@@ -173,6 +173,15 @@ worker_spi_main(Datum main_arg)
 		BackgroundWorkerInitializeConnection(worker_spi_database,
 											 worker_spi_role, flags);
 
+	/*
+	 * Disable parallel query for workers started with BYPASS_ALLOWCONN so as
+	 * these don't attempt connections to the database that may not allow
+	 * that.
+	 */
+	if (flags & BGWORKER_BYPASS_ALLOWCONN)
+		SetConfigOption("max_parallel_workers_per_gather", "0",
+						PGC_USERSET, PGC_S_OVERRIDE);
+
 	elog(LOG, "%s initialized with %s.%s",
 		 MyBgworkerEntry->bgw_name, table->schema, table->name);
 	initialize_worker_spi(table);
