@@ -141,6 +141,13 @@ libpgcommon.a: $(OBJS_FRONTEND)
 	$(AR) $(AROPT) $@ $^
 
 #
+# Files in libpgcommon.a should use/export the "xxx_private" versions
+# of pg_char_to_encoding() and friends.
+#
+$(OBJS_FRONTEND): CPPFLAGS += -DUSE_PRIVATE_ENCODING_FUNCS
+
+
+#
 # Shared library versions of object files
 #
 

@@ -112,8 +112,8 @@ common_sources_frontend_static += files(
   'logging.c',
 )
 
-# Build pgport once for backend, once for use in frontend binaries, and once
-# for use in shared libraries
+# Build pgcommon once for backend, once for use in frontend binaries, and
+# once for use in shared libraries
 #
 # XXX: in most environments we could probably link_whole pgcommon_shlib
 # against pgcommon_static, instead of compiling twice.
@@ -131,6 +131,9 @@ pgcommon_variants = {
   '': default_lib_args + {
     'sources': common_sources_frontend_static,
     'dependencies': [frontend_common_code],
+    # Files in libpgcommon.a should use/export the "xxx_private" versions
+    # of pg_char_to_encoding() and friends.
+    'c_args': ['-DUSE_PRIVATE_ENCODING_FUNCS'],
   },
   '_shlib': default_lib_args + {
     'pic': true,

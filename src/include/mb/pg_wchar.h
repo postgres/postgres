@@ -13,6 +13,9 @@
  *		included by libpq client programs.  In particular, a libpq client
  *		should not assume that the encoding IDs used by the version of libpq
  *		it's linked to match up with the IDs declared here.
+ *		To help prevent mistakes, relevant functions that are exported by
+ *		libpq have a physically different name when being referenced
+ *		statically.
  *
  *-------------------------------------------------------------------------
  */
@@ -561,6 +564,23 @@ surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second)
 	return ((first & 0x3FF) << 10) + 0x10000 + (second & 0x3FF);
 }
 
+
+/*
+ * The functions in this list are exported by libpq, and we need to be sure
+ * that we know which calls are satisfied by libpq and which are satisfied
+ * by static linkage to libpgcommon.  (This is because we might be using a
+ * libpq.so that's of a different major version and has encoding IDs that
+ * differ from the current version's.)  The nominal function names are what
+ * are actually used in and exported by libpq, while the names exported by
+ * libpgcommon.a and libpgcommon_srv.a end in "_private".
+ */
+#if defined(USE_PRIVATE_ENCODING_FUNCS) || !defined(FRONTEND)
+#define pg_char_to_encoding			pg_char_to_encoding_private
+#define pg_encoding_to_char			pg_encoding_to_char_private
+#define pg_valid_server_encoding	pg_valid_server_encoding_private
+#define pg_valid_server_encoding_id	pg_valid_server_encoding_id_private
+#define pg_utf_mblen				pg_utf_mblen_private
+#endif
 
 /*
  * These functions are considered part of libpq's exported API and

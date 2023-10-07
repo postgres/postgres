@@ -16,13 +16,12 @@ subdir = src/bin/initdb
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(ICU_CFLAGS) $(CPPFLAGS)
-
 # Note: it's important that we link to encnames.o from libpgcommon, not
 # from libpq, else we have risks of version skew if we run with a libpq
-# shared library from a different PG version.  The libpq_pgport macro
-# should ensure that that happens.
-#
+# shared library from a different PG version.  Define
+# USE_PRIVATE_ENCODING_FUNCS to ensure that that happens.
+override CPPFLAGS := -DUSE_PRIVATE_ENCODING_FUNCS -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(ICU_CFLAGS) $(CPPFLAGS)
+
 # We need libpq only because fe_utils does.
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport) $(ICU_LIBS)
 
