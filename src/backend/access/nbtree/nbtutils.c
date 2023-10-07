@@ -1415,7 +1415,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 
 		/*
 		 * Is the key required for scanning for either forward or backward
-		 * direction?  If so and called told us that these types of keys are
+		 * direction?  If so and caller told us that these types of keys are
 		 * known to be matched, skip the check.  Except for the row keys,
 		 * where NULLs could be found in the middle of matching values.
 		 */
