@@ -4,8 +4,9 @@ PGFILEDESC = "pg_tde access method"
 MODULE_big = pg_tde
 EXTENSION = pg_tde
 DATA = pg_tde--1.0.sql
-REGRESS = pg_tde
-TAP_TESTS = 0
+
+REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/postgres-tde-ext/postgres-tde-ext.conf --inputdir=regression
+REGRESS = non_sorted_off_compact update_compare_indexes
 
 OBJS = src/encryption/enc_tuple.o \
 src/encryption/enc_aes.o \
@@ -26,7 +27,6 @@ src/keyring/keyring_file.o \
 src/keyring/keyring_api.o \
 src/pg_tde.o
 
-
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -44,5 +44,4 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-SHLIB_LINK += $(filter -lcrypto -lssl, $(LIBS))
-SHLIB_LINK += -ljson-c
+SHLIB_LINK += -lcrypto -lssl -ljson-c

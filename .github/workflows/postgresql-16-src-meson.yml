@@ -49,5 +49,29 @@ jobs:
       - name: Build postgres
         run: |
           meson setup build
-          cd build && ninja
+          cd build && ninja && sudo ninja install
         working-directory: src
+
+      - name: Start postgresql cluster with pg_tde
+        run: |
+          export PATH="/usr/local/pgsql/bin:$PATH"
+          sudo cp /usr/local/pgsql/bin/pg_config /usr/bin
+          initdb -D /opt/pgsql/data
+          echo "shared_preload_libraries = 'pg_tde'" >> /opt/pgsql/data/postgresql.conf
+          pg_ctl -D /opt/pgsql/data -l logfile start
+
+      - name: Test postgres-tde-ext
+        run: |
+          export PATH="/usr/local/pgsql/bin:$PATH"
+          meson test --suite postgres-tde-ext -v
+        working-directory: src/build
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: Regressions diff and postgresql log
+          path: |
+            src/build/testrun/postgres-tde-ext/regress/
+          retention-days: 3
+

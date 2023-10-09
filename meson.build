@@ -58,3 +58,17 @@ install_data(
   'pg_tde--1.0.sql',
   kwargs: contrib_data_args,
 )
+
+tests += {
+  'name': 'postgres-tde-ext',
+  'sd': meson.current_source_dir() + '/regression/',
+  'bd': meson.current_build_dir() + '/regression/',
+  'regress': {
+    'sql': [
+      'non_sorted_off_compact',
+      'update_compare_indexes',
+    ],
+    'regress_args': ['--temp-config', files('postgres-tde-ext.conf')],
+    'runningcheck': false,
+  },
+}

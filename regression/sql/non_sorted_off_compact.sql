@@ -1,5 +1,6 @@
 -- A test case for https://github.com/Percona-Lab/postgres-tde-ext/pull/21
 -- 
+CREATE EXTENSION pg_tde;
 DROP TABLE IF EXISTS sbtest1;
 CREATE TABLE sbtest1(
 	  id SERIAL,
@@ -46,3 +47,6 @@ INSERT INTO sbtest1(k) VALUES
 ---- Trigger comapction
 delete from sbtest1 where id in (2);
 VACUUM sbtest1;
+
+DROP TABLE sbtest1;
+DROP EXTENSION pg_tde;
