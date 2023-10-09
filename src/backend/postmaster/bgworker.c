@@ -33,6 +33,7 @@
 #include "storage/shmem.h"
 #include "tcop/tcopprot.h"
 #include "utils/ascii.h"
+#include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
 
@@ -347,7 +348,9 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 		/*
 		 * Copy the registration data into the registered workers list.
 		 */
-		rw = malloc(sizeof(RegisteredBgWorker));
+		rw = MemoryContextAllocExtended(PostmasterContext,
+										sizeof(RegisteredBgWorker),
+										MCXT_ALLOC_NO_OOM);
 		if (rw == NULL)
 		{
 			ereport(LOG,
@@ -455,7 +458,7 @@ ForgetBackgroundWorker(slist_mutable_iter *cur)
 							 rw->rw_worker.bgw_name)));
 
 	slist_delete_current(cur);
-	free(rw);
+	pfree(rw);
 }
 
 /*
@@ -951,7 +954,9 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	/*
 	 * Copy the registration data into the registered workers list.
 	 */
-	rw = malloc(sizeof(RegisteredBgWorker));
+	rw = MemoryContextAllocExtended(PostmasterContext,
+									sizeof(RegisteredBgWorker),
+									MCXT_ALLOC_NO_OOM);
 	if (rw == NULL)
 	{
 		ereport(LOG,
