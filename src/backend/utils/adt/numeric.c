@@ -5190,12 +5190,13 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 	init_var(&tmp_var);
 
 	/*
-	 * Copy the bytea into a StringInfo so that we can "receive" it using the
-	 * standard recv-function infrastructure.
+	 * Fake up a StringInfo pointing to the bytea's value so we can "receive"
+	 * the serialized aggregate state value.
 	 */
-	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf,
-						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
+	buf.data = VARDATA_ANY(sstate);
+	buf.len = VARSIZE_ANY_EXHDR(sstate);
+	buf.maxlen = 0;
+	buf.cursor = 0;
 
 	result = makeNumericAggStateCurrentContext(false);
 
@@ -5222,7 +5223,6 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 	result->nInfcount = pq_getmsgint64(&buf);
 
 	pq_getmsgend(&buf);
-	pfree(buf.data);
 
 	free_var(&tmp_var);
 
@@ -5306,12 +5306,13 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 	init_var(&tmp_var);
 
 	/*
-	 * Copy the bytea into a StringInfo so that we can "receive" it using the
-	 * standard recv-function infrastructure.
+	 * Fake up a StringInfo pointing to the bytea's value so we can "receive"
+	 * the serialized aggregate state value.
 	 */
-	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf,
-						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
+	buf.data = VARDATA_ANY(sstate);
+	buf.len = VARSIZE_ANY_EXHDR(sstate);
+	buf.maxlen = 0;
+	buf.cursor = 0;
 
 	result = makeNumericAggStateCurrentContext(false);
 
@@ -5342,7 +5343,6 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 	result->nInfcount = pq_getmsgint64(&buf);
 
 	pq_getmsgend(&buf);
-	pfree(buf.data);
 
 	free_var(&tmp_var);
 
@@ -5677,12 +5677,13 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	init_var(&tmp_var);
 
 	/*
-	 * Copy the bytea into a StringInfo so that we can "receive" it using the
-	 * standard recv-function infrastructure.
+	 * Fake up a StringInfo pointing to the bytea's value so we can "receive"
+	 * the serialized aggregate state value.
 	 */
-	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf,
-						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
+	buf.data = VARDATA_ANY(sstate);
+	buf.len = VARSIZE_ANY_EXHDR(sstate);
+	buf.maxlen = 0;
+	buf.cursor = 0;
 
 	result = makePolyNumAggStateCurrentContext(false);
 
@@ -5706,7 +5707,6 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 #endif
 
 	pq_getmsgend(&buf);
-	pfree(buf.data);
 
 	free_var(&tmp_var);
 
@@ -5868,12 +5868,13 @@ int8_avg_deserialize(PG_FUNCTION_ARGS)
 	init_var(&tmp_var);
 
 	/*
-	 * Copy the bytea into a StringInfo so that we can "receive" it using the
-	 * standard recv-function infrastructure.
+	 * Fake up a StringInfo pointing to the bytea's value so we can "receive"
+	 * the serialized aggregate state value.
 	 */
-	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf,
-						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
+	buf.data = VARDATA_ANY(sstate);
+	buf.len = VARSIZE_ANY_EXHDR(sstate);
+	buf.maxlen = 0;
+	buf.cursor = 0;
 
 	result = makePolyNumAggStateCurrentContext(false);
 
@@ -5889,7 +5890,6 @@ int8_avg_deserialize(PG_FUNCTION_ARGS)
 #endif
 
 	pq_getmsgend(&buf);
-	pfree(buf.data);
 
 	free_var(&tmp_var);
 
