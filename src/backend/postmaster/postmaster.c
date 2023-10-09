@@ -4982,7 +4982,7 @@ SubPostmasterMain(int argc, char *argv[])
 		shmem_slot = atoi(argv[1] + 15);
 		MyBgworkerEntry = BackgroundWorkerEntry(shmem_slot);
 
-		StartBackgroundWorker();
+		BackgroundWorkerMain();
 	}
 	if (strcmp(argv[1], "--forklog") == 0)
 	{
@@ -5721,7 +5721,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			MemoryContextDelete(PostmasterContext);
 			PostmasterContext = NULL;
 
-			StartBackgroundWorker();
+			BackgroundWorkerMain();
 
 			exit(1);			/* should not get here */
 			break;

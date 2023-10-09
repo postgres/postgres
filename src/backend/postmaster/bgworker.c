@@ -741,13 +741,10 @@ bgworker_die(SIGNAL_ARGS)
 }
 
 /*
- * Start a new background worker
- *
- * This is the main entry point for background worker, to be called from
- * postmaster.
+ * Main entry point for background worker processes.
  */
 void
-StartBackgroundWorker(void)
+BackgroundWorkerMain(void)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	BackgroundWorker *worker = MyBgworkerEntry;
