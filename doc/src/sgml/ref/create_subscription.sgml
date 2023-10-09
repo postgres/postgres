@@ -51,7 +51,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
   </para>
 
   <para>
-   To be able to create a subscription, you must have the privileges of the
+   To be able to create a subscription, you must have the privileges of
    the <literal>pg_create_subscription</literal> role, as well as
    <literal>CREATE</literal> privileges on the current database.
   </para>

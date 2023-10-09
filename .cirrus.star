@@ -46,7 +46,7 @@ def main():
 
 def config_from(config_src):
     """return contents of config file `config_src`, surrounded by markers
-    indicating start / end of the the included file
+    indicating start / end of the included file
     """
 
     config_contents = fs.read(config_src)

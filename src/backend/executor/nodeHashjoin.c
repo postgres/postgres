@@ -1306,7 +1306,7 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
  * The data recorded in the file for each tuple is its hash value,
  * then the tuple in MinimalTuple format.
  *
- * fileptr points to a batch file in one of the the hashtable arrays.
+ * fileptr points to a batch file in one of the hashtable arrays.
  *
  * The batch files (and their buffers) are allocated in the spill context
  * created for the hashtable.

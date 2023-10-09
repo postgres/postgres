@@ -846,7 +846,7 @@ restart:
 
 	/*
 	 * If we got here without a DecodedXLogRecord, it means we needed to
-	 * validate total_len before trusting it, but by now now we've done that.
+	 * validate total_len before trusting it, but by now we've done that.
 	 */
 	if (decoded == NULL)
 	{

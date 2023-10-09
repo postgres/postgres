@@ -2,7 +2,7 @@
  * This test must be run in a database with UTF-8 encoding
  * and a Unicode-aware locale.
  *
- * Also disable this file for ICU, because the test for the the
+ * Also disable this file for ICU, because the test for the
  * Turkish dotted I is not correct for many ICU locales. citext always
  * uses the default collation, so it's not easy to restrict the test
  * to the "tr-TR-x-icu" collation where it will succeed.

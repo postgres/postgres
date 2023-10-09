@@ -169,7 +169,7 @@ FETCH BACKWARD FROM c;
 FETCH BACKWARD FROM c;
 FETCH NEXT FROM c;
 
--- scroll beyond end end
+-- scroll beyond end
 FETCH LAST FROM c;
 FETCH BACKWARD FROM c;
 FETCH NEXT FROM c;
@@ -200,7 +200,7 @@ FETCH BACKWARD FROM c;
 FETCH BACKWARD FROM c;
 FETCH NEXT FROM c;
 
--- scroll beyond end end
+-- scroll beyond end
 FETCH LAST FROM c;
 FETCH BACKWARD FROM c;
 FETCH NEXT FROM c;

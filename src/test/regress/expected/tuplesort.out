@@ -401,7 +401,7 @@ FETCH NEXT FROM c;
  00000000-0000-0000-0000-000000000000
 (1 row)
 
--- scroll beyond end end
+-- scroll beyond end
 FETCH LAST FROM c;
  noabort_decreasing 
 --------------------
@@ -498,7 +498,7 @@ FETCH NEXT FROM c;
  00000000-0000-0000-0000-000000000000
 (1 row)
 
--- scroll beyond end end
+-- scroll beyond end
 FETCH LAST FROM c;
  noabort_decreasing 
 --------------------
