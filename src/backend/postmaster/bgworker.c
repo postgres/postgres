@@ -880,20 +880,42 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	RegisteredBgWorker *rw;
 	static int	numworkers = 0;
 
-	if (!IsUnderPostmaster)
-		ereport(DEBUG1,
-				(errmsg_internal("registering background worker \"%s\"", worker->bgw_name)));
-
-	if (!process_shared_preload_libraries_in_progress &&
-		strcmp(worker->bgw_library_name, "postgres") != 0)
+	/*
+	 * Static background workers can only be registered in the postmaster
+	 * process.
+	 */
+	if (IsUnderPostmaster || !IsPostmasterEnvironment)
 	{
-		if (!IsUnderPostmaster)
-			ereport(LOG,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("background worker \"%s\": must be registered in shared_preload_libraries",
-							worker->bgw_name)));
+		/*
+		 * In EXEC_BACKEND or single-user mode, we process
+		 * shared_preload_libraries in backend processes too.  We cannot
+		 * register static background workers at that stage, but many
+		 * libraries' _PG_init() functions don't distinguish whether they're
+		 * being loaded in the postmaster or in a backend, they just check
+		 * process_shared_preload_libraries_in_progress.  It's a bit sloppy,
+		 * but for historical reasons we tolerate it.  In EXEC_BACKEND mode,
+		 * the background workers should already have been registered when the
+		 * library was loaded in postmaster.
+		 */
+		if (process_shared_preload_libraries_in_progress)
+			return;
+		ereport(LOG,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("background worker \"%s\": must be registered in shared_preload_libraries",
+						worker->bgw_name)));
 		return;
 	}
+
+	/*
+	 * Cannot register static background workers after calling
+	 * BackgroundWorkerShmemInit().
+	 */
+	if (BackgroundWorkerData != NULL)
+		elog(ERROR, "cannot register background worker \"%s\" after shmem init",
+			 worker->bgw_name);
+
+	ereport(DEBUG1,
+			(errmsg_internal("registering background worker \"%s\"", worker->bgw_name)));
 
 	if (!SanityCheckBackgroundWorker(worker, LOG))
 		return;
