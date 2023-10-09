@@ -63,10 +63,6 @@ extern void create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,
 extern void generate_partitionwise_join_paths(PlannerInfo *root,
 											  RelOptInfo *rel);
 
-#ifdef OPTIMIZER_DEBUG
-extern void debug_print_rel(PlannerInfo *root, RelOptInfo *rel);
-#endif
-
 /*
  * indxpath.c
  *	  routines to generate index paths
