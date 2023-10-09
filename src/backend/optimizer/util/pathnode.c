@@ -3133,10 +3133,26 @@ create_agg_path(PlannerInfo *root,
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
 	pathnode->path.parallel_workers = subpath->parallel_workers;
+
 	if (aggstrategy == AGG_SORTED)
-		pathnode->path.pathkeys = subpath->pathkeys;	/* preserves order */
+	{
+		/*
+		 * Attempt to preserve the order of the subpath.  Additional pathkeys
+		 * may have been added in adjust_group_pathkeys_for_groupagg() to
+		 * support ORDER BY / DISTINCT aggregates.  Pathkeys added there
+		 * belong to columns within the aggregate function, so we must strip
+		 * these additional pathkeys off as those columns are unavailable
+		 * above the aggregate node.
+		 */
+		if (list_length(subpath->pathkeys) > root->num_groupby_pathkeys)
+			pathnode->path.pathkeys = list_copy_head(subpath->pathkeys,
+													 root->num_groupby_pathkeys);
+		else
+			pathnode->path.pathkeys = subpath->pathkeys;	/* preserves order */
+	}
 	else
 		pathnode->path.pathkeys = NIL;	/* output is unordered */
+
 	pathnode->subpath = subpath;
 
 	pathnode->aggstrategy = aggstrategy;
