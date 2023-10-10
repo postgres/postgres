@@ -40,9 +40,9 @@ PostgreSQL documentation
   <application>pg_upgrade</application> (formerly called <application>pg_migrator</application>) allows data
   stored in <productname>PostgreSQL</productname> data files to be upgraded to a later <productname>PostgreSQL</productname>
   major version without the data dump/restore typically required for
-  major version upgrades, e.g., from 9.5.8 to 9.6.4 or from 10.7 to 11.2.
-  It is not required for minor version upgrades, e.g., from 9.6.2 to 9.6.3
-  or from 10.1 to 10.2.
+  major version upgrades, e.g., from 12.14 to 13.10 or from 14.9 to 15.5.
+  It is not required for minor version upgrades, e.g., from 12.7 to 12.8
+  or from 14.1 to 14.5.
  </para>
 
  <para>
@@ -390,14 +390,14 @@ make prefix=/usr/local/pgsql.new install
      Make sure both database servers are stopped using, on Unix, e.g.:
 
 <programlisting>
-pg_ctl -D /opt/PostgreSQL/9.6 stop
+pg_ctl -D /opt/PostgreSQL/12 stop
 pg_ctl -D /opt/PostgreSQL/&majorversion; stop
 </programlisting>
 
      or on Windows, using the proper service names:
 
 <programlisting>
-NET STOP postgresql-9.6
+NET STOP postgresql-12
 NET STOP postgresql-&majorversion;
 </programlisting>
     </para>
@@ -471,9 +471,9 @@ SET PATH=%PATH%;C:\Program Files\PostgreSQL\&majorversion;\bin;
 
 <programlisting>
 pg_upgrade.exe
-        --old-datadir "C:/Program Files/PostgreSQL/9.6/data"
+        --old-datadir "C:/Program Files/PostgreSQL/12/data"
         --new-datadir "C:/Program Files/PostgreSQL/&majorversion;/data"
-        --old-bindir "C:/Program Files/PostgreSQL/9.6/bin"
+        --old-bindir "C:/Program Files/PostgreSQL/12/bin"
         --new-bindir "C:/Program Files/PostgreSQL/&majorversion;/bin"
 </programlisting>
 
@@ -603,8 +603,8 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive old_cluster
        remote directory, e.g.,
 
 <programlisting>
-rsync --archive --delete --hard-links --size-only --no-inc-recursive /opt/PostgreSQL/9.5 \
-      /opt/PostgreSQL/9.6 standby.example.com:/opt/PostgreSQL
+rsync --archive --delete --hard-links --size-only --no-inc-recursive /opt/PostgreSQL/12 \
+      /opt/PostgreSQL/&majorversion; standby.example.com:/opt/PostgreSQL
 </programlisting>
 
        You can verify what the command will do using
@@ -633,8 +633,8 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive /opt/Postgr
        <application>rsync</application> command for each tablespace directory, e.g.:
 
 <programlisting>
-rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tblsp/PG_9.5_201510051 \
-      /vol1/pg_tblsp/PG_9.6_201608131 standby.example.com:/vol1/pg_tblsp
+rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tblsp/PG_12_201909212 \
+      /vol1/pg_tblsp/PG_&majorversion;_202307071 standby.example.com:/vol1/pg_tblsp
 </programlisting>
 
        If you have relocated <filename>pg_wal</filename> outside the data
