@@ -2165,7 +2165,8 @@ host ... radius radiusservers="server1,server2" radiussecrets="""secret one"",""
 
    <para>
     This authentication method uses SSL client certificates to perform
-    authentication. It is therefore only available for SSL connections.
+    authentication. It is therefore only available for SSL connections;
+    see <xref linkend="ssl-openssl-config"/> for SSL configuration instructions.
     When using this authentication method, the server will require that
     the client provide a valid, trusted certificate.  No password prompt
     will be sent to the client.  The <literal>cn</literal> (Common Name)
