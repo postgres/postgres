@@ -1453,3 +1453,19 @@ inner join tenk2 t2 on t1.tenthous = t2.tenthous
          ->  Result
 (8 rows)
 
+-- Ensure there is no problem if cheapest_startup_path is NULL
+explain (costs off)
+select * from tenk1 t1
+left join lateral
+  (select t1.tenthous from tenk2 t2 union all (values(1)))
+on true limit 1;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Limit
+   ->  Nested Loop Left Join
+         ->  Seq Scan on tenk1 t1
+         ->  Append
+               ->  Index Only Scan using tenk2_hundred on tenk2 t2
+               ->  Result
+(6 rows)
+

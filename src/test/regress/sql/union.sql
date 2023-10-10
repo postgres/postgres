@@ -551,3 +551,10 @@ select t1.unique1 from tenk1 t1
 inner join tenk2 t2 on t1.tenthous = t2.tenthous
    union all
 (values(1)) limit 1;
+
+-- Ensure there is no problem if cheapest_startup_path is NULL
+explain (costs off)
+select * from tenk1 t1
+left join lateral
+  (select t1.tenthous from tenk2 t2 union all (values(1)))
+on true limit 1;
