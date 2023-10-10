@@ -211,13 +211,13 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 
-				if (set_oldest_commit_ts_xid < 2 &&
-					set_oldest_commit_ts_xid != 0)
-					pg_fatal("transaction ID (-c) must be either 0 or greater than or equal to 2");
+				if (set_oldest_commit_ts_xid < FirstNormalTransactionId &&
+					set_oldest_commit_ts_xid != InvalidTransactionId)
+					pg_fatal("transaction ID (-c) must be either %u or greater than or equal to %u", InvalidTransactionId, FirstNormalTransactionId);
 
-				if (set_newest_commit_ts_xid < 2 &&
-					set_newest_commit_ts_xid != 0)
-					pg_fatal("transaction ID (-c) must be either 0 or greater than or equal to 2");
+				if (set_newest_commit_ts_xid < FirstNormalTransactionId &&
+					set_newest_commit_ts_xid != InvalidTransactionId)
+					pg_fatal("transaction ID (-c) must be either %u or greater than or equal to %u", InvalidTransactionId, FirstNormalTransactionId);
 				break;
 
 			case 'o':
