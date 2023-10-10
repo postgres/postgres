@@ -42,8 +42,8 @@
   */
 IndexTuple
 index_form_tuple(TupleDesc tupleDescriptor,
-				 Datum *values,
-				 bool *isnull)
+				 const Datum *values,
+				 const bool *isnull)
 {
 	return index_form_tuple_context(tupleDescriptor, values, isnull,
 									CurrentMemoryContext);
@@ -63,8 +63,8 @@ index_form_tuple(TupleDesc tupleDescriptor,
  */
 IndexTuple
 index_form_tuple_context(TupleDesc tupleDescriptor,
-						 Datum *values,
-						 bool *isnull,
+						 const Datum *values,
+						 const bool *isnull,
 						 MemoryContext context)
 {
 	char	   *tp;				/* tuple pointer */
@@ -79,8 +79,8 @@ index_form_tuple_context(TupleDesc tupleDescriptor,
 	int			numberOfAttributes = tupleDescriptor->natts;
 
 #ifdef TOAST_INDEX_HACK
-	Datum		untoasted_values[INDEX_MAX_KEYS];
-	bool		untoasted_free[INDEX_MAX_KEYS];
+	Datum		untoasted_values[INDEX_MAX_KEYS] = {0};
+	bool		untoasted_free[INDEX_MAX_KEYS] = {0};
 #endif
 
 	if (numberOfAttributes > INDEX_MAX_KEYS)

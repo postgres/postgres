@@ -205,8 +205,8 @@ getmissingattr(TupleDesc tupleDesc,
  */
 Size
 heap_compute_data_size(TupleDesc tupleDesc,
-					   Datum *values,
-					   bool *isnull)
+					   const Datum *values,
+					   const bool *isnull)
 {
 	Size		data_length = 0;
 	int			i;
@@ -390,7 +390,7 @@ fill_val(Form_pg_attribute att,
  */
 void
 heap_fill_tuple(TupleDesc tupleDesc,
-				Datum *values, bool *isnull,
+				const Datum *values, const bool *isnull,
 				char *data, Size data_size,
 				uint16 *infomask, bits8 *bit)
 {
@@ -1106,8 +1106,8 @@ heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
  */
 HeapTuple
 heap_form_tuple(TupleDesc tupleDescriptor,
-				Datum *values,
-				bool *isnull)
+				const Datum *values,
+				const bool *isnull)
 {
 	HeapTuple	tuple;			/* return tuple */
 	HeapTupleHeader td;			/* tuple data */
@@ -1200,9 +1200,9 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 HeapTuple
 heap_modify_tuple(HeapTuple tuple,
 				  TupleDesc tupleDesc,
-				  Datum *replValues,
-				  bool *replIsnull,
-				  bool *doReplace)
+				  const Datum *replValues,
+				  const bool *replIsnull,
+				  const bool *doReplace)
 {
 	int			numberOfAttributes = tupleDesc->natts;
 	int			attoff;
@@ -1269,9 +1269,9 @@ HeapTuple
 heap_modify_tuple_by_cols(HeapTuple tuple,
 						  TupleDesc tupleDesc,
 						  int nCols,
-						  int *replCols,
-						  Datum *replValues,
-						  bool *replIsnull)
+						  const int *replCols,
+						  const Datum *replValues,
+						  const bool *replIsnull)
 {
 	int			numberOfAttributes = tupleDesc->natts;
 	Datum	   *values;
@@ -1442,8 +1442,8 @@ heap_freetuple(HeapTuple htup)
  */
 MinimalTuple
 heap_form_minimal_tuple(TupleDesc tupleDescriptor,
-						Datum *values,
-						bool *isnull)
+						const Datum *values,
+						const bool *isnull)
 {
 	MinimalTuple tuple;			/* return tuple */
 	Size		len,

@@ -106,7 +106,7 @@ _h_spooldestroy(HSpool *hspool)
  * spool an index entry into the sort file.
  */
 void
-_h_spool(HSpool *hspool, ItemPointer self, Datum *values, bool *isnull)
+_h_spool(HSpool *hspool, ItemPointer self, const Datum *values, const bool *isnull)
 {
 	tuplesort_putindextuplevalues(hspool->sortstate, hspool->index,
 								  self, values, isnull);

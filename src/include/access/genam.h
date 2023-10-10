@@ -204,7 +204,7 @@ extern IndexScanDesc RelationGetIndexScan(Relation indexRelation,
 										  int nkeys, int norderbys);
 extern void IndexScanEnd(IndexScanDesc scan);
 extern char *BuildIndexValueDescription(Relation indexRelation,
-										Datum *values, bool *isnull);
+										const Datum *values, const bool *isnull);
 extern TransactionId index_compute_xid_horizon_for_tuples(Relation irel,
 														  Relation hrel,
 														  Buffer ibuf,

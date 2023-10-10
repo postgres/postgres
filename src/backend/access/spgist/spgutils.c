@@ -788,7 +788,7 @@ memcpyInnerDatum(void *target, SpGistTypeDesc *att, Datum datum)
  */
 Size
 SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
-					   Datum *datums, bool *isnulls)
+					   const Datum *datums, const bool *isnulls)
 {
 	Size		size;
 	Size		data_size;
@@ -841,7 +841,7 @@ SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
  */
 SpGistLeafTuple
 spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
-				 Datum *datums, bool *isnulls)
+				 const Datum *datums, const bool *isnulls)
 {
 	SpGistLeafTuple tup;
 	TupleDesc	tupleDescriptor = state->leafTupDesc;

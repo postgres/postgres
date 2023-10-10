@@ -748,7 +748,7 @@ tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
  */
 void
 tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
-					 Datum *values, bool *isnull)
+					 const Datum *values, const bool *isnull)
 {
 	MinimalTuple tuple;
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);

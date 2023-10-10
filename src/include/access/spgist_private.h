@@ -506,10 +506,10 @@ extern void SpGistInitBuffer(Buffer b, uint16 f);
 extern void SpGistInitMetapage(Page page);
 extern unsigned int SpGistGetInnerTypeSize(SpGistTypeDesc *att, Datum datum);
 extern Size SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
-								   Datum *datums, bool *isnulls);
+								   const Datum *datums, const bool *isnulls);
 extern SpGistLeafTuple spgFormLeafTuple(SpGistState *state,
 										ItemPointer heapPtr,
-										Datum *datums, bool *isnulls);
+										const Datum *datums, const bool *isnulls);
 extern SpGistNodeTuple spgFormNodeTuple(SpGistState *state,
 										Datum label, bool isnull);
 extern SpGistInnerTuple spgFormInnerTuple(SpGistState *state,

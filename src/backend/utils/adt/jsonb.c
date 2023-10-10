@@ -58,7 +58,7 @@ static void jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal);
 static JsonParseErrorType jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype);
 static void composite_to_jsonb(Datum composite, JsonbInState *result);
 static void array_dim_to_jsonb(JsonbInState *result, int dim, int ndims, int *dims,
-							   Datum *vals, bool *nulls, int *valcount,
+							   const Datum *vals, const bool *nulls, int *valcount,
 							   JsonTypeCategory tcategory, Oid outfuncoid);
 static void array_to_jsonb_internal(Datum array, JsonbInState *result);
 static void datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
@@ -864,8 +864,8 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
  * ourselves recursively to process the next dimension.
  */
 static void
-array_dim_to_jsonb(JsonbInState *result, int dim, int ndims, int *dims, Datum *vals,
-				   bool *nulls, int *valcount, JsonTypeCategory tcategory,
+array_dim_to_jsonb(JsonbInState *result, int dim, int ndims, int *dims, const Datum *vals,
+				   const bool *nulls, int *valcount, JsonTypeCategory tcategory,
 				   Oid outfuncoid)
 {
 	int			i;
@@ -1127,7 +1127,7 @@ datum_to_jsonb(Datum val, JsonTypeCategory tcategory, Oid outfuncoid)
 }
 
 Datum
-jsonb_build_object_worker(int nargs, Datum *args, bool *nulls, Oid *types,
+jsonb_build_object_worker(int nargs, const Datum *args, const bool *nulls, const Oid *types,
 						  bool absent_on_null, bool unique_keys)
 {
 	int			i;
@@ -1212,7 +1212,7 @@ jsonb_build_object_noargs(PG_FUNCTION_ARGS)
 }
 
 Datum
-jsonb_build_array_worker(int nargs, Datum *args, bool *nulls, Oid *types,
+jsonb_build_array_worker(int nargs, const Datum *args, const bool *nulls, const Oid *types,
 						 bool absent_on_null)
 {
 	int			i;

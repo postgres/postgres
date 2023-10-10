@@ -573,7 +573,7 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 
 IndexTuple
 gistFormTuple(GISTSTATE *giststate, Relation r,
-			  Datum *attdata, bool *isnull, bool isleaf)
+			  const Datum *attdata, const bool *isnull, bool isleaf)
 {
 	Datum		compatt[INDEX_MAX_KEYS];
 	IndexTuple	res;
@@ -594,7 +594,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 
 void
 gistCompressValues(GISTSTATE *giststate, Relation r,
-				   Datum *attdata, bool *isnull, bool isleaf, Datum *compatt)
+				   const Datum *attdata, const bool *isnull, bool isleaf, Datum *compatt)
 {
 	int			i;
 

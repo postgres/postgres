@@ -1182,7 +1182,7 @@ catenate_stringinfo_string(StringInfo buffer, const char *addon)
 }
 
 Datum
-json_build_object_worker(int nargs, Datum *args, bool *nulls, Oid *types,
+json_build_object_worker(int nargs, const Datum *args, const bool *nulls, const Oid *types,
 						 bool absent_on_null, bool unique_keys)
 {
 	int			i;
@@ -1295,7 +1295,7 @@ json_build_object_noargs(PG_FUNCTION_ARGS)
 }
 
 Datum
-json_build_array_worker(int nargs, Datum *args, bool *nulls, Oid *types,
+json_build_array_worker(int nargs, const Datum *args, const bool *nulls, const Oid *types,
 						bool absent_on_null)
 {
 	int			i;

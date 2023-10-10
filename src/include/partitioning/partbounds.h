@@ -100,8 +100,8 @@ typedef struct PartitionBoundInfoData
 
 extern int	get_hash_partition_greatest_modulus(PartitionBoundInfo bound);
 extern uint64 compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc,
-										   Oid *partcollation,
-										   Datum *values, bool *isnull);
+										   const Oid *partcollation,
+										   const Datum *values, const bool *isnull);
 extern List *get_qual_from_partbound(Relation parent,
 									 PartitionBoundSpec *spec);
 extern PartitionBoundInfo partition_bounds_create(PartitionBoundSpec **boundspecs,

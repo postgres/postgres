@@ -80,7 +80,7 @@ static void union_tuples(BrinDesc *bdesc, BrinMemTuple *a,
 						 BrinTuple *b);
 static void brin_vacuum_scan(Relation idxrel, BufferAccessStrategy strategy);
 static bool add_values_to_range(Relation idxRel, BrinDesc *bdesc,
-								BrinMemTuple *dtup, Datum *values, bool *nulls);
+								BrinMemTuple *dtup, const Datum *values, const bool *nulls);
 static bool check_null_keys(BrinValues *bval, ScanKey *nullkeys, int nnullkeys);
 
 /*
@@ -1774,7 +1774,7 @@ brin_vacuum_scan(Relation idxrel, BufferAccessStrategy strategy)
 
 static bool
 add_values_to_range(Relation idxRel, BrinDesc *bdesc, BrinMemTuple *dtup,
-					Datum *values, bool *nulls)
+					const Datum *values, const bool *nulls)
 {
 	int			keyno;
 

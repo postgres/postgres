@@ -4720,8 +4720,8 @@ get_range_nulltest(PartitionKey key)
  * Compute the hash value for given partition key values.
  */
 uint64
-compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc, Oid *partcollation,
-							 Datum *values, bool *isnull)
+compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc, const Oid *partcollation,
+							 const Datum *values, const bool *isnull)
 {
 	int			i;
 	uint64		rowHash = 0;

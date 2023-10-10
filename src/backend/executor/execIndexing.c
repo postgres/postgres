@@ -127,15 +127,15 @@ typedef enum
 static bool check_exclusion_or_unique_constraint(Relation heap, Relation index,
 												 IndexInfo *indexInfo,
 												 ItemPointer tupleid,
-												 Datum *values, bool *isnull,
+												 const Datum *values, const bool *isnull,
 												 EState *estate, bool newIndex,
 												 CEOUC_WAIT_MODE waitMode,
 												 bool violationOK,
 												 ItemPointer conflictTid);
 
-static bool index_recheck_constraint(Relation index, Oid *constr_procs,
-									 Datum *existing_values, bool *existing_isnull,
-									 Datum *new_values);
+static bool index_recheck_constraint(Relation index, const Oid *constr_procs,
+									 const Datum *existing_values, const bool *existing_isnull,
+									 const Datum *new_values);
 static bool index_unchanged_by_update(ResultRelInfo *resultRelInfo,
 									  EState *estate, IndexInfo *indexInfo,
 									  Relation indexRelation);
@@ -684,7 +684,7 @@ static bool
 check_exclusion_or_unique_constraint(Relation heap, Relation index,
 									 IndexInfo *indexInfo,
 									 ItemPointer tupleid,
-									 Datum *values, bool *isnull,
+									 const Datum *values, const bool *isnull,
 									 EState *estate, bool newIndex,
 									 CEOUC_WAIT_MODE waitMode,
 									 bool violationOK,
@@ -910,7 +910,7 @@ void
 check_exclusion_constraint(Relation heap, Relation index,
 						   IndexInfo *indexInfo,
 						   ItemPointer tupleid,
-						   Datum *values, bool *isnull,
+						   const Datum *values, const bool *isnull,
 						   EState *estate, bool newIndex)
 {
 	(void) check_exclusion_or_unique_constraint(heap, index, indexInfo, tupleid,
@@ -924,9 +924,9 @@ check_exclusion_constraint(Relation heap, Relation index,
  * exclusion condition against the new_values.  Returns true if conflict.
  */
 static bool
-index_recheck_constraint(Relation index, Oid *constr_procs,
-						 Datum *existing_values, bool *existing_isnull,
-						 Datum *new_values)
+index_recheck_constraint(Relation index, const Oid *constr_procs,
+						 const Datum *existing_values, const bool *existing_isnull,
+						 const Datum *new_values)
 {
 	int			indnkeyatts = IndexRelationGetNumberOfKeyAttributes(index);
 	int			i;

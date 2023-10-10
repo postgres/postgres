@@ -2273,7 +2273,7 @@ begin_tup_output_tupdesc(DestReceiver *dest,
  * write a single tuple
  */
 void
-do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
+do_tup_output(TupOutputState *tstate, const Datum *values, const bool *isnull)
 {
 	TupleTableSlot *slot = tstate->slot;
 	int			natts = slot->tts_tupleDescriptor->natts;

@@ -316,7 +316,7 @@ toast_tuple_cleanup(ToastTupleContext *ttc)
  * relation.
  */
 void
-toast_delete_external(Relation rel, Datum *values, bool *isnull,
+toast_delete_external(Relation rel, const Datum *values, const bool *isnull,
 					  bool is_speculative)
 {
 	TupleDesc	tupleDesc = rel->rd_att;
