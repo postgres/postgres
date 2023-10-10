@@ -792,58 +792,73 @@ XLogInsertRecord(XLogRecData *rdata,
 	 *----------
 	 */
 	START_CRIT_SECTION();
-	if (isLogSwitch)
-		WALInsertLockAcquireExclusive();
-	else
+
+	if (likely(!isLogSwitch))
+	{
 		WALInsertLockAcquire();
 
-	/*
-	 * Check to see if my copy of RedoRecPtr is out of date. If so, may have
-	 * to go back and have the caller recompute everything. This can only
-	 * happen just after a checkpoint, so it's better to be slow in this case
-	 * and fast otherwise.
-	 *
-	 * Also check to see if fullPageWrites was just turned on or there's a
-	 * running backup (which forces full-page writes); if we weren't already
-	 * doing full-page writes then go back and recompute.
-	 *
-	 * If we aren't doing full-page writes then RedoRecPtr doesn't actually
-	 * affect the contents of the XLOG record, so we'll update our local copy
-	 * but not force a recomputation.  (If doPageWrites was just turned off,
-	 * we could recompute the record without full pages, but we choose not to
-	 * bother.)
-	 */
-	if (RedoRecPtr != Insert->RedoRecPtr)
-	{
-		Assert(RedoRecPtr < Insert->RedoRecPtr);
-		RedoRecPtr = Insert->RedoRecPtr;
-	}
-	doPageWrites = (Insert->fullPageWrites || Insert->runningBackups > 0);
-
-	if (doPageWrites &&
-		(!prevDoPageWrites ||
-		 (fpw_lsn != InvalidXLogRecPtr && fpw_lsn <= RedoRecPtr)))
-	{
 		/*
-		 * Oops, some buffer now needs to be backed up that the caller didn't
-		 * back up.  Start over.
+		 * Check to see if my copy of RedoRecPtr is out of date. If so, may
+		 * have to go back and have the caller recompute everything. This can
+		 * only happen just after a checkpoint, so it's better to be slow in
+		 * this case and fast otherwise.
+		 *
+		 * Also check to see if fullPageWrites was just turned on or there's a
+		 * running backup (which forces full-page writes); if we weren't
+		 * already doing full-page writes then go back and recompute.
+		 *
+		 * If we aren't doing full-page writes then RedoRecPtr doesn't
+		 * actually affect the contents of the XLOG record, so we'll update
+		 * our local copy but not force a recomputation.  (If doPageWrites was
+		 * just turned off, we could recompute the record without full pages,
+		 * but we choose not to bother.)
 		 */
-		WALInsertLockRelease();
-		END_CRIT_SECTION();
-		return InvalidXLogRecPtr;
-	}
+		if (RedoRecPtr != Insert->RedoRecPtr)
+		{
+			Assert(RedoRecPtr < Insert->RedoRecPtr);
+			RedoRecPtr = Insert->RedoRecPtr;
+		}
+		doPageWrites = (Insert->fullPageWrites || Insert->runningBackups > 0);
 
-	/*
-	 * Reserve space for the record in the WAL. This also sets the xl_prev
-	 * pointer.
-	 */
-	if (isLogSwitch)
-		inserted = ReserveXLogSwitch(&StartPos, &EndPos, &rechdr->xl_prev);
-	else
-	{
+		if (doPageWrites &&
+			(!prevDoPageWrites ||
+			 (fpw_lsn != InvalidXLogRecPtr && fpw_lsn <= RedoRecPtr)))
+		{
+			/*
+			 * Oops, some buffer now needs to be backed up that the caller
+			 * didn't back up.  Start over.
+			 */
+			WALInsertLockRelease();
+			END_CRIT_SECTION();
+			return InvalidXLogRecPtr;
+		}
+
+		/*
+		 * Reserve space for the record in the WAL. This also sets the xl_prev
+		 * pointer.
+		 */
 		ReserveXLogInsertLocation(rechdr->xl_tot_len, &StartPos, &EndPos,
 								  &rechdr->xl_prev);
+
+		/* Normal records are always inserted. */
 		inserted = true;
+	}
+	else
+	{
+		/*
+		 * In order to insert an XLOG_SWITCH record, we need to hold all of
+		 * the WAL insertion locks, not just one, so that no one else can
+		 * begin inserting a record until we've figured out how much space
+		 * remains in the current WAL segment and claimed all of it.
+		 *
+		 * Nonetheless, this case is simpler than the normal cases handled
+		 * above, which must check for changes in doPageWrites and RedoRecPtr.
+		 * Those checks are only needed for records that can contain
+		 * full-pages images, and an XLOG_SWITCH record never does.
+		 */
+		Assert(fpw_lsn == InvalidXLogRecPtr);
+		WALInsertLockAcquireExclusive();
+		inserted = ReserveXLogSwitch(&StartPos, &EndPos, &rechdr->xl_prev);
 	}
 
 	if (inserted)
