@@ -67,6 +67,7 @@ tests += {
     'sql': [
       'non_sorted_off_compact',
       'update_compare_indexes',
+      'pgtde_is_encrypted',
     ],
     'regress_args': ['--temp-config', files('postgres-tde-ext.conf')],
     'runningcheck': false,
