@@ -36,10 +36,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
     | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>' | PASSWORD NULL
     | VALID UNTIL '<replaceable class="parameter">timestamp</replaceable>'
     | IN ROLE <replaceable class="parameter">role_name</replaceable> [, ...]
-    | IN GROUP <replaceable class="parameter">role_name</replaceable> [, ...]
     | ROLE <replaceable class="parameter">role_name</replaceable> [, ...]
     | ADMIN <replaceable class="parameter">role_name</replaceable> [, ...]
-    | USER <replaceable class="parameter">role_name</replaceable> [, ...]
     | SYSID <replaceable class="parameter">uid</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -295,15 +293,6 @@ in sync when changing the above synopsis!
      </varlistentry>
 
      <varlistentry>
-      <term><literal>IN GROUP</literal> <replaceable class="parameter">role_name</replaceable></term>
-      <listitem>
-       <para><literal>IN GROUP</literal> is an obsolete spelling of
-        <literal>IN ROLE</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><literal>ROLE</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
@@ -322,16 +311,6 @@ in sync when changing the above synopsis!
         but the named roles are added to the new role <literal>WITH ADMIN
         OPTION</literal>, giving them the right to grant membership in this role
         to others.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>USER</literal> <replaceable class="parameter">role_name</replaceable></term>
-      <listitem>
-       <para>
-        The <literal>USER</literal> clause is an obsolete spelling of
-        the <literal>ROLE</literal> clause.
        </para>
       </listitem>
      </varlistentry>
@@ -483,6 +462,22 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ WITH ADMIN <repl
    The behavior specified by the SQL standard is most closely approximated
    by giving users the <literal>NOINHERIT</literal> attribute, while roles are
    given the <literal>INHERIT</literal> attribute.
+  </para>
+
+  <para>
+   The <literal>USER</literal> clause has the same behavior as
+   <literal>ROLE</literal> but has been deprecated:
+<synopsis>
+USER <replaceable class="parameter">role_name</replaceable> [, ...]
+</synopsis>
+  </para>
+
+  <para>
+   The <literal>IN GROUP</literal> clause has the same behavior as <literal>IN
+   ROLE</literal> but has been deprecated:
+<synopsis>
+IN GROUP <replaceable class="parameter">role_name</replaceable> [, ...]
+</synopsis>
   </para>
  </refsect1>
 
