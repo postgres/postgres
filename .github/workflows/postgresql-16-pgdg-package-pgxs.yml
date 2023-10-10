@@ -54,6 +54,26 @@ jobs:
           sudo make USE_PGXS=1 install
         working-directory: src/postgres-tde-ext
 
+      - name: Start pg_stat_monitor_tests
+        run: |
+          sudo service postgresql stop
+          echo "shared_preload_libraries = 'pg_tde'" |
+            sudo tee -a /etc/postgresql/16/main/postgresql.conf
+          sudo service postgresql start
+          sudo psql -V
+          sudo -u postgres bash -c 'make installcheck USE_PGXS=1'
+        working-directory: src/postgres-tde-ext
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: Regressions diff and postgresql log
+          path: |
+            src/postgres-tde-ext/regression.diffs
+            src/postgres-tde-ext/logfile
+          retention-days: 3
+
       - name: Create release directory
         run: |
           sudo mkdir pgtde-pgdg16

@@ -47,11 +47,37 @@ jobs:
 
       - name: Build postgres
         run: |
-          ./configure --prefix=/usr --with-openssl 
+          ./configure --with-openssl  --enable-tap-tests=no
           make -j
+          sudo make install
         working-directory: src
 
       - name: Build postgres-tde-ext
         run: |
           make -j
+          sudo make install
         working-directory: src/contrib/postgres-tde-ext
+
+      - name: Start postgresql cluster with pg_tde
+        run: |
+          export PATH="/usr/local/pgsql/bin:$PATH"
+          sudo cp /usr/local/pgsql/bin/pg_config /usr/bin
+          initdb -D /opt/pgsql/data
+          echo "shared_preload_libraries = 'pg_tde'" >> \
+            /opt/pgsql/data/postgresql.conf
+          pg_ctl -D /opt/pgsql/data -l logfile start
+
+      - name: Build postgres-tde-ext
+        run: |
+          make installcheck
+        working-directory: src/contrib/postgres-tde-ext
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: Regressions diff and postgresql log
+          path: |
+            src/postgres-tde-ext/regression.diffs
+            src/postgres-tde-ext/logfile
+          retention-days: 3
