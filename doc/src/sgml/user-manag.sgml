@@ -103,11 +103,10 @@ SELECT rolname FROM pg_roles WHERE rolcanlogin;
   <para>
    In order to bootstrap the database system, a freshly initialized
    system always contains one predefined login-capable role. This role
-   is always a <quote>superuser</quote>, and by default it will have
+   is always a <quote>superuser</quote>, and it will have
    the same name as the operating system user that initialized the
-   database cluster, unless another name is specified while
-   running <command>initdb</command>.
-   It is common, but not required, to arrange for this role to be named
+   database cluster with <command>initdb</command> unless a different name
+   is specified.  This role is often named
    <literal>postgres</literal>. In order to create more roles you
    first have to connect as this initial role.
   </para>
