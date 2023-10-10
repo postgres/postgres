@@ -1505,10 +1505,12 @@ omicron         bryanh                  guest1
     <literal>negotiate</literal> mode, which will use
     <productname>Kerberos</productname> when possible and automatically
     fall back to <productname>NTLM</productname> in other cases.
-    <productname>SSPI</productname> authentication only works when both
-    server and client are running <productname>Windows</productname>,
-    or, on non-Windows platforms, when <productname>GSSAPI</productname>
-    is available.
+    <productname>SSPI</productname> and <productname>GSSAPI</productname>
+    interoperate as clients and servers, e.g., an
+    <productname>SSPI</productname> client can authenticate to an
+    <productname>GSSAPI</productname> server.  It is recommended to use
+    <productname>SSPI</productname> on Windows clients and servers and
+    <productname>GSSAPI</productname> on non-Windows platforms.
    </para>
 
    <para>
