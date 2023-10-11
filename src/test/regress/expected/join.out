@@ -5788,13 +5788,11 @@ explain (costs off)
 select p.* from
   parent p left join child c on (p.k = c.k)
   where p.k = 1 and p.k = 2;
-                   QUERY PLAN                   
-------------------------------------------------
+        QUERY PLAN        
+--------------------------
  Result
    One-Time Filter: false
-   ->  Index Scan using parent_pkey on parent p
-         Index Cond: (k = 1)
-(4 rows)
+(2 rows)
 
 select p.* from
   (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
