@@ -48,9 +48,9 @@ HOW IT WORKS
 To use pg_upgrade during an upgrade, start by installing a fresh
 cluster using the newest version in a new directory. When you've
 finished installation, the new cluster will contain the new executables
-and the usual template0, template1, and postgres, but no user-defined
-tables. At this point, you can shut down the old and new postmasters and
-invoke pg_upgrade.
+and the usual template0, template1, and postgres databases, but no
+user-defined tables. At this point, you can shut down the old and new
+postmasters and invoke pg_upgrade.
 
 When pg_upgrade starts, it ensures that all required executables are
 present and contain the expected version numbers. The verification
