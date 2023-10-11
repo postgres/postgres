@@ -348,8 +348,8 @@ GenericXLogFinish(GenericXLogState *state)
 		START_CRIT_SECTION();
 
 		/*
-		 * Compute deltas if necessary, write changes to buffers, mark
-		 * buffers dirty, and register changes.
+		 * Compute deltas if necessary, write changes to buffers, mark buffers
+		 * dirty, and register changes.
 		 */
 		for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)
 		{
