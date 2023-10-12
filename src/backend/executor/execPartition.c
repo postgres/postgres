@@ -2108,7 +2108,7 @@ InitPartitionPruneContext(PartitionPruneContext *context,
 	foreach(lc, pruning_steps)
 	{
 		PartitionPruneStepOp *step = (PartitionPruneStepOp *) lfirst(lc);
-		ListCell   *lc2;
+		ListCell   *lc2 = list_head(step->exprs);
 		int			keyno;
 
 		/* not needed for other step kinds */
@@ -2117,34 +2117,39 @@ InitPartitionPruneContext(PartitionPruneContext *context,
 
 		Assert(list_length(step->exprs) <= partnatts);
 
-		keyno = 0;
-		foreach(lc2, step->exprs)
+		for (keyno = 0; keyno < partnatts; keyno++)
 		{
-			Expr	   *expr = (Expr *) lfirst(lc2);
+			if (bms_is_member(keyno, step->nullkeys))
+				continue;
 
-			/* not needed for Consts */
-			if (!IsA(expr, Const))
+			if (lc2 != NULL)
 			{
-				int			stateidx = PruneCxtStateIdx(partnatts,
-														step->step.step_id,
-														keyno);
+				Expr	   *expr = lfirst(lc2);
 
-				/*
-				 * When planstate is NULL, pruning_steps is known not to
-				 * contain any expressions that depend on the parent plan.
-				 * Information of any available EXTERN parameters must be
-				 * passed explicitly in that case, which the caller must have
-				 * made available via econtext.
-				 */
-				if (planstate == NULL)
-					context->exprstates[stateidx] =
-						ExecInitExprWithParams(expr,
-											   econtext->ecxt_param_list_info);
-				else
-					context->exprstates[stateidx] =
-						ExecInitExpr(expr, context->planstate);
+				/* not needed for Consts */
+				if (!IsA(expr, Const))
+				{
+					int			stateidx = PruneCxtStateIdx(partnatts,
+															step->step.step_id,
+															keyno);
+
+					/*
+					 * When planstate is NULL, pruning_steps is known not to
+					 * contain any expressions that depend on the parent plan.
+					 * Information of any available EXTERN parameters must be
+					 * passed explicitly in that case, which the caller must
+					 * have made available via econtext.
+					 */
+					if (planstate == NULL)
+						context->exprstates[stateidx] =
+							ExecInitExprWithParams(expr,
+												   econtext->ecxt_param_list_info);
+					else
+						context->exprstates[stateidx] =
+							ExecInitExpr(expr, context->planstate);
+				}
+				lc2 = lnext(step->exprs, lc2);
 			}
-			keyno++;
 		}
 	}
 }
