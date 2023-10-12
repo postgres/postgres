@@ -1103,16 +1103,57 @@ explain (costs off) select * from rp_prefix_test3 where a >= 1 and b >= 1 and b 
 -- that the caller arranges clauses in that prefix in the required order)
 explain (costs off) select * from rp_prefix_test3 where a >= 1 and b >= 1 and b = 2 and c = 2 and d >= 0;
 
-create table hp_prefix_test (a int, b int, c int, d int) partition by hash (a part_test_int4_ops, b part_test_int4_ops, c part_test_int4_ops, d part_test_int4_ops);
-create table hp_prefix_test_p1 partition of hp_prefix_test for values with (modulus 2, remainder 0);
-create table hp_prefix_test_p2 partition of hp_prefix_test for values with (modulus 2, remainder 1);
-
--- Test that get_steps_using_prefix() handles non-NULL step_nullkeys
-explain (costs off) select * from hp_prefix_test where a = 1 and b is null and c = 1 and d = 1;
-
 drop table rp_prefix_test1;
 drop table rp_prefix_test2;
 drop table rp_prefix_test3;
+
+--
+-- Test that get_steps_using_prefix() handles IS NULL clauses correctly
+--
+create table hp_prefix_test (a int, b int, c int, d int)
+  partition by hash (a part_test_int4_ops, b part_test_int4_ops, c part_test_int4_ops, d part_test_int4_ops);
+
+-- create 8 partitions
+select 'create table hp_prefix_test_p' || x::text || ' partition of hp_prefix_test for values with (modulus 8, remainder ' || x::text || ');'
+from generate_Series(0,7) x;
+\gexec
+
+-- insert 16 rows, one row for each test to perform.
+insert into hp_prefix_test
+select
+  case a when 0 then null else 1 end,
+  case b when 0 then null else 2 end,
+  case c when 0 then null else 3 end,
+  case d when 0 then null else 4 end
+from
+  generate_series(0,1) a,
+  generate_series(0,1) b,
+  generate_Series(0,1) c,
+  generate_Series(0,1) d;
+
+-- Ensure partition pruning works correctly for each combination of IS NULL
+-- and equality quals.  This may seem a little excessive, but there have been
+-- a number of bugs in this area over the years.  We make use of row only
+-- output to reduce the size of the expected results.
+\t on
+select
+  'explain (costs off) select tableoid::regclass,* from hp_prefix_test where ' ||
+  string_agg(c.colname || case when g.s & (1 << c.colpos) = 0 then ' is null' else ' = ' || (colpos+1)::text end, ' and ' order by c.colpos)
+from (values('a',0),('b',1),('c',2),('d',3)) c(colname, colpos), generate_Series(0,15) g(s)
+group by g.s
+order by g.s;
+\gexec
+
+-- And ensure we get exactly 1 row from each. Again, all 16 possible combinations.
+select
+  'select tableoid::regclass,* from hp_prefix_test where ' ||
+  string_agg(c.colname || case when g.s & (1 << c.colpos) = 0 then ' is null' else ' = ' || (colpos+1)::text end, ' and ' order by c.colpos)
+from (values('a',0),('b',1),('c',2),('d',3)) c(colname, colpos), generate_Series(0,15) g(s)
+group by g.s
+order by g.s;
+\gexec
+\t off
+
 drop table hp_prefix_test;
 
 --

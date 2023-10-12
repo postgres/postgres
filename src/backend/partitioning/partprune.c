@@ -165,7 +165,6 @@ static List *get_steps_using_prefix(GeneratePruningStepsContext *context,
 					   bool step_op_is_ne,
 					   Expr *step_lastexpr,
 					   Oid step_lastcmpfn,
-					   int step_lastkeyno,
 					   Bitmapset *step_nullkeys,
 					   List *prefix);
 static List *get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
@@ -173,8 +172,8 @@ static List *get_steps_using_prefix_recurse(GeneratePruningStepsContext *context
 							   bool step_op_is_ne,
 							   Expr *step_lastexpr,
 							   Oid step_lastcmpfn,
-							   int step_lastkeyno,
 							   Bitmapset *step_nullkeys,
+							   List *prefix,
 							   ListCell *start,
 							   List *step_exprs,
 							   List *step_cmpfns);
@@ -1404,7 +1403,6 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 															  pc->op_is_ne,
 															  pc->expr,
 															  pc->cmpfn,
-															  0,
 															  NULL,
 															  NIL);
 							opsteps = list_concat(opsteps, pc_steps);
@@ -1530,7 +1528,6 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 															  pc->op_is_ne,
 															  pc->expr,
 															  pc->cmpfn,
-															  pc->keyno,
 															  NULL,
 															  prefix);
 							opsteps = list_concat(opsteps, pc_steps);
@@ -1604,7 +1601,6 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 												   false,
 												   pc->expr,
 												   pc->cmpfn,
-												   pc->keyno,
 												   nullkeys,
 												   prefix);
 						opsteps = list_concat(opsteps, list_copy(pc_steps));
@@ -2244,25 +2240,31 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 
 /*
  * get_steps_using_prefix
- *		Generate list of PartitionPruneStepOp steps each consisting of given
- *		opstrategy
+ *		Generate a list of PartitionPruneStepOps based on the given input.
  *
- * To generate steps, step_lastexpr and step_lastcmpfn are appended to
- * expressions and cmpfns, respectively, extracted from the clauses in
- * 'prefix'.  Actually, since 'prefix' may contain multiple clauses for the
- * same partition key column, we must generate steps for various combinations
- * of the clauses of different keys.
+ * 'step_lastexpr' and 'step_lastcmpfn' are the Expr and comparison function
+ * belonging to the final partition key that we have a clause for.  'prefix'
+ * is a list of PartClauseInfos for partition key numbers prior to the given
+ * 'step_lastexpr' and 'step_lastcmpfn'.  'prefix' may contain multiple
+ * PartClauseInfos belonging to a single partition key.  We will generate a
+ * PartitionPruneStepOp for each combination of the given PartClauseInfos
+ * using, at most, one PartClauseInfo per partition key.
  *
- * For list/range partitioning, callers must ensure that step_nullkeys is
- * NULL, and that prefix contains at least one clause for each of the
- * partition keys earlier than one specified in step_lastkeyno if it's
- * greater than zero.  For hash partitioning, step_nullkeys is allowed to be
- * non-NULL, but they must ensure that prefix contains at least one clause
- * for each of the partition keys other than those specified in step_nullkeys
- * and step_lastkeyno.
+ * For LIST and RANGE partitioned tables, callers must ensure that
+ * step_nullkeys is NULL, and that prefix contains at least one clause for
+ * each of the partition keys prior to the key that 'step_lastexpr' and
+ * 'step_lastcmpfn'belong to.
  *
- * For both cases, callers must also ensure that clauses in prefix are sorted
- * in ascending order of their partition key numbers.
+ * For HASH partitioned tables, callers must ensure that 'prefix' contains at
+ * least one clause for each of the partition keys apart from the final key
+ * (the expr and comparison function for the final key are in 'step_lastexpr'
+ * and 'step_lastcmpfn').  A bit set in step_nullkeys can substitute clauses
+ * in the 'prefix' list for any given key.  If a bit is set in 'step_nullkeys'
+ * for a given key, then there must be no PartClauseInfo for that key in the
+ * 'prefix' list.
+ *
+ * For each of the above cases, callers must ensure that PartClauseInfos in
+ * 'prefix' are sorted in ascending order of keyno.
  */
 static List *
 get_steps_using_prefix(GeneratePruningStepsContext *context,
@@ -2270,14 +2272,17 @@ get_steps_using_prefix(GeneratePruningStepsContext *context,
 					   bool step_op_is_ne,
 					   Expr *step_lastexpr,
 					   Oid step_lastcmpfn,
-					   int step_lastkeyno,
 					   Bitmapset *step_nullkeys,
 					   List *prefix)
 {
+	/* step_nullkeys must be empty for RANGE and LIST partitioned tables */
 	Assert(step_nullkeys == NULL ||
 		   context->rel->part_scheme->strategy == PARTITION_STRATEGY_HASH);
 
-	/* Quick exit if there are no values to prefix with. */
+	/*
+	 * No recursive processing is required when 'prefix' is an empty list.  This
+	 * occurs when there is only 1 partition key column.
+	 */
 	if (list_length(prefix) == 0)
 	{
 		PartitionPruneStep *step;
@@ -2291,26 +2296,31 @@ get_steps_using_prefix(GeneratePruningStepsContext *context,
 		return list_make1(step);
 	}
 
-	/* Recurse to generate steps for various combinations. */
+	/* Recurse to generate steps for every combination of clauses. */
 	return get_steps_using_prefix_recurse(context,
 										  step_opstrategy,
 										  step_op_is_ne,
 										  step_lastexpr,
 										  step_lastcmpfn,
-										  step_lastkeyno,
 										  step_nullkeys,
+										  prefix,
 										  list_head(prefix),
 										  NIL, NIL);
 }
 
 /*
  * get_steps_using_prefix_recurse
- *		Recursively generate combinations of clauses for different partition
- *		keys and start generating steps upon reaching clauses for the greatest
- *		column that is less than the one for which we're currently generating
- *		steps (that is, step_lastkeyno)
+ *		Generate and return a list of PartitionPruneStepOps using the 'prefix'
+ *		list of PartClauseInfos starting at the 'start' cell.
  *
- * 'start' is where we should start iterating for the current invocation.
+ * When 'prefix' contains multiple PartClauseInfos for a single partition key
+ * we create a PartitionPruneStepOp for each combination of duplicated
+ * PartClauseInfos.  The returned list will contain a PartitionPruneStepOp
+ * for each unique combination of input PartClauseInfos containing at most one
+ * PartClauseInfo per partition key.
+ *
+ * 'prefix' is the input list of PartClauseInfos sorted by keyno.
+ * 'start' marks the cell that searching the 'prefix' list should start from.
  * 'step_exprs' and 'step_cmpfns' each contains the expressions and cmpfns
  * we've generated so far from the clauses for the previous part keys.
  */
@@ -2320,8 +2330,8 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 							   bool step_op_is_ne,
 							   Expr *step_lastexpr,
 							   Oid step_lastcmpfn,
-							   int step_lastkeyno,
 							   Bitmapset *step_nullkeys,
+							   List *prefix,
 							   ListCell *start,
 							   List *step_exprs,
 							   List *step_cmpfns)
@@ -2329,23 +2339,25 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 	List	   *result = NIL;
 	ListCell   *lc;
 	int			cur_keyno;
+	int			final_keyno;
 
 	/* Actually, recursion would be limited by PARTITION_MAX_KEYS. */
 	check_stack_depth();
 
-	/* Check if we need to recurse. */
 	Assert(start != NULL);
 	cur_keyno = ((PartClauseInfo *) lfirst(start))->keyno;
-	if (cur_keyno < step_lastkeyno - 1)
+	final_keyno = ((PartClauseInfo *) llast(prefix))->keyno;
+
+	/* Check if we need to recurse. */
+	if (cur_keyno < final_keyno)
 	{
 		PartClauseInfo *pc;
 		ListCell   *next_start;
 
 		/*
-		 * For each clause with cur_keyno, add its expr and cmpfn to
-		 * step_exprs and step_cmpfns, respectively, and recurse after setting
-		 * next_start to the ListCell of the first clause for the next
-		 * partition key.
+		 * Find the first PartClauseInfo belonging to the next partition key, the
+		 * next recursive call must start iteration of the prefix list from that
+		 * point.
 		 */
 		for_each_cell(lc, start)
 		{
@@ -2354,8 +2366,15 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 			if (pc->keyno > cur_keyno)
 				break;
 		}
+
+		/* record where to start iterating in the next recursive call */
 		next_start = lc;
 
+		/*
+		 * For each PartClauseInfo with keyno set to cur_keyno, add its expr and
+		 * cmpfn to step_exprs and step_cmpfns, respectively, and recurse using
+		 * 'next_start' as the starting point in the 'prefix' list.
+		 */
 		for_each_cell(lc, start)
 		{
 			List	   *moresteps;
@@ -2375,6 +2394,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 			}
 			else
 			{
+				/* check the 'prefix' list is sorted correctly */
 				Assert(pc->keyno > cur_keyno);
 				break;
 			}
@@ -2384,8 +2404,8 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 													   step_op_is_ne,
 													   step_lastexpr,
 													   step_lastcmpfn,
-													   step_lastkeyno,
 													   step_nullkeys,
+													   prefix,
 													   next_start,
 													   step_exprs1,
 													   step_cmpfns1);
@@ -2402,8 +2422,8 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 		 * each clause with cur_keyno, which is all clauses from here onward
 		 * till the end of the list.  Note that for hash partitioning,
 		 * step_nullkeys is allowed to be non-empty, in which case step_exprs
-		 * would only contain expressions for the earlier partition keys that
-		 * are not specified in step_nullkeys.
+		 * would only contain expressions for the partition keys that are not
+		 * specified in step_nullkeys.
 		 */
 		Assert(list_length(step_exprs) == cur_keyno ||
 			   !bms_is_empty(step_nullkeys));
