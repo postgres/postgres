@@ -684,6 +684,7 @@ BaseInit(void)
  *	flags:
  *	  - INIT_PG_LOAD_SESSION_LIBS to honor [session|local]_preload_libraries.
  *	  - INIT_PG_OVERRIDE_ALLOW_CONNS to connect despite !datallowconn.
+ *	  - INIT_PG_OVERRIDE_ROLE_LOGIN to connect despite !rolcanlogin.
  *	out_dbname: optional output parameter, see below; pass NULL if not used
  *
  * The database can be specified by name, using the in_dbname parameter, or by
@@ -901,7 +902,8 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		}
 		else
 		{
-			InitializeSessionUserId(username, useroid);
+			InitializeSessionUserId(username, useroid,
+									(flags & INIT_PG_OVERRIDE_ROLE_LOGIN) != 0);
 			am_superuser = superuser();
 		}
 	}
@@ -910,7 +912,7 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		/* normal multiuser case */
 		Assert(MyProcPort != NULL);
 		PerformAuthentication(MyProcPort);
-		InitializeSessionUserId(username, useroid);
+		InitializeSessionUserId(username, useroid, false);
 		/* ensure that auth_method is actually valid, aka authn_id is not NULL */
 		if (MyClientConnectionInfo.authn_id)
 			InitializeSystemUser(MyClientConnectionInfo.authn_id,

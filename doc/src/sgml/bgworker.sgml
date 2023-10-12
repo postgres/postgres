@@ -201,6 +201,9 @@ typedef struct BackgroundWorker
    during <command>initdb</command>. If <literal>BGWORKER_BYPASS_ALLOWCONN</literal>
    is specified as <varname>flags</varname> it is possible to bypass the restriction
    to connect to databases not allowing user connections.
+   If <literal>BGWORKER_BYPASS_ROLELOGINCHECK</literal> is specified as
+   <varname>flags</varname> it is possible to bypass the login check for the
+   role used to connect to databases.
    A background worker can only call one of these two functions, and only
    once.  It is not possible to switch databases.
   </para>

@@ -150,9 +150,11 @@ extern void BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid, ui
  * Flags to BackgroundWorkerInitializeConnection et al
  *
  *
- * Allow bypassing datallowconn restrictions when connecting to database
+ * Allow bypassing datallowconn restrictions and login check when connecting
+ * to database
  */
-#define BGWORKER_BYPASS_ALLOWCONN 1
+#define BGWORKER_BYPASS_ALLOWCONN 0x0001
+#define BGWORKER_BYPASS_ROLELOGINCHECK 0x0002
 
 
 /* Block/unblock signals in a background worker process */

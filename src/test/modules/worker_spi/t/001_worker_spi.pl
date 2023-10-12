@@ -131,4 +131,34 @@ ok( $node->poll_query_until(
 		qq[noconndb|myrole|WorkerSpiMain]),
 	'dynamic bgworker with BYPASS_ALLOWCONN started');
 
+# Check BGWORKER_BYPASS_ROLELOGINCHECK.
+# First create a role without login access.
+$node->safe_psql(
+	'postgres', qq[
+  CREATE ROLE nologrole WITH NOLOGIN;
+  GRANT CREATE ON DATABASE mydb TO nologrole;
+]);
+my $nologrole_id = $node->safe_psql('mydb',
+	"SELECT oid FROM pg_roles where rolname = 'nologrole';");
+$log_offset = -s $node->logfile;
+
+# bgworker cannot be launched with login restriction.
+$node->psql('postgres',
+	qq[SELECT worker_spi_launch(13, $mydb_id, $nologrole_id);]);
+$node->wait_for_log(qr/role "nologrole" is not permitted to log in/,
+	$log_offset);
+
+# bgworker bypasses the login restriction, and can be launched.
+$log_offset = -s $node->logfile;
+my $worker5_pid = $node->safe_psql('mydb',
+	qq[SELECT worker_spi_launch(13, $mydb_id, $nologrole_id, '{"ROLELOGINCHECK"}');]
+);
+ok( $node->poll_query_until(
+		'mydb',
+		qq[SELECT datname, usename, wait_event FROM pg_stat_activity
+            WHERE backend_type = 'worker_spi dynamic' AND
+            pid = $worker5_pid;],
+		'mydb|nologrole|WorkerSpiMain'),
+	'dynamic bgworker with BYPASS_ROLELOGINCHECK launched');
+
 done_testing();

@@ -452,6 +452,8 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 
 		if (strcmp(optname, "ALLOWCONN") == 0)
 			flags |= BGWORKER_BYPASS_ALLOWCONN;
+		else if (strcmp(optname, "ROLELOGINCHECK") == 0)
+			flags |= BGWORKER_BYPASS_ROLELOGINCHECK;
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

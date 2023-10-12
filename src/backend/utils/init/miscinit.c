@@ -725,7 +725,7 @@ has_rolreplication(Oid roleid)
  * Initialize user identity during normal backend startup
  */
 void
-InitializeSessionUserId(const char *rolename, Oid roleid)
+InitializeSessionUserId(const char *rolename, Oid roleid, bool bypass_login_check)
 {
 	HeapTuple	roleTup;
 	Form_pg_authid rform;
@@ -789,7 +789,7 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 		/*
 		 * Is role allowed to login at all?
 		 */
-		if (!rform->rolcanlogin)
+		if (!bypass_login_check && !rform->rolcanlogin)
 			ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					 errmsg("role \"%s\" is not permitted to log in",
