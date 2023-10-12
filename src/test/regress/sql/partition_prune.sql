@@ -384,8 +384,6 @@ drop table hp2;
 explain (costs off) select * from hp where a = 1 and b = 'abcde' and
   (c = 2 or c = 3);
 
-drop table hp;
-
 --
 -- Test runtime partition pruning
 --
@@ -435,6 +433,25 @@ prepare ab_q3 (int, int) as
 select a from ab where b between $1 and $2 and a < (select 3);
 
 explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
+
+--
+-- Test runtime pruning with hash partitioned tables
+--
+
+-- recreate partitions dropped above
+create table hp1 partition of hp for values with (modulus 4, remainder 1);
+create table hp2 partition of hp for values with (modulus 4, remainder 2);
+create table hp3 partition of hp for values with (modulus 4, remainder 3);
+
+-- Ensure we correctly prune unneeded partitions when there is an IS NULL qual
+prepare hp_q1 (text) as
+select * from hp where a is null and b = $1;
+
+explain (costs off) execute hp_q1('xxx');
+
+deallocate hp_q1;
+
+drop table hp;
 
 -- Test a backwards Append scan
 create table list_part (a int) partition by list (a);
