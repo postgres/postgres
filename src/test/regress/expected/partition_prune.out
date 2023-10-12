@@ -1948,7 +1948,6 @@ explain (costs off) select * from hp where a = 1 and b = 'abcde' and
    One-Time Filter: false
 (2 rows)
 
-drop table hp;
 --
 -- Test runtime partition pruning
 --
@@ -2070,6 +2069,27 @@ explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
          Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
 (10 rows)
 
+--
+-- Test runtime pruning with hash partitioned tables
+--
+-- recreate partitions dropped above
+create table hp1 partition of hp for values with (modulus 4, remainder 1);
+create table hp2 partition of hp for values with (modulus 4, remainder 2);
+create table hp3 partition of hp for values with (modulus 4, remainder 3);
+-- Ensure we correctly prune unneeded partitions when there is an IS NULL qual
+prepare hp_q1 (text) as
+select * from hp where a is null and b = $1;
+explain (costs off) execute hp_q1('xxx');
+                 QUERY PLAN                 
+--------------------------------------------
+ Append
+   Subplans Removed: 3
+   ->  Seq Scan on hp2 hp_1
+         Filter: ((a IS NULL) AND (b = $1))
+(4 rows)
+
+deallocate hp_q1;
+drop table hp;
 -- Test a backwards Append scan
 create table list_part (a int) partition by list (a);
 create table list_part1 partition of list_part for values in (1);
