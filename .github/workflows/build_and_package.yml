@@ -1,0 +1,44 @@
+name: Build and Package PostgreSQL
+
+on:
+  push:
+    branches:
+      - main
+   workflow_dispatch: # Enable manual execution
+
+jobs:
+  build_and_package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Out PostgreSQL Repository
+        uses: actions/checkout@v2
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential debhelper devscripts fakeroot
+
+      - name: Build PostgreSQL
+        run: |
+          cd postgres-mirror
+          ./configure
+          make
+        working-directory: /github/workspace
+
+      - name: Generate Debian Packages
+        run: |
+          cd postgres-mirror
+          dpkg-buildpackage -b -us -uc
+        working-directory: /github/workspace
+
+      - name: Move Deb Packages
+        run: |
+          mv ../*.deb /github/workspace/deb-packages
+        working-directory: /github/workspace/postgres-mirror
+
+      - name: Upload Deb Packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb-packages
+          path: /github/workspace/deb-packages
