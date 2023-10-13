@@ -3016,6 +3016,7 @@ WalSnd
 WalSndCtlData
 WalSndSendDataCallback
 WalSndState
+WalSyncMethod
 WalTimeSample
 WalUsage
 WalWriteMethod

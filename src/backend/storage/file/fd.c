@@ -398,9 +398,9 @@ pg_fsync(int fd)
 	errno = 0;
 #endif
 
-	/* #if is to skip the sync_method test if there's no need for it */
+	/* #if is to skip the wal_sync_method test if there's no need for it */
 #if defined(HAVE_FSYNC_WRITETHROUGH)
-	if (sync_method == SYNC_METHOD_FSYNC_WRITETHROUGH)
+	if (wal_sync_method == WAL_SYNC_METHOD_FSYNC_WRITETHROUGH)
 		return pg_fsync_writethrough(fd);
 	else
 #endif

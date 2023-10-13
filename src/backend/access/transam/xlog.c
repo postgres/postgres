@@ -130,7 +130,7 @@ bool	   *wal_consistency_checking = NULL;
 bool		wal_init_zero = true;
 bool		wal_recycle = true;
 bool		log_checkpoints = true;
-int			sync_method = DEFAULT_SYNC_METHOD;
+int			wal_sync_method = DEFAULT_WAL_SYNC_METHOD;
 int			wal_level = WAL_LEVEL_REPLICA;
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
@@ -171,17 +171,17 @@ static bool check_wal_consistency_checking_deferred = false;
 /*
  * GUC support
  */
-const struct config_enum_entry sync_method_options[] = {
-	{"fsync", SYNC_METHOD_FSYNC, false},
+const struct config_enum_entry wal_sync_method_options[] = {
+	{"fsync", WAL_SYNC_METHOD_FSYNC, false},
 #ifdef HAVE_FSYNC_WRITETHROUGH
-	{"fsync_writethrough", SYNC_METHOD_FSYNC_WRITETHROUGH, false},
+	{"fsync_writethrough", WAL_SYNC_METHOD_FSYNC_WRITETHROUGH, false},
 #endif
-	{"fdatasync", SYNC_METHOD_FDATASYNC, false},
+	{"fdatasync", WAL_SYNC_METHOD_FDATASYNC, false},
 #ifdef O_SYNC
-	{"open_sync", SYNC_METHOD_OPEN, false},
+	{"open_sync", WAL_SYNC_METHOD_OPEN, false},
 #endif
 #ifdef O_DSYNC
-	{"open_datasync", SYNC_METHOD_OPEN_DSYNC, false},
+	{"open_datasync", WAL_SYNC_METHOD_OPEN_DSYNC, false},
 #endif
 	{NULL, 0, false}
 };
@@ -2343,8 +2343,8 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 		 * have no open file or the wrong one.  However, we do not need to
 		 * fsync more than one file.
 		 */
-		if (sync_method != SYNC_METHOD_OPEN &&
-			sync_method != SYNC_METHOD_OPEN_DSYNC)
+		if (wal_sync_method != WAL_SYNC_METHOD_OPEN &&
+			wal_sync_method != WAL_SYNC_METHOD_OPEN_DSYNC)
 		{
 			if (openLogFile >= 0 &&
 				!XLByteInPrevSeg(LogwrtResult.Write, openLogSegNo,
@@ -2974,7 +2974,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 	 */
 	*added = false;
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | O_CLOEXEC |
-					   get_sync_bit(sync_method));
+					   get_sync_bit(wal_sync_method));
 	if (fd < 0)
 	{
 		if (errno != ENOENT)
@@ -3139,7 +3139,7 @@ XLogFileInit(XLogSegNo logsegno, TimeLineID logtli)
 
 	/* Now open original target segment (might not be file I just made) */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | O_CLOEXEC |
-					   get_sync_bit(sync_method));
+					   get_sync_bit(wal_sync_method));
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -3371,7 +3371,7 @@ XLogFileOpen(XLogSegNo segno, TimeLineID tli)
 	XLogFilePath(path, tli, segno, wal_segment_size);
 
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | O_CLOEXEC |
-					   get_sync_bit(sync_method));
+					   get_sync_bit(wal_sync_method));
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
@@ -8137,16 +8137,16 @@ get_sync_bit(int method)
 			 * not included in the enum option array, and therefore will never
 			 * be seen here.
 			 */
-		case SYNC_METHOD_FSYNC:
-		case SYNC_METHOD_FSYNC_WRITETHROUGH:
-		case SYNC_METHOD_FDATASYNC:
+		case WAL_SYNC_METHOD_FSYNC:
+		case WAL_SYNC_METHOD_FSYNC_WRITETHROUGH:
+		case WAL_SYNC_METHOD_FDATASYNC:
 			return o_direct_flag;
 #ifdef O_SYNC
-		case SYNC_METHOD_OPEN:
+		case WAL_SYNC_METHOD_OPEN:
 			return O_SYNC | o_direct_flag;
 #endif
 #ifdef O_DSYNC
-		case SYNC_METHOD_OPEN_DSYNC:
+		case WAL_SYNC_METHOD_OPEN_DSYNC:
 			return O_DSYNC | o_direct_flag;
 #endif
 		default:
@@ -8160,9 +8160,9 @@ get_sync_bit(int method)
  * GUC support
  */
 void
-assign_xlog_sync_method(int new_sync_method, void *extra)
+assign_wal_sync_method(int new_wal_sync_method, void *extra)
 {
-	if (sync_method != new_sync_method)
+	if (wal_sync_method != new_wal_sync_method)
 	{
 		/*
 		 * To ensure that no blocks escape unsynced, force an fsync on the
@@ -8188,7 +8188,7 @@ assign_xlog_sync_method(int new_sync_method, void *extra)
 			}
 
 			pgstat_report_wait_end();
-			if (get_sync_bit(sync_method) != get_sync_bit(new_sync_method))
+			if (get_sync_bit(wal_sync_method) != get_sync_bit(new_wal_sync_method))
 				XLogFileClose();
 		}
 	}
@@ -8214,8 +8214,8 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 	 * file.
 	 */
 	if (!enableFsync ||
-		sync_method == SYNC_METHOD_OPEN ||
-		sync_method == SYNC_METHOD_OPEN_DSYNC)
+		wal_sync_method == WAL_SYNC_METHOD_OPEN ||
+		wal_sync_method == WAL_SYNC_METHOD_OPEN_DSYNC)
 		return;
 
 	/* Measure I/O timing to sync the WAL file */
@@ -8225,29 +8225,29 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 		INSTR_TIME_SET_ZERO(start);
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_SYNC);
-	switch (sync_method)
+	switch (wal_sync_method)
 	{
-		case SYNC_METHOD_FSYNC:
+		case WAL_SYNC_METHOD_FSYNC:
 			if (pg_fsync_no_writethrough(fd) != 0)
 				msg = _("could not fsync file \"%s\": %m");
 			break;
 #ifdef HAVE_FSYNC_WRITETHROUGH
-		case SYNC_METHOD_FSYNC_WRITETHROUGH:
+		case WAL_SYNC_METHOD_FSYNC_WRITETHROUGH:
 			if (pg_fsync_writethrough(fd) != 0)
 				msg = _("could not fsync write-through file \"%s\": %m");
 			break;
 #endif
-		case SYNC_METHOD_FDATASYNC:
+		case WAL_SYNC_METHOD_FDATASYNC:
 			if (pg_fdatasync(fd) != 0)
 				msg = _("could not fdatasync file \"%s\": %m");
 			break;
-		case SYNC_METHOD_OPEN:
-		case SYNC_METHOD_OPEN_DSYNC:
+		case WAL_SYNC_METHOD_OPEN:
+		case WAL_SYNC_METHOD_OPEN_DSYNC:
 			/* not reachable */
 			Assert(false);
 			break;
 		default:
-			elog(PANIC, "unrecognized wal_sync_method: %d", sync_method);
+			elog(PANIC, "unrecognized wal_sync_method: %d", wal_sync_method);
 			break;
 	}
 

@@ -5,4 +5,4 @@
  * would prefer open_datasync on FreeBSD 13+, but that is not a good choice on
  * many systems.
  */
-#define PLATFORM_DEFAULT_SYNC_METHOD	SYNC_METHOD_FDATASYNC
+#define PLATFORM_DEFAULT_WAL_SYNC_METHOD	WAL_SYNC_METHOD_FDATASYNC
