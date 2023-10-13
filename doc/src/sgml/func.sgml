@@ -10738,6 +10738,13 @@ SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'A
     <literal><replaceable>timestamp</replaceable> AT TIME ZONE
     <replaceable>zone</replaceable></literal>.
    </para>
+
+   <para>
+    The function <literal><function>timezone</function>(<replaceable>zone</replaceable>,
+    <replaceable>time</replaceable>)</literal> is equivalent to the SQL-conforming construct
+    <literal><replaceable>time</replaceable> AT TIME ZONE
+    <replaceable>zone</replaceable></literal>.
+   </para>
   </sect2>
 
   <sect2 id="functions-datetime-current">
