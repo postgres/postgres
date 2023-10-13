@@ -5921,3 +5921,23 @@ generate_series_timestamptz_at_zone(PG_FUNCTION_ARGS)
 {
 	return generate_series_timestamptz_internal(fcinfo);
 }
+
+/* timestamp_at_local()
+ * timestamptz_at_local()
+ *
+ * The regression tests do not like two functions with the same proargs and
+ * prosrc but different proname, but the grammar for AT LOCAL needs an
+ * overloaded name to handle both types of timestamp, so we make simple
+ * wrappers for it.
+ */
+Datum
+timestamp_at_local(PG_FUNCTION_ARGS)
+{
+	return timestamp_timestamptz(fcinfo);
+}
+
+Datum
+timestamptz_at_local(PG_FUNCTION_ARGS)
+{
+	return timestamptz_timestamp(fcinfo);
+}

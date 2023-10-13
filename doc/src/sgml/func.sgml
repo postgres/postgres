@@ -10611,7 +10611,7 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
   </sect2>
 
   <sect2 id="functions-datetime-zoneconvert">
-   <title><literal>AT TIME ZONE</literal></title>
+   <title><literal>AT TIME ZONE and AT LOCAL</literal></title>
 
    <indexterm>
     <primary>time zone</primary>
@@ -10620,6 +10620,10 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
 
    <indexterm>
     <primary>AT TIME ZONE</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>AT LOCAL</primary>
    </indexterm>
 
    <para>
@@ -10632,7 +10636,7 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
    </para>
 
     <table id="functions-datetime-zoneconvert-table">
-     <title><literal>AT TIME ZONE</literal> Variants</title>
+     <title><literal>AT TIME ZONE</literal> and <literal>AT LOCAL</literal> Variants</title>
      <tgroup cols="1">
       <thead>
        <row>
@@ -10667,6 +10671,22 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
 
        <row>
         <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp without time zone</type> <literal>AT LOCAL</literal>
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time stamp <emphasis>without</emphasis> time zone to
+         time stamp <emphasis>with</emphasis> the session's
+         <varname>TimeZone</varname> value as time zone.
+        </para>
+        <para>
+         <literal>timestamp '2001-02-16 20:38:40' at local</literal>
+         <returnvalue>2001-02-17 03:38:40+00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
          <type>timestamp with time zone</type> <literal>AT TIME ZONE</literal> <replaceable>zone</replaceable>
          <returnvalue>timestamp without time zone</returnvalue>
         </para>
@@ -10677,6 +10697,22 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
         </para>
         <para>
          <literal>timestamp with time zone '2001-02-16 20:38:40-05' at time zone 'America/Denver'</literal>
+         <returnvalue>2001-02-16 18:38:40</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp with time zone</type> <literal>AT LOCAL</literal>
+         <returnvalue>timestamp without time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time stamp <emphasis>with</emphasis> time zone to
+         time stamp <emphasis>without</emphasis> time zone, as the time would
+         appear with the session's <varname>TimeZone</varname> value as time zone.
+        </para>
+        <para>
+         <literal>timestamp with time zone '2001-02-16 20:38:40-05' at local</literal>
          <returnvalue>2001-02-16 18:38:40</returnvalue>
         </para></entry>
        </row>
@@ -10696,6 +10732,25 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
          <returnvalue>10:34:17+00</returnvalue>
         </para></entry>
        </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>time with time zone</type> <literal>AT LOCAL</literal>
+         <returnvalue>time with time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time <emphasis>with</emphasis> time zone to a new time
+         zone.  Since no date is supplied, this uses the currently active UTC
+         offset for the session's <varname>TimeZone</varname> value.
+        </para>
+        <para>
+         Assuming the session's <varname>TimeZone</varname> is set to <literal>UTC</literal>:
+        </para>
+        <para>
+         <literal>time with time zone '05:34:17-05' at local</literal>
+         <returnvalue>10:34:17+00</returnvalue>
+        </para></entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
@@ -10711,6 +10766,13 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
    </para>
 
    <para>
+    The syntax <literal>AT LOCAL</literal> may be used as shorthand for
+    <literal>AT TIME ZONE <replaceable>local</replaceable></literal>, where
+    <replaceable>local</replaceable> is the session's
+    <varname>TimeZone</varname> value.
+   </para>
+
+   <para>
     Examples (assuming the current <xref linkend="guc-timezone"/> setting
     is <literal>America/Los_Angeles</literal>):
 <screen>
@@ -10722,6 +10784,12 @@ SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'America/D
 
 SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'America/Chicago';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 05:38:40</computeroutput>
+
+SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT LOCAL;
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 17:38:40</computeroutput>
+
+SELECT TIME WITH TIME ZONE '20:38:40-05' AT LOCAL;
+<lineannotation>Result: </lineannotation><computeroutput>17:38:40</computeroutput>
 </screen>
     The first example adds a time zone to a value that lacks it, and
     displays the value using the current <varname>TimeZone</varname>
@@ -10729,7 +10797,18 @@ SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'A
     to the specified time zone, and returns the value without a time zone.
     This allows storage and display of values different from the current
     <varname>TimeZone</varname> setting.  The third example converts
-    Tokyo time to Chicago time.
+    Tokyo time to Chicago time.  The fourth example shifts the time stamp
+    with time zone value to the time zone currently specified by the
+    <varname>TimeZone</varname> setting and returns the value without a
+    time zone.
+   </para>
+
+   <para>
+    The fifth example is a cautionary tale. Due to the fact that there is no
+    date associated with the input value, the conversion is made using the
+    current date of the session. Therefore, this static example may show a wrong
+    result depending on the time of the year it is viewed because
+    <literal>'America/Los_Angeles'</literal> observes Daylight Savings Time.
    </para>
 
    <para>
@@ -10744,6 +10823,18 @@ SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'A
     <replaceable>time</replaceable>)</literal> is equivalent to the SQL-conforming construct
     <literal><replaceable>time</replaceable> AT TIME ZONE
     <replaceable>zone</replaceable></literal>.
+   </para>
+
+   <para>
+    The function <literal><function>timezone</function>(<replaceable>timestamp</replaceable>)</literal>
+    is equivalent to the SQL-conforming construct <literal><replaceable>timestamp</replaceable>
+    AT LOCAL</literal>.
+   </para>
+
+   <para>
+    The function <literal><function>timezone</function>(<replaceable>time</replaceable>)</literal>
+    is equivalent to the SQL-conforming construct <literal><replaceable>time</replaceable>
+    AT LOCAL</literal>.
    </para>
   </sect2>
 

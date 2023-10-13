@@ -14508,6 +14508,13 @@ a_expr:		c_expr									{ $$ = $1; }
 											   COERCE_SQL_SYNTAX,
 											   @2);
 				}
+			| a_expr AT LOCAL						%prec AT
+				{
+					$$ = (Node *) makeFuncCall(SystemFuncName("timezone"),
+											   list_make1($1),
+											   COERCE_SQL_SYNTAX,
+											   -1);
+				}
 		/*
 		 * These operators must be called out explicitly in order to make use
 		 * of bison's automatic operator-precedence handling.  All other

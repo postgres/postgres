@@ -10347,6 +10347,16 @@ get_func_sql_syntax(FuncExpr *expr, deparse_context *context)
 			appendStringInfoChar(buf, ')');
 			return true;
 
+		case F_TIMEZONE_TIMESTAMP:
+		case F_TIMEZONE_TIMESTAMPTZ:
+		case F_TIMEZONE_TIMETZ:
+			/* AT LOCAL */
+			appendStringInfoChar(buf, '(');
+			get_rule_expr_paren((Node *) linitial(expr->args), context, false,
+								(Node *) expr);
+			appendStringInfoString(buf, " AT LOCAL)");
+			return true;
+
 		case F_OVERLAPS_TIMESTAMPTZ_INTERVAL_TIMESTAMPTZ_INTERVAL:
 		case F_OVERLAPS_TIMESTAMPTZ_INTERVAL_TIMESTAMPTZ_TIMESTAMPTZ:
 		case F_OVERLAPS_TIMESTAMPTZ_TIMESTAMPTZ_TIMESTAMPTZ_INTERVAL:

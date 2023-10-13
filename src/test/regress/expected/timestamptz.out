@@ -3136,6 +3136,62 @@ SELECT '2014-10-25 23:00:00 UTC'::timestamptz AT TIME ZONE 'MSK';
 (1 row)
 
 --
+-- Test LOCAL time zone
+--
+BEGIN;
+SET LOCAL TIME ZONE 'Europe/Paris';
+VALUES (CAST('1978-07-07 19:38 America/New_York' AS TIMESTAMP WITH TIME ZONE) AT LOCAL);
+         column1          
+--------------------------
+ Sat Jul 08 01:38:00 1978
+(1 row)
+
+VALUES (TIMESTAMP '1978-07-07 19:38' AT LOCAL);
+            column1            
+-------------------------------
+ Fri Jul 07 19:38:00 1978 CEST
+(1 row)
+
+SET LOCAL TIME ZONE 'Australia/Sydney';
+VALUES (CAST('1978-07-07 19:38 America/New_York' AS TIMESTAMP WITH TIME ZONE) AT LOCAL);
+         column1          
+--------------------------
+ Sat Jul 08 09:38:00 1978
+(1 row)
+
+VALUES (TIMESTAMP '1978-07-07 19:38' AT LOCAL);
+            column1            
+-------------------------------
+ Fri Jul 07 19:38:00 1978 AEST
+(1 row)
+
+SET LOCAL TimeZone TO 'UTC';
+CREATE VIEW timestamp_local_view AS
+  SELECT CAST('1978-07-07 19:38 America/New_York' AS TIMESTAMP WITH TIME ZONE) AT LOCAL AS ttz_at_local,
+         timezone(CAST('1978-07-07 19:38 America/New_York' AS TIMESTAMP WITH TIME ZONE)) AS ttz_func,
+         TIMESTAMP '1978-07-07 19:38' AT LOCAL AS t_at_local,
+         timezone(TIMESTAMP '1978-07-07 19:38') AS t_func;
+SELECT pg_get_viewdef('timestamp_local_view', true);
+                                        pg_get_viewdef                                        
+----------------------------------------------------------------------------------------------
+  SELECT ('Fri Jul 07 23:38:00 1978 UTC'::timestamp with time zone AT LOCAL) AS ttz_at_local,+
+     timezone('Fri Jul 07 23:38:00 1978 UTC'::timestamp with time zone) AS ttz_func,         +
+     ('Fri Jul 07 19:38:00 1978'::timestamp without time zone AT LOCAL) AS t_at_local,       +
+     timezone('Fri Jul 07 19:38:00 1978'::timestamp without time zone) AS t_func;
+(1 row)
+
+\x
+TABLE timestamp_local_view;
+-[ RECORD 1 ]+-----------------------------
+ttz_at_local | Fri Jul 07 23:38:00 1978
+ttz_func     | Fri Jul 07 23:38:00 1978
+t_at_local   | Fri Jul 07 19:38:00 1978 UTC
+t_func       | Fri Jul 07 19:38:00 1978 UTC
+
+\x
+DROP VIEW timestamp_local_view;
+COMMIT;
+--
 -- Test that AT TIME ZONE isn't misoptimized when using an index (bug #14504)
 --
 create temp table tmptz (f1 timestamptz primary key);
