@@ -6737,7 +6737,9 @@ CreateCheckPoint(int flags)
 	{
 		do
 		{
+			pgstat_report_wait_start(WAIT_EVENT_CHECKPOINT_DELAY_START);
 			pg_usleep(10000L);	/* wait for 10 msec */
+			pgstat_report_wait_end();
 		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids,
 											  DELAY_CHKPT_START));
 	}
@@ -6750,7 +6752,9 @@ CreateCheckPoint(int flags)
 	{
 		do
 		{
+			pgstat_report_wait_start(WAIT_EVENT_CHECKPOINT_DELAY_COMPLETE);
 			pg_usleep(10000L);	/* wait for 10 msec */
+			pgstat_report_wait_end();
 		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids,
 											  DELAY_CHKPT_COMPLETE));
 	}
