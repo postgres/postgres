@@ -111,6 +111,14 @@ You can also build a docker image manually with:
 docker build . -f ./docker/Dockerfile -t your-image-name
 ```
 
+## Helper functions
+
+The extension provides the following helper functions:
+
+### pgtde_is_encrypted(tablename)
+
+Returns `t` if the table is encrypted (uses the pg_tde access method), or `f` otherwise.
+
 ## Base commit
 
 This is based on the heap code as of the following commit:

@@ -1,0 +1,24 @@
+CREATE EXTENSION pg_tde;
+
+CREATE TABLE test_enc(
+	  id SERIAL,
+	  k INTEGER DEFAULT '0' NOT NULL,
+	  PRIMARY KEY (id)
+	) USING pg_tde;
+
+CREATE TABLE test_norm(
+	  id SERIAL,
+	  k INTEGER DEFAULT '0' NOT NULL,
+	  PRIMARY KEY (id)
+	) USING heap;
+
+SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_enc';
+SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_norm';
+
+SELECT pgtde_is_encrypted('test_enc');
+SELECT pgtde_is_encrypted('test_norm');
+
+DROP TABLE test_enc;
+DROP TABLE test_norm;
+
+DROP EXTENSION pg_tde;
