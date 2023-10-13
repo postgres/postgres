@@ -274,9 +274,11 @@
    </para>
    <para>
     Normally, the remote replication slot is created automatically when the
-    subscription is created using <command>CREATE SUBSCRIPTION</command> and it
+    subscription is created using <link linkend="sql-createsubscription">
+    <command>CREATE SUBSCRIPTION</command></link> and it
     is dropped automatically when the subscription is dropped using
-    <command>DROP SUBSCRIPTION</command>.  In some situations, however, it can
+    <link linkend="sql-dropsubscription"><command>DROP SUBSCRIPTION</command></link>.
+    In some situations, however, it can
     be useful or necessary to manipulate the subscription and the underlying
     replication slot separately.  Here are some scenarios:
 
@@ -306,8 +308,9 @@
        When dropping a subscription, the replication slot should be kept.
        This could be useful when the subscriber database is being moved to a
        different host and will be activated from there.  In that case,
-       disassociate the slot from the subscription using <command>ALTER
-       SUBSCRIPTION</command> before attempting to drop the subscription.
+       disassociate the slot from the subscription using
+       <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION</command></link>
+       before attempting to drop the subscription.
       </para>
      </listitem>
 
@@ -1349,7 +1352,8 @@ test_sub=# SELECT * FROM child ORDER BY a;
      If a subscription is affected by this problem, the only way to resume
      replication is to adjust one of the column lists on the publication
      side so that they all match; and then either recreate the subscription,
-     or use <literal>ALTER SUBSCRIPTION ... DROP PUBLICATION</literal> to
+     or use <link linkend="sql-altersubscription-params-setadddrop-publication">
+     <literal>ALTER SUBSCRIPTION ... DROP PUBLICATION</literal></link> to
      remove one of the offending publications and add it again.
     </para>
    </warning>
@@ -1504,13 +1508,15 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    the replication origin name can be found from the server log (LSN 0/14C0378 and
    replication origin <literal>pg_16395</literal> in the above case).  The
    transaction that produced the conflict can be skipped by using
-   <command>ALTER SUBSCRIPTION ... SKIP</command> with the finish LSN
+   <link linkend="sql-altersubscription-params-skip"><command>ALTER SUBSCRIPTION ... SKIP</command></link>
+   with the finish LSN
    (i.e., LSN 0/14C0378).  The finish LSN could be an LSN at which the transaction
    is committed or prepared on the publisher.  Alternatively, the transaction can
    also be skipped by calling the <link linkend="pg-replication-origin-advance">
    <function>pg_replication_origin_advance()</function></link> function.
    Before using this function, the subscription needs to be disabled temporarily
-   either by <command>ALTER SUBSCRIPTION ... DISABLE</command> or, the
+   either by <link linkend="sql-altersubscription-params-disable">
+   <command>ALTER SUBSCRIPTION ... DISABLE</command></link> or, the
    subscription can be used with the
    <link linkend="sql-createsubscription-with-disable-on-error"><literal>disable_on_error</literal></link>
    option. Then, you can use <function>pg_replication_origin_advance()</function>

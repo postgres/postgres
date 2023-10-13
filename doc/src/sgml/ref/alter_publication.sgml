@@ -51,7 +51,8 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    <literal>ADD</literal> and <literal>DROP</literal> clauses will add and
    remove one or more tables/schemas from the publication.  Note that adding
    tables/schemas to a publication that is already subscribed to will require an
-   <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal> action on the
+   <link linkend="sql-altersubscription-params-refresh-publication">
+   <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal></link> action on the
    subscribing side in order to become effective. Note also that
    <literal>DROP TABLES IN SCHEMA</literal> will not drop any schema tables
    that were specified using

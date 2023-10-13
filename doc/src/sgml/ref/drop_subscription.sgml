@@ -40,7 +40,7 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
   <para>
    <command>DROP SUBSCRIPTION</command> cannot be executed inside a
    transaction block if the subscription is associated with a replication
-   slot.  (You can use <command>ALTER SUBSCRIPTION</command> to unset the
+   slot.  (You can use <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION</command></link> to unset the
    slot.)
   </para>
  </refsect1>
@@ -87,9 +87,11 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
    replication slot cannot be dropped or does not exist or never existed,
    the <command>DROP SUBSCRIPTION</command> command will fail.  To proceed
    in this situation, first disable the subscription by executing
-   <literal>ALTER SUBSCRIPTION ... DISABLE</literal>, and then disassociate
+   <link linkend="sql-altersubscription-params-disable">
+   <literal>ALTER SUBSCRIPTION ... DISABLE</literal></link>, and then disassociate
    it from the replication slot by executing
-   <literal>ALTER SUBSCRIPTION ... SET (slot_name = NONE)</literal>.
+   <link linkend="sql-altersubscription-params-set">
+   <literal>ALTER SUBSCRIPTION ... SET (slot_name = NONE)</literal></link>.
    After that, <command>DROP SUBSCRIPTION</command> will no longer attempt any
    actions on a remote host.  Note that if the remote replication slot still
    exists, it (and any related table synchronization slots) should then be

@@ -85,7 +85,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
   <title>Parameters</title>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-name">
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
@@ -94,7 +94,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-connection">
     <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
     <listitem>
      <para>
@@ -105,7 +105,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-setadddrop-publication">
     <term><literal>SET PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
     <term><literal>ADD PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
     <term><literal>DROP PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
@@ -147,13 +147,14 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-refresh-publication">
     <term><literal>REFRESH PUBLICATION</literal></term>
     <listitem>
      <para>
       Fetch missing table information from publisher.  This will start
       replication of tables that were added to the subscribed-to publications
-      since <command>CREATE SUBSCRIPTION</command> or
+      since <link linkend="sql-createsubscription">
+      <command>CREATE SUBSCRIPTION</command></link> or
       the last invocation of <command>REFRESH PUBLICATION</command>.
      </para>
 
@@ -192,7 +193,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-enable">
     <term><literal>ENABLE</literal></term>
     <listitem>
      <para>
@@ -202,7 +203,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-disable">
     <term><literal>DISABLE</literal></term>
     <listitem>
      <para>
@@ -212,7 +213,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-set">
     <term><literal>SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
@@ -232,7 +233,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-skip">
     <term><literal>SKIP ( <replaceable class="parameter">skip_option</replaceable> = <replaceable class="parameter">value</replaceable> )</literal></term>
     <listitem>
      <para>
@@ -272,7 +273,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-new-owner">
     <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
@@ -281,7 +282,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-altersubscription-params-new-name">
     <term><replaceable class="parameter">new_name</replaceable></term>
     <listitem>
      <para>
