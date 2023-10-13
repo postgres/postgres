@@ -4682,6 +4682,12 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches("JOIN"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_selectables);
 
+/* ... AT [ LOCAL | TIME ZONE ] ... */
+	else if (TailMatches("AT"))
+		COMPLETE_WITH("LOCAL", "TIME ZONE");
+	else if (TailMatches("AT", "TIME", "ZONE"))
+		COMPLETE_WITH_TIMEZONE_NAME();
+
 /* Backslash commands */
 /* TODO:  \dc \dd \dl */
 	else if (TailMatchesCS("\\?"))
