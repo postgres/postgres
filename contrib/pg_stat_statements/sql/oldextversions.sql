@@ -48,4 +48,9 @@ AlTER EXTENSION pg_stat_statements UPDATE TO '1.10';
 \d pg_stat_statements
 SELECT count(*) > 0 AS has_data FROM pg_stat_statements;
 
+-- New views for pg_stat_statements in 1.11
+AlTER EXTENSION pg_stat_statements UPDATE TO '1.11';
+\d pg_stat_statements
+SELECT count(*) > 0 AS has_data FROM pg_stat_statements;
+
 DROP EXTENSION pg_stat_statements;
