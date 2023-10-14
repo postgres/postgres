@@ -50,7 +50,7 @@
   opfmethod => 'btree', opfname => 'integer_ops' },
 { oid => '1977',
   opfmethod => 'hash', opfname => 'integer_ops' },
-{ oid => '1982',
+{ oid => '1982', oid_symbol => 'INTERVAL_BTREE_FAM_OID',
   opfmethod => 'btree', opfname => 'interval_ops' },
 { oid => '1983',
   opfmethod => 'hash', opfname => 'interval_ops' },
