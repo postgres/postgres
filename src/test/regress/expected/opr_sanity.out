@@ -2192,6 +2192,7 @@ ORDER BY 1, 2, 3;
                     | array_ops        | array_ops        | anyarray
                     | float_ops        | float4_ops       | real
                     | float_ops        | float8_ops       | double precision
+                    | interval_ops     | interval_ops     | interval
                     | jsonb_ops        | jsonb_ops        | jsonb
                     | numeric_ops      | numeric_ops      | numeric
                     | range_ops        | range_ops        | anyrange
@@ -2199,7 +2200,7 @@ ORDER BY 1, 2, 3;
                     | record_ops       | record_ops       | record
                     | tsquery_ops      | tsquery_ops      | tsquery
                     | tsvector_ops     | tsvector_ops     | tsvector
-(14 rows)
+(15 rows)
 
 -- **************** pg_index ****************
 -- Look for illegal values in pg_index fields.
