@@ -183,6 +183,19 @@ char	   *namespace_search_path = NULL;
 
 
 /* Local functions */
+static bool RelationIsVisibleExt(Oid relid, bool *is_missing);
+static bool TypeIsVisibleExt(Oid typid, bool *is_missing);
+static bool FunctionIsVisibleExt(Oid funcid, bool *is_missing);
+static bool OperatorIsVisibleExt(Oid oprid, bool *is_missing);
+static bool OpclassIsVisibleExt(Oid opcid, bool *is_missing);
+static bool OpfamilyIsVisibleExt(Oid opfid, bool *is_missing);
+static bool CollationIsVisibleExt(Oid collid, bool *is_missing);
+static bool ConversionIsVisibleExt(Oid conid, bool *is_missing);
+static bool StatisticsObjIsVisibleExt(Oid stxid, bool *is_missing);
+static bool TSParserIsVisibleExt(Oid prsId, bool *is_missing);
+static bool TSDictionaryIsVisibleExt(Oid dictId, bool *is_missing);
+static bool TSTemplateIsVisibleExt(Oid tmplId, bool *is_missing);
+static bool TSConfigIsVisibleExt(Oid cfgid, bool *is_missing);
 static void recomputeNamespacePath(void);
 static void AccessTempTableNamespace(bool force);
 static void InitTempTableNamespace(void);
@@ -692,6 +705,18 @@ RelnameGetRelid(const char *relname)
 bool
 RelationIsVisible(Oid relid)
 {
+	return RelationIsVisibleExt(relid, NULL);
+}
+
+/*
+ * RelationIsVisibleExt
+ *		As above, but if the relation isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+RelationIsVisibleExt(Oid relid, bool *is_missing)
+{
 	HeapTuple	reltup;
 	Form_pg_class relform;
 	Oid			relnamespace;
@@ -699,7 +724,14 @@ RelationIsVisible(Oid relid)
 
 	reltup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(reltup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for relation %u", relid);
+	}
 	relform = (Form_pg_class) GETSTRUCT(reltup);
 
 	recomputeNamespacePath();
@@ -800,6 +832,18 @@ TypenameGetTypidExtended(const char *typname, bool temp_ok)
 bool
 TypeIsVisible(Oid typid)
 {
+	return TypeIsVisibleExt(typid, NULL);
+}
+
+/*
+ * TypeIsVisibleExt
+ *		As above, but if the type isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+TypeIsVisibleExt(Oid typid, bool *is_missing)
+{
 	HeapTuple	typtup;
 	Form_pg_type typform;
 	Oid			typnamespace;
@@ -807,7 +851,14 @@ TypeIsVisible(Oid typid)
 
 	typtup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
 	if (!HeapTupleIsValid(typtup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for type %u", typid);
+	}
 	typform = (Form_pg_type) GETSTRUCT(typtup);
 
 	recomputeNamespacePath();
@@ -1437,6 +1488,18 @@ MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 bool
 FunctionIsVisible(Oid funcid)
 {
+	return FunctionIsVisibleExt(funcid, NULL);
+}
+
+/*
+ * FunctionIsVisibleExt
+ *		As above, but if the function isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+FunctionIsVisibleExt(Oid funcid, bool *is_missing)
+{
 	HeapTuple	proctup;
 	Form_pg_proc procform;
 	Oid			pronamespace;
@@ -1444,7 +1507,14 @@ FunctionIsVisible(Oid funcid)
 
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for function %u", funcid);
+	}
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	recomputeNamespacePath();
@@ -1771,6 +1841,18 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 bool
 OperatorIsVisible(Oid oprid)
 {
+	return OperatorIsVisibleExt(oprid, NULL);
+}
+
+/*
+ * OperatorIsVisibleExt
+ *		As above, but if the operator isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+OperatorIsVisibleExt(Oid oprid, bool *is_missing)
+{
 	HeapTuple	oprtup;
 	Form_pg_operator oprform;
 	Oid			oprnamespace;
@@ -1778,7 +1860,14 @@ OperatorIsVisible(Oid oprid)
 
 	oprtup = SearchSysCache1(OPEROID, ObjectIdGetDatum(oprid));
 	if (!HeapTupleIsValid(oprtup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for operator %u", oprid);
+	}
 	oprform = (Form_pg_operator) GETSTRUCT(oprtup);
 
 	recomputeNamespacePath();
@@ -1857,6 +1946,18 @@ OpclassnameGetOpcid(Oid amid, const char *opcname)
 bool
 OpclassIsVisible(Oid opcid)
 {
+	return OpclassIsVisibleExt(opcid, NULL);
+}
+
+/*
+ * OpclassIsVisibleExt
+ *		As above, but if the opclass isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+OpclassIsVisibleExt(Oid opcid, bool *is_missing)
+{
 	HeapTuple	opctup;
 	Form_pg_opclass opcform;
 	Oid			opcnamespace;
@@ -1864,7 +1965,14 @@ OpclassIsVisible(Oid opcid)
 
 	opctup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opcid));
 	if (!HeapTupleIsValid(opctup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for opclass %u", opcid);
+	}
 	opcform = (Form_pg_opclass) GETSTRUCT(opctup);
 
 	recomputeNamespacePath();
@@ -1940,6 +2048,18 @@ OpfamilynameGetOpfid(Oid amid, const char *opfname)
 bool
 OpfamilyIsVisible(Oid opfid)
 {
+	return OpfamilyIsVisibleExt(opfid, NULL);
+}
+
+/*
+ * OpfamilyIsVisibleExt
+ *		As above, but if the opfamily isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+OpfamilyIsVisibleExt(Oid opfid, bool *is_missing)
+{
 	HeapTuple	opftup;
 	Form_pg_opfamily opfform;
 	Oid			opfnamespace;
@@ -1947,7 +2067,14 @@ OpfamilyIsVisible(Oid opfid)
 
 	opftup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfid));
 	if (!HeapTupleIsValid(opftup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for opfamily %u", opfid);
+	}
 	opfform = (Form_pg_opfamily) GETSTRUCT(opftup);
 
 	recomputeNamespacePath();
@@ -2072,6 +2199,18 @@ CollationGetCollid(const char *collname)
 bool
 CollationIsVisible(Oid collid)
 {
+	return CollationIsVisibleExt(collid, NULL);
+}
+
+/*
+ * CollationIsVisibleExt
+ *		As above, but if the collation isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+CollationIsVisibleExt(Oid collid, bool *is_missing)
+{
 	HeapTuple	colltup;
 	Form_pg_collation collform;
 	Oid			collnamespace;
@@ -2079,7 +2218,14 @@ CollationIsVisible(Oid collid)
 
 	colltup = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
 	if (!HeapTupleIsValid(colltup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for collation %u", collid);
+	}
 	collform = (Form_pg_collation) GETSTRUCT(colltup);
 
 	recomputeNamespacePath();
@@ -2155,6 +2301,18 @@ ConversionGetConid(const char *conname)
 bool
 ConversionIsVisible(Oid conid)
 {
+	return ConversionIsVisibleExt(conid, NULL);
+}
+
+/*
+ * ConversionIsVisibleExt
+ *		As above, but if the conversion isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+ConversionIsVisibleExt(Oid conid, bool *is_missing)
+{
 	HeapTuple	contup;
 	Form_pg_conversion conform;
 	Oid			connamespace;
@@ -2162,7 +2320,14 @@ ConversionIsVisible(Oid conid)
 
 	contup = SearchSysCache1(CONVOID, ObjectIdGetDatum(conid));
 	if (!HeapTupleIsValid(contup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for conversion %u", conid);
+	}
 	conform = (Form_pg_conversion) GETSTRUCT(contup);
 
 	recomputeNamespacePath();
@@ -2257,16 +2422,35 @@ get_statistics_object_oid(List *names, bool missing_ok)
  *		for the unqualified statistics object name".
  */
 bool
-StatisticsObjIsVisible(Oid relid)
+StatisticsObjIsVisible(Oid stxid)
+{
+	return StatisticsObjIsVisibleExt(stxid, NULL);
+}
+
+/*
+ * StatisticsObjIsVisibleExt
+ *		As above, but if the statistics object isn't found and is_missing is
+ *		not NULL, then set *is_missing = true and return false instead of
+ *		throwing an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+StatisticsObjIsVisibleExt(Oid stxid, bool *is_missing)
 {
 	HeapTuple	stxtup;
 	Form_pg_statistic_ext stxform;
 	Oid			stxnamespace;
 	bool		visible;
 
-	stxtup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(relid));
+	stxtup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(stxid));
 	if (!HeapTupleIsValid(stxtup))
-		elog(ERROR, "cache lookup failed for statistics object %u", relid);
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
+		elog(ERROR, "cache lookup failed for statistics object %u", stxid);
+	}
 	stxform = (Form_pg_statistic_ext) GETSTRUCT(stxtup);
 
 	recomputeNamespacePath();
@@ -2382,6 +2566,18 @@ get_ts_parser_oid(List *names, bool missing_ok)
 bool
 TSParserIsVisible(Oid prsId)
 {
+	return TSParserIsVisibleExt(prsId, NULL);
+}
+
+/*
+ * TSParserIsVisibleExt
+ *		As above, but if the parser isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+TSParserIsVisibleExt(Oid prsId, bool *is_missing)
+{
 	HeapTuple	tup;
 	Form_pg_ts_parser form;
 	Oid			namespace;
@@ -2389,7 +2585,14 @@ TSParserIsVisible(Oid prsId)
 
 	tup = SearchSysCache1(TSPARSEROID, ObjectIdGetDatum(prsId));
 	if (!HeapTupleIsValid(tup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for text search parser %u", prsId);
+	}
 	form = (Form_pg_ts_parser) GETSTRUCT(tup);
 
 	recomputeNamespacePath();
@@ -2508,6 +2711,18 @@ get_ts_dict_oid(List *names, bool missing_ok)
 bool
 TSDictionaryIsVisible(Oid dictId)
 {
+	return TSDictionaryIsVisibleExt(dictId, NULL);
+}
+
+/*
+ * TSDictionaryIsVisibleExt
+ *		As above, but if the dictionary isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+TSDictionaryIsVisibleExt(Oid dictId, bool *is_missing)
+{
 	HeapTuple	tup;
 	Form_pg_ts_dict form;
 	Oid			namespace;
@@ -2515,8 +2730,15 @@ TSDictionaryIsVisible(Oid dictId)
 
 	tup = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dictId));
 	if (!HeapTupleIsValid(tup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for text search dictionary %u",
 			 dictId);
+	}
 	form = (Form_pg_ts_dict) GETSTRUCT(tup);
 
 	recomputeNamespacePath();
@@ -2635,6 +2857,18 @@ get_ts_template_oid(List *names, bool missing_ok)
 bool
 TSTemplateIsVisible(Oid tmplId)
 {
+	return TSTemplateIsVisibleExt(tmplId, NULL);
+}
+
+/*
+ * TSTemplateIsVisibleExt
+ *		As above, but if the template isn't found and is_missing is not NULL,
+ *		then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+TSTemplateIsVisibleExt(Oid tmplId, bool *is_missing)
+{
 	HeapTuple	tup;
 	Form_pg_ts_template form;
 	Oid			namespace;
@@ -2642,7 +2876,14 @@ TSTemplateIsVisible(Oid tmplId)
 
 	tup = SearchSysCache1(TSTEMPLATEOID, ObjectIdGetDatum(tmplId));
 	if (!HeapTupleIsValid(tup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for text search template %u", tmplId);
+	}
 	form = (Form_pg_ts_template) GETSTRUCT(tup);
 
 	recomputeNamespacePath();
@@ -2761,6 +3002,18 @@ get_ts_config_oid(List *names, bool missing_ok)
 bool
 TSConfigIsVisible(Oid cfgid)
 {
+	return TSConfigIsVisibleExt(cfgid, NULL);
+}
+
+/*
+ * TSConfigIsVisibleExt
+ *		As above, but if the configuration isn't found and is_missing is not
+ *		NULL, then set *is_missing = true and return false instead of throwing
+ *		an error.  (Caller must initialize *is_missing = false.)
+ */
+static bool
+TSConfigIsVisibleExt(Oid cfgid, bool *is_missing)
+{
 	HeapTuple	tup;
 	Form_pg_ts_config form;
 	Oid			namespace;
@@ -2768,8 +3021,15 @@ TSConfigIsVisible(Oid cfgid)
 
 	tup = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgid));
 	if (!HeapTupleIsValid(tup))
+	{
+		if (is_missing != NULL)
+		{
+			*is_missing = true;
+			return false;
+		}
 		elog(ERROR, "cache lookup failed for text search configuration %u",
 			 cfgid);
+	}
 	form = (Form_pg_ts_config) GETSTRUCT(tup);
 
 	recomputeNamespacePath();
@@ -4283,152 +4543,189 @@ fetch_search_path_array(Oid *sarray, int sarray_len)
  * condition errors when a query that's scanning a catalog using an MVCC
  * snapshot uses one of these functions.  The underlying IsVisible functions
  * always use an up-to-date snapshot and so might see the object as already
- * gone when it's still visible to the transaction snapshot.  (There is no race
- * condition in the current coding because we don't accept sinval messages
- * between the SearchSysCacheExists test and the subsequent lookup.)
+ * gone when it's still visible to the transaction snapshot.
  */
 
 Datum
 pg_table_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(oid)))
+	result = RelationIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(RelationIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_type_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(TYPEOID, ObjectIdGetDatum(oid)))
+	result = TypeIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(TypeIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_function_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(PROCOID, ObjectIdGetDatum(oid)))
+	result = FunctionIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(FunctionIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_operator_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(OPEROID, ObjectIdGetDatum(oid)))
+	result = OperatorIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(OperatorIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_opclass_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(CLAOID, ObjectIdGetDatum(oid)))
+	result = OpclassIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(OpclassIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_opfamily_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(OPFAMILYOID, ObjectIdGetDatum(oid)))
+	result = OpfamilyIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(OpfamilyIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_collation_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(COLLOID, ObjectIdGetDatum(oid)))
+	result = CollationIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(CollationIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_conversion_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(CONVOID, ObjectIdGetDatum(oid)))
+	result = ConversionIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(ConversionIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_statistics_obj_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(STATEXTOID, ObjectIdGetDatum(oid)))
+	result = StatisticsObjIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(StatisticsObjIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_ts_parser_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(TSPARSEROID, ObjectIdGetDatum(oid)))
+	result = TSParserIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(TSParserIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_ts_dict_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(TSDICTOID, ObjectIdGetDatum(oid)))
+	result = TSDictionaryIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(TSDictionaryIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_ts_template_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(TSTEMPLATEOID, ObjectIdGetDatum(oid)))
+	result = TSTemplateIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(TSTemplateIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 pg_ts_config_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+	bool		result;
+	bool		is_missing = false;
 
-	if (!SearchSysCacheExists1(TSCONFIGOID, ObjectIdGetDatum(oid)))
+	result = TSConfigIsVisibleExt(oid, &is_missing);
+
+	if (is_missing)
 		PG_RETURN_NULL();
-
-	PG_RETURN_BOOL(TSConfigIsVisible(oid));
+	PG_RETURN_BOOL(result);
 }
 
 Datum
