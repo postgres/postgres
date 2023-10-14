@@ -239,8 +239,12 @@ extern void RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid);
 extern AclMode pg_class_aclmask(Oid table_oid, Oid roleid,
 								AclMode mask, AclMaskHow how);
 
-/* generic function */
-extern AclResult object_aclcheck(Oid classid, Oid objectid, Oid roleid, AclMode mode);
+/* generic functions */
+extern AclResult object_aclcheck(Oid classid, Oid objectid,
+								 Oid roleid, AclMode mode);
+extern AclResult object_aclcheck_ext(Oid classid, Oid objectid,
+									 Oid roleid, AclMode mode,
+									 bool *is_missing);
 
 /* special cases */
 extern AclResult pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
@@ -250,6 +254,9 @@ extern AclResult pg_attribute_aclcheck_ext(Oid table_oid, AttrNumber attnum,
 										   bool *is_missing);
 extern AclResult pg_attribute_aclcheck_all(Oid table_oid, Oid roleid,
 										   AclMode mode, AclMaskHow how);
+extern AclResult pg_attribute_aclcheck_all_ext(Oid table_oid, Oid roleid,
+											   AclMode mode, AclMaskHow how,
+											   bool *is_missing);
 extern AclResult pg_class_aclcheck(Oid table_oid, Oid roleid, AclMode mode);
 extern AclResult pg_class_aclcheck_ext(Oid table_oid, Oid roleid,
 									   AclMode mode, bool *is_missing);

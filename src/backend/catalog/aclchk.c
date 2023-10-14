@@ -13,6 +13,27 @@
  * NOTES
  *	  See acl.h.
  *
+ *	  The xxx_aclmask() functions in this file are wrappers around
+ *	  acl.c's aclmask() function; see that for basic usage information.
+ *	  The wrapper functions add object-type-specific lookup capability.
+ *	  Generally, they will throw error if the object doesn't exist.
+ *
+ *	  The xxx_aclmask_ext() functions add the ability to not throw
+ *	  error if the object doesn't exist.  If their "is_missing" argument
+ *	  isn't NULL, then when the object isn't found they will set
+ *	  *is_missing = true and return zero (no privileges) instead of
+ *	  throwing an error.  Caller must initialize *is_missing = false.
+ *
+ *	  The xxx_aclcheck() functions are simplified wrappers around the
+ *	  corresponding xxx_aclmask() functions, simply returning ACLCHECK_OK
+ *	  if any of the privileges specified in "mode" are held, and otherwise
+ *	  a suitable error code (in practice, always ACLCHECK_NO_PRIV).
+ *	  Again, they will throw error if the object doesn't exist.
+ *
+ *	  The xxx_aclcheck_ext() functions add the ability to not throw
+ *	  error if the object doesn't exist.  Their "is_missing" argument
+ *	  works similarly to the xxx_aclmask_ext() functions.
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -139,6 +160,9 @@ static AclMode pg_aclmask(ObjectType objtype, Oid object_oid, AttrNumber attnum,
 						  Oid roleid, AclMode mask, AclMaskHow how);
 static AclMode object_aclmask(Oid classid, Oid objectid, Oid roleid,
 							  AclMode mask, AclMaskHow how);
+static AclMode object_aclmask_ext(Oid classid, Oid objectid, Oid roleid,
+								  AclMode mask, AclMaskHow how,
+								  bool *is_missing);
 static AclMode pg_attribute_aclmask(Oid table_oid, AttrNumber attnum,
 									Oid roleid, AclMode mask, AclMaskHow how);
 static AclMode pg_attribute_aclmask_ext(Oid table_oid, AttrNumber attnum,
@@ -151,10 +175,12 @@ static AclMode pg_parameter_acl_aclmask(Oid acl_oid, Oid roleid,
 										AclMode mask, AclMaskHow how);
 static AclMode pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 											   AclMode mask, AclMaskHow how, Snapshot snapshot);
-static AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
-									AclMode mask, AclMaskHow how);
-static AclMode pg_type_aclmask(Oid type_oid, Oid roleid,
-							   AclMode mask, AclMaskHow how);
+static AclMode pg_namespace_aclmask_ext(Oid nsp_oid, Oid roleid,
+										AclMode mask, AclMaskHow how,
+										bool *is_missing);
+static AclMode pg_type_aclmask_ext(Oid type_oid, Oid roleid,
+								   AclMode mask, AclMaskHow how,
+								   bool *is_missing);
 static void recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
 									Acl *new_acl);
 static void recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
@@ -3065,6 +3091,18 @@ static AclMode
 object_aclmask(Oid classid, Oid objectid, Oid roleid,
 			   AclMode mask, AclMaskHow how)
 {
+	return object_aclmask_ext(classid, objectid, roleid, mask, how, NULL);
+}
+
+/*
+ * Generic routine for examining a user's privileges for an object,
+ * with is_missing
+ */
+static AclMode
+object_aclmask_ext(Oid classid, Oid objectid, Oid roleid,
+				   AclMode mask, AclMaskHow how,
+				   bool *is_missing)
+{
 	int			cacheid;
 	AclMode		result;
 	HeapTuple	tuple;
@@ -3077,9 +3115,11 @@ object_aclmask(Oid classid, Oid objectid, Oid roleid,
 	switch (classid)
 	{
 		case NamespaceRelationId:
-			return pg_namespace_aclmask(objectid, roleid, mask, how);
+			return pg_namespace_aclmask_ext(objectid, roleid, mask, how,
+											is_missing);
 		case TypeRelationId:
-			return pg_type_aclmask(objectid, roleid, mask, how);
+			return pg_type_aclmask_ext(objectid, roleid, mask, how,
+									   is_missing);
 	}
 
 	/* Even more special cases */
@@ -3092,16 +3132,26 @@ object_aclmask(Oid classid, Oid objectid, Oid roleid,
 		return mask;
 
 	/*
-	 * Get the objects's ACL from its catalog
+	 * Get the object's ACL from its catalog
 	 */
 
 	cacheid = get_object_catcache_oid(classid);
 
 	tuple = SearchSysCache1(cacheid, ObjectIdGetDatum(objectid));
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("%s with OID %u does not exist", get_object_class_descr(classid), objectid)));
+	{
+		if (is_missing != NULL)
+		{
+			/* return "no privileges" instead of throwing an error */
+			*is_missing = true;
+			return 0;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("%s with OID %u does not exist",
+							get_object_class_descr(classid), objectid)));
+	}
 
 	ownerId = DatumGetObjectId(SysCacheGetAttrNotNull(cacheid,
 													  tuple,
@@ -3149,10 +3199,7 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 }
 
 /*
- * Routine for examining a user's privileges for a column
- *
- * Does the bulk of the work for pg_attribute_aclmask(), and allows other
- * callers to avoid the missing attribute ERROR when is_missing is non-NULL.
+ * Routine for examining a user's privileges for a column, with is_missing
  */
 static AclMode
 pg_attribute_aclmask_ext(Oid table_oid, AttrNumber attnum, Oid roleid,
@@ -3226,15 +3273,24 @@ pg_attribute_aclmask_ext(Oid table_oid, AttrNumber attnum, Oid roleid,
 	 * Must get the relation's ownerId from pg_class.  Since we already found
 	 * a pg_attribute entry, the only likely reason for this to fail is that a
 	 * concurrent DROP of the relation committed since then (which could only
-	 * happen if we don't have lock on the relation).  We prefer to report "no
-	 * privileges" rather than failing in such a case, so as to avoid unwanted
-	 * failures in has_column_privilege() tests.
+	 * happen if we don't have lock on the relation).  Treat that similarly to
+	 * not finding the attribute entry.
 	 */
 	classTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(table_oid));
 	if (!HeapTupleIsValid(classTuple))
 	{
 		ReleaseSysCache(attTuple);
-		return 0;
+		if (is_missing != NULL)
+		{
+			/* return "no privileges" instead of throwing an error */
+			*is_missing = true;
+			return 0;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("relation with OID %u does not exist",
+							table_oid)));
 	}
 	classForm = (Form_pg_class) GETSTRUCT(classTuple);
 
@@ -3267,10 +3323,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 }
 
 /*
- * Routine for examining a user's privileges for a table
- *
- * Does the bulk of the work for pg_class_aclmask(), and allows other
- * callers to avoid the missing relation ERROR when is_missing is non-NULL.
+ * Routine for examining a user's privileges for a table, with is_missing
  */
 static AclMode
 pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
@@ -3585,11 +3638,12 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 }
 
 /*
- * Routine for examining a user's privileges for a namespace
+ * Routine for examining a user's privileges for a namespace, with is_missing
  */
 static AclMode
-pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
-					 AclMode mask, AclMaskHow how)
+pg_namespace_aclmask_ext(Oid nsp_oid, Oid roleid,
+						 AclMode mask, AclMaskHow how,
+						 bool *is_missing)
 {
 	AclMode		result;
 	HeapTuple	tuple;
@@ -3623,8 +3677,8 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	 */
 	if (isTempNamespace(nsp_oid))
 	{
-		if (object_aclcheck(DatabaseRelationId, MyDatabaseId, roleid,
-							ACL_CREATE_TEMP) == ACLCHECK_OK)
+		if (object_aclcheck_ext(DatabaseRelationId, MyDatabaseId, roleid,
+								ACL_CREATE_TEMP, is_missing) == ACLCHECK_OK)
 			return mask & ACL_ALL_RIGHTS_SCHEMA;
 		else
 			return mask & ACL_USAGE;
@@ -3635,9 +3689,18 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	 */
 	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(nsp_oid));
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema with OID %u does not exist", nsp_oid)));
+	{
+		if (is_missing != NULL)
+		{
+			/* return "no privileges" instead of throwing an error */
+			*is_missing = true;
+			return 0;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema with OID %u does not exist", nsp_oid)));
+	}
 
 	ownerId = ((Form_pg_namespace) GETSTRUCT(tuple))->nspowner;
 
@@ -3677,19 +3740,19 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 }
 
 /*
- * Routine for examining a user's privileges for a type.
+ * Routine for examining a user's privileges for a type, with is_missing
  */
 static AclMode
-pg_type_aclmask(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how)
+pg_type_aclmask_ext(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how,
+					bool *is_missing)
 {
 	AclMode		result;
 	HeapTuple	tuple;
+	Form_pg_type typeForm;
 	Datum		aclDatum;
 	bool		isNull;
 	Acl		   *acl;
 	Oid			ownerId;
-
-	Form_pg_type typeForm;
 
 	/* Bypass permission checks for superusers */
 	if (superuser_arg(roleid))
@@ -3700,10 +3763,19 @@ pg_type_aclmask(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how)
 	 */
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type with OID %u does not exist",
-						type_oid)));
+	{
+		if (is_missing != NULL)
+		{
+			/* return "no privileges" instead of throwing an error */
+			*is_missing = true;
+			return 0;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type with OID %u does not exist",
+							type_oid)));
+	}
 	typeForm = (Form_pg_type) GETSTRUCT(tuple);
 
 	/*
@@ -3717,9 +3789,20 @@ pg_type_aclmask(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how)
 		ReleaseSysCache(tuple);
 
 		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(elttype_oid));
-		/* this case is not a user-facing error, so elog not ereport */
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for type %u", elttype_oid);
+		{
+			if (is_missing != NULL)
+			{
+				/* return "no privileges" instead of throwing an error */
+				*is_missing = true;
+				return 0;
+			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("type with OID %u does not exist",
+								elttype_oid)));
+		}
 		typeForm = (Form_pg_type) GETSTRUCT(tuple);
 	}
 
@@ -3759,7 +3842,20 @@ pg_type_aclmask(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how)
 AclResult
 object_aclcheck(Oid classid, Oid objectid, Oid roleid, AclMode mode)
 {
-	if (object_aclmask(classid, objectid, roleid, mode, ACLMASK_ANY) != 0)
+	return object_aclcheck_ext(classid, objectid, roleid, mode, NULL);
+}
+
+/*
+ * Exported generic routine for checking a user's access privileges to an
+ * object, with is_missing
+ */
+AclResult
+object_aclcheck_ext(Oid classid, Oid objectid,
+					Oid roleid, AclMode mode,
+					bool *is_missing)
+{
+	if (object_aclmask_ext(classid, objectid, roleid, mode, ACLMASK_ANY,
+						   is_missing) != 0)
 		return ACLCHECK_OK;
 	else
 		return ACLCHECK_NO_PRIV;
@@ -3784,10 +3880,8 @@ pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
 
 
 /*
- * Exported routine for checking a user's access privileges to a column
- *
- * Does the bulk of the work for pg_attribute_aclcheck(), and allows other
- * callers to avoid the missing attribute ERROR when is_missing is non-NULL.
+ * Exported routine for checking a user's access privileges to a column,
+ * with is_missing
  */
 AclResult
 pg_attribute_aclcheck_ext(Oid table_oid, AttrNumber attnum,
@@ -3823,22 +3917,46 @@ AclResult
 pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 						  AclMaskHow how)
 {
+	return pg_attribute_aclcheck_all_ext(table_oid, roleid, mode, how, NULL);
+}
+
+/*
+ * Exported routine for checking a user's access privileges to any/all columns,
+ * with is_missing
+ */
+AclResult
+pg_attribute_aclcheck_all_ext(Oid table_oid, Oid roleid,
+							  AclMode mode, AclMaskHow how,
+							  bool *is_missing)
+{
 	AclResult	result;
 	HeapTuple	classTuple;
 	Form_pg_class classForm;
+	Oid			ownerId;
 	AttrNumber	nattrs;
 	AttrNumber	curr_att;
 
 	/*
-	 * Must fetch pg_class row to check number of attributes.  As in
-	 * pg_attribute_aclmask, we prefer to return "no privileges" instead of
-	 * throwing an error if we get any unexpected lookup errors.
+	 * Must fetch pg_class row to get owner ID and number of attributes.
 	 */
 	classTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(table_oid));
 	if (!HeapTupleIsValid(classTuple))
-		return ACLCHECK_NO_PRIV;
+	{
+		if (is_missing != NULL)
+		{
+			/* return "no privileges" instead of throwing an error */
+			*is_missing = true;
+			return ACLCHECK_NO_PRIV;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("relation with OID %u does not exist",
+							table_oid)));
+	}
 	classForm = (Form_pg_class) GETSTRUCT(classTuple);
 
+	ownerId = classForm->relowner;
 	nattrs = classForm->relnatts;
 
 	ReleaseSysCache(classTuple);
@@ -3852,11 +3970,20 @@ pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 	for (curr_att = 1; curr_att <= nattrs; curr_att++)
 	{
 		HeapTuple	attTuple;
+		Datum		aclDatum;
+		bool		isNull;
+		Acl		   *acl;
 		AclMode		attmask;
 
 		attTuple = SearchSysCache2(ATTNUM,
 								   ObjectIdGetDatum(table_oid),
 								   Int16GetDatum(curr_att));
+
+		/*
+		 * Lookup failure probably indicates that the table was just dropped,
+		 * but we'll treat it the same as a dropped column rather than
+		 * throwing error.
+		 */
 		if (!HeapTupleIsValid(attTuple))
 			continue;
 
@@ -3867,16 +3994,27 @@ pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 			continue;
 		}
 
+		aclDatum = SysCacheGetAttr(ATTNUM, attTuple, Anum_pg_attribute_attacl,
+								   &isNull);
+
 		/*
 		 * Here we hard-wire knowledge that the default ACL for a column
 		 * grants no privileges, so that we can fall out quickly in the very
 		 * common case where attacl is null.
 		 */
-		if (heap_attisnull(attTuple, Anum_pg_attribute_attacl, NULL))
+		if (isNull)
 			attmask = 0;
 		else
-			attmask = pg_attribute_aclmask(table_oid, curr_att, roleid,
-										   mode, ACLMASK_ANY);
+		{
+			/* detoast column's ACL if necessary */
+			acl = DatumGetAclP(aclDatum);
+
+			attmask = aclmask(acl, roleid, ownerId, mode, ACLMASK_ANY);
+
+			/* if we have a detoasted copy, free it */
+			if ((Pointer) acl != DatumGetPointer(aclDatum))
+				pfree(acl);
+		}
 
 		ReleaseSysCache(attTuple);
 
@@ -3911,10 +4049,8 @@ pg_class_aclcheck(Oid table_oid, Oid roleid, AclMode mode)
 }
 
 /*
- * Exported routine for checking a user's access privileges to a table
- *
- * Does the bulk of the work for pg_class_aclcheck(), and allows other
- * callers to avoid the missing relation ERROR when is_missing is non-NULL.
+ * Exported routine for checking a user's access privileges to a table,
+ * with is_missing
  */
 AclResult
 pg_class_aclcheck_ext(Oid table_oid, Oid roleid,
