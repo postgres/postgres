@@ -6377,15 +6377,24 @@ clear_socket_set(socket_set *sa)
 static void
 add_socket_to_set(socket_set *sa, int fd, int idx)
 {
-	if (fd < 0 || fd >= FD_SETSIZE)
+	/* See connect_slot() for background on this code. */
+#ifdef WIN32
+	if (sa->fds.fd_count + 1 >= FD_SETSIZE)
 	{
-		/*
-		 * Doing a hard exit here is a bit grotty, but it doesn't seem worth
-		 * complicating the API to make it less grotty.
-		 */
-		fprintf(stderr, "too many client connections for select()\n");
+		fprintf(stderr,
+				"too many concurrent database clients for this platform: %d\n",
+				sa->fds.fd_count + 1);
 		exit(1);
 	}
+#else
+	if (fd < 0 || fd >= FD_SETSIZE)
+	{
+		fprintf(stderr,
+				"socket file descriptor out of range for select(): %d\n",
+				fd);
+		exit(1);
+	}
+#endif
 	FD_SET(fd, &sa->fds);
 	if (fd > sa->maxfd)
 		sa->maxfd = fd;

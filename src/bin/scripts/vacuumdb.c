@@ -635,15 +635,39 @@ vacuum_one_database(const ConnParams *cparams,
 			conn = connectDatabase(cparams, progname, echo, false, true);
 
 			/*
-			 * Fail and exit immediately if trying to use a socket in an
-			 * unsupported range.  POSIX requires open(2) to use the lowest
-			 * unused file descriptor and the hint given relies on that.
+			 * POSIX defines FD_SETSIZE as the highest file descriptor
+			 * acceptable to FD_SET() and allied macros.  Windows defines it
+			 * as a ceiling on the count of file descriptors in the set, not a
+			 * ceiling on the value of each file descriptor; see
+			 * https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-select
+			 * and
+			 * https://learn.microsoft.com/en-us/windows/win32/api/winsock/ns-winsock-fd_set.
+			 * We can't ignore that, because Windows starts file descriptors
+			 * at a higher value, delays reuse, and skips values.  With less
+			 * than ten concurrent file descriptors, opened and closed
+			 * rapidly, one can reach file descriptor 1024.
+			 *
+			 * Doing a hard exit here is a bit grotty, but it doesn't seem
+			 * worth complicating the API to make it less grotty.
 			 */
-			if (PQsocket(conn) >= FD_SETSIZE)
+#ifdef WIN32
+			if (i >= FD_SETSIZE)
 			{
-				pg_log_fatal("too many jobs for this platform -- try %d", i);
+				pg_log_fatal("too many jobs for this platform: %d", i);
 				exit(1);
 			}
+#else
+			{
+				int			fd = PQsocket(conn);
+
+				if (fd >= FD_SETSIZE)
+				{
+					pg_log_fatal("socket file descriptor out of range for select(): %d",
+								 fd);
+					exit(1);
+				}
+			}
+#endif
 
 			init_slot(slots + i, conn);
 		}
