@@ -172,8 +172,6 @@
 { amprocfamily => 'btree/interval_ops', amproclefttype => 'interval',
   amprocrighttype => 'interval', amprocnum => '3',
   amproc => 'in_range(interval,interval,interval,bool,bool)' },
-{ amprocfamily => 'btree/interval_ops', amproclefttype => 'interval',
-  amprocrighttype => 'interval', amprocnum => '4', amproc => 'btequalimage' },
 { amprocfamily => 'btree/macaddr_ops', amproclefttype => 'macaddr',
   amprocrighttype => 'macaddr', amprocnum => '1', amproc => 'macaddr_cmp' },
 { amprocfamily => 'btree/macaddr_ops', amproclefttype => 'macaddr',
