@@ -21,7 +21,7 @@ RUN cp /usr/share/postgresql/postgresql.conf.sample /etc/postgresql/postgresql.c
     echo "{'provider': 'file','datafile': '/tmp/pgkeyring',}" > /etc/postgresql/tde_conf.json; \
     chown postgres /etc/postgresql/tde_conf.json; \
     mkdir -p /docker-entrypoint-initdb.d
-COPY ./docker/pg-tde-create-ext.sql /docker-entrypoint-initdb.d/pg-tde-create-ext.sql
+COPY ./docker/pg-tde-create-ext.sh /docker-entrypoint-initdb.d/pg-tde-create-ext.sh
 
 VOLUME /etc/postgresql/
 
