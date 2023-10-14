@@ -295,8 +295,41 @@ connect_slot(ParallelSlotArray *sa, int slotno, const char *dbname)
 	slot->connection = connectDatabase(sa->cparams, sa->progname, sa->echo, false, true);
 	sa->cparams->override_dbname = old_override;
 
-	if (PQsocket(slot->connection) >= FD_SETSIZE)
-		pg_fatal("too many jobs for this platform");
+	/*
+	 * POSIX defines FD_SETSIZE as the highest file descriptor acceptable to
+	 * FD_SET() and allied macros.  Windows defines it as a ceiling on the
+	 * count of file descriptors in the set, not a ceiling on the value of
+	 * each file descriptor; see
+	 * https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-select
+	 * and
+	 * https://learn.microsoft.com/en-us/windows/win32/api/winsock/ns-winsock-fd_set.
+	 * We can't ignore that, because Windows starts file descriptors at a
+	 * higher value, delays reuse, and skips values.  With less than ten
+	 * concurrent file descriptors, opened and closed rapidly, one can reach
+	 * file descriptor 1024.
+	 *
+	 * Doing a hard exit here is a bit grotty, but it doesn't seem worth
+	 * complicating the API to make it less grotty.
+	 */
+#ifdef WIN32
+	if (slotno >= FD_SETSIZE)
+	{
+		pg_log_error("too many jobs for this platform: %d", slotno);
+		exit(1);
+	}
+#else
+	{
+		int			fd = PQsocket(slot->connection);
+
+		if (fd >= FD_SETSIZE)
+		{
+			pg_log_error("socket file descriptor out of range for select(): %d",
+						 fd);
+			pg_log_error_hint("Try fewer jobs.");
+			exit(1);
+		}
+	}
+#endif
 
 	/* Setup the connection using the supplied command, if any. */
 	if (sa->initcmd)
