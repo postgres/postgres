@@ -283,3 +283,40 @@ copy oversized_column_default (col2) from stdin;
 copy oversized_column_default from stdin (default '');
 \.
 drop table oversized_column_default;
+
+
+--
+-- Create partitioned table that does not allow bulk insertions, to test bugs
+-- related to the reuse of BulkInsertState across partitions (only done when
+-- not using bulk insert).  Switching between partitions often makes it more
+-- likely to encounter these bugs, so we just switch on roughly every insert
+-- by having an even/odd number partition and inserting evenly distributed
+-- data.
+--
+CREATE TABLE parted_si (
+  id int not null,
+  data text not null,
+  -- prevent use of bulk insert by having a volatile function
+  rand float8 not null default random()
+)
+PARTITION BY LIST((id % 2));
+
+CREATE TABLE parted_si_p_even PARTITION OF parted_si FOR VALUES IN (0);
+CREATE TABLE parted_si_p_odd PARTITION OF parted_si FOR VALUES IN (1);
+
+-- Test that bulk relation extension handles reusing a single BulkInsertState
+-- across partitions.  Without the fix applied, this reliably reproduces
+-- #18130 unless shared_buffers is extremely small (preventing any use use of
+-- bulk relation extension). See
+-- https://postgr.es/m/18130-7a86a7356a75209d%40postgresql.org
+-- https://postgr.es/m/257696.1695670946%40sss.pgh.pa.us
+\set filename :abs_srcdir '/data/desc.data'
+COPY parted_si(id, data) FROM :'filename';
+
+-- An earlier bug (see commit b1ecb9b3fcf) could end up using a buffer from
+-- the wrong partition. This test is *not* guaranteed to trigger that bug, but
+-- does so when shared_buffers is small enough.  To test if we encountered the
+-- bug, check that the partition condition isn't violated.
+SELECT tableoid::regclass, id % 2 = 0 is_even, count(*) from parted_si GROUP BY 1, 2 ORDER BY 1;
+
+DROP TABLE parted_si;
