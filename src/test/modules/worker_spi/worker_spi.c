@@ -174,11 +174,11 @@ worker_spi_main(Datum main_arg)
 											 worker_spi_role, flags);
 
 	/*
-	 * Disable parallel query for workers started with BYPASS_ALLOWCONN so as
-	 * these don't attempt connections to the database that may not allow
-	 * that.
+	 * Disable parallel query for workers started with BYPASS_ALLOWCONN or
+	 * BGWORKER_BYPASS_ALLOWCONN so as these don't attempt connections using a
+	 * database or a role that may not allow that.
 	 */
-	if (flags & BGWORKER_BYPASS_ALLOWCONN)
+	if ((flags & (BGWORKER_BYPASS_ALLOWCONN | BGWORKER_BYPASS_ROLELOGINCHECK)))
 		SetConfigOption("max_parallel_workers_per_gather", "0",
 						PGC_USERSET, PGC_S_OVERRIDE);
 
