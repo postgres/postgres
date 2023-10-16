@@ -167,6 +167,8 @@ BuildEventTriggerCache(void)
 			event = EVT_SQLDrop;
 		else if (strcmp(evtevent, "table_rewrite") == 0)
 			event = EVT_TableRewrite;
+		else if (strcmp(evtevent, "login") == 0)
+			event = EVT_Login;
 		else
 			continue;
 

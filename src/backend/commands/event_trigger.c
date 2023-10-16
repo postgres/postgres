@@ -20,6 +20,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_event_trigger.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -37,15 +38,18 @@
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "pgstat.h"
+#include "storage/lmgr.h"
 #include "tcop/deparse_utility.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/evtcache.h"
 #include "utils/fmgroids.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
 typedef struct EventTriggerQueryState
@@ -103,6 +107,7 @@ static void validate_table_rewrite_tags(const char *filtervar, List *taglist);
 static void EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata);
 static const char *stringify_grant_objtype(ObjectType objtype);
 static const char *stringify_adefprivs_objtype(ObjectType objtype);
+static void SetDatatabaseHasLoginEventTriggers(void);
 
 /*
  * Create an event trigger.
@@ -133,6 +138,7 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	if (strcmp(stmt->eventname, "ddl_command_start") != 0 &&
 		strcmp(stmt->eventname, "ddl_command_end") != 0 &&
 		strcmp(stmt->eventname, "sql_drop") != 0 &&
+		strcmp(stmt->eventname, "login") != 0 &&
 		strcmp(stmt->eventname, "table_rewrite") != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -165,6 +171,10 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	else if (strcmp(stmt->eventname, "table_rewrite") == 0
 			 && tags != NULL)
 		validate_table_rewrite_tags("tag", tags);
+	else if (strcmp(stmt->eventname, "login") == 0 && tags != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Tag filtering is not supported for login event trigger")));
 
 	/*
 	 * Give user a nice error message if an event trigger of the same name
@@ -296,6 +306,13 @@ insert_event_trigger_tuple(const char *trigname, const char *eventname, Oid evtO
 	CatalogTupleInsert(tgrel, tuple);
 	heap_freetuple(tuple);
 
+	/*
+	 * Login event triggers have an additional flag in pg_database to avoid
+	 * faster lookups in hot codepaths. Set the flag unless already True.
+	 */
+	if (strcmp(eventname, "login") == 0)
+		SetDatatabaseHasLoginEventTriggers();
+
 	/* Depend on owner. */
 	recordDependencyOnOwner(EventTriggerRelationId, trigoid, evtOwner);
 
@@ -358,6 +375,41 @@ filter_list_to_array(List *filterlist)
 }
 
 /*
+ * Set pg_database.dathasloginevt flag for current database indicating that
+ * current database has on login triggers.
+ */
+void
+SetDatatabaseHasLoginEventTriggers(void)
+{
+	/* Set dathasloginevt flag in pg_database */
+	Form_pg_database db;
+	Relation	pg_db = table_open(DatabaseRelationId, RowExclusiveLock);
+	HeapTuple	tuple;
+
+	/*
+	 * Use shared lock to prevent a conflit with EventTriggerOnLogin() trying
+	 * to reset pg_database.dathasloginevt flag.  Note, this lock doesn't
+	 * effectively blocks database or other objection.  It's just custom lock
+	 * tag used to prevent multiple backends changing pg_database.dathasloginevt
+	 * flag.
+	 */
+	LockSharedObject(DatabaseRelationId, MyDatabaseId, 0, AccessExclusiveLock);
+
+	tuple = SearchSysCacheCopy1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+	db = (Form_pg_database) GETSTRUCT(tuple);
+	if (!db->dathasloginevt)
+	{
+		db->dathasloginevt = true;
+		CatalogTupleUpdate(pg_db, &tuple->t_self, tuple);
+		CommandCounterIncrement();
+	}
+	table_close(pg_db, RowExclusiveLock);
+	heap_freetuple(tuple);
+}
+
+/*
  * ALTER EVENT TRIGGER foo ENABLE|DISABLE|ENABLE ALWAYS|REPLICA
  */
 Oid
@@ -390,6 +442,14 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 	evtForm->evtenabled = tgenabled;
 
 	CatalogTupleUpdate(tgrel, &tup->t_self, tup);
+
+	/*
+	 * Login event triggers have an additional flag in pg_database to avoid
+	 * faster lookups in hot codepaths. Set the flag unless already True.
+	 */
+	if (namestrcmp(&evtForm->evtevent, "login") == 0 &&
+		tgenabled != TRIGGER_DISABLED)
+		SetDatatabaseHasLoginEventTriggers();
 
 	InvokeObjectPostAlterHook(EventTriggerRelationId,
 							  trigoid, 0);
@@ -549,6 +609,15 @@ filter_event_trigger(CommandTag tag, EventTriggerCacheItem *item)
 	return true;
 }
 
+static CommandTag
+EventTriggerGetTag(Node *parsetree, EventTriggerEvent event)
+{
+	if (event == EVT_Login)
+		return CMDTAG_LOGIN;
+	else
+		return CreateCommandTag(parsetree);
+}
+
 /*
  * Setup for running triggers for the given event.  Return value is an OID list
  * of functions to run; if there are any, trigdata is filled with an
@@ -557,7 +626,7 @@ filter_event_trigger(CommandTag tag, EventTriggerCacheItem *item)
 static List *
 EventTriggerCommonSetup(Node *parsetree,
 						EventTriggerEvent event, const char *eventstr,
-						EventTriggerData *trigdata)
+						EventTriggerData *trigdata, bool unfiltered)
 {
 	CommandTag	tag;
 	List	   *cachelist;
@@ -582,10 +651,12 @@ EventTriggerCommonSetup(Node *parsetree,
 	{
 		CommandTag	dbgtag;
 
-		dbgtag = CreateCommandTag(parsetree);
+		dbgtag = EventTriggerGetTag(parsetree, event);
+
 		if (event == EVT_DDLCommandStart ||
 			event == EVT_DDLCommandEnd ||
-			event == EVT_SQLDrop)
+			event == EVT_SQLDrop ||
+			event == EVT_Login)
 		{
 			if (!command_tag_event_trigger_ok(dbgtag))
 				elog(ERROR, "unexpected command tag \"%s\"", GetCommandTagName(dbgtag));
@@ -604,7 +675,7 @@ EventTriggerCommonSetup(Node *parsetree,
 		return NIL;
 
 	/* Get the command tag. */
-	tag = CreateCommandTag(parsetree);
+	tag = EventTriggerGetTag(parsetree, event);
 
 	/*
 	 * Filter list of event triggers by command tag, and copy them into our
@@ -617,7 +688,7 @@ EventTriggerCommonSetup(Node *parsetree,
 	{
 		EventTriggerCacheItem *item = lfirst(lc);
 
-		if (filter_event_trigger(tag, item))
+		if (unfiltered || filter_event_trigger(tag, item))
 		{
 			/* We must plan to fire this trigger. */
 			runlist = lappend_oid(runlist, item->fnoid);
@@ -670,7 +741,7 @@ EventTriggerDDLCommandStart(Node *parsetree)
 	runlist = EventTriggerCommonSetup(parsetree,
 									  EVT_DDLCommandStart,
 									  "ddl_command_start",
-									  &trigdata);
+									  &trigdata, false);
 	if (runlist == NIL)
 		return;
 
@@ -718,7 +789,7 @@ EventTriggerDDLCommandEnd(Node *parsetree)
 
 	runlist = EventTriggerCommonSetup(parsetree,
 									  EVT_DDLCommandEnd, "ddl_command_end",
-									  &trigdata);
+									  &trigdata, false);
 	if (runlist == NIL)
 		return;
 
@@ -764,7 +835,7 @@ EventTriggerSQLDrop(Node *parsetree)
 
 	runlist = EventTriggerCommonSetup(parsetree,
 									  EVT_SQLDrop, "sql_drop",
-									  &trigdata);
+									  &trigdata, false);
 
 	/*
 	 * Nothing to do if run list is empty.  Note this typically can't happen,
@@ -805,6 +876,96 @@ EventTriggerSQLDrop(Node *parsetree)
 	list_free(runlist);
 }
 
+/*
+ * Fire login event triggers if any are present.  The dathasloginevt
+ * pg_database flag is left when an event trigger is dropped, to avoid
+ * complicating the codepath in the case of multiple event triggers.  This
+ * function will instead unset the flag if no trigger is defined.
+ */
+void
+EventTriggerOnLogin(void)
+{
+	List	   *runlist;
+	EventTriggerData trigdata;
+
+	/*
+	 * See EventTriggerDDLCommandStart for a discussion about why event
+	 * triggers are disabled in single user mode or via a GUC.  We also need a
+	 * database connection (some background workers doesn't have it).
+	 */
+	if (!IsUnderPostmaster || !event_triggers ||
+		!OidIsValid(MyDatabaseId) || !MyDatabaseHasLoginEventTriggers)
+		return;
+
+	StartTransactionCommand();
+	runlist = EventTriggerCommonSetup(NULL,
+										EVT_Login, "login",
+										&trigdata, false);
+
+	if (runlist != NIL)
+	{
+		/*
+		 * Event trigger execution may require an active snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+
+		/* Run the triggers. */
+		EventTriggerInvoke(runlist, &trigdata);
+
+		/* Cleanup. */
+		list_free(runlist);
+
+		PopActiveSnapshot();
+	}
+	/*
+	 * There is no active login event trigger, but our pg_database.dathasloginevt was set.
+	 * Try to unset this flag.  We use the lock to prevent concurrent
+	 * SetDatatabaseHasLoginEventTriggers(), but we don't want to hang the
+	 * connection waiting on the lock.  Thus, we are just trying to acquire
+	 * the lock conditionally.
+	 */
+	else if (ConditionalLockSharedObject(DatabaseRelationId, MyDatabaseId,
+										 0, AccessExclusiveLock))
+	{
+		/*
+		 * The lock is held.  Now we need to recheck that login event triggers
+		 * list is still empty.  Once the list is empty, we know that even if
+		 * there is a backend, which concurrently inserts/enables login trigger,
+		 * it will update pg_database.dathasloginevt *afterwards*.
+		 */
+		runlist = EventTriggerCommonSetup(NULL,
+										  EVT_Login, "login",
+										  &trigdata, true);
+
+		if (runlist == NIL)
+		{
+			Relation	pg_db = table_open(DatabaseRelationId, RowExclusiveLock);
+			HeapTuple	tuple;
+			Form_pg_database db;
+
+			tuple = SearchSysCacheCopy1(DATABASEOID,
+										ObjectIdGetDatum(MyDatabaseId));
+
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+
+			db = (Form_pg_database) GETSTRUCT(tuple);
+			if (db->dathasloginevt)
+			{
+				db->dathasloginevt = false;
+				CatalogTupleUpdate(pg_db, &tuple->t_self, tuple);
+			}
+			table_close(pg_db, RowExclusiveLock);
+			heap_freetuple(tuple);
+		}
+		else
+		{
+			list_free(runlist);
+		}
+	}
+	CommitTransactionCommand();
+}
+
 
 /*
  * Fire table_rewrite triggers.
@@ -835,7 +996,7 @@ EventTriggerTableRewrite(Node *parsetree, Oid tableOid, int reason)
 	runlist = EventTriggerCommonSetup(parsetree,
 									  EVT_TableRewrite,
 									  "table_rewrite",
-									  &trigdata);
+									  &trigdata, false);
 	if (runlist == NIL)
 		return;
 

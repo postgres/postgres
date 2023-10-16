@@ -46,6 +46,25 @@ $node_standby_2->start;
 $node_primary->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1002) AS a");
 
+$node_primary->safe_psql(
+	'postgres', q{
+CREATE TABLE user_logins(id serial, who text);
+
+CREATE FUNCTION on_login_proc() RETURNS EVENT_TRIGGER AS $$
+BEGIN
+  IF NOT pg_is_in_recovery() THEN
+    INSERT INTO user_logins (who) VALUES (session_user);
+  END IF;
+  IF session_user = 'regress_hacker' THEN
+    RAISE EXCEPTION 'You are not welcome!';
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE EVENT TRIGGER on_login_trigger ON login EXECUTE FUNCTION on_login_proc();
+ALTER EVENT TRIGGER on_login_trigger ENABLE ALWAYS;
+});
+
 # Wait for standbys to catch up
 $node_primary->wait_for_replay_catchup($node_standby_1);
 $node_standby_1->wait_for_replay_catchup($node_standby_2, $node_primary);
@@ -383,6 +402,13 @@ sub replay_check
 }
 
 replay_check();
+
+my $evttrig = $node_standby_1->safe_psql('postgres',
+	"SELECT evtname FROM pg_event_trigger WHERE evtevent = 'login'");
+is($evttrig, 'on_login_trigger', 'Name of login trigger');
+$evttrig = $node_standby_2->safe_psql('postgres',
+	"SELECT evtname FROM pg_event_trigger WHERE evtevent = 'login'");
+is($evttrig, 'on_login_trigger', 'Name of login trigger');
 
 note "enabling hot_standby_feedback";
 

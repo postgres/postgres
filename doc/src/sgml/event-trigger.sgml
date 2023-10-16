@@ -28,11 +28,30 @@
      An event trigger fires whenever the event with which it is associated
      occurs in the database in which it is defined. Currently, the only
      supported events are
+     <literal>login</literal>,
      <literal>ddl_command_start</literal>,
      <literal>ddl_command_end</literal>,
      <literal>table_rewrite</literal>
      and <literal>sql_drop</literal>.
      Support for additional events may be added in future releases.
+   </para>
+
+   <para>
+     The <literal>login</literal> event occurs when an authenticated user logs
+     into the system. Any bug in a trigger procedure for this event may
+     prevent successful login to the system. Such bugs may be fixed by
+     setting <xref linkend="guc-event-triggers"/> is set to <literal>false</literal>
+     either in a connection string or configuration file. Alternative is
+     restarting the system in single-user mode (as event triggers are
+     disabled in this mode). See the <xref linkend="app-postgres"/> reference
+     page for details about using single-user mode.
+     The <literal>login</literal> event will also fire on standby servers.
+     To prevent servers from becoming inaccessible, such triggers must avoid
+     writing anything to the database when running on a standby.
+     Also, it's recommended to avoid long-running queries in
+     <literal>login</literal> event triggers.  Notes that, for instance,
+     cancelling connection in <application>psql</application> wouldn't cancel
+     the in-progress <literal>login</literal> trigger.
    </para>
 
    <para>
@@ -1300,4 +1319,79 @@ CREATE EVENT TRIGGER no_rewrite_allowed
 </programlisting>
    </para>
  </sect1>
+
+  <sect1 id="event-trigger-database-login-example">
+    <title>A Database Login Event Trigger Example</title>
+
+    <para>
+      The event trigger on the <literal>login</literal> event can be
+      useful for logging user logins, for verifying the connection and
+      assigning roles according to current circumstances, or for session
+      data initialization. It is very important that any event trigger using
+      the <literal>login</literal> event checks whether or not the database is
+      in recovery before performing any writes. Writing to a standby server
+      will make it inaccessible.
+    </para>
+
+    <para>
+      The following example demonstrates these options.
+<programlisting>
+-- create test tables and roles
+CREATE TABLE user_login_log (
+  "user" text,
+  "session_start" timestamp with time zone
+);
+CREATE ROLE day_worker;
+CREATE ROLE night_worker;
+
+-- the example trigger function
+CREATE OR REPLACE FUNCTION init_session()
+  RETURNS event_trigger SECURITY DEFINER
+  LANGUAGE plpgsql AS
+$$
+DECLARE
+  hour integer = EXTRACT('hour' FROM current_time at time zone 'utc');
+  rec boolean;
+BEGIN
+-- 1. Forbid logging in between 2AM and 4AM.
+IF hour BETWEEN 2 AND 4 THEN
+  RAISE EXCEPTION 'Login forbidden';
+END IF;
+
+-- The checks below cannot be performed on standby servers so
+-- ensure the database is not in recovery before we perform any
+-- operations.
+SELECT pg_is_in_recovery() INTO rec;
+IF rec THEN
+  RETURN;
+END IF;
+
+-- 2. Assign some roles. At daytime, grant the day_worker role, else the
+-- night_worker role.
+IF hour BETWEEN 8 AND 20 THEN
+  EXECUTE 'REVOKE night_worker FROM ' || quote_ident(session_user);
+  EXECUTE 'GRANT day_worker TO ' || quote_ident(session_user);
+ELSE
+  EXECUTE 'REVOKE day_worker FROM ' || quote_ident(session_user);
+  EXECUTE 'GRANT night_worker TO ' || quote_ident(session_user);
+END IF;
+
+-- 3. Initialize user session data
+CREATE TEMP TABLE session_storage (x float, y integer);
+ALTER TABLE session_storage OWNER TO session_user;
+
+-- 4. Log the connection time
+INSERT INTO public.user_login_log VALUES (session_user, current_timestamp);
+
+END;
+$$;
+
+-- trigger definition
+CREATE EVENT TRIGGER init_session
+  ON login
+  EXECUTE FUNCTION init_session();
+ALTER EVENT TRIGGER init_session ENABLE ALWAYS;
+</programlisting>
+    </para>
+  </sect1>
 </chapter>

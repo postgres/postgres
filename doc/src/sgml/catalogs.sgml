@@ -3037,6 +3037,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>dathasloginevt</structfield> <type>bool</type>
+      </para>
+      <para>
+        Indicates that there are login event triggers defined for this database.
+        This flag is used to avoid extra lookups on the
+        <structname>pg_event_trigger</structname> table during each backend
+        startup.  This flag is used internally by <productname>PostgreSQL</productname>
+        and should not be manually altered or read for monitoring purposes.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>datconnlimit</structfield> <type>int4</type>
       </para>
       <para>

@@ -3552,8 +3552,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("ON");
 	/* Complete CREATE EVENT TRIGGER <name> ON with event_type */
 	else if (Matches("CREATE", "EVENT", "TRIGGER", MatchAny, "ON"))
-		COMPLETE_WITH("ddl_command_start", "ddl_command_end", "sql_drop",
-					  "table_rewrite");
+		COMPLETE_WITH("ddl_command_start", "ddl_command_end", "login",
+					  "sql_drop", "table_rewrite");
 
 	/*
 	 * Complete CREATE EVENT TRIGGER <name> ON <event_type>.  EXECUTE FUNCTION
