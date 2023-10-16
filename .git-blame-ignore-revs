@@ -14,6 +14,15 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+e9718b4bd3e4234ffd5a4907a903367fc483c843 # 2023-10-16 09:36:31 +0900
+# Fix code indentation violations in e83d1b0c40cc
+
+01529c7040088db2718628d0814058598152bd39 # 2023-10-16 13:32:41 +1300
+# Fix comment from commit 22655aa231.
+
+b6a77c6a6ccf698787201b001cbbbf9c89fe5715 # 2023-10-11 17:14:31 -0400
+# Reindent comment in GenericXLogFinish().
+
 bc6041b61f6678d32a5cfb70744653cd8f8d01c0 # 2023-08-30 15:56:22 +0900
 # Fix code indentation vioaltion introduced in commit 3c662643c4.
 
