@@ -63,11 +63,14 @@ $node->safe_psql('postgres', q(CREATE ROLE myrole SUPERUSER LOGIN;));
 $node->safe_psql('mydb', 'CREATE EXTENSION worker_spi;');
 
 # Now load the module as a shared library.
+# Update max_worker_processes to make room for enough bgworkers, including
+# parallel workers these may spawn.
 $node->append_conf(
 	'postgresql.conf', q{
 shared_preload_libraries = 'worker_spi'
 worker_spi.database = 'mydb'
 worker_spi.total_workers = 3
+max_worker_processes = 32
 });
 $node->restart;
 
