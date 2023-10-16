@@ -172,9 +172,9 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 			 && tags != NULL)
 		validate_table_rewrite_tags("tag", tags);
 	else if (strcmp(stmt->eventname, "login") == 0 && tags != NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Tag filtering is not supported for login event trigger")));
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Tag filtering is not supported for login event trigger")));
 
 	/*
 	 * Give user a nice error message if an event trigger of the same name
@@ -390,8 +390,8 @@ SetDatatabaseHasLoginEventTriggers(void)
 	 * Use shared lock to prevent a conflit with EventTriggerOnLogin() trying
 	 * to reset pg_database.dathasloginevt flag.  Note, this lock doesn't
 	 * effectively blocks database or other objection.  It's just custom lock
-	 * tag used to prevent multiple backends changing pg_database.dathasloginevt
-	 * flag.
+	 * tag used to prevent multiple backends changing
+	 * pg_database.dathasloginevt flag.
 	 */
 	LockSharedObject(DatabaseRelationId, MyDatabaseId, 0, AccessExclusiveLock);
 
@@ -899,8 +899,8 @@ EventTriggerOnLogin(void)
 
 	StartTransactionCommand();
 	runlist = EventTriggerCommonSetup(NULL,
-										EVT_Login, "login",
-										&trigdata, false);
+									  EVT_Login, "login",
+									  &trigdata, false);
 
 	if (runlist != NIL)
 	{
@@ -917,12 +917,13 @@ EventTriggerOnLogin(void)
 
 		PopActiveSnapshot();
 	}
+
 	/*
-	 * There is no active login event trigger, but our pg_database.dathasloginevt was set.
-	 * Try to unset this flag.  We use the lock to prevent concurrent
-	 * SetDatatabaseHasLoginEventTriggers(), but we don't want to hang the
-	 * connection waiting on the lock.  Thus, we are just trying to acquire
-	 * the lock conditionally.
+	 * There is no active login event trigger, but our
+	 * pg_database.dathasloginevt was set. Try to unset this flag.  We use the
+	 * lock to prevent concurrent SetDatatabaseHasLoginEventTriggers(), but we
+	 * don't want to hang the connection waiting on the lock.  Thus, we are
+	 * just trying to acquire the lock conditionally.
 	 */
 	else if (ConditionalLockSharedObject(DatabaseRelationId, MyDatabaseId,
 										 0, AccessExclusiveLock))
@@ -930,8 +931,8 @@ EventTriggerOnLogin(void)
 		/*
 		 * The lock is held.  Now we need to recheck that login event triggers
 		 * list is still empty.  Once the list is empty, we know that even if
-		 * there is a backend, which concurrently inserts/enables login trigger,
-		 * it will update pg_database.dathasloginevt *afterwards*.
+		 * there is a backend, which concurrently inserts/enables login
+		 * trigger, it will update pg_database.dathasloginevt *afterwards*.
 		 */
 		runlist = EventTriggerCommonSetup(NULL,
 										  EVT_Login, "login",
