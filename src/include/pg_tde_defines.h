@@ -20,7 +20,7 @@
 */
 
 #define ENCRYPTION_DEBUG 0
-#define KEYRING_DEBUG 0
+#define KEYRING_DEBUG 1
 #define TDE_FORK_DEBUG 0
 
 #define pg_tde_fill_tuple heap_fill_tuple

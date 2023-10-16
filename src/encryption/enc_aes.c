@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include <openssl/ssl.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -37,23 +38,21 @@
  */
 
 
-const EVP_CIPHER* cipher;
-const EVP_CIPHER* cipher2;
-int cipher_block_size;
+const EVP_CIPHER* cipher = NULL;
+const EVP_CIPHER* cipher2 = NULL;
+int cipher_block_size = 0;
 
 void AesInit(void)
 {
 	static int initialized = 0;
 
 	if(!initialized) {
-		// Not sure if we need this 2, does postgres already call them somewhere?
 		OpenSSL_add_all_algorithms();
 		ERR_load_crypto_strings();
 	
-		cipher = EVP_get_cipherbyname("aes-128-ctr");
+		cipher = EVP_aes_128_cbc();
 		cipher_block_size = EVP_CIPHER_block_size(cipher); // == buffer size
-														   //
-		cipher2 = EVP_get_cipherbyname("aes-128-ecb");
+		cipher2 = EVP_aes_128_ecb();
 
 		initialized = 1;
 	}
@@ -82,7 +81,6 @@ static void AesRun2(EVP_CIPHER_CTX** ctxPtr, int enc, const unsigned char* key, 
 static void AesRun(int enc, const unsigned char* key, const unsigned char* iv, const unsigned char* in, int in_len, unsigned char* out, int* out_len)
 {
 	EVP_CIPHER_CTX* ctx = NULL;
-	int f_len; // todo: what to do with this?
 	ctx = EVP_CIPHER_CTX_new();
 	EVP_CIPHER_CTX_init(ctx);
 
@@ -97,11 +95,10 @@ static void AesRun(int enc, const unsigned char* key, const unsigned char* iv, c
 		goto cleanup;
 	}
 
-	if(EVP_CipherFinal_ex(ctx, out, &f_len) == 0) {
+	if(EVP_CipherFinal_ex(ctx, out, out_len) == 0) {
 		fprintf(stderr, "ERROR: EVP_CipherFinal_ex failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
 		goto cleanup;
 	}
-	assert(f_len == 0);
 
 cleanup:
  	EVP_CIPHER_CTX_cleanup(ctx);
