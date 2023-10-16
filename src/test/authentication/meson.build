@@ -11,6 +11,7 @@ tests += {
       't/003_peer.pl',
       't/004_file_inclusion.pl',
       't/005_sspi.pl',
+      't/006_login_trigger.pl',
     ],
   },
 }
