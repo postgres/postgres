@@ -94,8 +94,8 @@ $node->start;
 
 # Create temporary roles and log table
 psql_command(
-	$node, 'CREATE ROLE alice WITH LOGIN;
-CREATE ROLE mallory WITH LOGIN;
+	$node, 'CREATE ROLE regress_alice WITH LOGIN;
+CREATE ROLE regress_mallory WITH LOGIN;
 CREATE TABLE user_logins(id serial, who text);
 GRANT SELECT ON user_logins TO public;
 ', 0, 'create tmp objects',
@@ -109,7 +109,7 @@ psql_command(
 	'CREATE FUNCTION on_login_proc() RETURNS event_trigger AS $$
 BEGIN
   INSERT INTO user_logins (who) VALUES (SESSION_USER);
-  IF SESSION_USER = \'mallory\' THEN
+  IF SESSION_USER = \'regress_mallory\' THEN
     RAISE EXCEPTION \'Hello %! You are NOT welcome here!\', SESSION_USER;
   END IF;
   RAISE NOTICE \'Hello %! You are welcome!\', SESSION_USER;
@@ -140,20 +140,20 @@ psql_command(
 
 # Try to log as allowed Alice and disallowed Mallory (two times)
 psql_command(
-	$node, 'SELECT 1;', 0, 'try alice',
-	connstr => 'user=alice',
+	$node, 'SELECT 1;', 0, 'try regress_alice',
+	connstr => 'user=regress_alice',
 	log_exact => '1',
 	err_like => [qr/You are welcome/],
 	err_unlike => [qr/You are NOT welcome/]);
 psql_command(
-	$node, 'SELECT 1;', 2, 'try mallory',
-	connstr => 'user=mallory',
+	$node, 'SELECT 1;', 2, 'try regress_mallory',
+	connstr => 'user=regress_mallory',
 	log_exact => '',
 	err_like => [qr/You are NOT welcome/],
 	err_unlike => [qr/You are welcome/]);
 psql_command(
-	$node, 'SELECT 1;', 2, 'try mallory',
-	connstr => 'user=mallory',
+	$node, 'SELECT 1;', 2, 'try regress_mallory',
+	connstr => 'user=regress_mallory',
 	log_exact => '',
 	err_like => [qr/You are NOT welcome/],
 	err_unlike => [qr/You are welcome/]);
@@ -161,8 +161,8 @@ psql_command(
 # Check that Alice's login record is here, while the Mallory's one is not
 psql_command(
 	$node, 'SELECT * FROM user_logins;', 0, 'select *',
-	log_like => [qr/3\|alice/],
-	log_unlike => [qr/mallory/],
+	log_like => [qr/3\|regress_alice/],
+	log_unlike => [qr/regress_mallory/],
 	err_like => [qr/You are welcome/]);
 
 # Check total number of successful logins so far
@@ -180,8 +180,8 @@ psql_command(
 psql_command(
 	$node, 'DROP TABLE user_logins;
 DROP FUNCTION on_login_proc;
-DROP ROLE mallory;
-DROP ROLE alice;
+DROP ROLE regress_mallory;
+DROP ROLE regress_alice;
 ', 0, 'cleanup',
 	log_exact => '',
 	err_exact => '');
