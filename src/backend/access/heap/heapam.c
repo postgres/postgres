@@ -1794,10 +1794,10 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
 	bistate->current_buf = InvalidBuffer;
 
 	/*
-	 * Despite the name, we also reset bulk relation extension
-	 * state. Otherwise we can end up erroring out due to looking for free
-	 * space in ->next_free of one partition, even though ->next_free was set
-	 * when extending another partition. It's obviously also could be bad for
+	 * Despite the name, we also reset bulk relation extension state.
+	 * Otherwise we can end up erroring out due to looking for free space in
+	 * ->next_free of one partition, even though ->next_free was set when
+	 * extending another partition. It could obviously also be bad for
 	 * efficiency to look at existing blocks at offsets from another
 	 * partition, even if we don't error out.
 	 */
