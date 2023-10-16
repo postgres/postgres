@@ -55,11 +55,21 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 	char		ControlFilePath[MAXPGPATH];
 	pg_crc32c	crc;
 	int			r;
+#ifdef FRONTEND
+	pg_crc32c	last_crc;
+	int			retries = 0;
+#endif
 
 	AssertArg(crc_ok_p);
 
 	ControlFile = palloc(sizeof(ControlFileData));
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
+
+#ifdef FRONTEND
+	INIT_CRC32C(last_crc);
+
+retry:
+#endif
 
 #ifndef FRONTEND
 	if ((fd = OpenTransientFile(ControlFilePath, O_RDONLY | PG_BINARY)) == -1)
@@ -127,6 +137,26 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 	FIN_CRC32C(crc);
 
 	*crc_ok_p = EQ_CRC32C(crc, ControlFile->crc);
+
+#ifdef FRONTEND
+
+	/*
+	 * If the server was writing at the same time, it is possible that we read
+	 * partially updated contents on some systems.  If the CRC doesn't match,
+	 * retry a limited number of times until we compute the same bad CRC twice
+	 * in a row with a short sleep in between.  Then the failure is unlikely
+	 * to be due to a concurrent write.
+	 */
+	if (!*crc_ok_p &&
+		(retries == 0 || !EQ_CRC32C(crc, last_crc)) &&
+		retries < 10)
+	{
+		retries++;
+		last_crc = crc;
+		pg_usleep(10000);
+		goto retry;
+	}
+#endif
 
 	/* Make sure the control file is valid byte order. */
 	if (ControlFile->pg_control_version % 65536 == 0 &&
