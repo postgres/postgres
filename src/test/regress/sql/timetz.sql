@@ -84,3 +84,23 @@ SELECT date_part('microsecond', TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-
 SELECT date_part('millisecond', TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
 SELECT date_part('second',      TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
 SELECT date_part('epoch',       TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+
+--
+-- Test timetz_zone, timetz_izone
+--
+BEGIN;
+SET LOCAL TimeZone TO 'UTC';
+CREATE VIEW timetz_local_view AS
+  SELECT f1 AS dat,
+       f1 AT TIME ZONE current_setting('TimeZone') AS dat_at_tz,
+       f1 AT TIME ZONE INTERVAL '00:00' AS dat_at_int
+  FROM TIMETZ_TBL
+  ORDER BY f1;
+SELECT pg_get_viewdef('timetz_local_view', true);
+TABLE timetz_local_view;
+SELECT f1 AS dat,
+       f1 AT TIME ZONE 'UTC+10' AS dat_at_tz,
+       f1 AT TIME ZONE INTERVAL '-10:00' AS dat_at_int
+  FROM TIMETZ_TBL
+  ORDER BY f1;
+ROLLBACK;
