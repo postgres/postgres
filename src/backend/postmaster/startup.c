@@ -132,7 +132,20 @@ StartupProcShutdownHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	if (in_restore_command)
-		proc_exit(1);
+	{
+		/*
+		 * If we are in a child process (e.g., forked by system() in
+		 * RestoreArchivedFile()), we don't want to call any exit callbacks.
+		 * The parent will take care of that.
+		 */
+		if (MyProcPid == (int) getpid())
+			proc_exit(1);
+		else
+		{
+			write_stderr_signal_safe("StartupProcShutdownHandler() called in child process\n");
+			_exit(1);
+		}
+	}
 	else
 		shutdown_requested = true;
 	WakeupRecovery();
