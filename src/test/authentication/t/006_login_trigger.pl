@@ -10,6 +10,11 @@ use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
+if (!$use_unix_sockets)
+{
+	plan skip_all =>
+	  "authentication tests cannot run without Unix-domain sockets";
+}
 
 # Execute a psql command and compare its output towards given regexps
 sub psql_command
