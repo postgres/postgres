@@ -55,3 +55,23 @@ SELECT '25:00:00 PDT'::timetz;  -- not allowed
 -- where we do mixed-type arithmetic. - thomas 2000-12-02
 
 SELECT f1 + time with time zone '00:01' AS "Illegal" FROM TIMETZ_TBL;
+
+--
+-- Test timetz_zone, timetz_izone
+--
+BEGIN;
+SET LOCAL TimeZone TO 'UTC';
+CREATE VIEW timetz_local_view AS
+  SELECT f1 AS dat,
+       f1 AT TIME ZONE current_setting('TimeZone') AS dat_at_tz,
+       f1 AT TIME ZONE INTERVAL '00:00' AS dat_at_int
+  FROM TIMETZ_TBL
+  ORDER BY f1;
+SELECT pg_get_viewdef('timetz_local_view', true);
+TABLE timetz_local_view;
+SELECT f1 AS dat,
+       f1 AT TIME ZONE 'UTC+10' AS dat_at_tz,
+       f1 AT TIME ZONE INTERVAL '-10:00' AS dat_at_int
+  FROM TIMETZ_TBL
+  ORDER BY f1;
+ROLLBACK;
