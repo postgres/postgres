@@ -656,7 +656,7 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
 
 <programlisting>
 WARNING:  database "mydb" must be vacuumed within 39985967 transactions
-HINT:  To avoid a database shutdown, execute a database-wide VACUUM in that database.
+HINT:  To avoid XID assignment failures, execute a database-wide VACUUM in that database.
 </programlisting>
 
     (A manual <command>VACUUM</command> should fix the problem, as suggested by the
@@ -667,16 +667,17 @@ HINT:  To avoid a database shutdown, execute a database-wide VACUUM in that data
     there are fewer than three million transactions left until wraparound:
 
 <programlisting>
-ERROR:  database is not accepting commands to avoid wraparound data loss in database "mydb"
-HINT:  Stop the postmaster and vacuum that database in single-user mode.
+ERROR:  database is not accepting commands that assign new XIDs to avoid wraparound data loss in database "mydb"
+HINT:  Execute a database-wide VACUUM in that database.
 </programlisting>
 
     In this condition any transactions already in progress can continue,
     but only read-only transactions can be started. Operations that
     modify database records or truncate relations will fail.
     The <command>VACUUM</command> command can still be run normally.
-    Contrary to what the hint states, it is not necessary or desirable to stop the
-    postmaster or enter single user-mode in order to restore normal operation.
+    Note that, contrary to what was sometimes recommended in earlier releases,
+    it is not necessary or desirable to stop the postmaster or enter single
+    user-mode in order to restore normal operation.
     Instead, follow these steps:
 
     <orderedlist>
