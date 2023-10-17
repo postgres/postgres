@@ -108,6 +108,9 @@ GetSubscription(Oid subid, bool missing_ok)
 								   Anum_pg_subscription_suborigin);
 	sub->origin = TextDatumGetCString(datum);
 
+	/* Is the subscription owner a superuser? */
+	sub->ownersuperuser = superuser_arg(sub->owner);
+
 	ReleaseSysCache(tup);
 
 	return sub;
