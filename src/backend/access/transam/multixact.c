@@ -1020,14 +1020,14 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 			if (oldest_datname)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("database is not accepting commands that generate new MultiXactIds to avoid wraparound data loss in database \"%s\"",
+						 errmsg("database is not accepting commands that assign new MultiXactIds to avoid wraparound data loss in database \"%s\"",
 								oldest_datname),
 						 errhint("Execute a database-wide VACUUM in that database.\n"
 								 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("database is not accepting commands that generate new MultiXactIds to avoid wraparound data loss in database with OID %u",
+						 errmsg("database is not accepting commands that assign new MultiXactIds to avoid wraparound data loss in database with OID %u",
 								oldest_datoid),
 						 errhint("Execute a database-wide VACUUM in that database.\n"
 								 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
