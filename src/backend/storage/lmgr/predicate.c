@@ -1004,7 +1004,7 @@ SerialSetActiveSerXmin(TransactionId xid)
 void
 CheckPointPredicate(void)
 {
-	int			tailPage;
+	int			truncateCutoffPage;
 
 	LWLockAcquire(SerialSLRULock, LW_EXCLUSIVE);
 
@@ -1017,8 +1017,24 @@ CheckPointPredicate(void)
 
 	if (TransactionIdIsValid(serialControl->tailXid))
 	{
-		/* We can truncate the SLRU up to the page containing tailXid */
+		int			tailPage;
+
 		tailPage = SerialPage(serialControl->tailXid);
+
+		/*
+		 * It is possible for the tailXid to be ahead of the headXid.  This
+		 * occurs if we checkpoint while there are in-progress serializable
+		 * transaction(s) advancing the tail but we are yet to summarize the
+		 * transactions.  In this case, we cutoff up to the headPage and the
+		 * next summary will advance the headXid.
+		 */
+		if (SerialPagePrecedesLogically(tailPage, serialControl->headPage))
+		{
+			/* We can truncate the SLRU up to the page containing tailXid */
+			truncateCutoffPage = tailPage;
+		}
+		else
+			truncateCutoffPage = serialControl->headPage;
 	}
 	else
 	{
@@ -1051,14 +1067,14 @@ CheckPointPredicate(void)
 		 *   transaction instigating the summarize fails in
 		 *   SimpleLruReadPage().
 		 */
-		tailPage = serialControl->headPage;
+		truncateCutoffPage = serialControl->headPage;
 		serialControl->headPage = -1;
 	}
 
 	LWLockRelease(SerialSLRULock);
 
 	/* Truncate away pages that are no longer required */
-	SimpleLruTruncate(SerialSlruCtl, tailPage);
+	SimpleLruTruncate(SerialSlruCtl, truncateCutoffPage);
 
 	/*
 	 * Write dirty SLRU pages to disk
