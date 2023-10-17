@@ -3734,6 +3734,34 @@ write_stderr(const char *fmt,...)
 
 
 /*
+ * Write a message to STDERR using only async-signal-safe functions.  This can
+ * be used to safely emit a message from a signal handler.
+ *
+ * TODO: It is likely possible to safely do a limited amount of string
+ * interpolation (e.g., %s and %d), but that is not presently supported.
+ */
+void
+write_stderr_signal_safe(const char *str)
+{
+	int			nwritten = 0;
+	int			ntotal = strlen(str);
+
+	while (nwritten < ntotal)
+	{
+		int			rc;
+
+		rc = write(STDERR_FILENO, str + nwritten, ntotal - nwritten);
+
+		/* Just give up on error.  There isn't much else we can do. */
+		if (rc == -1)
+			return;
+
+		nwritten += rc;
+	}
+}
+
+
+/*
  * Adjust the level of a recovery-related message per trace_recovery_messages.
  *
  * The argument is the default log level of the message, eg, DEBUG2.  (This
