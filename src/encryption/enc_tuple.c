@@ -9,39 +9,53 @@
 #include "storage/bufmgr.h"
 #include "keyring/keyring_api.h"
 
-// ================================================================
-// ACTUAL ENCRYPTION/DECRYPTION FUNCTIONS
-// ================================================================
+#define AES_BLOCK_SIZE 16
 
-// t_data and out have to be different addresses without overlap!
-// The only difference between enc and dec is how we calculate offsetInPage
-void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to, RelKeysData* keys)
+/* ================================================================
+ * ACTUAL ENCRYPTION/DECRYPTION FUNCTIONS
+ * ================================================================
+ *
+ * data and out have to be different addresses without overlap!
+ * start_offset: is the absolute location of start of data in the file
+ * The only difference between enc and dec is how we calculate offsetInPage
+ */
+
+void
+pg_tde_crypt(uint64_t start_offset, const char* data, uint32 data_len, char* out, RelKeysData* keys, const char* context)
 {
-	const uint64_t offsetInFile = (bn * BLCKSZ) + offsetInPage;
+    const uint64_t aes_start_block = start_offset / AES_BLOCK_SIZE;
+    const uint64_t aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE -1)) / AES_BLOCK_SIZE;
+    const uint64_t aes_block_no = start_offset % AES_BLOCK_SIZE;
+    unsigned char* encKey;
 
-	const uint64_t aesBlockNumber1 = offsetInFile / 16;
-	const uint64_t aesBlockNumber2 = (offsetInFile + (to-from) + 15) / 16;
-	const uint64_t aesBlockOffset = offsetInFile % 16;
+    ereport(DEBUG2,
+        (errmsg("%s: start_offset:%llu, data_len: %u data:%p",context?context:"", start_offset,data_len, data)));
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvla"
-	unsigned char encKey[16 * (aesBlockNumber2 - aesBlockNumber1 + 1)];
-#pragma GCC diagnostic pop
+    encKey = palloc(AES_BLOCK_SIZE * (aes_end_block - aes_start_block + 1));
 
-	// TODO: verify key length!
-	Aes128EncryptedZeroBlocks2(&(keys->internal_key[0].ctx), keys->internal_key[0].key, aesBlockNumber1, aesBlockNumber2, encKey);
+    // TODO: verify key length!
+    Aes128EncryptedZeroBlocks2(&(keys->internal_key[0].ctx), keys->internal_key[0].key, aes_start_block, aes_end_block, encKey);
 
 #if ENCRYPTION_DEBUG
-	fprintf(stderr, " ---- (Oid: %i, Offset: %lu Len: %u, AesBlock: %lu, BlockOffset: %lu) ----\n", tableOid, offsetInPage, to - from, aesBlockNumber1, aesBlockOffset);
+    /* While in active development, We are emmiting a LOG message for debug data when ENCRYPTION_DEBUG is enabled.*/
+    ereport(LOG,
+        (errmsg("%s: Start offset: %llu Data_Len: %u, AesBlock: %llu, BlockOffset: %llu", context?context:"", start_offset, data_len, aes_start_block, aes_block_no)));
 #endif
-	for(unsigned i = 0; i < to - from; ++i) {
-		const char v = ((char*)(t_data))[i + from];
-		char realKey = encKey[aesBlockOffset + i];
+
+    for(unsigned i = 0; i < data_len; ++i)
+    {
 #if ENCRYPTION_DEBUG > 1
-	    fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", v & 0xFF, (v ^ realKey) & 0xFF);
+        fprintf(stderr, " >> 0x%02hhX 0x%02hhX\n", v & 0xFF, (v ^ encKey[aes_block_no + i]) & 0xFF);
 #endif
-		out[i + from] = v ^ realKey;
-	}
+        out[i] = data[i] ^ encKey[aes_block_no + i];
+    }
+    pfree(encKey);
+}
+
+void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInPage, char* t_data, char* out, unsigned from, unsigned to, RelKeysData* keys)
+{
+    const uint64_t offsetInFile = (bn * BLCKSZ) + offsetInPage;
+    pg_tde_crypt(offsetInFile, t_data + from, (to - from), out + from, keys, "CryptTupInternal");
 }
 
 void PGTdeDecryptTupInternal(Oid tableOid, BlockNumber bn, Page page, HeapTupleHeader t_data, char* out, unsigned from, unsigned to, RelKeysData* keys)
@@ -122,27 +136,27 @@ PGTdePageAddItemExtended(RelFileLocator rel,
 }
 
 TupleTableSlot *
-PGTdeExecStoreBufferHeapTuple(RelFileLocator rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
+PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
 {
-	Page pageHeader;
-
-	RelKeysData *keys = GetRelationKeys(rel);
-
-	pageHeader = BufferGetPage(buffer);
-	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple, keys);
-
+    if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+    {
+        Page pageHeader;
+        RelKeysData *keys = GetRelationKeys(rel->rd_locator);
+        pageHeader = BufferGetPage(buffer);
+        PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple, keys);
+    }
 	return  ExecStoreBufferHeapTuple(tuple, slot, buffer);
 }
 
 TupleTableSlot *
-PGTdeExecStorePinnedBufferHeapTuple(RelFileLocator rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
+PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
 {
-	Page pageHeader;
-
-	RelKeysData *keys = GetRelationKeys(rel);
-
-	pageHeader = BufferGetPage(buffer);
-	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple, keys);
-
+    if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+    {
+        Page pageHeader;
+        RelKeysData *keys = GetRelationKeys(rel->rd_locator);
+        pageHeader = BufferGetPage(buffer);
+        PGTdeDecryptTupData(BufferGetBlockNumber(buffer), pageHeader, tuple, keys);
+    }
 	return  ExecStorePinnedBufferHeapTuple(tuple, slot, buffer);
 }

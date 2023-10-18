@@ -23,7 +23,17 @@ PGTdePageAddItemExtended(RelFileLocator rel, Oid oid, BlockNumber bn, Page page,
 					int flags);
 
 /* Wrapper functions for reading decrypted tuple into a given slot */
-TupleTableSlot *
-PGTdeExecStoreBufferHeapTuple(RelFileLocator rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
-TupleTableSlot *
-PGTdeExecStorePinnedBufferHeapTuple(RelFileLocator rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
+extern TupleTableSlot *
+PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
+extern TupleTableSlot *
+PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
+
+extern void
+pg_tde_crypt(uint64_t start_offset, const char* data, uint32 data_len, char* out, RelKeysData* keys, const char* context);
+
+#define PG_TDE_ENCRYPT_DATA(_start_offset, _data, _data_len, _out, _keys) \
+	pg_tde_crypt(_start_offset, _data, _data_len, _out, _keys, "ENCRYPT")
+
+#define PG_TDE_DECRYPT_DATA(_start_offset, _data, _data_len, _out, _keys) \
+	pg_tde_crypt(_start_offset, _data, _data_len, _out, _keys, "DECRYPT")
+

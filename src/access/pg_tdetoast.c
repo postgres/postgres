@@ -33,8 +33,11 @@
 #include "access/toast_helper.h"
 #include "access/toast_internals.h"
 #include "utils/fmgroids.h"
+#include "encryption/enc_tuple.h"
 
 
+static void
+pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int options);
 /* ----------
  * pg_tde_toast_delete -
  *
@@ -216,7 +219,7 @@ pg_tde_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		 */
 		if (toast_attr[biggest_attno].tai_size > maxDataLen &&
 			rel->rd_rel->reltoastrelid != InvalidOid)
-			toast_tuple_externalize(&ttc, biggest_attno, options);
+			pg_tde_toast_tuple_externalize(&ttc, biggest_attno, options);
 	}
 
 	/*
@@ -233,7 +236,7 @@ pg_tde_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		biggest_attno = toast_tuple_find_biggest_attribute(&ttc, false, false);
 		if (biggest_attno < 0)
 			break;
-		toast_tuple_externalize(&ttc, biggest_attno, options);
+		pg_tde_toast_tuple_externalize(&ttc, biggest_attno, options);
 	}
 
 	/*
@@ -269,7 +272,7 @@ pg_tde_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		if (biggest_attno < 0)
 			break;
 
-		toast_tuple_externalize(&ttc, biggest_attno, options);
+		pg_tde_toast_tuple_externalize(&ttc, biggest_attno, options);
 	}
 
 	/*
@@ -642,6 +645,9 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	int			num_indexes;
 	int			validIndex;
 	SnapshotData SnapshotToast;
+	char		decrypted_data[TOAST_MAX_CHUNK_SIZE];
+    RelKeysData *keys = GetRelationKeys(toastrel->rd_locator);
+
 
 	/* Look for the valid index of toast relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -688,6 +694,7 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 
 	/* Prepare for scan */
 	init_toast_snapshot(&SnapshotToast);
+
 	toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
 										   &SnapshotToast, nscankeys, toastkey);
 
@@ -771,9 +778,15 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 		if (curchunk == endchunk)
 			chcpyend = (sliceoffset + slicelength - 1) % TOAST_MAX_CHUNK_SIZE;
 
+		/* Decrypt the data chunk by chunk here */
+		PG_TDE_DECRYPT_DATA((curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + chcpystrt,
+					chunkdata + chcpystrt,
+					(chcpyend - chcpystrt) + 1,
+					decrypted_data, keys);
+
 		memcpy(VARDATA(result) +
 			   (curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + chcpystrt,
-			   chunkdata + chcpystrt,
+			   decrypted_data, /*chunkdata + chcpystrt,*/
 			   (chcpyend - chcpystrt) + 1);
 
 		expectedchunk++;
@@ -792,4 +805,50 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	/* End scan and close indexes. */
 	systable_endscan_ordered(toastscan);
 	toast_close_indexes(toastidxs, num_indexes, AccessShareLock);
+}
+
+/* pg_tde extension */
+static void
+pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int options)
+{
+	Datum	   *value = &ttc->ttc_values[attribute];
+	int32		data_size =0;
+	Pointer		dval = DatumGetPointer(*value);
+	char*		data_p;
+	char*		encrypted_data;
+    Relation    toastrel;
+    RelKeysData *keys;
+
+    /* Problem here is we want to encrypt the chunk using the toast relation key
+     * that is treated as a seperate relation. So we need to get the encryption keys
+     * for the toast table. Which is a performance penalty.
+     * TODO: come up with a better solution
+     */
+    toastrel = table_open(ttc->ttc_rel->rd_rel->reltoastrelid, NoLock);
+    keys = GetRelationKeys(toastrel->rd_locator);
+    table_close(toastrel, NoLock);
+    
+    if (VARATT_IS_SHORT(dval))
+	{
+		data_p = VARDATA_SHORT(dval);
+		data_size = VARSIZE_SHORT(dval) - VARHDRSZ_SHORT;
+	}
+	else if (VARATT_IS_COMPRESSED(dval))
+	{
+		data_p = VARDATA(dval);
+		data_size = VARSIZE(dval) - VARHDRSZ;
+	}
+	else
+	{
+		data_p = VARDATA(dval);
+		data_size = VARSIZE(dval) - VARHDRSZ;
+	}
+	/* Now encrypt the data and replace it in ttc */
+	encrypted_data = (char *)palloc(data_size);
+	PG_TDE_ENCRYPT_DATA(0, data_p, data_size, encrypted_data, keys);
+
+	memcpy(VARDATA(dval), encrypted_data, data_size);
+	pfree(encrypted_data);
+
+	toast_tuple_externalize(ttc, attribute, options);
 }
