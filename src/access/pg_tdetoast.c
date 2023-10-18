@@ -833,11 +833,6 @@ pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int option
 		data_p = VARDATA_SHORT(dval);
 		data_size = VARSIZE_SHORT(dval) - VARHDRSZ_SHORT;
 	}
-	else if (VARATT_IS_COMPRESSED(dval))
-	{
-		data_p = VARDATA(dval);
-		data_size = VARSIZE(dval) - VARHDRSZ;
-	}
 	else
 	{
 		data_p = VARDATA(dval);
