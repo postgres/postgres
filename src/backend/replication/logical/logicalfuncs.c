@@ -362,10 +362,11 @@ pg_logical_emit_message_bytea(PG_FUNCTION_ARGS)
 	bool		transactional = PG_GETARG_BOOL(0);
 	char	   *prefix = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bytea	   *data = PG_GETARG_BYTEA_PP(2);
+	bool		flush = PG_GETARG_BOOL(3);
 	XLogRecPtr	lsn;
 
 	lsn = LogLogicalMessage(prefix, VARDATA_ANY(data), VARSIZE_ANY_EXHDR(data),
-							transactional);
+							transactional, flush);
 	PG_RETURN_LSN(lsn);
 }
 

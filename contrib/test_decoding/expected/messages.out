@@ -6,13 +6,14 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
  init
 (1 row)
 
-SELECT 'msg1' FROM pg_logical_emit_message(true, 'test', 'msg1');
+-- These two cover the path for the flush variant.
+SELECT 'msg1' FROM pg_logical_emit_message(true, 'test', 'msg1', true);
  ?column? 
 ----------
  msg1
 (1 row)
 
-SELECT 'msg2' FROM pg_logical_emit_message(false, 'test', 'msg2');
+SELECT 'msg2' FROM pg_logical_emit_message(false, 'test', 'msg2', true);
  ?column? 
 ----------
  msg2

@@ -27740,11 +27740,11 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         <indexterm>
          <primary>pg_logical_emit_message</primary>
         </indexterm>
-        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>text</type> )
+        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>text</type> [, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal>] )
         <returnvalue>pg_lsn</returnvalue>
        </para>
        <para role="func_signature">
-        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>bytea</type> )
+        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>bytea</type> [, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal>] )
         <returnvalue>pg_lsn</returnvalue>
        </para>
        <para>
@@ -27758,6 +27758,11 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         recognize messages that are interesting for them.
         The <parameter>content</parameter> parameter is the content of the
         message, given either in text or binary form.
+        The <parameter>flush</parameter> parameter (default set to
+        <literal>false</literal>) controls if the message is immediately
+        flushed to WAL or not. <parameter>flush</parameter> has no effect
+        with <parameter>transactional</parameter>, as the message's WAL
+        record is flushed along with its transaction.
        </para></entry>
       </row>
      </tbody>

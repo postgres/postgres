@@ -11167,11 +11167,11 @@
   prosrc => 'pg_replication_slot_advance' },
 { oid => '3577', descr => 'emit a textual logical decoding message',
   proname => 'pg_logical_emit_message', provolatile => 'v', proparallel => 'u',
-  prorettype => 'pg_lsn', proargtypes => 'bool text text',
+  prorettype => 'pg_lsn', proargtypes => 'bool text text bool',
   prosrc => 'pg_logical_emit_message_text' },
 { oid => '3578', descr => 'emit a binary logical decoding message',
   proname => 'pg_logical_emit_message', provolatile => 'v', proparallel => 'u',
-  prorettype => 'pg_lsn', proargtypes => 'bool text bytea',
+  prorettype => 'pg_lsn', proargtypes => 'bool text bytea bool',
   prosrc => 'pg_logical_emit_message_bytea' },
 
 # event triggers

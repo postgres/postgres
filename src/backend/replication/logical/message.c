@@ -44,9 +44,10 @@
  */
 XLogRecPtr
 LogLogicalMessage(const char *prefix, const char *message, size_t size,
-				  bool transactional)
+				  bool transactional, bool flush)
 {
 	xl_logical_message xlrec;
+	XLogRecPtr	lsn;
 
 	/*
 	 * Force xid to be allocated if we're emitting a transactional message.
@@ -71,7 +72,15 @@ LogLogicalMessage(const char *prefix, const char *message, size_t size,
 	/* allow origin filtering */
 	XLogSetRecordFlags(XLOG_INCLUDE_ORIGIN);
 
-	return XLogInsert(RM_LOGICALMSG_ID, XLOG_LOGICAL_MESSAGE);
+	lsn = XLogInsert(RM_LOGICALMSG_ID, XLOG_LOGICAL_MESSAGE);
+
+	/*
+	 * Make sure that the message hits disk before leaving if emitting a
+	 * non-transactional message when flush is requested.
+	 */
+	if (!transactional && flush)
+		XLogFlush(lsn);
+	return lsn;
 }
 
 /*
