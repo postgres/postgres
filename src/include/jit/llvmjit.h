@@ -67,6 +67,8 @@ extern LLVMTypeRef TypeStorageBool;
 extern LLVMTypeRef StructNullableDatum;
 extern LLVMTypeRef StructTupleDescData;
 extern LLVMTypeRef StructHeapTupleData;
+extern LLVMTypeRef StructHeapTupleHeaderData;
+extern LLVMTypeRef StructMinimalTupleData;
 extern LLVMTypeRef StructTupleTableSlot;
 extern LLVMTypeRef StructHeapTupleTableSlot;
 extern LLVMTypeRef StructMinimalTupleTableSlot;
@@ -80,6 +82,8 @@ extern LLVMTypeRef StructAggStatePerTransData;
 extern LLVMTypeRef StructAggStatePerGroupData;
 
 extern LLVMValueRef AttributeTemplate;
+extern LLVMValueRef ExecEvalBoolSubroutineTemplate;
+extern LLVMValueRef ExecEvalSubroutineTemplate;
 
 
 extern void llvm_enter_fatal_on_oom(void);
@@ -133,6 +137,8 @@ extern char *LLVMGetHostCPUFeatures(void);
 #endif
 
 extern unsigned LLVMGetAttributeCountAtIndexPG(LLVMValueRef F, uint32 Idx);
+extern LLVMTypeRef LLVMGetFunctionReturnType(LLVMValueRef r);
+extern LLVMTypeRef LLVMGetFunctionType(LLVMValueRef r);
 
 #ifdef __cplusplus
 } /* extern "C" */
