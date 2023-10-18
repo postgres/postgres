@@ -382,7 +382,7 @@ command_ok(
 	],
 	'run of pg_upgrade --check for new instance');
 ok(!-d $newnode->data_dir . "/pg_upgrade_output.d",
-	"pg_upgrade_output.d/ not removed after pg_upgrade --check success");
+	"pg_upgrade_output.d/ removed after pg_upgrade --check success");
 
 # Actual run, pg_upgrade_output.d is removed at the end.
 command_ok(
