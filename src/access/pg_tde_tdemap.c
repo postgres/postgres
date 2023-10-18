@@ -18,6 +18,8 @@
 #include "utils/memutils.h"
 
 #include "access/pg_tde_tdemap.h"
+#include "encryption/enc_aes.h"
+#include "keyring/keyring_api.h"
 
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -33,8 +35,10 @@ pg_tde_delete_key_fork(Relation rel)
 	/* TODO: delete related internal keys from cache */
 	char    *key_file_path = pg_tde_get_key_file_path(&rel->rd_locator);
     if (!key_file_path)
+	{
         ereport(ERROR,
                 (errmsg("failed to get key file path")));
+	}
 	RegisterFileForDeletion(key_file_path, true);
 	pfree(key_file_path);
 }
@@ -52,26 +56,48 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 	File		file = -1;
 	InternalKey int_key = {0};
 	RelKeysData *data;
+	unsigned char        dataEnc[1024];
 	size_t 		sz;
+	int			encsz;
+	const keyInfo 	*master_key_info;
+	// TODO: use proper iv stored in the file!
+	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+	master_key_info = keyringGetLatestKey(MasterKeyName);
+	if(master_key_info == NULL)
+	{
+		master_key_info = keyringGenerateKey(MasterKeyName, 16);
+	}
+	if(master_key_info == NULL)
+	{
+        ereport(ERROR,
+                (errmsg("failed to retrieve master key")));
+	}
 
     key_file_path = pg_tde_get_key_file_path(newrlocator);
     if (!key_file_path)
+	{
         ereport(ERROR,
                 (errmsg("failed to get key file path")));
+	}
 
 	file = PathNameOpenFile(key_file_path, O_RDWR | O_CREAT | PG_BINARY);
 	if (file < 0)
+	{
 		ereport(FATAL,
         		(errcode_for_file_access(),
         		errmsg("could not open tde key file \"%s\": %m",
 				  		key_file_path)));
+	}
 
 
 	if (!RAND_bytes(int_key.key, INTERNAL_KEY_LEN))
+	{
 		ereport(FATAL,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("could not generate internal key for relation \"%s\": %s",
                 		RelationGetRelationName(rel), ERR_error_string(ERR_get_error(), NULL))));
+	}
 
 #if TDE_FORK_DEBUG
 	ereport(DEBUG2,
@@ -87,14 +113,19 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 	data->internal_keys_len = 1;
 
 	sz = SizeOfRelKeysData(data->internal_keys_len);
-	/* 
-	 * TODO: internal key(s) should be encrypted
-	 */
-	if (FileWrite(file, data, sz, 0, WAIT_EVENT_DATA_FILE_WRITE) != sz)
+
+	memcpy(dataEnc, data, sz);
+	AesEncrypt(master_key_info->data.data, iv, (unsigned char*)data + SizeOfRelKeysDataHeader, 16, dataEnc + SizeOfRelKeysDataHeader, &encsz);
+
+	Assert(encsz == sz - SizeOfRelKeysDataHeader);
+
+	if (FileWrite(file, dataEnc, sz, 0, WAIT_EVENT_DATA_FILE_WRITE) != sz)
+	{
     	ereport(FATAL,
 				(errcode_for_file_access(),
                 errmsg("could not write key data to file \"%s\": %m",
                 		key_file_path)));
+	}
 
 	/* Register the file for delete in case transaction Aborts */
 	RegisterFileForDeletion(key_file_path, false);
@@ -120,15 +151,19 @@ pg_tde_get_keys_from_fork(const RelFileLocator *rlocator)
 
     key_file_path = pg_tde_get_key_file_path(rlocator);
     if (!key_file_path)
+	{
         ereport(ERROR,
                 (errmsg("failed to get key file path")));
+	}
 
 	file = PathNameOpenFile(key_file_path, O_RDONLY | PG_BINARY);
 	if (file < 0)
+	{
 		ereport(FATAL,
                 (errcode_for_file_access(),
                 errmsg("could not open tde key file \"%s\": %m",
 						key_file_path)));
+	}
 
 	
 	sz = (Size) FileSize(file);
@@ -145,10 +180,36 @@ pg_tde_get_keys_from_fork(const RelFileLocator *rlocator)
 						key_file_path)));
 	else if (nbytes < SizeOfRelKeysData(1) || 
 				(nbytes - SizeOfRelKeysDataHeader) % sizeof(InternalKey) != 0)
+	{
 		ereport(FATAL,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				errmsg("corrupted key data in file \"%s\"",
 						key_file_path)));
+	}
+
+	{
+		const keyInfo 	*master_key_info;
+		unsigned char        dataDec[1024];
+		int			encsz;
+		// TODO: use proper iv stored in the file!
+		unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+		master_key_info = keyringGetLatestKey(keys->master_key_name);
+		if(master_key_info == NULL)
+		{
+			master_key_info = keyringGenerateKey(keys->master_key_name, 16);
+		}
+		if(master_key_info == NULL)
+		{
+			ereport(ERROR,
+					(errmsg("failed to retrieve master key")));
+		}
+
+		AesDecrypt(master_key_info->data.data, iv, (unsigned char*) keys->internal_key , 16, dataDec, &encsz);
+		memcpy(keys->internal_key, dataDec, encsz);
+
+	}
+
 
 #if TDE_FORK_DEBUG
 	for (Size i = 0; i < keys->internal_keys_len; i++) 
@@ -175,8 +236,6 @@ RelKeysData *
 GetRelationKeys(RelFileLocator rel)
 {
 	RelKeys		*curr;
-	RelKeys		*prev = NULL;
-	RelKeys		*new;
 	RelKeysData *keys;
 
 	Oid rel_id = rel.relNumber;
@@ -192,7 +251,6 @@ GetRelationKeys(RelFileLocator rel)
 #endif
 			return curr->keys;
 		}
-		prev = curr;
 	}
 
 	keys = pg_tde_get_keys_from_fork(&rel);

@@ -54,11 +54,14 @@ jobs:
           sudo make USE_PGXS=1 install
         working-directory: src/postgres-tde-ext
 
-      - name: Start pg_stat_monitor_tests
+      - name: Start postgres-tde-ext tests
         run: |
           sudo service postgresql stop
           echo "shared_preload_libraries = 'pg_tde'" |
             sudo tee -a /etc/postgresql/16/main/postgresql.conf
+          echo "pg_tde.keyringConfigFile = '/tmp/keyring.json'" |
+            sudo tee -a /etc/postgresql/16/main/postgresql.conf
+          cp keyring.json /tmp/keyring.json
           sudo service postgresql start
           sudo psql -V
           sudo -u postgres bash -c 'make installcheck USE_PGXS=1'
@@ -73,6 +76,11 @@ jobs:
             src/postgres-tde-ext/regression.diffs
             src/postgres-tde-ext/logfile
           retention-days: 3
+
+      - name: Report on test fail 2
+        if: ${{ failure() }}
+        run: |
+          cat src/postgres-tde-ext/regression.diffs
 
       - name: Create release directory
         run: |

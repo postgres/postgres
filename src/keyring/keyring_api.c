@@ -72,7 +72,10 @@ const keyInfo* keyringStoreKey(keyName name, keyData data)
 #if KEYRING_DEBUG
 	fprintf(stderr, "Storing key: %s\n", name.name);
 #endif
-	keyringFileStoreKey(ki);
+	if(!keyringFileStoreKey(ki))
+	{
+		return NULL;
+	}
 	return ki;
 }
 

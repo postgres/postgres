@@ -1,0 +1,4 @@
+CREATE EXTENSION pg_tde;
+CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING pg_tde;
+DROP TABLE test_enc;
+DROP EXTENSION pg_tde;

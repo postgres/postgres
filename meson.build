@@ -61,8 +61,8 @@ install_data(
 
 tests += {
   'name': 'postgres-tde-ext',
-  'sd': meson.current_source_dir() + '/regression/',
-  'bd': meson.current_build_dir() + '/regression/',
+  'sd': meson.current_source_dir(),
+  'bd': meson.current_build_dir(),
   'regress': {
     'sql': [
       'non_sorted_off_compact',
@@ -71,5 +71,10 @@ tests += {
     ],
     'regress_args': ['--temp-config', files('postgres-tde-ext.conf')],
     'runningcheck': false,
+  },
+  'tap': {
+    'tests': [
+      't/001_basic.pl',
+    ],
   },
 }

@@ -17,6 +17,7 @@
 #include "storage/ipc.h"
 #include "storage/shmem.h"
 #include "access/pg_tde_ddl.h"
+#include "encryption/enc_aes.h"
 
 #include "keyring/keyring_config.h"
 #include "keyring/keyring_api.h"
@@ -43,6 +44,8 @@ pgsm_shmem_startup(void)
 		prev_shmem_startup_hook();
 
 	keyringInitCache();
+
+	AesInit();
 }
 
 

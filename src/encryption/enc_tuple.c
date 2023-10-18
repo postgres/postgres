@@ -28,8 +28,6 @@ void PGTdeCryptTupInternal(Oid tableOid, BlockNumber bn, unsigned long offsetInP
 	unsigned char encKey[16 * (aesBlockNumber2 - aesBlockNumber1 + 1)];
 #pragma GCC diagnostic pop
 
-	AesInit(); // TODO: where to move this?
-
 	// TODO: verify key length!
 	Aes128EncryptedZeroBlocks2(&(keys->internal_key[0].ctx), keys->internal_key[0].key, aesBlockNumber1, aesBlockNumber2, encKey);
 

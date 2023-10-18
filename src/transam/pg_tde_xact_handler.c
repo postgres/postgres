@@ -149,7 +149,7 @@ do_pending_deletes(bool isCommit)
             if (pending->atCommit == isCommit)
             {
                 ereport(LOG,
-                        (errmsg("pg_tde_xact_callback: deleting file %s",
+                        (errmsg("pg_tde_xact_callback: deletingx file %s",
                                 pending->path)));
                 durable_unlink(pending->path, WARNING); /* TODO: should it be ERROR? */
             }
