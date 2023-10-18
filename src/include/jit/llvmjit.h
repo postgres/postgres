@@ -146,6 +146,10 @@ extern unsigned LLVMGetAttributeCountAtIndexPG(LLVMValueRef F, uint32 Idx);
 extern LLVMTypeRef LLVMGetFunctionReturnType(LLVMValueRef r);
 extern LLVMTypeRef LLVMGetFunctionType(LLVMValueRef r);
 
+#if LLVM_MAJOR_VERSION < 8
+extern LLVMTypeRef LLVMGlobalGetValueType(LLVMValueRef g);
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
