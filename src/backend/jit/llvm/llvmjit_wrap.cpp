@@ -76,3 +76,15 @@ LLVMGetAttributeCountAtIndexPG(LLVMValueRef F, uint32 Idx)
 	 */
 	return LLVMGetAttributeCountAtIndex(F, Idx);
 }
+
+LLVMTypeRef
+LLVMGetFunctionReturnType(LLVMValueRef r)
+{
+	return llvm::wrap(llvm::unwrap<llvm::Function>(r)->getReturnType());
+}
+
+LLVMTypeRef
+LLVMGetFunctionType(LLVMValueRef r)
+{
+	return llvm::wrap(llvm::unwrap<llvm::Function>(r)->getFunctionType());
+}
