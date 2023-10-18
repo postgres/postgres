@@ -88,3 +88,11 @@ LLVMGetFunctionType(LLVMValueRef r)
 {
 	return llvm::wrap(llvm::unwrap<llvm::Function>(r)->getFunctionType());
 }
+
+#if LLVM_VERSION_MAJOR < 8
+LLVMTypeRef
+LLVMGlobalGetValueType(LLVMValueRef g)
+{
+	return llvm::wrap(llvm::unwrap<llvm::GlobalValue>(g)->getValueType());
+}
+#endif
