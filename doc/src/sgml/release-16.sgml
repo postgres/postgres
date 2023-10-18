@@ -2610,7 +2610,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
        <para>
         The <literal>Member of</literal> output column has been removed
         from <command>\du</command> and <command>\dg</command> because
-        this new command displays this informaion in more detail.
+        this new command displays this information in more detail.
        </para>
       </listitem>
 
