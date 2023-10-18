@@ -18,6 +18,9 @@
 #include <llvm-c/BitWriter.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
+#if LLVM_VERSION_MAJOR > 16
+#include <llvm-c/Transforms/PassBuilder.h>
+#endif
 #if LLVM_VERSION_MAJOR > 11
 #include <llvm-c/Orc.h>
 #include <llvm-c/OrcEE.h>
@@ -27,11 +30,13 @@
 #endif
 #include <llvm-c/Support.h>
 #include <llvm-c/Target.h>
+#if LLVM_VERSION_MAJOR < 17
 #include <llvm-c/Transforms/IPO.h>
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 #include <llvm-c/Transforms/Scalar.h>
 #if LLVM_VERSION_MAJOR > 6
 #include <llvm-c/Transforms/Utils.h>
+#endif
 #endif
 
 #include "jit/llvmjit.h"
@@ -630,6 +635,7 @@ llvm_function_reference(LLVMJitContext *context,
 static void
 llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module)
 {
+#if LLVM_VERSION_MAJOR < 17
 	LLVMPassManagerBuilderRef llvm_pmb;
 	LLVMPassManagerRef llvm_mpm;
 	LLVMPassManagerRef llvm_fpm;
@@ -693,6 +699,31 @@ llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module)
 	LLVMDisposePassManager(llvm_mpm);
 
 	LLVMPassManagerBuilderDispose(llvm_pmb);
+#else
+	LLVMPassBuilderOptionsRef options;
+	LLVMErrorRef err;
+	const char *passes;
+
+	if (context->base.flags & PGJIT_OPT3)
+		passes = "default<O3>";
+	else
+		passes = "default<O0>,mem2reg";
+
+	options = LLVMCreatePassBuilderOptions();
+
+#ifdef LLVM_PASS_DEBUG
+	LLVMPassBuilderOptionsSetDebugLogging(options, 1);
+#endif
+
+	LLVMPassBuilderOptionsSetInlinerThreshold(options, 512);
+
+	err = LLVMRunPasses(module, passes, NULL, options);
+
+	if (err)
+		elog(ERROR, "failed to JIT module: %s", llvm_error_message(err));
+
+	LLVMDisposePassBuilderOptions(options);
+#endif
 }
 
 /*
