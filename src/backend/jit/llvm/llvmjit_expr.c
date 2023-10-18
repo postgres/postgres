@@ -150,7 +150,7 @@ llvm_compile_expr(ExprState *state)
 
 	/* create function */
 	eval_fn = LLVMAddFunction(mod, funcname,
-							  llvm_pg_var_func_type("TypeExprStateEvalFunc"));
+							  llvm_pg_var_func_type("ExecInterpExprStillValid"));
 	LLVMSetLinkage(eval_fn, LLVMExternalLinkage);
 	LLVMSetVisibility(eval_fn, LLVMDefaultVisibility);
 	llvm_copy_attributes(AttributeTemplate, eval_fn);
@@ -164,61 +164,95 @@ llvm_compile_expr(ExprState *state)
 
 	LLVMPositionBuilderAtEnd(b, entry);
 
-	v_tmpvaluep = LLVMBuildStructGEP(b, v_state,
-									 FIELDNO_EXPRSTATE_RESVALUE,
-									 "v.state.resvalue");
-	v_tmpisnullp = LLVMBuildStructGEP(b, v_state,
-									  FIELDNO_EXPRSTATE_RESNULL,
-									  "v.state.resnull");
-	v_parent = l_load_struct_gep(b, v_state,
+	v_tmpvaluep = l_struct_gep(b,
+							   StructExprState,
+							   v_state,
+							   FIELDNO_EXPRSTATE_RESVALUE,
+							   "v.state.resvalue");
+	v_tmpisnullp = l_struct_gep(b,
+								StructExprState,
+								v_state,
+								FIELDNO_EXPRSTATE_RESNULL,
+								"v.state.resnull");
+	v_parent = l_load_struct_gep(b,
+								 StructExprState,
+								 v_state,
 								 FIELDNO_EXPRSTATE_PARENT,
 								 "v.state.parent");
 
 	/* build global slots */
-	v_scanslot = l_load_struct_gep(b, v_econtext,
+	v_scanslot = l_load_struct_gep(b,
+								   StructExprContext,
+								   v_econtext,
 								   FIELDNO_EXPRCONTEXT_SCANTUPLE,
 								   "v_scanslot");
-	v_innerslot = l_load_struct_gep(b, v_econtext,
+	v_innerslot = l_load_struct_gep(b,
+									StructExprContext,
+									v_econtext,
 									FIELDNO_EXPRCONTEXT_INNERTUPLE,
 									"v_innerslot");
-	v_outerslot = l_load_struct_gep(b, v_econtext,
+	v_outerslot = l_load_struct_gep(b,
+									StructExprContext,
+									v_econtext,
 									FIELDNO_EXPRCONTEXT_OUTERTUPLE,
 									"v_outerslot");
-	v_resultslot = l_load_struct_gep(b, v_state,
+	v_resultslot = l_load_struct_gep(b,
+									 StructExprState,
+									 v_state,
 									 FIELDNO_EXPRSTATE_RESULTSLOT,
 									 "v_resultslot");
 
 	/* build global values/isnull pointers */
-	v_scanvalues = l_load_struct_gep(b, v_scanslot,
+	v_scanvalues = l_load_struct_gep(b,
+									 StructTupleTableSlot,
+									 v_scanslot,
 									 FIELDNO_TUPLETABLESLOT_VALUES,
 									 "v_scanvalues");
-	v_scannulls = l_load_struct_gep(b, v_scanslot,
+	v_scannulls = l_load_struct_gep(b,
+									StructTupleTableSlot,
+									v_scanslot,
 									FIELDNO_TUPLETABLESLOT_ISNULL,
 									"v_scannulls");
-	v_innervalues = l_load_struct_gep(b, v_innerslot,
+	v_innervalues = l_load_struct_gep(b,
+									  StructTupleTableSlot,
+									  v_innerslot,
 									  FIELDNO_TUPLETABLESLOT_VALUES,
 									  "v_innervalues");
-	v_innernulls = l_load_struct_gep(b, v_innerslot,
+	v_innernulls = l_load_struct_gep(b,
+									 StructTupleTableSlot,
+									 v_innerslot,
 									 FIELDNO_TUPLETABLESLOT_ISNULL,
 									 "v_innernulls");
-	v_outervalues = l_load_struct_gep(b, v_outerslot,
+	v_outervalues = l_load_struct_gep(b,
+									  StructTupleTableSlot,
+									  v_outerslot,
 									  FIELDNO_TUPLETABLESLOT_VALUES,
 									  "v_outervalues");
-	v_outernulls = l_load_struct_gep(b, v_outerslot,
+	v_outernulls = l_load_struct_gep(b,
+									 StructTupleTableSlot,
+									 v_outerslot,
 									 FIELDNO_TUPLETABLESLOT_ISNULL,
 									 "v_outernulls");
-	v_resultvalues = l_load_struct_gep(b, v_resultslot,
+	v_resultvalues = l_load_struct_gep(b,
+									   StructTupleTableSlot,
+									   v_resultslot,
 									   FIELDNO_TUPLETABLESLOT_VALUES,
 									   "v_resultvalues");
-	v_resultnulls = l_load_struct_gep(b, v_resultslot,
+	v_resultnulls = l_load_struct_gep(b,
+									  StructTupleTableSlot,
+									  v_resultslot,
 									  FIELDNO_TUPLETABLESLOT_ISNULL,
 									  "v_resultnulls");
 
 	/* aggvalues/aggnulls */
-	v_aggvalues = l_load_struct_gep(b, v_econtext,
+	v_aggvalues = l_load_struct_gep(b,
+									StructExprContext,
+									v_econtext,
 									FIELDNO_EXPRCONTEXT_AGGVALUES,
 									"v.econtext.aggvalues");
-	v_aggnulls = l_load_struct_gep(b, v_econtext,
+	v_aggnulls = l_load_struct_gep(b,
+								   StructExprContext,
+								   v_econtext,
 								   FIELDNO_EXPRCONTEXT_AGGNULLS,
 								   "v.econtext.aggnulls");
 
@@ -252,8 +286,8 @@ llvm_compile_expr(ExprState *state)
 					LLVMValueRef v_tmpisnull;
 					LLVMValueRef v_tmpvalue;
 
-					v_tmpvalue = LLVMBuildLoad(b, v_tmpvaluep, "");
-					v_tmpisnull = LLVMBuildLoad(b, v_tmpisnullp, "");
+					v_tmpvalue = l_load(b, TypeSizeT, v_tmpvaluep, "");
+					v_tmpisnull = l_load(b, TypeStorageBool, v_tmpisnullp, "");
 
 					LLVMBuildStore(b, v_tmpisnull, v_isnullp);
 
@@ -296,7 +330,9 @@ llvm_compile_expr(ExprState *state)
 					 * whether deforming is required.
 					 */
 					v_nvalid =
-						l_load_struct_gep(b, v_slot,
+						l_load_struct_gep(b,
+										  StructTupleTableSlot,
+										  v_slot,
 										  FIELDNO_TUPLETABLESLOT_NVALID,
 										  "");
 					LLVMBuildCondBr(b,
@@ -327,8 +363,10 @@ llvm_compile_expr(ExprState *state)
 
 						params[0] = v_slot;
 
-						LLVMBuildCall(b, l_jit_deform,
-									  params, lengthof(params), "");
+						l_call(b,
+							   LLVMGetFunctionType(l_jit_deform),
+							   l_jit_deform,
+							   params, lengthof(params), "");
 					}
 					else
 					{
@@ -337,9 +375,10 @@ llvm_compile_expr(ExprState *state)
 						params[0] = v_slot;
 						params[1] = l_int32_const(op->d.fetch.last_var);
 
-						LLVMBuildCall(b,
-									  llvm_pg_func(mod, "slot_getsomeattrs_int"),
-									  params, lengthof(params), "");
+						l_call(b,
+							   llvm_pg_var_func_type("slot_getsomeattrs_int"),
+							   llvm_pg_func(mod, "slot_getsomeattrs_int"),
+							   params, lengthof(params), "");
 					}
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
@@ -373,8 +412,8 @@ llvm_compile_expr(ExprState *state)
 					}
 
 					v_attnum = l_int32_const(op->d.var.attnum);
-					value = l_load_gep1(b, v_values, v_attnum, "");
-					isnull = l_load_gep1(b, v_nulls, v_attnum, "");
+					value = l_load_gep1(b, TypeSizeT, v_values, v_attnum, "");
+					isnull = l_load_gep1(b, TypeStorageBool, v_nulls, v_attnum, "");
 					LLVMBuildStore(b, value, v_resvaluep);
 					LLVMBuildStore(b, isnull, v_resnullp);
 
@@ -439,15 +478,19 @@ llvm_compile_expr(ExprState *state)
 
 					/* load data */
 					v_attnum = l_int32_const(op->d.assign_var.attnum);
-					v_value = l_load_gep1(b, v_values, v_attnum, "");
-					v_isnull = l_load_gep1(b, v_nulls, v_attnum, "");
+					v_value = l_load_gep1(b, TypeSizeT, v_values, v_attnum, "");
+					v_isnull = l_load_gep1(b, TypeStorageBool, v_nulls, v_attnum, "");
 
 					/* compute addresses of targets */
 					v_resultnum = l_int32_const(op->d.assign_var.resultnum);
-					v_rvaluep = LLVMBuildGEP(b, v_resultvalues,
-											 &v_resultnum, 1, "");
-					v_risnullp = LLVMBuildGEP(b, v_resultnulls,
-											  &v_resultnum, 1, "");
+					v_rvaluep = l_gep(b,
+									  TypeSizeT,
+									  v_resultvalues,
+									  &v_resultnum, 1, "");
+					v_risnullp = l_gep(b,
+									   TypeStorageBool,
+									   v_resultnulls,
+									   &v_resultnum, 1, "");
 
 					/* and store */
 					LLVMBuildStore(b, v_value, v_rvaluep);
@@ -468,15 +511,15 @@ llvm_compile_expr(ExprState *state)
 					size_t		resultnum = op->d.assign_tmp.resultnum;
 
 					/* load data */
-					v_value = LLVMBuildLoad(b, v_tmpvaluep, "");
-					v_isnull = LLVMBuildLoad(b, v_tmpisnullp, "");
+					v_value = l_load(b, TypeSizeT, v_tmpvaluep, "");
+					v_isnull = l_load(b, TypeStorageBool, v_tmpisnullp, "");
 
 					/* compute addresses of targets */
 					v_resultnum = l_int32_const(resultnum);
 					v_rvaluep =
-						LLVMBuildGEP(b, v_resultvalues, &v_resultnum, 1, "");
+						l_gep(b, TypeSizeT, v_resultvalues, &v_resultnum, 1, "");
 					v_risnullp =
-						LLVMBuildGEP(b, v_resultnulls, &v_resultnum, 1, "");
+						l_gep(b, TypeStorageBool, v_resultnulls, &v_resultnum, 1, "");
 
 					/* store nullness */
 					LLVMBuildStore(b, v_isnull, v_risnullp);
@@ -500,9 +543,10 @@ llvm_compile_expr(ExprState *state)
 						LLVMPositionBuilderAtEnd(b, b_notnull);
 						v_params[0] = v_value;
 						v_value =
-							LLVMBuildCall(b,
-										  llvm_pg_func(mod, "MakeExpandedObjectReadOnlyInternal"),
-										  v_params, lengthof(v_params), "");
+							l_call(b,
+								   llvm_pg_var_func_type("MakeExpandedObjectReadOnlyInternal"),
+								   llvm_pg_func(mod, "MakeExpandedObjectReadOnlyInternal"),
+								   v_params, lengthof(v_params), "");
 
 						/*
 						 * Falling out of the if () with builder in b_notnull,
@@ -665,8 +709,8 @@ llvm_compile_expr(ExprState *state)
 					if (opcode == EEOP_BOOL_AND_STEP_FIRST)
 						LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
 
-					v_boolnull = LLVMBuildLoad(b, v_resnullp, "");
-					v_boolvalue = LLVMBuildLoad(b, v_resvaluep, "");
+					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
+					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
 
 					/* set resnull to boolnull */
 					LLVMBuildStore(b, v_boolnull, v_resnullp);
@@ -707,7 +751,7 @@ llvm_compile_expr(ExprState *state)
 					/* Build block that continues if bool is TRUE. */
 					LLVMPositionBuilderAtEnd(b, b_boolcont);
 
-					v_boolanynull = LLVMBuildLoad(b, v_boolanynullp, "");
+					v_boolanynull = l_load(b, TypeStorageBool, v_boolanynullp, "");
 
 					/* set value to NULL if any previous values were NULL */
 					LLVMBuildCondBr(b,
@@ -761,8 +805,8 @@ llvm_compile_expr(ExprState *state)
 
 					if (opcode == EEOP_BOOL_OR_STEP_FIRST)
 						LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
-					v_boolnull = LLVMBuildLoad(b, v_resnullp, "");
-					v_boolvalue = LLVMBuildLoad(b, v_resvaluep, "");
+					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
+					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
 
 					/* set resnull to boolnull */
 					LLVMBuildStore(b, v_boolnull, v_resnullp);
@@ -802,7 +846,7 @@ llvm_compile_expr(ExprState *state)
 					/* build block that continues if bool is FALSE */
 					LLVMPositionBuilderAtEnd(b, b_boolcont);
 
-					v_boolanynull = LLVMBuildLoad(b, v_boolanynullp, "");
+					v_boolanynull = l_load(b, TypeStorageBool, v_boolanynullp, "");
 
 					/* set value to NULL if any previous values were NULL */
 					LLVMBuildCondBr(b,
@@ -826,8 +870,8 @@ llvm_compile_expr(ExprState *state)
 					LLVMValueRef v_boolnull;
 					LLVMValueRef v_negbool;
 
-					v_boolnull = LLVMBuildLoad(b, v_resnullp, "");
-					v_boolvalue = LLVMBuildLoad(b, v_resvaluep, "");
+					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
+					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
 
 					v_negbool = LLVMBuildZExt(b,
 											  LLVMBuildICmp(b, LLVMIntEQ,
@@ -854,8 +898,8 @@ llvm_compile_expr(ExprState *state)
 					b_qualfail = l_bb_before_v(opblocks[opno + 1],
 											   "op.%d.qualfail", opno);
 
-					v_resvalue = LLVMBuildLoad(b, v_resvaluep, "");
-					v_resnull = LLVMBuildLoad(b, v_resnullp, "");
+					v_resvalue = l_load(b, TypeSizeT, v_resvaluep, "");
+					v_resnull = l_load(b, TypeStorageBool, v_resnullp, "");
 
 					v_nullorfalse =
 						LLVMBuildOr(b,
@@ -893,7 +937,7 @@ llvm_compile_expr(ExprState *state)
 
 					/* Transfer control if current result is null */
 
-					v_resnull = LLVMBuildLoad(b, v_resnullp, "");
+					v_resnull = l_load(b, TypeStorageBool, v_resnullp, "");
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
@@ -909,7 +953,7 @@ llvm_compile_expr(ExprState *state)
 
 					/* Transfer control if current result is non-null */
 
-					v_resnull = LLVMBuildLoad(b, v_resnullp, "");
+					v_resnull = l_load(b, TypeStorageBool, v_resnullp, "");
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
@@ -928,8 +972,8 @@ llvm_compile_expr(ExprState *state)
 
 					/* Transfer control if current result is null or false */
 
-					v_resvalue = LLVMBuildLoad(b, v_resvaluep, "");
-					v_resnull = LLVMBuildLoad(b, v_resnullp, "");
+					v_resvalue = l_load(b, TypeSizeT, v_resvaluep, "");
+					v_resnull = l_load(b, TypeStorageBool, v_resnullp, "");
 
 					v_nullorfalse =
 						LLVMBuildOr(b,
@@ -948,7 +992,7 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_NULLTEST_ISNULL:
 				{
-					LLVMValueRef v_resnull = LLVMBuildLoad(b, v_resnullp, "");
+					LLVMValueRef v_resnull = l_load(b, TypeStorageBool, v_resnullp, "");
 					LLVMValueRef v_resvalue;
 
 					v_resvalue =
@@ -967,7 +1011,7 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_NULLTEST_ISNOTNULL:
 				{
-					LLVMValueRef v_resnull = LLVMBuildLoad(b, v_resnullp, "");
+					LLVMValueRef v_resnull = l_load(b, TypeStorageBool, v_resnullp, "");
 					LLVMValueRef v_resvalue;
 
 					v_resvalue =
@@ -1003,7 +1047,7 @@ llvm_compile_expr(ExprState *state)
 				{
 					LLVMBasicBlockRef b_isnull,
 								b_notnull;
-					LLVMValueRef v_resnull = LLVMBuildLoad(b, v_resnullp, "");
+					LLVMValueRef v_resnull = l_load(b, TypeStorageBool, v_resnullp, "");
 
 					b_isnull = l_bb_before_v(opblocks[opno + 1],
 											 "op.%d.isnull", opno);
@@ -1047,7 +1091,7 @@ llvm_compile_expr(ExprState *state)
 					else
 					{
 						LLVMValueRef v_value =
-							LLVMBuildLoad(b, v_resvaluep, "");
+							l_load(b, TypeSizeT, v_resvaluep, "");
 
 						v_value = LLVMBuildZExt(b,
 												LLVMBuildICmp(b, LLVMIntEQ,
@@ -1075,20 +1119,19 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_PARAM_CALLBACK:
 				{
-					LLVMTypeRef v_functype;
 					LLVMValueRef v_func;
 					LLVMValueRef v_params[3];
 
-					v_functype = llvm_pg_var_func_type("TypeExecEvalSubroutine");
 					v_func = l_ptr_const(op->d.cparam.paramfunc,
-										 LLVMPointerType(v_functype, 0));
+										 llvm_pg_var_type("TypeExecEvalSubroutine"));
 
 					v_params[0] = v_state;
 					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));
 					v_params[2] = v_econtext;
-					LLVMBuildCall(b,
-								  v_func,
-								  v_params, lengthof(v_params), "");
+					l_call(b,
+						   LLVMGetFunctionType(ExecEvalSubroutineTemplate),
+						   v_func,
+						   v_params, lengthof(v_params), "");
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
 					break;
@@ -1097,21 +1140,20 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_SBSREF_SUBSCRIPTS:
 				{
 					int			jumpdone = op->d.sbsref_subscript.jumpdone;
-					LLVMTypeRef v_functype;
 					LLVMValueRef v_func;
 					LLVMValueRef v_params[3];
 					LLVMValueRef v_ret;
 
-					v_functype = llvm_pg_var_func_type("TypeExecEvalBoolSubroutine");
 					v_func = l_ptr_const(op->d.sbsref_subscript.subscriptfunc,
-										 LLVMPointerType(v_functype, 0));
+										 llvm_pg_var_type("TypeExecEvalBoolSubroutine"));
 
 					v_params[0] = v_state;
 					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));
 					v_params[2] = v_econtext;
-					v_ret = LLVMBuildCall(b,
-										  v_func,
-										  v_params, lengthof(v_params), "");
+					v_ret = l_call(b,
+								   LLVMGetFunctionType(ExecEvalBoolSubroutineTemplate),
+								   v_func,
+								   v_params, lengthof(v_params), "");
 					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
 
 					LLVMBuildCondBr(b,
@@ -1126,20 +1168,19 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_SBSREF_ASSIGN:
 			case EEOP_SBSREF_FETCH:
 				{
-					LLVMTypeRef v_functype;
 					LLVMValueRef v_func;
 					LLVMValueRef v_params[3];
 
-					v_functype = llvm_pg_var_func_type("TypeExecEvalSubroutine");
 					v_func = l_ptr_const(op->d.sbsref.subscriptfunc,
-										 LLVMPointerType(v_functype, 0));
+										 llvm_pg_var_type("TypeExecEvalSubroutine"));
 
 					v_params[0] = v_state;
 					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));
 					v_params[2] = v_econtext;
-					LLVMBuildCall(b,
-								  v_func,
-								  v_params, lengthof(v_params), "");
+					l_call(b,
+						   LLVMGetFunctionType(ExecEvalSubroutineTemplate),
+						   v_func,
+						   v_params, lengthof(v_params), "");
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
 					break;
@@ -1174,8 +1215,8 @@ llvm_compile_expr(ExprState *state)
 
 					/* if casetest != NULL */
 					LLVMPositionBuilderAtEnd(b, b_avail);
-					v_casevalue = LLVMBuildLoad(b, v_casevaluep, "");
-					v_casenull = LLVMBuildLoad(b, v_casenullp, "");
+					v_casevalue = l_load(b, TypeSizeT, v_casevaluep, "");
+					v_casenull = l_load(b, TypeStorageBool, v_casenullp, "");
 					LLVMBuildStore(b, v_casevalue, v_resvaluep);
 					LLVMBuildStore(b, v_casenull, v_resnullp);
 					LLVMBuildBr(b, opblocks[opno + 1]);
@@ -1183,10 +1224,14 @@ llvm_compile_expr(ExprState *state)
 					/* if casetest == NULL */
 					LLVMPositionBuilderAtEnd(b, b_notavail);
 					v_casevalue =
-						l_load_struct_gep(b, v_econtext,
+						l_load_struct_gep(b,
+										  StructExprContext,
+										  v_econtext,
 										  FIELDNO_EXPRCONTEXT_CASEDATUM, "");
 					v_casenull =
-						l_load_struct_gep(b, v_econtext,
+						l_load_struct_gep(b,
+										  StructExprContext,
+										  v_econtext,
 										  FIELDNO_EXPRCONTEXT_CASENULL, "");
 					LLVMBuildStore(b, v_casevalue, v_resvaluep);
 					LLVMBuildStore(b, v_casenull, v_resnullp);
@@ -1211,7 +1256,7 @@ llvm_compile_expr(ExprState *state)
 					v_nullp = l_ptr_const(op->d.make_readonly.isnull,
 										  l_ptr(TypeStorageBool));
 
-					v_null = LLVMBuildLoad(b, v_nullp, "");
+					v_null = l_load(b, TypeStorageBool, v_nullp, "");
 
 					/* store null isnull value in result */
 					LLVMBuildStore(b, v_null, v_resnullp);
@@ -1228,13 +1273,14 @@ llvm_compile_expr(ExprState *state)
 					v_valuep = l_ptr_const(op->d.make_readonly.value,
 										   l_ptr(TypeSizeT));
 
-					v_value = LLVMBuildLoad(b, v_valuep, "");
+					v_value = l_load(b, TypeSizeT, v_valuep, "");
 
 					v_params[0] = v_value;
 					v_ret =
-						LLVMBuildCall(b,
-									  llvm_pg_func(mod, "MakeExpandedObjectReadOnlyInternal"),
-									  v_params, lengthof(v_params), "");
+						l_call(b,
+							   llvm_pg_var_func_type("MakeExpandedObjectReadOnlyInternal"),
+							   llvm_pg_func(mod, "MakeExpandedObjectReadOnlyInternal"),
+							   v_params, lengthof(v_params), "");
 					LLVMBuildStore(b, v_ret, v_resvaluep);
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
@@ -1280,12 +1326,14 @@ llvm_compile_expr(ExprState *state)
 					v_fcinfo_in = l_ptr_const(fcinfo_in, l_ptr(StructFunctionCallInfoData));
 
 					v_fcinfo_in_isnullp =
-						LLVMBuildStructGEP(b, v_fcinfo_in,
-										   FIELDNO_FUNCTIONCALLINFODATA_ISNULL,
-										   "v_fcinfo_in_isnull");
+						l_struct_gep(b,
+									 StructFunctionCallInfoData,
+									 v_fcinfo_in,
+									 FIELDNO_FUNCTIONCALLINFODATA_ISNULL,
+									 "v_fcinfo_in_isnull");
 
 					/* output functions are not called on nulls */
-					v_resnull = LLVMBuildLoad(b, v_resnullp, "");
+					v_resnull = l_load(b, TypeStorageBool, v_resnullp, "");
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_resnull,
 												  l_sbool_const(1), ""),
@@ -1297,7 +1345,7 @@ llvm_compile_expr(ExprState *state)
 					LLVMBuildBr(b, b_input);
 
 					LLVMPositionBuilderAtEnd(b, b_calloutput);
-					v_resvalue = LLVMBuildLoad(b, v_resvaluep, "");
+					v_resvalue = l_load(b, TypeSizeT, v_resvaluep, "");
 
 					/* set arg[0] */
 					LLVMBuildStore(b,
@@ -1307,8 +1355,10 @@ llvm_compile_expr(ExprState *state)
 								   l_sbool_const(0),
 								   l_funcnullp(b, v_fcinfo_out, 0));
 					/* and call output function (can never return NULL) */
-					v_output = LLVMBuildCall(b, v_fn_out, &v_fcinfo_out,
-											 1, "funccall_coerce_out");
+					v_output = l_call(b,
+									  LLVMGetFunctionType(v_fn_out),
+									  v_fn_out, &v_fcinfo_out,
+									  1, "funccall_coerce_out");
 					LLVMBuildBr(b, b_input);
 
 					/* build block handling input function call */
@@ -1362,8 +1412,10 @@ llvm_compile_expr(ExprState *state)
 					/* reset fcinfo_in->isnull */
 					LLVMBuildStore(b, l_sbool_const(0), v_fcinfo_in_isnullp);
 					/* and call function */
-					v_retval = LLVMBuildCall(b, v_fn_in, &v_fcinfo_in, 1,
-											 "funccall_iocoerce_in");
+					v_retval = l_call(b,
+									  LLVMGetFunctionType(v_fn_in),
+									  v_fn_in, &v_fcinfo_in, 1,
+									  "funccall_iocoerce_in");
 
 					LLVMBuildStore(b, v_retval, v_resvaluep);
 
@@ -1696,7 +1748,7 @@ llvm_compile_expr(ExprState *state)
 					 */
 					v_cmpresult =
 						LLVMBuildTrunc(b,
-									   LLVMBuildLoad(b, v_resvaluep, ""),
+									   l_load(b, TypeSizeT, v_resvaluep, ""),
 									   LLVMInt32Type(), "");
 
 					switch (rctype)
@@ -1789,8 +1841,8 @@ llvm_compile_expr(ExprState *state)
 
 					/* if casetest != NULL */
 					LLVMPositionBuilderAtEnd(b, b_avail);
-					v_casevalue = LLVMBuildLoad(b, v_casevaluep, "");
-					v_casenull = LLVMBuildLoad(b, v_casenullp, "");
+					v_casevalue = l_load(b, TypeSizeT, v_casevaluep, "");
+					v_casenull = l_load(b, TypeStorageBool, v_casenullp, "");
 					LLVMBuildStore(b, v_casevalue, v_resvaluep);
 					LLVMBuildStore(b, v_casenull, v_resnullp);
 					LLVMBuildBr(b, opblocks[opno + 1]);
@@ -1798,11 +1850,15 @@ llvm_compile_expr(ExprState *state)
 					/* if casetest == NULL */
 					LLVMPositionBuilderAtEnd(b, b_notavail);
 					v_casevalue =
-						l_load_struct_gep(b, v_econtext,
+						l_load_struct_gep(b,
+										  StructExprContext,
+										  v_econtext,
 										  FIELDNO_EXPRCONTEXT_DOMAINDATUM,
 										  "");
 					v_casenull =
-						l_load_struct_gep(b, v_econtext,
+						l_load_struct_gep(b,
+										  StructExprContext,
+										  v_econtext,
 										  FIELDNO_EXPRCONTEXT_DOMAINNULL,
 										  "");
 					LLVMBuildStore(b, v_casevalue, v_resvaluep);
@@ -1869,8 +1925,8 @@ llvm_compile_expr(ExprState *state)
 					v_aggno = l_int32_const(op->d.aggref.aggno);
 
 					/* load agg value / null */
-					value = l_load_gep1(b, v_aggvalues, v_aggno, "aggvalue");
-					isnull = l_load_gep1(b, v_aggnulls, v_aggno, "aggnull");
+					value = l_load_gep1(b, TypeSizeT, v_aggvalues, v_aggno, "aggvalue");
+					isnull = l_load_gep1(b, TypeStorageBool, v_aggnulls, v_aggno, "aggnull");
 
 					/* and store result */
 					LLVMBuildStore(b, value, v_resvaluep);
@@ -1901,12 +1957,12 @@ llvm_compile_expr(ExprState *state)
 					 */
 					v_wfuncnop = l_ptr_const(&wfunc->wfuncno,
 											 l_ptr(LLVMInt32Type()));
-					v_wfuncno = LLVMBuildLoad(b, v_wfuncnop, "v_wfuncno");
+					v_wfuncno = l_load(b, LLVMInt32Type(), v_wfuncnop, "v_wfuncno");
 
 					/* load window func value / null */
-					value = l_load_gep1(b, v_aggvalues, v_wfuncno,
+					value = l_load_gep1(b, TypeSizeT, v_aggvalues, v_wfuncno,
 										"windowvalue");
-					isnull = l_load_gep1(b, v_aggnulls, v_wfuncno,
+					isnull = l_load_gep1(b, TypeStorageBool, v_aggnulls, v_wfuncno,
 										 "windownull");
 
 					LLVMBuildStore(b, value, v_resvaluep);
@@ -2020,14 +2076,14 @@ llvm_compile_expr(ExprState *state)
 							b_argnotnull = b_checknulls[argno + 1];
 
 						if (opcode == EEOP_AGG_STRICT_INPUT_CHECK_NULLS)
-							v_argisnull = l_load_gep1(b, v_nullsp, v_argno, "");
+							v_argisnull = l_load_gep1(b, TypeStorageBool, v_nullsp, v_argno, "");
 						else
 						{
 							LLVMValueRef v_argn;
 
-							v_argn = LLVMBuildGEP(b, v_argsp, &v_argno, 1, "");
+							v_argn = l_gep(b, StructNullableDatum, v_argsp, &v_argno, 1, "");
 							v_argisnull =
-								l_load_struct_gep(b, v_argn,
+								l_load_struct_gep(b, StructNullableDatum, v_argn,
 												  FIELDNO_NULLABLE_DATUM_ISNULL,
 												  "");
 						}
@@ -2061,13 +2117,16 @@ llvm_compile_expr(ExprState *state)
 					v_aggstatep = LLVMBuildBitCast(b, v_parent,
 												   l_ptr(StructAggState), "");
 
-					v_allpergroupsp = l_load_struct_gep(b, v_aggstatep,
+					v_allpergroupsp = l_load_struct_gep(b,
+														StructAggState,
+														v_aggstatep,
 														FIELDNO_AGGSTATE_ALL_PERGROUPS,
 														"aggstate.all_pergroups");
 
 					v_setoff = l_int32_const(op->d.agg_plain_pergroup_nullcheck.setoff);
 
-					v_pergroup_allaggs = l_load_gep1(b, v_allpergroupsp, v_setoff, "");
+					v_pergroup_allaggs = l_load_gep1(b, l_ptr(StructAggStatePerGroupData),
+													 v_allpergroupsp, v_setoff, "");
 
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ,
@@ -2130,15 +2189,19 @@ llvm_compile_expr(ExprState *state)
 					 * [op->d.agg_trans.setoff] [op->d.agg_trans.transno];
 					 */
 					v_allpergroupsp =
-						l_load_struct_gep(b, v_aggstatep,
+						l_load_struct_gep(b,
+										  StructAggState,
+										  v_aggstatep,
 										  FIELDNO_AGGSTATE_ALL_PERGROUPS,
 										  "aggstate.all_pergroups");
 					v_setoff = l_int32_const(op->d.agg_trans.setoff);
 					v_transno = l_int32_const(op->d.agg_trans.transno);
 					v_pergroupp =
-						LLVMBuildGEP(b,
-									 l_load_gep1(b, v_allpergroupsp, v_setoff, ""),
-									 &v_transno, 1, "");
+						l_gep(b,
+							  StructAggStatePerGroupData,
+							  l_load_gep1(b, l_ptr(StructAggStatePerGroupData),
+										  v_allpergroupsp, v_setoff, ""),
+							  &v_transno, 1, "");
 
 
 					if (opcode == EEOP_AGG_PLAIN_TRANS_INIT_STRICT_BYVAL ||
@@ -2149,7 +2212,9 @@ llvm_compile_expr(ExprState *state)
 						LLVMBasicBlockRef b_no_init;
 
 						v_notransvalue =
-							l_load_struct_gep(b, v_pergroupp,
+							l_load_struct_gep(b,
+											  StructAggStatePerGroupData,
+											  v_pergroupp,
 											  FIELDNO_AGGSTATEPERGROUPDATA_NOTRANSVALUE,
 											  "notransvalue");
 
@@ -2178,10 +2243,11 @@ llvm_compile_expr(ExprState *state)
 							params[2] = v_pergroupp;
 							params[3] = v_aggcontext;
 
-							LLVMBuildCall(b,
-										  llvm_pg_func(mod, "ExecAggInitGroup"),
-										  params, lengthof(params),
-										  "");
+							l_call(b,
+								   llvm_pg_var_func_type("ExecAggInitGroup"),
+								   llvm_pg_func(mod, "ExecAggInitGroup"),
+								   params, lengthof(params),
+								   "");
 
 							LLVMBuildBr(b, opblocks[opno + 1]);
 						}
@@ -2200,7 +2266,9 @@ llvm_compile_expr(ExprState *state)
 						b_strictpass = l_bb_before_v(opblocks[opno + 1],
 													 "op.%d.strictpass", opno);
 						v_transnull =
-							l_load_struct_gep(b, v_pergroupp,
+							l_load_struct_gep(b,
+											  StructAggStatePerGroupData,
+											  v_pergroupp,
 											  FIELDNO_AGGSTATEPERGROUPDATA_TRANSVALUEISNULL,
 											  "transnull");
 
@@ -2220,20 +2288,23 @@ llvm_compile_expr(ExprState *state)
 											   l_ptr(StructExprContext));
 
 					v_current_setp =
-						LLVMBuildStructGEP(b,
-										   v_aggstatep,
-										   FIELDNO_AGGSTATE_CURRENT_SET,
-										   "aggstate.current_set");
+						l_struct_gep(b,
+									 StructAggState,
+									 v_aggstatep,
+									 FIELDNO_AGGSTATE_CURRENT_SET,
+									 "aggstate.current_set");
 					v_curaggcontext =
-						LLVMBuildStructGEP(b,
-										   v_aggstatep,
-										   FIELDNO_AGGSTATE_CURAGGCONTEXT,
-										   "aggstate.curaggcontext");
+						l_struct_gep(b,
+									 StructAggState,
+									 v_aggstatep,
+									 FIELDNO_AGGSTATE_CURAGGCONTEXT,
+									 "aggstate.curaggcontext");
 					v_current_pertransp =
-						LLVMBuildStructGEP(b,
-										   v_aggstatep,
-										   FIELDNO_AGGSTATE_CURPERTRANS,
-										   "aggstate.curpertrans");
+						l_struct_gep(b,
+									 StructAggState,
+									 v_aggstatep,
+									 FIELDNO_AGGSTATE_CURPERTRANS,
+									 "aggstate.curpertrans");
 
 					/* set aggstate globals */
 					LLVMBuildStore(b, v_aggcontext, v_curaggcontext);
@@ -2249,19 +2320,25 @@ llvm_compile_expr(ExprState *state)
 
 					/* store transvalue in fcinfo->args[0] */
 					v_transvaluep =
-						LLVMBuildStructGEP(b, v_pergroupp,
-										   FIELDNO_AGGSTATEPERGROUPDATA_TRANSVALUE,
-										   "transvalue");
+						l_struct_gep(b,
+									 StructAggStatePerGroupData,
+									 v_pergroupp,
+									 FIELDNO_AGGSTATEPERGROUPDATA_TRANSVALUE,
+									 "transvalue");
 					v_transnullp =
-						LLVMBuildStructGEP(b, v_pergroupp,
-										   FIELDNO_AGGSTATEPERGROUPDATA_TRANSVALUEISNULL,
-										   "transnullp");
+						l_struct_gep(b,
+									 StructAggStatePerGroupData,
+									 v_pergroupp,
+									 FIELDNO_AGGSTATEPERGROUPDATA_TRANSVALUEISNULL,
+									 "transnullp");
 					LLVMBuildStore(b,
-								   LLVMBuildLoad(b, v_transvaluep,
-												 "transvalue"),
+								   l_load(b,
+										  TypeSizeT,
+										  v_transvaluep,
+										  "transvalue"),
 								   l_funcvaluep(b, v_fcinfo, 0));
 					LLVMBuildStore(b,
-								   LLVMBuildLoad(b, v_transnullp, "transnull"),
+								   l_load(b, TypeStorageBool, v_transnullp, "transnull"),
 								   l_funcnullp(b, v_fcinfo, 0));
 
 					/* and invoke transition function */
@@ -2294,8 +2371,8 @@ llvm_compile_expr(ExprState *state)
 						b_nocall = l_bb_before_v(opblocks[opno + 1],
 												 "op.%d.transnocall", opno);
 
-						v_transvalue = LLVMBuildLoad(b, v_transvaluep, "");
-						v_transnull = LLVMBuildLoad(b, v_transnullp, "");
+						v_transvalue = l_load(b, TypeSizeT, v_transvaluep, "");
+						v_transnull = l_load(b, TypeStorageBool, v_transnullp, "");
 
 						/*
 						 * DatumGetPointer(newVal) !=
@@ -2321,9 +2398,11 @@ llvm_compile_expr(ExprState *state)
 
 						v_fn = llvm_pg_func(mod, "ExecAggCopyTransValue");
 						v_newval =
-							LLVMBuildCall(b, v_fn,
-										  params, lengthof(params),
-										  "");
+							l_call(b,
+								   LLVMGetFunctionType(v_fn),
+								   v_fn,
+								   params, lengthof(params),
+								   "");
 
 						/* store trans value */
 						LLVMBuildStore(b, v_newval, v_transvaluep);
@@ -2359,7 +2438,7 @@ llvm_compile_expr(ExprState *state)
 					v_args[0] = l_ptr_const(aggstate, l_ptr(StructAggState));
 					v_args[1] = l_ptr_const(pertrans, l_ptr(StructAggStatePerTransData));
 
-					v_ret = LLVMBuildCall(b, v_fn, v_args, 2, "");
+					v_ret = l_call(b, LLVMGetFunctionType(v_fn), v_fn, v_args, 2, "");
 					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
 
 					LLVMBuildCondBr(b,
@@ -2383,7 +2462,7 @@ llvm_compile_expr(ExprState *state)
 					v_args[0] = l_ptr_const(aggstate, l_ptr(StructAggState));
 					v_args[1] = l_ptr_const(pertrans, l_ptr(StructAggStatePerTransData));
 
-					v_ret = LLVMBuildCall(b, v_fn, v_args, 2, "");
+					v_ret = l_call(b, LLVMGetFunctionType(v_fn), v_fn, v_args, 2, "");
 					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
 
 					LLVMBuildCondBr(b,
@@ -2481,15 +2560,17 @@ BuildV1Call(LLVMJitContext *context, LLVMBuilderRef b,
 	v_fn = llvm_function_reference(context, b, mod, fcinfo);
 
 	v_fcinfo = l_ptr_const(fcinfo, l_ptr(StructFunctionCallInfoData));
-	v_fcinfo_isnullp = LLVMBuildStructGEP(b, v_fcinfo,
-										  FIELDNO_FUNCTIONCALLINFODATA_ISNULL,
-										  "v_fcinfo_isnull");
+	v_fcinfo_isnullp = l_struct_gep(b,
+									StructFunctionCallInfoData,
+									v_fcinfo,
+									FIELDNO_FUNCTIONCALLINFODATA_ISNULL,
+									"v_fcinfo_isnull");
 	LLVMBuildStore(b, l_sbool_const(0), v_fcinfo_isnullp);
 
-	v_retval = LLVMBuildCall(b, v_fn, &v_fcinfo, 1, "funccall");
+	v_retval = l_call(b, LLVMGetFunctionType(AttributeTemplate), v_fn, &v_fcinfo, 1, "funccall");
 
 	if (v_fcinfo_isnull)
-		*v_fcinfo_isnull = LLVMBuildLoad(b, v_fcinfo_isnullp, "");
+		*v_fcinfo_isnull = l_load(b, TypeStorageBool, v_fcinfo_isnullp, "");
 
 	/*
 	 * Add lifetime-end annotation, signaling that writes to memory don't have
@@ -2501,11 +2582,11 @@ BuildV1Call(LLVMJitContext *context, LLVMBuilderRef b,
 
 		params[0] = l_int64_const(sizeof(NullableDatum) * fcinfo->nargs);
 		params[1] = l_ptr_const(fcinfo->args, l_ptr(LLVMInt8Type()));
-		LLVMBuildCall(b, v_lifetime, params, lengthof(params), "");
+		l_call(b, LLVMGetFunctionType(v_lifetime), v_lifetime, params, lengthof(params), "");
 
 		params[0] = l_int64_const(sizeof(fcinfo->isnull));
 		params[1] = l_ptr_const(&fcinfo->isnull, l_ptr(LLVMInt8Type()));
-		LLVMBuildCall(b, v_lifetime, params, lengthof(params), "");
+		l_call(b, LLVMGetFunctionType(v_lifetime), v_lifetime, params, lengthof(params), "");
 	}
 
 	return v_retval;
@@ -2537,7 +2618,7 @@ build_EvalXFuncInt(LLVMBuilderRef b, LLVMModuleRef mod, const char *funcname,
 	for (int i = 0; i < nargs; i++)
 		params[argno++] = v_args[i];
 
-	v_ret = LLVMBuildCall(b, v_fn, params, argno, "");
+	v_ret = l_call(b, LLVMGetFunctionType(v_fn), v_fn, params, argno, "");
 
 	pfree(params);
 
