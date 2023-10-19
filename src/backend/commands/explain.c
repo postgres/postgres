@@ -3564,11 +3564,14 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 								usage->temp_blks_written > 0);
 		bool		has_shared_timing = (!INSTR_TIME_IS_ZERO(usage->shared_blk_read_time) ||
 										 !INSTR_TIME_IS_ZERO(usage->shared_blk_write_time));
+		bool		has_local_timing = (!INSTR_TIME_IS_ZERO(usage->local_blk_read_time) ||
+										!INSTR_TIME_IS_ZERO(usage->local_blk_write_time));
 		bool		has_temp_timing = (!INSTR_TIME_IS_ZERO(usage->temp_blk_read_time) ||
 									   !INSTR_TIME_IS_ZERO(usage->temp_blk_write_time));
 		bool		show_planning = (planning && (has_shared ||
 												  has_local || has_temp ||
 												  has_shared_timing ||
+												  has_local_timing ||
 												  has_temp_timing));
 
 		if (show_planning)
@@ -3634,7 +3637,7 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 		}
 
 		/* As above, show only positive counter values. */
-		if (has_shared_timing || has_temp_timing)
+		if (has_shared_timing || has_local_timing || has_temp_timing)
 		{
 			ExplainIndentText(es);
 			appendStringInfoString(es->str, "I/O Timings:");
@@ -3648,6 +3651,18 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 				if (!INSTR_TIME_IS_ZERO(usage->shared_blk_write_time))
 					appendStringInfo(es->str, " write=%0.3f",
 									 INSTR_TIME_GET_MILLISEC(usage->shared_blk_write_time));
+				if (has_local_timing || has_temp_timing)
+					appendStringInfoChar(es->str, ',');
+			}
+			if (has_local_timing)
+			{
+				appendStringInfoString(es->str, " local");
+				if (!INSTR_TIME_IS_ZERO(usage->local_blk_read_time))
+					appendStringInfo(es->str, " read=%0.3f",
+									 INSTR_TIME_GET_MILLISEC(usage->local_blk_read_time));
+				if (!INSTR_TIME_IS_ZERO(usage->local_blk_write_time))
+					appendStringInfo(es->str, " write=%0.3f",
+									 INSTR_TIME_GET_MILLISEC(usage->local_blk_write_time));
 				if (has_temp_timing)
 					appendStringInfoChar(es->str, ',');
 			}
@@ -3696,6 +3711,12 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 								 3, es);
 			ExplainPropertyFloat("Shared I/O Write Time", "ms",
 								 INSTR_TIME_GET_MILLISEC(usage->shared_blk_write_time),
+								 3, es);
+			ExplainPropertyFloat("Local I/O Read Time", "ms",
+								 INSTR_TIME_GET_MILLISEC(usage->local_blk_read_time),
+								 3, es);
+			ExplainPropertyFloat("Local I/O Write Time", "ms",
+								 INSTR_TIME_GET_MILLISEC(usage->local_blk_write_time),
 								 3, es);
 			ExplainPropertyFloat("Temp I/O Read Time", "ms",
 								 INSTR_TIME_GET_MILLISEC(usage->temp_blk_read_time),

@@ -260,6 +260,8 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
        "Temp Written Blocks": N,    +
        "Shared I/O Read Time": N.N, +
        "Shared I/O Write Time": N.N,+
+       "Local I/O Read Time": N.N,  +
+       "Local I/O Write Time": N.N, +
        "Temp I/O Read Time": N.N,   +
        "Temp I/O Write Time": N.N   +
      },                             +
@@ -276,6 +278,8 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
        "Temp Written Blocks": N,    +
        "Shared I/O Read Time": N.N, +
        "Shared I/O Write Time": N.N,+
+       "Local I/O Read Time": N.N,  +
+       "Local I/O Write Time": N.N, +
        "Temp I/O Read Time": N.N,   +
        "Temp I/O Write Time": N.N   +
      },                             +

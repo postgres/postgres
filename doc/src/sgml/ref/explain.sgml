@@ -183,8 +183,8 @@ ROLLBACK;
       Include information on buffer usage. Specifically, include the number of
       shared blocks hit, read, dirtied, and written, the number of local blocks
       hit, read, dirtied, and written, the number of temp blocks read and
-      written, and the time spent reading and writing data file blocks and
-      temporary file blocks (in milliseconds) if
+      written, and the time spent reading and writing data file blocks, local
+      blocks and temporary file blocks (in milliseconds) if
       <xref linkend="guc-track-io-timing"/> is enabled.  A
       <emphasis>hit</emphasis> means that a read was avoided because the block
       was found already in cache when needed.
