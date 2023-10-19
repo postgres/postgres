@@ -49,5 +49,6 @@ const keyInfo* keyringStoreKey(keyName name, keyData data);
 unsigned keyringCacheMemorySize(void);
 void keyringInitCache(void);
 const keyInfo* keyringCacheStoreKey(keyName name, keyData data);
+const char * tde_sprint_masterkey(const keyData *k);
 
 #endif // KEYRING_API_H

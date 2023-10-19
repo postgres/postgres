@@ -57,16 +57,17 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 	InternalKey int_key = {0};
 	RelKeysData *data;
 	unsigned char        dataEnc[1024];
+	RelKeysData *encData = dataEnc;
 	size_t 		sz;
 	int			encsz;
 	const keyInfo 	*master_key_info;
 	// TODO: use proper iv stored in the file!
-	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	unsigned char iv[INTERNAL_KEY_LEN] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	master_key_info = keyringGetLatestKey(MasterKeyName);
 	if(master_key_info == NULL)
 	{
-		master_key_info = keyringGenerateKey(MasterKeyName, 16);
+		master_key_info = keyringGenerateKey(MasterKeyName, INTERNAL_KEY_LEN);
 	}
 	if(master_key_info == NULL)
 	{
@@ -99,11 +100,6 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
                 		RelationGetRelationName(rel), ERR_error_string(ERR_get_error(), NULL))));
 	}
 
-#if TDE_FORK_DEBUG
-	ereport(DEBUG2,
-		(errmsg("internal_key: %s", tde_sprint_key(&int_key))));
-#endif
-
 	/* Allocate in TopMemoryContext and don't pfree sice we add it to
 	 * the cache as well */
 	data = (RelKeysData *) MemoryContextAlloc(TopMemoryContext, SizeOfRelKeysData(1));
@@ -112,10 +108,25 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 	data->internal_key[0] = int_key;
 	data->internal_keys_len = 1;
 
+#if TDE_FORK_DEBUG
+	ereport(DEBUG2,
+		(errmsg("internal_key: %s", tde_sprint_key(&data->internal_key[0]))));
+#endif
+
 	sz = SizeOfRelKeysData(data->internal_keys_len);
 
+#if TDE_FORK_DEBUG
+		ereport(DEBUG2,
+			(errmsg("fork file master key: %s: %s", master_key_info->name.name, tde_sprint_masterkey(&master_key_info->data))));
+#endif
+
 	memcpy(dataEnc, data, sz);
-	AesEncrypt(master_key_info->data.data, iv, (unsigned char*)data + SizeOfRelKeysDataHeader, 16, dataEnc + SizeOfRelKeysDataHeader, &encsz);
+	AesEncrypt(master_key_info->data.data, iv, (unsigned char*)data + SizeOfRelKeysDataHeader, INTERNAL_KEY_LEN, dataEnc + SizeOfRelKeysDataHeader, &encsz);
+
+#if TDE_FORK_DEBUG
+	ereport(DEBUG2,
+		(errmsg("encrypted internal_key: %s", tde_sprint_key(&encData->internal_key[0]))));
+#endif
 
 	Assert(encsz == sz - SizeOfRelKeysDataHeader);
 
@@ -187,17 +198,23 @@ pg_tde_get_keys_from_fork(const RelFileLocator *rlocator)
 						key_file_path)));
 	}
 
+#if TDE_FORK_DEBUG
+	for (Size i = 0; i < keys->internal_keys_len; i++) 
+		ereport(DEBUG2,
+			(errmsg("encrypted fork file keys: [%lu] %s: %s", i+1, keys->master_key_name, tde_sprint_key(&keys->internal_key[i]))));
+#endif
+
 	{
 		const keyInfo 	*master_key_info;
 		unsigned char        dataDec[1024];
 		int			encsz;
 		// TODO: use proper iv stored in the file!
-		unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+		unsigned char iv[INTERNAL_KEY_LEN] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 		master_key_info = keyringGetLatestKey(keys->master_key_name);
 		if(master_key_info == NULL)
 		{
-			master_key_info = keyringGenerateKey(keys->master_key_name, 16);
+			master_key_info = keyringGenerateKey(keys->master_key_name, INTERNAL_KEY_LEN);
 		}
 		if(master_key_info == NULL)
 		{
@@ -205,11 +222,16 @@ pg_tde_get_keys_from_fork(const RelFileLocator *rlocator)
 					(errmsg("failed to retrieve master key")));
 		}
 
-		AesDecrypt(master_key_info->data.data, iv, (unsigned char*) keys->internal_key , 16, dataDec, &encsz);
-		memcpy(keys->internal_key, dataDec, encsz);
+#if TDE_FORK_DEBUG
+		ereport(DEBUG2,
+			(errmsg("fork file master key: %s: %s", master_key_info->name.name, tde_sprint_masterkey(&master_key_info->data))));
+#endif
+
+		AesDecrypt(master_key_info->data.data, iv, (unsigned char*) keys->internal_key , INTERNAL_KEY_LEN, dataDec, &encsz);
+
+		memcpy(keys->internal_key, dataDec, INTERNAL_KEY_LEN);
 
 	}
-
 
 #if TDE_FORK_DEBUG
 	for (Size i = 0; i < keys->internal_keys_len; i++) 
@@ -286,6 +308,18 @@ tde_sprint_key(InternalKey *k)
 		sprintf(buf+i, "%02X", k->key[i]);
 
 	sprintf(buf+i, "[%lu, %lu]", k->start_loc, k->end_loc);
+
+	return buf;
+}
+
+const char *
+tde_sprint_masterkey(const keyData *k)
+{
+	static char buf[256];
+	int 	i;
+
+	for (i = 0; i < k->len; i++)
+		sprintf(buf+i, "%02X", k->data[i]);
 
 	return buf;
 }
