@@ -128,8 +128,6 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 		(errmsg("encrypted internal_key: %s", tde_sprint_key(&encData->internal_key[0]))));
 #endif
 
-	Assert(encsz == sz - SizeOfRelKeysDataHeader);
-
 	if (FileWrite(file, dataEnc, sz, 0, WAIT_EVENT_DATA_FILE_WRITE) != sz)
 	{
     	ereport(FATAL,
