@@ -735,11 +735,15 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 
 				/*
 				 * Check for corrupt data: if we fell off the end of the
-				 * source, or if we obtained off = 0, we have problems.  (We
-				 * must check this, else we risk an infinite loop below in the
-				 * face of corrupt data.)
+				 * source, or if we obtained off = 0, or if off is more than
+				 * the distance back to the buffer start, we have problems.
+				 * (We must check for off = 0, else we risk an infinite loop
+				 * below in the face of corrupt data.  Likewise, the upper
+				 * limit on off prevents accessing outside the buffer
+				 * boundaries.)
 				 */
-				if (unlikely(sp > srcend || off == 0))
+				if (unlikely(sp > srcend || off == 0 ||
+							 off > (dp - (unsigned char *) dest)))
 					return -1;
 
 				/*
