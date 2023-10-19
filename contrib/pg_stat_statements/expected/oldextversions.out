@@ -284,8 +284,8 @@ AlTER EXTENSION pg_stat_statements UPDATE TO '1.11';
  local_blks_written     | bigint           |           |          | 
  temp_blks_read         | bigint           |           |          | 
  temp_blks_written      | bigint           |           |          | 
- blk_read_time          | double precision |           |          | 
- blk_write_time         | double precision |           |          | 
+ shared_blk_read_time   | double precision |           |          | 
+ shared_blk_write_time  | double precision |           |          | 
  temp_blk_read_time     | double precision |           |          | 
  temp_blk_write_time    | double precision |           |          | 
  wal_records            | bigint           |           |          | 

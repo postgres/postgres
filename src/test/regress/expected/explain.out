@@ -230,60 +230,60 @@ select explain_filter('explain (buffers, format json) select * from int8_tbl i8'
 -- but always set in JSON format, so check them only in this case.
 set track_io_timing = on;
 select explain_filter('explain (analyze, buffers, format json) select * from int8_tbl i8');
-           explain_filter           
-------------------------------------
- [                                 +
-   {                               +
-     "Plan": {                     +
-       "Node Type": "Seq Scan",    +
-       "Parallel Aware": false,    +
-       "Async Capable": false,     +
-       "Relation Name": "int8_tbl",+
-       "Alias": "i8",              +
-       "Startup Cost": N.N,        +
-       "Total Cost": N.N,          +
-       "Plan Rows": N,             +
-       "Plan Width": N,            +
-       "Actual Startup Time": N.N, +
-       "Actual Total Time": N.N,   +
-       "Actual Rows": N,           +
-       "Actual Loops": N,          +
-       "Shared Hit Blocks": N,     +
-       "Shared Read Blocks": N,    +
-       "Shared Dirtied Blocks": N, +
-       "Shared Written Blocks": N, +
-       "Local Hit Blocks": N,      +
-       "Local Read Blocks": N,     +
-       "Local Dirtied Blocks": N,  +
-       "Local Written Blocks": N,  +
-       "Temp Read Blocks": N,      +
-       "Temp Written Blocks": N,   +
-       "I/O Read Time": N.N,       +
-       "I/O Write Time": N.N,      +
-       "Temp I/O Read Time": N.N,  +
-       "Temp I/O Write Time": N.N  +
-     },                            +
-     "Planning": {                 +
-       "Shared Hit Blocks": N,     +
-       "Shared Read Blocks": N,    +
-       "Shared Dirtied Blocks": N, +
-       "Shared Written Blocks": N, +
-       "Local Hit Blocks": N,      +
-       "Local Read Blocks": N,     +
-       "Local Dirtied Blocks": N,  +
-       "Local Written Blocks": N,  +
-       "Temp Read Blocks": N,      +
-       "Temp Written Blocks": N,   +
-       "I/O Read Time": N.N,       +
-       "I/O Write Time": N.N,      +
-       "Temp I/O Read Time": N.N,  +
-       "Temp I/O Write Time": N.N  +
-     },                            +
-     "Planning Time": N.N,         +
-     "Triggers": [                 +
-     ],                            +
-     "Execution Time": N.N         +
-   }                               +
+           explain_filter            
+-------------------------------------
+ [                                  +
+   {                                +
+     "Plan": {                      +
+       "Node Type": "Seq Scan",     +
+       "Parallel Aware": false,     +
+       "Async Capable": false,      +
+       "Relation Name": "int8_tbl", +
+       "Alias": "i8",               +
+       "Startup Cost": N.N,         +
+       "Total Cost": N.N,           +
+       "Plan Rows": N,              +
+       "Plan Width": N,             +
+       "Actual Startup Time": N.N,  +
+       "Actual Total Time": N.N,    +
+       "Actual Rows": N,            +
+       "Actual Loops": N,           +
+       "Shared Hit Blocks": N,      +
+       "Shared Read Blocks": N,     +
+       "Shared Dirtied Blocks": N,  +
+       "Shared Written Blocks": N,  +
+       "Local Hit Blocks": N,       +
+       "Local Read Blocks": N,      +
+       "Local Dirtied Blocks": N,   +
+       "Local Written Blocks": N,   +
+       "Temp Read Blocks": N,       +
+       "Temp Written Blocks": N,    +
+       "Shared I/O Read Time": N.N, +
+       "Shared I/O Write Time": N.N,+
+       "Temp I/O Read Time": N.N,   +
+       "Temp I/O Write Time": N.N   +
+     },                             +
+     "Planning": {                  +
+       "Shared Hit Blocks": N,      +
+       "Shared Read Blocks": N,     +
+       "Shared Dirtied Blocks": N,  +
+       "Shared Written Blocks": N,  +
+       "Local Hit Blocks": N,       +
+       "Local Read Blocks": N,      +
+       "Local Dirtied Blocks": N,   +
+       "Local Written Blocks": N,   +
+       "Temp Read Blocks": N,       +
+       "Temp Written Blocks": N,    +
+       "Shared I/O Read Time": N.N, +
+       "Shared I/O Write Time": N.N,+
+       "Temp I/O Read Time": N.N,   +
+       "Temp I/O Write Time": N.N   +
+     },                             +
+     "Planning Time": N.N,          +
+     "Triggers": [                  +
+     ],                             +
+     "Execution Time": N.N          +
+   }                                +
  ]
 (1 row)
 
