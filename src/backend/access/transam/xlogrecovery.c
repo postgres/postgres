@@ -1638,6 +1638,17 @@ PerformWalRecovery(void)
 		replayTLI = RedoStartTLI;
 		XLogPrefetcherBeginRead(xlogprefetcher, RedoStartLSN);
 		record = ReadRecord(xlogprefetcher, PANIC, false, replayTLI);
+
+		/*
+		 * If a checkpoint record's redo pointer points back to an earlier
+		 * LSN, the record at that LSN should be an XLOG_CHECKPOINT_REDO
+		 * record.
+		 */
+		if (record->xl_rmid != RM_XLOG_ID ||
+			(record->xl_info & ~XLR_INFO_MASK) != XLOG_CHECKPOINT_REDO)
+			ereport(FATAL,
+					(errmsg("unexpected record type found at redo point %X/%X",
+							LSN_FORMAT_ARGS(xlogreader->ReadRecPtr))));
 	}
 	else
 	{

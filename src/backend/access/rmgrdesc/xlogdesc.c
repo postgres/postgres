@@ -148,6 +148,10 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 LSN_FORMAT_ARGS(xlrec.overwritten_lsn),
 						 timestamptz_to_str(xlrec.overwrite_time));
 	}
+	else if (info == XLOG_CHECKPOINT_REDO)
+	{
+		/* No details to write out */
+	}
 }
 
 const char *
@@ -195,6 +199,9 @@ xlog_identify(uint8 info)
 			break;
 		case XLOG_FPI_FOR_HINT:
 			id = "FPI_FOR_HINT";
+			break;
+		case XLOG_CHECKPOINT_REDO:
+			id = "CHECKPOINT_REDO";
 			break;
 	}
 

@@ -80,9 +80,17 @@ SELECT pg_current_wal_lsn() AS wal_lsn4 \gset
 SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_block_info(:'wal_lsn3', :'wal_lsn4')
   WHERE relfilenode = :'sample_tbl_oid' AND block_data IS NOT NULL;
 
--- Force full-page image on the next update.
+-- Force a checkpoint so that the next update will log a full-page image.
 SELECT pg_current_wal_lsn() AS wal_lsn5 \gset
 CHECKPOINT;
+
+-- Verify that an XLOG_CHECKPOINT_REDO record begins at precisely the redo LSN
+-- of the checkpoint we just performed.
+SELECT redo_lsn FROM pg_control_checkpoint() \gset
+SELECT start_lsn = :'redo_lsn'::pg_lsn AS same_lsn, resource_manager,
+    record_type FROM pg_get_wal_record_info(:'redo_lsn');
+
+-- This update should produce a full-page image because of the checkpoint.
 UPDATE sample_tbl SET col1 = col1 + 1 WHERE col1 = 2;
 SELECT pg_current_wal_lsn() AS wal_lsn6 \gset
 -- Check if we get FPI from WAL record.

@@ -559,6 +559,16 @@ typedef struct XLogCtlData
 	slock_t		info_lck;		/* locks shared variables shown above */
 } XLogCtlData;
 
+/*
+ * Classification of XLogRecordInsert operations.
+ */
+typedef enum
+{
+	WALINSERT_NORMAL,
+	WALINSERT_SPECIAL_SWITCH,
+	WALINSERT_SPECIAL_CHECKPOINT
+} WalInsertClass;
+
 static XLogCtlData *XLogCtl = NULL;
 
 /* a private copy of XLogCtl->Insert.WALInsertLocks, for convenience */
@@ -739,12 +749,20 @@ XLogInsertRecord(XLogRecData *rdata,
 	bool		inserted;
 	XLogRecord *rechdr = (XLogRecord *) rdata->data;
 	uint8		info = rechdr->xl_info & ~XLR_INFO_MASK;
-	bool		isLogSwitch = (rechdr->xl_rmid == RM_XLOG_ID &&
-							   info == XLOG_SWITCH);
+	WalInsertClass class = WALINSERT_NORMAL;
 	XLogRecPtr	StartPos;
 	XLogRecPtr	EndPos;
 	bool		prevDoPageWrites = doPageWrites;
 	TimeLineID	insertTLI;
+
+	/* Does this record type require special handling? */
+	if (unlikely(rechdr->xl_rmid == RM_XLOG_ID))
+	{
+		if (info == XLOG_SWITCH)
+			class = WALINSERT_SPECIAL_SWITCH;
+		else if (info == XLOG_CHECKPOINT_REDO)
+			class = WALINSERT_SPECIAL_CHECKPOINT;
+	}
 
 	/* we assume that all of the record header is in the first chunk */
 	Assert(rdata->len >= SizeOfXLogRecord);
@@ -793,7 +811,7 @@ XLogInsertRecord(XLogRecData *rdata,
 	 */
 	START_CRIT_SECTION();
 
-	if (likely(!isLogSwitch))
+	if (likely(class == WALINSERT_NORMAL))
 	{
 		WALInsertLockAcquire();
 
@@ -843,7 +861,7 @@ XLogInsertRecord(XLogRecData *rdata,
 		/* Normal records are always inserted. */
 		inserted = true;
 	}
-	else
+	else if (class == WALINSERT_SPECIAL_SWITCH)
 	{
 		/*
 		 * In order to insert an XLOG_SWITCH record, we need to hold all of
@@ -852,13 +870,31 @@ XLogInsertRecord(XLogRecData *rdata,
 		 * remains in the current WAL segment and claimed all of it.
 		 *
 		 * Nonetheless, this case is simpler than the normal cases handled
-		 * above, which must check for changes in doPageWrites and RedoRecPtr.
-		 * Those checks are only needed for records that can contain
-		 * full-pages images, and an XLOG_SWITCH record never does.
+		 * below, which must check for changes in doPageWrites and RedoRecPtr.
+		 * Those checks are only needed for records that can contain buffer
+		 * references, and an XLOG_SWITCH record never does.
 		 */
 		Assert(fpw_lsn == InvalidXLogRecPtr);
 		WALInsertLockAcquireExclusive();
 		inserted = ReserveXLogSwitch(&StartPos, &EndPos, &rechdr->xl_prev);
+	}
+	else
+	{
+		Assert(class == WALINSERT_SPECIAL_CHECKPOINT);
+
+		/*
+		 * We need to update both the local and shared copies of RedoRecPtr,
+		 * which means that we need to hold all the WAL insertion locks.
+		 * However, there can't be any buffer references, so as above, we need
+		 * not check RedoRecPtr before inserting the record; we just need to
+		 * update it afterwards.
+		 */
+		Assert(fpw_lsn == InvalidXLogRecPtr);
+		WALInsertLockAcquireExclusive();
+		ReserveXLogInsertLocation(rechdr->xl_tot_len, &StartPos, &EndPos,
+								  &rechdr->xl_prev);
+		RedoRecPtr = Insert->RedoRecPtr = StartPos;
+		inserted = true;
 	}
 
 	if (inserted)
@@ -876,7 +912,8 @@ XLogInsertRecord(XLogRecData *rdata,
 		 * All the record data, including the header, is now ready to be
 		 * inserted. Copy the record in the space reserved.
 		 */
-		CopyXLogRecordToWAL(rechdr->xl_tot_len, isLogSwitch, rdata,
+		CopyXLogRecordToWAL(rechdr->xl_tot_len,
+							class == WALINSERT_SPECIAL_SWITCH, rdata,
 							StartPos, EndPos, insertTLI);
 
 		/*
@@ -935,7 +972,7 @@ XLogInsertRecord(XLogRecData *rdata,
 	 * padding space that fills the rest of the segment, and perform
 	 * end-of-segment actions (eg, notifying archiver).
 	 */
-	if (isLogSwitch)
+	if (class == WALINSERT_SPECIAL_SWITCH)
 	{
 		TRACE_POSTGRESQL_WAL_SWITCH();
 		XLogFlush(EndPos);
@@ -1054,8 +1091,12 @@ XLogInsertRecord(XLogRecData *rdata,
  *
  * NB: The space calculation here must match the code in CopyXLogRecordToWAL,
  * where we actually copy the record to the reserved space.
+ *
+ * NB: Testing shows that XLogInsertRecord runs faster if this code is inlined;
+ * however, because there are two call sites, the compiler is reluctant to
+ * inline. We use pg_attribute_always_inline here to try to convince it.
  */
-static void
+static pg_attribute_always_inline void
 ReserveXLogInsertLocation(int size, XLogRecPtr *StartPos, XLogRecPtr *EndPos,
 						  XLogRecPtr *PrevPtr)
 {
@@ -6475,17 +6516,22 @@ update_checkpoint_display(int flags, bool restartpoint, bool reset)
  * In particular note that this routine is synchronous and does not pay
  * attention to CHECKPOINT_WAIT.
  *
- * If !shutdown then we are writing an online checkpoint. This is a very special
- * kind of operation and WAL record because the checkpoint action occurs over
- * a period of time yet logically occurs at just a single LSN. The logical
- * position of the WAL record (redo ptr) is the same or earlier than the
- * physical position. When we replay WAL we locate the checkpoint via its
- * physical position then read the redo ptr and actually start replay at the
- * earlier logical position. Note that we don't write *anything* to WAL at
- * the logical position, so that location could be any other kind of WAL record.
- * All of this mechanism allows us to continue working while we checkpoint.
- * As a result, timing of actions is critical here and be careful to note that
- * this function will likely take minutes to execute on a busy system.
+ * If !shutdown then we are writing an online checkpoint. An XLOG_CHECKPOINT_REDO
+ * record is inserted into WAL at the logical location of the checkpoint, before
+ * flushing anything to disk, and when the checkpoint is eventually completed,
+ * and it is from this point that WAL replay will begin in the case of a recovery
+ * from this checkpoint. Once everything is written to disk, an
+ * XLOG_CHECKPOINT_ONLINE record is written to complete the checkpoint, and
+ * points back to the earlier XLOG_CHECKPOINT_REDO record. This mechanism allows
+ * other write-ahead log records to be written while the checkpoint is in
+ * progress, but we must be very careful about order of operations. This function
+ * may take many minutes to execute on a busy system.
+ *
+ * On the other hand, when shutdown is true, concurrent insertion into the
+ * write-ahead log is impossible, so there is no need for two separate records.
+ * In this case, we only insert an XLOG_CHECKPOINT_SHUTDOWN record, and it's
+ * both the record marking the completion of the checkpoint and the location
+ * from which WAL replay would begin if needed.
  */
 void
 CreateCheckPoint(int flags)
@@ -6497,7 +6543,6 @@ CreateCheckPoint(int flags)
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	uint32		freespace;
 	XLogRecPtr	PriorRedoPtr;
-	XLogRecPtr	curInsert;
 	XLogRecPtr	last_important_lsn;
 	VirtualTransactionId *vxids;
 	int			nvxids;
@@ -6568,13 +6613,6 @@ CreateCheckPoint(int flags)
 	last_important_lsn = GetLastImportantRecPtr();
 
 	/*
-	 * We must block concurrent insertions while examining insert state to
-	 * determine the checkpoint REDO pointer.
-	 */
-	WALInsertLockAcquireExclusive();
-	curInsert = XLogBytePosToRecPtr(Insert->CurrBytePos);
-
-	/*
 	 * If this isn't a shutdown or forced checkpoint, and if there has been no
 	 * WAL activity requiring a checkpoint, skip it.  The idea here is to
 	 * avoid inserting duplicate checkpoints when the system is idle.
@@ -6584,7 +6622,6 @@ CreateCheckPoint(int flags)
 	{
 		if (last_important_lsn == ControlFile->checkPoint)
 		{
-			WALInsertLockRelease();
 			END_CRIT_SECTION();
 			ereport(DEBUG1,
 					(errmsg_internal("checkpoint skipped because system is idle")));
@@ -6606,44 +6643,80 @@ CreateCheckPoint(int flags)
 	else
 		checkPoint.PrevTimeLineID = checkPoint.ThisTimeLineID;
 
+	/*
+	 * We must block concurrent insertions while examining insert state.
+	 */
+	WALInsertLockAcquireExclusive();
+
 	checkPoint.fullPageWrites = Insert->fullPageWrites;
 
-	/*
-	 * Compute new REDO record ptr = location of next XLOG record.
-	 *
-	 * NB: this is NOT necessarily where the checkpoint record itself will be,
-	 * since other backends may insert more XLOG records while we're off doing
-	 * the buffer flush work.  Those XLOG records are logically after the
-	 * checkpoint, even though physically before it.  Got that?
-	 */
-	freespace = INSERT_FREESPACE(curInsert);
-	if (freespace == 0)
+	if (shutdown)
 	{
-		if (XLogSegmentOffset(curInsert, wal_segment_size) == 0)
-			curInsert += SizeOfXLogLongPHD;
-		else
-			curInsert += SizeOfXLogShortPHD;
-	}
-	checkPoint.redo = curInsert;
+		XLogRecPtr	curInsert = XLogBytePosToRecPtr(Insert->CurrBytePos);
 
-	/*
-	 * Here we update the shared RedoRecPtr for future XLogInsert calls; this
-	 * must be done while holding all the insertion locks.
-	 *
-	 * Note: if we fail to complete the checkpoint, RedoRecPtr will be left
-	 * pointing past where it really needs to point.  This is okay; the only
-	 * consequence is that XLogInsert might back up whole buffers that it
-	 * didn't really need to.  We can't postpone advancing RedoRecPtr because
-	 * XLogInserts that happen while we are dumping buffers must assume that
-	 * their buffer changes are not included in the checkpoint.
-	 */
-	RedoRecPtr = XLogCtl->Insert.RedoRecPtr = checkPoint.redo;
+		/*
+		 * Compute new REDO record ptr = location of next XLOG record.
+		 *
+		 * Since this is a shutdown checkpoint, there can't be any concurrent
+		 * WAL insertion.
+		 */
+		freespace = INSERT_FREESPACE(curInsert);
+		if (freespace == 0)
+		{
+			if (XLogSegmentOffset(curInsert, wal_segment_size) == 0)
+				curInsert += SizeOfXLogLongPHD;
+			else
+				curInsert += SizeOfXLogShortPHD;
+		}
+		checkPoint.redo = curInsert;
+
+		/*
+		 * Here we update the shared RedoRecPtr for future XLogInsert calls;
+		 * this must be done while holding all the insertion locks.
+		 *
+		 * Note: if we fail to complete the checkpoint, RedoRecPtr will be
+		 * left pointing past where it really needs to point.  This is okay;
+		 * the only consequence is that XLogInsert might back up whole buffers
+		 * that it didn't really need to.  We can't postpone advancing
+		 * RedoRecPtr because XLogInserts that happen while we are dumping
+		 * buffers must assume that their buffer changes are not included in
+		 * the checkpoint.
+		 */
+		RedoRecPtr = XLogCtl->Insert.RedoRecPtr = checkPoint.redo;
+	}
 
 	/*
 	 * Now we can release the WAL insertion locks, allowing other xacts to
 	 * proceed while we are flushing disk buffers.
 	 */
 	WALInsertLockRelease();
+
+	/*
+	 * If this is an online checkpoint, we have not yet determined the redo
+	 * point. We do so now by inserting the special XLOG_CHECKPOINT_REDO
+	 * record; the LSN at which it starts becomes the new redo pointer. We
+	 * don't do this for a shutdown checkpoint, because in that case no WAL
+	 * can be written between the redo point and the insertion of the
+	 * checkpoint record itself, so the checkpoint record itself serves to
+	 * mark the redo point.
+	 */
+	if (!shutdown)
+	{
+		int			dummy = 0;
+
+		/* Record must have payload to avoid assertion failure. */
+		XLogBeginInsert();
+		XLogRegisterData((char *) &dummy, sizeof(dummy));
+		(void) XLogInsert(RM_XLOG_ID, XLOG_CHECKPOINT_REDO);
+
+		/*
+		 * XLogInsertRecord will have updated XLogCtl->Insert.RedoRecPtr in
+		 * shared memory and RedoRecPtr in backend-local memory, but we need
+		 * to copy that into the record that will be inserted when the
+		 * checkpoint is complete.
+		 */
+		checkPoint.redo = RedoRecPtr;
+	}
 
 	/* Update the info_lck-protected copy of RedoRecPtr as well */
 	SpinLockAcquire(&XLogCtl->info_lck);
@@ -8104,6 +8177,10 @@ xlog_redo(XLogReaderState *record)
 
 		/* Keep track of full_page_writes */
 		lastFullPageWrites = fpw;
+	}
+	else if (info == XLOG_CHECKPOINT_REDO)
+	{
+		/* nothing to do here, just for informational purposes */
 	}
 }
 
