@@ -65,6 +65,8 @@ static void AesRun2(EVP_CIPHER_CTX** ctxPtr, int enc, const unsigned char* key, 
 	{
 		*ctxPtr = EVP_CIPHER_CTX_new();
 		EVP_CIPHER_CTX_init(*ctxPtr);
+		
+		EVP_CIPHER_CTX_set_padding(*ctxPtr, 0);
 
 		if(EVP_CipherInit_ex(*ctxPtr, cipher2, NULL, key, iv, enc) == 0) {
 			fprintf(stderr, "ERROR: EVP_CipherInit_ex failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
@@ -84,6 +86,7 @@ static void AesRun(int enc, const unsigned char* key, const unsigned char* iv, c
 	ctx = EVP_CIPHER_CTX_new();
 	EVP_CIPHER_CTX_init(ctx);
 
+	EVP_CIPHER_CTX_set_padding(ctx, 0);
 
 	if(EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc) == 0) {
 		fprintf(stderr, "ERROR: EVP_CipherInit_ex failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));

@@ -56,7 +56,7 @@ jobs:
         run: |
           cp ../contrib/postgres-tde-ext/keyring.json /tmp/keyring.json
           meson test --suite setup -v
-          meson test --suite postgres-tde-ext -v
+          meson test --suite postgres-tde-ext -v --num-processes 1
         working-directory: src/build
 
       - name: Report on test fail
