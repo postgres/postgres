@@ -184,6 +184,10 @@ typedef struct Counters
 										 * in msec */
 	double		shared_blk_write_time;	/* time spent writing shared blocks,
 										 * in msec */
+	double		local_blk_read_time;	/* time spent reading local blocks, in
+										 * msec */
+	double		local_blk_write_time;	/* time spent writing local blocks, in
+										 * msec */
 	double		temp_blk_read_time; /* time spent reading temp blocks, in msec */
 	double		temp_blk_write_time;	/* time spent writing temp blocks, in
 										 * msec */
@@ -1395,6 +1399,8 @@ pgss_store(const char *query, uint64 queryId,
 		e->counters.temp_blks_written += bufusage->temp_blks_written;
 		e->counters.shared_blk_read_time += INSTR_TIME_GET_MILLISEC(bufusage->shared_blk_read_time);
 		e->counters.shared_blk_write_time += INSTR_TIME_GET_MILLISEC(bufusage->shared_blk_write_time);
+		e->counters.local_blk_read_time += INSTR_TIME_GET_MILLISEC(bufusage->local_blk_read_time);
+		e->counters.local_blk_write_time += INSTR_TIME_GET_MILLISEC(bufusage->local_blk_write_time);
 		e->counters.temp_blk_read_time += INSTR_TIME_GET_MILLISEC(bufusage->temp_blk_read_time);
 		e->counters.temp_blk_write_time += INSTR_TIME_GET_MILLISEC(bufusage->temp_blk_write_time);
 		e->counters.usage += USAGE_EXEC(total_time);
@@ -1472,8 +1478,8 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 #define PG_STAT_STATEMENTS_COLS_V1_8	32
 #define PG_STAT_STATEMENTS_COLS_V1_9	33
 #define PG_STAT_STATEMENTS_COLS_V1_10	43
-#define PG_STAT_STATEMENTS_COLS_V1_11	45
-#define PG_STAT_STATEMENTS_COLS			45	/* maximum of above */
+#define PG_STAT_STATEMENTS_COLS_V1_11	47
+#define PG_STAT_STATEMENTS_COLS			47	/* maximum of above */
 
 /*
  * Retrieve statement statistics.
@@ -1827,6 +1833,11 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		{
 			values[i++] = Float8GetDatumFast(tmp.shared_blk_read_time);
 			values[i++] = Float8GetDatumFast(tmp.shared_blk_write_time);
+		}
+		if (api_version >= PGSS_V1_11)
+		{
+			values[i++] = Float8GetDatumFast(tmp.local_blk_read_time);
+			values[i++] = Float8GetDatumFast(tmp.local_blk_write_time);
 		}
 		if (api_version >= PGSS_V1_10)
 		{
