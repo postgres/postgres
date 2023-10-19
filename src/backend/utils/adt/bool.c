@@ -35,6 +35,7 @@ parse_bool(const char *value, bool *result)
 bool
 parse_bool_with_len(const char *value, size_t len, bool *result)
 {
+	/* Check the most-used possibilities first. */
 	switch (*value)
 	{
 		case 't':
@@ -119,12 +120,7 @@ parse_bool_with_len(const char *value, size_t len, bool *result)
  *****************************************************************************/
 
 /*
- *		boolin			- converts "t" or "f" to 1 or 0
- *
- * Check explicitly for "true/false" and TRUE/FALSE, 1/0, YES/NO, ON/OFF.
- * Reject other values.
- *
- * In the switch statement, check the most-used possibilities first.
+ *		boolin			- input function for type boolean
  */
 Datum
 boolin(PG_FUNCTION_ARGS)
