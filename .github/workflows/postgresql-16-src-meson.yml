@@ -48,7 +48,7 @@ jobs:
 
       - name: Build postgres
         run: |
-          meson setup build --prefix `pwd`/../inst
+          meson setup build --prefix `pwd`/../inst --buildtype=debug -Dcassert=true
           cd build && ninja && ninja install
         working-directory: src
 
