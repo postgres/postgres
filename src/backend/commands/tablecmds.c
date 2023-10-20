@@ -7996,7 +7996,9 @@ ATExecColumnDefault(Relation rel, const char *colName,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("column \"%s\" of relation \"%s\" is an identity column",
 						colName, RelationGetRelationName(rel)),
-				 newDefault ? 0 : errhint("Use ALTER TABLE ... ALTER COLUMN ... DROP IDENTITY instead.")));
+		/* translator: %s is an SQL ALTER command */
+				 newDefault ? 0 : errhint("Use %s instead.",
+										  "ALTER TABLE ... ALTER COLUMN ... DROP IDENTITY")));
 
 	if (TupleDescAttr(tupdesc, attnum - 1)->attgenerated)
 		ereport(ERROR,
@@ -8004,7 +8006,9 @@ ATExecColumnDefault(Relation rel, const char *colName,
 				 errmsg("column \"%s\" of relation \"%s\" is a generated column",
 						colName, RelationGetRelationName(rel)),
 				 newDefault || TupleDescAttr(tupdesc, attnum - 1)->attgenerated != ATTRIBUTE_GENERATED_STORED ? 0 :
-				 errhint("Use ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION instead.")));
+		/* translator: %s is an SQL ALTER command */
+				 errhint("Use %s instead.",
+						 "ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION")));
 
 	/*
 	 * Remove any old default for the column.  We use RESTRICT here for
@@ -14534,7 +14538,9 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is a composite type",
 							NameStr(tuple_class->relname)),
-					 errhint("Use ALTER TYPE instead.")));
+			/* translator: %s is an SQL ALTER command */
+					 errhint("Use %s instead.",
+							 "ALTER TYPE")));
 			break;
 		case RELKIND_TOASTVALUE:
 			if (recursing)
@@ -17942,7 +17948,9 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is a composite type", rv->relname),
-				 errhint("Use ALTER TYPE instead.")));
+		/* translator: %s is an SQL ALTER command */
+				 errhint("Use %s instead.",
+						 "ALTER TYPE")));
 
 	/*
 	 * Don't allow ALTER TABLE .. SET SCHEMA on relations that can't be moved
@@ -17961,7 +17969,9 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change schema of composite type \"%s\"",
 							rv->relname),
-					 errhint("Use ALTER TYPE instead.")));
+			/* translator: %s is an SQL ALTER command */
+					 errhint("Use %s instead.",
+							 "ALTER TYPE")));
 		else if (relkind == RELKIND_TOASTVALUE)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
