@@ -2877,10 +2877,11 @@ timetz_zone(PG_FUNCTION_ARGS)
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
 	result->time = t->time + (t->zone - tz) * USECS_PER_SEC;
+	/* C99 modulo has the wrong sign convention for negative input */
 	while (result->time < INT64CONST(0))
 		result->time += USECS_PER_DAY;
-	while (result->time >= USECS_PER_DAY)
-		result->time -= USECS_PER_DAY;
+	if (result->time >= USECS_PER_DAY)
+		result->time %= USECS_PER_DAY;
 
 	result->zone = tz;
 
@@ -2910,10 +2911,11 @@ timetz_izone(PG_FUNCTION_ARGS)
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
 	result->time = time->time + (time->zone - tz) * USECS_PER_SEC;
+	/* C99 modulo has the wrong sign convention for negative input */
 	while (result->time < INT64CONST(0))
 		result->time += USECS_PER_DAY;
-	while (result->time >= USECS_PER_DAY)
-		result->time -= USECS_PER_DAY;
+	if (result->time >= USECS_PER_DAY)
+		result->time %= USECS_PER_DAY;
 
 	result->zone = tz;
 
