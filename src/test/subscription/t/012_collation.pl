@@ -21,9 +21,7 @@ $node_publisher->init(
 $node_publisher->start;
 
 my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
-$node_subscriber->init(
-	allows_streaming => 'logical',
-	extra => [ '--locale=C', '--encoding=UTF8' ]);
+$node_subscriber->init(extra => [ '--locale=C', '--encoding=UTF8' ]);
 $node_subscriber->start;
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';

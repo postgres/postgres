@@ -15,7 +15,7 @@ $node_publisher->start;
 
 # Create subscriber node
 my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
-$node_subscriber->init(allows_streaming => 'logical');
+$node_subscriber->init;
 $node_subscriber->append_conf('postgresql.conf',
 	"wal_retrieve_retry_interval = 1ms");
 $node_subscriber->start;

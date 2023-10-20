@@ -293,7 +293,7 @@ $node_primary->wait_for_replay_catchup($node_standby);
 #######################
 # Initialize subscriber node
 #######################
-$node_subscriber->init(allows_streaming => 'logical');
+$node_subscriber->init;
 $node_subscriber->start;
 
 my %psql_subscriber = (

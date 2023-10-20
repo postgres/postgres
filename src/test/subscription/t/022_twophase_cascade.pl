@@ -39,7 +39,7 @@ logical_decoding_work_mem = 64kB
 $node_B->start;
 # node_C
 my $node_C = PostgreSQL::Test::Cluster->new('node_C');
-$node_C->init(allows_streaming => 'logical');
+$node_C->init;
 $node_C->append_conf(
 	'postgresql.conf', qq(
 max_prepared_transactions = 10

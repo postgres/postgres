@@ -15,9 +15,7 @@ $node_publisher->init(
 $node_publisher->start;
 
 my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
-$node_subscriber->init(
-	allows_streaming => 'logical',
-	extra => [ '--locale=C', '--encoding=LATIN1' ]);
+$node_subscriber->init(extra => [ '--locale=C', '--encoding=LATIN1' ]);
 $node_subscriber->start;
 
 my $ddl = "CREATE TABLE test1 (a int, b text);";

@@ -15,11 +15,11 @@ $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
 
 my $node_subscriber1 = PostgreSQL::Test::Cluster->new('subscriber1');
-$node_subscriber1->init(allows_streaming => 'logical');
+$node_subscriber1->init;
 $node_subscriber1->start;
 
 my $node_subscriber2 = PostgreSQL::Test::Cluster->new('subscriber2');
-$node_subscriber2->init(allows_streaming => 'logical');
+$node_subscriber2->init;
 $node_subscriber2->start;
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';

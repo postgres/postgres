@@ -16,7 +16,7 @@ $node_publisher->start;
 
 # Create and initialize subscriber node
 my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
-$node_subscriber->init(allows_streaming => 'logical');
+$node_subscriber->init;
 $node_subscriber->start;
 
 # Create tables on both sides of the replication
