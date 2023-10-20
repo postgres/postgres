@@ -250,19 +250,22 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 			if (!collcollate)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("parameter \"lc_collate\" must be specified")));
+						 errmsg("parameter \"%s\" must be specified",
+								"lc_collate")));
 
 			if (!collctype)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("parameter \"lc_ctype\" must be specified")));
+						 errmsg("parameter \"%s\" must be specified",
+								"lc_ctype")));
 		}
 		else if (collprovider == COLLPROVIDER_ICU)
 		{
 			if (!colliculocale)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("parameter \"locale\" must be specified")));
+						 errmsg("parameter \"%s\" must be specified",
+								"locale")));
 
 			/*
 			 * During binary upgrade, preserve the locale string. Otherwise,
@@ -416,7 +419,9 @@ AlterCollation(AlterCollationStmt *stmt)
 	if (collOid == DEFAULT_COLLATION_OID)
 		ereport(ERROR,
 				(errmsg("cannot refresh version of default collation"),
-				 errhint("Use ALTER DATABASE ... REFRESH COLLATION VERSION instead.")));
+		/* translator: %s is an SQL command */
+				 errhint("Use %s instead.",
+						 "ALTER DATABASE ... REFRESH COLLATION VERSION")));
 
 	if (!object_ownercheck(CollationRelationId, collOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_COLLATION,
