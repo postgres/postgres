@@ -52,7 +52,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
    There are a few restrictions on your choice of name:
    <itemizedlist>
     <listitem>
-     <para><literal>--</literal> and <literal>/*</literal> cannot appear anywhere in an operator name,
+     <para>
+     <literal>--</literal> and <literal>/*</literal> cannot appear anywhere in an operator name,
      since they will be taken as the start of a comment.
      </para>
     </listitem>
@@ -72,8 +73,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
     </listitem>
     <listitem>
      <para>
-     The use of <literal>=&gt;</literal> as an operator name is deprecated.  It may
-     be disallowed altogether in a future release.
+     The symbol <literal>=&gt;</literal> is reserved by the SQL grammar,
+     so it cannot be used as an operator name.
      </para>
     </listitem>
    </itemizedlist>
