@@ -30,7 +30,11 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
 ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , <replaceable>right_type</replaceable> )
     SET ( {  RESTRICT = { <replaceable class="parameter">res_proc</replaceable> | NONE }
            | JOIN = { <replaceable class="parameter">join_proc</replaceable> | NONE }
-         } [, ... ] )
+           | COMMUTATOR = <replaceable class="parameter">com_op</replaceable>
+           | NEGATOR = <replaceable class="parameter">neg_op</replaceable>
+           | HASHES
+           | MERGES
+          } [, ... ] )
 </synopsis>
  </refsynopsisdiv>
 
@@ -121,7 +125,67 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
      </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><replaceable class="parameter">com_op</replaceable></term>
+    <listitem>
+     <para>
+      The commutator of this operator. Can only be changed if the operator
+      does not have an existing commutator.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">neg_op</replaceable></term>
+    <listitem>
+     <para>
+      The negator of this operator. Can only be changed if the operator does
+      not have an existing negator.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>HASHES</literal></term>
+    <listitem>
+     <para>
+      Indicates this operator can support a hash join. Can only be enabled and
+      not disabled.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>MERGES</literal></term>
+    <listitem>
+     <para>
+      Indicates this operator can support a merge join. Can only be enabled
+      and not disabled.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Refer to <xref linkend="xoper"/> and
+   <xref linkend="xoper-optimization"/> for further information.
+  </para>
+
+  <para>
+   Since commutators come in pairs that are commutators of each other,
+   <literal>ALTER OPERATOR SET COMMUTATOR</literal> will also set the
+   commutator of the <replaceable class="parameter">com_op</replaceable>
+   to be the target operator.  Likewise, <literal>ALTER OPERATOR SET
+   NEGATOR</literal> will also set the negator of
+   the <replaceable class="parameter">neg_op</replaceable> to be the
+   target operator.  Therefore, you must own the commutator or negator
+   operator as well as the target operator.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -131,13 +195,25 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</repla
    Change the owner of a custom operator <literal>a @@ b</literal> for type <type>text</type>:
 <programlisting>
 ALTER OPERATOR @@ (text, text) OWNER TO joe;
-</programlisting></para>
+</programlisting>
+  </para>
 
   <para>
-    Change the restriction and join selectivity estimator functions of a custom operator <literal>a &amp;&amp; b</literal> for type <type>int[]</type>:
+   Change the restriction and join selectivity estimator functions of a
+   custom operator <literal>a &amp;&amp; b</literal> for
+   type <type>int[]</type>:
 <programlisting>
-ALTER OPERATOR &amp;&amp; (_int4, _int4) SET (RESTRICT = _int_contsel, JOIN = _int_contjoinsel);
-</programlisting></para>
+ALTER OPERATOR &amp;&amp; (int[], int[]) SET (RESTRICT = _int_contsel, JOIN = _int_contjoinsel);
+</programlisting>
+  </para>
+
+  <para>
+   Mark the <literal>&amp;&amp;</literal> operator as being its own
+   commutator:
+<programlisting>
+ALTER OPERATOR &amp;&amp; (int[], int[]) SET (COMMUTATOR = &amp;&amp;);
+</programlisting>
+  </para>
 
  </refsect1>
 

@@ -210,6 +210,49 @@ CREATE OPERATOR #*# (
 );
 ROLLBACK;
 
+-- Should fail. An operator cannot be its own negator.
+BEGIN TRANSACTION;
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    negator = ===
+);
+ROLLBACK;
+
+-- Should fail. An operator cannot be its own negator. Here we check that
+-- this error is detected when replacing a shell operator.
+BEGIN TRANSACTION;
+-- create a shell operator for ===!!! by referencing it as a commutator
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    commutator = ===!!!
+);
+CREATE OPERATOR ===!!! (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4ne,
+    negator = ===!!!
+);
+ROLLBACK;
+
+-- test that we can't use part of an existing commutator or negator pair
+-- as a commutator or negator
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    commutator = =
+);
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    negator = <>
+);
+
 -- invalid: non-lowercase quoted identifiers
 CREATE OPERATOR ===
 (

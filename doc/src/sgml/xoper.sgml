@@ -146,44 +146,6 @@ SELECT (a + b) AS c FROM test_complex;
      <literal>=</literal> operator must specify that it is valid, by marking the
      operator with commutator information.
     </para>
-
-    <para>
-     When you are defining a self-commutative operator, you just do it.
-     When you are defining a pair of commutative operators, things are
-     a little trickier: how can the first one to be defined refer to the
-     other one, which you haven't defined yet?  There are two solutions
-     to this problem:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-        One way is to omit the <literal>COMMUTATOR</literal> clause in the first operator that
-        you define, and then provide one in the second operator's definition.
-        Since <productname>PostgreSQL</productname> knows that commutative
-        operators come in pairs, when it sees the second definition it will
-        automatically go back and fill in the missing <literal>COMMUTATOR</literal> clause in
-        the first definition.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        The other, more straightforward way is just to include <literal>COMMUTATOR</literal> clauses
-        in both definitions.  When <productname>PostgreSQL</productname> processes
-        the first definition and realizes that <literal>COMMUTATOR</literal> refers to a nonexistent
-        operator, the system will make a dummy entry for that operator in the
-        system catalog.  This dummy entry will have valid data only
-        for the operator name, left and right operand types, and result type,
-        since that's all that <productname>PostgreSQL</productname> can deduce
-        at this point.  The first operator's catalog entry will link to this
-        dummy entry.  Later, when you define the second operator, the system
-        updates the dummy entry with the additional information from the second
-        definition.  If you try to use the dummy operator before it's been filled
-        in, you'll just get an error message.
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
    </sect2>
 
    <sect2 id="xoper-negator">
@@ -217,12 +179,6 @@ SELECT (a + b) AS c FROM test_complex;
     <literal>x &lt;&gt; y</literal>.  This comes up more often than you might think, because
     <literal>NOT</literal> operations can be inserted as a consequence of other rearrangements.
    </para>
-
-   <para>
-    Pairs of negator operators can be defined using the same methods
-    explained above for commutator pairs.
-   </para>
-
   </sect2>
 
   <sect2 id="xoper-restrict">

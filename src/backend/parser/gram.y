@@ -10151,6 +10151,8 @@ operator_def_elem: ColLabel '=' NONE
 						{ $$ = makeDefElem($1, NULL, @1); }
 				   | ColLabel '=' operator_def_arg
 						{ $$ = makeDefElem($1, (Node *) $3, @1); }
+				   | ColLabel
+						{ $$ = makeDefElem($1, NULL, @1); }
 		;
 
 /* must be similar enough to def_arg to avoid reduce/reduce conflicts */

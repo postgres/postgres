@@ -44,11 +44,6 @@ static Oid	OperatorGet(const char *operatorName,
 						Oid rightObjectId,
 						bool *defined);
 
-static Oid	OperatorLookup(List *operatorName,
-						   Oid leftObjectId,
-						   Oid rightObjectId,
-						   bool *defined);
-
 static Oid	OperatorShellMake(const char *operatorName,
 							  Oid operatorNamespace,
 							  Oid leftTypeId,
@@ -57,8 +52,7 @@ static Oid	OperatorShellMake(const char *operatorName,
 static Oid	get_other_operator(List *otherOp,
 							   Oid otherLeftTypeId, Oid otherRightTypeId,
 							   const char *operatorName, Oid operatorNamespace,
-							   Oid leftTypeId, Oid rightTypeId,
-							   bool isCommutator);
+							   Oid leftTypeId, Oid rightTypeId);
 
 
 /*
@@ -166,7 +160,7 @@ OperatorGet(const char *operatorName,
  *
  *		*defined is set true if defined (not a shell)
  */
-static Oid
+Oid
 OperatorLookup(List *operatorName,
 			   Oid leftObjectId,
 			   Oid rightObjectId,
@@ -361,53 +355,17 @@ OperatorCreate(const char *operatorName,
 				 errmsg("\"%s\" is not a valid operator name",
 						operatorName)));
 
-	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
-	{
-		/* If it's not a binary op, these things mustn't be set: */
-		if (commutatorName)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only binary operators can have commutators")));
-		if (OidIsValid(joinId))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only binary operators can have join selectivity")));
-		if (canMerge)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only binary operators can merge join")));
-		if (canHash)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only binary operators can hash")));
-	}
-
 	operResultType = get_func_rettype(procedureId);
 
-	if (operResultType != BOOLOID)
-	{
-		/* If it's not a boolean op, these things mustn't be set: */
-		if (negatorName)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only boolean operators can have negators")));
-		if (OidIsValid(restrictionId))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only boolean operators can have restriction selectivity")));
-		if (OidIsValid(joinId))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only boolean operators can have join selectivity")));
-		if (canMerge)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only boolean operators can merge join")));
-		if (canHash)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only boolean operators can hash")));
-	}
+	OperatorValidateParams(leftTypeId,
+						   rightTypeId,
+						   operResultType,
+						   commutatorName != NIL,
+						   negatorName != NIL,
+						   OidIsValid(restrictionId),
+						   OidIsValid(joinId),
+						   canMerge,
+						   canHash);
 
 	operatorObjectId = OperatorGet(operatorName,
 								   operatorNamespace,
@@ -442,8 +400,7 @@ OperatorCreate(const char *operatorName,
 		commutatorId = get_other_operator(commutatorName,
 										  rightTypeId, leftTypeId,
 										  operatorName, operatorNamespace,
-										  leftTypeId, rightTypeId,
-										  true);
+										  leftTypeId, rightTypeId);
 
 		/* Permission check: must own other operator */
 		if (OidIsValid(commutatorId) &&
@@ -452,8 +409,9 @@ OperatorCreate(const char *operatorName,
 						   NameListToString(commutatorName));
 
 		/*
-		 * self-linkage to this operator; will fix below. Note that only
-		 * self-linkage for commutation makes sense.
+		 * If self-linkage to the new operator is requested, we'll fix it
+		 * below.  (In case of self-linkage to an existing shell operator, we
+		 * need do nothing special.)
 		 */
 		if (!OidIsValid(commutatorId))
 			selfCommutator = true;
@@ -467,14 +425,24 @@ OperatorCreate(const char *operatorName,
 		negatorId = get_other_operator(negatorName,
 									   leftTypeId, rightTypeId,
 									   operatorName, operatorNamespace,
-									   leftTypeId, rightTypeId,
-									   false);
+									   leftTypeId, rightTypeId);
 
 		/* Permission check: must own other operator */
 		if (OidIsValid(negatorId) &&
 			!object_ownercheck(OperatorRelationId, negatorId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 						   NameListToString(negatorName));
+
+		/*
+		 * Prevent self negation, as it doesn't make sense.  It's self
+		 * negation if result is InvalidOid (negator would be the same
+		 * operator but it doesn't exist yet) or operatorObjectId (we are
+		 * replacing a shell that would need to be its own negator).
+		 */
+		if (!OidIsValid(negatorId) || negatorId == operatorObjectId)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("operator cannot be its own negator")));
 	}
 	else
 		negatorId = InvalidOid;
@@ -548,11 +516,6 @@ OperatorCreate(const char *operatorName,
 	/* Add dependencies for the entry */
 	address = makeOperatorDependencies(tup, true, isUpdate);
 
-	/* Post creation hook for new operator */
-	InvokeObjectPostCreateHook(OperatorRelationId, operatorObjectId, 0);
-
-	table_close(pg_operator_desc, RowExclusiveLock);
-
 	/*
 	 * If a commutator and/or negator link is provided, update the other
 	 * operator(s) to point at this one, if they don't already have a link.
@@ -570,21 +533,95 @@ OperatorCreate(const char *operatorName,
 	if (OidIsValid(commutatorId) || OidIsValid(negatorId))
 		OperatorUpd(operatorObjectId, commutatorId, negatorId, false);
 
+	/* Post creation hook for new operator */
+	InvokeObjectPostCreateHook(OperatorRelationId, operatorObjectId, 0);
+
+	table_close(pg_operator_desc, RowExclusiveLock);
+
 	return address;
 }
 
 /*
- * Try to lookup another operator (commutator, etc)
+ * OperatorValidateParams
  *
- * If not found, check to see if it is exactly the operator we are trying
- * to define; if so, return InvalidOid.  (Note that this case is only
- * sensible for a commutator, so we error out otherwise.)  If it is not
- * the same operator, create a shell operator.
+ * Check that an operator with argument types leftTypeId and rightTypeId,
+ * returning operResultType, can have the attributes that are set to true.
+ * Raise an error for any disallowed attribute.
+ *
+ * Note: in ALTER OPERATOR, we only bother to pass "true" for attributes
+ * the command is trying to set, not those that may already be set.
+ * This is OK as long as the attribute checks are independent.
+ */
+void
+OperatorValidateParams(Oid leftTypeId,
+					   Oid rightTypeId,
+					   Oid operResultType,
+					   bool hasCommutator,
+					   bool hasNegator,
+					   bool hasRestrictionSelectivity,
+					   bool hasJoinSelectivity,
+					   bool canMerge,
+					   bool canHash)
+{
+	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
+	{
+		/* If it's not a binary op, these things mustn't be set: */
+		if (hasCommutator)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only binary operators can have commutators")));
+		if (hasJoinSelectivity)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only binary operators can have join selectivity")));
+		if (canMerge)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only binary operators can merge join")));
+		if (canHash)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only binary operators can hash")));
+	}
+
+	if (operResultType != BOOLOID)
+	{
+		/* If it's not a boolean op, these things mustn't be set: */
+		if (hasNegator)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can have negators")));
+		if (hasRestrictionSelectivity)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can have restriction selectivity")));
+		if (hasJoinSelectivity)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can have join selectivity")));
+		if (canMerge)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can merge join")));
+		if (canHash)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only boolean operators can hash")));
+	}
+}
+
+/*
+ * Try to lookup another operator (commutator, etc); return its OID
+ *
+ * If not found, check to see if it would be the same operator we are trying
+ * to define; if so, return InvalidOid.  (Caller must decide whether
+ * that is sensible.)  If it is not the same operator, create a shell
+ * operator.
  */
 static Oid
 get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 				   const char *operatorName, Oid operatorNamespace,
-				   Oid leftTypeId, Oid rightTypeId, bool isCommutator)
+				   Oid leftTypeId, Oid rightTypeId)
 {
 	Oid			other_oid;
 	bool		otherDefined;
@@ -611,14 +648,7 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 		otherLeftTypeId == leftTypeId &&
 		otherRightTypeId == rightTypeId)
 	{
-		/*
-		 * self-linkage to this operator; caller will fix later. Note that
-		 * only self-linkage for commutation makes sense.
-		 */
-		if (!isCommutator)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("operator cannot be its own negator or sort operator")));
+		/* self-linkage to new operator; caller must handle this */
 		return InvalidOid;
 	}
 
@@ -643,7 +673,7 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
  *	For a given operator, look up its negator and commutator operators.
  *	When isDelete is false, update their negator and commutator fields to
  *	point back to the given operator; when isDelete is true, update those
- *	fields to no longer point back to the given operator.
+ *	fields to be InvalidOid.
  *
  *	The !isDelete case solves a problem for users who need to insert two new
  *	operators that are the negator or commutator of each other, while the
@@ -681,17 +711,40 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete)
 		bool		update_commutator = false;
 
 		/*
-		 * Out of due caution, we only change the commutator's oprcom field if
-		 * it has the exact value we expected: InvalidOid when creating an
-		 * operator, or baseId when dropping one.
+		 * We can skip doing anything if the commutator's oprcom field is
+		 * already what we want.  While that's not expected in the isDelete
+		 * case, it's perfectly possible when filling in a shell operator.
 		 */
-		if (isDelete && t->oprcom == baseId)
+		if (isDelete && OidIsValid(t->oprcom))
 		{
 			t->oprcom = InvalidOid;
 			update_commutator = true;
 		}
-		else if (!isDelete && !OidIsValid(t->oprcom))
+		else if (!isDelete && t->oprcom != baseId)
 		{
+			/*
+			 * If commutator's oprcom field is already set to point to some
+			 * third operator, it's an error.  Changing its link would be
+			 * unsafe, and letting the inconsistency stand would not be good
+			 * either.  This might be indicative of catalog corruption, so
+			 * don't assume t->oprcom is necessarily a valid operator.
+			 */
+			if (OidIsValid(t->oprcom))
+			{
+				char	   *thirdop = get_opname(t->oprcom);
+
+				if (thirdop != NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("commutator operator %s is already the commutator of operator %s",
+									NameStr(t->oprname), thirdop)));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("commutator operator %s is already the commutator of operator %u",
+									NameStr(t->oprname), t->oprcom)));
+			}
+
 			t->oprcom = baseId;
 			update_commutator = true;
 		}
@@ -726,17 +779,40 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete)
 		bool		update_negator = false;
 
 		/*
-		 * Out of due caution, we only change the negator's oprnegate field if
-		 * it has the exact value we expected: InvalidOid when creating an
-		 * operator, or baseId when dropping one.
+		 * We can skip doing anything if the negator's oprnegate field is
+		 * already what we want.  While that's not expected in the isDelete
+		 * case, it's perfectly possible when filling in a shell operator.
 		 */
-		if (isDelete && t->oprnegate == baseId)
+		if (isDelete && OidIsValid(t->oprnegate))
 		{
 			t->oprnegate = InvalidOid;
 			update_negator = true;
 		}
-		else if (!isDelete && !OidIsValid(t->oprnegate))
+		else if (!isDelete && t->oprnegate != baseId)
 		{
+			/*
+			 * If negator's oprnegate field is already set to point to some
+			 * third operator, it's an error.  Changing its link would be
+			 * unsafe, and letting the inconsistency stand would not be good
+			 * either.  This might be indicative of catalog corruption, so
+			 * don't assume t->oprnegate is necessarily a valid operator.
+			 */
+			if (OidIsValid(t->oprnegate))
+			{
+				char	   *thirdop = get_opname(t->oprnegate);
+
+				if (thirdop != NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("negator operator %s is already the negator of operator %s",
+									NameStr(t->oprname), thirdop)));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("negator operator %s is already the negator of operator %u",
+									NameStr(t->oprname), t->oprnegate)));
+			}
+
 			t->oprnegate = baseId;
 			update_negator = true;
 		}

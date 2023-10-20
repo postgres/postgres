@@ -42,6 +42,9 @@ extern Operator compatible_oper(ParseState *pstate, List *op,
 
 /* currently no need for compatible_left_oper/compatible_right_oper */
 
+/* Error reporting support */
+extern const char *op_signature_string(List *op, Oid arg1, Oid arg2);
+
 /* Routines for identifying "<", "=", ">" operators for a type */
 extern void get_sort_group_operators(Oid argtype,
 									 bool needLT, bool needEQ, bool needGT,
