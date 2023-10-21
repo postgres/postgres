@@ -927,7 +927,7 @@ dsm_unpin_mapping(dsm_segment *seg)
 void
 dsm_pin_segment(dsm_segment *seg)
 {
-	void	   *handle;
+	void	   *handle = NULL;
 
 	/*
 	 * Bump reference count for this segment in shared memory. This will
@@ -938,7 +938,8 @@ dsm_pin_segment(dsm_segment *seg)
 	LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
 	if (dsm_control->item[seg->control_slot].pinned)
 		elog(ERROR, "cannot pin a segment that is already pinned");
-	dsm_impl_pin_segment(seg->handle, seg->impl_private, &handle);
+	if (!is_main_region_dsm_handle(seg->handle))
+		dsm_impl_pin_segment(seg->handle, seg->impl_private, &handle);
 	dsm_control->item[seg->control_slot].pinned = true;
 	dsm_control->item[seg->control_slot].refcnt++;
 	dsm_control->item[seg->control_slot].impl_private_pm_handle = handle;
@@ -995,8 +996,9 @@ dsm_unpin_segment(dsm_handle handle)
 	 * releasing the lock, because impl_private_pm_handle may get modified by
 	 * dsm_impl_unpin_segment.
 	 */
-	dsm_impl_unpin_segment(handle,
-						   &dsm_control->item[control_slot].impl_private_pm_handle);
+	if (!is_main_region_dsm_handle(handle))
+		dsm_impl_unpin_segment(handle,
+							   &dsm_control->item[control_slot].impl_private_pm_handle);
 
 	/* Note that 1 means no references (0 means unused slot). */
 	if (--dsm_control->item[control_slot].refcnt == 1)
