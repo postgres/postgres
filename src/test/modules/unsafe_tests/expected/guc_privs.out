@@ -220,9 +220,31 @@ SELECT 1 FROM pg_parameter_acl WHERE parname = 'none.such';
 ----------
 (0 rows)
 
+-- Superuser should be able to ALTER SYSTEM SET a non-existent custom GUC.
+ALTER SYSTEM SET none.such = 'whiz bang';
+-- None of the above should have created a placeholder GUC for none.such.
+SHOW none.such;  -- error
+ERROR:  unrecognized configuration parameter "none.such"
+-- However, if we reload ...
+SELECT pg_reload_conf();
+ pg_reload_conf 
+----------------
+ t
+(1 row)
+
+-- and start a new session to avoid race condition ...
+\c -
+SET SESSION AUTHORIZATION regress_admin;
+-- then it should be there.
+SHOW none.such;
+ none.such 
+-----------
+ whiz bang
+(1 row)
+
 -- Can't grant on a non-existent core GUC.
 GRANT ALL ON PARAMETER no_such_guc TO regress_host_resource_admin;  -- fail
-ERROR:  invalid parameter name "no_such_guc"
+ERROR:  unrecognized configuration parameter "no_such_guc"
 -- Initially there are no privileges and no catalog entry for this GUC.
 SELECT has_parameter_privilege('regress_host_resource_admin', 'enable_material', 'SET');
  has_parameter_privilege 
@@ -459,6 +481,8 @@ SELECT set_config ('temp_buffers', '8192', false); -- ok
 ALTER SYSTEM RESET autovacuum_work_mem;  -- ok, privileges have been granted
 ALTER SYSTEM RESET ALL;  -- fail, insufficient privileges
 ERROR:  permission denied to perform ALTER SYSTEM RESET ALL
+ALTER SYSTEM SET none.such2 = 'whiz bang';  -- fail, not superuser
+ERROR:  permission denied to set parameter "none.such2"
 ALTER ROLE regress_host_resource_admin SET lc_messages = 'POSIX';  -- fail
 ERROR:  permission denied to set parameter "lc_messages"
 ALTER ROLE regress_host_resource_admin SET max_stack_depth = '1MB';  -- ok

@@ -250,6 +250,8 @@ static void write_auto_conf_file(int fd, const char *filename, ConfigVariable *h
 static void replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 									  const char *name, const char *value);
 static bool valid_custom_variable_name(const char *name);
+static bool assignable_custom_variable_name(const char *name, bool skip_errors,
+											int elevel);
 static void do_serialize(char **destptr, Size *maxbytes,
 						 const char *fmt,...) pg_attribute_printf(3, 4);
 static bool call_bool_check_hook(struct config_bool *conf, bool *newval,
@@ -1063,7 +1065,7 @@ add_guc_variable(struct config_generic *var, int elevel)
  *
  * It must be two or more identifiers separated by dots, where the rules
  * for what is an identifier agree with scan.l.  (If you change this rule,
- * adjust the errdetail in find_option().)
+ * adjust the errdetail in assignable_custom_variable_name().)
  */
 static bool
 valid_custom_variable_name(const char *name)
@@ -1096,6 +1098,71 @@ valid_custom_variable_name(const char *name)
 		return false;			/* empty name component */
 	/* OK if we found at least one separator */
 	return saw_sep;
+}
+
+/*
+ * Decide whether an unrecognized variable name is allowed to be SET.
+ *
+ * It must pass the syntactic rules of valid_custom_variable_name(),
+ * and it must not be in any namespace already reserved by an extension.
+ * (We make this separate from valid_custom_variable_name() because we don't
+ * apply the reserved-namespace test when reading configuration files.)
+ *
+ * If valid, return true.  Otherwise, return false if skip_errors is true,
+ * else throw a suitable error at the specified elevel (and return false
+ * if that's less than ERROR).
+ */
+static bool
+assignable_custom_variable_name(const char *name, bool skip_errors, int elevel)
+{
+	/* If there's no separator, it can't be a custom variable */
+	const char *sep = strchr(name, GUC_QUALIFIER_SEPARATOR);
+
+	if (sep != NULL)
+	{
+		size_t		classLen = sep - name;
+		ListCell   *lc;
+
+		/* The name must be syntactically acceptable ... */
+		if (!valid_custom_variable_name(name))
+		{
+			if (!skip_errors)
+				ereport(elevel,
+						(errcode(ERRCODE_INVALID_NAME),
+						 errmsg("invalid configuration parameter name \"%s\"",
+								name),
+						 errdetail("Custom parameter names must be two or more simple identifiers separated by dots.")));
+			return false;
+		}
+		/* ... and it must not match any previously-reserved prefix */
+		foreach(lc, reserved_class_prefix)
+		{
+			const char *rcprefix = lfirst(lc);
+
+			if (strlen(rcprefix) == classLen &&
+				strncmp(name, rcprefix, classLen) == 0)
+			{
+				if (!skip_errors)
+					ereport(elevel,
+							(errcode(ERRCODE_INVALID_NAME),
+							 errmsg("invalid configuration parameter name \"%s\"",
+									name),
+							 errdetail("\"%s\" is a reserved prefix.",
+									   rcprefix)));
+				return false;
+			}
+		}
+		/* OK to create it */
+		return true;
+	}
+
+	/* Unrecognized single-part name */
+	if (!skip_errors)
+		ereport(elevel,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("unrecognized configuration parameter \"%s\"",
+						name)));
+	return false;
 }
 
 /*
@@ -1191,52 +1258,15 @@ find_option(const char *name, bool create_placeholders, bool skip_errors,
 	if (create_placeholders)
 	{
 		/*
-		 * Check if the name is valid, and if so, add a placeholder.  If it
-		 * doesn't contain a separator, don't assume that it was meant to be a
-		 * placeholder.
+		 * Check if the name is valid, and if so, add a placeholder.
 		 */
-		const char *sep = strchr(name, GUC_QUALIFIER_SEPARATOR);
-
-		if (sep != NULL)
-		{
-			size_t		classLen = sep - name;
-			ListCell   *lc;
-
-			/* The name must be syntactically acceptable ... */
-			if (!valid_custom_variable_name(name))
-			{
-				if (!skip_errors)
-					ereport(elevel,
-							(errcode(ERRCODE_INVALID_NAME),
-							 errmsg("invalid configuration parameter name \"%s\"",
-									name),
-							 errdetail("Custom parameter names must be two or more simple identifiers separated by dots.")));
-				return NULL;
-			}
-			/* ... and it must not match any previously-reserved prefix */
-			foreach(lc, reserved_class_prefix)
-			{
-				const char *rcprefix = lfirst(lc);
-
-				if (strlen(rcprefix) == classLen &&
-					strncmp(name, rcprefix, classLen) == 0)
-				{
-					if (!skip_errors)
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_NAME),
-								 errmsg("invalid configuration parameter name \"%s\"",
-										name),
-								 errdetail("\"%s\" is a reserved prefix.",
-										   rcprefix)));
-					return NULL;
-				}
-			}
-			/* OK, create it */
+		if (assignable_custom_variable_name(name, skip_errors, elevel))
 			return add_placeholder_variable(name, elevel);
-		}
+		else
+			return NULL;		/* error message, if any, already emitted */
 	}
 
-	/* Unknown name */
+	/* Unknown name and we're not supposed to make a placeholder */
 	if (!skip_errors)
 		ereport(elevel,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1369,18 +1399,16 @@ convert_GUC_name_for_parameter_acl(const char *name)
 /*
  * Check whether we should allow creation of a pg_parameter_acl entry
  * for the given name.  (This can be applied either before or after
- * canonicalizing it.)
+ * canonicalizing it.)  Throws error if not.
  */
-bool
+void
 check_GUC_name_for_parameter_acl(const char *name)
 {
 	/* OK if the GUC exists. */
-	if (find_option(name, false, true, DEBUG1) != NULL)
-		return true;
+	if (find_option(name, false, true, DEBUG5) != NULL)
+		return;
 	/* Otherwise, it'd better be a valid custom GUC name. */
-	if (valid_custom_variable_name(name))
-		return true;
-	return false;
+	(void) assignable_custom_variable_name(name, false, ERROR);
 }
 
 /*
@@ -4515,52 +4543,64 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	{
 		struct config_generic *record;
 
-		record = find_option(name, false, false, ERROR);
-		Assert(record != NULL);
-
-		/*
-		 * Don't allow parameters that can't be set in configuration files to
-		 * be set in PG_AUTOCONF_FILENAME file.
-		 */
-		if ((record->context == PGC_INTERNAL) ||
-			(record->flags & GUC_DISALLOW_IN_FILE) ||
-			(record->flags & GUC_DISALLOW_IN_AUTO_FILE))
-			ereport(ERROR,
-					(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-					 errmsg("parameter \"%s\" cannot be changed",
-							name)));
-
-		/*
-		 * If a value is specified, verify that it's sane.
-		 */
-		if (value)
+		/* We don't want to create a placeholder if there's not one already */
+		record = find_option(name, false, true, DEBUG5);
+		if (record != NULL)
 		{
-			union config_var_val newval;
-			void	   *newextra = NULL;
-
-			/* Check that it's acceptable for the indicated parameter */
-			if (!parse_and_validate_value(record, name, value,
-										  PGC_S_FILE, ERROR,
-										  &newval, &newextra))
+			/*
+			 * Don't allow parameters that can't be set in configuration files
+			 * to be set in PG_AUTOCONF_FILENAME file.
+			 */
+			if ((record->context == PGC_INTERNAL) ||
+				(record->flags & GUC_DISALLOW_IN_FILE) ||
+				(record->flags & GUC_DISALLOW_IN_AUTO_FILE))
 				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for parameter \"%s\": \"%s\"",
-								name, value)));
-
-			if (record->vartype == PGC_STRING && newval.stringval != NULL)
-				guc_free(newval.stringval);
-			guc_free(newextra);
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("parameter \"%s\" cannot be changed",
+								name)));
 
 			/*
-			 * We must also reject values containing newlines, because the
-			 * grammar for config files doesn't support embedded newlines in
-			 * string literals.
+			 * If a value is specified, verify that it's sane.
 			 */
-			if (strchr(value, '\n'))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("parameter value for ALTER SYSTEM must not contain a newline")));
+			if (value)
+			{
+				union config_var_val newval;
+				void	   *newextra = NULL;
+
+				if (!parse_and_validate_value(record, name, value,
+											  PGC_S_FILE, ERROR,
+											  &newval, &newextra))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("invalid value for parameter \"%s\": \"%s\"",
+									name, value)));
+
+				if (record->vartype == PGC_STRING && newval.stringval != NULL)
+					guc_free(newval.stringval);
+				guc_free(newextra);
+			}
 		}
+		else
+		{
+			/*
+			 * Variable not known; check we'd be allowed to create it.  (We
+			 * cannot validate the value, but that's fine.  A non-core GUC in
+			 * the config file cannot cause postmaster start to fail, so we
+			 * don't have to be too tense about possibly installing a bad
+			 * value.)
+			 */
+			(void) assignable_custom_variable_name(name, false, ERROR);
+		}
+
+		/*
+		 * We must also reject values containing newlines, because the grammar
+		 * for config files doesn't support embedded newlines in string
+		 * literals.
+		 */
+		if (value && strchr(value, '\n'))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("parameter value for ALTER SYSTEM must not contain a newline")));
 	}
 
 	/*

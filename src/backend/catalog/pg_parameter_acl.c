@@ -82,11 +82,7 @@ ParameterAclCreate(const char *parameter)
 	 * To prevent cluttering pg_parameter_acl with useless entries, insist
 	 * that the name be valid.
 	 */
-	if (!check_GUC_name_for_parameter_acl(parameter))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("invalid parameter name \"%s\"",
-						parameter)));
+	check_GUC_name_for_parameter_acl(parameter);
 
 	/* Convert name to the form it should have in pg_parameter_acl. */
 	parname = convert_GUC_name_for_parameter_acl(parameter);
