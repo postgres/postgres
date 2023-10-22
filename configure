@@ -5123,6 +5123,8 @@ fi
   if echo $pgac_llvm_version | $AWK -F '.' '{ if ($1 >= 4 || ($1 == 3 && $2 >= 9)) exit 1; else exit 0;}';then
     as_fn_error $? "$LLVM_CONFIG version is $pgac_llvm_version but at least 3.9 is required" "$LINENO" 5
   fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: using llvm $pgac_llvm_version" >&5
+$as_echo "$as_me: using llvm $pgac_llvm_version" >&6;}
 
   # need clang to create some bitcode files
 
