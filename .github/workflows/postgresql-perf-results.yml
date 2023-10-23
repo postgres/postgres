@@ -1,0 +1,51 @@
+name: Perf test results
+
+on:
+  workflow_run:
+    workflows: [Perf test]
+    types:
+      - completed
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Download artifact'
+        uses: actions/github-script@v5
+        with:
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "pr_perf_results"
+            })[0];
+            let download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_perf_results.zip`, Buffer.from(download.data));
+
+      - name: 'Unzip artifact'
+        run: |
+          unzip pr_perf_results.zip
+
+      - name: Clone postgres-tde-ext repository
+        uses: actions/checkout@v2
+        with:
+          path: 'src'
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: 'Create comment'
+        run: |
+          gh pr comment ${PR_NUMBER} -F ../pr_perf_results --edit-last || \
+            gh pr comment ${PR_NUMBER} -F ../pr_perf_results
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: src
