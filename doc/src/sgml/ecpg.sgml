@@ -1506,9 +1506,9 @@ EXEC SQL TYPE serial_t IS long;
      </para>
 
      <para>
-      Any word you declare as a typedef cannot be used as an SQL keyword
-      in <literal>EXEC SQL</literal> commands later in the same program.
-      For example, this won't work:
+      Any word you declare as a <literal>typedef</literal> cannot be used as
+      an SQL keyword in <literal>EXEC SQL</literal> commands later in the same
+      program. For example, this won't work:
 <programlisting>
 EXEC SQL BEGIN DECLARE SECTION;
     typedef int start;

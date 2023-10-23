@@ -7943,7 +7943,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        disk and apply at once after the transaction is committed on the
        publisher and received by the subscriber,
        <literal>p</literal> = apply changes directly using a parallel apply
-       worker if available (same as 't' if no worker is available)
+       worker if available (same as <literal>t</literal> if no worker is
+       available)
       </para></entry>
      </row>
 

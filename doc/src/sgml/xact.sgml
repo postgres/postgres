@@ -70,7 +70,7 @@
   </para>
 
   <para>
-   In addition to <literal>vxid</literal> and <type>xid</type>,
+   In addition to <literal>vxid</literal> and <literal>xid</literal>,
    prepared transactions are also assigned Global Transaction
    Identifiers (<acronym>GID</acronym>). GIDs are string literals up
    to 200 bytes long, which must be unique amongst other currently
@@ -121,7 +121,7 @@
   <para>
    Subtransactions can be started explicitly using the
    <command>SAVEPOINT</command> command, but can also be started in
-   other ways, such as PL/pgSQL's <command>EXCEPTION</command> clause.
+   other ways, such as PL/pgSQL's <literal>EXCEPTION</literal> clause.
    PL/Python and PL/TCL also support explicit subtransactions.
    Subtransactions can also be started from other subtransactions.
    The top-level transaction and its child subtransactions form a

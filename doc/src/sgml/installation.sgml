@@ -2743,8 +2743,8 @@ ninja install
        <para>
         The default backend Meson uses is ninja and that should suffice for
         most use cases.  However, if you'd like to fully integrate with Visual
-        Studio, you can set the <option>BACKEND</option> to
-        <command>vs</command>.
+        Studio, you can set the <replaceable>BACKEND</replaceable> to
+        <literal>vs</literal>.
        </para>
       </listitem>
      </varlistentry>

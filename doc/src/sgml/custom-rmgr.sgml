@@ -96,8 +96,8 @@ extern void RegisterCustomRmgr(RmgrId rmid, const RmgrData *rmgr);
  </para>
  <note>
    <para>
-    The extension must remain in shared_preload_libraries as long as any
-    custom WAL records may exist in the system. Otherwise
+    The extension must remain in <varname>shared_preload_libraries</varname>
+    as long as any custom WAL records may exist in the system. Otherwise
     <productname>PostgreSQL</productname> will not be able to apply or decode
     the custom WAL records, which may prevent the server from starting.
    </para>
