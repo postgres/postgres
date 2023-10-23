@@ -500,7 +500,7 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 		/* invalidate non-timetravel entries */
 		InvalidateSystemCaches();
 
-		/* Decode at least one record, until we run out of records */
+		/* Decode records until we reach the requested target */
 		while (ctx->reader->EndRecPtr < moveto)
 		{
 			char	   *errm = NULL;
@@ -522,10 +522,6 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 			 */
 			if (record)
 				LogicalDecodingProcessRecord(ctx, ctx->reader);
-
-			/* Stop once the requested target has been reached */
-			if (moveto <= ctx->reader->EndRecPtr)
-				break;
 
 			CHECK_FOR_INTERRUPTS();
 		}
