@@ -75,14 +75,15 @@ typedef struct
 	pg_checksum_type manifest_checksum_type;
 } basebackup_options;
 
-static int64 sendTablespace(bbsink *sink, char *path, char *spcoid, bool sizeonly,
+static int64 sendTablespace(bbsink *sink, char *path, Oid spcoid, bool sizeonly,
 							struct backup_manifest_info *manifest);
 static int64 sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 					 List *tablespaces, bool sendtblspclinks,
-					 backup_manifest_info *manifest, const char *spcoid);
+					 backup_manifest_info *manifest, Oid spcoid);
 static bool sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
-					 struct stat *statbuf, bool missing_ok, Oid dboid,
-					 backup_manifest_info *manifest, const char *spcoid);
+					 struct stat *statbuf, bool missing_ok,
+					 Oid dboid, Oid spcoid,
+					 backup_manifest_info *manifest);
 static off_t read_file_data_into_buffer(bbsink *sink,
 										const char *readfilename, int fd,
 										off_t offset, size_t length,
@@ -305,7 +306,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 
 				if (tmp->path == NULL)
 					tmp->size = sendDir(sink, ".", 1, true, state.tablespaces,
-										true, NULL, NULL);
+										true, NULL, InvalidOid);
 				else
 					tmp->size = sendTablespace(sink, tmp->path, tmp->oid, true,
 											   NULL);
@@ -346,7 +347,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 
 				/* Then the bulk of the files... */
 				sendDir(sink, ".", 1, false, state.tablespaces,
-						sendtblspclinks, &manifest, NULL);
+						sendtblspclinks, &manifest, InvalidOid);
 
 				/* ... and pg_control after everything else. */
 				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
@@ -355,11 +356,11 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 							 errmsg("could not stat file \"%s\": %m",
 									XLOG_CONTROL_FILE)));
 				sendFile(sink, XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf,
-						 false, InvalidOid, &manifest, NULL);
+						 false, InvalidOid, InvalidOid, &manifest);
 			}
 			else
 			{
-				char	   *archive_name = psprintf("%s.tar", ti->oid);
+				char	   *archive_name = psprintf("%u.tar", ti->oid);
 
 				bbsink_begin_archive(sink, archive_name);
 
@@ -623,8 +624,8 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 						(errcode_for_file_access(),
 						 errmsg("could not stat file \"%s\": %m", pathbuf)));
 
-			sendFile(sink, pathbuf, pathbuf, &statbuf, false, InvalidOid,
-					 &manifest, NULL);
+			sendFile(sink, pathbuf, pathbuf, &statbuf, false,
+					 InvalidOid, InvalidOid, &manifest);
 
 			/* unconditionally mark file as archived */
 			StatusFilePath(pathbuf, fname, ".done");
@@ -1087,7 +1088,7 @@ sendFileWithContent(bbsink *sink, const char *filename, const char *content,
 
 	_tarWritePadding(sink, len);
 
-	AddFileToBackupManifest(manifest, NULL, filename, len,
+	AddFileToBackupManifest(manifest, InvalidOid, filename, len,
 							(pg_time_t) statbuf.st_mtime, &checksum_ctx);
 }
 
@@ -1099,7 +1100,7 @@ sendFileWithContent(bbsink *sink, const char *filename, const char *content,
  * Only used to send auxiliary tablespaces, not PGDATA.
  */
 static int64
-sendTablespace(bbsink *sink, char *path, char *spcoid, bool sizeonly,
+sendTablespace(bbsink *sink, char *path, Oid spcoid, bool sizeonly,
 			   backup_manifest_info *manifest)
 {
 	int64		size;
@@ -1154,7 +1155,7 @@ sendTablespace(bbsink *sink, char *path, char *spcoid, bool sizeonly,
 static int64
 sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 		List *tablespaces, bool sendtblspclinks, backup_manifest_info *manifest,
-		const char *spcoid)
+		Oid spcoid)
 {
 	DIR		   *dir;
 	struct dirent *de;
@@ -1416,8 +1417,8 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 
 			if (!sizeonly)
 				sent = sendFile(sink, pathbuf, pathbuf + basepathlen + 1, &statbuf,
-								true, isDbDir ? atooid(lastDir + 1) : InvalidOid,
-								manifest, spcoid);
+								true, isDbDir ? atooid(lastDir + 1) : InvalidOid, spcoid,
+								manifest);
 
 			if (sent || sizeonly)
 			{
@@ -1486,8 +1487,8 @@ is_checksummed_file(const char *fullpath, const char *filename)
  */
 static bool
 sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
-		 struct stat *statbuf, bool missing_ok, Oid dboid,
-		 backup_manifest_info *manifest, const char *spcoid)
+		 struct stat *statbuf, bool missing_ok, Oid dboid, Oid spcoid,
+		 backup_manifest_info *manifest)
 {
 	int			fd;
 	BlockNumber blkno = 0;

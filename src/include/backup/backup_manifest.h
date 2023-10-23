@@ -39,7 +39,7 @@ extern void InitializeBackupManifest(backup_manifest_info *manifest,
 									 backup_manifest_option want_manifest,
 									 pg_checksum_type manifest_checksum_type);
 extern void AddFileToBackupManifest(backup_manifest_info *manifest,
-									const char *spcoid,
+									Oid spcoid,
 									const char *pathname, size_t size,
 									pg_time_t mtime,
 									pg_checksum_context *checksum_ctx);

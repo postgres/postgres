@@ -27,7 +27,7 @@
  */
 typedef struct
 {
-	char	   *oid;			/* tablespace's OID, as a decimal string */
+	Oid			oid;			/* tablespace's OID */
 	char	   *path;			/* full path to tablespace's directory */
 	char	   *rpath;			/* relative path if it's within PGDATA, else
 								 * NULL */

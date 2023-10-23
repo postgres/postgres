@@ -678,7 +678,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 				tablespaceinfo *ti = lfirst(lc);
 				char	   *linkloc;
 
-				linkloc = psprintf("pg_tblspc/%s", ti->oid);
+				linkloc = psprintf("pg_tblspc/%u", ti->oid);
 
 				/*
 				 * Remove the existing symlink if any and Create the symlink
@@ -692,7 +692,6 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 							 errmsg("could not create symbolic link \"%s\": %m",
 									linkloc)));
 
-				pfree(ti->oid);
 				pfree(ti->path);
 				pfree(ti);
 			}
@@ -1341,6 +1340,8 @@ read_tablespace_map(List **tablespaces)
 	{
 		if (!was_backslash && (ch == '\n' || ch == '\r'))
 		{
+			char	   *endp;
+
 			if (i == 0)
 				continue;		/* \r immediately followed by \n */
 
@@ -1360,7 +1361,12 @@ read_tablespace_map(List **tablespaces)
 			str[n++] = '\0';
 
 			ti = palloc0(sizeof(tablespaceinfo));
-			ti->oid = pstrdup(str);
+			errno = 0;
+			ti->oid = strtoul(str, &endp, 10);
+			if (*endp != '\0' || errno == EINVAL || errno == ERANGE)
+				ereport(FATAL,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("invalid data in file \"%s\"", TABLESPACE_MAP)));
 			ti->path = pstrdup(str + n);
 			*tablespaces = lappend(*tablespaces, ti);
 

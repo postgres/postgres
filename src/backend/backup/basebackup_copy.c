@@ -407,7 +407,7 @@ SendTablespaceList(List *tablespaces)
 		}
 		else
 		{
-			values[0] = ObjectIdGetDatum(strtoul(ti->oid, NULL, 10));
+			values[0] = ObjectIdGetDatum(ti->oid);
 			values[1] = CStringGetTextDatum(ti->path);
 		}
 		if (ti->size >= 0)

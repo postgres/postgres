@@ -8579,9 +8579,22 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 			char	   *relpath = NULL;
 			char	   *s;
 			PGFileType	de_type;
+			char	   *badp;
+			Oid			tsoid;
 
-			/* Skip anything that doesn't look like a tablespace */
-			if (strspn(de->d_name, "0123456789") != strlen(de->d_name))
+			/*
+			 * Try to parse the directory name as an unsigned integer.
+			 *
+			 * Tablespace directories should be positive integers that can be
+			 * represented in 32 bits, with no leading zeroes or trailing
+			 * garbage. If we come across a name that doesn't meet those
+			 * criteria, skip it.
+			 */
+			if (de->d_name[0] < '1' || de->d_name[1] > '9')
+				continue;
+			errno = 0;
+			tsoid = strtoul(de->d_name, &badp, 10);
+			if (*badp != '\0' || errno == EINVAL || errno == ERANGE)
 				continue;
 
 			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
@@ -8656,7 +8669,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 			}
 
 			ti = palloc(sizeof(tablespaceinfo));
-			ti->oid = pstrdup(de->d_name);
+			ti->oid = tsoid;
 			ti->path = pstrdup(linkpath);
 			ti->rpath = relpath;
 			ti->size = -1;
