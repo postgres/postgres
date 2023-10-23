@@ -1119,7 +1119,7 @@ SELECT a.pid, a.wait_event, w.description
   FROM pg_stat_activity a JOIN
        pg_wait_events w ON (a.wait_event_type = w.type AND
                             a.wait_event = w.name)
-  WHERE wait_event is NOT NULL and a.state = 'active';
+  WHERE a.wait_event is NOT NULL and a.state = 'active';
 -[ RECORD 1 ]------------------------------------------------------&zwsp;------------
 pid         | 686674
 wait_event  | WALInitSync
