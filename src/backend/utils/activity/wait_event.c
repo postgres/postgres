@@ -56,9 +56,9 @@ uint32	   *my_wait_event_info = &local_my_wait_event_info;
  * It is used to ensure that no duplicated entries are registered.
  *
  * The size of the hash table is based on the assumption that
- * WAIT_EVENT_EXTENSION_BASH_INIT_SIZE is enough for most cases, and it seems
+ * WAIT_EVENT_EXTENSION_HASH_INIT_SIZE is enough for most cases, and it seems
  * unlikely that the number of entries will reach
- * WAIT_EVENT_EXTENSION_BASH_MAX_SIZE.
+ * WAIT_EVENT_EXTENSION_HASH_MAX_SIZE.
  */
 static HTAB *WaitEventExtensionHashById;	/* find names from IDs */
 static HTAB *WaitEventExtensionHashByName;	/* find IDs from names */
