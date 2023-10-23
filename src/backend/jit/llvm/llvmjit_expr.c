@@ -1126,7 +1126,7 @@ llvm_compile_expr(ExprState *state)
 										 llvm_pg_var_type("TypeExecEvalSubroutine"));
 
 					v_params[0] = v_state;
-					v_params[1] = l_ptr_const(op, l_ptr(TypeSizeT));
+					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));
 					v_params[2] = v_econtext;
 					l_call(b,
 						   LLVMGetFunctionType(ExecEvalSubroutineTemplate),
