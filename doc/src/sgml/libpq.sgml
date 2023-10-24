@@ -7323,7 +7323,7 @@ size_t PQresultMemorySize(const PGresult *res);
      <para>
       This value is the sum of all <function>malloc</function> requests
       associated with the <structname>PGresult</structname> object, that is,
-      all the space that will be freed by <xref linkend="libpq-PQclear"/>.
+      all the memory that will be freed by <xref linkend="libpq-PQclear"/>.
       This information can be useful for managing memory consumption.
      </para>
     </listitem>
