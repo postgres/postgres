@@ -216,11 +216,12 @@ typedef struct ProjectSet
  *		Apply rows produced by outer plan to result table(s),
  *		by inserting, updating, or deleting.
  *
- * If the originally named target table is a partitioned table, both
- * nominalRelation and rootRelation contain the RT index of the partition
- * root, which is not otherwise mentioned in the plan.  Otherwise rootRelation
- * is zero.  However, nominalRelation will always be set, as it's the rel that
- * EXPLAIN should claim is the INSERT/UPDATE/DELETE/MERGE target.
+ * If the originally named target table is a partitioned table or inheritance
+ * tree, both nominalRelation and rootRelation contain the RT index of the
+ * partition root or appendrel RTE, which is not otherwise mentioned in the
+ * plan.  Otherwise rootRelation is zero.  However, nominalRelation will
+ * always be set, as it's the rel that EXPLAIN should claim is the
+ * INSERT/UPDATE/DELETE/MERGE target.
  *
  * Note that rowMarks and epqParam are presumed to be valid for all the
  * table(s); they can't contain any info that varies across tables.
@@ -232,7 +233,7 @@ typedef struct ModifyTable
 	CmdType		operation;		/* INSERT, UPDATE, DELETE, or MERGE */
 	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	Index		nominalRelation;	/* Parent RT index for use of EXPLAIN */
-	Index		rootRelation;	/* Root RT index, if target is partitioned */
+	Index		rootRelation;	/* Root RT index, if partitioned/inherited */
 	bool		partColsUpdated;	/* some part key in hierarchy updated? */
 	List	   *resultRelations;	/* integer list of RT indexes */
 	List	   *updateColnosLists;	/* per-target-table update_colnos lists */

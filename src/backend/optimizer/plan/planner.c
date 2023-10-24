@@ -1800,6 +1800,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 														   parse->resultRelation);
 				int			resultRelation = -1;
 
+				/* Pass the root result rel forward to the executor. */
+				rootRelation = parse->resultRelation;
+
 				/* Add only leaf children to ModifyTable. */
 				while ((resultRelation = bms_next_member(root->leaf_result_relids,
 														 resultRelation)) >= 0)
@@ -1923,6 +1926,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			else
 			{
 				/* Single-relation INSERT/UPDATE/DELETE/MERGE. */
+				rootRelation = 0;	/* there's no separate root rel */
 				resultRelations = list_make1_int(parse->resultRelation);
 				if (parse->commandType == CMD_UPDATE)
 					updateColnosLists = list_make1(root->update_colnos);
@@ -1933,16 +1937,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				if (parse->mergeActionList)
 					mergeActionLists = list_make1(parse->mergeActionList);
 			}
-
-			/*
-			 * If target is a partition root table, we need to mark the
-			 * ModifyTable node appropriately for that.
-			 */
-			if (rt_fetch(parse->resultRelation, parse->rtable)->relkind ==
-				RELKIND_PARTITIONED_TABLE)
-				rootRelation = parse->resultRelation;
-			else
-				rootRelation = 0;
 
 			/*
 			 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node

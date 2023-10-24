@@ -97,6 +97,25 @@ SELECT relname, d.* FROM ONLY d, pg_class where d.tableoid = pg_class.oid;
 CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
 INSERT INTO z VALUES (NULL, 'text'); -- should fail
 
+-- Check inherited UPDATE with first child excluded
+create table some_tab (f1 int, f2 int, f3 int, check (f1 < 10) no inherit);
+create table some_tab_child () inherits(some_tab);
+insert into some_tab_child select i, i+1, 0 from generate_series(1,1000) i;
+create index on some_tab_child(f1, f2);
+-- while at it, also check that statement-level triggers fire
+create function some_tab_stmt_trig_func() returns trigger as
+$$begin raise notice 'updating some_tab'; return NULL; end;$$
+language plpgsql;
+create trigger some_tab_stmt_trig
+  before update on some_tab execute function some_tab_stmt_trig_func();
+
+explain (costs off)
+update some_tab set f3 = 11 where f1 = 12 and f2 = 13;
+update some_tab set f3 = 11 where f1 = 12 and f2 = 13;
+
+drop table some_tab cascade;
+drop function some_tab_stmt_trig_func();
+
 -- Check inherited UPDATE with all children excluded
 create table some_tab (a int, b int);
 create table some_tab_child () inherits (some_tab);
