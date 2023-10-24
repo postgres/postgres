@@ -332,9 +332,13 @@ aminsert (Relation indexRelation,
    modify any columns covered by the index, but nevertheless requires a
    new version in the index.  The index AM may use this hint to decide
    to apply bottom-up index deletion in parts of the index where many
-   versions of the same logical row accumulate.  Note that updating a
-   non-key column does not affect the value of
-   <literal>indexUnchanged</literal>.
+   versions of the same logical row accumulate.  Note that updating a non-key
+   column or a column that only appears in a partial index predicate does not
+   affect the value of <literal>indexUnchanged</literal>.  The core code
+   determines each tuple's <literal>indexUnchanged</literal> value using a low
+   overhead approach that allows both false positives and false negatives.
+   Index AMs must not treat <literal>indexUnchanged</literal> as an
+   authoritative source of information about tuple visibility or versioning.
   </para>
 
   <para>
