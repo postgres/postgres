@@ -36,11 +36,11 @@ EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 all: pg_regress$(X)
 
 pg_regress$(X): pg_regress.o pg_regress_main.o $(WIN32RES) | submake-libpgport
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate
 pg_regress.o: pg_regress.c $(top_builddir)/src/port/pg_config_paths.h
-pg_regress.o: override CPPFLAGS += -I$(top_builddir)/src/port $(EXTRADEFS)
+pg_regress.o: override CPPFLAGS += -I$(top_builddir)/src/port -I$(libpq_srcdir) $(EXTRADEFS)
 
 # note: because of the submake dependency, this rule's action is really a no-op
 $(top_builddir)/src/port/pg_config_paths.h: | submake-libpgport

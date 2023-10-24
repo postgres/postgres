@@ -30,7 +30,7 @@ endif
 pg_regress = executable('pg_regress',
   regress_sources,
   c_args: pg_regress_cflags,
-  dependencies: [frontend_code],
+  dependencies: [frontend_code, libpq],
   kwargs: default_bin_args + {
     'install_dir': dir_pgxs / 'src/test/regress',
   },

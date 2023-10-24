@@ -18,7 +18,7 @@ pg_regress_ecpg = executable('pg_regress_ecpg',
   pg_regress_ecpg_sources,
   c_args: pg_regress_cflags,
   include_directories: [pg_regress_inc, include_directories('.')],
-  dependencies: [frontend_code],
+  dependencies: [frontend_code, libpq],
   kwargs: default_bin_args + {
     'install': false
   },

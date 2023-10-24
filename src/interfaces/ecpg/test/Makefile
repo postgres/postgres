@@ -10,6 +10,7 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := \
 	'-I$(top_builddir)/src/port' \
 	'-I$(top_srcdir)/src/test/regress' \
+	'-I$(libpq_srcdir)' \
 	'-DHOST_TUPLE="$(host_tuple)"' \
 	'-DSHELLPROG="$(SHELL)"' \
 	$(CPPFLAGS)
@@ -45,7 +46,7 @@ clean distclean maintainer-clean:
 all: pg_regress$(X)
 
 pg_regress$(X): pg_regress_ecpg.o $(WIN32RES) $(top_builddir)/src/test/regress/pg_regress.o
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 $(top_builddir)/src/test/regress/pg_regress.o:
 	$(MAKE) -C $(dir $@) $(notdir $@)
