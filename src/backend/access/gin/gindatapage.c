@@ -721,9 +721,12 @@ dataExecPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	/* Apply changes to page */
 	dataPlaceToPageLeafRecompress(buf, leaf);
 
+	MarkBufferDirty(buf);
+
 	/* If needed, register WAL data built by computeLeafRecompressWALData */
 	if (RelationNeedsWAL(btree->index) && !btree->isBuild)
 	{
+		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 		XLogRegisterBufData(0, leaf->walinfo, leaf->walinfolen);
 	}
 }
@@ -1155,6 +1158,8 @@ dataExecPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	pitem = (PostingItem *) insertdata;
 	GinDataPageAddPostingItem(page, pitem, off);
 
+	MarkBufferDirty(buf);
+
 	if (RelationNeedsWAL(btree->index) && !btree->isBuild)
 	{
 		/*
@@ -1167,6 +1172,7 @@ dataExecPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		data.offset = off;
 		data.newitem = *pitem;
 
+		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 		XLogRegisterBufData(0, (char *) &data,
 							sizeof(ginxlogInsertDataInternal));
 	}

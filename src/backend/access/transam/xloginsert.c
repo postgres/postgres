@@ -248,6 +248,20 @@ XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags)
 	Assert(!((flags & REGBUF_FORCE_IMAGE) && (flags & (REGBUF_NO_IMAGE))));
 	Assert(begininsert_called);
 
+	/*
+	 * Ordinarily, buffer should be exclusive-locked and marked dirty before
+	 * we get here, otherwise we could end up violating one of the rules in
+	 * access/transam/README.
+	 *
+	 * Some callers intentionally register a clean page and never update that
+	 * page's LSN; in that case they can pass the flag REGBUF_NO_CHANGE to
+	 * bypass these checks.
+	 */
+#ifdef USE_ASSERT_CHECKING
+	if (!(flags & REGBUF_NO_CHANGE))
+		Assert(BufferIsExclusiveLocked(buffer) && BufferIsDirty(buffer));
+#endif
+
 	if (block_id >= max_registered_block_id)
 	{
 		if (block_id >= max_registered_buffers)
@@ -1313,8 +1327,8 @@ log_newpage_range(Relation rel, ForkNumber forknum,
 		START_CRIT_SECTION();
 		for (i = 0; i < nbufs; i++)
 		{
-			XLogRegisterBuffer(i, bufpack[i], flags);
 			MarkBufferDirty(bufpack[i]);
+			XLogRegisterBuffer(i, bufpack[i], flags);
 		}
 
 		recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI);

@@ -2099,6 +2099,65 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 }
 
 /*
+ * BufferIsExclusiveLocked
+ *
+ *      Checks if buffer is exclusive-locked.
+ *
+ * Buffer must be pinned.
+ */
+bool
+BufferIsExclusiveLocked(Buffer buffer)
+{
+	BufferDesc *bufHdr;
+
+	if (BufferIsLocal(buffer))
+	{
+		int			bufid = -buffer - 1;
+
+		bufHdr = GetLocalBufferDescriptor(bufid);
+	}
+	else
+	{
+		bufHdr = GetBufferDescriptor(buffer - 1);
+	}
+
+	Assert(BufferIsPinned(buffer));
+	return LWLockHeldByMeInMode(BufferDescriptorGetContentLock(bufHdr),
+								LW_EXCLUSIVE);
+}
+
+/*
+ * BufferIsDirty
+ *
+ *		Checks if buffer is already dirty.
+ *
+ * Buffer must be pinned and exclusive-locked.  (Without an exclusive lock,
+ * the result may be stale before it's returned.)
+ */
+bool
+BufferIsDirty(Buffer buffer)
+{
+	BufferDesc *bufHdr;
+
+	if (BufferIsLocal(buffer))
+	{
+		int			bufid = -buffer - 1;
+
+		bufHdr = GetLocalBufferDescriptor(bufid);
+	}
+	else
+	{
+		bufHdr = GetBufferDescriptor(buffer - 1);
+	}
+
+	Assert(BufferIsPinned(buffer));
+	Assert(LWLockHeldByMeInMode(BufferDescriptorGetContentLock(bufHdr),
+								LW_EXCLUSIVE));
+
+	return pg_atomic_read_u32(&bufHdr->state) & BM_DIRTY;
+}
+
+/*
  * MarkBufferDirty
  *
  *		Marks buffer contents as dirty (actual write happens later).

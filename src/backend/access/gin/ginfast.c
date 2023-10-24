@@ -397,6 +397,9 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 		}
 
 		Assert((ptr - collectordata) <= collector->sumsize);
+
+		MarkBufferDirty(buffer);
+
 		if (needWal)
 		{
 			XLogRegisterBuffer(1, buffer, REGBUF_STANDARD);
@@ -404,8 +407,6 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 		}
 
 		metadata->tailFreeSize = PageGetExactFreeSpace(page);
-
-		MarkBufferDirty(buffer);
 	}
 
 	/*

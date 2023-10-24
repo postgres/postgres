@@ -658,11 +658,15 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 		XLogRegisterData((char *) &xlrec, SizeOfHashSqueezePage);
 
 		/*
-		 * bucket buffer needs to be registered to ensure that we can acquire
-		 * a cleanup lock on it during replay.
+		 * bucket buffer was not changed, but still needs to be registered to
+		 * ensure that we can acquire a cleanup lock on it during replay.
 		 */
 		if (!xlrec.is_prim_bucket_same_wrt)
-			XLogRegisterBuffer(0, bucketbuf, REGBUF_STANDARD | REGBUF_NO_IMAGE);
+		{
+			uint8		flags = REGBUF_STANDARD | REGBUF_NO_IMAGE | REGBUF_NO_CHANGE;
+
+			XLogRegisterBuffer(0, bucketbuf, flags);
+		}
 
 		XLogRegisterBuffer(1, wbuf, REGBUF_STANDARD);
 		if (xlrec.ntups > 0)
@@ -960,11 +964,16 @@ readpage:
 						XLogRegisterData((char *) &xlrec, SizeOfHashMovePageContents);
 
 						/*
-						 * bucket buffer needs to be registered to ensure that
-						 * we can acquire a cleanup lock on it during replay.
+						 * bucket buffer was not changed, but still needs to
+						 * be registered to ensure that we can acquire a
+						 * cleanup lock on it during replay.
 						 */
 						if (!xlrec.is_prim_bucket_same_wrt)
-							XLogRegisterBuffer(0, bucket_buf, REGBUF_STANDARD | REGBUF_NO_IMAGE);
+						{
+							int			flags = REGBUF_STANDARD | REGBUF_NO_IMAGE | REGBUF_NO_CHANGE;
+
+							XLogRegisterBuffer(0, bucket_buf, flags);
+						}
 
 						XLogRegisterBuffer(1, wbuf, REGBUF_STANDARD);
 						XLogRegisterBufData(1, (char *) itup_offsets,
