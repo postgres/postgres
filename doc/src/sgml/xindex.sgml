@@ -29,14 +29,11 @@
   <title>Index Methods and Operator Classes</title>
 
   <para>
-   The <classname>pg_am</classname> table contains one row for every
-   index method (internally known as access method).  Support for
-   regular access to tables is built into
-   <productname>PostgreSQL</productname>, but all index methods are
-   described in <classname>pg_am</classname>.  It is possible to add a
-   new index access method by writing the necessary code and
-   then creating an entry in <classname>pg_am</classname> &mdash; but that is
-   beyond the scope of this chapter (see <xref linkend="indexam"/>).
+   Operator classes are associated with an index access method, such
+   as <link linkend="btree">B-Tree</link>
+   or <link linkend="gin">GIN</link>. Custom index access method may be
+   defined with <xref linkend="sql-create-access-method"/>. See
+   <xref linkend="indexam"/> for details.
   </para>
 
   <para>
