@@ -1553,6 +1553,8 @@ if test "$with_gssapi" = yes ; then
 fi
 
 PGAC_PATH_PROGS(OPENSSL, openssl)
+pgac_openssl_version="$($OPENSSL version 2> /dev/null || echo openssl not found)"
+AC_MSG_NOTICE([using openssl: $pgac_openssl_version])
 if test "$with_ssl" = openssl ; then
   AC_CHECK_HEADER(openssl/ssl.h, [], [AC_MSG_ERROR([header file <openssl/ssl.h> is required for OpenSSL])])
   AC_CHECK_HEADER(openssl/err.h, [], [AC_MSG_ERROR([header file <openssl/err.h> is required for OpenSSL])])
