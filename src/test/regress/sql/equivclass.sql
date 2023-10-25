@@ -259,6 +259,22 @@ drop user regress_user_ectest;
 explain (costs off)
   select * from tenk1 where unique1 = unique1 and unique2 = unique2;
 
+-- Test that broken ECs are processed correctly during self join removal.
+-- Disable merge joins so that we don't get an error about missing commutator.
+-- Test both orientations of the join clause, because only one of them breaks
+-- the EC.
+set enable_mergejoin to off;
+
+explain (costs off)
+  select * from ec0 m join ec0 n on m.ff = n.ff
+  join ec1 p on m.ff + n.ff = p.f1;
+
+explain (costs off)
+  select * from ec0 m join ec0 n on m.ff = n.ff
+  join ec1 p on p.f1::int8 = (m.ff + n.ff)::int8alias1;
+
+reset enable_mergejoin;
+
 -- this could be converted, but isn't at present
 explain (costs off)
   select * from tenk1 where unique1 = unique1 or unique2 = unique2;

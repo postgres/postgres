@@ -2499,16 +2499,13 @@ SELECT * FROM rw_view1;
 (1 row)
 
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Update on base_tbl base_tbl_1
-   ->  Nested Loop
-         ->  Index Scan using base_tbl_pkey on base_tbl base_tbl_1
-               Index Cond: (id = 1)
-         ->  Index Scan using base_tbl_pkey on base_tbl
-               Index Cond: (id = 1)
-               Filter: ((NOT deleted) AND snoop(data))
-(7 rows)
+                    QUERY PLAN                    
+--------------------------------------------------
+ Update on base_tbl
+   ->  Index Scan using base_tbl_pkey on base_tbl
+         Index Cond: (id = 1)
+         Filter: ((NOT deleted) AND snoop(data))
+(4 rows)
 
 DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
 NOTICE:  snooped value: Row 1
