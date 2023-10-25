@@ -2563,11 +2563,14 @@ SELECT * FROM emp1 e1, emp1 e2 WHERE e1.id = e2.id AND e2.code <> e1.code;
 -- Shuffle self-joined relations. Only in the case of iterative deletion
 -- attempts explains of these queries will be identical.
 CREATE UNIQUE INDEX ON emp1((id*id));
-explain SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
+explain (costs off)
+SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
 WHERE c1.id=c2.id AND c1.id*c2.id=c3.id*c3.id;
-explain SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
+explain (costs off)
+SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
 WHERE c1.id=c3.id AND c1.id*c3.id=c2.id*c2.id;
-explain SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
+explain (costs off)
+SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
 WHERE c3.id=c2.id AND c3.id*c2.id=c1.id*c1.id;
 
 -- We can remove the join even if we find the join can't duplicate rows and
