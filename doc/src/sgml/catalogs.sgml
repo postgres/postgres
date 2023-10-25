@@ -10333,7 +10333,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <row>
       <entry><structfield>data_type</structfield></entry>
       <entry><type>regtype</type></entry>
-      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Data type of the sequence</entry>
      </row>
      <row>
