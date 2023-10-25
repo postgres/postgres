@@ -209,7 +209,7 @@ block_fpi_data    |
       <para>
        The <function>pg_filenode_relation</function> function (see
        <xref linkend="functions-admin-dblocation"/>) can help you to
-       determine which relation was modified during original execution
+       determine which relation was modified during original execution.
       </para>
      </tip>
      <para>

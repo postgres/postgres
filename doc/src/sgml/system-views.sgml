@@ -1608,7 +1608,7 @@
 
   <para>
    Apply transaction locks are used in parallel mode to apply the transaction
-   in logical replication. The remote transaction id is displayed in the
+   in logical replication. The remote transaction ID is displayed in the
    <structfield>transactionid</structfield> column. The <structfield>objsubid</structfield>
    displays the lock subtype which is 0 for the lock used to synchronize the
    set of changes, and 1 for the lock used to wait for the transaction to

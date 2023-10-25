@@ -2090,9 +2090,9 @@ ninja
     configure with the <option>--backend</option> option to select the one you
     want to use and then build using <literal>meson compile</literal>. To
     learn more about these backends and other arguments you can provide to
-    ninja, you can refer to the meson <ulink
+    ninja, you can refer to the <ulink
     url="https://mesonbuild.com/Running-Meson.html#building-from-the-source">
-    documentation</ulink>.
+    Meson documentation</ulink>.
    </para>
   </step>
 

@@ -205,7 +205,7 @@ make update-po
    <para>
     The PO files can be edited with a regular text editor. There are also
     several specialized editors for PO files which can help the process with
-    translation specific features.
+    translation-specific features.
     There is (unsurprisingly) a PO mode for Emacs, which can be quite
     useful.
    </para>
