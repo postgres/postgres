@@ -845,7 +845,7 @@ initialize_environment(void)
 		{
 			char		s[16];
 
-			sprintf(s, "%d", port);
+			snprintf(s, sizeof(s), "%d", port);
 			setenv("PGPORT", s, 1);
 		}
 	}
@@ -867,7 +867,7 @@ initialize_environment(void)
 		{
 			char		s[16];
 
-			sprintf(s, "%d", port);
+			snprintf(s, sizeof(s), "%d", port);
 			setenv("PGPORT", s, 1);
 		}
 		if (user != NULL)
