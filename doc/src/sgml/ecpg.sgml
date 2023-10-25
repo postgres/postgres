@@ -414,12 +414,6 @@ EXEC SQL DISCONNECT <optional><replaceable>connection</replaceable></optional>;
 
     <listitem>
      <simpara>
-      <literal>DEFAULT</literal>
-     </simpara>
-    </listitem>
-
-    <listitem>
-     <simpara>
       <literal>CURRENT</literal>
      </simpara>
     </listitem>
@@ -7130,7 +7124,6 @@ EXEC SQL DEALLOCATE DESCRIPTOR mydesc;
 <synopsis>
 DISCONNECT <replaceable class="parameter">connection_name</replaceable>
 DISCONNECT [ CURRENT ]
-DISCONNECT DEFAULT
 DISCONNECT ALL
 </synopsis>
    </refsynopsisdiv>
@@ -7171,15 +7164,6 @@ DISCONNECT ALL
       </listitem>
      </varlistentry>
 
-     <varlistentry id="ecpg-sql-disconnect-default">
-      <term><literal>DEFAULT</literal></term>
-      <listitem>
-       <para>
-        Close the default connection.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="ecpg-sql-disconnect-all">
       <term><literal>ALL</literal></term>
       <listitem>
@@ -7198,13 +7182,11 @@ DISCONNECT ALL
 int
 main(void)
 {
-    EXEC SQL CONNECT TO testdb AS DEFAULT USER testuser;
     EXEC SQL CONNECT TO testdb AS con1 USER testuser;
     EXEC SQL CONNECT TO testdb AS con2 USER testuser;
     EXEC SQL CONNECT TO testdb AS con3 USER testuser;
 
     EXEC SQL DISCONNECT CURRENT;  /* close con3          */
-    EXEC SQL DISCONNECT DEFAULT;  /* close DEFAULT       */
     EXEC SQL DISCONNECT ALL;      /* close con2 and con1 */
 
     return 0;
@@ -7772,11 +7754,11 @@ SET CONNECTION [ TO | = ] <replaceable class="parameter">connection_name</replac
       </listitem>
      </varlistentry>
 
-     <varlistentry id="ecpg-sql-set-connection-default">
-      <term><literal>DEFAULT</literal></term>
+     <varlistentry id="ecpg-sql-set-connection-current">
+      <term><literal>CURRENT</literal></term>
       <listitem>
        <para>
-        Set the connection to the default connection.
+        Set the connection to the current connection (thus, nothing happens).
        </para>
       </listitem>
      </varlistentry>
