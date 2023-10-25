@@ -984,7 +984,7 @@ mymap   /^(.*)@otherdomain\.com$   guest
    a slash (<literal>/</literal>), the remainder of the field is treated
    as a regular expression (see <xref linkend="posix-syntax-details"/>
    for details of <productname>PostgreSQL</productname>'s regular
-   expression syntax. It is not possible to use <literal>\1</literal>
+   expression syntax). It is not possible to use <literal>\1</literal>
    to use a capture from regular expression on
    <replaceable>system-username</replaceable> for a regular expression
    on <replaceable>database-username</replaceable>.

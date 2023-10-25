@@ -156,7 +156,7 @@
   <para>
    When a top-level transaction with an xid commits, all of its
    subcommitted child subtransactions are also persistently recorded
-   as committed in the <filename>pg_xact</filename> directory.  If the
+   as committed in the <filename>pg_xact</filename> subdirectory.  If the
    top-level transaction aborts, all its subtransactions are also aborted,
    even if they were subcommitted.
   </para>
