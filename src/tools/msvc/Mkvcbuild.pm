@@ -356,10 +356,11 @@ sub mkvcbuild
 	$pgregress_ecpg->AddFile('src/test/regress/pg_regress.c');
 	$pgregress_ecpg->AddIncludeDir('src/port');
 	$pgregress_ecpg->AddIncludeDir('src/test/regress');
+	$pgregress_ecpg->AddIncludeDir('src/interfaces/libpq');
 	$pgregress_ecpg->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_ecpg->AddLibrary('ws2_32.lib');
 	$pgregress_ecpg->AddDirResourceFile('src/interfaces/ecpg/test');
-	$pgregress_ecpg->AddReference($libpgcommon, $libpgport);
+	$pgregress_ecpg->AddReference($libpq, $libpgcommon, $libpgport);
 
 	my $isolation_tester =
 	  $solution->AddProject('isolationtester', 'exe', 'misc');
@@ -383,10 +384,11 @@ sub mkvcbuild
 	$pgregress_isolation->AddFile('src/test/regress/pg_regress.c');
 	$pgregress_isolation->AddIncludeDir('src/port');
 	$pgregress_isolation->AddIncludeDir('src/test/regress');
+	$pgregress_isolation->AddIncludeDir('src/interfaces/libpq');
 	$pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_isolation->AddLibrary('ws2_32.lib');
 	$pgregress_isolation->AddDirResourceFile('src/test/isolation');
-	$pgregress_isolation->AddReference($libpgcommon, $libpgport);
+	$pgregress_isolation->AddReference($libpq, $libpgcommon, $libpgport);
 
 	# src/bin
 	my $D;
@@ -854,10 +856,11 @@ sub mkvcbuild
 	$pgregress->AddFile('src/test/regress/pg_regress.c');
 	$pgregress->AddFile('src/test/regress/pg_regress_main.c');
 	$pgregress->AddIncludeDir('src/port');
+	$pgregress->AddIncludeDir('src/interfaces/libpq');
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress->AddLibrary('ws2_32.lib');
 	$pgregress->AddDirResourceFile('src/test/regress');
-	$pgregress->AddReference($libpgcommon, $libpgport);
+	$pgregress->AddReference($libpq, $libpgcommon, $libpgport);
 
 	# fix up pg_waldump once it's been set up
 	# files symlinked on Unix are copied on windows
