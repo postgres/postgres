@@ -14179,6 +14179,9 @@ $as_echo_n "checking for OPENSSL... " >&6; }
 $as_echo "$OPENSSL" >&6; }
 fi
 
+pgac_openssl_version="$($OPENSSL version 2> /dev/null || echo openssl not found)"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: using openssl: $pgac_openssl_version" >&5
+$as_echo "$as_me: using openssl: $pgac_openssl_version" >&6;}
 if test "$with_ssl" = openssl ; then
   ac_fn_c_check_header_mongrel "$LINENO" "openssl/ssl.h" "ac_cv_header_openssl_ssl_h" "$ac_includes_default"
 if test "x$ac_cv_header_openssl_ssl_h" = xyes; then :
