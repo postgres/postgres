@@ -17,6 +17,7 @@
 #include "catalog/pg_type.h"
 #include "commands/extension.h"
 #include "miscadmin.h"
+#include "replication/logical.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
@@ -260,4 +261,47 @@ binary_upgrade_set_missing_value(PG_FUNCTION_ARGS)
 	SetAttrMissing(table_id, cattname, cvalue);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * Verify the given slot has already consumed all the WAL changes.
+ *
+ * Returns true if there are no decodable WAL records after the
+ * confirmed_flush_lsn. Otherwise false.
+ *
+ * This is a special purpose function to ensure that the given slot can be
+ * upgraded without data loss.
+ */
+Datum
+binary_upgrade_logical_slot_has_caught_up(PG_FUNCTION_ARGS)
+{
+	Name		slot_name;
+	XLogRecPtr	end_of_wal;
+	bool		found_pending_wal;
+
+	CHECK_IS_BINARY_UPGRADE;
+
+	/* We must check before dereferencing the argument */
+	if (PG_ARGISNULL(0))
+		elog(ERROR, "null argument to binary_upgrade_validate_wal_records is not allowed");
+
+	CheckSlotPermissions();
+
+	slot_name = PG_GETARG_NAME(0);
+
+	/* Acquire the given slot */
+	ReplicationSlotAcquire(NameStr(*slot_name), true);
+
+	Assert(SlotIsLogical(MyReplicationSlot));
+
+	/* Slots must be valid as otherwise we won't be able to scan the WAL */
+	Assert(MyReplicationSlot->data.invalidated == RS_INVAL_NONE);
+
+	end_of_wal = GetFlushRecPtr(NULL);
+	found_pending_wal = LogicalReplicationSlotHasPendingWal(end_of_wal);
+
+	/* Clean up */
+	ReplicationSlotRelease();
+
+	PG_RETURN_BOOL(!found_pending_wal);
 }

@@ -46,7 +46,9 @@ library_name_compare(const void *p1, const void *p2)
 /*
  * get_loadable_libraries()
  *
- *	Fetch the names of all old libraries containing C-language functions.
+ *	Fetch the names of all old libraries containing either C-language functions
+ *	or are corresponding to logical replication output plugins.
+ *
  *	We will later check that they all exist in the new installation.
  */
 void
@@ -55,6 +57,7 @@ get_loadable_libraries(void)
 	PGresult  **ress;
 	int			totaltups;
 	int			dbnum;
+	int			n_libinfos;
 
 	ress = (PGresult **) pg_malloc(old_cluster.dbarr.ndbs * sizeof(PGresult *));
 	totaltups = 0;
@@ -81,7 +84,12 @@ get_loadable_libraries(void)
 		PQfinish(conn);
 	}
 
-	os_info.libraries = (LibraryInfo *) pg_malloc(totaltups * sizeof(LibraryInfo));
+	/*
+	 * Allocate memory for required libraries and logical replication output
+	 * plugins.
+	 */
+	n_libinfos = totaltups + count_old_cluster_logical_slots();
+	os_info.libraries = (LibraryInfo *) pg_malloc(sizeof(LibraryInfo) * n_libinfos);
 	totaltups = 0;
 
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
@@ -89,6 +97,7 @@ get_loadable_libraries(void)
 		PGresult   *res = ress[dbnum];
 		int			ntups;
 		int			rowno;
+		LogicalSlotInfoArr *slot_arr = &old_cluster.dbarr.dbs[dbnum].slot_arr;
 
 		ntups = PQntuples(res);
 		for (rowno = 0; rowno < ntups; rowno++)
@@ -101,6 +110,23 @@ get_loadable_libraries(void)
 			totaltups++;
 		}
 		PQclear(res);
+
+		/*
+		 * Store the names of output plugins as well. There is a possibility
+		 * that duplicated plugins are set, but the consumer function
+		 * check_loadable_libraries() will avoid checking the same library, so
+		 * we do not have to consider their uniqueness here.
+		 */
+		for (int slotno = 0; slotno < slot_arr->nslots; slotno++)
+		{
+			if (slot_arr->slots[slotno].invalid)
+				continue;
+
+			os_info.libraries[totaltups].name = pg_strdup(slot_arr->slots[slotno].plugin);
+			os_info.libraries[totaltups].dbnum = dbnum;
+
+			totaltups++;
+		}
 	}
 
 	pg_free(ress);

@@ -384,6 +384,79 @@ make prefix=/usr/local/pgsql.new install
    </step>
 
    <step>
+    <title>Prepare for publisher upgrades</title>
+
+    <para>
+     <application>pg_upgrade</application> attempts to migrate logical
+     slots. This helps avoid the need for manually defining the same
+     logical slots on the new publisher. Migration of logical slots is
+     only supported when the old cluster is version 17.0 or later.
+     Logical slots on clusters before version 17.0 will silently be
+     ignored.
+    </para>
+
+    <para>
+     Before you start upgrading the publisher cluster, ensure that the
+     subscription is temporarily disabled, by executing
+     <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... DISABLE</command></link>.
+     Re-enable the subscription after the upgrade.
+    </para>
+
+    <para>
+     There are some prerequisites for <application>pg_upgrade</application> to
+     be able to upgrade the logical slots. If these are not met an error
+     will be reported.
+    </para>
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       The new cluster must have
+       <link linkend="guc-wal-level"><varname>wal_level</varname></link> as
+       <literal>logical</literal>.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The new cluster must have
+       <link linkend="guc-max-replication-slots"><varname>max_replication_slots</varname></link>
+       configured to a value greater than or equal to the number of slots
+       present in the old cluster.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The output plugins referenced by the slots on the old cluster must be
+       installed in the new PostgreSQL executable directory.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The old cluster has replicated all the transactions and logical decoding
+       messages to subscribers.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       All slots on the old cluster must be usable, i.e., there are no slots
+       whose
+       <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>conflicting</structfield>
+       is <literal>true</literal>.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The new cluster must not have permanent logical slots, i.e.,
+       there must be no slots where
+       <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>temporary</structfield>
+       is <literal>false</literal>.
+      </para>
+     </listitem>
+    </itemizedlist>
+
+   </step>
+
+   <step>
     <title>Stop both servers</title>
 
     <para>
@@ -650,8 +723,9 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tb
        Configure the servers for log shipping.  (You do not need to run
        <function>pg_backup_start()</function> and <function>pg_backup_stop()</function>
        or take a file system backup as the standbys are still synchronized
-       with the primary.)  Replication slots are not copied and must
-       be recreated.
+       with the primary.)  Only logical slots on the primary are copied to the
+       new standby, but other slots on the old standby are not copied so must
+       be recreated manually.
       </para>
      </step>
 

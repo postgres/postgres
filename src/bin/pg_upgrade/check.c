@@ -33,6 +33,8 @@ static void check_for_jsonb_9_4_usage(ClusterInfo *cluster);
 static void check_for_pg_role_prefix(ClusterInfo *cluster);
 static void check_for_new_tablespace_dir(void);
 static void check_for_user_defined_encoding_conversions(ClusterInfo *cluster);
+static void check_new_cluster_logical_replication_slots(void);
+static void check_old_cluster_for_valid_slots(bool live_check);
 
 
 /*
@@ -89,8 +91,11 @@ check_and_dump_old_cluster(bool live_check)
 	if (!live_check)
 		start_postmaster(&old_cluster, true);
 
-	/* Extract a list of databases and tables from the old cluster */
-	get_db_and_rel_infos(&old_cluster);
+	/*
+	 * Extract a list of databases, tables, and logical replication slots from
+	 * the old cluster.
+	 */
+	get_db_rel_and_slot_infos(&old_cluster, live_check);
 
 	init_tablespaces();
 
@@ -106,6 +111,13 @@ check_and_dump_old_cluster(bool live_check)
 	check_for_composite_data_type_usage(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
+
+	/*
+	 * Logical replication slots can be migrated since PG17. See comments atop
+	 * get_old_cluster_logical_slot_infos().
+	 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 1700)
+		check_old_cluster_for_valid_slots(live_check);
 
 	/*
 	 * PG 16 increased the size of the 'aclitem' type, which breaks the
@@ -200,7 +212,7 @@ check_and_dump_old_cluster(bool live_check)
 void
 check_new_cluster(void)
 {
-	get_db_and_rel_infos(&new_cluster);
+	get_db_rel_and_slot_infos(&new_cluster, false);
 
 	check_new_cluster_is_empty();
 
@@ -223,6 +235,8 @@ check_new_cluster(void)
 	check_for_prepared_transactions(&new_cluster);
 
 	check_for_new_tablespace_dir();
+
+	check_new_cluster_logical_replication_slots();
 }
 
 
@@ -1450,4 +1464,152 @@ check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
 	}
 	else
 		check_ok();
+}
+
+/*
+ * check_new_cluster_logical_replication_slots()
+ *
+ * Verify that there are no logical replication slots on the new cluster and
+ * that the parameter settings necessary for creating slots are sufficient.
+ */
+static void
+check_new_cluster_logical_replication_slots(void)
+{
+	PGresult   *res;
+	PGconn	   *conn;
+	int			nslots_on_old;
+	int			nslots_on_new;
+	int			max_replication_slots;
+	char	   *wal_level;
+
+	/* Logical slots can be migrated since PG17. */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1600)
+		return;
+
+	nslots_on_old = count_old_cluster_logical_slots();
+
+	/* Quick return if there are no logical slots to be migrated. */
+	if (nslots_on_old == 0)
+		return;
+
+	conn = connectToServer(&new_cluster, "template1");
+
+	prep_status("Checking for new cluster logical replication slots");
+
+	res = executeQueryOrDie(conn, "SELECT count(*) "
+							"FROM pg_catalog.pg_replication_slots "
+							"WHERE slot_type = 'logical' AND "
+							"temporary IS FALSE;");
+
+	if (PQntuples(res) != 1)
+		pg_fatal("could not count the number of logical replication slots");
+
+	nslots_on_new = atoi(PQgetvalue(res, 0, 0));
+
+	if (nslots_on_new)
+		pg_fatal("Expected 0 logical replication slots but found %d.",
+				 nslots_on_new);
+
+	PQclear(res);
+
+	res = executeQueryOrDie(conn, "SELECT setting FROM pg_settings "
+							"WHERE name IN ('wal_level', 'max_replication_slots') "
+							"ORDER BY name DESC;");
+
+	if (PQntuples(res) != 2)
+		pg_fatal("could not determine parameter settings on new cluster");
+
+	wal_level = PQgetvalue(res, 0, 0);
+
+	if (strcmp(wal_level, "logical") != 0)
+		pg_fatal("wal_level must be \"logical\", but is set to \"%s\"",
+				 wal_level);
+
+	max_replication_slots = atoi(PQgetvalue(res, 1, 0));
+
+	if (nslots_on_old > max_replication_slots)
+		pg_fatal("max_replication_slots (%d) must be greater than or equal to the number of "
+				 "logical replication slots (%d) on the old cluster",
+				 max_replication_slots, nslots_on_old);
+
+	PQclear(res);
+	PQfinish(conn);
+
+	check_ok();
+}
+
+/*
+ * check_old_cluster_for_valid_slots()
+ *
+ * Verify that all the logical slots are valid and have consumed all the WAL
+ * before shutdown.
+ */
+static void
+check_old_cluster_for_valid_slots(bool live_check)
+{
+	char		output_path[MAXPGPATH];
+	FILE	   *script = NULL;
+
+	prep_status("Checking for valid logical replication slots");
+
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
+			 "invalid_logical_replication_slots.txt");
+
+	for (int dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
+	{
+		LogicalSlotInfoArr *slot_arr = &old_cluster.dbarr.dbs[dbnum].slot_arr;
+
+		for (int slotnum = 0; slotnum < slot_arr->nslots; slotnum++)
+		{
+			LogicalSlotInfo *slot = &slot_arr->slots[slotnum];
+
+			/* Is the slot usable? */
+			if (slot->invalid)
+			{
+				if (script == NULL &&
+					(script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %s",
+							 output_path, strerror(errno));
+
+				fprintf(script, "The slot \"%s\" is invalid\n",
+						slot->slotname);
+
+				continue;
+			}
+
+			/*
+			 * Do additional check to ensure that all logical replication
+			 * slots have consumed all the WAL before shutdown.
+			 *
+			 * Note: This can be satisfied only when the old cluster has been
+			 * shut down, so we skip this for live checks.
+			 */
+			if (!live_check && !slot->caught_up)
+			{
+				if (script == NULL &&
+					(script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %s",
+							 output_path, strerror(errno));
+
+				fprintf(script,
+						"The slot \"%s\" has not consumed the WAL yet\n",
+						slot->slotname);
+			}
+		}
+	}
+
+	if (script)
+	{
+		fclose(script);
+
+		pg_log(PG_REPORT, "fatal");
+		pg_fatal("Your installation contains logical replication slots that can't be upgraded.\n"
+				 "You can remove invalid slots and/or consume the pending WAL for other slots,\n"
+				 "and then restart the upgrade.\n"
+				 "A list of the problematic slots is in the file:\n"
+				 "    %s", output_path);
+	}
+
+	check_ok();
 }

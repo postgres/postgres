@@ -1504,6 +1504,8 @@ LogicalRepTyp
 LogicalRepWorker
 LogicalRepWorkerType
 LogicalRewriteMappingData
+LogicalSlotInfo
+LogicalSlotInfoArr
 LogicalTape
 LogicalTapeSet
 LsnReadQueue

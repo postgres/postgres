@@ -59,6 +59,7 @@ static void copy_xact_xlog_xid(void);
 static void set_frozenxids(bool minmxid_only);
 static void make_outputdirs(char *pgdata);
 static void setup(char *argv0, bool *live_check);
+static void create_logical_replication_slots(void);
 
 ClusterInfo old_cluster,
 			new_cluster;
@@ -187,6 +188,21 @@ main(int argc, char **argv)
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid,
 			  new_cluster.pgdata);
 	check_ok();
+
+	/*
+	 * Migrate the logical slots to the new cluster.  Note that we need to do
+	 * this after resetting WAL because otherwise the required WAL would be
+	 * removed and slots would become unusable.  There is a possibility that
+	 * background processes might generate some WAL before we could create the
+	 * slots in the new cluster but we can ignore that WAL as that won't be
+	 * required downstream.
+	 */
+	if (count_old_cluster_logical_slots())
+	{
+		start_postmaster(&new_cluster, true);
+		create_logical_replication_slots();
+		stop_postmaster(false);
+	}
 
 	if (user_opts.do_sync)
 	{
@@ -593,7 +609,7 @@ create_new_objects(void)
 		set_frozenxids(true);
 
 	/* update new_cluster info now that we have objects in the databases */
-	get_db_and_rel_infos(&new_cluster);
+	get_db_rel_and_slot_infos(&new_cluster, false);
 }
 
 /*
@@ -861,4 +877,60 @@ set_frozenxids(bool minmxid_only)
 	PQfinish(conn_template1);
 
 	check_ok();
+}
+
+/*
+ * create_logical_replication_slots()
+ *
+ * Similar to create_new_objects() but only restores logical replication slots.
+ */
+static void
+create_logical_replication_slots(void)
+{
+	prep_status_progress("Restoring logical replication slots in the new cluster");
+
+	for (int dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
+	{
+		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
+		LogicalSlotInfoArr *slot_arr = &old_db->slot_arr;
+		PGconn	   *conn;
+		PQExpBuffer query;
+
+		/* Skip this database if there are no slots */
+		if (slot_arr->nslots == 0)
+			continue;
+
+		conn = connectToServer(&new_cluster, old_db->db_name);
+		query = createPQExpBuffer();
+
+		pg_log(PG_STATUS, "%s", old_db->db_name);
+
+		for (int slotnum = 0; slotnum < slot_arr->nslots; slotnum++)
+		{
+			LogicalSlotInfo *slot_info = &slot_arr->slots[slotnum];
+
+			/* Constructs a query for creating logical replication slots */
+			appendPQExpBuffer(query,
+							  "SELECT * FROM "
+							  "pg_catalog.pg_create_logical_replication_slot(");
+			appendStringLiteralConn(query, slot_info->slotname, conn);
+			appendPQExpBuffer(query, ", ");
+			appendStringLiteralConn(query, slot_info->plugin, conn);
+			appendPQExpBuffer(query, ", false, %s);",
+							  slot_info->two_phase ? "true" : "false");
+
+			PQclear(executeQueryOrDie(conn, "%s", query->data));
+
+			resetPQExpBuffer(query);
+		}
+
+		PQfinish(conn);
+
+		destroyPQExpBuffer(query);
+	}
+
+	end_progress_output();
+	check_ok();
+
+	return;
 }

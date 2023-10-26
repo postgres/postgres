@@ -109,6 +109,9 @@ typedef struct LogicalDecodingContext
 	TransactionId write_xid;
 	/* Are we processing the end LSN of a transaction? */
 	bool		end_xact;
+
+	/* Do we need to process any change in fast_forward mode? */
+	bool		processing_required;
 } LogicalDecodingContext;
 
 
@@ -144,5 +147,7 @@ extern bool filter_prepare_cb_wrapper(LogicalDecodingContext *ctx,
 extern bool filter_by_origin_cb_wrapper(LogicalDecodingContext *ctx, RepOriginId origin_id);
 extern void ResetLogicalStreamingState(void);
 extern void UpdateDecodingStats(LogicalDecodingContext *ctx);
+
+extern bool LogicalReplicationSlotHasPendingWal(XLogRecPtr end_of_wal);
 
 #endif
