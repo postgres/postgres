@@ -62,7 +62,7 @@ typedef struct
 typedef enum
 {
 	SPLIT_LEFT = 0,				/* makes initialization to SPLIT_LEFT easier */
-	SPLIT_RIGHT
+	SPLIT_RIGHT,
 } SplitLR;
 
 /*

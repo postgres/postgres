@@ -51,7 +51,7 @@ typedef enum
 {
 	PMQUIT_NOT_SENT = 0,		/* postmaster hasn't sent SIGQUIT */
 	PMQUIT_FOR_CRASH,			/* some other backend bought the farm */
-	PMQUIT_FOR_STOP				/* immediate stop was commanded */
+	PMQUIT_FOR_STOP,			/* immediate stop was commanded */
 } QuitSignalReason;
 
 /* PMSignalData is an opaque struct, details known only within pmsignal.c */

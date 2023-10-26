@@ -83,7 +83,7 @@
 typedef enum CreateDBStrategy
 {
 	CREATEDB_WAL_LOG,
-	CREATEDB_FILE_COPY
+	CREATEDB_FILE_COPY,
 } CreateDBStrategy;
 
 typedef struct

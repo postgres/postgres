@@ -62,7 +62,7 @@ typedef enum ArchiveMode
 {
 	ARCHIVE_MODE_OFF = 0,		/* disabled */
 	ARCHIVE_MODE_ON,			/* enabled while server is running normally */
-	ARCHIVE_MODE_ALWAYS			/* enabled always (even during recovery) */
+	ARCHIVE_MODE_ALWAYS,		/* enabled always (even during recovery) */
 } ArchiveMode;
 extern PGDLLIMPORT int XLogArchiveMode;
 
@@ -71,7 +71,7 @@ typedef enum WalLevel
 {
 	WAL_LEVEL_MINIMAL = 0,
 	WAL_LEVEL_REPLICA,
-	WAL_LEVEL_LOGICAL
+	WAL_LEVEL_LOGICAL,
 } WalLevel;
 
 /* Compression algorithms for WAL */
@@ -80,7 +80,7 @@ typedef enum WalCompression
 	WAL_COMPRESSION_NONE = 0,
 	WAL_COMPRESSION_PGLZ,
 	WAL_COMPRESSION_LZ4,
-	WAL_COMPRESSION_ZSTD
+	WAL_COMPRESSION_ZSTD,
 } WalCompression;
 
 /* Recovery states */
@@ -88,7 +88,7 @@ typedef enum RecoveryState
 {
 	RECOVERY_STATE_CRASH = 0,	/* crash recovery */
 	RECOVERY_STATE_ARCHIVE,		/* archive recovery */
-	RECOVERY_STATE_DONE			/* currently in production */
+	RECOVERY_STATE_DONE,		/* currently in production */
 } RecoveryState;
 
 extern PGDLLIMPORT int wal_level;
@@ -190,7 +190,7 @@ typedef enum WALAvailability
 	WALAVAIL_EXTENDED,			/* WAL segment is reserved by a slot or
 								 * wal_keep_size */
 	WALAVAIL_UNRESERVED,		/* no longer reserved, but not removed yet */
-	WALAVAIL_REMOVED			/* WAL segment has been removed */
+	WALAVAIL_REMOVED,			/* WAL segment has been removed */
 } WALAvailability;
 
 struct XLogRecData;

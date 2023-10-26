@@ -32,7 +32,7 @@ typedef enum relopt_type
 	RELOPT_TYPE_INT,
 	RELOPT_TYPE_REAL,
 	RELOPT_TYPE_ENUM,
-	RELOPT_TYPE_STRING
+	RELOPT_TYPE_STRING,
 } relopt_type;
 
 /* kinds supported by reloptions */

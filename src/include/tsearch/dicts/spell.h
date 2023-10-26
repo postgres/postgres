@@ -158,7 +158,7 @@ typedef enum
 {
 	FM_CHAR,					/* one character (like ispell) */
 	FM_LONG,					/* two characters */
-	FM_NUM						/* number, >= 0 and < 65536 */
+	FM_NUM,						/* number, >= 0 and < 65536 */
 } FlagMode;
 
 /*

@@ -44,7 +44,7 @@
 typedef enum pg_cryptohash_errno
 {
 	PG_CRYPTOHASH_ERROR_NONE = 0,
-	PG_CRYPTOHASH_ERROR_DEST_LEN
+	PG_CRYPTOHASH_ERROR_DEST_LEN,
 } pg_cryptohash_errno;
 
 /* Internal pg_cryptohash_ctx structure */

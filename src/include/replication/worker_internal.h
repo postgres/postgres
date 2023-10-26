@@ -33,7 +33,7 @@ typedef enum LogicalRepWorkerType
 	WORKERTYPE_UNKNOWN = 0,
 	WORKERTYPE_TABLESYNC,
 	WORKERTYPE_APPLY,
-	WORKERTYPE_PARALLEL_APPLY
+	WORKERTYPE_PARALLEL_APPLY,
 } LogicalRepWorkerType;
 
 typedef struct LogicalRepWorker
@@ -106,7 +106,7 @@ typedef enum ParallelTransState
 {
 	PARALLEL_TRANS_UNKNOWN,
 	PARALLEL_TRANS_STARTED,
-	PARALLEL_TRANS_FINISHED
+	PARALLEL_TRANS_FINISHED,
 } ParallelTransState;
 
 /*
@@ -130,7 +130,7 @@ typedef enum PartialFileSetState
 	FS_EMPTY,
 	FS_SERIALIZE_IN_PROGRESS,
 	FS_SERIALIZE_DONE,
-	FS_READY
+	FS_READY,
 } PartialFileSetState;
 
 /*

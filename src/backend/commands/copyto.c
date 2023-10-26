@@ -51,7 +51,7 @@ typedef enum CopyDest
 {
 	COPY_FILE,					/* to file (or a piped program) */
 	COPY_FRONTEND,				/* to frontend */
-	COPY_CALLBACK				/* to callback function */
+	COPY_CALLBACK,				/* to callback function */
 } CopyDest;
 
 /*

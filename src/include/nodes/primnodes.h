@@ -49,7 +49,7 @@ typedef enum OnCommitAction
 	ONCOMMIT_NOOP,				/* No ON COMMIT clause (do nothing) */
 	ONCOMMIT_PRESERVE_ROWS,		/* ON COMMIT PRESERVE ROWS (do nothing) */
 	ONCOMMIT_DELETE_ROWS,		/* ON COMMIT DELETE ROWS */
-	ONCOMMIT_DROP				/* ON COMMIT DROP */
+	ONCOMMIT_DROP,				/* ON COMMIT DROP */
 } OnCommitAction;
 
 /*
@@ -345,7 +345,7 @@ typedef enum ParamKind
 	PARAM_EXTERN,
 	PARAM_EXEC,
 	PARAM_SUBLINK,
-	PARAM_MULTIEXPR
+	PARAM_MULTIEXPR,
 } ParamKind;
 
 typedef struct Param
@@ -641,7 +641,7 @@ typedef enum CoercionContext
 	COERCION_IMPLICIT,			/* coercion in context of expression */
 	COERCION_ASSIGNMENT,		/* coercion in context of assignment */
 	COERCION_PLPGSQL,			/* if no assignment cast, use CoerceViaIO */
-	COERCION_EXPLICIT			/* explicit cast operation */
+	COERCION_EXPLICIT,			/* explicit cast operation */
 } CoercionContext;
 
 /*
@@ -661,7 +661,7 @@ typedef enum CoercionForm
 	COERCE_EXPLICIT_CALL,		/* display as a function call */
 	COERCE_EXPLICIT_CAST,		/* display as an explicit cast */
 	COERCE_IMPLICIT_CAST,		/* implicit cast, so hide it */
-	COERCE_SQL_SYNTAX			/* display with SQL-mandated special syntax */
+	COERCE_SQL_SYNTAX,			/* display with SQL-mandated special syntax */
 } CoercionForm;
 
 /*
@@ -928,7 +928,7 @@ typedef enum SubLinkType
 	EXPR_SUBLINK,
 	MULTIEXPR_SUBLINK,
 	ARRAY_SUBLINK,
-	CTE_SUBLINK					/* for SubPlans only */
+	CTE_SUBLINK,				/* for SubPlans only */
 } SubLinkType;
 
 
@@ -1384,7 +1384,7 @@ typedef enum RowCompareType
 	ROWCOMPARE_EQ = 3,			/* BTEqualStrategyNumber */
 	ROWCOMPARE_GE = 4,			/* BTGreaterEqualStrategyNumber */
 	ROWCOMPARE_GT = 5,			/* BTGreaterStrategyNumber */
-	ROWCOMPARE_NE = 6			/* no such btree strategy */
+	ROWCOMPARE_NE = 6,			/* no such btree strategy */
 } RowCompareType;
 
 typedef struct RowCompareExpr
@@ -1474,7 +1474,7 @@ typedef enum SQLValueFunctionOp
 	SVFOP_USER,
 	SVFOP_SESSION_USER,
 	SVFOP_CURRENT_CATALOG,
-	SVFOP_CURRENT_SCHEMA
+	SVFOP_CURRENT_SCHEMA,
 } SQLValueFunctionOp;
 
 typedef struct SQLValueFunction
@@ -1511,13 +1511,13 @@ typedef enum XmlExprOp
 	IS_XMLPI,					/* XMLPI(name [, args]) */
 	IS_XMLROOT,					/* XMLROOT(xml, version, standalone) */
 	IS_XMLSERIALIZE,			/* XMLSERIALIZE(is_document, xmlval, indent) */
-	IS_DOCUMENT					/* xmlval IS DOCUMENT */
+	IS_DOCUMENT,				/* xmlval IS DOCUMENT */
 } XmlExprOp;
 
 typedef enum XmlOptionType
 {
 	XMLOPTION_DOCUMENT,
-	XMLOPTION_CONTENT
+	XMLOPTION_CONTENT,
 } XmlOptionType;
 
 typedef struct XmlExpr
@@ -1564,7 +1564,7 @@ typedef enum JsonFormatType
 {
 	JS_FORMAT_DEFAULT,			/* unspecified */
 	JS_FORMAT_JSON,				/* FORMAT JSON [ENCODING ...] */
-	JS_FORMAT_JSONB				/* implicit internal format for RETURNING
+	JS_FORMAT_JSONB,			/* implicit internal format for RETURNING
 								 * jsonb */
 } JsonFormatType;
 
@@ -1616,7 +1616,7 @@ typedef enum JsonConstructorType
 	JSCTOR_JSON_ARRAYAGG = 4,
 	JSCTOR_JSON_PARSE = 5,
 	JSCTOR_JSON_SCALAR = 6,
-	JSCTOR_JSON_SERIALIZE = 7
+	JSCTOR_JSON_SERIALIZE = 7,
 } JsonConstructorType;
 
 /*
@@ -1645,7 +1645,7 @@ typedef enum JsonValueType
 	JS_TYPE_ANY,				/* IS JSON [VALUE] */
 	JS_TYPE_OBJECT,				/* IS JSON OBJECT */
 	JS_TYPE_ARRAY,				/* IS JSON ARRAY */
-	JS_TYPE_SCALAR				/* IS JSON SCALAR */
+	JS_TYPE_SCALAR,				/* IS JSON SCALAR */
 } JsonValueType;
 
 /*

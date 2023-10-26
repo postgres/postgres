@@ -66,7 +66,7 @@ enum r_type
 {
 	JULIAN_DAY,					/* Jn = Julian day */
 	DAY_OF_YEAR,				/* n = day of year */
-	MONTH_NTH_DAY_OF_WEEK		/* Mm.n.d = month, week, day of week */
+	MONTH_NTH_DAY_OF_WEEK,		/* Mm.n.d = month, week, day of week */
 };
 
 struct rule

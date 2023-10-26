@@ -137,7 +137,7 @@ typedef enum
 {
 	FROM_CHAR_DATE_NONE = 0,	/* Value does not affect date mode. */
 	FROM_CHAR_DATE_GREGORIAN,	/* Gregorian (day, month, year) style date */
-	FROM_CHAR_DATE_ISOWEEK		/* ISO 8601 week date */
+	FROM_CHAR_DATE_ISOWEEK,		/* ISO 8601 week date */
 } FromCharDateMode;
 
 typedef struct

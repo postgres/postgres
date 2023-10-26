@@ -30,7 +30,7 @@ typedef enum JsonTokenType
 	JSON_TOKEN_TRUE,
 	JSON_TOKEN_FALSE,
 	JSON_TOKEN_NULL,
-	JSON_TOKEN_END
+	JSON_TOKEN_END,
 } JsonTokenType;
 
 typedef enum JsonParseErrorType
@@ -54,7 +54,7 @@ typedef enum JsonParseErrorType
 	JSON_UNICODE_UNTRANSLATABLE,
 	JSON_UNICODE_HIGH_SURROGATE,
 	JSON_UNICODE_LOW_SURROGATE,
-	JSON_SEM_ACTION_FAILED		/* error should already be reported */
+	JSON_SEM_ACTION_FAILED,		/* error should already be reported */
 } JsonParseErrorType;
 
 

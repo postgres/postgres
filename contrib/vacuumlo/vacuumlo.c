@@ -35,7 +35,7 @@ enum trivalue
 {
 	TRI_DEFAULT,
 	TRI_NO,
-	TRI_YES
+	TRI_YES,
 };
 
 struct _param

@@ -162,7 +162,7 @@ typedef enum
 	TSS_BUILDRUNS,				/* Loading tuples; writing to tape */
 	TSS_SORTEDINMEM,			/* Sort completed entirely in memory */
 	TSS_SORTEDONTAPE,			/* Sort completed, final run is on tape */
-	TSS_FINALMERGE				/* Performing final merge on-the-fly */
+	TSS_FINALMERGE,				/* Performing final merge on-the-fly */
 } TupSortStatus;
 
 /*

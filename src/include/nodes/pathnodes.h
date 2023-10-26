@@ -76,7 +76,7 @@ typedef enum UpperRelationKind
 	UPPERREL_PARTIAL_DISTINCT,	/* result of partial "SELECT DISTINCT", if any */
 	UPPERREL_DISTINCT,			/* result of "SELECT DISTINCT", if any */
 	UPPERREL_ORDERED,			/* result of ORDER BY, if any */
-	UPPERREL_FINAL				/* result of any remaining top-level actions */
+	UPPERREL_FINAL,				/* result of any remaining top-level actions */
 	/* NB: UPPERREL_FINAL must be last enum entry; it's used to size arrays */
 } UpperRelationKind;
 
@@ -814,7 +814,7 @@ typedef enum RelOptKind
 	RELOPT_OTHER_MEMBER_REL,
 	RELOPT_OTHER_JOINREL,
 	RELOPT_UPPER_REL,
-	RELOPT_OTHER_UPPER_REL
+	RELOPT_OTHER_UPPER_REL,
 } RelOptKind;
 
 /*
@@ -1465,7 +1465,7 @@ typedef enum VolatileFunctionStatus
 {
 	VOLATILITY_UNKNOWN = 0,
 	VOLATILITY_VOLATILE,
-	VOLATILITY_NOVOLATILE
+	VOLATILITY_NOVOLATILE,
 } VolatileFunctionStatus;
 
 /*
@@ -1987,7 +1987,7 @@ typedef enum UniquePathMethod
 {
 	UNIQUE_PATH_NOOP,			/* input is known unique already */
 	UNIQUE_PATH_HASH,			/* use hashing */
-	UNIQUE_PATH_SORT			/* use sorting */
+	UNIQUE_PATH_SORT,			/* use sorting */
 } UniquePathMethod;
 
 typedef struct UniquePath
@@ -3228,7 +3228,7 @@ typedef enum
 {
 	PARTITIONWISE_AGGREGATE_NONE,
 	PARTITIONWISE_AGGREGATE_FULL,
-	PARTITIONWISE_AGGREGATE_PARTIAL
+	PARTITIONWISE_AGGREGATE_PARTIAL,
 } PartitionwiseAggregateType;
 
 /*

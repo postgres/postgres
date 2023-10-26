@@ -23,7 +23,7 @@ typedef enum
 	PG_SHA224,
 	PG_SHA256,
 	PG_SHA384,
-	PG_SHA512
+	PG_SHA512,
 } pg_cryptohash_type;
 
 /* opaque context, private to each cryptohash implementation */

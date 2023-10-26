@@ -43,7 +43,7 @@ typedef enum
 	 * were running at that point finished. Till we reach that we hold off
 	 * calling any commit callbacks.
 	 */
-	SNAPBUILD_CONSISTENT = 2
+	SNAPBUILD_CONSISTENT = 2,
 } SnapBuildState;
 
 /* forward declare so we don't have to expose the struct to the public */

@@ -33,7 +33,7 @@ typedef enum pg_checksum_type
 	CHECKSUM_TYPE_SHA224,
 	CHECKSUM_TYPE_SHA256,
 	CHECKSUM_TYPE_SHA384,
-	CHECKSUM_TYPE_SHA512
+	CHECKSUM_TYPE_SHA512,
 } pg_checksum_type;
 
 /*

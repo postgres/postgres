@@ -31,7 +31,7 @@ typedef enum XLTW_Oper
 	XLTW_InsertIndex,
 	XLTW_InsertIndexUnique,
 	XLTW_FetchUpdated,
-	XLTW_RecheckExclusionConstr
+	XLTW_RecheckExclusionConstr,
 } XLTW_Oper;
 
 extern void RelationInitLockInfo(Relation relation);

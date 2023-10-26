@@ -145,7 +145,7 @@ typedef enum TransState
 	TRANS_INPROGRESS,			/* inside a valid transaction */
 	TRANS_COMMIT,				/* commit in progress */
 	TRANS_ABORT,				/* abort in progress */
-	TRANS_PREPARE				/* prepare in progress */
+	TRANS_PREPARE,				/* prepare in progress */
 } TransState;
 
 /*
@@ -180,7 +180,7 @@ typedef enum TBlockState
 	TBLOCK_SUBABORT_END,		/* failed subxact, ROLLBACK received */
 	TBLOCK_SUBABORT_PENDING,	/* live subxact, ROLLBACK received */
 	TBLOCK_SUBRESTART,			/* live subxact, ROLLBACK TO received */
-	TBLOCK_SUBABORT_RESTART		/* failed subxact, ROLLBACK TO received */
+	TBLOCK_SUBABORT_RESTART,	/* failed subxact, ROLLBACK TO received */
 } TBlockState;
 
 /*

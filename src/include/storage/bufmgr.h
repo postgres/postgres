@@ -35,7 +35,7 @@ typedef enum BufferAccessStrategyType
 	BAS_BULKREAD,				/* Large read-only scan (hint bit updates are
 								 * ok) */
 	BAS_BULKWRITE,				/* Large multi-block write (e.g. COPY IN) */
-	BAS_VACUUM					/* VACUUM */
+	BAS_VACUUM,					/* VACUUM */
 } BufferAccessStrategyType;
 
 /* Possible modes for ReadBufferExtended() */
@@ -47,7 +47,7 @@ typedef enum
 	RBM_ZERO_AND_CLEANUP_LOCK,	/* Like RBM_ZERO_AND_LOCK, but locks the page
 								 * in "cleanup" mode */
 	RBM_ZERO_ON_ERROR,			/* Read, but return an all-zeros page on error */
-	RBM_NORMAL_NO_LOG			/* Don't log page as invalid during WAL
+	RBM_NORMAL_NO_LOG,			/* Don't log page as invalid during WAL
 								 * replay; otherwise same as RBM_NORMAL */
 } ReadBufferMode;
 

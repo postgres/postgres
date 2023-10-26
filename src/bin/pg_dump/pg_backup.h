@@ -33,7 +33,7 @@ typedef enum trivalue
 {
 	TRI_DEFAULT,
 	TRI_NO,
-	TRI_YES
+	TRI_YES,
 } trivalue;
 
 typedef enum _archiveFormat
@@ -42,14 +42,14 @@ typedef enum _archiveFormat
 	archCustom = 1,
 	archTar = 3,
 	archNull = 4,
-	archDirectory = 5
+	archDirectory = 5,
 } ArchiveFormat;
 
 typedef enum _archiveMode
 {
 	archModeAppend,
 	archModeWrite,
-	archModeRead
+	archModeRead,
 } ArchiveMode;
 
 typedef enum _teSection
@@ -57,7 +57,7 @@ typedef enum _teSection
 	SECTION_NONE = 1,			/* comments, ACLs, etc; can be anywhere */
 	SECTION_PRE_DATA,			/* stuff to be processed before data */
 	SECTION_DATA,				/* table data, large objects, LO comments */
-	SECTION_POST_DATA			/* stuff to be processed after data */
+	SECTION_POST_DATA,			/* stuff to be processed after data */
 } teSection;
 
 /* We need one enum entry per prepared query in pg_dump */

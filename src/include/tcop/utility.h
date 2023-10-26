@@ -23,7 +23,7 @@ typedef enum
 	PROCESS_UTILITY_QUERY,		/* a complete query, but not toplevel */
 	PROCESS_UTILITY_QUERY_NONATOMIC,	/* a complete query, nonatomic
 										 * execution context */
-	PROCESS_UTILITY_SUBCOMMAND	/* a portion of a query */
+	PROCESS_UTILITY_SUBCOMMAND, /* a portion of a query */
 } ProcessUtilityContext;
 
 /* Info needed when recursing from ALTER TABLE */

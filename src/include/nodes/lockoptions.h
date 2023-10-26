@@ -24,7 +24,7 @@ typedef enum LockClauseStrength
 	LCS_FORKEYSHARE,			/* FOR KEY SHARE */
 	LCS_FORSHARE,				/* FOR SHARE */
 	LCS_FORNOKEYUPDATE,			/* FOR NO KEY UPDATE */
-	LCS_FORUPDATE				/* FOR UPDATE */
+	LCS_FORUPDATE,				/* FOR UPDATE */
 } LockClauseStrength;
 
 /*
@@ -40,7 +40,7 @@ typedef enum LockWaitPolicy
 	/* Skip rows that can't be locked (SKIP LOCKED) */
 	LockWaitSkip,
 	/* Raise an error if a row cannot be locked (NOWAIT) */
-	LockWaitError
+	LockWaitError,
 } LockWaitPolicy;
 
 /*
@@ -55,7 +55,7 @@ typedef enum LockTupleMode
 	/* SELECT FOR NO KEY UPDATE, and UPDATEs that don't modify key columns */
 	LockTupleNoKeyExclusive,
 	/* SELECT FOR UPDATE, UPDATEs that modify key columns, and DELETE */
-	LockTupleExclusive
+	LockTupleExclusive,
 } LockTupleMode;
 
 #endif							/* LOCKOPTIONS_H */

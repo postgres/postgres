@@ -351,7 +351,7 @@ typedef enum
 {
 	LISTEN_LISTEN,
 	LISTEN_UNLISTEN,
-	LISTEN_UNLISTEN_ALL
+	LISTEN_UNLISTEN_ALL,
 } ListenActionKind;
 
 typedef struct

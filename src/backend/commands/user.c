@@ -64,7 +64,7 @@ typedef enum
 	RRG_REMOVE_ADMIN_OPTION,
 	RRG_REMOVE_INHERIT_OPTION,
 	RRG_REMOVE_SET_OPTION,
-	RRG_DELETE_GRANT
+	RRG_DELETE_GRANT,
 } RevokeRoleGrantAction;
 
 /* Potentially set by pg_upgrade_support functions */

@@ -211,7 +211,7 @@ typedef enum
 	XLOG_FROM_ANY = 0,			/* request to read WAL from any source */
 	XLOG_FROM_ARCHIVE,			/* restored using restore_command */
 	XLOG_FROM_PG_WAL,			/* existing file in pg_wal */
-	XLOG_FROM_STREAM			/* streamed from primary */
+	XLOG_FROM_STREAM,			/* streamed from primary */
 } XLogSource;
 
 /* human-readable names for XLogSources, for debugging output */

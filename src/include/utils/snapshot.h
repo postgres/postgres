@@ -115,7 +115,7 @@ typedef enum SnapshotType
 	 * For visibility checks snapshot->min must have been set up with the xmin
 	 * horizon to use.
 	 */
-	SNAPSHOT_NON_VACUUMABLE
+	SNAPSHOT_NON_VACUUMABLE,
 } SnapshotType;
 
 typedef struct SnapshotData *Snapshot;

@@ -113,7 +113,7 @@ typedef enum
 	HASH_FIND,
 	HASH_ENTER,
 	HASH_REMOVE,
-	HASH_ENTER_NULL
+	HASH_ENTER_NULL,
 } HASHACTION;
 
 /* hash_seq status (should be considered an opaque type by callers) */

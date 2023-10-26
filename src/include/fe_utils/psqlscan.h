@@ -32,7 +32,7 @@ typedef enum
 	PSCAN_SEMICOLON,			/* found command-ending semicolon */
 	PSCAN_BACKSLASH,			/* found backslash command */
 	PSCAN_INCOMPLETE,			/* end of line, SQL statement incomplete */
-	PSCAN_EOL					/* end of line, SQL possibly complete */
+	PSCAN_EOL,					/* end of line, SQL possibly complete */
 } PsqlScanResult;
 
 /* Prompt type returned by psql_scan() */
@@ -45,7 +45,7 @@ typedef enum _promptStatus
 	PROMPT_DOUBLEQUOTE,
 	PROMPT_DOLLARQUOTE,
 	PROMPT_PAREN,
-	PROMPT_COPY
+	PROMPT_COPY,
 } promptStatus_t;
 
 /* Quoting request types for get_variable() callback */
@@ -54,7 +54,7 @@ typedef enum
 	PQUOTE_PLAIN,				/* just return the actual value */
 	PQUOTE_SQL_LITERAL,			/* add quotes to make a valid SQL literal */
 	PQUOTE_SQL_IDENT,			/* quote if needed to make a SQL identifier */
-	PQUOTE_SHELL_ARG			/* quote if needed to be safe in a shell cmd */
+	PQUOTE_SHELL_ARG,			/* quote if needed to be safe in a shell cmd */
 } PsqlScanQuoteType;
 
 /* Callback functions to be used by the lexer */

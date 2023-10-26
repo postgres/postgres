@@ -149,7 +149,7 @@ typedef enum TypeFuncClass
 	TYPEFUNC_COMPOSITE,			/* determinable rowtype result */
 	TYPEFUNC_COMPOSITE_DOMAIN,	/* domain over determinable rowtype result */
 	TYPEFUNC_RECORD,			/* indeterminate rowtype result */
-	TYPEFUNC_OTHER				/* bogus type, eg pseudotype */
+	TYPEFUNC_OTHER,				/* bogus type, eg pseudotype */
 } TypeFuncClass;
 
 extern TypeFuncClass get_call_result_type(FunctionCallInfo fcinfo,

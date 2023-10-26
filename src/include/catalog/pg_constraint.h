@@ -202,7 +202,7 @@ typedef enum ConstraintCategory
 {
 	CONSTRAINT_RELATION,
 	CONSTRAINT_DOMAIN,
-	CONSTRAINT_ASSERTION		/* for future expansion */
+	CONSTRAINT_ASSERTION,		/* for future expansion */
 } ConstraintCategory;
 
 

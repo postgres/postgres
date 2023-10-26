@@ -37,21 +37,21 @@ typedef enum
 	PSQL_ECHO_NONE,
 	PSQL_ECHO_QUERIES,
 	PSQL_ECHO_ERRORS,
-	PSQL_ECHO_ALL
+	PSQL_ECHO_ALL,
 } PSQL_ECHO;
 
 typedef enum
 {
 	PSQL_ECHO_HIDDEN_OFF,
 	PSQL_ECHO_HIDDEN_ON,
-	PSQL_ECHO_HIDDEN_NOEXEC
+	PSQL_ECHO_HIDDEN_NOEXEC,
 } PSQL_ECHO_HIDDEN;
 
 typedef enum
 {
 	PSQL_ERROR_ROLLBACK_OFF,
 	PSQL_ERROR_ROLLBACK_INTERACTIVE,
-	PSQL_ERROR_ROLLBACK_ON
+	PSQL_ERROR_ROLLBACK_ON,
 } PSQL_ERROR_ROLLBACK;
 
 typedef enum
@@ -59,7 +59,7 @@ typedef enum
 	PSQL_COMP_CASE_PRESERVE_UPPER,
 	PSQL_COMP_CASE_PRESERVE_LOWER,
 	PSQL_COMP_CASE_UPPER,
-	PSQL_COMP_CASE_LOWER
+	PSQL_COMP_CASE_LOWER,
 } PSQL_COMP_CASE;
 
 typedef enum
@@ -67,14 +67,14 @@ typedef enum
 	hctl_none = 0,
 	hctl_ignorespace = 1,
 	hctl_ignoredups = 2,
-	hctl_ignoreboth = hctl_ignorespace | hctl_ignoredups
+	hctl_ignoreboth = hctl_ignorespace | hctl_ignoredups,
 } HistControl;
 
 enum trivalue
 {
 	TRI_DEFAULT,
 	TRI_NO,
-	TRI_YES
+	TRI_YES,
 };
 
 typedef struct _psqlSettings

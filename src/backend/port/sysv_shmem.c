@@ -86,7 +86,7 @@ typedef enum
 	SHMSTATE_ATTACHED,			/* pertinent to DataDir, has attached PIDs */
 	SHMSTATE_ENOENT,			/* no segment of that ID */
 	SHMSTATE_FOREIGN,			/* exists, but not pertinent to DataDir */
-	SHMSTATE_UNATTACHED			/* pertinent to DataDir, no attached PIDs */
+	SHMSTATE_UNATTACHED,		/* pertinent to DataDir, no attached PIDs */
 } IpcMemoryState;
 
 

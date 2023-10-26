@@ -44,7 +44,7 @@ typedef enum
 	SLRU_PAGE_EMPTY,			/* buffer is not in use */
 	SLRU_PAGE_READ_IN_PROGRESS, /* page is being read in */
 	SLRU_PAGE_VALID,			/* page is valid and not being written */
-	SLRU_PAGE_WRITE_IN_PROGRESS /* page is being written out */
+	SLRU_PAGE_WRITE_IN_PROGRESS,	/* page is being written out */
 } SlruPageStatus;
 
 /*

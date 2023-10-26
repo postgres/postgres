@@ -35,7 +35,7 @@ typedef enum IOFuncSelector
 	IOFunc_input,
 	IOFunc_output,
 	IOFunc_receive,
-	IOFunc_send
+	IOFunc_send,
 } IOFuncSelector;
 
 /* Flag bits for get_attstatsslot */

@@ -26,7 +26,7 @@ typedef enum
 	WJB_BEGIN_ARRAY,
 	WJB_END_ARRAY,
 	WJB_BEGIN_OBJECT,
-	WJB_END_OBJECT
+	WJB_END_OBJECT,
 } JsonbIteratorToken;
 
 /* Strategy numbers for GIN index opclasses */
@@ -335,7 +335,7 @@ typedef enum
 	JBI_ARRAY_ELEM,
 	JBI_OBJECT_START,
 	JBI_OBJECT_KEY,
-	JBI_OBJECT_VALUE
+	JBI_OBJECT_VALUE,
 } JsonbIterState;
 
 typedef struct JsonbIterator

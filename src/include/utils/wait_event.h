@@ -56,7 +56,7 @@ extern PGDLLIMPORT uint32 *my_wait_event_info;
 typedef enum
 {
 	WAIT_EVENT_EXTENSION = PG_WAIT_EXTENSION,
-	WAIT_EVENT_EXTENSION_FIRST_USER_DEFINED
+	WAIT_EVENT_EXTENSION_FIRST_USER_DEFINED,
 } WaitEventExtension;
 
 extern void WaitEventExtensionShmemInit(void);

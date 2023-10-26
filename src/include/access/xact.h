@@ -72,8 +72,8 @@ typedef enum
 	SYNCHRONOUS_COMMIT_REMOTE_WRITE,	/* wait for local flush and remote
 										 * write */
 	SYNCHRONOUS_COMMIT_REMOTE_FLUSH,	/* wait for local and remote flush */
-	SYNCHRONOUS_COMMIT_REMOTE_APPLY /* wait for local and remote flush and
-									 * remote apply */
+	SYNCHRONOUS_COMMIT_REMOTE_APPLY,	/* wait for local and remote flush and
+										 * remote apply */
 }			SyncCommitLevel;
 
 /* Define the default setting for synchronous_commit */
@@ -132,7 +132,7 @@ typedef enum
 	XACT_EVENT_PREPARE,
 	XACT_EVENT_PRE_COMMIT,
 	XACT_EVENT_PARALLEL_PRE_COMMIT,
-	XACT_EVENT_PRE_PREPARE
+	XACT_EVENT_PRE_PREPARE,
 } XactEvent;
 
 typedef void (*XactCallback) (XactEvent event, void *arg);
@@ -142,7 +142,7 @@ typedef enum
 	SUBXACT_EVENT_START_SUB,
 	SUBXACT_EVENT_COMMIT_SUB,
 	SUBXACT_EVENT_ABORT_SUB,
-	SUBXACT_EVENT_PRE_COMMIT_SUB
+	SUBXACT_EVENT_PRE_COMMIT_SUB,
 } SubXactEvent;
 
 typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,

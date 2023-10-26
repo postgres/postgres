@@ -21,7 +21,7 @@ typedef enum manifest_option
 {
 	MANIFEST_OPTION_YES,
 	MANIFEST_OPTION_NO,
-	MANIFEST_OPTION_FORCE_ENCODE
+	MANIFEST_OPTION_FORCE_ENCODE,
 } backup_manifest_option;
 
 typedef struct backup_manifest_info

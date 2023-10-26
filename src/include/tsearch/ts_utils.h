@@ -133,7 +133,7 @@ typedef enum
 {
 	TS_NO,						/* definitely no match */
 	TS_YES,						/* definitely does match */
-	TS_MAYBE					/* can't verify match for lack of pos data */
+	TS_MAYBE,					/* can't verify match for lack of pos data */
 } TSTernaryValue;
 
 /*

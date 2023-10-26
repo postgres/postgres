@@ -295,7 +295,7 @@ typedef enum
 {
 	ExprSingleResult,			/* expression does not return a set */
 	ExprMultipleResult,			/* this result is an element of a set */
-	ExprEndResult				/* there are no more elements in the set */
+	ExprEndResult,				/* there are no more elements in the set */
 } ExprDoneCond;
 
 /*
@@ -309,7 +309,7 @@ typedef enum
 	SFRM_ValuePerCall = 0x01,	/* one value returned per call */
 	SFRM_Materialize = 0x02,	/* result set instantiated in Tuplestore */
 	SFRM_Materialize_Random = 0x04, /* Tuplestore needs randomAccess */
-	SFRM_Materialize_Preferred = 0x08	/* caller prefers Tuplestore */
+	SFRM_Materialize_Preferred = 0x08,	/* caller prefers Tuplestore */
 } SetFunctionReturnMode;
 
 /*
@@ -989,7 +989,7 @@ typedef struct SubPlanState
 typedef enum DomainConstraintType
 {
 	DOM_CONSTRAINT_NOTNULL,
-	DOM_CONSTRAINT_CHECK
+	DOM_CONSTRAINT_CHECK,
 } DomainConstraintType;
 
 typedef struct DomainConstraintState
@@ -1669,7 +1669,7 @@ typedef enum
 {
 	BM_INITIAL,
 	BM_INPROGRESS,
-	BM_FINISHED
+	BM_FINISHED,
 } SharedBitmapState;
 
 /* ----------------
@@ -2466,7 +2466,7 @@ typedef enum WindowAggStatus
 	WINDOWAGG_DONE,				/* No more processing to do */
 	WINDOWAGG_RUN,				/* Normal processing of window funcs */
 	WINDOWAGG_PASSTHROUGH,		/* Don't eval window funcs */
-	WINDOWAGG_PASSTHROUGH_STRICT	/* Pass-through plus don't store new
+	WINDOWAGG_PASSTHROUGH_STRICT,	/* Pass-through plus don't store new
 									 * tuples during spool */
 } WindowAggStatus;
 
@@ -2744,7 +2744,7 @@ typedef enum
 	LIMIT_WINDOWEND_TIES,		/* have returned a tied row */
 	LIMIT_SUBPLANEOF,			/* at EOF of subplan (within window) */
 	LIMIT_WINDOWEND,			/* stepped off end of window */
-	LIMIT_WINDOWSTART			/* stepped off beginning of window */
+	LIMIT_WINDOWSTART,			/* stepped off beginning of window */
 } LimitStateCond;
 
 typedef struct LimitState

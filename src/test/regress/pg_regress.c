@@ -91,7 +91,7 @@ typedef enum TAPtype
 	NOTE_END,
 	TEST_STATUS,
 	PLAN,
-	NONE
+	NONE,
 } TAPtype;
 
 /* options settable from command line */

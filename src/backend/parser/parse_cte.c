@@ -35,7 +35,7 @@ typedef enum
 	RECURSION_SUBLINK,			/* inside a sublink */
 	RECURSION_OUTERJOIN,		/* inside nullable side of an outer join */
 	RECURSION_INTERSECT,		/* underneath INTERSECT (ALL) */
-	RECURSION_EXCEPT			/* underneath EXCEPT (ALL) */
+	RECURSION_EXCEPT,			/* underneath EXCEPT (ALL) */
 } RecursionContext;
 
 /* Associated error messages --- each must have one %s for CTE name */

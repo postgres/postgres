@@ -42,7 +42,7 @@ typedef enum PLpgSQL_nsitem_type
 {
 	PLPGSQL_NSTYPE_LABEL,		/* block label */
 	PLPGSQL_NSTYPE_VAR,			/* scalar variable */
-	PLPGSQL_NSTYPE_REC			/* composite variable */
+	PLPGSQL_NSTYPE_REC,			/* composite variable */
 } PLpgSQL_nsitem_type;
 
 /*
@@ -52,7 +52,7 @@ typedef enum PLpgSQL_label_type
 {
 	PLPGSQL_LABEL_BLOCK,		/* DECLARE/BEGIN block */
 	PLPGSQL_LABEL_LOOP,			/* looping construct */
-	PLPGSQL_LABEL_OTHER			/* anything else */
+	PLPGSQL_LABEL_OTHER,		/* anything else */
 } PLpgSQL_label_type;
 
 /*
@@ -64,7 +64,7 @@ typedef enum PLpgSQL_datum_type
 	PLPGSQL_DTYPE_ROW,
 	PLPGSQL_DTYPE_REC,
 	PLPGSQL_DTYPE_RECFIELD,
-	PLPGSQL_DTYPE_PROMISE
+	PLPGSQL_DTYPE_PROMISE,
 } PLpgSQL_datum_type;
 
 /*
@@ -83,7 +83,7 @@ typedef enum PLpgSQL_promise_type
 	PLPGSQL_PROMISE_TG_NARGS,
 	PLPGSQL_PROMISE_TG_ARGV,
 	PLPGSQL_PROMISE_TG_EVENT,
-	PLPGSQL_PROMISE_TG_TAG
+	PLPGSQL_PROMISE_TG_TAG,
 } PLpgSQL_promise_type;
 
 /*
@@ -93,7 +93,7 @@ typedef enum PLpgSQL_type_type
 {
 	PLPGSQL_TTYPE_SCALAR,		/* scalar types and domains */
 	PLPGSQL_TTYPE_REC,			/* composite types, including RECORD */
-	PLPGSQL_TTYPE_PSEUDO		/* pseudotypes */
+	PLPGSQL_TTYPE_PSEUDO,		/* pseudotypes */
 } PLpgSQL_type_type;
 
 /*
@@ -127,7 +127,7 @@ typedef enum PLpgSQL_stmt_type
 	PLPGSQL_STMT_PERFORM,
 	PLPGSQL_STMT_CALL,
 	PLPGSQL_STMT_COMMIT,
-	PLPGSQL_STMT_ROLLBACK
+	PLPGSQL_STMT_ROLLBACK,
 } PLpgSQL_stmt_type;
 
 /*
@@ -138,7 +138,7 @@ enum
 	PLPGSQL_RC_OK,
 	PLPGSQL_RC_EXIT,
 	PLPGSQL_RC_RETURN,
-	PLPGSQL_RC_CONTINUE
+	PLPGSQL_RC_CONTINUE,
 };
 
 /*
@@ -158,7 +158,7 @@ typedef enum PLpgSQL_getdiag_kind
 	PLPGSQL_GETDIAG_DATATYPE_NAME,
 	PLPGSQL_GETDIAG_MESSAGE_TEXT,
 	PLPGSQL_GETDIAG_TABLE_NAME,
-	PLPGSQL_GETDIAG_SCHEMA_NAME
+	PLPGSQL_GETDIAG_SCHEMA_NAME,
 } PLpgSQL_getdiag_kind;
 
 /*
@@ -174,7 +174,7 @@ typedef enum PLpgSQL_raise_option_type
 	PLPGSQL_RAISEOPTION_CONSTRAINT,
 	PLPGSQL_RAISEOPTION_DATATYPE,
 	PLPGSQL_RAISEOPTION_TABLE,
-	PLPGSQL_RAISEOPTION_SCHEMA
+	PLPGSQL_RAISEOPTION_SCHEMA,
 } PLpgSQL_raise_option_type;
 
 /*
@@ -184,7 +184,7 @@ typedef enum PLpgSQL_resolve_option
 {
 	PLPGSQL_RESOLVE_ERROR,		/* throw error if ambiguous */
 	PLPGSQL_RESOLVE_VARIABLE,	/* prefer plpgsql var to table column */
-	PLPGSQL_RESOLVE_COLUMN		/* prefer table column to plpgsql var */
+	PLPGSQL_RESOLVE_COLUMN,		/* prefer table column to plpgsql var */
 } PLpgSQL_resolve_option;
 
 
@@ -957,7 +957,7 @@ typedef enum PLpgSQL_trigtype
 {
 	PLPGSQL_DML_TRIGGER,
 	PLPGSQL_EVENT_TRIGGER,
-	PLPGSQL_NOT_TRIGGER
+	PLPGSQL_NOT_TRIGGER,
 } PLpgSQL_trigtype;
 
 /*
@@ -1188,7 +1188,7 @@ typedef enum
 {
 	IDENTIFIER_LOOKUP_NORMAL,	/* normal processing of var names */
 	IDENTIFIER_LOOKUP_DECLARE,	/* In DECLARE --- don't look up names */
-	IDENTIFIER_LOOKUP_EXPR		/* In SQL expression --- special case */
+	IDENTIFIER_LOOKUP_EXPR,		/* In SQL expression --- special case */
 } IdentifierLookup;
 
 extern IdentifierLookup plpgsql_IdentifierLookup;

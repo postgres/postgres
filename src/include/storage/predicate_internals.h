@@ -362,7 +362,7 @@ typedef enum PredicateLockTargetType
 {
 	PREDLOCKTAG_RELATION,
 	PREDLOCKTAG_PAGE,
-	PREDLOCKTAG_TUPLE
+	PREDLOCKTAG_TUPLE,
 	/* TODO SSI: Other types may be needed for index locking */
 } PredicateLockTargetType;
 
@@ -424,7 +424,7 @@ typedef struct PredicateLockData
 typedef enum TwoPhasePredicateRecordType
 {
 	TWOPHASEPREDICATERECORD_XACT,
-	TWOPHASEPREDICATERECORD_LOCK
+	TWOPHASEPREDICATERECORD_LOCK,
 } TwoPhasePredicateRecordType;
 
 /*

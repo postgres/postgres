@@ -47,7 +47,7 @@ typedef enum
 	/* an update that doesn't touch "key" columns */
 	MultiXactStatusNoKeyUpdate = 0x04,
 	/* other updates, and delete */
-	MultiXactStatusUpdate = 0x05
+	MultiXactStatusUpdate = 0x05,
 } MultiXactStatus;
 
 #define MaxMultiXactStatus MultiXactStatusUpdate

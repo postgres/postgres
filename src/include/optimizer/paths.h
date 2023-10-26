@@ -198,7 +198,7 @@ typedef enum
 	PATHKEYS_EQUAL,				/* pathkeys are identical */
 	PATHKEYS_BETTER1,			/* pathkey 1 is a superset of pathkey 2 */
 	PATHKEYS_BETTER2,			/* vice versa */
-	PATHKEYS_DIFFERENT			/* neither pathkey includes the other */
+	PATHKEYS_DIFFERENT,			/* neither pathkey includes the other */
 } PathKeysComparison;
 
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);

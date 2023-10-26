@@ -29,7 +29,7 @@ typedef enum CollectedCommandType
 	SCT_AlterOpFamily,
 	SCT_AlterDefaultPrivileges,
 	SCT_CreateOpClass,
-	SCT_AlterTSConfig
+	SCT_AlterTSConfig,
 } CollectedCommandType;
 
 /*

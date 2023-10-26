@@ -52,7 +52,7 @@ typedef enum
 	HUGE_PAGES_OFF,
 	HUGE_PAGES_ON,
 	HUGE_PAGES_TRY,				/* only for huge_pages */
-	HUGE_PAGES_UNKNOWN			/* only for huge_pages_status */
+	HUGE_PAGES_UNKNOWN,			/* only for huge_pages_status */
 }			HugePagesType;
 
 /* Possible values for shared_memory_type */
@@ -60,7 +60,7 @@ typedef enum
 {
 	SHMEM_TYPE_WINDOWS,
 	SHMEM_TYPE_SYSV,
-	SHMEM_TYPE_MMAP
+	SHMEM_TYPE_MMAP,
 }			PGShmemType;
 
 #ifndef WIN32

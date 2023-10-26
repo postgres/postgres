@@ -492,7 +492,7 @@ typedef enum
 {
 	PGERROR_TERSE,				/* single-line error messages */
 	PGERROR_DEFAULT,			/* recommended style */
-	PGERROR_VERBOSE				/* all the facts, ma'am */
+	PGERROR_VERBOSE,			/* all the facts, ma'am */
 }			PGErrorVerbosity;
 
 extern PGDLLIMPORT int Log_error_verbosity;

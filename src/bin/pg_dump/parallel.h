@@ -32,7 +32,7 @@ typedef enum
 	WFW_NO_WAIT,
 	WFW_GOT_STATUS,
 	WFW_ONE_IDLE,
-	WFW_ALL_IDLE
+	WFW_ALL_IDLE,
 } WFW_WaitOption;
 
 /*

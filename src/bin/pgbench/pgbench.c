@@ -227,7 +227,7 @@ typedef enum
 {
 	PART_NONE,					/* no partitioning */
 	PART_RANGE,					/* range partitioning */
-	PART_HASH					/* hash partitioning */
+	PART_HASH,					/* hash partitioning */
 } partition_method_t;
 
 static partition_method_t partition_method = PART_NONE;
@@ -459,7 +459,7 @@ typedef enum EStatus
 	/* SQL errors */
 	ESTATUS_SERIALIZATION_ERROR,
 	ESTATUS_DEADLOCK_ERROR,
-	ESTATUS_OTHER_SQL_ERROR
+	ESTATUS_OTHER_SQL_ERROR,
 } EStatus;
 
 /*
@@ -470,7 +470,7 @@ typedef enum TStatus
 	TSTATUS_IDLE,
 	TSTATUS_IN_BLOCK,
 	TSTATUS_CONN_ERROR,
-	TSTATUS_OTHER_ERROR
+	TSTATUS_OTHER_ERROR,
 } TStatus;
 
 /* Various random sequences are initialized from this one. */
@@ -587,7 +587,7 @@ typedef enum
 	 * aborted because a command failed, CSTATE_FINISHED means success.
 	 */
 	CSTATE_ABORTED,
-	CSTATE_FINISHED
+	CSTATE_FINISHED,
 } ConnectionStateEnum;
 
 /*
@@ -697,7 +697,7 @@ typedef enum MetaCommand
 	META_ELSE,					/* \else */
 	META_ENDIF,					/* \endif */
 	META_STARTPIPELINE,			/* \startpipeline */
-	META_ENDPIPELINE			/* \endpipeline */
+	META_ENDPIPELINE,			/* \endpipeline */
 } MetaCommand;
 
 typedef enum QueryMode

@@ -32,7 +32,7 @@ typedef enum
 {
 	CLOSE_NORMAL,
 	CLOSE_UNLINK,
-	CLOSE_NO_RENAME
+	CLOSE_NO_RENAME,
 } WalCloseMethod;
 
 /*

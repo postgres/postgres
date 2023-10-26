@@ -280,7 +280,7 @@ typedef enum CmdType
 	CMD_MERGE,					/* merge stmt */
 	CMD_UTILITY,				/* cmds like create, destroy, copy, vacuum,
 								 * etc. */
-	CMD_NOTHING					/* dummy command for instead nothing rules
+	CMD_NOTHING,				/* dummy command for instead nothing rules
 								 * with qual */
 } CmdType;
 
@@ -324,7 +324,7 @@ typedef enum JoinType
 	 * by the executor (nor, indeed, by most of the planner).
 	 */
 	JOIN_UNIQUE_OUTER,			/* LHS path must be made unique */
-	JOIN_UNIQUE_INNER			/* RHS path must be made unique */
+	JOIN_UNIQUE_INNER,			/* RHS path must be made unique */
 
 	/*
 	 * We might need additional join types someday.
@@ -364,7 +364,7 @@ typedef enum AggStrategy
 	AGG_PLAIN,					/* simple agg across all input rows */
 	AGG_SORTED,					/* grouped agg, input must be sorted */
 	AGG_HASHED,					/* grouped agg, use internal hashtable */
-	AGG_MIXED					/* grouped agg, hash and sort both used */
+	AGG_MIXED,					/* grouped agg, hash and sort both used */
 } AggStrategy;
 
 /*
@@ -388,7 +388,7 @@ typedef enum AggSplit
 	/* Initial phase of partial aggregation, with serialization: */
 	AGGSPLIT_INITIAL_SERIAL = AGGSPLITOP_SKIPFINAL | AGGSPLITOP_SERIALIZE,
 	/* Final phase of partial aggregation, with deserialization: */
-	AGGSPLIT_FINAL_DESERIAL = AGGSPLITOP_COMBINE | AGGSPLITOP_DESERIALIZE
+	AGGSPLIT_FINAL_DESERIAL = AGGSPLITOP_COMBINE | AGGSPLITOP_DESERIALIZE,
 } AggSplit;
 
 /* Test whether an AggSplit value selects each primitive option: */
@@ -408,13 +408,13 @@ typedef enum SetOpCmd
 	SETOPCMD_INTERSECT,
 	SETOPCMD_INTERSECT_ALL,
 	SETOPCMD_EXCEPT,
-	SETOPCMD_EXCEPT_ALL
+	SETOPCMD_EXCEPT_ALL,
 } SetOpCmd;
 
 typedef enum SetOpStrategy
 {
 	SETOP_SORTED,				/* input must be sorted */
-	SETOP_HASHED				/* use internal hashtable */
+	SETOP_HASHED,				/* use internal hashtable */
 } SetOpStrategy;
 
 /*
@@ -427,7 +427,7 @@ typedef enum OnConflictAction
 {
 	ONCONFLICT_NONE,			/* No "ON CONFLICT" clause */
 	ONCONFLICT_NOTHING,			/* ON CONFLICT ... DO NOTHING */
-	ONCONFLICT_UPDATE			/* ON CONFLICT ... DO UPDATE */
+	ONCONFLICT_UPDATE,			/* ON CONFLICT ... DO UPDATE */
 } OnConflictAction;
 
 /*

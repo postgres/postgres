@@ -35,7 +35,7 @@ enum gbtree_type
 	gbt_t_bool,
 	gbt_t_inet,
 	gbt_t_uuid,
-	gbt_t_enum
+	gbt_t_enum,
 };
 
 #endif

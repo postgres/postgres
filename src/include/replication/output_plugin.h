@@ -17,7 +17,7 @@ struct OutputPluginCallbacks;
 typedef enum OutputPluginOutputType
 {
 	OUTPUT_PLUGIN_BINARY_OUTPUT,
-	OUTPUT_PLUGIN_TEXTUAL_OUTPUT
+	OUTPUT_PLUGIN_TEXTUAL_OUTPUT,
 } OutputPluginOutputType;
 
 /*

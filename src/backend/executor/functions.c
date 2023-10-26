@@ -59,7 +59,7 @@ typedef struct
  */
 typedef enum
 {
-	F_EXEC_START, F_EXEC_RUN, F_EXEC_DONE
+	F_EXEC_START, F_EXEC_RUN, F_EXEC_DONE,
 } ExecStatus;
 
 typedef struct execution_state

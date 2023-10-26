@@ -50,7 +50,7 @@ typedef enum
 {
 	PG_MODE_CHECK,
 	PG_MODE_DISABLE,
-	PG_MODE_ENABLE
+	PG_MODE_ENABLE,
 } PgChecksumMode;
 
 static PgChecksumMode mode = PG_MODE_CHECK;

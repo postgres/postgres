@@ -128,7 +128,7 @@ typedef enum
 	SLRU_READ_FAILED,
 	SLRU_WRITE_FAILED,
 	SLRU_FSYNC_FAILED,
-	SLRU_CLOSE_FAILED
+	SLRU_CLOSE_FAILED,
 } SlruErrorCause;
 
 static SlruErrorCause slru_errcause;

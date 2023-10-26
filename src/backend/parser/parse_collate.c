@@ -58,7 +58,7 @@ typedef enum
 	COLLATE_NONE,				/* expression is of a noncollatable datatype */
 	COLLATE_IMPLICIT,			/* collation was derived implicitly */
 	COLLATE_CONFLICT,			/* we had a conflict of implicit collations */
-	COLLATE_EXPLICIT			/* collation was derived explicitly */
+	COLLATE_EXPLICIT,			/* collation was derived explicitly */
 } CollateStrength;
 
 typedef struct

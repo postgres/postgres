@@ -25,7 +25,7 @@ typedef enum
 {
 	RECOVERY_PREFETCH_OFF,
 	RECOVERY_PREFETCH_ON,
-	RECOVERY_PREFETCH_TRY
+	RECOVERY_PREFETCH_TRY,
 }			RecoveryPrefetchValue;
 
 struct XLogPrefetcher;

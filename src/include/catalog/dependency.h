@@ -36,7 +36,7 @@ typedef enum DependencyType
 	DEPENDENCY_PARTITION_PRI = 'P',
 	DEPENDENCY_PARTITION_SEC = 'S',
 	DEPENDENCY_EXTENSION = 'e',
-	DEPENDENCY_AUTO_EXTENSION = 'x'
+	DEPENDENCY_AUTO_EXTENSION = 'x',
 } DependencyType;
 
 /*
@@ -75,7 +75,7 @@ typedef enum SharedDependencyType
 	SHARED_DEPENDENCY_ACL = 'a',
 	SHARED_DEPENDENCY_POLICY = 'r',
 	SHARED_DEPENDENCY_TABLESPACE = 't',
-	SHARED_DEPENDENCY_INVALID = 0
+	SHARED_DEPENDENCY_INVALID = 0,
 } SharedDependencyType;
 
 /* expansible list of ObjectAddresses (private in dependency.c) */
@@ -127,7 +127,7 @@ typedef enum ObjectClass
 	OCLASS_PUBLICATION_NAMESPACE,	/* pg_publication_namespace */
 	OCLASS_PUBLICATION_REL,		/* pg_publication_rel */
 	OCLASS_SUBSCRIPTION,		/* pg_subscription */
-	OCLASS_TRANSFORM			/* pg_transform */
+	OCLASS_TRANSFORM,			/* pg_transform */
 } ObjectClass;
 
 #define LAST_OCLASS		OCLASS_TRANSFORM

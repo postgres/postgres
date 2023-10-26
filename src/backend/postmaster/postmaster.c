@@ -262,7 +262,7 @@ typedef enum
 	STARTUP_NOT_RUNNING,
 	STARTUP_RUNNING,
 	STARTUP_SIGNALED,			/* we sent it a SIGQUIT or SIGKILL */
-	STARTUP_CRASHED
+	STARTUP_CRASHED,
 } StartupStatusEnum;
 
 static StartupStatusEnum StartupStatus = STARTUP_NOT_RUNNING;
@@ -332,7 +332,7 @@ typedef enum
 	PM_SHUTDOWN_2,				/* waiting for archiver and walsenders to
 								 * finish */
 	PM_WAIT_DEAD_END,			/* waiting for dead_end children to exit */
-	PM_NO_CHILDREN				/* all important children have exited */
+	PM_NO_CHILDREN,				/* all important children have exited */
 } PMState;
 
 static PMState pmState = PM_INIT;

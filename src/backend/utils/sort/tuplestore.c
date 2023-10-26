@@ -73,7 +73,7 @@ typedef enum
 {
 	TSS_INMEM,					/* Tuples still fit in memory */
 	TSS_WRITEFILE,				/* Writing to temp file */
-	TSS_READFILE				/* Reading from temp file */
+	TSS_READFILE,				/* Reading from temp file */
 } TupStoreStatus;
 
 /*

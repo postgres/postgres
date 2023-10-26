@@ -97,7 +97,7 @@ typedef enum
 	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
 	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
 	HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still in progress */
-	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
+	HEAPTUPLE_DELETE_IN_PROGRESS,	/* deleting xact is still in progress */
 } HTSV_Result;
 
 /*

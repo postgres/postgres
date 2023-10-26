@@ -756,7 +756,7 @@ enum SpGistSpecialOffsetNumbers
 {
 	SpGistBreakOffsetNumber = InvalidOffsetNumber,
 	SpGistRedirectOffsetNumber = MaxOffsetNumber + 1,
-	SpGistErrorOffsetNumber = MaxOffsetNumber + 2
+	SpGistErrorOffsetNumber = MaxOffsetNumber + 2,
 };
 
 static OffsetNumber

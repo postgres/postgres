@@ -49,7 +49,7 @@ typedef enum
 	STANDBY_DISABLED,
 	STANDBY_INITIALIZED,
 	STANDBY_SNAPSHOT_PENDING,
-	STANDBY_SNAPSHOT_READY
+	STANDBY_SNAPSHOT_READY,
 } HotStandbyState;
 
 extern PGDLLIMPORT HotStandbyState standbyState;
@@ -71,7 +71,7 @@ typedef enum
 	BLK_NEEDS_REDO,				/* changes from WAL record need to be applied */
 	BLK_DONE,					/* block is already up-to-date */
 	BLK_RESTORED,				/* block was restored from a full-page image */
-	BLK_NOTFOUND				/* block was not found (and hence does not
+	BLK_NOTFOUND,				/* block was not found (and hence does not
 								 * need to be replayed) */
 } XLogRedoAction;
 

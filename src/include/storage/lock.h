@@ -145,7 +145,7 @@ typedef enum LockTagType
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
 	LOCKTAG_ADVISORY,			/* advisory user locks */
-	LOCKTAG_APPLY_TRANSACTION	/* transaction being applied on a logical
+	LOCKTAG_APPLY_TRANSACTION,	/* transaction being applied on a logical
 								 * replication subscriber */
 } LockTagType;
 
@@ -502,7 +502,7 @@ typedef enum
 	LOCKACQUIRE_NOT_AVAIL,		/* lock not available, and dontWait=true */
 	LOCKACQUIRE_OK,				/* lock successfully acquired */
 	LOCKACQUIRE_ALREADY_HELD,	/* incremented count for lock already held */
-	LOCKACQUIRE_ALREADY_CLEAR	/* incremented count for lock already clear */
+	LOCKACQUIRE_ALREADY_CLEAR,	/* incremented count for lock already clear */
 } LockAcquireResult;
 
 /* Deadlock states identified by DeadLockCheck() */
@@ -512,7 +512,7 @@ typedef enum
 	DS_NO_DEADLOCK,				/* no deadlock detected */
 	DS_SOFT_DEADLOCK,			/* deadlock avoided by queue rearrangement */
 	DS_HARD_DEADLOCK,			/* deadlock, no way out but ERROR */
-	DS_BLOCKED_BY_AUTOVACUUM	/* no deadlock; queue blocked by autovacuum
+	DS_BLOCKED_BY_AUTOVACUUM,	/* no deadlock; queue blocked by autovacuum
 								 * worker */
 } DeadLockState;
 

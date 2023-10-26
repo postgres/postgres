@@ -639,7 +639,7 @@ enum PipelineInsertStep
 	BI_INSERT_ROWS,
 	BI_COMMIT_TX,
 	BI_SYNC,
-	BI_DONE
+	BI_DONE,
 };
 
 static void

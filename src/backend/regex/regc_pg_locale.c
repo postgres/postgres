@@ -68,7 +68,7 @@ typedef enum
 	PG_REGEX_LOCALE_1BYTE,		/* Use <ctype.h> functions */
 	PG_REGEX_LOCALE_WIDE_L,		/* Use locale_t <wctype.h> functions */
 	PG_REGEX_LOCALE_1BYTE_L,	/* Use locale_t <ctype.h> functions */
-	PG_REGEX_LOCALE_ICU			/* Use ICU uchar.h functions */
+	PG_REGEX_LOCALE_ICU,		/* Use ICU uchar.h functions */
 } PG_Locale_Strategy;
 
 static PG_Locale_Strategy pg_regex_strategy;

@@ -29,7 +29,7 @@ PG_MODULE_MAGIC;
 typedef enum HeapTupleForceOption
 {
 	HEAP_FORCE_KILL,
-	HEAP_FORCE_FREEZE
+	HEAP_FORCE_FREEZE,
 } HeapTupleForceOption;
 
 PG_FUNCTION_INFO_V1(heap_force_kill);

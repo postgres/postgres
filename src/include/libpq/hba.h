@@ -38,7 +38,7 @@ typedef enum UserAuth
 	uaLDAP,
 	uaCert,
 	uaRADIUS,
-	uaPeer
+	uaPeer,
 #define USER_AUTH_LAST uaPeer	/* Must be last value of this enum */
 } UserAuth;
 
@@ -51,7 +51,7 @@ typedef enum IPCompareMethod
 	ipCmpMask,
 	ipCmpSameHost,
 	ipCmpSameNet,
-	ipCmpAll
+	ipCmpAll,
 } IPCompareMethod;
 
 typedef enum ConnType
@@ -68,13 +68,13 @@ typedef enum ClientCertMode
 {
 	clientCertOff,
 	clientCertCA,
-	clientCertFull
+	clientCertFull,
 } ClientCertMode;
 
 typedef enum ClientCertName
 {
 	clientCertCN,
-	clientCertDN
+	clientCertDN,
 } ClientCertName;
 
 /*

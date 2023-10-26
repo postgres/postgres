@@ -252,7 +252,7 @@ typedef enum GlobalVisHorizonKind
 	VISHORIZON_SHARED,
 	VISHORIZON_CATALOG,
 	VISHORIZON_DATA,
-	VISHORIZON_TEMP
+	VISHORIZON_TEMP,
 } GlobalVisHorizonKind;
 
 /*
@@ -263,7 +263,7 @@ typedef enum KAXCompressReason
 	KAX_NO_SPACE,				/* need to free up space at array end */
 	KAX_PRUNE,					/* we just pruned old entries */
 	KAX_TRANSACTION_END,		/* we just committed/removed some XIDs */
-	KAX_STARTUP_PROCESS_IDLE	/* startup process is about to sleep */
+	KAX_STARTUP_PROCESS_IDLE,	/* startup process is about to sleep */
 } KAXCompressReason;
 
 

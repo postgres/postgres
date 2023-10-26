@@ -88,7 +88,7 @@ typedef enum JsonPathGinNodeType
 {
 	JSP_GIN_OR,
 	JSP_GIN_AND,
-	JSP_GIN_ENTRY
+	JSP_GIN_ENTRY,
 } JsonPathGinNodeType;
 
 typedef struct JsonPathGinNode JsonPathGinNode;

@@ -34,7 +34,7 @@ typedef enum ReplicationSlotPersistency
 {
 	RS_PERSISTENT,
 	RS_EPHEMERAL,
-	RS_TEMPORARY
+	RS_TEMPORARY,
 } ReplicationSlotPersistency;
 
 /*

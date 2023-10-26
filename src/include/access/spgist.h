@@ -68,7 +68,7 @@ typedef enum spgChooseResultType
 {
 	spgMatchNode = 1,			/* descend into existing node */
 	spgAddNode,					/* add a node to the inner tuple */
-	spgSplitTuple				/* split inner tuple (change its prefix) */
+	spgSplitTuple,				/* split inner tuple (change its prefix) */
 } spgChooseResultType;
 
 typedef struct spgChooseOut

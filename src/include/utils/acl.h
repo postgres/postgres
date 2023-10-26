@@ -173,7 +173,7 @@ typedef struct ArrayType Acl;
 typedef enum
 {
 	ACLMASK_ALL,				/* normal case: compute all bits */
-	ACLMASK_ANY					/* return when result is known nonzero */
+	ACLMASK_ANY,				/* return when result is known nonzero */
 } AclMaskHow;
 
 /* result codes for pg_*_aclcheck */
@@ -181,7 +181,7 @@ typedef enum
 {
 	ACLCHECK_OK = 0,
 	ACLCHECK_NO_PRIV,
-	ACLCHECK_NOT_OWNER
+	ACLCHECK_NOT_OWNER,
 } AclResult;
 
 

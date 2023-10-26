@@ -19,7 +19,7 @@
 
 typedef enum EphemeralNameRelationType
 {
-	ENR_NAMED_TUPLESTORE		/* named tuplestore relation; e.g., deltas */
+	ENR_NAMED_TUPLESTORE,		/* named tuplestore relation; e.g., deltas */
 } EphemeralNameRelationType;
 
 /*

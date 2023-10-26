@@ -82,7 +82,7 @@ enum FdwScanPrivateIndex
 	 * String describing join i.e. names of relations being joined and types
 	 * of join, added when the scan is join
 	 */
-	FdwScanPrivateRelations
+	FdwScanPrivateRelations,
 };
 
 /*
@@ -108,7 +108,7 @@ enum FdwModifyPrivateIndex
 	/* has-returning flag (as a Boolean node) */
 	FdwModifyPrivateHasReturning,
 	/* Integer list of attribute numbers retrieved by RETURNING */
-	FdwModifyPrivateRetrievedAttrs
+	FdwModifyPrivateRetrievedAttrs,
 };
 
 /*
@@ -129,7 +129,7 @@ enum FdwDirectModifyPrivateIndex
 	/* Integer list of attribute numbers retrieved by RETURNING */
 	FdwDirectModifyPrivateRetrievedAttrs,
 	/* set-processed flag (as a Boolean node) */
-	FdwDirectModifyPrivateSetProcessed
+	FdwDirectModifyPrivateSetProcessed,
 };
 
 /*
@@ -285,7 +285,7 @@ enum FdwPathPrivateIndex
 	/* has-final-sort flag (as a Boolean node) */
 	FdwPathPrivateHasFinalSort,
 	/* has-limit flag (as a Boolean node) */
-	FdwPathPrivateHasLimit
+	FdwPathPrivateHasLimit,
 };
 
 /* Struct for extra information passed to estimate_path_cost_size() */

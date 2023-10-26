@@ -52,7 +52,7 @@ typedef enum ObjectAccessType
 	OAT_POST_ALTER,
 	OAT_NAMESPACE_SEARCH,
 	OAT_FUNCTION_EXECUTE,
-	OAT_TRUNCATE
+	OAT_TRUNCATE,
 } ObjectAccessType;
 
 /*

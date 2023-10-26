@@ -108,7 +108,7 @@ typedef enum
 {
 	NO_WAL,
 	FETCH_WAL,
-	STREAM_WAL
+	STREAM_WAL,
 } IncludeWal;
 
 /*
@@ -118,7 +118,7 @@ typedef enum
 {
 	COMPRESS_LOCATION_UNSPECIFIED,
 	COMPRESS_LOCATION_CLIENT,
-	COMPRESS_LOCATION_SERVER
+	COMPRESS_LOCATION_SERVER,
 } CompressionLocation;
 
 /* Global options */

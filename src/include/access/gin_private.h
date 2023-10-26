@@ -143,7 +143,7 @@ typedef enum
 {
 	GPTP_NO_WORK,
 	GPTP_INSERT,
-	GPTP_SPLIT
+	GPTP_SPLIT,
 } GinPlaceToPageRC;
 
 typedef struct GinBtreeData

@@ -82,7 +82,7 @@ typedef enum PartClauseMatchStatus
 	PARTCLAUSE_MATCH_NULLNESS,
 	PARTCLAUSE_MATCH_STEPS,
 	PARTCLAUSE_MATCH_CONTRADICT,
-	PARTCLAUSE_UNSUPPORTED
+	PARTCLAUSE_UNSUPPORTED,
 } PartClauseMatchStatus;
 
 /*
@@ -93,7 +93,7 @@ typedef enum PartClauseTarget
 {
 	PARTTARGET_PLANNER,			/* want to prune during planning */
 	PARTTARGET_INITIAL,			/* want to prune during executor startup */
-	PARTTARGET_EXEC				/* want to prune during each plan node scan */
+	PARTTARGET_EXEC,			/* want to prune during each plan node scan */
 } PartClauseTarget;
 
 /*

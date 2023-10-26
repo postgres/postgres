@@ -62,7 +62,7 @@ typedef enum
 	BMS_EQUAL,					/* sets are equal */
 	BMS_SUBSET1,				/* first set is a subset of the second */
 	BMS_SUBSET2,				/* second set is a subset of the first */
-	BMS_DIFFERENT				/* neither set is a subset of the other */
+	BMS_DIFFERENT,				/* neither set is a subset of the other */
 } BMS_Comparison;
 
 /* result of bms_membership */
@@ -70,7 +70,7 @@ typedef enum
 {
 	BMS_EMPTY_SET,				/* 0 members */
 	BMS_SINGLETON,				/* 1 member */
-	BMS_MULTIPLE				/* >1 member */
+	BMS_MULTIPLE,				/* >1 member */
 } BMS_Membership;
 
 

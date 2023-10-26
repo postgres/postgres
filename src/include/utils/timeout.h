@@ -51,7 +51,7 @@ typedef enum TimeoutType
 {
 	TMPARAM_AFTER,
 	TMPARAM_AT,
-	TMPARAM_EVERY
+	TMPARAM_EVERY,
 } TimeoutType;
 
 typedef struct

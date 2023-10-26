@@ -30,7 +30,7 @@ typedef enum ReindexType
 	REINDEX_INDEX,
 	REINDEX_SCHEMA,
 	REINDEX_SYSTEM,
-	REINDEX_TABLE
+	REINDEX_TABLE,
 } ReindexType;
 
 

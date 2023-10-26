@@ -47,7 +47,7 @@ enum _actions
 {
 	ACT_SINGLE_QUERY,
 	ACT_SINGLE_SLASH,
-	ACT_FILE
+	ACT_FILE,
 };
 
 typedef struct SimpleActionListCell

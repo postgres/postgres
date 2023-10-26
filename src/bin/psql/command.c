@@ -53,7 +53,7 @@
 typedef enum EditableObjectType
 {
 	EditableFunction,
-	EditableView
+	EditableView,
 } EditableObjectType;
 
 /* local function declarations */

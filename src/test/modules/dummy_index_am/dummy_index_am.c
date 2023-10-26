@@ -32,7 +32,7 @@ relopt_kind di_relopt_kind;
 typedef enum DummyAmEnum
 {
 	DUMMY_AM_ENUM_ONE,
-	DUMMY_AM_ENUM_TWO
+	DUMMY_AM_ENUM_TWO,
 }			DummyAmEnum;
 
 /* Dummy index options */

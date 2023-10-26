@@ -37,7 +37,7 @@ typedef enum
 	PGBT_NULL,
 	PGBT_INT,
 	PGBT_DOUBLE,
-	PGBT_BOOLEAN
+	PGBT_BOOLEAN,
 	/* add other types here */
 } PgBenchValueType;
 
@@ -58,7 +58,7 @@ typedef enum PgBenchExprType
 {
 	ENODE_CONSTANT,
 	ENODE_VARIABLE,
-	ENODE_FUNCTION
+	ENODE_FUNCTION,
 } PgBenchExprType;
 
 /* List of operators and callable functions */
@@ -100,7 +100,7 @@ typedef enum PgBenchFunction
 	PGBENCH_CASE,
 	PGBENCH_HASH_FNV1A,
 	PGBENCH_HASH_MURMUR2,
-	PGBENCH_PERMUTE
+	PGBENCH_PERMUTE,
 } PgBenchFunction;
 
 typedef struct PgBenchExpr PgBenchExpr;

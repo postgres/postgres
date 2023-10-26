@@ -74,7 +74,7 @@ typedef enum pushdown_safe_type
 {
 	PUSHDOWN_UNSAFE,			/* unsafe to push qual into subquery */
 	PUSHDOWN_SAFE,				/* safe to push qual into subquery */
-	PUSHDOWN_WINDOWCLAUSE_RUNCOND	/* unsafe, but may work as WindowClause
+	PUSHDOWN_WINDOWCLAUSE_RUNCOND,	/* unsafe, but may work as WindowClause
 									 * run condition */
 } pushdown_safe_type;
 

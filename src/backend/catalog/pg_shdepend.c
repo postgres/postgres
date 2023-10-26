@@ -73,7 +73,7 @@ typedef enum
 {
 	LOCAL_OBJECT,
 	SHARED_OBJECT,
-	REMOTE_OBJECT
+	REMOTE_OBJECT,
 } SharedDependencyObjectType;
 
 typedef struct

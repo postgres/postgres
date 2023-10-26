@@ -39,7 +39,7 @@
 typedef enum
 {
 	TIDEXPR_UPPER_BOUND,
-	TIDEXPR_LOWER_BOUND
+	TIDEXPR_LOWER_BOUND,
 } TidExprType;
 
 /* Upper or lower range bound for scan */

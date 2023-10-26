@@ -24,7 +24,7 @@ typedef enum
 	FILE_ACTION_NONE,			/* no action (we might still copy modified
 								 * blocks based on the parsed WAL) */
 	FILE_ACTION_TRUNCATE,		/* truncate local file to 'newsize' bytes */
-	FILE_ACTION_REMOVE			/* remove local file / directory / symlink */
+	FILE_ACTION_REMOVE,			/* remove local file / directory / symlink */
 } file_action_t;
 
 typedef enum
@@ -33,7 +33,7 @@ typedef enum
 
 	FILE_TYPE_REGULAR,
 	FILE_TYPE_DIRECTORY,
-	FILE_TYPE_SYMLINK
+	FILE_TYPE_SYMLINK,
 } file_type_t;
 
 /*

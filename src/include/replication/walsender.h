@@ -21,7 +21,7 @@ typedef enum
 {
 	CRS_EXPORT_SNAPSHOT,
 	CRS_NOEXPORT_SNAPSHOT,
-	CRS_USE_SNAPSHOT
+	CRS_USE_SNAPSHOT,
 } CRSSnapshotAction;
 
 /* global state */

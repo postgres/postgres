@@ -143,7 +143,7 @@ typedef enum PgFdwSamplingMethod
 	ANALYZE_SAMPLE_AUTO,		/* choose by server version */
 	ANALYZE_SAMPLE_RANDOM,		/* remote random() */
 	ANALYZE_SAMPLE_SYSTEM,		/* TABLESAMPLE system */
-	ANALYZE_SAMPLE_BERNOULLI	/* TABLESAMPLE bernoulli */
+	ANALYZE_SAMPLE_BERNOULLI,	/* TABLESAMPLE bernoulli */
 } PgFdwSamplingMethod;
 
 /* in postgres_fdw.c */

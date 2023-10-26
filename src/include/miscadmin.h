@@ -409,7 +409,7 @@ typedef enum ProcessingMode
 {
 	BootstrapProcessing,		/* bootstrap creation of template database */
 	InitProcessing,				/* initializing system */
-	NormalProcessing			/* normal processing */
+	NormalProcessing,			/* normal processing */
 } ProcessingMode;
 
 extern PGDLLIMPORT ProcessingMode Mode;

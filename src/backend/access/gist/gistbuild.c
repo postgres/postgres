@@ -75,7 +75,7 @@ typedef enum
 	GIST_BUFFERING_STATS,		/* gathering statistics of index tuple size
 								 * before switching to the buffering build
 								 * mode */
-	GIST_BUFFERING_ACTIVE		/* in buffering build mode */
+	GIST_BUFFERING_ACTIVE,		/* in buffering build mode */
 } GistBuildMode;
 
 /* Working state for gistbuild and its callback */

@@ -115,7 +115,7 @@ typedef enum LWLockMode
 {
 	LW_EXCLUSIVE,
 	LW_SHARED,
-	LW_WAIT_UNTIL_FREE			/* A special mode used in PGPROC->lwWaitMode,
+	LW_WAIT_UNTIL_FREE,			/* A special mode used in PGPROC->lwWaitMode,
 								 * when waiting for lock to become free. Not
 								 * to be used as LWLockAcquire argument */
 } LWLockMode;
@@ -207,7 +207,7 @@ typedef enum BuiltinTrancheIds
 	LWTRANCHE_PGSTATS_DATA,
 	LWTRANCHE_LAUNCHER_DSA,
 	LWTRANCHE_LAUNCHER_HASH,
-	LWTRANCHE_FIRST_USER_DEFINED
+	LWTRANCHE_FIRST_USER_DEFINED,
 }			BuiltinTrancheIds;
 
 /*

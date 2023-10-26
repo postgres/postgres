@@ -783,7 +783,7 @@ typedef enum FmgrHookEventType
 {
 	FHET_START,
 	FHET_END,
-	FHET_ABORT
+	FHET_ABORT,
 } FmgrHookEventType;
 
 typedef bool (*needs_fmgr_hook_type) (Oid fn_oid);

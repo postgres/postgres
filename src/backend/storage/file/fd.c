@@ -249,7 +249,7 @@ typedef enum
 	AllocateDescFile,
 	AllocateDescPipe,
 	AllocateDescDir,
-	AllocateDescRawFD
+	AllocateDescRawFD,
 } AllocateDescKind;
 
 typedef struct

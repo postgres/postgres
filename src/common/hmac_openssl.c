@@ -57,7 +57,7 @@ typedef enum pg_hmac_errno
 {
 	PG_HMAC_ERROR_NONE = 0,
 	PG_HMAC_ERROR_DEST_LEN,
-	PG_HMAC_ERROR_OPENSSL
+	PG_HMAC_ERROR_OPENSSL,
 } pg_hmac_errno;
 
 /* Internal pg_hmac_ctx structure */

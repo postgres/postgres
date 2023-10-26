@@ -129,7 +129,7 @@ typedef enum
 {
 	SCRAM_AUTH_INIT,
 	SCRAM_AUTH_SALT_SENT,
-	SCRAM_AUTH_FINISHED
+	SCRAM_AUTH_FINISHED,
 } scram_state_enum;
 
 typedef struct

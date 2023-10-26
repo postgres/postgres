@@ -95,7 +95,7 @@ typedef enum OidOptions
 {
 	zeroIsError = 1,
 	zeroAsStar = 2,
-	zeroAsNone = 4
+	zeroAsNone = 4,
 } OidOptions;
 
 /* global decls */

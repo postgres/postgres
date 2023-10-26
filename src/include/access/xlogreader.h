@@ -350,7 +350,7 @@ typedef enum XLogPageReadResult
 {
 	XLREAD_SUCCESS = 0,			/* record is successfully read */
 	XLREAD_FAIL = -1,			/* failed during reading a record */
-	XLREAD_WOULDBLOCK = -2		/* nonblocking mode only, no data */
+	XLREAD_WOULDBLOCK = -2,		/* nonblocking mode only, no data */
 } XLogPageReadResult;
 
 /* Read the next XLog record. Returns NULL on end-of-WAL or failure */

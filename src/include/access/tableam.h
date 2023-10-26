@@ -61,8 +61,8 @@ typedef enum ScanOptions
 	SO_ALLOW_PAGEMODE = 1 << 8,
 
 	/* unregister snapshot at scan end? */
-	SO_TEMP_SNAPSHOT = 1 << 9
-} ScanOptions;
+	SO_TEMP_SNAPSHOT = 1 << 9,
+}			ScanOptions;
 
 /*
  * Result codes for table_{update,delete,lock_tuple}, and for visibility
@@ -99,7 +99,7 @@ typedef enum TM_Result
 	TM_BeingModified,
 
 	/* lock couldn't be acquired, action skipped. Only used by lock_tuple */
-	TM_WouldBlock
+	TM_WouldBlock,
 } TM_Result;
 
 /*
@@ -115,7 +115,7 @@ typedef enum TU_UpdateIndexes
 	TU_All,
 
 	/* Only summarized columns were updated, TID is unchanged */
-	TU_Summarizing
+	TU_Summarizing,
 } TU_UpdateIndexes;
 
 /*

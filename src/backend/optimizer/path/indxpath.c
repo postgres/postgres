@@ -45,7 +45,7 @@ typedef enum
 {
 	ST_INDEXSCAN,				/* must support amgettuple */
 	ST_BITMAPSCAN,				/* must support amgetbitmap */
-	ST_ANYSCAN					/* either is okay */
+	ST_ANYSCAN,					/* either is okay */
 } ScanTypeControl;
 
 /* Data structure for collecting qual clauses that match an index */

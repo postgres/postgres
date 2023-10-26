@@ -40,7 +40,7 @@ typedef enum					/* contexts of JSON parser */
 	JSON_PARSE_OBJECT_LABEL,	/* saw object label, expecting ':' */
 	JSON_PARSE_OBJECT_NEXT,		/* saw object value, expecting ',' or '}' */
 	JSON_PARSE_OBJECT_COMMA,	/* saw object ',', expecting next label */
-	JSON_PARSE_END				/* saw the end of a document, expect nothing */
+	JSON_PARSE_END,				/* saw the end of a document, expect nothing */
 } JsonParseContext;
 
 static inline JsonParseErrorType json_lex_string(JsonLexContext *lex);

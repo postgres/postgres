@@ -83,7 +83,7 @@ typedef enum
 								 * it has default collation that is not
 								 * traceable to a foreign Var */
 	FDW_COLLATE_SAFE,			/* collation derives from a foreign Var */
-	FDW_COLLATE_UNSAFE			/* collation is non-default and derives from
+	FDW_COLLATE_UNSAFE,			/* collation is non-default and derives from
 								 * something other than a foreign Var */
 } FDWCollateState;
 

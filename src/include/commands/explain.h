@@ -22,7 +22,7 @@ typedef enum ExplainFormat
 	EXPLAIN_FORMAT_TEXT,
 	EXPLAIN_FORMAT_XML,
 	EXPLAIN_FORMAT_JSON,
-	EXPLAIN_FORMAT_YAML
+	EXPLAIN_FORMAT_YAML,
 } ExplainFormat;
 
 typedef struct ExplainWorkersState

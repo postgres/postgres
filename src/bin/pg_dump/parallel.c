@@ -77,7 +77,7 @@ typedef enum
 	WRKR_NOT_STARTED = 0,
 	WRKR_IDLE,
 	WRKR_WORKING,
-	WRKR_TERMINATED
+	WRKR_TERMINATED,
 } T_WorkerStatus;
 
 #define WORKER_IS_RUNNING(workerStatus) \

@@ -43,7 +43,7 @@ typedef enum XidBoundsViolation
 	XID_IN_FUTURE,
 	XID_PRECEDES_CLUSTERMIN,
 	XID_PRECEDES_RELMIN,
-	XID_BOUNDS_OK
+	XID_BOUNDS_OK,
 } XidBoundsViolation;
 
 typedef enum XidCommitStatus
@@ -51,14 +51,14 @@ typedef enum XidCommitStatus
 	XID_COMMITTED,
 	XID_IS_CURRENT_XID,
 	XID_IN_PROGRESS,
-	XID_ABORTED
+	XID_ABORTED,
 } XidCommitStatus;
 
 typedef enum SkipPages
 {
 	SKIP_PAGES_ALL_FROZEN,
 	SKIP_PAGES_ALL_VISIBLE,
-	SKIP_PAGES_NONE
+	SKIP_PAGES_NONE,
 } SkipPages;
 
 /*

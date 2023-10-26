@@ -35,7 +35,7 @@ typedef enum
 {
 	ETCS_NEEDS_REBUILD,
 	ETCS_REBUILD_STARTED,
-	ETCS_VALID
+	ETCS_VALID,
 } EventTriggerCacheStateType;
 
 typedef struct

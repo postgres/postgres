@@ -129,7 +129,7 @@ typedef enum
 {
 	TBM_EMPTY,					/* no hashtable, nentries == 0 */
 	TBM_ONE_PAGE,				/* entry1 contains the single entry */
-	TBM_HASH					/* pagetable is valid, entry1 is not */
+	TBM_HASH,					/* pagetable is valid, entry1 is not */
 } TBMStatus;
 
 /*
@@ -139,7 +139,7 @@ typedef enum
 {
 	TBM_NOT_ITERATING,			/* not yet converted to page and chunk array */
 	TBM_ITERATING_PRIVATE,		/* converted to local page and chunk array */
-	TBM_ITERATING_SHARED		/* converted to shared page and chunk array */
+	TBM_ITERATING_SHARED,		/* converted to shared page and chunk array */
 } TBMIteratingState;
 
 /*

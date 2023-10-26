@@ -52,7 +52,7 @@ typedef enum pg_cryptohash_errno
 {
 	PG_CRYPTOHASH_ERROR_NONE = 0,
 	PG_CRYPTOHASH_ERROR_DEST_LEN,
-	PG_CRYPTOHASH_ERROR_OPENSSL
+	PG_CRYPTOHASH_ERROR_OPENSSL,
 } pg_cryptohash_errno;
 
 /*

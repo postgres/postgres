@@ -65,7 +65,7 @@ typedef enum CAC_state
 	CAC_SHUTDOWN,
 	CAC_RECOVERY,
 	CAC_NOTCONSISTENT,
-	CAC_TOOMANY
+	CAC_TOOMANY,
 } CAC_state;
 
 

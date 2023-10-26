@@ -88,7 +88,7 @@ typedef enum
 {
 	LRQ_NEXT_NO_IO,
 	LRQ_NEXT_IO,
-	LRQ_NEXT_AGAIN
+	LRQ_NEXT_AGAIN,
 } LsnReadQueueNextStatus;
 
 /*

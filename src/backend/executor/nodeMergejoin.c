@@ -145,7 +145,7 @@ typedef enum
 {
 	MJEVAL_MATCHABLE,			/* normal, potentially matchable tuple */
 	MJEVAL_NONMATCHABLE,		/* tuple cannot join because it has a null */
-	MJEVAL_ENDOFJOIN			/* end of input (physical or effective) */
+	MJEVAL_ENDOFJOIN,			/* end of input (physical or effective) */
 } MJEvalResult;
 
 

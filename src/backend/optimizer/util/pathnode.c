@@ -40,7 +40,7 @@ typedef enum
 	COSTS_EQUAL,				/* path costs are fuzzily equal */
 	COSTS_BETTER1,				/* first path is cheaper than second */
 	COSTS_BETTER2,				/* second path is cheaper than first */
-	COSTS_DIFFERENT				/* neither path dominates the other on cost */
+	COSTS_DIFFERENT,			/* neither path dominates the other on cost */
 } PathCostComparison;
 
 /*

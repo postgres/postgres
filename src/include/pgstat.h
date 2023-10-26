@@ -62,7 +62,7 @@ typedef enum TrackFunctionsLevel
 {
 	TRACK_FUNC_OFF,
 	TRACK_FUNC_PL,
-	TRACK_FUNC_ALL
+	TRACK_FUNC_ALL,
 }			TrackFunctionsLevel;
 
 typedef enum PgStat_FetchConsistency
@@ -79,7 +79,7 @@ typedef enum SessionEndType
 	DISCONNECT_NORMAL,
 	DISCONNECT_CLIENT_EOF,
 	DISCONNECT_FATAL,
-	DISCONNECT_KILLED
+	DISCONNECT_KILLED,
 } SessionEndType;
 
 /* ----------

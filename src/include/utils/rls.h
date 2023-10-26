@@ -42,7 +42,7 @@ enum CheckEnableRlsResult
 {
 	RLS_NONE,
 	RLS_NONE_ENV,
-	RLS_ENABLED
+	RLS_ENABLED,
 };
 
 extern int	check_enable_rls(Oid relid, Oid checkAsUser, bool noError);

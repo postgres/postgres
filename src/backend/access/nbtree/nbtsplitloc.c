@@ -22,7 +22,7 @@ typedef enum
 	/* strategy for searching through materialized list of split points */
 	SPLIT_DEFAULT,				/* give some weight to truncation */
 	SPLIT_MANY_DUPLICATES,		/* find minimally distinguishing point */
-	SPLIT_SINGLE_VALUE			/* leave left page almost full */
+	SPLIT_SINGLE_VALUE,			/* leave left page almost full */
 } FindSplitStrat;
 
 typedef struct

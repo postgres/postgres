@@ -63,7 +63,7 @@ typedef enum
 	ARRAY_QUOTED_ELEM_COMPLETED,
 	ARRAY_ELEM_DELIMITED,
 	ARRAY_LEVEL_COMPLETED,
-	ARRAY_LEVEL_DELIMITED
+	ARRAY_LEVEL_DELIMITED,
 } ArrayParseState;
 
 /* Working state for array_iterate() */

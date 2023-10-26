@@ -104,7 +104,7 @@ typedef enum
 {
 	DEBUG_PARALLEL_OFF,
 	DEBUG_PARALLEL_ON,
-	DEBUG_PARALLEL_REGRESS
+	DEBUG_PARALLEL_REGRESS,
 }			DebugParallelMode;
 
 /* GUC parameters */

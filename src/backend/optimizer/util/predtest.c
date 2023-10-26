@@ -51,7 +51,7 @@ typedef enum
 {
 	CLASS_ATOM,					/* expression that's not AND or OR */
 	CLASS_AND,					/* expression with AND semantics */
-	CLASS_OR					/* expression with OR semantics */
+	CLASS_OR,					/* expression with OR semantics */
 } PredClass;
 
 typedef struct PredIterInfoData *PredIterInfo;

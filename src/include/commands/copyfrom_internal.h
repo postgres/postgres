@@ -25,7 +25,7 @@ typedef enum CopySource
 {
 	COPY_FILE,					/* from file (or a piped program) */
 	COPY_FRONTEND,				/* from frontend */
-	COPY_CALLBACK				/* from callback function */
+	COPY_CALLBACK,				/* from callback function */
 } CopySource;
 
 /*
@@ -36,7 +36,7 @@ typedef enum EolType
 	EOL_UNKNOWN,
 	EOL_NL,
 	EOL_CR,
-	EOL_CRNL
+	EOL_CRNL,
 } EolType;
 
 /*
@@ -47,7 +47,7 @@ typedef enum CopyInsertMethod
 	CIM_SINGLE,					/* use table_tuple_insert or ExecForeignInsert */
 	CIM_MULTI,					/* always use table_multi_insert or
 								 * ExecForeignBatchInsert */
-	CIM_MULTI_CONDITIONAL		/* use table_multi_insert or
+	CIM_MULTI_CONDITIONAL,		/* use table_multi_insert or
 								 * ExecForeignBatchInsert only if valid */
 } CopyInsertMethod;
 

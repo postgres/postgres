@@ -43,7 +43,7 @@ typedef enum pg_hmac_errno
 {
 	PG_HMAC_ERROR_NONE = 0,
 	PG_HMAC_ERROR_OOM,
-	PG_HMAC_ERROR_INTERNAL
+	PG_HMAC_ERROR_INTERNAL,
 } pg_hmac_errno;
 
 /* Internal pg_hmac_ctx structure */

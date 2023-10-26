@@ -591,7 +591,7 @@ typedef enum SubqueryScanStatus
 {
 	SUBQUERY_SCAN_UNKNOWN,
 	SUBQUERY_SCAN_TRIVIAL,
-	SUBQUERY_SCAN_NONTRIVIAL
+	SUBQUERY_SCAN_NONTRIVIAL,
 } SubqueryScanStatus;
 
 typedef struct SubqueryScan
@@ -1330,7 +1330,7 @@ typedef enum RowMarkType
 	ROW_MARK_SHARE,				/* obtain shared tuple lock */
 	ROW_MARK_KEYSHARE,			/* obtain keyshare tuple lock */
 	ROW_MARK_REFERENCE,			/* just fetch the TID, don't lock it */
-	ROW_MARK_COPY				/* physically copy the row value */
+	ROW_MARK_COPY,				/* physically copy the row value */
 } RowMarkType;
 
 #define RowMarkRequiresRowShareLock(marktype)  ((marktype) <= ROW_MARK_KEYSHARE)
@@ -1542,7 +1542,7 @@ typedef struct PartitionPruneStepOp
 typedef enum PartitionPruneCombineOp
 {
 	PARTPRUNE_COMBINE_UNION,
-	PARTPRUNE_COMBINE_INTERSECT
+	PARTPRUNE_COMBINE_INTERSECT,
 } PartitionPruneCombineOp;
 
 typedef struct PartitionPruneStepCombine
@@ -1586,7 +1586,7 @@ typedef enum MonotonicFunction
 	MONOTONICFUNC_NONE = 0,
 	MONOTONICFUNC_INCREASING = (1 << 0),
 	MONOTONICFUNC_DECREASING = (1 << 1),
-	MONOTONICFUNC_BOTH = MONOTONICFUNC_INCREASING | MONOTONICFUNC_DECREASING
+	MONOTONICFUNC_BOTH = MONOTONICFUNC_INCREASING | MONOTONICFUNC_DECREASING,
 } MonotonicFunction;
 
 #endif							/* PLANNODES_H */

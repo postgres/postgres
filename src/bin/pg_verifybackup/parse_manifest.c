@@ -34,7 +34,7 @@ typedef enum
 	JM_EXPECT_THIS_WAL_RANGE_FIELD,
 	JM_EXPECT_THIS_WAL_RANGE_VALUE,
 	JM_EXPECT_MANIFEST_CHECKSUM_VALUE,
-	JM_EXPECT_EOF
+	JM_EXPECT_EOF,
 } JsonManifestSemanticState;
 
 /*
@@ -47,7 +47,7 @@ typedef enum
 	JMFF_SIZE,
 	JMFF_LAST_MODIFIED,
 	JMFF_CHECKSUM_ALGORITHM,
-	JMFF_CHECKSUM
+	JMFF_CHECKSUM,
 } JsonManifestFileField;
 
 /*
@@ -57,7 +57,7 @@ typedef enum
 {
 	JMWRF_TIMELINE,
 	JMWRF_START_LSN,
-	JMWRF_END_LSN
+	JMWRF_END_LSN,
 } JsonManifestWALRangeField;
 
 /*

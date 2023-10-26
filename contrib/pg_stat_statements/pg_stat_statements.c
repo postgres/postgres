@@ -118,7 +118,7 @@ typedef enum pgssVersion
 	PGSS_V1_8,
 	PGSS_V1_9,
 	PGSS_V1_10,
-	PGSS_V1_11
+	PGSS_V1_11,
 } pgssVersion;
 
 typedef enum pgssStoreKind
@@ -282,7 +282,7 @@ typedef enum
 {
 	PGSS_TRACK_NONE,			/* track no statements */
 	PGSS_TRACK_TOP,				/* only top level statements */
-	PGSS_TRACK_ALL				/* all statements, including nested ones */
+	PGSS_TRACK_ALL,				/* all statements, including nested ones */
 }			PGSSTrackLevel;
 
 static const struct config_enum_entry track_options[] =

@@ -38,7 +38,7 @@ typedef enum ToastCompressionId
 {
 	TOAST_PGLZ_COMPRESSION_ID = 0,
 	TOAST_LZ4_COMPRESSION_ID = 1,
-	TOAST_INVALID_COMPRESSION_ID = 2
+	TOAST_INVALID_COMPRESSION_ID = 2,
 } ToastCompressionId;
 
 /*

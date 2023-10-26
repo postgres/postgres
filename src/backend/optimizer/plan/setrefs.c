@@ -35,7 +35,7 @@ typedef enum
 {
 	NRM_EQUAL,					/* expect exact match of nullingrels */
 	NRM_SUBSET,					/* actual Var may have a subset of input */
-	NRM_SUPERSET				/* actual Var may have a superset of input */
+	NRM_SUPERSET,				/* actual Var may have a superset of input */
 } NullingRelsMatch;
 
 typedef struct

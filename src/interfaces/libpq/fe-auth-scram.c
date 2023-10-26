@@ -46,7 +46,7 @@ typedef enum
 	FE_SCRAM_INIT,
 	FE_SCRAM_NONCE_SENT,
 	FE_SCRAM_PROOF_SENT,
-	FE_SCRAM_FINISHED
+	FE_SCRAM_FINISHED,
 } fe_scram_state_enum;
 
 typedef struct

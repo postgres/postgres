@@ -113,7 +113,7 @@ struct ParallelState;
 typedef enum T_Action
 {
 	ACT_DUMP,
-	ACT_RESTORE
+	ACT_RESTORE,
 } T_Action;
 
 typedef void (*ClosePtrType) (ArchiveHandle *AH);
@@ -151,7 +151,7 @@ typedef enum
 {
 	SQL_SCAN = 0,				/* normal */
 	SQL_IN_SINGLE_QUOTE,		/* '...' literal */
-	SQL_IN_DOUBLE_QUOTE			/* "..." identifier */
+	SQL_IN_DOUBLE_QUOTE,		/* "..." identifier */
 } sqlparseState;
 
 typedef struct
@@ -166,14 +166,14 @@ typedef enum
 	STAGE_NONE = 0,
 	STAGE_INITIALIZING,
 	STAGE_PROCESSING,
-	STAGE_FINALIZING
+	STAGE_FINALIZING,
 } ArchiverStage;
 
 typedef enum
 {
 	OUTPUT_SQLCMDS = 0,			/* emitting general SQL commands */
 	OUTPUT_COPYDATA,			/* writing COPY data */
-	OUTPUT_OTHERDATA			/* writing data as INSERT commands */
+	OUTPUT_OTHERDATA,			/* writing data as INSERT commands */
 } ArchiverOutput;
 
 /*
@@ -199,7 +199,7 @@ typedef enum
 {
 	RESTORE_PASS_MAIN = 0,		/* Main pass (most TOC item types) */
 	RESTORE_PASS_ACL,			/* ACL item types */
-	RESTORE_PASS_POST_ACL		/* Event trigger and matview refresh items */
+	RESTORE_PASS_POST_ACL,		/* Event trigger and matview refresh items */
 
 #define RESTORE_PASS_LAST RESTORE_PASS_POST_ACL
 } RestorePass;

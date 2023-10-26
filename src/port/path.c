@@ -248,7 +248,7 @@ typedef enum
 	RELATIVE_PATH_INIT,			/* At start of a relative path */
 	RELATIVE_WITH_N_DEPTH,		/* We collected 'pathdepth' directories in a
 								 * relative path */
-	RELATIVE_WITH_PARENT_REF	/* Relative path containing only double-dots */
+	RELATIVE_WITH_PARENT_REF,	/* Relative path containing only double-dots */
 } canonicalize_state;
 
 /*

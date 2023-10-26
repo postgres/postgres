@@ -39,7 +39,7 @@ typedef enum ifState
 								 * false parent branch */
 	IFSTATE_ELSE_TRUE,			/* currently in an \else that is true and all
 								 * parent branches (if any) are true */
-	IFSTATE_ELSE_FALSE			/* currently in an \else that is false or
+	IFSTATE_ELSE_FALSE,			/* currently in an \else that is false or
 								 * ignored */
 } ifState;
 

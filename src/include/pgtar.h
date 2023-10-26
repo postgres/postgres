@@ -20,7 +20,7 @@ enum tarError
 {
 	TAR_OK = 0,
 	TAR_NAME_TOO_LONG,
-	TAR_SYMLINK_TOO_LONG
+	TAR_SYMLINK_TOO_LONG,
 };
 
 /*
@@ -51,7 +51,7 @@ enum tarHeaderOffset
 	TAR_OFFSET_GNAME = 297,		/* 32 byte string */
 	TAR_OFFSET_DEVMAJOR = 329,	/* 8 byte tar number */
 	TAR_OFFSET_DEVMINOR = 337,	/* 8 byte tar number */
-	TAR_OFFSET_PREFIX = 345		/* 155 byte string */
+	TAR_OFFSET_PREFIX = 345,	/* 155 byte string */
 	/* last 12 bytes of the 512-byte block are unassigned */
 };
 
@@ -59,7 +59,7 @@ enum tarFileType
 {
 	TAR_FILETYPE_PLAIN = '0',
 	TAR_FILETYPE_SYMLINK = '2',
-	TAR_FILETYPE_DIRECTORY = '5'
+	TAR_FILETYPE_DIRECTORY = '5',
 };
 
 extern enum tarError tarCreateHeader(char *h, const char *filename,
