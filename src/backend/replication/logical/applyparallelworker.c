@@ -774,10 +774,7 @@ LogicalParallelApplyLoop(shm_mq_handle *mqh)
 			if (len == 0)
 				elog(ERROR, "invalid message length");
 
-			s.cursor = 0;
-			s.maxlen = -1;
-			s.data = (char *) data;
-			s.len = len;
+			initReadOnlyStringInfo(&s, data, len);
 
 			/*
 			 * The first byte of messages sent from leader apply worker to

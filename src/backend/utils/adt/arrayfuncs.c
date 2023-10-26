@@ -1475,7 +1475,6 @@ ReadArrayBinary(StringInfo buf,
 	{
 		int			itemlen;
 		StringInfoData elem_buf;
-		char		csave;
 
 		/* Get and check the item length */
 		itemlen = pq_getmsgint(buf, 4);
@@ -1494,20 +1493,12 @@ ReadArrayBinary(StringInfo buf,
 		}
 
 		/*
-		 * Rather than copying data around, we just set up a phony StringInfo
-		 * pointing to the correct portion of the input buffer. We assume we
-		 * can scribble on the input buffer so as to maintain the convention
-		 * that StringInfos have a trailing null.
+		 * Rather than copying data around, we just initialize a StringInfo
+		 * pointing to the correct portion of the message buffer.
 		 */
-		elem_buf.data = &buf->data[buf->cursor];
-		elem_buf.maxlen = itemlen + 1;
-		elem_buf.len = itemlen;
-		elem_buf.cursor = 0;
+		initReadOnlyStringInfo(&elem_buf, &buf->data[buf->cursor], itemlen);
 
 		buf->cursor += itemlen;
-
-		csave = buf->data[buf->cursor];
-		buf->data[buf->cursor] = '\0';
 
 		/* Now call the element's receiveproc */
 		values[i] = ReceiveFunctionCall(receiveproc, &elem_buf,
@@ -1520,8 +1511,6 @@ ReadArrayBinary(StringInfo buf,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 					 errmsg("improper binary format in array element %d",
 							i + 1)));
-
-		buf->data[buf->cursor] = csave;
 	}
 
 	/*

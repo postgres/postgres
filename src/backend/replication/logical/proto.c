@@ -879,6 +879,7 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 	/* Read the data */
 	for (i = 0; i < natts; i++)
 	{
+		char	   *buff;
 		char		kind;
 		int			len;
 		StringInfo	value = &tuple->colvalues[i];
@@ -899,19 +900,18 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 				len = pq_getmsgint(in, 4);	/* read length */
 
 				/* and data */
-				value->data = palloc(len + 1);
-				pq_copymsgbytes(in, value->data, len);
+				buff = palloc(len + 1);
+				pq_copymsgbytes(in, buff, len);
 
 				/*
-				 * Not strictly necessary for LOGICALREP_COLUMN_BINARY, but
-				 * per StringInfo practice.
+				 * NUL termination is required for LOGICALREP_COLUMN_TEXT mode
+				 * as input functions require that.  For
+				 * LOGICALREP_COLUMN_BINARY it's not technically required, but
+				 * it's harmless.
 				 */
-				value->data[len] = '\0';
+				buff[len] = '\0';
 
-				/* make StringInfo fully valid */
-				value->len = len;
-				value->cursor = 0;
-				value->maxlen = len;
+				initStringInfoFromString(value, buff, len);
 				break;
 			default:
 				elog(ERROR, "unrecognized data representation type '%c'", kind);

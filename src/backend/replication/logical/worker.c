@@ -3582,10 +3582,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 					/* Ensure we are reading the data into our memory context. */
 					MemoryContextSwitchTo(ApplyMessageContext);
 
-					s.data = buf;
-					s.len = len;
-					s.cursor = 0;
-					s.maxlen = -1;
+					initReadOnlyStringInfo(&s, buf, len);
 
 					c = pq_getmsgbyte(&s);
 

@@ -784,7 +784,6 @@ array_agg_deserialize(PG_FUNCTION_ARGS)
 		{
 			int			itemlen;
 			StringInfoData elem_buf;
-			char		csave;
 
 			if (result->dnulls[i])
 			{
@@ -799,28 +798,19 @@ array_agg_deserialize(PG_FUNCTION_ARGS)
 						 errmsg("insufficient data left in message")));
 
 			/*
-			 * Rather than copying data around, we just set up a phony
-			 * StringInfo pointing to the correct portion of the input buffer.
-			 * We assume we can scribble on the input buffer so as to maintain
-			 * the convention that StringInfos have a trailing null.
+			 * Rather than copying data around, we just initialize a
+			 * StringInfo pointing to the correct portion of the message
+			 * buffer.
 			 */
-			elem_buf.data = &buf.data[buf.cursor];
-			elem_buf.maxlen = itemlen + 1;
-			elem_buf.len = itemlen;
-			elem_buf.cursor = 0;
+			initReadOnlyStringInfo(&elem_buf, &buf.data[buf.cursor], itemlen);
 
 			buf.cursor += itemlen;
-
-			csave = buf.data[buf.cursor];
-			buf.data[buf.cursor] = '\0';
 
 			/* Now call the element's receiveproc */
 			result->dvalues[i] = ReceiveFunctionCall(&iodata->typreceive,
 													 &elem_buf,
 													 iodata->typioparam,
 													 -1);
-
-			buf.data[buf.cursor] = csave;
 		}
 	}
 

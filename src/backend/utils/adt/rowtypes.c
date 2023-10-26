@@ -569,7 +569,6 @@ record_recv(PG_FUNCTION_ARGS)
 		int			itemlen;
 		StringInfoData item_buf;
 		StringInfo	bufptr;
-		char		csave;
 
 		/* Ignore dropped columns in datatype, but fill with nulls */
 		if (att->attisdropped)
@@ -619,25 +618,19 @@ record_recv(PG_FUNCTION_ARGS)
 			/* -1 length means NULL */
 			bufptr = NULL;
 			nulls[i] = true;
-			csave = 0;			/* keep compiler quiet */
 		}
 		else
 		{
+			char	   *strbuff;
+
 			/*
-			 * Rather than copying data around, we just set up a phony
-			 * StringInfo pointing to the correct portion of the input buffer.
-			 * We assume we can scribble on the input buffer so as to maintain
-			 * the convention that StringInfos have a trailing null.
+			 * Rather than copying data around, we just initialize a
+			 * StringInfo pointing to the correct portion of the message
+			 * buffer.
 			 */
-			item_buf.data = &buf->data[buf->cursor];
-			item_buf.maxlen = itemlen + 1;
-			item_buf.len = itemlen;
-			item_buf.cursor = 0;
-
+			strbuff = &buf->data[buf->cursor];
 			buf->cursor += itemlen;
-
-			csave = buf->data[buf->cursor];
-			buf->data[buf->cursor] = '\0';
+			initReadOnlyStringInfo(&item_buf, strbuff, itemlen);
 
 			bufptr = &item_buf;
 			nulls[i] = false;
@@ -667,8 +660,6 @@ record_recv(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 						 errmsg("improper binary format in record column %d",
 								i + 1)));
-
-			buf->data[buf->cursor] = csave;
 		}
 	}
 
