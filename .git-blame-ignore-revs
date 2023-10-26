@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+611806cd726fc92989ac918eac48fd8d684869c7 # 2023-10-26 09:20:54 +0200
+# Add trailing commas to enum definitions
+
 e9718b4bd3e4234ffd5a4907a903367fc483c843 # 2023-10-16 09:36:31 +0900
 # Fix code indentation violations in e83d1b0c40cc
 
