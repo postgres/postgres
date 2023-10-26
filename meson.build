@@ -45,12 +45,14 @@ enc_test = executable('enc_test',
   files('src/encryption/enc_aes.c', 'src/encryption/test.c'),
   kwargs: mod_args,
   include_directories: incdir,
+  c_args : '-DFRONTEND',
 )
 
 pg_tde_perf = executable('enc_perf_test',
   files('src/encryption/enc_aes.c', 'src/encryption/test_perf.c'),
   kwargs: contrib_mod_args,
   include_directories: incdir,
+  c_args : '-DFRONTEND',
 )
 
 install_data(

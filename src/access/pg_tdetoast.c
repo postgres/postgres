@@ -824,7 +824,7 @@ pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int option
      * for the toast table. Which is a performance penalty.
      * TODO: come up with a better solution
      */
-    toastrel = table_open(ttc->ttc_rel->rd_rel->reltoastrelid, NoLock);
+    toastrel = table_open(ttc->ttc_rel->rd_rel->reltoastrelid, AccessShareLock);
     keys = GetRelationKeys(toastrel->rd_locator);
     table_close(toastrel, NoLock);
     

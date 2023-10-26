@@ -1341,30 +1341,22 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 
 			itemidptr = &itemidbase[i];
 
-			if(copy_head < copy_tail) { // TODO: recheck this condition
+			if(copy_head < copy_tail)
+			{
+				// TODO: recheck this condition
 				// We leave the original loop as-is, and recrypt tuples one by one
 				// This is definitely not the fastest, but simple
-				Oid tableOid = RelationGetRelid(rel);
 				BlockNumber bn = BufferGetBlockNumber(buffer);
-				unsigned long headerSize = sizeof(HeapTupleHeaderData);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvla"
-				char tmpData[itemidptr->alignedlen];
-#pragma GCC diagnostic pop
+				unsigned long header_size = sizeof(HeapTupleHeaderData);
+				uint64 read_offset_in_page = copy_head;
+				uint64 write_offset_in_page = upper;
+				uint32 data_len = itemidptr->len - header_size;
+				char* read_from = (char*)(page) + copy_head + header_size;
+				char* write_to = (char*)(page) + copy_head + header_size;
 
-
-#ifdef ENCRYPTION_DEBUG
-				fprintf(stderr, " >>>> RELOCATING FROM %u to %u tail %u\n", copy_head, upper, copy_tail);
-				// Decrypt with old offset
-				fprintf(stderr, " >>>>> DECRYPTING\n");
-#endif
-				PGTdeCryptTupInternal(tableOid, bn, copy_head, (char*)(page) + copy_head, tmpData, headerSize, itemidptr->len, keys);
-				// Reencrypt with new offset
-#ifdef ENCRYPTION_DEBUG
-				fprintf(stderr, " >>>>> ENCRYPTING\n");
-#endif
-				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, (char*)page + copy_head, headerSize, itemidptr->len, keys);
-
+				PG_TDE_RE_ENCRYPT_TUPLE_DATA(bn, read_offset_in_page, read_from,
+											bn, write_offset_in_page, write_to,
+											data_len, keys);
 			}
 
 			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
@@ -1397,26 +1389,17 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 				// We leave the original loop as-is, and recrypt tuples one by one
 				// This is definitely not the fastest, but simple
 				//
-				Oid tableOid = RelationGetRelid(rel);
 				BlockNumber bn = BufferGetBlockNumber(buffer);
-				unsigned long headerSize = sizeof(HeapTupleHeaderData);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvla"
-				char tmpData[itemidptr->alignedlen];
-#pragma GCC diagnostic pop
+				unsigned long header_size = sizeof(HeapTupleHeaderData);
+				uint64 read_offset_in_page = copy_head;
+				uint64 write_offset_in_page = upper;
+				uint32 data_len = itemidptr->len - header_size;
+				char* read_from = (char*)(page) + copy_head + header_size;
+				char* write_to = (char*)(page) + copy_head + header_size;
 
-#ifdef ENCRYPTION_DEBUG
-				fprintf(stderr, " >>>> RELOCATING FROM %u to %u tail %u\n", copy_head, upper, copy_tail);
-
-				// Decrypt with old offset
-				fprintf(stderr, " >>>>> DECRYPTING\n");
-#endif
-				PGTdeCryptTupInternal(tableOid, bn, copy_head, (char*)(page) + copy_head, tmpData, headerSize, itemidptr->len, keys);
-				// Reencrypt with new offset
-#ifdef ENCRYPTION_DEBUG
-				fprintf(stderr, " >>>>> ENCRYPTING\n");
-#endif
-				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, (char*)page + copy_head, headerSize, itemidptr->len, keys);
+				PG_TDE_RE_ENCRYPT_TUPLE_DATA(bn, read_offset_in_page, read_from,
+											bn, write_offset_in_page, write_to,
+											data_len, keys);
 			}
 
 		/* move the remaining tuples. */
@@ -1502,25 +1485,17 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 			if(copy_head < copy_tail) { // TODO: recheck this condition
 				// We leave the original loop as-is, and recrypt tuples one by one
 				// This is definitely not the fastest, but simple
-				Oid tableOid = RelationGetRelid(rel);
 				BlockNumber bn = BufferGetBlockNumber(buffer);
-				unsigned long headerSize = sizeof(HeapTupleHeaderData);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvla"
-				char tmpData[itemidptr->alignedlen];
-#pragma GCC diagnostic pop
+				unsigned long header_size = sizeof(HeapTupleHeaderData);
+				uint64 read_offset_in_page = copy_head;
+				uint64 write_offset_in_page = upper;
+				uint32 data_len = itemidptr->len - header_size;
+				char* read_from = scratchptr + copy_head + header_size;
+				char* write_to = scratchptr + copy_head + header_size;
 
-#ifdef ENCRYPTION_DEBUG
-				fprintf(stderr, " >>>> [non-sorted] RELOCATING FROM %u to %u tail %u\n", copy_head, upper, copy_tail);
-				/* Decrypt with old offset */
-				fprintf(stderr, " >>>>> DECRYPTING\n");
-#endif
-				PGTdeCryptTupInternal(tableOid, bn, copy_head, scratchptr + copy_head, tmpData, headerSize, itemidptr->len, keys);
-				/* Reencrypt with new offset */
-#ifdef ENCRYPTION_DEBUG
-				fprintf(stderr, " >>>>> ENCRYPTING\n");
-#endif
-				PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, scratchptr + copy_head, headerSize, itemidptr->len, keys);
+				PG_TDE_RE_ENCRYPT_TUPLE_DATA(bn, read_offset_in_page, read_from,
+											bn, write_offset_in_page, write_to,
+											data_len, keys);
 			}
 
 			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
@@ -1550,25 +1525,18 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 
 		/* Recrypt the remaining chunk */
 		if(copy_head < copy_tail) { // TODO: recheck this condition
-			Oid tableOid = RelationGetRelid(rel);
 			BlockNumber bn = BufferGetBlockNumber(buffer);
-			unsigned long headerSize = sizeof(HeapTupleHeaderData);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvla"
-			char tmpData[itemidptr->alignedlen];
-#pragma GCC diagnostic pop
+			unsigned long header_size = sizeof(HeapTupleHeaderData);
+			uint64 read_offset_in_page = copy_head;
+			uint64 write_offset_in_page = upper;
+			uint32 data_len = itemidptr->len - header_size;
+			char* read_from = scratchptr + copy_head + header_size;
+			char* write_to = scratchptr + copy_head + header_size;
 
-#ifdef ENCRYPTION_DEBUG
-			fprintf(stderr, " >>>> [non-sorted] RELOCATING FROM %u to %u tail %u\n", copy_head, upper, copy_tail);
-			/* Decrypt with old offset */
-			fprintf(stderr, " >>>>> DECRYPTING\n");
-#endif
-			PGTdeCryptTupInternal(tableOid, bn, copy_head, scratchptr + copy_head, tmpData, headerSize, itemidptr->len, keys);
-			/* Reencrypt with new offset */
-#ifdef ENCRYPTION_DEBUG
-			fprintf(stderr, " >>>>> ENCRYPTING\n");
-#endif
-			PGTdeCryptTupInternal(tableOid, bn, upper, tmpData, scratchptr + copy_head, headerSize, itemidptr->len, keys);
+			PG_TDE_RE_ENCRYPT_TUPLE_DATA(bn, read_offset_in_page, read_from,
+										bn, write_offset_in_page, write_to,
+										data_len, keys);
+
 		}
 		
 		/* Copy the remaining chunk */

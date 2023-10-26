@@ -3108,8 +3108,8 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
 	/* decrypt the old tuple */
-	RelKeysData *keys = GetRelationKeys(relation->rd_locator);
-	PGTdeDecryptTupData(BufferGetBlockNumber(buffer), page, &oldtup, keys);
+	PG_TDE_DECRYPT_TUPLE(BufferGetBlockNumber(buffer), page, &oldtup, &oldtup,
+							GetRelationKeys(relation->rd_locator));
 
 	/* the new tuple is ready, except for this: */
 	newtup->t_tableOid = RelationGetRelid(relation);
