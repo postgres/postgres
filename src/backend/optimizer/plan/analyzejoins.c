@@ -35,20 +35,6 @@
 #include "utils/lsyscache.h"
 
 /*
- * UniqueRelInfo caches a fact that a relation is unique when being joined
- * to other relation(s) specified by outerrelids.
- * 'extra_clauses' contains additional clauses from a baserestrictinfo list that
- * were used to prove uniqueness. We cache it for the SJ checking procedure: SJ
- * can be removed if the outer relation contains strictly the same set of
- * clauses.
- */
-typedef struct UniqueRelInfo
-{
-	Relids		outerrelids;
-	List	   *extra_clauses;
-} UniqueRelInfo;
-
-/*
  * The context for replace_varno_walker() containing source and target relids.
  */
 typedef struct
