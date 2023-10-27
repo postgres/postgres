@@ -2085,9 +2085,6 @@ brin_minmax_multi_distance_date(PG_FUNCTION_ARGS)
 	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
 	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
 
-	if (DATE_NOT_FINITE(dateVal1) || DATE_NOT_FINITE(dateVal2))
-		PG_RETURN_FLOAT8(0);
-
 	delta = (float8) dateVal2 - (float8) dateVal1;
 
 	Assert(delta >= 0);
@@ -2145,9 +2142,6 @@ brin_minmax_multi_distance_timestamp(PG_FUNCTION_ARGS)
 
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
-
-	if (TIMESTAMP_NOT_FINITE(dt1) || TIMESTAMP_NOT_FINITE(dt2))
-		PG_RETURN_FLOAT8(0);
 
 	delta = (float8) dt2 - (float8) dt1;
 

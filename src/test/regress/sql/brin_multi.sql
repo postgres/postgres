@@ -624,4 +624,43 @@ SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
 
 DROP TABLE brin_date_test;
 RESET enable_seqscan;
+
+-- test handling of infinite timestamp values
+CREATE TABLE brin_timestamp_test(a TIMESTAMP);
+
+INSERT INTO brin_timestamp_test VALUES ('-infinity'), ('infinity');
+INSERT INTO brin_timestamp_test
+SELECT i FROM generate_series('2000-01-01'::timestamp, '2000-02-09'::timestamp, '1 day'::interval) s(i);
+
+CREATE INDEX ON brin_timestamp_test USING brin (a timestamp_minmax_multi_ops) WITH (pages_per_range=1);
+
+SET enable_seqscan = off;
+
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+SELECT * FROM brin_timestamp_test WHERE a = '2023-01-01'::timestamp;
+
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+SELECT * FROM brin_timestamp_test WHERE a = '1900-01-01'::timestamp;
+
+DROP TABLE brin_timestamp_test;
+RESET enable_seqscan;
+
+-- test handling of infinite date values
+CREATE TABLE brin_date_test(a DATE);
+
+INSERT INTO brin_date_test VALUES ('-infinity'), ('infinity');
+INSERT INTO brin_date_test SELECT '2000-01-01'::date + i FROM generate_series(1, 40) s(i);
+
+CREATE INDEX ON brin_date_test USING brin (a date_minmax_multi_ops) WITH (pages_per_range=1);
+
+SET enable_seqscan = off;
+
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
+
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+SELECT * FROM brin_date_test WHERE a = '1900-01-01'::date;
+
+DROP TABLE brin_date_test;
+RESET enable_seqscan;
 RESET datestyle;
