@@ -265,8 +265,6 @@ typedef struct PgStat_CheckpointerStats
 	PgStat_Counter checkpoint_write_time;	/* times in milliseconds */
 	PgStat_Counter checkpoint_sync_time;
 	PgStat_Counter buf_written_checkpoints;
-	PgStat_Counter buf_written_backend;
-	PgStat_Counter buf_fsync_backend;
 } PgStat_CheckpointerStats;
 
 

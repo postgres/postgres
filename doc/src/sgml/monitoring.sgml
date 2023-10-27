@@ -2955,26 +2955,6 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>buffers_backend</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of buffers written directly by a backend
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>buffers_backend_fsync</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of times a backend had to execute its own
-       <function>fsync</function> call (normally the background writer handles those
-       even when the backend does its own write)
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>buffers_alloc</structfield> <type>bigint</type>
       </para>
       <para>
