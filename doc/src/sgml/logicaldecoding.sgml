@@ -1197,9 +1197,8 @@ OutputPluginWrite(ctx, true);
       </listitem>
      </itemizedlist>
 
-     Note that these commands that can cause deadlock apply to not only explicitly
-     indicated system catalog tables above but also to any other [user] catalog
-     table.
+     Note that these commands can cause deadlocks not only for the system
+     catalog tables listed above but for other catalog tables.
     </para>
    </sect2>
   </sect1>
