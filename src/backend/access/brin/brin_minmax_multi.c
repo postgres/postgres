@@ -2081,13 +2081,18 @@ brin_minmax_multi_distance_uuid(PG_FUNCTION_ARGS)
 Datum
 brin_minmax_multi_distance_date(PG_FUNCTION_ARGS)
 {
+	float8		delta = 0;
 	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
 	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
 
 	if (DATE_NOT_FINITE(dateVal1) || DATE_NOT_FINITE(dateVal2))
 		PG_RETURN_FLOAT8(0);
 
-	PG_RETURN_FLOAT8(dateVal1 - dateVal2);
+	delta = (float8) dateVal2 - (float8) dateVal1;
+
+	Assert(delta >= 0);
+
+	PG_RETURN_FLOAT8(delta);
 }
 
 /*
