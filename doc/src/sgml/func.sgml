@@ -20218,8 +20218,7 @@ SELECT NULLIF(value, '(none)') ...
         <returnvalue>setof anyrange</returnvalue>
        </para>
        <para>
-        Expands a multirange into a set of ranges.
-        The ranges are read out in storage order (ascending).
+        Expands a multirange into a set of ranges in ascending order.
        </para>
        <para>
         <literal>unnest('{[1,2), [3,4)}'::int4multirange)</literal>
