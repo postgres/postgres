@@ -422,8 +422,9 @@ PostgreSQL documentation
         A compression detail string can optionally be specified.
         If the detail string is an integer, it specifies the compression
         level.  Otherwise, it should be a comma-separated list of items,
-        each of the form <literal>keyword</literal> or
-        <literal>keyword=value</literal>.
+        each of the form
+        <replaceable>keyword</replaceable> or
+        <replaceable>keyword=value</replaceable>.
         Currently, the supported keywords are <literal>level</literal>,
         <literal>long</literal>, and <literal>workers</literal>.
         The detail string cannot be used when the compression method
@@ -1019,7 +1020,7 @@ PostgreSQL documentation
 </screen></para>
 
   <para>
-   To create a backup of a local server with one tar file for each tablespace
+   To create a backup of the local server with one tar file for each tablespace
    compressed with <application>gzip</application> at level 9, stored in the
    directory <filename>backup</filename>:
 <screen>

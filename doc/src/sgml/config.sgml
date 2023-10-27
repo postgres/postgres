@@ -9041,7 +9041,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         The timeout is measured from the time a command arrives at the
         server until it is completed by the server.  If multiple SQL
-        statements appear in a single simple-Query message, the timeout
+        statements appear in a single simple-query message, the timeout
         is applied to each statement separately.
         (<productname>PostgreSQL</productname> versions before 13 usually
         treated the timeout as applying to the whole query string.)

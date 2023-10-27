@@ -229,7 +229,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
             data is generated in <command>pgbench</command> client and then
             sent to the server. This uses the client/server bandwidth
             extensively through a <command>COPY</command>.
-            <command>pgbench</command> uses the FREEZE option with version 14 or later
+            <command>pgbench</command> uses the <option>FREEZE</option> option
+            with version 14 or later
             of <productname>PostgreSQL</productname> to speed up
             subsequent <command>VACUUM</command>, except on the
             <literal>pgbench_accounts</literal> table if partitions are
@@ -1118,7 +1119,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
     each SQL command on a single line ending with a semicolon.
    </para>
    <para>
-    It is assumed that pgbench scripts do not contain incomplete blocks of SQL
+    It is assumed that <application>pgbench</application> scripts do not contain
+    incomplete blocks of SQL
     transactions. If at runtime the client reaches the end of the script without
     completing the last transaction block, it will be aborted.
    </para>
@@ -2636,7 +2638,7 @@ END;
   </para>
 
   <para>
-   Here is some example output generated with these options:
+   Here is some example output generated with this option:
 <screen>
 <userinput>pgbench --aggregate-interval=10 --time=20 --client=10 --log --rate=1000 --latency-limit=10 --failures-detailed --max-tries=10 test</userinput>
 

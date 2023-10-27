@@ -261,7 +261,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    unnecessary and can be avoided by setting
    <varname>stats_fetch_consistency</varname> to <literal>none</literal>.
 
-   You can invoke <function>pg_stat_clear_snapshot</function>() to discard the
+   You can invoke <function>pg_stat_clear_snapshot()</function> to discard the
    current transaction's statistics snapshot or cached values (if any).  The
    next use of statistical information will (when in snapshot mode) cause a
    new snapshot to be built or (when in cache mode) accessed statistics to be

@@ -381,9 +381,9 @@ DELETE
       An expression to assign to the column.  If used in a
       <literal>WHEN MATCHED</literal> clause, the expression can use values
       from the original row in the target table, and values from the
-      <literal>data_source</literal> row.
+      <replaceable>data_source</replaceable> row.
       If used in a <literal>WHEN NOT MATCHED</literal> clause, the
-      expression can use values from the <literal>data_source</literal>.
+      expression can use values from the <replaceable>data_source</replaceable>.
      </para>
     </listitem>
    </varlistentry>

@@ -1359,8 +1359,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
 
    <para>
     If you need to re-create a standby server while transactions are
-    waiting, make sure that the commands pg_backup_start() and
-    pg_backup_stop() are run in a session with
+    waiting, make sure that the functions <function>pg_backup_start()</function>
+    and <function>pg_backup_stop()</function> are run in a session with
     <varname>synchronous_commit</varname> = <literal>off</literal>, otherwise those
     requests will wait forever for the standby to appear.
    </para>
@@ -2219,10 +2219,11 @@ HINT:  You can then restart the server after making the necessary configuration 
     The cumulative statistics system is active during recovery. All scans,
     reads, blocks, index usage, etc., will be recorded normally on the
     standby. However, WAL replay will not increment relation and database
-    specific counters. I.e. replay will not increment pg_stat_all_tables
-    columns (like n_tup_ins), nor will reads or writes performed by the
-    startup process be tracked in the pg_statio views, nor will associated
-    pg_stat_database columns be incremented.
+    specific counters. I.e. replay will not increment
+    <structname>pg_stat_all_tables</structname> columns (like <structfield>n_tup_ins</structfield>),
+    nor will reads or writes performed by the startup process be tracked in the
+    <structname>pg_statio_</structname> views, nor will associated
+    <structname>pg_stat_database</structname> columns be incremented.
    </para>
 
    <para>

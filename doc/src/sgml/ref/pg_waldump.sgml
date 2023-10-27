@@ -117,7 +117,7 @@ PostgreSQL documentation
       <term><option>--fork=<replaceable>fork</replaceable></option></term>
       <listitem>
        <para>
-        If provided, only display records that modify blocks in the given fork.
+        Only display records that modify blocks in the given fork.
         The valid values are <literal>main</literal> for the main fork,
         <literal>fsm</literal> for the free space map,
         <literal>vm</literal> for the visibility map,
@@ -174,12 +174,13 @@ PostgreSQL documentation
         names, and exit.
        </para>
        <para>
-        Extensions may define custom resource managers, but pg_waldump does
+        Extensions may define custom resource managers, but
+        <application>pg_waldump</application> does
         not load the extension module and therefore does not recognize custom
         resource managers by name. Instead, you can specify the custom
         resource managers as <literal>custom###</literal> where
-        "<literal>###</literal>" is the three-digit resource manager ID. Names
-        of this form will always be considered valid.
+        <replaceable>###</replaceable> is the three-digit resource manager ID.
+        Names of this form will always be considered valid.
        </para>
       </listitem>
      </varlistentry>

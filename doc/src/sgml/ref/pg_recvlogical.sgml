@@ -274,7 +274,7 @@ PostgreSQL documentation
        <listitem>
        <para>
         Enables decoding of prepared transactions. This option may only be specified with
-        <option>--create-slot</option>
+        <option>--create-slot</option>.
        </para>
        </listitem>
      </varlistentry>

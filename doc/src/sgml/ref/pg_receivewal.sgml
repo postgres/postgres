@@ -281,7 +281,8 @@ PostgreSQL documentation
         A compression detail string can optionally be specified.  If the
         detail string is an integer, it specifies the compression level.
         Otherwise, it should be a comma-separated list of items, each of the
-        form <literal>keyword</literal> or <literal>keyword=value</literal>.
+        form <replaceable>keyword</replaceable> or
+        <replaceable>keyword=value</replaceable>.
         Currently, the only supported keyword is <literal>level</literal>.
        </para>
        <para>
