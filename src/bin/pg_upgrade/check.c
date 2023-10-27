@@ -1554,7 +1554,7 @@ check_old_cluster_for_valid_slots(bool live_check)
 
 	snprintf(output_path, sizeof(output_path), "%s/%s",
 			 log_opts.basedir,
-			 "invalid_logical_replication_slots.txt");
+			 "invalid_logical_slots.txt");
 
 	for (int dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{

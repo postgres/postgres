@@ -15,23 +15,23 @@ use Test::More;
 my $mode = $ENV{PG_TEST_PG_UPGRADE_MODE} || '--copy';
 
 # Initialize old cluster
-my $old_publisher = PostgreSQL::Test::Cluster->new('old_publisher');
-$old_publisher->init(allows_streaming => 'logical');
+my $oldpub = PostgreSQL::Test::Cluster->new('oldpub');
+$oldpub->init(allows_streaming => 'logical');
 
 # Initialize new cluster
-my $new_publisher = PostgreSQL::Test::Cluster->new('new_publisher');
-$new_publisher->init(allows_streaming => 'logical');
+my $newpub = PostgreSQL::Test::Cluster->new('newpub');
+$newpub->init(allows_streaming => 'logical');
 
-# Setup a pg_upgrade command. This will be used anywhere.
+# Setup a common pg_upgrade command to be used by all the test cases
 my @pg_upgrade_cmd = (
 	'pg_upgrade', '--no-sync',
-	'-d', $old_publisher->data_dir,
-	'-D', $new_publisher->data_dir,
-	'-b', $old_publisher->config_data('--bindir'),
-	'-B', $new_publisher->config_data('--bindir'),
-	'-s', $new_publisher->host,
-	'-p', $old_publisher->port,
-	'-P', $new_publisher->port,
+	'-d', $oldpub->data_dir,
+	'-D', $newpub->data_dir,
+	'-b', $oldpub->config_data('--bindir'),
+	'-B', $newpub->config_data('--bindir'),
+	'-s', $newpub->host,
+	'-p', $oldpub->port,
+	'-P', $newpub->port,
 	$mode);
 
 # ------------------------------
@@ -39,17 +39,17 @@ my @pg_upgrade_cmd = (
 
 # Preparations for the subsequent test:
 # 1. Create two slots on the old cluster
-$old_publisher->start;
-$old_publisher->safe_psql(
+$oldpub->start;
+$oldpub->safe_psql(
 	'postgres', qq[
 	SELECT pg_create_logical_replication_slot('test_slot1', 'test_decoding');
 	SELECT pg_create_logical_replication_slot('test_slot2', 'test_decoding');
 ]);
-$old_publisher->stop();
+$oldpub->stop();
 
 # 2. Set 'max_replication_slots' to be less than the number of slots (2)
 #	 present on the old cluster.
-$new_publisher->append_conf('postgresql.conf', "max_replication_slots = 1");
+$newpub->append_conf('postgresql.conf', "max_replication_slots = 1");
 
 # pg_upgrade will fail because the new cluster has insufficient
 # max_replication_slots
@@ -62,12 +62,12 @@ command_checks_all(
 	[qr//],
 	'run of pg_upgrade where the new cluster has insufficient max_replication_slots'
 );
-ok( -d $new_publisher->data_dir . "/pg_upgrade_output.d",
+ok( -d $newpub->data_dir . "/pg_upgrade_output.d",
 	"pg_upgrade_output.d/ not removed after pg_upgrade failure");
 
 # Set 'max_replication_slots' to match the number of slots (2) present on the
 # old cluster. Both slots will be used for subsequent tests.
-$new_publisher->append_conf('postgresql.conf', "max_replication_slots = 2");
+$newpub->append_conf('postgresql.conf', "max_replication_slots = 2");
 
 
 # ------------------------------
@@ -82,14 +82,14 @@ $new_publisher->append_conf('postgresql.conf', "max_replication_slots = 2");
 #
 # 3. Emit a non-transactional message. This will cause test_slot2 to detect the
 #	 unconsumed WAL record.
-$old_publisher->start;
-$old_publisher->safe_psql(
+$oldpub->start;
+$oldpub->safe_psql(
 	'postgres', qq[
 		CREATE TABLE tbl AS SELECT generate_series(1, 10) AS a;
 		SELECT pg_replication_slot_advance('test_slot2', pg_current_wal_lsn());
 		SELECT count(*) FROM pg_logical_emit_message('false', 'prefix', 'This is a non-transactional message');
 ]);
-$old_publisher->stop;
+$oldpub->stop;
 
 # pg_upgrade will fail because there are slots still having unconsumed WAL
 # records
@@ -111,12 +111,12 @@ my $slots_filename;
 # contains a milliseconds timestamp. File::Find::find must be used.
 find(
 	sub {
-		if ($File::Find::name =~ m/invalid_logical_replication_slots\.txt/)
+		if ($File::Find::name =~ m/invalid_logical_slots\.txt/)
 		{
 			$slots_filename = $File::Find::name;
 		}
 	},
-	$new_publisher->data_dir . "/pg_upgrade_output.d");
+	$newpub->data_dir . "/pg_upgrade_output.d");
 
 # Check the file content. Both slots should be reporting that they have
 # unconsumed WAL records.
@@ -135,10 +135,10 @@ like(
 
 # Preparations for the subsequent test:
 # 1. Setup logical replication (first, cleanup slots from the previous tests)
-my $old_connstr = $old_publisher->connstr . ' dbname=postgres';
+my $old_connstr = $oldpub->connstr . ' dbname=postgres';
 
-$old_publisher->start;
-$old_publisher->safe_psql(
+$oldpub->start;
+$oldpub->safe_psql(
 	'postgres', qq[
 	SELECT * FROM pg_drop_replication_slot('test_slot1');
 	SELECT * FROM pg_drop_replication_slot('test_slot2');
@@ -146,47 +146,47 @@ $old_publisher->safe_psql(
 ]);
 
 # Initialize subscriber cluster
-my $subscriber = PostgreSQL::Test::Cluster->new('subscriber');
-$subscriber->init();
+my $sub = PostgreSQL::Test::Cluster->new('sub');
+$sub->init();
 
-$subscriber->start;
-$subscriber->safe_psql(
+$sub->start;
+$sub->safe_psql(
 	'postgres', qq[
 	CREATE TABLE tbl (a int);
 	CREATE SUBSCRIPTION regress_sub CONNECTION '$old_connstr' PUBLICATION regress_pub WITH (two_phase = 'true')
 ]);
-$subscriber->wait_for_subscription_sync($old_publisher, 'regress_sub');
+$sub->wait_for_subscription_sync($oldpub, 'regress_sub');
 
 # 2. Temporarily disable the subscription
-$subscriber->safe_psql('postgres', "ALTER SUBSCRIPTION regress_sub DISABLE");
-$old_publisher->stop;
+$sub->safe_psql('postgres', "ALTER SUBSCRIPTION regress_sub DISABLE");
+$oldpub->stop;
 
 # pg_upgrade should be successful
 command_ok([@pg_upgrade_cmd], 'run of pg_upgrade of old cluster');
 
 # Check that the slot 'regress_sub' has migrated to the new cluster
-$new_publisher->start;
-my $result = $new_publisher->safe_psql('postgres',
+$newpub->start;
+my $result = $newpub->safe_psql('postgres',
 	"SELECT slot_name, two_phase FROM pg_replication_slots");
 is($result, qq(regress_sub|t), 'check the slot exists on new cluster');
 
 # Update the connection
-my $new_connstr = $new_publisher->connstr . ' dbname=postgres';
-$subscriber->safe_psql(
+my $new_connstr = $newpub->connstr . ' dbname=postgres';
+$sub->safe_psql(
 	'postgres', qq[
 	ALTER SUBSCRIPTION regress_sub CONNECTION '$new_connstr';
 	ALTER SUBSCRIPTION regress_sub ENABLE;
 ]);
 
 # Check whether changes on the new publisher get replicated to the subscriber
-$new_publisher->safe_psql('postgres',
+$newpub->safe_psql('postgres',
 	"INSERT INTO tbl VALUES (generate_series(11, 20))");
-$new_publisher->wait_for_catchup('regress_sub');
-$result = $subscriber->safe_psql('postgres', "SELECT count(*) FROM tbl");
-is($result, qq(20), 'check changes are replicated to the subscriber');
+$newpub->wait_for_catchup('regress_sub');
+$result = $sub->safe_psql('postgres', "SELECT count(*) FROM tbl");
+is($result, qq(20), 'check changes are replicated to the sub');
 
 # Clean up
-$subscriber->stop();
-$new_publisher->stop();
+$sub->stop();
+$newpub->stop();
 
 done_testing();
