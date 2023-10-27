@@ -2144,7 +2144,7 @@ brin_minmax_multi_distance_timestamp(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(dt1) || TIMESTAMP_NOT_FINITE(dt2))
 		PG_RETURN_FLOAT8(0);
 
-	delta = dt2 - dt1;
+	delta = (float8) dt2 - (float8) dt1;
 
 	Assert(delta >= 0);
 
