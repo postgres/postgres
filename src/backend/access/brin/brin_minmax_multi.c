@@ -2160,34 +2160,9 @@ brin_minmax_multi_distance_interval(PG_FUNCTION_ARGS)
 
 	Interval   *ia = PG_GETARG_INTERVAL_P(0);
 	Interval   *ib = PG_GETARG_INTERVAL_P(1);
-	Interval   *result;
 
 	int64		dayfraction;
 	int64		days;
-
-	result = (Interval *) palloc(sizeof(Interval));
-
-	result->month = ib->month - ia->month;
-	/* overflow check copied from int4mi */
-	if (!SAMESIGN(ib->month, ia->month) &&
-		!SAMESIGN(result->month, ib->month))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
-
-	result->day = ib->day - ia->day;
-	if (!SAMESIGN(ib->day, ia->day) &&
-		!SAMESIGN(result->day, ib->day))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
-
-	result->time = ib->time - ia->time;
-	if (!SAMESIGN(ib->time, ia->time) &&
-		!SAMESIGN(result->time, ib->time))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
 
 	/*
 	 * Delta is (fractional) number of days between the intervals. Assume
@@ -2195,10 +2170,10 @@ brin_minmax_multi_distance_interval(PG_FUNCTION_ARGS)
 	 * don't need to be exact, in the worst case we'll build a bit less
 	 * efficient ranges. But we should not contradict interval_cmp.
 	 */
-	dayfraction = result->time % USECS_PER_DAY;
-	days = result->time / USECS_PER_DAY;
-	days += result->month * INT64CONST(30);
-	days += result->day;
+	dayfraction = (ib->time % USECS_PER_DAY) - (ia->time % USECS_PER_DAY);
+	days = (ib->time / USECS_PER_DAY) - (ia->time / USECS_PER_DAY);
+	days += (int64) ib->day - (int64) ia->day;
+	days += ((int64) ib->month - (int64) ia->month) * INT64CONST(30);
 
 	/* convert to double precision */
 	delta = (double) days + dayfraction / (double) USECS_PER_DAY;
