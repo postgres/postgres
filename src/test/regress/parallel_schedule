@@ -121,10 +121,12 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion tr
 # ----------
 test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain compression memoize stats
 
-# event_trigger depends on create_am and cannot run concurrently with
-# any test that runs DDL
-# oidjoins is read-only, though, and should run late for best coverage
-test: event_trigger oidjoins
+# event_trigger cannot run concurrently with any other tests because
+# on-login event handling could catch connection of a concurrent test.
+test: event_trigger
+
+# oidjoins should run late for best coverage
+test: oidjoins
 
 # this test also uses event triggers, so likewise run it by itself
 test: fast_default
