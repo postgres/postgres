@@ -432,6 +432,17 @@ PostgreSQL documentation
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><option>--checkunique</option></term>
+     <listitem>
+      <para>
+       For each index with unique constraint checked, verify that no more than
+       one among duplicate entries is visible in the index using <xref linkend="amcheck"/>'s
+       <option>checkunique</option> option.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
 

@@ -257,6 +257,9 @@ for my $dbname (qw(db1 db2 db3))
 
 			CREATE INDEX t1_spgist ON $schema.t1 USING SPGIST (ir);
 			CREATE INDEX t2_spgist ON $schema.t2 USING SPGIST (ir);
+
+			CREATE UNIQUE INDEX t1_btree_unique ON $schema.t1 USING BTREE (i);
+			CREATE UNIQUE INDEX t2_btree_unique ON $schema.t2 USING BTREE (i);
 		));
 	}
 }
@@ -517,4 +520,51 @@ $node->command_checks_all(
 	0, [$no_output_re], [$no_output_re],
 	'pg_amcheck excluding all corrupt schemas');
 
+$node->command_checks_all(
+	[
+		@cmd, '-s', 's1', '-i', 't1_btree', '--parent-check',
+		'--checkunique', 'db1'
+	],
+	2,
+	[$index_missing_relation_fork_re],
+	[$no_output_re],
+	'pg_amcheck smoke test --parent-check --checkunique');
+
+$node->command_checks_all(
+	[
+		@cmd, '-s', 's1', '-i', 't1_btree', '--heapallindexed',
+		'--rootdescend', '--checkunique', 'db1'
+	],
+	2,
+	[$index_missing_relation_fork_re],
+	[$no_output_re],
+	'pg_amcheck smoke test --heapallindexed --rootdescend --checkunique');
+
+$node->command_checks_all(
+	[
+		@cmd, '--checkunique', '-d', 'db1', '-d', 'db2',
+		'-d', 'db3', '-S', 's*'
+	],
+	0,
+	[$no_output_re],
+	[$no_output_re],
+	'pg_amcheck excluding all corrupt schemas with --checkunique option');
+
+#
+# Smoke test for checkunique option for not supported versions.
+#
+$node->safe_psql(
+	'db3', q(
+		DROP EXTENSION amcheck;
+		CREATE EXTENSION amcheck WITH SCHEMA amcheck_schema VERSION '1.3' ;
+));
+
+$node->command_checks_all(
+	[ @cmd, '--checkunique', 'db3' ],
+	0,
+	[$no_output_re],
+	[
+		qr/pg_amcheck: warning: --checkunique option is not supported by amcheck version "1.3"/
+	],
+	'pg_amcheck smoke test --checkunique');
 done_testing();

@@ -135,6 +135,19 @@ CREATE INDEX bttest_a_expr_idx ON bttest_a ((ifun(id) + ifun(0)))
 
 SELECT bt_index_check('bttest_a_expr_idx', true);
 
+-- UNIQUE constraint check
+SELECT bt_index_check('bttest_a_idx', heapallindexed => true, checkunique => true);
+SELECT bt_index_check('bttest_b_idx', heapallindexed => false, checkunique => true);
+SELECT bt_index_parent_check('bttest_a_idx', heapallindexed => true, rootdescend => true, checkunique => true);
+SELECT bt_index_parent_check('bttest_b_idx', heapallindexed => true, rootdescend => false, checkunique => true);
+
+-- Check that null values in an unique index are not treated as equal
+CREATE TABLE bttest_unique_nulls (a serial, b int, c int UNIQUE);
+INSERT INTO bttest_unique_nulls VALUES (generate_series(1, 10000), 2, default);
+SELECT bt_index_check('bttest_unique_nulls_c_key', heapallindexed => true, checkunique => true);
+CREATE INDEX on bttest_unique_nulls (b,c);
+SELECT bt_index_check('bttest_unique_nulls_b_c_idx', heapallindexed => true, checkunique => true);
+
 -- cleanup
 DROP TABLE bttest_a;
 DROP TABLE bttest_b;
@@ -142,5 +155,6 @@ DROP TABLE bttest_multi;
 DROP TABLE delete_test_table;
 DROP TABLE toast_bug;
 DROP FUNCTION ifun(int8);
+DROP TABLE bttest_unique_nulls;
 DROP OWNED BY regress_bttest_role; -- permissions
 DROP ROLE regress_bttest_role;
