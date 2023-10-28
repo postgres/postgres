@@ -101,22 +101,22 @@
 
    <itemizedlist spacing="compact">
     <listitem>
-     <simpara>complex queries</simpara>
+     <simpara><link linkend="sql">complex queries</link></simpara>
     </listitem>
     <listitem>
-     <simpara>foreign keys</simpara>
+     <simpara><link linkend="ddl-constraints-fk">foreign keys</link></simpara>
     </listitem>
     <listitem>
-     <simpara>triggers</simpara>
+     <simpara><link linkend="triggers">triggers</link></simpara>
     </listitem>
     <listitem>
-     <simpara>updatable views</simpara>
+     <simpara><link linkend="sql-createview-updatable-views">updatable views</link></simpara>
     </listitem>
     <listitem>
-     <simpara>transactional integrity</simpara>
+     <simpara><link linkend="transaction-iso">transactional integrity</link></simpara>
     </listitem>
     <listitem>
-     <simpara>multiversion concurrency control</simpara>
+     <simpara><link linkend="mvcc">multiversion concurrency control</link></simpara>
     </listitem>
    </itemizedlist>
 
@@ -125,22 +125,22 @@
 
    <itemizedlist spacing="compact">
     <listitem>
-     <simpara>data types</simpara>
+     <simpara><link linkend="datatype">data types</link></simpara>
     </listitem>
     <listitem>
-     <simpara>functions</simpara>
+     <simpara><link linkend="functions">functions</link></simpara>
     </listitem>
     <listitem>
-     <simpara>operators</simpara>
+     <simpara><link linkend="functions">operators</link></simpara>
     </listitem>
     <listitem>
-     <simpara>aggregate functions</simpara>
+     <simpara><link linkend="functions-aggregate">aggregate functions</link></simpara>
     </listitem>
     <listitem>
-     <simpara>index methods</simpara>
+     <simpara><link linkend="indexes">index methods</link></simpara>
     </listitem>
     <listitem>
-     <simpara>procedural languages</simpara>
+     <simpara><link linkend="server-programming">procedural languages</link></simpara>
     </listitem>
    </itemizedlist>
   </para>
