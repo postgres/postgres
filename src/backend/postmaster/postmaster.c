@@ -1563,8 +1563,8 @@ getInstallationPaths(const char *argv0)
 	FreeDir(pdir);
 
 	/*
-	 * XXX is it worth similarly checking the share/ directory?  If the lib/
-	 * directory is there, then share/ probably is too.
+	 * It's not worth checking the share/ directory.  If the lib/ directory
+	 * is there, then share/ probably is too.
 	 */
 }
 
