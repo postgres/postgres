@@ -10554,7 +10554,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
        <para>
         On Linux, <literal>syncfs</literal> may be used instead, to ask the
-        operating system to synchronize the whole file systems that contain the
+        operating system to synchronize the file systems that contain the
         data directory, the WAL files and each tablespace (but not any other
         file systems that may be reachable through symbolic links).  See
         <xref linkend="syncfs"/> for more information about using
