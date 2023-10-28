@@ -924,10 +924,9 @@ vacuum insert threshold = vacuum base insert threshold + vacuum insert scale fac
     <xref linkend="reloption-autovacuum-freeze-min-age"/> as this may allow
     tuples to be frozen by earlier vacuums.  The number of obsolete tuples and
     the number of inserted tuples are obtained from the cumulative statistics system;
-    it is a semi-accurate count updated by each <command>UPDATE</command>,
-    <command>DELETE</command> and <command>INSERT</command> operation.  (It is
-    only semi-accurate because some information might be lost under heavy
-    load.)  If the <structfield>relfrozenxid</structfield> value of the table
+    it is an eventually-consistent count updated by each <command>UPDATE</command>,
+    <command>DELETE</command> and <command>INSERT</command> operation.
+    If the <structfield>relfrozenxid</structfield> value of the table
     is more than <varname>vacuum_freeze_table_age</varname> transactions old,
     an aggressive vacuum is performed to freeze old tuples and advance
     <structfield>relfrozenxid</structfield>; otherwise, only pages that have been modified
