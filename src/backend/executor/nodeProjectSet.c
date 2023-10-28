@@ -73,19 +73,21 @@ ExecProjectSet(PlanState *pstate)
 	}
 
 	/*
-	 * Reset argument context to free any expression evaluation storage
-	 * allocated in the previous tuple cycle.  Note this can't happen until
-	 * we're done projecting out tuples from a scan tuple, as ValuePerCall
-	 * functions are allowed to reference the arguments for each returned
-	 * tuple.
-	 */
-	MemoryContextReset(node->argcontext);
-
-	/*
 	 * Get another input tuple and project SRFs from it.
 	 */
 	for (;;)
 	{
+		/*
+		 * Reset argument context to free any expression evaluation storage
+		 * allocated in the previous tuple cycle.  Note this can't happen
+		 * until we're done projecting out tuples from a scan tuple, as
+		 * ValuePerCall functions are allowed to reference the arguments for
+		 * each returned tuple.  However, if we loop around after finding that
+		 * no rows are produced from a scan tuple, we should reset, to avoid
+		 * leaking memory when many successive scan tuples produce no rows.
+		 */
+		MemoryContextReset(node->argcontext);
+
 		/*
 		 * Retrieve tuples from the outer plan until there are no more.
 		 */
@@ -111,6 +113,12 @@ ExecProjectSet(PlanState *pstate)
 		 */
 		if (resultSlot)
 			return resultSlot;
+
+		/*
+		 * When we do loop back, we'd better reset the econtext again, just in
+		 * case the SRF leaked some memory there.
+		 */
+		ResetExprContext(econtext);
 	}
 
 	return NULL;
