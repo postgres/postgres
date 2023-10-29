@@ -114,6 +114,7 @@ struct pg_itm_in
  *	30 days.
  */
 #define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */
+#define DAYS_PER_WEEK	7
 #define HOURS_PER_DAY	24		/* assume no daylight savings time changes */
 
 /*

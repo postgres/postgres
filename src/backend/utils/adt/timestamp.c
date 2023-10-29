@@ -1509,24 +1509,41 @@ make_interval(PG_FUNCTION_ARGS)
 	Interval   *result;
 
 	/*
-	 * Reject out-of-range inputs.  We really ought to check the integer
-	 * inputs as well, but it's not entirely clear what limits to apply.
+	 * Reject out-of-range inputs.  We reject any input values that cause
+	 * integer overflow of the corresponding interval fields.
 	 */
 	if (isinf(secs) || isnan(secs))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+		goto out_of_range;
 
 	result = (Interval *) palloc(sizeof(Interval));
-	result->month = years * MONTHS_PER_YEAR + months;
-	result->day = weeks * 7 + days;
 
-	secs = rint(secs * USECS_PER_SEC);
-	result->time = hours * ((int64) SECS_PER_HOUR * USECS_PER_SEC) +
-		mins * ((int64) SECS_PER_MINUTE * USECS_PER_SEC) +
-		(int64) secs;
+	/* years and months -> months */
+	if (pg_mul_s32_overflow(years, MONTHS_PER_YEAR, &result->month) ||
+		pg_add_s32_overflow(result->month, months, &result->month))
+		goto out_of_range;
+
+	/* weeks and days -> days */
+	if (pg_mul_s32_overflow(weeks, DAYS_PER_WEEK, &result->day) ||
+		pg_add_s32_overflow(result->day, days, &result->day))
+		goto out_of_range;
+
+	/* hours and mins -> usecs (cannot overflow 64-bit) */
+	result->time = hours * USECS_PER_HOUR + mins * USECS_PER_MINUTE;
+
+	/* secs -> usecs */
+	secs = rint(float8_mul(secs, USECS_PER_SEC));
+	if (!FLOAT8_FITS_IN_INT64(secs) ||
+		pg_add_s64_overflow(result->time, (int64) secs, &result->time))
+		goto out_of_range;
 
 	PG_RETURN_INTERVAL_P(result);
+
+out_of_range:
+	ereport(ERROR,
+			errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("interval out of range"));
+
+	PG_RETURN_NULL();			/* keep compiler quiet */
 }
 
 /* EncodeSpecialTimestamp()
