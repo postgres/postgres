@@ -4583,16 +4583,17 @@ getSubscriptions(Archive *fout)
 	int			i_oid;
 	int			i_subname;
 	int			i_subowner;
+	int			i_subbinary;
 	int			i_substream;
 	int			i_subtwophasestate;
 	int			i_subdisableonerr;
-	int			i_suborigin;
+	int			i_subpasswordrequired;
+	int			i_subrunasowner;
 	int			i_subconninfo;
 	int			i_subslotname;
 	int			i_subsynccommit;
 	int			i_subpublications;
-	int			i_subbinary;
-	int			i_subpasswordrequired;
+	int			i_suborigin;
 	int			i,
 				ntups;
 
@@ -4646,12 +4647,14 @@ getSubscriptions(Archive *fout)
 
 	if (fout->remoteVersion >= 160000)
 		appendPQExpBufferStr(query,
-							 " s.suborigin,\n"
-							 " s.subpasswordrequired\n");
+							 " s.subpasswordrequired,\n"
+							 " s.subrunasowner,\n"
+							 " s.suborigin\n");
 	else
 		appendPQExpBuffer(query,
-						  " '%s' AS suborigin,\n"
-						  " 't' AS subpasswordrequired\n",
+						  " 't' AS subpasswordrequired,\n"
+						  " 't' AS subrunasowner,\n"
+						  " '%s' AS suborigin\n",
 						  LOGICALREP_ORIGIN_ANY);
 
 	appendPQExpBufferStr(query,
@@ -4671,16 +4674,17 @@ getSubscriptions(Archive *fout)
 	i_oid = PQfnumber(res, "oid");
 	i_subname = PQfnumber(res, "subname");
 	i_subowner = PQfnumber(res, "subowner");
-	i_subconninfo = PQfnumber(res, "subconninfo");
-	i_subslotname = PQfnumber(res, "subslotname");
-	i_subsynccommit = PQfnumber(res, "subsynccommit");
-	i_subpublications = PQfnumber(res, "subpublications");
 	i_subbinary = PQfnumber(res, "subbinary");
 	i_substream = PQfnumber(res, "substream");
 	i_subtwophasestate = PQfnumber(res, "subtwophasestate");
 	i_subdisableonerr = PQfnumber(res, "subdisableonerr");
-	i_suborigin = PQfnumber(res, "suborigin");
 	i_subpasswordrequired = PQfnumber(res, "subpasswordrequired");
+	i_subrunasowner = PQfnumber(res, "subrunasowner");
+	i_subconninfo = PQfnumber(res, "subconninfo");
+	i_subslotname = PQfnumber(res, "subslotname");
+	i_subsynccommit = PQfnumber(res, "subsynccommit");
+	i_subpublications = PQfnumber(res, "subpublications");
+	i_suborigin = PQfnumber(res, "suborigin");
 
 	subinfo = pg_malloc(ntups * sizeof(SubscriptionInfo));
 
@@ -4693,15 +4697,7 @@ getSubscriptions(Archive *fout)
 		AssignDumpId(&subinfo[i].dobj);
 		subinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_subname));
 		subinfo[i].rolname = getRoleName(PQgetvalue(res, i, i_subowner));
-		subinfo[i].subconninfo = pg_strdup(PQgetvalue(res, i, i_subconninfo));
-		if (PQgetisnull(res, i, i_subslotname))
-			subinfo[i].subslotname = NULL;
-		else
-			subinfo[i].subslotname = pg_strdup(PQgetvalue(res, i, i_subslotname));
-		subinfo[i].subsynccommit =
-			pg_strdup(PQgetvalue(res, i, i_subsynccommit));
-		subinfo[i].subpublications =
-			pg_strdup(PQgetvalue(res, i, i_subpublications));
+
 		subinfo[i].subbinary =
 			pg_strdup(PQgetvalue(res, i, i_subbinary));
 		subinfo[i].substream =
@@ -4710,9 +4706,22 @@ getSubscriptions(Archive *fout)
 			pg_strdup(PQgetvalue(res, i, i_subtwophasestate));
 		subinfo[i].subdisableonerr =
 			pg_strdup(PQgetvalue(res, i, i_subdisableonerr));
-		subinfo[i].suborigin = pg_strdup(PQgetvalue(res, i, i_suborigin));
 		subinfo[i].subpasswordrequired =
 			pg_strdup(PQgetvalue(res, i, i_subpasswordrequired));
+		subinfo[i].subrunasowner =
+			pg_strdup(PQgetvalue(res, i, i_subrunasowner));
+		subinfo[i].subconninfo =
+			pg_strdup(PQgetvalue(res, i, i_subconninfo));
+		if (PQgetisnull(res, i, i_subslotname))
+			subinfo[i].subslotname = NULL;
+		else
+			subinfo[i].subslotname =
+				pg_strdup(PQgetvalue(res, i, i_subslotname));
+		subinfo[i].subsynccommit =
+			pg_strdup(PQgetvalue(res, i, i_subsynccommit));
+		subinfo[i].subpublications =
+			pg_strdup(PQgetvalue(res, i, i_subpublications));
+		subinfo[i].suborigin = pg_strdup(PQgetvalue(res, i, i_suborigin));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(subinfo[i].dobj), fout);
@@ -4788,14 +4797,17 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 	if (strcmp(subinfo->subdisableonerr, "t") == 0)
 		appendPQExpBufferStr(query, ", disable_on_error = true");
 
-	if (pg_strcasecmp(subinfo->suborigin, LOGICALREP_ORIGIN_ANY) != 0)
-		appendPQExpBuffer(query, ", origin = %s", subinfo->suborigin);
+	if (strcmp(subinfo->subpasswordrequired, "t") != 0)
+		appendPQExpBuffer(query, ", password_required = false");
+
+	if (strcmp(subinfo->subrunasowner, "t") == 0)
+		appendPQExpBufferStr(query, ", run_as_owner = true");
 
 	if (strcmp(subinfo->subsynccommit, "off") != 0)
 		appendPQExpBuffer(query, ", synchronous_commit = %s", fmtId(subinfo->subsynccommit));
 
-	if (strcmp(subinfo->subpasswordrequired, "t") != 0)
-		appendPQExpBuffer(query, ", password_required = false");
+	if (pg_strcasecmp(subinfo->suborigin, LOGICALREP_ORIGIN_ANY) != 0)
+		appendPQExpBuffer(query, ", origin = %s", subinfo->suborigin);
 
 	appendPQExpBufferStr(query, ");\n");
 
