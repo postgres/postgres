@@ -1588,68 +1588,14 @@ PG_STAT_GET_XACT_RELENTRY_INT64(blocks_fetched)
 /* pg_stat_get_xact_blocks_hit */
 PG_STAT_GET_XACT_RELENTRY_INT64(blocks_hit)
 
-Datum
-pg_stat_get_xact_tuples_inserted(PG_FUNCTION_ARGS)
-{
-	Oid			relid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_TableStatus *tabentry;
-	PgStat_TableXactStatus *trans;
+/* pg_stat_get_xact_tuples_inserted */
+PG_STAT_GET_XACT_RELENTRY_INT64(tuples_inserted)
 
-	if ((tabentry = find_tabstat_entry(relid)) == NULL)
-		result = 0;
-	else
-	{
-		result = tabentry->counts.tuples_inserted;
-		/* live subtransactions' counts aren't in tuples_inserted yet */
-		for (trans = tabentry->trans; trans != NULL; trans = trans->upper)
-			result += trans->tuples_inserted;
-	}
+/* pg_stat_get_xact_tuples_updated */
+PG_STAT_GET_XACT_RELENTRY_INT64(tuples_updated)
 
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_xact_tuples_updated(PG_FUNCTION_ARGS)
-{
-	Oid			relid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_TableStatus *tabentry;
-	PgStat_TableXactStatus *trans;
-
-	if ((tabentry = find_tabstat_entry(relid)) == NULL)
-		result = 0;
-	else
-	{
-		result = tabentry->counts.tuples_updated;
-		/* live subtransactions' counts aren't in tuples_updated yet */
-		for (trans = tabentry->trans; trans != NULL; trans = trans->upper)
-			result += trans->tuples_updated;
-	}
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_xact_tuples_deleted(PG_FUNCTION_ARGS)
-{
-	Oid			relid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_TableStatus *tabentry;
-	PgStat_TableXactStatus *trans;
-
-	if ((tabentry = find_tabstat_entry(relid)) == NULL)
-		result = 0;
-	else
-	{
-		result = tabentry->counts.tuples_deleted;
-		/* live subtransactions' counts aren't in tuples_deleted yet */
-		for (trans = tabentry->trans; trans != NULL; trans = trans->upper)
-			result += trans->tuples_deleted;
-	}
-
-	PG_RETURN_INT64(result);
-}
+/* pg_stat_get_xact_tuples_deleted */
+PG_STAT_GET_XACT_RELENTRY_INT64(tuples_deleted)
 
 Datum
 pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS)
