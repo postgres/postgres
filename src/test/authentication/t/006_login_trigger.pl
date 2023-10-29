@@ -143,27 +143,16 @@ psql_command(
 	log_exact => '2',
 	err_like => [qr/You are welcome/]);
 
-# Try to log as allowed Alice and disallowed Mallory (two times)
+# Try to login as allowed Alice.  We don't check the Mallroy login, because
+# FATAL error could cause a timing-dependant panic of IPC::Run.
 psql_command(
 	$node, 'SELECT 1;', 0, 'try regress_alice',
 	connstr => 'user=regress_alice',
 	log_exact => '1',
 	err_like => [qr/You are welcome/],
 	err_unlike => [qr/You are NOT welcome/]);
-psql_command(
-	$node, 'SELECT 1;', 2, 'try regress_mallory',
-	connstr => 'user=regress_mallory',
-	log_exact => '',
-	err_like => [qr/You are NOT welcome/],
-	err_unlike => [qr/You are welcome/]);
-psql_command(
-	$node, 'SELECT 1;', 2, 'try regress_mallory',
-	connstr => 'user=regress_mallory',
-	log_exact => '',
-	err_like => [qr/You are NOT welcome/],
-	err_unlike => [qr/You are welcome/]);
 
-# Check that Alice's login record is here, while the Mallory's one is not
+# Check that Alice's login record is here
 psql_command(
 	$node, 'SELECT * FROM user_logins;', 0, 'select *',
 	log_like => [qr/3\|regress_alice/],
