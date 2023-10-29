@@ -307,9 +307,9 @@ leftmostvalue_interval(void)
 {
 	Interval   *v = palloc(sizeof(Interval));
 
-	v->time = DT_NOBEGIN;
-	v->day = 0;
-	v->month = 0;
+	v->time = PG_INT64_MIN;
+	v->day = PG_INT32_MIN;
+	v->month = PG_INT32_MIN;
 	return IntervalPGetDatum(v);
 }
 
