@@ -945,6 +945,21 @@ SELECT stats_reset > :'checkpointer_reset_ts'::timestamptz FROM pg_stat_checkpoi
 (1 row)
 
 SELECT stats_reset AS checkpointer_reset_ts FROM pg_stat_checkpointer \gset
+-- Test that reset_shared with recovery_prefetch specified as the stats type works
+SELECT stats_reset AS recovery_prefetch_reset_ts FROM pg_stat_recovery_prefetch \gset
+SELECT pg_stat_reset_shared('recovery_prefetch');
+ pg_stat_reset_shared 
+----------------------
+ 
+(1 row)
+
+SELECT stats_reset > :'recovery_prefetch_reset_ts'::timestamptz FROM pg_stat_recovery_prefetch;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT stats_reset AS recovery_prefetch_reset_ts FROM pg_stat_recovery_prefetch \gset
 -- Test that reset_shared with wal specified as the stats type works
 SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
 SELECT pg_stat_reset_shared('wal');
@@ -985,12 +1000,22 @@ SELECT stats_reset = :'checkpointer_reset_ts'::timestamptz FROM pg_stat_checkpoi
  t
 (1 row)
 
+SELECT stats_reset = :'recovery_prefetch_reset_ts'::timestamptz FROM pg_stat_recovery_prefetch;
+ ?column? 
+----------
+ t
+(1 row)
+
 SELECT stats_reset = :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
  ?column? 
 ----------
  t
 (1 row)
 
+-- Test error case for reset_shared with unknown stats type
+SELECT pg_stat_reset_shared('unknown');
+ERROR:  unrecognized reset target: "unknown"
+HINT:  Target must be "archiver", "bgwriter", "checkpointer", "io", "recovery_prefetch", or "wal".
 -- Test that reset works for pg_stat_database
 -- Since pg_stat_database stats_reset starts out as NULL, reset it once first so we have something to compare it to
 SELECT pg_stat_reset();
