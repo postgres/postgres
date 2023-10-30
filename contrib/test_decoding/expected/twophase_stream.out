@@ -31,7 +31,10 @@ PREPARE TRANSACTION 'test1';
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
                            data                           
 ----------------------------------------------------------
+ opening a streamed block for transaction
  streaming message: transactional: 1 prefix: test, sz: 50
+ closing a streamed block for transaction
+ aborting streamed (sub)transaction
  opening a streamed block for transaction
  streaming change for transaction
  streaming change for transaction
@@ -55,7 +58,7 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL, 'incl
  streaming change for transaction
  closing a streamed block for transaction
  preparing streamed transaction 'test1'
-(24 rows)
+(27 rows)
 
 COMMIT PREPARED 'test1';
 --should show the COMMIT PREPARED and the other changes in the transaction
@@ -84,8 +87,11 @@ PREPARE TRANSACTION 'test1_nodecode';
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
                            data                           
 ----------------------------------------------------------
+ opening a streamed block for transaction
  streaming message: transactional: 1 prefix: test, sz: 50
-(1 row)
+ closing a streamed block for transaction
+ aborting streamed (sub)transaction
+(4 rows)
 
 COMMIT PREPARED 'test1_nodecode';
 -- should show the inserts but not show a COMMIT PREPARED but a COMMIT

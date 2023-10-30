@@ -944,6 +944,19 @@ pg_decode_stream_message(LogicalDecodingContext *ctx,
 						 ReorderBufferTXN *txn, XLogRecPtr lsn, bool transactional,
 						 const char *prefix, Size sz, const char *message)
 {
+	/* Output stream start if we haven't yet for transactional messages. */
+	if (transactional)
+	{
+		TestDecodingData *data = ctx->output_plugin_private;
+		TestDecodingTxnData *txndata = txn->output_plugin_private;
+
+		if (data->skip_empty_xacts && !txndata->stream_wrote_changes)
+		{
+			pg_output_stream_start(ctx, data, txn, false);
+		}
+		txndata->xact_wrote_changes = txndata->stream_wrote_changes = true;
+	}
+
 	OutputPluginPrepareWrite(ctx, true);
 
 	if (transactional)
