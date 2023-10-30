@@ -157,6 +157,9 @@ static void bt_check_every_level(Relation rel, Relation heaprel,
 								 bool rootdescend, bool checkunique);
 static BtreeLevel bt_check_level_from_leftmost(BtreeCheckState *state,
 											   BtreeLevel level);
+static bool bt_leftmost_ignoring_half_dead(BtreeCheckState *state,
+										   BlockNumber start,
+										   BTPageOpaque start_opaque);
 static void bt_recheck_sibling_links(BtreeCheckState *state,
 									 BlockNumber btpo_prev_from_target,
 									 BlockNumber leftcurrent);
@@ -826,7 +829,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 			 */
 			if (state->readonly)
 			{
-				if (!P_LEFTMOST(opaque))
+				if (!bt_leftmost_ignoring_half_dead(state, current, opaque))
 					ereport(ERROR,
 							(errcode(ERRCODE_INDEX_CORRUPTED),
 							 errmsg("block %u is not leftmost in index \"%s\"",
@@ -880,8 +883,16 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 			 */
 		}
 
-		/* Sibling links should be in mutual agreement */
-		if (opaque->btpo_prev != leftcurrent)
+		/*
+		 * Sibling links should be in mutual agreement.  There arises
+		 * leftcurrent == P_NONE && btpo_prev != P_NONE when the left sibling
+		 * of the parent's low-key downlink is half-dead.  (A half-dead page
+		 * has no downlink from its parent.)  Under heavyweight locking, the
+		 * last bt_leftmost_ignoring_half_dead() validated this btpo_prev.
+		 * Without heavyweight locking, validation of the P_NONE case remains
+		 * unimplemented.
+		 */
+		if (opaque->btpo_prev != leftcurrent && leftcurrent != P_NONE)
 			bt_recheck_sibling_links(state, opaque->btpo_prev, leftcurrent);
 
 		/* Check level */
@@ -1118,6 +1129,66 @@ bt_entry_unique_check(BtreeCheckState *state, IndexTuple itup,
 }
 
 /*
+ * Like P_LEFTMOST(start_opaque), but accept an arbitrarily-long chain of
+ * half-dead, sibling-linked pages to the left.  If a half-dead page appears
+ * under state->readonly, the database exited recovery between the first-stage
+ * and second-stage WAL records of a deletion.
+ */
+static bool
+bt_leftmost_ignoring_half_dead(BtreeCheckState *state,
+							   BlockNumber start,
+							   BTPageOpaque start_opaque)
+{
+	BlockNumber reached = start_opaque->btpo_prev,
+				reached_from = start;
+	bool		all_half_dead = true;
+
+	/*
+	 * To handle the !readonly case, we'd need to accept BTP_DELETED pages and
+	 * potentially observe nbtree/README "Page deletion and backwards scans".
+	 */
+	Assert(state->readonly);
+
+	while (reached != P_NONE && all_half_dead)
+	{
+		Page		page = palloc_btree_page(state, reached);
+		BTPageOpaque reached_opaque = BTPageGetOpaque(page);
+
+		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * Try to detect btpo_prev circular links.  _bt_unlink_halfdead_page()
+		 * writes that side-links will continue to point to the siblings.
+		 * Check btpo_next for that property.
+		 */
+		all_half_dead = P_ISHALFDEAD(reached_opaque) &&
+			reached != start &&
+			reached != reached_from &&
+			reached_opaque->btpo_next == reached_from;
+		if (all_half_dead)
+		{
+			XLogRecPtr	pagelsn = PageGetLSN(page);
+
+			/* pagelsn should point to an XLOG_BTREE_MARK_PAGE_HALFDEAD */
+			ereport(DEBUG1,
+					(errcode(ERRCODE_NO_DATA),
+					 errmsg_internal("harmless interrupted page deletion detected in index \"%s\"",
+									 RelationGetRelationName(state->rel)),
+					 errdetail_internal("Block=%u right block=%u page lsn=%X/%X.",
+										reached, reached_from,
+										LSN_FORMAT_ARGS(pagelsn))));
+
+			reached_from = reached;
+			reached = reached_opaque->btpo_prev;
+		}
+
+		pfree(page);
+	}
+
+	return all_half_dead;
+}
+
+/*
  * Raise an error when target page's left link does not point back to the
  * previous target page, called leftcurrent here.  The leftcurrent page's
  * right link was followed to get to the current target page, and we expect
@@ -1157,6 +1228,9 @@ bt_recheck_sibling_links(BtreeCheckState *state,
 						 BlockNumber btpo_prev_from_target,
 						 BlockNumber leftcurrent)
 {
+	/* passing metapage to BTPageGetOpaque() would give irrelevant findings */
+	Assert(leftcurrent != P_NONE);
+
 	if (!state->readonly)
 	{
 		Buffer		lbuf;
@@ -2235,7 +2309,8 @@ bt_child_highkey_check(BtreeCheckState *state,
 		opaque = BTPageGetOpaque(page);
 
 		/* The first page we visit at the level should be leftmost */
-		if (first && !BlockNumberIsValid(state->prevrightlink) && !P_LEFTMOST(opaque))
+		if (first && !BlockNumberIsValid(state->prevrightlink) &&
+			!bt_leftmost_ignoring_half_dead(state, blkno, opaque))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("the first child of leftmost target page is not leftmost of its level in index \"%s\"",
