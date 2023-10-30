@@ -1018,7 +1018,6 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 	Oid			indexoid = PG_GETARG_OID(0);
 	Relation	indexRel = index_open(indexoid, AccessShareLock);
 	IndexBulkDeleteResult stats;
-	GinState	ginstate;
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -1050,8 +1049,26 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 					   RelationGetRelationName(indexRel));
 
 	memset(&stats, 0, sizeof(stats));
-	initGinState(&ginstate, indexRel);
-	ginInsertCleanup(&ginstate, true, true, true, &stats);
+
+	/*
+	 * Can't assume anything about the content of an !indisready index.  Make
+	 * those a no-op, not an error, so users can just run this function on all
+	 * indexes of the access method.  Since an indisready&&!indisvalid index
+	 * is merely awaiting missed aminsert calls, we're capable of processing
+	 * it.  Decline to do so, out of an abundance of caution.
+	 */
+	if (indexRel->rd_index->indisvalid)
+	{
+		GinState	ginstate;
+
+		initGinState(&ginstate, indexRel);
+		ginInsertCleanup(&ginstate, true, true, true, &stats);
+	}
+	else
+		ereport(DEBUG1,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("index \"%s\" is not valid",
+						RelationGetRelationName(indexRel))));
 
 	index_close(indexRel, AccessShareLock);
 
