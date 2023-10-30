@@ -1056,9 +1056,9 @@ bt_entry_unique_check(BtreeCheckState *state, IndexTuple itup,
 				}
 
 				/*
-				 * Prevent double reporting unique constraint violation between
-				 * the posting list entries of the first tuple on the page after
-				 * cross-page check.
+				 * Prevent double reporting unique constraint violation
+				 * between the posting list entries of the first tuple on the
+				 * page after cross-page check.
 				 */
 				if (*lVis_block != targetblock && ItemPointerIsValid(*lVis_tid))
 					return;
@@ -1072,8 +1072,8 @@ bt_entry_unique_check(BtreeCheckState *state, IndexTuple itup,
 	}
 
 	/*
-	 * Current tuple has no posting list. If TID is visible save info about
-	 * it for the next comparisons in the loop in bt_page_check(). Report
+	 * Current tuple has no posting list. If TID is visible save info about it
+	 * for the next comparisons in the loop in bt_page_check(). Report
 	 * duplicate if lVis_tid is already valid.
 	 */
 	else
@@ -1694,8 +1694,8 @@ bt_target_page_check(BtreeCheckState *state)
 		}
 
 		/*
-		 * If the index is unique verify entries uniqueness by checking the heap
-		 * tuples visibility.
+		 * If the index is unique verify entries uniqueness by checking the
+		 * heap tuples visibility.
 		 */
 		if (state->checkunique && state->indexinfo->ii_Unique &&
 			P_ISLEAF(topaque) && !skey->anynullkeys)
