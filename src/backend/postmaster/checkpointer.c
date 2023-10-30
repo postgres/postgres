@@ -358,7 +358,7 @@ CheckpointerMain(void)
 		if (((volatile CheckpointerShmemStruct *) CheckpointerShmem)->ckpt_flags)
 		{
 			do_checkpoint = true;
-			PendingCheckpointerStats.requested_checkpoints++;
+			PendingCheckpointerStats.num_requested++;
 		}
 
 		/*
@@ -372,7 +372,7 @@ CheckpointerMain(void)
 		if (elapsed_secs >= CheckPointTimeout)
 		{
 			if (!do_checkpoint)
-				PendingCheckpointerStats.timed_checkpoints++;
+				PendingCheckpointerStats.num_timed++;
 			do_checkpoint = true;
 			flags |= CHECKPOINT_CAUSE_TIME;
 		}
@@ -569,7 +569,7 @@ HandleCheckpointerInterrupts(void)
 		 * updates the statistics, increment the checkpoint request and flush
 		 * out pending statistic.
 		 */
-		PendingCheckpointerStats.requested_checkpoints++;
+		PendingCheckpointerStats.num_requested++;
 		ShutdownXLOG(0, 0);
 		pgstat_report_checkpointer();
 		pgstat_report_wal(true);

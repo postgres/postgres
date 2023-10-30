@@ -2751,7 +2751,7 @@ BufferSync(int flags)
 			if (SyncOneBuffer(buf_id, false, &wb_context) & BUF_WRITTEN)
 			{
 				TRACE_POSTGRESQL_BUFFER_SYNC_WRITTEN(buf_id);
-				PendingCheckpointerStats.buf_written_checkpoints++;
+				PendingCheckpointerStats.buffers_written++;
 				num_written++;
 			}
 		}

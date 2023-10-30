@@ -1111,15 +1111,19 @@ CREATE VIEW pg_stat_archiver AS
 
 CREATE VIEW pg_stat_bgwriter AS
     SELECT
-        pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,
-        pg_stat_get_bgwriter_requested_checkpoints() AS checkpoints_req,
-        pg_stat_get_checkpoint_write_time() AS checkpoint_write_time,
-        pg_stat_get_checkpoint_sync_time() AS checkpoint_sync_time,
-        pg_stat_get_bgwriter_buf_written_checkpoints() AS buffers_checkpoint,
         pg_stat_get_bgwriter_buf_written_clean() AS buffers_clean,
         pg_stat_get_bgwriter_maxwritten_clean() AS maxwritten_clean,
         pg_stat_get_buf_alloc() AS buffers_alloc,
         pg_stat_get_bgwriter_stat_reset_time() AS stats_reset;
+
+CREATE VIEW pg_stat_checkpointer AS
+    SELECT
+        pg_stat_get_checkpointer_num_timed() AS num_timed,
+        pg_stat_get_checkpointer_num_requested() AS num_requested,
+        pg_stat_get_checkpointer_write_time() AS write_time,
+        pg_stat_get_checkpointer_sync_time() AS sync_time,
+        pg_stat_get_checkpointer_buffers_written() AS buffers_written,
+        pg_stat_get_checkpointer_stat_reset_time() AS stats_reset;
 
 CREATE VIEW pg_stat_io AS
 SELECT

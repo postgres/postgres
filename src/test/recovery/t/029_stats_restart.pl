@@ -173,7 +173,7 @@ is($wal_start->{reset}, $wal_restart->{reset},
 
 ## Check that checkpoint stats are reset, WAL stats aren't affected
 
-$node->safe_psql($connect_db, "SELECT pg_stat_reset_shared('bgwriter')");
+$node->safe_psql($connect_db, "SELECT pg_stat_reset_shared('checkpointer')");
 
 $sect = "post ckpt reset";
 my $ckpt_reset = checkpoint_stats();
@@ -323,9 +323,9 @@ sub checkpoint_stats
 	my %results;
 
 	$results{count} = $node->safe_psql($connect_db,
-		"SELECT checkpoints_timed + checkpoints_req FROM pg_stat_bgwriter");
+		"SELECT num_timed + num_requested FROM pg_stat_checkpointer");
 	$results{reset} = $node->safe_psql($connect_db,
-		"SELECT stats_reset FROM pg_stat_bgwriter");
+		"SELECT stats_reset FROM pg_stat_checkpointer");
 
 	return \%results;
 }

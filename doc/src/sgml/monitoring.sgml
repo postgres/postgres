@@ -452,6 +452,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_checkpointer</structname><indexterm><primary>pg_stat_checkpointer</primary></indexterm></entry>
+      <entry>One row only, showing statistics about the
+       checkpointer process's activity. See
+       <link linkend="monitoring-pg-stat-checkpointer-view">
+       <structname>pg_stat_checkpointer</structname></link> for details.
+     </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_database</structname><indexterm><primary>pg_stat_database</primary></indexterm></entry>
       <entry>One row per database, showing database-wide statistics. See
        <link linkend="monitoring-pg-stat-database-view">
@@ -2868,7 +2877,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
   <para>
    The <structname>pg_stat_bgwriter</structname> view will always have a
-   single row, containing global data for the cluster.
+   single row, containing data about the background writer of the cluster.
   </para>
 
   <table id="pg-stat-bgwriter-view" xreflabel="pg_stat_bgwriter">
@@ -2886,54 +2895,6 @@ description | Waiting for a newly initialized WAL file to reach durable storage
     </thead>
 
     <tbody>
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>checkpoints_timed</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of scheduled checkpoints that have been performed
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>checkpoints_req</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of requested checkpoints that have been performed
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>checkpoint_write_time</structfield> <type>double precision</type>
-      </para>
-      <para>
-       Total amount of time that has been spent in the portion of
-       checkpoint processing where files are written to disk, in milliseconds
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>checkpoint_sync_time</structfield> <type>double precision</type>
-      </para>
-      <para>
-       Total amount of time that has been spent in the portion of
-       checkpoint processing where files are synchronized to disk, in
-       milliseconds
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>buffers_checkpoint</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of buffers written during checkpoints
-      </para></entry>
-     </row>
-
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>buffers_clean</structfield> <type>bigint</type>
@@ -2959,6 +2920,95 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Number of buffers allocated
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which these statistics were last reset
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-checkpointer-view">
+  <title><structname>pg_stat_checkpointer</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_checkpointer</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_checkpointer</structname> view will always have a
+   single row, containing data about the checkpointer process of the cluster.
+  </para>
+
+  <table id="pg-stat-checkpointer-view" xreflabel="pg_stat_checkpointer">
+   <title><structname>pg_stat_checkpointer</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>num_timed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of scheduled checkpoints that have been performed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>num_requested</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of requested checkpoints that have been performed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>write_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total amount of time that has been spent in the portion of
+       checkpoint processing where files are written to disk, in milliseconds
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sync_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total amount of time that has been spent in the portion of
+       checkpoint processing where files are synchronized to disk, in
+       milliseconds
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_written</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffers written during checkpoints
       </para></entry>
      </row>
 
@@ -4669,8 +4719,10 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         Resets some cluster-wide statistics counters to zero, depending on the
         argument.  The argument can be <literal>bgwriter</literal> to reset
         all the counters shown in
-        the <structname>pg_stat_bgwriter</structname>
-        view, <literal>archiver</literal> to reset all the counters shown in
+        the <structname>pg_stat_bgwriter</structname> view,
+        <literal>checkpointer</literal> to reset all the counters shown in
+        the <structname>pg_stat_checkpointer</structname> view,
+        <literal>archiver</literal> to reset all the counters shown in
         the <structname>pg_stat_archiver</structname> view,
         <literal>io</literal> to reset all the counters shown in the
         <structname>pg_stat_io</structname> view,

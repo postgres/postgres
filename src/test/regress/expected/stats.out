@@ -828,8 +828,8 @@ SELECT sessions > :db_stat_sessions FROM pg_stat_database WHERE datname = (SELEC
  t
 (1 row)
 
--- Test pg_stat_bgwriter checkpointer-related stats, together with pg_stat_wal
-SELECT checkpoints_req AS rqst_ckpts_before FROM pg_stat_bgwriter \gset
+-- Test pg_stat_checkpointer checkpointer-related stats, together with pg_stat_wal
+SELECT num_requested AS rqst_ckpts_before FROM pg_stat_checkpointer \gset
 -- Test pg_stat_wal (and make a temp table so our temp schema exists)
 SELECT wal_bytes AS wal_bytes_before FROM pg_stat_wal \gset
 CREATE TEMP TABLE test_stats_temp AS SELECT 17;
@@ -839,7 +839,7 @@ DROP TABLE test_stats_temp;
 -- results of the first.
 CHECKPOINT;
 CHECKPOINT;
-SELECT checkpoints_req > :rqst_ckpts_before FROM pg_stat_bgwriter;
+SELECT num_requested > :rqst_ckpts_before FROM pg_stat_checkpointer;
  ?column? 
 ----------
  t
@@ -930,6 +930,21 @@ SELECT stats_reset > :'bgwriter_reset_ts'::timestamptz FROM pg_stat_bgwriter;
 (1 row)
 
 SELECT stats_reset AS bgwriter_reset_ts FROM pg_stat_bgwriter \gset
+-- Test that reset_shared with checkpointer specified as the stats type works
+SELECT stats_reset AS checkpointer_reset_ts FROM pg_stat_checkpointer \gset
+SELECT pg_stat_reset_shared('checkpointer');
+ pg_stat_reset_shared 
+----------------------
+ 
+(1 row)
+
+SELECT stats_reset > :'checkpointer_reset_ts'::timestamptz FROM pg_stat_checkpointer;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT stats_reset AS checkpointer_reset_ts FROM pg_stat_checkpointer \gset
 -- Test that reset_shared with wal specified as the stats type works
 SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
 SELECT pg_stat_reset_shared('wal');
@@ -959,6 +974,12 @@ SELECT stats_reset = :'archiver_reset_ts'::timestamptz FROM pg_stat_archiver;
 (1 row)
 
 SELECT stats_reset = :'bgwriter_reset_ts'::timestamptz FROM pg_stat_bgwriter;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT stats_reset = :'checkpointer_reset_ts'::timestamptz FROM pg_stat_checkpointer;
  ?column? 
 ----------
  t

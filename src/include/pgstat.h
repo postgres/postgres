@@ -260,11 +260,12 @@ typedef struct PgStat_BgWriterStats
 
 typedef struct PgStat_CheckpointerStats
 {
-	PgStat_Counter timed_checkpoints;
-	PgStat_Counter requested_checkpoints;
-	PgStat_Counter checkpoint_write_time;	/* times in milliseconds */
-	PgStat_Counter checkpoint_sync_time;
-	PgStat_Counter buf_written_checkpoints;
+	PgStat_Counter num_timed;
+	PgStat_Counter num_requested;
+	PgStat_Counter write_time;	/* times in milliseconds */
+	PgStat_Counter sync_time;
+	PgStat_Counter buffers_written;
+	TimestampTz stat_reset_timestamp;
 } PgStat_CheckpointerStats;
 
 

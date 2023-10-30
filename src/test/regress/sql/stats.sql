@@ -417,8 +417,8 @@ SELECT sessions AS db_stat_sessions FROM pg_stat_database WHERE datname = (SELEC
 SELECT pg_stat_force_next_flush();
 SELECT sessions > :db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database());
 
--- Test pg_stat_bgwriter checkpointer-related stats, together with pg_stat_wal
-SELECT checkpoints_req AS rqst_ckpts_before FROM pg_stat_bgwriter \gset
+-- Test pg_stat_checkpointer checkpointer-related stats, together with pg_stat_wal
+SELECT num_requested AS rqst_ckpts_before FROM pg_stat_checkpointer \gset
 
 -- Test pg_stat_wal (and make a temp table so our temp schema exists)
 SELECT wal_bytes AS wal_bytes_before FROM pg_stat_wal \gset
@@ -432,7 +432,7 @@ DROP TABLE test_stats_temp;
 CHECKPOINT;
 CHECKPOINT;
 
-SELECT checkpoints_req > :rqst_ckpts_before FROM pg_stat_bgwriter;
+SELECT num_requested > :rqst_ckpts_before FROM pg_stat_checkpointer;
 SELECT wal_bytes > :wal_bytes_before FROM pg_stat_wal;
 
 -- Test pg_stat_get_backend_idset() and some allied functions.
@@ -470,6 +470,12 @@ SELECT pg_stat_reset_shared('bgwriter');
 SELECT stats_reset > :'bgwriter_reset_ts'::timestamptz FROM pg_stat_bgwriter;
 SELECT stats_reset AS bgwriter_reset_ts FROM pg_stat_bgwriter \gset
 
+-- Test that reset_shared with checkpointer specified as the stats type works
+SELECT stats_reset AS checkpointer_reset_ts FROM pg_stat_checkpointer \gset
+SELECT pg_stat_reset_shared('checkpointer');
+SELECT stats_reset > :'checkpointer_reset_ts'::timestamptz FROM pg_stat_checkpointer;
+SELECT stats_reset AS checkpointer_reset_ts FROM pg_stat_checkpointer \gset
+
 -- Test that reset_shared with wal specified as the stats type works
 SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
 SELECT pg_stat_reset_shared('wal');
@@ -480,6 +486,7 @@ SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
 SELECT pg_stat_reset_shared(NULL);
 SELECT stats_reset = :'archiver_reset_ts'::timestamptz FROM pg_stat_archiver;
 SELECT stats_reset = :'bgwriter_reset_ts'::timestamptz FROM pg_stat_bgwriter;
+SELECT stats_reset = :'checkpointer_reset_ts'::timestamptz FROM pg_stat_checkpointer;
 SELECT stats_reset = :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
 
 -- Test that reset works for pg_stat_database

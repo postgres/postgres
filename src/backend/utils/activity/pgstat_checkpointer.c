@@ -47,11 +47,11 @@ pgstat_report_checkpointer(void)
 	pgstat_begin_changecount_write(&stats_shmem->changecount);
 
 #define CHECKPOINTER_ACC(fld) stats_shmem->stats.fld += PendingCheckpointerStats.fld
-	CHECKPOINTER_ACC(timed_checkpoints);
-	CHECKPOINTER_ACC(requested_checkpoints);
-	CHECKPOINTER_ACC(checkpoint_write_time);
-	CHECKPOINTER_ACC(checkpoint_sync_time);
-	CHECKPOINTER_ACC(buf_written_checkpoints);
+	CHECKPOINTER_ACC(num_timed);
+	CHECKPOINTER_ACC(num_requested);
+	CHECKPOINTER_ACC(write_time);
+	CHECKPOINTER_ACC(sync_time);
+	CHECKPOINTER_ACC(buffers_written);
 #undef CHECKPOINTER_ACC
 
 	pgstat_end_changecount_write(&stats_shmem->changecount);
@@ -92,6 +92,7 @@ pgstat_checkpointer_reset_all_cb(TimestampTz ts)
 									&stats_shmem->stats,
 									sizeof(stats_shmem->stats),
 									&stats_shmem->changecount);
+	stats_shmem->stats.stat_reset_timestamp = ts;
 	LWLockRelease(&stats_shmem->lock);
 }
 
@@ -113,10 +114,10 @@ pgstat_checkpointer_snapshot_cb(void)
 
 	/* compensate by reset offsets */
 #define CHECKPOINTER_COMP(fld) pgStatLocal.snapshot.checkpointer.fld -= reset.fld;
-	CHECKPOINTER_COMP(timed_checkpoints);
-	CHECKPOINTER_COMP(requested_checkpoints);
-	CHECKPOINTER_COMP(checkpoint_write_time);
-	CHECKPOINTER_COMP(checkpoint_sync_time);
-	CHECKPOINTER_COMP(buf_written_checkpoints);
+	CHECKPOINTER_COMP(num_timed);
+	CHECKPOINTER_COMP(num_requested);
+	CHECKPOINTER_COMP(write_time);
+	CHECKPOINTER_COMP(sync_time);
+	CHECKPOINTER_COMP(buffers_written);
 #undef CHECKPOINTER_COMP
 }
