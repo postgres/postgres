@@ -651,20 +651,20 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 								checkPoint.ThisTimeLineID))
 					ereport(FATAL,
 							(errmsg("could not find redo location referenced by checkpoint record"),
-							 errhint("If you are restoring from a backup, touch \"%s/recovery.signal\" and add required recovery options.\n"
+							 errhint("If you are restoring from a backup, touch \"%s/recovery.signal\" or \"%s/standby.signal\" and add required recovery options.\n"
 									 "If you are not restoring from a backup, try removing the file \"%s/backup_label\".\n"
 									 "Be careful: removing \"%s/backup_label\" will result in a corrupt cluster if restoring from a backup.",
-									 DataDir, DataDir, DataDir)));
+									 DataDir, DataDir, DataDir, DataDir)));
 			}
 		}
 		else
 		{
 			ereport(FATAL,
 					(errmsg("could not locate required checkpoint record"),
-					 errhint("If you are restoring from a backup, touch \"%s/recovery.signal\" and add required recovery options.\n"
+					 errhint("If you are restoring from a backup, touch \"%s/recovery.signal\" or \"%s/standby.signal\" and add required recovery options.\n"
 							 "If you are not restoring from a backup, try removing the file \"%s/backup_label\".\n"
 							 "Be careful: removing \"%s/backup_label\" will result in a corrupt cluster if restoring from a backup.",
-							 DataDir, DataDir, DataDir)));
+							 DataDir, DataDir, DataDir, DataDir)));
 			wasShutdown = false;	/* keep compiler quiet */
 		}
 
