@@ -11702,7 +11702,7 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         On the publisher side, <varname>debug_logical_replication_streaming</varname>
         allows streaming or serializing changes immediately in logical decoding.
         When set to <literal>immediate</literal>, stream each change if the
-        <link linkend="sql-createsubscription-with-streaming"><literal>streaming</literal></link>
+        <link linkend="sql-createsubscription-params-with-streaming"><literal>streaming</literal></link>
         option of
         <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>
         is enabled, otherwise, serialize each change.  When set to

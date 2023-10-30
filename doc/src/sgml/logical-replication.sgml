@@ -253,7 +253,7 @@
    will be filled with the default value as specified in the definition of the
    target table. However, logical replication in binary format is more
    restrictive. See the
-   <link linkend="sql-createsubscription-with-binary"><literal>binary</literal></link>
+   <link linkend="sql-createsubscription-params-with-binary"><literal>binary</literal></link>
    option of <command>CREATE SUBSCRIPTION</command> for details.
   </para>
 
@@ -371,7 +371,7 @@ INSERT 0 3
     <para>
      Create publications for the tables. The publications <literal>pub2</literal>
      and <literal>pub3a</literal> disallow some
-     <link linkend="sql-createpublication-with-publish"><literal>publish</literal></link>
+     <link linkend="sql-createpublication-params-with-publish"><literal>publish</literal></link>
      operations. The publication <literal>pub3b</literal> has a row filter (see
      <xref linkend="logical-replication-row-filter"/>).
 <programlisting>
@@ -593,7 +593,7 @@ ALTER SUBSCRIPTION
    <para>
     Example 2: Where the subscription says <literal>connect = false</literal>,
     but also specifies the
-    <link linkend="sql-createsubscription-with-slot-name"><literal>slot_name</literal></link>
+    <link linkend="sql-createsubscription-params-with-slot-name"><literal>slot_name</literal></link>
     option.
     <itemizedlist>
      <listitem>
@@ -712,7 +712,7 @@ ALTER SUBSCRIPTION
     then the row is not replicated. The <literal>WHERE</literal> clause expression
     is evaluated with the same role used for the replication connection (i.e.
     the role specified in the
-    <link linkend="sql-createsubscription-connection"><literal>CONNECTION</literal></link>
+    <link linkend="sql-createsubscription-params-connection"><literal>CONNECTION</literal></link>
     clause of the <xref linkend="sql-createsubscription"/>). Row filters have
     no effect for <command>TRUNCATE</command> command.
    </para>
@@ -805,7 +805,7 @@ ALTER SUBSCRIPTION
 
    <para>
     If the publication contains a partitioned table, the publication parameter
-    <link linkend="sql-createpublication-with-publish-via-partition-root"><literal>publish_via_partition_root</literal></link>
+    <link linkend="sql-createpublication-params-with-publish-via-partition-root"><literal>publish_via_partition_root</literal></link>
     determines which row filter is used. If <literal>publish_via_partition_root</literal>
     is <literal>true</literal>, the <emphasis>root partitioned table's</emphasis>
     row filter is used. Otherwise, if <literal>publish_via_partition_root</literal>
@@ -834,7 +834,7 @@ ALTER SUBSCRIPTION
    <warning>
     <para>
      Because initial data synchronization does not take into account the
-     <link linkend="sql-createpublication-with-publish"><literal>publish</literal></link>
+     <link linkend="sql-createpublication-params-with-publish"><literal>publish</literal></link>
      parameter when copying existing table data, some rows may be copied that
      would not be replicated using DML. Refer to
      <xref linkend="logical-replication-snapshot"/>, and see
@@ -858,7 +858,7 @@ ALTER SUBSCRIPTION
    <para>
     If the subscription has several publications in which the same table has
     been published with different row filters (for the same
-    <link linkend="sql-createpublication-with-publish"><literal>publish</literal></link>
+    <link linkend="sql-createpublication-params-with-publish"><literal>publish</literal></link>
     operation), those expressions get ORed together, so that rows satisfying
     <emphasis>any</emphasis> of the expressions will be replicated. This means all
     the other row filters for the same table become redundant if:
@@ -871,14 +871,14 @@ ALTER SUBSCRIPTION
      <listitem>
       <para>
        One of the publications was created using
-       <link linkend="sql-createpublication-for-all-tables"><literal>FOR ALL TABLES</literal></link>.
+       <link linkend="sql-createpublication-params-for-all-tables"><literal>FOR ALL TABLES</literal></link>.
        This clause does not allow row filters.
       </para>
      </listitem>
      <listitem>
       <para>
        One of the publications was created using
-       <link linkend="sql-createpublication-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
+       <link linkend="sql-createpublication-params-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
        and the table belongs to the referred schema. This clause does not allow
        row filters.
       </para>
@@ -1145,7 +1145,7 @@ test_sub=# SELECT * FROM t1;
 
    <para>
     The following examples show how the publication parameter
-    <link linkend="sql-createpublication-with-publish-via-partition-root"><literal>publish_via_partition_root</literal></link>
+    <link linkend="sql-createpublication-params-with-publish-via-partition-root"><literal>publish_via_partition_root</literal></link>
     determines whether the row filter of the parent or child table will be used
     in the case of partitioned tables.
    </para>
@@ -1300,13 +1300,13 @@ test_sub=# SELECT * FROM child ORDER BY a;
 
   <para>
    Specifying a column list when the publication also publishes
-   <link linkend="sql-createpublication-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
+   <link linkend="sql-createpublication-params-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
    is not supported.
   </para>
 
   <para>
    For partitioned tables, the publication parameter
-   <link linkend="sql-createpublication-with-publish-via-partition-root"><literal>publish_via_partition_root</literal></link>
+   <link linkend="sql-createpublication-params-with-publish-via-partition-root"><literal>publish_via_partition_root</literal></link>
    determines which column list is used. If <literal>publish_via_partition_root</literal>
    is <literal>true</literal>, the root partitioned table's column list is
    used. Otherwise, if <literal>publish_via_partition_root</literal> is
@@ -1518,7 +1518,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    either by <link linkend="sql-altersubscription-params-disable">
    <command>ALTER SUBSCRIPTION ... DISABLE</command></link> or, the
    subscription can be used with the
-   <link linkend="sql-createsubscription-with-disable-on-error"><literal>disable_on_error</literal></link>
+   <link linkend="sql-createsubscription-params-with-disable-on-error"><literal>disable_on_error</literal></link>
    option. Then, you can use <function>pg_replication_origin_advance()</function>
    function with the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>)
    and the next LSN of the finish LSN (i.e., 0/14C0379).  The current position of
@@ -1531,7 +1531,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
   <para>
    When the
-   <link linkend="sql-createsubscription-with-streaming"><literal>streaming</literal></link>
+   <link linkend="sql-createsubscription-params-with-streaming"><literal>streaming</literal></link>
    mode is <literal>parallel</literal>, the finish LSN of failed transactions
    may not be logged. In that case, it may be necessary to change the streaming
    mode to <literal>on</literal> or <literal>off</literal> and cause the same
@@ -1624,7 +1624,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
      using the identity and schema of the partitioned root table instead of
      that of the individual leaf partitions in which the changes actually
      originate (see
-     <link linkend="sql-createpublication-with-publish-via-partition-root"><literal>publish_via_partition_root</literal></link>
+     <link linkend="sql-createpublication-params-with-publish-via-partition-root"><literal>publish_via_partition_root</literal></link>
      parameter of <command>CREATE PUBLICATION</command>).
     </para>
    </listitem>
@@ -1709,7 +1709,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     <note>
      <para>
       The publication
-      <link linkend="sql-createpublication-with-publish"><literal>publish</literal></link>
+      <link linkend="sql-createpublication-params-with-publish"><literal>publish</literal></link>
       parameter only affects what DML operations will be replicated. The
       initial data synchronization does not take this parameter into account
       when copying the existing table data.
@@ -1743,7 +1743,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    zero rows in this view.  If the initial data synchronization of any
    table is in progress, there will be additional workers for the tables
    being synchronized. Moreover, if the
-   <link linkend="sql-createsubscription-with-streaming"><literal>streaming</literal></link>
+   <link linkend="sql-createsubscription-params-with-streaming"><literal>streaming</literal></link>
    transaction is applied in parallel, there may be additional parallel apply
    workers.
   </para>

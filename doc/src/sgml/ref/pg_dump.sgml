@@ -1488,7 +1488,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    truncate the target tables before initiating a new full table copy.  If users
    intend to copy initial data during refresh they must create the slot with
    <literal>two_phase = false</literal>.  After the initial sync, the
-   <link linkend="sql-createsubscription-with-two-phase"><literal>two_phase</literal></link>
+   <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
    option will be automatically enabled by the subscriber if the subscription
    had been originally created with <literal>two_phase = true</literal> option.
   </para>

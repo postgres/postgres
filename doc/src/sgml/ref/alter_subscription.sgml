@@ -72,9 +72,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
    executed inside a transaction block.
 
    These commands also cannot be executed when the subscription has
-   <link linkend="sql-createsubscription-with-two-phase"><literal>two_phase</literal></link>
+   <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
    commit enabled, unless
-   <link linkend="sql-createsubscription-with-copy-data"><literal>copy_data</literal></link>
+   <link linkend="sql-createsubscription-params-with-copy-data"><literal>copy_data</literal></link>
    is <literal>false</literal>. See column <structfield>subtwophasestate</structfield>
    of <link linkend="catalog-pg-subscription"><structname>pg_subscription</structname></link>
    to know the actual two-phase state.
@@ -178,12 +178,12 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
          <para>
           See <xref linkend="sql-createsubscription-notes"/> for details of
           how <literal>copy_data = true</literal> can interact with the
-          <link linkend="sql-createsubscription-with-origin"><literal>origin</literal></link>
+          <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>
           parameter.
          </para>
          <para>
           See the
-          <link linkend="sql-createsubscription-with-binary"><literal>binary</literal></link>
+          <link linkend="sql-createsubscription-params-with-binary"><literal>binary</literal></link>
           parameter of <command>CREATE SUBSCRIPTION</command> for details about
           copying pre-existing data in binary format.
          </para>
@@ -220,14 +220,14 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       This clause alters parameters originally set by
       <xref linkend="sql-createsubscription"/>.  See there for more
       information.  The parameters that can be altered are
-      <link linkend="sql-createsubscription-with-slot-name"><literal>slot_name</literal></link>,
-      <link linkend="sql-createsubscription-with-synchronous-commit"><literal>synchronous_commit</literal></link>,
-      <link linkend="sql-createsubscription-with-binary"><literal>binary</literal></link>,
-      <link linkend="sql-createsubscription-with-streaming"><literal>streaming</literal></link>,
-      <link linkend="sql-createsubscription-with-disable-on-error"><literal>disable_on_error</literal></link>,
-      <link linkend="sql-createsubscription-with-password-required"><literal>password_required</literal></link>,
-      <link linkend="sql-createsubscription-with-run-as-owner"><literal>run_as_owner</literal></link>, and
-      <link linkend="sql-createsubscription-with-origin"><literal>origin</literal></link>.
+      <link linkend="sql-createsubscription-params-with-slot-name"><literal>slot_name</literal></link>,
+      <link linkend="sql-createsubscription-params-with-synchronous-commit"><literal>synchronous_commit</literal></link>,
+      <link linkend="sql-createsubscription-params-with-binary"><literal>binary</literal></link>,
+      <link linkend="sql-createsubscription-params-with-streaming"><literal>streaming</literal></link>,
+      <link linkend="sql-createsubscription-params-with-disable-on-error"><literal>disable_on_error</literal></link>,
+      <link linkend="sql-createsubscription-params-with-password-required"><literal>password_required</literal></link>,
+      <link linkend="sql-createsubscription-params-with-run-as-owner"><literal>run_as_owner</literal></link>, and
+      <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>.
       Only a superuser can set <literal>password_required = false</literal>.
      </para>
     </listitem>
@@ -243,7 +243,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       the logical replication worker skips all data modification changes within
       the transaction.  This option has no effect on the transactions that are
       already prepared by enabling
-      <link linkend="sql-createsubscription-with-two-phase"><literal>two_phase</literal></link>
+      <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
       on the subscriber.
       After the logical replication worker successfully skips the transaction or
       finishes a transaction, the LSN (stored in

@@ -68,7 +68,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
   <title>Parameters</title>
 
   <variablelist>
-   <varlistentry id="sql-createsubscription-name">
+   <varlistentry id="sql-createsubscription-params-name">
     <term><replaceable class="parameter">subscription_name</replaceable></term>
     <listitem>
      <para>
@@ -77,7 +77,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
     </listitem>
    </varlistentry>
 
-   <varlistentry id="sql-createsubscription-connection">
+   <varlistentry id="sql-createsubscription-params-connection">
     <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
     <listitem>
      <para>
@@ -88,7 +88,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
     </listitem>
    </varlistentry>
 
-   <varlistentry id="sql-createsubscription-publication">
+   <varlistentry id="sql-createsubscription-params-publication">
     <term><literal>PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...]</literal></term>
     <listitem>
      <para>
@@ -97,7 +97,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
     </listitem>
    </varlistentry>
 
-   <varlistentry id="sql-createsubscription-with">
+   <varlistentry id="sql-createsubscription-params-with">
     <term><literal>WITH ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
@@ -109,7 +109,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
       <variablelist>
 
-       <varlistentry id="sql-createsubscription-with-connect">
+       <varlistentry id="sql-createsubscription-params-with-connect">
         <term><literal>connect</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -136,7 +136,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-create-slot">
+       <varlistentry id="sql-createsubscription-params-with-create-slot">
         <term><literal>create_slot</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -152,7 +152,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-enabled">
+       <varlistentry id="sql-createsubscription-params-with-enabled">
         <term><literal>enabled</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -163,7 +163,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-slot-name">
+       <varlistentry id="sql-createsubscription-params-with-slot-name">
         <term><literal>slot_name</literal> (<type>string</type>)</term>
         <listitem>
          <para>
@@ -192,7 +192,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
       <variablelist>
 
-       <varlistentry id="sql-createsubscription-with-binary">
+       <varlistentry id="sql-createsubscription-params-with-binary">
         <term><literal>binary</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -229,7 +229,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-copy-data">
+       <varlistentry id="sql-createsubscription-params-with-copy-data">
         <term><literal>copy_data</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -250,7 +250,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-streaming">
+       <varlistentry id="sql-createsubscription-params-with-streaming">
         <term><literal>streaming</literal> (<type>enum</type>)</term>
         <listitem>
          <para>
@@ -278,7 +278,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-synchronous-commit">
+       <varlistentry id="sql-createsubscription-params-with-synchronous-commit">
         <term><literal>synchronous_commit</literal> (<type>enum</type>)</term>
         <listitem>
          <para>
@@ -310,7 +310,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-two-phase">
+       <varlistentry id="sql-createsubscription-params-with-two-phase">
         <term><literal>two_phase</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -341,7 +341,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-disable-on-error">
+       <varlistentry id="sql-createsubscription-params-with-disable-on-error">
         <term><literal>disable_on_error</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -353,7 +353,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-password-required">
+       <varlistentry id="sql-createsubscription-params-with-password-required">
         <term><literal>password_required</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -366,7 +366,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-run-as-owner">
+       <varlistentry id="sql-createsubscription-params-with-run-as-owner">
         <term><literal>run_as_owner</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
@@ -380,7 +380,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         </listitem>
        </varlistentry>
 
-       <varlistentry id="sql-createsubscription-with-origin">
+       <varlistentry id="sql-createsubscription-params-with-origin">
         <term><literal>origin</literal> (<type>string</type>)</term>
         <listitem>
          <para>
@@ -452,8 +452,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    the case of different <literal>WHERE</literal> clauses, if one of the
    publications has no <literal>WHERE</literal> clause (referring to that
    publish operation) or the publication is declared as
-   <link linkend="sql-createpublication-for-all-tables"><literal>FOR ALL TABLES</literal></link>
-   or <link linkend="sql-createpublication-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>,
+   <link linkend="sql-createpublication-params-for-all-tables"><literal>FOR ALL TABLES</literal></link>
+   or <link linkend="sql-createpublication-params-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>,
    rows are always published regardless of the definition of the other
    expressions. If the subscriber is a <productname>PostgreSQL</productname>
    version before 15, then any row filtering is ignored during the initial data
@@ -461,7 +461,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    deleting any initially copied data that would be incompatible with
    subsequent filtering. Because initial data synchronization does not take
    into account the publication
-   <link linkend="sql-createpublication-with-publish"><literal>publish</literal></link>
+   <link linkend="sql-createpublication-params-with-publish"><literal>publish</literal></link>
    parameter when copying existing table data, some rows may be copied that
    would not be replicated using DML. See
    <xref linkend="logical-replication-subscription-examples"/> for examples.
