@@ -42,6 +42,7 @@ tests += {
       't/001_verify_heapam.pl',
       't/002_cic.pl',
       't/003_cic_2pc.pl',
+      't/005_pitr.pl',
     ],
   },
 }
