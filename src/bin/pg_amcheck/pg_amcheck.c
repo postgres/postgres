@@ -599,7 +599,8 @@ main(int argc, char *argv[])
 
 		/*
 		 * Check the version of amcheck extension. Skip requested unique
-		 * constraint check with warning if it is not yet supported by amcheck.
+		 * constraint check with warning if it is not yet supported by
+		 * amcheck.
 		 */
 		if (opts.checkunique == true)
 		{
