@@ -2384,7 +2384,8 @@ range_contains_elem_internal(TypeCacheEntry *typcache, RangeType *r, Datum val)
  * values into a range object.  They are modeled after heaptuple.c's
  * heap_compute_data_size() and heap_fill_tuple(), but we need not handle
  * null values here.  TYPE_IS_PACKABLE must test the same conditions as
- * heaptuple.c's ATT_IS_PACKABLE macro.
+ * heaptuple.c's ATT_IS_PACKABLE macro.  See the comments thare for more
+ * details.
  */
 
 /* Does datatype allow packing into the 1-byte-header varlena format? */
