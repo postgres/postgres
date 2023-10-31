@@ -1174,7 +1174,11 @@ SELECT '52093.89'::money::numeric::float8;
        </row>
        <row>
         <entry><type>character(<replaceable>n</replaceable>)</type>, <type>char(<replaceable>n</replaceable>)</type>, <type>bpchar(<replaceable>n</replaceable>)</type></entry>
-        <entry>fixed-length, blank padded</entry>
+        <entry>fixed-length, blank-padded</entry>
+       </row>
+       <row>
+        <entry><type>bpchar</type></entry>
+        <entry>variable unlimited length, blank-trimmed</entry>
        </row>
        <row>
         <entry><type>text</type></entry>
@@ -1230,19 +1234,22 @@ SELECT '52093.89'::money::numeric::float8;
 
    <para>
     The type name <type>varchar</type> is an alias for <type>character
-    varying</type>, while <type>char</type> and <type>bpchar</type> are
-    aliases for <type>character</type>.
-    The <type>varchar</type> and <type>char</type> aliases are defined in
-    the <acronym>SQL</acronym> standard, but <type>bpchar</type> is
-    a <productname>PostgreSQL</productname> extension.
+    varying</type>, while <type>bpchar</type> (with length specifier) and
+    <type>char</type> are aliases for <type>character</type>.  The
+    <type>varchar</type> and <type>char</type> aliases are defined in the
+    <acronym>SQL</acronym> standard;  <type>bpchar</type> is a
+    <productname>PostgreSQL</productname> extension.
    </para>
 
    <para>
     If specified, the length <replaceable>n</replaceable> must be greater
-    than zero and cannot exceed 10485760.
-    <type>character</type> without length specifier is equivalent to
-    <type>character(1)</type>. If <type>character varying</type> is used
-    without length specifier, the type accepts strings of any size.
+    than zero and cannot exceed 10,485,760.  If <type>character
+    varying</type> (or <type>varchar</type>) is used without
+    length specifier, the type accepts strings of any length. If
+    <type>bpchar</type> lacks a length specifier, it also accepts strings
+    of any length, but trailing spaces are semantically insignificant.
+    If <type>character</type> (or <type>char</type>) lacks a specifier,
+    it is equivalent to <type>character(1)</type>.
    </para>
 
    <para>
