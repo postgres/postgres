@@ -110,7 +110,7 @@
 #ssl_crl_file = ''
 #ssl_crl_dir = ''
 #ssl_key_file = 'server.key'
-#ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
+#ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'	# allowed SSL ciphers
 #ssl_prefer_server_ciphers = on
 #ssl_ecdh_curve = 'prime256v1'
 #ssl_min_protocol_version = 'TLSv1.2'
@@ -246,9 +246,9 @@
 
 # - Prefetching during recovery -
 
-#recovery_prefetch = try		# prefetch pages referenced in the WAL?
-#wal_decode_buffer_size = 512kB		# lookahead window used for prefetching
-					# (change requires restart)
+#recovery_prefetch = try	# prefetch pages referenced in the WAL?
+#wal_decode_buffer_size = 512kB	# lookahead window used for prefetching
+				# (change requires restart)
 
 # - Archiving -
 
@@ -280,7 +280,7 @@
 # Set these only when performing a targeted recovery.
 
 #recovery_target = ''		# 'immediate' to end recovery as soon as a
-                                # consistent state is reached
+				# consistent state is reached
 				# (change requires restart)
 #recovery_target_name = ''	# the named restore point to which recovery will proceed
 				# (change requires restart)
@@ -290,14 +290,14 @@
 				# (change requires restart)
 #recovery_target_lsn = ''	# the WAL LSN up to which recovery will proceed
 				# (change requires restart)
-#recovery_target_inclusive = on # Specifies whether to stop:
+#recovery_target_inclusive = on	# Specifies whether to stop:
 				# just after the specified recovery target (on)
 				# just before the recovery target (off)
 				# (change requires restart)
 #recovery_target_timeline = 'latest'	# 'current', 'latest', or timeline ID
-				# (change requires restart)
+					# (change requires restart)
 #recovery_target_action = 'pause'	# 'pause', 'promote', 'shutdown'
-				# (change requires restart)
+					# (change requires restart)
 
 
 #------------------------------------------------------------------------------
@@ -399,7 +399,7 @@
 #cpu_tuple_cost = 0.01			# same scale as above
 #cpu_index_tuple_cost = 0.005		# same scale as above
 #cpu_operator_cost = 0.0025		# same scale as above
-#parallel_setup_cost = 1000.0	# same scale as above
+#parallel_setup_cost = 1000.0		# same scale as above
 #parallel_tuple_cost = 0.1		# same scale as above
 #min_parallel_table_scan_size = 8MB
 #min_parallel_index_scan_size = 512kB
@@ -460,7 +460,7 @@
 #log_directory = 'log'			# directory where log files are written,
 					# can be absolute or relative to PGDATA
 #log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'	# log file name pattern,
-					# can include strftime() escapes
+							# can include strftime() escapes
 #log_file_mode = 0600			# creation mode for log files,
 					# begin with 0 to use octal notation
 #log_rotation_age = 1d			# Automatic rotation of logfiles will
@@ -642,19 +642,19 @@
 #autovacuum_vacuum_threshold = 50	# min number of row updates before
 					# vacuum
 #autovacuum_vacuum_insert_threshold = 1000	# min number of row inserts
-					# before vacuum; -1 disables insert
-					# vacuums
+						# before vacuum; -1 disables insert
+						# vacuums
 #autovacuum_analyze_threshold = 50	# min number of row updates before
 					# analyze
 #autovacuum_vacuum_scale_factor = 0.2	# fraction of table size before vacuum
 #autovacuum_vacuum_insert_scale_factor = 0.2	# fraction of inserts over table
-					# size before insert vacuum
+						# size before insert vacuum
 #autovacuum_analyze_scale_factor = 0.1	# fraction of table size before analyze
 #autovacuum_freeze_max_age = 200000000	# maximum XID age before forced vacuum
 					# (change requires restart)
 #autovacuum_multixact_freeze_max_age = 400000000	# maximum multixact age
-					# before forced vacuum
-					# (change requires restart)
+							# before forced vacuum
+							# (change requires restart)
 #autovacuum_vacuum_cost_delay = 2ms	# default vacuum cost delay for
 					# autovacuum, in milliseconds;
 					# -1 means use vacuum_cost_delay
@@ -691,10 +691,10 @@
 #default_transaction_read_only = off
 #default_transaction_deferrable = off
 #session_replication_role = 'origin'
-#statement_timeout = 0			# in milliseconds, 0 is disabled
-#lock_timeout = 0			# in milliseconds, 0 is disabled
+#statement_timeout = 0				# in milliseconds, 0 is disabled
+#lock_timeout = 0				# in milliseconds, 0 is disabled
 #idle_in_transaction_session_timeout = 0	# in milliseconds, 0 is disabled
-#idle_session_timeout = 0		# in milliseconds, 0 is disabled
+#idle_session_timeout = 0			# in milliseconds, 0 is disabled
 #vacuum_freeze_table_age = 150000000
 #vacuum_freeze_min_age = 50000000
 #vacuum_failsafe_age = 1600000000
@@ -713,7 +713,7 @@
 #datestyle = 'iso, mdy'
 #intervalstyle = 'postgres'
 #timezone = 'GMT'
-#timezone_abbreviations = 'Default'     # Select the set of available time zone
+#timezone_abbreviations = 'Default'	# Select the set of available time zone
 					# abbreviations.  Currently, there are
 					#   Default
 					#   Australia (historical usage)
@@ -742,7 +742,7 @@
 
 #local_preload_libraries = ''
 #session_preload_libraries = ''
-#shared_preload_libraries = ''	# (change requires restart)
+#shared_preload_libraries = ''		# (change requires restart)
 #jit_provider = 'llvmjit'		# JIT library to use
 
 # - Other Defaults -
@@ -763,7 +763,7 @@
 #max_pred_locks_per_relation = -2	# negative values mean
 					# (max_pred_locks_per_transaction
 					#  / -max_pred_locks_per_relation) - 1
-#max_pred_locks_per_page = 2            # min 0
+#max_pred_locks_per_page = 2		# min 0
 
 
 #------------------------------------------------------------------------------
