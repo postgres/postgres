@@ -726,7 +726,7 @@
 
   <para>
    As an example, <literal>CET-1CEST,M3.5.0,M10.5.0/3</literal> describes
-   current (as of 2020) timekeeping practice in Paris.  This specification
+   the current (as of 2020) timekeeping practice in Paris.  This specification
    says that standard time has the abbreviation <literal>CET</literal> and
    is one hour ahead (east) of UTC; daylight savings time has the
    abbreviation <literal>CEST</literal> and is implicitly two hours ahead
