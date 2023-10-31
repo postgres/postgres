@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SYSTEM SET <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | '<replaceable class="parameter">value</replaceable>' | DEFAULT }
+ALTER SYSTEM SET <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> [, ...] | DEFAULT }
 
 ALTER SYSTEM RESET <replaceable class="parameter">configuration_parameter</replaceable>
 ALTER SYSTEM RESET ALL
@@ -82,8 +82,16 @@ ALTER SYSTEM RESET ALL
       New value of the parameter.  Values can be specified as string
       constants, identifiers, numbers, or comma-separated lists of
       these, as appropriate for the particular parameter.
+      Values that are neither numbers nor valid identifiers must be quoted.
       <literal>DEFAULT</literal> can be written to specify removing the
       parameter and its value from <filename>postgresql.auto.conf</filename>.
+     </para>
+
+     <para>
+      For some list-accepting parameters, quoted values will produce
+      double-quoted output to preserve whitespace and commas; for others,
+      double-quotes must be used inside single-quoted strings to get
+      this effect.
      </para>
     </listitem>
    </varlistentry>
