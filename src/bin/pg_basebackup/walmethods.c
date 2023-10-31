@@ -594,6 +594,11 @@ dir_existsfile(WalWriteMethod *wwmethod, const char *pathname)
 
 	fd = open(tmppath, O_RDONLY | PG_BINARY, 0);
 	if (fd < 0)
+
+		/*
+		 * Skip setting dir_data->lasterrno here because we are only checking
+		 * for existence.
+		 */
 		return false;
 	close(fd);
 	return true;
