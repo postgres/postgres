@@ -107,10 +107,6 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
-	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
-		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("only heap AM is supported")));
-
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -122,6 +118,10 @@ pgrowlocks(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table",
 						RelationGetRelationName(rel))));
+	else if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("only heap AM is supported")));
 
 	/*
 	 * check permissions: must have SELECT on table or be in
