@@ -389,18 +389,20 @@ tablename  | null_frac | n_distinct | most_common_vals
 </programlisting>
 
    In this case there is no <acronym>MCV</acronym> information for
-   <structfield>unique2</structfield> because all the values appear to be
-   unique, so we use an algorithm that relies only on the number of
-   distinct values for both relations together with their null fractions:
+   <structname>unique2</structname> and all the values appear to be
+   unique (n_distinct = -1), so we use an algorithm that relies on the row
+   count estimates for both relations (num_rows, not shown, but "tenk")
+   together with the column null fractions (zero for both):
 
 <programlisting>
-selectivity = (1 - null_frac1) * (1 - null_frac2) * min(1/num_distinct1, 1/num_distinct2)
+selectivity = (1 - null_frac1) * (1 - null_frac2) / max(num_rows1, num_rows2)
             = (1 - 0) * (1 - 0) / max(10000, 10000)
             = 0.0001
 </programlisting>
 
    This is, subtract the null fraction from one for each of the relations,
-   and divide by the maximum of the numbers of distinct values.
+   and divide by the row count of the larger relation (this value does get
+   scaled in the non-unique case).
    The number of rows
    that the join is likely to emit is calculated as the cardinality of the
    Cartesian product of the two inputs, multiplied by the
