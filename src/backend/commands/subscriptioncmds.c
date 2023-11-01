@@ -975,8 +975,10 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 				(errmsg("could not connect to publisher when attempting to "
 						"drop the replication slot \"%s\"", slotname),
 				 errdetail("The error was: %s", err),
-				 errhint("Use ALTER SUBSCRIPTION ... SET (slot_name = NONE) "
-						 "to disassociate the subscription from the slot.")));
+				 /* translator: %s is an SQL ALTER command */
+				 errhint("Use %s to disable the subscription, and then use %s to disassociate it from the slot.",
+						 "ALTER SUBSCRIPTION ... DISABLE",
+						 "ALTER SUBSCRIPTION ... SET (slot_name = NONE)")));
 
 	PG_TRY();
 	{

@@ -139,7 +139,9 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 	 * Predicate lock entry leaf page, following pages will be locked by
 	 * moveRightIfItNeeded()
 	 */
-	PredicateLockPage(btree->index, stack->buffer, snapshot);
+	PredicateLockPage(btree->index,
+					  BufferGetBlockNumber(stack->buffer),
+					  snapshot);
 
 	for (;;)
 	{

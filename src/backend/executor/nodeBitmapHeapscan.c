@@ -39,6 +39,7 @@
 
 #include "access/relscan.h"
 #include "access/transam.h"
+#include "access/xact.h"
 #include "access/visibilitymap.h"
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
@@ -217,9 +218,12 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 * Ignore any claimed entries past what we think is the end of the
 			 * relation.  (This is probably not necessary given that we got at
 			 * least AccessShareLock on the table before performing any of the
-			 * indexscans, but let's be safe.)
+			 * indexscans, but let's be safe.)  We don't take this optimization
+			 * in SERIALIZABLE isolation though, as we need to examine all
+			 * invisible tuples reachable by the index.
 			 */
-			if (tbmres->blockno >= scan->rs_nblocks)
+			if (!IsolationIsSerializable() &&
+				tbmres->blockno >= scan->rs_nblocks)
 			{
 				node->tbmres = tbmres = NULL;
 				continue;
@@ -390,7 +394,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	/*
 	 * Acquire pin on the target heap page, trading in any pin we held before.
 	 */
-	Assert(page < scan->rs_nblocks);
+	Assert(IsolationIsSerializable() || page < scan->rs_nblocks);
 
 	scan->rs_cbuf = ReleaseAndReadBuffer(scan->rs_cbuf,
 										 scan->rs_rd,

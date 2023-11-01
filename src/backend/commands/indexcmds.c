@@ -1160,6 +1160,7 @@ DefineIndex(Oid relationId,
 					IndexStmt  *childStmt = copyObject(stmt);
 					bool		found_whole_row;
 					ListCell   *lc;
+					ObjectAddress childAddr;
 
 					/*
 					 * We can't use the same index name for the child index,
@@ -1212,14 +1213,24 @@ DefineIndex(Oid relationId,
 					Assert(GetUserId() == child_save_userid);
 					SetUserIdAndSecContext(root_save_userid,
 										   root_save_sec_context);
-					DefineIndex(childRelid, childStmt,
-								InvalidOid, /* no predefined OID */
-								indexRelationId,	/* this is our child */
-								createdConstraintId,
-								is_alter_table, check_rights, check_not_in_use,
-								skip_build, quiet);
+					childAddr =
+						DefineIndex(childRelid, childStmt,
+									InvalidOid, /* no predefined OID */
+									indexRelationId,	/* this is our child */
+									createdConstraintId,
+									is_alter_table, check_rights,
+									check_not_in_use,
+									skip_build, quiet);
 					SetUserIdAndSecContext(child_save_userid,
 										   child_save_sec_context);
+
+					/*
+					 * Check if the index just created is valid or not, as it
+					 * could be possible that it has been switched as invalid
+					 * when recursing across multiple partition levels.
+					 */
+					if (!get_index_isvalid(childAddr.objectId))
+						invalidate_parent = true;
 				}
 
 				pfree(attmap);
@@ -1249,6 +1260,12 @@ DefineIndex(Oid relationId,
 				ReleaseSysCache(tup);
 				heap_close(pg_index, RowExclusiveLock);
 				heap_freetuple(newtup);
+
+				/*
+				 * CCI here to make this update visible, in case this recurses
+				 * across multiple partition levels.
+				 */
+				CommandCounterIncrement();
 			}
 		}
 
