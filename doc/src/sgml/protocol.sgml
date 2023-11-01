@@ -2222,8 +2222,10 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
       </para>
 
       <para>
-       WAL data is sent as a series of CopyData messages.  (This allows
-       other information to be intermixed; in particular the server can send
+       WAL data is sent as a series of CopyData messages;
+       see <xref linkend="protocol-message-types"/> and <xref
+       linkend="protocol-message-formats"/> for details.
+       (This allows other information to be intermixed; in particular the server can send
        an ErrorResponse message if it encounters a failure after beginning
        to stream.)  The payload of each CopyData message from server to the
        client contains a message of one of the following formats:
