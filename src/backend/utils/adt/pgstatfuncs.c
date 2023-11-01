@@ -78,7 +78,7 @@ PG_STAT_GET_RELENTRY_INT64(ins_since_vacuum)
 /* pg_stat_get_live_tuples */
 PG_STAT_GET_RELENTRY_INT64(live_tuples)
 
-/* pg_stat_get_mods_since_analyze */
+/* pg_stat_get_mod_since_analyze */
 PG_STAT_GET_RELENTRY_INT64(mod_since_analyze)
 
 /* pg_stat_get_numscans */
