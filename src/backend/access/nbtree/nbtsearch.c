@@ -383,18 +383,32 @@ _bt_binsrch(Relation rel,
 
 	cmpval = key->nextkey ? 0 : 1;	/* select comparison value */
 
-	while (high > low)
+	if (high - low < 8)
 	{
-		OffsetNumber mid = low + ((high - low) / 2);
+		while (high > low)
+		{
+			result = _bt_compare(rel, key, page, low);
 
-		/* We have low <= mid < high, so mid points at a real slot */
+			if (result >= cmpval)
+				low = low + 1;
+			else
+				break;
+		}
+	}
+	else{
+		while (high > low)
+		{
+			OffsetNumber mid = low + ((high - low) / 2);
 
-		result = _bt_compare(rel, key, page, mid);
+			/* We have low <= mid < high, so mid points at a real slot */
 
-		if (result >= cmpval)
-			low = mid + 1;
-		else
-			high = mid;
+			result = _bt_compare(rel, key, page, mid);
+
+			if (result >= cmpval)
+				low = mid + 1;
+			else
+				high = mid;
+		}
 	}
 
 	/*
