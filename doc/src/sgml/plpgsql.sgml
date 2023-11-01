@@ -3942,7 +3942,7 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
    <para>
     If no condition name nor SQLSTATE is specified in a
     <command>RAISE EXCEPTION</command> command, the default is to use
-    <literal>ERRCODE_RAISE_EXCEPTION</literal> (<literal>P0001</literal>).
+    <literal>raise_exception</literal> (<literal>P0001</literal>).
     If no message text is specified, the default is to use the condition
     name or SQLSTATE as message text.
    </para>
