@@ -8,6 +8,24 @@ SELECT U&'\0061\0308bc' <> U&'\00E4bc' COLLATE "C" AS sanity_check;
  t
 (1 row)
 
+SELECT unicode_version() IS NOT NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT unicode_assigned(U&'abc');
+ unicode_assigned 
+------------------
+ t
+(1 row)
+
+SELECT unicode_assigned(U&'abc\+10FFFF');
+ unicode_assigned 
+------------------
+ f
+(1 row)
+
 SELECT normalize('');
  normalize 
 -----------

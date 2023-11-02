@@ -25,6 +25,25 @@ endforeach
 update_unicode_targets = []
 
 update_unicode_targets += \
+  custom_target('unicode_version.h',
+    output: ['unicode_version.h'],
+    command: [
+      perl, files('generate-unicode_version.pl'),
+      '--outdir', '@OUTDIR@', '--version', UNICODE_VERSION],
+    build_by_default: false,
+  )
+
+update_unicode_targets += \
+  custom_target('unicode_category_table.h',
+    input: [unicode_data['UnicodeData.txt']],
+    output: ['unicode_category_table.h'],
+    command: [
+      perl, files('generate-unicode_category_table.pl'),
+      '--outdir', '@OUTDIR@', '@INPUT@'],
+    build_by_default: false,
+  )
+
+update_unicode_targets += \
   custom_target('unicode_norm_table.h',
     input: [unicode_data['UnicodeData.txt'], unicode_data['CompositionExclusions.txt']],
     output: ['unicode_norm_table.h', 'unicode_norm_hashfunc.h'],
@@ -73,6 +92,17 @@ norm_test_table = custom_target('norm_test_table.h',
 
 inc = include_directories('.')
 
+category_test = executable('category_test',
+  ['category_test.c'],
+  dependencies: [frontend_port_code, icu],
+  include_directories: inc,
+  link_with: [common_static, pgport_static],
+  build_by_default: false,
+  kwargs: default_bin_args + {
+    'install': false,
+  }
+)
+
 norm_test = executable('norm_test',
   ['norm_test.c', norm_test_table],
   dependencies: [frontend_port_code],
@@ -85,6 +115,16 @@ norm_test = executable('norm_test',
 )
 
 update_unicode_dep = []
+
+if not meson.is_cross_build()
+  update_unicode_dep += custom_target('category_test.run',
+    output: 'category_test.run',
+    input: update_unicode_targets,
+    command: [category_test, UNICODE_VERSION],
+    build_by_default: false,
+    build_always_stale: true,
+  )
+endif
 
 if not meson.is_cross_build()
   update_unicode_dep += custom_target('norm_test.run',

@@ -30,6 +30,7 @@ common_sources = files(
   'scram-common.c',
   'string.c',
   'stringinfo.c',
+  'unicode_category.c',
   'unicode_norm.c',
   'username.c',
   'wait_error.c',

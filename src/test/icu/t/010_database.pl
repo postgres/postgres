@@ -27,6 +27,10 @@ CREATE TABLE icu (def text, en text COLLATE "en-x-icu", upfirst text COLLATE upp
 INSERT INTO icu VALUES ('a', 'a', 'a'), ('b', 'b', 'b'), ('A', 'A', 'A'), ('B', 'B', 'B');
 });
 
+is( $node1->safe_psql('dbicu', q{SELECT icu_unicode_version() IS NOT NULL}),
+	qq(t),
+	'ICU unicode version defined');
+
 is( $node1->safe_psql('dbicu', q{SELECT def FROM icu ORDER BY def}),
 	qq(A
 a

@@ -2862,6 +2862,22 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>unicode_assigned</primary>
+        </indexterm>
+        <function>unicode_assigned</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns <literal>true</literal> if all characters in the string are
+        assigned Unicode codepoints; <literal>false</literal> otherwise. This
+        function can only be used when the server encoding is
+        <literal>UTF8</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>upper</primary>
         </indexterm>
         <function>upper</function> ( <type>text</type> )
@@ -23427,25 +23443,6 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
         This is equivalent to <function>current_user</function>.
        </para></entry>
       </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>version</primary>
-        </indexterm>
-        <function>version</function> ()
-        <returnvalue>text</returnvalue>
-       </para>
-       <para>
-        Returns a string describing the <productname>PostgreSQL</productname>
-        server's version.  You can also get this information from
-        <xref linkend="guc-server-version"/>, or for a machine-readable
-        version use <xref linkend="guc-server-version-num"/>.  Software
-        developers should use <varname>server_version_num</varname> (available
-        since 8.2) or <xref linkend="libpq-PQserverVersion"/> instead of
-        parsing the text version.
-       </para></entry>
-      </row>
      </tbody>
     </tgroup>
    </table>
@@ -26326,6 +26323,80 @@ SELECT collation for ('foo' COLLATE "de_DE");
        <entry><type>boolean</type></entry>
       </row>
 
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
+  <sect2 id="functions-info-version">
+   <title>Version Information Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-version"/>
+    print version information.
+   </para>
+
+   <table id="functions-version">
+    <title>Version Information Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>version</primary>
+        </indexterm>
+        <function>version</function> ()
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns a string describing the <productname>PostgreSQL</productname>
+        server's version.  You can also get this information from
+        <xref linkend="guc-server-version"/>, or for a machine-readable
+        version use <xref linkend="guc-server-version-num"/>.  Software
+        developers should use <varname>server_version_num</varname> (available
+        since 8.2) or <xref linkend="libpq-PQserverVersion"/> instead of
+        parsing the text version.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>unicode_version</primary>
+        </indexterm>
+        <function>unicode_version</function> ()
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns a string representing the version of Unicode used by
+        <productname>PostgreSQL</productname>.
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>icu_unicode_version</primary>
+        </indexterm>
+        <function>icu_unicode_version</function> ()
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns a string representing the version of Unicode used by ICU, if
+        the server was built with ICU support; otherwise returns
+        <literal>NULL</literal> </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

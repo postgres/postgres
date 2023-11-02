@@ -12019,6 +12019,18 @@
   proname => 'pg_partition_root', prorettype => 'regclass',
   proargtypes => 'regclass', prosrc => 'pg_partition_root' },
 
+{ oid => '4549', descr => 'Unicode version used by Postgres',
+  proname => 'unicode_version', prorettype => 'text', proargtypes => '',
+  prosrc => 'unicode_version' },
+
+{ oid => '6099', descr => 'Unicode version used by ICU, if enabled',
+  proname => 'icu_unicode_version', prorettype => 'text', proargtypes => '',
+  prosrc => 'icu_unicode_version' },
+
+{ oid => '6105', descr => 'check valid Unicode',
+  proname => 'unicode_assigned', prorettype => 'bool', proargtypes => 'text',
+  prosrc => 'unicode_assigned' },
+
 { oid => '4350', descr => 'Unicode normalization',
   proname => 'normalize', prorettype => 'text', proargtypes => 'text text',
   prosrc => 'unicode_normalize_func' },

@@ -5,6 +5,10 @@ SELECT getdatabaseencoding() <> 'UTF8' AS skip_test \gset
 
 SELECT U&'\0061\0308bc' <> U&'\00E4bc' COLLATE "C" AS sanity_check;
 
+SELECT unicode_version() IS NOT NULL;
+SELECT unicode_assigned(U&'abc');
+SELECT unicode_assigned(U&'abc\+10FFFF');
+
 SELECT normalize('');
 SELECT normalize(U&'\0061\0308\24D1c') = U&'\00E4\24D1c' COLLATE "C" AS test_default;
 SELECT normalize(U&'\0061\0308\24D1c', NFC) = U&'\00E4\24D1c' COLLATE "C" AS test_nfc;

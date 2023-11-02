@@ -81,6 +81,6 @@ main(int argc, char **argv)
 		}
 	}
 
-	printf("All tests successful!\n");
+	printf("norm_test: All tests successful!\n");
 	exit(0);
 }
