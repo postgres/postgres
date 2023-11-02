@@ -14,12 +14,13 @@ $node->start;
 # Grab the names of all the parameters that can be listed in the
 # configuration sample file.  config_file is an exception, it is not
 # in postgresql.conf.sample but is part of the lists from guc_tables.c.
+# Custom GUCs loaded by extensions are excluded.
 my $all_params = $node->safe_psql(
 	'postgres',
 	"SELECT name
      FROM pg_settings
    WHERE NOT 'NOT_IN_SAMPLE' = ANY (pg_settings_get_flags(name)) AND
-       name <> 'config_file'
+       name <> 'config_file' AND category <> 'Customized Options'
      ORDER BY 1");
 # Note the lower-case conversion, for consistency.
 my @all_params_array = split("\n", lc($all_params));
