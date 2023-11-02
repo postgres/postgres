@@ -223,6 +223,16 @@ struct config_real
 	void	   *reset_extra;
 };
 
+/*
+ * A note about string GUCs: the boot_val is allowed to be NULL, which leads
+ * to the reset_val and the actual variable value (*variable) also being NULL.
+ * However, there is no way to set a NULL value subsequently using
+ * set_config_option or any other GUC API.  Also, GUC APIs such as SHOW will
+ * display a NULL value as an empty string.  Callers that choose to use a NULL
+ * boot_val should overwrite the setting later in startup, or else be careful
+ * that NULL doesn't have semantics that are visibly different from an empty
+ * string.
+ */
 struct config_string
 {
 	struct config_generic gen;
