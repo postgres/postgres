@@ -248,9 +248,17 @@ start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 	 * invalidation of slots during the upgrade. We set this option when
 	 * cluster is PG17 or later because logical replication slots can only be
 	 * migrated since then. Besides, max_slot_wal_keep_size is added in PG13.
+	 *
+	 * Use max_logical_replication_workers as 0 to prevent a startup of the
+	 * logical replication launcher while upgrading because it may start apply
+	 * workers that could start receiving changes from the publisher before
+	 * the physical files are put in place, causing corruption on the new
+	 * cluster upgrading to.  Like the previous parameter, this is set only
+	 * when a cluster is PG17 or later as logical slots can only be migrated
+	 * since this version.
 	 */
 	if (GET_MAJOR_VERSION(cluster->major_version) >= 1700)
-		appendPQExpBufferStr(&pgoptions, " -c max_slot_wal_keep_size=-1");
+		appendPQExpBufferStr(&pgoptions, " -c max_slot_wal_keep_size=-1 -c max_logical_replication_workers=0");
 
 	/* Use -b to disable autovacuum. */
 	snprintf(cmd, sizeof(cmd),
