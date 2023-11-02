@@ -4215,8 +4215,7 @@ SetConfigOption(const char *name, const char *value,
 /*
  * Fetch the current value of the option `name', as a string.
  *
- * If the option doesn't exist, return NULL if missing_ok is true (NOTE that
- * this cannot be distinguished from a string variable with a NULL value!),
+ * If the option doesn't exist, return NULL if missing_ok is true,
  * otherwise throw an ereport and don't return.
  *
  * If restrict_privileged is true, we also enforce that only superusers and
@@ -4259,7 +4258,8 @@ GetConfigOption(const char *name, bool missing_ok, bool restrict_privileged)
 			return buffer;
 
 		case PGC_STRING:
-			return *((struct config_string *) record)->variable;
+			return *((struct config_string *) record)->variable ?
+				*((struct config_string *) record)->variable : "";
 
 		case PGC_ENUM:
 			return config_enum_lookup_by_value((struct config_enum *) record,
@@ -4306,7 +4306,8 @@ GetConfigOptionResetString(const char *name)
 			return buffer;
 
 		case PGC_STRING:
-			return ((struct config_string *) record)->reset_val;
+			return ((struct config_string *) record)->reset_val ?
+				((struct config_string *) record)->reset_val : "";
 
 		case PGC_ENUM:
 			return config_enum_lookup_by_value((struct config_enum *) record,
