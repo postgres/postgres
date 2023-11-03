@@ -213,9 +213,10 @@ if docs_dep.found()
 
   install_doc_man = custom_target('install-man',
     output: 'install-man',
+    input: man,
     command: [
       python, install_files, '--prefix', dir_prefix,
-      '--install-dirs', dir_man, man],
+      '--install-dirs', dir_man, '@INPUT@'],
     build_always_stale: true, build_by_default: false,
   )
   alias_target('install-doc-man', install_doc_man)
