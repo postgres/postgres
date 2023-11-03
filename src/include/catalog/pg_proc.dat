@@ -12083,4 +12083,19 @@
   proname => 'any_value_transfn', prorettype => 'anyelement',
   proargtypes => 'anyelement anyelement', prosrc => 'any_value_transfn' },
 
+# for color data type
+{ oid => '7901', proname => 'color_in', prorettype => 'color',
+  proargtypes => 'cstring', prosrc => 'color_in' },
+{ oid => '7902', proname => 'color_out', prorettype => 'cstring',
+  proargtypes => 'color', prosrc => 'color_out' },
+{ oid => '7903', proname => 'color_send', prorettype => 'bytea',
+  proargtypes => 'color', prosrc => 'color_send' },
+{ oid => '7904', proname => 'color_recv', prorettype => 'color',
+  proargtypes => 'internal', prosrc => 'color_recv' },
+{ oid => '7905', proname => 'color_eq', prorettype => 'bool',
+  proargtypes => 'color color', prosrc => 'color_eq' },
+{ oid => '7906', proname => 'color_ne', prorettype => 'bool',
+  proargtypes => 'color color', prosrc => 'color_ne' },
+{ oid => '7907', proname => 'color_add', prorettype => 'color',
+  proargtypes => 'color color', prosrc => 'color_add' },
 ]

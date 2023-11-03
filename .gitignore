@@ -43,3 +43,7 @@ lib*.pc
 /Release/
 /tmp_install/
 /portlock/
+
+test-install/
+test-data/
+postgres.conf

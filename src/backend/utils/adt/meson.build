@@ -14,6 +14,7 @@ backend_sources += files(
   'bool.c',
   'cash.c',
   'char.c',
+  'color.c',
   'cryptohashfuncs.c',
   'date.c',
   'datetime.c',

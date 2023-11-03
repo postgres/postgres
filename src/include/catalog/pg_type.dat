@@ -692,4 +692,11 @@
   typreceive => 'brin_minmax_multi_summary_recv',
   typsend => 'brin_minmax_multi_summary_send', typalign => 'i',
   typstorage => 'x', typcollation => 'default' },
+
+# custom type (color)
+{ oid => '7012', array_type_oid => '7201',
+  descr => 'color data type',
+  typname => 'color', typlen => '4', typbyval => 't', typcategory => 'N',
+  typinput => 'color_in', typoutput => 'color_out', typreceive => 'color_recv',
+  typsend => 'color_send', typalign => 'i', typstorage => 'x' },
 ]

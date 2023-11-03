@@ -25,6 +25,7 @@ OBJS = \
 	bool.o \
 	cash.o \
 	char.o \
+	color.o \
 	cryptohashfuncs.o \
 	date.o \
 	datetime.o \

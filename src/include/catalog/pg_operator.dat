@@ -3458,4 +3458,17 @@
   oprcode => 'multirange_after_multirange', oprrest => 'multirangesel',
   oprjoin => 'scalargtjoinsel' },
 
+# custom color type
+
+{ oid => '7915', descr => 'equal',
+  oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'color',
+  oprright => 'color', oprresult => 'bool', oprcom => '=(color,color)',
+  oprnegate => '<>(color,color)', oprcode => 'color_eq' },
+{ oid => '7916', descr => 'not equal',
+  oprname => '<>', oprcanmerge => 't', oprcanhash => 't', oprleft => 'color',
+  oprright => 'color', oprresult => 'bool', oprcom => '<>(color,color)',
+  oprnegate => '=(color,color)', oprcode => 'color_ne' },
+{ oid => '7917', descr => 'add',
+  oprname => '+', oprleft => 'color', oprright => 'color', oprresult => 'color',
+  oprcom => '+(color,color)', oprcode => 'color_add' },
 ]
