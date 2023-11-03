@@ -627,6 +627,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 						 * This code erroneously assumes '\.' on a line alone
 						 * inside a quoted CSV string terminates the \copy.
 						 * https://www.postgresql.org/message-id/E1TdNVQ-0001ju-GO@wrigleys.postgresql.org
+						 * https://www.postgresql.org/message-id/bfcd57e4-8f23-4c3e-a5db-2571d09208e2@beta.fastmail.com
 						 */
 						if ((linelen == 3 && memcmp(fgresult, "\\.\n", 3) == 0) ||
 							(linelen == 4 && memcmp(fgresult, "\\.\r\n", 4) == 0))
