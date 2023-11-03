@@ -1647,7 +1647,20 @@ sqrt(2)
     are always just expressions and cannot be output-column names or numbers.
     For example:
 <programlisting>
-SELECT array_agg(a ORDER BY b DESC) FROM table;
+WITH vals (v) AS ( VALUES (1),(3),(4),(3),(2) )
+SELECT array_agg(v ORDER BY v DESC) FROM vals;
+  array_agg
+-------------
+ {4,3,3,2,1}
+</programlisting>
+    Since <type>jsonb</type> only keeps the last matching key, ordering
+    of its keys can be significant:
+<programlisting>
+WITH vals (k, v) AS ( VALUES ('key0','1'), ('key1','3'), ('key1','2') )
+SELECT jsonb_object_agg(k, v ORDER BY v) FROM vals;
+      jsonb_object_agg
+----------------------------
+ {"key0": "1", "key1": "3"}
 </programlisting>
    </para>
 
@@ -1668,19 +1681,18 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
    </para>
 
    <para>
-    If <literal>DISTINCT</literal> is specified in addition to an
-    <replaceable>order_by_clause</replaceable>, then all the <literal>ORDER BY</literal>
-    expressions must match regular arguments of the aggregate; that is,
-    you cannot sort on an expression that is not included in the
-    <literal>DISTINCT</literal> list.
+    If <literal>DISTINCT</literal> is specified with an
+    <replaceable>order_by_clause</replaceable>, <literal>ORDER
+    BY</literal> expressions can only reference columns in the
+    <literal>DISTINCT</literal> list.  For example:
+<programlisting>
+WITH vals (v) AS ( VALUES (1),(3),(4),(3),(2) )
+SELECT array_agg(DISTINCT v ORDER BY v DESC) FROM vals;
+ array_agg
+-----------
+ {4,3,2,1}
+</programlisting>
    </para>
-
-   <note>
-    <para>
-     The ability to specify both <literal>DISTINCT</literal> and <literal>ORDER BY</literal>
-     in an aggregate function is a <productname>PostgreSQL</productname> extension.
-    </para>
-   </note>
 
    <para>
     Placing <literal>ORDER BY</literal> within the aggregate's regular argument

@@ -20288,6 +20288,13 @@ SELECT NULLIF(value, '(none)') ...
    aggregation.
   </para>
 
+  <para>
+   While all aggregates below accept an optional
+   <literal>ORDER BY</literal> clause (as outlined in <xref
+   linkend="syntax-aggregates"/>), the clause has only been added to
+   aggregates whose output is affected by ordering.
+  </para>
+
    <table id="functions-aggregate-table">
     <title>General-Purpose Aggregate Functions</title>
     <tgroup cols="2">
@@ -20325,7 +20332,7 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_agg</primary>
         </indexterm>
-        <function>array_agg</function> ( <type>anynonarray</type> )
+        <function>array_agg</function> ( <type>anynonarray</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
         <returnvalue>anyarray</returnvalue>
        </para>
        <para>
@@ -20336,7 +20343,7 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>array_agg</function> ( <type>anyarray</type> )
+        <function>array_agg</function> ( <type>anyarray</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
         <returnvalue>anyarray</returnvalue>
        </para>
        <para>
@@ -20541,14 +20548,14 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>json_agg</primary>
         </indexterm>
-        <function>json_agg</function> ( <type>anyelement</type> )
+        <function>json_agg</function> ( <type>anyelement</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
         <returnvalue>json</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_agg</primary>
         </indexterm>
-        <function>jsonb_agg</function> ( <type>anyelement</type> )
+        <function>jsonb_agg</function> ( <type>anyelement</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
@@ -20588,7 +20595,8 @@ SELECT NULLIF(value, '(none)') ...
         </indexterm>
         <function>json_object_agg</function> ( <parameter>key</parameter>
          <type>"any"</type>, <parameter>value</parameter>
-         <type>"any"</type> )
+         <type>"any"</type>
+         <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
         <returnvalue>json</returnvalue>
        </para>
        <para role="func_signature">
@@ -20597,7 +20605,8 @@ SELECT NULLIF(value, '(none)') ...
         </indexterm>
         <function>jsonb_object_agg</function> ( <parameter>key</parameter>
          <type>"any"</type>, <parameter>value</parameter>
-         <type>"any"</type> )
+         <type>"any"</type>
+         <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
@@ -20834,7 +20843,8 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para role="func_signature">
         <function>string_agg</function> ( <parameter>value</parameter>
-         <type>bytea</type>, <parameter>delimiter</parameter> <type>bytea</type> )
+         <type>bytea</type>, <parameter>delimiter</parameter> <type>bytea</type>
+         <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
         <returnvalue>bytea</returnvalue>
        </para>
        <para>
@@ -20892,7 +20902,7 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>xmlagg</primary>
         </indexterm>
-        <function>xmlagg</function> ( <type>xml</type> )
+        <function>xmlagg</function> ( <type>xml</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
         <returnvalue>xml</returnvalue>
        </para>
        <para>
