@@ -74,6 +74,35 @@
   </para>
 
   <para>
+   The <filename>pg_hba.conf</filename> file is read on start-up and when
+   the main server process receives a
+   <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
+   signal. If you edit the file on an
+   active system, you will need to signal the postmaster
+   (using <literal>pg_ctl reload</literal>, calling the SQL function
+   <function>pg_reload_conf()</function>, or using <literal>kill
+   -HUP</literal>) to make it re-read the file.
+  </para>
+
+  <note>
+   <para>
+    The preceding statement is not true on Microsoft Windows: there, any
+    changes in the <filename>pg_hba.conf</filename> file are immediately
+    applied by subsequent new connections.
+   </para>
+  </note>
+
+  <para>
+   The system view
+   <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link>
+   can be helpful for pre-testing changes to the <filename>pg_hba.conf</filename>
+   file, or for diagnosing problems if loading of the file did not have the
+   desired effects.  Rows in the view with
+   non-null <structfield>error</structfield> fields indicate problems in the
+   corresponding lines of the file.
+  </para>
+
+  <para>
    The general format of the <filename>pg_hba.conf</filename> file is
    a set of records, one per line. Blank lines are ignored, as is any
    text after the <literal>#</literal> comment character.
@@ -733,35 +762,6 @@ openssl x509 -in myclient.crt -noout --subject -nameopt RFC2253 | sed "s/^subjec
    range of allowed client IP addresses.
   </para>
 
-  <para>
-   The <filename>pg_hba.conf</filename> file is read on start-up and when
-   the main server process receives a
-   <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
-   signal. If you edit the file on an
-   active system, you will need to signal the postmaster
-   (using <literal>pg_ctl reload</literal>, calling the SQL function
-   <function>pg_reload_conf()</function>, or using <literal>kill
-   -HUP</literal>) to make it re-read the file.
-  </para>
-
-  <note>
-   <para>
-    The preceding statement is not true on Microsoft Windows: there, any
-    changes in the <filename>pg_hba.conf</filename> file are immediately
-    applied by subsequent new connections.
-   </para>
-  </note>
-
-  <para>
-   The system view
-   <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link>
-   can be helpful for pre-testing changes to the <filename>pg_hba.conf</filename>
-   file, or for diagnosing problems if loading of the file did not have the
-   desired effects.  Rows in the view with
-   non-null <structfield>error</structfield> fields indicate problems in the
-   corresponding lines of the file.
-  </para>
-
   <tip>
    <para>
     To connect to a particular database, a user must not only pass the
@@ -933,6 +933,28 @@ local   db1,db2,@demodbs  all                                   md5
    As for <filename>pg_hba.conf</filename>, the lines in this file can
    be include directives, following the same rules.
   </para>
+
+  <para>
+   The <filename>pg_ident.conf</filename> file is read on start-up and
+   when the main server process receives a
+   <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
+   signal. If you edit the file on an
+   active system, you will need to signal the postmaster
+   (using <literal>pg_ctl reload</literal>, calling the SQL function
+   <function>pg_reload_conf()</function>, or using <literal>kill
+   -HUP</literal>) to make it re-read the file.
+  </para>
+
+  <para>
+   The system view
+   <link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link>
+   can be helpful for pre-testing changes to the
+   <filename>pg_ident.conf</filename> file, or for diagnosing problems if
+   loading of the file did not have the desired effects.  Rows in the view with
+   non-null <structfield>error</structfield> fields indicate problems in the
+   corresponding lines of the file.
+  </para>
+
   <para>
    There is no restriction regarding how many database users a given
    operating system user can correspond to, nor vice versa.  Thus, entries
@@ -998,27 +1020,6 @@ mymap   /^(.*)@otherdomain\.com$   guest
     system user name.
    </para>
   </tip>
-
-  <para>
-   The <filename>pg_ident.conf</filename> file is read on start-up and
-   when the main server process receives a
-   <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
-   signal. If you edit the file on an
-   active system, you will need to signal the postmaster
-   (using <literal>pg_ctl reload</literal>, calling the SQL function
-   <function>pg_reload_conf()</function>, or using <literal>kill
-   -HUP</literal>) to make it re-read the file.
-  </para>
-
-  <para>
-   The system view
-   <link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link>
-   can be helpful for pre-testing changes to the
-   <filename>pg_ident.conf</filename> file, or for diagnosing problems if
-   loading of the file did not have the desired effects.  Rows in the view with
-   non-null <structfield>error</structfield> fields indicate problems in the
-   corresponding lines of the file.
-  </para>
 
   <para>
    A <filename>pg_ident.conf</filename> file that could be used in
