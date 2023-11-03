@@ -1156,7 +1156,7 @@ check_for_removed_data_type_usage(ClusterInfo *cluster, const char *version,
 
 	if (check_for_data_type_usage(cluster, typename, output_path))
 	{
-		pg_log(PG_REPORT, "fatal");
+		pg_log(PG_REPORT, "fatal\n");
 		pg_fatal("Your installation contains the \"%s\" data type in user tables.\n"
 				 "The \"%s\" type has been removed in PostgreSQL version %s,\n"
 				 "so this cluster cannot currently be upgraded.  You can drop the\n"
