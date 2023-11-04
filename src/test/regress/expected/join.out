@@ -6759,6 +6759,23 @@ WHERE c3.id=c2.id AND c3.id*c2.id=c1.id*c1.id;
          Filter: ((id IS NOT NULL) AND ((id * id) IS NOT NULL))
 (3 rows)
 
+-- Check the usage of a parse tree by the set operations (bug #18170)
+explain (costs off)
+SELECT c1.code FROM emp1 c1 LEFT JOIN emp1 c2 ON c1.id = c2.id
+WHERE c2.id IS NOT NULL
+EXCEPT ALL
+SELECT c3.code FROM emp1 c3;
+                  QUERY PLAN                  
+----------------------------------------------
+ HashSetOp Except All
+   ->  Append
+         ->  Subquery Scan on "*SELECT* 1"
+               ->  Seq Scan on emp1 c2
+                     Filter: (id IS NOT NULL)
+         ->  Subquery Scan on "*SELECT* 2"
+               ->  Seq Scan on emp1 c3
+(7 rows)
+
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
 -- moving quals over to s1 to make it so it can't match any rows.
