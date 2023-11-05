@@ -398,23 +398,6 @@ Branch: REL_11_STABLE [bae063db4] 2023-10-30 14:46:09 -0700
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [6fde2d9a0] 2023-08-21 13:32:14 +0900
-Branch: REL_16_STABLE Release: REL_16_0 [d6af45052] 2023-08-21 13:33:04 +0900
-Branch: REL_15_STABLE [ad8753a3a] 2023-08-21 13:33:08 +0900
--->
-     <para>
-      Fix <function>pg_stat_reset_single_table_counters()</function> to do
-      the right thing for a shared catalog (Masahiro Ikeda)
-     </para>
-
-     <para>
-      Previously the reset would be ineffective.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [cf1c65070] 2023-09-25 11:50:28 -0400
 Branch: REL_16_STABLE [8465efc1a] 2023-09-25 11:50:28 -0400
@@ -459,28 +442,6 @@ Branch: REL_11_STABLE [7a310cae0] 2023-10-01 13:17:25 -0400
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [ae10dbb0c] 2023-09-04 14:55:37 +0900
-Branch: REL_16_STABLE Release: REL_16_0 [fac3fa0d5] 2023-09-04 14:55:49 +0900
-Branch: REL_15_STABLE [88aa4a049] 2023-09-04 14:55:51 +0900
-Branch: REL_14_STABLE [df11421d8] 2023-09-04 14:55:53 +0900
-Branch: REL_13_STABLE [82fa8ae5f] 2023-09-04 14:55:55 +0900
-Branch: REL_12_STABLE [40ddb8db9] 2023-09-04 14:55:57 +0900
-Branch: REL_11_STABLE [358cd2b25] 2023-09-04 14:55:58 +0900
--->
-     <para>
-      Fix incorrect coding in <function>gtsvector_picksplit()</function>
-      (Alexander Lakhin)
-     </para>
-
-     <para>
-      This could lead to poor page-split decisions in GiST indexes
-      on <type>tsvector</type> columns.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [9b103f861] 2023-10-18 20:43:27 -0400
 Branch: REL_16_STABLE [cfa4eba02] 2023-10-18 20:43:17 -0400
@@ -503,29 +464,6 @@ Branch: REL_16_STABLE [a81e5516f] 2023-09-13 09:48:31 +0530
       Fix <command>ALTER SUBSCRIPTION</command> so that a commanded change
       in the <literal>run_as_owner</literal> option is actually applied
       (Hou Zhijie)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [48e2b234f] 2023-09-21 23:11:30 -0400
-Branch: REL_16_STABLE [227c7cf15] 2023-09-21 23:11:30 -0400 !! no live bug
-Branch: REL_15_STABLE [77dc81602] 2023-09-21 23:11:31 -0400 !! no live bug
-Branch: REL_14_STABLE [10323f140] 2023-09-21 23:11:31 -0400
-Branch: REL_13_STABLE [555a8d9d3] 2023-09-21 23:11:31 -0400
-Branch: REL_12_STABLE [7cabb20a9] 2023-09-21 23:11:31 -0400
--->
-     <para>
-      Fix <command>COMMIT AND CHAIN</command>/<command>ROLLBACK AND
-      CHAIN</command> to work properly when there is an unreleased
-      savepoint (Liu Xiang, Tom Lane)
-     </para>
-
-     <para>
-      Instead of propagating the current transaction's properties to the
-      new transaction, they propagated some previous transaction's
-      properties.
      </para>
     </listitem>
 
@@ -894,41 +832,6 @@ Branch: REL_11_STABLE [a374f6c61] 2023-09-15 17:01:26 -0400
 
     <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_13_STABLE [59bc0dfe4] 2023-09-15 16:39:27 -0400
-Branch: REL_12_STABLE [8a15b4178] 2023-09-15 16:39:27 -0400
-Branch: REL_11_STABLE [479b99125] 2023-09-15 16:39:27 -0400
--->
-     <para>
-      Avoid <quote>record type has not been registered</quote> failure
-      when deparsing a view that contains references to fields of
-      composite constants (Tom Lane)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_12_STABLE [2f02d4a2b] 2023-09-15 16:20:08 -0400
-Branch: REL_11_STABLE [ece1154f4] 2023-09-15 16:20:08 -0400
--->
-     <para>
-      Allow extracting fields from
-      a <type>RECORD</type>-type <literal>ROW()</literal> expression
-      (Tom Lane)
-     </para>
-
-     <para>
-      SQL code that knows that we name such
-      fields <literal>f1</literal>, <literal>f2</literal>, etc can use
-      those names to extract fields from the expression.  This change was
-      originally made in version 13, and is now being back-patched into
-      older branches to support tests for a related bug.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: David Rowley <drowley@postgresql.org>
 Branch: master [ee3a551e9] 2023-09-14 11:27:29 +1200
 Branch: REL_16_STABLE [1a6900e58] 2023-09-14 11:27:16 +1200
@@ -966,21 +869,6 @@ Branch: REL_11_STABLE [6ae57f190] 2023-09-13 14:52:34 +1200
      <para>
       An out-of-memory error occurring at just the wrong point could leave
       behind inconsistent state that would lead to an infinite loop.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Amit Kapila <akapila@postgresql.org>
-Branch: REL_15_STABLE [c7256e656] 2023-09-12 10:23:17 +0530
-Branch: REL_14_STABLE [f7d25117b] 2023-09-12 10:12:51 +0530
-Branch: REL_13_STABLE [c570bb4d6] 2023-09-12 09:58:50 +0530
-Branch: REL_12_STABLE [7e57208ed] 2023-09-12 09:44:37 +0530
-Branch: REL_11_STABLE [feb4e218e] 2023-09-12 09:36:56 +0530
--->
-     <para>
-      Fix assertion failure when logical decoding is retried in the same
-      session after an error (Hou Zhijie)
      </para>
     </listitem>
 
@@ -1026,151 +914,6 @@ Branch: REL_12_STABLE [bde2f1847] 2023-09-26 10:59:49 +1300
      <para>
       Fix possible recovery failure due to trying to allocate memory based
       on a bogus WAL record length field (Thomas Munro, Michael Paquier)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
-Branch: REL_14_STABLE [2f13e8d9e] 2023-09-12 09:35:42 +0900
-Branch: REL_13_STABLE [5dc093eac] 2023-09-12 09:35:51 +0900
-Branch: REL_12_STABLE [7b03d3a3b] 2023-09-12 09:35:57 +0900
--->
-     <para>
-      Ensure that standby-mode WAL recovery reports an error when an
-      invalid page header is found (Yugo Nagata, Kyotaro Horiguchi)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [2b8e5273e] 2023-09-04 08:04:22 +0900
-Branch: REL_16_STABLE Release: REL_16_0 [c397c98ae] 2023-09-04 08:04:40 +0900
-Branch: REL_15_STABLE [5a9325fdd] 2023-09-04 08:04:43 +0900
--->
-     <para>
-      Fix race condition in database dropping that could lead to the
-      autovacuum launcher getting stuck (Andres Freund, Will Mortensen,
-      Jacob Speidel)
-     </para>
-
-     <para>
-      The race could lead to a statistics entry for the removed database
-      remaining present, confusing the launcher's selection of which
-      database to process.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [52c6c0f19] 2023-08-30 08:03:42 +0900
-Branch: REL_16_STABLE Release: REL_16_0 [1d2939b6d] 2023-08-30 08:03:48 +0900
-Branch: REL_15_STABLE [5180160c1] 2023-08-30 08:03:51 +0900
-Branch: REL_14_STABLE [d2bd4ba30] 2023-08-30 08:03:52 +0900
-Branch: REL_13_STABLE [420c8dc7e] 2023-08-30 08:03:54 +0900
--->
-     <para>
-      Fix datatype size confusion in logical tape management
-      (Ranier Vilela)
-     </para>
-
-     <para>
-      Integer overflow was possible on platforms where long is wider than
-      int, although it would take a multiple-terabyte temporary file to
-      cause a problem.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [5fec3c870] 2023-08-29 09:09:40 +0300
-Branch: REL_16_STABLE Release: REL_16_0 [5f38ff3d0] 2023-08-29 09:10:28 +0300
-Branch: REL_15_STABLE [0c1024060] 2023-08-29 09:12:35 +0300
-Branch: REL_14_STABLE [3d895f95a] 2023-08-29 09:12:24 +0300
-Branch: REL_13_STABLE [a01e479e8] 2023-08-29 09:12:17 +0300
--->
-     <para>
-      Avoid unintended close of syslogger process's stdin
-      (Heikki Linnakangas)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [d8b2fcc9d] 2023-08-24 12:02:46 -0400
-Branch: REL_16_STABLE Release: REL_16_0 [ba0d737ca] 2023-08-24 12:02:40 -0400
-Branch: REL_15_STABLE [870085135] 2023-08-24 12:02:40 -0400
-Branch: REL_14_STABLE [9b2a41db1] 2023-08-24 12:02:40 -0400
-Branch: REL_13_STABLE [27566bcf3] 2023-08-24 12:02:40 -0400
-Branch: REL_12_STABLE [b808dbf90] 2023-08-24 12:02:40 -0400
-Branch: REL_11_STABLE [9c59f3862] 2023-08-24 12:02:40 -0400
--->
-     <para>
-      Avoid doing plan cache revalidation of utility statements
-      that do not receive interesting processing during parse analysis
-      (Tom Lane)
-     </para>
-
-     <para>
-      Aside from saving a few cycles, this prevents failure after a cache
-      invalidation for statements that must not set a snapshot, such
-      as <command>SET TRANSACTION ISOLATION LEVEL</command>.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-Branch: master [a68458108] 2023-08-22 15:17:05 -0400
-Branch: REL_16_STABLE Release: REL_16_0 [f938acd68] 2023-08-22 15:18:19 -0400
-Branch: REL_15_STABLE [75f323aa1] 2023-08-22 15:16:01 -0400
-Branch: REL_14_STABLE [7f4515a58] 2023-08-22 15:15:45 -0400
-Branch: REL_13_STABLE [1bb619d4d] 2023-08-22 15:15:31 -0400
-Branch: REL_12_STABLE [01993ac74] 2023-08-22 15:15:18 -0400
-Branch: REL_11_STABLE [2d13dab04] 2023-08-23 17:22:16 -0400
-Branch: REL_11_STABLE [b915bf495] 2023-08-24 16:14:26 -0400
--->
-     <para>
-      Keep by-reference <structfield>attmissingval</structfield> values in
-      a long-lived context while they are being used (Andrew Dunstan)
-     </para>
-
-     <para>
-      This avoids possible use of dangling pointers when a tuple slot
-      outlives the tuple descriptor with which its value was constructed.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Jeff Davis <jdavis@postgresql.org>
-Branch: master [fa2e87494] 2023-08-09 13:09:25 -0700
-Branch: REL_16_STABLE Release: REL_16_0 [0d56c32c8] 2023-08-09 13:09:01 -0700
-Branch: REL_15_STABLE [9f3343e40] 2023-08-07 15:12:49 -0700
-Branch: REL_14_STABLE [00953f1e2] 2023-08-07 15:12:33 -0700
-Branch: REL_13_STABLE [90cadfd49] 2023-08-07 15:12:09 -0700
-Branch: REL_12_STABLE [a86d40227] 2023-08-07 15:11:18 -0700
-Branch: REL_11_STABLE [43ba5105a] 2023-08-07 15:09:11 -0700
-Branch: master [bee263b08] 2023-08-10 10:20:54 -0700
-Branch: REL_16_STABLE Release: REL_16_0 [7bed93a46] 2023-08-10 10:24:58 -0700
-Branch: REL_15_STABLE [1bc19dfcf] 2023-08-10 10:25:47 -0700
-Branch: REL_14_STABLE [5a32af3f2] 2023-08-10 10:26:12 -0700
-Branch: REL_13_STABLE [4caa9e33e] 2023-08-10 10:26:46 -0700
-Branch: REL_12_STABLE [01bc42634] 2023-08-10 10:27:00 -0700
-Branch: REL_11_STABLE [ae1269295] 2023-08-10 10:27:24 -0700
--->
-     <para>
-      Recalculate the effective value of <varname>search_path</varname>
-      after <command>ALTER ROLE</command> (Jeff Davis)
-     </para>
-
-     <para>
-      This ensures that after renaming a role, the meaning of the special
-      string <literal>$user</literal> is re-determined.
      </para>
     </listitem>
 
@@ -1252,24 +995,6 @@ Branch: REL_16_STABLE [67738dbf9] 2023-10-29 12:56:24 -0400
 
     <listitem>
 <!--
-Author: Jeff Davis <jdavis@postgresql.org>
-Branch: master [37188cea0] 2023-08-22 12:50:01 -0700
-Branch: REL_16_STABLE Release: REL_16_0 [501704e82] 2023-08-22 12:49:40 -0700
-Branch: REL_15_STABLE [1d9976d1b] 2023-08-22 12:49:17 -0700
-Author: Peter Eisentraut <peter@eisentraut.org>
-Branch: master [f234b8cd1] 2023-09-05 11:39:27 +0200
-Branch: REL_16_STABLE Release: REL_16_0 [9ddecd406] 2023-09-05 11:39:17 +0200
-Branch: REL_15_STABLE [3a788447d] 2023-09-05 11:36:55 +0200
--->
-     <para>
-      Fix assertion failure in <application>pg_dump</application> when
-      it's asked to dump the <literal>pg_catalog</literal> schema (Peter
-      Eisentraut)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [06c0c3688] 2023-10-02 13:27:58 -0400
 Branch: REL_16_STABLE [aaaf8fbb6] 2023-10-02 13:27:51 -0400
@@ -1317,28 +1042,6 @@ Branch: REL_12_STABLE [d3246a2ad] 2023-11-03 12:07:40 -0400
       in <productname>PostgreSQL</productname> version 12, so check to
       make sure they aren't present in an older database before claiming
       it can be upgraded.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [e1c6db630] 2023-09-07 14:12:18 +0900
-Branch: REL_16_STABLE Release: REL_16_0 [105795843] 2023-09-07 14:12:25 +0900
-Branch: REL_15_STABLE [574bff7bd] 2023-09-07 14:12:29 +0900
-Branch: REL_14_STABLE [9de74ca70] 2023-09-07 14:12:31 +0900
-Branch: REL_13_STABLE [6cdd7b805] 2023-09-07 14:12:33 +0900
-Branch: REL_12_STABLE [2fe968ce9] 2023-09-07 14:12:34 +0900
-Branch: REL_11_STABLE [dbd1a06c9] 2023-09-07 14:12:36 +0900
--->
-     <para>
-      Avoid generating invalid temporary slot names
-      in <application>pg_basebackup</application> (Jelte Fennema)
-     </para>
-
-     <para>
-      This has only been seen to occur when the server connection runs
-      through <application>pgbouncer</application>.
      </para>
     </listitem>
 
