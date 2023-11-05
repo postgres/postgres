@@ -59,12 +59,12 @@ SetDataDirectoryCreatePerm(int dataDirMode)
  * false is returned.
  *
  * Suppress when on Windows, because there may not be proper support for Unix-y
- * file permissions.
+ * file permissions.  But we still run stat() on the directory so that callers
+ * get consistent behavior for example if the directory does not exist.
  */
 bool
 GetDataDirectoryCreatePerm(const char *dataDir)
 {
-#if !defined(WIN32) && !defined(__CYGWIN__)
 	struct stat statBuf;
 
 	/*
@@ -75,16 +75,12 @@ GetDataDirectoryCreatePerm(const char *dataDir)
 	if (stat(dataDir, &statBuf) == -1)
 		return false;
 
+#if !defined(WIN32) && !defined(__CYGWIN__)
 	/* Set permissions */
 	SetDataDirectoryCreatePerm(statBuf.st_mode);
-	return true;
-#else							/* !defined(WIN32) && !defined(__CYGWIN__) */
-	/*
-	 * On Windows, we don't have anything to do here since they don't have
-	 * Unix-y permissions.
-	 */
-	return true;
 #endif
+
+	return true;
 }
 
 
