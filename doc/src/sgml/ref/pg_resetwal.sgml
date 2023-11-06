@@ -166,7 +166,8 @@ PostgreSQL documentation
    <command>pg_resetwal</command> is unable to determine appropriate values
    by reading <filename>pg_control</filename>.  Safe values can be determined as
    described below.  For values that take numeric arguments, hexadecimal
-   values can be specified by using the prefix <literal>0x</literal>.
+   values can be specified by using the prefix <literal>0x</literal>.  Note
+   that these instructions only apply with the standard block size of 8 kB.
   </para>
 
   <variablelist>
@@ -189,6 +190,7 @@ PostgreSQL documentation
       greatest file name in the same directory.  The file names are in
       hexadecimal.
      </para>
+      <!-- XXX: Should there be a multiplier, similar to the other options? -->
     </listitem>
    </varlistentry>
 
@@ -272,6 +274,7 @@ PostgreSQL documentation
       names are in hexadecimal, so the easiest way to do this is to specify
       the option value in hexadecimal and append four zeroes.
      </para>
+     <!-- 65536 = SLRU_PAGES_PER_SEGMENT * BLCKSZ / sizeof(MultiXactOffset) -->
     </listitem>
    </varlistentry>
 
@@ -306,6 +309,7 @@ PostgreSQL documentation
       The file names are in hexadecimal.  There is no simple recipe such as
       the ones for other options of appending zeroes.
      </para>
+     <!-- 52352 = SLRU_PAGES_PER_SEGMENT * floor(BLCKSZ/20) * 4; see multixact.c -->
     </listitem>
    </varlistentry>
 
@@ -354,6 +358,7 @@ PostgreSQL documentation
       in <filename>pg_xact</filename>, <literal>-u 0x700000</literal> will work (five
       trailing zeroes provide the proper multiplier).
      </para>
+     <!-- 1048576 = SLRU_PAGES_PER_SEGMENT * BLCKSZ * CLOG_XACTS_PER_BYTE -->
     </listitem>
    </varlistentry>
 
@@ -375,6 +380,7 @@ PostgreSQL documentation
       in <filename>pg_xact</filename>, <literal>-x 0x1200000</literal> will work (five
       trailing zeroes provide the proper multiplier).
      </para>
+     <!-- 1048576 = SLRU_PAGES_PER_SEGMENT * BLCKSZ * CLOG_XACTS_PER_BYTE -->
     </listitem>
    </varlistentry>
   </variablelist>
