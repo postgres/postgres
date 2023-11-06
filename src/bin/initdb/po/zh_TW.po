@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-09-05 20:50+0000\n"
-"PO-Revision-Date: 2023-09-11 08:36+0800\n"
+"PO-Revision-Date: 2023-11-06 08:49+0800\n"
 "Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
 "Language-Team: \n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.4.1\n"
 
 # libpq/be-secure.c:294 libpq/be-secure.c:387
 #: ../../../src/common/logging.c:276
@@ -110,7 +110,7 @@ msgstr "無法複製 null 指標(內部錯誤)\n"
 #: ../../common/file_utils.c:87 ../../common/file_utils.c:447
 #, c-format
 msgid "could not stat file \"%s\": %m"
-msgstr "無法查詢檔案 \"%s\" 的狀態: %m"
+msgstr "無法取得檔案 \"%s\" 的狀態: %m"
 
 # access/transam/slru.c:930 commands/tablespace.c:529
 # commands/tablespace.c:694 utils/adt/misc.c:174
@@ -408,7 +408,7 @@ msgstr "選擇預設時區 … "
 
 #: initdb.c:1206
 msgid "creating configuration files ... "
-msgstr "建立設定檔中… "
+msgstr "建立組態檔… "
 
 # libpq/pqcomm.c:520
 #: initdb.c:1367 initdb.c:1381 initdb.c:1448 initdb.c:1459
@@ -443,7 +443,7 @@ msgstr "請重新輸入: "
 #: initdb.c:1595
 #, c-format
 msgid "Passwords didn't match.\n"
-msgstr "密碼不符。\n"
+msgstr "密碼不一致。\n"
 
 #: initdb.c:1619
 #, c-format
@@ -469,7 +469,7 @@ msgstr "無法寫入至子行程: %s\n"
 #: initdb.c:2048
 #, c-format
 msgid "ok\n"
-msgstr "成功\n"
+msgstr ""
 
 # fe-misc.c:991
 #: initdb.c:2137
@@ -501,12 +501,12 @@ msgstr "無效的區域設定；請檢查 LANG 和 LC_* 環境變數"
 #: initdb.c:2203 initdb.c:2227
 #, c-format
 msgid "encoding mismatch"
-msgstr "編碼不符"
+msgstr "編碼不一致"
 
 #: initdb.c:2204
 #, c-format
 msgid "The encoding you selected (%s) and the encoding that the selected locale uses (%s) do not match. This would lead to misbehavior in various character string processing functions."
-msgstr "您選擇的編碼方式(%s)和所選的區域使用的編碼方式(%s)不符合。這可能會導致各種字串處理函數的不正常行為。"
+msgstr "您選擇的編碼方式(%s)和所選的區域使用的編碼方式(%s)不一致，這可能會導致各種字串處理函數的不正常行為。"
 
 #: initdb.c:2209 initdb.c:2230
 #, c-format
@@ -569,7 +569,7 @@ msgstr "用法:\n"
 #: initdb.c:2429
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
-msgstr ""
+msgstr "  %s [OPTION]... [DATADIR]\n"
 
 #: initdb.c:2430
 #, c-format
@@ -659,9 +659,7 @@ msgstr ""
 #: initdb.c:2448
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
-msgstr ""
-"      --pwfile=FILE         從檔案中讀取新超級使用者的密碼\n"
-"\n"
+msgstr "      --pwfile=FILE         從檔案中讀取新超級使用者的密碼\n"
 
 #: initdb.c:2449
 #, c-format
@@ -675,9 +673,7 @@ msgstr ""
 #: initdb.c:2451
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
-msgstr ""
-"  -U, --username=NAME       資料庫超級使用者名稱\n"
-"\n"
+msgstr "  -U, --username=NAME       資料庫超級使用者名稱\n"
 
 #: initdb.c:2452
 #, c-format
@@ -692,7 +688,7 @@ msgstr "  -X, --waldir=WALDIR       write-ahead 日誌目錄的位置\n"
 #: initdb.c:2454
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
-msgstr "      --wal-segsize=SIZE    WAL 段的大小，單位是 MB\n"
+msgstr "      --wal-segsize=SIZE    WAL 片段的大小，單位是 MB\n"
 
 #: initdb.c:2455
 #, c-format
@@ -938,7 +934,7 @@ msgstr "預設文字搜尋配置將被設為 \"%s\"。\n"
 #: initdb.c:2805 initdb.c:2876
 #, c-format
 msgid "creating directory %s ... "
-msgstr "正在建立目錄 %s… "
+msgstr "建立目錄 %s… "
 
 # commands/tablespace.c:154 commands/tablespace.c:162
 # commands/tablespace.c:168
@@ -950,7 +946,7 @@ msgstr "無法建立目錄 \"%s\": %m"
 #: initdb.c:2819 initdb.c:2891
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
-msgstr "正在修復現有目錄 %s 的權限… "
+msgstr "修復現有目錄 %s 的權限… "
 
 #: initdb.c:2824 initdb.c:2896
 #, c-format
@@ -1032,7 +1028,7 @@ msgstr "以除錯模式執行。\n"
 #: initdb.c:3204
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
-msgstr "以不清理模式執行。錯誤將不會被清除。\n"
+msgstr "以不清理模式執行，錯誤將不會被清除。\n"
 
 #: initdb.c:3274
 #, c-format
@@ -1051,7 +1047,7 @@ msgstr "除非選擇了語言提供者 \"%2$s\"，否則不能指定 %1$s"
 
 #: initdb.c:3327 initdb.c:3404
 msgid "syncing data to disk ... "
-msgstr "正在將資料同步到磁碟… "
+msgstr "同步資料到磁碟… "
 
 #: initdb.c:3335
 #, c-format
@@ -1072,7 +1068,7 @@ msgstr "--wal-segsize 的參數必須是1和1024之間的二的次方數"
 #: initdb.c:3373
 #, c-format
 msgid "superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\""
-msgstr "不允許使用超級使用者名稱 \"%s\"；角色名稱不能以 \"pg_\" 開頭"
+msgstr "不允許使用超級使用者名稱 \"%s\"，角色名稱不能以 \"pg_\" 開頭"
 
 #: initdb.c:3375
 #, c-format
@@ -1081,7 +1077,7 @@ msgid ""
 "This user must also own the server process.\n"
 "\n"
 msgstr ""
-"資料庫系統的檔案屬於使用者 \"%s\"。這個使用者也必須擁有伺服器行程。\n"
+"資料庫系統的檔案屬於使用者 \"%s\"，該使用者也必須擁有伺服器行程。\n"
 "\n"
 
 #: initdb.c:3391
@@ -1114,12 +1110,12 @@ msgstr "啟動本機連線的 \"trust\" 身份驗證"
 #: initdb.c:3416
 #, c-format
 msgid "You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb."
-msgstr "您可以在下次執行 initdb 時透過編輯 pg_hba.conf 或使用 -A 或 --auth-local 和 --auth-host 選項來更改這個設定。"
+msgstr "您可以在下次執行 initdb 時透過編輯 pg_hba.conf 或用選項 -A 或 --auth-local 和 --auth-host 來變更這個設定。"
 
 #. translator: This is a placeholder in a shell command.
 #: initdb.c:3446
 msgid "logfile"
-msgstr ""
+msgstr "logfile"
 
 #: initdb.c:3448
 #, c-format
@@ -1131,7 +1127,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"成功。您現在可以使用以下指令啟動資料庫伺服器:\n"
+"成功，您現在可以用下列命令啟動資料庫伺服器:\n"
 "\n"
 "    %s\n"
 "\n"

@@ -3316,7 +3316,7 @@ msgid ""
 "    [all, errors, none, queries]\n"
 msgstr ""
 "  ECHO\n"
-"    controlla quale input è scritto su stardard output\n"
+"    controlla quale input è scritto su standard output\n"
 "    [all, errors, none, queries]\n"
 
 #: help.c:406

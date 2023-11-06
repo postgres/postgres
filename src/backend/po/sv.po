@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-31 19:45+0000\n"
-"PO-Revision-Date: 2023-08-31 22:02+0200\n"
+"POT-Creation-Date: 2023-09-23 02:45+0000\n"
+"PO-Revision-Date: 2023-09-23 15:32+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -232,8 +232,8 @@ msgstr "kunde inte fsync:a fil \"%s\": %m"
 #: storage/ipc/procarray.c:2232 storage/ipc/procarray.c:2239
 #: storage/ipc/procarray.c:2738 storage/ipc/procarray.c:3374
 #: utils/adt/formatting.c:1690 utils/adt/formatting.c:1812
-#: utils/adt/formatting.c:1935 utils/adt/pg_locale.c:469
-#: utils/adt/pg_locale.c:633 utils/fmgr/dfmgr.c:229 utils/hash/dynahash.c:514
+#: utils/adt/formatting.c:1935 utils/adt/pg_locale.c:473
+#: utils/adt/pg_locale.c:637 utils/fmgr/dfmgr.c:229 utils/hash/dynahash.c:514
 #: utils/hash/dynahash.c:614 utils/hash/dynahash.c:1111 utils/mb/mbutils.c:402
 #: utils/mb/mbutils.c:430 utils/mb/mbutils.c:815 utils/mb/mbutils.c:842
 #: utils/misc/guc.c:640 utils/misc/guc.c:665 utils/misc/guc.c:1053
@@ -2155,96 +2155,96 @@ msgid "cannot PREPARE a transaction that has exported snapshots"
 msgstr "kan inte göra PREPARE på en transaktion som har exporterade snapshots"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3489
+#: access/transam/xact.c:3490
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%s kan inte köras i ett transaktionsblock"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3499
+#: access/transam/xact.c:3500
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%s kan inte köras i ett undertransaktionsblock"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3509
+#: access/transam/xact.c:3510
 #, c-format
 msgid "%s cannot be executed within a pipeline"
 msgstr "%s kan inte köras inuti en pipeline"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3519
+#: access/transam/xact.c:3520
 #, c-format
 msgid "%s cannot be executed from a function"
 msgstr "%s kan inte köras från en funktion"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3590 access/transam/xact.c:3915
-#: access/transam/xact.c:3994 access/transam/xact.c:4117
-#: access/transam/xact.c:4268 access/transam/xact.c:4337
-#: access/transam/xact.c:4448
+#: access/transam/xact.c:3591 access/transam/xact.c:3916
+#: access/transam/xact.c:3995 access/transam/xact.c:4118
+#: access/transam/xact.c:4269 access/transam/xact.c:4338
+#: access/transam/xact.c:4449
 #, c-format
 msgid "%s can only be used in transaction blocks"
 msgstr "%s kan bara användas i transaktionsblock"
 
-#: access/transam/xact.c:3801
+#: access/transam/xact.c:3802
 #, c-format
 msgid "there is already a transaction in progress"
 msgstr "det är redan en transaktion igång"
 
-#: access/transam/xact.c:3920 access/transam/xact.c:3999
-#: access/transam/xact.c:4122
+#: access/transam/xact.c:3921 access/transam/xact.c:4000
+#: access/transam/xact.c:4123
 #, c-format
 msgid "there is no transaction in progress"
 msgstr "ingen transaktion pågår"
 
-#: access/transam/xact.c:4010
+#: access/transam/xact.c:4011
 #, c-format
 msgid "cannot commit during a parallel operation"
 msgstr "kan inte commit:a under en parallell operation"
 
-#: access/transam/xact.c:4133
+#: access/transam/xact.c:4134
 #, c-format
 msgid "cannot abort during a parallel operation"
 msgstr "can inte avbryta under en parallell operation"
 
-#: access/transam/xact.c:4232
+#: access/transam/xact.c:4233
 #, c-format
 msgid "cannot define savepoints during a parallel operation"
 msgstr "kan inte definiera sparpunkter under en parallell operation"
 
-#: access/transam/xact.c:4319
+#: access/transam/xact.c:4320
 #, c-format
 msgid "cannot release savepoints during a parallel operation"
 msgstr "kan inte frigöra en sparpunkt under en parallell operation"
 
-#: access/transam/xact.c:4329 access/transam/xact.c:4380
-#: access/transam/xact.c:4440 access/transam/xact.c:4489
+#: access/transam/xact.c:4330 access/transam/xact.c:4381
+#: access/transam/xact.c:4441 access/transam/xact.c:4490
 #, c-format
 msgid "savepoint \"%s\" does not exist"
 msgstr "sparpunkt \"%s\" existerar inte"
 
-#: access/transam/xact.c:4386 access/transam/xact.c:4495
+#: access/transam/xact.c:4387 access/transam/xact.c:4496
 #, c-format
 msgid "savepoint \"%s\" does not exist within current savepoint level"
 msgstr "sparpunkt \"%s\" finns inte inom aktuell sparpunktsnivå"
 
-#: access/transam/xact.c:4428
+#: access/transam/xact.c:4429
 #, c-format
 msgid "cannot rollback to savepoints during a parallel operation"
 msgstr "kan inte rulla tillbaka till sparpunkt under en parallell operation"
 
-#: access/transam/xact.c:4556
+#: access/transam/xact.c:4557
 #, c-format
 msgid "cannot start subtransactions during a parallel operation"
 msgstr "kan inte starta subtransaktioner under en parallell operation"
 
-#: access/transam/xact.c:4624
+#: access/transam/xact.c:4625
 #, c-format
 msgid "cannot commit subtransactions during a parallel operation"
 msgstr "kan inte commit:a subtransaktioner undert en parallell operation"
 
-#: access/transam/xact.c:5270
+#: access/transam/xact.c:5271
 #, c-format
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "kan inte ha mer än 2^32-1 subtransaktioner i en transaktion"
@@ -2822,167 +2822,167 @@ msgstr[1] "servern befordrades inte inom %d sekunder"
 msgid "recovery_prefetch is not supported on platforms that lack posix_fadvise()."
 msgstr "recovery_prefetch stöds inte på plattformar som saknar posix_fadvise()."
 
-#: access/transam/xlogreader.c:626
+#: access/transam/xlogreader.c:610
 #, c-format
 msgid "invalid record offset at %X/%X: expected at least %u, got %u"
 msgstr "ogiltig postlängd vid %X/%X: förväntade minst %u, fick %u"
 
-#: access/transam/xlogreader.c:635
+#: access/transam/xlogreader.c:619
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord är begärd vid %X/%X"
 
-#: access/transam/xlogreader.c:676 access/transam/xlogreader.c:1119
-#, c-format
-msgid "invalid record length at %X/%X: expected at least %u, got %u"
-msgstr "ogiltig postlängd vid %X/%X: förväntade minst %u, fick %u"
-
-#: access/transam/xlogreader.c:705
-#, c-format
-msgid "out of memory while trying to decode a record of length %u"
-msgstr "slut på minne vid avkodning av post med längden %u"
-
-#: access/transam/xlogreader.c:727
-#, c-format
-msgid "record length %u at %X/%X too long"
-msgstr "postlängd %u vid %X/%X är för lång"
-
-#: access/transam/xlogreader.c:776
+#: access/transam/xlogreader.c:740
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "det finns ingen contrecord-flagga vid %X/%X"
 
-#: access/transam/xlogreader.c:789
+#: access/transam/xlogreader.c:753
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "ogiltig contrecord-längd %u (förväntade %lld) vid %X/%X"
 
-#: access/transam/xlogreader.c:1127
+#: access/transam/xlogreader.c:812
+#, c-format
+msgid "record length %u at %X/%X too long"
+msgstr "postlängd %u vid %X/%X är för lång"
+
+#: access/transam/xlogreader.c:878
+#, c-format
+msgid "out of memory while trying to decode a record of length %u"
+msgstr "slut på minne vid avkodning av post med längden %u"
+
+#: access/transam/xlogreader.c:1130
+#, c-format
+msgid "invalid record length at %X/%X: expected at least %u, got %u"
+msgstr "ogiltig postlängd vid %X/%X: förväntade minst %u, fick %u"
+
+#: access/transam/xlogreader.c:1138
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "ogiltigt resurshanterar-ID %u vid %X/%X"
 
-#: access/transam/xlogreader.c:1140 access/transam/xlogreader.c:1156
+#: access/transam/xlogreader.c:1151 access/transam/xlogreader.c:1167
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "post med inkorrekt prev-link %X/%X vid %X/%X"
 
-#: access/transam/xlogreader.c:1192
+#: access/transam/xlogreader.c:1203
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "felaktig resurshanterardatakontrollsumma i post vid %X/%X"
 
-#: access/transam/xlogreader.c:1226
+#: access/transam/xlogreader.c:1237
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "felaktigt magiskt nummer %04X i WAL-segment %s, LSN %X/%X, offset %u"
 
-#: access/transam/xlogreader.c:1241 access/transam/xlogreader.c:1283
+#: access/transam/xlogreader.c:1252 access/transam/xlogreader.c:1294
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "ogiltiga infobitar %04X i WAL-segment %s, LSN %X/%X, offset %u"
 
-#: access/transam/xlogreader.c:1257
+#: access/transam/xlogreader.c:1268
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WAL-fil är från ett annat databassystem: WAL-filens databassystemidentifierare är %llu, pg_control databassystemidentifierare är %llu"
 
-#: access/transam/xlogreader.c:1265
+#: access/transam/xlogreader.c:1276
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvud"
 
-#: access/transam/xlogreader.c:1271
+#: access/transam/xlogreader.c:1282
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvud"
 
-#: access/transam/xlogreader.c:1303
+#: access/transam/xlogreader.c:1314
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "oväntad sidadress %X/%X i WAL-segment %s, LSN %X/%X, offset %u"
 
-#: access/transam/xlogreader.c:1329
+#: access/transam/xlogreader.c:1340
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "ej-i-sekvens för tidslinje-ID %u (efter %u) i WAL-segment %s, LSN %X/%X, offset %u"
 
-#: access/transam/xlogreader.c:1735
+#: access/transam/xlogreader.c:1746
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "\"ej i sekvens\"-block_id %u vid %X/%X"
 
-#: access/transam/xlogreader.c:1759
+#: access/transam/xlogreader.c:1770
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA är satt men ingen data inkluderad vid %X/%X"
 
-#: access/transam/xlogreader.c:1766
+#: access/transam/xlogreader.c:1777
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA är ej satt men datalängden är %u vid %X/%X"
 
-#: access/transam/xlogreader.c:1802
+#: access/transam/xlogreader.c:1813
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE är satt men håloffset %u längd %u blockavbildlängd %u vid %X/%X"
 
-#: access/transam/xlogreader.c:1818
+#: access/transam/xlogreader.c:1829
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE är inte satt men håloffset %u längd %u vid %X/%X"
 
-#: access/transam/xlogreader.c:1832
+#: access/transam/xlogreader.c:1843
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED är satt men blockavbildlängd %u vid %X/%X"
 
-#: access/transam/xlogreader.c:1847
+#: access/transam/xlogreader.c:1858
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED är satt men blockavbildlängd är %u vid %X/%X"
 
-#: access/transam/xlogreader.c:1863
+#: access/transam/xlogreader.c:1874
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL är satt men ingen tidigare rel vid %X/%X"
 
-#: access/transam/xlogreader.c:1875
+#: access/transam/xlogreader.c:1886
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "ogiltig block_id %u vid %X/%X"
 
-#: access/transam/xlogreader.c:1942
+#: access/transam/xlogreader.c:1953
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "post med ogiltig längd vid %X/%X"
 
-#: access/transam/xlogreader.c:1968
+#: access/transam/xlogreader.c:1979
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "kunde inte hitta backup-block med ID %d i WAL-post"
 
-#: access/transam/xlogreader.c:2052
+#: access/transam/xlogreader.c:2063
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt block %d angivet"
 
-#: access/transam/xlogreader.c:2059
+#: access/transam/xlogreader.c:2070
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt state, block %d"
 
-#: access/transam/xlogreader.c:2086 access/transam/xlogreader.c:2103
+#: access/transam/xlogreader.c:2097 access/transam/xlogreader.c:2114
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med %s stöds inte av bygget, block %d"
 
-#: access/transam/xlogreader.c:2112
+#: access/transam/xlogreader.c:2123
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med okänd metod, block %d"
 
-#: access/transam/xlogreader.c:2120
+#: access/transam/xlogreader.c:2131
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "kunde inte packa upp avbild vid %X/%X, block %d"
@@ -3676,7 +3676,7 @@ msgstr "kunde inte skapa katalog \"%s\": %m"
 msgid "directory \"%s\" exists but is not empty"
 msgstr "katalogen \"%s\" existerar men är inte tom"
 
-#: backup/basebackup_server.c:125 utils/init/postinit.c:1160
+#: backup/basebackup_server.c:125 utils/init/postinit.c:1164
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "kunde inte komma åt katalog \"%s\": %m"
@@ -4347,7 +4347,7 @@ msgstr "parameter ACL med OID %u existerar inte"
 msgid "schema with OID %u does not exist"
 msgstr "schema med OID %u existerar inte"
 
-#: catalog/aclchk.c:3705 utils/cache/typcache.c:385 utils/cache/typcache.c:440
+#: catalog/aclchk.c:3705 utils/cache/typcache.c:390 utils/cache/typcache.c:445
 #, c-format
 msgid "type with OID %u does not exist"
 msgstr "typ med OID %u existerar inte"
@@ -6236,14 +6236,14 @@ msgstr "måste vara en superuser för att döpa om %s"
 
 #: commands/alter.c:259 commands/subscriptioncmds.c:636
 #: commands/subscriptioncmds.c:1116 commands/subscriptioncmds.c:1198
-#: commands/subscriptioncmds.c:1830
+#: commands/subscriptioncmds.c:1837
 #, c-format
 msgid "password_required=false is superuser-only"
 msgstr "password_required=false är enbart för superanvändare"
 
 #: commands/alter.c:260 commands/subscriptioncmds.c:637
 #: commands/subscriptioncmds.c:1117 commands/subscriptioncmds.c:1199
-#: commands/subscriptioncmds.c:1831
+#: commands/subscriptioncmds.c:1838
 #, c-format
 msgid "Subscriptions with the password_required option set to false may only be created or modified by the superuser."
 msgstr "Prenumerationer med password_required-flaggan satt till \"false\" får bara skapas eller ändras av superanvändare."
@@ -6586,8 +6586,8 @@ msgstr "inga användbara systemlokaler hittades"
 #: commands/dbcommands.c:1934 commands/dbcommands.c:2132
 #: commands/dbcommands.c:2370 commands/dbcommands.c:2461
 #: commands/dbcommands.c:2571 commands/dbcommands.c:3071
-#: utils/init/postinit.c:1021 utils/init/postinit.c:1127
-#: utils/init/postinit.c:1153
+#: utils/init/postinit.c:1021 utils/init/postinit.c:1085
+#: utils/init/postinit.c:1157
 #, c-format
 msgid "database \"%s\" does not exist"
 msgstr "databasen \"%s\" existerar inte"
@@ -7304,7 +7304,7 @@ msgid "cannot use invalid database \"%s\" as template"
 msgstr "kan inte använda ogiltig databas \"%s\" som mall"
 
 #: commands/dbcommands.c:988 commands/dbcommands.c:2380
-#: utils/init/postinit.c:1136
+#: utils/init/postinit.c:1100
 #, c-format
 msgid "Use DROP DATABASE to drop invalid databases."
 msgstr "Använd DROP TABLE för att ta bort ogiltiga databaser."
@@ -9879,8 +9879,8 @@ msgstr "prenumeration har skapats men är ej ansluten"
 msgid "To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription."
 msgstr "För att initiera en replikering så måste du manuellt skapa replikeringsslot:en, aktivera prenumerationen samt refresh:a prenumerationen."
 
-#: commands/subscriptioncmds.c:1096 commands/subscriptioncmds.c:1502
-#: commands/subscriptioncmds.c:1885 utils/cache/lsyscache.c:3642
+#: commands/subscriptioncmds.c:1096 commands/subscriptioncmds.c:1509
+#: commands/subscriptioncmds.c:1892 utils/cache/lsyscache.c:3642
 #, c-format
 msgid "subscription \"%s\" does not exist"
 msgstr "prenumerationen \"%s\" finns inte"
@@ -9890,143 +9890,143 @@ msgstr "prenumerationen \"%s\" finns inte"
 msgid "cannot set %s for enabled subscription"
 msgstr "kan inte sätta %s för påslagen prenumeration"
 
-#: commands/subscriptioncmds.c:1227
+#: commands/subscriptioncmds.c:1234
 #, c-format
 msgid "cannot enable subscription that does not have a slot name"
 msgstr "kan inte slå på prenumeration som inte har ett slot-namn"
 
-#: commands/subscriptioncmds.c:1271 commands/subscriptioncmds.c:1322
+#: commands/subscriptioncmds.c:1278 commands/subscriptioncmds.c:1329
 #, c-format
 msgid "ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions"
 msgstr "ALTER SUBSCRIPTION med refresh stöds inte för avstängda prenumerationer"
 
-#: commands/subscriptioncmds.c:1272
+#: commands/subscriptioncmds.c:1279
 #, c-format
 msgid "Use ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false)."
 msgstr "Använd ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false)."
 
-#: commands/subscriptioncmds.c:1281 commands/subscriptioncmds.c:1336
+#: commands/subscriptioncmds.c:1288 commands/subscriptioncmds.c:1343
 #, c-format
 msgid "ALTER SUBSCRIPTION with refresh and copy_data is not allowed when two_phase is enabled"
 msgstr "ALTER SUBSCRIPTION med refresh och copy_data stöds inte när two_phase är påslaget"
 
-#: commands/subscriptioncmds.c:1282
+#: commands/subscriptioncmds.c:1289
 #, c-format
 msgid "Use ALTER SUBSCRIPTION ... SET PUBLICATION with refresh = false, or with copy_data = false, or use DROP/CREATE SUBSCRIPTION."
 msgstr "Använd ALTER SUBSCRIPTION ... SET PUBLICATION with refresh = false eller med copy_data = false eller använd DROP/CREATE SUBSCRIPTION."
 
 #. translator: %s is an SQL ALTER command
-#: commands/subscriptioncmds.c:1324
+#: commands/subscriptioncmds.c:1331
 #, c-format
 msgid "Use %s instead."
 msgstr "Använd %s istället."
 
 #. translator: %s is an SQL ALTER command
-#: commands/subscriptioncmds.c:1338
+#: commands/subscriptioncmds.c:1345
 #, c-format
 msgid "Use %s with refresh = false, or with copy_data = false, or use DROP/CREATE SUBSCRIPTION."
 msgstr "Använd %s with refresh = false eller med copy_data = false eller använd DROP/CREATE SUBSCRIPTION."
 
-#: commands/subscriptioncmds.c:1360
+#: commands/subscriptioncmds.c:1367
 #, c-format
 msgid "ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions"
 msgstr "ALTER SUBSCRIPTION ... REFRESH tillåts inte för avstängda prenumerationer"
 
-#: commands/subscriptioncmds.c:1385
+#: commands/subscriptioncmds.c:1392
 #, c-format
 msgid "ALTER SUBSCRIPTION ... REFRESH with copy_data is not allowed when two_phase is enabled"
 msgstr "ALTER SUBSCRIPTION ... REFRESH med copy_data stöds inte när two_phase är påslaget"
 
-#: commands/subscriptioncmds.c:1386
+#: commands/subscriptioncmds.c:1393
 #, c-format
 msgid "Use ALTER SUBSCRIPTION ... REFRESH with copy_data = false, or use DROP/CREATE SUBSCRIPTION."
 msgstr "Använd ALTER SUBSCRIPTION ... REFRESH med copy_data = false eller använd DROP/CREATE SUBSCRIPTION."
 
-#: commands/subscriptioncmds.c:1421
+#: commands/subscriptioncmds.c:1428
 #, c-format
 msgid "skip WAL location (LSN %X/%X) must be greater than origin LSN %X/%X"
 msgstr "skip-WAL-position (LSN %X/%X) måste vara större än käll-LSN %X/%X"
 
-#: commands/subscriptioncmds.c:1506
+#: commands/subscriptioncmds.c:1513
 #, c-format
 msgid "subscription \"%s\" does not exist, skipping"
 msgstr "prenumeration \"%s\" finns inte, hoppar över"
 
-#: commands/subscriptioncmds.c:1775
+#: commands/subscriptioncmds.c:1782
 #, c-format
 msgid "dropped replication slot \"%s\" on publisher"
 msgstr "slängde replikerings-slot \"%s\" på publicerare"
 
-#: commands/subscriptioncmds.c:1784 commands/subscriptioncmds.c:1792
+#: commands/subscriptioncmds.c:1791 commands/subscriptioncmds.c:1799
 #, c-format
 msgid "could not drop replication slot \"%s\" on publisher: %s"
 msgstr "kunde inte slänga replikeringsslotten \"%s\" på publicerare: %s"
 
-#: commands/subscriptioncmds.c:1917
+#: commands/subscriptioncmds.c:1924
 #, c-format
 msgid "subscription with OID %u does not exist"
 msgstr "prenumeration med OID %u existerar inte"
 
-#: commands/subscriptioncmds.c:1988 commands/subscriptioncmds.c:2113
+#: commands/subscriptioncmds.c:1995 commands/subscriptioncmds.c:2120
 #, c-format
 msgid "could not receive list of replicated tables from the publisher: %s"
 msgstr "kunde inte ta emot lista med replikerade tabeller från publiceraren: %s"
 
-#: commands/subscriptioncmds.c:2024
+#: commands/subscriptioncmds.c:2031
 #, c-format
 msgid "subscription \"%s\" requested copy_data with origin = NONE but might copy data that had a different origin"
 msgstr "prenumeration \"%s\" begärde copy_data med origin = NONE men kan kopiera data från en annan källa"
 
-#: commands/subscriptioncmds.c:2026
+#: commands/subscriptioncmds.c:2033
 #, c-format
 msgid "The subscription being created subscribes to a publication (%s) that contains tables that are written to by other subscriptions."
 msgid_plural "The subscription being created subscribes to publications (%s) that contain tables that are written to by other subscriptions."
 msgstr[0] "Prenumerationen som skapas läser från publlicering (%s) som innehåller tabell som skrivs till från andra prenumerationer."
 msgstr[1] "Prenumerationen som skapas läser från publliceringar (%s) som innehåller tabell som skrivs till från andra prenumerationer."
 
-#: commands/subscriptioncmds.c:2029
+#: commands/subscriptioncmds.c:2036
 #, c-format
 msgid "Verify that initial data copied from the publisher tables did not come from other origins."
 msgstr "Kontrollera att den initiala datan som kopieras från publicerade tabeller inte kom från andra källor."
 
-#: commands/subscriptioncmds.c:2135 replication/logical/tablesync.c:876
+#: commands/subscriptioncmds.c:2142 replication/logical/tablesync.c:876
 #: replication/pgoutput/pgoutput.c:1115
 #, c-format
 msgid "cannot use different column lists for table \"%s.%s\" in different publications"
 msgstr "kunde inte ha olika kolumnlistor för tabellen \"%s.%s\" i olika publiceringar"
 
-#: commands/subscriptioncmds.c:2185
+#: commands/subscriptioncmds.c:2192
 #, c-format
 msgid "could not connect to publisher when attempting to drop replication slot \"%s\": %s"
 msgstr "kunde inte ansluta till publicerare vid försök att slänga replikeringsslot \"%s\": %s"
 
 #. translator: %s is an SQL ALTER command
-#: commands/subscriptioncmds.c:2188
+#: commands/subscriptioncmds.c:2195
 #, c-format
 msgid "Use %s to disable the subscription, and then use %s to disassociate it from the slot."
 msgstr "Använd %s för att stänga av prenumerationen och sedan %s för att dissociera den från slotten."
 
-#: commands/subscriptioncmds.c:2219
+#: commands/subscriptioncmds.c:2226
 #, c-format
 msgid "publication name \"%s\" used more than once"
 msgstr "publiceringsnamn \"%s\" använt mer än en gång"
 
-#: commands/subscriptioncmds.c:2263
+#: commands/subscriptioncmds.c:2270
 #, c-format
 msgid "publication \"%s\" is already in subscription \"%s\""
 msgstr "publicering \"%s\" finns redan i prenumerationen \"%s\""
 
-#: commands/subscriptioncmds.c:2277
+#: commands/subscriptioncmds.c:2284
 #, c-format
 msgid "publication \"%s\" is not in subscription \"%s\""
 msgstr "publicering \"%s\" finns inte i prenumerationen \"%s\""
 
-#: commands/subscriptioncmds.c:2288
+#: commands/subscriptioncmds.c:2295
 #, c-format
 msgid "cannot drop all the publications from a subscription"
 msgstr "kan inte slänga alla publiceringar från en prenumeration"
 
-#: commands/subscriptioncmds.c:2345
+#: commands/subscriptioncmds.c:2352
 #, c-format
 msgid "%s requires a Boolean value or \"parallel\""
 msgstr "%s kräver ett booleskt värde eller \"parallel\""
@@ -12078,7 +12078,7 @@ msgstr "främmande nyckel-villkor går inte att ha på domäner"
 msgid "specifying constraint deferrability not supported for domains"
 msgstr "att ange deferrable för integritetsvillkor stöds inte för domäner"
 
-#: commands/typecmds.c:1317 utils/cache/typcache.c:2561
+#: commands/typecmds.c:1317 utils/cache/typcache.c:2567
 #, c-format
 msgid "%s is not an enum"
 msgstr "%s är inte en enum"
@@ -13105,8 +13105,8 @@ msgid "Table has type %s, but query expects %s."
 msgstr "Tabell har typ %s men fråga förväntar sig %s."
 
 #: executor/execExprInterp.c:2050 utils/adt/expandedrecord.c:99
-#: utils/adt/expandedrecord.c:231 utils/cache/typcache.c:1743
-#: utils/cache/typcache.c:1902 utils/cache/typcache.c:2049
+#: utils/adt/expandedrecord.c:231 utils/cache/typcache.c:1749
+#: utils/cache/typcache.c:1908 utils/cache/typcache.c:2055
 #: utils/fmgr/funcapi.c:561
 #, c-format
 msgid "type %s is not composite"
@@ -15346,8 +15346,8 @@ msgstr "kunde inte acceptera SSL-uppkoppling: %s"
 msgid "This may indicate that the client does not support any SSL protocol version between %s and %s."
 msgstr "Detta kan tyda på att servern inte stöder någon SSL-protokolversion mellan %s och %s."
 
-#: libpq/be-secure-openssl.c:566 libpq/be-secure-openssl.c:746
-#: libpq/be-secure-openssl.c:810
+#: libpq/be-secure-openssl.c:566 libpq/be-secure-openssl.c:755
+#: libpq/be-secure-openssl.c:819
 #, c-format
 msgid "unrecognized SSL error code: %d"
 msgstr "okänd SSL-felkod: %d"
@@ -15357,95 +15357,95 @@ msgstr "okänd SSL-felkod: %d"
 msgid "SSL certificate's common name contains embedded null"
 msgstr "SSL-certifikatets \"comman name\" innehåller null-värden"
 
-#: libpq/be-secure-openssl.c:652
+#: libpq/be-secure-openssl.c:658
 #, c-format
 msgid "SSL certificate's distinguished name contains embedded null"
 msgstr "SSL-certifikatets utskiljande namn innehåller null-värden"
 
-#: libpq/be-secure-openssl.c:735 libpq/be-secure-openssl.c:794
+#: libpq/be-secure-openssl.c:744 libpq/be-secure-openssl.c:803
 #, c-format
 msgid "SSL error: %s"
 msgstr "SSL-fel: %s"
 
-#: libpq/be-secure-openssl.c:976
+#: libpq/be-secure-openssl.c:985
 #, c-format
 msgid "could not open DH parameters file \"%s\": %m"
 msgstr "kunde inte öppna DH-parameterfil \"%s\": %m"
 
-#: libpq/be-secure-openssl.c:988
+#: libpq/be-secure-openssl.c:997
 #, c-format
 msgid "could not load DH parameters file: %s"
 msgstr "kunde inte ladda DH-parameterfil: %s"
 
-#: libpq/be-secure-openssl.c:998
+#: libpq/be-secure-openssl.c:1007
 #, c-format
 msgid "invalid DH parameters: %s"
 msgstr "ogiltiga DH-parametrar: %s"
 
-#: libpq/be-secure-openssl.c:1007
+#: libpq/be-secure-openssl.c:1016
 #, c-format
 msgid "invalid DH parameters: p is not prime"
 msgstr "ogiltiga DH-parametrar: p är inte ett primtal"
 
-#: libpq/be-secure-openssl.c:1016
+#: libpq/be-secure-openssl.c:1025
 #, c-format
 msgid "invalid DH parameters: neither suitable generator or safe prime"
 msgstr "ogiltiga DH-parametrar: varken lämplig generator eller säkert primtal"
 
-#: libpq/be-secure-openssl.c:1152
+#: libpq/be-secure-openssl.c:1161
 #, c-format
 msgid "Client certificate verification failed at depth %d: %s."
 msgstr "Klientcertifikat-autentisering misslyckades vid djupet %d: %s."
 
-#: libpq/be-secure-openssl.c:1189
+#: libpq/be-secure-openssl.c:1198
 #, c-format
 msgid "Failed certificate data (unverified): subject \"%s\", serial number %s, issuer \"%s\"."
 msgstr "Felaktig certifikatdata (ej verifierad): ämne \"%s\", serienummer %s, utställare \"%s\"."
 
-#: libpq/be-secure-openssl.c:1190
+#: libpq/be-secure-openssl.c:1199
 msgid "unknown"
 msgstr "okänd"
 
-#: libpq/be-secure-openssl.c:1281
+#: libpq/be-secure-openssl.c:1290
 #, c-format
 msgid "DH: could not load DH parameters"
 msgstr "DH: kunde inte ladda DH-parametrar"
 
-#: libpq/be-secure-openssl.c:1289
+#: libpq/be-secure-openssl.c:1298
 #, c-format
 msgid "DH: could not set DH parameters: %s"
 msgstr "DH: kunde inte sätta DH-parametrar: %s"
 
-#: libpq/be-secure-openssl.c:1316
+#: libpq/be-secure-openssl.c:1325
 #, c-format
 msgid "ECDH: unrecognized curve name: %s"
 msgstr "ECDH: okänt kurvnamn: %s"
 
-#: libpq/be-secure-openssl.c:1325
+#: libpq/be-secure-openssl.c:1334
 #, c-format
 msgid "ECDH: could not create key"
 msgstr "ECDH: kunde inte skapa nyckel"
 
-#: libpq/be-secure-openssl.c:1353
+#: libpq/be-secure-openssl.c:1362
 msgid "no SSL error reported"
 msgstr "inget SSL-fel rapporterat"
 
-#: libpq/be-secure-openssl.c:1357
+#: libpq/be-secure-openssl.c:1366
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL-felkod %lu"
 
-#: libpq/be-secure-openssl.c:1516
+#: libpq/be-secure-openssl.c:1525
 #, c-format
 msgid "could not create BIO"
 msgstr "kunde inte skapa BIO"
 
-#: libpq/be-secure-openssl.c:1526
+#: libpq/be-secure-openssl.c:1535
 #, c-format
 msgid "could not get NID for ASN1_OBJECT object"
 msgstr "kunde inte hämta NID för ASN1_OBJECT-objekt"
 
-#: libpq/be-secure-openssl.c:1534
+#: libpq/be-secure-openssl.c:1543
 #, c-format
 msgid "could not convert NID %d to an ASN1_OBJECT structure"
 msgstr "kunde inte konvertera NID %d till en ASN1_OBJECT-struktur"
@@ -18569,8 +18569,8 @@ msgstr "dålig %%TYPE-referens (för många punktade namn): %s"
 msgid "type reference %s converted to %s"
 msgstr "typreferens %s konverterad till %s"
 
-#: parser/parse_type.c:278 parser/parse_type.c:813 utils/cache/typcache.c:390
-#: utils/cache/typcache.c:445
+#: parser/parse_type.c:278 parser/parse_type.c:813 utils/cache/typcache.c:395
+#: utils/cache/typcache.c:450
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "typ \"%s\" är bara ett skal"
@@ -25490,83 +25490,83 @@ msgstr "efterfrågat tecken är inte giltigt för kodning: %u"
 msgid "percentile value %g is not between 0 and 1"
 msgstr "percentil-värde %g är inte mellan 0 och  1"
 
-#: utils/adt/pg_locale.c:1406
+#: utils/adt/pg_locale.c:1410
 #, c-format
 msgid "could not open collator for locale \"%s\" with rules \"%s\": %s"
 msgstr "kunde inte öppna jämförelse för lokal \"%s\" med regler \"%s\": %s"
 
-#: utils/adt/pg_locale.c:1417 utils/adt/pg_locale.c:2831
+#: utils/adt/pg_locale.c:1421 utils/adt/pg_locale.c:2831
 #: utils/adt/pg_locale.c:2904
 #, c-format
 msgid "ICU is not supported in this build"
 msgstr "ICU stöds inte av detta bygge"
 
-#: utils/adt/pg_locale.c:1446
+#: utils/adt/pg_locale.c:1450
 #, c-format
 msgid "could not create locale \"%s\": %m"
 msgstr "kunde inte skapa locale \"%s\": %m"
 
-#: utils/adt/pg_locale.c:1449
+#: utils/adt/pg_locale.c:1453
 #, c-format
 msgid "The operating system could not find any locale data for the locale name \"%s\"."
 msgstr "Operativsystemet kunde inte hitta någon lokaldata för lokalnamnet \"%s\"."
 
-#: utils/adt/pg_locale.c:1564
+#: utils/adt/pg_locale.c:1568
 #, c-format
 msgid "collations with different collate and ctype values are not supported on this platform"
 msgstr "jämförelser (collations) med olika collate- och ctype-värden stöds inte på denna plattform"
 
-#: utils/adt/pg_locale.c:1573
+#: utils/adt/pg_locale.c:1577
 #, c-format
 msgid "collation provider LIBC is not supported on this platform"
 msgstr "leverantören LIBC för jämförelse (collation) stöds inte på denna plattform"
 
-#: utils/adt/pg_locale.c:1614
+#: utils/adt/pg_locale.c:1618
 #, c-format
 msgid "collation \"%s\" has no actual version, but a version was recorded"
 msgstr "jämförelse (collation) \"%s\" har ingen version men en version har lagrats"
 
-#: utils/adt/pg_locale.c:1620
+#: utils/adt/pg_locale.c:1624
 #, c-format
 msgid "collation \"%s\" has version mismatch"
 msgstr "jämförelse (collation) \"%s\" har en version som inte matchar"
 
-#: utils/adt/pg_locale.c:1622
+#: utils/adt/pg_locale.c:1626
 #, c-format
 msgid "The collation in the database was created using version %s, but the operating system provides version %s."
 msgstr "Jämförelsen (collation) i databasen har skapats med version %s men operativsystemet har version %s."
 
-#: utils/adt/pg_locale.c:1625
+#: utils/adt/pg_locale.c:1629
 #, c-format
 msgid "Rebuild all objects affected by this collation and run ALTER COLLATION %s REFRESH VERSION, or build PostgreSQL with the right library version."
 msgstr "Bygg om alla objekt som påverkas av denna jämförelse (collation) och kör ALTER COLLATION %s REFRESH VERSION eller bygg PostgreSQL med rätt bibliotekversion."
 
-#: utils/adt/pg_locale.c:1691
+#: utils/adt/pg_locale.c:1695
 #, c-format
 msgid "could not load locale \"%s\""
 msgstr "kunde inte skapa locale \"%s\""
 
-#: utils/adt/pg_locale.c:1716
+#: utils/adt/pg_locale.c:1720
 #, c-format
 msgid "could not get collation version for locale \"%s\": error code %lu"
 msgstr "kunde inte hitta jämförelseversion (collation) för lokal \"%s\": felkod %lu"
 
-#: utils/adt/pg_locale.c:1772 utils/adt/pg_locale.c:1785
+#: utils/adt/pg_locale.c:1776 utils/adt/pg_locale.c:1789
 #, c-format
 msgid "could not convert string to UTF-16: error code %lu"
 msgstr "kunde inte konvertera sträng till UTF-16: felkod %lu"
 
-#: utils/adt/pg_locale.c:1799
+#: utils/adt/pg_locale.c:1803
 #, c-format
 msgid "could not compare Unicode strings: %m"
 msgstr "kunde inte jämföra Unicode-strängar: %m"
 
-#: utils/adt/pg_locale.c:1980
+#: utils/adt/pg_locale.c:1984
 #, c-format
 msgid "collation failed: %s"
 msgstr "jämförelse misslyckades: %s"
 
-#: utils/adt/pg_locale.c:2201 utils/adt/pg_locale.c:2233
+#: utils/adt/pg_locale.c:2205 utils/adt/pg_locale.c:2237
 #, c-format
 msgid "sort key generation failed: %s"
 msgstr "generering av sorteringsnyckel misslyckades: %s"
@@ -25798,8 +25798,8 @@ msgstr "mer än en funktion med namn %s"
 msgid "more than one operator named %s"
 msgstr "mer än en operator med namn %s"
 
-#: utils/adt/regproc.c:675 utils/adt/regproc.c:2009 utils/adt/ruleutils.c:10013
-#: utils/adt/ruleutils.c:10226
+#: utils/adt/regproc.c:675 utils/adt/regproc.c:2009 utils/adt/ruleutils.c:10020
+#: utils/adt/ruleutils.c:10233
 #, c-format
 msgid "too many arguments"
 msgstr "för många argument"
@@ -26551,47 +26551,52 @@ msgstr "XML stöder inte oändliga timestamp-värden."
 msgid "invalid query"
 msgstr "ogiltig fråga"
 
-#: utils/adt/xml.c:4266
+#: utils/adt/xml.c:3018
+#, c-format
+msgid "portal \"%s\" does not return tuples"
+msgstr "portalen \"%s\" returnerar inga tupler"
+
+#: utils/adt/xml.c:4270
 #, c-format
 msgid "invalid array for XML namespace mapping"
 msgstr "ogiltig array till XML-namnrymdmappning"
 
-#: utils/adt/xml.c:4267
+#: utils/adt/xml.c:4271
 #, c-format
 msgid "The array must be two-dimensional with length of the second axis equal to 2."
 msgstr "Arrayen måste vara tvådimensionell där längden på andra axeln är 2."
 
-#: utils/adt/xml.c:4291
+#: utils/adt/xml.c:4295
 #, c-format
 msgid "empty XPath expression"
 msgstr "tomt XPath-uttryck"
 
-#: utils/adt/xml.c:4343
+#: utils/adt/xml.c:4347
 #, c-format
 msgid "neither namespace name nor URI may be null"
 msgstr "varken namnrymdnamn eller URI får vara null"
 
-#: utils/adt/xml.c:4350
+#: utils/adt/xml.c:4354
 #, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr "kunde inte registrera XML-namnrymd med namn \"%s\" och URL \"%s\""
 
-#: utils/adt/xml.c:4693
+#: utils/adt/xml.c:4697
 #, c-format
 msgid "DEFAULT namespace is not supported"
 msgstr "namnrymden DEFAULT stöds inte"
 
-#: utils/adt/xml.c:4722
+#: utils/adt/xml.c:4726
 #, c-format
 msgid "row path filter must not be empty string"
 msgstr "sökvägsfilter för rad får inte vara tomma strängen"
 
-#: utils/adt/xml.c:4753
+#: utils/adt/xml.c:4757
 #, c-format
 msgid "column path filter must not be empty string"
 msgstr "sokvägsfilter för kolumn får inte vara tomma strängen"
 
-#: utils/adt/xml.c:4897
+#: utils/adt/xml.c:4901
 #, c-format
 msgid "more than one value returned by column XPath expression"
 msgstr "mer än ett värde returnerades från kolumns XPath-uttryck"
@@ -26667,7 +26672,7 @@ msgstr "relationsmappningsfilen \"%s\" innehåller ogiltig data"
 msgid "relation mapping file \"%s\" contains incorrect checksum"
 msgstr "relationsmappningsfilen \"%s\" innehåller en felaktig checksumma"
 
-#: utils/cache/typcache.c:1803 utils/fmgr/funcapi.c:566
+#: utils/cache/typcache.c:1809 utils/fmgr/funcapi.c:566
 #, c-format
 msgid "record type has not been registered"
 msgstr "posttypen har inte registrerats"
@@ -27258,22 +27263,22 @@ msgstr "rättighet saknas för att starta WAL-skickare"
 msgid "Only roles with the %s attribute may start a WAL sender process."
 msgstr "Bara roller med attributet %s får starta en process för WAL-skickande."
 
-#: utils/init/postinit.c:1038
-#, c-format
-msgid "database %u does not exist"
-msgstr "databasen %u existerar inte"
-
-#: utils/init/postinit.c:1128
+#: utils/init/postinit.c:1086
 #, c-format
 msgid "It seems to have just been dropped or renamed."
 msgstr "Det verkar precis ha tagits bort eller döpts om."
 
-#: utils/init/postinit.c:1135
+#: utils/init/postinit.c:1090
+#, c-format
+msgid "database %u does not exist"
+msgstr "databasen %u existerar inte"
+
+#: utils/init/postinit.c:1099
 #, c-format
 msgid "cannot connect to invalid database \"%s\""
 msgstr "kan inte ansluta till ogiltig databas \"%s\""
 
-#: utils/init/postinit.c:1155
+#: utils/init/postinit.c:1159
 #, c-format
 msgid "The database subdirectory \"%s\" is missing."
 msgstr "Databasens underbibliotek \"%s\" saknas."

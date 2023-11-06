@@ -1,0 +1,84 @@
+# Traditional Chinese message translation file for pg_test_timing
+# Copyright (C) 2023 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
+# Zhenbang Wei <znbang@gmail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_test_timing (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-09-11 20:49+0000\n"
+"PO-Revision-Date: 2023-11-06 08:50+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: \n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.1\n"
+
+#: pg_test_timing.c:59
+#, c-format
+msgid "Usage: %s [-d DURATION]\n"
+msgstr "用法: %s [-d DURATION]\n"
+
+#: pg_test_timing.c:81
+#, c-format
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s: 選項 %s 的參數無效\n"
+
+# postmaster/postmaster.c:512 postmaster/postmaster.c:525
+#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "用 \"%s --help\" 取得更多資訊。\n"
+
+#: pg_test_timing.c:90
+#, c-format
+msgid "%s: %s must be in range %u..%u\n"
+msgstr "%s: %s 必須在範圍 %u..%u 內\n"
+
+#: pg_test_timing.c:107
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 命令列參數過多(第一個是 \"%s\")\n"
+
+#: pg_test_timing.c:115
+#, c-format
+msgid "Testing timing overhead for %u second.\n"
+msgid_plural "Testing timing overhead for %u seconds.\n"
+msgstr[0] "測試 %u 秒的計時額外負擔。\n"
+
+#: pg_test_timing.c:151
+#, c-format
+msgid "Detected clock going backwards in time.\n"
+msgstr "偵測到時鐘時間倒退。\n"
+
+#: pg_test_timing.c:152
+#, c-format
+msgid "Time warp: %d ms\n"
+msgstr "時間扭曲: %d 毫秒\n"
+
+#: pg_test_timing.c:175
+#, c-format
+msgid "Per loop time including overhead: %0.2f ns\n"
+msgstr "每個循環時間，包括額外負擔: %0.2f ns\n"
+
+#: pg_test_timing.c:186
+msgid "< us"
+msgstr "< us"
+
+#: pg_test_timing.c:187
+#, no-c-format
+msgid "% of total"
+msgstr "佔總數 %"
+
+#: pg_test_timing.c:188
+msgid "count"
+msgstr "次數"
+
+#: pg_test_timing.c:197
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "計時期間的 histogram:\n"

@@ -1,45 +1,43 @@
-# Spanish message translation file for pg_basebackup
-#
-# Copyright (c) 2011-2021, PostgreSQL Global Development Group
-# This file is distributed under the same license as the PostgreSQL package.
-#
-# Álvaro Herrera <alvherre@alvh.no-ip.org>, 2011-2014.
-# Carlos Chapi <carlos.chapi@2ndquadrant.com>, 2017, 2021.
+# Traditional Chinese message translation file for pg_basebackup
+# Copyright (C) 2023 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_basebackup (PostgreSQL) package.
+# Zhenbang Wei <znbang@gmail.com>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 07:19+0000\n"
-"PO-Revision-Date: 2023-10-04 11:47+0200\n"
-"Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
-"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
-"Language: es\n"
+"POT-Creation-Date: 2023-09-11 20:48+0000\n"
+"PO-Revision-Date: 2023-11-06 08:49+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: \n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: BlackCAT 1.1\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.1\n"
 
+# libpq/be-secure.c:294 libpq/be-secure.c:387
 #: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
-msgstr "error: "
+msgstr "錯誤: "
 
 #: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
-msgstr "precaución: "
+msgstr "警告: "
 
 #: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
-msgstr "detalle: "
+msgstr "詳細內容: "
 
 #: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
-msgstr "consejo: "
+msgstr "提示: "
 
 #: ../../common/compression.c:132 ../../common/compression.c:141
 #: ../../common/compression.c:150 bbstreamer_gzip.c:116 bbstreamer_gzip.c:249
@@ -47,350 +45,428 @@ msgstr "consejo: "
 #: bbstreamer_zstd.c:284
 #, c-format
 msgid "this build does not support compression with %s"
-msgstr "esta instalación no soporta compresión con %s"
+msgstr "此版本不支援使用 %s 進行壓縮"
 
 #: ../../common/compression.c:205
 msgid "found empty string where a compression option was expected"
-msgstr "se encontró una cadena vacía donde se esperaba una opción de compresión"
+msgstr "在預期壓縮選項的地方發現空字串"
 
 #: ../../common/compression.c:244
 #, c-format
 msgid "unrecognized compression option: \"%s\""
-msgstr "opción de compresión no reconocida: «%s»"
+msgstr "無法辨識的壓縮選項: %s"
 
+# bootstrap/bootstrap.c:304 postmaster/postmaster.c:500 tcop/postgres.c:2507
 #: ../../common/compression.c:283
 #, c-format
 msgid "compression option \"%s\" requires a value"
-msgstr "la opción de compresión «%s» requiere un valor"
+msgstr "壓縮選項 \"%s\" 需要提供數值"
 
+# commands/define.c:233
 #: ../../common/compression.c:292
 #, c-format
 msgid "value for compression option \"%s\" must be an integer"
-msgstr "el valor para la opción de compresión «%s» debe ser un entero"
+msgstr "壓縮選項 \"%s\" 的數值必須是整數"
 
+# commands/define.c:233
 #: ../../common/compression.c:331
 #, c-format
 msgid "value for compression option \"%s\" must be a Boolean value"
-msgstr "el valor para la opción de compresión «%s» debe ser booleano"
+msgstr "壓縮選項 \"%s\" 的數值必須是布林值"
 
+# commands/indexcmds.c:623
 #: ../../common/compression.c:379
 #, c-format
 msgid "compression algorithm \"%s\" does not accept a compression level"
-msgstr "el algoritmo de compresión «%s» no acepta un nivel de compresión"
+msgstr "壓縮演算法 \"%s\" 不接受壓縮等級"
 
 #: ../../common/compression.c:386
 #, c-format
 msgid "compression algorithm \"%s\" expects a compression level between %d and %d (default at %d)"
-msgstr "el algoritmo de compresión «%s» espera un nivel de compresión entre %d y %d (por omisión %d)"
+msgstr "壓縮演算法 \"%s\" 預期的壓縮等級應在 %d 到 %d 之間(預設值 %d)"
 
+# commands/indexcmds.c:623
 #: ../../common/compression.c:397
 #, c-format
 msgid "compression algorithm \"%s\" does not accept a worker count"
-msgstr "el algoritmo de compresión «%s» no acepta una cantidad de procesos ayudantes"
+msgstr "壓縮演算法 \"%s\" 不支援工作執行緒數目設定"
 
+# commands/indexcmds.c:224
 #: ../../common/compression.c:408
 #, c-format
 msgid "compression algorithm \"%s\" does not support long-distance mode"
-msgstr "el algoritmo de compresión «%s» no acepta modo de larga distancia"
+msgstr "壓縮演算法 \"%s\" 不支援長距離模式"
 
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
 msgid "out of memory\n"
-msgstr "memoria agotada\n"
+msgstr "記憶體不足\n"
 
+# common.c:78
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "no se puede duplicar un puntero nulo (error interno)\n"
+msgstr "無法複製 null 指標(內部錯誤)\n"
 
+# access/transam/xlog.c:1936 access/transam/xlog.c:2038
+# access/transam/xlog.c:5291
 #: ../../common/file_utils.c:87 ../../common/file_utils.c:447
 #: pg_receivewal.c:319 pg_recvlogical.c:339
 #, c-format
 msgid "could not stat file \"%s\": %m"
-msgstr "no se pudo hacer stat al archivo «%s»: %m"
+msgstr "無法取得檔案 \"%s\" 的狀態: %m"
 
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
 #: ../../common/file_utils.c:162 pg_receivewal.c:242
 #, c-format
 msgid "could not open directory \"%s\": %m"
-msgstr "no se pudo abrir el directorio «%s»: %m"
+msgstr "無法開啟目錄 \"%s\": %m"
 
+# access/transam/slru.c:967 commands/tablespace.c:577
+# commands/tablespace.c:721
 #: ../../common/file_utils.c:196 pg_receivewal.c:471
 #, c-format
 msgid "could not read directory \"%s\": %m"
-msgstr "no se pudo leer el directorio «%s»: %m"
+msgstr "無法讀取目錄 \"%s\": %m"
 
+# access/transam/slru.c:638 access/transam/xlog.c:1631
+# access/transam/xlog.c:2742 access/transam/xlog.c:2832
+# access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
+# utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
+# utils/misc/database.c:68
 #: ../../common/file_utils.c:228 ../../common/file_utils.c:287
 #: ../../common/file_utils.c:361 ../../fe_utils/recovery_gen.c:121
 #: pg_receivewal.c:386
 #, c-format
 msgid "could not open file \"%s\": %m"
-msgstr "no se pudo abrir el archivo «%s»: %m"
+msgstr "無法開啟檔案 \"%s\": %m"
 
+# access/transam/slru.c:673 access/transam/xlog.c:1562
+# access/transam/xlog.c:1686 access/transam/xlog.c:3008
 #: ../../common/file_utils.c:299 ../../common/file_utils.c:369
 #: pg_recvlogical.c:194
 #, c-format
 msgid "could not fsync file \"%s\": %m"
-msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
+msgstr "無法 fsync 檔案 \"%s\": %m"
 
-#: ../../common/file_utils.c:379 pg_basebackup.c:2237 walmethods.c:462
+# access/transam/xlog.c:3037 access/transam/xlog.c:3819
+# access/transam/xlog.c:3862 commands/user.c:282 commands/user.c:412
+# postmaster/pgarch.c:597
+#: ../../common/file_utils.c:379 pg_basebackup.c:2238 walmethods.c:462
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
-msgstr "no se pudo renombrar el archivo de «%s» a «%s»: %m"
+msgstr "無法將檔案 \"%s\" 更名為 \"%s\": %m"
 
+# utils/adt/formatting.c:2044
 #: ../../fe_utils/option_utils.c:69
 #, c-format
 msgid "invalid value \"%s\" for option %s"
-msgstr "el valor «%s» no es válido para la opción «%s»"
+msgstr "選項 %2$s 的值 \"%1$s\" 無效"
 
 #: ../../fe_utils/option_utils.c:76
 #, c-format
 msgid "%s must be in range %d..%d"
-msgstr "%s debe estar en el rango %d..%d"
+msgstr "%s 必須在範圍 %d..%d 內"
 
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
 #: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
 #: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
-#: ../../fe_utils/recovery_gen.c:149 pg_basebackup.c:1609
+#: ../../fe_utils/recovery_gen.c:149 pg_basebackup.c:1610
 #, c-format
 msgid "out of memory"
-msgstr "memoria agotada"
+msgstr "記憶體不足"
 
+# access/transam/xlog.c:1555 access/transam/xlog.c:1679
+# access/transam/xlog.c:2964 access/transam/xlog.c:3002 commands/copy.c:1117
+# commands/tablespace.c:668 commands/tablespace.c:674
+# postmaster/postmaster.c:3430 utils/init/miscinit.c:832
+# utils/init/miscinit.c:841 utils/misc/guc.c:4934 utils/misc/guc.c:4998
 #: ../../fe_utils/recovery_gen.c:124 bbstreamer_file.c:121
-#: bbstreamer_file.c:258 pg_basebackup.c:1406 pg_basebackup.c:1700
+#: bbstreamer_file.c:258 pg_basebackup.c:1407 pg_basebackup.c:1701
 #, c-format
 msgid "could not write to file \"%s\": %m"
-msgstr "no se pudo escribir a archivo «%s»: %m"
+msgstr "無法寫入檔案 \"%s\": %m"
 
+# access/transam/slru.c:645 access/transam/xlog.c:1526
+# access/transam/xlog.c:1646 access/transam/xlog.c:2911
+# access/transam/xlog.c:5308 access/transam/xlog.c:5426
+# postmaster/postmaster.c:3366
 #: ../../fe_utils/recovery_gen.c:133 bbstreamer_file.c:93 bbstreamer_file.c:360
-#: pg_basebackup.c:1470 pg_basebackup.c:1679
+#: pg_basebackup.c:1471 pg_basebackup.c:1680
 #, c-format
 msgid "could not create file \"%s\": %m"
-msgstr "no se pudo crear archivo «%s»: %m"
+msgstr "無法建立檔案 \"%s\": %m"
 
+# access/transam/slru.c:680 access/transam/xlog.c:1567
+# access/transam/xlog.c:1691 access/transam/xlog.c:3013
 #: bbstreamer_file.c:138 pg_recvlogical.c:633
 #, c-format
 msgid "could not close file \"%s\": %m"
-msgstr "no se pudo cerrar el archivo «%s»: %m"
+msgstr "無法關閉檔案 \"%s\": %m"
 
 #: bbstreamer_file.c:275
 #, c-format
 msgid "unexpected state while extracting archive"
-msgstr "estado inesperado mientras se extraía el archivo"
+msgstr "解壓縮封存檔時出現非預期的狀況"
 
-#: bbstreamer_file.c:320 pg_basebackup.c:686 pg_basebackup.c:730
+# commands/tablespace.c:154 commands/tablespace.c:162
+# commands/tablespace.c:168
+#: bbstreamer_file.c:320 pg_basebackup.c:687 pg_basebackup.c:731
 #, c-format
 msgid "could not create directory \"%s\": %m"
-msgstr "no se pudo crear el directorio «%s»: %m"
+msgstr "無法建立目錄 \"%s\": %m"
 
+# commands/tablespace.c:325 commands/tablespace.c:969
 #: bbstreamer_file.c:325
 #, c-format
 msgid "could not set permissions on directory \"%s\": %m"
-msgstr "no se pudo definir los permisos del directorio «%s»: %m"
+msgstr "無法設定目錄 \"%s\" 的權限: %m"
 
 #: bbstreamer_file.c:344
 #, c-format
 msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
-msgstr "no se pudo crear un enlace simbólico desde «%s» a «%s»: %m"
+msgstr "無法建立符號連結 \"%s\" 至 \"%s\"：%m"
 
 #: bbstreamer_file.c:364
 #, c-format
 msgid "could not set permissions on file \"%s\": %m"
-msgstr "no se pudo definir los permisos al archivo «%s»: %m"
+msgstr "無法設定檔案 \"%s\" 的權限: %m"
 
 #: bbstreamer_gzip.c:95
 #, c-format
 msgid "could not create compressed file \"%s\": %m"
-msgstr "no se pudo crear el archivo comprimido «%s»: %m"
+msgstr "無法建立壓縮檔 \"%s\": %m"
 
 #: bbstreamer_gzip.c:103
 #, c-format
 msgid "could not duplicate stdout: %m"
-msgstr "no se pudo duplicar stdout: %m"
+msgstr "無法複製標準輸出: %m"
 
 #: bbstreamer_gzip.c:107
 #, c-format
 msgid "could not open output file: %m"
-msgstr "no se pudo abrir el archivo de salida: %m"
+msgstr "無法開啟輸出檔: %m"
 
 #: bbstreamer_gzip.c:111
 #, c-format
 msgid "could not set compression level %d: %s"
-msgstr "no se pudo definir el nivel de compresión %d: %s"
+msgstr "無法設定壓縮等級 %d: %s"
 
 #: bbstreamer_gzip.c:143
 #, c-format
 msgid "could not write to compressed file \"%s\": %s"
-msgstr "no se pudo escribir al archivo comprimido «%s»: %s"
+msgstr "無法寫入壓縮檔 \"%s\": %s"
 
 #: bbstreamer_gzip.c:167
 #, c-format
 msgid "could not close compressed file \"%s\": %m"
-msgstr "no se pudo cerrar el archivo comprimido «%s»: %m"
+msgstr "無法關閉壓縮檔 \"%s\": %m"
 
 #: bbstreamer_gzip.c:245 walmethods.c:876
 #, c-format
 msgid "could not initialize compression library"
-msgstr "no se pudo inicializar la biblioteca de compresión"
+msgstr "無法初始化壓縮程式庫"
 
 #: bbstreamer_gzip.c:296 bbstreamer_lz4.c:354 bbstreamer_zstd.c:329
 #, c-format
 msgid "could not decompress data: %s"
-msgstr "no se pudo descomprimir datos: %s"
+msgstr "無法解壓縮資料: %s"
 
 #: bbstreamer_inject.c:189
 #, c-format
 msgid "unexpected state while injecting recovery settings"
-msgstr "formato de resultados inesperado mientras se inyectaban los parámetros de recuperación"
+msgstr "注入還原設定時出現非預期的狀態"
 
 #: bbstreamer_lz4.c:95
 #, c-format
 msgid "could not create lz4 compression context: %s"
-msgstr "no se pudo crear un contexto de compresión lz4: %s"
+msgstr "無法建立 lz4 壓縮 context: %s"
 
 #: bbstreamer_lz4.c:140
 #, c-format
 msgid "could not write lz4 header: %s"
-msgstr "no se pudo escribir la cabecera lz4: %s"
+msgstr "無法寫入 lz4 標頭: %s"
 
 #: bbstreamer_lz4.c:189 bbstreamer_zstd.c:181 bbstreamer_zstd.c:223
 #, c-format
 msgid "could not compress data: %s"
-msgstr "no se pudo comprimir datos: %s"
+msgstr "無法壓縮資料: %s"
 
 #: bbstreamer_lz4.c:241
 #, c-format
 msgid "could not end lz4 compression: %s"
-msgstr "no se pudo terminar la compresión lz4: %s"
+msgstr "無法完成 lz4 壓縮: %s"
 
 #: bbstreamer_lz4.c:293
 #, c-format
 msgid "could not initialize compression library: %s"
-msgstr "no se pudo inicializar la biblioteca de compresión: %s"
+msgstr "無法初始化壓縮程式庫: %s"
 
 #: bbstreamer_tar.c:244
 #, c-format
 msgid "tar file trailer exceeds 2 blocks"
-msgstr "la terminación del archivo tar excede de 2 bloques"
+msgstr "tar 檔的尾部超過 2 個區塊"
 
 #: bbstreamer_tar.c:249
 #, c-format
 msgid "unexpected state while parsing tar archive"
-msgstr "se encontró un estado inesperado mientras se interpretaba el archivo tar"
+msgstr "解析 tar 封存檔時出現非預期的狀態"
 
 #: bbstreamer_tar.c:296
 #, c-format
 msgid "tar member has empty name"
-msgstr "miembro de tar tiene nombre vacío"
+msgstr "tar 成員的名稱是空的"
 
 #: bbstreamer_tar.c:328
 #, c-format
 msgid "COPY stream ended before last file was finished"
-msgstr "el flujo COPY terminó antes que el último archivo estuviera completo"
+msgstr "COPY 串流在最後一個檔案完成之前結束"
 
 #: bbstreamer_zstd.c:85
 #, c-format
 msgid "could not create zstd compression context"
-msgstr "no se pudo restablecer el contexto de compresión zstd"
+msgstr "無法建立 zstd 壓縮 context"
 
 #: bbstreamer_zstd.c:91
 #, c-format
 msgid "could not set zstd compression level to %d: %s"
-msgstr "no se pudo definir el nivel de compresión zstd a %d: %s"
+msgstr "無法設定 zstd 壓縮等級至 %d: %s"
 
 #: bbstreamer_zstd.c:105
 #, c-format
 msgid "could not set compression worker count to %d: %s"
-msgstr "no se pudo definir la cantidad de procesos ayudantes de compresión a %d: %s"
+msgstr "無法設定壓縮工作數量至 %d: %s"
 
 #: bbstreamer_zstd.c:116
 #, c-format
 msgid "could not enable long-distance mode: %s"
-msgstr "no se pudo habilitar el modo “long-distance”: %s"
+msgstr "無法啟動 long-distance 模式: %s"
 
 #: bbstreamer_zstd.c:275
 #, c-format
 msgid "could not create zstd decompression context"
-msgstr "no se pudo crear el contexto de descompresión zstd"
+msgstr "無法建立 zstd 解壓縮 context"
 
 #: pg_basebackup.c:238
 #, c-format
 msgid "removing data directory \"%s\""
-msgstr "eliminando el directorio de datos «%s»"
+msgstr "刪除資料目錄 \"%s\""
 
 #: pg_basebackup.c:240
 #, c-format
 msgid "failed to remove data directory"
-msgstr "no se pudo eliminar el directorio de datos"
+msgstr "無法刪除資料目錄"
 
 #: pg_basebackup.c:244
 #, c-format
 msgid "removing contents of data directory \"%s\""
-msgstr "eliminando el contenido del directorio «%s»"
+msgstr "刪除資料目錄 \"%s\" 的內容"
 
 #: pg_basebackup.c:246
 #, c-format
 msgid "failed to remove contents of data directory"
-msgstr "no se pudo eliminar el contenido del directorio de datos"
+msgstr "無法刪除資料目錄的內容"
 
 #: pg_basebackup.c:251
 #, c-format
 msgid "removing WAL directory \"%s\""
-msgstr "eliminando el directorio de WAL «%s»"
+msgstr "刪除 WAL 目錄 \"%s\""
 
 #: pg_basebackup.c:253
 #, c-format
 msgid "failed to remove WAL directory"
-msgstr "no se pudo eliminar el directorio de WAL"
+msgstr "無法刪除 WAL 目錄"
 
 #: pg_basebackup.c:257
 #, c-format
 msgid "removing contents of WAL directory \"%s\""
-msgstr "eliminando el contenido del directorio de WAL «%s»"
+msgstr "刪除 WAL 目錄 \"%s\" 的內容"
 
 #: pg_basebackup.c:259
 #, c-format
 msgid "failed to remove contents of WAL directory"
-msgstr "no se pudo eliminar el contenido del directorio de WAL"
+msgstr "無法刪除 WAL 目錄的內容"
 
 #: pg_basebackup.c:265
 #, c-format
 msgid "data directory \"%s\" not removed at user's request"
-msgstr "directorio de datos «%s» no eliminado a petición del usuario"
+msgstr "使用者要求不刪除資料目錄 \"%s\""
 
 #: pg_basebackup.c:268
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
-msgstr "directorio de WAL «%s» no eliminado a petición del usuario"
+msgstr "使用者要求不刪除 WAL 目錄 \"%s\""
 
 #: pg_basebackup.c:272
 #, c-format
 msgid "changes to tablespace directories will not be undone"
-msgstr "los cambios a los directorios de tablespaces no se desharán"
+msgstr "對表空間目錄的變更將無法撤銷"
 
 #: pg_basebackup.c:324
 #, c-format
 msgid "directory name too long"
-msgstr "nombre de directorio demasiado largo"
+msgstr "目錄名稱過長"
 
 #: pg_basebackup.c:331
 #, c-format
 msgid "multiple \"=\" signs in tablespace mapping"
-msgstr "múltiples signos «=» en mapeo de tablespace"
+msgstr "表空間映射中有多個 \"=\" 符號"
 
 #: pg_basebackup.c:340
 #, c-format
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
-msgstr "formato de mapeo de tablespace «%s» no válido, debe ser «ANTIGUO=NUEVO»"
+msgstr "無效的表空間映射格式 \"%s\"，必須是 \"OLDDIR=NEWDIR\""
 
 #: pg_basebackup.c:359
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
-msgstr "directorio antiguo no es una ruta absoluta en mapeo de tablespace: %s"
+msgstr "表空間映射中的舊目錄不是絕對路徑: %s"
 
 #: pg_basebackup.c:363
 #, c-format
 msgid "new directory is not an absolute path in tablespace mapping: %s"
-msgstr "directorio nuevo no es una ruta absoluta en mapeo de tablespace: %s"
+msgstr "表空間映射中的新目錄不是絕對路徑: %s"
 
 #: pg_basebackup.c:385
 #, c-format
@@ -398,18 +474,18 @@ msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s obtiene un respaldo base a partir de un servidor PostgreSQL en ejecución.\n"
+"%s 對正在運行的 PostgreSQL 伺服器進行基本備份。\n"
 "\n"
 
 #: pg_basebackup.c:387 pg_receivewal.c:79 pg_recvlogical.c:76
 #, c-format
 msgid "Usage:\n"
-msgstr "Empleo:\n"
+msgstr "用法:\n"
 
 #: pg_basebackup.c:388 pg_receivewal.c:80 pg_recvlogical.c:77
 #, c-format
 msgid "  %s [OPTION]...\n"
-msgstr "  %s [OPCIÓN]...\n"
+msgstr "  %s [OPTION]...\n"
 
 #: pg_basebackup.c:389
 #, c-format
@@ -418,17 +494,17 @@ msgid ""
 "Options controlling the output:\n"
 msgstr ""
 "\n"
-"Opciones que controlan la salida:\n"
+"控制輸出的選項:\n"
 
 #: pg_basebackup.c:390
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
-msgstr "  -D, --pgdata=DIR       directorio en el cual recibir el respaldo base\n"
+msgstr "  -D, --pgdata=DIRECTORY 將基本備份接收到目錄中\n"
 
 #: pg_basebackup.c:391
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
-msgstr "  -F, --format=p|t       formato de salida (plano (por omisión), tar)\n"
+msgstr "  -F, --format=p|t       輸出格式(純文字(預設)、tar)\n"
 
 #: pg_basebackup.c:392
 #, c-format
@@ -436,8 +512,8 @@ msgid ""
 "  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"
 msgstr ""
-"  -r, --max-rate=TASA    máxima tasa a la que transferir el directorio de datos\n"
-"                         (en kB/s, o use sufijos «k» o «M»)\n"
+"  -r, --max-rate=RATE    資料目錄最大傳輸速率\n"
+"                         (單位是 kB/s，或用後綴 \"k\" 或 \"M\")\n"
 
 #: pg_basebackup.c:394
 #, c-format
@@ -446,7 +522,7 @@ msgid ""
 "                         write configuration for replication\n"
 msgstr ""
 "  -R, --write-recovery-conf\n"
-"                         escribe configuración para replicación\n"
+"                         複寫的寫入組態\n"
 
 #: pg_basebackup.c:396
 #, c-format
@@ -454,8 +530,8 @@ msgid ""
 "  -t, --target=TARGET[:DETAIL]\n"
 "                         backup target (if other than client)\n"
 msgstr ""
-"  -t, --target=DESTINO:[DETALLE]\n"
-"                         destino del respaldo base (si no es el cliente)\n"
+"  -t, --target=TARGET[:DETAIL]\n"
+"                         備份目標(如果不同於客戶端)\n"
 
 #: pg_basebackup.c:398
 #, c-format
@@ -463,13 +539,13 @@ msgid ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
 "                         relocate tablespace in OLDDIR to NEWDIR\n"
 msgstr ""
-"  -T, --tablespace-mapping=ANTIGUO=NUEVO\n"
-"                         reubicar el directorio de tablespace de ANTIGUO a NUEVO\n"
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                         將 OLDDIR 中的表空間搬到 NEWDIR\n"
 
 #: pg_basebackup.c:400
 #, c-format
 msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
-msgstr "      --waldir=DIRWAL    ubicación para el directorio WAL\n"
+msgstr "      --waldir=WALDIR    write-ahead 日誌目錄的位置\n"
 
 #: pg_basebackup.c:401
 #, c-format
@@ -478,13 +554,12 @@ msgid ""
 "                         include required WAL files with specified method\n"
 msgstr ""
 "  -X, --wal-method=none|fetch|stream\n"
-"                         incluye los archivos WAL necesarios,\n"
-"                         en el modo especificado\n"
+"                         用指定的方式包括必要的 WAL 檔\n"
 
 #: pg_basebackup.c:403
 #, c-format
 msgid "  -z, --gzip             compress tar output\n"
-msgstr "  -z, --gzip             comprimir la salida de tar\n"
+msgstr "  -z, --gzip             壓縮 tar 輸出\n"
 
 #: pg_basebackup.c:404
 #, c-format
@@ -492,13 +567,13 @@ msgid ""
 "  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
 "                         compress on client or server as specified\n"
 msgstr ""
-"  -Z, --compress=[{client|server}-]MÉTODO[:DETALLE]\n"
-"                         comprimir en cliente o servidor como se especifica\n"
+"  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
+"                         依指定方式在客戶端或伺服器進行壓縮\n"
 
 #: pg_basebackup.c:406
 #, c-format
 msgid "  -Z, --compress=none    do not compress tar output\n"
-msgstr "  -Z, --compress=none    no comprimir la salida tar\n"
+msgstr "  -Z, --compress=none    不壓縮 tar 輸出\n"
 
 #: pg_basebackup.c:407
 #, c-format
@@ -507,7 +582,7 @@ msgid ""
 "General options:\n"
 msgstr ""
 "\n"
-"Opciones generales:\n"
+"一般選項:\n"
 
 #: pg_basebackup.c:408
 #, c-format
@@ -516,47 +591,47 @@ msgid ""
 "                         set fast or spread checkpointing\n"
 msgstr ""
 "  -c, --checkpoint=fast|spread\n"
-"                         utilizar checkpoint rápido o extendido\n"
+"                         設定 fast 或 spread 檢查點\n"
 
 #: pg_basebackup.c:410
 #, c-format
 msgid "  -C, --create-slot      create replication slot\n"
-msgstr "  -C, --create-slot      crear un slot de replicación\n"
+msgstr "  -C, --create-slot      建立複寫插槽\n"
 
 #: pg_basebackup.c:411
 #, c-format
 msgid "  -l, --label=LABEL      set backup label\n"
-msgstr "  -l, --label=ETIQUETA   establecer etiqueta del respaldo\n"
+msgstr "  -l, --label=LABEL      設定備份標籤\n"
 
 #: pg_basebackup.c:412
 #, c-format
 msgid "  -n, --no-clean         do not clean up after errors\n"
-msgstr "  -n, --no-clean         no hacer limpieza tras errores\n"
+msgstr "  -n, --no-clean         發生錯誤後不清理\n"
 
 #: pg_basebackup.c:413
 #, c-format
 msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
-msgstr "  -N, --no-sync          no esperar que los cambios se sincronicen a disco\n"
+msgstr "  -N, --no-sync          不等待變更安全寫入磁碟\n"
 
 #: pg_basebackup.c:414
 #, c-format
 msgid "  -P, --progress         show progress information\n"
-msgstr "  -P, --progress         mostrar información de progreso\n"
+msgstr "  -P, --progress         顯示進度資訊\n"
 
 #: pg_basebackup.c:415 pg_receivewal.c:89
 #, c-format
 msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
-msgstr "  -S, --slot=NOMBRE      slot de replicación a usar\n"
+msgstr "  -S, --slot=SLOTNAME    複寫插槽名稱\n"
 
 #: pg_basebackup.c:416 pg_receivewal.c:91 pg_recvlogical.c:98
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
-msgstr "  -v, --verbose          desplegar mensajes verbosos\n"
+msgstr "  -v, --verbose          顯示詳細訊息\n"
 
 #: pg_basebackup.c:417 pg_receivewal.c:92 pg_recvlogical.c:99
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version          mostrar información de versión, luego salir\n"
+msgstr "  -V, --version          顯示版本，然後結束\n"
 
 #: pg_basebackup.c:418
 #, c-format
@@ -565,7 +640,7 @@ msgid ""
 "                         use algorithm for manifest checksums\n"
 msgstr ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
-"                         usar algoritmo para sumas de comprobación del manifiesto\n"
+"                         使用指定算法驗證清單檢查碼\n"
 
 #: pg_basebackup.c:420
 #, c-format
@@ -574,22 +649,22 @@ msgid ""
 "                         hex encode all file names in manifest\n"
 msgstr ""
 "      --manifest-force-encode\n"
-"                         codifica a hexadecimal todos los nombres de archivo en el manifiesto\n"
+"                         將清單中所有檔名進行十六進位編碼\n"
 
 #: pg_basebackup.c:422
 #, c-format
 msgid "      --no-estimate-size do not estimate backup size in server side\n"
-msgstr "      --no-estimate-size no estimar el tamaño del la copia de seguridad en el lado del servidor\n"
+msgstr "      --no-estimate-size 不在伺服器端估算備份大小\n"
 
 #: pg_basebackup.c:423
 #, c-format
 msgid "      --no-manifest      suppress generation of backup manifest\n"
-msgstr "      --no-manifest      suprimir la generación del manifiesto de la copia de seguridad\n"
+msgstr "      --no-manifest      禁止產生備份清單\n"
 
 #: pg_basebackup.c:424
 #, c-format
 msgid "      --no-slot          prevent creation of temporary replication slot\n"
-msgstr "      --no-slot          evitar la creación de un slot de replicación temporal\n"
+msgstr "      --no-slot          阻止建立臨時複寫插槽\n"
 
 #: pg_basebackup.c:425
 #, c-format
@@ -598,12 +673,12 @@ msgid ""
 "                         do not verify checksums\n"
 msgstr ""
 "      --no-verify-checksums\n"
-"                         no verificar checksums\n"
+"                         不驗證檢查碼\n"
 
 #: pg_basebackup.c:427 pg_receivewal.c:95 pg_recvlogical.c:100
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help             mostrar esta ayuda, luego salir\n"
+msgstr "  -?, --help             顯示說明，然後結束\n"
 
 #: pg_basebackup.c:428 pg_receivewal.c:96 pg_recvlogical.c:101
 #, c-format
@@ -612,22 +687,22 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"Opciones de conexión:\n"
+"連線選項:\n"
 
 #: pg_basebackup.c:429 pg_receivewal.c:97
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
-msgstr "  -d, --dbname=CONSTR    cadena de conexión\n"
+msgstr "  -d, --dbname=CONNSTR   連線字串\n"
 
 #: pg_basebackup.c:430 pg_receivewal.c:98 pg_recvlogical.c:103
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr "  -h, --host=ANFITRIÓN   dirección del servidor o directorio del socket\n"
+msgstr "  -h, --host=HOSTNAME    資料庫伺服器主機或socket目錄\n"
 
 #: pg_basebackup.c:431 pg_receivewal.c:99 pg_recvlogical.c:104
 #, c-format
 msgid "  -p, --port=PORT        database server port number\n"
-msgstr "  -p, --port=PORT        número de port del servidor\n"
+msgstr "  -p, --port=PORT        資料庫伺服器連接埠\n"
 
 #: pg_basebackup.c:432
 #, c-format
@@ -635,25 +710,23 @@ msgid ""
 "  -s, --status-interval=INTERVAL\n"
 "                         time between status packets sent to server (in seconds)\n"
 msgstr ""
-"  -s, --status-interval=INTERVALO (segundos)\n"
-"                         tiempo entre envíos de paquetes de estado al servidor\n"
+"  -s, --status-interval=INTERVAL\n"
+"                         向伺服器發送狀態封包的時間間隔(以秒為單位)\n"
 
 #: pg_basebackup.c:434 pg_receivewal.c:100 pg_recvlogical.c:105
 #, c-format
 msgid "  -U, --username=NAME    connect as specified database user\n"
-msgstr "  -U, --username=NOMBRE  conectarse con el usuario especificado\n"
+msgstr "  -U, --username=NAME    以指定的資料庫使用者連線\n"
 
 #: pg_basebackup.c:435 pg_receivewal.c:101 pg_recvlogical.c:106
 #, c-format
 msgid "  -w, --no-password      never prompt for password\n"
-msgstr "  -w, --no-password      nunca pedir contraseña\n"
+msgstr "  -w, --no-password      不詢問密碼\n"
 
 #: pg_basebackup.c:436 pg_receivewal.c:102 pg_recvlogical.c:107
 #, c-format
 msgid "  -W, --password         force password prompt (should happen automatically)\n"
-msgstr ""
-"  -W, --password         forzar un prompt para la contraseña\n"
-"                         (debería ser automático)\n"
+msgstr "  -W, --password         要求輸入密碼(應該是自動的)\n"
 
 #: pg_basebackup.c:437 pg_receivewal.c:106 pg_recvlogical.c:108
 #, c-format
@@ -662,375 +735,377 @@ msgid ""
 "Report bugs to <%s>.\n"
 msgstr ""
 "\n"
-"Reporte errores a <%s>.\n"
+"回報錯誤至 <%s>。\n"
 
 #: pg_basebackup.c:438 pg_receivewal.c:107 pg_recvlogical.c:109
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "Sitio web de %s: <%s>\n"
+msgstr "%s 網站: <%s>\n"
 
 #: pg_basebackup.c:477
 #, c-format
 msgid "could not read from ready pipe: %m"
-msgstr "no se pudo leer desde la tubería: %m"
+msgstr "無法從就緒的管道讀取: %m"
 
-#: pg_basebackup.c:480 pg_basebackup.c:622 pg_basebackup.c:2151
+#: pg_basebackup.c:480 pg_basebackup.c:622 pg_basebackup.c:2152
 #: streamutil.c:441
 #, c-format
 msgid "could not parse write-ahead log location \"%s\""
-msgstr "no se pudo interpretar la ubicación del WAL «%s»"
+msgstr "無法解析 write-ahead 日誌位置 \"%s\""
 
 #: pg_basebackup.c:585 pg_receivewal.c:600
 #, c-format
 msgid "could not finish writing WAL files: %m"
-msgstr "no se pudo completar la escritura de archivos WAL: %m"
+msgstr "無法完成寫入 WAL 檔: %m"
 
 #: pg_basebackup.c:631
 #, c-format
 msgid "could not create pipe for background process: %m"
-msgstr "no se pudo crear la tubería para el proceso en segundo plano: %m"
+msgstr "無法為背景行程建立管道: %m"
 
-#: pg_basebackup.c:664
+#: pg_basebackup.c:665
 #, c-format
 msgid "created temporary replication slot \"%s\""
-msgstr "se creó slot temporal de replicación «%s»"
+msgstr "已建立臨時複寫插槽 \"%s\""
 
-#: pg_basebackup.c:667
+#: pg_basebackup.c:668
 #, c-format
 msgid "created replication slot \"%s\""
-msgstr "se creó el slot de replicación «%s»"
+msgstr "已建立複寫插槽 \"%s\""
 
-#: pg_basebackup.c:701
+#: pg_basebackup.c:702
 #, c-format
 msgid "could not create background process: %m"
-msgstr "no se pudo lanzar el proceso en segundo plano: %m"
+msgstr "無法建立背景行程: %m"
 
-#: pg_basebackup.c:710
+#: pg_basebackup.c:711
 #, c-format
 msgid "could not create background thread: %m"
-msgstr "no se pudo lanzar el hilo en segundo plano: %m"
+msgstr "無法建立背景執行緒: %m"
 
-#: pg_basebackup.c:749
+# commands/tablespace.c:334
+#: pg_basebackup.c:750
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
-msgstr "el directorio «%s» existe pero no está vacío"
+msgstr "目錄 \"%s\" 已存在，但不是空目錄"
 
-#: pg_basebackup.c:755
+# utils/init/postinit.c:283
+#: pg_basebackup.c:756
 #, c-format
 msgid "could not access directory \"%s\": %m"
-msgstr "no se pudo acceder al directorio «%s»: %m"
+msgstr "無法存取目錄 \"%s\": %m"
 
-#: pg_basebackup.c:831
+#: pg_basebackup.c:832
 #, c-format
 msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
-msgstr[0] "%*s/%s kB (100%%), %d/%d tablespace %*s"
-msgstr[1] "%*s/%s kB (100%%), %d/%d tablespaces %*s"
+msgstr[0] "%*s/%s kB (100%%), %d/%d 表空間 %*s"
 
-#: pg_basebackup.c:843
+#: pg_basebackup.c:844
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
-msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
-msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d 表空間 (%s%-*.*s)"
 
-#: pg_basebackup.c:859
+#: pg_basebackup.c:860
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
-msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace"
-msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d 表空間"
 
-#: pg_basebackup.c:883
+#: pg_basebackup.c:884
 #, c-format
 msgid "transfer rate \"%s\" is not a valid value"
-msgstr "tasa de transferencia «%s» no es un valor válido"
+msgstr "傳輸速率 \"%s\" 不是有效的數值"
 
-#: pg_basebackup.c:885
+#: pg_basebackup.c:886
 #, c-format
 msgid "invalid transfer rate \"%s\": %m"
-msgstr "tasa de transferencia «%s» no válida: %m"
+msgstr "無效的傳輸速率 \"%s\": %m"
 
-#: pg_basebackup.c:892
+#: pg_basebackup.c:893
 #, c-format
 msgid "transfer rate must be greater than zero"
-msgstr "tasa de transferencia debe ser mayor que cero"
+msgstr "傳輸速率必須大於零"
 
-#: pg_basebackup.c:922
+#: pg_basebackup.c:923
 #, c-format
 msgid "invalid --max-rate unit: \"%s\""
-msgstr "unidad de --max-rato no válida: «%s»"
+msgstr "無效的 --max-rate 單位: \"%s\""
 
-#: pg_basebackup.c:926
+#: pg_basebackup.c:927
 #, c-format
 msgid "transfer rate \"%s\" exceeds integer range"
-msgstr "la tasa de transferencia «%s» excede el rango de enteros"
+msgstr "傳輸速率 \"%s\" 超出整數範圍"
 
-#: pg_basebackup.c:933
+#: pg_basebackup.c:934
 #, c-format
 msgid "transfer rate \"%s\" is out of range"
-msgstr "la tasa de transferencia «%s» está fuera de rango"
+msgstr "傳輸速率 \"%s\" 超出範圍"
 
-#: pg_basebackup.c:995
+#: pg_basebackup.c:996
 #, c-format
 msgid "could not get COPY data stream: %s"
-msgstr "no se pudo obtener un flujo de datos COPY: %s"
+msgstr "無法取得 COPY 資料流: %s"
 
-#: pg_basebackup.c:1012 pg_recvlogical.c:436 pg_recvlogical.c:608
+#: pg_basebackup.c:1013 pg_recvlogical.c:436 pg_recvlogical.c:608
 #: receivelog.c:973
 #, c-format
 msgid "could not read COPY data: %s"
-msgstr "no fue posible leer datos COPY: %s"
+msgstr "無法讀取 COPY 資料: %s"
 
-#: pg_basebackup.c:1016
+#: pg_basebackup.c:1017
 #, c-format
 msgid "background process terminated unexpectedly"
-msgstr "un proceso en segundo plano terminó inesperadamente"
-
-#: pg_basebackup.c:1087
-#, c-format
-msgid "cannot inject manifest into a compressed tar file"
-msgstr "no se pueden inyectar un manifiesto en un archivo tar comprimido"
+msgstr "背景行程意外終止"
 
 #: pg_basebackup.c:1088
 #, c-format
-msgid "Use client-side compression, send the output to a directory rather than standard output, or use %s."
-msgstr "Use compresión del lado del cliente, envíe la salida a un directorio en lugar de a salida estándar, o use %s."
+msgid "cannot inject manifest into a compressed tar file"
+msgstr "無法將清單注入到壓縮的 tar 檔案中"
 
-#: pg_basebackup.c:1104
+#: pg_basebackup.c:1089
 #, c-format
-msgid "cannot parse archive \"%s\""
-msgstr "no se pudo interpretar el archivo «%s»"
+msgid "Use client-side compression, send the output to a directory rather than standard output, or use %s."
+msgstr "使用客戶端壓縮，將輸出送至目錄而非標準輸出，或使用 %s。"
 
 #: pg_basebackup.c:1105
 #, c-format
-msgid "Only tar archives can be parsed."
-msgstr "Sólo los archivos tar pueden ser interpretados."
+msgid "cannot parse archive \"%s\""
+msgstr "無法解析封存檔 \"%s\""
 
-#: pg_basebackup.c:1107
+#: pg_basebackup.c:1106
+#, c-format
+msgid "Only tar archives can be parsed."
+msgstr "只能解析 tar 封存檔"
+
+#: pg_basebackup.c:1108
 #, c-format
 msgid "Plain format requires pg_basebackup to parse the archive."
-msgstr "El formato plano requiere que pg_basebackup interprete el archivo."
+msgstr "純文字格式需要 pg_basebackup 來解析封存檔。"
 
-#: pg_basebackup.c:1109
+#: pg_basebackup.c:1110
 #, c-format
 msgid "Using - as the output directory requires pg_basebackup to parse the archive."
-msgstr "Usar - como directorio de salida requiere que pg_basebackup interprete el archivo."
+msgstr "使用 - 作為輸出目錄需要 pg_basebackup 來解析封存檔。"
 
-#: pg_basebackup.c:1111
+#: pg_basebackup.c:1112
 #, c-format
 msgid "The -R option requires pg_basebackup to parse the archive."
-msgstr "La opción -R requiere que pg_basebackup interprete el archivo."
+msgstr "使用 -R 選項需要 pg_basebackup 來解析封存檔。"
 
-#: pg_basebackup.c:1330
+#: pg_basebackup.c:1331
 #, c-format
 msgid "archives must precede manifest"
-msgstr "los archivos deben preceder al manifiesto"
+msgstr "封存檔必須位於清單之前"
 
-#: pg_basebackup.c:1345
+#: pg_basebackup.c:1346
 #, c-format
 msgid "invalid archive name: \"%s\""
-msgstr "nombre de archivo no válido: «%s»"
+msgstr "無效的封存檔名: \"%s\""
 
-#: pg_basebackup.c:1417
+#: pg_basebackup.c:1418
 #, c-format
 msgid "unexpected payload data"
-msgstr "datos inesperados"
+msgstr "非預期的負載資料"
 
-#: pg_basebackup.c:1560
+#: pg_basebackup.c:1561
 #, c-format
 msgid "empty COPY message"
-msgstr "mensaje COPY vacío"
+msgstr "空的 COPY 訊息"
 
-#: pg_basebackup.c:1562
+#: pg_basebackup.c:1563
 #, c-format
 msgid "malformed COPY message of type %d, length %zu"
-msgstr "mensaje COPY mal formado de tipo %d, largo %zu"
+msgstr "COPY 訊息格式錯誤，類型 %d，長度 %zu"
 
-#: pg_basebackup.c:1760
+#: pg_basebackup.c:1761
 #, c-format
 msgid "incompatible server version %s"
-msgstr "versión del servidor %s incompatible"
+msgstr "不相容的伺服器版本 %s"
 
-#: pg_basebackup.c:1776
+#: pg_basebackup.c:1777
 #, c-format
 msgid "Use -X none or -X fetch to disable log streaming."
-msgstr "Use -X none o -X fetch para deshabilitar el flujo de log."
+msgstr "用 -X none 或 -X fetch 關閉日誌串流。"
 
-#: pg_basebackup.c:1844
+#: pg_basebackup.c:1845
 #, c-format
 msgid "backup targets are not supported by this server version"
-msgstr "los destinos de respaldo no están soportados por esta versión de servidor"
+msgstr "此伺服器版本不支援備份目標"
 
-#: pg_basebackup.c:1847
+#: pg_basebackup.c:1848
 #, c-format
 msgid "recovery configuration cannot be written when a backup target is used"
-msgstr "la configuración de recuperación no puede ser escrita cuando se usa un destino de respaldo base"
+msgstr "使用備份目標時無法寫入復原組態"
 
-#: pg_basebackup.c:1874
+#: pg_basebackup.c:1875
 #, c-format
 msgid "server does not support server-side compression"
-msgstr "el servidor no soporta compresión del lado del servidor"
+msgstr "伺服器不支援伺服器端壓縮"
 
-#: pg_basebackup.c:1884
+#: pg_basebackup.c:1885
 #, c-format
 msgid "initiating base backup, waiting for checkpoint to complete"
-msgstr "iniciando el respaldo base, esperando que el checkpoint se complete"
+msgstr "正在啟動基本備份，等待檢查點完成"
 
-#: pg_basebackup.c:1888
+#: pg_basebackup.c:1889
 #, c-format
 msgid "waiting for checkpoint"
-msgstr "esperando al checkpoint"
+msgstr "等待檢查點"
 
-#: pg_basebackup.c:1901 pg_recvlogical.c:260 receivelog.c:543 receivelog.c:582
+#: pg_basebackup.c:1902 pg_recvlogical.c:260 receivelog.c:543 receivelog.c:582
 #: streamutil.c:288 streamutil.c:361 streamutil.c:413 streamutil.c:501
 #: streamutil.c:653 streamutil.c:698
 #, c-format
 msgid "could not send replication command \"%s\": %s"
-msgstr "no se pudo ejecutar la orden de replicación «%s»: %s"
+msgstr "無法傳送複寫命令 \"%s\": %s"
 
-#: pg_basebackup.c:1909
+#: pg_basebackup.c:1910
 #, c-format
 msgid "could not initiate base backup: %s"
-msgstr "no se pudo iniciar el respaldo base: %s"
+msgstr "無法啟動基本備份: %s"
 
-#: pg_basebackup.c:1912
+#: pg_basebackup.c:1913
 #, c-format
 msgid "server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields"
-msgstr "el servidor envió una respuesta inesperada a la orden BASE_BACKUP; se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos"
+msgstr "伺服器回傳非預期回應給 BASE_BACKUP 命令，收到 %d 列和 %d 欄，預期 %d 列和 %d 欄"
 
-#: pg_basebackup.c:1918
+#: pg_basebackup.c:1919
 #, c-format
 msgid "checkpoint completed"
-msgstr "el checkpoint se ha completado"
+msgstr "檢查點完成"
 
-#: pg_basebackup.c:1932
+#: pg_basebackup.c:1933
 #, c-format
 msgid "write-ahead log start point: %s on timeline %u"
-msgstr "punto de inicio del WAL: %s en el timeline %u"
+msgstr "write-ahead 日誌起始點：%s，時間線 %u"
 
-#: pg_basebackup.c:1940
+#: pg_basebackup.c:1941
 #, c-format
 msgid "could not get backup header: %s"
-msgstr "no se pudo obtener la cabecera de respaldo: %s"
+msgstr "無法取得備份標頭: %s"
 
-#: pg_basebackup.c:1943
+#: pg_basebackup.c:1944
 #, c-format
 msgid "no data returned from server"
-msgstr "el servidor no retornó datos"
+msgstr "未從伺服器回傳任何資料"
 
-#: pg_basebackup.c:1986
+#: pg_basebackup.c:1987
 #, c-format
 msgid "can only write single tablespace to stdout, database has %d"
-msgstr "sólo se puede escribir un tablespace a stdout, la base de datos tiene %d"
+msgstr "只能將單一表空間寫入標準輸出，資料庫有 %d 個"
 
-#: pg_basebackup.c:1999
+#: pg_basebackup.c:2000
 #, c-format
 msgid "starting background WAL receiver"
-msgstr "iniciando el receptor de WAL en segundo plano"
+msgstr "啟動背景 WAL 接收程序"
 
-#: pg_basebackup.c:2082
+#: pg_basebackup.c:2083
 #, c-format
 msgid "backup failed: %s"
-msgstr "el respaldo falló: %s"
+msgstr "備份失敗: %s"
 
-#: pg_basebackup.c:2085
+#: pg_basebackup.c:2086
 #, c-format
 msgid "no write-ahead log end position returned from server"
-msgstr "el servidor no retornó la posición final del WAL"
+msgstr "伺服器未返回 write-ahead 日誌結束位置"
 
-#: pg_basebackup.c:2088
+#: pg_basebackup.c:2089
 #, c-format
 msgid "write-ahead log end point: %s"
-msgstr "posición final del WAL: %s"
+msgstr "write-ahead 日誌結束點: %s"
 
-#: pg_basebackup.c:2099
+#: pg_basebackup.c:2100
 #, c-format
 msgid "checksum error occurred"
-msgstr "ocurrió un error de checksums"
+msgstr "發生檢查碼錯誤"
 
-#: pg_basebackup.c:2104
+#: pg_basebackup.c:2105
 #, c-format
 msgid "final receive failed: %s"
-msgstr "la recepción final falló: %s"
+msgstr "最終接收失敗: %s"
 
-#: pg_basebackup.c:2128
+#: pg_basebackup.c:2129
 #, c-format
 msgid "waiting for background process to finish streaming ..."
-msgstr "esperando que el proceso en segundo plano complete el flujo..."
+msgstr "等待背景行程完成串流..."
 
-#: pg_basebackup.c:2132
+#: pg_basebackup.c:2133
 #, c-format
 msgid "could not send command to background pipe: %m"
-msgstr "no se pudo enviar una orden a la tubería de segundo plano: %m"
+msgstr "無法向背景管道傳送指令: %m"
 
-#: pg_basebackup.c:2137
+#: pg_basebackup.c:2138
 #, c-format
 msgid "could not wait for child process: %m"
-msgstr "no se pudo esperar al proceso hijo: %m"
+msgstr "無法等待子進程: %m"
 
-#: pg_basebackup.c:2139
+#: pg_basebackup.c:2140
 #, c-format
 msgid "child %d died, expected %d"
-msgstr "el hijo %d murió, pero se esperaba al %d"
+msgstr "子行程 %d 終止，預期為 %d"
 
-#: pg_basebackup.c:2141 streamutil.c:91 streamutil.c:196
+# commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
+# nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
+#: pg_basebackup.c:2142 streamutil.c:91 streamutil.c:196
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_basebackup.c:2161
+#: pg_basebackup.c:2162
 #, c-format
 msgid "could not wait for child thread: %m"
-msgstr "no se pudo esperar el hilo hijo: %m"
+msgstr "無法等待子執行緒: %m"
 
-#: pg_basebackup.c:2166
+#: pg_basebackup.c:2167
 #, c-format
 msgid "could not get child thread exit status: %m"
-msgstr "no se pudo obtener la cabecera de respaldo: %m"
+msgstr "無法取得子執行緒結束碼: %m"
 
-#: pg_basebackup.c:2169
+#: pg_basebackup.c:2170
 #, c-format
 msgid "child thread exited with error %u"
-msgstr "el hilo hijo terminó con error %u"
+msgstr "子執行緒結束發生錯誤 %u"
 
-#: pg_basebackup.c:2198
+#: pg_basebackup.c:2199
 #, c-format
 msgid "syncing data to disk ..."
-msgstr "sincronizando datos a disco ..."
+msgstr "同步資料到磁碟…"
 
-#: pg_basebackup.c:2223
+#: pg_basebackup.c:2224
 #, c-format
 msgid "renaming backup_manifest.tmp to backup_manifest"
-msgstr "renombrando backup_manifest.tmp a backup_manifest"
+msgstr "將 backup_manifest.tmp 更名為 backup_manifest"
 
-#: pg_basebackup.c:2243
+#: pg_basebackup.c:2244
 #, c-format
 msgid "base backup completed"
-msgstr "el respaldo base se ha completado"
+msgstr "基本備份完成"
 
-#: pg_basebackup.c:2326
+#: pg_basebackup.c:2327
 #, c-format
 msgid "invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\""
-msgstr "argumento de checkpoint «%s» no válido, debe ser «fast» o «spread»"
+msgstr "無效的檢查點參數 \"%s\"，必須為 \"fast\" 或 \"spread\""
 
-#: pg_basebackup.c:2344
+#: pg_basebackup.c:2345
 #, c-format
 msgid "invalid output format \"%s\", must be \"plain\" or \"tar\""
-msgstr "formato de salida «%s» no válido, debe ser «plain» o «tar»"
+msgstr "無效的輸出格式 \"%s\"，必須為 \"plain\" 或 \"tar\""
 
-#: pg_basebackup.c:2422
+#: pg_basebackup.c:2423
 #, c-format
 msgid "invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\""
-msgstr "opción de wal-method «%s» no válida, debe ser «fetch», «stream» o «none»"
+msgstr "無效的 wal-method 選項 \"%s\"，必須為 \"fetch\"、\"stream\" 或 \"none\""
 
-#: pg_basebackup.c:2457 pg_basebackup.c:2469 pg_basebackup.c:2491
-#: pg_basebackup.c:2503 pg_basebackup.c:2509 pg_basebackup.c:2561
-#: pg_basebackup.c:2572 pg_basebackup.c:2582 pg_basebackup.c:2588
-#: pg_basebackup.c:2595 pg_basebackup.c:2607 pg_basebackup.c:2619
-#: pg_basebackup.c:2627 pg_basebackup.c:2640 pg_basebackup.c:2646
-#: pg_basebackup.c:2655 pg_basebackup.c:2667 pg_basebackup.c:2678
-#: pg_basebackup.c:2686 pg_receivewal.c:748 pg_receivewal.c:760
+# tcop/postgres.c:2636 tcop/postgres.c:2652
+#: pg_basebackup.c:2458 pg_basebackup.c:2470 pg_basebackup.c:2492
+#: pg_basebackup.c:2504 pg_basebackup.c:2510 pg_basebackup.c:2562
+#: pg_basebackup.c:2573 pg_basebackup.c:2583 pg_basebackup.c:2589
+#: pg_basebackup.c:2596 pg_basebackup.c:2608 pg_basebackup.c:2620
+#: pg_basebackup.c:2628 pg_basebackup.c:2641 pg_basebackup.c:2647
+#: pg_basebackup.c:2656 pg_basebackup.c:2668 pg_basebackup.c:2679
+#: pg_basebackup.c:2687 pg_receivewal.c:748 pg_receivewal.c:760
 #: pg_receivewal.c:767 pg_receivewal.c:776 pg_receivewal.c:783
 #: pg_receivewal.c:793 pg_recvlogical.c:835 pg_recvlogical.c:847
 #: pg_recvlogical.c:857 pg_recvlogical.c:864 pg_recvlogical.c:871
@@ -1038,99 +1113,102 @@ msgstr "opción de wal-method «%s» no válida, debe ser «fetch», «stream» 
 #: pg_recvlogical.c:899 pg_recvlogical.c:906
 #, c-format
 msgid "Try \"%s --help\" for more information."
-msgstr "Pruebe «%s --help» para mayor información."
+msgstr "用 \"%s --help\" 取得更多資訊。"
 
-#: pg_basebackup.c:2467 pg_receivewal.c:758 pg_recvlogical.c:845
+#: pg_basebackup.c:2468 pg_receivewal.c:758 pg_recvlogical.c:845
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
+msgstr "命令列參數過多(第一個是 \"%s\")"
 
-#: pg_basebackup.c:2490
+#: pg_basebackup.c:2491
 #, c-format
 msgid "cannot specify both format and backup target"
-msgstr "no se puede especificar un formato junto con un destino de respaldo"
+msgstr "無法同時指定格式和備份目標"
 
-#: pg_basebackup.c:2502
+#: pg_basebackup.c:2503
 #, c-format
 msgid "must specify output directory or backup target"
-msgstr "debe especificar un directorio de salida o destino de respaldo base"
+msgstr "必須指定輸出目錄或備份目標"
 
-#: pg_basebackup.c:2508
+#: pg_basebackup.c:2509
 #, c-format
 msgid "cannot specify both output directory and backup target"
-msgstr "no se puede especificar un directorio de salida junto con un destino de respaldo"
+msgstr "無法同時指定輸出目錄和備份目標"
 
-#: pg_basebackup.c:2538 pg_receivewal.c:802
+# access/transam/xlog.c:3720
+#: pg_basebackup.c:2539 pg_receivewal.c:802
 #, c-format
 msgid "unrecognized compression algorithm: \"%s\""
-msgstr "algoritmo de compresión no reconocido: «%s»"
+msgstr "無法識別的壓縮演算法: \" %s \""
 
-#: pg_basebackup.c:2544 pg_receivewal.c:809
+# fe-connect.c:2675
+#: pg_basebackup.c:2545 pg_receivewal.c:809
 #, c-format
 msgid "invalid compression specification: %s"
-msgstr "especificación de compresión no válida: %s"
+msgstr "無效的壓縮規格: %s"
 
-#: pg_basebackup.c:2560
+#: pg_basebackup.c:2561
 #, c-format
 msgid "client-side compression is not possible when a backup target is specified"
-msgstr "la compresión del lado del cliente no es posible cuando se especifica un destino del respaldo base"
+msgstr "指定備份目標時無法進行客戶端端壓縮"
 
-#: pg_basebackup.c:2571
+#: pg_basebackup.c:2572
 #, c-format
 msgid "only tar mode backups can be compressed"
-msgstr "sólo los respaldos de modo tar pueden ser comprimidos"
+msgstr "只有 tar 模式的備份可以進行壓縮"
 
-#: pg_basebackup.c:2581
+#: pg_basebackup.c:2582
 #, c-format
 msgid "WAL cannot be streamed when a backup target is specified"
-msgstr "no se puede enviar WAL cuando se especifica un destino del respaldo base"
+msgstr "指定備份目標時無法串流 WAL"
 
-#: pg_basebackup.c:2587
+#: pg_basebackup.c:2588
 #, c-format
 msgid "cannot stream write-ahead logs in tar mode to stdout"
-msgstr "no se puede enviar WALs en modo tar a stdout"
+msgstr "無法將 tar 模式下的 write-ahead 日誌串流至標準輸出"
 
-#: pg_basebackup.c:2594
+#: pg_basebackup.c:2595
 #, c-format
 msgid "replication slots can only be used with WAL streaming"
-msgstr "los slots de replicación sólo pueden usarse con flujo de WAL"
+msgstr "複寫插槽僅可與 WAL 串流一同使用"
 
-#: pg_basebackup.c:2606
+#: pg_basebackup.c:2607
 #, c-format
 msgid "--no-slot cannot be used with slot name"
-msgstr "no se puede usar --no-slot junto con nombre de slot"
+msgstr "--no-slot 不能與插槽名稱一同使用"
 
 #. translator: second %s is an option name
-#: pg_basebackup.c:2617 pg_receivewal.c:774
+#: pg_basebackup.c:2618 pg_receivewal.c:774
 #, c-format
 msgid "%s needs a slot to be specified using --slot"
-msgstr "la opcón %s necesita que se especifique un slot con --slot"
+msgstr "%s 需要使用 --slot 指定一個插槽"
 
-#: pg_basebackup.c:2625 pg_basebackup.c:2665 pg_basebackup.c:2676
-#: pg_basebackup.c:2684
+#: pg_basebackup.c:2626 pg_basebackup.c:2666 pg_basebackup.c:2677
+#: pg_basebackup.c:2685
 #, c-format
 msgid "%s and %s are incompatible options"
-msgstr "%s y %s son opciones incompatibles"
+msgstr "%s 和 %s 是不相容的選項"
 
-#: pg_basebackup.c:2639
+#: pg_basebackup.c:2640
 #, c-format
 msgid "WAL directory location cannot be specified along with a backup target"
-msgstr "la ubicación del directorio de WAL no puede especificarse junto con un destino de respaldo"
+msgstr "無法在指定備份目標時指定 WAL 目錄位置"
 
-#: pg_basebackup.c:2645
+#: pg_basebackup.c:2646
 #, c-format
 msgid "WAL directory location can only be specified in plain mode"
-msgstr "la ubicación del directorio de WAL sólo puede especificarse en modo «plain»"
+msgstr "WAL 目錄位置只能在純文字模式下指定"
 
-#: pg_basebackup.c:2654
+#: pg_basebackup.c:2655
 #, c-format
 msgid "WAL directory location must be an absolute path"
-msgstr "la ubicación del directorio de WAL debe ser una ruta absoluta"
+msgstr "WAL 目錄的位置必須是絕對路徑"
 
-#: pg_basebackup.c:2754
+# commands/tablespace.c:355 commands/tablespace.c:984
+#: pg_basebackup.c:2755
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
-msgstr "no se pudo crear el enlace simbólico «%s»: %m"
+msgstr "無法建立符號連結 \"%s\": %m"
 
 #: pg_receivewal.c:77
 #, c-format
@@ -1138,7 +1216,7 @@ msgid ""
 "%s receives PostgreSQL streaming write-ahead logs.\n"
 "\n"
 msgstr ""
-"%s recibe flujos del WAL de PostgreSQL.\n"
+"%s 接收 PostgreSQL 的串流 write-ahead 日誌\n"
 "\n"
 
 #: pg_receivewal.c:81 pg_recvlogical.c:82
@@ -1148,32 +1226,32 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"Opciones:\n"
+"選項:\n"
 
 #: pg_receivewal.c:82
 #, c-format
 msgid "  -D, --directory=DIR    receive write-ahead log files into this directory\n"
-msgstr "  -D, --directory=DIR    recibir los archivos de WAL en este directorio\n"
+msgstr "  -D, --directory=DIR    接收 write-ahead 日誌檔到此目錄\n"
 
 #: pg_receivewal.c:83 pg_recvlogical.c:83
 #, c-format
 msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
-msgstr "  -E, --endpos=LSN       salir luego de recibir el LSN especificado\n"
+msgstr "  -E, --endpos=LSN       收到指定的 LSN 後結束\n"
 
 #: pg_receivewal.c:84 pg_recvlogical.c:87
 #, c-format
 msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
-msgstr "      --if-not-exists    no abandonar si el slot ya existe al crear un slot\n"
+msgstr "      --if-not-exists    建立插槽時如果插槽已存在則不產生錯誤\n"
 
 #: pg_receivewal.c:85 pg_recvlogical.c:89
 #, c-format
 msgid "  -n, --no-loop          do not loop on connection lost\n"
-msgstr "  -n, --no-loop          no entrar en bucle al perder la conexión\n"
+msgstr "  -n, --no-loop          連線中斷時不循環\n"
 
 #: pg_receivewal.c:86
 #, c-format
 msgid "      --no-sync          do not wait for changes to be written safely to disk\n"
-msgstr "      --no-sync          no esperar que los cambios se sincronicen a disco\n"
+msgstr "      --no-sync          不等待變更安全寫入磁碟\n"
 
 #: pg_receivewal.c:87 pg_recvlogical.c:94
 #, c-format
@@ -1182,13 +1260,12 @@ msgid ""
 "                         time between status packets sent to server (default: %d)\n"
 msgstr ""
 "  -s, --status-interval=SECS\n"
-"                         tiempo entre envíos de paquetes de estado al servidor\n"
-"                         (por omisión: %d)\n"
+"                         向伺服器發送狀態封包的時間間隔(預設: %d)\n"
 
 #: pg_receivewal.c:90
 #, c-format
 msgid "      --synchronous      flush write-ahead log immediately after writing\n"
-msgstr "      --synchronous      sincronizar el WAL inmediatamente después de escribir\n"
+msgstr "      --synchronous      寫入 write-ahead 日誌後立即 flush\n"
 
 #: pg_receivewal.c:93
 #, c-format
@@ -1196,8 +1273,8 @@ msgid ""
 "  -Z, --compress=METHOD[:DETAIL]\n"
 "                         compress as specified\n"
 msgstr ""
-"  -Z, --compress=MÉTODO[:DETALLE]\n"
-"                         comprimir como se indica\n"
+"  -Z, --compress=METHOD[:DETAIL]\n"
+"                         指定壓縮方式\n"
 
 #: pg_receivewal.c:103
 #, c-format
@@ -1206,158 +1283,165 @@ msgid ""
 "Optional actions:\n"
 msgstr ""
 "\n"
-"Acciones optativas:\n"
+"選擇性操作:\n"
 
 #: pg_receivewal.c:104 pg_recvlogical.c:79
 #, c-format
 msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
-msgstr "      --create-slot      crear un nuevo slot de replicación (para el nombre, vea --slot)\n"
+msgstr "      --create-slot      建立新的複寫插槽(插槽名稱請參見 --slot)\n"
 
 #: pg_receivewal.c:105 pg_recvlogical.c:80
 #, c-format
 msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
-msgstr "      --drop-slot        eliminar un slot de replicación (para el nombre, vea --slot)\n"
+msgstr "      --drop-slot        刪除複寫插槽(插槽名稱請參見 --slot)\n"
 
 #: pg_receivewal.c:191
 #, c-format
 msgid "finished segment at %X/%X (timeline %u)"
-msgstr "terminó el segmento en %X/%X (timeline %u)"
+msgstr "完成片斷，位置 %X/%X (時間軸 %u)"
 
 #: pg_receivewal.c:198
 #, c-format
 msgid "stopped log streaming at %X/%X (timeline %u)"
-msgstr "detenido el flujo de log en %X/%X (timeline %u)"
+msgstr "停止日誌串流，位置 %X/%X (時間軸 %u)"
 
 #: pg_receivewal.c:214
 #, c-format
 msgid "switched to timeline %u at %X/%X"
-msgstr "cambiado al timeline %u en %X/%X"
+msgstr "切換至時間軸 %u，位置 %X/%X"
 
 #: pg_receivewal.c:224
 #, c-format
 msgid "received interrupt signal, exiting"
-msgstr "se recibió una señal de interrupción, saliendo"
+msgstr "收到中斷信號，結束"
 
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
 #: pg_receivewal.c:256
 #, c-format
 msgid "could not close directory \"%s\": %m"
-msgstr "no se pudo abrir el directorio «%s»: %m"
+msgstr "無法關閉目錄 \"%s\": %m"
 
 #: pg_receivewal.c:323
 #, c-format
 msgid "segment file \"%s\" has incorrect size %lld, skipping"
-msgstr "el archivo de segmento «%s» tiene tamaño incorrecto %lld, ignorando"
+msgstr "片斷檔 \"%s\" 大小 %lld 不正確，跳過"
 
 #: pg_receivewal.c:340
 #, c-format
 msgid "could not open compressed file \"%s\": %m"
-msgstr "no se pudo abrir el archivo comprimido «%s»: %m"
+msgstr "無法開啟壓縮檔 \"%s\": %m"
 
 #: pg_receivewal.c:343
 #, c-format
 msgid "could not seek in compressed file \"%s\": %m"
-msgstr "no se pudo buscar en el archivo comprimido «%s»: %m"
+msgstr "無法 seek 壓縮檔 \"%s\": %m"
 
 #: pg_receivewal.c:349
 #, c-format
 msgid "could not read compressed file \"%s\": %m"
-msgstr "no se pudo leer el archivo comprimido «%s»: %m"
+msgstr "無法讀取壓縮檔 \"%s\": %m"
 
 #: pg_receivewal.c:352
 #, c-format
 msgid "could not read compressed file \"%s\": read %d of %zu"
-msgstr "no se pudo leer el archivo comprimido «%s»: leídos %d de %zu"
+msgstr "無法讀取壓縮檔 \"%s\": 已讀取 %d / %zu"
 
 #: pg_receivewal.c:362
 #, c-format
 msgid "compressed segment file \"%s\" has incorrect uncompressed size %d, skipping"
-msgstr "el archivo de segmento «%s» tiene tamaño incorrecto %d al descomprimirse, ignorando"
+msgstr "壓縮片斷檔 \"%s\" 的未壓縮大小 %d 不正確，跳過"
 
+# libpq/be-secure.c:649
 #: pg_receivewal.c:390
 #, c-format
 msgid "could not create LZ4 decompression context: %s"
-msgstr "no se pudo crear un contexto de descompresión LZ4: %s"
+msgstr "無法建立 LZ4 解壓縮 context: %s"
 
+# access/transam/xlog.c:1659 access/transam/xlog.c:2942
+# access/transam/xlog.c:5397 access/transam/xlog.c:5448
+# access/transam/xlog.c:5520 access/transam/xlog.c:5545
+# access/transam/xlog.c:5583
 #: pg_receivewal.c:402
 #, c-format
 msgid "could not read file \"%s\": %m"
-msgstr "no se pudo leer el archivo «%s»: %m"
+msgstr "無法讀取檔案 \"%s\": %m"
 
 #: pg_receivewal.c:420
 #, c-format
 msgid "could not decompress file \"%s\": %s"
-msgstr "no se pudo descomprimir el archivo «%s»: %s"
+msgstr "無法解壓縮檔案 \"%s\": %s"
 
 #: pg_receivewal.c:443
 #, c-format
 msgid "could not free LZ4 decompression context: %s"
-msgstr "no se pudo liberar el contexto de descompresión LZ4: %s"
+msgstr "無法釋放 LZ4 解壓縮 context: %s"
 
 #: pg_receivewal.c:448
 #, c-format
 msgid "compressed segment file \"%s\" has incorrect uncompressed size %zu, skipping"
-msgstr "el archivo de segmento «%s» tiene tamaño incorrecto %zu al descomprimirse, ignorando"
+msgstr "壓縮片斷檔 \"%s\" 的未壓縮大小 %zu 不正確，跳過"
 
 #: pg_receivewal.c:453
 #, c-format
 msgid "cannot check file \"%s\": compression with %s not supported by this build"
-msgstr "no se puede verificar el archivo «%s»: la compresión con %s no está soportada en este servidor"
+msgstr "無法檢查檔案 \"%s\": 此版本不支援 %s 壓縮"
 
 #: pg_receivewal.c:578
 #, c-format
 msgid "starting log streaming at %X/%X (timeline %u)"
-msgstr "iniciando el flujo de log en %X/%X (timeline %u)"
+msgstr "開始日誌串流，位置 %X/%X (時間軸 %u)"
 
 #: pg_receivewal.c:693 pg_recvlogical.c:783
 #, c-format
 msgid "could not parse end position \"%s\""
-msgstr "no se pudo interpretar la posición final «%s»"
+msgstr "無法解析結束位置 \"%s\""
 
 #: pg_receivewal.c:766
 #, c-format
 msgid "cannot use --create-slot together with --drop-slot"
-msgstr "no puede usarse --create-slot junto con --drop-slot"
+msgstr "無法同時使用 --create-slot 和 --drop-slot"
 
 #: pg_receivewal.c:782
 #, c-format
 msgid "cannot use --synchronous together with --no-sync"
-msgstr "no puede usarse --synchronous junto con --no-sync"
+msgstr "無法同時使用 --synchronous 和 --no-sync"
 
 #: pg_receivewal.c:792
 #, c-format
 msgid "no target directory specified"
-msgstr "no se especificó un directorio de salida"
+msgstr "未指定目標目錄"
 
 #: pg_receivewal.c:816
 #, c-format
 msgid "compression with %s is not yet supported"
-msgstr "el método de compresión %s no está soportado aún"
+msgstr "尚未支援 %s 壓縮"
 
 #: pg_receivewal.c:859
 #, c-format
 msgid "replication connection using slot \"%s\" is unexpectedly database specific"
-msgstr "la conexión de replicación usando el slot «%s» es inesperadamente específica a una base de datos"
+msgstr "使用插槽 \"%s\" 的複寫連線意外的只能用於特定資料庫"
 
 #: pg_receivewal.c:878 pg_recvlogical.c:954
 #, c-format
 msgid "dropping replication slot \"%s\""
-msgstr "eliminando el slot de replicación «%s»"
+msgstr "刪除複寫插槽 \"%s\""
 
 #: pg_receivewal.c:889 pg_recvlogical.c:964
 #, c-format
 msgid "creating replication slot \"%s\""
-msgstr "creando el slot de replicación «%s»"
+msgstr "建立複寫插槽 \"%s\""
 
 #: pg_receivewal.c:918 pg_recvlogical.c:988
 #, c-format
 msgid "disconnected"
-msgstr "desconectado"
+msgstr "連線中斷"
 
 #. translator: check source for value for %d
 #: pg_receivewal.c:922 pg_recvlogical.c:992
 #, c-format
 msgid "disconnected; waiting %d seconds to try again"
-msgstr "desconectado; esperando %d segundos para intentar nuevamente"
+msgstr "連線中斷，等待 %d 秒後重試"
 
 #: pg_recvlogical.c:74
 #, c-format
@@ -1365,7 +1449,7 @@ msgid ""
 "%s controls PostgreSQL logical decoding streams.\n"
 "\n"
 msgstr ""
-"%s controla flujos de decodificación lógica de PostgreSQL.\n"
+"%s 控制 PostgreSQL 邏輯解碼串流\n"
 "\n"
 
 #: pg_recvlogical.c:78
@@ -1375,17 +1459,17 @@ msgid ""
 "Action to be performed:\n"
 msgstr ""
 "\n"
-"Acciones a ejecutar:\n"
+"要執行的操作:\n"
 
 #: pg_recvlogical.c:81
 #, c-format
 msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
-msgstr "      --start            iniciar flujo en un slot de replicación (para el nombre, vea --slot)\n"
+msgstr "      --start            開始在複寫插槽的串流(插槽位名稱請參見 --slot)\n"
 
 #: pg_recvlogical.c:84
 #, c-format
 msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
-msgstr "  -f, --file=ARCHIVO     recibir el log en este archivo, - para stdout\n"
+msgstr "  -f, --file=FILE        將日誌接收到此檔案，- 表示標準輸出\n"
 
 #: pg_recvlogical.c:85
 #, c-format
@@ -1393,13 +1477,13 @@ msgid ""
 "  -F  --fsync-interval=SECS\n"
 "                         time between fsyncs to the output file (default: %d)\n"
 msgstr ""
-"  -F, --fsync-interval=SEGS\n"
-"                         tiempo entre fsyncs del archivo de salida (omisión: %d)\n"
+"  -F  --fsync-interval=SECS\n"
+"                         fsync 輸出檔的時間間隔(預設: %d)\n"
 
 #: pg_recvlogical.c:88
 #, c-format
 msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
-msgstr "  -I, --startpos=LSN     dónde en un slot existente debe empezar el flujo\n"
+msgstr "  -I, --startpos=LSN     現有插槽中串流開始位置\n"
 
 #: pg_recvlogical.c:90
 #, c-format
@@ -1408,402 +1492,399 @@ msgid ""
 "                         pass option NAME with optional value VALUE to the\n"
 "                         output plugin\n"
 msgstr ""
-"  -o, --option=NOMBRE[=VALOR]\n"
-"                         pasar opción NOMBRE con valor opcional VALOR al\n"
-"                         plugin de salida\n"
+"  -o, --option=NAME[=VALUE]\n"
+"                         將選項 NAME 和選擇性的值 VALUE 傳給輸出外掛程式\n"
 
 #: pg_recvlogical.c:93
 #, c-format
 msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
-msgstr "  -P, --plugin=PLUGIN    usar plug-in de salida PLUGIN (omisión: %s)\n"
+msgstr "  -P, --plugin=PLUGIN    使用輸出外掛程式 PLUGIN(預設: %s)\n"
 
 #: pg_recvlogical.c:96
 #, c-format
 msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
-msgstr "  -S, --slot=NOMBRE-SLOT nombre del slot de replicación lógica\n"
+msgstr "  -S, --slot=SLOTNAME    邏輯複寫插槽的名稱\n"
 
 #: pg_recvlogical.c:97
 #, c-format
 msgid "  -t, --two-phase        enable decoding of prepared transactions when creating a slot\n"
-msgstr "  -t, --two-phase        activa decodificación de transacciones preparadas al crear un slot\n"
+msgstr "  -t, --two-phase        建立插槽時啟動已準備交易解碼\n"
 
 #: pg_recvlogical.c:102
 #, c-format
 msgid "  -d, --dbname=DBNAME    database to connect to\n"
-msgstr "  -d, --dbname=BASE      base de datos a la cual conectarse\n"
+msgstr "  -d, --dbname=DBNAME    要連線的資料庫\n"
 
 #: pg_recvlogical.c:135
 #, c-format
 msgid "confirming write up to %X/%X, flush to %X/%X (slot %s)"
-msgstr "confirmando escritura hasta %X/%X, fsync hasta %X/%X (slot %s)"
+msgstr "確認寫入至 %X/%X，flush 至 %X/%X (插槽 %s)"
 
 #: pg_recvlogical.c:159 receivelog.c:360
 #, c-format
 msgid "could not send feedback packet: %s"
-msgstr "no se pudo enviar el paquete de retroalimentación: %s"
+msgstr "無法傳送反饋封包: %s"
 
 #: pg_recvlogical.c:227
 #, c-format
 msgid "starting log streaming at %X/%X (slot %s)"
-msgstr "iniciando el flujo de log en %X/%X (slot %s)"
+msgstr "開始日誌串流，位置 %X/%X (插槽 %s)"
 
 #: pg_recvlogical.c:269
 #, c-format
 msgid "streaming initiated"
-msgstr "flujo iniciado"
+msgstr "已啟動串流"
 
+# utils/init/miscinit.c:533
 #: pg_recvlogical.c:333
 #, c-format
 msgid "could not open log file \"%s\": %m"
-msgstr "no se pudo abrir el archivo de registro «%s»: %m"
+msgstr "無法開啟日誌檔 \"%s\": %m"
 
 #: pg_recvlogical.c:362 receivelog.c:882
 #, c-format
 msgid "invalid socket: %s"
-msgstr "el socket no es válido: %s"
+msgstr "無效的 socket: %s"
 
+# fe-misc.c:991
 #: pg_recvlogical.c:415 receivelog.c:910
 #, c-format
 msgid "%s() failed: %m"
-msgstr "%s() falló: %m"
+msgstr "%s() 失敗: %m"
 
+# fe-misc.c:610
+# fe-misc.c:701
 #: pg_recvlogical.c:422 receivelog.c:959
 #, c-format
 msgid "could not receive data from WAL stream: %s"
-msgstr "no se pudo recibir datos desde el flujo de WAL: %s"
+msgstr "無法從 WAL 串流接收資料: %s"
 
 #: pg_recvlogical.c:464 pg_recvlogical.c:515 receivelog.c:1003
 #: receivelog.c:1066
 #, c-format
 msgid "streaming header too small: %d"
-msgstr "cabecera de flujo demasiado pequeña: %d"
+msgstr "串流標頭太小: %d"
 
 #: pg_recvlogical.c:499 receivelog.c:843
 #, c-format
 msgid "unrecognized streaming header: \"%c\""
-msgstr "cabecera de flujo no reconocida: «%c»"
+msgstr "無法識別的串流標頭: \"%c\""
 
 #: pg_recvlogical.c:553 pg_recvlogical.c:565
 #, c-format
 msgid "could not write %d bytes to log file \"%s\": %m"
-msgstr "no se pudo escribir %d bytes al archivo de registro «%s»: %m"
+msgstr "無法寫入 %d 個位元組至日誌檔 \"%s\": %m"
 
 #: pg_recvlogical.c:619 receivelog.c:642 receivelog.c:679
 #, c-format
 msgid "unexpected termination of replication stream: %s"
-msgstr "término inesperado del flujo de replicación: %s"
+msgstr "複寫串流意外終止: %s"
 
 #: pg_recvlogical.c:778
 #, c-format
 msgid "could not parse start position \"%s\""
-msgstr "no se pudo interpretar la posición de inicio «%s»"
+msgstr "無法解析開始位罝: \"%s\""
 
 #: pg_recvlogical.c:856
 #, c-format
 msgid "no slot specified"
-msgstr "no se especificó slot"
+msgstr "未指定插槽"
 
 #: pg_recvlogical.c:863
 #, c-format
 msgid "no target file specified"
-msgstr "no se especificó un archivo de destino"
+msgstr "未指定目標檔"
 
 #: pg_recvlogical.c:870
 #, c-format
 msgid "no database specified"
-msgstr "no se especificó una base de datos"
+msgstr "未指定資料庫"
 
 #: pg_recvlogical.c:877
 #, c-format
 msgid "at least one action needs to be specified"
-msgstr "debe especificarse al menos una operación"
+msgstr "至少需要指定一個操作"
 
 #: pg_recvlogical.c:884
 #, c-format
 msgid "cannot use --create-slot or --start together with --drop-slot"
-msgstr "no puede usarse --create-slot o --start junto con --drop-slot"
+msgstr "--create-slot 或 --start 無法和 --drop-slot 一起使用"
 
 #: pg_recvlogical.c:891
 #, c-format
 msgid "cannot use --create-slot or --drop-slot together with --startpos"
-msgstr "no puede usarse --create-slot o --drop-slot junto con --startpos"
+msgstr "--create-slot 或 --drop-slot 無法和 --startpos 一起使用"
 
 #: pg_recvlogical.c:898
 #, c-format
 msgid "--endpos may only be specified with --start"
-msgstr "--endpos sólo se puede utilizar con --start"
+msgstr "--endpos 只能與 --start 一同使用"
 
 #: pg_recvlogical.c:905
 #, c-format
 msgid "--two-phase may only be specified with --create-slot"
-msgstr "--two-phase sólo se puede utilizar con --create-slot"
+msgstr "--two-phase 只能與 --create-slot 一同使用"
 
 #: pg_recvlogical.c:938
 #, c-format
 msgid "could not establish database-specific replication connection"
-msgstr "no se pudo establecer una conexión de replicación específica a una base de datos"
+msgstr "無法建立特定資料庫的複寫連線"
 
 #: pg_recvlogical.c:1032
 #, c-format
 msgid "end position %X/%X reached by keepalive"
-msgstr "ubicación de término %X/%X alcanzado por «keep-alive»"
+msgstr ""
 
 #: pg_recvlogical.c:1035
 #, c-format
 msgid "end position %X/%X reached by WAL record at %X/%X"
-msgstr "ubicación de término %X/%X alcanzado por registro WAL en %X/%X"
+msgstr ""
 
 #: receivelog.c:66
 #, c-format
 msgid "could not create archive status file \"%s\": %s"
-msgstr "no se pudo crear el archivo de estado «%s»: %s"
+msgstr "無法建立封存狀態檔 \"%s\": %s"
 
 #: receivelog.c:73
 #, c-format
 msgid "could not close archive status file \"%s\": %s"
-msgstr "no se pudo cerrar el archivo de estado «%s»: %s"
+msgstr "無法關閉封存狀態檔 \"%s\": %s"
 
 #: receivelog.c:122
 #, c-format
 msgid "could not get size of write-ahead log file \"%s\": %s"
-msgstr "no se pudo obtener el tamaño del archivo de WAL «%s»: %s"
+msgstr "無法取得 write-ahead 日誌檔 \"%s\" 的大小: %s"
 
 #: receivelog.c:133
 #, c-format
 msgid "could not open existing write-ahead log file \"%s\": %s"
-msgstr "no se pudo abrir el archivo de WAL «%s»: %s"
+msgstr "無法開啟已存在的 write-ahead 日誌檔 \"%s\": %s"
 
 #: receivelog.c:142
 #, c-format
 msgid "could not fsync existing write-ahead log file \"%s\": %s"
-msgstr "no se pudo sincronizar (fsync) el archivo de WAL «%s»: %s"
+msgstr "無法 fsync 已存在的 write-ahead 日誌檔 \"%s\": %s"
 
 #: receivelog.c:157
 #, c-format
 msgid "write-ahead log file \"%s\" has %zd byte, should be 0 or %d"
 msgid_plural "write-ahead log file \"%s\" has %zd bytes, should be 0 or %d"
-msgstr[0] "el archivo de WAL «%s» mide %zd byte, debería ser 0 o %d"
-msgstr[1] "el archivo de WAL «%s» mide %zd bytes, debería ser 0 o %d"
+msgstr[0] "write-ahead 日誌檔 \"%s\" 大小為 %zd 個位元組，應為 0 或 %d"
 
 #: receivelog.c:175
 #, c-format
 msgid "could not open write-ahead log file \"%s\": %s"
-msgstr "no se pudo abrir archivo de WAL «%s»: %s"
+msgstr "無法開啟 write-head 日誌檔 \"%s\": %s"
 
 #: receivelog.c:216
 #, c-format
 msgid "not renaming \"%s\", segment is not complete"
-msgstr "no se cambiará el nombre a «%s», el segmento no está completo"
+msgstr "未更名 \"%s\"，片段未完成"
 
 #: receivelog.c:227 receivelog.c:317 receivelog.c:688
 #, c-format
 msgid "could not close file \"%s\": %s"
-msgstr "no se pudo cerrar el archivo «%s»: %s"
+msgstr "無法關閉檔案 \"%s\": %s"
 
 #: receivelog.c:288
 #, c-format
 msgid "server reported unexpected history file name for timeline %u: %s"
-msgstr "el servidor reportó un nombre inesperado para el archivo de historia de timeline %u: %s"
+msgstr "伺服器回報非預期的時間線 %u 歷史檔案名稱: %s"
 
 #: receivelog.c:297
 #, c-format
 msgid "could not create timeline history file \"%s\": %s"
-msgstr "no se pudo crear el archivo de historia de timeline «%s»: %s"
+msgstr "無法建立時間軸歷史檔 \"%s\": %s"
 
 #: receivelog.c:304
 #, c-format
 msgid "could not write timeline history file \"%s\": %s"
-msgstr "no se pudo escribir al archivo de historia de timeline «%s»: %s"
+msgstr "無法寫入時間軸歷史檔 \"%s\": %s"
 
 #: receivelog.c:394
 #, c-format
 msgid "incompatible server version %s; client does not support streaming from server versions older than %s"
-msgstr "versión de servidor %s incompatible; el cliente no soporta flujos de servidores anteriores a la versión %s"
+msgstr "不相容的伺服器版本 %s；客戶端不支援來自舊於 %s 的伺服器版本的串流"
 
 #: receivelog.c:403
 #, c-format
 msgid "incompatible server version %s; client does not support streaming from server versions newer than %s"
-msgstr "versión de servidor %s incompatible; el cliente no soporta flujos de servidores posteriores a %s"
+msgstr "不相容的伺服器版本 %s；客戶端不支援來自新於 %s 的伺服器版本的串流"
 
 #: receivelog.c:508
 #, c-format
 msgid "system identifier does not match between base backup and streaming connection"
-msgstr "el identificador de sistema no coincide entre el respaldo base y la conexión de flujo"
+msgstr "基本備份和串流連線之間的系統識別碼不一致"
 
 #: receivelog.c:516
 #, c-format
 msgid "starting timeline %u is not present in the server"
-msgstr "el timeline de inicio %u no está presente en el servidor"
+msgstr "伺服器中不存在起始時間軸 %u"
 
 #: receivelog.c:555
 #, c-format
 msgid "unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields"
-msgstr "respuesta inesperada a la orden TIMELINE_HISTORY: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos"
+msgstr "TIMELINE_HISTORY 命令出現非預回應: 收到 %d 列和 %d 欄，預期 %d 列和 %d 欄"
 
 #: receivelog.c:626
 #, c-format
 msgid "server reported unexpected next timeline %u, following timeline %u"
-msgstr "el servidor reportó un timeline siguiente %u inesperado, a continuación del timeline %u"
+msgstr "伺服器回報非預期的下一個時間軸 %u，所跟隨的時間軸 %u"
 
 #: receivelog.c:632
 #, c-format
 msgid "server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X"
-msgstr "el servidor paró la transmisión del timeline %u en %X/%X, pero reportó que el siguiente timeline %u comienza en %X/%X"
+msgstr "伺服器停止串流時間軸 %u，位置 %X/%X，但是回報下一個時間軸 %u 將從 %X/%X 開始"
 
 #: receivelog.c:672
 #, c-format
 msgid "replication stream was terminated before stop point"
-msgstr "el flujo de replicación terminó antes del punto de término"
+msgstr "複寫串流在停止點之前被終結"
 
 #: receivelog.c:718
 #, c-format
 msgid "unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields"
-msgstr "respuesta inesperada después del fin-de-timeline: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos"
+msgstr "時間軸結束後出現意外的結果集: 收到 %d 列和 %d 欄，預期 %d 列和 %d 欄"
 
 #: receivelog.c:727
 #, c-format
 msgid "could not parse next timeline's starting point \"%s\""
-msgstr "no se pudo interpretar el punto de inicio del siguiente timeline «%s»"
+msgstr "無法解析下一個時間軸的啟始點 \"%s\""
 
 #: receivelog.c:775 receivelog.c:1022 walmethods.c:1201
 #, c-format
 msgid "could not fsync file \"%s\": %s"
-msgstr "no se pudo sincronizar (fsync) archivo «%s»: %s"
+msgstr "無法 fsync 檔案 \"%s\": %s"
 
 #: receivelog.c:1083
 #, c-format
 msgid "received write-ahead log record for offset %u with no file open"
-msgstr "se recibió un registro de WAL para el desplazamiento %u sin ningún archivo abierto"
+msgstr "收到 write-ahead 日誌記錄給偏移 %u 但無開啟的檔案"
 
 #: receivelog.c:1093
 #, c-format
 msgid "got WAL data offset %08x, expected %08x"
-msgstr "se obtuvo desplazamiento de datos WAL %08x, se esperaba %08x"
+msgstr "收到 WAL 資料偏移 %08x，預期 %08x"
 
 #: receivelog.c:1128
 #, c-format
 msgid "could not write %d bytes to WAL file \"%s\": %s"
-msgstr "no se pudo escribir %d bytes al archivo WAL «%s»: %s"
+msgstr "無法將 %d 個位元組寫入 WAL 檔 \"%s\": %s"
 
 #: receivelog.c:1153 receivelog.c:1193 receivelog.c:1222
 #, c-format
 msgid "could not send copy-end packet: %s"
-msgstr "no se pudo enviar el paquete copy-end: %s"
+msgstr "無法傳送 copy-end 封包: %s"
 
 #: streamutil.c:158
 msgid "Password: "
-msgstr "Contraseña: "
+msgstr "密碼: "
 
 #: streamutil.c:181
 #, c-format
 msgid "could not connect to server"
-msgstr "no se pudo conectar al servidor"
+msgstr "無法連線至資料庫"
 
 #: streamutil.c:222
 #, c-format
 msgid "could not clear search_path: %s"
-msgstr "no se pudo limpiar search_path: %s"
+msgstr "無法清除 search_path: %s"
 
 #: streamutil.c:238
 #, c-format
 msgid "could not determine server setting for integer_datetimes"
-msgstr "no se pudo determinar la opción integer_datetimes del servidor"
+msgstr "無法確定伺服器的 integer_datetimes 設定"
 
 #: streamutil.c:245
 #, c-format
 msgid "integer_datetimes compile flag does not match server"
-msgstr "la opción de compilación integer_datetimes no coincide con el servidor"
+msgstr "integer_datetimes 的編譯旗標與伺服器不一致"
 
 #: streamutil.c:296
 #, c-format
 msgid "could not fetch WAL segment size: got %d rows and %d fields, expected %d rows and %d or more fields"
-msgstr "no se pudo obtener el tamaño del segmento de WAL: se obtuvo %d filas y %d campos, se esperaban %d filas y %d o más campos"
+msgstr "無法取得 WAL 片段大小: 收到 %d 列和 %d 欄，預期 %d 列和 %d 或更多欄"
 
 #: streamutil.c:306
 #, c-format
 msgid "WAL segment size could not be parsed"
-msgstr "el tamaño de segmento de WAL no pudo ser analizado"
+msgstr "無法解析 WAL 片段大小"
 
 #: streamutil.c:324
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes"
-msgstr[0] "el tamaño de segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el servidor remoto reportó un valor de %d byte"
-msgstr[1] "el tamaño de segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el servidor remoto reportó un valor de %d bytes"
+msgstr[0] "WAL 片段大小必須是介於 1MB 到 1GB 之間的二的次方，但遠端伺服器報告的值為 %d 位元組"
 
 #: streamutil.c:369
 #, c-format
 msgid "could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields"
-msgstr "no se pudo obtener el indicador de acceso de grupo: se obtuvo %d filas y %d campos, se esperaban %d filas y %d o más campos"
+msgstr "無法取得群組存取標誌: 收到 %d 列和 %d 欄，預期 %d 列和 %d 或更多欄"
 
 #: streamutil.c:378
 #, c-format
 msgid "group access flag could not be parsed: %s"
-msgstr "el indicador de acceso de grupo no pudo ser analizado: %s"
+msgstr "無法解析群組存取標誌: %s"
 
 #: streamutil.c:421 streamutil.c:458
 #, c-format
 msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
-msgstr "no se pudo identificar al sistema: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d o más campos"
+msgstr "無法識別系統: 收到 %d 列和 %d 欄，預期 %d 列和 %d 或更多欄"
 
 #: streamutil.c:510
 #, c-format
 msgid "could not read replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
-msgstr "no se pudo leer el slot de replicación «%s»: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos"
+msgstr "無法讀取複寫插槽 \"%s\": 收到 %d 列和 %d 欄，預期 %d 列和 %d 欄"
 
 #: streamutil.c:522
 #, c-format
 msgid "replication slot \"%s\" does not exist"
-msgstr "no existe el slot de replicación «%s»"
+msgstr "複寫插槽 \"%s\" 不存在"
 
 #: streamutil.c:533
 #, c-format
 msgid "expected a physical replication slot, got type \"%s\" instead"
-msgstr "se esperaba un slot de replicación físico, en cambio se obtuvo tipo «%s»"
+msgstr "預期是物理複寫槽位卻得到類型 \"%s\""
 
 #: streamutil.c:547
 #, c-format
 msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
-msgstr "no se pudo interpretar restart_lsn de WAL «%s» para el slot de replicación «%s»"
+msgstr "無法解析複寫槽位 \"%2$s\" 的 restart_lsn \"%1$s\""
 
 #: streamutil.c:664
 #, c-format
 msgid "could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
-msgstr "no se pudo create el slot de replicación «%s»: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos"
+msgstr "無法建立複寫插槽 \"%s\": 收到 %d 列和 %d 欄，預期 %d 列和 %d 欄"
 
 #: streamutil.c:708
 #, c-format
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
-msgstr "no se pudo eliminar el slot de replicación «%s»: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos"
+msgstr "無法刪除複寫插槽 \"%s\": 收到 %d 列和 %d 欄，預期 %d 列和 %d 欄"
 
 #: walmethods.c:721 walmethods.c:1264
 msgid "could not compress data"
-msgstr "no se pudo comprimir datos"
+msgstr "無法壓縮資料"
 
 #: walmethods.c:750
 msgid "could not reset compression stream"
-msgstr "no se pudo restablecer el flujo comprimido"
+msgstr "無法重設壓縮串流"
 
 #: walmethods.c:888
 msgid "implementation error: tar files can't have more than one open file"
-msgstr "error de implementación: los archivos tar no pueden tener abierto más de un fichero"
+msgstr "實作錯誤: tar 檔不能有多個已開啟的檔案"
 
 #: walmethods.c:903
 msgid "could not create tar header"
-msgstr "no se pudo crear la cabecera del archivo tar"
+msgstr "無法建立 tar 標頭"
 
 #: walmethods.c:920 walmethods.c:961 walmethods.c:1166 walmethods.c:1179
 msgid "could not change compression parameters"
-msgstr "no se pudo cambiar los parámetros de compresión"
+msgstr "無法變更壓縮參數"
 
 #: walmethods.c:1052
 msgid "unlink not supported with compression"
-msgstr "unlink no soportado con compresión"
+msgstr "壓縮模式不支援 unlink"
 
 #: walmethods.c:1288
 msgid "could not close compression stream"
-msgstr "no se pudo cerrar el flujo comprimido"
-
-#, c-format
-#~ msgid "could not set compression flag for %s: %s"
-#~ msgstr "no se pudo definir una opción de compresión para %s: %s"
+msgstr "無法關閉壓縮串流: %s"

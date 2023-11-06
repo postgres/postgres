@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-25 09:36+0900\n"
-"PO-Revision-Date: 2023-08-25 13:02+0900\n"
+"POT-Creation-Date: 2023-09-26 10:21+0900\n"
+"PO-Revision-Date: 2023-09-26 11:38+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -20,7 +20,7 @@ msgstr ""
 "X-Generator: Poedit 1.8.13\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: check.c:69
+#: check.c:72
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -29,7 +29,7 @@ msgstr ""
 "元の実行中サーバーの一貫性チェックを実行しています。\n"
 "--------------------------------------------------"
 
-#: check.c:75
+#: check.c:78
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -38,7 +38,7 @@ msgstr ""
 "整合性チェックを実行しています。\n"
 "-----------------------------"
 
-#: check.c:221
+#: check.c:234
 #, c-format
 msgid ""
 "\n"
@@ -47,7 +47,7 @@ msgstr ""
 "\n"
 "* クラスタは互換性があります *"
 
-#: check.c:229
+#: check.c:242
 #, c-format
 msgid ""
 "\n"
@@ -58,7 +58,7 @@ msgstr ""
 "この後pg_upgradeが失敗した場合は、続ける前に新しいクラスタを\n"
 "initdbで再作成する必要があります。"
 
-#: check.c:270
+#: check.c:283
 #, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade.\n"
@@ -69,7 +69,7 @@ msgstr ""
 "新サーバーを起動した後、以下を行うことを検討してください。\n"
 "    %s/vacuumdb %s--all --analyze-in-stages"
 
-#: check.c:276
+#: check.c:289
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -78,7 +78,7 @@ msgstr ""
 "このスクリプトを実行すると、旧クラスタのデータファイルが削除されます:\n"
 "    %s"
 
-#: check.c:281
+#: check.c:294
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -91,57 +91,57 @@ msgstr ""
 "ファイルを削除するためのスクリプトを作成できませんでした。 古い\n"
 "クラスタの内容は手動で削除する必要があります。"
 
-#: check.c:293
+#: check.c:306
 #, c-format
 msgid "Checking cluster versions"
 msgstr "クラスタのバージョンを確認しています"
 
-#: check.c:305
+#: check.c:318
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version %s and later."
 msgstr "このユーティリティではPostgreSQLバージョン%s以降のバージョンからのみアップグレードできます。"
 
-#: check.c:310
+#: check.c:323
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s."
 msgstr "このユーティリティは、PostgreSQLバージョン%sにのみアップグレードできます。"
 
-#: check.c:319
+#: check.c:332
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions."
 msgstr "このユーティリティは PostgreSQL の過去のメジャーバージョンにダウングレードする用途では使用できません。"
 
-#: check.c:324
+#: check.c:337
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions."
 msgstr "旧クラスタのデータとバイナリのディレクトリは異なるメジャーバージョンのものです。"
 
-#: check.c:327
+#: check.c:340
 #, c-format
 msgid "New cluster data and binary directories are from different major versions."
 msgstr "新クラスタのデータとバイナリのディレクトリは異なるメジャーバージョンのものです。"
 
-#: check.c:342
+#: check.c:355
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different."
 msgstr "稼働中のサーバーをチェックする場合、新旧のポート番号が異なっている必要があります。"
 
-#: check.c:362
+#: check.c:375
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\""
 msgstr "新クラスタのデータベース\"%s\"が空ではありません: リレーション\"%s.%s\"が見つかりました"
 
-#: check.c:385
+#: check.c:398
 #, c-format
 msgid "Checking for new cluster tablespace directories"
 msgstr "新しいクラスタのテーブル空間ディレクトリを確認しています"
 
-#: check.c:396
+#: check.c:409
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\""
 msgstr "新しいクラスタのテーブル空間ディレクトリはすでに存在します: \"%s\""
 
-#: check.c:429
+#: check.c:442
 #, c-format
 msgid ""
 "\n"
@@ -150,7 +150,7 @@ msgstr ""
 "\n"
 "警告: 新データディレクトリが旧データディレクトリ、つまり %sの中にあってはなりません"
 
-#: check.c:453
+#: check.c:466
 #, c-format
 msgid ""
 "\n"
@@ -159,61 +159,61 @@ msgstr ""
 "\n"
 "警告: ユーザー定義テーブル空間の場所がデータディレクトリ、つまり %s の中にあってはなりません。"
 
-#: check.c:463
+#: check.c:476
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "旧クラスタを削除するスクリプトを作成しています"
 
-#: check.c:466 check.c:639 check.c:755 check.c:850 check.c:979 check.c:1056
-#: check.c:1299 check.c:1373 file.c:339 function.c:163 option.c:476
+#: check.c:479 check.c:652 check.c:768 check.c:863 check.c:992 check.c:1069
+#: check.c:1348 check.c:1422 file.c:339 function.c:163 option.c:476
 #: version.c:116 version.c:292 version.c:426
 #, c-format
 msgid "could not open file \"%s\": %s"
 msgstr "ファイル\"%s\"をオープンできませんでした: %s"
 
-#: check.c:517
+#: check.c:530
 #, c-format
 msgid "could not add execute permission to file \"%s\": %s"
 msgstr "ファイル\"%s\"に実行権限を追加できませんでした: %s"
 
-#: check.c:537
+#: check.c:550
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "データベースユーザーがインストールユーザーかどうかをチェックしています"
 
-#: check.c:553
+#: check.c:566
 #, c-format
 msgid "database user \"%s\" is not the install user"
 msgstr "データベースユーザー\"%s\"がインストールユーザーではありません"
 
-#: check.c:564
+#: check.c:577
 #, c-format
 msgid "could not determine the number of users"
 msgstr "ユーザー数を特定できませんでした"
 
-#: check.c:572
+#: check.c:585
 #, c-format
 msgid "Only the install user can be defined in the new cluster."
 msgstr "新クラスタ内で定義できるのはインストールユーザーのみです。"
 
-#: check.c:601
+#: check.c:614
 #, c-format
 msgid "Checking database connection settings"
 msgstr "データベース接続の設定を確認しています"
 
-#: check.c:627
+#: check.c:640
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false"
 msgstr "template0 には接続を許可してはなりません。すなわち、pg_database.datallowconn は false である必要があります"
 
-#: check.c:654 check.c:775 check.c:873 check.c:999 check.c:1076 check.c:1135
-#: check.c:1196 check.c:1224 check.c:1254 check.c:1313 check.c:1394
-#: function.c:185 version.c:192 version.c:232 version.c:378
+#: check.c:667 check.c:788 check.c:886 check.c:1012 check.c:1089 check.c:1148
+#: check.c:1209 check.c:1238 check.c:1272 check.c:1303 check.c:1362
+#: check.c:1443 function.c:185 version.c:192 version.c:232 version.c:378
 #, c-format
 msgid "fatal"
 msgstr "致命的"
 
-#: check.c:655
+#: check.c:668
 #, c-format
 msgid ""
 "All non-template0 databases must allow connections, i.e. their\n"
@@ -232,27 +232,27 @@ msgstr ""
 "一覧が以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:680
+#: check.c:693
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "準備済みトランザクションをチェックしています"
 
-#: check.c:689
+#: check.c:702
 #, c-format
 msgid "The source cluster contains prepared transactions"
 msgstr "移行元クラスタに準備済みトランザクションがあります"
 
-#: check.c:691
+#: check.c:704
 #, c-format
 msgid "The target cluster contains prepared transactions"
 msgstr "移行先クラスタに準備済みトランザクションがあります"
 
-#: check.c:716
+#: check.c:729
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "bigint を渡す際にミスマッチが発生する contrib/isn をチェックしています"
 
-#: check.c:776
+#: check.c:789
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -272,12 +272,12 @@ msgstr ""
 "問題のある関数の一覧は以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:798
+#: check.c:811
 #, c-format
 msgid "Checking for user-defined postfix operators"
 msgstr "ユーザー定義の後置演算子を確認しています"
 
-#: check.c:874
+#: check.c:887
 #, c-format
 msgid ""
 "Your installation contains user-defined postfix operators, which are not\n"
@@ -292,12 +292,12 @@ msgstr ""
 "以下のファイルにユーザー定義後置演算子の一覧があります:\n"
 "    %s"
 
-#: check.c:898
+#: check.c:911
 #, c-format
 msgid "Checking for incompatible polymorphic functions"
 msgstr "非互換の多態関数を確認しています"
 
-#: check.c:1000
+#: check.c:1013
 #, c-format
 msgid ""
 "Your installation contains user-defined objects that refer to internal\n"
@@ -315,12 +315,12 @@ msgstr ""
 "問題となるオブジェクトの一覧は以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:1024
+#: check.c:1037
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "WITH OIDS宣言されたテーブルをチェックしています"
 
-#: check.c:1077
+#: check.c:1090
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
@@ -335,12 +335,12 @@ msgstr ""
 "以下のファイルにこの問題を抱えるテーブルの一覧があります:\n"
 "    %s"
 
-#: check.c:1105
+#: check.c:1118
 #, c-format
 msgid "Checking for system-defined composite types in user tables"
 msgstr "ユーザーテーブル内のシステム定義複合型を確認しています"
 
-#: check.c:1136
+#: check.c:1149
 #, c-format
 msgid ""
 "Your installation contains system-defined composite types in user tables.\n"
@@ -357,12 +357,12 @@ msgstr ""
 "問題のある列の一覧は、以下のファイルにあります: \n"
 "    %s"
 
-#: check.c:1164
+#: check.c:1177
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "ユーザーテーブル内の reg * データ型をチェックしています"
 
-#: check.c:1197
+#: check.c:1210
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -379,12 +379,12 @@ msgstr ""
 "問題のある列の一覧は以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:1218
+#: check.c:1231
 #, c-format
-msgid "Checking for incompatible \"aclitem\" data type in user tables"
-msgstr "ユーザーテーブル内の非互換のaclitemデータ型を確認しています"
+msgid "Checking for incompatible \"%s\" data type in user tables"
+msgstr "ユーザーテーブル中で使用されている非互換の\"%s\"データ型をチェックしています"
 
-#: check.c:1225
+#: check.c:1239
 #, c-format
 msgid ""
 "Your installation contains the \"aclitem\" data type in user tables.\n"
@@ -401,12 +401,33 @@ msgstr ""
 "問題のある列の一覧は以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:1246
+#: check.c:1263
+#, c-format
+msgid "Checking for removed \"%s\" data type in user tables"
+msgstr "ユーザーテーブル中で使用されている削除された\"%s\"データ型をチェックしています"
+
+#: check.c:1273
+#, c-format
+msgid ""
+"Your installation contains the \"%s\" data type in user tables.\n"
+"The \"%s\" type has been removed in PostgreSQL version %s,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.  A list of the problem columns is in the file:\n"
+"    %s"
+msgstr ""
+"このクラスタではユーザーテーブルにデータ型\"%s\"が含まれています。\n"
+"この\"%s\"型はPostgreSQLバージョン%sでは削除されています、そのためこのクラスタは\n"
+"現時点ではアップグレードできません。問題の列を削除するか、他のデータ型に変更した後に\n"
+"アップグレードを再実行できます。問題のある列の一覧は、以下のファイルにあります: \n"
+"    %s"
+
+#: check.c:1295
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "互換性のない\"jsonb\"データ型をチェックしています"
 
-#: check.c:1255
+#: check.c:1304
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -423,12 +444,12 @@ msgstr ""
 "問題のある列の一覧は以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:1282
+#: check.c:1331
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "'pg_' で始まるロールをチェックしています"
 
-#: check.c:1314
+#: check.c:1363
 #, c-format
 msgid ""
 "Your installation contains roles starting with \"pg_\".\n"
@@ -444,12 +465,12 @@ msgstr ""
 "\"pg_\"で始まるロールの一覧は以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:1334
+#: check.c:1383
 #, c-format
 msgid "Checking for user-defined encoding conversions"
 msgstr "ユーザー定義のエンコーディング変換を確認しています"
 
-#: check.c:1395
+#: check.c:1444
 #, c-format
 msgid ""
 "Your installation contains user-defined encoding conversions.\n"

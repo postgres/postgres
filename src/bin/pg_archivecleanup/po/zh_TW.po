@@ -1,0 +1,185 @@
+# Traditional Chinese message translation file for pg_archivecleanup
+# Copyright (C) 2023 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-09-11 20:51+0000\n"
+"PO-Revision-Date: 2023-11-06 08:49+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: \n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.1\n"
+
+# libpq/be-secure.c:294 libpq/be-secure.c:387
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "錯誤: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "詳細內容: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+#: pg_archivecleanup.c:66
+#, c-format
+msgid "archive location \"%s\" does not exist"
+msgstr "封存檔位置 \"%s\" 不存在"
+
+# access/transam/xlog.c:1944 access/transam/xlog.c:5453
+# access/transam/xlog.c:5607 postmaster/postmaster.c:3504
+#: pg_archivecleanup.c:151
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "無法刪除檔案 \"%s\": %m"
+
+#: pg_archivecleanup.c:157
+#, c-format
+msgid "could not read archive location \"%s\": %m"
+msgstr "無法讀取封存檔位置 \"%s\": %m"
+
+#: pg_archivecleanup.c:160
+#, c-format
+msgid "could not close archive location \"%s\": %m"
+msgstr "無法關閉封存檔位置 \"%s\": %m"
+
+#: pg_archivecleanup.c:164
+#, c-format
+msgid "could not open archive location \"%s\": %m"
+msgstr "無法開啟封存檔位置 \"%s\": %m"
+
+#: pg_archivecleanup.c:237
+#, c-format
+msgid "invalid file name argument"
+msgstr "無效的檔案名稱參數"
+
+# tcop/postgres.c:2636 tcop/postgres.c:2652
+#: pg_archivecleanup.c:238 pg_archivecleanup.c:313 pg_archivecleanup.c:333
+#: pg_archivecleanup.c:345 pg_archivecleanup.c:352
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "用 \"%s --help\" 取得更多資訊。"
+
+#: pg_archivecleanup.c:251
+#, c-format
+msgid ""
+"%s removes older WAL files from PostgreSQL archives.\n"
+"\n"
+msgstr "%s 從 PostgreSQL 封存檔中移除較舊的 WAL 檔\n"
+
+#: pg_archivecleanup.c:252
+#, c-format
+msgid "Usage:\n"
+msgstr "用法:\n"
+
+#: pg_archivecleanup.c:253
+#, c-format
+msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+
+#: pg_archivecleanup.c:254
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"選項:\n"
+
+#: pg_archivecleanup.c:255
+#, c-format
+msgid "  -d             generate debug output (verbose mode)\n"
+msgstr "  -d             產生除錯輸出(詳細模式)\n"
+
+#: pg_archivecleanup.c:256
+#, c-format
+msgid "  -n             dry run, show the names of the files that would be removed\n"
+msgstr "  -n             模擬執行，顯示將被移除的檔案名稱\n"
+
+#: pg_archivecleanup.c:257
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  顯示版本，然後結束\n"
+
+#: pg_archivecleanup.c:258
+#, c-format
+msgid "  -x EXT         clean up files if they have this extension\n"
+msgstr "  -x EXT         清除有此副檔名的檔案\n"
+
+#: pg_archivecleanup.c:259
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     顯示說明，然後結束\n"
+
+#: pg_archivecleanup.c:260
+#, c-format
+msgid ""
+"\n"
+"For use as archive_cleanup_command in postgresql.conf:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+"e.g.\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+msgstr ""
+"\n"
+"用於 postgresql.conf 中的 archive_cleanup_command:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+"例如:\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+
+#: pg_archivecleanup.c:265
+#, c-format
+msgid ""
+"\n"
+"Or for use as a standalone archive cleaner:\n"
+"e.g.\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+msgstr ""
+"\n"
+"或者作為獨立的封存檔清理工具使用:\n"
+"例如:\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+
+#: pg_archivecleanup.c:269
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"回報錯誤至 <%s>。\n"
+
+#: pg_archivecleanup.c:270
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 網站: <%s>\n"
+
+#: pg_archivecleanup.c:332
+#, c-format
+msgid "must specify archive location"
+msgstr "必需指定封存檔位置"
+
+#: pg_archivecleanup.c:344
+#, c-format
+msgid "must specify oldest kept WAL file"
+msgstr "必須指定最早保留的 WAL 檔"
+
+#: pg_archivecleanup.c:351
+#, c-format
+msgid "too many command-line arguments"
+msgstr "命令列參數過多"

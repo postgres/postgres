@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-09-07 05:51+0000\n"
-"PO-Revision-Date: 2023-09-11 11:38+0800\n"
+"PO-Revision-Date: 2023-11-06 08:49+0800\n"
 "Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
 "Language-Team: \n"
 "Language: zh_TW\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.4.1\n"
 
 # libpq/be-secure.c:294 libpq/be-secure.c:387
 #: ../../../src/common/logging.c:276
@@ -196,7 +196,7 @@ msgstr "子行程因不明狀態 %d 而停止"
 #: ../../fe_utils/option_utils.c:69
 #, c-format
 msgid "invalid value \"%s\" for option %s"
-msgstr "值 \"%s\" 對於 \"%s\" 是無效的"
+msgstr "選項 %2$s 的值 \"%1$s\" 無效"
 
 #: ../../fe_utils/option_utils.c:76
 #, c-format
@@ -206,12 +206,12 @@ msgstr "%s 必須在範圍 %d..%d 內"
 #: common.c:132
 #, c-format
 msgid "reading extensions"
-msgstr "讀取擴充功能"
+msgstr "讀取擴充模組"
 
 #: common.c:135
 #, c-format
 msgid "identifying extension members"
-msgstr "識別擴充功能成員"
+msgstr "識別擴充模組成員"
 
 #: common.c:138
 #, c-format
@@ -332,7 +332,7 @@ msgstr "讀取事件觸發器"
 #: common.c:218
 #, c-format
 msgid "finding extension tables"
-msgstr "尋找擴充功能資料表"
+msgstr "尋找擴充模組資料表"
 
 #: common.c:222
 #, c-format
@@ -562,7 +562,7 @@ msgid ""
 "could not obtain lock on relation \"%s\"\n"
 "This usually means that someone requested an ACCESS EXCLUSIVE lock on the table after the pg_dump parent process had gotten the initial ACCESS SHARE lock on the table."
 msgstr ""
-"無法在 relation \"%s\" 上獲得鎖定\n"
+"無法在關聯\"%s\" 上獲得鎖定\n"
 "這通常表示在 pg_dump 的父行程獲得資料表的初始 ACCESS SHARE 鎖定之後，有人要求對該資料表進行 ACCESS EXCLUSIVE 鎖定。"
 
 #: parallel.c:1410
@@ -1149,7 +1149,7 @@ msgstr "無法從 libpq 取得 server_version"
 #: pg_backup_db.c:53 pg_dumpall.c:1809
 #, c-format
 msgid "aborting because of server version mismatch"
-msgstr "因伺服器版本不符而中止"
+msgstr "因伺服器版本不一致而中止"
 
 #: pg_backup_db.c:54 pg_dumpall.c:1810
 #, c-format
@@ -1198,7 +1198,7 @@ msgstr "查詢是: %s"
 #, c-format
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
-msgstr[0] "查詢傳回 %d 筆資料，而非一筆資料: %s"
+msgstr[0] "查詢回傳 %d 筆資料，而非一筆資料: %s"
 
 #: pg_backup_db.c:351
 #, c-format
@@ -1212,12 +1212,12 @@ msgstr "無法執行查詢"
 #: pg_backup_db.c:460
 #, c-format
 msgid "error returned by PQputCopyData: %s"
-msgstr "PQputCopyData 返回的錯誤: %s"
+msgstr "PQputCopyData 回傳的錯誤: %s"
 
 #: pg_backup_db.c:509
 #, c-format
 msgid "error returned by PQputCopyEnd: %s"
-msgstr "PQputCopyEnd 返回的錯誤: %s"
+msgstr "PQputCopyEnd 回傳的錯誤: %s"
 
 # describe.c:933
 #: pg_backup_db.c:515
@@ -1385,7 +1385,7 @@ msgstr "無法關閉暫存檔: %m"
 #: pg_backup_tar.c:1036
 #, c-format
 msgid "actual file length (%lld) does not match expected (%lld)"
-msgstr "實際檔案長度(%lld)與預期長度(%lld)不符"
+msgstr "實際檔案長度(%lld)與預期長度(%lld)不一致"
 
 #: pg_backup_tar.c:1082 pg_backup_tar.c:1113
 #, c-format
@@ -1507,7 +1507,7 @@ msgstr "找不到符合的資料表"
 #: pg_dump.c:876
 #, c-format
 msgid "no matching extensions were found"
-msgstr "找不到符合的擴充功能"
+msgstr "找不到符合的擴充模組"
 
 #: pg_dump.c:1056
 #, c-format
@@ -1581,7 +1581,7 @@ msgstr "  --lock-wait-timeout=TIMEOUT  等待資料表鎖定超過 TIMEOUT 後�
 #: pg_dump.c:1070 pg_dumpall.c:664
 #, c-format
 msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
-msgstr "  --no-sync                    不等待變更被安全寫入磁碟\n"
+msgstr "  --no-sync                    不等待變更安全寫入磁碟\n"
 
 #: pg_dump.c:1071 pg_dumpall.c:638
 #, c-format
@@ -1798,7 +1798,7 @@ msgstr "  --no-table-access-method     不備份資料表存取方式\n"
 #: pg_dump.c:1117 pg_dumpall.c:666
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
-msgstr "  --no-tablespaces             不備份資料表空間\n"
+msgstr "  --no-tablespaces             不備份表空間\n"
 
 #: pg_dump.c:1118 pg_dumpall.c:667
 #, c-format
@@ -1955,7 +1955,7 @@ msgstr "指定的輸出格式 \"%s\" 無效"
 #: pg_dump.c:1409 pg_dump.c:1465 pg_dump.c:1518 pg_dumpall.c:1449
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
-msgstr "不合標準的正式名稱(太多點號名稱): %s"
+msgstr "不合適的完整名稱(太多點號名稱): %s"
 
 # describe.c:1542
 #: pg_dump.c:1417
@@ -1978,7 +1978,7 @@ msgstr "找不到符合模式 \"%s\" 的外部伺服器"
 #: pg_dump.c:1594
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
-msgstr "不合標準的 relation 名稱(太多點號名稱): %s"
+msgstr "不合適的關聯名稱(太多點號名稱): %s"
 
 # describe.c:1542
 #: pg_dump.c:1616
@@ -2297,12 +2297,12 @@ msgstr "無法解析預設 ACL 清單(%s)或預設(%s)給物件 \"%s\"(%s)"
 #: pg_dump.c:15341
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
-msgstr "取得檢視表 \"%s\" 定義的查詢未返回資料"
+msgstr "取得檢視表 \"%s\" 定義的查詢未回傳資料"
 
 #: pg_dump.c:15344
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
-msgstr "取得檢視表 \"%s\" 定義的查詢返回一筆以上定義"
+msgstr "取得檢視表 \"%s\" 定義的查詢回傳一筆以上定義"
 
 #: pg_dump.c:15351
 #, c-format
@@ -2335,7 +2335,7 @@ msgstr "無法解析索引統計內容"
 #: pg_dump.c:16441
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
-msgstr "索引統計欄位和內容的數量不符"
+msgstr "索引統計欄位和內容的數量不一致"
 
 #: pg_dump.c:16657
 #, c-format
@@ -2351,7 +2351,7 @@ msgstr "無法識別的約束類型: %c"
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
-msgstr[0] "取得序列 \"%s\" 資料的查詢傳回 %d 筆資料(預期 1 筆)"
+msgstr[0] "取得序列 \"%s\" 資料的查詢回傳 %d 筆資料(預期 1 筆)"
 
 # utils/adt/acl.c:1261 utils/adt/acl.c:1486 utils/adt/acl.c:1698
 # utils/adt/acl.c:1902 utils/adt/acl.c:2106 utils/adt/acl.c:2315
@@ -2375,7 +2375,7 @@ msgstr "觸發器 \"%2$s\" 在表格 \"%3$s\" 上的參數字串無效(%1$s)"
 #: pg_dump.c:17655
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
-msgstr "取得資料表 \"%s\" 的規則 \"%s\" 的查詢失敗: 返回的資料筆數錯誤"
+msgstr "取得資料表 \"%s\" 的規則 \"%s\" 的查詢失敗: 回傳的資料筆數錯誤"
 
 # catalog/dependency.c:152
 #: pg_dump.c:17808
@@ -2386,7 +2386,7 @@ msgstr "找不到參考的擴充功能 %u"
 #: pg_dump.c:17898
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
-msgstr "擴充功能的配置和條件的數量不符"
+msgstr "擴充功能的配置和條件的數量不一致"
 
 #: pg_dump.c:18030
 #, c-format
@@ -2522,7 +2522,7 @@ msgstr "  -O, --no-owner               跳過物件所有權的還原\n"
 #: pg_dumpall.c:645
 #, c-format
 msgid "  -r, --roles-only             dump only roles, no databases or tablespaces\n"
-msgstr "  -r, --roles-only             只備份角色，不包括資料庫或資料表空間\n"
+msgstr "  -r, --roles-only             只備份角色，不包括資料庫或表空間\n"
 
 #: pg_dumpall.c:647
 #, c-format
@@ -2532,7 +2532,7 @@ msgstr "  -S, --superuser=NAME         備份時使用的超級使用者名稱\n
 #: pg_dumpall.c:648
 #, c-format
 msgid "  -t, --tablespaces-only       dump only tablespaces, no databases or roles\n"
-msgstr "  -t, --tablespaces-only       只備份資料表空間，不包括資料庫或角色\n"
+msgstr "  -t, --tablespaces-only       只備份表空間，不包括資料庫或角色\n"
 
 #: pg_dumpall.c:654
 #, c-format
@@ -2584,7 +2584,7 @@ msgstr "無法解析參數 \"%2$s\" 的 ACL 清單 (%1$s)"
 #: pg_dumpall.c:1303
 #, c-format
 msgid "could not parse ACL list (%s) for tablespace \"%s\""
-msgstr "無法解析資料表空間 \"%2$s\" 的 ACL 清單 (%1$s)"
+msgstr "無法解析表空間 \"%2$s\" 的 ACL 清單 (%1$s)"
 
 #: pg_dumpall.c:1510
 #, c-format
@@ -2775,7 +2775,7 @@ msgstr "  -S, --superuser=NAME         用於停用觸發器的超級使用者�
 #: pg_restore.c:460
 #, c-format
 msgid "  -t, --table=NAME             restore named relation (table, view, etc.)\n"
-msgstr "  -t, --table=NAME             還原指定的 relation(資料表、檢視表等)\n"
+msgstr "  -t, --table=NAME             還原指定的關聯(資料表、檢視表等)\n"
 
 #: pg_restore.c:461
 #, c-format
@@ -2832,7 +2832,7 @@ msgstr "  --no-table-access-method     不要還原資料表存取方式\n"
 #: pg_restore.c:474
 #, c-format
 msgid "  --no-tablespaces             do not restore tablespace assignments\n"
-msgstr "  --no-tablespaces             不要還原資料表空間分配\n"
+msgstr "  --no-tablespaces             不要還原表空間分配\n"
 
 #: pg_restore.c:475
 #, c-format

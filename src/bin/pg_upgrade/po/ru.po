@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-28 07:59+0300\n"
-"PO-Revision-Date: 2023-08-30 15:47+0300\n"
+"POT-Creation-Date: 2023-11-03 09:08+0300\n"
+"PO-Revision-Date: 2023-11-03 09:24+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: check.c:69
+#: check.c:72
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -27,7 +27,7 @@ msgstr ""
 "Проверка целостности на старом работающем сервере\n"
 "-------------------------------------------------"
 
-#: check.c:75
+#: check.c:78
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -36,7 +36,7 @@ msgstr ""
 "Проведение проверок целостности\n"
 "-------------------------------"
 
-#: check.c:221
+#: check.c:234
 #, c-format
 msgid ""
 "\n"
@@ -45,7 +45,7 @@ msgstr ""
 "\n"
 "*Кластеры совместимы*"
 
-#: check.c:229
+#: check.c:242
 #, c-format
 msgid ""
 "\n"
@@ -57,7 +57,7 @@ msgstr ""
 "initdb\n"
 "для нового кластера, чтобы продолжить."
 
-#: check.c:270
+#: check.c:283
 #, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade.\n"
@@ -68,7 +68,7 @@ msgstr ""
 "Запустив новый сервер, имеет смысл выполнить:\n"
 "    %s/vacuumdb %s--all --analyze-in-stages"
 
-#: check.c:276
+#: check.c:289
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -77,7 +77,7 @@ msgstr ""
 "При запуске этого скрипта будут удалены файлы данных старого кластера:\n"
 "    %s"
 
-#: check.c:281
+#: check.c:294
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -90,24 +90,24 @@ msgstr ""
 "пространства или каталог данных нового кластера.\n"
 "Содержимое старого кластера нужно будет удалить вручную."
 
-#: check.c:293
+#: check.c:306
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Проверка версий кластеров"
 
-#: check.c:305
+#: check.c:318
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version %s and later."
 msgstr ""
 "Эта утилита может производить обновление только с версии PostgreSQL %s и "
 "новее."
 
-#: check.c:310
+#: check.c:323
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s."
 msgstr "Эта утилита может повышать версию PostgreSQL только до %s."
 
-#: check.c:319
+#: check.c:332
 #, c-format
 msgid ""
 "This utility cannot be used to downgrade to older major PostgreSQL versions."
@@ -115,7 +115,7 @@ msgstr ""
 "Эта утилита не может понижать версию до более старой основной версии "
 "PostgreSQL."
 
-#: check.c:324
+#: check.c:337
 #, c-format
 msgid ""
 "Old cluster data and binary directories are from different major versions."
@@ -123,7 +123,7 @@ msgstr ""
 "Каталоги данных и исполняемых файлов старого кластера относятся к разным "
 "основным версиям."
 
-#: check.c:327
+#: check.c:340
 #, c-format
 msgid ""
 "New cluster data and binary directories are from different major versions."
@@ -131,7 +131,7 @@ msgstr ""
 "Каталоги данных и исполняемых файлов нового кластера относятся к разным "
 "основным версиям."
 
-#: check.c:342
+#: check.c:355
 #, c-format
 msgid ""
 "When checking a live server, the old and new port numbers must be different."
@@ -139,24 +139,24 @@ msgstr ""
 "Для проверки работающего сервера новый номер порта должен отличаться от "
 "старого."
 
-#: check.c:362
+#: check.c:375
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\""
 msgstr ""
 "Новая база данных кластера \"%s\" не пустая: найдено отношение \"%s.%s\""
 
-#: check.c:385
+#: check.c:398
 #, c-format
 msgid "Checking for new cluster tablespace directories"
 msgstr "Проверка каталогов табличных пространств в новом кластере"
 
-#: check.c:396
+#: check.c:409
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\""
 msgstr ""
 "каталог табличного пространства в новом кластере уже существует: \"%s\""
 
-#: check.c:429
+#: check.c:442
 #, c-format
 msgid ""
 "\n"
@@ -167,7 +167,7 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ:  новый каталог данных не должен располагаться внутри старого "
 "каталога данных, то есть, в %s"
 
-#: check.c:453
+#: check.c:466
 #, c-format
 msgid ""
 "\n"
@@ -178,49 +178,49 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ:  пользовательские табличные пространства не должны "
 "располагаться внутри каталога данных, то есть, в %s"
 
-#: check.c:463
+#: check.c:476
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Создание скрипта для удаления старого кластера"
 
-#: check.c:466 check.c:639 check.c:755 check.c:850 check.c:979 check.c:1056
-#: check.c:1299 check.c:1373 file.c:339 function.c:163 option.c:476
+#: check.c:479 check.c:652 check.c:768 check.c:863 check.c:992 check.c:1069
+#: check.c:1348 check.c:1422 file.c:339 function.c:163 option.c:476
 #: version.c:116 version.c:292 version.c:426
 #, c-format
 msgid "could not open file \"%s\": %s"
 msgstr "не удалось открыть файл \"%s\": %s"
 
-#: check.c:517
+#: check.c:530
 #, c-format
 msgid "could not add execute permission to file \"%s\": %s"
 msgstr "не удалось добавить право выполнения для файла \"%s\": %s"
 
-#: check.c:537
+#: check.c:550
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Проверка, является ли пользователь БД стартовым пользователем"
 
-#: check.c:553
+#: check.c:566
 #, c-format
 msgid "database user \"%s\" is not the install user"
 msgstr "пользователь БД \"%s\" не является стартовым пользователем"
 
-#: check.c:564
+#: check.c:577
 #, c-format
 msgid "could not determine the number of users"
 msgstr "не удалось определить количество пользователей"
 
-#: check.c:572
+#: check.c:585
 #, c-format
 msgid "Only the install user can be defined in the new cluster."
 msgstr "В новом кластере может быть определён только стартовый пользователь."
 
-#: check.c:601
+#: check.c:614
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Проверка параметров подключения к базе данных"
 
-#: check.c:627
+#: check.c:640
 #, c-format
 msgid ""
 "template0 must not allow connections, i.e. its pg_database.datallowconn must "
@@ -229,14 +229,14 @@ msgstr ""
 "база template0 не должна допускать подключения, то есть её свойство "
 "pg_database.datallowconn должно быть false"
 
-#: check.c:654 check.c:775 check.c:873 check.c:999 check.c:1076 check.c:1135
-#: check.c:1196 check.c:1224 check.c:1254 check.c:1313 check.c:1394
-#: function.c:185 version.c:192 version.c:232 version.c:378
+#: check.c:667 check.c:788 check.c:886 check.c:1012 check.c:1089 check.c:1148
+#: check.c:1209 check.c:1238 check.c:1272 check.c:1303 check.c:1362
+#: check.c:1443 function.c:185 version.c:192 version.c:232 version.c:378
 #, c-format
 msgid "fatal"
 msgstr "сбой"
 
-#: check.c:655
+#: check.c:668
 #, c-format
 msgid ""
 "All non-template0 databases must allow connections, i.e. their\n"
@@ -255,27 +255,27 @@ msgstr ""
 "с этой проблемой содержится в файле:\n"
 "    %s"
 
-#: check.c:680
+#: check.c:693
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Проверка наличия подготовленных транзакций"
 
-#: check.c:689
+#: check.c:702
 #, c-format
 msgid "The source cluster contains prepared transactions"
 msgstr "Исходный кластер содержит подготовленные транзакции"
 
-#: check.c:691
+#: check.c:704
 #, c-format
 msgid "The target cluster contains prepared transactions"
 msgstr "Целевой кластер содержит подготовленные транзакции"
 
-#: check.c:716
+#: check.c:729
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Проверка несоответствия при передаче bigint в contrib/isn"
 
-#: check.c:776
+#: check.c:789
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -297,12 +297,12 @@ msgstr ""
 "проблемных функций приведён в файле:\n"
 "    %s"
 
-#: check.c:798
+#: check.c:811
 #, c-format
 msgid "Checking for user-defined postfix operators"
 msgstr "Проверка пользовательских постфиксных операторов"
 
-#: check.c:874
+#: check.c:887
 #, c-format
 msgid ""
 "Your installation contains user-defined postfix operators, which are not\n"
@@ -318,12 +318,12 @@ msgstr ""
 "Список пользовательских постфиксных операторов приведён в файле:\n"
 "    %s"
 
-#: check.c:898
+#: check.c:911
 #, c-format
 msgid "Checking for incompatible polymorphic functions"
 msgstr "Проверка несовместимых полиморфных функций"
 
-#: check.c:1000
+#: check.c:1013
 #, c-format
 msgid ""
 "Your installation contains user-defined objects that refer to internal\n"
@@ -344,12 +344,12 @@ msgstr ""
 "Список проблемных объектов приведён в файле:\n"
 "    %s"
 
-#: check.c:1024
+#: check.c:1037
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Проверка таблиц со свойством WITH OIDS"
 
-#: check.c:1077
+#: check.c:1090
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
@@ -365,12 +365,12 @@ msgstr ""
 "Список проблемных таблиц приведён в файле:\n"
 "    %s"
 
-#: check.c:1105
+#: check.c:1118
 #, c-format
 msgid "Checking for system-defined composite types in user tables"
 msgstr "Проверка системных составных типов в пользовательских таблицах"
 
-#: check.c:1136
+#: check.c:1149
 #, c-format
 msgid ""
 "Your installation contains system-defined composite types in user tables.\n"
@@ -387,12 +387,12 @@ msgstr ""
 "и перезапустить обновление. Список проблемных столбцов приведён в файле:\n"
 "    %s"
 
-#: check.c:1164
+#: check.c:1177
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "Проверка типов данных reg* в пользовательских таблицах"
 
-#: check.c:1197
+#: check.c:1210
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -410,13 +410,12 @@ msgstr ""
 "столбцов приведён в файле:\n"
 "    %s"
 
-#: check.c:1218
+#: check.c:1231
 #, c-format
-msgid "Checking for incompatible \"aclitem\" data type in user tables"
-msgstr ""
-"Проверка несовместимого типа данных \"aclitem\" в пользовательских таблицах"
+msgid "Checking for incompatible \"%s\" data type in user tables"
+msgstr "Проверка несовместимого типа данных \"%s\" в пользовательских таблицах"
 
-#: check.c:1225
+#: check.c:1239
 #, c-format
 msgid ""
 "Your installation contains the \"aclitem\" data type in user tables.\n"
@@ -435,12 +434,34 @@ msgstr ""
 "перезапустить обновление. Список проблемных столбцов приведён в файле:\n"
 "    %s"
 
-#: check.c:1246
+#: check.c:1263
+#, c-format
+msgid "Checking for removed \"%s\" data type in user tables"
+msgstr "Проверка удалённого типа данных \"%s\" в пользовательских таблицах"
+
+#: check.c:1273
+#, c-format
+msgid ""
+"Your installation contains the \"%s\" data type in user tables.\n"
+"The \"%s\" type has been removed in PostgreSQL version %s,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.  A list of the problem columns is in the file:\n"
+"    %s"
+msgstr ""
+"В вашей инсталляции пользовательские таблицы используют тип данных \"%s\".\n"
+"Тип \"%s\" был удалён в PostgreSQL версии %s, поэтому обновить\n"
+"кластер в текущем состоянии невозможно. Вы можете удалить проблемные столбцы "
+"и\n"
+"перезапустить обновление. Список проблемных столбцов приведён в файле:\n"
+"    %s"
+
+#: check.c:1295
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Проверка несовместимого типа данных \"jsonb\""
 
-#: check.c:1255
+#: check.c:1304
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -457,12 +478,12 @@ msgstr ""
 "перезапустить обновление. Список проблемных столбцов приведён в файле:\n"
 "    %s"
 
-#: check.c:1282
+#: check.c:1331
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Проверка ролей с именами, начинающимися с \"pg_\""
 
-#: check.c:1314
+#: check.c:1363
 #, c-format
 msgid ""
 "Your installation contains roles starting with \"pg_\".\n"
@@ -477,12 +498,12 @@ msgstr ""
 "Список ролей с префиксом \"pg_\" приведён в файле:\n"
 "    %s"
 
-#: check.c:1334
+#: check.c:1383
 #, c-format
 msgid "Checking for user-defined encoding conversions"
 msgstr "Проверка пользовательских перекодировок"
 
-#: check.c:1395
+#: check.c:1444
 #, c-format
 msgid ""
 "Your installation contains user-defined encoding conversions.\n"

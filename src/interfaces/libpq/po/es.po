@@ -12,14 +12,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 07:10+0000\n"
-"PO-Revision-Date: 2023-05-22 12:05+0200\n"
+"POT-Creation-Date: 2023-10-03 07:10+0000\n"
+"PO-Revision-Date: 2023-10-06 13:28+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: BlackCAT 1.1\n"
 
 #: ../../port/thread.c:50 ../../port/thread.c:86
@@ -74,9 +75,9 @@ msgstr "no se pudo generar nonce"
 
 #: fe-auth-scram.c:375 fe-auth-scram.c:448 fe-auth-scram.c:600
 #: fe-auth-scram.c:620 fe-auth-scram.c:644 fe-auth-scram.c:658
-#: fe-auth-scram.c:704 fe-auth-scram.c:740 fe-auth-scram.c:914 fe-auth.c:295
-#: fe-auth.c:368 fe-auth.c:402 fe-auth.c:617 fe-auth.c:728 fe-auth.c:1209
-#: fe-auth.c:1374 fe-connect.c:925 fe-connect.c:1759 fe-connect.c:1921
+#: fe-auth-scram.c:704 fe-auth-scram.c:740 fe-auth-scram.c:914 fe-auth.c:296
+#: fe-auth.c:369 fe-auth.c:403 fe-auth.c:618 fe-auth.c:729 fe-auth.c:1210
+#: fe-auth.c:1375 fe-connect.c:925 fe-connect.c:1759 fe-connect.c:1921
 #: fe-connect.c:3291 fe-connect.c:4496 fe-connect.c:5161 fe-connect.c:5416
 #: fe-connect.c:5534 fe-connect.c:5781 fe-connect.c:5861 fe-connect.c:5959
 #: fe-connect.c:6210 fe-connect.c:6237 fe-connect.c:6313 fe-connect.c:6336
@@ -85,7 +86,7 @@ msgstr "no se pudo generar nonce"
 #: fe-exec.c:3111 fe-exec.c:4071 fe-exec.c:4235 fe-gssapi-common.c:109
 #: fe-lobj.c:870 fe-protocol3.c:204 fe-protocol3.c:228 fe-protocol3.c:256
 #: fe-protocol3.c:273 fe-protocol3.c:353 fe-protocol3.c:720 fe-protocol3.c:959
-#: fe-protocol3.c:1769 fe-protocol3.c:2169 fe-secure-common.c:110
+#: fe-protocol3.c:1770 fe-protocol3.c:2170 fe-secure-common.c:110
 #: fe-secure-gssapi.c:500 fe-secure-openssl.c:434 fe-secure-openssl.c:1285
 #, c-format
 msgid "out of memory"
@@ -145,193 +146,193 @@ msgstr "mensaje SCRAM mal formado (la signatura del servidor no es válida)"
 msgid "could not generate random salt"
 msgstr "no se pudo generar una sal aleatoria"
 
-#: fe-auth.c:76
+#: fe-auth.c:77
 #, c-format
 msgid "out of memory allocating GSSAPI buffer (%d)"
 msgstr "memoria agotada creando el búfer GSSAPI (%d)"
 
-#: fe-auth.c:137
+#: fe-auth.c:138
 msgid "GSSAPI continuation error"
 msgstr "error en continuación de GSSAPI"
 
-#: fe-auth.c:167 fe-auth.c:396 fe-gssapi-common.c:97 fe-secure-common.c:99
+#: fe-auth.c:168 fe-auth.c:397 fe-gssapi-common.c:97 fe-secure-common.c:99
 #: fe-secure-common.c:173
 #, c-format
 msgid "host name must be specified"
 msgstr "el nombre de servidor debe ser especificado"
 
-#: fe-auth.c:173
+#: fe-auth.c:174
 #, c-format
 msgid "duplicate GSS authentication request"
 msgstr "petición de autentificación GSS duplicada"
 
-#: fe-auth.c:237
+#: fe-auth.c:238
 #, c-format
 msgid "out of memory allocating SSPI buffer (%d)"
 msgstr "memoria agotada creando el búfer SSPI (%d)"
 
-#: fe-auth.c:284
+#: fe-auth.c:285
 msgid "SSPI continuation error"
 msgstr "error en continuación de SSPI"
 
-#: fe-auth.c:358
+#: fe-auth.c:359
 #, c-format
 msgid "duplicate SSPI authentication request"
 msgstr "petición de autentificación SSPI duplicada"
 
-#: fe-auth.c:383
+#: fe-auth.c:384
 msgid "could not acquire SSPI credentials"
 msgstr "no se pudo obtener las credenciales SSPI"
 
-#: fe-auth.c:436
+#: fe-auth.c:437
 #, c-format
 msgid "channel binding required, but SSL not in use"
 msgstr "se requiere enlazado de canal (channel binding), pero no se está usando SSL"
 
-#: fe-auth.c:442
+#: fe-auth.c:443
 #, c-format
 msgid "duplicate SASL authentication request"
 msgstr "petición de autentificación SASL duplicada"
 
-#: fe-auth.c:500
+#: fe-auth.c:501
 #, c-format
 msgid "channel binding is required, but client does not support it"
 msgstr "se requiere enlazado de canal (channel binding), pero no está soportado en el cliente"
 
-#: fe-auth.c:516
+#: fe-auth.c:517
 #, c-format
 msgid "server offered SCRAM-SHA-256-PLUS authentication over a non-SSL connection"
 msgstr "el servidor ofreció autenticación SCRAM-SHA-256-PLUS sobre una conexión no-SSL"
 
-#: fe-auth.c:530
+#: fe-auth.c:531
 #, c-format
 msgid "none of the server's SASL authentication mechanisms are supported"
 msgstr "ningún método de autentificación SASL del servidor está soportado"
 
-#: fe-auth.c:537
+#: fe-auth.c:538
 #, c-format
 msgid "channel binding is required, but server did not offer an authentication method that supports channel binding"
 msgstr "se requiere enlazado de canal (channel binding), pero el servidor no ofrece un método de autenticación que lo soporte"
 
-#: fe-auth.c:640
+#: fe-auth.c:641
 #, c-format
 msgid "out of memory allocating SASL buffer (%d)"
 msgstr "memoria agotada creando el búfer SASL (%d)"
 
-#: fe-auth.c:664
+#: fe-auth.c:665
 #, c-format
 msgid "AuthenticationSASLFinal received from server, but SASL authentication was not completed"
 msgstr "Se recibió AuthenticationSASLFinal desde el servidor, pero la autentificación SASL no se completó"
 
-#: fe-auth.c:674
+#: fe-auth.c:675
 #, c-format
 msgid "no client response found after SASL exchange success"
 msgstr "no se encontró respuesta del cliente luego del intercambio SASL exitoso"
 
-#: fe-auth.c:737 fe-auth.c:744 fe-auth.c:1357 fe-auth.c:1368
+#: fe-auth.c:738 fe-auth.c:745 fe-auth.c:1358 fe-auth.c:1369
 #, c-format
 msgid "could not encrypt password: %s"
 msgstr "no se pudo cifrar contraseña: %s"
 
-#: fe-auth.c:772
+#: fe-auth.c:773
 msgid "server requested a cleartext password"
 msgstr "el servidor solicitó una contraseña en texto claro"
 
-#: fe-auth.c:774
+#: fe-auth.c:775
 msgid "server requested a hashed password"
 msgstr "el servidor solicitó una contraseña cifrada"
 
-#: fe-auth.c:777
+#: fe-auth.c:778
 msgid "server requested GSSAPI authentication"
 msgstr "el servidor solicitó autentificación GSSAPI"
 
-#: fe-auth.c:779
+#: fe-auth.c:780
 msgid "server requested SSPI authentication"
 msgstr "el servidor solicitó autentificación SSPI"
 
-#: fe-auth.c:783
+#: fe-auth.c:784
 msgid "server requested SASL authentication"
 msgstr "el servidor solicitó autentificación SASL"
 
-#: fe-auth.c:786
+#: fe-auth.c:787
 msgid "server requested an unknown authentication type"
 msgstr "múltiples valores especificados para el tipo de autentificación"
 
-#: fe-auth.c:819
+#: fe-auth.c:820
 #, c-format
 msgid "server did not request an SSL certificate"
 msgstr "el servidor no solicitó un certificado SSL"
 
-#: fe-auth.c:824
+#: fe-auth.c:825
 #, c-format
 msgid "server accepted connection without a valid SSL certificate"
 msgstr "el servidor aceptó la conexión sin un certificado SSL válido"
 
-#: fe-auth.c:878
+#: fe-auth.c:879
 msgid "server did not complete authentication"
 msgstr "el servidor no completó la autentificación"
 
-#: fe-auth.c:912
+#: fe-auth.c:913
 #, c-format
 msgid "authentication method requirement \"%s\" failed: %s"
 msgstr "el método de autentificación «%s» requerido falló: %s"
 
-#: fe-auth.c:935
+#: fe-auth.c:936
 #, c-format
 msgid "channel binding required, but server authenticated client without channel binding"
 msgstr "se requiere enlazado de canal (channel binding), pero el servidor autenticó al cliente sin enlazado de canal"
 
-#: fe-auth.c:940
+#: fe-auth.c:941
 #, c-format
 msgid "channel binding required but not supported by server's authentication request"
 msgstr "se requiere enlazado de canal (channel binding), pero no es compatible con la solicitud de autenticación del servidor"
 
-#: fe-auth.c:974
+#: fe-auth.c:975
 #, c-format
 msgid "Kerberos 4 authentication not supported"
 msgstr "el método de autentificación Kerberos 4 no está soportado"
 
-#: fe-auth.c:978
+#: fe-auth.c:979
 #, c-format
 msgid "Kerberos 5 authentication not supported"
 msgstr "el método de autentificación Kerberos 5 no está soportado"
 
-#: fe-auth.c:1048
+#: fe-auth.c:1049
 #, c-format
 msgid "GSSAPI authentication not supported"
 msgstr "el método de autentificación GSSAPI no está soportado"
 
-#: fe-auth.c:1079
+#: fe-auth.c:1080
 #, c-format
 msgid "SSPI authentication not supported"
 msgstr "el método de autentificación SSPI no está soportado"
 
-#: fe-auth.c:1086
+#: fe-auth.c:1087
 #, c-format
 msgid "Crypt authentication not supported"
 msgstr "el método de autentificación Crypt no está soportado"
 
-#: fe-auth.c:1150
+#: fe-auth.c:1151
 #, c-format
 msgid "authentication method %u not supported"
 msgstr "el método de autentificación %u no está soportado"
 
-#: fe-auth.c:1196
+#: fe-auth.c:1197
 #, c-format
 msgid "user name lookup failure: error code %lu"
 msgstr "fallo en la búsqueda de nombre de usuario: código de error %lu"
 
-#: fe-auth.c:1320
+#: fe-auth.c:1321
 #, c-format
 msgid "unexpected shape of result set returned for SHOW"
 msgstr "SHOW retornó un conjunto de resultados con estructura inesperada"
 
-#: fe-auth.c:1328
+#: fe-auth.c:1329
 #, c-format
 msgid "password_encryption value too long"
 msgstr "el valor para password_encryption es demasiado largo"
 
-#: fe-auth.c:1378
+#: fe-auth.c:1379
 #, c-format
 msgid "unrecognized password encryption algorithm \"%s\""
 msgstr "algoritmo para cifrado de contraseña «%s» desconocido"
@@ -375,7 +376,6 @@ msgstr "el valor «%2$s» de %1$s no es válido cuando el soporte SSL no está c
 
 #: fe-connect.c:1546
 #, c-format
-#| msgid "weak sslmode \"%s\" may not be used with sslrootcert=system (use verify-full)"
 msgid "weak sslmode \"%s\" may not be used with sslrootcert=system (use \"verify-full\")"
 msgstr "el sslmode débil «%s» no puede ser usado con sslrootcert=system (use «verify-full»)"
 
@@ -789,7 +789,7 @@ msgstr "contraseña obtenida desde el archivo «%s»"
 msgid "row number %d is out of range 0..%d"
 msgstr "el número de fila %d está fuera del rango 0..%d"
 
-#: fe-exec.c:528 fe-protocol3.c:1975
+#: fe-exec.c:528 fe-protocol3.c:1976
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -875,7 +875,7 @@ msgstr "COPY terminado por un nuevo PQexec"
 msgid "PQexec not allowed during COPY BOTH"
 msgstr "PQexec no está permitido durante COPY BOTH"
 
-#: fe-exec.c:2586 fe-exec.c:2641 fe-exec.c:2709 fe-protocol3.c:1906
+#: fe-exec.c:2586 fe-exec.c:2641 fe-exec.c:2709 fe-protocol3.c:1907
 #, c-format
 msgid "no COPY in progress"
 msgstr "no hay COPY alguno en ejecución"
@@ -1149,27 +1149,34 @@ msgstr "%s:%s"
 msgid "LINE %d: "
 msgstr "LÍNEA %d: "
 
-#: fe-protocol3.c:1424
+#: fe-protocol3.c:1423
 #, c-format
-msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u\n"
-msgstr "versión de protocolo no soportada por el servidor: cliente usa %u.%u, servidor soporta hasta %u.%u\n"
+msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u"
+msgstr "versión de protocolo no soportada por el servidor: cliente usa %u.%u, servidor soporta hasta %u.%u"
 
-#: fe-protocol3.c:1436
+#: fe-protocol3.c:1429
+#, c-format
+msgid "protocol extension not supported by server: %s"
+msgid_plural "protocol extensions not supported by server: %s"
+msgstr[0] "extensión del protocolo no soportada por el servidor: %s"
+msgstr[1] "extensiones del protocolo no soportadas por el servidor: %s"
+
+#: fe-protocol3.c:1437
 #, c-format
 msgid "invalid %s message"
 msgstr "mensaje %s no válido"
 
-#: fe-protocol3.c:1801
+#: fe-protocol3.c:1802
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: no se está haciendo COPY OUT de texto"
 
-#: fe-protocol3.c:2175
+#: fe-protocol3.c:2176
 #, c-format
 msgid "protocol error: no function result"
 msgstr "error de protocolo: no hay resultado de función"
 
-#: fe-protocol3.c:2186
+#: fe-protocol3.c:2187
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "error de protocolo: id=0x%x"
@@ -1193,6 +1200,13 @@ msgstr "no se pudo convertir la dirección IP del certificado a cadena: %s"
 #, c-format
 msgid "host name must be specified for a verified SSL connection"
 msgstr "el nombre de servidor debe ser especificado para una conexión SSL verificada"
+
+#: fe-secure-common.c:286
+#, c-format
+msgid "server certificate for \"%s\" (and %d other name) does not match host name \"%s\""
+msgid_plural "server certificate for \"%s\" (and %d other names) does not match host name \"%s\""
+msgstr[0] "el certificado de servidor para «%s» (y %d otro nombre) no coincide con el nombre de servidor «%s»"
+msgstr[1] "el certificado de servidor para «%s» (y %d otros nombres) no coincide con el nombre de servidor «%s»"
 
 #: fe-secure-common.c:294
 #, c-format

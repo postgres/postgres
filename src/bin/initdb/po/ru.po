@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-28 07:59+0300\n"
-"PO-Revision-Date: 2023-08-29 13:38+0300\n"
+"POT-Creation-Date: 2023-09-11 15:31+0300\n"
+"PO-Revision-Date: 2023-09-11 16:13+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -1071,8 +1071,8 @@ msgstr "аргументом --wal-segsize должно быть число"
 
 #: initdb.c:3359
 #, c-format
-msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
-msgstr "аргументом --wal-segsize должна быть степень 2 от 1 до 1024"
+msgid "argument of --wal-segsize must be a power of two between 1 and 1024"
+msgstr "аргументом --wal-segsize должна быть степень двух от 1 до 1024"
 
 #: initdb.c:3373
 #, c-format

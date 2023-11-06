@@ -1,0 +1,538 @@
+# Traditional Chinese message translation file for pg_amcheck
+# Copyright (C) 2023 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_amcheck (PostgreSQL) package.
+# Zhenbang Wei <znbang@gmail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_amcheck (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-09-11 20:51+0000\n"
+"PO-Revision-Date: 2023-11-06 08:49+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: \n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.1\n"
+
+# libpq/be-secure.c:294 libpq/be-secure.c:387
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "錯誤: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "詳細內容: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+msgid "Cancel request sent\n"
+msgstr "已傳送取消請求\n"
+
+# fe-connect.c:1427
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+msgid "Could not send cancel request: "
+msgstr "無法傳送取消請求: "
+
+#: ../../fe_utils/connect_utils.c:91
+#, c-format
+msgid "could not connect to database %s: out of memory"
+msgstr "無法連線至資料庫 %s: 記憶體不足"
+
+# commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
+# nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
+#: ../../fe_utils/connect_utils.c:116
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+# utils/adt/formatting.c:2044
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "值 \"%s\" 對於 \"%s\" 是無效的"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s 必須在範圍 %d..%d 內"
+
+#: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
+#: pg_amcheck.c:1647 pg_amcheck.c:2092
+#, c-format
+msgid "query failed: %s"
+msgstr "查詢失敗: %s"
+
+#: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
+#: pg_amcheck.c:571 pg_amcheck.c:1102 pg_amcheck.c:1648 pg_amcheck.c:2093
+#, c-format
+msgid "Query was: %s"
+msgstr "查詢是: %s"
+
+#: pg_amcheck.c:399
+#, c-format
+msgid "invalid argument for option %s"
+msgstr "選項 %s 的參數無效"
+
+#: pg_amcheck.c:405
+#, c-format
+msgid "invalid start block"
+msgstr "起始區塊無效"
+
+#: pg_amcheck.c:407
+#, c-format
+msgid "start block out of bounds"
+msgstr "起始區塊超出範圍"
+
+#: pg_amcheck.c:414
+#, c-format
+msgid "invalid end block"
+msgstr "結束區塊無效"
+
+#: pg_amcheck.c:416
+#, c-format
+msgid "end block out of bounds"
+msgstr "結束區塊超出範圍"
+
+# tcop/postgres.c:2636 tcop/postgres.c:2652
+#: pg_amcheck.c:439 pg_amcheck.c:461
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "用 \"%s --help\" 取得更多資訊。"
+
+#: pg_amcheck.c:445
+#, c-format
+msgid "end block precedes start block"
+msgstr "結束區塊早於起始區塊"
+
+#: pg_amcheck.c:459
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "命令列參數過多(第一個是 \"%s\")"
+
+#: pg_amcheck.c:479
+#, c-format
+msgid "cannot specify a database name with --all"
+msgstr "無法用 --all 參數指定資料庫名稱"
+
+#: pg_amcheck.c:485
+#, c-format
+msgid "cannot specify both a database name and database patterns"
+msgstr "無法同時使用資料庫名稱和資料庫名稱表達式"
+
+#: pg_amcheck.c:513
+#, c-format
+msgid "no databases to check"
+msgstr "無需檢查任何資料庫"
+
+#: pg_amcheck.c:569
+#, c-format
+msgid "database \"%s\": %s"
+msgstr "資料庫 \"%s\": %s"
+
+#: pg_amcheck.c:580
+#, c-format
+msgid "skipping database \"%s\": amcheck is not installed"
+msgstr "跳過資料庫 \"%s\": 未安裝 amcheck"
+
+#: pg_amcheck.c:588
+#, c-format
+msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
+msgstr "在資料庫 \"%s\": schema \"%s\" 使用 amcheck 版本 \"%s\""
+
+#: pg_amcheck.c:610
+#, c-format
+msgid "no heap tables to check matching \"%s\""
+msgstr "沒有符合 \"%s\" 的 heap 資料表需要檢查"
+
+#: pg_amcheck.c:613
+#, c-format
+msgid "no btree indexes to check matching \"%s\""
+msgstr "沒有符合 \"%s\" 的 btree 索引需要檢查"
+
+#: pg_amcheck.c:616
+#, c-format
+msgid "no relations to check in schemas matching \"%s\""
+msgstr "符合 \"%s\" 的 schema 中沒有關聯需要檢查"
+
+#: pg_amcheck.c:619
+#, c-format
+msgid "no relations to check matching \"%s\""
+msgstr "沒有符合 \"%s\" 的關聯需要檢查"
+
+#: pg_amcheck.c:647
+#, c-format
+msgid "no relations to check"
+msgstr "沒有關聯需要檢查"
+
+#: pg_amcheck.c:730
+#, c-format
+msgid "checking heap table \"%s.%s.%s\""
+msgstr "檢查 heap 資料表 \"%s.%s.%s\""
+
+#: pg_amcheck.c:746
+#, c-format
+msgid "checking btree index \"%s.%s.%s\""
+msgstr "檢查 btree 索引 \"%s.%s.%s\""
+
+#: pg_amcheck.c:893
+#, c-format
+msgid "error sending command to database \"%s\": %s"
+msgstr "傳送命令至資料庫 \"%s\" 發生錯誤: %s"
+
+#: pg_amcheck.c:896
+#, c-format
+msgid "Command was: %s"
+msgstr "命令是: %s"
+
+#: pg_amcheck.c:1015
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
+msgstr "heap 資料表 \"%s.%s.%s\"，區塊 %s，位移 %s，屬性 %s:\n"
+
+#: pg_amcheck.c:1022
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
+msgstr "heap 資料表 \"%s.%s.%s\"，區塊 %s，位移 %s:\n"
+
+#: pg_amcheck.c:1028
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s:\n"
+msgstr "heap 資料表 \"%s.%s.%s\"，區塊 %s:\n"
+
+#: pg_amcheck.c:1033 pg_amcheck.c:1044
+#, c-format
+msgid "heap table \"%s.%s.%s\":\n"
+msgstr "heap 資料表 \"%s.%s.%s\":\n"
+
+#: pg_amcheck.c:1048 pg_amcheck.c:1117
+#, c-format
+msgid "query was: %s\n"
+msgstr "查詢是: %s\n"
+
+#: pg_amcheck.c:1099
+#, c-format
+msgid "btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d"
+msgstr "btree 索引 \"%s.%s.%s\": btree 檢查函數回傳非預期數量的資料列: %d"
+
+#: pg_amcheck.c:1103
+#, c-format
+msgid "Are %s's and amcheck's versions compatible?"
+msgstr "%s 和 amcheck 的版本是否相容?"
+
+#: pg_amcheck.c:1113
+#, c-format
+msgid "btree index \"%s.%s.%s\":\n"
+msgstr "btree 索引 \"%s.%s.%s\":\n"
+
+#: pg_amcheck.c:1138
+#, c-format
+msgid ""
+"%s checks objects in a PostgreSQL database for corruption.\n"
+"\n"
+msgstr "%s 檢查 PostgreSQL 資料庫中的物件是否損壞。\n"
+
+#: pg_amcheck.c:1139
+#, c-format
+msgid "Usage:\n"
+msgstr "用法:\n"
+
+#: pg_amcheck.c:1140
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [OPTION]... [DBNAME]\n"
+
+#: pg_amcheck.c:1141
+#, c-format
+msgid ""
+"\n"
+"Target options:\n"
+msgstr ""
+"\n"
+"目標選項:\n"
+
+#: pg_amcheck.c:1142
+#, c-format
+msgid "  -a, --all                       check all databases\n"
+msgstr "  -a, --all                       檢查所有資料庫\n"
+
+#: pg_amcheck.c:1143
+#, c-format
+msgid "  -d, --database=PATTERN          check matching database(s)\n"
+msgstr "  -d, --database=PATTERN          檢查符合的資料庫\n"
+
+#: pg_amcheck.c:1144
+#, c-format
+msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
+msgstr "  -D, --exclude-database=PATTERN  不檢查符合的資料庫\n"
+
+#: pg_amcheck.c:1145
+#, c-format
+msgid "  -i, --index=PATTERN             check matching index(es)\n"
+msgstr "  -i, --index=PATTERN             檢查符合的索引\n"
+
+#: pg_amcheck.c:1146
+#, c-format
+msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
+msgstr "  -I, --exclude-index=PATTERN     不檢查符合的索引\n"
+
+#: pg_amcheck.c:1147
+#, c-format
+msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
+msgstr "  -r, --relation=PATTERN          檢查符合的關聯\n"
+
+#: pg_amcheck.c:1148
+#, c-format
+msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
+msgstr "  -R, --exclude-relation=PATTERN  不檢查符合的關聯\n"
+
+#: pg_amcheck.c:1149
+#, c-format
+msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
+msgstr "  -s, --schema=PATTERN            檢查符合的 schema\n"
+
+#: pg_amcheck.c:1150
+#, c-format
+msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
+msgstr "  -S, --exclude-schema=PATTERN    不檢查符合的 schema\n"
+
+#: pg_amcheck.c:1151
+#, c-format
+msgid "  -t, --table=PATTERN             check matching table(s)\n"
+msgstr "  -t, --table=PATTERN             檢查符合的資料表\n"
+
+#: pg_amcheck.c:1152
+#, c-format
+msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
+msgstr "  -T, --exclude-table=PATTERN     不檢查符合的資料表\n"
+
+#: pg_amcheck.c:1153
+#, c-format
+msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
+msgstr "      --no-dependent-indexes      不展開關聯清單以包含索引\n"
+
+#: pg_amcheck.c:1154
+#, c-format
+msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
+msgstr "      --no-dependent-toast        不展開關聯清單以包含 TOAST 資料表\n"
+
+#: pg_amcheck.c:1155
+#, c-format
+msgid "      --no-strict-names           do NOT require patterns to match objects\n"
+msgstr "      --no-strict-names           不要求表達式必須符合物件\n"
+
+#: pg_amcheck.c:1156
+#, c-format
+msgid ""
+"\n"
+"Table checking options:\n"
+msgstr ""
+"\n"
+"資料表檢查選項:\n"
+
+#: pg_amcheck.c:1157
+#, c-format
+msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
+msgstr "      --exclude-toast-pointers    不要追蹤關聯 TOAST 指標\n"
+
+#: pg_amcheck.c:1158
+#, c-format
+msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
+msgstr "      --on-error-stop             在第一個損壞資料頁的結尾停止檢查\n"
+
+#: pg_amcheck.c:1159
+#, c-format
+msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
+msgstr "      --skip=OPTION               不檢查 \"all-frozen\" 或 \"all-visible\" 區塊\n"
+
+#: pg_amcheck.c:1160
+#, c-format
+msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
+msgstr "      --startblock=BLOCK          從指定的區塊編號開始檢查資料表\n"
+
+#: pg_amcheck.c:1161
+#, c-format
+msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
+msgstr "      --endblock=BLOCK            只檢查資料表直到指定的區塊編號為止\n"
+
+#: pg_amcheck.c:1162
+#, c-format
+msgid ""
+"\n"
+"B-tree index checking options:\n"
+msgstr ""
+"\n"
+"B-tree 索引檢查選項:\n"
+
+#: pg_amcheck.c:1163
+#, c-format
+msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
+msgstr "      --heapallindexed            檢查所有 heap tuple 是否都在索引內找到\n"
+
+#: pg_amcheck.c:1164
+#, c-format
+msgid "      --parent-check              check index parent/child relationships\n"
+msgstr "      --parent-check              檢查索引的父子關係\n"
+
+#: pg_amcheck.c:1165
+#, c-format
+msgid "      --rootdescend               search from root page to refind tuples\n"
+msgstr "      --rootdescend               從根資料頁搜索以重新尋找 tuple\n"
+
+#: pg_amcheck.c:1166
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"連線選項:\n"
+
+#: pg_amcheck.c:1167
+#, c-format
+msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME             資料庫伺服器主機或 socket 目錄\n"
+
+#: pg_amcheck.c:1168
+#, c-format
+msgid "  -p, --port=PORT                 database server port\n"
+msgstr "  -p, --port=PORT                 資料庫伺服器連接埠\n"
+
+#: pg_amcheck.c:1169
+#, c-format
+msgid "  -U, --username=USERNAME         user name to connect as\n"
+msgstr "  -U, --username=USERNAME         連線的使用者名稱\n"
+
+#: pg_amcheck.c:1170
+#, c-format
+msgid "  -w, --no-password               never prompt for password\n"
+msgstr "  -w, --no-password               不詢問密碼\n"
+
+#: pg_amcheck.c:1171
+#, c-format
+msgid "  -W, --password                  force password prompt\n"
+msgstr "  -W, --password                  要求詢問密碼\n"
+
+#: pg_amcheck.c:1172
+#, c-format
+msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
+msgstr "      --maintenance-db=DBNAME     替代的維護資料庫\n"
+
+#: pg_amcheck.c:1173
+#, c-format
+msgid ""
+"\n"
+"Other options:\n"
+msgstr ""
+"\n"
+"其他選項:\n"
+
+#: pg_amcheck.c:1174
+#, c-format
+msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgstr "  -e, --echo                      顯示被送到伺服器的命令\n"
+
+#: pg_amcheck.c:1175
+#, c-format
+msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
+msgstr "  -j, --jobs=NUM                  用這麼多連線至伺服器\n"
+
+#: pg_amcheck.c:1176
+#, c-format
+msgid "  -P, --progress                  show progress information\n"
+msgstr "  -P, --progress                  顯示進度資訊\n"
+
+#: pg_amcheck.c:1177
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   產生詳細輸出\n"
+
+#: pg_amcheck.c:1178
+#, c-format
+msgid "  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version                   顯示版本，然後結束\n"
+
+#: pg_amcheck.c:1179
+#, c-format
+msgid "      --install-missing           install missing extensions\n"
+msgstr "      --install-missing           安裝缺少的擴充模組\n"
+
+#: pg_amcheck.c:1180
+#, c-format
+msgid "  -?, --help                      show this help, then exit\n"
+msgstr "  -?, --help                      顯示說明，然後結束\n"
+
+#: pg_amcheck.c:1182
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"回報錯誤至 <%s>。\n"
+
+#: pg_amcheck.c:1183
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 網站: <%s>\n"
+
+#: pg_amcheck.c:1236
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
+msgstr "%*s/%s 關聯 (%d%%)，%*s/%s 資料頁 (%d%%) %*s"
+
+#: pg_amcheck.c:1247
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
+msgstr "%*s/%s 關聯 (%d%%)，%*s/%s 資料頁 (%d%%) (%s%-*.*s)"
+
+#: pg_amcheck.c:1262
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
+msgstr "%*s/%s 關聯 (%d%%)，%*s/%s 資料頁 (%d%%)"
+
+# catalog/namespace.c:1201 gram.y:2516 gram.y:7422 parser/parse_expr.c:1183
+# parser/parse_target.c:734
+#: pg_amcheck.c:1321 pg_amcheck.c:1354
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "完整名稱不正確(太多含點名稱): %s"
+
+# catalog/namespace.c:1313
+#: pg_amcheck.c:1399
+#, c-format
+msgid "improper relation name (too many dotted names): %s"
+msgstr "關聯名稱不正確(太多含點名稱): %s"
+
+#: pg_amcheck.c:1552 pg_amcheck.c:1691
+#, c-format
+msgid "including database \"%s\""
+msgstr "包括資料庫 \"%s\""
+
+#: pg_amcheck.c:1673
+#, c-format
+msgid "internal error: received unexpected database pattern_id %d"
+msgstr "內部錯誤: 收到非預期的資料庫 pattern_id %d"
+
+#: pg_amcheck.c:1675
+#, c-format
+msgid "no connectable databases to check matching \"%s\""
+msgstr "沒有符合 \"%s\" 的可連線資料庫需要檢查"
+
+#: pg_amcheck.c:2133
+#, c-format
+msgid "internal error: received unexpected relation pattern_id %d"
+msgstr "內部錯誤: 收到非預期的關聯 pattern_id %d"

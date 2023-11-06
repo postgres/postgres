@@ -1,30 +1,84 @@
 # Traditional Chinese message translation file for pg_config
-# Copyright (C) 2011 PostgreSQL Global Development Group
-# This file is distributed under the same license as the PostgreSQL package.
+# Copyright (C) 2023 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_config (PostgreSQL) package.
 # 2004-12-13 Zhenbang Wei <forth@zbwei.net>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-05-11 20:40+0000\n"
-"PO-Revision-Date: 2013-09-03 23:27-0400\n"
+"Project-Id-Version: pg_config (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-09-08 21:48+0000\n"
+"PO-Revision-Date: 2023-11-06 08:49+0800\n"
 "Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language-Team: \n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.1\n"
 
-#: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
-#: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
-#: pg_config.c:371
+#: ../../common/config_info.c:134 ../../common/config_info.c:142
+#: ../../common/config_info.c:150 ../../common/config_info.c:158
+#: ../../common/config_info.c:166 ../../common/config_info.c:174
+#: ../../common/config_info.c:182 ../../common/config_info.c:190
+msgid "not recorded"
+msgstr "未紀錄"
+
+# command.c:122
+#: ../../common/exec.c:172
 #, c-format
-msgid "not recorded\n"
-msgstr "沒有紀錄\n"
+msgid "invalid binary \"%s\": %m"
+msgstr "無效的執行檔 \"%s\": %m"
 
-#: pg_config.c:428
+# command.c:1103
+#: ../../common/exec.c:215
+#, c-format
+msgid "could not read binary \"%s\": %m"
+msgstr "無法讀取執行檔 \"%s\": %m"
+
+#: ../../common/exec.c:223
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "找不到可執行的 \"%s\""
+
+# utils/error/elog.c:1128
+#: ../../common/exec.c:250
+#, c-format
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "無法將路徑 \"%s\" 解析為絕對路徑: %m"
+
+# fe-misc.c:991
+#: ../../common/exec.c:412
+#, c-format
+msgid "%s() failed: %m"
+msgstr "%s() 失敗: %m"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+msgid "out of memory"
+msgstr "記憶體不足"
+
+#: pg_config.c:74
 #, c-format
 msgid ""
 "\n"
@@ -32,168 +86,153 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"%s 顯示已安裝 PostgreSQL 資訊。\n"
+"%s 提供關於已安裝 PostgreSQL 版本的資訊。\n"
 "\n"
 
-#: pg_config.c:429
+#: pg_config.c:75
 #, c-format
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "用法:\n"
 
-#: pg_config.c:430
+#: pg_config.c:76
 #, c-format
 msgid ""
 "  %s [OPTION]...\n"
 "\n"
 msgstr ""
-"  %s [選項]...\n"
+"  %s [OPTION]...\n"
 "\n"
 
-#: pg_config.c:431
+#: pg_config.c:77
 #, c-format
 msgid "Options:\n"
 msgstr "選項:\n"
 
-#: pg_config.c:432
+#: pg_config.c:78
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir              顯示執行檔位置\n"
+msgstr "  --bindir              顯示使用者可執行檔的位置\n"
 
-#: pg_config.c:433
+#: pg_config.c:79
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
-msgstr "  --docdir              顯示文件檔位置\n"
+msgstr "  --docdir              顯示文件檔的位置\n"
 
-#: pg_config.c:434
+#: pg_config.c:80
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
-msgstr "  --htmldir             顯示 HTML 文件檔位置\n"
+msgstr "  --htmldir             顯示 HTML 文件檔的位置\n"
 
-#: pg_config.c:435
+#: pg_config.c:81
 #, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
-msgstr "  --includedir          顯使用戶端介面 C 標頭檔位置\n"
+msgstr "  --includedir          顯示客戶端介面 C 標頭檔的位置\n"
 
-#: pg_config.c:437
+#: pg_config.c:83
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  --pkgincludedir       顯示其他 C 標頭檔位置\n"
+msgstr "  --pkgincludedir       顯示其他 C 標頭檔的位置\n"
 
-#: pg_config.c:438
+#: pg_config.c:84
 #, c-format
-msgid ""
-"  --includedir-server   show location of C header files for the server\n"
-msgstr "  --includedir-server   顯示伺服器 C 標頭檔位置\n"
+msgid "  --includedir-server   show location of C header files for the server\n"
+msgstr "  --includedir-server   顯示伺服器 C 標頭檔的位置\n"
 
-#: pg_config.c:439
+#: pg_config.c:85
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  --libdir              顯示程式庫位置\n"
+msgstr "  --libdir              顯示目的碼程式庫的位置\n"
 
-#: pg_config.c:440
+#: pg_config.c:86
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           顯示可動態載入模組位置\n"
+msgstr "  --pkglibdir           顯示動態載入模組的位置\n"
 
-#: pg_config.c:441
+#: pg_config.c:87
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  --localedir           顯示區域支援檔位置\n"
+msgstr "  --localedir           顯示區域支援檔的位置\n"
 
-#: pg_config.c:442
+#: pg_config.c:88
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  --mandir              顯示使用說明位置\n"
+msgstr "  --mandir              顯示使用手冊的位置\n"
 
-#: pg_config.c:443
+#: pg_config.c:89
 #, c-format
-msgid ""
-"  --sharedir            show location of architecture-independent support "
-"files\n"
-msgstr "  --sharedir            顯示與架構無關的支援檔位置\n"
+msgid "  --sharedir            show location of architecture-independent support files\n"
+msgstr "  --sharedir            顯示與架構無關的支援檔的位置\n"
 
-#: pg_config.c:444
+#: pg_config.c:90
 #, c-format
-msgid ""
-"  --sysconfdir          show location of system-wide configuration files\n"
-msgstr "  --sysconfdir          顯示系統層級設定檔位置\n"
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir          顯示系統全域組態檔的位置\n"
 
-#: pg_config.c:445
+#: pg_config.c:91
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                顯示外部程式 makefile 位置\n"
+msgstr "  --pgxs                顯示擴充模組 makefile 位置\n"
 
-#: pg_config.c:446
+#: pg_config.c:92
 #, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
-msgstr ""
-"  --configure           顯示建立 PostgreSQL 時 \"configure\" 命令搞\n"
-"                        所使用的參數\n"
+msgstr "  --configure           顯示建立 PostgreSQL 時給 \"configure\" 腳本的參數\n"
 
-#: pg_config.c:448
+#: pg_config.c:94
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
 msgstr "  --cc                  顯示建立 PostgreSQL 時使用的 CC 值\n"
 
-#: pg_config.c:449
+#: pg_config.c:95
 #, c-format
-msgid ""
-"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
 msgstr "  --cppflags            顯示建立 PostgreSQL 時使用的 CPPFLAGS 值\n"
 
-#: pg_config.c:450
+#: pg_config.c:96
 #, c-format
-msgid ""
-"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr "  --cflags              顯示建立 PostgreSQL 時使用的 CFLAGS 值\n"
 
-#: pg_config.c:451
+#: pg_config.c:97
 #, c-format
-msgid ""
-"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
 msgstr "  --cflags_sl           顯示建立 PostgreSQL 時使用的 CFLAGS_SL 值\n"
 
-#: pg_config.c:452
+#: pg_config.c:98
 #, c-format
-msgid ""
-"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
 msgstr "  --ldflags             顯示建立 PostgreSQL 時使用的 LDFLAGS 值\n"
 
-#: pg_config.c:453
+#: pg_config.c:99
 #, c-format
-msgid ""
-"  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was "
-"built\n"
+msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
 msgstr "  --ldflags_ex          顯示建立 PostgreSQL 時使用的 LDFLAGS_EX 值\n"
 
-#: pg_config.c:454
+#: pg_config.c:100
 #, c-format
-msgid ""
-"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
-"built\n"
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
 msgstr "  --ldflags_sl          顯示建立 PostgreSQL 時使用的 LDFLAGS_SL 值\n"
 
-#: pg_config.c:455
+#: pg_config.c:101
 #, c-format
-msgid ""
-"  --libs                show LIBS value used when PostgreSQL was built\n"
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr "  --libs                顯示建立 PostgreSQL 時使用的 LIBS 值\n"
 
-#: pg_config.c:456
+#: pg_config.c:102
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
-msgstr "  --version             顯示 PostgreSQL 版本\n"
+msgstr "  --version             顯示 PostgreSQL 的版本\n"
 
-#: pg_config.c:457
+#: pg_config.c:103
 #, c-format
-msgid "  --help                show this help, then exit\n"
-msgstr "  --help                顯示說明然後結束\n"
+msgid "  -?, --help            show this help, then exit\n"
+msgstr "  -?, --help                顯示說明，然後結束\n"
 
-#: pg_config.c:458
+#: pg_config.c:104
 #, c-format
 msgid ""
 "\n"
@@ -201,93 +240,34 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"沒有參數，已顯示所有已知項目。\n"
+"沒有參數時顯示所有已知項目。\n"
 "\n"
 
-#: pg_config.c:459
+#: pg_config.c:105
 #, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "回報錯誤至 <pgsql-bugs@postgresql.org>。\n"
+msgid "Report bugs to <%s>.\n"
+msgstr "回報錯誤至 <%s>。\n"
+
+#: pg_config.c:106
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 首頁: <%s>\n"
 
 # postmaster/postmaster.c:512 postmaster/postmaster.c:525
-#: pg_config.c:465
+#: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "執行 \"%s --help\" 顯示更多資訊。\n"
+msgstr "用 \"%s --help\" 取得更多資訊。\n"
 
-#: pg_config.c:504
+#: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: 找不到程式執行檔\n"
+msgstr "%s: 找不到自身的程式執行檔\n"
 
-#: pg_config.c:527
+#: pg_config.c:181
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: 無效的參數: %s\n"
-
-#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
-#, c-format
-msgid "could not identify current directory: %s"
-msgstr "無法識別目前的目錄: %s"
-
-# command.c:122
-#: ../../port/exec.c:144
-#, c-format
-msgid "invalid binary \"%s\""
-msgstr "無效的 binary \"%s\""
-
-# command.c:1103
-#: ../../port/exec.c:193
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "無法讀取 binary \"%s\""
-
-#: ../../port/exec.c:200
-#, c-format
-msgid "could not find a \"%s\" to execute"
-msgstr "找不到 \"%s\" 執行"
-
-#: ../../port/exec.c:255 ../../port/exec.c:291
-#, c-format
-msgid "could not change directory to \"%s\""
-msgstr "無法切換目錄至 \"%s\""
-
-#: ../../port/exec.c:270
-#, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "無法讀取符號連結 \"%s\""
-
-#: ../../port/exec.c:517
-#, c-format
-msgid "child process exited with exit code %d"
-msgstr "子行程結束，結束代碼 %d"
-
-#: ../../port/exec.c:521
-#, c-format
-msgid "child process was terminated by exception 0x%X"
-msgstr "子行程被例外 0x%X  結束"
-
-#: ../../port/exec.c:530
-#, c-format
-msgid "child process was terminated by signal %s"
-msgstr "子行程被信號 %s 結束"
-
-#: ../../port/exec.c:533
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "子行程被信號 %d 結束"
-
-#: ../../port/exec.c:537
-#, c-format
-msgid "child process exited with unrecognized status %d"
-msgstr "子行程結束，不明狀態代碼 %d"
-
-#~ msgid ""
-#~ "  %s OPTION...\n"
-#~ "\n"
-#~ msgstr ""
-#~ "  %s 選項...\n"
-#~ "\n"
 
 #~ msgid ""
 #~ "\n"
@@ -296,8 +276,51 @@ msgstr "子行程結束，不明狀態代碼 %d"
 #~ "\n"
 #~ "執行\"%s --help\"取得更多資訊\n"
 
+#~ msgid ""
+#~ "  %s OPTION...\n"
+#~ "\n"
+#~ msgstr ""
+#~ "  %s 選項...\n"
+#~ "\n"
+
+#, c-format
+#~ msgid "  --help                show this help, then exit\n"
+#~ msgstr "  --help                顯示說明然後結束\n"
+
 #~ msgid "%s: argument required\n"
 #~ msgstr "%s：不能省略參數\n"
 
 #~ msgid "%s: could not find own executable\n"
 #~ msgstr "%s：找不到執行檔\n"
+
+#, c-format
+#~ msgid "child process exited with exit code %d"
+#~ msgstr "子行程結束，結束代碼 %d"
+
+#, c-format
+#~ msgid "child process exited with unrecognized status %d"
+#~ msgstr "子行程結束，不明狀態代碼 %d"
+
+#, c-format
+#~ msgid "child process was terminated by exception 0x%X"
+#~ msgstr "子行程被例外 0x%X  結束"
+
+#, c-format
+#~ msgid "child process was terminated by signal %d"
+#~ msgstr "子行程被信號 %d 結束"
+
+#, c-format
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "子行程被信號 %s 結束"
+
+#, c-format
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "無法切換目錄至 \"%s\""
+
+#, c-format
+#~ msgid "could not identify current directory: %s"
+#~ msgstr "無法識別目前的目錄: %s"
+
+#, c-format
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "無法讀取符號連結 \"%s\""

@@ -1,0 +1,496 @@
+# Traditional Chinese message translation file for plpython
+# Copyright (C) 2023 PostgreSQL Global Development Group
+# This file is distributed under the same license as the plpython (PostgreSQL) package.
+# Zhenbang Wei <znbang@gmail.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plpython (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-09-11 20:38+0000\n"
+"PO-Revision-Date: 2023-11-06 08:50+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: \n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.1\n"
+
+#: plpy_cursorobject.c:72
+#, c-format
+msgid "plpy.cursor expected a query or a plan"
+msgstr "plpy.cursor 預期查詢或計劃"
+
+#: plpy_cursorobject.c:155
+#, c-format
+msgid "plpy.cursor takes a sequence as its second argument"
+msgstr "plpy.execute 接受序列做為第二個參數"
+
+#: plpy_cursorobject.c:171 plpy_spi.c:205
+#, c-format
+msgid "could not execute plan"
+msgstr "無法執行計畫"
+
+#: plpy_cursorobject.c:174 plpy_spi.c:208
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "預期 %d 個參數序列，收到 %d 個: %s"
+
+# sql_help.h:345
+#: plpy_cursorobject.c:321
+#, c-format
+msgid "iterating a closed cursor"
+msgstr "迭代已關閉的游標"
+
+# postmaster/postmaster.c:1832
+#: plpy_cursorobject.c:329 plpy_cursorobject.c:395
+#, c-format
+msgid "iterating a cursor in an aborted subtransaction"
+msgstr "在已中止的子交易中迭代游標"
+
+# sql_help.h:109
+#: plpy_cursorobject.c:387
+#, c-format
+msgid "fetch from a closed cursor"
+msgstr "從已關閉的游標中擷取資料"
+
+#: plpy_cursorobject.c:430 plpy_spi.c:401
+#, c-format
+msgid "query result has too many rows to fit in a Python list"
+msgstr "查詢結果的列數過多，無法放入 Python 串列"
+
+# postmaster/postmaster.c:1832
+#: plpy_cursorobject.c:482
+#, c-format
+msgid "closing a cursor in an aborted subtransaction"
+msgstr "在已中止的子交易中關閉游標"
+
+# commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
+# nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
+#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:530
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpy_exec.c:139
+#, c-format
+msgid "unsupported set function return mode"
+msgstr "不支援的集合函數回傳模式"
+
+#: plpy_exec.c:140
+#, c-format
+msgid "PL/Python set-returning functions only support returning one value per call."
+msgstr "PL/Python 的集合回傳函數僅支援每次呼叫回傳一個值。"
+
+#: plpy_exec.c:153
+#, c-format
+msgid "returned object cannot be iterated"
+msgstr "無法迭代回傳的物件"
+
+#: plpy_exec.c:154
+#, c-format
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "PL/Python 的集合回傳函數必須回傳一個可迭代的物件。"
+
+#: plpy_exec.c:168
+#, c-format
+msgid "error fetching next item from iterator"
+msgstr "從迭代器取得下一個項目時發生錯誤"
+
+#: plpy_exec.c:211
+#, c-format
+msgid "PL/Python procedure did not return None"
+msgstr "PL/Python 程序未回傳 None"
+
+#: plpy_exec.c:215
+#, c-format
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "PL/Python 函數的回傳型別為 \"void\" 但未回傳 None"
+
+#: plpy_exec.c:369 plpy_exec.c:393
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "觸發程序回傳非預期的值"
+
+#: plpy_exec.c:370
+#, c-format
+msgid "Expected None or a string."
+msgstr "預期 None 或字串。"
+
+#: plpy_exec.c:383
+#, c-format
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "PL/Python 觸發函數在 DELETE 觸發器中回傳 \"MODIFY\" -- 已忽略"
+
+#: plpy_exec.c:394
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "預期 None 或 \"OK\" 或 \"SKIP\" 或 \"MODIFY\"。"
+
+#: plpy_exec.c:444
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "設定 PyList_SetItem() 的參數時失敗"
+
+#: plpy_exec.c:448
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "設定 PyDict_SetItemString() 的參數時失敗"
+
+#: plpy_exec.c:460
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "在不接受紀錄型別的 context 中呼叫回傳紀錄的函數"
+
+#: plpy_exec.c:677
+#, c-format
+msgid "while creating return value"
+msgstr "在建立回傳值時"
+
+#: plpy_exec.c:924
+#, c-format
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"] 已刪除，無法修改資料列"
+
+#: plpy_exec.c:929
+#, c-format
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] 不是字典"
+
+#: plpy_exec.c:954
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr "位於順序位置 %d 的 TD[\"new\"] 字典鍵不是字串"
+
+#: plpy_exec.c:961
+#, c-format
+msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
+msgstr "TD[\"new\"] 中的鍵 \"%s\" 不在觸發資料列的欄位中"
+
+# commands/tablecmds.c:5425
+#: plpy_exec.c:966
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "無法設定系統屬性 \"%s\""
+
+# commands/tablecmds.c:4580
+#: plpy_exec.c:971
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "無法設定產生的欄位 \"%s\""
+
+#: plpy_exec.c:1029
+#, c-format
+msgid "while modifying trigger row"
+msgstr "在修改觸發資料列時"
+
+#: plpy_exec.c:1087
+#, c-format
+msgid "forcibly aborting a subtransaction that has not been exited"
+msgstr "強制中止尚未退出的子交易"
+
+#: plpy_main.c:109
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "工作階段中有多個 Python 程式庫"
+
+#: plpy_main.c:110
+#, c-format
+msgid "Only one Python major version can be used in one session."
+msgstr "同一個工作階段中只能使用一個 Python 主要版本。"
+
+#: plpy_main.c:122
+#, c-format
+msgid "untrapped error in initialization"
+msgstr "初始化中未被捕獲的錯誤"
+
+#: plpy_main.c:145
+#, c-format
+msgid "could not import \"__main__\" module"
+msgstr "無法匯入 \"__main__\" 模組"
+
+#: plpy_main.c:154
+#, c-format
+msgid "could not initialize globals"
+msgstr "無法初始化全域變數"
+
+#: plpy_main.c:352
+#, c-format
+msgid "PL/Python procedure \"%s\""
+msgstr "PL/Python 程序 \"%s\""
+
+#: plpy_main.c:355
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "PL/Python 函數 \"%s\""
+
+#: plpy_main.c:363
+#, c-format
+msgid "PL/Python anonymous code block"
+msgstr "PL/Python 匿名程式區塊"
+
+#: plpy_plpymodule.c:168 plpy_plpymodule.c:171
+#, c-format
+msgid "could not import \"plpy\" module"
+msgstr "無法匯入 \"plpy\" 模組"
+
+#: plpy_plpymodule.c:182
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "無法建立 spiexceptions 模組"
+
+#: plpy_plpymodule.c:190
+#, c-format
+msgid "could not add the spiexceptions module"
+msgstr "無法新增 spiexceptions 模組"
+
+# access/transam/xlog.c:4111
+#: plpy_plpymodule.c:257
+#, c-format
+msgid "could not generate SPI exceptions"
+msgstr "無法產生 SPI 例外"
+
+#: plpy_plpymodule.c:425
+#, c-format
+msgid "could not unpack arguments in plpy.elog"
+msgstr "無法解析 plpy.elog 中的參數"
+
+#: plpy_plpymodule.c:434
+msgid "could not parse error message in plpy.elog"
+msgstr "無法解析 plpy.elog 中的錯誤訊息"
+
+#: plpy_plpymodule.c:451
+#, c-format
+msgid "argument 'message' given by name and position"
+msgstr "參數 'message' 被同時以名稱和位置給定"
+
+# commands/define.c:279
+#: plpy_plpymodule.c:478
+#, c-format
+msgid "'%s' is an invalid keyword argument for this function"
+msgstr "這個函數的 '%s' 是無效關鍵字參數"
+
+#: plpy_plpymodule.c:489 plpy_plpymodule.c:495
+#, c-format
+msgid "invalid SQLSTATE code"
+msgstr "無效的 SQLSTATE 碼"
+
+#: plpy_procedure.c:225
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "觸發函數只能作為觸發器被呼叫"
+
+#: plpy_procedure.c:229
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "PL/Python 函數無法回傳型別 %s"
+
+#: plpy_procedure.c:307
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "PL/Python 函數不能接受型別 %s"
+
+#: plpy_procedure.c:395
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "無法編譯 PL/Python 函數 \"%s\""
+
+#: plpy_procedure.c:398
+#, c-format
+msgid "could not compile anonymous PL/Python code block"
+msgstr "無法編譯匿名 PL/Python 程式區塊"
+
+#: plpy_resultobject.c:117 plpy_resultobject.c:143 plpy_resultobject.c:169
+#, c-format
+msgid "command did not produce a result set"
+msgstr "命令未產生結果集"
+
+#: plpy_spi.c:56
+#, c-format
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "plpy.prepare 的第二個參數必須是序列"
+
+#: plpy_spi.c:98
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare: 順序位置 %d 的型別名稱不是字串"
+
+#: plpy_spi.c:170
+#, c-format
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute 預期查詢或計畫"
+
+#: plpy_spi.c:189
+#, c-format
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute 接受序列做為第二個參數"
+
+#: plpy_spi.c:297
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "SPI_execute_plan 失敗: %s"
+
+#: plpy_spi.c:339
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "SPI_execute 失敗: %s"
+
+#: plpy_subxactobject.c:92
+#, c-format
+msgid "this subtransaction has already been entered"
+msgstr "已進入這個子交易"
+
+#: plpy_subxactobject.c:98 plpy_subxactobject.c:156
+#, c-format
+msgid "this subtransaction has already been exited"
+msgstr "已結束這個子交易"
+
+#: plpy_subxactobject.c:150
+#, c-format
+msgid "this subtransaction has not been entered"
+msgstr "尚未進入這個子交易"
+
+#: plpy_subxactobject.c:162
+#, c-format
+msgid "there is no subtransaction to exit from"
+msgstr "無需結束任何子交易"
+
+#: plpy_typeio.c:588
+#, c-format
+msgid "could not import a module for Decimal constructor"
+msgstr "無法匯入 Decimal 建構子的模組"
+
+#: plpy_typeio.c:592
+#, c-format
+msgid "no Decimal attribute in module"
+msgstr "模組中找不到 Decimal 屬性"
+
+#: plpy_typeio.c:598
+#, c-format
+msgid "conversion from numeric to Decimal failed"
+msgstr "從數值轉換為 Decimal 失敗"
+
+#: plpy_typeio.c:912
+#, c-format
+msgid "could not create bytes representation of Python object"
+msgstr "無法建立 Python 物件的位元組表示"
+
+#: plpy_typeio.c:1049
+#, c-format
+msgid "could not create string representation of Python object"
+msgstr "無法建立 Python 物件的字串表示"
+
+#: plpy_typeio.c:1060
+#, c-format
+msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
+msgstr "無法將 Python 物件轉換為 cstring: Python 字串表示中似乎包含 null 位元組"
+
+#: plpy_typeio.c:1157
+#, c-format
+msgid "return value of function with array return type is not a Python sequence"
+msgstr "回傳型別是陣列的函數的回傳值並非 Python 序列"
+
+# access/common/tupdesc.c:679
+#: plpy_typeio.c:1202
+#, c-format
+msgid "could not determine sequence length for function return value"
+msgstr "無法確定函數回傳值的序列長度"
+
+# executor/execQual.c:2085 utils/adt/arrayfuncs.c:507
+#: plpy_typeio.c:1222 plpy_typeio.c:1237 plpy_typeio.c:1253
+#, c-format
+msgid "multidimensional arrays must have array expressions with matching dimensions"
+msgstr "多維陣列必須有相同維度的陣列表達式"
+
+# executor/execQual.c:257 executor/execQual.c:285 executor/execQual.c:2065
+# utils/adt/array_userfuncs.c:362 utils/adt/arrayfuncs.c:216
+# utils/adt/arrayfuncs.c:472 utils/adt/arrayfuncs.c:1153
+# utils/adt/arrayfuncs.c:2421
+#: plpy_typeio.c:1227
+#, c-format
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "陣列維度數超過允許的最大值(%d)"
+
+# utils/adt/rowtypes.c:125 utils/adt/rowtypes.c:152 utils/adt/rowtypes.c:176
+# utils/adt/rowtypes.c:184 utils/adt/rowtypes.c:234 utils/adt/rowtypes.c:242
+#: plpy_typeio.c:1329
+#, c-format
+msgid "malformed record literal: \"%s\""
+msgstr "格式錯誤的記錄文字: \"%s\""
+
+# utils/adt/rowtypes.c:126
+#: plpy_typeio.c:1330
+#, c-format
+msgid "Missing left parenthesis."
+msgstr "缺少左括號。"
+
+#: plpy_typeio.c:1331 plpy_typeio.c:1532
+#, c-format
+msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
+msgstr "若要在陣列中回傳複合型別，請將複合型別回傳為 Python 的 tuple，例如: \"[('foo',)]\"。"
+
+#: plpy_typeio.c:1378
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "對照表中找不到鍵 \"%s\""
+
+#: plpy_typeio.c:1379
+#, c-format
+msgid "To return null in a column, add the value None to the mapping with the key named after the column."
+msgstr "若要在欄位回傳 null，以欄位名稱為鍵值將 None 加入對照表。"
+
+#: plpy_typeio.c:1432
+#, c-format
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "回傳的序列長度與資料列中的欄位數不一致"
+
+#: plpy_typeio.c:1530
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "Python 物件中不存在屬性 \"%s\""
+
+#: plpy_typeio.c:1533
+#, c-format
+msgid "To return null in a column, let the returned object have an attribute named after column with value None."
+msgstr "若要在欄位回傳 null，以欄位名稱為回傳物件的屬性名稱並以 None 為值。"
+
+#: plpy_util.c:31
+#, c-format
+msgid "could not convert Python Unicode object to bytes"
+msgstr "無法將 Python 的 Unicode 物件轉換為位元組"
+
+#: plpy_util.c:37
+#, c-format
+msgid "could not extract bytes from encoded string"
+msgstr "無法從編碼字串中提取位元組"
+
+#~ msgid "PL/Python only supports one-dimensional arrays."
+#~ msgstr "PL/Python 只支援一維陣列"
+
+#~ msgid "Start a new session to use a different Python major version."
+#~ msgstr "用不同 Python 主版號開始新 session"
+
+#, c-format
+#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
+#~ msgstr "session 原來用 Python 主版號 %d，現在嘗試用 Python 主版號 %d。"
+
+#~ msgid "cannot convert multidimensional array to Python list"
+#~ msgstr "無法將多維陣列轉成 Python list"
+
+#~ msgid "could not create new dictionary"
+#~ msgstr "無法建立新字典"
+
+#~ msgid "could not create new dictionary while building trigger arguments"
+#~ msgstr "建立觸發程序參數時無法建立新字典"
+
+#~ msgid "plan.status takes no arguments"
+#~ msgstr "plan.status 不接受參數"
+
+#~ msgid "plpy.prepare does not support composite types"
+#~ msgstr "plpy.prepare 不支援複合型別"
+
+#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
+#~ msgstr "PLy_spi_execute_fetch_result 有非預期錯誤"
