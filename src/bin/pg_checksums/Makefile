@@ -36,7 +36,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_checksums$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f pg_checksums$(X) $(OBJS)
 	rm -rf tmp_check
 

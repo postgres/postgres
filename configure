@@ -10162,13 +10162,9 @@ if test "$BISON"; then
 $as_echo "$as_me: using $pgac_bison_version" >&6;}
   if echo "$pgac_bison_version" | $AWK '{ if ($4 < 2.3) exit 0; else exit 1;}'
   then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
+    as_fn_error $? "
 *** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
-*** Bison version 2.3 or later is required, but this is $pgac_bison_version." >&5
-$as_echo "$as_me: WARNING:
-*** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
-*** Bison version 2.3 or later is required, but this is $pgac_bison_version." >&2;}
-    BISON=""
+*** Bison version 2.3 or later is required, but this is $pgac_bison_version." "$LINENO" 5
   fi
   # Bison >=3.0 issues warnings about %name-prefix="base_yy", instead
   # of the now preferred %name-prefix "base_yy", but the latter
@@ -10181,18 +10177,7 @@ $as_echo "$as_me: WARNING:
 fi
 
 if test -z "$BISON"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
-*** Without Bison you will not be able to build PostgreSQL from Git nor
-*** change any of the parser definition files.  You can obtain Bison from
-*** a GNU mirror site.  (If you are using the official distribution of
-*** PostgreSQL then you do not need to worry about this, because the Bison
-*** output is pre-generated.)" >&5
-$as_echo "$as_me: WARNING:
-*** Without Bison you will not be able to build PostgreSQL from Git nor
-*** change any of the parser definition files.  You can obtain Bison from
-*** a GNU mirror site.  (If you are using the official distribution of
-*** PostgreSQL then you do not need to worry about this, because the Bison
-*** output is pre-generated.)" >&2;}
+  as_fn_error $? "bison not found" "$LINENO" 5
 fi
 
 
@@ -10225,12 +10210,9 @@ else
             pgac_cv_path_flex=$pgac_candidate
             break 2
           else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
+            as_fn_error $? "
 *** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.35 or later is required, but this is $pgac_flex_version." >&5
-$as_echo "$as_me: WARNING:
-*** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.35 or later is required, but this is $pgac_flex_version." >&2;}
+*** Flex version 2.5.35 or later is required, but this is $pgac_flex_version." "$LINENO" 5
           fi
         fi
       fi
@@ -10244,20 +10226,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_path_flex" >&5
 $as_echo "$pgac_cv_path_flex" >&6; }
 if test x"$pgac_cv_path_flex" = x"no"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
-*** Without Flex you will not be able to build PostgreSQL from Git nor
-*** change any of the scanner definition files.  You can obtain Flex from
-*** a GNU mirror site.  (If you are using the official distribution of
-*** PostgreSQL then you do not need to worry about this because the Flex
-*** output is pre-generated.)" >&5
-$as_echo "$as_me: WARNING:
-*** Without Flex you will not be able to build PostgreSQL from Git nor
-*** change any of the scanner definition files.  You can obtain Flex from
-*** a GNU mirror site.  (If you are using the official distribution of
-*** PostgreSQL then you do not need to worry about this because the Flex
-*** output is pre-generated.)" >&2;}
-
-  FLEX=
+  as_fn_error $? "flex not found" "$LINENO" 5
 else
   FLEX=$pgac_cv_path_flex
   pgac_flex_version=`$FLEX --version 2>/dev/null`
@@ -10331,27 +10300,14 @@ $as_echo "$as_me: using perl $pgac_perl_version" >&6;}
   if echo "$pgac_perl_version" | sed 's/[.a-z_]/ /g' | \
     $AWK '{ if ($1 == 5 && ($2 >= 14)) exit 1; else exit 0;}'
   then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
+    as_fn_error $? "
 *** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
-*** Perl version 5.14 or later is required, but this is $pgac_perl_version." >&5
-$as_echo "$as_me: WARNING:
-*** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
-*** Perl version 5.14 or later is required, but this is $pgac_perl_version." >&2;}
-    PERL=""
+*** Perl version 5.14 or later is required, but this is $pgac_perl_version." "$LINENO" 5
   fi
 fi
 
 if test -z "$PERL"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
-*** Without Perl you will not be able to build PostgreSQL from Git.
-*** You can obtain Perl from any CPAN mirror site.
-*** (If you are using the official distribution of PostgreSQL then you do not
-*** need to worry about this, because the Perl output is pre-generated.)" >&5
-$as_echo "$as_me: WARNING:
-*** Without Perl you will not be able to build PostgreSQL from Git.
-*** You can obtain Perl from any CPAN mirror site.
-*** (If you are using the official distribution of PostgreSQL then you do not
-*** need to worry about this, because the Perl output is pre-generated.)" >&2;}
+  as_fn_error $? "Perl not found" "$LINENO" 5
 fi
 
 if test "$with_perl" = yes; then

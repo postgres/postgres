@@ -165,6 +165,3 @@ clean distclean: clean-lib
 	rm -f $(OBJS) pthread.h libpq-refs-stamp
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
-
-maintainer-clean: distclean
-	$(MAKE) -C test $@

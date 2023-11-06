@@ -34,13 +34,14 @@ catalogdir  = $(top_srcdir)/src/backend/catalog
 
 include $(top_srcdir)/src/backend/common.mk
 
-all: distprep probes.h generated-header-symlinks
+all: probes.h generated-header-symlinks
 
-distprep: fmgr-stamp errcodes.h
+.PHONY: generated-header-symlinks submake-adt-headers
 
-.PHONY: generated-header-symlinks
+generated-header-symlinks: $(top_builddir)/src/include/utils/header-stamp submake-adt-headers
 
-generated-header-symlinks: $(top_builddir)/src/include/utils/header-stamp $(top_builddir)/src/include/utils/probes.h
+submake-adt-headers:
+	$(MAKE) -C adt jsonpath_gram.h
 
 $(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h
 
@@ -66,21 +67,14 @@ probes.h: Gen_dummy_probes.sed probes.d
 	sed -f $^ >$@
 endif
 
-# These generated headers must be symlinked into builddir/src/include/,
-# using absolute links for the reasons explained in src/backend/Makefile.
+# These generated headers must be symlinked into src/include/.
 # We use header-stamp to record that we've done this because the symlinks
 # themselves may appear older than fmgr-stamp.
-$(top_builddir)/src/include/utils/header-stamp: fmgr-stamp errcodes.h
-	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
-	cd '$(dir $@)' && for file in fmgroids.h fmgrprotos.h errcodes.h; do \
-	  rm -f $$file && $(LN_S) "$$prereqdir/$$file" . ; \
+$(top_builddir)/src/include/utils/header-stamp: fmgr-stamp errcodes.h probes.h
+	cd '$(dir $@)' && for file in fmgroids.h fmgrprotos.h errcodes.h probes.h; do \
+	  rm -f $$file && $(LN_S) "../../../$(subdir)/$$file" . ; \
 	done
 	touch $@
-
-# probes.h is handled differently because it's not in the distribution tarball.
-$(top_builddir)/src/include/utils/probes.h: probes.h
-	cd '$(dir $@)' && rm -f $(notdir $@) && \
-	    $(LN_S) "../../../$(subdir)/probes.h" .
 
 # Recipe for rebuilding the Perl version of Gen_dummy_probes
 # Nothing depends on it, so it will never be called unless explicitly requested
@@ -104,10 +98,6 @@ installdirs:
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, errcodes.txt)
 
-# fmgroids.h, fmgrprotos.h, fmgrtab.c, fmgr-stamp, and errcodes.h are in the
-# distribution tarball, so they are not cleaned here.
 clean:
 	rm -f probes.h probes.h.tmp
-
-maintainer-clean: clean
 	rm -f fmgroids.h fmgrprotos.h fmgrtab.c fmgr-stamp errcodes.h

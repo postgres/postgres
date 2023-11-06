@@ -7,8 +7,7 @@
 #----------------------------------------------------------------------------
 
 # This makefile is for building and installing the documentation.
-# When a release tarball is created, the documentation files are
-# prepared using the distprep target.  In Git-based trees these files
+# In Git-based trees these files
 # don't exist, unless explicitly built, so we skip the installation in
 # that case.
 
@@ -27,8 +26,6 @@ include $(top_builddir)/src/Makefile.global
 
 
 all: html man
-
-distprep: html distprep-man
 
 
 ifndef DBTOEPUB
@@ -77,7 +74,7 @@ postgres-full.xml: postgres.sgml $(ALLSGML)
 ## Man pages
 ##
 
-man distprep-man: man-stamp
+man: man-stamp
 
 man-stamp: stylesheet-man.xsl postgres-full.xml
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $^
@@ -89,10 +86,9 @@ man-stamp: stylesheet-man.xsl postgres-full.xml
 ##
 
 # Technically, this should depend on Makefile.global, but then
-# version.sgml would need to be rebuilt after every configure run,
-# even in distribution tarballs.  So this is cheating a bit, but it
-# will achieve the goal of updating the version number when it
-# changes.
+# version.sgml would need to be rebuilt after every configure run.  So
+# this is cheating a bit, but it will achieve the goal of updating the
+# version number when it changes.
 version.sgml: $(top_srcdir)/configure
 	{ \
 	  echo "<!ENTITY version \"$(VERSION)\">"; \
@@ -305,8 +301,6 @@ clean:
 	rm -f *.texixml *.texi *.info db2texi.refs
 
 distclean: clean
-
-maintainer-clean: distclean
 # HTML
 	rm -fr html/ html-stamp
 # man

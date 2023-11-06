@@ -15,6 +15,8 @@ PGFILEDESC = "fuzzystrmatch - similarities and distance between strings"
 
 REGRESS = fuzzystrmatch fuzzystrmatch_utf8
 
+EXTRA_CLEAN = daitch_mokotoff.h
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -31,10 +33,3 @@ daitch_mokotoff.o: daitch_mokotoff.h
 
 daitch_mokotoff.h: daitch_mokotoff_header.pl
 	$(PERL) $< $@
-
-# daitch_mokotoff.h is included in tarballs, so it has to be made by
-# "distprep" and not cleaned except by "maintainer-clean".
-distprep: daitch_mokotoff.h
-
-maintainer-clean:
-	rm -f daitch_mokotoff.h

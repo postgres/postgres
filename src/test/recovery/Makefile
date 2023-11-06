@@ -25,5 +25,5 @@ check:
 installcheck:
 	$(prove_installcheck)
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -rf tmp_check

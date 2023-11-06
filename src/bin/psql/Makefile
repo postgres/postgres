@@ -62,8 +62,6 @@ psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
 psqlscanslash.c: FLEX_NO_BACKUP=yes
 psqlscanslash.c: FLEX_FIX_WARNING=yes
 
-distprep: sql_help.h sql_help.c psqlscanslash.c
-
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) '$(DESTDIR)$(bindir)/psql$(X)'
 	$(INSTALL_DATA) $(srcdir)/psqlrc.sample '$(DESTDIR)$(datadir)/psqlrc.sample'
@@ -77,10 +75,6 @@ uninstall:
 clean distclean:
 	rm -f psql$(X) $(OBJS) lex.backup
 	rm -rf tmp_check
-
-# files removed here are supposed to be in the distribution tarball,
-# so do not clean them in the clean/distclean rules
-maintainer-clean: distclean
 	rm -f sql_help.h sql_help.c psqlscanslash.c
 
 check:

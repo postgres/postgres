@@ -83,5 +83,3 @@ clean:
 
 distclean: clean
 	rm -f UnicodeData.txt EastAsianWidth.txt CompositionExclusions.txt NormalizationTest.txt norm_test_table.h unicode_norm_table.h
-
-maintainer-clean: distclean

@@ -18,5 +18,5 @@ PROGS = testlibpq testlibpq2 testlibpq3 testlibpq4 testlo testlo64
 
 all: $(PROGS)
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f $(PROGS) *.o

@@ -48,8 +48,6 @@ psqlscan.c: FLEXFLAGS = -Cfe -p -p
 psqlscan.c: FLEX_NO_BACKUP=yes
 psqlscan.c: FLEX_FIX_WARNING=yes
 
-distprep: psqlscan.c
-
 # libpgfeutils could be useful to contrib, so install it
 install: all installdirs
 	$(INSTALL_STLIB) libpgfeutils.a '$(DESTDIR)$(libdir)/libpgfeutils.a'
@@ -62,8 +60,4 @@ uninstall:
 
 clean distclean:
 	rm -f libpgfeutils.a $(OBJS) lex.backup
-
-# psqlscan.c is supposed to be in the distribution tarball,
-# so do not clean it in the clean/distclean rules
-maintainer-clean: distclean
 	rm -f psqlscan.c

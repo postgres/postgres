@@ -23,7 +23,7 @@ export OPENSSL with_ssl
 sslfiles sslfiles-clean:
 	$(MAKE) -f $(srcdir)/sslfiles.mk $@
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -rf tmp_check
 	$(MAKE) -f $(srcdir)/sslfiles.mk $@
 

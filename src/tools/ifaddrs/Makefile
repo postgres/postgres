@@ -24,5 +24,5 @@ all: test_ifaddrs
 test_ifaddrs: test_ifaddrs.o $(libpq_backend_dir)/ifaddr.o
 	$(CC) $(CFLAGS) test_ifaddrs.o $(libpq_backend_dir)/ifaddr.o $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f test_ifaddrs$(X) $(OBJS)

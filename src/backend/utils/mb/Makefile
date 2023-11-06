@@ -21,5 +21,5 @@ OBJS = \
 
 include $(top_srcdir)/src/backend/common.mk
 
-clean distclean maintainer-clean:
+clean distclean:
 	$(MAKE) -C conversion_procs $@

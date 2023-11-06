@@ -72,7 +72,7 @@ configure. Alternatively use a separate check out for meson based builds.
 @0@
 ****'''
 if fs.exists(meson.current_source_dir() / 'src' / 'include' / 'pg_config.h')
-  errmsg_cleanup = 'To clean up, run make maintainer-clean in the source tree.'
+  errmsg_cleanup = 'To clean up, run make distclean in the source tree.'
   error(errmsg_nonclean_base.format(errmsg_cleanup))
 endif
 

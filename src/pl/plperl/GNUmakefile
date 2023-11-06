@@ -127,7 +127,7 @@ installcheck: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
-clean distclean maintainer-clean: clean-lib
+clean distclean: clean-lib
 	rm -f SPI.c Util.c $(OBJS) perlchunks.h plperl_opmask.h
 	rm -rf $(pg_regress_clean_files)
 ifeq ($(PORTNAME), win32)

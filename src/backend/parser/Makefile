@@ -64,8 +64,8 @@ scan.c: FLEX_FIX_WARNING=yes
 # Force these dependencies to be known even without dependency info built:
 gram.o scan.o parser.o: gram.h
 
-
-# gram.c, gram.h, and scan.c are in the distribution tarball, so they
-# are not cleaned here.
-clean distclean maintainer-clean:
+clean:
+	rm -f gram.c \
+	      gram.h \
+	      scan.c
 	rm -f lex.backup

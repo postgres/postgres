@@ -72,8 +72,7 @@ documentation.  See standalone-profile.xsl for details.
 
       Alternatively, <productname>PostgreSQL</productname> can be built using
       <ulink url="https://mesonbuild.com/">Meson</ulink>.  This is currently
-      experimental and only works when building from a Git checkout (not from
-      a distribution tarball).  If you choose to use
+      experimental.  If you choose to use
       <application>Meson</application>, then you don't need
       <acronym>GNU</acronym> <application>make</application>, but the other
       requirements below still apply.
@@ -99,6 +98,41 @@ documentation.  See standalone-profile.xsl for details.
       <application>tar</application> is required to unpack the source
       distribution, in addition to either
       <application>gzip</application> or <application>bzip2</application>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary>flex</primary>
+      </indexterm>
+      <indexterm>
+       <primary>lex</primary>
+      </indexterm>
+      <indexterm>
+       <primary>bison</primary>
+      </indexterm>
+      <indexterm>
+       <primary>yacc</primary>
+      </indexterm>
+
+      <application>Flex</application> 2.5.35 or later and
+      <application>Bison</application> 2.3 or later are required.  Other
+      <application>lex</application> and <application>yacc</application>
+      programs cannot be used.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary>perl</primary>
+      </indexterm>
+
+      <application>Perl</application> 5.14 or later is needed during the build
+      process and to run some test suites.  (This requirement is separate from
+      the requirements for building <application>PL/Perl</application>; see
+      below.)
      </para>
     </listitem>
 
@@ -310,51 +344,6 @@ documentation.  See standalone-profile.xsl for details.
       To build the <productname>PostgreSQL</productname> documentation,
       there is a separate set of requirements; see
       <xref linkend="docguide-toolsets"/>.
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-   If you are building from a <productname>Git</productname> tree instead of
-   using a released source package, or if you want to do server development,
-   you also need the following packages:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      <indexterm>
-       <primary>flex</primary>
-      </indexterm>
-      <indexterm>
-       <primary>lex</primary>
-      </indexterm>
-      <indexterm>
-       <primary>bison</primary>
-      </indexterm>
-      <indexterm>
-       <primary>yacc</primary>
-      </indexterm>
-
-      <application>Flex</application> and <application>Bison</application>
-      are needed to build from a Git checkout, or if you changed the actual
-      scanner and parser definition files. If you need them, be sure
-      to get <application>Flex</application> 2.5.35 or later and
-      <application>Bison</application> 2.3 or later. Other <application>lex</application>
-      and <application>yacc</application> programs cannot be used.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      <indexterm>
-       <primary>perl</primary>
-      </indexterm>
-
-      <application>Perl</application> 5.14 or later is needed to build from a Git checkout,
-      or if you changed the input files for any of the build steps that
-      use Perl scripts.  If building on Windows you will need
-      <application>Perl</application> in any case.  <application>Perl</application> is
-      also required to run some test suites.
      </para>
     </listitem>
    </itemizedlist>

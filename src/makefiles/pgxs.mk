@@ -391,7 +391,7 @@ ifdef MODULE_big
 clean: clean-lib
 endif
 
-distclean maintainer-clean: clean
+distclean: clean
 
 
 ifdef REGRESS

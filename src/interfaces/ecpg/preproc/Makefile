@@ -81,8 +81,6 @@ ecpg_keywords.o: ecpg_kwlist_d.h
 c_keywords.o: c_kwlist_d.h
 keywords.o: $(top_srcdir)/src/include/parser/kwlist.h
 
-distprep: preproc.y preproc.c preproc.h pgc.c c_kwlist_d.h ecpg_kwlist_d.h
-
 install: all installdirs
 	$(INSTALL_PROGRAM) ecpg$(X) '$(DESTDIR)$(bindir)'
 
@@ -92,11 +90,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
-# preproc.y, preproc.c, preproc.h, pgc.c, c_kwlist_d.h, and ecpg_kwlist_d.h
-# are in the distribution tarball, so they are not cleaned here.
 clean distclean:
 	rm -f *.o ecpg$(X)
 	rm -f typename.c
-
-maintainer-clean: distclean
 	rm -f preproc.y preproc.c preproc.h pgc.c c_kwlist_d.h ecpg_kwlist_d.h

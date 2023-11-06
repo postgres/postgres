@@ -123,8 +123,6 @@ GEN_KEYWORDLIST_DEPS = $(TOOLSDIR)/gen_keywordlist.pl $(TOOLSDIR)/PerfectHash.pm
 
 all: libpgcommon.a libpgcommon_shlib.a libpgcommon_srv.a
 
-distprep: kwlist_d.h
-
 # libpgcommon is needed by some contrib
 install: all installdirs
 	$(INSTALL_STLIB) libpgcommon.a '$(DESTDIR)$(libdir)/libpgcommon.a'
@@ -197,10 +195,7 @@ RYU_OBJS = $(RYU_FILES) $(RYU_FILES:%.o=%_shlib.o) $(RYU_FILES:%.o=%_srv.o)
 
 $(RYU_OBJS): CFLAGS += $(PERMIT_DECLARATION_AFTER_STATEMENT)
 
-# kwlist_d.h is in the distribution tarball, so it is not cleaned here.
 clean distclean:
 	rm -f libpgcommon.a libpgcommon_shlib.a libpgcommon_srv.a
 	rm -f $(OBJS_FRONTEND) $(OBJS_SHLIB) $(OBJS_SRV)
-
-maintainer-clean: distclean
 	rm -f kwlist_d.h

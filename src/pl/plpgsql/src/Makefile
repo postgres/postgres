@@ -104,14 +104,7 @@ submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
 
-distprep: pl_gram.h pl_gram.c plerrcodes.h pl_reserved_kwlist_d.h pl_unreserved_kwlist_d.h
-
-# pl_gram.c, pl_gram.h, plerrcodes.h, pl_reserved_kwlist_d.h, and
-# pl_unreserved_kwlist_d.h are in the distribution tarball, so they
-# are not cleaned here.
 clean distclean: clean-lib
 	rm -f $(OBJS)
 	rm -rf $(pg_regress_clean_files)
-
-maintainer-clean: distclean
 	rm -f pl_gram.c pl_gram.h plerrcodes.h pl_reserved_kwlist_d.h pl_unreserved_kwlist_d.h

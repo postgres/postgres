@@ -269,6 +269,6 @@ sslfiles-clean:
 # clean targets will be run during a "standard" recursive clean run from the
 # main build tree. The sslfiles-clean target must be run explicitly from this
 # directory.
-.PHONY: clean distclean maintainer-clean
-clean distclean maintainer-clean:
+.PHONY: clean distclean
+clean distclean:
 	rm -rf ssl/*.old ssl/new_certs_dir ssl/client*_tmp.key

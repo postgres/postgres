@@ -40,6 +40,5 @@ endif
 
 include $(top_srcdir)/src/backend/common.mk
 
-# Note: guc-file.c is not deleted by 'make clean',
-# since we want to ship it in distribution tarballs.
 clean:
+	rm -f guc-file.c

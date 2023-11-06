@@ -63,8 +63,6 @@ pltcl.o: pltclerrcodes.h
 pltclerrcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-pltclerrcodes.pl
 	$(PERL) $(srcdir)/generate-pltclerrcodes.pl $< > $@
 
-distprep: pltclerrcodes.h
-
 install: all install-lib install-data
 
 installdirs: installdirs-lib
@@ -91,13 +89,10 @@ installcheck: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
-# pltclerrcodes.h is in the distribution tarball, so don't clean it here.
 clean distclean: clean-lib
 	rm -f $(OBJS)
 	rm -rf $(pg_regress_clean_files)
 ifeq ($(PORTNAME), win32)
 	rm -f $(tclwithver).def
 endif
-
-maintainer-clean: distclean
 	rm -f pltclerrcodes.h

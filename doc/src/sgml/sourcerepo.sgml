@@ -16,16 +16,6 @@
   has some discussion on working with Git.
  </para>
 
-  <para>
-   Note that building <productname>PostgreSQL</productname> from the source
-   repository requires reasonably up-to-date versions of <application>bison</application>,
-   <application>flex</application>, and <application>Perl</application>.
-   These tools are not needed to build from a distribution tarball, because
-   the files generated with these tools are included in the tarball.
-   Other tool requirements
-   are the same as shown in <xref linkend="install-requirements"/>.
-  </para>
-
  <sect1 id="git">
   <title>Getting the Source via <productname>Git</productname></title>
 

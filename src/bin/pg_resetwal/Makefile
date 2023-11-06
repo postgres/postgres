@@ -35,7 +35,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_resetwal$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f pg_resetwal$(X) $(OBJS)
 	rm -rf tmp_check
 

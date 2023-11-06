@@ -39,7 +39,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_bsd_indent$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f pg_bsd_indent$(X) $(OBJS)
 	rm -rf log/ tmp_check/
 

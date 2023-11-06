@@ -19,11 +19,11 @@
 #
 # Meta configuration
 
-standard_targets = all install installdirs uninstall distprep clean distclean maintainer-clean coverage check checkprep installcheck init-po update-po
+standard_targets = all install installdirs uninstall clean distclean coverage check checkprep installcheck init-po update-po
 # these targets should recurse even into subdirectories not being built:
-standard_always_targets = distprep clean distclean maintainer-clean
+standard_always_targets = clean distclean
 
-.PHONY: $(standard_targets) install-strip html man installcheck-parallel update-unicode
+.PHONY: $(standard_targets) maintainer-clean install-strip html man installcheck-parallel update-unicode
 
 # make `all' the default target
 all:
@@ -34,6 +34,8 @@ all:
 
 # Never delete any intermediate files automatically.
 .SECONDARY:
+
+maintainer-clean: distclean
 
 # PostgreSQL version number
 VERSION = @PACKAGE_VERSION@
@@ -319,12 +321,8 @@ X = @EXEEXT@
 
 # Perl
 
-ifneq (@PERL@,)
-    # quoted to protect pathname with spaces
-    PERL		= '@PERL@'
-else
-    PERL		= $(missing) perl
-endif
+# quoted to protect pathname with spaces
+PERL		= '@PERL@'
 perl_archlibexp		= @perl_archlibexp@
 perl_privlibexp		= @perl_privlibexp@
 perl_includespec	= @perl_includespec@
@@ -777,21 +775,13 @@ TAS         = @TAS@
 # Global targets and rules
 
 %.c: %.l
-ifdef FLEX
 	$(FLEX) $(if $(FLEX_NO_BACKUP),-b) $(FLEXFLAGS) -o'$@' $<
 	@$(if $(FLEX_NO_BACKUP),if [ `wc -l <lex.backup` -eq 1 ]; then rm lex.backup; else echo "Scanner requires backup; see lex.backup." 1>&2; exit 1; fi)
 	$(if $(FLEX_FIX_WARNING),$(PERL) $(top_srcdir)/src/tools/fix-old-flex-code.pl '$@')
-else
-	@$(missing) flex $< '$@'
-endif
 
 %.c: %.y
 	$(if $(BISON_CHECK_CMD),$(BISON_CHECK_CMD))
-ifdef BISON
 	$(BISON) $(BISONFLAGS) -o $@ $<
-else
-	@$(missing) bison $< $@
-endif
 
 %.i: %.c
 	$(CPP) $(CPPFLAGS) -o $@ $<
@@ -919,7 +909,7 @@ recurse = $(foreach target,$(if $1,$1,$(standard_targets)),$(foreach subdir,$(if
 # If a makefile's list of SUBDIRS varies depending on configuration, then
 # any subdirectories excluded from SUBDIRS should instead be added to
 # ALWAYS_SUBDIRS, and then it must call recurse_always as well as recurse.
-# This ensures that distprep, distclean, etc will apply to all subdirectories.
+# This ensures that distclean, etc will apply to all subdirectories.
 # In the normal case all arguments will be defaulted.
 # $1: targets to make recursive (defaults to standard_always_targets)
 # $2: list of subdirs (defaults to ALWAYS_SUBDIRS variable)
@@ -974,7 +964,7 @@ include $(Po_files)
 endif
 
 # hook for clean-up
-clean distclean maintainer-clean: clean-deps
+clean distclean: clean-deps
 
 .PHONY: clean-deps
 clean-deps:
@@ -1058,7 +1048,7 @@ lcov_test.info: $(all_gcda_files)
 
 
 # hook for clean-up
-clean distclean maintainer-clean: clean-coverage
+clean distclean: clean-coverage
 
 .PHONY: clean-coverage
 clean-coverage:

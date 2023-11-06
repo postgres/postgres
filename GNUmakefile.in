@@ -41,7 +41,7 @@ install-world-bin-contrib-recurse: install-world-bin-src-recurse
 
 $(call recurse,installdirs uninstall init-po update-po,doc src config)
 
-$(call recurse,distprep coverage,doc src config contrib)
+$(call recurse,coverage,doc src config contrib)
 
 # clean, distclean, etc should apply to contrib too, even though
 # it's not built by default
@@ -53,7 +53,7 @@ clean:
 
 # Important: distclean `src' last, otherwise Makefile.global
 # will be gone too soon.
-distclean maintainer-clean:
+distclean:
 	$(MAKE) -C doc $@
 	$(MAKE) -C contrib $@
 	$(MAKE) -C config $@
@@ -109,7 +109,6 @@ distdir:
 	      || cp "$(top_srcdir)/$$file" "$(distdir)/$$file"; \
 	  fi || exit; \
 	done
-	$(MAKE) -C $(distdir) distprep
 	$(MAKE) -C $(distdir)/doc/src/sgml/ INSTALL
 	cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
 	$(MAKE) -C $(distdir) distclean
@@ -122,7 +121,6 @@ distcheck: dist
 	install_prefix=`cd $(dummy) && pwd`; \
 	cd $(distdir) \
 	&& ./configure --prefix="$$install_prefix"
-	$(MAKE) -C $(distdir) -q distprep
 	$(MAKE) -C $(distdir)
 	$(MAKE) -C $(distdir) install
 	$(MAKE) -C $(distdir) uninstall

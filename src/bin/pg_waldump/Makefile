@@ -45,7 +45,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_waldump$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f pg_waldump$(X) $(OBJS) $(RMGRDESCSOURCES) xlogreader.c xlogstats.c
 	rm -rf tmp_check
 

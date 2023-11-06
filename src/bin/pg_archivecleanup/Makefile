@@ -25,7 +25,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_archivecleanup$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f pg_archivecleanup$(X) $(OBJS)
 	rm -rf tmp_check
 

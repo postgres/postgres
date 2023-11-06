@@ -48,7 +48,7 @@ installdirs:
 uninstall:
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(addsuffix $(X), $(PROGRAMS)))
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS))
 	rm -f common.o $(WIN32RES)
 	rm -rf tmp_check

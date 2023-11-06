@@ -38,8 +38,6 @@ exprparse.c: BISONFLAGS += -d
 # Force these dependencies to be known even without dependency info built:
 exprparse.o exprscan.o: exprparse.h
 
-distprep: exprparse.c exprscan.c
-
 install: all installdirs
 	$(INSTALL_PROGRAM) pgbench$(X) '$(DESTDIR)$(bindir)/pgbench$(X)'
 
@@ -52,8 +50,6 @@ uninstall:
 clean distclean:
 	rm -f pgbench$(X) $(OBJS)
 	rm -rf tmp_check
-
-maintainer-clean: distclean
 	rm -f exprparse.h exprparse.c exprscan.c
 
 check:

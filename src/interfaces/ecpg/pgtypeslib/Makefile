@@ -50,5 +50,3 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	rm -f $(OBJS)
-
-maintainer-clean: distclean

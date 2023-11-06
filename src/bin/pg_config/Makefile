@@ -33,7 +33,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_config$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f pg_config$(X) $(OBJS)
 	rm -rf tmp_check
 

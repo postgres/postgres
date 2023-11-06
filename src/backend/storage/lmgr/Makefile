@@ -45,8 +45,6 @@ lwlocknames.h: $(top_srcdir)/src/backend/storage/lmgr/lwlocknames.txt generate-l
 check: s_lock_test
 	./s_lock_test
 
-clean distclean:
+clean:
 	rm -f s_lock_test
-
-maintainer-clean: clean
 	rm -f lwlocknames.h lwlocknames.c

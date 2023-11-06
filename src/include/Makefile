@@ -78,5 +78,5 @@ clean:
 	rm -f catalog/pg_*_d.h catalog/header-stamp
 	rm -f nodes/nodetags.h nodes/header-stamp
 
-distclean maintainer-clean: clean
+distclean: clean
 	rm -f pg_config.h pg_config_ext.h pg_config_os.h stamp-h stamp-ext-h

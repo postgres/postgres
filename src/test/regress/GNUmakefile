@@ -146,7 +146,7 @@ bigcheck: all | temp-install
 ## Clean up
 ##
 
-clean distclean maintainer-clean: clean-lib
+clean distclean: clean-lib
 # things built by `all' target
 	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)

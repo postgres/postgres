@@ -20,5 +20,5 @@ all: $(PROGS)
 
 $(PROGS): $(WIN32RES)
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f $(PROGS) *.o

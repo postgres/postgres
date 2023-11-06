@@ -28,5 +28,7 @@ bootparse.c: BISONFLAGS += -d
 # Force these dependencies to be known even without dependency info built:
 bootparse.o bootscanner.o: bootparse.h
 
-# bootparse.c and bootscanner.c are in the distribution tarball, so
-# they are not cleaned here.
+clean:
+	rm -f bootparse.c \
+	      bootparse.h \
+	      bootscanner.c

@@ -40,7 +40,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_amcheck$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f pg_amcheck$(X) $(OBJS)
 	rm -rf tmp_check
 

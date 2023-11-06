@@ -49,7 +49,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_rewind$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f pg_rewind$(X) $(OBJS) xlogreader.c
 	rm -rf tmp_check
 

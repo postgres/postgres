@@ -13,19 +13,14 @@ if test "$PERL"; then
   if echo "$pgac_perl_version" | sed ['s/[.a-z_]/ /g'] | \
     $AWK '{ if ([$]1 == 5 && ([$]2 >= 14)) exit 1; else exit 0;}'
   then
-    AC_MSG_WARN([
+    AC_MSG_ERROR([
 *** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
 *** Perl version 5.14 or later is required, but this is $pgac_perl_version.])
-    PERL=""
   fi
 fi
 
 if test -z "$PERL"; then
-  AC_MSG_WARN([
-*** Without Perl you will not be able to build PostgreSQL from Git.
-*** You can obtain Perl from any CPAN mirror site.
-*** (If you are using the official distribution of PostgreSQL then you do not
-*** need to worry about this, because the Perl output is pre-generated.)])
+  AC_MSG_ERROR([Perl not found])
 fi
 ])# PGAC_PATH_PERL
 

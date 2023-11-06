@@ -75,5 +75,5 @@ ifeq (,$(with_system_tzdata))
 endif
 	$(MAKE) -C tznames $@
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f zic$(X) $(ZICOBJS) abbrevs.txt

@@ -48,6 +48,10 @@ syncrep_gram.c: BISONFLAGS += -d
 # Force these dependencies to be known even without dependency info built:
 syncrep_gram.o syncrep_scanner.o: syncrep_gram.h
 
-# repl_gram.c, repl_scanner.c, syncrep_gram.c and syncrep_scanner.c
-# are in the distribution tarball, so they are not cleaned here.
-# (Our parent Makefile takes care of them during maintainer-clean.)
+clean:
+	rm -f repl_gram.c \
+	      repl_gram.h \
+	      repl_scanner.c \
+	      syncrep_gram.c \
+	      syncrep_gram.h \
+	      syncrep_scanner.c

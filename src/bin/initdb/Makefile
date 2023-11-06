@@ -54,7 +54,7 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/initdb$(X)'
 
-clean distclean maintainer-clean:
+clean distclean:
 	rm -f initdb$(X) $(OBJS) localtime.c
 	rm -rf tmp_check
 

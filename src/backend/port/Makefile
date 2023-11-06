@@ -43,6 +43,6 @@ else
 	$(CC) $(CFLAGS) -c $<
 endif
 
-distclean clean:
+clean:
 	rm -f tas_cpp.s
 	$(MAKE) -C win32 clean

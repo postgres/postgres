@@ -21,7 +21,7 @@ else
 abs_builddir := $(shell sh -c "pwd -W")
 endif
 
-all install installdirs uninstall distprep:
+all install installdirs uninstall:
 	$(MAKE) -C connect $@
 	$(MAKE) -C sql $@
 	$(MAKE) -C pgtypeslib $@
@@ -30,7 +30,7 @@ all install installdirs uninstall distprep:
 	$(MAKE) -C compat_oracle $@
 	$(MAKE) -C thread $@
 
-clean distclean maintainer-clean:
+clean distclean:
 	$(MAKE) -C connect $@
 	$(MAKE) -C sql $@
 	$(MAKE) -C pgtypeslib $@

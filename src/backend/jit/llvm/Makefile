@@ -71,6 +71,6 @@ uninstall-types:
 
 include $(top_srcdir)/src/Makefile.shlib
 
-clean distclean maintainer-clean: clean-lib
+clean distclean: clean-lib
 	rm -f $(OBJS)
 	rm -f llvmjit_types.bc

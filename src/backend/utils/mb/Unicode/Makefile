@@ -66,8 +66,6 @@ all: $(MAPS)
 
 distclean: clean
 	rm -f $(TEXTS)
-
-maintainer-clean: distclean
 	rm -f $(MAPS)
 
 
