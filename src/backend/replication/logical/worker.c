@@ -2019,7 +2019,6 @@ void
 apply_spooled_messages(FileSet *stream_fileset, TransactionId xid,
 					   XLogRecPtr lsn)
 {
-	StringInfoData s2;
 	int			nchanges;
 	char		path[MAXPGPATH];
 	char	   *buffer = NULL;
@@ -2057,7 +2056,6 @@ apply_spooled_messages(FileSet *stream_fileset, TransactionId xid,
 	CurrentResourceOwner = oldowner;
 
 	buffer = palloc(BLCKSZ);
-	initStringInfo(&s2);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -2079,6 +2077,7 @@ apply_spooled_messages(FileSet *stream_fileset, TransactionId xid,
 	nchanges = 0;
 	while (true)
 	{
+		StringInfoData s2;
 		size_t		nbytes;
 		int			len;
 
@@ -2104,9 +2103,8 @@ apply_spooled_messages(FileSet *stream_fileset, TransactionId xid,
 
 		BufFileTell(stream_fd, &fileno, &offset);
 
-		/* copy the buffer to the stringinfo and call apply_dispatch */
-		resetStringInfo(&s2);
-		appendBinaryStringInfo(&s2, buffer, len);
+		/* init a stringinfo using the buffer and call apply_dispatch */
+		initReadOnlyStringInfo(&s2, buffer, len);
 
 		/* Ensure we are reading the data into our memory context. */
 		oldcxt = MemoryContextSwitchTo(ApplyMessageContext);

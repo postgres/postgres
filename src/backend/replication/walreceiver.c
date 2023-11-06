@@ -132,7 +132,6 @@ typedef enum WalRcvWakeupReason
 static TimestampTz wakeup[NUM_WALRCV_WAKEUPS];
 
 static StringInfoData reply_message;
-static StringInfoData incoming_message;
 
 /* Prototypes for private functions */
 static void WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last);
@@ -425,7 +424,6 @@ WalReceiverMain(void)
 			/* Initialize LogstreamResult and buffers for processing messages */
 			LogstreamResult.Write = LogstreamResult.Flush = GetXLogReplayRecPtr(NULL);
 			initStringInfo(&reply_message);
-			initStringInfo(&incoming_message);
 
 			/* Initialize nap wakeup times. */
 			now = GetCurrentTimestamp();
@@ -843,19 +841,20 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len, TimeLineID tli)
 	TimestampTz sendTime;
 	bool		replyRequested;
 
-	resetStringInfo(&incoming_message);
-
 	switch (type)
 	{
 		case 'w':				/* WAL records */
 			{
-				/* copy message to StringInfo */
+				StringInfoData incoming_message;
+
 				hdrlen = sizeof(int64) + sizeof(int64) + sizeof(int64);
 				if (len < hdrlen)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
 							 errmsg_internal("invalid WAL message received from primary")));
-				appendBinaryStringInfo(&incoming_message, buf, hdrlen);
+
+				/* initialize a StringInfo with the given buffer */
+				initReadOnlyStringInfo(&incoming_message, buf, hdrlen);
 
 				/* read the fields */
 				dataStart = pq_getmsgint64(&incoming_message);
@@ -870,13 +869,16 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len, TimeLineID tli)
 			}
 		case 'k':				/* Keepalive */
 			{
-				/* copy message to StringInfo */
+				StringInfoData incoming_message;
+
 				hdrlen = sizeof(int64) + sizeof(int64) + sizeof(char);
 				if (len != hdrlen)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
 							 errmsg_internal("invalid keepalive message received from primary")));
-				appendBinaryStringInfo(&incoming_message, buf, hdrlen);
+
+				/* initialize a StringInfo with the given buffer */
+				initReadOnlyStringInfo(&incoming_message, buf, hdrlen);
 
 				/* read the fields */
 				walEnd = pq_getmsgint64(&incoming_message);
