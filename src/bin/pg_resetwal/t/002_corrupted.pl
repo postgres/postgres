@@ -55,4 +55,12 @@ command_checks_all(
 	],
 	'processes zero WAL segment size');
 
+# now try to run it
+command_fails_like(
+	[ 'pg_resetwal', $node->data_dir ],
+	qr/not proceeding because control file values were guessed/,
+	'does not run when control file values were guessed');
+command_ok([ 'pg_resetwal', '-f', $node->data_dir ],
+	'runs with force when control file values were guessed');
+
 done_testing();
