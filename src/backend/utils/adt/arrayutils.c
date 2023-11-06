@@ -64,10 +64,6 @@ ArrayGetOffset0(int n, const int *tup, const int *scale)
  * This must do overflow checking, since it is used to validate that a user
  * dimensionality request doesn't overflow what we can handle.
  *
- * We limit array sizes to at most about a quarter billion elements,
- * so that it's not necessary to check for overflow in quite so many
- * places --- for instance when palloc'ing Datum arrays.
- *
  * The multiplication overflow check only works on machines that have int64
  * arithmetic, but that is nearly all platforms these days, and doing check
  * divides for those that don't seems way too expensive.
@@ -77,8 +73,6 @@ ArrayGetNItems(int ndim, const int *dims)
 {
 	int32		ret;
 	int			i;
-
-#define MaxArraySize ((Size) (MaxAllocSize / sizeof(Datum)))
 
 	if (ndim <= 0)
 		return 0;
