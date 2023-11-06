@@ -4,14 +4,14 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2005.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023.
 # Maxim Yablokov <m.yablokov@postgrespro.ru>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-05-03 05:56+0300\n"
-"PO-Revision-Date: 2022-09-29 11:40+0300\n"
+"PO-Revision-Date: 2023-08-30 15:09+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -100,7 +100,7 @@ msgstr "не удалось закодировать подтверждение 
 
 #: fe-auth-scram.c:654
 msgid "invalid SCRAM response (nonce mismatch)\n"
-msgstr "неверный ответ SCRAM (несовпадение проверочного кода)\n"
+msgstr "неверный ответ SCRAM (несовпадение разового кода)\n"
 
 #: fe-auth-scram.c:687
 msgid "malformed SCRAM message (invalid salt)\n"
@@ -1073,7 +1073,7 @@ msgstr "не удалось преобразовать в строку IP-адр
 
 #: fe-secure-common.c:276
 msgid "host name must be specified for a verified SSL connection\n"
-msgstr "для проверенного SSL-соединения требуется указать имя узла\n"
+msgstr "для проверенного SSL-соединения должно указываться имя узла\n"
 
 #: fe-secure-common.c:301
 #, c-format
@@ -1083,7 +1083,7 @@ msgstr ""
 
 #: fe-secure-common.c:307
 msgid "could not get server's host name from server certificate\n"
-msgstr "не удалось получить имя сервера из сертификата\n"
+msgstr "не удалось получить имя сервера из серверного сертификата\n"
 
 #: fe-secure-gssapi.c:201
 msgid "GSSAPI wrap error"
@@ -1161,7 +1161,7 @@ msgstr "не удалось сгенерировать хеш сертифика
 
 #: fe-secure-openssl.c:502
 msgid "SSL certificate's name entry is missing\n"
-msgstr "запись имени в SSL-сертификате отсутствует\n"
+msgstr "в SSL-сертификате отсутствует запись имени\n"
 
 #: fe-secure-openssl.c:537
 msgid "SSL certificate's address entry is missing\n"
@@ -1262,7 +1262,7 @@ msgstr "не удалось загрузить закрытый ключ SSL \"%
 #: fe-secure-openssl.c:1362
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
-msgstr "сертификат присутствует, но файла закрытого ключа \"%s\" нет\n"
+msgstr "при наличии сертификата отсутствует файл закрытого ключа \"%s\"\n"
 
 #: fe-secure-openssl.c:1366
 #, c-format

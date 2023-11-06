@@ -435,12 +435,12 @@ msgstr "WAL-fil är från ett annat databassystem: WAL-filens databassystemident
 #: xlogreader.c:1268
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
-msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvuid"
+msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvud"
 
 #: xlogreader.c:1274
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
-msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvuid"
+msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvud"
 
 #: xlogreader.c:1305
 #, c-format

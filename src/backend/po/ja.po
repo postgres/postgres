@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-07-25 14:38+0900\n"
-"PO-Revision-Date: 2023-07-25 14:44+0900\n"
+"POT-Creation-Date: 2023-09-20 09:19+0900\n"
+"PO-Revision-Date: 2023-09-20 09:32+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -67,24 +67,24 @@ msgstr "圧縮アルゴリズム\"%s\"はワーカー数を受け付けません
 msgid "not recorded"
 msgstr "記録されていません"
 
-#: ../common/controldata_utils.c:69 ../common/controldata_utils.c:73 commands/copyfrom.c:1515 commands/extension.c:3380 utils/adt/genfile.c:123
+#: ../common/controldata_utils.c:69 ../common/controldata_utils.c:73 commands/copyfrom.c:1515 commands/extension.c:3401 utils/adt/genfile.c:123
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "ファイル\"%s\"を読み取り用にオープンできませんでした: %m"
 
-#: ../common/controldata_utils.c:84 ../common/controldata_utils.c:86 access/transam/timeline.c:143 access/transam/timeline.c:362 access/transam/twophase.c:1349 access/transam/xlog.c:3207 access/transam/xlog.c:4022 access/transam/xlogrecovery.c:1197 access/transam/xlogrecovery.c:1289 access/transam/xlogrecovery.c:1326 access/transam/xlogrecovery.c:1386 backup/basebackup.c:1844 commands/extension.c:3390 libpq/hba.c:505 replication/logical/origin.c:729
-#: replication/logical/origin.c:765 replication/logical/reorderbuffer.c:4958 replication/logical/snapbuild.c:1858 replication/logical/snapbuild.c:1900 replication/logical/snapbuild.c:1927 replication/slot.c:1807 replication/slot.c:1848 replication/walsender.c:658 storage/file/buffile.c:463 storage/file/copydir.c:195 utils/adt/genfile.c:197 utils/adt/misc.c:863 utils/cache/relmapper.c:813
+#: ../common/controldata_utils.c:84 ../common/controldata_utils.c:86 access/transam/timeline.c:143 access/transam/timeline.c:362 access/transam/twophase.c:1349 access/transam/xlog.c:3207 access/transam/xlog.c:4022 access/transam/xlogrecovery.c:1197 access/transam/xlogrecovery.c:1289 access/transam/xlogrecovery.c:1326 access/transam/xlogrecovery.c:1386 backup/basebackup.c:1844 commands/extension.c:3411 libpq/hba.c:505 replication/logical/origin.c:729
+#: replication/logical/origin.c:765 replication/logical/reorderbuffer.c:4958 replication/logical/snapbuild.c:1870 replication/logical/snapbuild.c:1912 replication/logical/snapbuild.c:1939 replication/slot.c:1807 replication/slot.c:1848 replication/walsender.c:658 storage/file/buffile.c:463 storage/file/copydir.c:195 utils/adt/genfile.c:197 utils/adt/misc.c:863 utils/cache/relmapper.c:813
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
-#: ../common/controldata_utils.c:92 ../common/controldata_utils.c:95 access/transam/xlog.c:3212 access/transam/xlog.c:4027 backup/basebackup.c:1848 replication/logical/origin.c:734 replication/logical/origin.c:773 replication/logical/snapbuild.c:1863 replication/logical/snapbuild.c:1905 replication/logical/snapbuild.c:1932 replication/slot.c:1811 replication/slot.c:1852 replication/walsender.c:663 utils/cache/relmapper.c:817
+#: ../common/controldata_utils.c:92 ../common/controldata_utils.c:95 access/transam/xlog.c:3212 access/transam/xlog.c:4027 backup/basebackup.c:1848 replication/logical/origin.c:734 replication/logical/origin.c:773 replication/logical/snapbuild.c:1875 replication/logical/snapbuild.c:1917 replication/logical/snapbuild.c:1944 replication/slot.c:1811 replication/slot.c:1852 replication/walsender.c:663 utils/cache/relmapper.c:817
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトのうち%2$dバイトを読み込みました"
 
 #: ../common/controldata_utils.c:104 ../common/controldata_utils.c:108 ../common/controldata_utils.c:241 ../common/controldata_utils.c:244 access/heap/rewriteheap.c:1178 access/heap/rewriteheap.c:1281 access/transam/timeline.c:392 access/transam/timeline.c:438 access/transam/timeline.c:516 access/transam/twophase.c:1361 access/transam/twophase.c:1773 access/transam/xlog.c:3054 access/transam/xlog.c:3247 access/transam/xlog.c:3252 access/transam/xlog.c:3390
-#: access/transam/xlog.c:3992 access/transam/xlog.c:4738 commands/copyfrom.c:1575 commands/copyto.c:327 libpq/be-fsstubs.c:455 libpq/be-fsstubs.c:525 replication/logical/origin.c:667 replication/logical/origin.c:806 replication/logical/reorderbuffer.c:5016 replication/logical/snapbuild.c:1767 replication/logical/snapbuild.c:1940 replication/slot.c:1698 replication/slot.c:1859 replication/walsender.c:673 storage/file/copydir.c:218 storage/file/copydir.c:223
+#: access/transam/xlog.c:3992 access/transam/xlog.c:4738 commands/copyfrom.c:1575 commands/copyto.c:327 libpq/be-fsstubs.c:455 libpq/be-fsstubs.c:525 replication/logical/origin.c:667 replication/logical/origin.c:806 replication/logical/reorderbuffer.c:5016 replication/logical/snapbuild.c:1779 replication/logical/snapbuild.c:1952 replication/slot.c:1698 replication/slot.c:1859 replication/walsender.c:673 storage/file/copydir.c:218 storage/file/copydir.c:223
 #: storage/file/fd.c:745 storage/file/fd.c:3643 storage/file/fd.c:3749 utils/cache/relmapper.c:828 utils/cache/relmapper.c:956
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -108,25 +108,25 @@ msgstr ""
 "PostgreSQLインストレーションはこのデータディレクトリと互換性がなくなります。"
 
 #: ../common/controldata_utils.c:189 ../common/controldata_utils.c:194 ../common/file_utils.c:232 ../common/file_utils.c:291 ../common/file_utils.c:365 access/heap/rewriteheap.c:1264 access/transam/timeline.c:111 access/transam/timeline.c:251 access/transam/timeline.c:348 access/transam/twophase.c:1305 access/transam/xlog.c:2941 access/transam/xlog.c:3123 access/transam/xlog.c:3162 access/transam/xlog.c:3357 access/transam/xlog.c:4012
-#: access/transam/xlogrecovery.c:4209 access/transam/xlogrecovery.c:4312 access/transam/xlogutils.c:852 backup/basebackup.c:522 backup/basebackup.c:1520 postmaster/syslogger.c:1560 replication/logical/origin.c:719 replication/logical/reorderbuffer.c:3611 replication/logical/reorderbuffer.c:4162 replication/logical/reorderbuffer.c:4938 replication/logical/snapbuild.c:1722 replication/logical/snapbuild.c:1829 replication/slot.c:1779 replication/walsender.c:631
+#: access/transam/xlogrecovery.c:4209 access/transam/xlogrecovery.c:4312 access/transam/xlogutils.c:852 backup/basebackup.c:522 backup/basebackup.c:1520 postmaster/syslogger.c:1560 replication/logical/origin.c:719 replication/logical/reorderbuffer.c:3611 replication/logical/reorderbuffer.c:4162 replication/logical/reorderbuffer.c:4938 replication/logical/snapbuild.c:1734 replication/logical/snapbuild.c:1841 replication/slot.c:1779 replication/walsender.c:631
 #: replication/walsender.c:2722 storage/file/copydir.c:161 storage/file/fd.c:720 storage/file/fd.c:3395 storage/file/fd.c:3630 storage/file/fd.c:3720 storage/smgr/md.c:541 utils/cache/relmapper.c:792 utils/cache/relmapper.c:900 utils/error/elog.c:1933 utils/init/miscinit.c:1366 utils/init/miscinit.c:1500 utils/init/miscinit.c:1577 utils/misc/guc.c:8991 utils/misc/guc.c:9040
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: ../common/controldata_utils.c:210 ../common/controldata_utils.c:213 access/transam/twophase.c:1746 access/transam/twophase.c:1755 access/transam/xlog.c:8674 access/transam/xlogfuncs.c:600 backup/basebackup_server.c:173 backup/basebackup_server.c:266 postmaster/postmaster.c:5630 postmaster/syslogger.c:1571 postmaster/syslogger.c:1584 postmaster/syslogger.c:1597 utils/cache/relmapper.c:934
+#: ../common/controldata_utils.c:210 ../common/controldata_utils.c:213 access/transam/twophase.c:1746 access/transam/twophase.c:1755 access/transam/xlog.c:8674 access/transam/xlogfuncs.c:600 backup/basebackup_server.c:173 backup/basebackup_server.c:266 postmaster/postmaster.c:5633 postmaster/syslogger.c:1571 postmaster/syslogger.c:1584 postmaster/syslogger.c:1597 utils/cache/relmapper.c:934
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
 #: ../common/controldata_utils.c:227 ../common/controldata_utils.c:232 ../common/file_utils.c:303 ../common/file_utils.c:373 access/heap/rewriteheap.c:960 access/heap/rewriteheap.c:1172 access/heap/rewriteheap.c:1275 access/transam/timeline.c:432 access/transam/timeline.c:510 access/transam/twophase.c:1767 access/transam/xlog.c:3047 access/transam/xlog.c:3241 access/transam/xlog.c:3985 access/transam/xlog.c:7977 access/transam/xlog.c:8020
-#: backup/basebackup_server.c:207 replication/logical/snapbuild.c:1760 replication/slot.c:1684 replication/slot.c:1789 storage/file/fd.c:737 storage/file/fd.c:3741 storage/smgr/md.c:992 storage/smgr/md.c:1033 storage/sync/sync.c:453 utils/cache/relmapper.c:949 utils/misc/guc.c:8760
+#: backup/basebackup_server.c:207 replication/logical/snapbuild.c:1772 replication/slot.c:1684 replication/slot.c:1789 storage/file/fd.c:737 storage/file/fd.c:3741 storage/smgr/md.c:992 storage/smgr/md.c:1033 storage/sync/sync.c:453 utils/cache/relmapper.c:949 utils/misc/guc.c:8760
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
 
 #: ../common/cryptohash.c:266 ../common/cryptohash_openssl.c:133 ../common/cryptohash_openssl.c:332 ../common/exec.c:560 ../common/exec.c:605 ../common/exec.c:697 ../common/hmac.c:309 ../common/hmac.c:325 ../common/hmac_openssl.c:132 ../common/hmac_openssl.c:327 ../common/md5_common.c:155 ../common/psprintf.c:143 ../common/scram-common.c:247 ../common/stringinfo.c:305 ../port/path.c:751 ../port/path.c:789 ../port/path.c:806 access/transam/twophase.c:1414
-#: access/transam/xlogrecovery.c:587 lib/dshash.c:253 libpq/auth.c:1338 libpq/auth.c:1406 libpq/auth.c:1964 libpq/be-secure-gssapi.c:520 postmaster/bgworker.c:349 postmaster/bgworker.c:931 postmaster/postmaster.c:2591 postmaster/postmaster.c:4177 postmaster/postmaster.c:5555 postmaster/postmaster.c:5926 replication/libpqwalreceiver/libpqwalreceiver.c:300 replication/logical/logical.c:205 replication/walsender.c:701 storage/buffer/localbuf.c:442
+#: access/transam/xlogrecovery.c:587 lib/dshash.c:253 libpq/auth.c:1338 libpq/auth.c:1406 libpq/auth.c:1964 libpq/be-secure-gssapi.c:520 postmaster/bgworker.c:349 postmaster/bgworker.c:931 postmaster/postmaster.c:2594 postmaster/postmaster.c:4180 postmaster/postmaster.c:5558 postmaster/postmaster.c:5929 replication/libpqwalreceiver/libpqwalreceiver.c:300 replication/logical/logical.c:205 replication/walsender.c:701 storage/buffer/localbuf.c:442
 #: storage/file/fd.c:892 storage/file/fd.c:1434 storage/file/fd.c:1595 storage/file/fd.c:2409 storage/ipc/procarray.c:1451 storage/ipc/procarray.c:2281 storage/ipc/procarray.c:2288 storage/ipc/procarray.c:2793 storage/ipc/procarray.c:3424 utils/adt/formatting.c:1732 utils/adt/formatting.c:1854 utils/adt/formatting.c:1977 utils/adt/pg_locale.c:453 utils/adt/pg_locale.c:617 utils/adt/regexp.c:224 utils/fmgr/dfmgr.c:229 utils/hash/dynahash.c:513
 #: utils/hash/dynahash.c:613 utils/hash/dynahash.c:1116 utils/mb/mbutils.c:401 utils/mb/mbutils.c:429 utils/mb/mbutils.c:814 utils/mb/mbutils.c:841 utils/misc/guc.c:5192 utils/misc/guc.c:5208 utils/misc/guc.c:5221 utils/misc/guc.c:8738 utils/misc/tzparser.c:476 utils/mmgr/aset.c:476 utils/mmgr/dsa.c:702 utils/mmgr/dsa.c:724 utils/mmgr/dsa.c:805 utils/mmgr/generation.c:266 utils/mmgr/mcxt.c:888 utils/mmgr/mcxt.c:924 utils/mmgr/mcxt.c:962 utils/mmgr/mcxt.c:1000
 #: utils/mmgr/mcxt.c:1088 utils/mmgr/mcxt.c:1119 utils/mmgr/mcxt.c:1155 utils/mmgr/mcxt.c:1207 utils/mmgr/mcxt.c:1242 utils/mmgr/mcxt.c:1277 utils/mmgr/slab.c:238
@@ -191,13 +191,13 @@ msgstr "メモリ不足です\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "nullポインタは複製できません(内部エラー)\n"
 
-#: ../common/file_utils.c:87 ../common/file_utils.c:451 ../common/file_utils.c:455 access/transam/twophase.c:1317 access/transam/xlogarchive.c:111 access/transam/xlogarchive.c:230 backup/basebackup.c:338 backup/basebackup.c:528 backup/basebackup.c:599 commands/copyfrom.c:1525 commands/copyto.c:725 commands/extension.c:3369 commands/tablespace.c:826 commands/tablespace.c:917 guc-file.l:1066 postmaster/pgarch.c:597 replication/logical/snapbuild.c:1639
+#: ../common/file_utils.c:87 ../common/file_utils.c:451 ../common/file_utils.c:455 access/transam/twophase.c:1317 access/transam/xlogarchive.c:111 access/transam/xlogarchive.c:230 backup/basebackup.c:338 backup/basebackup.c:528 backup/basebackup.c:599 commands/copyfrom.c:1525 commands/copyto.c:725 commands/extension.c:3390 commands/tablespace.c:826 commands/tablespace.c:917 guc-file.l:1066 postmaster/pgarch.c:597 replication/logical/snapbuild.c:1651
 #: storage/file/copydir.c:68 storage/file/copydir.c:107 storage/file/fd.c:1951 storage/file/fd.c:2037 storage/file/fd.c:3243 storage/file/fd.c:3450 utils/adt/dbsize.c:92 utils/adt/dbsize.c:244 utils/adt/dbsize.c:324 utils/adt/genfile.c:413 utils/adt/genfile.c:588 utils/adt/misc.c:327
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ファイル\"%s\"のstatに失敗しました: %m"
 
-#: ../common/file_utils.c:166 ../common/pgfnames.c:48 commands/tablespace.c:749 commands/tablespace.c:759 postmaster/postmaster.c:1576 storage/file/fd.c:2812 storage/file/reinit.c:126 utils/adt/misc.c:235 utils/misc/tzparser.c:338
+#: ../common/file_utils.c:166 ../common/pgfnames.c:48 commands/tablespace.c:749 commands/tablespace.c:759 postmaster/postmaster.c:1579 storage/file/fd.c:2812 storage/file/reinit.c:126 utils/adt/misc.c:235 utils/misc/tzparser.c:338
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
@@ -207,7 +207,7 @@ msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: ../common/file_utils.c:383 access/transam/xlogarchive.c:419 postmaster/syslogger.c:1608 replication/logical/snapbuild.c:1779 replication/slot.c:721 replication/slot.c:1570 replication/slot.c:1712 storage/file/fd.c:755 storage/file/fd.c:853 utils/time/snapmgr.c:1282
+#: ../common/file_utils.c:383 access/transam/xlogarchive.c:419 postmaster/syslogger.c:1608 replication/logical/snapbuild.c:1791 replication/slot.c:721 replication/slot.c:1570 replication/slot.c:1712 storage/file/fd.c:755 storage/file/fd.c:853 utils/time/snapmgr.c:1282
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
@@ -669,7 +669,7 @@ msgstr "%2$s型の属性\"%1$s\"が%3$s型の対応する属性と合致しま�
 msgid "Attribute \"%s\" of type %s does not exist in type %s."
 msgstr "%2$s型の属性\"%1$s\"が%3$s型の中に存在しません。"
 
-#: access/common/heaptuple.c:1036 access/common/heaptuple.c:1371
+#: access/common/heaptuple.c:1124 access/common/heaptuple.c:1459
 #, c-format
 msgid "number of columns (%d) exceeds limit (%d)"
 msgstr "列数(%d)が上限(%d)を超えています"
@@ -988,7 +988,7 @@ msgstr "行が大きすぎます: サイズは%zu、上限は%zu"
 msgid "could not write to file \"%s\", wrote %d of %d: %m"
 msgstr "ファイル\"%1$s\"に書き込めませんでした、%3$dバイト中%2$dバイト書き込みました: %m"
 
-#: access/heap/rewriteheap.c:1013 access/heap/rewriteheap.c:1131 access/transam/timeline.c:329 access/transam/timeline.c:485 access/transam/xlog.c:2963 access/transam/xlog.c:3176 access/transam/xlog.c:3964 access/transam/xlog.c:8657 access/transam/xlogfuncs.c:594 backup/basebackup_server.c:149 backup/basebackup_server.c:242 commands/dbcommands.c:517 postmaster/postmaster.c:4604 postmaster/postmaster.c:5617 replication/logical/origin.c:587 replication/slot.c:1631
+#: access/heap/rewriteheap.c:1013 access/heap/rewriteheap.c:1131 access/transam/timeline.c:329 access/transam/timeline.c:485 access/transam/xlog.c:2963 access/transam/xlog.c:3176 access/transam/xlog.c:3964 access/transam/xlog.c:8657 access/transam/xlogfuncs.c:594 backup/basebackup_server.c:149 backup/basebackup_server.c:242 commands/dbcommands.c:517 postmaster/postmaster.c:4607 postmaster/postmaster.c:5620 replication/logical/origin.c:587 replication/slot.c:1631
 #: storage/file/copydir.c:167 storage/smgr/md.c:222 utils/time/snapmgr.c:1261
 #, c-format
 msgid "could not create file \"%s\": %m"
@@ -999,13 +999,13 @@ msgstr "ファイル\"%s\"を作成できませんでした: %m"
 msgid "could not truncate file \"%s\" to %u: %m"
 msgstr "ファイル\"%s\"を%uバイトに切り詰められませんでした: %m"
 
-#: access/heap/rewriteheap.c:1159 access/transam/timeline.c:384 access/transam/timeline.c:424 access/transam/timeline.c:502 access/transam/xlog.c:3035 access/transam/xlog.c:3232 access/transam/xlog.c:3976 commands/dbcommands.c:529 postmaster/postmaster.c:4614 postmaster/postmaster.c:4624 replication/logical/origin.c:599 replication/logical/origin.c:641 replication/logical/origin.c:660 replication/logical/snapbuild.c:1736 replication/slot.c:1666
+#: access/heap/rewriteheap.c:1159 access/transam/timeline.c:384 access/transam/timeline.c:424 access/transam/timeline.c:502 access/transam/xlog.c:3035 access/transam/xlog.c:3232 access/transam/xlog.c:3976 commands/dbcommands.c:529 postmaster/postmaster.c:4617 postmaster/postmaster.c:4627 replication/logical/origin.c:599 replication/logical/origin.c:641 replication/logical/origin.c:660 replication/logical/snapbuild.c:1748 replication/slot.c:1666
 #: storage/file/buffile.c:537 storage/file/copydir.c:207 utils/init/miscinit.c:1441 utils/init/miscinit.c:1452 utils/init/miscinit.c:1460 utils/misc/guc.c:8721 utils/misc/guc.c:8752 utils/misc/guc.c:10742 utils/misc/guc.c:10756 utils/time/snapmgr.c:1266 utils/time/snapmgr.c:1273
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: access/heap/rewriteheap.c:1249 access/transam/twophase.c:1706 access/transam/xlogarchive.c:119 access/transam/xlogarchive.c:429 postmaster/postmaster.c:1157 postmaster/syslogger.c:1537 replication/logical/origin.c:575 replication/logical/reorderbuffer.c:4431 replication/logical/snapbuild.c:1681 replication/logical/snapbuild.c:2097 replication/slot.c:1763 storage/file/fd.c:795 storage/file/fd.c:3263 storage/file/fd.c:3325 storage/file/reinit.c:262
+#: access/heap/rewriteheap.c:1249 access/transam/twophase.c:1706 access/transam/xlogarchive.c:119 access/transam/xlogarchive.c:429 postmaster/postmaster.c:1157 postmaster/syslogger.c:1537 replication/logical/origin.c:575 replication/logical/reorderbuffer.c:4431 replication/logical/snapbuild.c:1693 replication/logical/snapbuild.c:2109 replication/slot.c:1763 storage/file/fd.c:795 storage/file/fd.c:3263 storage/file/fd.c:3325 storage/file/reinit.c:262
 #: storage/ipc/dsm.c:317 storage/smgr/md.c:373 storage/smgr/md.c:432 storage/sync/sync.c:250 utils/time/snapmgr.c:1606
 #, c-format
 msgid "could not remove file \"%s\": %m"
@@ -3330,7 +3330,7 @@ msgstr "ディレクトリ\"%s\"を作成できませんでした: %m"
 msgid "directory \"%s\" exists but is not empty"
 msgstr "ディレクトリ\"%s\"は存在しますが、空ではありません"
 
-#: backup/basebackup_server.c:123 utils/init/postinit.c:1086
+#: backup/basebackup_server.c:123 utils/init/postinit.c:1090
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"にアクセスできませんでした: %m"
@@ -3536,7 +3536,7 @@ msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr "GRANT/REVOKE ON SCHEMAS を使っている時には IN SCHEMA 句は指定できません"
 
 #: catalog/aclchk.c:1587 catalog/catalog.c:627 catalog/objectaddress.c:1543 catalog/pg_publication.c:510 commands/analyze.c:391 commands/copy.c:779 commands/sequence.c:1663 commands/tablecmds.c:7271 commands/tablecmds.c:7427 commands/tablecmds.c:7477 commands/tablecmds.c:7551 commands/tablecmds.c:7621 commands/tablecmds.c:7733 commands/tablecmds.c:7827 commands/tablecmds.c:7886 commands/tablecmds.c:7975 commands/tablecmds.c:8005 commands/tablecmds.c:8133
-#: commands/tablecmds.c:8215 commands/tablecmds.c:8371 commands/tablecmds.c:8489 commands/tablecmds.c:12218 commands/tablecmds.c:12399 commands/tablecmds.c:12559 commands/tablecmds.c:13723 commands/tablecmds.c:16292 commands/trigger.c:954 parser/analyze.c:2468 parser/parse_relation.c:725 parser/parse_target.c:1063 parser/parse_type.c:144 parser/parse_utilcmd.c:3435 parser/parse_utilcmd.c:3471 parser/parse_utilcmd.c:3513 utils/adt/acl.c:2869
+#: commands/tablecmds.c:8215 commands/tablecmds.c:8371 commands/tablecmds.c:8489 commands/tablecmds.c:12218 commands/tablecmds.c:12399 commands/tablecmds.c:12559 commands/tablecmds.c:13723 commands/tablecmds.c:16292 commands/trigger.c:954 parser/analyze.c:2506 parser/parse_relation.c:725 parser/parse_target.c:1063 parser/parse_type.c:144 parser/parse_utilcmd.c:3435 parser/parse_utilcmd.c:3471 parser/parse_utilcmd.c:3513 utils/adt/acl.c:2869
 #: utils/adt/ruleutils.c:2830
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
@@ -3982,7 +3982,7 @@ msgstr "OID %uの外部データラッパーは存在しません"
 msgid "foreign server with OID %u does not exist"
 msgstr "OID %uの外部サーバーは存在しません"
 
-#: catalog/aclchk.c:4816 catalog/aclchk.c:5210 utils/cache/typcache.c:385 utils/cache/typcache.c:440
+#: catalog/aclchk.c:4816 catalog/aclchk.c:5210 utils/cache/typcache.c:390 utils/cache/typcache.c:445
 #, c-format
 msgid "type with OID %u does not exist"
 msgstr "OID %uの型は存在しません"
@@ -4310,7 +4310,7 @@ msgstr "生成式は不変ではありません"
 msgid "column \"%s\" is of type %s but default expression is of type %s"
 msgstr "列\"%s\"の型は%sですが、デフォルト式の型は%sです"
 
-#: catalog/heap.c:2804 commands/prepare.c:334 parser/analyze.c:2692 parser/parse_target.c:594 parser/parse_target.c:882 parser/parse_target.c:892 rewrite/rewriteHandler.c:1295
+#: catalog/heap.c:2804 commands/prepare.c:334 parser/analyze.c:2730 parser/parse_target.c:594 parser/parse_target.c:882 parser/parse_target.c:892 rewrite/rewriteHandler.c:1295
 #, c-format
 msgid "You will need to rewrite or cast the expression."
 msgstr "式を書き換えるかキャストする必要があります。"
@@ -4460,7 +4460,7 @@ msgstr "リレーション\"%s.%s\"は存在しません"
 msgid "relation \"%s\" does not exist"
 msgstr "リレーション\"%s\"は存在しません"
 
-#: catalog/namespace.c:501 catalog/namespace.c:3076 commands/extension.c:1535 commands/extension.c:1541
+#: catalog/namespace.c:501 catalog/namespace.c:3076 commands/extension.c:1556 commands/extension.c:1562
 #, c-format
 msgid "no schema has been selected to create in"
 msgstr "作成先のスキーマが選択されていません"
@@ -5257,12 +5257,12 @@ msgstr "変換\"%s\"はすでに存在します"
 msgid "default conversion for %s to %s already exists"
 msgstr "%sから%sへのデフォルトの変換はすでに存在します"
 
-#: catalog/pg_depend.c:222 commands/extension.c:3268
+#: catalog/pg_depend.c:222 commands/extension.c:3289
 #, c-format
 msgid "%s is already a member of extension \"%s\""
 msgstr "%sはすでに機能拡張\"%s\"のメンバです"
 
-#: catalog/pg_depend.c:229 catalog/pg_depend.c:280 commands/extension.c:3308
+#: catalog/pg_depend.c:229 catalog/pg_depend.c:280 commands/extension.c:3329
 #, c-format
 msgid "%s is not a member of extension \"%s\""
 msgstr "%s は機能拡張\"%s\"のメンバではありません"
@@ -6165,7 +6165,7 @@ msgstr "コマンド\"%s\"を実行できませんでした: %m"
 msgid "no usable system locales were found"
 msgstr "使用できるシステムロケールが見つかりません"
 
-#: commands/comment.c:61 commands/dbcommands.c:1549 commands/dbcommands.c:1761 commands/dbcommands.c:1874 commands/dbcommands.c:2068 commands/dbcommands.c:2310 commands/dbcommands.c:2405 commands/dbcommands.c:2515 commands/dbcommands.c:3014 utils/init/postinit.c:947 utils/init/postinit.c:1053 utils/init/postinit.c:1079
+#: commands/comment.c:61 commands/dbcommands.c:1549 commands/dbcommands.c:1761 commands/dbcommands.c:1874 commands/dbcommands.c:2068 commands/dbcommands.c:2310 commands/dbcommands.c:2405 commands/dbcommands.c:2515 commands/dbcommands.c:3014 utils/init/postinit.c:947 utils/init/postinit.c:1011 utils/init/postinit.c:1083
 #, c-format
 msgid "database \"%s\" does not exist"
 msgstr "データベース\"%s\"は存在しません"
@@ -6810,7 +6810,7 @@ msgstr "テンプレートデータベース\"%s\"は存在しません"
 msgid "cannot use invalid database \"%s\" as template"
 msgstr "無効なデータベース\"%s\"はテンプレートとして使用できません"
 
-#: commands/dbcommands.c:976 commands/dbcommands.c:2320 utils/init/postinit.c:1062
+#: commands/dbcommands.c:976 commands/dbcommands.c:2320 utils/init/postinit.c:1026
 #, c-format
 msgid "Use DROP DATABASE to drop invalid databases."
 msgstr "DROP DATABASEを使用して不正なデータベースを削除してください。"
@@ -7375,7 +7375,7 @@ msgstr "EXPLAINのオプションWALにはANALYZE指定が必要です"
 msgid "EXPLAIN option TIMING requires ANALYZE"
 msgstr "EXPLAINオプションのTIMINGにはANALYZE指定が必要です"
 
-#: commands/extension.c:173 commands/extension.c:2933
+#: commands/extension.c:173 commands/extension.c:2954
 #, c-format
 msgid "extension \"%s\" does not exist"
 msgstr "機能拡張\"%s\"は存在しません"
@@ -7515,117 +7515,127 @@ msgstr "この機能拡張を更新するには現在のデータベースのCRE
 msgid "Must be superuser to update this extension."
 msgstr "この機能拡張を更新するにはスーパーユーザーである必要があります。"
 
-#: commands/extension.c:1216
+#: commands/extension.c:1018
+#, c-format
+msgid "invalid character in extension owner: must not contain any of \"%s\""
+msgstr "機能拡張の所有者名に不正な文字: \"%s\"のいずれの文字も含むことはできません"
+
+#: commands/extension.c:1042
+#, c-format
+msgid "invalid character in extension \"%s\" schema: must not contain any of \"%s\""
+msgstr "機能拡張\"%s\"のスキーマ名に不正な文字: \"%s\"のいずれの文字も含むことはできません"
+
+#: commands/extension.c:1237
 #, c-format
 msgid "extension \"%s\" has no update path from version \"%s\" to version \"%s\""
 msgstr "機能拡張\"%s\"について、バージョン\"%s\"からバージョン\"%s\"へのアップデートパスがありません"
 
-#: commands/extension.c:1424 commands/extension.c:2991
+#: commands/extension.c:1445 commands/extension.c:3012
 #, c-format
 msgid "version to install must be specified"
 msgstr "インストールするバージョンを指定してください"
 
-#: commands/extension.c:1461
+#: commands/extension.c:1482
 #, c-format
 msgid "extension \"%s\" has no installation script nor update path for version \"%s\""
 msgstr "機能拡張\"%s\"にはバージョン\"%s\"のインストールスクリプトもアップデートパスもありません"
 
-#: commands/extension.c:1495
+#: commands/extension.c:1516
 #, c-format
 msgid "extension \"%s\" must be installed in schema \"%s\""
 msgstr "機能拡張\"%s\"はスキーマ\"%s\"内にインストールされていなければなりません"
 
-#: commands/extension.c:1655
+#: commands/extension.c:1676
 #, c-format
 msgid "cyclic dependency detected between extensions \"%s\" and \"%s\""
 msgstr "機能拡張\"%s\"と\"%s\"の間に循環依存関係が検出されました"
 
-#: commands/extension.c:1660
+#: commands/extension.c:1681
 #, c-format
 msgid "installing required extension \"%s\""
 msgstr "必要な機能拡張をインストールします:\"%s\""
 
-#: commands/extension.c:1683
+#: commands/extension.c:1704
 #, c-format
 msgid "required extension \"%s\" is not installed"
 msgstr "要求された機能拡張\"%s\"はインストールされていません"
 
-#: commands/extension.c:1686
+#: commands/extension.c:1707
 #, c-format
 msgid "Use CREATE EXTENSION ... CASCADE to install required extensions too."
 msgstr "必要な機能拡張を一緒にインストールするには CREATE EXTENSION ... CASCADE を使ってください。"
 
-#: commands/extension.c:1721
+#: commands/extension.c:1742
 #, c-format
 msgid "extension \"%s\" already exists, skipping"
 msgstr "機能拡張\"%s\"はすでに存在します、スキップします"
 
-#: commands/extension.c:1728
+#: commands/extension.c:1749
 #, c-format
 msgid "extension \"%s\" already exists"
 msgstr "機能拡張\"%s\"はすでに存在します"
 
-#: commands/extension.c:1739
+#: commands/extension.c:1760
 #, c-format
 msgid "nested CREATE EXTENSION is not supported"
 msgstr "入れ子の CREATE EXTENSION はサポートされません"
 
-#: commands/extension.c:1903
+#: commands/extension.c:1924
 #, c-format
 msgid "cannot drop extension \"%s\" because it is being modified"
 msgstr "変更されているため拡張\"%s\"を削除できません"
 
-#: commands/extension.c:2380
+#: commands/extension.c:2401
 #, c-format
 msgid "%s can only be called from an SQL script executed by CREATE EXTENSION"
 msgstr "%s はCREATE EXTENSIONにより実行されるSQLスクリプトからのみ呼び出すことができます"
 
-#: commands/extension.c:2392
+#: commands/extension.c:2413
 #, c-format
 msgid "OID %u does not refer to a table"
 msgstr "OID %u がテーブルを参照していません"
 
-#: commands/extension.c:2397
+#: commands/extension.c:2418
 #, c-format
 msgid "table \"%s\" is not a member of the extension being created"
 msgstr "テーブル\"%s\"は生成されようとしている機能拡張のメンバではありません"
 
-#: commands/extension.c:2751
+#: commands/extension.c:2772
 #, c-format
 msgid "cannot move extension \"%s\" into schema \"%s\" because the extension contains the schema"
 msgstr "機能拡張がそのスキーマを含んでいるため、機能拡張\"%s\"をスキーマ\"%s\"に移動できません"
 
-#: commands/extension.c:2792 commands/extension.c:2852
+#: commands/extension.c:2813 commands/extension.c:2873
 #, c-format
 msgid "extension \"%s\" does not support SET SCHEMA"
 msgstr "機能拡張\"%s\"は SET SCHEMA をサポートしていません"
 
-#: commands/extension.c:2854
+#: commands/extension.c:2875
 #, c-format
 msgid "%s is not in the extension's schema \"%s\""
 msgstr "機能拡張のスキーマ\"%2$s\"に%1$sが見つかりません"
 
-#: commands/extension.c:2913
+#: commands/extension.c:2934
 #, c-format
 msgid "nested ALTER EXTENSION is not supported"
 msgstr "入れ子になった ALTER EXTENSION はサポートされていません"
 
-#: commands/extension.c:3002
+#: commands/extension.c:3023
 #, c-format
 msgid "version \"%s\" of extension \"%s\" is already installed"
 msgstr "機能拡張 \"%2$s\"のバージョン\"%1$s\"はすでにインストールされています"
 
-#: commands/extension.c:3214
+#: commands/extension.c:3235
 #, c-format
 msgid "cannot add an object of this type to an extension"
 msgstr "この型のオブジェクトは機能拡張に追加できません"
 
-#: commands/extension.c:3280
+#: commands/extension.c:3301
 #, c-format
 msgid "cannot add schema \"%s\" to extension \"%s\" because the schema contains the extension"
 msgstr "スキーマ\"%s\"を拡張\"%s\"に追加できません。そのスキーマにその拡張が含まれているためです"
 
-#: commands/extension.c:3374
+#: commands/extension.c:3395
 #, c-format
 msgid "file \"%s\" is too large"
 msgstr "ファイル\"%s\"は大きすぎます"
@@ -8781,7 +8791,7 @@ msgstr "準備された文\"%s\"は存在しません"
 msgid "must be superuser to create custom procedural language"
 msgstr "手続き言語を生成するためにはスーパーユーザーである必要があります"
 
-#: commands/publicationcmds.c:130 postmaster/postmaster.c:1219 postmaster/postmaster.c:1318 utils/init/miscinit.c:1651
+#: commands/publicationcmds.c:130 postmaster/postmaster.c:1222 postmaster/postmaster.c:1321 utils/init/miscinit.c:1651
 #, c-format
 msgid "invalid list syntax in parameter \"%s\""
 msgstr "パラメータ\"%s\"のリスト構文が不正です"
@@ -11185,7 +11195,7 @@ msgstr "トリガ\"%s\"の実行前には、この行はパーティション\"%
 msgid "tuple to be updated was already modified by an operation triggered by the current command"
 msgstr "更新対象のタプルはすでに現在のコマンドによって発行された操作によって変更されています"
 
-#: commands/trigger.c:3424 executor/nodeModifyTable.c:1510 executor/nodeModifyTable.c:1584 executor/nodeModifyTable.c:2345 executor/nodeModifyTable.c:2428 executor/nodeModifyTable.c:3058
+#: commands/trigger.c:3424 executor/nodeModifyTable.c:1510 executor/nodeModifyTable.c:1584 executor/nodeModifyTable.c:2345 executor/nodeModifyTable.c:2428 executor/nodeModifyTable.c:3059
 #, c-format
 msgid "Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows."
 msgstr "他の行への変更を伝搬させるためにBEFOREトリガではなくAFTERトリガの使用を検討してください"
@@ -11195,7 +11205,7 @@ msgstr "他の行への変更を伝搬させるためにBEFOREトリガではな
 msgid "could not serialize access due to concurrent update"
 msgstr "更新が同時に行われたためアクセスの直列化ができませんでした"
 
-#: commands/trigger.c:3473 executor/nodeModifyTable.c:1616 executor/nodeModifyTable.c:2445 executor/nodeModifyTable.c:2594 executor/nodeModifyTable.c:2946
+#: commands/trigger.c:3473 executor/nodeModifyTable.c:1616 executor/nodeModifyTable.c:2445 executor/nodeModifyTable.c:2594 executor/nodeModifyTable.c:2947
 #, c-format
 msgid "could not serialize access due to concurrent delete"
 msgstr "削除が同時に行われたためアクセスの直列化ができませんでした"
@@ -12842,7 +12852,7 @@ msgid "Consider defining the foreign key on table \"%s\"."
 msgstr "テーブル\"%s\"上に外部キー制約を定義することを検討してください。"
 
 #. translator: %s is a SQL command name
-#: executor/nodeModifyTable.c:2548 executor/nodeModifyTable.c:2935
+#: executor/nodeModifyTable.c:2548 executor/nodeModifyTable.c:2936
 #, c-format
 msgid "%s command cannot affect row a second time"
 msgstr "%sコマンドは単一の行に2度は適用できません"
@@ -12852,17 +12862,17 @@ msgstr "%sコマンドは単一の行に2度は適用できません"
 msgid "Ensure that no rows proposed for insertion within the same command have duplicate constrained values."
 msgstr "同じコマンドでの挿入候補の行が同じ制約値を持つことがないようにしてください"
 
-#: executor/nodeModifyTable.c:2937
+#: executor/nodeModifyTable.c:2938
 #, c-format
 msgid "Ensure that not more than one source row matches any one target row."
 msgstr "ソース行が2行以上ターゲット行に合致しないようにしてください。"
 
-#: executor/nodeModifyTable.c:3018
+#: executor/nodeModifyTable.c:3019
 #, c-format
 msgid "tuple to be deleted was already moved to another partition due to concurrent update"
 msgstr "削除対象のタプルは同時に行われた更新によってすでに他の子テーブルに移動されています"
 
-#: executor/nodeModifyTable.c:3057
+#: executor/nodeModifyTable.c:3058
 #, c-format
 msgid "tuple to be updated or deleted was already modified by an operation triggered by the current command"
 msgstr "更新または削除対象のタプルは、現在のコマンドによって発火した操作トリガーによってすでに更新されています"
@@ -12983,7 +12993,7 @@ msgstr "カーソルで%s問い合わせを開くことができません"
 msgid "DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE is not supported"
 msgstr "DECLARE SCROLL CURSOR ... FOR UPDATE/SHAREはサポートされていません"
 
-#: executor/spi.c:1717 parser/analyze.c:2861
+#: executor/spi.c:1717 parser/analyze.c:2899
 #, c-format
 msgid "Scrollable cursors must be READ ONLY."
 msgstr "スクロール可能カーソルは読み取り専用である必要があります。"
@@ -15519,7 +15529,7 @@ msgid "%s cannot be applied to the nullable side of an outer join"
 msgstr "外部結合のNULL可な側では%sを適用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: optimizer/plan/planner.c:1344 parser/analyze.c:1714 parser/analyze.c:1970 parser/analyze.c:3152
+#: optimizer/plan/planner.c:1344 parser/analyze.c:1752 parser/analyze.c:2008 parser/analyze.c:3190
 #, c-format
 msgid "%s is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "UNION/INTERSECT/EXCEPTでは%sを使用できません"
@@ -15610,216 +15620,216 @@ msgstr "ON CONFLICT DO UPDATEでの排除制約の使用はサポートされて
 msgid "there is no unique or exclusion constraint matching the ON CONFLICT specification"
 msgstr "ON CONFLICT 指定に合致するユニーク制約または排除制約がありません"
 
-#: parser/analyze.c:780 parser/analyze.c:1494
+#: parser/analyze.c:818 parser/analyze.c:1532
 #, c-format
 msgid "VALUES lists must all be the same length"
 msgstr "VALUESリストはすべて同じ長さでなければなりません"
 
-#: parser/analyze.c:981
+#: parser/analyze.c:1019
 #, c-format
 msgid "INSERT has more expressions than target columns"
 msgstr "INSERTに対象列よりも多くの式があります"
 
-#: parser/analyze.c:999
+#: parser/analyze.c:1037
 #, c-format
 msgid "INSERT has more target columns than expressions"
 msgstr "INSERTに式よりも多くの対象列があります"
 
-#: parser/analyze.c:1003
+#: parser/analyze.c:1041
 #, c-format
 msgid "The insertion source is a row expression containing the same number of columns expected by the INSERT. Did you accidentally use extra parentheses?"
 msgstr "挿入ソースがINSERTが期待するのと同じ列数を含む行表現になっています。うっかり余計なカッコをつけたりしませんでしたか？"
 
-#: parser/analyze.c:1302 parser/analyze.c:1687
+#: parser/analyze.c:1340 parser/analyze.c:1725
 #, c-format
 msgid "SELECT ... INTO is not allowed here"
 msgstr "ここではSELECT ... INTOは許可されません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:1617 parser/analyze.c:3363
+#: parser/analyze.c:1655 parser/analyze.c:3401
 #, c-format
 msgid "%s cannot be applied to VALUES"
 msgstr "%sをVALUESに使用できません"
 
-#: parser/analyze.c:1853
+#: parser/analyze.c:1891
 #, c-format
 msgid "invalid UNION/INTERSECT/EXCEPT ORDER BY clause"
 msgstr "不正なUNION/INTERSECT/EXCEPT ORDER BY句です"
 
-#: parser/analyze.c:1854
+#: parser/analyze.c:1892
 #, c-format
 msgid "Only result column names can be used, not expressions or functions."
 msgstr "式や関数ではなく、結果列の名前のみが使用できます。"
 
-#: parser/analyze.c:1855
+#: parser/analyze.c:1893
 #, c-format
 msgid "Add the expression/function to every SELECT, or move the UNION into a FROM clause."
 msgstr "式/関数をすべてのSELECTにつけてください。またはこのUNIONをFROM句に移動してください。"
 
-#: parser/analyze.c:1960
+#: parser/analyze.c:1998
 #, c-format
 msgid "INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT"
 msgstr "INTOはUNION/INTERSECT/EXCEPTの最初のSELECTでのみ使用できます"
 
-#: parser/analyze.c:2032
+#: parser/analyze.c:2070
 #, c-format
 msgid "UNION/INTERSECT/EXCEPT member statement cannot refer to other relations of same query level"
 msgstr "UNION/INTERSECT/EXCEPTの要素となる文では同一問い合わせレベルの他のリレーションを参照できません"
 
-#: parser/analyze.c:2119
+#: parser/analyze.c:2157
 #, c-format
 msgid "each %s query must have the same number of columns"
 msgstr "すべての%s問い合わせは同じ列数を返す必要があります"
 
-#: parser/analyze.c:2523
+#: parser/analyze.c:2561
 #, c-format
 msgid "RETURNING must have at least one column"
 msgstr "RETURNINGには少なくとも1つの列が必要です"
 
-#: parser/analyze.c:2626
+#: parser/analyze.c:2664
 #, c-format
 msgid "assignment source returned %d column"
 msgid_plural "assignment source returned %d columns"
 msgstr[0] "代入元が%d個の列を返しました"
 
-#: parser/analyze.c:2687
+#: parser/analyze.c:2725
 #, c-format
 msgid "variable \"%s\" is of type %s but expression is of type %s"
 msgstr "変数\"%s\"は型%sですが、式は型%sでした"
 
 #. translator: %s is a SQL keyword
-#: parser/analyze.c:2811 parser/analyze.c:2819
+#: parser/analyze.c:2849 parser/analyze.c:2857
 #, c-format
 msgid "cannot specify both %s and %s"
 msgstr "%sと%sの両方を同時には指定できません"
 
-#: parser/analyze.c:2839
+#: parser/analyze.c:2877
 #, c-format
 msgid "DECLARE CURSOR must not contain data-modifying statements in WITH"
 msgstr "DECLARE CURSOR では WITH にデータを変更する文を含んではなりません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:2847
+#: parser/analyze.c:2885
 #, c-format
 msgid "DECLARE CURSOR WITH HOLD ... %s is not supported"
 msgstr "DECLARE CURSOR WITH HOLD ... %sはサポートされていません"
 
-#: parser/analyze.c:2850
+#: parser/analyze.c:2888
 #, c-format
 msgid "Holdable cursors must be READ ONLY."
 msgstr "保持可能カーソルは読み取り専用である必要があります。"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:2858
+#: parser/analyze.c:2896
 #, c-format
 msgid "DECLARE SCROLL CURSOR ... %s is not supported"
 msgstr "DECLARE SCROLL CURSOR ... %sはサポートされていません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:2869
+#: parser/analyze.c:2907
 #, c-format
 msgid "DECLARE INSENSITIVE CURSOR ... %s is not valid"
 msgstr "DECLARE INSENSITIVE CURSOR ... %sはが不正です"
 
-#: parser/analyze.c:2872
+#: parser/analyze.c:2910
 #, c-format
 msgid "Insensitive cursors must be READ ONLY."
 msgstr "INSENSITIVEカーソルは読み取り専用である必要があります。"
 
-#: parser/analyze.c:2938
+#: parser/analyze.c:2976
 #, c-format
 msgid "materialized views must not use data-modifying statements in WITH"
 msgstr "実体化ビューではWITH句にデータを変更する文を含んではなりません"
 
-#: parser/analyze.c:2948
+#: parser/analyze.c:2986
 #, c-format
 msgid "materialized views must not use temporary tables or views"
 msgstr "実体化ビューでは一時テーブルやビューを使用してはいけません"
 
-#: parser/analyze.c:2958
+#: parser/analyze.c:2996
 #, c-format
 msgid "materialized views may not be defined using bound parameters"
 msgstr "実体化ビューは境界パラメータを用いて定義してはなりません"
 
-#: parser/analyze.c:2970
+#: parser/analyze.c:3008
 #, c-format
 msgid "materialized views cannot be unlogged"
 msgstr "実体化ビューをログ非取得にはできません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3159
+#: parser/analyze.c:3197
 #, c-format
 msgid "%s is not allowed with DISTINCT clause"
 msgstr "DISTINCT句では%sを使用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3166
+#: parser/analyze.c:3204
 #, c-format
 msgid "%s is not allowed with GROUP BY clause"
 msgstr "GROUP BY句で%sを使用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3173
+#: parser/analyze.c:3211
 #, c-format
 msgid "%s is not allowed with HAVING clause"
 msgstr "HAVING 句では%sを使用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3180
+#: parser/analyze.c:3218
 #, c-format
 msgid "%s is not allowed with aggregate functions"
 msgstr "集約関数では%sは使用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3187
+#: parser/analyze.c:3225
 #, c-format
 msgid "%s is not allowed with window functions"
 msgstr "ウィンドウ関数では%sは使用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3194
+#: parser/analyze.c:3232
 #, c-format
 msgid "%s is not allowed with set-returning functions in the target list"
 msgstr "ターゲットリストの中では%sを集合返却関数と一緒に使うことはできません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3286
+#: parser/analyze.c:3324
 #, c-format
 msgid "%s must specify unqualified relation names"
 msgstr "%sでは非修飾のリレーション名を指定してください"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3336
+#: parser/analyze.c:3374
 #, c-format
 msgid "%s cannot be applied to a join"
 msgstr "%sを結合に使用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3345
+#: parser/analyze.c:3383
 #, c-format
 msgid "%s cannot be applied to a function"
 msgstr "%sを関数に使用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3354
+#: parser/analyze.c:3392
 #, c-format
 msgid "%s cannot be applied to a table function"
 msgstr "%sはテーブル関数には適用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3372
+#: parser/analyze.c:3410
 #, c-format
 msgid "%s cannot be applied to a WITH query"
 msgstr "%sはWITH問い合わせには適用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3381
+#: parser/analyze.c:3419
 #, c-format
 msgid "%s cannot be applied to a named tuplestore"
 msgstr "%sは名前付きタプルストアには適用できません"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: parser/analyze.c:3401
+#: parser/analyze.c:3439
 #, c-format
 msgid "relation \"%s\" in %s clause not found in FROM clause"
 msgstr "%2$s句のリレーション\"%1$s\"はFROM句にありません"
@@ -17620,7 +17630,7 @@ msgstr "%%TYPE参照が不適切です(ドット区切りの名前が多すぎ�
 msgid "type reference %s converted to %s"
 msgstr "型参照%sは%sに変換されました"
 
-#: parser/parse_type.c:278 parser/parse_type.c:807 utils/cache/typcache.c:390 utils/cache/typcache.c:445
+#: parser/parse_type.c:278 parser/parse_type.c:807 utils/cache/typcache.c:395 utils/cache/typcache.c:450
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "型\"%s\"は単なるシェルです"
@@ -18480,92 +18490,92 @@ msgstr "%s: データトークンテーブルが不正です、修復してく�
 msgid "could not create I/O completion port for child queue"
 msgstr "子キュー向けのI/O終了ポートを作成できませんでした"
 
-#: postmaster/postmaster.c:1178
+#: postmaster/postmaster.c:1189
 #, c-format
 msgid "ending log output to stderr"
 msgstr "標準エラー出力へのログ出力を終了しています"
 
-#: postmaster/postmaster.c:1179
+#: postmaster/postmaster.c:1190
 #, c-format
 msgid "Future log output will go to log destination \"%s\"."
 msgstr "この後のログ出力はログ配送先\"%s\"に出力されます。"
 
-#: postmaster/postmaster.c:1190
+#: postmaster/postmaster.c:1201
 #, c-format
 msgid "starting %s"
 msgstr "%s を起動しています"
 
-#: postmaster/postmaster.c:1250
+#: postmaster/postmaster.c:1253
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "\"%s\"に関する監視用ソケットを作成できませんでした"
 
-#: postmaster/postmaster.c:1256
+#: postmaster/postmaster.c:1259
 #, c-format
 msgid "could not create any TCP/IP sockets"
 msgstr "TCP/IPソケットを作成できませんでした"
 
-#: postmaster/postmaster.c:1288
+#: postmaster/postmaster.c:1291
 #, c-format
 msgid "DNSServiceRegister() failed: error code %ld"
 msgstr "DNSServiceRegister()が失敗しました: エラーコード %ld"
 
-#: postmaster/postmaster.c:1340
+#: postmaster/postmaster.c:1343
 #, c-format
 msgid "could not create Unix-domain socket in directory \"%s\""
 msgstr "ディレクトリ\"%s\"においてUnixドメインソケットを作成できませんでした"
 
-#: postmaster/postmaster.c:1346
+#: postmaster/postmaster.c:1349
 #, c-format
 msgid "could not create any Unix-domain sockets"
 msgstr "Unixドメインソケットを作成できませんでした"
 
-#: postmaster/postmaster.c:1358
+#: postmaster/postmaster.c:1361
 #, c-format
 msgid "no socket created for listening"
 msgstr "監視用に作成するソケットはありません"
 
-#: postmaster/postmaster.c:1389
+#: postmaster/postmaster.c:1392
 #, c-format
 msgid "%s: could not change permissions of external PID file \"%s\": %s\n"
 msgstr "%s: 外部PIDファイル\"%s\"の権限を変更できませんでした: %s\n"
 
-#: postmaster/postmaster.c:1393
+#: postmaster/postmaster.c:1396
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: 外部PIDファイル\"%s\"に書き出せませんでした: %s\n"
 
-#: postmaster/postmaster.c:1420 utils/init/postinit.c:220
+#: postmaster/postmaster.c:1423 utils/init/postinit.c:220
 #, c-format
 msgid "could not load pg_hba.conf"
 msgstr "pg_hba.conf の読み込みができませんでした"
 
-#: postmaster/postmaster.c:1446
+#: postmaster/postmaster.c:1449
 #, c-format
 msgid "postmaster became multithreaded during startup"
 msgstr "postmasterは起動値処理中はマルチスレッドで動作します"
 
-#: postmaster/postmaster.c:1447
+#: postmaster/postmaster.c:1450
 #, c-format
 msgid "Set the LC_ALL environment variable to a valid locale."
 msgstr "LC_ALL環境変数を使用可能なロケールに設定してください。"
 
-#: postmaster/postmaster.c:1548
+#: postmaster/postmaster.c:1551
 #, c-format
 msgid "%s: could not locate my own executable path"
 msgstr "%s: 自身の実行ファイルのパスが特定できません"
 
-#: postmaster/postmaster.c:1555
+#: postmaster/postmaster.c:1558
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr "%s: 一致するpostgres実行ファイルがありませんでした"
 
-#: postmaster/postmaster.c:1578 utils/misc/tzparser.c:340
+#: postmaster/postmaster.c:1581 utils/misc/tzparser.c:340
 #, c-format
 msgid "This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location."
 msgstr "これは、PostgreSQLのインストールが不完全であるかまたは、ファイル\"%s\"が本来の場所からなくなってしまったことを示しています。"
 
-#: postmaster/postmaster.c:1605
+#: postmaster/postmaster.c:1608
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -18576,471 +18586,471 @@ msgstr ""
 "ディレクトリ\"%s\"にあるものと想定していましたが、\n"
 "ファイル\"%s\"をオープンできませんでした: %s\n"
 
-#: postmaster/postmaster.c:1782
+#: postmaster/postmaster.c:1785
 #, c-format
 msgid "select() failed in postmaster: %m"
 msgstr "postmasterでselect()が失敗しました: %m"
 
-#: postmaster/postmaster.c:1913
+#: postmaster/postmaster.c:1916
 #, c-format
 msgid "issuing SIGKILL to recalcitrant children"
 msgstr "手に負えない子プロセスにSIGKILLを送出します"
 
-#: postmaster/postmaster.c:1934
+#: postmaster/postmaster.c:1937
 #, c-format
 msgid "performing immediate shutdown because data directory lock file is invalid"
 msgstr "データディレクトリのロックファイルが不正なため、即時シャットダウンを実行中です"
 
-#: postmaster/postmaster.c:2037 postmaster/postmaster.c:2065
+#: postmaster/postmaster.c:2040 postmaster/postmaster.c:2068
 #, c-format
 msgid "incomplete startup packet"
 msgstr "開始パケットが不完全です"
 
-#: postmaster/postmaster.c:2049 postmaster/postmaster.c:2082
+#: postmaster/postmaster.c:2052 postmaster/postmaster.c:2085
 #, c-format
 msgid "invalid length of startup packet"
 msgstr "不正な開始パケット長"
 
-#: postmaster/postmaster.c:2111
+#: postmaster/postmaster.c:2114
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "SSLネゴシエーション応答の送信に失敗しました: %m"
 
-#: postmaster/postmaster.c:2129
+#: postmaster/postmaster.c:2132
 #, c-format
 msgid "received unencrypted data after SSL request"
 msgstr "SSL要求の後に非暗号化データを受信しました"
 
-#: postmaster/postmaster.c:2130 postmaster/postmaster.c:2174
+#: postmaster/postmaster.c:2133 postmaster/postmaster.c:2177
 #, c-format
 msgid "This could be either a client-software bug or evidence of an attempted man-in-the-middle attack."
 msgstr "これはクライアントソフトウェアのバグであるか、man-in-the-middle攻撃の証左である可能性があります。"
 
-#: postmaster/postmaster.c:2155
+#: postmaster/postmaster.c:2158
 #, c-format
 msgid "failed to send GSSAPI negotiation response: %m"
 msgstr "GSSAPIネゴシエーション応答の送信に失敗しました: %m"
 
-#: postmaster/postmaster.c:2173
+#: postmaster/postmaster.c:2176
 #, c-format
 msgid "received unencrypted data after GSSAPI encryption request"
 msgstr "GSSAPI暗号化リクエストの後に非暗号化データを受信"
 
-#: postmaster/postmaster.c:2197
+#: postmaster/postmaster.c:2200
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "フロントエンドプロトコル%u.%uをサポートしていません: サーバーは%u.0から %u.%uまでをサポートします"
 
-#: postmaster/postmaster.c:2261 utils/misc/guc.c:7400 utils/misc/guc.c:7436 utils/misc/guc.c:7506 utils/misc/guc.c:8937 utils/misc/guc.c:11971 utils/misc/guc.c:12012
+#: postmaster/postmaster.c:2264 utils/misc/guc.c:7400 utils/misc/guc.c:7436 utils/misc/guc.c:7506 utils/misc/guc.c:8937 utils/misc/guc.c:11971 utils/misc/guc.c:12012
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "パラメータ\"%s\"の値が不正です: \"%s\""
 
-#: postmaster/postmaster.c:2264
+#: postmaster/postmaster.c:2267
 #, c-format
 msgid "Valid values are: \"false\", 0, \"true\", 1, \"database\"."
 msgstr "有効な値: \"false\", 0, \"true\", 1, \"database\"。"
 
-#: postmaster/postmaster.c:2309
+#: postmaster/postmaster.c:2312
 #, c-format
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr "開始パケットの配置が不正です: 最終バイトはターミネータであるはずです"
 
-#: postmaster/postmaster.c:2326
+#: postmaster/postmaster.c:2329
 #, c-format
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "開始パケットで指定されたPostgreSQLユーザー名は存在しません"
 
-#: postmaster/postmaster.c:2390
+#: postmaster/postmaster.c:2393
 #, c-format
 msgid "the database system is starting up"
 msgstr "データベースシステムは起動処理中です"
 
-#: postmaster/postmaster.c:2396
+#: postmaster/postmaster.c:2399
 #, c-format
 msgid "the database system is not yet accepting connections"
 msgstr "データベースシステムはまだ接続を受け付けていません"
 
-#: postmaster/postmaster.c:2397
+#: postmaster/postmaster.c:2400
 #, c-format
 msgid "Consistent recovery state has not been yet reached."
 msgstr "リカバリの一貫性はまだ確保されていません。"
 
-#: postmaster/postmaster.c:2401
+#: postmaster/postmaster.c:2404
 #, c-format
 msgid "the database system is not accepting connections"
 msgstr "データベースシステムは接続を受け付けていません"
 
-#: postmaster/postmaster.c:2402
+#: postmaster/postmaster.c:2405
 #, c-format
 msgid "Hot standby mode is disabled."
 msgstr "ホットスタンバイモードは無効です。"
 
-#: postmaster/postmaster.c:2407
+#: postmaster/postmaster.c:2410
 #, c-format
 msgid "the database system is shutting down"
 msgstr "データベースシステムはシャットダウンしています"
 
-#: postmaster/postmaster.c:2412
+#: postmaster/postmaster.c:2415
 #, c-format
 msgid "the database system is in recovery mode"
 msgstr "データベースシステムはリカバリモードです"
 
-#: postmaster/postmaster.c:2417 storage/ipc/procarray.c:493 storage/ipc/sinvaladt.c:306 storage/lmgr/proc.c:359
+#: postmaster/postmaster.c:2420 storage/ipc/procarray.c:493 storage/ipc/sinvaladt.c:306 storage/lmgr/proc.c:359
 #, c-format
 msgid "sorry, too many clients already"
 msgstr "現在クライアント数が多すぎます"
 
-#: postmaster/postmaster.c:2504
+#: postmaster/postmaster.c:2507
 #, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "プロセス%dに対するキャンセル要求においてキーが間違っています"
 
-#: postmaster/postmaster.c:2516
+#: postmaster/postmaster.c:2519
 #, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "キャンセル要求内のPID %dがどのプロセスにも一致しません"
 
-#: postmaster/postmaster.c:2770
+#: postmaster/postmaster.c:2773
 #, c-format
 msgid "received SIGHUP, reloading configuration files"
 msgstr "SIGHUPを受け取りました。設定ファイルをリロードしています"
 
 #. translator: %s is a configuration file
-#: postmaster/postmaster.c:2794 postmaster/postmaster.c:2798
+#: postmaster/postmaster.c:2797 postmaster/postmaster.c:2801
 #, c-format
 msgid "%s was not reloaded"
 msgstr "%s は再読み込みされていません"
 
-#: postmaster/postmaster.c:2808
+#: postmaster/postmaster.c:2811
 #, c-format
 msgid "SSL configuration was not reloaded"
 msgstr "SSL設定は再読み込みされていません"
 
-#: postmaster/postmaster.c:2864
+#: postmaster/postmaster.c:2867
 #, c-format
 msgid "received smart shutdown request"
 msgstr "スマートシャットダウン要求を受け取りました"
 
-#: postmaster/postmaster.c:2905
+#: postmaster/postmaster.c:2908
 #, c-format
 msgid "received fast shutdown request"
 msgstr "高速シャットダウン要求を受け取りました"
 
-#: postmaster/postmaster.c:2923
+#: postmaster/postmaster.c:2926
 #, c-format
 msgid "aborting any active transactions"
 msgstr "活動中の全トランザクションをアボートしています"
 
-#: postmaster/postmaster.c:2947
+#: postmaster/postmaster.c:2950
 #, c-format
 msgid "received immediate shutdown request"
 msgstr "即時シャットダウン要求を受け取りました"
 
-#: postmaster/postmaster.c:3024
+#: postmaster/postmaster.c:3027
 #, c-format
 msgid "shutdown at recovery target"
 msgstr "リカバリ目標でシャットダウンします"
 
-#: postmaster/postmaster.c:3042 postmaster/postmaster.c:3078
+#: postmaster/postmaster.c:3045 postmaster/postmaster.c:3081
 msgid "startup process"
 msgstr "起動プロセス"
 
-#: postmaster/postmaster.c:3045
+#: postmaster/postmaster.c:3048
 #, c-format
 msgid "aborting startup due to startup process failure"
 msgstr "起動プロセスの失敗のため起動を中断しています"
 
-#: postmaster/postmaster.c:3118
+#: postmaster/postmaster.c:3121
 #, c-format
 msgid "database system is ready to accept connections"
 msgstr "データベースシステムの接続受け付け準備が整いました"
 
-#: postmaster/postmaster.c:3139
+#: postmaster/postmaster.c:3142
 msgid "background writer process"
 msgstr "バックグランドライタプロセス"
 
-#: postmaster/postmaster.c:3186
+#: postmaster/postmaster.c:3189
 msgid "checkpointer process"
 msgstr "チェックポイント処理プロセス"
 
-#: postmaster/postmaster.c:3202
+#: postmaster/postmaster.c:3205
 msgid "WAL writer process"
 msgstr "WALライタプロセス"
 
-#: postmaster/postmaster.c:3217
+#: postmaster/postmaster.c:3220
 msgid "WAL receiver process"
 msgstr "WAL 受信プロセス"
 
-#: postmaster/postmaster.c:3232
+#: postmaster/postmaster.c:3235
 msgid "autovacuum launcher process"
 msgstr "自動VACUUM起動プロセス"
 
-#: postmaster/postmaster.c:3250
+#: postmaster/postmaster.c:3253
 msgid "archiver process"
 msgstr "アーカイバプロセス"
 
-#: postmaster/postmaster.c:3263
+#: postmaster/postmaster.c:3266
 msgid "system logger process"
 msgstr "システムログ取得プロセス"
 
-#: postmaster/postmaster.c:3327
+#: postmaster/postmaster.c:3330
 #, c-format
 msgid "background worker \"%s\""
 msgstr "バックグラウンドワーカー\"%s\""
 
-#: postmaster/postmaster.c:3406 postmaster/postmaster.c:3426 postmaster/postmaster.c:3433 postmaster/postmaster.c:3451
+#: postmaster/postmaster.c:3409 postmaster/postmaster.c:3429 postmaster/postmaster.c:3436 postmaster/postmaster.c:3454
 msgid "server process"
 msgstr "サーバープロセス"
 
-#: postmaster/postmaster.c:3505
+#: postmaster/postmaster.c:3508
 #, c-format
 msgid "terminating any other active server processes"
 msgstr "他の活動中のサーバープロセスを終了しています"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3742
+#: postmaster/postmaster.c:3745
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d)は終了コード%dで終了しました"
 
-#: postmaster/postmaster.c:3744 postmaster/postmaster.c:3756 postmaster/postmaster.c:3766 postmaster/postmaster.c:3777
+#: postmaster/postmaster.c:3747 postmaster/postmaster.c:3759 postmaster/postmaster.c:3769 postmaster/postmaster.c:3780
 #, c-format
 msgid "Failed process was running: %s"
 msgstr "失敗したプロセスが実行していました: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3753
+#: postmaster/postmaster.c:3756
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d)は例外%Xで終了しました"
 
-#: postmaster/postmaster.c:3755 postmaster/shell_archive.c:134
+#: postmaster/postmaster.c:3758 postmaster/shell_archive.c:134
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "16進値の説明についてはC インクルードファイル\"ntstatus.h\"を参照してください。"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3763
+#: postmaster/postmaster.c:3766
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d)はシグナル%dで終了しました: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3775
+#: postmaster/postmaster.c:3778
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d)は認識できないステータス%dで終了しました"
 
-#: postmaster/postmaster.c:3975
+#: postmaster/postmaster.c:3978
 #, c-format
 msgid "abnormal database system shutdown"
 msgstr "データベースシステムは異常にシャットダウンしました"
 
-#: postmaster/postmaster.c:4001
+#: postmaster/postmaster.c:4004
 #, c-format
 msgid "shutting down due to startup process failure"
 msgstr "起動プロセスの失敗のためシャットダウンしています"
 
-#: postmaster/postmaster.c:4007
+#: postmaster/postmaster.c:4010
 #, c-format
 msgid "shutting down because restart_after_crash is off"
 msgstr "restart_after_crashがoffであるためシャットダウンします"
 
-#: postmaster/postmaster.c:4019
+#: postmaster/postmaster.c:4022
 #, c-format
 msgid "all server processes terminated; reinitializing"
 msgstr "全てのサーバープロセスが終了しました: 再初期化しています"
 
-#: postmaster/postmaster.c:4191 postmaster/postmaster.c:5519 postmaster/postmaster.c:5917
+#: postmaster/postmaster.c:4194 postmaster/postmaster.c:5522 postmaster/postmaster.c:5920
 #, c-format
 msgid "could not generate random cancel key"
 msgstr "ランダムなキャンセルキーを生成できませんでした"
 
-#: postmaster/postmaster.c:4253
+#: postmaster/postmaster.c:4256
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "接続用の新しいプロセスをforkできませんでした: %m"
 
-#: postmaster/postmaster.c:4295
+#: postmaster/postmaster.c:4298
 msgid "could not fork new process for connection: "
 msgstr "接続用の新しいプロセスをforkできませんでした"
 
-#: postmaster/postmaster.c:4401
+#: postmaster/postmaster.c:4404
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "接続を受け付けました: ホスト=%s ポート番号=%s"
 
-#: postmaster/postmaster.c:4406
+#: postmaster/postmaster.c:4409
 #, c-format
 msgid "connection received: host=%s"
 msgstr "接続を受け付けました: ホスト=%s"
 
-#: postmaster/postmaster.c:4643
+#: postmaster/postmaster.c:4646
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "サーバープロセス\"%s\"を実行できませんでした: %m"
 
-#: postmaster/postmaster.c:4701
+#: postmaster/postmaster.c:4704
 #, c-format
 msgid "could not create backend parameter file mapping: error code %lu"
 msgstr "バックエンドパラメータファイルのファイルマッピングを作成できませんでした: エラーコード%lu"
 
-#: postmaster/postmaster.c:4710
+#: postmaster/postmaster.c:4713
 #, c-format
 msgid "could not map backend parameter memory: error code %lu"
 msgstr "バックエンドパラメータのメモリをマップできませんでした: エラーコード %lu"
 
-#: postmaster/postmaster.c:4737
+#: postmaster/postmaster.c:4740
 #, c-format
 msgid "subprocess command line too long"
 msgstr "サブプロセスのコマンドラインが長すぎます"
 
-#: postmaster/postmaster.c:4755
+#: postmaster/postmaster.c:4758
 #, c-format
 msgid "CreateProcess() call failed: %m (error code %lu)"
 msgstr "CreateProcess() の呼び出しが失敗しました: %m (エラーコード %lu)"
 
-#: postmaster/postmaster.c:4782
+#: postmaster/postmaster.c:4785
 #, c-format
 msgid "could not unmap view of backend parameter file: error code %lu"
 msgstr "バックエンドパラメータファイルのビューをアンマップできませんでした: エラーコード %lu"
 
-#: postmaster/postmaster.c:4786
+#: postmaster/postmaster.c:4789
 #, c-format
 msgid "could not close handle to backend parameter file: error code %lu"
 msgstr "バックエンドパラメータファイルのハンドルをクローズできませんでした: エラーコード%lu"
 
-#: postmaster/postmaster.c:4808
+#: postmaster/postmaster.c:4811
 #, c-format
 msgid "giving up after too many tries to reserve shared memory"
 msgstr "共有メモリの確保のリトライ回数が多すぎるため中断します"
 
-#: postmaster/postmaster.c:4809
+#: postmaster/postmaster.c:4812
 #, c-format
 msgid "This might be caused by ASLR or antivirus software."
 msgstr "これはASLRまたはアンチウイルスソフトウェアが原因である可能性があります。"
 
-#: postmaster/postmaster.c:4982
+#: postmaster/postmaster.c:4985
 #, c-format
 msgid "SSL configuration could not be loaded in child process"
 msgstr "SSL構成は子プロセスでは読み込めません"
 
-#: postmaster/postmaster.c:5107
+#: postmaster/postmaster.c:5110
 #, c-format
 msgid "Please report this to <%s>."
 msgstr "これを<%s>まで報告してください。"
 
-#: postmaster/postmaster.c:5179
+#: postmaster/postmaster.c:5182
 #, c-format
 msgid "database system is ready to accept read-only connections"
 msgstr "データベースシステムはリードオンリー接続の受け付け準備ができました"
 
-#: postmaster/postmaster.c:5443
+#: postmaster/postmaster.c:5446
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "起動プロセスをforkできませんでした: %m"
 
-#: postmaster/postmaster.c:5447
+#: postmaster/postmaster.c:5450
 #, c-format
 msgid "could not fork archiver process: %m"
 msgstr "アーカイバプロセスをforkできませんでした: %m"
 
-#: postmaster/postmaster.c:5451
+#: postmaster/postmaster.c:5454
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "バックグランドライタプロセスをforkできませんでした: %m"
 
-#: postmaster/postmaster.c:5455
+#: postmaster/postmaster.c:5458
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "チェックポイント処理プロセスをforkできませんでした: %m"
 
-#: postmaster/postmaster.c:5459
+#: postmaster/postmaster.c:5462
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "WALライタプロセスをforkできませんでした: %m"
 
-#: postmaster/postmaster.c:5463
+#: postmaster/postmaster.c:5466
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "WAL 受信プロセスを fork できませんでした: %m"
 
-#: postmaster/postmaster.c:5467
+#: postmaster/postmaster.c:5470
 #, c-format
 msgid "could not fork process: %m"
 msgstr "プロセスをforkできませんでした: %m"
 
-#: postmaster/postmaster.c:5668 postmaster/postmaster.c:5695
+#: postmaster/postmaster.c:5671 postmaster/postmaster.c:5698
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr "登録時にデータベース接続の必要性が示されていません"
 
-#: postmaster/postmaster.c:5679 postmaster/postmaster.c:5706
+#: postmaster/postmaster.c:5682 postmaster/postmaster.c:5709
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "バックグラウンドワーカー内の不正な処理モード"
 
-#: postmaster/postmaster.c:5791
+#: postmaster/postmaster.c:5794
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "ワーカープロセスをforkできませんでした: %m"
 
-#: postmaster/postmaster.c:5903
+#: postmaster/postmaster.c:5906
 #, c-format
 msgid "no slot available for new worker process"
 msgstr "新しいワーカープロセスに割り当て可能なスロットがありません"
 
-#: postmaster/postmaster.c:6234
+#: postmaster/postmaster.c:6237
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "バックエンドで使用するためにソケット%dを複製できませんでした: エラーコード %d"
 
-#: postmaster/postmaster.c:6266
+#: postmaster/postmaster.c:6269
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "継承したソケットを作成できませんでした: エラーコード %d\n"
 
-#: postmaster/postmaster.c:6295
+#: postmaster/postmaster.c:6298
 #, c-format
 msgid "could not open backend variables file \"%s\": %s\n"
 msgstr "バックエンド変数ファイル\"%s\"をオープンできませんでした: %s\n"
 
-#: postmaster/postmaster.c:6302
+#: postmaster/postmaster.c:6305
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "バックエンド変数ファイル\"%s\"から読み取れませんでした: %s\n"
 
-#: postmaster/postmaster.c:6311
+#: postmaster/postmaster.c:6314
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "ファイル\"%s\"を削除できませんでした: %s\n"
 
-#: postmaster/postmaster.c:6328
+#: postmaster/postmaster.c:6331
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "バックエンド変数のビューをマップできませんでした: エラーコード %lu\n"
 
-#: postmaster/postmaster.c:6337
+#: postmaster/postmaster.c:6340
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr "バックエンド変数のビューをアンマップできませんでした: エラーコード %lu\n"
 
-#: postmaster/postmaster.c:6344
+#: postmaster/postmaster.c:6347
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr "バックエンドパラメータ変数のハンドルをクローズできませんでした: エラーコード%lu\n"
 
-#: postmaster/postmaster.c:6503
+#: postmaster/postmaster.c:6506
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "子プロセスの終了コードの読み込みができませんでした\n"
 
-#: postmaster/postmaster.c:6545
+#: postmaster/postmaster.c:6548
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "個プロセスの終了コードを投稿できませんでした\n"
@@ -19527,68 +19537,68 @@ msgstr "pg_replslot/%2$s/xid* の削除中にファイル\"%1$s\"が削除でき
 msgid "could not read from file \"%s\": read %d instead of %d bytes"
 msgstr "ファイル\"%1$s\"の読み込みに失敗しました: %3$dバイトのはずが%2$dバイトでした"
 
-#: replication/logical/snapbuild.c:634
+#: replication/logical/snapbuild.c:646
 #, c-format
 msgid "initial slot snapshot too large"
 msgstr "初期スロットスナップショットが大きすぎます"
 
-#: replication/logical/snapbuild.c:688
+#: replication/logical/snapbuild.c:700
 #, c-format
 msgid "exported logical decoding snapshot: \"%s\" with %u transaction ID"
 msgid_plural "exported logical decoding snapshot: \"%s\" with %u transaction IDs"
 msgstr[0] "エクスポートされた論理デコードスナップショット: \"%s\" (%u個のトランザクションID を含む)"
 
-#: replication/logical/snapbuild.c:1367 replication/logical/snapbuild.c:1474 replication/logical/snapbuild.c:2003
+#: replication/logical/snapbuild.c:1379 replication/logical/snapbuild.c:1486 replication/logical/snapbuild.c:2015
 #, c-format
 msgid "logical decoding found consistent point at %X/%X"
 msgstr "論理デコードは一貫性ポイントを%X/%Xで発見しました"
 
-#: replication/logical/snapbuild.c:1369
+#: replication/logical/snapbuild.c:1381
 #, c-format
 msgid "There are no running transactions."
 msgstr "実行中のトランザクションはありません。"
 
-#: replication/logical/snapbuild.c:1425
+#: replication/logical/snapbuild.c:1437
 #, c-format
 msgid "logical decoding found initial starting point at %X/%X"
 msgstr "論理デコードは初期開始点を%X/%Xで発見しました"
 
-#: replication/logical/snapbuild.c:1427 replication/logical/snapbuild.c:1451
+#: replication/logical/snapbuild.c:1439 replication/logical/snapbuild.c:1463
 #, c-format
 msgid "Waiting for transactions (approximately %d) older than %u to end."
 msgstr "%2$uより古いトランザクション(おおよそ%1$d個)の完了を待っています"
 
-#: replication/logical/snapbuild.c:1449
+#: replication/logical/snapbuild.c:1461
 #, c-format
 msgid "logical decoding found initial consistent point at %X/%X"
 msgstr "論理デコードは初期の一貫性ポイントを%X/%Xで発見しました"
 
-#: replication/logical/snapbuild.c:1476
+#: replication/logical/snapbuild.c:1488
 #, c-format
 msgid "There are no old transactions anymore."
 msgstr "古いトランザクションはこれ以上はありません"
 
-#: replication/logical/snapbuild.c:1871
+#: replication/logical/snapbuild.c:1883
 #, c-format
 msgid "snapbuild state file \"%s\" has wrong magic number: %u instead of %u"
 msgstr "スナップショット構築状態ファイル\"%1$s\"のマジックナンバーが不正です: %3$uのはずが%2$uでした"
 
-#: replication/logical/snapbuild.c:1877
+#: replication/logical/snapbuild.c:1889
 #, c-format
 msgid "snapbuild state file \"%s\" has unsupported version: %u instead of %u"
 msgstr "スナップショット状態ファイル\"%1$s\"のバージョン%2$uはサポート外です: %3$uのはずが%2$uでした"
 
-#: replication/logical/snapbuild.c:1948
+#: replication/logical/snapbuild.c:1960
 #, c-format
 msgid "checksum mismatch for snapbuild state file \"%s\": is %u, should be %u"
 msgstr "スナップショット生成状態ファイル\"%s\"のチェックサムが一致しません: %uですが、%uであるべきです"
 
-#: replication/logical/snapbuild.c:2005
+#: replication/logical/snapbuild.c:2017
 #, c-format
 msgid "Logical decoding will begin using saved snapshot."
 msgstr "論理デコードは保存されたスナップショットを使って開始します。"
 
-#: replication/logical/snapbuild.c:2077
+#: replication/logical/snapbuild.c:2089
 #, c-format
 msgid "could not parse file name \"%s\""
 msgstr "ファイル名\"%s\"をパースできませんでした"
@@ -24326,22 +24336,22 @@ msgstr "pg_lsnからNaNは減算できません"
 msgid "function can only be called when server is in binary upgrade mode"
 msgstr "関数はサーバーがバイナリアップグレードモードであるときのみ呼び出せます"
 
-#: utils/adt/pgstatfuncs.c:482
+#: utils/adt/pgstatfuncs.c:483
 #, c-format
 msgid "invalid command name: \"%s\""
 msgstr "不正なコマンド名: \"%s\""
 
-#: utils/adt/pgstatfuncs.c:2114
+#: utils/adt/pgstatfuncs.c:2115
 #, c-format
 msgid "unrecognized reset target: \"%s\""
 msgstr "認識できないリセットターゲット: \"%s\""
 
-#: utils/adt/pgstatfuncs.c:2115
+#: utils/adt/pgstatfuncs.c:2116
 #, c-format
 msgid "Target must be \"archiver\", \"bgwriter\", \"recovery_prefetch\", or \"wal\"."
 msgstr "対象は\"archiver\"、\"bgwriter\"、\"recovery_prefetch\"または\"wal\"でなければなりません。"
 
-#: utils/adt/pgstatfuncs.c:2193
+#: utils/adt/pgstatfuncs.c:2198
 #, c-format
 msgid "invalid subscription OID %u"
 msgstr "不正なサブスクリプションOID %u"
@@ -24472,7 +24482,7 @@ msgstr "\"%s\"という名前の関数が複数あります"
 msgid "more than one operator named %s"
 msgstr "%sという名前の演算子が複数あります"
 
-#: utils/adt/regproc.c:715 utils/adt/regproc.c:756 utils/adt/regproc.c:2055 utils/adt/ruleutils.c:10021 utils/adt/ruleutils.c:10190
+#: utils/adt/regproc.c:715 utils/adt/regproc.c:756 utils/adt/regproc.c:2055 utils/adt/ruleutils.c:10028 utils/adt/ruleutils.c:10197
 #, c-format
 msgid "too many arguments"
 msgstr "引数が多すぎます"
@@ -25246,47 +25256,52 @@ msgstr "XMLタイムスタンプ値としては無限をサポートしません
 msgid "invalid query"
 msgstr "不正な無効な問い合わせ"
 
-#: utils/adt/xml.c:4015
+#: utils/adt/xml.c:2767
+#, c-format
+msgid "portal \"%s\" does not return tuples"
+msgstr "ポータル\"%s\"はタプルを返却しません"
+
+#: utils/adt/xml.c:4019
 #, c-format
 msgid "invalid array for XML namespace mapping"
 msgstr "XML名前空間マッピングに対する不正な配列"
 
-#: utils/adt/xml.c:4016
+#: utils/adt/xml.c:4020
 #, c-format
 msgid "The array must be two-dimensional with length of the second axis equal to 2."
 msgstr "この配列は第2軸の長さが2である2次元配列でなければなりません。"
 
-#: utils/adt/xml.c:4040
+#: utils/adt/xml.c:4044
 #, c-format
 msgid "empty XPath expression"
 msgstr "空のXPath式"
 
-#: utils/adt/xml.c:4092
+#: utils/adt/xml.c:4096
 #, c-format
 msgid "neither namespace name nor URI may be null"
 msgstr "名前空間名もURIもnullにはできません"
 
-#: utils/adt/xml.c:4099
+#: utils/adt/xml.c:4103
 #, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr "\"%s\"という名前のXML名前空間およびURI\"%s\"を登録できませんでした"
 
-#: utils/adt/xml.c:4450
+#: utils/adt/xml.c:4454
 #, c-format
 msgid "DEFAULT namespace is not supported"
 msgstr "デフォルト名前空間は実装されていません"
 
-#: utils/adt/xml.c:4479
+#: utils/adt/xml.c:4483
 #, c-format
 msgid "row path filter must not be empty string"
 msgstr "行パスフィルタは空文字列であってはなりません"
 
-#: utils/adt/xml.c:4510
+#: utils/adt/xml.c:4514
 #, c-format
 msgid "column path filter must not be empty string"
 msgstr "列パスフィルタ空文字列であってはなりません"
 
-#: utils/adt/xml.c:4654
+#: utils/adt/xml.c:4658
 #, c-format
 msgid "more than one value returned by column XPath expression"
 msgstr "列XPath式が2つ以上の値を返却しました"
@@ -25316,7 +25331,7 @@ msgstr "型%sの利用可能な出力関数がありません"
 msgid "operator class \"%s\" of access method %s is missing support function %d for type %s"
 msgstr "アクセスメソッド %2$s の演算子クラス\"%1$s\"は%4$s型に対応するサポート関数%3$dを含んでいません"
 
-#: utils/cache/plancache.c:722
+#: utils/cache/plancache.c:724
 #, c-format
 msgid "cached plan must not change result type"
 msgstr "キャッシュした実行計画は結果型を変更してはなりません"
@@ -25927,22 +25942,22 @@ msgstr "残りの接続スロットはレプリケーションユーザーでは
 msgid "must be superuser or replication role to start walsender"
 msgstr "walsenderを起動するにはスーパーユーザーまたはreplicationロールである必要があります"
 
-#: utils/init/postinit.c:964
-#, c-format
-msgid "database %u does not exist"
-msgstr "データベース %u は存在しません"
-
-#: utils/init/postinit.c:1054
+#: utils/init/postinit.c:1012
 #, c-format
 msgid "It seems to have just been dropped or renamed."
 msgstr "削除またはリネームされたばかりのようです。"
 
-#: utils/init/postinit.c:1061
+#: utils/init/postinit.c:1016
+#, c-format
+msgid "database %u does not exist"
+msgstr "データベース %u は存在しません"
+
+#: utils/init/postinit.c:1025
 #, c-format
 msgid "cannot connect to invalid database \"%s\""
 msgstr "無効なデータベース\"%s\"への接続はできません"
 
-#: utils/init/postinit.c:1081
+#: utils/init/postinit.c:1085
 #, c-format
 msgid "The database subdirectory \"%s\" is missing."
 msgstr "データベースのサブディレクトリ\"%s\"がありません。"

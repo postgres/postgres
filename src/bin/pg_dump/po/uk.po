@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-18 19:19+0000\n"
-"PO-Revision-Date: 2023-04-19 15:37\n"
+"POT-Creation-Date: 2023-08-27 18:36+0000\n"
+"PO-Revision-Date: 2023-08-28 15:54\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -1024,7 +1024,8 @@ msgstr "не вдалося зв'язатися з базою даних"
 msgid "reconnection failed: %s"
 msgstr "помилка повторного підключення: %s"
 
-#: pg_backup_db.c:190 pg_backup_db.c:265 pg_dumpall.c:1520 pg_dumpall.c:1604
+#: pg_backup_db.c:190 pg_backup_db.c:265 pg_dump_sort.c:1280
+#: pg_dump_sort.c:1300 pg_dumpall.c:1520 pg_dumpall.c:1604
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1829,8 +1830,8 @@ msgstr "читання політик безпеки на рівні рядкі�
 msgid "unexpected policy command type: %c"
 msgstr "неочікуваний тип команди в політиці: %c"
 
-#: pg_dump.c:4314 pg_dump.c:4632 pg_dump.c:11833 pg_dump.c:17684
-#: pg_dump.c:17686 pg_dump.c:18307
+#: pg_dump.c:4314 pg_dump.c:4632 pg_dump.c:11835 pg_dump.c:17724
+#: pg_dump.c:17726 pg_dump.c:18347
 #, c-format
 msgid "could not parse %s array"
 msgstr "не вдалося аналізувати масив %s"
@@ -1850,63 +1851,63 @@ msgstr "не вдалося знайти батьківський елемент
 msgid "schema with OID %u does not exist"
 msgstr "схема з OID %u не існує"
 
-#: pg_dump.c:6613 pg_dump.c:16948
+#: pg_dump.c:6615 pg_dump.c:16988
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "помилка цілісності, за OID %u не вдалося знайти батьківську таблицю послідовності з OID %u"
 
-#: pg_dump.c:6756
+#: pg_dump.c:6758
 #, c-format
 msgid "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "помилка цілісності, OID %u не знайдено в таблиці pg_partitioned_table"
 
-#: pg_dump.c:6987 pg_dump.c:7254 pg_dump.c:7725 pg_dump.c:8392 pg_dump.c:8513
-#: pg_dump.c:8667
+#: pg_dump.c:6989 pg_dump.c:7256 pg_dump.c:7727 pg_dump.c:8394 pg_dump.c:8515
+#: pg_dump.c:8669
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "нерозпізнаний OID таблиці %u"
 
-#: pg_dump.c:6991
+#: pg_dump.c:6993
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "неочікувані дані індексу для таблиці \"%s\""
 
-#: pg_dump.c:7486
+#: pg_dump.c:7488
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "помилка цілісності, за OID %u не вдалося знайти батьківську таблицю для запису pg_rewrite з OID %u"
 
-#: pg_dump.c:7777
+#: pg_dump.c:7779
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)"
 msgstr "запит не повернув ім'я цільової таблиці для тригера зовнішнього ключа \"%s\" в таблиці \"%s\" (OID цільової таблиці: %u)"
 
-#: pg_dump.c:8396
+#: pg_dump.c:8398
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "неочікувані дані стовпця для таблиці \"%s\""
 
-#: pg_dump.c:8426
+#: pg_dump.c:8428
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "неприпустима нумерація стовпців у таблиці \"%s\""
 
-#: pg_dump.c:8475
+#: pg_dump.c:8477
 #, c-format
 msgid "finding table default expressions"
 msgstr "пошук виразів за замовчуванням для таблиці"
 
-#: pg_dump.c:8517
+#: pg_dump.c:8519
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "неприпустиме значення adnum %d для таблиці \"%s\""
 
-#: pg_dump.c:8617
+#: pg_dump.c:8619
 #, c-format
 msgid "finding table check constraints"
 msgstr "пошук перевірочних обмежень таблиці"
 
-#: pg_dump.c:8671
+#: pg_dump.c:8673
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
@@ -1915,167 +1916,177 @@ msgstr[1] "очікувалось %d обмеження-перевірки дл�
 msgstr[2] "очікувалось %d обмежень-перевірок для таблиці \"%s\", але знайдено %d"
 msgstr[3] "очікувалось %d обмежень-перевірок для таблиці \"%s\", але знайдено %d"
 
-#: pg_dump.c:8675
+#: pg_dump.c:8677
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "Системні каталоги можуть бути пошкоджені."
 
-#: pg_dump.c:9365
+#: pg_dump.c:9367
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "роль з OID %u не існує"
 
-#: pg_dump.c:9477 pg_dump.c:9506
+#: pg_dump.c:9479 pg_dump.c:9508
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "непідтримуваний запис в pg_init_privs: %u %u %d"
 
-#: pg_dump.c:10327
+#: pg_dump.c:10329
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "typtype типу даних \"%s\" має неприпустимий вигляд"
 
-#: pg_dump.c:11902
+#: pg_dump.c:11904
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "нерозпізнане значення provolatile для функції \"%s\""
 
-#: pg_dump.c:11952 pg_dump.c:13777
+#: pg_dump.c:11954 pg_dump.c:13817
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "нерозпізнане значення proparallel для функції \"%s\""
 
-#: pg_dump.c:12083 pg_dump.c:12189 pg_dump.c:12196
+#: pg_dump.c:12086 pg_dump.c:12192 pg_dump.c:12199
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "не вдалося знайти визначення функції для функції з OID %u"
 
-#: pg_dump.c:12122
+#: pg_dump.c:12125
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "неприпустиме значення в полі pg_cast.castfunc або pg_cast.castmethod"
 
-#: pg_dump.c:12125
+#: pg_dump.c:12128
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "неприпустиме значення в полі pg_cast.castmethod"
 
-#: pg_dump.c:12215
+#: pg_dump.c:12218
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "неприпустиме визначення перетворення, як мінімум одне з trffromsql і trftosql повинно бути ненульовим"
 
-#: pg_dump.c:12232
+#: pg_dump.c:12235
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "неприпустиме значення в полі pg_transform.trffromsql"
 
-#: pg_dump.c:12253
+#: pg_dump.c:12256
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "неприпустиме значення в полі pg_transform.trftosql"
 
-#: pg_dump.c:12398
+#: pg_dump.c:12401
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "постфіксні оператори більше не підтримуються (оператор \"%s\")"
 
-#: pg_dump.c:12568
+#: pg_dump.c:12571
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "не вдалося знайти оператора з OID %s"
 
-#: pg_dump.c:12636
+#: pg_dump.c:12639
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "неприпустимий тип \"%c\" методу доступу \"%s\""
 
-#: pg_dump.c:13278
+#: pg_dump.c:13293
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "нерозпізнаний постачальник правил сортування: %s"
 
-#: pg_dump.c:13696
+#: pg_dump.c:13302 pg_dump.c:13311 pg_dump.c:13321 pg_dump.c:13330
+#, c-format
+msgid "invalid collation \"%s\""
+msgstr "неприпустиме правило сортування \"%s\""
+
+#: pg_dump.c:13346
+#, c-format
+msgid "unrecognized collation provider '%c'"
+msgstr "нерозпізнаний провайдер параметрів сортування '%c'"
+
+#: pg_dump.c:13736
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "нерозпізнане значення aggfinalmodify для агрегату \"%s\""
 
-#: pg_dump.c:13752
+#: pg_dump.c:13792
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "нерозпізнане значення aggmfinalmodify для агрегату \"%s\""
 
-#: pg_dump.c:14470
+#: pg_dump.c:14510
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "нерозпізнаний тип об’єкта у стандартному праві: %d"
 
-#: pg_dump.c:14486
+#: pg_dump.c:14526
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "не вдалося проаналізувати стандартний ACL список (%s)"
 
-#: pg_dump.c:14568
+#: pg_dump.c:14608
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "не вдалося аналізувати початковий список ACL (%s) або за замовченням (%s) для об'єкта \"%s\" (%s)"
 
-#: pg_dump.c:14593
+#: pg_dump.c:14633
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "не вдалося аналізувати список ACL (%s) або за замовчуванням (%s) для об'єкту \"%s\" (%s)"
 
-#: pg_dump.c:15131
+#: pg_dump.c:15171
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "запит на отримання визначення перегляду \"%s\" не повернув дані"
 
-#: pg_dump.c:15134
+#: pg_dump.c:15174
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "запит на отримання визначення перегляду \"%s\" повернув більше, ніж одне визначення"
 
-#: pg_dump.c:15141
+#: pg_dump.c:15181
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "визначення перегляду \"%s\" пусте (довжина нуль)"
 
-#: pg_dump.c:15225
+#: pg_dump.c:15265
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS більше не підтримується (таблиця\"%s\")"
 
-#: pg_dump.c:16154
+#: pg_dump.c:16194
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "неприпустиме число стовпців %d для таблиці \"%s\""
 
-#: pg_dump.c:16232
+#: pg_dump.c:16272
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "не вдалося проаналізувати стовпці статистики індексів"
 
-#: pg_dump.c:16234
+#: pg_dump.c:16274
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "не вдалося проаналізувати значення статистики індексів"
 
-#: pg_dump.c:16236
+#: pg_dump.c:16276
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "невідповідна кількість стовпців і значень для статистики індексів"
 
-#: pg_dump.c:16454
+#: pg_dump.c:16494
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "пропущено індекс для обмеження \"%s\""
 
-#: pg_dump.c:16682
+#: pg_dump.c:16722
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "нерозпізнаний тип обмеження: %c"
 
-#: pg_dump.c:16783 pg_dump.c:17012
+#: pg_dump.c:16823 pg_dump.c:17052
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
@@ -2084,47 +2095,47 @@ msgstr[1] "запит на отримання даних послідовнос�
 msgstr[2] "запит на отримання даних послідовності \"%s\" повернув %d рядків (очікувалося 1)"
 msgstr[3] "запит на отримання даних послідовності \"%s\" повернув %d рядків (очікувалося 1)"
 
-#: pg_dump.c:16815
+#: pg_dump.c:16855
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "нерозпізнаний тип послідовності: %s"
 
-#: pg_dump.c:17104
+#: pg_dump.c:17144
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "неочікуване значення tgtype: %d"
 
-#: pg_dump.c:17176
+#: pg_dump.c:17216
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "неприпустимий рядок аргументу (%s) для тригера \"%s\" у таблиці \"%s\""
 
-#: pg_dump.c:17445
+#: pg_dump.c:17485
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "помилка запиту на отримання правила \"%s\" для таблиці \"%s\": повернено неправильне число рядків "
 
-#: pg_dump.c:17598
+#: pg_dump.c:17638
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "не вдалося знайти згадане розширення %u"
 
-#: pg_dump.c:17688
+#: pg_dump.c:17728
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "невідповідна кількість конфігурацій і умов для розширення"
 
-#: pg_dump.c:17820
+#: pg_dump.c:17860
 #, c-format
 msgid "reading dependency data"
 msgstr "читання даних залежності"
 
-#: pg_dump.c:17906
+#: pg_dump.c:17946
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "немає об’єкту посилання %u %u"
 
-#: pg_dump.c:17917
+#: pg_dump.c:17957
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "немає посилання на об'єкт %u %u"
@@ -2144,7 +2155,7 @@ msgstr "неприпустима залежність %d"
 msgid "could not identify dependency loop"
 msgstr "не вдалося ідентифікувати цикл залежності"
 
-#: pg_dump_sort.c:1232
+#: pg_dump_sort.c:1276
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
@@ -2153,22 +2164,17 @@ msgstr[1] "у наступних таблицях зациклені зовні�
 msgstr[2] "у наступних таблицях зациклені зовнішні ключі:"
 msgstr[3] "у наступних таблицях зациклені зовнішні ключі:"
 
-#: pg_dump_sort.c:1236 pg_dump_sort.c:1256
-#, c-format
-msgid "  %s"
-msgstr "  %s"
-
-#: pg_dump_sort.c:1237
+#: pg_dump_sort.c:1281
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints."
 msgstr "Ви не зможете відновити дамп без використання --disable-triggers або тимчасово розірвати обмеження."
 
-#: pg_dump_sort.c:1238
+#: pg_dump_sort.c:1282
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem."
 msgstr "Можливо, використання повного вивантажування замість --data-only вивантажування допоможе уникнути цієї проблеми."
 
-#: pg_dump_sort.c:1250
+#: pg_dump_sort.c:1294
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "не вдалося вирішити цикл залежності серед цих елементів:"

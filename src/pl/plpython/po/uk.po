@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-12 10:38+0000\n"
-"PO-Revision-Date: 2022-09-13 11:52\n"
+"POT-Creation-Date: 2023-08-17 04:25+0000\n"
+"PO-Revision-Date: 2023-08-17 15:51\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -126,62 +126,62 @@ msgstr "Тригерна функція PL/Python повернула \"MODIFY\" 
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "Очікувалось None, \"OK\", \"SKIP\" або \"MODIFY\"."
 
-#: plpy_exec.c:441
+#: plpy_exec.c:446
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "помилка PyList_SetItem() під час встановлення параметрів"
 
-#: plpy_exec.c:445
+#: plpy_exec.c:450
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "помилка PyDict_SetItemString() під час встановлення параметрів"
 
-#: plpy_exec.c:457
+#: plpy_exec.c:462
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "функція, що повертає набір, викликана у контексті, що не приймає тип запис"
 
-#: plpy_exec.c:674
+#: plpy_exec.c:679
 #, c-format
 msgid "while creating return value"
 msgstr "під час створення значення результату"
 
-#: plpy_exec.c:908
+#: plpy_exec.c:926
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] видалено, неможливо змінити рядок"
 
-#: plpy_exec.c:913
+#: plpy_exec.c:931
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] не є словником"
 
-#: plpy_exec.c:938
+#: plpy_exec.c:956
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "ключ словника TD[\"new\"] на порядковий позиції %d не є рядком"
 
-#: plpy_exec.c:945
+#: plpy_exec.c:963
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "ключ \"%s\" знайдений у TD[\"new\"] не існує як стовпець у рядку тригера"
 
-#: plpy_exec.c:950
+#: plpy_exec.c:968
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "не вдалося встановити системний атрибут \"%s\""
 
-#: plpy_exec.c:955
+#: plpy_exec.c:973
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "неможливо оновити згенерований стовпець \"%s\""
 
-#: plpy_exec.c:1013
+#: plpy_exec.c:1031
 #, c-format
 msgid "while modifying trigger row"
 msgstr "під час зміни рядка тригера"
 
-#: plpy_exec.c:1071
+#: plpy_exec.c:1089
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "примусове переривання субтранзакції, яка не вийшла"
@@ -350,102 +350,92 @@ msgstr "ця субтранзакція ще не почалася"
 msgid "there is no subtransaction to exit from"
 msgstr "немає субтранзакції, щоб з неї вийти"
 
-#: plpy_typeio.c:587
+#: plpy_typeio.c:588
 #, c-format
 msgid "could not import a module for Decimal constructor"
 msgstr "не вдалося імпортувати модуль для конструктора Decimal"
 
-#: plpy_typeio.c:591
+#: plpy_typeio.c:592
 #, c-format
 msgid "no Decimal attribute in module"
 msgstr "відсутній атрибут Decimal у модулі"
 
-#: plpy_typeio.c:597
+#: plpy_typeio.c:598
 #, c-format
 msgid "conversion from numeric to Decimal failed"
 msgstr "не вдалося виконати перетворення з numeric на Decimal"
 
-#: plpy_typeio.c:911
+#: plpy_typeio.c:912
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "не вдалося створити байтову репрезентацію об'єкта Python"
 
-#: plpy_typeio.c:1048
+#: plpy_typeio.c:1049
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "не вдалося створити рядкову репрезентацію об'єкта Python"
 
-#: plpy_typeio.c:1059
+#: plpy_typeio.c:1060
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "не вдалося перетворити об'єкт Python на cstring: репрезентація рядка Python містить значення null-байти"
 
-#: plpy_typeio.c:1170
-#, c-format
-msgid "number of array dimensions exceeds the maximum allowed (%d)"
-msgstr "кількість вимірів масиву перевищує максимально дозволену (%d)"
-
-#: plpy_typeio.c:1175
-#, c-format
-msgid "could not determine sequence length for function return value"
-msgstr "не вдалося визначити довжину послідовності для значення функція"
-
-#: plpy_typeio.c:1180 plpy_typeio.c:1186
-#, c-format
-msgid "array size exceeds the maximum allowed"
-msgstr "розмір масиву перевищує максимально дозволений"
-
-#: plpy_typeio.c:1214
+#: plpy_typeio.c:1157
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "значення функції з масивом в якості результату не є послідовністю Python"
 
-#: plpy_typeio.c:1261
+#: plpy_typeio.c:1202
 #, c-format
-msgid "wrong length of inner sequence: has length %d, but %d was expected"
-msgstr "неправильна довжина внутрішньої послідовності: довжина %d, але очікується %d"
+msgid "could not determine sequence length for function return value"
+msgstr "не вдалося визначити довжину послідовності для значення функція"
 
-#: plpy_typeio.c:1263
+#: plpy_typeio.c:1222 plpy_typeio.c:1237 plpy_typeio.c:1253
 #, c-format
-msgid "To construct a multidimensional array, the inner sequences must all have the same length."
-msgstr "Щоб побудувати багатовимірний масив, внутрішні послідовності повинні мати однакову довжину."
+msgid "multidimensional arrays must have array expressions with matching dimensions"
+msgstr "для багатовимірних масивів повинні задаватись вирази з відповідними вимірами"
 
-#: plpy_typeio.c:1342
+#: plpy_typeio.c:1227
+#, c-format
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "кількість вимірів масиву перевищує максимально дозволену (%d)"
+
+#: plpy_typeio.c:1329
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "невірно сформований літерал запису: \"%s\""
 
-#: plpy_typeio.c:1343
+#: plpy_typeio.c:1330
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Відсутня ліва дужка."
 
-#: plpy_typeio.c:1344 plpy_typeio.c:1545
+#: plpy_typeio.c:1331 plpy_typeio.c:1532
 #, c-format
 msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
 msgstr "Щоб повернути складений тип в масиві, треба повернути композитний тип як кортеж Python, наприклад, \"[('foo',)]\"."
 
-#: plpy_typeio.c:1391
+#: plpy_typeio.c:1378
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не знайдено в зіставленні"
 
-#: plpy_typeio.c:1392
+#: plpy_typeio.c:1379
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Для повернення значення null в стовпці, додайте значення None з ключом, що дорівнює імені стовпця."
 
-#: plpy_typeio.c:1445
+#: plpy_typeio.c:1432
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "довжина повернутої послідовності не відповідає кількості стовпців у рядку"
 
-#: plpy_typeio.c:1543
+#: plpy_typeio.c:1530
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "атрибут \"%s\" не існує в об'єкті Python"
 
-#: plpy_typeio.c:1546
+#: plpy_typeio.c:1533
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Щоб повернути null в стовпці, результуючий об'єкт має мати атрибут з іменем стовпця зі значенням None."
