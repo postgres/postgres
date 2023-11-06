@@ -1321,7 +1321,7 @@ innerrel_is_unique_ext(PlannerInfo *root,
 		 * supersets of them anyway.
 		 */
 		old_context = MemoryContextSwitchTo(root->planner_cxt);
-		uniqueRelInfo = palloc(sizeof(UniqueRelInfo));
+		uniqueRelInfo = makeNode(UniqueRelInfo);
 		uniqueRelInfo->extra_clauses = outer_exprs;
 		uniqueRelInfo->outerrelids = bms_copy(outerrelids);
 		innerrel->unique_for_rels = lappend(innerrel->unique_for_rels,
