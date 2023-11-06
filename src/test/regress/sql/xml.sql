@@ -660,3 +660,10 @@ SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n
 \x
 
 SELECT * FROM XMLTABLE('.' PASSING XMLELEMENT(NAME a) columns a varchar(20) PATH '"<foo/>"', b xml PATH '"<foo/>"');
+
+SELECT xmltext(NULL);
+SELECT xmltext('');
+SELECT xmltext('  ');
+SELECT xmltext('foo `$_-+?=*^%!|/\()[]{}');
+SELECT xmltext('foo & <"bar">');
+SELECT xmltext('x'|| '<P>73</P>'::xml || .42 || true || 'j'::char);

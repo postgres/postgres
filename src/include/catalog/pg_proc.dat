@@ -8793,6 +8793,9 @@
 { oid => '2922', descr => 'serialize an XML value to a character string',
   proname => 'text', prorettype => 'text', proargtypes => 'xml',
   prosrc => 'xmltotext' },
+{ oid => '3813', descr => 'generate XML text node',
+  proname => 'xmltext', proisstrict => 't', prorettype => 'xml',
+  proargtypes => 'text', prosrc => 'xmltext' },
 
 { oid => '2923', descr => 'map table contents to XML',
   proname => 'table_to_xml', procost => '100', provolatile => 's',

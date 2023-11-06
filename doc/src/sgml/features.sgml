@@ -199,6 +199,15 @@
        standard.
       </para>
      </listitem>
+
+     <listitem>
+      <para>
+       <productname>PostgreSQL</productname> does not support the
+       <literal>RETURNING CONTENT</literal> or <literal>RETURNING SEQUENCE</literal>
+       clauses, functions which are defined to have these in the specification
+       are implicitly returning content.
+      </para>
+     </listitem>
     </itemizedlist>
    </para>
 

@@ -633,7 +633,7 @@ X034	XMLAgg			YES
 X035	XMLAgg: ORDER BY option			YES	
 X036	XMLComment			YES	
 X037	XMLPI			YES	
-X038	XMLText			NO	
+X038	XMLText			YES	supported except for RETURNING
 X040	Basic table mapping			YES	
 X041	Basic table mapping: null absent			YES	
 X042	Basic table mapping: null as nil			YES	

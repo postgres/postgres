@@ -14180,6 +14180,36 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     documents for processing in client applications.
    </para>
 
+  <sect3 id="functions-producing-xml-xmltext">
+    <title><literal>xmltext</literal></title>
+
+    <indexterm>
+     <primary>xmltext</primary>
+    </indexterm>
+
+<synopsis>
+<function>xmltext</function> ( <type>text</type> ) <returnvalue>xml</returnvalue>
+</synopsis>
+
+    <para>
+     The function <function>xmltext</function> returns an XML value with a single
+     text node containing the input argument as its content. Predefined entities
+     like ampersand (<literal><![CDATA[&]]></literal>), left and right angle brackets
+     (<literal><![CDATA[< >]]></literal>), and quotation marks (<literal><![CDATA[""]]></literal>)
+     are escaped.
+    </para>
+
+    <para>
+     Example:
+<screen><![CDATA[
+SELECT xmltext('< foo & bar >');
+         xmltext
+-------------------------
+ &lt; foo &amp; bar &gt;
+]]></screen>
+    </para>
+   </sect3>
+
    <sect3 id="functions-producing-xml-xmlcomment">
     <title><literal>xmlcomment</literal></title>
 

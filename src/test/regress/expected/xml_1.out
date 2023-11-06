@@ -1402,3 +1402,26 @@ DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT * FROM XMLTABLE('.' PASSING XMLELEMENT(NAME a) columns a varchar(20) PATH '"<foo/>"', b xml PATH '"<foo/>"');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT xmltext(NULL);
+ xmltext 
+---------
+ 
+(1 row)
+
+SELECT xmltext('');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT xmltext('  ');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT xmltext('foo `$_-+?=*^%!|/\()[]{}');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT xmltext('foo & <"bar">');
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT xmltext('x'|| '<P>73</P>'::xml || .42 || true || 'j'::char);
+ERROR:  unsupported XML feature
+LINE 1: SELECT xmltext('x'|| '<P>73</P>'::xml || .42 || true || 'j':...
+                             ^
+DETAIL:  This functionality requires the server to be built with libxml support.

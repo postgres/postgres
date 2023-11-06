@@ -1765,3 +1765,39 @@ SELECT * FROM XMLTABLE('.' PASSING XMLELEMENT(NAME a) columns a varchar(20) PATH
  <foo/> | &lt;foo/&gt;
 (1 row)
 
+SELECT xmltext(NULL);
+ xmltext 
+---------
+ 
+(1 row)
+
+SELECT xmltext('');
+ xmltext 
+---------
+ 
+(1 row)
+
+SELECT xmltext('  ');
+ xmltext 
+---------
+   
+(1 row)
+
+SELECT xmltext('foo `$_-+?=*^%!|/\()[]{}');
+         xmltext          
+--------------------------
+ foo `$_-+?=*^%!|/\()[]{}
+(1 row)
+
+SELECT xmltext('foo & <"bar">');
+              xmltext              
+-----------------------------------
+ foo &amp; &lt;&quot;bar&quot;&gt;
+(1 row)
+
+SELECT xmltext('x'|| '<P>73</P>'::xml || .42 || true || 'j'::char);
+             xmltext             
+---------------------------------
+ x&lt;P&gt;73&lt;/P&gt;0.42truej
+(1 row)
+
