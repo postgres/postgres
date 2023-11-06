@@ -3,12 +3,12 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Serguei A. Mokhov, <mokhov@cs.concordia.ca>, 2003-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019, 2020, 2021, 2022.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019, 2020, 2021, 2022, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2022-03-11 08:15+0300\n"
+"POT-Creation-Date: 2023-08-07 16:41+0300\n"
 "PO-Revision-Date: 2021-11-08 05:30+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -108,12 +108,12 @@ msgstr "%s: кластеризовать таблицу \"%s\" в базе \"%s\
 msgid "%s: clustering of database \"%s\" failed: %s"
 msgstr "%s: кластеризовать базу \"%s\" не удалось: %s"
 
-#: clusterdb.c:248
+#: clusterdb.c:250
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: кластеризация базы \"%s\"\n"
 
-#: clusterdb.c:264
+#: clusterdb.c:266
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -122,19 +122,19 @@ msgstr ""
 "%s упорядочивает данные всех кластеризованных таблиц в базе данных.\n"
 "\n"
 
-#: clusterdb.c:265 createdb.c:268 createuser.c:359 dropdb.c:162 dropuser.c:168
-#: pg_isready.c:222 reindexdb.c:399 vacuumdb.c:1003
+#: clusterdb.c:267 createdb.c:268 createuser.c:359 dropdb.c:162 dropuser.c:168
+#: pg_isready.c:222 reindexdb.c:401 vacuumdb.c:1003
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: clusterdb.c:266 reindexdb.c:400 vacuumdb.c:1004
+#: clusterdb.c:268 reindexdb.c:402 vacuumdb.c:1004
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД]\n"
 
-#: clusterdb.c:267 createdb.c:270 createuser.c:361 dropdb.c:164 dropuser.c:170
-#: pg_isready.c:225 reindexdb.c:401 vacuumdb.c:1005
+#: clusterdb.c:269 createdb.c:270 createuser.c:361 dropdb.c:164 dropuser.c:170
+#: pg_isready.c:225 reindexdb.c:403 vacuumdb.c:1005
 #, c-format
 msgid ""
 "\n"
@@ -143,50 +143,50 @@ msgstr ""
 "\n"
 "Параметры:\n"
 
-#: clusterdb.c:268
+#: clusterdb.c:270
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 кластеризовать все базы\n"
 
-#: clusterdb.c:269
+#: clusterdb.c:271
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=ИМЯ_БД       имя базы данных для кластеризации\n"
 
-#: clusterdb.c:270 createuser.c:365 dropdb.c:165 dropuser.c:171 reindexdb.c:404
+#: clusterdb.c:272 createuser.c:365 dropdb.c:165 dropuser.c:171 reindexdb.c:406
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                отображать команды, отправляемые серверу\n"
 
-#: clusterdb.c:271 reindexdb.c:406
+#: clusterdb.c:273 reindexdb.c:408
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               не выводить никакие сообщения\n"
 
-#: clusterdb.c:272
+#: clusterdb.c:274
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
 msgstr ""
 "  -t, --table=ТАБЛИЦА       кластеризовать только указанную таблицу(ы)\n"
 
-#: clusterdb.c:273 reindexdb.c:410
+#: clusterdb.c:275 reindexdb.c:412
 #, c-format
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             выводить исчерпывающие сообщения\n"
 
-#: clusterdb.c:274 createuser.c:377 dropdb.c:167 dropuser.c:174 reindexdb.c:411
+#: clusterdb.c:276 createuser.c:377 dropdb.c:167 dropuser.c:174 reindexdb.c:413
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             показать версию и выйти\n"
 
-#: clusterdb.c:275 createuser.c:382 dropdb.c:169 dropuser.c:176 reindexdb.c:412
+#: clusterdb.c:277 createuser.c:382 dropdb.c:169 dropuser.c:176 reindexdb.c:414
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
-#: clusterdb.c:276 createdb.c:281 createuser.c:383 dropdb.c:170 dropuser.c:177
-#: pg_isready.c:231 reindexdb.c:413 vacuumdb.c:1021
+#: clusterdb.c:278 createdb.c:281 createuser.c:383 dropdb.c:170 dropuser.c:177
+#: pg_isready.c:231 reindexdb.c:415 vacuumdb.c:1021
 #, c-format
 msgid ""
 "\n"
@@ -195,43 +195,43 @@ msgstr ""
 "\n"
 "Параметры подключения:\n"
 
-#: clusterdb.c:277 createuser.c:384 dropdb.c:171 dropuser.c:178 reindexdb.c:414
+#: clusterdb.c:279 createuser.c:384 dropdb.c:171 dropuser.c:178 reindexdb.c:416
 #: vacuumdb.c:1022
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ИМЯ            имя сервера баз данных или каталог сокетов\n"
 
-#: clusterdb.c:278 createuser.c:385 dropdb.c:172 dropuser.c:179 reindexdb.c:415
+#: clusterdb.c:280 createuser.c:385 dropdb.c:172 dropuser.c:179 reindexdb.c:417
 #: vacuumdb.c:1023
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=ПОРТ           порт сервера баз данных\n"
 
-#: clusterdb.c:279 dropdb.c:173 reindexdb.c:416 vacuumdb.c:1024
+#: clusterdb.c:281 dropdb.c:173 reindexdb.c:418 vacuumdb.c:1024
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ        имя пользователя для подключения к серверу\n"
 
-#: clusterdb.c:280 createuser.c:387 dropdb.c:174 dropuser.c:181 reindexdb.c:417
+#: clusterdb.c:282 createuser.c:387 dropdb.c:174 dropuser.c:181 reindexdb.c:419
 #: vacuumdb.c:1025
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         не запрашивать пароль\n"
 
-#: clusterdb.c:281 createuser.c:388 dropdb.c:175 dropuser.c:182 reindexdb.c:418
+#: clusterdb.c:283 createuser.c:388 dropdb.c:175 dropuser.c:182 reindexdb.c:420
 #: vacuumdb.c:1026
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            запросить пароль\n"
 
-#: clusterdb.c:282 dropdb.c:176 reindexdb.c:419 vacuumdb.c:1027
+#: clusterdb.c:284 dropdb.c:176 reindexdb.c:421 vacuumdb.c:1027
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=ИМЯ_БД   сменить опорную базу данных\n"
 
-#: clusterdb.c:283
+#: clusterdb.c:285
 #, c-format
 msgid ""
 "\n"
@@ -240,8 +240,8 @@ msgstr ""
 "\n"
 "Подробнее о кластеризации вы можете узнать в описании SQL-команды CLUSTER.\n"
 
-#: clusterdb.c:284 createdb.c:289 createuser.c:389 dropdb.c:177 dropuser.c:183
-#: pg_isready.c:236 reindexdb.c:421 vacuumdb.c:1029
+#: clusterdb.c:286 createdb.c:289 createuser.c:389 dropdb.c:177 dropuser.c:183
+#: pg_isready.c:236 reindexdb.c:423 vacuumdb.c:1029
 #, c-format
 msgid ""
 "\n"
@@ -870,17 +870,17 @@ msgstr "%s: переиндексировать схему \"%s\" в базе \"%
 msgid "%s: reindexing of database \"%s\" failed: %s"
 msgstr "%s: переиндексировать базу данных \"%s\" не удалось: %s"
 
-#: reindexdb.c:353
+#: reindexdb.c:355
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: переиндексация базы данных \"%s\"\n"
 
-#: reindexdb.c:386
+#: reindexdb.c:388
 #, c-format
 msgid "%s: reindexing of system catalogs failed: %s"
 msgstr "%s: переиндексировать системные каталоги не удалось: %s"
 
-#: reindexdb.c:398
+#: reindexdb.c:400
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -889,40 +889,40 @@ msgstr ""
 "%s переиндексирует базу данных PostgreSQL.\n"
 "\n"
 
-#: reindexdb.c:402
+#: reindexdb.c:404
 #, c-format
 msgid "  -a, --all                 reindex all databases\n"
 msgstr "  -a, --all                 переиндексировать все базы данных\n"
 
-#: reindexdb.c:403
+#: reindexdb.c:405
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to reindex\n"
 msgstr "  -d, --dbname=БД           имя базы для переиндексации\n"
 
-#: reindexdb.c:405
+#: reindexdb.c:407
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
 msgstr "  -i, --index=ИНДЕКС        пересоздать только указанный индекс(ы)\n"
 
-#: reindexdb.c:407
+#: reindexdb.c:409
 #, c-format
 msgid "  -s, --system              reindex system catalogs only\n"
 msgstr ""
 "  -s, --system              переиндексировать только системные каталоги\n"
 
-#: reindexdb.c:408
+#: reindexdb.c:410
 #, c-format
 msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
 msgstr ""
 "  -S, --schema=СХЕМА        переиндексировать только указанную схему(ы)\n"
 
-#: reindexdb.c:409
+#: reindexdb.c:411
 #, c-format
 msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
 msgstr ""
 "  -t, --table=ТАБЛИЦА       переиндексировать только указанную таблицу(ы)\n"
 
-#: reindexdb.c:420
+#: reindexdb.c:422
 #, c-format
 msgid ""
 "\n"
