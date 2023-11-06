@@ -3098,7 +3098,7 @@ msgstr "  \\dX     [PATTERN]      列出扩展统计信息\n"
 
 #: help.c:270
 msgid "  \\dy[+]  [PATTERN]      list event triggers\n"
-msgstr "  \\dy[+]  [PATTERN]      l列出所有事件触发器\n"
+msgstr "  \\dy[+]  [PATTERN]      列出所有事件触发器\n"
 
 #: help.c:271
 #, c-format

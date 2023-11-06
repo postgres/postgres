@@ -2757,7 +2757,7 @@ msgstr "Rapporter les bogues à <%s>.\n"
 #: help.c:145
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: help.c:171
 #, c-format
