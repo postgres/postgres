@@ -407,6 +407,9 @@ SELECT jsonb_object_agg(name, type) FROM foo;
 INSERT INTO foo VALUES (999999, NULL, 'bar');
 SELECT jsonb_object_agg(name, type) FROM foo;
 
+-- edge case for parser
+SELECT jsonb_object_agg(DISTINCT 'a', 'abc');
+
 -- jsonb_object
 
 -- empty object, one dimension
