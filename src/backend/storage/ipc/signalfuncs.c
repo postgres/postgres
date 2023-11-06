@@ -74,8 +74,13 @@ pg_signal_backend(int pid, int sig)
 		return SIGNAL_BACKEND_ERROR;
 	}
 
-	/* Only allow superusers to signal superuser-owned backends. */
-	if (superuser_arg(proc->roleId) && !superuser())
+	/*
+	 * Only allow superusers to signal superuser-owned backends.  Any process
+	 * not advertising a role might have the importance of a superuser-owned
+	 * backend, so treat it that way.
+	 */
+	if ((!OidIsValid(proc->roleId) || superuser_arg(proc->roleId)) &&
+		!superuser())
 		return SIGNAL_BACKEND_NOSUPERUSER;
 
 	/* Users can signal backends they have role membership in. */
