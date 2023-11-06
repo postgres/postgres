@@ -27,7 +27,7 @@
     certain types of indexes yielding wrong search results or being
     unnecessarily inefficient.  It is advisable
     to <command>REINDEX</command> potentially-affected indexes after
-    installing this update.  See the first through fourth changelog
+    installing this update.  See the fourth through seventh changelog
     entries below.
    </para>
   </sect2>
@@ -36,6 +36,119 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3b0776fde] 2023-11-06 10:38:00 -0500
+Branch: REL_16_STABLE [d3d1e2509] 2023-11-06 10:38:00 -0500
+Branch: REL_15_STABLE [4f4a422fb] 2023-11-06 10:38:00 -0500
+Branch: REL_14_STABLE [9146d0d65] 2023-11-06 10:38:00 -0500
+Branch: REL_13_STABLE [d3de70fdb] 2023-11-06 10:38:00 -0500
+Branch: REL_12_STABLE [e911afd09] 2023-11-06 10:38:00 -0500
+Branch: REL_11_STABLE [8c6633f4d] 2023-11-06 10:38:00 -0500
+-->
+     <para>
+      Fix handling of unknown-type arguments
+      in <literal>DISTINCT</literal> <type>"any"</type> aggregate
+      functions (Tom Lane)
+     </para>
+
+     <para>
+      This error led to a <type>text</type>-type value being interpreted
+      as an <type>unknown</type>-type value (that is, a zero-terminated
+      string) at runtime.  This could result in disclosure of server
+      memory following the <type>text</type> value.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Jingzhou Fu
+      for reporting this problem.
+      (CVE-2023-5868)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [18b585155] 2023-11-06 10:56:43 -0500
+Branch: REL_16_STABLE [e24daa94b] 2023-11-06 10:56:43 -0500
+Branch: REL_15_STABLE [3bc6bc3ee] 2023-11-06 10:56:43 -0500
+Branch: REL_14_STABLE [edc0a8d82] 2023-11-06 10:56:43 -0500
+Branch: REL_13_STABLE [26c599beb] 2023-11-06 10:56:43 -0500
+Branch: REL_12_STABLE [d267cea24] 2023-11-06 10:56:43 -0500
+Branch: REL_11_STABLE [c48008f59] 2023-11-06 10:56:43 -0500
+-->
+     <para>
+      Detect integer overflow while computing new array dimensions
+      (Tom Lane)
+     </para>
+
+     <para>
+      When assigning new elements to array subscripts that are outside the
+      current array bounds, an undetected integer overflow could occur in
+      edge cases.  Memory stomps that are potentially exploitable for
+      arbitrary code execution are possible, and so is disclosure of
+      server memory.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Pedro
+      Gallegos for reporting this problem.
+      (CVE-2023-5869)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [3a9b18b30] 2023-11-06 06:14:13 -0800
+Branch: REL_16_STABLE [785412731] 2023-11-06 06:14:16 -0800
+Branch: REL_15_STABLE [595c988c9] 2023-11-06 06:14:16 -0800
+Branch: REL_14_STABLE [508acb901] 2023-11-06 06:14:17 -0800
+Branch: REL_13_STABLE [28b609550] 2023-11-06 06:14:17 -0800
+Branch: REL_12_STABLE [2893f2f40] 2023-11-06 06:14:17 -0800
+Branch: REL_11_STABLE [e082734c8] 2023-11-06 06:14:18 -0800
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [b72de09a1] 2023-11-06 06:14:13 -0800
+Branch: REL_16_STABLE [2c3c5ec49] 2023-11-06 06:14:16 -0800
+Branch: REL_15_STABLE [fbc371909] 2023-11-06 06:14:16 -0800
+Branch: REL_14_STABLE [ecd5d240c] 2023-11-06 06:14:17 -0800
+Branch: REL_13_STABLE [2c7a2a00a] 2023-11-06 06:14:17 -0800
+Branch: REL_12_STABLE [7bbf4d037] 2023-11-06 06:14:17 -0800
+Branch: REL_11_STABLE [a27be40c1] 2023-11-06 06:14:18 -0800
+-->
+     <para>
+      Prevent the <literal>pg_signal_backend</literal> role from
+      signalling background workers and autovacuum processes
+      (Noah Misch, Jelte Fennema-Nio)
+     </para>
+
+     <para>
+      The documentation says that <literal>pg_signal_backend</literal>
+      cannot issue signals to superuser-owned processes.  It was able to
+      signal these background processes, though, because they advertise a
+      role OID of zero.  Treat that as indicating superuser ownership.
+      The security implications of cancelling one of these process types
+      are fairly small so far as the core code goes (we'll just start
+      another one), but extensions might add background workers that are
+      more vulnerable.
+     </para>
+
+     <para>
+      Also ensure that the <varname>is_superuser</varname> parameter is
+      set correctly in such processes.  No specific security consequences
+      are known for that oversight, but it might be significant for some
+      extensions.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Hemanth Sandrana and Mahendrakar Srinivasarao
+      for reporting this problem.
+      (CVE-2023-5870)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
