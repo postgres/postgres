@@ -6,12 +6,11 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
 # Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023.
-# Maxim Yablokov <m.yablokov@postgrespro.ru>, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-03 05:57+0300\n"
+"POT-Creation-Date: 2023-11-03 09:09+0300\n"
 "PO-Revision-Date: 2023-05-03 06:17+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -760,12 +759,12 @@ msgstr "не удалось закрыть входной файл: %m"
 msgid "unrecognized file format \"%d\""
 msgstr "неопознанный формат файла: \"%d\""
 
-#: pg_backup_archiver.c:2455 pg_backup_archiver.c:4492
+#: pg_backup_archiver.c:2455 pg_backup_archiver.c:4510
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "закончен объект %d %s %s"
 
-#: pg_backup_archiver.c:2459 pg_backup_archiver.c:4505
+#: pg_backup_archiver.c:2459 pg_backup_archiver.c:4523
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "рабочий процесс завершился с кодом возврата %d"
@@ -820,47 +819,47 @@ msgstr "функция \"%s\" не найдена"
 msgid "trigger \"%s\" not found"
 msgstr "триггер \"%s\" не найден"
 
-#: pg_backup_archiver.c:3200
+#: pg_backup_archiver.c:3218
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "не удалось переключить пользователя сеанса на \"%s\": %s"
 
-#: pg_backup_archiver.c:3332
+#: pg_backup_archiver.c:3350
 #, c-format
 msgid "could not set search_path to \"%s\": %s"
 msgstr "не удалось присвоить search_path значение \"%s\": %s"
 
-#: pg_backup_archiver.c:3394
+#: pg_backup_archiver.c:3412
 #, c-format
 msgid "could not set default_tablespace to %s: %s"
 msgstr "не удалось задать для default_tablespace значение %s: %s"
 
-#: pg_backup_archiver.c:3439
+#: pg_backup_archiver.c:3457
 #, c-format
 msgid "could not set default_table_access_method: %s"
 msgstr "не удалось задать default_table_access_method: %s"
 
-#: pg_backup_archiver.c:3531 pg_backup_archiver.c:3689
+#: pg_backup_archiver.c:3549 pg_backup_archiver.c:3707
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
 msgstr "неизвестно, как назначить владельца для объекта типа \"%s\""
 
-#: pg_backup_archiver.c:3792
+#: pg_backup_archiver.c:3810
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "в заголовке файла не найдена нужная сигнатура"
 
-#: pg_backup_archiver.c:3806
+#: pg_backup_archiver.c:3824
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "неподдерживаемая версия (%d.%d) в заголовке файла"
 
-#: pg_backup_archiver.c:3811
+#: pg_backup_archiver.c:3829
 #, c-format
 msgid "sanity check on integer size (%lu) failed"
 msgstr "несоответствие размера integer (%lu)"
 
-#: pg_backup_archiver.c:3815
+#: pg_backup_archiver.c:3833
 #, c-format
 msgid ""
 "archive was made on a machine with larger integers, some operations might "
@@ -869,12 +868,12 @@ msgstr ""
 "архив был сделан на компьютере большей разрядности -- возможен сбой "
 "некоторых операций"
 
-#: pg_backup_archiver.c:3825
+#: pg_backup_archiver.c:3843
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "ожидаемый формат (%d) отличается от формата, указанного в файле (%d)"
 
-#: pg_backup_archiver.c:3840
+#: pg_backup_archiver.c:3858
 #, c-format
 msgid ""
 "archive is compressed, but this installation does not support compression -- "
@@ -883,42 +882,42 @@ msgstr ""
 "архив сжат, но установленная версия не поддерживает сжатие -- данные "
 "недоступны"
 
-#: pg_backup_archiver.c:3874
+#: pg_backup_archiver.c:3892
 #, c-format
 msgid "invalid creation date in header"
 msgstr "неверная дата создания в заголовке"
 
-#: pg_backup_archiver.c:4017
+#: pg_backup_archiver.c:4035
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "обработка объекта %d %s %s"
 
-#: pg_backup_archiver.c:4096
+#: pg_backup_archiver.c:4114
 #, c-format
 msgid "entering main parallel loop"
 msgstr "вход в основной параллельный цикл"
 
-#: pg_backup_archiver.c:4107
+#: pg_backup_archiver.c:4125
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "объект %d %s %s пропускается"
 
-#: pg_backup_archiver.c:4116
+#: pg_backup_archiver.c:4134
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "объект %d %s %s запускается"
 
-#: pg_backup_archiver.c:4170
+#: pg_backup_archiver.c:4188
 #, c-format
 msgid "finished main parallel loop"
 msgstr "основной параллельный цикл закончен"
 
-#: pg_backup_archiver.c:4206
+#: pg_backup_archiver.c:4224
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "обработка пропущенного объекта %d %s %s"
 
-#: pg_backup_archiver.c:4811
+#: pg_backup_archiver.c:4829
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
 msgstr "создать таблицу \"%s\" не удалось, её данные не будут восстановлены"

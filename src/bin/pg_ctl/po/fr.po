@@ -603,7 +603,7 @@ msgstr "  %s promote    [-D RÉP_DONNÉES] [-W] [-t SECS] [-s]\n"
 #: pg_ctl.c:2070
 #, c-format
 msgid "  %s logrotate  [-D DATADIR] [-s]\n"
-msgstr "  %s reload     [-D RÉP_DONNÉES] [-s]\n"
+msgstr "  %s logrotate  [-D RÉP_DONNÉES] [-s]\n"
 
 #: pg_ctl.c:2071
 #, c-format

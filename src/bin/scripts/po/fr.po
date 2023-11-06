@@ -9,16 +9,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-10-28 16:39+0000\n"
-"PO-Revision-Date: 2021-10-29 16:17+0200\n"
+"POT-Creation-Date: 2023-10-29 12:43+0000\n"
+"PO-Revision-Date: 2023-10-30 13:36+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.4\n"
 
 #: ../../../src/common/logging.c:236
 #, c-format
@@ -67,26 +67,26 @@ msgid_plural "(%lu rows)"
 msgstr[0] "(%lu ligne)"
 msgstr[1] "(%lu lignes)"
 
-#: ../../fe_utils/print.c:3058
+#: ../../fe_utils/print.c:3059
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrompu\n"
 
-#: ../../fe_utils/print.c:3122
+#: ../../fe_utils/print.c:3123
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
 "Ne peut pas ajouter l'en-tête au contenu de la table : le nombre de colonnes\n"
 "%d est dépassé.\n"
 
-#: ../../fe_utils/print.c:3162
+#: ../../fe_utils/print.c:3163
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
 "Ne peut pas ajouter une cellule au contenu de la table : le nombre total des\n"
 "cellules %d est dépassé.\n"
 
-#: ../../fe_utils/print.c:3417
+#: ../../fe_utils/print.c:3418
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "format de sortie invalide (erreur interne) : %d"
@@ -125,12 +125,12 @@ msgstr "la réorganisation de la table « %s » de la base de données « %s » 
 msgid "clustering of database \"%s\" failed: %s"
 msgstr "la réorganisation de la base de données « %s » via la commande CLUSTER a échoué : %s"
 
-#: clusterdb.c:248
+#: clusterdb.c:250
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s : réorganisation de la base de données « %s » via la commande CLUSTER\n"
 
-#: clusterdb.c:264
+#: clusterdb.c:266
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -140,19 +140,19 @@ msgstr ""
 "base de données via la commande CLUSTER.\n"
 "\n"
 
-#: clusterdb.c:265 createdb.c:266 createuser.c:359 dropdb.c:163 dropuser.c:170
-#: pg_isready.c:224 reindexdb.c:422 vacuumdb.c:1216
+#: clusterdb.c:267 createdb.c:266 createuser.c:359 dropdb.c:163 dropuser.c:170
+#: pg_isready.c:224 reindexdb.c:424 vacuumdb.c:1240
 #, c-format
 msgid "Usage:\n"
 msgstr "Usage :\n"
 
-#: clusterdb.c:266 reindexdb.c:423 vacuumdb.c:1217
+#: clusterdb.c:268 reindexdb.c:425 vacuumdb.c:1241
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [BASE]\n"
 
-#: clusterdb.c:267 createdb.c:268 createuser.c:361 dropdb.c:165 dropuser.c:172
-#: pg_isready.c:227 reindexdb.c:424 vacuumdb.c:1218
+#: clusterdb.c:269 createdb.c:268 createuser.c:361 dropdb.c:165 dropuser.c:172
+#: pg_isready.c:227 reindexdb.c:426 vacuumdb.c:1242
 #, c-format
 msgid ""
 "\n"
@@ -161,48 +161,48 @@ msgstr ""
 "\n"
 "Options :\n"
 
-#: clusterdb.c:268
+#: clusterdb.c:270
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                      réorganise toutes les bases de données\n"
 
-#: clusterdb.c:269
+#: clusterdb.c:271
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=BASE              base de données à réorganiser\n"
 
-#: clusterdb.c:270 createuser.c:365 dropdb.c:166 dropuser.c:173 reindexdb.c:428
+#: clusterdb.c:272 createuser.c:365 dropdb.c:166 dropuser.c:173 reindexdb.c:430
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                     affiche les commandes envoyées au serveur\n"
 
-#: clusterdb.c:271 reindexdb.c:430
+#: clusterdb.c:273 reindexdb.c:432
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet                    n'écrit aucun message\n"
 
-#: clusterdb.c:272
+#: clusterdb.c:274
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
 msgstr "  -t, --table=TABLE              réorganise uniquement cette(ces) table(s)\n"
 
-#: clusterdb.c:273 reindexdb.c:434
+#: clusterdb.c:275 reindexdb.c:436
 #, c-format
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose                  mode verbeux\n"
 
-#: clusterdb.c:274 createuser.c:377 dropdb.c:168 dropuser.c:176 reindexdb.c:435
+#: clusterdb.c:276 createuser.c:377 dropdb.c:168 dropuser.c:176 reindexdb.c:437
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version                  affiche la version puis quitte\n"
 
-#: clusterdb.c:275 createuser.c:382 dropdb.c:170 dropuser.c:178 reindexdb.c:436
+#: clusterdb.c:277 createuser.c:382 dropdb.c:170 dropuser.c:178 reindexdb.c:438
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                     affiche cette aide puis quitte\n"
 
-#: clusterdb.c:276 createdb.c:279 createuser.c:383 dropdb.c:171 dropuser.c:179
-#: pg_isready.c:233 reindexdb.c:437 vacuumdb.c:1238
+#: clusterdb.c:278 createdb.c:279 createuser.c:383 dropdb.c:171 dropuser.c:179
+#: pg_isready.c:233 reindexdb.c:439 vacuumdb.c:1262
 #, c-format
 msgid ""
 "\n"
@@ -211,43 +211,43 @@ msgstr ""
 "\n"
 "Options de connexion :\n"
 
-#: clusterdb.c:277 createuser.c:384 dropdb.c:172 dropuser.c:180 reindexdb.c:438
-#: vacuumdb.c:1239
+#: clusterdb.c:279 createuser.c:384 dropdb.c:172 dropuser.c:180 reindexdb.c:440
+#: vacuumdb.c:1263
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HÔTE                hôte du serveur de bases de données ou\n"
 "                                 répertoire des sockets\n"
 
-#: clusterdb.c:278 createuser.c:385 dropdb.c:173 dropuser.c:181 reindexdb.c:439
-#: vacuumdb.c:1240
+#: clusterdb.c:280 createuser.c:385 dropdb.c:173 dropuser.c:181 reindexdb.c:441
+#: vacuumdb.c:1264
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT                port du serveur de bases de données\n"
 
-#: clusterdb.c:279 dropdb.c:174 reindexdb.c:440 vacuumdb.c:1241
+#: clusterdb.c:281 dropdb.c:174 reindexdb.c:442 vacuumdb.c:1265
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=UTILISATEUR     nom d'utilisateur pour la connexion\n"
 
-#: clusterdb.c:280 createuser.c:387 dropdb.c:175 dropuser.c:183 reindexdb.c:441
-#: vacuumdb.c:1242
+#: clusterdb.c:282 createuser.c:387 dropdb.c:175 dropuser.c:183 reindexdb.c:443
+#: vacuumdb.c:1266
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password              empêche la demande d'un mot de passe\n"
 
-#: clusterdb.c:281 createuser.c:388 dropdb.c:176 dropuser.c:184 reindexdb.c:442
-#: vacuumdb.c:1243
+#: clusterdb.c:283 createuser.c:388 dropdb.c:176 dropuser.c:184 reindexdb.c:444
+#: vacuumdb.c:1267
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password                 force la demande d'un mot de passe\n"
 
-#: clusterdb.c:282 dropdb.c:177 reindexdb.c:443 vacuumdb.c:1244
+#: clusterdb.c:284 dropdb.c:177 reindexdb.c:445 vacuumdb.c:1268
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=BASE          indique une autre base par défaut\n"
 
-#: clusterdb.c:283
+#: clusterdb.c:285
 #, c-format
 msgid ""
 "\n"
@@ -256,8 +256,8 @@ msgstr ""
 "\n"
 "Lire la description de la commande SQL CLUSTER pour de plus amples détails.\n"
 
-#: clusterdb.c:284 createdb.c:287 createuser.c:389 dropdb.c:178 dropuser.c:185
-#: pg_isready.c:238 reindexdb.c:445 vacuumdb.c:1246
+#: clusterdb.c:286 createdb.c:287 createuser.c:389 dropdb.c:178 dropuser.c:185
+#: pg_isready.c:238 reindexdb.c:447 vacuumdb.c:1270
 #, c-format
 msgid ""
 "\n"
@@ -266,31 +266,31 @@ msgstr ""
 "\n"
 "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: common.c:87 common.c:145
+#: common.c:100 common.c:158
 msgid "Password: "
 msgstr "Mot de passe : "
 
-#: common.c:132
+#: common.c:145
 #, c-format
 msgid "could not connect to database %s: out of memory"
 msgstr "n'a pas pu se connecter à la base de données %s : plus de mémoire"
 
-#: common.c:159
+#: common.c:172
 #, c-format
 msgid "could not connect to database %s: %s"
 msgstr "n'a pas pu se connecter à la base de données %s : %s"
 
-#: common.c:215 common.c:241
+#: common.c:228 common.c:254
 #, c-format
 msgid "query failed: %s"
 msgstr "échec de la requête : %s"
 
-#: common.c:216 common.c:242
+#: common.c:229 common.c:255
 #, c-format
 msgid "query was: %s"
 msgstr "la requête était : %s"
 
-#: common.c:358
+#: common.c:371
 #, c-format
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
@@ -298,36 +298,26 @@ msgstr[0] "la requête a renvoyé %d ligne au lieu d'une seule : %s"
 msgstr[1] "la requête a renvoyé %d lignes au lieu d'une seule : %s"
 
 #. translator: abbreviation for "yes"
-#: common.c:383
+#: common.c:396
 msgid "y"
 msgstr "o"
 
 #. translator: abbreviation for "no"
-#: common.c:385
+#: common.c:398
 msgid "n"
 msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
-#: common.c:395
+#: common.c:408
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:409
+#: common.c:422
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Merci de répondre « %s » ou « %s ».\n"
-
-#: common.c:488 common.c:525
-#, c-format
-msgid "Cancel request sent\n"
-msgstr "Requête d'annulation envoyée\n"
-
-#: common.c:491 common.c:529
-#, c-format
-msgid "Could not send cancel request: %s"
-msgstr "N'a pas pu envoyer la requête d'annulation : %s"
 
 #: createdb.c:149
 #, c-format
@@ -877,17 +867,17 @@ msgstr "la réindexation du schéma « %s » dans la base de données « %s » a
 msgid "reindexing of database \"%s\" failed: %s"
 msgstr "la réindexation de la base de données « %s » a échoué : %s"
 
-#: reindexdb.c:372
+#: reindexdb.c:374
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s : réindexation de la base de données « %s »\n"
 
-#: reindexdb.c:409
+#: reindexdb.c:411
 #, c-format
 msgid "reindexing of system catalogs failed: %s"
 msgstr "la réindexation des catalogues système a échoué : %s"
 
-#: reindexdb.c:421
+#: reindexdb.c:423
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -896,42 +886,42 @@ msgstr ""
 "%s réindexe une base de données PostgreSQL.\n"
 "\n"
 
-#: reindexdb.c:425
+#: reindexdb.c:427
 #, c-format
 msgid "  -a, --all                 reindex all databases\n"
 msgstr "  -a, --all                      réindexe toutes les bases de données\n"
 
-#: reindexdb.c:426
+#: reindexdb.c:428
 #, c-format
 msgid "      --concurrently        reindex concurrently\n"
 msgstr "      --concurrently             réindexation en concurrence\n"
 
-#: reindexdb.c:427
+#: reindexdb.c:429
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to reindex\n"
 msgstr "  -d, --dbname=BASE              réindexe cette base de données\n"
 
-#: reindexdb.c:429
+#: reindexdb.c:431
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
 msgstr "  -i, --index=INDEX              réindexe uniquement cet index\n"
 
-#: reindexdb.c:431
+#: reindexdb.c:433
 #, c-format
 msgid "  -s, --system              reindex system catalogs only\n"
 msgstr "  -s, --system                   réindexe seulement les catalogues système\n"
 
-#: reindexdb.c:432
+#: reindexdb.c:434
 #, c-format
 msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
 msgstr "  -S, --schema=SCHEMA            réindexe seulement le schéma indiqué\n"
 
-#: reindexdb.c:433
+#: reindexdb.c:435
 #, c-format
 msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
 msgstr "  -t, --table=TABLE              réindexe uniquement cette table\n"
 
-#: reindexdb.c:444
+#: reindexdb.c:446
 #, c-format
 msgid ""
 "\n"
@@ -992,22 +982,27 @@ msgstr "%s : traitement de la base de données « %s » %s\n"
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s : exécution de VACUUM sur la base de données « %s »\n"
 
-#: vacuumdb.c:644
+#: vacuumdb.c:656
 #, c-format
-msgid "too many jobs for this platform -- try %d"
-msgstr "trop de jobs pour cette plateforme -- tente %d"
+msgid "too many jobs for this platform: %d"
+msgstr "trop de jobs pour cette plateforme : %d"
 
-#: vacuumdb.c:942
+#: vacuumdb.c:665
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "descripteur de fichier socket hors d'échelle pour select() :  %d"
+
+#: vacuumdb.c:966
 #, c-format
 msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "l'exécution de VACUUM sur la table « %s » dans la base de données « %s » a échoué : %s"
 
-#: vacuumdb.c:945 vacuumdb.c:1080
+#: vacuumdb.c:969 vacuumdb.c:1104
 #, c-format
 msgid "vacuuming of database \"%s\" failed: %s"
 msgstr "l'exécution de VACUUM sur la base de données « %s » a échoué : %s"
 
-#: vacuumdb.c:1215
+#: vacuumdb.c:1239
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -1016,99 +1011,99 @@ msgstr ""
 "%s nettoie et analyse une base de données PostgreSQL.\n"
 "\n"
 
-#: vacuumdb.c:1219
+#: vacuumdb.c:1243
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       exécute VACUUM sur toutes les bases de données\n"
 
-#: vacuumdb.c:1220
+#: vacuumdb.c:1244
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=BASE               exécute VACUUM sur cette base de données\n"
 
-#: vacuumdb.c:1221
+#: vacuumdb.c:1245
 #, c-format
 msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
 msgstr "      --disable-page-skipping     désactive le comportement page-skipping\n"
 
-#: vacuumdb.c:1222
+#: vacuumdb.c:1246
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      affiche les commandes envoyées au serveur\n"
 
-#: vacuumdb.c:1223
+#: vacuumdb.c:1247
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      exécute VACUUM en mode FULL\n"
 
-#: vacuumdb.c:1224
+#: vacuumdb.c:1248
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr ""
 "  -F, --freeze                    gèle les informations de transactions des\n"
 "                                  lignes\n"
 
-#: vacuumdb.c:1225
+#: vacuumdb.c:1249
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
 msgstr ""
 "  -j, --jobs=NOMBRE               utilise ce nombre de connexions concurrentes\n"
 "                                  pour le VACUUM\n"
 
-#: vacuumdb.c:1226
+#: vacuumdb.c:1250
 #, c-format
 msgid "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"
 msgstr ""
 "      --min-mxid-age=MXID_AGE     âge minimum des identifiants de\n"
 "                                  multitransactions pour les tables à nettoyer\n"
 
-#: vacuumdb.c:1227
+#: vacuumdb.c:1251
 #, c-format
 msgid "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"
 msgstr ""
 "      --min-xid-age=XID_AGE       âge minimum des identifiants de transactions\n"
 "                                  pour les tables à nettoyer\n"
 
-#: vacuumdb.c:1228
+#: vacuumdb.c:1252
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     n'écrit aucun message\n"
 
-#: vacuumdb.c:1229
+#: vacuumdb.c:1253
 #, c-format
 msgid "      --skip-locked               skip relations that cannot be immediately locked\n"
 msgstr ""
 "      --skip-locked               ignore les relations qui ne peuvent pas être\n"
 "                                  verrouillées immédiatement\n"
 
-#: vacuumdb.c:1230
+#: vacuumdb.c:1254
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr "  -t, --table='TABLE[(COLONNES)]' exécute VACUUM sur cette (ces) tables\n"
 
-#: vacuumdb.c:1231
+#: vacuumdb.c:1255
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   mode verbeux\n"
 
-#: vacuumdb.c:1232
+#: vacuumdb.c:1256
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   affiche la version puis quitte\n"
 
-#: vacuumdb.c:1233
+#: vacuumdb.c:1257
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   met à jour les statistiques de l'optimiseur\n"
 
-#: vacuumdb.c:1234
+#: vacuumdb.c:1258
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
 msgstr ""
 "  -Z, --analyze-only              met seulement à jour les statistiques de\n"
 "                                  l'optimiseur ; pas de VACUUM\n"
 
-#: vacuumdb.c:1235
+#: vacuumdb.c:1259
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
@@ -1118,12 +1113,12 @@ msgstr ""
 "                                  l'optimiseur, en plusieurs étapes pour de\n"
 "                                  meilleurs résultats ; pas de VACUUM\n"
 
-#: vacuumdb.c:1237
+#: vacuumdb.c:1261
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      affiche cette aide puis quitte\n"
 
-#: vacuumdb.c:1245
+#: vacuumdb.c:1269
 #, c-format
 msgid ""
 "\n"
@@ -1131,26 +1126,6 @@ msgid ""
 msgstr ""
 "\n"
 "Lire la description de la commande SQL VACUUM pour plus d'informations.\n"
-
-#~ msgid "%s: invalid socket: %s"
-#~ msgstr "%s : socket invalide : %s"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s : n'a pas pu obtenir les informations concernant l'utilisateur actuel : %s\n"
-
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s : n'a pas pu récupérer le nom de l'utilisateur actuel : %s\n"
-
-#~ msgid "  --version                       output version information, then exit\n"
-#~ msgstr "  --version                       affiche la version et quitte\n"
-
-#~ msgid "  --help                          show this help, then exit\n"
-#~ msgstr "  --help                          affiche cette aide et quitte\n"
-
-#~ msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
-#~ msgstr ""
-#~ "%s : il existe encore %s fonctions déclarées dans le langage « %s » ;\n"
-#~ "langage non supprimé\n"
 
 #~ msgid ""
 #~ "\n"
@@ -1161,63 +1136,52 @@ msgstr ""
 #~ "Si une des options -d, -D, -r, -R, -s, -S et RÔLE n'est pas précisée,\n"
 #~ "elle sera demandée interactivement.\n"
 
-#~ msgid "  --version                 output version information, then exit\n"
-#~ msgstr "  --version                      affiche la version et quitte\n"
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
 
-#~ msgid "  --help                    show this help, then exit\n"
-#~ msgstr "  --help                         affiche cette aide et quitte\n"
+#~ msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+#~ msgstr "  %s [OPTION]... NOMLANGAGE [BASE]\n"
 
-#~ msgid "  --version                    output version information, then exit\n"
-#~ msgstr "  --version                     affiche la version et quitte\n"
+#~ msgid "  --help                          show this help, then exit\n"
+#~ msgstr "  --help                          affiche cette aide et quitte\n"
 
 #~ msgid "  --help                       show this help, then exit\n"
 #~ msgstr "  --help                        affiche cette aide et quitte\n"
 
-#~ msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
-#~ msgstr "pg_strdup : ne peut pas dupliquer un pointeur nul (erreur interne)\n"
+#~ msgid "  --help                    show this help, then exit\n"
+#~ msgstr "  --help                         affiche cette aide et quitte\n"
 
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s : mémoire épuisée\n"
+#~ msgid "  --version                       output version information, then exit\n"
+#~ msgstr "  --version                       affiche la version et quitte\n"
 
-#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
-#~ msgstr ""
-#~ "%s : ne peut utiliser l'option « freeze » lors de l'exécution d'un ANALYZE\n"
-#~ "seul\n"
+#~ msgid "  --version                    output version information, then exit\n"
+#~ msgstr "  --version                     affiche la version et quitte\n"
+
+#~ msgid "  --version                 output version information, then exit\n"
+#~ msgstr "  --version                      affiche la version et quitte\n"
+
+#~ msgid "  -E, --encrypted           encrypt stored password\n"
+#~ msgstr "  -E, --encrypted                chiffre le mot de passe stocké\n"
+
+#~ msgid "  -N, --unencrypted         do not encrypt stored password\n"
+#~ msgstr "  -N, --unencrypted              ne chiffre pas le mot de passe stocké\n"
 
 #~ msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
 #~ msgstr ""
 #~ "  -d, --dbname=BASE           base de données à partir de laquelle\n"
 #~ "                                 supprimer le langage\n"
 
-#~ msgid ""
-#~ "%s removes a procedural language from a database.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s supprime un langage procédural d'une base de données.\n"
-#~ "\n"
-
-#~ msgid "%s: language removal failed: %s"
-#~ msgstr "%s : la suppression du langage a échoué : %s"
-
-#~ msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
-#~ msgstr "%s : le langage « %s » n'est pas installé dans la base de données « %s »\n"
-
-#~ msgid "  -N, --unencrypted         do not encrypt stored password\n"
-#~ msgstr "  -N, --unencrypted              ne chiffre pas le mot de passe stocké\n"
-
-#~ msgid "  -E, --encrypted           encrypt stored password\n"
-#~ msgstr "  -E, --encrypted                chiffre le mot de passe stocké\n"
+#~ msgid "  -d, --dbname=DBNAME       database to install language in\n"
+#~ msgstr "  -d, --dbname=BASE           base sur laquelle installer le langage\n"
 
 #~ msgid "  -l, --list                show a list of currently installed languages\n"
 #~ msgstr ""
 #~ "  -l, --list                     affiche la liste des langages déjà\n"
 #~ "                                 installés\n"
-
-#~ msgid "  -d, --dbname=DBNAME       database to install language in\n"
-#~ msgstr "  -d, --dbname=BASE           base sur laquelle installer le langage\n"
-
-#~ msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
-#~ msgstr "  %s [OPTION]... NOMLANGAGE [BASE]\n"
 
 #~ msgid ""
 #~ "%s installs a procedural language into a PostgreSQL database.\n"
@@ -1226,38 +1190,53 @@ msgstr ""
 #~ "%s installe un langage de procédures dans une base de données PostgreSQL.\n"
 #~ "\n"
 
-#~ msgid "%s: language installation failed: %s"
-#~ msgstr "%s : l'installation du langage a échoué : %s"
+#~ msgid ""
+#~ "%s removes a procedural language from a database.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "%s supprime un langage procédural d'une base de données.\n"
+#~ "\n"
 
-#~ msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
-#~ msgstr "%s : le langage « %s » est déjà installé sur la base de données « %s »\n"
-
-#~ msgid "%s: missing required argument language name\n"
-#~ msgstr "%s : argument nom du langage requis mais manquant\n"
-
-#~ msgid "Procedural Languages"
-#~ msgstr "Langages procéduraux"
-
-#~ msgid "Trusted?"
-#~ msgstr "De confiance (trusted) ?"
-
-#~ msgid "yes"
-#~ msgstr "oui"
-
-#~ msgid "no"
-#~ msgstr "non"
-
-#~ msgid "Name"
-#~ msgstr "Nom"
-
-#~ msgid "%s: too many parallel jobs requested (maximum: %d)\n"
-#~ msgstr "%s : trop de jobs en parallèle demandés (maximum %d)\n"
+#~ msgid "%s: \"%s\" is not a valid encoding name\n"
+#~ msgstr "%s : « %s » n'est pas un nom d'encodage valide\n"
 
 #~ msgid "%s: %s"
 #~ msgstr "%s : %s"
 
-#~ msgid "%s: \"%s\" is not a valid encoding name\n"
-#~ msgstr "%s : « %s » n'est pas un nom d'encodage valide\n"
+#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
+#~ msgstr ""
+#~ "%s : ne peut utiliser l'option « freeze » lors de l'exécution d'un ANALYZE\n"
+#~ "seul\n"
+
+#~ msgid "%s: could not get current user name: %s\n"
+#~ msgstr "%s : n'a pas pu récupérer le nom de l'utilisateur actuel : %s\n"
+
+#~ msgid "%s: could not obtain information about current user: %s\n"
+#~ msgstr "%s : n'a pas pu obtenir les informations concernant l'utilisateur actuel : %s\n"
+
+#~ msgid "%s: invalid socket: %s"
+#~ msgstr "%s : socket invalide : %s"
+
+#~ msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+#~ msgstr "%s : le langage « %s » est déjà installé sur la base de données « %s »\n"
+
+#~ msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+#~ msgstr "%s : le langage « %s » n'est pas installé dans la base de données « %s »\n"
+
+#~ msgid "%s: language installation failed: %s"
+#~ msgstr "%s : l'installation du langage a échoué : %s"
+
+#~ msgid "%s: language removal failed: %s"
+#~ msgstr "%s : la suppression du langage a échoué : %s"
+
+#~ msgid "%s: missing required argument language name\n"
+#~ msgstr "%s : argument nom du langage requis mais manquant\n"
+
+#~ msgid "%s: out of memory\n"
+#~ msgstr "%s : mémoire épuisée\n"
+
+#~ msgid "%s: query failed: %s"
+#~ msgstr "%s : échec de la requête : %s"
 
 #~ msgid "%s: query returned %d row instead of one: %s\n"
 #~ msgid_plural "%s: query returned %d rows instead of one: %s\n"
@@ -1267,15 +1246,39 @@ msgstr ""
 #~ msgid "%s: query was: %s\n"
 #~ msgstr "%s : la requête était : %s\n"
 
-#~ msgid "%s: query failed: %s"
-#~ msgstr "%s : échec de la requête : %s"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#~ msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
 #~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
+#~ "%s : il existe encore %s fonctions déclarées dans le langage « %s » ;\n"
+#~ "langage non supprimé\n"
 
 #~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
 #~ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
+
+#~ msgid "%s: too many parallel jobs requested (maximum: %d)\n"
+#~ msgstr "%s : trop de jobs en parallèle demandés (maximum %d)\n"
+
+#, c-format
+#~ msgid "Cancel request sent\n"
+#~ msgstr "Requête d'annulation envoyée\n"
+
+#, c-format
+#~ msgid "Could not send cancel request: %s"
+#~ msgstr "N'a pas pu envoyer la requête d'annulation : %s"
+
+#~ msgid "Name"
+#~ msgstr "Nom"
+
+#~ msgid "Procedural Languages"
+#~ msgstr "Langages procéduraux"
+
+#~ msgid "Trusted?"
+#~ msgstr "De confiance (trusted) ?"
+
+#~ msgid "no"
+#~ msgstr "non"
+
+#~ msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
+#~ msgstr "pg_strdup : ne peut pas dupliquer un pointeur nul (erreur interne)\n"
+
+#~ msgid "yes"
+#~ msgstr "oui"

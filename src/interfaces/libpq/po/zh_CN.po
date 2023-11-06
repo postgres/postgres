@@ -318,7 +318,7 @@ msgstr "Unix域的套接字路径\"%s\"超长(最大为%d字节)\n"
 #: fe-connect.c:2351
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr "无法解释 Unix-domian 套接字路径 \"%s\" 到地址: %s\n"
+msgstr "无法解释 Unix-domain 套接字路径 \"%s\" 到地址: %s\n"
 
 #: fe-connect.c:2472
 #, c-format
