@@ -605,6 +605,97 @@ RegisterSnapshotInvalidation(Oid dbId, Oid relId)
 }
 
 /*
+ * PrepareInvalidationState
+ *		Initialize inval data for the current (sub)transaction.
+ */
+static void
+PrepareInvalidationState(void)
+{
+	TransInvalidationInfo *myInfo;
+
+	if (transInvalInfo != NULL &&
+		transInvalInfo->my_level == GetCurrentTransactionNestLevel())
+		return;
+
+	myInfo = (TransInvalidationInfo *)
+		MemoryContextAllocZero(TopTransactionContext,
+							   sizeof(TransInvalidationInfo));
+	myInfo->parent = transInvalInfo;
+	myInfo->my_level = GetCurrentTransactionNestLevel();
+
+	/* Now, do we have a previous stack entry? */
+	if (transInvalInfo != NULL)
+	{
+		/* Yes; this one should be for a deeper nesting level. */
+		Assert(myInfo->my_level > transInvalInfo->my_level);
+
+		/*
+		 * The parent (sub)transaction must not have any current (i.e.,
+		 * not-yet-locally-processed) messages.  If it did, we'd have a
+		 * semantic problem: the new subtransaction presumably ought not be
+		 * able to see those events yet, but since the CommandCounter is
+		 * linear, that can't work once the subtransaction advances the
+		 * counter.  This is a convenient place to check for that, as well as
+		 * being important to keep management of the message arrays simple.
+		 */
+		if (NumMessagesInGroup(&transInvalInfo->CurrentCmdInvalidMsgs) != 0)
+			elog(ERROR, "cannot start a subtransaction when there are unprocessed inval messages");
+
+		/*
+		 * MemoryContextAllocZero set firstmsg = nextmsg = 0 in each group,
+		 * which is fine for the first (sub)transaction, but otherwise we need
+		 * to update them to follow whatever is already in the arrays.
+		 */
+		SetGroupToFollow(&myInfo->PriorCmdInvalidMsgs,
+						 &transInvalInfo->CurrentCmdInvalidMsgs);
+		SetGroupToFollow(&myInfo->CurrentCmdInvalidMsgs,
+						 &myInfo->PriorCmdInvalidMsgs);
+	}
+	else
+	{
+		/*
+		 * Here, we need only clear any array pointers left over from a prior
+		 * transaction.
+		 */
+		InvalMessageArrays[CatCacheMsgs].msgs = NULL;
+		InvalMessageArrays[CatCacheMsgs].maxmsgs = 0;
+		InvalMessageArrays[RelCacheMsgs].msgs = NULL;
+		InvalMessageArrays[RelCacheMsgs].maxmsgs = 0;
+	}
+
+	transInvalInfo = myInfo;
+}
+
+/* ----------------------------------------------------------------
+ *					  public functions
+ * ----------------------------------------------------------------
+ */
+
+void
+InvalidateSystemCachesExtended(bool debug_discard)
+{
+	int			i;
+
+	InvalidateCatalogSnapshot();
+	ResetCatalogCaches();
+	RelationCacheInvalidate(debug_discard); /* gets smgr and relmap too */
+
+	for (i = 0; i < syscache_callback_count; i++)
+	{
+		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
+
+		ccitem->function(ccitem->arg, ccitem->id, 0);
+	}
+
+	for (i = 0; i < relcache_callback_count; i++)
+	{
+		struct RELCACHECALLBACK *ccitem = relcache_callback_list + i;
+
+		ccitem->function(ccitem->arg, InvalidOid);
+	}
+}
+
+/*
  * LocalExecuteInvalidationMessage
  *
  * Process a single invalidation message (which could be of any type).
@@ -704,36 +795,6 @@ InvalidateSystemCaches(void)
 	InvalidateSystemCachesExtended(false);
 }
 
-void
-InvalidateSystemCachesExtended(bool debug_discard)
-{
-	int			i;
-
-	InvalidateCatalogSnapshot();
-	ResetCatalogCaches();
-	RelationCacheInvalidate(debug_discard); /* gets smgr and relmap too */
-
-	for (i = 0; i < syscache_callback_count; i++)
-	{
-		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
-
-		ccitem->function(ccitem->arg, ccitem->id, 0);
-	}
-
-	for (i = 0; i < relcache_callback_count; i++)
-	{
-		struct RELCACHECALLBACK *ccitem = relcache_callback_list + i;
-
-		ccitem->function(ccitem->arg, InvalidOid);
-	}
-}
-
-
-/* ----------------------------------------------------------------
- *					  public functions
- * ----------------------------------------------------------------
- */
-
 /*
  * AcceptInvalidationMessages
  *		Read and process invalidation messages from the shared invalidation
@@ -785,68 +846,6 @@ AcceptInvalidationMessages(void)
 		}
 	}
 #endif
-}
-
-/*
- * PrepareInvalidationState
- *		Initialize inval data for the current (sub)transaction.
- */
-static void
-PrepareInvalidationState(void)
-{
-	TransInvalidationInfo *myInfo;
-
-	if (transInvalInfo != NULL &&
-		transInvalInfo->my_level == GetCurrentTransactionNestLevel())
-		return;
-
-	myInfo = (TransInvalidationInfo *)
-		MemoryContextAllocZero(TopTransactionContext,
-							   sizeof(TransInvalidationInfo));
-	myInfo->parent = transInvalInfo;
-	myInfo->my_level = GetCurrentTransactionNestLevel();
-
-	/* Now, do we have a previous stack entry? */
-	if (transInvalInfo != NULL)
-	{
-		/* Yes; this one should be for a deeper nesting level. */
-		Assert(myInfo->my_level > transInvalInfo->my_level);
-
-		/*
-		 * The parent (sub)transaction must not have any current (i.e.,
-		 * not-yet-locally-processed) messages.  If it did, we'd have a
-		 * semantic problem: the new subtransaction presumably ought not be
-		 * able to see those events yet, but since the CommandCounter is
-		 * linear, that can't work once the subtransaction advances the
-		 * counter.  This is a convenient place to check for that, as well as
-		 * being important to keep management of the message arrays simple.
-		 */
-		if (NumMessagesInGroup(&transInvalInfo->CurrentCmdInvalidMsgs) != 0)
-			elog(ERROR, "cannot start a subtransaction when there are unprocessed inval messages");
-
-		/*
-		 * MemoryContextAllocZero set firstmsg = nextmsg = 0 in each group,
-		 * which is fine for the first (sub)transaction, but otherwise we need
-		 * to update them to follow whatever is already in the arrays.
-		 */
-		SetGroupToFollow(&myInfo->PriorCmdInvalidMsgs,
-						 &transInvalInfo->CurrentCmdInvalidMsgs);
-		SetGroupToFollow(&myInfo->CurrentCmdInvalidMsgs,
-						 &myInfo->PriorCmdInvalidMsgs);
-	}
-	else
-	{
-		/*
-		 * Here, we need only clear any array pointers left over from a prior
-		 * transaction.
-		 */
-		InvalMessageArrays[CatCacheMsgs].msgs = NULL;
-		InvalMessageArrays[CatCacheMsgs].maxmsgs = 0;
-		InvalMessageArrays[RelCacheMsgs].msgs = NULL;
-		InvalMessageArrays[RelCacheMsgs].maxmsgs = 0;
-	}
-
-	transInvalInfo = myInfo;
 }
 
 /*
