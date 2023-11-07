@@ -34,6 +34,11 @@ my @pg_upgrade_cmd = (
 	'-P', $newpub->port,
 	$mode);
 
+# In a VPATH build, we'll be started in the source directory, but we want
+# to run pg_upgrade in the build directory so that any files generated finish
+# in it, like delete_old_cluster.{sh,bat}.
+chdir ${PostgreSQL::Test::Utils::tmp_check};
+
 # ------------------------------
 # TEST: Confirm pg_upgrade fails when the new cluster has wrong GUC values
 
