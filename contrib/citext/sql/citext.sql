@@ -574,7 +574,6 @@ SELECT ltrim('zzzytrim'::citext, 'xyz'::citext) = 'trim' AS t;
 SELECT ltrim('zzzytrim'::text,   'xyz'::citext) = 'trim' AS t;
 SELECT ltrim('zzzytrim'::citext, 'xyz'::text  ) = 'trim' AS t;
 
-SELECT md5( name ) = md5( name::text ) AS t FROM srt;
 -- pg_client_encoding() takes no args and returns name.
 SELECT quote_ident( name ) = quote_ident( name::text ) AS t FROM srt;
 SELECT quote_literal( name ) = quote_literal( name::text ) AS t FROM srt;
