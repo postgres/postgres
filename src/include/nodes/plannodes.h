@@ -20,7 +20,6 @@
 #include "lib/stringinfo.h"
 #include "nodes/bitmapset.h"
 #include "nodes/lockoptions.h"
-#include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 
 

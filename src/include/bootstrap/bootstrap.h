@@ -15,6 +15,7 @@
 #define BOOTSTRAP_H
 
 #include "nodes/execnodes.h"
+#include "nodes/parsenodes.h"
 
 
 /*

@@ -15,7 +15,6 @@
 #define TCOPPROT_H
 
 #include "nodes/params.h"
-#include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "storage/procsignal.h"
 #include "utils/guc.h"

@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "nodes/parsenodes.h"
 #include "nodes/supportnodes.h"
 #include "utils/builtins.h"
 #include "windowapi.h"
