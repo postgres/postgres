@@ -206,15 +206,27 @@ static void ReleaseAuxProcessResourcesCallback(int code, Datum arg);
  *	  INTERNAL ROUTINES														 *
  *****************************************************************************/
 
+/*
+ * Hash function for value+kind combination.
+ */
 static inline uint32
 hash_resource_elem(Datum value, const ResourceOwnerDesc *kind)
 {
-	Datum		data[2];
-
-	data[0] = value;
-	data[1] = PointerGetDatum(kind);
-
-	return hash_bytes((unsigned char *) &data, 2 * SIZEOF_DATUM);
+	/*
+	 * Most resource kinds store a pointer in 'value', and pointers are unique
+	 * all on their own.  But some resources store plain integers (Files and
+	 * Buffers as of this writing), so we want to incorporate the 'kind' in
+	 * the hash too, otherwise those resources will collide a lot.  But
+	 * because there are only a few resource kinds like that - and only a few
+	 * resource kinds to begin with - we don't need to work too hard to mix
+	 * 'kind' into the hash.  Just add it with hash_combine(), it perturbs the
+	 * result enough for our purposes.
+	 */
+#if SIZEOF_DATUM == 8
+	return hash_combine64(murmurhash64((uint64) value), (uint64) kind);
+#else
+	return hash_combine(murmurhash32((uint32) value), (uint32) kind);
+#endif
 }
 
 /*
