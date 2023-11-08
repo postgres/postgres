@@ -7,7 +7,7 @@ tests += {
   'tap': {
     'env': {
       'with_ssl': ssl_library,
-      'OPENSSL': openssl.path(),
+      'OPENSSL': openssl.found() ? openssl.path() : '',
     },
     'tests': [
       't/001_ssltests.pl',
