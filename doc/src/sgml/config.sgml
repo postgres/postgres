@@ -2572,7 +2572,7 @@ include_dir 'conf.d'
        </term>
        <listitem>
         <para>
-         Sets the maximum number of background processes that the system
+         Sets the maximum number of background processes that the cluster
          can support.  This parameter can only be set at server start.  The
          default is 8.
         </para>
@@ -2680,7 +2680,7 @@ include_dir 'conf.d'
        </term>
        <listitem>
         <para>
-         Sets the maximum number of workers that the system can support for
+         Sets the maximum number of workers that the cluster can support for
          parallel operations.  The default value is 8.  When increasing or
          decreasing this value, consider also adjusting
          <xref linkend="guc-max-parallel-maintenance-workers"/> and
