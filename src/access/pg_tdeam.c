@@ -1975,9 +1975,11 @@ pg_tde_insert(Relation relation, HeapTuple tup, CommandId cid,
 		 */
 		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD | bufflags);
 		XLogRegisterBufData(0, (char *) &xlhdr, SizeOfHeapHeader);
+		/* register encrypted tuple data from the buffer */
+		PageHeader	phdr = (PageHeader) BufferGetPage(buffer);
 		/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
 		XLogRegisterBufData(0,
-							(char *) heaptup->t_data + SizeofHeapTupleHeader,
+							((char *) phdr) + phdr->pd_upper + SizeofHeapTupleHeader,
 							heaptup->t_len - SizeofHeapTupleHeader);
 
 		/* filtering by origin on a row level is much more efficient */
@@ -2341,10 +2343,12 @@ pg_tde_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 				tuphdr->t_infomask = heaptup->t_data->t_infomask;
 				tuphdr->t_hoff = heaptup->t_data->t_hoff;
 
+				/* Point to an encrypted tuple data in the Buffer */
+				char *tup_data_on_page = (char *) page + ItemIdGetOffset(PageGetItemId(page, heaptup->t_self.ip_posid));
 				/* write bitmap [+ padding] [+ oid] + data */
 				datalen = heaptup->t_len - SizeofHeapTupleHeader;
 				memcpy(scratchptr,
-					   (char *) heaptup->t_data + SizeofHeapTupleHeader,
+					   tup_data_on_page + SizeofHeapTupleHeader,
 					   datalen);
 				tuphdr->datalen = datalen;
 				scratchptr += datalen;
@@ -8400,6 +8404,7 @@ log_pg_tde_update(Relation reln, Buffer oldbuf,
 				suffixlen = 0;
 	XLogRecPtr	recptr;
 	Page		page = BufferGetPage(newbuf);
+	PageHeader	phdr = (PageHeader) page;
 	bool		need_tuple_data = RelationIsLogicallyLogged(reln);
 	bool		init;
 	int			bufflags;
@@ -8551,11 +8556,12 @@ log_pg_tde_update(Relation reln, Buffer oldbuf,
 	 *
 	 * The 'data' doesn't include the common prefix or suffix.
 	 */
+	/* We write an encrypted newtuple data from the buffer */
 	XLogRegisterBufData(0, (char *) &xlhdr, SizeOfHeapHeader);
 	if (prefixlen == 0)
 	{
 		XLogRegisterBufData(0,
-							((char *) newtup->t_data) + SizeofHeapTupleHeader,
+							((char *) phdr) + phdr->pd_upper + SizeofHeapTupleHeader,
 							newtup->t_len - SizeofHeapTupleHeader - suffixlen);
 	}
 	else
@@ -8568,13 +8574,13 @@ log_pg_tde_update(Relation reln, Buffer oldbuf,
 		if (newtup->t_data->t_hoff - SizeofHeapTupleHeader > 0)
 		{
 			XLogRegisterBufData(0,
-								((char *) newtup->t_data) + SizeofHeapTupleHeader,
+								((char *) phdr) + phdr->pd_upper + SizeofHeapTupleHeader,
 								newtup->t_data->t_hoff - SizeofHeapTupleHeader);
 		}
 
 		/* data after common prefix */
 		XLogRegisterBufData(0,
-							((char *) newtup->t_data) + newtup->t_data->t_hoff + prefixlen,
+							((char *) phdr) + phdr->pd_upper + newtup->t_data->t_hoff + prefixlen,
 							newtup->t_len - newtup->t_data->t_hoff - prefixlen - suffixlen);
 	}
 

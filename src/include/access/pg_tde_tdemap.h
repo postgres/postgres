@@ -10,6 +10,7 @@
 
 #include "utils/rel.h"
 #include "storage/relfilelocator.h"
+#include "access/xlog_internal.h"
 
 #define TDE_FORK_EXT "tde"
 
@@ -56,4 +57,22 @@ extern void pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation r
 extern RelKeysData *pg_tde_get_keys_from_fork(const RelFileLocator *rlocator);
 extern RelKeysData *GetRelationKeys(RelFileLocator rel);
 const char * tde_sprint_key(InternalKey *k);
+
+/* TDE XLOG resource manager */
+#define XLOG_TDE_CREATE_FORK   0x00
+/* TODO: ID has to be registedred and changed: https://wiki.postgresql.org/wiki/CustomWALResourceManagers */
+#define RM_TDERMGR_ID          RM_EXPERIMENTAL_ID
+#define RM_TDERMGR_NAME        "test_pg_tde_custom_rmgr"
+
+extern void            pg_tde_rmgr_redo(XLogReaderState *record);
+extern void            pg_tde_rmgr_desc(StringInfo buf, XLogReaderState *record);
+extern const char *    pg_tde_rmgr_identify(uint8 info);
+
+static const RmgrData pg_tde_rmgr = {
+	.rm_name = RM_TDERMGR_NAME,
+	.rm_redo = pg_tde_rmgr_redo,
+	.rm_desc = pg_tde_rmgr_desc,
+	.rm_identify = pg_tde_rmgr_identify
+};
+
 #endif                            /* PG_TDE_MAP_H */

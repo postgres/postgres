@@ -18,6 +18,7 @@
 #include "storage/shmem.h"
 #include "access/pg_tde_ddl.h"
 #include "encryption/enc_aes.h"
+#include "access/pg_tde_tdemap.h"
 
 #include "keyring/keyring_config.h"
 #include "keyring/keyring_api.h"
@@ -67,4 +68,6 @@ void
     RegisterXactCallback(pg_tde_xact_callback, NULL);
     RegisterSubXactCallback(pg_tde_subxact_callback, NULL);
 	SetupTdeDDLHooks();
+
+	RegisterCustomRmgr(RM_TDERMGR_ID, &pg_tde_rmgr);
 }
