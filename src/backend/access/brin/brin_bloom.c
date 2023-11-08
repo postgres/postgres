@@ -320,8 +320,7 @@ bloom_init(int ndistinct, double false_positive_rate)
 	int			nhashes;		/* number of hash functions */
 
 	Assert(ndistinct > 0);
-	Assert((false_positive_rate >= BLOOM_MIN_FALSE_POSITIVE_RATE) &&
-		   (false_positive_rate < BLOOM_MAX_FALSE_POSITIVE_RATE));
+	Assert(false_positive_rate > 0 && false_positive_rate < 1);
 
 	/* calculate bloom filter size / parameters */
 	bloom_filter_size(ndistinct, false_positive_rate,
