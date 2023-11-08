@@ -3235,6 +3235,14 @@ PQsendFlushRequest(PGconn *conn)
 		return 0;
 	}
 
+	/*
+	 * Give the data a push (in pipeline mode, only if we're past the size
+	 * threshold).  In nonblock mode, don't complain if we're unable to send
+	 * it all; PQgetResult() will do any additional flushing needed.
+	 */
+	if (pqPipelineFlush(conn) < 0)
+		return 0;
+
 	return 1;
 }
 
