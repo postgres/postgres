@@ -208,7 +208,7 @@ ANALYZE [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
   <para>
    <command>ANALYZE</command>
    requires only a read lock on the target table, so it can run in
-   parallel with other activity on the table.
+   parallel with other non-DDL activity on the table.
   </para>
 
   <para>
