@@ -9,10 +9,6 @@ that supports an extended subset of the SQL standard, including
 transactions, foreign keys, subqueries, triggers, user-defined types
 and functions.  This distribution also contains C language bindings.
 
-PostgreSQL has many language interfaces, many of which are listed here:
-
-	https://www.postgresql.org/download/
-
 See the file INSTALL for instructions on how to build and install
 PostgreSQL.  That file also lists supported operating systems and
 hardware platforms and contains information regarding any other
@@ -22,6 +18,6 @@ file COPYRIGHT.  A comprehensive documentation set is included in this
 distribution; it can be read as described in the installation
 instructions.
 
-The latest version of this software may be obtained at
-https://www.postgresql.org/download/.  For more information look at our
-web site located at https://www.postgresql.org/.
+The latest version of this software, and related software, may be
+obtained at https://www.postgresql.org/download/.  For more information
+look at our web site located at https://www.postgresql.org/.
