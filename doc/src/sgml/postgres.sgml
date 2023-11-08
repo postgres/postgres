@@ -38,24 +38,22 @@ break is not needed in a wider output rendering.
   <partintro>
    <para>
     Welcome to the <productname>PostgreSQL</productname> Tutorial.  The
-    following few chapters are intended to give a simple introduction
+    tutorial is intended to give an introduction
     to <productname>PostgreSQL</productname>, relational database
-    concepts, and the SQL language to those who are new to any one of
-    these aspects.  We only assume some general knowledge about how to
-    use computers.  No particular Unix or programming experience is
-    required.  This part is mainly intended to give you some hands-on
-    experience with important aspects of the
-    <productname>PostgreSQL</productname> system.  It makes no attempt
-    to be a complete or thorough treatment of the topics it covers.
+    concepts, and the SQL language. We assume some general knowledge about 
+    how to use computers and no particular Unix or programming experience is
+    required.  This tutorial is intended to provide hands-on experience with 
+    important aspects of the <productname>PostgreSQL</productname> system.  
+    It makes no attempt to be a comprehensive treatment of the topics it covers.
    </para>
 
    <para>
-    After you have worked through this tutorial you might want to move
-    on to reading <xref linkend="sql"/> to gain a more formal knowledge
+    After you have successfully completed this tutorial you will want to
+    read the <xref linkend="sql"/> section to gain a better understanding
     of the SQL language, or <xref linkend="client-interfaces"/> for
-    information about developing applications for
-    <productname>PostgreSQL</productname>.  Those who set up and
-    manage their own server should also read <xref linkend="admin"/>.
+    information about developing applications with
+    <productname>PostgreSQL</productname>.  Those who provision and
+    manage their own PostgreSQL installation should also read <xref linkend="admin"/>.
    </para>
   </partintro>
 
@@ -73,28 +71,26 @@ break is not needed in a wider output rendering.
     This part describes the use of the <acronym>SQL</acronym> language
     in <productname>PostgreSQL</productname>.  We start with
     describing the general syntax of <acronym>SQL</acronym>, then
-    explain how to create the structures to hold data, how to populate
-    the database, and how to query it.  The middle part lists the
-    available data types and functions for use in
-    <acronym>SQL</acronym> commands.  The rest treats several
-    aspects that are important for tuning a database for optimal
-    performance.
+    how to create tables, how to populate the database, and how to 
+    query it.  The middle part lists the available data types and 
+    functions for use in <acronym>SQL</acronym> commands.  Lastly,
+    we address several aspects of importance for tuning a database.
    </para>
 
    <para>
-    The information in this part is arranged so that a novice user can
-    follow it start to end to gain a full understanding of the topics
+    The information is arranged so that a novice user can
+    follow it from start to end and gain a full understanding of the topics
     without having to refer forward too many times.  The chapters are
     intended to be self-contained, so that advanced users can read the
-    chapters individually as they choose.  The information in this
-    part is presented in a narrative fashion in topical units.
-    Readers looking for a complete description of a particular command
-    should see <xref linkend="reference"/>.
+    chapters individually as they choose.  The information is presented 
+    in narrative form with topical units. Readers looking for a complete 
+    description of a particular command are encouraged to review 
+    the <xref linkend="reference"/>.
    </para>
 
    <para>
-    Readers of this part should know how to connect to a
-    <productname>PostgreSQL</productname> database and issue
+    Readers should know how to connect to a
+    <productname>PostgreSQL</productname> database and issue 
     <acronym>SQL</acronym> commands.  Readers that are unfamiliar with
     these issues are encouraged to read <xref linkend="tutorial"/>
     first.  <acronym>SQL</acronym> commands are typically entered
@@ -125,32 +121,32 @@ break is not needed in a wider output rendering.
   <partintro>
    <para>
     This part covers topics that are of interest to a
-    <productname>PostgreSQL</productname> database administrator.  This includes
-    installation of the software, set up and configuration of the
-    server, management of users and databases, and maintenance tasks.
-    Anyone who runs a <productname>PostgreSQL</productname> server, even for
+    <productname>PostgreSQL</productname> administrator.  This includes
+    installation, configuration of the server, management of users 
+    and databases, and maintenance tasks. Anyone running 
+    <productname>PostgreSQL</productname> server, even for
     personal use, but especially in production, should be familiar
-    with the topics covered in this part.
+    with these topics.
    </para>
 
    <para>
-    The information in this part is arranged approximately in the
-    order in which a new user should read it.  But the chapters are
-    self-contained and can be read individually as desired.  The
-    information in this part is presented in a narrative fashion in
-    topical units.  Readers looking for a complete description of a
-    particular command should see <xref linkend="reference"/>.
+    The information attempts to be in the order in which 
+    a new user should read it.  The chapters are self-contained and 
+    can be read individually as desired.  The information is presented 
+    in a narrative form in topical units.  Readers looking for a complete 
+    description of a command are encouraged to review the 
+    <xref linkend="reference"/>.
    </para>
 
    <para>
     The first few chapters are written so they can be understood
     without prerequisite knowledge, so new users who need to set
-    up their own server can begin their exploration with this part.
-    The rest of this part is about tuning and management; that material
+    up their own server can begin their exploration. The rest of this 
+    part is about tuning and management; that material
     assumes that the reader is familiar with the general use of
     the <productname>PostgreSQL</productname> database system.  Readers are
-    encouraged to look at <xref linkend="tutorial"/> and <xref
-    linkend="sql"/> for additional information.
+    encouraged review the <xref linkend="tutorial"/> and <xref
+    linkend="sql"/> parts for additional information.
    </para>
   </partintro>
 
@@ -182,13 +178,13 @@ break is not needed in a wider output rendering.
    <para>
     This part describes the client programming interfaces distributed
     with <productname>PostgreSQL</productname>.  Each of these chapters can be
-    read independently.  Note that there are many other programming
-    interfaces for client programs that are distributed separately and
+    read independently.  There are many external programming
+    interfaces for client programs that are distributed separately. They 
     contain their own documentation (<xref linkend="external-projects"/>
     lists some of the more popular ones).  Readers of this part should be
-    familiar with using <acronym>SQL</acronym> commands to manipulate
+    familiar with using <acronym>SQL</acronym> to manipulate
     and query the database (see <xref linkend="sql"/>) and of course
-    with the programming language that the interface uses.
+    with the programming language of their choice.
    </para>
   </partintro>
 
@@ -206,15 +202,15 @@ break is not needed in a wider output rendering.
    <para>
     This part is about extending the server functionality with
     user-defined functions, data types, triggers, etc.  These are
-    advanced topics which should probably be approached only after all
+    advanced topics which should be approached only after all
     the other user documentation about <productname>PostgreSQL</productname> has
     been understood.  Later chapters in this part describe the server-side
     programming languages available in the
     <productname>PostgreSQL</productname> distribution as well as
-    general issues concerning server-side programming languages.  It
+    general issues concerning server-side programming.  It
     is essential to read at least the earlier sections of <xref
     linkend="extend"/> (covering functions) before diving into the
-    material about server-side programming languages.
+    material about server-side programming.
    </para>
   </partintro>
 
