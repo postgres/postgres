@@ -14,7 +14,7 @@ endif
 
 ldap_password_func = shared_module('ldap_password_func',
   ldap_password_func_sources,
-  kwargs: pg_mod_args + {
+  kwargs: pg_test_mod_args + {
     'dependencies': [ldap, pg_mod_args['dependencies']],
   },
 )
