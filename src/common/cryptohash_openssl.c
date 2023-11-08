@@ -31,7 +31,6 @@
 #ifndef FRONTEND
 #include "utils/memutils.h"
 #include "utils/resowner.h"
-#include "utils/resowner_private.h"
 #endif
 
 /*
@@ -74,6 +73,32 @@ struct pg_cryptohash_ctx
 #endif
 };
 
+/* ResourceOwner callbacks to hold cryptohash contexts */
+#ifndef FRONTEND
+static void ResOwnerReleaseCryptoHash(Datum res);
+
+static const ResourceOwnerDesc cryptohash_resowner_desc =
+{
+	.name = "OpenSSL cryptohash context",
+	.release_phase = RESOURCE_RELEASE_BEFORE_LOCKS,
+	.release_priority = RELEASE_PRIO_CRYPTOHASH_CONTEXTS,
+	.ReleaseResource = ResOwnerReleaseCryptoHash,
+	.DebugPrint = NULL			/* the default message is fine */
+};
+
+/* Convenience wrappers over ResourceOwnerRemember/Forget */
+static inline void
+ResourceOwnerRememberCryptoHash(ResourceOwner owner, pg_cryptohash_ctx *ctx)
+{
+	ResourceOwnerRemember(owner, PointerGetDatum(ctx), &cryptohash_resowner_desc);
+}
+static inline void
+ResourceOwnerForgetCryptoHash(ResourceOwner owner, pg_cryptohash_ctx *ctx)
+{
+	ResourceOwnerForget(owner, PointerGetDatum(ctx), &cryptohash_resowner_desc);
+}
+#endif
+
 static const char *
 SSLerrmessage(unsigned long ecode)
 {
@@ -104,7 +129,7 @@ pg_cryptohash_create(pg_cryptohash_type type)
 	 * allocation to avoid leaking.
 	 */
 #ifndef FRONTEND
-	ResourceOwnerEnlargeCryptoHash(CurrentResourceOwner);
+	ResourceOwnerEnlarge(CurrentResourceOwner);
 #endif
 
 	ctx = ALLOC(sizeof(pg_cryptohash_ctx));
@@ -138,8 +163,7 @@ pg_cryptohash_create(pg_cryptohash_type type)
 
 #ifndef FRONTEND
 	ctx->resowner = CurrentResourceOwner;
-	ResourceOwnerRememberCryptoHash(CurrentResourceOwner,
-									PointerGetDatum(ctx));
+	ResourceOwnerRememberCryptoHash(CurrentResourceOwner, ctx);
 #endif
 
 	return ctx;
@@ -307,8 +331,8 @@ pg_cryptohash_free(pg_cryptohash_ctx *ctx)
 	EVP_MD_CTX_destroy(ctx->evpctx);
 
 #ifndef FRONTEND
-	ResourceOwnerForgetCryptoHash(ctx->resowner,
-								  PointerGetDatum(ctx));
+	if (ctx->resowner)
+		ResourceOwnerForgetCryptoHash(ctx->resowner, ctx);
 #endif
 
 	explicit_bzero(ctx, sizeof(pg_cryptohash_ctx));
@@ -351,3 +375,16 @@ pg_cryptohash_error(pg_cryptohash_ctx *ctx)
 	Assert(false);				/* cannot be reached */
 	return _("success");
 }
+
+/* ResourceOwner callbacks */
+
+#ifndef FRONTEND
+static void
+ResOwnerReleaseCryptoHash(Datum res)
+{
+	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) DatumGetPointer(res);
+
+	ctx->resowner = NULL;
+	pg_cryptohash_free(ctx);
+}
+#endif

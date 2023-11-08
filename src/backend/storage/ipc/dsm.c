@@ -38,13 +38,15 @@
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
 #include "storage/dsm.h"
+#include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/pg_shmem.h"
+#include "storage/shmem.h"
 #include "utils/freepage.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
-#include "utils/resowner_private.h"
+#include "utils/resowner.h"
 
 #define PG_DYNSHMEM_CONTROL_MAGIC		0x9a503d32
 
@@ -139,6 +141,32 @@ static dsm_handle dsm_control_handle;
 static dsm_control_header *dsm_control;
 static Size dsm_control_mapped_size = 0;
 static void *dsm_control_impl_private = NULL;
+
+
+/* ResourceOwner callbacks to hold DSM segments */
+static void ResOwnerReleaseDSM(Datum res);
+static char *ResOwnerPrintDSM(Datum res);
+
+static const ResourceOwnerDesc dsm_resowner_desc =
+{
+	.name = "dynamic shared memory segment",
+	.release_phase = RESOURCE_RELEASE_BEFORE_LOCKS,
+	.release_priority = RELEASE_PRIO_DSMS,
+	.ReleaseResource = ResOwnerReleaseDSM,
+	.DebugPrint = ResOwnerPrintDSM
+};
+
+/* Convenience wrappers over ResourceOwnerRemember/Forget */
+static inline void
+ResourceOwnerRememberDSM(ResourceOwner owner, dsm_segment *seg)
+{
+	ResourceOwnerRemember(owner, PointerGetDatum(seg), &dsm_resowner_desc);
+}
+static inline void
+ResourceOwnerForgetDSM(ResourceOwner owner, dsm_segment *seg)
+{
+	ResourceOwnerForget(owner, PointerGetDatum(seg), &dsm_resowner_desc);
+}
 
 /*
  * Start up the dynamic shared memory system.
@@ -907,7 +935,7 @@ void
 dsm_unpin_mapping(dsm_segment *seg)
 {
 	Assert(seg->resowner == NULL);
-	ResourceOwnerEnlargeDSMs(CurrentResourceOwner);
+	ResourceOwnerEnlarge(CurrentResourceOwner);
 	seg->resowner = CurrentResourceOwner;
 	ResourceOwnerRememberDSM(seg->resowner, seg);
 }
@@ -1176,7 +1204,7 @@ dsm_create_descriptor(void)
 	dsm_segment *seg;
 
 	if (CurrentResourceOwner)
-		ResourceOwnerEnlargeDSMs(CurrentResourceOwner);
+		ResourceOwnerEnlarge(CurrentResourceOwner);
 
 	seg = MemoryContextAlloc(TopMemoryContext, sizeof(dsm_segment));
 	dlist_push_head(&dsm_segment_list, &seg->node);
@@ -1254,4 +1282,23 @@ static inline bool
 is_main_region_dsm_handle(dsm_handle handle)
 {
 	return handle & 1;
+}
+
+/* ResourceOwner callbacks */
+
+static void
+ResOwnerReleaseDSM(Datum res)
+{
+	dsm_segment *seg = (dsm_segment *) DatumGetPointer(res);
+
+	seg->resowner = NULL;
+	dsm_detach(seg);
+}
+static char *
+ResOwnerPrintDSM(Datum res)
+{
+	dsm_segment *seg = (dsm_segment *) DatumGetPointer(res);
+
+	return psprintf("dynamic shared memory segment %u",
+					dsm_segment_handle(seg));
 }

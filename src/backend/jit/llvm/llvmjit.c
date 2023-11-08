@@ -45,7 +45,7 @@
 #include "portability/instr_time.h"
 #include "storage/ipc.h"
 #include "utils/memutils.h"
-#include "utils/resowner_private.h"
+#include "utils/resowner.h"
 
 #define LLVMJIT_LLVM_CONTEXT_REUSE_MAX 100
 
@@ -130,6 +130,30 @@ static uint64_t llvm_resolve_symbol(const char *name, void *ctx);
 static LLVMOrcLLJITRef llvm_create_jit_instance(LLVMTargetMachineRef tm);
 static char *llvm_error_message(LLVMErrorRef error);
 #endif							/* LLVM_VERSION_MAJOR > 11 */
+
+/* ResourceOwner callbacks to hold JitContexts  */
+static void ResOwnerReleaseJitContext(Datum res);
+
+static const ResourceOwnerDesc jit_resowner_desc =
+{
+	.name = "LLVM JIT context",
+	.release_phase = RESOURCE_RELEASE_BEFORE_LOCKS,
+	.release_priority = RELEASE_PRIO_JIT_CONTEXTS,
+	.ReleaseResource = ResOwnerReleaseJitContext,
+	.DebugPrint = NULL			/* the default message is fine */
+};
+
+/* Convenience wrappers over ResourceOwnerRemember/Forget */
+static inline void
+ResourceOwnerRememberJIT(ResourceOwner owner, LLVMJitContext *handle)
+{
+	ResourceOwnerRemember(owner, PointerGetDatum(handle), &jit_resowner_desc);
+}
+static inline void
+ResourceOwnerForgetJIT(ResourceOwner owner, LLVMJitContext *handle)
+{
+	ResourceOwnerForget(owner, PointerGetDatum(handle), &jit_resowner_desc);
+}
 
 PG_MODULE_MAGIC;
 
@@ -220,7 +244,7 @@ llvm_create_context(int jitFlags)
 
 	llvm_recreate_llvm_context();
 
-	ResourceOwnerEnlargeJIT(CurrentResourceOwner);
+	ResourceOwnerEnlarge(CurrentResourceOwner);
 
 	context = MemoryContextAllocZero(TopMemoryContext,
 									 sizeof(LLVMJitContext));
@@ -228,7 +252,7 @@ llvm_create_context(int jitFlags)
 
 	/* ensure cleanup */
 	context->base.resowner = CurrentResourceOwner;
-	ResourceOwnerRememberJIT(CurrentResourceOwner, PointerGetDatum(context));
+	ResourceOwnerRememberJIT(CurrentResourceOwner, context);
 
 	llvm_jit_context_in_use_count++;
 
@@ -300,6 +324,9 @@ llvm_release_context(JitContext *context)
 	llvm_jit_context->handles = NIL;
 
 	llvm_leave_fatal_on_oom();
+
+	if (context->resowner)
+		ResourceOwnerForgetJIT(context->resowner, llvm_jit_context);
 }
 
 /*
@@ -1394,3 +1421,15 @@ llvm_error_message(LLVMErrorRef error)
 }
 
 #endif							/* LLVM_VERSION_MAJOR > 11 */
+
+/*
+ * ResourceOwner callbacks
+ */
+static void
+ResOwnerReleaseJitContext(Datum res)
+{
+	JitContext *context = (JitContext *) DatumGetPointer(res);
+
+	context->resowner = NULL;
+	jit_release_context(context);
+}

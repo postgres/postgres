@@ -48,7 +48,7 @@
 #include "storage/standby.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-#include "utils/resowner_private.h"
+#include "utils/resowner.h"
 
 
 /* This configuration variable is used to set the lock table size */

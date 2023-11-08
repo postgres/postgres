@@ -39,8 +39,8 @@ because transactions may initiate operations that require resources (such
 as query parsing) when no associated Portal exists yet.
 
 
-API Overview
-------------
+Usage
+-----
 
 The basic operations on a ResourceOwner are:
 
@@ -53,13 +53,6 @@ The basic operations on a ResourceOwner are:
 
 * delete a ResourceOwner (including child owner objects); all resources
   must have been released beforehand
-
-This API directly supports the resource types listed in the definition of
-ResourceOwnerData struct in src/backend/utils/resowner/resowner.c.
-Other objects can be associated with a ResourceOwner by recording the address
-of the owning ResourceOwner in such an object.  There is an API for other
-modules to get control during ResourceOwner release, so that they can scan
-their own data structures to find the objects that need to be deleted.
 
 Locks are handled specially because in non-error situations a lock should
 be held until end of transaction, even if it was originally taken by a
@@ -79,3 +72,106 @@ CurrentResourceOwner must point to the same resource owner that was current
 when the buffer, lock, or cache reference was acquired.  It would be possible
 to relax this restriction given additional bookkeeping effort, but at present
 there seems no need.
+
+Adding a new resource type
+--------------------------
+
+ResourceOwner can track ownership of many different kinds of resources.  In
+core PostgreSQL it is used for buffer pins, lmgr locks, and catalog cache
+references, to name a few examples.
+
+To add a new kind of resource, define a ResourceOwnerDesc to describe it.
+For example:
+
+static const ResourceOwnerDesc myresource_desc = {
+	.name = "My fancy resource",
+	.release_phase = RESOURCE_RELEASE_AFTER_LOCKS,
+	.release_priority = RELEASE_PRIO_FIRST,
+	.ReleaseResource = ReleaseMyResource,
+	.DebugPrint = PrintMyResource
+};
+
+ResourceOwnerRemember() and ResourceOwnerForget() functions take a pointer
+to that struct, along with a Datum to represent the resource.  The meaning
+of the Datum depends on the resource type.  Most resource types use it to
+store a pointer to some struct, but it can also be a file descriptor or
+library handle, for example.
+
+The ReleaseResource callback is called when a resource owner is released or
+deleted.  It should release any resources (e.g. close files, free memory)
+associated with the resource.  Because the callback is called during
+transaction abort, it must perform only low-level cleanup with no user
+visible effects.  The callback should not perform operations that could
+fail, like allocate memory.
+
+The optional DebugPrint callback is used in the warning at transaction
+commit, if any resources are leaked.  If not specified, a generic
+implementation that prints the resource name and the resource as a pointer
+is used.
+
+There is another API for other modules to get control during ResourceOwner
+release, so that they can scan their own data structures to find the objects
+that need to be deleted.  See RegisterResourceReleaseCallback function.
+This used to be the only way for extensions to use the resource owner
+mechanism with new kinds of objects; nowadays it easier to define a custom
+ResourceOwnerDesc struct.
+
+
+Releasing
+---------
+
+Releasing the resources of a ResourceOwner happens in three phases:
+
+1. "Before-locks" resources
+
+2. Locks
+
+3. "After-locks" resources
+
+Each resource type specifies whether it needs to be released before or after
+locks.  Each resource type also has a priority, which determines the order
+that the resources are released in.  Note that the phases are performed fully
+for the whole tree of resource owners, before moving to the next phase, but
+the priority within each phase only determines the order within that
+ResourceOwner.  Child resource owners are always handled before the parent,
+within each phase.
+
+For example, imagine that you have two ResourceOwners, parent and child,
+as follows:
+
+Parent
+  parent resource BEFORE_LOCKS priority 1
+  parent resource BEFORE_LOCKS priority 2
+  parent resource AFTER_LOCKS priority 10001
+  parent resource AFTER_LOCKS priority 10002
+  Child
+    child resource BEFORE_LOCKS priority 1
+    child resource BEFORE_LOCKS priority 2
+    child resource AFTER_LOCKS priority 10001
+    child resource AFTER_LOCKS priority 10002
+
+These resources would be released in the following order:
+
+child resource BEFORE_LOCKS priority 1
+child resource BEFORE_LOCKS priority 2
+parent resource BEFORE_LOCKS priority 1
+parent resource BEFORE_LOCKS priority 2
+(locks)
+child resource AFTER_LOCKS priority 10001
+child resource AFTER_LOCKS priority 10002
+parent resource AFTER_LOCKS priority 10001
+parent resource AFTER_LOCKS priority 10002
+
+To release all the resources, you need to call ResourceOwnerRelease() three
+times, once for each phase. You may perform additional tasks between the
+phases, but after the first call to ResourceOwnerRelease(), you cannot use
+the ResourceOwner to remember any more resources. You also cannot call
+ResourceOwnerForget on the resource owner to release any previously
+remembered resources "in retail", after you have started the release process.
+
+Normally, you are expected to call ResourceOwnerForget on every resource so
+that at commit, the ResourceOwner is empty (locks are an exception). If there
+are any resources still held at commit, ResourceOwnerRelease will print a
+WARNING on each such resource. At abort, however, we truly rely on the
+ResourceOwner mechanism and it is normal that there are resources to be
+released.

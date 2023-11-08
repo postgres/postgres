@@ -207,7 +207,7 @@ extern Buffer ExtendBufferedRelTo(BufferManagerRelation bmr,
 
 extern void InitBufferPoolAccess(void);
 extern void AtEOXact_Buffers(bool isCommit);
-extern void PrintBufferLeakWarning(Buffer buffer);
+extern char *DebugPrintBufferRefcount(Buffer buffer);
 extern void CheckPointBuffers(int flags);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
@@ -247,8 +247,6 @@ extern void LockBufferForCleanup(Buffer buffer);
 extern bool ConditionalLockBufferForCleanup(Buffer buffer);
 extern bool IsBufferCleanupOK(Buffer buffer);
 extern bool HoldingBufferPinThatDelaysRecovery(void);
-
-extern void AbortBufferIO(Buffer buffer);
 
 extern bool BgBufferSync(struct WritebackContext *wb_context);
 

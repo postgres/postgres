@@ -27,9 +27,34 @@
 #include "common/hashfn.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
-#include "utils/resowner_private.h"
+#include "utils/resowner.h"
 #include "utils/syscache.h"
 
+/* ResourceOwner callbacks to hold tupledesc references  */
+static void ResOwnerReleaseTupleDesc(Datum res);
+static char *ResOwnerPrintTupleDesc(Datum res);
+
+static const ResourceOwnerDesc tupdesc_resowner_desc =
+{
+	.name = "tupdesc reference",
+	.release_phase = RESOURCE_RELEASE_AFTER_LOCKS,
+	.release_priority = RELEASE_PRIO_TUPDESC_REFS,
+	.ReleaseResource = ResOwnerReleaseTupleDesc,
+	.DebugPrint = ResOwnerPrintTupleDesc
+};
+
+/* Convenience wrappers over ResourceOwnerRemember/Forget */
+static inline void
+ResourceOwnerRememberTupleDesc(ResourceOwner owner, TupleDesc tupdesc)
+{
+	ResourceOwnerRemember(owner, PointerGetDatum(tupdesc), &tupdesc_resowner_desc);
+}
+
+static inline void
+ResourceOwnerForgetTupleDesc(ResourceOwner owner, TupleDesc tupdesc)
+{
+	ResourceOwnerForget(owner, PointerGetDatum(tupdesc), &tupdesc_resowner_desc);
+}
 
 /*
  * CreateTemplateTupleDesc
@@ -364,7 +389,7 @@ IncrTupleDescRefCount(TupleDesc tupdesc)
 {
 	Assert(tupdesc->tdrefcount >= 0);
 
-	ResourceOwnerEnlargeTupleDescs(CurrentResourceOwner);
+	ResourceOwnerEnlarge(CurrentResourceOwner);
 	tupdesc->tdrefcount++;
 	ResourceOwnerRememberTupleDesc(CurrentResourceOwner, tupdesc);
 }
@@ -846,4 +871,26 @@ TupleDescGetDefault(TupleDesc tupdesc, AttrNumber attnum)
 	}
 
 	return result;
+}
+
+/* ResourceOwner callbacks */
+
+static void
+ResOwnerReleaseTupleDesc(Datum res)
+{
+	TupleDesc	tupdesc = (TupleDesc) DatumGetPointer(res);
+
+	/* Like DecrTupleDescRefCount, but don't call ResourceOwnerForget() */
+	Assert(tupdesc->tdrefcount > 0);
+	if (--tupdesc->tdrefcount == 0)
+		FreeTupleDesc(tupdesc);
+}
+
+static char *
+ResOwnerPrintTupleDesc(Datum res)
+{
+	TupleDesc	tupdesc = (TupleDesc) DatumGetPointer(res);
+
+	return psprintf("TupleDesc %p (%u,%d)",
+					tupdesc, tupdesc->tdtypeid, tupdesc->tdtypmod);
 }
