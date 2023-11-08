@@ -130,6 +130,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	if (LocalBufHash == NULL)
 		InitLocalBuffers();
 
+	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
+
 	/* See if the desired buffer already exists */
 	hresult = (LocalBufferLookupEnt *)
 		hash_search(LocalBufHash, &newTag, HASH_FIND, NULL);

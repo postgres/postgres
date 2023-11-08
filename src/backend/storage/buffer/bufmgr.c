@@ -1023,9 +1023,6 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 								 forkNum, strategy, flags);
 	}
 
-	/* Make sure we will have room to remember the buffer pin */
-	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
-
 	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum,
 									   smgr->smgr_rlocator.locator.spcOid,
 									   smgr->smgr_rlocator.locator.dbOid,
@@ -1229,6 +1226,10 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	Buffer		victim_buffer;
 	BufferDesc *victim_buf_hdr;
 	uint32		victim_buf_state;
+
+	/* Make sure we will have room to remember the buffer pin */
+	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
+	ReservePrivateRefCountEntry();
 
 	/* create a tag so we can lookup the buffer */
 	InitBufferTag(&newTag, &smgr->smgr_rlocator.locator, forkNum, blockNum);
@@ -1591,7 +1592,7 @@ GetVictimBuffer(BufferAccessStrategy strategy, IOContext io_context)
 
 	/*
 	 * Ensure, while the spinlock's not yet held, that there's a free refcount
-	 * entry.
+	 * entry, and a resource owner slot for the pin.
 	 */
 	ReservePrivateRefCountEntry();
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
@@ -1859,9 +1860,6 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		MemSet((char *) buf_block, 0, BLCKSZ);
 	}
 
-	/* in case we need to pin an existing buffer below */
-	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
-
 	/*
 	 * Lock relation against concurrent extensions, unless requested not to.
 	 *
@@ -1946,6 +1944,10 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		uint32		hash;
 		LWLock	   *partition_lock;
 		int			existing_id;
+
+		/* in case we need to pin an existing buffer below */
+		ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
+		ReservePrivateRefCountEntry();
 
 		InitBufferTag(&tag, &bmr.smgr->smgr_rlocator.locator, fork, first_block + i);
 		hash = BufTableHashCode(&tag);
@@ -2281,7 +2283,8 @@ ReleaseAndReadBuffer(Buffer buffer,
  * taking the buffer header lock; instead update the state variable in loop of
  * CAS operations. Hopefully it's just a single CAS.
  *
- * Note that ResourceOwnerEnlargeBuffers must have been done already.
+ * Note that ResourceOwnerEnlargeBuffers and ReservePrivateRefCountEntry()
+ * must have been done already.
  *
  * Returns true if buffer is BM_VALID, else false.  This provision allows
  * some callers to avoid an extra spinlock cycle.
@@ -2294,6 +2297,7 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy)
 	PrivateRefCountEntry *ref;
 
 	Assert(!BufferIsLocal(b));
+	Assert(ReservedRefCountEntry != NULL);
 
 	ref = GetPrivateRefCountEntry(b, true);
 
@@ -2302,7 +2306,6 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy)
 		uint32		buf_state;
 		uint32		old_buf_state;
 
-		ReservePrivateRefCountEntry();
 		ref = NewPrivateRefCountEntry(b);
 
 		old_buf_state = pg_atomic_read_u32(&buf->state);
@@ -2375,7 +2378,8 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy)
  * The spinlock is released before return.
  *
  * As this function is called with the spinlock held, the caller has to
- * previously call ReservePrivateRefCountEntry().
+ * previously call ReservePrivateRefCountEntry() and
+ * ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
  *
  * Currently, no callers of this function want to modify the buffer's
  * usage_count at all, so there's no need for a strategy parameter.
@@ -2549,9 +2553,6 @@ BufferSync(int flags)
 	int			i;
 	int			mask = BM_DIRTY;
 	WritebackContext wb_context;
-
-	/* Make sure we can handle the pin inside SyncOneBuffer */
-	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
 	/*
 	 * Unless this is a shutdown checkpoint or we have been explicitly told,
@@ -3029,9 +3030,6 @@ BgBufferSync(WritebackContext *wb_context)
 	 * requirements, or hit the bgwriter_lru_maxpages limit.
 	 */
 
-	/* Make sure we can handle the pin inside SyncOneBuffer */
-	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
-
 	num_to_scan = bufs_to_lap;
 	num_written = 0;
 	reusable_buffers = reusable_buffers_est;
@@ -3113,8 +3111,6 @@ BgBufferSync(WritebackContext *wb_context)
  *
  * (BUF_WRITTEN could be set in error if FlushBuffer finds the buffer clean
  * after locking it, but we don't care all that much.)
- *
- * Note: caller must have done ResourceOwnerEnlargeBuffers.
  */
 static int
 SyncOneBuffer(int buf_id, bool skip_recently_used, WritebackContext *wb_context)
@@ -3124,7 +3120,9 @@ SyncOneBuffer(int buf_id, bool skip_recently_used, WritebackContext *wb_context)
 	uint32		buf_state;
 	BufferTag	tag;
 
+	/* Make sure we can handle the pin */
 	ReservePrivateRefCountEntry();
+	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
 	/*
 	 * Check whether buffer needs writing.
@@ -4169,9 +4167,6 @@ FlushRelationBuffers(Relation rel)
 		return;
 	}
 
-	/* Make sure we can handle the pin inside the loop */
-	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
-
 	for (i = 0; i < NBuffers; i++)
 	{
 		uint32		buf_state;
@@ -4185,7 +4180,9 @@ FlushRelationBuffers(Relation rel)
 		if (!BufTagMatchesRelFileLocator(&bufHdr->tag, &rel->rd_locator))
 			continue;
 
+		/* Make sure we can handle the pin */
 		ReservePrivateRefCountEntry();
+		ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
 		buf_state = LockBufHdr(bufHdr);
 		if (BufTagMatchesRelFileLocator(&bufHdr->tag, &rel->rd_locator) &&
@@ -4242,9 +4239,6 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 	if (use_bsearch)
 		pg_qsort(srels, nrels, sizeof(SMgrSortArray), rlocator_comparator);
 
-	/* Make sure we can handle the pin inside the loop */
-	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
-
 	for (i = 0; i < NBuffers; i++)
 	{
 		SMgrSortArray *srelent = NULL;
@@ -4283,7 +4277,9 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 		if (srelent == NULL)
 			continue;
 
+		/* Make sure we can handle the pin */
 		ReservePrivateRefCountEntry();
+		ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
 		buf_state = LockBufHdr(bufHdr);
 		if (BufTagMatchesRelFileLocator(&bufHdr->tag, &srelent->rlocator) &&
@@ -4478,9 +4474,6 @@ FlushDatabaseBuffers(Oid dbid)
 	int			i;
 	BufferDesc *bufHdr;
 
-	/* Make sure we can handle the pin inside the loop */
-	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
-
 	for (i = 0; i < NBuffers; i++)
 	{
 		uint32		buf_state;
@@ -4494,7 +4487,9 @@ FlushDatabaseBuffers(Oid dbid)
 		if (bufHdr->tag.dbOid != dbid)
 			continue;
 
+		/* Make sure we can handle the pin */
 		ReservePrivateRefCountEntry();
+		ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
 		buf_state = LockBufHdr(bufHdr);
 		if (bufHdr->tag.dbOid == dbid &&
