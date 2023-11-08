@@ -349,10 +349,13 @@ ResourceOwnerReleaseAll(ResourceOwner owner, ResourceReleasePhase phase,
 	ResourceElem *items;
 	uint32		nitems;
 
-	/* ResourceOwnerSort must've been called already */
+	/*
+	 * ResourceOwnerSort must've been called already.  All the resources are
+	 * either in the array or the hash.
+	 */
 	Assert(owner->releasing);
 	Assert(owner->sorted);
-	if (!owner->hash)
+	if (owner->nhash == 0)
 	{
 		items = owner->arr;
 		nitems = owner->narr;
@@ -393,7 +396,7 @@ ResourceOwnerReleaseAll(ResourceOwner owner, ResourceReleasePhase phase,
 		kind->ReleaseResource(value);
 		nitems--;
 	}
-	if (!owner->hash)
+	if (owner->nhash == 0)
 		owner->narr = nitems;
 	else
 		owner->nhash = nitems;
