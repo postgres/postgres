@@ -7630,6 +7630,9 @@ set_attnotnull(List **wqueue, Relation rel, AttrNumber attnum, bool recurse,
 	Form_pg_attribute attForm;
 	bool		retval = false;
 
+	/* Guard against stack overflow due to overly deep inheritance tree. */
+	check_stack_depth();
+
 	tuple = SearchSysCacheCopyAttNum(RelationGetRelid(rel), attnum);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
@@ -7715,6 +7718,9 @@ ATExecSetNotNull(List **wqueue, Relation rel, char *conName, char *colName,
 	List	   *cooked;
 	bool		is_no_inherit = false;
 	List	   *ready = NIL;
+
+	/* Guard against stack overflow due to overly deep inheritance tree. */
+	check_stack_depth();
 
 	/*
 	 * In cases of multiple inheritance, we might visit the same child more
@@ -9358,6 +9364,9 @@ ATAddCheckNNConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	List	   *children;
 	ListCell   *child;
 	ObjectAddress address = InvalidObjectAddress;
+
+	/* Guard against stack overflow due to overly deep inheritance tree. */
+	check_stack_depth();
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -12427,6 +12436,9 @@ dropconstraint_internal(Relation rel, HeapTuple constraintTup, DropBehavior beha
 	if (list_member_oid(*readyRels, RelationGetRelid(rel)))
 		return InvalidObjectAddress;
 	*readyRels = lappend_oid(*readyRels, RelationGetRelid(rel));
+
+	/* Guard against stack overflow due to overly deep inheritance tree. */
+	check_stack_depth();
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
