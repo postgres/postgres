@@ -255,6 +255,7 @@ int64		random_seed = -1;
 #define SCALE_32BIT_THRESHOLD 20000
 
 bool		use_log;			/* log transaction latencies to a file */
+bool		use_log_header;		/* include column header in the logfile */
 bool		use_quiet;			/* quiet logging onto stderr */
 int			agg_interval;		/* log aggregates instead of individual
 								 * transactions */
@@ -822,6 +823,7 @@ static void setDoubleValue(PgBenchValue *pv, double dval);
 static bool evaluateExpr(CState *st, PgBenchExpr *expr,
 						 PgBenchValue *retval);
 static ConnectionStateEnum executeMetaCommand(CState *st, pg_time_usec_t *now);
+static void doLogHeader(FILE *logfile, double throttle_delay, uint32 retries);
 static void doLog(TState *thread, CState *st,
 				  StatsData *agg, bool skipped, double latency, double lag);
 static void processXactStats(TState *thread, CState *st, pg_time_usec_t *now,
@@ -925,6 +927,7 @@ usage(void)
 		   "  --log-prefix=PREFIX      prefix for transaction time log file\n"
 		   "                           (default: \"pgbench_log\")\n"
 		   "  --max-tries=NUM          max number of tries to run transaction (default: 1)\n"
+		   "  --log-header             write column headers to logfile\n"
 		   "  --progress-timestamp     use Unix epoch timestamps for progress\n"
 		   "  --random-seed=SEED       set random seed (\"time\", \"rand\", integer)\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g., 0.01 for 1%%)\n"
@@ -4501,6 +4504,37 @@ getResultString(bool skipped, EStatus estatus)
 }
 
 /*
+ * Generate the header for the --log file
+ *
+ * schedule_lag field is only present when --rate is specified
+ * retries field is only present when --max-tries != 1
+ */
+void doLogHeader(FILE *logfile, double throttle_delay, uint32 retries)
+{
+    // header fields present in all cases
+    fprintf(logfile, "client_id transaction_no time script_no time_epoch time_us");
+    
+    // Append "schedule_lag" if the schedule_lag is true
+    if (throttle_delay)
+    {
+        fprintf(logfile, " schedule_lag");
+    }
+
+
+    // Append "retries" when set
+    if (retries > 1)
+    {
+        fprintf(logfile, " retries");
+    }
+
+    fprintf(logfile, "\n");
+
+	// flush the buffer to ensure the header is written immediately
+	fflush(logfile);
+}
+
+
+/*
  * Print log entry after completing one transaction.
  *
  * We print Unix-epoch timestamps in the log, so that entries can be
@@ -4517,7 +4551,6 @@ doLog(TState *thread, CState *st,
 	pg_time_usec_t now = pg_time_now() + epoch_shift;
 
 	Assert(use_log);
-
 	/*
 	 * Skip the log entry if sampling is enabled and this row doesn't belong
 	 * to the random sample.
@@ -6628,6 +6661,7 @@ main(int argc, char **argv)
 		{"max-tries", required_argument, NULL, 14},
 		{"verbose-errors", no_argument, NULL, 15},
 		{"exit-on-abort", no_argument, NULL, 16},
+		{"log-header", no_argument, NULL, 17},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -6965,6 +6999,9 @@ main(int argc, char **argv)
 				benchmarking_option_set = true;
 				exit_on_abort = true;
 				break;
+			case 17:
+				use_log_header = true;
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -7100,6 +7137,9 @@ main(int argc, char **argv)
 
 	if (!use_log && logfile_prefix)
 		pg_fatal("log file prefix (--log-prefix) is allowed only when logging transactions (-l)");
+
+	if (!use_log && use_log_header)
+		pg_fatal("log header (--log-header) is allowed only when logging transactions (-l)");
 
 	if (duration > 0 && agg_interval > duration)
 		pg_fatal("number of seconds for aggregation (%d) must not be higher than test duration (%d)", agg_interval, duration);
@@ -7380,6 +7420,9 @@ threadRun(void *arg)
 
 		if (thread->logfile == NULL)
 			pg_fatal("could not open logfile \"%s\": %m", logpath);
+		else
+			if (use_log_header)
+				doLogHeader(thread->logfile, throttle_delay, max_tries);
 	}
 
 	/* explicitly initialize the state machines */
