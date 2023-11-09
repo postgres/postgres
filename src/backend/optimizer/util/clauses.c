@@ -3296,12 +3296,19 @@ eval_const_expressions_mutator(Node *node,
 											  fselect->resulttype,
 											  fselect->resulttypmod,
 											  fselect->resultcollid))
-						return (Node *) makeVar(((Var *) arg)->varno,
-												fselect->fieldnum,
-												fselect->resulttype,
-												fselect->resulttypmod,
-												fselect->resultcollid,
-												((Var *) arg)->varlevelsup);
+					{
+						Var		   *newvar;
+
+						newvar = makeVar(((Var *) arg)->varno,
+										 fselect->fieldnum,
+										 fselect->resulttype,
+										 fselect->resulttypmod,
+										 fselect->resultcollid,
+										 ((Var *) arg)->varlevelsup);
+						/* New Var is nullable by same rels as the old one */
+						newvar->varnullingrels = ((Var *) arg)->varnullingrels;
+						return (Node *) newvar;
+					}
 				}
 				if (arg && IsA(arg, RowExpr))
 				{
