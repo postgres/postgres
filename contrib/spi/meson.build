@@ -20,6 +20,10 @@ install_data('autoinc.control', 'autoinc--1.0.sql',
   kwargs: contrib_data_args,
 )
 
+install_data('autoinc.example',
+  kwargs: contrib_doc_args,
+)
+
 
 insert_username_sources = files(
   'insert_username.c',
@@ -41,6 +45,10 @@ install_data(
   'insert_username.control',
   'insert_username--1.0.sql',
   kwargs: contrib_data_args,
+)
+
+install_data('insert_username.example',
+  kwargs: contrib_doc_args,
 )
 
 
@@ -66,6 +74,11 @@ install_data(
   kwargs: contrib_data_args,
 )
 
+install_data('moddatetime.example',
+  kwargs: contrib_doc_args,
+)
+
+
 # this is needed for the regression tests;
 # comment out if you want a quieter refint package for other uses
 refint_cflags = ['-DREFINT_VERBOSE']
@@ -89,4 +102,8 @@ contrib_targets += refint
 
 install_data('refint.control', 'refint--1.0.sql',
   kwargs: contrib_data_args,
+)
+
+install_data('refint.example',
+  kwargs: contrib_doc_args,
 )
