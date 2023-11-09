@@ -2012,19 +2012,10 @@ interval_time(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	TimeADT		result;
-	int64		days;
 
-	result = span->time;
-	if (result >= USECS_PER_DAY)
-	{
-		days = result / USECS_PER_DAY;
-		result -= days * USECS_PER_DAY;
-	}
-	else if (result < 0)
-	{
-		days = (-result + USECS_PER_DAY - 1) / USECS_PER_DAY;
-		result += days * USECS_PER_DAY;
-	}
+	result = span->time % USECS_PER_DAY;
+	if (result < 0)
+		result += USECS_PER_DAY;
 
 	PG_RETURN_TIMEADT(result);
 }

@@ -981,6 +981,18 @@ SELECT CAST(interval '02:03' AS time) AS "02:03:00";
  02:03:00
 (1 row)
 
+SELECT CAST(interval '-02:03' AS time) AS "21:57:00";
+ 21:57:00 
+----------
+ 21:57:00
+(1 row)
+
+SELECT CAST(interval '-9223372022400000000 us' AS time) AS "00:00:00";
+ 00:00:00 
+----------
+ 00:00:00
+(1 row)
+
 SELECT time '01:30' + interval '02:01' AS "03:31:00";
  03:31:00 
 ----------

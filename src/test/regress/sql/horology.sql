@@ -182,6 +182,8 @@ SELECT d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
 
 SELECT CAST(time '01:02' AS interval) AS "+01:02";
 SELECT CAST(interval '02:03' AS time) AS "02:03:00";
+SELECT CAST(interval '-02:03' AS time) AS "21:57:00";
+SELECT CAST(interval '-9223372022400000000 us' AS time) AS "00:00:00";
 SELECT time '01:30' + interval '02:01' AS "03:31:00";
 SELECT time '01:30' - interval '02:01' AS "23:29:00";
 SELECT time '02:30' + interval '36:01' AS "14:31:00";
