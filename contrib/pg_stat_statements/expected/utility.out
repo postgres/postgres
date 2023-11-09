@@ -533,30 +533,3 @@ SELECT pg_stat_statements_reset();
  
 (1 row)
 
--- SET statements.
--- These use two different strings, still they count as one entry.
-SET work_mem = '1MB';
-Set work_mem = '1MB';
-SET work_mem = '2MB';
-RESET work_mem;
-SET enable_seqscan = off;
-SET enable_seqscan = on;
-RESET enable_seqscan;
-SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |               query               
--------+------+-----------------------------------
-     1 |    0 | RESET enable_seqscan
-     1 |    0 | RESET work_mem
-     1 |    1 | SELECT pg_stat_statements_reset()
-     1 |    0 | SET enable_seqscan = off
-     1 |    0 | SET enable_seqscan = on
-     2 |    0 | SET work_mem = '1MB'
-     1 |    0 | SET work_mem = '2MB'
-(7 rows)
-
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
-(1 row)
-

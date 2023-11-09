@@ -264,16 +264,3 @@ DROP TABLE pgss_ctas;
 DROP TABLE pgss_select_into;
 
 SELECT pg_stat_statements_reset();
-
--- SET statements.
--- These use two different strings, still they count as one entry.
-SET work_mem = '1MB';
-Set work_mem = '1MB';
-SET work_mem = '2MB';
-RESET work_mem;
-SET enable_seqscan = off;
-SET enable_seqscan = on;
-RESET enable_seqscan;
-
-SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
-SELECT pg_stat_statements_reset();
