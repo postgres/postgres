@@ -608,7 +608,7 @@ check_type:
 
 		parse(hd_type);	/* let parser worry about if, or whatever */
 	    }
-	    ps.search_brace = btype_2;	/* this should insure that constructs
+	    ps.search_brace = btype_2;	/* this should ensure that constructs
 					 * such as main(){...} and int[]{...}
 					 * have their braces put in the right
 					 * place */
