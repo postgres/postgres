@@ -511,7 +511,10 @@ endif
 dir_man = get_option('mandir')
 
 # FIXME: These used to be separately configurable - worth adding?
-dir_doc = get_option('datadir') / 'doc' / 'postgresql'
+dir_doc = get_option('datadir') / 'doc'
+if not (dir_prefix_contains_pg or dir_doc.contains('pgsql') or dir_doc.contains('postgres'))
+  dir_doc = dir_doc / pkg
+endif
 dir_doc_html = dir_doc / 'html'
 
 dir_locale = get_option('localedir')
