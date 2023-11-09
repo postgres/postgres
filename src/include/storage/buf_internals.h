@@ -150,7 +150,7 @@ typedef struct buftag
  * is held.  Thus buffer header lock holder can do complex updates of the
  * state variable in single write, simultaneously with lock release (cleaning
  * BM_LOCKED flag).  On the other hand, updating of state without holding
- * buffer header lock is restricted to CAS, which insure that BM_LOCKED flag
+ * buffer header lock is restricted to CAS, which ensures that BM_LOCKED flag
  * is not set.  Atomic increment/decrement, OR/AND etc. are not allowed.
  *
  * An exception is that if we have the buffer pinned, its tag can't change
