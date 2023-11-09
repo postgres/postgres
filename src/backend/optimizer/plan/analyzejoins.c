@@ -474,9 +474,9 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 			/* ph_needed might or might not become empty */
 			phv->phrels = replace_relid(phv->phrels, relid, subst);
 			phv->phrels = replace_relid(phv->phrels, ojrelid, subst);
-			phinfo->ph_lateral = replace_relid(phinfo->ph_lateral, relid, subst);
-			phinfo->ph_var->phrels = replace_relid(phinfo->ph_var->phrels, relid, subst);
 			Assert(!bms_is_empty(phv->phrels));
+			replace_varno((Node *) phv->phexpr, relid, subst);
+			phinfo->ph_lateral = replace_relid(phinfo->ph_lateral, relid, subst);
 			Assert(phv->phnullingrels == NULL); /* no need to adjust */
 		}
 	}

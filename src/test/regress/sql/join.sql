@@ -2580,6 +2580,14 @@ WHERE c2.id IS NOT NULL
 EXCEPT ALL
 SELECT c3.code FROM emp1 c3;
 
+-- Check that SJE removes references from PHVs correctly
+explain (costs off)
+select * from emp1 t1 left join
+    (select coalesce(t3.code, 1) from emp1 t2
+        left join (emp1 t3 join emp1 t4 on t3.id = t4.id)
+        on true)
+on true;
+
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
 -- moving quals over to s1 to make it so it can't match any rows.
