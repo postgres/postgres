@@ -659,6 +659,8 @@ select -('-9223372036854775807'::int8);
 
 select -('-9223372036854775808'::int8);
 ERROR:  bigint out of range
+select 0::int8 - '-9223372036854775808'::int8;
+ERROR:  bigint out of range
 select '9223372036854775800'::int8 + '9223372036854775800'::int8;
 ERROR:  bigint out of range
 select '-9223372036854775800'::int8 + '-9223372036854775800'::int8;
