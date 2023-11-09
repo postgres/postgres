@@ -71,6 +71,7 @@ tests += {
       'update_compare_indexes',
       'pgtde_is_encrypted',
       'multi_insert',
+      'trigger_on_view',
     ],
     'regress_args': ['--temp-config', files('postgres-tde-ext.conf')],
     'runningcheck': false,

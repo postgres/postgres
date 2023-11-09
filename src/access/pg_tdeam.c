@@ -76,6 +76,7 @@
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/spccache.h"
+#include "utils/memutils.h"
 
 
 static HeapTuple pg_tde_prepare_insert(Relation relation, HeapTuple tup,
@@ -3010,6 +3011,7 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Bitmapset  *modified_attrs;
 	ItemId		lp;
 	HeapTupleData oldtup;
+	HeapTupleData oldtup2;
 	HeapTuple	heaptup;
 	HeapTuple	old_key_tuple = NULL;
 	bool		old_key_copied = false;
@@ -3112,8 +3114,20 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
 	/* decrypt the old tuple */
-	PG_TDE_DECRYPT_TUPLE(BufferGetBlockNumber(buffer), page, &oldtup, &oldtup,
+	{
+		char* new_ptr = NULL;
+		new_ptr = MemoryContextAlloc(CurTransactionContext, oldtup.t_len);
+		memcpy(new_ptr, oldtup.t_data, oldtup.t_len);
+		// only neccessary field
+		oldtup2.t_data = (HeapTupleHeader)new_ptr;
+	}
+	PG_TDE_DECRYPT_TUPLE(BufferGetBlockNumber(buffer), page, &oldtup, &oldtup2,
 							GetRelationKeys(relation->rd_locator));
+
+	// change field in oldtup now.
+	// We can't do it before, as PG_TDE_DECRYPT_TUPLE uses t_data address in 
+	// calculations
+	oldtup.t_data = oldtup2.t_data;
 
 	/* the new tuple is ready, except for this: */
 	newtup->t_tableOid = RelationGetRelid(relation);
