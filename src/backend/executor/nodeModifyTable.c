@@ -2899,6 +2899,22 @@ lmerge_matched:
 				}
 				result = ExecUpdateAct(context, resultRelInfo, tupleid, NULL,
 									   newslot, false, &updateCxt);
+
+				/*
+				 * As in ExecUpdate(), if ExecUpdateAct() reports that a
+				 * cross-partition update was done, then there's nothing else
+				 * for us to do --- the UPDATE has been turned into a DELETE
+				 * and an INSERT, and we must not perform any of the usual
+				 * post-update tasks.
+				 */
+				if (updateCxt.crossPartUpdate)
+				{
+					mtstate->mt_merge_updated += 1;
+					if (canSetTag)
+						(estate->es_processed)++;
+					return true;
+				}
+
 				if (result == TM_Ok && updateCxt.updated)
 				{
 					ExecUpdateEpilogue(context, &updateCxt, resultRelInfo,
