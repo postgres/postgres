@@ -211,8 +211,12 @@ pg_sub_s64_overflow(int64 a, int64 b, int64 *result)
 	*result = (int64) res;
 	return false;
 #else
+	/*
+	 * Note: overflow is also possible when a == 0 and b < 0 (specifically,
+	 * when b == PG_INT64_MIN).
+	 */
 	if ((a < 0 && b > 0 && a < PG_INT64_MIN + b) ||
-		(a > 0 && b < 0 && a > PG_INT64_MAX + b))
+		(a >= 0 && b < 0 && a > PG_INT64_MAX + b))
 	{
 		*result = 0x5EED;		/* to avoid spurious warnings */
 		return true;
