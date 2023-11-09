@@ -408,7 +408,7 @@ get_db_infos(ClusterInfo *cluster)
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	ntups = PQntuples(res);
-	dbinfos = (DbInfo *) pg_malloc(sizeof(DbInfo) * ntups);
+	dbinfos = (DbInfo *) pg_malloc0(sizeof(DbInfo) * ntups);
 
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
@@ -636,15 +636,11 @@ get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check)
 	PGconn	   *conn;
 	PGresult   *res;
 	LogicalSlotInfo *slotinfos = NULL;
-	int			num_slots = 0;
+	int			num_slots;
 
 	/* Logical slots can be migrated since PG17. */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1600)
-	{
-		dbinfo->slot_arr.slots = slotinfos;
-		dbinfo->slot_arr.nslots = num_slots;
 		return;
-	}
 
 	conn = connectToServer(&old_cluster, dbinfo->db_name);
 
