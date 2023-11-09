@@ -1583,6 +1583,42 @@ create trigger qqq after insert on parted_trig_1_1 for each row execute procedur
 insert into parted_trig values (50), (1500);
 drop table parted_trig;
 
+-- Verify that the correct triggers fire for cross-partition updates
+create table parted_trig (a int) partition by list (a);
+create table parted_trig1 partition of parted_trig for values in (1);
+create table parted_trig2 partition of parted_trig for values in (2);
+insert into parted_trig values (1);
+
+create or replace function trigger_notice() returns trigger as $$
+  begin
+    raise notice 'trigger % on % % % for %', TG_NAME, TG_TABLE_NAME, TG_WHEN, TG_OP, TG_LEVEL;
+    if TG_LEVEL = 'ROW' then
+      if TG_OP = 'DELETE' then
+        return OLD;
+      else
+        return NEW;
+      end if;
+    end if;
+    return null;
+  end;
+  $$ language plpgsql;
+create trigger parted_trig_before_stmt before insert or update or delete on parted_trig
+   for each statement execute procedure trigger_notice();
+create trigger parted_trig_before_row before insert or update or delete on parted_trig
+   for each row execute procedure trigger_notice();
+create trigger parted_trig_after_row after insert or update or delete on parted_trig
+   for each row execute procedure trigger_notice();
+create trigger parted_trig_after_stmt after insert or update or delete on parted_trig
+   for each statement execute procedure trigger_notice();
+
+update parted_trig set a = 2 where a = 1;
+
+-- update action in merge should behave the same
+merge into parted_trig using (select 1) as ss on true
+  when matched and a = 2 then update set a = 1;
+
+drop table parted_trig;
+
 -- Verify propagation of trigger arguments to partitions
 create table parted_trig (a int) partition by list (a);
 create table parted_trig1 partition of parted_trig for values in (1);
