@@ -84,6 +84,8 @@ extern bool check_maintenance_io_concurrency(int *newval, void **extra,
 extern void assign_maintenance_io_concurrency(int newval, void *extra);
 extern bool check_max_connections(int *newval, void **extra, GucSource source);
 extern bool check_max_wal_senders(int *newval, void **extra, GucSource source);
+extern bool check_max_slot_wal_keep_size(int *newval, void **extra,
+										 GucSource source);
 extern void assign_max_wal_size(int newval, void *extra);
 extern bool check_max_worker_processes(int *newval, void **extra,
 									   GucSource source);

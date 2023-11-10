@@ -2064,6 +2064,25 @@ check_wal_segment_size(int *newval, void **extra, GucSource source)
 }
 
 /*
+ * GUC check_hook for max_slot_wal_keep_size
+ *
+ * We don't allow the value of max_slot_wal_keep_size other than -1 during the
+ * binary upgrade. See start_postmaster() in pg_upgrade for more details.
+ */
+bool
+check_max_slot_wal_keep_size(int *newval, void **extra, GucSource source)
+{
+	if (IsBinaryUpgrade && *newval != -1)
+	{
+		GUC_check_errdetail("\"%s\" must be set to -1 during binary upgrade mode.",
+							"max_slot_wal_keep_size");
+		return false;
+	}
+
+	return true;
+}
+
+/*
  * At a checkpoint, how many WAL segments to recycle as preallocated future
  * XLOG segments? Returns the highest segment that should be preallocated.
  */
