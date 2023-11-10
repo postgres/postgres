@@ -2600,6 +2600,12 @@ select * from emp1 t1 left join
         on true)
 on true;
 
+-- Check that SJE does not remove self joins if a PHV references the removed
+-- rel laterally.
+explain (costs off)
+select * from emp1 t1 join emp1 t2 on t1.id = t2.id left join
+    lateral (select t1.id as t1id, * from generate_series(1,1) t3) s on true;
+
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
 -- moving quals over to s1 to make it so it can't match any rows.

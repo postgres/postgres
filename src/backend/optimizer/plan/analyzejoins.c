@@ -476,7 +476,6 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 			phv->phrels = replace_relid(phv->phrels, ojrelid, subst);
 			Assert(!bms_is_empty(phv->phrels));
 			replace_varno((Node *) phv->phexpr, relid, subst);
-			phinfo->ph_lateral = replace_relid(phinfo->ph_lateral, relid, subst);
 			Assert(phv->phnullingrels == NULL); /* no need to adjust */
 		}
 	}
@@ -2134,7 +2133,8 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 
 				/* there isn't any other place to eval PHV */
 				if (bms_is_subset(phinfo->ph_eval_at, joinrelids) ||
-					bms_is_subset(phinfo->ph_needed, joinrelids))
+					bms_is_subset(phinfo->ph_needed, joinrelids) ||
+					bms_is_member(r, phinfo->ph_lateral))
 					break;
 			}
 			if (lc)
