@@ -621,6 +621,13 @@ LANGUAGE internal
 STRICT IMMUTABLE PARALLEL SAFE
 AS 'unicode_is_normalized';
 
+CREATE OR REPLACE FUNCTION
+  pg_stat_reset_shared(target text DEFAULT NULL)
+RETURNS void
+LANGUAGE INTERNAL
+CALLED ON NULL INPUT VOLATILE PARALLEL SAFE
+AS 'pg_stat_reset_shared';
+
 --
 -- The default permissions for functions mean that anyone can execute them.
 -- A number of functions shouldn't be executable by just anyone, but rather

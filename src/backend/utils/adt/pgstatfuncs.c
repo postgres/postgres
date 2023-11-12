@@ -1685,7 +1685,22 @@ pg_stat_reset(PG_FUNCTION_ARGS)
 Datum
 pg_stat_reset_shared(PG_FUNCTION_ARGS)
 {
-	char	   *target = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *target = NULL;
+
+	if (PG_ARGISNULL(0))
+	{
+		/* Reset all the statistics when nothing is specified */
+		pgstat_reset_of_kind(PGSTAT_KIND_ARCHIVER);
+		pgstat_reset_of_kind(PGSTAT_KIND_BGWRITER);
+		pgstat_reset_of_kind(PGSTAT_KIND_CHECKPOINTER);
+		pgstat_reset_of_kind(PGSTAT_KIND_IO);
+		XLogPrefetchResetStats();
+		pgstat_reset_of_kind(PGSTAT_KIND_WAL);
+
+		PG_RETURN_VOID();
+	}
+
+	target = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	if (strcmp(target, "archiver") == 0)
 		pgstat_reset_of_kind(PGSTAT_KIND_ARCHIVER);
