@@ -94,7 +94,7 @@ static bool verify_page_checksum(Page page, XLogRecPtr start_lsn,
 								 BlockNumber blkno,
 								 uint16 *expected_checksum);
 static void sendFileWithContent(bbsink *sink, const char *filename,
-								const char *content,
+								const char *content, int len,
 								backup_manifest_info *manifest);
 static int64 _tarWriteHeader(bbsink *sink, const char *filename,
 							 const char *linktarget, struct stat *statbuf,
@@ -334,14 +334,14 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 				/* In the main tar, include the backup_label first... */
 				backup_label = build_backup_content(backup_state, false);
 				sendFileWithContent(sink, BACKUP_LABEL_FILE,
-									backup_label, &manifest);
+									backup_label, -1, &manifest);
 				pfree(backup_label);
 
 				/* Then the tablespace_map file, if required... */
 				if (opt->sendtblspcmapfile)
 				{
 					sendFileWithContent(sink, TABLESPACE_MAP,
-										tablespace_map->data, &manifest);
+										tablespace_map->data, -1, &manifest);
 					sendtblspclinks = false;
 				}
 
@@ -601,7 +601,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 			 * complete segment.
 			 */
 			StatusFilePath(pathbuf, walFileName, ".done");
-			sendFileWithContent(sink, pathbuf, "", &manifest);
+			sendFileWithContent(sink, pathbuf, "", -1, &manifest);
 		}
 
 		/*
@@ -629,7 +629,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 
 			/* unconditionally mark file as archived */
 			StatusFilePath(pathbuf, fname, ".done");
-			sendFileWithContent(sink, pathbuf, "", &manifest);
+			sendFileWithContent(sink, pathbuf, "", -1, &manifest);
 		}
 
 		/* Properly terminate the tar file. */
@@ -1037,26 +1037,29 @@ SendBaseBackup(BaseBackupCmd *cmd)
 
 /*
  * Inject a file with given name and content in the output tar stream.
+ *
+ * "len" can optionally be set to an arbitrary length of data sent.  If set
+ * to -1, the content sent is treated as a string with strlen() as length.
  */
 static void
 sendFileWithContent(bbsink *sink, const char *filename, const char *content,
-					backup_manifest_info *manifest)
+					int len, backup_manifest_info *manifest)
 {
 	struct stat statbuf;
-	int			bytes_done = 0,
-				len;
+	int			bytes_done = 0;
 	pg_checksum_context checksum_ctx;
 
 	if (pg_checksum_init(&checksum_ctx, manifest->checksum_type) < 0)
 		elog(ERROR, "could not initialize checksum of file \"%s\"",
 			 filename);
 
-	len = strlen(content);
+	if (len < 0)
+		len = strlen(content);
 
 	/*
-	 * Construct a stat struct for the backup_label file we're injecting in
-	 * the tar.
+	 * Construct a stat struct for the file we're injecting in the tar.
 	 */
+
 	/* Windows doesn't have the concept of uid and gid */
 #ifdef WIN32
 	statbuf.st_uid = 0;
