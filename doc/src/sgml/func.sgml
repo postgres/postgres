@@ -718,7 +718,19 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
     <literal>IS NULL</literal> and <literal>IS NOT NULL</literal> do not always return
     inverse results for row-valued expressions; in particular, a row-valued
     expression that contains both null and non-null fields will return false
-    for both tests.  In some cases, it may be preferable to
+    for both tests.  For example: 
+
+<programlisting>
+SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
+
+SELECT ROW(table.*) IS NULL FROM table;  -- detect all-null rows
+
+SELECT ROW(table.*) IS NOT NULL FROM table;  -- detect all-non-null rows
+
+SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in rows
+</programlisting>
+
+    In some cases, it may be preferable to
     write <replaceable>row</replaceable> <literal>IS DISTINCT FROM NULL</literal>
     or <replaceable>row</replaceable> <literal>IS NOT DISTINCT FROM NULL</literal>,
     which will simply check whether the overall row value is null without any
