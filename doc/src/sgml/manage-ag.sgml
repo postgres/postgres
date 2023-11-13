@@ -504,7 +504,7 @@ CREATE TABLE foo(i int);
   <para>
    Two tablespaces are automatically created when the database cluster
    is initialized.  The
-   <literal>pg_global</literal> tablespace is used for shared system catalogs. The
+   <literal>pg_global</literal> tablespace is used only for shared system catalogs. The
    <literal>pg_default</literal> tablespace is the default tablespace of the
    <literal>template1</literal> and <literal>template0</literal> databases (and, therefore,
    will be the default tablespace for other databases as well, unless
