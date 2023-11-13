@@ -4941,11 +4941,12 @@ int PQsetnonblocking(PGconn *conn, int arg);
       </para>
 
       <para>
-       In the nonblocking state, calls to
+       In the nonblocking state, successful calls to
        <function>PQsendQuery</function>, <function>PQputline</function>,
        <function>PQputnbytes</function>, <function>PQputCopyData</function>,
-       and <function>PQendcopy</function> will not block but instead return
-       an error if they need to be called again.
+       and <function>PQendcopy</function> will not block;  their changes
+       are stored in the local output buffer until they are flushed.
+       Unsuccessful calls will return an error and must be retried.
       </para>
 
       <para>
