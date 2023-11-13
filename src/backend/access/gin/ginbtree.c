@@ -274,7 +274,11 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack)
 			blkno = GinPageGetOpaque(page)->rightlink;
 			if (blkno == InvalidBlockNumber)
 			{
-				UnlockReleaseBuffer(buffer);
+				/* Link not present in this level */
+				LockBuffer(buffer, GIN_UNLOCK);
+				/* Do not release pin on the root buffer */
+				if (buffer != root->buffer)
+					ReleaseBuffer(buffer);
 				break;
 			}
 			buffer = ginStepRight(buffer, btree->index, GIN_EXCLUSIVE);
