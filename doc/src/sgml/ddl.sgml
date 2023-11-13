@@ -1737,6 +1737,11 @@ ALTER TABLE products RENAME TO items;
    <primary>ACL</primary>
   </indexterm>
 
+  <indexterm zone="ddl-priv-default">
+   <primary>privilege</primary>
+   <secondary>default</secondary>
+  </indexterm>
+
   <para>
    When an object is created, it is assigned an owner. The
    owner is normally the role that executed the creation statement.
@@ -2049,7 +2054,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    reference page of the respective command.
   </para>
 
-  <para>
+  <para id="ddl-priv-default">
    PostgreSQL grants privileges on some types of objects to
    <literal>PUBLIC</literal> by default when the objects are created.
    No privileges are granted to <literal>PUBLIC</literal> by default on
@@ -2374,6 +2379,15 @@ GRANT SELECT (col1), UPDATE (col1) ON mytable TO miriam_rw;
    Notice that the owner's implicit grant options are not marked in the
    access privileges display.  A <literal>*</literal> will appear only when
    grant options have been explicitly granted to someone.
+  </para>
+
+  <para>
+   The <quote>Access privileges</quote> column
+   shows <literal>(none)</literal> when the object's privileges entry is
+   non-null but empty.  This means that no privileges are granted at all,
+   even to the object's owner &mdash; a rare situation.  (The owner still
+   has implicit grant options in this case, and so could re-grant her own
+   privileges; but she has none at the moment.)
   </para>
  </sect1>
 
