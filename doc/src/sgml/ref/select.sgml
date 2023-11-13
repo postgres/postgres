@@ -1918,8 +1918,7 @@ WITH t AS (
   )
 SELECT * FROM t
 UNION ALL
-SELECT * FROM t
-
+SELECT * FROM t;
          x
 --------------------
   0.534150459803641
