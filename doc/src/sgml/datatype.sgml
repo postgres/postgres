@@ -3366,13 +3366,13 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
         <entry><type>lseg</type></entry>
         <entry>32 bytes</entry>
         <entry>Finite line segment</entry>
-        <entry>((x1,y1),(x2,y2))</entry>
+        <entry>[(x1,y1),(x2,y2)]</entry>
        </row>
        <row>
         <entry><type>box</type></entry>
         <entry>32 bytes</entry>
         <entry>Rectangular box</entry>
-        <entry>((x1,y1),(x2,y2))</entry>
+        <entry>(x1,y1),(x2,y2)</entry>
        </row>
        <row>
         <entry><type>path</type></entry>
