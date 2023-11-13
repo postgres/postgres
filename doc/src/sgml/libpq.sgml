@@ -5316,11 +5316,12 @@ int PQsetnonblocking(PGconn *conn, int arg);
       </para>
 
       <para>
-       In the nonblocking state, calls to
+       In the nonblocking state, successful calls to
        <xref linkend="libpq-PQsendQuery"/>, <xref linkend="libpq-PQputline"/>,
        <xref linkend="libpq-PQputnbytes"/>, <xref linkend="libpq-PQputCopyData"/>,
-       and <xref linkend="libpq-PQendcopy"/> will not block but instead return
-       an error if they need to be called again.
+       and <xref linkend="libpq-PQendcopy"/> will not block;  their changes
+       are stored in the local output buffer until they are flushed.
+       Unsuccessful calls will return an error and must be retried.
       </para>
 
       <para>
