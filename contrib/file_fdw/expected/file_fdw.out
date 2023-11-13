@@ -51,23 +51,23 @@ CREATE USER MAPPING FOR regress_no_priv_user SERVER file_server;
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'xml');  -- ERROR
 ERROR:  COPY format "xml" not recognized
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', quote ':');          -- ERROR
-ERROR:  COPY quote available only in CSV mode
+ERROR:  COPY QUOTE requires CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape ':');         -- ERROR
-ERROR:  COPY escape available only in CSV mode
+ERROR:  COPY ESCAPE requires CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', header 'true');    -- ERROR
 ERROR:  cannot specify HEADER in BINARY mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', quote ':');        -- ERROR
-ERROR:  COPY quote available only in CSV mode
+ERROR:  COPY QUOTE requires CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', escape ':');       -- ERROR
-ERROR:  COPY escape available only in CSV mode
+ERROR:  COPY ESCAPE requires CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter 'a');      -- ERROR
 ERROR:  COPY delimiter cannot be "a"
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape '-');         -- ERROR
-ERROR:  COPY escape available only in CSV mode
+ERROR:  COPY ESCAPE requires CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', quote '-', null '=-=');   -- ERROR
 ERROR:  CSV quote character must not appear in the NULL specification
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '-', null '=-=');    -- ERROR
-ERROR:  COPY delimiter must not appear in the NULL specification
+ERROR:  COPY delimiter character must not appear in the NULL specification
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '-', quote '-');    -- ERROR
 ERROR:  COPY delimiter and quote must be different
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '---');     -- ERROR
@@ -138,7 +138,7 @@ CREATE FOREIGN TABLE text_csv (
 ) SERVER file_server
 OPTIONS (format 'text', filename :'filename', null 'NULL');
 SELECT * FROM text_csv; -- ERROR
-ERROR:  COPY force not null available only in CSV mode
+ERROR:  COPY FORCE_NOT_NULL requires CSV mode
 ALTER FOREIGN TABLE text_csv OPTIONS (SET format 'csv');
 \pset null _null_
 SELECT * FROM text_csv;
