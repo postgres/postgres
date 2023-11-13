@@ -148,8 +148,8 @@ ArrayIOData
 ArrayIterator
 ArrayMapState
 ArrayMetaState
-ArrayParseState
 ArraySubWorkspace
+ArrayToken
 ArrayType
 AsyncQueueControl
 AsyncQueueEntry

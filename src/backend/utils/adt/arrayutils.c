@@ -44,21 +44,6 @@ ArrayGetOffset(int n, const int *dim, const int *lb, const int *indx)
 }
 
 /*
- * Same, but subscripts are assumed 0-based, and use a scale array
- * instead of raw dimension data (see mda_get_prod to create scale array)
- */
-int
-ArrayGetOffset0(int n, const int *tup, const int *scale)
-{
-	int			i,
-				lin = 0;
-
-	for (i = 0; i < n; i++)
-		lin += tup[i] * scale[i];
-	return lin;
-}
-
-/*
  * Convert array dimensions into number of elements
  *
  * This must do overflow checking, since it is used to validate that a user

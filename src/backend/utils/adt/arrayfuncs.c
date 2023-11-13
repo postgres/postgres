@@ -54,18 +54,16 @@ bool		Array_nulls = true;
 			PG_FREE_IF_COPY(array, n); \
 	} while (0)
 
+/* ReadArrayToken return type */
 typedef enum
 {
-	ARRAY_NO_LEVEL,
-	ARRAY_LEVEL_STARTED,
-	ARRAY_ELEM_STARTED,
-	ARRAY_ELEM_COMPLETED,
-	ARRAY_QUOTED_ELEM_STARTED,
-	ARRAY_QUOTED_ELEM_COMPLETED,
-	ARRAY_ELEM_DELIMITED,
-	ARRAY_LEVEL_COMPLETED,
-	ARRAY_LEVEL_DELIMITED,
-} ArrayParseState;
+	ATOK_LEVEL_START,
+	ATOK_LEVEL_END,
+	ATOK_DELIM,
+	ATOK_ELEM,
+	ATOK_ELEM_NULL,
+	ATOK_ERROR,
+} ArrayToken;
 
 /* Working state for array_iterate() */
 typedef struct ArrayIteratorData
@@ -91,15 +89,21 @@ typedef struct ArrayIteratorData
 	int			current_item;	/* the item # we're at in the array */
 }			ArrayIteratorData;
 
-static int	ArrayCount(const char *str, int *dim, char typdelim,
-					   Node *escontext);
-static bool ReadArrayStr(char *arrayStr, const char *origStr,
-						 int nitems, int ndim, int *dim,
+static bool ReadArrayDimensions(char **srcptr, int *ndim_p,
+								int *dim, int *lBound,
+								const char *origStr, Node *escontext);
+static bool ReadDimensionInt(char **srcptr, int *result,
+							 const char *origStr, Node *escontext);
+static bool ReadArrayStr(char **srcptr,
 						 FmgrInfo *inputproc, Oid typioparam, int32 typmod,
 						 char typdelim,
 						 int typlen, bool typbyval, char typalign,
-						 Datum *values, bool *nulls,
-						 bool *hasnulls, int32 *nbytes, Node *escontext);
+						 int *ndim_p, int *dim,
+						 int *nitems_p,
+						 Datum **values_p, bool **nulls_p,
+						 const char *origStr, Node *escontext);
+static ArrayToken ReadArrayToken(char **srcptr, StringInfo elembuf, char typdelim,
+								 const char *origStr, Node *escontext);
 static void ReadArrayBinary(StringInfo buf, int nitems,
 							FmgrInfo *receiveproc, Oid typioparam, int32 typmod,
 							int typlen, bool typbyval, char typalign,
@@ -185,12 +189,10 @@ array_in(PG_FUNCTION_ARGS)
 	char		typalign;
 	char		typdelim;
 	Oid			typioparam;
-	char	   *string_save,
-			   *p;
-	int			i,
-				nitems;
-	Datum	   *dataPtr;
-	bool	   *nullsPtr;
+	char	   *p;
+	int			nitems;
+	Datum	   *values;
+	bool	   *nulls;
 	bool		hasnulls;
 	int32		nbytes;
 	int32		dataoffset;
@@ -233,104 +235,38 @@ array_in(PG_FUNCTION_ARGS)
 	typdelim = my_extra->typdelim;
 	typioparam = my_extra->typioparam;
 
-	/* Make a modifiable copy of the input */
-	string_save = pstrdup(string);
+	/*
+	 * Initialize dim[] and lBound[] for ReadArrayStr, in case there is no
+	 * explicit dimension info.  (If there is, ReadArrayDimensions will
+	 * overwrite this.)
+	 */
+	for (int i = 0; i < MAXDIM; i++)
+	{
+		dim[i] = -1;			/* indicates "not yet known" */
+		lBound[i] = 1;			/* default lower bound */
+	}
 
 	/*
-	 * If the input string starts with dimension info, read and use that.
-	 * Otherwise, we require the input to be in curly-brace style, and we
-	 * prescan the input to determine dimensions.
+	 * Start processing the input string.
 	 *
-	 * Dimension info takes the form of one or more [n] or [m:n] items. The
-	 * outer loop iterates once per dimension item.
+	 * If the input string starts with dimension info, read and use that.
+	 * Otherwise, we'll determine the dimensions during ReadArrayStr.
 	 */
-	p = string_save;
-	ndim = 0;
-	for (;;)
-	{
-		char	   *q;
-		int			ub;
-
-		/*
-		 * Note: we currently allow whitespace between, but not within,
-		 * dimension items.
-		 */
-		while (scanner_isspace(*p))
-			p++;
-		if (*p != '[')
-			break;				/* no more dimension items */
-		p++;
-		if (ndim >= MAXDIM)
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-							ndim + 1, MAXDIM)));
-
-		for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++)
-			 /* skip */ ;
-		if (q == p)				/* no digits? */
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("malformed array literal: \"%s\"", string),
-					 errdetail("\"[\" must introduce explicitly-specified array dimensions.")));
-
-		if (*q == ':')
-		{
-			/* [m:n] format */
-			*q = '\0';
-			lBound[ndim] = atoi(p);
-			p = q + 1;
-			for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++)
-				 /* skip */ ;
-			if (q == p)			/* no digits? */
-				ereturn(escontext, (Datum) 0,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("malformed array literal: \"%s\"", string),
-						 errdetail("Missing array dimension value.")));
-		}
-		else
-		{
-			/* [n] format */
-			lBound[ndim] = 1;
-		}
-		if (*q != ']')
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("malformed array literal: \"%s\"", string),
-					 errdetail("Missing \"%s\" after array dimensions.",
-							   "]")));
-
-		*q = '\0';
-		ub = atoi(p);
-		p = q + 1;
-		if (ub < lBound[ndim])
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					 errmsg("upper bound cannot be less than lower bound")));
-
-		dim[ndim] = ub - lBound[ndim] + 1;
-		ndim++;
-	}
+	p = string;
+	if (!ReadArrayDimensions(&p, &ndim, dim, lBound, string, escontext))
+		return (Datum) 0;
 
 	if (ndim == 0)
 	{
-		/* No array dimensions, so intuit dimensions from brace structure */
+		/* No array dimensions, so next character should be a left brace */
 		if (*p != '{')
 			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed array literal: \"%s\"", string),
 					 errdetail("Array value must start with \"{\" or dimension information.")));
-		ndim = ArrayCount(p, dim, typdelim, escontext);
-		if (ndim < 0)
-			PG_RETURN_NULL();
-		for (i = 0; i < ndim; i++)
-			lBound[i] = 1;
 	}
 	else
 	{
-		int			ndim_braces,
-					dim_braces[MAXDIM];
-
 		/* If array dimensions are given, expect '=' operator */
 		if (strncmp(p, ASSGN, strlen(ASSGN)) != 0)
 			ereturn(escontext, (Datum) 0,
@@ -339,66 +275,68 @@ array_in(PG_FUNCTION_ARGS)
 					 errdetail("Missing \"%s\" after array dimensions.",
 							   ASSGN)));
 		p += strlen(ASSGN);
+		/* Allow whitespace after it */
 		while (scanner_isspace(*p))
 			p++;
 
-		/*
-		 * intuit dimensions from brace structure -- it better match what we
-		 * were given
-		 */
 		if (*p != '{')
 			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed array literal: \"%s\"", string),
 					 errdetail("Array contents must start with \"{\".")));
-		ndim_braces = ArrayCount(p, dim_braces, typdelim, escontext);
-		if (ndim_braces < 0)
-			PG_RETURN_NULL();
-		if (ndim_braces != ndim)
+	}
+
+	/* Parse the value part, in the curly braces: { ... } */
+	if (!ReadArrayStr(&p,
+					  &my_extra->proc, typioparam, typmod,
+					  typdelim,
+					  typlen, typbyval, typalign,
+					  &ndim,
+					  dim,
+					  &nitems,
+					  &values, &nulls,
+					  string,
+					  escontext))
+		return (Datum) 0;
+
+	/* only whitespace is allowed after the closing brace */
+	while (*p)
+	{
+		if (!scanner_isspace(*p++))
 			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed array literal: \"%s\"", string),
-					 errdetail("Specified array dimensions do not match array contents.")));
-		for (i = 0; i < ndim; ++i)
-		{
-			if (dim[i] != dim_braces[i])
-				ereturn(escontext, (Datum) 0,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("malformed array literal: \"%s\"", string),
-						 errdetail("Specified array dimensions do not match array contents.")));
-		}
+					 errdetail("Junk after closing right brace.")));
 	}
-
-#ifdef ARRAYDEBUG
-	printf("array_in- ndim %d (", ndim);
-	for (i = 0; i < ndim; i++)
-	{
-		printf(" %d", dim[i]);
-	};
-	printf(") for %s\n", string);
-#endif
-
-	/* This checks for overflow of the array dimensions */
-	nitems = ArrayGetNItemsSafe(ndim, dim, escontext);
-	if (nitems < 0)
-		PG_RETURN_NULL();
-	if (!ArrayCheckBoundsSafe(ndim, dim, lBound, escontext))
-		PG_RETURN_NULL();
 
 	/* Empty array? */
 	if (nitems == 0)
 		PG_RETURN_ARRAYTYPE_P(construct_empty_array(element_type));
 
-	dataPtr = (Datum *) palloc(nitems * sizeof(Datum));
-	nullsPtr = (bool *) palloc(nitems * sizeof(bool));
-	if (!ReadArrayStr(p, string,
-					  nitems, ndim, dim,
-					  &my_extra->proc, typioparam, typmod,
-					  typdelim,
-					  typlen, typbyval, typalign,
-					  dataPtr, nullsPtr,
-					  &hasnulls, &nbytes, escontext))
-		PG_RETURN_NULL();
+	/*
+	 * Check for nulls, compute total data space needed
+	 */
+	hasnulls = false;
+	nbytes = 0;
+	for (int i = 0; i < nitems; i++)
+	{
+		if (nulls[i])
+			hasnulls = true;
+		else
+		{
+			/* let's just make sure data is not toasted */
+			if (typlen == -1)
+				values[i] = PointerGetDatum(PG_DETOAST_DATUM(values[i]));
+			nbytes = att_addlength_datum(nbytes, typlen, values[i]);
+			nbytes = att_align_nominal(nbytes, typalign);
+			/* check for overflow of total request */
+			if (!AllocSizeIsValid(nbytes))
+				ereturn(escontext, (Datum) 0,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("array size exceeds the maximum allowed (%d)",
+								(int) MaxAllocSize)));
+		}
+	}
 	if (hasnulls)
 	{
 		dataoffset = ARR_OVERHEAD_WITHNULLS(ndim, nitems);
@@ -409,6 +347,10 @@ array_in(PG_FUNCTION_ARGS)
 		dataoffset = 0;			/* marker for no null bitmap */
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
+
+	/*
+	 * Construct the final array datum
+	 */
 	retval = (ArrayType *) palloc0(nbytes);
 	SET_VARSIZE(retval, nbytes);
 	retval->ndim = ndim;
@@ -424,302 +366,218 @@ array_in(PG_FUNCTION_ARGS)
 	memcpy(ARR_LBOUND(retval), lBound, ndim * sizeof(int));
 
 	CopyArrayEls(retval,
-				 dataPtr, nullsPtr, nitems,
+				 values, nulls, nitems,
 				 typlen, typbyval, typalign,
 				 true);
 
-	pfree(dataPtr);
-	pfree(nullsPtr);
-	pfree(string_save);
+	pfree(values);
+	pfree(nulls);
 
 	PG_RETURN_ARRAYTYPE_P(retval);
 }
 
 /*
- * ArrayCount
- *	 Determines the dimensions for an array string.
+ * ReadArrayDimensions
+ *	 parses the array dimensions part of the input and converts the values
+ *	 to internal format.
  *
- * Returns number of dimensions as function result.  The axis lengths are
- * returned in dim[], which must be of size MAXDIM.
+ * On entry, *srcptr points to the string to parse. It is advanced to point
+ * after whitespace (if any) and dimension info (if any).
  *
- * If we detect an error, fill *escontext with error details and return -1
- * (unless escontext isn't provided, in which case errors will be thrown).
+ * *ndim_p, dim[], and lBound[] are output variables. They are filled with the
+ * number of dimensions (<= MAXDIM), the lengths of each dimension, and the
+ * lower subscript bounds, respectively.  If no dimension info appears,
+ * *ndim_p will be set to zero, and dim[] and lBound[] are unchanged.
+ *
+ * 'origStr' is the original input string, used only in error messages.
+ * If *escontext points to an ErrorSaveContext, details of any error are
+ * reported there.
+ *
+ * Result:
+ *	true for success, false for failure (if escontext is provided).
+ *
+ * Note that dim[] and lBound[] are allocated by the caller, and must have
+ * MAXDIM elements.
  */
-static int
-ArrayCount(const char *str, int *dim, char typdelim, Node *escontext)
+static bool
+ReadArrayDimensions(char **srcptr, int *ndim_p, int *dim, int *lBound,
+					const char *origStr, Node *escontext)
 {
-	int			nest_level = 0,
-				i;
-	int			ndim = 1,
-				temp[MAXDIM],
-				nelems[MAXDIM],
-				nelems_last[MAXDIM];
-	bool		in_quotes = false;
-	bool		eoArray = false;
-	bool		empty_array = true;
-	const char *ptr;
-	ArrayParseState parse_state = ARRAY_NO_LEVEL;
+	char	   *p = *srcptr;
+	int			ndim;
 
-	for (i = 0; i < MAXDIM; ++i)
+	/*
+	 * Dimension info takes the form of one or more [n] or [m:n] items.  This
+	 * loop iterates once per dimension item.
+	 */
+	ndim = 0;
+	for (;;)
 	{
-		temp[i] = dim[i] = nelems_last[i] = 0;
-		nelems[i] = 1;
-	}
+		char	   *q;
+		int			ub;
+		int			i;
 
-	ptr = str;
-	while (!eoArray)
-	{
-		bool		itemdone = false;
+		/*
+		 * Note: we currently allow whitespace between, but not within,
+		 * dimension items.
+		 */
+		while (scanner_isspace(*p))
+			p++;
+		if (*p != '[')
+			break;				/* no more dimension items */
+		p++;
+		if (ndim >= MAXDIM)
+			ereturn(escontext, false,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+							ndim + 1, MAXDIM)));
 
-		while (!itemdone)
-		{
-			if (parse_state == ARRAY_ELEM_STARTED ||
-				parse_state == ARRAY_QUOTED_ELEM_STARTED)
-				empty_array = false;
-
-			switch (*ptr)
-			{
-				case '\0':
-					/* Signal a premature end of the string */
-					ereturn(escontext, -1,
-							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("malformed array literal: \"%s\"", str),
-							 errdetail("Unexpected end of input.")));
-				case '\\':
-
-					/*
-					 * An escape must be after a level start, after an element
-					 * start, or after an element delimiter. In any case we
-					 * now must be past an element start.
-					 */
-					if (parse_state != ARRAY_LEVEL_STARTED &&
-						parse_state != ARRAY_ELEM_STARTED &&
-						parse_state != ARRAY_QUOTED_ELEM_STARTED &&
-						parse_state != ARRAY_ELEM_DELIMITED)
-						ereturn(escontext, -1,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("malformed array literal: \"%s\"", str),
-								 errdetail("Unexpected \"%c\" character.",
-										   '\\')));
-					if (parse_state != ARRAY_QUOTED_ELEM_STARTED)
-						parse_state = ARRAY_ELEM_STARTED;
-					/* skip the escaped character */
-					if (*(ptr + 1))
-						ptr++;
-					else
-						ereturn(escontext, -1,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("malformed array literal: \"%s\"", str),
-								 errdetail("Unexpected end of input.")));
-					break;
-				case '"':
-
-					/*
-					 * A quote must be after a level start, after a quoted
-					 * element start, or after an element delimiter. In any
-					 * case we now must be past an element start.
-					 */
-					if (parse_state != ARRAY_LEVEL_STARTED &&
-						parse_state != ARRAY_QUOTED_ELEM_STARTED &&
-						parse_state != ARRAY_ELEM_DELIMITED)
-						ereturn(escontext, -1,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("malformed array literal: \"%s\"", str),
-								 errdetail("Unexpected array element.")));
-					in_quotes = !in_quotes;
-					if (in_quotes)
-						parse_state = ARRAY_QUOTED_ELEM_STARTED;
-					else
-						parse_state = ARRAY_QUOTED_ELEM_COMPLETED;
-					break;
-				case '{':
-					if (!in_quotes)
-					{
-						/*
-						 * A left brace can occur if no nesting has occurred
-						 * yet, after a level start, or after a level
-						 * delimiter.
-						 */
-						if (parse_state != ARRAY_NO_LEVEL &&
-							parse_state != ARRAY_LEVEL_STARTED &&
-							parse_state != ARRAY_LEVEL_DELIMITED)
-							ereturn(escontext, -1,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"", str),
-									 errdetail("Unexpected \"%c\" character.",
-											   '{')));
-						parse_state = ARRAY_LEVEL_STARTED;
-						if (nest_level >= MAXDIM)
-							ereturn(escontext, -1,
-									(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-									 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-											nest_level + 1, MAXDIM)));
-						temp[nest_level] = 0;
-						nest_level++;
-						if (ndim < nest_level)
-							ndim = nest_level;
-					}
-					break;
-				case '}':
-					if (!in_quotes)
-					{
-						/*
-						 * A right brace can occur after an element start, an
-						 * element completion, a quoted element completion, or
-						 * a level completion.
-						 */
-						if (parse_state != ARRAY_ELEM_STARTED &&
-							parse_state != ARRAY_ELEM_COMPLETED &&
-							parse_state != ARRAY_QUOTED_ELEM_COMPLETED &&
-							parse_state != ARRAY_LEVEL_COMPLETED &&
-							!(nest_level == 1 && parse_state == ARRAY_LEVEL_STARTED))
-							ereturn(escontext, -1,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"", str),
-									 errdetail("Unexpected \"%c\" character.",
-											   '}')));
-						parse_state = ARRAY_LEVEL_COMPLETED;
-						if (nest_level == 0)
-							ereturn(escontext, -1,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"", str),
-									 errdetail("Unmatched \"%c\" character.", '}')));
-						nest_level--;
-
-						if (nelems_last[nest_level] != 0 &&
-							nelems[nest_level] != nelems_last[nest_level])
-							ereturn(escontext, -1,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"", str),
-									 errdetail("Multidimensional arrays must have "
-											   "sub-arrays with matching "
-											   "dimensions.")));
-						nelems_last[nest_level] = nelems[nest_level];
-						nelems[nest_level] = 1;
-						if (nest_level == 0)
-							eoArray = itemdone = true;
-						else
-						{
-							/*
-							 * We don't set itemdone here; see comments in
-							 * ReadArrayStr
-							 */
-							temp[nest_level - 1]++;
-						}
-					}
-					break;
-				default:
-					if (!in_quotes)
-					{
-						if (*ptr == typdelim)
-						{
-							/*
-							 * Delimiters can occur after an element start, an
-							 * element completion, a quoted element
-							 * completion, or a level completion.
-							 */
-							if (parse_state != ARRAY_ELEM_STARTED &&
-								parse_state != ARRAY_ELEM_COMPLETED &&
-								parse_state != ARRAY_QUOTED_ELEM_COMPLETED &&
-								parse_state != ARRAY_LEVEL_COMPLETED)
-								ereturn(escontext, -1,
-										(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-										 errmsg("malformed array literal: \"%s\"", str),
-										 errdetail("Unexpected \"%c\" character.",
-												   typdelim)));
-							if (parse_state == ARRAY_LEVEL_COMPLETED)
-								parse_state = ARRAY_LEVEL_DELIMITED;
-							else
-								parse_state = ARRAY_ELEM_DELIMITED;
-							itemdone = true;
-							nelems[nest_level - 1]++;
-						}
-						else if (!scanner_isspace(*ptr))
-						{
-							/*
-							 * Other non-space characters must be after a
-							 * level start, after an element start, or after
-							 * an element delimiter. In any case we now must
-							 * be past an element start.
-							 */
-							if (parse_state != ARRAY_LEVEL_STARTED &&
-								parse_state != ARRAY_ELEM_STARTED &&
-								parse_state != ARRAY_ELEM_DELIMITED)
-								ereturn(escontext, -1,
-										(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-										 errmsg("malformed array literal: \"%s\"", str),
-										 errdetail("Unexpected array element.")));
-							parse_state = ARRAY_ELEM_STARTED;
-						}
-					}
-					break;
-			}
-			if (!itemdone)
-				ptr++;
-		}
-		temp[ndim - 1]++;
-		ptr++;
-	}
-
-	/* only whitespace is allowed after the closing brace */
-	while (*ptr)
-	{
-		if (!scanner_isspace(*ptr++))
-			ereturn(escontext, -1,
+		q = p;
+		if (!ReadDimensionInt(&p, &i, origStr, escontext))
+			return false;
+		if (p == q)				/* no digits? */
+			ereturn(escontext, false,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("malformed array literal: \"%s\"", str),
-					 errdetail("Junk after closing right brace.")));
+					 errmsg("malformed array literal: \"%s\"", origStr),
+					 errdetail("\"[\" must introduce explicitly-specified array dimensions.")));
+
+		if (*p == ':')
+		{
+			/* [m:n] format */
+			lBound[ndim] = i;
+			p++;
+			q = p;
+			if (!ReadDimensionInt(&p, &ub, origStr, escontext))
+				return false;
+			if (p == q)			/* no digits? */
+				ereturn(escontext, false,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("malformed array literal: \"%s\"", origStr),
+						 errdetail("Missing array dimension value.")));
+		}
+		else
+		{
+			/* [n] format */
+			lBound[ndim] = 1;
+			ub = i;
+		}
+		if (*p != ']')
+			ereturn(escontext, false,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("malformed array literal: \"%s\"", origStr),
+					 errdetail("Missing \"%s\" after array dimensions.",
+							   "]")));
+		p++;
+
+		/*
+		 * Note: we could accept ub = lb-1 to represent a zero-length
+		 * dimension.  However, that would result in an empty array, for which
+		 * we don't keep any dimension data, so that e.g. [1:0] and [101:100]
+		 * would be equivalent.  Given the lack of field demand, there seems
+		 * little point in allowing such cases.
+		 */
+		if (ub < lBound[ndim])
+			ereturn(escontext, false,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("upper bound cannot be less than lower bound")));
+
+		/* Upper bound of INT_MAX must be disallowed, cf ArrayCheckBounds() */
+		if (ub == INT_MAX)
+			ereturn(escontext, false,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("array upper bound is too large: %d", ub)));
+
+		/* Compute "ub - lBound[ndim] + 1", detecting overflow */
+		if (pg_sub_s32_overflow(ub, lBound[ndim], &ub) ||
+			pg_add_s32_overflow(ub, 1, &ub))
+			ereturn(escontext, false,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("array size exceeds the maximum allowed (%d)",
+							(int) MaxArraySize)));
+
+		dim[ndim] = ub;
+		ndim++;
 	}
 
-	/* special case for an empty array */
-	if (empty_array)
-		return 0;
+	*srcptr = p;
+	*ndim_p = ndim;
+	return true;
+}
 
-	for (i = 0; i < ndim; ++i)
-		dim[i] = temp[i];
+/*
+ * ReadDimensionInt
+ *	 parse an integer, for the array dimensions
+ *
+ * On entry, *srcptr points to the string to parse. It is advanced past the
+ * digits of the integer. If there are no digits, returns true and leaves
+ * *srcptr unchanged.
+ *
+ * Result:
+ *	true for success, false for failure (if escontext is provided).
+ *  On success, the parsed integer is returned in *result.
+ */
+static bool
+ReadDimensionInt(char **srcptr, int *result,
+				 const char *origStr, Node *escontext)
+{
+	char	   *p = *srcptr;
+	long		l;
 
-	return ndim;
+	/* don't accept leading whitespace */
+	if (!isdigit((unsigned char) *p) && *p != '-' && *p != '+')
+	{
+		*result = 0;
+		return true;
+	}
+
+	errno = 0;
+	l = strtol(p, srcptr, 10);
+
+	if (errno == ERANGE || l > PG_INT32_MAX || l < PG_INT32_MIN)
+		ereturn(escontext, false,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("array bound is out of integer range")));
+
+	*result = (int) l;
+	return true;
 }
 
 /*
  * ReadArrayStr :
- *	 parses the array string pointed to by "arrayStr" and converts the values
- *	 to internal format.  Unspecified elements are initialized to nulls.
- *	 The array dimensions must already have been determined.
+ *	 parses the array string pointed to by *srcptr and converts the values
+ *	 to internal format.  Determines the array dimensions as it goes.
  *
- * Inputs:
- *	arrayStr: the string to parse.
- *			  CAUTION: the contents of "arrayStr" will be modified!
- *	origStr: the unmodified input string, used only in error messages.
- *	nitems: total number of array elements, as already determined.
- *	ndim: number of array dimensions
- *	dim[]: array axis lengths
+ * On entry, *srcptr points to the string to parse (it must point to a '{').
+ * On successful return, it is advanced to point past the closing '}'.
+ *
+ * If dimensions were specified explicitly, they are passed in *ndim_p and
+ * dim[].  This function will check that the array values match the specified
+ * dimensions.  If dimensions were not given, caller must pass *ndim_p == 0
+ * and initialize all elements of dim[] to -1.  Then this function will
+ * deduce the dimensions from the structure of the input and store them in
+ * *ndim_p and the dim[] array.
+ *
+ * Element type information:
  *	inputproc: type-specific input procedure for element datatype.
  *	typioparam, typmod: auxiliary values to pass to inputproc.
  *	typdelim: the value delimiter (type-specific).
  *	typlen, typbyval, typalign: storage parameters of element datatype.
  *
  * Outputs:
- *	values[]: filled with converted data values.
- *	nulls[]: filled with is-null markers.
- *	*hasnulls: set true iff there are any null elements.
- *	*nbytes: set to total size of data area needed (including alignment
- *		padding but not including array header overhead).
- *	*escontext: if this points to an ErrorSaveContext, details of
- *		any error are reported there.
+ *  *ndim_p, dim: dimensions deduced from the input structure.
+ *  *nitems_p: total number of elements.
+ *	*values_p[]: palloc'd array, filled with converted data values.
+ *	*nulls_p[]: palloc'd array, filled with is-null markers.
+ *
+ * 'origStr' is the original input string, used only in error messages.
+ * If *escontext points to an ErrorSaveContext, details of any error are
+ * reported there.
  *
  * Result:
  *	true for success, false for failure (if escontext is provided).
- *
- * Note that values[] and nulls[] are allocated by the caller, and must have
- * nitems elements.
  */
 static bool
-ReadArrayStr(char *arrayStr,
-			 const char *origStr,
-			 int nitems,
-			 int ndim,
-			 int *dim,
+ReadArrayStr(char **srcptr,
 			 FmgrInfo *inputproc,
 			 Oid typioparam,
 			 int32 typmod,
@@ -727,224 +585,363 @@ ReadArrayStr(char *arrayStr,
 			 int typlen,
 			 bool typbyval,
 			 char typalign,
-			 Datum *values,
-			 bool *nulls,
-			 bool *hasnulls,
-			 int32 *nbytes,
+			 int *ndim_p,
+			 int *dim,
+			 int *nitems_p,
+			 Datum **values_p,
+			 bool **nulls_p,
+			 const char *origStr,
 			 Node *escontext)
 {
-	int			i,
-				nest_level = 0;
-	char	   *srcptr;
-	bool		in_quotes = false;
-	bool		eoArray = false;
-	bool		hasnull;
-	int32		totbytes;
-	int			indx[MAXDIM] = {0},
-				prod[MAXDIM];
+	int			ndim = *ndim_p;
+	bool		dimensions_specified = (ndim != 0);
+	int			maxitems;
+	Datum	   *values;
+	bool	   *nulls;
+	StringInfoData elembuf;
+	int			nest_level;
+	int			nitems;
+	bool		ndim_frozen;
+	bool		expect_delim;
+	int			nelems[MAXDIM];
 
-	mda_get_prod(ndim, dim, prod);
+	/* Allocate some starting output workspace; we'll enlarge as needed */
+	maxitems = 16;
+	values = palloc_array(Datum, maxitems);
+	nulls = palloc_array(bool, maxitems);
 
-	/* Initialize is-null markers to true */
-	memset(nulls, true, nitems * sizeof(bool));
+	/* Allocate workspace to hold (string representation of) one element */
+	initStringInfo(&elembuf);
 
-	/*
-	 * We have to remove " and \ characters to create a clean item value to
-	 * pass to the datatype input routine.  We overwrite each item value
-	 * in-place within arrayStr to do this.  srcptr is the current scan point,
-	 * and dstptr is where we are copying to.
-	 *
-	 * We also want to suppress leading and trailing unquoted whitespace. We
-	 * use the leadingspace flag to suppress leading space.  Trailing space is
-	 * tracked by using dstendptr to point to the last significant output
-	 * character.
-	 *
-	 * The error checking in this routine is mostly pro-forma, since we expect
-	 * that ArrayCount() already validated the string.  So we don't bother
-	 * with errdetail messages.
-	 */
-	srcptr = arrayStr;
-	while (!eoArray)
+	/* Loop below assumes first token is ATOK_LEVEL_START */
+	Assert(**srcptr == '{');
+
+	/* Parse tokens until we reach the matching right brace */
+	nest_level = 0;
+	nitems = 0;
+	ndim_frozen = dimensions_specified;
+	expect_delim = false;
+	do
 	{
-		bool		itemdone = false;
-		bool		leadingspace = true;
-		bool		hasquoting = false;
-		char	   *itemstart;
-		char	   *dstptr;
-		char	   *dstendptr;
+		ArrayToken	tok;
 
-		i = -1;
-		itemstart = dstptr = dstendptr = srcptr;
+		tok = ReadArrayToken(srcptr, &elembuf, typdelim, origStr, escontext);
 
-		while (!itemdone)
+		switch (tok)
 		{
-			switch (*srcptr)
-			{
-				case '\0':
-					/* Signal a premature end of the string */
+			case ATOK_LEVEL_START:
+				/* Can't write left brace where delim is expected */
+				if (expect_delim)
 					ereturn(escontext, false,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("malformed array literal: \"%s\"",
-									origStr)));
-					break;
-				case '\\':
-					/* Skip backslash, copy next character as-is. */
-					srcptr++;
-					if (*srcptr == '\0')
+							 errmsg("malformed array literal: \"%s\"", origStr),
+							 errdetail("Unexpected \"%c\" character.", '{')));
+
+				/* Initialize element counting in the new level */
+				if (nest_level >= MAXDIM)
+					ereturn(escontext, false,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+									nest_level + 1, MAXDIM)));
+
+				nelems[nest_level] = 0;
+				nest_level++;
+				if (nest_level > ndim)
+				{
+					/* Can't increase ndim once it's frozen */
+					if (ndim_frozen)
+						goto dimension_error;
+					ndim = nest_level;
+				}
+				break;
+
+			case ATOK_LEVEL_END:
+				/* Can't get here with nest_level == 0 */
+				Assert(nest_level > 0);
+
+				/*
+				 * We allow a right brace to terminate an empty sub-array,
+				 * otherwise it must occur where we expect a delimiter.
+				 */
+				if (nelems[nest_level - 1] > 0 && !expect_delim)
+					ereturn(escontext, false,
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", origStr),
+							 errdetail("Unexpected \"%c\" character.",
+									   '}')));
+				nest_level--;
+				/* Nested sub-arrays count as elements of outer level */
+				if (nest_level > 0)
+					nelems[nest_level - 1]++;
+
+				/*
+				 * Note: if we had dimensionality info, then dim[nest_level]
+				 * is initially non-negative, and we'll check each sub-array's
+				 * length against that.
+				 */
+				if (dim[nest_level] < 0)
+				{
+					/* Save length of first sub-array of this level */
+					dim[nest_level] = nelems[nest_level];
+				}
+				else if (nelems[nest_level] != dim[nest_level])
+				{
+					/* Subsequent sub-arrays must have same length */
+					goto dimension_error;
+				}
+
+				/*
+				 * Must have a delim or another right brace following, unless
+				 * we have reached nest_level 0, where this won't matter.
+				 */
+				expect_delim = true;
+				break;
+
+			case ATOK_DELIM:
+				if (!expect_delim)
+					ereturn(escontext, false,
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", origStr),
+							 errdetail("Unexpected \"%c\" character.",
+									   typdelim)));
+				expect_delim = false;
+				break;
+
+			case ATOK_ELEM:
+			case ATOK_ELEM_NULL:
+				/* Can't get here with nest_level == 0 */
+				Assert(nest_level > 0);
+
+				/* Disallow consecutive ELEM tokens */
+				if (expect_delim)
+					ereturn(escontext, false,
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", origStr),
+							 errdetail("Unexpected array element.")));
+
+				/* Enlarge the values/nulls arrays if needed */
+				if (nitems >= maxitems)
+				{
+					if (maxitems >= MaxArraySize)
 						ereturn(escontext, false,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("malformed array literal: \"%s\"",
-										origStr)));
-					*dstptr++ = *srcptr++;
-					/* Treat the escaped character as non-whitespace */
-					leadingspace = false;
-					dstendptr = dstptr;
-					hasquoting = true;	/* can't be a NULL marker */
-					break;
-				case '"':
-					in_quotes = !in_quotes;
-					if (in_quotes)
-						leadingspace = false;
-					else
-					{
-						/*
-						 * Advance dstendptr when we exit in_quotes; this
-						 * saves having to do it in all the other in_quotes
-						 * cases.
-						 */
-						dstendptr = dstptr;
-					}
-					hasquoting = true;	/* can't be a NULL marker */
-					srcptr++;
-					break;
-				case '{':
-					if (!in_quotes)
-					{
-						if (nest_level >= ndim)
-							ereturn(escontext, false,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"",
-											origStr)));
-						nest_level++;
-						indx[nest_level - 1] = 0;
-						srcptr++;
-					}
-					else
-						*dstptr++ = *srcptr++;
-					break;
-				case '}':
-					if (!in_quotes)
-					{
-						if (nest_level == 0)
-							ereturn(escontext, false,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									 errmsg("malformed array literal: \"%s\"",
-											origStr)));
-						if (i == -1)
-							i = ArrayGetOffset0(ndim, indx, prod);
-						indx[nest_level - 1] = 0;
-						nest_level--;
-						if (nest_level == 0)
-							eoArray = itemdone = true;
-						else
-							indx[nest_level - 1]++;
-						srcptr++;
-					}
-					else
-						*dstptr++ = *srcptr++;
-					break;
-				default:
-					if (in_quotes)
-						*dstptr++ = *srcptr++;
-					else if (*srcptr == typdelim)
-					{
-						if (i == -1)
-							i = ArrayGetOffset0(ndim, indx, prod);
-						itemdone = true;
-						indx[ndim - 1]++;
-						srcptr++;
-					}
-					else if (scanner_isspace(*srcptr))
-					{
-						/*
-						 * If leading space, drop it immediately.  Else, copy
-						 * but don't advance dstendptr.
-						 */
-						if (leadingspace)
-							srcptr++;
-						else
-							*dstptr++ = *srcptr++;
-					}
-					else
-					{
-						*dstptr++ = *srcptr++;
-						leadingspace = false;
-						dstendptr = dstptr;
-					}
-					break;
-			}
-		}
+								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+								 errmsg("array size exceeds the maximum allowed (%d)",
+										(int) MaxArraySize)));
+					maxitems = Min(maxitems * 2, MaxArraySize);
+					values = repalloc_array(values, Datum, maxitems);
+					nulls = repalloc_array(nulls, bool, maxitems);
+				}
 
-		Assert(dstptr < srcptr);
-		*dstendptr = '\0';
+				/* Read the element's value, or check that NULL is allowed */
+				if (!InputFunctionCallSafe(inputproc,
+										   (tok == ATOK_ELEM_NULL) ? NULL : elembuf.data,
+										   typioparam, typmod,
+										   escontext,
+										   &values[nitems]))
+					return false;
+				nulls[nitems] = (tok == ATOK_ELEM_NULL);
+				nitems++;
 
-		if (i < 0 || i >= nitems)
-			ereturn(escontext, false,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("malformed array literal: \"%s\"",
-							origStr)));
+				/*
+				 * Once we have found an element, the number of dimensions can
+				 * no longer increase, and subsequent elements must all be at
+				 * the same nesting depth.
+				 */
+				ndim_frozen = true;
+				if (nest_level != ndim)
+					goto dimension_error;
+				/* Count the new element */
+				nelems[nest_level - 1]++;
 
-		if (Array_nulls && !hasquoting &&
-			pg_strcasecmp(itemstart, "NULL") == 0)
-		{
-			/* it's a NULL item */
-			if (!InputFunctionCallSafe(inputproc, NULL,
-									   typioparam, typmod,
-									   escontext,
-									   &values[i]))
+				/* Must have a delim or a right brace following */
+				expect_delim = true;
+				break;
+
+			case ATOK_ERROR:
 				return false;
-			nulls[i] = true;
 		}
-		else
-		{
-			if (!InputFunctionCallSafe(inputproc, itemstart,
-									   typioparam, typmod,
-									   escontext,
-									   &values[i]))
-				return false;
-			nulls[i] = false;
-		}
-	}
+	} while (nest_level > 0);
 
-	/*
-	 * Check for nulls, compute total data space needed
-	 */
-	hasnull = false;
-	totbytes = 0;
-	for (i = 0; i < nitems; i++)
-	{
-		if (nulls[i])
-			hasnull = true;
-		else
-		{
-			/* let's just make sure data is not toasted */
-			if (typlen == -1)
-				values[i] = PointerGetDatum(PG_DETOAST_DATUM(values[i]));
-			totbytes = att_addlength_datum(totbytes, typlen, values[i]);
-			totbytes = att_align_nominal(totbytes, typalign);
-			/* check for overflow of total request */
-			if (!AllocSizeIsValid(totbytes))
-				ereturn(escontext, false,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("array size exceeds the maximum allowed (%d)",
-								(int) MaxAllocSize)));
-		}
-	}
-	*hasnulls = hasnull;
-	*nbytes = totbytes;
+	/* Clean up and return results */
+	pfree(elembuf.data);
+
+	*ndim_p = ndim;
+	*nitems_p = nitems;
+	*values_p = values;
+	*nulls_p = nulls;
 	return true;
+
+dimension_error:
+	if (dimensions_specified)
+		ereturn(escontext, false,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("malformed array literal: \"%s\"", origStr),
+				 errdetail("Specified array dimensions do not match array contents.")));
+	else
+		ereturn(escontext, false,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("malformed array literal: \"%s\"", origStr),
+				 errdetail("Multidimensional arrays must have sub-arrays with matching dimensions.")));
 }
 
+/*
+ * ReadArrayToken
+ *	 read one token from an array value string
+ *
+ * Starts scanning from *srcptr.  On non-error return, *srcptr is
+ * advanced past the token.
+ *
+ * If the token is ATOK_ELEM, the de-escaped string is returned in elembuf.
+ */
+static ArrayToken
+ReadArrayToken(char **srcptr, StringInfo elembuf, char typdelim,
+			   const char *origStr, Node *escontext)
+{
+	char	   *p = *srcptr;
+	int			dstlen;
+	bool		has_escapes;
+
+	resetStringInfo(elembuf);
+
+	/* Identify token type.  Loop advances over leading whitespace. */
+	for (;;)
+	{
+		switch (*p)
+		{
+			case '\0':
+				goto ending_error;
+			case '{':
+				*srcptr = p + 1;
+				return ATOK_LEVEL_START;
+			case '}':
+				*srcptr = p + 1;
+				return ATOK_LEVEL_END;
+			case '"':
+				p++;
+				goto quoted_element;
+			default:
+				if (*p == typdelim)
+				{
+					*srcptr = p + 1;
+					return ATOK_DELIM;
+				}
+				if (scanner_isspace(*p))
+				{
+					p++;
+					continue;
+				}
+				goto unquoted_element;
+		}
+	}
+
+quoted_element:
+	for (;;)
+	{
+		switch (*p)
+		{
+			case '\0':
+				goto ending_error;
+			case '\\':
+				/* Skip backslash, copy next character as-is. */
+				p++;
+				if (*p == '\0')
+					goto ending_error;
+				appendStringInfoChar(elembuf, *p++);
+				break;
+			case '"':
+
+				/*
+				 * If next non-whitespace isn't typdelim or a brace, complain
+				 * about incorrect quoting.  While we could leave such cases
+				 * to be detected as incorrect token sequences, the resulting
+				 * message wouldn't be as helpful.  (We could also give the
+				 * incorrect-quoting error when next is '{', but treating that
+				 * as a token sequence error seems better.)
+				 */
+				while (*(++p) != '\0')
+				{
+					if (*p == typdelim || *p == '}' || *p == '{')
+					{
+						*srcptr = p;
+						return ATOK_ELEM;
+					}
+					if (!scanner_isspace(*p))
+						ereturn(escontext, ATOK_ERROR,
+								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								 errmsg("malformed array literal: \"%s\"", origStr),
+								 errdetail("Incorrectly quoted array element.")));
+				}
+				goto ending_error;
+			default:
+				appendStringInfoChar(elembuf, *p++);
+				break;
+		}
+	}
+
+unquoted_element:
+
+	/*
+	 * We don't include trailing whitespace in the result.  dstlen tracks how
+	 * much of the output string is known to not be trailing whitespace.
+	 */
+	dstlen = 0;
+	has_escapes = false;
+	for (;;)
+	{
+		switch (*p)
+		{
+			case '\0':
+				goto ending_error;
+			case '{':
+				ereturn(escontext, ATOK_ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("malformed array literal: \"%s\"", origStr),
+						 errdetail("Unexpected \"%c\" character.",
+								   '{')));
+			case '"':
+				/* Must double-quote all or none of an element. */
+				ereturn(escontext, ATOK_ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("malformed array literal: \"%s\"", origStr),
+						 errdetail("Incorrectly quoted array element.")));
+			case '\\':
+				/* Skip backslash, copy next character as-is. */
+				p++;
+				if (*p == '\0')
+					goto ending_error;
+				appendStringInfoChar(elembuf, *p++);
+				dstlen = elembuf->len;	/* treat it as non-whitespace */
+				has_escapes = true;
+				break;
+			default:
+				/* End of elem? */
+				if (*p == typdelim || *p == '}')
+				{
+					/* hack: truncate the output string to dstlen */
+					elembuf->data[dstlen] = '\0';
+					elembuf->len = dstlen;
+					*srcptr = p;
+					/* Check if it's unquoted "NULL" */
+					if (Array_nulls && !has_escapes &&
+						pg_strcasecmp(elembuf->data, "NULL") == 0)
+						return ATOK_ELEM_NULL;
+					else
+						return ATOK_ELEM;
+				}
+				appendStringInfoChar(elembuf, *p);
+				if (!scanner_isspace(*p))
+					dstlen = elembuf->len;
+				p++;
+				break;
+		}
+	}
+
+ending_error:
+	ereturn(escontext, ATOK_ERROR,
+			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 errmsg("malformed array literal: \"%s\"", origStr),
+			 errdetail("Unexpected end of input.")));
+}
 
 /*
  * Copy data into an array object from a temporary array of Datums.

@@ -1492,20 +1492,35 @@ select '{{1,{2}},{2,3}}'::text[];
 ERROR:  malformed array literal: "{{1,{2}},{2,3}}"
 LINE 1: select '{{1,{2}},{2,3}}'::text[];
                ^
-DETAIL:  Unexpected "{" character.
-select '{{},{}}'::text[];
-ERROR:  malformed array literal: "{{},{}}"
-LINE 1: select '{{},{}}'::text[];
-               ^
-DETAIL:  Unexpected "}" character.
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
 select E'{{1,2},\\{2,3}}'::text[];
 ERROR:  malformed array literal: "{{1,2},\{2,3}}"
 LINE 1: select E'{{1,2},\\{2,3}}'::text[];
                ^
-DETAIL:  Unexpected "\" character.
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
+select '{"a"b}'::text[];
+ERROR:  malformed array literal: "{"a"b}"
+LINE 1: select '{"a"b}'::text[];
+               ^
+DETAIL:  Incorrectly quoted array element.
+select '{a"b"}'::text[];
+ERROR:  malformed array literal: "{a"b"}"
+LINE 1: select '{a"b"}'::text[];
+               ^
+DETAIL:  Incorrectly quoted array element.
+select '{"a""b"}'::text[];
+ERROR:  malformed array literal: "{"a""b"}"
+LINE 1: select '{"a""b"}'::text[];
+               ^
+DETAIL:  Incorrectly quoted array element.
 select '{{"1 2" x},{3}}'::text[];
 ERROR:  malformed array literal: "{{"1 2" x},{3}}"
 LINE 1: select '{{"1 2" x},{3}}'::text[];
+               ^
+DETAIL:  Incorrectly quoted array element.
+select '{{"1 2"} x,{3}}'::text[];
+ERROR:  malformed array literal: "{{"1 2"} x,{3}}"
+LINE 1: select '{{"1 2"} x,{3}}'::text[];
                ^
 DETAIL:  Unexpected array element.
 select '{}}'::text[];
@@ -1518,14 +1533,125 @@ ERROR:  malformed array literal: "{ }}"
 LINE 1: select '{ }}'::text[];
                ^
 DETAIL:  Junk after closing right brace.
+select '}{'::text[];
+ERROR:  malformed array literal: "}{"
+LINE 1: select '}{'::text[];
+               ^
+DETAIL:  Array value must start with "{" or dimension information.
+select '{foo{}}'::text[];
+ERROR:  malformed array literal: "{foo{}}"
+LINE 1: select '{foo{}}'::text[];
+               ^
+DETAIL:  Unexpected "{" character.
+select '{"foo"{}}'::text[];
+ERROR:  malformed array literal: "{"foo"{}}"
+LINE 1: select '{"foo"{}}'::text[];
+               ^
+DETAIL:  Unexpected "{" character.
+select '{foo,,bar}'::text[];
+ERROR:  malformed array literal: "{foo,,bar}"
+LINE 1: select '{foo,,bar}'::text[];
+               ^
+DETAIL:  Unexpected "," character.
+select '{{1},{{2}}}'::text[];
+ERROR:  malformed array literal: "{{1},{{2}}}"
+LINE 1: select '{{1},{{2}}}'::text[];
+               ^
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
+select '{{{1}},{2}}'::text[];
+ERROR:  malformed array literal: "{{{1}},{2}}"
+LINE 1: select '{{{1}},{2}}'::text[];
+               ^
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
+select '{{},{{}}}'::text[];
+ERROR:  malformed array literal: "{{},{{}}}"
+LINE 1: select '{{},{{}}}'::text[];
+               ^
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
+select '{{{}},{}}'::text[];
+ERROR:  malformed array literal: "{{{}},{}}"
+LINE 1: select '{{{}},{}}'::text[];
+               ^
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
+select '{{1},{}}'::text[];
+ERROR:  malformed array literal: "{{1},{}}"
+LINE 1: select '{{1},{}}'::text[];
+               ^
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
+select '{{},{1}}'::text[];
+ERROR:  malformed array literal: "{{},{1}}"
+LINE 1: select '{{},{1}}'::text[];
+               ^
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
+select '[1:0]={}'::int[];
+ERROR:  upper bound cannot be less than lower bound
+LINE 1: select '[1:0]={}'::int[];
+               ^
+select '[2147483646:2147483647]={1,2}'::int[];
+ERROR:  array upper bound is too large: 2147483647
+LINE 1: select '[2147483646:2147483647]={1,2}'::int[];
+               ^
+select '[1:-1]={}'::int[];
+ERROR:  upper bound cannot be less than lower bound
+LINE 1: select '[1:-1]={}'::int[];
+               ^
+select '[2]={1}'::int[];
+ERROR:  malformed array literal: "[2]={1}"
+LINE 1: select '[2]={1}'::int[];
+               ^
+DETAIL:  Specified array dimensions do not match array contents.
+select '[1:]={1}'::int[];
+ERROR:  malformed array literal: "[1:]={1}"
+LINE 1: select '[1:]={1}'::int[];
+               ^
+DETAIL:  Missing array dimension value.
+select '[:1]={1}'::int[];
+ERROR:  malformed array literal: "[:1]={1}"
+LINE 1: select '[:1]={1}'::int[];
+               ^
+DETAIL:  "[" must introduce explicitly-specified array dimensions.
 select array[];
 ERROR:  cannot determine type of empty array
 LINE 1: select array[];
                ^
 HINT:  Explicitly cast to the desired type, for example ARRAY[]::integer[].
+select '{{1,},{1},}'::text[];
+ERROR:  malformed array literal: "{{1,},{1},}"
+LINE 1: select '{{1,},{1},}'::text[];
+               ^
+DETAIL:  Unexpected "}" character.
+select '{{1,},{1}}'::text[];
+ERROR:  malformed array literal: "{{1,},{1}}"
+LINE 1: select '{{1,},{1}}'::text[];
+               ^
+DETAIL:  Unexpected "}" character.
+select '{{1,}}'::text[];
+ERROR:  malformed array literal: "{{1,}}"
+LINE 1: select '{{1,}}'::text[];
+               ^
+DETAIL:  Unexpected "}" character.
+select '{1,}'::text[];
+ERROR:  malformed array literal: "{1,}"
+LINE 1: select '{1,}'::text[];
+               ^
+DETAIL:  Unexpected "}" character.
+select '[21474836488:21474836489]={1,2}'::int[];
+ERROR:  array bound is out of integer range
+LINE 1: select '[21474836488:21474836489]={1,2}'::int[];
+               ^
+select '[-2147483649:-2147483648]={1,2}'::int[];
+ERROR:  array bound is out of integer range
+LINE 1: select '[-2147483649:-2147483648]={1,2}'::int[];
+               ^
 -- none of the above should be accepted
 -- all of the following should be accepted
 select '{}'::text[];
+ text 
+------
+ {}
+(1 row)
+
+select '{{},{}}'::text[];
  text 
 ------
  {}
@@ -1535,6 +1661,18 @@ select '{{{1,2,3,4},{2,3,4,5}},{{3,4,5,6},{4,5,6,7}}}'::text[];
                      text                      
 -----------------------------------------------
  {{{1,2,3,4},{2,3,4,5}},{{3,4,5,6},{4,5,6,7}}}
+(1 row)
+
+select '{null,n\ull,"null"}'::text[];
+         text         
+----------------------
+ {NULL,"null","null"}
+(1 row)
+
+select '{ ab\c , "ab\"c" }'::text[];
+     text      
+---------------
+ {abc,"ab\"c"}
 (1 row)
 
 select '{0 second  ,0 second}'::interval[];
@@ -1570,10 +1708,28 @@ select array[]::text[];
  {}
 (1 row)
 
+select '[2]={1,7}'::int[];
+ int4  
+-------
+ {1,7}
+(1 row)
+
 select '[0:1]={1.1,2.2}'::float8[];
      float8      
 -----------------
  [0:1]={1.1,2.2}
+(1 row)
+
+select '[2147483646:2147483646]={1}'::int[];
+            int4             
+-----------------------------
+ [2147483646:2147483646]={1}
+(1 row)
+
+select '[-2147483648:-2147483647]={1,2}'::int[];
+              int4               
+---------------------------------
+ [-2147483648:-2147483647]={1,2}
 (1 row)
 
 -- all of the above should be accepted
