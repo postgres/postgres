@@ -532,15 +532,9 @@ NET STOP postgresql-&majorversion;
     </para>
 
     <para>
-     For Windows users, you must be logged into an administrative account, and
-     then start a shell as the <literal>postgres</literal> user and set the proper path:
-
-<programlisting>
-RUNAS /USER:postgres "CMD.EXE"
-SET PATH=%PATH%;C:\Program Files\PostgreSQL\&majorversion;\bin;
-</programlisting>
-
-     and then run <application>pg_upgrade</application> with quoted directories, e.g.:
+     For Windows users, you must be logged into an administrative account,
+     and then run <application>pg_upgrade</application> with quoted
+     directories, e.g.:
 
 <programlisting>
 pg_upgrade.exe
