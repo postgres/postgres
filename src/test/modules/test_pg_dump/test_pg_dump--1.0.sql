@@ -12,11 +12,13 @@ CREATE SEQUENCE regress_pg_dump_seq;
 
 CREATE SEQUENCE regress_seq_dumpable;
 SELECT pg_catalog.pg_extension_config_dump('regress_seq_dumpable', '');
+GRANT SELECT ON SEQUENCE regress_seq_dumpable TO public;
 
 CREATE TABLE regress_table_dumpable (
 	col1 int check (col1 > 0)
 );
 SELECT pg_catalog.pg_extension_config_dump('regress_table_dumpable', '');
+GRANT SELECT ON regress_table_dumpable TO public;
 
 CREATE SCHEMA regress_pg_dump_schema;
 
