@@ -271,6 +271,35 @@ ALTER INDEX hash_split_index SET (fillfactor = 10);
 REINDEX INDEX hash_split_index;
 -- Clean up.
 DROP TABLE hash_split_heap;
+-- Testcases for removing overflow pages.
+CREATE TABLE hash_cleanup_heap(keycol INT);
+CREATE INDEX hash_cleanup_index on hash_cleanup_heap USING HASH (keycol);
+-- Insert tuples to both the primary bucket page and overflow pages.
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 500) as i;
+-- Fill overflow pages by "dead" tuples.
+BEGIN;
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 1000) as i;
+ROLLBACK;
+-- Checkpoint will ensure that all hash buffers are cleaned before we try
+-- to remove overflow pages.
+CHECKPOINT;
+-- This will squeeze the bucket and remove overflow pages.
+VACUUM hash_cleanup_heap;
+TRUNCATE hash_cleanup_heap;
+-- Insert a few tuples so that the primary bucket page doesn't get full and
+-- tuples can be moved to it.
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 50) as i;
+-- Fill overflow pages by "dead" tuples.
+BEGIN;
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 1500) as i;
+ROLLBACK;
+-- And insert some tuples again. During squeeze operation, these will be moved
+-- to the primary bucket allowing to test freeing intermediate overflow pages.
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 500) as i;
+CHECKPOINT;
+VACUUM hash_cleanup_heap;
+-- Clean up.
+DROP TABLE hash_cleanup_heap;
 -- Index on temp table.
 CREATE TEMP TABLE hash_temp_heap (x int, y int);
 INSERT INTO hash_temp_heap VALUES (1,1);
