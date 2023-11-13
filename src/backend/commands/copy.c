@@ -671,7 +671,7 @@ ProcessCopyOptions(ParseState *pstate,
 	if (!opts_out->csv_mode && opts_out->quote != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY quote available only in CSV mode")));
+				 errmsg("COPY QUOTE requires CSV mode")));
 
 	if (opts_out->csv_mode && strlen(opts_out->quote) != 1)
 		ereport(ERROR,
@@ -687,7 +687,7 @@ ProcessCopyOptions(ParseState *pstate,
 	if (!opts_out->csv_mode && opts_out->escape != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY escape available only in CSV mode")));
+				 errmsg("COPY ESCAPE requires CSV mode")));
 
 	if (opts_out->csv_mode && strlen(opts_out->escape) != 1)
 		ereport(ERROR,
@@ -698,45 +698,51 @@ ProcessCopyOptions(ParseState *pstate,
 	if (!opts_out->csv_mode && (opts_out->force_quote || opts_out->force_quote_all))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force quote available only in CSV mode")));
+				 errmsg("COPY FORCE_QUOTE requires CSV mode")));
 	if ((opts_out->force_quote || opts_out->force_quote_all) && is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force quote only available using COPY TO")));
+				 errmsg("COPY FORCE_QUOTE cannot be used with COPY FROM")));
 
 	/* Check force_notnull */
 	if (!opts_out->csv_mode && opts_out->force_notnull != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force not null available only in CSV mode")));
+				 errmsg("COPY FORCE_NOT_NULL requires CSV mode")));
 	if (opts_out->force_notnull != NIL && !is_from)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force not null only available using COPY FROM")));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY FORCE_NOT_NULL cannot be used with COPY TO")));
 
 	/* Check force_null */
 	if (!opts_out->csv_mode && opts_out->force_null != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force null available only in CSV mode")));
+				 errmsg("COPY FORCE_NULL requires CSV mode")));
 
 	if (opts_out->force_null != NIL && !is_from)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force null only available using COPY FROM")));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY FORCE_NULL cannot be used with COPY TO")));
 
 	/* Don't allow the delimiter to appear in the null string. */
 	if (strchr(opts_out->null_print, opts_out->delim[0]) != NULL)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY delimiter must not appear in the NULL specification")));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY delimiter character must not appear in the NULL specification")));
 
 	/* Don't allow the CSV quote char to appear in the null string. */
 	if (opts_out->csv_mode &&
 		strchr(opts_out->null_print, opts_out->quote[0]) != NULL)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("CSV quote character must not appear in the NULL specification")));
+
+	/* Check freeze */
+	if (opts_out->freeze && !is_from)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY FREEZE cannot be used with COPY TO")));
 
 	if (opts_out->default_print)
 	{

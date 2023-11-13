@@ -83,17 +83,17 @@ ERROR:  cannot specify DELIMITER in BINARY mode
 COPY x to stdin (format BINARY, null 'x');
 ERROR:  cannot specify NULL in BINARY mode
 COPY x to stdin (format TEXT, force_quote(a));
-ERROR:  COPY force quote available only in CSV mode
+ERROR:  COPY FORCE_QUOTE requires CSV mode
 COPY x from stdin (format CSV, force_quote(a));
-ERROR:  COPY force quote only available using COPY TO
+ERROR:  COPY FORCE_QUOTE cannot be used with COPY FROM
 COPY x to stdout (format TEXT, force_not_null(a));
-ERROR:  COPY force not null available only in CSV mode
+ERROR:  COPY FORCE_NOT_NULL requires CSV mode
 COPY x to stdin (format CSV, force_not_null(a));
-ERROR:  COPY force not null only available using COPY FROM
+ERROR:  COPY FORCE_NOT_NULL cannot be used with COPY TO
 COPY x to stdout (format TEXT, force_null(a));
-ERROR:  COPY force null available only in CSV mode
+ERROR:  COPY FORCE_NULL requires CSV mode
 COPY x to stdin (format CSV, force_null(a));
-ERROR:  COPY force null only available using COPY FROM
+ERROR:  COPY FORCE_NULL cannot be used with COPY TO
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  column "d" specified more than once
