@@ -19683,7 +19683,7 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Extracts the lower bound of the range (<literal>NULL</literal> if the
-        range is empty or the lower bound is infinite).
+        range is empty or has no lower bound).
        </para>
        <para>
         <literal>lower(numrange(1.1,2.2))</literal>
@@ -19701,7 +19701,7 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Extracts the upper bound of the range (<literal>NULL</literal> if the
-        range is empty or the upper bound is infinite).
+        range is empty or has no upper bound).
        </para>
        <para>
         <literal>upper(numrange(1.1,2.2))</literal>
@@ -19769,7 +19769,8 @@ SELECT NULLIF(value, '(none)') ...
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Is the range's lower bound infinite?
+        Does the range have no lower bound?  (A lower bound of
+        <literal>-Infinity</literal> returns false.)
        </para>
        <para>
         <literal>lower_inf('(,)'::daterange)</literal>
@@ -19786,7 +19787,8 @@ SELECT NULLIF(value, '(none)') ...
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Is the range's upper bound infinite?
+        Does the range have no upper bound?  (An upper bound of
+        <literal>Infinity</literal> returns false.)
        </para>
        <para>
         <literal>upper_inf('(,)'::daterange)</literal>
@@ -19841,7 +19843,7 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Extracts the lower bound of the multirange (<literal>NULL</literal> if the
-        multirange is empty or the lower bound is infinite).
+        multirange is empty has no lower bound).
        </para>
        <para>
         <literal>lower('{[1.1,2.2)}'::nummultirange)</literal>
@@ -19859,7 +19861,7 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Extracts the upper bound of the multirange (<literal>NULL</literal> if the
-        multirange is empty or the upper bound is infinite).
+        multirange is empty or has no upper bound).
        </para>
        <para>
         <literal>upper('{[1.1,2.2)}'::nummultirange)</literal>
@@ -19927,7 +19929,8 @@ SELECT NULLIF(value, '(none)') ...
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Is the multirange's lower bound infinite?
+        Does the multirange have no lower bound?  (A lower bound of
+        <literal>-Infinity</literal> returns false.)
        </para>
        <para>
         <literal>lower_inf('{(,)}'::datemultirange)</literal>
@@ -19944,7 +19947,8 @@ SELECT NULLIF(value, '(none)') ...
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Is the multirange's upper bound infinite?
+        Does the multirange have no upper bound?  (An upper bound of
+        <literal>Infinity</literal> returns false.)
        </para>
        <para>
         <literal>upper_inf('{(,)}'::datemultirange)</literal>
