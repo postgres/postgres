@@ -1287,7 +1287,10 @@ ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type
    <para>
     <function>ts_headline</function> accepts a document along
     with a query, and returns an excerpt from
-    the document in which terms from the query are highlighted.  The
+    the document in which terms from the query are highlighted.
+    Specifically, the function will use the query to select relevant
+    text fragments, and then highlight all words that appear in the query,
+    even if those word positions do not match the query's restrictions.  The
     configuration to be used to parse the document can be specified by
     <replaceable>config</replaceable>; if <replaceable>config</replaceable>
     is omitted, the
