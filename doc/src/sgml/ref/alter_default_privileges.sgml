@@ -88,25 +88,19 @@ REVOKE [ GRANT OPTION FOR ]
   <title>Description</title>
 
   <para>
-   <command>ALTER DEFAULT PRIVILEGES</command> allows you to set the privileges
-   that will be applied to objects created in the future.  (It does not
-   affect privileges assigned to already-existing objects.)  Currently,
-   only the privileges for schemas, tables (including views and foreign
-   tables), sequences, functions, and types (including domains) can be
-   altered.  For this command, functions include aggregates and procedures.
-   The words <literal>FUNCTIONS</literal> and <literal>ROUTINES</literal> are
-   equivalent in this command.  (<literal>ROUTINES</literal> is preferred
-   going forward as the standard term for functions and procedures taken
-   together.  In earlier PostgreSQL releases, only the
-   word <literal>FUNCTIONS</literal> was allowed.  It is not possible to set
-   default privileges for functions and procedures separately.)
+   <command>ALTER DEFAULT PRIVILEGES</command> allows you to set the
+   privileges that will be applied to objects created in the future.
+   (It does not affect privileges assigned to already-existing objects.)
+   Privileges can be set globally (i.e., for all objects created in the
+   current database), or just for objects created in specified schemas.
   </para>
 
   <para>
-   You can change default privileges only for objects that will be created by
-   yourself or by roles that you are a member of.  The privileges can be set
-   globally (i.e., for all objects created in the current database),
-   or just for objects created in specified schemas.
+   While you can change your own default privileges and the defaults of
+   roles that you are a member of, at object creation time, new object
+   permissions are only affected by the default privileges of the current
+   role, and are not inherited from any roles in which the current role
+   is a member.
   </para>
 
   <para>
@@ -116,6 +110,19 @@ REVOKE [ GRANT OPTION FOR ]
    <literal>PUBLIC</literal> as well.  However, this behavior can be changed by
    altering the global default privileges with
    <command>ALTER DEFAULT PRIVILEGES</command>.
+  </para>
+
+  <para>
+   Currently,
+   only the privileges for schemas, tables (including views and foreign
+   tables), sequences, functions, and types (including domains) can be
+   altered.  For this command, functions include aggregates and procedures.
+   The words <literal>FUNCTIONS</literal> and <literal>ROUTINES</literal> are
+   equivalent in this command.  (<literal>ROUTINES</literal> is preferred
+   going forward as the standard term for functions and procedures taken
+   together.  In earlier PostgreSQL releases, only the
+   word <literal>FUNCTIONS</literal> was allowed.  It is not possible to set
+   default privileges for functions and procedures separately.)
   </para>
 
   <para>
@@ -136,12 +143,9 @@ REVOKE [ GRANT OPTION FOR ]
     <term><replaceable>target_role</replaceable></term>
     <listitem>
      <para>
-      The name of an existing role of which the current role is a member.
-      Default access privileges are not inherited, so member roles
-      must use <command>SET ROLE</command> to access these privileges,
-      or <command>ALTER DEFAULT PRIVILEGES</command> must be run for
-      each member role.  If <literal>FOR ROLE</literal> is omitted,
-      the current role is assumed.
+      Change default privileges for objects created by the
+      <replaceable>target_role</replaceable>, or the current
+      role if unspecified.
      </para>
     </listitem>
    </varlistentry>
