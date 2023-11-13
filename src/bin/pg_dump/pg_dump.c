@@ -1680,13 +1680,10 @@ checkExtensionMembership(DumpableObject *dobj, Archive *fout)
 	addObjectDependency(dobj, ext->dobj.dumpId);
 
 	/*
-	 * In 9.6 and above, mark the member object to have any non-initial ACL,
-	 * policies, and security labels dumped.
-	 *
-	 * Note that any initial ACLs (see pg_init_privs) will be removed when we
-	 * extract the information about the object.  We don't provide support for
-	 * initial policies and security labels and it seems unlikely for those to
-	 * ever exist, but we may have to revisit this later.
+	 * In 9.6 and above, mark the member object to have any non-initial ACLs
+	 * dumped.  (Any initial ACLs will be removed later, using data from
+	 * pg_init_privs, so that we'll dump only the delta from the extension's
+	 * initial setup.)
 	 *
 	 * Prior to 9.6, we do not include any extension member components.
 	 *
@@ -1694,6 +1691,13 @@ checkExtensionMembership(DumpableObject *dobj, Archive *fout)
 	 * individually, since the idea is to exactly reproduce the database
 	 * contents rather than replace the extension contents with something
 	 * different.
+	 *
+	 * Note: it might be interesting someday to implement storage and delta
+	 * dumping of extension members' RLS policies and/or security labels.
+	 * However there is a pitfall for RLS policies: trying to dump them
+	 * requires getting a lock on their tables, and the calling user might not
+	 * have privileges for that.  We need no lock to examine a table's ACLs,
+	 * so the current feature doesn't have a problem of that sort.
 	 */
 	if (fout->dopt->binary_upgrade)
 		dobj->dump = ext->dobj.dump;
@@ -1702,9 +1706,7 @@ checkExtensionMembership(DumpableObject *dobj, Archive *fout)
 		if (fout->remoteVersion < 90600)
 			dobj->dump = DUMP_COMPONENT_NONE;
 		else
-			dobj->dump = ext->dobj.dump_contains & (DUMP_COMPONENT_ACL |
-													DUMP_COMPONENT_SECLABEL |
-													DUMP_COMPONENT_POLICY);
+			dobj->dump = ext->dobj.dump_contains & (DUMP_COMPONENT_ACL);
 	}
 
 	return true;
