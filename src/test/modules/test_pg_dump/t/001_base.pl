@@ -172,6 +172,19 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
+
+	# regress_dump_login_role shouldn't need SELECT rights on internal
+	# (undumped) extension tables
+	privileged_internals => {
+		dump_cmd => [
+			'pg_dump', '--no-sync', "--file=$tempdir/privileged_internals.sql",
+			# these two tables are irrelevant to the test case
+			'--exclude-table=regress_pg_dump_schema.external_tab',
+			'--exclude-table=regress_pg_dump_schema.extdependtab',
+			'--username=regress_dump_login_role', 'postgres',
+		],
+	},
+
 	schema_only => {
 		dump_cmd => [
 			'pg_dump', '--no-sync', "--file=$tempdir/schema_only.sql",
@@ -281,6 +294,7 @@ my %full_runs = (
 	exclude_table     => 1,
 	no_privs          => 1,
 	no_owner          => 1,
+	privileged_internals => 1,
 	with_extension    => 1,
 	without_extension => 1);
 
@@ -316,6 +330,16 @@ my %tests = (
 		create_sql   => 'CREATE ROLE regress_dump_test_role;',
 		regexp       => qr/^CREATE ROLE regress_dump_test_role;\n/m,
 		like         => { pg_dumpall_globals => 1, },
+	},
+
+	'CREATE ROLE regress_dump_login_role' => {
+		create_order => 1,
+		create_sql => 'CREATE ROLE regress_dump_login_role LOGIN;',
+		regexp => qr/^
+			\QCREATE ROLE regress_dump_login_role;\E
+			\n\QALTER ROLE regress_dump_login_role WITH \E.*\Q LOGIN \E.*;
+			\n/xm,
+		like => { pg_dumpall_globals => 1, },
 	},
 
 	'CREATE SEQUENCE regress_pg_dump_table_col1_seq' => {
@@ -661,6 +685,7 @@ my %tests = (
 			data_only          => 1,
 			extension_schema   => 1,
 			pg_dumpall_globals => 1,
+			privileged_internals => 1,
 			section_data       => 1,
 			section_pre_data   => 1,
 			# Excludes this schema as extension is not listed.
@@ -677,6 +702,7 @@ my %tests = (
 			data_only          => 1,
 			extension_schema   => 1,
 			pg_dumpall_globals => 1,
+			privileged_internals => 1,
 			section_data       => 1,
 			section_pre_data   => 1,
 			# Excludes this schema as extension is not listed.
@@ -700,6 +726,7 @@ my %tests = (
 			# Excludes the extension and keeps the schema's data.
 			without_extension_internal_schema => 1,
 		},
+		unlike => { privileged_internals => 1 },
 	},);
 
 #########################################
