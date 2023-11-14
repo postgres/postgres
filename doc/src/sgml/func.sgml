@@ -9565,7 +9565,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          <returnvalue>boolean</returnvalue>
         </para>
         <para>
-         Test for finite interval (currently always true)
+         Test for finite interval (not +/-infinity)
         </para>
         <para>
          <literal>isfinite(interval '4 hours')</literal>
@@ -10462,7 +10462,11 @@ SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
      When the input value is +/-Infinity, <function>extract</function> returns
      +/-Infinity for monotonically-increasing fields (<literal>epoch</literal>,
      <literal>julian</literal>, <literal>year</literal>, <literal>isoyear</literal>,
-     <literal>decade</literal>, <literal>century</literal>, and <literal>millennium</literal>).
+     <literal>decade</literal>, <literal>century</literal>, and <literal>millennium</literal>
+     for <type>timestamp</type> inputs; <literal>epoch</literal>, <literal>hour</literal>,
+     <literal>day</literal>, <literal>year</literal>, <literal>decade</literal>,
+     <literal>century</literal>, and <literal>millennium</literal> for
+     <type>interval</type> inputs).
      For other fields, NULL is returned.  <productname>PostgreSQL</productname>
      versions before 9.6 returned zero for all cases of infinite input.
     </para>

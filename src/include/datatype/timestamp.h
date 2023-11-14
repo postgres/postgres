@@ -151,7 +151,7 @@ struct pg_itm_in
 #define TIMESTAMP_INFINITY	PG_INT64_MAX
 
 /*
- * Historically these alias for infinity have been used.
+ * Historically these aliases for infinity have been used.
  */
 #define DT_NOBEGIN		TIMESTAMP_MINUS_INFINITY
 #define DT_NOEND		TIMESTAMP_INFINITY
@@ -168,6 +168,31 @@ struct pg_itm_in
 
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
+/*
+ * Infinite intervals are represented by setting all fields to the minimum or
+ * maximum integer values.
+ */
+#define INTERVAL_NOBEGIN(i)	\
+	do {	\
+		(i)->time = PG_INT64_MIN;	\
+		(i)->day = PG_INT32_MIN;	\
+		(i)->month = PG_INT32_MIN;	\
+	} while (0)
+
+#define INTERVAL_IS_NOBEGIN(i)	\
+	((i)->month == PG_INT32_MIN && (i)->day == PG_INT32_MIN && (i)->time == PG_INT64_MIN)
+
+#define INTERVAL_NOEND(i)	\
+	do {	\
+		(i)->time = PG_INT64_MAX;	\
+		(i)->day = PG_INT32_MAX;	\
+		(i)->month = PG_INT32_MAX;	\
+	} while (0)
+
+#define INTERVAL_IS_NOEND(i)	\
+	((i)->month == PG_INT32_MAX && (i)->day == PG_INT32_MAX && (i)->time == PG_INT64_MAX)
+
+#define INTERVAL_NOT_FINITE(i) (INTERVAL_IS_NOBEGIN(i) || INTERVAL_IS_NOEND(i))
 
 /*
  * Julian date support.

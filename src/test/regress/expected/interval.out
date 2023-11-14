@@ -52,6 +52,18 @@ SELECT INTERVAL '10 years -11 month -12 days +13:14' AS "9 years...";
  9 years 1 mon -12 days +13:14:00
 (1 row)
 
+SELECT INTERVAL 'infinity' AS "eternity";
+ eternity 
+----------
+ infinity
+(1 row)
+
+SELECT INTERVAL '-infinity' AS "beginning of time";
+ beginning of time 
+-------------------
+ -infinity
+(1 row)
+
 CREATE TABLE INTERVAL_TBL (f1 interval);
 INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 1 minute');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 5 hour');
@@ -63,6 +75,8 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('1 day 2 hours 3 minutes 4 seconds');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('6 years');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months 12 hours');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('infinity');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('-infinity');
 -- badly formatted interval
 INSERT INTO INTERVAL_TBL (f1) VALUES ('badly formatted interval');
 ERROR:  invalid input syntax for type interval: "badly formatted interval"
@@ -117,7 +131,9 @@ SELECT * FROM INTERVAL_TBL;
  6 years
  5 mons
  5 mons 12:00:00
-(10 rows)
+ infinity
+ -infinity
+(12 rows)
 
 SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 <> interval '@ 10 days';
@@ -132,7 +148,9 @@ SELECT * FROM INTERVAL_TBL
  6 years
  5 mons
  5 mons 12:00:00
-(9 rows)
+ infinity
+ -infinity
+(11 rows)
 
 SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 <= interval '@ 5 hours';
@@ -141,7 +159,8 @@ SELECT * FROM INTERVAL_TBL
  00:01:00
  05:00:00
  -00:00:14
-(3 rows)
+ -infinity
+(4 rows)
 
 SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 < interval '@ 1 day';
@@ -150,7 +169,8 @@ SELECT * FROM INTERVAL_TBL
  00:01:00
  05:00:00
  -00:00:14
-(3 rows)
+ -infinity
+(4 rows)
 
 SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 = interval '@ 34 years';
@@ -168,7 +188,8 @@ SELECT * FROM INTERVAL_TBL
  6 years
  5 mons
  5 mons 12:00:00
-(5 rows)
+ infinity
+(6 rows)
 
 SELECT * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 > interval '@ 3 seconds ago';
@@ -183,7 +204,8 @@ SELECT * FROM INTERVAL_TBL
  6 years
  5 mons
  5 mons 12:00:00
-(9 rows)
+ infinity
+(10 rows)
 
 SELECT r1.*, r2.*
    FROM INTERVAL_TBL r1, INTERVAL_TBL r2
@@ -191,27 +213,35 @@ SELECT r1.*, r2.*
    ORDER BY r1.f1, r2.f1;
        f1        |       f1        
 -----------------+-----------------
+ -00:00:14       | -infinity
+ 00:01:00        | -infinity
  00:01:00        | -00:00:14
+ 05:00:00        | -infinity
  05:00:00        | -00:00:14
  05:00:00        | 00:01:00
+ 1 day 02:03:04  | -infinity
  1 day 02:03:04  | -00:00:14
  1 day 02:03:04  | 00:01:00
  1 day 02:03:04  | 05:00:00
+ 10 days         | -infinity
  10 days         | -00:00:14
  10 days         | 00:01:00
  10 days         | 05:00:00
  10 days         | 1 day 02:03:04
+ 3 mons          | -infinity
  3 mons          | -00:00:14
  3 mons          | 00:01:00
  3 mons          | 05:00:00
  3 mons          | 1 day 02:03:04
  3 mons          | 10 days
+ 5 mons          | -infinity
  5 mons          | -00:00:14
  5 mons          | 00:01:00
  5 mons          | 05:00:00
  5 mons          | 1 day 02:03:04
  5 mons          | 10 days
  5 mons          | 3 mons
+ 5 mons 12:00:00 | -infinity
  5 mons 12:00:00 | -00:00:14
  5 mons 12:00:00 | 00:01:00
  5 mons 12:00:00 | 05:00:00
@@ -219,6 +249,7 @@ SELECT r1.*, r2.*
  5 mons 12:00:00 | 10 days
  5 mons 12:00:00 | 3 mons
  5 mons 12:00:00 | 5 mons
+ 6 years         | -infinity
  6 years         | -00:00:14
  6 years         | 00:01:00
  6 years         | 05:00:00
@@ -227,6 +258,7 @@ SELECT r1.*, r2.*
  6 years         | 3 mons
  6 years         | 5 mons
  6 years         | 5 mons 12:00:00
+ 34 years        | -infinity
  34 years        | -00:00:14
  34 years        | 00:01:00
  34 years        | 05:00:00
@@ -236,8 +268,63 @@ SELECT r1.*, r2.*
  34 years        | 5 mons
  34 years        | 5 mons 12:00:00
  34 years        | 6 years
-(45 rows)
+ infinity        | -infinity
+ infinity        | -00:00:14
+ infinity        | 00:01:00
+ infinity        | 05:00:00
+ infinity        | 1 day 02:03:04
+ infinity        | 10 days
+ infinity        | 3 mons
+ infinity        | 5 mons
+ infinity        | 5 mons 12:00:00
+ infinity        | 6 years
+ infinity        | 34 years
+(66 rows)
 
+-- test unary minus
+SELECT f1, -f1 FROM INTERVAL_TBL;
+       f1        |     ?column?      
+-----------------+-------------------
+ 00:01:00        | -00:01:00
+ 05:00:00        | -05:00:00
+ 10 days         | -10 days
+ 34 years        | -34 years
+ 3 mons          | -3 mons
+ -00:00:14       | 00:00:14
+ 1 day 02:03:04  | -1 days -02:03:04
+ 6 years         | -6 years
+ 5 mons          | -5 mons
+ 5 mons 12:00:00 | -5 mons -12:00:00
+ infinity        | -infinity
+ -infinity       | infinity
+(12 rows)
+
+SELECT -('-2147483648 months'::interval); -- should fail
+ERROR:  interval out of range
+SELECT -('-2147483647 months'::interval); -- ok
+        ?column?        
+------------------------
+ 178956970 years 7 mons
+(1 row)
+
+SELECT -('-2147483648 days'::interval); -- should fail
+ERROR:  interval out of range
+SELECT -('-2147483647 days'::interval); -- ok
+    ?column?     
+-----------------
+ 2147483647 days
+(1 row)
+
+SELECT -('-9223372036854775808 us'::interval); -- should fail
+ERROR:  interval out of range
+SELECT -('-9223372036854775807 us'::interval); -- ok
+        ?column?         
+-------------------------
+ 2562047788:00:54.775807
+(1 row)
+
+SELECT -('-2147483647 months -2147483647 days -9223372036854775807 us'::interval); -- should fail
+ERROR:  interval out of range
 -- Test intervals that are large enough to overflow 64 bits in comparisons
 CREATE TEMP TABLE INTERVAL_TBL_OF (f1 interval);
 INSERT INTO INTERVAL_TBL_OF (f1) VALUES
@@ -304,6 +391,17 @@ SELECT f1 FROM INTERVAL_TBL_OF r1 ORDER BY f1;
 (5 rows)
 
 RESET enable_seqscan;
+-- subtracting about-to-overflow values should result in 0
+SELECT f1 - f1 FROM INTERVAL_TBL_OF;
+ ?column? 
+----------
+ 00:00:00
+ 00:00:00
+ 00:00:00
+ 00:00:00
+ 00:00:00
+(5 rows)
+
 DROP TABLE INTERVAL_TBL_OF;
 -- Test multiplication and division with intervals.
 -- Floating point arithmetic rounding errors can lead to unexpected results,
@@ -386,12 +484,14 @@ SELECT * FROM INTERVAL_TBL;
  @ 6 years
  @ 5 mons
  @ 5 mons 12 hours
-(10 rows)
+ infinity
+ -infinity
+(12 rows)
 
 -- test avg(interval), which is somewhat fragile since people have been
 -- known to change the allowed input syntax for type interval without
 -- updating pg_aggregate.agginitval
-select avg(f1) from interval_tbl;
+select avg(f1) from interval_tbl where isfinite(f1);
                        avg                       
 -------------------------------------------------
  @ 4 years 1 mon 10 days 4 hours 18 mins 23 secs
@@ -820,8 +920,8 @@ SELECT interval '1 2:03:04.5678' minute to second(2);
 SELECT f1, f1::INTERVAL DAY TO MINUTE AS "minutes",
   (f1 + INTERVAL '1 month')::INTERVAL MONTH::INTERVAL YEAR AS "years"
   FROM interval_tbl;
-       f1        |     minutes     |  years   
------------------+-----------------+----------
+       f1        |     minutes     |   years   
+-----------------+-----------------+-----------
  00:01:00        | 00:01:00        | 00:00:00
  05:00:00        | 05:00:00        | 00:00:00
  10 days         | 10 days         | 00:00:00
@@ -832,7 +932,9 @@ SELECT f1, f1::INTERVAL DAY TO MINUTE AS "minutes",
  6 years         | 6 years         | 6 years
  5 mons          | 5 mons          | 00:00:00
  5 mons 12:00:00 | 5 mons 12:00:00 | 00:00:00
-(10 rows)
+ infinity        | infinity        | infinity
+ -infinity       | -infinity       | -infinity
+(12 rows)
 
 -- test inputting and outputting SQL standard interval literals
 SET IntervalStyle TO sql_standard;
@@ -1616,31 +1718,31 @@ select make_interval(mins := -1, secs := -9223372036800.0);
 ERROR:  interval out of range
 -- test that INT_MIN number is formatted properly
 SET IntervalStyle to postgres;
-select interval '-2147483648 months -2147483648 days -9223372036854775808 us';
+select interval '-2147483647 months -2147483648 days -9223372036854775808 us';
                               interval                              
 --------------------------------------------------------------------
- -178956970 years -8 mons -2147483648 days -2562047788:00:54.775808
+ -178956970 years -7 mons -2147483648 days -2562047788:00:54.775808
 (1 row)
 
 SET IntervalStyle to sql_standard;
-select interval '-2147483648 months -2147483648 days -9223372036854775808 us';
+select interval '-2147483647 months -2147483648 days -9223372036854775808 us';
                      interval                      
 ---------------------------------------------------
- -178956970-8 -2147483648 -2562047788:00:54.775808
+ -178956970-7 -2147483648 -2562047788:00:54.775808
 (1 row)
 
 SET IntervalStyle to iso_8601;
-select interval '-2147483648 months -2147483648 days -9223372036854775808 us';
+select interval '-2147483647 months -2147483648 days -9223372036854775808 us';
                       interval                       
 -----------------------------------------------------
- P-178956970Y-8M-2147483648DT-2562047788H-54.775808S
+ P-178956970Y-7M-2147483648DT-2562047788H-54.775808S
 (1 row)
 
 SET IntervalStyle to postgres_verbose;
-select interval '-2147483648 months -2147483648 days -9223372036854775808 us';
+select interval '-2147483647 months -2147483648 days -9223372036854775808 us';
                                    interval                                   
 ------------------------------------------------------------------------------
- @ 178956970 years 8 mons 2147483648 days 2562047788 hours 54.775808 secs ago
+ @ 178956970 years 7 mons 2147483648 days 2562047788 hours 54.775808 secs ago
 (1 row)
 
 -- check that '30 days' equals '1 month' according to the hash function
@@ -1719,19 +1821,21 @@ SELECT f1,
     EXTRACT(MILLENNIUM FROM f1) AS MILLENNIUM,
     EXTRACT(EPOCH FROM f1) AS EPOCH
     FROM INTERVAL_TBL;
-              f1               | microsecond | millisecond |   second   | minute | hour | day | month | quarter | year | decade | century | millennium |       epoch       
--------------------------------+-------------+-------------+------------+--------+------+-----+-------+---------+------+--------+---------+------------+-------------------
- @ 1 min                       |           0 |       0.000 |   0.000000 |      1 |    0 |   0 |     0 |       1 |    0 |      0 |       0 |          0 |         60.000000
- @ 5 hours                     |           0 |       0.000 |   0.000000 |      0 |    5 |   0 |     0 |       1 |    0 |      0 |       0 |          0 |      18000.000000
- @ 10 days                     |           0 |       0.000 |   0.000000 |      0 |    0 |  10 |     0 |       1 |    0 |      0 |       0 |          0 |     864000.000000
- @ 34 years                    |           0 |       0.000 |   0.000000 |      0 |    0 |   0 |     0 |       1 |   34 |      3 |       0 |          0 | 1072958400.000000
- @ 3 mons                      |           0 |       0.000 |   0.000000 |      0 |    0 |   0 |     3 |       2 |    0 |      0 |       0 |          0 |    7776000.000000
- @ 14 secs ago                 |   -14000000 |  -14000.000 | -14.000000 |      0 |    0 |   0 |     0 |       1 |    0 |      0 |       0 |          0 |        -14.000000
- @ 1 day 2 hours 3 mins 4 secs |     4000000 |    4000.000 |   4.000000 |      3 |    2 |   1 |     0 |       1 |    0 |      0 |       0 |          0 |      93784.000000
- @ 6 years                     |           0 |       0.000 |   0.000000 |      0 |    0 |   0 |     0 |       1 |    6 |      0 |       0 |          0 |  189345600.000000
- @ 5 mons                      |           0 |       0.000 |   0.000000 |      0 |    0 |   0 |     5 |       2 |    0 |      0 |       0 |          0 |   12960000.000000
- @ 5 mons 12 hours             |           0 |       0.000 |   0.000000 |      0 |   12 |   0 |     5 |       2 |    0 |      0 |       0 |          0 |   13003200.000000
-(10 rows)
+              f1               | microsecond | millisecond |   second   | minute |   hour    |    day    | month | quarter |   year    |  decade   |  century  | millennium |       epoch       
+-------------------------------+-------------+-------------+------------+--------+-----------+-----------+-------+---------+-----------+-----------+-----------+------------+-------------------
+ @ 1 min                       |           0 |       0.000 |   0.000000 |      1 |         0 |         0 |     0 |       1 |         0 |         0 |         0 |          0 |         60.000000
+ @ 5 hours                     |           0 |       0.000 |   0.000000 |      0 |         5 |         0 |     0 |       1 |         0 |         0 |         0 |          0 |      18000.000000
+ @ 10 days                     |           0 |       0.000 |   0.000000 |      0 |         0 |        10 |     0 |       1 |         0 |         0 |         0 |          0 |     864000.000000
+ @ 34 years                    |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |     0 |       1 |        34 |         3 |         0 |          0 | 1072958400.000000
+ @ 3 mons                      |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |     3 |       2 |         0 |         0 |         0 |          0 |    7776000.000000
+ @ 14 secs ago                 |   -14000000 |  -14000.000 | -14.000000 |      0 |         0 |         0 |     0 |       1 |         0 |         0 |         0 |          0 |        -14.000000
+ @ 1 day 2 hours 3 mins 4 secs |     4000000 |    4000.000 |   4.000000 |      3 |         2 |         1 |     0 |       1 |         0 |         0 |         0 |          0 |      93784.000000
+ @ 6 years                     |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |     0 |       1 |         6 |         0 |         0 |          0 |  189345600.000000
+ @ 5 mons                      |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |     5 |       2 |         0 |         0 |         0 |          0 |   12960000.000000
+ @ 5 mons 12 hours             |           0 |       0.000 |   0.000000 |      0 |        12 |         0 |     5 |       2 |         0 |         0 |         0 |          0 |   13003200.000000
+ infinity                      |             |             |            |        |  Infinity |  Infinity |       |         |  Infinity |  Infinity |  Infinity |   Infinity |          Infinity
+ -infinity                     |             |             |            |        | -Infinity | -Infinity |       |         | -Infinity | -Infinity | -Infinity |  -Infinity |         -Infinity
+(12 rows)
 
 SELECT EXTRACT(FORTNIGHT FROM INTERVAL '2 days');  -- error
 ERROR:  unit "fortnight" not recognized for type interval
@@ -1805,13 +1909,301 @@ SELECT f1,
  @ 6 years                     |           0 |           0 |      0 |  189345600
  @ 5 mons                      |           0 |           0 |      0 |   12960000
  @ 5 mons 12 hours             |           0 |           0 |      0 |   13003200
-(10 rows)
+ infinity                      |             |             |        |   Infinity
+ -infinity                     |             |             |        |  -Infinity
+(12 rows)
 
 -- internal overflow test case
 SELECT extract(epoch from interval '1000000000 days');
         extract        
 -----------------------
  86400000000000.000000
+(1 row)
+
+--
+-- test infinite intervals
+--
+-- largest finite intervals
+SELECT interval '-2147483648 months -2147483648 days -9223372036854775807 us';
+                                   interval                                   
+------------------------------------------------------------------------------
+ @ 178956970 years 8 mons 2147483648 days 2562047788 hours 54.775807 secs ago
+(1 row)
+
+SELECT interval '2147483647 months 2147483647 days 9223372036854775806 us';
+                                 interval                                 
+--------------------------------------------------------------------------
+ @ 178956970 years 7 mons 2147483647 days 2562047788 hours 54.775806 secs
+(1 row)
+
+-- infinite intervals
+SELECT interval '-2147483648 months -2147483648 days -9223372036854775808 us';
+ interval  
+-----------
+ -infinity
+(1 row)
+
+SELECT interval '2147483647 months 2147483647 days 9223372036854775807 us';
+ interval 
+----------
+ infinity
+(1 row)
+
+CREATE TABLE INFINITE_INTERVAL_TBL (i interval);
+INSERT INTO INFINITE_INTERVAL_TBL VALUES ('infinity'), ('-infinity'), ('1 year 2 days 3 hours');
+SELECT i, isfinite(i) FROM INFINITE_INTERVAL_TBL;
+            i            | isfinite 
+-------------------------+----------
+ infinity                | f
+ -infinity               | f
+ @ 1 year 2 days 3 hours | t
+(3 rows)
+
+-- test basic arithmetic
+CREATE FUNCTION eval(expr text)
+RETURNS text AS
+$$
+DECLARE
+  result text;
+BEGIN
+  EXECUTE 'select '||expr INTO result;
+  RETURN result;
+EXCEPTION WHEN OTHERS THEN
+  RETURN SQLERRM;
+END
+$$
+LANGUAGE plpgsql;
+SELECT d AS date, i AS interval,
+       eval(format('date %L + interval %L', d, i)) AS plus,
+       eval(format('date %L - interval %L', d, i)) AS minus
+FROM (VALUES (date '-infinity'),
+             (date '1995-08-06'),
+             (date 'infinity')) AS t1(d),
+     (VALUES (interval '-infinity'),
+             (interval 'infinity')) AS t2(i);
+    date    | interval  |          plus          |         minus          
+------------+-----------+------------------------+------------------------
+ -infinity  | -infinity | -infinity              | timestamp out of range
+ -infinity  | infinity  | timestamp out of range | -infinity
+ 1995-08-06 | -infinity | -infinity              | infinity
+ 1995-08-06 | infinity  | infinity               | -infinity
+ infinity   | -infinity | timestamp out of range | infinity
+ infinity   | infinity  | infinity               | timestamp out of range
+(6 rows)
+
+SELECT i1 AS interval1, i2 AS interval2,
+       eval(format('interval %L + interval %L', i1, i2)) AS plus,
+       eval(format('interval %L - interval %L', i1, i2)) AS minus
+FROM (VALUES (interval '-infinity'),
+             (interval '2 months'),
+             (interval 'infinity')) AS t1(i1),
+     (VALUES (interval '-infinity'),
+             (interval '10 days'),
+             (interval 'infinity')) AS t2(i2);
+ interval1 | interval2 |         plus          |         minus         
+-----------+-----------+-----------------------+-----------------------
+ -infinity | -infinity | -infinity             | interval out of range
+ -infinity | @ 10 days | -infinity             | -infinity
+ -infinity | infinity  | interval out of range | -infinity
+ @ 2 mons  | -infinity | -infinity             | infinity
+ @ 2 mons  | @ 10 days | @ 2 mons 10 days      | @ 2 mons -10 days
+ @ 2 mons  | infinity  | infinity              | -infinity
+ infinity  | -infinity | interval out of range | infinity
+ infinity  | @ 10 days | infinity              | infinity
+ infinity  | infinity  | infinity              | interval out of range
+(9 rows)
+
+SELECT interval '2147483646 months 2147483646 days 9223372036854775806 us' + interval '1 month 1 day 1 us';
+ERROR:  interval out of range
+SELECT interval '-2147483647 months -2147483647 days -9223372036854775807 us' + interval '-1 month -1 day -1 us';
+ERROR:  interval out of range
+SELECT interval '2147483646 months 2147483646 days 9223372036854775806 us' - interval '-1 month -1 day -1 us';
+ERROR:  interval out of range
+SELECT interval '-2147483647 months -2147483647 days -9223372036854775807 us' - interval '1 month 1 day 1 us';
+ERROR:  interval out of range
+SELECT t AS timestamp, i AS interval,
+       eval(format('timestamp %L + interval %L', t, i)) AS plus,
+       eval(format('timestamp %L - interval %L', t, i)) AS minus
+FROM (VALUES (timestamp '-infinity'),
+             (timestamp '1995-08-06 12:30:15'),
+             (timestamp 'infinity')) AS t1(t),
+     (VALUES (interval '-infinity'),
+             (interval 'infinity')) AS t2(i);
+      timestamp      | interval  |          plus          |         minus          
+---------------------+-----------+------------------------+------------------------
+ -infinity           | -infinity | -infinity              | timestamp out of range
+ -infinity           | infinity  | timestamp out of range | -infinity
+ 1995-08-06 12:30:15 | -infinity | -infinity              | infinity
+ 1995-08-06 12:30:15 | infinity  | infinity               | -infinity
+ infinity            | -infinity | timestamp out of range | infinity
+ infinity            | infinity  | infinity               | timestamp out of range
+(6 rows)
+
+SELECT t AT TIME ZONE 'GMT' AS timestamptz, i AS interval,
+       eval(format('timestamptz %L + interval %L', t, i)) AS plus,
+       eval(format('timestamptz %L - interval %L', t, i)) AS minus
+FROM (VALUES (timestamptz '-infinity'),
+             (timestamptz '1995-08-06 12:30:15 GMT'),
+             (timestamptz 'infinity')) AS t1(t),
+     (VALUES (interval '-infinity'),
+             (interval 'infinity')) AS t2(i);
+     timestamptz     | interval  |          plus          |         minus          
+---------------------+-----------+------------------------+------------------------
+ -infinity           | -infinity | -infinity              | timestamp out of range
+ -infinity           | infinity  | timestamp out of range | -infinity
+ 1995-08-06 12:30:15 | -infinity | -infinity              | infinity
+ 1995-08-06 12:30:15 | infinity  | infinity               | -infinity
+ infinity            | -infinity | timestamp out of range | infinity
+ infinity            | infinity  | infinity               | timestamp out of range
+(6 rows)
+
+-- time +/- infinite interval not supported
+SELECT time '11:27:42' + interval 'infinity';
+ERROR:  cannot add infinite interval to time
+SELECT time '11:27:42' + interval '-infinity';
+ERROR:  cannot add infinite interval to time
+SELECT time '11:27:42' - interval 'infinity';
+ERROR:  cannot subtract infinite interval from time
+SELECT time '11:27:42' - interval '-infinity';
+ERROR:  cannot subtract infinite interval from time
+SELECT timetz '11:27:42' + interval 'infinity';
+ERROR:  cannot add infinite interval to time
+SELECT timetz '11:27:42' + interval '-infinity';
+ERROR:  cannot add infinite interval to time
+SELECT timetz '11:27:42' - interval 'infinity';
+ERROR:  cannot subtract infinite interval from time
+SELECT timetz '11:27:42' - interval '-infinity';
+ERROR:  cannot subtract infinite interval from time
+SELECT lhst.i lhs,
+    rhst.i rhs,
+    lhst.i < rhst.i AS lt,
+    lhst.i <= rhst.i AS le,
+    lhst.i = rhst.i AS eq,
+    lhst.i > rhst.i AS gt,
+    lhst.i >= rhst.i AS ge,
+    lhst.i <> rhst.i AS ne
+    FROM INFINITE_INTERVAL_TBL lhst CROSS JOIN INFINITE_INTERVAL_TBL rhst
+    WHERE NOT isfinite(lhst.i);
+    lhs    |           rhs           | lt | le | eq | gt | ge | ne 
+-----------+-------------------------+----+----+----+----+----+----
+ infinity  | infinity                | f  | t  | t  | f  | t  | f
+ -infinity | infinity                | t  | t  | f  | f  | f  | t
+ infinity  | -infinity               | f  | f  | f  | t  | t  | t
+ -infinity | -infinity               | f  | t  | t  | f  | t  | f
+ infinity  | @ 1 year 2 days 3 hours | f  | f  | f  | t  | t  | t
+ -infinity | @ 1 year 2 days 3 hours | t  | t  | f  | f  | f  | t
+(6 rows)
+
+SELECT i AS interval,
+    -i AS um,
+    i * 2.0 AS mul,
+    i * -2.0 AS mul_neg,
+    i * 'infinity' AS mul_inf,
+    i * '-infinity' AS mul_inf_neg,
+    i / 3.0 AS div,
+    i / -3.0 AS div_neg
+    FROM INFINITE_INTERVAL_TBL
+    WHERE NOT isfinite(i);
+ interval  |    um     |    mul    |  mul_neg  |  mul_inf  | mul_inf_neg |    div    |  div_neg  
+-----------+-----------+-----------+-----------+-----------+-------------+-----------+-----------
+ infinity  | -infinity | infinity  | -infinity | infinity  | -infinity   | infinity  | -infinity
+ -infinity | infinity  | -infinity | infinity  | -infinity | infinity    | -infinity | infinity
+(2 rows)
+
+SELECT -interval '-2147483647 months -2147483647 days -9223372036854775807 us';
+ERROR:  interval out of range
+SELECT interval 'infinity' * 'nan';
+ERROR:  interval out of range
+SELECT interval '-infinity' * 'nan';
+ERROR:  interval out of range
+SELECT interval '-1073741824 months -1073741824 days -4611686018427387904 us' * 2;
+ERROR:  interval out of range
+SELECT interval 'infinity' * 0;
+ERROR:  interval out of range
+SELECT interval '-infinity' * 0;
+ERROR:  interval out of range
+SELECT interval '0 days' * 'infinity'::float;
+ERROR:  interval out of range
+SELECT interval '0 days' * '-infinity'::float;
+ERROR:  interval out of range
+SELECT interval '5 days' * 'infinity'::float;
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT interval '5 days' * '-infinity'::float;
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT interval 'infinity' / 'infinity';
+ERROR:  interval out of range
+SELECT interval 'infinity' / '-infinity';
+ERROR:  interval out of range
+SELECT interval 'infinity' / 'nan';
+ERROR:  interval out of range
+SELECT interval '-infinity' / 'infinity';
+ERROR:  interval out of range
+SELECT interval '-infinity' / '-infinity';
+ERROR:  interval out of range
+SELECT interval '-infinity' / 'nan';
+ERROR:  interval out of range
+SELECT interval '-1073741824 months -1073741824 days -4611686018427387904 us' / 0.5;
+ERROR:  interval out of range
+SELECT date_bin('infinity', timestamp '2001-02-16 20:38:40', timestamp '2001-02-16 20:05:00');
+ERROR:  timestamps cannot be binned into infinite intervals
+SELECT date_bin('-infinity', timestamp '2001-02-16 20:38:40', timestamp '2001-02-16 20:05:00');
+ERROR:  timestamps cannot be binned into infinite intervals
+SELECT i AS interval, date_trunc('hour', i)
+    FROM INFINITE_INTERVAL_TBL
+    WHERE NOT isfinite(i);
+ interval  | date_trunc 
+-----------+------------
+ infinity  | infinity
+ -infinity | -infinity
+(2 rows)
+
+SELECT i AS interval, justify_days(i), justify_hours(i), justify_interval(i)
+    FROM INFINITE_INTERVAL_TBL
+    WHERE NOT isfinite(i);
+ interval  | justify_days | justify_hours | justify_interval 
+-----------+--------------+---------------+------------------
+ infinity  | infinity     | infinity      | infinity
+ -infinity | -infinity    | -infinity     | -infinity
+(2 rows)
+
+SELECT timezone('infinity'::interval, '1995-08-06 12:12:12'::timestamp);
+ERROR:  interval time zone "infinity" must be finite
+SELECT timezone('-infinity'::interval, '1995-08-06 12:12:12'::timestamp);
+ERROR:  interval time zone "-infinity" must be finite
+SELECT timezone('infinity'::interval, '1995-08-06 12:12:12'::timestamptz);
+ERROR:  interval time zone "infinity" must be finite
+SELECT timezone('-infinity'::interval, '1995-08-06 12:12:12'::timestamptz);
+ERROR:  interval time zone "-infinity" must be finite
+SELECT timezone('infinity'::interval, '12:12:12'::time);
+ERROR:  interval time zone "infinity" must be finite
+SELECT timezone('-infinity'::interval, '12:12:12'::time);
+ERROR:  interval time zone "-infinity" must be finite
+SELECT timezone('infinity'::interval, '12:12:12'::timetz);
+ERROR:  interval time zone "infinity" must be finite
+SELECT timezone('-infinity'::interval, '12:12:12'::timetz);
+ERROR:  interval time zone "-infinity" must be finite
+SELECT 'infinity'::interval::time;
+ERROR:  cannot convert infinite interval to time
+SELECT '-infinity'::interval::time;
+ERROR:  cannot convert infinite interval to time
+SELECT to_char('infinity'::interval, 'YYYY');
+ to_char 
+---------
+ 
+(1 row)
+
+SELECT to_char('-infinity'::interval, 'YYYY');
+ to_char 
+---------
+ 
 (1 row)
 
 -- "ago" can only appear once at the end of an interval.
@@ -1831,4 +2223,43 @@ LINE 1: SELECT INTERVAL 'hour 5 months';
 SELECT INTERVAL '1 year months days 5 hours';
 ERROR:  invalid input syntax for type interval: "1 year months days 5 hours"
 LINE 1: SELECT INTERVAL '1 year months days 5 hours';
+                        ^
+-- unacceptable reserved words in interval. Only "infinity", "+infinity" and
+-- "-infinity" are allowed.
+SELECT INTERVAL 'now';
+ERROR:  invalid input syntax for type interval: "now"
+LINE 1: SELECT INTERVAL 'now';
+                        ^
+SELECT INTERVAL 'today';
+ERROR:  invalid input syntax for type interval: "today"
+LINE 1: SELECT INTERVAL 'today';
+                        ^
+SELECT INTERVAL 'tomorrow';
+ERROR:  invalid input syntax for type interval: "tomorrow"
+LINE 1: SELECT INTERVAL 'tomorrow';
+                        ^
+SELECT INTERVAL 'allballs';
+ERROR:  invalid input syntax for type interval: "allballs"
+LINE 1: SELECT INTERVAL 'allballs';
+                        ^
+SELECT INTERVAL 'epoch';
+ERROR:  invalid input syntax for type interval: "epoch"
+LINE 1: SELECT INTERVAL 'epoch';
+                        ^
+SELECT INTERVAL 'yesterday';
+ERROR:  invalid input syntax for type interval: "yesterday"
+LINE 1: SELECT INTERVAL 'yesterday';
+                        ^
+-- infinity specification should be the only thing
+SELECT INTERVAL 'infinity years';
+ERROR:  invalid input syntax for type interval: "infinity years"
+LINE 1: SELECT INTERVAL 'infinity years';
+                        ^
+SELECT INTERVAL 'infinity ago';
+ERROR:  invalid input syntax for type interval: "infinity ago"
+LINE 1: SELECT INTERVAL 'infinity ago';
+                        ^
+SELECT INTERVAL '+infinity -infinity';
+ERROR:  invalid input syntax for type interval: "+infinity -infinity"
+LINE 1: SELECT INTERVAL '+infinity -infinity';
                         ^

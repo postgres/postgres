@@ -397,3 +397,22 @@ select generate_series('2022-01-01 00:00'::timestamp,
 select * from generate_series('2020-01-01 00:00'::timestamp,
                               '2020-01-02 03:00'::timestamp,
                               '0 hour'::interval);
+select generate_series(timestamp '1995-08-06 12:12:12', timestamp '1996-08-06 12:12:12', interval 'infinity');
+select generate_series(timestamp '1995-08-06 12:12:12', timestamp '1996-08-06 12:12:12', interval '-infinity');
+
+
+-- test arithmetic with infinite timestamps
+select timestamp 'infinity' - timestamp 'infinity';
+select timestamp 'infinity' - timestamp '-infinity';
+select timestamp '-infinity' - timestamp 'infinity';
+select timestamp '-infinity' - timestamp '-infinity';
+select timestamp 'infinity' - timestamp '1995-08-06 12:12:12';
+select timestamp '-infinity' - timestamp '1995-08-06 12:12:12';
+
+-- test age() with infinite timestamps
+select age(timestamp 'infinity');
+select age(timestamp '-infinity');
+select age(timestamp 'infinity', timestamp 'infinity');
+select age(timestamp 'infinity', timestamp '-infinity');
+select age(timestamp '-infinity', timestamp 'infinity');
+select age(timestamp '-infinity', timestamp '-infinity');

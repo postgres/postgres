@@ -3271,6 +3271,9 @@ ClearPgItmIn(struct pg_itm_in *itm_in)
  *
  * Allow ISO-style time span, with implicit units on number of days
  *	preceding an hh:mm:ss field. - thomas 1998-04-30
+ *
+ * itm_in remains undefined for infinite interval values for which dtype alone
+ * suffices.
  */
 int
 DecodeInterval(char **field, int *ftype, int nf, int range,
@@ -3574,6 +3577,8 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 				if (parsing_unit_val)
 					return DTERR_BAD_FORMAT;
 				type = DecodeUnits(i, field[i], &uval);
+				if (type == UNKNOWN_FIELD)
+					type = DecodeSpecial(i, field[i], &uval);
 				if (type == IGNORE_DTF)
 					continue;
 
@@ -3595,6 +3600,27 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 							return DTERR_BAD_FORMAT;
 						is_before = true;
 						type = uval;
+						break;
+
+					case RESERV:
+						tmask = (DTK_DATE_M | DTK_TIME_M);
+
+						/*
+						 * Only reserved words corresponding to infinite
+						 * intervals are accepted.
+						 */
+						if (uval != DTK_LATE && uval != DTK_EARLY)
+							return DTERR_BAD_FORMAT;
+
+						/*
+						 * Infinity cannot be followed by anything else. We
+						 * could allow "ago" to reverse the sign of infinity
+						 * but using signed infinity is more intuitive.
+						 */
+						if (i != nf - 1)
+							return DTERR_BAD_FORMAT;
+
+						*dtype = uval;
 						break;
 
 					default:

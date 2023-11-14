@@ -684,4 +684,23 @@ SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
 
 DROP TABLE brin_interval_test;
 RESET enable_seqscan;
+
+-- test handling of infinite interval values
+CREATE TABLE brin_interval_test(a INTERVAL);
+
+INSERT INTO brin_interval_test VALUES ('-infinity'), ('infinity');
+INSERT INTO brin_interval_test SELECT (i || ' days')::interval FROM generate_series(100, 140) s(i);
+
+CREATE INDEX ON brin_interval_test USING brin (a interval_minmax_multi_ops) WITH (pages_per_range=1);
+
+SET enable_seqscan = off;
+
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
+
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
+
+DROP TABLE brin_interval_test;
+RESET enable_seqscan;
 RESET datestyle;

@@ -1171,6 +1171,7 @@ SELECT t.d1 AS t, i.f1 AS i, t.d1 + i.f1 AS "add", t.d1 - i.f1 AS "subtract"
 
 SELECT t.f1 AS t, i.f1 AS i, t.f1 + i.f1 AS "add", t.f1 - i.f1 AS "subtract"
   FROM TIME_TBL t, INTERVAL_TBL i
+  WHERE isfinite(i.f1)
   ORDER BY 1,2;
       t      |               i               |     add     |  subtract   
 -------------+-------------------------------+-------------+-------------
@@ -1278,6 +1279,7 @@ SELECT t.f1 AS t, i.f1 AS i, t.f1 + i.f1 AS "add", t.f1 - i.f1 AS "subtract"
 
 SELECT t.f1 AS t, i.f1 AS i, t.f1 + i.f1 AS "add", t.f1 - i.f1 AS "subtract"
   FROM TIMETZ_TBL t, INTERVAL_TBL i
+  WHERE isfinite(i.f1)
   ORDER BY 1,2;
        t        |               i               |      add       |    subtract    
 ----------------+-------------------------------+----------------+----------------
@@ -1556,6 +1558,22 @@ SELECT d.f1 AS "timestamp", t.f1 AS "interval", d.f1 + t.f1 AS plus
   ORDER BY plus, "timestamp", "interval";
           timestamp           |           interval            |             plus             
 ------------------------------+-------------------------------+------------------------------
+ Thu Jan 01 00:00:00 1970 PST | -infinity                     | -infinity
+ Wed Feb 28 17:32:01 1996 PST | -infinity                     | -infinity
+ Thu Feb 29 17:32:01 1996 PST | -infinity                     | -infinity
+ Fri Mar 01 17:32:01 1996 PST | -infinity                     | -infinity
+ Mon Dec 30 17:32:01 1996 PST | -infinity                     | -infinity
+ Tue Dec 31 17:32:01 1996 PST | -infinity                     | -infinity
+ Fri Dec 31 17:32:01 1999 PST | -infinity                     | -infinity
+ Sat Jan 01 17:32:01 2000 PST | -infinity                     | -infinity
+ Wed Mar 15 02:14:05 2000 PST | -infinity                     | -infinity
+ Wed Mar 15 03:14:04 2000 PST | -infinity                     | -infinity
+ Wed Mar 15 08:14:01 2000 PST | -infinity                     | -infinity
+ Wed Mar 15 12:14:03 2000 PST | -infinity                     | -infinity
+ Wed Mar 15 13:14:02 2000 PST | -infinity                     | -infinity
+ Sun Dec 31 17:32:01 2000 PST | -infinity                     | -infinity
+ Mon Jan 01 17:32:01 2001 PST | -infinity                     | -infinity
+ Sat Sep 22 18:19:20 2001 PDT | -infinity                     | -infinity
  Thu Jan 01 00:00:00 1970 PST | @ 14 secs ago                 | Wed Dec 31 23:59:46 1969 PST
  Thu Jan 01 00:00:00 1970 PST | @ 1 min                       | Thu Jan 01 00:01:00 1970 PST
  Thu Jan 01 00:00:00 1970 PST | @ 5 hours                     | Thu Jan 01 05:00:00 1970 PST
@@ -1716,14 +1734,45 @@ SELECT d.f1 AS "timestamp", t.f1 AS "interval", d.f1 + t.f1 AS plus
  Sun Dec 31 17:32:01 2000 PST | @ 34 years                    | Sun Dec 31 17:32:01 2034 PST
  Mon Jan 01 17:32:01 2001 PST | @ 34 years                    | Mon Jan 01 17:32:01 2035 PST
  Sat Sep 22 18:19:20 2001 PDT | @ 34 years                    | Sat Sep 22 18:19:20 2035 PDT
-(160 rows)
+ Thu Jan 01 00:00:00 1970 PST | infinity                      | infinity
+ Wed Feb 28 17:32:01 1996 PST | infinity                      | infinity
+ Thu Feb 29 17:32:01 1996 PST | infinity                      | infinity
+ Fri Mar 01 17:32:01 1996 PST | infinity                      | infinity
+ Mon Dec 30 17:32:01 1996 PST | infinity                      | infinity
+ Tue Dec 31 17:32:01 1996 PST | infinity                      | infinity
+ Fri Dec 31 17:32:01 1999 PST | infinity                      | infinity
+ Sat Jan 01 17:32:01 2000 PST | infinity                      | infinity
+ Wed Mar 15 02:14:05 2000 PST | infinity                      | infinity
+ Wed Mar 15 03:14:04 2000 PST | infinity                      | infinity
+ Wed Mar 15 08:14:01 2000 PST | infinity                      | infinity
+ Wed Mar 15 12:14:03 2000 PST | infinity                      | infinity
+ Wed Mar 15 13:14:02 2000 PST | infinity                      | infinity
+ Sun Dec 31 17:32:01 2000 PST | infinity                      | infinity
+ Mon Jan 01 17:32:01 2001 PST | infinity                      | infinity
+ Sat Sep 22 18:19:20 2001 PDT | infinity                      | infinity
+(192 rows)
 
 SELECT d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
-  WHERE isfinite(d.f1)
   ORDER BY minus, "timestamp", "interval";
           timestamp           |           interval            |            minus             
 ------------------------------+-------------------------------+------------------------------
+ Thu Jan 01 00:00:00 1970 PST | infinity                      | -infinity
+ Wed Feb 28 17:32:01 1996 PST | infinity                      | -infinity
+ Thu Feb 29 17:32:01 1996 PST | infinity                      | -infinity
+ Fri Mar 01 17:32:01 1996 PST | infinity                      | -infinity
+ Mon Dec 30 17:32:01 1996 PST | infinity                      | -infinity
+ Tue Dec 31 17:32:01 1996 PST | infinity                      | -infinity
+ Fri Dec 31 17:32:01 1999 PST | infinity                      | -infinity
+ Sat Jan 01 17:32:01 2000 PST | infinity                      | -infinity
+ Wed Mar 15 02:14:05 2000 PST | infinity                      | -infinity
+ Wed Mar 15 03:14:04 2000 PST | infinity                      | -infinity
+ Wed Mar 15 08:14:01 2000 PST | infinity                      | -infinity
+ Wed Mar 15 12:14:03 2000 PST | infinity                      | -infinity
+ Wed Mar 15 13:14:02 2000 PST | infinity                      | -infinity
+ Sun Dec 31 17:32:01 2000 PST | infinity                      | -infinity
+ Mon Jan 01 17:32:01 2001 PST | infinity                      | -infinity
+ Sat Sep 22 18:19:20 2001 PDT | infinity                      | -infinity
  Thu Jan 01 00:00:00 1970 PST | @ 34 years                    | Wed Jan 01 00:00:00 1936 PST
  Wed Feb 28 17:32:01 1996 PST | @ 34 years                    | Wed Feb 28 17:32:01 1962 PST
  Thu Feb 29 17:32:01 1996 PST | @ 34 years                    | Wed Feb 28 17:32:01 1962 PST
@@ -1884,7 +1933,23 @@ SELECT d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minus
  Sat Sep 22 18:19:20 2001 PDT | @ 5 hours                     | Sat Sep 22 13:19:20 2001 PDT
  Sat Sep 22 18:19:20 2001 PDT | @ 1 min                       | Sat Sep 22 18:18:20 2001 PDT
  Sat Sep 22 18:19:20 2001 PDT | @ 14 secs ago                 | Sat Sep 22 18:19:34 2001 PDT
-(160 rows)
+ Thu Jan 01 00:00:00 1970 PST | -infinity                     | infinity
+ Wed Feb 28 17:32:01 1996 PST | -infinity                     | infinity
+ Thu Feb 29 17:32:01 1996 PST | -infinity                     | infinity
+ Fri Mar 01 17:32:01 1996 PST | -infinity                     | infinity
+ Mon Dec 30 17:32:01 1996 PST | -infinity                     | infinity
+ Tue Dec 31 17:32:01 1996 PST | -infinity                     | infinity
+ Fri Dec 31 17:32:01 1999 PST | -infinity                     | infinity
+ Sat Jan 01 17:32:01 2000 PST | -infinity                     | infinity
+ Wed Mar 15 02:14:05 2000 PST | -infinity                     | infinity
+ Wed Mar 15 03:14:04 2000 PST | -infinity                     | infinity
+ Wed Mar 15 08:14:01 2000 PST | -infinity                     | infinity
+ Wed Mar 15 12:14:03 2000 PST | -infinity                     | infinity
+ Wed Mar 15 13:14:02 2000 PST | -infinity                     | infinity
+ Sun Dec 31 17:32:01 2000 PST | -infinity                     | infinity
+ Mon Jan 01 17:32:01 2001 PST | -infinity                     | infinity
+ Sat Sep 22 18:19:20 2001 PDT | -infinity                     | infinity
+(192 rows)
 
 SELECT d.f1 AS "timestamp",
    timestamp with time zone '1980-01-06 00:00 GMT' AS gpstime_zero,

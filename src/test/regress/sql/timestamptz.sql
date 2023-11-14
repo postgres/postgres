@@ -458,6 +458,8 @@ select generate_series('2022-01-01 00:00'::timestamptz,
 select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
                               '0 hour'::interval);
+select generate_series(timestamptz '1995-08-06 12:12:12', timestamptz '1996-08-06 12:12:12', interval 'infinity');
+select generate_series(timestamptz '1995-08-06 12:12:12', timestamptz '1996-08-06 12:12:12', interval '-infinity');
 
 -- Interval crossing time shift for Europe/Warsaw timezone (with DST)
 SET TimeZone to 'UTC';
@@ -642,3 +644,19 @@ insert into tmptz values ('2017-01-18 00:00+00');
 explain (costs off)
 select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';
 select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';
+
+-- test arithmetic with infinite timestamps
+SELECT timestamptz 'infinity' - timestamptz 'infinity';
+SELECT timestamptz 'infinity' - timestamptz '-infinity';
+SELECT timestamptz '-infinity' - timestamptz 'infinity';
+SELECT timestamptz '-infinity' - timestamptz '-infinity';
+SELECT timestamptz 'infinity' - timestamptz '1995-08-06 12:12:12';
+SELECT timestamptz '-infinity' - timestamptz '1995-08-06 12:12:12';
+
+-- test age() with infinite timestamps
+SELECT age(timestamptz 'infinity');
+SELECT age(timestamptz '-infinity');
+SELECT age(timestamptz 'infinity', timestamptz 'infinity');
+SELECT age(timestamptz 'infinity', timestamptz '-infinity');
+SELECT age(timestamptz '-infinity', timestamptz 'infinity');
+SELECT age(timestamptz '-infinity', timestamptz '-infinity');

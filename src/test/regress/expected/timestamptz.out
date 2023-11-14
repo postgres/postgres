@@ -2468,6 +2468,10 @@ select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
                               '0 hour'::interval);
 ERROR:  step size cannot equal zero
+select generate_series(timestamptz '1995-08-06 12:12:12', timestamptz '1996-08-06 12:12:12', interval 'infinity');
+ERROR:  step size cannot be infinite
+select generate_series(timestamptz '1995-08-06 12:12:12', timestamptz '1996-08-06 12:12:12', interval '-infinity');
+ERROR:  step size cannot be infinite
 -- Interval crossing time shift for Europe/Warsaw timezone (with DST)
 SET TimeZone to 'UTC';
 SELECT date_add('2022-10-30 00:00:00+01'::timestamptz,
@@ -3210,3 +3214,61 @@ select * from tmptz where f1 at time zone 'utc' = '2017-01-18 00:00';
  Tue Jan 17 16:00:00 2017 PST
 (1 row)
 
+-- test arithmetic with infinite timestamps
+SELECT timestamptz 'infinity' - timestamptz 'infinity';
+ERROR:  interval out of range
+SELECT timestamptz 'infinity' - timestamptz '-infinity';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT timestamptz '-infinity' - timestamptz 'infinity';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT timestamptz '-infinity' - timestamptz '-infinity';
+ERROR:  interval out of range
+SELECT timestamptz 'infinity' - timestamptz '1995-08-06 12:12:12';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT timestamptz '-infinity' - timestamptz '1995-08-06 12:12:12';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+-- test age() with infinite timestamps
+SELECT age(timestamptz 'infinity');
+    age    
+-----------
+ -infinity
+(1 row)
+
+SELECT age(timestamptz '-infinity');
+   age    
+----------
+ infinity
+(1 row)
+
+SELECT age(timestamptz 'infinity', timestamptz 'infinity');
+ERROR:  interval out of range
+SELECT age(timestamptz 'infinity', timestamptz '-infinity');
+   age    
+----------
+ infinity
+(1 row)
+
+SELECT age(timestamptz '-infinity', timestamptz 'infinity');
+    age    
+-----------
+ -infinity
+(1 row)
+
+SELECT age(timestamptz '-infinity', timestamptz '-infinity');
+ERROR:  interval out of range

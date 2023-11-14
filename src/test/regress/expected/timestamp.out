@@ -2125,3 +2125,65 @@ select * from generate_series('2020-01-01 00:00'::timestamp,
                               '2020-01-02 03:00'::timestamp,
                               '0 hour'::interval);
 ERROR:  step size cannot equal zero
+select generate_series(timestamp '1995-08-06 12:12:12', timestamp '1996-08-06 12:12:12', interval 'infinity');
+ERROR:  step size cannot be infinite
+select generate_series(timestamp '1995-08-06 12:12:12', timestamp '1996-08-06 12:12:12', interval '-infinity');
+ERROR:  step size cannot be infinite
+-- test arithmetic with infinite timestamps
+select timestamp 'infinity' - timestamp 'infinity';
+ERROR:  interval out of range
+select timestamp 'infinity' - timestamp '-infinity';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+select timestamp '-infinity' - timestamp 'infinity';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+select timestamp '-infinity' - timestamp '-infinity';
+ERROR:  interval out of range
+select timestamp 'infinity' - timestamp '1995-08-06 12:12:12';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+select timestamp '-infinity' - timestamp '1995-08-06 12:12:12';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+-- test age() with infinite timestamps
+select age(timestamp 'infinity');
+    age    
+-----------
+ -infinity
+(1 row)
+
+select age(timestamp '-infinity');
+   age    
+----------
+ infinity
+(1 row)
+
+select age(timestamp 'infinity', timestamp 'infinity');
+ERROR:  interval out of range
+select age(timestamp 'infinity', timestamp '-infinity');
+   age    
+----------
+ infinity
+(1 row)
+
+select age(timestamp '-infinity', timestamp 'infinity');
+    age    
+-----------
+ -infinity
+(1 row)
+
+select age(timestamp '-infinity', timestamp '-infinity');
+ERROR:  interval out of range

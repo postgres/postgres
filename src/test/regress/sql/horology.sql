@@ -213,10 +213,12 @@ SELECT t.d1 AS t, i.f1 AS i, t.d1 + i.f1 AS "add", t.d1 - i.f1 AS "subtract"
 
 SELECT t.f1 AS t, i.f1 AS i, t.f1 + i.f1 AS "add", t.f1 - i.f1 AS "subtract"
   FROM TIME_TBL t, INTERVAL_TBL i
+  WHERE isfinite(i.f1)
   ORDER BY 1,2;
 
 SELECT t.f1 AS t, i.f1 AS i, t.f1 + i.f1 AS "add", t.f1 - i.f1 AS "subtract"
   FROM TIMETZ_TBL t, INTERVAL_TBL i
+  WHERE isfinite(i.f1)
   ORDER BY 1,2;
 
 -- SQL9x OVERLAPS operator
@@ -293,7 +295,6 @@ SELECT d.f1 AS "timestamp", t.f1 AS "interval", d.f1 + t.f1 AS plus
 
 SELECT d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
-  WHERE isfinite(d.f1)
   ORDER BY minus, "timestamp", "interval";
 
 SELECT d.f1 AS "timestamp",

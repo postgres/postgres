@@ -4127,7 +4127,7 @@ interval_to_char(PG_FUNCTION_ARGS)
 	struct pg_itm tt,
 			   *itm = &tt;
 
-	if (VARSIZE_ANY_EXHDR(fmt) <= 0)
+	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || INTERVAL_NOT_FINITE(it))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);

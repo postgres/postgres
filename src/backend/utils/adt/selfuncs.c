@@ -4802,6 +4802,10 @@ convert_timevalue_to_scalar(Datum value, Oid typid, bool *failure)
 				 * Convert the month part of Interval to days using assumed
 				 * average month length of 365.25/12.0 days.  Not too
 				 * accurate, but plenty good enough for our purposes.
+				 *
+				 * This also works for infinite intervals, which just have all
+				 * fields set to INT_MIN/INT_MAX, and so will produce a result
+				 * smaller/larger than any finite interval.
 				 */
 				return interval->time + interval->day * (double) USECS_PER_DAY +
 					interval->month * ((DAYS_PER_YEAR / (double) MONTHS_PER_YEAR) * USECS_PER_DAY);
