@@ -4781,14 +4781,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <indexterm>
          <primary>pg_stat_reset_slru</primary>
         </indexterm>
-        <function>pg_stat_reset_slru</function> ( <type>text</type> )
+        <function>pg_stat_reset_slru</function> ( [ <parameter>target</parameter> <type>text</type> <literal>DEFAULT</literal> <literal>NULL</literal> ] )
         <returnvalue>void</returnvalue>
        </para>
        <para>
         Resets statistics to zero for a single SLRU cache, or for all SLRUs in
-        the cluster.  If the argument is NULL, all counters shown in
+        the cluster. If <parameter>target</parameter> is
+        <literal>NULL</literal> or is not specified, all the counters shown in
         the <structname>pg_stat_slru</structname> view for all SLRU caches are
-        reset.  The argument can be one of
+        reset. The argument can be one of
         <literal>CommitTs</literal>,
         <literal>MultiXactMember</literal>,
         <literal>MultiXactOffset</literal>,

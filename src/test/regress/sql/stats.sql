@@ -454,7 +454,7 @@ SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru W
 SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'CommitTs' \gset
 
 -- Test that multiple SLRUs are reset when no specific SLRU provided to reset function
-SELECT pg_stat_reset_slru(NULL);
+SELECT pg_stat_reset_slru();
 SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'CommitTs';
 SELECT stats_reset > :'slru_notify_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'Notify';
 
