@@ -63,8 +63,8 @@ probes.h: postprocess_dtrace.sed probes.h.tmp
 probes.h.tmp: probes.d
 	$(DTRACE) -C -h -s $< -o $@
 else
-probes.h: Gen_dummy_probes.sed probes.d
-	sed -f $^ >$@
+probes.h: Gen_dummy_probes.pl probes.d
+	$(PERL) -n $^ >$@
 endif
 
 # These generated headers must be symlinked into src/include/.
@@ -75,17 +75,6 @@ $(top_builddir)/src/include/utils/header-stamp: fmgr-stamp errcodes.h probes.h
 	  rm -f $$file && $(LN_S) "../../../$(subdir)/$$file" . ; \
 	done
 	touch $@
-
-# Recipe for rebuilding the Perl version of Gen_dummy_probes
-# Nothing depends on it, so it will never be called unless explicitly requested
-# The last two lines of the recipe format the script according to  our
-# standard and put back some blank lines for improved readability.
-Gen_dummy_probes.pl: Gen_dummy_probes.sed Gen_dummy_probes.pl.prolog
-	cp $(srcdir)/Gen_dummy_probes.pl.prolog $@
-	s2p -f $<  | sed -e 1,3d -e '/# #/ d' -e '$$d' >> $@
-	perltidy --profile=$(srcdir)/../../tools/pgindent/perltidyrc $@
-	perl -pi -e '!$$lb && ( /^\t+#/  || /^# prototypes/ ) && print qq{\n};'\
-		-e '$$lb = m/^\n/; ' $@
 
 .PHONY: install-data
 install-data: errcodes.txt installdirs

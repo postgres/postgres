@@ -608,7 +608,7 @@ sub GenerateFiles
 	{
 		print "Generating probes.h...\n";
 		system(
-			'perl src/backend/utils/Gen_dummy_probes.pl src/backend/utils/probes.d > src/include/utils/probes.h'
+			'perl -n src/backend/utils/Gen_dummy_probes.pl src/backend/utils/probes.d > src/include/utils/probes.h'
 		);
 	}
 

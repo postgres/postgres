@@ -49,7 +49,7 @@ else
     input: files('../../backend/utils/probes.d'),
     output: 'probes.h',
     capture: true,
-    command: [sed, '-f', files('../../backend/utils/Gen_dummy_probes.sed'), '@INPUT@'],
+    command: [perl, '-n', files('../../backend/utils/Gen_dummy_probes.pl'), '@INPUT@'],
     install: true,
     install_dir: dir_include_server / 'utils',
   )
