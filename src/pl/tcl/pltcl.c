@@ -334,7 +334,7 @@ static void pltcl_init_tuple_store(pltcl_call_state *call_state);
 /*
  * Hack to override Tcl's builtin Notifier subsystem.  This prevents the
  * backend from becoming multithreaded, which breaks all sorts of things.
- * That happens in the default version of Tcl_InitNotifier if the TCL library
+ * That happens in the default version of Tcl_InitNotifier if the Tcl library
  * has been compiled with multithreading support (i.e. when TCL_THREADS is
  * defined under Unix, and in all cases under Windows).
  * It's okay to disable the notifier because we never enter the Tcl event loop
