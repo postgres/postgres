@@ -718,7 +718,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
     <literal>IS NULL</literal> and <literal>IS NOT NULL</literal> do not always return
     inverse results for row-valued expressions; in particular, a row-valued
     expression that contains both null and non-null fields will return false
-    for both tests.  For example: 
+    for both tests.  For example:
 
 <programlisting>
 SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
