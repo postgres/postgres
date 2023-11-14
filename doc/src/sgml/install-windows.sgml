@@ -218,8 +218,7 @@ $ENV{MSBFLAGS}="/m";
      <listitem>
      <para>
       <productname>Bison</productname> and <productname>Flex</productname> are
-      required to build from Git, but not required when building from a release
-      file. Only <productname>Bison</productname> versions 2.3 and later
+      required.  Only <productname>Bison</productname> versions 2.3 and later
       will work. <productname>Flex</productname> must be version 2.5.35 or later.
      </para>
 
