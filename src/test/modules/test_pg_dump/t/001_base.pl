@@ -677,7 +677,7 @@ my %tests = (
 # Create a PG instance to test actually dumping from
 
 my $node = get_new_node('main');
-$node->init;
+$node->init('auth_extra' => [ '--create-role', 'regress_dump_login_role' ]);
 $node->start;
 
 my $port = $node->port;
