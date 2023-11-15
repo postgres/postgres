@@ -1,0 +1,13 @@
+CREATE EXTENSION test_dsa;
+SELECT test_dsa_basic();
+ test_dsa_basic 
+----------------
+ 
+(1 row)
+
+SELECT test_dsa_resowners();
+ test_dsa_resowners 
+--------------------
+ 
+(1 row)
+

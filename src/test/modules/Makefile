@@ -17,6 +17,7 @@ SUBDIRS = \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \
 		  test_ddl_deparse \
+		  test_dsa \
 		  test_extensions \
 		  test_ginpostinglist \
 		  test_integerset \

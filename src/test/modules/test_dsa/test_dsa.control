@@ -1,0 +1,4 @@
+comment = 'Test code for dynamic shared memory areas'
+default_version = '1.0'
+module_pathname = '$libdir/test_dsa'
+relocatable = true
