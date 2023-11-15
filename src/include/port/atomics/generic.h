@@ -83,7 +83,7 @@ pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 static inline bool
 pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	return pg_atomic_exchange_u32_impl(ptr, &value, 1) == 0;
+	return pg_atomic_exchange_u32_impl(ptr, 1) == 0;
 }
 
 #define PG_HAVE_ATOMIC_UNLOCKED_TEST_FLAG
