@@ -4717,22 +4717,51 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        </para>
        <para>
         Resets some cluster-wide statistics counters to zero, depending on the
-        argument.  The argument can be <literal>bgwriter</literal> to reset
-        all the counters shown in
-        the <structname>pg_stat_bgwriter</structname> view,
-        <literal>checkpointer</literal> to reset all the counters shown in
-        the <structname>pg_stat_checkpointer</structname> view,
-        <literal>archiver</literal> to reset all the counters shown in
-        the <structname>pg_stat_archiver</structname> view,
-        <literal>io</literal> to reset all the counters shown in the
-        <structname>pg_stat_io</structname> view,
-        <literal>wal</literal> to reset all the counters shown in the
-        <structname>pg_stat_wal</structname> view or
-        <literal>recovery_prefetch</literal> to reset all the counters shown
-        in the <structname>pg_stat_recovery_prefetch</structname> view.
-        If <parameter>target</parameter> is <literal>NULL</literal> or
-        is not specified, all the counters from the views listed above are
-        reset.
+        argument. <parameter>target</parameter> can be:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>archiver</literal>: Reset all the counters shown in the
+          <structname>pg_stat_archiver</structname> view.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+           <literal>bgwriter</literal>: Reset all the counters shown in the
+           <structname>pg_stat_bgwriter</structname> view.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>checkpointer</literal>: Reset all the counters shown in the
+          <structname>pg_stat_checkpointer</structname> view.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>io</literal>: Reset all the counters shown in the
+          <structname>pg_stat_io</structname> view.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>recovery_prefetch</literal>: Reset all the counters shown in
+          the <structname>pg_stat_recovery_prefetch</structname> view.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>wal</literal>: Reset all the counters shown in the
+          <structname>pg_stat_wal</structname> view.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>NULL</literal> or not specified: All the counters from the
+          views listed above are reset.
+         </para>
+        </listitem>
+       </itemizedlist>
        </para>
        <para>
         This function is restricted to superusers by default, but other users
