@@ -157,8 +157,7 @@ CONTEXT:  PL/pgSQL function city_update() line 9 at RAISE
  city_id | city_name | population | country_name | continent 
 ---------+-----------+------------+--------------+-----------
        1 | Tokyo     |   13010279 | Japan        | Asia
-       1 | Tokyo     |   13010279 |              | 
-(2 rows)
+(1 row)
 
  UPDATE city_view SET country_name = 'UK' WHERE city_name = 'New York' RETURNING *;
  city_id | city_name | population | country_name | continent 
@@ -170,23 +169,20 @@ CONTEXT:  PL/pgSQL function city_update() line 9 at RAISE
  city_id | city_name | population | country_name |   continent   
 ---------+-----------+------------+--------------+---------------
   123456 | New York  |    8391881 | USA          | North America
-  123456 | New York  |    8391881 | USA          | North America
-(2 rows)
+(1 row)
 
  UPDATE city_view SET continent = 'EU' WHERE continent = 'Europe' RETURNING *;
  city_id | city_name  | population | country_name | continent 
 ---------+------------+------------+--------------+-----------
   234567 | Birmingham |    1016800 | UK           | Europe
-  123456 | New York   |            | UK           | Europe
-(2 rows)
+(1 row)
 
  UPDATE city_view v1 SET country_name = v2.country_name FROM city_view v2
      WHERE v2.city_name = 'Birmingham' AND v1.city_name = 'London' RETURNING *;
  city_id | city_name | population | country_name | continent | city_id | city_name  | population | country_name | continent 
 ---------+-----------+------------+--------------+-----------+---------+------------+------------+--------------+-----------
        2 | London    |    7556900 | UK           | Europe    |  234567 | Birmingham |    1016800 | UK           | Europe
-       2 | London    |    7556900 | UK           | Europe    |  234567 | Birmingham |    1016800 | UK           | Europe
-(2 rows)
+(1 row)
 
  
  -- DELETE .. RETURNING

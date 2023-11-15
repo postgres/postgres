@@ -3011,7 +3011,8 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Bitmapset  *modified_attrs;
 	ItemId		lp;
 	HeapTupleData oldtup;
-	HeapTupleData oldtup2;
+	HeapTupleData oldtup_decrypted;
+	void*		oldtup_data;
 	HeapTuple	heaptup;
 	HeapTuple	old_key_tuple = NULL;
 	bool		old_key_copied = false;
@@ -3111,23 +3112,24 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 */
 	oldtup.t_tableOid = RelationGetRelid(relation);
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
+	oldtup_data = oldtup.t_data;
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
 	/* decrypt the old tuple */
 	{
 		char* new_ptr = NULL;
 		new_ptr = MemoryContextAlloc(CurTransactionContext, oldtup.t_len);
-		memcpy(new_ptr, oldtup.t_data, oldtup.t_len);
+		memcpy(new_ptr, oldtup.t_data, oldtup.t_data->t_hoff);
 		// only neccessary field
-		oldtup2.t_data = (HeapTupleHeader)new_ptr;
+		oldtup_decrypted.t_data = (HeapTupleHeader)new_ptr;
 	}
-	PG_TDE_DECRYPT_TUPLE(BufferGetBlockNumber(buffer), page, &oldtup, &oldtup2,
+	PG_TDE_DECRYPT_TUPLE(BufferGetBlockNumber(buffer), page, &oldtup, &oldtup_decrypted,
 							GetRelationKeys(relation->rd_locator));
 
 	// change field in oldtup now.
 	// We can't do it before, as PG_TDE_DECRYPT_TUPLE uses t_data address in 
 	// calculations
-	oldtup.t_data = oldtup2.t_data;
+	oldtup.t_data = oldtup_decrypted.t_data;
 
 	/* the new tuple is ready, except for this: */
 	newtup->t_tableOid = RelationGetRelid(relation);
@@ -3185,6 +3187,8 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 * with the new tuple's location, so there's great risk of confusion if we
 	 * use otid anymore.
 	 */
+
+	oldtup.t_data = oldtup_data;
 
 l2:
 	checked_lockers = false;
