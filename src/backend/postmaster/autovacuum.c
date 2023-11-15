@@ -555,7 +555,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		FlushErrorState();
 
 		/* Flush any leaked data in the top-level context */
-		MemoryContextResetAndDeleteChildren(AutovacMemCxt);
+		MemoryContextReset(AutovacMemCxt);
 
 		/* don't leave dangling pointers to freed memory */
 		DatabaseListCxt = NULL;
@@ -2521,7 +2521,7 @@ do_autovacuum(void)
 
 
 		/* clean up memory before each iteration */
-		MemoryContextResetAndDeleteChildren(PortalContext);
+		MemoryContextReset(PortalContext);
 
 		/*
 		 * Save the relation name for a possible error message, to avoid a
@@ -2576,7 +2576,7 @@ do_autovacuum(void)
 			/* this resets ProcGlobal->statusFlags[i] too */
 			AbortOutOfAnyTransaction();
 			FlushErrorState();
-			MemoryContextResetAndDeleteChildren(PortalContext);
+			MemoryContextReset(PortalContext);
 
 			/* restart our transaction for the following operations */
 			StartTransactionCommand();
@@ -2718,7 +2718,7 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 	autovac_report_workitem(workitem, cur_nspname, cur_relname);
 
 	/* clean up memory before each work item */
-	MemoryContextResetAndDeleteChildren(PortalContext);
+	MemoryContextReset(PortalContext);
 
 	/*
 	 * We will abort the current work item if something errors out, and
@@ -2770,7 +2770,7 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 		/* this resets ProcGlobal->statusFlags[i] too */
 		AbortOutOfAnyTransaction();
 		FlushErrorState();
-		MemoryContextResetAndDeleteChildren(PortalContext);
+		MemoryContextReset(PortalContext);
 
 		/* restart our transaction for the following operations */
 		StartTransactionCommand();

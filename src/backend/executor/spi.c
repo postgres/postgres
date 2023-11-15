@@ -547,7 +547,7 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 		if (_SPI_current->execSubid >= mySubid)
 		{
 			_SPI_current->execSubid = InvalidSubTransactionId;
-			MemoryContextResetAndDeleteChildren(_SPI_current->execCxt);
+			MemoryContextReset(_SPI_current->execCxt);
 		}
 
 		/* throw away any tuple tables created within current subxact */
@@ -3083,7 +3083,7 @@ _SPI_end_call(bool use_exec)
 		/* mark Executor context no longer in use */
 		_SPI_current->execSubid = InvalidSubTransactionId;
 		/* and free Executor memory */
-		MemoryContextResetAndDeleteChildren(_SPI_current->execCxt);
+		MemoryContextReset(_SPI_current->execCxt);
 	}
 
 	return 0;

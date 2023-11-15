@@ -631,7 +631,7 @@ ExecReScanSetOp(SetOpState *node)
 
 	/* Release any hashtable storage */
 	if (node->tableContext)
-		MemoryContextResetAndDeleteChildren(node->tableContext);
+		MemoryContextReset(node->tableContext);
 
 	/* And rebuild empty hashtable if needed */
 	if (((SetOp *) node->ps.plan)->strategy == SETOP_HASHED)

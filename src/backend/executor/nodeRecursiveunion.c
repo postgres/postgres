@@ -317,7 +317,7 @@ ExecReScanRecursiveUnion(RecursiveUnionState *node)
 
 	/* Release any hashtable storage */
 	if (node->tableContext)
-		MemoryContextResetAndDeleteChildren(node->tableContext);
+		MemoryContextReset(node->tableContext);
 
 	/* Empty hashtable if needed */
 	if (plan->numCols > 0)

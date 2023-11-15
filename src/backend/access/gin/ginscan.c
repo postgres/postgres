@@ -251,7 +251,7 @@ ginFreeScanKeys(GinScanOpaque so)
 			tbm_free(entry->matchBitmap);
 	}
 
-	MemoryContextResetAndDeleteChildren(so->keyCtx);
+	MemoryContextReset(so->keyCtx);
 
 	so->keys = NULL;
 	so->nkeys = 0;

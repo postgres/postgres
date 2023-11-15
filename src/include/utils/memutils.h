@@ -66,9 +66,6 @@ extern PGDLLIMPORT MemoryContext CurTransactionContext;
 /* This is a transient link to the active portal's memory context: */
 extern PGDLLIMPORT MemoryContext PortalContext;
 
-/* Backwards compatibility macro */
-#define MemoryContextResetAndDeleteChildren(ctx) MemoryContextReset(ctx)
-
 
 /*
  * Memory-context-type-independent functions in mcxt.c

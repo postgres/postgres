@@ -91,7 +91,7 @@ BuildEventTriggerCache(void)
 		 * This can happen either because a previous rebuild failed, or
 		 * because an invalidation happened before the rebuild was complete.
 		 */
-		MemoryContextResetAndDeleteChildren(EventTriggerCacheContext);
+		MemoryContextReset(EventTriggerCacheContext);
 	}
 	else
 	{
@@ -262,7 +262,7 @@ InvalidateEventCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 	 */
 	if (EventTriggerCacheState == ETCS_VALID)
 	{
-		MemoryContextResetAndDeleteChildren(EventTriggerCacheContext);
+		MemoryContextReset(EventTriggerCacheContext);
 		EventTriggerCache = NULL;
 	}
 

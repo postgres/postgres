@@ -1833,7 +1833,7 @@ FlushErrorState(void)
 	errordata_stack_depth = -1;
 	recursion_depth = 0;
 	/* Delete all data in ErrorContext */
-	MemoryContextResetAndDeleteChildren(ErrorContext);
+	MemoryContextReset(ErrorContext);
 }
 
 /*

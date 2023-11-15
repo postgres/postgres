@@ -290,7 +290,7 @@ CheckpointerMain(void)
 		FlushErrorState();
 
 		/* Flush any leaked data in the top-level context */
-		MemoryContextResetAndDeleteChildren(checkpointer_context);
+		MemoryContextReset(checkpointer_context);
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();

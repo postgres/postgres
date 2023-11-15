@@ -2237,7 +2237,7 @@ compute_expr_stats(Relation onerel, double totalrows,
 
 		ExecDropSingleTupleTableSlot(slot);
 		FreeExecutorState(estate);
-		MemoryContextResetAndDeleteChildren(expr_context);
+		MemoryContextReset(expr_context);
 	}
 
 	MemoryContextSwitchTo(old_context);

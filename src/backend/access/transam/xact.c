@@ -1933,7 +1933,7 @@ AtCleanup_Memory(void)
 	 * Clear the special abort context for next time.
 	 */
 	if (TransactionAbortContext != NULL)
-		MemoryContextResetAndDeleteChildren(TransactionAbortContext);
+		MemoryContextReset(TransactionAbortContext);
 
 	/*
 	 * Release all transaction-local memory.
@@ -1969,7 +1969,7 @@ AtSubCleanup_Memory(void)
 	 * Clear the special abort context for next time.
 	 */
 	if (TransactionAbortContext != NULL)
-		MemoryContextResetAndDeleteChildren(TransactionAbortContext);
+		MemoryContextReset(TransactionAbortContext);
 
 	/*
 	 * Delete the subxact local memory contexts. Its CurTransactionContext can

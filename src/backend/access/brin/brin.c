@@ -297,7 +297,7 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 							   samepage))
 			{
 				/* no luck; start over */
-				MemoryContextResetAndDeleteChildren(tupcxt);
+				MemoryContextReset(tupcxt);
 				continue;
 			}
 		}
@@ -533,7 +533,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 		CHECK_FOR_INTERRUPTS();
 
-		MemoryContextResetAndDeleteChildren(perRangeCxt);
+		MemoryContextReset(perRangeCxt);
 
 		tup = brinGetTupleForHeapBlock(opaque->bo_rmAccess, heapBlk, &buf,
 									   &off, &size, BUFFER_LOCK_SHARE);

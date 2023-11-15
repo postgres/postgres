@@ -216,7 +216,7 @@ initialize_windowaggregate(WindowAggState *winstate,
 	 * it, so we must leave it to the caller to reset at an appropriate time.
 	 */
 	if (peraggstate->aggcontext != winstate->aggcontext)
-		MemoryContextResetAndDeleteChildren(peraggstate->aggcontext);
+		MemoryContextReset(peraggstate->aggcontext);
 
 	if (peraggstate->initValueIsNull)
 		peraggstate->transValue = peraggstate->initValue;
@@ -875,7 +875,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * result for it, else we'll leak memory.
 	 */
 	if (numaggs_restart > 0)
-		MemoryContextResetAndDeleteChildren(winstate->aggcontext);
+		MemoryContextReset(winstate->aggcontext);
 	for (i = 0; i < numaggs; i++)
 	{
 		peraggstate = &winstate->peragg[i];
@@ -1351,12 +1351,12 @@ release_partition(WindowAggState *winstate)
 	 * any aggregate temp data).  We don't rely on retail pfree because some
 	 * aggregates might have allocated data we don't have direct pointers to.
 	 */
-	MemoryContextResetAndDeleteChildren(winstate->partcontext);
-	MemoryContextResetAndDeleteChildren(winstate->aggcontext);
+	MemoryContextReset(winstate->partcontext);
+	MemoryContextReset(winstate->aggcontext);
 	for (i = 0; i < winstate->numaggs; i++)
 	{
 		if (winstate->peragg[i].aggcontext != winstate->aggcontext)
-			MemoryContextResetAndDeleteChildren(winstate->peragg[i].aggcontext);
+			MemoryContextReset(winstate->peragg[i].aggcontext);
 	}
 
 	if (winstate->buffer)

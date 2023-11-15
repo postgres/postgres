@@ -583,7 +583,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 					stats->stadistinct = n_distinct;
 			}
 
-			MemoryContextResetAndDeleteChildren(col_context);
+			MemoryContextReset(col_context);
 		}
 
 		if (nindexes > 0)
@@ -972,7 +972,7 @@ compute_index_stats(Relation onerel, double totalrows,
 									 numindexrows,
 									 totalindexrows);
 
-				MemoryContextResetAndDeleteChildren(col_context);
+				MemoryContextReset(col_context);
 			}
 		}
 
@@ -981,7 +981,7 @@ compute_index_stats(Relation onerel, double totalrows,
 
 		ExecDropSingleTupleTableSlot(slot);
 		FreeExecutorState(estate);
-		MemoryContextResetAndDeleteChildren(ind_context);
+		MemoryContextReset(ind_context);
 	}
 
 	MemoryContextSwitchTo(old_context);

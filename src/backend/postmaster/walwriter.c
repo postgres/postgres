@@ -178,7 +178,7 @@ WalWriterMain(void)
 		FlushErrorState();
 
 		/* Flush any leaked data in the top-level context */
-		MemoryContextResetAndDeleteChildren(walwriter_context);
+		MemoryContextReset(walwriter_context);
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
