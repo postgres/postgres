@@ -256,7 +256,18 @@ ALTER TABLE T ADD COLUMN c2 TIMESTAMP DEFAULT clock_timestamp();
 
 SELECT comp();
 
+-- check that we notice insertion of a volatile default argument
+CREATE FUNCTION foolme(timestamptz DEFAULT clock_timestamp())
+  RETURNS timestamptz
+  IMMUTABLE AS 'select $1' LANGUAGE sql;
+ALTER TABLE T ADD COLUMN c3 timestamptz DEFAULT foolme();
+
+SELECT attname, atthasmissing, attmissingval FROM pg_attribute
+  WHERE attrelid = 't'::regclass AND attnum > 0
+  ORDER BY attnum;
+
 DROP TABLE T;
+DROP FUNCTION foolme(timestamptz);
 
 -- Simple querie
 CREATE TABLE T (pk INT NOT NULL PRIMARY KEY);
