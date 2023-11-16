@@ -272,7 +272,25 @@ SELECT comp();
  Rewritten
 (1 row)
 
+-- check that we notice insertion of a volatile default argument
+CREATE FUNCTION foolme(timestamptz DEFAULT clock_timestamp())
+  RETURNS timestamptz
+  IMMUTABLE AS 'select $1' LANGUAGE sql;
+ALTER TABLE T ADD COLUMN c3 timestamptz DEFAULT foolme();
+NOTICE:  rewriting table t for reason 2
+SELECT attname, atthasmissing, attmissingval FROM pg_attribute
+  WHERE attrelid = 't'::regclass AND attnum > 0
+  ORDER BY attnum;
+ attname | atthasmissing | attmissingval 
+---------+---------------+---------------
+ pk      | f             | 
+ c1      | f             | 
+ c2      | f             | 
+ c3      | f             | 
+(4 rows)
+
 DROP TABLE T;
+DROP FUNCTION foolme(timestamptz);
 -- Simple querie
 CREATE TABLE T (pk INT NOT NULL PRIMARY KEY);
 SELECT set('t');
