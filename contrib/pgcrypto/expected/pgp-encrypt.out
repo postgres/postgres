@@ -122,14 +122,6 @@ NOTICE:  pgp_decrypt: unexpected s2k_count: expected 65000000 got 65011712
 
 -- s2k digest change
 select pgp_sym_decrypt(
-	pgp_sym_encrypt('Secret.', 'key', 's2k-digest-algo=md5'),
-	'key', 'expect-s2k-digest-algo=md5');
- pgp_sym_decrypt 
------------------
- Secret.
-(1 row)
-
-select pgp_sym_decrypt(
 		pgp_sym_encrypt('Secret.', 'key', 's2k-digest-algo=sha1'),
 	'key', 'expect-s2k-digest-algo=sha1');
  pgp_sym_decrypt 

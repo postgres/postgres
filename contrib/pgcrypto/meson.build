@@ -48,6 +48,7 @@ pgcrypto_regress = [
   'pgp-armor',
   'pgp-decrypt',
   'pgp-encrypt',
+  'pgp-encrypt-md5',
   'pgp-pubkey-decrypt',
   'pgp-pubkey-encrypt',
   'pgp-info',
