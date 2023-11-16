@@ -642,6 +642,11 @@ contain_subplans_walker(Node *node, void *context)
  * mistakenly think that something like "WHERE random() < 0.5" can be treated
  * as a constant qualification.
  *
+ * This will give the right answer only for clauses that have been put
+ * through expression preprocessing.  Callers outside the planner typically
+ * should use contain_mutable_functions_after_planning() instead, for the
+ * reasons given there.
+ *
  * We will recursively look into Query nodes (i.e., SubLink sub-selects)
  * but not into SubPlans.  See comments for contain_volatile_functions().
  */
@@ -701,6 +706,34 @@ contain_mutable_functions_walker(Node *node, void *context)
 								  context);
 }
 
+/*
+ * contain_mutable_functions_after_planning
+ *	  Test whether given expression contains mutable functions.
+ *
+ * This is a wrapper for contain_mutable_functions() that is safe to use from
+ * outside the planner.  The difference is that it first runs the expression
+ * through expression_planner().  There are two key reasons why we need that:
+ *
+ * First, function default arguments will get inserted, which may affect
+ * volatility (consider "default now()").
+ *
+ * Second, inline-able functions will get inlined, which may allow us to
+ * conclude that the function is really less volatile than it's marked.
+ * As an example, polymorphic functions must be marked with the most volatile
+ * behavior that they have for any input type, but once we inline the
+ * function we may be able to conclude that it's not so volatile for the
+ * particular input type we're dealing with.
+ */
+bool
+contain_mutable_functions_after_planning(Expr *expr)
+{
+	/* We assume here that expression_planner() won't scribble on its input */
+	expr = expression_planner(expr);
+
+	/* Now we can search for non-immutable functions */
+	return contain_mutable_functions((Node *) expr);
+}
+
 
 /*****************************************************************************
  *		Check clauses for volatile functions
@@ -713,6 +746,11 @@ contain_mutable_functions_walker(Node *node, void *context)
  * Returns true if any volatile function (or operator implemented by a
  * volatile function) is found. This test prevents, for example,
  * invalid conversions of volatile expressions into indexscan quals.
+ *
+ * This will give the right answer only for clauses that have been put
+ * through expression preprocessing.  Callers outside the planner typically
+ * should use contain_volatile_functions_after_planning() instead, for the
+ * reasons given there.
  *
  * We will recursively look into Query nodes (i.e., SubLink sub-selects)
  * but not into SubPlans.  This is a bit odd, but intentional.  If we are
@@ -768,6 +806,34 @@ contain_volatile_functions_walker(Node *node, void *context)
 	}
 	return expression_tree_walker(node, contain_volatile_functions_walker,
 								  context);
+}
+
+/*
+ * contain_volatile_functions_after_planning
+ *	  Test whether given expression contains volatile functions.
+ *
+ * This is a wrapper for contain_volatile_functions() that is safe to use from
+ * outside the planner.  The difference is that it first runs the expression
+ * through expression_planner().  There are two key reasons why we need that:
+ *
+ * First, function default arguments will get inserted, which may affect
+ * volatility (consider "default random()").
+ *
+ * Second, inline-able functions will get inlined, which may allow us to
+ * conclude that the function is really less volatile than it's marked.
+ * As an example, polymorphic functions must be marked with the most volatile
+ * behavior that they have for any input type, but once we inline the
+ * function we may be able to conclude that it's not so volatile for the
+ * particular input type we're dealing with.
+ */
+bool
+contain_volatile_functions_after_planning(Expr *expr)
+{
+	/* We assume here that expression_planner() won't scribble on its input */
+	expr = expression_planner(expr);
+
+	/* Now we can search for volatile functions */
+	return contain_volatile_functions((Node *) expr);
 }
 
 /*
