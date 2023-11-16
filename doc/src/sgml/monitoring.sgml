@@ -4751,6 +4751,12 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         </listitem>
         <listitem>
          <para>
+          <literal>slru</literal>: Reset all the counters shown in the
+          <structname>pg_stat_slru</structname> view.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
           <literal>wal</literal>: Reset all the counters shown in the
           <structname>pg_stat_wal</structname> view.
          </para>
