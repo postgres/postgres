@@ -3252,8 +3252,9 @@ foreach test_dir : tests
 
       testport += 1
     elif kind == 'tap'
+      testwrap_tap = testwrap_base
       if not tap_tests_enabled
-        continue
+        testwrap_tap += ['--skip', 'TAP tests not enabled']
       endif
 
       test_command = [
@@ -3293,7 +3294,7 @@ foreach test_dir : tests
         test(test_dir['name'] / onetap_p,
           python,
           kwargs: test_kwargs,
-          args: testwrap_base + [
+          args: testwrap_tap + [
             '--testgroup', test_dir['name'],
             '--testname', onetap_p,
             '--', test_command,

@@ -12,6 +12,7 @@ parser.add_argument('--srcdir', help='source directory of test', type=str)
 parser.add_argument('--basedir', help='base directory of test', type=str)
 parser.add_argument('--testgroup', help='test group', type=str)
 parser.add_argument('--testname', help='test name', type=str)
+parser.add_argument('--skip', help='skip test (with reason)', type=str)
 parser.add_argument('test_command', nargs='*')
 
 args = parser.parse_args()
@@ -22,6 +23,10 @@ testdir = '{}/testrun/{}/{}'.format(
 print('# executing test in {} group {} test {}'.format(
     testdir, args.testgroup, args.testname))
 sys.stdout.flush()
+
+if args.skip is not None:
+    print('1..0 # Skipped: ' + args.skip)
+    sys.exit(0)
 
 if os.path.exists(testdir) and os.path.isdir(testdir):
     shutil.rmtree(testdir)
