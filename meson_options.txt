@@ -136,7 +136,7 @@ option('tcl_version', type: 'string', value: 'tcl',
 option('readline', type: 'feature', value: 'auto',
   description: 'Use GNU Readline or BSD Libedit for editing')
 
-option('selinux', type: 'feature', value: 'disabled',
+option('selinux', type: 'feature', value: 'auto',
   description: 'SELinux support')
 
 option('ssl', type: 'combo', choices: ['auto', 'none', 'openssl'],
