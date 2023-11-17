@@ -1198,6 +1198,16 @@ build-postgresql:
        </listitem>
       </varlistentry>
 
+      <varlistentry id="configure-option-with-sepgsql">
+       <term><option>--with-selinux</option></term>
+       <listitem>
+        <para>
+         Build with SElinux support, enabling the <xref linkend="sepgsql"/>
+         extension.
+        </para>
+       </listitem>
+      </varlistentry>
+
      </variablelist>
 
    </sect3>
@@ -2629,6 +2639,17 @@ ninja install
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="configure-with-sepgsql-meson">
+      <term><option>-Dselinux={ auto | enabled | disabled }</option></term>
+      <listitem>
+       <para>
+        Build with SElinux support, enabling the <xref linkend="sepgsql"/>
+        extension.  Defaults to auto.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </sect3>
 

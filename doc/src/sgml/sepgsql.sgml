@@ -87,9 +87,14 @@ Policy from config file:        targeted
   </para>
 
   <para>
-   To build this module, include the option <literal>--with-selinux</literal> in
-   your PostgreSQL <literal>configure</literal> command.  Be sure that the
-   <filename>libselinux-devel</filename> RPM is installed at build time.
+   To build this module specify <xref
+   linkend="configure-option-with-sepgsql"/> (when using <link
+   linkend="install-make">make and autoconf</link> ) or <xref
+   linkend="configure-with-sepgsql-meson"/> (when using <link
+   linkend="install-meson">meson</link>).
+
+   Be sure that the <filename>libselinux-devel</filename> RPM is installed at
+   build time.
   </para>
 
   <para>
