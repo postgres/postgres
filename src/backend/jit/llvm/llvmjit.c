@@ -47,6 +47,8 @@
 #include "utils/memutils.h"
 #include "utils/resowner_private.h"
 
+#define LLVMJIT_LLVM_CONTEXT_REUSE_MAX 100
+
 /* Handle of a module emitted via ORC JIT */
 typedef struct LLVMJitHandle
 {
@@ -100,8 +102,15 @@ LLVMModuleRef llvm_types_module = NULL;
 
 static bool llvm_session_initialized = false;
 static size_t llvm_generation = 0;
+
+/* number of LLVMJitContexts that currently are in use */
+static size_t llvm_jit_context_in_use_count = 0;
+
+/* how many times has the current LLVMContextRef been used */
+static size_t llvm_llvm_context_reuse_count = 0;
 static const char *llvm_triple = NULL;
 static const char *llvm_layout = NULL;
+static LLVMContextRef llvm_context;
 
 
 static LLVMTargetRef llvm_targetref;
@@ -122,6 +131,8 @@ static void llvm_compile_module(LLVMJitContext *context);
 static void llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module);
 
 static void llvm_create_types(void);
+static void llvm_set_target(void);
+static void llvm_recreate_llvm_context(void);
 static uint64_t llvm_resolve_symbol(const char *name, void *ctx);
 
 #if LLVM_VERSION_MAJOR > 11
@@ -143,6 +154,63 @@ _PG_jit_provider_init(JitProviderCallbacks *cb)
 	cb->compile_expr = llvm_compile_expr;
 }
 
+
+/*
+ * Every now and then create a new LLVMContextRef. Unfortunately, during every
+ * round of inlining, types may "leak" (they can still be found/used via the
+ * context, but new types will be created the next time in inlining is
+ * performed). To prevent that from slowly accumulating problematic amounts of
+ * memory, recreate the LLVMContextRef we use. We don't want to do so too
+ * often, as that implies some overhead (particularly re-loading the module
+ * summaries / modules is fairly expensive). A future TODO would be to make
+ * this more finegrained and only drop/recreate the LLVMContextRef when we know
+ * there has been inlining. If we can get the size of the context from LLVM
+ * then that might be a better way to determine when to drop/recreate rather
+ * then the usagecount heuristic currently employed.
+ */
+static void
+llvm_recreate_llvm_context(void)
+{
+	if (!llvm_context)
+		elog(ERROR, "Trying to recreate a non-existing context");
+
+	/*
+	 * We can only safely recreate the LLVM context if no other code is being
+	 * JITed, otherwise we'd release the types in use for that.
+	 */
+	if (llvm_jit_context_in_use_count > 0)
+	{
+		llvm_llvm_context_reuse_count++;
+		return;
+	}
+
+	if (llvm_llvm_context_reuse_count <= LLVMJIT_LLVM_CONTEXT_REUSE_MAX)
+	{
+		llvm_llvm_context_reuse_count++;
+		return;
+	}
+
+	/*
+	 * Need to reset the modules that the inlining code caches before
+	 * disposing of the context. LLVM modules exist within a specific LLVM
+	 * context, therefore disposing of the context before resetting the cache
+	 * would lead to dangling pointers to modules.
+	 */
+	llvm_inline_reset_caches();
+
+	LLVMContextDispose(llvm_context);
+	llvm_context = LLVMContextCreate();
+	llvm_llvm_context_reuse_count = 0;
+
+	/*
+	 * Re-build cached type information, so code generation code can rely on
+	 * that information to be present (also prevents the variables to be
+	 * dangling references).
+	 */
+	llvm_create_types();
+}
+
+
 /*
  * Create a context for JITing work.
  *
@@ -159,6 +227,8 @@ llvm_create_context(int jitFlags)
 
 	llvm_session_initialize();
 
+	llvm_recreate_llvm_context();
+
 	ResourceOwnerEnlargeJIT(CurrentResourceOwner);
 
 	context = MemoryContextAllocZero(TopMemoryContext,
@@ -169,6 +239,8 @@ llvm_create_context(int jitFlags)
 	context->base.resowner = CurrentResourceOwner;
 	ResourceOwnerRememberJIT(CurrentResourceOwner, PointerGetDatum(context));
 
+	llvm_jit_context_in_use_count++;
+
 	return context;
 }
 
@@ -178,8 +250,14 @@ llvm_create_context(int jitFlags)
 static void
 llvm_release_context(JitContext *context)
 {
-	LLVMJitContext *llvm_context = (LLVMJitContext *) context;
+	LLVMJitContext *llvm_jit_context = (LLVMJitContext *) context;
 	ListCell   *lc;
+
+	/*
+	 * Consider as cleaned up even if we skip doing so below, that way we can
+	 * verify the tracking is correct (see llvm_shutdown()).
+	 */
+	llvm_jit_context_in_use_count--;
 
 	/*
 	 * When this backend is exiting, don't clean up LLVM. As an error might
@@ -191,13 +269,13 @@ llvm_release_context(JitContext *context)
 
 	llvm_enter_fatal_on_oom();
 
-	if (llvm_context->module)
+	if (llvm_jit_context->module)
 	{
-		LLVMDisposeModule(llvm_context->module);
-		llvm_context->module = NULL;
+		LLVMDisposeModule(llvm_jit_context->module);
+		llvm_jit_context->module = NULL;
 	}
 
-	foreach(lc, llvm_context->handles)
+	foreach(lc, llvm_jit_context->handles)
 	{
 		LLVMJitHandle *jit_handle = (LLVMJitHandle *) lfirst(lc);
 
@@ -227,8 +305,8 @@ llvm_release_context(JitContext *context)
 
 		pfree(jit_handle);
 	}
-	list_free(llvm_context->handles);
-	llvm_context->handles = NIL;
+	list_free(llvm_jit_context->handles);
+	llvm_jit_context->handles = NIL;
 
 	llvm_leave_fatal_on_oom();
 }
@@ -248,7 +326,7 @@ llvm_mutable_module(LLVMJitContext *context)
 	{
 		context->compiled = false;
 		context->module_generation = llvm_generation++;
-		context->module = LLVMModuleCreateWithName("pg");
+		context->module = LLVMModuleCreateWithNameInContext("pg", llvm_context);
 		LLVMSetTarget(context->module, llvm_triple);
 		LLVMSetDataLayout(context->module, llvm_layout);
 	}
@@ -832,6 +910,14 @@ llvm_session_initialize(void)
 	LLVMInitializeNativeAsmPrinter();
 	LLVMInitializeNativeAsmParser();
 
+	if (llvm_context == NULL)
+	{
+		llvm_context = LLVMContextCreate();
+
+		llvm_jit_context_in_use_count = 0;
+		llvm_llvm_context_reuse_count = 0;
+	}
+
 	/*
 	 * When targeting LLVM 15, turn off opaque pointers for the context we
 	 * build our code in.  We don't need to do so for other contexts (e.g.
@@ -850,6 +936,11 @@ llvm_session_initialize(void)
 	 * triple.
 	 */
 	llvm_create_types();
+
+	/*
+	 * Extract target information from loaded module.
+	 */
+	llvm_set_target();
 
 	if (LLVMGetTargetFromTriple(llvm_triple, &llvm_targetref, &error) != 0)
 	{
@@ -946,6 +1037,10 @@ llvm_shutdown(int code, Datum arg)
 		return;
 	}
 
+	if (llvm_jit_context_in_use_count != 0)
+		elog(PANIC, "LLVMJitContext in use count not 0 at exit (is %zu)",
+			 llvm_jit_context_in_use_count);
+
 #if LLVM_VERSION_MAJOR > 11
 	{
 		if (llvm_opt3_orc)
@@ -1009,6 +1104,23 @@ load_return_type(LLVMModuleRef mod, const char *name)
 }
 
 /*
+ * Load triple & layout from clang emitted file so we're guaranteed to be
+ * compatible.
+ */
+static void
+llvm_set_target(void)
+{
+	if (!llvm_types_module)
+		elog(ERROR, "failed to extract target information, llvmjit_types.c not loaded");
+
+	if (llvm_triple == NULL)
+		llvm_triple = pstrdup(LLVMGetTarget(llvm_types_module));
+
+	if (llvm_layout == NULL)
+		llvm_layout = pstrdup(LLVMGetDataLayoutStr(llvm_types_module));
+}
+
+/*
  * Load required information, types, function signatures from llvmjit_types.c
  * and make them available in global variables.
  *
@@ -1031,18 +1143,11 @@ llvm_create_types(void)
 	}
 
 	/* eagerly load contents, going to need it all */
-	if (LLVMParseBitcode2(buf, &llvm_types_module))
+	if (LLVMParseBitcodeInContext2(llvm_context, buf, &llvm_types_module))
 	{
-		elog(ERROR, "LLVMParseBitcode2 of %s failed", path);
+		elog(ERROR, "LLVMParseBitcodeInContext2 of %s failed", path);
 	}
 	LLVMDisposeMemoryBuffer(buf);
-
-	/*
-	 * Load triple & layout from clang emitted file so we're guaranteed to be
-	 * compatible.
-	 */
-	llvm_triple = pstrdup(LLVMGetTarget(llvm_types_module));
-	llvm_layout = pstrdup(LLVMGetDataLayoutStr(llvm_types_module));
 
 	TypeSizeT = llvm_pg_var_type("TypeSizeT");
 	TypeParamBool = load_return_type(llvm_types_module, "FunctionReturningBool");
