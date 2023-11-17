@@ -10,8 +10,10 @@ SET password_encryption = 'scram-sha-256'; -- ok
 
 -- consistency of password entries
 SET password_encryption = 'md5';
-CREATE ROLE regress_passwd1 PASSWORD 'role_pwd1';
-CREATE ROLE regress_passwd2 PASSWORD 'role_pwd2';
+CREATE ROLE regress_passwd1;
+ALTER ROLE regress_passwd1 PASSWORD 'role_pwd1';
+CREATE ROLE regress_passwd2;
+ALTER ROLE regress_passwd2 PASSWORD 'role_pwd2';
 SET password_encryption = 'scram-sha-256';
 CREATE ROLE regress_passwd3 PASSWORD 'role_pwd3';
 CREATE ROLE regress_passwd4 PASSWORD NULL;
