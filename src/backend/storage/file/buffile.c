@@ -841,14 +841,14 @@ BufFileTell(BufFile *file, int *fileno, off_t *offset)
  *
  * Performs absolute seek to the start of the n'th BLCKSZ-sized block of
  * the file.  Note that users of this interface will fail if their files
- * exceed BLCKSZ * LONG_MAX bytes, but that is quite a lot; we don't work
- * with tables bigger than that, either...
+ * exceed BLCKSZ * PG_INT64_MAX bytes, but that is quite a lot; we don't
+ * work with tables bigger than that, either...
  *
  * Result is 0 if OK, EOF if not.  Logical position is not moved if an
  * impossible seek is attempted.
  */
 int
-BufFileSeekBlock(BufFile *file, long blknum)
+BufFileSeekBlock(BufFile *file, int64 blknum)
 {
 	return BufFileSeek(file,
 					   (int) (blknum / BUFFILE_SEG_SIZE),
@@ -901,10 +901,10 @@ BufFileSize(BufFile *file)
  * begins.  Caller should apply this as an offset when working off block
  * positions that are in terms of the original BufFile space.
  */
-long
+int64
 BufFileAppend(BufFile *target, BufFile *source)
 {
-	long		startBlock = target->numFiles * BUFFILE_SEG_SIZE;
+	int64		startBlock = target->numFiles * BUFFILE_SEG_SIZE;
 	int			newNumFiles = target->numFiles + source->numFiles;
 	int			i;
 

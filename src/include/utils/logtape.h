@@ -51,7 +51,7 @@ typedef struct TapeShare
 	 * Currently, all the leader process needs is the location of the
 	 * materialized tape's first block.
 	 */
-	long		firstblocknumber;
+	int64		firstblocknumber;
 } TapeShare;
 
 /*
@@ -70,8 +70,8 @@ extern void LogicalTapeWrite(LogicalTape *lt, const void *ptr, size_t size);
 extern void LogicalTapeRewindForRead(LogicalTape *lt, size_t buffer_size);
 extern void LogicalTapeFreeze(LogicalTape *lt, TapeShare *share);
 extern size_t LogicalTapeBackspace(LogicalTape *lt, size_t size);
-extern void LogicalTapeSeek(LogicalTape *lt, long blocknum, int offset);
-extern void LogicalTapeTell(LogicalTape *lt, long *blocknum, int *offset);
-extern long LogicalTapeSetBlocks(LogicalTapeSet *lts);
+extern void LogicalTapeSeek(LogicalTape *lt, int64 blocknum, int offset);
+extern void LogicalTapeTell(LogicalTape *lt, int64 *blocknum, int *offset);
+extern int64 LogicalTapeSetBlocks(LogicalTapeSet *lts);
 
 #endif							/* LOGTAPE_H */
