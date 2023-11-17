@@ -1912,7 +1912,8 @@ SELECT a + b AS sum, c FROM table1 ORDER BY sum + c;          -- wrong
 SELECT <replaceable>select_list</replaceable>
     FROM <replaceable>table_expression</replaceable>
     <optional> ORDER BY ... </optional>
-    <optional> LIMIT { <replaceable>number</replaceable> | ALL } </optional> <optional> OFFSET <replaceable>number</replaceable> </optional>
+    <optional> LIMIT { <replaceable class="parameter">count</replaceable> | ALL } </optional>
+    <optional> OFFSET <replaceable class="parameter">start</replaceable> </optional>
 </synopsis>
   </para>
 
