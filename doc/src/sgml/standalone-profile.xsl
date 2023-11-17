@@ -90,4 +90,8 @@ variant without links and references to the main documentation.
   <xsl:text>xml2</xsl:text>
 </xsl:template>
 
+<xsl:template match="xref[@linkend='sepgsql']">
+  <xsl:text>sepgsql</xsl:text>
+</xsl:template>
+
 </xsl:stylesheet>
