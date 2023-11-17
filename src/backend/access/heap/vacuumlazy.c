@@ -1047,18 +1047,6 @@ lazy_scan_heap(LVRelState *vacrel)
 				dead_items->num_items = 0;
 
 				/*
-				 * Periodically perform FSM vacuuming to make newly-freed
-				 * space visible on upper FSM pages.  Note we have not yet
-				 * performed FSM processing for blkno.
-				 */
-				if (blkno - next_fsm_block_to_vacuum >= VACUUM_FSM_EVERY_PAGES)
-				{
-					FreeSpaceMapVacuumRange(vacrel->rel, next_fsm_block_to_vacuum,
-											blkno);
-					next_fsm_block_to_vacuum = blkno;
-				}
-
-				/*
 				 * Now perform FSM processing for blkno, and move on to next
 				 * page.
 				 *
@@ -1071,6 +1059,24 @@ lazy_scan_heap(LVRelState *vacrel)
 
 				UnlockReleaseBuffer(buf);
 				RecordPageWithFreeSpace(vacrel->rel, blkno, freespace);
+
+				/*
+				 * Periodically perform FSM vacuuming to make newly-freed
+				 * space visible on upper FSM pages. FreeSpaceMapVacuumRange()
+				 * vacuums the portion of the freespace map covering heap
+				 * pages from start to end - 1. Include the block we just
+				 * vacuumed by passing it blkno + 1. Overflow isn't an issue
+				 * because MaxBlockNumber + 1 is InvalidBlockNumber which
+				 * causes FreeSpaceMapVacuumRange() to vacuum freespace map
+				 * pages covering the remainder of the relation.
+				 */
+				if (blkno - next_fsm_block_to_vacuum >= VACUUM_FSM_EVERY_PAGES)
+				{
+					FreeSpaceMapVacuumRange(vacrel->rel, next_fsm_block_to_vacuum,
+											blkno + 1);
+					next_fsm_block_to_vacuum = blkno + 1;
+				}
+
 				continue;
 			}
 
