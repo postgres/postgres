@@ -636,6 +636,24 @@ SELECT t1.id, t2.path, t2 FROM t AS t1 JOIN t AS t2 ON
  16 | {3,7,11,16} | (16,"{3,7,11,16}")
 (16 rows)
 
+-- test that column statistics from a materialized CTE are available
+-- to upper planner (otherwise, we'd get a stupider plan)
+explain (costs off)
+with x as materialized (select unique1 from tenk1 b)
+select count(*) from tenk1 a
+  where unique1 in (select * from x);
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Aggregate
+   CTE x
+     ->  Index Only Scan using tenk1_unique1 on tenk1 b
+   ->  Hash Semi Join
+         Hash Cond: (a.unique1 = x.unique1)
+         ->  Index Only Scan using tenk1_unique1 on tenk1 a
+         ->  Hash
+               ->  CTE Scan on x
+(8 rows)
+
 -- SEARCH clause
 create temp table graph0( f int, t int, label text );
 insert into graph0 values
