@@ -42,6 +42,13 @@ typedef struct LLVMJitContext
 	/* number of modules created */
 	size_t		module_generation;
 
+	/*
+	 * The LLVM Context used by this JIT context. An LLVM context is reused
+	 * across many compilations, but occasionally reset to prevent it using
+	 * too much memory due to more and more types accumulating.
+	 */
+	LLVMContextRef llvm_context;
+
 	/* current, "open for write", module */
 	LLVMModuleRef module;
 
@@ -107,6 +114,7 @@ extern LLVMValueRef llvm_function_reference(LLVMJitContext *context,
 						LLVMModuleRef mod,
 						FunctionCallInfo fcinfo);
 
+extern void llvm_inline_reset_caches(void);
 extern void llvm_inline(LLVMModuleRef mod);
 
 /*

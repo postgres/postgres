@@ -114,12 +114,12 @@ typedef llvm::StringMap<std::unique_ptr<llvm::ModuleSummaryIndex> > SummaryCache
 llvm::ManagedStatic<SummaryCache> summary_cache;
 
 
-static std::unique_ptr<ImportMapTy> llvm_build_inline_plan(llvm::Module *mod);
+static std::unique_ptr<ImportMapTy> llvm_build_inline_plan(LLVMContextRef lc, llvm::Module *mod);
 static void llvm_execute_inline_plan(llvm::Module *mod,
 									 ImportMapTy *globalsToInline);
 
-static llvm::Module* load_module_cached(llvm::StringRef modPath);
-static std::unique_ptr<llvm::Module> load_module(llvm::StringRef Identifier);
+static llvm::Module* load_module_cached(LLVMContextRef c, llvm::StringRef modPath);
+static std::unique_ptr<llvm::Module> load_module(LLVMContextRef c, llvm::StringRef Identifier);
 static std::unique_ptr<llvm::ModuleSummaryIndex> llvm_load_summary(llvm::StringRef path);
 
 
@@ -153,15 +153,28 @@ summaries_for_guid(const InlineSearchPath& path, llvm::GlobalValue::GUID guid);
 #endif
 
 /*
+ * Reset inlining related state. This needs to be called before the currently
+ * used LLVMContextRef is disposed (and a new one create), otherwise we would
+ * have dangling references to deleted modules.
+ */
+void
+llvm_inline_reset_caches(void)
+{
+	module_cache->clear();
+	summary_cache->clear();
+}
+
+/*
  * Perform inlining of external function references in M based on a simple
  * cost based analysis.
  */
 void
 llvm_inline(LLVMModuleRef M)
 {
+	LLVMContextRef lc = LLVMGetModuleContext(M);
 	llvm::Module *mod = llvm::unwrap(M);
 
-	std::unique_ptr<ImportMapTy> globalsToInline = llvm_build_inline_plan(mod);
+	std::unique_ptr<ImportMapTy> globalsToInline = llvm_build_inline_plan(lc, mod);
 	if (!globalsToInline)
 		return;
 	llvm_execute_inline_plan(mod, globalsToInline.get());
@@ -172,7 +185,7 @@ llvm_inline(LLVMModuleRef M)
  * mod.
  */
 static std::unique_ptr<ImportMapTy>
-llvm_build_inline_plan(llvm::Module *mod)
+llvm_build_inline_plan(LLVMContextRef lc, llvm::Module *mod)
 {
 	std::unique_ptr<ImportMapTy> globalsToInline(new ImportMapTy());
 	FunctionInlineStates functionStates;
@@ -271,7 +284,7 @@ llvm_build_inline_plan(llvm::Module *mod)
 				continue;
 			}
 
-			defMod = load_module_cached(modPath);
+			defMod = load_module_cached(lc, modPath);
 			if (defMod->materializeMetadata())
 				elog(FATAL, "failed to materialize metadata");
 
@@ -466,20 +479,20 @@ llvm_execute_inline_plan(llvm::Module *mod, ImportMapTy *globalsToInline)
  * the cache state would get corrupted.
  */
 static llvm::Module*
-load_module_cached(llvm::StringRef modPath)
+load_module_cached(LLVMContextRef lc, llvm::StringRef modPath)
 {
 	auto it = module_cache->find(modPath);
 	if (it == module_cache->end())
 	{
 		it = module_cache->insert(
-			std::make_pair(modPath, load_module(modPath))).first;
+			std::make_pair(modPath, load_module(lc, modPath))).first;
 	}
 
 	return it->second.get();
 }
 
 static std::unique_ptr<llvm::Module>
-load_module(llvm::StringRef Identifier)
+load_module(LLVMContextRef lc, llvm::StringRef Identifier)
 {
 	LLVMMemoryBufferRef buf;
 	LLVMModuleRef mod;
@@ -491,7 +504,7 @@ load_module(llvm::StringRef Identifier)
 	if (LLVMCreateMemoryBufferWithContentsOfFile(path, &buf, &msg))
 		elog(FATAL, "failed to open bitcode file \"%s\": %s",
 			 path, msg);
-	if (LLVMGetBitcodeModuleInContext2(LLVMGetGlobalContext(), buf, &mod))
+	if (LLVMGetBitcodeModuleInContext2(lc, buf, &mod))
 		elog(FATAL, "failed to parse bitcode in file \"%s\"", path);
 
 	/*
