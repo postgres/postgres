@@ -921,7 +921,7 @@ llvm_session_initialize(void)
 	}
 #endif							/* LLVM_VERSION_MAJOR > 11 */
 
-	before_shmem_exit(llvm_shutdown, 0);
+	on_proc_exit(llvm_shutdown, 0);
 
 	llvm_session_initialized = true;
 
