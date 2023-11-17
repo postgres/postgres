@@ -1201,8 +1201,8 @@ array_to_datum_internal(AV *av, ArrayBuildState **astatep,
 				if (cur_depth + 1 > MAXDIM)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-							 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-									cur_depth + 1, MAXDIM)));
+							 errmsg("number of array dimensions exceeds the maximum allowed (%d)",
+									MAXDIM)));
 				/* OK, add a dimension */
 				dims[*ndims] = av_len(nav) + 1;
 				(*ndims)++;

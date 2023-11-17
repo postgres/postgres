@@ -429,8 +429,8 @@ ReadArrayDimensions(char **srcptr, int *ndim_p, int *dim, int *lBound,
 		if (ndim >= MAXDIM)
 			ereturn(escontext, false,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-							ndim + 1, MAXDIM)));
+					 errmsg("number of array dimensions exceeds the maximum allowed (%d)",
+							MAXDIM)));
 
 		q = p;
 		if (!ReadDimensionInt(&p, &i, origStr, escontext))
@@ -641,8 +641,8 @@ ReadArrayStr(char **srcptr,
 				if (nest_level >= MAXDIM)
 					ereturn(escontext, false,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-							 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-									nest_level + 1, MAXDIM)));
+							 errmsg("number of array dimensions exceeds the maximum allowed (%d)",
+									MAXDIM)));
 
 				nelems[nest_level] = 0;
 				nest_level++;
