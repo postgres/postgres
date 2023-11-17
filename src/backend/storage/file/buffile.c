@@ -856,24 +856,6 @@ BufFileSeekBlock(BufFile *file, long blknum)
 					   SEEK_SET);
 }
 
-#ifdef NOT_USED
-/*
- * BufFileTellBlock --- block-oriented tell
- *
- * Any fractional part of a block in the current seek position is ignored.
- */
-long
-BufFileTellBlock(BufFile *file)
-{
-	long		blknum;
-
-	blknum = (file->curOffset + file->pos) / BLCKSZ;
-	blknum += file->curFile * BUFFILE_SEG_SIZE;
-	return blknum;
-}
-
-#endif
-
 /*
  * Return the current fileset based BufFile size.
  *
