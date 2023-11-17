@@ -1,0 +1,44 @@
+--
+-- HMAC-MD5
+--
+SELECT hmac(
+'Hi There',
+'\x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b'::bytea,
+'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+-- 2
+SELECT hmac(
+'Jefe',
+'what do ya want for nothing?',
+'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+-- 3
+SELECT hmac(
+'\xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'::bytea,
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+-- 4
+SELECT hmac(
+'\xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd'::bytea,
+'\x0102030405060708090a0b0c0d0e0f10111213141516171819'::bytea,
+'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+-- 5
+SELECT hmac(
+'Test With Truncation',
+'\x0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'::bytea,
+'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+-- 6
+SELECT hmac(
+'Test Using Larger Than Block-Size Key - Hash Key First',
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+-- 7
+SELECT hmac(
+'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data',
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized

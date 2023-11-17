@@ -1,0 +1,17 @@
+--
+-- MD5 message digest
+--
+SELECT digest('', 'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+SELECT digest('a', 'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+SELECT digest('abc', 'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+SELECT digest('message digest', 'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+SELECT digest('abcdefghijklmnopqrstuvwxyz', 'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+SELECT digest('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized
+SELECT digest('12345678901234567890123456789012345678901234567890123456789012345678901234567890', 'md5');
+ERROR:  Cannot use "md5": Cipher cannot be initialized

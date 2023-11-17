@@ -1,0 +1,16 @@
+--
+-- crypt() and gen_salt(): md5
+--
+SELECT crypt('', '$1$Szzz0yzz');
+ERROR:  crypt(3) returned NULL
+SELECT crypt('foox', '$1$Szzz0yzz');
+ERROR:  crypt(3) returned NULL
+CREATE TABLE ctest (data text, res text, salt text);
+INSERT INTO ctest VALUES ('password', '', '');
+UPDATE ctest SET salt = gen_salt('md5');
+UPDATE ctest SET res = crypt(data, salt);
+ERROR:  crypt(3) returned NULL
+SELECT res = crypt(data, res) AS "worked"
+FROM ctest;
+ERROR:  invalid salt
+DROP TABLE ctest;

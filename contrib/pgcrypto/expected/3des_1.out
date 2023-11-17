@@ -1,0 +1,29 @@
+--
+-- 3DES cipher
+--
+-- test vector from somewhere
+SELECT encrypt('\x8000000000000000',
+               '\x010101010101010101010101010101010101010101010101',
+               '3des-ecb/pad:none');
+ERROR:  encrypt error: Cipher cannot be initialized
+select encrypt('', 'foo', '3des');
+ERROR:  encrypt error: Cipher cannot be initialized
+-- 10 bytes key
+select encrypt('foo', '0123456789', '3des');
+ERROR:  encrypt error: Cipher cannot be initialized
+-- 22 bytes key
+select encrypt('foo', '0123456789012345678901', '3des');
+ERROR:  encrypt error: Cipher cannot be initialized
+-- decrypt
+select encode(decrypt(encrypt('foo', '0123456', '3des'), '0123456', '3des'), 'escape');
+ERROR:  encrypt error: Cipher cannot be initialized
+-- iv
+select encrypt_iv('foo', '0123456', 'abcd', '3des');
+ERROR:  encrypt_iv error: Cipher cannot be initialized
+select encode(decrypt_iv('\x50735067b073bb93', '0123456', 'abcd', '3des'), 'escape');
+ERROR:  decrypt_iv error: Cipher cannot be initialized
+-- long message
+select encrypt('Lets try a longer message.', '0123456789012345678901', '3des');
+ERROR:  encrypt error: Cipher cannot be initialized
+select encode(decrypt(encrypt('Lets try a longer message.', '0123456789012345678901', '3des'), '0123456789012345678901', '3des'), 'escape');
+ERROR:  encrypt error: Cipher cannot be initialized
