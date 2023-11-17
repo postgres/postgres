@@ -64,6 +64,9 @@ $ENV{PGHOST} = $node->host;
 $ENV{PGPORT} = $node->port;
 $node->start;
 
+# could fail in FIPS mode
+my $md5_works = ($node->psql('postgres', "select md5('')") == 0);
+
 # Configure server for SSL connections, with password handling.
 $ssl_server->configure_test_server_for_ssl(
 	$node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
@@ -91,12 +94,16 @@ $node->connect_ok("$common_connstr user=ssltestuser channel_binding=require",
 	"SCRAM with SSL and channel_binding=require");
 
 # Now test when the user has an MD5-encrypted password; should fail
-$node->connect_fails(
-	"$common_connstr user=md5testuser channel_binding=require",
-	"MD5 with SSL and channel_binding=require",
-	expected_stderr =>
-	  qr/channel binding required but not supported by server's authentication request/
-);
+SKIP:
+{
+	skip "MD5 not supported" unless $md5_works;
+	$node->connect_fails(
+		"$common_connstr user=md5testuser channel_binding=require",
+		"MD5 with SSL and channel_binding=require",
+		expected_stderr =>
+		  qr/channel binding required but not supported by server's authentication request/
+	);
+}
 
 # Now test with auth method 'cert' by connecting to 'certdb'. Should fail,
 # because channel binding is not performed.  Note that ssl/client.key may
@@ -130,12 +137,16 @@ $node->connect_ok(
 	"$common_connstr user=ssltestuser channel_binding=disable require_auth=scram-sha-256",
 	"SCRAM with SSL, channel_binding=disable, and require_auth=scram-sha-256"
 );
-$node->connect_fails(
-	"$common_connstr user=md5testuser require_auth=md5 channel_binding=require",
-	"channel_binding can fail even when require_auth succeeds",
-	expected_stderr =>
-	  qr/channel binding required but not supported by server's authentication request/
-);
+SKIP:
+{
+	skip "MD5 not supported" unless $md5_works;
+	$node->connect_fails(
+		"$common_connstr user=md5testuser require_auth=md5 channel_binding=require",
+		"channel_binding can fail even when require_auth succeeds",
+		expected_stderr =>
+		  qr/channel binding required but not supported by server's authentication request/
+	);
+}
 $node->connect_ok(
 	"$common_connstr user=ssltestuser channel_binding=require require_auth=scram-sha-256",
 	"SCRAM with SSL, channel_binding=require, and require_auth=scram-sha-256"

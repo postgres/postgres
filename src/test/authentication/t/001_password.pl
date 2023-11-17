@@ -66,24 +66,33 @@ $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
 $node->start;
 
+# could fail in FIPS mode
+my $md5_works = ($node->psql('postgres', "select md5('')") == 0);
+
 # Create 3 roles with different password methods for each one. The same
 # password is used for all of them.
-$node->safe_psql('postgres',
-	"SET password_encryption='scram-sha-256'; CREATE ROLE scram_role LOGIN PASSWORD 'pass';"
-);
-$node->safe_psql('postgres',
-	"SET password_encryption='md5'; CREATE ROLE md5_role LOGIN PASSWORD 'pass';"
-);
+is( $node->psql(
+		'postgres',
+		"SET password_encryption='scram-sha-256'; CREATE ROLE scram_role LOGIN PASSWORD 'pass';"
+	),
+	0,
+	'created user with SCRAM password');
+is( $node->psql(
+		'postgres',
+		"SET password_encryption='md5'; CREATE ROLE md5_role LOGIN PASSWORD 'pass';"
+	),
+	$md5_works ? 0 : 3,
+	'created user with md5 password');
 # Set up a table for tests of SYSTEM_USER.
 $node->safe_psql(
 	'postgres',
 	"CREATE TABLE sysuser_data (n) AS SELECT NULL FROM generate_series(1, 10);
-	 GRANT ALL ON sysuser_data TO md5_role;");
+	 GRANT ALL ON sysuser_data TO scram_role;");
 $ENV{"PGPASSWORD"} = 'pass';
 
 # Create a role that contains a comma to stress the parsing.
 $node->safe_psql('postgres',
-	q{SET password_encryption='md5'; CREATE ROLE "md5,role" LOGIN PASSWORD 'pass';}
+	q{SET password_encryption='scram-sha-256'; CREATE ROLE "scram,role" LOGIN PASSWORD 'pass';}
 );
 
 # Create a role with a non-default iteration count
@@ -141,8 +150,13 @@ reset_pg_hba($node, 'all', 'all', 'trust');
 test_conn($node, 'user=scram_role', 'trust', 0,
 	log_like =>
 	  [qr/connection authenticated: user="scram_role" method=trust/]);
-test_conn($node, 'user=md5_role', 'trust', 0,
-	log_like => [qr/connection authenticated: user="md5_role" method=trust/]);
+SKIP:
+{
+	skip "MD5 not supported" unless $md5_works;
+	test_conn($node, 'user=md5_role', 'trust', 0,
+		log_like =>
+		  [qr/connection authenticated: user="md5_role" method=trust/]);
+}
 
 # SYSTEM_USER is null when not authenticated.
 $res = $node->safe_psql('postgres', "SELECT SYSTEM_USER IS NULL;");
@@ -157,7 +171,7 @@ $res = $node->safe_psql(
         SET max_parallel_workers_per_gather TO 2;
 
         SELECT bool_and(SYSTEM_USER IS NOT DISTINCT FROM n) FROM sysuser_data;),
-	connstr => "user=md5_role");
+	connstr => "user=scram_role");
 is($res, 't',
 	"users with trust authentication use SYSTEM_USER = NULL in parallel workers"
 );
@@ -275,9 +289,14 @@ reset_pg_hba($node, 'all', 'all', 'password');
 test_conn($node, 'user=scram_role', 'password', 0,
 	log_like =>
 	  [qr/connection authenticated: identity="scram_role" method=password/]);
-test_conn($node, 'user=md5_role', 'password', 0,
-	log_like =>
-	  [qr/connection authenticated: identity="md5_role" method=password/]);
+SKIP:
+{
+	skip "MD5 not supported" unless $md5_works;
+	test_conn($node, 'user=md5_role', 'password', 0,
+		log_like =>
+		  [qr/connection authenticated: identity="md5_role" method=password/]
+	);
+}
 
 # require_auth succeeds here with a plaintext password.
 $node->connect_ok("user=scram_role require_auth=password",
@@ -393,59 +412,64 @@ reset_pg_hba($node, 'all', 'all', 'md5');
 test_conn($node, 'user=scram_role', 'md5', 0,
 	log_like =>
 	  [qr/connection authenticated: identity="scram_role" method=md5/]);
-test_conn($node, 'user=md5_role', 'md5', 0,
-	log_like =>
-	  [qr/connection authenticated: identity="md5_role" method=md5/]);
+SKIP:
+{
+	skip "MD5 not supported" unless $md5_works;
+	test_conn($node, 'user=md5_role', 'md5', 0,
+		log_like =>
+		  [qr/connection authenticated: identity="md5_role" method=md5/]);
+}
 
-# require_auth succeeds with MD5 required.
-$node->connect_ok("user=md5_role require_auth=md5",
-	"MD5 authentication required, works with MD5 auth");
-$node->connect_ok("user=md5_role require_auth=!none",
-	"any authentication required, works with MD5 auth");
+# require_auth succeeds with SCRAM required.
 $node->connect_ok(
-	"user=md5_role require_auth=md5,scram-sha-256,password",
-	"multiple authentication types required, works with MD5 auth");
+	"user=scram_role require_auth=scram-sha-256",
+	"SCRAM authentication required, works with SCRAM auth");
+$node->connect_ok("user=scram_role require_auth=!none",
+	"any authentication required, works with SCRAM auth");
+$node->connect_ok(
+	"user=scram_role require_auth=md5,scram-sha-256,password",
+	"multiple authentication types required, works with SCRAM auth");
 
 # Authentication fails if other types are required.
 $node->connect_fails(
-	"user=md5_role require_auth=password",
-	"password authentication required, fails with MD5 auth",
+	"user=scram_role require_auth=password",
+	"password authentication required, fails with SCRAM auth",
 	expected_stderr =>
-	  qr/authentication method requirement "password" failed: server requested a hashed password/
+	  qr/authentication method requirement "password" failed: server requested SASL authentication/
 );
 $node->connect_fails(
-	"user=md5_role require_auth=scram-sha-256",
-	"SCRAM authentication required, fails with MD5 auth",
+	"user=scram_role require_auth=md5",
+	"MD5 authentication required, fails with SCRAM auth",
 	expected_stderr =>
-	  qr/authentication method requirement "scram-sha-256" failed: server requested a hashed password/
+	  qr/authentication method requirement "md5" failed: server requested SASL authentication/
 );
 $node->connect_fails(
-	"user=md5_role require_auth=none",
-	"all authentication types forbidden, fails with MD5 auth",
+	"user=scram_role require_auth=none",
+	"all authentication types forbidden, fails with SCRAM auth",
 	expected_stderr =>
-	  qr/authentication method requirement "none" failed: server requested a hashed password/
+	  qr/authentication method requirement "none" failed: server requested SASL authentication/
 );
 
-# Authentication fails if MD5 is forbidden.
+# Authentication fails if SCRAM is forbidden.
 $node->connect_fails(
-	"user=md5_role require_auth=!md5",
-	"password authentication forbidden, fails with MD5 auth",
+	"user=scram_role require_auth=!scram-sha-256",
+	"password authentication forbidden, fails with SCRAM auth",
 	expected_stderr =>
-	  qr/authentication method requirement "!md5" failed: server requested a hashed password/
+	  qr/authentication method requirement "!scram-sha-256" failed: server requested SASL authentication/
 );
 $node->connect_fails(
-	"user=md5_role require_auth=!password,!md5,!scram-sha-256",
-	"multiple authentication types forbidden, fails with MD5 auth",
+	"user=scram_role require_auth=!password,!md5,!scram-sha-256",
+	"multiple authentication types forbidden, fails with SCRAM auth",
 	expected_stderr =>
-	  qr/authentication method requirement "!password,!md5,!scram-sha-256" failed: server requested a hashed password/
+	  qr/authentication method requirement "!password,!md5,!scram-sha-256" failed: server requested SASL authentication/
 );
 
 # Test SYSTEM_USER <> NULL with parallel workers.
 $node->safe_psql(
 	'postgres',
 	"TRUNCATE sysuser_data;
-INSERT INTO sysuser_data SELECT 'md5:md5_role' FROM generate_series(1, 10);",
-	connstr => "user=md5_role");
+INSERT INTO sysuser_data SELECT 'md5:scram_role' FROM generate_series(1, 10);",
+	connstr => "user=scram_role");
 $res = $node->safe_psql(
 	'postgres', qq(
         SET min_parallel_table_scan_size TO 0;
@@ -454,7 +478,7 @@ $res = $node->safe_psql(
         SET max_parallel_workers_per_gather TO 2;
 
         SELECT bool_and(SYSTEM_USER IS NOT DISTINCT FROM n) FROM sysuser_data;),
-	connstr => "user=md5_role");
+	connstr => "user=scram_role");
 is($res, 't',
 	"users with md5 authentication use SYSTEM_USER = md5:role in parallel workers"
 );
@@ -490,49 +514,57 @@ test_conn($node, 'user=md5_role', 'password from pgpass', 2);
 
 append_to_file(
 	$pgpassfile, qq!
-*:*:*:md5_role:p\\ass
-*:*:*:md5,role:p\\ass
+*:*:*:scram_role:p\\ass
+*:*:*:scram,role:p\\ass
 !);
 
-test_conn($node, 'user=md5_role', 'password from pgpass', 0);
+test_conn($node, 'user=scram_role', 'password from pgpass', 0);
 
 # Testing with regular expression for username.  The third regexp matches.
-reset_pg_hba($node, 'all', '/^.*nomatch.*$, baduser, /^md.*$', 'password');
-test_conn($node, 'user=md5_role', 'password, matching regexp for username', 0,
+reset_pg_hba($node, 'all', '/^.*nomatch.*$, baduser, /^scr.*$', 'password');
+test_conn(
+	$node,
+	'user=scram_role',
+	'password, matching regexp for username',
+	0,
 	log_like =>
-	  [qr/connection authenticated: identity="md5_role" method=password/]);
+	  [qr/connection authenticated: identity="scram_role" method=password/]);
 
 # The third regex does not match anymore.
-reset_pg_hba($node, 'all', '/^.*nomatch.*$, baduser, /^m_d.*$', 'password');
-test_conn($node, 'user=md5_role',
+reset_pg_hba($node, 'all', '/^.*nomatch.*$, baduser, /^sc_r.*$', 'password');
+test_conn($node, 'user=scram_role',
 	'password, non matching regexp for username',
 	2, log_unlike => [qr/connection authenticated:/]);
 
 # Test with a comma in the regular expression.  In this case, the use of
 # double quotes is mandatory so as this is not considered as two elements
 # of the user name list when parsing pg_hba.conf.
-reset_pg_hba($node, 'all', '"/^.*5,.*e$"', 'password');
-test_conn($node, 'user=md5,role', 'password, matching regexp for username', 0,
+reset_pg_hba($node, 'all', '"/^.*m,.*e$"', 'password');
+test_conn(
+	$node,
+	'user=scram,role',
+	'password, matching regexp for username',
+	0,
 	log_like =>
-	  [qr/connection authenticated: identity="md5,role" method=password/]);
+	  [qr/connection authenticated: identity="scram,role" method=password/]);
 
 # Testing with regular expression for dbname. The third regex matches.
 reset_pg_hba($node, '/^.*nomatch.*$, baddb, /^regex_t.*b$', 'all',
 	'password');
 test_conn(
 	$node,
-	'user=md5_role dbname=regex_testdb',
+	'user=scram_role dbname=regex_testdb',
 	'password, matching regexp for dbname',
 	0,
 	log_like =>
-	  [qr/connection authenticated: identity="md5_role" method=password/]);
+	  [qr/connection authenticated: identity="scram_role" method=password/]);
 
 # The third regexp does not match anymore.
 reset_pg_hba($node, '/^.*nomatch.*$, baddb, /^regex_t.*ba$',
 	'all', 'password');
 test_conn(
 	$node,
-	'user=md5_role dbname=regex_testdb',
+	'user=scram_role dbname=regex_testdb',
 	'password, non matching regexp for dbname',
 	2, log_unlike => [qr/connection authenticated:/]);
 
