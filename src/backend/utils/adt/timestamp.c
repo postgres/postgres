@@ -3548,17 +3548,14 @@ interval_mul(PG_FUNCTION_ARGS)
 	 * interval type has nothing equivalent to NaN.
 	 */
 	if (isnan(factor))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+		goto out_of_range;
 
 	if (INTERVAL_NOT_FINITE(span))
 	{
 		if (factor == 0.0)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("interval out of range")));
-		else if (factor < 0.0)
+			goto out_of_range;
+
+		if (factor < 0.0)
 			interval_um_internal(span, result);
 		else
 			memcpy(result, span, sizeof(Interval));
@@ -3570,10 +3567,9 @@ interval_mul(PG_FUNCTION_ARGS)
 		int			isign = interval_sign(span);
 
 		if (isign == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("interval out of range")));
-		else if (factor * isign < 0)
+			goto out_of_range;
+
+		if (factor * isign < 0)
 			INTERVAL_NOBEGIN(result);
 		else
 			INTERVAL_NOEND(result);
@@ -3582,19 +3578,13 @@ interval_mul(PG_FUNCTION_ARGS)
 	}
 
 	result_double = span->month * factor;
-	if (isnan(result_double) ||
-		result_double > INT_MAX || result_double < INT_MIN)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+	if (isnan(result_double) || !FLOAT8_FITS_IN_INT32(result_double))
+		goto out_of_range;
 	result->month = (int32) result_double;
 
 	result_double = span->day * factor;
-	if (isnan(result_double) ||
-		result_double > INT_MAX || result_double < INT_MIN)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+	if (isnan(result_double) || !FLOAT8_FITS_IN_INT32(result_double))
+		goto out_of_range;
 	result->day = (int32) result_double;
 
 	/*
@@ -3628,25 +3618,33 @@ interval_mul(PG_FUNCTION_ARGS)
 	 */
 	if (fabs(sec_remainder) >= SECS_PER_DAY)
 	{
-		result->day += (int) (sec_remainder / SECS_PER_DAY);
+		if (pg_add_s32_overflow(result->day,
+								(int) (sec_remainder / SECS_PER_DAY),
+								&result->day))
+			goto out_of_range;
 		sec_remainder -= (int) (sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
 	}
 
 	/* cascade units down */
-	result->day += (int32) month_remainder_days;
+	if (pg_add_s32_overflow(result->day, (int32) month_remainder_days,
+							&result->day))
+		goto out_of_range;
 	result_double = rint(span->time * factor + sec_remainder * USECS_PER_SEC);
 	if (isnan(result_double) || !FLOAT8_FITS_IN_INT64(result_double))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+		goto out_of_range;
 	result->time = (int64) result_double;
 
 	if (INTERVAL_NOT_FINITE(result))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+		goto out_of_range;
 
 	PG_RETURN_INTERVAL_P(result);
+
+out_of_range:
+	ereport(ERROR,
+			errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("interval out of range"));
+
+	PG_RETURN_NULL();			/* keep compiler quiet */
 }
 
 Datum
@@ -3665,7 +3663,8 @@ interval_div(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
 	double		month_remainder_days,
-				sec_remainder;
+				sec_remainder,
+				result_double;
 	int32		orig_month = span->month,
 				orig_day = span->day;
 	Interval   *result;
@@ -3685,16 +3684,12 @@ interval_div(PG_FUNCTION_ARGS)
 	 * by the regular division code, causing all fields to be set to zero.
 	 */
 	if (isnan(factor))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+		goto out_of_range;
 
 	if (INTERVAL_NOT_FINITE(span))
 	{
 		if (isinf(factor))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("interval out of range")));
+			goto out_of_range;
 
 		if (factor < 0.0)
 			interval_um_internal(span, result);
@@ -3704,8 +3699,15 @@ interval_div(PG_FUNCTION_ARGS)
 		PG_RETURN_INTERVAL_P(result);
 	}
 
-	result->month = (int32) (span->month / factor);
-	result->day = (int32) (span->day / factor);
+	result_double = span->month / factor;
+	if (isnan(result_double) || !FLOAT8_FITS_IN_INT32(result_double))
+		goto out_of_range;
+	result->month = (int32) result_double;
+
+	result_double = span->day / factor;
+	if (isnan(result_double) || !FLOAT8_FITS_IN_INT32(result_double))
+		goto out_of_range;
+	result->day = (int32) result_double;
 
 	/*
 	 * Fractional months full days into days.  See comment in interval_mul().
@@ -3717,20 +3719,33 @@ interval_div(PG_FUNCTION_ARGS)
 	sec_remainder = TSROUND(sec_remainder);
 	if (fabs(sec_remainder) >= SECS_PER_DAY)
 	{
-		result->day += (int) (sec_remainder / SECS_PER_DAY);
+		if (pg_add_s32_overflow(result->day,
+								(int) (sec_remainder / SECS_PER_DAY),
+								&result->day))
+			goto out_of_range;
 		sec_remainder -= (int) (sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
 	}
 
 	/* cascade units down */
-	result->day += (int32) month_remainder_days;
-	result->time = rint(span->time / factor + sec_remainder * USECS_PER_SEC);
+	if (pg_add_s32_overflow(result->day, (int32) month_remainder_days,
+							&result->day))
+		goto out_of_range;
+	result_double = rint(span->time / factor + sec_remainder * USECS_PER_SEC);
+	if (isnan(result_double) || !FLOAT8_FITS_IN_INT64(result_double))
+		goto out_of_range;
+	result->time = (int64) result_double;
 
 	if (INTERVAL_NOT_FINITE(result))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+		goto out_of_range;
 
 	PG_RETURN_INTERVAL_P(result);
+
+out_of_range:
+	ereport(ERROR,
+			errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("interval out of range"));
+
+	PG_RETURN_NULL();			/* keep compiler quiet */
 }
 
 
