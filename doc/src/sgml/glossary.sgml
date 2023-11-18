@@ -1097,12 +1097,29 @@
      (just like a <glossterm linkend="glossary-view">view</glossterm>),
      but stores data in the same way that a
      <glossterm linkend="glossary-table">table</glossterm> does. It cannot be
-     modified via <command>INSERT</command>, <command>UPDATE</command>, or
-     <command>DELETE</command> operations.
+     modified via <command>INSERT</command>, <command>UPDATE</command>,
+     <command>DELETE</command>, or <command>MERGE</command> operations.
     </para>
     <para>
      For more information, see
      <xref linkend="sql-creatematerializedview"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-merge">
+   <glossterm>Merge</glossterm>
+   <glossdef>
+    <para>
+     An <acronym>SQL</acronym> command used to conditionally add, modify,
+     or remove <glossterm linkend="glossary-tuple">rows</glossterm>
+     in a given <glossterm linkend="glossary-table">table</glossterm>,
+     using data from a source
+     <glossterm linkend="glossary-relation">relation</glossterm>.
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="sql-merge"/>.
     </para>
    </glossdef>
   </glossentry>
