@@ -102,14 +102,14 @@ DELETE
    that are referred to in the <literal>SET</literal> clause.
    If you specify an insert action, you must have the <literal>INSERT</literal>
    privilege on the <replaceable class="parameter">target_table_name</replaceable>.
-   If you specify an delete action, you must have the <literal>DELETE</literal>
+   If you specify a delete action, you must have the <literal>DELETE</literal>
    privilege on the <replaceable class="parameter">target_table_name</replaceable>.
    Privileges are tested once at statement start and are checked
    whether or not particular <literal>WHEN</literal> clauses are executed.
-   You will require the <literal>SELECT</literal> privilege on the
-   <replaceable class="parameter">data_source</replaceable> and any column(s)
-   of the <replaceable class="parameter">target_table_name</replaceable>
-   referred to in a <literal>condition</literal>.
+   You will require the <literal>SELECT</literal> privilege on any column(s)
+   of the <replaceable class="parameter">data_source</replaceable> and
+   <replaceable class="parameter">target_table_name</replaceable> referred to
+   in any <literal>condition</literal> or <literal>expression</literal>.
   </para>
 
   <para>
