@@ -1246,7 +1246,7 @@ Branch: REL_11_STABLE [919ebb023] 2023-08-07 06:06:01 -0700
      </para>
 
      <para>
-      The <productname>PostgreSQL</productname> Project thanks Micah Gate,
+      The <productname>PostgreSQL</productname> Project thanks Micah Gates,
       Valerie Woolard, Tim Carey-Smith, and Christoph Berg for reporting
       this problem.
       (CVE-2023-39417)
