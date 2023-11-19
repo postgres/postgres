@@ -734,17 +734,10 @@ void
 RemoveStatisticsById(Oid statsOid)
 {
 	Relation	relation;
+	Relation	rel;
 	HeapTuple	tup;
 	Form_pg_statistic_ext statext;
 	Oid			relid;
-
-	/*
-	 * First delete the pg_statistic_ext_data tuples holding the actual
-	 * statistical data. There might be data with/without inheritance, so
-	 * attempt deleting both.
-	 */
-	RemoveStatisticsDataById(statsOid, true);
-	RemoveStatisticsDataById(statsOid, false);
 
 	/*
 	 * Delete the pg_statistic_ext tuple.  Also send out a cache inval on the
@@ -760,11 +753,25 @@ RemoveStatisticsById(Oid statsOid)
 	statext = (Form_pg_statistic_ext) GETSTRUCT(tup);
 	relid = statext->stxrelid;
 
+	/*
+	 * Delete the pg_statistic_ext_data tuples holding the actual statistical
+	 * data. There might be data with/without inheritance, so attempt deleting
+	 * both. We lock the user table first, to prevent other processes (e.g.
+	 * DROP STATISTICS) from removing the row concurrently.
+	 */
+	rel = table_open(relid, ShareUpdateExclusiveLock);
+
+	RemoveStatisticsDataById(statsOid, true);
+	RemoveStatisticsDataById(statsOid, false);
+
 	CacheInvalidateRelcacheByRelid(relid);
 
 	CatalogTupleDelete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
+
+	/* Keep lock until the end of the transaction. */
+	table_close(rel, NoLock);
 
 	table_close(relation, RowExclusiveLock);
 }
