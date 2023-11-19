@@ -428,18 +428,12 @@ CreateStatistics(CreateStatsStmt *stmt)
 /*
  * Guts of statistics object deletion.
  */
-void
-RemoveStatisticsById(Oid statsOid)
+static void
+RemoveStatisticsDataById(Oid statsOid)
 {
 	Relation	relation;
 	HeapTuple	tup;
-	Form_pg_statistic_ext statext;
-	Oid			relid;
 
-	/*
-	 * First delete the pg_statistic_ext_data tuple holding the actual
-	 * statistical data.
-	 */
 	relation = table_open(StatisticExtDataRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(statsOid));
@@ -452,6 +446,19 @@ RemoveStatisticsById(Oid statsOid)
 	ReleaseSysCache(tup);
 
 	table_close(relation, RowExclusiveLock);
+}
+
+/*
+ * Guts of statistics object deletion.
+ */
+void
+RemoveStatisticsById(Oid statsOid)
+{
+	Relation	relation;
+	Relation	rel;
+	HeapTuple	tup;
+	Form_pg_statistic_ext statext;
+	Oid			relid;
 
 	/*
 	 * Delete the pg_statistic_ext tuple.  Also send out a cache inval on the
@@ -467,11 +474,23 @@ RemoveStatisticsById(Oid statsOid)
 	statext = (Form_pg_statistic_ext) GETSTRUCT(tup);
 	relid = statext->stxrelid;
 
+	/*
+	 * Delete the pg_statistic_ext_data tuple holding the actual statistical
+	 * data. Lock the user table first, to prevent other processes (e.g. DROP
+	 * STATISTICS) from removing the row concurrently.
+	 */
+	rel = table_open(relid, ShareUpdateExclusiveLock);
+
+	RemoveStatisticsDataById(statsOid);
+
 	CacheInvalidateRelcacheByRelid(relid);
 
 	CatalogTupleDelete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
+
+	/* Keep lock until the end of the transaction. */
+	table_close(rel, NoLock);
 
 	table_close(relation, RowExclusiveLock);
 }
