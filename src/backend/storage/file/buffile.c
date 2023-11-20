@@ -904,7 +904,7 @@ BufFileSize(BufFile *file)
 int64
 BufFileAppend(BufFile *target, BufFile *source)
 {
-	int64		startBlock = target->numFiles * BUFFILE_SEG_SIZE;
+	int64		startBlock = (int64) target->numFiles * BUFFILE_SEG_SIZE;
 	int			newNumFiles = target->numFiles + source->numFiles;
 	int			i;
 
