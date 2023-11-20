@@ -34,7 +34,7 @@ static const char *MasterKeyName = "master-key";
 
 static inline char* pg_tde_get_key_file_path(const RelFileLocator *newrlocator);
 static void put_keys_into_map(Oid rel_id, RelKeysData *keys);
-static void pg_tde_write_key_fork(RelFileLocator *rlocator, InternalKey *key, const char *MasterKeyName);
+static void pg_tde_write_key_fork(const RelFileLocator *rlocator, InternalKey *key, const char *MasterKeyName);
 static void pg_tde_xlog_create_fork(XLogReaderState *record);
 
 void
@@ -84,7 +84,7 @@ pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel)
 }
 
 void
-pg_tde_write_key_fork(RelFileLocator *rlocator, InternalKey *key, const char *MasterKeyName)
+pg_tde_write_key_fork(const RelFileLocator *rlocator, InternalKey *key, const char *MasterKeyName)
 {
 	char		*key_file_path;
 	File		file = -1;
@@ -109,16 +109,16 @@ pg_tde_write_key_fork(RelFileLocator *rlocator, InternalKey *key, const char *Ma
 	}
 
 	key_file_path = pg_tde_get_key_file_path(rlocator);
-    if (!key_file_path)
-        ereport(ERROR,
-                (errmsg("failed to get key file path")));
+	if (!key_file_path)
+		ereport(ERROR,
+				(errmsg("failed to get key file path")));
 
 	file = PathNameOpenFile(key_file_path, O_RDWR | O_CREAT | PG_BINARY);
 	if (file < 0)
 		ereport(FATAL,
-        		(errcode_for_file_access(),
-        		errmsg("could not open tde key file \"%s\": %m",
-				  		key_file_path)));
+				(errcode_for_file_access(),
+				errmsg("could not open tde key file \"%s\": %m",
+						key_file_path)));
 
 	/* Allocate in TopMemoryContext and don't pfree sice we add it to
 	 * the cache as well */

@@ -146,29 +146,6 @@ cleanup:
  	EVP_CIPHER_CTX_free(ctx);
 }
 
-void Aes128EncryptedZeroBlocks(const unsigned char* key, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char* out)
-{
-	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-
-	unsigned dataLen = (blockNumber2 - blockNumber1 + 1) * 16;
-	unsigned char data[MAX_AES_ENC_BATCH_KEY_SIZE];
-	int outLen;
-
-	Assert(blockNumber2 >= blockNumber1);
-	Assert(dataLen < MAX_AES_ENC_BATCH_KEY_SIZE);
-
-
-	// NOT memcpy: this is endian independent, and it's also how OpenSSL expects it
-	for(int i =0; i<8;++i) {
-		iv[15-i] = (blockNumber1 >> (8*i)) & 0xFF;
-	}
-
-	memset(data, 0, dataLen);
-
-	AesRun(1, key, iv, data, dataLen, out, &outLen);
-	Assert(outLen == dataLen);
-}
-
 void AesEncrypt(const unsigned char* key, const unsigned char* iv, const unsigned char* in, int in_len, unsigned char* out, int* out_len)
 {
 	AesRun(1, key, iv, in, in_len, out, out_len);
@@ -185,16 +162,16 @@ void AesDecrypt(const unsigned char* key, const unsigned char* iv, const unsigne
  * If the caller wants to process more than NUM_AES_BLOCKS_IN_BATCH * AES_BLOCK_SIZE
  * data it should divide the data into batches and call this function for each batch.
  */
-void Aes128EncryptedZeroBlocks2(void* ctxPtr, const unsigned char* key, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char* out)
+void Aes128EncryptedZeroBlocks(void* ctxPtr, const unsigned char* key, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char* out)
 {
 	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-	unsigned dataLen = (blockNumber2 - blockNumber1 + 1) * 16;
-	unsigned char data[MAX_AES_ENC_BATCH_KEY_SIZE];
+	unsigned dataLen = (blockNumber2 - blockNumber1) * 16;
+	unsigned char data[DATA_BYTES_PER_AES_BATCH];
 	int outLen;
 
 	Assert(blockNumber2 >= blockNumber1);
-	Assert(dataLen < MAX_AES_ENC_BATCH_KEY_SIZE);
+	Assert(dataLen <= DATA_BYTES_PER_AES_BATCH);
 
 	memset(data, 0, dataLen);
 	for(int j=blockNumber1;j<blockNumber2;++j)

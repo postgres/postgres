@@ -67,6 +67,8 @@ tests += {
   'bd': meson.current_build_dir(),
   'regress': {
     'sql': [
+      'toast_decrypt',
+      'move_large_tuples',
       'non_sorted_off_compact',
       'update_compare_indexes',
       'pgtde_is_encrypted',

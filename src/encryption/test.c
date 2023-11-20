@@ -49,7 +49,7 @@ int main()
 	fprintf(stderr, "\nTesting D using xor, decrypting only first block\n");
 	fprintf(stderr, "------------------------\n");
 
-	Aes128EncryptedZeroBlocks(hardcoded_key, 0, 0, output2);
+	Aes128EncryptedZeroBlocks(NULL, hardcoded_key, 0, 0, output2);
 	for(int i = 0; i < 16; ++i) {
 		char c = output2[i] ^ output[i];
 		fprintf(stderr, "%c", c);
@@ -59,7 +59,7 @@ int main()
 	fprintf(stderr, "\nTesting D using xor, decrypting only second block\n");
 	fprintf(stderr, "------------------------\n");
 
-	Aes128EncryptedZeroBlocks(hardcoded_key, 1, 1, output2);
+	Aes128EncryptedZeroBlocks(NULL, hardcoded_key, 1, 1, output2);
 	for(int i = 0; i < 16; ++i) {
 		char c = output2[i] ^ output[i+16];
 		fprintf(stderr, "%c", c);

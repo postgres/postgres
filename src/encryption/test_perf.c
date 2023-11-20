@@ -47,8 +47,7 @@ int main(int argc, char** argv)
 		fflush(stdout);
 		for(unsigned long long i = 0;i < innerIters; ++i) {
 			unsigned long long start = j * (8192/16) + i * blockSize;
-			Aes128EncryptedZeroBlocks2(NULL, hardcoded_key, start, start + blockSize, output2);
-			//Aes128EncryptedZeroBlocks(hardcoded_key, start, start + blockSize, output);
+			Aes128EncryptedZeroBlocks(NULL, hardcoded_key, start, start + blockSize, output2);
 			for(int k=0;k<blockSize * 16;++k) sum += output2[k];
 
 			//assert(memcmp(output, output2, 16) == 0);

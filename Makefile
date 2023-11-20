@@ -6,7 +6,13 @@ EXTENSION = pg_tde
 DATA = pg_tde--1.0.sql
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/postgres-tde-ext/postgres-tde-ext.conf
-REGRESS = non_sorted_off_compact update_compare_indexes pgtde_is_encrypted trigger_on_view
+REGRESS = toast_decrypt \
+move_large_tuples \
+non_sorted_off_compact \
+update_compare_indexes \
+pgtde_is_encrypted \
+multi_insert \
+trigger_on_view
 TAP_TESTS = 1
 
 OBJS = src/encryption/enc_tuple.o \
