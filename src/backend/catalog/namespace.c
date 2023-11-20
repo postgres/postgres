@@ -235,6 +235,10 @@ static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
  * when a function has search_path set in proconfig. Add a search path cache
  * that can be used by recomputeNamespacePath().
  *
+ * The cache is also used to remember already-validated strings in
+ * check_search_path() to avoid the need to call SplitIdentifierString()
+ * repeatedly.
+ *
  * The search path cache is based on a wrapper around a simplehash hash table
  * (nsphash, defined below). The spcache wrapper deals with OOM while trying
  * to initialize a key, and also offers a more convenient API.
@@ -294,6 +298,21 @@ spcache_init(void)
 	/* arbitrary initial starting size of 16 elements */
 	SearchPathCache = nsphash_create(SearchPathCacheContext, 16, NULL);
 	searchPathCacheValid = true;
+}
+
+/*
+ * Look up entry in search path cache without inserting. Returns NULL if not
+ * present.
+ */
+static SearchPathCacheEntry *
+spcache_lookup(const char *searchPath, Oid roleid)
+{
+	SearchPathCacheKey cachekey = {
+		.searchPath = searchPath,
+		.roleid = roleid
+	};
+
+	return nsphash_lookup(SearchPathCache, cachekey);
 }
 
 /*
@@ -4578,11 +4597,40 @@ ResetTempTableNamespace(void)
 bool
 check_search_path(char **newval, void **extra, GucSource source)
 {
+	Oid			roleid = InvalidOid;
+	const char *searchPath = *newval;
 	char	   *rawname;
 	List	   *namelist;
+	bool		use_cache = (SearchPathCacheContext != NULL);
 
-	/* Need a modifiable copy of string */
-	rawname = pstrdup(*newval);
+	/*
+	 * We used to try to check that the named schemas exist, but there are
+	 * many valid use-cases for having search_path settings that include
+	 * schemas that don't exist; and often, we are not inside a transaction
+	 * here and so can't consult the system catalogs anyway.  So now, the only
+	 * requirement is syntactic validity of the identifier list.
+	 */
+
+	/*
+	 * Checking only the syntactic validity also allows us to use the search
+	 * path cache (if available) to avoid calling SplitIdentifierString() on
+	 * the same string repeatedly.
+	 */
+	if (use_cache)
+	{
+		spcache_init();
+
+		roleid = GetUserId();
+
+		if (spcache_lookup(searchPath, roleid) != NULL)
+			return true;
+	}
+
+	/*
+	 * Ensure validity check succeeds before creating cache entry.
+	 */
+
+	rawname = pstrdup(searchPath);	/* need a modifiable copy */
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawname, ',', &namelist))
@@ -4604,6 +4652,10 @@ check_search_path(char **newval, void **extra, GucSource source)
 
 	pfree(rawname);
 	list_free(namelist);
+
+	/* create empty cache entry */
+	if (use_cache)
+		(void) spcache_insert(searchPath, roleid);
 
 	return true;
 }
