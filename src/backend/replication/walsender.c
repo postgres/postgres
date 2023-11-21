@@ -1061,9 +1061,25 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		ReplicationSlotCreate(cmd->slotname, false,
 							  cmd->temporary ? RS_TEMPORARY : RS_PERSISTENT,
 							  false);
+
+		if (reserve_wal)
+		{
+			ReplicationSlotReserveWal();
+
+			ReplicationSlotMarkDirty();
+
+			/* Write this slot to disk if it's a permanent one. */
+			if (!cmd->temporary)
+				ReplicationSlotSave();
+		}
 	}
 	else
 	{
+		LogicalDecodingContext *ctx;
+		bool		need_full_snapshot = false;
+
+		Assert(cmd->kind == REPLICATION_KIND_LOGICAL);
+
 		CheckLogicalDecodingRequirements();
 
 		/*
@@ -1076,12 +1092,6 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		ReplicationSlotCreate(cmd->slotname, true,
 							  cmd->temporary ? RS_TEMPORARY : RS_EPHEMERAL,
 							  two_phase);
-	}
-
-	if (cmd->kind == REPLICATION_KIND_LOGICAL)
-	{
-		LogicalDecodingContext *ctx;
-		bool		need_full_snapshot = false;
 
 		/*
 		 * Do options check early so that we can bail before calling the
@@ -1174,16 +1184,6 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 		if (!cmd->temporary)
 			ReplicationSlotPersist();
-	}
-	else if (cmd->kind == REPLICATION_KIND_PHYSICAL && reserve_wal)
-	{
-		ReplicationSlotReserveWal();
-
-		ReplicationSlotMarkDirty();
-
-		/* Write this slot to disk if it's a permanent one. */
-		if (!cmd->temporary)
-			ReplicationSlotSave();
 	}
 
 	snprintf(xloc, sizeof(xloc), "%X/%X",
