@@ -3331,6 +3331,8 @@ alias_target('bin', bin_targets + [libpq_st])
 alias_target('pl', pl_targets)
 alias_target('contrib', contrib_targets)
 alias_target('testprep', testprep_targets)
+
+alias_target('world', all_built, docs)
 alias_target('install-world', install_quiet, installdocs)
 
 
