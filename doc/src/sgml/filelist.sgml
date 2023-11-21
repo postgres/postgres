@@ -38,6 +38,7 @@
 <!ENTITY high-availability      SYSTEM "high-availability.sgml">
 <!ENTITY installbin    SYSTEM "install-binaries.sgml">
 <!ENTITY installation  SYSTEM "installation.sgml">
+<!ENTITY targets-meson  SYSTEM "targets-meson.sgml">
 <!ENTITY installw      SYSTEM "install-windows.sgml">
 <!ENTITY maintenance   SYSTEM "maintenance.sgml">
 <!ENTITY manage-ag     SYSTEM "manage-ag.sgml">

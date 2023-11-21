@@ -1,0 +1,43 @@
+# Copyright (c) 2023, PostgreSQL Global Development Group
+#
+# Description of important meson targets, used for the 'help' target and
+# installation.sgml (via generate-targets-meson.pl). Right now the parsers are
+# extremely simple. Both parsers ignore comments. The help target prints
+# everything else. For xml everything without a leading newline is a group,
+# remaining lines are target separated by whitespace from their description
+#
+Code Targets:
+  all                           Build everything other than documentation
+  backend                       Build backend and related modules
+  bin                           Build frontend binaries
+  contrib                       Build contrib modules
+  pl                            Build procedual languages
+
+Developer Targets:
+  reformat-dat-files            Rewrite catalog data files into standard format
+  expand-dat-files              Expand all data files to include defaults
+  update-unicode                Update unicode data to new version
+
+Documentation Targets:
+  html                          Build documentation in multi-page HTML format
+  man                           Build documentation in man page format
+  docs                          Build documentation in multi-page HTML and man page format
+  doc/src/sgml/postgres-A4.pdf  Build documentation in PDF format, with A4 pages
+  doc/src/sgml/postgres-US.pdf  Build documentation in PDF format, with US letter pages
+  doc/src/sgml/postgres.html    Build documentation in single-page HTML format
+  alldocs                       Build documentation in all supported formats
+
+Installation Targets:
+  install                       Install postgres, excluding documentation
+  install-docs                  Install documentation in multi-page HTML and man page formats
+  install-html                  Install documentation in multi-page HTML format
+  install-man                   Install documentation in man page format
+  install-quiet                 Like "install", but installed files are not displayed
+  install-world                 Install postgres, including multi-page HTML and man page documentation
+  uninstall                     Remove installed files
+
+Other Targets:
+  clean                         Remove all build products
+  test                          Run all enabled tests (including contrib)
+  world                         Build everything, including documentation
+  help                          List important targets

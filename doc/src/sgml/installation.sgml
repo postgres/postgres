@@ -3200,6 +3200,21 @@ ninja install
     </variablelist>
    </sect3>
   </sect2>
+
+  <sect2 id="targets-meson">
+   <title><literal>meson</literal> Build Targets</title>
+
+   <para>
+    Individual build targets can be built using <command>ninja</command> <replaceable>target</replaceable>.
+
+    When no target is specified, everything except documentation is
+    built. Individual build products can be built using the path/filename as
+    <replaceable>target</replaceable>.
+   </para>
+
+   &targets-meson;
+  </sect2>
+
  </sect1>
 
  <sect1 id="install-post">

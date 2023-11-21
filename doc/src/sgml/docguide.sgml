@@ -434,9 +434,9 @@ LOGLEVEL=-Dorg.apache.commons.logging.simplelog.defaultlog=WARN
   <title>Building the Documentation with Meson</title>
 
    <para>
-    Two options are provided for building the documentation using Meson.
-    Change to the <filename>build</filename> directory before running
-    one of these commands, or add <option>-C build</option> to the command.
+    To build the documentation using Meson, change to the
+    <filename>build</filename> directory before running one of these commands,
+    or add <option>-C build</option> to the command.
    </para>
 
    <para>
@@ -444,10 +444,9 @@ LOGLEVEL=-Dorg.apache.commons.logging.simplelog.defaultlog=WARN
 <screen>
 <prompt>build$ </prompt><userinput>ninja html</userinput>
 </screen>
-    To build all forms of the documentation:
-<screen>
-<prompt>build$ </prompt><userinput>ninja alldocs</userinput>
-</screen>
+    For a list of other documentation targets see
+    <xref linkend="targets-meson-documentation"/>.
+
     The output appears in the
     subdirectory <filename>build/doc/src/sgml</filename>.
    </para>

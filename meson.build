@@ -3335,6 +3335,13 @@ alias_target('testprep', testprep_targets)
 alias_target('world', all_built, docs)
 alias_target('install-world', install_quiet, installdocs)
 
+run_target('help',
+  command: [
+    perl, '-ne', 'next if /^#/; print',
+    files('doc/src/sgml/targets-meson.txt'),
+  ]
+)
+
 
 
 ###############################################################

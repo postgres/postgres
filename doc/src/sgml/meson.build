@@ -71,6 +71,15 @@ doc_generated += custom_target('keywords-table.sgml',
   capture: true,
 )
 
+doc_generated += custom_target('targets-meson.sgml',
+  input: files('targets-meson.txt'),
+  output: 'targets-meson.sgml',
+  command: [perl, files('generate-targets-meson.pl'), '@INPUT@'],
+  build_by_default: false,
+  install: false,
+  capture: true,
+)
+
 # For everything else we need at least xmllint
 if not xmllint_bin.found()
   subdir_done()
