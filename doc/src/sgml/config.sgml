@@ -2303,8 +2303,8 @@ include_dir 'conf.d'
        </term>
        <listitem>
         <para>
-         The accumulated cost that will cause the vacuuming process to sleep.
-         The default value is 200.
+         This is the accumulated cost that will cause the vacuuming process to sleep
+         for <varname>vacuum_cost_delay</varname>.  The default is 200.
         </para>
        </listitem>
       </varlistentry>
@@ -2364,7 +2364,7 @@ include_dir 'conf.d'
          <varname>bgwriter_delay</varname>.
          If this value is specified without units, it is taken as milliseconds.
          The default value is 200
-         milliseconds (<literal>200ms</literal>). Note that on many systems, the
+         milliseconds (<literal>200ms</literal>). Note that on some systems, the
          effective resolution of sleep delays is 10 milliseconds; setting
          <varname>bgwriter_delay</varname> to a value that is not a multiple of 10
          might have the same results as setting it to the next higher multiple
@@ -3258,7 +3258,7 @@ include_dir 'conf.d'
         flushed to disk.
         If this value is specified without units, it is taken as milliseconds.
         The default value is 200 milliseconds (<literal>200ms</literal>).  Note that
-        on many systems, the effective resolution of sleep delays is 10
+        on some systems, the effective resolution of sleep delays is 10
         milliseconds; setting <varname>wal_writer_delay</varname> to a value that is
         not a multiple of 10 might have the same results as setting it to the
         next higher multiple of 10. This parameter can only be set in the
