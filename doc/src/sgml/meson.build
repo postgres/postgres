@@ -142,7 +142,8 @@ if docs_dep.found()
       '--install-dir-contents', dir_doc_html, html],
     build_always_stale: true, build_by_default: false,
   )
-  alias_target('install-doc-html', install_doc_html)
+  alias_target('html', html)
+  alias_target('install-html', install_doc_html)
 
   # build and install multi-page html docs as part of docs target
   docs += html
@@ -231,7 +232,8 @@ if docs_dep.found()
       '--install-dirs', dir_man, '@INPUT@'],
     build_always_stale: true, build_by_default: false,
   )
-  alias_target('install-doc-man', install_doc_man)
+  alias_target('man', man)
+  alias_target('install-man', install_doc_man)
 
   # even though we don't want to build man pages as part of 'docs', we do want
   # to install them as part of install-docs
