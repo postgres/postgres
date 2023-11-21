@@ -15,6 +15,8 @@
 # Make "html" the default target, since that is what most people tend
 # to want to use.
 html:
+# Note that all is *not* the default target in this directory
+all: html man
 
 # We don't need the tree-wide headers or install support here.
 NO_GENERATED_HEADERS=yes
@@ -24,8 +26,6 @@ subdir = doc/src/sgml
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-
-all: html man
 
 
 ifndef DBTOEPUB

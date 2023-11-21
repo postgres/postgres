@@ -442,7 +442,7 @@ LOGLEVEL=-Dorg.apache.commons.logging.simplelog.defaultlog=WARN
    <para>
     To build just the <acronym>HTML</acronym> version of the documentation:
 <screen>
-<prompt>build$ </prompt><userinput>ninja docs</userinput>
+<prompt>build$ </prompt><userinput>ninja html</userinput>
 </screen>
     To build all forms of the documentation:
 <screen>

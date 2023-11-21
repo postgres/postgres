@@ -235,9 +235,9 @@ if docs_dep.found()
   alias_target('man', man)
   alias_target('install-man', install_doc_man)
 
-  # even though we don't want to build man pages as part of 'docs', we do want
-  # to install them as part of install-docs
+  # built and installed as part of the the docs target
   installdocs += install_doc_man
+  docs += man
 endif
 
 
