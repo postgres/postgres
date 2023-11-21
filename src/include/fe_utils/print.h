@@ -171,7 +171,7 @@ typedef struct printTableContent
 	const char **cells;			/* NULL-terminated array of cell content
 								 * strings */
 	const char **cell;			/* Pointer to the last added cell */
-	long		cellsadded;		/* Number of cells added this far */
+	uint64		cellsadded;		/* Number of cells added this far */
 	bool	   *cellmustfree;	/* true for cells that need to be free()d */
 	printTableFooter *footers;	/* Pointer to the first footer */
 	printTableFooter *footer;	/* Pointer to the last added footer */
