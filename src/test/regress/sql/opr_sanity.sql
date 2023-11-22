@@ -1213,7 +1213,7 @@ WHERE p2.oid = p1.amhandler AND p1.amtype = 'i' AND
 
 SELECT p1.oid, p1.amname, p2.oid, p2.proname
 FROM pg_am AS p1, pg_proc AS p2
-WHERE p2.oid = p1.amhandler AND p1.amtype = 's' AND
+WHERE p2.oid = p1.amhandler AND p1.amtype = 't' AND
     (p2.prorettype != 'table_am_handler'::regtype
      OR p2.proretset
      OR p2.pronargs != 1
