@@ -86,7 +86,7 @@
     <listitem>
       <para>
         On <productname>FreeBSD</productname>, IDE drives can be queried using
-        <command>atacontrol</command> and write caching turned off using
+        <command>camcontrol identify</command> and write caching turned off using
         <literal>hw.ata.wc=0</literal> in <filename>/boot/loader.conf</filename>;
         SCSI drives can be queried using <command>camcontrol identify</command>,
         and the write cache both queried and changed using
