@@ -1124,22 +1124,30 @@ copy_table(Relation rel)
 	/* Regular table with no row filter */
 	if (lrel.relkind == RELKIND_RELATION && qual == NIL)
 	{
-		appendStringInfo(&cmd, "COPY %s (",
+		appendStringInfo(&cmd, "COPY %s",
 						 quote_qualified_identifier(lrel.nspname, lrel.relname));
 
-		/*
-		 * XXX Do we need to list the columns in all cases? Maybe we're
-		 * replicating all columns?
-		 */
-		for (int i = 0; i < lrel.natts; i++)
+		/* If the table has columns, then specify the columns */
+		if (lrel.natts)
 		{
-			if (i > 0)
-				appendStringInfoString(&cmd, ", ");
+			appendStringInfoString(&cmd, " (");
 
-			appendStringInfoString(&cmd, quote_identifier(lrel.attnames[i]));
+			/*
+			 * XXX Do we need to list the columns in all cases? Maybe we're
+			 * replicating all columns?
+			 */
+			for (int i = 0; i < lrel.natts; i++)
+			{
+				if (i > 0)
+					appendStringInfoString(&cmd, ", ");
+
+				appendStringInfoString(&cmd, quote_identifier(lrel.attnames[i]));
+			}
+
+			appendStringInfoString(&cmd, ")");
 		}
 
-		appendStringInfoString(&cmd, ") TO STDOUT");
+		appendStringInfoString(&cmd, " TO STDOUT");
 	}
 	else
 	{
