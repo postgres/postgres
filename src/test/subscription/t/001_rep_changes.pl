@@ -57,6 +57,11 @@ $node_publisher->safe_psql('postgres',
 	"CREATE INDEX idx_no_replidentity_index ON tab_no_replidentity_index(c1)"
 );
 
+# Replicate the changes without columns
+$node_publisher->safe_psql('postgres', "CREATE TABLE tab_no_col()");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab_no_col default VALUES");
+
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_notrep (a int)");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_ins (a int)");
@@ -87,13 +92,16 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE INDEX idx_no_replidentity_index ON tab_no_replidentity_index(c1)"
 );
 
+# replication of the table without columns
+$node_subscriber->safe_psql('postgres', "CREATE TABLE tab_no_col()");
+
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres', "CREATE PUBLICATION tap_pub");
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_ins_only WITH (publish = insert)");
 $node_publisher->safe_psql('postgres',
-	"ALTER PUBLICATION tap_pub ADD TABLE tab_rep, tab_full, tab_full2, tab_mixed, tab_include, tab_nothing, tab_full_pk, tab_no_replidentity_index"
+	"ALTER PUBLICATION tap_pub ADD TABLE tab_rep, tab_full, tab_full2, tab_mixed, tab_include, tab_nothing, tab_full_pk, tab_no_replidentity_index, tab_no_col"
 );
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_ins_only ADD TABLE tab_ins");
@@ -141,6 +149,9 @@ $node_publisher->safe_psql('postgres', "UPDATE tab_include SET a = -a");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_no_replidentity_index VALUES(1)");
 
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab_no_col default VALUES");
+
 $node_publisher->wait_for_catchup('tap_sub');
 
 $result = $node_subscriber->safe_psql('postgres',
@@ -168,6 +179,10 @@ is( $node_subscriber->safe_psql(
 		'postgres', q(SELECT c1 FROM tab_no_replidentity_index)),
 	1,
 	"value replicated to subscriber without replica identity index");
+
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab_no_col");
+is($result, qq(2), 'check replicated changes for table having no columns');
 
 # insert some duplicate rows
 $node_publisher->safe_psql('postgres',
