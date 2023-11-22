@@ -67,7 +67,7 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</
       expression index or include a <literal>WHERE</literal> clause.
      </para>
      <para>
-      This option may not be used when the materialized view is not already
+      This option can only be used when the materialized view is already
       populated.
      </para>
      <para>
