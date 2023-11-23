@@ -1025,43 +1025,51 @@ ExecAppendAsyncEventWait(AppendState *node)
 	/* We should never be called when there are no valid async subplans. */
 	Assert(node->as_nasyncremain > 0);
 
+	Assert(node->as_eventset == NULL);
 	node->as_eventset = CreateWaitEventSet(CurrentMemoryContext, nevents);
-	AddWaitEventToSet(node->as_eventset, WL_EXIT_ON_PM_DEATH, PGINVALID_SOCKET,
-					  NULL, NULL);
-
-	/* Give each waiting subplan a chance to add an event. */
-	i = -1;
-	while ((i = bms_next_member(node->as_asyncplans, i)) >= 0)
+	PG_TRY();
 	{
-		AsyncRequest *areq = node->as_asyncrequests[i];
+		AddWaitEventToSet(node->as_eventset, WL_EXIT_ON_PM_DEATH, PGINVALID_SOCKET,
+						  NULL, NULL);
 
-		if (areq->callback_pending)
-			ExecAsyncConfigureWait(areq);
+		/* Give each waiting subplan a chance to add an event. */
+		i = -1;
+		while ((i = bms_next_member(node->as_asyncplans, i)) >= 0)
+		{
+			AsyncRequest *areq = node->as_asyncrequests[i];
+
+			if (areq->callback_pending)
+				ExecAsyncConfigureWait(areq);
+		}
+
+		/*
+		 * No need for further processing if there are no configured events
+		 * other than the postmaster death event.
+		 */
+		if (GetNumRegisteredWaitEvents(node->as_eventset) == 1)
+		{
+			FreeWaitEventSet(node->as_eventset);
+			node->as_eventset = NULL;
+			return;
+		}
+
+		/* Return at most EVENT_BUFFER_SIZE events in one call. */
+		if (nevents > EVENT_BUFFER_SIZE)
+			nevents = EVENT_BUFFER_SIZE;
+
+		/*
+		 * If the timeout is -1, wait until at least one event occurs.  If the
+		 * timeout is 0, poll for events, but do not wait at all.
+		 */
+		noccurred = WaitEventSetWait(node->as_eventset, timeout, occurred_event,
+									 nevents, WAIT_EVENT_APPEND_READY);
 	}
-
-	/*
-	 * No need for further processing if there are no configured events other
-	 * than the postmaster death event.
-	 */
-	if (GetNumRegisteredWaitEvents(node->as_eventset) == 1)
+	PG_FINALLY();
 	{
 		FreeWaitEventSet(node->as_eventset);
 		node->as_eventset = NULL;
-		return;
 	}
-
-	/* We wait on at most EVENT_BUFFER_SIZE events. */
-	if (nevents > EVENT_BUFFER_SIZE)
-		nevents = EVENT_BUFFER_SIZE;
-
-	/*
-	 * If the timeout is -1, wait until at least one event occurs.  If the
-	 * timeout is 0, poll for events, but do not wait at all.
-	 */
-	noccurred = WaitEventSetWait(node->as_eventset, timeout, occurred_event,
-								 nevents, WAIT_EVENT_APPEND_READY);
-	FreeWaitEventSet(node->as_eventset);
-	node->as_eventset = NULL;
+	PG_END_TRY();
 	if (noccurred == 0)
 		return;
 
