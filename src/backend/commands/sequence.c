@@ -474,7 +474,7 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 
 	seqform = (Form_pg_sequence) GETSTRUCT(seqtuple);
 
-	/* lock page's buffer and read tuple into new sequence structure */
+	/* lock page buffer and read tuple into new sequence structure */
 	(void) read_seq_tuple(seqrel, &buf, &datatuple);
 
 	/* copy the existing sequence data tuple, so it can be modified locally */
@@ -678,7 +678,7 @@ nextval_internal(Oid relid, bool check_permissions)
 	cycle = pgsform->seqcycle;
 	ReleaseSysCache(pgstuple);
 
-	/* lock page' buffer and read tuple */
+	/* lock page buffer and read tuple */
 	seq = read_seq_tuple(seqrel, &buf, &seqdatatuple);
 	page = BufferGetPage(buf);
 
@@ -974,7 +974,7 @@ do_setval(Oid relid, int64 next, bool iscalled)
 	 */
 	PreventCommandIfParallelMode("setval()");
 
-	/* lock page' buffer and read tuple */
+	/* lock page buffer and read tuple */
 	seq = read_seq_tuple(seqrel, &buf, &seqdatatuple);
 
 	if ((next < minv) || (next > maxv))
