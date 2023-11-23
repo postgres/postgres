@@ -102,6 +102,8 @@
 
 #include <signal.h>
 
+#include "utils/resowner.h"
+
 /*
  * Latch structure should be treated as opaque and only accessed through
  * the public functions. It is defined here to allow embedding Latches as
@@ -173,7 +175,7 @@ extern void SetLatch(Latch *latch);
 extern void ResetLatch(Latch *latch);
 extern void ShutdownLatchSupport(void);
 
-extern WaitEventSet *CreateWaitEventSet(MemoryContext context, int nevents);
+extern WaitEventSet *CreateWaitEventSet(ResourceOwner resowner, int nevents);
 extern void FreeWaitEventSet(WaitEventSet *set);
 extern void FreeWaitEventSetAfterFork(WaitEventSet *set);
 extern int	AddWaitEventToSet(WaitEventSet *set, uint32 events, pgsocket fd,

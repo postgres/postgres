@@ -62,6 +62,7 @@
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
 #include "utils/memutils.h"
+#include "utils/resowner.h"
 
 /*
  * Select the fd readiness primitive to use. Normally the "most modern"
@@ -101,6 +102,8 @@
 /* typedef in latch.h */
 struct WaitEventSet
 {
+	ResourceOwner owner;
+
 	int			nevents;		/* number of registered events */
 	int			nevents_space;	/* maximum number of events in this set */
 
@@ -194,6 +197,31 @@ static void WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event);
 
 static inline int WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 										WaitEvent *occurred_events, int nevents);
+
+/* ResourceOwner support to hold WaitEventSets */
+static void ResOwnerReleaseWaitEventSet(Datum res);
+
+static const ResourceOwnerDesc wait_event_set_resowner_desc =
+{
+	.name = "WaitEventSet",
+	.release_phase = RESOURCE_RELEASE_AFTER_LOCKS,
+	.release_priority = RELEASE_PRIO_WAITEVENTSETS,
+	.ReleaseResource = ResOwnerReleaseWaitEventSet,
+	.DebugPrint = NULL
+};
+
+/* Convenience wrappers over ResourceOwnerRemember/Forget */
+static inline void
+ResourceOwnerRememberWaitEventSet(ResourceOwner owner, WaitEventSet *set)
+{
+	ResourceOwnerRemember(owner, PointerGetDatum(set), &wait_event_set_resowner_desc);
+}
+static inline void
+ResourceOwnerForgetWaitEventSet(ResourceOwner owner, WaitEventSet *set)
+{
+	ResourceOwnerForget(owner, PointerGetDatum(set), &wait_event_set_resowner_desc);
+}
+
 
 /*
  * Initialize the process-local latch infrastructure.
@@ -323,7 +351,7 @@ InitializeLatchWaitSet(void)
 	Assert(LatchWaitSet == NULL);
 
 	/* Set up the WaitEventSet used by WaitLatch(). */
-	LatchWaitSet = CreateWaitEventSet(TopMemoryContext, 2);
+	LatchWaitSet = CreateWaitEventSet(NULL, 2);
 	latch_pos = AddWaitEventToSet(LatchWaitSet, WL_LATCH_SET, PGINVALID_SOCKET,
 								  MyLatch, NULL);
 	if (IsUnderPostmaster)
@@ -541,7 +569,7 @@ WaitLatchOrSocket(Latch *latch, int wakeEvents, pgsocket sock,
 	int			ret = 0;
 	int			rc;
 	WaitEvent	event;
-	WaitEventSet *set = CreateWaitEventSet(CurrentMemoryContext, 3);
+	WaitEventSet *set = CreateWaitEventSet(CurrentResourceOwner, 3);
 
 	if (wakeEvents & WL_TIMEOUT)
 		Assert(timeout >= 0);
@@ -716,9 +744,12 @@ ResetLatch(Latch *latch)
  *
  * These events can then be efficiently waited upon together, using
  * WaitEventSetWait().
+ *
+ * The WaitEventSet is tracked by the given 'resowner'.  Use NULL for session
+ * lifetime.
  */
 WaitEventSet *
-CreateWaitEventSet(MemoryContext context, int nevents)
+CreateWaitEventSet(ResourceOwner resowner, int nevents)
 {
 	WaitEventSet *set;
 	char	   *data;
@@ -744,7 +775,10 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 	sz += MAXALIGN(sizeof(HANDLE) * (nevents + 1));
 #endif
 
-	data = (char *) MemoryContextAllocZero(context, sz);
+	if (resowner != NULL)
+		ResourceOwnerEnlarge(resowner);
+
+	data = (char *) MemoryContextAllocZero(TopMemoryContext, sz);
 
 	set = (WaitEventSet *) data;
 	data += MAXALIGN(sizeof(WaitEventSet));
@@ -769,6 +803,12 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 	set->latch = NULL;
 	set->nevents_space = nevents;
 	set->exit_on_postmaster_death = false;
+
+	if (resowner != NULL)
+	{
+		ResourceOwnerRememberWaitEventSet(resowner, set);
+		set->owner = resowner;
+	}
 
 #if defined(WAIT_USE_EPOLL)
 	if (!AcquireExternalFD())
@@ -834,6 +874,12 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 void
 FreeWaitEventSet(WaitEventSet *set)
 {
+	if (set->owner)
+	{
+		ResourceOwnerForgetWaitEventSet(set->owner, set);
+		set->owner = NULL;
+	}
+
 #if defined(WAIT_USE_EPOLL)
 	close(set->epoll_fd);
 	ReleaseExternalFD();
@@ -841,9 +887,7 @@ FreeWaitEventSet(WaitEventSet *set)
 	close(set->kqueue_fd);
 	ReleaseExternalFD();
 #elif defined(WAIT_USE_WIN32)
-	WaitEvent  *cur_event;
-
-	for (cur_event = set->events;
+	for (WaitEvent *cur_event = set->events;
 		 cur_event < (set->events + set->nevents);
 		 cur_event++)
 	{
@@ -2300,3 +2344,13 @@ drain(void)
 }
 
 #endif
+
+static void
+ResOwnerReleaseWaitEventSet(Datum res)
+{
+	WaitEventSet *set = (WaitEventSet *) DatumGetPointer(res);
+
+	Assert(set->owner != NULL);
+	set->owner = NULL;
+	FreeWaitEventSet(set);
+}

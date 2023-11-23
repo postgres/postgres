@@ -1025,7 +1025,8 @@ ExecAppendAsyncEventWait(AppendState *node)
 	/* We should never be called when there are no valid async subplans. */
 	Assert(node->as_nasyncremain > 0);
 
-	node->as_eventset = CreateWaitEventSet(CurrentMemoryContext, nevents);
+	Assert(node->as_eventset == NULL);
+	node->as_eventset = CreateWaitEventSet(CurrentResourceOwner, nevents);
 	AddWaitEventToSet(node->as_eventset, WL_EXIT_ON_PM_DEATH, PGINVALID_SOCKET,
 					  NULL, NULL);
 
@@ -1050,7 +1051,7 @@ ExecAppendAsyncEventWait(AppendState *node)
 		return;
 	}
 
-	/* We wait on at most EVENT_BUFFER_SIZE events. */
+	/* Return at most EVENT_BUFFER_SIZE events in one call. */
 	if (nevents > EVENT_BUFFER_SIZE)
 		nevents = EVENT_BUFFER_SIZE;
 
