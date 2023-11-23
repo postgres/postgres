@@ -79,8 +79,8 @@
  * On success, returns the number of data bytes consumed (possibly less than
  * len).  On failure, returns -1 with errno set appropriately.  If the errno
  * indicates a non-retryable error, a message is added to conn->errorMessage.
- * For retryable errors, caller should call again (passing the same data)
- * once the socket is ready.
+ * For retryable errors, caller should call again (passing the same or more
+ * data) once the socket is ready.
  */
 ssize_t
 pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
@@ -90,19 +90,25 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 	gss_buffer_desc input,
 				output = GSS_C_EMPTY_BUFFER;
 	ssize_t		ret = -1;
-	size_t		bytes_sent = 0;
 	size_t		bytes_to_encrypt;
 	size_t		bytes_encrypted;
 	gss_ctx_id_t gctx = conn->gctx;
 
 	/*
-	 * When we get a failure, we must not tell the caller we have successfully
-	 * transmitted everything, else it won't retry.  Hence a "success"
-	 * (positive) return value must only count source bytes corresponding to
-	 * fully-transmitted encrypted packets.  The amount of source data
-	 * corresponding to the current partly-transmitted packet is remembered in
+	 * When we get a retryable failure, we must not tell the caller we have
+	 * successfully transmitted everything, else it won't retry.  For
+	 * simplicity, we claim we haven't transmitted anything until we have
+	 * successfully transmitted all "len" bytes.  Between calls, the amount of
+	 * the current input data that's already been encrypted and placed into
+	 * PqGSSSendBuffer (and perhaps transmitted) is remembered in
 	 * PqGSSSendConsumed.  On a retry, the caller *must* be sending that data
 	 * again, so if it offers a len less than that, something is wrong.
+	 *
+	 * Note: it may seem attractive to report partial write completion once
+	 * we've successfully sent any encrypted packets.  However, that can cause
+	 * problems for callers; notably, pqPutMsgEnd's heuristic to send only
+	 * full 8K blocks interacts badly with such a hack.  We won't save much,
+	 * typically, by letting callers discard data early, so don't risk it.
 	 */
 	if (len < PqGSSSendConsumed)
 	{
@@ -140,33 +146,20 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 
 			retval = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendNext, amount);
 			if (retval <= 0)
-			{
-				/*
-				 * Report any previously-sent data; if there was none, reflect
-				 * the pqsecure_raw_write result up to our caller.  When there
-				 * was some, we're effectively assuming that any interesting
-				 * failure condition will recur on the next try.
-				 */
-				if (bytes_sent)
-					return bytes_sent;
 				return retval;
-			}
 
 			/*
 			 * Check if this was a partial write, and if so, move forward that
 			 * far in our buffer and try again.
 			 */
-			if (retval != amount)
+			if (retval < amount)
 			{
 				PqGSSSendNext += retval;
 				continue;
 			}
 
-			/* We've successfully sent whatever data was in that packet. */
-			bytes_sent += PqGSSSendConsumed;
-
-			/* All encrypted data was sent, our buffer is empty now. */
-			PqGSSSendLength = PqGSSSendNext = PqGSSSendConsumed = 0;
+			/* We've successfully sent whatever data was in the buffer. */
+			PqGSSSendLength = PqGSSSendNext = 0;
 		}
 
 		/*
@@ -192,7 +185,7 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 
 		/*
 		 * Create the next encrypted packet.  Any failure here is considered a
-		 * hard failure, so we return -1 even if bytes_sent > 0.
+		 * hard failure, so we return -1 even if some data has been sent.
 		 */
 		major = gss_wrap(&minor, gctx, 1, GSS_C_QOP_DEFAULT,
 						 &input, &conf_state, &output);
@@ -236,10 +229,13 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 	}
 
 	/* If we get here, our counters should all match up. */
-	Assert(bytes_sent == len);
-	Assert(bytes_sent == bytes_encrypted);
+	Assert(len == PqGSSSendConsumed);
+	Assert(len == bytes_encrypted);
 
-	ret = bytes_sent;
+	/* We're reporting all the data as sent, so reset PqGSSSendConsumed. */
+	PqGSSSendConsumed = 0;
+
+	ret = bytes_encrypted;
 
 cleanup:
 	/* Release GSSAPI buffer storage, if we didn't already */
