@@ -129,9 +129,6 @@
       <entry morerows="1" valign="middle"><literal>tsvector_ops</literal></entry>
       <entry><literal>@@ (tsvector,tsquery)</literal></entry>
      </row>
-     <row>
-      <entry><literal>@@@ (tsvector,tsquery)</literal></entry>
-     </row>
     </tbody>
    </tgroup>
   </table>
