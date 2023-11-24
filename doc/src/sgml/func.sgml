@@ -26006,7 +26006,8 @@ SELECT collation for ('foo' COLLATE "de_DE");
     They only provide useful data when the
     <xref linkend="guc-track-commit-timestamp"/> configuration option is
     enabled, and only for transactions that were committed after it was
-    enabled.
+    enabled.  Commit timestamp information is routinely removed during
+    vacuum.
    </para>
 
    <table id="functions-commit-timestamp">
