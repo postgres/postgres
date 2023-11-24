@@ -25863,6 +25863,34 @@ SELECT collation for ('foo' COLLATE "de_DE");
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>age</primary>
+        </indexterm>
+        <function>age</function>  ( <type>xid</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of transactions between the supplied
+        transaction id and the current transaction counter.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>mxid_age</primary>
+        </indexterm>
+        <function>mxid_age</function>  ( <type>xid</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of multixacts IDs between the supplied
+        multixact ID and the current multixacts counter.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>txid_current</primary>
         </indexterm>
         <function>txid_current</function> ()
