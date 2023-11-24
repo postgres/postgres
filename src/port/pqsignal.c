@@ -30,15 +30,15 @@
  *	this relies on pqsigaction() in src/backend/port/win32/signal.c, which
  *	provides limited emulation of reliable signals.
  *
- * 	Frontend programs can use this version of pqsignal() to forward to the
- * 	native Windows signal() call if they wish, but beware that Windows signals
- * 	behave quite differently.  Only the 6 signals required by C are supported.
- * 	SIGINT handlers run in another thread instead of interrupting an existing
- * 	thread, and the others don't interrupt system calls either, so SA_RESTART
- * 	is moot.  All except SIGFPE have SA_RESETHAND semantics, meaning the
- * 	handler is reset to SIG_DFL each time it runs.  The set of things you are
- * 	allowed to do in a handler is also much more restricted than on Unix,
- * 	according to the documentation.
+ *	Frontend programs can use this version of pqsignal() to forward to the
+ *	native Windows signal() call if they wish, but beware that Windows signals
+ *	behave quite differently.  Only the 6 signals required by C are supported.
+ *	SIGINT handlers run in another thread instead of interrupting an existing
+ *	thread, and the others don't interrupt system calls either, so SA_RESTART
+ *	is moot.  All except SIGFPE have SA_RESETHAND semantics, meaning the
+ *	handler is reset to SIG_DFL each time it runs.  The set of things you are
+ *	allowed to do in a handler is also much more restricted than on Unix,
+ *	according to the documentation.
  *
  * ------------------------------------------------------------------------
  */
