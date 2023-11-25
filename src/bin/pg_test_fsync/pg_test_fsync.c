@@ -1,6 +1,12 @@
-/*
- *	pg_test_fsync.c
- *		tests all supported fsync() methods
+/*-------------------------------------------------------------------------
+ *
+ * pg_test_fsync --- tests all supported fsync() methods
+ *
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ *
+ * src/bin/pg_test_fsync/pg_test_fsync.c
+ *
+ *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
