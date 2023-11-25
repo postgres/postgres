@@ -3692,7 +3692,8 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr lastredoptr, XLogRecPtr endptr,
 }
 
 /*
- * Remove WAL files that are not part of the given timeline's history.
+ * Recycle or remove WAL files that are not part of the given timeline's
+ * history.
  *
  * This is called during recovery, whenever we switch to follow a new
  * timeline, and at the end of recovery when we create a new timeline. We
