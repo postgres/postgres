@@ -525,8 +525,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        Adding a constraint using an existing index can be helpful in
        situations where a new constraint needs to be added without blocking
        table updates for a long time.  To do that, create the index using
-       <command>CREATE INDEX CONCURRENTLY</command>, and then install it as an
-       official constraint using this syntax.  See the example below.
+       <command>CREATE UNIQUE INDEX CONCURRENTLY</command>, and then convert it to a
+       constraint using this syntax.  See the example below.
       </para>
      </note>
     </listitem>
