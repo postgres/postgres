@@ -16,6 +16,7 @@
 /features-unsupported.sgml
 /errcodes-table.sgml
 /keywords-table.sgml
+/targets-meson.sgml
 /version.sgml
 /wait_event_types.sgml
 # Assorted byproducts from building the above
