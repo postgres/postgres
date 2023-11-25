@@ -29,6 +29,7 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/tzparser.h"
+#include "utils/datetime.h"
 
 
 #define WHITESPACE " \t\n\r"
@@ -66,8 +67,8 @@ validateTzEntry(tzEntry *tzentry)
 	/*
 	 * Sanity-check the offset: shouldn't exceed 14 hours
 	 */
-	if (tzentry->offset > 14 * 60 * 60 ||
-		tzentry->offset < -14 * 60 * 60)
+	if (tzentry->offset > 14 * SECS_PER_HOUR ||
+		tzentry->offset < -14 * SECS_PER_HOUR)
 	{
 		GUC_check_errmsg("time zone offset %d is out of range in time zone file \"%s\", line %d",
 						 tzentry->offset,
@@ -155,7 +156,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 		 * zones that probably will never be used in the current session.
 		 */
 		tzentry->zone = pstrdup(offset);
-		tzentry->offset = 0;
+		tzentry->offset = 0 * SECS_PER_HOUR;
 		tzentry->is_dst = false;
 		remain = strtok(NULL, WHITESPACE);
 	}
