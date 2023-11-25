@@ -233,14 +233,19 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
 	int			i;
 	int			numIndices;
 	RelationPtr indexDescs;
+	IndexInfo **indexInfos;
 
 	numIndices = resultRelInfo->ri_NumIndices;
 	indexDescs = resultRelInfo->ri_IndexRelationDescs;
+	indexInfos = resultRelInfo->ri_IndexRelationInfo;
 
 	for (i = 0; i < numIndices; i++)
 	{
 		if (indexDescs[i] == NULL)
 			continue;			/* shouldn't happen? */
+
+		/* Give the index a chance to do some post-insert cleanup */
+		index_insert_cleanup(indexDescs[i], indexInfos[i]);
 
 		/* Drop lock acquired by ExecOpenIndices */
 		index_close(indexDescs[i], RowExclusiveLock);
