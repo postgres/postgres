@@ -27075,11 +27075,6 @@ postgres=# SELECT * FROM pg_walfile_name_offset((pg_backup_stop()).lsn);
 (1 row)
 </programlisting>
     Similarly, <function>pg_walfile_name</function> extracts just the write-ahead log file name.
-    When the given write-ahead log location is exactly at a write-ahead log file boundary, both
-    these functions return the name of the preceding write-ahead log file.
-    This is usually the desired behavior for managing write-ahead log archiving
-    behavior, since the preceding file is the last one that currently
-    needs to be archived.
    </para>
 
    <para>

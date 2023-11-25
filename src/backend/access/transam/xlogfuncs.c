@@ -374,10 +374,6 @@ pg_last_wal_replay_lsn(PG_FUNCTION_ARGS)
 /*
  * Compute an xlog file name and decimal byte offset given a WAL location,
  * such as is returned by pg_backup_stop() or pg_switch_wal().
- *
- * Note that a location exactly at a segment boundary is taken to be in
- * the previous segment.  This is usually the right thing, since the
- * expected usage is to determine which xlog file(s) are ready to archive.
  */
 Datum
 pg_walfile_name_offset(PG_FUNCTION_ARGS)
@@ -414,7 +410,7 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * xlogfilename
 	 */
-	XLByteToPrevSeg(locationpoint, xlogsegno, wal_segment_size);
+	XLByteToSeg(locationpoint, xlogsegno, wal_segment_size);
 	XLogFileName(xlogfilename, GetWALInsertionTimeLine(), xlogsegno,
 				 wal_segment_size);
 
@@ -457,7 +453,7 @@ pg_walfile_name(PG_FUNCTION_ARGS)
 				 errhint("%s cannot be executed during recovery.",
 						 "pg_walfile_name()")));
 
-	XLByteToPrevSeg(locationpoint, xlogsegno, wal_segment_size);
+	XLByteToSeg(locationpoint, xlogsegno, wal_segment_size);
 	XLogFileName(xlogfilename, GetWALInsertionTimeLine(), xlogsegno,
 				 wal_segment_size);
 

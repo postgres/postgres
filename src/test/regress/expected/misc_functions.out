@@ -619,7 +619,7 @@ SELECT count(*) > 0 AS ok FROM pg_control_system();
  t
 (1 row)
 
--- pg_split_walfile_name
+-- pg_split_walfile_name, pg_walfile_name & pg_walfile_name_offset
 SELECT * FROM pg_split_walfile_name(NULL);
  segment_number | timeline_id 
 ----------------+-------------
@@ -640,5 +640,33 @@ SELECT segment_number > 0 AS ok_segment_number, timeline_id
  ok_segment_number | timeline_id 
 -------------------+-------------
  t                 |  4294967295
+(1 row)
+
+SELECT setting::int8 AS segment_size
+FROM pg_settings
+WHERE name = 'wal_segment_size'
+\gset
+SELECT segment_number, file_offset
+FROM pg_walfile_name_offset('0/0'::pg_lsn + :segment_size),
+     pg_split_walfile_name(file_name);
+ segment_number | file_offset 
+----------------+-------------
+              1 |           0
+(1 row)
+
+SELECT segment_number, file_offset
+FROM pg_walfile_name_offset('0/0'::pg_lsn + :segment_size + 1),
+     pg_split_walfile_name(file_name);
+ segment_number | file_offset 
+----------------+-------------
+              1 |           1
+(1 row)
+
+SELECT segment_number, file_offset = :segment_size - 1
+FROM pg_walfile_name_offset('0/0'::pg_lsn + :segment_size - 1),
+     pg_split_walfile_name(file_name);
+ segment_number | ?column? 
+----------------+----------
+              0 | t
 (1 row)
 
