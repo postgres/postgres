@@ -858,7 +858,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %left		'*' '/' '%'
 %left		'^'
 /* Unary Operators */
-%left		AT				/* sets precedence for AT TIME ZONE */
+%left		AT				/* sets precedence for AT TIME ZONE, AT LOCAL */
 %left		COLLATE
 %right		UMINUS
 %left		'[' ']'
