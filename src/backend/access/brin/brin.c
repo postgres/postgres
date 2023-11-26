@@ -66,7 +66,7 @@ typedef struct BrinInsertState
 {
 	BrinRevmap *bis_rmAccess;
 	BrinDesc   *bis_desc;
-	BlockNumber	bis_pages_per_range;
+	BlockNumber bis_pages_per_range;
 } BrinInsertState;
 
 /*
@@ -360,6 +360,7 @@ brininsertcleanup(IndexInfo *indexInfo)
 	BrinInsertState *bistate = (BrinInsertState *) indexInfo->ii_AmCache;
 
 	Assert(bistate);
+
 	/*
 	 * Clean up the revmap. Note that the brinDesc has already been cleaned up
 	 * as part of its own memory context.
