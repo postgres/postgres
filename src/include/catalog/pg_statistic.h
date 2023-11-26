@@ -152,6 +152,9 @@ DECLARE_FOREIGN_KEY((starelid, staattnum), pg_attribute, (attrelid, attnum));
  * data "kind" will appear in any particular slot.  Instead, search the
  * stakind fields to see if the desired data is available.  (The standard
  * function get_attstatsslot() may be used for this.)
+ *
+ * Note: The pg_stats view needs to be modified whenever a new slot kind is
+ * added to core.
  */
 
 /*
@@ -262,7 +265,8 @@ DECLARE_FOREIGN_KEY((starelid, staattnum), pg_attribute, (attrelid, attnum));
  * a format similar to STATISTIC_KIND_HISTOGRAM: it contains M (>=2) range
  * values that divide the column data values into M-1 bins of approximately
  * equal population. The lengths are stored as float8s, as measured by the
- * range type's subdiff function. Only non-null rows are considered.
+ * range type's subdiff function. Only non-null, non-empty rows are
+ * considered.
  */
 #define STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM  6
 
