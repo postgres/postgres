@@ -2466,7 +2466,31 @@ pg_stats| SELECT n.nspname AS schemaname,
             WHEN (s.stakind4 = 5) THEN s.stanumbers4
             WHEN (s.stakind5 = 5) THEN s.stanumbers5
             ELSE NULL::real[]
-        END AS elem_count_histogram
+        END AS elem_count_histogram,
+        CASE
+            WHEN (s.stakind1 = 6) THEN s.stavalues1
+            WHEN (s.stakind2 = 6) THEN s.stavalues2
+            WHEN (s.stakind3 = 6) THEN s.stavalues3
+            WHEN (s.stakind4 = 6) THEN s.stavalues4
+            WHEN (s.stakind5 = 6) THEN s.stavalues5
+            ELSE NULL::anyarray
+        END AS range_length_histogram,
+        CASE
+            WHEN (s.stakind1 = 6) THEN s.stanumbers1[1]
+            WHEN (s.stakind2 = 6) THEN s.stanumbers2[1]
+            WHEN (s.stakind3 = 6) THEN s.stanumbers3[1]
+            WHEN (s.stakind4 = 6) THEN s.stanumbers4[1]
+            WHEN (s.stakind5 = 6) THEN s.stanumbers5[1]
+            ELSE NULL::real
+        END AS range_empty_frac,
+        CASE
+            WHEN (s.stakind1 = 7) THEN s.stavalues1
+            WHEN (s.stakind2 = 7) THEN s.stavalues2
+            WHEN (s.stakind3 = 7) THEN s.stavalues3
+            WHEN (s.stakind4 = 7) THEN s.stavalues4
+            WHEN (s.stakind5 = 7) THEN s.stavalues5
+            ELSE NULL::anyarray
+        END AS range_bounds_histogram
    FROM (((pg_statistic s
      JOIN pg_class c ON ((c.oid = s.starelid)))
      JOIN pg_attribute a ON (((c.oid = a.attrelid) AND (a.attnum = s.staattnum))))

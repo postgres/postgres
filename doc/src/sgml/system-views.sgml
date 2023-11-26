@@ -3799,6 +3799,45 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        non-null elements.  (Null for scalar types.)
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>range_length_histogram</structfield> <type>anyarray</type>
+      </para>
+      <para>
+       A histogram of the lengths of non-empty and non-null range values of a
+       range type column. (Null for non-range types.)
+      </para>
+      <para>
+       This histogram is calculated using the <literal>subtype_diff</literal>
+       range function regardless of whether range bounds are inclusive.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>range_empty_frac</structfield> <type>float4</type>
+      </para>
+      <para>
+       Fraction of column entries whose values are empty ranges.
+       (Null for non-range types.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>range_bounds_histogram</structfield> <type>anyarray</type>
+      </para>
+      <para>
+       A histogram of lower and upper bounds of non-empty and non-null range
+       values. (Null for non-range types.)
+      </para>
+      <para>
+       These two histograms are represented as a single array of ranges, whose
+       lower bounds represent the histogram of lower bounds, and upper bounds
+       represent the histogram of upper bounds.
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
