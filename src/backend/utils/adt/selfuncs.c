@@ -5028,22 +5028,27 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 	onerel = NULL;
 
-	switch (bms_membership(varnos))
+	if (bms_is_empty(varnos))
 	{
-		case BMS_EMPTY_SET:
-			/* No Vars at all ... must be pseudo-constant clause */
-			break;
-		case BMS_SINGLETON:
-			if (varRelid == 0 || bms_is_member(varRelid, varnos))
+		/* No Vars at all ... must be pseudo-constant clause */
+	}
+	else
+	{
+		int			relid;
+
+		if (bms_get_singleton_member(varnos, &relid))
+		{
+			if (varRelid == 0 || varRelid == relid)
 			{
-				onerel = find_base_rel(root,
-									   (varRelid ? varRelid : bms_singleton_member(varnos)));
+				onerel = find_base_rel(root, relid);
 				vardata->rel = onerel;
 				node = basenode;	/* strip any relabeling */
 			}
 			/* else treat it as a constant */
-			break;
-		case BMS_MULTIPLE:
+		}
+		else
+		{
+			/* varnos has multiple relids */
 			if (varRelid == 0)
 			{
 				/* treat it as a variable of a join relation */
@@ -5058,7 +5063,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				/* note: no point in expressional-index search here */
 			}
 			/* else treat it as a constant */
-			break;
+		}
 	}
 
 	bms_free(varnos);
@@ -6381,17 +6386,14 @@ find_join_input_rel(PlannerInfo *root, Relids relids)
 {
 	RelOptInfo *rel = NULL;
 
-	switch (bms_membership(relids))
+	if (!bms_is_empty(relids))
 	{
-		case BMS_EMPTY_SET:
-			/* should not happen */
-			break;
-		case BMS_SINGLETON:
-			rel = find_base_rel(root, bms_singleton_member(relids));
-			break;
-		case BMS_MULTIPLE:
+		int			relid;
+
+		if (bms_get_singleton_member(relids, &relid))
+			rel = find_base_rel(root, relid);
+		else
 			rel = find_join_rel(root, relids);
-			break;
 	}
 
 	if (rel == NULL)

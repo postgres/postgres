@@ -2634,15 +2634,17 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 	Relids		relids = restrictinfo->required_relids;
 	RelOptInfo *rel;
 
-	switch (bms_membership(relids))
+	if (!bms_is_empty(relids))
 	{
-		case BMS_SINGLETON:
+		int			relid;
 
+		if (bms_get_singleton_member(relids, &relid))
+		{
 			/*
 			 * There is only one relation participating in the clause, so it
 			 * is a restriction clause for that relation.
 			 */
-			rel = find_base_rel(root, bms_singleton_member(relids));
+			rel = find_base_rel(root, relid);
 
 			/* Add clause to rel's restriction list */
 			rel->baserestrictinfo = lappend(rel->baserestrictinfo,
@@ -2650,9 +2652,9 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 			/* Update security level info */
 			rel->baserestrict_min_security = Min(rel->baserestrict_min_security,
 												 restrictinfo->security_level);
-			break;
-		case BMS_MULTIPLE:
-
+		}
+		else
+		{
 			/*
 			 * The clause is a join clause, since there is more than one rel
 			 * in its relid set.
@@ -2675,15 +2677,15 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 			 * Add clause to the join lists of all the relevant relations.
 			 */
 			add_join_clause_to_rels(root, restrictinfo, relids);
-			break;
-		default:
-
-			/*
-			 * clause references no rels, and therefore we have no place to
-			 * attach it.  Shouldn't get here if callers are working properly.
-			 */
-			elog(ERROR, "cannot cope with variable-free clause");
-			break;
+		}
+	}
+	else
+	{
+		/*
+		 * clause references no rels, and therefore we have no place to attach
+		 * it.  Shouldn't get here if callers are working properly.
+		 */
+		elog(ERROR, "cannot cope with variable-free clause");
 	}
 }
 
