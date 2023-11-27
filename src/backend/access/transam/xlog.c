@@ -2456,35 +2456,44 @@ XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN)
 {
 	XLogRecPtr	WriteRqstPtr = asyncXactLSN;
 	bool		sleeping;
+	bool		wakeup = false;
+	XLogRecPtr	prevAsyncXactLSN;
 
 	SpinLockAcquire(&XLogCtl->info_lck);
 	LogwrtResult = XLogCtl->LogwrtResult;
 	sleeping = XLogCtl->WalWriterSleeping;
+	prevAsyncXactLSN = XLogCtl->asyncXactLSN;
 	if (XLogCtl->asyncXactLSN < asyncXactLSN)
 		XLogCtl->asyncXactLSN = asyncXactLSN;
 	SpinLockRelease(&XLogCtl->info_lck);
 
 	/*
-	 * If the WALWriter is sleeping, we should kick it to make it come out of
-	 * low-power mode.  Otherwise, determine whether there's a full page of
-	 * WAL available to write.
+	 * If somebody else already called this function with a more aggressive
+	 * LSN, they will have done what we needed (and perhaps more).
 	 */
-	if (!sleeping)
-	{
-		/* back off to last completed page boundary */
-		WriteRqstPtr -= WriteRqstPtr % XLOG_BLCKSZ;
-
-		/* if we have already flushed that far, we're done */
-		if (WriteRqstPtr <= LogwrtResult.Flush)
-			return;
-	}
+	if (asyncXactLSN <= prevAsyncXactLSN)
+		return;
 
 	/*
-	 * Nudge the WALWriter: it has a full page of WAL to write, or we want it
-	 * to come out of low-power mode so that this async commit will reach disk
-	 * within the expected amount of time.
+	 * If the WALWriter is sleeping, kick it to make it come out of low-power
+	 * mode, so that this async commit will reach disk within the expected
+	 * amount of time.  Otherwise, determine whether it has enough WAL
+	 * available to flush, the same way that XLogBackgroundFlush() does.
 	 */
-	if (ProcGlobal->walwriterLatch)
+	if (sleeping)
+		wakeup = true;
+	else
+	{
+		int			flushblocks;
+
+		flushblocks =
+			WriteRqstPtr / XLOG_BLCKSZ - LogwrtResult.Flush / XLOG_BLCKSZ;
+
+		if (WalWriterFlushAfter == 0 || flushblocks >= WalWriterFlushAfter)
+			wakeup = true;
+	}
+
+	if (wakeup && ProcGlobal->walwriterLatch)
 		SetLatch(ProcGlobal->walwriterLatch);
 }
 
@@ -2803,7 +2812,7 @@ XLogBackgroundFlush(void)
 	bool		flexible = true;
 	static TimestampTz lastflush;
 	TimestampTz now;
-	int			flushbytes;
+	int			flushblocks;
 	TimeLineID	insertTLI;
 
 	/* XLOG doesn't need flushing during recovery */
@@ -2855,9 +2864,13 @@ XLogBackgroundFlush(void)
 	/*
 	 * Determine how far to flush WAL, based on the wal_writer_delay and
 	 * wal_writer_flush_after GUCs.
+	 *
+	 * Note that XLogSetAsyncXactLSN() performs similar calculation based on
+	 * wal_writer_flush_after, to decide when to wake us up.  Make sure the
+	 * logic is the same in both places if you change this.
 	 */
 	now = GetCurrentTimestamp();
-	flushbytes =
+	flushblocks =
 		WriteRqst.Write / XLOG_BLCKSZ - LogwrtResult.Flush / XLOG_BLCKSZ;
 
 	if (WalWriterFlushAfter == 0 || lastflush == 0)
@@ -2876,7 +2889,7 @@ XLogBackgroundFlush(void)
 		WriteRqst.Flush = WriteRqst.Write;
 		lastflush = now;
 	}
-	else if (flushbytes >= WalWriterFlushAfter)
+	else if (flushblocks >= WalWriterFlushAfter)
 	{
 		/* exceeded wal_writer_flush_after blocks, flush */
 		WriteRqst.Flush = WriteRqst.Write;
