@@ -515,3 +515,10 @@ CREATE UNLOGGED TABLE brintest_unlogged (n numrange);
 CREATE INDEX brinidx_unlogged ON brintest_unlogged USING brin (n);
 INSERT INTO brintest_unlogged VALUES (numrange(0, 2^1000::numeric));
 DROP TABLE brintest_unlogged;
+
+-- test that the insert optimization works if no rows end up inserted
+CREATE TABLE brin_insert_optimization (a int);
+INSERT INTO brin_insert_optimization VALUES (1);
+CREATE INDEX ON brin_insert_optimization USING brin (a);
+UPDATE brin_insert_optimization SET a = a;
+DROP TABLE brin_insert_optimization;
