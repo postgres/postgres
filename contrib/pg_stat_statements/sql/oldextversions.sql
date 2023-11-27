@@ -48,9 +48,11 @@ AlTER EXTENSION pg_stat_statements UPDATE TO '1.10';
 \d pg_stat_statements
 SELECT count(*) > 0 AS has_data FROM pg_stat_statements;
 
--- New views for pg_stat_statements in 1.11
+-- New functions and views for pg_stat_statements in 1.11
 AlTER EXTENSION pg_stat_statements UPDATE TO '1.11';
 \d pg_stat_statements
 SELECT count(*) > 0 AS has_data FROM pg_stat_statements;
+-- New parameter minmax_only of pg_stat_statements_reset function
+SELECT pg_get_functiondef('pg_stat_statements_reset'::regproc);
 
 DROP EXTENSION pg_stat_statements;

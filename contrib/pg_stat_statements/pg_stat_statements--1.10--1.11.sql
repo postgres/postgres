@@ -3,13 +3,10 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
 \echo Use "ALTER EXTENSION pg_stat_statements UPDATE TO '1.11'" to load this file. \quit
 
-/* First we have to remove them from the extension */
-ALTER EXTENSION pg_stat_statements DROP VIEW pg_stat_statements;
-ALTER EXTENSION pg_stat_statements DROP FUNCTION pg_stat_statements(boolean);
-
-/* Then we can drop them */
+/* Drop old versions */
 DROP VIEW pg_stat_statements;
 DROP FUNCTION pg_stat_statements(boolean);
+DROP FUNCTION pg_stat_statements_reset(Oid, Oid, bigint);
 
 /* Now redefine */
 CREATE FUNCTION pg_stat_statements(IN showtext boolean,
@@ -59,7 +56,9 @@ CREATE FUNCTION pg_stat_statements(IN showtext boolean,
     OUT jit_emission_count int8,
     OUT jit_emission_time float8,
     OUT jit_deform_count int8,
-    OUT jit_deform_time float8
+    OUT jit_deform_time float8,
+    OUT stats_since timestamp with time zone,
+    OUT minmax_stats_since timestamp with time zone
 )
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'pg_stat_statements_1_11'
@@ -69,3 +68,15 @@ CREATE VIEW pg_stat_statements AS
   SELECT * FROM pg_stat_statements(true);
 
 GRANT SELECT ON pg_stat_statements TO PUBLIC;
+
+CREATE FUNCTION pg_stat_statements_reset(IN userid Oid DEFAULT 0,
+	IN dbid Oid DEFAULT 0,
+	IN queryid bigint DEFAULT 0,
+	IN minmax_only boolean DEFAULT false
+)
+RETURNS timestamp with time zone
+AS 'MODULE_PATHNAME', 'pg_stat_statements_reset_1_11'
+LANGUAGE C STRICT PARALLEL SAFE;
+
+-- Don't want this to be available to non-superusers.
+REVOKE ALL ON FUNCTION pg_stat_statements_reset(Oid, Oid, bigint, boolean) FROM PUBLIC;
