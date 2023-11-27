@@ -1136,8 +1136,8 @@ init_tuple_slot(PGOutputData *data, Relation relation,
 	 * Create tuple table slots. Create a copy of the TupleDesc as it needs to
 	 * live as long as the cache remains.
 	 */
-	oldtupdesc = CreateTupleDescCopy(RelationGetDescr(relation));
-	newtupdesc = CreateTupleDescCopy(RelationGetDescr(relation));
+	oldtupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
+	newtupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
 
 	entry->old_slot = MakeSingleTupleTableSlot(oldtupdesc, &TTSOpsHeapTuple);
 	entry->new_slot = MakeSingleTupleTableSlot(newtupdesc, &TTSOpsHeapTuple);
