@@ -3328,6 +3328,7 @@ exec_thread_arg
 execution_state
 explain_get_index_name_hook_type
 f_smgr
+fasthash_state
 fd_set
 fe_scram_state
 fe_scram_state_enum

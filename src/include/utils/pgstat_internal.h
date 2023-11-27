@@ -14,7 +14,7 @@
 #define PGSTAT_INTERNAL_H
 
 
-#include "common/hashfn.h"
+#include "common/hashfn_unstable.h"
 #include "lib/dshash.h"
 #include "lib/ilist.h"
 #include "pgstat.h"
@@ -776,16 +776,10 @@ pgstat_cmp_hash_key(const void *a, const void *b, size_t size, void *arg)
 static inline uint32
 pgstat_hash_hash_key(const void *d, size_t size, void *arg)
 {
-	const PgStat_HashKey *key = (PgStat_HashKey *) d;
-	uint32		hash;
+	const char *key = (const char *) d;
 
 	Assert(size == sizeof(PgStat_HashKey) && arg == NULL);
-
-	hash = murmurhash32(key->kind);
-	hash = hash_combine(hash, murmurhash32(key->dboid));
-	hash = hash_combine(hash, murmurhash32(key->objoid));
-
-	return hash;
+	return fasthash32(key, size, 0);
 }
 
 /*
