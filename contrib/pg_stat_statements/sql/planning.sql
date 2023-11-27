@@ -4,7 +4,7 @@
 
 -- These tests require track_planning to be enabled.
 SET pg_stat_statements.track_planning = TRUE;
-SELECT pg_stat_statements_reset();
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 
 --
 -- [re]plan counting
@@ -28,4 +28,4 @@ SELECT plans >= 2 AND plans <= calls AS plans_ok, calls, rows, query FROM pg_sta
 
 -- Cleanup
 DROP TABLE stats_plan_test;
-SELECT pg_stat_statements_reset();
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;

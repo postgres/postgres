@@ -3,10 +3,10 @@
 --
 -- These tests require track_planning to be enabled.
 SET pg_stat_statements.track_planning = TRUE;
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 --
@@ -64,7 +64,7 @@ SELECT plans, calls, rows, query FROM pg_stat_statements
      0 |     1 |    0 | ALTER TABLE stats_plan_test ADD COLUMN x int
      0 |     1 |    0 | CREATE TABLE stats_plan_test ()
      3 |     3 |    3 | SELECT $1
-     0 |     1 |    1 | SELECT pg_stat_statements_reset()
+     0 |     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
      1 |     0 |    0 | SELECT plans, calls, rows, query FROM pg_stat_statements+
        |       |      |   WHERE query NOT LIKE $1 ORDER BY query COLLATE "C"
 (5 rows)
@@ -80,9 +80,9 @@ SELECT plans >= 2 AND plans <= calls AS plans_ok, calls, rows, query FROM pg_sta
 
 -- Cleanup
 DROP TABLE stats_plan_test;
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 

@@ -3,10 +3,10 @@
 --
 -- These tests require track_utility to be enabled.
 SET pg_stat_statements.track_utility = TRUE;
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- Tables, indexes, triggers
@@ -33,13 +33,13 @@ NOTICE:  table "tab_stats" does not exist, skipping
      1 |    0 | CREATE TEMP TABLE tab_stats (a int, b char(20))
      3 |    0 | DROP TABLE IF EXISTS tab_stats
      1 |    0 | DROP TABLE tab_stats
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (8 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- Partitions
@@ -142,13 +142,13 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    0 | DROP TABLE trigger_tab_stats
      1 |    0 | DROP TYPE stats_type
      1 |    0 | DROP VIEW view_stats
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (39 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- Transaction statements
@@ -188,13 +188,13 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    0 | BEGIN TRANSACTION NOT DEFERRABLE, READ ONLY, READ WRITE, DEFERRABLE
      1 |    0 | BEGIN TRANSACTION READ ONLY, READ WRITE, DEFERRABLE, NOT DEFERRABLE
      7 |    0 | COMMIT WORK
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (8 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- Two-phase transactions
@@ -205,19 +205,19 @@ BEGIN;
 PREPARE TRANSACTION 'stat_trans2';
 ROLLBACK PREPARED 'stat_trans2';
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |               query               
--------+------+-----------------------------------
+ calls | rows |                       query                        
+-------+------+----------------------------------------------------
      2 |    0 | BEGIN
      1 |    0 | COMMIT PREPARED $1
      2 |    0 | PREPARE TRANSACTION $1
      1 |    0 | ROLLBACK PREPARED $1
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (5 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- Savepoints
@@ -235,20 +235,20 @@ ROLLBACK TO sp1;
 RELEASE SAVEPOINT sp1;
 COMMIT;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |               query               
--------+------+-----------------------------------
+ calls | rows |                       query                        
+-------+------+----------------------------------------------------
      1 |    0 | BEGIN
      1 |    0 | COMMIT
      3 |    0 | RELEASE $1
      4 |    0 | ROLLBACK TO $1
      4 |    0 | SAVEPOINT $1
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (6 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- EXPLAIN statements
@@ -284,7 +284,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 -------+------+---------------------------------------------------------------------------------
      2 |    0 | EXPLAIN (costs off) SELECT $1
      2 |    0 | EXPLAIN (costs off) SELECT a FROM generate_series($1,$2) AS tab(a) WHERE a = $3
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (3 rows)
 
 -- CALL
@@ -321,10 +321,10 @@ BEGIN
   i2 := i;
   i3 := i3 + i;
 END; $$ LANGUAGE plpgsql;
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 CALL sum_one(3);
@@ -346,22 +346,22 @@ CALL in_out(2, 1, 2);
 (1 row)
 
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |               query               
--------+------+-----------------------------------
+ calls | rows |                       query                        
+-------+------+----------------------------------------------------
      2 |    0 | CALL in_out($1, $2, $3)
      1 |    0 | CALL overload($1)
      1 |    0 | CALL overload($1)
      2 |    0 | CALL sum_one($1)
      2 |    0 | CALL sum_two($1,$2)
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (6 rows)
 
 -- COPY
 CREATE TABLE copy_stats (a int, b int);
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- Some queries with A_Const nodes.
@@ -391,14 +391,14 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    1 | COPY (SELECT 2) TO STDOUT
      1 |    2 | COPY (UPDATE copy_stats SET b = b + 1 RETURNING *) TO STDOUT
      1 |    2 | COPY (UPDATE copy_stats SET b = b + 2 RETURNING *) TO STDOUT
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (8 rows)
 
 DROP TABLE copy_stats;
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- CREATE TABLE AS
@@ -424,13 +424,13 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
        |      |     FROM generate_series($2, $3) AS tab(a) WHERE a < $4 AND a > $5
      2 |    0 | DROP TABLE ctas_stats_1
      2 |    0 | DROP TABLE ctas_stats_2
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (5 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- CREATE MATERIALIZED VIEW
@@ -450,13 +450,13 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
        |      |   SELECT a AS col1, $1::int AS col2                               +
        |      |     FROM generate_series($2, $3) AS tab(a) WHERE a < $4 AND a > $5
      2 |    0 | DROP MATERIALIZED VIEW matview_stats_1
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (3 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- CREATE VIEW
@@ -478,13 +478,13 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
        |      |   SELECT a AS col1, 4::int AS col2                             +
        |      |     FROM generate_series(1, 5) AS tab(a) WHERE a < 4 AND a > 3
      2 |    0 | DROP VIEW view_stats_1
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (4 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- Domains
@@ -499,13 +499,13 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    0 | ALTER DOMAIN domain_stats SET DEFAULT '3'
      1 |    0 | CREATE DOMAIN domain_stats AS int CHECK (VALUE > 0)
      1 |    0 | DROP DOMAIN domain_stats
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (5 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- Execution statements
@@ -534,19 +534,19 @@ DEALLOCATE PREPARE stat_select;
 DEALLOCATE ALL;
 DEALLOCATE PREPARE ALL;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |                 query                 
--------+------+---------------------------------------
+ calls | rows |                       query                        
+-------+------+----------------------------------------------------
      2 |    0 | DEALLOCATE $1
      2 |    0 | DEALLOCATE ALL
      2 |    2 | PREPARE stat_select AS SELECT $1 AS a
      1 |    1 | SELECT $1 as a
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (5 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- SET statements.
@@ -572,14 +572,14 @@ SET LOCAL SESSION AUTHORIZATION DEFAULT;
 RESET SESSION AUTHORIZATION;
 COMMIT;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
- calls | rows |                      query                      
--------+------+-------------------------------------------------
+ calls | rows |                       query                        
+-------+------+----------------------------------------------------
      2 |    0 | BEGIN
      2 |    0 | COMMIT
      2 |    0 | RESET SESSION AUTHORIZATION
      1 |    0 | RESET enable_seqscan
      1 |    0 | RESET work_mem
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
      1 |    0 | SET LOCAL SESSION AUTHORIZATION DEFAULT
      1 |    0 | SET SESSION SESSION AUTHORIZATION DEFAULT
      1 |    0 | SET TRANSACTION ISOLATION LEVEL READ COMMITTED
@@ -591,10 +591,10 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    0 | SET work_mem = '2MB'
 (15 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 --
@@ -652,15 +652,15 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    1 | FETCH NEXT pgss_cursor
      1 |   13 | REFRESH MATERIALIZED VIEW pgss_matv
      1 |   10 | SELECT generate_series($1, $2) c INTO pgss_select_into
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (12 rows)
 
 DROP MATERIALIZED VIEW pgss_matv;
 DROP TABLE pgss_ctas;
 DROP TABLE pgss_select_into;
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 

@@ -4,10 +4,10 @@
 CREATE EXTENSION pg_stat_statements;
 SET pg_stat_statements.track_utility = FALSE;
 SET pg_stat_statements.track_planning = TRUE;
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 --
@@ -138,7 +138,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    2 | SELECT $1 AS i UNION SELECT $2 ORDER BY i
      1 |    1 | SELECT $1 || $2
      0 |    0 | SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C"
-     1 |    1 | SELECT pg_stat_statements_reset()
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
      1 |    2 | WITH t(f) AS (                                                              +
        |      |   VALUES ($1), ($2)                                                         +
        |      | )                                                                           +
@@ -146,10 +146,10 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    1 | select $1::jsonb ? $2
 (12 rows)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 --
@@ -157,10 +157,10 @@ SELECT pg_stat_statements_reset();
 --
 CREATE TABLE pgss_a (id integer PRIMARY KEY);
 CREATE TABLE pgss_b (id integer PRIMARY KEY, a_id integer REFERENCES pgss_a);
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 -- control query
@@ -236,17 +236,17 @@ SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 | SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE OF pgss_b, pgss_a
      1 | SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE SKIP LOCKED
      0 | SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C"
-     1 | SELECT pg_stat_statements_reset()
+     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (12 rows)
 
 DROP TABLE pgss_a, pgss_b CASCADE;
 --
 -- access to pg_stat_statements_info view
 --
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 SELECT dealloc FROM pg_stat_statements_info;
@@ -406,9 +406,9 @@ SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%SELECT GROUPING%';
      2
 (1 row)
 
-SELECT pg_stat_statements_reset();
- pg_stat_statements_reset 
---------------------------
- 
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
