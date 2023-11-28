@@ -96,9 +96,6 @@
 /* Define to 1 if you have the <atomic.h> header file. */
 #undef HAVE_ATOMIC_H
 
-/* Define to 1 if you have the `BIO_get_data' function. */
-#undef HAVE_BIO_GET_DATA
-
 /* Define to 1 if you have the `BIO_meth_new' function. */
 #undef HAVE_BIO_METH_NEW
 

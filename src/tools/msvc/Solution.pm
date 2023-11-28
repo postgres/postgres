@@ -273,7 +273,6 @@ sub GenerateFiles
 				|| ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0'))
 			{
 				print $o "#define HAVE_ASN1_STRING_GET0_DATA 1\n";
-				print $o "#define HAVE_BIO_GET_DATA 1\n";
 				print $o "#define HAVE_BIO_METH_NEW 1\n";
 				print $o "#define HAVE_OPENSSL_INIT_SSL 1\n";
 			}

@@ -75,9 +75,6 @@
 /* Define to 1 if you have the `ASN1_STRING_get0_data' function. */
 /* #undef HAVE_ASN1_STRING_GET0_DATA */
 
-/* Define to 1 if you have the `BIO_get_data' function. */
-/* #undef HAVE_BIO_GET_DATA */
-
 /* Define to 1 if you have the `BIO_meth_new' function. */
 /* #undef HAVE_BIO_METH_NEW */
 
