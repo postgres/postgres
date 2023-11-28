@@ -942,8 +942,46 @@ TwoPhaseGetDummyProc(TransactionId xid, bool lock_held)
 /* State file support													*/
 /************************************************************************/
 
-#define TwoPhaseFilePath(path, xid) \
-	snprintf(path, MAXPGPATH, TWOPHASE_DIR "/%08X", xid)
+/*
+ * Compute the FullTransactionId for the given TransactionId.
+ *
+ * The wrap logic is safe here because the span of active xids cannot exceed one
+ * epoch at any given time.
+ */
+static inline FullTransactionId
+AdjustToFullTransactionId(TransactionId xid)
+{
+	FullTransactionId nextFullXid;
+	TransactionId nextXid;
+	uint32		epoch;
+
+	Assert(TransactionIdIsValid(xid));
+
+	LWLockAcquire(XidGenLock, LW_SHARED);
+	nextFullXid = ShmemVariableCache->nextXid;
+	LWLockRelease(XidGenLock);
+
+	nextXid = XidFromFullTransactionId(nextFullXid);
+	epoch = EpochFromFullTransactionId(nextFullXid);
+	if (unlikely(xid > nextXid))
+	{
+		/* Wraparound occured, must be from a prev epoch. */
+		Assert(epoch > 0);
+		epoch--;
+	}
+
+	return FullTransactionIdFromEpochAndXid(epoch, xid);
+}
+
+static inline int
+TwoPhaseFilePath(char *path, TransactionId xid)
+{
+	FullTransactionId fxid = AdjustToFullTransactionId(xid);
+
+	return snprintf(path, MAXPGPATH, TWOPHASE_DIR "/%08X%08X",
+					EpochFromFullTransactionId(fxid),
+					XidFromFullTransactionId(fxid));
+}
 
 /*
  * 2PC state file format:
@@ -1882,13 +1920,15 @@ restoreTwoPhaseData(void)
 	cldir = AllocateDir(TWOPHASE_DIR);
 	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
 	{
-		if (strlen(clde->d_name) == 8 &&
-			strspn(clde->d_name, "0123456789ABCDEF") == 8)
+		if (strlen(clde->d_name) == 16 &&
+			strspn(clde->d_name, "0123456789ABCDEF") == 16)
 		{
 			TransactionId xid;
+			FullTransactionId fxid;
 			char	   *buf;
 
-			xid = (TransactionId) strtoul(clde->d_name, NULL, 16);
+			fxid = FullTransactionIdFromU64(strtou64(clde->d_name, NULL, 16));
+			xid = XidFromFullTransactionId(fxid);
 
 			buf = ProcessTwoPhaseBuffer(xid, InvalidXLogRecPtr,
 										true, false, false);
