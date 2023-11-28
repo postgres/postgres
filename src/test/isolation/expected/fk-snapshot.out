@@ -122,3 +122,25 @@ a
 1
 (1 row)
 
+
+starting permutation: s2ip2 s1brr s1ifp2 s2brr s2dp2 s1c s2c
+step s2ip2: INSERT INTO pk_noparted VALUES (2);
+step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1ifp2: INSERT INTO fk_parted_pk VALUES (2);
+step s2brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2dp2: DELETE FROM pk_noparted WHERE a = 2; <waiting ...>
+step s1c: COMMIT;
+step s2dp2: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s2c: COMMIT;
+
+starting permutation: s2ip2 s1brr s1ifn2 s2brr s2dp2 s1c s2c
+step s2ip2: INSERT INTO pk_noparted VALUES (2);
+step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1ifn2: INSERT INTO fk_noparted_sn VALUES (2);
+step s2brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2dp2: DELETE FROM pk_noparted WHERE a = 2; <waiting ...>
+step s1c: COMMIT;
+step s2dp2: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s2c: COMMIT;
