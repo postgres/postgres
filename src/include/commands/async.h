@@ -21,6 +21,7 @@
 #define NUM_NOTIFY_BUFFERS	8
 
 extern PGDLLIMPORT bool Trace_notify;
+extern PGDLLIMPORT int max_notify_queue_pages;
 extern PGDLLIMPORT volatile sig_atomic_t notifyInterruptPending;
 
 extern Size AsyncShmemSize(void);

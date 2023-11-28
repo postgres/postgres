@@ -228,6 +228,7 @@ Asynchronous notification "foo" with payload "payload" received from server proc
   <simplelist type="inline">
    <member><xref linkend="sql-listen"/></member>
    <member><xref linkend="sql-unlisten"/></member>
+   <member><xref linkend="guc-max-notify-queue-pages"/></member>
   </simplelist>
  </refsect1>
 </refentry>

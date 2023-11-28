@@ -2151,6 +2151,22 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-max-notify-queue-pages" xreflabel="max_notify_queue_pages">
+      <term><varname>max_notify_queue_pages</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>max_notify_queue_pages</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the maximum amount of allocated pages for
+        <xref linkend="sql-notify"/> / <xref linkend="sql-listen"/> queue.
+        The default value is 1048576. For 8 KB pages it allows to consume
+        up to 8 GB of disk space.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
      </sect2>
 
