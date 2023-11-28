@@ -2936,7 +2936,14 @@ search_indexed_tlist_for_sortgroupref(Expr *node,
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 
-		/* The equal() check should be redundant, but let's be paranoid */
+		/*
+		 * Usually the equal() check is redundant, but in setop plans it may
+		 * not be, since prepunion.c assigns ressortgroupref equal to the
+		 * column resno without regard to whether that matches the topmost
+		 * level's sortgrouprefs and without regard to whether any implicit
+		 * coercions are added in the setop tree.  We might have to clean that
+		 * up someday; but for now, just ignore any false matches.
+		 */
 		if (tle->ressortgroupref == sortgroupref &&
 			equal(node, tle->expr))
 		{
