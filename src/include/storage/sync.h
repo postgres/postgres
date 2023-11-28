@@ -52,7 +52,7 @@ typedef struct FileTag
 	int16		handler;		/* SyncRequestHandler value, saving space */
 	int16		forknum;		/* ForkNumber, saving space */
 	RelFileLocator rlocator;
-	uint32		segno;
+	uint64		segno;
 } FileTag;
 
 extern void InitSync(void);

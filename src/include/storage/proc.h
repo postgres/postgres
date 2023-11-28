@@ -281,7 +281,7 @@ struct PGPROC
 	TransactionId clogGroupMemberXid;	/* transaction id of clog group member */
 	XidStatus	clogGroupMemberXidStatus;	/* transaction status of clog
 											 * group member */
-	int			clogGroupMemberPage;	/* clog page corresponding to
+	int64		clogGroupMemberPage;	/* clog page corresponding to
 										 * transaction id of clog group member */
 	XLogRecPtr	clogGroupMemberLsn; /* WAL location of commit record for clog
 									 * group member */

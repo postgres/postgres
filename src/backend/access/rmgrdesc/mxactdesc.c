@@ -55,10 +55,10 @@ multixact_desc(StringInfo buf, XLogReaderState *record)
 	if (info == XLOG_MULTIXACT_ZERO_OFF_PAGE ||
 		info == XLOG_MULTIXACT_ZERO_MEM_PAGE)
 	{
-		int			pageno;
+		int64		pageno;
 
-		memcpy(&pageno, rec, sizeof(int));
-		appendStringInfo(buf, "%d", pageno);
+		memcpy(&pageno, rec, sizeof(pageno));
+		appendStringInfo(buf, "%lld", (long long) pageno);
 	}
 	else if (info == XLOG_MULTIXACT_CREATE_ID)
 	{

@@ -196,7 +196,7 @@ typedef struct AsyncQueueEntry
  */
 typedef struct QueuePosition
 {
-	int			page;			/* SLRU page number */
+	int64		page;			/* SLRU page number */
 	int			offset;			/* byte offset within page */
 } QueuePosition;
 
@@ -443,8 +443,8 @@ static bool tryAdvanceTail = false;
 bool		Trace_notify = false;
 
 /* local function prototypes */
-static int	asyncQueuePageDiff(int p, int q);
-static bool asyncQueuePagePrecedes(int p, int q);
+static int64 asyncQueuePageDiff(int64 p, int64 q);
+static bool asyncQueuePagePrecedes(int64 p, int64 q);
 static void queue_listen(ListenActionKind action, const char *channel);
 static void Async_UnlistenOnExit(int code, Datum arg);
 static void Exec_ListenPreCommit(void);
@@ -477,10 +477,10 @@ static void ClearPendingActionsAndNotifies(void);
  * Compute the difference between two queue page numbers (i.e., p - q),
  * accounting for wraparound.
  */
-static int
-asyncQueuePageDiff(int p, int q)
+static int64
+asyncQueuePageDiff(int64 p, int64 q)
 {
-	int			diff;
+	int64		diff;
 
 	/*
 	 * We have to compare modulo (QUEUE_MAX_PAGE+1)/2.  Both inputs should be
@@ -504,7 +504,7 @@ asyncQueuePageDiff(int p, int q)
  * extant page, we need not assess entries within a page.
  */
 static bool
-asyncQueuePagePrecedes(int p, int q)
+asyncQueuePagePrecedes(int64 p, int64 q)
 {
 	return asyncQueuePageDiff(p, q) < 0;
 }
@@ -571,7 +571,7 @@ AsyncShmemInit(void)
 	NotifyCtl->PagePrecedes = asyncQueuePagePrecedes;
 	SimpleLruInit(NotifyCtl, "Notify", NUM_NOTIFY_BUFFERS, 0,
 				  NotifySLRULock, "pg_notify", LWTRANCHE_NOTIFY_BUFFER,
-				  SYNC_HANDLER_NONE);
+				  SYNC_HANDLER_NONE, false);
 
 	if (!found)
 	{
@@ -1336,7 +1336,7 @@ asyncQueueIsFull(void)
 static bool
 asyncQueueAdvance(volatile QueuePosition *position, int entryLength)
 {
-	int			pageno = QUEUE_POS_PAGE(*position);
+	int64		pageno = QUEUE_POS_PAGE(*position);
 	int			offset = QUEUE_POS_OFFSET(*position);
 	bool		pageJump = false;
 
@@ -1409,7 +1409,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 {
 	AsyncQueueEntry qe;
 	QueuePosition queue_head;
-	int			pageno;
+	int64		pageno;
 	int			offset;
 	int			slotno;
 

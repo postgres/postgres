@@ -60,8 +60,33 @@
 #include "storage/fd.h"
 #include "storage/shmem.h"
 
-#define SlruFileName(ctl, path, seg) \
-	snprintf(path, MAXPGPATH, "%s/%04X", (ctl)->Dir, seg)
+static int	inline
+SlruFileName(SlruCtl ctl, char *path, int64 segno)
+{
+	if (ctl->long_segment_names)
+	{
+		/*
+		 * We could use 16 characters here but the disadvantage would be that
+		 * the SLRU segments will be hard to distinguish from WAL segments.
+		 *
+		 * For this reason we use 15 characters. It is enough but also means
+		 * that in the future we can't decrease SLRU_PAGES_PER_SEGMENT easily.
+		 */
+		Assert(segno >= 0 && segno <= INT64CONST(0xFFFFFFFFFFFFFFF));
+		return snprintf(path, MAXPGPATH, "%s/%015llX", ctl->Dir,
+						(long long) segno);
+	}
+	else
+	{
+		/*
+		 * Despite the fact that %04X format string is used up to 24 bit
+		 * integers are allowed. See SlruCorrectSegmentFilenameLength()
+		 */
+		Assert(segno >= 0 && segno <= INT64CONST(0xFFFFFF));
+		return snprintf(path, MAXPGPATH, "%s/%04X", (ctl)->Dir,
+						(unsigned int) segno);
+	}
+}
 
 /*
  * During SimpleLruWriteAll(), we will usually not need to write more than one
@@ -75,7 +100,7 @@ typedef struct SlruWriteAllData
 {
 	int			num_files;		/* # files actually open */
 	int			fd[MAX_WRITEALL_BUFFERS];	/* their FD's */
-	int			segno[MAX_WRITEALL_BUFFERS];	/* their log seg#s */
+	int64		segno[MAX_WRITEALL_BUFFERS];	/* their log seg#s */
 } SlruWriteAllData;
 
 typedef struct SlruWriteAllData *SlruWriteAll;
@@ -138,15 +163,16 @@ static int	slru_errno;
 static void SimpleLruZeroLSNs(SlruCtl ctl, int slotno);
 static void SimpleLruWaitIO(SlruCtl ctl, int slotno);
 static void SlruInternalWritePage(SlruCtl ctl, int slotno, SlruWriteAll fdata);
-static bool SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno);
-static bool SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno,
+static bool SlruPhysicalReadPage(SlruCtl ctl, int64 pageno, int slotno);
+static bool SlruPhysicalWritePage(SlruCtl ctl, int64 pageno, int slotno,
 								  SlruWriteAll fdata);
-static void SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid);
-static int	SlruSelectLRUPage(SlruCtl ctl, int pageno);
+static void SlruReportIOError(SlruCtl ctl, int64 pageno, TransactionId xid);
+static int	SlruSelectLRUPage(SlruCtl ctl, int64 pageno);
 
 static bool SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename,
-									  int segpage, void *data);
-static void SlruInternalDeleteSegment(SlruCtl ctl, int segno);
+									  int64 segpage, void *data);
+static void SlruInternalDeleteSegment(SlruCtl ctl, int64 segno);
+
 
 /*
  * Initialization of shared memory
@@ -162,7 +188,7 @@ SimpleLruShmemSize(int nslots, int nlsns)
 	sz += MAXALIGN(nslots * sizeof(char *));	/* page_buffer[] */
 	sz += MAXALIGN(nslots * sizeof(SlruPageStatus));	/* page_status[] */
 	sz += MAXALIGN(nslots * sizeof(bool));	/* page_dirty[] */
-	sz += MAXALIGN(nslots * sizeof(int));	/* page_number[] */
+	sz += MAXALIGN(nslots * sizeof(int64)); /* page_number[] */
 	sz += MAXALIGN(nslots * sizeof(int));	/* page_lru_count[] */
 	sz += MAXALIGN(nslots * sizeof(LWLockPadded));	/* buffer_locks[] */
 
@@ -187,7 +213,7 @@ SimpleLruShmemSize(int nslots, int nlsns)
 void
 SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 			  LWLock *ctllock, const char *subdir, int tranche_id,
-			  SyncRequestHandler sync_handler)
+			  SyncRequestHandler sync_handler, bool long_segment_names)
 {
 	SlruShared	shared;
 	bool		found;
@@ -226,8 +252,8 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		offset += MAXALIGN(nslots * sizeof(SlruPageStatus));
 		shared->page_dirty = (bool *) (ptr + offset);
 		offset += MAXALIGN(nslots * sizeof(bool));
-		shared->page_number = (int *) (ptr + offset);
-		offset += MAXALIGN(nslots * sizeof(int));
+		shared->page_number = (int64 *) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(int64));
 		shared->page_lru_count = (int *) (ptr + offset);
 		offset += MAXALIGN(nslots * sizeof(int));
 
@@ -266,6 +292,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 	 */
 	ctl->shared = shared;
 	ctl->sync_handler = sync_handler;
+	ctl->long_segment_names = long_segment_names;
 	strlcpy(ctl->Dir, subdir, sizeof(ctl->Dir));
 }
 
@@ -278,7 +305,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
  * Control lock must be held at entry, and will be held at exit.
  */
 int
-SimpleLruZeroPage(SlruCtl ctl, int pageno)
+SimpleLruZeroPage(SlruCtl ctl, int64 pageno)
 {
 	SlruShared	shared = ctl->shared;
 	int			slotno;
@@ -393,7 +420,7 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
  * Control lock must be held at entry, and will be held at exit.
  */
 int
-SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
+SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
 				  TransactionId xid)
 {
 	SlruShared	shared = ctl->shared;
@@ -493,7 +520,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
  * It is unspecified whether the lock will be shared or exclusive.
  */
 int
-SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno, TransactionId xid)
+SimpleLruReadPage_ReadOnly(SlruCtl ctl, int64 pageno, TransactionId xid)
 {
 	SlruShared	shared = ctl->shared;
 	int			slotno;
@@ -540,7 +567,7 @@ static void
 SlruInternalWritePage(SlruCtl ctl, int slotno, SlruWriteAll fdata)
 {
 	SlruShared	shared = ctl->shared;
-	int			pageno = shared->page_number[slotno];
+	int64		pageno = shared->page_number[slotno];
 	bool		ok;
 
 	/* If a write is in progress, wait for it to finish */
@@ -624,9 +651,9 @@ SimpleLruWritePage(SlruCtl ctl, int slotno)
  * large enough to contain the given page.
  */
 bool
-SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
+SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int64 pageno)
 {
-	int			segno = pageno / SLRU_PAGES_PER_SEGMENT;
+	int64		segno = pageno / SLRU_PAGES_PER_SEGMENT;
 	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
 	int			offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
@@ -682,10 +709,10 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
  * read/write operations.  We could cache one virtual file pointer ...
  */
 static bool
-SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
+SlruPhysicalReadPage(SlruCtl ctl, int64 pageno, int slotno)
 {
 	SlruShared	shared = ctl->shared;
-	int			segno = pageno / SLRU_PAGES_PER_SEGMENT;
+	int64		segno = pageno / SLRU_PAGES_PER_SEGMENT;
 	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
 	off_t		offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
@@ -754,10 +781,10 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
  * SimpleLruWriteAll.
  */
 static bool
-SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruWriteAll fdata)
+SlruPhysicalWritePage(SlruCtl ctl, int64 pageno, int slotno, SlruWriteAll fdata)
 {
 	SlruShared	shared = ctl->shared;
-	int			segno = pageno / SLRU_PAGES_PER_SEGMENT;
+	int64		segno = pageno / SLRU_PAGES_PER_SEGMENT;
 	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
 	off_t		offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
@@ -929,9 +956,9 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruWriteAll fdata)
  * SlruPhysicalWritePage.  Call this after cleaning up shared-memory state.
  */
 static void
-SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
+SlruReportIOError(SlruCtl ctl, int64 pageno, TransactionId xid)
 {
-	int			segno = pageno / SLRU_PAGES_PER_SEGMENT;
+	int64		segno = pageno / SLRU_PAGES_PER_SEGMENT;
 	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
 	int			offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
@@ -1014,7 +1041,7 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
  * Control lock must be held at entry, and will be held at exit.
  */
 static int
-SlruSelectLRUPage(SlruCtl ctl, int pageno)
+SlruSelectLRUPage(SlruCtl ctl, int64 pageno)
 {
 	SlruShared	shared = ctl->shared;
 
@@ -1025,10 +1052,10 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 		int			cur_count;
 		int			bestvalidslot = 0;	/* keep compiler quiet */
 		int			best_valid_delta = -1;
-		int			best_valid_page_number = 0; /* keep compiler quiet */
+		int64		best_valid_page_number = 0; /* keep compiler quiet */
 		int			bestinvalidslot = 0;	/* keep compiler quiet */
 		int			best_invalid_delta = -1;
-		int			best_invalid_page_number = 0;	/* keep compiler quiet */
+		int64		best_invalid_page_number = 0;	/* keep compiler quiet */
 
 		/* See if page already has a buffer assigned */
 		for (slotno = 0; slotno < shared->num_slots; slotno++)
@@ -1069,7 +1096,7 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 		for (slotno = 0; slotno < shared->num_slots; slotno++)
 		{
 			int			this_delta;
-			int			this_page_number;
+			int64		this_page_number;
 
 			if (shared->page_status[slotno] == SLRU_PAGE_EMPTY)
 				return slotno;
@@ -1159,7 +1186,7 @@ SimpleLruWriteAll(SlruCtl ctl, bool allow_redirtied)
 	SlruShared	shared = ctl->shared;
 	SlruWriteAllData fdata;
 	int			slotno;
-	int			pageno = 0;
+	int64		pageno = 0;
 	int			i;
 	bool		ok;
 
@@ -1224,7 +1251,7 @@ SimpleLruWriteAll(SlruCtl ctl, bool allow_redirtied)
  * after it has accrued freshly-written data.
  */
 void
-SimpleLruTruncate(SlruCtl ctl, int cutoffPage)
+SimpleLruTruncate(SlruCtl ctl, int64 cutoffPage)
 {
 	SlruShared	shared = ctl->shared;
 	int			slotno;
@@ -1302,7 +1329,7 @@ restart:
  * they either can't yet contain anything, or have already been cleaned out.
  */
 static void
-SlruInternalDeleteSegment(SlruCtl ctl, int segno)
+SlruInternalDeleteSegment(SlruCtl ctl, int64 segno)
 {
 	char		path[MAXPGPATH];
 
@@ -1325,7 +1352,7 @@ SlruInternalDeleteSegment(SlruCtl ctl, int segno)
  * Delete an individual SLRU segment, identified by the segment number.
  */
 void
-SlruDeleteSegment(SlruCtl ctl, int segno)
+SlruDeleteSegment(SlruCtl ctl, int64 segno)
 {
 	SlruShared	shared = ctl->shared;
 	int			slotno;
@@ -1389,9 +1416,9 @@ restart:
  * first>=cutoff && last>=cutoff: no; every page of this segment is too young
  */
 static bool
-SlruMayDeleteSegment(SlruCtl ctl, int segpage, int cutoffPage)
+SlruMayDeleteSegment(SlruCtl ctl, int64 segpage, int64 cutoffPage)
 {
-	int			seg_last_page = segpage + SLRU_PAGES_PER_SEGMENT - 1;
+	int64		seg_last_page = segpage + SLRU_PAGES_PER_SEGMENT - 1;
 
 	Assert(segpage % SLRU_PAGES_PER_SEGMENT == 0);
 
@@ -1405,7 +1432,7 @@ SlruPagePrecedesTestOffset(SlruCtl ctl, int per_page, uint32 offset)
 {
 	TransactionId lhs,
 				rhs;
-	int			newestPage,
+	int64		newestPage,
 				oldestPage;
 	TransactionId newestXact,
 				oldestXact;
@@ -1498,9 +1525,10 @@ SlruPagePrecedesUnitTests(SlruCtl ctl, int per_page)
  *		one containing the page passed as "data".
  */
 bool
-SlruScanDirCbReportPresence(SlruCtl ctl, char *filename, int segpage, void *data)
+SlruScanDirCbReportPresence(SlruCtl ctl, char *filename, int64 segpage,
+							void *data)
 {
-	int			cutoffPage = *(int *) data;
+	int64		cutoffPage = *(int64 *) data;
 
 	if (SlruMayDeleteSegment(ctl, segpage, cutoffPage))
 		return true;			/* found one; don't iterate any more */
@@ -1513,9 +1541,10 @@ SlruScanDirCbReportPresence(SlruCtl ctl, char *filename, int segpage, void *data
  *		This callback deletes segments prior to the one passed in as "data".
  */
 static bool
-SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
+SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int64 segpage,
+						  void *data)
 {
-	int			cutoffPage = *(int *) data;
+	int64		cutoffPage = *(int64 *) data;
 
 	if (SlruMayDeleteSegment(ctl, segpage, cutoffPage))
 		SlruInternalDeleteSegment(ctl, segpage / SLRU_PAGES_PER_SEGMENT);
@@ -1528,11 +1557,35 @@ SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
  *		This callback deletes all segments.
  */
 bool
-SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage, void *data)
+SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int64 segpage, void *data)
 {
 	SlruInternalDeleteSegment(ctl, segpage / SLRU_PAGES_PER_SEGMENT);
 
 	return false;				/* keep going */
+}
+
+/*
+ * An internal function used by SlruScanDirectory().
+ *
+ * Returns true if a file with a name of a given length may be a correct
+ * SLRU segment.
+ */
+static inline bool
+SlruCorrectSegmentFilenameLength(SlruCtl ctl, size_t len)
+{
+	if (ctl->long_segment_names)
+		return (len == 15);		/* see SlruFileName() */
+	else
+
+		/*
+		 * Commit 638cf09e76d allowed 5-character lengths. Later commit
+		 * 73c986adde5 allowed 6-character length.
+		 *
+		 * Note: There is an ongoing plan to migrate all SLRUs to 64-bit page
+		 * numbers, and the corresponding 15-character file names, which may
+		 * eventually deprecate the support for 4, 5, and 6-character names.
+		 */
+		return (len == 4 || len == 5 || len == 6);
 }
 
 /*
@@ -1556,8 +1609,8 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 	bool		retval = false;
 	DIR		   *cldir;
 	struct dirent *clde;
-	int			segno;
-	int			segpage;
+	int64		segno;
+	int64		segpage;
 
 	cldir = AllocateDir(ctl->Dir);
 	while ((clde = ReadDir(cldir, ctl->Dir)) != NULL)
@@ -1566,10 +1619,10 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 
 		len = strlen(clde->d_name);
 
-		if ((len == 4 || len == 5 || len == 6) &&
+		if (SlruCorrectSegmentFilenameLength(ctl, len) &&
 			strspn(clde->d_name, "0123456789ABCDEF") == len)
 		{
-			segno = (int) strtol(clde->d_name, NULL, 16);
+			segno = strtoi64(clde->d_name, NULL, 16);
 			segpage = segno * SLRU_PAGES_PER_SEGMENT;
 
 			elog(DEBUG2, "SlruScanDirectory invoking callback on %s/%s",

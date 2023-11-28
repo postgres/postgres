@@ -61,7 +61,7 @@ SELECT test_slru_page_writeall();
 
 -- Flush the last page written out.
 SELECT test_slru_page_sync(12393);
-NOTICE:  Called SlruSyncFileTag() for segment 387 on path pg_test_slru/0183
+NOTICE:  Called SlruSyncFileTag() for segment 387 on path pg_test_slru/000000000000183
  test_slru_page_sync 
 ---------------------
  
