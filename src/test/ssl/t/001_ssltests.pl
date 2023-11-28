@@ -682,7 +682,7 @@ $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt "
 	  . sslkey('client-revoked.key'),
 	"certificate authorization fails with revoked client cert",
-	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/,
+	expected_stderr => qr|SSL error: ssl[a-z0-9/]* alert certificate revoked|,
 	# revoked certificates should not authenticate the user
 	log_unlike => [qr/connection authenticated:/],);
 
@@ -743,6 +743,6 @@ $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt "
 	  . sslkey('client-revoked.key'),
 	"certificate authorization fails with revoked client cert with server-side CRL directory",
-	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/);
+	expected_stderr => qr|SSL error: ssl[a-z0-9/]* alert certificate revoked|);
 
 done_testing();
