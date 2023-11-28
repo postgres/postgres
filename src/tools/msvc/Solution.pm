@@ -225,7 +225,6 @@ sub GenerateFiles
 		HAVE_ATOMICS => 1,
 		HAVE_ATOMIC_H => undef,
 		HAVE_BACKTRACE_SYMBOLS => undef,
-		HAVE_BIO_GET_DATA => undef,
 		HAVE_BIO_METH_NEW => undef,
 		HAVE_COMPUTED_GOTO => undef,
 		HAVE_COPYFILE => undef,
@@ -503,7 +502,6 @@ sub GenerateFiles
 			|| ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0'))
 		{
 			$define{HAVE_ASN1_STRING_GET0_DATA} = 1;
-			$define{HAVE_BIO_GET_DATA} = 1;
 			$define{HAVE_BIO_METH_NEW} = 1;
 			$define{HAVE_HMAC_CTX_FREE} = 1;
 			$define{HAVE_HMAC_CTX_NEW} = 1;
