@@ -462,37 +462,31 @@ SELECT stats_reset > :'slru_notify_reset_ts'::timestamptz FROM pg_stat_slru WHER
 SELECT stats_reset AS archiver_reset_ts FROM pg_stat_archiver \gset
 SELECT pg_stat_reset_shared('archiver');
 SELECT stats_reset > :'archiver_reset_ts'::timestamptz FROM pg_stat_archiver;
-SELECT stats_reset AS archiver_reset_ts FROM pg_stat_archiver \gset
 
 -- Test that reset_shared with bgwriter specified as the stats type works
 SELECT stats_reset AS bgwriter_reset_ts FROM pg_stat_bgwriter \gset
 SELECT pg_stat_reset_shared('bgwriter');
 SELECT stats_reset > :'bgwriter_reset_ts'::timestamptz FROM pg_stat_bgwriter;
-SELECT stats_reset AS bgwriter_reset_ts FROM pg_stat_bgwriter \gset
 
 -- Test that reset_shared with checkpointer specified as the stats type works
 SELECT stats_reset AS checkpointer_reset_ts FROM pg_stat_checkpointer \gset
 SELECT pg_stat_reset_shared('checkpointer');
 SELECT stats_reset > :'checkpointer_reset_ts'::timestamptz FROM pg_stat_checkpointer;
-SELECT stats_reset AS checkpointer_reset_ts FROM pg_stat_checkpointer \gset
 
 -- Test that reset_shared with recovery_prefetch specified as the stats type works
 SELECT stats_reset AS recovery_prefetch_reset_ts FROM pg_stat_recovery_prefetch \gset
 SELECT pg_stat_reset_shared('recovery_prefetch');
 SELECT stats_reset > :'recovery_prefetch_reset_ts'::timestamptz FROM pg_stat_recovery_prefetch;
-SELECT stats_reset AS recovery_prefetch_reset_ts FROM pg_stat_recovery_prefetch \gset
 
 -- Test that reset_shared with slru specified as the stats type works
 SELECT max(stats_reset) AS slru_reset_ts FROM pg_stat_slru \gset
 SELECT pg_stat_reset_shared('slru');
 SELECT max(stats_reset) > :'slru_reset_ts'::timestamptz FROM pg_stat_slru;
-SELECT max(stats_reset) AS slru_reset_ts FROM pg_stat_slru \gset
 
 -- Test that reset_shared with wal specified as the stats type works
 SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
 SELECT pg_stat_reset_shared('wal');
 SELECT stats_reset > :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
-SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
 
 -- Test error case for reset_shared with unknown stats type
 SELECT pg_stat_reset_shared('unknown');
