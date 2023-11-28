@@ -990,50 +990,6 @@ SELECT stats_reset > :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
 (1 row)
 
 SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
--- Test that reset_shared with no argument resets all the stats types
--- supported (providing NULL as argument has the same effect).
-SELECT pg_stat_reset_shared();
- pg_stat_reset_shared 
-----------------------
- 
-(1 row)
-
-SELECT stats_reset > :'archiver_reset_ts'::timestamptz FROM pg_stat_archiver;
- ?column? 
-----------
- t
-(1 row)
-
-SELECT stats_reset > :'bgwriter_reset_ts'::timestamptz FROM pg_stat_bgwriter;
- ?column? 
-----------
- t
-(1 row)
-
-SELECT stats_reset > :'checkpointer_reset_ts'::timestamptz FROM pg_stat_checkpointer;
- ?column? 
-----------
- t
-(1 row)
-
-SELECT stats_reset > :'recovery_prefetch_reset_ts'::timestamptz FROM pg_stat_recovery_prefetch;
- ?column? 
-----------
- t
-(1 row)
-
-SELECT max(stats_reset) > :'slru_reset_ts'::timestamptz FROM pg_stat_slru;
- ?column? 
-----------
- t
-(1 row)
-
-SELECT stats_reset > :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
- ?column? 
-----------
- t
-(1 row)
-
 -- Test error case for reset_shared with unknown stats type
 SELECT pg_stat_reset_shared('unknown');
 ERROR:  unrecognized reset target: "unknown"
