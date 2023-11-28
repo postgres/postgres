@@ -13,6 +13,11 @@ setup
   CREATE TABLE fk_noparted (
 	a			int		REFERENCES fk_parted_pk ON DELETE NO ACTION INITIALLY DEFERRED
   );
+
+  CREATE TABLE fk_noparted_sn (
+	a			int		REFERENCES pk_noparted ON DELETE SET NULL
+  );
+
   INSERT INTO pk_noparted VALUES (1);
   INSERT INTO fk_parted_pk VALUES (1);
   INSERT INTO fk_noparted VALUES (1);
@@ -20,7 +25,7 @@ setup
 
 teardown
 {
-  DROP TABLE pk_noparted, fk_parted_pk, fk_noparted;
+  DROP TABLE pk_noparted, fk_parted_pk, fk_noparted, fk_noparted_sn;
 }
 
 session s1
@@ -28,6 +33,7 @@ step s1brr	{ BEGIN ISOLATION LEVEL REPEATABLE READ; }
 step s1brc	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step s1ifp2	{ INSERT INTO fk_parted_pk VALUES (2); }
 step s1ifp1	{ INSERT INTO fk_parted_pk VALUES (1); }
+step s1ifn2	{ INSERT INTO fk_noparted_sn VALUES (2); }
 step s1dfp	{ DELETE FROM fk_parted_pk WHERE a = 1; }
 step s1c	{ COMMIT; }
 step s1sfp	{ SELECT * FROM fk_parted_pk; }
@@ -38,6 +44,7 @@ session s2
 step s2brr	{ BEGIN ISOLATION LEVEL REPEATABLE READ; }
 step s2brc	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step s2ip2	{ INSERT INTO pk_noparted VALUES (2); }
+step s2dp2	{ DELETE FROM pk_noparted WHERE a = 2; }
 step s2ifn2	{ INSERT INTO fk_noparted VALUES (2); }
 step s2c	{ COMMIT; }
 step s2sfp	{ SELECT * FROM fk_parted_pk; }
@@ -59,3 +66,11 @@ permutation s1brc s2brc s2ip2 s1sp s2c s1sp s1ifp2 s2brc s2sfp s1c s1sfp s2ifn2 
 # the same no matter the snapshot mode
 permutation s1brr s1dfp s1ifp1 s1c s1sfn
 permutation s1brc s1dfp s1ifp1 s1c s1sfn
+
+# trying to delete a row through DELETE CASCADE, whilst that row is deleted
+# in a concurrent transaction
+permutation s2ip2 s1brr s1ifp2 s2brr s2dp2 s1c s2c
+
+# trying to update a row through DELETE SET NULL, whilst that row is deleted
+# in a concurrent transaction
+permutation s2ip2 s1brr s1ifn2 s2brr s2dp2 s1c s2c
