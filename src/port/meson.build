@@ -66,8 +66,6 @@ replace_funcs_neg = [
   ['getpeereid'],
   ['inet_aton'],
   ['mkdtemp'],
-  ['preadv', 'HAVE_DECL_PREADV'],
-  ['pwritev', 'HAVE_DECL_PWRITEV'],
   ['strlcat'],
   ['strlcpy'],
   ['strnlen'],

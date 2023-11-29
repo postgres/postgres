@@ -16057,7 +16057,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-# We can't use AC_REPLACE_FUNCS to replace these functions, because it
+# We can't use AC_CHECK_FUNCS to detect these functions, because it
 # won't handle deployment target restrictions on macOS
 ac_fn_c_check_decl "$LINENO" "preadv" "ac_cv_have_decl_preadv" "#include <sys/uio.h>
 "
@@ -16070,16 +16070,6 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_PREADV $ac_have_decl
 _ACEOF
-if test $ac_have_decl = 1; then :
-
-else
-  case " $LIBOBJS " in
-  *" preadv.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS preadv.$ac_objext"
- ;;
-esac
-
-fi
 
 ac_fn_c_check_decl "$LINENO" "pwritev" "ac_cv_have_decl_pwritev" "#include <sys/uio.h>
 "
@@ -16092,16 +16082,6 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_PWRITEV $ac_have_decl
 _ACEOF
-if test $ac_have_decl = 1; then :
-
-else
-  case " $LIBOBJS " in
-  *" pwritev.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS pwritev.$ac_objext"
- ;;
-esac
-
-fi
 
 
 # This is probably only present on macOS, but may as well check always

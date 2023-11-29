@@ -17,6 +17,7 @@
 
 #include <limits.h>
 #include <sys/uio.h>
+#include <unistd.h>
 
 #else
 
@@ -36,20 +37,81 @@ struct iovec
 #define PG_IOV_MAX Min(IOV_MAX, 32)
 
 /*
- * Note that pg_preadv and pg_pwritev have a pg_ prefix as a warning that the
- * Windows implementations have the side-effect of changing the file position.
+ * Like preadv(), but with a prefix to remind us of a side-effect: on Windows
+ * this changes the current file position.
  */
-
+static inline ssize_t
+pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+{
 #if HAVE_DECL_PREADV
-#define pg_preadv preadv
+	/*
+	 * Avoid a small amount of argument copying overhead in the kernel if
+	 * there is only one iovec.
+	 */
+	if (iovcnt == 1)
+		return pread(fd, iov[0].iov_base, iov[0].iov_len, offset);
+	else
+		return preadv(fd, iov, iovcnt, offset);
 #else
-extern ssize_t pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset);
-#endif
+	ssize_t		sum = 0;
+	ssize_t		part;
 
-#if HAVE_DECL_PWRITEV
-#define pg_pwritev pwritev
-#else
-extern ssize_t pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
+	for (int i = 0; i < iovcnt; ++i)
+	{
+		part = pg_pread(fd, iov[i].iov_base, iov[i].iov_len, offset);
+		if (part < 0)
+		{
+			if (i == 0)
+				return -1;
+			else
+				return sum;
+		}
+		sum += part;
+		offset += part;
+		if (part < iov[i].iov_len)
+			return sum;
+	}
+	return sum;
 #endif
+}
+
+/*
+ * Like pwritev(), but with a prefix to remind us of a side-effect: on Windows
+ * this changes the current file position.
+ */
+static inline ssize_t
+pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+{
+#if HAVE_DECL_PWRITEV
+	/*
+	 * Avoid a small amount of argument copying overhead in the kernel if
+	 * there is only one iovec.
+	 */
+	if (iovcnt == 1)
+		return pwrite(fd, iov[0].iov_base, iov[0].iov_len, offset);
+	else
+		return pwritev(fd, iov, iovcnt, offset);
+#else
+	ssize_t		sum = 0;
+	ssize_t		part;
+
+	for (int i = 0; i < iovcnt; ++i)
+	{
+		part = pg_pwrite(fd, iov[i].iov_base, iov[i].iov_len, offset);
+		if (part < 0)
+		{
+			if (i == 0)
+				return -1;
+			else
+				return sum;
+		}
+		sum += part;
+		offset += part;
+		if (part < iov[i].iov_len)
+			return sum;
+	}
+	return sum;
+#endif
+}
 
 #endif							/* PG_IOVEC_H */
