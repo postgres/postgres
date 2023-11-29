@@ -47,11 +47,13 @@
 
 #include "dumputils.h"
 #include "fe_utils/option_utils.h"
+#include "filter.h"
 #include "getopt_long.h"
 #include "parallel.h"
 #include "pg_backup_utils.h"
 
 static void usage(const char *progname);
+static void read_restore_filters(const char *filename, RestoreOptions *dopt);
 
 int
 main(int argc, char **argv)
@@ -123,6 +125,7 @@ main(int argc, char **argv)
 		{"no-publications", no_argument, &no_publications, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-subscriptions", no_argument, &no_subscriptions, 1},
+		{"filter", required_argument, NULL, 4},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -284,6 +287,10 @@ main(int argc, char **argv)
 
 			case 3:				/* section */
 				set_dump_section(optarg, &(opts->dumpSections));
+				break;
+
+			case 4:
+				read_restore_filters(optarg, opts);
 				break;
 
 			default:
@@ -463,6 +470,8 @@ usage(const char *progname)
 	printf(_("  -1, --single-transaction     restore as a single transaction\n"));
 	printf(_("  --disable-triggers           disable triggers during data-only restore\n"));
 	printf(_("  --enable-row-security        enable row security\n"));
+	printf(_("  --filter=FILENAME            restore or skip objects based on expressions\n"
+			 "                               in FILENAME\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --no-comments                do not restore comments\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
@@ -493,4 +502,104 @@ usage(const char *progname)
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
 	printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
+}
+
+/*
+ * read_restore_filters - retrieve object identifier patterns from file
+ *
+ * Parse the specified filter file for include and exclude patterns, and add
+ * them to the relevant lists.  If the filename is "-" then filters will be
+ * read from STDIN rather than a file.
+ */
+static void
+read_restore_filters(const char *filename, RestoreOptions *opts)
+{
+	FilterStateData fstate;
+	char	   *objname;
+	FilterCommandType comtype;
+	FilterObjectType objtype;
+
+	filter_init(&fstate, filename, exit_nicely);
+
+	while (filter_read_item(&fstate, &objname, &comtype, &objtype))
+	{
+		if (comtype == FILTER_COMMAND_TYPE_INCLUDE)
+		{
+			switch (objtype)
+			{
+				case FILTER_OBJECT_TYPE_NONE:
+					break;
+				case FILTER_OBJECT_TYPE_TABLE_DATA:
+				case FILTER_OBJECT_TYPE_TABLE_DATA_AND_CHILDREN:
+				case FILTER_OBJECT_TYPE_TABLE_AND_CHILDREN:
+				case FILTER_OBJECT_TYPE_DATABASE:
+				case FILTER_OBJECT_TYPE_EXTENSION:
+				case FILTER_OBJECT_TYPE_FOREIGN_DATA:
+					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+										"include",
+										filter_object_type_name(objtype));
+					exit_nicely(1);
+
+				case FILTER_OBJECT_TYPE_FUNCTION:
+					opts->selTypes = 1;
+					opts->selFunction = 1;
+					simple_string_list_append(&opts->functionNames, objname);
+					break;
+				case FILTER_OBJECT_TYPE_INDEX:
+					opts->selTypes = 1;
+					opts->selIndex = 1;
+					simple_string_list_append(&opts->indexNames, objname);
+					break;
+				case FILTER_OBJECT_TYPE_SCHEMA:
+					simple_string_list_append(&opts->schemaNames, objname);
+					break;
+				case FILTER_OBJECT_TYPE_TABLE:
+					opts->selTypes = 1;
+					opts->selTable = 1;
+					simple_string_list_append(&opts->tableNames, objname);
+					break;
+				case FILTER_OBJECT_TYPE_TRIGGER:
+					opts->selTypes = 1;
+					opts->selTrigger = 1;
+					simple_string_list_append(&opts->triggerNames, objname);
+					break;
+			}
+		}
+		else if (comtype == FILTER_COMMAND_TYPE_EXCLUDE)
+		{
+			switch (objtype)
+			{
+				case FILTER_OBJECT_TYPE_NONE:
+					break;
+				case FILTER_OBJECT_TYPE_TABLE_DATA:
+				case FILTER_OBJECT_TYPE_TABLE_DATA_AND_CHILDREN:
+				case FILTER_OBJECT_TYPE_DATABASE:
+				case FILTER_OBJECT_TYPE_EXTENSION:
+				case FILTER_OBJECT_TYPE_FOREIGN_DATA:
+				case FILTER_OBJECT_TYPE_FUNCTION:
+				case FILTER_OBJECT_TYPE_INDEX:
+				case FILTER_OBJECT_TYPE_TABLE:
+				case FILTER_OBJECT_TYPE_TABLE_AND_CHILDREN:
+				case FILTER_OBJECT_TYPE_TRIGGER:
+					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+										"exclude",
+										filter_object_type_name(objtype));
+					exit_nicely(1);
+
+				case FILTER_OBJECT_TYPE_SCHEMA:
+					simple_string_list_append(&opts->schemaExcludeNames, objname);
+					break;
+			}
+		}
+		else
+		{
+			Assert(comtype == FILTER_COMMAND_TYPE_NONE);
+			Assert(objtype == FILTER_OBJECT_TYPE_NONE);
+		}
+
+		if (objname)
+			free(objname);
+	}
+
+	filter_free(&fstate);
 }

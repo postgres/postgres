@@ -60,6 +60,7 @@
 #include "dumputils.h"
 #include "fe_utils/option_utils.h"
 #include "fe_utils/string_utils.h"
+#include "filter.h"
 #include "getopt_long.h"
 #include "libpq/libpq-fs.h"
 #include "parallel.h"
@@ -327,6 +328,7 @@ static char *get_synchronized_snapshot(Archive *fout);
 static void setupDumpWorker(Archive *AH);
 static TableInfo *getRootTableInfo(const TableInfo *tbinfo);
 static bool forcePartitionRootLoad(const TableInfo *tbinfo);
+static void read_dump_filters(const char *filename, DumpOptions *dopt);
 
 
 int
@@ -433,6 +435,7 @@ main(int argc, char **argv)
 		{"exclude-table-and-children", required_argument, NULL, 13},
 		{"exclude-table-data-and-children", required_argument, NULL, 14},
 		{"sync-method", required_argument, NULL, 15},
+		{"filter", required_argument, NULL, 16},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -662,6 +665,10 @@ main(int argc, char **argv)
 			case 15:
 				if (!parse_sync_method(optarg, &sync_method))
 					exit_nicely(1);
+				break;
+
+			case 16:			/* read object filters from file */
+				read_dump_filters(optarg, &dopt);
 				break;
 
 			default:
@@ -1111,6 +1118,8 @@ help(const char *progname)
 			 "                               do NOT dump data for the specified table(s),\n"
 			 "                               including child and partition tables\n"));
 	printf(_("  --extra-float-digits=NUM     override default setting for extra_float_digits\n"));
+	printf(_("  --filter=FILENAME            include or exclude objects and data from dump\n"
+			 "                               based expressions in FILENAME\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --include-foreign-data=PATTERN\n"
 			 "                               include data of foreign tables on foreign\n"
@@ -18770,4 +18779,113 @@ appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 								fout->std_strings);
 	if (!res)
 		pg_log_warning("could not parse %s array", "reloptions");
+}
+
+/*
+ * read_dump_filters - retrieve object identifier patterns from file
+ *
+ * Parse the specified filter file for include and exclude patterns, and add
+ * them to the relevant lists.  If the filename is "-" then filters will be
+ * read from STDIN rather than a file.
+ */
+static void
+read_dump_filters(const char *filename, DumpOptions *dopt)
+{
+	FilterStateData fstate;
+	char	   *objname;
+	FilterCommandType comtype;
+	FilterObjectType objtype;
+
+	filter_init(&fstate, filename, exit_nicely);
+
+	while (filter_read_item(&fstate, &objname, &comtype, &objtype))
+	{
+		if (comtype == FILTER_COMMAND_TYPE_INCLUDE)
+		{
+			switch (objtype)
+			{
+				case FILTER_OBJECT_TYPE_NONE:
+					break;
+				case FILTER_OBJECT_TYPE_DATABASE:
+				case FILTER_OBJECT_TYPE_FUNCTION:
+				case FILTER_OBJECT_TYPE_INDEX:
+				case FILTER_OBJECT_TYPE_TABLE_DATA:
+				case FILTER_OBJECT_TYPE_TABLE_DATA_AND_CHILDREN:
+				case FILTER_OBJECT_TYPE_TRIGGER:
+					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+										"include",
+										filter_object_type_name(objtype));
+					exit_nicely(1);
+					break;		/* unreachable */
+
+				case FILTER_OBJECT_TYPE_EXTENSION:
+					simple_string_list_append(&extension_include_patterns, objname);
+					break;
+				case FILTER_OBJECT_TYPE_FOREIGN_DATA:
+					simple_string_list_append(&foreign_servers_include_patterns, objname);
+					break;
+				case FILTER_OBJECT_TYPE_SCHEMA:
+					simple_string_list_append(&schema_include_patterns, objname);
+					dopt->include_everything = false;
+					break;
+				case FILTER_OBJECT_TYPE_TABLE:
+					simple_string_list_append(&table_include_patterns, objname);
+					dopt->include_everything = false;
+					break;
+				case FILTER_OBJECT_TYPE_TABLE_AND_CHILDREN:
+					simple_string_list_append(&table_include_patterns_and_children,
+											  objname);
+					dopt->include_everything = false;
+					break;
+			}
+		}
+		else if (comtype == FILTER_COMMAND_TYPE_EXCLUDE)
+		{
+			switch (objtype)
+			{
+				case FILTER_OBJECT_TYPE_NONE:
+					break;
+				case FILTER_OBJECT_TYPE_DATABASE:
+				case FILTER_OBJECT_TYPE_FUNCTION:
+				case FILTER_OBJECT_TYPE_INDEX:
+				case FILTER_OBJECT_TYPE_TRIGGER:
+				case FILTER_OBJECT_TYPE_EXTENSION:
+				case FILTER_OBJECT_TYPE_FOREIGN_DATA:
+					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+										"exclude",
+										filter_object_type_name(objtype));
+					exit_nicely(1);
+					break;
+
+				case FILTER_OBJECT_TYPE_TABLE_DATA:
+					simple_string_list_append(&tabledata_exclude_patterns,
+											  objname);
+					break;
+				case FILTER_OBJECT_TYPE_TABLE_DATA_AND_CHILDREN:
+					simple_string_list_append(&tabledata_exclude_patterns_and_children,
+											  objname);
+					break;
+				case FILTER_OBJECT_TYPE_SCHEMA:
+					simple_string_list_append(&schema_exclude_patterns, objname);
+					break;
+				case FILTER_OBJECT_TYPE_TABLE:
+					simple_string_list_append(&table_exclude_patterns, objname);
+					break;
+				case FILTER_OBJECT_TYPE_TABLE_AND_CHILDREN:
+					simple_string_list_append(&table_exclude_patterns_and_children,
+											  objname);
+					break;
+			}
+		}
+		else
+		{
+			Assert(comtype == FILTER_COMMAND_TYPE_NONE);
+			Assert(objtype == FILTER_OBJECT_TYPE_NONE);
+		}
+
+		if (objname)
+			free(objname);
+	}
+
+	filter_free(&fstate);
 }

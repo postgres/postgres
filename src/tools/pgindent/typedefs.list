@@ -745,6 +745,9 @@ FileFdwPlanState
 FileNameMap
 FileSet
 FileTag
+FilterCommandType
+FilterObjectType
+FilterStateData
 FinalPathExtraData
 FindColsContext
 FindSplitData

@@ -837,6 +837,109 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--filter=<replaceable class="parameter">filename</replaceable></option></term>
+      <listitem>
+       <para>
+        Specify a filename from which to read patterns for objects to include
+        or exclude from the dump. The patterns are interpreted according to the
+        same rules as the corresponding options:
+        <option>-t</option>/<option>--table</option>,
+        <option>--table-and-children</option>,
+        <option>--exclude-table-and-children</option> or
+        <option>-T</option> for tables,
+        <option>-n</option>/<option>--schema</option> for schemas,
+        <option>--include-foreign-data</option> for data on foreign servers and
+        <option>--exclude-table-data</option>,
+        <option>--exclude-table-data-and-children</option> for table data,
+        <option>-e</option>/<option>--extension</option> for extensions.
+        To read from <literal>STDIN</literal>, use <filename>-</filename> as the
+        filename.  The <option>--filter</option> option can be specified in
+        conjunction with the above listed options for including or excluding
+        objects, and can also be specified more than once for multiple filter
+        files.
+       </para>
+
+       <para>
+        The file lists one object pattern per row, with the following format:
+<synopsis>
+{ include | exclude } { extension | foreign_data | table | table_and_children | table_data | table_data_and_children | schema } <replaceable class="parameter">PATTERN</replaceable>
+</synopsis>
+       </para>
+
+       <para>
+        The first keyword specifies whether the objects matched by the pattern
+        are to be included or excluded. The second keyword specifies the type
+        of object to be filtered using the pattern:
+        <itemizedlist>
+         <listitem>
+          <para>
+           <literal>extension</literal>: extensions, works like the
+           <option>--extension</option> option. This keyword can only be
+           used with the <literal>include</literal> keyword.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>foreign_data</literal>: data on foreign servers, works like
+           the <option>--include-foreign-data</option> option. This keyword can
+           only be used with the <literal>include</literal> keyword.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>table</literal>: tables, works like the
+           <option>-t</option>/<option>--table</option> option.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>table_and_children</literal>: tables including any partitions
+           or inheritance child tables, works like the
+           <option>--table-and-children</option> option.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>table_data</literal>: table data of any tables matching
+           <replaceable>pattern</replaceable>, works like the
+           <option>--exclude-table-data</option> option. This keyword can only
+           be used with the <literal>exclude</literal> keyword.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>table_data_and_children</literal>: table data of any tables
+           matching <replaceable>pattern</replaceable> as well as any partitions
+           or inheritance children of the table(s), works like the
+           <option>--exclude-table-data-and-children</option> option. This
+           keyword can only be used with the <literal>exclude</literal> keyword.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>schema</literal>: schemas, works like the
+           <option>-n</option>/<option>--schema</option> option.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+
+       <para>
+        Lines starting with <literal>#</literal> are considered comments and
+        ignored. Comments can be placed after an object pattern row as well.
+        Blank lines are also ignored. See <xref linkend="app-psql-patterns"/>
+        for how to perform quoting in patterns.
+       </para>
+
+       <para>
+        Example files are listed below in the <xref linkend="pg-dump-examples"/>
+        section.
+       </para>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--if-exists</option></term>
       <listitem>
        <para>
@@ -1168,6 +1271,7 @@ PostgreSQL documentation
         schema (<option>-n</option>/<option>--schema</option>) and
         table (<option>-t</option>/<option>--table</option>) pattern
         match at least one extension/schema/table in the database to be dumped.
+        This also applies to filters used with <option>--filter</option>.
         Note that if none of the extension/schema/table patterns find
         matches, <application>pg_dump</application> will generate an error
         even without <option>--strict-names</option>.
@@ -1611,6 +1715,19 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
 <screen>
 <prompt>$</prompt> <userinput>pg_dump -t "\"MixedCaseName\"" mydb &gt; mytab.sql</userinput>
+</screen></para>
+
+  <para>
+   To dump all tables whose names start with <literal>mytable</literal>, except
+   for table <literal>mytable2</literal>, specify a filter file
+   <filename>filter.txt</filename> like:
+<programlisting>
+include table mytable*
+exclude table mytable2
+</programlisting>
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump --filter=filter.txt mydb &gt; db.sql</userinput>
 </screen></para>
 
  </refsect1>
