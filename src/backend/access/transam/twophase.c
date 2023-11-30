@@ -965,7 +965,7 @@ AdjustToFullTransactionId(TransactionId xid)
 	epoch = EpochFromFullTransactionId(nextFullXid);
 	if (unlikely(xid > nextXid))
 	{
-		/* Wraparound occured, must be from a prev epoch. */
+		/* Wraparound occurred, must be from a prev epoch. */
 		Assert(epoch > 0);
 		epoch--;
 	}
