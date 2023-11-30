@@ -614,6 +614,13 @@ InitAuxiliaryProcess(void)
 	 * Arrange to clean up at process exit.
 	 */
 	on_shmem_exit(AuxiliaryProcKill, Int32GetDatum(proctype));
+
+	/*
+	 * Now that we have a PGPROC, we could try to acquire lightweight locks.
+	 * Initialize local state needed for them.  (Heavyweight locks cannot be
+	 * acquired in aux processes.)
+	 */
+	InitLWLockAccess();
 }
 
 /*
