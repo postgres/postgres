@@ -3080,14 +3080,14 @@ allocCStatePrepared(CState *st)
 /*
  * Prepare the SQL command from st->use_file at command_num.
  */
-static void
+static bool
 prepareCommand(CState *st, int command_num)
 {
 	Command    *command = sql_script[st->use_file].commands[command_num];
 
 	/* No prepare for non-SQL commands */
 	if (command->type != SQL_COMMAND)
-		return;
+		return true;
 
 	if (!st->prepared)
 		allocCStatePrepared(st);
@@ -3099,11 +3099,15 @@ prepareCommand(CState *st, int command_num)
 		pg_log_debug("client %d preparing %s", st->id, command->prepname);
 		res = PQprepare(st->con, command->prepname,
 						command->argv[0], command->argc - 1, NULL);
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		if (PQresultStatus(res) != PGRES_COMMAND_OK) {
 			pg_log_error("%s", PQerrorMessage(st->con));
+			return false;
+		}
 		PQclear(res);
 		st->prepared[st->use_file][command_num] = true;
 	}
+
+	return true;
 }
 
 /*
@@ -3113,7 +3117,7 @@ prepareCommand(CState *st, int command_num)
  * This sets the ->prepared flag for each relevant command as well as the
  * \startpipeline itself, but doesn't move the st->command counter.
  */
-static void
+static bool
 prepareCommandsInPipeline(CState *st)
 {
 	int			j;
@@ -3131,7 +3135,7 @@ prepareCommandsInPipeline(CState *st)
 	 * though we don't actually prepare this command.
 	 */
 	if (st->prepared[st->use_file][st->command])
-		return;
+		return true;
 
 	for (j = st->command + 1; commands[j] != NULL; j++)
 	{
@@ -3139,10 +3143,13 @@ prepareCommandsInPipeline(CState *st)
 			commands[j]->meta == META_ENDPIPELINE)
 			break;
 
-		prepareCommand(st, j);
+		if (!prepareCommand(st, j)) {
+			return false;
+		}
 	}
 
 	st->prepared[st->use_file][st->command] = true;
+	return true;
 }
 
 /* Send a SQL command, using the chosen querymode */
@@ -3177,7 +3184,8 @@ sendCommand(CState *st, Command *command)
 	{
 		const char *params[MAX_ARGS];
 
-		prepareCommand(st, st->command);
+		if (!prepareCommand(st, st->command))
+			return false;
 		getQueryParams(&st->variables, command, params);
 
 		pg_log_debug("client %d sending %s", st->id, command->prepname);
@@ -4424,8 +4432,12 @@ executeMetaCommand(CState *st, pg_time_usec_t *now)
 		 * ISOLATION LEVEL SERIALIZABLE in a pipeline would fail due to a
 		 * snapshot having been acquired by the prepare within the pipeline.
 		 */
-		if (querymode == QUERY_PREPARED)
-			prepareCommandsInPipeline(st);
+		if (querymode == QUERY_PREPARED) {
+			if (!prepareCommandsInPipeline(st)) {
+				commandFailed(st, "startpipeline", "failed to prepare commands in pipeline");
+				return CSTATE_ABORTED;
+			}
+		}
 
 		if (PQpipelineStatus(st->con) != PQ_PIPELINE_OFF)
 		{
