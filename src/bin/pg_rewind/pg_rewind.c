@@ -1130,7 +1130,6 @@ static void
 ensureCleanShutdown(const char *argv0)
 {
 	int			ret;
-#define MAXCMDLEN (2 * MAXPGPATH)
 	char		exec_path[MAXPGPATH];
 	PQExpBuffer postgres_cmd;
 
