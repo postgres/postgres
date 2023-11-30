@@ -539,6 +539,14 @@ Hint:       The addendum, written as a complete sentence.
    </para>
 
    <para>
+    In messages containing configuration variable names, do not include quotes
+    when the names are visibly not natural English words, such as when they
+    have underscores, are all-uppercase or have mixed case. Otherwise, quotes
+    must be added. Do include quotes in a message where an arbitrary variable
+    name is to be expanded.
+   </para>
+
+   <para>
     There are functions in the backend that will double-quote their own output
     as needed (for example, <function>format_type_be()</function>).  Do not put
     additional quotes around the output of such functions.
