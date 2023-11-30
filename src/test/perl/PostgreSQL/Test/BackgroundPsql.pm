@@ -301,7 +301,7 @@ sub set_query_timer_restart
 {
 	my $self = shift;
 
-	$self->{query_timer_restart} = shift if @_;
+	$self->{query_timer_restart} = 1;
 	return $self->{query_timer_restart};
 }
 
