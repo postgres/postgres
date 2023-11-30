@@ -1644,7 +1644,7 @@ GetSerializableTransactionSnapshot(Snapshot snapshot)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot use serializable mode in a hot standby"),
-				 errdetail("\"default_transaction_isolation\" is set to \"serializable\"."),
+				 errdetail("default_transaction_isolation is set to \"serializable\"."),
 				 errhint("You can use \"SET default_transaction_isolation = 'repeatable read'\" to change the default.")));
 
 	/*

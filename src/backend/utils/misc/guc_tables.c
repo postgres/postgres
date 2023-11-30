@@ -3821,7 +3821,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"archive_command", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the shell command that will be called to archive a WAL file."),
-			gettext_noop("This is used only if \"archive_library\" is not set.")
+			gettext_noop("This is used only if archive_library is not set.")
 		},
 		&XLogArchiveCommand,
 		"",
@@ -3831,7 +3831,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"archive_library", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the library that will be called to archive a WAL file."),
-			gettext_noop("An empty string indicates that \"archive_command\" should be used.")
+			gettext_noop("An empty string indicates that archive_command should be used.")
 		},
 		&XLogArchiveLibrary,
 		"",

@@ -195,7 +195,7 @@ be_tls_init(bool isServerStart)
 		{
 			ereport(isServerStart ? FATAL : LOG,
 			/*- translator: first %s is a GUC option name, second %s is its value */
-					(errmsg("\"%s\" setting \"%s\" not supported by this build",
+					(errmsg("%s setting \"%s\" not supported by this build",
 							"ssl_min_protocol_version",
 							GetConfigOption("ssl_min_protocol_version",
 											false, false))));
@@ -218,7 +218,7 @@ be_tls_init(bool isServerStart)
 		{
 			ereport(isServerStart ? FATAL : LOG,
 			/*- translator: first %s is a GUC option name, second %s is its value */
-					(errmsg("\"%s\" setting \"%s\" not supported by this build",
+					(errmsg("%s setting \"%s\" not supported by this build",
 							"ssl_max_protocol_version",
 							GetConfigOption("ssl_max_protocol_version",
 											false, false))));
@@ -245,7 +245,7 @@ be_tls_init(bool isServerStart)
 		{
 			ereport(isServerStart ? FATAL : LOG,
 					(errmsg("could not set SSL protocol version range"),
-					 errdetail("\"%s\" cannot be higher than \"%s\"",
+					 errdetail("%s cannot be higher than %s",
 							   "ssl_min_protocol_version",
 							   "ssl_max_protocol_version")));
 			goto error;

@@ -3931,7 +3931,7 @@ check_debug_io_direct(char **newval, void **extra, GucSource source)
 
 	if (!SplitGUCList(rawstring, ',', &elemlist))
 	{
-		GUC_check_errdetail("invalid list syntax in parameter \"%s\"",
+		GUC_check_errdetail("invalid list syntax in parameter %s",
 							"debug_io_direct");
 		pfree(rawstring);
 		list_free(elemlist);

@@ -717,7 +717,7 @@ check_client_encoding(char **newval, void **extra, GucSource source)
 		else
 		{
 			/* Provide a useful complaint */
-			GUC_check_errdetail("Cannot change \"client_encoding\" now.");
+			GUC_check_errdetail("Cannot change client_encoding now.");
 		}
 		return false;
 	}
