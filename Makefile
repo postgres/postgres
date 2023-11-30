@@ -7,6 +7,7 @@ DATA = pg_tde--1.0.sql
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/postgres-tde-ext/postgres-tde-ext.conf
 REGRESS = toast_decrypt \
+toast_extended_storage \
 move_large_tuples \
 non_sorted_off_compact \
 update_compare_indexes \

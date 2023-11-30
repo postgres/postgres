@@ -35,6 +35,7 @@
 #include "utils/fmgroids.h"
 #include "encryption/enc_tuple.h"
 
+#define TDE_TOAST_COMPRESS_HEADER_SIZE (VARHDRSZ_COMPRESSED - VARHDRSZ)
 
 static void
 pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int options);
@@ -714,6 +715,7 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 		int32		expected_size;
 		int32		chcpystrt;
 		int32		chcpyend;
+		int32 		encrypt_offset;
 
 		/*
 		 * Have a chunk, extract the sequence number and the data
@@ -778,15 +780,33 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 		if (curchunk == endchunk)
 			chcpyend = (sliceoffset + slicelength - 1) % TOAST_MAX_CHUNK_SIZE;
 
+		/* 
+		 * If TOAST is compressed, the first TDE_TOAST_COMPRESS_HEADER_SIZE (4 bytes) is
+		 * not encrypted and contains compression info. It should be added to the
+		 * result as it is and the rest should be decrypted. Encryption offset in
+		 * that case will be 0 for the first chunk (despite the encrypted data
+		 * starting with the offset TDE_TOAST_COMPRESS_HEADER_SIZE, we've encrypted it
+		 * without compression headers) and `chunk start offset - 4` for the next
+		 * chunks. 
+		 */
+		encrypt_offset = chcpystrt;
+		if (VARATT_IS_COMPRESSED(result)) {
+			if (curchunk == 0) {
+				memcpy(VARDATA(result), chunkdata + chcpystrt, TDE_TOAST_COMPRESS_HEADER_SIZE);
+				chcpystrt += TDE_TOAST_COMPRESS_HEADER_SIZE;
+			} else {
+				encrypt_offset -= TDE_TOAST_COMPRESS_HEADER_SIZE;
+			}
+		}
 		/* Decrypt the data chunk by chunk here */
-		PG_TDE_DECRYPT_DATA((curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + chcpystrt,
+		PG_TDE_DECRYPT_DATA((curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + encrypt_offset,
 					chunkdata + chcpystrt,
 					(chcpyend - chcpystrt) + 1,
 					decrypted_data, keys);
 
 		memcpy(VARDATA(result) +
 			   (curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + chcpystrt,
-			   decrypted_data, /*chunkdata + chcpystrt,*/
+			   decrypted_data,
 			   (chcpyend - chcpystrt) + 1);
 
 		expectedchunk++;
@@ -833,6 +853,11 @@ pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int option
 		data_p = VARDATA_SHORT(dval);
 		data_size = VARSIZE_SHORT(dval) - VARHDRSZ_SHORT;
 	}
+	else if (VARATT_IS_COMPRESSED(dval))
+	{
+		data_p = VARDATA_4B_C(dval);
+		data_size = VARSIZE(dval) - VARHDRSZ_COMPRESSED;
+	}
 	else
 	{
 		data_p = VARDATA(dval);
@@ -842,7 +867,7 @@ pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int option
 	encrypted_data = (char *)palloc(data_size);
 	PG_TDE_ENCRYPT_DATA(0, data_p, data_size, encrypted_data, keys);
 
-	memcpy(VARDATA(dval), encrypted_data, data_size);
+	memcpy(data_p, encrypted_data, data_size);
 	pfree(encrypted_data);
 
 	toast_tuple_externalize(ttc, attribute, options);

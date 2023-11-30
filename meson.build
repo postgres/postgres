@@ -68,6 +68,7 @@ tests += {
   'regress': {
     'sql': [
       'toast_decrypt',
+      'toast_extended_storage',
       'move_large_tuples',
       'non_sorted_off_compact',
       'update_compare_indexes',
