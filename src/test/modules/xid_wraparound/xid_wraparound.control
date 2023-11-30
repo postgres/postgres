@@ -1,0 +1,4 @@
+comment = 'Tests for XID wraparound'
+default_version = '1.0'
+module_pathname = '$libdir/xid_wraparound'
+relocatable = true
