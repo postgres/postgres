@@ -657,7 +657,6 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 		int			i;
 
 		/* Remote relation is copied as-is from the root entry. */
-		entry = &part_entry->relmapentry;
 		entry->remoterel.remoteid = remoterel->remoteid;
 		entry->remoterel.nspname = pstrdup(remoterel->nspname);
 		entry->remoterel.relname = pstrdup(remoterel->relname);

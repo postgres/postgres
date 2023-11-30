@@ -509,7 +509,6 @@ pa_allocate_worker(TransactionId xid)
 	winfo->in_use = true;
 	winfo->serialize_changes = false;
 	entry->winfo = winfo;
-	entry->xid = xid;
 }
 
 /*

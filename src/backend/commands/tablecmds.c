@@ -2104,10 +2104,7 @@ ExecuteTruncateGuts(List *explicit_rels,
 			/* Find or create cached entry for the foreign table */
 			ft_info = hash_search(ft_htab, &serverid, HASH_ENTER, &found);
 			if (!found)
-			{
-				ft_info->serverid = serverid;
 				ft_info->rels = NIL;
-			}
 
 			/*
 			 * Save the foreign table in the entry of the server that the

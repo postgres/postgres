@@ -2574,7 +2574,6 @@ createNewConnection(const char *name, remoteConn *rconn)
 	}
 
 	hentry->rconn = rconn;
-	strlcpy(hentry->name, name, sizeof(hentry->name));
 }
 
 static void

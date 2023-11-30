@@ -2305,15 +2305,13 @@ AddEventToPendingNotifies(Notification *n)
 		foreach(l, pendingNotifies->events)
 		{
 			Notification *oldn = (Notification *) lfirst(l);
-			NotificationHash *hentry;
 			bool		found;
 
-			hentry = (NotificationHash *) hash_search(pendingNotifies->hashtab,
-													  &oldn,
-													  HASH_ENTER,
-													  &found);
+			(void) hash_search(pendingNotifies->hashtab,
+							   &oldn,
+							   HASH_ENTER,
+							   &found);
 			Assert(!found);
-			hentry->event = oldn;
 		}
 	}
 
@@ -2323,15 +2321,13 @@ AddEventToPendingNotifies(Notification *n)
 	/* Add event to the hash table if needed */
 	if (pendingNotifies->hashtab != NULL)
 	{
-		NotificationHash *hentry;
 		bool		found;
 
-		hentry = (NotificationHash *) hash_search(pendingNotifies->hashtab,
-												  &n,
-												  HASH_ENTER,
-												  &found);
+		(void) hash_search(pendingNotifies->hashtab,
+						   &n,
+						   HASH_ENTER,
+						   &found);
 		Assert(!found);
-		hentry->event = n;
 	}
 }
 
