@@ -1969,7 +1969,7 @@ read_dumpall_filters(const char *filename, SimpleStringList *pattern)
 	{
 		if (comtype == FILTER_COMMAND_TYPE_INCLUDE)
 		{
-			pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+			pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed"),
 								"include",
 								filter_object_type_name(objtype));
 			exit_nicely(1);
@@ -1989,7 +1989,7 @@ read_dumpall_filters(const char *filename, SimpleStringList *pattern)
 			case FILTER_OBJECT_TYPE_SCHEMA:
 			case FILTER_OBJECT_TYPE_TABLE:
 			case FILTER_OBJECT_TYPE_TABLE_AND_CHILDREN:
-				pg_log_filter_error(&fstate, _("unsupported filter object."));
+				pg_log_filter_error(&fstate, _("unsupported filter object"));
 				exit_nicely(1);
 				break;
 

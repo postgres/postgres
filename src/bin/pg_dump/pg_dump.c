@@ -1119,7 +1119,7 @@ help(const char *progname)
 			 "                               including child and partition tables\n"));
 	printf(_("  --extra-float-digits=NUM     override default setting for extra_float_digits\n"));
 	printf(_("  --filter=FILENAME            include or exclude objects and data from dump\n"
-			 "                               based expressions in FILENAME\n"));
+			 "                               based on expressions in FILENAME\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --include-foreign-data=PATTERN\n"
 			 "                               include data of foreign tables on foreign\n"
@@ -18812,7 +18812,7 @@ read_dump_filters(const char *filename, DumpOptions *dopt)
 				case FILTER_OBJECT_TYPE_TABLE_DATA:
 				case FILTER_OBJECT_TYPE_TABLE_DATA_AND_CHILDREN:
 				case FILTER_OBJECT_TYPE_TRIGGER:
-					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed"),
 										"include",
 										filter_object_type_name(objtype));
 					exit_nicely(1);
@@ -18851,7 +18851,7 @@ read_dump_filters(const char *filename, DumpOptions *dopt)
 				case FILTER_OBJECT_TYPE_TRIGGER:
 				case FILTER_OBJECT_TYPE_EXTENSION:
 				case FILTER_OBJECT_TYPE_FOREIGN_DATA:
-					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed"),
 										"exclude",
 										filter_object_type_name(objtype));
 					exit_nicely(1);

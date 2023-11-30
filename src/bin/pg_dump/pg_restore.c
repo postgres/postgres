@@ -535,7 +535,7 @@ read_restore_filters(const char *filename, RestoreOptions *opts)
 				case FILTER_OBJECT_TYPE_DATABASE:
 				case FILTER_OBJECT_TYPE_EXTENSION:
 				case FILTER_OBJECT_TYPE_FOREIGN_DATA:
-					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed"),
 										"include",
 										filter_object_type_name(objtype));
 					exit_nicely(1);
@@ -581,7 +581,7 @@ read_restore_filters(const char *filename, RestoreOptions *opts)
 				case FILTER_OBJECT_TYPE_TABLE:
 				case FILTER_OBJECT_TYPE_TABLE_AND_CHILDREN:
 				case FILTER_OBJECT_TYPE_TRIGGER:
-					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed."),
+					pg_log_filter_error(&fstate, _("%s filter for \"%s\" is not allowed"),
 										"exclude",
 										filter_object_type_name(objtype));
 					exit_nicely(1);
