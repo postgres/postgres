@@ -60,7 +60,7 @@
 #include "storage/fd.h"
 #include "storage/shmem.h"
 
-static int	inline
+static inline int
 SlruFileName(SlruCtl ctl, char *path, int64 segno)
 {
 	if (ctl->long_segment_names)
