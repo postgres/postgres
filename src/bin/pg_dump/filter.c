@@ -185,14 +185,14 @@ filter_get_keyword(const char **line, int *size)
 	*size = 0;
 
 	/* Skip initial whitespace */
-	while (isspace(*ptr))
+	while (isspace((unsigned char) *ptr))
 		ptr++;
 
-	if (isalpha(*ptr))
+	if (isalpha((unsigned char) *ptr))
 	{
 		result = ptr++;
 
-		while (isalpha(*ptr) || *ptr == '_')
+		while (isalpha((unsigned char) *ptr) || *ptr == '_')
 			ptr++;
 
 		*size = ptr - result;
@@ -301,7 +301,7 @@ read_pattern(FilterStateData *fstate, const char *str, PQExpBuffer pattern)
 	bool		found_space = false;
 
 	/* Skip initial whitespace */
-	while (isspace(*str))
+	while (isspace((unsigned char) *str))
 		str++;
 
 	if (*str == '\0')
@@ -312,7 +312,7 @@ read_pattern(FilterStateData *fstate, const char *str, PQExpBuffer pattern)
 
 	while (*str && *str != '#')
 	{
-		while (*str && !isspace(*str) && !strchr("#,.()\"", *str))
+		while (*str && !isspace((unsigned char) *str) && !strchr("#,.()\"", *str))
 		{
 			/*
 			 * Append space only when it is allowed, and when it was found in
@@ -351,7 +351,7 @@ read_pattern(FilterStateData *fstate, const char *str, PQExpBuffer pattern)
 		found_space = false;
 
 		/* skip ending whitespaces */
-		while (isspace(*str))
+		while (isspace((unsigned char) *str))
 		{
 			found_space = true;
 			str++;
@@ -400,7 +400,7 @@ filter_read_item(FilterStateData *fstate,
 		fstate->lineno++;
 
 		/* Skip initial white spaces */
-		while (isspace(*str))
+		while (isspace((unsigned char) *str))
 			str++;
 
 		/*
