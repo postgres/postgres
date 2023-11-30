@@ -17,6 +17,7 @@ my $mode = $ENV{PG_TEST_PG_UPGRADE_MODE} || '--copy';
 # Initialize old cluster
 my $oldpub = PostgreSQL::Test::Cluster->new('oldpub');
 $oldpub->init(allows_streaming => 'logical');
+$oldpub->append_conf('postgresql.conf', 'autovacuum = off');
 
 # Initialize new cluster
 my $newpub = PostgreSQL::Test::Cluster->new('newpub');
