@@ -2717,10 +2717,10 @@ ALTER FOREIGN TABLE ft4 OPTIONS (ADD use_remote_estimate 'true');
 -- regress_view_owner_another, the view owner, though it fails as expected
 -- due to the lack of a user mapping for that user.
 EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM v4;
-ERROR:  user mapping not found for "regress_view_owner_another"
+ERROR:  user mapping not found for user "regress_view_owner_another", server "loopback"
 -- Likewise, but with the query under an UNION ALL
 EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM (SELECT * FROM v4 UNION ALL SELECT * FROM v4);
-ERROR:  user mapping not found for "regress_view_owner_another"
+ERROR:  user mapping not found for user "regress_view_owner_another", server "loopback"
 -- Should not get that error once a user mapping is created
 CREATE USER MAPPING FOR regress_view_owner_another SERVER loopback OPTIONS (password_required 'false');
 EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM v4;
