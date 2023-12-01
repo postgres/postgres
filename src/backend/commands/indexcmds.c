@@ -1011,7 +1011,10 @@ DefineIndex(Oid tableId,
 			{
 				if (key->partattrs[i] == indexInfo->ii_IndexAttrNumbers[j])
 				{
-					/* Matched the column, now what about the collation and equality op? */
+					/*
+					 * Matched the column, now what about the collation and
+					 * equality op?
+					 */
 					Oid			idx_opfamily;
 					Oid			idx_opcintype;
 
