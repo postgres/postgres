@@ -4490,6 +4490,14 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	BackendParameters param;
 	FILE	   *fp;
 
+	/*
+	 * Make sure padding bytes are initialized, to prevent Valgrind from
+	 * complaining about writing uninitialized bytes to the file.  This isn't
+	 * performance critical, and the win32 implementation initializes the
+	 * padding bytes to zeros, so do it even when not using Valgrind.
+	 */
+	memset(&param, 0, sizeof(BackendParameters));
+
 	if (!save_backend_variables(&param, port))
 		return -1;				/* log made by save_backend_variables */
 
