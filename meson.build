@@ -2924,8 +2924,12 @@ potentially_conflicting_files = []
 foreach t : potentially_conflicting_files_t
   potentially_conflicting_files += t.full_path()
 endforeach
-foreach t : configure_files
-  t = '@0@'.format(t)
+foreach t1 : configure_files
+  if meson.version().version_compare('>=0.59')
+    t = fs.parent(t1) / fs.name(t1)
+  else
+    t = '@0@'.format(t1)
+  endif
   potentially_conflicting_files += meson.current_build_dir() / t
 endforeach
 foreach sub, fnames : generated_sources_ac
