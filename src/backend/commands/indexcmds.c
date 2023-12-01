@@ -1003,9 +1003,12 @@ DefineIndex(Oid relationId,
 			{
 				if (key->partattrs[i] == indexInfo->ii_IndexAttrNumbers[j])
 				{
-					/* Matched the column, now what about the equality op? */
+					/* Matched the column, now what about the collation and equality op? */
 					Oid			idx_opfamily;
 					Oid			idx_opcintype;
+
+					if (key->partcollation[i] != collationObjectId[j])
+						continue;
 
 					if (get_opclass_opfamily_and_input_type(classObjectId[j],
 															&idx_opfamily,
