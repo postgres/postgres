@@ -4846,9 +4846,11 @@ ORDER BY c.ordinal_position;
   <title><literal>routine_column_usage</literal></title>
 
   <para>
-   The view <literal>routine_column_usage</literal> is meant to identify all
-   columns that are used by a function or procedure.  This information is
-   currently not tracked by <productname>PostgreSQL</productname>.
+   The view <literal>routine_column_usage</literal> identifies all columns
+   that are used by a function or procedure, either in the SQL body or in
+   parameter default expressions.  (This only works for unquoted SQL bodies,
+   not quoted bodies or functions in other languages.)  A column is only
+   included if its table is owned by a currently enabled role.
   </para>
 
   <table>
@@ -5085,12 +5087,12 @@ ORDER BY c.ordinal_position;
   <title><literal>routine_routine_usage</literal></title>
 
   <para>
-   The view <literal>routine_routine_usage</literal> is meant to identify all
-   functions or procedures that are used by another (or the same) function or
-   procedure, either in the body or in parameter default expressions.
-   Currently, only functions used in parameter default expressions are
-   tracked.  An entry is included here only if the used function is owned by a
-   currently enabled role.  (There is no such restriction on the using
+   The view <literal>routine_routine_usage</literal> identifies all functions
+   or procedures that are used by another (or the same) function or procedure,
+   either in the SQL body or in parameter default expressions.  (This only
+   works for unquoted SQL bodies, not quoted bodies or functions in other
+   languages.)  An entry is included here only if the used function is owned
+   by a currently enabled role.  (There is no such restriction on the using
    function.)
   </para>
 
@@ -5184,11 +5186,11 @@ ORDER BY c.ordinal_position;
   <title><literal>routine_sequence_usage</literal></title>
 
   <para>
-   The view <literal>routine_sequence_usage</literal> is meant to identify all
-   sequences that are used by a function or procedure, either in the body or
-   in parameter default expressions.  Currently, only sequences used in
-   parameter default expressions are tracked.  A sequence is only included if
-   that sequence is owned by a currently enabled role.
+   The view <literal>routine_sequence_usage</literal> identifies all sequences
+   that are used by a function or procedure, either in the SQL body or in
+   parameter default expressions.  (This only works for unquoted SQL bodies,
+   not quoted bodies or functions in other languages.)  A sequence is only
+   included if that sequence is owned by a currently enabled role.
   </para>
 
   <table>
