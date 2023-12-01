@@ -284,6 +284,23 @@ INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 500) as i;
 CHECKPOINT;
 VACUUM hash_cleanup_heap;
 
+TRUNCATE hash_cleanup_heap;
+
+-- Insert tuples to both the primary bucket page and overflow pages.
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 500) as i;
+-- Fill overflow pages by "dead" tuples.
+BEGIN;
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 1500) as i;
+ROLLBACK;
+-- And insert some tuples again. During squeeze operation, these will be moved
+-- to other overflow pages and also allow overflow pages filled by dead tuples
+-- to be freed. Note the main purpose of this test is to test the case where
+-- we don't need to move any tuple from the overflow page being freed.
+INSERT INTO hash_cleanup_heap SELECT 1 FROM generate_series(1, 50) as i;
+
+CHECKPOINT;
+VACUUM hash_cleanup_heap;
+
 -- Clean up.
 DROP TABLE hash_cleanup_heap;
 

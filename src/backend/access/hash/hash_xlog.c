@@ -632,7 +632,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_hash_squeeze_page *xldata = (xl_hash_squeeze_page *) XLogRecGetData(record);
 	Buffer		bucketbuf = InvalidBuffer;
-	Buffer		writebuf;
+	Buffer		writebuf = InvalidBuffer;
 	Buffer		ovflbuf;
 	Buffer		prevbuf = InvalidBuffer;
 	Buffer		mapbuf;
