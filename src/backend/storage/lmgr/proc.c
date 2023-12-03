@@ -291,7 +291,7 @@ InitProcGlobal(void)
 }
 
 /*
- * InitProcess -- initialize a per-process data structure for this backend
+ * InitProcess -- initialize a per-process PGPROC entry for this backend
  */
 void
 InitProcess(void)
@@ -461,6 +461,16 @@ InitProcess(void)
 	 */
 	InitLWLockAccess();
 	InitDeadLockChecking();
+
+#ifdef EXEC_BACKEND
+
+	/*
+	 * Initialize backend-local pointers to all the shared data structures.
+	 * (We couldn't do this until now because it needs LWLocks.)
+	 */
+	if (IsUnderPostmaster)
+		AttachSharedMemoryStructs();
+#endif
 }
 
 /*
@@ -487,7 +497,7 @@ InitProcessPhase2(void)
 }
 
 /*
- * InitAuxiliaryProcess -- create a per-auxiliary-process data structure
+ * InitAuxiliaryProcess -- create a PGPROC entry for an auxiliary process
  *
  * This is called by bgwriter and similar processes so that they will have a
  * MyProc value that's real enough to let them wait for LWLocks.  The PGPROC
@@ -621,6 +631,16 @@ InitAuxiliaryProcess(void)
 	 * acquired in aux processes.)
 	 */
 	InitLWLockAccess();
+
+#ifdef EXEC_BACKEND
+
+	/*
+	 * Initialize backend-local pointers to all the shared data structures.
+	 * (We couldn't do this until now because it needs LWLocks.)
+	 */
+	if (IsUnderPostmaster)
+		AttachSharedMemoryStructs();
+#endif
 }
 
 /*
