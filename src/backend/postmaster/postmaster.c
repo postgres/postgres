@@ -476,7 +476,7 @@ typedef struct
 #endif							/* WIN32 */
 
 static pid_t backend_forkexec(Port *port);
-static pid_t internal_forkexec(int argc, char *argv[], Port *port);
+static pid_t internal_forkexec(int argc, char *argv[], Port *port, BackgroundWorker *worker);
 
 /* Type for a socket that can be inherited to a client process */
 #ifdef WIN32
@@ -495,8 +495,13 @@ typedef int InheritableSocket;
  */
 typedef struct
 {
+	bool		has_port;
 	Port		port;
 	InheritableSocket portsocket;
+
+	bool		has_bgworker;
+	BackgroundWorker bgworker;
+
 	char		DataDir[MAXPGPATH];
 	int32		MyCancelKey;
 	int			MyPMChildSlot;
@@ -542,13 +547,13 @@ typedef struct
 	char		pkglib_path[MAXPGPATH];
 } BackendParameters;
 
-static void read_backend_variables(char *id, Port *port);
-static void restore_backend_variables(BackendParameters *param, Port *port);
+static void read_backend_variables(char *id, Port **port, BackgroundWorker **worker);
+static void restore_backend_variables(BackendParameters *param, Port **port, BackgroundWorker **worker);
 
 #ifndef WIN32
-static bool save_backend_variables(BackendParameters *param, Port *port);
+static bool save_backend_variables(BackendParameters *param, Port *port, BackgroundWorker *worker);
 #else
-static bool save_backend_variables(BackendParameters *param, Port *port,
+static bool save_backend_variables(BackendParameters *param, Port *port, BackgroundWorker *worker,
 								   HANDLE childProcess, pid_t childPid);
 #endif
 
@@ -4441,11 +4446,7 @@ BackendRun(Port *port)
 pid_t
 postmaster_forkexec(int argc, char *argv[])
 {
-	Port		port;
-
-	/* This entry point passes dummy values for the Port variables */
-	memset(&port, 0, sizeof(port));
-	return internal_forkexec(argc, argv, &port);
+	return internal_forkexec(argc, argv, NULL, NULL);
 }
 
 /*
@@ -4470,7 +4471,7 @@ backend_forkexec(Port *port)
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));
 
-	return internal_forkexec(ac, av, port);
+	return internal_forkexec(ac, av, port, NULL);
 }
 
 #ifndef WIN32
@@ -4482,7 +4483,7 @@ backend_forkexec(Port *port)
  * - fork():s, and then exec():s the child process
  */
 static pid_t
-internal_forkexec(int argc, char *argv[], Port *port)
+internal_forkexec(int argc, char *argv[], Port *port, BackgroundWorker *worker)
 {
 	static unsigned long tmpBackendFileNum = 0;
 	pid_t		pid;
@@ -4498,7 +4499,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	 */
 	memset(&param, 0, sizeof(BackendParameters));
 
-	if (!save_backend_variables(&param, port))
+	if (!save_backend_variables(&param, port, worker))
 		return -1;				/* log made by save_backend_variables */
 
 	/* Calculate name for temp file */
@@ -4582,7 +4583,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
  *	 file is complete.
  */
 static pid_t
-internal_forkexec(int argc, char *argv[], Port *port)
+internal_forkexec(int argc, char *argv[], Port *port, BackgroundWorker *worker)
 {
 	int			retry_count = 0;
 	STARTUPINFO si;
@@ -4679,7 +4680,7 @@ retry:
 		return -1;
 	}
 
-	if (!save_backend_variables(param, port, pi.hProcess, pi.dwProcessId))
+	if (!save_backend_variables(param, port, worker, pi.hProcess, pi.dwProcessId))
 	{
 		/*
 		 * log made by save_backend_variables, but we have to clean up the
@@ -4796,7 +4797,8 @@ retry:
 void
 SubPostmasterMain(int argc, char *argv[])
 {
-	Port		port;
+	Port	   *port;
+	BackgroundWorker *worker;
 
 	/* In EXEC_BACKEND case we will not have inherited these settings */
 	IsPostmasterEnvironment = true;
@@ -4810,8 +4812,7 @@ SubPostmasterMain(int argc, char *argv[])
 		elog(FATAL, "invalid subpostmaster invocation");
 
 	/* Read in the variables file */
-	memset(&port, 0, sizeof(Port));
-	read_backend_variables(argv[2], &port);
+	read_backend_variables(argv[2], &port, &worker);
 
 	/* Close the postmaster's sockets (as soon as we know them) */
 	ClosePostmasterPorts(strcmp(argv[1], "--forklog") == 0);
@@ -4839,7 +4840,7 @@ SubPostmasterMain(int argc, char *argv[])
 		strcmp(argv[1], "--forkavlauncher") == 0 ||
 		strcmp(argv[1], "--forkavworker") == 0 ||
 		strcmp(argv[1], "--forkaux") == 0 ||
-		strncmp(argv[1], "--forkbgworker=", 15) == 0)
+		strcmp(argv[1], "--forkbgworker") == 0)
 		PGSharedMemoryReAttach();
 	else
 		PGSharedMemoryNoReAttach();
@@ -4912,7 +4913,7 @@ SubPostmasterMain(int argc, char *argv[])
 		 * PGPROC slots, we have already initialized libpq and are able to
 		 * report the error to the client.
 		 */
-		BackendInitialize(&port);
+		BackendInitialize(port);
 
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
@@ -4924,7 +4925,7 @@ SubPostmasterMain(int argc, char *argv[])
 		AttachSharedMemoryStructs();
 
 		/* And run the backend */
-		BackendRun(&port);		/* does not return */
+		BackendRun(port);		/* does not return */
 	}
 	if (strcmp(argv[1], "--forkaux") == 0)
 	{
@@ -4970,10 +4971,8 @@ SubPostmasterMain(int argc, char *argv[])
 
 		AutoVacWorkerMain(argc - 2, argv + 2);	/* does not return */
 	}
-	if (strncmp(argv[1], "--forkbgworker=", 15) == 0)
+	if (strcmp(argv[1], "--forkbgworker") == 0)
 	{
-		int			shmem_slot;
-
 		/* do this as early as possible; in particular, before InitProcess() */
 		IsBackgroundWorker = true;
 
@@ -4986,10 +4985,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Attach process to shared data structures */
 		AttachSharedMemoryStructs();
 
-		/* Fetch MyBgworkerEntry from shared memory */
-		shmem_slot = atoi(argv[1] + 15);
-		MyBgworkerEntry = BackgroundWorkerEntry(shmem_slot);
-
+		MyBgworkerEntry = worker;
 		BackgroundWorkerMain();
 	}
 	if (strcmp(argv[1], "--forklog") == 0)
@@ -5648,22 +5644,19 @@ BackgroundWorkerUnblockSignals(void)
 
 #ifdef EXEC_BACKEND
 static pid_t
-bgworker_forkexec(int shmem_slot)
+bgworker_forkexec(BackgroundWorker *worker)
 {
 	char	   *av[10];
 	int			ac = 0;
-	char		forkav[MAXPGPATH];
-
-	snprintf(forkav, MAXPGPATH, "--forkbgworker=%d", shmem_slot);
 
 	av[ac++] = "postgres";
-	av[ac++] = forkav;
-	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
+	av[ac++] = "--forkbgworker";
+	av[ac++] = NULL;			/* filled in by internal_forkexec */
 	av[ac] = NULL;
 
 	Assert(ac < lengthof(av));
 
-	return postmaster_forkexec(ac, av);
+	return internal_forkexec(ac, av, NULL, worker);
 }
 #endif
 
@@ -5704,7 +5697,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 							 rw->rw_worker.bgw_name)));
 
 #ifdef EXEC_BACKEND
-	switch ((worker_pid = bgworker_forkexec(rw->rw_shmem_slot)))
+	switch ((worker_pid = bgworker_forkexec(&rw->rw_worker)))
 #else
 	switch ((worker_pid = fork_process()))
 #endif
@@ -6037,16 +6030,36 @@ static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
 /* Save critical backend variables into the BackendParameters struct */
 #ifndef WIN32
 static bool
-save_backend_variables(BackendParameters *param, Port *port)
+save_backend_variables(BackendParameters *param, Port *port, BackgroundWorker *worker)
 #else
 static bool
-save_backend_variables(BackendParameters *param, Port *port,
+save_backend_variables(BackendParameters *param, Port *port, BackgroundWorker *worker,
 					   HANDLE childProcess, pid_t childPid)
 #endif
 {
-	memcpy(&param->port, port, sizeof(Port));
-	if (!write_inheritable_socket(&param->portsocket, port->sock, childPid))
-		return false;
+	if (port)
+	{
+		memcpy(&param->port, port, sizeof(Port));
+		if (!write_inheritable_socket(&param->portsocket, port->sock, childPid))
+			return false;
+		param->has_port = true;
+	}
+	else
+	{
+		memset(&param->port, 0, sizeof(Port));
+		param->has_port = false;
+	}
+
+	if (worker)
+	{
+		memcpy(&param->bgworker, worker, sizeof(BackgroundWorker));
+		param->has_bgworker = true;
+	}
+	else
+	{
+		memset(&param->bgworker, 0, sizeof(BackgroundWorker));
+		param->has_bgworker = false;
+	}
 
 	strlcpy(param->DataDir, DataDir, MAXPGPATH);
 
@@ -6202,7 +6215,7 @@ read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
 #endif
 
 static void
-read_backend_variables(char *id, Port *port)
+read_backend_variables(char *id, Port **port, BackgroundWorker **worker)
 {
 	BackendParameters param;
 
@@ -6269,15 +6282,30 @@ read_backend_variables(char *id, Port *port)
 	}
 #endif
 
-	restore_backend_variables(&param, port);
+	restore_backend_variables(&param, port, worker);
 }
 
 /* Restore critical backend variables from the BackendParameters struct */
 static void
-restore_backend_variables(BackendParameters *param, Port *port)
+restore_backend_variables(BackendParameters *param, Port **port, BackgroundWorker **worker)
 {
-	memcpy(port, &param->port, sizeof(Port));
-	read_inheritable_socket(&port->sock, &param->portsocket);
+	if (param->has_port)
+	{
+		*port = (Port *) MemoryContextAlloc(TopMemoryContext, sizeof(Port));
+		memcpy(*port, &param->port, sizeof(Port));
+		read_inheritable_socket(&(*port)->sock, &param->portsocket);
+	}
+	else
+		*port = NULL;
+
+	if (param->has_bgworker)
+	{
+		*worker = (BackgroundWorker *)
+			MemoryContextAlloc(TopMemoryContext, sizeof(BackgroundWorker));
+		memcpy(*worker, &param->bgworker, sizeof(BackgroundWorker));
+	}
+	else
+		*worker = NULL;
 
 	SetDataDir(param->DataDir);
 

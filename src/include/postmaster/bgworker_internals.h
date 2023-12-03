@@ -57,8 +57,4 @@ extern void ResetBackgroundWorkerCrashTimes(void);
 /* Entry point for background worker processes */
 extern void BackgroundWorkerMain(void) pg_attribute_noreturn();
 
-#ifdef EXEC_BACKEND
-extern BackgroundWorker *BackgroundWorkerEntry(int slotno);
-#endif
-
 #endif							/* BGWORKER_INTERNALS_H */

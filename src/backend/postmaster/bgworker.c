@@ -350,7 +350,7 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 		 */
 		rw = MemoryContextAllocExtended(PostmasterContext,
 										sizeof(RegisteredBgWorker),
-										MCXT_ALLOC_NO_OOM);
+										MCXT_ALLOC_NO_OOM | MCXT_ALLOC_ZERO);
 		if (rw == NULL)
 		{
 			ereport(LOG,
@@ -630,27 +630,6 @@ ResetBackgroundWorkerCrashTimes(void)
 		}
 	}
 }
-
-#ifdef EXEC_BACKEND
-/*
- * In EXEC_BACKEND mode, workers use this to retrieve their details from
- * shared memory.
- */
-BackgroundWorker *
-BackgroundWorkerEntry(int slotno)
-{
-	static BackgroundWorker myEntry;
-	BackgroundWorkerSlot *slot;
-
-	Assert(slotno < BackgroundWorkerData->total_slots);
-	slot = &BackgroundWorkerData->slot[slotno];
-	Assert(slot->in_use);
-
-	/* must copy this in case we don't intend to retain shmem access */
-	memcpy(&myEntry, &slot->worker, sizeof myEntry);
-	return &myEntry;
-}
-#endif
 
 /*
  * Complain about the BackgroundWorker definition using error level elevel.
