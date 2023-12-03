@@ -648,7 +648,7 @@ protocol to make nodes agree on a serializable transactional order.
     later disconnected, the standby goes back to step 1 and tries to
     restore the file from the archive again. This loop of retries from the
     archive, <filename>pg_wal</filename>, and via streaming replication goes on until the server
-    is stopped or failover is triggered by a trigger file.
+    is stopped or is promoted.
    </para>
 
    <para>
