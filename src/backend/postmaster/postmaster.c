@@ -4917,11 +4917,11 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
 
-		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
+		/* Need a PGPROC to run AttachSharedMemoryStructs */
 		InitProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores();
+		AttachSharedMemoryStructs();
 
 		/* And run the backend */
 		BackendRun(&port);		/* does not return */
@@ -4935,11 +4935,11 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
 
-		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
+		/* Need a PGPROC to run AttachSharedMemoryStructs */
 		InitAuxiliaryProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores();
+		AttachSharedMemoryStructs();
 
 		auxtype = atoi(argv[3]);
 		AuxiliaryProcessMain(auxtype);	/* does not return */
@@ -4949,11 +4949,11 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
 
-		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
+		/* Need a PGPROC to run AttachSharedMemoryStructs */
 		InitProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores();
+		AttachSharedMemoryStructs();
 
 		AutoVacLauncherMain(argc - 2, argv + 2);	/* does not return */
 	}
@@ -4962,11 +4962,11 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
 
-		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
+		/* Need a PGPROC to run AttachSharedMemoryStructs */
 		InitProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores();
+		AttachSharedMemoryStructs();
 
 		AutoVacWorkerMain(argc - 2, argv + 2);	/* does not return */
 	}
@@ -4980,11 +4980,11 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
 
-		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
+		/* Need a PGPROC to run AttachSharedMemoryStructs */
 		InitProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores();
+		AttachSharedMemoryStructs();
 
 		/* Fetch MyBgworkerEntry from shared memory */
 		shmem_slot = atoi(argv[1] + 15);

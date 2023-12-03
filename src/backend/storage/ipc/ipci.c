@@ -58,6 +58,8 @@ shmem_startup_hook_type shmem_startup_hook = NULL;
 
 static Size total_addin_request = 0;
 
+static void CreateOrAttachShmemStructs(void);
+
 /*
  * RequestAddinShmemSpace
  *		Request that extra shmem space be allocated for use by
@@ -156,9 +158,106 @@ CalculateShmemSize(int *num_semaphores)
 	return size;
 }
 
+#ifdef EXEC_BACKEND
+/*
+ * AttachSharedMemoryStructs
+ *		Initialize a postmaster child process's access to shared memory
+ *      structures.
+ *
+ * In !EXEC_BACKEND mode, we inherit everything through the fork, and this
+ * isn't needed.
+ */
+void
+AttachSharedMemoryStructs(void)
+{
+	/* InitProcess must've been called already */
+	Assert(MyProc != NULL);
+	Assert(IsUnderPostmaster);
+
+	CreateOrAttachShmemStructs();
+
+	/*
+	 * Now give loadable modules a chance to set up their shmem allocations
+	 */
+	if (shmem_startup_hook)
+		shmem_startup_hook();
+}
+#endif
+
 /*
  * CreateSharedMemoryAndSemaphores
  *		Creates and initializes shared memory and semaphores.
+ */
+void
+CreateSharedMemoryAndSemaphores(void)
+{
+	PGShmemHeader *shim;
+	PGShmemHeader *seghdr;
+	Size		size;
+	int			numSemas;
+
+	Assert(!IsUnderPostmaster);
+
+	/* Compute the size of the shared-memory block */
+	size = CalculateShmemSize(&numSemas);
+	elog(DEBUG3, "invoking IpcMemoryCreate(size=%zu)", size);
+
+	/*
+	 * Create the shmem segment
+	 */
+	seghdr = PGSharedMemoryCreate(size, &shim);
+
+	/*
+	 * Make sure that huge pages are never reported as "unknown" while the
+	 * server is running.
+	 */
+	Assert(strcmp("unknown",
+				  GetConfigOption("huge_pages_status", false, false)) != 0);
+
+	InitShmemAccess(seghdr);
+
+	/*
+	 * Create semaphores
+	 */
+	PGReserveSemaphores(numSemas);
+
+	/*
+	 * If spinlocks are disabled, initialize emulation layer (which depends on
+	 * semaphores, so the order is important here).
+	 */
+#ifndef HAVE_SPINLOCKS
+	SpinlockSemaInit();
+#endif
+
+	/*
+	 * Set up shared memory allocation mechanism
+	 */
+	InitShmemAllocation();
+
+	/* Initialize subsystems */
+	CreateOrAttachShmemStructs();
+
+#ifdef EXEC_BACKEND
+
+	/*
+	 * Alloc the win32 shared backend array
+	 */
+	ShmemBackendArrayAllocation();
+#endif
+
+	/* Initialize dynamic shared memory facilities. */
+	dsm_postmaster_startup(shim);
+
+	/*
+	 * Now give loadable modules a chance to set up their shmem allocations
+	 */
+	if (shmem_startup_hook)
+		shmem_startup_hook();
+}
+
+/*
+ * Initialize various subsystems, setting up their data structures in
+ * shared memory.
  *
  * This is called by the postmaster or by a standalone backend.
  * It is also called by a backend forked from the postmaster in the
@@ -171,65 +270,9 @@ CalculateShmemSize(int *num_semaphores)
  * check IsUnderPostmaster, rather than EXEC_BACKEND, to detect this case.
  * This is a bit code-wasteful and could be cleaned up.)
  */
-void
-CreateSharedMemoryAndSemaphores(void)
+static void
+CreateOrAttachShmemStructs(void)
 {
-	PGShmemHeader *shim = NULL;
-
-	if (!IsUnderPostmaster)
-	{
-		PGShmemHeader *seghdr;
-		Size		size;
-		int			numSemas;
-
-		/* Compute the size of the shared-memory block */
-		size = CalculateShmemSize(&numSemas);
-		elog(DEBUG3, "invoking IpcMemoryCreate(size=%zu)", size);
-
-		/*
-		 * Create the shmem segment
-		 */
-		seghdr = PGSharedMemoryCreate(size, &shim);
-
-		/*
-		 * Make sure that huge pages are never reported as "unknown" while the
-		 * server is running.
-		 */
-		Assert(strcmp("unknown",
-					  GetConfigOption("huge_pages_status", false, false)) != 0);
-
-		InitShmemAccess(seghdr);
-
-		/*
-		 * Create semaphores
-		 */
-		PGReserveSemaphores(numSemas);
-
-		/*
-		 * If spinlocks are disabled, initialize emulation layer (which
-		 * depends on semaphores, so the order is important here).
-		 */
-#ifndef HAVE_SPINLOCKS
-		SpinlockSemaInit();
-#endif
-	}
-	else
-	{
-		/*
-		 * We are reattaching to an existing shared memory segment. This
-		 * should only be reached in the EXEC_BACKEND case.
-		 */
-#ifndef EXEC_BACKEND
-		elog(PANIC, "should be attached to shared memory already");
-#endif
-	}
-
-	/*
-	 * Set up shared memory allocation mechanism
-	 */
-	if (!IsUnderPostmaster)
-		InitShmemAllocation();
-
 	/*
 	 * Now initialize LWLocks, which do shared memory allocation and are
 	 * needed for InitShmemIndex.
@@ -302,25 +345,6 @@ CreateSharedMemoryAndSemaphores(void)
 	AsyncShmemInit();
 	StatsShmemInit();
 	WaitEventExtensionShmemInit();
-
-#ifdef EXEC_BACKEND
-
-	/*
-	 * Alloc the win32 shared backend array
-	 */
-	if (!IsUnderPostmaster)
-		ShmemBackendArrayAllocation();
-#endif
-
-	/* Initialize dynamic shared memory facilities. */
-	if (!IsUnderPostmaster)
-		dsm_postmaster_startup(shim);
-
-	/*
-	 * Now give loadable modules a chance to set up their shmem allocations
-	 */
-	if (shmem_startup_hook)
-		shmem_startup_hook();
 }
 
 /*

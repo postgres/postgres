@@ -468,7 +468,7 @@ InitProcess(void)
  *
  * This is separate from InitProcess because we can't acquire LWLocks until
  * we've created a PGPROC, but in the EXEC_BACKEND case ProcArrayAdd won't
- * work until after we've done CreateSharedMemoryAndSemaphores.
+ * work until after we've done AttachSharedMemoryStructs.
  */
 void
 InitProcessPhase2(void)
