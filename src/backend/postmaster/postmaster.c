@@ -4842,12 +4842,6 @@ SubPostmasterMain(int argc, char *argv[])
 	else
 		PGSharedMemoryNoReAttach();
 
-	/* autovacuum needs this set before calling InitProcess */
-	if (strcmp(argv[1], "--forkavlauncher") == 0)
-		AutovacuumLauncherIAm();
-	if (strcmp(argv[1], "--forkavworker") == 0)
-		AutovacuumWorkerIAm();
-
 	/* Read in remaining GUC variables */
 	read_nondefault_variables();
 

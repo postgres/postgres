@@ -386,15 +386,6 @@ avlauncher_forkexec(void)
 
 	return postmaster_forkexec(ac, av);
 }
-
-/*
- * We need this set from the outside, before InitProcess is called
- */
-void
-AutovacuumLauncherIAm(void)
-{
-	am_autovacuum_launcher = true;
-}
 #endif
 
 /*
@@ -1452,15 +1443,6 @@ avworker_forkexec(void)
 	Assert(ac < lengthof(av));
 
 	return postmaster_forkexec(ac, av);
-}
-
-/*
- * We need this set from the outside, before InitProcess is called
- */
-void
-AutovacuumWorkerIAm(void)
-{
-	am_autovacuum_worker = true;
 }
 #endif
 
