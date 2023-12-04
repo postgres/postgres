@@ -1,6 +1,7 @@
 
 #include "keyring/keyring_api.h"
 #include "keyring/keyring_file.h"
+#include "keyring/keyring_config.h"
 
 #include "postgres.h"
 #include "access/xlog.h"
@@ -82,7 +83,13 @@ const keyInfo* keyringStoreKey(keyName name, keyData data)
 keyName keyringConstructKeyName(const char* internalName, unsigned version)
 {
 	keyName name;
-	snprintf(name.name, sizeof(name.name), "%s-%u-%lu", internalName, version, GetSystemIdentifier());
+	if(keyringKeyPrefix != NULL && strlen(keyringKeyPrefix) > 0)
+	{
+		snprintf(name.name, sizeof(name.name), "%s-%s-%u", keyringKeyPrefix, internalName, version);
+	} else 
+	{
+		snprintf(name.name, sizeof(name.name), "%s-%u", internalName, version);
+	}
 	return name;
 }
 

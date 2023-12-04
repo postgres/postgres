@@ -7,6 +7,7 @@
 #include <json.h>
 
 extern char* keyringConfigFile;
+extern char* keyringKeyPrefix;
 
 void keyringRegisterVariables(void);
 

@@ -10,6 +10,23 @@
 #include "utils/guc.h"
 
 char* keyringConfigFile = "";
+char* keyringKeyPrefix = "";
+
+static bool keyringCheckKeyPrefix(char **newval, void **extra, GucSource source)
+{
+	if(*newval == NULL || strlen(*newval) == 0)
+	{
+		return 1; // empty
+	}
+
+	if(strlen(*newval) > 32)
+	{
+		elog(ERROR, "The maximum length of pg_tde.keyringKeyPrefix is 32 characters.");
+		return 0;
+	}
+
+	return 1;
+}
 
 static bool keyringCheckConfigFile(char **newval, void **extra, GucSource source)
 {
@@ -45,6 +62,7 @@ static void keyringAssignConfigFile(const char *newval, void *extra)
 
 void keyringRegisterVariables(void)
 {
+
 	DefineCustomStringVariable("pg_tde.keyringConfigFile", /* name */
 							"Location of the configuration file for the keyring", /* short_desc */
 							NULL,	/* long_desc */
@@ -54,6 +72,18 @@ void keyringRegisterVariables(void)
 							0,	/* flags */
 							&keyringCheckConfigFile,	/* check_hook */
 							&keyringAssignConfigFile,	/* assign_hook */
+							NULL	/* show_hook */
+		);
+
+	DefineCustomStringVariable("pg_tde.keyringKeyPrefix", /* name */
+							"Location of the configuration file for the keyring", /* short_desc */
+							NULL,	/* long_desc */
+							&keyringKeyPrefix,	/* value address */
+							"",	/* boot value */
+							PGC_POSTMASTER, /* context */
+							0,	/* flags */
+							&keyringCheckKeyPrefix,	/* check_hook */
+							NULL,	/* assign_hook */
 							NULL	/* show_hook */
 		);
 }
