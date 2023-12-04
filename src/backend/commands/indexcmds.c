@@ -94,20 +94,21 @@ static char *ChooseIndexName(const char *tabname, Oid namespaceId,
 							 bool primary, bool isconstraint);
 static char *ChooseIndexNameAddition(const List *colnames);
 static List *ChooseIndexColumnNames(const List *indexElems);
-static void ReindexIndex(const RangeVar *indexRelation, const ReindexParams *params,
+static void ReindexIndex(const ReindexStmt *stmt, const ReindexParams *params,
 						 bool isTopLevel);
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
 											Oid relId, Oid oldRelId, void *arg);
-static Oid	ReindexTable(const RangeVar *relation, const ReindexParams *params,
+static Oid	ReindexTable(const ReindexStmt *stmt, const ReindexParams *params,
 						 bool isTopLevel);
-static void ReindexMultipleTables(const char *objectName,
-								  ReindexObjectType objectKind, const ReindexParams *params);
+static void ReindexMultipleTables(const ReindexStmt *stmt,
+								  const ReindexParams *params);
 static void reindex_error_callback(void *arg);
-static void ReindexPartitions(Oid relid, const ReindexParams *params,
-							  bool isTopLevel);
-static void ReindexMultipleInternal(const List *relids,
+static void ReindexPartitions(const ReindexStmt *stmt, Oid relid,
+							  const ReindexParams *params, bool isTopLevel);
+static void ReindexMultipleInternal(const ReindexStmt *stmt, const List *relids,
 									const ReindexParams *params);
-static bool ReindexRelationConcurrently(Oid relationOid,
+static bool ReindexRelationConcurrently(const ReindexStmt *stmt,
+										Oid relationOid,
 										const ReindexParams *params);
 static void update_relispartition(Oid relationId, bool newval);
 static inline void set_indexsafe_procflags(void);
@@ -2735,10 +2736,10 @@ ExecReindex(ParseState *pstate, const ReindexStmt *stmt, bool isTopLevel)
 	switch (stmt->kind)
 	{
 		case REINDEX_OBJECT_INDEX:
-			ReindexIndex(stmt->relation, &params, isTopLevel);
+			ReindexIndex(stmt, &params, isTopLevel);
 			break;
 		case REINDEX_OBJECT_TABLE:
-			ReindexTable(stmt->relation, &params, isTopLevel);
+			ReindexTable(stmt, &params, isTopLevel);
 			break;
 		case REINDEX_OBJECT_SCHEMA:
 		case REINDEX_OBJECT_SYSTEM:
@@ -2754,7 +2755,7 @@ ExecReindex(ParseState *pstate, const ReindexStmt *stmt, bool isTopLevel)
 									  (stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
 									  (stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
 									  "REINDEX DATABASE");
-			ReindexMultipleTables(stmt->name, stmt->kind, &params);
+			ReindexMultipleTables(stmt, &params);
 			break;
 		default:
 			elog(ERROR, "unrecognized object type: %d",
@@ -2768,8 +2769,9 @@ ExecReindex(ParseState *pstate, const ReindexStmt *stmt, bool isTopLevel)
  *		Recreate a specific index.
  */
 static void
-ReindexIndex(const RangeVar *indexRelation, const ReindexParams *params, bool isTopLevel)
+ReindexIndex(const ReindexStmt *stmt, const ReindexParams *params, bool isTopLevel)
 {
+	const RangeVar *indexRelation = stmt->relation;
 	struct ReindexIndexCallbackState state;
 	Oid			indOid;
 	char		persistence;
@@ -2802,16 +2804,16 @@ ReindexIndex(const RangeVar *indexRelation, const ReindexParams *params, bool is
 	relkind = get_rel_relkind(indOid);
 
 	if (relkind == RELKIND_PARTITIONED_INDEX)
-		ReindexPartitions(indOid, params, isTopLevel);
+		ReindexPartitions(stmt, indOid, params, isTopLevel);
 	else if ((params->options & REINDEXOPT_CONCURRENTLY) != 0 &&
 			 persistence != RELPERSISTENCE_TEMP)
-		ReindexRelationConcurrently(indOid, params);
+		ReindexRelationConcurrently(stmt, indOid, params);
 	else
 	{
 		ReindexParams newparams = *params;
 
 		newparams.options |= REINDEXOPT_REPORT_PROGRESS;
-		reindex_index(indOid, false, persistence, &newparams);
+		reindex_index(stmt, indOid, false, persistence, &newparams);
 	}
 }
 
@@ -2891,10 +2893,11 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
  *		Recreate all indexes of a table (and of its toast table, if any)
  */
 static Oid
-ReindexTable(const RangeVar *relation, const ReindexParams *params, bool isTopLevel)
+ReindexTable(const ReindexStmt *stmt, const ReindexParams *params, bool isTopLevel)
 {
 	Oid			heapOid;
 	bool		result;
+	const RangeVar *relation = stmt->relation;
 
 	/*
 	 * The lock level used here should match reindex_relation().
@@ -2911,11 +2914,11 @@ ReindexTable(const RangeVar *relation, const ReindexParams *params, bool isTopLe
 									   RangeVarCallbackOwnsTable, NULL);
 
 	if (get_rel_relkind(heapOid) == RELKIND_PARTITIONED_TABLE)
-		ReindexPartitions(heapOid, params, isTopLevel);
+		ReindexPartitions(stmt, heapOid, params, isTopLevel);
 	else if ((params->options & REINDEXOPT_CONCURRENTLY) != 0 &&
 			 get_rel_persistence(heapOid) != RELPERSISTENCE_TEMP)
 	{
-		result = ReindexRelationConcurrently(heapOid, params);
+		result = ReindexRelationConcurrently(stmt, heapOid, params);
 
 		if (!result)
 			ereport(NOTICE,
@@ -2927,7 +2930,7 @@ ReindexTable(const RangeVar *relation, const ReindexParams *params, bool isTopLe
 		ReindexParams newparams = *params;
 
 		newparams.options |= REINDEXOPT_REPORT_PROGRESS;
-		result = reindex_relation(heapOid,
+		result = reindex_relation(stmt, heapOid,
 								  REINDEX_REL_PROCESS_TOAST |
 								  REINDEX_REL_CHECK_CONSTRAINTS,
 								  &newparams);
@@ -2949,9 +2952,9 @@ ReindexTable(const RangeVar *relation, const ReindexParams *params, bool isTopLe
  * That means this must not be called within a user transaction block!
  */
 static void
-ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
-					  const ReindexParams *params)
+ReindexMultipleTables(const ReindexStmt *stmt, const ReindexParams *params)
 {
+
 	Oid			objectOid;
 	Relation	relationRelation;
 	TableScanDesc scan;
@@ -2963,6 +2966,8 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	int			num_keys;
 	bool		concurrent_warning = false;
 	bool		tablespace_warning = false;
+	const char *objectName = stmt->name;
+	const ReindexObjectType objectKind = stmt->kind;
 
 	Assert(objectKind == REINDEX_OBJECT_SCHEMA ||
 		   objectKind == REINDEX_OBJECT_SYSTEM ||
@@ -3158,7 +3163,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	 * Process each relation listed in a separate transaction.  Note that this
 	 * commits and then starts a new transaction immediately.
 	 */
-	ReindexMultipleInternal(relids, params);
+	ReindexMultipleInternal(stmt, relids, params);
 
 	MemoryContextDelete(private_context);
 }
@@ -3188,7 +3193,7 @@ reindex_error_callback(void *arg)
  * by the caller.
  */
 static void
-ReindexPartitions(Oid relid, const ReindexParams *params, bool isTopLevel)
+ReindexPartitions(const ReindexStmt *stmt, Oid relid, const ReindexParams *params, bool isTopLevel)
 {
 	List	   *partitions = NIL;
 	char		relkind = get_rel_relkind(relid);
@@ -3264,7 +3269,7 @@ ReindexPartitions(Oid relid, const ReindexParams *params, bool isTopLevel)
 	 * Process each partition listed in a separate transaction.  Note that
 	 * this commits and then starts a new transaction immediately.
 	 */
-	ReindexMultipleInternal(partitions, params);
+	ReindexMultipleInternal(stmt, partitions, params);
 
 	/*
 	 * Clean up working storage --- note we must do this after
@@ -3282,7 +3287,7 @@ ReindexPartitions(Oid relid, const ReindexParams *params, bool isTopLevel)
  * and starts a new transaction when finished.
  */
 static void
-ReindexMultipleInternal(const List *relids, const ReindexParams *params)
+ReindexMultipleInternal(const ReindexStmt *stmt, const List *relids, const ReindexParams *params)
 {
 	ListCell   *l;
 
@@ -3341,7 +3346,7 @@ ReindexMultipleInternal(const List *relids, const ReindexParams *params)
 			ReindexParams newparams = *params;
 
 			newparams.options |= REINDEXOPT_MISSING_OK;
-			(void) ReindexRelationConcurrently(relid, &newparams);
+			(void) ReindexRelationConcurrently(stmt, relid, &newparams);
 			/* ReindexRelationConcurrently() does the verbose output */
 		}
 		else if (relkind == RELKIND_INDEX)
@@ -3350,7 +3355,7 @@ ReindexMultipleInternal(const List *relids, const ReindexParams *params)
 
 			newparams.options |=
 				REINDEXOPT_REPORT_PROGRESS | REINDEXOPT_MISSING_OK;
-			reindex_index(relid, false, relpersistence, &newparams);
+			reindex_index(stmt, relid, false, relpersistence, &newparams);
 			PopActiveSnapshot();
 			/* reindex_index() does the verbose output */
 		}
@@ -3361,7 +3366,7 @@ ReindexMultipleInternal(const List *relids, const ReindexParams *params)
 
 			newparams.options |=
 				REINDEXOPT_REPORT_PROGRESS | REINDEXOPT_MISSING_OK;
-			result = reindex_relation(relid,
+			result = reindex_relation(stmt, relid,
 									  REINDEX_REL_PROCESS_TOAST |
 									  REINDEX_REL_CHECK_CONSTRAINTS,
 									  &newparams);
@@ -3406,7 +3411,7 @@ ReindexMultipleInternal(const List *relids, const ReindexParams *params)
  * anyway, and a non-concurrent reindex is more efficient.
  */
 static bool
-ReindexRelationConcurrently(Oid relationOid, const ReindexParams *params)
+ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const ReindexParams *params)
 {
 	typedef struct ReindexIndexInfo
 	{
@@ -3843,6 +3848,20 @@ ReindexRelationConcurrently(Oid relationOid, const ReindexParams *params)
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 
 		table_close(heapRel, NoLock);
+
+		/*
+		 * If a statement is available, telling that this comes from a REINDEX
+		 * command, collect the new index for event triggers.
+		 */
+		if (stmt)
+		{
+			ObjectAddress address;
+
+			ObjectAddressSet(address, RelationRelationId, newIndexId);
+			EventTriggerCollectSimpleCommand(address,
+											 InvalidObjectAddress,
+											 (Node *) stmt);
+		}
 	}
 
 	/*

@@ -418,6 +418,51 @@ drop table rewriteme;
 drop event trigger no_rewrite_allowed;
 drop function test_evtrig_no_rewrite();
 
+-- Tests for REINDEX
+CREATE OR REPLACE FUNCTION reindex_start_command()
+RETURNS event_trigger AS $$
+BEGIN
+    RAISE NOTICE 'REINDEX START: % %', tg_event, tg_tag;
+END;
+$$ LANGUAGE plpgsql;
+CREATE EVENT TRIGGER regress_reindex_start ON ddl_command_start
+    WHEN TAG IN ('REINDEX')
+    EXECUTE PROCEDURE reindex_start_command();
+CREATE FUNCTION reindex_end_command()
+RETURNS event_trigger AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM pg_event_trigger_ddl_commands()
+    LOOP
+        RAISE NOTICE 'REINDEX END: command_tag=% type=% identity=%',
+	    obj.command_tag, obj.object_type, obj.object_identity;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+CREATE EVENT TRIGGER regress_reindex_end ON ddl_command_end
+    WHEN TAG IN ('REINDEX')
+    EXECUTE PROCEDURE reindex_end_command();
+
+CREATE TABLE concur_reindex_tab (c1 int);
+CREATE INDEX concur_reindex_ind ON concur_reindex_tab (c1);
+-- Both start and end triggers enabled.
+REINDEX INDEX concur_reindex_ind;
+REINDEX TABLE concur_reindex_tab;
+REINDEX INDEX CONCURRENTLY concur_reindex_ind;
+REINDEX TABLE CONCURRENTLY concur_reindex_tab;
+-- with start trigger disabled.
+ALTER EVENT TRIGGER regress_reindex_start DISABLE;
+REINDEX INDEX concur_reindex_ind;
+REINDEX INDEX CONCURRENTLY concur_reindex_ind;
+
+-- Clean up
+DROP EVENT TRIGGER regress_reindex_start;
+DROP EVENT TRIGGER regress_reindex_end;
+DROP FUNCTION reindex_end_command();
+DROP FUNCTION reindex_start_command();
+DROP TABLE concur_reindex_tab;
+
 -- test Row Security Event Trigger
 RESET SESSION AUTHORIZATION;
 CREATE TABLE event_trigger_test (a integer, b text);
