@@ -13,7 +13,6 @@
 #define _WALRECEIVER_H
 
 #include <netdb.h>
-#include <sys/socket.h>
 
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
