@@ -25,13 +25,15 @@ use Catalog;
 my $output_path = '';
 my $major_version;
 my $include_path;
+my $include_conf;
 
 my $num_errors = 0;
 
 GetOptions(
 	'output:s' => \$output_path,
 	'set-version:s' => \$major_version,
-	'include-path:s' => \$include_path) || usage();
+	'include-path:s' => \$include_path,
+	'include-conf:s' => \$include_conf) || usage();
 
 # Sanity check arguments.
 die "No input files.\n" unless @ARGV;
@@ -39,6 +41,7 @@ die "--set-version must be specified.\n" unless $major_version;
 die "Invalid version string: $major_version\n"
   unless $major_version =~ /^\d+$/;
 die "--include-path must be specified.\n" unless $include_path;
+die "--include-conf must be specified.\n" unless $include_conf;
 
 # Make sure paths end with a slash.
 if ($output_path ne '' && substr($output_path, -1) ne '/')
@@ -180,6 +183,12 @@ my $FirstUnpinnedObjectId =
 # Hash of next available OID, indexed by catalog name.
 my %GenbkiNextOids;
 
+my $NameDataLen=Catalog::FindDefinedSymbol('pg_config_manual.h', $include_path,
+	'NAMEDATALEN');
+my $SizeOfPointer=Catalog::FindDefinedSymbol('pg_config.h', $include_conf,
+	'SIZEOF_VOID_P');
+my $Float8PassByVal=$SizeOfPointer >= 8 ? "true": "false";
+my $AlignOfPointer=$SizeOfPointer == 4 ? "i" : "d";
 
 # Fetch some special data that we will substitute into the output file.
 # CAUTION: be wary about what symbols you substitute into the .bki file here!
@@ -634,6 +643,23 @@ EOM
 			my $symbol = form_pg_type_symbol($bki_values{typname});
 			$bki_values{oid_symbol} = $symbol
 			  if defined $symbol;
+
+			if ($bki_values{typlen} eq  'NAMEDATALEN')
+			{
+				$bki_values{typlen} = $NameDataLen;
+			}
+			if ($bki_values{typlen} eq  'SIZEOF_POINTER')
+			{
+				$bki_values{typlen} = $SizeOfPointer;
+			}
+			if ($bki_values{typalign} eq  'ALIGNOF_POINTER')
+			{
+				$bki_values{typalign} = $AlignOfPointer;
+			}
+			if ($bki_values{typbyval} eq  'FLOAT8PASSBYVAL')
+			{
+				$bki_values{typbyval} = $Float8PassByVal;
+			}
 		}
 
 		# Write to postgres.bki
@@ -811,6 +837,11 @@ sub gen_pg_attribute
 			$priorfixedwidth &=
 			  ($row{attnotnull} eq 't'
 				  && ($row{attlen} eq 'NAMEDATALEN' || $row{attlen} > 0));
+
+			if ($row{attnotnull} eq 't' && ($row{attlen} eq 'NAMEDATALEN'))
+			{
+				$row{attlen} = $NameDataLen;
+			}
 
 			# If it's bootstrapped, put an entry in postgres.bki.
 			print_bki_insert(\%row, $schema) if $table->{bootstrap};
@@ -1106,6 +1137,7 @@ Options:
     --output         Output directory (default '.')
     --set-version    PostgreSQL version number for initdb cross-check
     --include-path   Include path in source tree
+    --include-conf   Include file path generated after configuration
 
 genbki.pl generates postgres.bki and symbol definition
 headers from specially formatted header files and .dat

@@ -123,6 +123,7 @@ generated_catalog_headers = custom_target('generated_catalog_headers',
     perl,
     files('../../backend/catalog/genbki.pl'),
     '--include-path=@SOURCE_ROOT@/src/include',
+    '--include-conf=@BUILD_ROOT@/src/include',
     '--set-version=' + pg_version_major.to_string(),
     '--output=@OUTDIR@', '@INPUT@'
   ],

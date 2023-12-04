@@ -781,7 +781,7 @@ EOF
 		chdir('src/backend/catalog');
 		my $bki_srcs = join(' ../../../src/include/catalog/', @bki_srcs);
 		system(
-			"perl genbki.pl --include-path ../../../src/include/ --set-version=$majorver $bki_srcs"
+			"perl genbki.pl --include-path ../../../src/include/ --include-conf ../../../src/include/ --set-version=$majorver $bki_srcs"
 		);
 		open(my $f, '>', 'bki-stamp')
 		  || confess "Could not touch bki-stamp";
