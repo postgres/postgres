@@ -585,19 +585,19 @@ pg_convert(PG_FUNCTION_ARGS)
 												  src_encoding,
 												  dest_encoding);
 
-	/* update len if conversion actually happened */
-	if (dest_str != src_str)
-		len = strlen(dest_str);
+
+	/* return source string if no conversion happened */
+	if (dest_str == src_str)
+		PG_RETURN_BYTEA_P(string);
 
 	/*
 	 * build bytea data type structure.
 	 */
+	len = strlen(dest_str);
 	retval = (bytea *) palloc(len + VARHDRSZ);
 	SET_VARSIZE(retval, len + VARHDRSZ);
 	memcpy(VARDATA(retval), dest_str, len);
-
-	if (dest_str != src_str)
-		pfree(dest_str);
+	pfree(dest_str);
 
 	/* free memory if allocated by the toaster */
 	PG_FREE_IF_COPY(string, 0);
