@@ -24,8 +24,6 @@
 #ifndef GEQO_RANDOM_H
 #define GEQO_RANDOM_H
 
-#include <math.h>
-
 #include "optimizer/geqo.h"
 
 
