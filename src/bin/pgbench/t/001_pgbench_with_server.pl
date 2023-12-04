@@ -843,7 +843,7 @@ select 1 \gset f
 
 # Working \startpipeline in prepared query mode with serializable
 $node->pgbench(
-	'-c4 -j2 -t 10 -n -M prepared',
+	'-c4 -t 10 -n -M prepared',
 	0,
 	[
 		qr{type: .*/001_pgbench_pipeline_serializable},
