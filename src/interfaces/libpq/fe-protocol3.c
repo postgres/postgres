@@ -240,13 +240,8 @@ pqParseInput3(PGconn *conn)
 					}
 					else
 					{
-						/*
-						 * In simple query protocol, advance the command queue
-						 * (see PQgetResult).
-						 */
-						if (conn->cmd_queue_head &&
-							conn->cmd_queue_head->queryclass == PGQUERY_SIMPLE)
-							pqCommandQueueAdvance(conn);
+						/* Advance the command queue and set us idle */
+						pqCommandQueueAdvance(conn, true, false);
 						conn->asyncStatus = PGASYNC_IDLE;
 					}
 					break;
@@ -287,11 +282,12 @@ pqParseInput3(PGconn *conn)
 					/* Nothing to do for this message type */
 					break;
 				case '3':		/* Close Complete */
+
 					/*
 					 * If we get CloseComplete when waiting for it, consume
 					 * the queue element and keep going.  A result is not
-					 * expected from this message; it is just there so that
-					 * we know to wait for it when PQsendQuery is used in
+					 * expected from this message; it is just there so that we
+					 * know to wait for it when PQsendQuery is used in
 					 * pipeline mode, before going in IDLE state.  Failing to
 					 * do this makes us receive CloseComplete when IDLE, which
 					 * creates problems.
@@ -299,7 +295,7 @@ pqParseInput3(PGconn *conn)
 					if (conn->cmd_queue_head &&
 						conn->cmd_queue_head->queryclass == PGQUERY_CLOSE)
 					{
-						pqCommandQueueAdvance(conn);
+						pqCommandQueueAdvance(conn, false, false);
 					}
 
 					break;
