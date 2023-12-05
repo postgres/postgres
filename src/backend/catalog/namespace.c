@@ -241,7 +241,8 @@ static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
  *
  * The search path cache is based on a wrapper around a simplehash hash table
  * (nsphash, defined below). The spcache wrapper deals with OOM while trying
- * to initialize a key, and also offers a more convenient API.
+ * to initialize a key, optimizes repeated lookups of the same key, and also
+ * offers a more convenient API.
  */
 
 static inline uint32
@@ -281,6 +282,7 @@ spcachekey_equal(SearchPathCacheKey a, SearchPathCacheKey b)
 #define SPCACHE_RESET_THRESHOLD		256
 
 static nsphash_hash * SearchPathCache = NULL;
+static SearchPathCacheEntry * LastSearchPathCacheEntry = NULL;
 
 /*
  * Create or reset search_path cache as necessary.
@@ -295,6 +297,7 @@ spcache_init(void)
 		return;
 
 	MemoryContextReset(SearchPathCacheContext);
+	LastSearchPathCacheEntry = NULL;
 	/* arbitrary initial starting size of 16 elements */
 	SearchPathCache = nsphash_create(SearchPathCacheContext, 16, NULL);
 	searchPathCacheValid = true;
@@ -307,12 +310,25 @@ spcache_init(void)
 static SearchPathCacheEntry *
 spcache_lookup(const char *searchPath, Oid roleid)
 {
-	SearchPathCacheKey cachekey = {
-		.searchPath = searchPath,
-		.roleid = roleid
-	};
+	if (LastSearchPathCacheEntry &&
+		LastSearchPathCacheEntry->key.roleid == roleid &&
+		strcmp(LastSearchPathCacheEntry->key.searchPath, searchPath) == 0)
+	{
+		return LastSearchPathCacheEntry;
+	}
+	else
+	{
+		SearchPathCacheEntry *entry;
+		SearchPathCacheKey cachekey = {
+			.searchPath = searchPath,
+			.roleid = roleid
+		};
 
-	return nsphash_lookup(SearchPathCache, cachekey);
+		entry = nsphash_lookup(SearchPathCache, cachekey);
+
+		LastSearchPathCacheEntry = entry;
+		return entry;
+	}
 }
 
 /*
@@ -324,35 +340,45 @@ spcache_lookup(const char *searchPath, Oid roleid)
 static SearchPathCacheEntry *
 spcache_insert(const char *searchPath, Oid roleid)
 {
-	SearchPathCacheEntry *entry;
-	SearchPathCacheKey cachekey = {
-		.searchPath = searchPath,
-		.roleid = roleid
-	};
-
-	/*
-	 * searchPath is not saved in SearchPathCacheContext. First perform a
-	 * lookup, and copy searchPath only if we need to create a new entry.
-	 */
-	entry = nsphash_lookup(SearchPathCache, cachekey);
-
-	if (!entry)
+	if (LastSearchPathCacheEntry &&
+		LastSearchPathCacheEntry->key.roleid == roleid &&
+		strcmp(LastSearchPathCacheEntry->key.searchPath, searchPath) == 0)
 	{
-		bool		found;
-
-		cachekey.searchPath = MemoryContextStrdup(SearchPathCacheContext, searchPath);
-		entry = nsphash_insert(SearchPathCache, cachekey, &found);
-		Assert(!found);
-
-		entry->oidlist = NIL;
-		entry->finalPath = NIL;
-		entry->firstNS = InvalidOid;
-		entry->temp_missing = false;
-		entry->forceRecompute = false;
-		/* do not touch entry->status, used by simplehash */
+		return LastSearchPathCacheEntry;
 	}
+	else
+	{
+		SearchPathCacheEntry *entry;
+		SearchPathCacheKey cachekey = {
+			.searchPath = searchPath,
+			.roleid = roleid
+		};
 
-	return entry;
+		/*
+		 * searchPath is not saved in SearchPathCacheContext. First perform a
+		 * lookup, and copy searchPath only if we need to create a new entry.
+		 */
+		entry = nsphash_lookup(SearchPathCache, cachekey);
+
+		if (!entry)
+		{
+			bool		found;
+
+			cachekey.searchPath = MemoryContextStrdup(SearchPathCacheContext, searchPath);
+			entry = nsphash_insert(SearchPathCache, cachekey, &found);
+			Assert(!found);
+
+			entry->oidlist = NIL;
+			entry->finalPath = NIL;
+			entry->firstNS = InvalidOid;
+			entry->temp_missing = false;
+			entry->forceRecompute = false;
+			/* do not touch entry->status, used by simplehash */
+		}
+
+		LastSearchPathCacheEntry = entry;
+		return entry;
+	}
 }
 
 /*
