@@ -236,13 +236,8 @@ pqParseInput3(PGconn *conn)
 					}
 					else
 					{
-						/*
-						 * In simple query protocol, advance the command queue
-						 * (see PQgetResult).
-						 */
-						if (conn->cmd_queue_head &&
-							conn->cmd_queue_head->queryclass == PGQUERY_SIMPLE)
-							pqCommandQueueAdvance(conn);
+						/* Advance the command queue and set us idle */
+						pqCommandQueueAdvance(conn, true, false);
 						conn->asyncStatus = PGASYNC_IDLE;
 					}
 					break;
