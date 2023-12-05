@@ -779,6 +779,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	fpinfo->make_outerrel_subquery = false;
 	fpinfo->make_innerrel_subquery = false;
 	fpinfo->lower_subquery_rels = NULL;
+	fpinfo->hidden_subquery_rels = NULL;
 	/* Set the relation index. */
 	fpinfo->relation_index = baserel->relid;
 }
@@ -5725,6 +5726,45 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 }
 
 /*
+ * Check if reltarget is safe enough to push down semi-join.  Reltarget is not
+ * safe, if it contains references to inner rel relids, which do not belong to
+ * outer rel.
+ */
+static bool
+semijoin_target_ok(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel)
+{
+	List	   *vars;
+	ListCell   *lc;
+	bool		ok = true;
+
+	Assert(joinrel->reltarget);
+
+	vars = pull_var_clause((Node *) joinrel->reltarget->exprs, PVC_INCLUDE_PLACEHOLDERS);
+
+	foreach(lc, vars)
+	{
+		Var		   *var = (Var *) lfirst(lc);
+
+		if (!IsA(var, Var))
+			continue;
+
+		if (bms_is_member(var->varno, innerrel->relids) &&
+			!bms_is_member(var->varno, outerrel->relids))
+		{
+			/*
+			 * The planner can create semi-join, which refers to inner rel
+			 * vars in its target list. However, we deparse semi-join as an
+			 * exists() subquery, so can't handle references to inner rel in
+			 * the target list.
+			 */
+			ok = false;
+			break;
+		}
+	}
+	return ok;
+}
+
+/*
  * Assess whether the join between inner and outer relations can be pushed down
  * to the foreign server. As a side effect, save information we obtain in this
  * function to PgFdwRelationInfo passed in.
@@ -5741,12 +5781,19 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	List	   *joinclauses;
 
 	/*
-	 * We support pushing down INNER, LEFT, RIGHT and FULL OUTER joins.
-	 * Constructing queries representing SEMI and ANTI joins is hard, hence
-	 * not considered right now.
+	 * We support pushing down INNER, LEFT, RIGHT, FULL OUTER and SEMI joins.
+	 * Constructing queries representing ANTI joins is hard, hence not
+	 * considered right now.
 	 */
 	if (jointype != JOIN_INNER && jointype != JOIN_LEFT &&
-		jointype != JOIN_RIGHT && jointype != JOIN_FULL)
+		jointype != JOIN_RIGHT && jointype != JOIN_FULL &&
+		jointype != JOIN_SEMI)
+		return false;
+
+	/*
+	 * We can't push down semi-join if its reltarget is not safe
+	 */
+	if ((jointype == JOIN_SEMI) && !semijoin_target_ok(root, joinrel, outerrel, innerrel))
 		return false;
 
 	/*
@@ -5858,6 +5905,8 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	Assert(bms_is_subset(fpinfo_i->lower_subquery_rels, innerrel->relids));
 	fpinfo->lower_subquery_rels = bms_union(fpinfo_o->lower_subquery_rels,
 											fpinfo_i->lower_subquery_rels);
+	fpinfo->hidden_subquery_rels = bms_union(fpinfo_o->hidden_subquery_rels,
+											 fpinfo_i->hidden_subquery_rels);
 
 	/*
 	 * Pull the other remote conditions from the joining relations into join
@@ -5870,6 +5919,12 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	 * after the join is evaluated. The clauses from inner side are added to
 	 * the joinclauses, since they need to be evaluated while constructing the
 	 * join.
+	 *
+	 * For SEMI-JOIN clauses from inner relation can not be added to
+	 * remote_conds, but should be treated as join clauses (as they are
+	 * deparsed to EXISTS subquery, where inner relation can be referred). A
+	 * list of relation ids, which can't be referred to from higher levels, is
+	 * preserved as a hidden_subquery_rels list.
 	 *
 	 * For a FULL OUTER JOIN, the other clauses from either relation can not
 	 * be added to the joinclauses or remote_conds, since each relation acts
@@ -5899,6 +5954,16 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 											  fpinfo_o->remote_conds);
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
 											   fpinfo_i->remote_conds);
+			break;
+
+		case JOIN_SEMI:
+			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
+											  fpinfo_i->remote_conds);
+			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
+											  fpinfo->remote_conds);
+			fpinfo->remote_conds = list_copy(fpinfo_o->remote_conds);
+			fpinfo->hidden_subquery_rels = bms_union(fpinfo->hidden_subquery_rels,
+													 innerrel->relids);
 			break;
 
 		case JOIN_FULL:
@@ -5942,6 +6007,24 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 		Assert(!fpinfo->joinclauses);
 		fpinfo->joinclauses = fpinfo->remote_conds;
 		fpinfo->remote_conds = NIL;
+	}
+	else if (jointype == JOIN_LEFT || jointype == JOIN_RIGHT || jointype == JOIN_FULL)
+	{
+		/*
+		 * Conditions, generated from semi-joins, should be evaluated before
+		 * LEFT/RIGHT/FULL join.
+		 */
+		if (!bms_is_empty(fpinfo_o->hidden_subquery_rels))
+		{
+			fpinfo->make_outerrel_subquery = true;
+			fpinfo->lower_subquery_rels = bms_add_members(fpinfo->lower_subquery_rels, outerrel->relids);
+		}
+
+		if (!bms_is_empty(fpinfo_i->hidden_subquery_rels))
+		{
+			fpinfo->make_innerrel_subquery = true;
+			fpinfo->lower_subquery_rels = bms_add_members(fpinfo->lower_subquery_rels, innerrel->relids);
+		}
 	}
 
 	/* Mark that this join can be pushed down safely */
@@ -7692,6 +7775,8 @@ find_em_for_rel(PlannerInfo *root, EquivalenceClass *ec, RelOptInfo *rel)
 {
 	ListCell   *lc;
 
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
+
 	foreach(lc, ec->ec_members)
 	{
 		EquivalenceMember *em = (EquivalenceMember *) lfirst(lc);
@@ -7702,6 +7787,7 @@ find_em_for_rel(PlannerInfo *root, EquivalenceClass *ec, RelOptInfo *rel)
 		 */
 		if (bms_is_subset(em->em_relids, rel->relids) &&
 			!bms_is_empty(em->em_relids) &&
+			bms_is_empty(bms_intersect(em->em_relids, fpinfo->hidden_subquery_rels)) &&
 			is_foreign_expr(root, rel, em->em_expr))
 			return em;
 	}
