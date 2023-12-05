@@ -440,8 +440,8 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
 	private_context.first_wal_range = NULL;
 	private_context.last_wal_range = NULL;
 	context.private_data = &private_context;
-	context.perfile_cb = record_manifest_details_for_file;
-	context.perwalrange_cb = record_manifest_details_for_wal_range;
+	context.per_file_cb = record_manifest_details_for_file;
+	context.per_wal_range_cb = record_manifest_details_for_wal_range;
 	context.error_cb = report_manifest_error;
 	json_parse_manifest(&context, buffer, statbuf.st_size);
 

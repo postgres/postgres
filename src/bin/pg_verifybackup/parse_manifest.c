@@ -112,7 +112,7 @@ static bool parse_xlogrecptr(XLogRecPtr *result, char *input);
  *
  * Caller should set up the parsing context and then invoke this function.
  * For each file whose information is extracted from the manifest,
- * context->perfile_cb is invoked.  In case of trouble, context->error_cb is
+ * context->per_file_cb is invoked.  In case of trouble, context->error_cb is
  * invoked and is expected not to return.
  */
 void
@@ -545,8 +545,8 @@ json_manifest_finalize_file(JsonManifestParseState *parse)
 	}
 
 	/* Invoke the callback with the details we've gathered. */
-	context->perfile_cb(context, parse->pathname, size,
-						checksum_type, checksum_length, checksum_payload);
+	context->per_file_cb(context, parse->pathname, size,
+						 checksum_type, checksum_length, checksum_payload);
 
 	/* Free memory we no longer need. */
 	if (parse->size != NULL)
@@ -602,7 +602,7 @@ json_manifest_finalize_wal_range(JsonManifestParseState *parse)
 									"could not parse end LSN");
 
 	/* Invoke the callback with the details we've gathered. */
-	context->perwalrange_cb(context, tli, start_lsn, end_lsn);
+	context->per_wal_range_cb(context, tli, start_lsn, end_lsn);
 
 	/* Free memory we no longer need. */
 	if (parse->timeline != NULL)

@@ -3445,8 +3445,8 @@ jmp_buf
 join_search_hook_type
 json_aelem_action
 json_manifest_error_callback
-json_manifest_perfile_callback
-json_manifest_perwalrange_callback
+json_manifest_per_file_callback
+json_manifest_per_wal_range_callback
 json_ofield_action
 json_scalar_action
 json_struct_action
