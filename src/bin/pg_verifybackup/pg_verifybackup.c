@@ -119,15 +119,15 @@ static void parse_manifest_file(char *manifest_path,
 								manifest_files_hash **ht_p,
 								manifest_wal_range **first_wal_range_p);
 
-static void record_manifest_details_for_file(JsonManifestParseContext *context,
-											 char *pathname, size_t size,
-											 pg_checksum_type checksum_type,
-											 int checksum_length,
-											 uint8 *checksum_payload);
-static void record_manifest_details_for_wal_range(JsonManifestParseContext *context,
-												  TimeLineID tli,
-												  XLogRecPtr start_lsn,
-												  XLogRecPtr end_lsn);
+static void verifybackup_per_file_cb(JsonManifestParseContext *context,
+									 char *pathname, size_t size,
+									 pg_checksum_type checksum_type,
+									 int checksum_length,
+									 uint8 *checksum_payload);
+static void verifybackup_per_wal_range_cb(JsonManifestParseContext *context,
+										  TimeLineID tli,
+										  XLogRecPtr start_lsn,
+										  XLogRecPtr end_lsn);
 static void report_manifest_error(JsonManifestParseContext *context,
 								  const char *fmt,...)
 			pg_attribute_printf(2, 3) pg_attribute_noreturn();
@@ -440,8 +440,8 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
 	private_context.first_wal_range = NULL;
 	private_context.last_wal_range = NULL;
 	context.private_data = &private_context;
-	context.per_file_cb = record_manifest_details_for_file;
-	context.per_wal_range_cb = record_manifest_details_for_wal_range;
+	context.per_file_cb = verifybackup_per_file_cb;
+	context.per_wal_range_cb = verifybackup_per_wal_range_cb;
 	context.error_cb = report_manifest_error;
 	json_parse_manifest(&context, buffer, statbuf.st_size);
 
@@ -475,10 +475,10 @@ report_manifest_error(JsonManifestParseContext *context, const char *fmt,...)
  * Record details extracted from the backup manifest for one file.
  */
 static void
-record_manifest_details_for_file(JsonManifestParseContext *context,
-								 char *pathname, size_t size,
-								 pg_checksum_type checksum_type,
-								 int checksum_length, uint8 *checksum_payload)
+verifybackup_per_file_cb(JsonManifestParseContext *context,
+						 char *pathname, size_t size,
+						 pg_checksum_type checksum_type,
+						 int checksum_length, uint8 *checksum_payload)
 {
 	parser_context *pcxt = context->private_data;
 	manifest_files_hash *ht = pcxt->ht;
@@ -504,9 +504,9 @@ record_manifest_details_for_file(JsonManifestParseContext *context,
  * Record details extracted from the backup manifest for one WAL range.
  */
 static void
-record_manifest_details_for_wal_range(JsonManifestParseContext *context,
-									  TimeLineID tli,
-									  XLogRecPtr start_lsn, XLogRecPtr end_lsn)
+verifybackup_per_wal_range_cb(JsonManifestParseContext *context,
+							  TimeLineID tli,
+							  XLogRecPtr start_lsn, XLogRecPtr end_lsn)
 {
 	parser_context *pcxt = context->private_data;
 	manifest_wal_range *range;
