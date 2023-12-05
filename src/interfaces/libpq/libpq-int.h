@@ -698,7 +698,8 @@ extern void pqSaveMessageField(PGresult *res, char code,
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
 								  const char *value);
 extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
-extern void pqCommandQueueAdvance(PGconn *conn);
+extern void pqCommandQueueAdvance(PGconn *conn, bool isReadyForQuery,
+								  bool gotSync);
 extern int	PQsendQueryContinue(PGconn *conn, const char *query);
 
 /* === in fe-protocol3.c === */
