@@ -437,15 +437,9 @@ push(@dump_command, '--extra-float-digits', '0')
   if ($oldnode->pg_version < 12);
 $newnode->command_ok(\@dump_command, 'dump after running pg_upgrade');
 
-# No need to apply filters on the dumps if working on the same version
-# for the old and new nodes.
-my $dump1_filtered = $dump1_file;
-my $dump2_filtered = $dump2_file;
-if ($oldnode->pg_version != $newnode->pg_version)
-{
-	$dump1_filtered = filter_dump(1, $oldnode->pg_version, $dump1_file);
-	$dump2_filtered = filter_dump(0, $oldnode->pg_version, $dump2_file);
-}
+# Filter the contents of the dumps.
+my $dump1_filtered = filter_dump(1, $oldnode->pg_version, $dump1_file);
+my $dump2_filtered = filter_dump(0, $oldnode->pg_version, $dump2_file);
 
 # Compare the two dumps, there should be no differences.
 my $compare_res = compare($dump1_filtered, $dump2_filtered);
