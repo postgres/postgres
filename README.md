@@ -79,9 +79,12 @@ Compile and install the extension
 
 ```
 cd postgres-tde-ext
+./configure
 make USE_PGXS=1
 sudo make USE_PGXS=1 install
 ```
+
+_See [Make Builds for Developers](https://github.com/Percona-Lab/postgres-tde-ext/wiki/Make-builds-for-developers) for more info on the build infrastructure._
 
 ## Install from package
 

@@ -54,6 +54,7 @@ jobs:
 
       - name: Build postgres-tde-ext
         run: |
+          ./configure
           make -j
           sudo make install
         working-directory: src/contrib/postgres-tde-ext

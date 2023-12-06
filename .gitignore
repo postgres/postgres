@@ -1,2 +1,9 @@
 *.so
 *.o
+
+/config.cache
+/config.log
+/config.status
+/Makefile
+/autom4te.cache
+/configure~

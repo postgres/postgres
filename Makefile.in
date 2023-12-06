@@ -35,21 +35,19 @@ src/keyring/keyring_file.o \
 src/keyring/keyring_api.o \
 src/pg_tde.o
 
+override PG_CPPFLAGS += @tde_CPPFLAGS@
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 override PG_CPPFLAGS += -I$(CURDIR)/src/include
-# TODO: use proper configure for this
-override PG_CPPFLAGS += -I/usr/include/json-c
 include $(PGXS)
 else
 subdir = contrib/postgres-tde-ext
 top_builddir = ../..
 override PG_CPPFLAGS += -I$(top_srcdir)/$(subdir)/src/include
-# TODO: use proper configure for this
-override PG_CPPFLAGS += -I/usr/include/json-c
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-SHLIB_LINK += -lcrypto -lssl -ljson-c
+override SHLIB_LINK += @tde_LDFLAGS@ -lcrypto -lssl
