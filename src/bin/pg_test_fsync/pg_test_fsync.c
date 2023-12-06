@@ -598,11 +598,14 @@ test_non_sync(void)
 static void
 signal_cleanup(SIGNAL_ARGS)
 {
+	int			rc;
+
 	/* Delete the file if it exists. Ignore errors */
 	if (needs_unlink)
 		unlink(filename);
 	/* Finish incomplete line on stdout */
-	write(STDOUT_FILENO, "\n", 1);
+	rc = write(STDOUT_FILENO, "\n", 1);
+	(void) rc;					/* silence compiler warnings */
 	_exit(1);
 }
 
