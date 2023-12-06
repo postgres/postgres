@@ -581,6 +581,12 @@ $$ LANGUAGE plpgsql;
 CREATE EVENT TRIGGER regress_reindex_end ON ddl_command_end
     WHEN TAG IN ('REINDEX')
     EXECUTE PROCEDURE reindex_end_command();
+-- Extra event to force the use of a snapshot.
+CREATE FUNCTION reindex_end_command_snap() RETURNS EVENT_TRIGGER
+    AS $$ BEGIN PERFORM 1; END $$ LANGUAGE plpgsql;
+CREATE EVENT TRIGGER regress_reindex_end_snap ON ddl_command_end
+    EXECUTE FUNCTION reindex_end_command_snap();
+-- With simple relation
 CREATE TABLE concur_reindex_tab (c1 int);
 CREATE INDEX concur_reindex_ind ON concur_reindex_tab (c1);
 -- Both start and end triggers enabled.
@@ -602,10 +608,56 @@ REINDEX INDEX concur_reindex_ind;
 NOTICE:  REINDEX END: command_tag=REINDEX type=index identity=public.concur_reindex_ind
 REINDEX INDEX CONCURRENTLY concur_reindex_ind;
 NOTICE:  REINDEX END: command_tag=REINDEX type=index identity=public.concur_reindex_ind
+-- without an index
+DROP INDEX concur_reindex_ind;
+REINDEX TABLE concur_reindex_tab;
+NOTICE:  table "concur_reindex_tab" has no indexes to reindex
+REINDEX TABLE CONCURRENTLY concur_reindex_tab;
+NOTICE:  table "concur_reindex_tab" has no indexes that can be reindexed concurrently
+-- With a Schema
+CREATE SCHEMA concur_reindex_schema;
+-- No indexes
+REINDEX SCHEMA concur_reindex_schema;
+REINDEX SCHEMA CONCURRENTLY concur_reindex_schema;
+CREATE TABLE concur_reindex_schema.tab (a int);
+CREATE INDEX ind ON concur_reindex_schema.tab (a);
+-- One index reported
+REINDEX SCHEMA concur_reindex_schema;
+NOTICE:  REINDEX END: command_tag=REINDEX type=index identity=concur_reindex_schema.ind
+REINDEX SCHEMA CONCURRENTLY concur_reindex_schema;
+NOTICE:  REINDEX END: command_tag=REINDEX type=index identity=concur_reindex_schema.ind
+-- One table on schema but no indexes
+DROP INDEX concur_reindex_schema.ind;
+REINDEX SCHEMA concur_reindex_schema;
+REINDEX SCHEMA CONCURRENTLY concur_reindex_schema;
+DROP SCHEMA concur_reindex_schema CASCADE;
+NOTICE:  drop cascades to table concur_reindex_schema.tab
+-- With a partitioned table, and nothing else.
+CREATE TABLE concur_reindex_part (id int) PARTITION BY RANGE (id);
+REINDEX TABLE concur_reindex_part;
+REINDEX TABLE CONCURRENTLY concur_reindex_part;
+-- Partition that would be reindexed, still nothing.
+CREATE TABLE concur_reindex_child PARTITION OF concur_reindex_part
+  FOR VALUES FROM (0) TO (10);
+REINDEX TABLE concur_reindex_part;
+REINDEX TABLE CONCURRENTLY concur_reindex_part;
+-- Now add some indexes.
+CREATE INDEX concur_reindex_partidx ON concur_reindex_part (id);
+REINDEX INDEX concur_reindex_partidx;
+NOTICE:  REINDEX END: command_tag=REINDEX type=index identity=public.concur_reindex_child_id_idx
+REINDEX INDEX CONCURRENTLY concur_reindex_partidx;
+NOTICE:  REINDEX END: command_tag=REINDEX type=index identity=public.concur_reindex_child_id_idx
+REINDEX TABLE concur_reindex_part;
+NOTICE:  REINDEX END: command_tag=REINDEX type=index identity=public.concur_reindex_child_id_idx
+REINDEX TABLE CONCURRENTLY concur_reindex_part;
+NOTICE:  REINDEX END: command_tag=REINDEX type=index identity=public.concur_reindex_child_id_idx
+DROP TABLE concur_reindex_part;
 -- Clean up
 DROP EVENT TRIGGER regress_reindex_start;
 DROP EVENT TRIGGER regress_reindex_end;
+DROP EVENT TRIGGER regress_reindex_end_snap;
 DROP FUNCTION reindex_end_command();
+DROP FUNCTION reindex_end_command_snap();
 DROP FUNCTION reindex_start_command();
 DROP TABLE concur_reindex_tab;
 -- test Row Security Event Trigger

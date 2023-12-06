@@ -3347,6 +3347,8 @@ ReindexMultipleInternal(const ReindexStmt *stmt, const List *relids, const Reind
 
 			newparams.options |= REINDEXOPT_MISSING_OK;
 			(void) ReindexRelationConcurrently(stmt, relid, &newparams);
+			if (ActiveSnapshotSet())
+				PopActiveSnapshot();
 			/* ReindexRelationConcurrently() does the verbose output */
 		}
 		else if (relkind == RELKIND_INDEX)
@@ -3698,10 +3700,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 	 * session until this operation completes.
 	 */
 	if (indexIds == NIL)
-	{
-		PopActiveSnapshot();
 		return false;
-	}
 
 	/* It's not a shared catalog, so refuse to move it to shared tablespace */
 	if (params->tablespaceOid == GLOBALTABLESPACE_OID)
