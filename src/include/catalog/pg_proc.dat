@@ -11392,9 +11392,8 @@
   proparallel => 'u', prorettype => 'void', proargtypes => 'oid',
   prosrc => 'binary_upgrade_set_next_pg_tablespace_oid' },
 { oid => '8046', descr => 'for use by pg_upgrade',
-  proname => 'binary_upgrade_logical_slot_has_caught_up', proisstrict => 'f',
-  provolatile => 'v', proparallel => 'u', prorettype => 'bool',
-  proargtypes => 'name',
+  proname => 'binary_upgrade_logical_slot_has_caught_up', provolatile => 'v',
+  proparallel => 'u', prorettype => 'bool', proargtypes => 'name',
   prosrc => 'binary_upgrade_logical_slot_has_caught_up' },
 
 # conversion functions

@@ -281,11 +281,11 @@ binary_upgrade_logical_slot_has_caught_up(PG_FUNCTION_ARGS)
 
 	CHECK_IS_BINARY_UPGRADE;
 
-	/* We must check before dereferencing the argument */
-	if (PG_ARGISNULL(0))
-		elog(ERROR, "null argument to binary_upgrade_validate_wal_records is not allowed");
-
-	CheckSlotPermissions();
+	/*
+	 * Binary upgrades only allowed super-user connections so we must have
+	 * permission to use replication slots.
+	 */
+	Assert(has_rolreplication(GetUserId()));
 
 	slot_name = PG_GETARG_NAME(0);
 
