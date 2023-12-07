@@ -2581,7 +2581,8 @@ DROP INDEX concur_reindex_ind5_ccnew;
 DELETE FROM concur_reindex_tab4 WHERE c1 = 1;
 -- The invalid index is not processed when running REINDEX TABLE.
 REINDEX TABLE CONCURRENTLY concur_reindex_tab4;
-WARNING:  cannot reindex invalid index "public.concur_reindex_ind5" concurrently, skipping
+WARNING:  skipping reindex of invalid index "public.concur_reindex_ind5"
+HINT:  Use DROP INDEX or REINDEX INDEX.
 NOTICE:  table "concur_reindex_tab4" has no indexes that can be reindexed concurrently
 \d concur_reindex_tab4
         Table "public.concur_reindex_tab4"
