@@ -72,7 +72,10 @@ while (my $line = <$FH>)
 	# the current range, emit the current range and initialize a new
 	# range representing the gap.
 	if ($range_end + 1 != $code && $range_category ne $gap_category) {
-		push(@category_ranges, {start => $range_start, end => $range_end, category => $range_category});
+		if ($range_category ne $CATEGORY_UNASSIGNED) {
+			push(@category_ranges, {start => $range_start, end => $range_end,
+									category => $range_category});
+		}
 		$range_start = $range_end + 1;
 		$range_end = $code - 1;
 		$range_category = $gap_category;
@@ -80,7 +83,10 @@ while (my $line = <$FH>)
 
 	# different category; new range
 	if ($range_category ne $category) {
-		push(@category_ranges, {start => $range_start, end => $range_end, category => $range_category});
+		if ($range_category ne $CATEGORY_UNASSIGNED) {
+			push(@category_ranges, {start => $range_start, end => $range_end,
+									category => $range_category});
+		}
 		$range_start = $code;
 		$range_end = $code;
 		$range_category = $category;
@@ -109,14 +115,9 @@ die "<..., First> entry with no corresponding <..., Last> entry"
   if $gap_category ne $CATEGORY_UNASSIGNED;
 
 # emit final range
-push(@category_ranges, {start => $range_start, end => $range_end, category => $range_category});
-
-# emit range for any unassigned code points after last entry
-if ($range_end < 0x10FFFF) {
-	$range_start = $range_end + 1;
-	$range_end = 0x10FFFF;
-	$range_category = $CATEGORY_UNASSIGNED;
-	push(@category_ranges, {start => $range_start, end => $range_end, category => $range_category});
+if ($range_category ne $CATEGORY_UNASSIGNED) {
+	push(@category_ranges, {start => $range_start, end => $range_end,
+							category => $range_category});
 }
 
 my $num_ranges = scalar @category_ranges;
