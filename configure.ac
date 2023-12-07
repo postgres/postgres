@@ -44,6 +44,7 @@ AC_ARG_WITH([$1], AS_HELP_STRING([--with-$1=<path>],[Location where $4 is instal
 #=======================================
 
 REQUIRE_LIB(jsonc, json-c, json_object_get, json_object.h)
+REQUIRE_LIB(libcurl, curl, curl_easy_setopt, curl/curl.h)
 
 AC_SUBST(tde_CPPFLAGS)
 AC_SUBST(tde_LDFLAGS)

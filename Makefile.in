@@ -32,6 +32,7 @@ src/access/pg_tde_ddl.o \
 src/transam/pg_tde_xact_handler.o \
 src/keyring/keyring_config.o \
 src/keyring/keyring_file.o \
+src/keyring/keyring_vault.o \
 src/keyring/keyring_api.o \
 src/pg_tde.o
 
@@ -50,4 +51,4 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-override SHLIB_LINK += @tde_LDFLAGS@ -lcrypto -lssl
+override SHLIB_LINK += @tde_LDFLAGS@ -lcrypto -lssl -lcurl

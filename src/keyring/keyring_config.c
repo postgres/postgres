@@ -1,6 +1,7 @@
 
 #include "keyring/keyring_config.h"
 #include "keyring/keyring_file.h"
+#include "keyring/keyring_vault.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -11,6 +12,7 @@
 
 char* keyringConfigFile = "";
 char* keyringKeyPrefix = "";
+enum KeyringProvider keyringProvider = PROVIDER_UNKNOWN;
 
 static bool keyringCheckKeyPrefix(char **newval, void **extra, GucSource source)
 {
@@ -116,12 +118,30 @@ bool keyringLoadConfiguration(const char* configFileName)
 		goto cleanup;
 	}
 	
-	if(strncmp("file", provider, 5) != 0)
+
+	if(strncmp("file", provider, 5) == 0)
 	{
-		elog(ERROR, "Invalid pg_tde.keyringConfigFile: Unknown 'provider': %s. Currently only 'file' provider is supported. Keyring is not available.", provider);
+		ret = keyringFileParseConfiguration(root);
+		if(ret)
+		{
+			keyringProvider = PROVIDER_FILE;
+		}
 	}
 
-	ret = keyringFileParseConfiguration(root);
+	if(strncmp("vault-v2", provider, 9) == 0)
+	{
+		ret = keyringVaultParseConfiguration(root);
+		if(ret)
+		{
+			keyringProvider = PROVIDER_VAULT_V2;
+		}
+	}
+
+	if(keyringProvider == PROVIDER_UNKNOWN)
+	{
+		elog(ERROR, "Invalid pg_tde.keyringConfigFile: Unknown 'provider': %s. Currently only 'file' and 'vault-v2', providers are supported. Keyring is not available.", provider);
+	}
+
 
 	if (!ret)
 	{
@@ -138,7 +158,7 @@ const char* keyringParseStringParam(json_object* object)
 {
 	if(json_object_get_type(object) == json_type_object)
 	{
-		elog(WARNING, "Remote parameters are not yet implementeed");
+		elog(WARNING, "Remote parameters are not yet implemented");
 	}
 
 	return json_object_get_string(object);

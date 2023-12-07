@@ -6,6 +6,14 @@
 
 #include <json.h>
 
+enum KeyringProvider
+{
+	PROVIDER_UNKNOWN,
+	PROVIDER_FILE,
+	PROVIDER_VAULT_V2,
+} ;
+
+extern enum KeyringProvider keyringProvider;
 extern char* keyringConfigFile;
 extern char* keyringKeyPrefix;
 

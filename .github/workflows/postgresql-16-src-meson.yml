@@ -26,9 +26,13 @@ jobs:
             libxml2-dev libxslt-dev xsltproc libkrb5-dev libldap2-dev \
             libsystemd-dev gettext tcl-dev libperl-dev pkg-config clang-11 \
             llvm-11 llvm-11-dev libselinux1-dev python3-dev \
-            uuid-dev liblz4-dev meson ninja-build libjson-c-dev
+            uuid-dev liblz4-dev meson ninja-build libjson-c-dev \
+            gpg wget libcurl4-openssl-dev
           sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
+          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install -y vault
 
       - name: Clone postgres repository
         uses: actions/checkout@v2
@@ -52,9 +56,32 @@ jobs:
           cd build && ninja && ninja install
         working-directory: src
 
-      - name: Test postgres-tde-ext
+      - name: Test postgres-tde-ext with keyring_file
         run: |
           cp ../contrib/postgres-tde-ext/keyring.json /tmp/keyring.json
+          meson test --suite setup -v
+          meson test --suite postgres-tde-ext -v --num-processes 1
+        working-directory: src/build
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: Regressions diff and postgresql log
+          path: |
+            src/build/testrun/postgres-tde-ext/regress/
+          retention-days: 3
+
+      - name: Test postgres-tde-ext with keyring_vault
+        run: |
+          TV=$(mktemp)
+          { exec >$TV; vault server -dev; } &
+          sleep 10
+          ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
+          echo "Root token: $ROOT_TOKEN"
+          cp ../contrib/postgres-tde-ext/keyring-vault.json /tmp/keyring.json
+          sed -i "s/ROOT_TOKEN/$ROOT_TOKEN/g" /tmp/keyring.json
+          cat /tmp/keyring.json
           meson test --suite setup -v
           meson test --suite postgres-tde-ext -v --num-processes 1
         working-directory: src/build

@@ -1,6 +1,7 @@
 
 #include "keyring/keyring_api.h"
 #include "keyring/keyring_file.h"
+#include "keyring/keyring_vault.h"
 #include "keyring/keyring_config.h"
 
 #include "postgres.h"
@@ -29,8 +30,18 @@ void keyringInitCache(void)
 		memset(cache, 0, keyringCacheMemorySize());
 	}
 
-	// TODO: HARDCODED FILE PROVIDER
-	keyringFilePreloadCache();
+	switch(keyringProvider)
+	{
+		case PROVIDER_FILE:
+		keyringFilePreloadCache();
+		break;
+		case PROVIDER_VAULT_V2:
+		keyringVaultPreloadCache();
+		break;
+		case PROVIDER_UNKNOWN:
+		// nop
+		break;
+	}
 }
 
 const keyInfo* keyringCacheStoreKey(keyName name, keyData data)
@@ -57,7 +68,28 @@ const keyInfo* keyringGetKey(keyName name)
 			return &cache->keys[i];
 		}
 	}
-	// TODO: HARDCODED FILE PROVIDER
+	// not found in cache, try to look up
+	switch(keyringProvider)
+	{
+		case PROVIDER_FILE:
+			// nop, not implmeneted
+		break;
+		case PROVIDER_VAULT_V2:
+		{
+			keyData data;
+			data.len = 0;
+			keyringVaultGetKey(name, &data);
+			if(data.len > 0)
+			{
+				return keyringCacheStoreKey(name, data);
+			}
+			break;
+		}
+		case PROVIDER_UNKNOWN:
+		// nop
+		break;
+	}
+
 #if KEYRING_DEBUG
 	fprintf(stderr, " -- not found\n");
 #endif
@@ -66,18 +98,27 @@ const keyInfo* keyringGetKey(keyName name)
 
 const keyInfo* keyringStoreKey(keyName name, keyData data)
 {
-	// TODO: HARDCODED FILE PROVIDER
-	// Todo: we should first call the provider, and if it succeeds, add the key to the cache
-	// But as the current file implementation just dumps the cache to disk, this is a good first prototype
 	const keyInfo* ki = keyringCacheStoreKey(name, data);
 #if KEYRING_DEBUG
 	fprintf(stderr, "Storing key: %s\n", name.name);
 #endif
-	if(!keyringFileStoreKey(ki))
+	switch(keyringProvider)
 	{
-		return NULL;
+		case PROVIDER_FILE:
+		if(keyringFileStoreKey(ki)) return ki;
+		break;
+		case PROVIDER_VAULT_V2:
+		if(keyringVaultStoreKey(ki)) return ki;
+		break;
+		case PROVIDER_UNKNOWN:
+		// nop
+		break;
 	}
-	return ki;
+
+	//  if we are here, storeKey failed, remove from cache
+	cache->keyCount--;
+
+	return NULL;
 }
 
 keyName keyringConstructKeyName(const char* internalName, unsigned version)

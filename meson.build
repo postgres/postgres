@@ -1,6 +1,7 @@
 
 # libjson-c-dev on ubuntu
 jsondep = dependency('json-c')
+curldep = dependency('libcurl')
 
 pg_tde_sources = files(
         'src/pg_tde.c',
@@ -22,6 +23,7 @@ pg_tde_sources = files(
 
         'src/keyring/keyring_config.c',
         'src/keyring/keyring_file.c',
+        'src/keyring/keyring_vault.c',
         'src/keyring/keyring_api.c',
 
         'src/pg_tde.c',
@@ -29,7 +31,7 @@ pg_tde_sources = files(
 
 incdir = include_directories('src/include')
 
-deps_update = {'dependencies': contrib_mod_args.get('dependencies') + [jsondep]}
+deps_update = {'dependencies': contrib_mod_args.get('dependencies') + [jsondep, curldep]}
 
 mod_args = contrib_mod_args + deps_update
 

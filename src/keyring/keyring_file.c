@@ -52,13 +52,15 @@ int keyringFilePreloadCache(void)
 
 int keyringFileStoreKey(const keyInfo* ki)
 {
+	FILE *f;
+
 	if (strlen(keyringFileDataFileName) == 0) {
 		elog(ERROR, "Keyring datafile is not set");
 		return false;
 	}
 
 	// First very basic prototype: we just dump the cache to disk
-	FILE* f = fopen(keyringFileDataFileName, "w");
+	f = fopen(keyringFileDataFileName, "w");
 	if(f == NULL)
 	{
 		elog(ERROR, "Couldn't write keyring data into '%s'", keyringFileDataFileName);
