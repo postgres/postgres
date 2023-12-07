@@ -253,8 +253,6 @@ tts_virtual_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 {
 	TupleDesc	srcdesc = srcslot->tts_tupleDescriptor;
 
-	Assert(srcdesc->natts <= dstslot->tts_tupleDescriptor->natts);
-
 	tts_virtual_clear(dstslot);
 
 	slot_getallattrs(srcslot);
