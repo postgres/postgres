@@ -176,7 +176,7 @@ int64		end_time = 0;		/* when to stop in micro seconds, under -T */
 
 /*
  * scaling factor. for example, scale = 10 will make 1000000 tuples in
- * pgbench_accounts table.
+ * pgbench_cards table.
  */
 int			scale = 1;
 
@@ -217,12 +217,12 @@ char	   *tablespace = NULL;
 char	   *index_tablespace = NULL;
 
 /*
- * Number of "pgbench_accounts" partitions.  0 is the default and means no
+ * Number of "pgbench_cards" partitions.  0 is the default and means no
  * partitioning.
  */
 static int	partitions = 0;
 
-/* partitioning strategy for "pgbench_accounts" */
+/* partitioning strategy for "pgbench_cards" */
 typedef enum
 {
 	PART_NONE,					/* no partitioning */
@@ -240,10 +240,10 @@ int64		random_seed = -1;
  * end of configurable parameters
  *********************************************************************/
 
-#define nbranches	1			/* Makes little sense to change this.  Change
+#define ncustomers	50			/* Makes little sense to change this.  Change
 								 * -s instead */
-#define ntellers	10
-#define naccounts	100000
+#define nagreements	100
+#define ncards	150
 
 /*
  * The scale factor at/beyond which 32bit integers are incapable of storing
@@ -780,36 +780,62 @@ static const BuiltinScript builtin_script[] =
 	{
 		"tpcb-like",
 		"<builtin: TPC-B (sort of)>",
-		"\\set aid random(1, " CppAsString2(naccounts) " * :scale)\n"
-		"\\set bid random(1, " CppAsString2(nbranches) " * :scale)\n"
-		"\\set tid random(1, " CppAsString2(ntellers) " * :scale)\n"
+		"\\set aid random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set bid random(1, " CppAsString2(ncustomers) " * :scale)\n"
+		"\\set tid random(1, " CppAsString2(nagreements) " * :scale)\n"
 		"\\set delta random(-5000, 5000)\n"
 		"BEGIN;\n"
-		"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
-		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
-		"UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
-		"UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;\n"
+		"UPDATE pgbench_cards SET abalance = abalance + :delta WHERE aid = :aid;\n"
+		"SELECT abalance FROM pgbench_cards WHERE aid = :aid;\n"
+		"UPDATE pgbench_agreements SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
+		"UPDATE pgbench_clients SET shard = shard + :delta WHERE id = :bid;\n"
 		"INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
 		"END;\n"
 	},
 	{
 		"simple-update",
 		"<builtin: simple update>",
-		"\\set aid random(1, " CppAsString2(naccounts) " * :scale)\n"
-		"\\set bid random(1, " CppAsString2(nbranches) " * :scale)\n"
-		"\\set tid random(1, " CppAsString2(ntellers) " * :scale)\n"
+		"\\set aid random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set bid random(1, " CppAsString2(ncustomers) " * :scale)\n"
+		"\\set tid random(1, " CppAsString2(nagreements) " * :scale)\n"
 		"\\set delta random(-5000, 5000)\n"
 		"BEGIN;\n"
-		"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
-		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
+		"UPDATE pgbench_cards SET abalance = abalance + :delta WHERE aid = :aid;\n"
+		"SELECT abalance FROM pgbench_cards WHERE aid = :aid;\n"
 		"INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
 		"END;\n"
 	},
 	{
-		"select-only",
+		"select-cards",
 		"<builtin: select only>",
-		"\\set aid random(1, " CppAsString2(naccounts) " * :scale)\n"
-		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
+		"\\set aid random(1, " CppAsString2(ncards) " * :scale)\n"
+		"SELECT pan, pan_hash, client_id FROM pgbench_cards WHERE ucid = :aid;\n"
+	},
+	{
+		"select-batch-5",
+		"<builtin: select batch 5>",
+		"\\set c1 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c2 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c3 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c4 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c5 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"SELECT pan, pan_hash, client_id FROM pgbench_cards WHERE ucid in (:c1,:c2,:c3,:c4,:c5);\n"
+	},
+	{
+		"select-batch-10",
+		"<builtin: select batch 10>",
+		"\\set c1 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c2 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c3 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c4 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c5 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c6 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c7 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c8 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c9 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"\\set c10 random(1, " CppAsString2(ncards) " * :scale)\n"
+		"SELECT pan, pan_hash, client_id FROM pgbench_cards "
+		"WHERE ucid in (:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9,:c10);\n"
 	}
 };
 
@@ -889,18 +915,18 @@ usage(void)
 		   "  --index-tablespace=TABLESPACE\n"
 		   "                           create indexes in the specified tablespace\n"
 		   "  --partition-method=(range|hash)\n"
-		   "                           partition pgbench_accounts with this method (default: range)\n"
-		   "  --partitions=NUM         partition pgbench_accounts into NUM parts (default: 0)\n"
+		   "                           partition pgbench_cards with this method (default: range)\n"
+		   "  --partitions=NUM         partition pgbench_cards into NUM parts (default: 0)\n"
 		   "  --tablespace=TABLESPACE  create tables in the specified tablespace\n"
 		   "  --unlogged-tables        create tables as unlogged tables\n"
 		   "\nOptions to select what to run:\n"
 		   "  -b, --builtin=NAME[@W]   add builtin script NAME weighted at W (default: 1)\n"
 		   "                           (use \"-b list\" to list available scripts)\n"
 		   "  -f, --file=FILENAME[@W]  add script FILENAME weighted at W (default: 1)\n"
-		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
+		   "  -N, --skip-some-updates  skip updates of pgbench_agreements and pgbench_clients\n"
 		   "                           (same as \"-b simple-update\")\n"
-		   "  -S, --select-only        perform SELECT-only transactions\n"
-		   "                           (same as \"-b select-only\")\n"
+		   "  -S, --select-cards        perform select-cards transactions\n"
+		   "                           (same as \"-b select-cards\")\n"
 		   "\nBenchmarking options:\n"
 		   "  -c, --client=NUM         number of concurrent database clients (default: 1)\n"
 		   "  -C, --connect            establish new connection for each transaction\n"
@@ -4690,14 +4716,14 @@ initDropTables(PGconn *con)
 	 * foreign key dependencies or not doesn't matter.
 	 */
 	executeStatement(con, "drop table if exists "
-					 "pgbench_accounts, "
-					 "pgbench_branches, "
+					 "pgbench_cards, "
+					 "pgbench_clients, "
 					 "pgbench_history, "
-					 "pgbench_tellers");
+					 "pgbench_agreements");
 }
 
 /*
- * Create "pgbench_accounts" partitions if needed.
+ * Create "pgbench_cards" partitions if needed.
  *
  * This is the larger table of pgbench default tpc-b like schema
  * with a known size, so we choose to partition it.
@@ -4718,11 +4744,11 @@ createPartitions(PGconn *con)
 	{
 		if (partition_method == PART_RANGE)
 		{
-			int64		part_size = (naccounts * (int64) scale + partitions - 1) / partitions;
+			int64		part_size = (ncards * (int64) scale + partitions - 1) / partitions;
 
 			printfPQExpBuffer(&query,
-							  "create%s table pgbench_accounts_%d\n"
-							  "  partition of pgbench_accounts\n"
+							  "create%s table pgbench_cards_%d\n"
+							  "  partition of pgbench_cards\n"
 							  "  for values from (",
 							  unlogged_tables ? " unlogged" : "", p);
 
@@ -4748,8 +4774,8 @@ createPartitions(PGconn *con)
 		}
 		else if (partition_method == PART_HASH)
 			printfPQExpBuffer(&query,
-							  "create%s table pgbench_accounts_%d\n"
-							  "  partition of pgbench_accounts\n"
+							  "create%s table pgbench_cards_%d\n"
+							  "  partition of pgbench_cards\n"
 							  "  for values with (modulus %d, remainder %d)",
 							  unlogged_tables ? " unlogged" : "", p,
 							  partitions, p - 1);
@@ -4758,7 +4784,7 @@ createPartitions(PGconn *con)
 
 		/*
 		 * Per ddlinfo in initCreateTables, fillfactor is needed on table
-		 * pgbench_accounts.
+		 * pgbench_cards.
 		 */
 		appendPQExpBuffer(&query, " with (fillfactor=%d)", fillfactor);
 
@@ -4777,7 +4803,7 @@ initCreateTables(PGconn *con)
 	/*
 	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
 	 * fields in these table declarations were intended to comply with that.
-	 * The pgbench_accounts table complies with that because the "filler"
+	 * The pgbench_cards table complies with that because the "filler"
 	 * column is set to blank-padded empty string. But for all other tables
 	 * the columns default to NULL and so don't actually take any space.  We
 	 * could fix that by giving them non-null default values.  However, that
@@ -4800,21 +4826,21 @@ initCreateTables(PGconn *con)
 			0
 		},
 		{
-			"pgbench_tellers",
-			"tid int not null,bid int,tbalance int,filler char(84)",
-			"tid int not null,bid int,tbalance int,filler char(84)",
+			"pgbench_agreements",
+			"agreement TEXT, client_id INTEGER NOT NULL",
+			"agreement TEXT, client_id INTEGER NOT NULL",
 			1
 		},
 		{
-			"pgbench_accounts",
-			"aid    int not null,bid int,abalance int,filler char(84)",
-			"aid bigint not null,bid int,abalance int,filler char(84)",
+			"pgbench_cards",
+			"ucid BIGINT, pan TEXT NOT NULL, client_id INTEGER NOT NULL, pan_hash TEXT NOT NULL, key_id SMALLINT NOT NULL, iv TEXT NOT NULL",
+			"ucid BIGINT, pan TEXT NOT NULL, client_id INTEGER NOT NULL, pan_hash TEXT NOT NULL, key_id SMALLINT NOT NULL, iv TEXT NOT NULL",
 			1
 		},
 		{
-			"pgbench_branches",
-			"bid int not null,bbalance int,filler char(88)",
-			"bid int not null,bbalance int,filler char(88)",
+			"pgbench_clients",
+			"id SERIAL, client_id TEXT NOT NULL, shard SMALLINT",
+			"id SERIAL, client_id TEXT NOT NULL, shard SMALLINT",
 			1
 		}
 	};
@@ -4835,8 +4861,8 @@ initCreateTables(PGconn *con)
 						  ddl->table,
 						  (scale >= SCALE_32BIT_THRESHOLD) ? ddl->bigcols : ddl->smcols);
 
-		/* Partition pgbench_accounts table */
-		if (partition_method != PART_NONE && strcmp(ddl->table, "pgbench_accounts") == 0)
+		/* Partition pgbench_cards table */
+		if (partition_method != PART_NONE && strcmp(ddl->table, "pgbench_cards") == 0)
 			appendPQExpBuffer(&query,
 							  " partition by %s (aid)", PARTITION_METHOD[partition_method]);
 		else if (ddl->declare_fillfactor)
@@ -4870,10 +4896,10 @@ static void
 initTruncateTables(PGconn *con)
 {
 	executeStatement(con, "truncate table "
-					 "pgbench_accounts, "
-					 "pgbench_branches, "
+					 "pgbench_cards, "
+					 "pgbench_clients, "
 					 "pgbench_history, "
-					 "pgbench_tellers");
+					 "pgbench_agreements");
 }
 
 static void
@@ -4891,7 +4917,7 @@ initTeller(PQExpBufferData *sql, int64 curr)
 	/* "filler" column uses NULL */
 	printfPQExpBuffer(sql,
 					  INT64_FORMAT "\t" INT64_FORMAT "\t0\t\\N\n",
-					  curr + 1, curr / ntellers + 1);
+					  curr + 1, curr / nagreements + 1);
 }
 
 static void
@@ -4900,7 +4926,7 @@ initAccount(PQExpBufferData *sql, int64 curr)
 	/* "filler" column defaults to blank padded empty string */
 	printfPQExpBuffer(sql,
 					  INT64_FORMAT "\t" INT64_FORMAT "\t0\t\n",
-					  curr + 1, curr / naccounts + 1);
+					  curr + 1, curr / ncards + 1);
 }
 
 static void
@@ -4927,11 +4953,11 @@ initPopulateTable(PGconn *con, const char *table, int64 base,
 
 	/*
 	 * Use COPY with FREEZE on v14 and later for all the tables except
-	 * pgbench_accounts when it is partitioned.
+	 * pgbench_cards when it is partitioned.
 	 */
 	if (PQserverVersion(con) >= 140000)
 	{
-		if (strcmp(table, "pgbench_accounts") != 0 ||
+		if (strcmp(table, "pgbench_cards") != 0 ||
 			partitions == 0)
 			copy_statement_fmt = "copy %s from stdin with (freeze on)";
 	}
@@ -5009,8 +5035,8 @@ initPopulateTable(PGconn *con, const char *table, int64 base,
 /*
  * Fill the standard tables with some data generated and sent from the client.
  *
- * The filler column is NULL in pgbench_branches and pgbench_tellers, and is
- * a blank-padded string in pgbench_accounts.
+ * The filler column is NULL in pgbench_clients and pgbench_agreements, and is
+ * a blank-padded string in pgbench_cards.
  */
 static void
 initGenerateDataClientSide(PGconn *con)
@@ -5030,9 +5056,9 @@ initGenerateDataClientSide(PGconn *con)
 	 * fill branches, tellers, accounts in that order in case foreign keys
 	 * already exist
 	 */
-	initPopulateTable(con, "pgbench_branches", nbranches, initBranch);
-	initPopulateTable(con, "pgbench_tellers", ntellers, initTeller);
-	initPopulateTable(con, "pgbench_accounts", naccounts, initAccount);
+	initPopulateTable(con, "pgbench_clients", ncustomers, initBranch);
+	initPopulateTable(con, "pgbench_agreements", nagreements, initTeller);
+	initPopulateTable(con, "pgbench_cards", ncards, initAccount);
 
 	executeStatement(con, "commit");
 }
@@ -5041,8 +5067,8 @@ initGenerateDataClientSide(PGconn *con)
  * Fill the standard tables with some data generated on the server
  *
  * As already the case with the client-side data generation, the filler
- * column defaults to NULL in pgbench_branches and pgbench_tellers,
- * and is a blank-padded string in pgbench_accounts.
+ * column defaults to NULL in pgbench_clients and pgbench_agreements,
+ * and is a blank-padded string in pgbench_cards.
  */
 static void
 initGenerateDataServerSide(PGconn *con)
@@ -5063,22 +5089,27 @@ initGenerateDataServerSide(PGconn *con)
 	initPQExpBuffer(&sql);
 
 	printfPQExpBuffer(&sql,
-					  "insert into pgbench_branches(bid,bbalance) "
-					  "select bid, 0 "
-					  "from generate_series(1, %d) as bid", nbranches * scale);
+					  "insert into pgbench_clients(id,client_id,shard) "
+					  "select id, md5(random()::text), (random()*100)::int "
+					  "from generate_series(1, %d) as id", ncustomers * scale);
 	executeStatement(con, sql.data);
 
 	printfPQExpBuffer(&sql,
-					  "insert into pgbench_tellers(tid,bid,tbalance) "
-					  "select tid, (tid - 1) / %d + 1, 0 "
-					  "from generate_series(1, %d) as tid", ntellers, ntellers * scale);
+					  "insert into pgbench_agreements(client_id,agreement) "
+					  "select client_id, substr(md5(random()::text), 1, 16) "
+					  "from generate_series(1, %d) as client_id", nagreements * scale);
 	executeStatement(con, sql.data);
 
 	printfPQExpBuffer(&sql,
-					  "insert into pgbench_accounts(aid,bid,abalance,filler) "
-					  "select aid, (aid - 1) / %d + 1, 0, '' "
-					  "from generate_series(1, " INT64_FORMAT ") as aid",
-					  naccounts, (int64) naccounts * scale);
+					  "insert into pgbench_cards(ucid,pan,client_id,pan_hash,key_id,iv) "
+					  "select client_id as ucid, "
+					  "encode(sha256(random()::text::bytea), 'hex') as pan, "
+					  "client_id, "
+					  "encode(sha256(random()::text::bytea), 'hex') as pan_hash, "
+					  "0 as key_id, "
+					  "substr(md5(random()::text), 1, 24) as iv "
+					  "from generate_series(1, " INT64_FORMAT ") as client_id",
+					  (int64) ncards * scale);
 	executeStatement(con, sql.data);
 
 	termPQExpBuffer(&sql);
@@ -5093,9 +5124,9 @@ static void
 initVacuum(PGconn *con)
 {
 	fprintf(stderr, "vacuuming...\n");
-	executeStatement(con, "vacuum analyze pgbench_branches");
-	executeStatement(con, "vacuum analyze pgbench_tellers");
-	executeStatement(con, "vacuum analyze pgbench_accounts");
+	executeStatement(con, "vacuum analyze pgbench_clients");
+	executeStatement(con, "vacuum analyze pgbench_agreements");
+	executeStatement(con, "vacuum analyze pgbench_cards");
 	executeStatement(con, "vacuum analyze pgbench_history");
 }
 
@@ -5106,9 +5137,9 @@ static void
 initCreatePKeys(PGconn *con)
 {
 	static const char *const DDLINDEXes[] = {
-		"alter table pgbench_branches add primary key (bid)",
-		"alter table pgbench_tellers add primary key (tid)",
-		"alter table pgbench_accounts add primary key (aid)"
+		"alter table pgbench_clients add primary key (id)",
+		"create index if not exists pgbench_agreements_client_id on pgbench_agreements(client_id)",
+		"alter table pgbench_cards add primary key (ucid)"
 	};
 	int			i;
 	PQExpBufferData query;
@@ -5144,11 +5175,11 @@ static void
 initCreateFKeys(PGconn *con)
 {
 	static const char *const DDLKEYs[] = {
-		"alter table pgbench_tellers add constraint pgbench_tellers_bid_fkey foreign key (bid) references pgbench_branches",
-		"alter table pgbench_accounts add constraint pgbench_accounts_bid_fkey foreign key (bid) references pgbench_branches",
-		"alter table pgbench_history add constraint pgbench_history_bid_fkey foreign key (bid) references pgbench_branches",
-		"alter table pgbench_history add constraint pgbench_history_tid_fkey foreign key (tid) references pgbench_tellers",
-		"alter table pgbench_history add constraint pgbench_history_aid_fkey foreign key (aid) references pgbench_accounts"
+		"alter table pgbench_agreements add constraint pgbench_agreements_bid_fkey foreign key (bid) references pgbench_clients",
+		"alter table pgbench_cards add constraint pgbench_cards_bid_fkey foreign key (bid) references pgbench_clients",
+		"alter table pgbench_history add constraint pgbench_history_bid_fkey foreign key (bid) references pgbench_clients",
+		"alter table pgbench_history add constraint pgbench_history_tid_fkey foreign key (tid) references pgbench_agreements",
+		"alter table pgbench_history add constraint pgbench_history_aid_fkey foreign key (aid) references pgbench_cards"
 	};
 	int			i;
 
@@ -5278,14 +5309,14 @@ GetTableInfo(PGconn *con, bool scale_given)
 
 	/*
 	 * get the scaling factor that should be same as count(*) from
-	 * pgbench_branches if this is not a custom query
+	 * pgbench_clients if this is not a custom query
 	 */
-	res = PQexec(con, "select count(*) from pgbench_branches");
+	res = PQexec(con, "select count(*) from pgbench_clients");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		char	   *sqlState = PQresultErrorField(res, PG_DIAG_SQLSTATE);
 
-		pg_log_error("could not count number of branches: %s", PQerrorMessage(con));
+		pg_log_error("could not count number of clients: %s", PQerrorMessage(con));
 
 		if (sqlState && strcmp(sqlState, ERRCODE_UNDEFINED_TABLE) == 0)
 			pg_log_error_hint("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".",
@@ -5295,20 +5326,20 @@ GetTableInfo(PGconn *con, bool scale_given)
 	}
 	scale = atoi(PQgetvalue(res, 0, 0));
 	if (scale < 0)
-		pg_fatal("invalid count(*) from pgbench_branches: \"%s\"",
+		pg_fatal("invalid count(*) from pgbench_clients: \"%s\"",
 				 PQgetvalue(res, 0, 0));
 	PQclear(res);
 
 	/* warn if we override user-given -s switch */
 	if (scale_given)
-		pg_log_warning("scale option ignored, using count from pgbench_branches table (%d)",
+		pg_log_warning("scale option ignored, using count from pgbench_clients table (%d)",
 					   scale);
 
 	/*
-	 * Get the partition information for the first "pgbench_accounts" table
+	 * Get the partition information for the first "pgbench_cards" table
 	 * found in search_path.
 	 *
-	 * The result is empty if no "pgbench_accounts" is found.
+	 * The result is empty if no "pgbench_cards" is found.
 	 *
 	 * Otherwise, it always returns one row even if the table is not
 	 * partitioned (in which case the partition strategy is NULL).
@@ -5326,7 +5357,7 @@ GetTableInfo(PGconn *con, bool scale_given)
 				 "cross join lateral (select pg_catalog.array_position(pg_catalog.current_schemas(true), n.nspname)) as o(n) "
 				 "left join pg_catalog.pg_partitioned_table as p on (p.partrelid = c.oid) "
 				 "left join pg_catalog.pg_inherits as i on (c.oid = i.inhparent) "
-				 "where c.relname = 'pgbench_accounts' and o.n is not null "
+				 "where c.relname = 'pgbench_cards' and o.n is not null "
 				 "group by 1, 2 "
 				 "order by 1 asc "
 				 "limit 1");
@@ -5340,10 +5371,10 @@ GetTableInfo(PGconn *con, bool scale_given)
 	else if (PQntuples(res) == 0)
 	{
 		/*
-		 * This case is unlikely as pgbench already found "pgbench_branches"
+		 * This case is unlikely as pgbench already found "pgbench_clients"
 		 * above to compute the scale.
 		 */
-		pg_log_error("no pgbench_accounts table found in search_path");
+		pg_log_error("no pgbench_cards table found in search_path");
 		pg_log_error_hint("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".", PQdb(con));
 		exit(1);
 	}
@@ -6605,7 +6636,7 @@ main(int argc, char **argv)
 		{"report-per-command", no_argument, NULL, 'r'},
 		{"rate", required_argument, NULL, 'R'},
 		{"scale", required_argument, NULL, 's'},
-		{"select-only", no_argument, NULL, 'S'},
+		{"select-cards", no_argument, NULL, 'S'},
 		{"skip-some-updates", no_argument, NULL, 'N'},
 		{"time", required_argument, NULL, 'T'},
 		{"transactions", required_argument, NULL, 't'},
@@ -6854,7 +6885,7 @@ main(int argc, char **argv)
 					exit(1);
 				break;
 			case 'S':
-				process_builtin(findBuiltin("select-only"), 1);
+				process_builtin(findBuiltin("select-cards"), 1);
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
@@ -7223,15 +7254,15 @@ main(int argc, char **argv)
 	if (!is_no_vacuum)
 	{
 		fprintf(stderr, "starting vacuum...");
-		tryExecuteStatement(con, "vacuum pgbench_branches");
-		tryExecuteStatement(con, "vacuum pgbench_tellers");
+		tryExecuteStatement(con, "vacuum pgbench_clients");
+		tryExecuteStatement(con, "vacuum pgbench_agreements");
 		tryExecuteStatement(con, "truncate pgbench_history");
 		fprintf(stderr, "end.\n");
 
 		if (do_vacuum_accounts)
 		{
-			fprintf(stderr, "starting vacuum pgbench_accounts...");
-			tryExecuteStatement(con, "vacuum analyze pgbench_accounts");
+			fprintf(stderr, "starting vacuum pgbench_cards...");
+			tryExecuteStatement(con, "vacuum analyze pgbench_cards");
 			fprintf(stderr, "end.\n");
 		}
 	}
