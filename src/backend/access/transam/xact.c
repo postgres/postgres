@@ -75,6 +75,8 @@
  */
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
+int         DefaultXactLockStrategy = LOCK_NONE;
+int         XactLockStrategy;
 
 bool		DefaultXactReadOnly = false;
 bool		XactReadOnly;
@@ -205,6 +207,7 @@ typedef TransactionStateData *TransactionState;
 typedef struct SerializedTransactionState
 {
 	int			xactIsoLevel;
+    int         xactLockType;
 	bool		xactDeferrable;
 	FullTransactionId topFullTransactionId;
 	FullTransactionId currentFullTransactionId;
@@ -1954,6 +1957,10 @@ StartTransaction(void)
 	}
 	XactDeferrable = DefaultXactDeferrable;
 	XactIsoLevel = DefaultXactIsoLevel;
+    XactLockStrategy = DefaultXactLockStrategy;
+    if (XactLockStrategy != LOCK_NONE && XactIsoLevel) {
+        printf("Operation lock: iso %d-- lock %d\n", XactIsoLevel, XactLockStrategy);
+    }
 	forceSyncCommit = false;
 	MyXactFlags = 0;
 
@@ -2885,6 +2892,7 @@ StartTransactionCommand(void)
  * just skipping the reset in StartTransaction() won't work.)
  */
 static int	save_XactIsoLevel;
+static int	save_XactLockStrategy;
 static bool save_XactReadOnly;
 static bool save_XactDeferrable;
 
@@ -2893,6 +2901,7 @@ SaveTransactionCharacteristics(void)
 {
 	save_XactIsoLevel = XactIsoLevel;
 	save_XactReadOnly = XactReadOnly;
+    save_XactLockStrategy = XactLockStrategy;
 	save_XactDeferrable = XactDeferrable;
 }
 
@@ -2902,6 +2911,7 @@ RestoreTransactionCharacteristics(void)
 	XactIsoLevel = save_XactIsoLevel;
 	XactReadOnly = save_XactReadOnly;
 	XactDeferrable = save_XactDeferrable;
+    XactLockStrategy = save_XactLockStrategy;
 }
 
 
@@ -5230,7 +5240,7 @@ EstimateTransactionStateSpace(void)
  *		Write out relevant details of our transaction state that will be
  *		needed by a parallel worker.
  *
- * We need to save and restore XactDeferrable, XactIsoLevel, and the XIDs
+ * We need to save and restore XactDeferrable, XactIsoLevel, XactLockType, and the XIDs
  * associated with this transaction.  These are serialized into a
  * caller-supplied buffer big enough to hold the number of bytes reported by
  * EstimateTransactionStateSpace().  We emit the XIDs in sorted order for the
@@ -5248,6 +5258,7 @@ SerializeTransactionState(Size maxsize, char *start_address)
 	result = (SerializedTransactionState *) start_address;
 
 	result->xactIsoLevel = XactIsoLevel;
+    result->xactLockType = XactLockStrategy;
 	result->xactDeferrable = XactDeferrable;
 	result->topFullTransactionId = XactTopFullTransactionId;
 	result->currentFullTransactionId =
@@ -5317,6 +5328,7 @@ StartParallelWorkerTransaction(char *tstatespace)
 
 	tstate = (SerializedTransactionState *) tstatespace;
 	XactIsoLevel = tstate->xactIsoLevel;
+    XactLockStrategy = tstate->xactLockType;
 	XactDeferrable = tstate->xactDeferrable;
 	XactTopFullTransactionId = tstate->topFullTransactionId;
 	CurrentTransactionState->fullTransactionId =

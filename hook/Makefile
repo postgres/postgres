@@ -1,5 +1,7 @@
-MODULE_big = my_client_auth
-OBJS = my_client_auth.o
+HOOK = main
+
+MODULE_big = $(HOOK)
+OBJS = $(HOOK).o
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
