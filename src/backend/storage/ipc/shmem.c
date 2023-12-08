@@ -140,14 +140,6 @@ InitShmemAllocation(void)
 	/* ShmemIndex can't be set up yet (need LWLocks first) */
 	shmhdr->index = NULL;
 	ShmemIndex = (HTAB *) NULL;
-
-	/*
-	 * Initialize ShmemVariableCache for transaction manager. (This doesn't
-	 * really belong here, but not worth moving.)
-	 */
-	ShmemVariableCache = (VariableCache)
-		ShmemAlloc(sizeof(*ShmemVariableCache));
-	memset(ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
 }
 
 /*

@@ -21,6 +21,7 @@
 #include "access/nbtree.h"
 #include "access/subtrans.h"
 #include "access/syncscan.h"
+#include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xlogprefetcher.h"
 #include "access/xlogrecovery.h"
@@ -118,6 +119,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, PredicateLockShmemSize());
 	size = add_size(size, ProcGlobalShmemSize());
 	size = add_size(size, XLogPrefetchShmemSize());
+	size = add_size(size, VarsupShmemSize());
 	size = add_size(size, XLOGShmemSize());
 	size = add_size(size, XLogRecoveryShmemSize());
 	size = add_size(size, CLOGShmemSize());
@@ -289,6 +291,7 @@ CreateOrAttachShmemStructs(void)
 	/*
 	 * Set up xlog, clog, and buffers
 	 */
+	VarsupShmemInit();
 	XLOGShmemInit();
 	XLogPrefetchShmemInit();
 	XLogRecoveryShmemInit();
