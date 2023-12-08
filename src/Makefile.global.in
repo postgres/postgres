@@ -423,7 +423,7 @@ ifeq ($(MAKELEVEL),0)
 	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install >'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
 	$(MAKE) -j1 $(if $(CHECKPREP_TOP),-C $(CHECKPREP_TOP),) checkprep >>'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
 
-	$(with_temp_install) initdb -A trust -N --no-instructions --no-locale '$(abs_top_builddir)'/tmp_install/initdb-template >>'$(abs_top_builddir)'/tmp_install/log/initdb-template.log 2>&1
+	$(with_temp_install) initdb --auth trust --no-sync --no-instructions --no-locale --no-clean '$(abs_top_builddir)'/tmp_install/initdb-template >>'$(abs_top_builddir)'/tmp_install/log/initdb-template.log 2>&1
 endif
 endif
 endif
