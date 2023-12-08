@@ -2036,8 +2036,8 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
  *	_bt_readnextpage() -- Read next page containing valid data for scan
  *
  * On success exit, so->currPos is updated to contain data from the next
- * interesting page.  Caller is responsible to release lock and pin on
- * buffer on success.  We return true to indicate success.
+ * interesting page, and we return true.  Caller must release the lock (and
+ * maybe the pin) on the buffer on success exit.
  *
  * If there are no more matching records in the given direction, we drop all
  * locks and pins, set so->currPos.buf to InvalidBuffer, and return false.
@@ -2127,18 +2127,9 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 		 *
 		 * It might be possible to rearrange this code to have less overhead
 		 * in pinning and locking, but that would require capturing the left
-		 * pointer when the page is initially read, and using it here, along
-		 * with big changes to _bt_walk_left() and the code below.  It is not
-		 * clear whether this would be a win, since if the page immediately to
-		 * the left splits after we read this page and before we step left, we
-		 * would need to visit more pages than with the current code.
-		 *
-		 * Note that if we change the code so that we drop the pin for a scan
-		 * which uses a non-MVCC snapshot, we will need to modify the code for
-		 * walking left, to allow for the possibility that a referenced page
-		 * has been deleted.  As long as the buffer is pinned or the snapshot
-		 * is MVCC the page cannot move past the half-dead state to fully
-		 * deleted.
+		 * sibling block number when the page is initially read, and then
+		 * optimistically starting there (rather than pinning the page twice).
+		 * It is not clear that this would be worth the complexity.
 		 */
 		if (BTScanPosIsPinned(so->currPos))
 			_bt_lockbuf(rel, so->currPos.buf, BT_READ);
@@ -2243,9 +2234,8 @@ _bt_parallel_readpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
  * Returns InvalidBuffer if there is no page to the left (no lock is held
  * in that case).
  *
- * When working on a non-leaf level, it is possible for the returned page
- * to be half-dead; the caller should check that condition and step left
- * again if it's important.
+ * It is possible for the returned leaf page to be half-dead; caller must
+ * check that condition and step left again when required.
  */
 static Buffer
 _bt_walk_left(Relation rel, Buffer buf)
@@ -2288,8 +2278,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 		 * anymore, not that its left sibling got split more than four times.
 		 *
 		 * Note that it is correct to test P_ISDELETED not P_IGNORE here,
-		 * because half-dead pages are still in the sibling chain.  Caller
-		 * must reject half-dead pages if wanted.
+		 * because half-dead pages are still in the sibling chain.
 		 */
 		tries = 0;
 		for (;;)
