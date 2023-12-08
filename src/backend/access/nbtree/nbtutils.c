@@ -62,14 +62,6 @@ static int	_bt_keep_natts(Relation rel, IndexTuple lastleft,
  *		Build an insertion scan key that contains comparison data from itup
  *		as well as comparator routines appropriate to the key datatypes.
  *
- *		When itup is a non-pivot tuple, the returned insertion scan key is
- *		suitable for finding a place for it to go on the leaf level.  Pivot
- *		tuples can be used to re-find leaf page with matching high key, but
- *		then caller needs to set scan key's pivotsearch field to true.  This
- *		allows caller to search for a leaf page with a matching high key,
- *		which is usually to the left of the first leaf page a non-pivot match
- *		might appear on.
- *
  *		The result is intended for use with _bt_compare() and _bt_truncate().
  *		Callers that don't need to fill out the insertion scankey arguments
  *		(e.g. they use an ad-hoc comparison routine, or only need a scankey
@@ -120,8 +112,8 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		key->allequalimage = false;
 	}
 	key->anynullkeys = false;	/* initial assumption */
-	key->nextkey = false;
-	key->pivotsearch = false;
+	key->nextkey = false;		/* usual case, required by btinsert */
+	key->backward = false;		/* usual case, required by btinsert */
 	key->keysz = Min(indnkeyatts, tupnatts);
 	key->scantid = key->heapkeyspace && itup ?
 		BTreeTupleGetHeapTID(itup) : NULL;

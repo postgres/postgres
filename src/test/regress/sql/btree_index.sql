@@ -111,6 +111,31 @@ SELECT b.*
    WHERE b.seqno = '4500'::float8;
 
 --
+-- Add coverage for optimization of backwards scan index descents
+--
+-- Here we expect _bt_search to descend straight to a leaf page containing a
+-- non-pivot tuple with the value '47', which comes last (after 11 similar
+-- non-pivot tuples).  Query execution should only need to visit a single
+-- leaf page here.
+--
+-- Test case relies on tenk1_hundred index having a leaf page whose high key
+-- is '(48, -inf)'.  We use a low cardinality index to make our test case less
+-- sensitive to implementation details that may change in the future.
+set enable_seqscan to false;
+set enable_indexscan to true;
+set enable_bitmapscan to false;
+explain (costs off)
+select hundred, twenty from tenk1 where hundred < 48 order by hundred desc limit 1;
+select hundred, twenty from tenk1 where hundred < 48 order by hundred desc limit 1;
+
+-- This variant of the query need only return a single tuple located to the immediate
+-- right of the '(48, -inf)' high key.  It also only needs to scan one single
+-- leaf page (the right sibling of the page scanned by the last test case):
+explain (costs off)
+select hundred, twenty from tenk1 where hundred <= 48 order by hundred desc limit 1;
+select hundred, twenty from tenk1 where hundred <= 48 order by hundred desc limit 1;
+
+--
 -- Check correct optimization of LIKE (special index operator support)
 -- for both indexscan and bitmapscan cases
 --

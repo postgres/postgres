@@ -763,13 +763,8 @@ typedef BTStackData *BTStack;
  * bit, but may not when inserting into an INCLUDE index (tuple header value
  * is affected by the NULL-ness of both key and non-key attributes).
  *
- * When nextkey is false (the usual case), _bt_search and _bt_binsrch will
- * locate the first item >= scankey.  When nextkey is true, they will locate
- * the first item > scan key.
- *
- * pivotsearch is set to true by callers that want to re-find a leaf page
- * using a scankey built from a leaf page's high key.  Most callers set this
- * to false.
+ * See comments in _bt_first for an explanation of the nextkey and backward
+ * fields.
  *
  * scantid is the heap TID that is used as a final tiebreaker attribute.  It
  * is set to NULL when index scan doesn't need to find a position for a
@@ -792,7 +787,7 @@ typedef struct BTScanInsertData
 	bool		allequalimage;
 	bool		anynullkeys;
 	bool		nextkey;
-	bool		pivotsearch;
+	bool		backward;		/* backward index scan? */
 	ItemPointer scantid;		/* tiebreaker for scankeys */
 	int			keysz;			/* Size of scankeys array */
 	ScanKeyData scankeys[INDEX_MAX_KEYS];	/* Must appear last */
