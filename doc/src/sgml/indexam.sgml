@@ -123,6 +123,8 @@ typedef struct IndexAmRoutine
     bool        ampredlocks;
     /* does AM support parallel scan? */
     bool        amcanparallel;
+    /* does AM support parallel build? */
+    bool        amcanbuildparallel;
     /* does AM support columns included with clause INCLUDE? */
     bool        amcaninclude;
     /* does AM use maintenance_work_mem? */
@@ -286,6 +288,11 @@ ambuild (Relation heapRelation,
    and compute the keys that need to be inserted into the index.
    The function must return a palloc'd struct containing statistics about
    the new index.
+   The <structfield>amcanbuildparallel</structfield> flag indicates whether
+   the access method supports parallel index builds. When set to <literal>true</literal>,
+   the system will attempt to allocate parallel workers for the build.
+   Access methods supporting only non-parallel index builds should leave
+   this flag set to <literal>false</literal>.
   </para>
 
   <para>

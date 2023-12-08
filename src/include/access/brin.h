@@ -11,6 +11,7 @@
 #define BRIN_H
 
 #include "nodes/execnodes.h"
+#include "storage/shm_toc.h"
 #include "utils/relcache.h"
 
 
@@ -51,5 +52,7 @@ typedef struct BrinStatsData
 
 
 extern void brinGetStats(Relation index, BrinStatsData *stats);
+
+extern void _brin_parallel_build_main(dsm_segment *seg, shm_toc *toc);
 
 #endif							/* BRIN_H */

@@ -297,13 +297,17 @@ BpChar
 BrinBuildState
 BrinDesc
 BrinInsertState
+BrinLeader
 BrinMemTuple
 BrinMetaPageData
 BrinOpaque
 BrinOpcInfo
 BrinOptions
 BrinRevmap
+BrinShared
+BrinSortTuple
 BrinSpecialSpace
+BrinSpool
 BrinStatsData
 BrinTuple
 BrinValues
@@ -2883,6 +2887,7 @@ TupleTableSlotOps
 TuplesortClusterArg
 TuplesortDatumArg
 TuplesortIndexArg
+TuplesortIndexBrinArg
 TuplesortIndexBTreeArg
 TuplesortIndexHashArg
 TuplesortInstrumentation

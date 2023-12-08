@@ -243,6 +243,8 @@ typedef struct IndexAmRoutine
 	bool		ampredlocks;
 	/* does AM support parallel scan? */
 	bool		amcanparallel;
+	/* does AM support parallel build? */
+	bool		amcanbuildparallel;
 	/* does AM support columns included with clause INCLUDE? */
 	bool		amcaninclude;
 	/* does AM use maintenance_work_mem? */
