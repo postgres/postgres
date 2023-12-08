@@ -284,7 +284,7 @@ if (defined($ENV{oldinstall}))
 
 	my $dump_data = slurp_file($dump1_file);
 
-	my $newregresssrc = "$srcdir/src/test/regress";
+	my $newregresssrc = dirname($ENV{REGRESS_SHLIB});
 	foreach (@libpaths)
 	{
 		my $libpath = $_;
