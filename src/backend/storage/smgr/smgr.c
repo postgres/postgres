@@ -153,6 +153,8 @@ smgropen(RelFileLocator rlocator, BackendId backend)
 	SMgrRelation reln;
 	bool		found;
 
+	Assert(RelFileNumberIsValid(rlocator.relNumber));
+
 	if (SMgrRelationHash == NULL)
 	{
 		/* First time through: initialize the hash table */
