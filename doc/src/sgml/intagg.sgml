@@ -54,20 +54,22 @@
   <title>Sample Uses</title>
 
   <para>
-   Many database systems have the notion of a one to many table. Such a table
+   Many database systems have the notion of a many to many table. Such a table
    usually sits between two indexed tables, for example:
 
 <programlisting>
-CREATE TABLE left (id INT PRIMARY KEY, ...);
-CREATE TABLE right (id INT PRIMARY KEY, ...);
-CREATE TABLE one_to_many(left INT REFERENCES left, right INT REFERENCES right);
+CREATE TABLE left_table  (id INT PRIMARY KEY, ...);
+CREATE TABLE right_table (id INT PRIMARY KEY, ...);
+CREATE TABLE many_to_many(id_left  INT REFERENCES left_table,
+                          id_right INT REFERENCES right_table);
 </programlisting>
 
   It is typically used like this:
 
 <programlisting>
-SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right)
-  WHERE one_to_many.left = <replaceable>item</replaceable>;
+SELECT right_table.*
+FROM right_table JOIN many_to_many ON (right_table.id = many_to_many.id_right)
+WHERE many_to_many.id_left = <replaceable>item</replaceable>;
 </programlisting>
 
   This will return all the items in the right hand table for an entry
@@ -76,7 +78,7 @@ SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right)
 
  <para>
   Now, this methodology can be cumbersome with a very large number of
-  entries in the <structname>one_to_many</structname> table.  Often,
+  entries in the <structname>many_to_many</structname> table.  Often,
   a join like this would result in an index scan
   and a fetch for each right hand entry in the table for a particular
   left hand entry. If you have a very dynamic system, there is not much you
@@ -85,9 +87,9 @@ SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right)
 
 <programlisting>
 CREATE TABLE summary AS
-  SELECT left, int_array_aggregate(right) AS right
-  FROM one_to_many
-  GROUP BY left;
+  SELECT id_left, int_array_aggregate(id_right) AS rights
+  FROM many_to_many
+  GROUP BY id_left;
 </programlisting>
 
   This will create a table with one row per left item, and an array
@@ -95,33 +97,35 @@ CREATE TABLE summary AS
   the array; that's why there is an array enumerator.  You can do
 
 <programlisting>
-SELECT left, int_array_enum(right) FROM summary WHERE left = <replaceable>item</replaceable>;
+SELECT id_left, int_array_enum(rights) FROM summary WHERE id_left = <replaceable>item</replaceable>;
 </programlisting>
 
   The above query using <function>int_array_enum</function> produces the same results
   as
 
 <programlisting>
-SELECT left, right FROM one_to_many WHERE left = <replaceable>item</replaceable>;
+SELECT id_left, id_right FROM many_to_many WHERE id_left = <replaceable>item</replaceable>;
 </programlisting>
 
   The difference is that the query against the summary table has to get
   only one row from the table, whereas the direct query against
-  <structname>one_to_many</structname> must index scan and fetch a row for each entry.
+  <structname>many_to_many</structname> must index scan and fetch a row for each entry.
  </para>
 
  <para>
   On one system, an <command>EXPLAIN</command> showed a query with a cost of 8488 was
   reduced to a cost of 329.  The original query was a join involving the
-  <structname>one_to_many</structname> table, which was replaced by:
+  <structname>many_to_many</structname> table, which was replaced by:
 
 <programlisting>
-SELECT right, count(right) FROM
-  ( SELECT left, int_array_enum(right) AS right
-    FROM summary JOIN (SELECT left FROM left_table WHERE left = <replaceable>item</replaceable>) AS lefts
-         ON (summary.left = lefts.left)
+SELECT id_right, count(id_right) FROM
+  ( SELECT id_left, int_array_enum(rights) AS id_right
+    FROM summary
+    JOIN (SELECT id FROM left_table
+          WHERE id = <replaceable>item</replaceable>) AS lefts
+    ON (summary.id_left = lefts.id)
   ) AS list
-  GROUP BY right
+  GROUP BY id_right
   ORDER BY count DESC;
 </programlisting>
  </para>
