@@ -45,7 +45,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="parameter">start</replaceable> [ ROW | ROWS ] ]
     [ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } { ONLY | WITH TIES } ]
-    [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT | SKIP LOCKED ] [...] ]
+    [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } [ OF <replaceable class="parameter">from_reference</replaceable> [, ...] ] [ NOWAIT | SKIP LOCKED ] [...] ]
 
 <phrase>where <replaceable class="parameter">from_item</replaceable> can be one of:</phrase>
 
@@ -1577,7 +1577,7 @@ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { 
     The locking clause has the general form
 
 <synopsis>
-FOR <replaceable>lock_strength</replaceable> [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT | SKIP LOCKED ]
+FOR <replaceable>lock_strength</replaceable> [ OF <replaceable class="parameter">from_reference</replaceable> [, ...] ] [ NOWAIT | SKIP LOCKED ]
 </synopsis>
 
     where <replaceable>lock_strength</replaceable> can be one of
@@ -1591,8 +1591,11 @@ KEY SHARE
    </para>
 
    <para>
-    For more information on each row-level lock mode, refer to
-    <xref linkend="locking-rows"/>.
+    <replaceable class="parameter">from_reference</replaceable> must be a
+    table <replaceable class="parameter">alias</replaceable> or non-hidden
+    <replaceable class="parameter">table_name</replaceable> referenced
+    in the <literal>FROM</literal> clause.  For more information on each
+    row-level lock mode, refer to <xref linkend="locking-rows"/>.
    </para>
 
    <para>
