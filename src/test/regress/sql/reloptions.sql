@@ -52,6 +52,13 @@ SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass AND
 -- RESET fails if a value is specified
 ALTER TABLE reloptions_test RESET (fillfactor=12);
 
+-- We can RESET an invalid option which for some reason is already set
+UPDATE pg_class
+	SET reloptions = '{fillfactor=13,autovacuum_enabled=false,illegal_option=4}'
+	WHERE oid = 'reloptions_test'::regclass;
+ALTER TABLE reloptions_test RESET (illegal_option);
+SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
+
 -- Test vacuum_truncate option
 DROP TABLE reloptions_test;
 
