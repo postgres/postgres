@@ -2182,8 +2182,8 @@ XLogRecGetFullXid(XLogReaderState *record)
 	Assert(AmStartupProcess() || !IsUnderPostmaster);
 
 	xid = XLogRecGetXid(record);
-	next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
-	epoch = EpochFromFullTransactionId(ShmemVariableCache->nextXid);
+	next_xid = XidFromFullTransactionId(TransamVariables->nextXid);
+	epoch = EpochFromFullTransactionId(TransamVariables->nextXid);
 
 	/*
 	 * If xid is numerically greater than next_xid, it has to be from the last

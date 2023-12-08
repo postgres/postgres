@@ -758,12 +758,12 @@ ZeroCLOGPage(int64 pageno, bool writeXlog)
 
 /*
  * This must be called ONCE during postmaster or standalone-backend startup,
- * after StartupXLOG has initialized ShmemVariableCache->nextXid.
+ * after StartupXLOG has initialized TransamVariables->nextXid.
  */
 void
 StartupCLOG(void)
 {
-	TransactionId xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	TransactionId xid = XidFromFullTransactionId(TransamVariables->nextXid);
 	int64		pageno = TransactionIdToPage(xid);
 
 	LWLockAcquire(XactSLRULock, LW_EXCLUSIVE);
@@ -782,7 +782,7 @@ StartupCLOG(void)
 void
 TrimCLOG(void)
 {
-	TransactionId xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	TransactionId xid = XidFromFullTransactionId(TransamVariables->nextXid);
 	int64		pageno = TransactionIdToPage(xid);
 
 	LWLockAcquire(XactSLRULock, LW_EXCLUSIVE);

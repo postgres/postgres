@@ -203,7 +203,7 @@ consume_xids_shortcut(void)
 	uint32		consumed;
 
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-	nextXid = ShmemVariableCache->nextXid;
+	nextXid = TransamVariables->nextXid;
 
 	/*
 	 * Go slow near the "interesting values". The interesting zones include 5
@@ -211,7 +211,7 @@ consume_xids_shortcut(void)
 	 */
 	consumed = XidSkip(nextXid);
 	if (consumed > 0)
-		ShmemVariableCache->nextXid.value += (uint64) consumed;
+		TransamVariables->nextXid.value += (uint64) consumed;
 
 	LWLockRelease(XidGenLock);
 

@@ -81,12 +81,12 @@ typedef struct ToastedAttribute
 typedef struct HeapCheckContext
 {
 	/*
-	 * Cached copies of values from ShmemVariableCache and computed values
-	 * from them.
+	 * Cached copies of values from TransamVariables and computed values from
+	 * them.
 	 */
-	FullTransactionId next_fxid;	/* ShmemVariableCache->nextXid */
+	FullTransactionId next_fxid;	/* TransamVariables->nextXid */
 	TransactionId next_xid;		/* 32-bit version of next_fxid */
-	TransactionId oldest_xid;	/* ShmemVariableCache->oldestXid */
+	TransactionId oldest_xid;	/* TransamVariables->oldestXid */
 	FullTransactionId oldest_fxid;	/* 64-bit version of oldest_xid, computed
 									 * relative to next_fxid */
 	TransactionId safe_xmin;	/* this XID and newer ones can't become
@@ -1924,8 +1924,8 @@ update_cached_xid_range(HeapCheckContext *ctx)
 {
 	/* Make cached copies */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	ctx->next_fxid = ShmemVariableCache->nextXid;
-	ctx->oldest_xid = ShmemVariableCache->oldestXid;
+	ctx->next_fxid = TransamVariables->nextXid;
+	ctx->oldest_xid = TransamVariables->oldestXid;
 	LWLockRelease(XidGenLock);
 
 	/* And compute alternate versions of the same */
@@ -2062,7 +2062,7 @@ get_xid_status(TransactionId xid, HeapCheckContext *ctx,
 	*status = XID_COMMITTED;
 	LWLockAcquire(XactTruncationLock, LW_SHARED);
 	clog_horizon =
-		FullTransactionIdFromXidAndCtx(ShmemVariableCache->oldestClogXid,
+		FullTransactionIdFromXidAndCtx(TransamVariables->oldestClogXid,
 									   ctx);
 	if (FullTransactionIdPrecedesOrEquals(clog_horizon, fxid))
 	{

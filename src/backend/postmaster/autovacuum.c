@@ -2640,8 +2640,8 @@ deleted:
 	 *
 	 * Even if we didn't vacuum anything, it may still be important to do
 	 * this, because one indirect effect of vac_update_datfrozenxid() is to
-	 * update ShmemVariableCache->xidVacLimit.  That might need to be done
-	 * even if we haven't vacuumed anything, because relations with older
+	 * update TransamVariables->xidVacLimit.  That might need to be done even
+	 * if we haven't vacuumed anything, because relations with older
 	 * relfrozenxid values or other databases with older datfrozenxid values
 	 * might have been dropped, allowing xidVacLimit to advance.
 	 *

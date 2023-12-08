@@ -1869,7 +1869,7 @@ ApplyWalRecord(XLogReaderState *xlogreader, XLogRecord *record, TimeLineID *repl
 	error_context_stack = &errcallback;
 
 	/*
-	 * ShmemVariableCache->nextXid must be beyond record's xid.
+	 * TransamVariables->nextXid must be beyond record's xid.
 	 */
 	AdvanceNextFullTransactionIdPastXid(record->xl_xid);
 

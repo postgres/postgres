@@ -180,7 +180,7 @@ struct GlobalVisState
 typedef struct ComputeXidHorizonsResult
 {
 	/*
-	 * The value of ShmemVariableCache->latestCompletedXid when
+	 * The value of TransamVariables->latestCompletedXid when
 	 * ComputeXidHorizons() held ProcArrayLock.
 	 */
 	FullTransactionId latest_completed;
@@ -442,7 +442,7 @@ CreateSharedProcArray(void)
 		procArray->lastOverflowedXid = InvalidTransactionId;
 		procArray->replication_slot_xmin = InvalidTransactionId;
 		procArray->replication_slot_catalog_xmin = InvalidTransactionId;
-		ShmemVariableCache->xactCompletionCount = 1;
+		TransamVariables->xactCompletionCount = 1;
 	}
 
 	allProcs = ProcGlobal->allProcs;
@@ -591,7 +591,7 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 		MaintainLatestCompletedXid(latestXid);
 
 		/* Same with xactCompletionCount  */
-		ShmemVariableCache->xactCompletionCount++;
+		TransamVariables->xactCompletionCount++;
 
 		ProcGlobal->xids[myoff] = InvalidTransactionId;
 		ProcGlobal->subxidStates[myoff].overflowed = false;
@@ -773,7 +773,7 @@ ProcArrayEndTransactionInternal(PGPROC *proc, TransactionId latestXid)
 	MaintainLatestCompletedXid(latestXid);
 
 	/* Same with xactCompletionCount  */
-	ShmemVariableCache->xactCompletionCount++;
+	TransamVariables->xactCompletionCount++;
 }
 
 /*
@@ -942,7 +942,7 @@ ProcArrayClearTransaction(PGPROC *proc)
 	 * otherwise could end up reusing the snapshot later. Which would be bad,
 	 * because it might not count the prepared transaction as running.
 	 */
-	ShmemVariableCache->xactCompletionCount++;
+	TransamVariables->xactCompletionCount++;
 
 	/* Clear the subtransaction-XID cache too */
 	Assert(ProcGlobal->subxidStates[pgxactoff].count == proc->subxidStatus.count &&
@@ -959,13 +959,13 @@ ProcArrayClearTransaction(PGPROC *proc)
 }
 
 /*
- * Update ShmemVariableCache->latestCompletedXid to point to latestXid if
+ * Update TransamVariables->latestCompletedXid to point to latestXid if
  * currently older.
  */
 static void
 MaintainLatestCompletedXid(TransactionId latestXid)
 {
-	FullTransactionId cur_latest = ShmemVariableCache->latestCompletedXid;
+	FullTransactionId cur_latest = TransamVariables->latestCompletedXid;
 
 	Assert(FullTransactionIdIsValid(cur_latest));
 	Assert(!RecoveryInProgress());
@@ -973,12 +973,12 @@ MaintainLatestCompletedXid(TransactionId latestXid)
 
 	if (TransactionIdPrecedes(XidFromFullTransactionId(cur_latest), latestXid))
 	{
-		ShmemVariableCache->latestCompletedXid =
+		TransamVariables->latestCompletedXid =
 			FullXidRelativeTo(cur_latest, latestXid);
 	}
 
 	Assert(IsBootstrapProcessingMode() ||
-		   FullTransactionIdIsNormal(ShmemVariableCache->latestCompletedXid));
+		   FullTransactionIdIsNormal(TransamVariables->latestCompletedXid));
 }
 
 /*
@@ -987,7 +987,7 @@ MaintainLatestCompletedXid(TransactionId latestXid)
 static void
 MaintainLatestCompletedXidRecovery(TransactionId latestXid)
 {
-	FullTransactionId cur_latest = ShmemVariableCache->latestCompletedXid;
+	FullTransactionId cur_latest = TransamVariables->latestCompletedXid;
 	FullTransactionId rel;
 
 	Assert(AmStartupProcess() || !IsUnderPostmaster);
@@ -998,17 +998,17 @@ MaintainLatestCompletedXidRecovery(TransactionId latestXid)
 	 * latestCompletedXid to be initialized in recovery. But in recovery it's
 	 * safe to access nextXid without a lock for the startup process.
 	 */
-	rel = ShmemVariableCache->nextXid;
-	Assert(FullTransactionIdIsValid(ShmemVariableCache->nextXid));
+	rel = TransamVariables->nextXid;
+	Assert(FullTransactionIdIsValid(TransamVariables->nextXid));
 
 	if (!FullTransactionIdIsValid(cur_latest) ||
 		TransactionIdPrecedes(XidFromFullTransactionId(cur_latest), latestXid))
 	{
-		ShmemVariableCache->latestCompletedXid =
+		TransamVariables->latestCompletedXid =
 			FullXidRelativeTo(rel, latestXid);
 	}
 
-	Assert(FullTransactionIdIsNormal(ShmemVariableCache->latestCompletedXid));
+	Assert(FullTransactionIdIsNormal(TransamVariables->latestCompletedXid));
 }
 
 /*
@@ -1269,16 +1269,16 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	MaintainLatestCompletedXidRecovery(running->latestCompletedXid);
 
 	/*
-	 * NB: No need to increment ShmemVariableCache->xactCompletionCount here,
+	 * NB: No need to increment TransamVariables->xactCompletionCount here,
 	 * nobody can see it yet.
 	 */
 
 	LWLockRelease(ProcArrayLock);
 
-	/* ShmemVariableCache->nextXid must be beyond any observed xid. */
+	/* TransamVariables->nextXid must be beyond any observed xid. */
 	AdvanceNextFullTransactionIdPastXid(latestObservedXid);
 
-	Assert(FullTransactionIdIsValid(ShmemVariableCache->nextXid));
+	Assert(FullTransactionIdIsValid(TransamVariables->nextXid));
 
 	KnownAssignedXidsDisplay(trace_recovery(DEBUG3));
 	if (standbyState == STANDBY_SNAPSHOT_READY)
@@ -1456,7 +1456,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	 * target Xid is after that, it's surely still running.
 	 */
 	latestCompletedXid =
-		XidFromFullTransactionId(ShmemVariableCache->latestCompletedXid);
+		XidFromFullTransactionId(TransamVariables->latestCompletedXid);
 	if (TransactionIdPrecedes(latestCompletedXid, xid))
 	{
 		LWLockRelease(ProcArrayLock);
@@ -1725,7 +1725,7 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
-	h->latest_completed = ShmemVariableCache->latestCompletedXid;
+	h->latest_completed = TransamVariables->latestCompletedXid;
 
 	/*
 	 * We initialize the MIN() calculation with latestCompletedXid + 1. This
@@ -2082,7 +2082,7 @@ GetSnapshotDataReuse(Snapshot snapshot)
 	if (unlikely(snapshot->snapXactCompletionCount == 0))
 		return false;
 
-	curXactCompletionCount = ShmemVariableCache->xactCompletionCount;
+	curXactCompletionCount = TransamVariables->xactCompletionCount;
 	if (curXactCompletionCount != snapshot->snapXactCompletionCount)
 		return false;
 
@@ -2219,13 +2219,13 @@ GetSnapshotData(Snapshot snapshot)
 		return snapshot;
 	}
 
-	latest_completed = ShmemVariableCache->latestCompletedXid;
+	latest_completed = TransamVariables->latestCompletedXid;
 	mypgxactoff = MyProc->pgxactoff;
 	myxid = other_xids[mypgxactoff];
 	Assert(myxid == MyProc->xid);
 
-	oldestxid = ShmemVariableCache->oldestXid;
-	curXactCompletionCount = ShmemVariableCache->xactCompletionCount;
+	oldestxid = TransamVariables->oldestXid;
+	curXactCompletionCount = TransamVariables->xactCompletionCount;
 
 	/* xmax is always latestCompletedXid + 1 */
 	xmax = XidFromFullTransactionId(latest_completed);
@@ -2460,10 +2460,10 @@ GetSnapshotData(Snapshot snapshot)
 		/*
 		 * Check if we know that we can initialize or increase the lower
 		 * bound. Currently the only cheap way to do so is to use
-		 * ShmemVariableCache->oldestXid as input.
+		 * TransamVariables->oldestXid as input.
 		 *
 		 * We should definitely be able to do better. We could e.g. put a
-		 * global lower bound value into ShmemVariableCache.
+		 * global lower bound value into TransamVariables.
 		 */
 		GlobalVisSharedRels.maybe_needed =
 			FullTransactionIdNewer(GlobalVisSharedRels.maybe_needed,
@@ -2719,9 +2719,9 @@ GetRunningTransactionData(void)
 	LWLockAcquire(XidGenLock, LW_SHARED);
 
 	latestCompletedXid =
-		XidFromFullTransactionId(ShmemVariableCache->latestCompletedXid);
+		XidFromFullTransactionId(TransamVariables->latestCompletedXid);
 	oldestRunningXid =
-		XidFromFullTransactionId(ShmemVariableCache->nextXid);
+		XidFromFullTransactionId(TransamVariables->nextXid);
 
 	/*
 	 * Spin over procArray collecting all xids
@@ -2812,7 +2812,7 @@ GetRunningTransactionData(void)
 	CurrentRunningXacts->xcnt = count - subcount;
 	CurrentRunningXacts->subxcnt = subcount;
 	CurrentRunningXacts->subxid_overflow = suboverflowed;
-	CurrentRunningXacts->nextXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	CurrentRunningXacts->nextXid = XidFromFullTransactionId(TransamVariables->nextXid);
 	CurrentRunningXacts->oldestRunningXid = oldestRunningXid;
 	CurrentRunningXacts->latestCompletedXid = latestCompletedXid;
 
@@ -2858,7 +2858,7 @@ GetOldestActiveTransactionId(void)
 	 * have already completed), when we spin over it.
 	 */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	oldestRunningXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	oldestRunningXid = XidFromFullTransactionId(TransamVariables->nextXid);
 	LWLockRelease(XidGenLock);
 
 	/*
@@ -2924,7 +2924,7 @@ GetOldestSafeDecodingTransactionId(bool catalogOnly)
 	 * a safe, albeit pessimal, value.
 	 */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	oldestSafeXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	oldestSafeXid = XidFromFullTransactionId(TransamVariables->nextXid);
 
 	/*
 	 * If there's already a slot pegging the xmin horizon, we can start with
@@ -3968,7 +3968,7 @@ XidCacheRemoveRunningXids(TransactionId xid,
 	MaintainLatestCompletedXid(latestXid);
 
 	/* ... and xactCompletionCount */
-	ShmemVariableCache->xactCompletionCount++;
+	TransamVariables->xactCompletionCount++;
 
 	LWLockRelease(ProcArrayLock);
 }
@@ -4390,7 +4390,7 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
 		 */
 		latestObservedXid = xid;
 
-		/* ShmemVariableCache->nextXid must be beyond any observed xid */
+		/* TransamVariables->nextXid must be beyond any observed xid */
 		AdvanceNextFullTransactionIdPastXid(latestObservedXid);
 	}
 }
@@ -4418,7 +4418,7 @@ ExpireTreeKnownAssignedTransactionIds(TransactionId xid, int nsubxids,
 	MaintainLatestCompletedXidRecovery(max_xid);
 
 	/* ... and xactCompletionCount */
-	ShmemVariableCache->xactCompletionCount++;
+	TransamVariables->xactCompletionCount++;
 
 	LWLockRelease(ProcArrayLock);
 }

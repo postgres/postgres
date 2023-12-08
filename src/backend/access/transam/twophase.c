@@ -958,7 +958,7 @@ AdjustToFullTransactionId(TransactionId xid)
 	Assert(TransactionIdIsValid(xid));
 
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	nextFullXid = ShmemVariableCache->nextXid;
+	nextFullXid = TransamVariables->nextXid;
 	LWLockRelease(XidGenLock);
 
 	nextXid = XidFromFullTransactionId(nextFullXid);
@@ -1948,7 +1948,7 @@ restoreTwoPhaseData(void)
  *
  * Scan the shared memory entries of TwoPhaseState and determine the range
  * of valid XIDs present.  This is run during database startup, after we
- * have completed reading WAL.  ShmemVariableCache->nextXid has been set to
+ * have completed reading WAL.  TransamVariables->nextXid has been set to
  * one more than the highest XID for which evidence exists in WAL.
  *
  * We throw away any prepared xacts with main XID beyond nextXid --- if any
@@ -1967,7 +1967,7 @@ restoreTwoPhaseData(void)
  * backup should be rolled in.
  *
  * Our other responsibility is to determine and return the oldest valid XID
- * among the prepared xacts (if none, return ShmemVariableCache->nextXid).
+ * among the prepared xacts (if none, return TransamVariables->nextXid).
  * This is needed to synchronize pg_subtrans startup properly.
  *
  * If xids_p and nxids_p are not NULL, pointer to a palloc'd array of all
@@ -1977,7 +1977,7 @@ restoreTwoPhaseData(void)
 TransactionId
 PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 {
-	FullTransactionId nextXid = ShmemVariableCache->nextXid;
+	FullTransactionId nextXid = TransamVariables->nextXid;
 	TransactionId origNextXid = XidFromFullTransactionId(nextXid);
 	TransactionId result = origNextXid;
 	TransactionId *xids = NULL;
@@ -2196,7 +2196,7 @@ RecoverPreparedTransactions(void)
  *
  * If setParent is true, set up subtransaction parent linkages.
  *
- * If setNextXid is true, set ShmemVariableCache->nextXid to the newest
+ * If setNextXid is true, set TransamVariables->nextXid to the newest
  * value scanned.
  */
 static char *
@@ -2205,7 +2205,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 					  bool fromdisk,
 					  bool setParent, bool setNextXid)
 {
-	FullTransactionId nextXid = ShmemVariableCache->nextXid;
+	FullTransactionId nextXid = TransamVariables->nextXid;
 	TransactionId origNextXid = XidFromFullTransactionId(nextXid);
 	TransactionId *subxids;
 	char	   *buf;

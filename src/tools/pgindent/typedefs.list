@@ -2831,6 +2831,7 @@ TocEntry
 TokenAuxData
 TokenizedAuthLine
 TrackItem
+TransamVariablesData
 TransApplyAction
 TransInvalidationInfo
 TransState
@@ -2961,8 +2962,6 @@ VarString
 VarStringSortSupport
 Variable
 VariableAssignHook
-VariableCache
-VariableCacheData
 VariableSetKind
 VariableSetStmt
 VariableShowStmt

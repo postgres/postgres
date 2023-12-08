@@ -211,8 +211,8 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 	commitTsShared->dataLastCommit.nodeid = nodeid;
 
 	/* and move forwards our endpoint, if needed */
-	if (TransactionIdPrecedes(ShmemVariableCache->newestCommitTsXid, newestXact))
-		ShmemVariableCache->newestCommitTsXid = newestXact;
+	if (TransactionIdPrecedes(TransamVariables->newestCommitTsXid, newestXact))
+		TransamVariables->newestCommitTsXid = newestXact;
 	LWLockRelease(CommitTsLock);
 }
 
@@ -315,8 +315,8 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		return *ts != 0;
 	}
 
-	oldestCommitTsXid = ShmemVariableCache->oldestCommitTsXid;
-	newestCommitTsXid = ShmemVariableCache->newestCommitTsXid;
+	oldestCommitTsXid = TransamVariables->oldestCommitTsXid;
+	newestCommitTsXid = TransamVariables->newestCommitTsXid;
 	/* neither is invalid, or both are */
 	Assert(TransactionIdIsValid(oldestCommitTsXid) == TransactionIdIsValid(newestCommitTsXid));
 	LWLockRelease(CommitTsLock);
@@ -593,7 +593,7 @@ ZeroCommitTsPage(int64 pageno, bool writeXlog)
 
 /*
  * This must be called ONCE during postmaster or standalone-backend startup,
- * after StartupXLOG has initialized ShmemVariableCache->nextXid.
+ * after StartupXLOG has initialized TransamVariables->nextXid.
  */
 void
 StartupCommitTs(void)
@@ -683,7 +683,7 @@ ActivateCommitTs(void)
 	}
 	LWLockRelease(CommitTsLock);
 
-	xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	xid = XidFromFullTransactionId(TransamVariables->nextXid);
 	pageno = TransactionIdToCTsPage(xid);
 
 	/*
@@ -707,10 +707,10 @@ ActivateCommitTs(void)
 	 * Invalid temporarily.
 	 */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTsXid == InvalidTransactionId)
+	if (TransamVariables->oldestCommitTsXid == InvalidTransactionId)
 	{
-		ShmemVariableCache->oldestCommitTsXid =
-			ShmemVariableCache->newestCommitTsXid = ReadNextTransactionId();
+		TransamVariables->oldestCommitTsXid =
+			TransamVariables->newestCommitTsXid = ReadNextTransactionId();
 	}
 	LWLockRelease(CommitTsLock);
 
@@ -759,8 +759,8 @@ DeactivateCommitTs(void)
 	TIMESTAMP_NOBEGIN(commitTsShared->dataLastCommit.time);
 	commitTsShared->dataLastCommit.nodeid = InvalidRepOriginId;
 
-	ShmemVariableCache->oldestCommitTsXid = InvalidTransactionId;
-	ShmemVariableCache->newestCommitTsXid = InvalidTransactionId;
+	TransamVariables->oldestCommitTsXid = InvalidTransactionId;
+	TransamVariables->newestCommitTsXid = InvalidTransactionId;
 
 	LWLockRelease(CommitTsLock);
 
@@ -874,18 +874,18 @@ SetCommitTsLimit(TransactionId oldestXact, TransactionId newestXact)
 	 * "future" or signal a disabled committs.
 	 */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTsXid != InvalidTransactionId)
+	if (TransamVariables->oldestCommitTsXid != InvalidTransactionId)
 	{
-		if (TransactionIdPrecedes(ShmemVariableCache->oldestCommitTsXid, oldestXact))
-			ShmemVariableCache->oldestCommitTsXid = oldestXact;
-		if (TransactionIdPrecedes(newestXact, ShmemVariableCache->newestCommitTsXid))
-			ShmemVariableCache->newestCommitTsXid = newestXact;
+		if (TransactionIdPrecedes(TransamVariables->oldestCommitTsXid, oldestXact))
+			TransamVariables->oldestCommitTsXid = oldestXact;
+		if (TransactionIdPrecedes(newestXact, TransamVariables->newestCommitTsXid))
+			TransamVariables->newestCommitTsXid = newestXact;
 	}
 	else
 	{
-		Assert(ShmemVariableCache->newestCommitTsXid == InvalidTransactionId);
-		ShmemVariableCache->oldestCommitTsXid = oldestXact;
-		ShmemVariableCache->newestCommitTsXid = newestXact;
+		Assert(TransamVariables->newestCommitTsXid == InvalidTransactionId);
+		TransamVariables->oldestCommitTsXid = oldestXact;
+		TransamVariables->newestCommitTsXid = newestXact;
 	}
 	LWLockRelease(CommitTsLock);
 }
@@ -897,9 +897,9 @@ void
 AdvanceOldestCommitTsXid(TransactionId oldestXact)
 {
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTsXid != InvalidTransactionId &&
-		TransactionIdPrecedes(ShmemVariableCache->oldestCommitTsXid, oldestXact))
-		ShmemVariableCache->oldestCommitTsXid = oldestXact;
+	if (TransamVariables->oldestCommitTsXid != InvalidTransactionId &&
+		TransactionIdPrecedes(TransamVariables->oldestCommitTsXid, oldestXact))
+		TransamVariables->oldestCommitTsXid = oldestXact;
 	LWLockRelease(CommitTsLock);
 }
 

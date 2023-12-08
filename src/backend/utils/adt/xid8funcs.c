@@ -126,8 +126,8 @@ TransactionIdInRecentPast(FullTransactionId fxid, TransactionId *extracted_xid)
 						(unsigned long long) U64FromFullTransactionId(fxid))));
 
 	/*
-	 * ShmemVariableCache->oldestClogXid is protected by XactTruncationLock,
-	 * but we don't acquire that lock here.  Instead, we require the caller to
+	 * TransamVariables->oldestClogXid is protected by XactTruncationLock, but
+	 * we don't acquire that lock here.  Instead, we require the caller to
 	 * acquire it, because the caller is presumably going to look up the
 	 * returned XID.  If we took and released the lock within this function, a
 	 * CLOG truncation could occur before the caller finished with the XID.
@@ -137,12 +137,12 @@ TransactionIdInRecentPast(FullTransactionId fxid, TransactionId *extracted_xid)
 	/*
 	 * If the transaction ID has wrapped around, it's definitely too old to
 	 * determine the commit status.  Otherwise, we can compare it to
-	 * ShmemVariableCache->oldestClogXid to determine whether the relevant
-	 * CLOG entry is guaranteed to still exist.
+	 * TransamVariables->oldestClogXid to determine whether the relevant CLOG
+	 * entry is guaranteed to still exist.
 	 */
 	if (xid_epoch + 1 < now_epoch
 		|| (xid_epoch + 1 == now_epoch && xid < now_epoch_next_xid)
-		|| TransactionIdPrecedes(xid, ShmemVariableCache->oldestClogXid))
+		|| TransactionIdPrecedes(xid, TransamVariables->oldestClogXid))
 		return false;
 
 	return true;

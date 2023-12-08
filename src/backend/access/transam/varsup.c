@@ -30,17 +30,17 @@
 /* Number of OIDs to prefetch (preallocate) per XLOG write */
 #define VAR_OID_PREFETCH		8192
 
-/* pointer to "variable cache" in shared memory (set up by shmem.c) */
-VariableCache ShmemVariableCache = NULL;
+/* pointer to variables struct in shared memory */
+TransamVariablesData *TransamVariables = NULL;
 
 
 /*
- * Initialization of shared memory for ShmemVariableCache.
+ * Initialization of shared memory for TransamVariables.
  */
 Size
 VarsupShmemSize(void)
 {
-	return sizeof(VariableCacheData);
+	return sizeof(TransamVariablesData);
 }
 
 void
@@ -49,13 +49,13 @@ VarsupShmemInit(void)
 	bool		found;
 
 	/* Initialize our shared state struct */
-	ShmemVariableCache = ShmemInitStruct("ShmemVariableCache",
-										 sizeof(VariableCacheData),
-										 &found);
+	TransamVariables = ShmemInitStruct("TransamVariables",
+									   sizeof(TransamVariablesData),
+									   &found);
 	if (!IsUnderPostmaster)
 	{
 		Assert(!found);
-		memset(ShmemVariableCache, 0, sizeof(VariableCacheData));
+		memset(TransamVariables, 0, sizeof(TransamVariablesData));
 	}
 	else
 		Assert(found);
@@ -104,7 +104,7 @@ GetNewTransactionId(bool isSubXact)
 
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 
-	full_xid = ShmemVariableCache->nextXid;
+	full_xid = TransamVariables->nextXid;
 	xid = XidFromFullTransactionId(full_xid);
 
 	/*----------
@@ -120,7 +120,7 @@ GetNewTransactionId(bool isSubXact)
 	 * Note that this coding also appears in GetNewMultiXactId.
 	 *----------
 	 */
-	if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidVacLimit))
+	if (TransactionIdFollowsOrEquals(xid, TransamVariables->xidVacLimit))
 	{
 		/*
 		 * For safety's sake, we release XidGenLock while sending signals,
@@ -129,10 +129,10 @@ GetNewTransactionId(bool isSubXact)
 		 * possibility of deadlock while doing get_database_name(). First,
 		 * copy all the shared values we'll need in this path.
 		 */
-		TransactionId xidWarnLimit = ShmemVariableCache->xidWarnLimit;
-		TransactionId xidStopLimit = ShmemVariableCache->xidStopLimit;
-		TransactionId xidWrapLimit = ShmemVariableCache->xidWrapLimit;
-		Oid			oldest_datoid = ShmemVariableCache->oldestXidDB;
+		TransactionId xidWarnLimit = TransamVariables->xidWarnLimit;
+		TransactionId xidStopLimit = TransamVariables->xidStopLimit;
+		TransactionId xidWrapLimit = TransamVariables->xidWrapLimit;
+		Oid			oldest_datoid = TransamVariables->oldestXidDB;
 
 		LWLockRelease(XidGenLock);
 
@@ -188,7 +188,7 @@ GetNewTransactionId(bool isSubXact)
 
 		/* Re-acquire lock and start over */
 		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		full_xid = ShmemVariableCache->nextXid;
+		full_xid = TransamVariables->nextXid;
 		xid = XidFromFullTransactionId(full_xid);
 	}
 
@@ -211,7 +211,7 @@ GetNewTransactionId(bool isSubXact)
 	 * want the next incoming transaction to try it again.  We cannot assign
 	 * more XIDs until there is CLOG space for them.
 	 */
-	FullTransactionIdAdvance(&ShmemVariableCache->nextXid);
+	FullTransactionIdAdvance(&TransamVariables->nextXid);
 
 	/*
 	 * We must store the new XID into the shared ProcArray before releasing
@@ -290,7 +290,7 @@ ReadNextFullTransactionId(void)
 	FullTransactionId fullXid;
 
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	fullXid = ShmemVariableCache->nextXid;
+	fullXid = TransamVariables->nextXid;
 	LWLockRelease(XidGenLock);
 
 	return fullXid;
@@ -315,7 +315,7 @@ AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 	Assert(AmStartupProcess() || !IsUnderPostmaster);
 
 	/* Fast return if this isn't an xid high enough to move the needle. */
-	next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	next_xid = XidFromFullTransactionId(TransamVariables->nextXid);
 	if (!TransactionIdFollowsOrEquals(xid, next_xid))
 		return;
 
@@ -328,7 +328,7 @@ AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 	 * point in the WAL stream.
 	 */
 	TransactionIdAdvance(xid);
-	epoch = EpochFromFullTransactionId(ShmemVariableCache->nextXid);
+	epoch = EpochFromFullTransactionId(TransamVariables->nextXid);
 	if (unlikely(xid < next_xid))
 		++epoch;
 	newNextFullXid = FullTransactionIdFromEpochAndXid(epoch, xid);
@@ -338,7 +338,7 @@ AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 	 * concurrent readers.
 	 */
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-	ShmemVariableCache->nextXid = newNextFullXid;
+	TransamVariables->nextXid = newNextFullXid;
 	LWLockRelease(XidGenLock);
 }
 
@@ -355,10 +355,10 @@ void
 AdvanceOldestClogXid(TransactionId oldest_datfrozenxid)
 {
 	LWLockAcquire(XactTruncationLock, LW_EXCLUSIVE);
-	if (TransactionIdPrecedes(ShmemVariableCache->oldestClogXid,
+	if (TransactionIdPrecedes(TransamVariables->oldestClogXid,
 							  oldest_datfrozenxid))
 	{
-		ShmemVariableCache->oldestClogXid = oldest_datfrozenxid;
+		TransamVariables->oldestClogXid = oldest_datfrozenxid;
 	}
 	LWLockRelease(XactTruncationLock);
 }
@@ -441,13 +441,13 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 
 	/* Grab lock for just long enough to set the new limit values */
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-	ShmemVariableCache->oldestXid = oldest_datfrozenxid;
-	ShmemVariableCache->xidVacLimit = xidVacLimit;
-	ShmemVariableCache->xidWarnLimit = xidWarnLimit;
-	ShmemVariableCache->xidStopLimit = xidStopLimit;
-	ShmemVariableCache->xidWrapLimit = xidWrapLimit;
-	ShmemVariableCache->oldestXidDB = oldest_datoid;
-	curXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	TransamVariables->oldestXid = oldest_datfrozenxid;
+	TransamVariables->xidVacLimit = xidVacLimit;
+	TransamVariables->xidWarnLimit = xidWarnLimit;
+	TransamVariables->xidStopLimit = xidStopLimit;
+	TransamVariables->xidWrapLimit = xidWrapLimit;
+	TransamVariables->oldestXidDB = oldest_datoid;
+	curXid = XidFromFullTransactionId(TransamVariables->nextXid);
 	LWLockRelease(XidGenLock);
 
 	/* Log the info */
@@ -523,10 +523,10 @@ ForceTransactionIdLimitUpdate(void)
 
 	/* Locking is probably not really necessary, but let's be careful */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	nextXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
-	xidVacLimit = ShmemVariableCache->xidVacLimit;
-	oldestXid = ShmemVariableCache->oldestXid;
-	oldestXidDB = ShmemVariableCache->oldestXidDB;
+	nextXid = XidFromFullTransactionId(TransamVariables->nextXid);
+	xidVacLimit = TransamVariables->xidVacLimit;
+	oldestXid = TransamVariables->oldestXid;
+	oldestXidDB = TransamVariables->oldestXidDB;
 	LWLockRelease(XidGenLock);
 
 	if (!TransactionIdIsNormal(oldestXid))
@@ -576,37 +576,37 @@ GetNewObjectId(void)
 	 * available for automatic assignment during initdb, while ensuring they
 	 * will never conflict with user-assigned OIDs.
 	 */
-	if (ShmemVariableCache->nextOid < ((Oid) FirstNormalObjectId))
+	if (TransamVariables->nextOid < ((Oid) FirstNormalObjectId))
 	{
 		if (IsPostmasterEnvironment)
 		{
 			/* wraparound, or first post-initdb assignment, in normal mode */
-			ShmemVariableCache->nextOid = FirstNormalObjectId;
-			ShmemVariableCache->oidCount = 0;
+			TransamVariables->nextOid = FirstNormalObjectId;
+			TransamVariables->oidCount = 0;
 		}
 		else
 		{
 			/* we may be bootstrapping, so don't enforce the full range */
-			if (ShmemVariableCache->nextOid < ((Oid) FirstGenbkiObjectId))
+			if (TransamVariables->nextOid < ((Oid) FirstGenbkiObjectId))
 			{
 				/* wraparound in standalone mode (unlikely but possible) */
-				ShmemVariableCache->nextOid = FirstNormalObjectId;
-				ShmemVariableCache->oidCount = 0;
+				TransamVariables->nextOid = FirstNormalObjectId;
+				TransamVariables->oidCount = 0;
 			}
 		}
 	}
 
 	/* If we run out of logged for use oids then we must log more */
-	if (ShmemVariableCache->oidCount == 0)
+	if (TransamVariables->oidCount == 0)
 	{
-		XLogPutNextOid(ShmemVariableCache->nextOid + VAR_OID_PREFETCH);
-		ShmemVariableCache->oidCount = VAR_OID_PREFETCH;
+		XLogPutNextOid(TransamVariables->nextOid + VAR_OID_PREFETCH);
+		TransamVariables->oidCount = VAR_OID_PREFETCH;
 	}
 
-	result = ShmemVariableCache->nextOid;
+	result = TransamVariables->nextOid;
 
-	(ShmemVariableCache->nextOid)++;
-	(ShmemVariableCache->oidCount)--;
+	(TransamVariables->nextOid)++;
+	(TransamVariables->oidCount)--;
 
 	LWLockRelease(OidGenLock);
 
@@ -629,12 +629,12 @@ SetNextObjectId(Oid nextOid)
 	/* Taking the lock is, therefore, just pro forma; but do it anyway */
 	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 
-	if (ShmemVariableCache->nextOid > nextOid)
+	if (TransamVariables->nextOid > nextOid)
 		elog(ERROR, "too late to advance OID counter to %u, it is now %u",
-			 nextOid, ShmemVariableCache->nextOid);
+			 nextOid, TransamVariables->nextOid);
 
-	ShmemVariableCache->nextOid = nextOid;
-	ShmemVariableCache->oidCount = 0;
+	TransamVariables->nextOid = nextOid;
+	TransamVariables->oidCount = 0;
 
 	LWLockRelease(OidGenLock);
 }
@@ -661,7 +661,7 @@ StopGeneratingPinnedObjectIds(void)
  * Assert that xid is between [oldestXid, nextXid], which is the range we
  * expect XIDs coming from tables etc to be in.
  *
- * As ShmemVariableCache->oldestXid could change just after this call without
+ * As TransamVariables->oldestXid could change just after this call without
  * further precautions, and as a wrapped-around xid could again fall within
  * the valid range, this assertion can only detect if something is definitely
  * wrong, but not establish correctness.
@@ -696,8 +696,8 @@ AssertTransactionIdInAllowableRange(TransactionId xid)
 	 * before we see the updated nextXid value.
 	 */
 	pg_memory_barrier();
-	oldest_xid = ShmemVariableCache->oldestXid;
-	next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	oldest_xid = TransamVariables->oldestXid;
+	next_xid = XidFromFullTransactionId(TransamVariables->nextXid);
 
 	Assert(TransactionIdFollowsOrEquals(xid, oldest_xid) ||
 		   TransactionIdPrecedesOrEquals(xid, next_xid));
