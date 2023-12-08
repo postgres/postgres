@@ -27,7 +27,6 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "postmaster/interrupt.h"
 #include "postmaster/startup.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
