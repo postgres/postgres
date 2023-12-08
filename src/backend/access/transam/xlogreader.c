@@ -457,18 +457,37 @@ XLogReadRecordAlloc(XLogReaderState *state, size_t xl_tot_len, bool allow_oversi
 	if (state->decode_buffer_tail >= state->decode_buffer_head)
 	{
 		/* Empty, or tail is to the right of head. */
-		if (state->decode_buffer_tail + required_space <=
-			state->decode_buffer + state->decode_buffer_size)
+		if (required_space <=
+			state->decode_buffer_size -
+			(state->decode_buffer_tail - state->decode_buffer))
 		{
-			/* There is space between tail and end. */
+			/*-
+			 * There is space between tail and end.
+			 *
+			 * +-----+--------------------+-----+
+			 * |     |////////////////////|here!|
+			 * +-----+--------------------+-----+
+			 *       ^                    ^
+			 *       |                    |
+			 *       h                    t
+			 */
 			decoded = (DecodedXLogRecord *) state->decode_buffer_tail;
 			decoded->oversized = false;
 			return decoded;
 		}
-		else if (state->decode_buffer + required_space <
-				 state->decode_buffer_head)
+		else if (required_space <
+				 state->decode_buffer_head - state->decode_buffer)
 		{
-			/* There is space between start and head. */
+			/*-
+			 * There is space between start and head.
+			 *
+			 * +-----+--------------------+-----+
+			 * |here!|////////////////////|     |
+			 * +-----+--------------------+-----+
+			 *       ^                    ^
+			 *       |                    |
+			 *       h                    t
+			 */
 			decoded = (DecodedXLogRecord *) state->decode_buffer;
 			decoded->oversized = false;
 			return decoded;
@@ -477,10 +496,19 @@ XLogReadRecordAlloc(XLogReaderState *state, size_t xl_tot_len, bool allow_oversi
 	else
 	{
 		/* Tail is to the left of head. */
-		if (state->decode_buffer_tail + required_space <
-			state->decode_buffer_head)
+		if (required_space <
+			state->decode_buffer_head - state->decode_buffer_tail)
 		{
-			/* There is space between tail and head. */
+			/*-
+			 * There is space between tail and head.
+			 *
+			 * +-----+--------------------+-----+
+			 * |/////|here!               |/////|
+			 * +-----+--------------------+-----+
+			 *       ^                    ^
+			 *       |                    |
+			 *       t                    h
+			 */
 			decoded = (DecodedXLogRecord *) state->decode_buffer_tail;
 			decoded->oversized = false;
 			return decoded;
