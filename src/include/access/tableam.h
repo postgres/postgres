@@ -1233,6 +1233,7 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
 										 wait, tmfd, changingPart);
 }
 
+// TO Be read: Pan Hexiang
 /*
  * Update a tuple.
  *

@@ -188,6 +188,76 @@ ExecProcessReturning(ProjectionInfo *projectReturning,
 	return ExecProject(projectReturning);
 }
 
+static bool check_tuple_lock(Relation rel, TupleTableSlot *slot, EState* estate, LOCKMODE lockmode)
+{
+    ItemPointerData tid;
+    uint8 lockflags;
+    TM_Result	test;
+    TM_FailureData tmfd;
+
+    Assert(XactLockStrategy != LOCK_NONE);
+    if (XactLockStrategy == LOCK_2PL_NW)
+    {
+        tid = slot->tts_tid;
+        lockflags = TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS | TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
+
+        test = table_tuple_lock(rel, &tid, estate->es_snapshot,
+                                slot, estate->es_output_cid,
+                                lockmode, LockWaitError,
+                                lockflags,
+                                &tmfd);
+        switch (test)
+        {
+            case TM_WouldBlock:
+                /* couldn't lock tuple in SKIP LOCKED mode */
+//                goto lnext;
+                return false;
+
+            case TM_SelfModified:
+                return true;
+
+            case TM_Ok:
+                return true;
+
+            case TM_Updated:
+                if (IsolationUsesXactSnapshot())
+                    ereport(ERROR,
+                            (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                                    errmsg("could not serialize access due to concurrent update")));
+                elog(ERROR, "unexpected table_tuple_lock status: %u",
+                     test);
+                return false;
+
+            case TM_BeingModified:
+                if (IsolationUsesXactSnapshot())
+                    ereport(ERROR,
+                            (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                                    errmsg("could not serialize access due to concurrent update")));
+                elog(ERROR, "unexpected table_tuple_lock status: %u",
+                     test);
+                return false;
+
+            case TM_Deleted:
+                if (IsolationUsesXactSnapshot())
+                    ereport(ERROR,
+                            (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                                    errmsg("could not serialize access due to concurrent update")));
+                /* tuple was deleted so don't return it */
+                return false;
+
+            case TM_Invisible:
+                elog(ERROR, "attempted to lock invisible tuple");
+                return false;
+
+            default:
+                elog(ERROR, "unrecognized table_tuple_lock status: %u",
+                     test);
+                return false;
+        }
+    }
+    return false;
+}
+
 /*
  * ExecCheckTupleVisible -- verify tuple is visible
  *
@@ -201,7 +271,23 @@ ExecCheckTupleVisible(EState *estate,
 					  Relation rel,
 					  TupleTableSlot *slot)
 {
-	if (!IsolationUsesXactSnapshot())
+    if (XactLockStrategy != LOCK_NONE && !check_tuple_lock(rel, slot, estate, LockTupleShare))
+    {
+        Datum		xminDatum;
+        TransactionId xmin;
+        bool		isnull;
+
+        xminDatum = slot_getsysattr(slot, MinTransactionIdAttributeNumber, &isnull);
+        Assert(!isnull);
+        xmin = DatumGetTransactionId(xminDatum);
+
+        if (!TransactionIdIsCurrentTransactionId(xmin))
+            ereport(ERROR,
+                    (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                            errmsg("could not serialize access due to concurrent update")));
+    }
+
+ 	if (!IsolationUsesXactSnapshot())
 		return;
 
 	if (!table_tuple_satisfies_snapshot(rel, slot, estate->es_snapshot))
@@ -1379,6 +1465,18 @@ lreplace:
 		if (resultRelationDesc->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate);
 
+
+        if (XactNeedLock())
+        {
+            if (!check_tuple_lock(resultRelInfo->ri_RelationDesc, slot, estate, lockmode))
+            {
+                ereport(ERROR,
+                        (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                                errmsg("could not serialize access due to concurrent delete")));
+                return NULL;
+            }
+        }
+
 		/*
 		 * replace the heap tuple
 		 *
@@ -1395,7 +1493,12 @@ lreplace:
 									true /* wait for commit */ ,
 									&tmfd, &lockmode, &update_indexes);
 
-		switch (result)
+        if (XactNeedLock())
+        {
+            Assert(result == TM_SelfModified || result == TM_Ok);
+        }
+
+        switch (result)
 		{
 			case TM_SelfModified:
 
