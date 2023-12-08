@@ -132,29 +132,19 @@
    </para>
 
    <para>
-    A statement that targets a parent table in an inheritance or partitioning
-    hierarchy does not cause the statement-level triggers of affected child
-    tables to be fired; only the parent table's statement-level triggers are
-    fired.  However, row-level triggers of any affected child tables will be
-    fired.
+    If an <command>INSERT</command> contains an <literal>ON CONFLICT
+    DO UPDATE</literal> clause, it is possible for row-level
+    <literal>BEFORE</literal> <command>INSERT</command> and then
+    <literal>BEFORE</literal> <command>UPDATE</command> triggers
+    to be executed on triggered rows.  Such interactions can be
+    complex if the triggers are not idempotent because change made by
+    <literal>BEFORE</literal> <command>INSERT</command> triggers will be
+    seen by <literal>BEFORE</literal> <command>UPDATE</command> triggers,
+    including changes to <varname>EXCLUDED</varname> columns.
    </para>
 
    <para>
-    If an <command>INSERT</command> contains an <literal>ON CONFLICT
-    DO UPDATE</literal> clause, it is possible that the effects of
-    row-level <literal>BEFORE</literal> <command>INSERT</command> triggers and
-    row-level <literal>BEFORE</literal> <command>UPDATE</command> triggers can
-    both be applied in a way that is apparent from the final state of
-    the updated row, if an <varname>EXCLUDED</varname> column is referenced.
-    There need not be an <varname>EXCLUDED</varname> column reference for
-    both sets of row-level <literal>BEFORE</literal> triggers to execute,
-    though.  The
-    possibility of surprising outcomes should be considered when there
-    are both <literal>BEFORE</literal> <command>INSERT</command> and
-    <literal>BEFORE</literal> <command>UPDATE</command> row-level triggers
-    that change a row being inserted/updated (this can be
-    problematic even if the modifications are more or less equivalent, if
-    they're not also idempotent).  Note that statement-level
+    Note that statement-level
     <command>UPDATE</command> triggers are executed when <literal>ON
     CONFLICT DO UPDATE</literal> is specified, regardless of whether or not
     any rows were affected by the <command>UPDATE</command> (and
@@ -167,6 +157,14 @@
     <literal>AFTER</literal> <command>UPDATE</command> triggers and finally
     statement-level <literal>AFTER</literal> <command>INSERT</command>
     triggers.
+   </para>
+
+   <para>
+    A statement that targets a parent table in an inheritance or partitioning
+    hierarchy does not cause the statement-level triggers of affected child
+    tables to be fired; only the parent table's statement-level triggers are
+    fired.  However, row-level triggers of any affected child tables will be
+    fired.
    </para>
 
    <para>
