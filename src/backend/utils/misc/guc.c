@@ -3329,10 +3329,10 @@ set_config_option(const char *name, const char *value,
 	else
 		srole = BOOTSTRAP_SUPERUSERID;
 
-	return set_config_option_ext(name, value,
-								 context, source, srole,
-								 action, changeVal, elevel,
-								 is_reload);
+	return set_config_with_handle(name, NULL, value,
+								  context, source, srole,
+								  action, changeVal, elevel,
+								  is_reload);
 }
 
 /*
@@ -3355,6 +3355,27 @@ set_config_option_ext(const char *name, const char *value,
 					  GucContext context, GucSource source, Oid srole,
 					  GucAction action, bool changeVal, int elevel,
 					  bool is_reload)
+{
+	return set_config_with_handle(name, NULL, value,
+								  context, source, srole,
+								  action, changeVal, elevel,
+								  is_reload);
+}
+
+
+/*
+ * set_config_with_handle: takes an optional 'handle' argument, which can be
+ * obtained by the caller from get_config_handle().
+ *
+ * This should be used by callers which repeatedly set the same config
+ * option(s), and want to avoid the overhead of a hash lookup each time.
+ */
+int
+set_config_with_handle(const char *name, config_handle *handle,
+					   const char *value,
+					   GucContext context, GucSource source, Oid srole,
+					   GucAction action, bool changeVal, int elevel,
+					   bool is_reload)
 {
 	struct config_generic *record;
 	union config_var_val newval_union;
@@ -3395,9 +3416,15 @@ set_config_option_ext(const char *name, const char *value,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 				 errmsg("cannot set parameters during a parallel operation")));
 
-	record = find_option(name, true, false, elevel);
-	if (record == NULL)
-		return 0;
+	/* if handle is specified, no need to look up option */
+	if (!handle)
+	{
+		record = find_option(name, true, false, elevel);
+		if (record == NULL)
+			return 0;
+	}
+	else
+		record = handle;
 
 	/*
 	 * Check if the option can be set at this time. See guc.h for the precise
@@ -4163,6 +4190,22 @@ set_config_option_ext(const char *name, const char *value,
 	}
 
 	return changeVal ? 1 : -1;
+}
+
+
+/*
+ * Retrieve a config_handle for the given name, suitable for calling
+ * set_config_with_handle(). Only return handle to permanent GUC.
+ */
+config_handle *
+get_config_handle(const char *name)
+{
+	struct config_generic *gen = find_option(name, false, false, 0);
+
+	if (gen && ((gen->flags & GUC_CUSTOM_PLACEHOLDER) == 0))
+		return gen;
+
+	return NULL;
 }
 
 

@@ -3247,6 +3247,7 @@ collation_cache_entry
 color
 colormaprange
 compare_context
+config_handle
 config_var_value
 contain_aggs_of_level_context
 contain_placeholder_references_context

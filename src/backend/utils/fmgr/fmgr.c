@@ -613,6 +613,7 @@ struct fmgr_security_definer_cache
 	FmgrInfo	flinfo;			/* lookup info for target function */
 	Oid			userid;			/* userid to set, or InvalidOid */
 	List	   *configNames;	/* GUC names to set, or NIL */
+	List	   *configHandles;	/* GUC handles to set, or NIL */
 	List	   *configValues;	/* GUC values to set, or NIL */
 	Datum		arg;			/* passthrough argument for plugin modules */
 };
@@ -635,8 +636,9 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	FmgrInfo   *save_flinfo;
 	Oid			save_userid;
 	int			save_sec_context;
-	ListCell   *lc1;
-	ListCell   *lc2;
+	ListCell   *lc1,
+			   *lc2,
+			   *lc3;
 	volatile int save_nestlevel;
 	PgStat_FunctionCallUsage fcusage;
 
@@ -670,11 +672,23 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 		if (!isnull)
 		{
 			ArrayType  *array;
+			ListCell   *lc;
 
 			oldcxt = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
 			array = DatumGetArrayTypeP(datum);
 			TransformGUCArray(array, &fcache->configNames,
 							  &fcache->configValues);
+
+			/* transform names to config handles to avoid lookup cost */
+			fcache->configHandles = NIL;
+			foreach(lc, fcache->configNames)
+			{
+				char	   *name = (char *) lfirst(lc);
+
+				fcache->configHandles = lappend(fcache->configHandles,
+												get_config_handle(name));
+			}
+
 			MemoryContextSwitchTo(oldcxt);
 		}
 
@@ -696,17 +710,20 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 		SetUserIdAndSecContext(fcache->userid,
 							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-	forboth(lc1, fcache->configNames, lc2, fcache->configValues)
+	forthree(lc1, fcache->configNames,
+			 lc2, fcache->configHandles,
+			 lc3, fcache->configValues)
 	{
 		GucContext	context = superuser() ? PGC_SUSET : PGC_USERSET;
 		GucSource	source = PGC_S_SESSION;
 		GucAction	action = GUC_ACTION_SAVE;
 		char	   *name = lfirst(lc1);
-		char	   *value = lfirst(lc2);
+		config_handle *handle = lfirst(lc2);
+		char	   *value = lfirst(lc3);
 
-		(void) set_config_option(name, value,
-								 context, source,
-								 action, true, 0, false);
+		(void) set_config_with_handle(name, handle, value,
+									  context, source, GetUserId(),
+									  action, true, 0, false);
 	}
 
 	/* function manager hook */

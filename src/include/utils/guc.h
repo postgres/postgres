@@ -144,6 +144,8 @@ typedef struct ConfigVariable
 	struct ConfigVariable *next;
 } ConfigVariable;
 
+typedef struct config_generic config_handle;
+
 extern bool ParseConfigFile(const char *config_file, bool strict,
 							const char *calling_file, int calling_lineno,
 							int depth, int elevel,
@@ -387,6 +389,13 @@ extern int	set_config_option_ext(const char *name, const char *value,
 								  Oid srole,
 								  GucAction action, bool changeVal, int elevel,
 								  bool is_reload);
+extern int	set_config_with_handle(const char *name, config_handle *handle,
+								   const char *value,
+								   GucContext context, GucSource source,
+								   Oid srole,
+								   GucAction action, bool changeVal,
+								   int elevel, bool is_reload);
+extern config_handle *get_config_handle(const char *name);
 extern void AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt);
 extern char *GetConfigOptionByName(const char *name, const char **varname,
 								   bool missing_ok);
