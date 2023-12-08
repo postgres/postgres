@@ -53,9 +53,13 @@ typedef struct BrinBuildState
 	Buffer		bs_currentInsertBuf;
 	BlockNumber bs_pagesPerRange;
 	BlockNumber bs_currRangeStart;
+	BlockNumber bs_maxRangeStart;
 	BrinRevmap *bs_rmAccess;
 	BrinDesc   *bs_bdesc;
 	BrinMemTuple *bs_dtuple;
+	BrinTuple  *bs_emptyTuple;
+	Size		bs_emptyTupleLen;
+	MemoryContext bs_context;
 } BrinBuildState;
 
 /*
@@ -82,7 +86,9 @@ typedef struct BrinOpaque
 #define BRIN_ALL_BLOCKRANGES	InvalidBlockNumber
 
 static BrinBuildState *initialize_brin_buildstate(Relation idxRel,
-												  BrinRevmap *revmap, BlockNumber pagesPerRange);
+												  BrinRevmap *revmap,
+												  BlockNumber pagesPerRange,
+												  BlockNumber tablePages);
 static BrinInsertState *initialize_brin_insertstate(Relation idxRel, IndexInfo *indexInfo);
 static void terminate_brin_buildstate(BrinBuildState *state);
 static void brinsummarize(Relation index, Relation heapRel, BlockNumber pageRange,
@@ -94,6 +100,8 @@ static void brin_vacuum_scan(Relation idxrel, BufferAccessStrategy strategy);
 static bool add_values_to_range(Relation idxRel, BrinDesc *bdesc,
 								BrinMemTuple *dtup, const Datum *values, const bool *nulls);
 static bool check_null_keys(BrinValues *bval, ScanKey *nullkeys, int nnullkeys);
+static void brin_fill_empty_ranges(BrinBuildState *state,
+								   BlockNumber prevRange, BlockNumber maxRange);
 
 /*
  * BRIN handler function: return IndexAmRoutine with access method parameters
@@ -933,7 +941,8 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * Initialize our state, including the deformed tuple state.
 	 */
 	revmap = brinRevmapInitialize(index, &pagesPerRange);
-	state = initialize_brin_buildstate(index, revmap, pagesPerRange);
+	state = initialize_brin_buildstate(index, revmap, pagesPerRange,
+									   RelationGetNumberOfBlocks(heap));
 
 	/*
 	 * Now scan the relation.  No syncscan allowed here because we want the
@@ -944,6 +953,17 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	/* process the final batch */
 	form_and_insert_tuple(state);
+
+	/*
+	 * Backfill the final ranges with empty data.
+	 *
+	 * This saves us from doing what amounts to full table scans when the
+	 * index with a predicate like WHERE (nonnull_column IS NULL), or other
+	 * very selective predicates.
+	 */
+	brin_fill_empty_ranges(state,
+						   state->bs_currRangeStart,
+						   state->bs_maxRangeStart);
 
 	/* release resources */
 	idxtuples = state->bs_numtuples;
@@ -1358,9 +1378,10 @@ brinGetStats(Relation index, BrinStatsData *stats)
  */
 static BrinBuildState *
 initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
-						   BlockNumber pagesPerRange)
+						   BlockNumber pagesPerRange, BlockNumber tablePages)
 {
 	BrinBuildState *state;
+	BlockNumber lastRange = 0;
 
 	state = palloc_object(BrinBuildState);
 
@@ -1372,6 +1393,22 @@ initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
 	state->bs_rmAccess = revmap;
 	state->bs_bdesc = brin_build_desc(idxRel);
 	state->bs_dtuple = brin_new_memtuple(state->bs_bdesc);
+
+	/* Remember the memory context to use for an empty tuple, if needed. */
+	state->bs_context = CurrentMemoryContext;
+	state->bs_emptyTuple = NULL;
+	state->bs_emptyTupleLen = 0;
+
+	/*
+	 * Calculate the start of the last page range. Page numbers are 0-based,
+	 * so to calculate the index we need to subtract one. The integer division
+	 * gives us the index of the page range.
+	 */
+	if (tablePages > 0)
+		lastRange = ((tablePages - 1) / pagesPerRange) * pagesPerRange;
+
+	/* Now calculate the start of the next range. */
+	state->bs_maxRangeStart = lastRange + state->bs_pagesPerRange;
 
 	return state;
 }
@@ -1612,7 +1649,8 @@ brinsummarize(Relation index, Relation heapRel, BlockNumber pageRange,
 				/* first time through */
 				Assert(!indexInfo);
 				state = initialize_brin_buildstate(index, revmap,
-												   pagesPerRange);
+												   pagesPerRange,
+												   InvalidBlockNumber);
 				indexInfo = BuildIndexInfo(index);
 			}
 			summarize_range(indexInfo, state, heapRel, startBlk, heapNumBlocks);
@@ -1981,4 +2019,79 @@ check_null_keys(BrinValues *bval, ScanKey *nullkeys, int nnullkeys)
 	}
 
 	return true;
+}
+
+/*
+ * brin_build_empty_tuple
+ *		Maybe initialize a BRIN tuple representing empty range.
+ *
+ * Returns a BRIN tuple representing an empty page range starting at the
+ * specified block number. The empty tuple is initialized only once, when it's
+ * needed for the first time, stored in the memory context bs_context to ensure
+ * proper life span, and reused on following calls. All empty tuples are
+ * exactly the same except for the bs_blkno field, which is set to the value
+ * in blkno parameter.
+ */
+static void
+brin_build_empty_tuple(BrinBuildState *state, BlockNumber blkno)
+{
+	/* First time an empty tuple is requested? If yes, initialize it. */
+	if (state->bs_emptyTuple == NULL)
+	{
+		MemoryContext oldcxt;
+		BrinMemTuple *dtuple = brin_new_memtuple(state->bs_bdesc);
+
+		/* Allocate the tuple in context for the whole index build. */
+		oldcxt = MemoryContextSwitchTo(state->bs_context);
+
+		state->bs_emptyTuple = brin_form_tuple(state->bs_bdesc, blkno, dtuple,
+											   &state->bs_emptyTupleLen);
+
+		MemoryContextSwitchTo(oldcxt);
+	}
+	else
+	{
+		/* If we already have an empty tuple, just update the block. */
+		state->bs_emptyTuple->bt_blkno = blkno;
+	}
+}
+
+/*
+ * brin_fill_empty_ranges
+ *		Add BRIN index tuples representing empty page ranges.
+ *
+ * prevRange/nextRange determine for which page ranges to add empty summaries.
+ * Both boundaries are exclusive, i.e. only ranges starting at blkno for which
+ * (prevRange < blkno < nextRange) will be added to the index.
+ *
+ * If prevRange is InvalidBlockNumber, this means there was no previous page
+ * range (i.e. the first empty range to add is for blkno=0).
+ *
+ * The empty tuple is built only once, and then reused for all future calls.
+ */
+static void
+brin_fill_empty_ranges(BrinBuildState *state,
+					   BlockNumber prevRange, BlockNumber nextRange)
+{
+	BlockNumber blkno;
+
+	/*
+	 * If we already summarized some ranges, we need to start with the next
+	 * one. Otherwise start from the first range of the table.
+	 */
+	blkno = (prevRange == InvalidBlockNumber) ? 0 : (prevRange + state->bs_pagesPerRange);
+
+	/* Generate empty ranges until we hit the next non-empty range. */
+	while (blkno < nextRange)
+	{
+		/* Did we already build the empty tuple? If not, do it now. */
+		brin_build_empty_tuple(state, blkno);
+
+		brin_doinsert(state->bs_irel, state->bs_pagesPerRange, state->bs_rmAccess,
+					  &state->bs_currentInsertBuf,
+					  blkno, state->bs_emptyTuple, state->bs_emptyTupleLen);
+
+		/* try next page range */
+		blkno += state->bs_pagesPerRange;
+	}
 }

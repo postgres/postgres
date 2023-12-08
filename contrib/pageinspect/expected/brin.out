@@ -89,4 +89,22 @@ SELECT brin_revmap_data(decode(repeat('00', :block_size), 'hex'));
  
 (1 row)
 
+-- Test that partial indexes have all pages, including empty ones.
+CREATE TABLE test2 (a int);
+INSERT INTO test2 SELECT i FROM generate_series(1,1000) s(i);
+-- No rows match the index predicate, make sure the index has the right number
+-- of ranges (same as number of page ranges).
+CREATE INDEX ON test2 USING brin (a) WITH (pages_per_range=1) WHERE (a IS NULL);
+ANALYZE test2;
+-- Does the index have one summary of the relation?
+SELECT (COUNT(*) = (SELECT relpages FROM pg_class WHERE relname = 'test2')) AS ranges_do_match
+ FROM generate_series((SELECT (lastrevmappage + 1) FROM brin_metapage_info(get_raw_page('test2_a_idx', 0))),
+                      (SELECT (relpages - 1) FROM pg_class WHERE relname = 'test2_a_idx')) AS pages(p),
+      LATERAL brin_page_items(get_raw_page('test2_a_idx', p), 'test2_a_idx') AS items;
+ ranges_do_match 
+-----------------
+ t
+(1 row)
+
 DROP TABLE test1;
+DROP TABLE test2;
