@@ -10,7 +10,6 @@
 #include "postgres_fe.h"
 
 #include "access/timeline.h"
-#include "access/xlog_internal.h"
 #include "pg_rewind.h"
 
 /*

@@ -15,7 +15,7 @@
 #define GENERIC_XLOG_H
 
 #include "access/xlog.h"
-#include "access/xlog_internal.h"
+#include "access/xlogreader.h"
 #include "access/xloginsert.h"
 #include "storage/bufpage.h"
 #include "utils/rel.h"
