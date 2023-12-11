@@ -858,27 +858,6 @@ makeJsonValueExpr(Expr *raw_expr, Expr *formatted_expr,
 }
 
 /*
- * makeJsonEncoding -
- *	  converts JSON encoding name to enum JsonEncoding
- */
-JsonEncoding
-makeJsonEncoding(char *name)
-{
-	if (!pg_strcasecmp(name, "utf8"))
-		return JS_ENC_UTF8;
-	if (!pg_strcasecmp(name, "utf16"))
-		return JS_ENC_UTF16;
-	if (!pg_strcasecmp(name, "utf32"))
-		return JS_ENC_UTF32;
-
-	ereport(ERROR,
-			errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("unrecognized JSON encoding: %s", name));
-
-	return JS_ENC_DEFAULT;
-}
-
-/*
  * makeJsonKeyValue -
  *	  creates a JsonKeyValue node
  */
