@@ -966,13 +966,12 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
 	if (nmsgs <= 0)
 		return;
 
-	elog(trace_recovery(DEBUG4), "replaying commit with %d messages%s", nmsgs,
+	elog(DEBUG4, "replaying commit with %d messages%s", nmsgs,
 		 (RelcacheInitFileInval ? " and relcache file invalidation" : ""));
 
 	if (RelcacheInitFileInval)
 	{
-		elog(trace_recovery(DEBUG4), "removing relcache init files for database %u",
-			 dbid);
+		elog(DEBUG4, "removing relcache init files for database %u", dbid);
 
 		/*
 		 * RelationCacheInitFilePreInvalidate, when the invalidation message

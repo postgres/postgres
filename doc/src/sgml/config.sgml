@@ -11216,32 +11216,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-trace-recovery-messages" xreflabel="trace_recovery_messages">
-      <term><varname>trace_recovery_messages</varname> (<type>enum</type>)
-      <indexterm>
-       <primary><varname>trace_recovery_messages</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Enables logging of recovery-related debugging output that otherwise
-        would not be logged. This parameter allows the user to override the
-        normal setting of <xref linkend="guc-log-min-messages"/>, but only for
-        specific messages. This is intended for use in debugging hot standby.
-        Valid values are <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
-        <literal>DEBUG3</literal>, <literal>DEBUG2</literal>, <literal>DEBUG1</literal>, and
-        <literal>LOG</literal>.  The default, <literal>LOG</literal>, does not affect
-        logging decisions at all.  The other values cause recovery-related
-        debug messages of that priority or higher to be logged as though they
-        had <literal>LOG</literal> priority; for common settings of
-        <varname>log_min_messages</varname> this results in unconditionally sending
-        them to the server log.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-trace-sort" xreflabel="trace_sort">
       <term><varname>trace_sort</varname> (<type>boolean</type>)
       <indexterm>

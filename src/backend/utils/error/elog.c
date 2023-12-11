@@ -3759,29 +3759,3 @@ write_stderr_signal_safe(const char *str)
 		nwritten += rc;
 	}
 }
-
-
-/*
- * Adjust the level of a recovery-related message per trace_recovery_messages.
- *
- * The argument is the default log level of the message, eg, DEBUG2.  (This
- * should only be applied to DEBUGn log messages, otherwise it's a no-op.)
- * If the level is >= trace_recovery_messages, we return LOG, causing the
- * message to be logged unconditionally (for most settings of
- * log_min_messages).  Otherwise, we return the argument unchanged.
- * The message will then be shown based on the setting of log_min_messages.
- *
- * Intention is to keep this for at least the whole of the 9.0 production
- * release, so we can more easily diagnose production problems in the field.
- * It should go away eventually, though, because it's an ugly and
- * hard-to-explain kluge.
- */
-int
-trace_recovery(int trace_level)
-{
-	if (trace_level < LOG &&
-		trace_level >= trace_recovery_messages)
-		return LOG;
-
-	return trace_level;
-}

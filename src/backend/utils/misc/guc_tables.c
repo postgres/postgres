@@ -525,7 +525,6 @@ int			log_parameter_max_length_on_error = 0;
 int			log_temp_files = -1;
 double		log_statement_sample_rate = 1.0;
 double		log_xact_sample_rate = 0;
-int			trace_recovery_messages = LOG;
 char	   *backtrace_functions;
 
 int			temp_file_limit = -1;
@@ -4777,23 +4776,6 @@ struct config_enum ConfigureNamesEnum[] =
 		},
 		&recoveryTargetAction,
 		RECOVERY_TARGET_ACTION_PAUSE, recovery_target_action_options,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"trace_recovery_messages", PGC_SIGHUP, DEVELOPER_OPTIONS,
-			gettext_noop("Enables logging of recovery-related debugging information."),
-			gettext_noop("Each level includes all the levels that follow it. The later"
-						 " the level, the fewer messages are sent."),
-			GUC_NOT_IN_SAMPLE,
-		},
-		&trace_recovery_messages,
-
-		/*
-		 * client_message_level_options allows too many values, really, but
-		 * it's not worth having a separate options array for this.
-		 */
-		LOG, client_message_level_options,
 		NULL, NULL, NULL
 	},
 

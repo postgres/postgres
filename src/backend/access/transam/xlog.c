@@ -7213,7 +7213,7 @@ RecoveryRestartPoint(const CheckPoint *checkPoint, XLogReaderState *record)
 	 */
 	if (XLogHaveInvalidPages())
 	{
-		elog(trace_recovery(DEBUG2),
+		elog(DEBUG2,
 			 "could not record restart point at %X/%X because there "
 			 "are unresolved references to invalid pages",
 			 LSN_FORMAT_ARGS(checkPoint->redo));

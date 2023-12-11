@@ -997,8 +997,7 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 		TransactionIdDidAbort(xid))
 		return;
 
-	elog(trace_recovery(DEBUG4),
-		 "adding recovery lock: db %u rel %u", dbOid, relOid);
+	elog(DEBUG4, "adding recovery lock: db %u rel %u", dbOid, relOid);
 
 	/* dbOid is InvalidOid when we are locking a shared relation. */
 	Assert(OidIsValid(relOid));
@@ -1042,7 +1041,7 @@ StandbyReleaseXidEntryLocks(RecoveryLockXidEntry *xidentry)
 	{
 		LOCKTAG		locktag;
 
-		elog(trace_recovery(DEBUG4),
+		elog(DEBUG4,
 			 "releasing recovery lock: xid %u db %u rel %u",
 			 entry->key.xid, entry->key.dbOid, entry->key.relOid);
 		/* Release the lock ... */
@@ -1109,7 +1108,7 @@ StandbyReleaseAllLocks(void)
 	HASH_SEQ_STATUS status;
 	RecoveryLockXidEntry *entry;
 
-	elog(trace_recovery(DEBUG2), "release all standby locks");
+	elog(DEBUG2, "release all standby locks");
 
 	hash_seq_init(&status, RecoveryLockXidHash);
 	while ((entry = hash_seq_search(&status)))
@@ -1369,7 +1368,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 	recptr = XLogInsert(RM_STANDBY_ID, XLOG_RUNNING_XACTS);
 
 	if (CurrRunningXacts->subxid_overflow)
-		elog(trace_recovery(DEBUG2),
+		elog(DEBUG2,
 			 "snapshot of %d running transactions overflowed (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
 			 CurrRunningXacts->xcnt,
 			 LSN_FORMAT_ARGS(recptr),
@@ -1377,7 +1376,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 			 CurrRunningXacts->latestCompletedXid,
 			 CurrRunningXacts->nextXid);
 	else
-		elog(trace_recovery(DEBUG2),
+		elog(DEBUG2,
 			 "snapshot of %d+%d running transaction ids (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
 			 CurrRunningXacts->xcnt, CurrRunningXacts->subxcnt,
 			 LSN_FORMAT_ARGS(recptr),
