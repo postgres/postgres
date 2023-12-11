@@ -2620,7 +2620,9 @@ build_EvalXFunc(LLVMBuilderRef b, LLVMModuleRef mod, const char *funcname,
 	LLVMValueRef v_fn;
 	LLVMTypeRef param_types[3];
 	LLVMValueRef params[3];
+	LLVMContextRef lc;
 
+	lc = LLVMGetModuleContext(mod);
 	v_fn = LLVMGetNamedFunction(mod, funcname);
 	if (!v_fn)
 	{
@@ -2628,7 +2630,7 @@ build_EvalXFunc(LLVMBuilderRef b, LLVMModuleRef mod, const char *funcname,
 		param_types[1] = l_ptr(StructExprEvalStep);
 		param_types[2] = l_ptr(StructExprContext);
 
-		sig = LLVMFunctionType(LLVMVoidType(),
+		sig = LLVMFunctionType(LLVMVoidTypeInContext(lc),
 							   param_types, lengthof(param_types),
 							   false);
 		v_fn = LLVMAddFunction(mod, funcname, sig);
