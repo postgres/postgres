@@ -424,6 +424,7 @@ aloop:
 	 * per-thread error queue following another call to an OpenSSL I/O
 	 * routine.
 	 */
+	errno = 0;
 	ERR_clear_error();
 	r = SSL_accept(port->ssl);
 	if (r <= 0)
@@ -460,7 +461,7 @@ aloop:
 										 WAIT_EVENT_SSL_OPEN_SERVER);
 				goto aloop;
 			case SSL_ERROR_SYSCALL:
-				if (r < 0)
+				if (r < 0 && errno != 0)
 					ereport(COMMERROR,
 							(errcode_for_socket_access(),
 							 errmsg("could not accept SSL connection: %m")));
@@ -636,7 +637,7 @@ be_tls_read(Port *port, void *ptr, size_t len, int *waitfor)
 			break;
 		case SSL_ERROR_SYSCALL:
 			/* leave it to caller to ereport the value of errno */
-			if (n != -1)
+			if (n != -1 || errno == 0)
 			{
 				errno = ECONNRESET;
 				n = -1;
@@ -694,8 +695,14 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 			n = -1;
 			break;
 		case SSL_ERROR_SYSCALL:
-			/* leave it to caller to ereport the value of errno */
-			if (n != -1)
+
+			/*
+			 * Leave it to caller to ereport the value of errno.  However, if
+			 * errno is still zero then assume it's a read EOF situation, and
+			 * report ECONNRESET.  (This seems possible because SSL_write can
+			 * also do reads.)
+			 */
+			if (n != -1 || errno == 0)
 			{
 				errno = ECONNRESET;
 				n = -1;

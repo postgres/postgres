@@ -200,7 +200,7 @@ rloop:
 			 */
 			goto rloop;
 		case SSL_ERROR_SYSCALL:
-			if (n < 0)
+			if (n < 0 && SOCK_ERRNO != 0)
 			{
 				result_errno = SOCK_ERRNO;
 				if (result_errno == EPIPE ||
@@ -308,7 +308,13 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 			n = 0;
 			break;
 		case SSL_ERROR_SYSCALL:
-			if (n < 0)
+
+			/*
+			 * If errno is still zero then assume it's a read EOF situation,
+			 * and report EOF.  (This seems possible because SSL_write can
+			 * also do reads.)
+			 */
+			if (n < 0 && SOCK_ERRNO != 0)
 			{
 				result_errno = SOCK_ERRNO;
 				if (result_errno == EPIPE || result_errno == ECONNRESET)
@@ -1305,10 +1311,12 @@ open_client_SSL(PGconn *conn)
 {
 	int			r;
 
+	SOCK_ERRNO_SET(0);
 	ERR_clear_error();
 	r = SSL_connect(conn->ssl);
 	if (r <= 0)
 	{
+		int			save_errno = SOCK_ERRNO;
 		int			err = SSL_get_error(conn->ssl, r);
 		unsigned long ecode;
 
@@ -1325,10 +1333,10 @@ open_client_SSL(PGconn *conn)
 				{
 					char		sebuf[PG_STRERROR_R_BUFLEN];
 
-					if (r == -1)
+					if (r == -1 && save_errno != 0)
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("SSL SYSCALL error: %s\n"),
-										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+										  SOCK_STRERROR(save_errno, sebuf, sizeof(sebuf)));
 					else
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
