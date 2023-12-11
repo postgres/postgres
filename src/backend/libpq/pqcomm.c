@@ -954,6 +954,8 @@ pq_recvbuf(void)
 	{
 		int			r;
 
+		errno = 0;
+
 		r = secure_read(MyProcPort, PqRecvBuffer + PqRecvLength,
 						PQ_RECV_BUFFER_SIZE - PqRecvLength);
 
@@ -966,10 +968,13 @@ pq_recvbuf(void)
 			 * Careful: an ereport() that tries to write to the client would
 			 * cause recursion to here, leading to stack overflow and core
 			 * dump!  This message must go *only* to the postmaster log.
+			 *
+			 * If errno is zero, assume it's EOF and let the caller complain.
 			 */
-			ereport(COMMERROR,
-					(errcode_for_socket_access(),
-					 errmsg("could not receive data from client: %m")));
+			if (errno != 0)
+				ereport(COMMERROR,
+						(errcode_for_socket_access(),
+						 errmsg("could not receive data from client: %m")));
 			return EOF;
 		}
 		if (r == 0)
@@ -1046,6 +1051,8 @@ pq_getbyte_if_available(unsigned char *c)
 	/* Put the socket into non-blocking mode */
 	socket_set_nonblocking(true);
 
+	errno = 0;
+
 	r = secure_read(MyProcPort, c, 1);
 	if (r < 0)
 	{
@@ -1062,10 +1069,13 @@ pq_getbyte_if_available(unsigned char *c)
 			 * Careful: an ereport() that tries to write to the client would
 			 * cause recursion to here, leading to stack overflow and core
 			 * dump!  This message must go *only* to the postmaster log.
+			 *
+			 * If errno is zero, assume it's EOF and let the caller complain.
 			 */
-			ereport(COMMERROR,
-					(errcode_for_socket_access(),
-					 errmsg("could not receive data from client: %m")));
+			if (errno != 0)
+				ereport(COMMERROR,
+						(errcode_for_socket_access(),
+						 errmsg("could not receive data from client: %m")));
 			r = EOF;
 		}
 	}
