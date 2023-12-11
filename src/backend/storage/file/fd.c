@@ -2110,18 +2110,18 @@ FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
 }
 
 int
-FileRead(File file, void *buffer, size_t amount, off_t offset,
-		 uint32 wait_event_info)
+FileReadV(File file, const struct iovec *iov, int iovcnt, off_t offset,
+		  uint32 wait_event_info)
 {
 	int			returnCode;
 	Vfd		   *vfdP;
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FileRead: %d (%s) " INT64_FORMAT " %zu %p",
+	DO_DB(elog(LOG, "FileReadV: %d (%s) " INT64_FORMAT " %d",
 			   file, VfdCache[file].fileName,
 			   (int64) offset,
-			   amount, buffer));
+			   iovcnt));
 
 	returnCode = FileAccess(file);
 	if (returnCode < 0)
@@ -2131,7 +2131,7 @@ FileRead(File file, void *buffer, size_t amount, off_t offset,
 
 retry:
 	pgstat_report_wait_start(wait_event_info);
-	returnCode = pg_pread(vfdP->fd, buffer, amount, offset);
+	returnCode = pg_preadv(vfdP->fd, iov, iovcnt, offset);
 	pgstat_report_wait_end();
 
 	if (returnCode < 0)
@@ -2166,18 +2166,18 @@ retry:
 }
 
 int
-FileWrite(File file, const void *buffer, size_t amount, off_t offset,
-		  uint32 wait_event_info)
+FileWriteV(File file, const struct iovec *iov, int iovcnt, off_t offset,
+		   uint32 wait_event_info)
 {
 	int			returnCode;
 	Vfd		   *vfdP;
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FileWrite: %d (%s) " INT64_FORMAT " %zu %p",
+	DO_DB(elog(LOG, "FileWriteV: %d (%s) " INT64_FORMAT " %d",
 			   file, VfdCache[file].fileName,
 			   (int64) offset,
-			   amount, buffer));
+			   iovcnt));
 
 	returnCode = FileAccess(file);
 	if (returnCode < 0)
@@ -2195,7 +2195,10 @@ FileWrite(File file, const void *buffer, size_t amount, off_t offset,
 	 */
 	if (temp_file_limit >= 0 && (vfdP->fdstate & FD_TEMP_FILE_LIMIT))
 	{
-		off_t		past_write = offset + amount;
+		off_t		past_write = offset;
+
+		for (int i = 0; i < iovcnt; ++i)
+			past_write += iov[i].iov_len;
 
 		if (past_write > vfdP->fileSize)
 		{
@@ -2211,23 +2214,27 @@ FileWrite(File file, const void *buffer, size_t amount, off_t offset,
 	}
 
 retry:
-	errno = 0;
 	pgstat_report_wait_start(wait_event_info);
-	returnCode = pg_pwrite(VfdCache[file].fd, buffer, amount, offset);
+	returnCode = pg_pwritev(vfdP->fd, iov, iovcnt, offset);
 	pgstat_report_wait_end();
-
-	/* if write didn't set errno, assume problem is no disk space */
-	if (returnCode != amount && errno == 0)
-		errno = ENOSPC;
 
 	if (returnCode >= 0)
 	{
+		/*
+		 * Some callers expect short writes to set errno, and traditionally we
+		 * have assumed that they imply disk space shortage.  We don't want to
+		 * waste CPU cycles adding up the total size here, so we'll just set
+		 * it for all successful writes in case such a caller determines that
+		 * the write was short and ereports "%m".
+		 */
+		errno = ENOSPC;
+
 		/*
 		 * Maintain fileSize and temporary_files_size if it's a temp file.
 		 */
 		if (vfdP->fdstate & FD_TEMP_FILE_LIMIT)
 		{
-			off_t		past_write = offset + amount;
+			off_t		past_write = offset + returnCode;
 
 			if (past_write > vfdP->fileSize)
 			{
@@ -2239,7 +2246,7 @@ retry:
 	else
 	{
 		/*
-		 * See comments in FileRead()
+		 * See comments in FileReadV()
 		 */
 #ifdef WIN32
 		DWORD		error = GetLastError();
