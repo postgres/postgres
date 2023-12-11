@@ -46,6 +46,11 @@ extern PGFileType get_dirent_type(const char *path,
 								  bool look_through_symlinks,
 								  int elevel);
 
+extern int	compute_remaining_iovec(struct iovec *destination,
+									const struct iovec *source,
+									int iovcnt,
+									size_t transferred);
+
 extern ssize_t pg_pwritev_with_retry(int fd,
 									 const struct iovec *iov,
 									 int iovcnt,
