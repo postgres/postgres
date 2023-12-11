@@ -1245,7 +1245,10 @@ typedef union PGAlignedXLogBlock
  * Note that this only works in function scope, not for global variables (it'd
  * be nice, but not trivial, to improve that).
  */
-#if defined(HAVE__BUILTIN_TYPES_COMPATIBLE_P)
+#if defined(__cplusplus)
+#define unconstify(underlying_type, expr) const_cast<underlying_type>(expr)
+#define unvolatize(underlying_type, expr) const_cast<underlying_type>(expr)
+#elif defined(HAVE__BUILTIN_TYPES_COMPATIBLE_P)
 #define unconstify(underlying_type, expr) \
 	(StaticAssertExpr(__builtin_types_compatible_p(__typeof(expr), const underlying_type), \
 					  "wrong cast"), \
