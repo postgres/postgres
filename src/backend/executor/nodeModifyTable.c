@@ -196,7 +196,7 @@ static bool check_tuple_lock(Relation rel, TupleTableSlot *slot, EState* estate,
     TM_FailureData tmfd;
 
     Assert(XactLockStrategy != LOCK_NONE);
-    if (XactLockStrategy == LOCK_2PL_NW)
+    if (IsolationIsSerializable() && XactLockStrategy == LOCK_2PL_NW)
     {
         tid = slot->tts_tid;
         lockflags = TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS | TUPLE_LOCK_FLAG_FIND_LAST_VERSION;

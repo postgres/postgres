@@ -44,6 +44,7 @@
 #define LOCK_NONE   3
 
 extern int	DefaultXactIsoLevel;
+extern int	DefaultXactLockStrategy;
 extern int  XactLockStrategy;
 extern PGDLLIMPORT int XactIsoLevel;
 
@@ -55,9 +56,9 @@ extern PGDLLIMPORT int XactIsoLevel;
  * These macros should be used to check which isolation level is selected.
  */
 #define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ)
-#define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE || XactLockStrategy != LOCK_NONE)
-#define IsolationIsSSI() (XactIsoLevel == XACT_SERIALIZABLE)
-#define XactNeedLock() (XactLockStrategy == LOCK_2PL || XactLockStrategy == LOCK_2PL_NW)
+#define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE)
+#define IsolationIsSSI() (XactIsoLevel == XACT_SERIALIZABLE && XactLockStrategy == LOCK_NONE)
+#define XactNeedLock() (XactIsoLevel == XACT_SERIALIZABLE && (XactLockStrategy == LOCK_2PL || XactLockStrategy == LOCK_2PL_NW))
 
 /* Xact read-only state */
 extern bool DefaultXactReadOnly;
