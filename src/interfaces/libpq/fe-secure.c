@@ -242,6 +242,8 @@ pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 	int			result_errno = 0;
 	char		sebuf[PG_STRERROR_R_BUFLEN];
 
+	SOCK_ERRNO_SET(0);
+
 	n = recv(conn->sock, ptr, len, 0);
 
 	if (n < 0)
@@ -270,6 +272,11 @@ pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 												"\tbefore or while processing the request.\n"));
 				break;
 #endif
+
+			case 0:
+				/* If errno didn't get set, treat it as regular EOF */
+				n = 0;
+				break;
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
