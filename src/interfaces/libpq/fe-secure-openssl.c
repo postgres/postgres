@@ -200,7 +200,7 @@ rloop:
 			 */
 			goto rloop;
 		case SSL_ERROR_SYSCALL:
-			if (n < 0)
+			if (n < 0 && SOCK_ERRNO != 0)
 			{
 				result_errno = SOCK_ERRNO;
 				if (result_errno == EPIPE ||
@@ -301,7 +301,13 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 			n = 0;
 			break;
 		case SSL_ERROR_SYSCALL:
-			if (n < 0)
+
+			/*
+			 * If errno is still zero then assume it's a read EOF situation,
+			 * and report EOF.  (This seems possible because SSL_write can
+			 * also do reads.)
+			 */
+			if (n < 0 && SOCK_ERRNO != 0)
 			{
 				result_errno = SOCK_ERRNO;
 				if (result_errno == EPIPE || result_errno == ECONNRESET)
@@ -1510,11 +1516,12 @@ open_client_SSL(PGconn *conn)
 					 * was using the system CA pool. For other errors, log
 					 * them using the normal SYSCALL logging.
 					 */
-					if (!save_errno && vcode == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY &&
+					if (save_errno == 0 &&
+						vcode == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY &&
 						strcmp(conn->sslrootcert, "system") == 0)
 						libpq_append_conn_error(conn, "SSL error: certificate verify failed: %s",
 												X509_verify_cert_error_string(vcode));
-					else if (r == -1)
+					else if (r == -1 && save_errno != 0)
 						libpq_append_conn_error(conn, "SSL SYSCALL error: %s",
 												SOCK_STRERROR(save_errno, sebuf, sizeof(sebuf)));
 					else
