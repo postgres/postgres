@@ -63,7 +63,7 @@ This setup is intended for developmenet, and stores the keys unencrypted in the 
 1. To build `pg_tde` from source code, you require the following on Ubuntu/Debian:
 
 ```sh
-sudo apt install make gcc libjson-c-dev postgresql-server-dev-16
+sudo apt install make gcc libjson-c-dev postgresql-server-dev-16 libcurl4-openssl-dev
 ```
 
 2. Install or build postgresql 16 [(see reference commit below)](#base-commit)

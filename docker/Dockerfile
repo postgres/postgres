@@ -7,13 +7,15 @@ RUN apt-get update; \
     libssl-dev \
     gcc \
     postgresql-server-dev-16 \
-    make
+    make \
+    libcurl4-openssl-dev
 
 WORKDIR /opt/postgres-tde-ext
 
 COPY . .
 
-RUN make USE_PGXS=1 && \
+RUN ./configure && \
+    make USE_PGXS=1 && \
     make USE_PGXS=1 install
 RUN cp /usr/share/postgresql/postgresql.conf.sample /etc/postgresql/postgresql.conf; \
     echo "shared_preload_libraries = 'pg_tde'" >> /etc/postgresql/postgresql.conf; \
