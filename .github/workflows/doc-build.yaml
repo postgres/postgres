@@ -1,0 +1,70 @@
+name: Build pg_tde documentation
+on:
+  push:
+    branches: 
+      - main
+      - Docs
+     
+jobs:
+  build:
+    name: Deploy docs
+    runs-on: ubuntu-latest
+
+    steps: 
+      #Pull the latest changes
+      - name: Chekout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      #Prepare the env
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+      
+      #Configure git
+      - name: Configure git
+        env:
+          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
+        run: |
+          git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
+          git config user.name "GitHub Action"
+          git config user.email "github-action@users.noreply.github.com"
+          git config user.password "${ROBOT_TOKEN}"
+          echo "GIT_USER=percona-platform-robot:${ROBOT_TOKEN}" >> $GITHUB_ENV
+
+      #Set up MkDocs
+      - name: Install MkDocs
+        run: |
+          cd documentation
+          python -m pip install --upgrade pip
+          pip install wheel
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+
+     
+     
+     # Deploy docs
+      - name: Deploy docs
+        run: |
+          cd documentation
+          mike deploy main -p
+          mike set-default main -p
+          mike retitle main "MVP" -p
+          
+
+# - name: Install Node.js 14.x
+#        uses: percona-platform/setup-node@v2
+#        with:
+#          node-version: "14"
+#
+#      - name: Spelling
+#        run: |
+#          npx markdown-spellcheck --report --en-us --ignore-acronyms --ignore-numbers "docs/**/*.md" || true
+          # Ignore errors, just inspect results
+#      - name: Grammar
+#        run: |
+#          npx write-good --no-passive docs/**/*.md || true
+#          # Ignore errors, just inspect results
+
+          

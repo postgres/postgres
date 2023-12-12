@@ -1,0 +1,134 @@
+# MkDocs general configuration
+
+site_name: pg_tde documentation
+site_description: Documentation
+site_author: Percona LLC
+copyright: >
+  <a href="https://www.percona.com/about">Percona LLC</a> and/or its affiliates © 2023 — <a href="#__consent">Cookie Consent</a>
+
+ 
+repo_name: Percona-Lab/postgres-tde-ext
+repo_url: https://github.com/Percona-Lab/postgres-tde-ext
+edit_uri: edit/main/documentation/docs/
+
+use_directory_urls: false
+
+# Theme settings
+theme:
+  name: material
+  logo: _images/percona-logo.svg
+  favicon: _images/percona-favicon.ico
+#  custom_dir: _resource/overrides
+  font:
+    text: Roboto
+
+  palette:
+
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: percona-light
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+# Theme features
+
+  features:
+    - search.share
+    - search.highlight
+    - content.code.copy
+    - content.action.view
+    - content.action.edit
+    - content.tabs.link
+    - navigation.top
+    - navigation.tracking
+
+
+extra_css:
+  - https://unicons.iconscout.com/release/v3.0.3/css/line.css
+  - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css
+  - css/percona.css
+  - css/design.css
+
+extra_javascript:
+  - js/version-select.js
+  - js/promptremover.js
+
+markdown_extensions:
+  - attr_list
+  - toc:
+      permalink: True
+  - admonition
+  - footnotes
+  - def_list   # https://michelf.ca/projects/php-markdown/extra/#def-list
+  - meta
+  - smarty:
+        smart_angled_quotes: true
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.tilde
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+        alternate_style: true
+  - pymdownx.tilde
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.highlight:
+        linenums: false
+  - pymdownx.emoji:
+       emoji_index: !!python/name:material.extensions.emoji.twemoji
+       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - git-revision-date-localized:
+      enable_creation_date: true
+      enabled: !ENV [ENABLED_GIT_REVISION_DATE, True]
+  - meta-descriptions:
+      export_csv: false
+      quiet: false
+      enable_checks: false
+      min_length: 50
+      max_length: 160
+  - section-index # Adds links to nodes - comment out when creating PDF
+#  - htmlproofer # Uncomment to check links - but extends build time significantly
+  - glightbox
+  - macros:
+      include_yaml:
+        - 'variables.yml' # Use in markdown as '{{ VAR }}'   
+
+extra:
+  version:
+    provider: mike
+#  homepage: https://docs.percona.com
+#  consent:
+#    title: Cookie consent
+#    description: >- 
+#      We use cookies to recognize your repeated visits and preferences, as well
+#      as to measure the effectiveness of our documentation and whether users
+#      find what they're searching for. With your consent, you're helping us to
+#      make our documentation better. Read more about <a class="reference external" href="https://www.percona.com/20180524-cookie-policy" target="_blank">Percona Cookie Policy</a>.
+
+nav:
+  - Home: index.md
+  - tde.md
+  - Get started:
+    - "Install": "install.md"
+    - "Set up": "setup.md"
+    - Test TDE: "test.md"
+  - How to:
+    - Configure streaming replication: replication.md
+  - uninstall.md
+  - contribute.md
+
+# - Version Selector: "../"
+

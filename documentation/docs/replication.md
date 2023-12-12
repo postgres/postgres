@@ -1,0 +1,2 @@
+# Streaming replication configuration
+
