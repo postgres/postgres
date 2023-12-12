@@ -382,7 +382,7 @@ libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli)
 						pchomp(PQerrorMessage(conn->streamConn)))));
 	}
 	/*
-	 * IDENTIFY_SERVER returns 3 columns in 9.3 and earlier, and 4 columns in
+	 * IDENTIFY_SYSTEM returns 3 columns in 9.3 and earlier, and 4 columns in
 	 * 9.4 and onwards.
 	 */
 	if (PQnfields(res) < 3 || PQntuples(res) != 1)
