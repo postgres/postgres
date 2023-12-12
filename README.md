@@ -9,6 +9,10 @@ To download the latest build of the main branch, use the `HEAD` release from [re
 Builds are available in a tar.gz format, containing only the required files, and as a deb package.
 The deb package is built against the pgdg16 release, but this dependency is not yet enforced in the package.
 
+## Documentation
+
+Find more information about `pg_tde` in the [documentation](https://percona-lab.github.io/postgres-tde-ext/).
+
 ## Installation steps
 
 1. Build and install the plugin with make [from source](#build-from-source), or download a [release](https://github.com/Percona-Lab/postgres-tde-ext/releases) and [install the package](#install-from-package)
