@@ -22,6 +22,7 @@
 #include "utils/guc.h"
 #include "utils/rel.h"
 #include "utils/snapshot.h"
+#include "xact.h"
 
 
 #define DEFAULT_TABLE_ACCESS_METHOD	"heap"
@@ -1750,5 +1751,73 @@ extern const TableAmRoutine *GetTableAmRoutine(Oid amhandler);
 extern const TableAmRoutine *GetHeapamTableAmRoutine(void);
 extern bool check_default_table_access_method(char **newval, void **extra,
 											  GucSource source);
+
+
+
+static bool lock_for_slot(Relation rel, Snapshot snap, TupleTableSlot *slot, CommandId cid, LOCKMODE lockmode)
+{
+    if (XactLockStrategy == LOCK_NONE)
+        return true;
+
+    ItemPointerData tid;
+    uint8 lockflags;
+    TM_Result	test;
+    TM_FailureData tmfd;
+
+    if (IsolationIsSerializable() && XactLockStrategy == LOCK_2PL_NW)
+    {
+        tid = slot->tts_tid;
+        lockflags = TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS | TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
+
+        test = table_tuple_lock(rel, &tid, snap, slot, cid,
+                                lockmode, LockWaitError,
+                                lockflags, &tmfd);
+        switch (test)
+        {
+            case TM_WouldBlock:
+                return false;
+            case TM_SelfModified:
+                return true;
+            case TM_Ok:
+                return true;
+            case TM_Updated:
+                if (IsolationUsesXactSnapshot())
+                    ereport(ERROR,
+                            (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                                    errmsg("could not serialize access due to concurrent update")));
+                elog(ERROR, "unexpected table_tuple_lock status: %u",
+                     test);
+                return false;
+
+            case TM_BeingModified:
+                if (IsolationUsesXactSnapshot())
+                    ereport(ERROR,
+                            (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                                    errmsg("could not serialize access due to concurrent update")));
+                elog(ERROR, "unexpected table_tuple_lock status: %u",
+                     test);
+                return false;
+
+            case TM_Deleted:
+                if (IsolationUsesXactSnapshot())
+                    ereport(ERROR,
+                            (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                                    errmsg("could not serialize access due to concurrent update")));
+                /* tuple was deleted so don't return it */
+                return false;
+
+            case TM_Invisible:
+                elog(ERROR, "attempted to lock invisible tuple");
+                return false;
+
+            default:
+                elog(ERROR, "unrecognized table_tuple_lock status: %u",
+                     test);
+                return false;
+        }
+    }
+    return true;
+}
+
 
 #endif							/* TABLEAM_H */

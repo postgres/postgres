@@ -1629,6 +1629,14 @@ ExecutePlan(EState *estate,
 		/*
 		 * Execute the plan and obtain a tuple
 		 */
+        if (operation == CMD_UPDATE)
+            XactCurrentOperation = XACT_UPDATE;
+        else if (operation == CMD_SELECT)
+            XactCurrentOperation = XACT_READ;
+        else if (operation == CMD_INSERT)
+            XactCurrentOperation = XACT_INSERT;
+        else
+            XactCurrentOperation = XACT_INVALID;
 		slot = ExecProcNode(planstate);
 
 		/*

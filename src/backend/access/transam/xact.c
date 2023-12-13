@@ -73,10 +73,11 @@
 /*
  *	User-tweakable parameters
  */
-int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
+int			DefaultXactIsoLevel = XACT_SERIALIZABLE;
 int			XactIsoLevel;
-int         DefaultXactLockStrategy = LOCK_NONE;
+int         DefaultXactLockStrategy = LOCK_2PL_NW;
 int         XactLockStrategy;
+int         XactCurrentOperation = XACT_INVALID;
 
 bool		DefaultXactReadOnly = false;
 bool		XactReadOnly;

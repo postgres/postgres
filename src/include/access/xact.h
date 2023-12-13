@@ -43,9 +43,15 @@
 #define LOCK_2PL_NW 2
 #define LOCK_NONE   3
 
+#define XACT_UPDATE 0
+#define XACT_READ   1
+#define XACT_INSERT   2
+#define XACT_INVALID   3
+
 extern int	DefaultXactIsoLevel;
 extern int	DefaultXactLockStrategy;
 extern int  XactLockStrategy;
+extern int  XactCurrentOperation;
 extern PGDLLIMPORT int XactIsoLevel;
 
 /*

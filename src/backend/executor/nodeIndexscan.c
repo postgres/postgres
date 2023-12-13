@@ -32,6 +32,7 @@
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "access/tableam.h"
+#include "access/xact.h"
 #include "catalog/pg_am.h"
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
@@ -68,6 +69,7 @@ static int	reorderqueue_cmp(const pairingheap_node *a,
 static void reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
 							  Datum *orderbyvals, bool *orderbynulls);
 static HeapTuple reorderqueue_pop(IndexScanState *node);
+static bool lock_for_slot(Relation rel, Snapshot snap, TupleTableSlot *slot, CommandId cid, LOCKMODE lockmode);
 
 
 /* ----------------------------------------------------------------
@@ -518,6 +520,7 @@ reorderqueue_pop(IndexScanState *node)
  *		ExecIndexScan(node)
  * ----------------------------------------------------------------
  */
+// PHX: we assume all transactional select use index, which is true for TPC-C and Modified-YCSB.
 static TupleTableSlot *
 ExecIndexScan(PlanState *pstate)
 {
@@ -529,14 +532,29 @@ ExecIndexScan(PlanState *pstate)
 	if (node->iss_NumRuntimeKeys != 0 && !node->iss_RuntimeKeysReady)
 		ExecReScan((PlanState *) node);
 
+    TupleTableSlot *slot = NULL;
 	if (node->iss_NumOrderByKeys > 0)
-		return ExecScan(&node->ss,
+        slot = ExecScan(&node->ss,
 						(ExecScanAccessMtd) IndexNextWithReorder,
 						(ExecScanRecheckMtd) IndexRecheck);
 	else
-		return ExecScan(&node->ss,
+        slot = ExecScan(&node->ss,
 						(ExecScanAccessMtd) IndexNext,
 						(ExecScanRecheckMtd) IndexRecheck);
+    LOCKMODE lockmode = LockTupleShare;
+    if (XactCurrentOperation == XACT_READ)
+        lockmode = LockTupleShare;
+    else if (XactCurrentOperation == XACT_UPDATE || XactCurrentOperation == XACT_INSERT)
+        lockmode = LockTupleExclusive;
+    else
+        elog(ERROR, "invalid xact operation");
+    if (!lock_for_slot(node->iss_RelationDesc, pstate->state->es_snapshot,
+                   slot, pstate->state->es_output_cid, lockmode)) {
+        elog(ERROR, "the lock for IndexScan failed");
+        return NULL;
+    } else {
+        return slot;
+    }
 }
 
 /* ----------------------------------------------------------------
