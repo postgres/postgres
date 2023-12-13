@@ -424,7 +424,6 @@ HeapTupleSatisfiesToast(HeapTuple htup, Snapshot snapshot,
 	return true;
 }
 
-// To Be Read: Pan Hexiang.
 /*
  * HeapTupleSatisfiesUpdate
  *

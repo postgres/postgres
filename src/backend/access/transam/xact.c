@@ -75,7 +75,7 @@
  */
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
-int         DefaultXactLockStrategy = LOCK_2PL_NW;
+int         DefaultXactLockStrategy = LOCK_NONE;
 int         XactLockStrategy;
 
 bool		DefaultXactReadOnly = false;
