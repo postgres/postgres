@@ -770,7 +770,7 @@
       view are discarded, it will also reset the statistics in the
       <structname>pg_stat_statements_info</structname> view.
       When <structfield>minmax_only</structfield> is <literal>true</literal> only the
-      values of minimun and maximum planning and execution time will be reset (i.e.
+      values of minimum and maximum planning and execution time will be reset (i.e.
       <structfield>min_plan_time</structfield>, <structfield>max_plan_time</structfield>,
       <structfield>min_exec_time</structfield> and <structfield>max_exec_time</structfield>
       fields). The default value for <structfield>minmax_only</structfield> parameter is
