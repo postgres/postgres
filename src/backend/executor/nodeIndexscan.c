@@ -548,6 +548,7 @@ ExecIndexScan(PlanState *pstate)
         lockmode = LockTupleExclusive;
     else
         elog(ERROR, "invalid xact operation");
+    // the iss_RelationDesc shall be loaded.
     if (!lock_for_slot(node->iss_RelationDesc, pstate->state->es_snapshot,
                    slot, pstate->state->es_output_cid, lockmode)) {
         elog(ERROR, "the lock for IndexScan failed");
