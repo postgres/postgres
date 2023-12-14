@@ -1139,7 +1139,7 @@ if not get_option('readline').disabled()
 
     if not at_least_one_header_found
       error('''readline header not found
-If you have @0@ already installed, see meson-log/meson-log.txt for details on the
+If you have @0@ already installed, see meson-logs/meson-log.txt for details on the
 failure. It is possible the compiler isn't looking in the proper directory.
 Use -Dreadline=disabled to disable readline support.'''.format(readline_dep))
     endif
