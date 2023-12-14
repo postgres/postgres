@@ -3632,7 +3632,7 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage, bool planning)
 
 			if (has_timing)
 			{
-				appendStringInfoString(es->str, " shared/local");
+				appendStringInfoString(es->str, " shared");
 				if (!INSTR_TIME_IS_ZERO(usage->blk_read_time))
 					appendStringInfo(es->str, " read=%0.3f",
 									 INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
