@@ -17,7 +17,6 @@
 #include "catalog/dependency.h"
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
-#include "utils/relcache.h"
 
 extern ObjectAddress ExecRenameStmt(RenameStmt *stmt);
 
@@ -29,7 +28,7 @@ extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 									 ObjectAddresses *objsMoved);
 
 extern ObjectAddress ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
-extern void AlterObjectOwner_internal(Relation rel, Oid objectId,
+extern void AlterObjectOwner_internal(Oid classId, Oid objectId,
 									  Oid new_ownerId);
 
 #endif							/* ALTER_H */
