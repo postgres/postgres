@@ -221,11 +221,10 @@ inv_create(Oid lobjId)
 	/*
 	 * dependency on the owner of largeobject
 	 *
-	 * The reason why we use LargeObjectRelationId instead of
-	 * LargeObjectMetadataRelationId here is to provide backward compatibility
-	 * to the applications which utilize a knowledge about internal layout of
-	 * system catalogs. OID of pg_largeobject_metadata and loid of
-	 * pg_largeobject are same value, so there are no actual differences here.
+	 * Note that LO dependencies are recorded using classId
+	 * LargeObjectRelationId for backwards-compatibility reasons.  Using
+	 * LargeObjectMetadataRelationId instead would simplify matters for the
+	 * backend, but it'd complicate pg_dump and possibly break other clients.
 	 */
 	recordDependencyOnOwner(LargeObjectRelationId,
 							lobjId_new, GetUserId());

@@ -3967,9 +3967,14 @@ object_ownercheck(Oid classid, Oid objectid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
+	/* For large objects, the catalog to consult is pg_largeobject_metadata */
+	if (classid == LargeObjectRelationId)
+		classid = LargeObjectMetadataRelationId;
+
 	cacheid = get_object_catcache_oid(classid);
 	if (cacheid != -1)
 	{
+		/* we can get the object's tuple from the syscache */
 		HeapTuple	tuple;
 
 		tuple = SearchSysCache1(cacheid, ObjectIdGetDatum(objectid));
@@ -3986,7 +3991,6 @@ object_ownercheck(Oid classid, Oid objectid, Oid roleid)
 	else
 	{
 		/* for catalogs without an appropriate syscache */
-
 		Relation	rel;
 		ScanKeyData entry[1];
 		SysScanDesc scan;
@@ -4306,9 +4310,9 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		ReleaseSysCache(tuple);
 	}
-	/* pg_largeobject_metadata */
-	else if (classoid == LargeObjectMetadataRelationId)
+	else if (classoid == LargeObjectRelationId)
 	{
+		/* For large objects, we must consult pg_largeobject_metadata */
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	tuple;

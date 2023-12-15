@@ -9,12 +9,18 @@
 -- ensure consistent test output regardless of the default bytea format
 SET bytea_output TO escape;
 
--- Test ALTER LARGE OBJECT OWNER, GRANT, COMMENT
+-- Test ALTER LARGE OBJECT OWNER
 CREATE ROLE regress_lo_user;
 SELECT lo_create(42);
 ALTER LARGE OBJECT 42 OWNER TO regress_lo_user;
+
+-- Test GRANT, COMMENT as non-superuser
+SET SESSION AUTHORIZATION regress_lo_user;
+
 GRANT SELECT ON LARGE OBJECT 42 TO public;
 COMMENT ON LARGE OBJECT 42 IS 'the ultimate answer';
+
+RESET SESSION AUTHORIZATION;
 
 -- Test psql's \lo_list et al (we assume no other LOs exist yet)
 \lo_list

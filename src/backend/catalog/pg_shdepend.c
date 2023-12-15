@@ -1618,6 +1618,10 @@ shdepReassignOwned(List *roleids, Oid newrole)
 						Oid			classId = sdepForm->classid;
 						Relation	catalog;
 
+						/*
+						 * For large objects, the catalog to modify is
+						 * pg_largeobject_metadata
+						 */
 						if (classId == LargeObjectRelationId)
 							classId = LargeObjectMetadataRelationId;
 
