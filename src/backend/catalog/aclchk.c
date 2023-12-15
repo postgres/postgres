@@ -5719,9 +5719,9 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		ReleaseSysCache(tuple);
 	}
-	/* pg_largeobject_metadata */
-	else if (classoid == LargeObjectMetadataRelationId)
+	else if (classoid == LargeObjectRelationId)
 	{
+		/* For large objects, we must consult pg_largeobject_metadata */
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	tuple;

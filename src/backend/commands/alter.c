@@ -1035,15 +1035,30 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 		/* Perform actual update */
 		CatalogTupleUpdate(rel, &newtup->t_self, newtup);
 
-		/* Update owner dependency reference */
+		/*
+		 * Update owner dependency reference.  When working on a large object,
+		 * we have to translate back to the OID conventionally used for LOs'
+		 * classId.
+		 */
 		if (classId == LargeObjectMetadataRelationId)
 			classId = LargeObjectRelationId;
+
 		changeDependencyOnOwner(classId, objectId, new_ownerId);
 
 		/* Release memory */
 		pfree(values);
 		pfree(nulls);
 		pfree(replaces);
+	}
+	else
+	{
+		/*
+		 * No need to change anything.  But when working on a large object, we
+		 * have to translate back to the OID conventionally used for LOs'
+		 * classId, or the post-alter hook (if any) will get confused.
+		 */
+		if (classId == LargeObjectMetadataRelationId)
+			classId = LargeObjectRelationId;
 	}
 
 	InvokeObjectPostAlterHook(classId, objectId, 0);
