@@ -92,15 +92,25 @@ pgstat_count_io_op_n(IOObject io_object, IOContext io_context, IOOp io_op, uint3
 	have_iostats = true;
 }
 
+/*
+ * Initialize the internal timing for an IO operation, depending on an
+ * IO timing GUC.
+ */
 instr_time
-pgstat_prepare_io_time(void)
+pgstat_prepare_io_time(bool track_io_guc)
 {
 	instr_time	io_start;
 
-	if (track_io_timing)
+	if (track_io_guc)
 		INSTR_TIME_SET_CURRENT(io_start);
 	else
+	{
+		/*
+		 * There is no need to set io_start when an IO timing GUC is disabled,
+		 * still initialize it to zero to avoid compiler warnings.
+		 */
 		INSTR_TIME_SET_ZERO(io_start);
+	}
 
 	return io_start;
 }

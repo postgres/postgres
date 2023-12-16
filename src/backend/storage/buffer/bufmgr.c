@@ -1143,7 +1143,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		MemSet((char *) bufBlock, 0, BLCKSZ);
 	else
 	{
-		instr_time	io_start = pgstat_prepare_io_time();
+		instr_time	io_start = pgstat_prepare_io_time(track_io_timing);
 
 		smgrread(smgr, forkNum, blockNum, bufBlock);
 
@@ -2070,7 +2070,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		}
 	}
 
-	io_start = pgstat_prepare_io_time();
+	io_start = pgstat_prepare_io_time(track_io_timing);
 
 	/*
 	 * Note: if smgrzeroextend fails, we will end up with buffers that are
@@ -3523,7 +3523,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 	 */
 	bufToWrite = PageSetChecksumCopy((Page) bufBlock, buf->tag.blockNum);
 
-	io_start = pgstat_prepare_io_time();
+	io_start = pgstat_prepare_io_time(track_io_timing);
 
 	/*
 	 * bufToWrite is either the shared buffer or a copy, as appropriate.
@@ -4181,7 +4181,7 @@ FlushRelationBuffers(Relation rel)
 
 				PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
 
-				io_start = pgstat_prepare_io_time();
+				io_start = pgstat_prepare_io_time(track_io_timing);
 
 				smgrwrite(RelationGetSmgr(rel),
 						  BufTagGetForkNum(&bufHdr->tag),
@@ -5614,7 +5614,7 @@ IssuePendingWritebacks(WritebackContext *wb_context, IOContext io_context)
 	sort_pending_writebacks(wb_context->pending_writebacks,
 							wb_context->nr_pending);
 
-	io_start = pgstat_prepare_io_time();
+	io_start = pgstat_prepare_io_time(track_io_timing);
 
 	/*
 	 * Coalesce neighbouring writes, but nothing else. For that we iterate
