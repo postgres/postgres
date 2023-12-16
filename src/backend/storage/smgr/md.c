@@ -710,27 +710,44 @@ mdclose(SMgrRelation reln, ForkNumber forknum)
 }
 
 /*
- * mdprefetch() -- Initiate asynchronous read of the specified block of a relation
+ * mdprefetch() -- Initiate asynchronous read of the specified blocks of a relation
  */
 bool
-mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
+mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
+		   int nblocks)
 {
 #ifdef USE_PREFETCH
-	off_t		seekpos;
-	MdfdVec    *v;
 
 	Assert((io_direct_flags & IO_DIRECT_DATA) == 0);
 
-	v = _mdfd_getseg(reln, forknum, blocknum, false,
-					 InRecovery ? EXTENSION_RETURN_NULL : EXTENSION_FAIL);
-	if (v == NULL)
+	if ((uint64) blocknum + nblocks > (uint64) MaxBlockNumber + 1)
 		return false;
 
-	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+	while (nblocks > 0)
+	{
+		off_t		seekpos;
+		MdfdVec    *v;
+		int			nblocks_this_segment;
 
-	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+		v = _mdfd_getseg(reln, forknum, blocknum, false,
+						 InRecovery ? EXTENSION_RETURN_NULL : EXTENSION_FAIL);
+		if (v == NULL)
+			return false;
 
-	(void) FilePrefetch(v->mdfd_vfd, seekpos, BLCKSZ, WAIT_EVENT_DATA_FILE_PREFETCH);
+		seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+
+		Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+
+		nblocks_this_segment =
+			Min(nblocks,
+				RELSEG_SIZE - (blocknum % ((BlockNumber) RELSEG_SIZE)));
+
+		(void) FilePrefetch(v->mdfd_vfd, seekpos, BLCKSZ * nblocks_this_segment,
+							WAIT_EVENT_DATA_FILE_PREFETCH);
+
+		blocknum += nblocks_this_segment;
+		nblocks -= nblocks_this_segment;
+	}
 #endif							/* USE_PREFETCH */
 
 	return true;

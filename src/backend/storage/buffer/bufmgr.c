@@ -569,7 +569,7 @@ PrefetchSharedBuffer(SMgrRelation smgr_reln,
 		 * recovery if the relation file doesn't exist.
 		 */
 		if ((io_direct_flags & IO_DIRECT_DATA) == 0 &&
-			smgrprefetch(smgr_reln, forkNum, blockNum))
+			smgrprefetch(smgr_reln, forkNum, blockNum, 1))
 		{
 			result.initiated_io = true;
 		}
