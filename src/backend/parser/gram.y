@@ -18461,7 +18461,7 @@ insertSelectOptions(SelectStmt *stmt,
 					 parser_errposition(exprLocation(limitClause->limitCount))));
 		stmt->limitCount = limitClause->limitCount;
 	}
-	if (limitClause && limitClause->limitOption != LIMIT_OPTION_DEFAULT)
+	if (limitClause)
 	{
 		if (stmt->limitOption)
 			ereport(ERROR,
