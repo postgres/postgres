@@ -91,6 +91,39 @@ CREATE INDEX test1_id_index ON test1 (id);
   </para>
 
   <para>
+   In general, <productname>PostgreSQL</productname> indexes can be used
+   to optimize queries that contain one or more <literal>WHERE</literal>
+   or <literal>JOIN</literal> clauses of the form
+
+<synopsis>
+<replaceable>indexed-column</replaceable> <replaceable>indexable-operator</replaceable> <replaceable>comparison-value</replaceable>
+</synopsis>
+
+   Here, the <replaceable>indexed-column</replaceable> is whatever
+   column or expression the index has been defined on.
+   The <replaceable>indexable-operator</replaceable> is an operator that
+   is a member of the index's <firstterm>operator class</firstterm> for
+   the indexed column.  (More details about that appear below.)
+   And the <replaceable>comparison-value</replaceable> can be any
+   expression that is not volatile and does not reference the index's
+   table.
+  </para>
+
+  <para>
+   In some cases the query planner can extract an indexable clause of
+   this form from another SQL construct.  A simple example is that if
+   the original clause was
+
+<synopsis>
+<replaceable>comparison-value</replaceable> <replaceable>operator</replaceable> <replaceable>indexed-column</replaceable>
+</synopsis>
+
+   then it can be flipped around into indexable form if the
+   original <replaceable>operator</replaceable> has a commutator
+   operator that is a member of the index's operator class.
+  </para>
+
+  <para>
    Creating an index on a large table can take a long time.  By default,
    <productname>PostgreSQL</productname> allows reads (<command>SELECT</command> statements) to occur
    on the table in parallel with index creation, but writes (<command>INSERT</command>,
@@ -120,7 +153,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    B-tree, Hash, GiST, SP-GiST, GIN, BRIN, and the extension <link
    linkend="bloom">bloom</link>.
    Each index type uses a different
-   algorithm that is best suited to different types of queries.
+   algorithm that is best suited to different types of indexable clauses.
    By default, the <link linkend="sql-createindex"><command>CREATE
    INDEX</command></link> command creates
    B-tree indexes, which fit the most common situations.
