@@ -1687,7 +1687,7 @@ GetSafeSnapshotBlockingPids(int blocked_pid, int *output, int output_size)
 Snapshot
 GetSerializableTransactionSnapshot(Snapshot snapshot)
 {
-	Assert(IsolationIsSSI());
+	Assert(IsolationIsSerializable());
 
 	/*
 	 * Can't use serializable mode while recovery is still active, as it is,
@@ -1729,7 +1729,7 @@ SetSerializableTransactionSnapshot(Snapshot snapshot,
 								   VirtualTransactionId *sourcevxid,
 								   int sourcepid)
 {
-	Assert(IsolationIsSSI());
+	Assert(IsolationIsSerializable());
 
 	/*
 	 * If this is called by parallel.c in a parallel worker, we don't want to
@@ -3482,7 +3482,7 @@ ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
 		   || !SxactIsRolledBack(MySerializableXact));
 
 	/* may not be serializable during COMMIT/ROLLBACK PREPARED */
-	Assert(MySerializableXact->pid == 0 || IsolationIsSSI());
+	Assert(MySerializableXact->pid == 0 || IsolationIsSerializable());
 
 	/* We'd better not already be on the cleanup list. */
 	Assert(!SxactIsOnFinishedList(MySerializableXact));
@@ -4939,7 +4939,7 @@ PreCommit_CheckForSerializationFailure(void)
 	if (MySerializableXact == InvalidSerializableXact)
 		return;
 
-	Assert(IsolationIsSSI());
+	Assert(IsolationIsSerializable());
 
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 

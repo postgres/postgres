@@ -3345,7 +3345,7 @@ l2:
 			result = TM_Updated;
 	}
 
-	if (result != TM_Ok)
+    if (result != TM_Ok || (!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID) && XactLockStrategy == LOCK_2PL))
 	{
 		tmfd->ctid = oldtup.t_data->t_ctid;
 		tmfd->xmax = HeapTupleHeaderGetUpdateXid(oldtup.t_data);

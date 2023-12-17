@@ -541,21 +541,25 @@ ExecIndexScan(PlanState *pstate)
         slot = ExecScan(&node->ss,
 						(ExecScanAccessMtd) IndexNext,
 						(ExecScanRecheckMtd) IndexRecheck);
-    LOCKMODE lockmode = LockTupleShare;
-    if (XactCurrentOperation == XACT_READ)
-        lockmode = LockTupleShare;
-    else if (XactCurrentOperation == XACT_UPDATE || XactCurrentOperation == XACT_INSERT)
-        lockmode = LockTupleExclusive;
-    else
-        elog(ERROR, "invalid xact operation");
-    // the iss_RelationDesc shall be loaded.
-    if (!lock_for_slot(node->iss_RelationDesc, pstate->state->es_snapshot,
-                   slot, pstate->state->es_output_cid, lockmode)) {
-        elog(ERROR, "the lock for IndexScan failed");
-        return NULL;
-    } else {
-        return slot;
-    }
+//    LOCKMODE lockmode = LockTupleShare;
+//    if (XactCurrentOperation == XACT_READ)
+//        lockmode = LockTupleShare;
+//    else if (XactCurrentOperation == XACT_UPDATE || XactCurrentOperation == XACT_INSERT)
+//        lockmode = LockTupleExclusive;
+//    else
+//        elog(ERROR, "invalid xact operation");
+    return slot;
+//    // the iss_RelationDesc shall be loaded.
+//    ResultRelInfo *resultRelInfo = pstate->state->es_result_relation_info;
+//    Relation resultRelationDesc = resultRelInfo->ri_RelationDesc;
+//    // before releasing buffer ?
+//    if (!lock_for_slot(resultRelationDesc, pstate->state->es_snapshot,
+//                   slot, pstate->state->es_output_cid, lockmode)) {
+//        elog(ERROR, "the lock for IndexScan failed");
+//        return NULL;
+//    } else {
+//        return slot;
+//    }
 }
 
 /* ----------------------------------------------------------------

@@ -201,7 +201,7 @@ ExecCheckTupleVisible(EState *estate,
 					  Relation rel,
 					  TupleTableSlot *slot)
 {
- 	if (!IsolationUsesXactSnapshot())
+	if (!IsolationUsesXactSnapshot())
 		return;
 
 	if (!table_tuple_satisfies_snapshot(rel, slot, estate->es_snapshot))
@@ -362,7 +362,6 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
  */
-// Pan Hexiang: check if Insert and Delete need lock.
 static TupleTableSlot *
 ExecInsert(ModifyTableState *mtstate,
 		   TupleTableSlot *slot,
@@ -1380,14 +1379,6 @@ lreplace:
 		if (resultRelationDesc->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate);
 
-//        if (!lock_for_slot(resultRelationDesc,
-//                           estate->es_snapshot, slot,
-//                           estate->es_output_cid,
-//                           LockTupleExclusive)) {
-//            elog()
-//            return NULL;
-//        }
-
 		/*
 		 * replace the heap tuple
 		 *
@@ -1404,12 +1395,7 @@ lreplace:
 									true /* wait for commit */ ,
 									&tmfd, &lockmode, &update_indexes);
 
-        if (XactNeedLock())
-        {
-            Assert(result == TM_SelfModified || result == TM_Ok);
-        }
-
-        switch (result)
+		switch (result)
 		{
 			case TM_SelfModified:
 

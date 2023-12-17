@@ -343,7 +343,7 @@ GetTransactionSnapshot(void)
 		if (IsolationUsesXactSnapshot())
 		{
 			/* First, create the snapshot in CurrentSnapshotData */
-			if (IsolationIsSSI())
+			if (IsolationIsSerializable())
 				CurrentSnapshot = GetSerializableTransactionSnapshot(&CurrentSnapshotData);
 			else
 				CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
