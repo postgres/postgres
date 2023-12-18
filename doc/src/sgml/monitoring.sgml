@@ -6868,7 +6868,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       arg5 is the ID of the backend which created the temporary relation for a
       local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
       arg6 is the number of bytes actually read, while arg7 is the number
-      requested (if these are different it indicates trouble).</entry>
+      requested (if these are different it indicates a short read).</entry>
     </row>
     <row>
      <entry><literal>smgr-md-write-start</literal></entry>
@@ -6890,7 +6890,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       arg5 is the ID of the backend which created the temporary relation for a
       local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
       arg6 is the number of bytes actually written, while arg7 is the number
-      requested (if these are different it indicates trouble).</entry>
+      requested (if these are different it indicates a short write).</entry>
     </row>
     <row>
      <entry><literal>sort-start</literal></entry>
