@@ -188,7 +188,7 @@ datum_to_json_internal(Datum val, bool is_null, StringInfo result,
 
 	if (is_null)
 	{
-		appendStringInfoString(result, "null");
+		appendBinaryStringInfo(result, "null", strlen("null"));
 		return;
 	}
 
@@ -210,11 +210,14 @@ datum_to_json_internal(Datum val, bool is_null, StringInfo result,
 			composite_to_json(val, result, false);
 			break;
 		case JSONTYPE_BOOL:
-			outputstr = DatumGetBool(val) ? "true" : "false";
 			if (key_scalar)
-				escape_json(result, outputstr);
+				appendStringInfoChar(result, '"');
+			if (DatumGetBool(val))
+				appendBinaryStringInfo(result, "true", strlen("true"));
 			else
-				appendStringInfoString(result, outputstr);
+				appendBinaryStringInfo(result, "false", strlen("false"));
+			if (key_scalar)
+				appendStringInfoChar(result, '"');
 			break;
 		case JSONTYPE_NUMERIC:
 			outputstr = OidOutputFunctionCall(outfuncoid, val);
@@ -277,9 +280,8 @@ datum_to_json_internal(Datum val, bool is_null, StringInfo result,
 		case JSONTYPE_CAST:
 			/* outfuncoid refers to a cast function, not an output function */
 			jsontext = DatumGetTextPP(OidFunctionCall1(outfuncoid, val));
-			outputstr = text_to_cstring(jsontext);
-			appendStringInfoString(result, outputstr);
-			pfree(outputstr);
+			appendBinaryStringInfo(result, VARDATA_ANY(jsontext),
+								   VARSIZE_ANY_EXHDR(jsontext));
 			pfree(jsontext);
 			break;
 		default:
