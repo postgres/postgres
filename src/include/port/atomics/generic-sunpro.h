@@ -87,6 +87,13 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 	return ret;
 }
 
+#define PG_HAVE_ATOMIC_EXCHANGE_U32
+static inline uint32
+pg_atomic_exchange_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 newval)
+{
+	return atomic_swap_32(&ptr->value, newval);
+}
+
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64
 static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
@@ -99,6 +106,13 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 	ret = current == *expected;
 	*expected = current;
 	return ret;
+}
+
+#define PG_HAVE_ATOMIC_EXCHANGE_U64
+static inline uint64
+pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 newval)
+{
+	return atomic_swap_64(&ptr->value, newval);
 }
 
 #endif /* HAVE_ATOMIC_H */

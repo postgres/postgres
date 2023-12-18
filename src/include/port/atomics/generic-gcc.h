@@ -176,6 +176,23 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 }
 #endif
 
+/*
+ * __sync_lock_test_and_set() only supports setting the value to 1 on some
+ * platforms, so we only provide an __atomic implementation for
+ * pg_atomic_exchange.
+ *
+ * We assume the availability of 32-bit __atomic_compare_exchange_n() implies
+ * the availability of 32-bit __atomic_exchange_n().
+ */
+#if !defined(PG_HAVE_ATOMIC_EXCHANGE_U32) && defined(HAVE_GCC__ATOMIC_INT32_CAS)
+#define PG_HAVE_ATOMIC_EXCHANGE_U32
+static inline uint32
+pg_atomic_exchange_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 newval)
+{
+	return __atomic_exchange_n(&ptr->value, newval, __ATOMIC_SEQ_CST);
+}
+#endif
+
 /* if we have 32-bit __sync_val_compare_and_swap, assume we have these too: */
 
 #if !defined(PG_HAVE_ATOMIC_FETCH_ADD_U32) && defined(HAVE_GCC__SYNC_INT32_CAS)
@@ -240,6 +257,23 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 	ret = current == *expected;
 	*expected = current;
 	return ret;
+}
+#endif
+
+/*
+ * __sync_lock_test_and_set() only supports setting the value to 1 on some
+ * platforms, so we only provide an __atomic implementation for
+ * pg_atomic_exchange.
+ *
+ * We assume the availability of 64-bit __atomic_compare_exchange_n() implies
+ * the availability of 64-bit __atomic_exchange_n().
+ */
+#if !defined(PG_HAVE_ATOMIC_EXCHANGE_U64) && defined(HAVE_GCC__ATOMIC_INT64_CAS)
+#define PG_HAVE_ATOMIC_EXCHANGE_U64
+static inline uint64
+pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 newval)
+{
+	return __atomic_exchange_n(&ptr->value, newval, __ATOMIC_SEQ_CST);
 }
 #endif
 
