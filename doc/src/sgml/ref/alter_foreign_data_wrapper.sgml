@@ -153,7 +153,7 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> REN
    Change a foreign-data wrapper <literal>dbi</literal>, add
    option <literal>foo</literal>, drop <literal>bar</literal>:
 <programlisting>
-ALTER FOREIGN DATA WRAPPER dbi OPTIONS (ADD foo '1', DROP 'bar');
+ALTER FOREIGN DATA WRAPPER dbi OPTIONS (ADD foo '1', DROP bar);
 </programlisting>
   </para>
 
