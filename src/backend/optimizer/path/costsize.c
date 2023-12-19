@@ -257,6 +257,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
 			 RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost = 0;
+	Cost		run_cost = 0;
 	Cost		cpu_run_cost;
 	Cost		disk_run_cost;
 	double		spc_seq_page_cost;
@@ -285,7 +286,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	 * disk costs
 	 */
 	disk_run_cost = spc_seq_page_cost * baserel->pages;
-
+	run_cost += disk_run_cost;
 	/* CPU costs */
 	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
 
@@ -317,9 +318,9 @@ cost_seqscan(Path *path, PlannerInfo *root,
 		 */
 		path->rows = clamp_row_est(path->rows / parallel_divisor);
 	}
-
+	run_cost += cpu_run_cost;
 	path->startup_cost = startup_cost;
-	path->total_cost = startup_cost + cpu_run_cost + disk_run_cost;
+	path->total_cost = startup_cost + run_cost;
 }
 
 /*
