@@ -600,10 +600,9 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	float8		free_percent;
 	uint64		total_space;
 
-	rel = index_open(relid, AccessShareLock);
+	rel = relation_open(relid, AccessShareLock);
 
-	/* index_open() checks that it's an index */
-	if (!IS_HASH(rel))
+	if (!IS_INDEX(rel) || !IS_HASH(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("relation \"%s\" is not a hash index",
