@@ -1061,30 +1061,6 @@ extern void ExceptionalCondition(const char *conditionName,
 
 
 /*
- * MemSetTest/MemSetLoop are a variant version that allow all the tests in
- * MemSet to be done at compile time in cases where "val" and "len" are
- * constants *and* we know the "start" pointer must be word-aligned.
- * If MemSetTest succeeds, then it is okay to use MemSetLoop, otherwise use
- * MemSetAligned.  Beware of multiple evaluations of the arguments when using
- * this approach.
- */
-#define MemSetTest(val, len) \
-	( ((len) & LONG_ALIGN_MASK) == 0 && \
-	(len) <= MEMSET_LOOP_LIMIT && \
-	MEMSET_LOOP_LIMIT != 0 && \
-	(val) == 0 )
-
-#define MemSetLoop(start, val, len) \
-	do \
-	{ \
-		long * _start = (long *) (start); \
-		long * _stop = (long *) ((char *) _start + (Size) (len)); \
-	\
-		while (_start < _stop) \
-			*_start++ = 0; \
-	} while (0)
-
-/*
  * Macros for range-checking float values before converting to integer.
  * We must be careful here that the boundary values are expressed exactly
  * in the float domain.  PG_INTnn_MIN is an exact power of 2, so it will

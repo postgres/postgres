@@ -139,39 +139,18 @@ typedef struct Node
  *
  * !WARNING!: Avoid using newNode directly. You should be using the
  *	  macro makeNode.  eg. to create a Query node, use makeNode(Query)
- *
- * Note: the size argument should always be a compile-time constant, so the
- * apparent risk of multiple evaluation doesn't matter in practice.
  */
-#ifdef __GNUC__
+static inline Node *
+newNode(size_t size, NodeTag tag)
+{
+	Node	   *result;
 
-/* With GCC, we can use a compound statement within an expression */
-#define newNode(size, tag) \
-({	Node   *_result; \
-	AssertMacro((size) >= sizeof(Node));		/* need the tag, at least */ \
-	_result = (Node *) palloc0fast(size); \
-	_result->type = (tag); \
-	_result; \
-})
-#else
+	Assert(size >= sizeof(Node));	/* need the tag, at least */
+	result = (Node *) palloc0(size);
+	result->type = tag;
 
-/*
- *	There is no way to dereference the palloc'ed pointer to assign the
- *	tag, and also return the pointer itself, so we need a holder variable.
- *	Fortunately, this macro isn't recursive so we just define
- *	a global variable for this purpose.
- */
-extern PGDLLIMPORT Node *newNodeMacroHolder;
-
-#define newNode(size, tag) \
-( \
-	AssertMacro((size) >= sizeof(Node)),		/* need the tag, at least */ \
-	newNodeMacroHolder = (Node *) palloc0fast(size), \
-	newNodeMacroHolder->type = (tag), \
-	newNodeMacroHolder \
-)
-#endif							/* __GNUC__ */
-
+	return result;
+}
 
 #define makeNode(_type_)		((_type_ *) newNode(sizeof(_type_),T_##_type_))
 #define NodeSetTag(nodeptr,t)	(((Node*)(nodeptr))->type = (t))

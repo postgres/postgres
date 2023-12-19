@@ -23,7 +23,6 @@ OBJS = \
 	makefuncs.o \
 	multibitmapset.o \
 	nodeFuncs.o \
-	nodes.o \
 	outfuncs.o \
 	params.o \
 	print.o \

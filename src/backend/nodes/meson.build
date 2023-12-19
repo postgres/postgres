@@ -7,7 +7,6 @@ backend_sources += files(
   'makefuncs.c',
   'multibitmapset.c',
   'nodeFuncs.c',
-  'nodes.c',
   'params.c',
   'print.c',
   'read.c',
