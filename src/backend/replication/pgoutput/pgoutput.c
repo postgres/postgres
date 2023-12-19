@@ -400,6 +400,16 @@ parse_output_parameters(List *options, PGOutputData *data)
 		else
 			elog(ERROR, "unrecognized pgoutput option: %s", defel->defname);
 	}
+
+	/* Check required options */
+	if (!protocol_version_given)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("proto_version option missing"));
+	if (!publication_names_given)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("publication_names option missing"));
 }
 
 /*
@@ -448,11 +458,6 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("client sent proto_version=%d but server only supports protocol %d or higher",
 							data->protocol_version, LOGICALREP_PROTO_MIN_VERSION_NUM)));
-
-		if (data->publication_names == NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("publication_names parameter missing")));
 
 		/*
 		 * Decide whether to enable streaming. It is disabled by default, in
