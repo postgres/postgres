@@ -153,6 +153,7 @@ ERROR:  relation "test_hashidx" is not a GIN index
 -- check that using any of these functions with unsupported relations will fail
 create table test_partitioned (a int) partition by range (a);
 create index test_partitioned_index on test_partitioned(a);
+create index test_partitioned_hash_index on test_partitioned using hash(a);
 -- these should all fail
 select pgstattuple('test_partitioned');
 ERROR:  cannot get tuple-level statistics for relation "test_partitioned"
@@ -171,7 +172,9 @@ ERROR:  relation "test_partitioned" is not a btree index
 select pgstatginindex('test_partitioned');
 ERROR:  relation "test_partitioned" is not a GIN index
 select pgstathashindex('test_partitioned');
-ERROR:  "test_partitioned" is not an index
+ERROR:  relation "test_partitioned" is not a hash index
+select pgstathashindex('test_partitioned_hash_index');
+ERROR:  relation "test_partitioned_hash_index" is not a hash index
 create view test_view as select 1;
 -- these should all fail
 select pgstattuple('test_view');
@@ -188,7 +191,7 @@ ERROR:  relation "test_view" is not a btree index
 select pgstatginindex('test_view');
 ERROR:  relation "test_view" is not a GIN index
 select pgstathashindex('test_view');
-ERROR:  "test_view" is not an index
+ERROR:  relation "test_view" is not a hash index
 create foreign data wrapper dummy;
 create server dummy_server foreign data wrapper dummy;
 create foreign table test_foreign_table () server dummy_server;
@@ -207,7 +210,7 @@ ERROR:  relation "test_foreign_table" is not a btree index
 select pgstatginindex('test_foreign_table');
 ERROR:  relation "test_foreign_table" is not a GIN index
 select pgstathashindex('test_foreign_table');
-ERROR:  "test_foreign_table" is not an index
+ERROR:  relation "test_foreign_table" is not a hash index
 -- a partition of a partitioned table should work though
 create table test_partition partition of test_partitioned for values from (1) to (100);
 select pgstattuple('test_partition');
@@ -253,7 +256,7 @@ ERROR:  relation "test_partition" is not a btree index
 select pgstatginindex('test_partition');
 ERROR:  relation "test_partition" is not a GIN index
 select pgstathashindex('test_partition');
-ERROR:  "test_partition" is not an index
+ERROR:  relation "test_partition" is not a hash index
 -- an actual index of a partitioned table should work though
 create index test_partition_idx on test_partition(a);
 create index test_partition_hash_idx on test_partition using hash (a);
