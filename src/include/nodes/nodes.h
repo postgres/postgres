@@ -230,9 +230,9 @@ extern bool equal(const void *a, const void *b);
 
 
 /*
- * Typedefs for identifying qualifier selectivities and plan costs as such.
- * These are just plain "double"s, but declaring a variable as Selectivity
- * or Cost makes the intent more obvious.
+ * Typedefs for identifying qualifier selectivities, plan costs, and row
+ * counts as such.  These are just plain "double"s, but declaring a variable
+ * as Selectivity, Cost, or Cardinality makes the intent more obvious.
  *
  * These could have gone into plannodes.h or some such, but many files
  * depend on them...
