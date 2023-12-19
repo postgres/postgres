@@ -431,7 +431,7 @@ parse_filename_for_nontemp_relation(const char *name, RelFileNumber *relnumber,
 	else
 	{
 		/* Reject leading zeroes, just like we do for RelFileNumber. */
-		if (name[0] < '1' || name[0] > '9')
+		if (name[1] < '1' || name[1] > '9')
 			return false;
 
 		errno = 0;
