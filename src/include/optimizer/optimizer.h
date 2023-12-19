@@ -90,6 +90,7 @@ extern PGDLLIMPORT double recursive_worktable_factor;
 extern PGDLLIMPORT int effective_cache_size;
 
 extern double clamp_row_est(double nrows);
+extern int32 clamp_width_est(int64 tuple_width);
 extern long clamp_cardinality_to_long(Cardinality x);
 
 /* in path/indxpath.c: */

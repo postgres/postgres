@@ -4610,6 +4610,7 @@ create_one_window_path(PlannerInfo *root,
 			 * Note: a WindowFunc adds nothing to the target's eval costs; but
 			 * we do need to account for the increase in tlist width.
 			 */
+			int64		tuple_width = window_target->width;
 			ListCell   *lc2;
 
 			window_target = copy_pathtarget(window_target);
@@ -4618,8 +4619,9 @@ create_one_window_path(PlannerInfo *root,
 				WindowFunc *wfunc = lfirst_node(WindowFunc, lc2);
 
 				add_column_to_pathtarget(window_target, (Expr *) wfunc, 0);
-				window_target->width += get_typavgwidth(wfunc->wintype, -1);
+				tuple_width += get_typavgwidth(wfunc->wintype, -1);
 			}
+			window_target->width = clamp_width_est(tuple_width);
 		}
 		else
 		{

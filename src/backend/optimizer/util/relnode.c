@@ -22,6 +22,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/inherit.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/placeholder.h"
@@ -1092,6 +1093,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 					bool can_null)
 {
 	Relids		relids = joinrel->relids;
+	int64		tuple_width = joinrel->reltarget->width;
 	ListCell   *vars;
 	ListCell   *lc;
 
@@ -1144,7 +1146,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 				joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
 													phv);
 				/* Bubbling up the precomputed result has cost zero */
-				joinrel->reltarget->width += phinfo->ph_width;
+				tuple_width += phinfo->ph_width;
 			}
 			continue;
 		}
@@ -1165,7 +1167,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 				list_nth(root->row_identity_vars, var->varattno - 1);
 
 			/* Update reltarget width estimate from RowIdentityVarInfo */
-			joinrel->reltarget->width += ridinfo->rowidwidth;
+			tuple_width += ridinfo->rowidwidth;
 		}
 		else
 		{
@@ -1181,7 +1183,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 				continue;		/* nope, skip it */
 
 			/* Update reltarget width estimate from baserel's attr_widths */
-			joinrel->reltarget->width += baserel->attr_widths[ndx];
+			tuple_width += baserel->attr_widths[ndx];
 		}
 
 		/*
@@ -1221,6 +1223,8 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 
 		/* Vars have cost zero, so no need to adjust reltarget->cost */
 	}
+
+	joinrel->reltarget->width = clamp_width_est(tuple_width);
 }
 
 /*

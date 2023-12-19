@@ -375,6 +375,7 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 							SpecialJoinInfo *sjinfo)
 {
 	Relids		relids = joinrel->relids;
+	int64		tuple_width = joinrel->reltarget->width;
 	ListCell   *lc;
 
 	foreach(lc, root->placeholder_list)
@@ -419,7 +420,7 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 					cost_qual_eval_node(&cost, (Node *) phv->phexpr, root);
 					joinrel->reltarget->cost.startup += cost.startup;
 					joinrel->reltarget->cost.per_tuple += cost.per_tuple;
-					joinrel->reltarget->width += phinfo->ph_width;
+					tuple_width += phinfo->ph_width;
 				}
 			}
 
@@ -443,6 +444,8 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 								phinfo->ph_lateral);
 		}
 	}
+
+	joinrel->reltarget->width = clamp_width_est(tuple_width);
 }
 
 /*

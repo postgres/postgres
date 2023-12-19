@@ -219,6 +219,35 @@ clamp_row_est(double nrows)
 }
 
 /*
+ * clamp_width_est
+ *		Force a tuple-width estimate to a sane value.
+ *
+ * The planner represents datatype width and tuple width estimates as int32.
+ * When summing column width estimates to create a tuple width estimate,
+ * it's possible to reach integer overflow in edge cases.  To ensure sane
+ * behavior, we form such sums in int64 arithmetic and then apply this routine
+ * to clamp to int32 range.
+ */
+int32
+clamp_width_est(int64 tuple_width)
+{
+	/*
+	 * Anything more than MaxAllocSize is clearly bogus, since we could not
+	 * create a tuple that large.
+	 */
+	if (tuple_width > MaxAllocSize)
+		return (int32) MaxAllocSize;
+
+	/*
+	 * Unlike clamp_row_est, we just Assert that the value isn't negative,
+	 * rather than masking such errors.
+	 */
+	Assert(tuple_width >= 0);
+
+	return (int32) tuple_width;
+}
+
+/*
  * clamp_cardinality_to_long
  *		Cast a Cardinality value to a sane long value.
  */
@@ -6101,7 +6130,7 @@ static void
 set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 {
 	Oid			reloid = planner_rt_fetch(rel->relid, root)->relid;
-	int32		tuple_width = 0;
+	int64		tuple_width = 0;
 	bool		have_wholerow_var = false;
 	ListCell   *lc;
 
@@ -6213,7 +6242,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	if (have_wholerow_var)
 	{
-		int32		wholerow_width = MAXALIGN(SizeofHeapTupleHeader);
+		int64		wholerow_width = MAXALIGN(SizeofHeapTupleHeader);
 
 		if (reloid != InvalidOid)
 		{
@@ -6230,7 +6259,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 				wholerow_width += rel->attr_widths[i - rel->min_attr];
 		}
 
-		rel->attr_widths[0 - rel->min_attr] = wholerow_width;
+		rel->attr_widths[0 - rel->min_attr] = clamp_width_est(wholerow_width);
 
 		/*
 		 * Include the whole-row Var as part of the output tuple.  Yes, that
@@ -6239,8 +6268,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 		tuple_width += wholerow_width;
 	}
 
-	Assert(tuple_width >= 0);
-	rel->reltarget->width = tuple_width;
+	rel->reltarget->width = clamp_width_est(tuple_width);
 }
 
 /*
@@ -6258,7 +6286,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 PathTarget *
 set_pathtarget_cost_width(PlannerInfo *root, PathTarget *target)
 {
-	int32		tuple_width = 0;
+	int64		tuple_width = 0;
 	ListCell   *lc;
 
 	/* Vars are assumed to have cost zero, but other exprs do not */
@@ -6282,8 +6310,7 @@ set_pathtarget_cost_width(PlannerInfo *root, PathTarget *target)
 		}
 	}
 
-	Assert(tuple_width >= 0);
-	target->width = tuple_width;
+	target->width = clamp_width_est(tuple_width);
 
 	return target;
 }
