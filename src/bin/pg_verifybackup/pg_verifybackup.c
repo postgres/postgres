@@ -20,9 +20,9 @@
 
 #include "common/hashfn.h"
 #include "common/logging.h"
+#include "common/parse_manifest.h"
 #include "fe_utils/simple_list.h"
 #include "getopt_long.h"
-#include "parse_manifest.h"
 #include "pgtime.h"
 
 /*

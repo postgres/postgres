@@ -6,15 +6,15 @@
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/bin/pg_verifybackup/parse_manifest.c
+ * src/common/parse_manifest.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
 
-#include "parse_manifest.h"
 #include "common/jsonapi.h"
+#include "common/parse_manifest.h"
 
 /*
  * Semantic states for JSON manifest parsing.

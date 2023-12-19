@@ -1,7 +1,6 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 pg_verifybackup_sources = files(
-  'parse_manifest.c',
   'pg_verifybackup.c'
 )
 
