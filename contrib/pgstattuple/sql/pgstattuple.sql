@@ -65,6 +65,7 @@ select pgstatginindex('test_hashidx');
 -- check that using any of these functions with unsupported relations will fail
 create table test_partitioned (a int) partition by range (a);
 create index test_partitioned_index on test_partitioned(a);
+create index test_partitioned_hash_index on test_partitioned using hash(a);
 -- these should all fail
 select pgstattuple('test_partitioned');
 select pgstattuple('test_partitioned_index');
@@ -73,6 +74,7 @@ select pg_relpages('test_partitioned');
 select pgstatindex('test_partitioned');
 select pgstatginindex('test_partitioned');
 select pgstathashindex('test_partitioned');
+select pgstathashindex('test_partitioned_hash_index');
 
 create view test_view as select 1;
 -- these should all fail
