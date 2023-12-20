@@ -306,7 +306,8 @@ pgstat_io_snapshot_cb(void)
 * - Syslogger because it is not connected to shared memory
 * - Archiver because most relevant archiving IO is delegated to a
 *   specialized command or module
-* - WAL Receiver and WAL Writer IO is not tracked in pg_stat_io for now
+* - WAL Receiver, WAL Writer, and WAL Summarizer IO are not tracked in
+*   pg_stat_io for now
 *
 * Function returns true if BackendType participates in the cumulative stats
 * subsystem for IO and false if it does not.
@@ -328,6 +329,7 @@ pgstat_tracks_io_bktype(BackendType bktype)
 		case B_LOGGER:
 		case B_WAL_RECEIVER:
 		case B_WAL_WRITER:
+		case B_WAL_SUMMARIZER:
 			return false;
 
 		case B_AUTOVAC_LAUNCHER:

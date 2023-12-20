@@ -4150,6 +4150,67 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
     </variablelist>
    </sect2>
 
+   <sect2 id="runtime-config-wal-summarization">
+    <title>WAL Summarization</title>
+
+ <!--
+    <para>
+     These settings control WAL summarization, a feature which must be
+     enabled in order to perform an
+     <link linkend="backup-incremental-backup">incremental backup</link>.
+    </para>
+ -->
+
+    <variablelist>
+     <varlistentry id="guc-summarize-wal" xreflabel="summarize_wal">
+      <term><varname>summarize_wal</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>summarize_wal</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+     <listitem>
+      <para>
+       Enables the WAL summarizer process. Note that WAL summarization can
+       be enabled either on a primary or on a standby. WAL summarization
+       cannot be enabled when <varname>wal_level</varname> is set to
+       <literal>minimal</literal>.  This parameter can only be set in the
+       <filename>postgresql.conf</filename> file or on the server command line.
+       The default is <literal>off</literal>.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-summary-keep-time" xreflabel="wal_summary_keep_time">
+      <term><varname>wal_summary_keep_time</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>wal_summary_keep_time</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+     <listitem>
+      <para>
+       Configures the amount of time after which the WAL summarizer
+       automatically removes old WAL summaries. The file timestamp is used to
+       determine which files are old enough to remove. Typically, you should set
+       this comfortably higher than the time that could pass between a backup
+       and a later incremental backup that depends on it.  WAL summaries must
+       be available for the entire range of WAL records between the preceding
+       backup and the new one being taken; if not, the incremental backup will
+       fail. If this parameter is set to zero, WAL summaries will not be
+       automatically deleted, but it is safe to manually remove files that you
+       know will not be required for future incremental backups.
+       This parameter can only be set in the
+       <filename>postgresql.conf</filename> file or on the server command line.
+       The default is 10 days. If <literal>summarize_wal = off</literal>,
+       existing WAL summaries will not be removed regardless of the value of
+       this parameter, because the WAL summarizer will not run.
+      </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+
+   </sect2>
+
    </sect1>
 
    <sect1 id="runtime-config-replication">

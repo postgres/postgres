@@ -77,6 +77,7 @@
 #include "port/pg_iovec.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
+#include "postmaster/walsummarizer.h"
 #include "postmaster/walwriter.h"
 #include "replication/logical.h"
 #include "replication/origin.h"
@@ -3592,6 +3593,43 @@ XLogGetLastRemovedSegno(void)
 	return lastRemovedSegNo;
 }
 
+/*
+ * Return the oldest WAL segment on the given TLI that still exists in
+ * XLOGDIR, or 0 if none.
+ */
+XLogSegNo
+XLogGetOldestSegno(TimeLineID tli)
+{
+	DIR		   *xldir;
+	struct dirent *xlde;
+	XLogSegNo	oldest_segno = 0;
+
+	xldir = AllocateDir(XLOGDIR);
+	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
+	{
+		TimeLineID	file_tli;
+		XLogSegNo	file_segno;
+
+		/* Ignore files that are not XLOG segments. */
+		if (!IsXLogFileName(xlde->d_name))
+			continue;
+
+		/* Parse filename to get TLI and segno. */
+		XLogFromFileName(xlde->d_name, &file_tli, &file_segno,
+						 wal_segment_size);
+
+		/* Ignore anything that's not from the TLI of interest. */
+		if (tli != file_tli)
+			continue;
+
+		/* If it's the oldest so far, update oldest_segno. */
+		if (oldest_segno == 0 || file_segno < oldest_segno)
+			oldest_segno = file_segno;
+	}
+
+	FreeDir(xldir);
+	return oldest_segno;
+}
 
 /*
  * Update the last removed segno pointer in shared memory, to reflect that the
@@ -3872,8 +3910,8 @@ RemoveXlogFile(const struct dirent *segment_de,
 }
 
 /*
- * Verify whether pg_wal and pg_wal/archive_status exist.
- * If the latter does not exist, recreate it.
+ * Verify whether pg_wal, pg_wal/archive_status, and pg_wal/summaries exist.
+ * If the latter do not exist, recreate them.
  *
  * It is not the goal of this function to verify the contents of these
  * directories, but to help in cases where someone has performed a cluster
@@ -3899,6 +3937,26 @@ ValidateXLOGDirectoryStructure(void)
 
 	/* Check for archive_status */
 	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status");
+	if (stat(path, &stat_buf) == 0)
+	{
+		/* Check for weird cases where it exists but isn't a directory */
+		if (!S_ISDIR(stat_buf.st_mode))
+			ereport(FATAL,
+					(errmsg("required WAL directory \"%s\" does not exist",
+							path)));
+	}
+	else
+	{
+		ereport(LOG,
+				(errmsg("creating missing WAL directory \"%s\"", path)));
+		if (MakePGDirectory(path) < 0)
+			ereport(FATAL,
+					(errmsg("could not create missing directory \"%s\": %m",
+							path)));
+	}
+
+	/* Check for summaries */
+	snprintf(path, MAXPGPATH, XLOGDIR "/summaries");
 	if (stat(path, &stat_buf) == 0)
 	{
 		/* Check for weird cases where it exists but isn't a directory */
@@ -5243,9 +5301,9 @@ StartupXLOG(void)
 #endif
 
 	/*
-	 * Verify that pg_wal and pg_wal/archive_status exist.  In cases where
-	 * someone has performed a copy for PITR, these directories may have been
-	 * excluded and need to be re-created.
+	 * Verify that pg_wal, pg_wal/archive_status, and pg_wal/summaries exist.
+	 * In cases where someone has performed a copy for PITR, these directories
+	 * may have been excluded and need to be re-created.
 	 */
 	ValidateXLOGDirectoryStructure();
 
@@ -6963,6 +7021,25 @@ CreateCheckPoint(int flags)
 	END_CRIT_SECTION();
 
 	/*
+	 * WAL summaries end when the next XLOG_CHECKPOINT_REDO or
+	 * XLOG_CHECKPOINT_SHUTDOWN record is reached. This is the first point
+	 * where (a) we're not inside of a critical section and (b) we can be
+	 * certain that the relevant record has been flushed to disk, which must
+	 * happen before it can be summarized.
+	 *
+	 * If this is a shutdown checkpoint, then this happens reasonably
+	 * promptly: we've only just inserted and flushed the
+	 * XLOG_CHECKPOINT_SHUTDOWN record. If this is not a shutdown checkpoint,
+	 * then this might not be very prompt at all: the XLOG_CHECKPOINT_REDO
+	 * record was written before we began flushing data to disk, and that
+	 * could be many minutes ago at this point. However, we don't XLogFlush()
+	 * after inserting that record, so we're not guaranteed that it's on disk
+	 * until after the above call that flushes the XLOG_CHECKPOINT_ONLINE
+	 * record.
+	 */
+	SetWalSummarizerLatch();
+
+	/*
 	 * Let smgr do post-checkpoint cleanup (eg, deleting old files).
 	 */
 	SyncPostCheckpoint();
@@ -7634,6 +7711,20 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 			if (currSegNo - segno > slot_keep_segs)
 				segno = currSegNo - slot_keep_segs;
 		}
+	}
+
+	/*
+	 * If WAL summarization is in use, don't remove WAL that has yet to be
+	 * summarized.
+	 */
+	keep = GetOldestUnsummarizedLSN(NULL, NULL, false);
+	if (keep != InvalidXLogRecPtr)
+	{
+		XLogSegNo	unsummarized_segno;
+
+		XLByteToSeg(keep, unsummarized_segno, wal_segment_size);
+		if (unsummarized_segno < segno)
+			segno = unsummarized_segno;
 	}
 
 	/* but, keep at least wal_keep_size if that's set */

@@ -12,4 +12,6 @@ backend_sources += files(
   'basebackup_target.c',
   'basebackup_throttle.c',
   'basebackup_zstd.c',
+  'walsummary.c',
+  'walsummaryfuncs.c',
 )

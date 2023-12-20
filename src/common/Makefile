@@ -47,6 +47,7 @@ OBJS_COMMON = \
 	archive.o \
 	base64.o \
 	binaryheap.o \
+	blkreftable.o \
 	checksum_helper.o \
 	compression.o \
 	config_info.o \

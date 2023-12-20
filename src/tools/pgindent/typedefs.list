@@ -4012,3 +4012,14 @@ yyscan_t
 z_stream
 z_streamp
 zic_t
+BlockRefTable
+BlockRefTableBuffer
+BlockRefTableEntry
+BlockRefTableKey
+BlockRefTableReader
+BlockRefTableSerializedEntry
+BlockRefTableWriter
+SummarizerReadLocalXLogPrivate
+WalSummarizerData
+WalSummaryFile
+WalSummaryIO

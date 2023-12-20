@@ -302,6 +302,11 @@
 #recovery_target_action = 'pause'	# 'pause', 'promote', 'shutdown'
 					# (change requires restart)
 
+# - WAL Summarization -
+
+#summarize_wal = off			 # run WAL summarizer process?
+#wal_summary_keep_time = '10d' # when to remove old summary files, 0 = never
+
 
 #------------------------------------------------------------------------------
 # REPLICATION

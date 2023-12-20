@@ -54,3 +54,4 @@ XactTruncationLock					44
 WrapLimitsVacuumLock				46
 NotifyQueueTailLock					47
 WaitEventExtensionLock				48
+WALSummarizerLock					49

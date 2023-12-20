@@ -56,6 +56,7 @@ RECOVERY_WAL_STREAM	"Waiting in main loop of startup process for WAL to arrive, 
 SYSLOGGER_MAIN	"Waiting in main loop of syslogger process."
 WAL_RECEIVER_MAIN	"Waiting in main loop of WAL receiver process."
 WAL_SENDER_MAIN	"Waiting in main loop of WAL sender process."
+WAL_SUMMARIZER_WAL	"Waiting in WAL summarizer for more WAL to be generated."
 WAL_WRITER_MAIN	"Waiting in main loop of WAL writer process."
 
 
@@ -142,6 +143,7 @@ SAFE_SNAPSHOT	"Waiting to obtain a valid snapshot for a <literal>READ ONLY DEFER
 SYNC_REP	"Waiting for confirmation from a remote server during synchronous replication."
 WAL_RECEIVER_EXIT	"Waiting for the WAL receiver to exit."
 WAL_RECEIVER_WAIT_START	"Waiting for startup process to send initial data for streaming replication."
+WAL_SUMMARY_READY	"Waiting for a new WAL summary to be generated."
 XACT_GROUP_UPDATE	"Waiting for the group leader to update transaction status at end of a parallel operation."
 
 
@@ -162,6 +164,7 @@ REGISTER_SYNC_REQUEST	"Waiting while sending synchronization requests to the che
 SPIN_DELAY	"Waiting while acquiring a contended spinlock."
 VACUUM_DELAY	"Waiting in a cost-based vacuum delay point."
 VACUUM_TRUNCATE	"Waiting to acquire an exclusive lock to truncate off any empty pages at the end of a table vacuumed."
+WAL_SUMMARIZER_ERROR	"Waiting after a WAL summarizer error."
 
 
 #
@@ -243,6 +246,8 @@ WAL_COPY_WRITE	"Waiting for a write when creating a new WAL segment by copying a
 WAL_INIT_SYNC	"Waiting for a newly initialized WAL file to reach durable storage."
 WAL_INIT_WRITE	"Waiting for a write while initializing a new WAL file."
 WAL_READ	"Waiting for a read from a WAL file."
+WAL_SUMMARY_READ	"Waiting for a read from a WAL summary file."
+WAL_SUMMARY_WRITE	"Waiting for a write to a WAL summary file."
 WAL_SYNC	"Waiting for a WAL file to reach durable storage."
 WAL_SYNC_METHOD_ASSIGN	"Waiting for data to reach durable storage while assigning a new WAL sync method."
 WAL_WRITE	"Waiting for a write to a WAL file."

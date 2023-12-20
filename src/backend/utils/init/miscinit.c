@@ -305,6 +305,9 @@ GetBackendTypeDesc(BackendType backendType)
 		case B_WAL_SENDER:
 			backendDesc = "walsender";
 			break;
+		case B_WAL_SUMMARIZER:
+			backendDesc = "walsummarizer";
+			break;
 		case B_WAL_WRITER:
 			backendDesc = "walwriter";
 			break;

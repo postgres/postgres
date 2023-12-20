@@ -21,6 +21,7 @@
 #include "postmaster/auxprocess.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
+#include "postmaster/walsummarizer.h"
 #include "postmaster/walwriter.h"
 #include "replication/walreceiver.h"
 #include "storage/bufmgr.h"
@@ -79,6 +80,9 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 			break;
 		case WalReceiverProcess:
 			MyBackendType = B_WAL_RECEIVER;
+			break;
+		case WalSummarizerProcess:
+			MyBackendType = B_WAL_SUMMARIZER;
 			break;
 		default:
 			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
@@ -156,6 +160,10 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 
 		case WalReceiverProcess:
 			WalReceiverMain();
+			proc_exit(1);
+
+		case WalSummarizerProcess:
+			WalSummarizerMain();
 			proc_exit(1);
 
 		default:
