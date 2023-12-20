@@ -1933,6 +1933,14 @@ AdvanceXLInsertBuffer(XLogRecPtr upto, TimeLineID tli, bool opportunistic)
 		NewPage = (XLogPageHeader) (XLogCtl->pages + nextidx * (Size) XLOG_BLCKSZ);
 
 		/*
+		 * Mark the xlblock with InvalidXLogRecPtr and issue a write barrier
+		 * before initializing. Otherwise, the old page may be partially
+		 * zeroed but look valid.
+		 */
+		pg_atomic_write_u64(&XLogCtl->xlblocks[nextidx], InvalidXLogRecPtr);
+		pg_write_barrier();
+
+		/*
 		 * Be sure to re-zero the buffer so that bytes beyond what we've
 		 * written will look like zeroes and not valid XLOG records...
 		 */
