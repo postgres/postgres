@@ -249,7 +249,7 @@ InitDiscoverCompressFileHandle(const char *path, const char *mode)
 
 	Assert(strcmp(mode, PG_BINARY_R) == 0);
 
-	fname = strdup(path);
+	fname = pg_strdup(path);
 
 	if (hasSuffix(fname, ".gz"))
 		compression_spec.algorithm = PG_COMPRESSION_GZIP;
