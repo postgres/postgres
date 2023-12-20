@@ -31,13 +31,13 @@ find the file src/tools/pgindent/exclude_file_patterns. The --excludes option
 can be used more than once to specify multiple files containing exclusion
 patterns.
 
-There are also two non-destructive modes of pgindent. If given the --show-diff
+There are also two non-destructive modes of pgindent. If given the --diff
 option pgindent will show the changes it would make, but doesn't actually make
-them. If given instead the --silent-diff option, pgindent will exit with a
-status of 2 if it finds any indent changes are required, but will not
-make the changes or give any other information. This mode is intended for
-possible use in a git pre-commit hook. An example of its use in a git hook
-can be seen at https://wiki.postgresql.org/wiki/Working_with_Git#Using_git_hooks
+them. If given instead the --check option, pgindent will exit with a status of
+2 if it finds any indent changes are required, but will not make the changes.
+This mode is intended for possible use in a git pre-commit hook. The --check
+and --diff options can be combined. An example of its use in a git hook can be
+seen at https://wiki.postgresql.org/wiki/Working_with_Git#Using_git_hooks
 
 Any non-option arguments are taken as the names of files to be indented. In this
 case only these files will be changed, and nothing else will be touched.

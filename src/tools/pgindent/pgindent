@@ -22,8 +22,8 @@ my $indent_opts =
 my $devnull = File::Spec->devnull;
 
 my ($typedefs_file, $typedef_str, @excludes,
-	$indent, $build, $show_diff,
-	$silent_diff, $help, @commits,);
+	$indent, $build, $diff,
+	$check, $help, @commits,);
 
 $help = 0;
 
@@ -34,14 +34,11 @@ my %options = (
 	"list-of-typedefs=s" => \$typedef_str,
 	"excludes=s" => \@excludes,
 	"indent=s" => \$indent,
-	"show-diff" => \$show_diff,
-	"silent-diff" => \$silent_diff,);
+	"diff" => \$diff,
+	"check" => \$check,);
 GetOptions(%options) || usage("bad command line argument");
 
 usage() if $help;
-
-usage("Cannot have both --silent-diff and --show-diff")
-  if $silent_diff && $show_diff;
 
 usage("Cannot use --commit with command line file list")
   if (@commits && @ARGV);
@@ -294,7 +291,7 @@ sub run_indent
 	return $source;
 }
 
-sub show_diff
+sub diff
 {
 	my $indented = shift;
 	my $source_filename = shift;
@@ -323,8 +320,8 @@ Options:
 	--list-of-typedefs=STR  string containing typedefs, space separated
 	--excludes=PATH         file containing list of filename patterns to ignore
 	--indent=PATH           path to pg_bsd_indent program
-	--show-diff             show the changes that would be made
-	--silent-diff           exit with status 2 if any changes would be made
+	--diff                  show the changes that would be made
+	--check                 exit with status 2 if any changes would be made
 The --excludes and --commit options can be given more than once.
 EOF
 	if ($help)
@@ -375,6 +372,7 @@ warn "No files to process" unless @files;
 process_exclude();
 
 my %processed;
+my $status = 0;
 
 foreach my $source_filename (@files)
 {
@@ -417,19 +415,24 @@ foreach my $source_filename (@files)
 
 	if ($source ne $orig_source)
 	{
-		if ($silent_diff)
+		if (!$diff && !$check)
 		{
-			exit 2;
-		}
-		elsif ($show_diff)
-		{
-			print show_diff($source, $source_filename);
+			write_source($source, $source_filename);
 		}
 		else
 		{
-			write_source($source, $source_filename);
+			if ($diff)
+			{
+				print diff($source, $source_filename);
+			}
+
+			if ($check)
+			{
+				$status = 2;
+				last unless $diff;
+			}
 		}
 	}
 }
 
-exit 0;
+exit $status;
