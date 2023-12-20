@@ -28,7 +28,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
     CREATE EXTENSION pg_tde;
     ```
     
-    By default, the `pg_tde` extension is created for the currently used database. To encrypt the data in other databases, you must explicitly run the `CREATE EXTENSION` command against them. 
+    By default, the `pg_tde` extension is created for the currently used database. To enable data encryption in other databases, you must explicitly run the `CREATE EXTENSION` command against them. 
 
     !!! tip
 

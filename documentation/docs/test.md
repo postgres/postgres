@@ -2,7 +2,20 @@
 
 To check if the data is encrypted, do the following:
 
-1. Create a table in the database for which you have [enabled `pg_tde`](setup.md)
+1. Create a table in the database for which you have [enabled `pg_tde`](setup.md). Enabling `pg_tde` extension creates the table access method `pg_tde`. To enable data encryption, create the table using this access method as follows:
+
+    ```sql
+    CREATE TABLE <table_name> (<field> <datatype>) USING pg_tde;
+    ```
+
+    !!! hint
+
+        You can enable data encryption by default by setting the `default_table_access_method` to `pg_tde`:
+
+        ```sql
+        SET default_table_access_method = pg_tde;
+        ```
+    
 2. Run the following function:
 
     ```sql
