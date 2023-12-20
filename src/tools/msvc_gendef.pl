@@ -11,7 +11,7 @@ my @def;
 #
 # Script that generates a .DEF file for all objects in a directory
 #
-# src/tools/msvc/gendef.pl
+# src/tools/msvc_gendef.pl
 #
 
 # Given a symbol file path, loops over its contents
@@ -142,7 +142,7 @@ sub writedef
 
 sub usage
 {
-	die("Usage: gendef.pl --arch <arch> --deffile <deffile> --tempdir <tempdir> files-or-directories\n"
+	die("Usage: msvc_gendef.pl --arch <arch> --deffile <deffile> --tempdir <tempdir> files-or-directories\n"
 		  . "    arch: x86 | x86_64\n"
 		  . "    deffile: path of the generated file\n"
 		  . "    tempdir: directory for temporary files\n"

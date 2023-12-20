@@ -53,10 +53,17 @@ AC_DEFUN([PGAC_CHECK_PERL_CONFIGS],
 # would be fatal to try to compile PL/Perl to a different libc ABI than core
 # Postgres uses.  The available information says that most symbols that affect
 # Perl's own ABI begin with letters, so it's almost sufficient to adopt -D
-# switches for symbols not beginning with underscore.  Some exceptions are the
-# Windows-specific -D_USE_32BIT_TIME_T and -D__MINGW_USE_VC2005_COMPAT; see
-# Mkvcbuild.pm for details.  We absorb the former when Perl reports it.  Perl
-# never reports the latter, and we don't attempt to deduce when it's needed.
+# switches for symbols not beginning with underscore.
+
+# Some exceptions are the Windows-specific -D_USE_32BIT_TIME_T and
+# -D__MINGW_USE_VC2005_COMPAT. To be exact, Windows offers several 32-bit ABIs.
+# Perl is sensitive to sizeof(time_t), one of the ABI dimensions.  PostgreSQL
+# doesn't support building with pre-MSVC-2005 compilers, but it does support
+# linking to Perl built with such a compiler.  MSVC-built Perl 5.13.4 and
+# later report -D_USE_32BIT_TIME_T in $Config{ccflags} if applicable, but
+# MinGW-built Perl never reports -D_USE_32BIT_TIME_T despite typically needing
+# it.
+#
 # Consequently, we don't support using MinGW to link to MSVC-built Perl.  As
 # of 2017, all supported ActivePerl and Strawberry Perl are MinGW-built.  If
 # that changes or an MSVC-built Perl distribution becomes prominent, we can

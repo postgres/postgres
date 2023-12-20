@@ -24,13 +24,6 @@ documentation.  See standalone-profile.xsl for details.
   and see <xref linkend="install-binaries" /> instead.
  </para>
 
- <para>
-  If you are building <productname>PostgreSQL</productname> for Microsoft
-  Windows, read this chapter if you intend to build with MinGW or Cygwin;
-  but if you intend to build with Microsoft's <productname>Visual
-  C++</productname>, see <xref linkend="install-windows"/> instead.
- </para>
-
  <sect1 id="install-requirements">
   <title>Requirements</title>
 
@@ -3567,8 +3560,7 @@ ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
    <para>
     PostgreSQL can be built using Cygwin, a Linux-like environment for
     Windows, but that method is inferior to the native Windows build
-    <phrase condition="standalone-ignore">(see <xref linkend="install-windows"/>)</phrase> and
-    running a server under Cygwin is no longer recommended.
+    and running a server under Cygwin is no longer recommended.
    </para>
 
    <para>
@@ -3734,7 +3726,7 @@ xcrun --show-sdk-path
   </sect2>
 
   <sect2 id="installation-notes-mingw">
-   <title>MinGW/Native Windows</title>
+   <title>MinGW</title>
 
    <indexterm zone="installation-notes-mingw">
     <primary>MinGW</primary>
@@ -3743,18 +3735,13 @@ xcrun --show-sdk-path
 
    <para>
     PostgreSQL for Windows can be built using MinGW, a Unix-like build
-    environment for Microsoft operating systems, or using
-    Microsoft's <productname>Visual C++</productname> compiler suite.
+    environment for Microsoft operating systems.
     The MinGW build procedure uses the normal build system described in
-    this chapter; the Visual C++ build works completely differently
-    and is described in <xref linkend="install-windows"/>.
+    this chapter.
    </para>
 
    <para>
-    The native Windows port requires a 32 or 64-bit version of Windows
-    2000 or later. Earlier operating systems do
-    not have sufficient infrastructure (but Cygwin may be used on
-    those).  MinGW, the Unix-like build tools, and MSYS, a collection
+    MinGW, the Unix-like build tools, and MSYS, a collection
     of Unix tools required to run shell scripts
     like <command>configure</command>, can be downloaded
     from <ulink url="http://www.mingw.org/"></ulink>.  Neither is
@@ -3777,8 +3764,8 @@ xcrun --show-sdk-path
     buffering issues.
    </para>
 
-   <sect3 id="windows-crash-dumps">
-    <title>Collecting Crash Dumps on Windows</title>
+   <sect3 id="mingw-crash-dumps">
+    <title>Collecting Crash Dumps</title>
 
     <para>
      If PostgreSQL on Windows crashes, it has the ability to generate
@@ -3894,6 +3881,293 @@ make: *** [postgres] Error 1
 </screen>
      your DTrace installation is too old to handle probes in static
      functions.  You need Solaris 10u4 or newer to use DTrace.
+    </para>
+   </sect3>
+  </sect2>
+
+  <sect2 id="installation-notes-visual">
+   <title>Visual</title>
+
+   <indexterm zone="installation-notes-visual">
+    <primary>Visual</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    It is recommended that most users download the binary distribution for
+    Windows, available as a graphical installer package from the
+    <productname>PostgreSQL</productname> website at
+    <ulink url="https://www.postgresql.org/download/"></ulink>. Building from
+    source is only intended for people developing
+    <productname>PostgreSQL</productname> or extensions.
+   </para>
+
+   <para>
+    PostgreSQL for Windows with Visual can be built using meson, as described
+    in <xref linkend="install-meson"/>.
+    The native Windows port requires a 32 or 64-bit version of Windows
+    10 or later.
+   </para>
+
+   <para>
+    Native builds of <application>psql</application> don't support command
+    line editing. The <productname>Cygwin</productname> build does support
+    command line editing, so it should be used where psql is needed for
+    interactive use on <productname>Windows</productname>.
+   </para>
+
+   <para>
+    PostgreSQL can be built using the Visual C++ compiler suite from Microsoft.
+    These compilers can be either from <productname>Visual Studio</productname>,
+    <productname>Visual Studio Express</productname> or some versions of the
+    <productname>Microsoft Windows SDK</productname>. If you do not already have a
+    <productname>Visual Studio</productname> environment set up, the easiest
+    ways are to use the compilers from
+    <productname>Visual Studio 2022</productname> or those in the
+    <productname>Windows SDK 10</productname>, which are both free downloads
+    from Microsoft.
+   </para>
+
+   <para>
+    Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
+    32-bit PostgreSQL builds are possible with
+    <productname>Visual Studio 2015</productname> to
+    <productname>Visual Studio 2022</productname>,
+    as well as standalone Windows SDK releases 10 and above.
+    64-bit PostgreSQL builds are supported with
+    <productname>Microsoft Windows SDK</productname> version 10 and above or
+    <productname>Visual Studio 2015</productname> and above.
+    <!--
+        For 2015 requirements:
+        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2015-sysrequirements-vs
+        For 2017 requirements:
+        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2017-system-requirements-vs
+        For 2019 requirements:
+        https://docs.microsoft.com/en-us/visualstudio/releases/2019/system-requirements
+        For 2022 requirements:
+        https://docs.microsoft.com/en-us/visualstudio/releases/2022/system-requirements
+    -->
+   </para>
+
+   <para>
+    If your build environment doesn't ship with a supported version of the
+    <productname>Microsoft Windows SDK</productname> it is recommended
+    that you upgrade to the latest version (currently version 10), available
+    for download from <ulink url="https://www.microsoft.com/download"></ulink>.
+   </para>
+
+   <para>
+    You must always include the
+    <application>Windows Headers and Libraries</application> part of the SDK.
+    If you install a <productname>Windows SDK</productname>
+    including the <application>Visual C++ Compilers</application>,
+    you don't need <productname>Visual Studio</productname> to build.
+    Note that as of Version 8.0a the Windows SDK no longer ships with a
+    complete command-line build environment.
+   </para>
+
+   <sect3 id="windows-requirements">
+    <title>Requirements</title>
+    <para>
+     The following additional products are required to build
+     <productname>PostgreSQL</productname> on Windows.
+
+     <variablelist>
+      <varlistentry>
+       <term><productname>ActiveState Perl</productname></term>
+       <listitem><para>
+        ActiveState Perl is required to run the build generation scripts. MinGW
+        or Cygwin Perl will not work. It must also be present in the PATH.
+        Binaries can be downloaded from
+        <ulink url="https://www.activestate.com"></ulink>
+        (Note: version 5.14 or later is required,
+        the free Standard Distribution is sufficient).
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>Bison</productname> and
+        <productname>Flex</productname></term>
+       <listitem>
+       <para>
+        <productname>Bison</productname> and <productname>Flex</productname> are
+        required.  Only <productname>Bison</productname> versions 2.3 and later
+        will work. <productname>Flex</productname> must be version 2.5.35 or later.
+       </para>
+
+       <para>
+        Both <productname>Bison</productname> and <productname>Flex</productname>
+        are included in the <productname>msys</productname> tool suite, available
+        from <ulink url="http://www.mingw.org/wiki/MSYS"></ulink> as part of the
+        <productname>MinGW</productname> compiler suite.
+       </para>
+
+       <para>
+        You will need to add the directory containing
+        <filename>flex.exe</filename> and <filename>bison.exe</filename> to the
+        PATH environment variable. In the case of MinGW, the directory is the
+        <filename>\msys\1.0\bin</filename> subdirectory of your MinGW
+        installation directory.
+       </para>
+
+       <note>
+        <para>
+          The Bison distribution from GnuWin32 appears to have a bug that
+          causes Bison to malfunction when installed in a directory with
+          spaces in the name, such as the default location on English
+          installations <filename>C:\Program Files\GnuWin32</filename>.
+          Consider installing into <filename>C:\GnuWin32</filename> or use the
+          NTFS short name path to GnuWin32 in your PATH environment setting
+          (e.g., <filename>C:\PROGRA~1\GnuWin32</filename>).
+         </para>
+       </note>
+
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
+     The following additional products are not required to get started,
+     but are required to build the complete package.
+
+     <variablelist>
+      <varlistentry>
+       <term><productname>ActiveState Tcl</productname></term>
+       <listitem><para>
+        Required for building <application>PL/Tcl</application> (Note: version
+        8.4 is required, the free Standard Distribution is sufficient).
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>Diff</productname></term>
+       <listitem><para>
+        Diff is required to run the regression tests, and can be downloaded
+        from <ulink url="http://gnuwin32.sourceforge.net"></ulink>.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>Gettext</productname></term>
+       <listitem><para>
+        Gettext is required to build with NLS support, and can be downloaded
+        from <ulink url="http://gnuwin32.sourceforge.net"></ulink>. Note that binaries,
+        dependencies and developer files are all needed.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>MIT Kerberos</productname></term>
+       <listitem><para>
+        Required for GSSAPI authentication support. MIT Kerberos can be
+        downloaded from
+        <ulink url="https://web.mit.edu/Kerberos/dist/index.html"></ulink>.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>libxml2</productname> and
+        <productname>libxslt</productname></term>
+       <listitem><para>
+        Required for XML support. Binaries can be downloaded from
+        <ulink url="https://zlatkovic.com/pub/libxml"></ulink> or source from
+        <ulink url="http://xmlsoft.org"></ulink>. Note that libxml2 requires iconv,
+        which is available from the same download location.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>LZ4</productname></term>
+       <listitem><para>
+        Required for supporting <productname>LZ4</productname> compression.
+        Binaries and source can be downloaded from
+        <ulink url="https://github.com/lz4/lz4/releases"></ulink>.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>Zstandard</productname></term>
+       <listitem><para>
+        Required for supporting <productname>Zstandard</productname> compression.
+        Binaries and source can be downloaded from
+        <ulink url="https://github.com/facebook/zstd/releases"></ulink>.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>OpenSSL</productname></term>
+       <listitem><para>
+        Required for SSL support. Binaries can be downloaded from
+        <ulink url="https://slproweb.com/products/Win32OpenSSL.html"></ulink>
+        or source from <ulink url="https://www.openssl.org"></ulink>.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>ossp-uuid</productname></term>
+       <listitem><para>
+        Required for UUID-OSSP support (contrib only). Source can be
+        downloaded from
+        <ulink url="http://www.ossp.org/pkg/lib/uuid/"></ulink>.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>Python</productname></term>
+       <listitem><para>
+        Required for building <application>PL/Python</application>. Binaries can
+        be downloaded from <ulink url="https://www.python.org"></ulink>.
+       </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><productname>zlib</productname></term>
+       <listitem><para>
+        Required for compression support in <application>pg_dump</application>
+        and <application>pg_restore</application>. Binaries can be downloaded
+        from <ulink url="https://www.zlib.net"></ulink>.
+       </para></listitem>
+      </varlistentry>
+
+     </variablelist>
+    </para>
+   </sect3>
+
+   <sect3 id="install-windows-full-64-bit">
+    <title>Special Considerations for 64-Bit Windows</title>
+    <para>
+     PostgreSQL will only build for the x64 architecture on 64-bit Windows.
+    </para>
+    <para>
+     Mixing 32- and 64-bit versions in the same build tree is not supported.
+     The build system will automatically detect if it's running in a 32- or
+     64-bit environment, and build PostgreSQL accordingly. For this reason, it
+     is important to start the correct command prompt before building.
+    </para>
+    <para>
+     To use a server-side third party library such as <productname>Python</productname> or
+     <productname>OpenSSL</productname>, this library <emphasis>must</emphasis> also be
+     64-bit. There is no support for loading a 32-bit library in a 64-bit
+     server. Several of the third party libraries that PostgreSQL supports may
+     only be available in 32-bit versions, in which case they cannot be used with
+     64-bit PostgreSQL.
+    </para>
+   </sect3>
+
+   <sect3 id="windows-crash-dumps">
+    <title>Collecting Crash Dumps</title>
+
+    <para>
+     If PostgreSQL on Windows crashes, it has the ability to generate
+     <productname>minidumps</productname> that can be used to track down the cause
+     for the crash, similar to core dumps on Unix. These dumps can be
+     read using the <productname>Windows Debugger Tools</productname> or using
+     <productname>Visual Studio</productname>. To enable the generation of dumps
+     on Windows, create a subdirectory named <filename>crashdumps</filename>
+     inside the cluster data directory. The dumps will then be written
+     into this directory with a unique name based on the identifier of
+     the crashing process and the current time of the crash.
     </para>
    </sect3>
   </sect2>

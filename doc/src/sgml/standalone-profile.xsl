@@ -60,10 +60,6 @@ variant without links and references to the main documentation.
   <xsl:text>the configuration parameter wal_compression</xsl:text>
 </xsl:template>
 
-<xsl:template match="xref[@linkend='install-windows']">
-  <xsl:text>the documentation</xsl:text>
-</xsl:template>
-
 <xsl:template match="xref[@linkend='locale-providers']">
   <xsl:text>the documentation</xsl:text>
 </xsl:template>

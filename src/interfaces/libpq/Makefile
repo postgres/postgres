@@ -27,9 +27,6 @@ ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
 
-# The MSVC build system scrapes OBJS from this file.  If you change any of
-# the conditional additions of files to OBJS, update Mkvcbuild.pm to match.
-
 OBJS = \
 	$(WIN32RES) \
 	fe-auth-scram.o \

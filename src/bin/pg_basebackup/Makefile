@@ -35,9 +35,6 @@ OBJS = \
 	streamutil.o \
 	walmethods.o
 
-# If you add or remove files here, also update Mkvcbuild.pm, which only knows
-# about OBJS, not BBOBJS, and thus has to be manually updated to stay in sync
-# with this list.
 BBOBJS = \
 	pg_basebackup.o \
 	bbstreamer_file.o \

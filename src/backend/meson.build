@@ -72,7 +72,7 @@ postgres_lib = static_library('postgres_lib',
 
 if cc.get_id() == 'msvc'
   postgres_def = custom_target('postgres.def',
-    command: [perl, files('../tools/msvc/gendef.pl'),
+    command: [perl, files('../tools/msvc_gendef.pl'),
               '--arch', host_cpu,
               '--tempdir', '@PRIVATE_DIR@',
               '--deffile', '@OUTPUT@',

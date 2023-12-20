@@ -2,7 +2,7 @@
 
 # script to detect compile time errors and warnings in all perl files
 
-INCLUDES="-I src/tools/msvc -I src/tools/msvc/dummylib -I src/backend/catalog"
+INCLUDES="-I src/backend/catalog"
 INCLUDES="-I src/test/perl -I src/backend/utils/mb/Unicode $INCLUDES"
 INCLUDES="-I src/bin/pg_rewind -I src/test/ssl/t $INCLUDES"
 
