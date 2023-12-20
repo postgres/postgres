@@ -296,6 +296,7 @@ should_allow_existing_directory(const char *pathname)
 	if (strcmp(filename, "pg_wal") == 0 ||
 		strcmp(filename, "pg_xlog") == 0 ||
 		strcmp(filename, "archive_status") == 0 ||
+		strcmp(filename, "summaries") == 0 ||
 		strcmp(filename, "pg_tblspc") == 0)
 		return true;
 

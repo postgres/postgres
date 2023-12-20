@@ -4153,13 +4153,11 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
    <sect2 id="runtime-config-wal-summarization">
     <title>WAL Summarization</title>
 
- <!--
     <para>
      These settings control WAL summarization, a feature which must be
      enabled in order to perform an
      <link linkend="backup-incremental-backup">incremental backup</link>.
     </para>
- -->
 
     <variablelist>
      <varlistentry id="guc-summarize-wal" xreflabel="summarize_wal">

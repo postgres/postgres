@@ -85,6 +85,7 @@ static void RewriteControlFile(void);
 static void FindEndOfXLOG(void);
 static void KillExistingXLOG(void);
 static void KillExistingArchiveStatus(void);
+static void KillExistingWALSummaries(void);
 static void WriteEmptyXLOG(void);
 static void usage(void);
 
@@ -493,6 +494,7 @@ main(int argc, char *argv[])
 	RewriteControlFile();
 	KillExistingXLOG();
 	KillExistingArchiveStatus();
+	KillExistingWALSummaries();
 	WriteEmptyXLOG();
 
 	printf(_("Write-ahead log reset\n"));
@@ -1034,6 +1036,40 @@ KillExistingArchiveStatus(void)
 		pg_fatal("could not close directory \"%s\": %m", ARCHSTATDIR);
 }
 
+/*
+ * Remove existing WAL summary files
+ */
+static void
+KillExistingWALSummaries(void)
+{
+#define WALSUMMARYDIR XLOGDIR	"/summaries"
+#define WALSUMMARY_NHEXCHARS	40
+
+	DIR		   *xldir;
+	struct dirent *xlde;
+	char		path[MAXPGPATH + sizeof(WALSUMMARYDIR)];
+
+	xldir = opendir(WALSUMMARYDIR);
+	if (xldir == NULL)
+		pg_fatal("could not open directory \"%s\": %m", WALSUMMARYDIR);
+
+	while (errno = 0, (xlde = readdir(xldir)) != NULL)
+	{
+		if (strspn(xlde->d_name, "0123456789ABCDEF") == WALSUMMARY_NHEXCHARS &&
+			strcmp(xlde->d_name + WALSUMMARY_NHEXCHARS, ".summary") == 0)
+		{
+			snprintf(path, sizeof(path), "%s/%s", WALSUMMARYDIR, xlde->d_name);
+			if (unlink(path) < 0)
+				pg_fatal("could not delete file \"%s\": %m", path);
+		}
+	}
+
+	if (errno)
+		pg_fatal("could not read directory \"%s\": %m", WALSUMMARYDIR);
+
+	if (closedir(xldir))
+		pg_fatal("could not close directory \"%s\": %m", ARCHSTATDIR);
+}
 
 /*
  * Write an empty XLOG file, containing only the checkpoint record

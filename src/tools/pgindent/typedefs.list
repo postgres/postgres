@@ -4023,3 +4023,15 @@ SummarizerReadLocalXLogPrivate
 WalSummarizerData
 WalSummaryFile
 WalSummaryIO
+FileBackupMethod
+IncrementalBackupInfo
+UploadManifestCmd
+backup_file_entry
+backup_wal_range
+cb_cleanup_dir
+cb_options
+cb_tablespace
+cb_tablespace_mapping
+manifest_data
+manifest_writer
+rfile

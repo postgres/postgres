@@ -34,6 +34,9 @@ typedef struct
 	int64		size;			/* total size as sent; -1 if not known */
 } tablespaceinfo;
 
-extern void SendBaseBackup(BaseBackupCmd *cmd);
+struct IncrementalBackupInfo;
+
+extern void SendBaseBackup(BaseBackupCmd *cmd,
+						   struct IncrementalBackupInfo *ib);
 
 #endif							/* _BASEBACKUP_H */

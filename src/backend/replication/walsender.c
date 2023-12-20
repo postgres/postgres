@@ -58,6 +58,7 @@
 #include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "backup/basebackup.h"
+#include "backup/basebackup_incremental.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
@@ -136,6 +137,17 @@ bool		wake_wal_senders = false;
  * keep a state of its work.
  */
 static XLogReaderState *xlogreader = NULL;
+
+/*
+ * If the UPLOAD_MANIFEST command is used to provide a backup manifest in
+ * preparation for an incremental backup, uploaded_manifest will be point
+ * to an object containing information about its contexts, and
+ * uploaded_manifest_mcxt will point to the memory context that contains
+ * that object and all of its subordinate data. Otherwise, both values will
+ * be NULL.
+ */
+static IncrementalBackupInfo *uploaded_manifest = NULL;
+static MemoryContext uploaded_manifest_mcxt = NULL;
 
 /*
  * These variables keep track of the state of the timeline we're currently
@@ -233,6 +245,9 @@ static void XLogSendLogical(void);
 static void WalSndDone(WalSndSendDataCallback send_data);
 static XLogRecPtr GetStandbyFlushRecPtr(TimeLineID *tli);
 static void IdentifySystem(void);
+static void UploadManifest(void);
+static bool HandleUploadManifestPacket(StringInfo buf, off_t *offset,
+									   IncrementalBackupInfo *ib);
 static void ReadReplicationSlot(ReadReplicationSlotCmd *cmd);
 static void CreateReplicationSlot(CreateReplicationSlotCmd *cmd);
 static void DropReplicationSlot(DropReplicationSlotCmd *cmd);
@@ -658,6 +673,143 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 				 errmsg("could not close file \"%s\": %m", path)));
 
 	pq_endmessage(&buf);
+}
+
+/*
+ * Handle UPLOAD_MANIFEST command.
+ */
+static void
+UploadManifest(void)
+{
+	MemoryContext mcxt;
+	IncrementalBackupInfo *ib;
+	off_t		offset = 0;
+	StringInfoData buf;
+
+	/*
+	 * parsing the manifest will use the cryptohash stuff, which requires a
+	 * resource owner
+	 */
+	Assert(CurrentResourceOwner == NULL);
+	CurrentResourceOwner = ResourceOwnerCreate(NULL, "base backup");
+
+	/* Prepare to read manifest data into a temporary context. */
+	mcxt = AllocSetContextCreate(CurrentMemoryContext,
+								 "incremental backup information",
+								 ALLOCSET_DEFAULT_SIZES);
+	ib = CreateIncrementalBackupInfo(mcxt);
+
+	/* Send a CopyInResponse message */
+	pq_beginmessage(&buf, 'G');
+	pq_sendbyte(&buf, 0);
+	pq_sendint16(&buf, 0);
+	pq_endmessage_reuse(&buf);
+	pq_flush();
+
+	/* Recieve packets from client until done. */
+	while (HandleUploadManifestPacket(&buf, &offset, ib))
+		;
+
+	/* Finish up manifest processing. */
+	FinalizeIncrementalManifest(ib);
+
+	/*
+	 * Discard any old manifest information and arrange to preserve the new
+	 * information we just got.
+	 *
+	 * We assume that MemoryContextDelete and MemoryContextSetParent won't
+	 * fail, and thus we shouldn't end up bailing out of here in such a way as
+	 * to leave dangling pointrs.
+	 */
+	if (uploaded_manifest_mcxt != NULL)
+		MemoryContextDelete(uploaded_manifest_mcxt);
+	MemoryContextSetParent(mcxt, CacheMemoryContext);
+	uploaded_manifest = ib;
+	uploaded_manifest_mcxt = mcxt;
+
+	/* clean up the resource owner we created */
+	WalSndResourceCleanup(true);
+}
+
+/*
+ * Process one packet received during the handling of an UPLOAD_MANIFEST
+ * operation.
+ *
+ * 'buf' is scratch space. This function expects it to be initialized, doesn't
+ * care what the current contents are, and may override them with completely
+ * new contents.
+ *
+ * The return value is true if the caller should continue processing
+ * additional packets and false if the UPLOAD_MANIFEST operation is complete.
+ */
+static bool
+HandleUploadManifestPacket(StringInfo buf, off_t *offset,
+						   IncrementalBackupInfo *ib)
+{
+	int			mtype;
+	int			maxmsglen;
+
+	HOLD_CANCEL_INTERRUPTS();
+
+	pq_startmsgread();
+	mtype = pq_getbyte();
+	if (mtype == EOF)
+		ereport(ERROR,
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("unexpected EOF on client connection with an open transaction")));
+
+	switch (mtype)
+	{
+		case 'd':				/* CopyData */
+			maxmsglen = PQ_LARGE_MESSAGE_LIMIT;
+			break;
+		case 'c':				/* CopyDone */
+		case 'f':				/* CopyFail */
+		case 'H':				/* Flush */
+		case 'S':				/* Sync */
+			maxmsglen = PQ_SMALL_MESSAGE_LIMIT;
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("unexpected message type 0x%02X during COPY from stdin",
+							mtype)));
+			maxmsglen = 0;		/* keep compiler quiet */
+			break;
+	}
+
+	/* Now collect the message body */
+	if (pq_getmessage(buf, maxmsglen))
+		ereport(ERROR,
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("unexpected EOF on client connection with an open transaction")));
+	RESUME_CANCEL_INTERRUPTS();
+
+	/* Process the message */
+	switch (mtype)
+	{
+		case 'd':				/* CopyData */
+			AppendIncrementalManifestData(ib, buf->data, buf->len);
+			return true;
+
+		case 'c':				/* CopyDone */
+			return false;
+
+		case 'H':				/* Sync */
+		case 'S':				/* Flush */
+			/* Ignore these while in CopyOut mode as we do elsewhere. */
+			return true;
+
+		case 'f':
+			ereport(ERROR,
+					(errcode(ERRCODE_QUERY_CANCELED),
+					 errmsg("COPY from stdin failed: %s",
+							pq_getmsgstring(buf))));
+	}
+
+	/* Not reached. */
+	Assert(false);
+	return false;
 }
 
 /*
@@ -1801,7 +1953,7 @@ exec_replication_command(const char *cmd_string)
 			cmdtag = "BASE_BACKUP";
 			set_ps_display(cmdtag);
 			PreventInTransactionBlock(true, cmdtag);
-			SendBaseBackup((BaseBackupCmd *) cmd_node);
+			SendBaseBackup((BaseBackupCmd *) cmd_node, uploaded_manifest);
 			EndReplicationCommand(cmdtag);
 			break;
 
@@ -1861,6 +2013,14 @@ exec_replication_command(const char *cmd_string)
 				CommitTransactionCommand();
 				EndReplicationCommand(cmdtag);
 			}
+			break;
+
+		case T_UploadManifestCmd:
+			cmdtag = "UPLOAD_MANIFEST";
+			set_ps_display(cmdtag);
+			PreventInTransactionBlock(true, cmdtag);
+			UploadManifest();
+			EndReplicationCommand(cmdtag);
 			break;
 
 		default:

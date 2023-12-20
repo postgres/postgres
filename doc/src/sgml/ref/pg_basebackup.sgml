@@ -38,11 +38,25 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>pg_basebackup</application> makes an exact copy of the database
-   cluster's files, while making sure the server is put into and
-   out of backup mode automatically. Backups are always taken of the entire
-   database cluster; it is not possible to back up individual databases or
-   database objects. For selective backups, another tool such as
+   <application>pg_basebackup</application> can take a full or incremental
+   base backup of the database. When used to take a full backup, it makes an
+   exact copy of the database cluster's files. When used to take an incremental
+   backup, some files that would have been part of a full backup may be
+   replaced with incremental versions of the same files, containing only those
+   blocks that have been modified since the reference backup. An incremental
+   backup cannot be used directly; instead,
+   <xref linkend="app-pgcombinebackup"/> must first
+   be used to combine it with the previous backups upon which it depends.
+   See <xref linkend="backup-incremental-backup" /> for more information
+   about incremental backups, and <xref linkend="backup-pitr-recovery" />
+   for steps to recover from a backup.
+  </para>
+
+  <para>
+   In any mode, <application>pg_basebackup</application> makes sure the server
+   is put into and out of backup mode automatically. Backups are always taken of
+   the entire database cluster; it is not possible to back up individual
+   databases or database objects. For selective backups, another tool such as
    <xref linkend="app-pgdump"/> must be used.
   </para>
 
@@ -194,6 +208,19 @@ PostgreSQL documentation
            </listitem>
          </varlistentry>
         </variablelist></para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-i <replaceable class="parameter">old_manifest_file</replaceable></option></term>
+      <term><option>--incremental=<replaceable class="parameter">old_meanifest_file</replaceable></option></term>
+      <listitem>
+       <para>
+        Performs an <link linkend="backup-incremental-backup">incremental
+        backup</link>. The backup manifest for the reference
+        backup must be provided, and will be uploaded to the server, which will
+        respond by sending the requested incremental backup.
+       </para>
       </listitem>
      </varlistentry>
 

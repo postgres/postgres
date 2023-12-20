@@ -1295,6 +1295,12 @@ read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
 								 tli_from_file, BACKUP_LABEL_FILE)));
 	}
 
+	if (fscanf(lfp, "INCREMENTAL FROM LSN: %X/%X\n", &hi, &lo) > 0)
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("this is an incremental backup, not a data directory"),
+				 errhint("Use pg_combinebackup to reconstruct a valid data directory.")));
+
 	if (ferror(lfp) || FreeFile(lfp))
 		ereport(FATAL,
 				(errcode_for_file_access(),

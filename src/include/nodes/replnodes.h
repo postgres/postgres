@@ -108,4 +108,13 @@ typedef struct TimeLineHistoryCmd
 	TimeLineID	timeline;
 } TimeLineHistoryCmd;
 
+/* ----------------------
+ *		UPLOAD_MANIFEST command
+ * ----------------------
+ */
+typedef struct UploadManifestCmd
+{
+	NodeTag		type;
+} UploadManifestCmd;
+
 #endif							/* REPLNODES_H */

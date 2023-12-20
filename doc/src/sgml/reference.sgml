@@ -250,6 +250,7 @@
    &pgamcheck;
    &pgBasebackup;
    &pgbench;
+   &pgCombinebackup;
    &pgConfig;
    &pgDump;
    &pgDumpall;

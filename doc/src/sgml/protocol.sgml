@@ -2599,6 +2599,19 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
      </listitem>
     </varlistentry>
 
+    <varlistentry id="protocol-replication-upload-manifest">
+     <term>
+      <literal>UPLOAD_MANIFEST</literal>
+      <indexterm><primary>UPLOAD_MANIFEST</primary></indexterm>
+     </term>
+     <listitem>
+      <para>
+       Uploads a backup manifest in preparation for taking an incremental
+       backup.
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry id="protocol-replication-base-backup" xreflabel="BASE_BACKUP">
      <term><literal>BASE_BACKUP</literal> [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
       <indexterm><primary>BASE_BACKUP</primary></indexterm>
@@ -2835,6 +2848,17 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
            <literal>SHA224</literal>, <literal>SHA256</literal>,
            <literal>SHA384</literal>, and <literal>SHA512</literal>.
            The default is <literal>CRC32C</literal>.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><literal>INCREMENTAL</literal></term>
+         <listitem>
+          <para>
+           Requests an incremental backup. The
+           <literal>UPLOAD_MANIFEST</literal> command must be executed
+           before running a base backup with this option.
           </para>
          </listitem>
         </varlistentry>

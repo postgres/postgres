@@ -102,6 +102,11 @@ typedef void (*WriteDataCallback) (size_t nbytes, char *buf,
 #define MINIMUM_VERSION_FOR_TERMINATED_TARFILE 150000
 
 /*
+ * pg_wal/summaries exists beginning with version 17.
+ */
+#define MINIMUM_VERSION_FOR_WAL_SUMMARIES 170000
+
+/*
  * Different ways to include WAL
  */
 typedef enum
@@ -217,7 +222,8 @@ static void ReceiveBackupManifestInMemoryChunk(size_t r, char *copybuf,
 											   void *callback_data);
 static void BaseBackup(char *compression_algorithm, char *compression_detail,
 					   CompressionLocation compressloc,
-					   pg_compress_specification *client_compress);
+					   pg_compress_specification *client_compress,
+					   char *incremental_manifest);
 
 static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 								 bool segment_finished);
@@ -390,6 +396,8 @@ usage(void)
 	printf(_("\nOptions controlling the output:\n"));
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
+	printf(_("  -i, --incremental=OLDMANIFEST\n"));
+	printf(_("                         take incremental backup\n"));
 	printf(_("  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
 			 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
 	printf(_("  -R, --write-recovery-conf\n"
@@ -688,6 +696,23 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 
 		if (pg_mkdir_p(statusdir, pg_dir_create_mode) != 0 && errno != EEXIST)
 			pg_fatal("could not create directory \"%s\": %m", statusdir);
+
+		/*
+		 * For newer server versions, likewise create pg_wal/summaries
+		 */
+		if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_WAL_SUMMARIES)
+		{
+			char		summarydir[MAXPGPATH];
+
+			snprintf(summarydir, sizeof(summarydir), "%s/%s/summaries",
+					 basedir,
+					 PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
+					 "pg_xlog" : "pg_wal");
+
+			if (pg_mkdir_p(statusdir, pg_dir_create_mode) != 0 &&
+				errno != EEXIST)
+				pg_fatal("could not create directory \"%s\": %m", summarydir);
+		}
 	}
 
 	/*
@@ -1728,7 +1753,9 @@ ReceiveBackupManifestInMemoryChunk(size_t r, char *copybuf,
 
 static void
 BaseBackup(char *compression_algorithm, char *compression_detail,
-		   CompressionLocation compressloc, pg_compress_specification *client_compress)
+		   CompressionLocation compressloc,
+		   pg_compress_specification *client_compress,
+		   char *incremental_manifest)
 {
 	PGresult   *res;
 	char	   *sysidentifier;
@@ -1794,7 +1821,76 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		exit(1);
 
 	/*
-	 * Start the actual backup
+	 * If the user wants an incremental backup, we must upload the manifest
+	 * for the previous backup upon which it is to be based.
+	 */
+	if (incremental_manifest != NULL)
+	{
+		int			fd;
+		char		mbuf[65536];
+		int			nbytes;
+
+		/* Reject if server is too old. */
+		if (serverVersion < MINIMUM_VERSION_FOR_WAL_SUMMARIES)
+			pg_fatal("server does not support incremental backup");
+
+		/* Open the file. */
+		fd = open(incremental_manifest, O_RDONLY | PG_BINARY, 0);
+		if (fd < 0)
+			pg_fatal("could not open file \"%s\": %m", incremental_manifest);
+
+		/* Tell the server what we want to do. */
+		if (PQsendQuery(conn, "UPLOAD_MANIFEST") == 0)
+			pg_fatal("could not send replication command \"%s\": %s",
+					 "UPLOAD_MANIFEST", PQerrorMessage(conn));
+		res = PQgetResult(conn);
+		if (PQresultStatus(res) != PGRES_COPY_IN)
+		{
+			if (PQresultStatus(res) == PGRES_FATAL_ERROR)
+				pg_fatal("could not upload manifest: %s",
+						 PQerrorMessage(conn));
+			else
+				pg_fatal("could not upload manifest: unexpected status %s",
+						 PQresStatus(PQresultStatus(res)));
+		}
+
+		/* Loop, reading from the file and sending the data to the server. */
+		while ((nbytes = read(fd, mbuf, sizeof mbuf)) > 0)
+		{
+			if (PQputCopyData(conn, mbuf, nbytes) < 0)
+				pg_fatal("could not send COPY data: %s",
+						 PQerrorMessage(conn));
+		}
+
+		/* Bail out if we exited the loop due to an error. */
+		if (nbytes < 0)
+			pg_fatal("could not read file \"%s\": %m", incremental_manifest);
+
+		/* End the COPY operation. */
+		if (PQputCopyEnd(conn, NULL) < 0)
+			pg_fatal("could not send end-of-COPY: %s",
+					 PQerrorMessage(conn));
+
+		/* See whether the server is happy with what we sent. */
+		res = PQgetResult(conn);
+		if (PQresultStatus(res) == PGRES_FATAL_ERROR)
+			pg_fatal("could not upload manifest: %s",
+					 PQerrorMessage(conn));
+		else if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			pg_fatal("could not upload manifest: unexpected status %s",
+					 PQresStatus(PQresultStatus(res)));
+
+		/* Consume ReadyForQuery message from server. */
+		res = PQgetResult(conn);
+		if (res != NULL)
+			pg_fatal("unexpected extra result while sending manifest");
+
+		/* Add INCREMENTAL option to BASE_BACKUP command. */
+		AppendPlainCommandOption(&buf, use_new_option_syntax, "INCREMENTAL");
+	}
+
+	/*
+	 * Continue building up the options list for the BASE_BACKUP command.
 	 */
 	AppendStringCommandOption(&buf, use_new_option_syntax, "LABEL", label);
 	if (estimatesize)
@@ -1901,6 +1997,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	else
 		basebkp = psprintf("BASE_BACKUP %s", buf.data);
 
+	/* OK, try to start the backup. */
 	if (PQsendQuery(conn, basebkp) == 0)
 		pg_fatal("could not send replication command \"%s\": %s",
 				 "BASE_BACKUP", PQerrorMessage(conn));
@@ -2256,6 +2353,7 @@ main(int argc, char **argv)
 		{"version", no_argument, NULL, 'V'},
 		{"pgdata", required_argument, NULL, 'D'},
 		{"format", required_argument, NULL, 'F'},
+		{"incremental", required_argument, NULL, 'i'},
 		{"checkpoint", required_argument, NULL, 'c'},
 		{"create-slot", no_argument, NULL, 'C'},
 		{"max-rate", required_argument, NULL, 'r'},
@@ -2293,6 +2391,7 @@ main(int argc, char **argv)
 	int			option_index;
 	char	   *compression_algorithm = "none";
 	char	   *compression_detail = NULL;
+	char	   *incremental_manifest = NULL;
 	CompressionLocation compressloc = COMPRESS_LOCATION_UNSPECIFIED;
 	pg_compress_specification client_compress;
 
@@ -2317,7 +2416,7 @@ main(int argc, char **argv)
 
 	atexit(cleanup_directories_atexit);
 
-	while ((c = getopt_long(argc, argv, "c:Cd:D:F:h:l:nNp:Pr:Rs:S:t:T:U:vwWX:zZ:",
+	while ((c = getopt_long(argc, argv, "c:Cd:D:F:h:i:l:nNp:Pr:Rs:S:t:T:U:vwWX:zZ:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2351,6 +2450,9 @@ main(int argc, char **argv)
 				break;
 			case 'h':
 				dbhost = pg_strdup(optarg);
+				break;
+			case 'i':
+				incremental_manifest = pg_strdup(optarg);
 				break;
 			case 'l':
 				label = pg_strdup(optarg);
@@ -2765,7 +2867,7 @@ main(int argc, char **argv)
 	}
 
 	BaseBackup(compression_algorithm, compression_detail, compressloc,
-			   &client_compress);
+			   &client_compress, incremental_manifest);
 
 	success = true;
 	return 0;

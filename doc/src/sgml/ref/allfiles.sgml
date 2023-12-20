@@ -202,6 +202,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pgBasebackup       SYSTEM "pg_basebackup.sgml">
 <!ENTITY pgbench            SYSTEM "pgbench.sgml">
 <!ENTITY pgChecksums        SYSTEM "pg_checksums.sgml">
+<!ENTITY pgCombinebackup    SYSTEM "pg_combinebackup.sgml">
 <!ENTITY pgConfig           SYSTEM "pg_config-ref.sgml">
 <!ENTITY pgControldata      SYSTEM "pg_controldata.sgml">
 <!ENTITY pgCtl              SYSTEM "pg_ctl-ref.sgml">

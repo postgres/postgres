@@ -223,10 +223,10 @@ SKIP:
 		"check backup dir permissions");
 }
 
-# Only archive_status directory should be copied in pg_wal/.
+# Only archive_status and summaries directories should be copied in pg_wal/.
 is_deeply(
 	[ sort(slurp_dir("$tempdir/backup/pg_wal/")) ],
-	[ sort qw(. .. archive_status) ],
+	[ sort qw(. .. archive_status summaries) ],
 	'no WAL files copied');
 
 # Contents of these directories should not be copied.

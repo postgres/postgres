@@ -19,6 +19,7 @@ OBJS = \
 	basebackup.o \
 	basebackup_copy.o \
 	basebackup_gzip.o \
+	basebackup_incremental.o \
 	basebackup_lz4.o \
 	basebackup_zstd.o \
 	basebackup_progress.o \

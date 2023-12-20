@@ -779,6 +779,10 @@ a tar-format backup, pass the name of the tar program to use in the
 keyword parameter tar_program.  Note that tablespace tar files aren't
 handled here.
 
+To restore from an incremental backup, pass the parameter combine_with_prior
+as a reference to an array of prior backup names with which this backup
+is to be combined using pg_combinebackup.
+
 Streaming replication can be enabled on this node by passing the keyword
 parameter has_streaming => 1. This is disabled by default.
 
@@ -816,7 +820,22 @@ sub init_from_backup
 	mkdir $self->archive_dir;
 
 	my $data_path = $self->data_dir;
-	if (defined $params{tar_program})
+	if (defined $params{combine_with_prior})
+	{
+		my @prior_backups = @{$params{combine_with_prior}};
+		my @prior_backup_path;
+
+		for my $prior_backup_name (@prior_backups)
+		{
+			push @prior_backup_path,
+				$root_node->backup_dir . '/' . $prior_backup_name;
+		}
+
+		local %ENV = $self->_get_env();
+		PostgreSQL::Test::Utils::system_or_bail('pg_combinebackup', '-d',
+			@prior_backup_path, $backup_path, '-o', $data_path);
+	}
+	elsif (defined $params{tar_program})
 	{
 		mkdir($data_path);
 		PostgreSQL::Test::Utils::system_or_bail($params{tar_program}, 'xf',

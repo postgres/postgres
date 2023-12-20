@@ -857,12 +857,79 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    </para>
   </sect2>
 
+  <sect2 id="backup-incremental-backup">
+   <title>Making an Incremental Backup</title>
+
+   <para>
+    You can use <xref linkend="app-pgbasebackup"/> to take an incremental
+    backup by specifying the <literal>--incremental</literal> option. You must
+    supply, as an argument to <literal>--incremental</literal>, the backup
+    manifest to an earlier backup from the same server. In the resulting
+    backup, non-relation files will be included in their entirety, but some
+    relation files may be replaced by smaller incremental files which contain
+    only the blocks which have been changed since the earlier backup and enough
+    metadata to reconstruct the current version of the file.
+   </para>
+
+   <para>
+    To figure out which blocks need to be backed up, the server uses WAL
+    summaries, which are stored in the data directory, inside the directory
+    <literal>pg_wal/summaries</literal>. If the required summary files are not
+    present, an attempt to take an incremental backup will fail. The summaries
+    present in this directory must cover all LSNs from the start LSN of the
+    prior backup to the start LSN of the current backup. Since the server looks
+    for WAL summaries just after establishing the start LSN of the current
+    backup, the necessary summary files probably won't be instantly present
+    on disk, but the server will wait for any missing files to show up.
+    This also helps if the WAL summarization process has fallen behind.
+    However, if the necessary files have already been removed, or if the WAL
+    summarizer doesn't catch up quickly enough, the incremental backup will
+    fail.
+   </para>
+
+   <para>
+    When restoring an incremental backup, it will be necessary to have not
+    only the incremental backup itself but also all earlier backups that
+    are required to supply the blocks omitted from the incremental backup.
+    See <xref linkend="app-pgcombinebackup"/> for further information about
+    this requirement.
+   </para>
+
+   <para>
+    Note that all of the requirements for making use of a full backup also
+    apply to an incremental backup. For instance, you still need all of the
+    WAL segment files generated during and after the file system backup, and
+    any relevant WAL history files. And you still need to create a
+    <literal>recovery.signal</literal> (or <literal>standby.signal</literal>)
+    and perform recovery, as described in
+    <xref linkend="backup-pitr-recovery" />. The requirement to have earlier
+    backups available at restore time and to use
+    <literal>pg_combinebackup</literal> is an additional requirement on top of
+    everything else. Keep in mind that <application>PostgreSQL</application>
+    has no built-in mechanism to figure out which backups are still needed as
+    a basis for restoring later incremental backups. You must keep track of
+    the relationships between your full and incremental backups on your own,
+    and be certain not to remove earlier backups if they might be needed when
+    restoring later incremental backups.
+   </para>
+
+   <para>
+    Incremental backups typically only make sense for relatively large
+    databases where a significant portion of the data does not change, or only
+    changes slowly. For a small database, it's simpler to ignore the existence
+    of incremental backups and simply take full backups, which are simpler
+    to manage. For a large database all of which is heavily modified,
+    incremental backups won't be much smaller than full backups.
+   </para>
+  </sect2>
+
   <sect2 id="backup-lowlevel-base-backup">
    <title>Making a Base Backup Using the Low Level API</title>
    <para>
-    The procedure for making a base backup using the low level
-    APIs contains a few more steps than
-    the <xref linkend="app-pgbasebackup"/> method, but is relatively
+    Instead of taking a full or incremental base backup using
+    <xref linkend="app-pgbasebackup"/>, you can take a base backup using the
+    low-level API. This procedure contains a few more steps than
+    the <application>pg_basebackup</application> method, but is relatively
     simple. It is very important that these steps are executed in
     sequence, and that the success of a step is verified before
     proceeding to the next step.
@@ -1118,12 +1185,26 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
    </listitem>
    <listitem>
     <para>
-     Restore the database files from your file system backup.  Be sure that they
+     If you're restoring a full backup, you can restore the database files
+     directly into the target directories.  Be sure that they
      are restored with the right ownership (the database system user, not
      <literal>root</literal>!) and with the right permissions.  If you are using
      tablespaces,
      you should verify that the symbolic links in <filename>pg_tblspc/</filename>
      were correctly restored.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     If you're restoring an incremental backup, you'll need to restore the
+     incremental backup and all earlier backups upon which it directly or
+     indirectly depends to the machine where you are performing the restore.
+     These backups will need to be placed in separate directories, not the
+     target directories where you want the running server to end up.
+     Once this is done, use <xref linkend="app-pgcombinebackup"/> to pull
+     data from the full backup and all of the subsequent incremental backups
+     and write out a synthetic full backup to the target directories. As above,
+     verify that permissions and tablespace links are correct.
     </para>
    </listitem>
    <listitem>

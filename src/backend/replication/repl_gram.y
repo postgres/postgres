@@ -76,11 +76,12 @@ Node *replication_parse_result;
 %token K_EXPORT_SNAPSHOT
 %token K_NOEXPORT_SNAPSHOT
 %token K_USE_SNAPSHOT
+%token K_UPLOAD_MANIFEST
 
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
 				create_replication_slot drop_replication_slot identify_system
-				read_replication_slot timeline_history show
+				read_replication_slot timeline_history show upload_manifest
 %type <list>	generic_option_list
 %type <defelt>	generic_option
 %type <uintval>	opt_timeline
@@ -114,6 +115,7 @@ command:
 			| read_replication_slot
 			| timeline_history
 			| show
+			| upload_manifest
 			;
 
 /*
@@ -307,6 +309,15 @@ timeline_history:
 				}
 			;
 
+/* UPLOAD_MANIFEST doesn't currently accept any arguments */
+upload_manifest:
+			K_UPLOAD_MANIFEST
+				{
+					UploadManifestCmd *cmd = makeNode(UploadManifestCmd);
+
+					$$ = (Node *) cmd;
+				}
+
 opt_physical:
 			K_PHYSICAL
 			| /* EMPTY */
@@ -411,6 +422,7 @@ ident_or_keyword:
 			| K_EXPORT_SNAPSHOT				{ $$ = "export_snapshot"; }
 			| K_NOEXPORT_SNAPSHOT			{ $$ = "noexport_snapshot"; }
 			| K_USE_SNAPSHOT				{ $$ = "use_snapshot"; }
+			| K_UPLOAD_MANIFEST				{ $$ = "upload_manifest"; }
 		;
 
 %%
