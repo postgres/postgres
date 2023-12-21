@@ -90,7 +90,7 @@ tests += {
   'bd': meson.current_build_dir(),
   'tap': {
     'env': {
-      'GZIP_PROGRAM': gzip.path(),
+      'GZIP_PROGRAM': gzip.found() ? gzip.path() : '',
       'LZ4': program_lz4.found() ? program_lz4.path() : '',
       'ZSTD': program_zstd.found() ? program_zstd.path() : '',
       'with_icu': icu.found() ? 'yes' : 'no',
