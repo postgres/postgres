@@ -668,6 +668,26 @@ insert into idxpart values (857142, 'six');
 select tableoid::regclass, * from idxpart order by a;
 drop table idxpart;
 
+-- Test some other non-btree index types
+create table idxpart (a int, b text, c int[]) partition by range (a);
+create table idxpart1 partition of idxpart for values from (0) to (100000);
+set enable_seqscan to off;
+
+create index idxpart_brin on idxpart using brin(b);
+explain (costs off) select * from idxpart where b = 'abcd';
+drop index idxpart_brin;
+
+create index idxpart_spgist on idxpart using spgist(b);
+explain (costs off) select * from idxpart where b = 'abcd';
+drop index idxpart_spgist;
+
+create index idxpart_gin on idxpart using gin(c);
+explain (costs off) select * from idxpart where c @> array[42];
+drop index idxpart_gin;
+
+reset enable_seqscan;
+drop table idxpart;
+
 -- intentionally leave some objects around
 create table idxpart (a int) partition by range (a);
 create table idxpart1 partition of idxpart for values from (0) to (100);
