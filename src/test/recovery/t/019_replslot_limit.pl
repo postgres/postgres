@@ -59,7 +59,7 @@ $result = $node_primary->safe_psql('postgres',
 is($result, "reserved|t", 'check the catching-up state');
 
 # Advance WAL by five segments (= 5MB) on primary
-advance_wal($node_primary, 1);
+$node_primary->advance_wal(1);
 $node_primary->safe_psql('postgres', "CHECKPOINT;");
 
 # The slot is always "safe" when fitting max_wal_size
@@ -69,7 +69,7 @@ $result = $node_primary->safe_psql('postgres',
 is($result, "reserved|t",
 	'check that it is safe if WAL fits in max_wal_size');
 
-advance_wal($node_primary, 4);
+$node_primary->advance_wal(4);
 $node_primary->safe_psql('postgres', "CHECKPOINT;");
 
 # The slot is always "safe" when max_slot_wal_keep_size is not set
@@ -100,7 +100,7 @@ $result = $node_primary->safe_psql('postgres',
 is($result, "reserved", 'check that max_slot_wal_keep_size is working');
 
 # Advance WAL again then checkpoint, reducing remain by 2 MB.
-advance_wal($node_primary, 2);
+$node_primary->advance_wal(2);
 $node_primary->safe_psql('postgres', "CHECKPOINT;");
 
 # The slot is still working
@@ -118,7 +118,7 @@ $node_standby->stop;
 $result = $node_primary->safe_psql('postgres',
 	"ALTER SYSTEM SET wal_keep_size to '8MB'; SELECT pg_reload_conf();");
 # Advance WAL again then checkpoint, reducing remain by 6 MB.
-advance_wal($node_primary, 6);
+$node_primary->advance_wal(6);
 $result = $node_primary->safe_psql('postgres',
 	"SELECT wal_status as remain FROM pg_replication_slots WHERE slot_name = 'rep1'"
 );
@@ -134,7 +134,7 @@ $node_primary->wait_for_catchup($node_standby);
 $node_standby->stop;
 
 # Advance WAL again without checkpoint, reducing remain by 6 MB.
-advance_wal($node_primary, 6);
+$node_primary->advance_wal(6);
 
 # Slot gets into 'reserved' state
 $result = $node_primary->safe_psql('postgres',
@@ -145,7 +145,7 @@ is($result, "extended", 'check that the slot state changes to "extended"');
 $node_primary->safe_psql('postgres', "CHECKPOINT;");
 
 # Advance WAL again without checkpoint; remain goes to 0.
-advance_wal($node_primary, 1);
+$node_primary->advance_wal(1);
 
 # Slot gets into 'unreserved' state and safe_wal_size is negative
 $result = $node_primary->safe_psql('postgres',
@@ -174,7 +174,7 @@ $node_primary->safe_psql('postgres',
 
 # Advance WAL again. The slot loses the oldest segment by the next checkpoint
 my $logstart = -s $node_primary->logfile;
-advance_wal($node_primary, 7);
+$node_primary->advance_wal(7);
 
 # Now create another checkpoint and wait until the WARNING is issued
 $node_primary->safe_psql('postgres',
@@ -275,18 +275,12 @@ $node_standby->init_from_backup($node_primary2, $backup_name,
 	has_streaming => 1);
 $node_standby->append_conf('postgresql.conf', "primary_slot_name = 'rep1'");
 $node_standby->start;
-my @result =
-  split(
-	'\n',
-	$node_primary2->safe_psql(
-		'postgres',
-		"CREATE TABLE tt();
-		 DROP TABLE tt;
-		 SELECT pg_switch_wal();
-		 CHECKPOINT;
-		 SELECT 'finished';",
-		timeout => $PostgreSQL::Test::Utils::timeout_default));
-is($result[1], 'finished', 'check if checkpoint command is not blocked');
+$node_primary2->advance_wal(1);
+$result = $node_primary2->safe_psql(
+	'postgres',
+	"CHECKPOINT; SELECT 'finished';",
+	timeout => $PostgreSQL::Test::Utils::timeout_default);
+is($result, 'finished', 'check if checkpoint command is not blocked');
 
 $node_primary2->stop;
 $node_standby->stop;
@@ -372,7 +366,7 @@ $logstart = -s $node_primary3->logfile;
 # freeze walsender and walreceiver. Slot will still be active, but walreceiver
 # won't get anything anymore.
 kill 'STOP', $senderpid, $receiverpid;
-advance_wal($node_primary3, 2);
+$node_primary3->advance_wal(2);
 
 my $msg_logged = 0;
 my $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
@@ -417,20 +411,5 @@ kill 'CONT', $receiverpid;
 
 $node_primary3->stop;
 $node_standby3->stop;
-
-#####################################
-# Advance WAL of $node by $n segments
-sub advance_wal
-{
-	my ($node, $n) = @_;
-
-	# Advance by $n segments (= (wal_segment_size * $n) bytes) on primary.
-	for (my $i = 0; $i < $n; $i++)
-	{
-		$node->safe_psql('postgres',
-			"CREATE TABLE t (); DROP TABLE t; SELECT pg_switch_wal();");
-	}
-	return;
-}
 
 done_testing();

@@ -522,11 +522,7 @@ $node_primary->safe_psql('postgres',
 my $segment_removed = $node_primary->safe_psql('postgres',
 	'SELECT pg_walfile_name(pg_current_wal_lsn())');
 chomp($segment_removed);
-$node_primary->psql(
-	'postgres', "
-	CREATE TABLE tab_phys_slot (a int);
-	INSERT INTO tab_phys_slot VALUES (generate_series(1,10));
-	SELECT pg_switch_wal();");
+$node_primary->advance_wal(1);
 my $current_lsn =
   $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 chomp($current_lsn);

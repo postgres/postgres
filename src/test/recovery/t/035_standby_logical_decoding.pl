@@ -524,11 +524,8 @@ my $walfile_name = $node_primary->safe_psql('postgres',
 chomp($walfile_name);
 
 # Generate some activity and switch WAL file on the primary
-$node_primary->safe_psql(
-	'postgres', "create table retain_test(a int);
-									 select pg_switch_wal();
-									 insert into retain_test values(1);
-									 checkpoint;");
+$node_primary->advance_wal(1);
+$node_primary->safe_psql('postgres', "checkpoint;");
 
 # Wait for the standby to catch up
 $node_primary->wait_for_replay_catchup($node_standby);
