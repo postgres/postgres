@@ -1314,7 +1314,7 @@ summarizer_wait_for_wal(void)
 }
 
 /*
- * Most recent RedoRecPtr value observed by RemoveOldWalSummaries.
+ * Remove WAL summaries whose mtimes are older than wal_summary_keep_time.
  */
 static void
 MaybeRemoveOldWalSummaries(void)
