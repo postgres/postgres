@@ -71,9 +71,10 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-				appendStringInfo(buf, "snapshotConflictHorizon: %u, ndeleted: %u, nupdated: %u",
+				appendStringInfo(buf, "snapshotConflictHorizon: %u, ndeleted: %u, nupdated: %u, isCatalogRel: %c",
 								 xlrec->snapshotConflictHorizon,
-								 xlrec->ndeleted, xlrec->nupdated);
+								 xlrec->ndeleted, xlrec->nupdated,
+								 xlrec->isCatalogRel ? 'T' : 'F');
 
 				if (XLogRecHasBlockData(record, 0))
 					delvacuum_desc(buf, XLogRecGetBlockData(record, 0, NULL),
@@ -113,11 +114,12 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) rec;
 
-				appendStringInfo(buf, "rel: %u/%u/%u, snapshotConflictHorizon: %u:%u",
+				appendStringInfo(buf, "rel: %u/%u/%u, snapshotConflictHorizon: %u:%u, isCatalogRel: %c",
 								 xlrec->locator.spcOid, xlrec->locator.dbOid,
 								 xlrec->locator.relNumber,
 								 EpochFromFullTransactionId(xlrec->snapshotConflictHorizon),
-								 XidFromFullTransactionId(xlrec->snapshotConflictHorizon));
+								 XidFromFullTransactionId(xlrec->snapshotConflictHorizon),
+								 xlrec->isCatalogRel ? 'T' : 'F');
 				break;
 			}
 		case XLOG_BTREE_META_CLEANUP:

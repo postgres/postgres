@@ -179,10 +179,11 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_prune *xlrec = (xl_heap_prune *) rec;
 
-		appendStringInfo(buf, "snapshotConflictHorizon: %u, nredirected: %u, ndead: %u",
+		appendStringInfo(buf, "snapshotConflictHorizon: %u, nredirected: %u, ndead: %u, isCatalogRel: %c",
 						 xlrec->snapshotConflictHorizon,
 						 xlrec->nredirected,
-						 xlrec->ndead);
+						 xlrec->ndead,
+						 xlrec->isCatalogRel ? 'T' : 'F');
 
 		if (XLogRecHasBlockData(record, 0))
 		{
@@ -238,8 +239,9 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_freeze_page *xlrec = (xl_heap_freeze_page *) rec;
 
-		appendStringInfo(buf, "snapshotConflictHorizon: %u, nplans: %u",
-						 xlrec->snapshotConflictHorizon, xlrec->nplans);
+		appendStringInfo(buf, "snapshotConflictHorizon: %u, nplans: %u, isCatalogRel: %c",
+						 xlrec->snapshotConflictHorizon, xlrec->nplans,
+						 xlrec->isCatalogRel ? 'T' : 'F');
 
 		if (XLogRecHasBlockData(record, 0))
 		{

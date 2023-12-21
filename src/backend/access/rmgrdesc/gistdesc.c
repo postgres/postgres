@@ -26,18 +26,20 @@ out_gistxlogPageUpdate(StringInfo buf, gistxlogPageUpdate *xlrec)
 static void
 out_gistxlogPageReuse(StringInfo buf, gistxlogPageReuse *xlrec)
 {
-	appendStringInfo(buf, "rel %u/%u/%u; blk %u; snapshotConflictHorizon %u:%u",
+	appendStringInfo(buf, "rel %u/%u/%u; blk %u; snapshotConflictHorizon %u:%u, isCatalogRel %c",
 					 xlrec->locator.spcOid, xlrec->locator.dbOid,
 					 xlrec->locator.relNumber, xlrec->block,
 					 EpochFromFullTransactionId(xlrec->snapshotConflictHorizon),
-					 XidFromFullTransactionId(xlrec->snapshotConflictHorizon));
+					 XidFromFullTransactionId(xlrec->snapshotConflictHorizon),
+					 xlrec->isCatalogRel ? 'T' : 'F');
 }
 
 static void
 out_gistxlogDelete(StringInfo buf, gistxlogDelete *xlrec)
 {
-	appendStringInfo(buf, "delete: snapshotConflictHorizon %u, nitems: %u",
-					 xlrec->snapshotConflictHorizon, xlrec->ntodelete);
+	appendStringInfo(buf, "delete: snapshotConflictHorizon %u, nitems: %u, isCatalogRel %c",
+					 xlrec->snapshotConflictHorizon, xlrec->ntodelete,
+					 xlrec->isCatalogRel ? 'T' : 'F');
 }
 
 static void

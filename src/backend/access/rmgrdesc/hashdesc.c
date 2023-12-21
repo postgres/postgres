@@ -113,9 +113,10 @@ hash_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_hash_vacuum_one_page *xlrec = (xl_hash_vacuum_one_page *) rec;
 
-				appendStringInfo(buf, "ntuples %d, snapshotConflictHorizon %u",
+				appendStringInfo(buf, "ntuples %d, snapshotConflictHorizon %u, isCatalogRel %c",
 								 xlrec->ntuples,
-								 xlrec->snapshotConflictHorizon);
+								 xlrec->snapshotConflictHorizon,
+								 xlrec->isCatalogRel ? 'T' : 'F');
 				break;
 			}
 	}
