@@ -1425,6 +1425,7 @@ ExecDelete(ModifyTableContext *context,
 		   bool processReturning,
 		   bool changingPart,
 		   bool canSetTag,
+		   TM_Result *tmresult,
 		   bool *tupleDeleted,
 		   TupleTableSlot **epqreturnslot)
 {
@@ -1441,7 +1442,7 @@ ExecDelete(ModifyTableContext *context,
 	 * done if it says we are.
 	 */
 	if (!ExecDeletePrologue(context, resultRelInfo, tupleid, oldtuple,
-							epqreturnslot, NULL))
+							epqreturnslot, tmresult))
 		return NULL;
 
 	/* INSTEAD OF ROW DELETE Triggers */
@@ -1495,6 +1496,9 @@ ExecDelete(ModifyTableContext *context,
 		 */
 ldelete:
 		result = ExecDeleteAct(context, resultRelInfo, tupleid, changingPart);
+
+		if (tmresult)
+			*tmresult = result;
 
 		switch (result)
 		{
@@ -1734,6 +1738,7 @@ ExecCrossPartitionUpdate(ModifyTableContext *context,
 						 TupleTableSlot *slot,
 						 bool canSetTag,
 						 UpdateContext *updateCxt,
+						 TM_Result *tmresult,
 						 TupleTableSlot **retry_slot,
 						 TupleTableSlot **inserted_tuple,
 						 ResultRelInfo **insert_destrel)
@@ -1797,7 +1802,7 @@ ExecCrossPartitionUpdate(ModifyTableContext *context,
 			   false,			/* processReturning */
 			   true,			/* changingPart */
 			   false,			/* canSetTag */
-			   &tuple_deleted, &epqslot);
+			   tmresult, &tuple_deleted, &epqslot);
 
 	/*
 	 * For some reason if DELETE didn't happen (e.g. trigger prevented it, or
@@ -1829,7 +1834,7 @@ ExecCrossPartitionUpdate(ModifyTableContext *context,
 		 * action entirely).
 		 */
 		if (context->relaction != NULL)
-			return false;
+			return *tmresult == TM_Ok;
 		else if (TupIsNull(epqslot))
 			return true;
 		else
@@ -2031,6 +2036,7 @@ lreplace:
 		if (ExecCrossPartitionUpdate(context, resultRelInfo,
 									 tupleid, oldtuple, slot,
 									 canSetTag, updateCxt,
+									 &result,
 									 &retry_slot,
 									 &inserted_tuple,
 									 &insert_destrel))
@@ -2070,7 +2076,7 @@ lreplace:
 		 * here; instead let it handle that on its own rules.
 		 */
 		if (context->relaction != NULL)
-			return TM_Updated;
+			return result;
 
 		/*
 		 * ExecCrossPartitionUpdate installed an updated version of the new
@@ -2898,7 +2904,7 @@ lmerge_matched:
 					break;		/* concurrent update/delete */
 				}
 				result = ExecUpdateAct(context, resultRelInfo, tupleid, NULL,
-									   newslot, false, &updateCxt);
+									   newslot, canSetTag, &updateCxt);
 
 				/*
 				 * As in ExecUpdate(), if ExecUpdateAct() reports that a
@@ -2910,8 +2916,6 @@ lmerge_matched:
 				if (updateCxt.crossPartUpdate)
 				{
 					mtstate->mt_merge_updated += 1;
-					if (canSetTag)
-						(estate->es_processed)++;
 					return true;
 				}
 
@@ -3843,7 +3847,7 @@ ExecModifyTable(PlanState *pstate)
 
 			case CMD_DELETE:
 				slot = ExecDelete(&context, resultRelInfo, tupleid, oldtuple,
-								  true, false, node->canSetTag, NULL, NULL);
+								  true, false, node->canSetTag, NULL, NULL, NULL);
 				break;
 
 			case CMD_MERGE:
