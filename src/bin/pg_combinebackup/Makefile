@@ -44,6 +44,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f pg_combinebackup$(X) $(OBJS)
+	rm -rf tmp_check
 
 check:
 	$(prove_check)
