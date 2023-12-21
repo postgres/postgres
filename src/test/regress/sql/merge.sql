@@ -1060,6 +1060,10 @@ INSERT INTO pa_target SELECT id, id * 100, 'initial' FROM generate_series(1,14,2
 
 -- try simple MERGE
 BEGIN;
+DO $$
+DECLARE
+  result integer;
+BEGIN
 MERGE INTO pa_target t
   USING pa_source s
   ON t.tid = s.sid
@@ -1067,6 +1071,10 @@ MERGE INTO pa_target t
     UPDATE SET balance = balance + delta, val = val || ' updated by merge'
   WHEN NOT MATCHED THEN
     INSERT VALUES (sid, delta, 'inserted by merge');
+GET DIAGNOSTICS result := ROW_COUNT;
+RAISE NOTICE 'ROW_COUNT = %', result;
+END;
+$$;
 SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 
@@ -1085,6 +1093,10 @@ ROLLBACK;
 
 -- try updating the partition key column
 BEGIN;
+DO $$
+DECLARE
+  result integer;
+BEGIN
 MERGE INTO pa_target t
   USING pa_source s
   ON t.tid = s.sid
@@ -1092,6 +1104,58 @@ MERGE INTO pa_target t
     UPDATE SET tid = tid + 1, balance = balance + delta, val = val || ' updated by merge'
   WHEN NOT MATCHED THEN
     INSERT VALUES (sid, delta, 'inserted by merge');
+GET DIAGNOSTICS result := ROW_COUNT;
+RAISE NOTICE 'ROW_COUNT = %', result;
+END;
+$$;
+SELECT * FROM pa_target ORDER BY tid;
+ROLLBACK;
+
+-- as above, but blocked by BEFORE DELETE ROW trigger
+BEGIN;
+CREATE FUNCTION trig_fn() RETURNS trigger LANGUAGE plpgsql AS
+  $$ BEGIN RETURN NULL; END; $$;
+CREATE TRIGGER del_trig BEFORE DELETE ON pa_target
+  FOR EACH ROW EXECUTE PROCEDURE trig_fn();
+DO $$
+DECLARE
+  result integer;
+BEGIN
+MERGE INTO pa_target t
+  USING pa_source s
+  ON t.tid = s.sid
+  WHEN MATCHED THEN
+    UPDATE SET tid = tid + 1, balance = balance + delta, val = val || ' updated by merge'
+  WHEN NOT MATCHED THEN
+    INSERT VALUES (sid, delta, 'inserted by merge');
+GET DIAGNOSTICS result := ROW_COUNT;
+RAISE NOTICE 'ROW_COUNT = %', result;
+END;
+$$;
+SELECT * FROM pa_target ORDER BY tid;
+ROLLBACK;
+
+-- as above, but blocked by BEFORE INSERT ROW trigger
+BEGIN;
+CREATE FUNCTION trig_fn() RETURNS trigger LANGUAGE plpgsql AS
+  $$ BEGIN RETURN NULL; END; $$;
+CREATE TRIGGER ins_trig BEFORE INSERT ON pa_target
+  FOR EACH ROW EXECUTE PROCEDURE trig_fn();
+DO $$
+DECLARE
+  result integer;
+BEGIN
+MERGE INTO pa_target t
+  USING pa_source s
+  ON t.tid = s.sid
+  WHEN MATCHED THEN
+    UPDATE SET tid = tid + 1, balance = balance + delta, val = val || ' updated by merge'
+  WHEN NOT MATCHED THEN
+    INSERT VALUES (sid, delta, 'inserted by merge');
+GET DIAGNOSTICS result := ROW_COUNT;
+RAISE NOTICE 'ROW_COUNT = %', result;
+END;
+$$;
 SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 
