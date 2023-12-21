@@ -1282,6 +1282,45 @@ select tableoid::regclass, * from idxpart order by a;
 (8 rows)
 
 drop table idxpart;
+-- Test some other non-btree index types
+create table idxpart (a int, b text, c int[]) partition by range (a);
+create table idxpart1 partition of idxpart for values from (0) to (100000);
+set enable_seqscan to off;
+create index idxpart_brin on idxpart using brin(b);
+explain (costs off) select * from idxpart where b = 'abcd';
+                QUERY PLAN                 
+-------------------------------------------
+ Bitmap Heap Scan on idxpart1 idxpart
+   Recheck Cond: (b = 'abcd'::text)
+   ->  Bitmap Index Scan on idxpart1_b_idx
+         Index Cond: (b = 'abcd'::text)
+(4 rows)
+
+drop index idxpart_brin;
+create index idxpart_spgist on idxpart using spgist(b);
+explain (costs off) select * from idxpart where b = 'abcd';
+                QUERY PLAN                 
+-------------------------------------------
+ Bitmap Heap Scan on idxpart1 idxpart
+   Recheck Cond: (b = 'abcd'::text)
+   ->  Bitmap Index Scan on idxpart1_b_idx
+         Index Cond: (b = 'abcd'::text)
+(4 rows)
+
+drop index idxpart_spgist;
+create index idxpart_gin on idxpart using gin(c);
+explain (costs off) select * from idxpart where c @> array[42];
+                  QUERY PLAN                  
+----------------------------------------------
+ Bitmap Heap Scan on idxpart1 idxpart
+   Recheck Cond: (c @> '{42}'::integer[])
+   ->  Bitmap Index Scan on idxpart1_c_idx
+         Index Cond: (c @> '{42}'::integer[])
+(4 rows)
+
+drop index idxpart_gin;
+reset enable_seqscan;
+drop table idxpart;
 -- intentionally leave some objects around
 create table idxpart (a int) partition by range (a);
 create table idxpart1 partition of idxpart for values from (0) to (100);
