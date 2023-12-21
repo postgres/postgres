@@ -100,7 +100,7 @@ typedef uint16 *BlockRefTableChunk;
  * 'chunk_size' is an array storing the allocated size of each chunk.
  *
  * 'chunk_usage' is an array storing the number of elements used in each
- * chunk. If that value is less than MAX_ENTRIES_PER_CHUNK, the corresonding
+ * chunk. If that value is less than MAX_ENTRIES_PER_CHUNK, the corresponding
  * chunk is used as an array; else the corresponding chunk is used as a bitmap.
  * When used as a bitmap, the least significant bit of the first array element
  * is the status of the lowest-numbered block covered by this chunk.
@@ -183,7 +183,7 @@ typedef struct BlockRefTableBuffer
  * table reference file from disk.
  *
  * total_chunks means the number of chunks for the RelFileLocator/ForkNumber
- * combination that is curently being read, and consumed_chunks is the number
+ * combination that is currently being read, and consumed_chunks is the number
  * of those that have been read. (We always read all the information for
  * a single chunk at one time, so we don't need to be able to represent the
  * state where a chunk has been partially read.)
@@ -567,7 +567,7 @@ WriteBlockRefTable(BlockRefTable *brtab,
  * malformed. This is not used for I/O errors, which must be handled internally
  * by read_callback.
  *
- * 'error_callback_arg' is an opaque arguent to be passed to error_callback.
+ * 'error_callback_arg' is an opaque argument to be passed to error_callback.
  */
 BlockRefTableReader *
 CreateBlockRefTableReader(io_callback_fn read_callback,
@@ -922,7 +922,7 @@ BlockRefTableEntrySetLimitBlock(BlockRefTableEntry *entry,
 
 	/*
 	 * Next, we need to discard any offsets within the chunk that would
-	 * contain the limit_block. We must handle this differenly depending on
+	 * contain the limit_block. We must handle this differently depending on
 	 * whether the chunk that would contain limit_block is a bitmap or an
 	 * array of offsets.
 	 */
@@ -955,7 +955,7 @@ BlockRefTableEntrySetLimitBlock(BlockRefTableEntry *entry,
 }
 
 /*
- * Mark a block in a given BlkRefTableEntry as known to have been modified.
+ * Mark a block in a given BlockRefTableEntry as known to have been modified.
  */
 void
 BlockRefTableEntryMarkBlockModified(BlockRefTableEntry *entry,
@@ -1112,7 +1112,7 @@ BlockRefTableEntryMarkBlockModified(BlockRefTableEntry *entry,
 }
 
 /*
- * Release memory for a BlockRefTablEntry that was created by
+ * Release memory for a BlockRefTableEntry that was created by
  * CreateBlockRefTableEntry.
  */
 void

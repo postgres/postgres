@@ -83,7 +83,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         The <option>-n</option>/<option>--dry-run</option> option instructs
-        <command>pg_cominebackup</command> to figure out what would be done
+        <command>pg_combinebackup</command> to figure out what would be done
         without actually creating the target directory or any output files.
         It is particularly useful in combination with <option>--debug</option>.
        </para>

@@ -213,7 +213,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-i <replaceable class="parameter">old_manifest_file</replaceable></option></term>
-      <term><option>--incremental=<replaceable class="parameter">old_meanifest_file</replaceable></option></term>
+      <term><option>--incremental=<replaceable class="parameter">old_manifest_file</replaceable></option></term>
       <listitem>
        <para>
         Performs an <link linkend="backup-incremental-backup">incremental

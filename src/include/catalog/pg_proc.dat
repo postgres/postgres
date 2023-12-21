@@ -12109,7 +12109,7 @@
   proargnames => '{tli,start_lsn,end_lsn}',
   prosrc => 'pg_available_wal_summaries' },
 { oid => '8437',
-  descr => 'contents of a WAL sumamry file',
+  descr => 'contents of a WAL summary file',
   proname => 'pg_wal_summary_contents', prorows => '100',
   proretset => 't', provolatile => 'v', proparallel => 's',
   prorettype => 'record', proargtypes => 'int8 pg_lsn pg_lsn',

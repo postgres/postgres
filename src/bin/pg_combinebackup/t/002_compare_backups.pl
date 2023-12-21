@@ -113,7 +113,7 @@ $pitr2->poll_query_until('postgres',
 # It would be much nicer if we could physically compare the data files, but
 # that doesn't really work. The contents of the page hole aren't guaranteed to
 # be identical, and there can be other discrepancies as well. To make this work
-# we'd need the equivalent of each AM's rm_mask functon written or at least
+# we'd need the equivalent of each AM's rm_mask function written or at least
 # callable from Perl, and that doesn't seem practical.
 #
 # NB: We're just using the primary's backup directory for scratch space here.

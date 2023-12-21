@@ -272,7 +272,7 @@ flush_manifest(manifest_writer *mwriter)
 }
 
 /*
- * Encode bytes using two hexademical digits for each one.
+ * Encode bytes using two hexadecimal digits for each one.
  */
 static size_t
 hex_encode(const uint8 *src, size_t len, char *dst)

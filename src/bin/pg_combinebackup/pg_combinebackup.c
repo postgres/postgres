@@ -454,7 +454,7 @@ check_backup_label_files(int n_backups, char **backup_dirs)
 		 * The exact size limit that we impose here doesn't really matter --
 		 * most of what's supposed to be in the file is fixed size and quite
 		 * short. However, the length of the backup_label is limited (at least
-		 * by some parts of the code) to MAXGPATH, so include that value in
+		 * by some parts of the code) to MAXPGPATH, so include that value in
 		 * the maximum length that we tolerate.
 		 */
 		slurp_file(fd, pathbuf, buf, 10000 + MAXPGPATH);
@@ -1192,7 +1192,7 @@ scan_for_existing_tablespaces(char *pathname, cb_options *opt)
 			if (!is_absolute_path(link_target))
 				pg_fatal("symbolic link \"%s\" is relative", tblspcdir);
 
-			/* Caonicalize the link target. */
+			/* Canonicalize the link target. */
 			canonicalize_path(link_target);
 
 			/*
@@ -1222,7 +1222,7 @@ scan_for_existing_tablespaces(char *pathname, cb_options *opt)
 			 * we just record the paths within the data directories.
 			 */
 			snprintf(ts->old_dir, MAXPGPATH, "%s/%s", pg_tblspc, de->d_name);
-			snprintf(ts->new_dir, MAXPGPATH, "%s/pg_tblpc/%s", opt->output,
+			snprintf(ts->new_dir, MAXPGPATH, "%s/pg_tblspc/%s", opt->output,
 					 de->d_name);
 			ts->in_place = true;
 		}

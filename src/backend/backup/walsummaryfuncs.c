@@ -92,7 +92,7 @@ pg_wal_summary_contents(PG_FUNCTION_ARGS)
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("invalid timeline %lld", (long long) raw_tli));
 
-	/* Prepare to read the specified WAL summry file. */
+	/* Prepare to read the specified WAL summary file. */
 	ws.tli = (TimeLineID) raw_tli;
 	ws.start_lsn = PG_GETARG_LSN(1);
 	ws.end_lsn = PG_GETARG_LSN(2);
@@ -143,7 +143,7 @@ pg_wal_summary_contents(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * If the limit block is not InvalidBlockNumber, emit an exta row
+			 * If the limit block is not InvalidBlockNumber, emit an extra row
 			 * with that block number and limit_block = true.
 			 *
 			 * There is no point in doing this when the limit_block is

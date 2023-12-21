@@ -69,7 +69,7 @@ my $nocsum_manifest =
 	slurp_file($node->backup_dir . '/csum_none/backup_manifest');
 my $nocsum_count = (() = $nocsum_manifest =~ /Checksum-Algorithm/mig);
 is($nocsum_count, 0,
-	"Checksum_Algorithm is not mentioned in no-checksum manifest");
+	"Checksum-Algorithm is not mentioned in no-checksum manifest");
 
 # OK, that's all.
 done_testing();

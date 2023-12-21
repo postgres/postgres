@@ -706,7 +706,7 @@ UploadManifest(void)
 	pq_endmessage_reuse(&buf);
 	pq_flush();
 
-	/* Recieve packets from client until done. */
+	/* Receive packets from client until done. */
 	while (HandleUploadManifestPacket(&buf, &offset, ib))
 		;
 
@@ -719,7 +719,7 @@ UploadManifest(void)
 	 *
 	 * We assume that MemoryContextDelete and MemoryContextSetParent won't
 	 * fail, and thus we shouldn't end up bailing out of here in such a way as
-	 * to leave dangling pointrs.
+	 * to leave dangling pointers.
 	 */
 	if (uploaded_manifest_mcxt != NULL)
 		MemoryContextDelete(uploaded_manifest_mcxt);

@@ -87,7 +87,7 @@ typedef struct
 	XLogRecPtr	pending_lsn;
 
 	/*
-	 * This field handles its own synchronizaton.
+	 * This field handles its own synchronization.
 	 */
 	ConditionVariable summary_file_cv;
 } WalSummarizerData;
@@ -117,7 +117,7 @@ static long sleep_quanta = 1;
 /*
  * The sleep time will always be a multiple of 200ms and will not exceed
  * thirty seconds (150 * 200 = 30 * 1000). Note that the timeout here needs
- * to be substntially less than the maximum amount of time for which an
+ * to be substantially less than the maximum amount of time for which an
  * incremental backup will wait for this process to catch up. Otherwise, an
  * incremental backup might time out on an idle system just because we sleep
  * for too long.
@@ -212,7 +212,7 @@ WalSummarizerMain(void)
 	/*
 	 * Within this function, 'current_lsn' and 'current_tli' refer to the
 	 * point from which the next WAL summary file should start. 'exact' is
-	 * true if 'current_lsn' is known to be the start of a WAL recod or WAL
+	 * true if 'current_lsn' is known to be the start of a WAL record or WAL
 	 * segment, and false if it might be in the middle of a record someplace.
 	 *
 	 * 'switch_lsn' and 'switch_tli', if set, are the LSN at which we need to
@@ -297,7 +297,7 @@ WalSummarizerMain(void)
 
 		/*
 		 * Sleep for 10 seconds before attempting to resume operations in
-		 * order to avoid excessing logging.
+		 * order to avoid excessive logging.
 		 *
 		 * Many of the likely error conditions are things that will repeat
 		 * every time. For example, if the WAL can't be read or the summary
@@ -449,7 +449,7 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact,
 		return InvalidXLogRecPtr;
 
 	/*
-	 * Unless we need to reset the pending_lsn, we initally acquire the lock
+	 * Unless we need to reset the pending_lsn, we initially acquire the lock
 	 * in shared mode and try to fetch the required information. If we acquire
 	 * in shared mode and find that the data structure hasn't been
 	 * initialized, we reacquire the lock in exclusive mode so that we can
@@ -699,7 +699,7 @@ HandleWalSummarizerInterrupts(void)
  *
  * 'start_lsn' is the point at which we should start summarizing. If this
  * value comes from the end LSN of the previous record as returned by the
- * xlograder machinery, 'exact' should be true; otherwise, 'exact' should
+ * xlogreader machinery, 'exact' should be true; otherwise, 'exact' should
  * be false, and this function will search forward for the start of a valid
  * WAL record.
  *
@@ -872,7 +872,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 			xlogreader->ReadRecPtr >= switch_lsn)
 		{
 			/*
-			 * Woops! We've read a record that *starts* after the switch LSN,
+			 * Whoops! We've read a record that *starts* after the switch LSN,
 			 * contrary to our goal of reading only until we hit the first
 			 * record that ends at or after the switch LSN. Pretend we didn't
 			 * read it after all by bailing out of this loop right here,
@@ -1061,7 +1061,7 @@ SummarizeSmgrRecord(XLogReaderState *xlogreader, BlockRefTable *brtab)
 }
 
 /*
- * Special handling for WAL recods with RM_XACT_ID.
+ * Special handling for WAL records with RM_XACT_ID.
  */
 static void
 SummarizeXactRecord(XLogReaderState *xlogreader, BlockRefTable *brtab)
@@ -1116,7 +1116,7 @@ SummarizeXactRecord(XLogReaderState *xlogreader, BlockRefTable *brtab)
 }
 
 /*
- * Special handling for WAL recods with RM_XLOG_ID.
+ * Special handling for WAL records with RM_XLOG_ID.
  */
 static bool
 SummarizeXlogRecord(XLogReaderState *xlogreader)
@@ -1294,8 +1294,7 @@ summarizer_wait_for_wal(void)
 		 * sleep time to the minimum, but we don't want a handful of extra WAL
 		 * records to provoke a strong reaction. We choose to reduce the sleep
 		 * time by 1 quantum for each page read beyond the first, which is a
-		 * fairly arbitrary way of trying to be reactive without
-		 * overrreacting.
+		 * fairly arbitrary way of trying to be reactive without overreacting.
 		 */
 		if (pages_read_since_last_sleep > sleep_quanta - 1)
 			sleep_quanta = 1;

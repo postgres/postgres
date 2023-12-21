@@ -158,7 +158,7 @@ CreateIncrementalBackupInfo(MemoryContext mcxt)
 
 /*
  * Before taking an incremental backup, the caller must supply the backup
- * manifest from a prior backup. Each chunk of manifest data recieved
+ * manifest from a prior backup. Each chunk of manifest data received
  * from the client should be passed to this function.
  */
 void
@@ -462,7 +462,7 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 			++deadcycles;
 
 		/*
-		 * If we've managed to wait for an entire minute withot the WAL
+		 * If we've managed to wait for an entire minute without the WAL
 		 * summarizer absorbing a single WAL record, error out; probably
 		 * something is wrong.
 		 *
@@ -473,7 +473,7 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 		 * likely to catch a reasonable number of the things that can go wrong
 		 * in practice (e.g. the summarizer process is completely hung, say
 		 * because somebody hooked up a debugger to it or something) without
-		 * giving up too quickly when the sytem is just slow.
+		 * giving up too quickly when the system is just slow.
 		 */
 		if (deadcycles >= 6)
 			ereport(ERROR,
