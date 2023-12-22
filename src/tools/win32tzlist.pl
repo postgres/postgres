@@ -18,7 +18,18 @@
 use strict;
 use warnings;
 
-use Win32::Registry;
+use Config;
+
+our $HKEY_LOCAL_MACHINE;
+
+BEGIN
+{
+	if ($Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys')
+	{
+		require Win32::Registry;
+		Win32::Registry->import;
+	}
+}
 
 my $tzfile = 'src/bin/initdb/findtimezone.c';
 
