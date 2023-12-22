@@ -1,12 +1,4 @@
 <!-- doc/src/sgml/installation.sgml -->
-<!--
-
-The standalone version has some portions that are different from the version
-that is integrated into the full documentation set, in particular as regards
-links, so that INSTALL.html can be created without links to the main
-documentation.  See standalone-profile.xsl for details.
-
--->
 
 <chapter id="installation">
  <title>Installation from Source Code</title>
@@ -15,7 +7,6 @@ documentation.  See standalone-profile.xsl for details.
   <primary>installation</primary>
  </indexterm>
 
- <!-- See also the version of this text in standalone-install.xml -->
  <para>
   This chapter describes the installation of
   <productname>PostgreSQL</productname> using the source code
@@ -942,9 +933,7 @@ build-postgresql:
        <listitem>
         <para>
          Build with support for <productname>LLVM</productname> based
-         <acronym>JIT</acronym> compilation<phrase
-         condition="standalone-ignore"> (see <xref
-         linkend="jit"/>)</phrase>.  This
+         <acronym>JIT</acronym> compilation (see <xref linkend="jit"/>).  This
          requires the <productname>LLVM</productname> library to be installed.
          The minimum required version of <productname>LLVM</productname> is
          currently 3.9.
@@ -1085,8 +1074,8 @@ build-postgresql:
          for <application>systemd</application><indexterm><primary>systemd</primary></indexterm>
          service notifications.  This improves integration if the server
          is started under <application>systemd</application> but has no impact
-         otherwise<phrase condition="standalone-ignore">; see <xref linkend="server-start"/> for more
-         information</phrase>.  <application>libsystemd</application> and the
+         otherwise; see <xref linkend="server-start"/> for more
+         information.  <application>libsystemd</application> and the
          associated header files need to be installed to use this option.
         </para>
        </listitem>
@@ -1224,9 +1213,8 @@ build-postgresql:
         <para>
          Build without support for the
          <productname>ICU</productname><indexterm><primary>ICU</primary></indexterm>
-         library, disabling the use of ICU collation features<phrase
-         condition="standalone-ignore"> (see <xref
-         linkend="collation"/>)</phrase>.
+         library, disabling the use of ICU collation features (see <xref
+         linkend="collation"/>).
         </para>
        </listitem>
       </varlistentry>
@@ -1583,7 +1571,7 @@ build-postgresql:
         <para>
          Enable tests using the Perl TAP tools.  This requires a Perl
          installation and the Perl module <literal>IPC::Run</literal>.
-         <phrase condition="standalone-ignore">See <xref linkend="regress-tap"/> for more information.</phrase>
+         See <xref linkend="regress-tap"/> for more information.
         </para>
        </listitem>
       </varlistentry>
@@ -1610,8 +1598,8 @@ build-postgresql:
          code coverage testing instrumentation.  When run, they
          generate files in the build directory with code coverage
          metrics.
-         <phrase condition="standalone-ignore">See <xref linkend="regress-coverage"/>
-         for more information.</phrase> This option is for use only with GCC
+         See <xref linkend="regress-coverage"/>
+         for more information. This option is for use only with GCC
          and when doing development work.
         </para>
        </listitem>
@@ -1639,8 +1627,7 @@ build-postgresql:
          </indexterm>
          Compiles <productname>PostgreSQL</productname> with support for the
          dynamic tracing tool DTrace.
-         <phrase condition="standalone-ignore">See <xref linkend="dynamic-trace"/>
-         for more information.</phrase>
+         See <xref linkend="dynamic-trace"/> for more information.
         </para>
 
         <para>
@@ -2406,9 +2393,8 @@ ninja install
        <para>
         Build with support for the
         <productname>ICU</productname><indexterm><primary>ICU</primary></indexterm>
-        library, enabling use of ICU collation features<phrase
-        condition="standalone-ignore"> (see <xref
-        linkend="collation"/>)</phrase>.  Defaults to auto and requires the
+        library, enabling use of ICU collation features (see <xref
+        linkend="collation"/>).  Defaults to auto and requires the
         <productname>ICU4C</productname> package to be installed.  The minimum
         required version of <productname>ICU4C</productname> is currently 4.2.
        </para>
@@ -2420,8 +2406,7 @@ ninja install
       <listitem>
        <para>
         Build with support for <productname>LLVM</productname> based
-        <acronym>JIT</acronym> compilation<phrase
-        condition="standalone-ignore"> (see <xref linkend="jit"/>)</phrase>.
+        <acronym>JIT</acronym> compilation (see <xref linkend="jit"/>).
         This requires the <productname>LLVM</productname> library to be
         installed.  The minimum required version of
         <productname>LLVM</productname> is currently 3.9.  Disabled by
@@ -2546,8 +2531,8 @@ ninja install
         <application>systemd</application><indexterm><primary>systemd</primary></indexterm>
         service notifications.  This improves integration if the server is
         started under <application>systemd</application> but has no impact
-        otherwise<phrase condition="standalone-ignore">; see <xref
-        linkend="server-start"/> for more information</phrase>.  Defaults to
+        otherwise; see <xref
+        linkend="server-start"/> for more information.  Defaults to
         auto.  <application>libsystemd</application> and the associated header
         files need to be installed to use this option.
        </para>
@@ -3122,8 +3107,7 @@ ninja install
        <para>
         Enable tests using the Perl TAP tools.  Defaults to auto and requires
         a Perl installation and the Perl module <literal>IPC::Run</literal>.
-        <phrase condition="standalone-ignore">See <xref
-        linkend="regress-tap"/> for more information.</phrase>
+        See <xref linkend="regress-tap"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -3147,8 +3131,8 @@ ninja install
         code coverage testing instrumentation.  When run, they
         generate files in the build directory with code coverage
         metrics.
-        <phrase condition="standalone-ignore">See <xref linkend="regress-coverage"/>
-        for more information.</phrase> This option is for use only with GCC
+        See <xref linkend="regress-coverage"/>
+        for more information. This option is for use only with GCC
         and when doing development work.
        </para>
       </listitem>
@@ -3163,8 +3147,7 @@ ninja install
         </indexterm>
         Enabling this compiles <productname>PostgreSQL</productname> with support for the
         dynamic tracing tool DTrace.
-        <phrase condition="standalone-ignore">See <xref linkend="dynamic-trace"/>
-        for more information.</phrase>
+        See <xref linkend="dynamic-trace"/> for more information.
        </para>
 
        <para>

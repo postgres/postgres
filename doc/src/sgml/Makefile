@@ -36,6 +36,8 @@ ifndef FOP
 FOP = $(missing) fop
 endif
 
+PANDOC = pandoc
+
 XMLINCLUDE = --path . --path $(srcdir)
 
 ifdef XMLLINT
@@ -112,25 +114,6 @@ wait_event_types.sgml: $(top_srcdir)/src/backend/utils/activity/wait_event_names
 
 targets-meson.sgml: targets-meson.txt $(srcdir)/generate-targets-meson.pl
 	$(PERL) $(srcdir)/generate-targets-meson.pl $^ > $@
-
-##
-## Generation of some text files.
-##
-
-ICONV = iconv
-PANDOC = pandoc
-
-INSTALL: % : %.html
-	$(PANDOC) -t plain -o $@.tmp $<
-	$(ICONV) -f utf8 -t us-ascii//TRANSLIT $@.tmp > $@
-	rm $@.tmp
-
-INSTALL.html: %.html : stylesheet-text.xsl %.xml
-	$(XMLLINT) --noout --valid $*.xml
-	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^ >$@
-
-INSTALL.xml: standalone-profile.xsl standalone-install.xml postgres-full.xml
-	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) --xinclude $(wordlist 1,2,$^) >$@
 
 
 ##
@@ -284,13 +267,9 @@ check-tabs:
 # keeping the dependencies satisfied.
 .SECONDARY: $(GENERATED_SGML)
 .SECONDARY: postgres-full.xml
-.SECONDARY: INSTALL.html INSTALL.xml
 .SECONDARY: postgres-A4.fo postgres-US.fo
 
 clean:
-# text --- these are shipped, but not in this directory
-	rm -f INSTALL
-	rm -f INSTALL.html INSTALL.xml
 # single-page output
 	rm -f postgres.html postgres.txt
 # print

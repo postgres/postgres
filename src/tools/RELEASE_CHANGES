@@ -107,6 +107,9 @@ Starting a New Development Cycle
   placeholder), "git rm" the previous one, and update release.sgml and
   filelist.sgml to match.
 
+* In the newly-made branch, replace "devel" with the branch's major version
+  number in the URLs appearing in the top-level README and Makefile files.
+
 * In the newly-made branch, change src/backend/nodes/gen_node_support.pl
   to enforce ABI stability of the NodeTag list (see "ARM ABI STABILITY
   CHECK HERE" therein).

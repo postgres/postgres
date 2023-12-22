@@ -9,14 +9,13 @@ that supports an extended subset of the SQL standard, including
 transactions, foreign keys, subqueries, triggers, user-defined types
 and functions.  This distribution also contains C language bindings.
 
-See the file INSTALL for instructions on how to build and install
-PostgreSQL.  That file also lists supported operating systems and
-hardware platforms and contains information regarding any other
-software packages that are required to build or run the PostgreSQL
-system.  Copyright and license information can be found in the
-file COPYRIGHT.  A comprehensive documentation set is included in this
-distribution; it can be read as described in the installation
-instructions.
+Copyright and license information can be found in the file COPYRIGHT.
+
+General documentation about this version of PostgreSQL can be found at:
+https://www.postgresql.org/docs/devel/
+In particular, information about building PostgreSQL from the source
+code can be found at:
+https://www.postgresql.org/docs/devel/installation.html
 
 The latest version of this software, and related software, may be
 obtained at https://www.postgresql.org/download/.  For more information

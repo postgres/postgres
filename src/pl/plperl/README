@@ -6,5 +6,4 @@ To build from this directory use 'make all; make install'.  libperl
 must have been built as a shared library, which is usually not the
 case in standard installations.
 
-Consult the PostgreSQL User's Guide and the INSTALL file in the
-top-level directory of the source distribution for more information.
+Consult the PostgreSQL User's Guide for more information.

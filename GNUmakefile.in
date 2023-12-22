@@ -109,10 +109,7 @@ distdir:
 	      || cp "$(top_srcdir)/$$file" "$(distdir)/$$file"; \
 	  fi || exit; \
 	done
-	$(MAKE) -C $(distdir)/doc/src/sgml/ INSTALL
-	cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
 	$(MAKE) -C $(distdir) distclean
-	rm -f $(distdir)/README.git
 
 distcheck: dist
 	rm -rf $(dummy)
