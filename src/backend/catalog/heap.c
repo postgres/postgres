@@ -1647,6 +1647,9 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	HeapTuple	tuple;
 	Form_pg_attribute attStruct;
 	char		newattname[NAMEDATALEN];
+	Datum		valuesAtt[Natts_pg_attribute] = {0};
+	bool		nullsAtt[Natts_pg_attribute] = {0};
+	bool		replacesAtt[Natts_pg_attribute] = {0};
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT release
@@ -1695,24 +1698,24 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 			 "........pg.dropped.%d........", attnum);
 	namestrcpy(&(attStruct->attname), newattname);
 
-	/* clear the missing value if any */
-	if (attStruct->atthasmissing)
-	{
-		Datum		valuesAtt[Natts_pg_attribute] = {0};
-		bool		nullsAtt[Natts_pg_attribute] = {0};
-		bool		replacesAtt[Natts_pg_attribute] = {0};
+	/* Clear the missing value */
+	attStruct->atthasmissing = false;
+	nullsAtt[Anum_pg_attribute_attmissingval - 1] = true;
+	replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
 
-		/* update the tuple - set atthasmissing and attmissingval */
-		valuesAtt[Anum_pg_attribute_atthasmissing - 1] =
-			BoolGetDatum(false);
-		replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
-		valuesAtt[Anum_pg_attribute_attmissingval - 1] = (Datum) 0;
-		nullsAtt[Anum_pg_attribute_attmissingval - 1] = true;
-		replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
+	/*
+	 * Clear the other variable-length fields.  This saves some space in
+	 * pg_attribute and removes no longer useful information.
+	 */
+	nullsAtt[Anum_pg_attribute_attacl - 1] = true;
+	replacesAtt[Anum_pg_attribute_attacl - 1] = true;
+	nullsAtt[Anum_pg_attribute_attoptions - 1] = true;
+	replacesAtt[Anum_pg_attribute_attoptions - 1] = true;
+	nullsAtt[Anum_pg_attribute_attfdwoptions - 1] = true;
+	replacesAtt[Anum_pg_attribute_attfdwoptions - 1] = true;
 
-		tuple = heap_modify_tuple(tuple, RelationGetDescr(attr_rel),
-								  valuesAtt, nullsAtt, replacesAtt);
-	}
+	tuple = heap_modify_tuple(tuple, RelationGetDescr(attr_rel),
+							  valuesAtt, nullsAtt, replacesAtt);
 
 	CatalogTupleUpdate(attr_rel, &tuple->t_self, tuple);
 
