@@ -46,25 +46,6 @@ $node->safe_psql('postgres',
 	  . "CREATE TYPE enum1 AS ENUM ('foo', 'bar', 'baz', 'BLACK');\n"
 	  . "CREATE PUBLICATION some_publication;\n");
 
-# Developers would not appreciate this test adding a bunch of junk to
-# their ~/.psql_history, so be sure to redirect history into a temp file.
-# We might as well put it in the test log directory, so that buildfarm runs
-# capture the result for possible debugging purposes.
-my $historyfile = "${PostgreSQL::Test::Utils::log_path}/010_psql_history.txt";
-$ENV{PSQL_HISTORY} = $historyfile;
-
-# Another pitfall for developers is that they might have a ~/.inputrc
-# file that changes readline's behavior enough to affect this test.
-# So ignore any such file.
-$ENV{INPUTRC} = '/dev/null';
-
-# Unset $TERM so that readline/libedit won't use any terminal-dependent
-# escape sequences; that leads to way too many cross-version variations
-# in the output.
-delete $ENV{TERM};
-# Some versions of readline inspect LS_COLORS, so for luck unset that too.
-delete $ENV{LS_COLORS};
-
 # In a VPATH build, we'll be started in the source directory, but we want
 # to run in the build directory so that we can use relative paths to
 # access the tab_comp_dir subdirectory; otherwise the output from filename
@@ -91,8 +72,13 @@ open $FH, ">", "tab_comp_dir/afile456"
 print $FH "other stuff\n";
 close $FH;
 
+# Arrange to capture, not discard, the interactive session's history output.
+# Put it in the test log directory, so that buildfarm runs capture the result
+# for possible debugging purposes.
+my $historyfile = "${PostgreSQL::Test::Utils::log_path}/010_psql_history.txt";
+
 # fire up an interactive psql session
-my $h = $node->interactive_psql('postgres');
+my $h = $node->interactive_psql('postgres', history_file => $historyfile);
 
 # Simple test case: type something and see if psql responds as expected
 sub check_completion
