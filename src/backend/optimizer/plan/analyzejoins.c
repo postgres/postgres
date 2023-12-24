@@ -2186,7 +2186,7 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 
 /*
  * Gather indexes of base relations from the joinlist and try to eliminate self
- * joins. To avoid complexity, limit the max power of this set by a GUC.
+ * joins.
  */
 static Relids
 remove_self_joins_recurse(PlannerInfo *root, List *joinlist, Relids toRemove)
