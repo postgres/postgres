@@ -340,6 +340,8 @@ CheckpointerMain(void)
 		pg_time_t	now;
 		int			elapsed_secs;
 		int			cur_timeout;
+		bool		chkpt_or_rstpt_requested = false;
+		bool		chkpt_or_rstpt_timed = false;
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
@@ -358,7 +360,7 @@ CheckpointerMain(void)
 		if (((volatile CheckpointerShmemStruct *) CheckpointerShmem)->ckpt_flags)
 		{
 			do_checkpoint = true;
-			PendingCheckpointerStats.num_requested++;
+			chkpt_or_rstpt_requested = true;
 		}
 
 		/*
@@ -372,7 +374,7 @@ CheckpointerMain(void)
 		if (elapsed_secs >= CheckPointTimeout)
 		{
 			if (!do_checkpoint)
-				PendingCheckpointerStats.num_timed++;
+				chkpt_or_rstpt_timed = true;
 			do_checkpoint = true;
 			flags |= CHECKPOINT_CAUSE_TIME;
 		}
@@ -407,6 +409,24 @@ CheckpointerMain(void)
 			 */
 			if (flags & CHECKPOINT_END_OF_RECOVERY)
 				do_restartpoint = false;
+
+			if (chkpt_or_rstpt_timed)
+			{
+				chkpt_or_rstpt_timed = false;
+				if (do_restartpoint)
+					PendingCheckpointerStats.restartpoints_timed++;
+				else
+					PendingCheckpointerStats.num_timed++;
+			}
+
+			if (chkpt_or_rstpt_requested)
+			{
+				chkpt_or_rstpt_requested = false;
+				if (do_restartpoint)
+					PendingCheckpointerStats.restartpoints_requested++;
+				else
+					PendingCheckpointerStats.num_requested++;
+			}
 
 			/*
 			 * We will warn if (a) too soon since last checkpoint (whatever
@@ -471,6 +491,9 @@ CheckpointerMain(void)
 				 * checkpoints happen at a predictable spacing.
 				 */
 				last_checkpoint_time = now;
+
+				if (do_restartpoint)
+					PendingCheckpointerStats.restartpoints_performed++;
 			}
 			else
 			{

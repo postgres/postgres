@@ -655,14 +655,41 @@
    directory.
    Restartpoints can't be performed more frequently than checkpoints on the
    primary because restartpoints can only be performed at checkpoint records.
-   A restartpoint is triggered when a checkpoint record is reached if at
-   least <varname>checkpoint_timeout</varname> seconds have passed since the last
-   restartpoint, or if WAL size is about to exceed
-   <varname>max_wal_size</varname>. However, because of limitations on when a
-   restartpoint can be performed, <varname>max_wal_size</varname> is often exceeded
-   during recovery, by up to one checkpoint cycle's worth of WAL.
+   A restartpoint can be demanded by a schedule or by an external request.
+   The <structfield>restartpoints_timed</structfield> counter in the
+   <link linkend="monitoring-pg-stat-checkpointer-view"><structname>pg_stat_checkpointer</structname></link>
+   view counts the first ones while the <structfield>restartpoints_req</structfield>
+   the second.
+   A restartpoint is triggered by schedule when a checkpoint record is reached
+   if at least <xref linkend="guc-checkpoint-timeout"/> seconds have passed since
+   the last performed restartpoint or when the previous attempt to perform
+   the restartpoint has failed. In the last case, the next restartpoint
+   will be scheduled in 15 seconds.
+   A restartpoint is triggered by request due to similar reasons like checkpoint
+   but mostly if WAL size is about to exceed <xref linkend="guc-max-wal-size"/>
+   However, because of limitations on when a restartpoint can be performed,
+   <varname>max_wal_size</varname> is often exceeded during recovery,
+   by up to one checkpoint cycle's worth of WAL.
    (<varname>max_wal_size</varname> is never a hard limit anyway, so you should
    always leave plenty of headroom to avoid running out of disk space.)
+   The <structfield>restartpoints_done</structfield> counter in the
+   <link linkend="monitoring-pg-stat-checkpointer-view"><structname>pg_stat_checkpointer</structname></link>
+   view counts the restartpoints that have really been performed.
+  </para>
+
+  <para>
+   In some cases, when the WAL size on the primary increases quickly,
+   for instance during massive INSERT,
+   the <structfield>restartpoints_req</structfield> counter on the standby
+   may demonstrate a peak growth.
+   This occurs because requests to create a new restartpoint due to increased
+   XLOG consumption cannot be performed because the safe checkpoint record
+   since the last restartpoint has not yet been replayed on the standby.
+   This behavior is normal and does not lead to an increase in system resource
+   consumption.
+   Only the <structfield>restartpoints_done</structfield>
+   counter among the restartpoint-related ones indicates that noticeable system
+   resources have been spent.
   </para>
 
   <para>
