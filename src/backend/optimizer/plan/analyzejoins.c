@@ -1456,7 +1456,16 @@ replace_varno_walker(Node *node, ReplaceVarnoContext *ctx)
 		}
 		return false;
 	}
-	if (IsA(node, RestrictInfo))
+	else if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		phv->phrels = replace_relid(phv->phrels, ctx->from, ctx->to);
+		phv->phnullingrels = replace_relid(phv->phnullingrels, ctx->from, ctx->to);
+
+		/* fall through to recurse into the placeholder's expression */
+	}
+	else if (IsA(node, RestrictInfo))
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) node;
 		int			relid = -1;
@@ -1639,26 +1648,6 @@ update_eclasses(EquivalenceClass *ec, int from, int to)
 	list_free(ec->ec_sources);
 	ec->ec_sources = new_sources;
 	ec->ec_relids = replace_relid(ec->ec_relids, from, to);
-}
-
-static bool
-sje_walker(Node *node, ReplaceVarnoContext *ctx)
-{
-	if (node == NULL)
-		return false;
-
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varno == ctx->from)
-		{
-			var->varno = ctx->to;
-			var->varnosyn = ctx->to;
-		}
-		return false;
-	}
-	return expression_tree_walker(node, sje_walker, (void *) ctx);
 }
 
 /*
@@ -1868,7 +1857,8 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	}
 
 	/* Replace varno in all the query structures */
-	query_tree_walker(root->parse, sje_walker, &ctx, QTW_EXAMINE_SORTGROUP);
+	query_tree_walker(root->parse, replace_varno_walker, &ctx,
+					  QTW_EXAMINE_SORTGROUP);
 
 	/* Replace links in the planner info */
 	remove_rel_from_query(root, toRemove, toKeep->relid, NULL, NULL);
