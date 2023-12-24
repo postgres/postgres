@@ -453,7 +453,7 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
 
-		Assert(!bms_is_member(relid, phinfo->ph_lateral));
+		Assert(sjinfo == NULL || !bms_is_member(relid, phinfo->ph_lateral));
 		if (bms_is_subset(phinfo->ph_needed, joinrelids) &&
 			bms_is_member(relid, phinfo->ph_eval_at) &&
 			!bms_is_member(ojrelid, phinfo->ph_eval_at))
@@ -472,6 +472,8 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 			phinfo->ph_needed = replace_relid(phinfo->ph_needed, relid, subst);
 			phinfo->ph_needed = replace_relid(phinfo->ph_needed, ojrelid, subst);
 			/* ph_needed might or might not become empty */
+			phinfo->ph_lateral = replace_relid(phinfo->ph_lateral, relid, subst);
+			/* ph_lateral might or might not be empty */
 			phv->phrels = replace_relid(phv->phrels, relid, subst);
 			phv->phrels = replace_relid(phv->phrels, ojrelid, subst);
 			Assert(!bms_is_empty(phv->phrels));
@@ -2115,20 +2117,8 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			joinrelids = bms_add_member(joinrelids, k);
 
 			/*
-			 * Be safe to do not remove tables participated in complicated PH
+			 * PHVs should not impose any constraints on removing self joins.
 			 */
-			foreach(lc, root->placeholder_list)
-			{
-				PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
-
-				/* there isn't any other place to eval PHV */
-				if (bms_is_subset(phinfo->ph_eval_at, joinrelids) ||
-					bms_is_subset(phinfo->ph_needed, joinrelids) ||
-					bms_is_member(r, phinfo->ph_lateral))
-					break;
-			}
-			if (lc)
-				continue;
 
 			/*
 			 * At this stage, joininfo lists of inner and outer can contain

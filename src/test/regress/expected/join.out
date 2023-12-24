@@ -6821,20 +6821,37 @@ on true;
                            Filter: (id IS NOT NULL)
 (8 rows)
 
--- Check that SJE does not remove self joins if a PHV references the removed
--- rel laterally.
-explain (costs off)
+-- Check that PHVs do not impose any constraints on removing self joins
+explain (verbose, costs off)
 select * from emp1 t1 join emp1 t2 on t1.id = t2.id left join
     lateral (select t1.id as t1id, * from generate_series(1,1) t3) s on true;
-                    QUERY PLAN                     
----------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Nested Loop Left Join
-   ->  Nested Loop
-         ->  Seq Scan on emp1 t1
-         ->  Index Scan using emp1_pkey on emp1 t2
-               Index Cond: (id = t1.id)
-   ->  Function Scan on generate_series t3
-(6 rows)
+   Output: t2.id, t2.code, t2.id, t2.code, (t2.id), t3.t3
+   ->  Seq Scan on public.emp1 t2
+         Output: t2.id, t2.code
+         Filter: (t2.id IS NOT NULL)
+   ->  Function Scan on pg_catalog.generate_series t3
+         Output: t3.t3, t2.id
+         Function Call: generate_series(1, 1)
+(8 rows)
+
+explain (verbose, costs off)
+select * from generate_series(1,10) t1(id) left join
+    lateral (select t1.id as t1id, t2.id from emp1 t2 join emp1 t3 on t2.id = t3.id)
+on true;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Nested Loop Left Join
+   Output: t1.id, (t1.id), t3.id
+   ->  Function Scan on pg_catalog.generate_series t1
+         Output: t1.id
+         Function Call: generate_series(1, 10)
+   ->  Seq Scan on public.emp1 t3
+         Output: t3.id, t1.id
+         Filter: (t3.id IS NOT NULL)
+(8 rows)
 
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
