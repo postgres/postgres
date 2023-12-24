@@ -4908,7 +4908,7 @@ initPopulateTable(PGconn *con, const char *table, int64 base,
 				  initRowMethod init_row)
 {
 	int			n;
-	int			k;
+	int64		k;
 	int			chars = 0;
 	PGresult   *res;
 	PQExpBufferData sql;
