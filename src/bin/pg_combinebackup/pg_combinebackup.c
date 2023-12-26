@@ -669,8 +669,8 @@ help(const char *progname)
 	printf(_("  -n, --dry-run             don't actually do anything\n"));
 	printf(_("  -N, --no-sync             do not wait for changes to be written safely to disk\n"));
 	printf(_("  -o, --output              output directory\n"));
-	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"));
-	printf(_("                            relocate tablespace in OLDDIR to NEWDIR\n"));
+	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+			 "                            relocate tablespace in OLDDIR to NEWDIR\n"));
 	printf(_("      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 			 "                            use algorithm for manifest checksums\n"));
 	printf(_("      --no-manifest         suppress generation of backup manifest\n"));

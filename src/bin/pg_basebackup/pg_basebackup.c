@@ -396,8 +396,8 @@ usage(void)
 	printf(_("\nOptions controlling the output:\n"));
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
-	printf(_("  -i, --incremental=OLDMANIFEST\n"));
-	printf(_("                         take incremental backup\n"));
+	printf(_("  -i, --incremental=OLDMANIFEST\n"
+			 "                         take incremental backup\n"));
 	printf(_("  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
 			 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
 	printf(_("  -R, --write-recovery-conf\n"
