@@ -432,7 +432,8 @@
    implemented by <quote>walsender</quote> and <quote>apply</quote>
    processes.  The walsender process starts logical decoding (described
    in <xref linkend="logicaldecoding"/>) of the WAL and loads the standard
-   logical decoding plugin (pgoutput).  The plugin transforms the changes read
+   logical decoding output plugin (<literal>pgoutput</literal>).  The plugin
+   transforms the changes read
    from WAL to the logical replication protocol
    (see <xref linkend="protocol-logical-replication"/>) and filters the data
    according to the publication specification.  The data is then continuously

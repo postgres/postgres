@@ -2515,7 +2515,10 @@ The commands accepted in replication mode are:
        <term><replaceable class="parameter">option_name</replaceable></term>
        <listitem>
         <para>
-         The name of an option passed to the slot's logical decoding plugin.
+         The name of an option passed to the slot's logical decoding output
+         plugin.  See <xref linkend="protocol-logical-replication"/> for
+         options that are accepted by the standard (<literal>pgoutput</literal>)
+         plugin.
         </para>
        </listitem>
       </varlistentry>
@@ -2823,12 +2826,18 @@ The commands accepted in replication mode are:
   the physical streaming replication protocol.
  </para>
 
+ <para>
+  <productname>PostgreSQL</productname> logical decoding supports output
+  plugins.  <literal>pgoutput</literal> is the standard one used for
+  the built-in logical replication.
+ </para>
+
  <sect2 id="protocol-logical-replication-params">
   <title>Logical Streaming Replication Parameters</title>
 
   <para>
-   The logical replication <literal>START_REPLICATION</literal> command
-   accepts following parameters:
+   Using the <literal>START_REPLICATION</literal> command,
+   <literal>pgoutput</literal> accepts the following options:
 
    <variablelist>
     <varlistentry>
@@ -2838,7 +2847,7 @@ The commands accepted in replication mode are:
      <listitem>
       <para>
        Protocol version. Currently only version <literal>1</literal> is
-       supported.
+       supported.  A valid version is required.
       </para>
      </listitem>
     </varlistentry>
@@ -2852,6 +2861,7 @@ The commands accepted in replication mode are:
        Comma separated list of publication names for which to subscribe
        (receive changes). The individual publication names are treated
        as standard objects names and can be quoted the same as needed.
+       At least one publication name is required.
       </para>
      </listitem>
     </varlistentry>
