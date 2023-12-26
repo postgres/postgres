@@ -532,7 +532,7 @@ test_sub=# SELECT * FROM t3;
     remote replication slot was not created automatically, the user must create
     it manually before the subscription can be activated. The steps to create
     the slot and activate the subscription are shown in the following examples.
-    These examples specify the standard logical decoding plugin
+    These examples specify the standard logical decoding output plugin
     (<literal>pgoutput</literal>), which is what the built-in logical
     replication uses.
    </para>
@@ -1643,7 +1643,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    implemented by <literal>walsender</literal> and <literal>apply</literal>
    processes.  The walsender process starts logical decoding (described
    in <xref linkend="logicaldecoding"/>) of the WAL and loads the standard
-   logical decoding plugin (pgoutput).  The plugin transforms the changes read
+   logical decoding output plugin (<literal>pgoutput</literal>).  The plugin
+   transforms the changes read
    from WAL to the logical replication protocol
    (see <xref linkend="protocol-logical-replication"/>) and filters the data
    according to the publication specification.  The data is then continuously
