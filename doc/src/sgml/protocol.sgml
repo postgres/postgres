@@ -2525,7 +2525,10 @@ The commands accepted in replication mode are:
        <term><replaceable class="parameter">option_name</replaceable></term>
        <listitem>
         <para>
-         The name of an option passed to the slot's logical decoding plugin.
+         The name of an option passed to the slot's logical decoding output
+         plugin.  See <xref linkend="protocol-logical-replication"/> for
+         options that are accepted by the standard (<literal>pgoutput</literal>)
+         plugin.
         </para>
        </listitem>
       </varlistentry>
@@ -2870,12 +2873,18 @@ The commands accepted in replication mode are:
   the physical streaming replication protocol.
  </para>
 
+ <para>
+  <productname>PostgreSQL</productname> logical decoding supports output
+  plugins.  <literal>pgoutput</literal> is the standard one used for
+  the built-in logical replication.
+ </para>
+
  <sect2 id="protocol-logical-replication-params">
   <title>Logical Streaming Replication Parameters</title>
 
   <para>
-   The logical replication <literal>START_REPLICATION</literal> command
-   accepts following parameters:
+   Using the <literal>START_REPLICATION</literal> command,
+   <literal>pgoutput</literal> accepts the following options:
 
    <variablelist>
     <varlistentry>
@@ -2885,7 +2894,8 @@ The commands accepted in replication mode are:
      <listitem>
       <para>
        Protocol version. Currently versions <literal>1</literal> and
-       <literal>2</literal> are supported. The version <literal>2</literal>
+       <literal>2</literal> are supported.  A valid version is required.
+       The version <literal>2</literal>
        is supported only for server version 14 and above, and it allows
        streaming of large in-progress transactions.
      </para>
@@ -2901,6 +2911,43 @@ The commands accepted in replication mode are:
        Comma separated list of publication names for which to subscribe
        (receive changes). The individual publication names are treated
        as standard objects names and can be quoted the same as needed.
+       At least one publication name is required.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      binary
+     </term>
+     <listitem>
+      <para>
+       Boolean option to use binary transfer mode.  Binary mode is faster
+       than the text mode but slightly less robust.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      messages
+     </term>
+     <listitem>
+      <para>
+       Boolean option to enable sending the messages that are written
+       by <function>pg_logical_emit_message</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      streaming
+     </term>
+     <listitem>
+      <para>
+       Boolean option to enable streaming of in-progress transactions.
+       Minimum protocol version 2 is required to turn it on.
       </para>
      </listitem>
     </varlistentry>
