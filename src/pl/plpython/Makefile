@@ -39,6 +39,7 @@ DATA = $(NAME)u.control $(NAME)u--1.0.sql
 # header files to install - it's not clear which of these might be needed
 # so install them all.
 INCS = 	plpython.h \
+	plpython_system.h \
 	plpy_cursorobject.h \
 	plpy_elog.h \
 	plpy_exec.h \
@@ -120,7 +121,7 @@ install-data: installdirs
 
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))
-	rm -f $(addprefix '$(DESTDIR)$(includedir_server)'/, plpython.h plpy_util.h)
+	rm -f $(addprefix '$(DESTDIR)$(includedir_server)'/, $(INCS))
 
 .PHONY: install-data uninstall-data
 
