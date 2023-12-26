@@ -67,6 +67,7 @@ install_headers(
   'plpy_typeio.h',
   'plpy_util.h',
   'plpython.h',
+  'plpython_server.h',
   install_dir: dir_include_server,
 )
 

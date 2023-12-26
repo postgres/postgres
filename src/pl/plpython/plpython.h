@@ -20,27 +20,10 @@
 #endif
 
 /*
- * Python versions <= 3.8 otherwise define a replacement, causing macro
- * redefinition warnings.
+ * Pull in Python headers via a wrapper header, to control the scope of
+ * the system_header pragma therein.
  */
-#define HAVE_SNPRINTF 1
-
-#if defined(_MSC_VER) && defined(_DEBUG)
-/* Python uses #pragma to bring in a non-default libpython on VC++ if
- * _DEBUG is defined */
-#undef _DEBUG
-/* Also hide away errcode, since we load Python.h before postgres.h */
-#define errcode __msvc_errcode
-#include <Python.h>
-#undef errcode
-#define _DEBUG
-#elif defined (_MSC_VER)
-#define errcode __msvc_errcode
-#include <Python.h>
-#undef errcode
-#else
-#include <Python.h>
-#endif
+#include "plpython_system.h"
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN

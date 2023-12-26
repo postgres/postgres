@@ -71,6 +71,7 @@ install_data(
 
 install_headers(
   'plperl.h',
+  'plperl_system.h',
   'ppport.h',
   install_dir: dir_include_server,
 )
