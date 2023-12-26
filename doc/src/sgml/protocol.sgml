@@ -2545,7 +2545,10 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         <term><replaceable class="parameter">option_name</replaceable></term>
         <listitem>
          <para>
-          The name of an option passed to the slot's logical decoding plugin.
+          The name of an option passed to the slot's logical decoding output
+          plugin.  See <xref linkend="protocol-logical-replication"/> for
+          options that are accepted by the standard (<literal>pgoutput</literal>)
+          plugin.
          </para>
         </listitem>
        </varlistentry>
@@ -3106,12 +3109,18 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
   the physical streaming replication protocol.
  </para>
 
+ <para>
+  <productname>PostgreSQL</productname> logical decoding supports output
+  plugins.  <literal>pgoutput</literal> is the standard one used for
+  the built-in logical replication.
+ </para>
+
  <sect2 id="protocol-logical-replication-params">
   <title>Logical Streaming Replication Parameters</title>
 
   <para>
-   The logical replication <literal>START_REPLICATION</literal> command
-   accepts following parameters:
+   Using the <literal>START_REPLICATION</literal> command,
+   <literal>pgoutput</literal> accepts the following options:
 
    <variablelist>
     <varlistentry>
@@ -3121,7 +3130,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
      <listitem>
       <para>
        Protocol version. Currently versions <literal>1</literal>, <literal>2</literal>,
-       <literal>3</literal>, and <literal>4</literal> are supported.
+       <literal>3</literal>, and <literal>4</literal> are supported.  A valid
+       version is required.
       </para>
       <para>
        Version <literal>2</literal> is supported only for server version 14
@@ -3148,6 +3158,73 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        Comma separated list of publication names for which to subscribe
        (receive changes). The individual publication names are treated
        as standard objects names and can be quoted the same as needed.
+       At least one publication name is required.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      binary
+     </term>
+     <listitem>
+      <para>
+       Boolean option to use binary transfer mode.  Binary mode is faster
+       than the text mode but slightly less robust.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      messages
+     </term>
+     <listitem>
+      <para>
+       Boolean option to enable sending the messages that are written
+       by <function>pg_logical_emit_message</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      streaming
+     </term>
+     <listitem>
+      <para>
+       Boolean option to enable streaming of in-progress transactions.
+       It accepts an additional value "parallel" to enable sending extra
+       information with some messages to be used for parallelisation.
+       Minimum protocol version 2 is required to turn it on.  Minimum protocol
+       version 4 is required for the "parallel" option.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      two_phase
+     </term>
+     <listitem>
+      <para>
+       Boolean option to enable two-phase transactions.   Minimum protocol
+       version 3 is required to turn it on.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      origin
+     </term>
+     <listitem>
+      <para>
+       Option to send changes by their origin.  Possible values are "none"
+       to only send the changes that have no origin associated, or "any"
+       to send the changes regardless of their origin.  This can be used
+       to avoid loops (infinite replication of the same data) among
+       replication nodes.
       </para>
      </listitem>
     </varlistentry>
