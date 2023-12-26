@@ -15,8 +15,6 @@
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
 
-#define ENCODING_GROWTH_RATE 4
-
 PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(euc_tw_to_big5);
