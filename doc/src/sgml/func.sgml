@@ -8749,6 +8749,12 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry><literal>'Tuesday,&nbsp;6&nbsp;&nbsp;05:39:18'</literal></entry>
        </row>
        <row>
+        <entry><literal>to_char(current_timestamp AT TIME ZONE
+        'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')</literal></entry>
+        <entry><literal>'2022-12-06T05:39:18Z'</literal>,
+        <acronym>ISO</acronym> 8601 extended format</entry>
+       </row>
+       <row>
         <entry><literal>to_char(-0.1, '99.99')</literal></entry>
         <entry><literal>'&nbsp;&nbsp;-.10'</literal></entry>
        </row>
