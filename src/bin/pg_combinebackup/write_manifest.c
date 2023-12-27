@@ -72,7 +72,7 @@ create_manifest_writer(char *directory)
  */
 void
 add_file_to_manifest(manifest_writer *mwriter, const char *manifest_path,
-					 size_t size, pg_time_t mtime,
+					 size_t size, time_t mtime,
 					 pg_checksum_type checksum_type,
 					 int checksum_length,
 					 uint8 *checksum_payload)

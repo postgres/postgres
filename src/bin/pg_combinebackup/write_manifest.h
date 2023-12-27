@@ -13,7 +13,6 @@
 #define WRITE_MANIFEST_H
 
 #include "common/checksum_helper.h"
-#include "pgtime.h"
 
 struct manifest_wal_range;
 
@@ -23,7 +22,7 @@ typedef struct manifest_writer manifest_writer;
 extern manifest_writer *create_manifest_writer(char *directory);
 extern void add_file_to_manifest(manifest_writer *mwriter,
 								 const char *manifest_path,
-								 size_t size, pg_time_t mtime,
+								 size_t size, time_t mtime,
 								 pg_checksum_type checksum_type,
 								 int checksum_length,
 								 uint8 *checksum_payload);
