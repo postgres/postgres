@@ -1051,9 +1051,6 @@ typedef struct BTScanOpaqueData
 	int		   *killedItems;	/* currPos.items indexes of killed items */
 	int			numKilled;		/* number of currently stored items */
 
-	/* flag indicating the first page in the scan */
-	bool		firstPage;
-
 	/*
 	 * If we are doing an index-only scan, these are the tuple storage
 	 * workspaces for the currPos and markPos respectively.  Each is of size

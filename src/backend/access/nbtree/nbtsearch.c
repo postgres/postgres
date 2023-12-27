@@ -30,7 +30,7 @@ static OffsetNumber _bt_binsrch(Relation rel, BTScanInsert key, Buffer buf);
 static int	_bt_binsrch_posting(BTScanInsert key, Page page,
 								OffsetNumber offnum);
 static bool _bt_readpage(IndexScanDesc scan, ScanDirection dir,
-						 OffsetNumber offnum);
+						 OffsetNumber offnum, bool firstPage);
 static void _bt_saveitem(BTScanOpaque so, int itemIndex,
 						 OffsetNumber offnum, IndexTuple itup);
 static int	_bt_setuppostingitems(BTScanOpaque so, int itemIndex,
@@ -1395,7 +1395,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	offnum = _bt_binsrch(rel, &inskey, buf);
 	Assert(!BTScanPosIsValid(so->currPos));
 	so->currPos.buf = buf;
-	so->firstPage = true;
 
 	/*
 	 * Now load data from the first page of the scan.
@@ -1416,7 +1415,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * for the page.  For example, when inskey is both < the leaf page's high
 	 * key and > all of its non-pivot tuples, offnum will be "maxoff + 1".
 	 */
-	if (!_bt_readpage(scan, dir, offnum))
+	if (!_bt_readpage(scan, dir, offnum, true))
 	{
 		/*
 		 * There's no actually-matching data on this page.  Try to advance to
@@ -1520,7 +1519,8 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
  * Returns true if any matching items found on the page, false if none.
  */
 static bool
-_bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
+_bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
+			 bool firstPage)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Page		page;
@@ -1601,7 +1601,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 	 * We skip this for the first page in the scan to evade the possible
 	 * slowdown of the point queries.
 	 */
-	if (!so->firstPage && minoff < maxoff)
+	if (!firstPage && minoff < maxoff)
 	{
 		ItemId		iid;
 		IndexTuple	itup;
@@ -1620,7 +1620,6 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 	}
 	else
 	{
-		so->firstPage = false;
 		requiredMatchedByPrecheck = false;
 	}
 
@@ -2079,7 +2078,7 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 				PredicateLockPage(rel, blkno, scan->xs_snapshot);
 				/* see if there are any matches on this page */
 				/* note that this will clear moreRight if we can stop */
-				if (_bt_readpage(scan, dir, P_FIRSTDATAKEY(opaque)))
+				if (_bt_readpage(scan, dir, P_FIRSTDATAKEY(opaque), false))
 					break;
 			}
 			else if (scan->parallel_scan != NULL)
@@ -2170,7 +2169,7 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 				PredicateLockPage(rel, BufferGetBlockNumber(so->currPos.buf), scan->xs_snapshot);
 				/* see if there are any matches on this page */
 				/* note that this will clear moreLeft if we can stop */
-				if (_bt_readpage(scan, dir, PageGetMaxOffsetNumber(page)))
+				if (_bt_readpage(scan, dir, PageGetMaxOffsetNumber(page), false))
 					break;
 			}
 			else if (scan->parallel_scan != NULL)
@@ -2487,14 +2486,13 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 
 	/* remember which buffer we have pinned */
 	so->currPos.buf = buf;
-	so->firstPage = true;
 
 	_bt_initialize_more_data(so, dir);
 
 	/*
 	 * Now load data from the first page of the scan.
 	 */
-	if (!_bt_readpage(scan, dir, start))
+	if (!_bt_readpage(scan, dir, start, false))
 	{
 		/*
 		 * There's no actually-matching data on this page.  Try to advance to
