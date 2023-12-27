@@ -336,6 +336,12 @@
 /* #define COPY_PARSE_PLAN_TREES */
 
 /*
+ * Define this to force Bitmapset reallocation on each modification.  Helps
+ * to find hangling pointers to Bitmapset's.
+ */
+/* #define REALLOCATE_BITMAPSETS */
+
+/*
  * Define this to force all parse and plan trees to be passed through
  * outfuncs.c/readfuncs.c, to facilitate catching errors and omissions in
  * those modules.

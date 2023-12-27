@@ -263,6 +263,7 @@ bms_intersect(const Bitmapset *a, const Bitmapset *b)
 	/* Handle cases where either input is NULL */
 	if (a == NULL || b == NULL)
 		return NULL;
+
 	/* Identify shorter and longer input; copy the shorter one */
 	if (a->nwords <= b->nwords)
 	{
@@ -798,8 +799,15 @@ bms_add_member(Bitmapset *a, int x)
 	{
 		int			oldnwords = a->nwords;
 		int			i;
+#ifdef REALLOCATE_BITMAPSETS
+		Bitmapset  *tmp = a;
 
+		a = (Bitmapset *) palloc(BITMAPSET_SIZE(wordnum + 1));
+		memcpy(a, tmp, BITMAPSET_SIZE(tmp->nwords));
+		pfree(tmp);
+#else
 		a = (Bitmapset *) repalloc(a, BITMAPSET_SIZE(wordnum + 1));
+#endif
 		a->nwords = wordnum + 1;
 		/* zero out the enlarged portion */
 		i = oldnwords;
@@ -808,6 +816,16 @@ bms_add_member(Bitmapset *a, int x)
 			a->words[i] = 0;
 		} while (++i < a->nwords);
 	}
+#ifdef REALLOCATE_BITMAPSETS
+	else
+	{
+		Bitmapset  *tmp = a;
+
+		a = (Bitmapset *) palloc(BITMAPSET_SIZE(tmp->nwords));
+		memcpy(a, tmp, BITMAPSET_SIZE(tmp->nwords));
+		pfree(tmp);
+	}
+#endif
 
 	a->words[wordnum] |= ((bitmapword) 1 << bitnum);
 	return a;
@@ -825,6 +843,9 @@ bms_del_member(Bitmapset *a, int x)
 {
 	int			wordnum,
 				bitnum;
+#ifdef REALLOCATE_BITMAPSETS
+	Bitmapset  *tmp = a;
+#endif
 
 	if (x < 0)
 		elog(ERROR, "negative bitmapset member not allowed");
@@ -835,6 +856,12 @@ bms_del_member(Bitmapset *a, int x)
 
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
+
+#ifdef REALLOCATE_BITMAPSETS
+	a = (Bitmapset *) palloc(BITMAPSET_SIZE(tmp->nwords));
+	memcpy(a, tmp, BITMAPSET_SIZE(tmp->nwords));
+	pfree(tmp);
+#endif
 
 	/* member can't exist.  Return 'a' unmodified */
 	if (unlikely(wordnum >= a->nwords))
@@ -889,6 +916,13 @@ bms_add_members(Bitmapset *a, const Bitmapset *b)
 	}
 	else
 	{
+#ifdef REALLOCATE_BITMAPSETS
+		Bitmapset  *tmp = a;
+
+		a = (Bitmapset *) palloc(BITMAPSET_SIZE(tmp->nwords));
+		memcpy(a, tmp, BITMAPSET_SIZE(tmp->nwords));
+		pfree(tmp);
+#endif
 		result = a;
 		other = b;
 	}
@@ -941,9 +975,16 @@ bms_add_range(Bitmapset *a, int lower, int upper)
 	{
 		int			oldnwords = a->nwords;
 		int			i;
+#ifdef REALLOCATE_BITMAPSETS
+		Bitmapset  *tmp = a;
 
+		a = (Bitmapset *) palloc(BITMAPSET_SIZE(uwordnum + 1));
+		memcpy(a, tmp, BITMAPSET_SIZE(tmp->nwords));
+		pfree(tmp);
+#else
 		/* ensure we have enough words to store the upper bit */
 		a = (Bitmapset *) repalloc(a, BITMAPSET_SIZE(uwordnum + 1));
+#endif
 		a->nwords = uwordnum + 1;
 		/* zero out the enlarged portion */
 		i = oldnwords;
@@ -992,6 +1033,12 @@ bms_int_members(Bitmapset *a, const Bitmapset *b)
 	int			lastnonzero;
 	int			shortlen;
 	int			i;
+#ifdef REALLOCATE_BITMAPSETS
+	Bitmapset  *tmp = a;
+#endif
+
+	Assert(a == NULL || IsA(a, Bitmapset));
+	Assert(b == NULL || IsA(b, Bitmapset));
 
 	Assert(a == NULL || IsA(a, Bitmapset));
 	Assert(b == NULL || IsA(b, Bitmapset));
@@ -1004,6 +1051,13 @@ bms_int_members(Bitmapset *a, const Bitmapset *b)
 		pfree(a);
 		return NULL;
 	}
+
+#ifdef REALLOCATE_BITMAPSETS
+	a = (Bitmapset *) palloc(BITMAPSET_SIZE(tmp->nwords));
+	memcpy(a, tmp, BITMAPSET_SIZE(tmp->nwords));
+	pfree(tmp);
+#endif
+
 	/* Intersect b into a; we need never copy */
 	shortlen = Min(a->nwords, b->nwords);
 	lastnonzero = -1;
@@ -1035,6 +1089,9 @@ Bitmapset *
 bms_del_members(Bitmapset *a, const Bitmapset *b)
 {
 	int			i;
+#ifdef REALLOCATE_BITMAPSETS
+	Bitmapset  *tmp = a;
+#endif
 
 	Assert(a == NULL || (IsA(a, Bitmapset) && a->words[a->nwords - 1] != 0));
 	Assert(b == NULL || (IsA(b, Bitmapset) && b->words[b->nwords - 1] != 0));
@@ -1044,6 +1101,13 @@ bms_del_members(Bitmapset *a, const Bitmapset *b)
 		return NULL;
 	if (b == NULL)
 		return a;
+
+#ifdef REALLOCATE_BITMAPSETS
+	a = (Bitmapset *) palloc(BITMAPSET_SIZE(tmp->nwords));
+	memcpy(a, tmp, BITMAPSET_SIZE(tmp->nwords));
+	pfree(tmp);
+#endif
+
 	/* Remove b's bits from a; we need never copy */
 	if (a->nwords > b->nwords)
 	{
@@ -1096,6 +1160,12 @@ bms_join(Bitmapset *a, Bitmapset *b)
 	Bitmapset  *other;
 	int			otherlen;
 	int			i;
+#ifdef REALLOCATE_BITMAPSETS
+	Bitmapset  *tmp = a;
+#endif
+
+	Assert(a == NULL || IsA(a, Bitmapset));
+	Assert(b == NULL || IsA(b, Bitmapset));
 
 	Assert(a == NULL || IsA(a, Bitmapset));
 	Assert(b == NULL || IsA(b, Bitmapset));
@@ -1105,6 +1175,13 @@ bms_join(Bitmapset *a, Bitmapset *b)
 		return b;
 	if (b == NULL)
 		return a;
+
+#ifdef REALLOCATE_BITMAPSETS
+	a = (Bitmapset *) palloc(BITMAPSET_SIZE(tmp->nwords));
+	memcpy(a, tmp, BITMAPSET_SIZE(tmp->nwords));
+	pfree(tmp);
+#endif
+
 	/* Identify shorter and longer input; use longer one as result */
 	if (a->nwords < b->nwords)
 	{
