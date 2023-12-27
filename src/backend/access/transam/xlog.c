@@ -2280,7 +2280,7 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 			char	   *from;
 			Size		nbytes;
 			Size		nleft;
-			int			written;
+			ssize_t		written;
 			instr_time	start;
 
 			/* OK to write the page(s) */

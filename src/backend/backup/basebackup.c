@@ -117,8 +117,8 @@ static void perform_base_backup(basebackup_options *opt, bbsink *sink,
 								IncrementalBackupInfo *ib);
 static void parse_basebackup_options(List *options, basebackup_options *opt);
 static int	compareWalFileNames(const ListCell *a, const ListCell *b);
-static int	basebackup_read_file(int fd, char *buf, size_t nbytes, off_t offset,
-								 const char *filename, bool partial_read_ok);
+static ssize_t basebackup_read_file(int fd, char *buf, size_t nbytes, off_t offset,
+									const char *filename, bool partial_read_ok);
 
 /* Was the backup currently in-progress initiated in recovery mode? */
 static bool backup_started_in_recovery = false;
@@ -525,7 +525,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 		{
 			char	   *walFileName = (char *) lfirst(lc);
 			int			fd;
-			size_t		cnt;
+			ssize_t		cnt;
 			pgoff_t		len = 0;
 
 			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", walFileName);
@@ -2079,11 +2079,11 @@ convert_link_to_directory(const char *pathbuf, struct stat *statbuf)
  *
  * Returns the number of bytes read.
  */
-static int
+static ssize_t
 basebackup_read_file(int fd, char *buf, size_t nbytes, off_t offset,
 					 const char *filename, bool partial_read_ok)
 {
-	int			rc;
+	ssize_t		rc;
 
 	pgstat_report_wait_start(WAIT_EVENT_BASEBACKUP_READ);
 	rc = pg_pread(fd, buf, nbytes, offset);
@@ -2096,7 +2096,7 @@ basebackup_read_file(int fd, char *buf, size_t nbytes, off_t offset,
 	if (!partial_read_ok && rc > 0 && rc != nbytes)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\": read %d of %zu",
+				 errmsg("could not read file \"%s\": read %zd of %zu",
 						filename, rc, nbytes)));
 
 	return rc;

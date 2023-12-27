@@ -504,7 +504,7 @@ make_rfile(char *filename, bool missing_ok)
 static void
 read_bytes(rfile *rf, void *buffer, unsigned length)
 {
-	unsigned	rb = read(rf->fd, buffer, length);
+	int			rb = read(rf->fd, buffer, length);
 
 	if (rb != length)
 	{
@@ -512,7 +512,7 @@ read_bytes(rfile *rf, void *buffer, unsigned length)
 			pg_fatal("could not read file \"%s\": %m", rf->filename);
 		else
 			pg_fatal("could not read file \"%s\": read only %d of %d bytes",
-					 rf->filename, (int) rb, length);
+					 rf->filename, rb, length);
 	}
 }
 
@@ -614,7 +614,7 @@ write_reconstructed_file(char *input_filename,
 	{
 		uint8		buffer[BLCKSZ];
 		rfile	   *s = sourcemap[i];
-		unsigned	wb;
+		int			wb;
 
 		/* Update accounting information. */
 		if (s == NULL)
@@ -641,7 +641,7 @@ write_reconstructed_file(char *input_filename,
 		}
 		else
 		{
-			unsigned	rb;
+			int			rb;
 
 			/* Read the block from the correct source, except if dry-run. */
 			rb = pg_pread(s->fd, buffer, BLCKSZ, offsetmap[i]);
@@ -650,9 +650,9 @@ write_reconstructed_file(char *input_filename,
 				if (rb < 0)
 					pg_fatal("could not read file \"%s\": %m", s->filename);
 				else
-					pg_fatal("could not read file \"%s\": read only %d of %d bytes at offset %u",
-							 s->filename, (int) rb, BLCKSZ,
-							 (unsigned) offsetmap[i]);
+					pg_fatal("could not read file \"%s\": read only %d of %d bytes at offset %llu",
+							 s->filename, rb, BLCKSZ,
+							 (unsigned long long) offsetmap[i]);
 			}
 		}
 
@@ -663,7 +663,7 @@ write_reconstructed_file(char *input_filename,
 				pg_fatal("could not write file \"%s\": %m", output_filename);
 			else
 				pg_fatal("could not write file \"%s\": wrote only %d of %d bytes",
-						 output_filename, (int) wb, BLCKSZ);
+						 output_filename, wb, BLCKSZ);
 		}
 
 		/* Update the checksum computation. */
