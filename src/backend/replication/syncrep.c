@@ -416,7 +416,7 @@ SyncRepInitConfig(void)
 		SpinLockRelease(&MyWalSnd->mutex);
 
 		ereport(DEBUG1,
-				(errmsg_internal("standby \"%s\" now has synchronous standby priority %u",
+				(errmsg_internal("standby \"%s\" now has synchronous standby priority %d",
 								 application_name, priority)));
 	}
 }
@@ -483,7 +483,7 @@ SyncRepReleaseWaiters(void)
 
 		if (SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY)
 			ereport(LOG,
-					(errmsg("standby \"%s\" is now a synchronous standby with priority %u",
+					(errmsg("standby \"%s\" is now a synchronous standby with priority %d",
 							application_name, MyWalSnd->sync_standby_priority)));
 		else
 			ereport(LOG,
