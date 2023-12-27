@@ -52,6 +52,12 @@ SELECT pg_get_functiondef('pg_stat_statements_reset'::regproc);
  
 (1 row)
 
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
 \d pg_stat_statements
                     View "public.pg_stat_statements"
        Column        |       Type       | Collation | Nullable | Default 
@@ -328,6 +334,12 @@ SELECT pg_get_functiondef('pg_stat_statements_reset'::regproc);
   PARALLEL SAFE STRICT                                                                                                                                            +
  AS '$libdir/pg_stat_statements', $function$pg_stat_statements_reset_1_11$function$                                                                               +
  
+(1 row)
+
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
 (1 row)
 
 DROP EXTENSION pg_stat_statements;

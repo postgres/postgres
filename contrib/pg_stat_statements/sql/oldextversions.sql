@@ -28,6 +28,7 @@ SET SESSION AUTHORIZATION pg_read_all_stats;
 SELECT pg_stat_statements_reset();
 RESET SESSION AUTHORIZATION;
 SELECT pg_get_functiondef('pg_stat_statements_reset'::regproc);
+SELECT pg_stat_statements_reset();
 \d pg_stat_statements
 SELECT count(*) > 0 AS has_data FROM pg_stat_statements;
 
@@ -55,5 +56,6 @@ AlTER EXTENSION pg_stat_statements UPDATE TO '1.11';
 SELECT count(*) > 0 AS has_data FROM pg_stat_statements;
 -- New parameter minmax_only of pg_stat_statements_reset function
 SELECT pg_get_functiondef('pg_stat_statements_reset'::regproc);
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 
 DROP EXTENSION pg_stat_statements;
