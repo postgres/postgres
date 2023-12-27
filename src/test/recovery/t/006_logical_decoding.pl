@@ -70,7 +70,7 @@ is(scalar(my @foobar = split /^/m, $result),
 # If we immediately crash the server we might lose the progress we just made
 # and replay the same changes again. But a clean shutdown should never repeat
 # the same changes when we use the SQL decoding interface.
-$node_primary->restart('fast');
+$node_primary->restart;
 
 # There are no new writes, so the result should be empty.
 $result = $node_primary->safe_psql('postgres',
