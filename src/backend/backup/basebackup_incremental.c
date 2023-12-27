@@ -575,7 +575,7 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 								tle->tli,
 								LSN_FORMAT_ARGS(tli_start_lsn),
 								LSN_FORMAT_ARGS(tli_end_lsn)),
-						 errdetail("The first unsummarized LSN is this range is %X/%X.",
+						 errdetail("The first unsummarized LSN in this range is %X/%X.",
 								   LSN_FORMAT_ARGS(tli_missing_lsn))));
 		}
 

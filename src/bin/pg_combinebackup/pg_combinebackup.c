@@ -538,7 +538,7 @@ check_control_files(int n_backups, char **backup_dirs)
 
 		/* Control file contents not meaningful if CRC is bad. */
 		if (!crc_ok)
-			pg_fatal("%s: crc is incorrect", controlpath);
+			pg_fatal("%s: CRC is incorrect", controlpath);
 
 		/* Can't interpret control file if not current version. */
 		if (control_file->pg_control_version != PG_CONTROL_VERSION)
