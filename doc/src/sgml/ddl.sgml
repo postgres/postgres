@@ -2280,9 +2280,16 @@ REVOKE ALL ON accounts FROM PUBLIC;
     <primary><type>aclitem</type></primary>
    </indexterm>
    The privileges that have been granted for a particular object are
-   displayed as a list of <type>aclitem</type> entries, where each
-   <type>aclitem</type> describes the permissions of one grantee that
-   have been granted by a particular grantor.  For example,
+   displayed as a list of <type>aclitem</type> entries, each having the
+   format:
+<synopsis>
+<replaceable>grantee</replaceable><literal>=</literal><replaceable>privilege-abbreviation</replaceable><optional><literal>*</literal></optional>...<literal>/</literal><replaceable>grantor</replaceable>
+</synopsis>
+   Each <type>aclitem</type> lists all the permissions of one grantee that
+   have been granted by a particular grantor.  Specific privileges are
+   represented by one-letter abbreviations from
+   <xref linkend="privilege-abbrevs-table"/>, with <literal>*</literal>
+   appended if the privilege was granted with grant option.  For example,
    <literal>calvin=r*w/hobbes</literal> specifies that the role
    <literal>calvin</literal> has the privilege
    <literal>SELECT</literal> (<literal>r</literal>) with grant option
