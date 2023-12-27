@@ -438,7 +438,7 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact,
 	LWLockMode	mode = reset_pending_lsn ? LW_EXCLUSIVE : LW_SHARED;
 	int			n;
 	List	   *tles;
-	XLogRecPtr	unsummarized_lsn;
+	XLogRecPtr	unsummarized_lsn = InvalidXLogRecPtr;
 	TimeLineID	unsummarized_tli = 0;
 	bool		should_make_exact = false;
 	List	   *existing_summaries;
