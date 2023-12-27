@@ -6853,6 +6853,21 @@ on true;
          Filter: (t3.id IS NOT NULL)
 (8 rows)
 
+-- Check that SJE replaces join clauses involving the removed rel correctly
+explain (costs off)
+select * from emp1 t1
+   inner join emp1 t2 on t1.id = t2.id
+    left join emp1 t3 on t1.id > 1 and t1.id < 2;
+                  QUERY PLAN                  
+----------------------------------------------
+ Nested Loop Left Join
+   Join Filter: ((t2.id > 1) AND (t2.id < 2))
+   ->  Seq Scan on emp1 t2
+         Filter: (id IS NOT NULL)
+   ->  Materialize
+         ->  Seq Scan on emp1 t3
+(6 rows)
+
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
 -- moving quals over to s1 to make it so it can't match any rows.

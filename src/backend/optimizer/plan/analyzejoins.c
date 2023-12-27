@@ -1522,6 +1522,10 @@ replace_varno_walker(Node *node, ReplaceVarnoContext *ctx)
 
 /*
  * Substitute newId by oldId in relids.
+ *
+ * We must make a copy of the original Bitmapset before making any
+ * modifications, because the same pointer to it might be shared among
+ * different places.
  */
 static Bitmapset *
 replace_relid(Relids relids, int oldId, int newId)
@@ -1529,12 +1533,13 @@ replace_relid(Relids relids, int oldId, int newId)
 	if (oldId < 0)
 		return relids;
 
+	/* Delete relid without substitution. */
 	if (newId < 0)
-		/* Delete relid without substitution. */
-		return bms_del_member(relids, oldId);
+		return bms_del_member(bms_copy(relids), oldId);
 
+	/* Substitute newId for oldId. */
 	if (bms_is_member(oldId, relids))
-		return bms_add_member(bms_del_member(relids, oldId), newId);
+		return bms_add_member(bms_del_member(bms_copy(relids), oldId), newId);
 
 	return relids;
 }
