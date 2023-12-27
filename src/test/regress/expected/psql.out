@@ -5293,26 +5293,30 @@ comment on function psql_df_plpgsql () is 'some comment';
 rollback;
 drop role regress_psql_user;
 -- check \sf
-\sf information_schema._pg_expandarray
-CREATE OR REPLACE FUNCTION information_schema._pg_expandarray(anyarray, OUT x anyelement, OUT n integer)
- RETURNS SETOF record
+\sf information_schema._pg_index_position
+CREATE OR REPLACE FUNCTION information_schema._pg_index_position(oid, smallint)
+ RETURNS integer
  LANGUAGE sql
- IMMUTABLE PARALLEL SAFE STRICT
-AS $function$select $1[s],
-        s operator(pg_catalog.-) pg_catalog.array_lower($1,1) operator(pg_catalog.+) 1
-        from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
-                                        pg_catalog.array_upper($1,1),
-                                        1) as g(s)$function$
-\sf+ information_schema._pg_expandarray
-        CREATE OR REPLACE FUNCTION information_schema._pg_expandarray(anyarray, OUT x anyelement, OUT n integer)
-         RETURNS SETOF record
+ STABLE STRICT
+BEGIN ATOMIC
+ SELECT (ss.a).n AS n
+    FROM ( SELECT information_schema._pg_expandarray(pg_index.indkey) AS a
+            FROM pg_index
+           WHERE (pg_index.indexrelid = $1)) ss
+   WHERE ((ss.a).x = $2);
+END
+\sf+ information_schema._pg_index_position
+        CREATE OR REPLACE FUNCTION information_schema._pg_index_position(oid, smallint)
+         RETURNS integer
          LANGUAGE sql
-         IMMUTABLE PARALLEL SAFE STRICT
-1       AS $function$select $1[s],
-2               s operator(pg_catalog.-) pg_catalog.array_lower($1,1) operator(pg_catalog.+) 1
-3               from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
-4                                               pg_catalog.array_upper($1,1),
-5                                               1) as g(s)$function$
+         STABLE STRICT
+1       BEGIN ATOMIC
+2        SELECT (ss.a).n AS n
+3           FROM ( SELECT information_schema._pg_expandarray(pg_index.indkey) AS a
+4                   FROM pg_index
+5                  WHERE (pg_index.indexrelid = $1)) ss
+6          WHERE ((ss.a).x = $2);
+7       END
 \sf+ interval_pl_time
         CREATE OR REPLACE FUNCTION pg_catalog.interval_pl_time(interval, time without time zone)
          RETURNS time without time zone

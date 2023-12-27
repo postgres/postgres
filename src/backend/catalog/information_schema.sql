@@ -43,11 +43,8 @@ SET search_path TO information_schema;
 CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
     RETURNS SETOF RECORD
     LANGUAGE sql STRICT IMMUTABLE PARALLEL SAFE
-    AS 'select $1[s],
-        s operator(pg_catalog.-) pg_catalog.array_lower($1,1) operator(pg_catalog.+) 1
-        from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
-                                        pg_catalog.array_upper($1,1),
-                                        1) as g(s)';
+    ROWS 100 SUPPORT pg_catalog.array_unnest_support
+    AS 'SELECT * FROM pg_catalog.unnest($1) WITH ORDINALITY';
 
 /* Given an index's OID and an underlying-table column number, return the
  * column's position in the index (NULL if not there) */

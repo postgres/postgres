@@ -6317,6 +6317,9 @@ array_unnest(PG_FUNCTION_ARGS)
 
 /*
  * Planner support function for array_unnest(anyarray)
+ *
+ * Note: this is now also used for information_schema._pg_expandarray(),
+ * which is simply a wrapper around array_unnest().
  */
 Datum
 array_unnest_support(PG_FUNCTION_ARGS)
