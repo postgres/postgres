@@ -1530,7 +1530,8 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	int			itemIndex;
 	bool		continuescan;
 	int			indnatts;
-	bool		requiredMatchedByPrecheck;
+	bool		continuescanPrechecked;
+	bool		haveFirstMatch = false;
 
 	/*
 	 * We must have the buffer pinned and locked, but the usual macro can't be
@@ -1585,12 +1586,11 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	Assert(BTScanPosIsPinned(so->currPos));
 
 	/*
-	 * Prechecking the page with scan keys required for direction scan.  We
-	 * check these keys with the last item on the page (according to our scan
-	 * direction).  If these keys are matched, we can skip checking them with
-	 * every item on the page.  Scan keys for our scan direction would
-	 * necessarily match the previous items.  Scan keys required for opposite
-	 * direction scan are already matched by the _bt_first() call.
+	 * Prechecking the value of the continuescan flag for the last item on the
+	 * page (for backwards scan it will be the first item on a page).  If we
+	 * observe it to be true, then it should be true for all other items. This
+	 * allows us to do significant optimizations in the _bt_checkkeys()
+	 * function for all the items on the page.
 	 *
 	 * With the forward scan, we do this check for the last item on the page
 	 * instead of the high key.  It's relatively likely that the most
@@ -1610,17 +1610,17 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 		itup = (IndexTuple) PageGetItem(page, iid);
 
 		/*
-		 * Do the precheck.  Note that we pass the pointer to
-		 * 'requiredMatchedByPrecheck' to 'continuescan' argument.  That will
+		 * Do the precheck.  Note that we pass the pointer to the
+		 * 'continuescanPrechecked' to the 'continuescan' argument. That will
 		 * set flag to true if all required keys are satisfied and false
 		 * otherwise.
 		 */
 		(void) _bt_checkkeys(scan, itup, indnatts, dir,
-							 &requiredMatchedByPrecheck, false);
+							 &continuescanPrechecked, false, false);
 	}
 	else
 	{
-		requiredMatchedByPrecheck = false;
+		continuescanPrechecked = false;
 	}
 
 	if (ScanDirectionIsForward(dir))
@@ -1650,19 +1650,22 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			Assert(!BTreeTupleIsPivot(itup));
 
 			passes_quals = _bt_checkkeys(scan, itup, indnatts, dir,
-										 &continuescan, requiredMatchedByPrecheck);
+										 &continuescan,
+										 continuescanPrechecked,
+										 haveFirstMatch);
 
 			/*
 			 * If the result of prechecking required keys was true, then in
 			 * assert-enabled builds we also recheck that the _bt_checkkeys()
 			 * result is the same.
 			 */
-			Assert(!requiredMatchedByPrecheck ||
+			Assert((!continuescanPrechecked && haveFirstMatch) ||
 				   passes_quals == _bt_checkkeys(scan, itup, indnatts, dir,
-												 &continuescan, false));
+												 &continuescan, false, false));
 			if (passes_quals)
 			{
 				/* tuple passes all scan key conditions */
+				haveFirstMatch = true;
 				if (!BTreeTupleIsPosting(itup))
 				{
 					/* Remember it */
@@ -1717,7 +1720,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			int			truncatt;
 
 			truncatt = BTreeTupleGetNAtts(itup, scan->indexRelation);
-			_bt_checkkeys(scan, itup, truncatt, dir, &continuescan, false);
+			_bt_checkkeys(scan, itup, truncatt, dir, &continuescan, false, false);
 		}
 
 		if (!continuescan)
@@ -1770,19 +1773,22 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			Assert(!BTreeTupleIsPivot(itup));
 
 			passes_quals = _bt_checkkeys(scan, itup, indnatts, dir,
-										 &continuescan, requiredMatchedByPrecheck);
+										 &continuescan,
+										 continuescanPrechecked,
+										 haveFirstMatch);
 
 			/*
 			 * If the result of prechecking required keys was true, then in
 			 * assert-enabled builds we also recheck that the _bt_checkkeys()
 			 * result is the same.
 			 */
-			Assert(!requiredMatchedByPrecheck ||
+			Assert((!continuescanPrechecked && !haveFirstMatch) ||
 				   passes_quals == _bt_checkkeys(scan, itup, indnatts, dir,
-												 &continuescan, false));
+												 &continuescan, false, false));
 			if (passes_quals && tuple_alive)
 			{
 				/* tuple passes all scan key conditions */
+				haveFirstMatch = true;
 				if (!BTreeTupleIsPosting(itup))
 				{
 					/* Remember it */

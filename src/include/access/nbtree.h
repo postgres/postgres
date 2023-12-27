@@ -1251,7 +1251,7 @@ extern void _bt_restore_array_keys(IndexScanDesc scan);
 extern void _bt_preprocess_keys(IndexScanDesc scan);
 extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 						  int tupnatts, ScanDirection dir, bool *continuescan,
-						  bool requiredMatchedByPrecheck);
+						  bool requiredMatchedByPrecheck, bool haveFirstMatch);
 extern void _bt_killitems(IndexScanDesc scan);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);

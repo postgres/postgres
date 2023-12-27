@@ -1364,13 +1364,15 @@ _bt_mark_scankey_required(ScanKey skey)
  * tupnatts: number of attributes in tupnatts (high key may be truncated)
  * dir: direction we are scanning in
  * continuescan: output parameter (will be set correctly in all cases)
- * requiredMatchedByPrecheck: indicates that scan keys required for
- * 							  direction scan are already matched
+ * continuescanPrechecked: indicates that *continuescan flag is known to
+ * 						   be true for the last item on the page
+ * haveFirstMatch: indicates that we already have at least one match
+ * 							  in the current page
  */
 bool
 _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			  ScanDirection dir, bool *continuescan,
-			  bool requiredMatchedByPrecheck)
+			  bool continuescanPrechecked, bool haveFirstMatch)
 {
 	TupleDesc	tupdesc;
 	BTScanOpaque so;
@@ -1406,13 +1408,23 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			requiredOppositeDir = true;
 
 		/*
-		 * Is the key required for scanning for either forward or backward
-		 * direction?  If so and caller told us that these types of keys are
-		 * known to be matched, skip the check.  Except for the row keys,
-		 * where NULLs could be found in the middle of matching values.
+		 * If the caller told us the *continuescan flag is known to be true
+		 * for the last item on the page, then we know the keys required for
+		 * the current direction scan should be matched.  Otherwise, the
+		 * *continuescan flag would be set for the current item and
+		 * subsequently the last item on the page accordingly.
+		 *
+		 * If the key is required for the opposite direction scan, we can skip
+		 * the check if the caller tells us there was already at least one
+		 * matching item on the page. Also, we require the *continuescan flag
+		 * to be true for the last item on the page to know there are no
+		 * NULLs.
+		 *
+		 * Both cases above work except for the row keys, where NULLs could be
+		 * found in the middle of matching values.
 		 */
-		if ((requiredSameDir || requiredOppositeDir) &&
-			!(key->sk_flags & SK_ROW_HEADER) && requiredMatchedByPrecheck)
+		if ((requiredSameDir || (requiredOppositeDir && haveFirstMatch)) &&
+			!(key->sk_flags & SK_ROW_HEADER) && continuescanPrechecked)
 			continue;
 
 		if (key->sk_attno > tupnatts)
@@ -1513,12 +1525,12 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 		}
 
 		/*
-		 * Apply the key checking function.  When the key is required for
-		 * opposite direction scan, it must be already satisfied by
-		 * _bt_first() except for the NULLs checking, which have already done
-		 * above.
+		 * Apply the key-checking function.  When the key is required for the
+		 * opposite direction scan, it must be already satisfied as soon as
+		 * there is already match on the page.  Except for the NULLs checking,
+		 * which have already done above.
 		 */
-		if (!requiredOppositeDir)
+		if (!(requiredOppositeDir && haveFirstMatch))
 		{
 			test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
 									 datum, key->sk_argument);
