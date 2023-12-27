@@ -84,6 +84,7 @@ bms_copy(const Bitmapset *a)
 
 	if (a == NULL)
 		return NULL;
+	Assert(IsA(a, Bitmapset));
 	size = BITMAPSET_SIZE(a->nwords);
 	result = (Bitmapset *) palloc(size);
 	memcpy(result, a, size);
@@ -98,8 +99,8 @@ bms_equal(const Bitmapset *a, const Bitmapset *b)
 {
 	int			i;
 
-	Assert(a == NULL || a->words[a->nwords - 1] != 0);
-	Assert(b == NULL || b->words[b->nwords - 1] != 0);
+	Assert(a == NULL || (IsA(a, Bitmapset) && a->words[a->nwords - 1] != 0));
+	Assert(b == NULL || (IsA(b, Bitmapset) && b->words[b->nwords - 1] != 0));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
@@ -139,8 +140,8 @@ bms_compare(const Bitmapset *a, const Bitmapset *b)
 {
 	int			i;
 
-	Assert(a == NULL || a->words[a->nwords - 1] != 0);
-	Assert(b == NULL || b->words[b->nwords - 1] != 0);
+	Assert(a == NULL || (IsA(a, Bitmapset) && a->words[a->nwords - 1] != 0));
+	Assert(b == NULL || (IsA(b, Bitmapset) && b->words[b->nwords - 1] != 0));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
@@ -215,6 +216,9 @@ bms_union(const Bitmapset *a, const Bitmapset *b)
 	int			otherlen;
 	int			i;
 
+	Assert(a == NULL || IsA(a, Bitmapset));
+	Assert(b == NULL || IsA(b, Bitmapset));
+
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
 		return bms_copy(b);
@@ -252,6 +256,9 @@ bms_intersect(const Bitmapset *a, const Bitmapset *b)
 	int			lastnonzero;
 	int			resultlen;
 	int			i;
+
+	Assert(a == NULL || IsA(a, Bitmapset));
+	Assert(b == NULL || IsA(b, Bitmapset));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL || b == NULL)
@@ -299,14 +306,16 @@ bms_difference(const Bitmapset *a, const Bitmapset *b)
 	Bitmapset  *result;
 	int			i;
 
-	Assert(a == NULL || a->words[a->nwords - 1] != 0);
-	Assert(b == NULL || b->words[b->nwords - 1] != 0);
+	Assert(a == NULL || (IsA(a, Bitmapset) && a->words[a->nwords - 1] != 0));
+	Assert(b == NULL || (IsA(b, Bitmapset) && b->words[b->nwords - 1] != 0));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
 		return NULL;
 	if (b == NULL)
 		return bms_copy(a);
+
+	Assert(IsA(a, Bitmapset) && IsA(b, Bitmapset));
 
 	/*
 	 * In Postgres' usage, an empty result is a very common case, so it's
@@ -364,14 +373,16 @@ bms_is_subset(const Bitmapset *a, const Bitmapset *b)
 {
 	int			i;
 
-	Assert(a == NULL || a->words[a->nwords - 1] != 0);
-	Assert(b == NULL || b->words[b->nwords - 1] != 0);
+	Assert(a == NULL || (IsA(a, Bitmapset) && a->words[a->nwords - 1] != 0));
+	Assert(b == NULL || (IsA(b, Bitmapset) && b->words[b->nwords - 1] != 0));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
 		return true;			/* empty set is a subset of anything */
 	if (b == NULL)
 		return false;
+
+	Assert(IsA(a, Bitmapset) && IsA(b, Bitmapset));
 
 	/* 'a' can't be a subset of 'b' if it contains more words */
 	if (a->nwords > b->nwords)
@@ -399,8 +410,8 @@ bms_subset_compare(const Bitmapset *a, const Bitmapset *b)
 	int			shortlen;
 	int			i;
 
-	Assert(a == NULL || a->words[a->nwords - 1] != 0);
-	Assert(b == NULL || b->words[b->nwords - 1] != 0);
+	Assert(a == NULL || (IsA(a, Bitmapset) && a->words[a->nwords - 1] != 0));
+	Assert(b == NULL || (IsA(b, Bitmapset) && b->words[b->nwords - 1] != 0));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
@@ -411,6 +422,9 @@ bms_subset_compare(const Bitmapset *a, const Bitmapset *b)
 	}
 	if (b == NULL)
 		return BMS_SUBSET2;
+
+	Assert(IsA(a, Bitmapset) && IsA(b, Bitmapset));
+
 	/* Check common words */
 	result = BMS_EQUAL;			/* status so far */
 	shortlen = Min(a->nwords, b->nwords);
@@ -467,6 +481,9 @@ bms_is_member(int x, const Bitmapset *a)
 		elog(ERROR, "negative bitmapset member not allowed");
 	if (a == NULL)
 		return false;
+
+	Assert(IsA(a, Bitmapset));
+
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
 	if (wordnum >= a->nwords)
@@ -494,6 +511,8 @@ bms_member_index(Bitmapset *a, int x)
 	/* return -1 if not a member of the bitmap */
 	if (!bms_is_member(x, a))
 		return -1;
+
+	Assert(IsA(a, Bitmapset));
 
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
@@ -529,6 +548,9 @@ bms_overlap(const Bitmapset *a, const Bitmapset *b)
 	int			shortlen;
 	int			i;
 
+	Assert(a == NULL || IsA(a, Bitmapset));
+	Assert(b == NULL || IsA(b, Bitmapset));
+
 	/* Handle cases where either input is NULL */
 	if (a == NULL || b == NULL)
 		return false;
@@ -552,6 +574,8 @@ bms_overlap_list(const Bitmapset *a, const List *b)
 	ListCell   *lc;
 	int			wordnum,
 				bitnum;
+
+	Assert(a == NULL || IsA(a, Bitmapset));
 
 	if (a == NULL || b == NIL)
 		return false;
@@ -582,8 +606,8 @@ bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b)
 {
 	int			i;
 
-	Assert(a == NULL || a->words[a->nwords - 1] != 0);
-	Assert(b == NULL || b->words[b->nwords - 1] != 0);
+	Assert(a == NULL || (IsA(a, Bitmapset) && a->words[a->nwords - 1] != 0));
+	Assert(b == NULL || (IsA(b, Bitmapset) && b->words[b->nwords - 1] != 0));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
@@ -617,6 +641,9 @@ bms_singleton_member(const Bitmapset *a)
 
 	if (a == NULL)
 		elog(ERROR, "bitmapset is empty");
+
+	Assert(IsA(a, Bitmapset));
+
 	nwords = a->nwords;
 	wordnum = 0;
 	do
@@ -657,6 +684,7 @@ bms_get_singleton_member(const Bitmapset *a, int *member)
 
 	if (a == NULL)
 		return false;
+	Assert(IsA(a, Bitmapset));
 	nwords = a->nwords;
 	wordnum = 0;
 	do
@@ -690,6 +718,7 @@ bms_num_members(const Bitmapset *a)
 
 	if (a == NULL)
 		return 0;
+	Assert(IsA(a, Bitmapset));
 	nwords = a->nwords;
 	wordnum = 0;
 	do
@@ -717,6 +746,7 @@ bms_membership(const Bitmapset *a)
 
 	if (a == NULL)
 		return BMS_EMPTY_SET;
+	Assert(IsA(a, Bitmapset));
 	nwords = a->nwords;
 	wordnum = 0;
 	do
@@ -759,6 +789,7 @@ bms_add_member(Bitmapset *a, int x)
 		elog(ERROR, "negative bitmapset member not allowed");
 	if (a == NULL)
 		return bms_make_singleton(x);
+	Assert(IsA(a, Bitmapset));
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
 
@@ -799,6 +830,9 @@ bms_del_member(Bitmapset *a, int x)
 		elog(ERROR, "negative bitmapset member not allowed");
 	if (a == NULL)
 		return NULL;
+
+	Assert(IsA(a, Bitmapset));
+
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
 
@@ -838,6 +872,9 @@ bms_add_members(Bitmapset *a, const Bitmapset *b)
 	const Bitmapset *other;
 	int			otherlen;
 	int			i;
+
+	Assert(a == NULL || IsA(a, Bitmapset));
+	Assert(b == NULL || IsA(b, Bitmapset));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
@@ -883,6 +920,8 @@ bms_add_range(Bitmapset *a, int lower, int upper)
 				uwordnum,
 				ushiftbits,
 				wordnum;
+
+	Assert(a == NULL || IsA(a, Bitmapset));
 
 	/* do nothing if nothing is called for, without further checking */
 	if (upper < lower)
@@ -954,6 +993,9 @@ bms_int_members(Bitmapset *a, const Bitmapset *b)
 	int			shortlen;
 	int			i;
 
+	Assert(a == NULL || IsA(a, Bitmapset));
+	Assert(b == NULL || IsA(b, Bitmapset));
+
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
 		return NULL;
@@ -994,8 +1036,8 @@ bms_del_members(Bitmapset *a, const Bitmapset *b)
 {
 	int			i;
 
-	Assert(a == NULL || a->words[a->nwords - 1] != 0);
-	Assert(b == NULL || b->words[b->nwords - 1] != 0);
+	Assert(a == NULL || (IsA(a, Bitmapset) && a->words[a->nwords - 1] != 0));
+	Assert(b == NULL || (IsA(b, Bitmapset) && b->words[b->nwords - 1] != 0));
 
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
@@ -1055,6 +1097,9 @@ bms_join(Bitmapset *a, Bitmapset *b)
 	int			otherlen;
 	int			i;
 
+	Assert(a == NULL || IsA(a, Bitmapset));
+	Assert(b == NULL || IsA(b, Bitmapset));
+
 	/* Handle cases where either input is NULL */
 	if (a == NULL)
 		return b;
@@ -1108,6 +1153,8 @@ bms_next_member(const Bitmapset *a, int prevbit)
 	int			nwords;
 	int			wordnum;
 	bitmapword	mask;
+
+	Assert(a == NULL || IsA(a, Bitmapset));
 
 	if (a == NULL)
 		return -2;
@@ -1167,6 +1214,8 @@ bms_prev_member(const Bitmapset *a, int prevbit)
 	int			wordnum;
 	int			ushiftbits;
 	bitmapword	mask;
+
+	Assert(a == NULL || IsA(a, Bitmapset));
 
 	/*
 	 * If set is NULL or if there are no more bits to the right then we've
