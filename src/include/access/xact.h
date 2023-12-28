@@ -59,11 +59,12 @@ extern PGDLLIMPORT int XactIsoLevel;
  * the others use one snapshot per statement.
  * Serializable uses predicate locks in addition to snapshots.
  * These macros should be used to check which isolation level is selected.
+ * In case of 2PL, we use single snapshot version.
  */
-#define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ)
+#define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ && XactLockStrategy == LOCK_NONE)
 #define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE)
 #define IsolationIsSSI() (XactIsoLevel == XACT_SERIALIZABLE && XactLockStrategy == LOCK_NONE)
-#define XactNeedLock() (XactIsoLevel == XACT_SERIALIZABLE && XactLockStrategy == LOCK_2PL)
+#define IsolationNeedLock() (XactLockStrategy == LOCK_2PL)
 
 /* Xact read-only state */
 extern bool DefaultXactReadOnly;

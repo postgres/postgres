@@ -1434,12 +1434,17 @@ lreplace:
 			case TM_Ok:
 				break;
 
+            case TM_BeingModified:
+                ereport(ERROR,
+                        (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                                errmsg("could not serialize access via 2PL due to concurrent modifcation")));
+
 			case TM_Updated:
 				{
 					TupleTableSlot *inputslot;
 					TupleTableSlot *epqslot;
 
-					if (IsolationUsesXactSnapshot())
+					if (IsolationUsesXactSnapshot() || IsolationNeedLock())
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 								 errmsg("could not serialize access due to concurrent update")));

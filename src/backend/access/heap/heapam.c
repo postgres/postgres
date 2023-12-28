@@ -3289,6 +3289,10 @@ l2:
 		}
 		else
 		{
+            // In 2PL (no wait policy), we directly abort for concurrent update.
+            result = TM_BeingModified;
+            goto abort_mark;
+
 			/*
 			 * Wait for regular transaction to end; but first, acquire tuple
 			 * lock.
@@ -3345,9 +3349,22 @@ l2:
 			result = TM_Updated;
 	}
 
+
+    if (XactLockStrategy == LOCK_2PL)
+    {
+        // add write lock for tuple access, no wait style.
+        LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+        if (!heap_acquire_tuplock(relation, &(oldtup.t_self), *lockmode,
+                             LockWaitSkip, &have_tuple_lock))
+            result = TM_BeingModified;
+        LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+    }
+
+    // 2PL does not accept parallel write.
     if (result != TM_Ok || (!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID) && XactLockStrategy == LOCK_2PL))
 	{
-		tmfd->ctid = oldtup.t_data->t_ctid;
+abort_mark:
+        tmfd->ctid = oldtup.t_data->t_ctid;
 		tmfd->xmax = HeapTupleHeaderGetUpdateXid(oldtup.t_data);
 		if (result == TM_SelfModified)
 			tmfd->cmax = HeapTupleHeaderGetCmax(oldtup.t_data);
