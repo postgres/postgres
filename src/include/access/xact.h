@@ -61,10 +61,11 @@ extern PGDLLIMPORT int XactIsoLevel;
  * These macros should be used to check which isolation level is selected.
  * In case of 2PL, we use single snapshot version.
  */
-#define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ && XactLockStrategy == LOCK_NONE)
 #define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE)
-#define IsolationIsSSI() (XactIsoLevel == XACT_SERIALIZABLE && XactLockStrategy == LOCK_NONE)
-#define IsolationNeedLock() (XactLockStrategy == LOCK_2PL)
+#define IsolationIsSSI() (IsolationIsSerializable() && XactLockStrategy == LOCK_NONE)
+#define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ || IsolationIsSSI())
+#define IsolationNeedLock() (XactLockStrategy == LOCK_2PL && XactIsoLevel == XACT_SERIALIZABLE)
+#define IsolationLockNoWait() (XactLockStrategy == LOCK_2PL)
 
 /* Xact read-only state */
 extern bool DefaultXactReadOnly;

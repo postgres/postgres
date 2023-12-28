@@ -3585,26 +3585,32 @@ UnlockBuffers(void)
 
 /*
  * Acquire or release the content_lock for the buffer.
+ * In case of lock release, return if the released lock is exclusive.
  */
-void
+bool
 LockBuffer(Buffer buffer, int mode)
 {
 	BufferDesc *buf;
+    bool oldLockMode;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
-		return;					/* local buffers need no lock */
+		return false;					/* local buffers need no lock */
 
 	buf = GetBufferDescriptor(buffer - 1);
 
 	if (mode == BUFFER_LOCK_UNLOCK)
-		LWLockRelease(BufferDescriptorGetContentLock(buf));
+	{
+        oldLockMode = LWLockRelease(BufferDescriptorGetContentLock(buf));
+		return oldLockMode == LW_EXCLUSIVE;
+	}
 	else if (mode == BUFFER_LOCK_SHARE)
 		LWLockAcquire(BufferDescriptorGetContentLock(buf), LW_SHARED);
 	else if (mode == BUFFER_LOCK_EXCLUSIVE)
 		LWLockAcquire(BufferDescriptorGetContentLock(buf), LW_EXCLUSIVE);
 	else
 		elog(ERROR, "unrecognized buffer lock mode: %d", mode);
+	return false;
 }
 
 /*

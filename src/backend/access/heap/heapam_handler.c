@@ -2251,7 +2251,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	 * though, as we need to examine all invisible tuples reachable by the
 	 * index.
 	 */
-	if (!IsolationIsSSI() && page >= hscan->rs_nblocks)
+	if (!IsolationIsSerializable() && page >= hscan->rs_nblocks)
 		return false;
 
 	/*

@@ -1714,7 +1714,7 @@ LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
 /*
  * LWLockRelease - release a previously acquired lock
  */
-void
+LWLockMode
 LWLockRelease(LWLock *lock)
 {
 	LWLockMode	mode;
@@ -1782,6 +1782,7 @@ LWLockRelease(LWLock *lock)
 	 * Now okay to allow cancel/die interrupts.
 	 */
 	RESUME_INTERRUPTS();
+    return mode;
 }
 
 /*

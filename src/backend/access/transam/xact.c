@@ -1959,9 +1959,9 @@ StartTransaction(void)
 	XactDeferrable = DefaultXactDeferrable;
 	XactIsoLevel = DefaultXactIsoLevel;
     XactLockStrategy = DefaultXactLockStrategy;
-    if (XactLockStrategy != LOCK_NONE) {
-        printf("Operation lock: iso %d-- lock %d\n", XactIsoLevel, XactLockStrategy);
-    }
+//    if (XactLockStrategy != LOCK_NONE) {
+//        printf("Operation lock: iso %d-- lock %d\n", XactIsoLevel, XactLockStrategy);
+//    }
 	forceSyncCommit = false;
 	MyXactFlags = 0;
 

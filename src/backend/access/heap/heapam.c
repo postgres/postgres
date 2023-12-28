@@ -346,15 +346,24 @@ heap_setscanlimits(TableScanDesc sscan, BlockNumber startBlk, BlockNumber numBlk
 void heap_lock_for_read(Relation relation,
                          HeapTuple tuple, Buffer buffer)
 {
-    LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+    bool is_exclusive;
+    // No need to lock for repeatable read, read committed, or SSI.
+    if (!IsolationNeedLock())
+        return;
+    is_exclusive = LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
-    if (!ConditionalLockTupleTuplock(relation, &tuple->t_self, LockTupleExclusive))
+    if (!IsolationLockNoWait())
+        LockTupleTuplock(relation, &tuple->t_self, LockTupleShare); // LockTupleShare or SIReadLock?
+    else if (!ConditionalLockTupleTuplock(relation, &tuple->t_self, LockTupleShare))
         ereport(ERROR,
                 (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
                         errmsg("could not serialize access due to read/write dependencies among transactions"),
                         errdetail_internal("Reason code: Canceled on conflict due to 2PL read lock."),
                         errhint("The transaction might succeed if retried.")));
-    LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+    if (is_exclusive)
+        LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+    else
+        LockBuffer(buffer, BUFFER_LOCK_SHARE);
 }
 
 /*
@@ -3369,18 +3378,20 @@ l2:
 	}
 
 
-    if (XactLockStrategy == LOCK_2PL)
+    if (IsolationNeedLock() && !have_tuple_lock)
     {
         // add write lock for tuple access, no wait style.
         LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-        if (!heap_acquire_tuplock(relation, &(oldtup.t_self), *lockmode,
-                             LockWaitSkip, &have_tuple_lock))
-            result = TM_BeingModified;
+        if (!IsolationLockNoWait())
+            LockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
+        else if (!ConditionalLockTupleTuplock(relation, &(oldtup.t_self), *lockmode))
+                result = TM_BeingModified;
         LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
     }
 
     // 2PL does not accept parallel write.
-    if (result != TM_Ok || (!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID) && XactLockStrategy == LOCK_2PL))
+    if (result != TM_Ok ||
+        (!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID) && IsolationNeedLock()))
 	{
 abort_mark:
         tmfd->ctid = oldtup.t_data->t_ctid;
