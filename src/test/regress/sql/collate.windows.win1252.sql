@@ -400,8 +400,13 @@ drop type textrange_en_us;
 
 -- nondeterministic collations
 -- (not supported with libc provider)
-
-CREATE COLLATION ctest_det (locale = 'en_US', deterministic = true);
+do $$
+BEGIN
+  EXECUTE 'CREATE COLLATION ctest_det (locale = ' ||
+          quote_literal((SELECT collcollate FROM pg_collation WHERE
+          collname = 'en_US')) || ', deterministic = true);';
+  END
+$$;
 CREATE COLLATION ctest_nondet (locale = 'en_US', deterministic = false);
 
 
