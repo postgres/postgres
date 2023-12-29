@@ -6,7 +6,7 @@
 # Successful initdb consumes much time and I/O.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use Fcntl ':mode';
 use File::stat qw{lstat};
 use PostgreSQL::Test::Cluster;

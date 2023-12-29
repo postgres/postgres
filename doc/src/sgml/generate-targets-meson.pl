@@ -4,7 +4,7 @@
 # Copyright (c) 2000-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 my $targets_meson_file = $ARGV[0];
 open my $targets_meson, '<', $targets_meson_file or die;

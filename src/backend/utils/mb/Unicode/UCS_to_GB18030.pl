@@ -14,7 +14,7 @@
 # and the "b" field is the hex byte sequence for GB18030
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use convutils;
 

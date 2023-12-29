@@ -3,7 +3,7 @@
 # doc/src/sgml/mk_feature_tables.pl
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 my $yesno = $ARGV[0];
 

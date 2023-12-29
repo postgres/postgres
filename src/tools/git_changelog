@@ -50,7 +50,7 @@
 
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 require Time::Local;
 require Getopt::Long;
 require IPC::Open2;

@@ -10,7 +10,7 @@
 #################################################################
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use File::Find;
 use File::Basename;

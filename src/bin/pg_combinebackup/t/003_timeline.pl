@@ -4,7 +4,7 @@
 # properly even when the reference backup is on a different timeline.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Compare;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

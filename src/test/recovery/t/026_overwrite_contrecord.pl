@@ -3,7 +3,7 @@
 # Tests for already-propagated WAL segments ending in incomplete WAL records.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use FindBin;
 use PostgreSQL::Test::Cluster;

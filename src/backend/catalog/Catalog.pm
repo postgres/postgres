@@ -14,7 +14,7 @@
 package Catalog;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use File::Compare;
 

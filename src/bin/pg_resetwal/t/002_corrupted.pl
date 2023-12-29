@@ -4,7 +4,7 @@
 # Tests for handling a corrupted pg_control
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

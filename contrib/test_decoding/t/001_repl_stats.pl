@@ -4,7 +4,7 @@
 # Test replication statistics data in pg_stat_replication_slots is sane after
 # drop replication slot and restart.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

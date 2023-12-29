@@ -30,7 +30,7 @@
 package PerfectHash;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 
 # At runtime, we'll compute two simple hash functions of the input key,

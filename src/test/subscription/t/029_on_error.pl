@@ -3,7 +3,7 @@
 
 # Tests for disable_on_error and SKIP transaction features.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;

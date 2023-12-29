@@ -1,7 +1,7 @@
 # Very simple exercise of direct I/O GUC.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use Fcntl;
 use IO::File;
 use PostgreSQL::Test::Cluster;

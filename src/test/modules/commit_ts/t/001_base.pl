@@ -4,7 +4,7 @@
 # Single-node test: value can be set, and is still present after recovery
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Utils;
 use Test::More;

@@ -30,7 +30,7 @@ compare the results of cross-version upgrade tests.
 package PostgreSQL::Test::AdjustUpgrade;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Exporter 'import';
 use PostgreSQL::Version;

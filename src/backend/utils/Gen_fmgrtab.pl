@@ -17,7 +17,7 @@
 use Catalog;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use Getopt::Long;
 
 my $output_path = '';

@@ -97,7 +97,7 @@ The IPC::Run module is required.
 package PostgreSQL::Test::Cluster;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Carp;
 use Config;

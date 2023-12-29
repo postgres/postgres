@@ -42,7 +42,7 @@ aimed at controlling command execution, logging and test functions.
 package PostgreSQL::Test::Utils;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Carp;
 use Config;

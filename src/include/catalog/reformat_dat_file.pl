@@ -18,7 +18,7 @@
 #----------------------------------------------------------------------
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use FindBin;
 use Getopt::Long;

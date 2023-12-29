@@ -9,7 +9,7 @@
 #
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 die "Usage: $0 OUTPUT_FILE\n" if @ARGV != 1;
 my $output_file = $ARGV[0];

@@ -4,7 +4,7 @@
 # This tests that more complex datatypes are replicated correctly
 # by logical replication
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;

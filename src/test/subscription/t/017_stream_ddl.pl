@@ -6,7 +6,7 @@
 # This file is mainly to test the DDL/DML interaction of the publisher side,
 # so we didn't add a parallel apply version for the tests in this file.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;

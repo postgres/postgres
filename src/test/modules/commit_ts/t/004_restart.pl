@@ -3,7 +3,7 @@
 
 # Testing of commit timestamps preservation across restarts
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;

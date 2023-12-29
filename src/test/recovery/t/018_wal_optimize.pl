@@ -10,7 +10,7 @@
 # For many years, individual commands made the decision to skip WAL, hence the
 # frequent appearance of COPY in these tests.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

@@ -17,7 +17,7 @@
 #		 # and Unicode name (not used in this script)
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use convutils;
 

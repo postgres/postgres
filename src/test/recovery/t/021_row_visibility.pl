@@ -4,7 +4,7 @@
 # Checks that snapshots on standbys behave in a minimally reasonable
 # way.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

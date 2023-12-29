@@ -5,7 +5,7 @@
 # prior backup.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Compare;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;

@@ -3,7 +3,7 @@
 
 # This test checks that constraints work on subscriber
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;

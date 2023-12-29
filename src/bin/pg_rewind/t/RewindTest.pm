@@ -32,7 +32,7 @@ package RewindTest;
 # to run psql against the primary and standby servers, respectively.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Carp;
 use Exporter 'import';

@@ -2,7 +2,7 @@
 # Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Basename qw(basename dirname);
 use File::Path     qw(rmtree);
 use PostgreSQL::Test::Cluster;

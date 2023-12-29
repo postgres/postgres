@@ -14,7 +14,7 @@
 # and the "b" field is the hex byte sequence for UHC
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use convutils;
 

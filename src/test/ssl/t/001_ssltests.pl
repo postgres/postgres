@@ -2,7 +2,7 @@
 # Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use Config qw ( %Config );
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
@@ -708,6 +708,8 @@ if ($? == 0)
 	# integer like how we do when grabbing the serial fails.
 	if ($Config{ivsize} == 8)
 	{
+		no warnings qw(portable);
+
 		$serialno =~ s/^serial=//;
 		$serialno =~ s/\s+//g;
 		$serialno = hex($serialno);

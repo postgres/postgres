@@ -4,7 +4,7 @@
 # Test the CREATE SUBSCRIPTION 'origin' parameter and its interaction with
 # 'copy_data' parameter.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;

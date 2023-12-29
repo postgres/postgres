@@ -27,7 +27,7 @@ file as capitalized and used as the name of the macro, along with an optional pr
 =cut
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Getopt::Long;
 

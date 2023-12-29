@@ -46,7 +46,7 @@ LdapServer - class for an LDAP server for testing pg_hba.conf authentication
 package LdapServer;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Utils;
 use Test::More;

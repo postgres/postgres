@@ -6,7 +6,7 @@
 package convutils;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Carp;
 use Exporter 'import';

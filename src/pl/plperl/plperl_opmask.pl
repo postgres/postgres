@@ -3,7 +3,7 @@
 # Copyright (c) 2021-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Opcode qw(opset opset_to_ops opdesc);
 

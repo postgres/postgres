@@ -5,7 +5,7 @@
 # Test pg_rewind when the target's pg_wal directory is a symlink.
 #
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Copy;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Utils;

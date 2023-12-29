@@ -6,7 +6,7 @@
 # pg_combinebackup does not produce a manifest when run with --no-manifest.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Compare;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

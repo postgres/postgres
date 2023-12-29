@@ -22,7 +22,7 @@
 #################################################################
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 my $debug = 0;
 

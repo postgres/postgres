@@ -16,7 +16,7 @@
 #----------------------------------------------------------------------
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 # Get command line argument.
 usage() if $#ARGV != 0;

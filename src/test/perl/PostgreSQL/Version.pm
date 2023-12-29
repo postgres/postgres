@@ -45,7 +45,7 @@ of common version formats and comparison operations.
 package PostgreSQL::Version;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Scalar::Util qw(blessed);
 

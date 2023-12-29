@@ -5,7 +5,7 @@
 # but specify them anyway for documentation's sake.)
 #
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use Config;
 
 use IPC::Run 0.79;

@@ -54,7 +54,7 @@ initiated by PostgreSQL::Test::Cluster.
 package PostgreSQL::Test::BackgroundPsql;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Carp;
 use Config;

@@ -7,7 +7,7 @@
 # Copyright (c) 2009-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 my $gram_filename = $ARGV[0];
 my $kwlist_filename = $ARGV[1];

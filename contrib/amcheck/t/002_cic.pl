@@ -3,7 +3,7 @@
 
 # Test CREATE INDEX CONCURRENTLY with concurrent modifications
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

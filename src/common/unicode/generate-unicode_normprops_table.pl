@@ -7,7 +7,7 @@
 # Copyright (c) 2020-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use FindBin;
 use lib "$FindBin::RealBin/../../tools/";

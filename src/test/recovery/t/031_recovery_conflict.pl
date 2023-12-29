@@ -5,7 +5,7 @@
 # pg_stat_database_conflicts are populated correctly
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;

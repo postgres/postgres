@@ -19,7 +19,7 @@
 #----------------------------------------------------------------------
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 # Must run in src/include/catalog
 use FindBin;

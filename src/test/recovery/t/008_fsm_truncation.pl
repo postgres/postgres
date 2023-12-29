@@ -6,7 +6,7 @@
 # FSM changes don't normally need to be WAL-logged, except for truncation.
 # The FSM mustn't return a page that doesn't exist (anymore).
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

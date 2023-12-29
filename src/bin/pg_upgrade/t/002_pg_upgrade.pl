@@ -2,7 +2,7 @@
 
 # Set of tests for pg_upgrade, including cross-version checks.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Cwd            qw(abs_path);
 use File::Basename qw(dirname);

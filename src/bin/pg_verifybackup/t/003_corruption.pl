@@ -4,7 +4,7 @@
 # Verify that various forms of corruption are detected by pg_verifybackup.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;

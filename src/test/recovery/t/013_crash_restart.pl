@@ -12,7 +12,7 @@
 # backend died), or because it's already restarted.
 #
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;

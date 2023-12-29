@@ -3,7 +3,7 @@
 
 # Test that logical replication respects permissions
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use Test::More;
 

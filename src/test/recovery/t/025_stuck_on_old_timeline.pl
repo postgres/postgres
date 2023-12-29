@@ -7,7 +7,7 @@
 # archive, so the WAL files all have to be streamed.  Test that the cascading
 # standby can follow the new primary (promoted standby).
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 

@@ -3,7 +3,7 @@
 # Tests for upgrading logical replication slots
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use File::Find qw(find);
 

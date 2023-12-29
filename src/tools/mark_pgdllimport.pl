@@ -23,7 +23,7 @@
 #----------------------------------------------------------------------
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 for my $include_file (@ARGV)
 {

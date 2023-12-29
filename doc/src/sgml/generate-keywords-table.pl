@@ -5,7 +5,7 @@
 # Copyright (c) 2019-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 my @sql_versions = reverse sort ('1992', '2016', '2023');
 

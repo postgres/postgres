@@ -4,7 +4,7 @@
 # Test how pg_rewind reacts to extra files and directories in the data dirs.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Utils;
 use Test::More;
 

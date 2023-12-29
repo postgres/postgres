@@ -7,7 +7,7 @@
 # Copyright (c) 2019-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 my $range_start = undef;
 my ($first, $last);

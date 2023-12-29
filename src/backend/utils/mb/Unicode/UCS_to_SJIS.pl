@@ -11,7 +11,7 @@
 # ftp site.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use convutils;
 

@@ -5,7 +5,7 @@
 # Ensure that max_slot_wal_keep_size limits the number of WAL files to
 # be kept by replication slots.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;

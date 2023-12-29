@@ -19,7 +19,7 @@ PostgreSQL::Test::RecursiveCopy::copypath($from, $to);
 package PostgreSQL::Test::RecursiveCopy;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Carp;
 use File::Basename;

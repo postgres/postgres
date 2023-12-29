@@ -8,7 +8,7 @@
 # "euc-jis-2004-std.txt" (http://x0213.org)
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use convutils;
 

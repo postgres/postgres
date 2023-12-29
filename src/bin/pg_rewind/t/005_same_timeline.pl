@@ -6,7 +6,7 @@
 # on the same timeline runs successfully.
 #
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Utils;
 use Test::More;
 

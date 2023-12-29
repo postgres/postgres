@@ -5,7 +5,7 @@
 # contrib/intarray/bench/create_test.pl
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 print <<EOT;
 create table message (

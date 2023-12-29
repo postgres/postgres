@@ -2,7 +2,7 @@
 # Copyright (c) 2022-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Basename;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::RecursiveCopy;

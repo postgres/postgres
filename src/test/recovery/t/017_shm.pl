@@ -5,7 +5,7 @@
 # Tests of pg_shmem.h functions
 #
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::stat qw(stat);
 use IPC::Run 'run';
 use PostgreSQL::Test::Cluster;

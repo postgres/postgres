@@ -7,7 +7,7 @@
 #-------------------------------------------------------------------------
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 m/^\s*probe / || next;
 s/^\s*probe ([^(]*)(.*);/$1$2/;

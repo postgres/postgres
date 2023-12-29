@@ -25,7 +25,7 @@ for a PostgreSQL cluster compiled against OpenSSL.
 package SSL::Backend::OpenSSL;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Basename;
 use File::Copy;
 

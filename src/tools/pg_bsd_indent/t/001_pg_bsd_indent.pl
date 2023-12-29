@@ -4,7 +4,7 @@
 # Copyright (c) 2017-2023, PostgreSQL Global Development Group
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Cwd qw(getcwd);
 use File::Copy "cp";

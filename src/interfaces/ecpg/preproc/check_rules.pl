@@ -17,7 +17,7 @@
 # Then it checks to make sure each rule in ecpg.addons was found in gram.y
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use Getopt::Long;
 
 my $srcdir = '.';
