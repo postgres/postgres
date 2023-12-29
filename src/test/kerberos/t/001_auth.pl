@@ -28,7 +28,7 @@ if ($ENV{with_gssapi} ne 'yes')
 {
 	plan skip_all => 'GSSAPI/Kerberos not supported by this build';
 }
-elsif ($ENV{PG_TEST_EXTRA} !~ /\bkerberos\b/)
+elsif (!$ENV{PG_TEST_EXTRA} || $ENV{PG_TEST_EXTRA} !~ /\bkerberos\b/)
 {
 	plan skip_all =>
 	  'Potentially unsafe test GSSAPI/Kerberos not enabled in PG_TEST_EXTRA';
@@ -203,7 +203,7 @@ system_or_bail $krb5kdc, '-P', $kdc_pidfile;
 
 END
 {
-	kill 'INT', `cat $kdc_pidfile` if -f $kdc_pidfile;
+	kill 'INT', `cat $kdc_pidfile` if defined($kdc_pidfile) && -f $kdc_pidfile;
 }
 
 note "setting up PostgreSQL instance";

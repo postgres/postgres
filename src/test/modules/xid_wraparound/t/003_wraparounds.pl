@@ -10,7 +10,7 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 use Time::HiRes qw(usleep);
 
-if ($ENV{PG_TEST_EXTRA} !~ /\bxid_wraparound\b/)
+if (!$ENV{PG_TEST_EXTRA} || $ENV{PG_TEST_EXTRA} !~ /\bxid_wraparound\b/)
 {
 	plan skip_all => "test xid_wraparound not enabled in PG_TEST_EXTRA";
 }
