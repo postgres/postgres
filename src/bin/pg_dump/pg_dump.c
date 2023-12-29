@@ -1762,6 +1762,26 @@ selectDumpablePublicationTable(DumpableObject *dobj, Archive *fout)
 }
 
 /*
+ * selectDumpableStatisticsObject: policy-setting subroutine
+ *		Mark an extended statistics object as to be dumped or not
+ *
+ * We dump an extended statistics object if the schema it's in and the table
+ * it's for are being dumped.  (This'll need more thought if statistics
+ * objects ever support cross-table stats.)
+ */
+static void
+selectDumpableStatisticsObject(StatsExtInfo *sobj, Archive *fout)
+{
+	if (checkExtensionMembership(&sobj->dobj, fout))
+		return;					/* extension membership overrides all else */
+
+	sobj->dobj.dump = sobj->dobj.namespace->dobj.dump_contains;
+	if (sobj->stattable == NULL ||
+		!(sobj->stattable->dobj.dump & DUMP_COMPONENT_DEFINITION))
+		sobj->dobj.dump = DUMP_COMPONENT_NONE;
+}
+
+/*
  * selectDumpableObject: policy-setting subroutine
  *		Mark a generic dumpable object as to be dumped or not
  *
@@ -7381,6 +7401,7 @@ getExtendedStatistics(Archive *fout)
 	int			i_stxname;
 	int			i_stxnamespace;
 	int			i_rolname;
+	int			i_stxrelid;
 	int			i;
 
 	/* Extended statistics were new in v10 */
@@ -7390,7 +7411,7 @@ getExtendedStatistics(Archive *fout)
 	query = createPQExpBuffer();
 
 	appendPQExpBuffer(query, "SELECT tableoid, oid, stxname, "
-					  "stxnamespace, (%s stxowner) AS rolname "
+					  "stxnamespace, (%s stxowner) AS rolname, stxrelid "
 					  "FROM pg_catalog.pg_statistic_ext",
 					  username_subquery);
 
@@ -7403,6 +7424,7 @@ getExtendedStatistics(Archive *fout)
 	i_stxname = PQfnumber(res, "stxname");
 	i_stxnamespace = PQfnumber(res, "stxnamespace");
 	i_rolname = PQfnumber(res, "rolname");
+	i_stxrelid = PQfnumber(res, "stxrelid");
 
 	statsextinfo = (StatsExtInfo *) pg_malloc(ntups * sizeof(StatsExtInfo));
 
@@ -7417,9 +7439,11 @@ getExtendedStatistics(Archive *fout)
 			findNamespace(fout,
 						  atooid(PQgetvalue(res, i, i_stxnamespace)));
 		statsextinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
+		statsextinfo[i].stattable =
+			findTableByOid(atooid(PQgetvalue(res, i, i_stxrelid)));
 
 		/* Decide whether we want to dump it */
-		selectDumpableObject(&(statsextinfo[i].dobj), fout);
+		selectDumpableStatisticsObject(&(statsextinfo[i]), fout);
 
 		/* Stats objects do not currently have ACLs. */
 		statsextinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;

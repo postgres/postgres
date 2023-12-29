@@ -2737,13 +2737,13 @@ my %tests = (
 	'CREATE STATISTICS extended_stats_no_options' => {
 		create_order => 97,
 		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_no_options
-							ON col1, col2 FROM dump_test.test_fifth_table',
+							ON col1, col2 FROM dump_test.test_table',
 		regexp => qr/^
-			\QCREATE STATISTICS dump_test.test_ext_stats_no_options ON col1, col2 FROM dump_test.test_fifth_table;\E
+			\QCREATE STATISTICS dump_test.test_ext_stats_no_options ON col1, col2 FROM dump_test.test_table;\E
 		    /xms,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
-		unlike => { exclude_dump_test_schema => 1, },
+		unlike => { exclude_dump_test_schema => 1, exclude_test_table => 1, },
 	},
 
 	'CREATE STATISTICS extended_stats_options' => {
