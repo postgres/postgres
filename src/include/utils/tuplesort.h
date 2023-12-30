@@ -430,9 +430,7 @@ extern Tuplesortstate *tuplesort_begin_index_gist(Relation heapRel,
 												  Relation indexRel,
 												  int workMem, SortCoordinate coordinate,
 												  int sortopt);
-extern Tuplesortstate *tuplesort_begin_index_brin(Relation heapRel,
-												  Relation indexRel,
-												  int workMem, SortCoordinate coordinate,
+extern Tuplesortstate *tuplesort_begin_index_brin(int workMem, SortCoordinate coordinate,
 												  int sortopt);
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
 											 Oid sortOperator, Oid sortCollation,

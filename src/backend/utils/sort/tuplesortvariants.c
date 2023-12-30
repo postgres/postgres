@@ -138,16 +138,6 @@ typedef struct
 } TuplesortIndexHashArg;
 
 /*
- * Data struture pointed by "TuplesortPublic.arg" for the index_brin subcase.
- */
-typedef struct
-{
-	TuplesortIndexArg index;
-
-	/* XXX do we need something here? */
-} TuplesortIndexBrinArg;
-
-/*
  * Data struture pointed by "TuplesortPublic.arg" for the Datum case.
  * Set by tuplesort_begin_datum and used only by the DatumTuple routines.
  */
@@ -562,20 +552,13 @@ tuplesort_begin_index_gist(Relation heapRel,
 }
 
 Tuplesortstate *
-tuplesort_begin_index_brin(Relation heapRel,
-						   Relation indexRel,
-						   int workMem,
+tuplesort_begin_index_brin(int workMem,
 						   SortCoordinate coordinate,
 						   int sortopt)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
 												   sortopt);
 	TuplesortPublic *base = TuplesortstateGetPublic(state);
-	MemoryContext oldcontext;
-	TuplesortIndexBrinArg *arg;
-
-	oldcontext = MemoryContextSwitchTo(base->maincontext);
-	arg = (TuplesortIndexBrinArg *) palloc(sizeof(TuplesortIndexBrinArg));
 
 #ifdef TRACE_SORT
 	if (trace_sort)
@@ -592,12 +575,7 @@ tuplesort_begin_index_brin(Relation heapRel,
 	base->writetup = writetup_index_brin;
 	base->readtup = readtup_index_brin;
 	base->haveDatum1 = true;
-	base->arg = arg;
-
-	arg->index.heapRel = heapRel;
-	arg->index.indexRel = indexRel;
-
-	MemoryContextSwitchTo(oldcontext);
+	base->arg = NULL;
 
 	return state;
 }

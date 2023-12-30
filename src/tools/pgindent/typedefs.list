@@ -307,7 +307,6 @@ BrinRevmap
 BrinShared
 BrinSortTuple
 BrinSpecialSpace
-BrinSpool
 BrinStatsData
 BrinTuple
 BrinValues

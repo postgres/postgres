@@ -51,16 +51,6 @@
 #define PARALLEL_KEY_BUFFER_USAGE		UINT64CONST(0xB000000000000005)
 
 /*
- * Status record for spooling/sorting phase.
- */
-typedef struct BrinSpool
-{
-	Tuplesortstate *sortstate;	/* state data for tuplesort.c */
-	Relation	heap;
-	Relation	index;
-} BrinSpool;
-
-/*
  * Status for index builds performed in parallel.  This is allocated in a
  * dynamic shared memory segment.
  */
@@ -183,7 +173,13 @@ typedef struct BrinBuildState
 	 */
 	BrinLeader *bs_leader;
 	int			bs_worker_id;
-	BrinSpool  *bs_spool;
+
+	/*
+	 * The sortstate is used by workers (including the leader). It has to be
+	 * part of the build state, because that's the only thing passed to the
+	 * build callback etc.
+	 */
+	Tuplesortstate *bs_sortstate;
 } BrinBuildState;
 
 /*
@@ -231,12 +227,11 @@ static void brin_fill_empty_ranges(BrinBuildState *state,
 /* parallel index builds */
 static void _brin_begin_parallel(BrinBuildState *buildstate, Relation heap, Relation index,
 								 bool isconcurrent, int request);
-static void _brin_end_parallel(BrinLeader *btleader, BrinBuildState *state);
+static void _brin_end_parallel(BrinLeader *brinleader, BrinBuildState *state);
 static Size _brin_parallel_estimate_shared(Relation heap, Snapshot snapshot);
 static void _brin_leader_participate_as_worker(BrinBuildState *buildstate,
 											   Relation heap, Relation index);
 static void _brin_parallel_scan_and_build(BrinBuildState *buildstate,
-										  BrinSpool *brinspool,
 										  BrinShared *brinshared,
 										  Sharedsort *sharedsort,
 										  Relation heap, Relation index,
@@ -1143,10 +1138,6 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	state = initialize_brin_buildstate(index, revmap, pagesPerRange,
 									   RelationGetNumberOfBlocks(heap));
 
-	state->bs_spool = (BrinSpool *) palloc0(sizeof(BrinSpool));
-	state->bs_spool->heap = heap;
-	state->bs_spool->index = index;
-
 	/*
 	 * Attempt to launch parallel worker scan when required
 	 *
@@ -1160,11 +1151,13 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 							 indexInfo->ii_ParallelWorkers);
 
 	/*
-	 * Now scan the relation.  No syncscan allowed here because we want the
-	 * heap blocks in physical order.
-	 *
 	 * If parallel build requested and at least one worker process was
-	 * successfully launched, set up coordination state
+	 * successfully launched, set up coordination state, wait for workers to
+	 * complete. Then read all tuples from the shared tuplesort and insert
+	 * them into the index.
+	 *
+	 * In serial mode, simply scan the table and build the index one index
+	 * tuple at a time.
 	 */
 	if (state->bs_leader)
 	{
@@ -1176,9 +1169,8 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 			state->bs_leader->nparticipanttuplesorts;
 		coordinate->sharedsort = state->bs_leader->sharedsort;
 
-
 		/*
-		 * Begin serial/leader tuplesort.
+		 * Begin leader tuplesort.
 		 *
 		 * In cases where parallelism is involved, the leader receives the
 		 * same share of maintenance_work_mem as a serial sort (it is
@@ -1199,19 +1191,18 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 		 * INDEX operation, regardless of the use of parallelism or any other
 		 * factor.
 		 */
-		state->bs_spool->sortstate =
-			tuplesort_begin_index_brin(heap, index,
-									   maintenance_work_mem, coordinate,
+		state->bs_sortstate =
+			tuplesort_begin_index_brin(maintenance_work_mem, coordinate,
 									   TUPLESORT_NONE);
 
-		/*
-		 * In parallel mode, wait for workers to complete, and then read all
-		 * tuples from the shared tuplesort and insert them into the index.
-		 */
 		_brin_end_parallel(state->bs_leader, state);
 	}
 	else						/* no parallel index build */
 	{
+		/*
+		 * Now scan the relation.  No syncscan allowed here because we want
+		 * the heap blocks in physical order.
+		 */
 		reltuples = table_index_build_scan(heap, index, indexInfo, false, true,
 										   brinbuildCallback, (void *) state, NULL);
 
@@ -1671,7 +1662,7 @@ initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
 	state->bs_dtuple = brin_new_memtuple(state->bs_bdesc);
 	state->bs_leader = NULL;
 	state->bs_worker_id = 0;
-	state->bs_spool = NULL;
+	state->bs_sortstate = NULL;
 	state->bs_context = CurrentMemoryContext;
 	state->bs_emptyTuple = NULL;
 	state->bs_emptyTupleLen = 0;
@@ -2002,7 +1993,7 @@ form_and_spill_tuple(BrinBuildState *state)
 						  state->bs_dtuple, &size);
 
 	/* write the BRIN tuple to the tuplesort */
-	tuplesort_putbrintuple(state->bs_spool->sortstate, tup, size);
+	tuplesort_putbrintuple(state->bs_sortstate, tup, size);
 
 	state->bs_numtuples++;
 
@@ -2522,7 +2513,6 @@ _brin_end_parallel(BrinLeader *brinleader, BrinBuildState *state)
 	Size		tuplen;
 	BrinShared *brinshared = brinleader->brinshared;
 	BlockNumber prevblkno = InvalidBlockNumber;
-	BrinSpool  *spool;
 	MemoryContext rangeCxt,
 				oldCxt;
 
@@ -2541,8 +2531,7 @@ _brin_end_parallel(BrinLeader *brinleader, BrinBuildState *state)
 	state->bs_numtuples = brinshared->indtuples;
 
 	/* do the actual sort in the leader */
-	spool = state->bs_spool;
-	tuplesort_performsort(spool->sortstate);
+	tuplesort_performsort(state->bs_sortstate);
 
 	/*
 	 * Initialize BrinMemTuple we'll use to union summaries from workers (in
@@ -2568,7 +2557,7 @@ _brin_end_parallel(BrinLeader *brinleader, BrinBuildState *state)
 	 * That probably gives us an index that is cheaper to scan, thanks to
 	 * mostly getting data from the same index page as before.
 	 */
-	while ((btup = tuplesort_getbrintuple(spool->sortstate, &tuplen, true)) != NULL)
+	while ((btup = tuplesort_getbrintuple(state->bs_sortstate, &tuplen, true)) != NULL)
 	{
 		/* Ranges should be multiples of pages_per_range for the index. */
 		Assert(btup->bt_blkno % brinshared->pagesPerRange == 0);
@@ -2640,7 +2629,7 @@ _brin_end_parallel(BrinLeader *brinleader, BrinBuildState *state)
 		prevblkno = btup->bt_blkno;
 	}
 
-	tuplesort_end(spool->sortstate);
+	tuplesort_end(state->bs_sortstate);
 
 	/* Fill the BRIN tuple for the last page range with data. */
 	if (prevblkno != InvalidBlockNumber)
@@ -2704,11 +2693,6 @@ _brin_leader_participate_as_worker(BrinBuildState *buildstate, Relation heap, Re
 	BrinLeader *brinleader = buildstate->bs_leader;
 	int			sortmem;
 
-	/* Allocate memory and initialize private spool */
-	buildstate->bs_spool = (BrinSpool *) palloc0(sizeof(BrinSpool));
-	buildstate->bs_spool->heap = buildstate->bs_spool->heap;
-	buildstate->bs_spool->index = buildstate->bs_spool->index;
-
 	/*
 	 * Might as well use reliable figure when doling out maintenance_work_mem
 	 * (when requested number of workers were not launched, this will be
@@ -2717,16 +2701,14 @@ _brin_leader_participate_as_worker(BrinBuildState *buildstate, Relation heap, Re
 	sortmem = maintenance_work_mem / brinleader->nparticipanttuplesorts;
 
 	/* Perform work common to all participants */
-	_brin_parallel_scan_and_build(buildstate, buildstate->bs_spool, brinleader->brinshared,
+	_brin_parallel_scan_and_build(buildstate, brinleader->brinshared,
 								  brinleader->sharedsort, heap, index, sortmem, true);
 }
 
 /*
  * Perform a worker's portion of a parallel sort.
  *
- * This generates a tuplesort for passed btspool, and a second tuplesort
- * state if a second btspool is need (i.e. for unique index builds).  All
- * other spool fields should already be set when this is called.
+ * This generates a tuplesort for the worker portion of the table.
  *
  * sortmem is the amount of working memory to use within each worker,
  * expressed in KBs.
@@ -2734,10 +2716,10 @@ _brin_leader_participate_as_worker(BrinBuildState *buildstate, Relation heap, Re
  * When this returns, workers are done, and need only release resources.
  */
 static void
-_brin_parallel_scan_and_build(BrinBuildState *state, BrinSpool *brinspool,
+_brin_parallel_scan_and_build(BrinBuildState *state,
 							  BrinShared *brinshared, Sharedsort *sharedsort,
-							  Relation heap, Relation index, int sortmem,
-							  bool progress)
+							  Relation heap, Relation index,
+							  int sortmem, bool progress)
 {
 	SortCoordinate coordinate;
 	TableScanDesc scan;
@@ -2751,10 +2733,8 @@ _brin_parallel_scan_and_build(BrinBuildState *state, BrinSpool *brinspool,
 	coordinate->sharedsort = sharedsort;
 
 	/* Begin "partial" tuplesort */
-	brinspool->sortstate = tuplesort_begin_index_brin(brinspool->heap,
-													  brinspool->index,
-													  sortmem, coordinate,
-													  TUPLESORT_NONE);
+	state->bs_sortstate = tuplesort_begin_index_brin(sortmem, coordinate,
+													 TUPLESORT_NONE);
 
 	/* Join parallel scan */
 	indexInfo = BuildIndexInfo(index);
@@ -2770,7 +2750,7 @@ _brin_parallel_scan_and_build(BrinBuildState *state, BrinSpool *brinspool,
 	form_and_spill_tuple(state);
 
 	/* sort the BRIN ranges built by this worker */
-	tuplesort_performsort(brinspool->sortstate);
+	tuplesort_performsort(state->bs_sortstate);
 
 	state->bs_reltuples += reltuples;
 
@@ -2786,7 +2766,7 @@ _brin_parallel_scan_and_build(BrinBuildState *state, BrinSpool *brinspool,
 	/* Notify leader */
 	ConditionVariableSignal(&brinshared->workersdonecv);
 
-	tuplesort_end(brinspool->sortstate);
+	tuplesort_end(state->bs_sortstate);
 }
 
 /*
@@ -2844,11 +2824,6 @@ _brin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 											brinshared->pagesPerRange,
 											InvalidBlockNumber);
 
-	/* Initialize worker's own spool */
-	buildstate->bs_spool = (BrinSpool *) palloc0(sizeof(BrinSpool));
-	buildstate->bs_spool->heap = heapRel;
-	buildstate->bs_spool->index = indexRel;
-
 	/* Look up shared state private to tuplesort.c */
 	sharedsort = shm_toc_lookup(toc, PARALLEL_KEY_TUPLESORT, false);
 	tuplesort_attach_shared(sharedsort, seg);
@@ -2863,8 +2838,7 @@ _brin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 	 */
 	sortmem = maintenance_work_mem / brinshared->scantuplesortstates;
 
-	_brin_parallel_scan_and_build(buildstate, buildstate->bs_spool,
-								  brinshared, sharedsort,
+	_brin_parallel_scan_and_build(buildstate, brinshared, sharedsort,
 								  heapRel, indexRel, sortmem, false);
 
 	/* Report WAL/buffer usage during parallel execution */
