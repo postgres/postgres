@@ -1040,16 +1040,22 @@ brinbuildCallbackParallel(Relation index,
 	thisblock = ItemPointerGetBlockNumber(tid);
 
 	/*
-	 * If we're in a block that belongs to a future range, summarize what
+	 * If we're in a block that belongs to a different range, summarize what
 	 * we've got and start afresh.  Note the scan might have skipped many
 	 * pages, if they were devoid of live tuples; we do not create emptry BRIN
 	 * ranges here - the leader is responsible for filling them in.
+	 *
+	 * Unlike serial builds, parallel index builds allow synchronized seqscans
+	 * (because that's what parallel scans do). This means the block may wrap
+	 * around to the beginning of the relation, so the condition needs to
+	 * check for both future and past ranges.
 	 */
-	if (thisblock > state->bs_currRangeStart + state->bs_pagesPerRange - 1)
+	if ((thisblock < state->bs_currRangeStart) ||
+		(thisblock > state->bs_currRangeStart + state->bs_pagesPerRange - 1))
 	{
 
 		BRIN_elog((DEBUG2,
-				   "brinbuildCallback: completed a range: %u--%u",
+				   "brinbuildCallbackParallel: completed a range: %u--%u",
 				   state->bs_currRangeStart,
 				   state->bs_currRangeStart + state->bs_pagesPerRange));
 
@@ -1201,7 +1207,9 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	{
 		/*
 		 * Now scan the relation.  No syncscan allowed here because we want
-		 * the heap blocks in physical order.
+		 * the heap blocks in physical order (we want to produce the ranges
+		 * starting from block 0, and the callback also relies on this to not
+		 * generate summary for the same range twice).
 		 */
 		reltuples = table_index_build_scan(heap, index, indexInfo, false, true,
 										   brinbuildCallback, (void *) state, NULL);
