@@ -4354,42 +4354,45 @@ BackendInitialize(Port *port)
 	 * now instead of wasting cycles on an authentication exchange. (This also
 	 * allows a pg_ping utility to be written.)
 	 */
-	switch (port->canAcceptConnections)
+	if (status == STATUS_OK)
 	{
-		case CAC_STARTUP:
-			ereport(FATAL,
-					(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-					 errmsg("the database system is starting up")));
-			break;
-		case CAC_NOTCONSISTENT:
-			if (EnableHotStandby)
+		switch (port->canAcceptConnections)
+		{
+			case CAC_STARTUP:
 				ereport(FATAL,
 						(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-						 errmsg("the database system is not yet accepting connections"),
-						 errdetail("Consistent recovery state has not been yet reached.")));
-			else
+						 errmsg("the database system is starting up")));
+				break;
+			case CAC_NOTCONSISTENT:
+				if (EnableHotStandby)
+					ereport(FATAL,
+							(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+							 errmsg("the database system is not yet accepting connections"),
+							 errdetail("Consistent recovery state has not been yet reached.")));
+				else
+					ereport(FATAL,
+							(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+							 errmsg("the database system is not accepting connections"),
+							 errdetail("Hot standby mode is disabled.")));
+				break;
+			case CAC_SHUTDOWN:
 				ereport(FATAL,
 						(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-						 errmsg("the database system is not accepting connections"),
-						 errdetail("Hot standby mode is disabled.")));
-			break;
-		case CAC_SHUTDOWN:
-			ereport(FATAL,
-					(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-					 errmsg("the database system is shutting down")));
-			break;
-		case CAC_RECOVERY:
-			ereport(FATAL,
-					(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-					 errmsg("the database system is in recovery mode")));
-			break;
-		case CAC_TOOMANY:
-			ereport(FATAL,
-					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-					 errmsg("sorry, too many clients already")));
-			break;
-		case CAC_OK:
-			break;
+						 errmsg("the database system is shutting down")));
+				break;
+			case CAC_RECOVERY:
+				ereport(FATAL,
+						(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+						 errmsg("the database system is in recovery mode")));
+				break;
+			case CAC_TOOMANY:
+				ereport(FATAL,
+						(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+						 errmsg("sorry, too many clients already")));
+				break;
+			case CAC_OK:
+				break;
+		}
 	}
 
 	/*
