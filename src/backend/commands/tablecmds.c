@@ -142,20 +142,24 @@ static List *on_commits = NIL;
  * a pass determined by subcommand type.
  */
 
-#define AT_PASS_UNSET			-1	/* UNSET will cause ERROR */
-#define AT_PASS_DROP			0	/* DROP (all flavors) */
-#define AT_PASS_ALTER_TYPE		1	/* ALTER COLUMN TYPE */
-#define AT_PASS_OLD_INDEX		2	/* re-add existing indexes */
-#define AT_PASS_OLD_CONSTR		3	/* re-add existing constraints */
-/* We could support a RENAME COLUMN pass here, but not currently used */
-#define AT_PASS_ADD_COL			4	/* ADD COLUMN */
-#define AT_PASS_ADD_CONSTR		5	/* ADD constraints (initial examination) */
-#define AT_PASS_COL_ATTRS		6	/* set column attributes, eg NOT NULL */
-#define AT_PASS_ADD_INDEXCONSTR	7	/* ADD index-based constraints */
-#define AT_PASS_ADD_INDEX		8	/* ADD indexes */
-#define AT_PASS_ADD_OTHERCONSTR	9	/* ADD other constraints, defaults */
-#define AT_PASS_MISC			10	/* other stuff */
-#define AT_NUM_PASSES			11
+typedef enum AlterTablePass
+{
+	AT_PASS_UNSET = -1,			/* UNSET will cause ERROR */
+	AT_PASS_DROP,				/* DROP (all flavors) */
+	AT_PASS_ALTER_TYPE,			/* ALTER COLUMN TYPE */
+	AT_PASS_OLD_INDEX,			/* re-add existing indexes */
+	AT_PASS_OLD_CONSTR,			/* re-add existing constraints */
+	/* We could support a RENAME COLUMN pass here, but not currently used */
+	AT_PASS_ADD_COL,			/* ADD COLUMN */
+	AT_PASS_ADD_CONSTR,			/* ADD constraints (initial examination) */
+	AT_PASS_COL_ATTRS,			/* set column attributes, eg NOT NULL */
+	AT_PASS_ADD_INDEXCONSTR,	/* ADD index-based constraints */
+	AT_PASS_ADD_INDEX,			/* ADD indexes */
+	AT_PASS_ADD_OTHERCONSTR,	/* ADD other constraints, defaults */
+	AT_PASS_MISC,				/* other stuff */
+} AlterTablePass;
+
+#define AT_NUM_PASSES			(AT_PASS_MISC + 1)
 
 typedef struct AlteredTableInfo
 {
@@ -399,12 +403,12 @@ static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 							  AlterTableUtilityContext *context);
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab,
-					  AlterTableCmd *cmd, LOCKMODE lockmode, int cur_pass,
+					  AlterTableCmd *cmd, LOCKMODE lockmode, AlterTablePass cur_pass,
 					  AlterTableUtilityContext *context);
 static AlterTableCmd *ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab,
 										  Relation rel, AlterTableCmd *cmd,
 										  bool recurse, LOCKMODE lockmode,
-										  int cur_pass,
+										  AlterTablePass cur_pass,
 										  AlterTableUtilityContext *context);
 static void ATRewriteTables(AlterTableStmt *parsetree,
 							List **wqueue, LOCKMODE lockmode,
@@ -427,7 +431,7 @@ static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recu
 static ObjectAddress ATExecAddColumn(List **wqueue, AlteredTableInfo *tab,
 									 Relation rel, AlterTableCmd **cmd,
 									 bool recurse, bool recursing,
-									 LOCKMODE lockmode, int cur_pass,
+									 LOCKMODE lockmode, AlterTablePass cur_pass,
 									 AlterTableUtilityContext *context);
 static bool check_for_column_name_collision(Relation rel, const char *colname,
 											bool if_not_exists);
@@ -565,7 +569,7 @@ static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab,
 static void ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId,
 								 char *cmd, List **wqueue, LOCKMODE lockmode,
 								 bool rewrite);
-static void RebuildConstraintComment(AlteredTableInfo *tab, int pass,
+static void RebuildConstraintComment(AlteredTableInfo *tab, AlterTablePass pass,
 									 Oid objid, Relation rel, List *domname,
 									 const char *conname);
 static void TryReuseIndex(Oid oldId, IndexStmt *stmt);
@@ -4739,7 +4743,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  AlterTableUtilityContext *context)
 {
 	AlteredTableInfo *tab;
-	int			pass = AT_PASS_UNSET;
+	AlterTablePass pass = AT_PASS_UNSET;
 
 	/* Find or create work queue entry for this table */
 	tab = ATGetQueueEntry(wqueue, rel);
@@ -5113,7 +5117,6 @@ static void
 ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 				  AlterTableUtilityContext *context)
 {
-	int			pass;
 	ListCell   *ltab;
 
 	/*
@@ -5123,7 +5126,7 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 	 * re-adding of the foreign key constraint to the other table).  Work can
 	 * only be propagated into later passes, however.
 	 */
-	for (pass = 0; pass < AT_NUM_PASSES; pass++)
+	for (AlterTablePass pass = 0; pass < AT_NUM_PASSES; pass++)
 	{
 		/* Go through each table that needs to be processed */
 		foreach(ltab, *wqueue)
@@ -5186,7 +5189,7 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
  */
 static void
 ATExecCmd(List **wqueue, AlteredTableInfo *tab,
-		  AlterTableCmd *cmd, LOCKMODE lockmode, int cur_pass,
+		  AlterTableCmd *cmd, LOCKMODE lockmode, AlterTablePass cur_pass,
 		  AlterTableUtilityContext *context)
 {
 	ObjectAddress address = InvalidObjectAddress;
@@ -5513,7 +5516,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 static AlterTableCmd *
 ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode,
-					int cur_pass, AlterTableUtilityContext *context)
+					AlterTablePass cur_pass, AlterTableUtilityContext *context)
 {
 	AlterTableCmd *newcmd = NULL;
 	AlterTableStmt *atstmt = makeNode(AlterTableStmt);
@@ -5551,7 +5554,7 @@ ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	foreach(lc, atstmt->cmds)
 	{
 		AlterTableCmd *cmd2 = lfirst_node(AlterTableCmd, lc);
-		int			pass;
+		AlterTablePass pass;
 
 		/*
 		 * This switch need only cover the subcommand types that can be added
@@ -6956,7 +6959,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 static ObjectAddress
 ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				AlterTableCmd **cmd, bool recurse, bool recursing,
-				LOCKMODE lockmode, int cur_pass,
+				LOCKMODE lockmode, AlterTablePass cur_pass,
 				AlterTableUtilityContext *context)
 {
 	Oid			myrelid = RelationGetRelid(rel);
@@ -14232,7 +14235,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
  * entry; but callers already have them so might as well pass them.)
  */
 static void
-RebuildConstraintComment(AlteredTableInfo *tab, int pass, Oid objid,
+RebuildConstraintComment(AlteredTableInfo *tab, AlterTablePass pass, Oid objid,
 						 Relation rel, List *domname,
 						 const char *conname)
 {

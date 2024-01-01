@@ -97,6 +97,7 @@ AlterTSConfigurationStmt
 AlterTSDictionaryStmt
 AlterTableCmd
 AlterTableMoveAllStmt
+AlterTablePass
 AlterTableSpaceOptionsStmt
 AlterTableStmt
 AlterTableType
