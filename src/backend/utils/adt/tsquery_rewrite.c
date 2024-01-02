@@ -281,7 +281,7 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY_COPY(0);
 	text	   *in = PG_GETARG_TEXT_PP(1);
-	TSQuery		rewrited = query;
+	TSQuery		rewritten = query;
 	MemoryContext outercontext = CurrentMemoryContext;
 	MemoryContext oldcontext;
 	QTNode	   *tree;
@@ -293,7 +293,7 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 	if (query->size == 0)
 	{
 		PG_FREE_IF_COPY(in, 1);
-		PG_RETURN_POINTER(rewrited);
+		PG_RETURN_POINTER(rewritten);
 	}
 
 	tree = QT2QTN(GETQUERY(query), GETOPERAND(query));
@@ -391,19 +391,19 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 	if (tree)
 	{
 		QTNBinary(tree);
-		rewrited = QTN2QT(tree);
+		rewritten = QTN2QT(tree);
 		QTNFree(tree);
 		PG_FREE_IF_COPY(query, 0);
 	}
 	else
 	{
-		SET_VARSIZE(rewrited, HDRSIZETQ);
-		rewrited->size = 0;
+		SET_VARSIZE(rewritten, HDRSIZETQ);
+		rewritten->size = 0;
 	}
 
 	pfree(buf);
 	PG_FREE_IF_COPY(in, 1);
-	PG_RETURN_POINTER(rewrited);
+	PG_RETURN_POINTER(rewritten);
 }
 
 Datum
@@ -412,7 +412,7 @@ tsquery_rewrite(PG_FUNCTION_ARGS)
 	TSQuery		query = PG_GETARG_TSQUERY_COPY(0);
 	TSQuery		ex = PG_GETARG_TSQUERY(1);
 	TSQuery		subst = PG_GETARG_TSQUERY(2);
-	TSQuery		rewrited = query;
+	TSQuery		rewritten = query;
 	QTNode	   *tree,
 			   *qex,
 			   *subs = NULL;
@@ -421,7 +421,7 @@ tsquery_rewrite(PG_FUNCTION_ARGS)
 	{
 		PG_FREE_IF_COPY(ex, 1);
 		PG_FREE_IF_COPY(subst, 2);
-		PG_RETURN_POINTER(rewrited);
+		PG_RETURN_POINTER(rewritten);
 	}
 
 	tree = QT2QTN(GETQUERY(query), GETOPERAND(query));
@@ -442,21 +442,21 @@ tsquery_rewrite(PG_FUNCTION_ARGS)
 
 	if (!tree)
 	{
-		SET_VARSIZE(rewrited, HDRSIZETQ);
-		rewrited->size = 0;
+		SET_VARSIZE(rewritten, HDRSIZETQ);
+		rewritten->size = 0;
 		PG_FREE_IF_COPY(ex, 1);
 		PG_FREE_IF_COPY(subst, 2);
-		PG_RETURN_POINTER(rewrited);
+		PG_RETURN_POINTER(rewritten);
 	}
 	else
 	{
 		QTNBinary(tree);
-		rewrited = QTN2QT(tree);
+		rewritten = QTN2QT(tree);
 		QTNFree(tree);
 	}
 
 	PG_FREE_IF_COPY(query, 0);
 	PG_FREE_IF_COPY(ex, 1);
 	PG_FREE_IF_COPY(subst, 2);
-	PG_RETURN_POINTER(rewrited);
+	PG_RETURN_POINTER(rewritten);
 }
