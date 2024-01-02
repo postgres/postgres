@@ -94,6 +94,7 @@ enum dbObjectTypePriorities
 	PRIO_PUBLICATION_REL,
 	PRIO_PUBLICATION_TABLE_IN_SCHEMA,
 	PRIO_SUBSCRIPTION,
+	PRIO_SUBSCRIPTION_REL,
 	PRIO_DEFAULT_ACL,			/* done in ACL pass */
 	PRIO_EVENT_TRIGGER,			/* must be next to last! */
 	PRIO_REFRESH_MATVIEW		/* must be last! */
@@ -147,10 +148,11 @@ static const int dbObjectTypePriority[] =
 	PRIO_PUBLICATION,			/* DO_PUBLICATION */
 	PRIO_PUBLICATION_REL,		/* DO_PUBLICATION_REL */
 	PRIO_PUBLICATION_TABLE_IN_SCHEMA,	/* DO_PUBLICATION_TABLE_IN_SCHEMA */
-	PRIO_SUBSCRIPTION			/* DO_SUBSCRIPTION */
+	PRIO_SUBSCRIPTION,			/* DO_SUBSCRIPTION */
+	PRIO_SUBSCRIPTION_REL		/* DO_SUBSCRIPTION_REL */
 };
 
-StaticAssertDecl(lengthof(dbObjectTypePriority) == (DO_SUBSCRIPTION + 1),
+StaticAssertDecl(lengthof(dbObjectTypePriority) == (DO_SUBSCRIPTION_REL + 1),
 				 "array length mismatch");
 
 static DumpId preDataBoundId;
@@ -1470,6 +1472,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_SUBSCRIPTION:
 			snprintf(buf, bufsize,
 					 "SUBSCRIPTION (ID %d OID %u)",
+					 obj->dumpId, obj->catId.oid);
+			return;
+		case DO_SUBSCRIPTION_REL:
+			snprintf(buf, bufsize,
+					 "SUBSCRIPTION TABLE (ID %d OID %u)",
 					 obj->dumpId, obj->catId.oid);
 			return;
 		case DO_PRE_DATA_BOUNDARY:

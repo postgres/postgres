@@ -34,7 +34,9 @@ static void check_for_pg_role_prefix(ClusterInfo *cluster);
 static void check_for_new_tablespace_dir(void);
 static void check_for_user_defined_encoding_conversions(ClusterInfo *cluster);
 static void check_new_cluster_logical_replication_slots(void);
+static void check_new_cluster_subscription_configuration(void);
 static void check_old_cluster_for_valid_slots(bool live_check);
+static void check_old_cluster_subscription_state(void);
 
 
 /*
@@ -112,12 +114,20 @@ check_and_dump_old_cluster(bool live_check)
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
-	/*
-	 * Logical replication slots can be migrated since PG17. See comments atop
-	 * get_old_cluster_logical_slot_infos().
-	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 1700)
+	{
+		/*
+		 * Logical replication slots can be migrated since PG17. See comments
+		 * atop get_old_cluster_logical_slot_infos().
+		 */
 		check_old_cluster_for_valid_slots(live_check);
+
+		/*
+		 * Subscriptions and their dependencies can be migrated since PG17.
+		 * See comments atop get_db_subscription_count().
+		 */
+		check_old_cluster_subscription_state();
+	}
 
 	/*
 	 * PG 16 increased the size of the 'aclitem' type, which breaks the
@@ -237,6 +247,8 @@ check_new_cluster(void)
 	check_for_new_tablespace_dir();
 
 	check_new_cluster_logical_replication_slots();
+
+	check_new_cluster_subscription_configuration();
 }
 
 
@@ -1539,6 +1551,53 @@ check_new_cluster_logical_replication_slots(void)
 }
 
 /*
+ * check_new_cluster_subscription_configuration()
+ *
+ * Verify that the max_replication_slots configuration specified is enough for
+ * creating the subscriptions. This is required to create the replication
+ * origin for each subscription.
+ */
+static void
+check_new_cluster_subscription_configuration(void)
+{
+	PGresult   *res;
+	PGconn	   *conn;
+	int			nsubs_on_old;
+	int			max_replication_slots;
+
+	/* Subscriptions and their dependencies can be migrated since PG17. */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) < 1700)
+		return;
+
+	nsubs_on_old = count_old_cluster_subscriptions();
+
+	/* Quick return if there are no subscriptions to be migrated. */
+	if (nsubs_on_old == 0)
+		return;
+
+	prep_status("Checking for new cluster configuration for subscriptions");
+
+	conn = connectToServer(&new_cluster, "template1");
+
+	res = executeQueryOrDie(conn, "SELECT setting FROM pg_settings "
+							"WHERE name = 'max_replication_slots';");
+
+	if (PQntuples(res) != 1)
+		pg_fatal("could not determine parameter settings on new cluster");
+
+	max_replication_slots = atoi(PQgetvalue(res, 0, 0));
+	if (nsubs_on_old > max_replication_slots)
+		pg_fatal("max_replication_slots (%d) must be greater than or equal to the number of "
+				 "subscriptions (%d) on the old cluster",
+				 max_replication_slots, nsubs_on_old);
+
+	PQclear(res);
+	PQfinish(conn);
+
+	check_ok();
+}
+
+/*
  * check_old_cluster_for_valid_slots()
  *
  * Verify that all the logical slots are valid and have consumed all the WAL
@@ -1612,4 +1671,130 @@ check_old_cluster_for_valid_slots(bool live_check)
 	}
 
 	check_ok();
+}
+
+/*
+ * check_old_cluster_subscription_state()
+ *
+ * Verify that the replication origin corresponding to each of the
+ * subscriptions are present and each of the subscribed tables is in
+ * 'i' (initialize) or 'r' (ready) state.
+ */
+static void
+check_old_cluster_subscription_state(void)
+{
+	FILE	   *script = NULL;
+	char		output_path[MAXPGPATH];
+	int			ntup;
+
+	prep_status("Checking for subscription state");
+
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
+			 "subs_invalid.txt");
+	for (int dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		DbInfo	   *active_db = &old_cluster.dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(&old_cluster, active_db->db_name);
+
+		/* We need to check for pg_replication_origin only once. */
+		if (dbnum == 0)
+		{
+			/*
+			 * Check that all the subscriptions have their respective
+			 * replication origin.
+			 */
+			res = executeQueryOrDie(conn,
+									"SELECT d.datname, s.subname "
+									"FROM pg_catalog.pg_subscription s "
+									"LEFT OUTER JOIN pg_catalog.pg_replication_origin o "
+									"	ON o.roname = 'pg_' || s.oid "
+									"INNER JOIN pg_catalog.pg_database d "
+									"	ON d.oid = s.subdbid "
+									"WHERE o.roname iS NULL;");
+
+			ntup = PQntuples(res);
+			for (int i = 0; i < ntup; i++)
+			{
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %s",
+							 output_path, strerror(errno));
+				fprintf(script, "The replication origin is missing for database:\"%s\" subscription:\"%s\"\n",
+						PQgetvalue(res, i, 0),
+						PQgetvalue(res, i, 1));
+			}
+			PQclear(res);
+		}
+
+		/*
+		 * We don't allow upgrade if there is a risk of dangling slot or
+		 * origin corresponding to initial sync after upgrade.
+		 *
+		 * A slot/origin not created yet refers to the 'i' (initialize) state,
+		 * while 'r' (ready) state refers to a slot/origin created previously
+		 * but already dropped. These states are supported for pg_upgrade. The
+		 * other states listed below are not supported:
+		 *
+		 * a) SUBREL_STATE_DATASYNC: A relation upgraded while in this state
+		 * would retain a replication slot, which could not be dropped by the
+		 * sync worker spawned after the upgrade because the subscription ID
+		 * used for the slot name won't match anymore.
+		 *
+		 * b) SUBREL_STATE_SYNCDONE: A relation upgraded while in this state
+		 * would retain the replication origin when there is a failure in
+		 * tablesync worker immediately after dropping the replication slot in
+		 * the publisher.
+		 *
+		 * c) SUBREL_STATE_FINISHEDCOPY: A tablesync worker spawned to work on
+		 * a relation upgraded while in this state would expect an origin ID
+		 * with the OID of the subscription used before the upgrade, causing
+		 * it to fail.
+		 *
+		 * d) SUBREL_STATE_SYNCWAIT, SUBREL_STATE_CATCHUP and
+		 * SUBREL_STATE_UNKNOWN: These states are not stored in the catalog,
+		 * so we need not allow these states.
+		 */
+		res = executeQueryOrDie(conn,
+								"SELECT r.srsubstate, s.subname, n.nspname, c.relname "
+								"FROM pg_catalog.pg_subscription_rel r "
+								"LEFT JOIN pg_catalog.pg_subscription s"
+								"	ON r.srsubid = s.oid "
+								"LEFT JOIN pg_catalog.pg_class c"
+								"	ON r.srrelid = c.oid "
+								"LEFT JOIN pg_catalog.pg_namespace n"
+								"	ON c.relnamespace = n.oid "
+								"WHERE r.srsubstate NOT IN ('i', 'r') "
+								"ORDER BY s.subname");
+
+		ntup = PQntuples(res);
+		for (int i = 0; i < ntup; i++)
+		{
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("could not open file \"%s\": %s",
+						 output_path, strerror(errno));
+
+			fprintf(script, "The table sync state \"%s\" is not allowed for database:\"%s\" subscription:\"%s\" schema:\"%s\" relation:\"%s\"\n",
+					PQgetvalue(res, i, 0),
+					active_db->db_name,
+					PQgetvalue(res, i, 1),
+					PQgetvalue(res, i, 2),
+					PQgetvalue(res, i, 3));
+		}
+
+		PQclear(res);
+		PQfinish(conn);
+	}
+
+	if (script)
+	{
+		fclose(script);
+		pg_log(PG_REPORT, "fatal");
+		pg_fatal("Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
+				 "You can allow the initial sync to finish for all relations and then restart the upgrade.\n"
+				 "A list of the problematic subscriptions is in the file:\n"
+				 "    %s", output_path);
+	}
+	else
+		check_ok();
 }

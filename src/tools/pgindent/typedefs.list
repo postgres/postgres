@@ -2669,6 +2669,7 @@ SubLinkType
 SubOpts
 SubPlan
 SubPlanState
+SubRelInfo
 SubRemoveRels
 SubTransactionId
 SubXactCallback

@@ -195,6 +195,7 @@ typedef struct
 											 * path */
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
 	LogicalSlotInfoArr slot_arr;	/* array of all LogicalSlotInfo */
+	int			nsubs;			/* number of subscriptions */
 } DbInfo;
 
 /*
@@ -421,6 +422,7 @@ FileNameMap *gen_db_file_maps(DbInfo *old_db,
 							  const char *new_pgdata);
 void		get_db_rel_and_slot_infos(ClusterInfo *cluster, bool live_check);
 int			count_old_cluster_logical_slots(void);
+int			count_old_cluster_subscriptions(void);
 
 /* option.c */
 

@@ -11410,6 +11410,16 @@
   proname => 'binary_upgrade_logical_slot_has_caught_up', provolatile => 'v',
   proparallel => 'u', prorettype => 'bool', proargtypes => 'name',
   prosrc => 'binary_upgrade_logical_slot_has_caught_up' },
+{ oid => '8404', descr => 'for use by pg_upgrade (relation for pg_subscription_rel)',
+  proname => 'binary_upgrade_add_sub_rel_state', proisstrict => 'f',
+  provolatile => 'v', proparallel => 'u', prorettype => 'void',
+  proargtypes => 'text oid char pg_lsn',
+  prosrc => 'binary_upgrade_add_sub_rel_state' },
+{ oid => '8405', descr => 'for use by pg_upgrade (remote_lsn for origin)',
+  proname => 'binary_upgrade_replorigin_advance', proisstrict => 'f',
+  provolatile => 'v', proparallel => 'u', prorettype => 'void',
+  proargtypes => 'text pg_lsn',
+  prosrc => 'binary_upgrade_replorigin_advance' },
 
 # conversion functions
 { oid => '4302',

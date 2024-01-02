@@ -24,6 +24,7 @@
 #include "catalog/pg_operator_d.h"
 #include "catalog/pg_proc_d.h"
 #include "catalog/pg_publication_d.h"
+#include "catalog/pg_subscription_d.h"
 #include "catalog/pg_type_d.h"
 #include "common/hashfn.h"
 #include "fe_utils/string_utils.h"
@@ -264,6 +265,9 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	pg_log_info("reading subscriptions");
 	getSubscriptions(fout);
+
+	pg_log_info("reading subscription membership of tables");
+	getSubscriptionTables(fout);
 
 	free(inhinfo);				/* not needed any longer */
 
@@ -976,6 +980,24 @@ findPublicationByOid(Oid oid)
 	dobj = findObjectByCatalogId(catId);
 	Assert(dobj == NULL || dobj->objType == DO_PUBLICATION);
 	return (PublicationInfo *) dobj;
+}
+
+/*
+ * findSubscriptionByOid
+ *	  finds the DumpableObject for the subscription with the given oid
+ *	  returns NULL if not found
+ */
+SubscriptionInfo *
+findSubscriptionByOid(Oid oid)
+{
+	CatalogId	catId;
+	DumpableObject *dobj;
+
+	catId.tableoid = SubscriptionRelationId;
+	catId.oid = oid;
+	dobj = findObjectByCatalogId(catId);
+	Assert(dobj == NULL || dobj->objType == DO_SUBSCRIPTION);
+	return (SubscriptionInfo *) dobj;
 }
 
 
