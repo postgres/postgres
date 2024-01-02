@@ -770,9 +770,8 @@ restart:
 }
 
 /*
- * Insert the key key into the hash-table, set *found to true if the key
- * already exists, false otherwise. Returns the hash-table entry in either
- * case.
+ * Insert the key into the hash-table, set *found to true if the key already
+ * exists, false otherwise. Returns the hash-table entry in either case.
  */
 SH_SCOPE	SH_ELEMENT_TYPE *
 SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found)
@@ -783,9 +782,9 @@ SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found)
 }
 
 /*
- * Insert the key key into the hash-table using an already-calculated
- * hash. Set *found to true if the key already exists, false
- * otherwise. Returns the hash-table entry in either case.
+ * Insert the key into the hash-table using an already-calculated hash. Set
+ * *found to true if the key already exists, false otherwise. Returns the
+ * hash-table entry in either case.
  */
 SH_SCOPE	SH_ELEMENT_TYPE *
 SH_INSERT_HASH(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash, bool *found)
