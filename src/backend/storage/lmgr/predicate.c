@@ -4344,6 +4344,13 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 		return;
 	}
 
+    if (IsolationNeedLock())
+    {
+        /* we do not maintain the conflict graph for 2PL */
+        LWLockRelease(SerializableXactHashLock);
+        return;
+    }
+
 	if (RWConflictExists(MySerializableXact, sxact))
 	{
 		/* We don't want duplicate conflict records in the list. */
@@ -4440,6 +4447,7 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 				 && !RWConflictExists(sxact, MySerializableXact))
 		{
 			LWLockRelease(SerializableXactHashLock);
+            CHECK_ISOLATION_LOCK_AND_RETURN
 			LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
 			/*
@@ -4763,6 +4771,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 	bool		failure;
 	RWConflict	conflict;
 
+    Assert(!IsolationNeedLock());   // disable the SSI during 2PL.
 	Assert(LWLockHeldByMe(SerializableXactHashLock));
 
 	failure = false;
@@ -4963,6 +4972,8 @@ PreCommit_CheckForSerializationFailure(void)
 		SHMQueueNext(&MySerializableXact->inConflicts,
 					 &MySerializableXact->inConflicts,
 					 offsetof(RWConflictData, inLink));
+    Assert(!IsolationNeedLock() || nearConflict == NULL);
+    // in case of 2PL, no dependency graph shall be maintained.
 	while (nearConflict)
 	{
 		if (!SxactIsCommitted(nearConflict->sxactOut)
