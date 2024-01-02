@@ -50,7 +50,6 @@
 extern int	DefaultXactIsoLevel;
 extern int	DefaultXactLockStrategy;
 extern int  XactLockStrategy;
-extern int  XactCurrentOperation;
 extern PGDLLIMPORT int XactIsoLevel;
 
 /*

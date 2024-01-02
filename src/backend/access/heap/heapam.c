@@ -3317,9 +3317,12 @@ l2:
 		}
 		else
 		{
-            // In 2PL (no wait policy), we directly abort for concurrent update.
-            result = TM_BeingModified;
-            goto abort_mark;
+            if (IsolationNeedLock())
+            {
+                // In 2PL (no wait policy), we directly abort for concurrent update.
+                result = TM_BeingModified;
+                goto abort_mark;
+            }
 
 			/*
 			 * Wait for regular transaction to end; but first, acquire tuple
