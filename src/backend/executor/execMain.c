@@ -1849,7 +1849,7 @@ ExecPartitionCheck(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 	econtext->ecxt_scantuple = slot;
 
 	/*
-	 * As in case of the catalogued constraints, we treat a NULL result as
+	 * As in case of the cataloged constraints, we treat a NULL result as
 	 * success here, not a failure.
 	 */
 	success = ExecCheck(resultRelInfo->ri_PartitionCheckExpr, econtext);

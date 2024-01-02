@@ -348,7 +348,7 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 	bool		autosummarize = BrinGetAutoSummarize(idxRel);
 
 	/*
-	 * If firt time through in this statement, initialize the insert state
+	 * If first time through in this statement, initialize the insert state
 	 * that we keep for all the inserts in the command.
 	 */
 	if (!bistate)
@@ -1042,7 +1042,7 @@ brinbuildCallbackParallel(Relation index,
 	/*
 	 * If we're in a block that belongs to a different range, summarize what
 	 * we've got and start afresh.  Note the scan might have skipped many
-	 * pages, if they were devoid of live tuples; we do not create emptry BRIN
+	 * pages, if they were devoid of live tuples; we do not create empty BRIN
 	 * ranges here - the leader is responsible for filling them in.
 	 *
 	 * Unlike serial builds, parallel index builds allow synchronized seqscans
@@ -2149,7 +2149,7 @@ union_tuples(BrinDesc *bdesc, BrinMemTuple *a, BrinTuple *b)
  * brin_vacuum_scan
  *		Do a complete scan of the index during VACUUM.
  *
- * This routine scans the complete index looking for uncatalogued index pages,
+ * This routine scans the complete index looking for uncataloged index pages,
  * i.e. those that might have been lost due to a crash after index extension
  * and such.
  */

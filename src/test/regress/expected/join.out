@@ -6957,7 +6957,7 @@ WHERE q0.a = 1;
 (7 rows)
 
 --
----- Only one side is unqiue
+---- Only one side is unique
 --select * from sl t1, sl t2 where t1.a = t2.a and t1.b = 1;
 --select * from sl t1, sl t2 where t1.a = t2.a and t2.b = 1;
 --

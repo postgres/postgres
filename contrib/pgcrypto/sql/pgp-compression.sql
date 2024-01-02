@@ -36,7 +36,7 @@ WITH random_string AS
   -- This generates a random string of 16366 bytes.  This is chosen
   -- as random so that it does not get compressed, and the decompression
   -- would work on a string with the same length as the origin, making the
-  -- test behavior more predictible.  lpad() ensures that the generated
+  -- test behavior more predictable.  lpad() ensures that the generated
   -- hexadecimal value is completed by extra zero characters if random()
   -- has generated a value strictly lower than 16.
   SELECT string_agg(decode(lpad(to_hex((random()*256)::int), 2, '0'), 'hex'), '') as bytes

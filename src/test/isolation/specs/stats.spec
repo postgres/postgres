@@ -543,10 +543,10 @@ permutation
   s1_table_insert
   s1_begin
   s1_table_update_k1 # should *not* be counted, different rel
-  s1_table_update_k1 # dito
+  s1_table_update_k1 # ditto
   s1_table_truncate
   s1_table_insert_k1 # should be counted
-  s1_table_update_k1 # dito
+  s1_table_update_k1 # ditto
   s1_prepare_a
   s1_commit_prepared_a
   s1_ff
@@ -557,10 +557,10 @@ permutation
   s1_table_insert
   s1_begin
   s1_table_update_k1 # should *not* be counted, different rel
-  s1_table_update_k1 # dito
+  s1_table_update_k1 # ditto
   s1_table_truncate
   s1_table_insert_k1 # should be counted
-  s1_table_update_k1 # dito
+  s1_table_update_k1 # ditto
   s1_prepare_a
   s1_ff # flush out non-transactional stats, might happen anyway
   s2_commit_prepared_a
@@ -572,10 +572,10 @@ permutation
   s1_table_insert
   s1_begin
   s1_table_update_k1 # should be counted
-  s1_table_update_k1 # dito
+  s1_table_update_k1 # ditto
   s1_table_truncate
   s1_table_insert_k1 # should *not* be counted, different rel
-  s1_table_update_k1 # dito
+  s1_table_update_k1 # ditto
   s1_prepare_a
   s1_rollback_prepared_a
   s1_ff
@@ -586,10 +586,10 @@ permutation
   s1_table_insert
   s1_begin
   s1_table_update_k1 # should be counted
-  s1_table_update_k1 # dito
+  s1_table_update_k1 # ditto
   s1_table_truncate
   s1_table_insert_k1 # should *not* be counted, different rel
-  s1_table_update_k1 # dito
+  s1_table_update_k1 # ditto
   s1_prepare_a
   s2_rollback_prepared_a
   s1_ff s2_ff

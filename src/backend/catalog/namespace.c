@@ -4218,7 +4218,7 @@ cachedNamespacePath(const char *searchPath, Oid roleid)
 	entry = spcache_insert(searchPath, roleid);
 
 	/*
-	 * An OOM may have resulted in a cache entry with mising 'oidlist' or
+	 * An OOM may have resulted in a cache entry with missing 'oidlist' or
 	 * 'finalPath', so just compute whatever is missing.
 	 */
 

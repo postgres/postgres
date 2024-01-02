@@ -127,7 +127,7 @@ typedef struct BloomMetaPageData
 	FreeBlockNumberArray notFullPage;
 } BloomMetaPageData;
 
-/* Magic number to distinguish bloom pages among anothers */
+/* Magic number to distinguish bloom pages from others */
 #define BLOOM_MAGICK_NUMBER (0xDBAC0DED)
 
 /* Number of blocks numbers fit in BloomMetaPageData */

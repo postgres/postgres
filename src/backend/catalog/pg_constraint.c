@@ -1290,7 +1290,7 @@ get_relation_constraint_attnos(Oid relid, const char *conname,
 
 /*
  * Return the OID of the constraint enforced by the given index in the
- * given relation; or InvalidOid if no such index is catalogued.
+ * given relation; or InvalidOid if no such index is cataloged.
  *
  * Much like get_constraint_index, this function is concerned only with the
  * one constraint that "owns" the given index.  Therefore, constraints of

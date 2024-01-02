@@ -4819,7 +4819,7 @@ SELECT * FROM ft2 ftupper WHERE
  925 |  5 | 00925 | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
 (10 rows)
 
--- EXISTS should be propogated to the highest upper inner join
+-- EXISTS should be propagated to the highest upper inner join
 EXPLAIN (verbose, costs off)
 	SELECT ft2.*, ft4.* FROM ft2 INNER JOIN
 	(SELECT * FROM ft4 WHERE EXISTS (

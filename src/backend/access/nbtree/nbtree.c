@@ -158,7 +158,7 @@ btbuildempty(Relation index)
 	Page		metapage;
 
 	/*
-	 * Initalize the metapage.
+	 * Initialize the metapage.
 	 *
 	 * Regular index build bypasses the buffer manager and uses smgr functions
 	 * directly, with an smgrimmedsync() call at the end.  That makes sense

@@ -2608,7 +2608,7 @@ range_contains_elem_internal(TypeCacheEntry *typcache, const RangeType *r, Datum
  * values into a range object.  They are modeled after heaptuple.c's
  * heap_compute_data_size() and heap_fill_tuple(), but we need not handle
  * null values here.  TYPE_IS_PACKABLE must test the same conditions as
- * heaptuple.c's ATT_IS_PACKABLE macro.  See the comments thare for more
+ * heaptuple.c's ATT_IS_PACKABLE macro.  See the comments there for more
  * details.
  */
 

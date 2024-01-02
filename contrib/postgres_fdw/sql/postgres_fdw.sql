@@ -1399,7 +1399,7 @@ SELECT * FROM ft2 ftupper WHERE
   AND ftupper.c1 > 900
   ORDER BY ftupper.c1 LIMIT 10;
 
--- EXISTS should be propogated to the highest upper inner join
+-- EXISTS should be propagated to the highest upper inner join
 EXPLAIN (verbose, costs off)
 	SELECT ft2.*, ft4.* FROM ft2 INNER JOIN
 	(SELECT * FROM ft4 WHERE EXISTS (

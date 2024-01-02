@@ -1928,8 +1928,8 @@ deconstruct_distribute_oj_quals(PlannerInfo *root,
 		 * jtitems list to be ordered that way.
 		 *
 		 * We first strip out all the nullingrels bits corresponding to
-		 * commutating joins below this one, and then successively put them
-		 * back as we crawl up the join stack.
+		 * commuting joins below this one, and then successively put them back
+		 * as we crawl up the join stack.
 		 */
 		quals = jtitem->oj_joinclauses;
 		if (!bms_is_empty(joins_below))

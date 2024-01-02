@@ -85,7 +85,7 @@
 	((att)->attstorage != TYPSTORAGE_PLAIN)
 
 /*
- * Setup for cacheing pass-by-ref missing attributes in a way that survives
+ * Setup for caching pass-by-ref missing attributes in a way that survives
  * tupleDesc destruction.
  */
 

@@ -227,7 +227,7 @@ FROM booltbl3 ORDER BY o;
 
 -- Test to make sure short-circuiting and NULL handling is
 -- correct. Use a table as source to prevent constant simplification
--- to interfer.
+-- from interfering.
 CREATE TABLE booltbl4(isfalse bool, istrue bool, isnul bool);
 INSERT INTO booltbl4 VALUES (false, true, null);
 \pset null '(null)'

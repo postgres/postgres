@@ -28,7 +28,7 @@ primary_psql('CHECKPOINT');
 RewindTest::promote_standby();
 
 # Insert a row in the old primary. This causes the primary and standby to have
-# "diverged", it's no longer possible to just apply the standy's logs over
+# "diverged", it's no longer possible to just apply the standby's logs over
 # primary directory - you need to rewind.  Also insert a new row in the
 # standby, which won't be present in the old primary.
 primary_psql("INSERT INTO tbl1 VALUES ('in primary, after promotion')");
