@@ -2634,10 +2634,10 @@ SpecialJoinInfo
 SpinDelayStatus
 SplitInterval
 SplitLR
+SplitPageLayout
 SplitPoint
 SplitTextOutputData
 SplitVar
-SplitedPageLayout
 StackElem
 StartDataPtrType
 StartLOPtrType

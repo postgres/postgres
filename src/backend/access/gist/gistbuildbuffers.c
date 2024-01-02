@@ -163,7 +163,7 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		 * not arbitrary that the new buffer is put to the beginning of the
 		 * list: in the final emptying phase we loop through all buffers at
 		 * each level, and flush them. If a page is split during the emptying,
-		 * it's more efficient to flush the new splitted pages first, before
+		 * it's more efficient to flush the new split pages first, before
 		 * moving on to pre-existing pages on the level. The buffers just
 		 * created during the page split are likely still in cache, so
 		 * flushing them immediately is more efficient than putting them to
@@ -518,7 +518,7 @@ gistFreeBuildBuffers(GISTBuildBuffers *gfbb)
 
 /*
  * Data structure representing information about node buffer for index tuples
- * relocation from splitted node buffer.
+ * relocation from split node buffer.
  */
 typedef struct
 {
@@ -549,12 +549,12 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	GISTNodeBuffer oldBuf;
 	ListCell   *lc;
 
-	/* If the splitted page doesn't have buffers, we have nothing to do. */
+	/* If the split page doesn't have buffers, we have nothing to do. */
 	if (!LEVEL_HAS_BUFFERS(level, gfbb))
 		return;
 
 	/*
-	 * Get the node buffer of the splitted page.
+	 * Get the node buffer of the split page.
 	 */
 	blocknum = BufferGetBlockNumber(buffer);
 	nodeBuffer = hash_search(gfbb->nodeBuffersTab, &blocknum,

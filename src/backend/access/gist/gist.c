@@ -44,7 +44,7 @@ static void gistprunepage(Relation rel, Page page, Buffer buffer,
 
 
 #define ROTATEDIST(d) do { \
-	SplitedPageLayout *tmp=(SplitedPageLayout*)palloc0(sizeof(SplitedPageLayout)); \
+	SplitPageLayout *tmp=(SplitPageLayout*)palloc0(sizeof(SplitPageLayout)); \
 	tmp->block.blkno = InvalidBlockNumber;	\
 	tmp->buffer = InvalidBuffer;	\
 	tmp->next = (d); \
@@ -283,11 +283,11 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		/* no space for insertion */
 		IndexTuple *itvec;
 		int			tlen;
-		SplitedPageLayout *dist = NULL,
+		SplitPageLayout *dist = NULL,
 				   *ptr;
 		BlockNumber oldrlink = InvalidBlockNumber;
 		GistNSN		oldnsn = 0;
-		SplitedPageLayout rootpg;
+		SplitPageLayout rootpg;
 		bool		is_rootsplit;
 		int			npage;
 
@@ -1080,7 +1080,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child, bool is_build)
 		{
 			/*
 			 * End of chain and still didn't find parent. It's a very-very
-			 * rare situation when root splitted.
+			 * rare situation when the root was split.
 			 */
 			break;
 		}
@@ -1435,7 +1435,7 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
  * used for XLOG and real writes buffers. Function is recursive, ie
  * it will split page until keys will fit in every page.
  */
-SplitedPageLayout *
+SplitPageLayout *
 gistSplit(Relation r,
 		  Page page,
 		  IndexTuple *itup,		/* contains compressed entry */
@@ -1446,7 +1446,7 @@ gistSplit(Relation r,
 			   *rvectup;
 	GistSplitVector v;
 	int			i;
-	SplitedPageLayout *res = NULL;
+	SplitPageLayout *res = NULL;
 
 	/* this should never recurse very deeply, but better safe than sorry */
 	check_stack_depth();
@@ -1496,7 +1496,7 @@ gistSplit(Relation r,
 
 	if (!gistfitpage(lvectup, v.splitVector.spl_nleft))
 	{
-		SplitedPageLayout *resptr,
+		SplitPageLayout *resptr,
 				   *subres;
 
 		resptr = subres = gistSplit(r, page, lvectup, v.splitVector.spl_nleft, giststate);

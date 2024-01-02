@@ -187,8 +187,8 @@ typedef struct gistxlogPage
 	int			num;			/* number of index tuples following */
 } gistxlogPage;
 
-/* SplitedPageLayout - gistSplit function result */
-typedef struct SplitedPageLayout
+/* SplitPageLayout - gistSplit function result */
+typedef struct SplitPageLayout
 {
 	gistxlogPage block;
 	IndexTupleData *list;
@@ -197,8 +197,8 @@ typedef struct SplitedPageLayout
 	Page		page;			/* to operate */
 	Buffer		buffer;			/* to write after all proceed */
 
-	struct SplitedPageLayout *next;
-} SplitedPageLayout;
+	struct SplitPageLayout *next;
+} SplitPageLayout;
 
 /*
  * GISTInsertStack used for locking buffers and transfer arguments during
@@ -432,8 +432,8 @@ extern bool gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 							Relation heapRel,
 							bool is_build);
 
-extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
-									int len, GISTSTATE *giststate);
+extern SplitPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
+								  int len, GISTSTATE *giststate);
 
 /* gistxlog.c */
 extern XLogRecPtr gistXLogPageDelete(Buffer buffer,
@@ -453,7 +453,7 @@ extern XLogRecPtr gistXLogDelete(Buffer buffer, OffsetNumber *todelete,
 								 Relation heaprel);
 
 extern XLogRecPtr gistXLogSplit(bool page_is_leaf,
-								SplitedPageLayout *dist,
+								SplitPageLayout *dist,
 								BlockNumber origrlink, GistNSN orignsn,
 								Buffer leftchildbuf, bool markfollowright);
 

@@ -527,7 +527,7 @@ gist_indexsortbuild_levelstate_flush(GISTBuildState *state,
 	BlockNumber blkno;
 	MemoryContext oldCtx;
 	IndexTuple	union_tuple;
-	SplitedPageLayout *dist;
+	SplitPageLayout *dist;
 	IndexTuple *itvec;
 	int			vect_len;
 	bool		isleaf = GistPageIsLeaf(levelstate->pages[0]);
@@ -555,8 +555,8 @@ gist_indexsortbuild_levelstate_flush(GISTBuildState *state,
 	}
 	else
 	{
-		/* Create splitted layout from single page */
-		dist = (SplitedPageLayout *) palloc0(sizeof(SplitedPageLayout));
+		/* Create split layout from single page */
+		dist = (SplitPageLayout *) palloc0(sizeof(SplitPageLayout));
 		union_tuple = gistunion(state->indexrel, itvec, vect_len,
 								state->giststate);
 		dist->itup = union_tuple;

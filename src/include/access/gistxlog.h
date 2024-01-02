@@ -69,7 +69,7 @@ typedef struct gistxlogPageSplit
 {
 	BlockNumber origrlink;		/* rightlink of the page before split */
 	GistNSN		orignsn;		/* NSN of the page before split */
-	bool		origleaf;		/* was splitted page a leaf page? */
+	bool		origleaf;		/* was split page a leaf page? */
 
 	uint16		npage;			/* # of pages in the split */
 	bool		markfollowright;	/* set F_FOLLOW_RIGHT flags */
