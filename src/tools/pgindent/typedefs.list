@@ -2480,6 +2480,8 @@ ScanState
 ScanTypeControl
 ScannerCallbackState
 SchemaQuery
+SearchPathCacheEntry
+SearchPathCacheKey
 SearchPathMatcher
 SecBuffer
 SecBufferDesc
@@ -3515,6 +3517,7 @@ needs_fmgr_hook_type
 network_sortsupport_state
 nodeitem
 normal_rand_fctx
+nsphash_hash
 ntile_context
 numeric
 object_access_hook_type

@@ -156,6 +156,11 @@ static Oid	namespaceUser = InvalidOid;
 
 /* The above four values are valid only if baseSearchPathValid */
 static bool baseSearchPathValid = true;
+
+/*
+ * Storage for search path cache.  Clear searchPathCacheValid as a simple
+ * way to invalidate *all* the cache entries, not just the active one.
+ */
 static bool searchPathCacheValid = false;
 static MemoryContext SearchPathCacheContext = NULL;
 
@@ -163,7 +168,7 @@ typedef struct SearchPathCacheKey
 {
 	const char *searchPath;
 	Oid			roleid;
-}			SearchPathCacheKey;
+} SearchPathCacheKey;
 
 typedef struct SearchPathCacheEntry
 {
@@ -176,7 +181,7 @@ typedef struct SearchPathCacheEntry
 
 	/* needed for simplehash */
 	char		status;
-}			SearchPathCacheEntry;
+} SearchPathCacheEntry;
 
 /*
  * myTempNamespace is InvalidOid until and unless a TEMP namespace is set up
@@ -281,8 +286,8 @@ spcachekey_equal(SearchPathCacheKey a, SearchPathCacheKey b)
  */
 #define SPCACHE_RESET_THRESHOLD		256
 
-static nsphash_hash * SearchPathCache = NULL;
-static SearchPathCacheEntry * LastSearchPathCacheEntry = NULL;
+static nsphash_hash *SearchPathCache = NULL;
+static SearchPathCacheEntry *LastSearchPathCacheEntry = NULL;
 
 /*
  * Create or reset search_path cache as necessary.
@@ -296,8 +301,11 @@ spcache_init(void)
 		SearchPathCache->members < SPCACHE_RESET_THRESHOLD)
 		return;
 
-	MemoryContextReset(SearchPathCacheContext);
+	/* make sure we don't leave dangling pointers if nsphash_create fails */
+	SearchPathCache = NULL;
 	LastSearchPathCacheEntry = NULL;
+
+	MemoryContextReset(SearchPathCacheContext);
 	/* arbitrary initial starting size of 16 elements */
 	SearchPathCache = nsphash_create(SearchPathCacheContext, 16, NULL);
 	searchPathCacheValid = true;
@@ -325,8 +333,8 @@ spcache_lookup(const char *searchPath, Oid roleid)
 		};
 
 		entry = nsphash_lookup(SearchPathCache, cachekey);
-
-		LastSearchPathCacheEntry = entry;
+		if (entry)
+			LastSearchPathCacheEntry = entry;
 		return entry;
 	}
 }
@@ -4267,7 +4275,7 @@ recomputeNamespacePath(void)
 {
 	Oid			roleid = GetUserId();
 	bool		pathChanged;
-	const		SearchPathCacheEntry *entry;
+	const SearchPathCacheEntry *entry;
 
 	/* Do nothing if path is already valid. */
 	if (baseSearchPathValid && namespaceUser == roleid)
@@ -4635,9 +4643,7 @@ check_search_path(char **newval, void **extra, GucSource source)
 	 * schemas that don't exist; and often, we are not inside a transaction
 	 * here and so can't consult the system catalogs anyway.  So now, the only
 	 * requirement is syntactic validity of the identifier list.
-	 */
-
-	/*
+	 *
 	 * Checking only the syntactic validity also allows us to use the search
 	 * path cache (if available) to avoid calling SplitIdentifierString() on
 	 * the same string repeatedly.
@@ -4667,19 +4673,10 @@ check_search_path(char **newval, void **extra, GucSource source)
 		list_free(namelist);
 		return false;
 	}
-
-	/*
-	 * We used to try to check that the named schemas exist, but there are
-	 * many valid use-cases for having search_path settings that include
-	 * schemas that don't exist; and often, we are not inside a transaction
-	 * here and so can't consult the system catalogs anyway.  So now, the only
-	 * requirement is syntactic validity of the identifier list.
-	 */
-
 	pfree(rawname);
 	list_free(namelist);
 
-	/* create empty cache entry */
+	/* OK to create empty cache entry */
 	if (use_cache)
 		(void) spcache_insert(searchPath, roleid);
 
@@ -4732,8 +4729,9 @@ InitializeSearchPath(void)
 	}
 	else
 	{
-		SearchPathCacheContext = AllocSetContextCreate(
-													   TopMemoryContext, "search_path processing cache",
+		/* Make the context we'll keep search path cache hashtable in */
+		SearchPathCacheContext = AllocSetContextCreate(TopMemoryContext,
+													   "search_path processing cache",
 													   ALLOCSET_DEFAULT_SIZES);
 
 		/*
