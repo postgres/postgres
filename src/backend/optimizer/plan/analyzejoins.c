@@ -1866,6 +1866,8 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	/* Replace varno in all the query structures */
 	query_tree_walker(root->parse, replace_varno_walker, &ctx,
 					  QTW_EXAMINE_SORTGROUP);
+	if (root->parse->resultRelation == toRemove->relid)
+		root->parse->resultRelation = toKeep->relid;
 
 	/* Replace links in the planner info */
 	remove_rel_from_query(root, toRemove, toKeep->relid, NULL, NULL);
@@ -1875,6 +1877,9 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 				  toRemove->relid, toKeep->relid);
 	replace_varno((Node *) root->processed_groupClause,
 				  toRemove->relid, toKeep->relid);
+	replace_relid(root->all_result_relids, toRemove->relid, toKeep->relid);
+	replace_relid(root->leaf_result_relids, toRemove->relid, toKeep->relid);
+
 
 	/*
 	 * There may be references to the rel in root->fkey_list, but if so,

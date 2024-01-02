@@ -6868,6 +6868,18 @@ select * from emp1 t1
          ->  Seq Scan on emp1 t3
 (6 rows)
 
+-- Check that SJE replaces target relation correctly
+explain (costs off)
+WITH t1 AS (SELECT * FROM emp1)
+UPDATE emp1 SET code = t1.code + 1 FROM t1
+WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code;
+            QUERY PLAN            
+----------------------------------
+ Update on emp1
+   ->  Seq Scan on emp1
+         Filter: (id IS NOT NULL)
+(3 rows)
+
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
 -- moving quals over to s1 to make it so it can't match any rows.
@@ -7030,7 +7042,7 @@ EXPLAIN (COSTS OFF) -- A RowMark exists for the table being kept
 UPDATE sj sq SET b = 1 FROM sj as sz WHERE sq.a = sz.a;
            QUERY PLAN            
 ---------------------------------
- Update on sj sq
+ Update on sj sz
    ->  Seq Scan on sj sz
          Filter: (a IS NOT NULL)
 (3 rows)
