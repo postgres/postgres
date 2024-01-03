@@ -1175,7 +1175,7 @@ plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
 plpy.execute(plan, [result])
 $$ LANGUAGE plpython3u;
 </programlisting>
-    Note that the use of <literal>try/catch</literal> is still
+    Note that the use of <literal>try</literal>/<literal>except</literal> is still
     required.  Otherwise the exception would propagate to the top of
     the Python stack and would cause the whole function to abort with
     a <productname>PostgreSQL</productname> error, so that the
