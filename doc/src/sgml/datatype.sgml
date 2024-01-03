@@ -3590,7 +3590,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </indexterm>
 
     <para>
-     Polygons are represented by lists of points (the vertexes of the
+     Polygons are represented by lists of points (the vertices of the
      polygon). Polygons are very similar to closed paths; the essential
      difference is that a polygon is considered to include the area
      within it, while a path is not.
