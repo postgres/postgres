@@ -2,7 +2,7 @@
 
 # Test for pg_upgrade of logical subscription
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use File::Find qw(find);
 
