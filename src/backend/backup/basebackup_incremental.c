@@ -436,12 +436,12 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 		 * drifting to something that is not a multiple of ten.
 		 */
 		timeout_in_ms -=
-			TimestampDifferenceMilliseconds(current_time, initial_time) %
+			TimestampDifferenceMilliseconds(initial_time, current_time) %
 			timeout_in_ms;
 
 		/* Wait for up to 10 seconds. */
 		summarized_lsn = WaitForWalSummarization(backup_state->startpoint,
-												 10000, &pending_lsn);
+												 timeout_in_ms, &pending_lsn);
 
 		/* If WAL summarization has progressed sufficiently, stop waiting. */
 		if (summarized_lsn >= backup_state->startpoint)
