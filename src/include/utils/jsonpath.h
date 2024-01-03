@@ -49,6 +49,13 @@ DatumGetJsonPathPCopy(Datum d)
 
 /*
  * All node's type of jsonpath expression
+ *
+ * These become part of the on-disk representation of the jsonpath type.
+ * Therefore, to preserve pg_upgradability, the order must not be changed, and
+ * new values must be added at the end.
+ *
+ * It is recommended that switch cases etc. in other parts of the code also
+ * use this order, to maintain some consistency.
  */
 typedef enum JsonPathItemType
 {

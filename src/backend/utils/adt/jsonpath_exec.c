@@ -621,6 +621,37 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 	switch (jsp->type)
 	{
+		case jpiNull:
+		case jpiBool:
+		case jpiNumeric:
+		case jpiString:
+		case jpiVariable:
+			{
+				JsonbValue	vbuf;
+				JsonbValue *v;
+				bool		hasNext = jspGetNext(jsp, &elem);
+
+				if (!hasNext && !found && jsp->type != jpiVariable)
+				{
+					/*
+					 * Skip evaluation, but not for variables.  We must
+					 * trigger an error for the missing variable.
+					 */
+					res = jperOk;
+					break;
+				}
+
+				v = hasNext ? &vbuf : palloc(sizeof(*v));
+
+				baseObject = cxt->baseObject;
+				getJsonPathItem(cxt, jsp, v);
+
+				res = executeNextItem(cxt, jsp, &elem,
+									  v, found, hasNext);
+				cxt->baseObject = baseObject;
+			}
+			break;
+
 			/* all boolean item types: */
 		case jpiAnd:
 		case jpiOr:
@@ -642,63 +673,32 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				break;
 			}
 
-		case jpiKey:
-			if (JsonbType(jb) == jbvObject)
-			{
-				JsonbValue *v;
-				JsonbValue	key;
+		case jpiAdd:
+			return executeBinaryArithmExpr(cxt, jsp, jb,
+										   numeric_add_opt_error, found);
 
-				key.type = jbvString;
-				key.val.string.val = jspGetString(jsp, &key.val.string.len);
+		case jpiSub:
+			return executeBinaryArithmExpr(cxt, jsp, jb,
+										   numeric_sub_opt_error, found);
 
-				v = findJsonbValueFromContainer(jb->val.binary.data,
-												JB_FOBJECT, &key);
+		case jpiMul:
+			return executeBinaryArithmExpr(cxt, jsp, jb,
+										   numeric_mul_opt_error, found);
 
-				if (v != NULL)
-				{
-					res = executeNextItem(cxt, jsp, NULL,
-										  v, found, false);
+		case jpiDiv:
+			return executeBinaryArithmExpr(cxt, jsp, jb,
+										   numeric_div_opt_error, found);
 
-					/* free value if it was not added to found list */
-					if (jspHasNext(jsp) || !found)
-						pfree(v);
-				}
-				else if (!jspIgnoreStructuralErrors(cxt))
-				{
-					Assert(found);
+		case jpiMod:
+			return executeBinaryArithmExpr(cxt, jsp, jb,
+										   numeric_mod_opt_error, found);
 
-					if (!jspThrowErrors(cxt))
-						return jperError;
+		case jpiPlus:
+			return executeUnaryArithmExpr(cxt, jsp, jb, NULL, found);
 
-					ereport(ERROR,
-							(errcode(ERRCODE_SQL_JSON_MEMBER_NOT_FOUND), \
-							 errmsg("JSON object does not contain key \"%s\"",
-									pnstrdup(key.val.string.val,
-											 key.val.string.len))));
-				}
-			}
-			else if (unwrap && JsonbType(jb) == jbvArray)
-				return executeItemUnwrapTargetArray(cxt, jsp, jb, found, false);
-			else if (!jspIgnoreStructuralErrors(cxt))
-			{
-				Assert(found);
-				RETURN_ERROR(ereport(ERROR,
-									 (errcode(ERRCODE_SQL_JSON_MEMBER_NOT_FOUND),
-									  errmsg("jsonpath member accessor can only be applied to an object"))));
-			}
-			break;
-
-		case jpiRoot:
-			jb = cxt->root;
-			baseObject = setBaseObject(cxt, jb, 0);
-			res = executeNextItem(cxt, jsp, NULL, jb, found, true);
-			cxt->baseObject = baseObject;
-			break;
-
-		case jpiCurrent:
-			res = executeNextItem(cxt, jsp, NULL, cxt->current,
-								  found, true);
-			break;
+		case jpiMinus:
+			return executeUnaryArithmExpr(cxt, jsp, jb, numeric_uminus,
+										  found);
 
 		case jpiAnyArray:
 			if (JsonbType(jb) == jbvArray)
@@ -714,6 +714,30 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				RETURN_ERROR(ereport(ERROR,
 									 (errcode(ERRCODE_SQL_JSON_ARRAY_NOT_FOUND),
 									  errmsg("jsonpath wildcard array accessor can only be applied to an array"))));
+			break;
+
+		case jpiAnyKey:
+			if (JsonbType(jb) == jbvObject)
+			{
+				bool		hasNext = jspGetNext(jsp, &elem);
+
+				if (jb->type != jbvBinary)
+					elog(ERROR, "invalid jsonb object type: %d", jb->type);
+
+				return executeAnyItem
+					(cxt, hasNext ? &elem : NULL,
+					 jb->val.binary.data, found, 1, 1, 1,
+					 false, jspAutoUnwrap(cxt));
+			}
+			else if (unwrap && JsonbType(jb) == jbvArray)
+				return executeItemUnwrapTargetArray(cxt, jsp, jb, found, false);
+			else if (!jspIgnoreStructuralErrors(cxt))
+			{
+				Assert(found);
+				RETURN_ERROR(ereport(ERROR,
+									 (errcode(ERRCODE_SQL_JSON_OBJECT_NOT_FOUND),
+									  errmsg("jsonpath wildcard member accessor can only be applied to an object"))));
+			}
 			break;
 
 		case jpiIndexArray:
@@ -822,103 +846,6 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 			}
 			break;
 
-		case jpiLast:
-			{
-				JsonbValue	tmpjbv;
-				JsonbValue *lastjbv;
-				int			last;
-				bool		hasNext = jspGetNext(jsp, &elem);
-
-				if (cxt->innermostArraySize < 0)
-					elog(ERROR, "evaluating jsonpath LAST outside of array subscript");
-
-				if (!hasNext && !found)
-				{
-					res = jperOk;
-					break;
-				}
-
-				last = cxt->innermostArraySize - 1;
-
-				lastjbv = hasNext ? &tmpjbv : palloc(sizeof(*lastjbv));
-
-				lastjbv->type = jbvNumeric;
-				lastjbv->val.numeric = int64_to_numeric(last);
-
-				res = executeNextItem(cxt, jsp, &elem,
-									  lastjbv, found, hasNext);
-			}
-			break;
-
-		case jpiAnyKey:
-			if (JsonbType(jb) == jbvObject)
-			{
-				bool		hasNext = jspGetNext(jsp, &elem);
-
-				if (jb->type != jbvBinary)
-					elog(ERROR, "invalid jsonb object type: %d", jb->type);
-
-				return executeAnyItem
-					(cxt, hasNext ? &elem : NULL,
-					 jb->val.binary.data, found, 1, 1, 1,
-					 false, jspAutoUnwrap(cxt));
-			}
-			else if (unwrap && JsonbType(jb) == jbvArray)
-				return executeItemUnwrapTargetArray(cxt, jsp, jb, found, false);
-			else if (!jspIgnoreStructuralErrors(cxt))
-			{
-				Assert(found);
-				RETURN_ERROR(ereport(ERROR,
-									 (errcode(ERRCODE_SQL_JSON_OBJECT_NOT_FOUND),
-									  errmsg("jsonpath wildcard member accessor can only be applied to an object"))));
-			}
-			break;
-
-		case jpiAdd:
-			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_add_opt_error, found);
-
-		case jpiSub:
-			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_sub_opt_error, found);
-
-		case jpiMul:
-			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_mul_opt_error, found);
-
-		case jpiDiv:
-			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_div_opt_error, found);
-
-		case jpiMod:
-			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_mod_opt_error, found);
-
-		case jpiPlus:
-			return executeUnaryArithmExpr(cxt, jsp, jb, NULL, found);
-
-		case jpiMinus:
-			return executeUnaryArithmExpr(cxt, jsp, jb, numeric_uminus,
-										  found);
-
-		case jpiFilter:
-			{
-				JsonPathBool st;
-
-				if (unwrap && JsonbType(jb) == jbvArray)
-					return executeItemUnwrapTargetArray(cxt, jsp, jb, found,
-														false);
-
-				jspGetArg(jsp, &elem);
-				st = executeNestedBoolItem(cxt, &elem, jb);
-				if (st != jpbTrue)
-					res = jperNotFound;
-				else
-					res = executeNextItem(cxt, jsp, NULL,
-										  jb, found, true);
-				break;
-			}
-
 		case jpiAny:
 			{
 				bool		hasNext = jspGetNext(jsp, &elem);
@@ -949,36 +876,81 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				break;
 			}
 
-		case jpiNull:
-		case jpiBool:
-		case jpiNumeric:
-		case jpiString:
-		case jpiVariable:
+		case jpiKey:
+			if (JsonbType(jb) == jbvObject)
 			{
-				JsonbValue	vbuf;
 				JsonbValue *v;
-				bool		hasNext = jspGetNext(jsp, &elem);
+				JsonbValue	key;
 
-				if (!hasNext && !found && jsp->type != jpiVariable)
+				key.type = jbvString;
+				key.val.string.val = jspGetString(jsp, &key.val.string.len);
+
+				v = findJsonbValueFromContainer(jb->val.binary.data,
+												JB_FOBJECT, &key);
+
+				if (v != NULL)
 				{
-					/*
-					 * Skip evaluation, but not for variables.  We must
-					 * trigger an error for the missing variable.
-					 */
-					res = jperOk;
-					break;
+					res = executeNextItem(cxt, jsp, NULL,
+										  v, found, false);
+
+					/* free value if it was not added to found list */
+					if (jspHasNext(jsp) || !found)
+						pfree(v);
 				}
+				else if (!jspIgnoreStructuralErrors(cxt))
+				{
+					Assert(found);
 
-				v = hasNext ? &vbuf : palloc(sizeof(*v));
+					if (!jspThrowErrors(cxt))
+						return jperError;
 
-				baseObject = cxt->baseObject;
-				getJsonPathItem(cxt, jsp, v);
-
-				res = executeNextItem(cxt, jsp, &elem,
-									  v, found, hasNext);
-				cxt->baseObject = baseObject;
+					ereport(ERROR,
+							(errcode(ERRCODE_SQL_JSON_MEMBER_NOT_FOUND), \
+							 errmsg("JSON object does not contain key \"%s\"",
+									pnstrdup(key.val.string.val,
+											 key.val.string.len))));
+				}
+			}
+			else if (unwrap && JsonbType(jb) == jbvArray)
+				return executeItemUnwrapTargetArray(cxt, jsp, jb, found, false);
+			else if (!jspIgnoreStructuralErrors(cxt))
+			{
+				Assert(found);
+				RETURN_ERROR(ereport(ERROR,
+									 (errcode(ERRCODE_SQL_JSON_MEMBER_NOT_FOUND),
+									  errmsg("jsonpath member accessor can only be applied to an object"))));
 			}
 			break;
+
+		case jpiCurrent:
+			res = executeNextItem(cxt, jsp, NULL, cxt->current,
+								  found, true);
+			break;
+
+		case jpiRoot:
+			jb = cxt->root;
+			baseObject = setBaseObject(cxt, jb, 0);
+			res = executeNextItem(cxt, jsp, NULL, jb, found, true);
+			cxt->baseObject = baseObject;
+			break;
+
+		case jpiFilter:
+			{
+				JsonPathBool st;
+
+				if (unwrap && JsonbType(jb) == jbvArray)
+					return executeItemUnwrapTargetArray(cxt, jsp, jb, found,
+														false);
+
+				jspGetArg(jsp, &elem);
+				st = executeNestedBoolItem(cxt, &elem, jb);
+				if (st != jpbTrue)
+					res = jperNotFound;
+				else
+					res = executeNextItem(cxt, jsp, NULL,
+										  jb, found, true);
+				break;
+			}
 
 		case jpiType:
 			{
@@ -1109,6 +1081,34 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				return executeItemUnwrapTargetArray(cxt, jsp, jb, found, false);
 
 			return executeKeyValueMethod(cxt, jsp, jb, found);
+
+		case jpiLast:
+			{
+				JsonbValue	tmpjbv;
+				JsonbValue *lastjbv;
+				int			last;
+				bool		hasNext = jspGetNext(jsp, &elem);
+
+				if (cxt->innermostArraySize < 0)
+					elog(ERROR, "evaluating jsonpath LAST outside of array subscript");
+
+				if (!hasNext && !found)
+				{
+					res = jperOk;
+					break;
+				}
+
+				last = cxt->innermostArraySize - 1;
+
+				lastjbv = hasNext ? &tmpjbv : palloc(sizeof(*lastjbv));
+
+				lastjbv->type = jbvNumeric;
+				lastjbv->val.numeric = int64_to_numeric(last);
+
+				res = executeNextItem(cxt, jsp, &elem,
+									  lastjbv, found, hasNext);
+			}
+			break;
 
 		default:
 			elog(ERROR, "unrecognized jsonpath item type: %d", jsp->type);
