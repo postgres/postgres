@@ -439,10 +439,10 @@ flattenJsonPathParseItem(StringInfo buf, int *result, struct Node *escontext,
 			break;
 		case jpiType:
 		case jpiSize:
-		case jpiAbs:
-		case jpiFloor:
-		case jpiCeiling:
 		case jpiDouble:
+		case jpiAbs:
+		case jpiCeiling:
+		case jpiFloor:
 		case jpiKeyValue:
 			break;
 		default:
@@ -610,18 +610,6 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			if (printBracketes)
 				appendStringInfoChar(buf, ')');
 			break;
-		case jpiPlus:
-		case jpiMinus:
-			if (printBracketes)
-				appendStringInfoChar(buf, '(');
-			appendStringInfoChar(buf, v->type == jpiPlus ? '+' : '-');
-			jspGetArg(v, &elem);
-			printJsonPathItem(buf, &elem, false,
-							  operationPriority(elem.type) <=
-							  operationPriority(v->type));
-			if (printBracketes)
-				appendStringInfoChar(buf, ')');
-			break;
 		case jpiFilter:
 			appendStringInfoString(buf, "?(");
 			jspGetArg(v, &elem);
@@ -712,23 +700,35 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 								 v->content.anybounds.first,
 								 v->content.anybounds.last);
 			break;
+		case jpiPlus:
+		case jpiMinus:
+			if (printBracketes)
+				appendStringInfoChar(buf, '(');
+			appendStringInfoChar(buf, v->type == jpiPlus ? '+' : '-');
+			jspGetArg(v, &elem);
+			printJsonPathItem(buf, &elem, false,
+							  operationPriority(elem.type) <=
+							  operationPriority(v->type));
+			if (printBracketes)
+				appendStringInfoChar(buf, ')');
+			break;
 		case jpiType:
 			appendStringInfoString(buf, ".type()");
 			break;
 		case jpiSize:
 			appendStringInfoString(buf, ".size()");
 			break;
+		case jpiDouble:
+			appendStringInfoString(buf, ".double()");
+			break;
 		case jpiAbs:
 			appendStringInfoString(buf, ".abs()");
-			break;
-		case jpiFloor:
-			appendStringInfoString(buf, ".floor()");
 			break;
 		case jpiCeiling:
 			appendStringInfoString(buf, ".ceiling()");
 			break;
-		case jpiDouble:
-			appendStringInfoString(buf, ".double()");
+		case jpiFloor:
+			appendStringInfoString(buf, ".floor()");
 			break;
 		case jpiDatetime:
 			appendStringInfoString(buf, ".datetime(");
@@ -771,11 +771,11 @@ jspOperationName(JsonPathItemType type)
 			return "<=";
 		case jpiGreaterOrEqual:
 			return ">=";
-		case jpiPlus:
 		case jpiAdd:
+		case jpiPlus:
 			return "+";
-		case jpiMinus:
 		case jpiSub:
+		case jpiMinus:
 			return "-";
 		case jpiMul:
 			return "*";
@@ -783,26 +783,26 @@ jspOperationName(JsonPathItemType type)
 			return "/";
 		case jpiMod:
 			return "%";
-		case jpiStartsWith:
-			return "starts with";
-		case jpiLikeRegex:
-			return "like_regex";
 		case jpiType:
 			return "type";
 		case jpiSize:
 			return "size";
-		case jpiKeyValue:
-			return "keyvalue";
 		case jpiDouble:
 			return "double";
 		case jpiAbs:
 			return "abs";
-		case jpiFloor:
-			return "floor";
 		case jpiCeiling:
 			return "ceiling";
+		case jpiFloor:
+			return "floor";
 		case jpiDatetime:
 			return "datetime";
+		case jpiKeyValue:
+			return "keyvalue";
+		case jpiStartsWith:
+			return "starts with";
+		case jpiLikeRegex:
+			return "like_regex";
 		default:
 			elog(ERROR, "unrecognized jsonpath item type: %d", type);
 			return NULL;
@@ -893,10 +893,10 @@ jspInitByBuffer(JsonPathItem *v, char *base, int32 pos)
 		case jpiAnyKey:
 		case jpiType:
 		case jpiSize:
-		case jpiAbs:
-		case jpiFloor:
-		case jpiCeiling:
 		case jpiDouble:
+		case jpiAbs:
+		case jpiCeiling:
+		case jpiFloor:
 		case jpiKeyValue:
 		case jpiLast:
 			break;
@@ -935,9 +935,9 @@ jspInitByBuffer(JsonPathItem *v, char *base, int32 pos)
 		case jpiNot:
 		case jpiExists:
 		case jpiIsUnknown:
+		case jpiFilter:
 		case jpiPlus:
 		case jpiMinus:
-		case jpiFilter:
 		case jpiDatetime:
 			read_int32(v->content.arg, base, pos);
 			break;
@@ -989,13 +989,6 @@ jspGetNext(JsonPathItem *v, JsonPathItem *a)
 			   v->type == jpiRoot ||
 			   v->type == jpiVariable ||
 			   v->type == jpiLast ||
-			   v->type == jpiAdd ||
-			   v->type == jpiSub ||
-			   v->type == jpiMul ||
-			   v->type == jpiDiv ||
-			   v->type == jpiMod ||
-			   v->type == jpiPlus ||
-			   v->type == jpiMinus ||
 			   v->type == jpiEqual ||
 			   v->type == jpiNotEqual ||
 			   v->type == jpiGreater ||
@@ -1006,12 +999,19 @@ jspGetNext(JsonPathItem *v, JsonPathItem *a)
 			   v->type == jpiOr ||
 			   v->type == jpiNot ||
 			   v->type == jpiIsUnknown ||
+			   v->type == jpiAdd ||
+			   v->type == jpiPlus ||
+			   v->type == jpiSub ||
+			   v->type == jpiMinus ||
+			   v->type == jpiMul ||
+			   v->type == jpiDiv ||
+			   v->type == jpiMod ||
 			   v->type == jpiType ||
 			   v->type == jpiSize ||
-			   v->type == jpiAbs ||
-			   v->type == jpiFloor ||
-			   v->type == jpiCeiling ||
 			   v->type == jpiDouble ||
+			   v->type == jpiAbs ||
+			   v->type == jpiCeiling ||
+			   v->type == jpiFloor ||
 			   v->type == jpiDatetime ||
 			   v->type == jpiKeyValue ||
 			   v->type == jpiStartsWith ||

@@ -80,7 +80,7 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 %token	<str>		OR_P AND_P NOT_P
 %token	<str>		LESS_P LESSEQUAL_P EQUAL_P NOTEQUAL_P GREATEREQUAL_P GREATER_P
 %token	<str>		ANY_P STRICT_P LAX_P LAST_P STARTS_P WITH_P LIKE_REGEX_P FLAG_P
-%token	<str>		ABS_P SIZE_P TYPE_P FLOOR_P DOUBLE_P CEILING_P KEYVALUE_P
+%token	<str>		TYPE_P SIZE_P DOUBLE_P ABS_P CEILING_P FLOOR_P KEYVALUE_P
 %token	<str>		DATETIME_P
 
 %type	<result>	result
@@ -206,10 +206,10 @@ accessor_expr:
 expr:
 	accessor_expr					{ $$ = makeItemList($1); }
 	| '(' expr ')'					{ $$ = $2; }
-	| '+' expr %prec UMINUS			{ $$ = makeItemUnary(jpiPlus, $2); }
-	| '-' expr %prec UMINUS			{ $$ = makeItemUnary(jpiMinus, $2); }
 	| expr '+' expr					{ $$ = makeItemBinary(jpiAdd, $1, $3); }
+	| '+' expr %prec UMINUS			{ $$ = makeItemUnary(jpiPlus, $2); }
 	| expr '-' expr					{ $$ = makeItemBinary(jpiSub, $1, $3); }
+	| '-' expr %prec UMINUS			{ $$ = makeItemUnary(jpiMinus, $2); }
 	| expr '*' expr					{ $$ = makeItemBinary(jpiMul, $1, $3); }
 	| expr '/' expr					{ $$ = makeItemBinary(jpiDiv, $1, $3); }
 	| expr '%' expr					{ $$ = makeItemBinary(jpiMod, $1, $3); }
@@ -278,28 +278,28 @@ key_name:
 	| EXISTS_P
 	| STRICT_P
 	| LAX_P
-	| ABS_P
-	| SIZE_P
+	| LAST_P
+	| FLAG_P
 	| TYPE_P
-	| FLOOR_P
+	| SIZE_P
 	| DOUBLE_P
+	| ABS_P
 	| CEILING_P
+	| FLOOR_P
 	| DATETIME_P
 	| KEYVALUE_P
-	| LAST_P
 	| STARTS_P
 	| WITH_P
 	| LIKE_REGEX_P
-	| FLAG_P
 	;
 
 method:
-	ABS_P							{ $$ = jpiAbs; }
+	TYPE_P							{ $$ = jpiType; }
 	| SIZE_P						{ $$ = jpiSize; }
-	| TYPE_P						{ $$ = jpiType; }
-	| FLOOR_P						{ $$ = jpiFloor; }
 	| DOUBLE_P						{ $$ = jpiDouble; }
+	| ABS_P							{ $$ = jpiAbs; }
 	| CEILING_P						{ $$ = jpiCeiling; }
+	| FLOOR_P						{ $$ = jpiFloor; }
 	| KEYVALUE_P					{ $$ = jpiKeyValue; }
 	;
 %%
