@@ -695,7 +695,7 @@ get_dtype(enum ECPGdtype type)
 	switch (type)
 	{
 		case ECPGd_count:
-			return "ECPGd_countr";
+			return "ECPGd_count";
 			break;
 		case ECPGd_data:
 			return "ECPGd_data";

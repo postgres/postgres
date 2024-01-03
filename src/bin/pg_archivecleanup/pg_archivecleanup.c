@@ -265,7 +265,7 @@ usage(void)
 	printf(_("  -n, --dry-run               dry run, show the names of the files that would be\n"
 			 "                              removed\n"));
 	printf(_("  -V, --version               output version information, then exit\n"));
-	printf(_("  -x, --strip-extension=EXT   strip this extention before identifying files for\n"
+	printf(_("  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
 			 "                              clean up\n"));
 	printf(_("  -?, --help                  show this help, then exit\n"));
 	printf(_("\n"
