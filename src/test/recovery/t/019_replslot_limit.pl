@@ -12,8 +12,6 @@ use PostgreSQL::Test::Cluster;
 use Test::More;
 use Time::HiRes qw(usleep);
 
-$ENV{PGDATABASE} = 'postgres';
-
 # Initialize primary node, setting wal-segsize to 1MB
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1, extra => ['--wal-segsize=1']);

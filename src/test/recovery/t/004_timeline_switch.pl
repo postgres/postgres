@@ -8,8 +8,6 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-$ENV{PGDATABASE} = 'postgres';
-
 # Ensure that a cascading standby is able to follow a newly-promoted standby
 # on a new timeline.
 
