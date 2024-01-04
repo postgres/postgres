@@ -381,26 +381,26 @@ lnext(const List *l, const ListCell *c)
 /*
  * foreach_delete_current -
  *	  delete the current list element from the List associated with a
- *	  surrounding foreach() loop, returning the new List pointer.
+ *	  surrounding foreach() or foreach_*() loop, returning the new List
+ *	  pointer; pass the name of the iterator variable.
  *
- * This is equivalent to list_delete_cell(), but it also adjusts the foreach
- * loop's state so that no list elements will be missed.  Do not delete
- * elements from an active foreach loop's list in any other way!
+ * This is similar to list_delete_cell(), but it also adjusts the loop's state
+ * so that no list elements will be missed.  Do not delete elements from an
+ * active foreach or foreach_* loop's list in any other way!
  */
-#define foreach_delete_current(lst, cell)	\
-	(cell##__state.i--, \
-	 (List *) (cell##__state.l = list_delete_cell(lst, cell)))
+#define foreach_delete_current(lst, var_or_cell)	\
+	((List *) (var_or_cell##__state.l = list_delete_nth_cell(lst, var_or_cell##__state.i--)))
 
 /*
  * foreach_current_index -
- *	  get the zero-based list index of a surrounding foreach() loop's
- *	  current element; pass the name of the "ListCell *" iterator variable.
+ *	  get the zero-based list index of a surrounding foreach() or foreach_*()
+ *	  loop's current element; pass the name of the iterator variable.
  *
  * Beware of using this after foreach_delete_current(); the value will be
  * out of sync for the rest of the current loop iteration.  Anyway, since
  * you just deleted the current element, the value is pretty meaningless.
  */
-#define foreach_current_index(cell)  (cell##__state.i)
+#define foreach_current_index(var_or_cell)  (var_or_cell##__state.i)
 
 /*
  * for_each_from -
@@ -451,6 +451,57 @@ for_each_cell_setup(const List *lst, const ListCell *initcell)
 
 	return r;
 }
+
+/*
+ * Convenience macros that loop through a list without needing a separate
+ * "ListCell *" variable.  Instead, the macros declare a locally-scoped loop
+ * variable with the provided name and the appropriate type.
+ *
+ * Since the variable is scoped to the loop, it's not possible to detect an
+ * early break by checking its value after the loop completes, as is common
+ * practice.  If you need to do this, you can either use foreach() instead or
+ * manually track early breaks with a separate variable declared outside of the
+ * loop.
+ *
+ * Note that the caveats described in the comment above the foreach() macro
+ * also apply to these convenience macros.
+ */
+#define foreach_ptr(type, var, lst) foreach_internal(type, *, var, lst, lfirst)
+#define foreach_int(var, lst)	foreach_internal(int, , var, lst, lfirst_int)
+#define foreach_oid(var, lst)	foreach_internal(Oid, , var, lst, lfirst_oid)
+#define foreach_xid(var, lst)	foreach_internal(TransactionId, , var, lst, lfirst_xid)
+
+/*
+ * The internal implementation of the above macros.  Do not use directly.
+ *
+ * This macro actually generates two loops in order to declare two variables of
+ * different types.  The outer loop only iterates once, so we expect optimizing
+ * compilers will unroll it, thereby optimizing it away.
+ */
+#define foreach_internal(type, pointer, var, lst, func) \
+	for (type pointer var = 0, pointer var##__outerloop = (type pointer) 1; \
+		 var##__outerloop; \
+		 var##__outerloop = 0) \
+		for (ForEachState var##__state = {(lst), 0}; \
+			 (var##__state.l != NIL && \
+			  var##__state.i < var##__state.l->length && \
+			 (var = func(&var##__state.l->elements[var##__state.i]), true)); \
+			 var##__state.i++)
+
+/*
+ * foreach_node -
+ *	  The same as foreach_ptr, but asserts that the element is of the specified
+ *	  node type.
+ */
+#define foreach_node(type, var, lst) \
+	for (type * var = 0, *var##__outerloop = (type *) 1; \
+		 var##__outerloop; \
+		 var##__outerloop = 0) \
+		for (ForEachState var##__state = {(lst), 0}; \
+			 (var##__state.l != NIL && \
+			  var##__state.i < var##__state.l->length && \
+			 (var = lfirst_node(type, &var##__state.l->elements[var##__state.i]), true)); \
+			 var##__state.i++)
 
 /*
  * forboth -

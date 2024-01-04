@@ -1036,11 +1036,11 @@ fetch_remote_table_info(char *nspname, char *relname,
 
 		/* Build the pubname list. */
 		initStringInfo(&pub_names);
-		foreach(lc, MySubscription->publications)
+		foreach_node(String, pubstr, MySubscription->publications)
 		{
-			char	   *pubname = strVal(lfirst(lc));
+			char	   *pubname = strVal(pubstr);
 
-			if (foreach_current_index(lc) > 0)
+			if (foreach_current_index(pubstr) > 0)
 				appendStringInfoString(&pub_names, ", ");
 
 			appendStringInfoString(&pub_names, quote_literal_cstr(pubname));

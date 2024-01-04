@@ -2234,7 +2234,6 @@ cleanup_rel_sync_cache(TransactionId xid, bool is_commit)
 {
 	HASH_SEQ_STATUS hash_seq;
 	RelationSyncEntry *entry;
-	ListCell   *lc;
 
 	Assert(RelationSyncCache != NULL);
 
@@ -2247,15 +2246,15 @@ cleanup_rel_sync_cache(TransactionId xid, bool is_commit)
 		 * corresponding schema and we don't need to send it unless there is
 		 * any invalidation for that relation.
 		 */
-		foreach(lc, entry->streamed_txns)
+		foreach_xid(streamed_txn, entry->streamed_txns)
 		{
-			if (xid == lfirst_xid(lc))
+			if (xid == streamed_txn)
 			{
 				if (is_commit)
 					entry->schema_sent = true;
 
 				entry->streamed_txns =
-					foreach_delete_current(entry->streamed_txns, lc);
+					foreach_delete_current(entry->streamed_txns, streamed_txn);
 				break;
 			}
 		}

@@ -216,7 +216,6 @@ ExecInitQual(List *qual, PlanState *parent)
 	ExprState  *state;
 	ExprEvalStep scratch = {0};
 	List	   *adjust_jumps = NIL;
-	ListCell   *lc;
 
 	/* short-circuit (here and in ExecQual) for empty restriction list */
 	if (qual == NIL)
@@ -250,10 +249,8 @@ ExecInitQual(List *qual, PlanState *parent)
 	scratch.resvalue = &state->resvalue;
 	scratch.resnull = &state->resnull;
 
-	foreach(lc, qual)
+	foreach_ptr(Expr, node, qual)
 	{
-		Expr	   *node = (Expr *) lfirst(lc);
-
 		/* first evaluate expression */
 		ExecInitExprRec(node, state, &state->resvalue, &state->resnull);
 
@@ -265,9 +262,9 @@ ExecInitQual(List *qual, PlanState *parent)
 	}
 
 	/* adjust jump targets */
-	foreach(lc, adjust_jumps)
+	foreach_int(jump, adjust_jumps)
 	{
-		ExprEvalStep *as = &state->steps[lfirst_int(lc)];
+		ExprEvalStep *as = &state->steps[jump];
 
 		Assert(as->opcode == EEOP_QUAL);
 		Assert(as->d.qualexpr.jumpdone == -1);
