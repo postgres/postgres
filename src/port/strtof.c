@@ -2,7 +2,7 @@
  *
  * strtof.c
  *
- * Portions Copyright (c) 2019-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2019-2024, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

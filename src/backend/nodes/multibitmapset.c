@@ -18,7 +18,7 @@
  * a small fraction of that has been built out; we'll add more as needed.
  *
  *
- * Copyright (c) 2022-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/nodes/multibitmapset.c

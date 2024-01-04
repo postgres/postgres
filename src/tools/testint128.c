@@ -6,7 +6,7 @@
  * This is a standalone test program that compares the behavior of an
  * implementation in int128.h to an (assumed correct) int128 native type.
  *
- * Copyright (c) 2017-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2024, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

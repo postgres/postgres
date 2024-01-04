@@ -6,7 +6,7 @@
  * by the PG_RMGR macro, which is not defined in this file; it can be
  * defined by the caller for special purposes.
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/rmgrlist.h

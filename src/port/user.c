@@ -4,7 +4,7 @@
  *
  *		  Wrapper functions for user and home directory lookup.
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * src/port/user.c
  *

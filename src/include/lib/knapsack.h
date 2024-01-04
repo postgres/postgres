@@ -1,7 +1,7 @@
 /*
  * knapsack.h
  *
- * Copyright (c) 2017-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2024, PostgreSQL Global Development Group
  *
  * src/include/lib/knapsack.h
  */

@@ -3,7 +3,7 @@
  * pg_crc32c_armv8.c
  *	  Compute CRC-32C checksum using ARMv8 CRC Extension instructions
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

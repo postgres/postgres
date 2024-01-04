@@ -1,7 +1,7 @@
 /*
  * text search configuration for _LANGNAME_ language
  *
- * Copyright (c) 2007-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2024, PostgreSQL Global Development Group
  *
  * src/backend/snowball/snowball.sql.in
  *

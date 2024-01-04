@@ -3,7 +3,7 @@
  * sha2.h
  *	  Constants related to SHA224, 256, 384 AND 512.
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

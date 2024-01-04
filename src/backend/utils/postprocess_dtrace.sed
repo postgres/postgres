@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------
 # sed script to postprocess dtrace output
 #
-# Copyright (c) 2008-2023, PostgreSQL Global Development Group
+# Copyright (c) 2008-2024, PostgreSQL Global Development Group
 #
 # src/backend/utils/postprocess_dtrace.sed
 #-------------------------------------------------------------------------

@@ -13,7 +13,7 @@
  *
  * NOTE: this file should not be included into any non-snowball sources!
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * src/include/snowball/header.h
  *

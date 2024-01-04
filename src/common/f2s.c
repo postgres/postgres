@@ -2,7 +2,7 @@
  *
  * Ryu floating-point output for single precision.
  *
- * Portions Copyright (c) 2018-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2018-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/f2s.c

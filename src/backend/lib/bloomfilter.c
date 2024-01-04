@@ -24,7 +24,7 @@
  * caller many authoritative lookups, such as expensive probes of a much larger
  * on-disk structure.
  *
- * Copyright (c) 2018-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/lib/bloomfilter.c

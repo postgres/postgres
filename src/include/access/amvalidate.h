@@ -4,7 +4,7 @@
  *	  Support routines for index access methods' amvalidate and
  *	  amadjustmembers functions.
  *
- * Copyright (c) 2016-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2024, PostgreSQL Global Development Group
  *
  * src/include/access/amvalidate.h
  *

@@ -8,7 +8,7 @@
  * Generation", IEEE Transactions on Computers, vol.57, no. 11,
  * pp. 1550-1560, November 2008, doi:10.1109/TC.2008.85
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

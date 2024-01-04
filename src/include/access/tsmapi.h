@@ -3,7 +3,7 @@
  * tsmapi.h
  *	  API for tablesample methods
  *
- * Copyright (c) 2015-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2024, PostgreSQL Global Development Group
  *
  * src/include/access/tsmapi.h
  *

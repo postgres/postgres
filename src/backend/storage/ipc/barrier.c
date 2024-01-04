@@ -3,7 +3,7 @@
  * barrier.c
  *	  Barriers for synchronizing cooperating processes.
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * From Wikipedia[1]: "In parallel computing, a barrier is a type of

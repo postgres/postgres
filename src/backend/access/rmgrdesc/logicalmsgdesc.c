@@ -3,7 +3,7 @@
  * logicalmsgdesc.c
  *	  rmgr descriptor routines for replication/logical/message.c
  *
- * Portions Copyright (c) 2015-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2015-2024, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

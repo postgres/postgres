@@ -2,7 +2,7 @@
  * config_info.h
  *		Common code for pg_config output
  *
- *	Copyright (c) 2016-2023, PostgreSQL Global Development Group
+ *	Copyright (c) 2016-2024, PostgreSQL Global Development Group
  *
  *	src/include/common/config_info.h
  */

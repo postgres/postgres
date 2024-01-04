@@ -3,7 +3,7 @@
  * shell_archive.h
  *		Exports for archiving via shell.
  *
- * Copyright (c) 2022-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2024, PostgreSQL Global Development Group
  *
  * src/include/archive/shell_archive.h
  *

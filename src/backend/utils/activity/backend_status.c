@@ -2,7 +2,7 @@
  * backend_status.c
  *	  Backend status reporting infrastructure.
  *
- * Copyright (c) 2001-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2024, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

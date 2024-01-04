@@ -18,7 +18,7 @@
  * C library thinks the locale is.
  *
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * src/port/pgstrcasecmp.c
  *

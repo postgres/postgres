@@ -21,7 +21,7 @@
  * The fields are separated by tabs. Lines beginning with # are comments, and
  * are ignored. Empty lines are also ignored.
  *
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/timeline.c

@@ -3,7 +3,7 @@
  * test_ginpostinglist.c
  *		Test varbyte-encoding in ginpostinglist.c
  *
- * Copyright (c) 2019-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2019-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_ginpostinglist/test_ginpostinglist.c

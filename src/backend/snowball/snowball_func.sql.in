@@ -1,7 +1,7 @@
 /*
  * Create underlying C functions for Snowball stemmers
  *
- * Copyright (c) 2007-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2024, PostgreSQL Global Development Group
  *
  * src/backend/snowball/snowball_func.sql.in
  *

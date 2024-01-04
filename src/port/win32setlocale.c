@@ -3,7 +3,7 @@
  * win32setlocale.c
  *		Wrapper to work around bugs in Windows setlocale() implementation
  *
- * Copyright (c) 2011-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2011-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/win32setlocale.c

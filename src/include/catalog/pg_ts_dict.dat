@@ -3,7 +3,7 @@
 # pg_ts_dict.dat
 #    Initial contents of the pg_ts_dict system catalog.
 #
-# Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/include/catalog/pg_ts_dict.dat

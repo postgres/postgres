@@ -17,7 +17,7 @@
  * line and start/end of string.  Colors are numbered 0..C-1, but note that
  * color 0 is "white" (all unused characters) and can generally be ignored.
  *
- * Portions Copyright (c) 2013-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1998, 1999 Henry Spencer
  *
  * IDENTIFICATION

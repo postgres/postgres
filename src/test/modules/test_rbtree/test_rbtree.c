@@ -3,7 +3,7 @@
  * test_rbtree.c
  *		Test correctness of red-black tree operations.
  *
- * Copyright (c) 2009-2023, PostgreSQL Global Development Group
+ * Copyright (c) 2009-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_rbtree/test_rbtree.c

@@ -18,7 +18,7 @@
  * later be marked as modified again; if that happens, it means the relation
  * was re-extended.
  *
- * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2024, PostgreSQL Global Development Group
  *
  * src/common/blkreftable.c
  *

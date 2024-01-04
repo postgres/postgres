@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 
-# Copyright (c) 2021-2023, PostgreSQL Global Development Group
+# Copyright (c) 2021-2024, PostgreSQL Global Development Group
 
 use strict;
 use warnings FATAL => 'all';

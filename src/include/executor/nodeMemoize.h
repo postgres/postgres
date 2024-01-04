@@ -4,7 +4,7 @@
  *
  *
  *
- * Portions Copyright (c) 2021-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2021-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/nodeMemoize.h
