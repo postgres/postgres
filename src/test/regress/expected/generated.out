@@ -578,6 +578,9 @@ INSERT INTO gtest20 (a) VALUES (10);  -- ok
 INSERT INTO gtest20 (a) VALUES (30);  -- violates constraint
 ERROR:  new row for relation "gtest20" violates check constraint "gtest20_b_check"
 DETAIL:  Failing row contains (30, 60).
+ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 100);  -- violates constraint
+ERROR:  check constraint "gtest20_b_check" of relation "gtest20" is violated by some row
+ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 3);  -- ok
 CREATE TABLE gtest20a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
 INSERT INTO gtest20a (a) VALUES (10);
 INSERT INTO gtest20a (a) VALUES (30);
@@ -673,6 +676,47 @@ SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
  1 | 2
 (1 row)
 
+ALTER TABLE gtest22c ALTER COLUMN b SET EXPRESSION AS (a * 4);
+ANALYZE gtest22c;
+EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b = 8;
+                 QUERY PLAN                  
+---------------------------------------------
+ Index Scan using gtest22c_b_idx on gtest22c
+   Index Cond: (b = 8)
+(2 rows)
+
+SELECT * FROM gtest22c WHERE b = 8;
+ a | b 
+---+---
+ 2 | 8
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b * 3 = 12;
+                   QUERY PLAN                   
+------------------------------------------------
+ Index Scan using gtest22c_expr_idx on gtest22c
+   Index Cond: ((b * 3) = 12)
+(2 rows)
+
+SELECT * FROM gtest22c WHERE b * 3 = 12;
+ a | b 
+---+---
+ 1 | 4
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
+                   QUERY PLAN                   
+------------------------------------------------
+ Index Scan using gtest22c_pred_idx on gtest22c
+   Index Cond: (a = 1)
+(2 rows)
+
+SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
+ a | b 
+---+---
+ 1 | 4
+(1 row)
+
 RESET enable_seqscan;
 RESET enable_bitmapscan;
 -- foreign keys
@@ -698,6 +742,10 @@ INSERT INTO gtest23b VALUES (1);  -- ok
 INSERT INTO gtest23b VALUES (5);  -- error
 ERROR:  insert or update on table "gtest23b" violates foreign key constraint "gtest23b_b_fkey"
 DETAIL:  Key (b)=(10) is not present in table "gtest23a".
+ALTER TABLE gtest23b ALTER COLUMN b SET EXPRESSION AS (a * 5); -- error
+ERROR:  insert or update on table "gtest23b" violates foreign key constraint "gtest23b_b_fkey"
+DETAIL:  Key (b)=(5) is not present in table "gtest23a".
+ALTER TABLE gtest23b ALTER COLUMN b SET EXPRESSION AS (a * 1); -- ok
 DROP TABLE gtest23b;
 DROP TABLE gtest23a;
 CREATE TABLE gtest23p (x int, y int GENERATED ALWAYS AS (x * 2) STORED, PRIMARY KEY (y));
@@ -785,30 +833,119 @@ Partition of: gtest_parent FOR VALUES FROM ('08-01-2016') TO ('09-01-2016')
 Partition of: gtest_parent FOR VALUES FROM ('09-01-2016') TO ('10-01-2016')
 
 INSERT INTO gtest_parent (f1, f2) VALUES ('2016-07-15', 1);
-SELECT * FROM gtest_parent;
-     f1     | f2 | f3 
-------------+----+----
- 07-15-2016 |  1 |  2
-(1 row)
+INSERT INTO gtest_parent (f1, f2) VALUES ('2016-07-15', 2);
+INSERT INTO gtest_parent (f1, f2) VALUES ('2016-08-15', 3);
+SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
+   tableoid   |     f1     | f2 | f3 
+--------------+------------+----+----
+ gtest_child  | 07-15-2016 |  1 |  2
+ gtest_child  | 07-15-2016 |  2 |  4
+ gtest_child2 | 08-15-2016 |  3 | 66
+(3 rows)
 
-SELECT * FROM gtest_child;
-     f1     | f2 | f3 
-------------+----+----
- 07-15-2016 |  1 |  2
-(1 row)
+UPDATE gtest_parent SET f1 = f1 + 60 WHERE f2 = 1;
+SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
+   tableoid   |     f1     | f2 | f3 
+--------------+------------+----+----
+ gtest_child  | 07-15-2016 |  2 |  4
+ gtest_child2 | 08-15-2016 |  3 | 66
+ gtest_child3 | 09-13-2016 |  1 | 33
+(3 rows)
 
-UPDATE gtest_parent SET f1 = f1 + 60;
-SELECT * FROM gtest_parent;
-     f1     | f2 | f3 
-------------+----+----
- 09-13-2016 |  1 | 33
-(1 row)
+-- alter only parent's and one child's generation expression
+ALTER TABLE ONLY gtest_parent ALTER COLUMN f3 SET EXPRESSION AS (f2 * 4);
+ALTER TABLE gtest_child ALTER COLUMN f3 SET EXPRESSION AS (f2 * 10);
+\d gtest_parent
+                   Partitioned table "public.gtest_parent"
+ Column |  Type  | Collation | Nullable |               Default               
+--------+--------+-----------+----------+-------------------------------------
+ f1     | date   |           | not null | 
+ f2     | bigint |           |          | 
+ f3     | bigint |           |          | generated always as (f2 * 4) stored
+Partition key: RANGE (f1)
+Number of partitions: 3 (Use \d+ to list them.)
 
-SELECT * FROM gtest_child3;
-     f1     | f2 | f3 
-------------+----+----
- 09-13-2016 |  1 | 33
-(1 row)
+\d gtest_child
+                          Table "public.gtest_child"
+ Column |  Type  | Collation | Nullable |               Default                
+--------+--------+-----------+----------+--------------------------------------
+ f1     | date   |           | not null | 
+ f2     | bigint |           |          | 
+ f3     | bigint |           |          | generated always as (f2 * 10) stored
+Partition of: gtest_parent FOR VALUES FROM ('07-01-2016') TO ('08-01-2016')
+
+\d gtest_child2
+                          Table "public.gtest_child2"
+ Column |  Type  | Collation | Nullable |               Default                
+--------+--------+-----------+----------+--------------------------------------
+ f1     | date   |           | not null | 
+ f2     | bigint |           |          | 
+ f3     | bigint |           |          | generated always as (f2 * 22) stored
+Partition of: gtest_parent FOR VALUES FROM ('08-01-2016') TO ('09-01-2016')
+
+\d gtest_child3
+                          Table "public.gtest_child3"
+ Column |  Type  | Collation | Nullable |               Default                
+--------+--------+-----------+----------+--------------------------------------
+ f1     | date   |           | not null | 
+ f2     | bigint |           |          | 
+ f3     | bigint |           |          | generated always as (f2 * 33) stored
+Partition of: gtest_parent FOR VALUES FROM ('09-01-2016') TO ('10-01-2016')
+
+SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
+   tableoid   |     f1     | f2 | f3 
+--------------+------------+----+----
+ gtest_child  | 07-15-2016 |  2 | 20
+ gtest_child2 | 08-15-2016 |  3 | 66
+ gtest_child3 | 09-13-2016 |  1 | 33
+(3 rows)
+
+-- alter generation expression of parent and all its children altogether
+ALTER TABLE gtest_parent ALTER COLUMN f3 SET EXPRESSION AS (f2 * 2);
+\d gtest_parent
+                   Partitioned table "public.gtest_parent"
+ Column |  Type  | Collation | Nullable |               Default               
+--------+--------+-----------+----------+-------------------------------------
+ f1     | date   |           | not null | 
+ f2     | bigint |           |          | 
+ f3     | bigint |           |          | generated always as (f2 * 2) stored
+Partition key: RANGE (f1)
+Number of partitions: 3 (Use \d+ to list them.)
+
+\d gtest_child
+                          Table "public.gtest_child"
+ Column |  Type  | Collation | Nullable |               Default               
+--------+--------+-----------+----------+-------------------------------------
+ f1     | date   |           | not null | 
+ f2     | bigint |           |          | 
+ f3     | bigint |           |          | generated always as (f2 * 2) stored
+Partition of: gtest_parent FOR VALUES FROM ('07-01-2016') TO ('08-01-2016')
+
+\d gtest_child2
+                         Table "public.gtest_child2"
+ Column |  Type  | Collation | Nullable |               Default               
+--------+--------+-----------+----------+-------------------------------------
+ f1     | date   |           | not null | 
+ f2     | bigint |           |          | 
+ f3     | bigint |           |          | generated always as (f2 * 2) stored
+Partition of: gtest_parent FOR VALUES FROM ('08-01-2016') TO ('09-01-2016')
+
+\d gtest_child3
+                         Table "public.gtest_child3"
+ Column |  Type  | Collation | Nullable |               Default               
+--------+--------+-----------+----------+-------------------------------------
+ f1     | date   |           | not null | 
+ f2     | bigint |           |          | 
+ f3     | bigint |           |          | generated always as (f2 * 2) stored
+Partition of: gtest_parent FOR VALUES FROM ('09-01-2016') TO ('10-01-2016')
+
+SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
+   tableoid   |     f1     | f2 | f3 
+--------------+------------+----+----
+ gtest_child  | 07-15-2016 |  2 |  4
+ gtest_child2 | 08-15-2016 |  3 |  6
+ gtest_child3 | 09-13-2016 |  1 |  2
+(3 rows)
 
 -- we leave these tables around for purposes of testing dump/reload/upgrade
 -- generated columns in partition key (not allowed)
@@ -825,7 +962,7 @@ DETAIL:  Column "f3" is a generated column.
 -- ALTER TABLE ... ADD COLUMN
 CREATE TABLE gtest25 (a int PRIMARY KEY);
 INSERT INTO gtest25 VALUES (3), (4);
-ALTER TABLE gtest25 ADD COLUMN b int GENERATED ALWAYS AS (a * 3) STORED;
+ALTER TABLE gtest25 ADD COLUMN b int GENERATED ALWAYS AS (a * 2) STORED, ALTER COLUMN b SET EXPRESSION AS (a * 3);
 SELECT * FROM gtest25 ORDER BY a;
  a | b  
 ---+----
@@ -935,18 +1072,50 @@ CREATE TABLE gtest29 (
     b int GENERATED ALWAYS AS (a * 2) STORED
 );
 INSERT INTO gtest29 (a) VALUES (3), (4);
+SELECT * FROM gtest29;
+ a | b 
+---+---
+ 3 | 6
+ 4 | 8
+(2 rows)
+
+\d gtest29
+                            Table "public.gtest29"
+ Column |  Type   | Collation | Nullable |              Default               
+--------+---------+-----------+----------+------------------------------------
+ a      | integer |           |          | 
+ b      | integer |           |          | generated always as (a * 2) stored
+
+ALTER TABLE gtest29 ALTER COLUMN a SET EXPRESSION AS (a * 3);  -- error
+ERROR:  column "a" of relation "gtest29" is not a generated column
 ALTER TABLE gtest29 ALTER COLUMN a DROP EXPRESSION;  -- error
 ERROR:  column "a" of relation "gtest29" is not a stored generated column
 ALTER TABLE gtest29 ALTER COLUMN a DROP EXPRESSION IF EXISTS;  -- notice
 NOTICE:  column "a" of relation "gtest29" is not a stored generated column, skipping
+-- Change the expression
+ALTER TABLE gtest29 ALTER COLUMN b SET EXPRESSION AS (a * 3);
+SELECT * FROM gtest29;
+ a | b  
+---+----
+ 3 |  9
+ 4 | 12
+(2 rows)
+
+\d gtest29
+                            Table "public.gtest29"
+ Column |  Type   | Collation | Nullable |              Default               
+--------+---------+-----------+----------+------------------------------------
+ a      | integer |           |          | 
+ b      | integer |           |          | generated always as (a * 3) stored
+
 ALTER TABLE gtest29 ALTER COLUMN b DROP EXPRESSION;
 INSERT INTO gtest29 (a) VALUES (5);
 INSERT INTO gtest29 (a, b) VALUES (6, 66);
 SELECT * FROM gtest29;
  a | b  
 ---+----
- 3 |  6
- 4 |  8
+ 3 |  9
+ 4 | 12
  5 |   
  6 | 66
 (4 rows)

@@ -2417,6 +2417,16 @@ alter_table_cmd:
 					n->name = $3;
 					$$ = (Node *) n;
 				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET EXPRESSION AS <expr> */
+			| ALTER opt_column ColId SET EXPRESSION AS '(' a_expr ')'
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+
+					n->subtype = AT_SetExpression;
+					n->name = $3;
+					n->def = $8;
+					$$ = (Node *) n;
+				}
 			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP EXPRESSION */
 			| ALTER opt_column ColId DROP EXPRESSION
 				{

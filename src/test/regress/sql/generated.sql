@@ -293,6 +293,9 @@ CREATE TABLE gtest20 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORE
 INSERT INTO gtest20 (a) VALUES (10);  -- ok
 INSERT INTO gtest20 (a) VALUES (30);  -- violates constraint
 
+ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 100);  -- violates constraint
+ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 3);  -- ok
+
 CREATE TABLE gtest20a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
 INSERT INTO gtest20a (a) VALUES (10);
 INSERT INTO gtest20a (a) VALUES (30);
@@ -341,6 +344,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b * 3 = 6;
 SELECT * FROM gtest22c WHERE b * 3 = 6;
 EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
 SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
+
+ALTER TABLE gtest22c ALTER COLUMN b SET EXPRESSION AS (a * 4);
+ANALYZE gtest22c;
+EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b = 8;
+SELECT * FROM gtest22c WHERE b = 8;
+EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b * 3 = 12;
+SELECT * FROM gtest22c WHERE b * 3 = 12;
+EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
+SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
 RESET enable_seqscan;
 RESET enable_bitmapscan;
 
@@ -356,6 +368,8 @@ CREATE TABLE gtest23b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STOR
 
 INSERT INTO gtest23b VALUES (1);  -- ok
 INSERT INTO gtest23b VALUES (5);  -- error
+ALTER TABLE gtest23b ALTER COLUMN b SET EXPRESSION AS (a * 5); -- error
+ALTER TABLE gtest23b ALTER COLUMN b SET EXPRESSION AS (a * 1); -- ok
 
 DROP TABLE gtest23b;
 DROP TABLE gtest23a;
@@ -414,11 +428,28 @@ ALTER TABLE gtest_parent ATTACH PARTITION gtest_child3 FOR VALUES FROM ('2016-09
 \d gtest_child2
 \d gtest_child3
 INSERT INTO gtest_parent (f1, f2) VALUES ('2016-07-15', 1);
-SELECT * FROM gtest_parent;
-SELECT * FROM gtest_child;
-UPDATE gtest_parent SET f1 = f1 + 60;
-SELECT * FROM gtest_parent;
-SELECT * FROM gtest_child3;
+INSERT INTO gtest_parent (f1, f2) VALUES ('2016-07-15', 2);
+INSERT INTO gtest_parent (f1, f2) VALUES ('2016-08-15', 3);
+SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
+UPDATE gtest_parent SET f1 = f1 + 60 WHERE f2 = 1;
+SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
+
+-- alter only parent's and one child's generation expression
+ALTER TABLE ONLY gtest_parent ALTER COLUMN f3 SET EXPRESSION AS (f2 * 4);
+ALTER TABLE gtest_child ALTER COLUMN f3 SET EXPRESSION AS (f2 * 10);
+\d gtest_parent
+\d gtest_child
+\d gtest_child2
+\d gtest_child3
+SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
+
+-- alter generation expression of parent and all its children altogether
+ALTER TABLE gtest_parent ALTER COLUMN f3 SET EXPRESSION AS (f2 * 2);
+\d gtest_parent
+\d gtest_child
+\d gtest_child2
+\d gtest_child3
+SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
 -- we leave these tables around for purposes of testing dump/reload/upgrade
 
 -- generated columns in partition key (not allowed)
@@ -428,7 +459,7 @@ CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED AL
 -- ALTER TABLE ... ADD COLUMN
 CREATE TABLE gtest25 (a int PRIMARY KEY);
 INSERT INTO gtest25 VALUES (3), (4);
-ALTER TABLE gtest25 ADD COLUMN b int GENERATED ALWAYS AS (a * 3) STORED;
+ALTER TABLE gtest25 ADD COLUMN b int GENERATED ALWAYS AS (a * 2) STORED, ALTER COLUMN b SET EXPRESSION AS (a * 3);
 SELECT * FROM gtest25 ORDER BY a;
 ALTER TABLE gtest25 ADD COLUMN x int GENERATED ALWAYS AS (b * 4) STORED;  -- error
 ALTER TABLE gtest25 ADD COLUMN x int GENERATED ALWAYS AS (z * 4) STORED;  -- error
@@ -473,8 +504,17 @@ CREATE TABLE gtest29 (
     b int GENERATED ALWAYS AS (a * 2) STORED
 );
 INSERT INTO gtest29 (a) VALUES (3), (4);
+SELECT * FROM gtest29;
+\d gtest29
+ALTER TABLE gtest29 ALTER COLUMN a SET EXPRESSION AS (a * 3);  -- error
 ALTER TABLE gtest29 ALTER COLUMN a DROP EXPRESSION;  -- error
 ALTER TABLE gtest29 ALTER COLUMN a DROP EXPRESSION IF EXISTS;  -- notice
+
+-- Change the expression
+ALTER TABLE gtest29 ALTER COLUMN b SET EXPRESSION AS (a * 3);
+SELECT * FROM gtest29;
+\d gtest29
+
 ALTER TABLE gtest29 ALTER COLUMN b DROP EXPRESSION;
 INSERT INTO gtest29 (a) VALUES (5);
 INSERT INTO gtest29 (a, b) VALUES (6, 66);

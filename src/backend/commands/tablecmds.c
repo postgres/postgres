@@ -147,10 +147,11 @@ typedef enum AlterTablePass
 	AT_PASS_UNSET = -1,			/* UNSET will cause ERROR */
 	AT_PASS_DROP,				/* DROP (all flavors) */
 	AT_PASS_ALTER_TYPE,			/* ALTER COLUMN TYPE */
+	AT_PASS_ADD_COL,			/* ADD COLUMN */
+	AT_PASS_SET_EXPRESSION,		/* ALTER SET EXPRESSION */
 	AT_PASS_OLD_INDEX,			/* re-add existing indexes */
 	AT_PASS_OLD_CONSTR,			/* re-add existing constraints */
 	/* We could support a RENAME COLUMN pass here, but not currently used */
-	AT_PASS_ADD_COL,			/* ADD COLUMN */
 	AT_PASS_ADD_CONSTR,			/* ADD constraints (initial examination) */
 	AT_PASS_COL_ATTRS,			/* set column attributes, eg NOT NULL */
 	AT_PASS_ADD_INDEXCONSTR,	/* ADD index-based constraints */
@@ -459,6 +460,8 @@ static ObjectAddress ATExecAddIdentity(Relation rel, const char *colName,
 static ObjectAddress ATExecSetIdentity(Relation rel, const char *colName,
 									   Node *def, LOCKMODE lockmode);
 static ObjectAddress ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
+static ObjectAddress ATExecSetExpression(AlteredTableInfo *tab, Relation rel, const char *colName,
+										 Node *newExpr, LOCKMODE lockmode);
 static void ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recursing, LOCKMODE lockmode);
 static ObjectAddress ATExecDropExpression(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
 static ObjectAddress ATExecSetStatistics(Relation rel, const char *colName, int16 colNum,
@@ -561,7 +564,7 @@ static void ATPrepAlterColumnType(List **wqueue,
 static bool ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno);
 static ObjectAddress ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 										   AlterTableCmd *cmd, LOCKMODE lockmode);
-static void RememberAllDependentForRebuilding(AlteredTableInfo *tab,
+static void RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 											  Relation rel, AttrNumber attnum, const char *colName);
 static void RememberConstraintForRebuilding(Oid conoid, AlteredTableInfo *tab);
 static void RememberIndexForRebuilding(Oid indoid, AlteredTableInfo *tab);
@@ -4551,6 +4554,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_AddIdentity:
 			case AT_DropIdentity:
 			case AT_SetIdentity:
+			case AT_SetExpression:
 			case AT_DropExpression:
 			case AT_SetCompression:
 				cmd_lockmode = AccessExclusiveLock;
@@ -4851,6 +4855,11 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* Need command-specific recursion decision */
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 			pass = AT_PASS_COL_ATTRS;
+			break;
+		case AT_SetExpression:	/* ALTER COLUMN SET EXPRESSION */
+			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
+			pass = AT_PASS_SET_EXPRESSION;
 			break;
 		case AT_DropExpression: /* ALTER COLUMN DROP EXPRESSION */
 			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_FOREIGN_TABLE);
@@ -5153,11 +5162,11 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 						  lockmode, pass, context);
 
 			/*
-			 * After the ALTER TYPE pass, do cleanup work (this is not done in
-			 * ATExecAlterColumnType since it should be done only once if
-			 * multiple columns of a table are altered).
+			 * After the ALTER TYPE or SET EXPRESSION pass, do cleanup work
+			 * (this is not done in ATExecAlterColumnType since it should be
+			 * done only once if multiple columns of a table are altered).
 			 */
-			if (pass == AT_PASS_ALTER_TYPE)
+			if (pass == AT_PASS_ALTER_TYPE || pass == AT_PASS_SET_EXPRESSION)
 				ATPostAlterTypeCleanup(wqueue, tab, lockmode);
 
 			if (tab->rel)
@@ -5235,6 +5244,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 			break;
 		case AT_SetAttNotNull:	/* set pg_attribute.attnotnull */
 			address = ATExecSetAttNotNull(wqueue, rel, cmd->name, lockmode);
+			break;
+		case AT_SetExpression:
+			address = ATExecSetExpression(tab, rel, cmd->name, cmd->def, lockmode);
 			break;
 		case AT_DropExpression:
 			address = ATExecDropExpression(rel, cmd->name, cmd->missing_ok, lockmode);
@@ -6363,6 +6375,8 @@ alter_table_type_to_string(AlterTableType cmdtype)
 			return "ALTER COLUMN ... SET NOT NULL";
 		case AT_SetAttNotNull:
 			return NULL;		/* not real grammar */
+		case AT_SetExpression:
+			return "ALTER COLUMN ... SET EXPRESSION";
 		case AT_DropExpression:
 			return "ALTER COLUMN ... DROP EXPRESSION";
 		case AT_SetStatistics:
@@ -8013,10 +8027,11 @@ ATExecColumnDefault(Relation rel, const char *colName,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("column \"%s\" of relation \"%s\" is a generated column",
 						colName, RelationGetRelationName(rel)),
-				 newDefault || TupleDescAttr(tupdesc, attnum - 1)->attgenerated != ATTRIBUTE_GENERATED_STORED ? 0 :
+				 newDefault ?
 		/* translator: %s is an SQL ALTER command */
-				 errhint("Use %s instead.",
-						 "ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION")));
+				 errhint("Use %s instead.", "ALTER TABLE ... ALTER COLUMN ... SET EXPRESSION") :
+				 (TupleDescAttr(tupdesc, attnum - 1)->attgenerated == ATTRIBUTE_GENERATED_STORED ?
+				  errhint("Use %s instead.", "ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION") : 0)));
 
 	/*
 	 * Remove any old default for the column.  We use RESTRICT here for
@@ -8310,6 +8325,121 @@ ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE 
 	seqaddress.objectSubId = 0;
 	performDeletion(&seqaddress, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
 
+	return address;
+}
+
+/*
+ * ALTER TABLE ALTER COLUMN SET EXPRESSION
+ *
+ * Return the address of the affected column.
+ */
+static ObjectAddress
+ATExecSetExpression(AlteredTableInfo *tab, Relation rel, const char *colName,
+					Node *newExpr, LOCKMODE lockmode)
+{
+	HeapTuple	tuple;
+	Form_pg_attribute attTup;
+	AttrNumber	attnum;
+	Oid			attrdefoid;
+	ObjectAddress address;
+	Expr	   *defval;
+	NewColumnValue *newval;
+	RawColumnDefault *rawEnt;
+
+	tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
+
+	attTup = (Form_pg_attribute) GETSTRUCT(tuple);
+	attnum = attTup->attnum;
+
+	if (attnum <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter system column \"%s\"",
+						colName)));
+
+	if (attTup->attgenerated != ATTRIBUTE_GENERATED_STORED)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("column \"%s\" of relation \"%s\" is not a generated column",
+						colName, RelationGetRelationName(rel))));
+	ReleaseSysCache(tuple);
+
+	/*
+	 * Clear all the missing values if we're rewriting the table, since this
+	 * renders them pointless.
+	 */
+	RelationClearMissing(rel);
+
+	/* make sure we don't conflict with later attribute modifications */
+	CommandCounterIncrement();
+
+	/*
+	 * Find everything that depends on the column (constraints, indexes, etc),
+	 * and record enough information to let us recreate the objects after
+	 * rewrite.
+	 */
+	RememberAllDependentForRebuilding(tab, AT_SetExpression, rel, attnum, colName);
+
+	/*
+	 * Drop the dependency records of the GENERATED expression, in particular
+	 * its INTERNAL dependency on the column, which would otherwise cause
+	 * dependency.c to refuse to perform the deletion.
+	 */
+	attrdefoid = GetAttrDefaultOid(RelationGetRelid(rel), attnum);
+	if (!OidIsValid(attrdefoid))
+		elog(ERROR, "could not find attrdef tuple for relation %u attnum %d",
+			 RelationGetRelid(rel), attnum);
+	(void) deleteDependencyRecordsFor(AttrDefaultRelationId, attrdefoid, false);
+
+	/* Make above changes visible */
+	CommandCounterIncrement();
+
+	/*
+	 * Get rid of the GENERATED expression itself.  We use RESTRICT here for
+	 * safety, but at present we do not expect anything to depend on the
+	 * expression.
+	 */
+	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT,
+					  false, false);
+
+	/* Prepare to store the new expression, in the catalogs */
+	rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+	rawEnt->attnum = attnum;
+	rawEnt->raw_default = newExpr;
+	rawEnt->missingMode = false;
+	rawEnt->generated = ATTRIBUTE_GENERATED_STORED;
+
+	/* Store the generated expression */
+	AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
+							  false, true, false, NULL);
+
+	/* Make above new expression visible */
+	CommandCounterIncrement();
+
+	/* Prepare for table rewrite */
+	defval = (Expr *) build_column_default(rel, attnum);
+
+	newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
+	newval->attnum = attnum;
+	newval->expr = expression_planner(defval);
+	newval->is_generated = true;
+
+	tab->newvals = lappend(tab->newvals, newval);
+	tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
+
+	/* Drop any pg_statistic entry for the column */
+	RemoveStatistics(RelationGetRelid(rel), attnum);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), attnum);
+
+	ObjectAddressSubSet(address, RelationRelationId,
+						RelationGetRelid(rel), attnum);
 	return address;
 }
 
@@ -13300,7 +13430,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 * the info before executing ALTER TYPE, though, else the deparser will
 	 * get confused.
 	 */
-	RememberAllDependentForRebuilding(tab, rel, attnum, colName);
+	RememberAllDependentForRebuilding(tab, AT_AlterColumnType, rel, attnum, colName);
 
 	/*
 	 * Now scan for dependencies of this column on other things.  The only
@@ -13497,17 +13627,20 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 }
 
 /*
- * Subroutine for ATExecAlterColumnType: Find everything that depends on the
- * column (constraints, indexes, etc), and record enough information to let us
- * recreate the objects.
+ * Subroutine for ATExecAlterColumnType and ATExecSetExpression: Find everything
+ * that depends on the column (constraints, indexes, etc), and record enough
+ * information to let us recreate the objects.
  */
 static void
-RememberAllDependentForRebuilding(AlteredTableInfo *tab, Relation rel, AttrNumber attnum, const char *colName)
+RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
+								  Relation rel, AttrNumber attnum, const char *colName)
 {
 	Relation	depRel;
 	ScanKeyData key[3];
 	SysScanDesc scan;
 	HeapTuple	depTup;
+
+	Assert(subtype == AT_AlterColumnType || subtype == AT_SetExpression);
 
 	depRel = table_open(DependRelationId, RowExclusiveLock);
 
@@ -13572,12 +13705,13 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, Relation rel, AttrNumbe
 
 			case OCLASS_REWRITE:
 				/* XXX someday see if we can cope with revising views */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot alter type of a column used by a view or rule"),
-						 errdetail("%s depends on column \"%s\"",
-								   getObjectDescription(&foundObject, false),
-								   colName)));
+				if (subtype == AT_AlterColumnType)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot alter type of a column used by a view or rule"),
+							 errdetail("%s depends on column \"%s\"",
+									   getObjectDescription(&foundObject, false),
+									   colName)));
 				break;
 
 			case OCLASS_TRIGGER:
@@ -13591,12 +13725,13 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, Relation rel, AttrNumbe
 				 * significant amount of new code.  Since we can't easily tell
 				 * which case applies, we punt for both.  FIXME someday.
 				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot alter type of a column used in a trigger definition"),
-						 errdetail("%s depends on column \"%s\"",
-								   getObjectDescription(&foundObject, false),
-								   colName)));
+				if (subtype == AT_AlterColumnType)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot alter type of a column used in a trigger definition"),
+							 errdetail("%s depends on column \"%s\"",
+									   getObjectDescription(&foundObject, false),
+									   colName)));
 				break;
 
 			case OCLASS_POLICY:
@@ -13609,12 +13744,13 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, Relation rel, AttrNumbe
 				 * easy enough to remove and recreate the policy; still, FIXME
 				 * someday.
 				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot alter type of a column used in a policy definition"),
-						 errdetail("%s depends on column \"%s\"",
-								   getObjectDescription(&foundObject, false),
-								   colName)));
+				if (subtype == AT_AlterColumnType)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot alter type of a column used in a policy definition"),
+							 errdetail("%s depends on column \"%s\"",
+									   getObjectDescription(&foundObject, false),
+									   colName)));
 				break;
 
 			case OCLASS_DEFAULT:
@@ -13634,19 +13770,20 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, Relation rel, AttrNumbe
 						/*
 						 * This must be a reference from the expression of a
 						 * generated column elsewhere in the same table.
-						 * Changing the type of a column that is used by a
-						 * generated column is not allowed by SQL standard, so
-						 * just punt for now.  It might be doable with some
-						 * thinking and effort.
+						 * Changing the type/generated expression of a column
+						 * that is used by a generated column is not allowed
+						 * by SQL standard, so just punt for now.  It might be
+						 * doable with some thinking and effort.
 						 */
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot alter type of a column used by a generated column"),
-								 errdetail("Column \"%s\" is used by generated column \"%s\".",
-										   colName,
-										   get_attname(col.objectId,
-													   col.objectSubId,
-													   false))));
+						if (subtype == AT_AlterColumnType)
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("cannot alter type of a column used by a generated column"),
+									 errdetail("Column \"%s\" is used by generated column \"%s\".",
+											   colName,
+											   get_attname(col.objectId,
+														   col.objectSubId,
+														   false))));
 					}
 					break;
 				}
@@ -13863,11 +14000,11 @@ RememberStatisticsForRebuilding(Oid stxoid, AlteredTableInfo *tab)
 }
 
 /*
- * Cleanup after we've finished all the ALTER TYPE operations for a
- * particular relation.  We have to drop and recreate all the indexes
- * and constraints that depend on the altered columns.  We do the
- * actual dropping here, but re-creation is managed by adding work
- * queue entries to do those steps later.
+ * Cleanup after we've finished all the ALTER TYPE or SET EXPRESSION
+ * operations for a particular relation.  We have to drop and recreate all the
+ * indexes and constraints that depend on the altered columns.  We do the
+ * actual dropping here, but re-creation is managed by adding work queue
+ * entries to do those steps later.
  */
 static void
 ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
