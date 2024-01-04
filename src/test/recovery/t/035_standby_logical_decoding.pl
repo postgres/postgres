@@ -168,27 +168,25 @@ sub change_hot_standby_feedback_and_wait_for_xmins
 	}
 }
 
-# Check conflicting status in pg_replication_slots.
-sub check_slots_conflicting_status
+# Check conflict_reason in pg_replication_slots.
+sub check_slots_conflict_reason
 {
-	my ($conflicting) = @_;
+	my ($slot_prefix, $reason) = @_;
 
-	if ($conflicting)
-	{
-		$res = $node_standby->safe_psql(
-			'postgres', qq(
-				 select bool_and(conflicting) from pg_replication_slots;));
+	my $active_slot = $slot_prefix . 'activeslot';
+	my $inactive_slot = $slot_prefix . 'inactiveslot';
 
-		is($res, 't', "Logical slots are reported as conflicting");
-	}
-	else
-	{
-		$res = $node_standby->safe_psql(
-			'postgres', qq(
-				select bool_or(conflicting) from pg_replication_slots;));
+	$res = $node_standby->safe_psql(
+		'postgres', qq(
+			 select conflict_reason from pg_replication_slots where slot_name = '$active_slot';));
 
-		is($res, 'f', "Logical slots are reported as non conflicting");
-	}
+	is($res, "$reason", "$active_slot conflict_reason is $reason");
+
+	$res = $node_standby->safe_psql(
+		'postgres', qq(
+			 select conflict_reason from pg_replication_slots where slot_name = '$inactive_slot';));
+
+	is($res, "$reason", "$inactive_slot conflict_reason is $reason");
 }
 
 # Drop the slots, re-create them, change hot_standby_feedback,
@@ -260,13 +258,13 @@ $node_primary->safe_psql('testdb',
 	qq[SELECT * FROM pg_create_physical_replication_slot('$primary_slotname');]
 );
 
-# Check conflicting is NULL for physical slot
+# Check conflict_reason is NULL for physical slot
 $res = $node_primary->safe_psql(
 	'postgres', qq[
-		 SELECT conflicting is null FROM pg_replication_slots where slot_name = '$primary_slotname';]
+		 SELECT conflict_reason is null FROM pg_replication_slots where slot_name = '$primary_slotname';]
 );
 
-is($res, 't', "Physical slot reports conflicting as NULL");
+is($res, 't', "Physical slot reports conflict_reason as NULL");
 
 my $backup_name = 'b1';
 $node_primary->backup($backup_name);
@@ -483,8 +481,8 @@ $node_primary->wait_for_replay_catchup($node_standby);
 # Check invalidation in the logfile and in pg_stat_database_conflicts
 check_for_invalidation('vacuum_full_', 1, 'with vacuum FULL on pg_class');
 
-# Verify slots are reported as conflicting in pg_replication_slots
-check_slots_conflicting_status(1);
+# Verify conflict_reason is 'rows_removed' in pg_replication_slots
+check_slots_conflict_reason('vacuum_full_', 'rows_removed');
 
 $handle =
   make_slot_active($node_standby, 'vacuum_full_', 0, \$stdout, \$stderr);
@@ -502,8 +500,8 @@ change_hot_standby_feedback_and_wait_for_xmins(1, 1);
 ##################################################
 $node_standby->restart;
 
-# Verify slots are reported as conflicting in pg_replication_slots
-check_slots_conflicting_status(1);
+# Verify conflict_reason is retained across a restart.
+check_slots_conflict_reason('vacuum_full_', 'rows_removed');
 
 ##################################################
 # Verify that invalidated logical slots do not lead to retaining WAL.
@@ -511,7 +509,7 @@ check_slots_conflicting_status(1);
 
 # Get the restart_lsn from an invalidated slot
 my $restart_lsn = $node_standby->safe_psql('postgres',
-	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = 'vacuum_full_activeslot' and conflicting is true;"
+	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = 'vacuum_full_activeslot' and conflict_reason is not null;"
 );
 
 chomp($restart_lsn);
@@ -565,8 +563,8 @@ $node_primary->wait_for_replay_catchup($node_standby);
 # Check invalidation in the logfile and in pg_stat_database_conflicts
 check_for_invalidation('row_removal_', $logstart, 'with vacuum on pg_class');
 
-# Verify slots are reported as conflicting in pg_replication_slots
-check_slots_conflicting_status(1);
+# Verify conflict_reason is 'rows_removed' in pg_replication_slots
+check_slots_conflict_reason('row_removal_', 'rows_removed');
 
 $handle =
   make_slot_active($node_standby, 'row_removal_', 0, \$stdout, \$stderr);
@@ -604,8 +602,8 @@ $node_primary->wait_for_replay_catchup($node_standby);
 check_for_invalidation('shared_row_removal_', $logstart,
 	'with vacuum on pg_authid');
 
-# Verify slots are reported as conflicting in pg_replication_slots
-check_slots_conflicting_status(1);
+# Verify conflict_reason is 'rows_removed' in pg_replication_slots
+check_slots_conflict_reason('shared_row_removal_', 'rows_removed');
 
 $handle = make_slot_active($node_standby, 'shared_row_removal_', 0, \$stdout,
 	\$stderr);
@@ -657,7 +655,13 @@ ok( $node_standby->poll_query_until(
 ) or die "Timed out waiting confl_active_logicalslot to be updated";
 
 # Verify slots are reported as non conflicting in pg_replication_slots
-check_slots_conflicting_status(0);
+is( $node_standby->safe_psql(
+		'postgres',
+		q[select bool_or(conflicting) from
+		  (select conflict_reason is not NULL as conflicting
+		   from pg_replication_slots WHERE slot_type = 'logical')]),
+	'f',
+	'Logical slots are reported as non conflicting');
 
 # Turn hot_standby_feedback back on
 change_hot_standby_feedback_and_wait_for_xmins(1, 0);
@@ -693,8 +697,8 @@ $node_primary->wait_for_replay_catchup($node_standby);
 # Check invalidation in the logfile and in pg_stat_database_conflicts
 check_for_invalidation('pruning_', $logstart, 'with on-access pruning');
 
-# Verify slots are reported as conflicting in pg_replication_slots
-check_slots_conflicting_status(1);
+# Verify conflict_reason is 'rows_removed' in pg_replication_slots
+check_slots_conflict_reason('pruning_', 'rows_removed');
 
 $handle = make_slot_active($node_standby, 'pruning_', 0, \$stdout, \$stderr);
 
@@ -737,8 +741,8 @@ $node_primary->wait_for_replay_catchup($node_standby);
 # Check invalidation in the logfile and in pg_stat_database_conflicts
 check_for_invalidation('wal_level_', $logstart, 'due to wal_level');
 
-# Verify slots are reported as conflicting in pg_replication_slots
-check_slots_conflicting_status(1);
+# Verify conflict_reason is 'wal_level_insufficient' in pg_replication_slots
+check_slots_conflict_reason('wal_level_', 'wal_level_insufficient');
 
 $handle =
   make_slot_active($node_standby, 'wal_level_', 0, \$stdout, \$stderr);

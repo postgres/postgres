@@ -406,10 +406,24 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 			nulls[i++] = true;
 		else
 		{
-			if (slot_contents.data.invalidated != RS_INVAL_NONE)
-				values[i++] = BoolGetDatum(true);
-			else
-				values[i++] = BoolGetDatum(false);
+			switch (slot_contents.data.invalidated)
+			{
+				case RS_INVAL_NONE:
+					nulls[i++] = true;
+					break;
+
+				case RS_INVAL_WAL_REMOVED:
+					values[i++] = CStringGetTextDatum("wal_removed");
+					break;
+
+				case RS_INVAL_HORIZON:
+					values[i++] = CStringGetTextDatum("rows_removed");
+					break;
+
+				case RS_INVAL_WAL_LEVEL:
+					values[i++] = CStringGetTextDatum("wal_level_insufficient");
+					break;
+			}
 		}
 
 		Assert(i == PG_GET_REPLICATION_SLOTS_COLS);

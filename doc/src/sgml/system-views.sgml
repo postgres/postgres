@@ -2525,11 +2525,34 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>conflicting</structfield> <type>bool</type>
+       <structfield>conflict_reason</structfield> <type>text</type>
       </para>
       <para>
-       True if this logical slot conflicted with recovery (and so is now
-       invalidated). Always NULL for physical slots.
+       The reason for the logical slot's conflict with recovery. It is always
+       NULL for physical slots, as well as for logical slots which are not
+       invalidated. The non-NULL values indicate that the slot is marked
+       as invalidated. Possible values are:
+       <itemizedlist spacing="compact">
+        <listitem>
+         <para>
+          <literal>wal_removed</literal> means that the required WAL has been
+          removed.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>rows_removed</literal> means that the required rows have
+          been removed.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>wal_level_insufficient</literal> means that the
+          primary doesn't have a <xref linkend="guc-wal-level"/> sufficient to
+          perform logical decoding.
+         </para>
+        </listitem>
+       </itemizedlist>
       </para></entry>
      </row>
     </tbody>
