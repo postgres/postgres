@@ -93,3 +93,82 @@ LINE 1: a.r[1] := 2
         ^
 QUERY:  a.r[1] := 2
 CONTEXT:  PL/pgSQL function inline_code_block line 2 at assignment
+--
+-- test of %type[] and %rowtype[] syntax
+--
+-- check supported syntax
+do $$
+declare
+  v int;
+  v1 v%type;
+  v2 v%type[];
+  v3 v%type[1];
+  v4 v%type[][];
+  v5 v%type[1][3];
+  v6 v%type array;
+  v7 v%type array[];
+  v8 v%type array[1];
+  v9 v%type array[1][1];
+  v10 pg_catalog.pg_class%rowtype[];
+begin
+  raise notice '%', pg_typeof(v1);
+  raise notice '%', pg_typeof(v2);
+  raise notice '%', pg_typeof(v3);
+  raise notice '%', pg_typeof(v4);
+  raise notice '%', pg_typeof(v5);
+  raise notice '%', pg_typeof(v6);
+  raise notice '%', pg_typeof(v7);
+  raise notice '%', pg_typeof(v8);
+  raise notice '%', pg_typeof(v9);
+  raise notice '%', pg_typeof(v10);
+end;
+$$;
+NOTICE:  integer
+NOTICE:  integer[]
+NOTICE:  integer[]
+NOTICE:  integer[]
+NOTICE:  integer[]
+NOTICE:  integer[]
+NOTICE:  integer[]
+NOTICE:  integer[]
+NOTICE:  integer[]
+NOTICE:  pg_class[]
+-- some types don't support arrays
+do $$
+declare
+  v pg_node_tree;
+  v1 v%type[];
+begin
+end;
+$$;
+ERROR:  could not find array type for data type pg_node_tree
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 4
+-- check functionality
+do $$
+declare
+  v1 int;
+  v2 varchar;
+  a1 v1%type[];
+  a2 v2%type[];
+begin
+  v1 := 10;
+  v2 := 'Hi';
+  a1 := array[v1,v1];
+  a2 := array[v2,v2];
+  raise notice '% %', a1, a2;
+end;
+$$;
+NOTICE:  {10,10} {Hi,Hi}
+create table array_test_table(a int, b varchar);
+insert into array_test_table values(1, 'first'), (2, 'second');
+do $$
+declare tg array_test_table%rowtype[];
+begin
+  tg := array(select array_test_table from array_test_table);
+  raise notice '%', tg;
+  tg := array(select row(a,b) from array_test_table);
+  raise notice '%', tg;
+end;
+$$;
+NOTICE:  {"(1,first)","(2,second)"}
+NOTICE:  {"(1,first)","(2,second)"}

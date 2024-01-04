@@ -675,12 +675,14 @@ DECLARE
    <title>Copying Types</title>
 
 <synopsis>
-<replaceable>variable</replaceable>%TYPE
+<replaceable>name</replaceable> <replaceable>table</replaceable>.<replaceable>column</replaceable>%TYPE
+<replaceable>name</replaceable> <replaceable>variable</replaceable>%TYPE
 </synopsis>
 
    <para>
-    <literal>%TYPE</literal> provides the data type of a variable or
-    table column. You can use this to declare variables that will hold
+    <literal>%TYPE</literal> provides the data type of a table column
+    or a previously-declared <application>PL/pgSQL</application>
+    variable. You can use this to declare variables that will hold
     database values. For example, let's say you have a column named
     <literal>user_id</literal> in your <literal>users</literal>
     table. To declare a variable with the same data type as
@@ -688,6 +690,21 @@ DECLARE
 <programlisting>
 user_id users.user_id%TYPE;
 </programlisting>
+   </para>
+
+   <para>
+    It is also possible to write array decoration
+    after <literal>%TYPE</literal>, thereby creating a variable that holds
+    an array of the referenced type:
+<programlisting>
+user_ids users.user_id%TYPE[];
+user_ids users.user_id%TYPE ARRAY[4];  -- equivalent to the above
+</programlisting>
+    Just as when declaring table columns that are arrays, it doesn't
+    matter whether you write multiple bracket pairs or specific array
+    dimensions: <productname>PostgreSQL</productname> treats all arrays of
+    a given element type as the same type, regardless of dimensionality.
+    (See <xref linkend="arrays-declaration"/>.)
    </para>
 
    <para>
@@ -737,6 +754,12 @@ user_id users.user_id%TYPE;
     it actually does not matter in <productname>PostgreSQL</productname> whether you
     write <literal>%ROWTYPE</literal> or not.  But the form with
     <literal>%ROWTYPE</literal> is more portable.)
+   </para>
+
+   <para>
+    As with <literal>%TYPE</literal>, <literal>%ROWTYPE</literal> can be
+    followed by array decoration to declare a variable that holds an array
+    of the referenced composite type.
    </para>
 
    <para>

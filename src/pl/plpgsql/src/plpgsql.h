@@ -1249,6 +1249,7 @@ extern PLpgSQL_type *plpgsql_parse_cwordrowtype(List *idents);
 extern PGDLLEXPORT PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod,
 														Oid collation,
 														TypeName *origtypname);
+extern PLpgSQL_type *plpgsql_build_datatype_arrayof(PLpgSQL_type *dtype);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 												PLpgSQL_type *dtype,
 												bool add2namespace);
