@@ -2128,10 +2128,11 @@ scalararraysel(PlannerInfo *root,
 /*
  * Estimate number of elements in the array yielded by an expression.
  *
- * It's important that this agree with scalararraysel.
+ * Note: the result is integral, but we use "double" to avoid overflow
+ * concerns.  Most callers will use it in double-type expressions anyway.
  */
-int
-estimate_array_length(Node *arrayexpr)
+double
+estimate_array_length(PlannerInfo *root, Node *arrayexpr)
 {
 	/* look through any binary-compatible relabeling of arrayexpr */
 	arrayexpr = strip_array_coercion(arrayexpr);
@@ -2152,11 +2153,39 @@ estimate_array_length(Node *arrayexpr)
 	{
 		return list_length(((ArrayExpr *) arrayexpr)->elements);
 	}
-	else
+	else if (arrayexpr)
 	{
-		/* default guess --- see also scalararraysel */
-		return 10;
+		/* See if we can find any statistics about it */
+		VariableStatData vardata;
+		AttStatsSlot sslot;
+		double		nelem = 0;
+
+		examine_variable(root, arrayexpr, 0, &vardata);
+		if (HeapTupleIsValid(vardata.statsTuple))
+		{
+			/*
+			 * Found stats, so use the average element count, which is stored
+			 * in the last stanumbers element of the DECHIST statistics.
+			 * Actually that is the average count of *distinct* elements;
+			 * perhaps we should scale it up somewhat?
+			 */
+			if (get_attstatsslot(&sslot, vardata.statsTuple,
+								 STATISTIC_KIND_DECHIST, InvalidOid,
+								 ATTSTATSSLOT_NUMBERS))
+			{
+				if (sslot.nnumbers > 0)
+					nelem = clamp_row_est(sslot.numbers[sslot.nnumbers - 1]);
+				free_attstatsslot(&sslot);
+			}
+		}
+		ReleaseVariableStats(vardata);
+
+		if (nelem > 0)
+			return nelem;
 	}
+
+	/* Else use a default guess --- this should match scalararraysel */
+	return 10;
 }
 
 /*
@@ -6540,7 +6569,7 @@ genericcostestimate(PlannerInfo *root,
 		if (IsA(rinfo->clause, ScalarArrayOpExpr))
 		{
 			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) rinfo->clause;
-			int			alength = estimate_array_length(lsecond(saop->args));
+			double		alength = estimate_array_length(root, lsecond(saop->args));
 
 			if (alength > 1)
 				num_sa_scans *= alength;
@@ -6820,7 +6849,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			{
 				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
 				Node	   *other_operand = (Node *) lsecond(saop->args);
-				int			alength = estimate_array_length(other_operand);
+				double		alength = estimate_array_length(root, other_operand);
 
 				clause_op = saop->opno;
 				found_saop = true;
@@ -7414,7 +7443,7 @@ gincost_scalararrayopexpr(PlannerInfo *root,
 	{
 		counts->exactEntries++;
 		counts->searchEntries++;
-		counts->arrayScans *= estimate_array_length(rightop);
+		counts->arrayScans *= estimate_array_length(root, rightop);
 		return true;
 	}
 
