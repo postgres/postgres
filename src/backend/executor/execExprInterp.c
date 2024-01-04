@@ -4538,12 +4538,16 @@ ExecEvalPreOrderedDistinctSingle(AggState *aggstate, AggStatePerTrans pertrans)
 /*
  * ExecEvalPreOrderedDistinctMulti
  *		Returns true when the aggregate input is distinct from the previous
- *		input and returns false when the input matches the previous input.
+ *		input and returns false when the input matches the previous input, or
+ *		when there was no previous input.
  */
 bool
 ExecEvalPreOrderedDistinctMulti(AggState *aggstate, AggStatePerTrans pertrans)
 {
 	ExprContext *tmpcontext = aggstate->tmpcontext;
+	bool		isdistinct = false; /* for now */
+	TupleTableSlot *save_outer;
+	TupleTableSlot *save_inner;
 
 	for (int i = 0; i < pertrans->numTransInputs; i++)
 	{
@@ -4554,6 +4558,10 @@ ExecEvalPreOrderedDistinctMulti(AggState *aggstate, AggStatePerTrans pertrans)
 	ExecClearTuple(pertrans->sortslot);
 	pertrans->sortslot->tts_nvalid = pertrans->numInputs;
 	ExecStoreVirtualTuple(pertrans->sortslot);
+
+	/* save the previous slots before we overwrite them */
+	save_outer = tmpcontext->ecxt_outertuple;
+	save_inner = tmpcontext->ecxt_innertuple;
 
 	tmpcontext->ecxt_outertuple = pertrans->sortslot;
 	tmpcontext->ecxt_innertuple = pertrans->uniqslot;
@@ -4566,9 +4574,15 @@ ExecEvalPreOrderedDistinctMulti(AggState *aggstate, AggStatePerTrans pertrans)
 
 		pertrans->haslast = true;
 		ExecCopySlot(pertrans->uniqslot, pertrans->sortslot);
-		return true;
+
+		isdistinct = true;
 	}
-	return false;
+
+	/* restore the original slots */
+	tmpcontext->ecxt_outertuple = save_outer;
+	tmpcontext->ecxt_innertuple = save_inner;
+
+	return isdistinct;
 }
 
 /*
