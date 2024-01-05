@@ -4734,12 +4734,12 @@ END; $$ LANGUAGE plpgsql;
 SELECT * FROM get_from_partitioned_table(1) AS t;
 
 CREATE OR REPLACE FUNCTION list_partitioned_table()
-RETURNS SETOF partitioned_table.a%TYPE AS $$
+RETURNS SETOF public.partitioned_table.a%TYPE AS $$
 DECLARE
-    row partitioned_table%ROWTYPE;
-    a_val partitioned_table.a%TYPE;
+    row public.partitioned_table%ROWTYPE;
+    a_val public.partitioned_table.a%TYPE;
 BEGIN
-    FOR row IN SELECT * FROM partitioned_table ORDER BY a LOOP
+    FOR row IN SELECT * FROM public.partitioned_table ORDER BY a LOOP
         a_val := row.a;
         RETURN NEXT a_val;
     END LOOP;
