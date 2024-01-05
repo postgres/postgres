@@ -73,7 +73,7 @@
 /*
  *	User-tweakable parameters
  */
-int			DefaultXactIsoLevel = XACT_SERIALIZABLE;
+int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
 int         DefaultXactLockStrategy = LOCK_NONE;
 int         XactLockStrategy;
@@ -344,6 +344,10 @@ static void ShowTransactionState(const char *str);
 static void ShowTransactionStateRec(const char *str, TransactionState state);
 static const char *BlockStateAsString(TBlockState blockState);
 static const char *TransStateAsString(TransState state);
+
+//static void get_lock_strategy();
+//static bool should_report_result();
+//static void report_xact_result(bool commit);
 
 
 /* ----------------------------------------------------------------
@@ -1879,6 +1883,69 @@ AtSubCleanup_Memory(void)
 }
 
 /* ----------------------------------------------------------------
+ *						learning related
+ * ----------------------------------------------------------------
+ */
+//
+//
+//static void get_lock_strategy()
+//{
+//    // Get lock strategy for the current transaction.
+//    conn_fd = connect_to_model(bao_host, bao_port);
+//
+//    if (conn_fd < 0)
+//    {
+//        elog(WARNING, "Unable to connect to cc server, no prediction provided.");
+//        XactLockStrategy = DefaultXactLockStrategy;
+//    }
+//    else
+//    {
+//        buffer_json = buffer_state();
+//        lock_json = lock_state();
+//        write_all_to_socket(conn_fd, START_PREDICTION_MESSAGE);
+//        write_all_to_socket(conn_fd, plan_json);
+//        write_all_to_socket(conn_fd, buffer_json);
+//        write_all_to_socket(conn_fd, TERMINAL_MESSAGE);
+//        shutdown(conn_fd, SHUT_WR);
+//
+//        if (read(conn_fd, &XactLockStrategy, sizeof(double)) != sizeof(double))
+//        {
+//            elog(WARNING, "Could not read the response from the cc server.");
+//            XactLockStrategy = DefaultXactLockStrategy;
+//        }
+//
+//        shutdown(conn_fd, SHUT_RDWR);
+//    }
+//}
+//
+//static bool should_report_result()
+//{
+//    return true;
+//}
+
+////  we adopt the reward function from CDBTune.
+////  r = C_T * r_T + C_L * r_L.
+////  To maximize the throughput, we expect to minimize the resource usage and contention on buffers, locks, logs, and pages.
+////  1. if current transaction t is committed:
+////      cost on throughput = latency * (#of locks) + latency / (PROC count).
+////      cost on latency = latency.
+////  2. if current transaction t is aborted:
+////      cost on throughput = latency * (#of locks) + latency / (PROC count) + E[throughput cost].
+////      cost on latency = latency + E[latency]
+////  E[latency] and E[throughput cost] are calculated based on historical data.
+//static void report_xact_result(bool is_commit)
+//{
+//    if (!should_report_result())
+//        return;
+//    conn_fd = connect_to_model(bao_host, bao_port);
+//    if (conn_fd < 0)
+//    {
+//        elog(WARNING, "Unable to connect to cc server, reward for transaction dropped.");
+//        return;
+//    }
+//}
+
+/* ----------------------------------------------------------------
  *						interface routines
  * ----------------------------------------------------------------
  */
@@ -1958,9 +2025,7 @@ StartTransaction(void)
 	XactDeferrable = DefaultXactDeferrable;
 	XactIsoLevel = DefaultXactIsoLevel;
     XactLockStrategy = DefaultXactLockStrategy;
-//    if (XactLockStrategy != LOCK_NONE) {
-//        printf("Operation lock: iso %d-- lock %d\n", XactIsoLevel, XactLockStrategy);
-//    }
+//    get_lock_strategy();
 	forceSyncCommit = false;
 	MyXactFlags = 0;
 

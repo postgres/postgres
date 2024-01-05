@@ -4,7 +4,7 @@ HOST="localhost"
 PORT="5432"
 USER="hexiang"
 DB_NAME="sysbench"
-TIME="10"
+TIME="5"
 # adjustable parameters.
 TABLES="1"
 TABLE_SIZE="10000"
@@ -24,9 +24,10 @@ sysbench $COMMON_OPTIONS \
   --threads=8 \
   --time=$TIME \
   --range_selects=off \
+  --index_updates=0 \
   --non_index_updates=8 \
   --delete_inserts=0 \
   --point_selects=8 \
   --rand-type=zipfian \
-  --rand-zipfian-exp=0.2 \
+  --rand-zipfian-exp=0.8 \
   run

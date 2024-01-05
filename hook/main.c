@@ -5,6 +5,7 @@
 #include "executor/executor.h"
 #include "cc.h"
 #include "optimizer/planner.h"
+#include "access/xact.h"
 
 PG_MODULE_MAGIC;
 void _PG_init(void);

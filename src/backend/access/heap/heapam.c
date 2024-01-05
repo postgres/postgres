@@ -347,7 +347,6 @@ void heap_lock_for_read(Relation relation,
                          HeapTuple tuple, Buffer buffer)
 {
     bool is_exclusive;
-    // No need to lock for repeatable read, read committed, or SSI.
     if (!IsolationNeedLock())
         return;
     is_exclusive = LockBuffer(buffer, BUFFER_LOCK_UNLOCK);

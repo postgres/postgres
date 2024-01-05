@@ -4447,7 +4447,7 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 				 && !RWConflictExists(sxact, MySerializableXact))
 		{
 			LWLockRelease(SerializableXactHashLock);
-            CHECK_ISOLATION_LOCK_AND_RETURN
+//            CHECK_ISOLATION_LOCK_AND_RETURN
 			LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
 			/*
@@ -4733,8 +4733,14 @@ static void
 FlagRWConflict(SERIALIZABLEXACT *reader, SERIALIZABLEXACT *writer)
 {
 	Assert(reader != writer);
+    // In case of 2PL, a rw conflict is not accepted at all.
+    ereport(ERROR,
+            (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                    errmsg("could not serialize access due to 2PL violation"),
+                    errdetail_internal("Reason code: Canceled on conflict due to 2PL read write conflict."),
+                    errhint("The transaction might succeed if retried.")));
 
-	/* First, see if this conflict causes failure. */
+    /* First, see if this conflict causes failure. */
 	OnConflict_CheckForSerializationFailure(reader, writer);
 
 	/* Actually do the conflict flagging. */
