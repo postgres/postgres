@@ -339,7 +339,12 @@ simple_table_tuple_update(Relation rel, ItemPointer otid,
 			/* done successfully */
 			break;
 
-		case TM_Updated:
+        case TM_BeingModified:
+            ereport(ERROR,
+                    (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                            errmsg("could not serialize access via 2PL due to concurrent modification")));
+
+        case TM_Updated:
 			elog(ERROR, "tuple concurrently updated");
 			break;
 

@@ -4344,12 +4344,12 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 		return;
 	}
 
-    if (IsolationNeedLock())
-    {
-        /* we do not maintain the conflict graph for 2PL */
-        LWLockRelease(SerializableXactHashLock);
-        return;
-    }
+//    if (IsolationNeedLock())
+//    {
+//        /* we do not maintain the conflict graph for 2PL */
+//        LWLockRelease(SerializableXactHashLock);
+//        return;
+//    }
 
 	if (RWConflictExists(MySerializableXact, sxact))
 	{
@@ -4734,11 +4734,12 @@ FlagRWConflict(SERIALIZABLEXACT *reader, SERIALIZABLEXACT *writer)
 {
 	Assert(reader != writer);
     // In case of 2PL, a rw conflict is not accepted at all.
-    ereport(ERROR,
-            (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-                    errmsg("could not serialize access due to 2PL violation"),
-                    errdetail_internal("Reason code: Canceled on conflict due to 2PL read write conflict."),
-                    errhint("The transaction might succeed if retried.")));
+    if (IsolationNeedLock())
+        ereport(ERROR,
+                (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                        errmsg("could not serialize access due to 2PL violation"),
+                        errdetail_internal("Reason code: Canceled on conflict due to 2PL read write conflict."),
+                        errhint("The transaction might succeed if retried.")));
 
     /* First, see if this conflict causes failure. */
 	OnConflict_CheckForSerializationFailure(reader, writer);

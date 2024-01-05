@@ -1437,7 +1437,7 @@ lreplace:
             case TM_BeingModified:
                 ereport(ERROR,
                         (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-                                errmsg("could not serialize access via 2PL due to concurrent modifcation")));
+                                errmsg("could not serialize access via 2PL due to concurrent modification")));
 
 			case TM_Updated:
 				{
