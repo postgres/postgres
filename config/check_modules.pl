@@ -1,3 +1,6 @@
+
+# Copyright (c) 2024, PostgreSQL Global Development Group
+
 #
 # Verify that required Perl modules are available,
 # in at least the required minimum versions.

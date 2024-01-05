@@ -1,3 +1,6 @@
+
+# Copyright (c) 2024, PostgreSQL Global Development Group
+
 # Very simple exercise of direct I/O GUC.
 
 use strict;
