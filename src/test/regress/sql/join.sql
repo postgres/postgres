@@ -2568,7 +2568,7 @@ reset join_collapse_limit;
 reset enable_seqscan;
 
 -- Check that clauses from the join filter list is not lost on the self-join removal
-CREATE TABLE emp1 ( id SERIAL PRIMARY KEY NOT NULL, code int);
+CREATE TABLE emp1 (id SERIAL PRIMARY KEY NOT NULL, code int);
 explain (verbose, costs off)
 SELECT * FROM emp1 e1, emp1 e2 WHERE e1.id = e2.id AND e2.code <> e1.code;
 
@@ -2621,6 +2621,21 @@ explain (costs off)
 WITH t1 AS (SELECT * FROM emp1)
 UPDATE emp1 SET code = t1.code + 1 FROM t1
 WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code;
+
+-- Check that SJE does not mistakenly omit qual clauses (bug #18187)
+explain (costs off)
+select 1 from emp1 full join
+    (select * from emp1 t1 join
+        emp1 t2 join emp1 t3 on t2.id = t3.id
+        on true
+    where false) s on true
+where false;
+select 1 from emp1 full join
+    (select * from emp1 t1 join
+        emp1 t2 join emp1 t3 on t2.id = t3.id
+        on true
+    where false) s on true
+where false;
 
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
