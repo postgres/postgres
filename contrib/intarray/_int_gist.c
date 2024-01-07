@@ -297,8 +297,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	ArrayType  *in;
 	int			lenin;
 	int		   *din;
-	int			i,
-				j;
+	int			i;
 
 	in = DatumGetArrayTypeP(entry->key);
 
@@ -342,9 +341,12 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	dr = ARRPTR(r);
 
 	for (i = 0; i < lenin; i += 2)
-		for (j = din[i]; j <= din[i + 1]; j++)
+	{
+		/* use int64 for j in case din[i + 1] is INT_MAX */
+		for (int64 j = din[i]; j <= din[i + 1]; j++)
 			if ((!i) || *(dr - 1) != j)
-				*dr++ = j;
+				*dr++ = (int) j;
+	}
 
 	if (in != (ArrayType *) DatumGetPointer(entry->key))
 		pfree(in);
