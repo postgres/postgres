@@ -421,6 +421,19 @@ find_base_rel(PlannerInfo *root, int relid)
 }
 
 /*
+ * find_base_rel_noerr
+ *	  Find a base or otherrel relation entry, returning NULL if there's none
+ */
+RelOptInfo *
+find_base_rel_noerr(PlannerInfo *root, int relid)
+{
+	/* use an unsigned comparison to prevent negative array element access */
+	if ((uint32) relid < (uint32) root->simple_rel_array_size)
+		return root->simple_rel_array[relid];
+	return NULL;
+}
+
+/*
  * find_base_rel_ignore_join
  *	  Find a base or otherrel relation entry, which must already exist.
  *

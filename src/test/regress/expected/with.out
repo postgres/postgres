@@ -654,6 +654,24 @@ select count(*) from tenk1 a
                ->  CTE Scan on x
 (8 rows)
 
+explain (costs off)
+with x as materialized (insert into tenk1 default values returning unique1)
+select count(*) from tenk1 a
+  where unique1 in (select * from x);
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Aggregate
+   CTE x
+     ->  Insert on tenk1
+           ->  Result
+   ->  Nested Loop
+         ->  HashAggregate
+               Group Key: x.unique1
+               ->  CTE Scan on x
+         ->  Index Only Scan using tenk1_unique1 on tenk1 a
+               Index Cond: (unique1 = x.unique1)
+(10 rows)
+
 -- SEARCH clause
 create temp table graph0( f int, t int, label text );
 insert into graph0 values

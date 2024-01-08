@@ -119,6 +119,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "statistics/statistics.h"
 #include "storage/bufmgr.h"
@@ -5434,17 +5435,30 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 
 		if (HeapTupleIsValid(vardata->statsTuple))
 		{
-			RelOptInfo *onerel = find_base_rel(root, var->varno);
+			RelOptInfo *onerel = find_base_rel_noerr(root, var->varno);
 			Oid			userid;
 
 			/*
 			 * Check if user has permission to read this column.  We require
 			 * all rows to be accessible, so there must be no securityQuals
-			 * from security barrier views or RLS policies.  Use
-			 * onerel->userid if it's set, in case we're accessing the table
-			 * via a view.
+			 * from security barrier views or RLS policies.
+			 *
+			 * Normally the Var will have an associated RelOptInfo from which
+			 * we can find out which userid to do the check as; but it might
+			 * not if it's a RETURNING Var for an INSERT target relation.  In
+			 * that case use the RTEPermissionInfo associated with the RTE.
 			 */
-			userid = OidIsValid(onerel->userid) ? onerel->userid : GetUserId();
+			if (onerel)
+				userid = onerel->userid;
+			else
+			{
+				RTEPermissionInfo *perminfo;
+
+				perminfo = getRTEPermissionInfo(root->parse->rteperminfos, rte);
+				userid = perminfo->checkAsUser;
+			}
+			if (!OidIsValid(userid))
+				userid = GetUserId();
 
 			vardata->acl_ok =
 				rte->securityQuals == NIL &&

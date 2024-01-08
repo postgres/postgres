@@ -354,6 +354,11 @@ with x as materialized (select unique1 from tenk1 b)
 select count(*) from tenk1 a
   where unique1 in (select * from x);
 
+explain (costs off)
+with x as materialized (insert into tenk1 default values returning unique1)
+select count(*) from tenk1 a
+  where unique1 in (select * from x);
+
 -- SEARCH clause
 
 create temp table graph0( f int, t int, label text );
