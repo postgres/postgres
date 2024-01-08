@@ -48,6 +48,8 @@
 
 static inline void libpqsrv_connect_prepare(void);
 static inline void libpqsrv_connect_internal(PGconn *conn, uint32 wait_event_info);
+static inline PGresult *libpqsrv_get_result_last(PGconn *conn, uint32 wait_event_info);
+static inline PGresult *libpqsrv_get_result(PGconn *conn, uint32 wait_event_info);
 
 
 /*
@@ -236,6 +238,131 @@ libpqsrv_connect_internal(PGconn *conn, uint32 wait_event_info)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+}
+
+/*
+ * PQexec() wrapper that processes interrupts.
+ *
+ * Unless PQsetnonblocking(conn, 1) is in effect, this can't process
+ * interrupts while pushing the query text to the server.  Consider that
+ * setting if query strings can be long relative to TCP buffer size.
+ *
+ * This has the preconditions of PQsendQuery(), not those of PQexec().  Most
+ * notably, PQexec() would silently discard any prior query results.
+ */
+static inline PGresult *
+libpqsrv_exec(PGconn *conn, const char *query, uint32 wait_event_info)
+{
+	if (!PQsendQuery(conn, query))
+		return NULL;
+	return libpqsrv_get_result_last(conn, wait_event_info);
+}
+
+/*
+ * PQexecParams() wrapper that processes interrupts.
+ *
+ * See notes at libpqsrv_exec().
+ */
+static inline PGresult *
+libpqsrv_exec_params(PGconn *conn,
+					 const char *command,
+					 int nParams,
+					 const Oid *paramTypes,
+					 const char *const *paramValues,
+					 const int *paramLengths,
+					 const int *paramFormats,
+					 int resultFormat,
+					 uint32 wait_event_info)
+{
+	if (!PQsendQueryParams(conn, command, nParams, paramTypes, paramValues,
+						   paramLengths, paramFormats, resultFormat))
+		return NULL;
+	return libpqsrv_get_result_last(conn, wait_event_info);
+}
+
+/*
+ * Like PQexec(), loop over PQgetResult() until it returns NULL or another
+ * terminal state.  Return the last non-NULL result or the terminal state.
+ */
+static inline PGresult *
+libpqsrv_get_result_last(PGconn *conn, uint32 wait_event_info)
+{
+	PGresult   *volatile lastResult = NULL;
+
+	/* In what follows, do not leak any PGresults on an error. */
+	PG_TRY();
+	{
+		for (;;)
+		{
+			/* Wait for, and collect, the next PGresult. */
+			PGresult   *result;
+
+			result = libpqsrv_get_result(conn, wait_event_info);
+			if (result == NULL)
+				break;			/* query is complete, or failure */
+
+			/*
+			 * Emulate PQexec()'s behavior of returning the last result when
+			 * there are many.
+			 */
+			PQclear(lastResult);
+			lastResult = result;
+
+			if (PQresultStatus(lastResult) == PGRES_COPY_IN ||
+				PQresultStatus(lastResult) == PGRES_COPY_OUT ||
+				PQresultStatus(lastResult) == PGRES_COPY_BOTH ||
+				PQstatus(conn) == CONNECTION_BAD)
+				break;
+		}
+	}
+	PG_CATCH();
+	{
+		PQclear(lastResult);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	return lastResult;
+}
+
+/*
+ * Perform the equivalent of PQgetResult(), but watch for interrupts.
+ */
+static inline PGresult *
+libpqsrv_get_result(PGconn *conn, uint32 wait_event_info)
+{
+	/*
+	 * Collect data until PQgetResult is ready to get the result without
+	 * blocking.
+	 */
+	while (PQisBusy(conn))
+	{
+		int			rc;
+
+		rc = WaitLatchOrSocket(MyLatch,
+							   WL_EXIT_ON_PM_DEATH | WL_LATCH_SET |
+							   WL_SOCKET_READABLE,
+							   PQsocket(conn),
+							   0,
+							   wait_event_info);
+
+		/* Interrupted? */
+		if (rc & WL_LATCH_SET)
+		{
+			ResetLatch(MyLatch);
+			CHECK_FOR_INTERRUPTS();
+		}
+
+		/* Consume whatever data is available from the socket */
+		if (PQconsumeInput(conn) == 0)
+		{
+			/* trouble; expect PQgetResult() to return NULL */
+			break;
+		}
+	}
+
+	/* Now we can collect and return the next PGresult */
+	return PQgetResult(conn);
 }
 
 #endif							/* LIBPQ_BE_FE_HELPERS_H */

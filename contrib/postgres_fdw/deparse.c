@@ -3815,7 +3815,7 @@ appendOrderBySuffix(Oid sortop, Oid sortcoltype, bool nulls_first,
  * Print the representation of a parameter to be sent to the remote side.
  *
  * Note: we always label the Param's type explicitly rather than relying on
- * transmitting a numeric type OID in PQexecParams().  This allows us to
+ * transmitting a numeric type OID in PQsendQueryParams().  This allows us to
  * avoid assuming that types have the same OIDs on the remote side as they
  * do locally --- they need only have the same names.
  */
