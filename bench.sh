@@ -1,3 +1,16 @@
+psql -d sysbench -c 'select pg_reload_conf()';
+psql -d sysbench -c 'set default_transaction_isolation="read committed"';
+#psql -d sysbench -c 'set default_cc_strategy="s2pl"';
+#psql -d sysbench -c 'set default_transaction_isolation="serializable"';
+psql -d sysbench -c 'set default_cc_strategy="ssi"';
+
+#
+#pgbench --client=16 \
+# --jobs=16 \
+# --time=5 \
+# pgbench;
+
+
 DB_DRIVER="pgsql"
 # fixed parameters.
 HOST="localhost"
@@ -8,6 +21,7 @@ TIME="5"
 # adjustable parameters.
 TABLES="1"
 TABLE_SIZE="10000"
+
 
 COMMON_OPTIONS="/usr/local/share/sysbench/oltp_read_write.lua
   --db-driver=$DB_DRIVER
@@ -21,13 +35,15 @@ COMMON_OPTIONS="/usr/local/share/sysbench/oltp_read_write.lua
 sysbench $COMMON_OPTIONS prepare
 
 sysbench $COMMON_OPTIONS \
-  --threads=8 \
+  --threads=16 \
   --time=$TIME \
+  --warmup-time=2 \
   --range_selects=off \
   --index_updates=0 \
-  --non_index_updates=8 \
+  --non_index_updates=4 \
   --delete_inserts=0 \
-  --point_selects=8 \
+  --point_selects=16 \
   --rand-type=zipfian \
-  --rand-zipfian-exp=0.8 \
+  --rand-zipfian-exp=0.5 \
+  --validate=on \
   run

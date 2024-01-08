@@ -19,6 +19,8 @@
 
 #include <time.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <storage/predicate_internals.h>
 
 #include "access/commit_ts.h"
 #include "access/multixact.h"
@@ -121,6 +123,9 @@ TransactionId *ParallelCurrentXids;
  * recording flags.
  */
 int			MyXactFlags;
+
+const char* cc_host = "localhost";
+const int cc_port = 5109;
 
 /*
  *	transaction states - transaction state from server perspective
@@ -345,9 +350,10 @@ static void ShowTransactionStateRec(const char *str, TransactionState state);
 static const char *BlockStateAsString(TBlockState blockState);
 static const char *TransStateAsString(TransState state);
 
-//static void get_lock_strategy();
-//static bool should_report_result();
-//static void report_xact_result(bool commit);
+static void get_lock_strategy();
+static bool should_report_result();
+static bool should_refine_cc();
+static void report_xact_result(bool commit);
 
 
 /* ----------------------------------------------------------------
@@ -1886,12 +1892,153 @@ AtSubCleanup_Memory(void)
  *						learning related
  * ----------------------------------------------------------------
  */
-//
-//
-//static void get_lock_strategy()
-//{
+
+static int connect_to_model(const char* host, int port) {
+    int ret, conn_fd;
+    struct sockaddr_in server_addr = { 0 };
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    inet_pton(AF_INET, host, &server_addr.sin_addr);
+    conn_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (conn_fd < 0) {
+        return conn_fd;
+    }
+
+    ret = connect(conn_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    if (ret == -1) {
+        return ret;
+    }
+
+    return conn_fd;
+}
+
+static void write_all_to_socket(int conn_fd, const char* json) {
+    size_t json_length;
+    ssize_t written, written_total;
+    json_length = strlen(json);
+    written_total = 0;
+
+    while (written_total != json_length) {
+        written = write(conn_fd,
+                        json + written_total,
+                        json_length - written_total);
+        written_total += written;
+    }
+}
+
+static char * PredicateLockTageToString(PredicateLockTargetType ltype)
+{
+    if (ltype == PREDLOCKTAG_RELATION)
+        return "relation";
+    else if (ltype == PREDLOCKTAG_PAGE)
+        return "page";
+    else if (ltype == PREDLOCKTAG_TUPLE)
+        return "tuple";
+    else return "unknown";
+}
+
+// EncodePredicateLockInfo encode all predicate lock information in SSI as string.
+static StringInfoData EncodePredicateLockInfo(PredicateLockData * c)
+{
+    StringInfoData lock_buf, buf;
+    initStringInfo(&lock_buf);
+    initStringInfo(&buf);
+    for (int i=0;i<c->nelements;i++)
+    {
+        SERIALIZABLEXACT xact = c->xacts[i];
+        PREDICATELOCKTARGETTAG tag = c->locktags[i];
+        PredicateLockTargetType pred_type = GET_PREDICATELOCKTARGETTAG_TYPE(tag);
+
+        resetStringInfo(&lock_buf);
+
+        /* lock type */
+        appendStringInfo(&lock_buf,
+                         _("Pred: process %d xact %d has pred lock <"),
+                         xact.pid,
+                         xact.vxid.localTransactionId);
+
+        appendStringInfo(&lock_buf,
+                         _("%s,db:%d,rel:%d,offset%d>"),
+                         PredicateLockTageToString(pred_type),
+                         GET_PREDICATELOCKTARGETTAG_DB(tag),
+                         GET_PREDICATELOCKTARGETTAG_RELATION(tag),
+                         pred_type == PREDLOCKTAG_TUPLE? GET_PREDICATELOCKTARGETTAG_OFFSET(tag): -1,
+                         pred_type != PREDLOCKTAG_RELATION? GET_PREDICATELOCKTARGETTAG_PAGE(tag): -1);
+
+        /* xact info */
+        appendStringInfo(&lock_buf,
+                         _("%s,db:%d,rel:%d,offset%d>"),
+                         PredicateLockTageToString(pred_type),
+                         GET_PREDICATELOCKTARGETTAG_DB(tag),
+                         GET_PREDICATELOCKTARGETTAG_RELATION(tag),
+                         pred_type == PREDLOCKTAG_TUPLE? GET_PREDICATELOCKTARGETTAG_OFFSET(tag): -1,
+                         pred_type != PREDLOCKTAG_RELATION? GET_PREDICATELOCKTARGETTAG_PAGE(tag): -1);
+    }
+    return buf;
+}
+
+// EncodeLockData encode all non-predicate lock information as string.
+static StringInfoData EncodeLockData(LockData * c)
+{
+    StringInfoData lock_tag_buf, lock_buf;
+    initStringInfo(&lock_buf);
+    initStringInfo(&lock_tag_buf);
+    for (int i=0;i<c->nelements;i++)
+    {
+        LockInstanceData lc = c->locks[i];
+        resetStringInfo(&lock_tag_buf);
+        DescribeLockTag(&lock_tag_buf, &lc.locktag);
+        appendStringInfo(&lock_buf,
+                         _("Lock: process %d waits for %s on %s in txn %d, "
+                           "holding mask %d; group leaded by process %d."),
+                         lc.pid,
+                         GetLockmodeName(lc.locktag.locktag_lockmethodid,
+                                         lc.waitLockMode),
+                         lock_tag_buf.data,
+                         lc.lxid,
+                         lc.holdMask,
+                         lc.leaderPid);
+    }
+    return lock_buf;
+}
+
+static StringInfoData EncodeDependencyGraphData()
+{
+    StringInfoData buf;
+    initStringInfo(&buf);
+    return buf;
+}
+
+static StringInfoData EncodeSessionData()
+{
+    StringInfoData buf;
+    initStringInfo(&buf);
+    return buf;
+}
+
+static void get_lock_strategy()
+{
+    int conn_fd;
+    MemoryContext oldcontext;
+    StringInfoData buf;
+
+    if (!should_refine_cc())
+        return;
+    initStringInfo(&buf);
+    appendStringInfo(&buf,
+                     _("[Lock:{%s}]\n"
+                       "[Pred:{%s}]\n"
+                       "[Dependency:{%s}]\n"
+                       "[Session:{%s}]\n"),
+                     EncodeLockData(GetLockStatusData()).data,
+                     EncodePredicateLockInfo(GetPredicateLockStatusData()).data,
+                     EncodeDependencyGraphData().data,
+                     EncodeSessionData().data);
+    printf("%s\n", buf.data);
+
 //    // Get lock strategy for the current transaction.
-//    conn_fd = connect_to_model(bao_host, bao_port);
+//    conn_fd = connect_to_model(cc_host, cc_port);
 //
 //    if (conn_fd < 0)
 //    {
@@ -1900,12 +2047,15 @@ AtSubCleanup_Memory(void)
 //    }
 //    else
 //    {
-//        buffer_json = buffer_state();
-//        lock_json = lock_state();
-//        write_all_to_socket(conn_fd, START_PREDICTION_MESSAGE);
-//        write_all_to_socket(conn_fd, plan_json);
-//        write_all_to_socket(conn_fd, buffer_json);
-//        write_all_to_socket(conn_fd, TERMINAL_MESSAGE);
+//        // PG lock information.
+//       // PG SSI dependency graph.
+//
+//        // Session information.
+//        // Historical session data.
+//
+////        write_all_to_socket(conn_fd, START_PREDICTION_MESSAGE);
+////        write_all_to_socket(conn_fd, buffer_json);
+////        write_all_to_socket(conn_fd, TERMINAL_MESSAGE);
 //        shutdown(conn_fd, SHUT_WR);
 //
 //        if (read(conn_fd, &XactLockStrategy, sizeof(double)) != sizeof(double))
@@ -1916,34 +2066,42 @@ AtSubCleanup_Memory(void)
 //
 //        shutdown(conn_fd, SHUT_RDWR);
 //    }
-//}
-//
-//static bool should_report_result()
-//{
-//    return true;
-//}
+}
 
-////  we adopt the reward function from CDBTune.
-////  r = C_T * r_T + C_L * r_L.
-////  To maximize the throughput, we expect to minimize the resource usage and contention on buffers, locks, logs, and pages.
-////  1. if current transaction t is committed:
-////      cost on throughput = latency * (#of locks) + latency / (PROC count).
-////      cost on latency = latency.
-////  2. if current transaction t is aborted:
-////      cost on throughput = latency * (#of locks) + latency / (PROC count) + E[throughput cost].
-////      cost on latency = latency + E[latency]
-////  E[latency] and E[throughput cost] are calculated based on historical data.
-//static void report_xact_result(bool is_commit)
-//{
-//    if (!should_report_result())
-//        return;
-//    conn_fd = connect_to_model(bao_host, bao_port);
-//    if (conn_fd < 0)
-//    {
-//        elog(WARNING, "Unable to connect to cc server, reward for transaction dropped.");
-//        return;
-//    }
-//}
+static bool should_refine_cc()
+{
+    return true;
+}
+
+static bool should_report_result()
+{
+    return true;
+}
+
+//  we adopt the reward function from CDBTune.
+//  r = C_T * r_T + C_L * r_L.
+//  To maximize the throughput, we expect to minimize the resource usage and contention on buffers, locks, logs, and pages.
+//  1. if current transaction t is committed:
+//      cost on throughput = latency * (#of locks) + latency / (PROC count).
+//      cost on latency = latency.
+//  2. if current transaction t is aborted:
+//      cost on throughput = latency * (#of locks) + latency / (PROC count) + E[throughput cost].
+//      cost on latency = latency + E[latency]
+//  E[latency] and E[throughput cost] are calculated based on historical data.
+static void report_xact_result(bool is_commit)
+{
+    int conn_fd;
+    if (!should_report_result())
+        return;
+    conn_fd = connect_to_model(cc_host, cc_port);
+    if (conn_fd < 0)
+    {
+        elog(WARNING, "Unable to connect to cc server, reward for transaction dropped.");
+        return;
+    } else {
+
+    }
+}
 
 /* ----------------------------------------------------------------
  *						interface routines
@@ -2025,7 +2183,10 @@ StartTransaction(void)
 	XactDeferrable = DefaultXactDeferrable;
 	XactIsoLevel = DefaultXactIsoLevel;
     XactLockStrategy = DefaultXactLockStrategy;
-//    get_lock_strategy();
+    if (IsolationIsSerializable())
+        // In case of SSI, disable locking based methods.
+        XactLockStrategy = LOCK_NONE;
+    get_lock_strategy();
 	forceSyncCommit = false;
 	MyXactFlags = 0;
 
