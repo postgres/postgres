@@ -2638,6 +2638,15 @@ select 1 from emp1 full join
     where false) s on true
 where false;
 
+-- Check that SJE does not mistakenly re-use knowledge of relation uniqueness
+-- made with different set of quals
+insert into emp1 values (2, 1);
+explain (costs off)
+select * from emp1 t1 where exists (select * from emp1 t2
+                                    where t2.id = t1.code and t2.code > 0);
+select * from emp1 t1 where exists (select * from emp1 t2
+                                    where t2.id = t1.code and t2.code > 0);
+
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
 -- moving quals over to s1 to make it so it can't match any rows.

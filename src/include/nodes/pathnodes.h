@@ -3408,6 +3408,12 @@ typedef struct UniqueRelInfo
 	Relids		outerrelids;
 
 	/*
+	 * The relation in consideration is unique when considering only clauses
+	 * suitable for self-join (passed split_selfjoin_quals()).
+	 */
+	bool		self_join;
+
+	/*
 	 * Additional clauses from a baserestrictinfo list that were used to prove
 	 * the uniqueness.   We cache it for the self-join checking procedure: a
 	 * self-join can be removed if the outer relation contains strictly the

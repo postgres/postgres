@@ -6905,6 +6905,29 @@ where false;
 ----------
 (0 rows)
 
+-- Check that SJE does not mistakenly re-use knowledge of relation uniqueness
+-- made with different set of quals
+insert into emp1 values (2, 1);
+explain (costs off)
+select * from emp1 t1 where exists (select * from emp1 t2
+                                    where t2.id = t1.code and t2.code > 0);
+                 QUERY PLAN                  
+---------------------------------------------
+ Nested Loop
+   ->  Seq Scan on emp1 t1
+   ->  Index Scan using emp1_pkey on emp1 t2
+         Index Cond: (id = t1.code)
+         Filter: (code > 0)
+(5 rows)
+
+select * from emp1 t1 where exists (select * from emp1 t2
+                                    where t2.id = t1.code and t2.code > 0);
+ id | code 
+----+------
+  1 |    1
+  2 |    1
+(2 rows)
+
 -- We can remove the join even if we find the join can't duplicate rows and
 -- the base quals of each side are different.  In the following case we end up
 -- moving quals over to s1 to make it so it can't match any rows.
