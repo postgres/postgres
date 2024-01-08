@@ -5,7 +5,7 @@
  *
  * Code built directly into the backend is not allowed to link to libpq
  * directly. Extension code is allowed to use libpq however. However, libpq
- * used in extensions has to be careful to block inside libpq, otherwise
+ * used in extensions has to be careful not to block inside libpq, otherwise
  * interrupts will not be processed, leading to issues like unresolvable
  * deadlocks. Backend code also needs to take care to acquire/release an
  * external fd for the connection, otherwise fd.c's accounting of fd's is
