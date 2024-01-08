@@ -44,7 +44,6 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/latch.h"
-#include "utils/wait_event.h"
 
 
 static inline void libpqsrv_connect_prepare(void);
