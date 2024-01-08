@@ -2623,6 +2623,7 @@ UPDATE emp1 SET code = t1.code + 1 FROM t1
 WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code;
 
 -- Check that SJE does not mistakenly omit qual clauses (bug #18187)
+insert into emp1 values (1, 1);
 explain (costs off)
 select 1 from emp1 full join
     (select * from emp1 t1 join
