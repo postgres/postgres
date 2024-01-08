@@ -1173,6 +1173,7 @@ ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable)
 					 * array.
 					 */
 					dtuples = (old_batch0->ntuples * 2.0) / new_nbatch;
+
 					/*
 					 * We need to calculate the maximum number of buckets to
 					 * stay within the MaxAllocSize boundary.  Round the
