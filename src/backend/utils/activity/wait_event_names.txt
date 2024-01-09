@@ -276,6 +276,10 @@ Extension	"Waiting in an extension."
 # This class of wait events has its own set of C structure, so these are
 # only used for the documentation.
 #
+# NB: Predefined LWLocks (i.e., those declared in lwlocknames.txt) must be
+# listed in the top section of locks and must be listed in the same order as in
+# lwlocknames.txt.
+#
 
 Section: ClassName - WaitEventLWLock
 
@@ -325,6 +329,14 @@ WrapLimitsVacuum	"Waiting to update limits on transaction id and multixact consu
 NotifyQueueTail	"Waiting to update limit on <command>NOTIFY</command> message storage."
 WaitEventExtension	"Waiting to read or update custom wait events information for extensions."
 WALSummarizer	"Waiting to read or update WAL summarization state."
+
+#
+# END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)
+#
+# Predefined LWLocks (i.e., those declared in lwlocknames.txt) must be listed
+# in the section above and must be listed in the same order as in
+# lwlocknames.txt.  Other LWLocks must be listed in the section below.
+#
 
 XactBuffer	"Waiting for I/O on a transaction status SLRU buffer."
 CommitTsBuffer	"Waiting for I/O on a commit timestamp SLRU buffer."

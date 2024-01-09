@@ -1,7 +1,9 @@
 # Copyright (c) 2022-2024, PostgreSQL Global Development Group
 
 lwlocknames = custom_target('lwlocknames',
-  input: files('../../backend/storage/lmgr/lwlocknames.txt'),
+  input: files(
+    '../../backend/storage/lmgr/lwlocknames.txt',
+    '../../backend/utils/activity/wait_event_names.txt'),
   output: ['lwlocknames.h', 'lwlocknames.c'],
   command: [
     perl, files('../../backend/storage/lmgr/generate-lwlocknames.pl'),
