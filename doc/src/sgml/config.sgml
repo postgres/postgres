@@ -4179,7 +4179,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      </varlistentry>
 
      <varlistentry id="guc-wal-summary-keep-time" xreflabel="wal_summary_keep_time">
-      <term><varname>wal_summary_keep_time</varname> (<type>boolean</type>)
+      <term><varname>wal_summary_keep_time</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>wal_summary_keep_time</varname> configuration parameter</primary>
       </indexterm>
@@ -4198,6 +4198,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        know will not be required for future incremental backups.
        This parameter can only be set in the
        <filename>postgresql.conf</filename> file or on the server command line.
+       If this value is specified without units, it is taken as minutes.
        The default is 10 days. If <literal>summarize_wal = off</literal>,
        existing WAL summaries will not be removed regardless of the value of
        this parameter, because the WAL summarizer will not run.
