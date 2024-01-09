@@ -26480,6 +26480,86 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
   </sect2>
 
+  <sect2 id="functions-info-wal-summary">
+   <title>WAL Summarization Information Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-wal-summary"/>
+    print information about the status of WAL summarization.
+    See <xref linkend="guc-summarize-wal" />.
+   </para>
+
+   <table id="functions-wal-summary">
+    <title>WAL Summarization Information Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_available_wal_summaries</primary>
+        </indexterm>
+        <function>pg_available_wal_summaries</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>tli</parameter> <type>bigint</type>,
+        <parameter>start_lsn</parameter> <type>pg_lsn</type>,
+        <parameter>end_lsn</parameter> <type>pg_lsn</type> )
+       </para>
+       <para>
+        Returns information about the WAL summary files present in the
+        data directory, under <literal>pg_wal/summaries</literal>.
+        One row will be returned per WAL summary file. Each file summarizes
+        WAL on the indicated TLI within the indicated LSN range. This function
+        might be useful to determine whether enough WAL summaries are present
+        on the server to take an incremental backup based on some prior
+        backup whose start LSN is known.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_wal_summary_contents</primary>
+        </indexterm>
+        <function>pg_wal_summary_contents</function> ( <parameter>tli</parameter> <type>bigint</type>, <parameter>start_lsn</parameter> <type>pg_lsn</type>, <parameter>end_lsn</parameter> <type>pg_lsn</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>relfilenode</parameter> <type>oid</type>,
+        <parameter>reltablespace</parameter> <type>oid</type>,
+        <parameter>reldatabase</parameter> <type>oid</type>,
+        <parameter>relforknumber</parameter> <type>smallint</type>,
+        <parameter>relblocknumber</parameter> <type>bigint</type>,
+        <parameter>is_limit_block</parameter> <type>boolean</type> )
+       </para>
+       <para>
+        Returns one information about the contents of a single WAL summary file
+        identified by TLI and starting and ending LSNs. Each row with
+        <literal>is_limit_block</literal> false indicates that the block
+        identified by the remaining output columns was modified by at least
+        one WAL record within the range of records summarized by this file.
+        Each row with <literal>is_limit_block</literal> true indicates either
+        that (a) the relation fork was truncated to the length given by
+        <literal>relblocknumber</literal> within the relevant range of WAL
+        records or (b) that the relation fork was created or dropped within
+        the relevant range of WAL records; in such cases,
+        <literal>relblocknumber</literal> will be zero.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
   </sect1>
 
   <sect1 id="functions-admin">
