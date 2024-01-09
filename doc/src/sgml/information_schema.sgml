@@ -697,8 +697,8 @@
       <para>
        An encoding of some character repertoire.  Most older character
        repertoires only use one encoding form, and so there are no
-       separate names for them (e.g., <literal>LATIN1</literal> is an
-       encoding form applicable to the <literal>LATIN1</literal>
+       separate names for them (e.g., <literal>LATIN2</literal> is an
+       encoding form applicable to the <literal>LATIN2</literal>
        repertoire).  But for example Unicode has the encoding forms
        <literal>UTF8</literal>, <literal>UTF16</literal>, etc. (not
        all supported by PostgreSQL).  Encoding forms are not exposed
