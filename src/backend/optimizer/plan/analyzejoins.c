@@ -1900,8 +1900,10 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	/* Replace varno in all the query structures */
 	query_tree_walker(root->parse, replace_varno_walker, &ctx,
 					  QTW_EXAMINE_SORTGROUP);
-	if (root->parse->resultRelation == toRemove->relid)
-		root->parse->resultRelation = toKeep->relid;
+
+	/* See remove_self_joins_one_group() */
+	Assert(root->parse->resultRelation != toRemove->relid);
+	Assert(root->parse->resultRelation != toKeep->relid);
 
 	/* Replace links in the planner info */
 	remove_rel_from_query(root, toRemove, toKeep->relid, NULL, NULL);
