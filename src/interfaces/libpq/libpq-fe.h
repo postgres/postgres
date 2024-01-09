@@ -659,6 +659,7 @@ extern int	PQenv2encoding(void);
 
 extern char *PQencryptPassword(const char *passwd, const char *user);
 extern char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, const char *algorithm);
+extern PGresult *PQchangePassword(PGconn *conn, const char *user, const char *passwd);
 
 /* === in encnames.c === */
 

@@ -7116,6 +7116,45 @@ char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, 
     </listitem>
    </varlistentry>
 
+   <varlistentry id="libpq-PQchangePassword">
+    <term><function>PQchangePassword</function><indexterm><primary>PQchangePassword</primary></indexterm></term>
+
+    <listitem>
+     <para>
+      Changes a <productname>PostgreSQL</productname> password.
+<synopsis>
+PGresult *PQchangePassword(PGconn *conn, const char *user, const char *passwd);
+</synopsis>
+      This function uses <function>PQencryptPasswordConn</function>
+      to build and execute the command <literal>ALTER USER ... PASSWORD
+      '...'</literal>, thereby changing the user's password. It exists for
+      the same reason as <function>PQencryptPasswordConn</function>, but
+      is more convenient as it both builds and runs the command for you.
+      <xref linkend="libpq-PQencryptPasswordConn"/> is passed a
+      <symbol>NULL</symbol> for the algorithm argument, hence encryption is
+      done according to the server's <xref linkend="guc-password-encryption"/>
+      setting.
+     </para>
+
+     <para>
+      The <parameter>user</parameter> and <parameter>passwd</parameter> arguments
+      are the SQL name of the target user, and the new cleartext password.
+     </para>
+
+     <para>
+      Returns a <structname>PGresult</structname> pointer representing
+      the result of the <literal>ALTER USER</literal> command, or
+      a null pointer if the routine failed before issuing any command.
+      The <xref linkend="libpq-PQresultStatus"/> function should be called
+      to check the return value for any errors (including the value of a null
+      pointer, in which case it will return
+      <symbol>PGRES_FATAL_ERROR</symbol>). Use
+      <xref linkend="libpq-PQerrorMessage"/> to get more information about
+      such errors.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="libpq-PQencryptPassword">
     <term><function>PQencryptPassword</function><indexterm><primary>PQencryptPassword</primary></indexterm></term>
 

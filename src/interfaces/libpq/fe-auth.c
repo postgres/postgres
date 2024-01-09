@@ -1372,3 +1372,84 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 
 	return crypt_pwd;
 }
+
+/*
+ * PQchangePassword -- exported routine to change a password
+ *
+ * This is intended to be used by client applications that wish to
+ * change the password for a user. The password is not sent in
+ * cleartext because it is encrypted on the client side. This is
+ * good because it ensures the cleartext password is never known by
+ * the server, and therefore won't end up in logs, pg_stat displays,
+ * etc. The password encryption is performed by PQencryptPasswordConn(),
+ * which is passed a NULL for the algorithm argument. Hence encryption
+ * is done according to the server's password_encryption
+ * setting. We export the function so that clients won't be dependent
+ * on the implementation specific details with respect to how the
+ * server changes passwords.
+ *
+ * Arguments are a connection object, the SQL name of the target user,
+ * and the cleartext password.
+ *
+ * Return value is the PGresult of the executed ALTER USER statement
+ * or NULL if we never get there. The caller is responsible to PQclear()
+ * the returned PGresult.
+ *
+ * PQresultStatus() should be called to check the return value for errors,
+ * and PQerrorMessage() used to get more information about such errors.
+ */
+PGresult *
+PQchangePassword(PGconn *conn, const char *user, const char *passwd)
+{
+	char	   *encrypted_password = PQencryptPasswordConn(conn, passwd,
+														   user, NULL);
+
+	if (!encrypted_password)
+	{
+		/* PQencryptPasswordConn() already registered the error */
+		return NULL;
+	}
+	else
+	{
+		char	   *fmtpw = PQescapeLiteral(conn, encrypted_password,
+											strlen(encrypted_password));
+
+		/* no longer needed, so clean up now */
+		PQfreemem(encrypted_password);
+
+		if (!fmtpw)
+		{
+			/* PQescapeLiteral() already registered the error */
+			return NULL;
+		}
+		else
+		{
+			char	   *fmtuser = PQescapeIdentifier(conn, user, strlen(user));
+
+			if (!fmtuser)
+			{
+				/* PQescapeIdentifier() already registered the error */
+				PQfreemem(fmtpw);
+				return NULL;
+			}
+			else
+			{
+				PQExpBufferData buf;
+				PGresult   *res;
+
+				initPQExpBuffer(&buf);
+				printfPQExpBuffer(&buf, "ALTER USER %s PASSWORD %s",
+								  fmtuser, fmtpw);
+
+				res = PQexec(conn, buf.data);
+
+				/* clean up */
+				termPQExpBuffer(&buf);
+				PQfreemem(fmtuser);
+				PQfreemem(fmtpw);
+
+				return res;
+			}
+		}
+	}
+}
