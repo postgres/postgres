@@ -2086,6 +2086,14 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 	{
 		RelOptInfo *inner = root->simple_rel_array[r];
 
+		/*
+		 * We don't accept result relation as either source or target relation
+		 * of SJE, because result relation has different behavior in
+		 * EvalPlanQual() and RETURNING clause.
+		 */
+		if (root->parse->resultRelation == r)
+			continue;
+
 		k = r;
 
 		while ((k = bms_next_member(relids, k)) > 0)
@@ -2100,6 +2108,9 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			PlanRowMark *omark = NULL;
 			PlanRowMark *imark = NULL;
 			List	   *uclauses = NIL;
+
+			if (root->parse->resultRelation == k)
+				continue;
 
 			/* A sanity check: the relations have the same Oid. */
 			Assert(root->simple_rte_array[k]->relid ==

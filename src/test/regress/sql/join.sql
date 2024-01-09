@@ -2616,11 +2616,25 @@ select * from emp1 t1
    inner join emp1 t2 on t1.id = t2.id
     left join emp1 t3 on t1.id > 1 and t1.id < 2;
 
--- Check that SJE replaces target relation correctly
+-- Check that SJE doesn't replace the target relation
 explain (costs off)
 WITH t1 AS (SELECT * FROM emp1)
 UPDATE emp1 SET code = t1.code + 1 FROM t1
-WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code;
+WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code, t1.code;
+INSERT INTO emp1 VALUES (1, 1), (2, 1);
+WITH t1 AS (SELECT * FROM emp1)
+UPDATE emp1 SET code = t1.code + 1 FROM t1
+WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code, t1.code;
+TRUNCATE emp1;
+
+EXPLAIN (COSTS OFF)
+UPDATE sj sq SET b = 1 FROM sj as sz WHERE sq.a = sz.a;
+
+CREATE RULE sj_del_rule AS ON DELETE TO sj
+  DO INSTEAD
+    UPDATE sj SET a = 1 WHERE a = old.a;
+EXPLAIN (COSTS OFF) DELETE FROM sj;
+DROP RULE sj_del_rule ON sj CASCADE;
 
 -- Check that SJE does not mistakenly omit qual clauses (bug #18187)
 insert into emp1 values (1, 1);
@@ -2729,18 +2743,8 @@ ON sj_t1.id = _t2t3t4.id;
 -- Test RowMarks-related code
 --
 
--- TODO: Why this select returns two copies of ctid field? Should we fix it?
 EXPLAIN (COSTS OFF) -- Both sides have explicit LockRows marks
 SELECT a1.a FROM sj a1,sj a2 WHERE (a1.a=a2.a) FOR UPDATE;
-
-EXPLAIN (COSTS OFF) -- A RowMark exists for the table being kept
-UPDATE sj sq SET b = 1 FROM sj as sz WHERE sq.a = sz.a;
-
-CREATE RULE sj_del_rule AS ON DELETE TO sj
-  DO INSTEAD
-    UPDATE sj SET a = 1 WHERE a = old.a;
-EXPLAIN (COSTS OFF) DELETE FROM sj; -- A RowMark exists for the table being dropped
-DROP RULE sj_del_rule ON sj CASCADE;
 
 reset enable_hashjoin;
 reset enable_mergejoin;
