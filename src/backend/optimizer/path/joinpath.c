@@ -730,8 +730,11 @@ try_nestloop_path(PlannerInfo *root,
 		return;
 
 	/*
-	 * Paths are parameterized by top-level parents, so run parameterization
-	 * tests on the parent relids.
+	 * Any parameterization of the input paths refers to topmost parents of
+	 * the relevant relations, because reparameterize_path_by_child() hasn't
+	 * been called yet.  So we must consider topmost parents of the relations
+	 * being joined, too, while determining parameterization of the result and
+	 * checking for disallowed parameterization cases.
 	 */
 	if (innerrel->top_parent_relids)
 		innerrelids = innerrel->top_parent_relids;

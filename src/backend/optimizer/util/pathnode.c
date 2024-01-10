@@ -2360,6 +2360,9 @@ create_foreign_upper_path(PlannerInfo *root, RelOptInfo *rel,
  * calc_nestloop_required_outer
  *	  Compute the required_outer set for a nestloop join path
  *
+ * Note: when considering a child join, the inputs nonetheless use top-level
+ * parent relids
+ *
  * Note: result must not share storage with either input
  */
 Relids
@@ -2394,11 +2397,30 @@ calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path)
 {
 	Relids		outer_paramrels = PATH_REQ_OUTER(outer_path);
 	Relids		inner_paramrels = PATH_REQ_OUTER(inner_path);
+	Relids		innerrelids PG_USED_FOR_ASSERTS_ONLY;
+	Relids		outerrelids PG_USED_FOR_ASSERTS_ONLY;
 	Relids		required_outer;
 
+	/*
+	 * Any parameterization of the input paths refers to topmost parents of
+	 * the relevant relations, because reparameterize_path_by_child() hasn't
+	 * been called yet.  So we must consider topmost parents of the relations
+	 * being joined, too, while checking for disallowed parameterization
+	 * cases.
+	 */
+	if (inner_path->parent->top_parent_relids)
+		innerrelids = inner_path->parent->top_parent_relids;
+	else
+		innerrelids = inner_path->parent->relids;
+
+	if (outer_path->parent->top_parent_relids)
+		outerrelids = outer_path->parent->top_parent_relids;
+	else
+		outerrelids = outer_path->parent->relids;
+
 	/* neither path can require rels from the other */
-	Assert(!bms_overlap(outer_paramrels, inner_path->parent->relids));
-	Assert(!bms_overlap(inner_paramrels, outer_path->parent->relids));
+	Assert(!bms_overlap(outer_paramrels, innerrelids));
+	Assert(!bms_overlap(inner_paramrels, outerrelids));
 	/* form the union ... */
 	required_outer = bms_union(outer_paramrels, inner_paramrels);
 	/* we do not need an explicit test for empty; bms_union gets it right */
