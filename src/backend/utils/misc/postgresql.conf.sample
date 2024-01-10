@@ -728,7 +728,7 @@
 					# encoding
 
 # These settings are initialized by initdb, but they can be changed.
-#lc_messages = 'C'			# locale for system error message
+#lc_messages = ''			# locale for system error message
 					# strings
 #lc_monetary = 'C'			# locale for monetary formatting
 #lc_numeric = 'C'			# locale for number formatting
