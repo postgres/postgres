@@ -5323,7 +5323,7 @@ END
          LANGUAGE sql
          IMMUTABLE PARALLEL SAFE STRICT COST 1
 1       RETURN ($2 + $1)
-\sf ts_debug(text)
+\sf ts_debug(text);
 CREATE OR REPLACE FUNCTION pg_catalog.ts_debug(document text, OUT alias text, OUT description text, OUT token text, OUT dictionaries regdictionary[], OUT dictionary regdictionary, OUT lexemes text[])
  RETURNS SETOF record
  LANGUAGE sql

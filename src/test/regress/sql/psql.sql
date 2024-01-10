@@ -1315,7 +1315,7 @@ drop role regress_psql_user;
 \sf information_schema._pg_index_position
 \sf+ information_schema._pg_index_position
 \sf+ interval_pl_time
-\sf ts_debug(text)
+\sf ts_debug(text);
 \sf+ ts_debug(text)
 
 -- AUTOCOMMIT

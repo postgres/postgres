@@ -1640,18 +1640,7 @@ exec_command_help(PsqlScanState scan_state, bool active_branch)
 	if (active_branch)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
-												 OT_WHOLE_LINE, NULL, false);
-		size_t		len;
-
-		/* strip any trailing spaces and semicolons */
-		if (opt)
-		{
-			len = strlen(opt);
-			while (len > 0 &&
-				   (isspace((unsigned char) opt[len - 1])
-					|| opt[len - 1] == ';'))
-				opt[--len] = '\0';
-		}
+												 OT_WHOLE_LINE, NULL, true);
 
 		helpSQL(opt, pset.popt.topt.pager);
 		free(opt);
@@ -3151,6 +3140,10 @@ ignore_slash_filepipe(PsqlScanState scan_state)
  * This *MUST* be used for inactive-branch processing of any slash command
  * that takes an OT_WHOLE_LINE option.  Otherwise we might consume a different
  * amount of option text in active and inactive cases.
+ *
+ * Note: although callers might pass "semicolon" as either true or false,
+ * we need not duplicate that here, since it doesn't affect the amount of
+ * input text consumed.
  */
 static void
 ignore_slash_whole_line(PsqlScanState scan_state)
