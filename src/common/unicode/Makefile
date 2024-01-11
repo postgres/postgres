@@ -21,7 +21,7 @@ CPPFLAGS += $(ICU_CFLAGS)
 # By default, do nothing.
 all:
 
-update-unicode: unicode_category_table.h unicode_norm_table.h unicode_nonspacing_table.h unicode_east_asian_fw_table.h unicode_normprops_table.h unicode_norm_hashfunc.h unicode_version.h
+update-unicode: unicode_category_table.h unicode_east_asian_fw_table.h unicode_nonspacing_table.h unicode_norm_hashfunc.h unicode_norm_table.h unicode_normprops_table.h unicode_version.h
 	mv $^ $(top_srcdir)/src/include/common/
 	$(MAKE) category-check
 	$(MAKE) normalization-check
@@ -29,7 +29,7 @@ update-unicode: unicode_category_table.h unicode_norm_table.h unicode_nonspacing
 # These files are part of the Unicode Character Database. Download
 # them on demand.  The dependency on Makefile.global is for
 # UNICODE_VERSION.
-UnicodeData.txt EastAsianWidth.txt DerivedNormalizationProps.txt CompositionExclusions.txt NormalizationTest.txt: $(top_builddir)/src/Makefile.global
+CompositionExclusions.txt DerivedNormalizationProps.txt EastAsianWidth.txt NormalizationTest.txt UnicodeData.txt: $(top_builddir)/src/Makefile.global
 	$(DOWNLOAD) https://www.unicode.org/Public/$(UNICODE_VERSION)/ucd/$(@F)
 
 unicode_version.h: generate-unicode_version.pl
@@ -82,4 +82,4 @@ clean:
 	rm -f $(OBJS) category_test category_test.o norm_test norm_test.o
 
 distclean: clean
-	rm -f UnicodeData.txt EastAsianWidth.txt CompositionExclusions.txt NormalizationTest.txt norm_test_table.h unicode_norm_table.h
+	rm -f CompositionExclusions.txt DerivedNormalizationProps.txt EastAsianWidth.txt NormalizationTest.txt UnicodeData.txt norm_test_table.h unicode_category_table.h unicode_norm_table.h

@@ -11,7 +11,7 @@ endif
 
 # These files are part of the Unicode Character Database. Download them on
 # demand.
-foreach f : ['UnicodeData.txt', 'EastAsianWidth.txt', 'DerivedNormalizationProps.txt', 'CompositionExclusions.txt', 'NormalizationTest.txt']
+foreach f : ['CompositionExclusions.txt', 'DerivedNormalizationProps.txt', 'EastAsianWidth.txt', 'NormalizationTest.txt', 'UnicodeData.txt']
   url = unicode_baseurl.format(UNICODE_VERSION, f)
   target = custom_target(f,
     output: f,
@@ -25,15 +25,6 @@ endforeach
 update_unicode_targets = []
 
 update_unicode_targets += \
-  custom_target('unicode_version.h',
-    output: ['unicode_version.h'],
-    command: [
-      perl, files('generate-unicode_version.pl'),
-      '--outdir', '@OUTDIR@', '--version', UNICODE_VERSION],
-    build_by_default: false,
-  )
-
-update_unicode_targets += \
   custom_target('unicode_category_table.h',
     input: [unicode_data['UnicodeData.txt']],
     output: ['unicode_category_table.h'],
@@ -41,6 +32,25 @@ update_unicode_targets += \
       perl, files('generate-unicode_category_table.pl'),
       '--outdir', '@OUTDIR@', '@INPUT@'],
     build_by_default: false,
+  )
+
+update_unicode_targets += \
+  custom_target('unicode_east_asian_fw_table.h',
+    input: [unicode_data['EastAsianWidth.txt']],
+    output: ['unicode_east_asian_fw_table.h'],
+    command: [perl, files('generate-unicode_east_asian_fw_table.pl'), '@INPUT@'],
+    build_by_default: false,
+    capture: true,
+  )
+
+update_unicode_targets += \
+  custom_target('unicode_nonspacing_table.h',
+    input: [unicode_data['UnicodeData.txt']],
+    output: ['unicode_nonspacing_table.h'],
+    depend_files: perfect_hash_pm,
+    command: [perl, files('generate-unicode_nonspacing_table.pl'), '@INPUT@'],
+    build_by_default: false,
+    capture: true,
   )
 
 update_unicode_targets += \
@@ -55,25 +65,6 @@ update_unicode_targets += \
   )
 
 update_unicode_targets += \
-  custom_target('unicode_nonspacing_table.h',
-    input: [unicode_data['UnicodeData.txt']],
-    output: ['unicode_nonspacing_table.h'],
-    depend_files: perfect_hash_pm,
-    command: [perl, files('generate-unicode_nonspacing_table.pl'), '@INPUT@'],
-    build_by_default: false,
-    capture: true,
-  )
-
-update_unicode_targets += \
-  custom_target('unicode_east_asian_fw_table.h',
-    input: [unicode_data['EastAsianWidth.txt']],
-    output: ['unicode_east_asian_fw_table.h'],
-    command: [perl, files('generate-unicode_east_asian_fw_table.pl'), '@INPUT@'],
-    build_by_default: false,
-    capture: true,
-  )
-
-update_unicode_targets += \
   custom_target('unicode_normprops_table.h',
     input: [unicode_data['DerivedNormalizationProps.txt']],
     output: ['unicode_normprops_table.h'],
@@ -81,6 +72,15 @@ update_unicode_targets += \
     command: [perl, files('generate-unicode_normprops_table.pl'), '@INPUT@'],
     build_by_default: false,
     capture: true,
+  )
+
+update_unicode_targets += \
+  custom_target('unicode_version.h',
+    output: ['unicode_version.h'],
+    command: [
+      perl, files('generate-unicode_version.pl'),
+      '--outdir', '@OUTDIR@', '--version', UNICODE_VERSION],
+    build_by_default: false,
   )
 
 norm_test_table = custom_target('norm_test_table.h',

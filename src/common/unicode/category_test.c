@@ -28,9 +28,9 @@
 static int
 parse_unicode_version(const char *version)
 {
-	int			n,
-				major,
-				minor;
+	int			n PG_USED_FOR_ASSERTS_ONLY;
+	int			major;
+	int			minor;
 
 	n = sscanf(version, "%d.%d", &major, &minor);
 
@@ -54,8 +54,8 @@ main(int argc, char **argv)
 	int			pg_skipped_codepoints = 0;
 	int			icu_skipped_codepoints = 0;
 
-	printf("Postgres Unicode Version:\t%s\n", PG_UNICODE_VERSION);
-	printf("ICU Unicode Version:\t\t%s\n", U_UNICODE_VERSION);
+	printf("category_test: Postgres Unicode version:\t%s\n", PG_UNICODE_VERSION);
+	printf("category_test: ICU Unicode version:\t\t%s\n", U_UNICODE_VERSION);
 
 	for (UChar32 code = 0; code <= 0x10ffff; code++)
 	{
@@ -79,11 +79,11 @@ main(int argc, char **argv)
 				icu_skipped_codepoints++;
 			else
 			{
-				printf("FAILURE for codepoint %06x\n", code);
-				printf("Postgres category:	%02d %s %s\n", pg_category,
+				printf("category_test: FAILURE for codepoint 0x%06x\n", code);
+				printf("category_test: Postgres category:	%02d %s %s\n", pg_category,
 					   unicode_category_abbrev(pg_category),
 					   unicode_category_string(pg_category));
-				printf("ICU category:		%02d %s %s\n", icu_category,
+				printf("category_test: ICU category:		%02d %s %s\n", icu_category,
 					   unicode_category_abbrev(icu_category),
 					   unicode_category_string(icu_category));
 				printf("\n");
@@ -93,16 +93,16 @@ main(int argc, char **argv)
 	}
 
 	if (pg_skipped_codepoints > 0)
-		printf("Skipped %d codepoints unassigned in Postgres due to Unicode version mismatch.\n",
+		printf("category_test: skipped %d codepoints unassigned in Postgres due to Unicode version mismatch\n",
 			   pg_skipped_codepoints);
 	if (icu_skipped_codepoints > 0)
-		printf("Skipped %d codepoints unassigned in ICU due to Unicode version mismatch.\n",
+		printf("category_test: skipped %d codepoints unassigned in ICU due to Unicode version mismatch\n",
 			   icu_skipped_codepoints);
 
-	printf("category_test: All tests successful!\n");
+	printf("category_test: success\n");
 	exit(0);
 #else
-	printf("ICU support required for test; skipping.\n");
+	printf("category_test: ICU support required for test; skipping\n");
 	exit(0);
 #endif
 }
