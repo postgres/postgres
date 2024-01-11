@@ -23,6 +23,19 @@ $oldpub->append_conf('postgresql.conf', 'autovacuum = off');
 my $newpub = PostgreSQL::Test::Cluster->new('newpub');
 $newpub->init(allows_streaming => 'logical');
 
+# During upgrade, when pg_restore performs CREATE DATABASE, bgwriter or
+# checkpointer may flush buffers and hold a file handle for the system table.
+# So, if later due to some reason we need to re-create the file with the same
+# name like a TRUNCATE command on the same table, then the command will fail
+# if OS (such as older Windows versions) doesn't remove an unlinked file
+# completely till it is open. The probability of seeing this behavior is
+# higher in this test because we use wal_level as logical via
+# allows_streaming => 'logical' which in turn set shared_buffers as 1MB.
+$newpub->append_conf('postgresql.conf', q{
+bgwriter_lru_maxpages = 0
+checkpoint_timeout = 1h
+});
+
 # Setup a common pg_upgrade command to be used by all the test cases
 my @pg_upgrade_cmd = (
 	'pg_upgrade', '--no-sync',
