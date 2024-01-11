@@ -440,7 +440,7 @@ GetWalSummarizerState(TimeLineID *summarized_tli, XLogRecPtr *summarized_lsn,
 	}
 	else
 	{
-		int	summarizer_pgprocno = WalSummarizerCtl->summarizer_pgprocno;
+		int			summarizer_pgprocno = WalSummarizerCtl->summarizer_pgprocno;
 
 		*summarized_tli = WalSummarizerCtl->summarized_tli;
 		*summarized_lsn = WalSummarizerCtl->summarized_lsn;
