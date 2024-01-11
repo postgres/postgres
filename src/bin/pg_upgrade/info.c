@@ -756,7 +756,7 @@ get_db_subscription_count(DbInfo *dbinfo)
 
 	conn = connectToServer(&old_cluster, dbinfo->db_name);
 	res = executeQueryOrDie(conn, "SELECT count(*) "
-							"FROM pg_catalog.pg_subscription WHERE subdbid = %d",
+							"FROM pg_catalog.pg_subscription WHERE subdbid = %u",
 							dbinfo->db_oid);
 	dbinfo->nsubs = atoi(PQgetvalue(res, 0, 0));
 
