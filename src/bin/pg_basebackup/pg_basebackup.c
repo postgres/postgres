@@ -709,7 +709,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 					 PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
 					 "pg_xlog" : "pg_wal");
 
-			if (pg_mkdir_p(statusdir, pg_dir_create_mode) != 0 &&
+			if (pg_mkdir_p(summarydir, pg_dir_create_mode) != 0 &&
 				errno != EEXIST)
 				pg_fatal("could not create directory \"%s\": %m", summarydir);
 		}

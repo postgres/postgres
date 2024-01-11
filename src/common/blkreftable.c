@@ -988,8 +988,7 @@ BlockRefTableEntryMarkBlockModified(BlockRefTableEntry *entry,
 		 */
 		max_chunks = Max(16, entry->nchunks);
 		while (max_chunks < chunkno + 1)
-			chunkno *= 2;
-		Assert(max_chunks > chunkno);
+			max_chunks *= 2;
 		extra_chunks = max_chunks - entry->nchunks;
 
 		if (entry->nchunks == 0)

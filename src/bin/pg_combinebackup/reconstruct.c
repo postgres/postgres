@@ -577,13 +577,12 @@ write_reconstructed_file(char *input_filename,
 			{
 				if (current_block == start_of_range)
 					appendStringInfo(&debug_buf, " %u:%s@" UINT64_FORMAT,
-									 current_block,
-									 s == NULL ? "ZERO" : s->filename,
+									 current_block, s->filename,
 									 (uint64) offsetmap[current_block]);
 				else
 					appendStringInfo(&debug_buf, " %u-%u:%s@" UINT64_FORMAT,
 									 start_of_range, current_block,
-									 s == NULL ? "ZERO" : s->filename,
+									 s->filename,
 									 (uint64) offsetmap[current_block]);
 			}
 
