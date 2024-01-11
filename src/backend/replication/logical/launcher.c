@@ -925,7 +925,14 @@ ApplyLauncherRegister(void)
 {
 	BackgroundWorker bgw;
 
-	if (max_logical_replication_workers == 0)
+	/*
+	 * The logical replication launcher is disabled during binary upgrades, to
+	 * prevent logical replication workers from running on the source cluster.
+	 * That could cause replication origins to move forward after having been
+	 * copied to the target cluster, potentially creating conflicts with the
+	 * copied data files.
+	 */
+	if (max_logical_replication_workers == 0 || IsBinaryUpgrade)
 		return;
 
 	memset(&bgw, 0, sizeof(bgw));
