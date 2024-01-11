@@ -587,7 +587,7 @@ if not docs_opt.disabled()
   if xmllint_bin.found() and xsltproc_bin.found()
     docs_dep = declare_dependency()
   elif docs_opt.enabled()
-    error('missing required tools for docs in HTML / man page format')
+    error('missing required tools (xmllint and xsltproc needed) for docs in HTML / man page format')
   endif
 endif
 
