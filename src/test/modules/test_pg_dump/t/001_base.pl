@@ -387,14 +387,14 @@ my %tests = (
 
 	'CREATE SEQUENCE regress_pg_dump_table_col1_seq' => {
 		regexp => qr/^
-                    \QCREATE SEQUENCE public.regress_pg_dump_table_col1_seq\E
-                    \n\s+\QAS integer\E
-                    \n\s+\QSTART WITH 1\E
-                    \n\s+\QINCREMENT BY 1\E
-                    \n\s+\QNO MINVALUE\E
-                    \n\s+\QNO MAXVALUE\E
-                    \n\s+\QCACHE 1;\E
-                    \n/xm,
+			\QCREATE SEQUENCE public.regress_pg_dump_table_col1_seq\E
+			\n\s+\QAS integer\E
+			\n\s+\QSTART WITH 1\E
+			\n\s+\QINCREMENT BY 1\E
+			\n\s+\QNO MINVALUE\E
+			\n\s+\QNO MAXVALUE\E
+			\n\s+\QCACHE 1;\E
+			\n/xm,
 		like => { binary_upgrade => 1, },
 	},
 
@@ -412,13 +412,13 @@ my %tests = (
 
 	'CREATE SEQUENCE regress_pg_dump_seq' => {
 		regexp => qr/^
-                    \QCREATE SEQUENCE public.regress_pg_dump_seq\E
-                    \n\s+\QSTART WITH 1\E
-                    \n\s+\QINCREMENT BY 1\E
-                    \n\s+\QNO MINVALUE\E
-                    \n\s+\QNO MAXVALUE\E
-                    \n\s+\QCACHE 1;\E
-                    \n/xm,
+			\QCREATE SEQUENCE public.regress_pg_dump_seq\E
+			\n\s+\QSTART WITH 1\E
+			\n\s+\QINCREMENT BY 1\E
+			\n\s+\QNO MINVALUE\E
+			\n\s+\QNO MAXVALUE\E
+			\n\s+\QCACHE 1;\E
+			\n/xm,
 		like => { binary_upgrade => 1, },
 	},
 
@@ -642,13 +642,13 @@ my %tests = (
 
 	'CREATE SEQUENCE regress_pg_dump_schema.test_seq' => {
 		regexp => qr/^
-                    \QCREATE SEQUENCE regress_pg_dump_schema.test_seq\E
-                    \n\s+\QSTART WITH 1\E
-                    \n\s+\QINCREMENT BY 1\E
-                    \n\s+\QNO MINVALUE\E
-                    \n\s+\QNO MAXVALUE\E
-                    \n\s+\QCACHE 1;\E
-                    \n/xm,
+			\QCREATE SEQUENCE regress_pg_dump_schema.test_seq\E
+			\n\s+\QSTART WITH 1\E
+			\n\s+\QINCREMENT BY 1\E
+			\n\s+\QNO MINVALUE\E
+			\n\s+\QNO MAXVALUE\E
+			\n\s+\QCACHE 1;\E
+			\n/xm,
 		like => { binary_upgrade => 1, },
 	},
 
@@ -663,9 +663,9 @@ my %tests = (
 
 	'CREATE TYPE regress_pg_dump_schema.test_type' => {
 		regexp => qr/^
-                    \QCREATE TYPE regress_pg_dump_schema.test_type AS (\E
-                    \n\s+\Qcol1 integer\E
-                    \n\);\n/xm,
+			\QCREATE TYPE regress_pg_dump_schema.test_type AS (\E
+			\n\s+\Qcol1 integer\E
+			\n\);\n/xm,
 		like => { binary_upgrade => 1, },
 	},
 
@@ -680,9 +680,9 @@ my %tests = (
 
 	'CREATE FUNCTION regress_pg_dump_schema.test_func' => {
 		regexp => qr/^
-            \QCREATE FUNCTION regress_pg_dump_schema.test_func() RETURNS integer\E
-            \n\s+\QLANGUAGE sql\E
-            \n/xm,
+			\QCREATE FUNCTION regress_pg_dump_schema.test_func() RETURNS integer\E
+			\n\s+\QLANGUAGE sql\E
+			\n/xm,
 		like => { binary_upgrade => 1, },
 	},
 
@@ -697,10 +697,10 @@ my %tests = (
 
 	'CREATE AGGREGATE regress_pg_dump_schema.test_agg' => {
 		regexp => qr/^
-            \QCREATE AGGREGATE regress_pg_dump_schema.test_agg(smallint) (\E
-            \n\s+\QSFUNC = int2_sum,\E
-            \n\s+\QSTYPE = bigint\E
-            \n\);\n/xm,
+			\QCREATE AGGREGATE regress_pg_dump_schema.test_agg(smallint) (\E
+			\n\s+\QSFUNC = int2_sum,\E
+			\n\s+\QSTYPE = bigint\E
+			\n\);\n/xm,
 		like => { binary_upgrade => 1, },
 	},
 
