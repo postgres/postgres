@@ -1,0 +1,122 @@
+<!--
+doc/src/sgml/ref/pg_walsummary.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pgwalsummary">
+ <indexterm zone="app-pgwalsummary">
+  <primary>pg_walsummary</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle><application>pg_walsummary</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_walsummary</refname>
+  <refpurpose>print contents of WAL summary files</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_walsummary</command>
+   <arg rep="repeat" choice="opt"><replaceable>option</replaceable></arg>
+   <arg rep="repeat"><replaceable>file</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+  <para>
+   <application>pg_walsummary</application> is used to print the contents of
+   WAL summary files. These binary files are found with the
+   <literal>pg_wal/summaries</literal> subdirectory of the data directory,
+   and can be converted to text using this tool. This is not ordinarily
+   necessary, since WAL summary files primarily exist to support
+   <link linkend="backup-incremental-backup">incremental backup</link>,
+   but it may be useful for debugging purposes.
+  </para>
+
+  <para>
+   A WAL summary file is indexed by tablespace OID, relation OID, and relation
+   fork. For each relation fork, it stores the list of blocks that were
+   modified by WAL within the range summarized in the file. It can also
+   store a "limit block," which is 0 if the relation fork was created or
+   truncated within the relevant WAL range, and otherwise the shortest length
+   to which the relation fork was truncated. If the relation fork was not
+   created, deleted, or truncated within the relevant WAL range, the limit
+   block is undefined or infinite and will not be printed by this tool.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><option>-i</option></term>
+      <term><option>--indivudual</option></term>
+      <listitem>
+       <para>
+        By default, <literal>pg_walsummary</literal> prints one line of output
+        for each range of one or more consecutive modified blocks. This can
+        make the output a lot briefer, since a relation where all blocks from
+        0 through 999 were modified will produce only one line of output rather
+        than 1000 separate lines. This option requests a separate line of
+        output for every modified block.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-q</option></term>
+      <term><option>--quiet</option></term>
+      <listitem>
+       <para>
+        Do not print any output, except for errors. This can be useful
+        when you want to know whether a WAL summary file can be successfully
+        parsed but don't care about the contents.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
+       <listitem>
+       <para>
+       Shows help about <application>pg_walsummary</application> command line
+       arguments, and exits.
+       </para>
+       </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <para>
+   The environment variable <envar>PG_COLOR</envar> specifies whether to use
+   color in diagnostic messages. Possible values are
+   <literal>always</literal>, <literal>auto</literal> and
+   <literal>never</literal>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-pgbasebackup"/></member>
+   <member><xref linkend="app-pgcombinebackup"/></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

@@ -31,6 +31,7 @@ SUBDIRS = \
 	pg_upgrade \
 	pg_verifybackup \
 	pg_waldump \
+	pg_walsummary \
 	pgbench \
 	psql \
 	scripts
