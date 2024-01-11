@@ -303,7 +303,7 @@ OPTIONS (ADD password_required 'false');
        scans on that server.  This represents the additional overhead of
        data transfer between servers.  You might increase or decrease this
        number to reflect higher or lower network delay to the remote server.
-       The default value is <literal>0.01</literal>.
+       The default value is <literal>0.2</literal>.
       </para>
      </listitem>
     </varlistentry>
