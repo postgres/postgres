@@ -78,10 +78,10 @@ my $filename = sprintf "%s/pg_wal/summaries/%08s%08s%08s%08s%08s.summary",
 					   split(m@/@, $end_lsn);
 ok(-f $filename, "WAL summary file exists");
 
-# Run pg_walsummary on it. We expect block 0 to be modified, but block 1
-# to be unmodified, so the output should say block 0, not block 0..1 or
-# similar.
-my ($stdout, $stderr) = run_command([ 'pg_walsummary', $filename ]);
+# Run pg_walsummary on it. We expect block 0 to be modified, but depending
+# on where the new tuple ends up, block 1 might also be modified, so we
+# pass -i to pg_walsummary to make sure we don't end up with a 0..1 range.
+my ($stdout, $stderr) = run_command([ 'pg_walsummary', '-i', $filename ]);
 like($stdout, qr/FORK main: block 0$/m, "stdout shows block 0 modified");
 is($stderr, '', 'stderr is empty');
 
