@@ -2435,8 +2435,13 @@ pullup_replace_vars_callback(Var *var,
 			else if (newnode && IsA(newnode, PlaceHolderVar) &&
 					 ((PlaceHolderVar *) newnode)->phlevelsup == 0)
 			{
-				/* No need to wrap a PlaceHolderVar with another one, either */
-				wrap = false;
+				/* The same rules apply for a PlaceHolderVar */
+				if (rcon->target_rte->lateral &&
+					!bms_is_subset(((PlaceHolderVar *) newnode)->phrels,
+								   rcon->relids))
+					wrap = true;
+				else
+					wrap = false;
 			}
 			else
 			{
