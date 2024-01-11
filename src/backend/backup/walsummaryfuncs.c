@@ -16,11 +16,13 @@
 #include "common/blkreftable.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "postmaster/walsummarizer.h"
 #include "utils/fmgrprotos.h"
 #include "utils/pg_lsn.h"
 
 #define NUM_WS_ATTS			3
 #define NUM_SUMMARY_ATTS	6
+#define NUM_STATE_ATTS		4
 #define MAX_BLOCKS_PER_CALL	256
 
 /*
@@ -166,4 +168,41 @@ pg_wal_summary_contents(PG_FUNCTION_ARGS)
 	FileClose(io.file);
 
 	return (Datum) 0;
+}
+
+/*
+ * Returns information about the state of the WAL summarizer process.
+ */
+Datum
+pg_get_wal_summarizer_state(PG_FUNCTION_ARGS)
+{
+	Datum		values[NUM_STATE_ATTS];
+	bool		nulls[NUM_STATE_ATTS];
+	TimeLineID	summarized_tli;
+	XLogRecPtr	summarized_lsn;
+	XLogRecPtr	pending_lsn;
+	int			summarizer_pid;
+	TupleDesc	tupdesc;
+	HeapTuple	htup;
+
+	GetWalSummarizerState(&summarized_tli, &summarized_lsn, &pending_lsn,
+						  &summarizer_pid);
+
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	memset(nulls, 0, sizeof(nulls));
+
+	values[0] = Int64GetDatum((int64) summarized_tli);
+	values[1] = LSNGetDatum(summarized_lsn);
+	values[2] = LSNGetDatum(pending_lsn);
+
+	if (summarizer_pid < 0)
+		nulls[3] = true;
+	else
+		values[3] = Int32GetDatum(summarizer_pid);
+
+	htup = heap_form_tuple(tupdesc, values, nulls);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(htup));
 }

@@ -142,6 +142,7 @@ static XLogRecPtr redo_pointer_at_last_summary_removal = InvalidXLogRecPtr;
 bool		summarize_wal = false;
 int			wal_summary_keep_time = 10 * 24 * 60;
 
+static void WalSummarizerShutdown(int code, Datum arg);
 static XLogRecPtr GetLatestLSN(TimeLineID *tli);
 static void HandleWalSummarizerInterrupts(void);
 static XLogRecPtr SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn,
@@ -245,6 +246,7 @@ WalSummarizerMain(void)
 	pqsignal(SIGUSR2, SIG_IGN); /* not used */
 
 	/* Advertise ourselves. */
+	on_shmem_exit(WalSummarizerShutdown, (Datum) 0);
 	LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
 	WalSummarizerCtl->summarizer_pgprocno = MyProc->pgprocno;
 	LWLockRelease(WALSummarizerLock);
@@ -415,6 +417,57 @@ WalSummarizerMain(void)
 		/* Wake up anyone waiting for more summary files to be written. */
 		ConditionVariableBroadcast(&WalSummarizerCtl->summary_file_cv);
 	}
+}
+
+/*
+ * Get information about the state of the WAL summarizer.
+ */
+void
+GetWalSummarizerState(TimeLineID *summarized_tli, XLogRecPtr *summarized_lsn,
+					  XLogRecPtr *pending_lsn, int *summarizer_pid)
+{
+	LWLockAcquire(WALSummarizerLock, LW_SHARED);
+	if (!WalSummarizerCtl->initialized)
+	{
+		/*
+		 * If initialized is false, the rest of the structure contents are
+		 * undefined.
+		 */
+		*summarized_tli = 0;
+		*summarized_lsn = InvalidXLogRecPtr;
+		*pending_lsn = InvalidXLogRecPtr;
+		*summarizer_pid = -1;
+	}
+	else
+	{
+		int	summarizer_pgprocno = WalSummarizerCtl->summarizer_pgprocno;
+
+		*summarized_tli = WalSummarizerCtl->summarized_tli;
+		*summarized_lsn = WalSummarizerCtl->summarized_lsn;
+		if (summarizer_pgprocno == INVALID_PGPROCNO)
+		{
+			/*
+			 * If the summarizer has exited, the fact that it had processed
+			 * beyond summarized_lsn is irrelevant now.
+			 */
+			*pending_lsn = WalSummarizerCtl->summarized_lsn;
+			*summarizer_pid = -1;
+		}
+		else
+		{
+			*pending_lsn = WalSummarizerCtl->pending_lsn;
+
+			/*
+			 * We're not fussed about inexact answers here, since they could
+			 * become stale instantly, so we don't bother taking the lock, but
+			 * make sure that invalid PID values are normalized to -1.
+			 */
+			*summarizer_pid = GetPGProcByNumber(summarizer_pgprocno)->pid;
+			if (*summarizer_pid <= 0)
+				*summarizer_pid = -1;
+		}
+	}
+	LWLockRelease(WALSummarizerLock);
 }
 
 /*
@@ -620,6 +673,18 @@ WaitForWalSummarization(XLogRecPtr lsn, long timeout, XLogRecPtr *pending_lsn)
 	}
 
 	return summarized_lsn;
+}
+
+/*
+ * On exit, update shared memory to make it clear that we're no longer
+ * running.
+ */
+static void
+WalSummarizerShutdown(int code, Datum arg)
+{
+	LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
+	WalSummarizerCtl->summarizer_pgprocno = INVALID_PGPROCNO;
+	LWLockRelease(WALSummarizerLock);
 }
 
 /*

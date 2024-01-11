@@ -12142,5 +12142,14 @@
   proargmodes => '{i,i,i,o,o,o,o,o,o}',
   proargnames => '{tli,start_lsn,end_lsn,relfilenode,reltablespace,reldatabase,relforknumber,relblocknumber,is_limit_block}',
   prosrc => 'pg_wal_summary_contents' },
+{ oid => '8438',
+  descr => 'WAL summarizer state',
+  proname => 'pg_get_wal_summarizer_state',
+  provolatile => 'v', proparallel => 's',
+  prorettype => 'record', proargtypes => '',
+  proallargtypes => '{int8,pg_lsn,pg_lsn,int4}',
+  proargmodes => '{o,o,o,o}',
+  proargnames => '{summarized_tli,summarized_lsn,pending_lsn,summarizer_pid}',
+  prosrc => 'pg_get_wal_summarizer_state' },
 
 ]

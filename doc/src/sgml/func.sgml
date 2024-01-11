@@ -26554,6 +26554,34 @@ SELECT collation for ('foo' COLLATE "de_DE");
         <literal>relblocknumber</literal> will be zero.
        </para></entry>
       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_wal_summarizer_state</primary>
+        </indexterm>
+        <function>pg_get_wal_summarizer_state</function> ()
+        <returnvalue>record</returnvalue>
+        ( <parameter>summarized_tli</parameter> <type>bigint</type>,
+        <parameter>summarized_lsn</parameter> <type>pg_lsn</type>,
+        <parameter>pending_lsn</parameter> <type>pg_lsn</type>,
+        <parameter>summarizer_pid</parameter> <type>int</type> )
+       </para>
+       <para>
+        Returns information about the progress of the WAL summarizer. If the
+        WAL summarizer has never run since the instance was started, then
+        <literal>summarized_tli</literal> and <literal>summarized_lsn</literal>
+        will be <literal>0</literal> and <literal>0/0</literal> respectively;
+        otherwise, they will be the TLI and ending LSN of the last WAL summary
+        file written to disk. If the WAL summarizer is currently running,
+        <literal>pending_lsn</literal> will be the ending LSN of the last
+        record that it has consumed, which must always be greater than or
+        equal to <literal>summarized_lsn</literal>; if the WAL summarizer is
+        not running, it will be equal to <literal>summarized_lsn</literal>.
+        <literal>summarized_pid</literal> is the PID of the WAL summarizer
+        process, if it is running, and otherwise NULL.
+       </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
