@@ -7980,6 +7980,33 @@ select * from
          Output: (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
 (24 rows)
 
+-- another case requiring nested PlaceHolderVars
+explain (verbose, costs off)
+select * from
+  (select 0 as val0) as ss0
+  left join (select 1 as val) as ss1 on true
+  left join lateral (select ss1.val as val_filtered where false) as ss2 on true;
+           QUERY PLAN           
+--------------------------------
+ Nested Loop Left Join
+   Output: 0, (1), ((1))
+   Join Filter: false
+   ->  Result
+         Output: 1
+   ->  Result
+         Output: (1)
+         One-Time Filter: false
+(8 rows)
+
+select * from
+  (select 0 as val0) as ss0
+  left join (select 1 as val) as ss1 on true
+  left join lateral (select ss1.val as val_filtered where false) as ss2 on true;
+ val0 | val | val_filtered 
+------+-----+--------------
+    0 |   1 |             
+(1 row)
+
 -- case that breaks the old ph_may_need optimization
 explain (verbose, costs off)
 select c.*,a.*,ss1.q1,ss2.q1,ss3.* from
