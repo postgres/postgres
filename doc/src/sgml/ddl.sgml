@@ -4299,7 +4299,9 @@ ALTER INDEX measurement_city_id_logdate_key
         Using <literal>ONLY</literal> to add or drop a constraint on only
         the partitioned table is supported as long as there are no
         partitions.  Once partitions exist, using <literal>ONLY</literal>
-        will result in an error.  Instead, constraints on the partitions
+        will result in an error for any constraints other than
+        <literal>UNIQUE</literal> and <literal>PRIMARY KEY</literal>.
+        Instead, constraints on the partitions
         themselves can be added and (if they are not present in the parent
         table) dropped.
        </para>
