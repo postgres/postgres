@@ -128,10 +128,10 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      </para>
      <para>
       For <command>INSERT</command>, <command>UPDATE</command> and
-      <command>DELETE</command> queries a RETURNING clause must be provided,
-      and the target relation must not have a conditional rule, nor
-      an <literal>ALSO</literal> rule, nor an <literal>INSTEAD</literal> rule
-      that expands to multiple statements.
+      <command>DELETE</command> queries a <literal>RETURNING</literal> clause
+      must be provided, and the target relation must not have a conditional
+      rule, nor an <literal>ALSO</literal> rule, nor an
+      <literal>INSTEAD</literal> rule that expands to multiple statements.
      </para>
     </listitem>
    </varlistentry>
