@@ -559,11 +559,11 @@ start_postmaster(void)
 		else
 			close(fd);
 
-		cmd = psprintf("CMD /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
+		cmd = psprintf("CMD /D /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
 					   exec_path, pgdata_opt, post_opts, DEVNULL, log_file);
 	}
 	else
-		cmd = psprintf("CMD /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
+		cmd = psprintf("CMD /D /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
 					   exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	if (!CreateRestrictedProcess(cmd, &pi, false))
