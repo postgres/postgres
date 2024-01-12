@@ -6984,22 +6984,15 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	Relation	pgclass,
 				attrdesc;
 	HeapTuple	reltup;
-	FormData_pg_attribute attribute;
+	Form_pg_attribute attribute;
 	int			newattnum;
 	char		relkind;
-	HeapTuple	typeTuple;
-	Oid			typeOid;
-	int32		typmod;
-	Oid			collOid;
-	Form_pg_type tform;
 	Expr	   *defval;
 	List	   *children;
 	ListCell   *child;
 	AlterTableCmd *childcmd;
-	AclResult	aclresult;
 	ObjectAddress address;
 	TupleDesc	tupdesc;
-	FormData_pg_attribute *aattr[] = {&attribute};
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -7121,58 +7114,20 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				 errmsg("tables can have at most %d columns",
 						MaxHeapAttributeNumber)));
 
-	typeTuple = typenameType(NULL, colDef->typeName, &typmod);
-	tform = (Form_pg_type) GETSTRUCT(typeTuple);
-	typeOid = tform->oid;
+	/*
+	 * Construct new attribute's pg_attribute entry.
+	 */
+	tupdesc = BuildDescForRelation(list_make1(colDef));
 
-	aclresult = object_aclcheck(TypeRelationId, typeOid, GetUserId(), ACL_USAGE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error_type(aclresult, typeOid);
+	attribute = TupleDescAttr(tupdesc, 0);
 
-	collOid = GetColumnDefCollation(NULL, colDef, typeOid);
+	/* Fix up attribute number */
+	attribute->attnum = newattnum;
 
 	/* make sure datatype is legal for a column */
-	CheckAttributeType(colDef->colname, typeOid, collOid,
+	CheckAttributeType(NameStr(attribute->attname), attribute->atttypid, attribute->attcollation,
 					   list_make1_oid(rel->rd_rel->reltype),
 					   0);
-
-	/*
-	 * Construct new attribute's pg_attribute entry.  (Variable-length fields
-	 * are handled by InsertPgAttributeTuples().)
-	 */
-	attribute.attrelid = myrelid;
-	namestrcpy(&(attribute.attname), colDef->colname);
-	attribute.atttypid = typeOid;
-	attribute.attstattarget = -1;
-	attribute.attlen = tform->typlen;
-	attribute.attnum = newattnum;
-	if (list_length(colDef->typeName->arrayBounds) > PG_INT16_MAX)
-		ereport(ERROR,
-				errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				errmsg("too many array dimensions"));
-	attribute.attndims = list_length(colDef->typeName->arrayBounds);
-	attribute.atttypmod = typmod;
-	attribute.attbyval = tform->typbyval;
-	attribute.attalign = tform->typalign;
-	if (colDef->storage_name)
-		attribute.attstorage = GetAttributeStorage(typeOid, colDef->storage_name);
-	else
-		attribute.attstorage = tform->typstorage;
-	attribute.attcompression = GetAttributeCompression(typeOid,
-													   colDef->compression);
-	attribute.attnotnull = colDef->is_not_null;
-	attribute.atthasdef = false;
-	attribute.atthasmissing = false;
-	attribute.attidentity = colDef->identity;
-	attribute.attgenerated = colDef->generated;
-	attribute.attisdropped = false;
-	attribute.attislocal = colDef->is_local;
-	attribute.attinhcount = colDef->inhcount;
-	attribute.attcollation = collOid;
-
-	ReleaseSysCache(typeTuple);
-
-	tupdesc = CreateTupleDesc(lengthof(aattr), (FormData_pg_attribute **) &aattr);
 
 	InsertPgAttributeTuples(attrdesc, tupdesc, myrelid, NULL, NULL);
 
@@ -7203,7 +7158,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		RawColumnDefault *rawEnt;
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
-		rawEnt->attnum = attribute.attnum;
+		rawEnt->attnum = attribute->attnum;
 		rawEnt->raw_default = copyObject(colDef->raw_default);
 
 		/*
@@ -7277,7 +7232,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			NextValueExpr *nve = makeNode(NextValueExpr);
 
 			nve->seqid = RangeVarGetRelid(colDef->identitySequence, NoLock, false);
-			nve->typeId = typeOid;
+			nve->typeId = attribute->atttypid;
 
 			defval = (Expr *) nve;
 
@@ -7285,23 +7240,23 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
 		}
 		else
-			defval = (Expr *) build_column_default(rel, attribute.attnum);
+			defval = (Expr *) build_column_default(rel, attribute->attnum);
 
-		if (!defval && DomainHasConstraints(typeOid))
+		if (!defval && DomainHasConstraints(attribute->atttypid))
 		{
 			Oid			baseTypeId;
 			int32		baseTypeMod;
 			Oid			baseTypeColl;
 
-			baseTypeMod = typmod;
-			baseTypeId = getBaseTypeAndTypmod(typeOid, &baseTypeMod);
+			baseTypeMod = attribute->atttypmod;
+			baseTypeId = getBaseTypeAndTypmod(attribute->atttypid, &baseTypeMod);
 			baseTypeColl = get_typcollation(baseTypeId);
 			defval = (Expr *) makeNullConst(baseTypeId, baseTypeMod, baseTypeColl);
 			defval = (Expr *) coerce_to_target_type(NULL,
 													(Node *) defval,
 													baseTypeId,
-													typeOid,
-													typmod,
+													attribute->atttypid,
+													attribute->atttypmod,
 													COERCION_ASSIGNMENT,
 													COERCE_IMPLICIT_CAST,
 													-1);
@@ -7314,17 +7269,17 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			NewColumnValue *newval;
 
 			newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
-			newval->attnum = attribute.attnum;
+			newval->attnum = attribute->attnum;
 			newval->expr = expression_planner(defval);
 			newval->is_generated = (colDef->generated != '\0');
 
 			tab->newvals = lappend(tab->newvals, newval);
 		}
 
-		if (DomainHasConstraints(typeOid))
+		if (DomainHasConstraints(attribute->atttypid))
 			tab->rewrite |= AT_REWRITE_DEFAULT_VAL;
 
-		if (!TupleDescAttr(rel->rd_att, attribute.attnum - 1)->atthasmissing)
+		if (!TupleDescAttr(rel->rd_att, attribute->attnum - 1)->atthasmissing)
 		{
 			/*
 			 * If the new column is NOT NULL, and there is no missing value,
@@ -7337,8 +7292,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Add needed dependency entries for the new column.
 	 */
-	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid);
-	add_column_collation_dependency(myrelid, newattnum, attribute.attcollation);
+	add_column_datatype_dependency(myrelid, newattnum, attribute->atttypid);
+	add_column_collation_dependency(myrelid, newattnum, attribute->attcollation);
 
 	/*
 	 * Propagate to children as appropriate.  Unlike most other ALTER
