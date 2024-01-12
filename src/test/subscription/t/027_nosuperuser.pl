@@ -303,4 +303,84 @@ GRANT SELECT ON alice.unpartitioned TO regress_alice;
 expect_replication("alice.unpartitioned", 3, 17, 21,
 	"restoring SELECT permission permits replication to continue");
 
+# If the subscription connection requires a password ('password_required'
+# is true) then a non-superuser must specify that password in the connection
+# string.
+$ENV{"PGPASSWORD"} = 'secret';
+
+my $node_publisher1  = PostgreSQL::Test::Cluster->new('publisher1');
+my $node_subscriber1 = PostgreSQL::Test::Cluster->new('subscriber1');
+$node_publisher1->init(allows_streaming => 'logical');
+$node_subscriber1->init;
+$node_publisher1->start;
+$node_subscriber1->start;
+my $publisher_connstr1 =
+  $node_publisher1->connstr . ' user=regress_test_user dbname=postgres';
+my $publisher_connstr2 =
+  $node_publisher1->connstr
+  . ' user=regress_test_user dbname=postgres password=secret';
+
+for my $node ($node_publisher1, $node_subscriber1)
+{
+	$node->safe_psql(
+		'postgres', qq(
+  CREATE ROLE regress_test_user PASSWORD 'secret' LOGIN REPLICATION;
+  GRANT CREATE ON DATABASE postgres TO regress_test_user;
+  GRANT PG_CREATE_SUBSCRIPTION TO regress_test_user;
+  ));
+}
+
+$node_publisher1->safe_psql(
+	'postgres', qq(
+SET SESSION AUTHORIZATION regress_test_user;
+CREATE PUBLICATION regress_test_pub;
+));
+$node_subscriber1->safe_psql(
+	'postgres', qq(
+CREATE SUBSCRIPTION regress_test_sub CONNECTION '$publisher_connstr1' PUBLICATION regress_test_pub;
+));
+
+# Wait for initial sync to finish
+$node_subscriber1->wait_for_subscription_sync($node_publisher1,
+	'regress_test_sub');
+
+# Setup pg_hba configuration so that logical replication connection without
+# password is not allowed.
+unlink($node_publisher1->data_dir . '/pg_hba.conf');
+$node_publisher1->append_conf('pg_hba.conf',
+	qq{local all 				regress_test_user 	md5});
+$node_publisher1->reload;
+
+# Change the subscription owner to a non-superuser
+$node_subscriber1->safe_psql(
+	'postgres', qq(
+ALTER SUBSCRIPTION regress_test_sub OWNER TO regress_test_user;
+));
+
+# Non-superuser must specify password in the connection string
+my ($ret, $stdout, $stderr) = $node_subscriber1->psql(
+	'postgres', qq(
+SET SESSION AUTHORIZATION regress_test_user;
+ALTER SUBSCRIPTION regress_test_sub REFRESH PUBLICATION;
+));
+isnt($ret, 0,
+	"non zero exit for subscription whose owner is a non-superuser must specify password parameter of the connection string"
+);
+ok( $stderr =~ m/DETAIL:  Non-superusers must provide a password in the connection string./,
+	'subscription whose owner is a non-superuser must specify password parameter of the connection string'
+);
+
+delete $ENV{"PGPASSWORD"};
+
+# It should succeed after including the password parameter of the connection
+# string.
+($ret, $stdout, $stderr) = $node_subscriber1->psql(
+	'postgres', qq(
+SET SESSION AUTHORIZATION regress_test_user;
+ALTER SUBSCRIPTION regress_test_sub CONNECTION '$publisher_connstr2';
+ALTER SUBSCRIPTION regress_test_sub REFRESH PUBLICATION;
+));
+is($ret, 0,
+	"Non-superuser will be able to refresh the publication after specifying the password parameter of the connection string"
+);
 done_testing();
