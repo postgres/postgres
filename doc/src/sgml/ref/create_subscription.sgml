@@ -357,11 +357,12 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         <term><literal>password_required</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
-          Specifies whether connections to the publisher made as a result
-          of this subscription must use password authentication. This setting
-          is ignored when the subscription is owned by a superuser.
-          The default is <literal>true</literal>. Only superusers can set
-          this value to <literal>false</literal>.
+          If set to <literal>true</literal>, connections to the publisher made
+          as a result of this subscription must use password authentication
+          and the password must be specified as a part of the connection
+          string. This setting is ignored when the subscription is owned by a
+          superuser.  The default is <literal>true</literal>. Only superusers
+          can set this value to <literal>false</literal>.
          </para>
         </listitem>
        </varlistentry>
