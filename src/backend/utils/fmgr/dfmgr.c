@@ -33,6 +33,7 @@
 #include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
 #include "storage/shmem.h"
 #include "utils/hsearch.h"
 
@@ -78,7 +79,6 @@ char	   *Dynamic_library_path;
 static void *internal_load_library(const char *libname);
 static void incompatible_module_error(const char *libname,
 									  const Pg_magic_struct *module_magic_data) pg_attribute_noreturn();
-static bool file_exists(const char *name);
 static char *expand_dynamic_library_name(const char *name);
 static void check_restricted_library_name(const char *name);
 static char *substitute_libpath_macro(const char *name);
@@ -400,23 +400,6 @@ incompatible_module_error(const char *libname,
 			 errdetail_internal("%s", details.data)));
 }
 
-static bool
-file_exists(const char *name)
-{
-	struct stat st;
-
-	Assert(name != NULL);
-
-	if (stat(name, &st) == 0)
-		return !S_ISDIR(st.st_mode);
-	else if (!(errno == ENOENT || errno == ENOTDIR || errno == EACCES))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not access file \"%s\": %m", name)));
-
-	return false;
-}
-
 
 /*
  * If name contains a slash, check if the file exists, if so return
@@ -447,7 +430,7 @@ expand_dynamic_library_name(const char *name)
 	else
 	{
 		full = substitute_libpath_macro(name);
-		if (file_exists(full))
+		if (pg_file_exists(full))
 			return full;
 		pfree(full);
 	}
@@ -465,7 +448,7 @@ expand_dynamic_library_name(const char *name)
 	{
 		full = substitute_libpath_macro(new);
 		pfree(new);
-		if (file_exists(full))
+		if (pg_file_exists(full))
 			return full;
 		pfree(full);
 	}
@@ -582,7 +565,7 @@ find_in_dynamic_libpath(const char *basename)
 
 		elog(DEBUG3, "find_in_dynamic_libpath: trying \"%s\"", full);
 
-		if (file_exists(full))
+		if (pg_file_exists(full))
 			return full;
 
 		pfree(full);

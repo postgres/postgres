@@ -494,6 +494,29 @@ retry:
 }
 
 /*
+ * pg_file_exists -- check that a file exists.
+ *
+ * This requires an absolute path to the file.  Returns true if the file is
+ * not a directory, false otherwise.
+ */
+bool
+pg_file_exists(const char *name)
+{
+	struct stat st;
+
+	Assert(name != NULL);
+
+	if (stat(name, &st) == 0)
+		return !S_ISDIR(st.st_mode);
+	else if (!(errno == ENOENT || errno == ENOTDIR || errno == EACCES))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not access file \"%s\": %m", name)));
+
+	return false;
+}
+
+/*
  * pg_flush_data --- advise OS that the described dirty data should be flushed
  *
  * offset of 0 with nbytes 0 means that the entire file should be flushed
