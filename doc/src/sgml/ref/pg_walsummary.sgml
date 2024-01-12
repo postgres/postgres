@@ -58,7 +58,7 @@ PostgreSQL documentation
     <variablelist>
      <varlistentry>
       <term><option>-i</option></term>
-      <term><option>--indivudual</option></term>
+      <term><option>--individual</option></term>
       <listitem>
        <para>
         By default, <literal>pg_walsummary</literal> prints one line of output
