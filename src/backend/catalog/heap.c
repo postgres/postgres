@@ -749,14 +749,16 @@ InsertPgAttributeTuples(Relation pg_attribute_rel,
 		slot[slotCount]->tts_values[Anum_pg_attribute_attisdropped - 1] = BoolGetDatum(attrs->attisdropped);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attislocal - 1] = BoolGetDatum(attrs->attislocal);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attinhcount - 1] = Int16GetDatum(attrs->attinhcount);
-		slot[slotCount]->tts_values[Anum_pg_attribute_attstattarget - 1] = Int16GetDatum(attrs->attstattarget);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attcollation - 1] = ObjectIdGetDatum(attrs->attcollation);
 		if (attoptions && attoptions[natts] != (Datum) 0)
 			slot[slotCount]->tts_values[Anum_pg_attribute_attoptions - 1] = attoptions[natts];
 		else
 			slot[slotCount]->tts_isnull[Anum_pg_attribute_attoptions - 1] = true;
 
-		/* start out with empty permissions and empty options */
+		/*
+		 * The remaining fields are not set for new columns.
+		 */
+		slot[slotCount]->tts_isnull[Anum_pg_attribute_attstattarget - 1] = true;
 		slot[slotCount]->tts_isnull[Anum_pg_attribute_attacl - 1] = true;
 		slot[slotCount]->tts_isnull[Anum_pg_attribute_attfdwoptions - 1] = true;
 		slot[slotCount]->tts_isnull[Anum_pg_attribute_attmissingval - 1] = true;
@@ -818,9 +820,6 @@ AddNewAttributeTuples(Oid new_rel_oid,
 
 	indstate = CatalogOpenIndexes(rel);
 
-	/* set stats detail level to a sane default */
-	for (int i = 0; i < natts; i++)
-		tupdesc->attrs[i].attstattarget = -1;
 	InsertPgAttributeTuples(rel, tupdesc, new_rel_oid, NULL, indstate);
 
 	/* add dependencies on their datatypes and collations */
@@ -1685,9 +1684,6 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	/* Remove any not-null constraint the column may have */
 	attStruct->attnotnull = false;
 
-	/* We don't want to keep stats for it anymore */
-	attStruct->attstattarget = 0;
-
 	/* Unset this so no one tries to look up the generation expression */
 	attStruct->attgenerated = '\0';
 
@@ -1704,9 +1700,11 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
 
 	/*
-	 * Clear the other variable-length fields.  This saves some space in
-	 * pg_attribute and removes no longer useful information.
+	 * Clear the other nullable fields.  This saves some space in pg_attribute
+	 * and removes no longer useful information.
 	 */
+	nullsAtt[Anum_pg_attribute_attstattarget - 1] = true;
+	replacesAtt[Anum_pg_attribute_attstattarget - 1] = true;
 	nullsAtt[Anum_pg_attribute_attacl - 1] = true;
 	replacesAtt[Anum_pg_attribute_attacl - 1] = true;
 	nullsAtt[Anum_pg_attribute_attoptions - 1] = true;

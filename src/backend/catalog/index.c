@@ -325,7 +325,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 
 		MemSet(to, 0, ATTRIBUTE_FIXED_PART_SIZE);
 		to->attnum = i + 1;
-		to->attstattarget = -1;
 		to->attcacheoff = -1;
 		to->attislocal = true;
 		to->attcollation = (i < numkeyatts) ? collationIds[i] : InvalidOid;
@@ -1780,10 +1779,12 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 		while (HeapTupleIsValid((attrTuple = systable_getnext(scan))))
 		{
 			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(attrTuple);
+			HeapTuple	tp;
+			Datum		dat;
+			bool		isnull;
 			Datum		repl_val[Natts_pg_attribute];
 			bool		repl_null[Natts_pg_attribute];
 			bool		repl_repl[Natts_pg_attribute];
-			int			attstattarget;
 			HeapTuple	newTuple;
 
 			/* Ignore dropped columns */
@@ -1793,10 +1794,18 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 			/*
 			 * Get attstattarget from the old index and refresh the new value.
 			 */
-			attstattarget = get_attstattarget(oldIndexId, att->attnum);
+			tp = SearchSysCache2(ATTNUM, ObjectIdGetDatum(oldIndexId), Int16GetDatum(att->attnum));
+			if (!HeapTupleIsValid(tp))
+				elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+					 att->attnum, oldIndexId);
+			dat = SysCacheGetAttr(ATTNUM, tp, Anum_pg_attribute_attstattarget, &isnull);
+			ReleaseSysCache(tp);
 
-			/* no need for a refresh if both match */
-			if (attstattarget == att->attstattarget)
+			/*
+			 * No need for a refresh if old index value is null.  (All new
+			 * index values are null at this point.)
+			 */
+			if (isnull)
 				continue;
 
 			memset(repl_val, 0, sizeof(repl_val));
@@ -1804,7 +1813,7 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 			memset(repl_repl, false, sizeof(repl_repl));
 
 			repl_repl[Anum_pg_attribute_attstattarget - 1] = true;
-			repl_val[Anum_pg_attribute_attstattarget - 1] = Int16GetDatum(attstattarget);
+			repl_val[Anum_pg_attribute_attstattarget - 1] = dat;
 
 			newTuple = heap_modify_tuple(attrTuple,
 										 RelationGetDescr(pg_attribute),

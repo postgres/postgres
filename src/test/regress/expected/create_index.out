@@ -2707,8 +2707,8 @@ SELECT attrelid::regclass, attnum, attstattarget
          attrelid          | attnum | attstattarget 
 ---------------------------+--------+---------------
  concur_exprs_index_expr   |      1 |           100
- concur_exprs_index_pred   |      1 |            -1
- concur_exprs_index_pred_2 |      1 |            -1
+ concur_exprs_index_pred   |      1 |              
+ concur_exprs_index_pred_2 |      1 |              
 (3 rows)
 
 DROP TABLE concur_exprs_tab;

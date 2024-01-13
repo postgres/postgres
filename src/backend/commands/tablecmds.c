@@ -8543,10 +8543,14 @@ ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 {
 	int			newtarget;
 	Relation	attrelation;
-	HeapTuple	tuple;
+	HeapTuple	tuple,
+				newtuple;
 	Form_pg_attribute attrtuple;
 	AttrNumber	attnum;
 	ObjectAddress address;
+	Datum		repl_val[Natts_pg_attribute];
+	bool		repl_null[Natts_pg_attribute];
+	bool		repl_repl[Natts_pg_attribute];
 
 	/*
 	 * We allow referencing columns by numbers only for indexes, since table
@@ -8559,8 +8563,18 @@ ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot refer to non-index column by number")));
 
-	Assert(IsA(newValue, Integer));
-	newtarget = intVal(newValue);
+	if (newValue)
+	{
+		Assert(IsA(newValue, Integer));
+		newtarget = intVal(newValue);
+	}
+	else
+	{
+		/*
+		 * -1 was used in previous versions to represent the default setting
+		 */
+		newtarget = -1;
+	}
 
 	/*
 	 * Limit target to a sane range
@@ -8585,7 +8599,7 @@ ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 
 	if (colName)
 	{
-		tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
+		tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
 
 		if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,
@@ -8595,7 +8609,7 @@ ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 	}
 	else
 	{
-		tuple = SearchSysCacheCopyAttNum(RelationGetRelid(rel), colNum);
+		tuple = SearchSysCacheAttNum(RelationGetRelid(rel), colNum);
 
 		if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,
@@ -8629,16 +8643,27 @@ ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 					 errhint("Alter statistics on table column instead.")));
 	}
 
-	attrtuple->attstattarget = newtarget;
-
-	CatalogTupleUpdate(attrelation, &tuple->t_self, tuple);
+	/* Build new tuple. */
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
+	if (newtarget != -1)
+		repl_val[Anum_pg_attribute_attstattarget - 1] = newtarget;
+	else
+		repl_null[Anum_pg_attribute_attstattarget - 1] = true;
+	repl_repl[Anum_pg_attribute_attstattarget - 1] = true;
+	newtuple = heap_modify_tuple(tuple, RelationGetDescr(attrelation),
+								 repl_val, repl_null, repl_repl);
+	CatalogTupleUpdate(attrelation, &tuple->t_self, newtuple);
 
 	InvokeObjectPostAlterHook(RelationRelationId,
 							  RelationGetRelid(rel),
 							  attrtuple->attnum);
 	ObjectAddressSubSet(address, RelationRelationId,
 						RelationGetRelid(rel), attnum);
-	heap_freetuple(tuple);
+
+	heap_freetuple(newtuple);
+
+	ReleaseSysCache(tuple);
 
 	table_close(attrelation, RowExclusiveLock);
 
