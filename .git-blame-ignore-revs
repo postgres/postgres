@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+96c019ffa3f883d139709ea0cfe76dc1bce0f1f8 # 2024-01-13 13:54:11 -0500
+# Re-pgindent catcache.c after previous commit.
+
 611806cd726fc92989ac918eac48fd8d684869c7 # 2023-10-26 09:20:54 +0200
 # Add trailing commas to enum definitions
 
