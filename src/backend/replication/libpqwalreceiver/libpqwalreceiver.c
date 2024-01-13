@@ -284,10 +284,15 @@ libpqrcv_check_conninfo(const char *conninfo, bool must_use_password)
 		}
 
 		if (!uses_password)
+		{
+			/* malloc'd, so we must free it explicitly */
+			PQconninfoFree(opts);
+
 			ereport(ERROR,
 					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
 					 errmsg("password is required"),
 					 errdetail("Non-superusers must provide a password in the connection string.")));
+		}
 	}
 
 	PQconninfoFree(opts);
