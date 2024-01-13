@@ -1362,34 +1362,34 @@ SearchCatCacheMiss(CatCache *cache,
 		cur_skey[2].sk_argument = v3;
 		cur_skey[3].sk_argument = v4;
 
-	scandesc = systable_beginscan(relation,
-								  cache->cc_indexoid,
-								  IndexScanOK(cache, cur_skey),
-								  NULL,
-								  nkeys,
-								  cur_skey);
+		scandesc = systable_beginscan(relation,
+									  cache->cc_indexoid,
+									  IndexScanOK(cache, cur_skey),
+									  NULL,
+									  nkeys,
+									  cur_skey);
 
-	ct = NULL;
-	stale = false;
+		ct = NULL;
+		stale = false;
 
-	while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
-	{
-		ct = CatalogCacheCreateEntry(cache, ntp, scandesc, NULL,
-									 hashValue, hashIndex);
-		/* upon failure, we must start the scan over */
-		if (ct == NULL)
+		while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
 		{
-			stale = true;
-			break;
+			ct = CatalogCacheCreateEntry(cache, ntp, scandesc, NULL,
+										 hashValue, hashIndex);
+			/* upon failure, we must start the scan over */
+			if (ct == NULL)
+			{
+				stale = true;
+				break;
+			}
+			/* immediately set the refcount to 1 */
+			ResourceOwnerEnlargeCatCacheRefs(CurrentResourceOwner);
+			ct->refcount++;
+			ResourceOwnerRememberCatCacheRef(CurrentResourceOwner, &ct->tuple);
+			break;				/* assume only one match */
 		}
-		/* immediately set the refcount to 1 */
-		ResourceOwnerEnlargeCatCacheRefs(CurrentResourceOwner);
-		ct->refcount++;
-		ResourceOwnerRememberCatCacheRef(CurrentResourceOwner, &ct->tuple);
-		break;					/* assume only one match */
-	}
 
-	systable_endscan(scandesc);
+		systable_endscan(scandesc);
 	} while (stale);
 
 	table_close(relation, AccessShareLock);
@@ -1649,95 +1649,95 @@ SearchCatCacheList(CatCache *cache,
 			cur_skey[2].sk_argument = v3;
 			cur_skey[3].sk_argument = v4;
 
-		scandesc = systable_beginscan(relation,
-									  cache->cc_indexoid,
-									  IndexScanOK(cache, cur_skey),
-									  NULL,
-									  nkeys,
-									  cur_skey);
+			scandesc = systable_beginscan(relation,
+										  cache->cc_indexoid,
+										  IndexScanOK(cache, cur_skey),
+										  NULL,
+										  nkeys,
+										  cur_skey);
 
-		/* The list will be ordered iff we are doing an index scan */
-		ordered = (scandesc->irel != NULL);
+			/* The list will be ordered iff we are doing an index scan */
+			ordered = (scandesc->irel != NULL);
 
-		stale = false;
+			stale = false;
 
-		while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
-		{
-			uint32		hashValue;
-			Index		hashIndex;
-			bool		found = false;
-			dlist_head *bucket;
-
-			/*
-			 * See if there's an entry for this tuple already.
-			 */
-			ct = NULL;
-			hashValue = CatalogCacheComputeTupleHashValue(cache, cache->cc_nkeys, ntp);
-			hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
-
-			bucket = &cache->cc_bucket[hashIndex];
-			dlist_foreach(iter, bucket)
+			while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
 			{
-				ct = dlist_container(CatCTup, cache_elem, iter.cur);
-
-				if (ct->dead || ct->negative)
-					continue;	/* ignore dead and negative entries */
-
-				if (ct->hash_value != hashValue)
-					continue;	/* quickly skip entry if wrong hash val */
-
-				if (!ItemPointerEquals(&(ct->tuple.t_self), &(ntp->t_self)))
-					continue;	/* not same tuple */
+				uint32		hashValue;
+				Index		hashIndex;
+				bool		found = false;
+				dlist_head *bucket;
 
 				/*
-				 * Found a match, but can't use it if it belongs to another
-				 * list already
+				 * See if there's an entry for this tuple already.
 				 */
-				if (ct->c_list)
-					continue;
+				ct = NULL;
+				hashValue = CatalogCacheComputeTupleHashValue(cache, cache->cc_nkeys, ntp);
+				hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
 
-				found = true;
-				break;			/* A-OK */
-			}
-
-			if (!found)
-			{
-				/* We didn't find a usable entry, so make a new one */
-				ct = CatalogCacheCreateEntry(cache, ntp, scandesc, NULL,
-											 hashValue, hashIndex);
-				/* upon failure, we must start the scan over */
-				if (ct == NULL)
+				bucket = &cache->cc_bucket[hashIndex];
+				dlist_foreach(iter, bucket)
 				{
+					ct = dlist_container(CatCTup, cache_elem, iter.cur);
+
+					if (ct->dead || ct->negative)
+						continue;	/* ignore dead and negative entries */
+
+					if (ct->hash_value != hashValue)
+						continue;	/* quickly skip entry if wrong hash val */
+
+					if (!ItemPointerEquals(&(ct->tuple.t_self), &(ntp->t_self)))
+						continue;	/* not same tuple */
+
 					/*
-					 * Release refcounts on any items we already had.  We dare
-					 * not try to free them if they're now unreferenced, since
-					 * an error while doing that would result in the PG_CATCH
-					 * below doing extra refcount decrements.  Besides, we'll
-					 * likely re-adopt those items in the next iteration, so
-					 * it's not worth complicating matters to try to get rid
-					 * of them.
+					 * Found a match, but can't use it if it belongs to
+					 * another list already
 					 */
-					foreach(ctlist_item, ctlist)
-					{
-						ct = (CatCTup *) lfirst(ctlist_item);
-						Assert(ct->c_list == NULL);
-						Assert(ct->refcount > 0);
-						ct->refcount--;
-					}
-					/* Reset ctlist in preparation for new try */
-					ctlist = NIL;
-					stale = true;
-					break;
+					if (ct->c_list)
+						continue;
+
+					found = true;
+					break;		/* A-OK */
 				}
+
+				if (!found)
+				{
+					/* We didn't find a usable entry, so make a new one */
+					ct = CatalogCacheCreateEntry(cache, ntp, scandesc, NULL,
+												 hashValue, hashIndex);
+					/* upon failure, we must start the scan over */
+					if (ct == NULL)
+					{
+						/*
+						 * Release refcounts on any items we already had.  We
+						 * dare not try to free them if they're now
+						 * unreferenced, since an error while doing that would
+						 * result in the PG_CATCH below doing extra refcount
+						 * decrements.  Besides, we'll likely re-adopt those
+						 * items in the next iteration, so it's not worth
+						 * complicating matters to try to get rid of them.
+						 */
+						foreach(ctlist_item, ctlist)
+						{
+							ct = (CatCTup *) lfirst(ctlist_item);
+							Assert(ct->c_list == NULL);
+							Assert(ct->refcount > 0);
+							ct->refcount--;
+						}
+						/* Reset ctlist in preparation for new try */
+						ctlist = NIL;
+						stale = true;
+						break;
+					}
+				}
+
+				/* Careful here: add entry to ctlist, then bump its refcount */
+				/* This way leaves state correct if lappend runs out of memory */
+				ctlist = lappend(ctlist, ct);
+				ct->refcount++;
 			}
 
-			/* Careful here: add entry to ctlist, then bump its refcount */
-			/* This way leaves state correct if lappend runs out of memory */
-			ctlist = lappend(ctlist, ct);
-			ct->refcount++;
-		}
-
-		systable_endscan(scandesc);
+			systable_endscan(scandesc);
 		} while (stale);
 
 		table_close(relation, AccessShareLock);
