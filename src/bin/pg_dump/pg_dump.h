@@ -444,18 +444,8 @@ typedef struct _triggerInfo
 {
 	DumpableObject dobj;
 	TableInfo  *tgtable;		/* link to table the trigger is for */
-	char	   *tgfname;
-	int			tgtype;
-	int			tgnargs;
-	char	   *tgargs;
-	bool		tgisconstraint;
-	char	   *tgconstrname;
-	Oid			tgconstrrelid;
-	char	   *tgconstrrelname;
 	char		tgenabled;
 	bool		tgispartition;
-	bool		tgdeferrable;
-	bool		tginitdeferred;
 	char	   *tgdef;
 } TriggerInfo;
 

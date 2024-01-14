@@ -7988,18 +7988,8 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_oid,
 				i_tgrelid,
 				i_tgname,
-				i_tgfname,
-				i_tgtype,
-				i_tgnargs,
-				i_tgargs,
-				i_tgisconstraint,
-				i_tgconstrname,
-				i_tgconstrrelid,
-				i_tgconstrrelname,
 				i_tgenabled,
 				i_tgispartition,
-				i_tgdeferrable,
-				i_tginitdeferred,
 				i_tgdef;
 
 	/*
@@ -8038,7 +8028,6 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT t.tgrelid, t.tgname, "
-						  "t.tgfoid::pg_catalog.regproc AS tgfname, "
 						  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
 						  "t.tgenabled, t.tableoid, t.oid, "
 						  "t.tgparentid <> 0 AS tgispartition\n"
@@ -8062,7 +8051,6 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT t.tgrelid, t.tgname, "
-						  "t.tgfoid::pg_catalog.regproc AS tgfname, "
 						  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
 						  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal as tgispartition\n"
 						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
@@ -8083,7 +8071,6 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT t.tgrelid, t.tgname, "
-						  "t.tgfoid::pg_catalog.regproc AS tgfname, "
 						  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
 						  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal as tgispartition "
 						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
@@ -8102,7 +8089,6 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 		/* See above about pretty=true in pg_get_triggerdef */
 		appendPQExpBuffer(query,
 						  "SELECT t.tgrelid, t.tgname, "
-						  "t.tgfoid::pg_catalog.regproc AS tgfname, "
 						  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
 						  "t.tgenabled, false as tgispartition, "
 						  "t.tableoid, t.oid "
@@ -8121,18 +8107,8 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 	i_oid = PQfnumber(res, "oid");
 	i_tgrelid = PQfnumber(res, "tgrelid");
 	i_tgname = PQfnumber(res, "tgname");
-	i_tgfname = PQfnumber(res, "tgfname");
-	i_tgtype = PQfnumber(res, "tgtype");
-	i_tgnargs = PQfnumber(res, "tgnargs");
-	i_tgargs = PQfnumber(res, "tgargs");
-	i_tgisconstraint = PQfnumber(res, "tgisconstraint");
-	i_tgconstrname = PQfnumber(res, "tgconstrname");
-	i_tgconstrrelid = PQfnumber(res, "tgconstrrelid");
-	i_tgconstrrelname = PQfnumber(res, "tgconstrrelname");
 	i_tgenabled = PQfnumber(res, "tgenabled");
 	i_tgispartition = PQfnumber(res, "tgispartition");
-	i_tgdeferrable = PQfnumber(res, "tgdeferrable");
-	i_tginitdeferred = PQfnumber(res, "tginitdeferred");
 	i_tgdef = PQfnumber(res, "tgdef");
 
 	tginfo = (TriggerInfo *) pg_malloc(ntups * sizeof(TriggerInfo));
@@ -8181,57 +8157,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 			tginfo[j].tgtable = tbinfo;
 			tginfo[j].tgenabled = *(PQgetvalue(res, j, i_tgenabled));
 			tginfo[j].tgispartition = *(PQgetvalue(res, j, i_tgispartition)) == 't';
-			if (i_tgdef >= 0)
-			{
-				tginfo[j].tgdef = pg_strdup(PQgetvalue(res, j, i_tgdef));
-
-				/* remaining fields are not valid if we have tgdef */
-				tginfo[j].tgfname = NULL;
-				tginfo[j].tgtype = 0;
-				tginfo[j].tgnargs = 0;
-				tginfo[j].tgargs = NULL;
-				tginfo[j].tgisconstraint = false;
-				tginfo[j].tgdeferrable = false;
-				tginfo[j].tginitdeferred = false;
-				tginfo[j].tgconstrname = NULL;
-				tginfo[j].tgconstrrelid = InvalidOid;
-				tginfo[j].tgconstrrelname = NULL;
-			}
-			else
-			{
-				tginfo[j].tgdef = NULL;
-
-				tginfo[j].tgfname = pg_strdup(PQgetvalue(res, j, i_tgfname));
-				tginfo[j].tgtype = atoi(PQgetvalue(res, j, i_tgtype));
-				tginfo[j].tgnargs = atoi(PQgetvalue(res, j, i_tgnargs));
-				tginfo[j].tgargs = pg_strdup(PQgetvalue(res, j, i_tgargs));
-				tginfo[j].tgisconstraint = *(PQgetvalue(res, j, i_tgisconstraint)) == 't';
-				tginfo[j].tgdeferrable = *(PQgetvalue(res, j, i_tgdeferrable)) == 't';
-				tginfo[j].tginitdeferred = *(PQgetvalue(res, j, i_tginitdeferred)) == 't';
-
-				if (tginfo[j].tgisconstraint)
-				{
-					tginfo[j].tgconstrname = pg_strdup(PQgetvalue(res, j, i_tgconstrname));
-					tginfo[j].tgconstrrelid = atooid(PQgetvalue(res, j, i_tgconstrrelid));
-					if (OidIsValid(tginfo[j].tgconstrrelid))
-					{
-						if (PQgetisnull(res, j, i_tgconstrrelname))
-							pg_fatal("query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)",
-									 tginfo[j].dobj.name,
-									 tbinfo->dobj.name,
-									 tginfo[j].tgconstrrelid);
-						tginfo[j].tgconstrrelname = pg_strdup(PQgetvalue(res, j, i_tgconstrrelname));
-					}
-					else
-						tginfo[j].tgconstrrelname = NULL;
-				}
-				else
-				{
-					tginfo[j].tgconstrname = NULL;
-					tginfo[j].tgconstrrelid = InvalidOid;
-					tginfo[j].tgconstrrelname = NULL;
-				}
-			}
+			tginfo[j].tgdef = pg_strdup(PQgetvalue(res, j, i_tgdef));
 		}
 	}
 
@@ -17776,10 +17702,6 @@ dumpTrigger(Archive *fout, const TriggerInfo *tginfo)
 	PQExpBuffer trigprefix;
 	PQExpBuffer trigidentity;
 	char	   *qtabname;
-	char	   *tgargs;
-	size_t		lentgargs;
-	const char *p;
-	int			findx;
 	char	   *tag;
 
 	/* Do nothing in data-only dump */
@@ -17796,120 +17718,8 @@ dumpTrigger(Archive *fout, const TriggerInfo *tginfo)
 	appendPQExpBuffer(trigidentity, "%s ", fmtId(tginfo->dobj.name));
 	appendPQExpBuffer(trigidentity, "ON %s", fmtQualifiedDumpable(tbinfo));
 
+	appendPQExpBuffer(query, "%s;\n", tginfo->tgdef);
 	appendPQExpBuffer(delqry, "DROP TRIGGER %s;\n", trigidentity->data);
-
-	if (tginfo->tgdef)
-	{
-		appendPQExpBuffer(query, "%s;\n", tginfo->tgdef);
-	}
-	else
-	{
-		if (tginfo->tgisconstraint)
-		{
-			appendPQExpBufferStr(query, "CREATE CONSTRAINT TRIGGER ");
-			appendPQExpBufferStr(query, fmtId(tginfo->tgconstrname));
-		}
-		else
-		{
-			appendPQExpBufferStr(query, "CREATE TRIGGER ");
-			appendPQExpBufferStr(query, fmtId(tginfo->dobj.name));
-		}
-		appendPQExpBufferStr(query, "\n    ");
-
-		/* Trigger type */
-		if (TRIGGER_FOR_BEFORE(tginfo->tgtype))
-			appendPQExpBufferStr(query, "BEFORE");
-		else if (TRIGGER_FOR_AFTER(tginfo->tgtype))
-			appendPQExpBufferStr(query, "AFTER");
-		else if (TRIGGER_FOR_INSTEAD(tginfo->tgtype))
-			appendPQExpBufferStr(query, "INSTEAD OF");
-		else
-			pg_fatal("unexpected tgtype value: %d", tginfo->tgtype);
-
-		findx = 0;
-		if (TRIGGER_FOR_INSERT(tginfo->tgtype))
-		{
-			appendPQExpBufferStr(query, " INSERT");
-			findx++;
-		}
-		if (TRIGGER_FOR_DELETE(tginfo->tgtype))
-		{
-			if (findx > 0)
-				appendPQExpBufferStr(query, " OR DELETE");
-			else
-				appendPQExpBufferStr(query, " DELETE");
-			findx++;
-		}
-		if (TRIGGER_FOR_UPDATE(tginfo->tgtype))
-		{
-			if (findx > 0)
-				appendPQExpBufferStr(query, " OR UPDATE");
-			else
-				appendPQExpBufferStr(query, " UPDATE");
-			findx++;
-		}
-		if (TRIGGER_FOR_TRUNCATE(tginfo->tgtype))
-		{
-			if (findx > 0)
-				appendPQExpBufferStr(query, " OR TRUNCATE");
-			else
-				appendPQExpBufferStr(query, " TRUNCATE");
-			findx++;
-		}
-		appendPQExpBuffer(query, " ON %s\n",
-						  fmtQualifiedDumpable(tbinfo));
-
-		if (tginfo->tgisconstraint)
-		{
-			if (OidIsValid(tginfo->tgconstrrelid))
-			{
-				/* regclass output is already quoted */
-				appendPQExpBuffer(query, "    FROM %s\n    ",
-								  tginfo->tgconstrrelname);
-			}
-			if (!tginfo->tgdeferrable)
-				appendPQExpBufferStr(query, "NOT ");
-			appendPQExpBufferStr(query, "DEFERRABLE INITIALLY ");
-			if (tginfo->tginitdeferred)
-				appendPQExpBufferStr(query, "DEFERRED\n");
-			else
-				appendPQExpBufferStr(query, "IMMEDIATE\n");
-		}
-
-		if (TRIGGER_FOR_ROW(tginfo->tgtype))
-			appendPQExpBufferStr(query, "    FOR EACH ROW\n    ");
-		else
-			appendPQExpBufferStr(query, "    FOR EACH STATEMENT\n    ");
-
-		/* regproc output is already sufficiently quoted */
-		appendPQExpBuffer(query, "EXECUTE FUNCTION %s(",
-						  tginfo->tgfname);
-
-		tgargs = (char *) PQunescapeBytea((unsigned char *) tginfo->tgargs,
-										  &lentgargs);
-		p = tgargs;
-		for (findx = 0; findx < tginfo->tgnargs; findx++)
-		{
-			/* find the embedded null that terminates this trigger argument */
-			size_t		tlen = strlen(p);
-
-			if (p + tlen >= tgargs + lentgargs)
-			{
-				/* hm, not found before end of bytea value... */
-				pg_fatal("invalid argument string (%s) for trigger \"%s\" on table \"%s\"",
-						 tginfo->tgargs,
-						 tginfo->dobj.name,
-						 tbinfo->dobj.name);
-			}
-
-			if (findx > 0)
-				appendPQExpBufferStr(query, ", ");
-			appendStringLiteralAH(query, p, fout);
-			p += tlen + 1;
-		}
-		free(tgargs);
-		appendPQExpBufferStr(query, ");\n");
-	}
 
 	/* Triggers can depend on extensions */
 	append_depends_on_extension(fout, query, &tginfo->dobj,
