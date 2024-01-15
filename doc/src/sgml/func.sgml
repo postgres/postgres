@@ -26578,7 +26578,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         record that it has consumed, which must always be greater than or
         equal to <literal>summarized_lsn</literal>; if the WAL summarizer is
         not running, it will be equal to <literal>summarized_lsn</literal>.
-        <literal>summarized_pid</literal> is the PID of the WAL summarizer
+        <literal>summarizer_pid</literal> is the PID of the WAL summarizer
         process, if it is running, and otherwise NULL.
        </para></entry>
       </row>

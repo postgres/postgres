@@ -63,7 +63,7 @@ SELECT EXISTS (
 )
 EOM
 
-# Figure out the exact details for the new sumamry file.
+# Figure out the exact details for the new summary file.
 my $details = $node1->safe_psql('postgres', <<EOM);
 SELECT tli, start_lsn, end_lsn from pg_available_wal_summaries()
 	WHERE tli = $summarized_tli AND end_lsn > '$summarized_lsn'
