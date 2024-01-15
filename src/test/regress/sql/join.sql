@@ -2600,6 +2600,14 @@ select * from emp1 t1 left join
         on true)
 on true;
 
+-- Check that SJE removes the whole PHVs correctly
+explain (verbose, costs off)
+select 1 from emp1 t1 left join
+    ((select 1 as x, * from emp1 t2) s1 inner join
+        (select * from emp1 t3) s2 on s1.id = s2.id)
+    on true
+where s1.x = 1;
+
 -- Check that PHVs do not impose any constraints on removing self joins
 explain (verbose, costs off)
 select * from emp1 t1 join emp1 t2 on t1.id = t2.id left join

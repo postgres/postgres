@@ -456,7 +456,7 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 		Assert(sjinfo == NULL || !bms_is_member(relid, phinfo->ph_lateral));
 		if (bms_is_subset(phinfo->ph_needed, joinrelids) &&
 			bms_is_member(relid, phinfo->ph_eval_at) &&
-			!bms_is_member(ojrelid, phinfo->ph_eval_at))
+			(sjinfo == NULL || !bms_is_member(ojrelid, phinfo->ph_eval_at)))
 		{
 			root->placeholder_list = foreach_delete_current(root->placeholder_list,
 															l);

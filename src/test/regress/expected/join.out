@@ -6821,6 +6821,26 @@ on true;
                            Filter: (id IS NOT NULL)
 (8 rows)
 
+-- Check that SJE removes the whole PHVs correctly
+explain (verbose, costs off)
+select 1 from emp1 t1 left join
+    ((select 1 as x, * from emp1 t2) s1 inner join
+        (select * from emp1 t3) s2 on s1.id = s2.id)
+    on true
+where s1.x = 1;
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Nested Loop
+   Output: 1
+   ->  Seq Scan on public.emp1 t1
+         Output: t1.id, t1.code
+   ->  Materialize
+         Output: t3.id
+         ->  Seq Scan on public.emp1 t3
+               Output: t3.id
+               Filter: ((t3.id IS NOT NULL) AND (1 = 1))
+(9 rows)
+
 -- Check that PHVs do not impose any constraints on removing self joins
 explain (verbose, costs off)
 select * from emp1 t1 join emp1 t2 on t1.id = t2.id left join
