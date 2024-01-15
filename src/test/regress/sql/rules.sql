@@ -57,9 +57,9 @@ create rule rtest_pers_del as on delete to rtest_person do also
 --
 -- Tables and rules for the logging test
 --
-create table rtest_emp (ename char(20), salary money);
-create table rtest_emplog (ename char(20), who name, action char(10), newsal money, oldsal money);
-create table rtest_empmass (ename char(20), salary money);
+create table rtest_emp (ename char(20), salary numeric);
+create table rtest_emplog (ename char(20), who name, action char(10), newsal numeric, oldsal numeric);
+create table rtest_empmass (ename char(20), salary numeric);
 
 create rule rtest_emp_ins as on insert to rtest_emp do
 	insert into rtest_emplog values (new.ename, current_user,

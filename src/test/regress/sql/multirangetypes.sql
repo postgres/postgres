@@ -802,7 +802,7 @@ drop type two_ints cascade;
 
 set enable_sort = off;  -- try to make it pick a hash setop implementation
 
-select '{(2,5)}'::cashmultirange except select '{(5,6)}'::cashmultirange;
+select '{(01,10)}'::varbitmultirange except select '{(10,11)}'::varbitmultirange;
 
 reset enable_sort;
 

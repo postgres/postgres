@@ -51,11 +51,11 @@ SELECT * FROM t;
 
 -- UNION DISTINCT requires hashable type
 WITH RECURSIVE t(n) AS (
-    VALUES (1::money)
+    VALUES ('01'::varbit)
 UNION
-    SELECT n+1::money FROM t WHERE n < 100::money
+    SELECT n || '10'::varbit FROM t WHERE n < '100'::varbit
 )
-SELECT sum(n) FROM t;
+SELECT n FROM t;
 ERROR:  could not implement recursive UNION
 DETAIL:  All column datatypes must be hashable.
 -- recursive view

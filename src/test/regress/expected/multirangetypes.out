@@ -3273,10 +3273,10 @@ NOTICE:  drop cascades to type two_ints_range
 -- Check behavior when subtype lacks a hash function
 --
 set enable_sort = off;  -- try to make it pick a hash setop implementation
-select '{(2,5)}'::cashmultirange except select '{(5,6)}'::cashmultirange;
- cashmultirange  
------------------
- {($2.00,$5.00)}
+select '{(01,10)}'::varbitmultirange except select '{(10,11)}'::varbitmultirange;
+ varbitmultirange 
+------------------
+ {(01,10)}
 (1 row)
 
 reset enable_sort;
