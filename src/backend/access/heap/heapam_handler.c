@@ -165,6 +165,7 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 
 		slot->tts_tableOid = RelationGetRelid(scan->rel);
 		ExecStoreBufferHeapTuple(&bslot->base.tupdata, slot, hscan->xs_cbuf);
+//        heap_lock_for_read(hscan->xs_base.rel, &bslot->base.tupdata,hscan->xs_cbuf);
 	}
 	else
 	{

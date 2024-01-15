@@ -69,7 +69,7 @@ static int	reorderqueue_cmp(const pairingheap_node *a,
 static void reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
 							  Datum *orderbyvals, bool *orderbynulls);
 static HeapTuple reorderqueue_pop(IndexScanState *node);
-static bool lock_for_slot(Relation rel, Snapshot snap, TupleTableSlot *slot, CommandId cid, LOCKMODE lockmode);
+//static bool lock_for_slot(Relation rel, Snapshot snap, TupleTableSlot *slot, CommandId cid, LOCKMODE lockmode);
 
 
 /* ----------------------------------------------------------------
@@ -525,6 +525,7 @@ static TupleTableSlot *
 ExecIndexScan(PlanState *pstate)
 {
 	IndexScanState *node = castNode(IndexScanState, pstate);
+    TupleTableSlot *slot = NULL;
 
 	/*
 	 * If we have runtime keys and they've not already been set up, do it now.
@@ -532,7 +533,6 @@ ExecIndexScan(PlanState *pstate)
 	if (node->iss_NumRuntimeKeys != 0 && !node->iss_RuntimeKeysReady)
 		ExecReScan((PlanState *) node);
 
-    TupleTableSlot *slot = NULL;
 	if (node->iss_NumOrderByKeys > 0)
         slot = ExecScan(&node->ss,
 						(ExecScanAccessMtd) IndexNextWithReorder,

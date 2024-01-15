@@ -42,6 +42,7 @@
 #define LOCK_OCC    1
 #define LOCK_2PL    2
 #define LOCK_2PL_WD    3
+#define LOCK_2PL_NW    4
 
 #define XACT_UPDATE 0
 #define XACT_READ   1
@@ -63,9 +64,9 @@ extern PGDLLIMPORT int XactIsoLevel;
  */
 #define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE)
 #define IsolationIsSSI() (IsolationIsSerializable() && XactLockStrategy == LOCK_NONE)
-#define IsolationUsesXactSnapshot() XactIsoLevel >= XACT_REPEATABLE_READ
+#define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ)
 #define IsolationNeedLock() (XactLockStrategy == LOCK_2PL || XactLockStrategy == LOCK_2PL_WD)
-#define IsolationLockNoWait() (XactLockStrategy == LOCK_2PL)
+#define IsolationLockNoWait() (XactLockStrategy == LOCK_2PL_NW)
 #define CHECK_ISOLATION_LOCK_AND_RETURN if (IsolationNeedLock()) return;
 
 /* Xact read-only state */

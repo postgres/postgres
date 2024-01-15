@@ -343,12 +343,48 @@ heap_setscanlimits(TableScanDesc sscan, BlockNumber startBlk, BlockNumber numBlk
 	scan->rs_numblocks = numBlks;
 }
 
+#define IS_TEST_RELATION(relation) ((relation)->rd_id == 75489)
+
+void heap_lock_for_scan(Relation relation)
+{
+    if (IS_TEST_RELATION(relation))
+        printf("xact%d locking for scanning relation (%d)\n", GetCurrentTransactionId(), relation->rd_id);
+    // Explicit lock relation in ShareLock mode, blocking table alters.
+    LockRelation(relation, ShareLock);
+}
+
+void heap_lock_for_write(Relation relation,
+                        HeapTuple tuple, Buffer buffer)
+{
+    bool is_exclusive;
+    if (!IsolationNeedLock()) return;
+	if (IS_TEST_RELATION(relation))
+	    printf("xact%d locking for writing tuple (%d:%d-%d:%d)\n", GetCurrentTransactionId(), relation->rd_id,
+    	       tuple->t_self.ip_blkid.bi_hi, tuple->t_self.ip_blkid.bi_lo, tuple->t_self.ip_posid);
+    is_exclusive = LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+
+    if (!IsolationLockNoWait())
+        LockTupleTuplock(relation, &tuple->t_self, LockTupleExclusive); // LockTupleShare or SIReadLock?
+    else if (!ConditionalLockTupleTuplock(relation, &tuple->t_self, LockTupleExclusive))
+        ereport(ERROR,
+                (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                        errmsg("could not serialize access due to read/write dependencies among transactions"),
+                        errdetail_internal("Reason code: Canceled on conflict due to 2PL write lock."),
+                        errhint("The transaction might succeed if retried.")));
+    if (is_exclusive)
+        LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+    else
+        LockBuffer(buffer, BUFFER_LOCK_SHARE);
+}
+
 void heap_lock_for_read(Relation relation,
                          HeapTuple tuple, Buffer buffer)
 {
     bool is_exclusive;
-    if (!IsolationNeedLock())
-        return;
+    if (!IsolationNeedLock()) return;
+    if (IS_TEST_RELATION(relation))
+	    printf("xact%d locking for reading tuple (%d:%d-%d:%d)\n", GetCurrentTransactionId(), relation->rd_id,
+    	       tuple->t_self.ip_blkid.bi_hi, tuple->t_self.ip_blkid.bi_lo, tuple->t_self.ip_posid);
     is_exclusive = LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
     if (!IsolationLockNoWait())
@@ -1224,6 +1260,8 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 		 */
 		Assert(snapshot);
 		PredicateLockRelation(relation, snapshot);
+		if (IsolationNeedLock())
+			heap_lock_for_scan(relation);
 	}
 
 	/* we only need to set this up once */
@@ -1684,6 +1722,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 			{
 				ItemPointerSetOffsetNumber(tid, offnum);
 				PredicateLockTuple(relation, heapTuple, snapshot);
+//				heap_lock_for_read(relation, heapTuple, buffer);
 				if (all_dead)
 					*all_dead = false;
 				return true;
@@ -3383,12 +3422,13 @@ l2:
     if (IsolationNeedLock() && !have_tuple_lock)
     {
         // add write lock for tuple access, no wait style.
-        LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-        if (!IsolationLockNoWait())
-            LockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
-        else if (!ConditionalLockTupleTuplock(relation, &(oldtup.t_self), *lockmode))
-                result = TM_BeingModified;
-        LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+        heap_lock_for_write(relation, &oldtup, buffer);
+//        LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+//        if (!IsolationLockNoWait())
+//            LockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
+//        else if (!ConditionalLockTupleTuplock(relation, &(oldtup.t_self), *lockmode))
+//                result = TM_BeingModified;
+//        LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
     }
 
     // 2PL does not accept parallel write.

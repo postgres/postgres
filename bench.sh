@@ -5,10 +5,8 @@ psql -d sysbench -c 'set default_transaction_isolation="read committed"';
 psql -d sysbench -c 'set default_cc_strategy="ssi"';
 
 #
-#pgbench --client=16 \
-# --jobs=16 \
-# --time=5 \
-# pgbench;
+#pgbench pgbench;
+# --client=16  --jobs=16 --time=30
 
 
 DB_DRIVER="pgsql"
@@ -35,9 +33,10 @@ COMMON_OPTIONS="/usr/local/share/sysbench/oltp_read_write.lua
 sysbench $COMMON_OPTIONS prepare
 
 sysbench $COMMON_OPTIONS \
-  --threads=16 \
+  --threads=4 \
   --time=$TIME \
   --warmup-time=2 \
+  --validate=off \
   --range_selects=off \
   --index_updates=0 \
   --non_index_updates=4 \
@@ -45,5 +44,6 @@ sysbench $COMMON_OPTIONS \
   --point_selects=16 \
   --rand-type=zipfian \
   --rand-zipfian-exp=0.5 \
-  --validate=on \
   run
+
+

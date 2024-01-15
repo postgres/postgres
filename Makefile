@@ -39,3 +39,5 @@ all check install installdirs installcheck installcheck-parallel uninstall clean
 	   echo "You must use GNU make to build PostgreSQL." ; \
 	   false; \
 	 fi
+
+#./configure --enable-depend --enable-cassert --enable-debug CFLAGS="-ggdb -O0"./

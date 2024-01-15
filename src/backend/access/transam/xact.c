@@ -77,7 +77,7 @@
  */
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
-int         DefaultXactLockStrategy = LOCK_NONE;
+int         DefaultXactLockStrategy = LOCK_2PL;
 int         XactLockStrategy;
 
 bool		DefaultXactReadOnly = false;
@@ -350,10 +350,11 @@ static void ShowTransactionStateRec(const char *str, TransactionState state);
 static const char *BlockStateAsString(TBlockState blockState);
 static const char *TransStateAsString(TransState state);
 
-static void get_lock_strategy();
-static bool should_report_result();
-static bool should_refine_cc();
-static void report_xact_result(bool commit);
+static void get_lock_strategy(LocalTransactionId tid);
+static bool should_report_result(uint tid);
+static bool should_refine_cc(uint tid);
+static uint64_t get_cur_time_ns(void);
+static void report_xact_result(bool commit, LocalTransactionId tid);
 
 
 /* ----------------------------------------------------------------
@@ -1954,21 +1955,13 @@ static StringInfoData EncodePredicateLockInfo(PredicateLockData * c)
 
         /* lock type */
         appendStringInfo(&lock_buf,
-                         _("Pred: process %d xact %d has pred lock <"),
+                         _("{\"process\":%d,\"xact\":%d,"),
                          xact.pid,
                          xact.vxid.localTransactionId);
 
         appendStringInfo(&lock_buf,
-                         _("%s,db:%d,rel:%d,offset%d>"),
-                         PredicateLockTageToString(pred_type),
-                         GET_PREDICATELOCKTARGETTAG_DB(tag),
-                         GET_PREDICATELOCKTARGETTAG_RELATION(tag),
-                         pred_type == PREDLOCKTAG_TUPLE? GET_PREDICATELOCKTARGETTAG_OFFSET(tag): -1,
-                         pred_type != PREDLOCKTAG_RELATION? GET_PREDICATELOCKTARGETTAG_PAGE(tag): -1);
-
-        /* xact info */
-        appendStringInfo(&lock_buf,
-                         _("%s,db:%d,rel:%d,offset%d>"),
+                         _("\"pred\":%s,\"db\":%d,\"rel\":%d,"
+                           "\"offset\":%d,\"page\":%d},"),
                          PredicateLockTageToString(pred_type),
                          GET_PREDICATELOCKTARGETTAG_DB(tag),
                          GET_PREDICATELOCKTARGETTAG_RELATION(tag),
@@ -1978,28 +1971,34 @@ static StringInfoData EncodePredicateLockInfo(PredicateLockData * c)
     return buf;
 }
 
+const bool GenTrainingData = true;
+const bool EnableLearningCC = false;
+
 // EncodeLockData encode all non-predicate lock information as string.
-static StringInfoData EncodeLockData(LockData * c)
+static StringInfoData EncodeLockData(LockData * c, bool * CurrentNeedPredict)
 {
     StringInfoData lock_tag_buf, lock_buf;
     initStringInfo(&lock_buf);
     initStringInfo(&lock_tag_buf);
+    if (c->nelements == 0)
+        *CurrentNeedPredict = false;
+    appendStringInfo(&lock_buf,"{");
     for (int i=0;i<c->nelements;i++)
     {
         LockInstanceData lc = c->locks[i];
         resetStringInfo(&lock_tag_buf);
         DescribeLockTag(&lock_tag_buf, &lc.locktag);
         appendStringInfo(&lock_buf,
-                         _("Lock: process %d waits for %s on %s in txn %d, "
-                           "holding mask %d; group leaded by process %d."),
+                         _("{\"proc\":%d,\"wait\":%d,\"tag\":%s,\"xact\":%d,"
+                           "\"mask\":%d, \"lead\":%d},"),
                          lc.pid,
-                         GetLockmodeName(lc.locktag.locktag_lockmethodid,
-                                         lc.waitLockMode),
+                         lc.waitLockMode,
                          lock_tag_buf.data,
                          lc.lxid,
                          lc.holdMask,
                          lc.leaderPid);
     }
+    appendStringInfo(&lock_buf,"}");
     return lock_buf;
 }
 
@@ -2012,70 +2011,138 @@ static StringInfoData EncodeDependencyGraphData()
 
 static StringInfoData EncodeSessionData()
 {
+    // Get information from MyProc
     StringInfoData buf;
     initStringInfo(&buf);
     return buf;
 }
 
-static void get_lock_strategy()
+static StringInfoData EncodeResourceData()
+{
+    // Get information from MyProc
+    StringInfoData buf;
+    initStringInfo(&buf);
+    return buf;
+}
+
+#define NUM_OF_SYS_XACTS 1
+#define FEATURE_LENGTH 200
+#define REWARD_LENGTH 100
+#define TERMINAL_PRED_MESSAGE "$PRED_END$"
+#define START_PRED_MESSAGE "$PRED_START$"
+#define TERMINAL_REWARD_MESSAGE "$REWARD_END$"
+#define START_REWARD_MESSAGE "$REWARD_START$"
+#define SEC_TO_NS(sec) ((sec)*1000000000)
+
+static void get_lock_strategy(LocalTransactionId tid)
 {
     int conn_fd;
-    MemoryContext oldcontext;
+//    MemoryContext oldcontext;
     StringInfoData buf;
+    char feature[FEATURE_LENGTH];
+    FILE *file;
+    bool need_predict = true;
 
-    if (!should_refine_cc())
+//    printf("xact%d is started: %d--%d\n", tid, XactLockStrategy, XactIsoLevel);
+
+    if (!should_refine_cc(tid) || tid <= NUM_OF_SYS_XACTS)
         return;
+
     initStringInfo(&buf);
     appendStringInfo(&buf,
-                     _("[Lock:{%s}]\n"
-                       "[Pred:{%s}]\n"
-                       "[Dependency:{%s}]\n"
-                       "[Session:{%s}]\n"),
-                     EncodeLockData(GetLockStatusData()).data,
+                     _(
+//                             "{\"lock\":{%s},"
+                       "\"pred\":{%s},"
+//                       "dep:{%s},"
+                       "\"proc\":{%s},"
+                       "\"prof\":{%s}}"),
+//                     EncodeLockData(GetLockStatusData(), &need_predict).data,
                      EncodePredicateLockInfo(GetPredicateLockStatusData()).data,
-                     EncodeDependencyGraphData().data,
-                     EncodeSessionData().data);
-    printf("%s\n", buf.data);
+//                     EncodeDependencyGraphData().data,
+                     EncodeSessionData().data,
+                     EncodeResourceData().data);
 
-//    // Get lock strategy for the current transaction.
-//    conn_fd = connect_to_model(cc_host, cc_port);
-//
-//    if (conn_fd < 0)
-//    {
-//        elog(WARNING, "Unable to connect to cc server, no prediction provided.");
-//        XactLockStrategy = DefaultXactLockStrategy;
-//    }
-//    else
-//    {
-//        // PG lock information.
-//       // PG SSI dependency graph.
-//
-//        // Session information.
-//        // Historical session data.
-//
-////        write_all_to_socket(conn_fd, START_PREDICTION_MESSAGE);
-////        write_all_to_socket(conn_fd, buffer_json);
-////        write_all_to_socket(conn_fd, TERMINAL_MESSAGE);
-//        shutdown(conn_fd, SHUT_WR);
-//
-//        if (read(conn_fd, &XactLockStrategy, sizeof(double)) != sizeof(double))
-//        {
-//            elog(WARNING, "Could not read the response from the cc server.");
-//            XactLockStrategy = DefaultXactLockStrategy;
-//        }
-//
-//        shutdown(conn_fd, SHUT_RDWR);
-//    }
+//    if (!need_predict)
+//        buf.data = "{}";
+
+    if (GenTrainingData)
+    {
+//        long cmd = random() % 2;
+        int cmd = 1;
+        if (cmd == 0)
+        {
+            XactIsoLevel = XACT_SERIALIZABLE;
+            XactLockStrategy = LOCK_NONE;
+        }
+        else if (cmd == 1)
+        {
+            XactIsoLevel = XACT_READ_COMMITTED;
+            XactLockStrategy = LOCK_2PL;
+        }
+        else
+        {
+            XactIsoLevel = XACT_READ_COMMITTED;
+            XactLockStrategy = LOCK_2PL_WD;
+        }
+
+        // feature, cc, and start time (for latency calculation).
+        // save to data file.
+        file = fopen("data.in", "a");
+        if (file == NULL)
+        {
+            perror("Error opening file");
+            return;
+        }
+        fprintf(file, "XACT %d-%d: json={\"start_time\":%lu, \"input\":%s,"
+                      " \"cc\":%d}\n", MyBackendId, tid,
+                get_cur_time_ns(), buf.data, cmd);
+        fclose(file);
+    }
+    else
+    {
+        // feature only.
+        sprintf(feature, "XACT %d: %s\n", tid,
+                buf.data);
+        conn_fd = connect_to_model(cc_host, cc_port);
+        if (conn_fd < 0)
+        {
+            elog(WARNING, "Unable to connect to cc server, no prediction provided.");
+            XactLockStrategy = DefaultXactLockStrategy;
+        }
+
+        write_all_to_socket(conn_fd, START_PRED_MESSAGE);
+        write_all_to_socket(conn_fd, feature);
+        write_all_to_socket(conn_fd, TERMINAL_PRED_MESSAGE);
+        shutdown(conn_fd, SHUT_WR);
+
+        if (read(conn_fd, &XactLockStrategy, sizeof(int )) != sizeof(int ))
+        {
+            elog(WARNING, "Could not read the response from the cc server.");
+            XactLockStrategy = DefaultXactLockStrategy;
+        }
+
+        shutdown(conn_fd, SHUT_RDWR);
+    }
 }
 
-static bool should_refine_cc()
+static bool should_refine_cc(uint tid)
 {
     return true;
+//    return tid % 10 == 0;
 }
 
-static bool should_report_result()
+static bool should_report_result(uint tid)
 {
     return true;
+//    return tid % 10 == 0;
+}
+
+static uint64_t get_cur_time_ns()
+{
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+
+    return SEC_TO_NS((uint64_t)ts.tv_sec) + (uint64_t)ts.tv_nsec;
 }
 
 //  we adopt the reward function from CDBTune.
@@ -2088,18 +2155,47 @@ static bool should_report_result()
 //      cost on throughput = latency * (#of locks) + latency / (PROC count) + E[throughput cost].
 //      cost on latency = latency + E[latency]
 //  E[latency] and E[throughput cost] are calculated based on historical data.
-static void report_xact_result(bool is_commit)
+static void report_xact_result(bool is_commit, LocalTransactionId tid)
 {
     int conn_fd;
-    if (!should_report_result())
-        return;
-    conn_fd = connect_to_model(cc_host, cc_port);
-    if (conn_fd < 0)
-    {
-        elog(WARNING, "Unable to connect to cc server, reward for transaction dropped.");
-        return;
-    } else {
+    char reward[REWARD_LENGTH];
+    FILE *file;
 
+//    printf("xact%d is finished: %d--%d\n", tid, XactLockStrategy, XactIsoLevel);
+    if (!should_report_result(tid) || tid <= NUM_OF_SYS_XACTS)
+        return;
+    sprintf(reward, "XACT %d-%d: json={\"is_commit\":%d,\"end_time\":%lu}\n",
+            MyBackendId,
+            tid,
+            is_commit? 1:0,
+            get_cur_time_ns());
+    if (GenTrainingData)
+    {
+        file = fopen("data.out", "a");
+        if (file == NULL)
+        {
+            perror("Error opening file");
+            return;
+        }
+        fprintf(file, "%s", reward);
+        fclose(file);
+        // save to data file.
+    }
+    else
+    {
+        conn_fd = connect_to_model(cc_host, cc_port);
+        if (conn_fd < 0)
+        {
+            elog(WARNING, "Unable to connect to cc server, reward for transaction dropped.");
+            return;
+        }
+        else
+        {
+            write_all_to_socket(conn_fd, START_REWARD_MESSAGE);
+            write_all_to_socket(conn_fd, reward);
+            write_all_to_socket(conn_fd, TERMINAL_REWARD_MESSAGE);
+            shutdown(conn_fd, SHUT_RDWR);
+        }
     }
 }
 
@@ -2181,13 +2277,7 @@ StartTransaction(void)
 		XactReadOnly = DefaultXactReadOnly;
 	}
 	XactDeferrable = DefaultXactDeferrable;
-	XactIsoLevel = DefaultXactIsoLevel;
-    XactLockStrategy = DefaultXactLockStrategy;
-    if (IsolationIsSerializable())
-        // In case of SSI, disable locking based methods.
-        XactLockStrategy = LOCK_NONE;
-    get_lock_strategy();
-	forceSyncCommit = false;
+    forceSyncCommit = false;
 	MyXactFlags = 0;
 
 	/*
@@ -2216,10 +2306,20 @@ StartTransaction(void)
 	 */
 	vxid.backendId = MyBackendId;
 	vxid.localTransactionId = GetNextLocalTransactionId();
+	if (EnableLearningCC)
+	    get_lock_strategy(vxid.localTransactionId);
+	else
+	{
+		XactIsoLevel = DefaultXactIsoLevel;
+		XactLockStrategy = DefaultXactLockStrategy;
+		if (IsolationIsSerializable())
+			// In case of SSI, disable locking based methods.
+			XactLockStrategy = LOCK_NONE;
+	}
 
-	/*
-	 * Lock the virtual transaction id before we announce it in the proc array
-	 */
+    /*
+     * Lock the virtual transaction id before we announce it in the proc array
+     */
 	VirtualXactLockTableInsert(vxid);
 
 	/*
@@ -2229,7 +2329,7 @@ StartTransaction(void)
 	Assert(MyProc->backendId == vxid.backendId);
 	MyProc->lxid = vxid.localTransactionId;
 
-	TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
+    TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
 
 	/*
 	 * set transaction_timestamp() (a/k/a now()).  Normally, we want this to
@@ -2281,6 +2381,7 @@ CommitTransaction(void)
 	TransactionState s = CurrentTransactionState;
 	TransactionId latestXid;
 	bool		is_parallel_worker;
+    LocalTransactionId tid;
 
 	is_parallel_worker = (s->blockState == TBLOCK_PARALLEL_INPROGRESS);
 
@@ -2403,11 +2504,13 @@ CommitTransaction(void)
 
 	TRACE_POSTGRESQL_TRANSACTION_COMMIT(MyProc->lxid);
 
-	/*
-	 * Let others know about no transaction in progress by me. Note that this
-	 * must be done _before_ releasing locks we hold and _after_
-	 * RecordTransactionCommit.
-	 */
+    tid = MyProc->lxid;
+
+    /*
+     * Let others know about no transaction in progress by me. Note that this
+     * must be done _before_ releasing locks we hold and _after_
+     * RecordTransactionCommit.
+     */
 	ProcArrayEndTransaction(MyProc, latestXid);
 
 	/*
@@ -2507,8 +2610,9 @@ CommitTransaction(void)
 	 * default
 	 */
 	s->state = TRANS_DEFAULT;
+    report_xact_result(true, tid);
 
-	RESUME_INTERRUPTS();
+    RESUME_INTERRUPTS();
 }
 
 
@@ -2810,8 +2914,9 @@ AbortTransaction(void)
 	TransactionState s = CurrentTransactionState;
 	TransactionId latestXid;
 	bool		is_parallel_worker;
+    LocalTransactionId tid = MyProc->lxid;
 
-	/* Prevent cancel/die interrupt while cleaning up */
+    /* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
 	/* Make sure we have a valid memory context and resource owner */
@@ -2982,9 +3087,11 @@ AbortTransaction(void)
 		pgstat_report_xact_timestamp(0);
 	}
 
-	/*
-	 * State remains TRANS_ABORT until CleanupTransaction().
-	 */
+    report_xact_result(false, tid);
+
+    /*
+     * State remains TRANS_ABORT until CleanupTransaction().
+     */
 	RESUME_INTERRUPTS();
 }
 
