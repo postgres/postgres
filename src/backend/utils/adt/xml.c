@@ -213,14 +213,14 @@ static void XmlTableDestroyOpaque(struct TableFuncScanState *state);
 
 const TableFuncRoutine XmlTableRoutine =
 {
-	XmlTableInitOpaque,
-	XmlTableSetDocument,
-	XmlTableSetNamespace,
-	XmlTableSetRowFilter,
-	XmlTableSetColumnFilter,
-	XmlTableFetchRow,
-	XmlTableGetValue,
-	XmlTableDestroyOpaque
+	.InitOpaque = XmlTableInitOpaque,
+	.SetDocument = XmlTableSetDocument,
+	.SetNamespace = XmlTableSetNamespace,
+	.SetRowFilter = XmlTableSetRowFilter,
+	.SetColumnFilter = XmlTableSetColumnFilter,
+	.FetchRow = XmlTableFetchRow,
+	.GetValue = XmlTableGetValue,
+	.DestroyOpaque = XmlTableDestroyOpaque
 };
 
 #define NO_XML_SUPPORT() \
