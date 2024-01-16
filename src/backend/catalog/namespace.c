@@ -41,7 +41,7 @@
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
-#include "common/hashfn.h"
+#include "common/hashfn_unstable.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -253,11 +253,21 @@ static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 static inline uint32
 spcachekey_hash(SearchPathCacheKey key)
 {
-	const unsigned char *bytes = (const unsigned char *) key.searchPath;
-	int			blen = strlen(key.searchPath);
+	fasthash_state hs;
+	int			sp_len;
 
-	return hash_combine(hash_bytes(bytes, blen),
-						hash_uint32(key.roleid));
+	fasthash_init(&hs, FH_UNKNOWN_LENGTH, 0);
+
+	hs.accum = key.roleid;
+	fasthash_combine(&hs);
+
+	/*
+	 * Combine search path into the hash and save the length for tweaking the
+	 * final mix.
+	 */
+	sp_len = fasthash_accum_cstring(&hs, key.searchPath);
+
+	return fasthash_final32(&hs, sp_len);
 }
 
 static inline bool

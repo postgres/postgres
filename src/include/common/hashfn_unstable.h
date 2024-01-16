@@ -58,6 +58,24 @@
  * 2) Incremental interface. This can used for incorporating multiple
  * inputs. The standalone functions use this internally, so see fasthash64()
  * for an an example of how this works.
+ *
+ * The incremental interface is especially useful if any of the inputs
+ * are NUL-terminated C strings, since the length is not needed ahead
+ * of time. This avoids needing to call strlen(). This case is optimized
+ * in fasthash_accum_cstring() :
+ *
+ * fasthash_state hs;
+ * fasthash_init(&hs, FH_UNKNOWN_LENGTH, 0);
+ * len = fasthash_accum_cstring(&hs, *str);
+ * ...
+ * return fasthash_final32(&hs, len);
+ *
+ * Here we pass FH_UNKNOWN_LENGTH as a convention, since passing zero
+ * would zero out the internal seed as well. fasthash_accum_cstring()
+ * returns the length of the string, which is computed on-the-fly while
+ * mixing the string into the hash. Experimentation has found that
+ * SMHasher fails unless we incorporate the length, so it is passed to
+ * the finalizer as a tweak.
  */
 
 
@@ -149,6 +167,118 @@ fasthash_accum(fasthash_state *hs, const char *k, int len)
 	}
 
 	fasthash_combine(hs);
+}
+
+/*
+ * Set high bit in lowest byte where the input is zero, from:
+ * https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord
+ */
+#define haszero64(v) \
+	(((v) - 0x0101010101010101) & ~(v) & 0x8080808080808080)
+
+/*
+ * all-purpose workhorse for fasthash_accum_cstring
+ */
+static inline int
+fasthash_accum_cstring_unaligned(fasthash_state *hs, const char *str)
+{
+	const char *const start = str;
+
+	while (*str)
+	{
+		int			chunk_len = 0;
+
+		while (chunk_len < FH_SIZEOF_ACCUM && str[chunk_len] != '\0')
+			chunk_len++;
+
+		fasthash_accum(hs, str, chunk_len);
+		str += chunk_len;
+	}
+
+	return str - start;
+}
+
+/*
+ * specialized workhorse for fasthash_accum_cstring
+ *
+ * With an aligned pointer, we consume the string a word at a time.
+ * Loading the word containing the NUL terminator cannot segfault since
+ * allocation boundaries are suitably aligned.
+ */
+static inline int
+fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
+{
+	const char *const start = str;
+	int			remainder;
+	uint64		zero_bytes_le;
+
+	Assert(PointerIsAligned(start, uint64));
+	for (;;)
+	{
+		uint64		chunk = *(uint64 *) str;
+
+		/*
+		 * With little-endian representation, we can use this calculation,
+		 * which sets bits in the first byte in the result word that
+		 * corresponds to a zero byte in the original word. The rest of the
+		 * bytes are indeterminate, so cannot be used on big-endian machines
+		 * without either swapping or a bytewise check.
+		 */
+#ifdef WORDS_BIGENDIAN
+		zero_bytes_le = haszero64(pg_bswap(chunk));
+#else
+		zero_bytes_le = haszero64(chunk);
+#endif
+		if (zero_bytes_le)
+			break;
+
+		hs->accum = chunk;
+		fasthash_combine(hs);
+		str += FH_SIZEOF_ACCUM;
+	}
+
+	/*
+	 * For the last word, only use bytes up to the NUL for the hash. Bytes
+	 * with set bits will be 0x80, so calculate the first occurrence of a zero
+	 * byte within the input word by counting the number of trailing (because
+	 * little-endian) zeros and dividing the result by 8.
+	 */
+	remainder = pg_rightmost_one_pos64(zero_bytes_le) / BITS_PER_BYTE;
+	fasthash_accum(hs, str, remainder);
+	str += remainder;
+
+	return str - start;
+}
+
+/*
+ * Mix 'str' into the hash state and return the length of the string.
+ */
+static inline int
+fasthash_accum_cstring(fasthash_state *hs, const char *str)
+{
+#if SIZEOF_VOID_P >= 8
+
+	int			len;
+#ifdef USE_ASSERT_CHECKING
+	int			len_check;
+	fasthash_state hs_check;
+
+	memcpy(&hs_check, hs, sizeof(fasthash_state));
+	len_check = fasthash_accum_cstring_unaligned(&hs_check, str);
+#endif
+	if (PointerIsAligned(str, uint64))
+	{
+		len = fasthash_accum_cstring_aligned(hs, str);
+		Assert(hs_check.hash == hs->hash && len_check == len);
+		return len;
+	}
+#endif							/* SIZEOF_VOID_P */
+
+	/*
+	 * It's not worth it to try to make the word-at-a-time optimization work
+	 * on 32-bit platforms.
+	 */
+	return fasthash_accum_cstring_unaligned(hs, str);
 }
 
 /*
