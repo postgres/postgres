@@ -2091,8 +2091,9 @@ PQgetResult(PGconn *conn)
 			res = pqPrepareAsyncResult(conn);
 
 			/* Advance the queue as appropriate */
-			pqCommandQueueAdvance(conn, false,
-								  res->resultStatus == PGRES_PIPELINE_SYNC);
+			if (res)
+				pqCommandQueueAdvance(conn, false,
+									  res->resultStatus == PGRES_PIPELINE_SYNC);
 
 			if (conn->pipelineStatus != PQ_PIPELINE_OFF)
 			{
