@@ -385,8 +385,8 @@ typedef struct CkptSortItem
 extern PGDLLIMPORT CkptSortItem *CkptBufferIds;
 
 /* ResourceOwner callbacks to hold buffer I/Os and pins */
-extern const ResourceOwnerDesc buffer_io_resowner_desc;
-extern const ResourceOwnerDesc buffer_pin_resowner_desc;
+extern PGDLLIMPORT const ResourceOwnerDesc buffer_io_resowner_desc;
+extern PGDLLIMPORT const ResourceOwnerDesc buffer_pin_resowner_desc;
 
 /* Convenience wrappers over ResourceOwnerRemember/Forget */
 static inline void

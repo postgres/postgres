@@ -16,8 +16,8 @@
 
 #include "access/xlogdefs.h"
 
-extern bool summarize_wal;
-extern int	wal_summary_keep_time;
+extern PGDLLIMPORT bool summarize_wal;
+extern PGDLLIMPORT int wal_summary_keep_time;
 
 extern Size WalSummarizerShmemSize(void);
 extern void WalSummarizerShmemInit(void);
