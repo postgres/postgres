@@ -2722,6 +2722,12 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 				Oid			defCollId;
 
 				/*
+				 * Partitions have only one parent and have no column
+				 * definitions of their own, so conflict should never occur.
+				 */
+				Assert(!is_partition);
+
+				/*
 				 * Yes, try to merge the two column definitions.
 				 */
 				ereport(NOTICE,
@@ -2792,12 +2798,9 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 
 				/*
 				 * In regular inheritance, columns in the parent's primary key
-				 * get an extra not-null constraint.  Partitioning doesn't
-				 * need this, because the PK itself is going to be cloned to
-				 * the partition.
+				 * get an extra not-null constraint.
 				 */
-				if (!is_partition &&
-					bms_is_member(parent_attno - FirstLowInvalidHeapAttributeNumber,
+				if (bms_is_member(parent_attno - FirstLowInvalidHeapAttributeNumber,
 								  pkattrs))
 				{
 					CookedConstraint *nn;
