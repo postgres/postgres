@@ -395,6 +395,42 @@ defGetCopyHeaderChoice(DefElem *def, bool is_from)
 }
 
 /*
+ * Extract a CopySaveErrorToChoice value from a DefElem.
+ */
+static CopySaveErrorToChoice
+defGetCopySaveErrorToChoice(DefElem *def, ParseState *pstate, bool is_from)
+{
+	char	   *sval;
+
+	if (!is_from)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY SAVE_ERROR_TO cannot be used with COPY TO"),
+				 parser_errposition(pstate, def->location)));
+
+	/*
+	 * If no parameter value given, assume the default value.
+	 */
+	if (def->arg == NULL)
+		return COPY_SAVE_ERROR_TO_ERROR;
+
+	/*
+	 * Allow "error", or "none" values.
+	 */
+	sval = defGetString(def);
+	if (pg_strcasecmp(sval, "error") == 0)
+		return COPY_SAVE_ERROR_TO_ERROR;
+	if (pg_strcasecmp(sval, "none") == 0)
+		return COPY_SAVE_ERROR_TO_NONE;
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("COPY save_error_to \"%s\" not recognized", sval),
+			 parser_errposition(pstate, def->location)));
+	return COPY_SAVE_ERROR_TO_ERROR;	/* keep compiler quiet */
+}
+
+/*
  * Process the statement option list for COPY.
  *
  * Scan the options list (a list of DefElem) and transpose the information
@@ -419,6 +455,7 @@ ProcessCopyOptions(ParseState *pstate,
 	bool		format_specified = false;
 	bool		freeze_specified = false;
 	bool		header_specified = false;
+	bool		save_error_to_specified = false;
 	ListCell   *option;
 
 	/* Support external use for option sanity checking */
@@ -571,6 +608,13 @@ ProcessCopyOptions(ParseState *pstate,
 								defel->defname),
 						 parser_errposition(pstate, defel->location)));
 		}
+		else if (strcmp(defel->defname, "save_error_to") == 0)
+		{
+			if (save_error_to_specified)
+				errorConflictingDefElem(defel, pstate);
+			save_error_to_specified = true;
+			opts_out->save_error_to = defGetCopySaveErrorToChoice(defel, pstate, is_from);
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -597,6 +641,11 @@ ProcessCopyOptions(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify DEFAULT in BINARY mode")));
+
+	if (opts_out->binary && opts_out->save_error_to != COPY_SAVE_ERROR_TO_ERROR)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("cannot specify SAVE_ERROR_TO in BINARY mode")));
 
 	/* Set defaults for omitted options */
 	if (!opts_out->delim)

@@ -66,16 +66,20 @@ COPY x from stdin (force_not_null (a), force_not_null (b));
 COPY x from stdin (force_null (a), force_null (b));
 COPY x from stdin (convert_selectively (a), convert_selectively (b));
 COPY x from stdin (encoding 'sql_ascii', encoding 'sql_ascii');
+COPY x from stdin (save_error_to none,save_error_to none);
 
 -- incorrect options
 COPY x to stdin (format BINARY, delimiter ',');
 COPY x to stdin (format BINARY, null 'x');
+COPY x from stdin (format BINARY, save_error_to none);
+COPY x to stdin (save_error_to none);
 COPY x to stdin (format TEXT, force_quote(a));
 COPY x from stdin (format CSV, force_quote(a));
 COPY x to stdout (format TEXT, force_not_null(a));
 COPY x to stdin (format CSV, force_not_null(a));
 COPY x to stdout (format TEXT, force_null(a));
 COPY x to stdin (format CSV, force_null(a));
+COPY x to stdin (format BINARY, save_error_to unsupported);
 
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
@@ -494,6 +498,42 @@ test1
 SELECT * FROM instead_of_insert_tbl;
 COMMIT;
 
+-- tests for SAVE_ERROR_TO option
+CREATE TABLE check_ign_err (n int, m int[], k int);
+COPY check_ign_err FROM STDIN WITH (save_error_to error);
+1	{1}	1
+a	{2}	2
+3	{3}	3333333333
+4	{a, 4}	4
+
+5	{5}	5
+\.
+COPY check_ign_err FROM STDIN WITH (save_error_to none);
+1	{1}	1
+a	{2}	2
+3	{3}	3333333333
+4	{a, 4}	4
+
+5	{5}	5
+\.
+SELECT * FROM check_ign_err;
+
+-- test datatype error that can't be handled as soft: should fail
+CREATE TABLE hard_err(foo widget);
+COPY hard_err FROM STDIN WITH (save_error_to none);
+1
+\.
+
+-- test missing data: should fail
+COPY check_ign_err FROM STDIN WITH (save_error_to none);
+1	{1}
+\.
+
+-- test extra data: should fail
+COPY check_ign_err FROM STDIN WITH (save_error_to none);
+1	{1}	3	abc
+\.
+
 -- clean up
 DROP TABLE forcetest;
 DROP TABLE vistest;
@@ -508,6 +548,8 @@ DROP TABLE instead_of_insert_tbl;
 DROP VIEW instead_of_insert_tbl_view;
 DROP VIEW instead_of_insert_tbl_view_2;
 DROP FUNCTION fun_instead_of_insert_tbl();
+DROP TABLE check_ign_err;
+DROP TABLE hard_err;
 
 --
 -- COPY FROM ... DEFAULT

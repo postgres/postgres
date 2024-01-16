@@ -31,6 +31,16 @@ typedef enum CopyHeaderChoice
 } CopyHeaderChoice;
 
 /*
+ * Represents where to save input processing errors.  More values to be added
+ * in the future.
+ */
+typedef enum CopySaveErrorToChoice
+{
+	COPY_SAVE_ERROR_TO_ERROR = 0,	/* immediately throw errors */
+	COPY_SAVE_ERROR_TO_NONE,	/* ignore errors */
+} CopySaveErrorToChoice;
+
+/*
  * A struct to hold COPY options, in a parsed form. All of these are related
  * to formatting, except for 'freeze', which doesn't really belong here, but
  * it's expedient to parse it along with all the other options.
@@ -62,6 +72,7 @@ typedef struct CopyFormatOptions
 	bool		force_null_all; /* FORCE_NULL *? */
 	bool	   *force_null_flags;	/* per-column CSV FN flags */
 	bool		convert_selectively;	/* do selective binary conversion? */
+	CopySaveErrorToChoice save_error_to;	/* where to save error information */
 	List	   *convert_select; /* list of column names (can be NIL) */
 } CopyFormatOptions;
 

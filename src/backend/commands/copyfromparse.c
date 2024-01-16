@@ -70,6 +70,7 @@
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "pgstat.h"
 #include "port/pg_bswap.h"
 #include "utils/builtins.h"
@@ -955,11 +956,17 @@ NextCopyFrom(CopyFromState cstate, ExprContext *econtext,
 
 				values[m] = ExecEvalExpr(defexprs[m], econtext, &nulls[m]);
 			}
-			else
-				values[m] = InputFunctionCall(&in_functions[m],
-											  string,
-											  typioparams[m],
-											  att->atttypmod);
+			/* If SAVE_ERROR_TO is specified, skip rows with soft errors */
+			else if (!InputFunctionCallSafe(&in_functions[m],
+											string,
+											typioparams[m],
+											att->atttypmod,
+											(Node *) cstate->escontext,
+											&values[m]))
+			{
+				cstate->num_errors++;
+				return true;
+			}
 
 			cstate->cur_attname = NULL;
 			cstate->cur_attval = NULL;

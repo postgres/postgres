@@ -42,6 +42,7 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "optimizer/optimizer.h"
 #include "pgstat.h"
 #include "rewrite/rewriteHandler.h"
@@ -656,6 +657,9 @@ CopyFrom(CopyFromState cstate)
 	Assert(cstate->rel);
 	Assert(list_length(cstate->range_table) == 1);
 
+	if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR)
+		Assert(cstate->escontext);
+
 	/*
 	 * The target must be a plain, foreign, or partitioned relation, or have
 	 * an INSTEAD OF INSERT row trigger.  (Currently, such triggers are only
@@ -992,6 +996,25 @@ CopyFrom(CopyFromState cstate)
 		if (!NextCopyFrom(cstate, econtext, myslot->tts_values, myslot->tts_isnull))
 			break;
 
+		if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR &&
+			cstate->escontext->error_occurred)
+		{
+			/*
+			 * Soft error occured, skip this tuple and save error information
+			 * according to SAVE_ERROR_TO.
+			 */
+			if (cstate->opts.save_error_to == COPY_SAVE_ERROR_TO_NONE)
+
+				/*
+				 * Just make ErrorSaveContext ready for the next NextCopyFrom.
+				 * Since we don't set details_wanted and error_data is not to
+				 * be filled, just resetting error_occurred is enough.
+				 */
+				cstate->escontext->error_occurred = false;
+
+			continue;
+		}
+
 		ExecStoreVirtualTuple(myslot);
 
 		/*
@@ -1284,6 +1307,14 @@ CopyFrom(CopyFromState cstate)
 	/* Done, clean up */
 	error_context_stack = errcallback.previous;
 
+	if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR &&
+		cstate->num_errors > 0)
+		ereport(NOTICE,
+				errmsg_plural("%zd row were skipped due to data type incompatibility",
+							  "%zd rows were skipped due to data type incompatibility",
+							  cstate->num_errors,
+							  cstate->num_errors));
+
 	if (bistate != NULL)
 		FreeBulkInsertState(bistate);
 
@@ -1418,6 +1449,23 @@ BeginCopyFrom(ParseState *pstate,
 			cstate->opts.force_notnull_flags[attnum - 1] = true;
 		}
 	}
+
+	/* Set up soft error handler for SAVE_ERROR_TO */
+	if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR)
+	{
+		cstate->escontext = makeNode(ErrorSaveContext);
+		cstate->escontext->type = T_ErrorSaveContext;
+		cstate->escontext->error_occurred = false;
+
+		/*
+		 * Currently we only support COPY_SAVE_ERROR_TO_NONE. We'll add other
+		 * options later
+		 */
+		if (cstate->opts.save_error_to == COPY_SAVE_ERROR_TO_NONE)
+			cstate->escontext->details_wanted = false;
+	}
+	else
+		cstate->escontext = NULL;
 
 	/* Convert FORCE_NULL name list to per-column flags, check validity */
 	cstate->opts.force_null_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
