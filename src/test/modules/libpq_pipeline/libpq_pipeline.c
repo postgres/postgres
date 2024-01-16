@@ -162,6 +162,7 @@ test_multi_pipelines(PGconn *conn)
 	if (PQenterPipelineMode(conn) != 1)
 		pg_fatal("failed to enter pipeline mode: %s", PQerrorMessage(conn));
 
+	/* first pipeline */
 	if (PQsendQueryParams(conn, "SELECT $1", 1, dummy_param_oids,
 						  dummy_params, NULL, NULL, 0) != 1)
 		pg_fatal("dispatching first SELECT failed: %s", PQerrorMessage(conn));
@@ -169,14 +170,27 @@ test_multi_pipelines(PGconn *conn)
 	if (PQpipelineSync(conn) != 1)
 		pg_fatal("Pipeline sync failed: %s", PQerrorMessage(conn));
 
+	/* second pipeline */
 	if (PQsendQueryParams(conn, "SELECT $1", 1, dummy_param_oids,
 						  dummy_params, NULL, NULL, 0) != 1)
 		pg_fatal("dispatching second SELECT failed: %s", PQerrorMessage(conn));
+
+	/* Skip flushing once. */
+	if (PQsendPipelineSync(conn) != 1)
+		pg_fatal("Pipeline sync failed: %s", PQerrorMessage(conn));
+
+	/* third pipeline */
+	if (PQsendQueryParams(conn, "SELECT $1", 1, dummy_param_oids,
+						  dummy_params, NULL, NULL, 0) != 1)
+		pg_fatal("dispatching third SELECT failed: %s", PQerrorMessage(conn));
 
 	if (PQpipelineSync(conn) != 1)
 		pg_fatal("pipeline sync failed: %s", PQerrorMessage(conn));
 
 	/* OK, start processing the results */
+
+	/* first pipeline */
+
 	res = PQgetResult(conn);
 	if (res == NULL)
 		pg_fatal("PQgetResult returned null when there's a pipeline item: %s",
@@ -213,6 +227,35 @@ test_multi_pipelines(PGconn *conn)
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("Unexpected result code %s from second pipeline item",
+				 PQresStatus(PQresultStatus(res)));
+	PQclear(res);
+	res = NULL;
+
+	if (PQgetResult(conn) != NULL)
+		pg_fatal("PQgetResult returned something extra after first result");
+
+	if (PQexitPipelineMode(conn) != 0)
+		pg_fatal("exiting pipeline mode after query but before sync succeeded incorrectly");
+
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("PQgetResult returned null when sync result expected: %s",
+				 PQerrorMessage(conn));
+
+	if (PQresultStatus(res) != PGRES_PIPELINE_SYNC)
+		pg_fatal("Unexpected result code %s instead of sync result, error: %s",
+				 PQresStatus(PQresultStatus(res)), PQerrorMessage(conn));
+	PQclear(res);
+
+	/* third pipeline */
+
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("PQgetResult returned null when there's a pipeline item: %s",
+				 PQerrorMessage(conn));
+
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("Unexpected result code %s from third pipeline item",
 				 PQresStatus(PQresultStatus(res)));
 
 	res = PQgetResult(conn);

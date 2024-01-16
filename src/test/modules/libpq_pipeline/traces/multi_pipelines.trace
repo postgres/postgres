@@ -8,6 +8,17 @@ F	19	Bind	 "" "" 0 1 1 '1' 1 0
 F	6	Describe	 P ""
 F	9	Execute	 "" 0
 F	4	Sync
+F	21	Parse	 "" "SELECT $1" 1 NNNN
+F	19	Bind	 "" "" 0 1 1 '1' 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Sync
+B	4	ParseComplete
+B	4	BindComplete
+B	33	RowDescription	 1 "?column?" NNNN 0 NNNN 4 -1 0
+B	11	DataRow	 1 1 '1'
+B	13	CommandComplete	 "SELECT 1"
+B	5	ReadyForQuery	 I
 B	4	ParseComplete
 B	4	BindComplete
 B	33	RowDescription	 1 "?column?" NNNN 0 NNNN 4 -1 0
