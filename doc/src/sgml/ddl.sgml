@@ -249,7 +249,7 @@ CREATE TABLE products (
    storage and is computed when it is read.  Thus, a virtual generated column
    is similar to a view and a stored generated column is similar to a
    materialized view (except that it is always updated automatically).
-   PostgreSQL currently implements only stored generated columns.
+   <productname>PostgreSQL</productname> currently implements only stored generated columns.
   </para>
 
   <para>
