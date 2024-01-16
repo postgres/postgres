@@ -339,7 +339,9 @@ INSERT INTO people (id, name, address) VALUE (<emphasis>DEFAULT</emphasis>, 'C',
   </para>
 
   <para>
-   Identity columns are currently not supported for partitioned tables.
+   Partitions inherit identity columns from the partitioned table.  They
+   cannot have their own identity columns.  The properties of a given identity
+   column are consistent across all the partitions in the partition hierarchy.
   </para>
  </sect1>
 

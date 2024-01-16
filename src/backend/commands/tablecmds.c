@@ -359,7 +359,7 @@ static List *MergeAttributes(List *columns, const List *supers, char relpersiste
 							 bool is_partition, List **supconstr,
 							 List **supnotnulls);
 static List *MergeCheckConstraint(List *constraints, const char *name, Node *expr);
-static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
+static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel, bool ispartition);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void StoreCatalogInheritance(Oid relationId, List *supers,
 									bool child_is_partition);
@@ -456,10 +456,11 @@ static ObjectAddress ATExecColumnDefault(Relation rel, const char *colName,
 static ObjectAddress ATExecCookedColumnDefault(Relation rel, AttrNumber attnum,
 											   Node *newDefault);
 static ObjectAddress ATExecAddIdentity(Relation rel, const char *colName,
-									   Node *def, LOCKMODE lockmode);
+									   Node *def, LOCKMODE lockmode, bool recurse, bool recursing);
 static ObjectAddress ATExecSetIdentity(Relation rel, const char *colName,
-									   Node *def, LOCKMODE lockmode);
-static ObjectAddress ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
+									   Node *def, LOCKMODE lockmode, bool recurse, bool recursing);
+static ObjectAddress ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode,
+										bool recurse, bool recursing);
 static ObjectAddress ATExecSetExpression(AlteredTableInfo *tab, Relation rel, const char *colName,
 										 Node *newExpr, LOCKMODE lockmode);
 static void ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recurse, bool recursing, LOCKMODE lockmode);
@@ -627,7 +628,7 @@ static PartitionSpec *transformPartitionSpec(Relation rel, PartitionSpec *partsp
 static void ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNumber *partattrs,
 								  List **partexprs, Oid *partopclass, Oid *partcollation,
 								  PartitionStrategy strategy);
-static void CreateInheritance(Relation child_rel, Relation parent_rel);
+static void CreateInheritance(Relation child_rel, Relation parent_rel, bool ispartition);
 static void RemoveInheritance(Relation child_rel, Relation parent_rel,
 							  bool expect_detached);
 static void ATInheritAdjustNotNulls(Relation parent_rel, Relation child_rel,
@@ -2864,6 +2865,15 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 					def->is_not_null = true;
 				def->storage = attribute->attstorage;
 				def->generated = attribute->attgenerated;
+
+				/*
+				 * Regular inheritance children are independent enough not to
+				 * inherit identity columns.  But partitions are integral part
+				 * of a partitioned table and inherit identity column.
+				 */
+				if (is_partition)
+					def->identity = attribute->attidentity;
+
 				if (CompressionMethodIsValid(attribute->attcompression))
 					def->compression =
 						pstrdup(GetCompressionMethodName(attribute->attcompression));
@@ -4824,18 +4834,24 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_AddIdentity:
 			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
-			/* This command never recurses */
+			/* Set up recursion for phase 2; no other prep needed */
+			if (recurse)
+				cmd->recurse = true;
 			pass = AT_PASS_ADD_OTHERCONSTR;
 			break;
 		case AT_SetIdentity:
 			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
-			/* This command never recurses */
+			/* Set up recursion for phase 2; no other prep needed */
+			if (recurse)
+				cmd->recurse = true;
 			/* This should run after AddIdentity, so do it in MISC pass */
 			pass = AT_PASS_MISC;
 			break;
 		case AT_DropIdentity:
 			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
-			/* This command never recurses */
+			/* Set up recursion for phase 2; no other prep needed */
+			if (recurse)
+				cmd->recurse = true;
 			pass = AT_PASS_DROP;
 			break;
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
@@ -5227,16 +5243,16 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
 									  cur_pass, context);
 			Assert(cmd != NULL);
-			address = ATExecAddIdentity(rel, cmd->name, cmd->def, lockmode);
+			address = ATExecAddIdentity(rel, cmd->name, cmd->def, lockmode, cmd->recurse, false);
 			break;
 		case AT_SetIdentity:
 			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
 									  cur_pass, context);
 			Assert(cmd != NULL);
-			address = ATExecSetIdentity(rel, cmd->name, cmd->def, lockmode);
+			address = ATExecSetIdentity(rel, cmd->name, cmd->def, lockmode, cmd->recurse, false);
 			break;
 		case AT_DropIdentity:
-			address = ATExecDropIdentity(rel, cmd->name, cmd->missing_ok, lockmode);
+			address = ATExecDropIdentity(rel, cmd->name, cmd->missing_ok, lockmode, cmd->recurse, false);
 			break;
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
 			address = ATExecDropNotNull(rel, cmd->name, cmd->recurse, lockmode);
@@ -7092,11 +7108,17 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 
 	/*
-	 * Cannot add identity column if table has children, because identity does
-	 * not inherit.  (Adding column and identity separately will work.)
+	 * Regular inheritance children are independent enough not to inherit the
+	 * identity column from parent hence cannot recursively add identity
+	 * column if the table has inheritance children.
+	 *
+	 * Partitions, on the other hand, are integral part of a partitioned table
+	 * and inherit identity column.  Hence propagate identity column down the
+	 * partition hierarchy.
 	 */
 	if (colDef->identity &&
 		recurse &&
+		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
 		find_inheritance_children(myrelid, NoLock) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -8063,7 +8085,7 @@ ATExecCookedColumnDefault(Relation rel, AttrNumber attnum,
  */
 static ObjectAddress
 ATExecAddIdentity(Relation rel, const char *colName,
-				  Node *def, LOCKMODE lockmode)
+				  Node *def, LOCKMODE lockmode, bool recurse, bool recursing)
 {
 	Relation	attrelation;
 	HeapTuple	tuple;
@@ -8071,6 +8093,19 @@ ATExecAddIdentity(Relation rel, const char *colName,
 	AttrNumber	attnum;
 	ObjectAddress address;
 	ColumnDef  *cdef = castNode(ColumnDef, def);
+	bool		ispartitioned;
+
+	ispartitioned = (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+	if (ispartitioned && !recurse)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot add identity to a column of only the partitioned table"),
+				 errhint("Do not specify the ONLY keyword.")));
+
+	if (rel->rd_rel->relispartition && !recursing)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("cannot add identity to a column of a partition"));
 
 	attrelation = table_open(AttributeRelationId, RowExclusiveLock);
 
@@ -8125,6 +8160,27 @@ ATExecAddIdentity(Relation rel, const char *colName,
 
 	table_close(attrelation, RowExclusiveLock);
 
+	/*
+	 * Recurse to propagate the identity column to partitions.  Identity is
+	 * not inherited in regular inheritance children.
+	 */
+	if (recurse && ispartitioned)
+	{
+		List	   *children;
+		ListCell   *lc;
+
+		children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+
+		foreach(lc, children)
+		{
+			Relation	childrel;
+
+			childrel = table_open(lfirst_oid(lc), NoLock);
+			ATExecAddIdentity(childrel, colName, def, lockmode, recurse, true);
+			table_close(childrel, NoLock);
+		}
+	}
+
 	return address;
 }
 
@@ -8134,7 +8190,8 @@ ATExecAddIdentity(Relation rel, const char *colName,
  * Return the address of the affected column.
  */
 static ObjectAddress
-ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmode)
+ATExecSetIdentity(Relation rel, const char *colName, Node *def,
+				  LOCKMODE lockmode, bool recurse, bool recursing)
 {
 	ListCell   *option;
 	DefElem    *generatedEl = NULL;
@@ -8143,6 +8200,19 @@ ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmod
 	AttrNumber	attnum;
 	Relation	attrelation;
 	ObjectAddress address;
+	bool		ispartitioned;
+
+	ispartitioned = (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+	if (ispartitioned && !recurse)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot change identity column of only the partitioned table"),
+				 errhint("Do not specify the ONLY keyword.")));
+
+	if (rel->rd_rel->relispartition && !recursing)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("cannot change identity column of a partition"));
 
 	foreach(option, castNode(List, def))
 	{
@@ -8207,6 +8277,27 @@ ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmod
 	heap_freetuple(tuple);
 	table_close(attrelation, RowExclusiveLock);
 
+	/*
+	 * Recurse to propagate the identity change to partitions. Identity is not
+	 * inherited in regular inheritance children.
+	 */
+	if (generatedEl && recurse && ispartitioned)
+	{
+		List	   *children;
+		ListCell   *lc;
+
+		children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+
+		foreach(lc, children)
+		{
+			Relation	childrel;
+
+			childrel = table_open(lfirst_oid(lc), NoLock);
+			ATExecSetIdentity(childrel, colName, def, lockmode, recurse, true);
+			table_close(childrel, NoLock);
+		}
+	}
+
 	return address;
 }
 
@@ -8216,7 +8307,8 @@ ATExecSetIdentity(Relation rel, const char *colName, Node *def, LOCKMODE lockmod
  * Return the address of the affected column.
  */
 static ObjectAddress
-ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode)
+ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode,
+				   bool recurse, bool recursing)
 {
 	HeapTuple	tuple;
 	Form_pg_attribute attTup;
@@ -8225,6 +8317,19 @@ ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE 
 	ObjectAddress address;
 	Oid			seqid;
 	ObjectAddress seqaddress;
+	bool		ispartitioned;
+
+	ispartitioned = (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+	if (ispartitioned && !recurse)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot drop identity from a column of only the partitioned table"),
+				 errhint("Do not specify the ONLY keyword.")));
+
+	if (rel->rd_rel->relispartition && !recursing)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("cannot drop identity from a column of a partition"));
 
 	attrelation = table_open(AttributeRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
@@ -8273,15 +8378,39 @@ ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE 
 
 	table_close(attrelation, RowExclusiveLock);
 
-	/* drop the internal sequence */
-	seqid = getIdentitySequence(RelationGetRelid(rel), attnum, false);
-	deleteDependencyRecordsForClass(RelationRelationId, seqid,
-									RelationRelationId, DEPENDENCY_INTERNAL);
-	CommandCounterIncrement();
-	seqaddress.classId = RelationRelationId;
-	seqaddress.objectId = seqid;
-	seqaddress.objectSubId = 0;
-	performDeletion(&seqaddress, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
+	/*
+	 * Recurse to drop the identity from column in partitions.  Identity is
+	 * not inherited in regular inheritance children so ignore them.
+	 */
+	if (recurse && ispartitioned)
+	{
+		List	   *children;
+		ListCell   *lc;
+
+		children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+
+		foreach(lc, children)
+		{
+			Relation	childrel;
+
+			childrel = table_open(lfirst_oid(lc), NoLock);
+			ATExecDropIdentity(childrel, colName, false, lockmode, recurse, true);
+			table_close(childrel, NoLock);
+		}
+	}
+
+	if (!recursing)
+	{
+		/* drop the internal sequence */
+		seqid = getIdentitySequence(RelationGetRelid(rel), attnum, false);
+		deleteDependencyRecordsForClass(RelationRelationId, seqid,
+										RelationRelationId, DEPENDENCY_INTERNAL);
+		CommandCounterIncrement();
+		seqaddress.classId = RelationRelationId;
+		seqaddress.objectId = seqid;
+		seqaddress.objectSubId = 0;
+		performDeletion(&seqaddress, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
+	}
 
 	return address;
 }
@@ -15777,7 +15906,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 				 errdetail("ROW triggers with transition tables are not supported in inheritance hierarchies.")));
 
 	/* OK to create inheritance */
-	CreateInheritance(child_rel, parent_rel);
+	CreateInheritance(child_rel, parent_rel, false);
 
 	/*
 	 * If parent_rel has a primary key, then child_rel has not-null
@@ -15803,7 +15932,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
  * Common to ATExecAddInherit() and ATExecAttachPartition().
  */
 static void
-CreateInheritance(Relation child_rel, Relation parent_rel)
+CreateInheritance(Relation child_rel, Relation parent_rel, bool ispartition)
 {
 	Relation	catalogRelation;
 	SysScanDesc scan;
@@ -15848,7 +15977,7 @@ CreateInheritance(Relation child_rel, Relation parent_rel)
 	systable_endscan(scan);
 
 	/* Match up the columns and bump attinhcount as needed */
-	MergeAttributesIntoExisting(child_rel, parent_rel);
+	MergeAttributesIntoExisting(child_rel, parent_rel, ispartition);
 
 	/* Match up the constraints and bump coninhcount as needed */
 	MergeConstraintsIntoExisting(child_rel, parent_rel);
@@ -15926,7 +16055,7 @@ constraints_equivalent(HeapTuple a, HeapTuple b, TupleDesc tupleDesc)
  * the child must be as well. Defaults are not compared, however.
  */
 static void
-MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
+MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel, bool ispartition)
 {
 	Relation	attrrel;
 	TupleDesc	parent_desc;
@@ -15994,6 +16123,14 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("column \"%s\" in child table must not be a generated column", parent_attname)));
+
+			/*
+			 * Regular inheritance children are independent enough not to
+			 * inherit identity columns.  But partitions are integral part of
+			 * a partitioned table and inherit identity column.
+			 */
+			if (ispartition)
+				child_att->attidentity = parent_att->attidentity;
 
 			/*
 			 * OK, bump the child column's inheritance count.  (If we fail
@@ -18780,7 +18917,10 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach temporary relation of another session as partition")));
 
-	/* Check if there are any columns in attachrel that aren't in the parent */
+	/*
+	 * Check if attachrel has any identity columns or any columns that aren't
+	 * in the parent.
+	 */
 	tupleDesc = RelationGetDescr(attachrel);
 	natts = tupleDesc->natts;
 	for (attno = 1; attno <= natts; attno++)
@@ -18791,6 +18931,13 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 		/* Ignore dropped */
 		if (attribute->attisdropped)
 			continue;
+
+		if (attribute->attidentity)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("table \"%s\" being attached contains an identity column \"%s\"",
+						   RelationGetRelationName(attachrel), attributeName),
+					errdetail("The new partition may not contain an identity column."));
 
 		/* Try to find the column in parent (matching on column name) */
 		if (!SearchSysCacheExists2(ATTNAME,
@@ -18826,7 +18973,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 							  cmd->bound, pstate);
 
 	/* OK to create inheritance.  Rest of the checks performed there */
-	CreateInheritance(attachrel, rel);
+	CreateInheritance(attachrel, rel, true);
 
 	/* Update the pg_class entry. */
 	StorePartitionBound(attachrel, rel, cmd->bound);
@@ -19649,6 +19796,18 @@ DetachPartitionFinalize(Relation rel, Relation partRel, bool concurrent,
 	CatalogTupleUpdate(classRel, &newtuple->t_self, newtuple);
 	heap_freetuple(newtuple);
 	table_close(classRel, RowExclusiveLock);
+
+	/*
+	 * Drop identity property from all identity columns of partition.
+	 */
+	for (int attno = 0; attno < RelationGetNumberOfAttributes(partRel); attno++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(partRel->rd_att, attno);
+
+		if (!attr->attisdropped && attr->attidentity)
+			ATExecDropIdentity(partRel, NameStr(attr->attname), false,
+							   AccessExclusiveLock, true, true);
+	}
 
 	if (OidIsValid(defaultPartOid))
 	{
