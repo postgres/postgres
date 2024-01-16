@@ -252,7 +252,7 @@ static void lazy_scan_prune(LVRelState *vacrel, Buffer buf,
 							LVPagePruneState *prunestate);
 static bool lazy_scan_noprune(LVRelState *vacrel, Buffer buf,
 							  BlockNumber blkno, Page page,
-							  bool *recordfreespace);
+							  bool *has_lpdead_items);
 static void lazy_vacuum(LVRelState *vacrel);
 static bool lazy_vacuum_all_indexes(LVRelState *vacrel);
 static void lazy_vacuum_heap_rel(LVRelState *vacrel);
@@ -958,7 +958,7 @@ lazy_scan_heap(LVRelState *vacrel)
 		page = BufferGetPage(buf);
 		if (!ConditionalLockBufferForCleanup(buf))
 		{
-			bool		recordfreespace;
+			bool		has_lpdead_items;
 
 			LockBuffer(buf, BUFFER_LOCK_SHARE);
 
@@ -974,17 +974,30 @@ lazy_scan_heap(LVRelState *vacrel)
 			 * Collect LP_DEAD items in dead_items array, count tuples,
 			 * determine if rel truncation is safe
 			 */
-			if (lazy_scan_noprune(vacrel, buf, blkno, page,
-								  &recordfreespace))
+			if (lazy_scan_noprune(vacrel, buf, blkno, page, &has_lpdead_items))
 			{
 				Size		freespace = 0;
+				bool		recordfreespace;
 
 				/*
-				 * Processed page successfully (without cleanup lock) -- just
-				 * need to update the FSM, much like the lazy_scan_prune case.
-				 * Don't bother trying to match its visibility map setting
-				 * steps, though.
+				 * We processed the page successfully (without a cleanup
+				 * lock).
+				 *
+				 * Update the FSM, just as we would in the case where
+				 * lazy_scan_prune() is called. Our goal is to update the
+				 * freespace map the last time we touch the page. If the
+				 * relation has no indexes, or if index vacuuming is disabled,
+				 * there will be no second heap pass; if this particular page
+				 * has no dead items, the second heap pass will not touch this
+				 * page. So, in those cases, update the FSM now.
+				 *
+				 * After a call to lazy_scan_prune(), we would also try to
+				 * adjust the page-level all-visible bit and the visibility
+				 * map, but we skip that step in this path.
 				 */
+				recordfreespace = vacrel->nindexes == 0
+					|| !vacrel->do_index_vacuuming
+					|| !has_lpdead_items;
 				if (recordfreespace)
 					freespace = PageGetHeapFreeSpace(page);
 				UnlockReleaseBuffer(buf);
@@ -1935,15 +1948,17 @@ lazy_scan_prune(LVRelState *vacrel,
  * one or more tuples on the page.  We always return true for non-aggressive
  * callers.
  *
- * recordfreespace flag instructs caller on whether or not it should do
- * generic FSM processing for page.
+ * If this function returns true, *has_lpdead_items gets set to true or false
+ * depending on whether, upon return from this function, any LP_DEAD items are
+ * present on the page. If this function returns false, *has_lpdead_items
+ * is not updated.
  */
 static bool
 lazy_scan_noprune(LVRelState *vacrel,
 				  Buffer buf,
 				  BlockNumber blkno,
 				  Page page,
-				  bool *recordfreespace)
+				  bool *has_lpdead_items)
 {
 	OffsetNumber offnum,
 				maxoff;
@@ -1960,7 +1975,6 @@ lazy_scan_noprune(LVRelState *vacrel,
 	Assert(BufferGetBlockNumber(buf) == blkno);
 
 	hastup = false;				/* for now */
-	*recordfreespace = false;	/* for now */
 
 	lpdead_items = 0;
 	live_tuples = 0;
@@ -2102,18 +2116,8 @@ lazy_scan_noprune(LVRelState *vacrel,
 			hastup = true;
 			missed_dead_tuples += lpdead_items;
 		}
-
-		*recordfreespace = true;
 	}
-	else if (lpdead_items == 0)
-	{
-		/*
-		 * Won't be vacuuming this page later, so record page's freespace in
-		 * the FSM now
-		 */
-		*recordfreespace = true;
-	}
-	else
+	else if (lpdead_items > 0)
 	{
 		VacDeadItems *dead_items = vacrel->dead_items;
 		ItemPointerData tmp;
@@ -2138,12 +2142,6 @@ lazy_scan_noprune(LVRelState *vacrel,
 									 dead_items->num_items);
 
 		vacrel->lpdead_items += lpdead_items;
-
-		/*
-		 * Assume that we'll go on to vacuum this heap page during final pass
-		 * over the heap.  Don't record free space until then.
-		 */
-		*recordfreespace = false;
 	}
 
 	/*
@@ -2158,6 +2156,9 @@ lazy_scan_noprune(LVRelState *vacrel,
 	/* Can't truncate this page */
 	if (hastup)
 		vacrel->nonempty_pages = blkno + 1;
+
+	/* Did we find LP_DEAD items? */
+	*has_lpdead_items = (lpdead_items > 0);
 
 	/* Caller won't need to call lazy_scan_prune with same page */
 	return true;
