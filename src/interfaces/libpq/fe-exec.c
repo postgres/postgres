@@ -3235,7 +3235,7 @@ pqPipelineProcessQueue(PGconn *conn)
  * error, a PGresult with PGRES_PIPELINE_SYNC is produced.
  *
  * Queries can already have been sent before PQpipelineSync is called, but
- * PQpipelineSync need to be called before retrieving command results.
+ * PQpipelineSync needs to be called before retrieving command results.
  *
  * The connection will remain in pipeline mode and unavailable for new
  * synchronous command execution functions until all results from the pipeline
