@@ -1972,7 +1972,7 @@ static StringInfoData EncodePredicateLockInfo(PredicateLockData * c)
 }
 
 const bool GenTrainingData = true;
-const bool EnableLearningCC = false;
+const bool EnableLearningCC = true;
 
 // EncodeLockData encode all non-predicate lock information as string.
 static StringInfoData EncodeLockData(LockData * c, bool * CurrentNeedPredict)
@@ -2045,19 +2045,34 @@ static void get_lock_strategy(LocalTransactionId tid)
 
 //    printf("xact%d is started: %d--%d\n", tid, XactLockStrategy, XactIsoLevel);
 
+    if (!EnableLearningCC)
+    {
+        XactIsoLevel = DefaultXactIsoLevel;
+        XactLockStrategy = DefaultXactLockStrategy;
+        if (!IsolationNeedLock())
+            XactIsoLevel = XACT_SERIALIZABLE;
+        if (IsolationIsSerializable())
+            // In case of SSI, disable locking based methods.
+            Assert(XactLockStrategy == LOCK_NONE);
+//			XactLockStrategy = LOCK_NONE;
+
+        if (!(IsolationNeedLock() || IsolationIsSerializable()))
+            printf("xact%d is not serializable (iso:%d, lock:%d).\n", tid, XactIsoLevel, XactLockStrategy);
+        return;
+    }
+
     if (!should_refine_cc(tid) || tid <= NUM_OF_SYS_XACTS)
         return;
 
     initStringInfo(&buf);
     appendStringInfo(&buf,
-                     _(
-//                             "{\"lock\":{%s},"
-                       "\"pred\":{%s},"
+                     _("{\"lock\":{%s},"
+//                       "\"pred\":{%s},"
 //                       "dep:{%s},"
                        "\"proc\":{%s},"
                        "\"prof\":{%s}}"),
-//                     EncodeLockData(GetLockStatusData(), &need_predict).data,
-                     EncodePredicateLockInfo(GetPredicateLockStatusData()).data,
+                     EncodeLockData(GetLockStatusData(), &need_predict).data,
+//                     EncodePredicateLockInfo(GetPredicateLockStatusData()).data,
 //                     EncodeDependencyGraphData().data,
                      EncodeSessionData().data,
                      EncodeResourceData().data);
@@ -2067,8 +2082,8 @@ static void get_lock_strategy(LocalTransactionId tid)
 
     if (GenTrainingData)
     {
-//        long cmd = random() % 2;
-        int cmd = 1;
+        long cmd = random() % 3;
+//        int cmd = 1;
         if (cmd == 0)
         {
             XactIsoLevel = XACT_SERIALIZABLE;
@@ -2082,7 +2097,7 @@ static void get_lock_strategy(LocalTransactionId tid)
         else
         {
             XactIsoLevel = XACT_READ_COMMITTED;
-            XactLockStrategy = LOCK_2PL_WD;
+            XactLockStrategy = LOCK_2PL_NW;
         }
 
         // feature, cc, and start time (for latency calculation).
@@ -2160,6 +2175,9 @@ static void report_xact_result(bool is_commit, LocalTransactionId tid)
     int conn_fd;
     char reward[REWARD_LENGTH];
     FILE *file;
+
+    if (!EnableLearningCC)
+        return;
 
 //    printf("xact%d is finished: %d--%d\n", tid, XactLockStrategy, XactIsoLevel);
     if (!should_report_result(tid) || tid <= NUM_OF_SYS_XACTS)
@@ -2306,16 +2324,9 @@ StartTransaction(void)
 	 */
 	vxid.backendId = MyBackendId;
 	vxid.localTransactionId = GetNextLocalTransactionId();
-	if (EnableLearningCC)
-	    get_lock_strategy(vxid.localTransactionId);
-	else
-	{
-		XactIsoLevel = DefaultXactIsoLevel;
-		XactLockStrategy = DefaultXactLockStrategy;
-		if (IsolationIsSerializable())
-			// In case of SSI, disable locking based methods.
-			XactLockStrategy = LOCK_NONE;
-	}
+    get_lock_strategy(vxid.localTransactionId);
+//    Assert(XactIsoLevel == XACT_READ_COMMITTED);
+//    Assert(XactLockStrategy == LOCK_2PL);
 
     /*
      * Lock the virtual transaction id before we announce it in the proc array

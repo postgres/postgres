@@ -3419,16 +3419,10 @@ l2:
 	}
 
 
-    if (IsolationNeedLock() && !have_tuple_lock)
+    if (IsolationNeedLock() && !have_tuple_lock && result == TM_Ok)
     {
-        // add write lock for tuple access, no wait style.
+        // the TM_Updated mark is kept in 2PL for index conflicts.
         heap_lock_for_write(relation, &oldtup, buffer);
-//        LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-//        if (!IsolationLockNoWait())
-//            LockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
-//        else if (!ConditionalLockTupleTuplock(relation, &(oldtup.t_self), *lockmode))
-//                result = TM_BeingModified;
-//        LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
     }
 
     // 2PL does not accept parallel write.
