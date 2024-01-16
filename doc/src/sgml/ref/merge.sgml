@@ -627,8 +627,8 @@ WHEN MATCHED THEN
     This command conforms to the <acronym>SQL</acronym> standard.
   </para>
    <para>
-    The WITH clause and <literal>DO NOTHING</literal> action are extensions to
-    the <acronym>SQL</acronym> standard.
+    The <literal>WITH</literal> clause and <literal>DO NOTHING</literal>
+    action are extensions to the <acronym>SQL</acronym> standard.
   </para>
  </refsect1>
 </refentry>
