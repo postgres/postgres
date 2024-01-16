@@ -1310,10 +1310,10 @@ CopyFrom(CopyFromState cstate)
 	if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR &&
 		cstate->num_errors > 0)
 		ereport(NOTICE,
-				errmsg_plural("%zd row were skipped due to data type incompatibility",
-							  "%zd rows were skipped due to data type incompatibility",
-							  cstate->num_errors,
-							  cstate->num_errors));
+				errmsg_plural("%llu row were skipped due to data type incompatibility",
+							  "%llu rows were skipped due to data type incompatibility",
+							  (unsigned long long) cstate->num_errors,
+							  (unsigned long long) cstate->num_errors));
 
 	if (bistate != NULL)
 		FreeBulkInsertState(bistate);
