@@ -846,6 +846,8 @@ pqSaveWriteError(PGconn *conn)
  * using whatever is in conn->errorMessage.  In any case, clear the async
  * result storage, and update our notion of how much error text has been
  * returned to the application.
+ *
+ * Note that in no case (not even OOM) do we return NULL.
  */
 PGresult *
 pqPrepareAsyncResult(PGconn *conn)
@@ -2153,7 +2155,7 @@ PQgetResult(PGconn *conn)
 				 * (In other words: we don't return a NULL after a pipeline
 				 * sync.)
 				 */
-				if (res && res->resultStatus == PGRES_PIPELINE_SYNC)
+				if (res->resultStatus == PGRES_PIPELINE_SYNC)
 					pqPipelineProcessQueue(conn);
 			}
 			else
