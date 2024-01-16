@@ -354,7 +354,7 @@ void heap_lock_for_scan(Relation relation)
 }
 
 void heap_lock_for_write(Relation relation,
-                        HeapTuple tuple, Buffer buffer)
+                        HeapTuple tuple, Buffer buffer, LOCKMODE lock_mode)
 {
     bool is_exclusive;
     if (!IsolationNeedLock()) return;
@@ -364,8 +364,8 @@ void heap_lock_for_write(Relation relation,
     is_exclusive = LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
     if (!IsolationLockNoWait())
-        LockTupleTuplock(relation, &tuple->t_self, LockTupleExclusive); // LockTupleShare or SIReadLock?
-    else if (!ConditionalLockTupleTuplock(relation, &tuple->t_self, LockTupleExclusive))
+        LockTupleTuplock(relation, &tuple->t_self, lock_mode); // LockTupleShare or SIReadLock?
+    else if (!ConditionalLockTupleTuplock(relation, &tuple->t_self, lock_mode))
         ereport(ERROR,
                 (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
                         errmsg("could not serialize access due to read/write dependencies among transactions"),
@@ -3355,7 +3355,7 @@ l2:
 		}
 		else
 		{
-            if (IsolationNeedLock())
+            if (IsolationLockNoWait())
             {
                 // In 2PL (no wait policy), we directly abort for concurrent update.
                 result = TM_BeingModified;
@@ -3422,12 +3422,12 @@ l2:
     if (IsolationNeedLock() && !have_tuple_lock && result == TM_Ok)
     {
         // the TM_Updated mark is kept in 2PL for index conflicts.
-        heap_lock_for_write(relation, &oldtup, buffer);
+        heap_lock_for_write(relation, &oldtup, buffer, *lockmode);
+        have_tuple_lock = true;
     }
 
     // 2PL does not accept parallel write.
-    if (result != TM_Ok ||
-        (!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID) && IsolationNeedLock()))
+    if (result != TM_Ok)    //(!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID) && IsolationNeedLock())
 	{
 abort_mark:
         tmfd->ctid = oldtup.t_data->t_ctid;

@@ -2066,12 +2066,13 @@ static void get_lock_strategy(LocalTransactionId tid)
 
     initStringInfo(&buf);
     appendStringInfo(&buf,
-                     _("{\"lock\":{%s},"
+                     _(
+//                             "{\"lock\":{%s},"
 //                       "\"pred\":{%s},"
 //                       "dep:{%s},"
                        "\"proc\":{%s},"
                        "\"prof\":{%s}}"),
-                     EncodeLockData(GetLockStatusData(), &need_predict).data,
+//                     EncodeLockData(GetLockStatusData(), &need_predict).data,
 //                     EncodePredicateLockInfo(GetPredicateLockStatusData()).data,
 //                     EncodeDependencyGraphData().data,
                      EncodeSessionData().data,
@@ -2082,8 +2083,8 @@ static void get_lock_strategy(LocalTransactionId tid)
 
     if (GenTrainingData)
     {
-        long cmd = random() % 3;
-//        int cmd = 1;
+//        long cmd = random() % 3;
+        int cmd = 1;
         if (cmd == 0)
         {
             XactIsoLevel = XACT_SERIALIZABLE;
@@ -2094,10 +2095,15 @@ static void get_lock_strategy(LocalTransactionId tid)
             XactIsoLevel = XACT_READ_COMMITTED;
             XactLockStrategy = LOCK_2PL;
         }
-        else
+        else if (cmd == 2)
         {
             XactIsoLevel = XACT_READ_COMMITTED;
             XactLockStrategy = LOCK_2PL_NW;
+        }
+        else
+        {
+            XactIsoLevel = XACT_READ_COMMITTED;
+            XactLockStrategy = LOCK_ASSERT_ABORT;
         }
 
         // feature, cc, and start time (for latency calculation).
@@ -2142,14 +2148,14 @@ static void get_lock_strategy(LocalTransactionId tid)
 
 static bool should_refine_cc(uint tid)
 {
-    return true;
-//    return tid % 10 == 0;
+//    return true;
+    return tid % 10 == 0;
 }
 
 static bool should_report_result(uint tid)
 {
-    return true;
-//    return tid % 10 == 0;
+//    return true;
+    return tid % 10 == 0;
 }
 
 static uint64_t get_cur_time_ns()

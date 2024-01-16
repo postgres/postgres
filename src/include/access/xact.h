@@ -41,6 +41,7 @@
 #define LOCK_NONE   0
 #define LOCK_2PL    1
 #define LOCK_2PL_NW    2
+#define LOCK_ASSERT_ABORT    3
 
 #define XACT_UPDATE 0
 #define XACT_READ   1

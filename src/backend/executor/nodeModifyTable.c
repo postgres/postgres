@@ -1444,7 +1444,7 @@ lreplace:
 					TupleTableSlot *inputslot;
 					TupleTableSlot *epqslot;
 
-					if (IsolationUsesXactSnapshot() || IsolationNeedLock())
+					if (IsolationUsesXactSnapshot() || IsolationLockNoWait())
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 								 errmsg("could not serialize access due to concurrent update")));
@@ -1529,7 +1529,14 @@ lreplace:
 
 		/* insert index entries for tuple if necessary */
 		if (resultRelInfo->ri_NumIndices > 0 && update_indexes)
-			recheckIndexes = ExecInsertIndexTuples(slot, estate, false, NULL, NIL);
+        {
+            if (!ItemPointerIsValid(&slot->tts_tid))
+            {
+                printf("the result is %d\n", result);
+            }
+//            Assert(ItemPointerIsValid(&slot->tts_tid));
+            recheckIndexes = ExecInsertIndexTuples(slot, estate, false, NULL, NIL);
+        }
 	}
 
 	if (canSetTag)
