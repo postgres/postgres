@@ -263,9 +263,9 @@ pgstat_beinit(void)
 		 * Assign the MyBEEntry for an auxiliary process.  Since it doesn't
 		 * have a BackendId, the slot is statically allocated based on the
 		 * auxiliary process type (MyAuxProcType).  Backends use slots indexed
-		 * in the range from 1 to MaxBackends (inclusive), so we use
-		 * MaxBackends + AuxBackendType + 1 as the index of the slot for an
-		 * auxiliary process.
+		 * in the range from 0 to MaxBackends (exclusive), so we use
+		 * MaxBackends + AuxProcType as the index of the slot for an auxiliary
+		 * process.
 		 */
 		MyBEEntry = &BackendStatusArray[MaxBackends + MyAuxProcType];
 	}
