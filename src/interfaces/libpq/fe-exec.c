@@ -3247,23 +3247,6 @@ PQsendPipelineSync(PGconn *conn)
 /*
  * Workhorse function for PQpipelineSync and PQsendPipelineSync.
  *
- * It's legal to start submitting more commands in the pipeline immediately,
- * without waiting for the results of the current pipeline. There's no need to
- * end pipeline mode and start it again.
- *
- * If a command in a pipeline fails, every subsequent command up to and
- * including the result to the Sync message sent by pqPipelineSyncInternal
- * gets set to PGRES_PIPELINE_ABORTED state. If the whole pipeline is
- * processed without error, a PGresult with PGRES_PIPELINE_SYNC is produced.
- *
- * Queries can already have been sent before pqPipelineSyncInternal is called,
- * but pqPipelineSyncInternal needs to be called before retrieving command
- * results.
- *
- * The connection will remain in pipeline mode and unavailable for new
- * synchronous command execution functions until all results from the pipeline
- * are processed by the client.
- *
  * immediate_flush controls if the flush happens immediately after sending the
  * Sync message or not.
  */
