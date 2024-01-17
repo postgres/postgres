@@ -303,6 +303,7 @@ pgwin32_socket(int af, int type, int protocol)
 	if (ioctlsocket(s, FIONBIO, &on))
 	{
 		TranslateSocketError();
+		closesocket(s);
 		return INVALID_SOCKET;
 	}
 	errno = 0;
