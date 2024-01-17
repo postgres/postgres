@@ -890,7 +890,7 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 /*
  * Parse XLOG_HEAP_INSERT (not MULTI_INSERT!) records into tuplebufs.
  *
- * Deletes can contain the new tuple.
+ * Inserts can contain the new tuple.
  */
 static void
 DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
