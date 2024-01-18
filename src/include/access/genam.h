@@ -139,6 +139,7 @@ typedef struct IndexOrderByDistance
 #define IndexScanIsValid(scan) PointerIsValid(scan)
 
 extern Relation index_open(Oid relationId, LOCKMODE lockmode);
+extern Relation try_index_open(Oid relationId, LOCKMODE lockmode);
 extern void index_close(Relation relation, LOCKMODE lockmode);
 
 extern bool index_insert(Relation indexRelation,

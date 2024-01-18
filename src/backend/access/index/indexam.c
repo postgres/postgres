@@ -107,6 +107,7 @@ do { \
 static IndexScanDesc index_beginscan_internal(Relation indexRelation,
 											  int nkeys, int norderbys, Snapshot snapshot,
 											  ParallelIndexScanDesc pscan, bool temp_snap);
+static inline void validate_relation_kind(Relation r);
 
 
 /* ----------------------------------------------------------------
@@ -135,12 +136,30 @@ index_open(Oid relationId, LOCKMODE lockmode)
 
 	r = relation_open(relationId, lockmode);
 
-	if (r->rd_rel->relkind != RELKIND_INDEX &&
-		r->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index",
-						RelationGetRelationName(r))));
+	validate_relation_kind(r);
+
+	return r;
+}
+
+/* ----------------
+ *		try_index_open - open a index relation by relation OID
+ *
+ *		Same as index_open, except return NULL instead of failing
+ *		if the relation does not exist.
+ * ----------------
+ */
+Relation
+try_index_open(Oid relationId, LOCKMODE lockmode)
+{
+	Relation	r;
+
+	r = try_relation_open(relationId, lockmode);
+
+	/* leave if index does not exist */
+	if (!r)
+		return NULL;
+
+	validate_relation_kind(r);
 
 	return r;
 }
@@ -167,6 +186,24 @@ index_close(Relation relation, LOCKMODE lockmode)
 	if (lockmode != NoLock)
 		UnlockRelationId(&relid, lockmode);
 }
+
+/* ----------------
+ *		validate_relation_kind - check the relation's kind
+ *
+ *		Make sure relkind is an index or a partitioned index.
+ * ----------------
+ */
+static inline void
+validate_relation_kind(Relation r)
+{
+	if (r->rd_rel->relkind != RELKIND_INDEX &&
+		r->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not an index",
+						RelationGetRelationName(r))));
+}
+
 
 /* ----------------
  *		index_insert - insert an index tuple into a relation
