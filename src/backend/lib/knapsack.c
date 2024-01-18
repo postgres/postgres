@@ -89,10 +89,7 @@ DiscreteKnapsack(int max_weight, int num_items,
 			{
 				/* copy sets[ow] to sets[j] without realloc */
 				if (j != ow)
-				{
-					sets[j] = bms_del_members(sets[j], sets[j]);
-					sets[j] = bms_add_members(sets[j], sets[ow]);
-				}
+					sets[j] = bms_replace_members(sets[j], sets[ow]);
 
 				sets[j] = bms_add_member(sets[j], i);
 

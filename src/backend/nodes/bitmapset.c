@@ -977,6 +977,50 @@ bms_add_members(Bitmapset *a, const Bitmapset *b)
 }
 
 /*
+ * bms_replace_members
+ *		Remove all existing members from 'a' and repopulate the set with members
+ *		from 'b', recycling 'a', when possible.
+ */
+Bitmapset *
+bms_replace_members(Bitmapset *a, const Bitmapset *b)
+{
+	int			i;
+
+	Assert(bms_is_valid_set(a));
+	Assert(bms_is_valid_set(b));
+
+	if (a == NULL)
+		return bms_copy(b);
+	if (b == NULL)
+	{
+		pfree(a);
+		return NULL;
+	}
+
+	if (a->nwords < b->nwords)
+		a = (Bitmapset *) repalloc(a, BITMAPSET_SIZE(b->nwords));
+
+	i = 0;
+	do
+	{
+		a->words[i] = b->words[i];
+	} while (++i < b->nwords);
+
+	a->nwords = b->nwords;
+
+#ifdef REALLOCATE_BITMAPSETS
+
+	/*
+	 * There's no guarantee that the repalloc returned a new pointer, so copy
+	 * and free unconditionally here.
+	 */
+	a = bms_copy_and_free(a);
+#endif
+
+	return a;
+}
+
+/*
  * bms_add_range
  *		Add members in the range of 'lower' to 'upper' to the set.
  *
