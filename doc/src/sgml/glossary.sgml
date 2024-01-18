@@ -904,8 +904,9 @@
     </para>
     <para>
      To restore incremental backups the tool <xref linkend="app-pgcombinebackup"/>
-     is used, which combines incremental backups with a base backup and
-     <glossterm linkend="glossary-wal">WAL</glossterm> to restore a
+     is used, which combines incremental backups with a base backup.
+     Afterwards, recovery can use
+     <glossterm linkend="glossary-wal">WAL</glossterm> to bring the
      <glossterm linkend="glossary-db-cluster">database cluster</glossterm> to
      a consistent state.
     </para>
