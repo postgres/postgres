@@ -53,6 +53,7 @@ tests += {
   'bd': meson.current_build_dir(),
   'regress': {
     'sql': [
+      'security',
       'seg',
     ],
   },
