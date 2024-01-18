@@ -999,7 +999,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        <literal>client backend</literal>, <literal>checkpointer</literal>,
        <literal>archiver</literal>, <literal>standalone backend</literal>,
        <literal>startup</literal>, <literal>walreceiver</literal>,
-       <literal>walsender</literal> and <literal>walwriter</literal>.
+       <literal>walsender</literal>, <literal>walwriter</literal> and
+       <literal>walsummarizer</literal>.
        In addition, background workers registered by extensions may have
        additional types.
       </para></entry>
