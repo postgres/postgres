@@ -35,6 +35,8 @@ typedef struct
 
 	/* tuple visibility test, initialized for the relation */
 	GlobalVisState *vistest;
+	/* whether or not dead items can be set LP_UNUSED during pruning */
+	bool		mark_unused_now;
 
 	TransactionId new_prune_xid;	/* new prune hint value for page */
 	TransactionId snapshotConflictHorizon;	/* latest xid removed */
@@ -67,6 +69,7 @@ static void heap_prune_record_prunable(PruneState *prstate, TransactionId xid);
 static void heap_prune_record_redirect(PruneState *prstate,
 									   OffsetNumber offnum, OffsetNumber rdoffnum);
 static void heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum);
+static void heap_prune_record_dead_or_unused(PruneState *prstate, OffsetNumber offnum);
 static void heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum);
 static void page_verify_redirects(Page page);
 
@@ -148,7 +151,13 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		{
 			PruneResult presult;
 
-			heap_page_prune(relation, buffer, vistest, &presult, NULL);
+			/*
+			 * For now, pass mark_unused_now as false regardless of whether or
+			 * not the relation has indexes, since we cannot safely determine
+			 * that during on-access pruning with the current implementation.
+			 */
+			heap_page_prune(relation, buffer, vistest, false,
+							&presult, NULL);
 
 			/*
 			 * Report the number of tuples reclaimed to pgstats.  This is
@@ -193,6 +202,9 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * (see heap_prune_satisfies_vacuum and
  * HeapTupleSatisfiesVacuum).
  *
+ * mark_unused_now indicates whether or not dead items can be set LP_UNUSED during
+ * pruning.
+ *
  * off_loc is the offset location required by the caller to use in error
  * callback.
  *
@@ -203,6 +215,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 void
 heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
+				bool mark_unused_now,
 				PruneResult *presult,
 				OffsetNumber *off_loc)
 {
@@ -227,6 +240,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 	prstate.new_prune_xid = InvalidTransactionId;
 	prstate.rel = relation;
 	prstate.vistest = vistest;
+	prstate.mark_unused_now = mark_unused_now;
 	prstate.snapshotConflictHorizon = InvalidTransactionId;
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
 	memset(prstate.marked, 0, sizeof(prstate.marked));
@@ -306,9 +320,9 @@ heap_page_prune(Relation relation, Buffer buffer,
 		if (off_loc)
 			*off_loc = offnum;
 
-		/* Nothing to do if slot is empty or already dead */
+		/* Nothing to do if slot is empty */
 		itemid = PageGetItemId(page, offnum);
-		if (!ItemIdIsUsed(itemid) || ItemIdIsDead(itemid))
+		if (!ItemIdIsUsed(itemid))
 			continue;
 
 		/* Process this item or chain of items */
@@ -581,7 +595,17 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum,
 		 * function.)
 		 */
 		if (ItemIdIsDead(lp))
+		{
+			/*
+			 * If the caller set mark_unused_now true, we can set dead line
+			 * pointers LP_UNUSED now. We don't increment ndeleted here since
+			 * the LP was already marked dead.
+			 */
+			if (unlikely(prstate->mark_unused_now))
+				heap_prune_record_unused(prstate, offnum);
+
 			break;
+		}
 
 		Assert(ItemIdIsNormal(lp));
 		htup = (HeapTupleHeader) PageGetItem(dp, lp);
@@ -715,7 +739,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum,
 		 * redirect the root to the correct chain member.
 		 */
 		if (i >= nchain)
-			heap_prune_record_dead(prstate, rootoffnum);
+			heap_prune_record_dead_or_unused(prstate, rootoffnum);
 		else
 			heap_prune_record_redirect(prstate, rootoffnum, chainitems[i]);
 	}
@@ -726,9 +750,9 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum,
 		 * item.  This can happen if the loop in heap_page_prune caused us to
 		 * visit the dead successor of a redirect item before visiting the
 		 * redirect item.  We can clean up by setting the redirect item to
-		 * DEAD state.
+		 * DEAD state or LP_UNUSED if the caller indicated.
 		 */
-		heap_prune_record_dead(prstate, rootoffnum);
+		heap_prune_record_dead_or_unused(prstate, rootoffnum);
 	}
 
 	return ndeleted;
@@ -772,6 +796,27 @@ heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum)
 	prstate->ndead++;
 	Assert(!prstate->marked[offnum]);
 	prstate->marked[offnum] = true;
+}
+
+/*
+ * Depending on whether or not the caller set mark_unused_now to true, record that a
+ * line pointer should be marked LP_DEAD or LP_UNUSED. There are other cases in
+ * which we will mark line pointers LP_UNUSED, but we will not mark line
+ * pointers LP_DEAD if mark_unused_now is true.
+ */
+static void
+heap_prune_record_dead_or_unused(PruneState *prstate, OffsetNumber offnum)
+{
+	/*
+	 * If the caller set mark_unused_now to true, we can remove dead tuples
+	 * during pruning instead of marking their line pointers dead. Set this
+	 * tuple's line pointer LP_UNUSED. We hint that this option is less
+	 * likely.
+	 */
+	if (unlikely(prstate->mark_unused_now))
+		heap_prune_record_unused(prstate, offnum);
+	else
+		heap_prune_record_dead(prstate, offnum);
 }
 
 /* Record line pointer to be marked unused */
@@ -903,13 +948,24 @@ heap_page_prune_execute(Buffer buffer,
 #ifdef USE_ASSERT_CHECKING
 
 		/*
-		 * Only heap-only tuples can become LP_UNUSED during pruning.  They
-		 * don't need to be left in place as LP_DEAD items until VACUUM gets
-		 * around to doing index vacuuming.
+		 * When heap_page_prune() was called, mark_unused_now may have been
+		 * passed as true, which allows would-be LP_DEAD items to be made
+		 * LP_UNUSED instead. This is only possible if the relation has no
+		 * indexes. If there are any dead items, then mark_unused_now was not
+		 * true and every item being marked LP_UNUSED must refer to a
+		 * heap-only tuple.
 		 */
-		Assert(ItemIdHasStorage(lp) && ItemIdIsNormal(lp));
-		htup = (HeapTupleHeader) PageGetItem(page, lp);
-		Assert(HeapTupleHeaderIsHeapOnly(htup));
+		if (ndead > 0)
+		{
+			Assert(ItemIdHasStorage(lp) && ItemIdIsNormal(lp));
+			htup = (HeapTupleHeader) PageGetItem(page, lp);
+			Assert(HeapTupleHeaderIsHeapOnly(htup));
+		}
+		else
+		{
+			Assert(ItemIdIsUsed(lp));
+		}
+
 #endif
 
 		ItemIdSetUnused(lp);
