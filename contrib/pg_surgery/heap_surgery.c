@@ -95,7 +95,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
-				 errhint("heap surgery functions cannot be executed during recovery.")));
+				 errhint("Heap surgery functions cannot be executed during recovery.")));
 
 	/* Check inputs. */
 	sanity_check_tid_array(ta, &ntids);

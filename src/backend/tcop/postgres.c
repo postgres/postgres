@@ -2479,7 +2479,7 @@ errdetail_params(ParamListInfo params)
 
 		str = BuildParamLogString(params, NULL, log_parameter_max_length);
 		if (str && str[0] != '\0')
-			errdetail("parameters: %s", str);
+			errdetail("Parameters: %s", str);
 	}
 
 	return 0;
@@ -2494,7 +2494,7 @@ static int
 errdetail_abort(void)
 {
 	if (MyProc->recoveryConflictPending)
-		errdetail("abort reason: recovery conflict");
+		errdetail("Abort reason: recovery conflict");
 
 	return 0;
 }

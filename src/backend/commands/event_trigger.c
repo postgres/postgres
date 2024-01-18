@@ -174,7 +174,7 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	else if (strcmp(stmt->eventname, "login") == 0 && tags != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Tag filtering is not supported for login event trigger")));
+				 errmsg("tag filtering is not supported for login event trigger")));
 
 	/*
 	 * Give user a nice error message if an event trigger of the same name
