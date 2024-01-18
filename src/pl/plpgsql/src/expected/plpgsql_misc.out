@@ -1,0 +1,31 @@
+--
+-- Miscellaneous topics
+--
+-- Verify that we can parse new-style CREATE FUNCTION/PROCEDURE
+do
+$$
+  declare procedure int;  -- check we still recognize non-keywords as vars
+  begin
+  create function test1() returns int
+    begin atomic
+      select 2 + 2;
+    end;
+  create or replace procedure test2(x int)
+    begin atomic
+      select x + 2;
+    end;
+  end
+$$;
+\sf test1
+CREATE OR REPLACE FUNCTION public.test1()
+ RETURNS integer
+ LANGUAGE sql
+BEGIN ATOMIC
+ SELECT (2 + 2);
+END
+\sf test2
+CREATE OR REPLACE PROCEDURE public.test2(IN x integer)
+ LANGUAGE sql
+BEGIN ATOMIC
+ SELECT (x + 2);
+END
