@@ -1,4 +1,4 @@
 {
-        'provider': 'file',
-        'datafile': '/tmp/pgkeyring',
+        "provider": "file",
+        "datafile": "/tmp/pgkeyring"
 }

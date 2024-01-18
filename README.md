@@ -52,8 +52,8 @@ sudo systemctl restart postgresql.service
 
 ```json
 {
-        'provider': 'file',
-        'datafile': '/tmp/pgkeyring',
+        "provider": "file",
+        "datafile": "/tmp/pgkeyring"
 }
 ```
 

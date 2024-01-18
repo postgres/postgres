@@ -62,11 +62,11 @@ Create the keyring configuration file with the following contents:
 
      ```json
      {
-             'provider': 'vault-v2',
-             'token': 'ROOT_TOKEN',
-             'url': 'http://127.0.0.1:8200',
-             'mountPath': 'secret'
-             'caPath': '<path/to/caFile>'
+             "provider": "vault-v2",
+             "token": "ROOT_TOKEN",
+             "url": "http://127.0.0.1:8200",
+             "mountPath": "secret",
+             "caPath": "<path/to/caFile>"
      }
      ```
 
@@ -82,8 +82,8 @@ Create the keyring configuration file with the following contents:
 
      ```json
      {
-             'provider': 'file',
-             'datafile': '/tmp/pgkeyring',
+             "provider": "file",
+             "datafile": "/tmp/pgkeyring"
      }
      ```     
 
