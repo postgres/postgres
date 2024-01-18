@@ -924,7 +924,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     <secondary>streaming replication</secondary>
    </indexterm>
    <para>
-    Replication slots provide an automated way to ensure that the primary does
+    Replication slots provide an automated way to ensure that the
+    primary server does
     not remove WAL segments until they have been received by all standbys,
     and that the primary does not remove rows which could cause a
     <link linkend="hot-standby-conflict">recovery conflict</link> even when the
@@ -935,21 +936,28 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     of old WAL segments using <xref linkend="guc-wal-keep-size"/>, or by
     storing the segments in an archive using
     <xref linkend="guc-archive-command"/> or <xref linkend="guc-archive-library"/>.
-    However, these methods often result in retaining more WAL segments than
+    A disadvantage of these methods is that they
+    often result in retaining more WAL segments than
     required, whereas replication slots retain only the number of segments
-    known to be needed.  On the other hand, replication slots can retain so
-    many WAL segments that they fill up the space allocated
-    for <literal>pg_wal</literal>;
-    <xref linkend="guc-max-slot-wal-keep-size"/> limits the size of WAL files
-    retained by replication slots.
+    known to be needed.
    </para>
    <para>
     Similarly, <xref linkend="guc-hot-standby-feedback"/> on its own, without
     also using a replication slot, provides protection against relevant rows
     being removed by vacuum, but provides no protection during any time period
-    when the standby is not connected.  Replication slots overcome these
-    disadvantages.
+    when the standby is not connected.
    </para>
+
+   <caution>
+    <para>
+     Beware that replication slots can cause the server to retain so
+     many WAL segments that they fill up the space allocated for
+     <literal>pg_wal</literal>.
+     <xref linkend="guc-max-slot-wal-keep-size"/> can be used to limit the size
+     of WAL files retained by replication slots.
+    </para>
+   </caution>
+
    <sect3 id="streaming-replication-slots-manipulation">
     <title>Querying and Manipulating Replication Slots</title>
     <para>
