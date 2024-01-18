@@ -76,12 +76,13 @@ tests += {
   'regress': {
     'sql': [
       'plpgsql_array',
+      'plpgsql_cache',
       'plpgsql_call',
       'plpgsql_control',
       'plpgsql_copy',
       'plpgsql_domain',
+      'plpgsql_misc',
       'plpgsql_record',
-      'plpgsql_cache',
       'plpgsql_simple',
       'plpgsql_transaction',
       'plpgsql_trap',
