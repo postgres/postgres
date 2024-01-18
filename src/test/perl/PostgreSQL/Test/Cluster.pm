@@ -2012,12 +2012,15 @@ sub psql
 	# We don't use IPC::Run::Simple to limit dependencies.
 	#
 	# We always die on signal.
-	my $core = $ret & 128 ? " (core dumped)" : "";
-	die "psql exited with signal "
-	  . ($ret & 127)
-	  . "$core: '$$stderr' while running '@psql_params'"
-	  if $ret & 127;
-	$ret = $ret >> 8;
+	if (defined $ret)
+	{
+		my $core = $ret & 128 ? " (core dumped)" : "";
+		die "psql exited with signal "
+		  . ($ret & 127)
+		  . "$core: '$$stderr' while running '@psql_params'"
+		  if $ret & 127;
+		$ret = $ret >> 8;
+	}
 
 	if ($ret && $params{on_error_die})
 	{
