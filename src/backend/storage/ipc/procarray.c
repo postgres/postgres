@@ -1053,7 +1053,7 @@ void
 ProcArrayApplyRecoveryInfo(RunningTransactions running)
 {
 	TransactionId *xids;
-	TransactionId xid;
+	TransactionId advanceNextXid;
 	int			nxids;
 	int			i;
 
@@ -1072,9 +1072,9 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * because we will need it up to date for accessing two-phase transactions
 	 * in StandbyReleaseOldLocks().
 	 */
-	xid = running->nextXid;
-	TransactionIdRetreat(xid);
-	AdvanceNextFullTransactionIdPastXid(xid);
+	advanceNextXid = running->nextXid;
+	TransactionIdRetreat(advanceNextXid);
+	AdvanceNextFullTransactionIdPastXid(advanceNextXid);
 	Assert(FullTransactionIdIsValid(TransamVariables->nextXid));
 
 	/*
