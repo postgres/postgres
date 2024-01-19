@@ -225,7 +225,7 @@ fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 		 * without either swapping or a bytewise check.
 		 */
 #ifdef WORDS_BIGENDIAN
-		zero_bytes_le = haszero64(pg_bswap(chunk));
+		zero_bytes_le = haszero64(pg_bswap64(chunk));
 #else
 		zero_bytes_le = haszero64(chunk);
 #endif
