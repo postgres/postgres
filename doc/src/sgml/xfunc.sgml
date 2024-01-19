@@ -3397,90 +3397,136 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
    </sect2>
 
    <sect2 id="xfunc-shared-addin">
-    <title>Shared Memory and LWLocks</title>
+    <title>Shared Memory</title>
 
-    <para>
-     Add-ins can reserve LWLocks and an allocation of shared memory on server
-     startup.  The add-in's shared library must be preloaded by specifying
-     it in
-     <xref linkend="guc-shared-preload-libraries"/><indexterm><primary>shared_preload_libraries</primary></indexterm>.
-     The shared library should register a <literal>shmem_request_hook</literal>
-     in its <function>_PG_init</function> function.  This
-     <literal>shmem_request_hook</literal> can reserve LWLocks or shared memory.
-     Shared memory is reserved by calling:
+    <sect3 id="xfunc-shared-addin-at-startup">
+     <title>Requesting Shared Memory at Startup</title>
+
+     <para>
+      Add-ins can reserve shared memory on server startup.  To do so, the
+      add-in's shared library must be preloaded by specifying it in
+      <xref linkend="guc-shared-preload-libraries"/><indexterm><primary>shared_preload_libraries</primary></indexterm>.
+      The shared library should also register a
+      <literal>shmem_request_hook</literal> in its
+      <function>_PG_init</function> function.  This
+      <literal>shmem_request_hook</literal> can reserve shared memory by
+      calling:
 <programlisting>
-void RequestAddinShmemSpace(int size)
+void RequestAddinShmemSpace(Size size)
 </programlisting>
-     from your <literal>shmem_request_hook</literal>.
-    </para>
-    <para>
-     LWLocks are reserved by calling:
+      Each backend should obtain a pointer to the reserved shared memory by
+      calling:
+<programlisting>
+void *ShmemInitStruct(const char *name, Size size, bool *foundPtr)
+</programlisting>
+      If this function sets <literal>foundPtr</literal> to
+      <literal>false</literal>, the caller should proceed to initialize the
+      contents of the reserved shared memory.  If <literal>foundPtr</literal>
+      is set to <literal>true</literal>, the shared memory was already
+      initialized by another backend, and the caller need not initialize
+      further.
+     </para>
+
+     <para>
+      To avoid race conditions, each backend should use the LWLock
+      <function>AddinShmemInitLock</function> when initializing its allocation
+      of shared memory, as shown here:
+<programlisting>
+static mystruct *ptr = NULL;
+bool        found;
+
+LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+ptr = ShmemInitStruct("my struct name", size, &amp;found);
+if (!found)
+{
+    ... initialize contents of shared memory ...
+    ptr->locks = GetNamedLWLockTranche("my tranche name");
+}
+LWLockRelease(AddinShmemInitLock);
+</programlisting>
+      <literal>shmem_startup_hook</literal> provides a convenient place for the
+      initialization code, but it is not strictly required that all such code
+      be placed in this hook.  Each backend will execute the registered
+      <literal>shmem_startup_hook</literal> shortly after it attaches to shared
+      memory.  Note that add-ins should still acquire
+      <function>AddinShmemInitLock</function> within this hook, as shown in the
+      example above.
+     </para>
+
+     <para>
+      An example of a <literal>shmem_request_hook</literal> and
+      <literal>shmem_startup_hook</literal> can be found in
+      <filename>contrib/pg_stat_statements/pg_stat_statements.c</filename> in
+      the <productname>PostgreSQL</productname> source tree.
+     </para>
+    </sect3>
+   </sect2>
+
+   <sect2 id="xfunc-addin-lwlocks">
+    <title>LWLocks</title>
+
+    <sect3 id="xfunc-addin-lwlocks-at-startup">
+     <title>Requesting LWLocks at Startup</title>
+
+     <para>
+      Add-ins can reserve LWLocks on server startup.  As with shared memory,
+      the add-in's shared library must be preloaded by specifying it in
+      <xref linkend="guc-shared-preload-libraries"/><indexterm><primary>shared_preload_libraries</primary></indexterm>,
+      and the shared library should register a
+      <literal>shmem_request_hook</literal> in its
+      <function>_PG_init</function> function.  This
+      <literal>shmem_request_hook</literal> can reserve LWLocks by calling:
 <programlisting>
 void RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 </programlisting>
-     from your <literal>shmem_request_hook</literal>.  This will ensure that an array of
-     <literal>num_lwlocks</literal> LWLocks is available under the name
-     <literal>tranche_name</literal>.  Use <function>GetNamedLWLockTranche</function>
-     to get a pointer to this array.
-    </para>
-    <para>
-     An example of a <literal>shmem_request_hook</literal> can be found in
-     <filename>contrib/pg_stat_statements/pg_stat_statements.c</filename> in the
-     <productname>PostgreSQL</productname> source tree.
-    </para>
-    <para>
-     There is another, more flexible method of obtaining LWLocks. First,
-     allocate a <literal>tranche_id</literal> from a shared counter by
-     calling:
+      This ensures that an array of <literal>num_lwlocks</literal> LWLocks is
+      available under the name <literal>tranche_name</literal>.  A pointer to
+      this array can be obtained by calling:
+<programlisting>
+LWLockPadded *GetNamedLWLockTranche(const char *tranche_name)
+</programlisting>
+     </para>
+    </sect3>
+
+    <sect3 id="xfunc-addin-lwlocks-after-startup">
+     <title>Requesting LWLocks After Startup</title>
+
+     <para>
+      There is another, more flexible method of obtaining LWLocks that can be
+      done after server startup and outside a
+      <literal>shmem_request_hook</literal>.  To do so, first allocate a
+      <literal>tranche_id</literal> by calling:
 <programlisting>
 int LWLockNewTrancheId(void)
 </programlisting>
-     Next, each individual process using the <literal>tranche_id</literal>
-     should associate it with a <literal>tranche_name</literal> by calling:
-<programlisting>
-void LWLockRegisterTranche(int tranche_id, const char *tranche_name)
-</programlisting>
-     It is also required to call <function>LWLockInitialize</function> once
-     per LWLock, passing the <literal>tranche_id</literal> as argument:
+      Next, initialize each LWLock, passing the new
+      <literal>tranche_id</literal> as an argument:
 <programlisting>
 void LWLockInitialize(LWLock *lock, int tranche_id)
 </programlisting>
-     A complete usage example of <function>LWLockNewTrancheId</function>,
-     <function>LWLockInitialize</function> and
-     <function>LWLockRegisterTranche</function> can be found in
-     <filename>contrib/pg_prewarm/autoprewarm.c</filename> in the
-     <productname>PostgreSQL</productname> source tree.
-    </para>
-    <para>
-     To avoid possible race-conditions, each backend should use the LWLock
-     <function>AddinShmemInitLock</function> when connecting to and initializing
-     its allocation of shared memory, as shown here:
+      Similar to shared memory, each backend should ensure that only one
+      process allocates a new <literal>tranche_id</literal> and initializes
+      each new LWLock.  One way to do this is to only call these functions in
+      your shared memory initialization code with the
+      <function>AddinShmemInitLock</function> held exclusively.
+     </para>
+
+     <para>
+      Finally, each backend using the <literal>tranche_id</literal> should
+      associate it with a <literal>tranche_name</literal> by calling:
 <programlisting>
-static mystruct *ptr = NULL;
-
-if (!ptr)
-{
-        bool    found;
-
-        LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
-        ptr = ShmemInitStruct("my struct name", size, &amp;found);
-        if (!found)
-        {
-                initialize contents of shmem area;
-                acquire any requested LWLocks using:
-                ptr->locks = GetNamedLWLockTranche("my tranche name");
-        }
-        LWLockRelease(AddinShmemInitLock);
-}
+void LWLockRegisterTranche(int tranche_id, const char *tranche_name)
 </programlisting>
-    </para>
-    <para>
-     It is convenient to use <literal>shmem_startup_hook</literal> which allows
-     placing all the code responsible for initializing shared memory in one
-     place. When using <literal>shmem_startup_hook</literal> the extension
-     still needs to acquire <function>AddinShmemInitLock</function> in order to
-     work properly on all the supported platforms.
-    </para>
+     </para>
+
+     <para>
+      A complete usage example of <function>LWLockNewTrancheId</function>,
+      <function>LWLockInitialize</function>, and
+      <function>LWLockRegisterTranche</function> can be found in
+      <filename>contrib/pg_prewarm/autoprewarm.c</filename> in the
+      <productname>PostgreSQL</productname> source tree.
+     </para>
+    </sect3>
    </sect2>
 
    <sect2 id="xfunc-addin-wait-events">
