@@ -43,7 +43,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     FORCE_QUOTE { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     FORCE_NOT_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     FORCE_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
-    SAVE_ERROR_TO '<replaceable class="parameter">location</replaceable>'
+    ON_ERROR '<replaceable class="parameter">error_action</replaceable>'
     ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
 </synopsis>
  </refsynopsisdiv>
@@ -375,20 +375,20 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SAVE_ERROR_TO</literal></term>
+    <term><literal>ON_ERROR</literal></term>
     <listitem>
      <para>
-      Specifies to save error information to <replaceable class="parameter">
-      location</replaceable> when there is malformed data in the input.
-      Currently, only <literal>error</literal> (default) and <literal>none</literal>
+      Specifies which <replaceable class="parameter">
+      error_action</replaceable> to perform when there is malformed data in the input.
+      Currently, only <literal>stop</literal> (default) and <literal>ignore</literal>
       values are supported.
-      If the <literal>error</literal> value is specified,
+      If the <literal>stop</literal> value is specified,
       <command>COPY</command> stops operation at the first error.
-      If the <literal>none</literal> value is specified,
+      If the <literal>ignore</literal> value is specified,
       <command>COPY</command> skips malformed data and continues copying data.
       The option is allowed only in <command>COPY FROM</command>.
-      The <literal>none</literal> value is allowed only when
-      not using <literal>binary</literal> format.
+      Only <literal>stop</literal> value is allowed when
+      using <literal>binary</literal> format.
      </para>
     </listitem>
    </varlistentry>
@@ -577,7 +577,7 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <para>
     <command>COPY</command> stops operation at the first error when
-    <literal>SAVE_ERROR_TO</literal> is not specified. This
+    <literal>ON_ERROR</literal> is not specified. This
     should not lead to problems in the event of a <command>COPY
     TO</command>, but the target table will already have received
     earlier rows in a <command>COPY FROM</command>. These rows will not

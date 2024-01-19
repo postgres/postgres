@@ -395,39 +395,39 @@ defGetCopyHeaderChoice(DefElem *def, bool is_from)
 }
 
 /*
- * Extract a CopySaveErrorToChoice value from a DefElem.
+ * Extract a CopyOnErrorChoice value from a DefElem.
  */
-static CopySaveErrorToChoice
-defGetCopySaveErrorToChoice(DefElem *def, ParseState *pstate, bool is_from)
+static CopyOnErrorChoice
+defGetCopyOnErrorChoice(DefElem *def, ParseState *pstate, bool is_from)
 {
 	char	   *sval;
 
 	if (!is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("COPY SAVE_ERROR_TO cannot be used with COPY TO"),
+				 errmsg("COPY ON_ERROR cannot be used with COPY TO"),
 				 parser_errposition(pstate, def->location)));
 
 	/*
 	 * If no parameter value given, assume the default value.
 	 */
 	if (def->arg == NULL)
-		return COPY_SAVE_ERROR_TO_ERROR;
+		return COPY_ON_ERROR_STOP;
 
 	/*
-	 * Allow "error", or "none" values.
+	 * Allow "stop", or "ignore" values.
 	 */
 	sval = defGetString(def);
-	if (pg_strcasecmp(sval, "error") == 0)
-		return COPY_SAVE_ERROR_TO_ERROR;
-	if (pg_strcasecmp(sval, "none") == 0)
-		return COPY_SAVE_ERROR_TO_NONE;
+	if (pg_strcasecmp(sval, "stop") == 0)
+		return COPY_ON_ERROR_STOP;
+	if (pg_strcasecmp(sval, "ignore") == 0)
+		return COPY_ON_ERROR_IGNORE;
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("COPY save_error_to \"%s\" not recognized", sval),
+			 errmsg("COPY ON_ERROR \"%s\" not recognized", sval),
 			 parser_errposition(pstate, def->location)));
-	return COPY_SAVE_ERROR_TO_ERROR;	/* keep compiler quiet */
+	return COPY_ON_ERROR_STOP;	/* keep compiler quiet */
 }
 
 /*
@@ -455,7 +455,7 @@ ProcessCopyOptions(ParseState *pstate,
 	bool		format_specified = false;
 	bool		freeze_specified = false;
 	bool		header_specified = false;
-	bool		save_error_to_specified = false;
+	bool		on_error_specified = false;
 	ListCell   *option;
 
 	/* Support external use for option sanity checking */
@@ -608,12 +608,12 @@ ProcessCopyOptions(ParseState *pstate,
 								defel->defname),
 						 parser_errposition(pstate, defel->location)));
 		}
-		else if (strcmp(defel->defname, "save_error_to") == 0)
+		else if (strcmp(defel->defname, "on_error") == 0)
 		{
-			if (save_error_to_specified)
+			if (on_error_specified)
 				errorConflictingDefElem(defel, pstate);
-			save_error_to_specified = true;
-			opts_out->save_error_to = defGetCopySaveErrorToChoice(defel, pstate, is_from);
+			on_error_specified = true;
+			opts_out->on_error = defGetCopyOnErrorChoice(defel, pstate, is_from);
 		}
 		else
 			ereport(ERROR,
@@ -642,10 +642,10 @@ ProcessCopyOptions(ParseState *pstate,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify DEFAULT in BINARY mode")));
 
-	if (opts_out->binary && opts_out->save_error_to != COPY_SAVE_ERROR_TO_ERROR)
+	if (opts_out->binary && opts_out->on_error != COPY_ON_ERROR_STOP)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("cannot specify SAVE_ERROR_TO in BINARY mode")));
+				 errmsg("only ON_ERROR STOP is allowed in BINARY mode")));
 
 	/* Set defaults for omitted options */
 	if (!opts_out->delim)

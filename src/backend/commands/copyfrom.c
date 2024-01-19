@@ -657,7 +657,7 @@ CopyFrom(CopyFromState cstate)
 	Assert(cstate->rel);
 	Assert(list_length(cstate->range_table) == 1);
 
-	if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR)
+	if (cstate->opts.on_error != COPY_ON_ERROR_STOP)
 		Assert(cstate->escontext);
 
 	/*
@@ -996,14 +996,14 @@ CopyFrom(CopyFromState cstate)
 		if (!NextCopyFrom(cstate, econtext, myslot->tts_values, myslot->tts_isnull))
 			break;
 
-		if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR &&
+		if (cstate->opts.on_error != COPY_ON_ERROR_STOP &&
 			cstate->escontext->error_occurred)
 		{
 			/*
-			 * Soft error occured, skip this tuple and save error information
-			 * according to SAVE_ERROR_TO.
+			 * Soft error occured, skip this tuple and deal with error
+			 * information according to ON_ERROR.
 			 */
-			if (cstate->opts.save_error_to == COPY_SAVE_ERROR_TO_NONE)
+			if (cstate->opts.on_error == COPY_ON_ERROR_IGNORE)
 
 				/*
 				 * Just make ErrorSaveContext ready for the next NextCopyFrom.
@@ -1307,7 +1307,7 @@ CopyFrom(CopyFromState cstate)
 	/* Done, clean up */
 	error_context_stack = errcallback.previous;
 
-	if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR &&
+	if (cstate->opts.on_error != COPY_ON_ERROR_STOP &&
 		cstate->num_errors > 0)
 		ereport(NOTICE,
 				errmsg_plural("%llu row was skipped due to data type incompatibility",
@@ -1450,18 +1450,18 @@ BeginCopyFrom(ParseState *pstate,
 		}
 	}
 
-	/* Set up soft error handler for SAVE_ERROR_TO */
-	if (cstate->opts.save_error_to != COPY_SAVE_ERROR_TO_ERROR)
+	/* Set up soft error handler for ON_ERROR */
+	if (cstate->opts.on_error != COPY_ON_ERROR_STOP)
 	{
 		cstate->escontext = makeNode(ErrorSaveContext);
 		cstate->escontext->type = T_ErrorSaveContext;
 		cstate->escontext->error_occurred = false;
 
 		/*
-		 * Currently we only support COPY_SAVE_ERROR_TO_NONE. We'll add other
+		 * Currently we only support COPY_ON_ERROR_IGNORE. We'll add other
 		 * options later
 		 */
-		if (cstate->opts.save_error_to == COPY_SAVE_ERROR_TO_NONE)
+		if (cstate->opts.on_error == COPY_ON_ERROR_IGNORE)
 			cstate->escontext->details_wanted = false;
 	}
 	else

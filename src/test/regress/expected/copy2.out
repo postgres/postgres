@@ -77,21 +77,21 @@ COPY x from stdin (encoding 'sql_ascii', encoding 'sql_ascii');
 ERROR:  conflicting or redundant options
 LINE 1: COPY x from stdin (encoding 'sql_ascii', encoding 'sql_ascii...
                                                  ^
-COPY x from stdin (save_error_to none,save_error_to none);
+COPY x from stdin (on_error ignore, on_error ignore);
 ERROR:  conflicting or redundant options
-LINE 1: COPY x from stdin (save_error_to none,save_error_to none);
-                                              ^
+LINE 1: COPY x from stdin (on_error ignore, on_error ignore);
+                                            ^
 -- incorrect options
 COPY x to stdin (format BINARY, delimiter ',');
 ERROR:  cannot specify DELIMITER in BINARY mode
 COPY x to stdin (format BINARY, null 'x');
 ERROR:  cannot specify NULL in BINARY mode
-COPY x from stdin (format BINARY, save_error_to none);
-ERROR:  cannot specify SAVE_ERROR_TO in BINARY mode
-COPY x to stdin (save_error_to none);
-ERROR:  COPY SAVE_ERROR_TO cannot be used with COPY TO
-LINE 1: COPY x to stdin (save_error_to none);
-                         ^
+COPY x from stdin (format BINARY, on_error ignore);
+ERROR:  only ON_ERROR STOP is allowed in BINARY mode
+COPY x from stdin (on_error unsupported);
+ERROR:  COPY ON_ERROR "unsupported" not recognized
+LINE 1: COPY x from stdin (on_error unsupported);
+                           ^
 COPY x to stdin (format TEXT, force_quote(a));
 ERROR:  COPY FORCE_QUOTE requires CSV mode
 COPY x from stdin (format CSV, force_quote(a));
@@ -104,9 +104,9 @@ COPY x to stdout (format TEXT, force_null(a));
 ERROR:  COPY FORCE_NULL requires CSV mode
 COPY x to stdin (format CSV, force_null(a));
 ERROR:  COPY FORCE_NULL cannot be used with COPY TO
-COPY x to stdin (format BINARY, save_error_to unsupported);
-ERROR:  COPY SAVE_ERROR_TO cannot be used with COPY TO
-LINE 1: COPY x to stdin (format BINARY, save_error_to unsupported);
+COPY x to stdin (format BINARY, on_error unsupported);
+ERROR:  COPY ON_ERROR cannot be used with COPY TO
+LINE 1: COPY x to stdin (format BINARY, on_error unsupported);
                                         ^
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
@@ -724,12 +724,12 @@ SELECT * FROM instead_of_insert_tbl;
 (2 rows)
 
 COMMIT;
--- tests for SAVE_ERROR_TO option
+-- tests for on_error option
 CREATE TABLE check_ign_err (n int, m int[], k int);
-COPY check_ign_err FROM STDIN WITH (save_error_to error);
+COPY check_ign_err FROM STDIN WITH (on_error stop);
 ERROR:  invalid input syntax for type integer: "a"
 CONTEXT:  COPY check_ign_err, line 2, column n: "a"
-COPY check_ign_err FROM STDIN WITH (save_error_to none);
+COPY check_ign_err FROM STDIN WITH (on_error ignore);
 NOTICE:  4 rows were skipped due to data type incompatibility
 SELECT * FROM check_ign_err;
  n |  m  | k 
@@ -740,15 +740,15 @@ SELECT * FROM check_ign_err;
 
 -- test datatype error that can't be handled as soft: should fail
 CREATE TABLE hard_err(foo widget);
-COPY hard_err FROM STDIN WITH (save_error_to none);
+COPY hard_err FROM STDIN WITH (on_error ignore);
 ERROR:  invalid input syntax for type widget: "1"
 CONTEXT:  COPY hard_err, line 1, column foo: "1"
 -- test missing data: should fail
-COPY check_ign_err FROM STDIN WITH (save_error_to none);
+COPY check_ign_err FROM STDIN WITH (on_error ignore);
 ERROR:  missing data for column "k"
 CONTEXT:  COPY check_ign_err, line 1: "1	{1}"
 -- test extra data: should fail
-COPY check_ign_err FROM STDIN WITH (save_error_to none);
+COPY check_ign_err FROM STDIN WITH (on_error ignore);
 ERROR:  extra data after last expected column
 CONTEXT:  COPY check_ign_err, line 1: "1	{1}	3	abc"
 -- clean up

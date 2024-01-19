@@ -956,7 +956,11 @@ NextCopyFrom(CopyFromState cstate, ExprContext *econtext,
 
 				values[m] = ExecEvalExpr(defexprs[m], econtext, &nulls[m]);
 			}
-			/* If SAVE_ERROR_TO is specified, skip rows with soft errors */
+
+			/*
+			 * If ON_ERROR is specified with IGNORE, skip rows with soft
+			 * errors
+			 */
 			else if (!InputFunctionCallSafe(&in_functions[m],
 											string,
 											typioparams[m],
