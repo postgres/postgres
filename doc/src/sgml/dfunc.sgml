@@ -66,11 +66,12 @@
       <option>-fPIC</option>.  To create shared libraries the compiler
       flag is <option>-shared</option>.
 <programlisting>
-gcc -fPIC -c foo.c
-gcc -shared -o foo.so foo.o
+cc -fPIC -c foo.c
+cc -shared -o foo.so foo.o
 </programlisting>
-      This is applicable as of version 3.0 of
-      <systemitem class="osname">FreeBSD</systemitem>.
+      This is applicable as of version 13.0 of
+      <systemitem class="osname">FreeBSD</systemitem>, older versions used
+      the <filename>gcc</filename> compiler.
      </para>
     </listitem>
    </varlistentry>
