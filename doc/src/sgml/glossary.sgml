@@ -247,7 +247,8 @@
     </para>
     <para>
      This role also behaves as a normal
-     <glossterm linkend="glossary-database-superuser">database superuser</glossterm>.
+     <glossterm linkend="glossary-database-superuser">database superuser</glossterm>,
+     and its superuser status cannot be removed.
     </para>
    </glossdef>
   </glossentry>

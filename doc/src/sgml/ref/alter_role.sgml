@@ -69,7 +69,9 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    <link linkend="sql-grant"><command>GRANT</command></link> and
    <link linkend="sql-revoke"><command>REVOKE</command></link> for that.)
    Attributes not mentioned in the command retain their previous settings.
-   Database superusers can change any of these settings for any role.
+   Database superusers can change any of these settings for any role, except
+   for changing the <literal>SUPERUSER</literal> property for the
+   <glossterm linkend="glossary-bootstrap-superuser">bootstrap superuser</glossterm>.
    Non-superuser roles having <literal>CREATEROLE</literal> privilege can
    change most of these properties, but only for non-superuser and
    non-replication roles for which they have been granted

@@ -868,7 +868,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("permission denied to alter role"),
-					 errdetail("The bootstrap user must have the %s attribute.",
+					 errdetail("The bootstrap superuser must have the %s attribute.",
 							   "SUPERUSER")));
 
 		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(should_be_super);

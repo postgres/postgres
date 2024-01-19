@@ -350,7 +350,7 @@ ALTER ROLE myname SET enable_indexscan TO off;
    options. Thus, the fact that privileges are not inherited by default nor
    is <literal>SET ROLE</literal> granted by default is a safeguard against
    accidents, not a security feature. Also note that, because this automatic
-   grant is granted by the bootstrap user, it cannot be removed or changed by
+   grant is granted by the bootstrap superuser, it cannot be removed or changed by
    the <literal>CREATEROLE</literal> user; however, any superuser could
    revoke it, modify it, and/or issue additional such grants to other
    <literal>CREATEROLE</literal> users. Whichever <literal>CREATEROLE</literal>
