@@ -989,6 +989,7 @@ select \if false \\ (bogus \else \\ 42 \endif \\ forty_two;
 	\echo `nosuchcommand` :foo :'foo' :"foo"
 	\pset fieldsep | `nosuchcommand` :foo :'foo' :"foo"
 	\a
+	SELECT $1 \bind 1 \g
 	\C arg1
 	\c arg1 arg2 arg3 arg4
 	\cd arg1

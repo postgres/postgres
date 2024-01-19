@@ -486,6 +486,8 @@ exec_command_bind(PsqlScanState scan_state, bool active_branch)
 		pset.bind_nparams = nparams;
 		pset.bind_flag = true;
 	}
+	else
+		ignore_slash_options(scan_state);
 
 	return status;
 }
