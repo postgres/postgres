@@ -64,10 +64,16 @@ This setup is intended for developmenet, and stores the keys unencrypted in the 
 
 ## Build from source
 
-1. To build `pg_tde` from source code, you require the following on Ubuntu/Debian:
+1. To build `pg_tde` from source code, you require the following:
 
+* On Debian and Ubuntu:
 ```sh
-sudo apt install make gcc libjson-c-dev postgresql-server-dev-16 libcurl4-openssl-dev
+sudo apt install make gcc autoconf libjson-c-dev libcurl4-openssl-dev postgresql-server-dev-16
+```
+
+* On MacOS:
+```sh
+brew install make autoconf curl json-c gettext postresql@16
 ```
 
 2. Install or build postgresql 16 [(see reference commit below)](#base-commit)

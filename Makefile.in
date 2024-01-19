@@ -51,4 +51,4 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-override SHLIB_LINK += @tde_LDFLAGS@ -lcrypto -lssl -lcurl
+override SHLIB_LINK += @tde_LDFLAGS@ -lcrypto -lssl

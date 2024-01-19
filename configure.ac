@@ -5,46 +5,54 @@ AC_INIT([pg_tde], [0.1-mvp], [https://github.com/Percona-Lab/postgres-tde-ext/is
 
 AC_CANONICAL_HOST
 
-# REQUIRE_LIB(name,lib,testfn,test_include.h)
+# REQUIRE_LIB(name,lib,package,testfn,test_header_dir,test_include.h)
 # name = The complete name of the library file without the extension.
 # lib = The name of the library file without the 'lib' prefix and without the extension.
+# package = The name of the package that holds the library
 # testfn = One function included in the library that can be used for a test compilation.
-# header = header file to check for
+# headerdir = The directory that contains required header.
+# header = The header file to check for
 # if there's a problem during the test compilation.
 AC_DEFUN([REQUIRE_LIB], [ {
-AC_ARG_WITH([$1], AS_HELP_STRING([--with-$1=<path>],[Location where $4 is installed]),[],[with_$1=default])
+	AC_ARG_WITH([$1], AS_HELP_STRING([--with-$1=<path>],[Location where $6 is installed]),[],[with_$1=default])
 	AS_IF([test "x$with_$1" == xdefault],
 	[
 		case $host_os in
-			darwin*) libpathx=($HOMEBREW_CELLAR/$2/*)
-						tde_CPPFLAGS="$tde_CPPFLAGS -I$libpathx/include/$2"
+			darwin*) libpathx=($HOMEBREW_CELLAR/$3/*)
+						tde_CPPFLAGS="$tde_CPPFLAGS -I$libpathx/include/$5"
 						tde_LDFLAGS="$tde_LDFLAGS -L$libpathx/lib -l$2" ;;
-				  *) tde_CPPFLAGS="$tde_CPPFLAGS -I/usr/include/$2" 
+				  *) tde_CPPFLAGS="$tde_CPPFLAGS -I/usr/include/$5" 
 				  		tde_LDFLAGS="$tde_LDFLAGS -l$2" ;;
 		esac
 	], [ #AS_ELSE
 		tde_CPPFLAGS="$tde_CPPFLAGS -I${with_$1}/include"
 		tde_LDFLAGS="$tde_LDFLAGS -L${with_$1}/lib -l$2"
 	])
-
 	LDFLAGS="$LDFLAGS $tde_LDFLAGS"
 	CPPFLAGS="$CPPFLAGS $tde_CPPFLAGS"
 
-	AC_CHECK_HEADER($4, [],
+	AC_CHECK_HEADER($6, [],
 	[
-		AC_MSG_ERROR([header file <$4> is required, try specifying --with-$1])
+		AC_MSG_ERROR([header file <$6> is required, try specifying --with-$1])
 	])
 
-	AC_CHECK_LIB($2, $3, [],
+
+	AC_CHECK_LIB($2, $4, [],
 	[
-		AC_MSG_ERROR([$2 was not found, try specifying --with-$1])
+		AC_MSG_ERROR([$1 was not found, try specifying --with-$1])
 	])
 } ] )
 
 #=======================================
 
-REQUIRE_LIB(jsonc, json-c, json_object_get, json_object.h)
-REQUIRE_LIB(libcurl, curl, curl_easy_setopt, curl/curl.h)
+REQUIRE_LIB(jsonc, json-c, json-c, json_object_get, json-c, json_object.h)
+REQUIRE_LIB(libcurl, curl, curl, curl_easy_setopt, curl, curl/curl.h)
+
+case $host_os in
+	# on other systems libintl is a part of glibc
+	darwin*) REQUIRE_LIB(libintl, intl, gettext, ngettext, [], libintl.h)
+esac
+
 
 AC_SUBST(tde_CPPFLAGS)
 AC_SUBST(tde_LDFLAGS)
