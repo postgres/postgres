@@ -77,7 +77,7 @@
  */
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
-int         DefaultXactLockStrategy = LOCK_2PL;
+int         DefaultXactLockStrategy = LOCK_LEARNED;
 int         XactLockStrategy;
 
 bool		DefaultXactReadOnly = false;
@@ -355,7 +355,9 @@ static bool should_report_result(uint tid);
 static bool should_refine_cc(uint tid);
 static uint64_t get_cur_time_ns(void);
 static void report_xact_result(bool commit, LocalTransactionId tid);
-
+static double predict_cc_reward(const double features[3], int modelIndex);
+static int get_optimal_strategy(const double x[3]);
+static void scatterInput(double input[], const double mean[],const double scale[], const int size);
 
 /* ----------------------------------------------------------------
  *	transaction state accessors
@@ -1940,11 +1942,12 @@ static char * PredicateLockTageToString(PredicateLockTargetType ltype)
 }
 
 // EncodePredicateLockInfo encode all predicate lock information in SSI as string.
-static StringInfoData EncodePredicateLockInfo(PredicateLockData * c)
+static StringInfoData EncodePredicateLockInfo(PredicateLockData * c, bool *need_predict)
 {
     StringInfoData lock_buf, buf;
     initStringInfo(&lock_buf);
     initStringInfo(&buf);
+    if (c->nelements > 0) *need_predict = true;
     for (int i=0;i<c->nelements;i++)
     {
         SERIALIZABLEXACT xact = c->xacts[i];
@@ -1971,8 +1974,7 @@ static StringInfoData EncodePredicateLockInfo(PredicateLockData * c)
     return buf;
 }
 
-const bool GenTrainingData = true;
-const bool EnableLearningCC = true;
+const bool GenTrainingData = false;
 
 // EncodeLockData encode all non-predicate lock information as string.
 static StringInfoData EncodeLockData(LockData * c, bool * CurrentNeedPredict)
@@ -1980,8 +1982,7 @@ static StringInfoData EncodeLockData(LockData * c, bool * CurrentNeedPredict)
     StringInfoData lock_tag_buf, lock_buf;
     initStringInfo(&lock_buf);
     initStringInfo(&lock_tag_buf);
-    if (c->nelements == 0)
-        *CurrentNeedPredict = false;
+    if (c->nelements > 0) *CurrentNeedPredict = true;
     appendStringInfo(&lock_buf,"{");
     for (int i=0;i<c->nelements;i++)
     {
@@ -2001,6 +2002,29 @@ static StringInfoData EncodeLockData(LockData * c, bool * CurrentNeedPredict)
     appendStringInfo(&lock_buf,"}");
     return lock_buf;
 }
+
+static double ExtractXactFeature(LockData * c)
+{
+    double res = 0;
+    for (int i=0;i<c->nelements;i++)
+    {
+        bool is_distinct = true;
+        for (int j = 0; j < i; j ++)
+            if (c->locks[i].lxid == c->locks[j].lxid) is_distinct = false;
+        if (is_distinct)
+            res++;
+    }
+    return res;
+}
+
+static double ExtractLockFeature(LockData * c)
+{
+    double res = 0;
+    for (int i=0;i<c->nelements;i++)
+        if (c->locks[i].locktag.locktag_type == LOCKTAG_TUPLE) res ++;
+    return res;
+}
+
 
 static StringInfoData EncodeDependencyGraphData()
 {
@@ -2034,78 +2058,115 @@ static StringInfoData EncodeResourceData()
 #define START_REWARD_MESSAGE "$REWARD_START$"
 #define SEC_TO_NS(sec) ((sec)*1000000000)
 
+const double coef_cc[3][3] = {
+        {-1965.37506541, -682.6019029, 1746.80575016},
+        {-1459.30808223, -674.81190928, 1223.25562313},
+        {-462.02951823, -768.24424437, 293.91901704}
+};
+
+const double intercepts[3] = {
+        -2436.88767819106,
+        -2263.574064276241,
+        -2277.7867326958767
+};
+
+double model_mean[3] ={4.12285967e+03, 2.75442752e+00, 2.72079123e+01};
+double model_scale[3] ={1.26367589e+04, 2.55579183e+00, 1.04733990e+02};
+
+
+void scatterInput(double x[], const double mean[],const double scale[], const int size) {
+    for (int i = 0; i < size; ++i) {
+        x[i] = (x[i] - mean[i]) / scale[i];
+    }
+}
+
+void scatter_features(double x[], const int size) {
+    scatterInput(x, model_mean, model_scale, size);
+}
+
+double predict_cc_reward(const double x[3], int modelIndex) {
+    double prediction = 0;
+    for (int i = 0; i < 3; ++i) {
+        prediction += x[i] * coef_cc[modelIndex][i];
+    }
+    prediction += intercepts[modelIndex];
+    return prediction;
+}
+
+int get_optimal_strategy(const double x[3]) {
+    int optimal_cc = LOCK_NONE;
+    double current_reward = predict_cc_reward(x, LOCK_NONE);
+    for (int cc = 1; cc <= LOCK_2PL_NW;cc ++)
+    {
+        double tmp = predict_cc_reward(x, cc);
+        if (current_reward < tmp)
+        {
+            optimal_cc = cc;
+            current_reward = tmp;
+        }
+    }
+    printf("The optimal cc is %d regarding feature (%f, %f, %f)\n", optimal_cc, x[0], x[1], x[2]);
+    return optimal_cc;
+}
+
 static void get_lock_strategy(LocalTransactionId tid)
 {
-    int conn_fd;
+    int conn_fd, cmd;
 //    MemoryContext oldcontext;
-    StringInfoData buf;
+    StringInfoData buf, lock_str;
     char feature[FEATURE_LENGTH];
     FILE *file;
-    bool need_predict = true;
+    bool need_predict = false;
+    LockData *lockInfo;
+    PredicateLockData *predInfo;
 
-//    printf("xact%d is started: %d--%d\n", tid, XactLockStrategy, XactIsoLevel);
+//    printf("xact%d is started: %d:%d -- %d:%d\n", tid,XactIsoLevel, XactLockStrategy, DefaultXactIsoLevel, DefaultXactLockStrategy);
 
-    if (!EnableLearningCC)
+
+    if (!should_refine_cc(tid) || tid <= NUM_OF_SYS_XACTS)
+        return;
+
+    lockInfo = GetLockStatusData();
+    predInfo = GetPredicateLockStatusData();
+    lock_str = EncodeLockData(lockInfo, &need_predict);
+    initStringInfo(&buf);
+    appendStringInfo(&buf,
+                     _(
+                             "{\"lock\":{%s},"
+                             "\"pred\":{%s},"
+                             //                       "dep:{%s},"
+                             "\"proc\":{%s},"
+                             "\"prof\":{%s}}"),
+                     lock_str.data,
+                     EncodePredicateLockInfo(predInfo, &need_predict).data,
+//                     EncodeDependencyGraphData().data,
+                     EncodeSessionData().data,
+                     EncodeResourceData().data);
+
+    double x[3] = {buf.len, ExtractXactFeature(lockInfo), ExtractLockFeature(lockInfo)};
+
+    if (!IsolationLearnCC())
     {
         XactIsoLevel = DefaultXactIsoLevel;
         XactLockStrategy = DefaultXactLockStrategy;
         if (!IsolationNeedLock())
             XactIsoLevel = XACT_SERIALIZABLE;
         if (IsolationIsSerializable())
+        {
             // In case of SSI, disable locking based methods.
+            XactLockStrategy = LOCK_NONE;
             Assert(XactLockStrategy == LOCK_NONE);
-//			XactLockStrategy = LOCK_NONE;
+        }
 
         if (!(IsolationNeedLock() || IsolationIsSerializable()))
             printf("xact%d is not serializable (iso:%d, lock:%d).\n", tid, XactIsoLevel, XactLockStrategy);
         return;
     }
 
-    if (!should_refine_cc(tid) || tid <= NUM_OF_SYS_XACTS)
-        return;
-
-    initStringInfo(&buf);
-    appendStringInfo(&buf,
-                     _(
-//                             "{\"lock\":{%s},"
-//                       "\"pred\":{%s},"
-//                       "dep:{%s},"
-                       "\"proc\":{%s},"
-                       "\"prof\":{%s}}"),
-//                     EncodeLockData(GetLockStatusData(), &need_predict).data,
-//                     EncodePredicateLockInfo(GetPredicateLockStatusData()).data,
-//                     EncodeDependencyGraphData().data,
-                     EncodeSessionData().data,
-                     EncodeResourceData().data);
-
-//    if (!need_predict)
-//        buf.data = "{}";
-
     if (GenTrainingData)
     {
-//        long cmd = random() % 3;
-        int cmd = 1;
-        if (cmd == 0)
-        {
-            XactIsoLevel = XACT_SERIALIZABLE;
-            XactLockStrategy = LOCK_NONE;
-        }
-        else if (cmd == 1)
-        {
-            XactIsoLevel = XACT_READ_COMMITTED;
-            XactLockStrategy = LOCK_2PL;
-        }
-        else if (cmd == 2)
-        {
-            XactIsoLevel = XACT_READ_COMMITTED;
-            XactLockStrategy = LOCK_2PL_NW;
-        }
-        else
-        {
-            XactIsoLevel = XACT_READ_COMMITTED;
-            XactLockStrategy = LOCK_ASSERT_ABORT;
-        }
-
+        cmd = (int)(random() % 3);
+//        int cmd = 1;
         // feature, cc, and start time (for latency calculation).
         // save to data file.
         file = fopen("data.in", "a");
@@ -2121,41 +2182,70 @@ static void get_lock_strategy(LocalTransactionId tid)
     }
     else
     {
+//        printf("origin features (%f, %f, %f)\n", x[0], x[1], x[2]);
+        scatter_features(x, 3);
+//        printf("scattered features (%f, %f, %f)\n",  x[0], x[1], x[2]);
+        if (!need_predict) cmd = 1;
+        else cmd = get_optimal_strategy(x);
         // feature only.
-        sprintf(feature, "XACT %d: %s\n", tid,
-                buf.data);
-        conn_fd = connect_to_model(cc_host, cc_port);
-        if (conn_fd < 0)
-        {
-            elog(WARNING, "Unable to connect to cc server, no prediction provided.");
-            XactLockStrategy = DefaultXactLockStrategy;
-        }
-
-        write_all_to_socket(conn_fd, START_PRED_MESSAGE);
-        write_all_to_socket(conn_fd, feature);
-        write_all_to_socket(conn_fd, TERMINAL_PRED_MESSAGE);
-        shutdown(conn_fd, SHUT_WR);
-
-        if (read(conn_fd, &XactLockStrategy, sizeof(int )) != sizeof(int ))
-        {
-            elog(WARNING, "Could not read the response from the cc server.");
-            XactLockStrategy = DefaultXactLockStrategy;
-        }
-
-        shutdown(conn_fd, SHUT_RDWR);
+//        sprintf(feature, "XACT %d: %s\n", tid,
+//                buf.data);
+//        conn_fd = connect_to_model(cc_host, cc_port);
+//        if (conn_fd < 0)
+//        {
+//            elog(WARNING, "Unable to connect to cc server, no prediction provided.");
+//            XactLockStrategy = DefaultXactLockStrategy;
+//        }
+//
+//        write_all_to_socket(conn_fd, START_PRED_MESSAGE);
+//        write_all_to_socket(conn_fd, feature);
+//        write_all_to_socket(conn_fd, TERMINAL_PRED_MESSAGE);
+//        shutdown(conn_fd, SHUT_WR);
+//
+//        if (read(conn_fd, &XactLockStrategy, sizeof(int )) != sizeof(int ))
+//        {
+//            elog(WARNING, "Could not read the response from the cc server.");
+//            XactLockStrategy = DefaultXactLockStrategy;
+//        }
+//
+//        shutdown(conn_fd, SHUT_RDWR);
     }
+
+    if (cmd == 0)
+    {
+        XactIsoLevel = XACT_SERIALIZABLE;
+        XactLockStrategy = LOCK_NONE;
+    }
+    else if (cmd == 1)
+    {
+        XactIsoLevel = XACT_READ_COMMITTED;
+        XactLockStrategy = LOCK_2PL;
+    }
+    else if (cmd == 2)
+    {
+        XactIsoLevel = XACT_READ_COMMITTED;
+        XactLockStrategy = LOCK_2PL_NW;
+    }
+    else
+    {
+        XactIsoLevel = XACT_READ_COMMITTED;
+        XactLockStrategy = LOCK_ASSERT_ABORT;
+    }
+
 }
 
 static bool should_refine_cc(uint tid)
 {
-//    return true;
-    return tid % 10 == 0;
+    return true;
+//    return tid % 10 == 0;
 }
 
 static bool should_report_result(uint tid)
 {
-//    return true;
-    return tid % 10 == 0;
+    if (GenTrainingData)
+        return true;
+    return false;
+//    return tid % 10 == 0;
 }
 
 static uint64_t get_cur_time_ns()
@@ -2182,7 +2272,7 @@ static void report_xact_result(bool is_commit, LocalTransactionId tid)
     char reward[REWARD_LENGTH];
     FILE *file;
 
-    if (!EnableLearningCC)
+    if (!IsolationLearnCC())
         return;
 
 //    printf("xact%d is finished: %d--%d\n", tid, XactLockStrategy, XactIsoLevel);
@@ -2331,6 +2421,9 @@ StartTransaction(void)
 	vxid.backendId = MyBackendId;
 	vxid.localTransactionId = GetNextLocalTransactionId();
     get_lock_strategy(vxid.localTransactionId);
+//    printf("iso:%d -- %d, %d\n", XactIsoLevel, XactLockStrategy, DefaultXactLockStrategy);
+    Assert((!IsolationIsSerializable() && !IsolationNeedLock()) || IsolationLearnCC()
+        || XactLockStrategy == DefaultXactLockStrategy || IsolationIsSerializable());
 //    Assert(XactIsoLevel == XACT_READ_COMMITTED);
 //    Assert(XactLockStrategy == LOCK_2PL);
 

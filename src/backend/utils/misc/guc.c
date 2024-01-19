@@ -304,9 +304,10 @@ static const struct config_enum_entry isolation_level_options[] = {
 
 static const struct config_enum_entry cc_strategy_options[] = {
         {"s2pl", LOCK_2PL, false},
-//        {"s2plwd", LOCK_2PL_WD, false},
+        {"s2plnw", LOCK_2PL_NW, false},
 //        {"s2plnw", LOCK_2PL_NW, false},
         {"ssi", LOCK_NONE, false},
+        {"learned", LOCK_LEARNED, false},
         {NULL, 0}
 };
 
@@ -4298,7 +4299,7 @@ static struct config_enum ConfigureNamesEnum[] =
                     NULL
             },
             &DefaultXactLockStrategy,
-            LOCK_2PL, cc_strategy_options,
+            LOCK_LEARNED, cc_strategy_options,
             NULL, NULL, NULL
     },
 
