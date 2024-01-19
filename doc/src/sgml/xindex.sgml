@@ -508,7 +508,7 @@
    </table>
 
   <para>
-   GiST indexes have eleven support functions, six of which are optional,
+   GiST indexes have twelve support functions, seven of which are optional,
    as shown in <xref linkend="xindex-gist-support-table"/>.
    (For more information see <xref linkend="gist"/>.)
   </para>
@@ -589,6 +589,12 @@
        <entry>provide a sort comparator to be used in fast index builds
         (optional)</entry>
        <entry>11</entry>
+      </row>
+      <row>
+       <entry><function>stratnum</function></entry>
+       <entry>translate well-known strategy numbers to ones
+        used by the operator class (optional)</entry>
+       <entry>12</entry>
       </row>
      </tbody>
     </tgroup>
