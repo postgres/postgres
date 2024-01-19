@@ -32,12 +32,12 @@
 #include "access/xact.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
-#include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgworker.h"
 #include "postmaster/interrupt.h"
 #include "storage/buf_internals.h"
 #include "storage/dsm.h"
+#include "storage/dsm_registry.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -95,8 +95,6 @@ static void apw_start_database_worker(void);
 static bool apw_init_shmem(void);
 static void apw_detach_shmem(int code, Datum arg);
 static int	apw_compare_blockinfo(const void *p, const void *q);
-static void autoprewarm_shmem_request(void);
-static shmem_request_hook_type prev_shmem_request_hook = NULL;
 
 /* Pointer to shared-memory state. */
 static AutoPrewarmSharedState *apw_state = NULL;
@@ -140,24 +138,9 @@ _PG_init(void)
 
 	MarkGUCPrefixReserved("pg_prewarm");
 
-	prev_shmem_request_hook = shmem_request_hook;
-	shmem_request_hook = autoprewarm_shmem_request;
-
 	/* Register autoprewarm worker, if enabled. */
 	if (autoprewarm)
 		apw_start_leader_worker();
-}
-
-/*
- * Requests any additional shared memory required for autoprewarm.
- */
-static void
-autoprewarm_shmem_request(void)
-{
-	if (prev_shmem_request_hook)
-		prev_shmem_request_hook();
-
-	RequestAddinShmemSpace(MAXALIGN(sizeof(AutoPrewarmSharedState)));
 }
 
 /*
@@ -767,6 +750,16 @@ autoprewarm_dump_now(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64((int64) num_blocks);
 }
 
+static void
+apw_init_state(void *ptr)
+{
+	AutoPrewarmSharedState *state = (AutoPrewarmSharedState *) ptr;
+
+	LWLockInitialize(&state->lock, LWLockNewTrancheId());
+	state->bgworker_pid = InvalidPid;
+	state->pid_using_dumpfile = InvalidPid;
+}
+
 /*
  * Allocate and initialize autoprewarm related shared memory, if not already
  * done, and set up backend-local pointer to that state.  Returns true if an
@@ -777,19 +770,10 @@ apw_init_shmem(void)
 {
 	bool		found;
 
-	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
-	apw_state = ShmemInitStruct("autoprewarm",
-								sizeof(AutoPrewarmSharedState),
-								&found);
-	if (!found)
-	{
-		/* First time through ... */
-		LWLockInitialize(&apw_state->lock, LWLockNewTrancheId());
-		apw_state->bgworker_pid = InvalidPid;
-		apw_state->pid_using_dumpfile = InvalidPid;
-	}
-	LWLockRelease(AddinShmemInitLock);
-
+	apw_state = GetNamedDSMSegment("autoprewarm",
+								   sizeof(AutoPrewarmSharedState),
+								   apw_init_state,
+								   &found);
 	LWLockRegisterTranche(apw_state->lock.tranche, "autoprewarm");
 
 	return found;
