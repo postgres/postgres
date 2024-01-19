@@ -12,6 +12,7 @@ OBJS = \
 	barrier.o \
 	dsm.o \
 	dsm_impl.o \
+	dsm_registry.o \
 	ipc.o \
 	ipci.o \
 	latch.o \

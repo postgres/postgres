@@ -329,6 +329,7 @@ WrapLimitsVacuum	"Waiting to update limits on transaction id and multixact consu
 NotifyQueueTail	"Waiting to update limit on <command>NOTIFY</command> message storage."
 WaitEventExtension	"Waiting to read or update custom wait events information for extensions."
 WALSummarizer	"Waiting to read or update WAL summarization state."
+DSMRegistry	"Waiting to read or update the dynamic shared memory registry."
 
 #
 # END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)
@@ -367,6 +368,8 @@ PgStatsHash	"Waiting for stats shared memory hash table access."
 PgStatsData	"Waiting for shared memory stats data access."
 LogicalRepLauncherDSA	"Waiting to access logical replication launcher's dynamic shared memory allocator."
 LogicalRepLauncherHash	"Waiting to access logical replication launcher's shared hash table."
+DSMRegistryDSA	"Waiting to access dynamic shared memory registry's dynamic shared memory allocator."
+DSMRegistryHash	"Waiting to access dynamic shared memory registry's shared hash table."
 
 #
 # Wait Events - Lock

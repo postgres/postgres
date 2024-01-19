@@ -3460,6 +3460,45 @@ LWLockRelease(AddinShmemInitLock);
       the <productname>PostgreSQL</productname> source tree.
      </para>
     </sect3>
+
+    <sect3 id="xfunc-shared-addin-after-startup">
+     <title>Requesting Shared Memory After Startup</title>
+
+     <para>
+      There is another, more flexible method of reserving shared memory that
+      can be done after server startup and outside a
+      <literal>shmem_request_hook</literal>.  To do so, each backend that will
+      use the shared memory should obtain a pointer to it by calling:
+<programlisting>
+void *GetNamedDSMSegment(const char *name, size_t size,
+                         void (*init_callback) (void *ptr),
+                         bool *found)
+</programlisting>
+      If a dynamic shared memory segment with the given name does not yet
+      exist, this function will allocate it and initialize it with the provided
+      <function>init_callback</function> callback function.  If the segment has
+      already been allocated and initialized by another backend, this function
+      simply attaches the existing dynamic shared memory segment to the current
+      backend.
+     </para>
+
+     <para>
+      Unlike shared memory reserved at server startup, there is no need to
+      acquire <function>AddinShmemInitLock</function> or otherwise take action
+      to avoid race conditions when reserving shared memory with
+      <function>GetNamedDSMSegment</function>.  This function ensures that only
+      one backend allocates and initializes the segment and that all other
+      backends receive a pointer to the fully allocated and initialized
+      segment.
+     </para>
+
+     <para>
+      A complete usage example of <function>GetNamedDSMSegment</function> can
+      be found in
+      <filename>src/test/modules/test_dsm_registry/test_dsm_registry.c</filename>
+      in the <productname>PostgreSQL</productname> source tree.
+     </para>
+    </sect3>
    </sect2>
 
    <sect2 id="xfunc-addin-lwlocks">
@@ -3469,8 +3508,9 @@ LWLockRelease(AddinShmemInitLock);
      <title>Requesting LWLocks at Startup</title>
 
      <para>
-      Add-ins can reserve LWLocks on server startup.  As with shared memory,
-      the add-in's shared library must be preloaded by specifying it in
+      Add-ins can reserve LWLocks on server startup.  As with shared memory
+      reserved at server startup, the add-in's shared library must be preloaded
+      by specifying it in
       <xref linkend="guc-shared-preload-libraries"/><indexterm><primary>shared_preload_libraries</primary></indexterm>,
       and the shared library should register a
       <literal>shmem_request_hook</literal> in its
@@ -3508,7 +3548,10 @@ void LWLockInitialize(LWLock *lock, int tranche_id)
       process allocates a new <literal>tranche_id</literal> and initializes
       each new LWLock.  One way to do this is to only call these functions in
       your shared memory initialization code with the
-      <function>AddinShmemInitLock</function> held exclusively.
+      <function>AddinShmemInitLock</function> held exclusively.  If using
+      <function>GetNamedDSMSegment</function>, calling these functions in the
+      <function>init_callback</function> callback function is sufficient to
+      avoid race conditions.
      </para>
 
      <para>

@@ -611,6 +611,8 @@ DropSubscriptionStmt
 DropTableSpaceStmt
 DropUserMappingStmt
 DropdbStmt
+DSMRegistryCtxStruct
+DSMRegistryEntry
 DumpComponents
 DumpId
 DumpOptions
@@ -2799,6 +2801,7 @@ Tcl_NotifierProcs
 Tcl_Obj
 Tcl_Time
 TempNamespaceStatus
+TestDSMRegistryStruct
 TestDecodingData
 TestDecodingTxnData
 TestSpec

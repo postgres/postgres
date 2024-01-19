@@ -1,0 +1,14 @@
+CREATE EXTENSION test_dsm_registry;
+SELECT set_val_in_shmem(1236);
+ set_val_in_shmem 
+------------------
+ 
+(1 row)
+
+\c
+SELECT get_val_in_shmem();
+ get_val_in_shmem 
+------------------
+             1236
+(1 row)
+

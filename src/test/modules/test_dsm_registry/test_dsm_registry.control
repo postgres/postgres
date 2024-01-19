@@ -1,0 +1,4 @@
+comment = 'Test code for the DSM registry'
+default_version = '1.0'
+module_pathname = '$libdir/test_dsm_registry'
+relocatable = true

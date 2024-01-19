@@ -40,6 +40,7 @@
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/dsm.h"
+#include "storage/dsm_registry.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
@@ -115,6 +116,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
 											 sizeof(ShmemIndexEnt)));
 	size = add_size(size, dsm_estimate_size());
+	size = add_size(size, DSMRegistryShmemSize());
 	size = add_size(size, BufferShmemSize());
 	size = add_size(size, LockShmemSize());
 	size = add_size(size, PredicateLockShmemSize());
@@ -289,6 +291,7 @@ CreateOrAttachShmemStructs(void)
 	InitShmemIndex();
 
 	dsm_shmem_init();
+	DSMRegistryShmemInit();
 
 	/*
 	 * Set up xlog, clog, and buffers

@@ -18,6 +18,7 @@ SUBDIRS = \
 		  test_custom_rmgrs \
 		  test_ddl_deparse \
 		  test_dsa \
+		  test_dsm_registry \
 		  test_extensions \
 		  test_ginpostinglist \
 		  test_integerset \

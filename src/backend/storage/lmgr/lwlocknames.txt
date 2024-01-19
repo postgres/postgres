@@ -55,3 +55,4 @@ WrapLimitsVacuumLock				46
 NotifyQueueTailLock					47
 WaitEventExtensionLock				48
 WALSummarizerLock					49
+DSMRegistryLock						50
