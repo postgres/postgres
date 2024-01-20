@@ -44,6 +44,12 @@ SELECT * FROM update_test;
  10 | 20 | 
 (2 rows)
 
+-- error, you're not supposed to qualify the target column
+UPDATE update_test t SET t.b = t.b + 10 WHERE t.a = 10;
+ERROR:  column "t" of relation "update_test" does not exist
+LINE 1: UPDATE update_test t SET t.b = t.b + 10 WHERE t.a = 10;
+                                 ^
+HINT:  SET target columns cannot be qualified with the relation name.
 --
 -- Test VALUES in FROM
 --
