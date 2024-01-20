@@ -1181,6 +1181,81 @@ SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;
 
+-- GROUP BY optimization by reorder columns
+CREATE TABLE btg AS SELECT
+  i % 100 AS x,
+  i % 100 AS y,
+  'abc' || i % 10 AS z,
+  i AS w
+FROM generate_series(1,10000) AS i;
+CREATE INDEX abc ON btg(x,y);
+ANALYZE btg;
+
+-- GROUP BY optimization by reorder columns by frequency
+
+SET enable_hashagg=off;
+SET max_parallel_workers= 0;
+SET max_parallel_workers_per_gather = 0;
+
+-- Utilize index scan ordering to avoid a Sort operation
+EXPLAIN (COSTS OFF) SELECT count(*) FROM btg GROUP BY x,y;
+EXPLAIN (COSTS OFF) SELECT count(*) FROM btg GROUP BY y,x;
+
+-- Engage incremental sort
+explain (COSTS OFF) SELECT x,y FROM btg GROUP BY x,y,z,w;
+explain (COSTS OFF) SELECT x,y FROM btg GROUP BY z,y,w,x;
+explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,z,x,y;
+explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,x,z,y;
+
+-- Subqueries
+explain (COSTS OFF) SELECT x,y
+FROM (SELECT * FROM btg ORDER BY x,y,w,z) AS q1
+GROUP BY (w,x,z,y);
+explain (COSTS OFF) SELECT x,y
+FROM (SELECT * FROM btg ORDER BY x,y,w,z LIMIT 100) AS q1
+GROUP BY (w,x,z,y);
+
+-- Should work with and without GROUP-BY optimization
+explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,x,z,y ORDER BY y,x,z,w;
+
+-- Utilize incremental sort to make the ORDER BY rule a bit cheaper
+explain (COSTS OFF) SELECT x,w FROM btg GROUP BY w,x,y,z ORDER BY x*x,z;
+
+SET enable_incremental_sort = off;
+-- The case when the number of incoming subtree path keys is more than
+-- the number of grouping keys.
+CREATE INDEX idx_y_x_z ON btg(y,x,w);
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT y,x,array_agg(distinct w) FROM btg WHERE y < 0 GROUP BY x,y;
+RESET enable_incremental_sort;
+
+DROP TABLE btg;
+
+-- The case, when scanning sort order correspond to aggregate sort order but
+-- can not be found in the group-by list
+CREATE TABLE t1 (c1 int PRIMARY KEY, c2 int);
+CREATE UNIQUE INDEX ON t1(c2);
+explain (costs off)
+SELECT array_agg(c1 ORDER BY c2),c2
+FROM t1 WHERE c2 < 100 GROUP BY c1 ORDER BY 2;
+DROP TABLE t1 CASCADE;
+
+-- Check, that GROUP-BY reordering optimization can operate with pathkeys, built
+-- by planner itself. For example, by MergeJoin.
+SET enable_hashjoin = off;
+SET enable_nestloop = off;
+explain (COSTS OFF)
+SELECT c1.relname,c1.relpages
+FROM pg_class c1 JOIN pg_class c2 ON (c1.relname=c2.relname AND c1.relpages=c2.relpages)
+GROUP BY c1.reltuples,c1.relpages,c1.relname
+ORDER BY c1.relpages, c1.relname, c1.relpages*c1.relpages;
+RESET enable_hashjoin;
+RESET enable_nestloop;
+
+RESET enable_hashagg;
+RESET max_parallel_workers;
+RESET max_parallel_workers_per_gather;
+
 -- Secondly test the case of a parallel aggregate combiner function
 -- returning NULL. For that use normal transition function, but a
 -- combiner function returning NULL.

@@ -140,7 +140,7 @@ static double preprocess_limit(PlannerInfo *root,
 							   double tuple_fraction,
 							   int64 *offset_est, int64 *count_est);
 static void remove_useless_groupby_columns(PlannerInfo *root);
-static List *preprocess_groupclause(PlannerInfo *root, List *force);
+static List *groupclause_apply_groupingset(PlannerInfo *root, List *force);
 static List *extract_rollup_sets(List *groupingSets);
 static List *reorder_grouping_sets(List *groupingSets, List *sortclause);
 static void standard_qp_callback(PlannerInfo *root, void *extra);
@@ -1423,7 +1423,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		else if (parse->groupClause)
 		{
 			/* Preprocess regular GROUP BY clause, if any */
-			root->processed_groupClause = preprocess_groupclause(root, NIL);
+			root->processed_groupClause = list_copy(parse->groupClause);;
 			/* Remove any redundant GROUP BY columns */
 			remove_useless_groupby_columns(root);
 		}
@@ -2144,7 +2144,7 @@ preprocess_grouping_sets(PlannerInfo *root)
 		 * The groupClauses for hashed grouping sets are built later on.)
 		 */
 		if (gs->set)
-			rollup->groupClause = preprocess_groupclause(root, gs->set);
+			rollup->groupClause = groupclause_apply_groupingset(root, gs->set);
 		else
 			rollup->groupClause = NIL;
 
@@ -2796,111 +2796,24 @@ remove_useless_groupby_columns(PlannerInfo *root)
 }
 
 /*
- * preprocess_groupclause - do preparatory work on GROUP BY clause
- *
- * The idea here is to adjust the ordering of the GROUP BY elements
- * (which in itself is semantically insignificant) to match ORDER BY,
- * thereby allowing a single sort operation to both implement the ORDER BY
- * requirement and set up for a Unique step that implements GROUP BY.
- *
- * In principle it might be interesting to consider other orderings of the
- * GROUP BY elements, which could match the sort ordering of other
- * possible plans (eg an indexscan) and thereby reduce cost.  We don't
- * bother with that, though.  Hashed grouping will frequently win anyway.
- *
- * Note: we need no comparable processing of the distinctClause because
- * the parser already enforced that that matches ORDER BY.
- *
- * Note: we return a fresh List, but its elements are the same
- * SortGroupClauses appearing in parse->groupClause.  This is important
- * because later processing may modify the processed_groupClause list.
- *
- * For grouping sets, the order of items is instead forced to agree with that
- * of the grouping set (and items not in the grouping set are skipped). The
- * work of sorting the order of grouping set elements to match the ORDER BY if
- * possible is done elsewhere.
+ * groupclause_apply_groupingset
+ *		Apply the order of GROUP BY clauses defined by grouping sets.  Items
+ *		not in the grouping set are skipped.
  */
 static List *
-preprocess_groupclause(PlannerInfo *root, List *force)
+groupclause_apply_groupingset(PlannerInfo *root, List *gset)
 {
 	Query	   *parse = root->parse;
 	List	   *new_groupclause = NIL;
-	bool		partial_match;
 	ListCell   *sl;
-	ListCell   *gl;
 
-	/* For grouping sets, we need to force the ordering */
-	if (force)
+	foreach(sl, gset)
 	{
-		foreach(sl, force)
-		{
-			Index		ref = lfirst_int(sl);
-			SortGroupClause *cl = get_sortgroupref_clause(ref, parse->groupClause);
+		Index		ref = lfirst_int(sl);
+		SortGroupClause *cl = get_sortgroupref_clause(ref, parse->groupClause);
 
-			new_groupclause = lappend(new_groupclause, cl);
-		}
-
-		return new_groupclause;
+		new_groupclause = lappend(new_groupclause, cl);
 	}
-
-	/* If no ORDER BY, nothing useful to do here */
-	if (parse->sortClause == NIL)
-		return list_copy(parse->groupClause);
-
-	/*
-	 * Scan the ORDER BY clause and construct a list of matching GROUP BY
-	 * items, but only as far as we can make a matching prefix.
-	 *
-	 * This code assumes that the sortClause contains no duplicate items.
-	 */
-	foreach(sl, parse->sortClause)
-	{
-		SortGroupClause *sc = lfirst_node(SortGroupClause, sl);
-
-		foreach(gl, parse->groupClause)
-		{
-			SortGroupClause *gc = lfirst_node(SortGroupClause, gl);
-
-			if (equal(gc, sc))
-			{
-				new_groupclause = lappend(new_groupclause, gc);
-				break;
-			}
-		}
-		if (gl == NULL)
-			break;				/* no match, so stop scanning */
-	}
-
-	/* Did we match all of the ORDER BY list, or just some of it? */
-	partial_match = (sl != NULL);
-
-	/* If no match at all, no point in reordering GROUP BY */
-	if (new_groupclause == NIL)
-		return list_copy(parse->groupClause);
-
-	/*
-	 * Add any remaining GROUP BY items to the new list, but only if we were
-	 * able to make a complete match.  In other words, we only rearrange the
-	 * GROUP BY list if the result is that one list is a prefix of the other
-	 * --- otherwise there's no possibility of a common sort.  Also, give up
-	 * if there are any non-sortable GROUP BY items, since then there's no
-	 * hope anyway.
-	 */
-	foreach(gl, parse->groupClause)
-	{
-		SortGroupClause *gc = lfirst_node(SortGroupClause, gl);
-
-		if (list_member_ptr(new_groupclause, gc))
-			continue;			/* it matched an ORDER BY item */
-		if (partial_match)		/* give up, no common sort possible */
-			return list_copy(parse->groupClause);
-		if (!OidIsValid(gc->sortop))	/* give up, GROUP BY can't be sorted */
-			return list_copy(parse->groupClause);
-		new_groupclause = lappend(new_groupclause, gc);
-	}
-
-	/* Success --- install the rearranged GROUP BY list */
-	Assert(list_length(parse->groupClause) == list_length(new_groupclause));
 	return new_groupclause;
 }
 
@@ -4200,7 +4113,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 			{
 				rollup = makeNode(RollupData);
 
-				rollup->groupClause = preprocess_groupclause(root, gset);
+				rollup->groupClause = groupclause_apply_groupingset(root, gset);
 				rollup->gsets_data = list_make1(gs);
 				rollup->gsets = remap_to_groupclause_idx(rollup->groupClause,
 														 rollup->gsets_data,
@@ -4389,7 +4302,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 
 			Assert(gs->set != NIL);
 
-			rollup->groupClause = preprocess_groupclause(root, gs->set);
+			rollup->groupClause = groupclause_apply_groupingset(root, gs->set);
 			rollup->gsets_data = list_make1(gs);
 			rollup->gsets = remap_to_groupclause_idx(rollup->groupClause,
 													 rollup->gsets_data,
@@ -6810,6 +6723,58 @@ done:
 }
 
 /*
+ * make_ordered_path
+ *		Return a path ordered by 'pathkeys' based on the given 'path'.  May
+ *		return NULL if it doesn't make sense to generate an ordered path in
+ *		this case.
+ */
+static Path *
+make_ordered_path(PlannerInfo *root, RelOptInfo *rel, Path *path,
+				  Path *cheapest_path, List *pathkeys)
+{
+	bool		is_sorted;
+	int			presorted_keys;
+
+	is_sorted = pathkeys_count_contained_in(pathkeys,
+											path->pathkeys,
+											&presorted_keys);
+
+	if (!is_sorted)
+	{
+		/*
+		 * Try at least sorting the cheapest path and also try incrementally
+		 * sorting any path which is partially sorted already (no need to deal
+		 * with paths which have presorted keys when incremental sort is
+		 * disabled unless it's the cheapest input path).
+		 */
+		if (path != cheapest_path &&
+			(presorted_keys == 0 || !enable_incremental_sort))
+			return NULL;
+
+		/*
+		 * We've no need to consider both a sort and incremental sort. We'll
+		 * just do a sort if there are no presorted keys and an incremental
+		 * sort when there are presorted keys.
+		 */
+		if (presorted_keys == 0 || !enable_incremental_sort)
+			path = (Path *) create_sort_path(root,
+											 rel,
+											 path,
+											 pathkeys,
+											 -1.0);
+		else
+			path = (Path *) create_incremental_sort_path(root,
+														 rel,
+														 path,
+														 pathkeys,
+														 presorted_keys,
+														 -1.0);
+	}
+
+	return path;
+}
+
+/*
  * add_paths_to_grouping_rel
  *
  * Add non-partial paths to grouping relation.
@@ -6839,90 +6804,75 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		 */
 		foreach(lc, input_rel->pathlist)
 		{
+			ListCell   *lc2;
 			Path	   *path = (Path *) lfirst(lc);
-			bool		is_sorted;
-			int			presorted_keys;
+			Path	   *path_save = path;
+			List	   *pathkey_orderings = NIL;
 
-			is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-													path->pathkeys,
-													&presorted_keys);
+			/* generate alternative group orderings that might be useful */
+			pathkey_orderings = get_useful_group_keys_orderings(root, path);
 
-			if (!is_sorted)
+			Assert(list_length(pathkey_orderings) > 0);
+
+			foreach(lc2, pathkey_orderings)
 			{
-				/*
-				 * Try at least sorting the cheapest path and also try
-				 * incrementally sorting any path which is partially sorted
-				 * already (no need to deal with paths which have presorted
-				 * keys when incremental sort is disabled unless it's the
-				 * cheapest input path).
-				 */
-				if (path != cheapest_path &&
-					(presorted_keys == 0 || !enable_incremental_sort))
-					continue;
+				PathKeyInfo *info = (PathKeyInfo *) lfirst(lc2);
 
-				/*
-				 * We've no need to consider both a sort and incremental sort.
-				 * We'll just do a sort if there are no presorted keys and an
-				 * incremental sort when there are presorted keys.
-				 */
-				if (presorted_keys == 0 || !enable_incremental_sort)
-					path = (Path *) create_sort_path(root,
-													 grouped_rel,
-													 path,
-													 root->group_pathkeys,
-													 -1.0);
-				else
-					path = (Path *) create_incremental_sort_path(root,
-																 grouped_rel,
-																 path,
-																 root->group_pathkeys,
-																 presorted_keys,
-																 -1.0);
-			}
+				/* restore the path (we replace it in the loop) */
+				path = path_save;
 
-			/* Now decide what to stick atop it */
-			if (parse->groupingSets)
-			{
-				consider_groupingsets_paths(root, grouped_rel,
-											path, true, can_hash,
-											gd, agg_costs, dNumGroups);
-			}
-			else if (parse->hasAggs)
-			{
-				/*
-				 * We have aggregation, possibly with plain GROUP BY. Make an
-				 * AggPath.
-				 */
-				add_path(grouped_rel, (Path *)
-						 create_agg_path(root,
+				path = make_ordered_path(root,
 										 grouped_rel,
 										 path,
-										 grouped_rel->reltarget,
-										 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
-										 AGGSPLIT_SIMPLE,
-										 root->processed_groupClause,
-										 havingQual,
-										 agg_costs,
-										 dNumGroups));
-			}
-			else if (parse->groupClause)
-			{
-				/*
-				 * We have GROUP BY without aggregation or grouping sets. Make
-				 * a GroupPath.
-				 */
-				add_path(grouped_rel, (Path *)
-						 create_group_path(root,
-										   grouped_rel,
-										   path,
-										   root->processed_groupClause,
-										   havingQual,
-										   dNumGroups));
-			}
-			else
-			{
-				/* Other cases should have been handled above */
-				Assert(false);
+										 cheapest_path,
+										 info->pathkeys);
+				if (path == NULL)
+					continue;
+
+				/* Now decide what to stick atop it */
+				if (parse->groupingSets)
+				{
+					consider_groupingsets_paths(root, grouped_rel,
+												path, true, can_hash,
+												gd, agg_costs, dNumGroups);
+				}
+				else if (parse->hasAggs)
+				{
+					/*
+					 * We have aggregation, possibly with plain GROUP BY. Make
+					 * an AggPath.
+					 */
+					add_path(grouped_rel, (Path *)
+							 create_agg_path(root,
+											 grouped_rel,
+											 path,
+											 grouped_rel->reltarget,
+											 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+											 AGGSPLIT_SIMPLE,
+											 info->clauses,
+											 havingQual,
+											 agg_costs,
+											 dNumGroups));
+				}
+				else if (parse->groupClause)
+				{
+					/*
+					 * We have GROUP BY without aggregation or grouping sets.
+					 * Make a GroupPath.
+					 */
+					add_path(grouped_rel, (Path *)
+							 create_group_path(root,
+											   grouped_rel,
+											   path,
+											   info->clauses,
+											   havingQual,
+											   dNumGroups));
+				}
+				else
+				{
+					/* Other cases should have been handled above */
+					Assert(false);
+				}
 			}
 		}
 
@@ -6934,69 +6884,55 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		{
 			foreach(lc, partially_grouped_rel->pathlist)
 			{
+				ListCell   *lc2;
 				Path	   *path = (Path *) lfirst(lc);
-				bool		is_sorted;
-				int			presorted_keys;
+				Path	   *path_save = path;
+				List	   *pathkey_orderings = NIL;
 
-				is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-														path->pathkeys,
-														&presorted_keys);
+				/* generate alternative group orderings that might be useful */
+				pathkey_orderings = get_useful_group_keys_orderings(root, path);
 
-				if (!is_sorted)
+				Assert(list_length(pathkey_orderings) > 0);
+
+				/* process all potentially interesting grouping reorderings */
+				foreach(lc2, pathkey_orderings)
 				{
-					/*
-					 * Try at least sorting the cheapest path and also try
-					 * incrementally sorting any path which is partially
-					 * sorted already (no need to deal with paths which have
-					 * presorted keys when incremental sort is disabled unless
-					 * it's the cheapest input path).
-					 */
-					if (path != partially_grouped_rel->cheapest_total_path &&
-						(presorted_keys == 0 || !enable_incremental_sort))
-						continue;
+					PathKeyInfo *info = (PathKeyInfo *) lfirst(lc2);
 
-					/*
-					 * We've no need to consider both a sort and incremental
-					 * sort.  We'll just do a sort if there are no pre-sorted
-					 * keys and an incremental sort when there are presorted
-					 * keys.
-					 */
-					if (presorted_keys == 0 || !enable_incremental_sort)
-						path = (Path *) create_sort_path(root,
-														 grouped_rel,
-														 path,
-														 root->group_pathkeys,
-														 -1.0);
-					else
-						path = (Path *) create_incremental_sort_path(root,
-																	 grouped_rel,
-																	 path,
-																	 root->group_pathkeys,
-																	 presorted_keys,
-																	 -1.0);
-				}
+					/* restore the path (we replace it in the loop) */
+					path = path_save;
 
-				if (parse->hasAggs)
-					add_path(grouped_rel, (Path *)
-							 create_agg_path(root,
+					path = make_ordered_path(root,
 											 grouped_rel,
 											 path,
-											 grouped_rel->reltarget,
-											 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
-											 AGGSPLIT_FINAL_DESERIAL,
-											 root->processed_groupClause,
-											 havingQual,
-											 agg_final_costs,
-											 dNumGroups));
-				else
-					add_path(grouped_rel, (Path *)
-							 create_group_path(root,
-											   grouped_rel,
-											   path,
-											   root->processed_groupClause,
-											   havingQual,
-											   dNumGroups));
+											 partially_grouped_rel->cheapest_total_path,
+											 info->pathkeys);
 
+					if (path == NULL)
+						continue;
+
+					if (parse->hasAggs)
+						add_path(grouped_rel, (Path *)
+								 create_agg_path(root,
+												 grouped_rel,
+												 path,
+												 grouped_rel->reltarget,
+												 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+												 AGGSPLIT_FINAL_DESERIAL,
+												 info->clauses,
+												 havingQual,
+												 agg_final_costs,
+												 dNumGroups));
+					else
+						add_path(grouped_rel, (Path *)
+								 create_group_path(root,
+												   grouped_rel,
+												   path,
+												   info->clauses,
+												   havingQual,
+												   dNumGroups));
+
+				}
 			}
 		}
 	}
@@ -7199,66 +7135,54 @@ create_partial_grouping_paths(PlannerInfo *root,
 		 */
 		foreach(lc, input_rel->pathlist)
 		{
+			ListCell   *lc2;
 			Path	   *path = (Path *) lfirst(lc);
-			bool		is_sorted;
-			int			presorted_keys;
+			Path	   *path_save = path;
+			List	   *pathkey_orderings = NIL;
 
-			is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-													path->pathkeys,
-													&presorted_keys);
-			if (!is_sorted)
+			/* generate alternative group orderings that might be useful */
+			pathkey_orderings = get_useful_group_keys_orderings(root, path);
+
+			Assert(list_length(pathkey_orderings) > 0);
+
+			/* process all potentially interesting grouping reorderings */
+			foreach(lc2, pathkey_orderings)
 			{
-				/*
-				 * Try at least sorting the cheapest path and also try
-				 * incrementally sorting any path which is partially sorted
-				 * already (no need to deal with paths which have presorted
-				 * keys when incremental sort is disabled unless it's the
-				 * cheapest input path).
-				 */
-				if (path != cheapest_total_path &&
-					(presorted_keys == 0 || !enable_incremental_sort))
-					continue;
+				PathKeyInfo *info = (PathKeyInfo *) lfirst(lc2);
 
-				/*
-				 * We've no need to consider both a sort and incremental sort.
-				 * We'll just do a sort if there are no presorted keys and an
-				 * incremental sort when there are presorted keys.
-				 */
-				if (presorted_keys == 0 || !enable_incremental_sort)
-					path = (Path *) create_sort_path(root,
-													 partially_grouped_rel,
-													 path,
-													 root->group_pathkeys,
-													 -1.0);
-				else
-					path = (Path *) create_incremental_sort_path(root,
-																 partially_grouped_rel,
-																 path,
-																 root->group_pathkeys,
-																 presorted_keys,
-																 -1.0);
-			}
+				/* restore the path (we replace it in the loop) */
+				path = path_save;
 
-			if (parse->hasAggs)
-				add_path(partially_grouped_rel, (Path *)
-						 create_agg_path(root,
+				path = make_ordered_path(root,
 										 partially_grouped_rel,
 										 path,
-										 partially_grouped_rel->reltarget,
-										 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
-										 AGGSPLIT_INITIAL_SERIAL,
-										 root->processed_groupClause,
-										 NIL,
-										 agg_partial_costs,
-										 dNumPartialGroups));
-			else
-				add_path(partially_grouped_rel, (Path *)
-						 create_group_path(root,
-										   partially_grouped_rel,
-										   path,
-										   root->processed_groupClause,
-										   NIL,
-										   dNumPartialGroups));
+										 cheapest_total_path,
+										 info->pathkeys);
+
+				if (path == NULL)
+					continue;
+
+				if (parse->hasAggs)
+					add_path(partially_grouped_rel, (Path *)
+							 create_agg_path(root,
+											 partially_grouped_rel,
+											 path,
+											 partially_grouped_rel->reltarget,
+											 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+											 AGGSPLIT_INITIAL_SERIAL,
+											 info->clauses,
+											 NIL,
+											 agg_partial_costs,
+											 dNumPartialGroups));
+				else
+					add_path(partially_grouped_rel, (Path *)
+							 create_group_path(root,
+											   partially_grouped_rel,
+											   path,
+											   info->clauses,
+											   NIL,
+											   dNumPartialGroups));
+			}
 		}
 	}
 
@@ -7267,67 +7191,55 @@ create_partial_grouping_paths(PlannerInfo *root,
 		/* Similar to above logic, but for partial paths. */
 		foreach(lc, input_rel->partial_pathlist)
 		{
+			ListCell   *lc2;
 			Path	   *path = (Path *) lfirst(lc);
-			bool		is_sorted;
-			int			presorted_keys;
+			Path	   *path_save = path;
+			List	   *pathkey_orderings = NIL;
 
-			is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-													path->pathkeys,
-													&presorted_keys);
+			/* generate alternative group orderings that might be useful */
+			pathkey_orderings = get_useful_group_keys_orderings(root, path);
 
-			if (!is_sorted)
+			Assert(list_length(pathkey_orderings) > 0);
+
+			/* process all potentially interesting grouping reorderings */
+			foreach(lc2, pathkey_orderings)
 			{
-				/*
-				 * Try at least sorting the cheapest path and also try
-				 * incrementally sorting any path which is partially sorted
-				 * already (no need to deal with paths which have presorted
-				 * keys when incremental sort is disabled unless it's the
-				 * cheapest input path).
-				 */
-				if (path != cheapest_partial_path &&
-					(presorted_keys == 0 || !enable_incremental_sort))
+				PathKeyInfo *info = (PathKeyInfo *) lfirst(lc2);
+
+
+				/* restore the path (we replace it in the loop) */
+				path = path_save;
+
+				path = make_ordered_path(root,
+										 partially_grouped_rel,
+										 path,
+										 cheapest_partial_path,
+										 info->pathkeys);
+
+				if (path == NULL)
 					continue;
 
-				/*
-				 * We've no need to consider both a sort and incremental sort.
-				 * We'll just do a sort if there are no presorted keys and an
-				 * incremental sort when there are presorted keys.
-				 */
-				if (presorted_keys == 0 || !enable_incremental_sort)
-					path = (Path *) create_sort_path(root,
+				if (parse->hasAggs)
+					add_partial_path(partially_grouped_rel, (Path *)
+									 create_agg_path(root,
 													 partially_grouped_rel,
 													 path,
-													 root->group_pathkeys,
-													 -1.0);
+													 partially_grouped_rel->reltarget,
+													 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+													 AGGSPLIT_INITIAL_SERIAL,
+													 info->clauses,
+													 NIL,
+													 agg_partial_costs,
+													 dNumPartialPartialGroups));
 				else
-					path = (Path *) create_incremental_sort_path(root,
-																 partially_grouped_rel,
-																 path,
-																 root->group_pathkeys,
-																 presorted_keys,
-																 -1.0);
+					add_partial_path(partially_grouped_rel, (Path *)
+									 create_group_path(root,
+													   partially_grouped_rel,
+													   path,
+													   info->clauses,
+													   NIL,
+													   dNumPartialPartialGroups));
 			}
-
-			if (parse->hasAggs)
-				add_partial_path(partially_grouped_rel, (Path *)
-								 create_agg_path(root,
-												 partially_grouped_rel,
-												 path,
-												 partially_grouped_rel->reltarget,
-												 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
-												 AGGSPLIT_INITIAL_SERIAL,
-												 root->processed_groupClause,
-												 NIL,
-												 agg_partial_costs,
-												 dNumPartialPartialGroups));
-			else
-				add_partial_path(partially_grouped_rel, (Path *)
-								 create_group_path(root,
-												   partially_grouped_rel,
-												   path,
-												   root->processed_groupClause,
-												   NIL,
-												   dNumPartialPartialGroups));
 		}
 	}
 
@@ -7441,6 +7353,8 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * We can also skip the entire loop when we only have a single-item
 	 * group_pathkeys because then we can't possibly have a presorted prefix
 	 * of the list without having the list be fully sorted.
+	 *
+	 * XXX Shouldn't this also consider the group-key-reordering?
 	 */
 	if (!enable_incremental_sort || list_length(root->group_pathkeys) == 1)
 		return;

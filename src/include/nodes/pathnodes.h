@@ -405,7 +405,7 @@ struct PlannerInfo
 	List	   *initial_rels pg_node_attr(read_write_ignore);
 
 	/*
-	 * Upper-rel RelOptInfos. Use fetch_upper_rel() to get any particular
+	 * Upper-rel RelOptInfos. Use fetch_pper_rel() to get any particular
 	 * upper rel.
 	 */
 	List	   *upper_rels[UPPERREL_FINAL + 1] pg_node_attr(read_write_ignore);
@@ -1455,6 +1455,16 @@ typedef struct PathKey
 	int			pk_strategy;	/* sort direction (ASC or DESC) */
 	bool		pk_nulls_first; /* do NULLs come before normal values? */
 } PathKey;
+
+/*
+ * Combines the information about pathkeys and the associated clauses.
+ */
+typedef struct PathKeyInfo
+{
+	NodeTag		type;
+	List	   *pathkeys;
+	List	   *clauses;
+} PathKeyInfo;
 
 /*
  * VolatileFunctionStatus -- allows nodes to cache their
