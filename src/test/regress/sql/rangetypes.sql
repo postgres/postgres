@@ -629,3 +629,72 @@ create function inoutparam_fail(inout i anyelement, out r anyrange)
 --should fail
 create function table_fail(i anyelement) returns table(i anyelement, r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;
+
+--
+-- Test support functions
+--
+
+-- empty range
+explain (verbose, costs off)
+select current_date <@ daterange 'empty';
+
+-- unbounded range
+explain (verbose, costs off)
+select current_date <@ daterange(NULL, NULL);
+
+-- only lower bound present
+explain (verbose, costs off)
+select current_date <@ daterange('2000-01-01', NULL, '[)');
+
+-- only upper bound present
+explain (verbose, costs off)
+select current_date <@ daterange(NULL, '2000-01-01', '(]');
+
+-- lower range "-Infinity" excluded
+explain (verbose, costs off)
+select current_date <@ daterange('-Infinity', '1997-04-10'::date, '()');
+
+-- lower range "-Infinity" included
+explain (verbose, costs off)
+select current_date <@ daterange('-Infinity', '1997-04-10'::date, '[)');
+
+-- upper range "Infinity" excluded
+explain (verbose, costs off)
+select current_date <@ daterange('2002-09-25'::date, 'Infinity', '[)');
+
+-- upper range "Infinity" included
+explain (verbose, costs off)
+select current_date <@ daterange('2002-09-25'::date, 'Infinity', '[]');
+
+-- should also work if we use "@>"
+explain (verbose, costs off)
+select daterange('-Infinity', '1997-04-10'::date, '()') @> current_date;
+
+explain (verbose, costs off)
+select daterange('2002-09-25'::date, 'Infinity', '[]') @> current_date;
+
+-- Check that volatile cases are not optimized
+explain (verbose, costs off)
+select now() <@ tstzrange('2024-01-20 00:00', '2024-01-21 00:00');
+explain (verbose, costs off)  -- unsafe!
+select clock_timestamp() <@ tstzrange('2024-01-20 00:00', '2024-01-21 00:00');
+explain (verbose, costs off)
+select clock_timestamp() <@ tstzrange('2024-01-20 00:00', NULL);
+
+-- test a custom range type with a non-default operator class
+create type textrange_supp as range (
+   subtype = text,
+   subtype_opclass = text_pattern_ops
+);
+
+create temp table text_support_test (t text collate "C");
+
+insert into text_support_test values ('a'), ('c'), ('d'), ('ch');
+
+explain (costs off)
+select * from text_support_test where t <@ textrange_supp('a', 'd');
+select * from text_support_test where t <@ textrange_supp('a', 'd');
+
+drop table text_support_test;
+
+drop type textrange_supp;

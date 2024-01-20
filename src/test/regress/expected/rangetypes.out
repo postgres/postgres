@@ -1834,3 +1834,145 @@ create function table_fail(i anyelement) returns table(i anyelement, r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;
 ERROR:  cannot determine result data type
 DETAIL:  A result of type anyrange requires at least one input of type anyrange or anymultirange.
+--
+-- Test support functions
+--
+-- empty range
+explain (verbose, costs off)
+select current_date <@ daterange 'empty';
+   QUERY PLAN    
+-----------------
+ Result
+   Output: false
+(2 rows)
+
+-- unbounded range
+explain (verbose, costs off)
+select current_date <@ daterange(NULL, NULL);
+   QUERY PLAN   
+----------------
+ Result
+   Output: true
+(2 rows)
+
+-- only lower bound present
+explain (verbose, costs off)
+select current_date <@ daterange('2000-01-01', NULL, '[)');
+                   QUERY PLAN                   
+------------------------------------------------
+ Result
+   Output: (CURRENT_DATE >= '01-01-2000'::date)
+(2 rows)
+
+-- only upper bound present
+explain (verbose, costs off)
+select current_date <@ daterange(NULL, '2000-01-01', '(]');
+                  QUERY PLAN                   
+-----------------------------------------------
+ Result
+   Output: (CURRENT_DATE < '01-02-2000'::date)
+(2 rows)
+
+-- lower range "-Infinity" excluded
+explain (verbose, costs off)
+select current_date <@ daterange('-Infinity', '1997-04-10'::date, '()');
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Result
+   Output: ((CURRENT_DATE > '-infinity'::date) AND (CURRENT_DATE < '04-10-1997'::date))
+(2 rows)
+
+-- lower range "-Infinity" included
+explain (verbose, costs off)
+select current_date <@ daterange('-Infinity', '1997-04-10'::date, '[)');
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Result
+   Output: ((CURRENT_DATE >= '-infinity'::date) AND (CURRENT_DATE < '04-10-1997'::date))
+(2 rows)
+
+-- upper range "Infinity" excluded
+explain (verbose, costs off)
+select current_date <@ daterange('2002-09-25'::date, 'Infinity', '[)');
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Result
+   Output: ((CURRENT_DATE >= '09-25-2002'::date) AND (CURRENT_DATE < 'infinity'::date))
+(2 rows)
+
+-- upper range "Infinity" included
+explain (verbose, costs off)
+select current_date <@ daterange('2002-09-25'::date, 'Infinity', '[]');
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Result
+   Output: ((CURRENT_DATE >= '09-25-2002'::date) AND (CURRENT_DATE <= 'infinity'::date))
+(2 rows)
+
+-- should also work if we use "@>"
+explain (verbose, costs off)
+select daterange('-Infinity', '1997-04-10'::date, '()') @> current_date;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Result
+   Output: ((CURRENT_DATE > '-infinity'::date) AND (CURRENT_DATE < '04-10-1997'::date))
+(2 rows)
+
+explain (verbose, costs off)
+select daterange('2002-09-25'::date, 'Infinity', '[]') @> current_date;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Result
+   Output: ((CURRENT_DATE >= '09-25-2002'::date) AND (CURRENT_DATE <= 'infinity'::date))
+(2 rows)
+
+-- Check that volatile cases are not optimized
+explain (verbose, costs off)
+select now() <@ tstzrange('2024-01-20 00:00', '2024-01-21 00:00');
+                                                                       QUERY PLAN                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+ Result
+   Output: ((now() >= 'Sat Jan 20 00:00:00 2024 PST'::timestamp with time zone) AND (now() < 'Sun Jan 21 00:00:00 2024 PST'::timestamp with time zone))
+(2 rows)
+
+explain (verbose, costs off)  -- unsafe!
+select clock_timestamp() <@ tstzrange('2024-01-20 00:00', '2024-01-21 00:00');
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Result
+   Output: (clock_timestamp() <@ '["Sat Jan 20 00:00:00 2024 PST","Sun Jan 21 00:00:00 2024 PST")'::tstzrange)
+(2 rows)
+
+explain (verbose, costs off)
+select clock_timestamp() <@ tstzrange('2024-01-20 00:00', NULL);
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
+ Result
+   Output: (clock_timestamp() >= 'Sat Jan 20 00:00:00 2024 PST'::timestamp with time zone)
+(2 rows)
+
+-- test a custom range type with a non-default operator class
+create type textrange_supp as range (
+   subtype = text,
+   subtype_opclass = text_pattern_ops
+);
+create temp table text_support_test (t text collate "C");
+insert into text_support_test values ('a'), ('c'), ('d'), ('ch');
+explain (costs off)
+select * from text_support_test where t <@ textrange_supp('a', 'd');
+                      QUERY PLAN                      
+------------------------------------------------------
+ Seq Scan on text_support_test
+   Filter: ((t ~>=~ 'a'::text) AND (t ~<~ 'd'::text))
+(2 rows)
+
+select * from text_support_test where t <@ textrange_supp('a', 'd');
+ t  
+----
+ a
+ c
+ ch
+(3 rows)
+
+drop table text_support_test;
+drop type textrange_supp;

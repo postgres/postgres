@@ -96,6 +96,7 @@ typedef struct TypeCacheEntry
 	 * btree comparison function.
 	 */
 	struct TypeCacheEntry *rngelemtype; /* range's element type */
+	Oid			rng_opfamily;	/* opfamily to use for range comparisons */
 	Oid			rng_collation;	/* collation for comparisons, if any */
 	FmgrInfo	rng_cmp_proc_finfo; /* comparison function */
 	FmgrInfo	rng_canonical_finfo;	/* canonicalization function, if any */

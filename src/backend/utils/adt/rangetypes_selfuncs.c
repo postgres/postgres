@@ -196,9 +196,10 @@ rangesel(PG_FUNCTION_ARGS)
 	else if (operator == OID_RANGE_ELEM_CONTAINED_OP)
 	{
 		/*
-		 * Here, the Var is the elem, not the range.  For now we just punt and
-		 * return the default estimate.  In future we could disassemble the
-		 * range constant and apply scalarineqsel ...
+		 * Here, the Var is the elem, not the range.  In typical cases
+		 * elem_contained_by_range_support will have simplified this case, so
+		 * that we won't get here.  If we do get here we'll fall back on a
+		 * default estimate.
 		 */
 	}
 	else if (((Const *) other)->consttype == vardata.vartype)

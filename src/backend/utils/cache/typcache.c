@@ -940,6 +940,7 @@ load_rangetype_info(TypeCacheEntry *typentry)
 	/* get opclass properties and look up the comparison function */
 	opfamilyOid = get_opclass_family(opclassOid);
 	opcintype = get_opclass_input_type(opclassOid);
+	typentry->rng_opfamily = opfamilyOid;
 
 	cmpFnOid = get_opfamily_proc(opfamilyOid, opcintype, opcintype,
 								 BTORDER_PROC);
