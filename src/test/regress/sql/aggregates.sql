@@ -1233,12 +1233,12 @@ DROP TABLE btg;
 
 -- The case, when scanning sort order correspond to aggregate sort order but
 -- can not be found in the group-by list
-CREATE TABLE t1 (c1 int PRIMARY KEY, c2 int);
-CREATE UNIQUE INDEX ON t1(c2);
+CREATE TABLE agg_sort_order (c1 int PRIMARY KEY, c2 int);
+CREATE UNIQUE INDEX ON agg_sort_order(c2);
 explain (costs off)
 SELECT array_agg(c1 ORDER BY c2),c2
-FROM t1 WHERE c2 < 100 GROUP BY c1 ORDER BY 2;
-DROP TABLE t1 CASCADE;
+FROM agg_sort_order WHERE c2 < 100 GROUP BY c1 ORDER BY 2;
+DROP TABLE agg_sort_order CASCADE;
 
 -- Check, that GROUP-BY reordering optimization can operate with pathkeys, built
 -- by planner itself. For example, by MergeJoin.
