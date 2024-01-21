@@ -256,7 +256,7 @@ spcachekey_hash(SearchPathCacheKey key)
 	fasthash_state hs;
 	int			sp_len;
 
-	fasthash_init(&hs, FH_UNKNOWN_LENGTH, 0);
+	fasthash_init(&hs, 0);
 
 	hs.accum = key.roleid;
 	fasthash_combine(&hs);

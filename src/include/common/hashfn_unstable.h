@@ -65,15 +65,12 @@
  * in fasthash_accum_cstring() :
  *
  * fasthash_state hs;
- * fasthash_init(&hs, FH_UNKNOWN_LENGTH, 0);
+ * fasthash_init(&hs, 0);
  * len = fasthash_accum_cstring(&hs, *str);
  * ...
  * return fasthash_final32(&hs, len);
  *
- * Here we pass FH_UNKNOWN_LENGTH as a convention, since passing zero
- * would zero out the internal seed as well. fasthash_accum_cstring()
- * returns the length of the string, which is computed on-the-fly while
- * mixing the string into the hash. Experimentation has found that
+ * The length is computed on-the-fly. Experimentation has found that
  * SMHasher fails unless we incorporate the length, so it is passed to
  * the finalizer as a tweak.
  */
@@ -89,20 +86,17 @@ typedef struct fasthash_state
 
 #define FH_SIZEOF_ACCUM sizeof(uint64)
 
-#define FH_UNKNOWN_LENGTH 1
 
 /*
  * Initialize the hash state.
  *
- * 'len' is the length of the input, if known ahead of time.
- * If that is not known, pass FH_UNKNOWN_LENGTH.
  * 'seed' can be zero.
  */
 static inline void
-fasthash_init(fasthash_state *hs, int len, uint64 seed)
+fasthash_init(fasthash_state *hs, uint64 seed)
 {
 	memset(hs, 0, sizeof(fasthash_state));
-	hs->hash = seed ^ (len * 0x880355f21e6d1965);
+	hs->hash = seed ^ 0x880355f21e6d1965;
 }
 
 /* both the finalizer and part of the combining step */
@@ -328,7 +322,10 @@ fasthash64(const char *k, int len, uint64 seed)
 {
 	fasthash_state hs;
 
-	fasthash_init(&hs, len, seed);
+	fasthash_init(&hs, 0);
+
+	/* re-initialize the seed according to input length */
+	hs.hash = seed ^ (len * 0x880355f21e6d1965);
 
 	while (len >= FH_SIZEOF_ACCUM)
 	{
