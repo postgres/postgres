@@ -6810,6 +6810,58 @@ done:
 }
 
 /*
+ * make_ordered_path
+ *		Return a path ordered by 'pathkeys' based on the given 'path'.  May
+ *		return NULL if it doesn't make sense to generate an ordered path in
+ *		this case.
+ */
+static Path *
+make_ordered_path(PlannerInfo *root, RelOptInfo *rel, Path *path,
+				  Path *cheapest_path, List *pathkeys)
+{
+	bool		is_sorted;
+	int			presorted_keys;
+
+	is_sorted = pathkeys_count_contained_in(pathkeys,
+											path->pathkeys,
+											&presorted_keys);
+
+	if (!is_sorted)
+	{
+		/*
+		 * Try at least sorting the cheapest path and also try incrementally
+		 * sorting any path which is partially sorted already (no need to deal
+		 * with paths which have presorted keys when incremental sort is
+		 * disabled unless it's the cheapest input path).
+		 */
+		if (path != cheapest_path &&
+			(presorted_keys == 0 || !enable_incremental_sort))
+			return NULL;
+
+		/*
+		 * We've no need to consider both a sort and incremental sort. We'll
+		 * just do a sort if there are no presorted keys and an incremental
+		 * sort when there are presorted keys.
+		 */
+		if (presorted_keys == 0 || !enable_incremental_sort)
+			path = (Path *) create_sort_path(root,
+											 rel,
+											 path,
+											 pathkeys,
+											 -1.0);
+		else
+			path = (Path *) create_incremental_sort_path(root,
+														 rel,
+														 path,
+														 pathkeys,
+														 presorted_keys,
+														 -1.0);
+	}
+
+	return path;
+}
+
+/*
  * add_paths_to_grouping_rel
  *
  * Add non-partial paths to grouping relation.
@@ -6840,45 +6892,15 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		foreach(lc, input_rel->pathlist)
 		{
 			Path	   *path = (Path *) lfirst(lc);
-			bool		is_sorted;
-			int			presorted_keys;
 
-			is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-													path->pathkeys,
-													&presorted_keys);
+			path = make_ordered_path(root,
+									 grouped_rel,
+									 path,
+									 cheapest_path,
+									 root->group_pathkeys);
 
-			if (!is_sorted)
-			{
-				/*
-				 * Try at least sorting the cheapest path and also try
-				 * incrementally sorting any path which is partially sorted
-				 * already (no need to deal with paths which have presorted
-				 * keys when incremental sort is disabled unless it's the
-				 * cheapest input path).
-				 */
-				if (path != cheapest_path &&
-					(presorted_keys == 0 || !enable_incremental_sort))
-					continue;
-
-				/*
-				 * We've no need to consider both a sort and incremental sort.
-				 * We'll just do a sort if there are no presorted keys and an
-				 * incremental sort when there are presorted keys.
-				 */
-				if (presorted_keys == 0 || !enable_incremental_sort)
-					path = (Path *) create_sort_path(root,
-													 grouped_rel,
-													 path,
-													 root->group_pathkeys,
-													 -1.0);
-				else
-					path = (Path *) create_incremental_sort_path(root,
-																 grouped_rel,
-																 path,
-																 root->group_pathkeys,
-																 presorted_keys,
-																 -1.0);
-			}
+			if (path == NULL)
+				continue;
 
 			/* Now decide what to stick atop it */
 			if (parse->groupingSets)
@@ -6935,46 +6957,15 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			foreach(lc, partially_grouped_rel->pathlist)
 			{
 				Path	   *path = (Path *) lfirst(lc);
-				bool		is_sorted;
-				int			presorted_keys;
 
-				is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-														path->pathkeys,
-														&presorted_keys);
+				path = make_ordered_path(root,
+										 grouped_rel,
+										 path,
+										 partially_grouped_rel->cheapest_total_path,
+										 root->group_pathkeys);
 
-				if (!is_sorted)
-				{
-					/*
-					 * Try at least sorting the cheapest path and also try
-					 * incrementally sorting any path which is partially
-					 * sorted already (no need to deal with paths which have
-					 * presorted keys when incremental sort is disabled unless
-					 * it's the cheapest input path).
-					 */
-					if (path != partially_grouped_rel->cheapest_total_path &&
-						(presorted_keys == 0 || !enable_incremental_sort))
-						continue;
-
-					/*
-					 * We've no need to consider both a sort and incremental
-					 * sort.  We'll just do a sort if there are no pre-sorted
-					 * keys and an incremental sort when there are presorted
-					 * keys.
-					 */
-					if (presorted_keys == 0 || !enable_incremental_sort)
-						path = (Path *) create_sort_path(root,
-														 grouped_rel,
-														 path,
-														 root->group_pathkeys,
-														 -1.0);
-					else
-						path = (Path *) create_incremental_sort_path(root,
-																	 grouped_rel,
-																	 path,
-																	 root->group_pathkeys,
-																	 presorted_keys,
-																	 -1.0);
-				}
+				if (path == NULL)
+					continue;
 
 				if (parse->hasAggs)
 					add_path(grouped_rel, (Path *)
@@ -7200,44 +7191,15 @@ create_partial_grouping_paths(PlannerInfo *root,
 		foreach(lc, input_rel->pathlist)
 		{
 			Path	   *path = (Path *) lfirst(lc);
-			bool		is_sorted;
-			int			presorted_keys;
 
-			is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-													path->pathkeys,
-													&presorted_keys);
-			if (!is_sorted)
-			{
-				/*
-				 * Try at least sorting the cheapest path and also try
-				 * incrementally sorting any path which is partially sorted
-				 * already (no need to deal with paths which have presorted
-				 * keys when incremental sort is disabled unless it's the
-				 * cheapest input path).
-				 */
-				if (path != cheapest_total_path &&
-					(presorted_keys == 0 || !enable_incremental_sort))
-					continue;
+			path = make_ordered_path(root,
+									 partially_grouped_rel,
+									 path,
+									 cheapest_total_path,
+									 root->group_pathkeys);
 
-				/*
-				 * We've no need to consider both a sort and incremental sort.
-				 * We'll just do a sort if there are no presorted keys and an
-				 * incremental sort when there are presorted keys.
-				 */
-				if (presorted_keys == 0 || !enable_incremental_sort)
-					path = (Path *) create_sort_path(root,
-													 partially_grouped_rel,
-													 path,
-													 root->group_pathkeys,
-													 -1.0);
-				else
-					path = (Path *) create_incremental_sort_path(root,
-																 partially_grouped_rel,
-																 path,
-																 root->group_pathkeys,
-																 presorted_keys,
-																 -1.0);
-			}
+			if (path == NULL)
+				continue;
 
 			if (parse->hasAggs)
 				add_path(partially_grouped_rel, (Path *)
@@ -7268,45 +7230,15 @@ create_partial_grouping_paths(PlannerInfo *root,
 		foreach(lc, input_rel->partial_pathlist)
 		{
 			Path	   *path = (Path *) lfirst(lc);
-			bool		is_sorted;
-			int			presorted_keys;
 
-			is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-													path->pathkeys,
-													&presorted_keys);
+			path = make_ordered_path(root,
+									 partially_grouped_rel,
+									 path,
+									 cheapest_partial_path,
+									 root->group_pathkeys);
 
-			if (!is_sorted)
-			{
-				/*
-				 * Try at least sorting the cheapest path and also try
-				 * incrementally sorting any path which is partially sorted
-				 * already (no need to deal with paths which have presorted
-				 * keys when incremental sort is disabled unless it's the
-				 * cheapest input path).
-				 */
-				if (path != cheapest_partial_path &&
-					(presorted_keys == 0 || !enable_incremental_sort))
-					continue;
-
-				/*
-				 * We've no need to consider both a sort and incremental sort.
-				 * We'll just do a sort if there are no presorted keys and an
-				 * incremental sort when there are presorted keys.
-				 */
-				if (presorted_keys == 0 || !enable_incremental_sort)
-					path = (Path *) create_sort_path(root,
-													 partially_grouped_rel,
-													 path,
-													 root->group_pathkeys,
-													 -1.0);
-				else
-					path = (Path *) create_incremental_sort_path(root,
-																 partially_grouped_rel,
-																 path,
-																 root->group_pathkeys,
-																 presorted_keys,
-																 -1.0);
-			}
+			if (path == NULL)
+				continue;
 
 			if (parse->hasAggs)
 				add_partial_path(partially_grouped_rel, (Path *)
