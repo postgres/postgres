@@ -114,6 +114,7 @@ select name, setting from pg_settings where name like 'enable%';
  enable_async_append            | on
  enable_bitmapscan              | on
  enable_gathermerge             | on
+ enable_group_by_reordering     | on
  enable_hashagg                 | on
  enable_hashjoin                | on
  enable_incremental_sort        | on
@@ -133,7 +134,7 @@ select name, setting from pg_settings where name like 'enable%';
  enable_seqscan                 | on
  enable_sort                    | on
  enable_tidscan                 | on
-(22 rows)
+(23 rows)
 
 -- There are always wait event descriptions for various types.
 select type, count(*) > 0 as ok FROM pg_wait_events

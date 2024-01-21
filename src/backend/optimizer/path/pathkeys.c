@@ -22,12 +22,15 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/plannodes.h"
+#include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "partitioning/partbounds.h"
 #include "utils/lsyscache.h"
 
+/* Consider reordering of GROUP BY keys? */
+bool		enable_group_by_reordering = true;
 
 static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
 static bool matches_boolean_partition_clause(RestrictInfo *rinfo,
@@ -348,6 +351,202 @@ pathkeys_contained_in(List *keys1, List *keys2)
 			break;
 	}
 	return false;
+}
+
+/*
+ * group_keys_reorder_by_pathkeys
+ *		Reorder GROUP BY keys to match the input pathkeys.
+ *
+ * Function returns new lists (pathkeys and clauses), original GROUP BY lists
+ * stay untouched.
+ *
+ * Returns the number of GROUP BY keys with a matching pathkey.
+ */
+static int
+group_keys_reorder_by_pathkeys(List *pathkeys, List **group_pathkeys,
+							   List **group_clauses,
+							   int num_groupby_pathkeys)
+{
+	List	   *new_group_pathkeys = NIL,
+			   *new_group_clauses = NIL;
+	ListCell   *lc;
+	int			n;
+
+	if (pathkeys == NIL || *group_pathkeys == NIL)
+		return 0;
+
+	/*
+	 * Walk the pathkeys (determining ordering of the input path) and see if
+	 * there's a matching GROUP BY key. If we find one, we append it to the
+	 * list, and do the same for the clauses.
+	 *
+	 * Once we find the first pathkey without a matching GROUP BY key, the
+	 * rest of the pathkeys are useless and can't be used to evaluate the
+	 * grouping, so we abort the loop and ignore the remaining pathkeys.
+	 */
+	foreach(lc, pathkeys)
+	{
+		PathKey    *pathkey = (PathKey *) lfirst(lc);
+		SortGroupClause *sgc;
+
+		/*
+		 * Pathkeys are built in a way that allows simply comparing pointers.
+		 * Give up if we can't find the matching pointer.  Also give up if
+		 * there is no sortclause reference for some reason.
+		 */
+		if (foreach_current_index(lc) >= num_groupby_pathkeys ||
+			!list_member_ptr(*group_pathkeys, pathkey) ||
+			pathkey->pk_eclass->ec_sortref == 0)
+			break;
+
+		/*
+		 * Since 1349d27 pathkey coming from underlying node can be in the
+		 * root->group_pathkeys but not in the processed_groupClause. So, we
+		 * should be careful here.
+		 */
+		sgc = get_sortgroupref_clause_noerr(pathkey->pk_eclass->ec_sortref,
+											*group_clauses);
+		if (!sgc)
+			/* The grouping clause does not cover this pathkey */
+			break;
+
+		/*
+		 * Sort group clause should have an ordering operator as long as there
+		 * is an associated pathkey.
+		 */
+		Assert(OidIsValid(sgc->sortop));
+
+		new_group_pathkeys = lappend(new_group_pathkeys, pathkey);
+		new_group_clauses = lappend(new_group_clauses, sgc);
+	}
+
+	/* remember the number of pathkeys with a matching GROUP BY key */
+	n = list_length(new_group_pathkeys);
+
+	/* append the remaining group pathkeys (will be treated as not sorted) */
+	*group_pathkeys = list_concat_unique_ptr(new_group_pathkeys,
+											 *group_pathkeys);
+	*group_clauses = list_concat_unique_ptr(new_group_clauses,
+											*group_clauses);
+
+	return n;
+}
+
+/*
+ * pathkeys_are_duplicate
+ *		Check if give pathkeys are already contained the list of
+ *		PathKeyInfo's.
+ */
+static bool
+pathkeys_are_duplicate(List *infos, List *pathkeys)
+{
+	ListCell   *lc;
+
+	foreach(lc, infos)
+	{
+		PathKeyInfo *info = lfirst_node(PathKeyInfo, lc);
+
+		if (compare_pathkeys(pathkeys, info->pathkeys) == PATHKEYS_EQUAL)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * get_useful_group_keys_orderings
+ *		Determine which orderings of GROUP BY keys are potentially interesting.
+ *
+ * Returns a list of PathKeyInfo items, each representing an interesting
+ * ordering of GROUP BY keys.  Each item stores pathkeys and clauses in the
+ * matching order.
+ *
+ * The function considers (and keeps) multiple GROUP BY orderings:
+ *
+ * - the original ordering, as specified by the GROUP BY clause,
+ * - GROUP BY keys reordered to match 'path' ordering (as much as possible),
+ * - GROUP BY keys to match target ORDER BY clause (as much as possible).
+ */
+List *
+get_useful_group_keys_orderings(PlannerInfo *root, Path *path)
+{
+	Query	   *parse = root->parse;
+	List	   *infos = NIL;
+	PathKeyInfo *info;
+
+	List	   *pathkeys = root->group_pathkeys;
+	List	   *clauses = root->processed_groupClause;
+
+	/* always return at least the original pathkeys/clauses */
+	info = makeNode(PathKeyInfo);
+	info->pathkeys = pathkeys;
+	info->clauses = clauses;
+	infos = lappend(infos, info);
+
+	/*
+	 * Should we try generating alternative orderings of the group keys? If
+	 * not, we produce only the order specified in the query, i.e. the
+	 * optimization is effectively disabled.
+	 */
+	if (!enable_group_by_reordering)
+		return infos;
+
+	/*
+	 * Grouping sets have own and more complex logic to decide the ordering.
+	 */
+	if (parse->groupingSets)
+		return infos;
+
+	/*
+	 * If the path is sorted in some way, try reordering the group keys to
+	 * match the path as much of the ordering as possible.  Then thanks to
+	 * incremental sort we would get this sort as cheap as possible.
+	 */
+	if (path->pathkeys &&
+		!pathkeys_contained_in(path->pathkeys, root->group_pathkeys))
+	{
+		int			n;
+
+		n = group_keys_reorder_by_pathkeys(path->pathkeys, &pathkeys, &clauses,
+										   root->num_groupby_pathkeys);
+
+		if (n > 0 &&
+			(enable_incremental_sort || n == root->num_groupby_pathkeys) &&
+			!pathkeys_are_duplicate(infos, pathkeys))
+		{
+			info = makeNode(PathKeyInfo);
+			info->pathkeys = pathkeys;
+			info->clauses = clauses;
+
+			infos = lappend(infos, info);
+		}
+	}
+
+	/*
+	 * Try reordering pathkeys to minimize the sort cost (this time consider
+	 * the ORDER BY clause).
+	 */
+	if (root->sort_pathkeys &&
+		!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys))
+	{
+		int			n;
+
+		n = group_keys_reorder_by_pathkeys(root->sort_pathkeys, &pathkeys,
+										   &clauses,
+										   root->num_groupby_pathkeys);
+
+		if (n > 0 &&
+			(enable_incremental_sort || n == list_length(root->sort_pathkeys)) &&
+			!pathkeys_are_duplicate(infos, pathkeys))
+		{
+			info = makeNode(PathKeyInfo);
+			info->pathkeys = pathkeys;
+			info->clauses = clauses;
+
+			infos = lappend(infos, info);
+		}
+	}
+
+	return infos;
 }
 
 /*
@@ -1940,6 +2139,54 @@ pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys)
 }
 
 /*
+ * pathkeys_useful_for_grouping
+ *		Count the number of pathkeys that are useful for grouping (instead of
+ *		explicit sort)
+ *
+ * Group pathkeys could be reordered to benefit from the ordering. The
+ * ordering may not be "complete" and may require incremental sort, but that's
+ * fine. So we simply count prefix pathkeys with a matching group key, and
+ * stop once we find the first pathkey without a match.
+ *
+ * So e.g. with pathkeys (a,b,c) and group keys (a,b,e) this determines (a,b)
+ * pathkeys are useful for grouping, and we might do incremental sort to get
+ * path ordered by (a,b,e).
+ *
+ * This logic is necessary to retain paths with ordering not matching grouping
+ * keys directly, without the reordering.
+ *
+ * Returns the length of pathkey prefix with matching group keys.
+ */
+static int
+pathkeys_useful_for_grouping(PlannerInfo *root, List *pathkeys)
+{
+	ListCell   *key;
+	int			n = 0;
+
+	/* no special ordering requested for grouping */
+	if (root->group_pathkeys == NIL)
+		return 0;
+
+	/* unordered path */
+	if (pathkeys == NIL)
+		return 0;
+
+	/* walk the pathkeys and search for matching group key */
+	foreach(key, pathkeys)
+	{
+		PathKey    *pathkey = (PathKey *) lfirst(key);
+
+		/* no matching group key, we're done */
+		if (!list_member_ptr(root->group_pathkeys, pathkey))
+			break;
+
+		n++;
+	}
+
+	return n;
+}
+
+/*
  * truncate_useless_pathkeys
  *		Shorten the given pathkey list to just the useful pathkeys.
  */
@@ -1953,6 +2200,9 @@ truncate_useless_pathkeys(PlannerInfo *root,
 
 	nuseful = pathkeys_useful_for_merging(root, rel, pathkeys);
 	nuseful2 = pathkeys_useful_for_ordering(root, pathkeys);
+	if (nuseful2 > nuseful)
+		nuseful = nuseful2;
+	nuseful2 = pathkeys_useful_for_grouping(root, pathkeys);
 	if (nuseful2 > nuseful)
 		nuseful = nuseful2;
 
@@ -1988,6 +2238,8 @@ has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel)
 {
 	if (rel->joininfo != NIL || rel->has_eclass_joins)
 		return true;			/* might be able to use pathkeys for merging */
+	if (root->group_pathkeys != NIL)
+		return true;			/* might be able to use pathkeys for grouping */
 	if (root->query_pathkeys != NIL)
 		return true;			/* might be able to use them for ordering */
 	return false;				/* definitely useless */

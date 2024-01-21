@@ -399,6 +399,7 @@
 #enable_seqscan = on
 #enable_sort = on
 #enable_tidscan = on
+#enable_group_by_reordering = on
 
 # - Planner Cost Constants -
 
