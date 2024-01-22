@@ -43,11 +43,19 @@ pg_tde = shared_module('pg_tde',
 )
 contrib_targets += pg_tde
 
+ldflags = []
+if host_system == 'darwin'
+  # On MacOS Shared Libraries and Loadable Modules are different things,
+  # so we need to pass an extra flag to the linker.
+  ldflags += '-bundle'
+endif
+
 enc_test = executable('enc_test',
   files('src/encryption/enc_aes.c', 'src/encryption/test.c'),
   kwargs: mod_args,
   include_directories: incdir,
   c_args : '-DFRONTEND',
+  link_args: ldflags,
 )
 
 pg_tde_perf = executable('enc_perf_test',
@@ -55,6 +63,7 @@ pg_tde_perf = executable('enc_perf_test',
   kwargs: contrib_mod_args,
   include_directories: incdir,
   c_args : '-DFRONTEND',
+  link_args: ldflags,
 )
 
 install_data(
