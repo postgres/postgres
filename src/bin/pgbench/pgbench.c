@@ -3763,10 +3763,21 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 			case CSTATE_START_COMMAND:
 				command = sql_script[st->use_file].commands[st->command];
 
-				/* Transition to script end processing if done */
+				/*
+				 * Transition to script end processing if done, but close up
+				 * shop if a pipeline is open at this point.
+				 */
 				if (command == NULL)
 				{
-					st->state = CSTATE_END_TX;
+					if (PQpipelineStatus(st->con) == PQ_PIPELINE_OFF)
+						st->state = CSTATE_END_TX;
+					else
+					{
+						pg_log_error("client %d aborted: end of script reached with pipeline open",
+									 st->id);
+						st->state = CSTATE_ABORTED;
+					}
+
 					break;
 				}
 
