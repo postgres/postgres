@@ -1,7 +1,7 @@
 CREATE EXTENSION test_ginpostinglist;
 --
 -- All the logic is in the test_ginpostinglist() function. It will throw
--- a error if something fails.
+-- an error if something fails.
 --
 SELECT test_ginpostinglist();
 NOTICE:  testing with (0, 1), (0, 2), max 14 bytes

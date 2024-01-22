@@ -2395,7 +2395,7 @@ show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 }
 
 /*
- * Show the sort keys for a IncrementalSort node.
+ * Show the sort keys for an IncrementalSort node.
  */
 static void
 show_incremental_sort_keys(IncrementalSortState *incrsortstate,

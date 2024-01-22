@@ -332,7 +332,7 @@ static TransactionId stream_xid = InvalidTransactionId;
  */
 static uint32 parallel_stream_nchanges = 0;
 
-/* Are we initializing a apply worker? */
+/* Are we initializing an apply worker? */
 bool		InitializingApplyWorker = false;
 
 /*

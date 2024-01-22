@@ -142,7 +142,7 @@ index_open(Oid relationId, LOCKMODE lockmode)
 }
 
 /* ----------------
- *		try_index_open - open a index relation by relation OID
+ *		try_index_open - open an index relation by relation OID
  *
  *		Same as index_open, except return NULL instead of failing
  *		if the relation does not exist.
