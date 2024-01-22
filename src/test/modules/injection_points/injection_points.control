@@ -1,0 +1,4 @@
+comment = 'Test code for injection points'
+default_version = '1.0'
+module_pathname = '$libdir/injection_points'
+relocatable = true
