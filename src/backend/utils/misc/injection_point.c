@@ -97,7 +97,7 @@ injection_point_cache_add(const char *name,
 		hash_search(InjectionPointCache, name, HASH_ENTER, &found);
 
 	Assert(!found);
-	memcpy(entry->name, name, strlen(name));
+	strlcpy(entry->name, name, sizeof(entry->name));
 	entry->callback = callback;
 }
 
@@ -217,11 +217,11 @@ InjectionPointAttach(const char *name,
 	}
 
 	/* Save the entry */
-	memcpy(entry_by_name->name, name, sizeof(entry_by_name->name));
+	strlcpy(entry_by_name->name, name, sizeof(entry_by_name->name));
 	entry_by_name->name[INJ_NAME_MAXLEN - 1] = '\0';
-	memcpy(entry_by_name->library, library, sizeof(entry_by_name->library));
+	strlcpy(entry_by_name->library, library, sizeof(entry_by_name->library));
 	entry_by_name->library[INJ_LIB_MAXLEN - 1] = '\0';
-	memcpy(entry_by_name->function, function, sizeof(entry_by_name->function));
+	strlcpy(entry_by_name->function, function, sizeof(entry_by_name->function));
 	entry_by_name->function[INJ_FUNC_MAXLEN - 1] = '\0';
 
 	LWLockRelease(InjectionPointLock);
