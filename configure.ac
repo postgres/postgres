@@ -251,6 +251,13 @@ PGAC_ARG_BOOL(enable, tap-tests, no,
 AC_SUBST(enable_tap_tests)
 
 #
+# Injection points
+#
+PGAC_ARG_BOOL(enable, injection-points, no, [enable injection points (for testing)],
+              [AC_DEFINE([USE_INJECTION_POINTS], 1, [Define to 1 to build with injection points. (--enable-injection-points)])])
+AC_SUBST(enable_injection_points)
+
+#
 # Block size
 #
 AC_MSG_CHECKING([for block size])

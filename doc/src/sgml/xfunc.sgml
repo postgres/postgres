@@ -3599,6 +3599,75 @@ uint32 WaitEventExtensionNew(const char *wait_event_name)
     </para>
    </sect2>
 
+   <sect2 id="xfunc-addin-injection-points">
+    <title>Injection Points</title>
+
+    <para>
+     An injection point with a given <literal>name</literal> is declared using
+     macro:
+<programlisting>
+INJECTION_POINT(name);
+</programlisting>
+
+     There are a few injection points already declared at strategic points
+     within the server code. After adding a new injection point the code needs
+     to be compiled in order for that injection point to be available in the
+     binary. Add-ins written in C-language can declare injection points in
+     their own code using the same macro.
+    </para>
+
+    <para>
+     Add-ins can attach callbacks to an already-declared injection point by
+     calling:
+<programlisting>
+extern void InjectionPointAttach(const char *name,
+                                 const char *library,
+                                 const char *function);
+</programlisting>
+
+     <literal>name</literal> is the name of the injection point, which when
+     reached during execution will execute the <literal>function</literal>
+     loaded from <literal>library</literal>.
+    </para>
+
+    <para>
+     Here is an example of callback for
+     <literal>InjectionPointCallback</literal>:
+<programlisting>
+static void
+custom_injection_callback(const char *name)
+{
+    elog(NOTICE, "%s: executed custom callback", name);
+}
+</programlisting>
+     This callback prints a message to server error log with severity
+     <literal>NOTICE</literal>, but callbacks may implement more complex
+     logic.
+    </para>
+
+    <para>
+     Optionally, it is possible to detach an injection point by calling:
+<programlisting>
+extern void InjectionPointDetach(const char *name);
+</programlisting>
+    </para>
+
+    <para>
+     A callback attached to an injection point is available across all the
+     backends including the backends started after
+     <literal>InjectionPointAttach</literal> is called. It remains attached
+     while the server is running or until the injection point is detached
+     using <literal>InjectionPointDetach</literal>.
+    </para>
+
+    <para>
+     Enabling injections points requires
+     <option>--enable-injection-points</option> with
+     <command>configure</command> or <option>-Dinjection_points=true</option>
+     with <application>Meson</application>.
+    </para>
+   </sect2>
+
    <sect2 id="extend-cpp">
     <title>Using C++ for Extensibility</title>
 

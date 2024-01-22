@@ -54,6 +54,7 @@ pgxs_kv = {
 
   'enable_rpath': get_option('rpath') ? 'yes' : 'no',
   'enable_nls': libintl.found() ? 'yes' : 'no',
+  'enable_injection_points': get_option('injection_points') ? 'yes' : 'no',
   'enable_tap_tests': tap_tests_enabled ? 'yes' : 'no',
   'enable_debug': get_option('debug') ? 'yes' : 'no',
   'enable_coverage': 'no',

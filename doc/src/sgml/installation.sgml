@@ -1656,6 +1656,21 @@ build-postgresql:
        </listitem>
       </varlistentry>
 
+      <varlistentry id="configure-option-enable-injection-points">
+       <term><option>--enable-injection-points</option></term>
+       <listitem>
+        <para>
+         Compiles <productname>PostgreSQL</productname> with support for
+         injection points in the server. Injection points allow to run
+         user-defined code from within the server in pre-defined code paths.
+         This helps in testing and in the investigation of concurrency scenarios
+         in a controlled fashion. This option is disabled by default.  See
+         <xref linkend="xfunc-addin-injection-points"/> for more details.  This
+         option is intended to be used only by developers for testing.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="configure-option-with-segsize-blocks">
        <term><option>--with-segsize-blocks=SEGSIZE_BLOCKS</option></term>
        <listitem>
@@ -3156,6 +3171,21 @@ ninja install
         will often be necessary because <command>dtrace</command> is
         typically installed under <filename>/usr/sbin</filename>,
         which might not be in your <envar>PATH</envar>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="configure-injection-points-meson">
+      <term><option>-Dinjection_points={ true | false }</option></term>
+      <listitem>
+       <para>
+        Compiles <productname>PostgreSQL</productname> with support for
+        injection points in the server. Injection points allow to run
+        user-defined code from within the server in pre-defined code paths.
+        This helps in testing and in the investigation of concurrency scenarios
+        in a controlled fashion. This option is disabled by default.  See
+        <xref linkend="xfunc-addin-injection-points"/> for more details.  This
+        option is intended to be used only by developers for testing.
        </para>
       </listitem>
      </varlistentry>

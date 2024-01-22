@@ -330,6 +330,7 @@ NotifyQueueTail	"Waiting to update limit on <command>NOTIFY</command> message st
 WaitEventExtension	"Waiting to read or update custom wait events information for extensions."
 WALSummarizer	"Waiting to read or update WAL summarization state."
 DSMRegistry	"Waiting to read or update the dynamic shared memory registry."
+InjectionPoint	"Waiting to read or update information related to injection points."
 
 #
 # END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)

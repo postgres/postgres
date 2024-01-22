@@ -698,6 +698,9 @@
 /* Define to build with ICU support. (--with-icu) */
 #undef USE_ICU
 
+/* Define to 1 to build with injection points. (--enable-injection-points) */
+#undef USE_INJECTION_POINTS
+
 /* Define to 1 to build with LDAP support. (--with-ldap) */
 #undef USE_LDAP
 

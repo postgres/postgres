@@ -43,6 +43,9 @@ option('cassert', type: 'boolean', value: false,
 option('tap_tests', type: 'feature', value: 'auto',
   description: 'Enable TAP tests')
 
+option('injection_points', type: 'boolean', value: false,
+  description: 'Enable injection points')
+
 option('PG_TEST_EXTRA', type: 'string', value: '',
   description: 'Enable selected extra tests')
 

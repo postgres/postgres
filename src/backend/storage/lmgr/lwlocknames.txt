@@ -56,3 +56,4 @@ NotifyQueueTailLock					47
 WaitEventExtensionLock				48
 WALSummarizerLock					49
 DSMRegistryLock						50
+InjectionPointLock				51
