@@ -300,11 +300,11 @@ InjectionPointRun(const char *name)
 				 path, name);
 
 		injection_callback = (InjectionPointCallback)
-			load_external_function(path, entry_by_name->function, true, NULL);
+			load_external_function(path, entry_by_name->function, false, NULL);
 
 		if (injection_callback == NULL)
 			elog(ERROR, "could not find function \"%s\" in library \"%s\" for injection point \"%s\"",
-				 name, entry_by_name->function, path);
+				 entry_by_name->function, path, name);
 
 		/* add it to the local cache when found */
 		injection_point_cache_add(name, injection_callback);
