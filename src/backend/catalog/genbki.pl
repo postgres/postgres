@@ -56,6 +56,8 @@ my %catalogs;
 my %catalog_data;
 my @toast_decls;
 my @index_decls;
+my %syscaches;
+my %syscache_catalogs;
 my %oidcounts;
 my @system_constraints;
 
@@ -121,6 +123,9 @@ foreach my $header (@ARGV)
 		}
 	}
 
+	# Lookup table to get index info by index name
+	my %indexes;
+
 	# If the header file contained toast or index info, build BKI
 	# commands for those, which we'll output later.
 	foreach my $toast (@{ $catalog->{toasting} })
@@ -134,6 +139,8 @@ foreach my $header (@ARGV)
 	}
 	foreach my $index (@{ $catalog->{indexing} })
 	{
+		$indexes{ $index->{index_name} } = $index;
+
 		push @index_decls,
 		  sprintf "declare %sindex %s %s on %s using %s\n",
 		  $index->{is_unique} ? 'unique ' : '',
@@ -150,6 +157,26 @@ foreach my $header (@ARGV)
 			  $index->{is_pkey} ? "PRIMARY KEY" : "UNIQUE",
 			  $index->{index_name};
 		}
+	}
+
+	# Analyze syscache info
+	foreach my $syscache (@{ $catalog->{syscaches} })
+	{
+		my $index = $indexes{ $syscache->{index_name} };
+		my $tblname = $index->{table_name};
+		my $key = $index->{index_decl};
+		$key =~ s/^\w+\(//;
+		$key =~ s/\)$//;
+		$key =~ s/(\w+)\s+\w+/Anum_${tblname}_$1/g;
+
+		$syscaches{ $syscache->{syscache_name} } = {
+			table_oid_macro => $catalogs{$tblname}->{relation_oid_macro},
+			index_oid_macro => $index->{index_oid_macro},
+			key => $key,
+			nbuckets => $syscache->{syscache_nbuckets},
+		};
+
+		$syscache_catalogs{$catname} = 1;
 	}
 }
 
@@ -419,6 +446,12 @@ open my $fk_info, '>', $fk_info_file . $tmpext
 my $constraints_file = $output_path . 'system_constraints.sql';
 open my $constraints, '>', $constraints_file . $tmpext
   or die "can't open $constraints_file$tmpext: $!";
+my $syscache_ids_file = $output_path . 'syscache_ids.h';
+open my $syscache_ids_fh, '>', $syscache_ids_file . $tmpext
+  or die "can't open $syscache_ids_file$tmpext: $!";
+my $syscache_info_file = $output_path . 'syscache_info.h';
+open my $syscache_info_fh, '>', $syscache_info_file . $tmpext
+  or die "can't open $syscache_info_file$tmpext: $!";
 
 # Generate postgres.bki and pg_*_d.h headers.
 
@@ -753,17 +786,59 @@ foreach my $catname (@catnames)
 # Closing boilerplate for system_fk_info.h
 print $fk_info "};\n\n#endif\t\t\t\t\t\t\t/* SYSTEM_FK_INFO_H */\n";
 
+# Now generate syscache info
+
+print_boilerplate($syscache_ids_fh, "syscache_ids.h", "SysCache identifiers");
+print $syscache_ids_fh "enum SysCacheIdentifier
+{
+";
+
+print_boilerplate($syscache_info_fh, "syscache_info.h",
+	"SysCache definitions");
+print $syscache_info_fh "\n";
+foreach my $catname (sort keys %syscache_catalogs)
+{
+	print $syscache_info_fh qq{#include "catalog/${catname}_d.h"\n};
+}
+print $syscache_info_fh "\n";
+print $syscache_info_fh "static const struct cachedesc cacheinfo[] = {\n";
+
+my $last_syscache;
+foreach my $syscache (sort keys %syscaches)
+{
+	print $syscache_ids_fh "\t$syscache,\n";
+	$last_syscache = $syscache;
+
+	print $syscache_info_fh "\t[$syscache] = {\n";
+	print $syscache_info_fh "\t\t", $syscaches{$syscache}{table_oid_macro},
+	  ",\n";
+	print $syscache_info_fh "\t\t", $syscaches{$syscache}{index_oid_macro},
+	  ",\n";
+	print $syscache_info_fh "\t\tKEY(", $syscaches{$syscache}{key}, "),\n";
+	print $syscache_info_fh "\t\t", $syscaches{$syscache}{nbuckets}, "\n";
+	print $syscache_info_fh "\t},\n";
+}
+
+print $syscache_ids_fh "};\n";
+print $syscache_ids_fh "#define SysCacheSize ($last_syscache + 1)\n";
+
+print $syscache_info_fh "};\n";
+
 # We're done emitting data
 close $bki;
 close $schemapg;
 close $fk_info;
 close $constraints;
+close $syscache_ids_fh;
+close $syscache_info_fh;
 
 # Finally, rename the completed files into place.
 Catalog::RenameTempFile($bkifile, $tmpext);
 Catalog::RenameTempFile($schemafile, $tmpext);
 Catalog::RenameTempFile($fk_info_file, $tmpext);
 Catalog::RenameTempFile($constraints_file, $tmpext);
+Catalog::RenameTempFile($syscache_ids_file, $tmpext);
+Catalog::RenameTempFile($syscache_info_file, $tmpext);
 
 exit($num_errors != 0 ? 1 : 0);
 

@@ -66,6 +66,9 @@ typedef FormData_pg_publication *Form_pg_publication;
 DECLARE_UNIQUE_INDEX_PKEY(pg_publication_oid_index, 6110, PublicationObjectIndexId, pg_publication, btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_publication_pubname_index, 6111, PublicationNameIndexId, pg_publication, btree(pubname name_ops));
 
+MAKE_SYSCACHE(PUBLICATIONOID, pg_publication_oid_index, 8);
+MAKE_SYSCACHE(PUBLICATIONNAME, pg_publication_pubname_index, 8);
+
 typedef struct PublicationActions
 {
 	bool		pubinsert;

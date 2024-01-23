@@ -51,6 +51,8 @@ typedef FormData_pg_subscription_rel *Form_pg_subscription_rel;
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_subscription_rel_srrelid_srsubid_index, 6117, SubscriptionRelSrrelidSrsubidIndexId, pg_subscription_rel, btree(srrelid oid_ops, srsubid oid_ops));
 
+MAKE_SYSCACHE(SUBSCRIPTIONRELMAP, pg_subscription_rel_srrelid_srsubid_index, 64);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /* ----------------

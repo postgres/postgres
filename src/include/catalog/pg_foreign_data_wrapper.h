@@ -55,4 +55,7 @@ DECLARE_TOAST(pg_foreign_data_wrapper, 4149, 4150);
 DECLARE_UNIQUE_INDEX_PKEY(pg_foreign_data_wrapper_oid_index, 112, ForeignDataWrapperOidIndexId, pg_foreign_data_wrapper, btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_foreign_data_wrapper_name_index, 548, ForeignDataWrapperNameIndexId, pg_foreign_data_wrapper, btree(fdwname name_ops));
 
+MAKE_SYSCACHE(FOREIGNDATAWRAPPEROID, pg_foreign_data_wrapper_oid_index, 2);
+MAKE_SYSCACHE(FOREIGNDATAWRAPPERNAME, pg_foreign_data_wrapper_name_index, 2);
+
 #endif							/* PG_FOREIGN_DATA_WRAPPER_H */

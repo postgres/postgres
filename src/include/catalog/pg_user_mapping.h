@@ -52,4 +52,7 @@ DECLARE_TOAST(pg_user_mapping, 4173, 4174);
 DECLARE_UNIQUE_INDEX_PKEY(pg_user_mapping_oid_index, 174, UserMappingOidIndexId, pg_user_mapping, btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_user_mapping_user_server_index, 175, UserMappingUserServerIndexId, pg_user_mapping, btree(umuser oid_ops, umserver oid_ops));
 
+MAKE_SYSCACHE(USERMAPPINGOID, pg_user_mapping_oid_index, 2);
+MAKE_SYSCACHE(USERMAPPINGUSERSERVER, pg_user_mapping_user_server_index, 2);
+
 #endif							/* PG_USER_MAPPING_H */

@@ -56,5 +56,6 @@ DECLARE_TOAST(pg_statistic_ext_data, 3430, 3431);
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_statistic_ext_data_stxoid_inh_index, 3433, StatisticExtDataStxoidInhIndexId, pg_statistic_ext_data, btree(stxoid oid_ops, stxdinherit bool_ops));
 
+MAKE_SYSCACHE(STATEXTDATASTXOID, pg_statistic_ext_data_stxoid_inh_index, 4);
 
 #endif							/* PG_STATISTIC_EXT_DATA_H */

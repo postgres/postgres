@@ -68,6 +68,8 @@ DECLARE_TOAST(pg_partitioned_table, 4165, 4166);
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_partitioned_table_partrelid_index, 3351, PartitionedRelidIndexId, pg_partitioned_table, btree(partrelid oid_ops));
 
+MAKE_SYSCACHE(PARTRELID, pg_partitioned_table_partrelid_index, 32);
+
 /* partattrs can contain zero (InvalidAttrNumber) to represent expressions */
 DECLARE_ARRAY_FOREIGN_KEY_OPT((partrelid, partattrs), pg_attribute, (attrelid, attnum));
 

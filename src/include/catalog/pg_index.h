@@ -72,6 +72,8 @@ typedef FormData_pg_index *Form_pg_index;
 DECLARE_INDEX(pg_index_indrelid_index, 2678, IndexIndrelidIndexId, pg_index, btree(indrelid oid_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_index_indexrelid_index, 2679, IndexRelidIndexId, pg_index, btree(indexrelid oid_ops));
 
+MAKE_SYSCACHE(INDEXRELID, pg_index_indexrelid_index, 64);
+
 /* indkey can contain zero (InvalidAttrNumber) to represent expressions */
 DECLARE_ARRAY_FOREIGN_KEY_OPT((indrelid, indkey), pg_attribute, (attrelid, attnum));
 

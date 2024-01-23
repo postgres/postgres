@@ -50,4 +50,7 @@ typedef FormData_pg_ts_config *Form_pg_ts_config;
 DECLARE_UNIQUE_INDEX(pg_ts_config_cfgname_index, 3608, TSConfigNameNspIndexId, pg_ts_config, btree(cfgname name_ops, cfgnamespace oid_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_ts_config_oid_index, 3712, TSConfigOidIndexId, pg_ts_config, btree(oid oid_ops));
 
+MAKE_SYSCACHE(TSCONFIGNAMENSP, pg_ts_config_cfgname_index, 2);
+MAKE_SYSCACHE(TSCONFIGOID, pg_ts_config_oid_index, 2);
+
 #endif							/* PG_TS_CONFIG_H */

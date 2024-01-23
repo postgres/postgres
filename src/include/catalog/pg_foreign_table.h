@@ -46,4 +46,6 @@ DECLARE_TOAST(pg_foreign_table, 4153, 4154);
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_foreign_table_relid_index, 3119, ForeignTableRelidIndexId, pg_foreign_table, btree(ftrelid oid_ops));
 
+MAKE_SYSCACHE(FOREIGNTABLEREL, pg_foreign_table_relid_index, 4);
+
 #endif							/* PG_FOREIGN_TABLE_H */

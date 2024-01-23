@@ -156,6 +156,9 @@ DECLARE_UNIQUE_INDEX_PKEY(pg_class_oid_index, 2662, ClassOidIndexId, pg_class, b
 DECLARE_UNIQUE_INDEX(pg_class_relname_nsp_index, 2663, ClassNameNspIndexId, pg_class, btree(relname name_ops, relnamespace oid_ops));
 DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeIndexId, pg_class, btree(reltablespace oid_ops, relfilenode oid_ops));
 
+MAKE_SYSCACHE(RELOID, pg_class_oid_index, 128);
+MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 #define		  RELKIND_RELATION		  'r'	/* ordinary table */

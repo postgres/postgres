@@ -50,6 +50,9 @@ typedef FormData_pg_am *Form_pg_am;
 DECLARE_UNIQUE_INDEX(pg_am_name_index, 2651, AmNameIndexId, pg_am, btree(amname name_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_am_oid_index, 2652, AmOidIndexId, pg_am, btree(oid oid_ops));
 
+MAKE_SYSCACHE(AMNAME, pg_am_name_index, 4);
+MAKE_SYSCACHE(AMOID, pg_am_oid_index, 4);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /*

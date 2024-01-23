@@ -64,6 +64,10 @@ DECLARE_UNIQUE_INDEX(pg_conversion_default_index, 2668, ConversionDefaultIndexId
 DECLARE_UNIQUE_INDEX(pg_conversion_name_nsp_index, 2669, ConversionNameNspIndexId, pg_conversion, btree(conname name_ops, connamespace oid_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_conversion_oid_index, 2670, ConversionOidIndexId, pg_conversion, btree(oid oid_ops));
 
+MAKE_SYSCACHE(CONDEFAULT, pg_conversion_default_index, 8);
+MAKE_SYSCACHE(CONNAMENSP, pg_conversion_name_nsp_index, 8);
+MAKE_SYSCACHE(CONVOID, pg_conversion_oid_index, 8);
+
 
 extern ObjectAddress ConversionCreate(const char *conname, Oid connamespace,
 									  Oid conowner,

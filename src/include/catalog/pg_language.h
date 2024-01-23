@@ -69,4 +69,7 @@ DECLARE_TOAST(pg_language, 4157, 4158);
 DECLARE_UNIQUE_INDEX(pg_language_name_index, 2681, LanguageNameIndexId, pg_language, btree(lanname name_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_language_oid_index, 2682, LanguageOidIndexId, pg_language, btree(oid oid_ops));
 
+MAKE_SYSCACHE(LANGNAME, pg_language_name_index, 4);
+MAKE_SYSCACHE(LANGOID, pg_language_oid_index, 4);
+
 #endif							/* PG_LANGUAGE_H */

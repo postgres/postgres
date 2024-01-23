@@ -53,6 +53,8 @@ DECLARE_TOAST_WITH_MACRO(pg_parameter_acl, 6244, 6245, PgParameterAclToastTable,
 DECLARE_UNIQUE_INDEX(pg_parameter_acl_parname_index, 6246, ParameterAclParnameIndexId, pg_parameter_acl, btree(parname text_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_parameter_acl_oid_index, 6247, ParameterAclOidIndexId, pg_parameter_acl, btree(oid oid_ops));
 
+MAKE_SYSCACHE(PARAMETERACLNAME, pg_parameter_acl_parname_index, 4);
+MAKE_SYSCACHE(PARAMETERACLOID, pg_parameter_acl_oid_index, 4);
 
 extern Oid	ParameterAclLookup(const char *parameter, bool missing_ok);
 extern Oid	ParameterAclCreate(const char *parameter);

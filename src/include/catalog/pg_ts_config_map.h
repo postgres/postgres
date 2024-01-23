@@ -46,4 +46,6 @@ typedef FormData_pg_ts_config_map *Form_pg_ts_config_map;
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_ts_config_map_index, 3609, TSConfigMapIndexId, pg_ts_config_map, btree(mapcfg oid_ops, maptokentype int4_ops, mapseqno int4_ops));
 
+MAKE_SYSCACHE(TSCONFIGMAP, pg_ts_config_map_index, 2);
+
 #endif							/* PG_TS_CONFIG_MAP_H */

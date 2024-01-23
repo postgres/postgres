@@ -51,4 +51,7 @@ DECLARE_UNIQUE_INDEX_PKEY(pg_publication_rel_oid_index, 6112, PublicationRelObje
 DECLARE_UNIQUE_INDEX(pg_publication_rel_prrelid_prpubid_index, 6113, PublicationRelPrrelidPrpubidIndexId, pg_publication_rel, btree(prrelid oid_ops, prpubid oid_ops));
 DECLARE_INDEX(pg_publication_rel_prpubid_index, 6116, PublicationRelPrpubidIndexId, pg_publication_rel, btree(prpubid oid_ops));
 
+MAKE_SYSCACHE(PUBLICATIONREL, pg_publication_rel_oid_index, 64);
+MAKE_SYSCACHE(PUBLICATIONRELMAP, pg_publication_rel_prrelid_prpubid_index, 64);
+
 #endif							/* PG_PUBLICATION_REL_H */

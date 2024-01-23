@@ -120,7 +120,7 @@ CATALOG_HEADERS := \
 	pg_subscription.h \
 	pg_subscription_rel.h
 
-GENERATED_HEADERS := $(CATALOG_HEADERS:%.h=%_d.h) schemapg.h system_fk_info.h
+GENERATED_HEADERS := $(CATALOG_HEADERS:%.h=%_d.h) schemapg.h syscache_ids.h syscache_info.h system_fk_info.h
 
 POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, $(CATALOG_HEADERS))
 

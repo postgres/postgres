@@ -59,4 +59,7 @@ DECLARE_TOAST_WITH_MACRO(pg_replication_origin, 4181, 4182, PgReplicationOriginT
 DECLARE_UNIQUE_INDEX_PKEY(pg_replication_origin_roiident_index, 6001, ReplicationOriginIdentIndex, pg_replication_origin, btree(roident oid_ops));
 DECLARE_UNIQUE_INDEX(pg_replication_origin_roname_index, 6002, ReplicationOriginNameIndex, pg_replication_origin, btree(roname text_ops));
 
+MAKE_SYSCACHE(REPLORIGIDENT, pg_replication_origin_roiident_index, 16);
+MAKE_SYSCACHE(REPLORIGNAME, pg_replication_origin_roname_index, 16);
+
 #endif							/* PG_REPLICATION_ORIGIN_H */

@@ -130,6 +130,16 @@ sub ParseHeader
 			  };
 		}
 		elsif (
+			/^MAKE_SYSCACHE\(\s*
+			(?<syscache_name>\w+),\s*
+			(?<index_name>\w+),\s*
+			(?<syscache_nbuckets>\w+)\s*
+			\)/x
+		  )
+		{
+			push @{ $catalog{syscaches} }, {%+};
+		}
+		elsif (
 			/^DECLARE_OID_DEFINING_MACRO\(\s*
 			 (?<other_name>\w+),\s*
 			 (?<other_oid>\d+)\s*

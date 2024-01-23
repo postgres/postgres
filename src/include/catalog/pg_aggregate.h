@@ -112,6 +112,8 @@ DECLARE_TOAST(pg_aggregate, 4159, 4160);
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_aggregate_fnoid_index, 2650, AggregateFnoidIndexId, pg_aggregate, btree(aggfnoid oid_ops));
 
+MAKE_SYSCACHE(AGGFNOID, pg_aggregate_fnoid_index, 16);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 /*

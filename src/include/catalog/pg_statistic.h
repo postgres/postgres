@@ -138,6 +138,8 @@ DECLARE_TOAST(pg_statistic, 2840, 2841);
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_statistic_relid_att_inh_index, 2696, StatisticRelidAttnumInhIndexId, pg_statistic, btree(starelid oid_ops, staattnum int2_ops, stainherit bool_ops));
 
+MAKE_SYSCACHE(STATRELATTINH, pg_statistic_relid_att_inh_index, 128);
+
 DECLARE_FOREIGN_KEY((starelid, staattnum), pg_attribute, (attrelid, attnum));
 
 #ifdef EXPOSE_TO_CLIENT_CODE

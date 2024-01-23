@@ -44,4 +44,7 @@ typedef FormData_pg_publication_namespace *Form_pg_publication_namespace;
 DECLARE_UNIQUE_INDEX_PKEY(pg_publication_namespace_oid_index, 6238, PublicationNamespaceObjectIndexId, pg_publication_namespace, btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_publication_namespace_pnnspid_pnpubid_index, 6239, PublicationNamespacePnnspidPnpubidIndexId, pg_publication_namespace, btree(pnnspid oid_ops, pnpubid oid_ops));
 
+MAKE_SYSCACHE(PUBLICATIONNAMESPACE, pg_publication_namespace_oid_index, 64);
+MAKE_SYSCACHE(PUBLICATIONNAMESPACEMAP, pg_publication_namespace_pnnspid_pnpubid_index, 64);
+
 #endif							/* PG_PUBLICATION_NAMESPACE_H */

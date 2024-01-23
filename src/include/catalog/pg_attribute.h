@@ -211,6 +211,9 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnam_index, 2658, AttributeRelidNameIndexId, pg_attribute, btree(attrelid oid_ops, attname name_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_attribute_relid_attnum_index, 2659, AttributeRelidNumIndexId, pg_attribute, btree(attrelid oid_ops, attnum int2_ops));
 
+MAKE_SYSCACHE(ATTNAME, pg_attribute_relid_attnam_index, 32);
+MAKE_SYSCACHE(ATTNUM, pg_attribute_relid_attnum_index, 128);
+
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 #define		  ATTRIBUTE_IDENTITY_ALWAYS		'a'

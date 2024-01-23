@@ -102,8 +102,22 @@ bki_data_f = files(bki_data)
 
 
 input = []
-output_files = ['postgres.bki', 'system_constraints.sql', 'schemapg.h', 'system_fk_info.h']
-output_install = [dir_data, dir_data, dir_include_server / 'catalog', dir_include_server / 'catalog']
+output_files = [
+  'postgres.bki',
+  'system_constraints.sql',
+  'schemapg.h',
+  'syscache_ids.h',
+  'syscache_info.h',
+  'system_fk_info.h',
+]
+output_install = [
+  dir_data,
+  dir_data,
+  dir_include_server / 'catalog',
+  false,
+  dir_include_server / 'catalog',
+  dir_include_server / 'catalog',
+]
 
 foreach h : catalog_headers
   fname = h.split('.h')[0] + '_d.h'
