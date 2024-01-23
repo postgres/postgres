@@ -238,6 +238,40 @@ sub check_for_invalidation
 	) or die "Timed out waiting confl_active_logicalslot to be updated";
 }
 
+# Launch $sql query, wait for a new snapshot that has a newer horizon and
+# launch a VACUUM.  $vac_option is the set of options to be passed to the
+# VACUUM command, $sql the sql to launch before triggering the vacuum and
+# $to_vac the relation to vacuum.
+#
+# Note that pg_current_snapshot() is used to get the horizon.  It does
+# not generate a Transaction/COMMIT WAL record, decreasing the risk of
+# seeing a xl_running_xacts that would advance an active replication slot's
+# catalog_xmin.  Advancing the active replication slot's catalog_xmin
+# would break some tests that expect the active slot to conflict with
+# the catalog xmin horizon.
+sub wait_until_vacuum_can_remove
+{
+	my ($vac_option, $sql, $to_vac) = @_;
+
+	# Get the current xid horizon,
+	my $xid_horizon = $node_primary->safe_psql('testdb',
+		qq[select pg_snapshot_xmin(pg_current_snapshot());]);
+
+	# Launch our sql.
+	$node_primary->safe_psql('testdb', qq[$sql]);
+
+	# Wait until we get a newer horizon.
+	$node_primary->poll_query_until('testdb',
+		"SELECT (select pg_snapshot_xmin(pg_current_snapshot())::text::int - $xid_horizon) > 0"
+	) or die "new snapshot does not have a newer horizon";
+
+	# Launch the vacuum command and insert into flush_wal (see CREATE
+	# TABLE flush_wal for the reason).
+	$node_primary->safe_psql(
+		'testdb', qq[VACUUM $vac_option verbose $to_vac;
+										  INSERT INTO flush_wal DEFAULT VALUES;]);
+}
+
 ########################
 # Initialize primary node
 ########################
@@ -248,6 +282,7 @@ $node_primary->append_conf(
 wal_level = 'logical'
 max_replication_slots = 4
 max_wal_senders = 4
+autovacuum = off
 });
 $node_primary->dump_info;
 $node_primary->start;
@@ -468,13 +503,9 @@ reactive_slots_change_hfs_and_wait_for_xmins('behaves_ok_', 'vacuum_full_',
 	0, 1);
 
 # This should trigger the conflict
-$node_primary->safe_psql(
-	'testdb', qq[
-  CREATE TABLE conflict_test(x integer, y text);
-  DROP TABLE conflict_test;
-  VACUUM full pg_class;
-  INSERT INTO flush_wal DEFAULT VALUES; -- see create table flush_wal
-]);
+wait_until_vacuum_can_remove(
+	'full', 'CREATE TABLE conflict_test(x integer, y text);
+								 DROP TABLE conflict_test;', 'pg_class');
 
 $node_primary->wait_for_replay_catchup($node_standby);
 
@@ -545,18 +576,15 @@ ok(!-f "$standby_walfile",
 my $logstart = -s $node_standby->logfile;
 
 # One way to produce recovery conflict is to create/drop a relation and
-# launch a vacuum on pg_class with hot_standby_feedback turned off on the standby.
+# launch a vacuum on pg_class with hot_standby_feedback turned off on the
+# standby.
 reactive_slots_change_hfs_and_wait_for_xmins('vacuum_full_', 'row_removal_',
 	0, 1);
 
 # This should trigger the conflict
-$node_primary->safe_psql(
-	'testdb', qq[
-  CREATE TABLE conflict_test(x integer, y text);
-  DROP TABLE conflict_test;
-  VACUUM pg_class;
-  INSERT INTO flush_wal DEFAULT VALUES; -- see create table flush_wal
-]);
+wait_until_vacuum_can_remove(
+	'', 'CREATE TABLE conflict_test(x integer, y text);
+							 DROP TABLE conflict_test;', 'pg_class');
 
 $node_primary->wait_for_replay_catchup($node_standby);
 
@@ -582,19 +610,16 @@ check_pg_recvlogical_stderr($handle,
 # get the position to search from in the standby logfile
 $logstart = -s $node_standby->logfile;
 
-# One way to produce recovery conflict is to create/drop a relation and
-# launch a vacuum on pg_class with hot_standby_feedback turned off on the standby.
+# One way to produce recovery conflict on a shared catalog table is to
+# create/drop a role and launch a vacuum on pg_authid with
+# hot_standby_feedback turned off on the standby.
 reactive_slots_change_hfs_and_wait_for_xmins('row_removal_',
 	'shared_row_removal_', 0, 1);
 
 # Trigger the conflict
-$node_primary->safe_psql(
-	'testdb', qq[
-  CREATE ROLE create_trash;
-  DROP ROLE create_trash;
-  VACUUM pg_authid;
-  INSERT INTO flush_wal DEFAULT VALUES; -- see create table flush_wal
-]);
+wait_until_vacuum_can_remove(
+	'', 'CREATE ROLE create_trash;
+							 DROP ROLE create_trash;', 'pg_authid');
 
 $node_primary->wait_for_replay_catchup($node_standby);
 
@@ -625,14 +650,11 @@ reactive_slots_change_hfs_and_wait_for_xmins('shared_row_removal_',
 	'no_conflict_', 0, 1);
 
 # This should not trigger a conflict
-$node_primary->safe_psql(
-	'testdb', qq[
-  CREATE TABLE conflict_test(x integer, y text);
-  INSERT INTO conflict_test(x,y) SELECT s, s::text FROM generate_series(1,4) s;
-  UPDATE conflict_test set x=1, y=1;
-  VACUUM conflict_test;
-  INSERT INTO flush_wal DEFAULT VALUES; -- see create table flush_wal
-]);
+wait_until_vacuum_can_remove(
+	'', 'CREATE TABLE conflict_test(x integer, y text);
+							 INSERT INTO conflict_test(x,y) SELECT s, s::text FROM generate_series(1,4) s;
+							 UPDATE conflict_test set x=1, y=1;', 'conflict_test');
+
 $node_primary->wait_for_replay_catchup($node_standby);
 
 # message should not be issued
@@ -671,7 +693,7 @@ $node_standby->restart;
 
 ##################################################
 # Recovery conflict: Invalidate conflicting slots, including in-use slots
-# Scenario 4: conflict due to on-access pruning.
+# Scenario 5: conflict due to on-access pruning.
 ##################################################
 
 # get the position to search from in the standby logfile
@@ -711,7 +733,7 @@ change_hot_standby_feedback_and_wait_for_xmins(1, 1);
 
 ##################################################
 # Recovery conflict: Invalidate conflicting slots, including in-use slots
-# Scenario 5: incorrect wal_level on primary.
+# Scenario 6: incorrect wal_level on primary.
 ##################################################
 
 # get the position to search from in the standby logfile
