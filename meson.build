@@ -159,12 +159,6 @@ cdata.set_quoted('CONFIGURE_ARGS', '')
 # Basic platform specific configuration
 ###############################################################
 
-# meson's system names don't quite map to our "traditional" names. In some
-# places we need the "traditional" name, e.g., for mapping
-# src/include/port/$os.h to src/include/pg_config_os.h. Define portname for
-# that purpose.
-portname = host_system
-
 exesuffix = '' # overridden below where necessary
 dlsuffix = '.so' # overridden below where necessary
 library_path_var = 'LD_LIBRARY_PATH'
@@ -191,6 +185,12 @@ if host_system == 'dragonfly'
   # apparently the most similar
   host_system = 'netbsd'
 endif
+
+# meson's system names don't quite map to our "traditional" names. In some
+# places we need the "traditional" name, e.g., for mapping
+# src/include/port/$os.h to src/include/pg_config_os.h. Define portname for
+# that purpose.
+portname = host_system
 
 if host_system == 'aix'
   library_path_var = 'LIBPATH'
