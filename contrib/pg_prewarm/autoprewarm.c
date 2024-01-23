@@ -164,8 +164,14 @@ autoprewarm_main(Datum main_arg)
 	if (apw_init_shmem())
 		first_time = false;
 
-	/* Set on-detach hook so that our PID will be cleared on exit. */
-	on_shmem_exit(apw_detach_shmem, 0);
+	/*
+	 * Set on-detach hook so that our PID will be cleared on exit.
+	 *
+	 * NB: Autoprewarm's state is stored in a DSM segment, and DSM segments
+	 * are detached before calling the on_shmem_exit callbacks, so we must put
+	 * apw_detach_shmem in the before_shmem_exit callback list.
+	 */
+	before_shmem_exit(apw_detach_shmem, 0);
 
 	/*
 	 * Store our PID in the shared memory area --- unless there's already

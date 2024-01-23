@@ -55,4 +55,10 @@ $node->wait_for_log(
 
 $node->stop;
 
+# control file should indicate normal shut down
+command_like(
+	[ 'pg_controldata', $node->data_dir() ],
+	qr/Database cluster state:\s*shut down/,
+	'cluster shut down normally');
+
 done_testing();
