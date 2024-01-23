@@ -177,18 +177,21 @@ GetNamedDSMSegment(const char *name, size_t size,
 				(errmsg("requested DSM segment size does not match size of "
 						"existing segment")));
 	}
-	else if (!dsm_find_mapping(entry->handle))
-	{
-		/* Attach to existing segment. */
-		dsm_segment *seg = dsm_attach(entry->handle);
-
-		dsm_pin_mapping(seg);
-		ret = dsm_segment_address(seg);
-	}
 	else
 	{
-		/* Return address of an already-attached segment. */
-		ret = dsm_segment_address(dsm_find_mapping(entry->handle));
+		dsm_segment *seg = dsm_find_mapping(entry->handle);
+
+		/* If the existing segment is not already attached, attach it now. */
+		if (seg == NULL)
+		{
+			seg = dsm_attach(entry->handle);
+			if (seg == NULL)
+				elog(ERROR, "could not map dynamic shared memory segment");
+
+			dsm_pin_mapping(seg);
+		}
+
+		ret = dsm_segment_address(seg);
 	}
 
 	dshash_release_lock(dsm_registry_table, entry);
