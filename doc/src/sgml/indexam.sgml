@@ -215,7 +215,7 @@ typedef struct IndexAmRoutine
    the first; however they are permitted to require some restriction to
    appear for the first index column, and this is signaled by setting
    <structfield>amoptionalkey</structfield> false.
-   One reason that an index AM might set
+   One reason that an index <acronym>AM</acronym> might set
    <structfield>amoptionalkey</structfield> false is if it doesn't index
    null values.  Since most indexable operators are
    strict and hence cannot return true for null inputs,

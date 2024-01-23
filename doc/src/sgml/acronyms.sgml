@@ -10,6 +10,15 @@
   <variablelist>
 
    <varlistentry>
+    <term><acronym>AM</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="glossary-am">Access Method</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>ANSI</acronym></term>
     <listitem>
      <para>

@@ -27,7 +27,7 @@
   and understanding of sorting semantics.  Therefore, they've acquired
   some features that go beyond what would be needed just to support btree
   indexes, and parts of the system that are quite distant from the
-  btree AM make use of them.
+  btree <acronym>AM</acronym> make use of them.
  </para>
 
 </sect1>

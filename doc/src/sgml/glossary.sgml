@@ -39,6 +39,21 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-am">
+   <glossterm>Access Method</glossterm>
+   <glossdef>
+    <para>
+     Interfaces which <productname>PostgreSQL</productname> use in order to
+     access data in tables and indexes.  This abstraction allows for adding
+     support for new types of data storage.
+    </para>
+    <para>
+     For more information, see <xref linkend="tableam" /> and
+     <xref linkend="indexam" />.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry>
    <glossterm>Analytic function</glossterm>
    <glosssee otherterm="glossary-window-function" />

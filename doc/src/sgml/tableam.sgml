@@ -56,7 +56,7 @@
 
  <para>
   To implement an access method, an implementor will typically need to
-  implement an AM-specific type of tuple table slot (see
+  implement an <acronym>AM</acronym>-specific type of tuple table slot (see
   <ulink url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/include/executor/tuptable.h;hb=HEAD">
    <filename>src/include/executor/tuptable.h</filename></ulink>), which allows
    code outside the access method to hold references to tuples of the AM, and
