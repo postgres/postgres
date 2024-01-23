@@ -163,6 +163,25 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	rel->attr_widths = (int32 *)
 		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
 
+	/* record which columns are defined as NOT NULL */
+	for (int i = 0; i < relation->rd_att->natts; i++)
+	{
+		FormData_pg_attribute *attr = &relation->rd_att->attrs[i];
+
+		if (attr->attnotnull)
+		{
+			rel->notnullattnums = bms_add_member(rel->notnullattnums,
+												 attr->attnum);
+
+			/*
+			 * Per RemoveAttributeById(), dropped columns will have their
+			 * attnotnull unset, so we needn't check for dropped columns in
+			 * the above condition.
+			 */
+			Assert(!attr->attisdropped);
+		}
+	}
+
 	/*
 	 * Estimate relation size --- unless it's an inheritance parent, in which
 	 * case the size we want is not the rel's own size but the size of its

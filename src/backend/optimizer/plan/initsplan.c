@@ -2619,6 +2619,193 @@ check_redundant_nullability_qual(PlannerInfo *root, Node *clause)
 }
 
 /*
+ * add_base_clause_to_rel
+ *		Add 'restrictinfo' as a baserestrictinfo to the base relation denoted
+ *		by 'relid'.  We offer some simple prechecks to try to determine if the
+ *		qual is always true, in which case we ignore it rather than add it.
+ *		If we detect the qual is always false, we replace it with
+ *		constant-FALSE.
+ */
+static void
+add_base_clause_to_rel(PlannerInfo *root, Index relid,
+					   RestrictInfo *restrictinfo)
+{
+	RelOptInfo *rel = find_base_rel(root, relid);
+
+	Assert(bms_membership(restrictinfo->required_relids) == BMS_SINGLETON);
+
+	/* Don't add the clause if it is always true */
+	if (restriction_is_always_true(root, restrictinfo))
+		return;
+
+	/*
+	 * Substitute the origin qual with constant-FALSE if it is provably always
+	 * false.  Note that we keep the same rinfo_serial.
+	 */
+	if (restriction_is_always_false(root, restrictinfo))
+	{
+		int			save_rinfo_serial = restrictinfo->rinfo_serial;
+
+		restrictinfo = make_restrictinfo(root,
+										 (Expr *) makeBoolConst(false, false),
+										 restrictinfo->is_pushed_down,
+										 restrictinfo->has_clone,
+										 restrictinfo->is_clone,
+										 restrictinfo->pseudoconstant,
+										 0, /* security_level */
+										 restrictinfo->required_relids,
+										 restrictinfo->incompatible_relids,
+										 restrictinfo->outer_relids);
+		restrictinfo->rinfo_serial = save_rinfo_serial;
+	}
+
+	/* Add clause to rel's restriction list */
+	rel->baserestrictinfo = lappend(rel->baserestrictinfo, restrictinfo);
+
+	/* Update security level info */
+	rel->baserestrict_min_security = Min(rel->baserestrict_min_security,
+										 restrictinfo->security_level);
+}
+
+/*
+ * expr_is_nonnullable
+ *	  Check to see if the Expr cannot be NULL
+ *
+ * If the Expr is a simple Var that is defined NOT NULL and meanwhile is not
+ * nulled by any outer joins, then we can know that it cannot be NULL.
+ */
+static bool
+expr_is_nonnullable(PlannerInfo *root, Expr *expr)
+{
+	RelOptInfo *rel;
+	Var		   *var;
+
+	/* For now only check simple Vars */
+	if (!IsA(expr, Var))
+		return false;
+
+	var = (Var *) expr;
+
+	/* could the Var be nulled by any outer joins? */
+	if (!bms_is_empty(var->varnullingrels))
+		return false;
+
+	/* system columns cannot be NULL */
+	if (var->varattno < 0)
+		return true;
+
+	/* is the column defined NOT NULL? */
+	rel = find_base_rel(root, var->varno);
+	if (var->varattno > 0 &&
+		bms_is_member(var->varattno, rel->notnullattnums))
+		return true;
+
+	return false;
+}
+
+/*
+ * restriction_is_always_true
+ *	  Check to see if the RestrictInfo is always true.
+ *
+ * Currently we only check for NullTest quals and OR clauses that include
+ * NullTest quals.  We may extend it in the future.
+ */
+bool
+restriction_is_always_true(PlannerInfo *root,
+						   RestrictInfo *restrictinfo)
+{
+	/* Check for NullTest qual */
+	if (IsA(restrictinfo->clause, NullTest))
+	{
+		NullTest   *nulltest = (NullTest *) restrictinfo->clause;
+
+		/* is this NullTest an IS_NOT_NULL qual? */
+		if (nulltest->nulltesttype != IS_NOT_NULL)
+			return false;
+
+		return expr_is_nonnullable(root, nulltest->arg);
+	}
+
+	/* If it's an OR, check its sub-clauses */
+	if (restriction_is_or_clause(restrictinfo))
+	{
+		ListCell   *lc;
+
+		Assert(is_orclause(restrictinfo->orclause));
+
+		/*
+		 * if any of the given OR branches is provably always true then the
+		 * entire condition is true.
+		 */
+		foreach(lc, ((BoolExpr *) restrictinfo->orclause)->args)
+		{
+			Node	   *orarg = (Node *) lfirst(lc);
+
+			if (!IsA(orarg, RestrictInfo))
+				continue;
+
+			if (restriction_is_always_true(root, (RestrictInfo *) orarg))
+				return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+ * restriction_is_always_false
+ *	  Check to see if the RestrictInfo is always false.
+ *
+ * Currently we only check for NullTest quals and OR clauses that include
+ * NullTest quals.  We may extend it in the future.
+ */
+bool
+restriction_is_always_false(PlannerInfo *root,
+							RestrictInfo *restrictinfo)
+{
+	/* Check for NullTest qual */
+	if (IsA(restrictinfo->clause, NullTest))
+	{
+		NullTest   *nulltest = (NullTest *) restrictinfo->clause;
+
+		/* is this NullTest an IS_NULL qual? */
+		if (nulltest->nulltesttype != IS_NULL)
+			return false;
+
+		return expr_is_nonnullable(root, nulltest->arg);
+	}
+
+	/* If it's an OR, check its sub-clauses */
+	if (restriction_is_or_clause(restrictinfo))
+	{
+		ListCell   *lc;
+
+		Assert(is_orclause(restrictinfo->orclause));
+
+		/*
+		 * Currently, when processing OR expressions, we only return true when
+		 * all of the OR branches are always false.  This could perhaps be
+		 * expanded to remove OR branches that are provably false.  This may
+		 * be a useful thing to do as it could result in the OR being left
+		 * with a single arg.  That's useful as it would allow the OR
+		 * condition to be replaced with its single argument which may allow
+		 * use of an index for faster filtering on the remaining condition.
+		 */
+		foreach(lc, ((BoolExpr *) restrictinfo->orclause)->args)
+		{
+			Node	   *orarg = (Node *) lfirst(lc);
+
+			if (!IsA(orarg, RestrictInfo) ||
+				!restriction_is_always_false(root, (RestrictInfo *) orarg))
+				return false;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+/*
  * distribute_restrictinfo_to_rels
  *	  Push a completed RestrictInfo into the proper restriction or join
  *	  clause list(s).
@@ -2632,7 +2819,6 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 								RestrictInfo *restrictinfo)
 {
 	Relids		relids = restrictinfo->required_relids;
-	RelOptInfo *rel;
 
 	if (!bms_is_empty(relids))
 	{
@@ -2644,14 +2830,7 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 			 * There is only one relation participating in the clause, so it
 			 * is a restriction clause for that relation.
 			 */
-			rel = find_base_rel(root, relid);
-
-			/* Add clause to rel's restriction list */
-			rel->baserestrictinfo = lappend(rel->baserestrictinfo,
-											restrictinfo);
-			/* Update security level info */
-			rel->baserestrict_min_security = Min(rel->baserestrict_min_security,
-												 restrictinfo->security_level);
+			add_base_clause_to_rel(root, relid, restrictinfo);
 		}
 		else
 		{

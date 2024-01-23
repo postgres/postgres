@@ -438,15 +438,14 @@ set enable_mergejoin to off;
 explain (costs off)
   select * from ec0 m join ec0 n on m.ff = n.ff
   join ec1 p on m.ff + n.ff = p.f1;
-               QUERY PLAN               
-----------------------------------------
+              QUERY PLAN               
+---------------------------------------
  Nested Loop
    Join Filter: ((n.ff + n.ff) = p.f1)
-   ->  Seq Scan on ec1 p
+   ->  Seq Scan on ec0 n
    ->  Materialize
-         ->  Seq Scan on ec0 n
-               Filter: (ff IS NOT NULL)
-(6 rows)
+         ->  Seq Scan on ec1 p
+(5 rows)
 
 explain (costs off)
   select * from ec0 m join ec0 n on m.ff = n.ff
@@ -455,11 +454,10 @@ explain (costs off)
 ---------------------------------------------------------------
  Nested Loop
    Join Filter: ((p.f1)::bigint = ((n.ff + n.ff))::int8alias1)
-   ->  Seq Scan on ec1 p
+   ->  Seq Scan on ec0 n
    ->  Materialize
-         ->  Seq Scan on ec0 n
-               Filter: (ff IS NOT NULL)
-(6 rows)
+         ->  Seq Scan on ec1 p
+(5 rows)
 
 reset enable_mergejoin;
 -- this could be converted, but isn't at present

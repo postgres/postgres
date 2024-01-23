@@ -14,9 +14,12 @@
  */
 #include "postgres.h"
 
+#include "nodes/makefuncs.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/planmain.h"
+#include "optimizer/restrictinfo.h"
 
 
 /*
@@ -97,6 +100,31 @@ add_join_clause_to_rels(PlannerInfo *root,
 						Relids join_relids)
 {
 	int			cur_relid;
+
+	/* Don't add the clause if it is always true */
+	if (restriction_is_always_true(root, restrictinfo))
+		return;
+
+	/*
+	 * Substitute constant-FALSE for the origin qual if it is always false.
+	 * Note that we keep the same rinfo_serial.
+	 */
+	if (restriction_is_always_false(root, restrictinfo))
+	{
+		int			save_rinfo_serial = restrictinfo->rinfo_serial;
+
+		restrictinfo = make_restrictinfo(root,
+										 (Expr *) makeBoolConst(false, false),
+										 restrictinfo->is_pushed_down,
+										 restrictinfo->has_clone,
+										 restrictinfo->is_clone,
+										 restrictinfo->pseudoconstant,
+										 0, /* security_level */
+										 restrictinfo->required_relids,
+										 restrictinfo->incompatible_relids,
+										 restrictinfo->outer_relids);
+		restrictinfo->rinfo_serial = save_rinfo_serial;
+	}
 
 	cur_relid = -1;
 	while ((cur_relid = bms_next_member(join_relids, cur_relid)) >= 0)
