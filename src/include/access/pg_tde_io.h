@@ -52,7 +52,7 @@ typedef struct BulkInsertStateData
 
 
 extern void pg_tde_RelationPutHeapTuple(Relation relation, Buffer buffer,
-								 HeapTuple tuple, bool token);
+								 HeapTuple tuple, bool encrypt, bool token);
 extern Buffer pg_tde_RelationGetBufferForTuple(Relation relation, Size len,
 										Buffer otherBuffer, int options,
 										BulkInsertStateData *bistate,

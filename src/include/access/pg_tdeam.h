@@ -31,10 +31,11 @@
 
 
 /* "options" flag bits for pg_tde_insert */
-#define HEAP_INSERT_SKIP_FSM	TABLE_INSERT_SKIP_FSM
-#define HEAP_INSERT_FROZEN		TABLE_INSERT_FROZEN
-#define HEAP_INSERT_NO_LOGICAL	TABLE_INSERT_NO_LOGICAL
-#define HEAP_INSERT_SPECULATIVE 0x0010
+#define HEAP_INSERT_SKIP_FSM		TABLE_INSERT_SKIP_FSM
+#define HEAP_INSERT_FROZEN			TABLE_INSERT_FROZEN
+#define HEAP_INSERT_NO_LOGICAL		TABLE_INSERT_NO_LOGICAL
+#define HEAP_INSERT_SPECULATIVE 	0x0010
+#define HEAP_INSERT_TDE_NO_ENCRYPT	0x2000 /* to specify rare cases when NO TDE enc */
 
 typedef struct BulkInsertStateData *BulkInsertState;
 struct TupleTableSlot;

@@ -40,6 +40,7 @@ void
 pg_tde_RelationPutHeapTuple(Relation relation,
 					 Buffer buffer,
 					 HeapTuple tuple,
+					 bool encrypt,
 					 bool token)
 {
 	Page		pageHeader;
@@ -63,8 +64,12 @@ pg_tde_RelationPutHeapTuple(Relation relation,
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 
-	offnum = TDE_PageAddItem(relation->rd_locator, tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, (Item) tuple->t_data,
-						 tuple->t_len, InvalidOffsetNumber, false, true);
+	if (encrypt)
+		offnum = TDE_PageAddItem(relation->rd_locator, tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, (Item) tuple->t_data,
+							tuple->t_len, InvalidOffsetNumber, false, true);
+	else
+		offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
+							tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
 		elog(PANIC, "failed to add tuple to page");

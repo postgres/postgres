@@ -32,13 +32,23 @@
 #include "access/genam.h"
 #include "access/toast_helper.h"
 #include "access/toast_internals.h"
+#include "miscadmin.h"
 #include "utils/fmgroids.h"
+#include "utils/snapmgr.h"
 #include "encryption/enc_tuple.h"
 
 #define TDE_TOAST_COMPRESS_HEADER_SIZE (VARHDRSZ_COMPRESSED - VARHDRSZ)
 
-static void
-pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int options);
+static void pg_tde_toast_tuple_externalize(ToastTupleContext *ttc,
+									int attribute, int options);
+static Datum pg_tde_toast_save_datum(Relation rel, Datum value,
+								struct varlena *oldexternal,
+								int options);
+static void pg_tde_toast_encrypt(Pointer dval, Oid valueid, RelKeysData *keys);
+static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
+static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
+
+
 /* ----------
  * pg_tde_toast_delete -
  *
@@ -799,7 +809,7 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 			}
 		}
 		/* Decrypt the data chunk by chunk here */
-		PG_TDE_DECRYPT_DATA((curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + encrypt_offset,
+		PG_TDE_DECRYPT_DATA((curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + encrypt_offset + valueid,
 					chunkdata + chcpystrt,
 					(chcpyend - chcpystrt) + 1,
 					decrypted_data, keys);
@@ -829,26 +839,18 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 
 /* pg_tde extension */
 static void
-pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int options)
+pg_tde_toast_encrypt(Pointer dval, Oid valueid, RelKeysData *keys)
 {
-	Datum	   *value = &ttc->ttc_values[attribute];
 	int32		data_size =0;
-	Pointer		dval = DatumGetPointer(*value);
 	char*		data_p;
 	char*		encrypted_data;
-    Relation    toastrel;
-    RelKeysData *keys;
 
-    /* Problem here is we want to encrypt the chunk using the toast relation key
-     * that is treated as a seperate relation. So we need to get the encryption keys
-     * for the toast table. Which is a performance penalty.
-     * TODO: come up with a better solution
-     */
-    toastrel = table_open(ttc->ttc_rel->rd_rel->reltoastrelid, AccessShareLock);
-    keys = GetRelationKeys(toastrel->rd_locator);
-    table_close(toastrel, NoLock);
-    
-    if (VARATT_IS_SHORT(dval))
+	/*
+	 * Encryption specific data_p and data_size as we have to avoid
+	 * encryption of the compression info.
+	 * See https://github.com/Percona-Lab/postgres-tde-ext/commit/dee6e357ef05d217a4c4df131249a80e5e909163
+	 */
+	if (VARATT_IS_SHORT(dval))
 	{
 		data_p = VARDATA_SHORT(dval);
 		data_size = VARSIZE_SHORT(dval) - VARHDRSZ_SHORT;
@@ -865,10 +867,390 @@ pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int option
 	}
 	/* Now encrypt the data and replace it in ttc */
 	encrypted_data = (char *)palloc(data_size);
-	PG_TDE_ENCRYPT_DATA(0, data_p, data_size, encrypted_data, keys);
+	PG_TDE_ENCRYPT_DATA(valueid, data_p, data_size, encrypted_data, keys);
 
 	memcpy(data_p, encrypted_data, data_size);
 	pfree(encrypted_data);
+}
 
-	toast_tuple_externalize(ttc, attribute, options);
+/*
+ * Move an attribute to external storage.
+ * 
+ * copy from PG src/backend/access/table/toast_helper.c
+ */
+static void
+pg_tde_toast_tuple_externalize(ToastTupleContext *ttc, int attribute, int options)
+{
+	Datum	   *value = &ttc->ttc_values[attribute];
+	Datum		old_value = *value;
+	ToastAttrInfo *attr = &ttc->ttc_attr[attribute];
+
+	attr->tai_colflags |= TOASTCOL_IGNORE;
+	*value = pg_tde_toast_save_datum(ttc->ttc_rel, old_value, attr->tai_oldexternal,
+							  options);
+	if ((attr->tai_colflags & TOASTCOL_NEEDS_FREE) != 0)
+		pfree(DatumGetPointer(old_value));
+	attr->tai_colflags |= TOASTCOL_NEEDS_FREE;
+	ttc->ttc_flags |= (TOAST_NEEDS_CHANGE | TOAST_NEEDS_FREE);
+}
+
+/* ----------
+ * pg_tde_toast_save_datum -
+ *
+ *	Save one single datum into the secondary relation and return
+ *	a Datum reference for it.
+ *	It also encrypts toasted data.
+ *
+ * rel: the main relation we're working with (not the toast rel!)
+ * value: datum to be pushed to toast storage
+ * oldexternal: if not NULL, toast pointer previously representing the datum
+ * options: options to be passed to heap_insert() for toast rows
+ * 
+ * based on toast_save_datum from PG src/backend/access/common/toast_internals.c
+ * ----------
+ */
+static Datum
+pg_tde_toast_save_datum(Relation rel, Datum value,
+				 struct varlena *oldexternal, int options)
+{
+	Relation	toastrel;
+	Relation   *toastidxs;
+	HeapTuple	toasttup;
+	TupleDesc	toasttupDesc;
+	Datum		t_values[3];
+	bool		t_isnull[3];
+	CommandId	mycid = GetCurrentCommandId(true);
+	struct varlena *result;
+	struct varatt_external toast_pointer;
+	union
+	{
+		struct varlena hdr;
+		/* this is to make the union big enough for a chunk: */
+		char		data[TOAST_MAX_CHUNK_SIZE + VARHDRSZ];
+		/* ensure union is aligned well enough: */
+		int32		align_it;
+	}			chunk_data;
+	int32		chunk_size;
+	int32		chunk_seq = 0;
+	char	   *data_p;
+	int32		data_todo;
+	Pointer		dval = DatumGetPointer(value);
+	int			num_indexes;
+	int			validIndex;
+
+
+	Assert(!VARATT_IS_EXTERNAL(value));
+
+	/*
+	 * Open the toast relation and its indexes.  We can use the index to check
+	 * uniqueness of the OID we assign to the toasted item, even though it has
+	 * additional columns besides OID.
+	 */
+	toastrel = table_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
+	toasttupDesc = toastrel->rd_att;
+
+	/* Open all the toast indexes and look for the valid one */
+	validIndex = toast_open_indexes(toastrel,
+									RowExclusiveLock,
+									&toastidxs,
+									&num_indexes);
+
+	/*
+	 * Get the data pointer and length, and compute va_rawsize and va_extinfo.
+	 *
+	 * va_rawsize is the size of the equivalent fully uncompressed datum, so
+	 * we have to adjust for short headers.
+	 *
+	 * va_extinfo stored the actual size of the data payload in the toast
+	 * records and the compression method in first 2 bits if data is
+	 * compressed.
+	 */
+	if (VARATT_IS_SHORT(dval))
+	{
+		data_p = VARDATA_SHORT(dval);
+		data_todo = VARSIZE_SHORT(dval) - VARHDRSZ_SHORT;
+		toast_pointer.va_rawsize = data_todo + VARHDRSZ;	/* as if not short */
+		toast_pointer.va_extinfo = data_todo;
+	}
+	else if (VARATT_IS_COMPRESSED(dval))
+	{
+		data_p = VARDATA(dval);
+		data_todo = VARSIZE(dval) - VARHDRSZ;
+		/* rawsize in a compressed datum is just the size of the payload */
+		toast_pointer.va_rawsize = VARDATA_COMPRESSED_GET_EXTSIZE(dval) + VARHDRSZ;
+
+		/* set external size and compression method */
+		VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, data_todo,
+													 VARDATA_COMPRESSED_GET_COMPRESS_METHOD(dval));
+		/* Assert that the numbers look like it's compressed */
+		Assert(VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer));
+	}
+	else
+	{
+		data_p = VARDATA(dval);
+		data_todo = VARSIZE(dval) - VARHDRSZ;
+		toast_pointer.va_rawsize = VARSIZE(dval);
+		toast_pointer.va_extinfo = data_todo;
+	}
+
+	/*
+	 * Insert the correct table OID into the result TOAST pointer.
+	 *
+	 * Normally this is the actual OID of the target toast table, but during
+	 * table-rewriting operations such as CLUSTER, we have to insert the OID
+	 * of the table's real permanent toast table instead.  rd_toastoid is set
+	 * if we have to substitute such an OID.
+	 */
+	if (OidIsValid(rel->rd_toastoid))
+		toast_pointer.va_toastrelid = rel->rd_toastoid;
+	else
+		toast_pointer.va_toastrelid = RelationGetRelid(toastrel);
+
+	/*
+	 * Choose an OID to use as the value ID for this toast value.
+	 *
+	 * Normally we just choose an unused OID within the toast table.  But
+	 * during table-rewriting operations where we are preserving an existing
+	 * toast table OID, we want to preserve toast value OIDs too.  So, if
+	 * rd_toastoid is set and we had a prior external value from that same
+	 * toast table, re-use its value ID.  If we didn't have a prior external
+	 * value (which is a corner case, but possible if the table's attstorage
+	 * options have been changed), we have to pick a value ID that doesn't
+	 * conflict with either new or existing toast value OIDs.
+	 */
+	if (!OidIsValid(rel->rd_toastoid))
+	{
+		/* normal case: just choose an unused OID */
+		toast_pointer.va_valueid =
+			GetNewOidWithIndex(toastrel,
+							   RelationGetRelid(toastidxs[validIndex]),
+							   (AttrNumber) 1);
+	}
+	else
+	{
+		/* rewrite case: check to see if value was in old toast table */
+		toast_pointer.va_valueid = InvalidOid;
+		if (oldexternal != NULL)
+		{
+			struct varatt_external old_toast_pointer;
+
+			Assert(VARATT_IS_EXTERNAL_ONDISK(oldexternal));
+			/* Must copy to access aligned fields */
+			VARATT_EXTERNAL_GET_POINTER(old_toast_pointer, oldexternal);
+			if (old_toast_pointer.va_toastrelid == rel->rd_toastoid)
+			{
+				/* This value came from the old toast table; reuse its OID */
+				toast_pointer.va_valueid = old_toast_pointer.va_valueid;
+
+				/*
+				 * There is a corner case here: the table rewrite might have
+				 * to copy both live and recently-dead versions of a row, and
+				 * those versions could easily reference the same toast value.
+				 * When we copy the second or later version of such a row,
+				 * reusing the OID will mean we select an OID that's already
+				 * in the new toast table.  Check for that, and if so, just
+				 * fall through without writing the data again.
+				 *
+				 * While annoying and ugly-looking, this is a good thing
+				 * because it ensures that we wind up with only one copy of
+				 * the toast value when there is only one copy in the old
+				 * toast table.  Before we detected this case, we'd have made
+				 * multiple copies, wasting space; and what's worse, the
+				 * copies belonging to already-deleted heap tuples would not
+				 * be reclaimed by VACUUM.
+				 */
+				if (toastrel_valueid_exists(toastrel,
+											toast_pointer.va_valueid))
+				{
+					/* Match, so short-circuit the data storage loop below */
+					data_todo = 0;
+				}
+			}
+		}
+		if (toast_pointer.va_valueid == InvalidOid)
+		{
+			/*
+			 * new value; must choose an OID that doesn't conflict in either
+			 * old or new toast table
+			 */
+			do
+			{
+				toast_pointer.va_valueid =
+					GetNewOidWithIndex(toastrel,
+									   RelationGetRelid(toastidxs[validIndex]),
+									   (AttrNumber) 1);
+			} while (toastid_valueid_exists(rel->rd_toastoid,
+											toast_pointer.va_valueid));
+		}
+	}
+
+	/*
+	* Encrypt toast data.
+	*/
+	pg_tde_toast_encrypt(dval, toast_pointer.va_valueid, GetRelationKeys(toastrel->rd_locator));
+
+	/*
+	 * Initialize constant parts of the tuple data
+	 */
+	t_values[0] = ObjectIdGetDatum(toast_pointer.va_valueid);
+	t_values[2] = PointerGetDatum(&chunk_data);
+	t_isnull[0] = false;
+	t_isnull[1] = false;
+	t_isnull[2] = false;
+
+	/*
+	 * Split up the item into chunks
+	 */
+	while (data_todo > 0)
+	{
+		int			i;
+
+		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * Calculate the size of this chunk
+		 */
+		chunk_size = Min(TOAST_MAX_CHUNK_SIZE, data_todo);
+
+		/*
+		 * Build a tuple and store it
+		 */
+		t_values[1] = Int32GetDatum(chunk_seq++);
+		SET_VARSIZE(&chunk_data, chunk_size + VARHDRSZ);
+		memcpy(VARDATA(&chunk_data), data_p, chunk_size);
+		toasttup = heap_form_tuple(toasttupDesc, t_values, t_isnull);
+
+		/*
+		 * The tuple should be insterted not encrypted.
+		 * TOAST data already encrypted.
+		 */
+		options |= HEAP_INSERT_TDE_NO_ENCRYPT;
+		pg_tde_insert(toastrel, toasttup, mycid, options, NULL);
+
+		/*
+		 * Create the index entry.  We cheat a little here by not using
+		 * FormIndexDatum: this relies on the knowledge that the index columns
+		 * are the same as the initial columns of the table for all the
+		 * indexes.  We also cheat by not providing an IndexInfo: this is okay
+		 * for now because btree doesn't need one, but we might have to be
+		 * more honest someday.
+		 *
+		 * Note also that there had better not be any user-created index on
+		 * the TOAST table, since we don't bother to update anything else.
+		 */
+		for (i = 0; i < num_indexes; i++)
+		{
+			/* Only index relations marked as ready can be updated */
+			if (toastidxs[i]->rd_index->indisready)
+				index_insert(toastidxs[i], t_values, t_isnull,
+							 &(toasttup->t_self),
+							 toastrel,
+							 toastidxs[i]->rd_index->indisunique ?
+							 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO,
+							 false, NULL);
+		}
+
+		/*
+		 * Free memory
+		 */
+		heap_freetuple(toasttup);
+
+		/*
+		 * Move on to next chunk
+		 */
+		data_todo -= chunk_size;
+		data_p += chunk_size;
+	}
+
+	/*
+	 * Done - close toast relation and its indexes but keep the lock until
+	 * commit, so as a concurrent reindex done directly on the toast relation
+	 * would be able to wait for this transaction.
+	 */
+	toast_close_indexes(toastidxs, num_indexes, NoLock);
+	table_close(toastrel, NoLock);
+
+	/*
+	 * Create the TOAST pointer value that we'll return
+	 */
+	result = (struct varlena *) palloc(TOAST_POINTER_SIZE);
+	SET_VARTAG_EXTERNAL(result, VARTAG_ONDISK);
+	memcpy(VARDATA_EXTERNAL(result), &toast_pointer, sizeof(toast_pointer));
+
+	return PointerGetDatum(result);
+}
+
+/* ----------
+ * toastrel_valueid_exists -
+ *
+ *	Test whether a toast value with the given ID exists in the toast relation.
+ *	For safety, we consider a value to exist if there are either live or dead
+ *	toast rows with that ID; see notes for GetNewOidWithIndex().
+ *
+ * copy from PG src/backend/access/common/toast_internals.c
+ * ----------
+ */
+static bool
+toastrel_valueid_exists(Relation toastrel, Oid valueid)
+{
+	bool		result = false;
+	ScanKeyData toastkey;
+	SysScanDesc toastscan;
+	int			num_indexes;
+	int			validIndex;
+	Relation   *toastidxs;
+
+	/* Fetch a valid index relation */
+	validIndex = toast_open_indexes(toastrel,
+									RowExclusiveLock,
+									&toastidxs,
+									&num_indexes);
+
+	/*
+	 * Setup a scan key to find chunks with matching va_valueid
+	 */
+	ScanKeyInit(&toastkey,
+				(AttrNumber) 1,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(valueid));
+
+	/*
+	 * Is there any such chunk?
+	 */
+	toastscan = systable_beginscan(toastrel,
+								   RelationGetRelid(toastidxs[validIndex]),
+								   true, SnapshotAny, 1, &toastkey);
+
+	if (systable_getnext(toastscan) != NULL)
+		result = true;
+
+	systable_endscan(toastscan);
+
+	/* Clean up */
+	toast_close_indexes(toastidxs, num_indexes, RowExclusiveLock);
+
+	return result;
+}
+
+/* ----------
+ * toastid_valueid_exists -
+ *
+ *	As above, but work from toast rel's OID not an open relation
+ *
+ * copy from PG src/backend/access/common/toast_internals.c
+ * ----------
+ */
+static bool
+toastid_valueid_exists(Oid toastrelid, Oid valueid)
+{
+	bool		result;
+	Relation	toastrel;
+
+	toastrel = table_open(toastrelid, AccessShareLock);
+
+	result = toastrel_valueid_exists(toastrel, valueid);
+
+	table_close(toastrel, AccessShareLock);
+
+	return result;
 }

@@ -1885,8 +1885,9 @@ pg_tde_insert(Relation relation, HeapTuple tup, CommandId cid,
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
-	pg_tde_RelationPutHeapTuple(relation, buffer, heaptup,
-						 (options & HEAP_INSERT_SPECULATIVE) != 0);
+	pg_tde_RelationPutHeapTuple(relation, buffer, heaptup, 
+						(options & HEAP_INSERT_TDE_NO_ENCRYPT) == 0,
+						(options & HEAP_INSERT_SPECULATIVE) != 0);
 
 	if (PageIsAllVisible(BufferGetPage(buffer)))
 	{
@@ -2229,7 +2230,7 @@ pg_tde_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		 * pg_tde_RelationGetBufferForTuple has ensured that the first tuple fits.
 		 * Put that on the page, and then as many other tuples as fit.
 		 */
-		pg_tde_RelationPutHeapTuple(relation, buffer, heaptuples[ndone], false);
+		pg_tde_RelationPutHeapTuple(relation, buffer, heaptuples[ndone], true, false);
 
 		/*
 		 * For logical decoding we need combo CIDs to properly decode the
@@ -2245,7 +2246,7 @@ pg_tde_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 			if (PageGetHeapFreeSpace(page) < MAXALIGN(heaptup->t_len) + saveFreeSpace)
 				break;
 
-			pg_tde_RelationPutHeapTuple(relation, buffer, heaptup, false);
+			pg_tde_RelationPutHeapTuple(relation, buffer, heaptup, true, false);
 
 			/*
 			 * For logical decoding we need combo CIDs to properly decode the
@@ -3810,7 +3811,7 @@ l2:
 		HeapTupleClearHeapOnly(newtup);
 	}
 
-	pg_tde_RelationPutHeapTuple(relation, newbuf, heaptup, false); /* insert new tuple */
+	pg_tde_RelationPutHeapTuple(relation, newbuf, heaptup, true, false); /* insert new tuple */
 
 
 	/* Clear obsolete visibility flags, possibly set by ourselves above... */
