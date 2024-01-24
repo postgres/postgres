@@ -1560,7 +1560,10 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * We don't check permissions here as a type's input/output
 				 * function are assumed to be executable by everyone.
 				 */
-				scratch.opcode = EEOP_IOCOERCE;
+				if (state->escontext == NULL)
+					scratch.opcode = EEOP_IOCOERCE;
+				else
+					scratch.opcode = EEOP_IOCOERCE_SAFE;
 
 				/* lookup the source type's output function */
 				scratch.d.iocoerce.finfo_out = palloc0(sizeof(FmgrInfo));
@@ -1595,6 +1598,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				fcinfo_in->args[1].isnull = false;
 				fcinfo_in->args[2].value = Int32GetDatum(-1);
 				fcinfo_in->args[2].isnull = false;
+
+				fcinfo_in->context = (Node *) state->escontext;
 
 				ExprEvalPushStep(state, &scratch);
 				break;
@@ -3303,6 +3308,7 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 	/* we'll allocate workspace only if needed */
 	scratch->d.domaincheck.checkvalue = NULL;
 	scratch->d.domaincheck.checknull = NULL;
+	scratch->d.domaincheck.escontext = state->escontext;
 
 	/*
 	 * Evaluate argument - it's fine to directly store it into resv/resnull,

@@ -1431,6 +1431,12 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
+			case EEOP_IOCOERCE_SAFE:
+				build_EvalXFunc(b, mod, "ExecEvalCoerceViaIOSafe",
+								v_state, op);
+				LLVMBuildBr(b, opblocks[opno + 1]);
+				break;
+
 			case EEOP_DISTINCT:
 			case EEOP_NOT_DISTINCT:
 				{

@@ -162,6 +162,7 @@ void	   *referenced_functions[] =
 	ExecEvalRow,
 	ExecEvalRowNotNull,
 	ExecEvalRowNull,
+	ExecEvalCoerceViaIOSafe,
 	ExecEvalSQLValueFunction,
 	ExecEvalScalarArrayOp,
 	ExecEvalHashedScalarArrayOp,
