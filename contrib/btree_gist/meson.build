@@ -91,6 +91,7 @@ tests += {
       'bool',
       'partitions',
       'stratnum',
+      'without_overlaps',
     ],
   },
 }
