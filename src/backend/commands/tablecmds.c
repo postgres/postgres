@@ -6001,6 +6001,10 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 							colDef->colname, RelationGetRelationName(rel))));
 
 			table_close(attrdesc, RowExclusiveLock);
+
+			/* Make the child column change visible */
+			CommandCounterIncrement();
+
 			return InvalidObjectAddress;
 		}
 	}
