@@ -87,12 +87,19 @@ typedef struct JsonBaseObjectInfo
 	int			id;
 } JsonBaseObjectInfo;
 
+/* Callbacks for executeJsonPath() */
+typedef JsonbValue *(*JsonPathGetVarCallback) (void *vars, char *varName, int varNameLen,
+											   JsonbValue *baseObject, int *baseObjectId);
+typedef int (*JsonPathCountVarsCallback) (void *vars);
+
 /*
  * Context of jsonpath execution.
  */
 typedef struct JsonPathExecContext
 {
-	Jsonb	   *vars;			/* variables to substitute into jsonpath */
+	void	   *vars;			/* variables to substitute into jsonpath */
+	JsonPathGetVarCallback getVar;	/* callback to extract a given variable
+									 * from 'vars' */
 	JsonbValue *root;			/* for $ evaluation */
 	JsonbValue *current;		/* for @ evaluation */
 	JsonBaseObjectInfo baseObject;	/* "base object" for .keyvalue()
@@ -174,7 +181,9 @@ typedef JsonPathBool (*JsonPathPredicateCallback) (JsonPathItem *jsp,
 												   void *param);
 typedef Numeric (*BinaryArithmFunc) (Numeric num1, Numeric num2, bool *error);
 
-static JsonPathExecResult executeJsonPath(JsonPath *path, Jsonb *vars,
+static JsonPathExecResult executeJsonPath(JsonPath *path, void *vars,
+										  JsonPathGetVarCallback getVar,
+										  JsonPathCountVarsCallback countVars,
 										  Jsonb *json, bool throwErrors,
 										  JsonValueList *result, bool useTz);
 static JsonPathExecResult executeItem(JsonPathExecContext *cxt,
@@ -226,7 +235,12 @@ static JsonPathExecResult appendBoolResult(JsonPathExecContext *cxt,
 static void getJsonPathItem(JsonPathExecContext *cxt, JsonPathItem *item,
 							JsonbValue *value);
 static void getJsonPathVariable(JsonPathExecContext *cxt,
-								JsonPathItem *variable, Jsonb *vars, JsonbValue *value);
+								JsonPathItem *variable, JsonbValue *value);
+static int	countVariablesFromJsonb(void *varsJsonb);
+static JsonbValue *getJsonPathVariableFromJsonb(void *varsJsonb, char *varName,
+												int varNameLen,
+												JsonbValue *baseObject,
+												int *baseObjectId);
 static int	JsonbArraySize(JsonbValue *jb);
 static JsonPathBool executeComparison(JsonPathItem *cmp, JsonbValue *lv,
 									  JsonbValue *rv, void *p);
@@ -284,7 +298,9 @@ jsonb_path_exists_internal(FunctionCallInfo fcinfo, bool tz)
 		silent = PG_GETARG_BOOL(3);
 	}
 
-	res = executeJsonPath(jp, vars, jb, !silent, NULL, tz);
+	res = executeJsonPath(jp, vars, getJsonPathVariableFromJsonb,
+						  countVariablesFromJsonb,
+						  jb, !silent, NULL, tz);
 
 	PG_FREE_IF_COPY(jb, 0);
 	PG_FREE_IF_COPY(jp, 1);
@@ -339,7 +355,9 @@ jsonb_path_match_internal(FunctionCallInfo fcinfo, bool tz)
 		silent = PG_GETARG_BOOL(3);
 	}
 
-	(void) executeJsonPath(jp, vars, jb, !silent, &found, tz);
+	(void) executeJsonPath(jp, vars, getJsonPathVariableFromJsonb,
+						   countVariablesFromJsonb,
+						   jb, !silent, &found, tz);
 
 	PG_FREE_IF_COPY(jb, 0);
 	PG_FREE_IF_COPY(jp, 1);
@@ -417,7 +435,9 @@ jsonb_path_query_internal(FunctionCallInfo fcinfo, bool tz)
 		vars = PG_GETARG_JSONB_P_COPY(2);
 		silent = PG_GETARG_BOOL(3);
 
-		(void) executeJsonPath(jp, vars, jb, !silent, &found, tz);
+		(void) executeJsonPath(jp, vars, getJsonPathVariableFromJsonb,
+							   countVariablesFromJsonb,
+							   jb, !silent, &found, tz);
 
 		funcctx->user_fctx = JsonValueListGetList(&found);
 
@@ -464,7 +484,9 @@ jsonb_path_query_array_internal(FunctionCallInfo fcinfo, bool tz)
 	Jsonb	   *vars = PG_GETARG_JSONB_P(2);
 	bool		silent = PG_GETARG_BOOL(3);
 
-	(void) executeJsonPath(jp, vars, jb, !silent, &found, tz);
+	(void) executeJsonPath(jp, vars, getJsonPathVariableFromJsonb,
+						   countVariablesFromJsonb,
+						   jb, !silent, &found, tz);
 
 	PG_RETURN_JSONB_P(JsonbValueToJsonb(wrapItemsInArray(&found)));
 }
@@ -495,7 +517,9 @@ jsonb_path_query_first_internal(FunctionCallInfo fcinfo, bool tz)
 	Jsonb	   *vars = PG_GETARG_JSONB_P(2);
 	bool		silent = PG_GETARG_BOOL(3);
 
-	(void) executeJsonPath(jp, vars, jb, !silent, &found, tz);
+	(void) executeJsonPath(jp, vars, getJsonPathVariableFromJsonb,
+						   countVariablesFromJsonb,
+						   jb, !silent, &found, tz);
 
 	if (JsonValueListLength(&found) >= 1)
 		PG_RETURN_JSONB_P(JsonbValueToJsonb(JsonValueListHead(&found)));
@@ -522,6 +546,9 @@ jsonb_path_query_first_tz(PG_FUNCTION_ARGS)
  *
  * 'path' - jsonpath to be executed
  * 'vars' - variables to be substituted to jsonpath
+ * 'getVar' - callback used by getJsonPathVariable() to extract variables from
+ *		'vars'
+ * 'countVars' - callback to count the number of jsonpath variables in 'vars'
  * 'json' - target document for jsonpath evaluation
  * 'throwErrors' - whether we should throw suppressible errors
  * 'result' - list to store result items into
@@ -537,8 +564,10 @@ jsonb_path_query_first_tz(PG_FUNCTION_ARGS)
  * In other case it tries to find all the satisfied result items.
  */
 static JsonPathExecResult
-executeJsonPath(JsonPath *path, Jsonb *vars, Jsonb *json, bool throwErrors,
-				JsonValueList *result, bool useTz)
+executeJsonPath(JsonPath *path, void *vars, JsonPathGetVarCallback getVar,
+				JsonPathCountVarsCallback countVars,
+				Jsonb *json, bool throwErrors, JsonValueList *result,
+				bool useTz)
 {
 	JsonPathExecContext cxt;
 	JsonPathExecResult res;
@@ -550,22 +579,16 @@ executeJsonPath(JsonPath *path, Jsonb *vars, Jsonb *json, bool throwErrors,
 	if (!JsonbExtractScalar(&json->root, &jbv))
 		JsonbInitBinary(&jbv, json);
 
-	if (vars && !JsonContainerIsObject(&vars->root))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"vars\" argument is not an object"),
-				 errdetail("Jsonpath parameters should be encoded as key-value pairs of \"vars\" object.")));
-	}
-
 	cxt.vars = vars;
+	cxt.getVar = getVar;
 	cxt.laxMode = (path->header & JSONPATH_LAX) != 0;
 	cxt.ignoreStructuralErrors = cxt.laxMode;
 	cxt.root = &jbv;
 	cxt.current = &jbv;
 	cxt.baseObject.jbc = NULL;
 	cxt.baseObject.id = 0;
-	cxt.lastGeneratedObjectId = vars ? 2 : 1;
+	/* 1 + number of base objects in vars */
+	cxt.lastGeneratedObjectId = 1 + countVars(vars);
 	cxt.innermostArraySize = -1;
 	cxt.throwErrors = throwErrors;
 	cxt.useTz = useTz;
@@ -2108,7 +2131,7 @@ getJsonPathItem(JsonPathExecContext *cxt, JsonPathItem *item,
 												 &value->val.string.len);
 			break;
 		case jpiVariable:
-			getJsonPathVariable(cxt, item, cxt->vars, value);
+			getJsonPathVariable(cxt, item, value);
 			return;
 		default:
 			elog(ERROR, "unexpected jsonpath item type");
@@ -2120,42 +2143,81 @@ getJsonPathItem(JsonPathExecContext *cxt, JsonPathItem *item,
  */
 static void
 getJsonPathVariable(JsonPathExecContext *cxt, JsonPathItem *variable,
-					Jsonb *vars, JsonbValue *value)
+					JsonbValue *value)
 {
 	char	   *varName;
 	int			varNameLength;
-	JsonbValue	tmp;
+	JsonbValue	baseObject;
+	int			baseObjectId;
 	JsonbValue *v;
-
-	if (!vars)
-	{
-		value->type = jbvNull;
-		return;
-	}
 
 	Assert(variable->type == jpiVariable);
 	varName = jspGetString(variable, &varNameLength);
-	tmp.type = jbvString;
-	tmp.val.string.val = varName;
-	tmp.val.string.len = varNameLength;
 
-	v = findJsonbValueFromContainer(&vars->root, JB_FOBJECT, &tmp);
-
-	if (v)
-	{
-		*value = *v;
-		pfree(v);
-	}
-	else
-	{
+	if (cxt->vars == NULL ||
+		(v = cxt->getVar(cxt->vars, varName, varNameLength,
+						 &baseObject, &baseObjectId)) == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("could not find jsonpath variable \"%s\"",
 						pnstrdup(varName, varNameLength))));
+
+	if (baseObjectId > 0)
+	{
+		*value = *v;
+		setBaseObject(cxt, &baseObject, baseObjectId);
+	}
+}
+
+/*
+ * Definition of JsonPathGetVarCallback for when JsonPathExecContext.vars
+ * is specified as a jsonb value.
+ */
+static JsonbValue *
+getJsonPathVariableFromJsonb(void *varsJsonb, char *varName, int varNameLength,
+							 JsonbValue *baseObject, int *baseObjectId)
+{
+	Jsonb	   *vars = varsJsonb;
+	JsonbValue	tmp;
+	JsonbValue *result;
+
+	tmp.type = jbvString;
+	tmp.val.string.val = varName;
+	tmp.val.string.len = varNameLength;
+
+	result = findJsonbValueFromContainer(&vars->root, JB_FOBJECT, &tmp);
+
+	if (result == NULL)
+	{
+		*baseObjectId = -1;
+		return NULL;
 	}
 
-	JsonbInitBinary(&tmp, vars);
-	setBaseObject(cxt, &tmp, 1);
+	*baseObjectId = 1;
+	JsonbInitBinary(baseObject, vars);
+
+	return result;
+}
+
+/*
+ * Definition of JsonPathCountVarsCallback for when JsonPathExecContext.vars
+ * is specified as a jsonb value.
+ */
+static int
+countVariablesFromJsonb(void *varsJsonb)
+{
+	Jsonb	   *vars = varsJsonb;
+
+	if (vars && !JsonContainerIsObject(&vars->root))
+	{
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("\"vars\" argument is not an object"),
+				errdetail("Jsonpath parameters should be encoded as key-value pairs of \"vars\" object."));
+	}
+
+	/* count of base objects */
+	return vars != NULL ? 1 : 0;
 }
 
 /**************** Support functions for JsonPath execution *****************/
