@@ -1088,6 +1088,23 @@ Inherits: inht1,
           inhs1
 
 DROP TABLE inhts;
+-- Test for adding a column to a parent table with complex inheritance
+CREATE TABLE inhta ();
+CREATE TABLE inhtb () INHERITS (inhta);
+CREATE TABLE inhtc () INHERITS (inhtb);
+CREATE TABLE inhtd () INHERITS (inhta, inhtb, inhtc);
+ALTER TABLE inhta ADD COLUMN i int;
+NOTICE:  merging definition of column "i" for child "inhtd"
+NOTICE:  merging definition of column "i" for child "inhtd"
+\d+ inhta
+                                   Table "public.inhta"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ i      | integer |           |          |         | plain   |              | 
+Child tables: inhtb,
+              inhtd
+
+DROP TABLE inhta, inhtb, inhtc, inhtd;
 -- Test for renaming in diamond inheritance
 CREATE TABLE inht2 (x int) INHERITS (inht1);
 CREATE TABLE inht3 (y int) INHERITS (inht1);
