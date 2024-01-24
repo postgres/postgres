@@ -1188,7 +1188,7 @@ CREATE TABLE btg AS SELECT
   'abc' || i % 10 AS z,
   i AS w
 FROM generate_series(1,10000) AS i;
-CREATE INDEX abc ON btg(x,y);
+CREATE INDEX btg_x_y_idx ON btg(x,y);
 ANALYZE btg;
 
 -- GROUP BY optimization by reorder columns by frequency

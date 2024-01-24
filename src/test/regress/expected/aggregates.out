@@ -2735,7 +2735,7 @@ CREATE TABLE btg AS SELECT
   'abc' || i % 10 AS z,
   i AS w
 FROM generate_series(1,10000) AS i;
-CREATE INDEX abc ON btg(x,y);
+CREATE INDEX btg_x_y_idx ON btg(x,y);
 ANALYZE btg;
 -- GROUP BY optimization by reorder columns by frequency
 SET enable_hashagg=off;
@@ -2743,92 +2743,92 @@ SET max_parallel_workers= 0;
 SET max_parallel_workers_per_gather = 0;
 -- Utilize index scan ordering to avoid a Sort operation
 EXPLAIN (COSTS OFF) SELECT count(*) FROM btg GROUP BY x,y;
-               QUERY PLAN               
-----------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  GroupAggregate
    Group Key: x, y
-   ->  Index Only Scan using abc on btg
+   ->  Index Only Scan using btg_x_y_idx on btg
 (3 rows)
 
 EXPLAIN (COSTS OFF) SELECT count(*) FROM btg GROUP BY y,x;
-               QUERY PLAN               
-----------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  GroupAggregate
    Group Key: x, y
-   ->  Index Only Scan using abc on btg
+   ->  Index Only Scan using btg_x_y_idx on btg
 (3 rows)
 
 -- Engage incremental sort
 explain (COSTS OFF) SELECT x,y FROM btg GROUP BY x,y,z,w;
-               QUERY PLAN                
------------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Group
    Group Key: x, y, z, w
    ->  Incremental Sort
          Sort Key: x, y, z, w
          Presorted Key: x, y
-         ->  Index Scan using abc on btg
+         ->  Index Scan using btg_x_y_idx on btg
 (6 rows)
 
 explain (COSTS OFF) SELECT x,y FROM btg GROUP BY z,y,w,x;
-               QUERY PLAN                
------------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Group
    Group Key: x, y, z, w
    ->  Incremental Sort
          Sort Key: x, y, z, w
          Presorted Key: x, y
-         ->  Index Scan using abc on btg
+         ->  Index Scan using btg_x_y_idx on btg
 (6 rows)
 
 explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,z,x,y;
-               QUERY PLAN                
------------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Group
    Group Key: x, y, w, z
    ->  Incremental Sort
          Sort Key: x, y, w, z
          Presorted Key: x, y
-         ->  Index Scan using abc on btg
+         ->  Index Scan using btg_x_y_idx on btg
 (6 rows)
 
 explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,x,z,y;
-               QUERY PLAN                
------------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Group
    Group Key: x, y, w, z
    ->  Incremental Sort
          Sort Key: x, y, w, z
          Presorted Key: x, y
-         ->  Index Scan using abc on btg
+         ->  Index Scan using btg_x_y_idx on btg
 (6 rows)
 
 -- Subqueries
 explain (COSTS OFF) SELECT x,y
 FROM (SELECT * FROM btg ORDER BY x,y,w,z) AS q1
 GROUP BY (w,x,z,y);
-                  QUERY PLAN                  
-----------------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Group
    Group Key: btg.x, btg.y, btg.w, btg.z
    ->  Incremental Sort
          Sort Key: btg.x, btg.y, btg.w, btg.z
          Presorted Key: btg.x, btg.y
-         ->  Index Scan using abc on btg
+         ->  Index Scan using btg_x_y_idx on btg
 (6 rows)
 
 explain (COSTS OFF) SELECT x,y
 FROM (SELECT * FROM btg ORDER BY x,y,w,z LIMIT 100) AS q1
 GROUP BY (w,x,z,y);
-                     QUERY PLAN                     
-----------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Group
    Group Key: btg.x, btg.y, btg.w, btg.z
    ->  Limit
          ->  Incremental Sort
                Sort Key: btg.x, btg.y, btg.w, btg.z
                Presorted Key: btg.x, btg.y
-               ->  Index Scan using abc on btg
+               ->  Index Scan using btg_x_y_idx on btg
 (7 rows)
 
 -- Should work with and without GROUP-BY optimization
@@ -2844,8 +2844,8 @@ explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,x,z,y ORDER BY y,x,z,w;
 
 -- Utilize incremental sort to make the ORDER BY rule a bit cheaper
 explain (COSTS OFF) SELECT x,w FROM btg GROUP BY w,x,y,z ORDER BY x*x,z;
-                  QUERY PLAN                   
------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Sort
    Sort Key: ((x * x)), z
    ->  Group
@@ -2853,7 +2853,7 @@ explain (COSTS OFF) SELECT x,w FROM btg GROUP BY w,x,y,z ORDER BY x*x,z;
          ->  Incremental Sort
                Sort Key: x, y, w, z
                Presorted Key: x, y
-               ->  Index Scan using abc on btg
+               ->  Index Scan using btg_x_y_idx on btg
 (8 rows)
 
 SET enable_incremental_sort = off;
