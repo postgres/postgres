@@ -1386,13 +1386,19 @@ SELECT 4 AS four \; SELECT 5 AS five \aset
 
    <varlistentry id="pgbench-metacommand-pipeline">
     <term><literal>\startpipeline</literal></term>
+    <term><literal>\syncpipeline</literal></term>
     <term><literal>\endpipeline</literal></term>
 
     <listitem>
       <para>
-        These commands delimit the start and end of a pipeline of SQL
-        statements.  In pipeline mode, statements are sent to the server
-        without waiting for the results of previous statements.  See
+        This group of commands implements pipelining of SQL statements.
+        A pipeline must begin with a <command>\startpipeline</command>
+        and end with an <command>\endpipeline</command>. In between there
+        may be any number of <command>\syncpipeline</command> commands,
+        which sends a <link linkend="protocol-flow-ext-query">sync message</link>
+        without ending the ongoing pipeline and flushing the send buffer.
+        In pipeline mode, statements are sent to the server without waiting
+        for the results of previous statements.  See
         <xref linkend="libpq-pipeline-mode"/> for more details.
         Pipeline mode requires the use of extended query protocol.
      </para>

@@ -814,6 +814,27 @@ $node->pgbench(
 }
 	});
 
+# Working \startpipeline with \syncpipeline
+$node->pgbench(
+	'-t 1 -n -M extended',
+	0,
+	[ qr{type: .*/001_pgbench_pipeline_sync}, qr{actually processed: 1/1} ],
+	[],
+	'working \startpipeline with \syncpipeline',
+	{
+		'001_pgbench_pipeline_sync' => q{
+-- test startpipeline
+\startpipeline
+select 1;
+\syncpipeline
+\syncpipeline
+select 2;
+\syncpipeline
+select 3;
+\endpipeline
+}
+	});
+
 # Working \startpipeline in prepared query mode
 $node->pgbench(
 	'-t 1 -n -M prepared',
@@ -901,6 +922,21 @@ $node->pgbench(
 		'001_pgbench_pipeline_6' => q{
 -- startpipeline only
 \startpipeline
+}
+	});
+
+# Try \startpipeline with \syncpipeline without \endpipeline
+$node->pgbench(
+	'-t 2 -n -M extended',
+	2,
+	[],
+	[qr{end of script reached with pipeline open}],
+	'error: call \startpipeline and \syncpipeline without \endpipeline',
+	{
+		'001_pgbench_pipeline_7' => q{
+-- startpipeline with \syncpipeline only
+\startpipeline
+\syncpipeline
 }
 	});
 
