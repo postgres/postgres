@@ -16730,6 +16730,58 @@ array w/o UK? | t
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>jsonb_populate_record_valid</primary>
+        </indexterm>
+        <function>jsonb_populate_record_valid</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>json</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Function for testing <function>jsonb_populate_record</function>.  Returns
+        <literal>true</literal> if the input <function>jsonb_populate_record</function>
+        would finish without an error for the given input JSON object; that is, it's
+        valid input, <literal>false</literal> otherwise.
+       </para>
+       <para>
+        <literal>create type jsb_char2 as (a char(2));</literal>
+       </para>
+       <para>
+        <literal>select jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aaa"}');</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ jsonb_populate_record_valid
+-----------------------------
+ f
+(1 row)
+</programlisting>
+
+        <literal>select * from jsonb_populate_record(NULL::jsb_char2, '{"a": "aaa"}') q;</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ERROR:  value too long for type character(2)
+</programlisting>
+        <literal>select jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aa"}');</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ jsonb_populate_record_valid
+-----------------------------
+ t
+(1 row)
+</programlisting>
+
+        <literal>select * from jsonb_populate_record(NULL::jsb_char2, '{"a": "aa"}') q;</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ a
+----
+ aa
+(1 row)
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>json_populate_recordset</primary>
         </indexterm>
         <function>json_populate_recordset</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>json</type> )

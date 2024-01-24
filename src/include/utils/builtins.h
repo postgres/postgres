@@ -28,6 +28,9 @@ extern bool parse_bool_with_len(const char *value, size_t len, bool *result);
 /* domains.c */
 extern void domain_check(Datum value, bool isnull, Oid domainType,
 						 void **extra, MemoryContext mcxt);
+extern bool domain_check_safe(Datum value, bool isnull, Oid domainType,
+							  void **extra, MemoryContext mcxt,
+							  Node *escontext);
 extern int	errdatatype(Oid datatypeOid);
 extern int	errdomainconstraint(Oid datatypeOid, const char *conname);
 

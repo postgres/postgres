@@ -40,6 +40,9 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
+static bool domain_check_internal(Datum value, bool isnull, Oid domainType,
+								  void **extra, MemoryContext mcxt,
+								  Node *escontext);
 
 /*
  * structure to cache state across multiple calls
@@ -343,6 +346,32 @@ void
 domain_check(Datum value, bool isnull, Oid domainType,
 			 void **extra, MemoryContext mcxt)
 {
+	(void) domain_check_internal(value, isnull, domainType, extra, mcxt,
+								 NULL);
+}
+
+/* Error-safe variant of domain_check(). */
+bool
+domain_check_safe(Datum value, bool isnull, Oid domainType,
+				  void **extra, MemoryContext mcxt,
+				  Node *escontext)
+{
+	return domain_check_internal(value, isnull, domainType, extra, mcxt,
+								 escontext);
+}
+
+/*
+ * domain_check_internal
+ * 		Workhorse for domain_check() and domain_check_safe()
+ *
+ * Returns false if an error occurred in domain_check_input() and 'escontext'
+ * points to an ErrorSaveContext, true otherwise.
+ */
+static bool
+domain_check_internal(Datum value, bool isnull, Oid domainType,
+					  void **extra, MemoryContext mcxt,
+					  Node *escontext)
+{
 	DomainIOData *my_extra = NULL;
 
 	if (mcxt == NULL)
@@ -365,7 +394,9 @@ domain_check(Datum value, bool isnull, Oid domainType,
 	/*
 	 * Do the necessary checks to ensure it's a valid domain value.
 	 */
-	domain_check_input(value, isnull, my_extra, NULL);
+	domain_check_input(value, isnull, my_extra, escontext);
+
+	return !SOFT_ERROR_OCCURRED(escontext);
 }
 
 /*

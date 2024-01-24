@@ -2505,6 +2505,121 @@ SELECT rec FROM jsonb_populate_record(
  (abc,3,"Thu Jan 02 00:00:00 2003")
 (1 row)
 
+-- Tests to check soft-error support for populate_record_field()
+-- populate_scalar()
+create type jsb_char2 as (a char(2));
+select jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aaa"}');
+ jsonb_populate_record_valid 
+-----------------------------
+ f
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_char2, '{"a": "aaa"}') q;
+ERROR:  value too long for type character(2)
+select jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aa"}');
+ jsonb_populate_record_valid 
+-----------------------------
+ t
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_char2, '{"a": "aa"}') q;
+ a  
+----
+ aa
+(1 row)
+
+-- populate_array()
+create type jsb_ia as (a int[]);
+create type jsb_ia2 as (a int[][]);
+select jsonb_populate_record_valid(NULL::jsb_ia, '{"a": 43.2}');
+ jsonb_populate_record_valid 
+-----------------------------
+ f
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_ia, '{"a": 43.2}') q;
+ERROR:  expected JSON array
+HINT:  See the value of key "a".
+select jsonb_populate_record_valid(NULL::jsb_ia, '{"a": [1, 2]}');
+ jsonb_populate_record_valid 
+-----------------------------
+ t
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_ia, '{"a": [1, 2]}') q;
+   a   
+-------
+ {1,2}
+(1 row)
+
+select jsonb_populate_record_valid(NULL::jsb_ia2, '{"a": [[1], [2, 3]]}');
+ jsonb_populate_record_valid 
+-----------------------------
+ f
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_ia2, '{"a": [[1], [2, 3]]}') q;
+ERROR:  malformed JSON array
+DETAIL:  Multidimensional arrays must have sub-arrays with matching dimensions.
+select jsonb_populate_record_valid(NULL::jsb_ia2, '{"a": [[1, 0], [2, 3]]}');
+ jsonb_populate_record_valid 
+-----------------------------
+ t
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_ia2, '{"a": [[1, 0], [2, 3]]}') q;
+       a       
+---------------
+ {{1,0},{2,3}}
+(1 row)
+
+-- populate_domain()
+create domain jsb_i_not_null as int not null;
+create domain jsb_i_gt_1 as int check (value > 1);
+create type jsb_i_not_null_rec as (a jsb_i_not_null);
+create type jsb_i_gt_1_rec as (a jsb_i_gt_1);
+select jsonb_populate_record_valid(NULL::jsb_i_not_null_rec, '{"a": null}');
+ jsonb_populate_record_valid 
+-----------------------------
+ f
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_i_not_null_rec, '{"a": null}') q;
+ERROR:  domain jsb_i_not_null does not allow null values
+select jsonb_populate_record_valid(NULL::jsb_i_not_null_rec, '{"a": 1}');
+ jsonb_populate_record_valid 
+-----------------------------
+ t
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_i_not_null_rec, '{"a": 1}') q;
+ a 
+---
+ 1
+(1 row)
+
+select jsonb_populate_record_valid(NULL::jsb_i_gt_1_rec, '{"a": 1}');
+ jsonb_populate_record_valid 
+-----------------------------
+ f
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_i_gt_1_rec, '{"a": 1}') q;
+ERROR:  value for domain jsb_i_gt_1 violates check constraint "jsb_i_gt_1_check"
+select jsonb_populate_record_valid(NULL::jsb_i_gt_1_rec, '{"a": 2}');
+ jsonb_populate_record_valid 
+-----------------------------
+ t
+(1 row)
+
+select * from jsonb_populate_record(NULL::jsb_i_gt_1_rec, '{"a": 2}') q;
+ a 
+---
+ 2
+(1 row)
+
+drop type jsb_ia, jsb_ia2, jsb_char2, jsb_i_not_null_rec, jsb_i_gt_1_rec;
+drop domain jsb_i_not_null, jsb_i_gt_1;
 -- anonymous record type
 SELECT jsonb_populate_record(null::record, '{"x": 0, "y": 1}');
 ERROR:  could not determine row type for result of jsonb_populate_record

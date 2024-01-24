@@ -265,6 +265,7 @@ typedef struct PopulateArrayContext
 	int		   *dims;			/* dimensions */
 	int		   *sizes;			/* current dimension counters */
 	int			ndims;			/* number of dimensions */
+	Node	   *escontext;		/* For soft-error handling */
 } PopulateArrayContext;
 
 /* state for populate_array_json() */
@@ -389,7 +390,8 @@ static JsonParseErrorType elements_array_element_end(void *state, bool isnull);
 static JsonParseErrorType elements_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* turn a json object into a hash table */
-static HTAB *get_json_object_as_hash(char *json, int len, const char *funcname);
+static HTAB *get_json_object_as_hash(char *json, int len, const char *funcname,
+									 Node *escontext);
 
 /* semantic actions for populate_array_json */
 static JsonParseErrorType populate_array_object_start(void *_state);
@@ -426,42 +428,48 @@ static JsonParseErrorType sn_scalar(void *state, char *token, JsonTokenType toke
 static Datum populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 									   bool is_json, bool have_record_arg);
 static Datum populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
-									bool is_json, bool have_record_arg);
+									bool is_json, bool have_record_arg,
+									Node *escontext);
 
 /* helper functions for populate_record[set] */
 static HeapTupleHeader populate_record(TupleDesc tupdesc, RecordIOData **record_p,
 									   HeapTupleHeader defaultval, MemoryContext mcxt,
-									   JsObject *obj);
+									   JsObject *obj, Node *escontext);
 static void get_record_type_from_argument(FunctionCallInfo fcinfo,
 										  const char *funcname,
 										  PopulateRecordCache *cache);
 static void get_record_type_from_query(FunctionCallInfo fcinfo,
 									   const char *funcname,
 									   PopulateRecordCache *cache);
-static void JsValueToJsObject(JsValue *jsv, JsObject *jso);
+static bool JsValueToJsObject(JsValue *jsv, JsObject *jso, Node *escontext);
 static Datum populate_composite(CompositeIOData *io, Oid typid,
 								const char *colname, MemoryContext mcxt,
-								HeapTupleHeader defaultval, JsValue *jsv, bool isnull);
-static Datum populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv);
+								HeapTupleHeader defaultval, JsValue *jsv, bool *isnull,
+								Node *escontext);
+static Datum populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv,
+							 bool *isnull, Node *escontext);
 static void prepare_column_cache(ColumnIOData *column, Oid typid, int32 typmod,
 								 MemoryContext mcxt, bool need_scalar);
 static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
 								   const char *colname, MemoryContext mcxt, Datum defaultval,
-								   JsValue *jsv, bool *isnull);
+								   JsValue *jsv, bool *isnull, Node *escontext);
 static RecordIOData *allocate_record_info(MemoryContext mcxt, int ncolumns);
 static bool JsObjectGetField(JsObject *obj, char *field, JsValue *jsv);
 static void populate_recordset_record(PopulateRecordsetState *state, JsObject *obj);
-static void populate_array_json(PopulateArrayContext *ctx, char *json, int len);
-static void populate_array_dim_jsonb(PopulateArrayContext *ctx, JsonbValue *jbv,
+static bool populate_array_json(PopulateArrayContext *ctx, char *json, int len);
+static bool populate_array_dim_jsonb(PopulateArrayContext *ctx, JsonbValue *jbv,
 									 int ndim);
 static void populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim);
-static void populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims);
-static void populate_array_check_dimension(PopulateArrayContext *ctx, int ndim);
-static void populate_array_element(PopulateArrayContext *ctx, int ndim, JsValue *jsv);
+static bool populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims);
+static bool populate_array_check_dimension(PopulateArrayContext *ctx, int ndim);
+static bool populate_array_element(PopulateArrayContext *ctx, int ndim, JsValue *jsv);
 static Datum populate_array(ArrayIOData *aio, const char *colname,
-							MemoryContext mcxt, JsValue *jsv);
+							MemoryContext mcxt, JsValue *jsv,
+							bool *isnull,
+							Node *escontext);
 static Datum populate_domain(DomainIOData *io, Oid typid, const char *colname,
-							 MemoryContext mcxt, JsValue *jsv, bool isnull);
+							 MemoryContext mcxt, JsValue *jsv, bool *isnull,
+							 Node *escontext);
 
 /* functions supporting jsonb_delete, jsonb_set and jsonb_concat */
 static JsonbValue *IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
@@ -2453,28 +2461,45 @@ Datum
 jsonb_populate_record(PG_FUNCTION_ARGS)
 {
 	return populate_record_worker(fcinfo, "jsonb_populate_record",
-								  false, true);
+								  false, true, NULL);
+}
+
+/*
+ * SQL function that can be used for testing json_populate_record().
+ *
+ * Returns false if json_populate_record() encounters an error for the
+ * provided input JSON object, true otherwise.
+ */
+Datum
+jsonb_populate_record_valid(PG_FUNCTION_ARGS)
+{
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+	(void) populate_record_worker(fcinfo, "jsonb_populate_record",
+								  false, true, (Node *) &escontext);
+
+	return BoolGetDatum(!SOFT_ERROR_OCCURRED(&escontext));
 }
 
 Datum
 jsonb_to_record(PG_FUNCTION_ARGS)
 {
 	return populate_record_worker(fcinfo, "jsonb_to_record",
-								  false, false);
+								  false, false, NULL);
 }
 
 Datum
 json_populate_record(PG_FUNCTION_ARGS)
 {
 	return populate_record_worker(fcinfo, "json_populate_record",
-								  true, true);
+								  true, true, NULL);
 }
 
 Datum
 json_to_record(PG_FUNCTION_ARGS)
 {
 	return populate_record_worker(fcinfo, "json_to_record",
-								  true, false);
+								  true, false, NULL);
 }
 
 /* helper function for diagnostics */
@@ -2484,14 +2509,15 @@ populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim)
 	if (ndim <= 0)
 	{
 		if (ctx->colname)
-			ereport(ERROR,
+			errsave(ctx->escontext,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("expected JSON array"),
 					 errhint("See the value of key \"%s\".", ctx->colname)));
 		else
-			ereport(ERROR,
+			errsave(ctx->escontext,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("expected JSON array")));
+		return;
 	}
 	else
 	{
@@ -2506,22 +2532,28 @@ populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim)
 			appendStringInfo(&indices, "[%d]", ctx->sizes[i]);
 
 		if (ctx->colname)
-			ereport(ERROR,
+			errsave(ctx->escontext,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("expected JSON array"),
 					 errhint("See the array element %s of key \"%s\".",
 							 indices.data, ctx->colname)));
 		else
-			ereport(ERROR,
+			errsave(ctx->escontext,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("expected JSON array"),
 					 errhint("See the array element %s.",
 							 indices.data)));
+		return;
 	}
 }
 
-/* set the number of dimensions of the populated array when it becomes known */
-static void
+/*
+ * Validate and set ndims for populating an array with some
+ * populate_array_*() function.
+ *
+ * Returns false if the input (ndims) is erroneous.
+ */
+static bool
 populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims)
 {
 	int			i;
@@ -2529,7 +2561,12 @@ populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims)
 	Assert(ctx->ndims <= 0);
 
 	if (ndims <= 0)
+	{
 		populate_array_report_expected_array(ctx, ndims);
+		/* Getting here means the error was reported softly. */
+		Assert(SOFT_ERROR_OCCURRED(ctx->escontext));
+		return false;
+	}
 
 	ctx->ndims = ndims;
 	ctx->dims = palloc(sizeof(int) * ndims);
@@ -2537,10 +2574,16 @@ populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims)
 
 	for (i = 0; i < ndims; i++)
 		ctx->dims[i] = -1;		/* dimensions are unknown yet */
+
+	return true;
 }
 
-/* check the populated subarray dimension */
-static void
+/*
+ * Check the populated subarray dimension
+ *
+ * Returns false if the input (ndims) is erroneous.
+ */
+static bool
 populate_array_check_dimension(PopulateArrayContext *ctx, int ndim)
 {
 	int			dim = ctx->sizes[ndim]; /* current dimension counter */
@@ -2548,7 +2591,7 @@ populate_array_check_dimension(PopulateArrayContext *ctx, int ndim)
 	if (ctx->dims[ndim] == -1)
 		ctx->dims[ndim] = dim;	/* assign dimension if not yet known */
 	else if (ctx->dims[ndim] != dim)
-		ereport(ERROR,
+		ereturn(ctx->escontext, false,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed JSON array"),
 				 errdetail("Multidimensional arrays must have "
@@ -2560,9 +2603,15 @@ populate_array_check_dimension(PopulateArrayContext *ctx, int ndim)
 	/* increment the parent dimension counter if it is a nested sub-array */
 	if (ndim > 0)
 		ctx->sizes[ndim - 1]++;
+
+	return true;
 }
 
-static void
+/*
+ * Returns true if the array element value was successfully extracted from jsv
+ * and added to ctx->astate.  False if an error occurred when doing so.
+ */
+static bool
 populate_array_element(PopulateArrayContext *ctx, int ndim, JsValue *jsv)
 {
 	Datum		element;
@@ -2573,13 +2622,18 @@ populate_array_element(PopulateArrayContext *ctx, int ndim, JsValue *jsv)
 									ctx->aio->element_type,
 									ctx->aio->element_typmod,
 									NULL, ctx->mcxt, PointerGetDatum(NULL),
-									jsv, &element_isnull);
+									jsv, &element_isnull, ctx->escontext);
+	/* Nothing to do on an error. */
+	if (SOFT_ERROR_OCCURRED(ctx->escontext))
+		return false;
 
 	accumArrayResult(ctx->astate, element, element_isnull,
 					 ctx->aio->element_type, ctx->acxt);
 
 	Assert(ndim > 0);
 	ctx->sizes[ndim - 1]++;		/* increment current dimension counter */
+
+	return true;
 }
 
 /* json object start handler for populate_array_json() */
@@ -2590,9 +2644,17 @@ populate_array_object_start(void *_state)
 	int			ndim = state->lex->lex_level;
 
 	if (state->ctx->ndims <= 0)
-		populate_array_assign_ndims(state->ctx, ndim);
+	{
+		if (!populate_array_assign_ndims(state->ctx, ndim))
+			return JSON_SEM_ACTION_FAILED;
+	}
 	else if (ndim < state->ctx->ndims)
+	{
 		populate_array_report_expected_array(state->ctx, ndim);
+		/* Getting here means the error was reported softly. */
+		Assert(SOFT_ERROR_OCCURRED(state->ctx->escontext));
+		return JSON_SEM_ACTION_FAILED;
+	}
 
 	return JSON_SUCCESS;
 }
@@ -2606,10 +2668,17 @@ populate_array_array_end(void *_state)
 	int			ndim = state->lex->lex_level;
 
 	if (ctx->ndims <= 0)
-		populate_array_assign_ndims(ctx, ndim + 1);
+	{
+		if (!populate_array_assign_ndims(ctx, ndim + 1))
+			return JSON_SEM_ACTION_FAILED;
+	}
 
 	if (ndim < ctx->ndims)
-		populate_array_check_dimension(ctx, ndim);
+	{
+		/* Report if an error occurred. */
+		if (!populate_array_check_dimension(ctx, ndim))
+			return JSON_SEM_ACTION_FAILED;
+	}
 
 	return JSON_SUCCESS;
 }
@@ -2667,7 +2736,9 @@ populate_array_element_end(void *_state, bool isnull)
 								state->element_start) * sizeof(char);
 		}
 
-		populate_array_element(ctx, ndim, &jsv);
+		/* Report if an error occurred. */
+		if (!populate_array_element(ctx, ndim, &jsv))
+			return JSON_SEM_ACTION_FAILED;
 	}
 
 	return JSON_SUCCESS;
@@ -2682,9 +2753,17 @@ populate_array_scalar(void *_state, char *token, JsonTokenType tokentype)
 	int			ndim = state->lex->lex_level;
 
 	if (ctx->ndims <= 0)
-		populate_array_assign_ndims(ctx, ndim);
+	{
+		if (!populate_array_assign_ndims(ctx, ndim))
+			return JSON_SEM_ACTION_FAILED;
+	}
 	else if (ndim < ctx->ndims)
+	{
 		populate_array_report_expected_array(ctx, ndim);
+		/* Getting here means the error was reported softly. */
+		Assert(SOFT_ERROR_OCCURRED(ctx->escontext));
+		return JSON_SEM_ACTION_FAILED;
+	}
 
 	if (ndim == ctx->ndims)
 	{
@@ -2697,8 +2776,12 @@ populate_array_scalar(void *_state, char *token, JsonTokenType tokentype)
 	return JSON_SUCCESS;
 }
 
-/* parse a json array and populate array */
-static void
+/*
+ * Parse a json array and populate array
+ *
+ * Returns false if an error occurs when parsing.
+ */
+static bool
 populate_array_json(PopulateArrayContext *ctx, char *json, int len)
 {
 	PopulateArrayState state;
@@ -2716,19 +2799,25 @@ populate_array_json(PopulateArrayContext *ctx, char *json, int len)
 	sem.array_element_end = populate_array_element_end;
 	sem.scalar = populate_array_scalar;
 
-	pg_parse_json_or_ereport(state.lex, &sem);
-
-	/* number of dimensions should be already known */
-	Assert(ctx->ndims > 0 && ctx->dims);
+	if (pg_parse_json_or_errsave(state.lex, &sem, ctx->escontext))
+	{
+		/* number of dimensions should be already known */
+		Assert(ctx->ndims > 0 && ctx->dims);
+	}
 
 	freeJsonLexContext(state.lex);
+
+	return !SOFT_ERROR_OCCURRED(ctx->escontext);
 }
 
 /*
  * populate_array_dim_jsonb() -- Iterate recursively through jsonb sub-array
  *		elements and accumulate result using given ArrayBuildState.
+ *
+ * Returns false if we return partway through because of an error in a
+ * subroutine.
  */
-static void
+static bool
 populate_array_dim_jsonb(PopulateArrayContext *ctx, /* context */
 						 JsonbValue *jbv,	/* jsonb sub-array */
 						 int ndim)	/* current dimension */
@@ -2742,7 +2831,12 @@ populate_array_dim_jsonb(PopulateArrayContext *ctx, /* context */
 	check_stack_depth();
 
 	if (jbv->type != jbvBinary || !JsonContainerIsArray(jbc))
+	{
 		populate_array_report_expected_array(ctx, ndim - 1);
+		/* Getting here means the error was reported softly. */
+		Assert(SOFT_ERROR_OCCURRED(ctx->escontext));
+		return false;
+	}
 
 	Assert(!JsonContainerIsScalar(jbc));
 
@@ -2763,7 +2857,10 @@ populate_array_dim_jsonb(PopulateArrayContext *ctx, /* context */
 		 (tok == WJB_ELEM &&
 		  (val.type != jbvBinary ||
 		   !JsonContainerIsArray(val.val.binary.data)))))
-		populate_array_assign_ndims(ctx, ndim);
+	{
+		if (!populate_array_assign_ndims(ctx, ndim))
+			return false;
+	}
 
 	jsv.is_json = false;
 	jsv.val.jsonb = &val;
@@ -2776,16 +2873,21 @@ populate_array_dim_jsonb(PopulateArrayContext *ctx, /* context */
 		 * it is not the innermost dimension.
 		 */
 		if (ctx->ndims > 0 && ndim >= ctx->ndims)
-			populate_array_element(ctx, ndim, &jsv);
+		{
+			if (!populate_array_element(ctx, ndim, &jsv))
+				return false;
+		}
 		else
 		{
 			/* populate child sub-array */
-			populate_array_dim_jsonb(ctx, &val, ndim + 1);
+			if (!populate_array_dim_jsonb(ctx, &val, ndim + 1))
+				return false;
 
 			/* number of dimensions should be already known */
 			Assert(ctx->ndims > 0 && ctx->dims);
 
-			populate_array_check_dimension(ctx, ndim);
+			if (!populate_array_check_dimension(ctx, ndim))
+				return false;
 		}
 
 		tok = JsonbIteratorNext(&it, &val, true);
@@ -2796,14 +2898,22 @@ populate_array_dim_jsonb(PopulateArrayContext *ctx, /* context */
 	/* free iterator, iterating until WJB_DONE */
 	tok = JsonbIteratorNext(&it, &val, true);
 	Assert(tok == WJB_DONE && !it);
+
+	return true;
 }
 
-/* recursively populate an array from json/jsonb */
+/*
+ * Recursively populate an array from json/jsonb
+ *
+ * *isnull is set to true if an error is reported during parsing.
+ */
 static Datum
 populate_array(ArrayIOData *aio,
 			   const char *colname,
 			   MemoryContext mcxt,
-			   JsValue *jsv)
+			   JsValue *jsv,
+			   bool *isnull,
+			   Node *escontext)
 {
 	PopulateArrayContext ctx;
 	Datum		result;
@@ -2818,14 +2928,27 @@ populate_array(ArrayIOData *aio,
 	ctx.ndims = 0;				/* unknown yet */
 	ctx.dims = NULL;
 	ctx.sizes = NULL;
+	ctx.escontext = escontext;
 
 	if (jsv->is_json)
-		populate_array_json(&ctx, jsv->val.json.str,
-							jsv->val.json.len >= 0 ? jsv->val.json.len
-							: strlen(jsv->val.json.str));
+	{
+		/* Return null if an error was found. */
+		if (!populate_array_json(&ctx, jsv->val.json.str,
+								 jsv->val.json.len >= 0 ? jsv->val.json.len
+								 : strlen(jsv->val.json.str)))
+		{
+			*isnull = true;
+			return (Datum) 0;
+		}
+	}
 	else
 	{
-		populate_array_dim_jsonb(&ctx, jsv->val.jsonb, 1);
+		/* Return null if an error was found. */
+		if (!populate_array_dim_jsonb(&ctx, jsv->val.jsonb, 1))
+		{
+			*isnull = true;
+			return (Datum) 0;
+		}
 		ctx.dims[0] = ctx.sizes[0];
 	}
 
@@ -2843,11 +2966,16 @@ populate_array(ArrayIOData *aio,
 	pfree(ctx.sizes);
 	pfree(lbs);
 
+	*isnull = false;
 	return result;
 }
 
-static void
-JsValueToJsObject(JsValue *jsv, JsObject *jso)
+/*
+ * Returns false if an error occurs, provided escontext points to an
+ * ErrorSaveContext.
+ */
+static bool
+JsValueToJsObject(JsValue *jsv, JsObject *jso, Node *escontext)
 {
 	jso->is_json = jsv->is_json;
 
@@ -2859,7 +2987,9 @@ JsValueToJsObject(JsValue *jsv, JsObject *jso)
 									jsv->val.json.len >= 0
 									? jsv->val.json.len
 									: strlen(jsv->val.json.str),
-									"populate_composite");
+									"populate_composite",
+									escontext);
+		Assert(jso->val.json_hash != NULL || SOFT_ERROR_OCCURRED(escontext));
 	}
 	else
 	{
@@ -2877,7 +3007,7 @@ JsValueToJsObject(JsValue *jsv, JsObject *jso)
 			is_scalar = IsAJsonbScalar(jbv) ||
 				(jbv->type == jbvBinary &&
 				 JsonContainerIsScalar(jbv->val.binary.data));
-			ereport(ERROR,
+			errsave(escontext,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 is_scalar
 					 ? errmsg("cannot call %s on a scalar",
@@ -2886,6 +3016,8 @@ JsValueToJsObject(JsValue *jsv, JsObject *jso)
 							  "populate_composite")));
 		}
 	}
+
+	return !SOFT_ERROR_OCCURRED(escontext);
 }
 
 /* acquire or update cached tuple descriptor for a composite type */
@@ -2912,7 +3044,12 @@ update_cached_tupdesc(CompositeIOData *io, MemoryContext mcxt)
 	}
 }
 
-/* recursively populate a composite (row type) value from json/jsonb */
+/*
+ * Recursively populate a composite (row type) value from json/jsonb
+ *
+ * Returns null if an error occurs in a subroutine, provided escontext points
+ * to an ErrorSaveContext.
+ */
 static Datum
 populate_composite(CompositeIOData *io,
 				   Oid typid,
@@ -2920,14 +3057,15 @@ populate_composite(CompositeIOData *io,
 				   MemoryContext mcxt,
 				   HeapTupleHeader defaultval,
 				   JsValue *jsv,
-				   bool isnull)
+				   bool *isnull,
+				   Node *escontext)
 {
 	Datum		result;
 
 	/* acquire/update cached tuple descriptor */
 	update_cached_tupdesc(io, mcxt);
 
-	if (isnull)
+	if (*isnull)
 		result = (Datum) 0;
 	else
 	{
@@ -2935,11 +3073,21 @@ populate_composite(CompositeIOData *io,
 		JsObject	jso;
 
 		/* prepare input value */
-		JsValueToJsObject(jsv, &jso);
+		if (!JsValueToJsObject(jsv, &jso, escontext))
+		{
+			*isnull = true;
+			return (Datum) 0;
+		}
 
 		/* populate resulting record tuple */
 		tuple = populate_record(io->tupdesc, &io->record_io,
-								defaultval, mcxt, &jso);
+								defaultval, mcxt, &jso, escontext);
+
+		if (SOFT_ERROR_OCCURRED(escontext))
+		{
+			*isnull = true;
+			return (Datum) 0;
+		}
 		result = HeapTupleHeaderGetDatum(tuple);
 
 		JsObjectFree(&jso);
@@ -2951,14 +3099,27 @@ populate_composite(CompositeIOData *io,
 	 * now, we can tell by comparing typid to base_typid.)
 	 */
 	if (typid != io->base_typid && typid != RECORDOID)
-		domain_check(result, isnull, typid, &io->domain_info, mcxt);
+	{
+		if (!domain_check_safe(result, *isnull, typid, &io->domain_info, mcxt,
+							   escontext))
+		{
+			*isnull = true;
+			return (Datum) 0;
+		}
+	}
 
 	return result;
 }
 
-/* populate non-null scalar value from json/jsonb value */
+/*
+ * Populate non-null scalar value from json/jsonb value.
+ *
+ * Returns null if an error occurs during the call to type input function,
+ * provided escontext is valid.
+ */
 static Datum
-populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
+populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv,
+				bool *isnull, Node *escontext)
 {
 	Datum		res;
 	char	   *str = NULL;
@@ -3029,7 +3190,12 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 			elog(ERROR, "unrecognized jsonb type: %d", (int) jbv->type);
 	}
 
-	res = InputFunctionCall(&io->typiofunc, str, io->typioparam, typmod);
+	if (!InputFunctionCallSafe(&io->typiofunc, str, io->typioparam, typmod,
+							   escontext, &res))
+	{
+		res = (Datum) 0;
+		*isnull = true;
+	}
 
 	/* free temporary buffer */
 	if (str != json)
@@ -3044,22 +3210,28 @@ populate_domain(DomainIOData *io,
 				const char *colname,
 				MemoryContext mcxt,
 				JsValue *jsv,
-				bool isnull)
+				bool *isnull,
+				Node *escontext)
 {
 	Datum		res;
 
-	if (isnull)
+	if (*isnull)
 		res = (Datum) 0;
 	else
 	{
 		res = populate_record_field(io->base_io,
 									io->base_typid, io->base_typmod,
 									colname, mcxt, PointerGetDatum(NULL),
-									jsv, &isnull);
-		Assert(!isnull);
+									jsv, isnull, escontext);
+		Assert(!*isnull || SOFT_ERROR_OCCURRED(escontext));
 	}
 
-	domain_check(res, isnull, typid, &io->domain_info, mcxt);
+	if (!domain_check_safe(res, *isnull, typid, &io->domain_info, mcxt,
+						   escontext))
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
 
 	return res;
 }
@@ -3160,7 +3332,8 @@ populate_record_field(ColumnIOData *col,
 					  MemoryContext mcxt,
 					  Datum defaultval,
 					  JsValue *jsv,
-					  bool *isnull)
+					  bool *isnull,
+					  Node *escontext)
 {
 	TypeCat		typcat;
 
@@ -3193,10 +3366,12 @@ populate_record_field(ColumnIOData *col,
 	switch (typcat)
 	{
 		case TYPECAT_SCALAR:
-			return populate_scalar(&col->scalar_io, typid, typmod, jsv);
+			return populate_scalar(&col->scalar_io, typid, typmod, jsv,
+								   isnull, escontext);
 
 		case TYPECAT_ARRAY:
-			return populate_array(&col->io.array, colname, mcxt, jsv);
+			return populate_array(&col->io.array, colname, mcxt, jsv,
+								  isnull, escontext);
 
 		case TYPECAT_COMPOSITE:
 		case TYPECAT_COMPOSITE_DOMAIN:
@@ -3205,11 +3380,12 @@ populate_record_field(ColumnIOData *col,
 									  DatumGetPointer(defaultval)
 									  ? DatumGetHeapTupleHeader(defaultval)
 									  : NULL,
-									  jsv, *isnull);
+									  jsv, isnull,
+									  escontext);
 
 		case TYPECAT_DOMAIN:
 			return populate_domain(&col->io.domain, typid, colname, mcxt,
-								   jsv, *isnull);
+								   jsv, isnull, escontext);
 
 		default:
 			elog(ERROR, "unrecognized type category '%c'", typcat);
@@ -3266,7 +3442,8 @@ populate_record(TupleDesc tupdesc,
 				RecordIOData **record_p,
 				HeapTupleHeader defaultval,
 				MemoryContext mcxt,
-				JsObject *obj)
+				JsObject *obj,
+				Node *escontext)
 {
 	RecordIOData *record = *record_p;
 	Datum	   *values;
@@ -3358,7 +3535,8 @@ populate_record(TupleDesc tupdesc,
 										  mcxt,
 										  nulls[i] ? (Datum) 0 : values[i],
 										  &field,
-										  &nulls[i]);
+										  &nulls[i],
+										  escontext);
 	}
 
 	res = heap_form_tuple(tupdesc, values, nulls);
@@ -3439,12 +3617,14 @@ get_record_type_from_query(FunctionCallInfo fcinfo,
  */
 static Datum
 populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
-					   bool is_json, bool have_record_arg)
+					   bool is_json, bool have_record_arg,
+					   Node *escontext)
 {
 	int			json_arg_num = have_record_arg ? 1 : 0;
 	JsValue		jsv = {0};
 	HeapTupleHeader rec;
 	Datum		rettuple;
+	bool		isnull;
 	JsonbValue	jbv;
 	MemoryContext fnmcxt = fcinfo->flinfo->fn_mcxt;
 	PopulateRecordCache *cache = fcinfo->flinfo->fn_extra;
@@ -3531,8 +3711,11 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 		jbv.val.binary.len = VARSIZE(jb) - VARHDRSZ;
 	}
 
+	isnull = false;
 	rettuple = populate_composite(&cache->c.io.composite, cache->argtype,
-								  NULL, fnmcxt, rec, &jsv, false);
+								  NULL, fnmcxt, rec, &jsv, &isnull,
+								  escontext);
+	Assert(!isnull || SOFT_ERROR_OCCURRED(escontext));
 
 	PG_RETURN_DATUM(rettuple);
 }
@@ -3540,10 +3723,13 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 /*
  * get_json_object_as_hash
  *
- * decompose a json object into a hash table.
+ * Decomposes a json object into a hash table.
+ *
+ * Returns the hash table if the json is parsed successfully, NULL otherwise.
  */
 static HTAB *
-get_json_object_as_hash(char *json, int len, const char *funcname)
+get_json_object_as_hash(char *json, int len, const char *funcname,
+						Node *escontext)
 {
 	HASHCTL		ctl;
 	HTAB	   *tab;
@@ -3572,7 +3758,11 @@ get_json_object_as_hash(char *json, int len, const char *funcname)
 	sem->object_field_start = hash_object_field_start;
 	sem->object_field_end = hash_object_field_end;
 
-	pg_parse_json_or_ereport(state->lex, sem);
+	if (!pg_parse_json_or_errsave(state->lex, sem, escontext))
+	{
+		hash_destroy(state->hash);
+		tab = NULL;
+	}
 
 	freeJsonLexContext(state->lex);
 
@@ -3743,14 +3933,16 @@ populate_recordset_record(PopulateRecordsetState *state, JsObject *obj)
 							  &cache->c.io.composite.record_io,
 							  state->rec,
 							  cache->fn_mcxt,
-							  obj);
+							  obj,
+							  NULL);
 
 	/* if it's domain over composite, check domain constraints */
 	if (cache->c.typcat == TYPECAT_COMPOSITE_DOMAIN)
-		domain_check(HeapTupleHeaderGetDatum(tuphead), false,
-					 cache->argtype,
-					 &cache->c.io.composite.domain_info,
-					 cache->fn_mcxt);
+		(void) domain_check_safe(HeapTupleHeaderGetDatum(tuphead), false,
+								 cache->argtype,
+								 &cache->c.io.composite.domain_info,
+								 cache->fn_mcxt,
+								 NULL);
 
 	/* ok, save into tuplestore */
 	tuple.t_len = HeapTupleHeaderGetDatumLength(tuphead);
