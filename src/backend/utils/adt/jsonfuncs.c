@@ -2478,7 +2478,7 @@ jsonb_populate_record_valid(PG_FUNCTION_ARGS)
 	(void) populate_record_worker(fcinfo, "jsonb_populate_record",
 								  false, true, (Node *) &escontext);
 
-	return BoolGetDatum(!SOFT_ERROR_OCCURRED(&escontext));
+	return BoolGetDatum(!escontext.error_occurred);
 }
 
 Datum
