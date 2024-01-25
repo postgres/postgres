@@ -90,7 +90,7 @@ typedef struct ReplicationSlotOnDisk
 	sizeof(ReplicationSlotOnDisk) - ReplicationSlotOnDiskConstantSize
 
 #define SLOT_MAGIC		0x1051CA1	/* format identifier */
-#define SLOT_VERSION	3		/* version for new files */
+#define SLOT_VERSION	4		/* version for new files */
 
 /* Control array for replication slot management */
 ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
@@ -248,10 +248,13 @@ ReplicationSlotValidateName(const char *name, int elevel)
  *     during getting changes, if the two_phase option is enabled it can skip
  *     prepare because by that time start decoding point has been moved. So the
  *     user will only get commit prepared.
+ * failover: If enabled, allows the slot to be synced to standbys so
+ *     that logical replication can be resumed after failover.
  */
 void
 ReplicationSlotCreate(const char *name, bool db_specific,
-					  ReplicationSlotPersistency persistency, bool two_phase)
+					  ReplicationSlotPersistency persistency,
+					  bool two_phase, bool failover)
 {
 	ReplicationSlot *slot = NULL;
 	int			i;
@@ -311,6 +314,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	slot->data.persistency = persistency;
 	slot->data.two_phase = two_phase;
 	slot->data.two_phase_at = InvalidXLogRecPtr;
+	slot->data.failover = failover;
 
 	/* and then data only present in shared memory */
 	slot->just_dirtied = false;

@@ -916,8 +916,10 @@ create_logical_replication_slots(void)
 			appendStringLiteralConn(query, slot_info->slotname, conn);
 			appendPQExpBuffer(query, ", ");
 			appendStringLiteralConn(query, slot_info->plugin, conn);
-			appendPQExpBuffer(query, ", false, %s);",
-							  slot_info->two_phase ? "true" : "false");
+
+			appendPQExpBuffer(query, ", false, %s, %s);",
+							  slot_info->two_phase ? "true" : "false",
+							  slot_info->failover ? "true" : "false");
 
 			PQclear(executeQueryOrDie(conn, "%s", query->data));
 

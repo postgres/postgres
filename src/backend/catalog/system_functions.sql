@@ -479,6 +479,7 @@ CREATE OR REPLACE FUNCTION pg_create_logical_replication_slot(
     IN slot_name name, IN plugin name,
     IN temporary boolean DEFAULT false,
     IN twophase boolean DEFAULT false,
+    IN failover boolean DEFAULT false,
     OUT slot_name name, OUT lsn pg_lsn)
 RETURNS RECORD
 LANGUAGE INTERNAL

@@ -2555,6 +2555,16 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        </itemizedlist>
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>failover</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if this is a logical slot enabled to be synced to the standbys.
+       Always false for physical slots.
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

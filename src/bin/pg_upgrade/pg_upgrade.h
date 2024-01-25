@@ -160,6 +160,8 @@ typedef struct
 	bool		two_phase;		/* can the slot decode 2PC? */
 	bool		caught_up;		/* has the slot caught up to latest changes? */
 	bool		invalid;		/* if true, the slot is unusable */
+	bool		failover;		/* is the slot designated to be synced to the
+								 * physical standby? */
 } LogicalSlotInfo;
 
 typedef struct

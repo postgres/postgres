@@ -176,3 +176,16 @@ ORDER BY o.slot_name, c.slot_name;
 SELECT pg_drop_replication_slot('orig_slot2');
 SELECT pg_drop_replication_slot('copied_slot2_no_change');
 SELECT pg_drop_replication_slot('copied_slot2_notemp');
+
+-- Test failover option of slots.
+SELECT 'init' FROM pg_create_logical_replication_slot('failover_true_slot', 'test_decoding', false, false, true);
+SELECT 'init' FROM pg_create_logical_replication_slot('failover_false_slot', 'test_decoding', false, false, false);
+SELECT 'init' FROM pg_create_logical_replication_slot('failover_default_slot', 'test_decoding', false, false);
+SELECT 'init' FROM pg_create_physical_replication_slot('physical_slot');
+
+SELECT slot_name, slot_type, failover FROM pg_replication_slots;
+
+SELECT pg_drop_replication_slot('failover_true_slot');
+SELECT pg_drop_replication_slot('failover_false_slot');
+SELECT pg_drop_replication_slot('failover_default_slot');
+SELECT pg_drop_replication_slot('physical_slot');

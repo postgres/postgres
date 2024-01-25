@@ -27707,7 +27707,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         <indexterm>
          <primary>pg_create_logical_replication_slot</primary>
         </indexterm>
-        <function>pg_create_logical_replication_slot</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type>, <parameter>twophase</parameter> <type>boolean</type> </optional> )
+        <function>pg_create_logical_replication_slot</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type>, <parameter>twophase</parameter> <type>boolean</type>, <parameter>failover</parameter> <type>boolean</type> </optional> )
         <returnvalue>record</returnvalue>
         ( <parameter>slot_name</parameter> <type>name</type>,
         <parameter>lsn</parameter> <type>pg_lsn</type> )
@@ -27722,8 +27722,13 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         released upon any error. The optional fourth parameter,
         <parameter>twophase</parameter>, when set to true, specifies
         that the decoding of prepared transactions is enabled for this
-        slot. A call to this function has the same effect as the replication
-        protocol command <literal>CREATE_REPLICATION_SLOT ... LOGICAL</literal>.
+        slot. The optional fifth parameter,
+        <parameter>failover</parameter>, when set to true,
+        specifies that this slot is enabled to be synced to the
+        standbys so that logical replication can be resumed after
+        failover. A call to this function has the same effect as
+        the replication protocol command
+        <literal>CREATE_REPLICATION_SLOT ... LOGICAL</literal>.
        </para></entry>
       </row>
 

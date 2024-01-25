@@ -406,3 +406,61 @@ SELECT pg_drop_replication_slot('copied_slot2_notemp');
  
 (1 row)
 
+-- Test failover option of slots.
+SELECT 'init' FROM pg_create_logical_replication_slot('failover_true_slot', 'test_decoding', false, false, true);
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('failover_false_slot', 'test_decoding', false, false, false);
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('failover_default_slot', 'test_decoding', false, false);
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT 'init' FROM pg_create_physical_replication_slot('physical_slot');
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT slot_name, slot_type, failover FROM pg_replication_slots;
+       slot_name       | slot_type | failover 
+-----------------------+-----------+----------
+ failover_true_slot    | logical   | t
+ failover_false_slot   | logical   | f
+ failover_default_slot | logical   | f
+ physical_slot         | physical  | f
+(4 rows)
+
+SELECT pg_drop_replication_slot('failover_true_slot');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+SELECT pg_drop_replication_slot('failover_false_slot');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+SELECT pg_drop_replication_slot('failover_default_slot');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+SELECT pg_drop_replication_slot('physical_slot');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+

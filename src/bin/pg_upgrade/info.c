@@ -666,7 +666,7 @@ get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check)
 	 * started and stopped several times causing any temporary slots to be
 	 * removed.
 	 */
-	res = executeQueryOrDie(conn, "SELECT slot_name, plugin, two_phase, "
+	res = executeQueryOrDie(conn, "SELECT slot_name, plugin, two_phase, failover, "
 							"%s as caught_up, conflict_reason IS NOT NULL as invalid "
 							"FROM pg_catalog.pg_replication_slots "
 							"WHERE slot_type = 'logical' AND "
@@ -684,6 +684,7 @@ get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check)
 		int			i_slotname;
 		int			i_plugin;
 		int			i_twophase;
+		int			i_failover;
 		int			i_caught_up;
 		int			i_invalid;
 
@@ -692,6 +693,7 @@ get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check)
 		i_slotname = PQfnumber(res, "slot_name");
 		i_plugin = PQfnumber(res, "plugin");
 		i_twophase = PQfnumber(res, "two_phase");
+		i_failover = PQfnumber(res, "failover");
 		i_caught_up = PQfnumber(res, "caught_up");
 		i_invalid = PQfnumber(res, "invalid");
 
@@ -702,6 +704,7 @@ get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check)
 			curr->slotname = pg_strdup(PQgetvalue(res, slotnum, i_slotname));
 			curr->plugin = pg_strdup(PQgetvalue(res, slotnum, i_plugin));
 			curr->two_phase = (strcmp(PQgetvalue(res, slotnum, i_twophase), "t") == 0);
+			curr->failover = (strcmp(PQgetvalue(res, slotnum, i_failover), "t") == 0);
 			curr->caught_up = (strcmp(PQgetvalue(res, slotnum, i_caught_up), "t") == 0);
 			curr->invalid = (strcmp(PQgetvalue(res, slotnum, i_invalid), "t") == 0);
 		}
