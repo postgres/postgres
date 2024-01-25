@@ -70,8 +70,6 @@ static uint32 local_my_wait_event_info;
 uint32	   *my_wait_event_info = &local_my_wait_event_info;
 #endif
 
-slock_t		dummy_spinlock;
-
 static int	spins_per_delay = DEFAULT_SPINS_PER_DELAY;
 
 
