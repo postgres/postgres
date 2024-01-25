@@ -55,7 +55,7 @@ gbt_decompress(PG_FUNCTION_ARGS)
 }
 
 /*
- * Returns the btree number for equals, otherwise invalid.
+ * Returns the btree number for supported operators, otherwise invalid.
  */
 Datum
 gist_stratnum_btree(PG_FUNCTION_ARGS)
