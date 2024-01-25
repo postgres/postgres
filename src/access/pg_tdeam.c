@@ -3635,7 +3635,7 @@ l2:
 		if (need_toast)
 		{
 			/* Note we always use WAL and FSM during updates */
-			heaptup = pg_tde_toast_insert_or_update(relation, newtup, &oldtup, 0);
+			heaptup = pg_tde_toast_insert_or_update(relation, newtup, &oldtup_decrypted, 0);
 			newtupsize = MAXALIGN(heaptup->t_len);
 		}
 		else
