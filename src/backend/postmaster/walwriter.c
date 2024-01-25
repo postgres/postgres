@@ -78,9 +78,6 @@ int			WalWriterFlushAfter = DEFAULT_WAL_WRITER_FLUSH_AFTER;
 #define LOOPS_UNTIL_HIBERNATE		50
 #define HIBERNATE_FACTOR			25
 
-/* Prototypes for private functions */
-static void HandleWalWriterInterrupts(void);
-
 /*
  * Main entry point for walwriter process
  *
@@ -245,7 +242,7 @@ WalWriterMain(void)
 		ResetLatch(MyLatch);
 
 		/* Process any signals received recently */
-		HandleWalWriterInterrupts();
+		HandleMainLoopInterrupts();
 
 		/*
 		 * Do what we're here for; then, if XLogBackgroundFlush() found useful
@@ -274,27 +271,4 @@ WalWriterMain(void)
 						 cur_timeout,
 						 WAIT_EVENT_WAL_WRITER_MAIN);
 	}
-}
-
-/*
- * Interrupt handler for main loops of WAL writer process.
- */
-static void
-HandleWalWriterInterrupts(void)
-{
-	if (ProcSignalBarrierPending)
-		ProcessProcSignalBarrier();
-
-	if (ConfigReloadPending)
-	{
-		ConfigReloadPending = false;
-		ProcessConfigFile(PGC_SIGHUP);
-	}
-
-	if (ShutdownRequestPending)
-		proc_exit(0);
-
-	/* Perform logging of memory contexts of this process */
-	if (LogMemoryContextPending)
-		ProcessLogMemoryContextInterrupt();
 }
