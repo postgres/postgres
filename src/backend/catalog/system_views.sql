@@ -1318,7 +1318,8 @@ CREATE VIEW pg_stat_progress_copy AS
         S.param1 AS bytes_processed,
         S.param2 AS bytes_total,
         S.param3 AS tuples_processed,
-        S.param4 AS tuples_excluded
+        S.param4 AS tuples_excluded,
+        S.param7 AS tuples_skipped
     FROM pg_stat_get_progress_info('COPY') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 

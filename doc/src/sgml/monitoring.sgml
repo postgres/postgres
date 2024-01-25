@@ -5780,6 +5780,18 @@ FROM pg_stat_get_backend_idset() AS backendid;
        <command>WHERE</command> clause of the <command>COPY</command> command.
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tuples_skipped</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of tuples skipped because they contain malformed data.
+       This counter only advances when a value other than
+       <literal>stop</literal> is specified to the <literal>ON_ERROR</literal>
+       option.
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

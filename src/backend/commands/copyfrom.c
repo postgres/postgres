@@ -650,6 +650,7 @@ CopyFrom(CopyFromState cstate)
 	CopyMultiInsertInfo multiInsertInfo = {0};	/* pacify compiler */
 	int64		processed = 0;
 	int64		excluded = 0;
+	int64		skipped = 0;
 	bool		has_before_insert_row_trig;
 	bool		has_instead_insert_row_trig;
 	bool		leafpart_use_multi_insert = false;
@@ -1011,6 +1012,10 @@ CopyFrom(CopyFromState cstate)
 				 * be filled, just resetting error_occurred is enough.
 				 */
 				cstate->escontext->error_occurred = false;
+
+			/* Report that this tuple was skipped by the ON_ERROR clause */
+			pgstat_progress_update_param(PROGRESS_COPY_TUPLES_SKIPPED,
+										 ++skipped);
 
 			continue;
 		}
