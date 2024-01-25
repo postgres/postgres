@@ -537,7 +537,7 @@ LookupCollation(ParseState *pstate, List *collnames, int location)
  * pstate is only used for error location purposes, and can be NULL.
  */
 Oid
-GetColumnDefCollation(ParseState *pstate, ColumnDef *coldef, Oid typeOid)
+GetColumnDefCollation(ParseState *pstate, const ColumnDef *coldef, Oid typeOid)
 {
 	Oid			result;
 	Oid			typcollation = get_typcollation(typeOid);
