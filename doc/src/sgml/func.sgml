@@ -15889,6 +15889,9 @@ table2-mapping
        </para>
        <para>
         Does JSON path return any item for the specified JSON value?
+        (This is useful only with SQL-standard JSON path expressions, not
+        <link linkend="functions-sqljson-check-expressions">predicate check
+        expressions</link>, since those always return a value.)
        </para>
        <para>
         <literal>'{"a":[1,2,3,4,5]}'::jsonb @? '$.a[*] ? (@ > 2)'</literal>
@@ -15903,9 +15906,12 @@ table2-mapping
        </para>
        <para>
         Returns the result of a JSON path predicate check for the
-        specified JSON value.  Only the first item of the result is taken into
-        account.  If the result is not Boolean, then <literal>NULL</literal>
-        is returned.
+        specified JSON value.
+        (This is useful only
+        with <link linkend="functions-sqljson-check-expressions">predicate
+        check expressions</link>, not SQL-standard JSON path expressions,
+        since it will return <literal>NULL</literal> if the path result is
+        not a single boolean value.)
        </para>
        <para>
         <literal>'{"a":[1,2,3,4,5]}'::jsonb @@ '$.a[*] > 2'</literal>
@@ -17029,6 +17035,9 @@ ERROR:  value too long for type character(2)
        <para>
         Checks whether the JSON path returns any item for the specified JSON
         value.
+        (This is useful only with SQL-standard JSON path expressions, not
+        <link linkend="functions-sqljson-check-expressions">predicate check
+        expressions</link>, since those always return a value.)
         If the <parameter>vars</parameter> argument is specified, it must
         be a JSON object, and its fields provide named values to be
         substituted into the <type>jsonpath</type> expression.
@@ -17052,8 +17061,12 @@ ERROR:  value too long for type character(2)
        </para>
        <para>
         Returns the result of a JSON path predicate check for the specified
-        JSON value.  Only the first item of the result is taken into account.
-        If the result is not Boolean, then <literal>NULL</literal> is returned.
+        JSON value.
+        (This is useful only
+        with <link linkend="functions-sqljson-check-expressions">predicate
+        check expressions</link>, not SQL-standard JSON path expressions,
+        since it will either fail or return <literal>NULL</literal> if the
+        path result is not a single boolean value.)
         The optional <parameter>vars</parameter>
         and <parameter>silent</parameter> arguments act the same as
         for <function>jsonb_path_exists</function>.
@@ -17075,6 +17088,12 @@ ERROR:  value too long for type character(2)
        <para>
         Returns all JSON items returned by the JSON path for the specified
         JSON value.
+        For SQL-standard JSON path expressions it returns the JSON
+        values selected from <parameter>target</parameter>.
+        For <link linkend="functions-sqljson-check-expressions">predicate
+        check expressions</link> it returns the result of the predicate
+        check: <literal>true</literal>, <literal>false</literal>,
+        or <literal>null</literal>.
         The optional <parameter>vars</parameter>
         and <parameter>silent</parameter> arguments act the same as
         for <function>jsonb_path_exists</function>.
@@ -17103,9 +17122,8 @@ ERROR:  value too long for type character(2)
        <para>
         Returns all JSON items returned by the JSON path for the specified
         JSON value, as a JSON array.
-        The optional <parameter>vars</parameter>
-        and <parameter>silent</parameter> arguments act the same as
-        for <function>jsonb_path_exists</function>.
+        The parameters are the same as
+        for <function>jsonb_path_query</function>.
        </para>
        <para>
         <literal>jsonb_path_query_array('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
@@ -17123,11 +17141,10 @@ ERROR:  value too long for type character(2)
        </para>
        <para>
         Returns the first JSON item returned by the JSON path for the
-        specified JSON value.  Returns <literal>NULL</literal> if there are no
+        specified JSON value, or <literal>NULL</literal> if there are no
         results.
-        The optional <parameter>vars</parameter>
-        and <parameter>silent</parameter> arguments act the same as
-        for <function>jsonb_path_exists</function>.
+        The parameters are the same as
+        for <function>jsonb_path_query</function>.
        </para>
        <para>
         <literal>jsonb_path_query_first('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
@@ -17266,9 +17283,9 @@ ERROR:  value too long for type character(2)
   </indexterm>
 
   <para>
-   SQL/JSON path expressions specify the items to be retrieved
-   from the JSON data, similar to XPath expressions used
-   for SQL access to XML. In <productname>PostgreSQL</productname>,
+   SQL/JSON path expressions specify item(s) to be retrieved
+   from a JSON value, similarly to XPath expressions used
+   for access to XML content. In <productname>PostgreSQL</productname>,
    path expressions are implemented as the <type>jsonpath</type>
    data type and can use any elements described in
    <xref linkend="datatype-jsonpath"/>.
@@ -17279,6 +17296,8 @@ ERROR:  value too long for type character(2)
    pass the provided path expression to the <firstterm>path engine</firstterm>
    for evaluation. If the expression matches the queried JSON data,
    the corresponding JSON item, or set of items, is returned.
+   If there is no match, the result will be <literal>NULL</literal>,
+   <literal>false</literal>, or an error, depending on the function.
    Path expressions are written in the SQL/JSON path language
    and can include arithmetic expressions and functions.
   </para>
@@ -17296,18 +17315,20 @@ ERROR:  value too long for type character(2)
   <para>
    To refer to the JSON value being queried (the
    <firstterm>context item</firstterm>), use the <literal>$</literal> variable
-   in the path expression. It can be followed by one or more
+   in the path expression. The first element of a path must always
+   be <literal>$</literal>. It can be followed by one or more
    <link linkend="type-jsonpath-accessors">accessor operators</link>,
    which go down the JSON structure level by level to retrieve sub-items
-   of the context item. Each operator that follows deals with the
-   result of the previous evaluation step.
+   of the context item. Each accessor operator acts on the
+   result(s) of the previous evaluation step, producing zero, one, or more
+   output items from each input item.
   </para>
 
   <para>
    For example, suppose you have some JSON data from a GPS tracker that you
    would like to parse, such as:
 <programlisting>
-{
+SELECT '{
   "track": {
     "segments": [
       {
@@ -17322,68 +17343,100 @@ ERROR:  value too long for type character(2)
       }
     ]
   }
-}
+}' AS json \gset
 </programlisting>
+   (The above example can be copied-and-pasted
+   into <application>psql</application> to set things up for the following
+   examples.  Then <application>psql</application> will
+   expand <literal>:'json'</literal> into a suitably-quoted string
+   constant containing the JSON value.)
   </para>
 
   <para>
    To retrieve the available track segments, you need to use the
    <literal>.<replaceable>key</replaceable></literal> accessor
-   operator to descend through surrounding JSON objects:
-<programlisting>
-$.track.segments
-</programlisting>
+   operator to descend through surrounding JSON objects, for example:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments');</userinput>
+                                                                         jsonb_path_query
+-----------------------------------------------------------&zwsp;-----------------------------------------------------------&zwsp;---------------------------------------------
+ [{"HR": 73, "location": [47.763, 13.4034], "start time": "2018-10-14 10:05:14"}, {"HR": 135, "location": [47.706, 13.2635], "start time": "2018-10-14 10:39:21"}]
+</screen>
   </para>
 
   <para>
    To retrieve the contents of an array, you typically use the
-   <literal>[*]</literal> operator. For example,
-   the following path will return the location coordinates for all
+   <literal>[*]</literal> operator.
+   The following example will return the location coordinates for all
    the available track segments:
-<programlisting>
-$.track.segments[*].location
-</programlisting>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+</screen>
+   Here we started with the whole JSON input value (<literal>$</literal>),
+   then the <literal>.track</literal> accessor selected the JSON object
+   associated with the <literal>"track"</literal> object key, then
+   the <literal>.segments</literal> accessor selected the JSON array
+   associated with the <literal>"segments"</literal> key within that
+   object, then the <literal>[*]</literal> accessor selected each element
+   of that array (producing a series of items), then
+   the <literal>.location</literal> accessor selected the JSON array
+   associated with the <literal>"location"</literal> key within each of
+   those objects.  In this example, each of those objects had
+   a <literal>"location"</literal> key; but if any of them did not,
+   the <literal>.location</literal> accessor would have simply produced no
+   output for that input item.
   </para>
 
   <para>
    To return the coordinates of the first segment only, you can
    specify the corresponding subscript in the <literal>[]</literal>
    accessor operator. Recall that JSON array indexes are 0-relative:
-<programlisting>
-$.track.segments[0].location
-</programlisting>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[0].location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+</screen>
   </para>
 
   <para>
    The result of each path evaluation step can be processed
-   by one or more <type>jsonpath</type> operators and methods
+   by one or more of the <type>jsonpath</type> operators and methods
    listed in <xref linkend="functions-sqljson-path-operators"/>.
    Each method name must be preceded by a dot. For example,
    you can get the size of an array:
-<programlisting>
-$.track.segments.size()
-</programlisting>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments.size()');</userinput>
+ jsonb_path_query
+------------------
+ 2
+</screen>
    More examples of using <type>jsonpath</type> operators
    and methods within path expressions appear below in
    <xref linkend="functions-sqljson-path-operators"/>.
   </para>
 
   <para>
-   When defining a path, you can also use one or more
+   A path can also contain
    <firstterm>filter expressions</firstterm> that work similarly to the
    <literal>WHERE</literal> clause in SQL. A filter expression begins with
    a question mark and provides a condition in parentheses:
 
-<programlisting>
+<synopsis>
 ? (<replaceable>condition</replaceable>)
-</programlisting>
+</synopsis>
   </para>
 
   <para>
    Filter expressions must be written just after the path evaluation step
    to which they should apply. The result of that step is filtered to include
    only those items that satisfy the provided condition. SQL/JSON defines
-   three-valued logic, so the condition can be <literal>true</literal>, <literal>false</literal>,
+   three-valued logic, so the condition can
+   produce <literal>true</literal>, <literal>false</literal>,
    or <literal>unknown</literal>. The <literal>unknown</literal> value
    plays the same role as SQL <literal>NULL</literal> and can be tested
    for with the <literal>is unknown</literal> predicate. Further path
@@ -17395,90 +17448,133 @@ $.track.segments.size()
    The functions and operators that can be used in filter expressions are
    listed in <xref linkend="functions-sqljson-filter-ex-table"/>.  Within a
    filter expression, the <literal>@</literal> variable denotes the value
-   being filtered (i.e., one result of the preceding path step).  You can
+   being considered (i.e., one result of the preceding path step).  You can
    write accessor operators after <literal>@</literal> to retrieve component
    items.
   </para>
 
   <para>
    For example, suppose you would like to retrieve all heart rate values higher
-   than 130. You can achieve this using the following expression:
-<programlisting>
-$.track.segments[*].HR ? (@ &gt; 130)
-</programlisting>
+   than 130. You can achieve this as follows:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].HR ? (@ &gt; 130)');</userinput>
+ jsonb_path_query
+------------------
+ 135
+</screen>
   </para>
 
   <para>
    To get the start times of segments with such values, you have to
-   filter out irrelevant segments before returning the start times, so the
+   filter out irrelevant segments before selecting the start times, so the
    filter expression is applied to the previous step, and the path used
    in the condition is different:
-<programlisting>
-$.track.segments[*] ? (@.HR &gt; 130)."start time"
-</programlisting>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.HR &gt; 130)."start time"');</userinput>
+   jsonb_path_query
+-----------------------
+ "2018-10-14 10:39:21"
+</screen>
   </para>
 
   <para>
-   You can use several filter expressions in sequence, if required. For
-   example, the following expression selects start times of all segments that
+   You can use several filter expressions in sequence, if required.
+   The following example selects start times of all segments that
    contain locations with relevant coordinates and high heart rate values:
-<programlisting>
-$.track.segments[*] ? (@.location[1] &lt; 13.4) ? (@.HR &gt; 130)."start time"
-</programlisting>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.location[1] &lt; 13.4) ? (@.HR &gt; 130)."start time"');</userinput>
+   jsonb_path_query
+-----------------------
+ "2018-10-14 10:39:21"
+</screen>
   </para>
 
   <para>
    Using filter expressions at different nesting levels is also allowed.
    The following example first filters all segments by location, and then
    returns high heart rate values for these segments, if available:
-<programlisting>
-$.track.segments[*] ? (@.location[1] &lt; 13.4).HR ? (@ &gt; 130)
-</programlisting>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.location[1] &lt; 13.4).HR ? (@ &gt; 130)');</userinput>
+ jsonb_path_query
+------------------
+ 135
+</screen>
   </para>
 
   <para>
-   You can also nest filter expressions within each other:
-<programlisting>
-$.track ? (exists(@.segments[*] ? (@.HR &gt; 130))).segments.size()
-</programlisting>
-   This expression returns the size of the track if it contains any
-   segments with high heart rate values, or an empty sequence otherwise.
+   You can also nest filter expressions within each other.
+   This example returns the size of the track if it contains any
+   segments with high heart rate values, or an empty sequence otherwise:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track ? (exists(@.segments[*] ? (@.HR &gt; 130))).segments.size()');</userinput>
+ jsonb_path_query
+------------------
+ 2
+</screen>
   </para>
 
-  <para>
-   <productname>PostgreSQL</productname>'s implementation of the SQL/JSON path
-   language has the following deviations from the SQL/JSON standard:
-  </para>
+  <sect3 id="functions-sqljson-deviations">
+  <title>Deviations from the SQL Standard</title>
+   <para>
+    <productname>PostgreSQL</productname>'s implementation of the SQL/JSON path
+    language has the following deviations from the SQL/JSON standard.
+   </para>
 
-  <itemizedlist>
-   <listitem>
+   <sect4 id="functions-sqljson-check-expressions">
+   <title>Boolean Predicate Check Expressions</title>
     <para>
-     A path expression can be a Boolean predicate, although the SQL/JSON
-     standard allows predicates only in filters.  This is necessary for
-     implementation of the <literal>@@</literal> operator. For example,
-     the following <type>jsonpath</type> expression is valid in
-     <productname>PostgreSQL</productname>:
-<programlisting>
-$.track.segments[*].HR &lt; 70
-</programlisting>
-    </para>
-   </listitem>
+     As an extension to the SQL standard,
+     a <productname>PostgreSQL</productname> path expression can be a
+     Boolean predicate, whereas the SQL standard allows predicates only within
+     filters. While SQL-standard path expressions return the relevant
+     element(s) of the queried JSON value, predicate check expressions
+     return the single three-valued result of the
+     predicate: <literal>true</literal>,
+     <literal>false</literal>, or <literal>unknown</literal>.
+     For example, we could write this SQL-standard filter expression:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments ?(@[*].HR &gt; 130)');</userinput>
+                                jsonb_path_query
+-----------------------------------------------------------&zwsp;----------------------
+ {"HR": 135, "location": [47.706, 13.2635], "start time": "2018-10-14 10:39:21"}
+</screen>
+     The similar predicate check expression simply
+     returns <literal>true</literal>, indicating that a match exists:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].HR &gt; 130');</userinput>
+ jsonb_path_query
+------------------
+ true
+</screen>
+     </para>
 
-   <listitem>
-    <para>
-     There are minor differences in the interpretation of regular
-     expression patterns used in <literal>like_regex</literal> filters, as
-     described in <xref linkend="jsonpath-regular-expressions"/>.
-    </para>
-   </listitem>
-  </itemizedlist>
+     <note>
+      <para>
+       Predicate check expressions are required in the
+       <literal>@@</literal> operator (and the
+       <function>jsonb_path_match</function> function), and should not be used
+       with the <literal>@?</literal> operator (or the
+       <function>jsonb_path_exists</function> function).
+      </para>
+     </note>
+    </sect4>
 
-   <sect3 id="strict-and-lax-modes">
+    <sect4 id="functions-sqljson-regular-expression-deviation">
+    <title>Regular Expression Interpretation</title>
+     <para>
+      There are minor differences in the interpretation of regular
+      expression patterns used in <literal>like_regex</literal> filters, as
+      described in <xref linkend="jsonpath-regular-expressions"/>.
+     </para>
+    </sect4>
+   </sect3>
+
+   <sect3 id="functions-sqljson-strict-and-lax-modes">
    <title>Strict and Lax Modes</title>
     <para>
      When you query JSON data, the path expression may not match the
      actual JSON data structure. An attempt to access a non-existent
-     member of an object or element of an array results in a
+     member of an object or element of an array is defined as a
      structural error. SQL/JSON path expressions have two modes
      of handling structural errors:
     </para>
@@ -17488,8 +17584,8 @@ $.track.segments[*].HR &lt; 70
      <para>
       lax (default) &mdash; the path engine implicitly adapts
       the queried data to the specified path.
-      Any remaining structural errors are suppressed and converted
-      to empty SQL/JSON sequences.
+      Any structural errors that cannot be fixed as described below
+      are suppressed, producing no match.
      </para>
     </listitem>
     <listitem>
@@ -17500,15 +17596,15 @@ $.track.segments[*].HR &lt; 70
    </itemizedlist>
 
    <para>
-    The lax mode facilitates matching of a JSON document structure and path
-    expression if the JSON data does not conform to the expected schema.
+    Lax mode facilitates matching of a JSON document and path
+    expression when the JSON data does not conform to the expected schema.
     If an operand does not match the requirements of a particular operation,
-    it can be automatically wrapped as an SQL/JSON array or unwrapped by
+    it can be automatically wrapped as an SQL/JSON array, or unwrapped by
     converting its elements into an SQL/JSON sequence before performing
-    this operation. Besides, comparison operators automatically unwrap their
-    operands in the lax mode, so you can compare SQL/JSON arrays
+    the operation. Also, comparison operators automatically unwrap their
+    operands in lax mode, so you can compare SQL/JSON arrays
     out-of-the-box. An array of size 1 is considered equal to its sole element.
-    Automatic unwrapping is not performed only when:
+    Automatic unwrapping is not performed when:
     <itemizedlist>
      <listitem>
       <para>
@@ -17531,41 +17627,96 @@ $.track.segments[*].HR &lt; 70
    <para>
     For example, when querying the GPS data listed above, you can
     abstract from the fact that it stores an array of segments
-    when using the lax mode:
-<programlisting>
-lax $.track.segments.location
-</programlisting>
+    when using lax mode:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments.location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+</screen>
    </para>
 
    <para>
-    In the strict mode, the specified path must exactly match the structure of
-    the queried JSON document to return an SQL/JSON item, so using this
-    path expression will cause an error. To get the same result as in
-    the lax mode, you have to explicitly unwrap the
+    In strict mode, the specified path must exactly match the structure of
+    the queried JSON document, so using this path
+    expression will cause an error:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments.location');</userinput>
+ERROR:  jsonpath member accessor can only be applied to an object
+</screen>
+    To get the same result as in lax mode, you have to explicitly unwrap the
     <literal>segments</literal> array:
-<programlisting>
-strict $.track.segments[*].location
-</programlisting>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments[*].location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+</screen>
    </para>
 
    <para>
-    The <literal>.**</literal> accessor can lead to surprising results
-    when using the lax mode. For instance, the following query selects every
-    <literal>HR</literal> value twice:
-<programlisting>
-lax $.**.HR
-</programlisting>
+    The unwrapping behavior of lax mode can lead to surprising results. For
+    instance, the following query using the <literal>.**</literal> accessor
+    selects every <literal>HR</literal> value twice:
+ <screen>
+ <prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.**.HR');</userinput>
+  jsonb_path_query
+ ------------------
+  73
+  135
+  73
+  135
+ </screen>
     This happens because the <literal>.**</literal> accessor selects both
     the <literal>segments</literal> array and each of its elements, while
     the <literal>.HR</literal> accessor automatically unwraps arrays when
-    using the lax mode. To avoid surprising results, we recommend using
-    the <literal>.**</literal> accessor only in the strict mode. The
+    using lax mode. To avoid surprising results, we recommend using
+    the <literal>.**</literal> accessor only in strict mode. The
     following query selects each <literal>HR</literal> value just once:
-<programlisting>
-strict $.**.HR
-</programlisting>
+ <screen>
+ <prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.**.HR');</userinput>
+  jsonb_path_query
+ ------------------
+  73
+  135
+ </screen>
    </para>
 
+   <para>
+    The unwrapping of arrays can also lead to unexpected results. Consider this
+    example, which selects all the <literal>location</literal> arrays:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments[*].location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+(2 rows)
+</screen>
+    As expected it returns the full arrays. But applying a filter expression
+    causes the arrays to be unwrapped to evaluate each item, returning only the
+    items that match the expression:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments[*].location ?(@[*] &gt; 15)');</userinput>
+ jsonb_path_query
+------------------
+ 47.763
+ 47.706
+(2 rows)
+</screen>
+    This despite the fact that the full arrays are selected by the path
+    expression. Use strict mode to restore selecting the arrays:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments[*].location ?(@[*] &gt; 15)');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+(2 rows)
+</screen>
+   </para>
    </sect3>
 
    <sect3 id="functions-sqljson-path-operators">

@@ -513,7 +513,7 @@ SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] == "qui"';
 </programlisting>
     For these operators, a GIN index extracts clauses of the form
     <literal><replaceable>accessors_chain</replaceable>
-    = <replaceable>constant</replaceable></literal> out of
+    == <replaceable>constant</replaceable></literal> out of
     the <type>jsonpath</type> pattern, and does the index search based on
     the keys and values mentioned in these clauses.  The accessors chain
     may include <literal>.<replaceable>key</replaceable></literal>,
