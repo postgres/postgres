@@ -1732,7 +1732,1246 @@ select jsonb_path_query('"10-03-2017t12:34:56"', '$.datetime("dd-mm-yyyy\"T\"HH2
 ERROR:  unmatched format character "T"
 select jsonb_path_query('"10-03-2017 12:34:56"', '$.datetime("dd-mm-yyyy\"T\"HH24:MI:SS")');
 ERROR:  unmatched format character "T"
+-- Test .bigint()
+select jsonb_path_query('null', '$.bigint()');
+ERROR:  jsonpath item method .bigint() can only be applied to a string or numeric value
+select jsonb_path_query('true', '$.bigint()');
+ERROR:  jsonpath item method .bigint() can only be applied to a string or numeric value
+select jsonb_path_query('null', '$.bigint()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('true', '$.bigint()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.bigint()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.bigint()');
+ERROR:  jsonpath item method .bigint() can only be applied to a string or numeric value
+select jsonb_path_query('{}', '$.bigint()');
+ERROR:  jsonpath item method .bigint() can only be applied to a string or numeric value
+select jsonb_path_query('[]', 'strict $.bigint()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.bigint()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"1.23"', '$.bigint()');
+ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+select jsonb_path_query('"1.23aaa"', '$.bigint()');
+ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+select jsonb_path_query('1e1000', '$.bigint()');
+ERROR:  numeric argument of jsonpath item method .bigint() is out of range for type bigint
+select jsonb_path_query('"nan"', '$.bigint()');
+ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+select jsonb_path_query('"NaN"', '$.bigint()');
+ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+select jsonb_path_query('"inf"', '$.bigint()');
+ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+select jsonb_path_query('"-inf"', '$.bigint()');
+ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+select jsonb_path_query('"inf"', '$.bigint()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"-inf"', '$.bigint()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('123', '$.bigint()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('"123"', '$.bigint()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('1.23', '$.bigint()');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('1.83', '$.bigint()');
+ jsonb_path_query 
+------------------
+ 2
+(1 row)
+
+select jsonb_path_query('1234567890123', '$.bigint()');
+ jsonb_path_query 
+------------------
+ 1234567890123
+(1 row)
+
+select jsonb_path_query('"1234567890123"', '$.bigint()');
+ jsonb_path_query 
+------------------
+ 1234567890123
+(1 row)
+
+select jsonb_path_query('12345678901234567890', '$.bigint()');
+ERROR:  numeric argument of jsonpath item method .bigint() is out of range for type bigint
+select jsonb_path_query('"12345678901234567890"', '$.bigint()');
+ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+select jsonb_path_query('"+123"', '$.bigint()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('-123', '$.bigint()');
+ jsonb_path_query 
+------------------
+ -123
+(1 row)
+
+select jsonb_path_query('"-123"', '$.bigint()');
+ jsonb_path_query 
+------------------
+ -123
+(1 row)
+
+select jsonb_path_query('123', '$.bigint() * 2');
+ jsonb_path_query 
+------------------
+ 246
+(1 row)
+
+-- Test .boolean()
+select jsonb_path_query('null', '$.boolean()');
+ERROR:  jsonpath item method .boolean() can only be applied to a bool, string, or numeric value
+select jsonb_path_query('null', '$.boolean()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.boolean()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.boolean()');
+ERROR:  jsonpath item method .boolean() can only be applied to a bool, string, or numeric value
+select jsonb_path_query('{}', '$.boolean()');
+ERROR:  jsonpath item method .boolean() can only be applied to a bool, string, or numeric value
+select jsonb_path_query('[]', 'strict $.boolean()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.boolean()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.boolean()');
+ERROR:  numeric argument of jsonpath item method .boolean() is out of range for type boolean
+select jsonb_path_query('"1.23"', '$.boolean()');
+ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+select jsonb_path_query('"1.23aaa"', '$.boolean()');
+ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+select jsonb_path_query('1e1000', '$.boolean()');
+ERROR:  numeric argument of jsonpath item method .boolean() is out of range for type boolean
+select jsonb_path_query('"nan"', '$.boolean()');
+ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+select jsonb_path_query('"NaN"', '$.boolean()');
+ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+select jsonb_path_query('"inf"', '$.boolean()');
+ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+select jsonb_path_query('"-inf"', '$.boolean()');
+ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+select jsonb_path_query('"inf"', '$.boolean()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"-inf"', '$.boolean()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"100"', '$.boolean()');
+ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+select jsonb_path_query('true', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('false', '$.boolean()');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('1', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('0', '$.boolean()');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('-1', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('100', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('"1"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('"0"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('"true"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('"false"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('"TRUE"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('"FALSE"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('"yes"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('"NO"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('"T"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('"f"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('"y"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('"N"', '$.boolean()');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('true', '$.boolean().type()');
+ jsonb_path_query 
+------------------
+ "boolean"
+(1 row)
+
+select jsonb_path_query('123', '$.boolean().type()');
+ jsonb_path_query 
+------------------
+ "boolean"
+(1 row)
+
+select jsonb_path_query('"Yes"', '$.boolean().type()');
+ jsonb_path_query 
+------------------
+ "boolean"
+(1 row)
+
+select jsonb_path_query_array('[1, "yes", false]', '$[*].boolean()');
+ jsonb_path_query_array 
+------------------------
+ [true, true, false]
+(1 row)
+
+-- Test .date()
+select jsonb_path_query('null', '$.date()');
+ERROR:  jsonpath item method .date() can only be applied to a string
+select jsonb_path_query('true', '$.date()');
+ERROR:  jsonpath item method .date() can only be applied to a string
+select jsonb_path_query('1', '$.date()');
+ERROR:  jsonpath item method .date() can only be applied to a string
+select jsonb_path_query('[]', '$.date()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.date()');
+ERROR:  jsonpath item method .date() can only be applied to a string
+select jsonb_path_query('{}', '$.date()');
+ERROR:  jsonpath item method .date() can only be applied to a string
+select jsonb_path_query('"bogus"', '$.date()');
+ERROR:  date format is not recognized: "bogus"
+select jsonb '"2023-08-15"' @? '$.date()';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('"2023-08-15"', '$.date()');
+ jsonb_path_query 
+------------------
+ "2023-08-15"
+(1 row)
+
+select jsonb_path_query('"2023-08-15"', '$.date().type()');
+ jsonb_path_query 
+------------------
+ "date"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.date()');
+ERROR:  date format is not recognized: "12:34:56"
+select jsonb_path_query('"12:34:56 +05:30"', '$.date()');
+ERROR:  date format is not recognized: "12:34:56 +05:30"
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.date()');
+ jsonb_path_query 
+------------------
+ "2023-08-15"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.date()');
+ jsonb_path_query 
+------------------
+ "2023-08-15"
+(1 row)
+
+select jsonb_path_query('"2023-08-15"', '$.date(2)');
+ERROR:  syntax error at or near "2" of jsonpath input
+LINE 1: select jsonb_path_query('"2023-08-15"', '$.date(2)');
+                                                ^
+-- Test .decimal()
+select jsonb_path_query('null', '$.decimal()');
+ERROR:  jsonpath item method .decimal() can only be applied to a string or numeric value
+select jsonb_path_query('true', '$.decimal()');
+ERROR:  jsonpath item method .decimal() can only be applied to a string or numeric value
+select jsonb_path_query('null', '$.decimal()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('true', '$.decimal()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.decimal()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.decimal()');
+ERROR:  jsonpath item method .decimal() can only be applied to a string or numeric value
+select jsonb_path_query('{}', '$.decimal()');
+ERROR:  jsonpath item method .decimal() can only be applied to a string or numeric value
+select jsonb_path_query('[]', 'strict $.decimal()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.decimal()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.decimal()');
+ jsonb_path_query 
+------------------
+ 1.23
+(1 row)
+
+select jsonb_path_query('"1.23"', '$.decimal()');
+ jsonb_path_query 
+------------------
+ 1.23
+(1 row)
+
+select jsonb_path_query('"1.23aaa"', '$.decimal()');
+ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+select jsonb_path_query('1e1000', '$.decimal()');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             jsonb_path_query                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+(1 row)
+
+select jsonb_path_query('"nan"', '$.decimal()');
+ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+select jsonb_path_query('"NaN"', '$.decimal()');
+ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+select jsonb_path_query('"inf"', '$.decimal()');
+ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+select jsonb_path_query('"-inf"', '$.decimal()');
+ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+select jsonb_path_query('"inf"', '$.decimal()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"-inf"', '$.decimal()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('123', '$.decimal()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('"123"', '$.decimal()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('12345678901234567890', '$.decimal()');
+   jsonb_path_query   
+----------------------
+ 12345678901234567890
+(1 row)
+
+select jsonb_path_query('"12345678901234567890"', '$.decimal()');
+   jsonb_path_query   
+----------------------
+ 12345678901234567890
+(1 row)
+
+select jsonb_path_query('"+12.3"', '$.decimal()');
+ jsonb_path_query 
+------------------
+ 12.3
+(1 row)
+
+select jsonb_path_query('-12.3', '$.decimal()');
+ jsonb_path_query 
+------------------
+ -12.3
+(1 row)
+
+select jsonb_path_query('"-12.3"', '$.decimal()');
+ jsonb_path_query 
+------------------
+ -12.3
+(1 row)
+
+select jsonb_path_query('12.3', '$.decimal() * 2');
+ jsonb_path_query 
+------------------
+ 24.6
+(1 row)
+
+select jsonb_path_query('12345.678', '$.decimal(6, 1)');
+ jsonb_path_query 
+------------------
+ 12345.7
+(1 row)
+
+select jsonb_path_query('12345.678', '$.decimal(6, 2)');
+ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+select jsonb_path_query('1234.5678', '$.decimal(6, 2)');
+ jsonb_path_query 
+------------------
+ 1234.57
+(1 row)
+
+select jsonb_path_query('12345.678', '$.decimal(4, 6)');
+ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+select jsonb_path_query('12345.678', '$.decimal(0, 6)');
+ERROR:  NUMERIC precision 0 must be between 1 and 1000
+select jsonb_path_query('12345.678', '$.decimal(1001, 6)');
+ERROR:  NUMERIC precision 1001 must be between 1 and 1000
+select jsonb_path_query('1234.5678', '$.decimal(+6, +2)');
+ jsonb_path_query 
+------------------
+ 1234.57
+(1 row)
+
+select jsonb_path_query('1234.5678', '$.decimal(+6, -2)');
+ jsonb_path_query 
+------------------
+ 1200
+(1 row)
+
+select jsonb_path_query('1234.5678', '$.decimal(-6, +2)');
+ERROR:  NUMERIC precision -6 must be between 1 and 1000
+select jsonb_path_query('1234.5678', '$.decimal(6, -1001)');
+ERROR:  NUMERIC scale -1001 must be between -1000 and 1000
+select jsonb_path_query('1234.5678', '$.decimal(6, 1001)');
+ERROR:  NUMERIC scale 1001 must be between -1000 and 1000
+select jsonb_path_query('-1234.5678', '$.decimal(+6, -2)');
+ jsonb_path_query 
+------------------
+ -1200
+(1 row)
+
+select jsonb_path_query('0.0123456', '$.decimal(1,2)');
+ jsonb_path_query 
+------------------
+ 0.01
+(1 row)
+
+select jsonb_path_query('0.0012345', '$.decimal(2,4)');
+ jsonb_path_query 
+------------------
+ 0.0012
+(1 row)
+
+select jsonb_path_query('-0.00123456', '$.decimal(2,-4)');
+ jsonb_path_query 
+------------------
+ 0
+(1 row)
+
+select jsonb_path_query('12.3', '$.decimal(12345678901,1)');
+ERROR:  precision of jsonpath item method .decimal() is out of range for type integer
+select jsonb_path_query('12.3', '$.decimal(1,12345678901)');
+ERROR:  scale of jsonpath item method .decimal() is out of range for type integer
+-- Test .integer()
+select jsonb_path_query('null', '$.integer()');
+ERROR:  jsonpath item method .integer() can only be applied to a string or numeric value
+select jsonb_path_query('true', '$.integer()');
+ERROR:  jsonpath item method .integer() can only be applied to a string or numeric value
+select jsonb_path_query('null', '$.integer()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('true', '$.integer()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.integer()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.integer()');
+ERROR:  jsonpath item method .integer() can only be applied to a string or numeric value
+select jsonb_path_query('{}', '$.integer()');
+ERROR:  jsonpath item method .integer() can only be applied to a string or numeric value
+select jsonb_path_query('[]', 'strict $.integer()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.integer()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"1.23"', '$.integer()');
+ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+select jsonb_path_query('"1.23aaa"', '$.integer()');
+ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+select jsonb_path_query('1e1000', '$.integer()');
+ERROR:  numeric argument of jsonpath item method .integer() is out of range for type integer
+select jsonb_path_query('"nan"', '$.integer()');
+ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+select jsonb_path_query('"NaN"', '$.integer()');
+ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+select jsonb_path_query('"inf"', '$.integer()');
+ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+select jsonb_path_query('"-inf"', '$.integer()');
+ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+select jsonb_path_query('"inf"', '$.integer()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"-inf"', '$.integer()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('123', '$.integer()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('"123"', '$.integer()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('1.23', '$.integer()');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('1.83', '$.integer()');
+ jsonb_path_query 
+------------------
+ 2
+(1 row)
+
+select jsonb_path_query('12345678901', '$.integer()');
+ERROR:  numeric argument of jsonpath item method .integer() is out of range for type integer
+select jsonb_path_query('"12345678901"', '$.integer()');
+ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+select jsonb_path_query('"+123"', '$.integer()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('-123', '$.integer()');
+ jsonb_path_query 
+------------------
+ -123
+(1 row)
+
+select jsonb_path_query('"-123"', '$.integer()');
+ jsonb_path_query 
+------------------
+ -123
+(1 row)
+
+select jsonb_path_query('123', '$.integer() * 2');
+ jsonb_path_query 
+------------------
+ 246
+(1 row)
+
+-- Test .number()
+select jsonb_path_query('null', '$.number()');
+ERROR:  jsonpath item method .number() can only be applied to a string or numeric value
+select jsonb_path_query('true', '$.number()');
+ERROR:  jsonpath item method .number() can only be applied to a string or numeric value
+select jsonb_path_query('null', '$.number()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('true', '$.number()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.number()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.number()');
+ERROR:  jsonpath item method .number() can only be applied to a string or numeric value
+select jsonb_path_query('{}', '$.number()');
+ERROR:  jsonpath item method .number() can only be applied to a string or numeric value
+select jsonb_path_query('[]', 'strict $.number()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.number()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.number()');
+ jsonb_path_query 
+------------------
+ 1.23
+(1 row)
+
+select jsonb_path_query('"1.23"', '$.number()');
+ jsonb_path_query 
+------------------
+ 1.23
+(1 row)
+
+select jsonb_path_query('"1.23aaa"', '$.number()');
+ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+select jsonb_path_query('1e1000', '$.number()');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             jsonb_path_query                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+(1 row)
+
+select jsonb_path_query('"nan"', '$.number()');
+ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+select jsonb_path_query('"NaN"', '$.number()');
+ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+select jsonb_path_query('"inf"', '$.number()');
+ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+select jsonb_path_query('"-inf"', '$.number()');
+ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+select jsonb_path_query('"inf"', '$.number()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"-inf"', '$.number()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('123', '$.number()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('"123"', '$.number()');
+ jsonb_path_query 
+------------------
+ 123
+(1 row)
+
+select jsonb_path_query('12345678901234567890', '$.number()');
+   jsonb_path_query   
+----------------------
+ 12345678901234567890
+(1 row)
+
+select jsonb_path_query('"12345678901234567890"', '$.number()');
+   jsonb_path_query   
+----------------------
+ 12345678901234567890
+(1 row)
+
+select jsonb_path_query('"+12.3"', '$.number()');
+ jsonb_path_query 
+------------------
+ 12.3
+(1 row)
+
+select jsonb_path_query('-12.3', '$.number()');
+ jsonb_path_query 
+------------------
+ -12.3
+(1 row)
+
+select jsonb_path_query('"-12.3"', '$.number()');
+ jsonb_path_query 
+------------------
+ -12.3
+(1 row)
+
+select jsonb_path_query('12.3', '$.number() * 2');
+ jsonb_path_query 
+------------------
+ 24.6
+(1 row)
+
+-- Test .string()
+select jsonb_path_query('null', '$.string()');
+ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
+select jsonb_path_query('null', '$.string()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.string()');
+ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
+select jsonb_path_query('[]', 'strict $.string()');
+ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
+select jsonb_path_query('{}', '$.string()');
+ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
+select jsonb_path_query('[]', 'strict $.string()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.string()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.string()');
+ jsonb_path_query 
+------------------
+ "1.23"
+(1 row)
+
+select jsonb_path_query('"1.23"', '$.string()');
+ jsonb_path_query 
+------------------
+ "1.23"
+(1 row)
+
+select jsonb_path_query('"1.23aaa"', '$.string()');
+ jsonb_path_query 
+------------------
+ "1.23aaa"
+(1 row)
+
+select jsonb_path_query('1234', '$.string()');
+ jsonb_path_query 
+------------------
+ "1234"
+(1 row)
+
+select jsonb_path_query('true', '$.string()');
+ jsonb_path_query 
+------------------
+ "true"
+(1 row)
+
+select jsonb_path_query('1234', '$.string().type()');
+ jsonb_path_query 
+------------------
+ "string"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()');
+      jsonb_path_query      
+----------------------------
+ "Tue Aug 15 00:04:56 2023"
+(1 row)
+
+select jsonb_path_query_array('[1.23, "yes", false]', '$[*].string()');
+  jsonb_path_query_array  
+--------------------------
+ ["1.23", "yes", "false"]
+(1 row)
+
+select jsonb_path_query_array('[1.23, "yes", false]', '$[*].string().type()');
+     jsonb_path_query_array     
+--------------------------------
+ ["string", "string", "string"]
+(1 row)
+
+-- Test .time()
+select jsonb_path_query('null', '$.time()');
+ERROR:  jsonpath item method .time() can only be applied to a string
+select jsonb_path_query('true', '$.time()');
+ERROR:  jsonpath item method .time() can only be applied to a string
+select jsonb_path_query('1', '$.time()');
+ERROR:  jsonpath item method .time() can only be applied to a string
+select jsonb_path_query('[]', '$.time()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.time()');
+ERROR:  jsonpath item method .time() can only be applied to a string
+select jsonb_path_query('{}', '$.time()');
+ERROR:  jsonpath item method .time() can only be applied to a string
+select jsonb_path_query('"bogus"', '$.time()');
+ERROR:  time format is not recognized: "bogus"
+select jsonb '"12:34:56"' @? '$.time()';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.time()');
+ jsonb_path_query 
+------------------
+ "12:34:56"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.time().type()');
+     jsonb_path_query     
+--------------------------
+ "time without time zone"
+(1 row)
+
+select jsonb_path_query('"2023-08-15"', '$.time()');
+ERROR:  time format is not recognized: "2023-08-15"
+select jsonb_path_query('"12:34:56 +05:30"', '$.time()');
+ jsonb_path_query 
+------------------
+ "12:34:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.time()');
+ jsonb_path_query 
+------------------
+ "12:34:56"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789"', '$.time(-1)');
+ERROR:  syntax error at or near "-" of jsonpath input
+LINE 1: select jsonb_path_query('"12:34:56.789"', '$.time(-1)');
+                                                  ^
+select jsonb_path_query('"12:34:56.789"', '$.time(2.0)');
+ERROR:  syntax error at or near "2.0" of jsonpath input
+LINE 1: select jsonb_path_query('"12:34:56.789"', '$.time(2.0)');
+                                                  ^
+select jsonb_path_query('"12:34:56.789"', '$.time(12345678901)');
+ERROR:  time precision of jsonpath item method .time() is out of range for type integer
+select jsonb_path_query('"12:34:56.789"', '$.time(0)');
+ jsonb_path_query 
+------------------
+ "12:34:57"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789"', '$.time(2)');
+ jsonb_path_query 
+------------------
+ "12:34:56.79"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789"', '$.time(5)');
+ jsonb_path_query 
+------------------
+ "12:34:56.789"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789"', '$.time(10)');
+WARNING:  TIME(10) precision reduced to maximum allowed, 6
+ jsonb_path_query 
+------------------
+ "12:34:56.789"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789012"', '$.time(8)');
+WARNING:  TIME(8) precision reduced to maximum allowed, 6
+ jsonb_path_query  
+-------------------
+ "12:34:56.789012"
+(1 row)
+
+-- Test .time_tz()
+select jsonb_path_query('null', '$.time_tz()');
+ERROR:  jsonpath item method .time_tz() can only be applied to a string
+select jsonb_path_query('true', '$.time_tz()');
+ERROR:  jsonpath item method .time_tz() can only be applied to a string
+select jsonb_path_query('1', '$.time_tz()');
+ERROR:  jsonpath item method .time_tz() can only be applied to a string
+select jsonb_path_query('[]', '$.time_tz()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.time_tz()');
+ERROR:  jsonpath item method .time_tz() can only be applied to a string
+select jsonb_path_query('{}', '$.time_tz()');
+ERROR:  jsonpath item method .time_tz() can only be applied to a string
+select jsonb_path_query('"bogus"', '$.time_tz()');
+ERROR:  time_tz format is not recognized: "bogus"
+select jsonb '"12:34:56 +05:30"' @? '$.time_tz()';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('"12:34:56 +05:30"', '$.time_tz()');
+ jsonb_path_query 
+------------------
+ "12:34:56+05:30"
+(1 row)
+
+select jsonb_path_query('"12:34:56 +05:30"', '$.time_tz().type()');
+   jsonb_path_query    
+-----------------------
+ "time with time zone"
+(1 row)
+
+select jsonb_path_query('"2023-08-15"', '$.time_tz()');
+ERROR:  time_tz format is not recognized: "2023-08-15"
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.time_tz()');
+ERROR:  time_tz format is not recognized: "2023-08-15 12:34:56"
+select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(-1)');
+ERROR:  syntax error at or near "-" of jsonpath input
+LINE 1: select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(...
+                                                         ^
+select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(2.0)');
+ERROR:  syntax error at or near "2.0" of jsonpath input
+LINE 1: select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(...
+                                                         ^
+select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(12345678901)');
+ERROR:  time precision of jsonpath item method .time_tz() is out of range for type integer
+select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(0)');
+ jsonb_path_query 
+------------------
+ "12:34:57+05:30"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(2)');
+  jsonb_path_query   
+---------------------
+ "12:34:56.79+05:30"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(5)');
+   jsonb_path_query   
+----------------------
+ "12:34:56.789+05:30"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(10)');
+WARNING:  TIME(10) WITH TIME ZONE precision reduced to maximum allowed, 6
+   jsonb_path_query   
+----------------------
+ "12:34:56.789+05:30"
+(1 row)
+
+select jsonb_path_query('"12:34:56.789012 +05:30"', '$.time_tz(8)');
+WARNING:  TIME(8) WITH TIME ZONE precision reduced to maximum allowed, 6
+    jsonb_path_query     
+-------------------------
+ "12:34:56.789012+05:30"
+(1 row)
+
+-- Test .timestamp()
+select jsonb_path_query('null', '$.timestamp()');
+ERROR:  jsonpath item method .timestamp() can only be applied to a string
+select jsonb_path_query('true', '$.timestamp()');
+ERROR:  jsonpath item method .timestamp() can only be applied to a string
+select jsonb_path_query('1', '$.timestamp()');
+ERROR:  jsonpath item method .timestamp() can only be applied to a string
+select jsonb_path_query('[]', '$.timestamp()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.timestamp()');
+ERROR:  jsonpath item method .timestamp() can only be applied to a string
+select jsonb_path_query('{}', '$.timestamp()');
+ERROR:  jsonpath item method .timestamp() can only be applied to a string
+select jsonb_path_query('"bogus"', '$.timestamp()');
+ERROR:  timestamp format is not recognized: "bogus"
+select jsonb '"2023-08-15 12:34:56"' @? '$.timestamp()';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp()');
+   jsonb_path_query    
+-----------------------
+ "2023-08-15T12:34:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().type()');
+       jsonb_path_query        
+-------------------------------
+ "timestamp without time zone"
+(1 row)
+
+select jsonb_path_query('"2023-08-15"', '$.timestamp()');
+   jsonb_path_query    
+-----------------------
+ "2023-08-15T00:00:00"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.timestamp()');
+ERROR:  timestamp format is not recognized: "12:34:56"
+select jsonb_path_query('"12:34:56 +05:30"', '$.timestamp()');
+ERROR:  timestamp format is not recognized: "12:34:56 +05:30"
+select jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(-1)');
+ERROR:  syntax error at or near "-" of jsonpath input
+LINE 1: ...ect jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timesta...
+                                                             ^
+select jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(2.0)');
+ERROR:  syntax error at or near "2.0" of jsonpath input
+LINE 1: ...ect jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timesta...
+                                                             ^
+select jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(12345678901)');
+ERROR:  time precision of jsonpath item method .timestamp() is out of range for type integer
+select jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(0)');
+   jsonb_path_query    
+-----------------------
+ "2023-08-15T12:34:57"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(2)');
+     jsonb_path_query     
+--------------------------
+ "2023-08-15T12:34:56.79"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(5)');
+     jsonb_path_query      
+---------------------------
+ "2023-08-15T12:34:56.789"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(10)');
+WARNING:  TIMESTAMP(10) precision reduced to maximum allowed, 6
+     jsonb_path_query      
+---------------------------
+ "2023-08-15T12:34:56.789"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56.789012"', '$.timestamp(8)');
+WARNING:  TIMESTAMP(8) precision reduced to maximum allowed, 6
+       jsonb_path_query       
+------------------------------
+ "2023-08-15T12:34:56.789012"
+(1 row)
+
+-- Test .timestamp_tz()
+select jsonb_path_query('null', '$.timestamp_tz()');
+ERROR:  jsonpath item method .timestamp_tz() can only be applied to a string
+select jsonb_path_query('true', '$.timestamp_tz()');
+ERROR:  jsonpath item method .timestamp_tz() can only be applied to a string
+select jsonb_path_query('1', '$.timestamp_tz()');
+ERROR:  jsonpath item method .timestamp_tz() can only be applied to a string
+select jsonb_path_query('[]', '$.timestamp_tz()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.timestamp_tz()');
+ERROR:  jsonpath item method .timestamp_tz() can only be applied to a string
+select jsonb_path_query('{}', '$.timestamp_tz()');
+ERROR:  jsonpath item method .timestamp_tz() can only be applied to a string
+select jsonb_path_query('"bogus"', '$.timestamp_tz()');
+ERROR:  timestamp_tz format is not recognized: "bogus"
+select jsonb '"2023-08-15 12:34:56 +05:30"' @? '$.timestamp_tz()';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp_tz()');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T12:34:56+05:30"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp_tz().type()');
+      jsonb_path_query      
+----------------------------
+ "timestamp with time zone"
+(1 row)
+
+select jsonb_path_query('"2023-08-15"', '$.timestamp_tz()');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T07:00:00+00:00"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.timestamp_tz()');
+ERROR:  timestamp_tz format is not recognized: "12:34:56"
+select jsonb_path_query('"12:34:56 +05:30"', '$.timestamp_tz()');
+ERROR:  timestamp_tz format is not recognized: "12:34:56 +05:30"
+select jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(-1)');
+ERROR:  syntax error at or near "-" of jsonpath input
+LINE 1: ...nb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timesta...
+                                                             ^
+select jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(2.0)');
+ERROR:  syntax error at or near "2.0" of jsonpath input
+LINE 1: ...nb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timesta...
+                                                             ^
+select jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(12345678901)');
+ERROR:  time precision of jsonpath item method .timestamp_tz() is out of range for type integer
+select jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(0)');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T12:34:57+05:30"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(2)');
+        jsonb_path_query        
+--------------------------------
+ "2023-08-15T12:34:56.79+05:30"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(5)');
+        jsonb_path_query         
+---------------------------------
+ "2023-08-15T12:34:56.789+05:30"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(10)');
+WARNING:  TIMESTAMP(10) WITH TIME ZONE precision reduced to maximum allowed, 6
+        jsonb_path_query         
+---------------------------------
+ "2023-08-15T12:34:56.789+05:30"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56.789012 +05:30"', '$.timestamp_tz(8)');
+WARNING:  TIMESTAMP(8) WITH TIME ZONE precision reduced to maximum allowed, 6
+          jsonb_path_query          
+------------------------------------
+ "2023-08-15T12:34:56.789012+05:30"
+(1 row)
+
 set time zone '+00';
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.time()');
+ jsonb_path_query 
+------------------
+ "07:04:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.time_tz()');
+ jsonb_path_query 
+------------------
+ "07:04:56+00:00"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.time_tz()');
+ jsonb_path_query 
+------------------
+ "12:34:56+00:00"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp()');
+   jsonb_path_query    
+-----------------------
+ "2023-08-15T07:04:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp_tz()');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T12:34:56+00:00"
+(1 row)
+
 select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy HH24:MI")');
    jsonb_path_query    
 -----------------------
@@ -1798,6 +3037,36 @@ select jsonb_path_query('"12:34 -05:20"', '$.datetime("HH24:MI TZH:TZM")');
 (1 row)
 
 set time zone '+10';
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.time()');
+ jsonb_path_query 
+------------------
+ "17:04:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.time_tz()');
+ jsonb_path_query 
+------------------
+ "17:04:56+10:00"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp()');
+   jsonb_path_query    
+-----------------------
+ "2023-08-15T17:04:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp_tz()');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T02:34:56+00:00"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp_tz()');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T12:34:56+05:30"
+(1 row)
+
 select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy HH24:MI")');
    jsonb_path_query    
 -----------------------
@@ -1863,6 +3132,30 @@ select jsonb_path_query('"12:34 -05:20"', '$.datetime("HH24:MI TZH:TZM")');
 (1 row)
 
 set time zone default;
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.time()');
+ jsonb_path_query 
+------------------
+ "00:04:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.time_tz()');
+ jsonb_path_query 
+------------------
+ "00:04:56-07:00"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp()');
+   jsonb_path_query    
+-----------------------
+ "2023-08-15T00:04:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp_tz()');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T12:34:56+05:30"
+(1 row)
+
 select jsonb_path_query('"2017-03-10"', '$.datetime().type()');
  jsonb_path_query 
 ------------------
@@ -2019,6 +3312,101 @@ select jsonb_path_query_tz(
  "2017-03-10T01:02:03+04:00"
 (2 rows)
 
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].datetime() ? (@ == "2017-03-10".date())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10"
+ "2017-03-10T00:00:00"
+ "2017-03-10T03:00:00+03:00"
+(3 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].datetime() ? (@ >= "2017-03-10".date())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10"
+ "2017-03-11"
+ "2017-03-10T00:00:00"
+ "2017-03-10T12:34:56"
+ "2017-03-10T03:00:00+03:00"
+(5 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].datetime() ? (@ <  "2017-03-10".date())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-09"
+ "2017-03-10T01:02:03+04:00"
+(2 rows)
+
+select jsonb_path_query(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].date() ? (@ == "2017-03-10".date())');
+ jsonb_path_query 
+------------------
+ "2017-03-10"
+ "2017-03-10"
+ "2017-03-10"
+ "2017-03-10"
+(4 rows)
+
+select jsonb_path_query(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].date() ? (@ >= "2017-03-10".date())');
+ jsonb_path_query 
+------------------
+ "2017-03-10"
+ "2017-03-11"
+ "2017-03-10"
+ "2017-03-10"
+ "2017-03-10"
+(5 rows)
+
+select jsonb_path_query(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].date() ? (@ <  "2017-03-10".date())');
+ jsonb_path_query 
+------------------
+ "2017-03-09"
+ "2017-03-09"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].date() ? (@ == "2017-03-10".date())');
+ jsonb_path_query_tz 
+---------------------
+ "2017-03-10"
+ "2017-03-10"
+ "2017-03-10"
+ "2017-03-10"
+(4 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].date() ? (@ >= "2017-03-10".date())');
+ jsonb_path_query_tz 
+---------------------
+ "2017-03-10"
+ "2017-03-11"
+ "2017-03-10"
+ "2017-03-10"
+ "2017-03-10"
+(5 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03+04", "2017-03-10 03:00:00+03"]',
+	'$[*].date() ? (@ <  "2017-03-10".date())');
+ jsonb_path_query_tz 
+---------------------
+ "2017-03-09"
+ "2017-03-09"
+(2 rows)
+
 -- time comparison
 select jsonb_path_query(
 	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
@@ -2063,6 +3451,112 @@ select jsonb_path_query_tz(
  "12:35:00+01:00"
  "13:35:00+01:00"
 (3 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].datetime() ? (@ == "12:35:00".time())');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00"
+ "12:35:00+00:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].datetime() ? (@ >= "12:35:00".time())');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00"
+ "12:36:00"
+ "12:35:00+00:00"
+(3 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].datetime() ? (@ <  "12:35:00".time())');
+ jsonb_path_query_tz 
+---------------------
+ "12:34:00"
+ "12:35:00+01:00"
+ "13:35:00+01:00"
+(3 rows)
+
+select jsonb_path_query(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].time() ? (@ == "12:35:00".time())');
+ jsonb_path_query 
+------------------
+ "12:35:00"
+ "12:35:00"
+ "12:35:00"
+ "12:35:00"
+(4 rows)
+
+select jsonb_path_query(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].time() ? (@ >= "12:35:00".time())');
+ jsonb_path_query 
+------------------
+ "12:35:00"
+ "12:36:00"
+ "12:35:00"
+ "12:35:00"
+ "13:35:00"
+ "12:35:00"
+(6 rows)
+
+select jsonb_path_query(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].time() ? (@ <  "12:35:00".time())');
+ jsonb_path_query 
+------------------
+ "12:34:00"
+ "11:35:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].time() ? (@ == "12:35:00".time())');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00"
+ "12:35:00"
+ "12:35:00"
+ "12:35:00"
+(4 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].time() ? (@ >= "12:35:00".time())');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00"
+ "12:36:00"
+ "12:35:00"
+ "12:35:00"
+ "13:35:00"
+ "12:35:00"
+(6 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00+00", "12:35:00+01", "13:35:00+01", "2017-03-10 12:35:00", "2017-03-10 12:35:00+01"]',
+	'$[*].time() ? (@ <  "12:35:00".time())');
+ jsonb_path_query_tz 
+---------------------
+ "12:34:00"
+ "11:35:00"
+(2 rows)
+
+select jsonb_path_query(
+	'["12:34:00.123", "12:35:00.123", "12:36:00.1123", "12:35:00.1123+00", "12:35:00.123+01", "13:35:00.123+01", "2017-03-10 12:35:00.1", "2017-03-10 12:35:00.123+01"]',
+	'$[*].time(2) ? (@ >= "12:35:00.123".time(2))');
+ jsonb_path_query 
+------------------
+ "12:35:00.12"
+ "12:36:00.11"
+ "12:35:00.12"
+ "13:35:00.12"
+(4 rows)
 
 -- timetz comparison
 select jsonb_path_query(
@@ -2110,6 +3604,110 @@ select jsonb_path_query_tz(
  "10:35:00"
 (3 rows)
 
+select jsonb_path_query_tz(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ == "12:35:00 +1".time_tz())');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00+01:00"
+(1 row)
+
+select jsonb_path_query_tz(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ >= "12:35:00 +1".time_tz())');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00+01:00"
+ "12:36:00+01:00"
+ "12:35:00-02:00"
+ "11:35:00"
+ "12:35:00"
+(5 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ <  "12:35:00 +1".time_tz())');
+ jsonb_path_query_tz 
+---------------------
+ "12:34:00+01:00"
+ "12:35:00+02:00"
+ "10:35:00"
+(3 rows)
+
+select jsonb_path_query(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].time_tz() ? (@ == "12:35:00 +1".time_tz())');
+ jsonb_path_query 
+------------------
+ "12:35:00+01:00"
+(1 row)
+
+select jsonb_path_query(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].time_tz() ? (@ >= "12:35:00 +1".time_tz())');
+ jsonb_path_query 
+------------------
+ "12:35:00+01:00"
+ "12:36:00+01:00"
+ "12:35:00-02:00"
+ "11:35:00+00:00"
+ "12:35:00+00:00"
+ "11:35:00+00:00"
+(6 rows)
+
+select jsonb_path_query(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].time_tz() ? (@ <  "12:35:00 +1".time_tz())');
+ jsonb_path_query 
+------------------
+ "12:34:00+01:00"
+ "12:35:00+02:00"
+ "10:35:00+00:00"
+(3 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].time_tz() ? (@ == "12:35:00 +1".time_tz())');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00+01:00"
+(1 row)
+
+select jsonb_path_query_tz(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].time_tz() ? (@ >= "12:35:00 +1".time_tz())');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00+01:00"
+ "12:36:00+01:00"
+ "12:35:00-02:00"
+ "11:35:00+00:00"
+ "12:35:00+00:00"
+ "11:35:00+00:00"
+(6 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00+01", "12:35:00+01", "12:36:00+01", "12:35:00+02", "12:35:00-02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].time_tz() ? (@ <  "12:35:00 +1".time_tz())');
+ jsonb_path_query_tz 
+---------------------
+ "12:34:00+01:00"
+ "12:35:00+02:00"
+ "10:35:00+00:00"
+(3 rows)
+
+select jsonb_path_query(
+	'["12:34:00.123+01", "12:35:00.123+01", "12:36:00.1123+01", "12:35:00.1123+02", "12:35:00.123-02", "10:35:00.123", "11:35:00.1", "12:35:00.123", "2017-03-10 12:35:00.123 +1"]',
+	'$[*].time_tz(2) ? (@ >= "12:35:00.123 +1".time_tz(2))');
+  jsonb_path_query   
+---------------------
+ "12:35:00.12+01:00"
+ "12:36:00.11+01:00"
+ "12:35:00.12-02:00"
+ "12:35:00.12+00:00"
+ "11:35:00.12+00:00"
+(5 rows)
+
 -- timestamp comparison
 select jsonb_path_query(
 	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56+01"]',
@@ -2156,6 +3754,111 @@ select jsonb_path_query_tz(
  "2017-03-10T12:35:00+01:00"
  "2017-03-10"
 (3 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].datetime() ? (@ == "2017-03-10 12:35:00".timestamp())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00"
+ "2017-03-10T13:35:00+01:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].datetime() ? (@ >= "2017-03-10 12:35:00".timestamp())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00"
+ "2017-03-10T12:36:00"
+ "2017-03-10T13:35:00+01:00"
+ "2017-03-10T12:35:00-01:00"
+ "2017-03-11"
+(5 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].datetime() ? (@ < "2017-03-10 12:35:00".timestamp())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:34:00"
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10"
+(3 rows)
+
+select jsonb_path_query(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp() ? (@ == "2017-03-10 12:35:00".timestamp())');
+   jsonb_path_query    
+-----------------------
+ "2017-03-10T12:35:00"
+ "2017-03-10T12:35:00"
+(2 rows)
+
+select jsonb_path_query(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp() ? (@ >= "2017-03-10 12:35:00".timestamp())');
+   jsonb_path_query    
+-----------------------
+ "2017-03-10T12:35:00"
+ "2017-03-10T12:36:00"
+ "2017-03-10T12:35:00"
+ "2017-03-10T13:35:00"
+ "2017-03-11T00:00:00"
+(5 rows)
+
+select jsonb_path_query(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp() ? (@ < "2017-03-10 12:35:00".timestamp())');
+   jsonb_path_query    
+-----------------------
+ "2017-03-10T12:34:00"
+ "2017-03-10T11:35:00"
+ "2017-03-10T00:00:00"
+(3 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp() ? (@ == "2017-03-10 12:35:00".timestamp())');
+  jsonb_path_query_tz  
+-----------------------
+ "2017-03-10T12:35:00"
+ "2017-03-10T12:35:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp() ? (@ >= "2017-03-10 12:35:00".timestamp())');
+  jsonb_path_query_tz  
+-----------------------
+ "2017-03-10T12:35:00"
+ "2017-03-10T12:36:00"
+ "2017-03-10T12:35:00"
+ "2017-03-10T13:35:00"
+ "2017-03-11T00:00:00"
+(5 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00+01", "2017-03-10 13:35:00+01", "2017-03-10 12:35:00-01", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp() ? (@ < "2017-03-10 12:35:00".timestamp())');
+  jsonb_path_query_tz  
+-----------------------
+ "2017-03-10T12:34:00"
+ "2017-03-10T11:35:00"
+ "2017-03-10T00:00:00"
+(3 rows)
+
+select jsonb_path_query(
+	'["2017-03-10 12:34:00.123", "2017-03-10 12:35:00.123", "2017-03-10 12:36:00.1123", "2017-03-10 12:35:00.1123+01", "2017-03-10 13:35:00.123+01", "2017-03-10 12:35:00.1-01", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp(2) ? (@ >= "2017-03-10 12:35:00.123".timestamp(2))');
+     jsonb_path_query     
+--------------------------
+ "2017-03-10T12:35:00.12"
+ "2017-03-10T12:36:00.11"
+ "2017-03-10T12:35:00.12"
+ "2017-03-10T13:35:00.1"
+ "2017-03-11T00:00:00"
+(5 rows)
 
 -- timestamptz comparison
 select jsonb_path_query(
@@ -2205,6 +3908,117 @@ select jsonb_path_query_tz(
  "2017-03-10T10:35:00"
  "2017-03-10"
 (4 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].datetime() ? (@ == "2017-03-10 12:35:00 +1".timestamp_tz())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10T11:35:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].datetime() ? (@ >= "2017-03-10 12:35:00 +1".timestamp_tz())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10T12:36:00+01:00"
+ "2017-03-10T12:35:00-02:00"
+ "2017-03-10T11:35:00"
+ "2017-03-10T12:35:00"
+ "2017-03-11"
+(6 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].datetime() ? (@ < "2017-03-10 12:35:00 +1".timestamp_tz())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:34:00+01:00"
+ "2017-03-10T12:35:00+02:00"
+ "2017-03-10T10:35:00"
+ "2017-03-10"
+(4 rows)
+
+select jsonb_path_query(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp_tz() ? (@ == "2017-03-10 12:35:00 +1".timestamp_tz())');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10T11:35:00+00:00"
+(2 rows)
+
+select jsonb_path_query(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp_tz() ? (@ >= "2017-03-10 12:35:00 +1".timestamp_tz())');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10T12:36:00+01:00"
+ "2017-03-10T12:35:00-02:00"
+ "2017-03-10T11:35:00+00:00"
+ "2017-03-10T12:35:00+00:00"
+ "2017-03-11T00:00:00+00:00"
+(6 rows)
+
+select jsonb_path_query(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp_tz() ? (@ < "2017-03-10 12:35:00 +1".timestamp_tz())');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00+01:00"
+ "2017-03-10T12:35:00+02:00"
+ "2017-03-10T10:35:00+00:00"
+ "2017-03-10T00:00:00+00:00"
+(4 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp_tz() ? (@ == "2017-03-10 12:35:00 +1".timestamp_tz())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10T11:35:00+00:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp_tz() ? (@ >= "2017-03-10 12:35:00 +1".timestamp_tz())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10T12:36:00+01:00"
+ "2017-03-10T12:35:00-02:00"
+ "2017-03-10T11:35:00+00:00"
+ "2017-03-10T12:35:00+00:00"
+ "2017-03-11T00:00:00+00:00"
+(6 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00+01", "2017-03-10 12:35:00+01", "2017-03-10 12:36:00+01", "2017-03-10 12:35:00+02", "2017-03-10 12:35:00-02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp_tz() ? (@ < "2017-03-10 12:35:00 +1".timestamp_tz())');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:34:00+01:00"
+ "2017-03-10T12:35:00+02:00"
+ "2017-03-10T10:35:00+00:00"
+ "2017-03-10T00:00:00+00:00"
+(4 rows)
+
+select jsonb_path_query(
+	'["2017-03-10 12:34:00.123+01", "2017-03-10 12:35:00.123+01", "2017-03-10 12:36:00.1123+01", "2017-03-10 12:35:00.1123+02", "2017-03-10 12:35:00.123-02", "2017-03-10 10:35:00.123", "2017-03-10 11:35:00.1", "2017-03-10 12:35:00.123", "2017-03-10", "2017-03-11"]',
+	'$[*].timestamp_tz(2) ? (@ >= "2017-03-10 12:35:00.123 +1".timestamp_tz(2))');
+        jsonb_path_query        
+--------------------------------
+ "2017-03-10T12:35:00.12+01:00"
+ "2017-03-10T12:36:00.11+01:00"
+ "2017-03-10T12:35:00.12-02:00"
+ "2017-03-10T12:35:00.12+00:00"
+ "2017-03-11T00:00:00+00:00"
+(5 rows)
 
 -- overflow during comparison
 select jsonb_path_query('"1000000-01-01"', '$.datetime() > "2020-01-01 12:00:00".datetime()'::jsonpath);

@@ -574,20 +574,20 @@ T861	SQL/JSON simplified accessor: case-sensitive JSON member accessor			NO
 T862	SQL/JSON simplified accessor: wildcard member accessor			NO	
 T863	SQL/JSON simplified accessor: single-quoted string literal as member accessor			NO	
 T864	SQL/JSON simplified accessor			NO	
-T865	SQL/JSON item method: bigint()			NO	
-T866	SQL/JSON item method: boolean()			NO	
-T867	SQL/JSON item method: date()			NO	
-T868	SQL/JSON item method: decimal()			NO	
-T869	SQL/JSON item method: decimal() with precision and scale			NO	
-T870	SQL/JSON item method: integer()			NO	
-T871	SQL/JSON item method: number()			NO	
-T872	SQL/JSON item method: string()			NO	
-T873	SQL/JSON item method: time()			NO	
-T874	SQL/JSON item method: time_tz()			NO	
-T875	SQL/JSON item method: time precision			NO	
-T876	SQL/JSON item method: timestamp()			NO	
-T877	SQL/JSON item method: timestamp_tz()			NO	
-T878	SQL/JSON item method: timestamp precision			NO	
+T865	SQL/JSON item method: bigint()			YES	
+T866	SQL/JSON item method: boolean()			YES	
+T867	SQL/JSON item method: date()			YES	
+T868	SQL/JSON item method: decimal()			YES	
+T869	SQL/JSON item method: decimal() with precision and scale			YES	
+T870	SQL/JSON item method: integer()			YES	
+T871	SQL/JSON item method: number()			YES	
+T872	SQL/JSON item method: string()			YES	
+T873	SQL/JSON item method: time()			YES	
+T874	SQL/JSON item method: time_tz()			YES	
+T875	SQL/JSON item method: time precision			YES	
+T876	SQL/JSON item method: timestamp()			YES	
+T877	SQL/JSON item method: timestamp_tz()			YES	
+T878	SQL/JSON item method: timestamp precision			YES	
 T879	JSON in equality operations			YES	with jsonb
 T880	JSON in grouping operations			YES	with jsonb
 T881	JSON in ordering operations			NO	with jsonb, partially supported

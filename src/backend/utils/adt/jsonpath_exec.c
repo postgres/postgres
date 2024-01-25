@@ -1094,6 +1094,11 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 			break;
 
 		case jpiDatetime:
+		case jpiDate:
+		case jpiTime:
+		case jpiTimeTz:
+		case jpiTimestamp:
+		case jpiTimestampTz:
 			if (unwrap && JsonbType(jb) == jbvArray)
 				return executeItemUnwrapTargetArray(cxt, jsp, jb, found, false);
 
@@ -1130,6 +1135,420 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 				res = executeNextItem(cxt, jsp, &elem,
 									  lastjbv, found, hasNext);
+			}
+			break;
+
+		case jpiBigint:
+			{
+				JsonbValue	jbv;
+				Datum		datum;
+
+				if (unwrap && JsonbType(jb) == jbvArray)
+					return executeItemUnwrapTargetArray(cxt, jsp, jb, found,
+														false);
+
+				if (jb->type == jbvNumeric)
+				{
+					bool		have_error;
+					int64		val;
+
+					val = numeric_int8_opt_error(jb->val.numeric, &have_error);
+					if (have_error)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("numeric argument of jsonpath item method .%s() is out of range for type bigint",
+													 jspOperationName(jsp->type)))));
+
+					datum = Int64GetDatum(val);
+					res = jperOk;
+				}
+				else if (jb->type == jbvString)
+				{
+					/* cast string as bigint */
+					char	   *tmp = pnstrdup(jb->val.string.val,
+											   jb->val.string.len);
+					ErrorSaveContext escontext = {T_ErrorSaveContext};
+					bool		noerr;
+
+					noerr = DirectInputFunctionCallSafe(int8in, tmp,
+														InvalidOid, -1,
+														(Node *) &escontext,
+														&datum);
+
+					if (!noerr || escontext.error_occurred)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("string argument of jsonpath item method .%s() is not a valid representation of a big integer",
+													 jspOperationName(jsp->type)))));
+					res = jperOk;
+				}
+
+				if (res == jperNotFound)
+					RETURN_ERROR(ereport(ERROR,
+										 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+										  errmsg("jsonpath item method .%s() can only be applied to a string or numeric value",
+												 jspOperationName(jsp->type)))));
+
+				jb = &jbv;
+				jb->type = jbvNumeric;
+				jb->val.numeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
+																	  datum));
+
+				res = executeNextItem(cxt, jsp, NULL, jb, found, true);
+			}
+			break;
+
+		case jpiBoolean:
+			{
+				JsonbValue	jbv;
+				bool		bval;
+
+				if (unwrap && JsonbType(jb) == jbvArray)
+					return executeItemUnwrapTargetArray(cxt, jsp, jb, found,
+														false);
+
+				if (jb->type == jbvBool)
+				{
+					bval = jb->val.boolean;
+
+					res = jperOk;
+				}
+				else if (jb->type == jbvNumeric)
+				{
+					int			ival;
+					Datum		datum;
+					bool		noerr;
+					char	   *tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
+																		  NumericGetDatum(jb->val.numeric)));
+					ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+					noerr = DirectInputFunctionCallSafe(int4in, tmp,
+														InvalidOid, -1,
+														(Node *) &escontext,
+														&datum);
+
+					if (!noerr || escontext.error_occurred)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("numeric argument of jsonpath item method .%s() is out of range for type boolean",
+													 jspOperationName(jsp->type)))));
+
+					ival = DatumGetInt32(datum);
+					if (ival == 0)
+						bval = false;
+					else
+						bval = true;
+
+					res = jperOk;
+				}
+				else if (jb->type == jbvString)
+				{
+					/* cast string as boolean */
+					char	   *tmp = pnstrdup(jb->val.string.val,
+											   jb->val.string.len);
+
+					if (!parse_bool(tmp, &bval))
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("string argument of jsonpath item method .%s() is not a valid representation of a boolean",
+													 jspOperationName(jsp->type)))));
+
+					res = jperOk;
+				}
+
+				if (res == jperNotFound)
+					RETURN_ERROR(ereport(ERROR,
+										 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+										  errmsg("jsonpath item method .%s() can only be applied to a bool, string, or numeric value",
+												 jspOperationName(jsp->type)))));
+
+				jb = &jbv;
+				jb->type = jbvBool;
+				jb->val.boolean = bval;
+
+				res = executeNextItem(cxt, jsp, NULL, jb, found, true);
+			}
+			break;
+
+		case jpiDecimal:
+		case jpiNumber:
+			{
+				JsonbValue	jbv;
+				Numeric		num;
+				char	   *numstr = NULL;
+
+				if (unwrap && JsonbType(jb) == jbvArray)
+					return executeItemUnwrapTargetArray(cxt, jsp, jb, found,
+														false);
+
+				if (jb->type == jbvNumeric)
+				{
+					num = jb->val.numeric;
+					if (numeric_is_nan(num) || numeric_is_inf(num))
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("numeric argument of jsonpath item method .%s() is out of range for type decimal or number",
+													 jspOperationName(jsp->type)))));
+
+					if (jsp->type == jpiDecimal)
+						numstr = DatumGetCString(DirectFunctionCall1(numeric_out,
+																	 NumericGetDatum(num)));
+					res = jperOk;
+				}
+				else if (jb->type == jbvString)
+				{
+					/* cast string as number */
+					Datum		datum;
+					bool		noerr;
+					ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+					numstr = pnstrdup(jb->val.string.val, jb->val.string.len);
+
+					noerr = DirectInputFunctionCallSafe(numeric_in, numstr,
+														InvalidOid, -1,
+														(Node *) &escontext,
+														&datum);
+
+					if (!noerr || escontext.error_occurred)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("string argument of jsonpath item method .%s() is not a valid representation of a decimal or number",
+													 jspOperationName(jsp->type)))));
+
+					num = DatumGetNumeric(datum);
+					if (numeric_is_nan(num) || numeric_is_inf(num))
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("string argument of jsonpath item method .%s() is not a valid representation of a decimal or number",
+													 jspOperationName(jsp->type)))));
+
+					res = jperOk;
+				}
+
+				if (res == jperNotFound)
+					RETURN_ERROR(ereport(ERROR,
+										 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+										  errmsg("jsonpath item method .%s() can only be applied to a string or numeric value",
+												 jspOperationName(jsp->type)))));
+
+				/*
+				 * If we have arguments, then they must be the precision and
+				 * optional scale used in .decimal().  Convert them to the
+				 * typmod equivalent and then truncate the numeric value per
+				 * this typmod details.
+				 */
+				if (jsp->type == jpiDecimal && jsp->content.args.left)
+				{
+					Datum		numdatum;
+					Datum		dtypmod;
+					int32		precision;
+					int32		scale = 0;
+					bool		have_error;
+					bool		noerr;
+					ArrayType  *arrtypmod;
+					Datum		datums[2];
+					char		pstr[12];	/* sign, 10 digits and '\0' */
+					char		sstr[12];	/* sign, 10 digits and '\0' */
+					ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+					jspGetLeftArg(jsp, &elem);
+					if (elem.type != jpiNumeric)
+						elog(ERROR, "invalid jsonpath item type for .decimal() precision");
+
+					precision = numeric_int4_opt_error(jspGetNumeric(&elem),
+													   &have_error);
+					if (have_error)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("precision of jsonpath item method .%s() is out of range for type integer",
+													 jspOperationName(jsp->type)))));
+
+					if (jsp->content.args.right)
+					{
+						jspGetRightArg(jsp, &elem);
+						if (elem.type != jpiNumeric)
+							elog(ERROR, "invalid jsonpath item type for .decimal() scale");
+
+						scale = numeric_int4_opt_error(jspGetNumeric(&elem),
+													   &have_error);
+						if (have_error)
+							RETURN_ERROR(ereport(ERROR,
+												 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+												  errmsg("scale of jsonpath item method .%s() is out of range for type integer",
+														 jspOperationName(jsp->type)))));
+					}
+
+					/*
+					 * numerictypmodin() takes the precision and scale in the
+					 * form of CString arrays.
+					 */
+					pg_ltoa(precision, pstr);
+					datums[0] = CStringGetDatum(pstr);
+					pg_ltoa(scale, sstr);
+					datums[1] = CStringGetDatum(sstr);
+					arrtypmod = construct_array_builtin(datums, 2, CSTRINGOID);
+
+					dtypmod = DirectFunctionCall1(numerictypmodin,
+												  PointerGetDatum(arrtypmod));
+
+					/* Convert numstr to Numeric with typmod */
+					Assert(numstr != NULL);
+					noerr = DirectInputFunctionCallSafe(numeric_in, numstr,
+														InvalidOid, dtypmod,
+														(Node *) &escontext,
+														&numdatum);
+
+					if (!noerr || escontext.error_occurred)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("string argument of jsonpath item method .%s() is not a valid representation of a decimal or number",
+													 jspOperationName(jsp->type)))));
+
+					num = DatumGetNumeric(numdatum);
+					pfree(arrtypmod);
+				}
+
+				jb = &jbv;
+				jb->type = jbvNumeric;
+				jb->val.numeric = num;
+
+				res = executeNextItem(cxt, jsp, NULL, jb, found, true);
+			}
+			break;
+
+		case jpiInteger:
+			{
+				JsonbValue	jbv;
+				Datum		datum;
+
+				if (unwrap && JsonbType(jb) == jbvArray)
+					return executeItemUnwrapTargetArray(cxt, jsp, jb, found,
+														false);
+
+				if (jb->type == jbvNumeric)
+				{
+					bool		have_error;
+					int32		val;
+
+					val = numeric_int4_opt_error(jb->val.numeric, &have_error);
+					if (have_error)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("numeric argument of jsonpath item method .%s() is out of range for type integer",
+													 jspOperationName(jsp->type)))));
+
+					datum = Int32GetDatum(val);
+					res = jperOk;
+				}
+				else if (jb->type == jbvString)
+				{
+					/* cast string as integer */
+					char	   *tmp = pnstrdup(jb->val.string.val,
+											   jb->val.string.len);
+					ErrorSaveContext escontext = {T_ErrorSaveContext};
+					bool		noerr;
+
+					noerr = DirectInputFunctionCallSafe(int4in, tmp,
+														InvalidOid, -1,
+														(Node *) &escontext,
+														&datum);
+
+					if (!noerr || escontext.error_occurred)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("string argument of jsonpath item method .%s() is not a valid representation of an integer",
+													 jspOperationName(jsp->type)))));
+					res = jperOk;
+				}
+
+				if (res == jperNotFound)
+					RETURN_ERROR(ereport(ERROR,
+										 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+										  errmsg("jsonpath item method .%s() can only be applied to a string or numeric value",
+												 jspOperationName(jsp->type)))));
+
+				jb = &jbv;
+				jb->type = jbvNumeric;
+				jb->val.numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+																	  datum));
+
+				res = executeNextItem(cxt, jsp, NULL, jb, found, true);
+			}
+			break;
+
+		case jpiStringFunc:
+			{
+				JsonbValue	jbv;
+				char	   *tmp = NULL;
+
+				switch (JsonbType(jb))
+				{
+					case jbvString:
+
+						/*
+						 * Value is not necessarily null-terminated, so we do
+						 * pnstrdup() here.
+						 */
+						tmp = pnstrdup(jb->val.string.val,
+									   jb->val.string.len);
+						break;
+					case jbvNumeric:
+						tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
+																  NumericGetDatum(jb->val.numeric)));
+						break;
+					case jbvBool:
+						tmp = (jb->val.boolean) ? "true" : "false";
+						break;
+					case jbvDatetime:
+						{
+							switch (jb->val.datetime.typid)
+							{
+								case DATEOID:
+									tmp = DatumGetCString(DirectFunctionCall1(date_out,
+																			  jb->val.datetime.value));
+									break;
+								case TIMEOID:
+									tmp = DatumGetCString(DirectFunctionCall1(time_out,
+																			  jb->val.datetime.value));
+									break;
+								case TIMETZOID:
+									tmp = DatumGetCString(DirectFunctionCall1(timetz_out,
+																			  jb->val.datetime.value));
+									break;
+								case TIMESTAMPOID:
+									tmp = DatumGetCString(DirectFunctionCall1(timestamp_out,
+																			  jb->val.datetime.value));
+									break;
+								case TIMESTAMPTZOID:
+									tmp = DatumGetCString(DirectFunctionCall1(timestamptz_out,
+																			  jb->val.datetime.value));
+									break;
+								default:
+									elog(ERROR, "unrecognized SQL/JSON datetime type oid: %u",
+										 jb->val.datetime.typid);
+							}
+						}
+						break;
+					case jbvNull:
+					case jbvArray:
+					case jbvObject:
+					case jbvBinary:
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
+											  errmsg("jsonpath item method .%s() can only be applied to a bool, string, numeric, or datetime value",
+													 jspOperationName(jsp->type)))));
+						break;
+				}
+
+				res = jperOk;
+
+				jb = &jbv;
+				Assert(tmp != NULL);	/* We must have set tmp above */
+				jb->val.string.val = (jb->type == jbvString) ? tmp : pstrdup(tmp);
+				jb->val.string.len = strlen(jb->val.string.val);
+				jb->type = jbvString;
+
+				res = executeNextItem(cxt, jsp, NULL, jb, found, true);
 			}
 			break;
 
@@ -1794,11 +2213,16 @@ executeNumericItemMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 }
 
 /*
- * Implementation of the .datetime() method.
+ * Implementation of the .datetime() and related methods.
  *
- * Converts a string into a date/time value. The actual type is determined at run time.
+ * Converts a string into a date/time value. The actual type is determined at
+ * run time.
  * If an argument is provided, this argument is used as a template string.
  * Otherwise, the first fitting ISO format is selected.
+ *
+ * .date(), .time(), .time_tz(), .timestamp(), .timestamp_tz() methods don't
+ * have a format, so ISO format is used.  However, except for .date(), they all
+ * take an optional time precision.
  */
 static JsonPathExecResult
 executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
@@ -1814,6 +2238,7 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	bool		hasNext;
 	JsonPathExecResult res = jperNotFound;
 	JsonPathItem elem;
+	int32		time_precision = -1;
 
 	if (!(jb = getScalar(jb, jbvString)))
 		RETURN_ERROR(ereport(ERROR,
@@ -1831,7 +2256,11 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	 */
 	collid = DEFAULT_COLLATION_OID;
 
-	if (jsp->content.arg)
+	/*
+	 * .datetime(template) has an argument, the rest of the methods don't have
+	 * an argument.  So we handle that separately.
+	 */
+	if (jsp->type == jpiDatetime && jsp->content.arg)
 	{
 		text	   *template;
 		char	   *template_str;
@@ -1893,6 +2322,30 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		static text *fmt_txt[lengthof(fmt_str)] = {0};
 		int			i;
 
+		/*
+		 * Check for optional precision for methods other than .datetime() and
+		 * .date()
+		 */
+		if (jsp->type != jpiDatetime && jsp->type != jpiDate &&
+			jsp->content.arg)
+		{
+			bool		have_error;
+
+			jspGetArg(jsp, &elem);
+
+			if (elem.type != jpiNumeric)
+				elog(ERROR, "invalid jsonpath item type for %s argument",
+					 jspOperationName(jsp->type));
+
+			time_precision = numeric_int4_opt_error(jspGetNumeric(&elem),
+													&have_error);
+			if (have_error)
+				RETURN_ERROR(ereport(ERROR,
+									 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+									  errmsg("time precision of jsonpath item method .%s() is out of range for type integer",
+											 jspOperationName(jsp->type)))));
+		}
+
 		/* loop until datetime format fits */
 		for (i = 0; i < lengthof(fmt_str); i++)
 		{
@@ -1919,11 +2372,260 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		}
 
 		if (res == jperNotFound)
-			RETURN_ERROR(ereport(ERROR,
-								 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
-								  errmsg("datetime format is not recognized: \"%s\"",
-										 text_to_cstring(datetime)),
-								  errhint("Use a datetime template argument to specify the input data format."))));
+		{
+			if (jsp->type == jpiDatetime)
+				RETURN_ERROR(ereport(ERROR,
+									 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+									  errmsg("datetime format is not recognized: \"%s\"",
+											 text_to_cstring(datetime)),
+									  errhint("Use a datetime template argument to specify the input data format."))));
+			else
+				RETURN_ERROR(ereport(ERROR,
+									 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+									  errmsg("%s format is not recognized: \"%s\"",
+											 jspOperationName(jsp->type), text_to_cstring(datetime)))));
+
+		}
+	}
+
+	/*
+	 * parse_datetime() processes the entire input string per the template or
+	 * ISO format and returns the Datum in best fitted datetime type.  So, if
+	 * this call is for a specific datatype, then we do the conversion here.
+	 * Throw an error for incompatible types.
+	 */
+	switch (jsp->type)
+	{
+		case jpiDatetime:		/* Nothing to do for DATETIME */
+			break;
+		case jpiDate:
+			{
+				/* Convert result type to date */
+				switch (typid)
+				{
+					case DATEOID:	/* Nothing to do for DATE */
+						break;
+					case TIMEOID:
+					case TIMETZOID:
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+											  errmsg("date format is not recognized: \"%s\"",
+													 text_to_cstring(datetime)))));
+						break;
+					case TIMESTAMPOID:
+						value = DirectFunctionCall1(timestamp_date,
+													value);
+						break;
+					case TIMESTAMPTZOID:
+						value = DirectFunctionCall1(timestamptz_date,
+													value);
+						break;
+					default:
+						elog(ERROR, "type with oid %d not supported", typid);
+				}
+
+				typid = DATEOID;
+			}
+			break;
+		case jpiTime:
+			{
+				/* Convert result type to time without time zone */
+				switch (typid)
+				{
+					case DATEOID:
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+											  errmsg("time format is not recognized: \"%s\"",
+													 text_to_cstring(datetime)))));
+						break;
+					case TIMEOID:	/* Nothing to do for TIME */
+						break;
+					case TIMETZOID:
+						value = DirectFunctionCall1(timetz_time,
+													value);
+						break;
+					case TIMESTAMPOID:
+						value = DirectFunctionCall1(timestamp_time,
+													value);
+						break;
+					case TIMESTAMPTZOID:
+						value = DirectFunctionCall1(timestamptz_time,
+													value);
+						break;
+					default:
+						elog(ERROR, "type with oid %d not supported", typid);
+				}
+
+				/* Force the user-given time precision, if any */
+				if (time_precision != -1)
+				{
+					TimeADT		result;
+
+					/* Get a warning when precision is reduced */
+					time_precision = anytime_typmod_check(false,
+														  time_precision);
+					result = DatumGetTimeADT(value);
+					AdjustTimeForTypmod(&result, time_precision);
+					value = TimeADTGetDatum(result);
+
+					/* Update the typmod value with the user-given precision */
+					typmod = time_precision;
+				}
+
+				typid = TIMEOID;
+			}
+			break;
+		case jpiTimeTz:
+			{
+				/* Convert result type to time with time zone */
+				switch (typid)
+				{
+					case DATEOID:
+					case TIMESTAMPOID:
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+											  errmsg("time_tz format is not recognized: \"%s\"",
+													 text_to_cstring(datetime)))));
+						break;
+					case TIMEOID:
+						value = DirectFunctionCall1(time_timetz,
+													value);
+						break;
+					case TIMETZOID: /* Nothing to do for TIMETZ */
+						break;
+					case TIMESTAMPTZOID:
+						value = DirectFunctionCall1(timestamptz_timetz,
+													value);
+						break;
+					default:
+						elog(ERROR, "type with oid %d not supported", typid);
+				}
+
+				/* Force the user-given time precision, if any */
+				if (time_precision != -1)
+				{
+					TimeTzADT  *result;
+
+					/* Get a warning when precision is reduced */
+					time_precision = anytime_typmod_check(true,
+														  time_precision);
+					result = DatumGetTimeTzADTP(value);
+					AdjustTimeForTypmod(&result->time, time_precision);
+					value = TimeTzADTPGetDatum(result);
+
+					/* Update the typmod value with the user-given precision */
+					typmod = time_precision;
+				}
+
+				typid = TIMETZOID;
+			}
+			break;
+		case jpiTimestamp:
+			{
+				/* Convert result type to timestamp without time zone */
+				switch (typid)
+				{
+					case DATEOID:
+						value = DirectFunctionCall1(date_timestamp,
+													value);
+						break;
+					case TIMEOID:
+					case TIMETZOID:
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+											  errmsg("timestamp format is not recognized: \"%s\"",
+													 text_to_cstring(datetime)))));
+						break;
+					case TIMESTAMPOID:	/* Nothing to do for TIMESTAMP */
+						break;
+					case TIMESTAMPTZOID:
+						value = DirectFunctionCall1(timestamptz_timestamp,
+													value);
+						break;
+					default:
+						elog(ERROR, "type with oid %d not supported", typid);
+				}
+
+				/* Force the user-given time precision, if any */
+				if (time_precision != -1)
+				{
+					Timestamp	result;
+					ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+					/* Get a warning when precision is reduced */
+					time_precision = anytimestamp_typmod_check(false,
+															   time_precision);
+					result = DatumGetTimestamp(value);
+					AdjustTimestampForTypmod(&result, time_precision,
+											 (Node *) &escontext);
+					if (escontext.error_occurred)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+											  errmsg("numeric argument of jsonpath item method .%s() is out of range for type integer",
+													 jspOperationName(jsp->type)))));
+					value = TimestampGetDatum(result);
+
+					/* Update the typmod value with the user-given precision */
+					typmod = time_precision;
+				}
+
+				typid = TIMESTAMPOID;
+			}
+			break;
+		case jpiTimestampTz:
+			{
+				/* Convert result type to timestamp with time zone */
+				switch (typid)
+				{
+					case DATEOID:
+						value = DirectFunctionCall1(date_timestamptz,
+													value);
+						break;
+					case TIMEOID:
+					case TIMETZOID:
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+											  errmsg("timestamp_tz format is not recognized: \"%s\"",
+													 text_to_cstring(datetime)))));
+						break;
+					case TIMESTAMPOID:
+						value = DirectFunctionCall1(timestamp_timestamptz,
+													value);
+						break;
+					case TIMESTAMPTZOID:	/* Nothing to do for TIMESTAMPTZ */
+						break;
+					default:
+						elog(ERROR, "type with oid %d not supported", typid);
+				}
+
+				/* Force the user-given time precision, if any */
+				if (time_precision != -1)
+				{
+					Timestamp	result;
+					ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+					/* Get a warning when precision is reduced */
+					time_precision = anytimestamp_typmod_check(true,
+															   time_precision);
+					result = DatumGetTimestampTz(value);
+					AdjustTimestampForTypmod(&result, time_precision,
+											 (Node *) &escontext);
+					if (escontext.error_occurred)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_SQL_JSON_DATETIME_FUNCTION),
+											  errmsg("numeric argument of jsonpath item method .%s() is out of range for type integer",
+													 jspOperationName(jsp->type)))));
+					value = TimestampTzGetDatum(result);
+
+					/* Update the typmod value with the user-given precision */
+					typmod = time_precision;
+				}
+
+				typid = TIMESTAMPTZOID;
+			}
+			break;
+		default:
+			elog(ERROR, "unrecognized jsonpath item type: %d", jsp->type);
 	}
 
 	pfree(datetime);

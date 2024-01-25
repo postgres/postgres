@@ -82,15 +82,18 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 %token	<str>		ANY_P STRICT_P LAX_P LAST_P STARTS_P WITH_P LIKE_REGEX_P FLAG_P
 %token	<str>		ABS_P SIZE_P TYPE_P FLOOR_P DOUBLE_P CEILING_P KEYVALUE_P
 %token	<str>		DATETIME_P
+%token	<str>		BIGINT_P BOOLEAN_P DATE_P DECIMAL_P INTEGER_P NUMBER_P
+%token	<str>		STRINGFUNC_P TIME_P TIME_TZ_P TIMESTAMP_P TIMESTAMP_TZ_P
 
 %type	<result>	result
 
 %type	<value>		scalar_value path_primary expr array_accessor
 					any_path accessor_op key predicate delimited_predicate
 					index_elem starts_with_initial expr_or_predicate
-					datetime_template opt_datetime_template
+					datetime_template opt_datetime_template csv_elem
+					datetime_precision opt_datetime_precision
 
-%type	<elems>		accessor_expr
+%type	<elems>		accessor_expr csv_list opt_csv_list
 
 %type	<indexs>	index_list
 
@@ -248,9 +251,59 @@ accessor_op:
 	| array_accessor				{ $$ = $1; }
 	| '.' any_path					{ $$ = $2; }
 	| '.' method '(' ')'			{ $$ = makeItemType($2); }
-	| '.' DATETIME_P '(' opt_datetime_template ')'
-									{ $$ = makeItemUnary(jpiDatetime, $4); }
 	| '?' '(' predicate ')'			{ $$ = makeItemUnary(jpiFilter, $3); }
+	| '.' DECIMAL_P '(' opt_csv_list ')'
+		{
+			if (list_length($4) == 0)
+				$$ = makeItemBinary(jpiDecimal, NULL, NULL);
+			else if (list_length($4) == 1)
+				$$ = makeItemBinary(jpiDecimal, linitial($4), NULL);
+			else if (list_length($4) == 2)
+				$$ = makeItemBinary(jpiDecimal, linitial($4), lsecond($4));
+			else
+				ereturn(escontext, false,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid input syntax for type %s", "jsonpath"),
+						 errdetail(".decimal() can only have an optional precision[,scale].")));
+		}
+	| '.' DATETIME_P '(' opt_datetime_template ')'
+		{ $$ = makeItemUnary(jpiDatetime, $4); }
+	| '.' TIME_P '(' opt_datetime_precision ')'
+		{ $$ = makeItemUnary(jpiTime, $4); }
+	| '.' TIME_TZ_P '(' opt_datetime_precision ')'
+		{ $$ = makeItemUnary(jpiTimeTz, $4); }
+	| '.' TIMESTAMP_P '(' opt_datetime_precision ')'
+		{ $$ = makeItemUnary(jpiTimestamp, $4); }
+	| '.' TIMESTAMP_TZ_P '(' opt_datetime_precision ')'
+		{ $$ = makeItemUnary(jpiTimestampTz, $4); }
+	;
+
+csv_elem:
+	INT_P
+		{ $$ = makeItemNumeric(&$1); }
+	| '+' INT_P %prec UMINUS
+		{ $$ = makeItemUnary(jpiPlus, makeItemNumeric(&$2)); }
+	| '-' INT_P %prec UMINUS
+		{ $$ = makeItemUnary(jpiMinus, makeItemNumeric(&$2)); }
+	;
+
+csv_list:
+	csv_elem						{ $$ = list_make1($1); }
+	| csv_list ',' csv_elem			{ $$ = lappend($1, $3); }
+	;
+
+opt_csv_list:
+	csv_list						{ $$ = $1; }
+	| /* EMPTY */					{ $$ = NULL; }
+	;
+
+datetime_precision:
+	INT_P							{ $$ = makeItemNumeric(&$1); }
+	;
+
+opt_datetime_precision:
+	datetime_precision				{ $$ = $1; }
+	| /* EMPTY */					{ $$ = NULL; }
 	;
 
 datetime_template:
@@ -291,6 +344,17 @@ key_name:
 	| WITH_P
 	| LIKE_REGEX_P
 	| FLAG_P
+	| BIGINT_P
+	| BOOLEAN_P
+	| DATE_P
+	| DECIMAL_P
+	| INTEGER_P
+	| NUMBER_P
+	| STRINGFUNC_P
+	| TIME_P
+	| TIME_TZ_P
+	| TIMESTAMP_P
+	| TIMESTAMP_TZ_P
 	;
 
 method:
@@ -301,6 +365,12 @@ method:
 	| DOUBLE_P						{ $$ = jpiDouble; }
 	| CEILING_P						{ $$ = jpiCeiling; }
 	| KEYVALUE_P					{ $$ = jpiKeyValue; }
+	| BIGINT_P						{ $$ = jpiBigint; }
+	| BOOLEAN_P						{ $$ = jpiBoolean; }
+	| DATE_P						{ $$ = jpiDate; }
+	| INTEGER_P						{ $$ = jpiInteger; }
+	| NUMBER_P						{ $$ = jpiNumber; }
+	| STRINGFUNC_P					{ $$ = jpiStringFunc; }
 	;
 %%
 

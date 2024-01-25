@@ -102,6 +102,17 @@ typedef enum JsonPathItemType
 	jpiLast,					/* LAST array subscript */
 	jpiStartsWith,				/* STARTS WITH predicate */
 	jpiLikeRegex,				/* LIKE_REGEX predicate */
+	jpiBigint,					/* .bigint() item method */
+	jpiBoolean,					/* .boolean() item method */
+	jpiDate,					/* .date() item method */
+	jpiDecimal,					/* .decimal() item method */
+	jpiInteger,					/* .integer() item method */
+	jpiNumber,					/* .number() item method */
+	jpiStringFunc,				/* .string() item method */
+	jpiTime,					/* .time() item method */
+	jpiTimeTz,					/* .time_tz() item method */
+	jpiTimestamp,				/* .timestamp() item method */
+	jpiTimestampTz,				/* .timestamp_tz() item method */
 } JsonPathItemType;
 
 /* XQuery regex mode flags for LIKE_REGEX predicate */
