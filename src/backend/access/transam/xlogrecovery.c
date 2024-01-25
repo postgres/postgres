@@ -622,6 +622,22 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 			EnableStandbyMode();
 
 		/*
+		 * Omitting backup_label when creating a new replica, PITR node etc.
+		 * unfortunately is a common cause of corruption.  Logging that
+		 * backup_label was used makes it a bit easier to exclude that as the
+		 * cause of observed corruption.
+		 *
+		 * Do so before we try to read the checkpoint record (which can fail),
+		 * as otherwise it can be hard to understand why a checkpoint other
+		 * than ControlFile->checkPoint is used.
+		 */
+		ereport(LOG,
+				(errmsg("starting backup recovery with redo LSN %X/%X, checkpoint LSN %X/%X, on timeline ID %u",
+						LSN_FORMAT_ARGS(RedoStartLSN),
+						LSN_FORMAT_ARGS(CheckPointLoc),
+						CheckPointTLI)));
+
+		/*
 		 * When a backup_label file is present, we want to roll forward from
 		 * the checkpoint it identifies, rather than using pg_control.
 		 */
@@ -758,6 +774,16 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 			if (StandbyModeRequested)
 				EnableStandbyMode();
 		}
+
+		/*
+		 * For the same reason as when starting up with backup_label present,
+		 * emit a log message when we continue initializing from a base
+		 * backup.
+		 */
+		if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+			ereport(LOG,
+					(errmsg("restarting backup recovery with redo LSN %X/%X",
+							LSN_FORMAT_ARGS(ControlFile->backupStartPoint))));
 
 		/* Get the last valid checkpoint record. */
 		CheckPointLoc = ControlFile->checkPoint;
@@ -2102,6 +2128,9 @@ CheckRecoveryConsistency(void)
 	if (!XLogRecPtrIsInvalid(backupEndPoint) &&
 		backupEndPoint <= lastReplayedEndRecPtr)
 	{
+		XLogRecPtr	saveBackupStartPoint = backupStartPoint;
+		XLogRecPtr	saveBackupEndPoint = backupEndPoint;
+
 		elog(DEBUG1, "end of backup reached");
 
 		/*
@@ -2112,6 +2141,11 @@ CheckRecoveryConsistency(void)
 		backupStartPoint = InvalidXLogRecPtr;
 		backupEndPoint = InvalidXLogRecPtr;
 		backupEndRequired = false;
+
+		ereport(LOG,
+				(errmsg("completed backup recovery with redo LSN %X/%X and end LSN %X/%X",
+						LSN_FORMAT_ARGS(saveBackupStartPoint),
+						LSN_FORMAT_ARGS(saveBackupEndPoint))));
 	}
 
 	/*
