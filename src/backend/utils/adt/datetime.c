@@ -3246,6 +3246,82 @@ DecodeTimezoneNameToTz(const char *tzname)
 	return result;
 }
 
+/* DecodeTimezoneAbbrevPrefix()
+ * Interpret prefix of string as a timezone abbreviation, if possible.
+ *
+ * This has roughly the same functionality as DecodeTimezoneAbbrev(),
+ * but the API is adapted to the needs of formatting.c.  Notably,
+ * we will match the longest possible prefix of the given string
+ * rather than insisting on a complete match, and downcasing is applied
+ * here rather than in the caller.
+ *
+ * Returns the length of the timezone abbreviation, or -1 if not recognized.
+ * On success, sets *offset to the GMT offset for the abbreviation if it
+ * is a fixed-offset abbreviation, or sets *tz to the pg_tz struct for
+ * a dynamic abbreviation.
+ */
+int
+DecodeTimezoneAbbrevPrefix(const char *str, int *offset, pg_tz **tz)
+{
+	char		lowtoken[TOKMAXLEN + 1];
+	int			len;
+
+	*offset = 0;				/* avoid uninitialized vars on failure */
+	*tz = NULL;
+
+	if (!zoneabbrevtbl)
+		return -1;				/* no abbrevs known, so fail immediately */
+
+	/* Downcase as much of the string as we could need */
+	for (len = 0; len < TOKMAXLEN; len++)
+	{
+		if (*str == '\0' || !isalpha((unsigned char) *str))
+			break;
+		lowtoken[len] = pg_tolower((unsigned char) *str++);
+	}
+	lowtoken[len] = '\0';
+
+	/*
+	 * We could avoid doing repeated binary searches if we cared to duplicate
+	 * datebsearch here, but it's not clear that such an optimization would be
+	 * worth the trouble.  In common cases there's probably not anything after
+	 * the zone abbrev anyway.  So just search with successively truncated
+	 * strings.
+	 */
+	while (len > 0)
+	{
+		const datetkn *tp = datebsearch(lowtoken, zoneabbrevtbl->abbrevs,
+										zoneabbrevtbl->numabbrevs);
+
+		if (tp != NULL)
+		{
+			if (tp->type == DYNTZ)
+			{
+				DateTimeErrorExtra extra;
+				pg_tz	   *tzp = FetchDynamicTimeZone(zoneabbrevtbl, tp,
+													   &extra);
+
+				if (tzp != NULL)
+				{
+					/* Caller must resolve the abbrev's current meaning */
+					*tz = tzp;
+					return len;
+				}
+			}
+			else
+			{
+				/* Fixed-offset zone abbrev, so it's easy */
+				*offset = tp->value;
+				return len;
+			}
+		}
+		lowtoken[--len] = '\0';
+	}
+
+	/* Did not find a match */
+	return -1;
+}
+
 
 /* ClearPgItmIn
  *

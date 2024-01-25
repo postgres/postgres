@@ -348,6 +348,9 @@ extern int	DecodeUnits(int field, const char *lowtoken, int *val);
 extern int	DecodeTimezoneName(const char *tzname, int *offset, pg_tz **tz);
 extern pg_tz *DecodeTimezoneNameToTz(const char *tzname);
 
+extern int	DecodeTimezoneAbbrevPrefix(const char *str,
+									   int *offset, pg_tz **tz);
+
 extern int	j2day(int date);
 
 extern struct Node *TemporalSimplify(int32 max_precis, struct Node *node);
