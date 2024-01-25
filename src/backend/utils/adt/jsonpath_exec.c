@@ -1540,11 +1540,9 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 						break;
 				}
 
-				res = jperOk;
-
 				jb = &jbv;
 				Assert(tmp != NULL);	/* We must have set tmp above */
-				jb->val.string.val = (jb->type == jbvString) ? tmp : pstrdup(tmp);
+				jb->val.string.val = tmp;
 				jb->val.string.len = strlen(jb->val.string.val);
 				jb->type = jbvString;
 
