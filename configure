@@ -5090,7 +5090,7 @@ if test "$with_llvm" = yes; then :
 
 
   if test -z "$LLVM_CONFIG"; then
-  for ac_prog in llvm-config llvm-config-7 llvm-config-6.0 llvm-config-5.0 llvm-config-4.0 llvm-config-3.9
+  for ac_prog in llvm-config llvm-config-17 llvm-config-16 llvm-config-15 llvm-config-14 llvm-config-13 llvm-config-12 llvm-config-11 llvm-config-10
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -5154,8 +5154,8 @@ fi
     as_fn_error $? "$LLVM_CONFIG does not work" "$LINENO" 5
   fi
   # and whether the version is supported
-  if echo $pgac_llvm_version | $AWK -F '.' '{ if ($1 >= 4 || ($1 == 3 && $2 >= 9)) exit 1; else exit 0;}';then
-    as_fn_error $? "$LLVM_CONFIG version is $pgac_llvm_version but at least 3.9 is required" "$LINENO" 5
+  if echo $pgac_llvm_version | $AWK -F '.' '{ if ($1 >= 10) exit 1; else exit 0;}';then
+    as_fn_error $? "$LLVM_CONFIG version is $pgac_llvm_version but at least 10 is required" "$LINENO" 5
   fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: using llvm $pgac_llvm_version" >&5
 $as_echo "$as_me: using llvm $pgac_llvm_version" >&6;}
@@ -5163,7 +5163,7 @@ $as_echo "$as_me: using llvm $pgac_llvm_version" >&6;}
   # need clang to create some bitcode files
 
   if test -z "$CLANG"; then
-  for ac_prog in clang clang-7 clang-6.0 clang-5.0 clang-4.0 clang-3.9
+  for ac_prog in clang clang-17 clang-16 clang-15 clang-14 clang-13 clang-12 clang-11 clang-10
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -16546,41 +16546,6 @@ if test "$with_llvm" = yes; then
   # Check which functionality is present
   SAVE_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $LLVM_CPPFLAGS"
-  ac_fn_c_check_decl "$LINENO" "LLVMOrcGetSymbolAddressIn" "ac_cv_have_decl_LLVMOrcGetSymbolAddressIn" "#include <llvm-c/OrcBindings.h>
-"
-if test "x$ac_cv_have_decl_LLVMOrcGetSymbolAddressIn" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN $ac_have_decl
-_ACEOF
-
-  ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUName" "ac_cv_have_decl_LLVMGetHostCPUName" "#include <llvm-c/TargetMachine.h>
-"
-if test "x$ac_cv_have_decl_LLVMGetHostCPUName" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMGETHOSTCPUNAME $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUFeatures" "ac_cv_have_decl_LLVMGetHostCPUFeatures" "#include <llvm-c/TargetMachine.h>
-"
-if test "x$ac_cv_have_decl_LLVMGetHostCPUFeatures" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMGETHOSTCPUFEATURES $ac_have_decl
-_ACEOF
-
   ac_fn_c_check_decl "$LINENO" "LLVMCreateGDBRegistrationListener" "ac_cv_have_decl_LLVMCreateGDBRegistrationListener" "#include <llvm-c/ExecutionEngine.h>
 "
 if test "x$ac_cv_have_decl_LLVMCreateGDBRegistrationListener" = xyes; then :

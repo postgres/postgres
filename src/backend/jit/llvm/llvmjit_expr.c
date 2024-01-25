@@ -2650,12 +2650,8 @@ create_LifetimeEnd(LLVMModuleRef mod)
 	LLVMTypeRef param_types[2];
 	LLVMContextRef lc;
 
-	/* LLVM 5+ has a variadic pointer argument */
-#if LLVM_VERSION_MAJOR < 5
-	const char *nm = "llvm.lifetime.end";
-#else
+	/* variadic pointer argument */
 	const char *nm = "llvm.lifetime.end.p0i8";
-#endif
 
 	fn = LLVMGetNamedFunction(mod, nm);
 	if (fn)

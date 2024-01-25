@@ -13,7 +13,7 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
   AC_REQUIRE([AC_PROG_AWK])
 
   AC_ARG_VAR(LLVM_CONFIG, [path to llvm-config command])
-  PGAC_PATH_PROGS(LLVM_CONFIG, llvm-config llvm-config-7 llvm-config-6.0 llvm-config-5.0 llvm-config-4.0 llvm-config-3.9)
+  PGAC_PATH_PROGS(LLVM_CONFIG, llvm-config llvm-config-17 llvm-config-16 llvm-config-15 llvm-config-14 llvm-config-13 llvm-config-12 llvm-config-11 llvm-config-10)
 
   # no point continuing if llvm wasn't found
   if test -z "$LLVM_CONFIG"; then
@@ -25,14 +25,14 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
     AC_MSG_ERROR([$LLVM_CONFIG does not work])
   fi
   # and whether the version is supported
-  if echo $pgac_llvm_version | $AWK -F '.' '{ if ([$]1 >= 4 || ([$]1 == 3 && [$]2 >= 9)) exit 1; else exit 0;}';then
-    AC_MSG_ERROR([$LLVM_CONFIG version is $pgac_llvm_version but at least 3.9 is required])
+  if echo $pgac_llvm_version | $AWK -F '.' '{ if ([$]1 >= 10) exit 1; else exit 0;}';then
+    AC_MSG_ERROR([$LLVM_CONFIG version is $pgac_llvm_version but at least 10 is required])
   fi
   AC_MSG_NOTICE([using llvm $pgac_llvm_version])
 
   # need clang to create some bitcode files
   AC_ARG_VAR(CLANG, [path to clang compiler to generate bitcode])
-  PGAC_PATH_PROGS(CLANG, clang clang-7 clang-6.0 clang-5.0 clang-4.0 clang-3.9)
+  PGAC_PATH_PROGS(CLANG, clang clang-17 clang-16 clang-15 clang-14 clang-13 clang-12 clang-11 clang-10)
   if test -z "$CLANG"; then
     AC_MSG_ERROR([clang not found, but required when compiling --with-llvm, specify with CLANG=])
   fi
@@ -115,8 +115,6 @@ AC_DEFUN([PGAC_CHECK_LLVM_FUNCTIONS],
   # Check which functionality is present
   SAVE_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $LLVM_CPPFLAGS"
-  AC_CHECK_DECLS([LLVMOrcGetSymbolAddressIn], [], [], [[#include <llvm-c/OrcBindings.h>]])
-  AC_CHECK_DECLS([LLVMGetHostCPUName, LLVMGetHostCPUFeatures], [], [], [[#include <llvm-c/TargetMachine.h>]])
   AC_CHECK_DECLS([LLVMCreateGDBRegistrationListener, LLVMCreatePerfJITEventListener], [], [], [[#include <llvm-c/ExecutionEngine.h>]])
   CPPFLAGS="$SAVE_CPPFLAGS"
 ])# PGAC_CHECK_LLVM_FUNCTIONS

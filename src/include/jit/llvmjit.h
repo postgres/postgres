@@ -130,25 +130,8 @@ extern LLVMValueRef slot_compile_deform(struct LLVMJitContext *context, TupleDes
  * Error handling related functions.
  ****************************************************************************
  */
-#if defined(HAVE_DECL_LLVMGETHOSTCPUNAME) && !HAVE_DECL_LLVMGETHOSTCPUNAME
-/** Get the host CPU as a string. The result needs to be disposed with
-  LLVMDisposeMessage. */
-extern char *LLVMGetHostCPUName(void);
-#endif
-
-#if defined(HAVE_DECL_LLVMGETHOSTCPUFEATURES) && !HAVE_DECL_LLVMGETHOSTCPUFEATURES
-/** Get the host CPU features as a string. The result needs to be disposed
-  with LLVMDisposeMessage. */
-extern char *LLVMGetHostCPUFeatures(void);
-#endif
-
-extern unsigned LLVMGetAttributeCountAtIndexPG(LLVMValueRef F, uint32 Idx);
 extern LLVMTypeRef LLVMGetFunctionReturnType(LLVMValueRef r);
 extern LLVMTypeRef LLVMGetFunctionType(LLVMValueRef r);
-
-#if LLVM_MAJOR_VERSION < 8
-extern LLVMTypeRef LLVMGlobalGetValueType(LLVMValueRef g);
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */
