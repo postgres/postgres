@@ -120,6 +120,7 @@ SELECT timestamp without time zone '1999-12-01' + interval '1 month - 1 second' 
 SELECT timestamp without time zone 'Jan 1, 4713 BC' + interval '106000000 days' AS "Feb 23, 285506";
 SELECT timestamp without time zone 'Jan 1, 4713 BC' + interval '107000000 days' AS "Jan 20, 288244";
 SELECT timestamp without time zone 'Jan 1, 4713 BC' + interval '109203489 days' AS "Dec 31, 294276";
+SELECT timestamp without time zone '2000-01-01' - interval '2483590 days' AS "out of range";
 SELECT timestamp without time zone '12/31/294276' - timestamp without time zone '12/23/1999' AS "106751991 Days";
 
 -- Shorthand values
@@ -151,6 +152,7 @@ SELECT timestamp with time zone '1996-03-01' - interval '1 second' AS "Feb 29";
 SELECT timestamp with time zone '1999-03-01' - interval '1 second' AS "Feb 28";
 SELECT timestamp with time zone '2000-03-01' - interval '1 second' AS "Feb 29";
 SELECT timestamp with time zone '1999-12-01' + interval '1 month - 1 second' AS "Dec 31";
+SELECT timestamp with time zone '2000-01-01' - interval '2483590 days' AS "out of range";
 
 SELECT (timestamp with time zone 'today' = (timestamp with time zone 'yesterday' + interval '1 day')) as "True";
 SELECT (timestamp with time zone 'today' = (timestamp with time zone 'tomorrow' - interval '1 day')) as "True";
