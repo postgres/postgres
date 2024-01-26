@@ -2816,37 +2816,6 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 							 errdetail("%s versus %s", prevdef->compression, newdef->compression)));
 
 				/*
-				 * In regular inheritance, columns in the parent's primary key
-				 * get an extra not-null constraint.
-				 */
-				if (bms_is_member(parent_attno - FirstLowInvalidHeapAttributeNumber,
-								  pkattrs))
-				{
-					CookedConstraint *nn;
-
-					nn = palloc(sizeof(CookedConstraint));
-					nn->contype = CONSTR_NOTNULL;
-					nn->conoid = InvalidOid;
-					nn->name = NULL;
-					nn->attnum = exist_attno;
-					nn->expr = NULL;
-					nn->skip_validation = false;
-					nn->is_local = false;
-					nn->inhcount = 1;
-					nn->is_no_inherit = false;
-
-					nnconstraints = lappend(nnconstraints, nn);
-				}
-
-				/*
-				 * mark attnotnull if parent has it and it's not NO INHERIT
-				 */
-				if (bms_is_member(parent_attno, nncols) ||
-					bms_is_member(parent_attno - FirstLowInvalidHeapAttributeNumber,
-								  pkattrs))
-					prevdef->is_not_null = true;
-
-				/*
 				 * Check for GENERATED conflicts
 				 */
 				if (prevdef->generated != newdef->generated)
@@ -2877,43 +2846,46 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 				 */
 				newdef->inhcount = 1;
 				newdef->is_local = false;
-				/* mark attnotnull if parent has it and it's not NO INHERIT */
-				if (bms_is_member(parent_attno, nncols) ||
-					bms_is_member(parent_attno - FirstLowInvalidHeapAttributeNumber,
-								  pkattrs))
-					newdef->is_not_null = true;
 				inh_columns = lappend(inh_columns, newdef);
+
 				newattmap->attnums[parent_attno - 1] = ++child_attno;
-
-				/*
-				 * In regular inheritance, columns in the parent's primary key
-				 * get an extra not-null constraint.  Partitioning doesn't
-				 * need this, because the PK itself is going to be cloned to
-				 * the partition.
-				 */
-				if (!is_partition &&
-					bms_is_member(parent_attno -
-								  FirstLowInvalidHeapAttributeNumber,
-								  pkattrs))
-				{
-					CookedConstraint *nn;
-
-					nn = palloc(sizeof(CookedConstraint));
-					nn->contype = CONSTR_NOTNULL;
-					nn->conoid = InvalidOid;
-					nn->name = NULL;
-					nn->attnum = newattmap->attnums[parent_attno - 1];
-					nn->expr = NULL;
-					nn->skip_validation = false;
-					nn->is_local = false;
-					nn->inhcount = 1;
-					nn->is_no_inherit = false;
-
-					nnconstraints = lappend(nnconstraints, nn);
-				}
 
 				/* remember for default processing below */
 				savedef = newdef;
+			}
+
+			/*
+			 * mark attnotnull if parent has it and it's not NO INHERIT
+			 */
+			if (bms_is_member(parent_attno, nncols) ||
+				bms_is_member(parent_attno - FirstLowInvalidHeapAttributeNumber,
+							  pkattrs))
+				savedef->is_not_null = true;
+
+			/*
+			 * In regular inheritance, columns in the parent's primary key get
+			 * an extra not-null constraint.  Partitioning doesn't need this,
+			 * because the PK itself is going to be cloned to the partition.
+			 */
+			if (!is_partition &&
+				bms_is_member(parent_attno -
+							  FirstLowInvalidHeapAttributeNumber,
+							  pkattrs))
+			{
+				CookedConstraint *nn;
+
+				nn = palloc(sizeof(CookedConstraint));
+				nn->contype = CONSTR_NOTNULL;
+				nn->conoid = InvalidOid;
+				nn->name = NULL;
+				nn->attnum = newattmap->attnums[parent_attno - 1];
+				nn->expr = NULL;
+				nn->skip_validation = false;
+				nn->is_local = false;
+				nn->inhcount = 1;
+				nn->is_no_inherit = false;
+
+				nnconstraints = lappend(nnconstraints, nn);
 			}
 
 			/*
