@@ -107,7 +107,7 @@ WHERE t1.unique1 < 10;', false);
          ->  Index Scan using tenk1_unique1 on tenk1 t1 (actual rows=10 loops=N)
                Index Cond: (unique1 < 10)
          ->  Memoize (actual rows=2 loops=N)
-               Cache Key: t1.two, t1.two
+               Cache Key: t1.two
                Cache Mode: binary
                Hits: 8  Misses: 2  Evictions: Zero  Overflows: 0  Memory Usage: NkB
                ->  Subquery Scan on t2 (actual rows=2 loops=N)
