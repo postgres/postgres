@@ -3947,9 +3947,8 @@ reindex_relation(const ReindexStmt *stmt, Oid relid, int flags,
 	toast_relid = rel->rd_rel->reltoastrelid;
 
 	/*
-	 * Get the list of index OIDs for this relation.  (We trust to the
-	 * relcache to get this with a sequential scan if ignoring system
-	 * indexes.)
+	 * Get the list of index OIDs for this relation.  (We trust the relcache
+	 * to get this with a sequential scan if ignoring system indexes.)
 	 */
 	indexIds = RelationGetIndexList(rel);
 
