@@ -50,7 +50,7 @@
      writing anything to the database when running on a standby.
      Also, it's recommended to avoid long-running queries in
      <literal>login</literal> event triggers.  Notes that, for instance,
-     cancelling connection in <application>psql</application> wouldn't cancel
+     canceling connection in <application>psql</application> wouldn't cancel
      the in-progress <literal>login</literal> trigger.
    </para>
 

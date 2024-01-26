@@ -601,7 +601,7 @@ is( $node_primary->poll_query_until(
 ok( pump_until(
 		$sigchld_bb, $sigchld_bb_timeout,
 		\$sigchld_bb_stderr, qr/backup is not in progress/),
-	'base backup cleanly cancelled');
+	'base backup cleanly canceled');
 $sigchld_bb->finish();
 
 done_testing();

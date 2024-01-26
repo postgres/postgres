@@ -1,6 +1,6 @@
 # This test exercises behavior of foreign keys in the face of concurrent
 # detach of partitions in the referenced table.
-# (The cases where the detaching transaction is cancelled is interesting
+# (The cases where the detaching transaction is canceled is interesting
 # because the locking situation is completely different.  I didn't verify
 # that keeping both variants adds any extra coverage.)
 #

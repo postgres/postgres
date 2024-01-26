@@ -7625,7 +7625,7 @@ defaultNoticeProcessor(void *arg, const char *message)
        is called.  It is the ideal time to initialize any
        <literal>instanceData</literal> an event procedure may need.  Only one
        register event will be fired per event handler per connection.  If the
-       event procedure fails (returns zero), the registration is cancelled.
+       event procedure fails (returns zero), the registration is canceled.
 
 <synopsis>
 typedef struct
