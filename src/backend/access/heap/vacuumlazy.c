@@ -838,6 +838,7 @@ lazy_scan_heap(LVRelState *vacrel)
 		Page		page;
 		bool		all_visible_according_to_vm;
 		bool		has_lpdead_items;
+		bool		got_cleanup_lock = false;
 
 		if (blkno == next_unskippable_block)
 		{
@@ -931,63 +932,40 @@ lazy_scan_heap(LVRelState *vacrel)
 		 */
 		visibilitymap_pin(vacrel->rel, blkno, &vmbuffer);
 
+		buf = ReadBufferExtended(vacrel->rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								 vacrel->bstrategy);
+		page = BufferGetPage(buf);
+
 		/*
 		 * We need a buffer cleanup lock to prune HOT chains and defragment
 		 * the page in lazy_scan_prune.  But when it's not possible to acquire
 		 * a cleanup lock right away, we may be able to settle for reduced
 		 * processing using lazy_scan_noprune.
 		 */
-		buf = ReadBufferExtended(vacrel->rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
-								 vacrel->bstrategy);
-		page = BufferGetPage(buf);
-		if (!ConditionalLockBufferForCleanup(buf))
-		{
+		got_cleanup_lock = ConditionalLockBufferForCleanup(buf);
+
+		if (!got_cleanup_lock)
 			LockBuffer(buf, BUFFER_LOCK_SHARE);
 
-			/* Check for new or empty pages before lazy_scan_noprune call */
-			if (lazy_scan_new_or_empty(vacrel, buf, blkno, page, true,
-									   vmbuffer))
-			{
-				/* Processed as new/empty page (lock and pin released) */
-				continue;
-			}
+		/* Check for new or empty pages before lazy_scan_[no]prune call */
+		if (lazy_scan_new_or_empty(vacrel, buf, blkno, page, !got_cleanup_lock,
+								   vmbuffer))
+		{
+			/* Processed as new/empty page (lock and pin released) */
+			continue;
+		}
 
-			/*
-			 * Collect LP_DEAD items in dead_items array, count tuples,
-			 * determine if rel truncation is safe
-			 */
-			if (lazy_scan_noprune(vacrel, buf, blkno, page, &has_lpdead_items))
-			{
-				Size		freespace = 0;
-				bool		recordfreespace;
-
-				/*
-				 * We processed the page successfully (without a cleanup
-				 * lock).
-				 *
-				 * Update the FSM, just as we would in the case where
-				 * lazy_scan_prune() is called. Our goal is to update the
-				 * freespace map the last time we touch the page. If the
-				 * relation has no indexes, or if index vacuuming is disabled,
-				 * there will be no second heap pass; if this particular page
-				 * has no dead items, the second heap pass will not touch this
-				 * page. So, in those cases, update the FSM now.
-				 *
-				 * After a call to lazy_scan_prune(), we would also try to
-				 * adjust the page-level all-visible bit and the visibility
-				 * map, but we skip that step in this path.
-				 */
-				recordfreespace = vacrel->nindexes == 0
-					|| !vacrel->do_index_vacuuming
-					|| !has_lpdead_items;
-				if (recordfreespace)
-					freespace = PageGetHeapFreeSpace(page);
-				UnlockReleaseBuffer(buf);
-				if (recordfreespace)
-					RecordPageWithFreeSpace(vacrel->rel, blkno, freespace);
-				continue;
-			}
-
+		/*
+		 * If we didn't get the cleanup lock, we can still collect LP_DEAD
+		 * items in the dead_items array for later vacuuming, count live and
+		 * recently dead tuples for vacuum logging, and determine if this
+		 * block could later be truncated. If we encounter any xid/mxids that
+		 * require advancing the relfrozenxid/relminxid, we'll have to wait
+		 * for a cleanup lock and call lazy_scan_prune().
+		 */
+		if (!got_cleanup_lock &&
+			!lazy_scan_noprune(vacrel, buf, blkno, page, &has_lpdead_items))
+		{
 			/*
 			 * lazy_scan_noprune could not do all required processing.  Wait
 			 * for a cleanup lock, and call lazy_scan_prune in the usual way.
@@ -995,45 +973,45 @@ lazy_scan_heap(LVRelState *vacrel)
 			Assert(vacrel->aggressive);
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			LockBufferForCleanup(buf);
-		}
-
-		/* Check for new or empty pages before lazy_scan_prune call */
-		if (lazy_scan_new_or_empty(vacrel, buf, blkno, page, false, vmbuffer))
-		{
-			/* Processed as new/empty page (lock and pin released) */
-			continue;
+			got_cleanup_lock = true;
 		}
 
 		/*
-		 * Prune, freeze, and count tuples.
+		 * If we have a cleanup lock, we must now prune, freeze, and count
+		 * tuples. We may have acquired the cleanup lock originally, or we may
+		 * have gone back and acquired it after lazy_scan_noprune() returned
+		 * false. Either way, the page hasn't been processed yet.
 		 *
-		 * Accumulates details of remaining LP_DEAD line pointers on page in
-		 * dead_items array.  This includes LP_DEAD line pointers that we
-		 * pruned ourselves, as well as existing LP_DEAD line pointers that
-		 * were pruned some time earlier.  Also considers freezing XIDs in the
-		 * tuple headers of remaining items with storage. It also determines
-		 * if truncating this block is safe.
+		 * Like lazy_scan_noprune(), lazy_scan_prune() will count
+		 * recently_dead_tuples and live tuples for vacuum logging, determine
+		 * if the block can later be truncated, and accumulate the details of
+		 * remaining LP_DEAD line pointers on the page in the dead_items
+		 * array. These dead items include those pruned by lazy_scan_prune()
+		 * as well we line pointers previously marked LP_DEAD.
 		 */
-		lazy_scan_prune(vacrel, buf, blkno, page,
-						vmbuffer, all_visible_according_to_vm,
-						&has_lpdead_items);
+		if (got_cleanup_lock)
+			lazy_scan_prune(vacrel, buf, blkno, page,
+							vmbuffer, all_visible_according_to_vm,
+							&has_lpdead_items);
 
 		/*
-		 * Final steps for block: drop cleanup lock, record free space in the
-		 * FSM.
+		 * Now drop the buffer lock and, potentially, update the FSM.
 		 *
-		 * If we will likely do index vacuuming, wait until
-		 * lazy_vacuum_heap_rel() to save free space. This doesn't just save
-		 * us some cycles; it also allows us to record any additional free
-		 * space that lazy_vacuum_heap_page() will make available in cases
-		 * where it's possible to truncate the page's line pointer array.
+		 * Our goal is to update the freespace map the last time we touch the
+		 * page. If we'll process a block in the second pass, we may free up
+		 * additional space on the page, so it is better to update the FSM
+		 * after the second pass. If the relation has no indexes, or if index
+		 * vacuuming is disabled, there will be no second heap pass; if this
+		 * particular page has no dead items, the second heap pass will not
+		 * touch this page. So, in those cases, update the FSM now.
 		 *
-		 * Note: It's not in fact 100% certain that we really will call
-		 * lazy_vacuum_heap_rel() -- lazy_vacuum() might yet opt to skip index
-		 * vacuuming (and so must skip heap vacuuming).  This is deemed okay
-		 * because it only happens in emergencies, or when there is very
-		 * little free space anyway. (Besides, we start recording free space
-		 * in the FSM once index vacuuming has been abandoned.)
+		 * Note: In corner cases, it's possible to miss updating the FSM
+		 * entirely. If index vacuuming is currently enabled, we'll skip the
+		 * FSM update now. But if failsafe mode is later activated, or there
+		 * are so few dead tuples that index vacuuming is bypassed, there will
+		 * also be no opportunity to update the FSM later, because we'll never
+		 * revisit this page. Since updating the FSM is desirable but not
+		 * absolutely required, that's OK.
 		 */
 		if (vacrel->nindexes == 0
 			|| !vacrel->do_index_vacuuming
@@ -1047,9 +1025,10 @@ lazy_scan_heap(LVRelState *vacrel)
 			/*
 			 * Periodically perform FSM vacuuming to make newly-freed space
 			 * visible on upper FSM pages. This is done after vacuuming if the
-			 * table has indexes.
+			 * table has indexes. There will only be newly-freed space if we
+			 * held the cleanup lock and lazy_scan_prune() was called.
 			 */
-			if (vacrel->nindexes == 0 && has_lpdead_items &&
+			if (got_cleanup_lock && vacrel->nindexes == 0 && has_lpdead_items &&
 				blkno - next_fsm_block_to_vacuum >= VACUUM_FSM_EVERY_PAGES)
 			{
 				FreeSpaceMapVacuumRange(vacrel->rel, next_fsm_block_to_vacuum,
