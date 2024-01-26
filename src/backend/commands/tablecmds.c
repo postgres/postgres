@@ -359,6 +359,8 @@ static List *MergeAttributes(List *columns, const List *supers, char relpersiste
 							 bool is_partition, List **supconstr,
 							 List **supnotnulls);
 static List *MergeCheckConstraint(List *constraints, const char *name, Node *expr);
+static void MergeChildAttribute(List *inh_columns, int exist_attno, int newcol_attno, const ColumnDef *newdef);
+static ColumnDef *MergeInheritedAttribute(List *inh_columns, int exist_attno, const ColumnDef *newdef);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel, bool ispartition);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void StoreCatalogInheritance(Oid relationId, List *supers,
@@ -2705,7 +2707,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 			char	   *attributeName = NameStr(attribute->attname);
 			int			exist_attno;
 			ColumnDef  *newdef;
-			ColumnDef  *savedef;
+			ColumnDef  *mergeddef;
 
 			/*
 			 * Ignore dropped columns in the parent.
@@ -2739,105 +2741,18 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 			exist_attno = findAttrByName(attributeName, inh_columns);
 			if (exist_attno > 0)
 			{
-				ColumnDef  *prevdef;
-				Oid			prevtypeid,
-							newtypeid;
-				int32		prevtypmod,
-							newtypmod;
-				Oid			prevcollid,
-							newcollid;
-
-				/*
-				 * Partitions have only one parent and have no column
-				 * definitions of their own, so conflict should never occur.
-				 */
-				Assert(!is_partition);
-
 				/*
 				 * Yes, try to merge the two column definitions.
 				 */
-				ereport(NOTICE,
-						(errmsg("merging multiple inherited definitions of column \"%s\"",
-								attributeName)));
-				prevdef = list_nth_node(ColumnDef, inh_columns, exist_attno - 1);
-
-				/*
-				 * Must have the same type and typmod
-				 */
-				typenameTypeIdAndMod(NULL, prevdef->typeName, &prevtypeid, &prevtypmod);
-				typenameTypeIdAndMod(NULL, newdef->typeName, &newtypeid, &newtypmod);
-				if (prevtypeid != newtypeid || prevtypmod != newtypmod)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("inherited column \"%s\" has a type conflict",
-									attributeName),
-							 errdetail("%s versus %s",
-									   format_type_with_typemod(prevtypeid, prevtypmod),
-									   format_type_with_typemod(newtypeid, newtypmod))));
-
-				/*
-				 * Must have the same collation
-				 */
-				prevcollid = GetColumnDefCollation(NULL, prevdef, prevtypeid);
-				newcollid = GetColumnDefCollation(NULL, newdef, newtypeid);
-				if (prevcollid != newcollid)
-					ereport(ERROR,
-							(errcode(ERRCODE_COLLATION_MISMATCH),
-							 errmsg("inherited column \"%s\" has a collation conflict",
-									attributeName),
-							 errdetail("\"%s\" versus \"%s\"",
-									   get_collation_name(prevcollid),
-									   get_collation_name(newcollid))));
-
-				/*
-				 * Copy/check storage parameter
-				 */
-				if (prevdef->storage == 0)
-					prevdef->storage = newdef->storage;
-				else if (prevdef->storage != newdef->storage)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("inherited column \"%s\" has a storage parameter conflict",
-									attributeName),
-							 errdetail("%s versus %s",
-									   storage_name(prevdef->storage),
-									   storage_name(newdef->storage))));
-
-				/*
-				 * Copy/check compression parameter
-				 */
-				if (prevdef->compression == NULL)
-					prevdef->compression = newdef->compression;
-				else if (strcmp(prevdef->compression, newdef->compression) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("column \"%s\" has a compression method conflict",
-									attributeName),
-							 errdetail("%s versus %s", prevdef->compression, newdef->compression)));
-
-				/*
-				 * Check for GENERATED conflicts
-				 */
-				if (prevdef->generated != newdef->generated)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("inherited column \"%s\" has a generation conflict",
-									attributeName)));
-
-				/*
-				 * Default and other constraints are handled below
-				 */
-
-				prevdef->inhcount++;
-				if (prevdef->inhcount < 0)
-					ereport(ERROR,
-							errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-							errmsg("too many inheritance parents"));
+				mergeddef = MergeInheritedAttribute(inh_columns, exist_attno, newdef);
 
 				newattmap->attnums[parent_attno - 1] = exist_attno;
 
-				/* remember for default processing below */
-				savedef = prevdef;
+				/*
+				 * Partitions have only one parent, so conflict should never
+				 * occur.
+				 */
+				Assert(!is_partition);
 			}
 			else
 			{
@@ -2850,8 +2765,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 
 				newattmap->attnums[parent_attno - 1] = ++child_attno;
 
-				/* remember for default processing below */
-				savedef = newdef;
+				mergeddef = newdef;
 			}
 
 			/*
@@ -2860,7 +2774,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 			if (bms_is_member(parent_attno, nncols) ||
 				bms_is_member(parent_attno - FirstLowInvalidHeapAttributeNumber,
 							  pkattrs))
-				savedef->is_not_null = true;
+				mergeddef->is_not_null = true;
 
 			/*
 			 * In regular inheritance, columns in the parent's primary key get
@@ -2907,7 +2821,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 				 * all the inherited default expressions for the moment.
 				 */
 				inherited_defaults = lappend(inherited_defaults, this_default);
-				cols_with_defaults = lappend(cols_with_defaults, savedef);
+				cols_with_defaults = lappend(cols_with_defaults, mergeddef);
 			}
 		}
 
@@ -3038,9 +2952,15 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 
 		foreach(lc, columns)
 		{
-			ColumnDef  *newdef = lfirst(lc);
+			ColumnDef  *newdef = lfirst_node(ColumnDef, lc);
 			char	   *attributeName = newdef->colname;
 			int			exist_attno;
+
+			/*
+			 * Partitions have only one parent and have no column definitions
+			 * of their own, so conflict should never occur.
+			 */
+			Assert(!is_partition);
 
 			newcol_attno++;
 
@@ -3050,155 +2970,15 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 			exist_attno = findAttrByName(attributeName, inh_columns);
 			if (exist_attno > 0)
 			{
-				ColumnDef  *inhdef;
-				Oid			inhtypeid,
-							newtypeid;
-				int32		inhtypmod,
-							newtypmod;
-				Oid			inhcollid,
-							newcollid;
-
-				/*
-				 * Partitions have only one parent and have no column
-				 * definitions of their own, so conflict should never occur.
-				 */
-				Assert(!is_partition);
-
 				/*
 				 * Yes, try to merge the two column definitions.
 				 */
-				if (exist_attno == newcol_attno)
-					ereport(NOTICE,
-							(errmsg("merging column \"%s\" with inherited definition",
-									attributeName)));
-				else
-					ereport(NOTICE,
-							(errmsg("moving and merging column \"%s\" with inherited definition", attributeName),
-							 errdetail("User-specified column moved to the position of the inherited column.")));
-				inhdef = list_nth_node(ColumnDef, inh_columns, exist_attno - 1);
-
-				/*
-				 * Must have the same type and typmod
-				 */
-				typenameTypeIdAndMod(NULL, inhdef->typeName, &inhtypeid, &inhtypmod);
-				typenameTypeIdAndMod(NULL, newdef->typeName, &newtypeid, &newtypmod);
-				if (inhtypeid != newtypeid || inhtypmod != newtypmod)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("column \"%s\" has a type conflict",
-									attributeName),
-							 errdetail("%s versus %s",
-									   format_type_with_typemod(inhtypeid, inhtypmod),
-									   format_type_with_typemod(newtypeid, newtypmod))));
-
-				/*
-				 * Must have the same collation
-				 */
-				inhcollid = GetColumnDefCollation(NULL, inhdef, inhtypeid);
-				newcollid = GetColumnDefCollation(NULL, newdef, newtypeid);
-				if (inhcollid != newcollid)
-					ereport(ERROR,
-							(errcode(ERRCODE_COLLATION_MISMATCH),
-							 errmsg("column \"%s\" has a collation conflict",
-									attributeName),
-							 errdetail("\"%s\" versus \"%s\"",
-									   get_collation_name(inhcollid),
-									   get_collation_name(newcollid))));
-
-				/*
-				 * Identity is never inherited.  The new column can have an
-				 * identity definition, so we always just take that one.
-				 */
-				inhdef->identity = newdef->identity;
-
-				/*
-				 * Copy storage parameter
-				 */
-				if (inhdef->storage == 0)
-					inhdef->storage = newdef->storage;
-				else if (newdef->storage != 0 && inhdef->storage != newdef->storage)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("column \"%s\" has a storage parameter conflict",
-									attributeName),
-							 errdetail("%s versus %s",
-									   storage_name(inhdef->storage),
-									   storage_name(newdef->storage))));
-
-				/*
-				 * Copy compression parameter
-				 */
-				if (inhdef->compression == NULL)
-					inhdef->compression = newdef->compression;
-				else if (newdef->compression != NULL)
-				{
-					if (strcmp(inhdef->compression, newdef->compression) != 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_DATATYPE_MISMATCH),
-								 errmsg("column \"%s\" has a compression method conflict",
-										attributeName),
-								 errdetail("%s versus %s", inhdef->compression, newdef->compression)));
-				}
-
-				/*
-				 * Merge of not-null constraints = OR 'em together
-				 */
-				inhdef->is_not_null |= newdef->is_not_null;
-
-				/*
-				 * Check for conflicts related to generated columns.
-				 *
-				 * If the parent column is generated, the child column will be
-				 * made a generated column if it isn't already.  If it is a
-				 * generated column, we'll take its generation expression in
-				 * preference to the parent's.  We must check that the child
-				 * column doesn't specify a default value or identity, which
-				 * matches the rules for a single column in parse_utilcmd.c.
-				 *
-				 * Conversely, if the parent column is not generated, the
-				 * child column can't be either.  (We used to allow that, but
-				 * it results in being able to override the generation
-				 * expression via UPDATEs through the parent.)
-				 */
-				if (inhdef->generated)
-				{
-					if (newdef->raw_default && !newdef->generated)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-								 errmsg("column \"%s\" inherits from generated column but specifies default",
-										inhdef->colname)));
-					if (newdef->identity)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-								 errmsg("column \"%s\" inherits from generated column but specifies identity",
-										inhdef->colname)));
-				}
-				else
-				{
-					if (newdef->generated)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-								 errmsg("child column \"%s\" specifies generation expression",
-										inhdef->colname),
-								 errhint("A child table column cannot be generated unless its parent column is.")));
-				}
-
-				/*
-				 * If new def has a default, override previous default
-				 */
-				if (newdef->raw_default != NULL)
-				{
-					inhdef->raw_default = newdef->raw_default;
-					inhdef->cooked_default = newdef->cooked_default;
-				}
-
-				/* Mark the column as locally defined */
-				inhdef->is_local = true;
+				MergeChildAttribute(inh_columns, exist_attno, newcol_attno, newdef);
 			}
 			else
 			{
 				/*
-				 * No, attach new column to result columns
+				 * No, attach new column unchanged to result columns.
 				 */
 				inh_columns = lappend(inh_columns, newdef);
 			}
@@ -3391,6 +3171,282 @@ MergeCheckConstraint(List *constraints, const char *name, Node *expr)
 	return lappend(constraints, newcon);
 }
 
+/*
+ * MergeChildAttribute
+ *		Merge given child attribute definition into given inherited attribute.
+ *
+ * Input arguments:
+ * 'inh_columns' is the list of inherited ColumnDefs.
+ * 'exist_attno' is the number of the inherited attribute in inh_columns
+ * 'newcol_attno' is the attribute number in child table's schema definition
+ * 'newdef' is the column/attribute definition from the child table.
+ *
+ * The ColumnDef in 'inh_columns' list is modified.  The child attribute's
+ * ColumnDef remains unchanged.
+ *
+ * Notes:
+ * - The attribute is merged according to the rules laid out in the prologue
+ *   of MergeAttributes().
+ * - If matching inherited attribute exists but the child attribute can not be
+ *   merged into it, the function throws respective errors.
+ * - A partition can not have its own column definitions. Hence this function
+ *   is applicable only to a regular inheritance child.
+ */
+static void
+MergeChildAttribute(List *inh_columns, int exist_attno, int newcol_attno, const ColumnDef *newdef)
+{
+	char	   *attributeName = newdef->colname;
+	ColumnDef  *inhdef;
+	Oid			inhtypeid,
+				newtypeid;
+	int32		inhtypmod,
+				newtypmod;
+	Oid			inhcollid,
+				newcollid;
+
+	if (exist_attno == newcol_attno)
+		ereport(NOTICE,
+				(errmsg("merging column \"%s\" with inherited definition",
+						attributeName)));
+	else
+		ereport(NOTICE,
+				(errmsg("moving and merging column \"%s\" with inherited definition", attributeName),
+				 errdetail("User-specified column moved to the position of the inherited column.")));
+
+	inhdef = list_nth_node(ColumnDef, inh_columns, exist_attno - 1);
+
+	/*
+	 * Must have the same type and typmod
+	 */
+	typenameTypeIdAndMod(NULL, inhdef->typeName, &inhtypeid, &inhtypmod);
+	typenameTypeIdAndMod(NULL, newdef->typeName, &newtypeid, &newtypmod);
+	if (inhtypeid != newtypeid || inhtypmod != newtypmod)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("column \"%s\" has a type conflict",
+						attributeName),
+				 errdetail("%s versus %s",
+						   format_type_with_typemod(inhtypeid, inhtypmod),
+						   format_type_with_typemod(newtypeid, newtypmod))));
+
+	/*
+	 * Must have the same collation
+	 */
+	inhcollid = GetColumnDefCollation(NULL, inhdef, inhtypeid);
+	newcollid = GetColumnDefCollation(NULL, newdef, newtypeid);
+	if (inhcollid != newcollid)
+		ereport(ERROR,
+				(errcode(ERRCODE_COLLATION_MISMATCH),
+				 errmsg("column \"%s\" has a collation conflict",
+						attributeName),
+				 errdetail("\"%s\" versus \"%s\"",
+						   get_collation_name(inhcollid),
+						   get_collation_name(newcollid))));
+
+	/*
+	 * Identity is never inherited by a regular inheritance child. Pick
+	 * child's identity definition if there's one.
+	 */
+	inhdef->identity = newdef->identity;
+
+	/*
+	 * Copy storage parameter
+	 */
+	if (inhdef->storage == 0)
+		inhdef->storage = newdef->storage;
+	else if (newdef->storage != 0 && inhdef->storage != newdef->storage)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("column \"%s\" has a storage parameter conflict",
+						attributeName),
+				 errdetail("%s versus %s",
+						   storage_name(inhdef->storage),
+						   storage_name(newdef->storage))));
+
+	/*
+	 * Copy compression parameter
+	 */
+	if (inhdef->compression == NULL)
+		inhdef->compression = newdef->compression;
+	else if (newdef->compression != NULL)
+	{
+		if (strcmp(inhdef->compression, newdef->compression) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("column \"%s\" has a compression method conflict",
+							attributeName),
+					 errdetail("%s versus %s", inhdef->compression, newdef->compression)));
+	}
+
+	/*
+	 * Merge of not-null constraints = OR 'em together
+	 */
+	inhdef->is_not_null |= newdef->is_not_null;
+
+	/*
+	 * Check for conflicts related to generated columns.
+	 *
+	 * If the parent column is generated, the child column will be made a
+	 * generated column if it isn't already.  If it is a generated column,
+	 * we'll take its generation expression in preference to the parent's.  We
+	 * must check that the child column doesn't specify a default value or
+	 * identity, which matches the rules for a single column in
+	 * parse_utilcmd.c.
+	 *
+	 * Conversely, if the parent column is not generated, the child column
+	 * can't be either.  (We used to allow that, but it results in being able
+	 * to override the generation expression via UPDATEs through the parent.)
+	 */
+	if (inhdef->generated)
+	{
+		if (newdef->raw_default && !newdef->generated)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+					 errmsg("column \"%s\" inherits from generated column but specifies default",
+							inhdef->colname)));
+		if (newdef->identity)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+					 errmsg("column \"%s\" inherits from generated column but specifies identity",
+							inhdef->colname)));
+	}
+	else
+	{
+		if (newdef->generated)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+					 errmsg("child column \"%s\" specifies generation expression",
+							inhdef->colname),
+					 errhint("A child table column cannot be generated unless its parent column is.")));
+	}
+
+	/*
+	 * If new def has a default, override previous default
+	 */
+	if (newdef->raw_default != NULL)
+	{
+		inhdef->raw_default = newdef->raw_default;
+		inhdef->cooked_default = newdef->cooked_default;
+	}
+
+	/* Mark the column as locally defined */
+	inhdef->is_local = true;
+}
+
+/*
+ * MergeInheritedAttribute
+ *		Merge given parent attribute definition into specified attribute
+ *		inherited from the previous parents.
+ *
+ * Input arguments:
+ * 'inh_columns' is the list of previously inherited ColumnDefs.
+ * 'exist_attno' is the number the existing matching attribute in inh_columns.
+ * 'newdef' is the new parent column/attribute definition to be merged.
+ *
+ * The matching ColumnDef in 'inh_columns' list is modified and returned.
+ *
+ * Notes:
+ * - The attribute is merged according to the rules laid out in the prologue
+ *   of MergeAttributes().
+ * - If matching inherited attribute exists but the new attribute can not be
+ *   merged into it, the function throws respective errors.
+ * - A partition inherits from only a single parent. Hence this function is
+ *   applicable only to a regular inheritance.
+ */
+static ColumnDef *
+MergeInheritedAttribute(List *inh_columns,
+						int exist_attno,
+						const ColumnDef *newdef)
+{
+	char	   *attributeName = newdef->colname;
+	ColumnDef  *prevdef;
+	Oid			prevtypeid,
+				newtypeid;
+	int32		prevtypmod,
+				newtypmod;
+	Oid			prevcollid,
+				newcollid;
+
+	ereport(NOTICE,
+			(errmsg("merging multiple inherited definitions of column \"%s\"",
+					attributeName)));
+	prevdef = list_nth_node(ColumnDef, inh_columns, exist_attno - 1);
+
+	/*
+	 * Must have the same type and typmod
+	 */
+	typenameTypeIdAndMod(NULL, prevdef->typeName, &prevtypeid, &prevtypmod);
+	typenameTypeIdAndMod(NULL, newdef->typeName, &newtypeid, &newtypmod);
+	if (prevtypeid != newtypeid || prevtypmod != newtypmod)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("inherited column \"%s\" has a type conflict",
+						attributeName),
+				 errdetail("%s versus %s",
+						   format_type_with_typemod(prevtypeid, prevtypmod),
+						   format_type_with_typemod(newtypeid, newtypmod))));
+
+	/*
+	 * Must have the same collation
+	 */
+	prevcollid = GetColumnDefCollation(NULL, prevdef, prevtypeid);
+	newcollid = GetColumnDefCollation(NULL, newdef, newtypeid);
+	if (prevcollid != newcollid)
+		ereport(ERROR,
+				(errcode(ERRCODE_COLLATION_MISMATCH),
+				 errmsg("inherited column \"%s\" has a collation conflict",
+						attributeName),
+				 errdetail("\"%s\" versus \"%s\"",
+						   get_collation_name(prevcollid),
+						   get_collation_name(newcollid))));
+
+	/*
+	 * Copy/check storage parameter
+	 */
+	if (prevdef->storage == 0)
+		prevdef->storage = newdef->storage;
+	else if (prevdef->storage != newdef->storage)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("inherited column \"%s\" has a storage parameter conflict",
+						attributeName),
+				 errdetail("%s versus %s",
+						   storage_name(prevdef->storage),
+						   storage_name(newdef->storage))));
+
+	/*
+	 * Copy/check compression parameter
+	 */
+	if (prevdef->compression == NULL)
+		prevdef->compression = newdef->compression;
+	else if (strcmp(prevdef->compression, newdef->compression) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("column \"%s\" has a compression method conflict",
+						attributeName),
+				 errdetail("%s versus %s", prevdef->compression, newdef->compression)));
+
+	/*
+	 * Check for GENERATED conflicts
+	 */
+	if (prevdef->generated != newdef->generated)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("inherited column \"%s\" has a generation conflict",
+						attributeName)));
+
+	/*
+	 * Default and other constraints are handled by the caller.
+	 */
+
+	prevdef->inhcount++;
+	if (prevdef->inhcount < 0)
+		ereport(ERROR,
+				errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				errmsg("too many inheritance parents"));
+
+	return prevdef;
+}
 
 /*
  * StoreCatalogInheritance
