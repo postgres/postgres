@@ -87,7 +87,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		/* Parse document */
 		doctree = xmlReadMemory((char *) VARDATA_ANY(doct),
 								VARSIZE_ANY_EXHDR(doct), NULL, NULL,
-								XML_PARSE_HUGE | XML_PARSE_NOENT);
+								XML_PARSE_NOENT);
 
 		if (doctree == NULL)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
@@ -96,7 +96,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		/* Same for stylesheet */
 		ssdoc = xmlReadMemory((char *) VARDATA_ANY(ssheet),
 							  VARSIZE_ANY_EXHDR(ssheet), NULL, NULL,
-							  XML_PARSE_HUGE | XML_PARSE_NOENT);
+							  XML_PARSE_NOENT);
 
 		if (ssdoc == NULL)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,

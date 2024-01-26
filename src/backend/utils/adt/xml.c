@@ -1688,8 +1688,8 @@ xml_doctype_in_content(const xmlChar *str)
  * xmloption_arg, but a DOCTYPE node in the input can force DOCUMENT mode).
  *
  * If parsed_nodes isn't NULL and the input is not an XML document, the list
- * of parsed nodes from the xmlParseInNodeContext call will be returned to
- * *parsed_nodes.
+ * of parsed nodes from the xmlParseBalancedChunkMemory call will be returned
+ * to *parsed_nodes.
  *
  * Errors normally result in ereport(ERROR), but if escontext is an
  * ErrorSaveContext, then "safe" errors are reported there instead, and the
@@ -1795,7 +1795,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 			doc = xmlCtxtReadDoc(ctxt, utf8string,
 								 NULL,
 								 "UTF-8",
-								 XML_PARSE_NOENT | XML_PARSE_DTDATTR | XML_PARSE_HUGE
+								 XML_PARSE_NOENT | XML_PARSE_DTDATTR
 								 | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
 			if (doc == NULL || xmlerrcxt->err_occurred)
 			{
@@ -1828,30 +1828,10 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 			/* allow empty content */
 			if (*(utf8string + count))
 			{
-				const char *data;
-				xmlNodePtr	root;
-				xmlNodePtr	lst;
-				xmlParserErrors xml_error;
-
-				data = (const char *) (utf8string + count);
-
-				/*
-				 * Create a fake root node.  The xmlNewDoc() function creates
-				 * an XML document without any nodes, and this is required for
-				 * xmlParseInNodeContext() that is able to handle
-				 * XML_PARSE_HUGE.
-				 */
-				root = xmlNewNode(NULL, (const xmlChar *) "content-root");
-				if (root == NULL || xmlerrcxt->err_occurred)
-					xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
-								"could not allocate xml node");
-				xmlDocSetRootElement(doc, root);
-
-				/* Try to parse string with using root node context. */
-				xml_error = xmlParseInNodeContext(root, data, strlen(data),
-												  XML_PARSE_HUGE,
-												  parsed_nodes ? parsed_nodes : &lst);
-				if (xml_error != XML_ERR_OK || xmlerrcxt->err_occurred)
+				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
+													   utf8string + count,
+													   parsed_nodes);
+				if (res_code != 0 || xmlerrcxt->err_occurred)
 				{
 					xml_errsave(escontext, xmlerrcxt,
 								ERRCODE_INVALID_XML_CONTENT,
@@ -4364,7 +4344,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate parser context");
 		doc = xmlCtxtReadMemory(ctxt, (char *) string + xmldecl_len,
-								len - xmldecl_len, NULL, NULL, XML_PARSE_HUGE);
+								len - xmldecl_len, NULL, NULL, 0);
 		if (doc == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 						"could not parse XML document");
@@ -4695,7 +4675,7 @@ XmlTableSetDocument(TableFuncScanState *state, Datum value)
 
 	PG_TRY();
 	{
-		doc = xmlCtxtReadMemory(xtCxt->ctxt, (char *) xstr, length, NULL, NULL, XML_PARSE_HUGE);
+		doc = xmlCtxtReadMemory(xtCxt->ctxt, (char *) xstr, length, NULL, NULL, 0);
 		if (doc == NULL || xtCxt->xmlerrcxt->err_occurred)
 			xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 						"could not parse XML document");
