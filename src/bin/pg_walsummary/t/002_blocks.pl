@@ -48,6 +48,7 @@ SELECT summarized_tli, summarized_lsn FROM pg_get_wal_summarizer_state()
 EOM
 ($summarized_tli, $summarized_lsn) = split(/\|/, $progress);
 note("after insert, summarized TLI $summarized_tli through $summarized_lsn");
+note_wal_summary_dir("after insert", $node1);
 
 # Update a row in the first block of the table and trigger a checkpoint.
 $node1->safe_psql('postgres', <<EOM);
@@ -70,6 +71,7 @@ SELECT tli, start_lsn, end_lsn from pg_available_wal_summaries()
 EOM
 my ($tli, $start_lsn, $end_lsn) = split(/\|/, $details);
 note("examining summary for TLI $tli from $start_lsn to $end_lsn");
+note_wal_summary_dir("after new summary", $node1);
 
 # Reconstruct the full pathname for the WAL summary file.
 my $filename = sprintf "%s/pg_wal/summaries/%08s%08s%08s%08s%08s.summary",
@@ -77,6 +79,7 @@ my $filename = sprintf "%s/pg_wal/summaries/%08s%08s%08s%08s%08s.summary",
 					   split(m@/@, $start_lsn),
 					   split(m@/@, $end_lsn);
 ok(-f $filename, "WAL summary file exists");
+note_wal_summary_dir("after existence check", $node1);
 
 # Run pg_walsummary on it. We expect block 0 to be modified, but depending
 # on where the new tuple ends up, block 1 might also be modified, so we
@@ -84,5 +87,16 @@ ok(-f $filename, "WAL summary file exists");
 my ($stdout, $stderr) = run_command([ 'pg_walsummary', '-i', $filename ]);
 like($stdout, qr/FORK main: block 0$/m, "stdout shows block 0 modified");
 is($stderr, '', 'stderr is empty');
+note_wal_summary_dir("after pg_walsummary run", $node1);
 
 done_testing();
+
+# XXX. Temporary debugging code.
+sub note_wal_summary_dir
+{
+	my ($flair, $node) = @_;
+
+	my $wsdir = sprintf "%s/pg_wal/summaries", $node->data_dir;
+	my @wsfiles = grep { $_ ne '.' && $_ ne '..' } slurp_dir($wsdir);
+	note("$flair pg_wal/summaries has: @wsfiles");
+}
