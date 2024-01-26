@@ -92,6 +92,43 @@ WHERE t1.unique1 < 1000;
   1000 | 9.5000000000000000
 (1 row)
 
+-- Try with LATERAL joins
+SELECT explain_memoize('
+SELECT COUNT(*),AVG(t2.t1two) FROM tenk1 t1 LEFT JOIN
+LATERAL (
+    SELECT t1.two as t1two, * FROM tenk1 t2 WHERE t2.unique1 < 5 OFFSET 0
+) t2
+ON t1.two = t2.two
+WHERE t1.unique1 < 10;', false);
+                                       explain_memoize                                        
+----------------------------------------------------------------------------------------------
+ Aggregate (actual rows=1 loops=N)
+   ->  Nested Loop Left Join (actual rows=25 loops=N)
+         ->  Index Scan using tenk1_unique1 on tenk1 t1 (actual rows=10 loops=N)
+               Index Cond: (unique1 < 10)
+         ->  Memoize (actual rows=2 loops=N)
+               Cache Key: t1.two, t1.two
+               Cache Mode: binary
+               Hits: 8  Misses: 2  Evictions: Zero  Overflows: 0  Memory Usage: NkB
+               ->  Subquery Scan on t2 (actual rows=2 loops=N)
+                     Filter: (t1.two = t2.two)
+                     Rows Removed by Filter: 2
+                     ->  Index Scan using tenk1_unique1 on tenk1 t2_1 (actual rows=5 loops=N)
+                           Index Cond: (unique1 < 5)
+(13 rows)
+
+-- And check we get the expected results.
+SELECT COUNT(*),AVG(t2.t1two) FROM tenk1 t1 LEFT JOIN
+LATERAL (
+    SELECT t1.two as t1two, * FROM tenk1 t2 WHERE t2.unique1 < 5 OFFSET 0
+) t2
+ON t1.two = t2.two
+WHERE t1.unique1 < 10;
+ count |          avg           
+-------+------------------------
+    25 | 0.40000000000000000000
+(1 row)
+
 -- Reduce work_mem and hash_mem_multiplier so that we see some cache evictions
 SET work_mem TO '64kB';
 SET hash_mem_multiplier TO 1.0;
