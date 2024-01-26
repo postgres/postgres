@@ -96,14 +96,14 @@ WHERE t1.unique1 < 1000;
 SELECT explain_memoize('
 SELECT COUNT(*),AVG(t2.t1two) FROM tenk1 t1 LEFT JOIN
 LATERAL (
-    SELECT t1.two as t1two, * FROM tenk1 t2 WHERE t2.unique1 < 5 OFFSET 0
+    SELECT t1.two as t1two, * FROM tenk1 t2 WHERE t2.unique1 < 4 OFFSET 0
 ) t2
 ON t1.two = t2.two
 WHERE t1.unique1 < 10;', false);
                                        explain_memoize                                        
 ----------------------------------------------------------------------------------------------
  Aggregate (actual rows=1 loops=N)
-   ->  Nested Loop Left Join (actual rows=25 loops=N)
+   ->  Nested Loop Left Join (actual rows=20 loops=N)
          ->  Index Scan using tenk1_unique1 on tenk1 t1 (actual rows=10 loops=N)
                Index Cond: (unique1 < 10)
          ->  Memoize (actual rows=2 loops=N)
@@ -113,20 +113,20 @@ WHERE t1.unique1 < 10;', false);
                ->  Subquery Scan on t2 (actual rows=2 loops=N)
                      Filter: (t1.two = t2.two)
                      Rows Removed by Filter: 2
-                     ->  Index Scan using tenk1_unique1 on tenk1 t2_1 (actual rows=5 loops=N)
-                           Index Cond: (unique1 < 5)
+                     ->  Index Scan using tenk1_unique1 on tenk1 t2_1 (actual rows=4 loops=N)
+                           Index Cond: (unique1 < 4)
 (13 rows)
 
 -- And check we get the expected results.
 SELECT COUNT(*),AVG(t2.t1two) FROM tenk1 t1 LEFT JOIN
 LATERAL (
-    SELECT t1.two as t1two, * FROM tenk1 t2 WHERE t2.unique1 < 5 OFFSET 0
+    SELECT t1.two as t1two, * FROM tenk1 t2 WHERE t2.unique1 < 4 OFFSET 0
 ) t2
 ON t1.two = t2.two
 WHERE t1.unique1 < 10;
  count |          avg           
 -------+------------------------
-    25 | 0.40000000000000000000
+    20 | 0.50000000000000000000
 (1 row)
 
 -- Reduce work_mem and hash_mem_multiplier so that we see some cache evictions
