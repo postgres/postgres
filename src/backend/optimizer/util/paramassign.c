@@ -90,7 +90,8 @@ assign_param_for_var(PlannerInfo *root, Var *var)
 				pvar->varattno == var->varattno &&
 				pvar->vartype == var->vartype &&
 				pvar->vartypmod == var->vartypmod &&
-				pvar->varcollid == var->varcollid)
+				pvar->varcollid == var->varcollid &&
+				bms_equal(pvar->varnullingrels, var->varnullingrels))
 				return pitem->paramId;
 		}
 	}
