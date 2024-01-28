@@ -206,7 +206,8 @@ DROP INDEX tenant_idx;
 DROP TABLE tenant_table;
 DROP VIEW tenant_view;
 DROP SCHEMA regress_tenant2_schema;
-DROP ROLE regress_tenant;
+-- check for duplicated drop
+DROP ROLE regress_tenant, regress_tenant;
 DROP ROLE regress_tenant2;
 DROP ROLE regress_rolecreator;
 DROP ROLE regress_role_admin;

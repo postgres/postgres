@@ -1093,7 +1093,7 @@ DropRole(DropRoleStmt *stmt)
 	Relation	pg_authid_rel,
 				pg_auth_members_rel;
 	ListCell   *item;
-	List	   *role_addresses = NIL;
+	List	   *role_oids = NIL;
 
 	if (!have_createrole_privilege())
 		ereport(ERROR,
@@ -1119,7 +1119,6 @@ DropRole(DropRoleStmt *stmt)
 		ScanKeyData scankey;
 		SysScanDesc sscan;
 		Oid			roleid;
-		ObjectAddress *role_address;
 
 		if (rolspec->roletype != ROLESPEC_CSTRING)
 			ereport(ERROR,
@@ -1260,21 +1259,16 @@ DropRole(DropRoleStmt *stmt)
 		 */
 		CommandCounterIncrement();
 
-		/* Looks tentatively OK, add it to the list. */
-		role_address = palloc(sizeof(ObjectAddress));
-		role_address->classId = AuthIdRelationId;
-		role_address->objectId = roleid;
-		role_address->objectSubId = 0;
-		role_addresses = lappend(role_addresses, role_address);
+		/* Looks tentatively OK, add it to the list if not there yet. */
+		role_oids = list_append_unique_oid(role_oids, roleid);
 	}
 
 	/*
 	 * Second pass over the roles to be removed.
 	 */
-	foreach(item, role_addresses)
+	foreach(item, role_oids)
 	{
-		ObjectAddress *role_address = lfirst(item);
-		Oid			roleid = role_address->objectId;
+		Oid			roleid = lfirst_oid(item);
 		HeapTuple	tuple;
 		Form_pg_authid roleform;
 		char	   *detail;
