@@ -75,7 +75,6 @@ pgxml_parser_init(PgXmlStrictness strictness)
 	xmlInitParser();
 
 	xmlSubstituteEntitiesDefault(1);
-	xmlLoadExtDtdDefaultValue = 1;
 
 	return xmlerrcxt;
 }
