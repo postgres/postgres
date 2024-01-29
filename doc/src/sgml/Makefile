@@ -215,7 +215,7 @@ uninstall:
 ## Install html
 
 install-html: html installdirs
-	cp -R $(call vpathsearch,html) '$(DESTDIR)$(htmldir)'
+	cp -R html '$(DESTDIR)$(htmldir)'
 
 
 ## Install man
@@ -230,7 +230,7 @@ sqlmansectnum = $(shell expr X'$(sqlmansect)' : X'\([0-9]\)')
 #
 ifeq ($(sqlmansectnum),7)
 install-man:
-	cp -R $(foreach dir,man1 man3 man7,$(call vpathsearch,$(dir))) '$(DESTDIR)$(mandir)'
+	cp -R man1 man3 man7 '$(DESTDIR)$(mandir)'
 
 else # sqlmansectnum != 7
 fix_sqlmansectnum = sed -e '/^\.TH/s/"7"/"$(sqlmansect)"/' \
@@ -241,9 +241,9 @@ man: fixed-man-stamp
 
 fixed-man-stamp: man-stamp
 	@$(MKDIR_P) $(addprefix fixedman/,man1 man3 man$(sqlmansectnum))
-	for file in $(call vpathsearch,man1)/*.1; do $(fix_sqlmansectnum) $$file >fixedman/man1/`basename $$file` || exit; done
-	for file in $(call vpathsearch,man3)/*.3; do $(fix_sqlmansectnum) $$file >fixedman/man3/`basename $$file` || exit; done
-	for file in $(call vpathsearch,man7)/*.7; do $(fix_sqlmansectnum) $$file >fixedman/man$(sqlmansectnum)/`basename $$file | sed s/\.7$$/.$(sqlmansect)/` || exit; done
+	for file in man1/*.1; do $(fix_sqlmansectnum) $$file >fixedman/man1/`basename $$file` || exit; done
+	for file in man3/*.3; do $(fix_sqlmansectnum) $$file >fixedman/man3/`basename $$file` || exit; done
+	for file in man7/*.7; do $(fix_sqlmansectnum) $$file >fixedman/man$(sqlmansectnum)/`basename $$file | sed s/\.7$$/.$(sqlmansect)/` || exit; done
 
 install-man:
 	cp -R $(foreach dir,man1 man3 man$(sqlmansectnum),fixedman/$(dir)) '$(DESTDIR)$(mandir)'
