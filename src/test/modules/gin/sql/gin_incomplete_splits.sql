@@ -1,0 +1,144 @@
+--
+-- The test uses a GIN index over int[].  The table contains arrays
+-- with integers from 1 to :next_i.  Each integer occurs exactly once,
+-- no gaps or duplicates, although the index does contain some
+-- duplicate elements because some of the inserting transactions are
+-- rolled back during the test. The exact contents of the table depend
+-- on the physical layout of the index, which in turn depends at least
+-- on the block size, so instead of check for the exact contents, we
+-- check those invariants.  :next_i psql variable is maintained at all
+-- times to hold the last inserted integer + 1.
+--
+
+-- This uses injection points to cause errors that leave some page
+-- splits in "incomplete" state
+create extension injection_points;
+
+-- Use the index for all the queries
+set enable_seqscan=off;
+
+-- Print a NOTICE whenever an incomplete split gets fixed
+SELECT injection_points_attach('gin-finish-incomplete-split', 'notice');
+
+--
+-- First create the test table and some helper functions
+--
+create table gin_incomplete_splits(i int4[]) with (autovacuum_enabled = off);
+
+create index on gin_incomplete_splits using gin (i) with (fastupdate = off);
+
+-- Creates an array with all integers from $1 (inclusive) $2 (exclusive)
+create function range_array(int, int) returns int[] language sql immutable as $$
+  select array_agg(g) from generate_series($1, $2 - 1) g
+$$;
+
+-- Inserts an array with 'n' rows to the test table. Pass :next_i as
+-- the first argument, returns the new value for :next_i.
+create function insert_n(first_i int, n int) returns int language plpgsql as $$
+begin
+  insert into gin_incomplete_splits values (range_array(first_i, first_i+n));
+  return first_i + n;
+end;
+$$;
+
+-- Inserts to the table until an insert fails. Like insert_n(), returns the
+-- new value for :next_i.
+create function insert_until_fail(next_i int, step int default 1) returns int language plpgsql as $$
+declare
+  i integer;
+begin
+  -- Insert arrays with 'step' elements each, until an error occurs.
+  loop
+    begin
+      select insert_n(next_i, step) into next_i;
+    exception when others then
+      raise notice 'failed with: %', sqlerrm;
+      exit;
+    end;
+
+    -- The caller is expected to set an injection point that eventuall
+    -- causes an error. But bail out if still no error after 10000
+    -- attempts, so that we don't get stuck in an infinite loop.
+    i := i + 1;
+    if i = 10000 then
+      raise 'no error on inserts after ';
+    end if;
+  end loop;
+
+  return next_i;
+end;
+$$;
+
+-- Check the invariants.
+create function verify(next_i int) returns bool language plpgsql as $$
+declare
+  a integer[];
+  elem integer;
+  c integer;
+begin
+  -- Perform a scan over the trailing part of the index, where the
+  -- possible incomplete splits are. (We don't check the whole table,
+  -- because that'd be pretty slow.)
+  c := 0;
+  -- Find all arrays that overlap with the last 200 inserted integers. Or
+  -- the next 100, which shouldn't exist.
+  for a in select i from gin_incomplete_splits where i && range_array(next_i - 200, next_i + 100)
+  loop
+    -- count all elements in those arrays in the window.
+    foreach elem in ARRAY a loop
+      if elem >= next_i then
+        raise 'unexpected value % in array', elem;
+      end if;
+      if elem >= next_i - 200 then
+        c := c + 1;
+      end if;
+    end loop;
+  end loop;
+  if c <> 200 then
+    raise 'unexpected count % ', c;
+  end if;
+
+  return true;
+end;
+$$;
+
+-- Insert one array to get started.
+select insert_n(1, 1000) as next_i
+\gset
+select verify(:next_i);
+
+
+--
+-- Test incomplete leaf split
+--
+SELECT injection_points_attach('gin-leave-leaf-split-incomplete', 'error');
+select insert_until_fail(:next_i) as next_i
+\gset
+SELECT injection_points_detach('gin-leave-leaf-split-incomplete');
+
+-- Verify that a scan works even though there's an incomplete split
+select verify(:next_i);
+
+-- Insert some more rows, finishing the split
+select insert_n(:next_i, 10) as next_i
+\gset
+-- Verify that a scan still works
+select verify(:next_i);
+
+
+--
+-- Test incomplete internal page split
+--
+SELECT injection_points_attach('gin-leave-internal-split-incomplete', 'error');
+select insert_until_fail(:next_i, 100) as next_i
+\gset
+SELECT injection_points_detach('gin-leave-internal-split-incomplete');
+
+ -- Verify that a scan works even though there's an incomplete split
+select verify(:next_i);
+
+-- Insert some more rows, finishing the split
+select insert_n(:next_i, 10) as next_i
+\gset
+-- Verify that a scan still works
+select verify(:next_i);

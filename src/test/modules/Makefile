@@ -40,9 +40,9 @@ SUBDIRS = \
 
 
 ifeq ($(enable_injection_points),yes)
-SUBDIRS += injection_points
+SUBDIRS += injection_points gin
 else
-ALWAYS_SUBDIRS += injection_points
+ALWAYS_SUBDIRS += injection_points gin
 endif
 
 ifeq ($(with_ssl),openssl)
