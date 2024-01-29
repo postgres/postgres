@@ -2060,6 +2060,16 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          </para>
         </listitem>
        </varlistentry>
+
+       <varlistentry>
+        <term><literal>FAILOVER [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
+        <listitem>
+         <para>
+          If true, the slot is enabled to be synced to the standbys.
+          The default is false.
+         </para>
+        </listitem>
+       </varlistentry>
       </variablelist>
 
       <para>
@@ -2121,6 +2131,46 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        For compatibility with older releases, this alternative syntax for
        the <literal>CREATE_REPLICATION_SLOT</literal> command is still supported.
       </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="protocol-replication-alter-replication-slot" xreflabel="ALTER_REPLICATION_SLOT">
+     <term><literal>ALTER_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> ( <replaceable class="parameter">option</replaceable> [, ...] )
+      <indexterm><primary>ALTER_REPLICATION_SLOT</primary></indexterm>
+     </term>
+     <listitem>
+      <para>
+       Change the definition of a replication slot.
+       See <xref linkend="streaming-replication-slots"/> for more about
+       replication slots. This command is currently only supported for logical
+       replication slots.
+      </para>
+
+      <variablelist>
+       <varlistentry>
+        <term><replaceable class="parameter">slot_name</replaceable></term>
+        <listitem>
+         <para>
+          The name of the slot to alter. Must be a valid replication slot
+          name (see <xref linkend="streaming-replication-slots-manipulation"/>).
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+
+      <para>The following option is supported:</para>
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>FAILOVER [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
+        <listitem>
+         <para>
+          If true, the slot is enabled to be synced to the standbys.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+
      </listitem>
     </varlistentry>
 

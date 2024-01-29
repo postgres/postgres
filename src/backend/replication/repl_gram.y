@@ -64,6 +64,7 @@ Node *replication_parse_result;
 %token K_START_REPLICATION
 %token K_CREATE_REPLICATION_SLOT
 %token K_DROP_REPLICATION_SLOT
+%token K_ALTER_REPLICATION_SLOT
 %token K_TIMELINE_HISTORY
 %token K_WAIT
 %token K_TIMELINE
@@ -80,8 +81,9 @@ Node *replication_parse_result;
 
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
-				create_replication_slot drop_replication_slot identify_system
-				read_replication_slot timeline_history show upload_manifest
+				create_replication_slot drop_replication_slot
+				alter_replication_slot identify_system read_replication_slot
+				timeline_history show upload_manifest
 %type <list>	generic_option_list
 %type <defelt>	generic_option
 %type <uintval>	opt_timeline
@@ -112,6 +114,7 @@ command:
 			| start_logical_replication
 			| create_replication_slot
 			| drop_replication_slot
+			| alter_replication_slot
 			| read_replication_slot
 			| timeline_history
 			| show
@@ -255,6 +258,18 @@ drop_replication_slot:
 					cmd = makeNode(DropReplicationSlotCmd);
 					cmd->slotname = $2;
 					cmd->wait = true;
+					$$ = (Node *) cmd;
+				}
+			;
+
+/* ALTER_REPLICATION_SLOT slot (options) */
+alter_replication_slot:
+			K_ALTER_REPLICATION_SLOT IDENT '(' generic_option_list ')'
+				{
+					AlterReplicationSlotCmd *cmd;
+					cmd = makeNode(AlterReplicationSlotCmd);
+					cmd->slotname = $2;
+					cmd->options = $4;
 					$$ = (Node *) cmd;
 				}
 			;
@@ -410,6 +425,7 @@ ident_or_keyword:
 			| K_START_REPLICATION			{ $$ = "start_replication"; }
 			| K_CREATE_REPLICATION_SLOT	{ $$ = "create_replication_slot"; }
 			| K_DROP_REPLICATION_SLOT		{ $$ = "drop_replication_slot"; }
+			| K_ALTER_REPLICATION_SLOT		{ $$ = "alter_replication_slot"; }
 			| K_TIMELINE_HISTORY			{ $$ = "timeline_history"; }
 			| K_WAIT						{ $$ = "wait"; }
 			| K_TIMELINE					{ $$ = "timeline"; }

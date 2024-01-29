@@ -684,6 +684,31 @@ ReplicationSlotDrop(const char *name, bool nowait)
 }
 
 /*
+ * Change the definition of the slot identified by the specified name.
+ */
+void
+ReplicationSlotAlter(const char *name, bool failover)
+{
+	Assert(MyReplicationSlot == NULL);
+
+	ReplicationSlotAcquire(name, false);
+
+	if (SlotIsPhysical(MyReplicationSlot))
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("cannot use %s with a physical replication slot",
+					   "ALTER_REPLICATION_SLOT"));
+
+	SpinLockAcquire(&MyReplicationSlot->mutex);
+	MyReplicationSlot->data.failover = failover;
+	SpinLockRelease(&MyReplicationSlot->mutex);
+
+	ReplicationSlotMarkDirty();
+	ReplicationSlotSave();
+	ReplicationSlotRelease();
+}
+
+/*
  * Permanently drop the currently acquired replication slot.
  */
 static void

@@ -1430,6 +1430,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	 */
 	walrcv_create_slot(LogRepWorkerWalRcvConn,
 					   slotname, false /* permanent */ , false /* two_phase */ ,
+					   false,
 					   CRS_USE_SNAPSHOT, origin_startpos);
 
 	/*

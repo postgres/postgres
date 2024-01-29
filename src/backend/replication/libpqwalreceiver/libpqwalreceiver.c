@@ -73,8 +73,11 @@ static char *libpqrcv_create_slot(WalReceiverConn *conn,
 								  const char *slotname,
 								  bool temporary,
 								  bool two_phase,
+								  bool failover,
 								  CRSSnapshotAction snapshot_action,
 								  XLogRecPtr *lsn);
+static void libpqrcv_alter_slot(WalReceiverConn *conn, const char *slotname,
+								bool failover);
 static pid_t libpqrcv_get_backend_pid(WalReceiverConn *conn);
 static WalRcvExecResult *libpqrcv_exec(WalReceiverConn *conn,
 									   const char *query,
@@ -95,6 +98,7 @@ static WalReceiverFunctionsType PQWalReceiverFunctions = {
 	.walrcv_receive = libpqrcv_receive,
 	.walrcv_send = libpqrcv_send,
 	.walrcv_create_slot = libpqrcv_create_slot,
+	.walrcv_alter_slot = libpqrcv_alter_slot,
 	.walrcv_get_backend_pid = libpqrcv_get_backend_pid,
 	.walrcv_exec = libpqrcv_exec,
 	.walrcv_disconnect = libpqrcv_disconnect
@@ -938,8 +942,8 @@ libpqrcv_send(WalReceiverConn *conn, const char *buffer, int nbytes)
  */
 static char *
 libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
-					 bool temporary, bool two_phase, CRSSnapshotAction snapshot_action,
-					 XLogRecPtr *lsn)
+					 bool temporary, bool two_phase, bool failover,
+					 CRSSnapshotAction snapshot_action, XLogRecPtr *lsn)
 {
 	PGresult   *res;
 	StringInfoData cmd;
@@ -963,6 +967,15 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 		if (two_phase)
 		{
 			appendStringInfoString(&cmd, "TWO_PHASE");
+			if (use_new_options_syntax)
+				appendStringInfoString(&cmd, ", ");
+			else
+				appendStringInfoChar(&cmd, ' ');
+		}
+
+		if (failover)
+		{
+			appendStringInfoString(&cmd, "FAILOVER");
 			if (use_new_options_syntax)
 				appendStringInfoString(&cmd, ", ");
 			else
@@ -1035,6 +1048,33 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 	PQclear(res);
 
 	return snapshot;
+}
+
+/*
+ * Change the definition of the replication slot.
+ */
+static void
+libpqrcv_alter_slot(WalReceiverConn *conn, const char *slotname,
+					bool failover)
+{
+	StringInfoData cmd;
+	PGresult   *res;
+
+	initStringInfo(&cmd);
+	appendStringInfo(&cmd, "ALTER_REPLICATION_SLOT %s ( FAILOVER %s )",
+					 quote_identifier(slotname),
+					 failover ? "true" : "false");
+
+	res = libpqrcv_PQexec(conn->streamConn, cmd.data);
+	pfree(cmd.data);
+
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("could not alter replication slot \"%s\": %s",
+						slotname, pchomp(PQerrorMessage(conn->streamConn)))));
+
+	PQclear(res);
 }
 
 /*

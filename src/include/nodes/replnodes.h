@@ -73,6 +73,18 @@ typedef struct DropReplicationSlotCmd
 
 
 /* ----------------------
+ *		ALTER_REPLICATION_SLOT command
+ * ----------------------
+ */
+typedef struct AlterReplicationSlotCmd
+{
+	NodeTag		type;
+	char	   *slotname;
+	List	   *options;
+} AlterReplicationSlotCmd;
+
+
+/* ----------------------
  *		START_REPLICATION command
  * ----------------------
  */

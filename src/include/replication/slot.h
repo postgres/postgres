@@ -227,6 +227,7 @@ extern void ReplicationSlotCreate(const char *name, bool db_specific,
 								  bool two_phase, bool failover);
 extern void ReplicationSlotPersist(void);
 extern void ReplicationSlotDrop(const char *name, bool nowait);
+extern void ReplicationSlotAlter(const char *name, bool failover);
 
 extern void ReplicationSlotAcquire(const char *name, bool nowait);
 extern void ReplicationSlotRelease(void);
