@@ -640,7 +640,7 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 				appendStringInfoString(ctx->out, " (no-tuple-data)");
 			else
 				tuple_to_stringinfo(ctx->out, tupdesc,
-									&change->data.tp.newtuple->tuple,
+									change->data.tp.newtuple,
 									false);
 			break;
 		case REORDER_BUFFER_CHANGE_UPDATE:
@@ -649,7 +649,7 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 			{
 				appendStringInfoString(ctx->out, " old-key:");
 				tuple_to_stringinfo(ctx->out, tupdesc,
-									&change->data.tp.oldtuple->tuple,
+									change->data.tp.oldtuple,
 									true);
 				appendStringInfoString(ctx->out, " new-tuple:");
 			}
@@ -658,7 +658,7 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 				appendStringInfoString(ctx->out, " (no-tuple-data)");
 			else
 				tuple_to_stringinfo(ctx->out, tupdesc,
-									&change->data.tp.newtuple->tuple,
+									change->data.tp.newtuple,
 									false);
 			break;
 		case REORDER_BUFFER_CHANGE_DELETE:
@@ -670,7 +670,7 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 			/* In DELETE, only the replica identity is present; display that */
 			else
 				tuple_to_stringinfo(ctx->out, tupdesc,
-									&change->data.tp.oldtuple->tuple,
+									change->data.tp.oldtuple,
 									true);
 			break;
 		default:

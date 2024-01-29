@@ -1473,7 +1473,7 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	if (change->data.tp.oldtuple)
 	{
 		old_slot = relentry->old_slot;
-		ExecStoreHeapTuple(&change->data.tp.oldtuple->tuple, old_slot, false);
+		ExecStoreHeapTuple(change->data.tp.oldtuple, old_slot, false);
 
 		/* Convert tuple if needed. */
 		if (relentry->attrmap)
@@ -1488,7 +1488,7 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	if (change->data.tp.newtuple)
 	{
 		new_slot = relentry->new_slot;
-		ExecStoreHeapTuple(&change->data.tp.newtuple->tuple, new_slot, false);
+		ExecStoreHeapTuple(change->data.tp.newtuple, new_slot, false);
 
 		/* Convert tuple if needed. */
 		if (relentry->attrmap)
