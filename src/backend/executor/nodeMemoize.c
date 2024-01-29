@@ -278,11 +278,14 @@ MemoizeHash_equal(struct memoize_hash *tb, const MemoizeKey *key1,
 }
 
 /*
- * Initialize the hash table to empty.
+ * Initialize the hash table to empty.  The MemoizeState's hashtable field
+ * must point to NULL.
  */
 static void
 build_hash_table(MemoizeState *mstate, uint32 size)
 {
+	Assert(mstate->hashtable == NULL);
+
 	/* Make a guess at a good size when we're not given a valid size. */
 	if (size == 0)
 		size = 1024;
@@ -400,8 +403,10 @@ remove_cache_entry(MemoizeState *mstate, MemoizeEntry *entry)
 static void
 cache_purge_all(MemoizeState *mstate)
 {
-	uint64		evictions = mstate->hashtable->members;
-	PlanState  *pstate = (PlanState *) mstate;
+	uint64		evictions = 0;
+
+	if (mstate->hashtable != NULL)
+		evictions = mstate->hashtable->members;
 
 	/*
 	 * Likely the most efficient way to remove all items is to just reset the
@@ -410,8 +415,8 @@ cache_purge_all(MemoizeState *mstate)
 	 */
 	MemoryContextReset(mstate->tableContext);
 
-	/* Make the hash table the same size as the original size */
-	build_hash_table(mstate, ((Memoize *) pstate->plan)->est_entries);
+	/* NULLify so we recreate the table on the next call */
+	mstate->hashtable = NULL;
 
 	/* reset the LRU list */
 	dlist_init(&mstate->lru_list);
@@ -706,6 +711,10 @@ ExecMemoize(PlanState *pstate)
 				bool		found;
 
 				Assert(node->entry == NULL);
+
+				/* first call? we'll need a hash table. */
+				if (unlikely(node->hashtable == NULL))
+					build_hash_table(node, ((Memoize *) pstate->plan)->est_entries);
 
 				/*
 				 * We're only ever in this state for the first call of the
@@ -1051,8 +1060,11 @@ ExecInitMemoize(Memoize *node, EState *estate, int eflags)
 	/* Zero the statistics counters */
 	memset(&mstate->stats, 0, sizeof(MemoizeInstrumentation));
 
-	/* Allocate and set up the actual cache */
-	build_hash_table(mstate, node->est_entries);
+	/*
+	 * Because it may require a large allocation, we delay building of the
+	 * hash table until executor run.
+	 */
+	mstate->hashtable = NULL;
 
 	return mstate;
 }
@@ -1062,6 +1074,7 @@ ExecEndMemoize(MemoizeState *node)
 {
 #ifdef USE_ASSERT_CHECKING
 	/* Validate the memory accounting code is correct in assert builds. */
+	if (node->hashtable != NULL)
 	{
 		int			count;
 		uint64		mem = 0;
