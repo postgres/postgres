@@ -465,10 +465,7 @@ retry:
 
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 
-	/*
-	 * Search for the slot with the specified name if the slot to acquire is
-	 * not given. If the slot is not found, we either return -1 or error out.
-	 */
+	/* Check if the slot exits with the given name. */
 	s = SearchNamedReplicationSlot(name, false);
 	if (s == NULL || !s->in_use)
 	{
