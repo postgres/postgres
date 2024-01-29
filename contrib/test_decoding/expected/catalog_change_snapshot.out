@@ -132,3 +132,47 @@ COMMIT
 stop    
 (1 row)
 
+
+starting permutation: s0_init s0_begin s0_savepoint s0_create_part1 s0_savepoint_release s1_checkpoint s0_create_part2 s0_commit s0_begin s0_truncate s1_checkpoint s1_get_changes s0_insert_part s1_get_changes s0_commit s1_get_changes
+step s0_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?
+--------
+init    
+(1 row)
+
+step s0_begin: BEGIN;
+step s0_savepoint: SAVEPOINT sp1;
+step s0_create_part1: CREATE TABLE tbl1_part_p1 PARTITION OF tbl1_part FOR VALUES FROM (0) TO (10);
+step s0_savepoint_release: RELEASE SAVEPOINT sp1;
+step s1_checkpoint: CHECKPOINT;
+step s0_create_part2: CREATE TABLE tbl1_part_p2 PARTITION OF tbl1_part FOR VALUES FROM (10) TO (20);
+step s0_commit: COMMIT;
+step s0_begin: BEGIN;
+step s0_truncate: TRUNCATE tbl1;
+step s1_checkpoint: CHECKPOINT;
+step s1_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
+data
+----
+(0 rows)
+
+step s0_insert_part: INSERT INTO tbl1_part VALUES (1);
+step s1_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
+data
+----
+(0 rows)
+
+step s0_commit: COMMIT;
+step s1_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
+data                                              
+--------------------------------------------------
+BEGIN                                             
+table public.tbl1: TRUNCATE: (no-flags)           
+table public.tbl1_part_p1: INSERT: val1[integer]:1
+COMMIT                                            
+(4 rows)
+
+?column?
+--------
+stop    
+(1 row)
+

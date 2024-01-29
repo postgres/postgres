@@ -2119,11 +2119,13 @@ SnapBuildXidSetCatalogChanges(SnapBuild *builder, TransactionId xid, int subxcnt
 							  TransactionId *subxacts, XLogRecPtr lsn)
 {
 	/*
-	 * Skip if there is no initial running xacts information or the
-	 * transaction is already marked as containing catalog changes.
+	 * Skip if there is no initial running xacts information.
+	 *
+	 * Even if the transaction has been marked as containing catalog
+	 * changes, it cannot be skipped because its subtransactions that
+	 * modified the catalog may not be marked.
 	 */
-	if (NInitialRunningXacts == 0 ||
-		ReorderBufferXidHasCatalogChanges(builder->reorder, xid))
+	if (NInitialRunningXacts == 0)
 		return;
 
 	if (bsearch(&xid, InitialRunningXacts, NInitialRunningXacts,
