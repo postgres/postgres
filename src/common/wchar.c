@@ -13,6 +13,7 @@
 #include "c.h"
 
 #include "mb/pg_wchar.h"
+#include "utils/ascii.h"
 
 
 /*
