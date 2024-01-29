@@ -6,6 +6,7 @@
 libpq_sources = files(
   'fe-auth-scram.c',
   'fe-auth.c',
+  'fe-cancel.c',
   'fe-connect.c',
   'fe-exec.c',
   'fe-lobj.c',

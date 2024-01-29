@@ -30,6 +30,7 @@ endif
 OBJS = \
 	$(WIN32RES) \
 	fe-auth-scram.o \
+	fe-cancel.o \
 	fe-connect.o \
 	fe-exec.o \
 	fe-lobj.o \
