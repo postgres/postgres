@@ -440,8 +440,8 @@ make prefix=/usr/local/pgsql.new install
       <para>
        All slots on the old cluster must be usable, i.e., there are no slots
        whose
-       <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>conflicting</structfield>
-       is <literal>true</literal>.
+       <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>conflict_reason</structfield>
+       is not <literal>NULL</literal>.
       </para>
      </listitem>
      <listitem>
