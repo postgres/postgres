@@ -66,6 +66,16 @@
 #if LIBXML_VERSION >= 20704
 #define HAVE_XMLSTRUCTUREDERRORCONTEXT 1
 #endif
+
+/*
+ * libxml2 2.12 decided to insert "const" into the error handler API.
+ */
+#if LIBXML_VERSION >= 21200
+#define PgXmlErrorPtr const xmlError *
+#else
+#define PgXmlErrorPtr xmlErrorPtr
+#endif
+
 #endif							/* USE_LIBXML */
 
 #include "access/htup_details.h"
@@ -123,7 +133,7 @@ static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
 										   xmlParserCtxtPtr ctxt);
 static void xml_errsave(Node *escontext, PgXmlErrorContext *errcxt,
 						int sqlcode, const char *msg);
-static void xml_errorHandler(void *data, xmlErrorPtr error);
+static void xml_errorHandler(void *data, PgXmlErrorPtr error);
 static int	errdetail_for_xml_code(int code);
 static void chopStringInfoNewlines(StringInfo str);
 static void appendStringInfoLineSeparator(StringInfo str);
@@ -2002,7 +2012,7 @@ xml_errsave(Node *escontext, PgXmlErrorContext *errcxt,
  * Error handler for libxml errors and warnings
  */
 static void
-xml_errorHandler(void *data, xmlErrorPtr error)
+xml_errorHandler(void *data, PgXmlErrorPtr error)
 {
 	PgXmlErrorContext *xmlerrcxt = (PgXmlErrorContext *) data;
 	xmlParserCtxtPtr ctxt = (xmlParserCtxtPtr) error->ctxt;
