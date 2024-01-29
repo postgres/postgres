@@ -94,6 +94,14 @@ select explain_filter('explain (generic_plan) select unique1 from tenk1 where th
 -- should fail
 select explain_filter('explain (analyze, generic_plan) select unique1 from tenk1 where thousand = $1');
 
+-- MEMORY option
+select explain_filter('explain (memory) select * from int8_tbl i8');
+select explain_filter('explain (memory, analyze) select * from int8_tbl i8');
+select explain_filter('explain (memory, summary, format yaml) select * from int8_tbl i8');
+select explain_filter('explain (memory, analyze, format json) select * from int8_tbl i8');
+prepare int8_query as select * from int8_tbl i8;
+select explain_filter('explain (memory) execute int8_query');
+
 -- Test EXPLAIN (GENERIC_PLAN) with partition pruning
 -- partitions should be pruned at plan time, based on constants,
 -- but there should be no pruning based on parameter placeholders

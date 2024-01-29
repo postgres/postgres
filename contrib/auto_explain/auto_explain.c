@@ -396,6 +396,8 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			es->wal = (es->analyze && auto_explain_log_wal);
 			es->timing = (es->analyze && auto_explain_log_timing);
 			es->summary = es->analyze;
+			/* No support for MEMORY */
+			/* es->memory = false; */
 			es->format = auto_explain_log_format;
 			es->settings = auto_explain_log_settings;
 

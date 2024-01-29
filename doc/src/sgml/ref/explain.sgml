@@ -44,6 +44,7 @@ EXPLAIN [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] <rep
     WAL [ <replaceable class="parameter">boolean</replaceable> ]
     TIMING [ <replaceable class="parameter">boolean</replaceable> ]
     SUMMARY [ <replaceable class="parameter">boolean</replaceable> ]
+    MEMORY [ <replaceable class="parameter">boolean</replaceable> ]
     FORMAT { TEXT | XML | JSON | YAML }
 </synopsis>
  </refsynopsisdiv>
@@ -246,6 +247,19 @@ ROLLBACK;
       <command>EXPLAIN EXECUTE</command> includes the time required to fetch
       the plan from the cache and the time required for re-planning, if
       necessary.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>MEMORY</literal></term>
+    <listitem>
+     <para>
+      Include information on memory consumption by the query planning phase.
+      Specifically, include the precise amount of storage used by planner
+      in-memory structures, as well as total memory considering allocation
+      overhead.
+      This parameter defaults to <literal>FALSE</literal>.
      </para>
     </listitem>
    </varlistentry>

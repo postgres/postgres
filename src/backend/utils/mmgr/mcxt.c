@@ -688,6 +688,19 @@ MemoryContextMemAllocated(MemoryContext context, bool recurse)
 }
 
 /*
+ * Return the memory consumption statistics about the given context and its
+ * children.
+ */
+void
+MemoryContextMemConsumed(MemoryContext context,
+						 MemoryContextCounters *consumed)
+{
+	memset(consumed, 0, sizeof(*consumed));
+
+	MemoryContextStatsInternal(context, 0, false, 0, consumed, false);
+}
+
+/*
  * MemoryContextStats
  *		Print statistics about the named context and all its descendants.
  *
