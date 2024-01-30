@@ -172,7 +172,7 @@ $sub->start;
 $sub->safe_psql(
 	'postgres', qq[
 	CREATE TABLE tbl (a int);
-	CREATE SUBSCRIPTION regress_sub CONNECTION '$old_connstr' PUBLICATION regress_pub WITH (two_phase = 'true')
+	CREATE SUBSCRIPTION regress_sub CONNECTION '$old_connstr' PUBLICATION regress_pub WITH (two_phase = 'true', failover = 'true')
 ]);
 $sub->wait_for_subscription_sync($oldpub, 'regress_sub');
 
@@ -192,8 +192,8 @@ command_ok([@pg_upgrade_cmd], 'run of pg_upgrade of old cluster');
 # Check that the slot 'regress_sub' has migrated to the new cluster
 $newpub->start;
 my $result = $newpub->safe_psql('postgres',
-	"SELECT slot_name, two_phase FROM pg_replication_slots");
-is($result, qq(regress_sub|t), 'check the slot exists on new cluster');
+	"SELECT slot_name, two_phase, failover FROM pg_replication_slots");
+is($result, qq(regress_sub|t|t), 'check the slot exists on new cluster');
 
 # Update the connection
 my $new_connstr = $newpub->connstr . ' dbname=postgres';

@@ -132,6 +132,13 @@
  * avoid such deadlocks, we generate a unique GID (consisting of the
  * subscription oid and the xid of the prepared transaction) for each prepare
  * transaction on the subscriber.
+ *
+ * FAILOVER
+ * ----------------------
+ * The logical slot on the primary can be synced to the standby by specifying
+ * failover = true when creating the subscription. Enabling failover allows us
+ * to smoothly transition to the promoted standby, ensuring that we can
+ * subscribe to the new primary without losing any data.
  *-------------------------------------------------------------------------
  */
 

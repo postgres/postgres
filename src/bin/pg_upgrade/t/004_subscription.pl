@@ -49,11 +49,11 @@ $old_sub->safe_psql(
 # Setup logical replication
 my $connstr = $publisher->connstr . ' dbname=postgres';
 
-# Setup an enabled subscription to verify that the running status is retained
-# after upgrade.
+# Setup an enabled subscription to verify that the running status and failover
+# option are retained after the upgrade.
 $publisher->safe_psql('postgres', "CREATE PUBLICATION regress_pub1");
 $old_sub->safe_psql('postgres',
-	"CREATE SUBSCRIPTION regress_sub1 CONNECTION '$connstr' PUBLICATION regress_pub1"
+	"CREATE SUBSCRIPTION regress_sub1 CONNECTION '$connstr' PUBLICATION regress_pub1 WITH (failover = true)"
 );
 $old_sub->wait_for_subscription_sync($publisher, 'regress_sub1');
 
@@ -137,14 +137,14 @@ $publisher->safe_psql(
 
 $new_sub->start;
 
-# The subscription's running status should be preserved. Old subscription
-# regress_sub1 should be enabled and old subscription regress_sub2 should be
-# disabled.
+# The subscription's running status and failover option should be preserved.
+# Old subscription regress_sub1 should have enabled and failover as true while
+# old subscription regress_sub2 should have enabled and failover as false.
 $result =
   $new_sub->safe_psql('postgres',
-	"SELECT subname, subenabled FROM pg_subscription ORDER BY subname");
-is( $result, qq(regress_sub1|t
-regress_sub2|f),
+	"SELECT subname, subenabled, subfailover FROM pg_subscription ORDER BY subname");
+is( $result, qq(regress_sub1|t|t
+regress_sub2|f|f),
 	"check that the subscription's running status are preserved");
 
 my $sub_oid = $new_sub->safe_psql('postgres',

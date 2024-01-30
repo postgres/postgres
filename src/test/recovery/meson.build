@@ -45,6 +45,7 @@ tests += {
       't/037_invalid_database.pl',
       't/038_save_logical_slots_shutdown.pl',
       't/039_end_of_wal.pl',
+      't/040_standby_failover_slots_sync.pl',
     ],
   },
 }

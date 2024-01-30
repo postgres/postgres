@@ -93,6 +93,11 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 	bool		subrunasowner;	/* True if replication should execute as the
 								 * subscription owner */
 
+	bool		subfailover;	/* True if the associated replication slots
+								 * (i.e. the main slot and the table sync
+								 * slots) in the upstream database are enabled
+								 * to be synchronized to the standbys. */
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Connection string to the publisher */
 	text		subconninfo BKI_FORCE_NOT_NULL;
@@ -142,6 +147,10 @@ typedef struct Subscription
 								 * occurs */
 	bool		passwordrequired;	/* Must connection use a password? */
 	bool		runasowner;		/* Run replication as subscription owner */
+	bool		failover;		/* True if the associated replication slots
+								 * (i.e. the main slot and the table sync
+								 * slots) in the upstream database are enabled
+								 * to be synchronized to the standbys. */
 	char	   *conninfo;		/* Connection string to the publisher */
 	char	   *slotname;		/* Name of the replication slot */
 	char	   *synccommit;		/* Synchronous commit setting for worker */

@@ -226,9 +226,30 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       <link linkend="sql-createsubscription-params-with-streaming"><literal>streaming</literal></link>,
       <link linkend="sql-createsubscription-params-with-disable-on-error"><literal>disable_on_error</literal></link>,
       <link linkend="sql-createsubscription-params-with-password-required"><literal>password_required</literal></link>,
-      <link linkend="sql-createsubscription-params-with-run-as-owner"><literal>run_as_owner</literal></link>, and
-      <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>.
+      <link linkend="sql-createsubscription-params-with-run-as-owner"><literal>run_as_owner</literal></link>,
+      <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>, and
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>.
       Only a superuser can set <literal>password_required = false</literal>.
+     </para>
+
+     <para>
+      When altering the
+      <link linkend="sql-createsubscription-params-with-slot-name"><literal>slot_name</literal></link>,
+      the <literal>failover</literal> property value of the named slot may differ from the
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
+      parameter specified in the subscription. When creating the slot,
+      ensure the slot <literal>failover</literal> property matches the
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
+      parameter value of the subscription. Otherwise, the slot on the
+      publisher may behave differently from what subscription's
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
+      option says. The slot on the publisher could either be
+      synced to the standbys even when the subscription's
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
+      option is disabled or could be disabled for sync
+      even when the subscription's
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
+      option is enabled.
      </para>
     </listitem>
    </varlistentry>

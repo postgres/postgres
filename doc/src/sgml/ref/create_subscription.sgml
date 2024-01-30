@@ -117,19 +117,22 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           command should connect to the publisher at all.  The default
           is <literal>true</literal>.  Setting this to
           <literal>false</literal> will force the values of
-          <literal>create_slot</literal>, <literal>enabled</literal> and
-          <literal>copy_data</literal> to <literal>false</literal>.
+          <literal>create_slot</literal>, <literal>enabled</literal>,
+          <literal>copy_data</literal>, and <literal>failover</literal>
+          to <literal>false</literal>.
           (You cannot combine setting <literal>connect</literal>
           to <literal>false</literal> with
           setting <literal>create_slot</literal>, <literal>enabled</literal>,
-          or <literal>copy_data</literal> to <literal>true</literal>.)
+          <literal>copy_data</literal>, or <literal>failover</literal> to
+          <literal>true</literal>.)
          </para>
 
          <para>
           Since no connection is made when this option is
           <literal>false</literal>, no tables are subscribed. To initiate
           replication, you must manually create the replication slot, enable
-          the subscription, and refresh the subscription. See
+          the failover if required, enable the subscription, and refresh the
+          subscription. See
           <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
           for examples.
          </para>
@@ -397,6 +400,18 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           See <xref linkend="sql-createsubscription-notes"/> for details of how
           <literal>copy_data = true</literal> can interact with the
           <literal>origin</literal> parameter.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry id="sql-createsubscription-params-with-failover">
+        <term><literal>failover</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the replication slots associated with the subscription
+          are enabled to be synced to the standbys so that logical
+          replication can be resumed from the new primary after failover.
+          The default is <literal>false</literal>.
          </para>
         </listitem>
        </varlistentry>
