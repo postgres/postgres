@@ -343,6 +343,32 @@ select string4 from tenk1 order by string4 limit 5;
 reset parallel_leader_participation;
 reset max_parallel_workers;
 
+create function parallel_safe_volatile(a int) returns int as
+  $$ begin return a; end; $$ parallel safe volatile language plpgsql;
+
+-- Test gather merge atop of a sort of a partial path
+explain (costs off)
+select * from tenk1 where four = 2
+order by four, hundred, parallel_safe_volatile(thousand);
+
+-- Test gather merge atop of an incremental sort a of partial path
+set min_parallel_index_scan_size = 0;
+set enable_seqscan = off;
+
+explain (costs off)
+select * from tenk1 where four = 2
+order by four, hundred, parallel_safe_volatile(thousand);
+
+reset min_parallel_index_scan_size;
+reset enable_seqscan;
+
+-- Test GROUP BY with a gather merge path atop of a sort of a partial path
+explain (costs off)
+select count(*) from tenk1
+group by twenty, parallel_safe_volatile(two);
+
+drop function parallel_safe_volatile(int);
+
 SAVEPOINT settings;
 SET LOCAL debug_parallel_query = 1;
 explain (costs off)
