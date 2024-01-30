@@ -331,6 +331,7 @@ WaitEventExtension	"Waiting to read or update custom wait events information for
 WALSummarizer	"Waiting to read or update WAL summarization state."
 DSMRegistry	"Waiting to read or update the dynamic shared memory registry."
 InjectionPoint	"Waiting to read or update information related to injection points."
+SerialControl	"Waiting to read or update shared <filename>pg_serial</filename> state."
 
 #
 # END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)
