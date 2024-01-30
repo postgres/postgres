@@ -250,7 +250,8 @@ prefix_init(void **priv_p, void *arg, PullFilter *src)
 	uint8		tmpbuf[PGP_MAX_BLOCK + 2];
 
 	len = pgp_get_cipher_block_size(ctx->cipher_algo);
-	if (len > sizeof(tmpbuf))
+	/* Make sure we have space for prefix */
+	if (len > PGP_MAX_BLOCK)
 		return PXE_BUG;
 
 	res = pullf_read_max(src, len + 2, &buf, tmpbuf);
