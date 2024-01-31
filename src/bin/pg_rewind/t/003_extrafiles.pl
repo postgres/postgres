@@ -77,7 +77,7 @@ sub run_test
 		{
 			$filename =~ s{\\}{/}g;
 		}
-		$test_primary_datadir =~ s{\\}{/}g;
+		$test_master_datadir =~ s{\\}{/}g;
 	}
 
 	is_deeply(
