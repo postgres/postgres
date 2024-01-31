@@ -1027,7 +1027,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       Adding a unique constraint will automatically create a unique B-tree
       index on the column or group of columns used in the constraint.  But if
       the constraint includes a <literal>WITHOUT OVERLAPS</literal> clause, it
-      will use a GiST index.
+      will use a GiST index.  The created index has the same name as the unique
+      constraint.
      </para>
 
      <para>
@@ -1082,6 +1083,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <literal>PRIMARY KEY</literal> constraint will automatically create a
       unique B-tree index, or GiST if <literal>WITHOUT OVERLAPS</literal> was
       specified, on the column or group of columns used in the constraint.
+      That index has the same name as the primary key constraint.
      </para>
 
      <para>
@@ -1118,8 +1120,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       Exclusion constraints are implemented using
-      an index, so each specified operator must be associated with an
-      appropriate operator class
+      an index that has the same name as the constraint, so each specified
+      operator must be associated with an appropriate operator class
       (see <xref linkend="indexes-opclass"/>) for the index access
       method <replaceable>index_method</replaceable>.
       The operators are required to be commutative.

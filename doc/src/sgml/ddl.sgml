@@ -3003,7 +3003,11 @@ SELECT * FROM information WHERE group_id = 2 FOR UPDATE;
   <para>
    A database contains one or more named <firstterm>schemas</firstterm>, which
    in turn contain tables.  Schemas also contain other kinds of named
-   objects, including data types, functions, and operators.  The same
+   objects, including data types, functions, and operators.  Within one
+   schema, two objects of the same type cannot have the same name.
+   Furthermore, tables, sequences, indexes, views, materialized views, and
+   foreign tables share the same namespace, so that, for example, an index and
+   a table must have different names if they are in the same schema.  The same
    object name can be used in different schemas without conflict; for
    example, both <literal>schema1</literal> and <literal>myschema</literal> can
    contain tables named <literal>mytable</literal>.  Unlike databases,
