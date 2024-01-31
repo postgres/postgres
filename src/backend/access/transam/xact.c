@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <storage/predicate_internals.h>
+#include <utils/lsyscache.h>
 
 #include "access/commit_ts.h"
 #include "access/multixact.h"
@@ -350,14 +351,14 @@ static void ShowTransactionStateRec(const char *str, TransactionState state);
 static const char *BlockStateAsString(TBlockState blockState);
 static const char *TransStateAsString(TransState state);
 
-static void get_lock_strategy(LocalTransactionId tid);
+static void get_lock_strategy(const char *sql);
 static bool should_report_result(uint tid);
 static bool should_refine_cc(uint tid);
 static uint64_t get_cur_time_ns(void);
 static void report_xact_result(bool commit, LocalTransactionId tid);
-static double predict_cc_reward(const double features[3], int modelIndex);
-static int get_optimal_strategy(const double x[3]);
-static void scatterInput(double input[], const double mean[],const double scale[], const int size);
+//static double predict_cc_reward(const double *x, int modelIndex);
+//static int get_optimal_strategy(const double *x);
+//static void scatterInput(double *x, const double mean[],const double scale[], int size);
 
 /* ----------------------------------------------------------------
  *	transaction state accessors
@@ -1930,220 +1931,182 @@ static void write_all_to_socket(int conn_fd, const char* json) {
     }
 }
 
-static char * PredicateLockTageToString(PredicateLockTargetType ltype)
-{
-    if (ltype == PREDLOCKTAG_RELATION)
-        return "relation";
-    else if (ltype == PREDLOCKTAG_PAGE)
-        return "page";
-    else if (ltype == PREDLOCKTAG_TUPLE)
-        return "tuple";
-    else return "unknown";
-}
-
-// EncodePredicateLockInfo encode all predicate lock information in SSI as string.
-static StringInfoData EncodePredicateLockInfo(PredicateLockData * c, bool *need_predict)
-{
-    StringInfoData lock_buf, buf;
-    initStringInfo(&lock_buf);
-    initStringInfo(&buf);
-    if (c->nelements > 0) *need_predict = true;
-    for (int i=0;i<c->nelements;i++)
-    {
-        SERIALIZABLEXACT xact = c->xacts[i];
-        PREDICATELOCKTARGETTAG tag = c->locktags[i];
-        PredicateLockTargetType pred_type = GET_PREDICATELOCKTARGETTAG_TYPE(tag);
-
-        resetStringInfo(&lock_buf);
-
-        /* lock type */
-        appendStringInfo(&lock_buf,
-                         _("{\"process\":%d,\"xact\":%d,"),
-                         xact.pid,
-                         xact.vxid.localTransactionId);
-
-        appendStringInfo(&lock_buf,
-                         _("\"pred\":%s,\"db\":%d,\"rel\":%d,"
-                           "\"offset\":%d,\"page\":%d},"),
-                         PredicateLockTageToString(pred_type),
-                         GET_PREDICATELOCKTARGETTAG_DB(tag),
-                         GET_PREDICATELOCKTARGETTAG_RELATION(tag),
-                         pred_type == PREDLOCKTAG_TUPLE? GET_PREDICATELOCKTARGETTAG_OFFSET(tag): -1,
-                         pred_type != PREDLOCKTAG_RELATION? GET_PREDICATELOCKTARGETTAG_PAGE(tag): -1);
-    }
-    return buf;
-}
-
-const bool GenTrainingData = false;
-
-// EncodeLockData encode all non-predicate lock information as string.
-static StringInfoData EncodeLockData(LockData * c, bool * CurrentNeedPredict)
-{
-    StringInfoData lock_tag_buf, lock_buf;
-    initStringInfo(&lock_buf);
-    initStringInfo(&lock_tag_buf);
-    if (c->nelements > 0) *CurrentNeedPredict = true;
-    appendStringInfo(&lock_buf,"{");
-    for (int i=0;i<c->nelements;i++)
-    {
-        LockInstanceData lc = c->locks[i];
-        resetStringInfo(&lock_tag_buf);
-        DescribeLockTag(&lock_tag_buf, &lc.locktag);
-        appendStringInfo(&lock_buf,
-                         _("{\"proc\":%d,\"wait\":%d,\"tag\":%s,\"xact\":%d,"
-                           "\"mask\":%d, \"lead\":%d},"),
-                         lc.pid,
-                         lc.waitLockMode,
-                         lock_tag_buf.data,
-                         lc.lxid,
-                         lc.holdMask,
-                         lc.leaderPid);
-    }
-    appendStringInfo(&lock_buf,"}");
-    return lock_buf;
-}
-
-static double ExtractXactFeature(LockData * c)
-{
-    double res = 0;
-    for (int i=0;i<c->nelements;i++)
-    {
-        bool is_distinct = true;
-        for (int j = 0; j < i; j ++)
-            if (c->locks[i].lxid == c->locks[j].lxid) is_distinct = false;
-        if (is_distinct)
-            res++;
-    }
-    return res;
-}
-
-static double ExtractLockFeature(LockData * c)
-{
-    double res = 0;
-    for (int i=0;i<c->nelements;i++)
-        if (c->locks[i].locktag.locktag_type == LOCKTAG_TUPLE) res ++;
-    return res;
-}
-
-
-static StringInfoData EncodeDependencyGraphData()
-{
-    StringInfoData buf;
-    initStringInfo(&buf);
-    return buf;
-}
-
-static StringInfoData EncodeSessionData()
-{
-    // Get information from MyProc
-    StringInfoData buf;
-    initStringInfo(&buf);
-    return buf;
-}
-
-static StringInfoData EncodeResourceData()
-{
-    // Get information from MyProc
-    StringInfoData buf;
-    initStringInfo(&buf);
-    return buf;
-}
-
 #define NUM_OF_SYS_XACTS 1
-#define FEATURE_LENGTH 200
+#define SKIP_XACT(tid) ((tid) <= NUM_OF_SYS_XACTS)
+#define FEATURE_LENGTH 4
+#define ALG_NUM 12
 #define REWARD_LENGTH 100
 #define TERMINAL_PRED_MESSAGE "$PRED_END$"
 #define START_PRED_MESSAGE "$PRED_START$"
 #define TERMINAL_REWARD_MESSAGE "$REWARD_END$"
 #define START_REWARD_MESSAGE "$REWARD_START$"
 #define SEC_TO_NS(sec) ((sec)*1000000000)
+#define IS_SYS_TABLE(rel) (starts_with(rel, "pg_") || starts_with(rel, "sql_"))
+#define CC_WO_LOCK 0    // the default algorithm to use w/o any contention.
+#define WRITE_LOCK_BIT LOCKBIT_ON(ExclusiveLock)
+#define READ_LOCK_BIT LOCKBIT_ON(RowShareLock)
+#define HAS_2PL_LOCK(c) (((c)->holdMask & READ_LOCK_BIT) | ((c)->holdMask & WRITE_LOCK_BIT))
+#define ONLY_2PL_LOCK(c) (!((c)->holdMask & ~(WRITE_LOCK_BIT|READ_LOCK_BIT)))
+//Assert();
 
-const double coef_cc[3][3] = {
-        {-1965.37506541, -682.6019029, 1746.80575016},
-        {-1459.30808223, -674.81190928, 1223.25562313},
-        {-462.02951823, -768.24424437, 293.91901704}
+
+const char* feature_names[FEATURE_LENGTH] = {
+//        "f_process",
+        "f_transactions",
+        "f_tuple_lock",
+        "f_relation_lock",
+        "f_current",
 };
 
-const double intercepts[3] = {
-        -2436.88767819106,
-        -2263.574064276241,
-        -2277.7867326958767
+#define GLOBAL_F_XACT 0
+#define GLOBAL_F_TUPLE_LOCK 1
+#define GLOBAL_F_REL_LOCK 2
+#define GLOBAL_F_CUR 3
+//#define GLOBAL_F_PROC 0
+//#define GLOBAL_F_CACHE 5
+//#define GLOBAL_F_IO 6
+//#define GLOBAL_F_WAIT_EVENTS 8
+
+// lock strategy, isolation level, deadlock detection interval (global), lock timeout.
+//
+// Deadlocks are situations where transactions are waiting on each other in a cycle,
+// and no progress can be made without intervention. Lock contention,
+// on the other hand, happens when one transaction has to wait for locks held by another,
+// but progress is still possible once the locks are released.
+//
+// For deadlock, a value of 1 second is a compromise between detecting and resolving deadlocks promptly and not
+// performing the detection so frequently that it becomes a performance issue itself. However, in a system where
+// transactions are typically very short, and lock contention is more common, a shorter DL timeout might be justified.
+// This period needs to be long enough to allow most transactions to complete
+// without triggering unnecessary deadlock checks, thus we make it larger than 100ms.
+//
+// For lock timeout, if the system is under high load, a shorter lock_timeout can help in quickly resolving lock contention,
+// ensuring that no single transaction can block others for too long.
+const int alg_list[ALG_NUM][4] = {
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 0},
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 1000},
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 100},
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 10},
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 1},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 0},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 1000},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 100},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 10},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 1},
+        {LOCK_2PL_NW, XACT_READ_COMMITTED, 1000, 0},
+        {LOCK_ASSERT_ABORT, XACT_READ_COMMITTED, 1000, 0}
 };
 
-double model_mean[3] ={4.12285967e+03, 2.75442752e+00, 2.72079123e+01};
-double model_scale[3] ={1.26367589e+04, 2.55579183e+00, 1.04733990e+02};
+const bool GenTrainingData = true;
 
+//static char * PredicateLockTagetToString(PredicateLockTargetType ltype)
+//{
+//    if (ltype == PREDLOCKTAG_RELATION)
+//        return "relation";
+//    else if (ltype == PREDLOCKTAG_PAGE)
+//        return "page";
+//    else if (ltype == PREDLOCKTAG_TUPLE)
+//        return "tuple";
+//    else return "unknown";
+//}
 
-void scatterInput(double x[], const double mean[],const double scale[], const int size) {
-    for (int i = 0; i < size; ++i) {
-        x[i] = (x[i] - mean[i]) / scale[i];
-    }
+static bool starts_with(const char *str, const char *pre) {
+    return strncmp(pre, str, strlen(pre)) == 0;
 }
 
-void scatter_features(double x[], const int size) {
-    scatterInput(x, model_mean, model_scale, size);
-}
+// lock_timeout and deadlock_timeout.
+static StringInfoData * ExtractSysFeatures(LocalTransactionId tid, const char* sql, bool *need_predict) {
+    StringInfoData *features = (StringInfoData *) palloc(sizeof(StringInfoData) * FEATURE_LENGTH);
+    LockData *lockInfo;
+//    PredicateLockData *predicateLockInfo;
 
-double predict_cc_reward(const double x[3], int modelIndex) {
-    double prediction = 0;
-    for (int i = 0; i < 3; ++i) {
-        prediction += x[i] * coef_cc[modelIndex][i];
-    }
-    prediction += intercepts[modelIndex];
-    return prediction;
-}
+    for (int i = 0; i < FEATURE_LENGTH; i++)
+        initStringInfo(&features[i]);
 
-int get_optimal_strategy(const double x[3]) {
-    int optimal_cc = LOCK_NONE;
-    double current_reward = predict_cc_reward(x, LOCK_NONE);
-    for (int cc = 1; cc <= LOCK_2PL_NW;cc ++)
     {
-        double tmp = predict_cc_reward(x, cc);
-        if (current_reward < tmp)
-        {
-            optimal_cc = cc;
-            current_reward = tmp;
+        // Transaction information.
+        appendStringInfo(&features[GLOBAL_F_XACT],"[");
+        for (int i = 0; i < ProcGlobal->allProcCount; i++) {
+            PGPROC *cur = &ProcGlobal->allProcs[i];
+            PGXACT *xact = &ProcGlobal->allPgXact[cur->pgprocno];
+            if (!TransactionIdIsValid(xact->xid)) continue;
+            if (cur->lxid == tid) continue;
+            *need_predict = true;
+            appendStringInfo(&features[GLOBAL_F_XACT],
+                             "{\"xact_id\":%d,"
+                             "\"xact_xmin\":%d,"
+                             "\"xact_check\":%d},", cur->lxid, xact->xmin, xact->delayChkpt ? 1 : 0);
         }
+        appendStringInfo(&features[GLOBAL_F_XACT], "]");
+        printf("xact%d: xact features %s\n", tid, features[GLOBAL_F_XACT].data);
+        if (!(*need_predict)) return features;
     }
-    printf("The optimal cc is %d regarding feature (%f, %f, %f)\n", optimal_cc, x[0], x[1], x[2]);
-    return optimal_cc;
+
+    {
+        // Current operation information.
+        appendStringInfo(&features[GLOBAL_F_CUR],
+                         "{\"cur_xact\":%d,"
+                         "\"cur_xmin\":%d,"
+                         "\"cur_sql\":%s},", tid, MyPgXact->xmin, sql);
+        printf("xact%d: current features %s\n", tid, features[GLOBAL_F_CUR].data);
+    }
+
+//    return features;
+
+    if (!need_predict)
+    {
+        printf("xact%d: no need for prediction!\n", tid);
+        return features;
+    }
+
+    {    // Lock information.
+        lockInfo = GetLockStatusData();
+        appendStringInfo(&features[GLOBAL_F_TUPLE_LOCK],"[");
+        appendStringInfo(&features[GLOBAL_F_REL_LOCK],"[");
+        for (int i = 0; i < lockInfo->nelements; i++) {
+            LockInstanceData *lc = &lockInfo->locks[i];
+            // ignore all local locks.
+            if (lc->pid == MyProcPid) continue;
+            if (lc->locktag.locktag_type == LOCKTAG_RELATION)
+            {
+                char * rel_name = get_rel_name(lc->locktag.locktag_field2);
+                if (IS_SYS_TABLE(rel_name)) continue;
+                appendStringInfo(&features[GLOBAL_F_REL_LOCK],
+                                 "{\"rel\":\"%s\", \"mode\":%d},",
+                                 rel_name,
+                                 lc->holdMask);
+            }
+            else if (lc->locktag.locktag_type == LOCKTAG_TUPLE)
+            {
+                char * rel_name = get_rel_name(lc->locktag.locktag_field2);
+                if (IS_SYS_TABLE(rel_name)) continue;
+                appendStringInfo(&features[GLOBAL_F_TUPLE_LOCK],
+                                 "{\"rel\":\"%s\", \"blk\":%d, \"offset\":%d, \"held_mask\":%d}",
+                                 rel_name,
+                                 lc->locktag.locktag_field3,
+                                 lc->locktag.locktag_field4,
+                                 lc->holdMask);
+            }
+        }
+        appendStringInfo(&features[GLOBAL_F_TUPLE_LOCK], "]");
+        appendStringInfo(&features[GLOBAL_F_REL_LOCK], "]");
+        printf("xact%d: tuple lock features %s\n", tid, features[GLOBAL_F_TUPLE_LOCK].data);
+        printf("xact%d: rel lock features %s\n", tid, features[GLOBAL_F_REL_LOCK].data);
+    }
+    return features;
 }
 
-static void get_lock_strategy(LocalTransactionId tid)
+static void get_lock_strategy(const char *sql)
 {
-    int conn_fd, cmd;
-//    MemoryContext oldcontext;
-    StringInfoData buf, lock_str;
-    char feature[FEATURE_LENGTH];
+    int cmd; // conn_fd,
+    StringInfoData* features = NULL;
     FILE *file;
     bool need_predict = false;
-    LockData *lockInfo;
-    PredicateLockData *predInfo;
+    uint32 tid = MyProc->lxid;
+    printf("tid = %d\n", tid);
 
-//    printf("xact%d is started: %d:%d -- %d:%d\n", tid,XactIsoLevel, XactLockStrategy, DefaultXactIsoLevel, DefaultXactLockStrategy);
-
-
-    if (!should_refine_cc(tid) || tid <= NUM_OF_SYS_XACTS)
+    if (!should_refine_cc(tid) || SKIP_XACT(tid))
         return;
-
-    lockInfo = GetLockStatusData();
-    predInfo = GetPredicateLockStatusData();
-    lock_str = EncodeLockData(lockInfo, &need_predict);
-    initStringInfo(&buf);
-    appendStringInfo(&buf,
-                     _(
-                             "{\"lock\":{%s},"
-                             "\"pred\":{%s},"
-                             //                       "dep:{%s},"
-                             "\"proc\":{%s},"
-                             "\"prof\":{%s}}"),
-                     lock_str.data,
-                     EncodePredicateLockInfo(predInfo, &need_predict).data,
-//                     EncodeDependencyGraphData().data,
-                     EncodeSessionData().data,
-                     EncodeResourceData().data);
-
-    double x[3] = {buf.len, ExtractXactFeature(lockInfo), ExtractLockFeature(lockInfo)};
 
     if (!IsolationLearnCC())
     {
@@ -2163,81 +2126,51 @@ static void get_lock_strategy(LocalTransactionId tid)
         return;
     }
 
-    if (GenTrainingData)
+    printf("starting to extract features\n");
+    features =  ExtractSysFeatures(tid, sql, &need_predict);
+    if (!need_predict) cmd = CC_WO_LOCK;
+    else
     {
-        cmd = (int)(random() % 3);
-//        int cmd = 1;
-        // feature, cc, and start time (for latency calculation).
-        // save to data file.
-        file = fopen("data.in", "a");
-        if (file == NULL)
+        if (GenTrainingData)
         {
-            perror("Error opening file");
-            return;
+            StringInfoData fe;
+            cmd = (int)(random() % ALG_NUM);
+            file = fopen("data.in", "a");
+            if (file == NULL)
+            {
+                perror("Error opening file");
+                return;
+            }
+            printf("xact%d: file opened, before writing features to file\n", tid);
+            initStringInfo(&fe);
+            appendStringInfo(&fe,
+                             _("XACT %d-%d, policy=%d, start_time:%lu, feature=("),
+                             MyBackendId, tid, cmd,
+                             get_cur_time_ns());
+            for (int i=0;i<FEATURE_LENGTH;i++)
+                appendStringInfo(&fe,
+                                 _("%s=%s,"), feature_names[i], features[i].data);
+            fprintf(file, "%s)\n", fe.data);
+            fclose(file);
+            printf("xact%d: file closed, after writing features to file\n", tid);
         }
-        fprintf(file, "XACT %d-%d: json={\"start_time\":%lu, \"input\":%s,"
-                      " \"cc\":%d}\n", MyBackendId, tid,
-                get_cur_time_ns(), buf.data, cmd);
-        fclose(file);
+        else
+        {
+//            scatter_features(x, FEATURE_LENGTH);
+//            cmd = get_optimal_strategy(x);
+        }
     }
-    else
-    {
-//        printf("origin features (%f, %f, %f)\n", x[0], x[1], x[2]);
-        scatter_features(x, 3);
-//        printf("scattered features (%f, %f, %f)\n",  x[0], x[1], x[2]);
-        if (!need_predict) cmd = 1;
-        else cmd = get_optimal_strategy(x);
-        // feature only.
-//        sprintf(feature, "XACT %d: %s\n", tid,
-//                buf.data);
-//        conn_fd = connect_to_model(cc_host, cc_port);
-//        if (conn_fd < 0)
-//        {
-//            elog(WARNING, "Unable to connect to cc server, no prediction provided.");
-//            XactLockStrategy = DefaultXactLockStrategy;
-//        }
-//
-//        write_all_to_socket(conn_fd, START_PRED_MESSAGE);
-//        write_all_to_socket(conn_fd, feature);
-//        write_all_to_socket(conn_fd, TERMINAL_PRED_MESSAGE);
-//        shutdown(conn_fd, SHUT_WR);
-//
-//        if (read(conn_fd, &XactLockStrategy, sizeof(int )) != sizeof(int ))
-//        {
-//            elog(WARNING, "Could not read the response from the cc server.");
-//            XactLockStrategy = DefaultXactLockStrategy;
-//        }
-//
-//        shutdown(conn_fd, SHUT_RDWR);
-    }
-
-    if (cmd == 0)
-    {
-        XactIsoLevel = XACT_SERIALIZABLE;
-        XactLockStrategy = LOCK_NONE;
-    }
-    else if (cmd == 1)
-    {
-        XactIsoLevel = XACT_READ_COMMITTED;
-        XactLockStrategy = LOCK_2PL;
-    }
-    else if (cmd == 2)
-    {
-        XactIsoLevel = XACT_READ_COMMITTED;
-        XactLockStrategy = LOCK_2PL_NW;
-    }
-    else
-    {
-        XactIsoLevel = XACT_READ_COMMITTED;
-        XactLockStrategy = LOCK_ASSERT_ABORT;
-    }
-
+    XactIsoLevel = alg_list[cmd][0];
+    XactLockStrategy = alg_list[cmd][1];
+    DeadlockTimeout = alg_list[cmd][2];
+    LockTimeout = alg_list[cmd][3];
+    if (features != NULL)
+        pfree(features);
 }
 
 static bool should_refine_cc(uint tid)
 {
     return true;
-//    return tid % 10 == 0;
 }
 
 static bool should_report_result(uint tid)
@@ -2245,7 +2178,6 @@ static bool should_report_result(uint tid)
     if (GenTrainingData)
         return true;
     return false;
-//    return tid % 10 == 0;
 }
 
 static uint64_t get_cur_time_ns()
@@ -2256,16 +2188,6 @@ static uint64_t get_cur_time_ns()
     return SEC_TO_NS((uint64_t)ts.tv_sec) + (uint64_t)ts.tv_nsec;
 }
 
-//  we adopt the reward function from CDBTune.
-//  r = C_T * r_T + C_L * r_L.
-//  To maximize the throughput, we expect to minimize the resource usage and contention on buffers, locks, logs, and pages.
-//  1. if current transaction t is committed:
-//      cost on throughput = latency * (#of locks) + latency / (PROC count).
-//      cost on latency = latency.
-//  2. if current transaction t is aborted:
-//      cost on throughput = latency * (#of locks) + latency / (PROC count) + E[throughput cost].
-//      cost on latency = latency + E[latency]
-//  E[latency] and E[throughput cost] are calculated based on historical data.
 static void report_xact_result(bool is_commit, LocalTransactionId tid)
 {
     int conn_fd;
@@ -2276,7 +2198,7 @@ static void report_xact_result(bool is_commit, LocalTransactionId tid)
         return;
 
 //    printf("xact%d is finished: %d--%d\n", tid, XactLockStrategy, XactIsoLevel);
-    if (!should_report_result(tid) || tid <= NUM_OF_SYS_XACTS)
+    if (!should_report_result(tid) || SKIP_XACT(tid))
         return;
     sprintf(reward, "XACT %d-%d: json={\"is_commit\":%d,\"end_time\":%lu}\n",
             MyBackendId,
@@ -2317,6 +2239,51 @@ static void report_xact_result(bool is_commit, LocalTransactionId tid)
  *						interface routines
  * ----------------------------------------------------------------
  */
+
+/*
+ *	AdjustTransaction
+ */
+void
+AdjustTransaction(const char* sql_text)
+{
+    TransactionState s;
+//    MemoryContext oldCtx;
+    TBlockState tb;
+
+    s = &TopTransactionStateData;
+    CurrentTransactionState = s;
+    tb = s->blockState;
+    printf("tb = %d\n", tb);
+
+    if (tb != TBLOCK_INPROGRESS && tb != TBLOCK_PARALLEL_INPROGRESS)
+        // we only adjust the cc strategy for explicit transactions that has not prepared.
+        // no sub transactions considered currently.
+        return;
+
+    CurTransactionContext = s->curTransactionContext;
+//    if(!FullTransactionIdIsValid(XactTopFullTransactionId))
+//    {
+//        // if the xact has not started, do not adjust.
+//        return;
+//    }
+//    oldCtx = MemoryContextSwitchTo(s->curTransactionContext);
+    // adjust the concurrency control strategy for current xact.
+    get_lock_strategy(sql_text);
+
+    Assert((!IsolationIsSerializable() && !IsolationNeedLock()) || IsolationLearnCC()
+           || XactLockStrategy == DefaultXactLockStrategy || IsolationIsSerializable());
+
+    if (XactLockStrategy == LOCK_ASSERT_ABORT)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                        errmsg("could not serialize access due to cc strategy"),
+                        errdetail_internal("Reason code: Asserted abort by AdjustTransaction."),
+                        errhint("The transaction might succeed if retried.")));
+    }
+
+//    MemoryContextSwitchTo(oldCtx);
+}
 
 /*
  *	StartTransaction
@@ -2420,12 +2387,6 @@ StartTransaction(void)
 	 */
 	vxid.backendId = MyBackendId;
 	vxid.localTransactionId = GetNextLocalTransactionId();
-    get_lock_strategy(vxid.localTransactionId);
-//    printf("iso:%d -- %d, %d\n", XactIsoLevel, XactLockStrategy, DefaultXactLockStrategy);
-    Assert((!IsolationIsSerializable() && !IsolationNeedLock()) || IsolationLearnCC()
-        || XactLockStrategy == DefaultXactLockStrategy || IsolationIsSerializable());
-//    Assert(XactIsoLevel == XACT_READ_COMMITTED);
-//    Assert(XactLockStrategy == LOCK_2PL);
 
     /*
      * Lock the virtual transaction id before we announce it in the proc array
@@ -3027,6 +2988,7 @@ AbortTransaction(void)
     LocalTransactionId tid = MyProc->lxid;
 
     /* Prevent cancel/die interrupt while cleaning up */
+	HOLD_INTERRUPTS();
 	HOLD_INTERRUPTS();
 
 	/* Make sure we have a valid memory context and resource owner */

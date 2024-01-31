@@ -41,8 +41,8 @@
 #define LOCK_NONE   0
 #define LOCK_2PL    1
 #define LOCK_2PL_NW    2
-#define LOCK_LEARNED    3
-#define LOCK_ASSERT_ABORT    4
+#define LOCK_ASSERT_ABORT    3
+#define LOCK_LEARNED    4
 
 #define XACT_UPDATE 0
 #define XACT_READ   1
@@ -408,6 +408,7 @@ extern int	GetCurrentTransactionNestLevel(void);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern void CommandCounterIncrement(void);
 extern void ForceSyncCommit(void);
+extern void AdjustTransaction(const char *sql_text);
 extern void StartTransactionCommand(void);
 extern void SaveTransactionCharacteristics(void);
 extern void RestoreTransactionCharacteristics(void);

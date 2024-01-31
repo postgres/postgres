@@ -343,7 +343,7 @@ heap_setscanlimits(TableScanDesc sscan, BlockNumber startBlk, BlockNumber numBlk
 	scan->rs_numblocks = numBlks;
 }
 
-#define IS_TEST_RELATION(relation) ((relation)->rd_id == 75489)
+#define IS_TEST_RELATION(relation) (false && get_rel_name((relation)->rd_id)[0] == 'y')
 
 void heap_lock_for_scan(Relation relation)
 {
@@ -354,7 +354,7 @@ void heap_lock_for_scan(Relation relation)
 }
 
 void heap_lock_for_write(Relation relation,
-                        HeapTuple tuple, Buffer buffer, LOCKMODE lock_mode)
+                        HeapTuple tuple, Buffer buffer)
 {
     bool is_exclusive;
     if (!IsolationNeedLock()) return;
@@ -364,8 +364,8 @@ void heap_lock_for_write(Relation relation,
     is_exclusive = LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
     if (!IsolationLockNoWait())
-        LockTupleTuplock(relation, &tuple->t_self, lock_mode); // LockTupleShare or SIReadLock?
-    else if (!ConditionalLockTupleTuplock(relation, &tuple->t_self, lock_mode))
+        LockTuple(relation, &tuple->t_self, ExclusiveLock); // LockTupleShare or SIReadLock?
+    else if (!ConditionalLockTuple(relation, &tuple->t_self, ExclusiveLock))
         ereport(ERROR,
                 (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
                         errmsg("could not serialize access due to read/write dependencies among transactions"),
@@ -388,8 +388,8 @@ void heap_lock_for_read(Relation relation,
     is_exclusive = LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
     if (!IsolationLockNoWait())
-        LockTupleTuplock(relation, &tuple->t_self, LockTupleShare); // LockTupleShare or SIReadLock?
-    else if (!ConditionalLockTupleTuplock(relation, &tuple->t_self, LockTupleShare))
+        LockTuple(relation, &tuple->t_self, RowShareLock);
+    else if (!ConditionalLockTuple(relation, &tuple->t_self, RowShareLock))
         ereport(ERROR,
                 (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
                         errmsg("could not serialize access due to read/write dependencies among transactions"),
@@ -3220,6 +3220,8 @@ l2:
 		uint16		infomask;
 		bool		can_continue = false;
 
+        if (IsolationLockNoWait()) goto abort_mark;
+
 		/*
 		 * XXX note that we don't consider the "no wait" case here.  This
 		 * isn't a problem currently because no caller uses that case, but it
@@ -3422,7 +3424,7 @@ l2:
     if (IsolationNeedLock() && !have_tuple_lock && result == TM_Ok)
     {
         // the TM_Updated mark is kept in 2PL for index conflicts.
-        heap_lock_for_write(relation, &oldtup, buffer, *lockmode);
+        heap_lock_for_write(relation, &oldtup, buffer);
         have_tuple_lock = true;
     }
 
@@ -3908,7 +3910,7 @@ abort_mark:
 	/*
 	 * Release the lmgr tuple lock, if we had it.
 	 */
-	if (have_tuple_lock)
+	if (have_tuple_lock && !IsolationNeedLock())
 		UnlockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
 
 	pgstat_count_heap_update(relation, use_hot_update);

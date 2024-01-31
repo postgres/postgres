@@ -979,6 +979,7 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
  *
  * Execute a "simple Query" protocol message.
  */
+// PHX: currently, we have only implemented the CC learning for simple queries.
 static void
 exec_simple_query(const char *query_string)
 {
@@ -2030,6 +2031,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 * case already due to prior BIND).
 	 */
 	start_xact_command();
+    AdjustTransaction(sourceText);
 
 	/*
 	 * If we re-issue an Execute protocol request against an existing portal,

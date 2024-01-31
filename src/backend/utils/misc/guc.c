@@ -4303,6 +4303,17 @@ static struct config_enum ConfigureNamesEnum[] =
             NULL, NULL, NULL
     },
 
+    {
+            {"cc_strategy", PGC_USERSET, CLIENT_CONN_STATEMENT,
+                    gettext_noop("Sets the current transaction's cc strategy."),
+                    NULL,
+                    GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+            },
+            &XactLockStrategy,
+            LOCK_NONE, cc_strategy_options,
+            NULL, NULL, NULL
+    },
+
 	{
 		{"IntervalStyle", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the display format for interval values."),
