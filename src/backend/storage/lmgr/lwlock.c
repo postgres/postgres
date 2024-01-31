@@ -1903,7 +1903,7 @@ LWLockHeldByMe(LWLock *lock)
 }
 
 /*
- * LWLockHeldByMe - test whether my process holds any of an array of locks
+ * LWLockAnyHeldByMe - test whether my process holds any of an array of locks
  *
  * This is meant as debug support only.
  */
