@@ -40,6 +40,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f pg_walsummary$(X) $(OBJS)
+	rm -rf tmp_check
 
 check:
 	$(prove_check)
