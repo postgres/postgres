@@ -1716,6 +1716,29 @@ order by t1.b limit 10;
 reset enable_nestloop;
 drop table matest0 cascade;
 NOTICE:  drop cascades to table matest1
+-- Test a MergeAppend plan where one child requires a sort
+create table matest0(a int primary key);
+create table matest1() inherits (matest0);
+insert into matest0 select generate_series(1, 400);
+insert into matest1 select generate_series(1, 200);
+analyze matest0;
+analyze matest1;
+explain (costs off)
+select * from matest0 where a < 100 order by a;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Merge Append
+   Sort Key: matest0.a
+   ->  Index Only Scan using matest0_pkey on matest0 matest0_1
+         Index Cond: (a < 100)
+   ->  Sort
+         Sort Key: matest0_2.a
+         ->  Seq Scan on matest1 matest0_2
+               Filter: (a < 100)
+(8 rows)
+
+drop table matest0 cascade;
+NOTICE:  drop cascades to table matest1
 --
 -- Test merge-append for UNION ALL append relations
 --
