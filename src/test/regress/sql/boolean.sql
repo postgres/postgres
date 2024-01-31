@@ -250,6 +250,11 @@ SELECT isfalse OR isnul OR istrue FROM booltbl4;
 SELECT istrue OR isfalse OR isnul FROM booltbl4;
 SELECT isnul OR istrue OR isfalse FROM booltbl4;
 
+-- Casts
+SELECT 0::boolean;
+SELECT 1::boolean;
+SELECT 2::boolean;
+
 
 --
 -- Clean up
