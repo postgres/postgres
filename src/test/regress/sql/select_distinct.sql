@@ -180,6 +180,19 @@ SELECT DISTINCT four,1,2,3 FROM tenk1 WHERE four = 0;
 -- Ensure we only get 1 row
 SELECT DISTINCT four,1,2,3 FROM tenk1 WHERE four = 0;
 
+SET parallel_setup_cost=0;
+SET min_parallel_table_scan_size=0;
+SET max_parallel_workers_per_gather=2;
+
+-- Ensure we get a plan with a Limit 1 in both partial distinct and final
+-- distinct
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT four FROM tenk1 WHERE four = 10;
+
+RESET max_parallel_workers_per_gather;
+RESET min_parallel_table_scan_size;
+RESET parallel_setup_cost;
+
 --
 -- Also, some tests of IS DISTINCT FROM, which doesn't quite deserve its
 -- very own regression file.

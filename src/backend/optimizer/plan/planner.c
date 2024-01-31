@@ -4737,11 +4737,45 @@ create_partial_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 																		-1.0);
 			}
 
-			add_partial_path(partial_distinct_rel, (Path *)
-							 create_upper_unique_path(root, partial_distinct_rel,
-													  sorted_path,
-													  list_length(root->distinct_pathkeys),
-													  numDistinctRows));
+			/*
+			 * An empty distinct_pathkeys means all tuples have the same value
+			 * for the DISTINCT clause.  See create_final_distinct_paths()
+			 */
+			if (root->distinct_pathkeys == NIL)
+			{
+				Node	   *limitCount;
+
+				limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+												sizeof(int64),
+												Int64GetDatum(1), false,
+												FLOAT8PASSBYVAL);
+
+				/*
+				 * Apply a LimitPath onto the partial path to restrict the
+				 * tuples from each worker to 1.  create_final_distinct_paths
+				 * will need to apply an additional LimitPath to restrict this
+				 * to a single row after the Gather node.  If the query
+				 * already has a LIMIT clause, then we could end up with three
+				 * Limit nodes in the final plan.  Consolidating the top two
+				 * of these could be done, but does not seem worth troubling
+				 * over.
+				 */
+				add_partial_path(partial_distinct_rel, (Path *)
+								 create_limit_path(root, partial_distinct_rel,
+												   sorted_path,
+												   NULL,
+												   limitCount,
+												   LIMIT_OPTION_COUNT,
+												   0, 1));
+			}
+			else
+			{
+				add_partial_path(partial_distinct_rel, (Path *)
+								 create_upper_unique_path(root, partial_distinct_rel,
+														  sorted_path,
+														  list_length(root->distinct_pathkeys),
+														  numDistinctRows));
+			}
 		}
 	}
 
