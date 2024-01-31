@@ -197,13 +197,6 @@ BackgroundWriterMain(void)
 		 */
 		pg_usleep(1000000L);
 
-		/*
-		 * Close all open files after any error.  This is helpful on Windows,
-		 * where holding deleted files open causes various strange errors.
-		 * It's not clear we need it elsewhere, but shouldn't hurt.
-		 */
-		smgrcloseall();
-
 		/* Report wait end here, when there is no further possibility of wait */
 		pgstat_report_wait_end();
 	}
