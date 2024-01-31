@@ -1422,25 +1422,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	heap_freetuple(reltup2);
 
 	table_close(relRelation, RowExclusiveLock);
-
-	/*
-	 * Close both relcache entries' smgr links.  We need this kluge because
-	 * both links will be invalidated during upcoming CommandCounterIncrement.
-	 * Whichever of the rels is the second to be cleared will have a dangling
-	 * reference to the other's smgr entry.  Rather than trying to avoid this
-	 * by ordering operations just so, it's easiest to close the links first.
-	 * (Fortunately, since one of the entries is local in our transaction,
-	 * it's sufficient to clear out our own relcache this way; the problem
-	 * cannot arise for other backends when they see our update on the
-	 * non-transient relation.)
-	 *
-	 * Caution: the placement of this step interacts with the decision to
-	 * handle toast rels by recursion.  When we are trying to rebuild pg_class
-	 * itself, the smgr close on pg_class must happen after all accesses in
-	 * this function.
-	 */
-	RelationCloseSmgrByOid(r1);
-	RelationCloseSmgrByOid(r2);
 }
 
 /*

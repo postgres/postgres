@@ -3044,7 +3044,7 @@ RelationCacheInvalidate(bool debug_discard)
 	 * start to rebuild entries, since that may involve catalog fetches which
 	 * will re-open catalog files.
 	 */
-	smgrcloseall();
+	smgrdestroyall();
 
 	/* Phase 2: rebuild the items found to need rebuild in phase 1 */
 	foreach(l, rebuildFirstList)
@@ -3064,25 +3064,6 @@ RelationCacheInvalidate(bool debug_discard)
 		/* Any RelationBuildDesc() on the stack must start over. */
 		for (i = 0; i < in_progress_list_len; i++)
 			in_progress_list[i].invalidated = true;
-}
-
-/*
- * RelationCloseSmgrByOid - close a relcache entry's smgr link
- *
- * Needed in some cases where we are changing a relation's physical mapping.
- * The link will be automatically reopened on next use.
- */
-void
-RelationCloseSmgrByOid(Oid relationId)
-{
-	Relation	relation;
-
-	RelationIdCacheLookup(relationId, relation);
-
-	if (!PointerIsValid(relation))
-		return;					/* not in cache, nothing to do */
-
-	RelationCloseSmgr(relation);
 }
 
 static void

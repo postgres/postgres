@@ -3,8 +3,42 @@
  * smgr.c
  *	  public interface routines to storage manager switch.
  *
- *	  All file system operations in POSTGRES dispatch through these
- *	  routines.
+ * All file system operations on relations dispatch through these routines.
+ * An SMgrRelation represents physical on-disk relation files that are open
+ * for reading and writing.
+ *
+ * When a relation is first accessed through the relation cache, the
+ * corresponding SMgrRelation entry is opened by calling smgropen(), and the
+ * reference is stored in the relation cache entry.
+ *
+ * Accesses that don't go through the relation cache open the SMgrRelation
+ * directly.  That includes flushing buffers from the buffer cache, as well as
+ * all accesses in auxiliary processes like the checkpointer or the WAL redo
+ * in the startup process.
+ *
+ * Operations like CREATE, DROP, ALTER TABLE also hold SMgrRelation references
+ * independent of the relation cache.  They need to prepare the physical files
+ * before updating the relation cache.
+ *
+ * There is a hash table that holds all the SMgrRelation entries in the
+ * backend.  If you call smgropen() twice for the same rel locator, you get a
+ * reference to the same SMgrRelation. The reference is valid until the end of
+ * transaction.  This makes repeated access to the same relation efficient,
+ * and allows caching things like the relation size in the SMgrRelation entry.
+ *
+ * At end of transaction, all SMgrRelation entries that haven't been pinned
+ * are removed.  An SMgrRelation can hold kernel file system descriptors for
+ * the underlying files, and we'd like to close those reasonably soon if the
+ * file gets deleted.  The SMgrRelations references held by the relcache are
+ * pinned to prevent them from being closed.
+ *
+ * There is another mechanism to close file descriptors early:
+ * PROCSIGNAL_BARRIER_SMGRRELEASE.  It is a request to immediately close all
+ * file descriptors.  Upon receiving that signal, the backend closes all file
+ * descriptors held open by SMgrRelations, but because it can happen in the
+ * middle of a transaction, we cannot destroy the SMgrRelation objects
+ * themselves, as there could pointers to them in active use.  See
+ * smgrrelease() and smgrreleaseall().
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -96,14 +130,15 @@ static const int NSmgr = lengthof(smgrsw);
 
 /*
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
- * In addition, "unowned" SMgrRelation objects are chained together in a list.
+ * In addition, "unpinned" SMgrRelation objects are chained together in a list.
  */
 static HTAB *SMgrRelationHash = NULL;
 
-static dlist_head unowned_relns;
+static dlist_head unpinned_relns;
 
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
+static void smgrdestroy(SMgrRelation reln);
 
 
 /*
@@ -147,7 +182,16 @@ smgrshutdown(int code, Datum arg)
 /*
  * smgropen() -- Return an SMgrRelation object, creating it if need be.
  *
- * This does not attempt to actually open the underlying file.
+ * In versions of PostgreSQL prior to 17, this function returned an object
+ * with no defined lifetime.  Now, however, the object remains valid for the
+ * lifetime of the transaction, up to the point where AtEOXact_SMgr() is
+ * called, making it much easier for callers to know for how long they can
+ * hold on to a pointer to the returned object.  If this function is called
+ * outside of a transaction, the object remains valid until smgrdestroy() or
+ * smgrdestroyall() is called.  Background processes that use smgr but not
+ * transactions typically do this once per checkpoint cycle.
+ *
+ * This does not attempt to actually open the underlying files.
  */
 SMgrRelation
 smgropen(RelFileLocator rlocator, BackendId backend)
@@ -167,7 +211,7 @@ smgropen(RelFileLocator rlocator, BackendId backend)
 		ctl.entrysize = sizeof(SMgrRelationData);
 		SMgrRelationHash = hash_create("smgr relation table", 400,
 									   &ctl, HASH_ELEM | HASH_BLOBS);
-		dlist_init(&unowned_relns);
+		dlist_init(&unpinned_relns);
 	}
 
 	/* Look up or create an entry */
@@ -181,7 +225,6 @@ smgropen(RelFileLocator rlocator, BackendId backend)
 	if (!found)
 	{
 		/* hash_search already filled in the lookup key */
-		reln->smgr_owner = NULL;
 		reln->smgr_targblock = InvalidBlockNumber;
 		for (int i = 0; i <= MAX_FORKNUM; ++i)
 			reln->smgr_cached_nblocks[i] = InvalidBlockNumber;
@@ -190,102 +233,61 @@ smgropen(RelFileLocator rlocator, BackendId backend)
 		/* implementation-specific initialization */
 		smgrsw[reln->smgr_which].smgr_open(reln);
 
-		/* it has no owner yet */
-		dlist_push_tail(&unowned_relns, &reln->node);
+		/* it is not pinned yet */
+		reln->pincount = 0;
+		dlist_push_tail(&unpinned_relns, &reln->node);
 	}
 
 	return reln;
 }
 
 /*
- * smgrsetowner() -- Establish a long-lived reference to an SMgrRelation object
- *
- * There can be only one owner at a time; this is sufficient since currently
- * the only such owners exist in the relcache.
+ * smgrpin() -- Prevent an SMgrRelation object from being destroyed at end of
+ *				of transaction
  */
 void
-smgrsetowner(SMgrRelation *owner, SMgrRelation reln)
+smgrpin(SMgrRelation reln)
 {
-	/* We don't support "disowning" an SMgrRelation here, use smgrclearowner */
-	Assert(owner != NULL);
-
-	/*
-	 * First, unhook any old owner.  (Normally there shouldn't be any, but it
-	 * seems possible that this can happen during swap_relation_files()
-	 * depending on the order of processing.  It's ok to close the old
-	 * relcache entry early in that case.)
-	 *
-	 * If there isn't an old owner, then the reln should be in the unowned
-	 * list, and we need to remove it.
-	 */
-	if (reln->smgr_owner)
-		*(reln->smgr_owner) = NULL;
-	else
+	if (reln->pincount == 0)
 		dlist_delete(&reln->node);
-
-	/* Now establish the ownership relationship. */
-	reln->smgr_owner = owner;
-	*owner = reln;
+	reln->pincount++;
 }
 
 /*
- * smgrclearowner() -- Remove long-lived reference to an SMgrRelation object
- *					   if one exists
+ * smgrunpin() -- Allow an SMgrRelation object to be destroyed at end of
+ *				  transaction
+ *
+ * The object remains valid, but if there are no other pins on it, it is moved
+ * to the unpinned list where it will be destroyed by AtEOXact_SMgr().
  */
 void
-smgrclearowner(SMgrRelation *owner, SMgrRelation reln)
+smgrunpin(SMgrRelation reln)
 {
-	/* Do nothing if the SMgrRelation object is not owned by the owner */
-	if (reln->smgr_owner != owner)
-		return;
-
-	/* unset the owner's reference */
-	*owner = NULL;
-
-	/* unset our reference to the owner */
-	reln->smgr_owner = NULL;
-
-	/* add to list of unowned relations */
-	dlist_push_tail(&unowned_relns, &reln->node);
+	Assert(reln->pincount > 0);
+	reln->pincount--;
+	if (reln->pincount == 0)
+		dlist_push_tail(&unpinned_relns, &reln->node);
 }
 
 /*
- * smgrexists() -- Does the underlying file for a fork exist?
+ * smgrdestroy() -- Delete an SMgrRelation object.
  */
-bool
-smgrexists(SMgrRelation reln, ForkNumber forknum)
+static void
+smgrdestroy(SMgrRelation reln)
 {
-	return smgrsw[reln->smgr_which].smgr_exists(reln, forknum);
-}
-
-/*
- * smgrclose() -- Close and delete an SMgrRelation object.
- */
-void
-smgrclose(SMgrRelation reln)
-{
-	SMgrRelation *owner;
 	ForkNumber	forknum;
+
+	Assert(reln->pincount == 0);
 
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 		smgrsw[reln->smgr_which].smgr_close(reln, forknum);
 
-	owner = reln->smgr_owner;
-
-	if (!owner)
-		dlist_delete(&reln->node);
+	dlist_delete(&reln->node);
 
 	if (hash_search(SMgrRelationHash,
 					&(reln->smgr_rlocator),
 					HASH_REMOVE, NULL) == NULL)
 		elog(ERROR, "SMgrRelation hashtable corrupted");
-
-	/*
-	 * Unhook the owner pointer, if any.  We do this last since in the remote
-	 * possibility of failure above, the SMgrRelation object will still exist.
-	 */
-	if (owner)
-		*owner = NULL;
 }
 
 /*
@@ -302,6 +304,45 @@ smgrrelease(SMgrRelation reln)
 		reln->smgr_cached_nblocks[forknum] = InvalidBlockNumber;
 	}
 	reln->smgr_targblock = InvalidBlockNumber;
+}
+
+/*
+ * smgrclose() -- Close an SMgrRelation object.
+ *
+ * The SMgrRelation reference should not be used after this call.  However,
+ * because we don't keep track of the references returned by smgropen(), we
+ * don't know if there are other references still pointing to the same object,
+ * so we cannot remove the SMgrRelation object yet.  Therefore, this is just a
+ * synonym for smgrrelease() at the moment.
+ */
+void
+smgrclose(SMgrRelation reln)
+{
+	smgrrelease(reln);
+}
+
+/*
+ * smgrdestroyall() -- Release resources used by all unpinned objects.
+ *
+ * It must be known that there are no pointers to SMgrRelations, other than
+ * those pinned with smgrpin().
+ */
+void
+smgrdestroyall(void)
+{
+	dlist_mutable_iter iter;
+
+	/*
+	 * Zap all unpinned SMgrRelations.  We rely on smgrdestroy() to remove
+	 * each one from the list.
+	 */
+	dlist_foreach_modify(iter, &unpinned_relns)
+	{
+		SMgrRelation rel = dlist_container(SMgrRelationData, node,
+										   iter.cur);
+
+		smgrdestroy(rel);
+	}
 }
 
 /*
@@ -322,38 +363,21 @@ smgrreleaseall(void)
 	hash_seq_init(&status, SMgrRelationHash);
 
 	while ((reln = (SMgrRelation) hash_seq_search(&status)) != NULL)
+	{
 		smgrrelease(reln);
+	}
 }
 
 /*
- * smgrcloseall() -- Close all existing SMgrRelation objects.
- */
-void
-smgrcloseall(void)
-{
-	HASH_SEQ_STATUS status;
-	SMgrRelation reln;
-
-	/* Nothing to do if hashtable not set up */
-	if (SMgrRelationHash == NULL)
-		return;
-
-	hash_seq_init(&status, SMgrRelationHash);
-
-	while ((reln = (SMgrRelation) hash_seq_search(&status)) != NULL)
-		smgrclose(reln);
-}
-
-/*
- * smgrcloserellocator() -- Close SMgrRelation object for given RelFileLocator,
- *							if one exists.
+ * smgrreleaserellocator() -- Release resources for given RelFileLocator, if
+ *							  it's open.
  *
- * This has the same effects as smgrclose(smgropen(rlocator)), but it avoids
+ * This has the same effects as smgrrelease(smgropen(rlocator)), but avoids
  * uselessly creating a hashtable entry only to drop it again when no
  * such entry exists already.
  */
 void
-smgrcloserellocator(RelFileLocatorBackend rlocator)
+smgrreleaserellocator(RelFileLocatorBackend rlocator)
 {
 	SMgrRelation reln;
 
@@ -365,7 +389,16 @@ smgrcloserellocator(RelFileLocatorBackend rlocator)
 									  &rlocator,
 									  HASH_FIND, NULL);
 	if (reln != NULL)
-		smgrclose(reln);
+		smgrrelease(reln);
+}
+
+/*
+ * smgrexists() -- Does the underlying file for a fork exist?
+ */
+bool
+smgrexists(SMgrRelation reln, ForkNumber forknum)
+{
+	return smgrsw[reln->smgr_which].smgr_exists(reln, forknum);
 }
 
 /*
@@ -733,7 +766,7 @@ smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
  * AtEOXact_SMgr
  *
  * This routine is called during transaction commit or abort (it doesn't
- * particularly care which).  All transient SMgrRelation objects are closed.
+ * particularly care which).  All unpinned SMgrRelation objects are destroyed.
  *
  * We do this as a compromise between wanting transient SMgrRelations to
  * live awhile (to amortize the costs of blind writes of multiple blocks)
@@ -744,21 +777,7 @@ smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
 void
 AtEOXact_SMgr(void)
 {
-	dlist_mutable_iter iter;
-
-	/*
-	 * Zap all unowned SMgrRelations.  We rely on smgrclose() to remove each
-	 * one from the list.
-	 */
-	dlist_foreach_modify(iter, &unowned_relns)
-	{
-		SMgrRelation rel = dlist_container(SMgrRelationData, node,
-										   iter.cur);
-
-		Assert(rel->smgr_owner == NULL);
-
-		smgrclose(rel);
-	}
+	smgrdestroyall();
 }
 
 /*

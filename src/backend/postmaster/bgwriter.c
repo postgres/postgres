@@ -239,10 +239,12 @@ BackgroundWriterMain(void)
 		if (FirstCallSinceLastCheckpoint())
 		{
 			/*
-			 * After any checkpoint, close all smgr files.  This is so we
-			 * won't hang onto smgr references to deleted files indefinitely.
+			 * After any checkpoint, free all smgr objects.  Otherwise we
+			 * would never do so for dropped relations, as the bgwriter does
+			 * not process shared invalidation messages or call
+			 * AtEOXact_SMgr().
 			 */
-			smgrcloseall();
+			smgrdestroyall();
 		}
 
 		/*

@@ -934,10 +934,6 @@ ExtendBufferedRelTo(BufferManagerRelation bmr,
 	{
 		LockRelationForExtension(bmr.rel, ExclusiveLock);
 
-		/* could have been closed while waiting for lock */
-		if (bmr.rel)
-			bmr.smgr = RelationGetSmgr(bmr.rel);
-
 		/* recheck, fork might have been created concurrently */
 		if (!smgrexists(bmr.smgr, fork))
 			smgrcreate(bmr.smgr, fork, flags & EB_PERFORMING_RECOVERY);
@@ -1897,11 +1893,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 	 * we get the lock.
 	 */
 	if (!(flags & EB_SKIP_EXTENSION_LOCK))
-	{
 		LockRelationForExtension(bmr.rel, ExclusiveLock);
-		if (bmr.rel)
-			bmr.smgr = RelationGetSmgr(bmr.rel);
-	}
 
 	/*
 	 * If requested, invalidate size cache, so that smgrnblocks asks the
@@ -4155,6 +4147,7 @@ FlushRelationBuffers(Relation rel)
 {
 	int			i;
 	BufferDesc *bufHdr;
+	SMgrRelation srel = RelationGetSmgr(rel);
 
 	if (RelationUsesLocalBuffers(rel))
 	{
@@ -4183,7 +4176,7 @@ FlushRelationBuffers(Relation rel)
 
 				io_start = pgstat_prepare_io_time(track_io_timing);
 
-				smgrwrite(RelationGetSmgr(rel),
+				smgrwrite(srel,
 						  BufTagGetForkNum(&bufHdr->tag),
 						  bufHdr->tag.blockNum,
 						  localpage,
@@ -4229,7 +4222,7 @@ FlushRelationBuffers(Relation rel)
 		{
 			PinBuffer_Locked(bufHdr);
 			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
-			FlushBuffer(bufHdr, RelationGetSmgr(rel), IOOBJECT_RELATION, IOCONTEXT_NORMAL);
+			FlushBuffer(bufHdr, srel, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
 			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
 			UnpinBuffer(bufHdr);
 		}
@@ -4442,12 +4435,16 @@ void
 CreateAndCopyRelationData(RelFileLocator src_rlocator,
 						  RelFileLocator dst_rlocator, bool permanent)
 {
-	RelFileLocatorBackend rlocator;
 	char		relpersistence;
+	SMgrRelation src_rel;
+	SMgrRelation dst_rel;
 
 	/* Set the relpersistence. */
 	relpersistence = permanent ?
 		RELPERSISTENCE_PERMANENT : RELPERSISTENCE_UNLOGGED;
+
+	src_rel = smgropen(src_rlocator, InvalidBackendId);
+	dst_rel = smgropen(dst_rlocator, InvalidBackendId);
 
 	/*
 	 * Create and copy all forks of the relation.  During create database we
@@ -4465,9 +4462,9 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 	for (ForkNumber forkNum = MAIN_FORKNUM + 1;
 		 forkNum <= MAX_FORKNUM; forkNum++)
 	{
-		if (smgrexists(smgropen(src_rlocator, InvalidBackendId), forkNum))
+		if (smgrexists(src_rel, forkNum))
 		{
-			smgrcreate(smgropen(dst_rlocator, InvalidBackendId), forkNum, false);
+			smgrcreate(dst_rel, forkNum, false);
 
 			/*
 			 * WAL log creation if the relation is persistent, or this is the
@@ -4481,15 +4478,6 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 										   permanent);
 		}
 	}
-
-	/* close source and destination smgr if exists. */
-	rlocator.backend = InvalidBackendId;
-
-	rlocator.locator = src_rlocator;
-	smgrcloserellocator(rlocator);
-
-	rlocator.locator = dst_rlocator;
-	smgrcloserellocator(rlocator);
 }
 
 /* ---------------------------------------------------------------------

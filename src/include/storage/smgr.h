@@ -21,28 +21,20 @@
 /*
  * smgr.c maintains a table of SMgrRelation objects, which are essentially
  * cached file handles.  An SMgrRelation is created (if not already present)
- * by smgropen(), and destroyed by smgrclose().  Note that neither of these
- * operations imply I/O, they just create or destroy a hashtable entry.
- * (But smgrclose() may release associated resources, such as OS-level file
+ * by smgropen(), and destroyed by smgrdestroy().  Note that neither of these
+ * operations imply I/O, they just create or destroy a hashtable entry.  (But
+ * smgrdestroy() may release associated resources, such as OS-level file
  * descriptors.)
  *
- * An SMgrRelation may have an "owner", which is just a pointer to it from
- * somewhere else; smgr.c will clear this pointer if the SMgrRelation is
- * closed.  We use this to avoid dangling pointers from relcache to smgr
- * without having to make the smgr explicitly aware of relcache.  There
- * can't be more than one "owner" pointer per SMgrRelation, but that's
- * all we need.
- *
- * SMgrRelations that do not have an "owner" are considered to be transient,
- * and are deleted at end of transaction.
+ * An SMgrRelation may be "pinned", to prevent it from being destroyed while
+ * it's in use.  We use this to prevent pointers relcache to smgr from being
+ * invalidated.  SMgrRelations that are not pinned are deleted at end of
+ * transaction.
  */
 typedef struct SMgrRelationData
 {
 	/* rlocator is the hashtable lookup key, so it must be first! */
 	RelFileLocatorBackend smgr_rlocator;	/* relation physical identifier */
-
-	/* pointer to owning pointer, or NULL if none */
-	struct SMgrRelationData **smgr_owner;
 
 	/*
 	 * The following fields are reset to InvalidBlockNumber upon a cache flush
@@ -68,7 +60,11 @@ typedef struct SMgrRelationData
 	int			md_num_open_segs[MAX_FORKNUM + 1];
 	struct _MdfdVec *md_seg_fds[MAX_FORKNUM + 1];
 
-	/* if unowned, list link in list of all unowned SMgrRelations */
+	/*
+	 * Pinning support.  If unpinned (ie. pincount == 0), 'node' is a list
+	 * link in list of all unpinned SMgrRelations.
+	 */
+	int			pincount;
 	dlist_node	node;
 } SMgrRelationData;
 
@@ -80,13 +76,13 @@ typedef SMgrRelationData *SMgrRelation;
 extern void smgrinit(void);
 extern SMgrRelation smgropen(RelFileLocator rlocator, BackendId backend);
 extern bool smgrexists(SMgrRelation reln, ForkNumber forknum);
-extern void smgrsetowner(SMgrRelation *owner, SMgrRelation reln);
-extern void smgrclearowner(SMgrRelation *owner, SMgrRelation reln);
+extern void smgrpin(SMgrRelation reln);
+extern void smgrunpin(SMgrRelation reln);
 extern void smgrclose(SMgrRelation reln);
-extern void smgrcloseall(void);
-extern void smgrcloserellocator(RelFileLocatorBackend rlocator);
+extern void smgrdestroyall(void);
 extern void smgrrelease(SMgrRelation reln);
 extern void smgrreleaseall(void);
+extern void smgrreleaserellocator(RelFileLocatorBackend rlocator);
 extern void smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
 extern void smgrdosyncall(SMgrRelation *rels, int nrels);
 extern void smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo);
