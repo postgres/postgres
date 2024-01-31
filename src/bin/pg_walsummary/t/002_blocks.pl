@@ -56,7 +56,8 @@ note_wal_summary_dir("after insert", $node1);
 
 # Update a row in the first block of the table and trigger a checkpoint.
 $node1->safe_psql('postgres', <<EOM);
-UPDATE mytable SET b = 'abcdefghijklmnopqrstuvwxyz' WHERE a = 2;
+UPDATE mytable SET b = 'abcdefghijklmnopqrstuvwxyz' || b || '01234567890'
+	WHERE a = 2;
 CHECKPOINT;
 EOM
 
