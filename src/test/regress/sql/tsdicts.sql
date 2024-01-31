@@ -238,3 +238,33 @@ CREATE TEXT SEARCH DICTIONARY tsdict_case
 	"DictFile" = ispell_sample,
 	"AffFile" = ispell_sample
 );
+
+-- Test grammar for configurations
+CREATE TEXT SEARCH CONFIGURATION dummy_tst (COPY=english);
+-- Overriden mapping change with duplicated tokens.
+ALTER TEXT SEARCH CONFIGURATION dummy_tst
+  ALTER MAPPING FOR word, word WITH ispell;
+-- Not a token supported by the configuration's parser, fails.
+ALTER TEXT SEARCH CONFIGURATION dummy_tst
+  DROP MAPPING FOR not_a_token, not_a_token;
+-- Not a token supported by the configuration's parser, fails even
+-- with IF EXISTS.
+ALTER TEXT SEARCH CONFIGURATION dummy_tst
+  DROP MAPPING IF EXISTS FOR not_a_token, not_a_token;
+-- Token supported by the configuration's parser, succeeds.
+ALTER TEXT SEARCH CONFIGURATION dummy_tst
+  DROP MAPPING FOR word, word;
+-- No mapping for token supported by the configuration's parser, fails.
+ALTER TEXT SEARCH CONFIGURATION dummy_tst
+  DROP MAPPING FOR word;
+-- Token supported by the configuration's parser, cannot be found,
+-- succeeds with IF EXISTS.
+ALTER TEXT SEARCH CONFIGURATION dummy_tst
+  DROP MAPPING IF EXISTS FOR word, word;
+-- Re-add mapping, with duplicated tokens supported by the parser.
+ALTER TEXT SEARCH CONFIGURATION dummy_tst
+  ADD MAPPING FOR word, word WITH ispell;
+-- Not a token supported by the configuration's parser, fails.
+ALTER TEXT SEARCH CONFIGURATION dummy_tst
+  ADD MAPPING FOR not_a_token WITH ispell;
+DROP TEXT SEARCH CONFIGURATION dummy_tst;

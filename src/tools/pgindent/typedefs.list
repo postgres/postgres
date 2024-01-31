@@ -2380,6 +2380,7 @@ TSQueryParserState
 TSQuerySign
 TSReadPointer
 TSTemplateInfo
+TSTokenTypeItem
 TSTokenTypeStorage
 TSVector
 TSVectorBuildState
