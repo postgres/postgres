@@ -258,7 +258,7 @@ RemoveWalSummaryIfOlderThan(WalSummaryFile *ws, time_t cutoff_time)
 #else
 	ereport(LOG,
 			(errmsg_internal("removing file \"%s\" cutoff_time=%llu", path,
-			 (unsigned long long) cutoff_time)));
+							 (unsigned long long) cutoff_time)));
 #endif
 }
 
