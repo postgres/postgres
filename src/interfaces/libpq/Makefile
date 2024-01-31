@@ -105,7 +105,9 @@ backend_src = $(top_srcdir)/src/backend
 # build toolchains insert abort() calls, e.g. to implement assert().)
 # If nm doesn't exist or doesn't work on shlibs, this test will do nothing,
 # which is fine.  The exclusion of __cxa_atexit is necessary on OpenBSD,
-# which seems to insert references to that even in pure C code.
+# which seems to insert references to that even in pure C code. Excluding
+# __tsan_func_exit is necessary when using ThreadSanitizer data race detector
+# which use this function for instrumentation of function exit.
 # Skip the test when profiling, as gcc may insert exit() calls for that.
 # Also skip the test on platforms where libpq infrastructure may be provided
 # by statically-linked libraries, as we can't expect them to honor this
@@ -113,7 +115,7 @@ backend_src = $(top_srcdir)/src/backend
 libpq-refs-stamp: $(shlib)
 ifneq ($(enable_coverage), yes)
 ifeq (,$(filter aix solaris,$(PORTNAME)))
-	@if nm -A -u $< 2>/dev/null | grep -v __cxa_atexit | grep exit; then \
+	@if nm -A -u $< 2>/dev/null | grep -v -e __cxa_atexit -e __tsan_func_exit | grep exit; then \
 		echo 'libpq must not be calling any function which invokes exit'; exit 1; \
 	fi
 endif
