@@ -31,6 +31,7 @@
 
 #include <signal.h>
 #include <unistd.h>
+#include <utils/lsyscache.h>
 
 #include "access/transam.h"
 #include "access/twophase.h"
@@ -450,6 +451,7 @@ InitLocks(void)
 									  16,
 									  &info,
 									  HASH_ELEM | HASH_BLOBS);
+    TwoPhaseLockingInit();
 }
 
 
@@ -3535,6 +3537,154 @@ LockShmemSize(void)
 
 	return size;
 }
+
+#define IS_SYS_TABLE(rel) (starts_with(rel, "pg_") || starts_with(rel, "sql_"))
+
+static bool starts_with(const char *str, const char *pre) {
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+
+#define LOG_LOCK_FEATURE 4
+#define LOCK_FEATURE_LEN (1<<LOG_LOCK_FEATURE)
+#define LOCK_FEATURE_MASK (LOCK_FEATURE_LEN-1)
+#define REL_ID_MULTI 13
+#define MOVING_AVERAGE_RATE 0.8
+
+LockFeature* LockFeatureVec;
+
+void TwoPhaseLockingInit()
+{
+    printf("2PL lock graph initialized\n");
+    LockFeatureVec = ShmemAllocUnlocked(sizeof (LockFeature) * LOCK_FEATURE_LEN);
+    for (int i=0;i<LOCK_FEATURE_LEN;i++)
+    {
+        SpinLockInit(&LockFeatureVec[i].mutex);
+        LockFeatureVec[i].read_cnt = 0;
+        LockFeatureVec[i].read_intention_cnt = 0;
+        LockFeatureVec[i].write_cnt = 0;
+        LockFeatureVec[i].write_intention_cnt = 0;
+        LockFeatureVec[i].utility = 1.0;
+    }
+}
+
+static LockFeature getTwoPhaseLockingReport(int i) {
+    LockFeature res = (LockFeature){};
+    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+    SpinLockAcquire(&LockFeatureVec[i].mutex);
+    res.read_cnt = LockFeatureVec[i].read_cnt;
+    res.write_cnt = LockFeatureVec[i].write_cnt;
+    res.read_intention_cnt = LockFeatureVec[i].read_intention_cnt;
+    res.write_intention_cnt = LockFeatureVec[i].write_intention_cnt;
+    res.utility = LockFeatureVec[i].utility;
+    SpinLockRelease(&LockFeatureVec[i].mutex);
+    return res;
+}
+
+void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read)
+{
+    uint64 full_key = (pgid) * 4096 + offset + rid * REL_ID_MULTI;
+    int i = (int)(full_key & LOCK_FEATURE_MASK);
+    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+    SpinLockAcquire(&LockFeatureVec[i].mutex);
+    if (is_read)
+        LockFeatureVec[i].read_intention_cnt ++;
+    else
+        LockFeatureVec[i].write_intention_cnt ++;
+    SpinLockRelease(&LockFeatureVec[i].mutex);
+}
+
+void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release, bool is_useful)
+{
+    uint64 full_key = (pgid) * 4096 + offset + rid * REL_ID_MULTI;
+    int i = (int)(full_key & LOCK_FEATURE_MASK);
+    int off = is_release? -1:1;
+
+    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+    SpinLockAcquire(&LockFeatureVec[i].mutex);
+    if (is_read)
+    {
+        if (!is_release) LockFeatureVec[i].read_intention_cnt --;
+        LockFeatureVec[i].read_cnt += off;
+    }
+    else
+    {
+        if (!is_release) LockFeatureVec[i].write_intention_cnt --;
+        LockFeatureVec[i].write_cnt += off;
+    }
+    if (is_release)
+        LockFeatureVec[i].utility = LockFeatureVec[i].utility * MOVING_AVERAGE_RATE + (1-MOVING_AVERAGE_RATE) * (is_useful? 1.0: -100.0);
+    SpinLockRelease(&LockFeatureVec[i].mutex);
+}
+
+void
+GetTupleLockFeatures(StringInfoData* feature) {
+    appendStringInfo(feature, "[");
+
+    for (int i = 0; i < LOCK_FEATURE_LEN; i++)
+    {
+        LockFeature tmp = getTwoPhaseLockingReport(i);
+        appendStringInfo(feature,
+                         "{\"rc\":%d, \"wc\":%d, \"ri\":%d, \"wi\":%d, \"ut\":%f},",
+                         tmp.read_cnt, tmp.write_cnt, tmp.read_intention_cnt, tmp.write_intention_cnt, tmp.utility);
+    }
+
+    appendStringInfo(feature, "]");
+}
+
+void
+GetRelationLockFeatures(StringInfoData* feature)
+{
+    PROCLOCK   *proclock;
+    HASH_SEQ_STATUS seqstat;
+    int			i;
+
+    initStringInfo(feature);
+    appendStringInfo(feature,"[");
+
+    for (i = 0; i < ProcGlobal->allProcCount; ++i) {
+        PGPROC *proc = &ProcGlobal->allProcs[i];
+        uint32 f;
+
+        for (f = 0; f < FP_LOCK_SLOTS_PER_BACKEND; ++f) {
+            char * rel_name;
+            uint32 lockbits = FAST_PATH_GET_BITS(proc, f);
+
+            /* Skip unallocated slots. */
+            if (!lockbits)
+                continue;
+
+            rel_name = get_rel_name(proc->fpRelId[f]);
+            if (rel_name != NULL && !IS_SYS_TABLE(rel_name))
+                appendStringInfo(feature,
+                                 "{\"xact\":\"%d\", \"rel\":\"%s\", \"mode\":%d},",
+                                 proc->lxid,
+                                 rel_name,
+                                 lockbits << FAST_PATH_LOCKNUMBER_OFFSET);
+        }
+    }
+
+    /* Now scan the tables to copy the data */
+    hash_seq_init(&seqstat, LockMethodProcLockHash);
+
+    while ((proclock = (PROCLOCK *) hash_seq_search(&seqstat)))
+    {
+        PGPROC	   *proc = proclock->tag.myProc;
+        LOCK	   *lock = proclock->tag.myLock;
+
+        if (lock->tag.locktag_type == LOCKTAG_RELATION)
+        {
+            char * rel_name = get_rel_name(lock->tag.locktag_field2);
+            if (rel_name != NULL && !IS_SYS_TABLE(rel_name))
+                appendStringInfo(feature,
+                                 "{\"xact\":\"%d\", \"rel\":\"%s\", \"mode\":%d},",
+                                 proc->lxid,
+                                 rel_name,
+                                 proclock->holdMask);
+        }
+    }
+    appendStringInfo(feature, "]");
+}
+
 
 /*
  * GetLockStatusData - Return a summary of the lock manager's internal

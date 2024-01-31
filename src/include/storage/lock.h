@@ -18,10 +18,12 @@
 #error "lock.h may not be included from frontend code"
 #endif
 
+#include <access/relation.h>
 #include "storage/lockdefs.h"
 #include "storage/backendid.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "lib/stringinfo.h"
 
 
 /* struct PGPROC is declared in proc.h, but must forward-reference it */
@@ -153,6 +155,17 @@ typedef enum LockTagType
 } LockTagType;
 
 #define LOCKTAG_LAST_TYPE	LOCKTAG_DATABASE_FROZEN_IDS
+
+// LockFeatureData regard the feature for a tuples grouped by hash.
+typedef struct LockFeatureData {
+    slock_t mutex;
+    uint16 read_cnt;
+    uint16 write_cnt;
+    uint16 read_intention_cnt;
+    uint16 write_intention_cnt;
+    double utility;
+    char   padding[1];
+} LockFeature;
 
 extern const char *const LockTagTypeNames[];
 
@@ -571,6 +584,11 @@ extern void GrantAwaitedLock(void);
 extern void RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode);
 extern Size LockShmemSize(void);
 extern LockData *GetLockStatusData(void);
+extern void GetTupleLockFeatures(StringInfoData* feature);
+void TwoPhaseLockingInit();
+extern void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read);
+extern void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release, bool is_useful);
+extern void GetRelationLockFeatures(StringInfoData* feature);
 extern BlockedProcsData *GetBlockerStatusData(int blocked_pid);
 
 extern xl_standby_lock *GetRunningTransactionLocks(int *nlocks);

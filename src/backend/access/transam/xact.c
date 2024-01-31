@@ -2010,10 +2010,6 @@ const bool GenTrainingData = true;
 //    else return "unknown";
 //}
 
-static bool starts_with(const char *str, const char *pre) {
-    return strncmp(pre, str, strlen(pre)) == 0;
-}
-
 // lock_timeout and deadlock_timeout.
 static StringInfoData * ExtractSysFeatures(LocalTransactionId tid, const char* sql, bool *need_predict) {
     StringInfoData *features = (StringInfoData *) palloc(sizeof(StringInfoData) * FEATURE_LENGTH);
@@ -2038,8 +2034,8 @@ static StringInfoData * ExtractSysFeatures(LocalTransactionId tid, const char* s
                              "\"xact_check\":%d},", cur->lxid, xact->xmin, xact->delayChkpt ? 1 : 0);
         }
         appendStringInfo(&features[GLOBAL_F_XACT], "]");
-        printf("xact%d: xact features %s\n", tid, features[GLOBAL_F_XACT].data);
         if (!(*need_predict)) return features;
+        printf("xact%d: xact features %s\n", tid, features[GLOBAL_F_XACT].data);
     }
 
     {
@@ -2060,38 +2056,11 @@ static StringInfoData * ExtractSysFeatures(LocalTransactionId tid, const char* s
     }
 
     {    // Lock information.
-        lockInfo = GetLockStatusData();
-        appendStringInfo(&features[GLOBAL_F_TUPLE_LOCK],"[");
-        appendStringInfo(&features[GLOBAL_F_REL_LOCK],"[");
-        for (int i = 0; i < lockInfo->nelements; i++) {
-            LockInstanceData *lc = &lockInfo->locks[i];
-            // ignore all local locks.
-            if (lc->pid == MyProcPid) continue;
-            if (lc->locktag.locktag_type == LOCKTAG_RELATION)
-            {
-                char * rel_name = get_rel_name(lc->locktag.locktag_field2);
-                if (IS_SYS_TABLE(rel_name)) continue;
-                appendStringInfo(&features[GLOBAL_F_REL_LOCK],
-                                 "{\"rel\":\"%s\", \"mode\":%d},",
-                                 rel_name,
-                                 lc->holdMask);
-            }
-            else if (lc->locktag.locktag_type == LOCKTAG_TUPLE)
-            {
-                char * rel_name = get_rel_name(lc->locktag.locktag_field2);
-                if (IS_SYS_TABLE(rel_name)) continue;
-                appendStringInfo(&features[GLOBAL_F_TUPLE_LOCK],
-                                 "{\"rel\":\"%s\", \"blk\":%d, \"offset\":%d, \"held_mask\":%d}",
-                                 rel_name,
-                                 lc->locktag.locktag_field3,
-                                 lc->locktag.locktag_field4,
-                                 lc->holdMask);
-            }
-        }
-        appendStringInfo(&features[GLOBAL_F_TUPLE_LOCK], "]");
-        appendStringInfo(&features[GLOBAL_F_REL_LOCK], "]");
+        printf("xact%d: exacting features\n", tid);
+        GetTupleLockFeatures(&features[GLOBAL_F_TUPLE_LOCK]);
         printf("xact%d: tuple lock features %s\n", tid, features[GLOBAL_F_TUPLE_LOCK].data);
-        printf("xact%d: rel lock features %s\n", tid, features[GLOBAL_F_REL_LOCK].data);
+//        GetRelationLockFeatures(&features[GLOBAL_F_REL_LOCK]);
+//        printf("xact%d: rel lock features %s\n", tid, features[GLOBAL_F_REL_LOCK].data);
     }
     return features;
 }
@@ -2103,10 +2072,11 @@ static void get_lock_strategy(const char *sql)
     FILE *file;
     bool need_predict = false;
     uint32 tid = MyProc->lxid;
-    printf("tid = %d\n", tid);
 
     if (!should_refine_cc(tid) || SKIP_XACT(tid))
         return;
+
+    features =  ExtractSysFeatures(tid, sql, &need_predict);
 
     if (!IsolationLearnCC())
     {
@@ -2126,8 +2096,6 @@ static void get_lock_strategy(const char *sql)
         return;
     }
 
-    printf("starting to extract features\n");
-    features =  ExtractSysFeatures(tid, sql, &need_predict);
     if (!need_predict) cmd = CC_WO_LOCK;
     else
     {
@@ -2253,7 +2221,7 @@ AdjustTransaction(const char* sql_text)
     s = &TopTransactionStateData;
     CurrentTransactionState = s;
     tb = s->blockState;
-    printf("tb = %d\n", tb);
+//    printf("tb = %d\n", tb);
 
     if (tb != TBLOCK_INPROGRESS && tb != TBLOCK_PARALLEL_INPROGRESS)
         // we only adjust the cc strategy for explicit transactions that has not prepared.
