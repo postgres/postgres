@@ -552,11 +552,6 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
                                                            lockmode == ExclusiveLock? false:true);
 
 	(void) LockAcquire(&tag, lockmode, false, false);
-    if (IsolationNeedLock()) TwoPhaseLockingReportTupleLock(tag.locktag_field2,
-                                                            tag.locktag_field3,
-                                                            tag.locktag_field4,
-                                                            lockmode == ExclusiveLock? false:true,
-                                                            false, false);
 }
 
 /*
@@ -583,11 +578,6 @@ ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
                                                            lockmode == ExclusiveLock? false:true);
 
 	res =  (LockAcquire(&tag, lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
-    if (res && IsolationNeedLock()) TwoPhaseLockingReportTupleLock(tag.locktag_field2,
-                                                            tag.locktag_field3,
-                                                            tag.locktag_field4,
-                                                            lockmode == ExclusiveLock? false:true,
-                                                            false, false);
     return res;
 }
 
@@ -606,11 +596,6 @@ UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetOffsetNumber(tid));
 
     LockRelease(&tag, lockmode, false);
-    if (IsolationNeedLock()) TwoPhaseLockingReportTupleLock(tag.locktag_field2,
-                                                                   tag.locktag_field3,
-                                                                   tag.locktag_field4,
-                                                                   lockmode == ExclusiveLock? false:true,
-                                                                   true, !IsAbortedTransactionBlockState());
 }
 
 /*

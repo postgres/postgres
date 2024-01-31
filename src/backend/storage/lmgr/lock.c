@@ -1474,7 +1474,13 @@ GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode)
 	if (lock->granted[lockmode] == lock->requested[lockmode])
 		lock->waitMask &= LOCKBIT_OFF(lockmode);
 	proclock->holdMask |= LOCKBIT_ON(lockmode);
-	LOCK_PRINT("GrantLock", lock, lockmode);
+    if (IsolationNeedLock() && lock->tag.locktag_type == LOCKTAG_TUPLE)
+        TwoPhaseLockingReportTupleLock(lock->tag.locktag_field2,
+                                       lock->tag.locktag_field3,
+                                       lock->tag.locktag_field4,
+                                       lockmode == ExclusiveLock? false:true,
+                                       false, !IsAbortedTransactionBlockState());
+    LOCK_PRINT("GrantLock", lock, lockmode);
 	Assert((lock->nGranted > 0) && (lock->granted[lockmode] > 0));
 	Assert(lock->nGranted <= lock->nRequested);
 }
@@ -1497,6 +1503,14 @@ UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 	Assert((lock->nRequested > 0) && (lock->requested[lockmode] > 0));
 	Assert((lock->nGranted > 0) && (lock->granted[lockmode] > 0));
 	Assert(lock->nGranted <= lock->nRequested);
+
+
+    if (IsolationNeedLock() && lock->tag.locktag_type == LOCKTAG_TUPLE)
+        TwoPhaseLockingReportTupleLock(lock->tag.locktag_field2,
+                                       lock->tag.locktag_field3,
+                                       lock->tag.locktag_field4,
+                                       lockmode == ExclusiveLock? false:true,
+                                       true, !IsAbortedTransactionBlockState());
 
 	/*
 	 * fix the general lock stats
