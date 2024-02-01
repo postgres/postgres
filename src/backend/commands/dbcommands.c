@@ -461,34 +461,11 @@ CreateDirAndVersionFile(char *dbpath, Oid dbid, Oid tsid, bool isRedo)
 	char		buf[16];
 
 	/*
-	 * Prepare version data before starting a critical section.
-	 *
-	 * Note that we don't have to copy this from the source database; there's
-	 * only one legal value.
+	 * Note that we don't have to copy version data from the source database;
+	 * there's only one legal value.
 	 */
 	sprintf(buf, "%s\n", PG_MAJORVERSION);
 	nbytes = strlen(PG_MAJORVERSION) + 1;
-
-	/* If we are not in WAL replay then write the WAL. */
-	if (!isRedo)
-	{
-		xl_dbase_create_wal_log_rec xlrec;
-		XLogRecPtr	lsn;
-
-		START_CRIT_SECTION();
-
-		xlrec.db_id = dbid;
-		xlrec.tablespace_id = tsid;
-
-		XLogBeginInsert();
-		XLogRegisterData((char *) (&xlrec),
-						 sizeof(xl_dbase_create_wal_log_rec));
-
-		lsn = XLogInsert(RM_DBASE_ID, XLOG_DBASE_CREATE_WAL_LOG);
-
-		/* As always, WAL must hit the disk before the data update does. */
-		XLogFlush(lsn);
-	}
 
 	/* Create database directory. */
 	if (MakePGDirectory(dbpath) < 0)
@@ -533,9 +510,24 @@ CreateDirAndVersionFile(char *dbpath, Oid dbid, Oid tsid, bool isRedo)
 	/* Close the version file. */
 	CloseTransientFile(fd);
 
-	/* Critical section done. */
+	/* If we are not in WAL replay then write the WAL. */
 	if (!isRedo)
+	{
+		xl_dbase_create_wal_log_rec xlrec;
+
+		START_CRIT_SECTION();
+
+		xlrec.db_id = dbid;
+		xlrec.tablespace_id = tsid;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) (&xlrec),
+						 sizeof(xl_dbase_create_wal_log_rec));
+
+		(void) XLogInsert(RM_DBASE_ID, XLOG_DBASE_CREATE_WAL_LOG);
+
 		END_CRIT_SECTION();
+	}
 }
 
 /*
