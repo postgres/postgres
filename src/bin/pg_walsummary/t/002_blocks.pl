@@ -46,12 +46,11 @@ SELECT EXISTS (
 EOM
 ok($result, "WAL summarization caught up after insert");
 
-# Get a list of what summaries we now have.
-my $progress = $node1->safe_psql('postgres', <<EOM);
-SELECT summarized_tli, summarized_lsn FROM pg_get_wal_summarizer_state()
+# Find the highest LSN that is summarized on disk.
+my $summarized_lsn = $node1->safe_psql('postgres', <<EOM);
+SELECT MAX(end_lsn) AS summarized_lsn FROM pg_available_wal_summaries()
 EOM
-my ($summarized_tli, $summarized_lsn) = split(/\|/, $progress);
-note("after insert, summarized TLI $summarized_tli through $summarized_lsn");
+note("after insert, summarized through $summarized_lsn");
 note_wal_summary_dir("after insert", $node1);
 
 # Update a row in the first block of the table and trigger a checkpoint.
@@ -65,7 +64,7 @@ EOM
 $result = $node1->poll_query_until('postgres', <<EOM);
 SELECT EXISTS (
     SELECT * from pg_available_wal_summaries()
-    WHERE tli = $summarized_tli AND end_lsn > '$summarized_lsn'
+    WHERE end_lsn > '$summarized_lsn'
 )
 EOM
 ok($result, "got new WAL summary after update");
@@ -73,7 +72,7 @@ ok($result, "got new WAL summary after update");
 # Figure out the exact details for the new summary file.
 my $details = $node1->safe_psql('postgres', <<EOM);
 SELECT tli, start_lsn, end_lsn from pg_available_wal_summaries()
-	WHERE tli = $summarized_tli AND end_lsn > '$summarized_lsn'
+	WHERE end_lsn > '$summarized_lsn'
 EOM
 my @lines = split(/\n/, $details);
 is(0+@lines, 1, "got exactly one new WAL summary");
