@@ -1520,6 +1520,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for a write of a two phase state file.</entry>
      </row>
      <row>
+      <entry><literal>VersionFileSync</literal></entry>
+      <entry>Waiting for the version file to reach durable storage while
+       creating a database.</entry>
+     </row>
+     <row>
       <entry><literal>VersionFileWrite</literal></entry>
       <entry>Waiting for the version file to be written while creating a database.</entry>
      </row>
