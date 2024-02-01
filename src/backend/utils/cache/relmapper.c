@@ -303,14 +303,15 @@ RelationMapCopy(Oid dbid, Oid tsid, char *srcdbpath, char *dstdbpath)
 	 * Write the same data into the destination database's relmap file.
 	 *
 	 * No sinval is needed because no one can be connected to the destination
-	 * database yet. For the same reason, there is no need to acquire
-	 * RelationMappingLock.
+	 * database yet.
 	 *
 	 * There's no point in trying to preserve files here. The new database
 	 * isn't usable yet anyway, and won't ever be if we can't install a relmap
 	 * file.
 	 */
+	LWLockAcquire(RelationMappingLock, LW_EXCLUSIVE);
 	write_relmap_file(&map, true, false, false, dbid, tsid, dstdbpath);
+	LWLockRelease(RelationMappingLock);
 }
 
 /*
@@ -633,10 +634,12 @@ RelationMapFinishBootstrap(void)
 	Assert(pending_local_updates.num_mappings == 0);
 
 	/* Write the files; no WAL or sinval needed */
+	LWLockAcquire(RelationMappingLock, LW_EXCLUSIVE);
 	write_relmap_file(&shared_map, false, false, false,
 					  InvalidOid, GLOBALTABLESPACE_OID, "global");
 	write_relmap_file(&local_map, false, false, false,
 					  MyDatabaseId, MyDatabaseTableSpace, DatabasePath);
+	LWLockRelease(RelationMappingLock);
 }
 
 /*
@@ -890,6 +893,15 @@ write_relmap_file(RelMapFile *newmap, bool write_wal, bool send_sinval,
 	int			fd;
 	char		mapfilename[MAXPGPATH];
 	char		maptempfilename[MAXPGPATH];
+
+	/*
+	 * Even without concurrent use of this map, CheckPointRelationMap() relies
+	 * on this locking.  Without it, a restore of a base backup taken after
+	 * this function's XLogInsert() and before its durable_rename() would not
+	 * have the changes.  wal_level=minimal doesn't need the lock, but this
+	 * isn't performance-critical enough for such a micro-optimization.
+	 */
+	Assert(LWLockHeldByMeInMode(RelationMappingLock, LW_EXCLUSIVE));
 
 	/*
 	 * Fill in the overhead fields and update CRC.
