@@ -249,11 +249,16 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
 
   <para>
    This variant of the <command>GRANT</command> command grants membership
-   in a role to one or more other roles.  Membership in a role is significant
+   in a role to one or more other roles, and the modification of
+   membership options <literal>SET</literal>, <literal>INHERIT</literal>,
+   and <literal>ADMIN</literal>;  see <xref linkend="role-membership"/>
+   for details.  Membership in a role is significant
    because it potentially allows access to the privileges granted to a role
    to each of its members, and potentially also the ability to make changes
    to the role itself. However, the actual permissions conferred depend on
-   the options associated with the grant.
+   the options associated with the grant.  To modify that options of
+   an existing membership, simply specify the membership with updated
+   option values.
   </para>
 
   <para>
@@ -261,7 +266,9 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    <literal>TRUE</literal> or <literal>FALSE</literal>. The keyword
    <literal>OPTION</literal> is accepted as a synonym for
    <literal>TRUE</literal>, so that <literal>WITH ADMIN OPTION</literal>
-   is a synonym for <literal>WITH ADMIN TRUE</literal>.
+   is a synonym for <literal>WITH ADMIN TRUE</literal>.  When altering
+   an existing membership the omission of an option results in the current
+   value being retained.
   </para>
 
   <para>
@@ -275,15 +282,13 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   </para>
 
   <para>
-   The <literal>INHERIT</literal> option, if it is set to
-   <literal>TRUE</literal>, causes the member to inherit the privileges of
-   the granted role. That is, it can automatically use whatever database
-   privileges have been granted to that role. If set to
-   <literal>FALSE</literal>, the member does not inherit the privileges
-   of the granted role. If this clause is not specified, it defaults to
-   true if the member role is set to <literal>INHERIT</literal> and to false
-   if the member role is set to <literal>NOINHERIT</literal>.
-   See <link linkend="sql-createrole"><command>CREATE ROLE</command></link>.
+   The <literal>INHERIT</literal> option controls the inheritance status
+   of the new membership;  see <xref linkend="role-membership"/> for
+   details on inheritance.  If it is set to <literal>TRUE</literal>,
+   it causes the new member to inherit from the granted role. If
+   set to <literal>FALSE</literal>, the new member does not inherit.
+   If unspecified when create a new role membership this defaults to
+   the inheritance attribute of the role being added.
   </para>
 
   <para>
