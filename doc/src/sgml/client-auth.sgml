@@ -666,7 +666,7 @@ include_dir         <replaceable>directory</replaceable>
        format. To see the <literal>DN</literal> of a client certificate
        in this format, do
 <programlisting>
-openssl x509 -in myclient.crt -noout --subject -nameopt RFC2253 | sed "s/^subject=//"
+openssl x509 -in myclient.crt -noout -subject -nameopt RFC2253 | sed "s/^subject=//"
 </programlisting>
         Care needs to be taken when using this option, especially when using
         regular expression matching against the <literal>DN</literal>.
