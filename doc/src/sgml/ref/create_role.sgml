@@ -68,6 +68,17 @@ in sync when changing the above synopsis!
    Note that roles are defined at the database cluster
    level, and so are valid in all databases in the cluster.
   </para>
+
+  <para>
+   During role creation it is possible to immediately assign the newly created
+   role to be a member of an existing role, and also assign existing roles
+   to be members of the newly created role.  The rules for which initial
+   role membership options are enabled described below in the
+   <literal>IN ROLE</literal>, <literal>ROLE</literal>, and
+   <literal>ADMIN</literal> clauses.  The <xref linkend="sql-grant"/>
+   command has fine-grained option control during membership creation,
+   and the ability to modify these options after the new role is created.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -135,24 +146,21 @@ in sync when changing the above synopsis!
       <term><literal>NOINHERIT</literal></term>
       <listitem>
        <para>
-        When the <literal>GRANT</literal> statement is used to confer
-        membership in one role to another role, the <literal>GRANT</literal>
-        may use the <literal>WITH INHERIT</literal> clause to specify whether
-        the privileges of the granted role should be <quote>inherited</quote>
-        by the new member. If the <literal>GRANT</literal> statement does not
-        specify either inheritance behavior, the new <literal>GRANT</literal>
-        will be created <literal>WITH INHERIT TRUE</literal> if the member
-        role is set to <literal>INHERIT</literal> and to
-        <literal>WITH INHERIT FALSE</literal> if it is set to
-        <literal>NOINHERIT</literal>.
+        This affects the membership inheritance status when this
+        role is added as a member of another role, both in this and
+        future commands.  Specifically, it controls the inheritance
+        status of memberships added with this command using the
+        <literal>IN ROLE</literal> clause, and in later commands using
+        the <literal>ROLE</literal> clause.  It is also used as the
+        default inheritance status when adding this role as a member
+        using the <literal>GRANT</literal> command.  If not specified,
+        <literal>INHERIT</literal> is the default.
        </para>
 
        <para>
         In <productname>PostgreSQL</productname> versions before 16,
-        the <literal>GRANT</literal> statement did not support
-        <literal>WITH INHERIT</literal>. Therefore, changing this role-level
-        property would also change the behavior of already-existing grants.
-        This is no longer the case.
+        inheritance was a role-level attribute that controlled all runtime
+        membership checks for that role.
        </para>
       </listitem>
      </varlistentry>
@@ -287,9 +295,10 @@ in sync when changing the above synopsis!
        <para>
         The <literal>IN ROLE</literal> clause causes the new role to
         be automatically added as a member of the specified existing
-        roles. (Note that there is no option to add the new role as an
-        administrator; use a separate <command>GRANT</command> command
-        to do that.)
+        roles. The new membership will have the <literal>SET</literal>
+        option enabled and the <literal>ADMIN</literal> option disabled.
+        The <literal>INHERIT</literal> option will be enabled unless the
+        <literal>NOINHERIT</literal> option is specified.
        </para>
       </listitem>
      </varlistentry>
@@ -308,8 +317,12 @@ in sync when changing the above synopsis!
       <listitem>
        <para>
         The <literal>ROLE</literal> clause causes one or more specified
-        existing roles to be automatically added as members of the new
-        role.  This in effect makes the new role a <quote>group</quote>.
+        existing roles to be automatically added as members, with the
+        <literal>SET</literal> option enabled. This in effect makes the
+        new role a <quote>group</quote>.  Roles named in this clause
+        with role-level the <literal>INHERIT</literal> attribute will have
+        the <literal>INHERIT</literal> option enabled in the new membership.
+        New memberships will have the <literal>ADMIN</literal> option disabled.
        </para>
       </listitem>
      </varlistentry>
@@ -318,10 +331,10 @@ in sync when changing the above synopsis!
       <term><literal>ADMIN</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
-        The <literal>ADMIN</literal> clause is like <literal>ROLE</literal>,
-        but the named roles are added to the new role <literal>WITH ADMIN
-        OPTION</literal>, giving them the right to grant membership in this role
-        to others.
+        The <literal>ADMIN</literal> clause has the same effect as
+        <literal>ROLE</literal>, but the named roles are added as members
+        of the new role with <literal>ADMIN</literal> enabled, giving
+        them the right to grant membership in the new role to others.
        </para>
       </listitem>
      </varlistentry>
@@ -374,15 +387,19 @@ in sync when changing the above synopsis!
   </para>
 
   <para>
-   The <literal>INHERIT</literal> attribute governs inheritance of grantable
-   privileges (that is, access privileges for database objects and role
-   memberships).  It does not apply to the special role attributes set by
-   <command>CREATE ROLE</command> and <command>ALTER ROLE</command>.  For example, being
-   a member of a role with <literal>CREATEDB</literal> privilege does not immediately
-   grant the ability to create databases, even if <literal>INHERIT</literal> is set;
-   it would be necessary to become that role via
-   <link linkend="sql-set-role"><command>SET ROLE</command></link> before
-   creating a database.
+   The role attributes defined here are non-inheritable, i.e., being a
+   member of a role with, e.g., <literal>CREATEDB</literal> will not
+   allow the member to create new databases even if the membership grant
+   has the <literal>INHERIT</literal> option.  Of course, if the membership
+   grant has the <literal>SET</literal> option the member role would be able to
+   <link linkend="sql-set-role"><command>SET ROLE</command></link> to the
+   createdb role and then create a new database.
+  </para>
+
+  <para>
+   The membership grants created by the
+   <literal>IN ROLE</literal>, <literal>ROLE</literal>, and <literal>ADMIN</literal>
+   clauses have the role executing this command as the grantee.
   </para>
 
   <para>
@@ -481,8 +498,10 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ WITH ADMIN <repl
 
   <para>
    The behavior specified by the SQL standard is most closely approximated
-   by giving users the <literal>NOINHERIT</literal> attribute, while roles are
-   given the <literal>INHERIT</literal> attribute.
+   creating SQL-standard users as <productname>PostgreSQL</productname>
+   roles with the <literal>NOINHERIT</literal> option, and SQL-standard
+   roles as <productname>PostgreSQL</productname> roles with the
+   <literal>INHERIT</literal> option.
   </para>
  </refsect1>
 

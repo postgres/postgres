@@ -409,10 +409,10 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
    than the original login role, and any database objects created are
    considered owned by the group role not the login role.  Second, member
    roles that have been granted membership with the
-   <literal>INHERIT</literal> option automatically have use
-   of the privileges of those roles, including any
-   privileges inherited by those roles.
-   As an example, suppose we have done:
+   <literal>INHERIT</literal> option automatically have use of the
+   privileges of those directly or indirectly a member of, though the
+   chain stops at memberships lacking the inherit option.  As an example,
+   suppose we have done:
 <programlisting>
 CREATE ROLE joe LOGIN;
 CREATE ROLE admin;
