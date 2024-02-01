@@ -73,7 +73,7 @@ ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> RENAME TO 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ] TRIGGER</literal></term>
+    <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ]</literal></term>
     <listitem>
      <para>
       These forms configure the firing of event triggers.  A disabled trigger
