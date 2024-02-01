@@ -71,7 +71,7 @@ sub run_test
 	# File::Find converts backslashes to slashes in the newer Perl
 	# versions. To support all Perl versions, do the same conversion
 	# for Windows before comparing the paths.
-	if ($PostgreSQL::Test::Utils::windows_os)
+	if ($windows_os)
 	{
 		for my $filename (@paths)
 		{
