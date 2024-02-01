@@ -508,6 +508,14 @@ CreateDirAndVersionFile(char *dbpath, Oid dbid, Oid tsid, bool isRedo)
 	}
 	pgstat_report_wait_end();
 
+	pgstat_report_wait_start(WAIT_EVENT_VERSION_FILE_SYNC);
+	if (pg_fsync(fd) != 0)
+		ereport(data_sync_elevel(ERROR),
+				(errcode_for_file_access(),
+				 errmsg("could not fsync file \"%s\": %m", versionfile)));
+	fsync_fname(dbpath, true);
+	pgstat_report_wait_end();
+
 	/* Close the version file. */
 	CloseTransientFile(fd);
 

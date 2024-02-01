@@ -236,6 +236,7 @@ TIMELINE_HISTORY_WRITE	"Waiting for a write of a newly created timeline history 
 TWOPHASE_FILE_READ	"Waiting for a read of a two phase state file."
 TWOPHASE_FILE_SYNC	"Waiting for a two phase state file to reach durable storage."
 TWOPHASE_FILE_WRITE	"Waiting for a write of a two phase state file."
+VERSION_FILE_SYNC	"Waiting for the version file to reach durable storage while creating a database."
 VERSION_FILE_WRITE	"Waiting for the version file to be written while creating a database."
 WALSENDER_TIMELINE_HISTORY_READ	"Waiting for a read from a timeline history file during a walsender timeline command."
 WAL_BOOTSTRAP_SYNC	"Waiting for WAL to reach durable storage during bootstrapping."
