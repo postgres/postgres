@@ -1344,8 +1344,8 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		UnpinBuffer(victim_buf_hdr);
 
 		/*
-		 * The victim buffer we acquired peviously is clean and unused, let it
-		 * be found again quickly
+		 * The victim buffer we acquired previously is clean and unused, let
+		 * it be found again quickly
 		 */
 		StrategyFreeBuffer(victim_buf_hdr);
 
@@ -1924,7 +1924,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 			BufferDesc *buf_hdr = GetBufferDescriptor(buffers[i] - 1);
 
 			/*
-			 * The victim buffer we acquired peviously is clean and unused,
+			 * The victim buffer we acquired previously is clean and unused,
 			 * let it be found again quickly
 			 */
 			StrategyFreeBuffer(buf_hdr);
@@ -2004,7 +2004,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 			LWLockRelease(partition_lock);
 
 			/*
-			 * The victim buffer we acquired peviously is clean and unused,
+			 * The victim buffer we acquired previously is clean and unused,
 			 * let it be found again quickly
 			 */
 			StrategyFreeBuffer(victim_buf_hdr);
