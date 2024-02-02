@@ -90,6 +90,13 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     in the <structname>pg_stat_progress_copy</structname> view. See
     <xref linkend="copy-progress-reporting"/> for details.
   </para>
+
+  <para>
+    By default, <command>COPY</command> will fail if it encounters an error
+    during processing. For use cases where a best-effort attempt at loading
+    the entire file is desired, the <literal>ON_ERROR</literal> clause can
+    be used to specify some other behavior.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -378,17 +385,20 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <term><literal>ON_ERROR</literal></term>
     <listitem>
      <para>
-      Specifies which <replaceable class="parameter">
-      error_action</replaceable> to perform when there is malformed data in the input.
-      Currently, only <literal>stop</literal> (default) and <literal>ignore</literal>
-      values are supported.
-      If the <literal>stop</literal> value is specified,
-      <command>COPY</command> stops operation at the first error.
-      If the <literal>ignore</literal> value is specified,
-      <command>COPY</command> skips malformed data and continues copying data.
-      The option is allowed only in <command>COPY FROM</command>.
-      Only <literal>stop</literal> value is allowed when
-      using <literal>binary</literal> format.
+      Specifies how to behave when encountering an error converting a column's
+      input value into its data type.
+      An <replaceable class="parameter">error_action</replaceable> value of
+      <literal>stop</literal> means fail the command, while
+      <literal>ignore</literal> means discard the input row and continue with the next one.
+      The default is <literal>stop</literal>.
+     </para>
+     <para>
+      The <literal>ignore</literal> option is applicable only for <command>COPY FROM</command>
+      when the <literal>FORMAT</literal> is <literal>text</literal> or <literal>csv</literal>.
+     </para>
+     <para>
+      A <literal>NOTICE</literal> message containing the ignored row count is emitted at the end
+      of the <command>COPY FROM</command> if at least one row was discarded.
      </para>
     </listitem>
    </varlistentry>
@@ -576,15 +586,13 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
-    <command>COPY</command> stops operation at the first error when
-    <literal>ON_ERROR</literal> is not specified. This
-    should not lead to problems in the event of a <command>COPY
-    TO</command>, but the target table will already have received
-    earlier rows in a <command>COPY FROM</command>. These rows will not
-    be visible or accessible, but they still occupy disk space. This might
-    amount to a considerable amount of wasted disk space if the failure
-    happened well into a large copy operation. You might wish to invoke
-    <command>VACUUM</command> to recover the wasted space.
+    The <command>COPY FROM</command> command physically inserts input rows
+    into the table as it progresses.  If the command fails, these rows are
+    left in a deleted state; these rows will not be visible, but still
+    occupy disk space. This might amount to considerable
+    wasted disk space if the failure happened well into a large copy
+    operation. <command>VACUUM</command> should be used to recover the
+    wasted space.
    </para>
 
    <para>
