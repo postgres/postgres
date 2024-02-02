@@ -548,8 +548,13 @@ ResourceOwnerRemember(ResourceOwner owner, Datum value, const ResourceOwnerDesc 
 /*
  * Forget that an object is owned by a ResourceOwner
  *
- * Note: if same resource ID is associated with the ResourceOwner more than
+ * Note: If same resource ID is associated with the ResourceOwner more than
  * once, one instance is removed.
+ *
+ * Note: Forgetting a resource does not guarantee that there is room to
+ * remember a new resource.  One exception is when you forget the most
+ * recently remembered resource; that does make room for a new remember call.
+ * Some code callers rely on that exception.
  */
 void
 ResourceOwnerForget(ResourceOwner owner, Datum value, const ResourceOwnerDesc *kind)

@@ -374,6 +374,9 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		victim_buf_id = -buffers[i] - 1;
 		victim_buf_hdr = GetLocalBufferDescriptor(victim_buf_id);
 
+		/* in case we need to pin an existing buffer below */
+		ResourceOwnerEnlarge(CurrentResourceOwner);
+
 		InitBufferTag(&tag, &bmr.smgr->smgr_rlocator.locator, fork, first_block + i);
 
 		hresult = (LocalBufferLookupEnt *)
@@ -646,6 +649,8 @@ InitLocalBuffers(void)
  * XXX: We could have a slightly more efficient version of PinLocalBuffer()
  * that does not support adjusting the usagecount - but so far it does not
  * seem worth the trouble.
+ *
+ * Note that ResourceOwnerEnlarge() must have been done already.
  */
 bool
 PinLocalBuffer(BufferDesc *buf_hdr, bool adjust_usagecount)
