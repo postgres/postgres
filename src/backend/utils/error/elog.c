@@ -920,6 +920,10 @@ errcode_for_file_access(void)
 			edata->sqlerrcode = ERRCODE_DISK_FULL;
 			break;
 
+		case ENOMEM:			/* Out of memory */
+			edata->sqlerrcode = ERRCODE_OUT_OF_MEMORY;
+			break;
+
 		case ENFILE:			/* File table overflow */
 		case EMFILE:			/* Too many open files */
 			edata->sqlerrcode = ERRCODE_INSUFFICIENT_RESOURCES;
