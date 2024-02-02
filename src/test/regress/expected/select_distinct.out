@@ -235,10 +235,10 @@ SELECT DISTINCT four FROM tenk1;
                      QUERY PLAN                     
 ----------------------------------------------------
  Unique
-   ->  Sort
-         Sort Key: four
-         ->  Gather
-               Workers Planned: 2
+   ->  Gather Merge
+         Workers Planned: 2
+         ->  Sort
+               Sort Key: four
                ->  HashAggregate
                      Group Key: four
                      ->  Parallel Seq Scan on tenk1

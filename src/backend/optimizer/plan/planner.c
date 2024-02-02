@@ -4819,7 +4819,7 @@ create_partial_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	if (partial_distinct_rel->partial_pathlist != NIL)
 	{
-		generate_gather_paths(root, partial_distinct_rel, true);
+		generate_useful_gather_paths(root, partial_distinct_rel, true);
 		set_cheapest(partial_distinct_rel);
 
 		/*
