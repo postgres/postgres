@@ -31,13 +31,13 @@ Install `pg_tde` using one of available installation methods:
     4. Clone the repository:  
 
         ```
-        git clone git://github.com/Percona-Lab/postgres-tde-ext
+        git clone git://github.com/Percona-Lab/pg_tde
         ```
 
     5. Compile and install the extension
 
         ```
-        cd postgres-tde-ext
+        cd pg_tde
         ./configure
         make USE_PGXS=1
         sudo make USE_PGXS=1 install
@@ -47,10 +47,10 @@ Install `pg_tde` using one of available installation methods:
 
     Currently only DEB packages for Ubuntu 22.04 are available. If you are running RPM-based operating system, consider [building the extension from source](#build-from-source) or [running it in Docker](#run-in-docker)
 
-    1. Download the latest [release package](https://github.com/Percona-Lab/postgres-tde-ext/releases)
+    1. Download the latest [release package](https://github.com/Percona-Lab/pg_tde/releases)
 
         ``` sh
-        wget https://github.com/Percona-Lab/postgres-tde-ext/releases/download/latest/pgtde-pgdg16.deb
+        wget https://github.com/Percona-Lab/pg_tde/releases/download/latest/pgtde-pgdg16.deb
         ```
 
     2. Install the package
@@ -61,12 +61,12 @@ Install `pg_tde` using one of available installation methods:
 
 === "Run in Docker"
 
-    You can find Docker images built from the current main branch on [Docker Hub](https://hub.docker.com/r/perconalab/postgres-tde-ext). Images are built on top of [postgres:16](https://hub.docker.com/_/postgres) official image.     
+    You can find Docker images built from the current main branch on [Docker Hub](https://hub.docker.com/r/perconalab/pg_tde). Images are built on top of [postgres:16](https://hub.docker.com/_/postgres) official image.     
 
     To run `pg_tde` in Docker, use the following command:    
 
     ```
-    docker run --name pg-tde -e POSTGRES_PASSWORD=mysecretpassword -d perconalab/postgres-tde-ext
+    docker run --name pg-tde -e POSTGRES_PASSWORD=mysecretpassword -d perconalab/pg_tde
     ```    
 
     It builds and adds `pg_tde` extension to PostgreSQL 16. Relevant `postgresql.conf` and `tde_conf.json` are created in `/etc/postgresql/` inside the container. This directory is exposed as a volume.    

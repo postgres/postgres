@@ -305,7 +305,7 @@ tde_apply_patches()
     if [[ ! -d "$TDE_DIR" ]];
     then
         t="$(basename $TDE_DIR)"
-        git clone https://github.com/Percona-Lab/postgres-tde-ext.git $t
+        git clone https://github.com/Percona-Lab/pg_tde.git $t
     fi
 
     pushd $TDE_DIR

@@ -35,7 +35,7 @@ jobs:
         run: |
           unzip pr_perf_results.zip
 
-      - name: Clone postgres-tde-ext repository
+      - name: Clone pg_tde repository
         uses: actions/checkout@v2
         with:
           path: 'src'

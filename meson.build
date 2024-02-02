@@ -73,7 +73,7 @@ install_data(
 )
 
 tests += {
-  'name': 'postgres-tde-ext',
+  'name': 'pg_tde',
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'regress': {
@@ -87,7 +87,7 @@ tests += {
       'multi_insert',
       'trigger_on_view',
     ],
-    'regress_args': ['--temp-config', files('postgres-tde-ext.conf')],
+    'regress_args': ['--temp-config', files('pg_tde.conf')],
     'runningcheck': false,
   },
   'tap': {

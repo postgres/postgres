@@ -41,14 +41,14 @@ jobs:
           ref: 'a81e5516fa4bc53e332cb35eefe231147c0e1749'
           path: 'src'
 
-      - name: Clone postgres-tde-ext repository
+      - name: Clone pg_tde repository
         uses: actions/checkout@v2
         with:
-          path: 'src/contrib/postgres-tde-ext'
+          path: 'src/contrib/pg_tde'
 
-      - name: Include postgres-tde-ext in meson build
+      - name: Include pg_tde in meson build
         run: |
-          echo "subdir('postgres-tde-ext')" >> src/contrib/meson.build
+          echo "subdir('pg_tde')" >> src/contrib/meson.build
 
       - name: Build postgres
         run: |
@@ -56,11 +56,11 @@ jobs:
           cd build && ninja && ninja install
         working-directory: src
 
-      - name: Test postgres-tde-ext with keyring_file
+      - name: Test pg_tde with keyring_file
         run: |
-          cp ../contrib/postgres-tde-ext/keyring.json /tmp/keyring.json
+          cp ../contrib/pg_tde/keyring.json /tmp/keyring.json
           meson test --suite setup -v
-          meson test --suite postgres-tde-ext -v --num-processes 1
+          meson test --suite pg_tde -v --num-processes 1
         working-directory: src/build
 
       - name: Report on test fail
@@ -69,21 +69,21 @@ jobs:
         with:
           name: Regressions diff and postgresql log
           path: |
-            src/build/testrun/postgres-tde-ext/regress/
+            src/build/testrun/pg_tde/regress/
           retention-days: 3
 
-      - name: Test postgres-tde-ext with keyring_vault
+      - name: Test pg_tde with keyring_vault
         run: |
           TV=$(mktemp)
           { exec >$TV; vault server -dev; } &
           sleep 10
           ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
           echo "Root token: $ROOT_TOKEN"
-          cp ../contrib/postgres-tde-ext/keyring-vault.json /tmp/keyring.json
+          cp ../contrib/pg_tde/keyring-vault.json /tmp/keyring.json
           sed -i "s/ROOT_TOKEN/$ROOT_TOKEN/g" /tmp/keyring.json
           cat /tmp/keyring.json
           meson test --suite setup -v
-          meson test --suite postgres-tde-ext -v --num-processes 1
+          meson test --suite pg_tde -v --num-processes 1
         working-directory: src/build
 
       - name: Report on test fail
@@ -92,6 +92,6 @@ jobs:
         with:
           name: Regressions diff and postgresql log
           path: |
-            src/build/testrun/postgres-tde-ext/regress/
+            src/build/testrun/pg_tde/regress/
           retention-days: 3
 

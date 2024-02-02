@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 # configure.ac
 
-AC_INIT([pg_tde], [0.1-mvp], [https://github.com/Percona-Lab/postgres-tde-ext/issues])
+AC_INIT([pg_tde], [0.1-mvp], [https://github.com/Percona-Lab/pg_tde/issues])
 
 AC_CANONICAL_HOST
 

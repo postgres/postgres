@@ -1,4 +1,4 @@
--- test https://github.com/Percona-Lab/postgres-tde-ext/issues/63
+-- test https://github.com/Percona-Lab/pg_tde/issues/63
 CREATE EXTENSION pg_tde;
 
 CREATE TEMP TABLE src (f1 text) USING pg_tde;

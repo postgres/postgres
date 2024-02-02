@@ -10,7 +10,7 @@ RUN apt-get update; \
     make \
     libcurl4-openssl-dev
 
-WORKDIR /opt/postgres-tde-ext
+WORKDIR /opt/pg_tde
 
 COPY . .
 

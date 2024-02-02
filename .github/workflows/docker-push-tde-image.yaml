@@ -21,5 +21,5 @@ jobs:
 
     - name: Build and push Docker image
       run: |
-        docker build -t perconalab/postgres-tde-ext:${{ github.sha }} -t perconalab/postgres-tde-ext:latest . -f docker/Dockerfile
-        docker push -a perconalab/postgres-tde-ext
+        docker build -t perconalab/pg_tde:${{ github.sha }} -t perconalab/pg_tde:latest . -f docker/Dockerfile
+        docker push -a perconalab/pg_tde

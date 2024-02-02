@@ -1,4 +1,4 @@
--- A test case for https://github.com/Percona-Lab/postgres-tde-ext/pull/21
+-- A test case for https://github.com/Percona-Lab/pg_tde/pull/21
 -- 
 CREATE EXTENSION pg_tde;
 DROP TABLE IF EXISTS sbtest1;

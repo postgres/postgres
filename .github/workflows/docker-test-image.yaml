@@ -12,11 +12,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t perconalab/postgres-tde-ext:${{ github.sha }} -t postgres-tde-ext-test . -f docker/Dockerfile
+        docker build -t perconalab/pg_tde:${{ github.sha }} -t pg_tde-test . -f docker/Dockerfile
 
     - name: Run and test Docker image
       run: |
-        docker run --name pg-tde -e POSTGRES_PASSWORD=mysecretpassword -d postgres-tde-ext-test
+        docker run --name pg-tde -e POSTGRES_PASSWORD=mysecretpassword -d pg_tde-test
         sleep 10
         IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' pg-tde)
         echo $IP

@@ -5,7 +5,7 @@ MODULE_big = pg_tde
 EXTENSION = pg_tde
 DATA = pg_tde--1.0.sql
 
-REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/postgres-tde-ext/postgres-tde-ext.conf
+REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_tde/pg_tde.conf
 REGRESS = toast_decrypt \
 toast_extended_storage \
 move_large_tuples \
@@ -44,7 +44,7 @@ PGXS := $(shell $(PG_CONFIG) --pgxs)
 override PG_CPPFLAGS += -I$(CURDIR)/src/include
 include $(PGXS)
 else
-subdir = contrib/postgres-tde-ext
+subdir = contrib/pg_tde
 top_builddir = ../..
 override PG_CPPFLAGS += -I$(top_srcdir)/$(subdir)/src/include
 include $(top_builddir)/src/Makefile.global

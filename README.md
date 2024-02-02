@@ -4,18 +4,18 @@ This is an `experimental` encrypted access method for PostgreSQL 16.
 
 ## Latest test release
 
-To download the latest build of the main branch, use the `HEAD` release from [releases](https://github.com/Percona-Lab/postgres-tde-ext/releases).
+To download the latest build of the main branch, use the `HEAD` release from [releases](https://github.com/Percona-Lab/pg_tde/releases).
 
 Builds are available in a tar.gz format, containing only the required files, and as a deb package.
 The deb package is built against the pgdg16 release, but this dependency is not yet enforced in the package.
 
 ## Documentation
 
-Find more information about `pg_tde` in the [documentation](https://percona-lab.github.io/postgres-tde-ext/).
+Find more information about `pg_tde` in the [documentation](https://percona-lab.github.io/pg_tde/).
 
 ## Installation steps
 
-1. Build and install the plugin with make [from source](#build-from-source), or download a [release](https://github.com/Percona-Lab/postgres-tde-ext/releases) and [install the package](#install-from-package)
+1. Build and install the plugin with make [from source](#build-from-source), or download a [release](https://github.com/Percona-Lab/pg_tde/releases) and [install the package](#install-from-package)
 2. `pg_tde` needs to be loaded at the start time. The extension requires additional shared memory; therefore,  add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` instance.
 
 Use the [ALTER SYSTEM](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter.
@@ -82,26 +82,26 @@ brew install make autoconf curl json-c gettext postresql@16
 4. Clone the repository, build and install it with the following commands:  
 
 ```
-git clone git://github.com/Percona-Lab/postgres-tde-ext
+git clone git://github.com/Percona-Lab/pg_tde
 ```
 
 Compile and install the extension
 
 ```
-cd postgres-tde-ext
+cd pg_tde
 ./configure
 make USE_PGXS=1
 sudo make USE_PGXS=1 install
 ```
 
-_See [Make Builds for Developers](https://github.com/Percona-Lab/postgres-tde-ext/wiki/Make-builds-for-developers) for more info on the build infrastructure._
+_See [Make Builds for Developers](https://github.com/Percona-Lab/pg_tde/wiki/Make-builds-for-developers) for more info on the build infrastructure._
 
 ## Install from package
 
-1. Download the latest [release package](https://github.com/Percona-Lab/postgres-tde-ext/releases)
+1. Download the latest [release package](https://github.com/Percona-Lab/pg_tde/releases)
 
 ``` sh
-wget https://github.com/Percona-Lab/postgres-tde-ext/releases/download/latest/pgtde-pgdg16.deb
+wget https://github.com/Percona-Lab/pg_tde/releases/download/latest/pgtde-pgdg16.deb
 ```
 2. Install the package
 
@@ -111,9 +111,9 @@ sudo dpkg -i pgtde-pgdg16.deb
 
 ## Run in Docker
 
-You can find docker images built from the current main branch on [Docker Hub](https://hub.docker.com/r/perconalab/postgres-tde-ext). Images build on top of [postgres:16](https://hub.docker.com/_/postgres) official image. To run it:
+You can find docker images built from the current main branch on [Docker Hub](https://hub.docker.com/r/perconalab/pg_tde). Images build on top of [postgres:16](https://hub.docker.com/_/postgres) official image. To run it:
 ```
-docker run --name pg-tde -e POSTGRES_PASSWORD=mysecretpassword -d perconalab/postgres-tde-ext
+docker run --name pg-tde -e POSTGRES_PASSWORD=mysecretpassword -d perconalab/pg_tde
 ```
 It builds and adds `pg_tde` extension to Postgres 16. Relevant `postgresql.conf` and `tde_conf.json` are created in `/etc/postgresql/` inside the container. This dir is exposed as volume.
 

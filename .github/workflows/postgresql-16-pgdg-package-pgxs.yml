@@ -38,24 +38,24 @@ jobs:
           sudo apt update
           sudo apt -y install postgresql-16 postgresql-server-dev-16
 
-      - name: Clone postgres-tde-ext repository
+      - name: Clone pg_tde repository
         uses: actions/checkout@master
         with:
-          path: 'src/postgres-tde-ext'
+          path: 'src/pg_tde'
 
       - name: Change src owner to postgres
         run: |
           sudo chmod o+rx ~
           sudo chown -R postgres:postgres src
 
-      - name: Build postgres-tde-ext
+      - name: Build pg_tde
         run: |
           sudo -u postgres bash -c './configure'
           sudo -u postgres bash -c 'make USE_PGXS=1'
           sudo make USE_PGXS=1 install
-        working-directory: src/postgres-tde-ext
+        working-directory: src/pg_tde
 
-      - name: Start postgres-tde-ext tests
+      - name: Start pg_tde tests
         run: |
           sudo service postgresql stop
           echo "shared_preload_libraries = 'pg_tde'" |
@@ -66,7 +66,7 @@ jobs:
           sudo service postgresql start
           sudo psql -V
           sudo -u postgres bash -c 'make installcheck USE_PGXS=1'
-        working-directory: src/postgres-tde-ext
+        working-directory: src/pg_tde
 
       - name: Report on test fail
         uses: actions/upload-artifact@v2
@@ -74,14 +74,14 @@ jobs:
         with:
           name: Regressions diff and postgresql log
           path: |
-            src/postgres-tde-ext/regression.diffs
-            src/postgres-tde-ext/logfile
+            src/pg_tde/regression.diffs
+            src/pg_tde/logfile
           retention-days: 3
 
       - name: Report on test fail 2
         if: ${{ failure() }}
         run: |
-          cat src/postgres-tde-ext/regression.diffs
+          cat src/pg_tde/regression.diffs
 
       - name: Create release directory
         run: |
@@ -126,7 +126,7 @@ jobs:
       - name: Publish release
         uses: ncipollo/release-action@v1
         # Only try and deploy on merged code
-        if: "github.repository == 'Percona-Lab/postgres-tde-ext' && github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule')"
+        if: "github.repository == 'Percona-Lab/pg_tde' && github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule')"
         with:
           artifacts: "pgtde-pgdg16.tar.gz,pgtde-pgdg16.deb"
           omitBody: true
