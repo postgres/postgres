@@ -24754,7 +24754,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
      <tbody>
       <row>
-       <entry role="func_table_entry"><para role="func_signature">
+       <entry id="format_type" role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>format_type</primary>
         </indexterm>
@@ -24765,6 +24765,35 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
         Returns the SQL name for a data type that is identified by its type
         OID and possibly a type modifier.  Pass NULL for the type modifier if
         no specific modifier is known.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="parse_type" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>parse_type</primary>
+        </indexterm>
+        <function>parse_type</function> ( <parameter>type</parameter> <type>text</type> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>typid</parameter> <type>oid</type>,
+          <parameter>typmod</parameter> <type>int4</type> )
+       </para>
+       <para>
+        Parses a string representing an SQL type declaration as used in a
+        <command>CREATE TABLE</command> statement, optionally schema-qualified.
+        Returns a record with two fields, <parameter>typid</parameter> and
+        <parameter>typid</parameter>, representing the OID and modifier for the
+        type. These correspond to the parameters to pass to the
+        <link linkend="format_type"><function>format_type</function> function.</link>
+       </para>
+       <para>
+        For example:
+<programlisting>
+SELECT format_type(p.typid, p.typmod) FROM parse_type('timestamp(4)') p;
+        format_type
+ --------------------------------
+  timestamp(4) without time zone
+</programlisting>
        </para></entry>
       </row>
 
