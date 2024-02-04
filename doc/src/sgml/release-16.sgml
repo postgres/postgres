@@ -23,7 +23,13 @@
    </para>
 
    <para>
-    However, if you are upgrading from a version earlier than 16.1,
+    However, one bug was fixed that could have resulted in corruption of
+    GIN indexes during concurrent updates.  If you suspect such
+    corruption, reindex affected indexes after installing this update.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 16.1,
     see <xref linkend="release-16-1"/>.
    </para>
   </sect2>
@@ -53,25 +59,6 @@ Branch: REL_12_STABLE [c922b2410] 2023-12-11 12:02:01 +0100
       There have been multiple reports of backend processes suffering
       out-of-memory conditions after sufficiently many JIT compilations.
       This fix should resolve that.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Andres Freund <andres@anarazel.de>
-Branch: REL_15_STABLE [f374fb4aa] 2024-01-18 11:12:31 +0900
-Branch: REL_14_STABLE [5f6ec27a6] 2024-01-18 11:12:38 +0900
-Branch: REL_13_STABLE [dc9d424cf] 2024-01-18 11:12:43 +0900
-Branch: REL_12_STABLE [810382285] 2024-01-18 11:12:48 +0900
--->
-     <para>
-      When dequeueing from an LWLock, avoid needing to search the list of
-      waiting processes (Andres Freund)
-     </para>
-
-     <para>
-      This fixes O(N^2) behavior when the list of waiters is long.  In
-      some use-cases this results in substantial throughput improvements.
      </para>
     </listitem>
 
@@ -750,14 +737,17 @@ Branch: REL_16_STABLE [48a6bf5c4] 2024-02-01 13:44:22 -0800
 Branch: REL_15_STABLE [8fa4a1ac6] 2024-02-01 13:44:23 -0800
 -->
      <para>
-      Add more interlocks between <command>CREATE DATABASE</command> and
-      base backup (Noah Misch)
+      Ensure durability of <command>CREATE DATABASE</command> (Noah Misch)
      </para>
 
      <para>
-      This fixes some cases where a base backup taken concurrently
-      with <command>CREATE DATABASE</command> could produce a corrupt
-      image of the new database.
+      If an operating system crash occurred during or shortly
+      after <command>CREATE DATABASE</command>, recovery could fail, or
+      subsequent connections to the new database could fail.  If a base
+      backup was taken in that window, similar problems could be observed
+      when trying to use the backup.  The symptom would be that the
+      database directory, <filename>PG_VERSION</filename> file, or
+      <filename>pg_filenode.map</filename> file was missing or empty.
      </para>
     </listitem>
 
@@ -909,27 +899,6 @@ Branch: REL_15_STABLE [57aae65ae] 2023-11-22 11:14:35 +0530
 
     <listitem>
 <!--
-Author: Amit Kapila <akapila@postgresql.org>
-Branch: REL_15_STABLE [b793a416b] 2024-01-29 10:42:41 +0530
-Branch: REL_14_STABLE [6b77048e5] 2024-01-29 10:34:03 +0530
--->
-     <para>
-      Prevent examining system catalogs with the wrong snapshot during
-      logical decoding (Fei Changhong)
-     </para>
-
-     <para>
-      If decoding begins partway through a transaction that modifies
-      system catalogs, the decoder may not recognize that, causing it to
-      fail to treat that transaction as in-progress for catalog lookups.
-      This fix deals with the case that a top-level transaction is already
-      marked as containing catalog changes, but its subtransaction(s) are
-      not.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Jeff Davis <jdavis@postgresql.org>
 Branch: master [5c3166905] 2024-01-12 13:41:36 -0800
 Branch: REL_16_STABLE [4c03ac7e2] 2024-01-12 13:42:09 -0800
@@ -1040,6 +1009,23 @@ Branch: REL_16_STABLE [41820e640] 2024-01-12 21:39:35 -0800
      <para>
       Fix minor memory leak in connection string validation
       for <command>CREATE SUBSCRIPTION</command> (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e4e63cd98] 2024-02-02 15:34:29 -0500
+Branch: REL_16_STABLE [a15378100] 2024-02-02 15:34:29 -0500
+Branch: REL_15_STABLE [3766b8b64] 2024-02-02 15:34:29 -0500
+Branch: REL_14_STABLE [329b96882] 2024-02-02 15:34:29 -0500
+Branch: REL_13_STABLE [29df29dad] 2024-02-02 15:34:29 -0500
+Branch: REL_12_STABLE [4493bfb70] 2024-02-02 15:34:29 -0500
+-->
+     <para>
+      Report <systemitem>ENOMEM</systemitem> errors from file-related system
+      calls as <literal>ERRCODE_OUT_OF_MEMORY</literal>,
+      not <literal>ERRCODE_INTERNAL_ERROR</literal> (Alexander Kuzmenkov)
      </para>
     </listitem>
 
