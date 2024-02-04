@@ -403,6 +403,17 @@ IsAbortedTransactionBlockState(void)
 	return false;
 }
 
+bool
+IsTransactionUseful(void)
+{
+    TransactionState s = CurrentTransactionState;
+//    printf("xact%d: current xact state =  (%d)\n ",
+//           GetCurrentTransactionId(), s->blockState);
+    if (s->blockState >= TBLOCK_ABORT && s->blockState <= TBLOCK_ABORT_PENDING)
+        return false;
+    return true;
+}
+
 
 /*
  *	GetTopTransactionId
@@ -2013,7 +2024,7 @@ const bool GenTrainingData = true;
 // lock_timeout and deadlock_timeout.
 static StringInfoData * ExtractSysFeatures(LocalTransactionId tid, const char* sql, bool *need_predict) {
     StringInfoData *features = (StringInfoData *) palloc(sizeof(StringInfoData) * FEATURE_LENGTH);
-    LockData *lockInfo;
+//    LockData *lockInfo;
 //    PredicateLockData *predicateLockInfo;
 
     for (int i = 0; i < FEATURE_LENGTH; i++)

@@ -586,8 +586,8 @@ extern Size LockShmemSize(void);
 extern LockData *GetLockStatusData(void);
 extern void GetTupleLockFeatures(StringInfoData* feature);
 void TwoPhaseLockingInit();
-extern void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read);
-extern void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release, bool is_useful);
+extern void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release);
+extern void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release);
 extern void GetRelationLockFeatures(StringInfoData* feature);
 extern BlockedProcsData *GetBlockerStatusData(int blocked_pid);
 

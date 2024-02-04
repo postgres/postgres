@@ -386,6 +386,7 @@ typedef struct xl_xact_parsed_abort
  */
 extern bool IsTransactionState(void);
 extern bool IsAbortedTransactionBlockState(void);
+extern bool IsTransactionUseful(void);
 extern TransactionId GetTopTransactionId(void);
 extern TransactionId GetTopTransactionIdIfAny(void);
 extern TransactionId GetCurrentTransactionId(void);

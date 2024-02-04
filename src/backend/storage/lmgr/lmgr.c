@@ -549,7 +549,8 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
     if (IsolationNeedLock()) TwoPhaseLockingReportIntention(tag.locktag_field2,
                                                            tag.locktag_field3,
                                                            tag.locktag_field4,
-                                                           lockmode == ExclusiveLock? false:true);
+                                                           lockmode == ExclusiveLock? false:true,
+                                                           false);
 
 	(void) LockAcquire(&tag, lockmode, false, false);
 }
@@ -575,9 +576,17 @@ ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
     if (IsolationNeedLock()) TwoPhaseLockingReportIntention(tag.locktag_field2,
                                                            tag.locktag_field3,
                                                            tag.locktag_field4,
-                                                           lockmode == ExclusiveLock? false:true);
+                                                           lockmode == ExclusiveLock? false:true,
+                                                           false);
 
 	res =  (LockAcquire(&tag, lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
+    if (!res) {
+        if (IsolationNeedLock()) TwoPhaseLockingReportIntention(tag.locktag_field2,
+                                                                tag.locktag_field3,
+                                                                tag.locktag_field4,
+                                                                lockmode == ExclusiveLock? false:true,
+                                                                true);
+    }
     return res;
 }
 

@@ -1479,7 +1479,7 @@ GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode)
                                        lock->tag.locktag_field3,
                                        lock->tag.locktag_field4,
                                        lockmode == ExclusiveLock? false:true,
-                                       false, !IsAbortedTransactionBlockState());
+                                       false);
     LOCK_PRINT("GrantLock", lock, lockmode);
 	Assert((lock->nGranted > 0) && (lock->granted[lockmode] > 0));
 	Assert(lock->nGranted <= lock->nRequested);
@@ -1510,7 +1510,7 @@ UnGrantLock(LOCK *lock, LOCKMODE lockmode,
                                        lock->tag.locktag_field3,
                                        lock->tag.locktag_field4,
                                        lockmode == ExclusiveLock? false:true,
-                                       true, !IsAbortedTransactionBlockState());
+                                       true);
 
 	/*
 	 * fix the general lock stats
@@ -3563,6 +3563,7 @@ static bool starts_with(const char *str, const char *pre) {
 #define LOCK_FEATURE_MASK (LOCK_FEATURE_LEN-1)
 #define REL_ID_MULTI 13
 #define MOVING_AVERAGE_RATE 0.8
+#define LOCK_KEY(rid, pgid, offset) ((pgid) * 4096 + (offset) + (rid) * REL_ID_MULTI)
 
 LockFeature* LockFeatureVec;
 
@@ -3594,26 +3595,30 @@ static LockFeature getTwoPhaseLockingReport(int i) {
     return res;
 }
 
-void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read)
+void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
 {
-    uint64 full_key = (pgid) * 4096 + offset + rid * REL_ID_MULTI;
-    int i = (int)(full_key & LOCK_FEATURE_MASK);
+    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
+    int cmd = is_release? -1:1;
     Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+//    printf("xact%d: lock intention report (%d,%d,%d), mode=%s, %s\n ",
+//           GetCurrentTransactionId(), rid, pgid, offset, is_read? "read":"modify", is_release? "release":"lock");
     SpinLockAcquire(&LockFeatureVec[i].mutex);
     if (is_read)
-        LockFeatureVec[i].read_intention_cnt ++;
+        LockFeatureVec[i].read_intention_cnt += cmd;
     else
-        LockFeatureVec[i].write_intention_cnt ++;
+        LockFeatureVec[i].write_intention_cnt += cmd;
     SpinLockRelease(&LockFeatureVec[i].mutex);
 }
 
-void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release, bool is_useful)
+void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
 {
-    uint64 full_key = (pgid) * 4096 + offset + rid * REL_ID_MULTI;
-    int i = (int)(full_key & LOCK_FEATURE_MASK);
+    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
     int off = is_release? -1:1;
+    bool is_useful = IsTransactionUseful();
 
     Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+//    printf("xact%d: lock report (%d,%d,%d), mode=%s, %s\n ",
+//           GetCurrentTransactionId(), rid, pgid, offset, is_read? "read":"modify", is_release? "release":"lock");
     SpinLockAcquire(&LockFeatureVec[i].mutex);
     if (is_read)
     {
