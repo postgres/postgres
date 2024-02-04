@@ -25460,11 +25460,12 @@ SELECT collation for ('foo' COLLATE "de_DE");
         <returnvalue>regtype</returnvalue>
        </para>
        <para>
-        Translates a textual type name to its OID.  A similar result is
+        Parses a string of text, extracts a potential type name from it, and
+        translates that name into an OID. A similar result is
         obtained by casting the string to type <type>regtype</type> (see
-        <xref linkend="datatype-oid"/>); however, this function will return
-        <literal>NULL</literal> rather than throwing an error if the name is
-        not found.
+        <xref linkend="datatype-oid"/>). Failure to extract a valid potential
+        type name results in an error; however, if the extracted names is not
+        known to the system, this function will return <literal>NULL</literal>.
        </para></entry>
       </row>
      </tbody>
