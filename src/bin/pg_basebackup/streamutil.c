@@ -358,11 +358,12 @@ RetrieveDataDirCreatePerm(PGconn *conn)
 	res = PQexec(conn, "SHOW data_directory_mode");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		pg_log_error("could not send replication command \"%s\": %s",
-					 "SHOW data_directory_mode", PQerrorMessage(conn));
-
+		// For some reason, aurora on arm64 machine returns this error for the above query:
+		// must be superuser or replication role to run this operation.
+		// So, we ignore the error and continue with the default group access.
+		SetDataDirectoryCreatePerm(700);
 		PQclear(res);
-		return false;
+		return true;
 	}
 	if (PQntuples(res) != 1 || PQnfields(res) < 1)
 	{
