@@ -700,14 +700,12 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 		/*
 		 * For newer server versions, likewise create pg_wal/summaries
 		 */
-		if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_WAL_SUMMARIES)
+		if (PQserverVersion(conn) >= MINIMUM_VERSION_FOR_WAL_SUMMARIES)
 		{
 			char		summarydir[MAXPGPATH];
 
 			snprintf(summarydir, sizeof(summarydir), "%s/%s/summaries",
-					 basedir,
-					 PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
-					 "pg_xlog" : "pg_wal");
+					 basedir, "pg_wal");
 
 			if (pg_mkdir_p(summarydir, pg_dir_create_mode) != 0 &&
 				errno != EEXIST)
