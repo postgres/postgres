@@ -4349,19 +4349,7 @@ freePGconn(PGconn *conn)
 		free(conn->events[i].name);
 	}
 
-	/* clean up pg_conn_host structures */
-	for (int i = 0; i < conn->nconnhost; ++i)
-	{
-		free(conn->connhost[i].host);
-		free(conn->connhost[i].hostaddr);
-		free(conn->connhost[i].port);
-		if (conn->connhost[i].password != NULL)
-		{
-			explicit_bzero(conn->connhost[i].password, strlen(conn->connhost[i].password));
-			free(conn->connhost[i].password);
-		}
-	}
-	free(conn->connhost);
+	pqReleaseConnHosts(conn);
 
 	free(conn->client_encoding_initial);
 	free(conn->events);
@@ -4421,6 +4409,31 @@ freePGconn(PGconn *conn)
 	termPQExpBuffer(&conn->workBuffer);
 
 	free(conn);
+}
+
+/*
+ * pqReleaseConnHosts
+ *	 - Free the host list in the PGconn.
+ */
+void
+pqReleaseConnHosts(PGconn *conn)
+{
+	if (conn->connhost)
+	{
+		for (int i = 0; i < conn->nconnhost; ++i)
+		{
+			free(conn->connhost[i].host);
+			free(conn->connhost[i].hostaddr);
+			free(conn->connhost[i].port);
+			if (conn->connhost[i].password != NULL)
+			{
+				explicit_bzero(conn->connhost[i].password,
+							   strlen(conn->connhost[i].password));
+				free(conn->connhost[i].password);
+			}
+		}
+		free(conn->connhost);
+	}
 }
 
 /*

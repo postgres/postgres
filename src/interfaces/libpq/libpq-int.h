@@ -678,6 +678,7 @@ extern void pqDropConnection(PGconn *conn, bool flushInput);
 #if defined(WIN32) && defined(SIO_KEEPALIVE_VALS)
 extern int	pqSetKeepalivesWin32(pgsocket sock, int idle, int interval);
 #endif
+extern void pqReleaseConnHosts(PGconn *conn);
 extern int	pqPacketSend(PGconn *conn, char pack_type,
 						 const void *buf, size_t buf_len);
 extern bool pqGetHomeDirectory(char *buf, int bufsize);
