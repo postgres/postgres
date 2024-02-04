@@ -675,10 +675,15 @@ extern char *const pgresStatus[];
 /* === in fe-connect.c === */
 
 extern void pqDropConnection(PGconn *conn, bool flushInput);
+extern bool pqConnectOptions2(PGconn *conn);
 #if defined(WIN32) && defined(SIO_KEEPALIVE_VALS)
 extern int	pqSetKeepalivesWin32(pgsocket sock, int idle, int interval);
 #endif
+extern int	pqConnectDBStart(PGconn *conn);
+extern int	pqConnectDBComplete(PGconn *conn);
+extern PGconn *pqMakeEmptyPGconn(void);
 extern void pqReleaseConnHosts(PGconn *conn);
+extern void pqClosePGconn(PGconn *conn);
 extern int	pqPacketSend(PGconn *conn, char pack_type,
 						 const void *buf, size_t buf_len);
 extern bool pqGetHomeDirectory(char *buf, int bufsize);
