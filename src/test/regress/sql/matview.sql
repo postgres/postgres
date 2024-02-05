@@ -231,6 +231,23 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_mv_foo;
 DROP OWNED BY regress_user_mvtest CASCADE;
 DROP ROLE regress_user_mvtest;
 
+-- Concurrent refresh requires a unique index on the materialized
+-- view. Test what happens if it's dropped during the refresh.
+CREATE OR REPLACE FUNCTION mvtest_drop_the_index()
+  RETURNS bool AS $$
+BEGIN
+  EXECUTE 'DROP INDEX IF EXISTS mvtest_drop_idx';
+  RETURN true;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE MATERIALIZED VIEW drop_idx_matview AS
+  SELECT 1 as i WHERE mvtest_drop_the_index();
+
+CREATE UNIQUE INDEX mvtest_drop_idx ON drop_idx_matview (i);
+REFRESH MATERIALIZED VIEW CONCURRENTLY drop_idx_matview;
+DROP MATERIALIZED VIEW drop_idx_matview; -- clean up
+
 -- make sure that create WITH NO DATA works via SPI
 BEGIN;
 CREATE FUNCTION mvtest_func()
