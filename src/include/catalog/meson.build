@@ -114,8 +114,8 @@ output_install = [
   dir_data,
   dir_data,
   dir_include_server / 'catalog',
-  false,
   dir_include_server / 'catalog',
+  false,
   dir_include_server / 'catalog',
 ]
 
