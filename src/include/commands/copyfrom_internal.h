@@ -53,6 +53,13 @@ typedef enum CopyInsertMethod
 } CopyInsertMethod;
 
 /*
+ * Per-format callback to parse a line into separate fields.
+ *
+ * Returns the number of fields read.
+ */
+typedef int (*CopyReadAttributes) (CopyFromState cstate);
+
+/*
  * This struct contains all the state variables used throughout a COPY FROM
  * operation.
  */
@@ -131,6 +138,12 @@ typedef struct CopyFromStateData
 	char	  **raw_fields;
 
 	/*
+	 * Per-format callback to parse lines, then fill raw_fields and
+	 * attribute_buf.
+	 */
+	CopyReadAttributes copy_read_attributes;
+
+	/*
 	 * Similarly, line_buf holds the whole input line being processed. The
 	 * input cycle is first to read the whole line into line_buf, and then
 	 * extract the individual attribute fields into attribute_buf.  line_buf
@@ -182,5 +195,9 @@ typedef struct CopyFromStateData
 
 extern void ReceiveCopyBegin(CopyFromState cstate);
 extern void ReceiveCopyBinaryHeader(CopyFromState cstate);
+
+/* Callbacks for copy_read_attributes */
+extern int	CopyReadAttributesCSV(CopyFromState cstate);
+extern int	CopyReadAttributesText(CopyFromState cstate);
 
 #endif							/* COPYFROM_INTERNAL_H */
