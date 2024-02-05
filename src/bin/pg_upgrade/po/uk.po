@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-12 08:32+0000\n"
-"PO-Revision-Date: 2022-09-13 11:52\n"
+"POT-Creation-Date: 2023-12-17 22:47+0000\n"
+"PO-Revision-Date: 2023-12-18 17:41\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -17,28 +17,28 @@ msgstr ""
 "X-Crowdin-File: /REL_14_STABLE/pg_upgrade.pot\n"
 "X-Crowdin-File-ID: 778\n"
 
-#: check.c:71
+#: check.c:74
 #, c-format
 msgid "Performing Consistency Checks on Old Live Server\n"
 "------------------------------------------------\n"
 msgstr "Перевірка цілістності на старому працюючому сервері\n"
 "------------------------------------------------\n"
 
-#: check.c:77
+#: check.c:80
 #, c-format
 msgid "Performing Consistency Checks\n"
 "-----------------------------\n"
 msgstr "Проведення перевірок цілістності\n"
 "-----------------------------\n"
 
-#: check.c:221
+#: check.c:234
 #, c-format
 msgid "\n"
 "*Clusters are compatible*\n"
 msgstr "\n"
 "*Кластери сумісні*\n"
 
-#: check.c:227
+#: check.c:240
 #, c-format
 msgid "\n"
 "If pg_upgrade fails after this point, you must re-initdb the\n"
@@ -47,7 +47,7 @@ msgstr "\n"
 "Якщо робота pg_upgrade після цієї точки перерветься, вам потрібно буде заново виконати initdb \n"
 "для нового кластера, перед продовженням.\n"
 
-#: check.c:272
+#: check.c:285
 #, c-format
 msgid "Optimizer statistics are not transferred by pg_upgrade.\n"
 "Once you start the new server, consider running:\n"
@@ -56,14 +56,14 @@ msgstr "Статистика оптимізатора не передаєтьс�
 "Після запуску нового серверу, розгляньте можливість запуску:\n"
 "    %s/vacuumdb %s--all --analyze-in-stages\n\n"
 
-#: check.c:278
+#: check.c:291
 #, c-format
 msgid "Running this script will delete the old cluster's data files:\n"
 "    %s\n"
 msgstr "При запуску цього скрипту файли даних старого кластера будуть видалені:\n"
 "    %s\n"
 
-#: check.c:283
+#: check.c:296
 #, c-format
 msgid "Could not create a script to delete the old cluster's data files\n"
 "because user-defined tablespaces or the new cluster's data directory\n"
@@ -74,170 +74,170 @@ msgstr "Не вдалося створити скрипт для видален�
 "простори або каталог даних нового кластера. Вміст старого кластера\n"
 "треба буде видалити вручну.\n"
 
-#: check.c:295
+#: check.c:308
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Перевірка версій кластерів"
 
-#: check.c:307
+#: check.c:320
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
 msgstr "Ця утиліта може виконувати оновлення тільки з версії PostgreSQL 8.4 і новіше.\n"
 
-#: check.c:311
+#: check.c:324
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s.\n"
 msgstr "Ця утиліта може тільки підвищувати версію PostgreSQL до %s.\n"
 
-#: check.c:320
+#: check.c:333
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions.\n"
 msgstr "Ця утиліта не може не може використовуватись щоб понижувати версію до більш старих основних версій PostgreSQL.\n"
 
-#: check.c:325
+#: check.c:338
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions.\n"
 msgstr "Каталог даних і двійковий каталог старого кластера з різних основних версій.\n"
 
-#: check.c:328
+#: check.c:341
 #, c-format
 msgid "New cluster data and binary directories are from different major versions.\n"
 msgstr "Каталог даних і двійковий каталог нового кластера з різних основних версій.\n"
 
-#: check.c:345
+#: check.c:358
 #, c-format
 msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
 msgstr "Для перевірки старого працюючого сервера до версії 9.1, вам необхідно вказати номер порта цього сервера.\n"
 
-#: check.c:349
+#: check.c:362
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different.\n"
 msgstr "Для перевірки працюючого сервера, старий і новий номер порта повинні бути різними.\n"
 
-#: check.c:364
+#: check.c:377
 #, c-format
 msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "кодування для бази даних \"%s\" не збігаються: старе \"%s\", нове \"%s\"\n"
 
-#: check.c:369
+#: check.c:382
 #, c-format
 msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "значення lc_collate для бази даних \"%s\" не збігаються: старе \"%s\", нове \"%s\"\n"
 
-#: check.c:372
+#: check.c:385
 #, c-format
 msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "значення lc_ctype для бази даних \"%s\" не збігаються: старе \"%s\", нове \"%s\"\n"
 
-#: check.c:445
+#: check.c:458
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n"
 msgstr "Новий кластер бази даних \"%s\" не порожній: знайдено відношення \"%s.%s\"\n"
 
-#: check.c:502
+#: check.c:515
 #, c-format
 msgid "Checking for new cluster tablespace directories"
 msgstr "Перевірка каталогів табличних просторів кластера"
 
-#: check.c:513
+#: check.c:526
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\"\n"
 msgstr "каталог нового кластерного табличного простору вже існує: \"%s\"\n"
 
-#: check.c:546
+#: check.c:559
 #, c-format
 msgid "\n"
 "WARNING:  new data directory should not be inside the old data directory, e.g. %s\n"
 msgstr "\n"
 "ПОПЕРЕДЖЕННЯ: новий каталог даних не повинен бути всередині старого каталогу даних, наприклад %s\n"
 
-#: check.c:570
+#: check.c:583
 #, c-format
 msgid "\n"
 "WARNING:  user-defined tablespace locations should not be inside the data directory, e.g. %s\n"
 msgstr "\n"
 "ПОПЕРЕДЖЕННЯ: користувацькі розташування табличних просторів не повинні бути всередині каталогу даних, наприклад %s\n"
 
-#: check.c:580
+#: check.c:593
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Створення скрипту для видалення старого кластеру"
 
-#: check.c:583 check.c:847 check.c:945 check.c:1075 check.c:1153 check.c:1415
+#: check.c:596 check.c:860 check.c:958 check.c:1088 check.c:1166 check.c:1462
 #: file.c:338 function.c:240 option.c:497 version.c:54 version.c:204
 #: version.c:376 version.c:511
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "не вдалося відкрити файл \"%s\": %s\n"
 
-#: check.c:639
+#: check.c:652
 #, c-format
 msgid "could not add execute permission to file \"%s\": %s\n"
 msgstr "не вдалося додати право виконання для файлу \"%s\": %s\n"
 
-#: check.c:659
+#: check.c:672
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Перевірка, чи є користувач бази даних стартовим користувачем"
 
-#: check.c:675
+#: check.c:688
 #, c-format
 msgid "database user \"%s\" is not the install user\n"
 msgstr "користувач бази даних \"%s\" не є стартовим користувачем\n"
 
-#: check.c:686
+#: check.c:699
 #, c-format
 msgid "could not determine the number of users\n"
 msgstr "не вдалося визначити кількість користувачів\n"
 
-#: check.c:694
+#: check.c:707
 #, c-format
 msgid "Only the install user can be defined in the new cluster.\n"
 msgstr "В новому кластері може бути визначеним тільки стартовий користувач.\n"
 
-#: check.c:714
+#: check.c:727
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Перевірка параметрів підключення до бази даних"
 
-#: check.c:736
+#: check.c:749
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
 msgstr "template0 не повинна дозволяти підключення, тобто pg_database.datallowconn повинно бути false\n"
 
-#: check.c:746
+#: check.c:759
 #, c-format
 msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
 msgstr "Всі бази даних, окрім template0, повинні дозволяти підключення, тобто pg_database.datallowconn повинно бути true\n"
 
-#: check.c:771
+#: check.c:784
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Перевірка підготовлених транзакцій"
 
-#: check.c:780
+#: check.c:793
 #, c-format
 msgid "The source cluster contains prepared transactions\n"
 msgstr "Початковий кластер містить підготовлені транзакції\n"
 
-#: check.c:782
+#: check.c:795
 #, c-format
 msgid "The target cluster contains prepared transactions\n"
 msgstr "Цільовий кластер містить підготовлені транзакції\n"
 
-#: check.c:808
+#: check.c:821
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Перевірка невідповідності при передаванні bigint в contrib/isn"
 
-#: check.c:869 check.c:970 check.c:1095 check.c:1175 check.c:1232 check.c:1291
-#: check.c:1320 check.c:1438 function.c:262 version.c:278 version.c:316
-#: version.c:460
+#: check.c:882 check.c:983 check.c:1108 check.c:1188 check.c:1245 check.c:1304
+#: check.c:1338 check.c:1367 check.c:1485 function.c:262 version.c:278
+#: version.c:316 version.c:460
 #, c-format
 msgid "fatal\n"
 msgstr "збій\n"
 
-#: check.c:870
+#: check.c:883
 #, c-format
 msgid "Your installation contains \"contrib/isn\" functions which rely on the\n"
 "bigint data type.  Your old and new clusters pass bigint values\n"
@@ -249,12 +249,12 @@ msgid "Your installation contains \"contrib/isn\" functions which rely on the\n"
 msgstr "Ваша інсталяція містить функції \"contrib/isn\", що використовують тип даних bigint. Старі та нові кластери передають значення bigint по-різному, тому цей кластер наразі неможливо оновити. Ви можете вручну вивантажити бази даних зі старого кластеру, що використовує засоби \"contrib/isn\", видалити їх, виконати оновлення, а потім відновити їх. Список проблемних функцій подано у файлі:\n"
 "    %s\n\n"
 
-#: check.c:893
+#: check.c:906
 #, c-format
 msgid "Checking for user-defined postfix operators"
 msgstr "Перевірка постфіксних операторів визначених користувачем"
 
-#: check.c:971
+#: check.c:984
 #, c-format
 msgid "Your installation contains user-defined postfix operators, which are not\n"
 "supported anymore.  Consider dropping the postfix operators and replacing\n"
@@ -266,12 +266,12 @@ msgstr "Ваша інсталяція містить користувацькі 
 "Список користувацьких постфіксних операторів знаходиться у файлі:\n"
 "    %s\n\n"
 
-#: check.c:995
+#: check.c:1008
 #, c-format
 msgid "Checking for incompatible polymorphic functions"
 msgstr "Перевірка несумісних поліморфних функцій"
 
-#: check.c:1096
+#: check.c:1109
 #, c-format
 msgid "Your installation contains user-defined objects that refer to internal\n"
 "polymorphic functions with arguments of type \"anyarray\" or \"anyelement\".\n"
@@ -288,12 +288,12 @@ msgstr "У вашій інсталяції містяться користува
 "Список проблемних об'єктів знаходиться у файлі:\n"
 "    %s\n\n"
 
-#: check.c:1121
+#: check.c:1134
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Перевірка таблиць WITH OIDS"
 
-#: check.c:1176
+#: check.c:1189
 #, c-format
 msgid "Your installation contains tables declared WITH OIDS, which is not\n"
 "supported anymore.  Consider removing the oid column using\n"
@@ -305,12 +305,12 @@ msgstr "Ваша інсталяція містить таблиці, створ�
 "Список проблемних таблиць подано у файлі:\n"
 "    %s\n\n"
 
-#: check.c:1204
+#: check.c:1217
 #, c-format
 msgid "Checking for system-defined composite types in user tables"
 msgstr "Перевірка складених типів визначених системою у таблицях користувача"
 
-#: check.c:1233
+#: check.c:1246
 #, c-format
 msgid "Your installation contains system-defined composite type(s) in user tables.\n"
 "These type OIDs are not stable across PostgreSQL versions,\n"
@@ -324,12 +324,12 @@ msgstr "Ваша інсталяція містить складені типи �
 "Список проблемних стовпців знаходиться у файлі:\n"
 "    %s\n\n"
 
-#: check.c:1261
+#: check.c:1274
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "Перевірка типів даних reg* в користувацьких таблицях"
 
-#: check.c:1292
+#: check.c:1305
 #, c-format
 msgid "Your installation contains one of the reg* data types in user tables.\n"
 "These data types reference system OIDs that are not preserved by\n"
@@ -343,12 +343,32 @@ msgstr "Ваша інсталяція містить один з типів да
 "Список проблемних стовпців знаходиться у файлі:\n"
 "    %s\n\n"
 
-#: check.c:1314
+#: check.c:1329
+#, c-format
+msgid "Checking for removed \"%s\" data type in user tables"
+msgstr "Перевірка видаленого типу даних \"%s\" в користувацьких таблицях"
+
+#: check.c:1339
+#, c-format
+msgid "Your installation contains the \"%s\" data type in user tables.\n"
+"The \"%s\" type has been removed in PostgreSQL version %s,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.  A list of the problem columns is in the file:\n"
+"    %s\n\n"
+msgstr "Користувацькі таблиці у вашій інсталяції містять тип даних \"%s\".\n"
+"Тип \"%s\" був видалений з версії PostgreSQL %s, тому цей кластер \n"
+"наразі не може бути оновлений. Ви можете видалите проблемні \n"
+"стовпці або змінити їх на інший тип даних, і перезапустити\n"
+"оновлення. Список проблемних стовпців є у файлі:\n"
+"    %s\n\n"
+
+#: check.c:1361
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Перевірка несумісного типу даних \"jsonb\""
 
-#: check.c:1321
+#: check.c:1368
 #, c-format
 msgid "Your installation contains the \"jsonb\" data type in user tables.\n"
 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
@@ -363,27 +383,27 @@ msgstr "Ваша інсталяція містить тип даних \"jsonb\"
 "Список проблемних стовпців знаходиться у файлі:\n"
 "    %s\n\n"
 
-#: check.c:1343
+#: check.c:1390
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Перевірка ролей, які починаються з \"pg_\""
 
-#: check.c:1353
+#: check.c:1400
 #, c-format
 msgid "The source cluster contains roles starting with \"pg_\"\n"
 msgstr "Початковий кластер містить ролі, які починаються з \"pg_\"\n"
 
-#: check.c:1355
+#: check.c:1402
 #, c-format
 msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "Цільовий кластер містить ролі, які починаються з \"pg_\"\n"
 
-#: check.c:1376
+#: check.c:1423
 #, c-format
 msgid "Checking for user-defined encoding conversions"
 msgstr "Перевірка користувацьких перетворення кодувань"
 
-#: check.c:1439
+#: check.c:1486
 #, c-format
 msgid "Your installation contains user-defined encoding conversions.\n"
 "The conversion function parameters changed in PostgreSQL version 14\n"
@@ -398,17 +418,17 @@ msgstr "Ваша інсталяція містить користувацькі 
 "Список перетворень кодувань знаходиться у файлі:\n"
 "    %s\n\n"
 
-#: check.c:1466
+#: check.c:1513
 #, c-format
 msgid "failed to get the current locale\n"
 msgstr "не вдалося отримати поточну локаль\n"
 
-#: check.c:1475
+#: check.c:1522
 #, c-format
 msgid "failed to get system locale name for \"%s\"\n"
 msgstr "не вдалося отримати системне ім'я локалі для \"%s\"\n"
 
-#: check.c:1481
+#: check.c:1528
 #, c-format
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "не вдалося відновити стару локаль \"%s\"\n"
@@ -475,194 +495,194 @@ msgstr "%d: проблема pg_resetwal\n"
 msgid "%d: controldata retrieval problem\n"
 msgstr "%d: проблема з отриманням контрольних даних\n"
 
-#: controldata.c:572
+#: controldata.c:571
 #, c-format
 msgid "The source cluster lacks some required control information:\n"
 msgstr "У початковому кластері відсутня необхідна контрольна інформація:\n"
 
-#: controldata.c:575
+#: controldata.c:574
 #, c-format
 msgid "The target cluster lacks some required control information:\n"
 msgstr "У цільовому кластері відсутня необхідна контрольна інформація:\n"
 
-#: controldata.c:578
+#: controldata.c:577
 #, c-format
 msgid "  checkpoint next XID\n"
 msgstr "  наступний XID контрольної точки\n"
 
-#: controldata.c:581
+#: controldata.c:580
 #, c-format
 msgid "  latest checkpoint next OID\n"
 msgstr "  наступний OID останньої контрольної точки\n"
 
-#: controldata.c:584
+#: controldata.c:583
 #, c-format
 msgid "  latest checkpoint next MultiXactId\n"
 msgstr "  наступний MultiXactId останньої контрольної точки\n"
 
-#: controldata.c:588
+#: controldata.c:587
 #, c-format
 msgid "  latest checkpoint oldest MultiXactId\n"
 msgstr "  найстарший MultiXactId останньої контрольної точки\n"
 
-#: controldata.c:591
+#: controldata.c:590
 #, c-format
 msgid "  latest checkpoint oldestXID\n"
 msgstr "  найстарший oldestXID останньої контрольної точки\n"
 
-#: controldata.c:594
+#: controldata.c:593
 #, c-format
 msgid "  latest checkpoint next MultiXactOffset\n"
 msgstr "  наступний MultiXactOffset останньої контрольної точки\n"
 
-#: controldata.c:597
+#: controldata.c:596
 #, c-format
 msgid "  first WAL segment after reset\n"
 msgstr "  перший сегмет WAL після скидання\n"
 
-#: controldata.c:600
+#: controldata.c:599
 #, c-format
 msgid "  float8 argument passing method\n"
 msgstr "  метод передачі аргументу float8\n"
 
-#: controldata.c:603
+#: controldata.c:602
 #, c-format
 msgid "  maximum alignment\n"
 msgstr "  максимальне вирівнювання\n"
 
-#: controldata.c:606
+#: controldata.c:605
 #, c-format
 msgid "  block size\n"
 msgstr "  розмір блоку\n"
 
-#: controldata.c:609
+#: controldata.c:608
 #, c-format
 msgid "  large relation segment size\n"
 msgstr "  розмір сегменту великого відношення\n"
 
-#: controldata.c:612
+#: controldata.c:611
 #, c-format
 msgid "  WAL block size\n"
 msgstr "  розмір блоку WAL\n"
 
-#: controldata.c:615
+#: controldata.c:614
 #, c-format
 msgid "  WAL segment size\n"
 msgstr "  розмір сегменту WAL\n"
 
-#: controldata.c:618
+#: controldata.c:617
 #, c-format
 msgid "  maximum identifier length\n"
 msgstr "  максимальна довжина ідентифікатора\n"
 
-#: controldata.c:621
+#: controldata.c:620
 #, c-format
 msgid "  maximum number of indexed columns\n"
 msgstr "  максимальна кількість індексованих стовпців\n"
 
-#: controldata.c:624
+#: controldata.c:623
 #, c-format
 msgid "  maximum TOAST chunk size\n"
 msgstr "  максимальний розмір порції TOAST\n"
 
-#: controldata.c:628
+#: controldata.c:627
 #, c-format
 msgid "  large-object chunk size\n"
 msgstr "  розмір порції великого об'єкту\n"
 
-#: controldata.c:631
+#: controldata.c:630
 #, c-format
 msgid "  dates/times are integers?\n"
 msgstr "  дата/час представлені цілими числами?\n"
 
-#: controldata.c:635
+#: controldata.c:634
 #, c-format
 msgid "  data checksum version\n"
 msgstr "  версія контрольних сум даних\n"
 
-#: controldata.c:637
+#: controldata.c:636
 #, c-format
 msgid "Cannot continue without required control information, terminating\n"
 msgstr "Не можна продовжити без необхідної контрольної інформації, завершення\n"
 
-#: controldata.c:652
+#: controldata.c:651
 #, c-format
 msgid "old and new pg_controldata alignments are invalid or do not match\n"
 "Likely one cluster is a 32-bit install, the other 64-bit\n"
 msgstr "старе і нове вирівнювання в pg_controldata неприпустимі або не збігаються\n"
 "Ймовірно, один кластер встановлений у 32-бітній системі, а інший - у 64-бітній\n"
 
-#: controldata.c:656
+#: controldata.c:655
 #, c-format
 msgid "old and new pg_controldata block sizes are invalid or do not match\n"
 msgstr "старий і новий розмір блоків в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:659
+#: controldata.c:658
 #, c-format
 msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n"
 msgstr "старий і новий максимальний розмір сегментів відношень в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:662
+#: controldata.c:661
 #, c-format
 msgid "old and new pg_controldata WAL block sizes are invalid or do not match\n"
 msgstr "старий і новий розмір блоків WAL в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:665
+#: controldata.c:664
 #, c-format
 msgid "old and new pg_controldata WAL segment sizes are invalid or do not match\n"
 msgstr "старий і новий розмір сегментів WAL в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:668
+#: controldata.c:667
 #, c-format
 msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match\n"
 msgstr "стара і нова максимальна довжина ідентифікаторів в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:671
+#: controldata.c:670
 #, c-format
 msgid "old and new pg_controldata maximum indexed columns are invalid or do not match\n"
 msgstr "стара і нова максимальна кількість індексованих стовпців в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:674
+#: controldata.c:673
 #, c-format
 msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n"
 msgstr "старий і новий максимальний розмір порції TOAST в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:679
+#: controldata.c:678
 #, c-format
 msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match\n"
 msgstr "старий і новий розмір порції великого об'єкту в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:682
+#: controldata.c:681
 #, c-format
 msgid "old and new pg_controldata date/time storage types do not match\n"
 msgstr "старий і новий тип сховища дати/часу в pg_controldata неприпустимі або не збігаються\n"
 
-#: controldata.c:695
+#: controldata.c:694
 #, c-format
 msgid "old cluster does not use data checksums but the new one does\n"
 msgstr "старий кластер не використовує контрольні суми даних, але новий використовує\n"
 
-#: controldata.c:698
+#: controldata.c:697
 #, c-format
 msgid "old cluster uses data checksums but the new one does not\n"
 msgstr "старий кластер використовує контрольні суми даних, але новий не використовує\n"
 
-#: controldata.c:700
+#: controldata.c:699
 #, c-format
 msgid "old and new cluster pg_controldata checksum versions do not match\n"
 msgstr "стара і нова версія контрольних сум кластера в pg_controldata не збігаються\n"
 
-#: controldata.c:711
+#: controldata.c:710
 #, c-format
 msgid "Adding \".old\" suffix to old global/pg_control"
 msgstr "Додавання суфікса \".old\" до старого файла global/pg_control"
 
-#: controldata.c:716
+#: controldata.c:715
 #, c-format
 msgid "Unable to rename %s to %s.\n"
 msgstr "Не вдалося перейменувати %s на %s.\n"
 
-#: controldata.c:719
+#: controldata.c:718
 #, c-format
 msgid "\n"
 "If you want to start the old cluster, you will need to remove\n"
@@ -974,7 +994,7 @@ msgstr "відображення для бази даних \"%s\":\n"
 msgid "%s.%s: %u to %u\n"
 msgstr "%s.%s: %u в %u\n"
 
-#: info.c:297 info.c:633
+#: info.c:297 info.c:632
 #, c-format
 msgid "\n\n"
 msgstr "\n\n"
@@ -993,12 +1013,12 @@ msgid "\n"
 msgstr "\n"
 "цільові бази даних:\n"
 
-#: info.c:631
+#: info.c:630
 #, c-format
 msgid "Database: %s\n"
 msgstr "База даних: %s\n"
 
-#: info.c:644
+#: info.c:643
 #, c-format
 msgid "relname: %s.%s: reloid: %u reltblspace: %s\n"
 msgstr "ім'я_відношення: %s.%s: oid_відношення: %u табл_простір: %s\n"

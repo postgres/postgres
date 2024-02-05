@@ -25848,7 +25848,7 @@ msgid "Forces synchronization of updates to disk."
 msgstr "Forzar la sincronización de escrituras a disco."
 
 #: utils/misc/guc.c:1228
-msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This insures that a database cluster will recover to a consistent state after an operating system or hardware crash."
+msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This ensures that a database cluster will recover to a consistent state after an operating system or hardware crash."
 msgstr "El servidor usará la llamada a sistema fsync() en varios lugares para asegurarse que las actualizaciones son escritas físicamente a disco. Esto asegura que las bases de datos se recuperarán a un estado consistente después de una caída de hardware o sistema operativo."
 
 #: utils/misc/guc.c:1239
