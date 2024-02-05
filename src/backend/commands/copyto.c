@@ -55,6 +55,14 @@ typedef enum CopyDest
 } CopyDest;
 
 /*
+ * Per-format callback to send output representation of one attribute for
+ * a `string`.  `use_quote` tracks if quotes are required in the output
+ * representation.
+ */
+typedef void (*CopyAttributeOut) (CopyToState cstate, const char *string,
+								  bool use_quote);
+
+/*
  * This struct contains all the state variables used throughout a COPY TO
  * operation.
  *
@@ -97,6 +105,7 @@ typedef struct CopyToStateData
 	MemoryContext copycontext;	/* per-copy execution context */
 
 	FmgrInfo   *out_functions;	/* lookup info for output functions */
+	CopyAttributeOut copy_attribute_out;	/* output representation callback */
 	MemoryContext rowcontext;	/* per-row evaluation context */
 	uint64		bytes_processed;	/* number of bytes processed so far */
 } CopyToStateData;
@@ -117,9 +126,12 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 static void EndCopy(CopyToState cstate);
 static void ClosePipeToProgram(CopyToState cstate);
 static void CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot);
-static void CopyAttributeOutText(CopyToState cstate, const char *string);
+
+/* Callbacks for copy_attribute_out */
+static void CopyAttributeOutText(CopyToState cstate, const char *string,
+								 bool use_quote);
 static void CopyAttributeOutCSV(CopyToState cstate, const char *string,
-								bool use_quote, bool single_attr);
+								bool use_quote);
 
 /* Low-level communications functions */
 static void SendCopyBegin(CopyToState cstate);
@@ -432,6 +444,15 @@ BeginCopyTo(ParseState *pstate,
 
 	/* Extract options from the statement node tree */
 	ProcessCopyOptions(pstate, &cstate->opts, false /* is_from */ , options);
+
+	/* Set output representation callback */
+	if (!cstate->opts.binary)
+	{
+		if (cstate->opts.csv_mode)
+			cstate->copy_attribute_out = CopyAttributeOutCSV;
+		else
+			cstate->copy_attribute_out = CopyAttributeOutText;
+	}
 
 	/* Process the source/target relation or query */
 	if (rel)
@@ -836,11 +857,8 @@ DoCopyTo(CopyToState cstate)
 
 				colname = NameStr(TupleDescAttr(tupDesc, attnum - 1)->attname);
 
-				if (cstate->opts.csv_mode)
-					CopyAttributeOutCSV(cstate, colname, false,
-										list_length(cstate->attnumlist) == 1);
-				else
-					CopyAttributeOutText(cstate, colname);
+				/* Ignore quotes */
+				cstate->copy_attribute_out(cstate, colname, false);
 			}
 
 			CopySendEndOfRow(cstate);
@@ -950,12 +968,9 @@ CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot)
 			{
 				string = OutputFunctionCall(&out_functions[attnum - 1],
 											value);
-				if (cstate->opts.csv_mode)
-					CopyAttributeOutCSV(cstate, string,
-										cstate->opts.force_quote_flags[attnum - 1],
-										list_length(cstate->attnumlist) == 1);
-				else
-					CopyAttributeOutText(cstate, string);
+
+				cstate->copy_attribute_out(cstate, string,
+										   cstate->opts.force_quote_flags[attnum - 1]);
 			}
 			else
 			{
@@ -985,7 +1000,8 @@ CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot)
 	} while (0)
 
 static void
-CopyAttributeOutText(CopyToState cstate, const char *string)
+CopyAttributeOutText(CopyToState cstate, const char *string,
+					 bool use_quote)
 {
 	const char *ptr;
 	const char *start;
@@ -1139,7 +1155,7 @@ CopyAttributeOutText(CopyToState cstate, const char *string)
  */
 static void
 CopyAttributeOutCSV(CopyToState cstate, const char *string,
-					bool use_quote, bool single_attr)
+					bool use_quote)
 {
 	const char *ptr;
 	const char *start;
@@ -1147,6 +1163,7 @@ CopyAttributeOutCSV(CopyToState cstate, const char *string,
 	char		delimc = cstate->opts.delim[0];
 	char		quotec = cstate->opts.quote[0];
 	char		escapec = cstate->opts.escape[0];
+	bool		single_attr = (list_length(cstate->attnumlist) == 1);
 
 	/* force quoting if it matches null_print (before conversion!) */
 	if (!use_quote && strcmp(string, cstate->opts.null_print) == 0)
