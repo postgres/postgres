@@ -2,11 +2,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:25+0200\n"
+"POT-Creation-Date: 2023-04-19 11:18+0000\n"
+"PO-Revision-Date: 2023-12-19 15:37\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
-"Language: uk\n"
+"Language: uk_UA\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_15_STABLE/pg_ctl.pot\n"
-"X-Crowdin-File-ID: 878\n"
+"X-Crowdin-File: /REL_16_STABLE/pg_ctl.pot\n"
+"X-Crowdin-File-ID: 937\n"
 
 #: ../../common/exec.c:172
 #, c-format
@@ -25,7 +25,7 @@ msgstr "невірний бінарний файл \"%s\": %m"
 #: ../../common/exec.c:215
 #, c-format
 msgid "could not read binary \"%s\": %m"
-msgstr "неможливо прочитати бінарний файл \"%s\": %m"
+msgstr "не вдалося прочитати бінарний файл \"%s\": %m"
 
 #: ../../common/exec.c:223
 #, c-format
@@ -33,10 +33,9 @@ msgid "could not find a \"%s\" to execute"
 msgstr "неможливо знайти \"%s\" для виконання"
 
 #: ../../common/exec.c:250
-#, fuzzy, c-format
-#| msgid "could not reopen file \"%s\" as stderr: %m"
+#, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
-msgstr "не вдалося повторно відкрити файл \"%s\" як stderr: %m"
+msgstr "не вдалося знайти абсолютний шлях \"%s\": %m"
 
 #: ../../common/exec.c:412
 #, c-format
@@ -207,11 +206,9 @@ msgstr "%s: сервер не було запущено вчасно\n"
 
 #: pg_ctl.c:997
 #, c-format
-msgid ""
-"%s: could not start server\n"
+msgid "%s: could not start server\n"
 "Examine the log output.\n"
-msgstr ""
-"%s: неможливо запустити сервер\n"
+msgstr "%s: неможливо запустити сервер\n"
 "Передивіться протокол виконання.\n"
 
 #: pg_ctl.c:1005
@@ -250,8 +247,7 @@ msgid "%s: server does not shut down\n"
 msgstr "%s: сервер не зупинено\n"
 
 #: pg_ctl.c:1059 pg_ctl.c:1121
-msgid ""
-"HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
+msgid "HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 "waiting for session-initiated disconnection.\n"
 msgstr "ПІДКАЗКА: Режим \"-m fast\" закриває сесії відразу, не чекаючи на відключення ініційовані сесіями.\n"
 
@@ -284,7 +280,7 @@ msgstr "запуск серверу в будь-якому разі\n"
 #: pg_ctl.c:1154
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %d)\n"
-msgstr "%s: неможливо перезавантажити сервер; сервер запущено в однокористувацькому режимі (PID: %d)\n"
+msgstr "%s: не можливо перезапустити сервер; сервер запущений в режимі single-user (PID: %d)\n"
 
 #: pg_ctl.c:1163
 #, c-format
@@ -485,12 +481,8 @@ msgstr "Спробуйте \"%s --help\" для додаткової інфор�
 
 #: pg_ctl.c:1966
 #, c-format
-msgid ""
-"%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
-"\n"
-msgstr ""
-"%s - це утиліта для ініціалізації, запуску, зупинки і контролю серверу PostgreSQL.\n"
-"\n"
+msgid "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n\n"
+msgstr "%s - це утиліта для ініціалізації, запуску, зупинки і контролю серверу PostgreSQL.\n\n"
 
 #: pg_ctl.c:1967
 #, c-format
@@ -504,11 +496,9 @@ msgstr "  %s init[db]   [-D КАТАЛОГ-ДАНИХ] [-s] [-o ПАРАМЕТР
 
 #: pg_ctl.c:1969
 #, c-format
-msgid ""
-"  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
+msgid "  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-p PATH] [-c]\n"
-msgstr ""
-"  %s start [-D КАТАЛОГ-ДАНИХ] [-l ІМ'Я-ФАЙЛ] [-W] [-t СЕК] [-s]\n"
+msgstr "  %s start [-D КАТАЛОГ-ДАНИХ] [-l ІМ'Я-ФАЙЛ] [-W] [-t СЕК] [-s]\n"
 "                    [-o ПАРАМЕТРИ] [-p ШЛЯХ] [-c]\n"
 
 #: pg_ctl.c:1971
@@ -518,11 +508,9 @@ msgstr "  %s stop [-D КАТАЛОГ-ДАНИХ] [-m РЕЖИМ-ЗУПИНКИ] 
 
 #: pg_ctl.c:1972
 #, c-format
-msgid ""
-"  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+msgid "  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-c]\n"
-msgstr ""
-"  %s restart [-D КАТАЛОГ-ДАНИХ] [-m РЕЖИМ-ЗУПИНКИ] [-W] [-t СЕК] [-s]\n"
+msgstr "  %s restart [-D КАТАЛОГ-ДАНИХ] [-m РЕЖИМ-ЗУПИНКИ] [-W] [-t СЕК] [-s]\n"
 "                    [-o ПАРАМЕТРИ] [-c]\n"
 
 #: pg_ctl.c:1974
@@ -552,11 +540,9 @@ msgstr "  %s kill       ІМ'Я-СИГНАЛУ PID\n"
 
 #: pg_ctl.c:1980
 #, c-format
-msgid ""
-"  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
+msgid "  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
 "                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
-msgstr ""
-"  %s register [-D КАТАЛОГ-ДАНИХ] [-N ІМ'Я-СЛУЖБИ] [-U ІМ'Я-КОРИСТУВАЧА] [-P ПАРОЛЬ]\n"
+msgstr "  %s register [-D КАТАЛОГ-ДАНИХ] [-N ІМ'Я-СЛУЖБИ] [-U ІМ'Я-КОРИСТУВАЧА] [-P ПАРОЛЬ]\n"
 "                  [-S ТИП-ЗАПУСКУ] [-e ДЖЕРЕЛО] [-W] [-t СЕК] [-s] [-o ПАРАМЕТРИ]\n"
 
 #: pg_ctl.c:1982
@@ -566,11 +552,9 @@ msgstr "  %s unregister [-N ІМ'Я-СЛУЖБИ]\n"
 
 #: pg_ctl.c:1985
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Common options:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Загальні параметри:\n"
 
 #: pg_ctl.c:1986
@@ -620,11 +604,9 @@ msgstr "Якщо -D параметр пропущено, використову�
 
 #: pg_ctl.c:1998
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Options for start or restart:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Параметри запуску або перезапуску:\n"
 
 #: pg_ctl.c:2000
@@ -644,8 +626,7 @@ msgstr "  -l, --log=ФАЙЛ     записувати (або додавати) 
 
 #: pg_ctl.c:2005
 #, c-format
-msgid ""
-"  -o, --options=OPTIONS  command line options to pass to postgres\n"
+msgid "  -o, --options=OPTIONS  command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr "  -o, --options=ПАРАМЕТРИ параметри командного рядку для PostgreSQL або initdb\n"
 
@@ -656,11 +637,9 @@ msgstr "  -p ШЛЯХ-ДО-СЕРВЕРУ   зазвичай зайвий\n"
 
 #: pg_ctl.c:2008
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Options for stop or restart:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Параметри припинення або перезапуску:\n"
 
 #: pg_ctl.c:2009
@@ -670,11 +649,9 @@ msgstr "  -m, --mode=РЕЖИМ    РЕЖИМ може бути \"smart\", \"fas
 
 #: pg_ctl.c:2011
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Shutdown modes are:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Режими зупинки:\n"
 
 #: pg_ctl.c:2012
@@ -694,20 +671,16 @@ msgstr "  immediate   вийти негайно без повної процед
 
 #: pg_ctl.c:2016
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Allowed signal names for kill:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Дозволенні сигнали для команди kill:\n"
 
 #: pg_ctl.c:2020
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Options for register and unregister:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Параметри для реєстрації і видалення: \n"
 
 #: pg_ctl.c:2021
@@ -732,11 +705,9 @@ msgstr "  -S ТИП-ЗАПУСКУ   тип запуску служби для �
 
 #: pg_ctl.c:2026
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Start types are:\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Типи запуску:\n"
 
 #: pg_ctl.c:2027
@@ -751,11 +722,9 @@ msgstr "  demand     запускати сервер за потреби\n"
 
 #: pg_ctl.c:2031
 #, c-format
-msgid ""
-"\n"
+msgid "\n"
 "Report bugs to <%s>.\n"
-msgstr ""
-"\n"
+msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
 #: pg_ctl.c:2032
@@ -790,12 +759,10 @@ msgstr "%s: контрольний файл видається пошкодже�
 
 #: pg_ctl.c:2250
 #, c-format
-msgid ""
-"%s: cannot be run as root\n"
+msgid "%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
-msgstr ""
-"%s: не може бути запущеним від ім'я супер-користувача\n"
+msgstr "%s: не може бути запущеним від ім'я супер-користувача\n"
 " Будь ласка увійдіть (використовуючи наприклад, \"su\") як (непривілейований) користувач який буде мати\n"
 "свій серверний процес. \n"
 
@@ -828,3 +795,4 @@ msgstr "%s: команда не вказана\n"
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: не вказано каталог даних і змінна середовища PGDATA не встановлена\n"
+

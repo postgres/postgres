@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-07-20 09:25+0900\n"
-"PO-Revision-Date: 2023-09-05 09:54+0200\n"
+"PO-Revision-Date: 2023-11-22 10:49+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -151,7 +151,7 @@ msgstr "割り込み\n"
 #: ../../fe_utils/print.c:3218
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
-msgstr "テーブルの内容にヘッダーを追加できません: 列数 %d が制限値を超えています。\n"
+msgstr "テーブルの内容にヘッダーを追加できません: 列数の上限値%dを超えています。\n"
 
 #: ../../fe_utils/print.c:3258
 #, c-format

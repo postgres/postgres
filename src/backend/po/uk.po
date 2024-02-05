@@ -26790,7 +26790,7 @@ msgid "Forces synchronization of updates to disk."
 msgstr "Примусова синхронізація оновлень на диск."
 
 #: utils/misc/guc.c:1297
-msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This insures that a database cluster will recover to a consistent state after an operating system or hardware crash."
+msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This ensures that a database cluster will recover to a consistent state after an operating system or hardware crash."
 msgstr "Сервер буде використовувати системний виклик fsync() в декількох місцях, щоб впевнитись, що оновлення фізично записані на диск. Це дозволить привести кластер бази даних в узгоджений стан після аварійного завершення роботи операційної системи або апаратного забезпечення."
 
 #: utils/misc/guc.c:1308

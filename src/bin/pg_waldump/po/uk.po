@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-17 06:47+0000\n"
-"PO-Revision-Date: 2023-08-28 15:54\n"
+"POT-Creation-Date: 2023-12-17 22:17+0000\n"
+"PO-Revision-Date: 2023-12-19 15:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -109,7 +109,7 @@ msgstr "%s"
 #: pg_waldump.c:519
 #, c-format
 msgid "invalid fork number: %u"
-msgstr ""
+msgstr "неприпустимий номер форку: %u"
 
 #: pg_waldump.c:531
 #, c-format
@@ -180,7 +180,9 @@ msgstr "  -n, --limit=N         число записів для відобра�
 msgid "  -p, --path=PATH        directory in which to find WAL segment files or a\n"
 "                         directory with a ./pg_wal that contains such files\n"
 "                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
-msgstr ""
+msgstr "  -p, --path=PATH       каталог, у якому шукати файли сегментів журналу \n"
+"                         або каталог з ./pg_wal, що містить такі файли\n"
+"                         (за замовчуванням: чинний каталог, ./pg_wal, $PGDATA/pg_wal)\n"
 
 #: pg_waldump.c:769
 #, c-format
@@ -208,7 +210,8 @@ msgstr "  -s, --start=RECPTR     почати читання WAL з місця R
 #, c-format
 msgid "  -t, --timeline=TLI     timeline from which to read WAL records\n"
 "                         (default: 1 or the value used in STARTSEG)\n"
-msgstr ""
+msgstr "  -t, --timeline=TLI     часова шкала, WAL-записи якої будуть прочитані\n"
+"                          (за замовчуванням: 1 або значення, що використовується у STARTSEG)\n"
 
 #: pg_waldump.c:776
 #, c-format
@@ -234,7 +237,7 @@ msgstr "  -z, --stats[=record]    показати статистику замі
 #: pg_waldump.c:781
 #, c-format
 msgid "  --save-fullpage=DIR    save full page images to DIR\n"
-msgstr ""
+msgstr "  --save-fullpage=DIR    зберігати повні зображення сторінок в DIR\n"
 
 #: pg_waldump.c:782
 #, c-format
@@ -382,167 +385,157 @@ msgstr "помилка у записі WAL у %X/%X: %s"
 msgid "Try \"%s --help\" for more information."
 msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
-#: xlogreader.c:626
+#: xlogreader.c:621
 #, c-format
 msgid "invalid record offset at %X/%X: expected at least %u, got %u"
 msgstr ""
 
-#: xlogreader.c:635
+#: xlogreader.c:630
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "по зсуву %X/%X запитано продовження запису"
 
-#: xlogreader.c:676 xlogreader.c:1119
+#: xlogreader.c:671 xlogreader.c:1136
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr ""
 
-#: xlogreader.c:705
-#, c-format
-msgid "out of memory while trying to decode a record of length %u"
-msgstr "не вистачило пам'яті під час спроби закодування запису довжиною %u"
-
-#: xlogreader.c:727
-#, c-format
-msgid "record length %u at %X/%X too long"
-msgstr "довжина запису %u на %X/%X є задовгою"
-
-#: xlogreader.c:776
+#: xlogreader.c:760
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "немає прапорця contrecord в позиції %X/%X"
 
-#: xlogreader.c:789
+#: xlogreader.c:773
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "неприпустима довжина contrecord %u (очікувалось %lld) на %X/%X"
 
-#: xlogreader.c:1127
+#: xlogreader.c:1144
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "невірний ID менеджера ресурсів %u в %X/%X"
 
-#: xlogreader.c:1140 xlogreader.c:1156
+#: xlogreader.c:1157 xlogreader.c:1173
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "запис з неправильним попереднім посиланням %X/%X на %X/%X"
 
-#: xlogreader.c:1192
+#: xlogreader.c:1211
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "некоректна контрольна сума даних менеджера ресурсів у запису по зсуву %X/%X"
 
-#: xlogreader.c:1226
+#: xlogreader.c:1245
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr ""
 
-#: xlogreader.c:1241 xlogreader.c:1283
+#: xlogreader.c:1260 xlogreader.c:1302
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr ""
 
-#: xlogreader.c:1257
+#: xlogreader.c:1276
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WAL файл належить іншій системі баз даних: ідентифікатор системи баз даних де міститься WAL файл - %llu, а ідентифікатор системи баз даних pg_control - %llu"
 
-#: xlogreader.c:1265
+#: xlogreader.c:1284
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "Файл WAL належить іншій системі баз даних: некоректний розмір сегменту в заголовку сторінки"
 
-#: xlogreader.c:1271
+#: xlogreader.c:1290
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "Файл WAL належить іншій системі баз даних: некоректний XLOG_BLCKSZ в заголовку сторінки"
 
-#: xlogreader.c:1303
+#: xlogreader.c:1322
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr ""
 
-#: xlogreader.c:1329
+#: xlogreader.c:1348
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr ""
 
-#: xlogreader.c:1735
+#: xlogreader.c:1754
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "ідентифікатор блока %u out-of-order в позиції %X/%X"
 
-#: xlogreader.c:1759
+#: xlogreader.c:1778
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA встановлений, але немає даних в позиції %X/%X"
 
-#: xlogreader.c:1766
+#: xlogreader.c:1785
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA встановлений, але довжина даних дорівнює %u в позиції %X/%X"
 
-#: xlogreader.c:1802
+#: xlogreader.c:1821
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE встановлений, але для пропуску задані: зсув %u, довжина %u, при довжині образу блока %u в позиції %X/%X"
 
-#: xlogreader.c:1818
+#: xlogreader.c:1837
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE не встановлений, але для пропуску задані: зсув %u, довжина %u в позиції %X/%X"
 
-#: xlogreader.c:1832
+#: xlogreader.c:1851
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED встановлений, але довжина образу блока дорівнює %u в позиції %X/%X"
 
-#: xlogreader.c:1847
+#: xlogreader.c:1866
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "ні BKPIMAGE_HAS_HOLE, ні BKPIMAGE_COMPRESSED не встановлені, але довжина образу блока дорівнює %u в позиції %X/%X"
 
-#: xlogreader.c:1863
+#: xlogreader.c:1882
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL встановлений, але попереднє значення не задано в позиції %X/%X"
 
-#: xlogreader.c:1875
+#: xlogreader.c:1894
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "невірний ідентифікатор блоку %u в позиції %X/%X"
 
-#: xlogreader.c:1942
+#: xlogreader.c:1961
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "запис з невірною довжиною на %X/%X"
 
-#: xlogreader.c:1968
+#: xlogreader.c:1987
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "не вдалося знайти блок резервної копії з ID %d у записі WAL"
 
-#: xlogreader.c:2052
+#: xlogreader.c:2071
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "не вдалося відновити зображення %X/%X з недійсним вказаним блоком %d"
 
-#: xlogreader.c:2059
+#: xlogreader.c:2078
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "не вдалося відновити зображення %X/%X з недійсним станом, блок %d"
 
-#: xlogreader.c:2086 xlogreader.c:2103
+#: xlogreader.c:2105 xlogreader.c:2122
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "не вдалося відновити зображення в %X/%X, стиснуте %s, не підтримується збіркою, блок %d"
 
-#: xlogreader.c:2112
+#: xlogreader.c:2131
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "не вдалося відновити зображення %X/%X стиснуте з невідомим методом, блок %d"
 
-#: xlogreader.c:2120
+#: xlogreader.c:2139
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "не вдалося розпакувати зображення на %X/%X, блок %d"

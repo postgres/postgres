@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-11-03 09:08+0300\n"
+"POT-Creation-Date: 2024-02-02 18:10+0300\n"
 "PO-Revision-Date: 2023-08-29 13:37+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -278,7 +278,7 @@ msgstr ""
 #: command.c:1350 command.c:2152 command.c:3435 command.c:3632 command.c:5795
 #: common.c:182 common.c:231 common.c:400 common.c:1102 common.c:1120
 #: common.c:1194 common.c:1313 common.c:1351 common.c:1444 common.c:1480
-#: copy.c:486 copy.c:720 help.c:66 large_obj.c:157 large_obj.c:192
+#: copy.c:486 copy.c:721 help.c:66 large_obj.c:157 large_obj.c:192
 #: large_obj.c:254 startup.c:304
 #, c-format
 msgid "%s"
@@ -1053,11 +1053,11 @@ msgstr ""
 "Вводите данные для копирования, разделяя строки переводом строки.\n"
 "Закончите ввод строкой '\\.' или сигналом EOF."
 
-#: copy.c:682
+#: copy.c:683
 msgid "aborted because of read failure"
 msgstr "прерывание из-за ошибки чтения"
 
-#: copy.c:716
+#: copy.c:717
 msgid "trying to exit copy mode"
 msgstr "попытка выйти из режима копирования"
 

@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-12 10:47+0000\n"
-"PO-Revision-Date: 2022-09-13 11:52\n"
+"POT-Creation-Date: 2023-04-19 11:17+0000\n"
+"PO-Revision-Date: 2023-12-20 11:53\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_15_STABLE/pg_config.pot\n"
-"X-Crowdin-File-ID: 926\n"
+"X-Crowdin-File: /REL_16_STABLE/pg_config.pot\n"
+"X-Crowdin-File-ID: 973\n"
 
 #: ../../common/config_info.c:134 ../../common/config_info.c:142
 #: ../../common/config_info.c:150 ../../common/config_info.c:158
@@ -24,42 +24,32 @@ msgstr ""
 msgid "not recorded"
 msgstr "не записано"
 
-#: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "не вдалося визначити поточний каталог: %m"
+msgid "invalid binary \"%s\": %m"
+msgstr "невірний бінарний файл \"%s\": %m"
 
-#: ../../common/exec.c:168
+#: ../../common/exec.c:215
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "невірний бінарний файл \"%s\""
+msgid "could not read binary \"%s\": %m"
+msgstr "не вдалося прочитати бінарний файл \"%s\": %m"
 
-#: ../../common/exec.c:218
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "неможливо прочитати бінарний файл \"%s\""
-
-#: ../../common/exec.c:226
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "неможливо знайти \"%s\" для виконання"
 
-#: ../../common/exec.c:282 ../../common/exec.c:321
+#: ../../common/exec.c:250
 #, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "не вдалося змінити каталог на \"%s\": %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "не вдалося знайти абсолютний шлях \"%s\": %m"
 
-#: ../../common/exec.c:299
-#, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "не можливо прочитати символічне послання \"%s\": %m"
-
-#: ../../common/exec.c:422
+#: ../../common/exec.c:412
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() помилка: %m"
 
-#: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
 

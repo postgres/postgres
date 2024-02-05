@@ -1689,7 +1689,7 @@ msgid ""
 "                               including child and partition tables\n"
 msgstr ""
 "  --exclude-table-data-and-children=MOTIF\n"
-"                               ne sauvegarde PAS les tables indiquées, ceci incluant les tables filles et les partitions\n"
+"                               ne sauvegarde PAS les données des tables indiquées, ceci incluant les tables filles et les partitions\n"
 
 #: pg_dump.c:1105 pg_dumpall.c:655
 #, c-format

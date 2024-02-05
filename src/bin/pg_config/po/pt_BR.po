@@ -1,15 +1,15 @@
 # Brazilian Portuguese message translation file for pg_config
 #
-# Copyright (C) 2004-2022 PostgreSQL Global Development Group
+# Copyright (C) 2004-2023 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Euler Taveira <euler@eulerto.com>, 2004-2022.
+# Euler Taveira <euler@eulerto.com>, 2004-2024.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-10 18:27-0300\n"
+"POT-Creation-Date: 2024-01-02 13:00-0300\n"
 "PO-Revision-Date: 2005-10-04 22:15-0300\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
@@ -25,42 +25,32 @@ msgstr ""
 msgid "not recorded"
 msgstr "não informado"
 
-#: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
+#: ../../common/exec.c:172
 #, c-format
-msgid "could not identify current directory: %m"
-msgstr "não pôde identificar diretório atual: %m"
+msgid "invalid binary \"%s\": %m"
+msgstr "binário \"%s\" é inválido: %m"
 
-#: ../../common/exec.c:168
+#: ../../common/exec.c:215
 #, c-format
-msgid "invalid binary \"%s\""
-msgstr "binário \"%s\" é inválido"
+msgid "could not read binary \"%s\": %m"
+msgstr "não pôde ler o binário \"%s\": %m"
 
-#: ../../common/exec.c:218
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "não pôde ler o binário \"%s\""
-
-#: ../../common/exec.c:226
+#: ../../common/exec.c:223
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "não pôde encontrar o \"%s\" para executá-lo"
 
-#: ../../common/exec.c:282 ../../common/exec.c:321
+#: ../../common/exec.c:250
 #, c-format
-msgid "could not change directory to \"%s\": %m"
-msgstr "não pôde mudar diretório para \"%s\": %m"
+msgid "could not resolve path \"%s\" to absolute form: %m"
+msgstr "não pôde resolver caminho \"%s\" para forma absoluta: %m"
 
-#: ../../common/exec.c:299
-#, c-format
-msgid "could not read symbolic link \"%s\": %m"
-msgstr "não pôde ler link simbólico \"%s\": %m"
-
-#: ../../common/exec.c:422
+#: ../../common/exec.c:412
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() falhou: %m"
 
-#: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
+#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
 msgid "out of memory"
 msgstr "sem memória"
 
