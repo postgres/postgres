@@ -759,7 +759,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 		/* Try to connect to the publisher. */
 		must_use_password = !superuser_arg(owner) && opts.passwordrequired;
-		wrconn = walrcv_connect(conninfo, true, must_use_password,
+		wrconn = walrcv_connect(conninfo, true, true, must_use_password,
 								stmt->subname, &err);
 		if (!wrconn)
 			ereport(ERROR,
@@ -910,7 +910,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 
 	/* Try to connect to the publisher. */
 	must_use_password = sub->passwordrequired && !sub->ownersuperuser;
-	wrconn = walrcv_connect(sub->conninfo, true, must_use_password,
+	wrconn = walrcv_connect(sub->conninfo, true, true, must_use_password,
 							sub->name, &err);
 	if (!wrconn)
 		ereport(ERROR,
@@ -1537,7 +1537,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 		/* Try to connect to the publisher. */
 		must_use_password = sub->passwordrequired && !sub->ownersuperuser;
-		wrconn = walrcv_connect(sub->conninfo, true, must_use_password,
+		wrconn = walrcv_connect(sub->conninfo, true, true, must_use_password,
 								sub->name, &err);
 		if (!wrconn)
 			ereport(ERROR,
@@ -1788,7 +1788,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 */
 	load_file("libpqwalreceiver", false);
 
-	wrconn = walrcv_connect(conninfo, true, must_use_password,
+	wrconn = walrcv_connect(conninfo, true, true, must_use_password,
 							subname, &err);
 	if (wrconn == NULL)
 	{

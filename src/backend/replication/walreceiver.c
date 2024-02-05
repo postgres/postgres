@@ -296,7 +296,7 @@ WalReceiverMain(void)
 	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/* Establish the connection to the primary for XLOG streaming */
-	wrconn = walrcv_connect(conninfo, false, false,
+	wrconn = walrcv_connect(conninfo, true, false, false,
 							cluster_name[0] ? cluster_name : "walreceiver",
 							&err);
 	if (!wrconn)
