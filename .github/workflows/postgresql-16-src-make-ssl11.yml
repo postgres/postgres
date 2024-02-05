@@ -1,10 +1,10 @@
-name: postgresql-16-src-make
+name: postgresql-16-src-make-ssl11
 on: [pull_request, workflow_dispatch]
 
 jobs:
   build:
-    name: pg-16-src-make-test
-    runs-on: ubuntu-22.04
+    name: pg-16-src-make-test-ssl11
+    runs-on: ubuntu-20.04
     steps:
 
 
@@ -24,8 +24,8 @@ jobs:
             zlib1g-dev libssl-dev libpam0g-dev bison flex \
             libipc-run-perl -y docbook-xsl docbook-xsl libxml2 libxml2-utils \
             libxml2-dev libxslt-dev xsltproc libkrb5-dev libldap2-dev \
-            libsystemd-dev gettext tcl-dev libperl-dev pkg-config clang-11 \
-            llvm-11 llvm-11-dev libselinux1-dev python3-dev \
+            libsystemd-dev gettext tcl-dev libperl-dev pkg-config \
+            libselinux1-dev python3-dev \
             uuid-dev liblz4-dev libjson-c-dev libcurl4-openssl-dev
           sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
@@ -37,10 +37,10 @@ jobs:
           ref: 'a81e5516fa4bc53e332cb35eefe231147c0e1749'
           path: 'src'
 
-      - name: Clone pg_tde repository
+      - name: Clone postgres-tde-ext repository
         uses: actions/checkout@v2
         with:
-          path: 'src/contrib/pg_tde'
+          path: 'src/contrib/postgres-tde-ext'
 
       - name: Create pgsql dir
         run: mkdir -p /opt/pgsql
@@ -52,12 +52,12 @@ jobs:
           sudo make install
         working-directory: src
 
-      - name: Build pg_tde
+      - name: Build postgres-tde-ext
         run: |
           ./configure
           make -j
           sudo make install
-        working-directory: src/contrib/pg_tde
+        working-directory: src/contrib/postgres-tde-ext
 
       - name: Start postgresql cluster with pg_tde
         run: |
@@ -68,13 +68,13 @@ jobs:
             /opt/pgsql/data/postgresql.conf
           echo "pg_tde.keyringConfigFile = '/tmp/keyring.json'" >> \
             /opt/pgsql/data/postgresql.conf
-          cp src/contrib/pg_tde/keyring.json /tmp/keyring.json
+          cp src/contrib/postgres-tde-ext/keyring.json /tmp/keyring.json
           pg_ctl -D /opt/pgsql/data -l logfile start
 
-      - name: Test pg_tde
+      - name: Test postgres-tde-ext
         run: |
           make installcheck
-        working-directory: src/contrib/pg_tde
+        working-directory: src/contrib/postgres-tde-ext
 
       - name: Report on test fail
         uses: actions/upload-artifact@v2
@@ -82,11 +82,11 @@ jobs:
         with:
           name: Regressions diff and postgresql log
           path: |
-            src/contrib/pg_tde/regression.diffs
+            src/contrib/postgres-tde-ext/regression.diffs
             logfile
           retention-days: 3
 
       - name: Report on test fail 2
         if: ${{ failure() }}
         run: |
-          cat src/contrib/pg_tde/regression.diffs
+          cat src/contrib/postgres-tde-ext/regression.diffs
