@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-11-03 20:54+0000\n"
-"PO-Revision-Date: 2019-05-15 16:52+0200\n"
+"PO-Revision-Date: 2023-11-08 21:55+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -217,7 +217,7 @@ msgstr "konnte Limit »%s« nicht parsen"
 #: pg_waldump.c:945
 #, c-format
 msgid "resource manager \"%s\" does not exist"
-msgstr "Resouce-Manager »%s« existiert nicht"
+msgstr "Resource-Manager »%s« existiert nicht"
 
 #: pg_waldump.c:954
 #, c-format

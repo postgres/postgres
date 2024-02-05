@@ -25834,7 +25834,7 @@ msgstr "강제로 변경된 버퍼 자료를 디스크와 동기화 시킴."
 #: utils/misc/guc.c:1125
 msgid ""
 "The server will use the fsync() system call in several places to make sure "
-"that updates are physically written to disk. This insures that a database "
+"that updates are physically written to disk. This ensures that a database "
 "cluster will recover to a consistent state after an operating system or "
 "hardware crash."
 msgstr ""

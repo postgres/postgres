@@ -24247,7 +24247,7 @@ msgid "Forces synchronization of updates to disk."
 msgstr "Disk göncellemelerin anuyumlu olmasını zorluyor"
 
 #: utils/misc/guc.c:1125
-msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This insures that a database cluster will recover to a consistent state after an operating system or hardware crash."
+msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This ensures that a database cluster will recover to a consistent state after an operating system or hardware crash."
 msgstr "Sunucu, güncellemelerin fiziksel olarak diske yazılmasına emin olmak için fsync() sistem fonksiyonunu kullanıyor. Bu, işletim sistemi veya donanımın çöküşünden sonra veritabanı cluster'in tutarlı bir duruma kurtarılmasını garantiliyor."
 
 #: utils/misc/guc.c:1136

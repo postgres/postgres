@@ -24615,7 +24615,7 @@ msgid "Forces synchronization of updates to disk."
 msgstr "强制和磁盘同步更新"
 
 #: utils/misc/guc.c:1127
-msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This insures that a database cluster will recover to a consistent state after an operating system or hardware crash."
+msgid "The server will use the fsync() system call in several places to make sure that updates are physically written to disk. This ensures that a database cluster will recover to a consistent state after an operating system or hardware crash."
 msgstr "服务器将在多个位置使用系统调用fsync()来确定更新操作已经将数据写入磁盘.这将确保在操作系统或硬件崩溃后数据库集群将恢复到一个一致性状态. "
 
 #: utils/misc/guc.c:1138
