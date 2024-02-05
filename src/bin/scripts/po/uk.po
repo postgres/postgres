@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-03-16 09:30+0000\n"
-"PO-Revision-Date: 2022-06-19 10:10\n"
+"POT-Creation-Date: 2023-12-17 23:01+0000\n"
+"PO-Revision-Date: 2023-12-18 17:41\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -128,134 +128,134 @@ msgstr "кластеризувати таблицю \"%s\" у базі дани�
 msgid "clustering of database \"%s\" failed: %s"
 msgstr "кластеризувати базу даних \"%s\" не вдалося: %s"
 
-#: clusterdb.c:249
+#: clusterdb.c:251
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: кластеризація бази даних \"%s\"\n"
 
-#: clusterdb.c:265
+#: clusterdb.c:267
 #, c-format
 msgid "%s clusters all previously clustered tables in a database.\n\n"
 msgstr "%s кластеризація усіх попередньо кластеризованих таблиць в базі даних.\n\n"
 
-#: clusterdb.c:266 createdb.c:266 createuser.c:354 dropdb.c:170 dropuser.c:170
-#: pg_isready.c:224 reindexdb.c:750 vacuumdb.c:911
+#: clusterdb.c:268 createdb.c:266 createuser.c:354 dropdb.c:170 dropuser.c:170
+#: pg_isready.c:224 reindexdb.c:752 vacuumdb.c:911
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
 
-#: clusterdb.c:267 reindexdb.c:751 vacuumdb.c:912
+#: clusterdb.c:269 reindexdb.c:753 vacuumdb.c:912
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [DBNAME]\n"
 
-#: clusterdb.c:268 createdb.c:268 createuser.c:356 dropdb.c:172 dropuser.c:172
-#: pg_isready.c:227 reindexdb.c:752 vacuumdb.c:913
+#: clusterdb.c:270 createdb.c:268 createuser.c:356 dropdb.c:172 dropuser.c:172
+#: pg_isready.c:227 reindexdb.c:754 vacuumdb.c:913
 #, c-format
 msgid "\n"
 "Options:\n"
 msgstr "\n"
 "Параметри:\n"
 
-#: clusterdb.c:269
+#: clusterdb.c:271
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                кластеризація усіх баз даних\n"
 
-#: clusterdb.c:270
+#: clusterdb.c:272
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=ІМ'Я_БД       база даних для кластеризації\n"
 
-#: clusterdb.c:271 createuser.c:360 dropdb.c:173 dropuser.c:173 reindexdb.c:756
+#: clusterdb.c:273 createuser.c:360 dropdb.c:173 dropuser.c:173 reindexdb.c:758
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo              показати команди, надіслані серверу\n"
 
-#: clusterdb.c:272 reindexdb.c:759
+#: clusterdb.c:274 reindexdb.c:761
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet             не виводити жодних повідомлень\n"
 
-#: clusterdb.c:273
+#: clusterdb.c:275
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
 msgstr "  -t, --table=ТАБЛИЦЯ        кластеризувати тільки вказані таблиці\n"
 
-#: clusterdb.c:274 reindexdb.c:763
+#: clusterdb.c:276 reindexdb.c:765
 #, c-format
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose              виводити багато інформації\n"
 
-#: clusterdb.c:275 createuser.c:372 dropdb.c:176 dropuser.c:176 reindexdb.c:764
+#: clusterdb.c:277 createuser.c:372 dropdb.c:176 dropuser.c:176 reindexdb.c:766
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version            вивести інформацію про версію і вийти\n"
 
-#: clusterdb.c:276 createuser.c:377 dropdb.c:178 dropuser.c:178 reindexdb.c:765
+#: clusterdb.c:278 createuser.c:377 dropdb.c:178 dropuser.c:178 reindexdb.c:767
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help               показати цю довідку, потім вийти\n"
 
-#: clusterdb.c:277 createdb.c:279 createuser.c:378 dropdb.c:179 dropuser.c:179
-#: pg_isready.c:233 reindexdb.c:766 vacuumdb.c:934
+#: clusterdb.c:279 createdb.c:279 createuser.c:378 dropdb.c:179 dropuser.c:179
+#: pg_isready.c:233 reindexdb.c:768 vacuumdb.c:934
 #, c-format
 msgid "\n"
 "Connection options:\n"
 msgstr "\n"
 "Налаштування з'єднання:\n"
 
-#: clusterdb.c:278 createuser.c:379 dropdb.c:180 dropuser.c:180 reindexdb.c:767
+#: clusterdb.c:280 createuser.c:379 dropdb.c:180 dropuser.c:180 reindexdb.c:769
 #: vacuumdb.c:935
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME     хост сервера бази даних або каталог сокетів\n"
 
-#: clusterdb.c:279 createuser.c:380 dropdb.c:181 dropuser.c:181 reindexdb.c:768
+#: clusterdb.c:281 createuser.c:380 dropdb.c:181 dropuser.c:181 reindexdb.c:770
 #: vacuumdb.c:936
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT         порт сервера бази даних\n"
 
-#: clusterdb.c:280 dropdb.c:182 reindexdb.c:769 vacuumdb.c:937
+#: clusterdb.c:282 dropdb.c:182 reindexdb.c:771 vacuumdb.c:937
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=ІМ'Я_КОРИСТУВАЧА   ім'я користувача для з'єднання з сервером\n"
 
-#: clusterdb.c:281 createuser.c:382 dropdb.c:183 dropuser.c:183 reindexdb.c:770
+#: clusterdb.c:283 createuser.c:382 dropdb.c:183 dropuser.c:183 reindexdb.c:772
 #: vacuumdb.c:938
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         ніколи не запитувати пароль\n"
 
-#: clusterdb.c:282 createuser.c:383 dropdb.c:184 dropuser.c:184 reindexdb.c:771
+#: clusterdb.c:284 createuser.c:383 dropdb.c:184 dropuser.c:184 reindexdb.c:773
 #: vacuumdb.c:939
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password           запросити пароль\n"
 
-#: clusterdb.c:283 dropdb.c:185 reindexdb.c:772 vacuumdb.c:940
+#: clusterdb.c:285 dropdb.c:185 reindexdb.c:774 vacuumdb.c:940
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME    альтернативна бази даних для обслуговування\n"
 
-#: clusterdb.c:284
+#: clusterdb.c:286
 #, c-format
 msgid "\n"
 "Read the description of the SQL command CLUSTER for details.\n"
 msgstr "\n"
 "Для деталей читайте опис команди SQL CLUSTER.\n"
 
-#: clusterdb.c:285 createdb.c:287 createuser.c:384 dropdb.c:186 dropuser.c:185
-#: pg_isready.c:238 reindexdb.c:774 vacuumdb.c:942
+#: clusterdb.c:287 createdb.c:287 createuser.c:384 dropdb.c:186 dropuser.c:185
+#: pg_isready.c:238 reindexdb.c:776 vacuumdb.c:942
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: clusterdb.c:286 createdb.c:288 createuser.c:385 dropdb.c:187 dropuser.c:186
-#: pg_isready.c:239 reindexdb.c:775 vacuumdb.c:943
+#: clusterdb.c:288 createdb.c:288 createuser.c:385 dropdb.c:187 dropuser.c:186
+#: pg_isready.c:239 reindexdb.c:777 vacuumdb.c:943
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"
@@ -845,67 +845,72 @@ msgstr "переіндексування системних каталогів �
 msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "переіндексувати таблиці \"%s\" в базі даних \"%s\" не вдалося: %s"
 
-#: reindexdb.c:732
+#: reindexdb.c:734
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: переіндексування бази даних \"%s\"\n"
 
-#: reindexdb.c:749
+#: reindexdb.c:751
 #, c-format
 msgid "%s reindexes a PostgreSQL database.\n\n"
 msgstr "%s переіндексовує базу даних PostgreSQL.\n\n"
 
-#: reindexdb.c:753
+#: reindexdb.c:755
 #, c-format
 msgid "  -a, --all                 reindex all databases\n"
 msgstr "  -a, --all               переіндексувати усі бази даних\n"
 
-#: reindexdb.c:754
+#: reindexdb.c:756
 #, c-format
 msgid "      --concurrently        reindex concurrently\n"
 msgstr "      --concurrently переіндексувати одночасно\n"
 
-#: reindexdb.c:755
+#: reindexdb.c:757
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to reindex\n"
 msgstr "  -d, --dbname=ІМ'Я_БД    база даних для переіндексування\n"
 
-#: reindexdb.c:757
+#: reindexdb.c:759
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
 msgstr "  -i, --index=ІНДЕКС       відтворити тільки вказані індекси\n"
 
-#: reindexdb.c:758
+#: reindexdb.c:760
 #, c-format
 msgid "  -j, --jobs=NUM            use this many concurrent connections to reindex\n"
 msgstr "  -j, --jobs=NUM            використати таку кількість паралельних підключень для переіндексації\n"
 
-#: reindexdb.c:760
+#: reindexdb.c:762
 #, c-format
 msgid "  -s, --system              reindex system catalogs only\n"
 msgstr "  -s, --system            переіндексувати тільки системні каталоги\n"
 
-#: reindexdb.c:761
+#: reindexdb.c:763
 #, c-format
 msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
 msgstr "  -S, --schema=СХЕМА     переіндексувати тільки вказані схеми\n"
 
-#: reindexdb.c:762
+#: reindexdb.c:764
 #, c-format
 msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
 msgstr "  -t, --table=ТАБЛИЦЯ        переіндексувати тільки вказані таблиці\n"
 
-#: reindexdb.c:773
+#: reindexdb.c:775
 #, c-format
 msgid "\n"
 "Read the description of the SQL command REINDEX for details.\n"
 msgstr "\n"
 "Для деталей читайте опис команди SQL REINDEX.\n"
 
-#: scripts_parallel.c:232
+#: scripts_parallel.c:244
 #, c-format
-msgid "too many jobs for this platform -- try %d"
-msgstr "надто багато завдань для цієї платформи -- спробуйте %d"
+msgid "too many jobs for this platform: %d"
+msgstr "занадто багато завдань для цієї платформи: %d"
+
+#: scripts_parallel.c:253
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "дескриптор файлу сокету поза діапазоном для select(): %d"
 
 #: vacuumdb.c:192
 #, c-format
