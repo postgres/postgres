@@ -795,9 +795,12 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	 *
 	 * ExecRefreshMatView() checks that after taking the exclusive lock on the
 	 * matview. So at least one unique index is guaranteed to exist here
-	 * because the lock is still being held; so an Assert seems sufficient.
+	 * because the lock is still being held.  (One known exception is if a
+	 * function called as part of refreshing the matview drops the index.
+	 * That's a pretty silly thing to do.)
 	 */
-	Assert(foundUniqueIndex);
+	if (!foundUniqueIndex)
+		elog(ERROR, "could not find suitable unique index on materialized view");
 
 	appendStringInfoString(&querybuf,
 						   " AND newdata.* OPERATOR(pg_catalog.*=) mv.*) "
