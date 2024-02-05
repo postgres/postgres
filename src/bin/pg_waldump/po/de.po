@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 04:48+0000\n"
-"PO-Revision-Date: 2022-05-20 10:51+0200\n"
+"PO-Revision-Date: 2023-11-08 21:52+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -265,12 +265,12 @@ msgstr "ungültiger Wert »%s« für Option %s"
 #: pg_waldump.c:858
 #, c-format
 msgid "custom resource manager \"%s\" does not exist"
-msgstr "Custom-Resouce-Manager »%s« existiert nicht"
+msgstr "Custom-Resource-Manager »%s« existiert nicht"
 
 #: pg_waldump.c:879
 #, c-format
 msgid "resource manager \"%s\" does not exist"
-msgstr "Resouce-Manager »%s« existiert nicht"
+msgstr "Resource-Manager »%s« existiert nicht"
 
 #: pg_waldump.c:894
 #, c-format

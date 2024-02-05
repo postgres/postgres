@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-11-03 09:09+0300\n"
+"POT-Creation-Date: 2024-02-02 18:11+0300\n"
 "PO-Revision-Date: 2023-11-03 09:24+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -273,8 +273,8 @@ msgstr ""
 "pg_database.datallowconn должно быть false\n"
 
 #: check.c:785 check.c:910 check.c:1012 check.c:1138 check.c:1219 check.c:1278
-#: check.c:1339 check.c:1404 check.c:1523 function.c:187 version.c:192
-#: version.c:232 version.c:378
+#: check.c:1339 check.c:1373 check.c:1404 check.c:1523 function.c:187
+#: version.c:192 version.c:232 version.c:378
 #, c-format
 msgid "fatal\n"
 msgstr "сбой\n"
@@ -471,11 +471,6 @@ msgstr ""
 #, c-format
 msgid "Checking for removed \"%s\" data type in user tables"
 msgstr "Проверка удалённого типа данных \"%s\" в пользовательских таблицах"
-
-#: check.c:1373
-#, c-format
-msgid "fatal"
-msgstr "сбой"
 
 #: check.c:1374
 #, c-format
@@ -2099,6 +2094,10 @@ msgstr ""
 "будучи выполненным администратором БД в psql, обновит все\n"
 "эти расширения.\n"
 "\n"
+
+#, c-format
+#~ msgid "fatal"
+#~ msgstr "сбой"
 
 #~ msgid ""
 #~ "When checking a pre-PG 9.1 live old server, you must specify the old "
