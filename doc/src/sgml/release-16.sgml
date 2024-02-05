@@ -41,6 +41,50 @@
 
     <listitem>
 <!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [5a9167c39] 2024-02-05 11:01:23 +0200
+Branch: REL_16_STABLE [d6a61cb3b] 2024-02-05 11:02:56 +0200
+Branch: REL_15_STABLE [f2fdea198] 2024-02-05 11:03:26 +0200
+Branch: REL_14_STABLE [f4f288352] 2024-02-05 11:03:43 +0200
+Branch: REL_13_STABLE [d541ce3b6] 2024-02-05 11:04:08 +0200
+Branch: REL_12_STABLE [2699fc035] 2024-02-05 11:04:22 +0200
+Branch: master [b96115acb] 2024-02-05 11:01:30 +0200
+Branch: REL_16_STABLE [fb3836855] 2024-02-05 11:03:03 +0200
+Branch: REL_15_STABLE [06f36bc01] 2024-02-05 11:03:28 +0200
+Branch: REL_14_STABLE [a45c950ae] 2024-02-05 11:03:43 +0200
+Branch: REL_13_STABLE [b73d21648] 2024-02-05 11:04:10 +0200
+Branch: REL_12_STABLE [add8bc9b8] 2024-02-05 11:04:23 +0200
+-->
+     <para>
+      Tighten security restrictions within <command>REFRESH MATERIALIZED
+      VIEW CONCURRENTLY</command> (Heikki Linnakangas)
+     </para>
+
+     <para>
+      One step of a concurrent refresh command was run under weak security
+      restrictions.  If a materialized view's owner could persuade a
+      superuser or other high-privileged user to perform a concurrent
+      refresh on that view, the view's owner could control code executed
+      with the privileges of the user running <command>REFRESH</command>.
+      Fix things so that all user-determined code is run as the view's
+      owner, as expected.
+     </para>
+
+     <para>
+      The only known exploit for this error does not work
+      in <productname>PostgreSQL</productname> 16.0 and later, so it may
+      be that v16 is not vulnerable in practice.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Pedro
+      Gallegos for reporting this problem.
+      (CVE-2024-0985) <!-- not CVE-2023-5869 as claimed in commit msg -->
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 Branch: master [9dce22033] 2023-09-27 13:02:21 +0200
 Branch: REL_16_STABLE [2cf50585e] 2023-11-17 10:18:38 +0100
