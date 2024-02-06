@@ -2584,7 +2584,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
           <literal>vacuum</literal>: I/O operations performed outside of shared
           buffers while vacuuming and analyzing permanent relations. Temporary
           table vacuums use the same local buffer pool as other temporary table
-          IO operations and are tracked in <varname>context</varname>
+          I/O operations and are tracked in <varname>context</varname>
           <literal>normal</literal>.
          </para>
         </listitem>
@@ -2860,7 +2860,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
     Columns tracking I/O time will only be non-zero when
     <xref linkend="guc-track-io-timing"/> is enabled. The user should be
     careful when referencing these columns in combination with their
-    corresponding IO operations in case <varname>track_io_timing</varname>
+    corresponding I/O operations in case <varname>track_io_timing</varname>
     was not enabled for the entire time since the last stats reset.
    </para>
   </note>
@@ -5734,7 +5734,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
        <structfield>type</structfield> <type>text</type>
       </para>
       <para>
-       The io type that the data is read from or written to:
+       The I/O type that the data is read from or written to:
        <literal>FILE</literal>, <literal>PROGRAM</literal>,
        <literal>PIPE</literal> (for <command>COPY FROM STDIN</command> and
        <command>COPY TO STDOUT</command>), or <literal>CALLBACK</literal>
