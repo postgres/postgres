@@ -766,14 +766,10 @@ StartupCLOG(void)
 	TransactionId xid = XidFromFullTransactionId(TransamVariables->nextXid);
 	int64		pageno = TransactionIdToPage(xid);
 
-	LWLockAcquire(XactSLRULock, LW_EXCLUSIVE);
-
 	/*
 	 * Initialize our idea of the latest page number.
 	 */
-	XactCtl->shared->latest_page_number = pageno;
-
-	LWLockRelease(XactSLRULock);
+	pg_atomic_write_u64(&XactCtl->shared->latest_page_number, pageno);
 }
 
 /*

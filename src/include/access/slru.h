@@ -49,6 +49,9 @@ typedef enum
 
 /*
  * Shared-memory state
+ *
+ * ControlLock is used to protect access to the other fields, except
+ * latest_page_number, which uses atomics; see comment in slru.c.
  */
 typedef struct SlruSharedData
 {
@@ -95,7 +98,7 @@ typedef struct SlruSharedData
 	 * this is not critical data, since we use it only to avoid swapping out
 	 * the latest page.
 	 */
-	int64		latest_page_number;
+	pg_atomic_uint64 latest_page_number;
 
 	/* SLRU's index for statistics purposes (might not be unique) */
 	int			slru_stats_idx;

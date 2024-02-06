@@ -2017,13 +2017,15 @@ StartupMultiXact(void)
 	 * Initialize offset's idea of the latest page number.
 	 */
 	pageno = MultiXactIdToOffsetPage(multi);
-	MultiXactOffsetCtl->shared->latest_page_number = pageno;
+	pg_atomic_write_u64(&MultiXactOffsetCtl->shared->latest_page_number,
+						pageno);
 
 	/*
 	 * Initialize member's idea of the latest page number.
 	 */
 	pageno = MXOffsetToMemberPage(offset);
-	MultiXactMemberCtl->shared->latest_page_number = pageno;
+	pg_atomic_write_u64(&MultiXactMemberCtl->shared->latest_page_number,
+						pageno);
 }
 
 /*
@@ -2047,14 +2049,15 @@ TrimMultiXact(void)
 	oldestMXactDB = MultiXactState->oldestMultiXactDB;
 	LWLockRelease(MultiXactGenLock);
 
-	/* Clean up offsets state */
-	LWLockAcquire(MultiXactOffsetSLRULock, LW_EXCLUSIVE);
-
 	/*
 	 * (Re-)Initialize our idea of the latest page number for offsets.
 	 */
 	pageno = MultiXactIdToOffsetPage(nextMXact);
-	MultiXactOffsetCtl->shared->latest_page_number = pageno;
+	pg_atomic_write_u64(&MultiXactOffsetCtl->shared->latest_page_number,
+						pageno);
+
+	/* Clean up offsets state */
+	LWLockAcquire(MultiXactOffsetSLRULock, LW_EXCLUSIVE);
 
 	/*
 	 * Zero out the remainder of the current offsets page.  See notes in
@@ -2081,14 +2084,16 @@ TrimMultiXact(void)
 
 	LWLockRelease(MultiXactOffsetSLRULock);
 
-	/* And the same for members */
-	LWLockAcquire(MultiXactMemberSLRULock, LW_EXCLUSIVE);
-
 	/*
+	 * And the same for members.
+	 *
 	 * (Re-)Initialize our idea of the latest page number for members.
 	 */
 	pageno = MXOffsetToMemberPage(offset);
-	MultiXactMemberCtl->shared->latest_page_number = pageno;
+	pg_atomic_write_u64(&MultiXactMemberCtl->shared->latest_page_number,
+						pageno);
+
+	LWLockAcquire(MultiXactMemberSLRULock, LW_EXCLUSIVE);
 
 	/*
 	 * Zero out the remainder of the current members page.  See notes in
@@ -3333,7 +3338,8 @@ multixact_redo(XLogReaderState *record)
 		 * SimpleLruTruncate.
 		 */
 		pageno = MultiXactIdToOffsetPage(xlrec.endTruncOff);
-		MultiXactOffsetCtl->shared->latest_page_number = pageno;
+		pg_atomic_write_u64(&MultiXactOffsetCtl->shared->latest_page_number,
+							pageno);
 		PerformOffsetsTruncation(xlrec.startTruncOff, xlrec.endTruncOff);
 
 		LWLockRelease(MultiXactTruncationLock);
