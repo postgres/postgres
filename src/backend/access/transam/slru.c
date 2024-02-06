@@ -240,7 +240,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		shared->lsn_groups_per_page = nlsns;
 
 		shared->cur_lru_count = 0;
-		pg_atomic_write_u64(&shared->latest_page_number, 0);
+		pg_atomic_init_u64(&shared->latest_page_number, 0);
 
 		shared->slru_stats_idx = pgstat_get_slru_index(name);
 
