@@ -696,12 +696,16 @@ ReplicationSlotAlter(const char *name, bool failover)
 				errmsg("cannot use %s with a physical replication slot",
 					   "ALTER_REPLICATION_SLOT"));
 
-	SpinLockAcquire(&MyReplicationSlot->mutex);
-	MyReplicationSlot->data.failover = failover;
-	SpinLockRelease(&MyReplicationSlot->mutex);
+	if (MyReplicationSlot->data.failover != failover)
+	{
+		SpinLockAcquire(&MyReplicationSlot->mutex);
+		MyReplicationSlot->data.failover = failover;
+		SpinLockRelease(&MyReplicationSlot->mutex);
 
-	ReplicationSlotMarkDirty();
-	ReplicationSlotSave();
+		ReplicationSlotMarkDirty();
+		ReplicationSlotSave();
+	}
+
 	ReplicationSlotRelease();
 }
 

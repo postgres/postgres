@@ -1591,9 +1591,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    information might have to be changed.  If the subscription needs to
    be enabled for
    <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>,
-   then same needs to be done by executing
-   <link linkend="sql-altersubscription-params-set">
-   <literal>ALTER SUBSCRIPTION ... SET (failover = true)</literal></link>
+   execute <link linkend="sql-altersubscription-params-set"><literal>ALTER SUBSCRIPTION ... SET (failover = true)</literal></link>
    after the slot has been created.  It might also be appropriate to
    truncate the target tables before initiating a new full table copy.  If users
    intend to copy initial data during refresh they must create the slot with

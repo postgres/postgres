@@ -73,7 +73,6 @@
 #define SUBOPT_LSN					0x00004000
 #define SUBOPT_ORIGIN				0x00008000
 
-
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
 
@@ -852,9 +851,6 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					 (opts.failover || walrcv_server_version(wrconn) >= 170000))
 			{
 				walrcv_alter_slot(wrconn, opts.slot_name, opts.failover);
-				ereport(NOTICE,
-						(errmsg("changed the failover state of replication slot \"%s\" on publisher to %s",
-								opts.slot_name, opts.failover ? "true" : "false")));
 			}
 		}
 		PG_FINALLY();
@@ -1547,10 +1543,6 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 		PG_TRY();
 		{
 			walrcv_alter_slot(wrconn, sub->slotname, opts.failover);
-
-			ereport(NOTICE,
-					(errmsg("changed the failover state of replication slot \"%s\" on publisher to %s",
-							sub->slotname, opts.failover ? "true" : "false")));
 		}
 		PG_FINALLY();
 		{

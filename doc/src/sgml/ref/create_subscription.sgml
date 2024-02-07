@@ -117,9 +117,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           command should connect to the publisher at all.  The default
           is <literal>true</literal>.  Setting this to
           <literal>false</literal> will force the values of
-          <literal>create_slot</literal>, <literal>enabled</literal>,
-          <literal>copy_data</literal>, and <literal>failover</literal>
-          to <literal>false</literal>.
+          <literal>create_slot</literal>, <literal>enabled</literal> and
+          <literal>copy_data</literal> to <literal>false</literal>.
           (You cannot combine setting <literal>connect</literal>
           to <literal>false</literal> with
           setting <literal>create_slot</literal>, <literal>enabled</literal>,
