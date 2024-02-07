@@ -647,6 +647,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 		xl_hash_squeeze_page xlrec;
 		XLogRecPtr	recptr;
 		int			i;
+		bool		mod_wbuf = false;
 
 		xlrec.prevblkno = prevblkno;
 		xlrec.nextblkno = nextblkno;
@@ -671,6 +672,10 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 		if (xlrec.ntups > 0)
 		{
 			XLogRegisterBuffer(1, wbuf, REGBUF_STANDARD);
+
+			/* Remember that wbuf is modified. */
+			mod_wbuf = true;
+
 			XLogRegisterBufData(1, (char *) itup_offsets,
 								nitups * sizeof(OffsetNumber));
 			for (i = 0; i < nitups; i++)
@@ -690,7 +695,14 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 
 			wbuf_flags = REGBUF_STANDARD;
 			if (!xlrec.is_prev_bucket_same_wrt)
+			{
 				wbuf_flags |= REGBUF_NO_CHANGE;
+			}
+			else
+			{
+				/* Remember that wbuf is modified. */
+				mod_wbuf = true;
+			}
 			XLogRegisterBuffer(1, wbuf, wbuf_flags);
 		}
 
@@ -719,7 +731,10 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SQUEEZE_PAGE);
 
-		PageSetLSN(BufferGetPage(wbuf), recptr);
+		/* Set LSN iff wbuf is modified. */
+		if (mod_wbuf)
+			PageSetLSN(BufferGetPage(wbuf), recptr);
+
 		PageSetLSN(BufferGetPage(ovflbuf), recptr);
 
 		if (BufferIsValid(prevbuf) && !xlrec.is_prev_bucket_same_wrt)
