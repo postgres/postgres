@@ -190,10 +190,12 @@ static void create_one_window_path(PlannerInfo *root,
 								   WindowFuncLists *wflists,
 								   List *activeWindows);
 static RelOptInfo *create_distinct_paths(PlannerInfo *root,
-										 RelOptInfo *input_rel);
+										 RelOptInfo *input_rel,
+										 PathTarget *target);
 static void create_partial_distinct_paths(PlannerInfo *root,
 										  RelOptInfo *input_rel,
-										  RelOptInfo *final_distinct_rel);
+										  RelOptInfo *final_distinct_rel,
+										  PathTarget *target);
 static RelOptInfo *create_final_distinct_paths(PlannerInfo *root,
 											   RelOptInfo *input_rel,
 											   RelOptInfo *distinct_rel);
@@ -1644,8 +1646,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		root->upper_targets[UPPERREL_FINAL] = final_target;
 		root->upper_targets[UPPERREL_ORDERED] = final_target;
-		root->upper_targets[UPPERREL_PARTIAL_DISTINCT] = sort_input_target;
 		root->upper_targets[UPPERREL_DISTINCT] = sort_input_target;
+		root->upper_targets[UPPERREL_PARTIAL_DISTINCT] = sort_input_target;
 		root->upper_targets[UPPERREL_WINDOW] = sort_input_target;
 		root->upper_targets[UPPERREL_GROUP_AGG] = grouping_target;
 
@@ -1695,7 +1697,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		if (parse->distinctClause)
 		{
 			current_rel = create_distinct_paths(root,
-												current_rel);
+												current_rel,
+												sort_input_target);
 		}
 	}							/* end of if (setOperations) */
 
@@ -4568,12 +4571,14 @@ create_one_window_path(PlannerInfo *root,
  * Build a new upperrel containing Paths for SELECT DISTINCT evaluation.
  *
  * input_rel: contains the source-data Paths
+ * target: the pathtarget for the result Paths to compute
  *
  * Note: input paths should already compute the desired pathtarget, since
  * Sort/Unique won't project anything.
  */
 static RelOptInfo *
-create_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel)
+create_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
+					  PathTarget *target)
 {
 	RelOptInfo *distinct_rel;
 
@@ -4601,7 +4606,7 @@ create_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel)
 	create_final_distinct_paths(root, input_rel, distinct_rel);
 
 	/* now build distinct paths based on input_rel's partial_pathlist */
-	create_partial_distinct_paths(root, input_rel, distinct_rel);
+	create_partial_distinct_paths(root, input_rel, distinct_rel, target);
 
 	/* Give a helpful error if we failed to create any paths */
 	if (distinct_rel->pathlist == NIL)
@@ -4643,7 +4648,8 @@ create_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel)
  */
 static void
 create_partial_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
-							  RelOptInfo *final_distinct_rel)
+							  RelOptInfo *final_distinct_rel,
+							  PathTarget *target)
 {
 	RelOptInfo *partial_distinct_rel;
 	Query	   *parse;
@@ -4664,7 +4670,7 @@ create_partial_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	partial_distinct_rel = fetch_upper_rel(root, UPPERREL_PARTIAL_DISTINCT,
 										   NULL);
-	partial_distinct_rel->reltarget = root->upper_targets[UPPERREL_PARTIAL_DISTINCT];
+	partial_distinct_rel->reltarget = target;
 	partial_distinct_rel->consider_parallel = input_rel->consider_parallel;
 
 	/*

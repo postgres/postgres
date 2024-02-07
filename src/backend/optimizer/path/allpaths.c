@@ -3053,10 +3053,10 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  *
  * If we're generating paths for a scan or join relation, override_rows will
  * be false, and we'll just use the relation's size estimate.  When we're
- * being called for a partially-grouped path, though, we need to override
- * the rowcount estimate.  (It's not clear that the particular value we're
- * using here is actually best, but the underlying rel has no estimate so
- * we must do something.)
+ * being called for a partially-grouped or partially-distinct path, though, we
+ * need to override the rowcount estimate.  (It's not clear that the
+ * particular value we're using here is actually best, but the underlying rel
+ * has no estimate so we must do something.)
  */
 void
 generate_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_rows)
