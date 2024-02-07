@@ -119,7 +119,7 @@ static void ClosePipeToProgram(CopyToState cstate);
 static void CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot);
 static void CopyAttributeOutText(CopyToState cstate, const char *string);
 static void CopyAttributeOutCSV(CopyToState cstate, const char *string,
-								bool use_quote, bool single_attr);
+								bool use_quote);
 
 /* Low-level communications functions */
 static void SendCopyBegin(CopyToState cstate);
@@ -837,8 +837,7 @@ DoCopyTo(CopyToState cstate)
 				colname = NameStr(TupleDescAttr(tupDesc, attnum - 1)->attname);
 
 				if (cstate->opts.csv_mode)
-					CopyAttributeOutCSV(cstate, colname, false,
-										list_length(cstate->attnumlist) == 1);
+					CopyAttributeOutCSV(cstate, colname, false);
 				else
 					CopyAttributeOutText(cstate, colname);
 			}
@@ -952,8 +951,7 @@ CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot)
 											value);
 				if (cstate->opts.csv_mode)
 					CopyAttributeOutCSV(cstate, string,
-										cstate->opts.force_quote_flags[attnum - 1],
-										list_length(cstate->attnumlist) == 1);
+										cstate->opts.force_quote_flags[attnum - 1]);
 				else
 					CopyAttributeOutText(cstate, string);
 			}
@@ -1139,7 +1137,7 @@ CopyAttributeOutText(CopyToState cstate, const char *string)
  */
 static void
 CopyAttributeOutCSV(CopyToState cstate, const char *string,
-					bool use_quote, bool single_attr)
+					bool use_quote)
 {
 	const char *ptr;
 	const char *start;
@@ -1147,6 +1145,7 @@ CopyAttributeOutCSV(CopyToState cstate, const char *string,
 	char		delimc = cstate->opts.delim[0];
 	char		quotec = cstate->opts.quote[0];
 	char		escapec = cstate->opts.escape[0];
+	bool		single_attr = (list_length(cstate->attnumlist) == 1);
 
 	/* force quoting if it matches null_print (before conversion!) */
 	if (!use_quote && strcmp(string, cstate->opts.null_print) == 0)
