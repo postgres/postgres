@@ -9,7 +9,32 @@
 #include "storage/bufmgr.h"
 #include "keyring/keyring_api.h"
 
+#ifdef ENCRYPTION_DEBUG
+static void iv_prefix_debug(const char* iv_prefix, char* out_hex)
+{
+	for(int i =0;i<16;++i) {
+		sprintf(out_hex + i*2, "%02x", (int)*(iv_prefix + i));
+	}
+	out_hex[32] = 0;
+}
+#endif
 
+static void
+SetIVPrefix(ItemPointerData* ip, char* iv_prefix)
+{
+	/* We have up to 16 bytes for the entire IV
+	 * The higher bytes (starting with 15) are used for the incrementing counter
+	 * The lower bytes (in this case, 0..5) are used for the tuple identification
+	 * Tuple identification is based on CTID, which currently is 48 bytes in
+	 * postgres: 4 bytes for the block id and 2 bytes for the position id
+	 */
+	iv_prefix[0] = ip->ip_blkid.bi_hi / 256;
+	iv_prefix[1] = ip->ip_blkid.bi_hi % 256;
+	iv_prefix[2] = ip->ip_blkid.bi_lo / 256;
+	iv_prefix[3] = ip->ip_blkid.bi_lo % 256;
+	iv_prefix[4] = ip->ip_posid / 256;
+	iv_prefix[5] = ip->ip_posid % 256;
+}
 
 /* 
  * ================================================================
@@ -23,7 +48,7 @@
  * start_offset: is the absolute location of start of data in the file.
  */
 void
-pg_tde_crypt(uint64 start_offset, const char* data, uint32 data_len, char* out, RelKeysData* keys, const char* context)
+pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint32 data_len, char* out, RelKeysData* keys, const char* context)
 {
 	uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE -1)) / AES_BLOCK_SIZE;
@@ -39,11 +64,15 @@ pg_tde_crypt(uint64 start_offset, const char* data, uint32 data_len, char* out, 
 	{
 		batch_end_block = Min(batch_start_block + NUM_AES_BLOCKS_IN_BATCH, aes_end_block);
 
-		Aes128EncryptedZeroBlocks(&(keys->internal_key[0].ctx), keys->internal_key[0].key, batch_start_block, batch_end_block, enc_key);
+		Aes128EncryptedZeroBlocks(&(keys->internal_key[0].ctx), keys->internal_key[0].key, iv_prefix, batch_start_block, batch_end_block, enc_key);
 #ifdef ENCRYPTION_DEBUG
+{
+	char ivp_debug[33];
+	iv_prefix_debug(iv_prefix, ivp_debug);
 		ereport(LOG,
-			(errmsg("%s: Batch-No:%d Start offset: %lu Data_Len: %u, batch_start_block: %lu, batch_end_block: %lu",
-				context?context:"", batch_no, start_offset, data_len, batch_start_block, batch_end_block)));
+			(errmsg("%s: Batch-No:%d Start offset: %lu Data_Len: %u, batch_start_block: %lu, batch_end_block: %lu, IV prefix: %s",
+				context?context:"", batch_no, start_offset, data_len, batch_start_block, batch_end_block, ivp_debug)));
+}
 #endif
 
 		current_batch_bytes = ((batch_end_block - batch_start_block) * AES_BLOCK_SIZE)
@@ -79,30 +108,6 @@ pg_tde_crypt(uint64 start_offset, const char* data, uint32 data_len, char* out, 
 }
 
 /*
- * pg_tde_move_encrypted_data:
- * Re-encrypts data in one go
-*/
-void
-pg_tde_move_encrypted_data(uint64 read_start_offset, const char* read_data,
-				uint64 write_start_offset, char* write_data,
-				uint32 data_len, RelKeysData* keys, const char* context)
-{
-	uint32	batch_len;
-	uint32	bytes_left;
-	uint32	curr_offset = 0;
-	char 	decrypted[DATA_BYTES_PER_AES_BATCH];
-
-	for (bytes_left = data_len; bytes_left > 0; bytes_left -= batch_len)
-	{
-		batch_len = Min(Min(DATA_BYTES_PER_AES_BATCH, data_len), bytes_left);
-		
-		pg_tde_crypt(read_start_offset + curr_offset, read_data + curr_offset, batch_len, decrypted, keys, context);
-		pg_tde_crypt(write_start_offset + curr_offset, decrypted, batch_len, write_data + curr_offset, keys, context);
-		curr_offset += batch_len;
-	}
-}
-
-/*
  * pg_tde_crypt_tuple:
  * Does the encryption/decryption of tuple data in place
  * page: Page containing the tuple, Used to calculate the offset of tuple in the page
@@ -111,21 +116,22 @@ pg_tde_move_encrypted_data(uint64 read_start_offset, const char* read_data,
  * context: Optional context message to be used in debug log
  * */
 void
-pg_tde_crypt_tuple(BlockNumber bn, Page page, HeapTuple tuple, HeapTuple out_tuple, RelKeysData* keys, const char* context)
+pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeysData* keys, const char* context)
 {
-    uint32 data_len = tuple->t_len - tuple->t_data->t_hoff;
-    uint64 tuple_offset_in_page = (char*)tuple->t_data - (char*)page;
-    uint64 tuple_offset_in_file = (bn * BLCKSZ) + tuple_offset_in_page;
-    char *tup_data = (char*)tuple->t_data + tuple->t_data->t_hoff;
-    char *out_data = (char*)out_tuple->t_data + out_tuple->t_data->t_hoff;
+	char iv_prefix[16] = {0};
+	uint32 data_len = tuple->t_len - tuple->t_data->t_hoff;
+	char *tup_data = (char*)tuple->t_data + tuple->t_data->t_hoff;
+	char *out_data = (char*)out_tuple->t_data + out_tuple->t_data->t_hoff;
+
+	SetIVPrefix(&tuple->t_self, iv_prefix);
 
 #ifdef ENCRYPTION_DEBUG
     ereport(LOG,
-        (errmsg("%s: table Oid: %u block no: %u data size: %u, tuple offset in file: %lu",
-                context?context:"", tuple->t_tableOid, bn,
-                data_len, tuple_offset_in_file)));
+        (errmsg("%s: table Oid: %u data size: %u",
+                context?context:"", tuple->t_tableOid,
+                data_len)));
 #endif
-    pg_tde_crypt(tuple_offset_in_file, tup_data, data_len, out_data, keys, context);
+    pg_tde_crypt(iv_prefix, 0, tup_data, data_len, out_data, keys, context);
 }
 
 
@@ -146,15 +152,19 @@ PGTdePageAddItemExtended(RelFileLocator rel,
 	OffsetNumber off = PageAddItemExtended(page,item,size,offsetNumber,flags);
 	PageHeader	phdr = (PageHeader) page;
 	unsigned long header_size = ((HeapTupleHeader)item)->t_hoff;
-
+	char iv_prefix[16] = {0,};
 	char* toAddr = ((char*)phdr) + phdr->pd_upper + header_size;
 	char* data = item + header_size;
-	uint64 offset_in_page = ((char*)phdr) + phdr->pd_upper - (char*)page;
 	uint32	data_len = size - header_size;
-
+	/* ctid stored in item is incorrect (not set) at this point */
+	ItemPointerData ip;
 	RelKeysData *keys = GetRelationKeys(rel);
 
-	PG_TDE_ENCRYPT_PAGE_ITEM(bn, offset_in_page, data, data_len, toAddr, keys);
+	ItemPointerSet(&ip, bn, off); 
+
+	SetIVPrefix(&ip, iv_prefix);
+
+	PG_TDE_ENCRYPT_PAGE_ITEM(iv_prefix, 0, data, data_len, toAddr, keys);
 	return off;
 }
 
@@ -165,15 +175,13 @@ PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slo
     if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
     {
 		MemoryContext oldContext;
-        Page pageHeader;
 		HeapTuple	decrypted_tuple;
         RelKeysData *keys = GetRelationKeys(rel->rd_locator);
-        pageHeader = BufferGetPage(buffer);
 
 		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 		decrypted_tuple = heap_copytuple(tuple);
 		MemoryContextSwitchTo(oldContext);
-		PG_TDE_DECRYPT_TUPLE_EX(BufferGetBlockNumber(buffer), pageHeader, tuple, decrypted_tuple, keys, "ExecStoreBuffer");
+		PG_TDE_DECRYPT_TUPLE_EX(tuple, decrypted_tuple, keys, "ExecStoreBuffer");
 		/* TODO: revisit this */
 		tuple->t_data = decrypted_tuple->t_data;
     }
@@ -187,16 +195,14 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlo
     if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
     {
 		MemoryContext oldContext;
-        Page pageHeader;
 		HeapTuple	decrypted_tuple;
         RelKeysData *keys = GetRelationKeys(rel->rd_locator);
-        pageHeader = BufferGetPage(buffer);
 
 		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 		decrypted_tuple = heap_copytuple(tuple);
 		MemoryContextSwitchTo(oldContext);
 
-		PG_TDE_DECRYPT_TUPLE_EX(BufferGetBlockNumber(buffer), pageHeader, tuple, decrypted_tuple, keys, "ExecStoreBuffer");
+		PG_TDE_DECRYPT_TUPLE_EX(tuple, decrypted_tuple, keys, "ExecStoreBuffer");
 		/* TODO: revisit this */
 		tuple->t_data = decrypted_tuple->t_data;
     }

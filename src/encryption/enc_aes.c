@@ -170,7 +170,7 @@ void AesDecrypt(const unsigned char* key, const unsigned char* iv, const unsigne
  * If the caller wants to process more than NUM_AES_BLOCKS_IN_BATCH * AES_BLOCK_SIZE
  * data it should divide the data into batches and call this function for each batch.
  */
-void Aes128EncryptedZeroBlocks(void* ctxPtr, const unsigned char* key, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char* out)
+void Aes128EncryptedZeroBlocks(void* ctxPtr, const unsigned char* key, const char* iv_prefix, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char* out)
 {
 	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
@@ -184,6 +184,8 @@ void Aes128EncryptedZeroBlocks(void* ctxPtr, const unsigned char* key, uint64_t 
 	memset(data, 0, dataLen);
 	for(int j=blockNumber1;j<blockNumber2;++j)
 	{
+		memcpy(data + (16*(j-blockNumber1)), iv_prefix, 16);
+
 		for(int i =0; i<8;++i) {
 			data[16*(j-blockNumber1)+15-i] = (j >> (8*i)) & 0xFF;
 		}

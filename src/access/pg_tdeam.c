@@ -3124,7 +3124,7 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 		// only neccessary field
 		oldtup_decrypted.t_data = (HeapTupleHeader)new_ptr;
 	}
-	PG_TDE_DECRYPT_TUPLE(BufferGetBlockNumber(buffer), page, &oldtup, &oldtup_decrypted,
+	PG_TDE_DECRYPT_TUPLE(&oldtup, &oldtup_decrypted,
 							GetRelationKeys(relation->rd_locator));
 
 	// change field in oldtup now.

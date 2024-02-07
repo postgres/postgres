@@ -1277,7 +1277,6 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 	Offset		copy_head;
 	itemIdCompact itemidptr;
 	int			i;
-	RelKeysData *keys = GetRelationKeys(rel->rd_locator);
 
 	/* Code within will not work correctly if nitems == 0 */
 	Assert(nitems > 0);
@@ -1341,24 +1340,6 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 
 			itemidptr = &itemidbase[i];
 
-			if(copy_head < copy_tail)
-			{
-				// TODO: recheck this condition
-				// We leave the original loop as-is, and recrypt tuples one by one
-				// This is definitely not the fastest, but simple
-				BlockNumber bn = BufferGetBlockNumber(buffer);
-				unsigned long header_size = sizeof(HeapTupleHeaderData);
-				uint64 read_offset_in_page = copy_head;
-				uint64 write_offset_in_page = upper;
-				uint32 data_len = itemidptr->len - header_size;
-				char* read_from = (char*)(page) + copy_head + header_size;
-				char* write_to = (char*)(page) + copy_head + header_size;
-
-				PG_TDE_RE_ENCRYPT_TUPLE_DATA(bn, read_offset_in_page, read_from,
-											bn, write_offset_in_page, write_to,
-											data_len, keys);
-			}
-
 			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
 
 			if (copy_head != itemidptr->itemoff + itemidptr->alignedlen && copy_head < copy_tail)
@@ -1382,25 +1363,6 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 			/* update the line pointer to reference the new offset */
 			lp->lp_off = upper;
 		}
-
-		// TODO: it says remaining, but looks like it's only one?
-		// TODO: exact same block is duplicated twice
-			if(copy_head < copy_tail) { // TODO: recheck this condition
-				// We leave the original loop as-is, and recrypt tuples one by one
-				// This is definitely not the fastest, but simple
-				//
-				BlockNumber bn = BufferGetBlockNumber(buffer);
-				unsigned long header_size = sizeof(HeapTupleHeaderData);
-				uint64 read_offset_in_page = copy_head;
-				uint64 write_offset_in_page = upper;
-				uint32 data_len = itemidptr->len - header_size;
-				char* read_from = (char*)(page) + copy_head + header_size;
-				char* write_to = (char*)(page) + copy_head + header_size;
-
-				PG_TDE_RE_ENCRYPT_TUPLE_DATA(bn, read_offset_in_page, read_from,
-											bn, write_offset_in_page, write_to,
-											data_len, keys);
-			}
 
 		/* move the remaining tuples. */
 		memmove((char *) page + upper,
@@ -1482,21 +1444,6 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 			ItemId		lp;
 
 			itemidptr = &itemidbase[i];
-			if(copy_head < copy_tail) { // TODO: recheck this condition
-				// We leave the original loop as-is, and recrypt tuples one by one
-				// This is definitely not the fastest, but simple
-				BlockNumber bn = BufferGetBlockNumber(buffer);
-				unsigned long header_size = sizeof(HeapTupleHeaderData);
-				uint64 read_offset_in_page = copy_head;
-				uint64 write_offset_in_page = upper;
-				uint32 data_len = itemidptr->len - header_size;
-				char* read_from = scratchptr + copy_head + header_size;
-				char* write_to = scratchptr + copy_head + header_size;
-
-				PG_TDE_RE_ENCRYPT_TUPLE_DATA(bn, read_offset_in_page, read_from,
-											bn, write_offset_in_page, write_to,
-											data_len, keys);
-			}
 
 			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
 
@@ -1523,22 +1470,6 @@ pgtde_compactify_tuples(Relation rel, Buffer buffer, itemIdCompact itemidbase, i
 			lp->lp_off = upper;
 		}
 
-		/* Recrypt the remaining chunk */
-		if(copy_head < copy_tail) { // TODO: recheck this condition
-			BlockNumber bn = BufferGetBlockNumber(buffer);
-			unsigned long header_size = sizeof(HeapTupleHeaderData);
-			uint64 read_offset_in_page = copy_head;
-			uint64 write_offset_in_page = upper;
-			uint32 data_len = itemidptr->len - header_size;
-			char* read_from = scratchptr + copy_head + header_size;
-			char* write_to = scratchptr + copy_head + header_size;
-
-			PG_TDE_RE_ENCRYPT_TUPLE_DATA(bn, read_offset_in_page, read_from,
-										bn, write_offset_in_page, write_to,
-										data_len, keys);
-
-		}
-		
 		/* Copy the remaining chunk */
 		memcpy((char *) page + upper,
 			   scratchptr + copy_head,

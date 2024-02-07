@@ -50,22 +50,6 @@ if host_system == 'darwin'
   ldflags += '-bundle'
 endif
 
-enc_test = executable('enc_test',
-  files('src/encryption/enc_aes.c', 'src/encryption/test.c'),
-  kwargs: mod_args,
-  include_directories: incdir,
-  c_args : '-DFRONTEND',
-  link_args: ldflags,
-)
-
-pg_tde_perf = executable('enc_perf_test',
-  files('src/encryption/enc_aes.c', 'src/encryption/test_perf.c'),
-  kwargs: contrib_mod_args,
-  include_directories: incdir,
-  c_args : '-DFRONTEND',
-  link_args: ldflags,
-)
-
 install_data(
   'pg_tde.control',
   'pg_tde--1.0.sql',
