@@ -1314,20 +1314,23 @@ SELCT 1/0;<!-- this typo is intentional -->
 
    <para>
     At present there is a hard-wired set of parameters for which
-    ParameterStatus will be generated: they are
-    <varname>server_version</varname>,
-    <varname>server_encoding</varname>,
-    <varname>client_encoding</varname>,
-    <varname>application_name</varname>,
-    <varname>default_transaction_read_only</varname>,
-    <varname>in_hot_standby</varname>,
-    <varname>is_superuser</varname>,
-    <varname>session_authorization</varname>,
-    <varname>DateStyle</varname>,
-    <varname>IntervalStyle</varname>,
-    <varname>TimeZone</varname>,
-    <varname>integer_datetimes</varname>, and
-    <varname>standard_conforming_strings</varname>.
+    ParameterStatus will be generated.  They are:
+    <simplelist type="vert" columns="2">
+     <member><varname>application_name</varname></member>
+     <member><varname>client_encoding</varname></member>
+     <member><varname>DateStyle</varname></member>
+     <member><varname>default_transaction_read_only</varname></member>
+     <member><varname>in_hot_standby</varname></member>
+     <member><varname>integer_datetimes</varname></member>
+     <member><varname>IntervalStyle</varname></member>
+     <member><varname>is_superuser</varname></member>
+     <member><varname>scram_iterations</varname></member>
+     <member><varname>server_encoding</varname></member>
+     <member><varname>server_version</varname></member>
+     <member><varname>session_authorization</varname></member>
+     <member><varname>standard_conforming_strings</varname></member>
+     <member><varname>TimeZone</varname></member>
+    </simplelist>
     (<varname>server_encoding</varname>, <varname>TimeZone</varname>, and
     <varname>integer_datetimes</varname> were not reported by releases before 8.0;
     <varname>standard_conforming_strings</varname> was not reported by releases
@@ -1337,7 +1340,8 @@ SELCT 1/0;<!-- this typo is intentional -->
     9.0;
     <varname>default_transaction_read_only</varname> and
     <varname>in_hot_standby</varname> were not reported by releases before
-    14.)
+    14; <varname>scram_iterations</varname> was not reported by releases
+    before 16.)
     Note that
     <varname>server_version</varname>,
     <varname>server_encoding</varname> and
