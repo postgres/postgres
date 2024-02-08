@@ -441,6 +441,10 @@ set       toc,title
 
 <!-- from html/autoidx.xsl -->
 
+<xsl:key name="primaryonly"
+         match="indexterm"
+         use="normalize-space(primary)"/>
+
 <xsl:template match="indexterm" mode="index-primary">
   <xsl:param name="scope" select="."/>
   <xsl:param name="role" select="''"/>
