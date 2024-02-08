@@ -4,7 +4,7 @@
 
 <!--
   This file contains XSLT stylesheet customizations that are common to
-  all output formats (HTML, HTML Help, XSL-FO, etc.).
+  all output formats (HTML, XSL-FO, man, etc.).
   -->
 
 <xsl:include href="stylesheet-speedup-common.xsl" />
