@@ -12,14 +12,13 @@ endif
 
 xid_wraparound = shared_module('xid_wraparound',
   xid_wraparound_sources,
-  kwargs: pg_mod_args,
+  kwargs: pg_test_mod_args,
 )
-testprep_targets += xid_wraparound
+test_install_libs += xid_wraparound
 
-install_data(
+test_install_data += files(
   'xid_wraparound.control',
   'xid_wraparound--1.0.sql',
-  kwargs: contrib_data_args,
 )
 
 tests += {
