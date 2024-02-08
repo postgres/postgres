@@ -680,7 +680,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	char		src_locprovider = '\0';
 	char	   *src_collversion = NULL;
 	bool		src_istemplate;
-	bool		src_hasloginevt;
+	bool		src_hasloginevt = false;
 	bool		src_allowconn;
 	TransactionId src_frozenxid = InvalidTransactionId;
 	MultiXactId src_minmxid = InvalidMultiXactId;
