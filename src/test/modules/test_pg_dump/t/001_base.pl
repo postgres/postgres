@@ -857,6 +857,22 @@ foreach my $run (sort keys %pgdump_runs)
 
 	foreach my $test (sort keys %tests)
 	{
+		# Check for proper test definitions
+		#
+		# There should be a "like" list, even if it is empty.  (This
+		# makes the test more self-documenting.)
+		if (!defined($tests{$test}->{like}))
+		{
+			die "missing \"like\" in test \"$test\"";
+		}
+		# Check for useless entries in "unlike" list.  Runs that are
+		# not listed in "like" don't need to be excluded in "unlike".
+		if ($tests{$test}->{unlike}->{$test_key}
+			&& !defined($tests{$test}->{like}->{$test_key}))
+		{
+			die "useless \"unlike\" entry \"$test_key\" in test \"$test\"";
+		}
+
 		# Run the test listed as a like, unless it is specifically noted
 		# as an unlike (generally due to an explicit exclusion or similar).
 		if ($tests{$test}->{like}->{$test_key}
