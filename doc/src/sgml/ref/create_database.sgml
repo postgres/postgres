@@ -25,7 +25,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
     [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
-           [ STRATEGY [=] <replaceable class="parameter">strategy</replaceable> ] ]
+           [ STRATEGY [=] <replaceable class="parameter">strategy</replaceable> ]
            [ LOCALE [=] <replaceable class="parameter">locale</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
