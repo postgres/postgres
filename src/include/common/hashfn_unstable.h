@@ -138,7 +138,7 @@ fasthash_combine(fasthash_state *hs)
 
 /* accumulate up to 8 bytes of input and combine it into the hash */
 static inline void
-fasthash_accum(fasthash_state *hs, const char *k, int len)
+fasthash_accum(fasthash_state *hs, const char *k, size_t len)
 {
 	uint32		lower_four;
 
@@ -189,14 +189,14 @@ fasthash_accum(fasthash_state *hs, const char *k, int len)
 /*
  * all-purpose workhorse for fasthash_accum_cstring
  */
-static inline int
+static inline size_t
 fasthash_accum_cstring_unaligned(fasthash_state *hs, const char *str)
 {
 	const char *const start = str;
 
 	while (*str)
 	{
-		int			chunk_len = 0;
+		size_t		chunk_len = 0;
 
 		while (chunk_len < FH_SIZEOF_ACCUM && str[chunk_len] != '\0')
 			chunk_len++;
@@ -215,11 +215,11 @@ fasthash_accum_cstring_unaligned(fasthash_state *hs, const char *str)
  * Loading the word containing the NUL terminator cannot segfault since
  * allocation boundaries are suitably aligned.
  */
-static inline int
+static inline size_t
 fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 {
 	const char *const start = str;
-	int			remainder;
+	size_t		remainder;
 	uint64		zero_byte_low;
 
 	Assert(PointerIsAligned(start, uint64));
@@ -269,14 +269,14 @@ fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 /*
  * Mix 'str' into the hash state and return the length of the string.
  */
-static inline int
+static inline size_t
 fasthash_accum_cstring(fasthash_state *hs, const char *str)
 {
 #if SIZEOF_VOID_P >= 8
 
-	int			len;
+	size_t		len;
 #ifdef USE_ASSERT_CHECKING
-	int			len_check;
+	size_t		len_check;
 	fasthash_state hs_check;
 
 	memcpy(&hs_check, hs, sizeof(fasthash_state));
@@ -340,7 +340,7 @@ fasthash_final32(fasthash_state *hs, uint64 tweak)
  * 'seed' can be zero.
  */
 static inline uint64
-fasthash64(const char *k, int len, uint64 seed)
+fasthash64(const char *k, size_t len, uint64 seed)
 {
 	fasthash_state hs;
 
@@ -362,7 +362,7 @@ fasthash64(const char *k, int len, uint64 seed)
 
 /* like fasthash64, but returns a 32-bit hashcode */
 static inline uint64
-fasthash32(const char *k, int len, uint64 seed)
+fasthash32(const char *k, size_t len, uint64 seed)
 {
 	return fasthash_reduce32(fasthash64(k, len, seed));
 }
