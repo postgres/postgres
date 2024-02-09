@@ -454,17 +454,38 @@ ECPGis_noind_null(enum ECPGttype type, const void *ptr)
 #ifdef WIN32
 #ifdef ENABLE_THREAD_SAFETY
 
-void
-win32_pthread_mutex(volatile pthread_mutex_t *mutex)
+int
+pthread_mutex_init(pthread_mutex_t *mp, void *attr)
 {
-	if (mutex->handle == NULL)
+	mp->initstate = 0;
+	return 0;
+}
+
+int
+pthread_mutex_lock(pthread_mutex_t *mp)
+{
+	/* Initialize the csection if not already done */
+	if (mp->initstate != 1)
 	{
-		while (InterlockedExchange((LONG *) &mutex->initlock, 1) == 1)
-			Sleep(0);
-		if (mutex->handle == NULL)
-			mutex->handle = CreateMutex(NULL, FALSE, NULL);
-		InterlockedExchange((LONG *) &mutex->initlock, 0);
+		LONG		istate;
+
+		while ((istate = InterlockedExchange(&mp->initstate, 2)) == 2)
+			Sleep(0);			/* wait, another thread is doing this */
+		if (istate != 1)
+			InitializeCriticalSection(&mp->csection);
+		InterlockedExchange(&mp->initstate, 1);
 	}
+	EnterCriticalSection(&mp->csection);
+	return 0;
+}
+
+int
+pthread_mutex_unlock(pthread_mutex_t *mp)
+{
+	if (mp->initstate != 1)
+		return EINVAL;
+	LeaveCriticalSection(&mp->csection);
+	return 0;
 }
 
 static pthread_mutex_t win32_pthread_once_lock = PTHREAD_MUTEX_INITIALIZER;
