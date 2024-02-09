@@ -612,8 +612,8 @@ BeginCopyTo(ParseState *pstate,
 		cstate->file_encoding = cstate->opts.file_encoding;
 
 	/*
-	 * Set up encoding conversion info if the file and server encodings
-	 * differ (see also pg_server_to_any).
+	 * Set up encoding conversion info if the file and server encodings differ
+	 * (see also pg_server_to_any).
 	 */
 	if (cstate->file_encoding == GetDatabaseEncoding() ||
 		cstate->file_encoding == PG_SQL_ASCII)
