@@ -456,7 +456,16 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	seqstmt = makeNode(CreateSeqStmt);
 	seqstmt->for_identity = for_identity;
 	seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-	seqstmt->sequence->relpersistence = cxt->relation->relpersistence;
+
+	/*
+	 * Copy the persistence of the table.  For CREATE TABLE, we get the
+	 * persistence from cxt->relation, which comes from the CreateStmt in
+	 * progress.  For ALTER TABLE, the parser won't set
+	 * cxt->relation->relpersistence, but we have cxt->rel as the existing
+	 * table, so we copy the persistence from there.
+	 */
+	seqstmt->sequence->relpersistence = cxt->rel ? cxt->rel->rd_rel->relpersistence : cxt->relation->relpersistence;
+
 	seqstmt->options = seqoptions;
 
 	/*
