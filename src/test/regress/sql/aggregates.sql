@@ -1231,6 +1231,25 @@ RESET enable_incremental_sort;
 
 DROP TABLE btg;
 
+-- Check we don't pick aggregate path key instead of grouping path key
+CREATE TABLE group_agg_pk AS SELECT
+  i % 10 AS x,
+  i % 2 AS y,
+  i % 2 AS z,
+  2 AS w,
+  i % 10 AS f
+FROM generate_series(1,100) AS i;
+ANALYZE group_agg_pk;
+SET enable_nestloop = off;
+SET enable_hashjoin = off;
+SELECT
+  c1.z, c1.w, string_agg(''::text, repeat(''::text, c1.f) ORDER BY c1.x,c1.y)
+FROM group_agg_pk c1 JOIN group_agg_pk c2 ON (c1.x = c2.f)
+GROUP BY c1.w, c1.z;
+RESET enable_nestloop;
+RESET enable_hashjoin;
+DROP TABLE group_agg_pk;
+
 -- The case, when scanning sort order correspond to aggregate sort order but
 -- can not be found in the group-by list
 CREATE TABLE agg_sort_order (c1 int PRIMARY KEY, c2 int);

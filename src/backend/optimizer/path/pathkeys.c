@@ -355,10 +355,14 @@ pathkeys_contained_in(List *keys1, List *keys2)
 
 /*
  * group_keys_reorder_by_pathkeys
- *		Reorder GROUP BY keys to match the input pathkeys.
+ *		Reorder GROUP BY pathkeys and clauses to match the input pathkeys.
  *
- * Function returns new lists (pathkeys and clauses), original GROUP BY lists
- * stay untouched.
+ * 'pathkeys' is an input list of pathkeys
+ * '*group_pathkeys' and '*group_clauses' are pathkeys and clauses lists to
+ *		reorder.  The pointers are redirected to new lists, original lists
+ *		stay untouched.
+ * 'num_groupby_pathkeys' is the number of first '*group_pathkeys' items to
+ *		search matching pathkeys.
  *
  * Returns the number of GROUP BY keys with a matching pathkey.
  */
@@ -369,11 +373,23 @@ group_keys_reorder_by_pathkeys(List *pathkeys, List **group_pathkeys,
 {
 	List	   *new_group_pathkeys = NIL,
 			   *new_group_clauses = NIL;
+	List	   *grouping_pathkeys;
 	ListCell   *lc;
 	int			n;
 
 	if (pathkeys == NIL || *group_pathkeys == NIL)
 		return 0;
+
+	/*
+	 * We're going to search within just the first num_groupby_pathkeys of
+	 * *group_pathkeys.  The thing is that root->group_pathkeys is passed as
+	 * *group_pathkeys containing grouping pathkeys altogether with aggregate
+	 * pathkeys.  If we process aggregate pathkeys we could get an invalid
+	 * result of get_sortgroupref_clause_noerr(), because their
+	 * pathkey->pk_eclass->ec_sortref doesn't referece query targetlist.  So,
+	 * we allocate a separate list of pathkeys for lookups.
+	 */
+	grouping_pathkeys = list_copy_head(*group_pathkeys, num_groupby_pathkeys);
 
 	/*
 	 * Walk the pathkeys (determining ordering of the input path) and see if
@@ -395,7 +411,7 @@ group_keys_reorder_by_pathkeys(List *pathkeys, List **group_pathkeys,
 		 * there is no sortclause reference for some reason.
 		 */
 		if (foreach_current_index(lc) >= num_groupby_pathkeys ||
-			!list_member_ptr(*group_pathkeys, pathkey) ||
+			!list_member_ptr(grouping_pathkeys, pathkey) ||
 			pathkey->pk_eclass->ec_sortref == 0)
 			break;
 
@@ -429,6 +445,7 @@ group_keys_reorder_by_pathkeys(List *pathkeys, List **group_pathkeys,
 	*group_clauses = list_concat_unique_ptr(new_group_clauses,
 											*group_clauses);
 
+	list_free(grouping_pathkeys);
 	return n;
 }
 
