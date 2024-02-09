@@ -42,6 +42,8 @@
 #endif
 #endif
 
+#include "common/string.h"
+
 /* Inhibit mingw CRT's auto-globbing of command line arguments */
 #if defined(WIN32) && !defined(_MSC_VER)
 extern int	_CRT_glob = 0;		/* 0 turns off globbing; 1 turns it on */
@@ -328,7 +330,7 @@ find_other_exec(const char *argv0, const char *target,
 				const char *versionstr, char *retpath)
 {
 	char		cmd[MAXPGPATH];
-	char		line[MAXPGPATH];
+	char	   *line;
 
 	if (find_my_exec(argv0, retpath) < 0)
 		return -1;
@@ -346,46 +348,55 @@ find_other_exec(const char *argv0, const char *target,
 
 	snprintf(cmd, sizeof(cmd), "\"%s\" -V", retpath);
 
-	if (!pipe_read_line(cmd, line, sizeof(line)))
+	if ((line = pipe_read_line(cmd)) == NULL)
 		return -1;
 
 	if (strcmp(line, versionstr) != 0)
+	{
+		pfree(line);
 		return -2;
+	}
 
+	pfree(line);
 	return 0;
 }
 
 
 /*
- * Execute a command in a pipe and read the first line from it.
+ * Execute a command in a pipe and read the first line from it. The returned
+ * string is palloc'd (malloc'd in frontend code), the caller is responsible
+ * for freeing.
  */
 char *
-pipe_read_line(char *cmd, char *line, int maxsize)
+pipe_read_line(char *cmd)
 {
-	FILE	   *pgver;
+	FILE	   *pipe_cmd;
+	char	   *line;
 
 	fflush(NULL);
 
 	errno = 0;
-	if ((pgver = popen(cmd, "r")) == NULL)
+	if ((pipe_cmd = popen(cmd, "r")) == NULL)
 	{
 		perror("popen failure");
 		return NULL;
 	}
 
+	/* Make sure popen() didn't change errno */
 	errno = 0;
-	if (fgets(line, maxsize, pgver) == NULL)
+	line = pg_get_line(pipe_cmd, NULL);
+
+	if (line == NULL)
 	{
-		if (feof(pgver))
-			fprintf(stderr, "no data was returned by command \"%s\"\n", cmd);
+		if (ferror(pipe_cmd))
+			log_error(errcode_for_file_access(),
+					  _("could not read from command \"%s\": %m"), cmd);
 		else
-			perror("fgets failure");
-		pclose(pgver);			/* no error checking */
-		return NULL;
+			log_error(errcode_for_file_access(),
+					  _("no data was returned by command \"%s\": %m"), cmd);
 	}
 
-	if (pclose_check(pgver))
-		return NULL;
+	(void) pclose_check(pipe_cmd);
 
 	return line;
 }

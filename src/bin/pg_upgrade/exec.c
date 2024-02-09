@@ -431,7 +431,7 @@ static void
 check_exec(const char *dir, const char *program, bool check_version)
 {
 	char		path[MAXPGPATH];
-	char		line[MAXPGPATH];
+	char	   *line;
 	char		cmd[MAXPGPATH];
 	char		versionstr[128];
 
@@ -442,7 +442,7 @@ check_exec(const char *dir, const char *program, bool check_version)
 
 	snprintf(cmd, sizeof(cmd), "\"%s\" -V", path);
 
-	if (!pipe_read_line(cmd, line, sizeof(line)))
+	if ((line = pipe_read_line(cmd)) == NULL)
 		pg_fatal("check for \"%s\" failed: cannot execute",
 				 path);
 
@@ -456,4 +456,6 @@ check_exec(const char *dir, const char *program, bool check_version)
 			pg_fatal("check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\"",
 					 path, line, versionstr);
 	}
+
+	pg_free(line);
 }
