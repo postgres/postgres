@@ -94,12 +94,7 @@ static bool ssl_lib_initialized = false;
 #ifdef ENABLE_THREAD_SAFETY
 static long crypto_open_connections = 0;
 
-#ifndef WIN32
 static pthread_mutex_t ssl_config_mutex = PTHREAD_MUTEX_INITIALIZER;
-#else
-static pthread_mutex_t ssl_config_mutex = NULL;
-static long win32_ssl_create_mutex = 0;
-#endif
 #endif							/* ENABLE_THREAD_SAFETY */
 
 static PQsslKeyPassHook_OpenSSL_type PQsslKeyPassHook = NULL;
@@ -783,20 +778,6 @@ int
 pgtls_init(PGconn *conn, bool do_ssl, bool do_crypto)
 {
 #ifdef ENABLE_THREAD_SAFETY
-#ifdef WIN32
-	/* Also see similar code in fe-connect.c, default_threadlock() */
-	if (ssl_config_mutex == NULL)
-	{
-		while (InterlockedExchange(&win32_ssl_create_mutex, 1) == 1)
-			 /* loop, another thread own the lock */ ;
-		if (ssl_config_mutex == NULL)
-		{
-			if (pthread_mutex_init(&ssl_config_mutex, NULL))
-				return -1;
-		}
-		InterlockedExchange(&win32_ssl_create_mutex, 0);
-	}
-#endif
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return -1;
 
@@ -887,7 +868,6 @@ static void
 destroy_ssl_system(void)
 {
 #if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
-	/* Mutex is created in pgtls_init() */
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return;
 
