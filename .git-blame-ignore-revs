@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+49e7c6f78ed608c5d5454080ae19c0e7f1b09a04 # 2024-02-09 11:05:01 +0900
+# Fix indentation of copyto.c
+
 96c019ffa3f883d139709ea0cfe76dc1bce0f1f8 # 2024-01-13 13:54:11 -0500
 # Re-pgindent catcache.c after previous commit.
 
