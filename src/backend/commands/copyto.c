@@ -612,13 +612,15 @@ BeginCopyTo(ParseState *pstate,
 		cstate->file_encoding = cstate->opts.file_encoding;
 
 	/*
-	 * Set up encoding conversion info.  Even if the file and server encodings
-	 * are the same, we must apply pg_any_to_server() to validate data in
-	 * multibyte encodings.
+	 * Set up encoding conversion info if the file and server encodings
+	 * differ (see also pg_server_to_any).
 	 */
-	cstate->need_transcoding =
-		(cstate->file_encoding != GetDatabaseEncoding() ||
-		 pg_database_encoding_max_length() > 1);
+	if (cstate->file_encoding == GetDatabaseEncoding() ||
+		cstate->file_encoding == PG_SQL_ASCII)
+		cstate->need_transcoding = false;
+	else
+		cstate->need_transcoding = true;
+
 	/* See Multibyte encoding comment above */
 	cstate->encoding_embeds_ascii = PG_ENCODING_IS_CLIENT_ONLY(cstate->file_encoding);
 
