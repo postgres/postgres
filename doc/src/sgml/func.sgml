@@ -18240,7 +18240,12 @@ ERROR:  jsonpath member accessor can only be applied to an object
       <type>timestamptz</type>, and <type>time</type> to <type>timetz</type>.
       However, all but the first of these conversions depend on the current
       <xref linkend="guc-timezone"/> setting, and thus can only be performed
-      within timezone-aware <type>jsonpath</type> functions.
+      within timezone-aware <type>jsonpath</type> functions.  Similarly, other
+      date/time-related methods that convert strings to date/time types
+      also do this casting, which may involve the current
+      <xref linkend="guc-timezone"/> setting. Therefore, these conversions can
+      also only be performed within timezone-aware <type>jsonpath</type>
+      functions.
      </para>
     </note>
 
