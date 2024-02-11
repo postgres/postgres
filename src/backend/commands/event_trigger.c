@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "access/xact.h"
@@ -943,18 +944,45 @@ EventTriggerOnLogin(void)
 			Relation	pg_db = table_open(DatabaseRelationId, RowExclusiveLock);
 			HeapTuple	tuple;
 			Form_pg_database db;
+			ScanKeyData key[1];
+			SysScanDesc scan;
 
-			tuple = SearchSysCacheCopy1(DATABASEOID,
-										ObjectIdGetDatum(MyDatabaseId));
+			/*
+			 * Get the pg_database tuple to scribble on.  Note that this does
+			 * not directly rely on the syscache to avoid issues with
+			 * flattened toast values for the in-place update.
+			 */
+			ScanKeyInit(&key[0],
+						Anum_pg_database_oid,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(MyDatabaseId));
+
+			scan = systable_beginscan(pg_db, DatabaseOidIndexId, true,
+									  NULL, 1, key);
+			tuple = systable_getnext(scan);
+			tuple = heap_copytuple(tuple);
+			systable_endscan(scan);
 
 			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+				elog(ERROR, "could not find tuple for database %u", MyDatabaseId);
 
 			db = (Form_pg_database) GETSTRUCT(tuple);
 			if (db->dathasloginevt)
 			{
 				db->dathasloginevt = false;
-				CatalogTupleUpdate(pg_db, &tuple->t_self, tuple);
+
+				/*
+				 * Do an "in place" update of the pg_database tuple.  Doing
+				 * this instead of regular updates serves two purposes. First,
+				 * that avoids possible waiting on the row-level lock. Second,
+				 * that avoids dealing with TOAST.
+				 *
+				 * It's known that changes made by heap_inplace_update() may
+				 * be lost due to concurrent normal updates.  However, we are
+				 * OK with that.  The subsequent connections will still have a
+				 * chance to set "dathasloginevt" to false.
+				 */
+				heap_inplace_update(pg_db, tuple);
 			}
 			table_close(pg_db, RowExclusiveLock);
 			heap_freetuple(tuple);
