@@ -16389,6 +16389,12 @@ esac
 esac
 
   case " $LIBOBJS " in
+  *" win32gai_strerror.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32gai_strerror.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
   *" win32getrusage.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS win32getrusage.$ac_objext"
  ;;
