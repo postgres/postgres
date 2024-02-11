@@ -49,7 +49,7 @@
      To prevent servers from becoming inaccessible, such triggers must avoid
      writing anything to the database when running on a standby.
      Also, it's recommended to avoid long-running queries in
-     <literal>login</literal> event triggers.  Notes that, for instance,
+     <literal>login</literal> event triggers.  Note that, for instance,
      canceling connection in <application>psql</application> wouldn't cancel
      the in-progress <literal>login</literal> trigger.
    </para>
@@ -1144,8 +1144,9 @@ typedef struct EventTriggerData
       <listitem>
        <para>
         Describes the event for which the function is called, one of
-        <literal>"ddl_command_start"</literal>, <literal>"ddl_command_end"</literal>,
-        <literal>"sql_drop"</literal>, <literal>"table_rewrite"</literal>.
+        <literal>"login"</literal>, <literal>"ddl_command_start"</literal>,
+        <literal>"ddl_command_end"</literal>, <literal>"sql_drop"</literal>,
+        <literal>"table_rewrite"</literal>.
         See <xref linkend="event-trigger-definition"/> for the meaning of these
         events.
        </para>
@@ -1203,8 +1204,9 @@ typedef struct EventTriggerData
     This is the source code of the trigger function:
 <programlisting><![CDATA[
 #include "postgres.h"
-#include "commands/event_trigger.h"
 
+#include "commands/event_trigger.h"
+#include "fmgr.h"
 
 PG_MODULE_MAGIC;
 
