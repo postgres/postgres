@@ -23,4 +23,12 @@
 #define ERROR PGERROR
 #endif
 
+/*
+ * We don't use the Windows gai_strerror[A] function because it is not
+ * thread-safe.  We define our own in src/port/win32gai_strerror.c.
+ */
+#undef gai_strerror
+
+extern const char *gai_strerror(int ecode);
+
 #endif							/* WIN32_SYS_SOCKET_H */

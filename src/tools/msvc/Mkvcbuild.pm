@@ -113,6 +113,7 @@ sub mkvcbuild
 	  win32env.c win32error.c
 	  win32fdatasync.c
 	  win32fseek.c
+	  win32gai_strerror.c
 	  win32getrusage.c
 	  win32gettimeofday.c
 	  win32link.c
