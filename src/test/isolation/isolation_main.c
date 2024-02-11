@@ -12,6 +12,7 @@
 
 #include "postgres_fe.h"
 
+#include "lib/stringinfo.h"
 #include "pg_regress.h"
 
 char		saved_argv0[MAXPGPATH];
@@ -34,8 +35,7 @@ isolation_start_test(const char *testname,
 	char		infile[MAXPGPATH];
 	char		outfile[MAXPGPATH];
 	char		expectfile[MAXPGPATH];
-	char		psql_cmd[MAXPGPATH * 3];
-	size_t		offset = 0;
+	StringInfoData psql_cmd;
 	char	   *appnameenv;
 
 	/* need to do the path lookup here, check isolation_init() for details */
@@ -75,34 +75,23 @@ isolation_start_test(const char *testname,
 	add_stringlist_item(resultfiles, outfile);
 	add_stringlist_item(expectfiles, expectfile);
 
-	if (launcher)
-	{
-		offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-						   "%s ", launcher);
-		if (offset >= sizeof(psql_cmd))
-		{
-			fprintf(stderr, _("command too long\n"));
-			exit(2);
-		}
-	}
+	initStringInfo(&psql_cmd);
 
-	offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-					   "\"%s\" \"dbname=%s\" < \"%s\" > \"%s\" 2>&1",
-					   isolation_exec,
-					   dblist->str,
-					   infile,
-					   outfile);
-	if (offset >= sizeof(psql_cmd))
-	{
-		fprintf(stderr, _("command too long\n"));
-		exit(2);
-	}
+	if (launcher)
+		appendStringInfo(&psql_cmd, "%s ", launcher);
+
+	appendStringInfo(&psql_cmd,
+					 "\"%s\" \"dbname=%s\" < \"%s\" > \"%s\" 2>&1",
+					 isolation_exec,
+					 dblist->str,
+					 infile,
+					 outfile);
 
 	appnameenv = psprintf("isolation/%s", testname);
 	setenv("PGAPPNAME", appnameenv, 1);
 	free(appnameenv);
 
-	pid = spawn_process(psql_cmd);
+	pid = spawn_process(psql_cmd.data);
 
 	if (pid == INVALID_PID)
 	{
@@ -112,6 +101,8 @@ isolation_start_test(const char *testname,
 	}
 
 	unsetenv("PGAPPNAME");
+
+	pfree(psql_cmd.data);
 
 	return pid;
 }
