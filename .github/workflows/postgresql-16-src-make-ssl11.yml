@@ -37,10 +37,10 @@ jobs:
           ref: 'a81e5516fa4bc53e332cb35eefe231147c0e1749'
           path: 'src'
 
-      - name: Clone postgres-tde-ext repository
+      - name: Clone pg_tde repository
         uses: actions/checkout@v2
         with:
-          path: 'src/contrib/postgres-tde-ext'
+          path: 'src/contrib/pg_tde'
 
       - name: Create pgsql dir
         run: mkdir -p /opt/pgsql
@@ -52,12 +52,12 @@ jobs:
           sudo make install
         working-directory: src
 
-      - name: Build postgres-tde-ext
+      - name: Build pg_tde
         run: |
           ./configure
           make -j
           sudo make install
-        working-directory: src/contrib/postgres-tde-ext
+        working-directory: src/contrib/pg_tde
 
       - name: Start postgresql cluster with pg_tde
         run: |
@@ -68,13 +68,13 @@ jobs:
             /opt/pgsql/data/postgresql.conf
           echo "pg_tde.keyringConfigFile = '/tmp/keyring.json'" >> \
             /opt/pgsql/data/postgresql.conf
-          cp src/contrib/postgres-tde-ext/keyring.json /tmp/keyring.json
+          cp src/contrib/pg_tde/keyring.json /tmp/keyring.json
           pg_ctl -D /opt/pgsql/data -l logfile start
 
-      - name: Test postgres-tde-ext
+      - name: Test pg_tde
         run: |
           make installcheck
-        working-directory: src/contrib/postgres-tde-ext
+        working-directory: src/contrib/pg_tde
 
       - name: Report on test fail
         uses: actions/upload-artifact@v2
@@ -82,11 +82,11 @@ jobs:
         with:
           name: Regressions diff and postgresql log
           path: |
-            src/contrib/postgres-tde-ext/regression.diffs
+            src/contrib/pg_tde/regression.diffs
             logfile
           retention-days: 3
 
       - name: Report on test fail 2
         if: ${{ failure() }}
         run: |
-          cat src/contrib/postgres-tde-ext/regression.diffs
+          cat src/contrib/pg_tde/regression.diffs

@@ -2428,13 +2428,13 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
-# REQUIRE_LIB(name,lib,package,testfn,test_include.h)
+# REQUIRE_LIB(name,lib,package,testfn,test_header_dir,test_include.h)
 # name = The complete name of the library file without the extension.
 # lib = The name of the library file without the 'lib' prefix and without the extension.
 # package = The name of the package that holds the library
 # testfn = One function included in the library that can be used for a test compilation.
-# headerdir = directory that contains required header
-# header = header file to check for
+# headerdir = The directory that contains required header.
+# header = The header file to check for
 # if there's a problem during the test compilation.
 
 
@@ -3510,7 +3510,7 @@ fi
 then :
 
 		case $host_os in
-			darwin*) libpathx=($HOMEBREW_CELLAR/json-c/*)
+			darwin*) libpathx=($(brew --cellar)/json-c/*)
 						tde_CPPFLAGS="$tde_CPPFLAGS -I$libpathx/include/json-c"
 						tde_LDFLAGS="$tde_LDFLAGS -L$libpathx/lib -ljson-c" ;;
 				  *) tde_CPPFLAGS="$tde_CPPFLAGS -I/usr/include/json-c"
@@ -3612,7 +3612,7 @@ fi
 then :
 
 		case $host_os in
-			darwin*) libpathx=($HOMEBREW_CELLAR/curl/*)
+			darwin*) libpathx=($(brew --cellar)/curl/*)
 						tde_CPPFLAGS="$tde_CPPFLAGS -I$libpathx/include/curl"
 						tde_LDFLAGS="$tde_LDFLAGS -L$libpathx/lib -lcurl" ;;
 				  *) tde_CPPFLAGS="$tde_CPPFLAGS -I/usr/include/curl"
@@ -3717,7 +3717,7 @@ fi
 then :
 
 		case $host_os in
-			darwin*) libpathx=($HOMEBREW_CELLAR/gettext/*)
+			darwin*) libpathx=($(brew --cellar)/gettext/*)
 						tde_CPPFLAGS="$tde_CPPFLAGS -I$libpathx/include/"
 						tde_LDFLAGS="$tde_LDFLAGS -L$libpathx/lib -lintl" ;;
 				  *) tde_CPPFLAGS="$tde_CPPFLAGS -I/usr/include/"

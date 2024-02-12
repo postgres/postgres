@@ -1,0 +1,73 @@
+name: postgresql-16-src-make-macos
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    name: pg-16-src-make-test
+    runs-on: macos-12
+    steps:
+      - name: Install dependencies
+        run: brew install json-c # All other required deps already installed in this image.
+
+      - name: Clone postgres repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'postgres/postgres'
+          ref: 'a81e5516fa4bc53e332cb35eefe231147c0e1749'
+          path: 'src'
+
+      - name: Clone pg_tde repository
+        uses: actions/checkout@v4
+        with:
+          path: 'src/contrib/pg_tde'
+
+      - name: Create pgsql dir
+        run: mkdir -p $HOME/pgsql
+
+      - name: Build postgres
+        run: |
+          export LDFLAGS="-L/usr/local/opt/openssl/lib"
+          export CPPFLAGS="-I/usr/local/opt/openssl/include"
+          export PKG_CONFIG_PATH="/usr/local/opt/icu4c/lib/pkgconfig"
+          ./configure --with-openssl  --enable-tap-tests=no --prefix=$HOME/postgres
+          make -j
+          sudo make install
+        working-directory: src
+
+      - name: Build pg_tde
+        run: |
+          ./configure
+          make -j
+          sudo make install
+        working-directory: src/contrib/pg_tde
+
+      - name: Start postgresql cluster with pg_tde
+        run: |
+          export PATH="$HOME/postgres/bin:$PATH"
+          initdb -D $HOME/pgsql/data
+          echo "shared_preload_libraries = 'pg_tde'" >> \
+            /$HOME/pgsql/data/postgresql.conf
+          echo "pg_tde.keyringConfigFile = '/tmp/keyring.json'" >> \
+            $HOME/pgsql/data/postgresql.conf
+          cp src/contrib/pg_tde/keyring.json /tmp/keyring.json
+          pg_ctl -D $HOME/pgsql/data -l logfile start
+
+      - name: Test pg_tde
+        run: |
+          make installcheck
+        working-directory: src/contrib/pg_tde
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: Regressions diff and postgresql log
+          path: |
+            src/contrib/pg_tde/regression.diffs
+          retention-days: 3
+
+      - name: Run debug commands on failure
+        if: ${{ failure() }}
+        run: |
+          env
+          pwd

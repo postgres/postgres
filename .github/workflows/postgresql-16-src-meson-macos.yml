@@ -1,0 +1,69 @@
+name: postgresql-16-src-meson-macos
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    name: pg-16-src-meson-test
+    runs-on: macos-12
+    steps:
+      - name: Install dependencies
+        run: brew install json-c meson vault gnu-sed # All other required deps already installed in this image.
+
+      - name: Clone postgres repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'postgres/postgres'
+          ref: 'a81e5516fa4bc53e332cb35eefe231147c0e1749'
+          path: 'src'
+
+      - name: Clone pg_tde repository
+        uses: actions/checkout@v4
+        with:
+          path: 'src/contrib/pg_tde'
+
+      - name: Include pg_tde in meson build
+        run: |
+          echo "subdir('pg_tde')" >> src/contrib/meson.build
+
+      - name: Build postgres
+        run: |
+          export PKG_CONFIG_PATH="/usr/local/opt/icu4c/lib/pkgconfig"
+          meson setup build --prefix `pwd`/../inst --buildtype=debug -Dcassert=true
+          cd build && ninja && ninja install
+        working-directory: src
+
+      - name: Test pg_tde with keyring_file
+        run: |
+          cp ../contrib/pg_tde/keyring.json /tmp/keyring.json
+          meson test --suite setup -v
+          meson test --suite pg_tde -v --num-processes 1
+        working-directory: src/build
+
+      - name: Test pg_tde with keyring_vault
+        run: |
+          TV=$(mktemp)
+          { exec >$TV; vault server -dev; } &
+          sleep 10
+          ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
+          echo "Root token: $ROOT_TOKEN"
+          cp ../contrib/pg_tde/keyring-vault.json /tmp/keyring.json
+          gsed -i "s/ROOT_TOKEN/$ROOT_TOKEN/g" /tmp/keyring.json
+          cat /tmp/keyring.json
+          meson test --suite setup -v
+          meson test --suite pg_tde -v --num-processes 1
+        working-directory: src/build
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: Regressions diff and postgresql log
+          path: |
+            src/build/testrun/pg_tde/regress/
+          retention-days: 3
+
+      - name: Run debug commands on failure
+        if: ${{ failure() }}
+        run: |
+          env
+          pwd

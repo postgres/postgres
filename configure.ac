@@ -18,7 +18,7 @@ AC_DEFUN([REQUIRE_LIB], [ {
 	AS_IF([test "x$with_$1" == xdefault],
 	[
 		case $host_os in
-			darwin*) libpathx=($HOMEBREW_CELLAR/$3/*)
+			darwin*) libpathx=($(brew --cellar)/$3/*)
 						tde_CPPFLAGS="$tde_CPPFLAGS -I$libpathx/include/$5"
 						tde_LDFLAGS="$tde_LDFLAGS -L$libpathx/lib -l$2" ;;
 				  *) tde_CPPFLAGS="$tde_CPPFLAGS -I/usr/include/$5" 
