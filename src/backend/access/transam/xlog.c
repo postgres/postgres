@@ -1706,6 +1706,126 @@ GetXLogBuffer(XLogRecPtr ptr, TimeLineID tli)
 }
 
 /*
+ * Read WAL data directly from WAL buffers, if available. Returns the number
+ * of bytes read successfully.
+ *
+ * Fewer than 'count' bytes may be read if some of the requested WAL data has
+ * already been evicted from the WAL buffers, or if the caller requests data
+ * that is not yet available.
+ *
+ * No locks are taken.
+ *
+ * The 'tli' argument is only used as a convenient safety check so that
+ * callers do not read from WAL buffers on a historical timeline.
+ */
+Size
+WALReadFromBuffers(char *dstbuf, XLogRecPtr startptr, Size count,
+				   TimeLineID tli)
+{
+	char	   *pdst = dstbuf;
+	XLogRecPtr	recptr = startptr;
+	XLogRecPtr	upto;
+	Size		nbytes;
+
+	if (RecoveryInProgress() || tli != GetWALInsertionTimeLine())
+		return 0;
+
+	Assert(!XLogRecPtrIsInvalid(startptr));
+
+	/*
+	 * Don't read past the available WAL data.
+	 *
+	 * Check using local copy of LogwrtResult. Ordinarily it's been updated by
+	 * the caller when determining how far to read; but if not, it just means
+	 * we'll read less data.
+	 *
+	 * XXX: the available WAL could be extended to the WAL insert pointer by
+	 * calling WaitXLogInsertionsToFinish().
+	 */
+	upto = Min(startptr + count, LogwrtResult.Write);
+	nbytes = upto - startptr;
+
+	/*
+	 * Loop through the buffers without a lock. For each buffer, atomically
+	 * read and verify the end pointer, then copy the data out, and finally
+	 * re-read and re-verify the end pointer.
+	 *
+	 * Once a page is evicted, it never returns to the WAL buffers, so if the
+	 * end pointer matches the expected end pointer before and after we copy
+	 * the data, then the right page must have been present during the data
+	 * copy. Read barriers are necessary to ensure that the data copy actually
+	 * happens between the two verification steps.
+	 *
+	 * If either verification fails, we simply terminate the loop and return
+	 * with the data that had been already copied out successfully.
+	 */
+	while (nbytes > 0)
+	{
+		uint32		offset = recptr % XLOG_BLCKSZ;
+		int			idx = XLogRecPtrToBufIdx(recptr);
+		XLogRecPtr	expectedEndPtr;
+		XLogRecPtr	endptr;
+		const char *page;
+		const char *psrc;
+		Size		npagebytes;
+
+		/*
+		 * Calculate the end pointer we expect in the xlblocks array if the
+		 * correct page is present.
+		 */
+		expectedEndPtr = recptr + (XLOG_BLCKSZ - offset);
+
+		/*
+		 * First verification step: check that the correct page is present in
+		 * the WAL buffers.
+		 */
+		endptr = pg_atomic_read_u64(&XLogCtl->xlblocks[idx]);
+		if (expectedEndPtr != endptr)
+			break;
+
+		/*
+		 * The correct page is present (or was at the time the endptr was
+		 * read; must re-verify later). Calculate pointer to source data and
+		 * determine how much data to read from this page.
+		 */
+		page = XLogCtl->pages + idx * (Size) XLOG_BLCKSZ;
+		psrc = page + offset;
+		npagebytes = Min(nbytes, XLOG_BLCKSZ - offset);
+
+		/*
+		 * Ensure that the data copy and the first verification step are not
+		 * reordered.
+		 */
+		pg_read_barrier();
+
+		/* data copy */
+		memcpy(pdst, psrc, npagebytes);
+
+		/*
+		 * Ensure that the data copy and the second verification step are not
+		 * reordered.
+		 */
+		pg_read_barrier();
+
+		/*
+		 * Second verification step: check that the page we read from wasn't
+		 * evicted while we were copying the data.
+		 */
+		endptr = pg_atomic_read_u64(&XLogCtl->xlblocks[idx]);
+		if (expectedEndPtr != endptr)
+			break;
+
+		pdst += npagebytes;
+		recptr += npagebytes;
+		nbytes -= npagebytes;
+	}
+
+	Assert(pdst - dstbuf <= count);
+
+	return pdst - dstbuf;
+}
+
+/*
  * Converts a "usable byte position" to XLogRecPtr. A usable byte position
  * is the position starting from the beginning of WAL, excluding all WAL
  * page headers.

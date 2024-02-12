@@ -252,6 +252,9 @@ extern XLogRecPtr GetLastImportantRecPtr(void);
 
 extern void SetWalWriterSleeping(bool sleeping);
 
+extern Size WALReadFromBuffers(char *dstbuf, XLogRecPtr startptr, Size count,
+							   TimeLineID tli);
+
 /*
  * Routines used by xlogrecovery.c to call back into xlog.c during recovery.
  */

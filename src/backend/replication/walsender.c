@@ -2966,6 +2966,7 @@ XLogSendPhysical(void)
 	Size		nbytes;
 	XLogSegNo	segno;
 	WALReadError errinfo;
+	Size		rbytes;
 
 	/* If requested switch the WAL sender to the stopping state. */
 	if (got_STOPPING)
@@ -3181,7 +3182,16 @@ XLogSendPhysical(void)
 	enlargeStringInfo(&output_message, nbytes);
 
 retry:
-	if (!WALRead(xlogreader,
+	/* attempt to read WAL from WAL buffers first */
+	rbytes = WALReadFromBuffers(&output_message.data[output_message.len],
+								startptr, nbytes, xlogreader->seg.ws_tli);
+	output_message.len += rbytes;
+	startptr += rbytes;
+	nbytes -= rbytes;
+
+	/* now read the remaining WAL from WAL file */
+	if (nbytes > 0 &&
+		!WALRead(xlogreader,
 				 &output_message.data[output_message.len],
 				 startptr,
 				 nbytes,
