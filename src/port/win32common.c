@@ -19,8 +19,6 @@
 #include "postgres.h"
 #endif
 
-#ifdef WIN32
-
 /*
  * pgwin32_get_file_type
  *
@@ -64,5 +62,3 @@ pgwin32_get_file_type(HANDLE hFile)
 
 	return fileType;
 }
-
-#endif							/* WIN32 */

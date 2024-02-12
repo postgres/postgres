@@ -17,7 +17,7 @@
 #include "postgres.h"
 #endif
 
-#if defined(WIN32) && defined(_MSC_VER)
+#ifdef _MSC_VER
 
 /*
  * _pgfseeko64
@@ -72,4 +72,4 @@ _pgftello64(FILE *stream)
 	return -1;
 }
 
-#endif							/* defined(WIN32) && defined(_MSC_VER) */
+#endif							/* _MSC_VER */

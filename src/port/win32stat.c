@@ -13,8 +13,6 @@
  *-------------------------------------------------------------------------
  */
 
-#ifdef WIN32
-
 #include "c.h"
 #include "port/win32ntdll.h"
 
@@ -302,5 +300,3 @@ _pgfstat64(int fileno, struct stat *buf)
 	buf->st_nlink = 1;
 	return 0;
 }
-
-#endif							/* WIN32 */
