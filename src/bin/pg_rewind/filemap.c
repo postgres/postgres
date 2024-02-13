@@ -749,10 +749,6 @@ isRelDataFile(const char *path)
 		}
 	}
 
-	/* Skip macOS system files */
-	if (strstr(path, ".DS_Store") != NULL)
-		return FILE_ACTION_NONE;
-
 	/*
 	 * The sscanf tests above can match files that have extra characters at
 	 * the end. To eliminate such cases, cross-check that GetRelationPath

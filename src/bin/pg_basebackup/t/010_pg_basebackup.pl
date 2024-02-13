@@ -73,16 +73,6 @@ foreach my $filename (
 	close $file;
 }
 
-# Test that macOS system files are skipped. Only test on non-macOS systems
-# however since creating incorrect .DS_Store files on a macOS system may have
-# unintended side effects.
-if ($Config{osname} ne 'darwin')
-{
-	open my $file, '>>', "$pgdata/.DS_Store";
-	print $file "DONOTCOPY";
-	close $file;
-}
-
 # Connect to a database to create global/pg_internal.init.  If this is removed
 # the test to ensure global/pg_internal.init is not copied will return a false
 # positive.
@@ -149,12 +139,6 @@ foreach my $filename (
 	global/pg_internal.init global/pg_internal.init.123))
 {
 	ok(!-f "$tempdir/backup/$filename", "$filename not copied");
-}
-
-# We only test .DS_Store files being skipped on non-macOS systems
-if ($Config{osname} ne 'darwin')
-{
-	ok(!-f "$tempdir/backup/.DS_Store", ".DS_Store not copied");
 }
 
 # Unlogged relation forks other than init should not be copied
