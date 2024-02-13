@@ -270,6 +270,8 @@ SELECT interval '1 2:03:04.5678' hour to second(2);
 SELECT interval '1 2.3456' minute to second(2);
 SELECT interval '1 2:03.5678' minute to second(2);
 SELECT interval '1 2:03:04.5678' minute to second(2);
+SELECT interval '2562047788:00:54.775807' second(2);  -- out of range
+SELECT interval '-2562047788:00:54.775807' second(2);  -- out of range
 
 -- test casting to restricted precision (bug #14479)
 SELECT f1, f1::INTERVAL DAY TO MINUTE AS "minutes",

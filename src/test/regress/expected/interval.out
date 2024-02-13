@@ -929,6 +929,14 @@ SELECT interval '1 2:03:04.5678' minute to second(2);
  1 day 02:03:04.57
 (1 row)
 
+SELECT interval '2562047788:00:54.775807' second(2);  -- out of range
+ERROR:  interval out of range
+LINE 1: SELECT interval '2562047788:00:54.775807' second(2);
+                        ^
+SELECT interval '-2562047788:00:54.775807' second(2);  -- out of range
+ERROR:  interval out of range
+LINE 1: SELECT interval '-2562047788:00:54.775807' second(2);
+                        ^
 -- test casting to restricted precision (bug #14479)
 SELECT f1, f1::INTERVAL DAY TO MINUTE AS "minutes",
   (f1 + INTERVAL '1 month')::INTERVAL MONTH::INTERVAL YEAR AS "years"

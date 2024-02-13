@@ -1509,17 +1509,23 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod,
 
 			if (interval->time >= INT64CONST(0))
 			{
-				interval->time = ((interval->time +
-								   IntervalOffsets[precision]) /
-								  IntervalScales[precision]) *
-					IntervalScales[precision];
+				if (pg_add_s64_overflow(interval->time,
+										IntervalOffsets[precision],
+										&interval->time))
+					ereturn(escontext, false,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("interval out of range")));
+				interval->time -= interval->time % IntervalScales[precision];
 			}
 			else
 			{
-				interval->time = -(((-interval->time +
-									 IntervalOffsets[precision]) /
-									IntervalScales[precision]) *
-								   IntervalScales[precision]);
+				if (pg_sub_s64_overflow(interval->time,
+										IntervalOffsets[precision],
+										&interval->time))
+					ereturn(escontext, false,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("interval out of range")));
+				interval->time -= interval->time % IntervalScales[precision];
 			}
 		}
 	}
