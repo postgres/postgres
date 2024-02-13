@@ -42,7 +42,13 @@
 /* GUC parameters */
 int			compute_query_id = COMPUTE_QUERY_ID_AUTO;
 
-/* True when compute_query_id is ON, or AUTO and a module requests them */
+/*
+ * True when compute_query_id is ON or AUTO, and a module requests them.
+ *
+ * Note that IsQueryIdEnabled() should be used instead of checking
+ * query_id_enabled or compute_query_id directly when we want to know
+ * whether query identifiers are computed in the core or not.
+ */
 bool		query_id_enabled = false;
 
 static void AppendJumble(JumbleState *jstate,
