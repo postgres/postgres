@@ -680,8 +680,13 @@ _outString(StringInfo str, const String *node)
 static void
 _outBitString(StringInfo str, const BitString *node)
 {
-	/* internal representation already has leading 'b' */
-	appendStringInfoString(str, node->bsval);
+	/*
+	 * The lexer will always produce a string starting with 'b' or 'x'.  There
+	 * might be characters following that that need escaping, but outToken
+	 * won't escape the 'b' or 'x'.  This is relied on by nodeTokenType.
+	 */
+	Assert(node->bsval[0] == 'b' || node->bsval[0] == 'x');
+	outToken(str, node->bsval);
 }
 
 static void

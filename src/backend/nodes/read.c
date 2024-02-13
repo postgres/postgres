@@ -498,14 +498,9 @@ nodeRead(const char *token, int tok_len)
 			result = (Node *) makeString(debackslash(token + 1, tok_len - 2));
 			break;
 		case T_BitString:
-			{
-				char	   *val = palloc(tok_len + 1);
-
-				memcpy(val, token, tok_len);
-				val[tok_len] = '\0';
-				result = (Node *) makeBitString(val);
-				break;
-			}
+			/* need to remove backslashes, but there are no quotes */
+			result = (Node *) makeBitString(debackslash(token, tok_len));
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) type);
 			result = NULL;		/* keep compiler happy */
