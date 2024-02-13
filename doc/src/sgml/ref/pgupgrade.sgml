@@ -767,9 +767,12 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tb
        Configure the servers for log shipping.  (You do not need to run
        <function>pg_backup_start()</function> and <function>pg_backup_stop()</function>
        or take a file system backup as the standbys are still synchronized
-       with the primary.)  Only logical slots on the primary are copied to the
-       new standby, but other slots on the old standby are not copied so must
-       be recreated manually.
+       with the primary.) If the old primary is prior to version 17.0, then no
+       slots on the primary are copied to the new standby, so all the slots on
+       the old standby must be recreated manually. If the old primary is
+       version 17.0 or later, then only logical slots on the primary are copied
+       to the new standby, but other slots on the old standby are not copied,
+       so must be recreated manually.
       </para>
      </step>
 
