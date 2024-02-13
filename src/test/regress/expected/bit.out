@@ -40,6 +40,23 @@ SELECT * FROM VARBIT_TABLE;
  01010101010
 (4 rows)
 
+-- Literals with syntax errors
+SELECT b' 0';
+ERROR:  " " is not a valid binary digit
+LINE 1: SELECT b' 0';
+               ^
+SELECT b'0 ';
+ERROR:  " " is not a valid binary digit
+LINE 1: SELECT b'0 ';
+               ^
+SELECT x' 0';
+ERROR:  " " is not a valid hexadecimal digit
+LINE 1: SELECT x' 0';
+               ^
+SELECT x'0 ';
+ERROR:  " " is not a valid hexadecimal digit
+LINE 1: SELECT x'0 ';
+               ^
 -- Concatenation
 SELECT v, b, (v || b) AS concat
        FROM BIT_TABLE, VARBIT_TABLE

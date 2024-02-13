@@ -29,6 +29,11 @@ INSERT INTO VARBIT_TABLE VALUES (B'101011111010'); -- too long
 --INSERT INTO VARBIT_TABLE VALUES ('X555');
 SELECT * FROM VARBIT_TABLE;
 
+-- Literals with syntax errors
+SELECT b' 0';
+SELECT b'0 ';
+SELECT x' 0';
+SELECT x'0 ';
 
 -- Concatenation
 SELECT v, b, (v || b) AS concat
