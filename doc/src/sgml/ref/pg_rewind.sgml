@@ -374,8 +374,9 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
       <filename>backup_label</filename>,
       <filename>tablespace_map</filename>,
       <filename>pg_internal.init</filename>,
-      <filename>postmaster.opts</filename>, and
-      <filename>postmaster.pid</filename>, as well as any file or directory
+      <filename>postmaster.opts</filename>,
+      <filename>postmaster.pid</filename> and
+      <filename>.DS_Store</filename> as well as any file or directory
       beginning with <filename>pgsql_tmp</filename>, are omitted.
      </para>
     </step>

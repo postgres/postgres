@@ -6,6 +6,7 @@
 
 use strict;
 use warnings;
+use Config;
 use PostgresNode;
 use TestLib;
 
@@ -113,6 +114,12 @@ mkdir "$pgdata/global/pgsql_tmp";
 append_to_file "$pgdata/global/pgsql_tmp/1.1",        "foo";
 append_to_file "$pgdata/global/pg_internal.init",     "foo";
 append_to_file "$pgdata/global/pg_internal.init.123", "foo";
+
+# These are non-postgres macOS files, which should be ignored by the scan.
+# Only perform this test on non-macOS systems though as creating incorrect
+# system files may have side effects on macOS.
+append_to_file "$pgdata/global/.DS_Store", "foo"
+	unless ($Config{osname} eq 'darwin');
 
 # Enable checksums.
 command_ok([ 'pg_checksums', '--enable', '--no-sync', '-D', $pgdata ],
