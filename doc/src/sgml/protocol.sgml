@@ -3056,7 +3056,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          <para>
           Files other than regular files and directories, such as symbolic
           links (other than for the directories listed above) and special
-          device files, are skipped.  (Symbolic links
+          device and operating system files, are skipped.  (Symbolic links
           in <filename>pg_tblspc</filename> are maintained.)
          </para>
         </listitem>
