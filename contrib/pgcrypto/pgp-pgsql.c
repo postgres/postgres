@@ -553,15 +553,15 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 Datum
 pgp_sym_encrypt_bytea(PG_FUNCTION_ARGS)
 {
-	bytea	   *data,
-			   *key;
+	bytea	   *data;
 	text	   *arg = NULL;
-	text	   *res;
+	text	   *res,
+			   *key;
 
 	data = PG_GETARG_BYTEA_PP(0);
-	key = PG_GETARG_BYTEA_PP(1);
+	key = PG_GETARG_TEXT_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_PP(2);
+		arg = PG_GETARG_TEXT_PP(2);
 
 	res = encrypt_internal(0, 0, data, key, arg);
 
@@ -575,15 +575,15 @@ pgp_sym_encrypt_bytea(PG_FUNCTION_ARGS)
 Datum
 pgp_sym_encrypt_text(PG_FUNCTION_ARGS)
 {
-	bytea	   *data,
+	text	   *data,
 			   *key;
 	text	   *arg = NULL;
 	text	   *res;
 
-	data = PG_GETARG_BYTEA_PP(0);
-	key = PG_GETARG_BYTEA_PP(1);
+	data = PG_GETARG_TEXT_PP(0);
+	key = PG_GETARG_TEXT_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_PP(2);
+		arg = PG_GETARG_TEXT_PP(2);
 
 	res = encrypt_internal(0, 1, data, key, arg);
 
@@ -598,15 +598,15 @@ pgp_sym_encrypt_text(PG_FUNCTION_ARGS)
 Datum
 pgp_sym_decrypt_bytea(PG_FUNCTION_ARGS)
 {
-	bytea	   *data,
-			   *key;
+	bytea	   *data;
 	text	   *arg = NULL;
-	text	   *res;
+	text	   *res,
+			   *key;
 
 	data = PG_GETARG_BYTEA_PP(0);
-	key = PG_GETARG_BYTEA_PP(1);
+	key = PG_GETARG_TEXT_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_PP(2);
+		arg = PG_GETARG_TEXT_PP(2);
 
 	res = decrypt_internal(0, 0, data, key, NULL, arg);
 
@@ -620,15 +620,15 @@ pgp_sym_decrypt_bytea(PG_FUNCTION_ARGS)
 Datum
 pgp_sym_decrypt_text(PG_FUNCTION_ARGS)
 {
-	bytea	   *data,
-			   *key;
+	bytea	   *data;
 	text	   *arg = NULL;
-	text	   *res;
+	text	   *res,
+			   *key;
 
 	data = PG_GETARG_BYTEA_PP(0);
-	key = PG_GETARG_BYTEA_PP(1);
+	key = PG_GETARG_TEXT_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_PP(2);
+		arg = PG_GETARG_TEXT_PP(2);
 
 	res = decrypt_internal(0, 1, data, key, NULL, arg);
 
@@ -654,7 +654,7 @@ pgp_pub_encrypt_bytea(PG_FUNCTION_ARGS)
 	data = PG_GETARG_BYTEA_PP(0);
 	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_PP(2);
+		arg = PG_GETARG_TEXT_PP(2);
 
 	res = encrypt_internal(1, 0, data, key, arg);
 
@@ -668,15 +668,15 @@ pgp_pub_encrypt_bytea(PG_FUNCTION_ARGS)
 Datum
 pgp_pub_encrypt_text(PG_FUNCTION_ARGS)
 {
-	bytea	   *data,
-			   *key;
+	bytea	   *key;
 	text	   *arg = NULL;
-	text	   *res;
+	text	   *res,
+			   *data;
 
-	data = PG_GETARG_BYTEA_PP(0);
+	data = PG_GETARG_TEXT_PP(0);
 	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		arg = PG_GETARG_BYTEA_PP(2);
+		arg = PG_GETARG_TEXT_PP(2);
 
 	res = encrypt_internal(1, 1, data, key, arg);
 
@@ -700,9 +700,9 @@ pgp_pub_decrypt_bytea(PG_FUNCTION_ARGS)
 	data = PG_GETARG_BYTEA_PP(0);
 	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		psw = PG_GETARG_BYTEA_PP(2);
+		psw = PG_GETARG_TEXT_PP(2);
 	if (PG_NARGS() > 3)
-		arg = PG_GETARG_BYTEA_PP(3);
+		arg = PG_GETARG_TEXT_PP(3);
 
 	res = decrypt_internal(1, 0, data, key, psw, arg);
 
@@ -727,9 +727,9 @@ pgp_pub_decrypt_text(PG_FUNCTION_ARGS)
 	data = PG_GETARG_BYTEA_PP(0);
 	key = PG_GETARG_BYTEA_PP(1);
 	if (PG_NARGS() > 2)
-		psw = PG_GETARG_BYTEA_PP(2);
+		psw = PG_GETARG_TEXT_PP(2);
 	if (PG_NARGS() > 3)
-		arg = PG_GETARG_BYTEA_PP(3);
+		arg = PG_GETARG_TEXT_PP(3);
 
 	res = decrypt_internal(1, 1, data, key, psw, arg);
 
