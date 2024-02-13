@@ -5,7 +5,6 @@
 
 use strict;
 use warnings;
-use Config;
 use TestLib;
 use Test::More tests => 5;
 
@@ -54,10 +53,6 @@ sub run_test
 	append_to_file
 	  "$test_standby_datadir/tst_standby_dir/standby_subdir/standby_file4",
 	  "in standby4";
-	# Skip testing .DS_Store files on macOS to avoid risk of side effects
-	append_to_file
-	  "$test_standby_datadir/tst_standby_dir/.DS_Store",
-	  "macOS system file" unless ($Config{osname} eq 'darwin');
 
 	mkdir "$test_primary_datadir/tst_primary_dir";
 	append_to_file "$test_primary_datadir/tst_primary_dir/primary_file1",

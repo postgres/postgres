@@ -648,10 +648,6 @@ decide_file_action(file_entry_t *entry)
 	if (strcmp(path, "global/pg_control") == 0)
 		return FILE_ACTION_NONE;
 
-	/* Skip macOS system files */
-	if (strstr(path, ".DS_Store") != NULL)
-		return FILE_ACTION_NONE;
-
 	/*
 	 * Remove all files matching the exclusion filters in the target.
 	 */

@@ -1272,10 +1272,6 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 					strlen(PG_TEMP_FILE_PREFIX)) == 0)
 			continue;
 
-		/* Skip macOS system files */
-		if (strcmp(de->d_name, ".DS_Store") == 0)
-			continue;
-
 		/*
 		 * Check if the postmaster has signaled us to exit, and abort with an
 		 * error in that case. The error handler further up will call
