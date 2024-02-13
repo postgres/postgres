@@ -965,7 +965,8 @@ PostgreSQL documentation
    The backup will include all files in the data directory and tablespaces,
    including the configuration files and any additional files placed in the
    directory by third parties, except certain temporary files managed by
-   PostgreSQL.  But only regular files and directories are copied, except that
+   PostgreSQL and operating system files.  But only regular files and
+   directories are copied, except that
    symbolic links used for tablespaces are preserved.  Symbolic links pointing
    to certain directories known to PostgreSQL are copied as empty directories.
    Other symbolic links and special device files are skipped.

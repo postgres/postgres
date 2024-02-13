@@ -329,6 +329,10 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 					strlen(PG_TEMP_FILES_DIR)) == 0)
 			continue;
 
+		/* Skip macOS system files */
+		if (strcmp(de->d_name, ".DS_Store") == 0)
+			continue;
+
 		snprintf(fn, sizeof(fn), "%s/%s", path, de->d_name);
 		if (lstat(fn, &st) < 0)
 			pg_fatal("could not stat file \"%s\": %m", fn);
