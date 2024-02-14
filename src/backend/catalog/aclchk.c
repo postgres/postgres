@@ -2447,11 +2447,17 @@ ExecGrant_Type_check(InternalGrant *istmt, HeapTuple tuple)
 
 	pg_type_tuple = (Form_pg_type) GETSTRUCT(tuple);
 
+	/* Disallow GRANT on dependent types */
 	if (IsTrueArrayType(pg_type_tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 				 errmsg("cannot set privileges of array types"),
 				 errhint("Set the privileges of the element type instead.")));
+	if (pg_type_tuple->typtype == TYPTYPE_MULTIRANGE)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+				 errmsg("cannot set privileges of multirange types"),
+				 errhint("Set the privileges of the range type instead.")));
 
 	/* Used GRANT DOMAIN on a non-domain? */
 	if (istmt->objtype == OBJECT_DOMAIN &&
@@ -3802,6 +3808,35 @@ pg_type_aclmask_ext(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("type with OID %u does not exist",
 								elttype_oid)));
+		}
+		typeForm = (Form_pg_type) GETSTRUCT(tuple);
+	}
+
+	/*
+	 * Likewise, multirange types don't manage their own permissions; consult
+	 * the associated range type.  (Note we must do this after the array step
+	 * to get the right answer for arrays of multiranges.)
+	 */
+	if (typeForm->typtype == TYPTYPE_MULTIRANGE)
+	{
+		Oid			rangetype = get_multirange_range(typeForm->oid);
+
+		ReleaseSysCache(tuple);
+
+		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rangetype));
+		if (!HeapTupleIsValid(tuple))
+		{
+			if (is_missing != NULL)
+			{
+				/* return "no privileges" instead of throwing an error */
+				*is_missing = true;
+				return 0;
+			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("type with OID %u does not exist",
+								rangetype)));
 		}
 		typeForm = (Form_pg_type) GETSTRUCT(tuple);
 	}

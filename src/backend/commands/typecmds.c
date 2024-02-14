@@ -3647,6 +3647,8 @@ RenameType(RenameStmt *stmt)
 				 errhint("You can alter type %s, which will alter the array type as well.",
 						 format_type_be(typTup->typelem))));
 
+	/* we do allow separate renaming of multirange types, though */
+
 	/*
 	 * If type is composite we need to rename associated pg_class entry too.
 	 * RenameRelationInternal will call RenameTypeInternal automatically.
@@ -3730,6 +3732,21 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 				 errhint("You can alter type %s, which will alter the array type as well.",
 						 format_type_be(typTup->typelem))));
 
+	/* don't allow direct alteration of multirange types, either */
+	if (typTup->typtype == TYPTYPE_MULTIRANGE)
+	{
+		Oid			rangetype = get_multirange_range(typeOid);
+
+		/* We don't expect get_multirange_range to fail, but cope if so */
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot alter multirange type %s",
+						format_type_be(typeOid)),
+				 OidIsValid(rangetype) ?
+				 errhint("You can alter type %s, which will alter the multirange type as well.",
+						 format_type_be(rangetype)) : 0));
+	}
+
 	/*
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
@@ -3769,13 +3786,13 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 /*
  * AlterTypeOwner_oid - change type owner unconditionally
  *
- * This function recurses to handle a pg_class entry, if necessary.  It
- * invokes any necessary access object hooks.  If hasDependEntry is true, this
- * function modifies the pg_shdepend entry appropriately (this should be
- * passed as false only for table rowtypes and array types).
+ * This function recurses to handle dependent types (arrays and multiranges).
+ * It invokes any necessary access object hooks.  If hasDependEntry is true,
+ * this function modifies the pg_shdepend entry appropriately (this should be
+ * passed as false only for table rowtypes and dependent types).
  *
  * This is used by ALTER TABLE/TYPE OWNER commands, as well as by REASSIGN
- * OWNED BY.  It assumes the caller has done all needed check.
+ * OWNED BY.  It assumes the caller has done all needed checks.
  */
 void
 AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
@@ -3815,7 +3832,7 @@ AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
  * AlterTypeOwnerInternal - bare-bones type owner change.
  *
  * This routine simply modifies the owner of a pg_type entry, and recurses
- * to handle a possible array type.
+ * to handle any dependent types.
  */
 void
 AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId)
@@ -3864,6 +3881,19 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId)
 	/* If it has an array type, update that too */
 	if (OidIsValid(typTup->typarray))
 		AlterTypeOwnerInternal(typTup->typarray, newOwnerId);
+
+	/* If it is a range type, update the associated multirange too */
+	if (typTup->typtype == TYPTYPE_RANGE)
+	{
+		Oid			multirange_typeid = get_range_multirange(typeOid);
+
+		if (!OidIsValid(multirange_typeid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("could not find multirange type for data type %s",
+							format_type_be(typeOid))));
+		AlterTypeOwnerInternal(multirange_typeid, newOwnerId);
+	}
 
 	/* Clean up */
 	table_close(rel, RowExclusiveLock);

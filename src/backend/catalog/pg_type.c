@@ -326,14 +326,15 @@ TypeCreate(Oid newTypeOid,
 				 errmsg("fixed-size types must have storage PLAIN")));
 
 	/*
-	 * This is a dependent type if it's an implicitly-created array type, or
-	 * if it's a relation rowtype that's not a composite type.  For such types
-	 * we'll leave the ACL empty, and we'll skip creating some dependency
-	 * records because there will be a dependency already through the
-	 * depended-on type or relation.  (Caution: this is closely intertwined
-	 * with some behavior in GenerateTypeDependencies.)
+	 * This is a dependent type if it's an implicitly-created array type or
+	 * multirange type, or if it's a relation rowtype that's not a composite
+	 * type.  For such types we'll leave the ACL empty, and we'll skip
+	 * creating some dependency records because there will be a dependency
+	 * already through the depended-on type or relation.  (Caution: this is
+	 * closely intertwined with some behavior in GenerateTypeDependencies.)
 	 */
 	isDependentType = isImplicitArray ||
+		typeType == TYPTYPE_MULTIRANGE ||
 		(OidIsValid(relationOid) && relationKind != RELKIND_COMPOSITE_TYPE);
 
 	/*
@@ -534,8 +535,9 @@ TypeCreate(Oid newTypeOid,
  * relationKind and isImplicitArray are likewise somewhat expensive to deduce
  * from the tuple, so we make callers pass those (they're not optional).
  *
- * isDependentType is true if this is an implicit array or relation rowtype;
- * that means it doesn't need its own dependencies on owner etc.
+ * isDependentType is true if this is an implicit array, multirange, or
+ * relation rowtype; that means it doesn't need its own dependencies on owner
+ * etc.
  *
  * We make an extension-membership dependency if we're in an extension
  * script and makeExtensionDep is true (and isDependentType isn't true).
@@ -601,18 +603,23 @@ GenerateTypeDependencies(HeapTuple typeTuple,
 	 * Make dependencies on namespace, owner, ACL, extension.
 	 *
 	 * Skip these for a dependent type, since it will have such dependencies
-	 * indirectly through its depended-on type or relation.
+	 * indirectly through its depended-on type or relation.  An exception is
+	 * that multiranges need their own namespace dependency, since we don't
+	 * force them to be in the same schema as their range type.
 	 */
 
-	/* placeholder for all normal dependencies */
+	/* collects normal dependencies for bulk recording */
 	addrs_normal = new_object_addresses();
 
-	if (!isDependentType)
+	if (!isDependentType || typeForm->typtype == TYPTYPE_MULTIRANGE)
 	{
 		ObjectAddressSet(referenced, NamespaceRelationId,
 						 typeForm->typnamespace);
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		add_exact_object_address(&referenced, addrs_normal);
+	}
 
+	if (!isDependentType)
+	{
 		recordDependencyOnOwner(TypeRelationId, typeObjectId,
 								typeForm->typowner);
 
@@ -727,6 +734,16 @@ GenerateTypeDependencies(HeapTuple typeTuple,
 		recordDependencyOn(&myself, &referenced,
 						   isImplicitArray ? DEPENDENCY_INTERNAL : DEPENDENCY_NORMAL);
 	}
+
+	/*
+	 * Note: you might expect that we should record an internal dependency of
+	 * a multirange on its range type here, by analogy with the cases above.
+	 * But instead, that is done by RangeCreate(), which also handles
+	 * recording of other range-type-specific dependencies.  That's pretty
+	 * bogus.  It's okay for now, because there are no cases where we need to
+	 * regenerate the dependencies of a range or multirange type.  But someday
+	 * we might need to move that logic here to allow such regeneration.
+	 */
 }
 
 /*

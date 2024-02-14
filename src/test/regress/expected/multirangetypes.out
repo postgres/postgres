@@ -3115,6 +3115,36 @@ select _textrange1(textrange2('a','z')) @> 'b'::text;
 drop type textrange1;
 drop type textrange2;
 --
+-- Multiranges don't have their own ownership or permissions.
+--
+create type textrange1 as range(subtype=text, multirange_type_name=multitextrange1, collation="C");
+create role regress_multirange_owner;
+alter type multitextrange1 owner to regress_multirange_owner;  -- fail
+ERROR:  cannot alter multirange type multitextrange1
+HINT:  You can alter type textrange1, which will alter the multirange type as well.
+alter type textrange1 owner to regress_multirange_owner;
+set role regress_multirange_owner;
+revoke usage on type multitextrange1 from public;  -- fail
+ERROR:  cannot set privileges of multirange types
+HINT:  Set the privileges of the range type instead.
+revoke usage on type textrange1 from public;
+\dT+ *textrange1*
+                                                                     List of data types
+ Schema |      Name       |  Internal name  | Size | Elements |          Owner           |                  Access privileges                  | Description 
+--------+-----------------+-----------------+------+----------+--------------------------+-----------------------------------------------------+-------------
+ public | multitextrange1 | multitextrange1 | var  |          | regress_multirange_owner |                                                     | 
+ public | textrange1      | textrange1      | var  |          | regress_multirange_owner | regress_multirange_owner=U/regress_multirange_owner | 
+(2 rows)
+
+create temp table test1(f1 multitextrange1[]);
+revoke usage on type textrange1 from regress_multirange_owner;
+create temp table test2(f1 multitextrange1[]);  -- fail
+ERROR:  permission denied for type multitextrange1
+drop table test1;
+drop type textrange1;
+reset role;
+drop role regress_multirange_owner;
+--
 -- Test polymorphic type system
 --
 create function anyarray_anymultirange_func(a anyarray, r anymultirange)
