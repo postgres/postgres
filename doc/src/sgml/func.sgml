@@ -23735,6 +23735,11 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
         <xref linkend="guc-log-destination"/>.
         The result reflects the contents of
         the <filename>current_logfiles</filename> file.
+       </para>
+       <para>
+        This function is restricted to superusers and roles with privileges of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
        </para></entry>
       </row>
 

@@ -683,3 +683,23 @@ SELECT gist_stratnum_identity(18::smallint);
                      18
 (1 row)
 
+-- pg_current_logfile
+CREATE ROLE regress_current_logfile;
+-- not available by default
+SELECT has_function_privilege('regress_current_logfile',
+  'pg_current_logfile()', 'EXECUTE');
+ has_function_privilege 
+------------------------
+ f
+(1 row)
+
+GRANT pg_monitor TO regress_current_logfile;
+-- role has privileges of pg_monitor and can execute the function
+SELECT has_function_privilege('regress_current_logfile',
+  'pg_current_logfile()', 'EXECUTE');
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+DROP ROLE regress_current_logfile;

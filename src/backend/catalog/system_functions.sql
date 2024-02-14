@@ -777,6 +777,10 @@ GRANT EXECUTE ON FUNCTION pg_ls_logicalmapdir() TO pg_monitor;
 
 GRANT EXECUTE ON FUNCTION pg_ls_replslotdir(text) TO pg_monitor;
 
+GRANT EXECUTE ON FUNCTION pg_current_logfile() TO pg_monitor;
+
+GRANT EXECUTE ON FUNCTION pg_current_logfile(text) TO pg_monitor;
+
 GRANT pg_read_all_settings TO pg_monitor;
 
 GRANT pg_read_all_stats TO pg_monitor;

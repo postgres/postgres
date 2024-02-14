@@ -254,3 +254,14 @@ FROM pg_walfile_name_offset('0/0'::pg_lsn + :segment_size - 1),
 -- test stratnum support functions
 SELECT gist_stratnum_identity(3::smallint);
 SELECT gist_stratnum_identity(18::smallint);
+
+-- pg_current_logfile
+CREATE ROLE regress_current_logfile;
+-- not available by default
+SELECT has_function_privilege('regress_current_logfile',
+  'pg_current_logfile()', 'EXECUTE');
+GRANT pg_monitor TO regress_current_logfile;
+-- role has privileges of pg_monitor and can execute the function
+SELECT has_function_privilege('regress_current_logfile',
+  'pg_current_logfile()', 'EXECUTE');
+DROP ROLE regress_current_logfile;
