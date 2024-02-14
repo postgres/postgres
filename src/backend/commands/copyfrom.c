@@ -1776,11 +1776,6 @@ BeginCopyFrom(ParseState *pstate,
 
 		cstate->max_fields = attr_count;
 		cstate->raw_fields = (char **) palloc(attr_count * sizeof(char *));
-
-		if (cstate->opts.csv_mode)
-			cstate->copy_read_attributes = CopyReadAttributesCSV;
-		else
-			cstate->copy_read_attributes = CopyReadAttributesText;
 	}
 
 	MemoryContextSwitchTo(oldcontext);
