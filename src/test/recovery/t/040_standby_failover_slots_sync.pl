@@ -171,7 +171,7 @@ $standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
 # flagged as 'synced'
 is( $standby1->safe_psql(
 		'postgres',
-		q{SELECT count(*) = 2 FROM pg_replication_slots WHERE slot_name IN ('lsub1_slot', 'lsub2_slot') AND synced;}
+		q{SELECT count(*) = 2 FROM pg_replication_slots WHERE slot_name IN ('lsub1_slot', 'lsub2_slot') AND synced AND NOT temporary;}
 	),
 	"t",
 	'logical slots have synced as true on standby');
@@ -227,6 +227,13 @@ $standby1->reload;
 $subscriber1->safe_psql('postgres',
 	"ALTER SUBSCRIPTION regress_mysub1 ENABLE");
 
+# This wait ensures that confirmed_flush_lsn has been moved to latest
+# position.
+$primary->wait_for_catchup('regress_mysub1');
+
+# To ensure that restart_lsn has moved to a recent WAL position, we need
+# to log XLOG_RUNNING_XACTS and make sure the same is processed as well
+$primary->psql('postgres', "CHECKPOINT");
 $primary->wait_for_catchup('regress_mysub1');
 
 # Do not allow any further advancement of the restart_lsn for the lsub1_slot.
@@ -256,7 +263,7 @@ $standby1->wait_for_log(qr/dropped replication slot "lsub1_slot" of dbid [0-9]+/
 # flagged as 'synced'
 is( $standby1->safe_psql(
 		'postgres',
-		q{SELECT conflict_reason IS NULL AND synced FROM pg_replication_slots WHERE slot_name = 'lsub1_slot';}
+		q{SELECT conflict_reason IS NULL AND synced AND NOT temporary FROM pg_replication_slots WHERE slot_name = 'lsub1_slot';}
 	),
 	"t",
 	'logical slot is re-synced');
