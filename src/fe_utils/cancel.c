@@ -152,7 +152,6 @@ ResetCancelConn(void)
 static void
 handle_sigint(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
 	char		errbuf[256];
 
 	CancelRequested = true;
@@ -173,8 +172,6 @@ handle_sigint(SIGNAL_ARGS)
 			write_stderr(errbuf);
 		}
 	}
-
-	errno = save_errno;			/* just in case the write changed it */
 }
 
 /*

@@ -283,13 +283,9 @@ PgArchWakeup(void)
 static void
 pgarch_waken_stop(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	/* set flag to do a final cycle and shut down afterwards */
 	ready_to_stop = true;
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /*

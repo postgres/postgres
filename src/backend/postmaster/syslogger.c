@@ -1642,10 +1642,6 @@ RemoveLogrotateSignalFiles(void)
 static void
 sigUsr1Handler(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	rotation_requested = true;
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }

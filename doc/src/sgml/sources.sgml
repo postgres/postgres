@@ -1007,18 +1007,10 @@ MemoryContextSwitchTo(MemoryContext context)
 static void
 handle_sighup(SIGNAL_ARGS)
 {
-    int         save_errno = errno;
-
     got_SIGHUP = true;
     SetLatch(MyLatch);
-
-    errno = save_errno;
 }
 </programlisting>
-     <varname>errno</varname> is saved and restored because
-     <function>SetLatch()</function> might change it. If that were not done
-     interrupted code that's currently inspecting <varname>errno</varname> might see the wrong
-     value.
     </para>
    </simplesect>
 

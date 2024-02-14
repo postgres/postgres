@@ -363,8 +363,6 @@ schedule_alarm(TimestampTz now)
 static void
 handle_sig_alarm(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	/*
 	 * Bump the holdoff counter, to make sure nothing we call will process
 	 * interrupts directly. No timeout handler should do that, but these
@@ -452,8 +450,6 @@ handle_sig_alarm(SIGNAL_ARGS)
 	}
 
 	RESUME_INTERRUPTS();
-
-	errno = save_errno;
 }
 
 

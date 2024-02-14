@@ -852,15 +852,11 @@ IsCheckpointOnSchedule(double progress)
 static void
 ReqCheckpointHandler(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	/*
 	 * The signaling process should have set ckpt_flags nonzero, so all we
 	 * need do is ensure that our main loop gets kicked out of any wait.
 	 */
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 

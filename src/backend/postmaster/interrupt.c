@@ -60,12 +60,8 @@ HandleMainLoopInterrupts(void)
 void
 SignalHandlerForConfigReload(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	ConfigReloadPending = true;
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /*
@@ -108,10 +104,6 @@ SignalHandlerForCrashExit(SIGNAL_ARGS)
 void
 SignalHandlerForShutdownRequest(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	ShutdownRequestPending = true;
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }

@@ -2612,12 +2612,8 @@ InitProcessGlobals(void)
 static void
 handle_pm_pmsignal_signal(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	pending_pm_pmsignal = true;
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /*
@@ -2626,12 +2622,8 @@ handle_pm_pmsignal_signal(SIGNAL_ARGS)
 static void
 handle_pm_reload_request_signal(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	pending_pm_reload_request = true;
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /*
@@ -2711,8 +2703,6 @@ process_pm_reload_request(void)
 static void
 handle_pm_shutdown_request_signal(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	switch (postgres_signal_arg)
 	{
 		case SIGTERM:
@@ -2729,8 +2719,6 @@ handle_pm_shutdown_request_signal(SIGNAL_ARGS)
 			break;
 	}
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /*
@@ -2890,12 +2878,8 @@ process_pm_shutdown_request(void)
 static void
 handle_pm_child_exit_signal(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	pending_pm_child_exit = true;
 	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /*

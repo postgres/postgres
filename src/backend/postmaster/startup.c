@@ -95,32 +95,22 @@ static void StartupProcExit(int code, Datum arg);
 static void
 StartupProcTriggerHandler(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	promote_signaled = true;
 	WakeupRecovery();
-
-	errno = save_errno;
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 StartupProcSigHupHandler(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	got_SIGHUP = true;
 	WakeupRecovery();
-
-	errno = save_errno;
 }
 
 /* SIGTERM: set flag to abort redo and exit */
 static void
 StartupProcShutdownHandler(SIGNAL_ARGS)
 {
-	int			save_errno = errno;
-
 	if (in_restore_command)
 	{
 		/*
@@ -139,8 +129,6 @@ StartupProcShutdownHandler(SIGNAL_ARGS)
 	else
 		shutdown_requested = true;
 	WakeupRecovery();
-
-	errno = save_errno;
 }
 
 /*

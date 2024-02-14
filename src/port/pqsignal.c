@@ -80,10 +80,14 @@ static volatile pqsigfunc pqsignal_handlers[PG_NSIG];
  * processes do not modify shared memory, which is often detrimental.  If the
  * check succeeds, the function originally provided to pqsignal() is called.
  * Otherwise, the default signal handler is installed and then called.
+ *
+ * This wrapper also handles restoring the value of errno.
  */
 static void
 wrapper_handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 #ifndef FRONTEND
 
 	/*
@@ -102,6 +106,8 @@ wrapper_handler(SIGNAL_ARGS)
 #endif
 
 	(*pqsignal_handlers[postgres_signal_arg]) (postgres_signal_arg);
+
+	errno = save_errno;
 }
 
 /*
