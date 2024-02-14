@@ -525,6 +525,18 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 						NameStr(slot->data.name))));
 
 	/*
+	 * Do not allow consumption of a "synchronized" slot until the standby
+	 * gets promoted.
+	 */
+	if (RecoveryInProgress() && slot->data.synced)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot use replication slot \"%s\" for logical decoding",
+					   NameStr(slot->data.name)),
+				errdetail("This slot is being synchronized from the primary server."),
+				errhint("Specify another replication slot."));
+
+	/*
 	 * Check if slot has been invalidated due to max_slot_wal_keep_size. Avoid
 	 * "cannot get changes" wording in this errmsg because that'd be
 	 * confusingly ambiguous about no changes being available when called from

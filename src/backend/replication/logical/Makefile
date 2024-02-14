@@ -25,6 +25,7 @@ OBJS = \
 	proto.o \
 	relation.o \
 	reorderbuffer.o \
+	slotsync.o \
 	snapbuild.o \
 	tablesync.o \
 	worker.o

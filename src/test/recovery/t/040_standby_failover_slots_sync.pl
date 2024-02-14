@@ -97,4 +97,241 @@ my ($result, $stdout, $stderr) = $subscriber1->psql('postgres',
 ok( $stderr =~ /ERROR:  cannot set failover for enabled subscription/,
 	"altering failover is not allowed for enabled subscription");
 
+##################################################
+# Test that pg_sync_replication_slots() cannot be executed on a non-standby server.
+##################################################
+
+($result, $stdout, $stderr) =
+  $publisher->psql('postgres', "SELECT pg_sync_replication_slots();");
+ok( $stderr =~
+	  /ERROR:  replication slots can only be synchronized to a standby server/,
+	"cannot sync slots on a non-standby server");
+
+##################################################
+# Test logical failover slots on the standby
+# Configure standby1 to replicate and synchronize logical slots configured
+# for failover on the primary
+#
+#              failover slot lsub1_slot ->| ----> subscriber1 (connected via logical replication)
+#              failover slot lsub2_slot   |       inactive
+# primary --->                            |
+#              physical slot sb1_slot --->| ----> standby1 (connected via streaming replication)
+#                                         |                 lsub1_slot, lsub2_slot (synced_slot)
+##################################################
+
+my $primary = $publisher;
+my $backup_name = 'backup';
+$primary->backup($backup_name);
+
+# Create a standby
+my $standby1 = PostgreSQL::Test::Cluster->new('standby1');
+$standby1->init_from_backup(
+	$primary, $backup_name,
+	has_streaming => 1,
+	has_restoring => 1);
+
+my $connstr_1 = $primary->connstr;
+$standby1->append_conf(
+	'postgresql.conf', qq(
+hot_standby_feedback = on
+primary_slot_name = 'sb1_slot'
+primary_conninfo = '$connstr_1 dbname=postgres'
+));
+
+$primary->psql('postgres',
+	q{SELECT pg_create_logical_replication_slot('lsub2_slot', 'test_decoding', false, false, true);}
+);
+
+$primary->psql('postgres',
+	q{SELECT pg_create_physical_replication_slot('sb1_slot');});
+
+# Start the standby so that slot syncing can begin
+$standby1->start;
+
+$primary->wait_for_catchup('regress_mysub1');
+
+# Do not allow any further advancement of the restart_lsn for the lsub1_slot.
+$subscriber1->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_mysub1 DISABLE");
+
+# Wait for the replication slot to become inactive on the publisher
+$primary->poll_query_until(
+	'postgres',
+	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'lsub1_slot' AND active = 'f'",
+	1);
+
+# Wait for the standby to catch up so that the standby is not lagging behind
+# the subscriber.
+$primary->wait_for_replay_catchup($standby1);
+
+# Synchronize the primary server slots to the standby.
+$standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
+
+# Confirm that the logical failover slots are created on the standby and are
+# flagged as 'synced'
+is( $standby1->safe_psql(
+		'postgres',
+		q{SELECT count(*) = 2 FROM pg_replication_slots WHERE slot_name IN ('lsub1_slot', 'lsub2_slot') AND synced;}
+	),
+	"t",
+	'logical slots have synced as true on standby');
+
+##################################################
+# Test that the synchronized slot will be dropped if the corresponding remote
+# slot on the primary server has been dropped.
+##################################################
+
+$primary->psql('postgres', "SELECT pg_drop_replication_slot('lsub2_slot');");
+
+$standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
+
+is( $standby1->safe_psql(
+		'postgres',
+		q{SELECT count(*) = 0 FROM pg_replication_slots WHERE slot_name = 'lsub2_slot';}
+	),
+	"t",
+	'synchronized slot has been dropped');
+
+##################################################
+# Test that if the synchronized slot is invalidated while the remote slot is
+# still valid, the slot will be dropped and re-created on the standby by
+# executing pg_sync_replication_slots() again.
+##################################################
+
+# Configure the max_slot_wal_keep_size so that the synced slot can be
+# invalidated due to wal removal.
+$standby1->append_conf('postgresql.conf', 'max_slot_wal_keep_size = 64kB');
+$standby1->reload;
+
+# Generate some activity and switch WAL file on the primary
+$primary->advance_wal(1);
+$primary->psql('postgres', "CHECKPOINT");
+$primary->wait_for_replay_catchup($standby1);
+
+# Request a checkpoint on the standby to trigger the WAL file(s) removal
+$standby1->safe_psql('postgres', "CHECKPOINT");
+
+# Check if the synced slot is invalidated
+is( $standby1->safe_psql(
+		'postgres',
+		q{SELECT conflict_reason = 'wal_removed' FROM pg_replication_slots WHERE slot_name = 'lsub1_slot';}
+	),
+	"t",
+	'synchronized slot has been invalidated');
+
+# Reset max_slot_wal_keep_size to avoid further wal removal
+$standby1->append_conf('postgresql.conf', 'max_slot_wal_keep_size = -1');
+$standby1->reload;
+
+# Enable the subscription to let it catch up to the latest wal position
+$subscriber1->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_mysub1 ENABLE");
+
+$primary->wait_for_catchup('regress_mysub1');
+
+# Do not allow any further advancement of the restart_lsn for the lsub1_slot.
+$subscriber1->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_mysub1 DISABLE");
+
+# Wait for the replication slot to become inactive on the publisher
+$primary->poll_query_until(
+	'postgres',
+	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'lsub1_slot' AND active = 'f'",
+	1);
+
+# Wait for the standby to catch up so that the standby is not lagging behind
+# the subscriber.
+$primary->wait_for_replay_catchup($standby1);
+
+my $log_offset = -s $standby1->logfile;
+
+# Synchronize the primary server slots to the standby.
+$standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
+
+# Confirm that the invalidated slot has been dropped.
+$standby1->wait_for_log(qr/dropped replication slot "lsub1_slot" of dbid [0-9]+/,
+	$log_offset);
+
+# Confirm that the logical slot has been re-created on the standby and is
+# flagged as 'synced'
+is( $standby1->safe_psql(
+		'postgres',
+		q{SELECT conflict_reason IS NULL AND synced FROM pg_replication_slots WHERE slot_name = 'lsub1_slot';}
+	),
+	"t",
+	'logical slot is re-synced');
+
+##################################################
+# Test that a synchronized slot can not be decoded, altered or dropped by the
+# user
+##################################################
+
+# Attempting to perform logical decoding on a synced slot should result in an error
+($result, $stdout, $stderr) = $standby1->psql('postgres',
+	"select * from pg_logical_slot_get_changes('lsub1_slot', NULL, NULL);");
+ok( $stderr =~
+	  /ERROR:  cannot use replication slot "lsub1_slot" for logical decoding/,
+	"logical decoding is not allowed on synced slot");
+
+# Attempting to alter a synced slot should result in an error
+($result, $stdout, $stderr) = $standby1->psql(
+	'postgres',
+	qq[ALTER_REPLICATION_SLOT lsub1_slot (failover);],
+	replication => 'database');
+ok($stderr =~ /ERROR:  cannot alter replication slot "lsub1_slot"/,
+	"synced slot on standby cannot be altered");
+
+# Attempting to drop a synced slot should result in an error
+($result, $stdout, $stderr) = $standby1->psql('postgres',
+	"SELECT pg_drop_replication_slot('lsub1_slot');");
+ok($stderr =~ /ERROR:  cannot drop replication slot "lsub1_slot"/,
+	"synced slot on standby cannot be dropped");
+
+##################################################
+# Test that we cannot synchronize slots if dbname is not specified in the
+# primary_conninfo.
+##################################################
+
+$standby1->append_conf('postgresql.conf', "primary_conninfo = '$connstr_1'");
+$standby1->reload;
+
+($result, $stdout, $stderr) =
+  $standby1->psql('postgres', "SELECT pg_sync_replication_slots();");
+ok( $stderr =~
+	  /HINT:  'dbname' must be specified in "primary_conninfo"/,
+	"cannot sync slots if dbname is not specified in primary_conninfo");
+
+##################################################
+# Test that we cannot synchronize slots to a cascading standby server.
+##################################################
+
+# Create a cascading standby
+$backup_name = 'backup2';
+$standby1->backup($backup_name);
+
+my $cascading_standby = PostgreSQL::Test::Cluster->new('cascading_standby');
+$cascading_standby->init_from_backup(
+	$standby1, $backup_name,
+	has_streaming => 1,
+	has_restoring => 1);
+
+my $cascading_connstr = $standby1->connstr;
+$cascading_standby->append_conf(
+	'postgresql.conf', qq(
+hot_standby_feedback = on
+primary_slot_name = 'cascading_sb_slot'
+primary_conninfo = '$cascading_connstr dbname=postgres'
+));
+
+$standby1->psql('postgres',
+	q{SELECT pg_create_physical_replication_slot('cascading_sb_slot');});
+
+$cascading_standby->start;
+
+($result, $stdout, $stderr) =
+  $cascading_standby->psql('postgres', "SELECT pg_sync_replication_slots();");
+ok( $stderr =~
+	  /ERROR:  cannot synchronize replication slots from a standby server/,
+	"cannot sync slots to a cascading standby server");
+
 done_testing();

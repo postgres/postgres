@@ -36,6 +36,7 @@
 #include "replication/logicallauncher.h"
 #include "replication/origin.h"
 #include "replication/slot.h"
+#include "replication/slotsync.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
@@ -153,6 +154,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, StatsShmemSize());
 	size = add_size(size, WaitEventExtensionShmemSize());
 	size = add_size(size, InjectionPointShmemSize());
+	size = add_size(size, SlotSyncShmemSize());
 #ifdef EXEC_BACKEND
 	size = add_size(size, ShmemBackendArraySize());
 #endif
@@ -347,6 +349,7 @@ CreateOrAttachShmemStructs(void)
 	WalSummarizerShmemInit();
 	PgArchShmemInit();
 	ApplyLauncherShmemInit();
+	SlotSyncShmemInit();
 
 	/*
 	 * Set up other modules that need some shared memory space

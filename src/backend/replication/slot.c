@@ -46,6 +46,7 @@
 #include "common/string.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "replication/slotsync.h"
 #include "replication/slot.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -90,7 +91,7 @@ typedef struct ReplicationSlotOnDisk
 	sizeof(ReplicationSlotOnDisk) - ReplicationSlotOnDiskConstantSize
 
 #define SLOT_MAGIC		0x1051CA1	/* format identifier */
-#define SLOT_VERSION	4		/* version for new files */
+#define SLOT_VERSION	5		/* version for new files */
 
 /* Control array for replication slot management */
 ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
@@ -103,7 +104,6 @@ int			max_replication_slots = 10; /* the maximum number of replication
 										 * slots */
 
 static void ReplicationSlotShmemExit(int code, Datum arg);
-static void ReplicationSlotDropAcquired(void);
 static void ReplicationSlotDropPtr(ReplicationSlot *slot);
 
 /* internal persistency functions */
@@ -250,11 +250,12 @@ ReplicationSlotValidateName(const char *name, int elevel)
  *     user will only get commit prepared.
  * failover: If enabled, allows the slot to be synced to standbys so
  *     that logical replication can be resumed after failover.
+ * synced: True if the slot is synchronized from the primary server.
  */
 void
 ReplicationSlotCreate(const char *name, bool db_specific,
 					  ReplicationSlotPersistency persistency,
-					  bool two_phase, bool failover)
+					  bool two_phase, bool failover, bool synced)
 {
 	ReplicationSlot *slot = NULL;
 	int			i;
@@ -262,6 +263,34 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	Assert(MyReplicationSlot == NULL);
 
 	ReplicationSlotValidateName(name, ERROR);
+
+	if (failover)
+	{
+		/*
+		 * Do not allow users to create the failover enabled slots on the
+		 * standby as we do not support sync to the cascading standby.
+		 *
+		 * However, failover enabled slots can be created during slot
+		 * synchronization because we need to retain the same values as the
+		 * remote slot.
+		 */
+		if (RecoveryInProgress() && !IsSyncingReplicationSlots())
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot enable failover for a replication slot created on the standby"));
+
+		/*
+		 * Do not allow users to create failover enabled temporary slots,
+		 * because temporary slots will not be synced to the standby.
+		 *
+		 * However, failover enabled temporary slots can be created during
+		 * slot synchronization. See the comments atop slotsync.c for details.
+		 */
+		if (persistency == RS_TEMPORARY && !IsSyncingReplicationSlots())
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot enable failover for a temporary replication slot"));
+	}
 
 	/*
 	 * If some other backend ran this code concurrently with us, we'd likely
@@ -315,6 +344,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	slot->data.two_phase = two_phase;
 	slot->data.two_phase_at = InvalidXLogRecPtr;
 	slot->data.failover = failover;
+	slot->data.synced = synced;
 
 	/* and then data only present in shared memory */
 	slot->just_dirtied = false;
@@ -677,6 +707,16 @@ ReplicationSlotDrop(const char *name, bool nowait)
 
 	ReplicationSlotAcquire(name, nowait);
 
+	/*
+	 * Do not allow users to drop the slots which are currently being synced
+	 * from the primary to the standby.
+	 */
+	if (RecoveryInProgress() && MyReplicationSlot->data.synced)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot drop replication slot \"%s\"", name),
+				errdetail("This slot is being synced from the primary server."));
+
 	ReplicationSlotDropAcquired();
 }
 
@@ -696,6 +736,38 @@ ReplicationSlotAlter(const char *name, bool failover)
 				errmsg("cannot use %s with a physical replication slot",
 					   "ALTER_REPLICATION_SLOT"));
 
+	if (RecoveryInProgress())
+	{
+		/*
+		 * Do not allow users to alter the slots which are currently being
+		 * synced from the primary to the standby.
+		 */
+		if (MyReplicationSlot->data.synced)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("cannot alter replication slot \"%s\"", name),
+					errdetail("This slot is being synced from the primary server."));
+
+		/*
+		 * Do not allow users to enable failover on the standby as we do not
+		 * support sync to the cascading standby.
+		 */
+		if (failover)
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot enable failover for a replication slot"
+						   " on the standby"));
+	}
+
+	/*
+	 * Do not allow users to enable failover for temporary slots as we do not
+	 * support syncing temporary slots to the standby.
+	 */
+	if (failover && MyReplicationSlot->data.persistency == RS_TEMPORARY)
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("cannot enable failover for a temporary replication slot"));
+
 	if (MyReplicationSlot->data.failover != failover)
 	{
 		SpinLockAcquire(&MyReplicationSlot->mutex);
@@ -712,7 +784,7 @@ ReplicationSlotAlter(const char *name, bool failover)
 /*
  * Permanently drop the currently acquired replication slot.
  */
-static void
+void
 ReplicationSlotDropAcquired(void)
 {
 	ReplicationSlot *slot = MyReplicationSlot;
@@ -868,8 +940,8 @@ ReplicationSlotMarkDirty(void)
 }
 
 /*
- * Convert a slot that's marked as RS_EPHEMERAL to a RS_PERSISTENT slot,
- * guaranteeing it will be there after an eventual crash.
+ * Convert a slot that's marked as RS_EPHEMERAL or RS_TEMPORARY to a
+ * RS_PERSISTENT slot, guaranteeing it will be there after an eventual crash.
  */
 void
 ReplicationSlotPersist(void)
@@ -2188,4 +2260,26 @@ RestoreSlotFromDisk(const char *name)
 		ereport(FATAL,
 				(errmsg("too many replication slots active before shutdown"),
 				 errhint("Increase max_replication_slots and try again.")));
+}
+
+/*
+ * Maps the pg_replication_slots.conflict_reason text value to
+ * ReplicationSlotInvalidationCause enum value
+ */
+ReplicationSlotInvalidationCause
+GetSlotInvalidationCause(char *conflict_reason)
+{
+	Assert(conflict_reason);
+
+	if (strcmp(conflict_reason, SLOT_INVAL_WAL_REMOVED_TEXT) == 0)
+		return RS_INVAL_WAL_REMOVED;
+	else if (strcmp(conflict_reason, SLOT_INVAL_HORIZON_TEXT) == 0)
+		return RS_INVAL_HORIZON;
+	else if (strcmp(conflict_reason, SLOT_INVAL_WAL_LEVEL_TEXT) == 0)
+		return RS_INVAL_WAL_LEVEL;
+	else
+		Assert(0);
+
+	/* Keep compiler quiet */
+	return RS_INVAL_NONE;
 }

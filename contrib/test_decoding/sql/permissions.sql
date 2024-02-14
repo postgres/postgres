@@ -29,6 +29,7 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 INSERT INTO lr_test VALUES('lr_superuser_init');
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 SELECT pg_drop_replication_slot('regression_slot');
+SELECT pg_sync_replication_slots();
 RESET ROLE;
 
 -- replication users can drop superuser created slots

@@ -28075,7 +28075,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
       </row>
 
       <row>
-       <entry role="func_table_entry"><para role="func_signature">
+       <entry id="pg-create-logical-replication-slot" role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>pg_create_logical_replication_slot</primary>
         </indexterm>
@@ -28444,6 +28444,39 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         record is flushed along with its transaction.
        </para></entry>
       </row>
+
+      <row>
+       <entry id="pg-sync-replication-slots" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_sync_replication_slots</primary>
+        </indexterm>
+        <function>pg_sync_replication_slots</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Synchronize the logical failover replication slots from the primary
+        server to the standby server. This function can only be executed on the
+        standby server. Temporary synced slots, if any, cannot be used for
+        logical decoding and must be dropped after promotion. See
+        <xref linkend="logicaldecoding-replication-slots-synchronization"/> for details.
+       </para>
+
+       <caution>
+        <para>
+          If, after executing the function,
+          <link linkend="guc-hot-standby-feedback">
+          <varname>hot_standby_feedback</varname></link> is disabled on
+          the standby or the physical slot configured in
+          <link linkend="guc-primary-slot-name">
+          <varname>primary_slot_name</varname></link> is
+          removed, then it is possible that the necessary rows of the
+          synchronized slot will be removed by the VACUUM process on the primary
+          server, resulting in the synchronized slot becoming invalidated.
+        </para>
+       </caution>
+      </entry>
+      </row>
+
      </tbody>
     </tgroup>
    </table>

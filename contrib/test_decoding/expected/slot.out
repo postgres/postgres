@@ -425,6 +425,8 @@ SELECT 'init' FROM pg_create_logical_replication_slot('failover_default_slot', '
  init
 (1 row)
 
+SELECT 'init' FROM pg_create_logical_replication_slot('failover_true_temp_slot', 'test_decoding', true, false, true);
+ERROR:  cannot enable failover for a temporary replication slot
 SELECT 'init' FROM pg_create_physical_replication_slot('physical_slot');
  ?column? 
 ----------

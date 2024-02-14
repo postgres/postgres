@@ -2062,7 +2062,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         <term><literal>FAILOVER [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
-          If true, the slot is enabled to be synced to the standbys.
+          If true, the slot is enabled to be synced to the standbys
+          so that logical replication can be resumed after failover.
           The default is false.
          </para>
         </listitem>
@@ -2162,7 +2163,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         <term><literal>FAILOVER [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
-          If true, the slot is enabled to be synced to the standbys.
+          If true, the slot is enabled to be synced to the standbys
+          so that logical replication can be resumed after failover.
          </para>
         </listitem>
        </varlistentry>

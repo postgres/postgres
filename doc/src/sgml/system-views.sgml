@@ -2561,10 +2561,26 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>failover</structfield> <type>bool</type>
       </para>
       <para>
-       True if this is a logical slot enabled to be synced to the standbys.
-       Always false for physical slots.
+       True if this is a logical slot enabled to be synced to the standbys
+       so that logical replication can be resumed from the new primary
+       after failover. Always false for physical slots.
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>synced</structfield> <type>bool</type>
+      </para>
+      <para>
+       True if this is a logical slot that was synced from a primary server.
+       On a hot standby, the slots with the synced column marked as true can
+       neither be used for logical decoding nor dropped manually. The value
+       of this column has no meaning on the primary server; the column value on
+       the primary is default false for all slots but may (if leftover from a
+       promoted standby) also be true.
+      </para></entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>

@@ -358,6 +358,62 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
       So if a slot is no longer required it should be dropped.
      </para>
     </caution>
+
+   </sect2>
+
+   <sect2 id="logicaldecoding-replication-slots-synchronization">
+    <title>Replication Slot Synchronization</title>
+    <para>
+     The logical replication slots on the primary can be synchronized to
+     the hot standby by using the <literal>failover</literal> parameter of
+     <link linkend="pg-create-logical-replication-slot">
+     <function>pg_create_logical_replication_slot</function></link>, or by
+     using the <link linkend="sql-createsubscription-params-with-failover">
+     <literal>failover</literal></link> option of
+     <command>CREATE SUBSCRIPTION</command> during slot creation, and then calling
+     <link linkend="pg-sync-replication-slots">
+     <function>pg_sync_replication_slots</function></link>
+     on the standby. For the synchronization to work, it is mandatory to
+     have a physical replication slot between the primary and the standby aka
+     <link linkend="guc-primary-slot-name"><varname>primary_slot_name</varname></link>
+     should be configured on the standby, and
+     <link linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</varname></link>
+     must be enabled on the standby. It is also necessary to specify a valid
+     <literal>dbname</literal> in the
+     <link linkend="guc-primary-conninfo"><varname>primary_conninfo</varname></link>.
+    </para>
+
+    <para>
+     The ability to resume logical replication after failover depends upon the
+     <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>synced</structfield>
+     value for the synchronized slots on the standby at the time of failover.
+     Only persistent slots that have attained synced state as true on the standby
+     before failover can be used for logical replication after failover.
+     Temporary synced slots cannot be used for logical decoding, therefore
+     logical replication for those slots cannot be resumed. For example, if the
+     synchronized slot could not become persistent on the standby due to a
+     disabled subscription, then the subscription cannot be resumed after
+     failover even when it is enabled.
+    </para>
+
+    <para>
+     To resume logical replication after failover from the synced logical
+     slots, the subscription's 'conninfo' must be altered to point to the
+     new primary server. This is done using
+     <link linkend="sql-altersubscription-params-connection"><command>ALTER SUBSCRIPTION ... CONNECTION</command></link>.
+     It is recommended that subscriptions are first disabled before promoting
+     the standby and are re-enabled after altering the connection string.
+    </para>
+    <caution>
+     <para>
+      There is a chance that the old primary is up again during the promotion
+      and if subscriptions are not disabled, the logical subscribers may
+      continue to receive data from the old primary server even after promotion
+      until the connection string is altered. This might result in data
+      inconsistency issues, preventing the logical subscribers from being
+      able to continue replication from the new primary server.
+     </para>
+    </caution>
    </sect2>
 
    <sect2 id="logicaldecoding-explanation-output-plugins">

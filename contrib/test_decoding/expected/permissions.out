@@ -64,6 +64,9 @@ DETAIL:  Only roles with the REPLICATION attribute may use replication slots.
 SELECT pg_drop_replication_slot('regression_slot');
 ERROR:  permission denied to use replication slots
 DETAIL:  Only roles with the REPLICATION attribute may use replication slots.
+SELECT pg_sync_replication_slots();
+ERROR:  permission denied to use replication slots
+DETAIL:  Only roles with the REPLICATION attribute may use replication slots.
 RESET ROLE;
 -- replication users can drop superuser created slots
 SET ROLE regress_lr_superuser;
