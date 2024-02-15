@@ -223,17 +223,14 @@ is( $standby1->safe_psql(
 $standby1->append_conf('postgresql.conf', 'max_slot_wal_keep_size = -1');
 $standby1->reload;
 
-# Enable the subscription to let it catch up to the latest wal position
-$subscriber1->safe_psql('postgres',
-	"ALTER SUBSCRIPTION regress_mysub1 ENABLE");
+# To ensure that restart_lsn has moved to a recent WAL position, we re-create
+# the subscription and the logical slot.
+$subscriber1->safe_psql(
+	'postgres', qq[
+	DROP SUBSCRIPTION regress_mysub1;
+	CREATE SUBSCRIPTION regress_mysub1 CONNECTION '$publisher_connstr' PUBLICATION regress_mypub WITH (slot_name = lsub1_slot, copy_data = false, failover = true);
+]);
 
-# This wait ensures that confirmed_flush_lsn has been moved to latest
-# position.
-$primary->wait_for_catchup('regress_mysub1');
-
-# To ensure that restart_lsn has moved to a recent WAL position, we need
-# to log XLOG_RUNNING_XACTS and make sure the same is processed as well
-$primary->psql('postgres', "CHECKPOINT");
 $primary->wait_for_catchup('regress_mysub1');
 
 # Do not allow any further advancement of the restart_lsn for the lsub1_slot.
