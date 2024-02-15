@@ -114,6 +114,7 @@ use Socket;
 use Test::More;
 use PostgreSQL::Test::Utils          ();
 use PostgreSQL::Test::BackgroundPsql ();
+use Text::ParseWords                 qw(shellwords);
 use Time::HiRes                      qw(usleep);
 use Scalar::Util                     qw(blessed);
 
@@ -518,6 +519,12 @@ sub init
 
 	$params{allows_streaming} = 0 unless defined $params{allows_streaming};
 	$params{has_archiving} = 0 unless defined $params{has_archiving};
+
+	my $initdb_extra_opts_env = $ENV{PG_TEST_INITDB_EXTRA_OPTS};
+	if (defined $initdb_extra_opts_env)
+	{
+		push @{ $params{extra} }, shellwords($initdb_extra_opts_env);
+	}
 
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;

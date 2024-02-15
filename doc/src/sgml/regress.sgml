@@ -390,12 +390,37 @@ make check LANG=C ENCODING=EUC_JP
    <title>Custom Server Settings</title>
 
    <para>
-    Custom server settings to use when running a regression test suite can be
+    There are several ways to use custom server settings when running a test
+    suite.  This can be useful to enable additional logging, adjust resource
+    limits, or enable extra run-time checks such as <xref
+    linkend="guc-debug-discard-caches"/>.  But note that not all tests can be
+    expected to pass cleanly with arbitrary settings.
+   </para>
+
+   <para>
+    Extra options can be passed to the various <command>initdb</command>
+    commands that are run internally during test setup using the environment
+    variable <envar>PG_TEST_INITDB_EXTRA_OPTS</envar>.  For example, to run a
+    test with checksums enabled and a custom WAL segment size and
+    <varname>work_mem</varname> setting, use:
+<screen>
+make check PG_TEST_INITDB_EXTRA_OPTS='-k --wal-segsize=4 -c work_mem=50MB'
+</screen>
+   </para>
+
+   <para>
+    For the core regression test suite and other tests driven by
+    <command>pg_regress</command>, custom run-time server settings can also be
     set in the <varname>PGOPTIONS</varname> environment variable (for settings
-    that allow this):
+    that allow this), for example:
 <screen>
 make check PGOPTIONS="-c debug_parallel_query=regress -c work_mem=50MB"
 </screen>
+    (This makes use of functionality provided by libpq; see <xref
+    linkend="libpq-connect-options"/> for details.)
+   </para>
+
+   <para>
     When running against a temporary installation, custom settings can also be
     set by supplying a pre-written <filename>postgresql.conf</filename>:
 <screen>
@@ -405,11 +430,6 @@ make check EXTRA_REGRESS_OPTS="--temp-config=test_postgresql.conf"
 </screen>
    </para>
 
-   <para>
-    This can be useful to enable additional logging, adjust resource limits,
-    or enable extra run-time checks such as <xref
-    linkend="guc-debug-discard-caches"/>.
-   </para>
   </sect2>
 
   <sect2 id="regress-run-extra-tests">
