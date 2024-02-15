@@ -1237,6 +1237,10 @@ create_tidrangescan_path(PlannerInfo *root, RelOptInfo *rel,
  *
  * Note that we must handle subpaths = NIL, representing a dummy access path.
  * Also, there are callers that pass root = NULL.
+ *
+ * 'rows', when passed as a non-negative number, will be used to overwrite the
+ * returned path's row estimate.  Otherwise, the row estimate is calculated
+ * by totalling the row estimates from the 'subpaths' list.
  */
 AppendPath *
 create_append_path(PlannerInfo *root,
