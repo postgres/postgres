@@ -117,6 +117,7 @@ init_libpq_conn(PGconn *conn)
 	run_simple_command(conn, "SET statement_timeout = 0");
 	run_simple_command(conn, "SET lock_timeout = 0");
 	run_simple_command(conn, "SET idle_in_transaction_session_timeout = 0");
+	run_simple_command(conn, "SET transaction_timeout = 0");
 
 	/*
 	 * we don't intend to do any updates, put the connection in read-only mode

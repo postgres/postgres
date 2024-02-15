@@ -72,3 +72,6 @@ installcheck-prepared-txns: all temp-install
 
 check-prepared-txns: all temp-install
 	$(pg_isolation_regress_check) --schedule=$(srcdir)/isolation_schedule prepared-transactions prepared-transactions-cic
+
+check-timeouts: all temp-install
+	$(pg_isolation_regress_check) timeouts timeouts-long

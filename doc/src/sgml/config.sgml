@@ -9140,6 +9140,42 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-transaction-timeout" xreflabel="transaction_timeout">
+      <term><varname>transaction_timeout</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>transaction_timeout</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Terminate any session that spans longer than the specified amount of
+        time in the transaction. The limit applies both to explicit transactions
+        (started with <command>BEGIN</command>) and to an implicitly started
+        transaction corresponding to a single statement.
+        If this value is specified without units, it is taken as milliseconds.
+        A value of zero (the default) disables the timeout.
+       </para>
+
+       <para>
+        If <varname>transaction_timeout</varname> is shorter or equal to
+        <varname>idle_in_transaction_session_timeout</varname> or <varname>statement_timeout</varname>
+        <varname>transaction_timeout</varname> will invalidate the longer timeout.
+       </para>
+
+       <para>
+        Setting <varname>transaction_timeout</varname> in
+        <filename>postgresql.conf</filename> is not recommended because it would
+        affect all sessions.
+       </para>
+
+       <note>
+        <para>
+         Prepared transactions are not subject to this timeout.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-lock-timeout" xreflabel="lock_timeout">
       <term><varname>lock_timeout</varname> (<type>integer</type>)
       <indexterm>

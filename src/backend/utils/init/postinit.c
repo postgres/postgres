@@ -75,6 +75,7 @@ static void ShutdownPostgres(int code, Datum arg);
 static void StatementTimeoutHandler(void);
 static void LockTimeoutHandler(void);
 static void IdleInTransactionSessionTimeoutHandler(void);
+static void TransactionTimeoutHandler(void);
 static void IdleSessionTimeoutHandler(void);
 static void IdleStatsUpdateTimeoutHandler(void);
 static void ClientCheckTimeoutHandler(void);
@@ -764,6 +765,7 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		RegisterTimeout(LOCK_TIMEOUT, LockTimeoutHandler);
 		RegisterTimeout(IDLE_IN_TRANSACTION_SESSION_TIMEOUT,
 						IdleInTransactionSessionTimeoutHandler);
+		RegisterTimeout(TRANSACTION_TIMEOUT, TransactionTimeoutHandler);
 		RegisterTimeout(IDLE_SESSION_TIMEOUT, IdleSessionTimeoutHandler);
 		RegisterTimeout(CLIENT_CONNECTION_CHECK_TIMEOUT, ClientCheckTimeoutHandler);
 		RegisterTimeout(IDLE_STATS_UPDATE_TIMEOUT,
@@ -1393,6 +1395,14 @@ LockTimeoutHandler(void)
 	kill(-MyProcPid, SIGINT);
 #endif
 	kill(MyProcPid, SIGINT);
+}
+
+static void
+TransactionTimeoutHandler(void)
+{
+	TransactionTimeoutPending = true;
+	InterruptPending = true;
+	SetLatch(MyLatch);
 }
 
 static void

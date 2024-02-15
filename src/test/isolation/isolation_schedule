@@ -89,6 +89,7 @@ test: sequence-ddl
 test: async-notify
 test: vacuum-no-cleanup-lock
 test: timeouts
+test: timeouts-long
 test: vacuum-concurrent-drop
 test: vacuum-conflict
 test: vacuum-skip-locked

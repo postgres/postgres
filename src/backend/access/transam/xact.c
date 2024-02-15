@@ -2139,6 +2139,10 @@ StartTransaction(void)
 	 */
 	s->state = TRANS_INPROGRESS;
 
+	/* Schedule transaction timeout */
+	if (TransactionTimeout > 0)
+		enable_timeout_after(TRANSACTION_TIMEOUT, TransactionTimeout);
+
 	ShowTransactionState("StartTransaction");
 }
 

@@ -1,4 +1,4 @@
-Parsed test spec with 2 sessions
+Parsed test spec with 7 sessions
 
 starting permutation: rdtbl sto locktbl
 step rdtbl: SELECT * FROM accounts;
@@ -79,3 +79,80 @@ step slto: SET lock_timeout = '10s'; SET statement_timeout = '10ms';
 step update: DELETE FROM accounts WHERE accountid = 'checking'; <waiting ...>
 step update: <... completed>
 ERROR:  canceling statement due to statement timeout
+
+starting permutation: stto s3_begin s3_sleep s3_check s3_abort
+step stto: SET statement_timeout = '10ms'; SET transaction_timeout = '1s';
+step s3_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s3_sleep: SELECT pg_sleep(0.1);
+ERROR:  canceling statement due to statement timeout
+step s3_check: SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s3';
+count
+-----
+    1
+(1 row)
+
+step s3_abort: ABORT;
+
+starting permutation: tsto s3_begin checker_sleep s3_check
+step tsto: SET statement_timeout = '1s'; SET transaction_timeout = '10ms';
+step s3_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
+step checker_sleep: SELECT pg_sleep(0.1);
+pg_sleep
+--------
+        
+(1 row)
+
+step s3_check: SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s3';
+count
+-----
+    0
+(1 row)
+
+
+starting permutation: itto s4_begin checker_sleep s4_check
+step itto: SET idle_in_transaction_session_timeout = '10ms'; SET transaction_timeout = '1s';
+step s4_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
+step checker_sleep: SELECT pg_sleep(0.1);
+pg_sleep
+--------
+        
+(1 row)
+
+step s4_check: SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s4';
+count
+-----
+    0
+(1 row)
+
+
+starting permutation: tito s5_begin checker_sleep s5_check
+step tito: SET idle_in_transaction_session_timeout = '1s'; SET transaction_timeout = '10ms';
+step s5_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
+step checker_sleep: SELECT pg_sleep(0.1);
+pg_sleep
+--------
+        
+(1 row)
+
+step s5_check: SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s5';
+count
+-----
+    0
+(1 row)
+
+
+starting permutation: s6_begin s6_tt checker_sleep s6_check
+step s6_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s6_tt: SET statement_timeout = '1s'; SET transaction_timeout = '10ms';
+step checker_sleep: SELECT pg_sleep(0.1);
+pg_sleep
+--------
+        
+(1 row)
+
+step s6_check: SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s6';
+count
+-----
+    0
+(1 row)
+

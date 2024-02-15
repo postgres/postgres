@@ -3115,6 +3115,7 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	ahprintf(AH, "SET statement_timeout = 0;\n");
 	ahprintf(AH, "SET lock_timeout = 0;\n");
 	ahprintf(AH, "SET idle_in_transaction_session_timeout = 0;\n");
+	ahprintf(AH, "SET transaction_timeout = 0;\n");
 
 	/* Select the correct character set encoding */
 	ahprintf(AH, "SET client_encoding = '%s';\n",
