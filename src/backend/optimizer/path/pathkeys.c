@@ -2143,12 +2143,6 @@ pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys)
 {
 	int			n_common_pathkeys;
 
-	if (root->query_pathkeys == NIL)
-		return 0;				/* no special ordering requested */
-
-	if (pathkeys == NIL)
-		return 0;				/* unordered path */
-
 	(void) pathkeys_count_contained_in(root->query_pathkeys, pathkeys,
 									   &n_common_pathkeys);
 
@@ -2182,10 +2176,6 @@ pathkeys_useful_for_grouping(PlannerInfo *root, List *pathkeys)
 
 	/* no special ordering requested for grouping */
 	if (root->group_pathkeys == NIL)
-		return 0;
-
-	/* unordered path */
-	if (pathkeys == NIL)
 		return 0;
 
 	/* walk the pathkeys and search for matching group key */
