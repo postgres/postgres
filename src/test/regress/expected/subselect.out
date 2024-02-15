@@ -1926,3 +1926,129 @@ select * from x for update;
    Output: subselect_tbl.f1, subselect_tbl.f2, subselect_tbl.f3
 (2 rows)
 
+-- Pull-up the direct-correlated ANY_SUBLINK
+explain (costs off)
+select * from tenk1 A where hundred in (select hundred from tenk2 B where B.odd = A.odd);
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Hash Join
+   Hash Cond: ((a.odd = b.odd) AND (a.hundred = b.hundred))
+   ->  Seq Scan on tenk1 a
+   ->  Hash
+         ->  HashAggregate
+               Group Key: b.odd, b.hundred
+               ->  Seq Scan on tenk2 b
+(7 rows)
+
+explain (costs off)
+select * from tenk1 A where exists
+(select 1 from tenk2 B
+where A.hundred in (select C.hundred FROM tenk2 C
+WHERE c.odd = b.odd));
+           QUERY PLAN            
+---------------------------------
+ Nested Loop Semi Join
+   Join Filter: (SubPlan 1)
+   ->  Seq Scan on tenk1 a
+   ->  Materialize
+         ->  Seq Scan on tenk2 b
+   SubPlan 1
+     ->  Seq Scan on tenk2 c
+           Filter: (odd = b.odd)
+(8 rows)
+
+-- we should only try to pull up the sublink into RHS of a left join
+-- but a.hundred is not avaiable.
+explain (costs off)
+SELECT * FROM tenk1 A LEFT JOIN tenk2 B
+ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
+           QUERY PLAN            
+---------------------------------
+ Nested Loop Left Join
+   Join Filter: (SubPlan 1)
+   ->  Seq Scan on tenk1 a
+   ->  Materialize
+         ->  Seq Scan on tenk2 b
+   SubPlan 1
+     ->  Seq Scan on tenk2 c
+           Filter: (odd = b.odd)
+(8 rows)
+
+-- we should only try to pull up the sublink into RHS of a left join
+-- but a.odd is not avaiable for this.
+explain (costs off)
+SELECT * FROM tenk1 A LEFT JOIN tenk2 B
+ON B.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = a.odd);
+           QUERY PLAN            
+---------------------------------
+ Nested Loop Left Join
+   Join Filter: (SubPlan 1)
+   ->  Seq Scan on tenk1 a
+   ->  Materialize
+         ->  Seq Scan on tenk2 b
+   SubPlan 1
+     ->  Seq Scan on tenk2 c
+           Filter: (odd = a.odd)
+(8 rows)
+
+-- should be able to pull up since all the references is available
+explain (costs off)
+SELECT * FROM tenk1 A LEFT JOIN tenk2 B
+ON B.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on tenk1 a
+   ->  Materialize
+         ->  Hash Join
+               Hash Cond: ((b.odd = c.odd) AND (b.hundred = c.hundred))
+               ->  Seq Scan on tenk2 b
+               ->  Hash
+                     ->  HashAggregate
+                           Group Key: c.odd, c.hundred
+                           ->  Seq Scan on tenk2 c
+(10 rows)
+
+-- we can pull up the sublink into the inner JoinExpr.
+explain (costs off)
+SELECT * FROM tenk1 A INNER JOIN tenk2 B
+ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
+                   QUERY PLAN                    
+-------------------------------------------------
+ Hash Join
+   Hash Cond: (c.odd = b.odd)
+   ->  Hash Join
+         Hash Cond: (a.hundred = c.hundred)
+         ->  Seq Scan on tenk1 a
+         ->  Hash
+               ->  HashAggregate
+                     Group Key: c.odd, c.hundred
+                     ->  Seq Scan on tenk2 c
+   ->  Hash
+         ->  Seq Scan on tenk2 b
+(11 rows)
+
+-- we can pull up the aggregate sublink into RHS of a left join.
+explain (costs off)
+SELECT * FROM tenk1 A LEFT JOIN tenk2 B
+ON B.hundred in (SELECT min(c.hundred) FROM tenk2 C WHERE c.odd = b.odd);
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on tenk1 a
+   ->  Materialize
+         ->  Nested Loop
+               ->  Seq Scan on tenk2 b
+               ->  Memoize
+                     Cache Key: b.hundred, b.odd
+                     Cache Mode: binary
+                     ->  Subquery Scan on "ANY_subquery"
+                           Filter: (b.hundred = "ANY_subquery".min)
+                           ->  Result
+                                 InitPlan 1 (returns $1)
+                                   ->  Limit
+                                         ->  Index Scan using tenk2_hundred on tenk2 c
+                                               Index Cond: (hundred IS NOT NULL)
+                                               Filter: (odd = b.odd)
+(16 rows)
+

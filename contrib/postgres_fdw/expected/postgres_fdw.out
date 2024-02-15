@@ -11894,7 +11894,7 @@ CREATE FOREIGN TABLE foreign_tbl (b int)
 CREATE FOREIGN TABLE foreign_tbl2 () INHERITS (foreign_tbl)
   SERVER loopback OPTIONS (table_name 'base_tbl');
 EXPLAIN (VERBOSE, COSTS OFF)
-SELECT a FROM base_tbl WHERE a IN (SELECT a FROM foreign_tbl);
+SELECT a FROM base_tbl WHERE (a, random() > 0) IN (SELECT a, random() > 0 FROM foreign_tbl);
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
  Seq Scan on public.base_tbl
@@ -11902,7 +11902,7 @@ SELECT a FROM base_tbl WHERE a IN (SELECT a FROM foreign_tbl);
    Filter: (SubPlan 1)
    SubPlan 1
      ->  Result
-           Output: base_tbl.a
+           Output: base_tbl.a, (random() > '0'::double precision)
            ->  Append
                  ->  Async Foreign Scan on public.foreign_tbl foreign_tbl_1
                        Remote SQL: SELECT NULL FROM public.base_tbl
@@ -11910,7 +11910,7 @@ SELECT a FROM base_tbl WHERE a IN (SELECT a FROM foreign_tbl);
                        Remote SQL: SELECT NULL FROM public.base_tbl
 (11 rows)
 
-SELECT a FROM base_tbl WHERE a IN (SELECT a FROM foreign_tbl);
+SELECT a FROM base_tbl WHERE (a, random() > 0) IN (SELECT a, random() > 0 FROM foreign_tbl);
  a 
 ---
  1

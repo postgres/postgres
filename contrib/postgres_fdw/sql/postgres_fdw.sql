@@ -3988,8 +3988,8 @@ CREATE FOREIGN TABLE foreign_tbl2 () INHERITS (foreign_tbl)
   SERVER loopback OPTIONS (table_name 'base_tbl');
 
 EXPLAIN (VERBOSE, COSTS OFF)
-SELECT a FROM base_tbl WHERE a IN (SELECT a FROM foreign_tbl);
-SELECT a FROM base_tbl WHERE a IN (SELECT a FROM foreign_tbl);
+SELECT a FROM base_tbl WHERE (a, random() > 0) IN (SELECT a, random() > 0 FROM foreign_tbl);
+SELECT a FROM base_tbl WHERE (a, random() > 0) IN (SELECT a, random() > 0 FROM foreign_tbl);
 
 -- Clean up
 DROP FOREIGN TABLE foreign_tbl CASCADE;
