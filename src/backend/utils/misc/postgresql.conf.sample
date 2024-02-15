@@ -175,10 +175,10 @@
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 #max_worker_processes = 8		# (change requires restart)
-#max_parallel_maintenance_workers = 2	# taken from max_parallel_workers
-#max_parallel_workers_per_gather = 2	# taken from max_parallel_workers
+#max_parallel_maintenance_workers = 2	# limited by max_parallel_workers
+#max_parallel_workers_per_gather = 2	# limited by max_parallel_workers
 #parallel_leader_participation = on
-#max_parallel_workers = 8		# maximum number of max_worker_processes that
+#max_parallel_workers = 8		# number of max_worker_processes that
 					# can be used in parallel operations
 #old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
 					# (change requires restart)
