@@ -16,6 +16,7 @@
 
 #include "access/gist.h"
 #include "access/stratnum.h"
+#include "common/int.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 
@@ -156,10 +157,8 @@ typedef struct
 static int
 comparecost(const void *a, const void *b)
 {
-	if (((const SPLITCOST *) a)->cost == ((const SPLITCOST *) b)->cost)
-		return 0;
-	else
-		return (((const SPLITCOST *) a)->cost > ((const SPLITCOST *) b)->cost) ? 1 : -1;
+	return pg_cmp_s32(((const SPLITCOST *) a)->cost,
+					  ((const SPLITCOST *) b)->cost);
 }
 
 #define WISH_F(a,b,c) (double)( -(double)(((a)-(b))*((a)-(b))*((a)-(b)))*(c) )

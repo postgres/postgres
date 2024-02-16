@@ -69,6 +69,7 @@
 #include "commands/policy.h"
 #include "commands/publicationcmds.h"
 #include "commands/trigger.h"
+#include "common/int.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -4520,7 +4521,7 @@ AttrDefaultCmp(const void *a, const void *b)
 	const AttrDefault *ada = (const AttrDefault *) a;
 	const AttrDefault *adb = (const AttrDefault *) b;
 
-	return ada->adnum - adb->adnum;
+	return pg_cmp_s16(ada->adnum, adb->adnum);
 }
 
 /*

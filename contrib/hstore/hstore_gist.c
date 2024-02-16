@@ -7,6 +7,7 @@
 #include "access/reloptions.h"
 #include "access/stratnum.h"
 #include "catalog/pg_type.h"
+#include "common/int.h"
 #include "hstore.h"
 #include "utils/pg_crc.h"
 
@@ -356,7 +357,8 @@ typedef struct
 static int
 comparecost(const void *a, const void *b)
 {
-	return ((const SPLITCOST *) a)->cost - ((const SPLITCOST *) b)->cost;
+	return pg_cmp_s32(((const SPLITCOST *) a)->cost,
+					  ((const SPLITCOST *) b)->cost);
 }
 
 

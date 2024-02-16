@@ -78,6 +78,7 @@
 #include "catalog/pg_database.h"
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
+#include "common/int.h"
 #include "lib/ilist.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -1120,10 +1121,8 @@ rebuild_database_list(Oid newdb)
 static int
 db_comparator(const void *a, const void *b)
 {
-	if (((const avl_dbase *) a)->adl_score == ((const avl_dbase *) b)->adl_score)
-		return 0;
-	else
-		return (((const avl_dbase *) a)->adl_score < ((const avl_dbase *) b)->adl_score) ? 1 : -1;
+	return pg_cmp_s32(((const avl_dbase *) a)->adl_score,
+					  ((const avl_dbase *) b)->adl_score);
 }
 
 /*

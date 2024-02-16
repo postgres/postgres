@@ -75,6 +75,7 @@
 #include <unistd.h>
 
 #include "access/xact.h"
+#include "common/int.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/syncrep.h"
@@ -698,12 +699,7 @@ cmp_lsn(const void *a, const void *b)
 	XLogRecPtr	lsn1 = *((const XLogRecPtr *) a);
 	XLogRecPtr	lsn2 = *((const XLogRecPtr *) b);
 
-	if (lsn1 > lsn2)
-		return -1;
-	else if (lsn1 == lsn2)
-		return 0;
-	else
-		return 1;
+	return pg_cmp_u64(lsn2, lsn1);
 }
 
 /*

@@ -46,6 +46,7 @@
 #include "postgres.h"
 
 #include "common/hashfn.h"
+#include "common/int.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
@@ -264,14 +265,7 @@ resource_priority_cmp(const void *a, const void *b)
 
 	/* Note: reverse order */
 	if (ra->kind->release_phase == rb->kind->release_phase)
-	{
-		if (ra->kind->release_priority == rb->kind->release_priority)
-			return 0;
-		else if (ra->kind->release_priority > rb->kind->release_priority)
-			return -1;
-		else
-			return 1;
-	}
+		return pg_cmp_u32(rb->kind->release_priority, ra->kind->release_priority);
 	else if (ra->kind->release_phase > rb->kind->release_phase)
 		return -1;
 	else

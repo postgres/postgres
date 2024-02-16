@@ -17,6 +17,7 @@
 
 #include "access/xlog_internal.h"
 #include "backup/walsummary.h"
+#include "common/int.h"
 #include "utils/wait_event.h"
 
 static bool IsWalSummaryFilename(char *filename);
@@ -355,9 +356,5 @@ ListComparatorForWalSummaryFiles(const ListCell *a, const ListCell *b)
 	WalSummaryFile *ws1 = lfirst(a);
 	WalSummaryFile *ws2 = lfirst(b);
 
-	if (ws1->start_lsn < ws2->start_lsn)
-		return -1;
-	if (ws1->start_lsn > ws2->start_lsn)
-		return 1;
-	return 0;
+	return pg_cmp_u64(ws1->start_lsn, ws2->start_lsn);
 }

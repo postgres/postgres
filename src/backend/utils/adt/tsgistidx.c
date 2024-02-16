@@ -17,6 +17,7 @@
 #include "access/gist.h"
 #include "access/heaptoast.h"
 #include "access/reloptions.h"
+#include "common/int.h"
 #include "lib/qunique.h"
 #include "port/pg_bitutils.h"
 #include "tsearch/ts_utils.h"
@@ -136,9 +137,7 @@ compareint(const void *va, const void *vb)
 	int32		a = *((const int32 *) va);
 	int32		b = *((const int32 *) vb);
 
-	if (a == b)
-		return 0;
-	return (a > b) ? 1 : -1;
+	return pg_cmp_s32(a, b);
 }
 
 static void
@@ -598,10 +597,7 @@ comparecost(const void *va, const void *vb)
 	const SPLITCOST *a = (const SPLITCOST *) va;
 	const SPLITCOST *b = (const SPLITCOST *) vb;
 
-	if (a->cost == b->cost)
-		return 0;
-	else
-		return (a->cost > b->cost) ? 1 : -1;
+	return pg_cmp_s32(a->cost, b->cost);
 }
 
 

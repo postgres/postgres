@@ -14,6 +14,7 @@
 #include "access/gin.h"
 #include "access/ginblock.h"
 #include "access/itup.h"
+#include "common/int.h"
 #include "catalog/pg_am_d.h"
 #include "fmgr.h"
 #include "lib/rbtree.h"
@@ -489,12 +490,7 @@ ginCompareItemPointers(ItemPointer a, ItemPointer b)
 	uint64		ia = (uint64) GinItemPointerGetBlockNumber(a) << 32 | GinItemPointerGetOffsetNumber(a);
 	uint64		ib = (uint64) GinItemPointerGetBlockNumber(b) << 32 | GinItemPointerGetOffsetNumber(b);
 
-	if (ia == ib)
-		return 0;
-	else if (ia > ib)
-		return 1;
-	else
-		return -1;
+	return pg_cmp_u64(ia, ib);
 }
 
 extern int	ginTraverseLock(Buffer buffer, bool searchMode);

@@ -29,6 +29,7 @@
 #include "catalog/pg_shdepend_d.h"
 #include "catalog/pg_shdescription_d.h"
 #include "catalog/pg_shseclabel_d.h"
+#include "common/int.h"
 #include "lib/qunique.h"
 #include "utils/catcache.h"
 #include "utils/lsyscache.h"
@@ -676,7 +677,5 @@ oid_compare(const void *a, const void *b)
 	Oid			oa = *((const Oid *) a);
 	Oid			ob = *((const Oid *) b);
 
-	if (oa == ob)
-		return 0;
-	return (oa > ob) ? 1 : -1;
+	return pg_cmp_u32(oa, ob);
 }

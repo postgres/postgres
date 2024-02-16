@@ -17,6 +17,7 @@
  */
 #include "postgres.h"
 
+#include "common/int.h"
 #include "nodes/pg_list.h"
 #include "port/pg_bitutils.h"
 #include "utils/memdebug.h"
@@ -1692,11 +1693,7 @@ list_int_cmp(const ListCell *p1, const ListCell *p2)
 	int			v1 = lfirst_int(p1);
 	int			v2 = lfirst_int(p2);
 
-	if (v1 < v2)
-		return -1;
-	if (v1 > v2)
-		return 1;
-	return 0;
+	return pg_cmp_s32(v1, v2);
 }
 
 /*
@@ -1708,9 +1705,5 @@ list_oid_cmp(const ListCell *p1, const ListCell *p2)
 	Oid			v1 = lfirst_oid(p1);
 	Oid			v2 = lfirst_oid(p2);
 
-	if (v1 < v2)
-		return -1;
-	if (v1 > v2)
-		return 1;
-	return 0;
+	return pg_cmp_u32(v1, v2);
 }

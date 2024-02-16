@@ -16,6 +16,7 @@
 #include "postgres_fe.h"
 
 #include "catalog/pg_class_d.h"
+#include "common/int.h"
 #include "lib/binaryheap.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_utils.h"
@@ -1504,9 +1505,5 @@ int_cmp(void *a, void *b, void *arg)
 	int			ai = (int) (intptr_t) a;
 	int			bi = (int) (intptr_t) b;
 
-	if (ai < bi)
-		return -1;
-	if (ai > bi)
-		return 1;
-	return 0;
+	return pg_cmp_s32(ai, bi);
 }

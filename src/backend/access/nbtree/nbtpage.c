@@ -28,6 +28,7 @@
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
+#include "common/int.h"
 #include "miscadmin.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
@@ -1466,14 +1467,9 @@ _bt_delitems_cmp(const void *a, const void *b)
 	TM_IndexDelete *indexdelete1 = (TM_IndexDelete *) a;
 	TM_IndexDelete *indexdelete2 = (TM_IndexDelete *) b;
 
-	if (indexdelete1->id > indexdelete2->id)
-		return 1;
-	if (indexdelete1->id < indexdelete2->id)
-		return -1;
+	Assert(indexdelete1->id != indexdelete2->id);
 
-	Assert(false);
-
-	return 0;
+	return pg_cmp_s16(indexdelete1->id, indexdelete2->id);
 }
 
 /*

@@ -8,6 +8,7 @@
 #include "postgres_fe.h"
 
 #include "common.h"
+#include "common/int.h"
 #include "common/logging.h"
 #include "crosstabview.h"
 #include "pqexpbuffer.h"
@@ -709,5 +710,5 @@ pivotFieldCompare(const void *a, const void *b)
 static int
 rankCompare(const void *a, const void *b)
 {
-	return *((const int *) a) - *((const int *) b);
+	return pg_cmp_s32(*(const int *) a, *(const int *) b);
 }

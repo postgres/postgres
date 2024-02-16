@@ -7,6 +7,7 @@
 
 #include "_int.h"
 #include "catalog/pg_type.h"
+#include "common/int.h"
 #include "lib/qunique.h"
 
 /* arguments are assumed sorted & unique-ified */
@@ -396,15 +397,11 @@ int_to_intset(int32 elem)
 int
 compASC(const void *a, const void *b)
 {
-	if (*(const int32 *) a == *(const int32 *) b)
-		return 0;
-	return (*(const int32 *) a > *(const int32 *) b) ? 1 : -1;
+	return pg_cmp_s32(*(const int32 *) a, *(const int32 *) b);
 }
 
 int
 compDESC(const void *a, const void *b)
 {
-	if (*(const int32 *) a == *(const int32 *) b)
-		return 0;
-	return (*(const int32 *) a < *(const int32 *) b) ? 1 : -1;
+	return pg_cmp_s32(*(const int32 *) b, *(const int32 *) a);
 }

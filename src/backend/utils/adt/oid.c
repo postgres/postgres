@@ -18,6 +18,7 @@
 #include <limits.h>
 
 #include "catalog/pg_type.h"
+#include "common/int.h"
 #include "libpq/pqformat.h"
 #include "nodes/miscnodes.h"
 #include "nodes/value.h"
@@ -259,11 +260,7 @@ oid_cmp(const void *p1, const void *p2)
 	Oid			v1 = *((const Oid *) p1);
 	Oid			v2 = *((const Oid *) p2);
 
-	if (v1 < v2)
-		return -1;
-	if (v1 > v2)
-		return 1;
-	return 0;
+	return pg_cmp_u32(v1, v2);
 }
 
 

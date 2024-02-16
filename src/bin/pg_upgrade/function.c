@@ -11,6 +11,7 @@
 
 #include "access/transam.h"
 #include "catalog/pg_language_d.h"
+#include "common/int.h"
 #include "pg_upgrade.h"
 
 /*
@@ -29,17 +30,16 @@ library_name_compare(const void *p1, const void *p2)
 {
 	const char *str1 = ((const LibraryInfo *) p1)->name;
 	const char *str2 = ((const LibraryInfo *) p2)->name;
-	int			slen1 = strlen(str1);
-	int			slen2 = strlen(str2);
+	size_t		slen1 = strlen(str1);
+	size_t		slen2 = strlen(str2);
 	int			cmp = strcmp(str1, str2);
 
 	if (slen1 != slen2)
-		return slen1 - slen2;
+		return pg_cmp_size(slen1, slen2);
 	if (cmp != 0)
 		return cmp;
-	else
-		return ((const LibraryInfo *) p1)->dbnum -
-			((const LibraryInfo *) p2)->dbnum;
+	return pg_cmp_s32(((const LibraryInfo *) p1)->dbnum,
+					  ((const LibraryInfo *) p2)->dbnum);
 }
 
 

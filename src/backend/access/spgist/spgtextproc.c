@@ -40,6 +40,7 @@
 #include "postgres.h"
 
 #include "access/spgist.h"
+#include "common/int.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
@@ -325,7 +326,7 @@ cmpNodePtr(const void *a, const void *b)
 	const spgNodePtr *aa = (const spgNodePtr *) a;
 	const spgNodePtr *bb = (const spgNodePtr *) b;
 
-	return aa->c - bb->c;
+	return pg_cmp_s16(aa->c, bb->c);
 }
 
 Datum

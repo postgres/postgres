@@ -50,6 +50,7 @@
 #include "access/parallel.h"
 #include "catalog/pg_authid.h"
 #include "common/hashfn.h"
+#include "common/int.h"
 #include "executor/instrument.h"
 #include "funcapi.h"
 #include "jit/jit.h"
@@ -3007,10 +3008,5 @@ comp_location(const void *a, const void *b)
 	int			l = ((const LocationLen *) a)->location;
 	int			r = ((const LocationLen *) b)->location;
 
-	if (l < r)
-		return -1;
-	else if (l > r)
-		return +1;
-	else
-		return 0;
+	return pg_cmp_s32(l, r);
 }

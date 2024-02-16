@@ -42,6 +42,7 @@
 
 #include "access/htup_details.h"
 #include "common/hashfn.h"
+#include "common/int.h"
 #include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
 #include "storage/lwlock.h"
@@ -1425,11 +1426,7 @@ tbm_comparator(const void *left, const void *right)
 	BlockNumber l = (*((PagetableEntry *const *) left))->blockno;
 	BlockNumber r = (*((PagetableEntry *const *) right))->blockno;
 
-	if (l < r)
-		return -1;
-	else if (l > r)
-		return 1;
-	return 0;
+	return pg_cmp_u32(l, r);
 }
 
 /*

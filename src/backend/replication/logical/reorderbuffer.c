@@ -91,6 +91,7 @@
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "catalog/catalog.h"
+#include "common/int.h"
 #include "lib/binaryheap.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -5119,11 +5120,7 @@ file_sort_by_lsn(const ListCell *a_p, const ListCell *b_p)
 	RewriteMappingFile *a = (RewriteMappingFile *) lfirst(a_p);
 	RewriteMappingFile *b = (RewriteMappingFile *) lfirst(b_p);
 
-	if (a->lsn < b->lsn)
-		return -1;
-	else if (a->lsn > b->lsn)
-		return 1;
-	return 0;
+	return pg_cmp_u64(a->lsn, b->lsn);
 }
 
 /*

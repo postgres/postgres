@@ -27,6 +27,7 @@
 #include "common/blkreftable.h"
 #include "common/parse_manifest.h"
 #include "common/hashfn.h"
+#include "common/int.h"
 #include "postmaster/walsummarizer.h"
 
 #define	BLOCKS_PER_READ			512
@@ -994,10 +995,5 @@ compare_block_numbers(const void *a, const void *b)
 	BlockNumber aa = *(BlockNumber *) a;
 	BlockNumber bb = *(BlockNumber *) b;
 
-	if (aa > bb)
-		return 1;
-	else if (aa == bb)
-		return 0;
-	else
-		return -1;
+	return pg_cmp_u32(aa, bb);
 }

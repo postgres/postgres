@@ -9,6 +9,7 @@
 #include "access/gist.h"
 #include "access/reloptions.h"
 #include "access/stratnum.h"
+#include "common/int.h"
 #include "port/pg_bitutils.h"
 
 #define GETENTRY(vec,pos) ((GISTTYPE *) DatumGetPointer((vec)->vector[(pos)].key))
@@ -312,7 +313,8 @@ typedef struct
 static int
 comparecost(const void *a, const void *b)
 {
-	return ((const SPLITCOST *) a)->cost - ((const SPLITCOST *) b)->cost;
+	return pg_cmp_s32(((const SPLITCOST *) a)->cost,
+					  ((const SPLITCOST *) b)->cost);
 }
 
 

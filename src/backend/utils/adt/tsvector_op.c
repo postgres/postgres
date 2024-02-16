@@ -19,6 +19,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
+#include "common/int.h"
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "lib/qunique.h"
@@ -435,9 +436,7 @@ compare_int(const void *va, const void *vb)
 	int			a = *((const int *) va);
 	int			b = *((const int *) vb);
 
-	if (a == b)
-		return 0;
-	return (a > b) ? 1 : -1;
+	return pg_cmp_s32(a, b);
 }
 
 static int
