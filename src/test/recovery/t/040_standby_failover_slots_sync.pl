@@ -15,6 +15,10 @@ use Test::More;
 # Create publisher
 my $publisher = PostgreSQL::Test::Cluster->new('publisher');
 $publisher->init(allows_streaming => 'logical');
+# Disable autovacuum to avoid generating xid during stats update as otherwise
+# the new XID could then be replicated to standby at some random point making
+# slots at primary lag behind standby during slot sync.
+$publisher->append_conf('postgresql.conf', 'autovacuum = off');
 $publisher->start;
 
 $publisher->safe_psql('postgres',
