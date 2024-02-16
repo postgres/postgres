@@ -321,6 +321,9 @@ reserve_wal_for_local_slot(XLogRecPtr restart_lsn)
 			oldest_segno = XLogGetOldestSegno(cur_timeline);
 		}
 
+		elog(DEBUG1, "segno: %ld of purposed restart_lsn for the synced slot, oldest_segno: %ld available",
+			 segno, oldest_segno);
+
 		/*
 		 * If all required WAL is still there, great, otherwise retry. The
 		 * slot should prevent further removal of WAL, unless there's a
@@ -361,7 +364,18 @@ update_and_persist_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 		 * current location when recreating the slot in the next cycle. It may
 		 * take more time to create such a slot. Therefore, we keep this slot
 		 * and attempt the synchronization in the next cycle.
+		 *
+		 * XXX should this be changed to elog(DEBUG1) perhaps?
 		 */
+		ereport(LOG,
+				errmsg("could not sync slot information as remote slot precedes local slot:"
+					   " remote slot \"%s\": LSN (%X/%X), catalog xmin (%u) local slot: LSN (%X/%X), catalog xmin (%u)",
+					   remote_slot->name,
+					   LSN_FORMAT_ARGS(remote_slot->restart_lsn),
+					   remote_slot->catalog_xmin,
+					   LSN_FORMAT_ARGS(slot->data.restart_lsn),
+					   slot->data.catalog_xmin));
+
 		return;
 	}
 
