@@ -34,6 +34,16 @@
  *	  - ST_COMPARE(a, b, arg) - variant that takes an extra argument
  *	  - ST_COMPARE_RUNTIME_POINTER - sort function takes a function pointer
  *
+ *	  NB: If the comparator function is inlined, some compilers may produce
+ *	  worse code with the optimized comparison routines in common/int.h than
+ *	  with code with the following form:
+ *
+ *	      if (a < b)
+ *	          return -1;
+ *	      if (a > b)
+ *	          return 1;
+ *	      return 0;
+ *
  *	  To say that the comparator and therefore also sort function should
  *	  receive an extra pass-through argument, specify the type of the
  *	  argument.
@@ -243,6 +253,9 @@ ST_SCOPE void ST_SORT(ST_ELEMENT_TYPE * first, size_t n
  * Find the median of three values.  Currently, performance seems to be best
  * if the comparator is inlined here, but the med3 function is not inlined
  * in the qsort function.
+ *
+ * Refer to the comment at the top of this file for known caveats to consider
+ * when writing inlined comparator functions.
  */
 static pg_noinline ST_ELEMENT_TYPE *
 ST_MED3(ST_ELEMENT_TYPE * a,
