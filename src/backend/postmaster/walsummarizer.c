@@ -1318,12 +1318,7 @@ summarizer_read_local_xlog_page(XLogReaderState *state,
 		}
 	}
 
-	/*
-	 * Even though we just determined how much of the page can be validly read
-	 * as 'count', read the whole page anyway. It's guaranteed to be
-	 * zero-padded up to the page boundary if it's incomplete.
-	 */
-	if (!WALRead(state, cur_page, targetPagePtr, XLOG_BLCKSZ,
+	if (!WALRead(state, cur_page, targetPagePtr, count,
 				 private_data->tli, &errinfo))
 		WALReadRaiseError(&errinfo);
 

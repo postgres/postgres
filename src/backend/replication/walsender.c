@@ -1099,7 +1099,7 @@ logical_read_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr, int req
 	if (!WALRead(state,
 				 cur_page,
 				 targetPagePtr,
-				 XLOG_BLCKSZ,
+				 count,
 				 currTLI,		/* Pass the current TLI because only
 								 * WalSndSegmentOpen controls whether new TLI
 								 * is needed. */
