@@ -548,7 +548,7 @@ where (x = 0) or (q1 >= q2 and q1 <= q2);
 -- Ensure we get a Nested Loop join between tenk1 and tenk2
 explain (costs off)
 select t1.unique1 from tenk1 t1
-inner join tenk2 t2 on t1.tenthous = t2.tenthous
+inner join tenk2 t2 on t1.tenthous = t2.tenthous and t2.thousand = 0
    union all
 (values(1)) limit 1;
 
