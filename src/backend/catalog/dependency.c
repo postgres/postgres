@@ -75,6 +75,7 @@
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteRemove.h"
@@ -515,6 +516,12 @@ findDependentObjects(const ObjectAddress *object,
 	 */
 	if (stack_address_present_add_flags(object, objflags, stack))
 		return;
+
+	/*
+	 * since this function recurses, it could be driven to stack overflow,
+	 * because of the deep dependency tree, not only due to dependency loops.
+	 */
+	check_stack_depth();
 
 	/*
 	 * It's also possible that the target object has already been completely
