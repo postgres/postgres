@@ -130,13 +130,19 @@ $standby1->init_from_backup(
 	has_streaming => 1,
 	has_restoring => 1);
 
+# Increase the log_min_messages setting to DEBUG2 on both the standby and
+# primary to debug test failures, if any.
 my $connstr_1 = $primary->connstr;
 $standby1->append_conf(
 	'postgresql.conf', qq(
 hot_standby_feedback = on
 primary_slot_name = 'sb1_slot'
 primary_conninfo = '$connstr_1 dbname=postgres'
+log_min_messages = 'debug2'
 ));
+
+$primary->append_conf('postgresql.conf', "log_min_messages = 'debug2'");
+$primary->reload;
 
 $primary->psql('postgres',
 	q{SELECT pg_create_logical_replication_slot('lsub2_slot', 'test_decoding', false, false, true);}
@@ -264,6 +270,13 @@ is( $standby1->safe_psql(
 	),
 	"t",
 	'logical slot is re-synced');
+
+# Reset the log_min_messages to the default value.
+$primary->append_conf('postgresql.conf', "log_min_messages = 'warning'");
+$primary->reload;
+
+$standby1->append_conf('postgresql.conf', "log_min_messages = 'warning'");
+$standby1->reload;
 
 ##################################################
 # Test that a synchronized slot can not be decoded, altered or dropped by the
