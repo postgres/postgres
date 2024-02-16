@@ -2302,6 +2302,10 @@ static Node *
 eval_const_expressions_mutator(Node *node,
 							   eval_const_expressions_context *context)
 {
+
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
 	if (node == NULL)
 		return NULL;
 	switch (nodeTag(node))
