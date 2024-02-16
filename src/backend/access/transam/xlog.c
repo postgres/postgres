@@ -1710,12 +1710,13 @@ GetXLogBuffer(XLogRecPtr ptr, TimeLineID tli)
  * of bytes read successfully.
  *
  * Fewer than 'count' bytes may be read if some of the requested WAL data has
- * already been evicted from the WAL buffers, or if the caller requests data
- * that is not yet available.
+ * already been evicted.
  *
  * No locks are taken.
  *
- * The 'tli' argument is only used as a convenient safety check so that
+ * Caller should ensure that it reads no further than LogwrtResult.Write
+ * (which should have been updated by the caller when determining how far to
+ * read). The 'tli' argument is only used as a convenient safety check so that
  * callers do not read from WAL buffers on a historical timeline.
  */
 Size
@@ -1724,26 +1725,13 @@ WALReadFromBuffers(char *dstbuf, XLogRecPtr startptr, Size count,
 {
 	char	   *pdst = dstbuf;
 	XLogRecPtr	recptr = startptr;
-	XLogRecPtr	upto;
-	Size		nbytes;
+	Size		nbytes = count;
 
 	if (RecoveryInProgress() || tli != GetWALInsertionTimeLine())
 		return 0;
 
 	Assert(!XLogRecPtrIsInvalid(startptr));
-
-	/*
-	 * Don't read past the available WAL data.
-	 *
-	 * Check using local copy of LogwrtResult. Ordinarily it's been updated by
-	 * the caller when determining how far to read; but if not, it just means
-	 * we'll read less data.
-	 *
-	 * XXX: the available WAL could be extended to the WAL insert pointer by
-	 * calling WaitXLogInsertionsToFinish().
-	 */
-	upto = Min(startptr + count, LogwrtResult.Write);
-	nbytes = upto - startptr;
+	Assert(startptr + count <= LogwrtResult.Write);
 
 	/*
 	 * Loop through the buffers without a lock. For each buffer, atomically
