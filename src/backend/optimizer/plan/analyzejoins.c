@@ -2307,8 +2307,8 @@ remove_self_joins_recurse(PlannerInfo *root, List *joinlist, Relids toRemove)
 		j++;
 	}
 
-	pg_qsort(candidates, numRels, sizeof(SelfJoinCandidate),
-			 self_join_candidates_cmp);
+	qsort(candidates, numRels, sizeof(SelfJoinCandidate),
+		  self_join_candidates_cmp);
 
 	/*
 	 * Iteratively form a group of relation indexes with the same oid and

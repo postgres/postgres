@@ -1369,7 +1369,7 @@ build_distances(FmgrInfo *distanceFn, Oid colloid,
 	 * Sort the distances in descending order, so that the longest gaps are at
 	 * the front.
 	 */
-	pg_qsort(distances, ndistances, sizeof(DistanceValue), compare_distances);
+	qsort(distances, ndistances, sizeof(DistanceValue), compare_distances);
 
 	return distances;
 }

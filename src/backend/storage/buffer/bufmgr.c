@@ -3915,7 +3915,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 
 	/* sort the list of rlocators if necessary */
 	if (use_bsearch)
-		pg_qsort(locators, n, sizeof(RelFileLocator), rlocator_comparator);
+		qsort(locators, n, sizeof(RelFileLocator), rlocator_comparator);
 
 	for (i = 0; i < NBuffers; i++)
 	{
@@ -4269,7 +4269,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 
 	/* sort the list of SMgrRelations if necessary */
 	if (use_bsearch)
-		pg_qsort(srels, nrels, sizeof(SMgrSortArray), rlocator_comparator);
+		qsort(srels, nrels, sizeof(SMgrSortArray), rlocator_comparator);
 
 	for (i = 0; i < NBuffers; i++)
 	{

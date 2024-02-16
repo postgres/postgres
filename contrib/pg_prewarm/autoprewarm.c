@@ -346,8 +346,8 @@ apw_load_buffers(void)
 	FreeFile(file);
 
 	/* Sort the blocks to be loaded. */
-	pg_qsort(blkinfo, num_elements, sizeof(BlockInfoRecord),
-			 apw_compare_blockinfo);
+	qsort(blkinfo, num_elements, sizeof(BlockInfoRecord),
+		  apw_compare_blockinfo);
 
 	/* Populate shared memory state. */
 	apw_state->block_info_handle = dsm_segment_handle(seg);

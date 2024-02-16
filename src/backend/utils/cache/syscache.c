@@ -146,14 +146,14 @@ InitCatalogCache(void)
 	Assert(SysCacheSupportingRelOidSize <= lengthof(SysCacheSupportingRelOid));
 
 	/* Sort and de-dup OID arrays, so we can use binary search. */
-	pg_qsort(SysCacheRelationOid, SysCacheRelationOidSize,
-			 sizeof(Oid), oid_compare);
+	qsort(SysCacheRelationOid, SysCacheRelationOidSize,
+		  sizeof(Oid), oid_compare);
 	SysCacheRelationOidSize =
 		qunique(SysCacheRelationOid, SysCacheRelationOidSize, sizeof(Oid),
 				oid_compare);
 
-	pg_qsort(SysCacheSupportingRelOid, SysCacheSupportingRelOidSize,
-			 sizeof(Oid), oid_compare);
+	qsort(SysCacheSupportingRelOid, SysCacheSupportingRelOidSize,
+		  sizeof(Oid), oid_compare);
 	SysCacheSupportingRelOidSize =
 		qunique(SysCacheSupportingRelOid, SysCacheSupportingRelOidSize,
 				sizeof(Oid), oid_compare);
@@ -668,7 +668,7 @@ RelationSupportsSysCache(Oid relid)
 
 
 /*
- * OID comparator for pg_qsort
+ * OID comparator for qsort
  */
 static int
 oid_compare(const void *a, const void *b)
