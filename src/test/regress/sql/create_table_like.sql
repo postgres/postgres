@@ -168,7 +168,7 @@ SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_clas
 SELECT s.stxname, objsubid, description FROM pg_description, pg_statistic_ext s WHERE classoid = 'pg_statistic_ext'::regclass AND objoid = s.oid AND s.stxrelid = 'ctlt_all'::regclass ORDER BY s.stxname, objsubid;
 
 CREATE TABLE inh_error1 () INHERITS (ctlt1, ctlt4);
-CREATE TABLE inh_error2 (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
+CREATE TABLE ctlt14_inh_like (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
 
 -- Check that LIKE isn't confused by a system catalog of the same name
 CREATE TABLE pg_attrdef (LIKE ctlt1 INCLUDING ALL);

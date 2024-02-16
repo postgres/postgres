@@ -3754,7 +3754,6 @@ columnDef:	ColId Typename opt_column_storage opt_column_compression create_gener
 					n->is_local = true;
 					n->is_not_null = false;
 					n->is_from_type = false;
-					n->storage = 0;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
 					n->collOid = InvalidOid;
@@ -3776,7 +3775,7 @@ columnOptions:	ColId ColQualList
 					n->is_local = true;
 					n->is_not_null = false;
 					n->is_from_type = false;
-					n->storage = 0;
+					n->storage_name = NULL;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
 					n->collOid = InvalidOid;
@@ -3795,7 +3794,7 @@ columnOptions:	ColId ColQualList
 					n->is_local = true;
 					n->is_not_null = false;
 					n->is_from_type = false;
-					n->storage = 0;
+					n->storage_name = NULL;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
 					n->collOid = InvalidOid;
@@ -13858,7 +13857,7 @@ TableFuncElement:	ColId Typename opt_collate_clause
 					n->is_local = true;
 					n->is_not_null = false;
 					n->is_from_type = false;
-					n->storage = 0;
+					n->storage_name = NULL;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
 					n->collClause = (CollateClause *) $3;

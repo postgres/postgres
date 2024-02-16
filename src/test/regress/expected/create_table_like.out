@@ -445,12 +445,10 @@ SELECT s.stxname, objsubid, description FROM pg_description, pg_statistic_ext s 
 
 CREATE TABLE inh_error1 () INHERITS (ctlt1, ctlt4);
 NOTICE:  merging multiple inherited definitions of column "a"
-ERROR:  inherited column "a" has a storage parameter conflict
-DETAIL:  MAIN versus EXTENDED
-CREATE TABLE inh_error2 (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
+ERROR:  column "a" inherits conflicting storage methods
+HINT:  To resolve the conflict, specify a storage method explicitly.
+CREATE TABLE ctlt14_inh_like (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
-ERROR:  column "a" has a storage parameter conflict
-DETAIL:  MAIN versus EXTENDED
 -- Check that LIKE isn't confused by a system catalog of the same name
 CREATE TABLE pg_attrdef (LIKE ctlt1 INCLUDING ALL);
 \d+ public.pg_attrdef
@@ -493,7 +491,9 @@ Statistics objects:
 
 ROLLBACK;
 DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
-NOTICE:  drop cascades to table inhe
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table inhe
+drop cascades to table ctlt14_inh_like
 -- LIKE must respect NO INHERIT property of constraints
 CREATE TABLE noinh_con_copy (a int CHECK (a > 0) NO INHERIT);
 CREATE TABLE noinh_con_copy1 (LIKE noinh_con_copy INCLUDING CONSTRAINTS);

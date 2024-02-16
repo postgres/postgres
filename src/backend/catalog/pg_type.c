@@ -974,3 +974,26 @@ makeMultirangeTypeName(const char *rangeTypeName, Oid typeNamespace)
 
 	return pstrdup(buf);
 }
+
+/*
+ * GetAttributeStorageName
+ *	  returns the name corresponding to a typstorage/attstorage enum value.
+ */
+const char *
+GetAttributeStorageName(char c)
+{
+	switch (c)
+	{
+		case TYPSTORAGE_PLAIN:
+			return "PLAIN";
+		case TYPSTORAGE_EXTERNAL:
+			return "EXTERNAL";
+		case TYPSTORAGE_EXTENDED:
+			return "EXTENDED";
+		case TYPSTORAGE_MAIN:
+			return "MAIN";
+		default:
+			elog(ERROR, "invalid storage type %c", c);
+			return NULL;
+	}
+}

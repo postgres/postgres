@@ -93,9 +93,46 @@ INSERT INTO cmpart VALUES (repeat('123456789', 4004));
 SELECT pg_column_compression(f1) FROM cmpart1;
 SELECT pg_column_compression(f1) FROM cmpart2;
 
--- test compression with inheritance, error
-CREATE TABLE cminh() INHERITS(cmdata, cmdata1);
-CREATE TABLE cminh(f1 TEXT COMPRESSION lz4) INHERITS(cmdata);
+-- test compression with inheritance
+CREATE TABLE cmparent1 (f1 TEXT COMPRESSION pglz);
+INSERT INTO cmparent1 VALUES ('cmparent1_' || repeat('1234567890', 1000));
+CREATE TABLE cmparent2 (f1 TEXT COMPRESSION lz4);
+INSERT INTO cmparent2 VALUES ('cmparent2_' || repeat('1234567890', 1000));
+CREATE TABLE ncmparent (f1 TEXT); -- parent without compression
+INSERT INTO ncmparent VALUES ('ncmparent_' || repeat('1234567890', 1000));
+CREATE TABLE cminh1(f1 TEXT) INHERITS(cmparent1);
+INSERT INTO cminh1 VALUES ('cminh1_' || repeat('1234567890', 1000));
+CREATE TABLE cminh2(f1 TEXT) INHERITS(ncmparent, cmparent1);
+INSERT INTO cminh2 VALUES ('cminh2_' || repeat('1234567890', 1000));
+CREATE TABLE cminh3(f1 TEXT) INHERITS(cmparent1, ncmparent);
+INSERT INTO cminh3 VALUES ('cminh3_' || repeat('1234567890', 1000));
+-- conflicting compression methods from parents
+CREATE TABLE cminh() INHERITS(cmparent1, cmparent2); --error
+CREATE TABLE cminh(f1 TEXT) INHERITS(cmparent1, cmparent2); --error
+-- child compression specification takes precedence, even if parent's
+-- compression conflict
+CREATE TABLE cminh4(f1 TEXT COMPRESSION lz4) INHERITS(cmparent1);
+INSERT INTO cminh4 VALUES ('cminh4_' || repeat('1234567890', 1000));
+CREATE TABLE cminh5(f1 TEXT COMPRESSION pglz) INHERITS(cmparent1, cmparent2);
+INSERT INTO cminh5 VALUES ('cminh5_' || repeat('1234567890', 1000));
+SELECT tableoid::regclass, pg_column_compression(f1) FROM cmparent1;
+SELECT tableoid::regclass, pg_column_compression(f1) FROM cmparent2;
+SELECT tableoid::regclass, pg_column_compression(f1) FROM ncmparent;
+-- ALTER compression specification in child
+ALTER TABLE cminh1 ALTER COLUMN f1 SET COMPRESSION lz4;
+INSERT INTO cminh1 VALUES ('cminh1_lz4_' || repeat('1234567890', 1000));
+SELECT pg_column_compression(f1) FROM cminh1;
+-- INHERIT through ALTER TABLE
+CREATE TABLE cminh6 (f1 TEXT);
+INSERT INTO cminh6 VALUES ('cminh6_' || repeat('1234567890', 1000));
+ALTER TABLE cminh6 INHERIT cmparent1;
+INSERT INTO cminh6 VALUES ('cminh6_inh_' || repeat('1234567890', 1000));
+SELECT pg_column_compression(f1) FROM cminh6;
+CREATE TABLE cminh7 (f1 TEXT COMPRESSION lz4);
+INSERT INTO cminh7 VALUES ('cminh7_' || repeat('1234567890', 1000));
+ALTER TABLE cminh7 INHERIT cmparent1;
+INSERT INTO cminh7 VALUES ('cminh7_inh_' || repeat('1234567890', 1000));
+SELECT pg_column_compression(f1) FROM cminh7;
 
 -- test default_toast_compression GUC
 SET default_toast_compression = '';

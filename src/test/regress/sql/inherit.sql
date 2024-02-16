@@ -1354,3 +1354,23 @@ UPDATE errtst_parent SET partid = 0, data = data + 10 WHERE partid = 20;
 UPDATE errtst_parent SET partid = 30, data = data + 10 WHERE partid = 20;
 
 DROP TABLE errtst_parent;
+
+-- storage and inheritance
+CREATE TABLE stparent1 (a TEXT STORAGE plain);
+CREATE TABLE stparent2 (a TEXT);
+-- child inherits parent's storage properties, if they do not conflict
+CREATE TABLE stchild1 (a TEXT) INHERITS (stparent1);
+CREATE TABLE stchild2 (a TEXT) INHERITS (stparent1, stparent2);
+-- child overrides parent's storage properties even if they conflict
+CREATE TABLE stchild3 (a TEXT STORAGE main) INHERITS (stparent1);
+CREATE TABLE stchild4 (a TEXT STORAGE main) INHERITS (stparent1, stparent2);
+-- child storage properties are not changed when inheriting after creation.
+CREATE TABLE stchild5 (a TEXT);
+ALTER TABLE stchild5 INHERIT stparent1;
+CREATE TABLE stchild6 (a TEXT STORAGE main);
+ALTER TABLE stchild6 INHERIT stparent1;
+SELECT attrelid::regclass, attname, attstorage FROM pg_attribute
+  WHERE (attrelid::regclass::name like 'stparent%'
+         OR attrelid::regclass::name like 'stchild%')
+        and attname = 'a'
+  ORDER BY 1, 2;
