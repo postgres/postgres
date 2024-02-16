@@ -18,7 +18,6 @@ src/backend/catalog/sql_features.txt		whitespace=space-before-tab,blank-at-eof,-
 # Test output files that contain extra whitespace
 *.out					-whitespace
 src/interfaces/ecpg/test/expected/*	-whitespace
-src/interfaces/libpq/test/expected.out	whitespace=-blank-at-eof
 
 # These files are maintained or generated elsewhere.  We take them as is.
 configure				-whitespace
