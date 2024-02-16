@@ -19,7 +19,6 @@ src/backend/utils/Gen_dummy_probes.pl.prolog	whitespace=-blank-at-eof
 # Test output files that contain extra whitespace
 *.out					-whitespace
 src/interfaces/ecpg/test/expected/*	-whitespace
-src/interfaces/libpq/test/expected.out	whitespace=-blank-at-eof
 
 # These files are maintained or generated elsewhere.  We take them as is.
 configure				-whitespace
