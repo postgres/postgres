@@ -321,7 +321,7 @@ reserve_wal_for_local_slot(XLogRecPtr restart_lsn)
 			oldest_segno = XLogGetOldestSegno(cur_timeline);
 		}
 
-		elog(DEBUG1, "segno: %ld of purposed restart_lsn for the synced slot, oldest_segno: %ld available",
+		elog(DEBUG1, "segno: " UINT64_FORMAT " of purposed restart_lsn for the synced slot, oldest_segno: " UINT64_FORMAT " available",
 			 segno, oldest_segno);
 
 		/*
