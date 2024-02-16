@@ -3647,9 +3647,17 @@ check_log_stats(bool *newval, void **extra, GucSource source)
 void
 assign_transaction_timeout(int newval, void *extra)
 {
-	if (TransactionTimeout <= 0 &&
-		get_timeout_active(TRANSACTION_TIMEOUT))
-		disable_timeout(TRANSACTION_TIMEOUT, false);
+	if (IsTransactionState())
+	{
+		/*
+		 * If transaction_timeout GUC has changes within the transaction block
+		 * enable or disable the timer correspondingly.
+		 */
+		if (newval > 0 && !get_timeout_active(TRANSACTION_TIMEOUT))
+			enable_timeout_after(TRANSACTION_TIMEOUT, newval);
+		else if (newval <= 0 && get_timeout_active(TRANSACTION_TIMEOUT))
+			disable_timeout(TRANSACTION_TIMEOUT, false);
+	}
 }
 
 
@@ -4510,11 +4518,6 @@ PostgresMain(const char *dbname, const char *username)
 					enable_timeout_after(IDLE_IN_TRANSACTION_SESSION_TIMEOUT,
 										 IdleInTransactionSessionTimeout);
 				}
-
-				/* Schedule or reschedule transaction timeout */
-				if (TransactionTimeout > 0 && !get_timeout_active(TRANSACTION_TIMEOUT))
-					enable_timeout_after(TRANSACTION_TIMEOUT,
-										 TransactionTimeout);
 			}
 			else if (IsTransactionOrTransactionBlock())
 			{
@@ -4529,11 +4532,6 @@ PostgresMain(const char *dbname, const char *username)
 					enable_timeout_after(IDLE_IN_TRANSACTION_SESSION_TIMEOUT,
 										 IdleInTransactionSessionTimeout);
 				}
-
-				/* Schedule or reschedule transaction timeout */
-				if (TransactionTimeout > 0 && !get_timeout_active(TRANSACTION_TIMEOUT))
-					enable_timeout_after(TRANSACTION_TIMEOUT,
-										 TransactionTimeout);
 			}
 			else
 			{
@@ -4586,13 +4584,6 @@ PostgresMain(const char *dbname, const char *username)
 					enable_timeout_after(IDLE_SESSION_TIMEOUT,
 										 IdleSessionTimeout);
 				}
-
-				/*
-				 * If GUC is changed then it's handled in
-				 * assign_transaction_timeout().
-				 */
-				if (TransactionTimeout > 0 && get_timeout_active(TRANSACTION_TIMEOUT))
-					disable_timeout(TRANSACTION_TIMEOUT, false);
 			}
 
 			/* Report any recently-changed GUC options */
