@@ -110,7 +110,7 @@
 #include "access/pg_tdeam_xlog.h"
 #include "access/pg_tdetoast.h"
 #include "access/pg_tde_rewrite.h"
-#include "encryption/enc_tuple.h"
+#include "encryption/enc_tde.h"
 
 #include "access/transam.h"
 #include "access/xact.h"

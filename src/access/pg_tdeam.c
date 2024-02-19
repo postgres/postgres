@@ -39,7 +39,7 @@
 #include "access/pg_tdetoast.h"
 #include "access/pg_tde_io.h"
 #include "access/pg_tde_visibilitymap.h"
-#include "encryption/enc_tuple.h"
+#include "encryption/enc_tde.h"
 
 #include "access/bufmask.h"
 #include "access/genam.h"

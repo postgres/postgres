@@ -16,7 +16,7 @@
 
 #include "postgres.h"
 
-#include "encryption/enc_tuple.h"
+#include "encryption/enc_tde.h"
 
 #include "access/pg_tdeam.h"
 #include "access/pg_tdeam_xlog.h"

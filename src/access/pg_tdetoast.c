@@ -35,7 +35,7 @@
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
 #include "utils/snapmgr.h"
-#include "encryption/enc_tuple.h"
+#include "encryption/enc_tde.h"
 
 #define TDE_TOAST_COMPRESS_HEADER_SIZE (VARHDRSZ_COMPRESSED - VARHDRSZ)
 

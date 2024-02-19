@@ -39,7 +39,7 @@
 #include "access/pg_tdeam.h"
 #include "access/pg_tdeam_xlog.h"
 #include "access/pg_tde_visibilitymap.h"
-#include "encryption/enc_tuple.h"
+#include "encryption/enc_tde.h"
 
 #include "access/amapi.h"
 #include "access/genam.h"

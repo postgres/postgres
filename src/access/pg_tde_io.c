@@ -20,7 +20,7 @@
 #include "access/pg_tdeam.h"
 #include "access/pg_tde_io.h"
 #include "access/pg_tde_visibilitymap.h"
-#include "encryption/enc_tuple.h"
+#include "encryption/enc_tde.h"
 
 #include "access/htup_details.h"
 #include "storage/bufmgr.h"

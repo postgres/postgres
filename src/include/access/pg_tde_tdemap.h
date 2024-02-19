@@ -12,8 +12,6 @@
 #include "storage/relfilelocator.h"
 #include "access/xlog_internal.h"
 
-#define TDE_FORK_EXT "tde"
-
 #define INTERNAL_KEY_LEN 16
 typedef struct InternalKey
 {
@@ -52,14 +50,17 @@ typedef struct RelKeys
     struct RelKeys *next;
 } RelKeys;
 
-extern void pg_tde_delete_key_fork(Relation rel);
-extern void pg_tde_create_key_fork(const RelFileLocator *newrlocator, Relation rel);
+extern void pg_tde_delete_key_map_entry(const RelFileLocator *rlocator);
+extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset);
+extern void pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel);
 extern RelKeysData *pg_tde_get_keys_from_fork(const RelFileLocator *rlocator);
 extern RelKeysData *GetRelationKeys(RelFileLocator rel);
+extern void pg_tde_cleanup_path_vars(void);
+
 const char * tde_sprint_key(InternalKey *k);
 
 /* TDE XLOG resource manager */
-#define XLOG_TDE_CREATE_FORK   0x00
+#define XLOG_TDE_RELATION_KEY   0x00
 /* TODO: ID has to be registedred and changed: https://wiki.postgresql.org/wiki/CustomWALResourceManagers */
 #define RM_TDERMGR_ID          RM_EXPERIMENTAL_ID
 #define RM_TDERMGR_NAME        "test_pg_tde_custom_rmgr"
@@ -68,6 +69,8 @@ extern void            pg_tde_rmgr_redo(XLogReaderState *record);
 extern void            pg_tde_rmgr_desc(StringInfo buf, XLogReaderState *record);
 extern const char *    pg_tde_rmgr_identify(uint8 info);
 
+
+/* Move this to pg_tde.c file */
 static const RmgrData pg_tde_rmgr = {
 	.rm_name = RM_TDERMGR_NAME,
 	.rm_redo = pg_tde_rmgr_redo,

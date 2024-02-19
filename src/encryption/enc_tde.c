@@ -4,7 +4,7 @@
 #include "utils/memutils.h"
 
 #include "access/pg_tde_tdemap.h"
-#include "encryption/enc_tuple.h"
+#include "encryption/enc_tde.h"
 #include "encryption/enc_aes.h"
 #include "storage/bufmgr.h"
 #include "keyring/keyring_api.h"
@@ -207,4 +207,54 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlo
 		tuple->t_data = decrypted_tuple->t_data;
     }
 	return  ExecStorePinnedBufferHeapTuple(tuple, slot, buffer);
+}
+
+/*
+ * Provide a simple interface to encrypt a given key.
+ *
+ * The function pallocs and updates the p_enc_rel_key_data along with key bytes. The memory
+ * is allocated in the current memory context as this key should be ephemeral with a very
+ * short lifespan until it is written to disk.
+ */
+void
+AesEncryptKey(const keyInfo *master_key_info, RelKeysData *rel_key_data, RelKeysData **p_enc_rel_key_data, size_t *enc_key_bytes)
+{
+        size_t sz;
+		unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        /* Ensure we are getting a valid pointer here */
+        Assert(master_key_info);
+
+        sz = SizeOfRelKeysData(1);
+
+        *p_enc_rel_key_data = (RelKeysData *) palloc(sz);
+        memcpy(*p_enc_rel_key_data, rel_key_data, sz);
+
+        AesEncrypt(master_key_info->data.data, iv, ((unsigned char*)rel_key_data) + SizeOfRelKeysDataHeader, INTERNAL_KEY_LEN, ((unsigned char *)(*p_enc_rel_key_data)) + SizeOfRelKeysDataHeader, (int *)enc_key_bytes);
+}
+
+/*
+ * Provide a simple interface to decrypt a given key.
+ *
+ * The function pallocs and updates the p_rel_key_data along with key bytes. It's important
+ * to note that memory is allocated in the TopMemoryContext so we expect this to be added
+ * to our key cache.
+ */
+void
+AesDecryptKey(const keyInfo *master_key_info, RelKeysData **p_rel_key_data, RelKeysData *enc_rel_key_data, size_t *key_bytes)
+{
+        size_t sz;
+		unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        /* Ensure we are getting a valid pointer here */
+        Assert(master_key_info);
+
+        sz = SizeOfRelKeysData(enc_rel_key_data->internal_keys_len);
+
+        *p_rel_key_data = (RelKeysData *) MemoryContextAlloc(TopMemoryContext, sz);
+
+        /* Fill in the structure */
+        memcpy(*p_rel_key_data, enc_rel_key_data, sz);
+
+        AesDecrypt(master_key_info->data.data, iv, ((unsigned char*) enc_rel_key_data) + SizeOfRelKeysDataHeader, INTERNAL_KEY_LEN, ((unsigned char *)(*p_rel_key_data)) + SizeOfRelKeysDataHeader, (int *)key_bytes);
 }

@@ -171,3 +171,31 @@ const keyInfo* keyringGenerateKey(const char* internalName, unsigned keyLen)
 	return keyringStoreKey(keyringConstructKeyName(internalName, i), kd);
 }
 
+/*
+ * Simplifying the interface to get the master key without having to worry
+ * generating a new one. If master key does not exist, and doGenerateKey is
+ * set, a new key is generated. This is useful during write operations.
+ *
+ * However, when performing a read operation and a master is expected to exist,
+ * doGenerateKey should be false and doRaiseError should be set to indicate
+ * that master key is expected but could not be accessed.
+ */
+const keyInfo* getMasterKey(const char* internalName, bool doGenerateKey, bool doRaiseError)
+{
+	const keyInfo* key = NULL;
+
+	key = keyringGetLatestKey(internalName);
+
+	if (key == NULL && doGenerateKey)
+	{
+		key = keyringGenerateKey(internalName, 16);
+	}
+
+	if (key == NULL && doRaiseError)
+	{
+        ereport(ERROR,
+                (errmsg("failed to retrieve master key")));
+	}
+
+	return key;
+}

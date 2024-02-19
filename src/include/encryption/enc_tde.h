@@ -1,20 +1,21 @@
 /*-------------------------------------------------------------------------
  *
- * enc_tuple.h
- *	  Encryption / Decryption of tuples and item data
+ * enc_tde.h
+ *	  Encryption / Decryption of functions for TDE
  *
- * src/include/encryption/enc_tuple.h
+ * src/include/encryption/enc_tde.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef ENC_TUPLE_H
-#define ENC_TUPLE_H
+#ifndef ENC_TDE_H
+#define ENC_TDE_H
 
 #include "utils/rel.h"
 #include "storage/bufpage.h"
 #include "executor/tuptable.h"
 #include "executor/tuptable.h"
 #include "access/pg_tde_tdemap.h"
+#include "keyring/keyring_api.h"
 
 extern void
 pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint32 data_len, char* out, RelKeysData* keys, const char* context);
@@ -57,4 +58,7 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlo
 		pg_tde_crypt(_iv_prefix, _iv_prefix_len, _data, _data_len, _out, _keys, "ENCRYPT-PAGE-ITEM"); \
 	} while(0)
 
-#endif /*ENC_TUPLE_H*/
+extern void AesEncryptKey(const keyInfo *master_key_info, RelKeysData *rel_key_data, RelKeysData **p_enc_rel_key_data, size_t *enc_key_bytes);
+extern void AesDecryptKey(const keyInfo *master_key_info, RelKeysData **p_rel_key_data, RelKeysData *enc_rel_key_data, size_t *key_bytes);
+
+#endif /*ENC_TDE_H*/

@@ -45,7 +45,7 @@ static void
             rel->rd_rel->relkind == RELKIND_MATVIEW) &&
             (subId == 0) && is_pg_tde_rel(rel))
             {
-                pg_tde_delete_key_fork(rel);
+                pg_tde_delete_key_map_entry(&rel->rd_locator);
             }
         relation_close(rel, AccessShareLock);
     }

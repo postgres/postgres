@@ -16,18 +16,19 @@
 #include "utils/elog.h"
 #include "storage/fd.h"
 #include "transam/pg_tde_xact_handler.h"
+#include "access/pg_tde_tdemap.h"
 
-typedef struct PendingFileDelete
+typedef struct PendingMapEntryDelete
 {
-    char    *path;    /* file that may need to be deleted */
-    bool    atCommit;       /* T=delete at commit; F=delete at abort */
-    int     nestLevel;      /* xact nesting level of request */
-    struct PendingFileDelete *next;  /* linked-list link */
-} PendingFileDelete;
+    off_t   map_entry_offset;               /* map entry offset */
+    RelFileLocator rlocator;                /* main for use as relation OID */
+    bool    atCommit;                       /* T=delete at commit; F=delete at abort */
+    int     nestLevel;                      /* xact nesting level of request */
+    struct  PendingMapEntryDelete *next;    /* linked-list link */
+} PendingMapEntryDelete;
 
-static PendingFileDelete *pendingDeletes = NULL; /* head of linked list */
+static PendingMapEntryDelete *pendingDeletes = NULL; /* head of linked list */
 
-static void cleanup_pending_deletes(bool atCommit);
 static void do_pending_deletes(bool isCommit);
 static void pending_delete_cleanup(void);
 
@@ -41,7 +42,6 @@ pg_tde_xact_callback(XactEvent event, void *arg)
         ereport(DEBUG2,
                 (errmsg("pg_tde_xact_callback: aborting transaction")));
         do_pending_deletes(false);
-
     }
     else if (event == XACT_EVENT_COMMIT)
     {
@@ -52,6 +52,8 @@ pg_tde_xact_callback(XactEvent event, void *arg)
     {
         pending_delete_cleanup();
     }
+
+    pg_tde_cleanup_path_vars();
 }
 
 void
@@ -68,50 +70,16 @@ pg_tde_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 }
 
 void
-RegisterFileForDeletion(const char *filePath, bool atCommit)
+RegisterEntryForDeletion(const RelFileLocator *rlocator, off_t map_entry_offset, bool atCommit)
 {
-    PendingFileDelete *pending;
-    pending = (PendingFileDelete *) MemoryContextAlloc(TopMemoryContext, sizeof(PendingFileDelete));
-    pending->path = MemoryContextStrdup(TopMemoryContext, filePath);
+    PendingMapEntryDelete *pending;
+    pending = (PendingMapEntryDelete *) MemoryContextAlloc(TopMemoryContext, sizeof(PendingMapEntryDelete));
+    pending->map_entry_offset = map_entry_offset;
+    memcpy(&pending->rlocator, rlocator, sizeof(RelFileLocator));
     pending->atCommit = atCommit;  /* delete if abort */
     pending->nestLevel = GetCurrentTransactionNestLevel();
     pending->next = pendingDeletes;
     pendingDeletes = pending;
-}
-
-/*
-  * cleanup_pending_deletes
-  *      Mark a relation as not to be deleted after all.
-  */
-static void
-cleanup_pending_deletes(bool atCommit)
-{
-    PendingFileDelete *pending;
-    PendingFileDelete *prev;
-    PendingFileDelete *next;
-
-    prev = NULL;
-    for (pending = pendingDeletes; pending != NULL; pending = next)
-    {
-        next = pending->next;
-        if (pending->atCommit == atCommit)
-        {
-            /* unlink and delete list entry */
-            if (prev)
-                prev->next = next;
-            else
-                pendingDeletes = next;
-            if (pending->path)
-                pfree(pending->path);
-            pfree(pending);
-            /* prev does not change */
-        }
-        else
-        {
-            /* unrelated entry, don't touch it */
-            prev = pending;
-        }
-    }
 }
 
 /*
@@ -124,10 +92,10 @@ cleanup_pending_deletes(bool atCommit)
 static void
 do_pending_deletes(bool isCommit)
 {
-    int         nestLevel = GetCurrentTransactionNestLevel();
-    PendingFileDelete *pending;
-    PendingFileDelete *prev;
-    PendingFileDelete *next;
+    int nestLevel = GetCurrentTransactionNestLevel();
+    PendingMapEntryDelete *pending;
+    PendingMapEntryDelete *prev;
+    PendingMapEntryDelete *next;
 
     prev = NULL;
     for (pending = pendingDeletes; pending != NULL; pending = next)
@@ -149,13 +117,12 @@ do_pending_deletes(bool isCommit)
             if (pending->atCommit == isCommit)
             {
                 ereport(LOG,
-                        (errmsg("pg_tde_xact_callback: deletingx file %s",
-                                pending->path)));
-                durable_unlink(pending->path, WARNING); /* TODO: should it be ERROR? */
+                        (errmsg("pg_tde_xact_callback: deleting entry at offset %d",
+                                (int)(pending->map_entry_offset))));
+
+                pg_tde_free_key_map_entry(&pending->rlocator, pending->map_entry_offset);
             }
-            /* must explicitly free the list entry */
-            if(pending->path)
-                pfree(pending->path);
+
             pfree(pending);
             /* prev does not change */
         }
@@ -172,16 +139,13 @@ do_pending_deletes(bool isCommit)
 static void
 pending_delete_cleanup(void)
 {
-    PendingFileDelete *pending;
-    PendingFileDelete *next;
+    PendingMapEntryDelete *pending;
+    PendingMapEntryDelete *next;
 
     for (pending = pendingDeletes; pending != NULL; pending = next)
     {
         next = pending->next;
         pendingDeletes = next;
-        /* must explicitly free the list entry */
-        if(pending->path)
-            pfree(pending->path);
         pfree(pending);
     }
 }

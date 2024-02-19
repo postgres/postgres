@@ -27,7 +27,7 @@
 #include "access/pg_tde_rewrite.h"
 #include "access/pg_tde_tdemap.h"
 
-#include "encryption/enc_tuple.h"
+#include "encryption/enc_tde.h"
 
 #include "access/genam.h"
 #include "access/multixact.h"
@@ -634,13 +634,16 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 	}
 
 	smgrclose(srel);
+
+	/* Update TDE filemap */
 	if (rel->rd_rel->relkind == RELKIND_RELATION ||
 		rel->rd_rel->relkind == RELKIND_MATVIEW	||
 		rel->rd_rel->relkind == RELKIND_TOASTVALUE)
 	{
 		ereport(DEBUG1,
 			(errmsg("creating key file for relation %s", RelationGetRelationName(rel))));
-		pg_tde_create_key_fork(newrlocator, rel);
+
+		pg_tde_create_key_map_entry(newrlocator, rel);
 	}
 }
 

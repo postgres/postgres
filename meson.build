@@ -18,7 +18,7 @@ pg_tde_sources = files(
         'src/access/pg_tde_visibilitymap.c',
         'src/access/pg_tde_ddl.c',
 
-        'src/encryption/enc_tuple.c',
+        'src/encryption/enc_tde.c',
         'src/encryption/enc_aes.c',
 
         'src/keyring/keyring_config.c',
