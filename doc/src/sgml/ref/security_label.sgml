@@ -29,7 +29,7 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
   DATABASE <replaceable class="parameter">object_name</replaceable> |
   DOMAIN <replaceable class="parameter">object_name</replaceable> |
   EVENT TRIGGER <replaceable class="parameter">object_name</replaceable> |
-  FOREIGN TABLE <replaceable class="parameter">object_name</replaceable>
+  FOREIGN TABLE <replaceable class="parameter">object_name</replaceable> |
   FUNCTION <replaceable class="parameter">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
   LARGE OBJECT <replaceable class="parameter">large_object_oid</replaceable> |
   MATERIALIZED VIEW <replaceable class="parameter">object_name</replaceable> |
