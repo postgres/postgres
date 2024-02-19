@@ -467,8 +467,8 @@ $psql_subscriber{subscriber_stdin} .= "\n";
 
 $psql_subscriber{run}->pump_nb();
 
-# Speed up the subscription creation
-$node_primary->safe_psql('postgres', "SELECT pg_log_standby_snapshot()");
+# Log the standby snapshot to speed up the subscription creation
+$node_primary->log_standby_snapshot($node_standby, 'tap_sub');
 
 # Explicitly shut down psql instance gracefully - to avoid hangs
 # or worse on windows
