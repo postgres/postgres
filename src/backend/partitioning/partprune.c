@@ -1810,11 +1810,63 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 	{
 		PartClauseInfo *partclause;
 
+		/*
+		 * For bool tests in the form of partkey IS NOT true and IS NOT false,
+		 * we invert these clauses.  Effectively, "partkey IS NOT true"
+		 * becomes "partkey IS false OR partkey IS NULL".  We do this by
+		 * building an OR BoolExpr and forming a clause just like that and
+		 * punt it off to gen_partprune_steps_internal() to generate pruning
+		 * steps.
+		 */
+		if (noteq)
+		{
+			List	   *new_clauses;
+			List	   *or_clause;
+			BooleanTest *new_booltest = (BooleanTest *) copyObject(clause);
+			NullTest   *nulltest;
+
+			/* We expect 'noteq' to only be set to true for BooleanTests */
+			Assert(IsA(clause, BooleanTest));
+
+			/* reverse the bool test */
+			if (new_booltest->booltesttype == IS_NOT_TRUE)
+				new_booltest->booltesttype = IS_FALSE;
+			else if (new_booltest->booltesttype == IS_NOT_FALSE)
+				new_booltest->booltesttype = IS_TRUE;
+			else
+			{
+				/*
+				 * We only expect match_boolean_partition_clause to match for
+				 * IS_NOT_TRUE and IS_NOT_FALSE.  IS_NOT_UNKNOWN is not
+				 * supported.
+				 */
+				Assert(false);
+			}
+
+			nulltest = makeNode(NullTest);
+			nulltest->arg = copyObject(partkey);
+			nulltest->nulltesttype = IS_NULL;
+			nulltest->argisrow = false;
+			nulltest->location = -1;
+
+			new_clauses = list_make2(new_booltest, nulltest);
+			or_clause = list_make1(makeBoolExpr(OR_EXPR, new_clauses, -1));
+
+			/* Finally, generate steps */
+			*clause_steps = gen_partprune_steps_internal(context, or_clause);
+
+			if (context->contradictory)
+				return PARTCLAUSE_MATCH_CONTRADICT; /* shouldn't happen */
+			else if (*clause_steps == NIL)
+				return PARTCLAUSE_UNSUPPORTED;	/* step generation failed */
+			return PARTCLAUSE_MATCH_STEPS;
+		}
+
 		partclause = (PartClauseInfo *) palloc(sizeof(PartClauseInfo));
 		partclause->keyno = partkeyidx;
 		/* Do pruning with the Boolean equality operator. */
 		partclause->opno = BooleanEqualOperator;
-		partclause->op_is_ne = noteq;
+		partclause->op_is_ne = false;
 		partclause->expr = expr;
 		/* We know that expr is of Boolean type. */
 		partclause->cmpfn = part_scheme->partsupfunc[partkeyidx].fn_oid;
@@ -2358,7 +2410,7 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
  * For LIST and RANGE partitioned tables, callers must ensure that
  * step_nullkeys is NULL, and that prefix contains at least one clause for
  * each of the partition keys prior to the key that 'step_lastexpr' and
- * 'step_lastcmpfn'belong to.
+ * 'step_lastcmpfn' belong to.
  *
  * For HASH partitioned tables, callers must ensure that 'prefix' contains at
  * least one clause for each of the partition keys apart from the final key
