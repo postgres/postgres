@@ -138,6 +138,8 @@ task:
     CPPFLAGS: -DRELCACHE_FORCE_RELEASE -DCOPY_PARSE_PLAN_TREES -DWRITE_READ_PARSE_PLAN_TREES -DRAW_EXPRESSION_COVERAGE_TEST -DENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
     CFLAGS: -Og -ggdb
 
+    PG_TEST_PG_UPGRADE_MODE: --link
+
   <<: *freebsd_task_template
 
   depends_on: SanityCheck
@@ -430,6 +432,8 @@ task:
     CXX: ccache c++
     CFLAGS: -Og -ggdb
     CXXFLAGS: -Og -ggdb
+
+    PG_TEST_PG_UPGRADE_MODE: --clone
 
   <<: *macos_task_template
 
