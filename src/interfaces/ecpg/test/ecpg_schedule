@@ -7,6 +7,7 @@ test: compat_informix/sqlda
 test: compat_informix/describe
 test: compat_informix/test_informix
 test: compat_informix/test_informix2
+test: compat_informix/intoasc
 test: compat_oracle/char_array
 test: connect/test2
 test: connect/test3
