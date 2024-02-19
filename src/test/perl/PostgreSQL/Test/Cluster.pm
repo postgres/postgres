@@ -3181,6 +3181,36 @@ $SIG{TERM} = $SIG{INT} = sub {
 
 =pod
 
+=item $node->log_standby_snapshot(self, standby, slot_name)
+
+Log a standby snapshot on primary once the slot restart_lsn is determined on
+the standby.
+
+=cut
+
+sub log_standby_snapshot
+{
+	my ($self, $standby, $slot_name) = @_;
+
+	# Once the slot's restart_lsn is determined, the standby looks for
+	# xl_running_xacts WAL record from the restart_lsn onwards. First wait
+	# until the slot restart_lsn is determined.
+
+	$standby->poll_query_until(
+		'postgres', qq[
+		SELECT restart_lsn IS NOT NULL
+		FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name'
+	])
+	  or die
+	  "timed out waiting for logical slot to calculate its restart_lsn";
+
+	# Then arrange for the xl_running_xacts record for which the standby is
+	# waiting.
+	$self->safe_psql('postgres', 'SELECT pg_log_standby_snapshot()');
+}
+
+=pod
+
 =item $node->create_logical_slot_on_standby(self, primary, slot_name, dbname)
 
 Create logical replication slot on given standby
@@ -3206,21 +3236,9 @@ sub create_logical_slot_on_standby
 		'2>',
 		\$stderr);
 
-	# Once the slot's restart_lsn is determined, the standby looks for
-	# xl_running_xacts WAL record from the restart_lsn onwards. First wait
-	# until the slot restart_lsn is determined.
-
-	$self->poll_query_until(
-		'postgres', qq[
-		SELECT restart_lsn IS NOT NULL
-		FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name'
-	])
-	  or die
-	  "timed out waiting for logical slot to calculate its restart_lsn";
-
-	# Then arrange for the xl_running_xacts record for which pg_recvlogical is
+	# Arrange for the xl_running_xacts record for which pg_recvlogical is
 	# waiting.
-	$primary->safe_psql('postgres', 'SELECT pg_log_standby_snapshot()');
+	$primary->log_standby_snapshot($self, $slot_name);
 
 	$handle->finish();
 
