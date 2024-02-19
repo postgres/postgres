@@ -1,0 +1,21 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "pgtypes_interval.h"
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char dirty_str[100] = "aaaaaaaaa_bbbbbbbb_ccccccccc_ddddddddd_";
+    interval *interval_ptr;
+EXEC SQL END DECLARE SECTION;
+
+int main()
+{
+    interval_ptr = (interval *) malloc(sizeof(interval));
+    interval_ptr->time = 100000000;
+    interval_ptr->month = 240;
+
+    printf("dirty_str contents before intoasc: %s\n", dirty_str);
+    intoasc(interval_ptr, dirty_str);
+    printf("dirty_str contents after intoasc: %s\n", dirty_str);
+    return 0;
+}
