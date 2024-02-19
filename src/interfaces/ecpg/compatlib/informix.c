@@ -674,7 +674,7 @@ intoasc(interval * i, char *str)
 	if (!tmp)
 		return -errno;
 
-	memcpy(str, tmp, strlen(tmp));
+	strcpy(str, tmp);
 	free(tmp);
 	return 0;
 }
