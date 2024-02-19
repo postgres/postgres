@@ -2659,6 +2659,8 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 				 */
 				pfmt++;
 				tmp = pgtypes_alloc(strlen("%m/%d/%y") + strlen(pstr) + 1);
+				if (!tmp)
+					return 1;
 				strcpy(tmp, "%m/%d/%y");
 				strcat(tmp, pfmt);
 				err = PGTYPEStimestamp_defmt_scan(&pstr, tmp, d, year, month, day, hour, minute, second, tz);
@@ -2784,6 +2786,8 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 			case 'r':
 				pfmt++;
 				tmp = pgtypes_alloc(strlen("%I:%M:%S %p") + strlen(pstr) + 1);
+				if (!tmp)
+					return 1;
 				strcpy(tmp, "%I:%M:%S %p");
 				strcat(tmp, pfmt);
 				err = PGTYPEStimestamp_defmt_scan(&pstr, tmp, d, year, month, day, hour, minute, second, tz);
@@ -2792,6 +2796,8 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 			case 'R':
 				pfmt++;
 				tmp = pgtypes_alloc(strlen("%H:%M") + strlen(pstr) + 1);
+				if (!tmp)
+					return 1;
 				strcpy(tmp, "%H:%M");
 				strcat(tmp, pfmt);
 				err = PGTYPEStimestamp_defmt_scan(&pstr, tmp, d, year, month, day, hour, minute, second, tz);
@@ -2837,6 +2843,8 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 			case 'T':
 				pfmt++;
 				tmp = pgtypes_alloc(strlen("%H:%M:%S") + strlen(pstr) + 1);
+				if (!tmp)
+					return 1;
 				strcpy(tmp, "%H:%M:%S");
 				strcat(tmp, pfmt);
 				err = PGTYPEStimestamp_defmt_scan(&pstr, tmp, d, year, month, day, hour, minute, second, tz);
