@@ -350,6 +350,25 @@ Branch: REL_12_STABLE [b8a606e21] 2023-11-28 11:59:53 +0200
     <listitem>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [1b2c6b756] 2023-11-08 14:06:26 +0900
+Branch: REL_16_STABLE [4dccf9575] 2023-11-08 14:06:36 +0900
+Branch: REL_15_STABLE [7e18c0bd6] 2023-11-08 14:06:39 +0900
+Branch: REL_14_STABLE [59fc39c0d] 2023-11-08 14:06:42 +0900
+-->
+     <para>
+      Fix overly tight assertion
+      about <varname>false_positive_rate</varname> parameter of
+      BRIN bloom operator classes (Alexander Lakhin)
+     </para>
+
+     <para>
+      This error had no impact in non-assert builds, either.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [bb812ab09] 2024-01-24 14:20:01 +0900
 Branch: REL_16_STABLE [51193e7a7] 2024-01-24 14:20:08 +0900
 Branch: REL_15_STABLE [ad6fbbeeb] 2024-01-24 14:20:10 +0900
@@ -1287,20 +1306,6 @@ Branch: REL_14_STABLE [85ecff891] 2024-01-22 17:48:30 +0100
       scripting mistake rather than a case
       that <application>pgbench</application> needs to handle nicely, so
       throw an error.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [1b2c6b756] 2023-11-08 14:06:26 +0900
-Branch: REL_16_STABLE [4dccf9575] 2023-11-08 14:06:36 +0900
-Branch: REL_15_STABLE [7e18c0bd6] 2023-11-08 14:06:39 +0900
-Branch: REL_14_STABLE [59fc39c0d] 2023-11-08 14:06:42 +0900
--->
-     <para>
-      In <filename>contrib/bloom</filename>, fix overly tight assertion
-      about <varname>false_positive_rate</varname> (Alexander Lakhin)
      </para>
     </listitem>
 
