@@ -2406,6 +2406,18 @@ left join (select coalesce(y.q1, 1) from int8_tbl y
 	on true) z
 on true;
 
+-- Test processing target lists in lateral subqueries
+explain (verbose, costs off)
+SELECT t3.a FROM sj t1, sj t2,
+LATERAL (SELECT t1.a WHERE t1.a <> 1
+		 GROUP BY (t1.a) HAVING t1.a > 0 ORDER BY t1.a LIMIT 1) t3,
+LATERAL (SELECT t1.a,t3.a WHERE t1.a <> t3.a+t2.a
+		 GROUP BY (t3.a) HAVING t1.a > t3.a*t3.a+t2.a/t1.a LIMIT 2) t4,
+LATERAL (SELECT * FROM sj TABLESAMPLE bernoulli(t1.a/t2.a)
+		 REPEATABLE (t1.a+t2.a)) t5,
+LATERAL generate_series(1, t1.a + t2.a) AS t6
+WHERE t1.a = t2.a;
+
 -- Check updating of Lateral links from top-level query to the removing relation
 explain (COSTS OFF)
 SELECT * FROM pg_am am WHERE am.amname IN (

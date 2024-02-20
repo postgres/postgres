@@ -395,7 +395,34 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/* Update lateral references. */
-		replace_varno((Node *) otherrel->lateral_vars, relid, subst);
+		if (root->hasLateralRTEs)
+		{
+			RangeTblEntry *rte = root->simple_rte_array[rti];
+			ReplaceVarnoContext ctx = {.from = relid,.to = subst};
+
+			if (rte->lateral)
+			{
+				replace_varno((Node *) otherrel->lateral_vars, relid, subst);
+
+				/*
+				 * Although we pass root->parse through cleanup procedure,
+				 * but parse->rtable and rte contains refs to different copies
+				 * of the subquery.
+				 */
+				if (otherrel->rtekind == RTE_SUBQUERY)
+					query_tree_walker(rte->subquery, replace_varno_walker, &ctx,
+									  QTW_EXAMINE_SORTGROUP);
+#ifdef USE_ASSERT_CHECKING
+				/* Just check possibly hidden non-replaced relids */
+				Assert(!bms_is_member(relid, pull_varnos(root, (Node *) rte->tablesample)));
+				Assert(!bms_is_member(relid, pull_varnos(root, (Node *) rte->functions)));
+				Assert(!bms_is_member(relid, pull_varnos(root, (Node *) rte->tablefunc)));
+				Assert(!bms_is_member(relid, pull_varnos(root, (Node *) rte->values_lists)));
+#endif
+			}
+		}
+
+
 	}
 
 	/*
