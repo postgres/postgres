@@ -9077,7 +9077,8 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </para>
         <para>
          Subtract timestamps (converting 24-hour intervals into days,
-         similarly to <function>justify_hours()</function>)
+         similarly to <link
+         linkend="function-justify-hours"><function>justify_hours()</function></link>)
         </para>
         <para>
          <literal>timestamp '2001-09-29 03:00' - timestamp '2001-07-27 12:00'</literal>
@@ -9490,35 +9491,35 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
        <row>
         <entry role="func_table_entry"><para role="func_signature">
-         <indexterm>
+         <indexterm id="function-justify-days">
           <primary>justify_days</primary>
          </indexterm>
          <function>justify_days</function> ( <type>interval</type> )
          <returnvalue>interval</returnvalue>
         </para>
         <para>
-         Adjust interval so 30-day time periods are represented as months
+         Adjust interval, converting 30-day time periods to months
         </para>
         <para>
-         <literal>justify_days(interval '35 days')</literal>
-         <returnvalue>1 mon 5 days</returnvalue>
+         <literal>justify_days(interval '1 year 65 days')</literal>
+         <returnvalue>1 year 2 mons 5 days</returnvalue>
         </para></entry>
        </row>
 
        <row>
         <entry role="func_table_entry"><para role="func_signature">
-         <indexterm>
+         <indexterm id="function-justify-hours">
           <primary>justify_hours</primary>
          </indexterm>
          <function>justify_hours</function> ( <type>interval</type> )
          <returnvalue>interval</returnvalue>
         </para>
         <para>
-         Adjust interval so 24-hour time periods are represented as days
+         Adjust interval, converting 24-hour time periods to days
         </para>
         <para>
-         <literal>justify_hours(interval '27 hours')</literal>
-         <returnvalue>1 day 03:00:00</returnvalue>
+         <literal>justify_hours(interval '50 hours 10 minutes')</literal>
+         <returnvalue>2 days 02:10:00</returnvalue>
         </para></entry>
        </row>
 
@@ -9951,13 +9952,19 @@ EXTRACT(<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
     The <function>extract</function> function retrieves subfields
     such as year or hour from date/time values.
     <replaceable>source</replaceable> must be a value expression of
-    type <type>timestamp</type>, <type>time</type>, or <type>interval</type>.
-    (Expressions of type <type>date</type> are
-    cast to <type>timestamp</type> and can therefore be used as
-    well.)  <replaceable>field</replaceable> is an identifier or
+    type <type>timestamp</type>, <type>date</type>, <type>time</type>,
+    or <type>interval</type>.  (Timestamps and times can be with or
+    without time zone.)
+    <replaceable>field</replaceable> is an identifier or
     string that selects what field to extract from the source value.
+    Not all fields are valid for every input data type; for example, fields
+    smaller than a day cannot be extracted from a <type>date</type>, while
+    fields of a day or more cannot be extracted from a <type>time</type>.
     The <function>extract</function> function returns values of type
     <type>numeric</type>.
+   </para>
+
+   <para>
     The following are valid field names:
 
     <!-- alphabetical -->
@@ -9966,7 +9973,8 @@ EXTRACT(<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
       <term><literal>century</literal></term>
       <listitem>
        <para>
-        The century
+        The century; for <type>interval</type> values, the year field
+        divided by 100
        </para>
 
 <screen>
@@ -9974,17 +9982,13 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2000-12-16 12:21:13');
 <lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
 SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>21</computeroutput>
+SELECT EXTRACT(CENTURY FROM DATE '0001-01-01 AD');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+SELECT EXTRACT(CENTURY FROM DATE '0001-12-31 BC');
+<lineannotation>Result: </lineannotation><computeroutput>-1</computeroutput>
+SELECT EXTRACT(CENTURY FROM INTERVAL '2001 years');
+<lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
 </screen>
-
-       <para>
-        The first century starts at 0001-01-01 00:00:00 AD, although
-        they did not know it at the time. This definition applies to all
-        Gregorian calendar countries. There is no century number 0,
-        you go from -1 century to 1 century.
-
-        If you disagree with this, please write your complaint to:
-        Pope, Cathedral Saint-Peter of Roma, Vatican.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -9992,14 +9996,13 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>day</literal></term>
       <listitem>
        <para>
-        For <type>timestamp</type> values, the day (of the month) field
-        (1&ndash;31) ; for <type>interval</type> values, the number of days
+        The day of the month (1&ndash;31); for <type>interval</type>
+        values, the number of days
        </para>
 
 <screen>
 SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>16</computeroutput>
-
 SELECT EXTRACT(DAY FROM INTERVAL '40 days 1 minute');
 <lineannotation>Result: </lineannotation><computeroutput>40</computeroutput>
 </screen>
@@ -10073,10 +10076,8 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
 <screen>
 SELECT EXTRACT(EPOCH FROM TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40.12-08');
 <lineannotation>Result: </lineannotation><computeroutput>982384720.120000</computeroutput>
-
 SELECT EXTRACT(EPOCH FROM TIMESTAMP '2001-02-16 20:38:40.12');
 <lineannotation>Result: </lineannotation><computeroutput>982355920.120000</computeroutput>
-
 SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
 <lineannotation>Result: </lineannotation><computeroutput>442800.000000</computeroutput>
 </screen>
@@ -10104,7 +10105,8 @@ SELECT to_timestamp(982384720.12);
       <term><literal>hour</literal></term>
       <listitem>
        <para>
-        The hour field (0&ndash;23)
+        The hour field (0&ndash;23 in timestamps, unrestricted in
+        intervals)
        </para>
 
 <screen>
@@ -10139,7 +10141,7 @@ SELECT EXTRACT(ISODOW FROM TIMESTAMP '2001-02-18 20:38:40');
       <listitem>
        <para>
         The <acronym>ISO</acronym> 8601 week-numbering year that the date
-        falls in (not applicable to intervals)
+        falls in
        </para>
 
 <screen>
@@ -10156,9 +10158,6 @@ SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-02');
         different from the Gregorian year.  See the <literal>week</literal>
         field for more information.
        </para>
-       <para>
-        This field is not available in PostgreSQL releases prior to 8.3.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -10167,7 +10166,7 @@ SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-02');
       <listitem>
        <para>
         The <firstterm>Julian Date</firstterm> corresponding to the
-        date or timestamp (not applicable to intervals).  Timestamps
+        date or timestamp.  Timestamps
         that are not local midnight result in a fractional value.  See
         <xref linkend="datetime-julian-dates"/> for more information.
        </para>
@@ -10200,12 +10199,15 @@ SELECT EXTRACT(MICROSECONDS FROM TIME '17:12:28.5');
       <term><literal>millennium</literal></term>
       <listitem>
        <para>
-        The millennium
+        The millennium; for <type>interval</type> values, the year field
+        divided by 1000
        </para>
 
 <screen>
 SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>3</computeroutput>
+SELECT EXTRACT(MILLENNIUM FROM INTERVAL '2001 years');
+<lineannotation>Result: </lineannotation><computeroutput>2</computeroutput>
 </screen>
 
        <para>
@@ -10248,18 +10250,16 @@ SELECT EXTRACT(MINUTE FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>month</literal></term>
       <listitem>
        <para>
-        For <type>timestamp</type> values, the number of the month
-        within the year (1&ndash;12) ; for <type>interval</type> values,
-        the number of months, modulo 12 (0&ndash;11)
+        The number of the month within the year (1&ndash;12);
+        for <type>interval</type> values, the number of months modulo 12
+        (0&ndash;11)
        </para>
 
 <screen>
 SELECT EXTRACT(MONTH FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>2</computeroutput>
-
 SELECT EXTRACT(MONTH FROM INTERVAL '2 years 3 months');
 <lineannotation>Result: </lineannotation><computeroutput>3</computeroutput>
-
 SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
 <lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
 </screen>
@@ -10290,7 +10290,6 @@ SELECT EXTRACT(QUARTER FROM TIMESTAMP '2001-02-16 20:38:40');
 <screen>
 SELECT EXTRACT(SECOND FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>40.000000</computeroutput>
-
 SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
 <lineannotation>Result: </lineannotation><computeroutput>28.500000</computeroutput>
 </screen>
@@ -10372,6 +10371,20 @@ SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
     </variablelist>
    </para>
 
+   <para>
+    When processing an <type>interval</type> value,
+    the <function>extract</function> function produces field values that
+    match the interpretation used by the interval output function.  This
+    can produce surprising results if one starts with a non-normalized
+    interval representation, for example:
+<screen>
+SELECT INTERVAL '80 minutes';
+<lineannotation>Result: </lineannotation><computeroutput>01:20:00</computeroutput>
+SELECT EXTRACT(MINUTES FROM INTERVAL '80 minutes');
+<lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
+</screen>
+   </para>
+
    <note>
     <para>
      When the input value is +/-Infinity, <function>extract</function> returns
@@ -10409,7 +10422,6 @@ date_part('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
 <screen>
 SELECT date_part('day', TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>16</computeroutput>
-
 SELECT date_part('hour', INTERVAL '4 hours 3 minutes');
 <lineannotation>Result: </lineannotation><computeroutput>4</computeroutput>
 </screen>
@@ -10487,16 +10499,12 @@ date_trunc(<replaceable>field</replaceable>, <replaceable>source</replaceable> [
 <screen>
 SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 20:00:00</computeroutput>
-
 SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>2001-01-01 00:00:00</computeroutput>
-
 SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00');
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 00:00:00-05</computeroutput>
-
 SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00', 'Australia/Sydney');
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 08:00:00-05</computeroutput>
-
 SELECT date_trunc('hour', INTERVAL '3 days 02:47:33');
 <lineannotation>Result: </lineannotation><computeroutput>3 days 02:00:00</computeroutput>
 </screen>
@@ -10535,7 +10543,6 @@ date_bin(<replaceable>stride</replaceable>, <replaceable>source</replaceable>, <
 <screen>
 SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-01-01');
 <lineannotation>Result: </lineannotation><computeroutput>2020-02-11 15:30:00</computeroutput>
-
 SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-01-01 00:02:30');
 <lineannotation>Result: </lineannotation><computeroutput>2020-02-11 15:32:30</computeroutput>
 </screen>
@@ -10659,10 +10666,8 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
 <screen>
 SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'America/Denver';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 19:38:40-08</computeroutput>
-
 SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'America/Denver';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 18:38:40</computeroutput>
-
 SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'America/Chicago';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 05:38:40</computeroutput>
 </screen>
@@ -10737,16 +10742,12 @@ LOCALTIMESTAMP(<replaceable>precision</replaceable>)
 <screen>
 SELECT CURRENT_TIME;
 <lineannotation>Result: </lineannotation><computeroutput>14:39:53.662522-05</computeroutput>
-
 SELECT CURRENT_DATE;
 <lineannotation>Result: </lineannotation><computeroutput>2019-12-23</computeroutput>
-
 SELECT CURRENT_TIMESTAMP;
 <lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.662522-05</computeroutput>
-
 SELECT CURRENT_TIMESTAMP(2);
 <lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.66-05</computeroutput>
-
 SELECT LOCALTIMESTAMP;
 <lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.662522</computeroutput>
 </screen>
