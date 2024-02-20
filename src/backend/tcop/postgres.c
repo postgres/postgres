@@ -3650,7 +3650,7 @@ assign_transaction_timeout(int newval, void *extra)
 	if (IsTransactionState())
 	{
 		/*
-		 * If transaction_timeout GUC has changes within the transaction block
+		 * If transaction_timeout GUC has changed within the transaction block
 		 * enable or disable the timer correspondingly.
 		 */
 		if (newval > 0 && !get_timeout_active(TRANSACTION_TIMEOUT))
