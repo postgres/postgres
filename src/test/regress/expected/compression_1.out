@@ -216,112 +216,13 @@ SELECT pg_column_compression(f1) FROM cmpart2;
 -----------------------
 (0 rows)
 
--- test compression with inheritance
-CREATE TABLE cmparent1 (f1 TEXT COMPRESSION pglz);
-INSERT INTO cmparent1 VALUES ('cmparent1_' || repeat('1234567890', 1000));
-CREATE TABLE cmparent2 (f1 TEXT COMPRESSION lz4);
-ERROR:  compression method lz4 not supported
-DETAIL:  This functionality requires the server to be built with lz4 support.
-INSERT INTO cmparent2 VALUES ('cmparent2_' || repeat('1234567890', 1000));
-ERROR:  relation "cmparent2" does not exist
-LINE 1: INSERT INTO cmparent2 VALUES ('cmparent2_' || repeat('123456...
-                    ^
-CREATE TABLE ncmparent (f1 TEXT); -- parent without compression
-INSERT INTO ncmparent VALUES ('ncmparent_' || repeat('1234567890', 1000));
-CREATE TABLE cminh1(f1 TEXT) INHERITS(cmparent1);
+-- test compression with inheritance, error
+CREATE TABLE cminh() INHERITS(cmdata, cmdata1);
+ERROR:  relation "cmdata1" does not exist
+CREATE TABLE cminh(f1 TEXT COMPRESSION lz4) INHERITS(cmdata);
 NOTICE:  merging column "f1" with inherited definition
-INSERT INTO cminh1 VALUES ('cminh1_' || repeat('1234567890', 1000));
-CREATE TABLE cminh2(f1 TEXT) INHERITS(ncmparent, cmparent1);
-NOTICE:  merging multiple inherited definitions of column "f1"
-NOTICE:  merging column "f1" with inherited definition
-INSERT INTO cminh2 VALUES ('cminh2_' || repeat('1234567890', 1000));
-CREATE TABLE cminh3(f1 TEXT) INHERITS(cmparent1, ncmparent);
-NOTICE:  merging multiple inherited definitions of column "f1"
-NOTICE:  merging column "f1" with inherited definition
-INSERT INTO cminh3 VALUES ('cminh3_' || repeat('1234567890', 1000));
--- conflicting compression methods from parents
-CREATE TABLE cminh() INHERITS(cmparent1, cmparent2); --error
-ERROR:  relation "cmparent2" does not exist
-CREATE TABLE cminh(f1 TEXT) INHERITS(cmparent1, cmparent2); --error
-ERROR:  relation "cmparent2" does not exist
--- child compression specification takes precedence, even if parent's
--- compression conflict
-CREATE TABLE cminh4(f1 TEXT COMPRESSION lz4) INHERITS(cmparent1);
-NOTICE:  merging column "f1" with inherited definition
-ERROR:  compression method lz4 not supported
-DETAIL:  This functionality requires the server to be built with lz4 support.
-INSERT INTO cminh4 VALUES ('cminh4_' || repeat('1234567890', 1000));
-ERROR:  relation "cminh4" does not exist
-LINE 1: INSERT INTO cminh4 VALUES ('cminh4_' || repeat('1234567890',...
-                    ^
-CREATE TABLE cminh5(f1 TEXT COMPRESSION pglz) INHERITS(cmparent1, cmparent2);
-ERROR:  relation "cmparent2" does not exist
-INSERT INTO cminh5 VALUES ('cminh5_' || repeat('1234567890', 1000));
-ERROR:  relation "cminh5" does not exist
-LINE 1: INSERT INTO cminh5 VALUES ('cminh5_' || repeat('1234567890',...
-                    ^
-SELECT tableoid::regclass, pg_column_compression(f1) FROM cmparent1;
- tableoid  | pg_column_compression 
------------+-----------------------
- cmparent1 | pglz
- cminh1    | pglz
- cminh2    | pglz
- cminh3    | pglz
-(4 rows)
-
-SELECT tableoid::regclass, pg_column_compression(f1) FROM cmparent2;
-ERROR:  relation "cmparent2" does not exist
-LINE 1: ...ableoid::regclass, pg_column_compression(f1) FROM cmparent2;
-                                                             ^
-SELECT tableoid::regclass, pg_column_compression(f1) FROM ncmparent;
- tableoid  | pg_column_compression 
------------+-----------------------
- ncmparent | pglz
- cminh2    | pglz
- cminh3    | pglz
-(3 rows)
-
--- ALTER compression specification in child
-ALTER TABLE cminh1 ALTER COLUMN f1 SET COMPRESSION lz4;
-ERROR:  compression method lz4 not supported
-DETAIL:  This functionality requires the server to be built with lz4 support.
-INSERT INTO cminh1 VALUES ('cminh1_lz4_' || repeat('1234567890', 1000));
-SELECT pg_column_compression(f1) FROM cminh1;
- pg_column_compression 
------------------------
- pglz
- pglz
-(2 rows)
-
--- INHERIT through ALTER TABLE
-CREATE TABLE cminh6 (f1 TEXT);
-INSERT INTO cminh6 VALUES ('cminh6_' || repeat('1234567890', 1000));
-ALTER TABLE cminh6 INHERIT cmparent1;
-INSERT INTO cminh6 VALUES ('cminh6_inh_' || repeat('1234567890', 1000));
-SELECT pg_column_compression(f1) FROM cminh6;
- pg_column_compression 
------------------------
- pglz
- pglz
-(2 rows)
-
-CREATE TABLE cminh7 (f1 TEXT COMPRESSION lz4);
-ERROR:  compression method lz4 not supported
-DETAIL:  This functionality requires the server to be built with lz4 support.
-INSERT INTO cminh7 VALUES ('cminh7_' || repeat('1234567890', 1000));
-ERROR:  relation "cminh7" does not exist
-LINE 1: INSERT INTO cminh7 VALUES ('cminh7_' || repeat('1234567890',...
-                    ^
-ALTER TABLE cminh7 INHERIT cmparent1;
-ERROR:  relation "cminh7" does not exist
-INSERT INTO cminh7 VALUES ('cminh7_inh_' || repeat('1234567890', 1000));
-ERROR:  relation "cminh7" does not exist
-LINE 1: INSERT INTO cminh7 VALUES ('cminh7_inh_' || repeat('12345678...
-                    ^
-SELECT pg_column_compression(f1) FROM cminh7;
-ERROR:  relation "cminh7" does not exist
-LINE 1: SELECT pg_column_compression(f1) FROM cminh7;
-                                              ^
+ERROR:  column "f1" has a compression method conflict
+DETAIL:  pglz versus lz4
 -- test default_toast_compression GUC
 SET default_toast_compression = '';
 ERROR:  invalid value for parameter "default_toast_compression": ""

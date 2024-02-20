@@ -350,16 +350,6 @@ typedef struct ForeignTruncateInfo
 #define child_dependency_type(child_is_partition)	\
 	((child_is_partition) ? DEPENDENCY_AUTO : DEPENDENCY_NORMAL)
 
-/*
- * Bogus property string to track conflict in inherited properties of a column.
- * It is currently used for storage and compression specifications, but may be
- * used for other string specifications in future. It can be any string which
- * does not look like a valid compression or storage method. It is meant to be
- * used by MergeAttributes() and its minions. It is not expected to be stored
- * on disk.
- */
-static const char *conflicting_column_property = "*** conflicting column property ***";
-
 static void truncate_check_rel(Oid relid, Form_pg_class reltuple);
 static void truncate_check_perms(Oid relid, Form_pg_class reltuple);
 static void truncate_check_activity(Relation rel);
@@ -370,8 +360,7 @@ static List *MergeAttributes(List *columns, const List *supers, char relpersiste
 							 List **supnotnulls);
 static List *MergeCheckConstraint(List *constraints, const char *name, Node *expr);
 static void MergeChildAttribute(List *inh_columns, int exist_attno, int newcol_attno, const ColumnDef *newdef);
-static ColumnDef *MergeInheritedAttribute(List *inh_columns, int exist_attno, const ColumnDef *newdef,
-										  bool *have_deferred_conflicts);
+static ColumnDef *MergeInheritedAttribute(List *inh_columns, int exist_attno, const ColumnDef *newdef);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel, bool ispartition);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void StoreCatalogInheritance(Oid relationId, List *supers,
@@ -631,6 +620,7 @@ static ObjectAddress ATExecSetCompression(Relation rel,
 										  const char *column, Node *newValue, LOCKMODE lockmode);
 
 static void index_copy_data(Relation rel, RelFileLocator newrlocator);
+static const char *storage_name(char c);
 
 static void RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid,
 											Oid oldRelOid, void *arg);
@@ -1373,7 +1363,9 @@ BuildDescForRelation(const List *columns)
 		att->attidentity = entry->identity;
 		att->attgenerated = entry->generated;
 		att->attcompression = GetAttributeCompression(att->atttypid, entry->compression);
-		if (entry->storage_name)
+		if (entry->storage)
+			att->attstorage = entry->storage;
+		else if (entry->storage_name)
 			att->attstorage = GetAttributeStorage(att->atttypid, entry->storage_name);
 	}
 
@@ -2396,6 +2388,28 @@ truncate_check_activity(Relation rel)
 	CheckTableNotInUse(rel, "TRUNCATE");
 }
 
+/*
+ * storage_name
+ *	  returns the name corresponding to a typstorage/attstorage enum value
+ */
+static const char *
+storage_name(char c)
+{
+	switch (c)
+	{
+		case TYPSTORAGE_PLAIN:
+			return "PLAIN";
+		case TYPSTORAGE_EXTERNAL:
+			return "EXTERNAL";
+		case TYPSTORAGE_EXTENDED:
+			return "EXTENDED";
+		case TYPSTORAGE_MAIN:
+			return "MAIN";
+		default:
+			return "???";
+	}
+}
+
 /*----------
  * MergeAttributes
  *		Returns new schema given initial schema and superclasses.
@@ -2469,7 +2483,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 	List	   *inh_columns = NIL;
 	List	   *constraints = NIL;
 	List	   *nnconstraints = NIL;
-	bool		have_deferred_conflicts = false;
+	bool		have_bogus_defaults = false;
 	int			child_attno;
 	static Node bogus_marker = {0}; /* marks conflicting defaults */
 	List	   *saved_columns = NIL;
@@ -2706,10 +2720,11 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 			 */
 			newdef = makeColumnDef(attributeName, attribute->atttypid,
 								   attribute->atttypmod, attribute->attcollation);
-			newdef->storage_name = GetAttributeStorageName(attribute->attstorage);
+			newdef->storage = attribute->attstorage;
 			newdef->generated = attribute->attgenerated;
 			if (CompressionMethodIsValid(attribute->attcompression))
-				newdef->compression = GetCompressionMethodName(attribute->attcompression);
+				newdef->compression =
+					pstrdup(GetCompressionMethodName(attribute->attcompression));
 
 			/*
 			 * Regular inheritance children are independent enough not to
@@ -2729,8 +2744,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 				/*
 				 * Yes, try to merge the two column definitions.
 				 */
-				mergeddef = MergeInheritedAttribute(inh_columns, exist_attno, newdef,
-													&have_deferred_conflicts);
+				mergeddef = MergeInheritedAttribute(inh_columns, exist_attno, newdef);
 
 				newattmap->attnums[parent_attno - 1] = exist_attno;
 
@@ -2853,7 +2867,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 			else if (!equal(def->cooked_default, this_default))
 			{
 				def->cooked_default = &bogus_marker;
-				have_deferred_conflicts = true;
+				have_bogus_defaults = true;
 			}
 		}
 
@@ -3063,10 +3077,10 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 	}
 
 	/*
-	 * If we found any conflicting parent default values or conflicting parent
-	 * properties, check to make sure they were overridden by the child.
+	 * If we found any conflicting parent default values, check to make sure
+	 * they were overridden by the child.
 	 */
-	if (have_deferred_conflicts)
+	if (have_bogus_defaults)
 	{
 		foreach(lc, columns)
 		{
@@ -3087,20 +3101,6 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 									def->colname),
 							 errhint("To resolve the conflict, specify a default explicitly.")));
 			}
-
-			if (def->compression == conflicting_column_property)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("column \"%s\" inherits conflicting compression methods",
-								def->colname),
-						 errhint("To resolve the conflict, specify a compression method explicitly.")));
-
-			if (def->storage_name == conflicting_column_property)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("column \"%s\" inherits conflicting storage methods",
-								def->colname),
-						 errhint("To resolve the conflict, specify a storage method explicitly.")));
 		}
 	}
 
@@ -3250,18 +3250,33 @@ MergeChildAttribute(List *inh_columns, int exist_attno, int newcol_attno, const 
 	inhdef->identity = newdef->identity;
 
 	/*
-	 * Child storage specification, if any, overrides inherited storage
-	 * property.
+	 * Copy storage parameter
 	 */
-	if (newdef->storage_name != NULL)
-		inhdef->storage_name = newdef->storage_name;
+	if (inhdef->storage == 0)
+		inhdef->storage = newdef->storage;
+	else if (newdef->storage != 0 && inhdef->storage != newdef->storage)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("column \"%s\" has a storage parameter conflict",
+						attributeName),
+				 errdetail("%s versus %s",
+						   storage_name(inhdef->storage),
+						   storage_name(newdef->storage))));
 
 	/*
-	 * Child compression specification, if any, overrides inherited
-	 * compression property.
+	 * Copy compression parameter
 	 */
-	if (newdef->compression != NULL)
+	if (inhdef->compression == NULL)
 		inhdef->compression = newdef->compression;
+	else if (newdef->compression != NULL)
+	{
+		if (strcmp(inhdef->compression, newdef->compression) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("column \"%s\" has a compression method conflict",
+							attributeName),
+					 errdetail("%s versus %s", inhdef->compression, newdef->compression)));
+	}
 
 	/*
 	 * Merge of not-null constraints = OR 'em together
@@ -3328,10 +3343,6 @@ MergeChildAttribute(List *inh_columns, int exist_attno, int newcol_attno, const 
  * 'exist_attno' is the number the existing matching attribute in inh_columns.
  * 'newdef' is the new parent column/attribute definition to be merged.
  *
- * Output arguments:
- * 'have_deferred_conflicts' is set to true if there is a conflict in inherited
- * 		compression properties; remains unchanged otherwise.
- *
  * The matching ColumnDef in 'inh_columns' list is modified and returned.
  *
  * Notes:
@@ -3345,8 +3356,7 @@ MergeChildAttribute(List *inh_columns, int exist_attno, int newcol_attno, const 
 static ColumnDef *
 MergeInheritedAttribute(List *inh_columns,
 						int exist_attno,
-						const ColumnDef *newdef,
-						bool *have_deferred_conflicts)
+						const ColumnDef *newdef)
 {
 	char	   *attributeName = newdef->colname;
 	ColumnDef  *prevdef;
@@ -3393,26 +3403,28 @@ MergeInheritedAttribute(List *inh_columns,
 	/*
 	 * Copy/check storage parameter
 	 */
-	if (prevdef->storage_name == NULL)
-		prevdef->storage_name = newdef->storage_name;
-	else if (newdef->storage_name != NULL &&
-			 strcmp(prevdef->storage_name, newdef->storage_name) != 0)
-	{
-		prevdef->storage_name = conflicting_column_property;
-		*have_deferred_conflicts = true;
-	}
+	if (prevdef->storage == 0)
+		prevdef->storage = newdef->storage;
+	else if (prevdef->storage != newdef->storage)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("inherited column \"%s\" has a storage parameter conflict",
+						attributeName),
+				 errdetail("%s versus %s",
+						   storage_name(prevdef->storage),
+						   storage_name(newdef->storage))));
 
 	/*
 	 * Copy/check compression parameter
 	 */
 	if (prevdef->compression == NULL)
 		prevdef->compression = newdef->compression;
-	else if (newdef->compression != NULL &&
-			 strcmp(prevdef->compression, newdef->compression) != 0)
-	{
-		prevdef->compression = conflicting_column_property;
-		*have_deferred_conflicts = true;
-	}
+	else if (strcmp(prevdef->compression, newdef->compression) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("column \"%s\" has a compression method conflict",
+						attributeName),
+				 errdetail("%s versus %s", prevdef->compression, newdef->compression)));
 
 	/*
 	 * Check for GENERATED conflicts

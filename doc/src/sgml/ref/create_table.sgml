@@ -398,13 +398,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      Column storage and compression settings are inherited from parent
-      tables.  If a column is inherited from multiple tables, the storage
-      settings or any explicit compression settings for the column must be the
-      same in all parent tables, else an error is reported.  Storage or
-      compression settings explicitly specified for the new table override any
-      inherited settings and can also be used to override conflicting
-      inherited settings.
+      Column <literal>STORAGE</literal> settings are also copied from parent tables.
      </para>
 
      <para>
