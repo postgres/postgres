@@ -1936,9 +1936,11 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 		 * whatsoever, but their negators (equality) are.  We can use one of
 		 * those if we find it, but only for list partitioning.
 		 *
-		 * Note: we report NOMATCH on failure, in case a later partkey has the
-		 * same expression but different opfamily.  That's unlikely, but not
-		 * much more so than duplicate expressions with different collations.
+		 * Note: we report NOMATCH on failure if the negator isn't the
+		 * equality operator for the partkey's opfamily as other partkeys may
+		 * have the same expression but different opfamily.  That's unlikely,
+		 * but not much more so than duplicate expressions with different
+		 * collations.
 		 */
 		if (op_in_opfamily(opno, partopfamily))
 		{
@@ -1948,8 +1950,9 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 		}
 		else
 		{
+			/* not supported for anything apart from LIST partitioned tables */
 			if (part_scheme->strategy != PARTITION_STRATEGY_LIST)
-				return PARTCLAUSE_NOMATCH;
+				return PARTCLAUSE_UNSUPPORTED;
 
 			/* See if the negator is equality */
 			negator = get_negator(opno);
@@ -2924,7 +2927,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
  * multiple pruning steps might exclude it, so we infer its inclusion
  * elsewhere.
  *
- * 'opstrategy' if non-zero must be a btree strategy number.
+ * 'opstrategy' must be a btree strategy number.
  *
  * 'values' contains Datums indexed by the partition key to use for pruning.
  *
