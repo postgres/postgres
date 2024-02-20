@@ -16,45 +16,35 @@
 typedef struct InternalKey
 {
     uint8   key[INTERNAL_KEY_LEN];
-    /* a start and end range of the key
-     * (start_loc == 0 && end_loc == 0) -> the key is for the whole file
-     */
-    Size    start_loc; 
-    Size    end_loc;
 	void*   ctx; // TODO: shouldn't be here / written to the disk
 } InternalKey;
 
 #define MASTER_KEY_NAME_LEN 256
-typedef struct RelKeysData
+typedef struct RelKeyData
 {
     char        master_key_name[MASTER_KEY_NAME_LEN];
-    Size        internal_keys_len;
-    InternalKey internal_key[FLEXIBLE_ARRAY_MEMBER];
-} RelKeysData;
+    InternalKey internal_key;
+} RelKeyData;
 
-#define SizeOfRelKeysDataHeader offsetof(RelKeysData, internal_key)
-#define SizeOfRelKeysData(keys_num) \
-    (SizeOfRelKeysDataHeader + sizeof(InternalKey) * keys_num)
-
-/* Relation keys cache.
+/* Relation key cache.
  * 
  * TODO: For now it is just a linked list. Data can only be added w/o any
  * ability to remove or change it. Also consider usage of more efficient data
  * struct (hash map) in the shared memory(?) - currently allocated in the
  * TopMemoryContext of the process. 
  */
-typedef struct RelKeys
+typedef struct RelKey
 {
     Oid     rel_id;
-    RelKeysData    *keys;
-    struct RelKeys *next;
-} RelKeys;
+    RelKeyData    *key;
+    struct RelKey *next;
+} RelKey;
 
 extern void pg_tde_delete_key_map_entry(const RelFileLocator *rlocator);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset);
 extern void pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel);
-extern RelKeysData *pg_tde_get_keys_from_fork(const RelFileLocator *rlocator);
-extern RelKeysData *GetRelationKeys(RelFileLocator rel);
+extern RelKeyData *pg_tde_get_key_from_fork(const RelFileLocator *rlocator);
+extern RelKeyData *GetRelationKey(RelFileLocator rel);
 extern void pg_tde_cleanup_path_vars(void);
 
 const char * tde_sprint_key(InternalKey *k);

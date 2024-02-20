@@ -385,12 +385,12 @@ pg_tde_page_prune(Relation relation, Buffer buffer,
 		*off_loc = InvalidOffsetNumber;
 
 	/* 
-	 * Make sure relation keys in the cahce to avoid pallocs in
+	 * Make sure relation key in the cahce to avoid pallocs in
 	 * the critical section.
 	 * We need it here as there is `pgtde_compactify_tuples()` down in
 	 * the call stack wich reencrypt tuples.
 	*/
-	GetRelationKeys(relation->rd_locator);
+	GetRelationKey(relation->rd_locator);
 
 	/* Any error while applying the changes is critical */
 	START_CRIT_SECTION();

@@ -1880,7 +1880,7 @@ pg_tde_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Make sure relation keys in the cahce to avoid pallocs in
 	 * the critical section. 
 	*/
-	GetRelationKeys(relation->rd_locator);
+	GetRelationKey(relation->rd_locator);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
@@ -2221,7 +2221,7 @@ pg_tde_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		 * Make sure relation keys in the cahce to avoid pallocs in
 		 * the critical section. 
 		*/
-		GetRelationKeys(relation->rd_locator);
+		GetRelationKey(relation->rd_locator);
 
 		/* NO EREPORT(ERROR) from here till changes are logged */
 		START_CRIT_SECTION();
@@ -3125,7 +3125,7 @@ pg_tde_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 		oldtup_decrypted.t_data = (HeapTupleHeader)new_ptr;
 	}
 	PG_TDE_DECRYPT_TUPLE(&oldtup, &oldtup_decrypted,
-							GetRelationKeys(relation->rd_locator));
+							GetRelationKey(relation->rd_locator));
 
 	// change field in oldtup now.
 	// We can't do it before, as PG_TDE_DECRYPT_TUPLE uses t_data address in 
@@ -3775,7 +3775,7 @@ l2:
 	 * Make sure relation keys in the cahce to avoid pallocs in
 	 * the critical section. 
 	*/
-	GetRelationKeys(relation->rd_locator);
+	GetRelationKey(relation->rd_locator);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();

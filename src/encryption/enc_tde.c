@@ -44,11 +44,11 @@ SetIVPrefix(ItemPointerData* ip, char* iv_prefix)
 
 /* 
  * pg_tde_crypt:
- * Encrypts/decrypts `data` with a given `keys`. The result is written to `out`.
+ * Encrypts/decrypts `data` with a given `key`. The result is written to `out`.
  * start_offset: is the absolute location of start of data in the file.
  */
 void
-pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint32 data_len, char* out, RelKeysData* keys, const char* context)
+pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint32 data_len, char* out, RelKeyData* key, const char* context)
 {
 	uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE -1)) / AES_BLOCK_SIZE;
@@ -64,7 +64,7 @@ pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint3
 	{
 		batch_end_block = Min(batch_start_block + NUM_AES_BLOCKS_IN_BATCH, aes_end_block);
 
-		Aes128EncryptedZeroBlocks(&(keys->internal_key[0].ctx), keys->internal_key[0].key, iv_prefix, batch_start_block, batch_end_block, enc_key);
+		Aes128EncryptedZeroBlocks(&(key->internal_key.ctx), key->internal_key.key, iv_prefix, batch_start_block, batch_end_block, enc_key);
 #ifdef ENCRYPTION_DEBUG
 {
 	char ivp_debug[33];
@@ -89,13 +89,13 @@ pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint3
 			 * what start_offset the function was called with.
 			 * For example start_offset = 10; MAX_AES_ENC_BATCH_KEY_SIZE = 6:
 			 * 		data:                 [10 11 12 13 14 15 16]
-			 * 		encKeys: [...][0 1 2 3  4  5][0  1  2  3  4  5]
+			 * 		encKey: [...][0 1 2 3  4  5][0  1  2  3  4  5]
 			 * so the 10th data byte is encoded with the 4th byte of the 2nd enc_key etc.
 			 * We need this shift so each byte will be coded the same despite
 			 * the initial offset.
 			 * Let's see the same data but sent to the func starting from the offset 0:
 			 * 		data:    [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
-			 * 		encKeys: [0 1 2 3 4 5][0 1 2 3 4 5][ 0 1  2  3  4  5]
+			 * 		encKey: [0 1 2 3 4 5][0 1 2 3 4 5][ 0 1  2  3  4  5]
 			 * again, the 10th data byte is encoded with the 4th byte of the 2nd enc_key etc.
 			 */
 			uint32  enc_key_index = i + (batch_no > 0 ? 0 : aes_block_no);
@@ -116,7 +116,7 @@ pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint3
  * context: Optional context message to be used in debug log
  * */
 void
-pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeysData* keys, const char* context)
+pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeyData* key, const char* context)
 {
 	char iv_prefix[16] = {0};
 	uint32 data_len = tuple->t_len - tuple->t_data->t_hoff;
@@ -131,7 +131,7 @@ pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeysData* keys, cons
                 context?context:"", tuple->t_tableOid,
                 data_len)));
 #endif
-    pg_tde_crypt(iv_prefix, 0, tup_data, data_len, out_data, keys, context);
+    pg_tde_crypt(iv_prefix, 0, tup_data, data_len, out_data, key, context);
 }
 
 
@@ -158,13 +158,13 @@ PGTdePageAddItemExtended(RelFileLocator rel,
 	uint32	data_len = size - header_size;
 	/* ctid stored in item is incorrect (not set) at this point */
 	ItemPointerData ip;
-	RelKeysData *keys = GetRelationKeys(rel);
+	RelKeyData *key = GetRelationKey(rel);
 
 	ItemPointerSet(&ip, bn, off); 
 
 	SetIVPrefix(&ip, iv_prefix);
 
-	PG_TDE_ENCRYPT_PAGE_ITEM(iv_prefix, 0, data, data_len, toAddr, keys);
+	PG_TDE_ENCRYPT_PAGE_ITEM(iv_prefix, 0, data, data_len, toAddr, key);
 	return off;
 }
 
@@ -176,12 +176,12 @@ PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slo
     {
 		MemoryContext oldContext;
 		HeapTuple	decrypted_tuple;
-        RelKeysData *keys = GetRelationKeys(rel->rd_locator);
+        RelKeyData *key = GetRelationKey(rel->rd_locator);
 
 		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 		decrypted_tuple = heap_copytuple(tuple);
 		MemoryContextSwitchTo(oldContext);
-		PG_TDE_DECRYPT_TUPLE_EX(tuple, decrypted_tuple, keys, "ExecStoreBuffer");
+		PG_TDE_DECRYPT_TUPLE_EX(tuple, decrypted_tuple, key, "ExecStoreBuffer");
 		/* TODO: revisit this */
 		tuple->t_data = decrypted_tuple->t_data;
     }
@@ -196,13 +196,13 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlo
     {
 		MemoryContext oldContext;
 		HeapTuple	decrypted_tuple;
-        RelKeysData *keys = GetRelationKeys(rel->rd_locator);
+        RelKeyData *key = GetRelationKey(rel->rd_locator);
 
 		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 		decrypted_tuple = heap_copytuple(tuple);
 		MemoryContextSwitchTo(oldContext);
 
-		PG_TDE_DECRYPT_TUPLE_EX(tuple, decrypted_tuple, keys, "ExecStoreBuffer");
+		PG_TDE_DECRYPT_TUPLE_EX(tuple, decrypted_tuple, key, "ExecStoreBuffer");
 		/* TODO: revisit this */
 		tuple->t_data = decrypted_tuple->t_data;
     }
@@ -217,20 +217,17 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlo
  * short lifespan until it is written to disk.
  */
 void
-AesEncryptKey(const keyInfo *master_key_info, RelKeysData *rel_key_data, RelKeysData **p_enc_rel_key_data, size_t *enc_key_bytes)
+AesEncryptKey(const keyInfo *master_key_info, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes)
 {
-        size_t sz;
 		unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         /* Ensure we are getting a valid pointer here */
         Assert(master_key_info);
 
-        sz = SizeOfRelKeysData(1);
+        *p_enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
+        memcpy(*p_enc_rel_key_data, rel_key_data, sizeof(RelKeyData));
 
-        *p_enc_rel_key_data = (RelKeysData *) palloc(sz);
-        memcpy(*p_enc_rel_key_data, rel_key_data, sz);
-
-        AesEncrypt(master_key_info->data.data, iv, ((unsigned char*)rel_key_data) + SizeOfRelKeysDataHeader, INTERNAL_KEY_LEN, ((unsigned char *)(*p_enc_rel_key_data)) + SizeOfRelKeysDataHeader, (int *)enc_key_bytes);
+        AesEncrypt(master_key_info->data.data, iv, ((unsigned char*)&rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *)&(*p_enc_rel_key_data)->internal_key), (int *)enc_key_bytes);
 }
 
 /*
@@ -241,20 +238,17 @@ AesEncryptKey(const keyInfo *master_key_info, RelKeysData *rel_key_data, RelKeys
  * to our key cache.
  */
 void
-AesDecryptKey(const keyInfo *master_key_info, RelKeysData **p_rel_key_data, RelKeysData *enc_rel_key_data, size_t *key_bytes)
+AesDecryptKey(const keyInfo *master_key_info, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes)
 {
-        size_t sz;
 		unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         /* Ensure we are getting a valid pointer here */
         Assert(master_key_info);
-
-        sz = SizeOfRelKeysData(enc_rel_key_data->internal_keys_len);
-
-        *p_rel_key_data = (RelKeysData *) MemoryContextAlloc(TopMemoryContext, sz);
+        *p_rel_key_data = (RelKeyData *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeyData));
 
         /* Fill in the structure */
-        memcpy(*p_rel_key_data, enc_rel_key_data, sz);
+        memcpy(*p_rel_key_data, enc_rel_key_data, sizeof(RelKeyData));
+		(*p_rel_key_data)->internal_key.ctx = NULL;
 
-        AesDecrypt(master_key_info->data.data, iv, ((unsigned char*) enc_rel_key_data) + SizeOfRelKeysDataHeader, INTERNAL_KEY_LEN, ((unsigned char *)(*p_rel_key_data)) + SizeOfRelKeysDataHeader, (int *)key_bytes);
+        AesDecrypt(master_key_info->data.data, iv, ((unsigned char*) &enc_rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *)&(*p_rel_key_data)->internal_key) , (int *)key_bytes);
 }

@@ -44,7 +44,7 @@ static void pg_tde_toast_tuple_externalize(ToastTupleContext *ttc,
 static Datum pg_tde_toast_save_datum(Relation rel, Datum value,
 								struct varlena *oldexternal,
 								int options);
-static void pg_tde_toast_encrypt(Pointer dval, Oid valueid, RelKeysData *keys);
+static void pg_tde_toast_encrypt(Pointer dval, Oid valueid, RelKeyData *keys);
 static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
 static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
 
@@ -657,7 +657,7 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	int			validIndex;
 	SnapshotData SnapshotToast;
 	char		decrypted_data[TOAST_MAX_CHUNK_SIZE];
-	RelKeysData 	*keys = GetRelationKeys(toastrel->rd_locator);
+	RelKeyData 	*key = GetRelationKey(toastrel->rd_locator);
 	char		iv_prefix[16] = {0,};
 
 
@@ -816,7 +816,7 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 		PG_TDE_DECRYPT_DATA(iv_prefix, (curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + encrypt_offset,
 					chunkdata + chcpystrt,
 					(chcpyend - chcpystrt) + 1,
-					decrypted_data, keys);
+					decrypted_data, key);
 
 		memcpy(VARDATA(result) +
 			   (curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + chcpystrt,
@@ -843,7 +843,7 @@ pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 
 /* pg_tde extension */
 static void
-pg_tde_toast_encrypt(Pointer dval, Oid valueid, RelKeysData *keys)
+pg_tde_toast_encrypt(Pointer dval, Oid valueid, RelKeyData *key)
 {
 	int32		data_size =0;
 	char*		data_p;
@@ -874,7 +874,7 @@ pg_tde_toast_encrypt(Pointer dval, Oid valueid, RelKeysData *keys)
 	encrypted_data = (char *)palloc(data_size);
 
 	memcpy(iv_prefix, &valueid, sizeof(Oid));
-	PG_TDE_ENCRYPT_DATA(iv_prefix, 0, data_p, data_size, encrypted_data, keys);
+	PG_TDE_ENCRYPT_DATA(iv_prefix, 0, data_p, data_size, encrypted_data, key);
 
 	memcpy(data_p, encrypted_data, data_size);
 	pfree(encrypted_data);
@@ -1094,7 +1094,7 @@ pg_tde_toast_save_datum(Relation rel, Datum value,
 	/*
 	* Encrypt toast data.
 	*/
-	pg_tde_toast_encrypt(dval, toast_pointer.va_valueid, GetRelationKeys(toastrel->rd_locator));
+	pg_tde_toast_encrypt(dval, toast_pointer.va_valueid, GetRelationKey(toastrel->rd_locator));
 
 	/*
 	 * Initialize constant parts of the tuple data
