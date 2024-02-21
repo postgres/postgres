@@ -18,18 +18,12 @@ $node1->init(has_archiving => 1, allows_streaming => 1);
 $node1->append_conf('postgresql.conf', 'summarize_wal = on');
 $node1->start;
 
-# Set up another new database instance. We don't want to use the cached
-# INITDB_TEMPLATE for this, because we want it to be a separate cluster
-# with a different system ID.
-my $node2;
-{
-	local $ENV{'INITDB_TEMPLATE'} = undef;
-
-	$node2 = PostgreSQL::Test::Cluster->new('node2');
-	$node2->init(has_archiving => 1, allows_streaming => 1);
-	$node2->append_conf('postgresql.conf', 'summarize_wal = on');
-	$node2->start;
-}
+# Set up another new database instance.  force_initdb is used because
+# we want it to be a separate cluster with a different system ID.
+my $node2 = PostgreSQL::Test::Cluster->new('node2');
+$node2->init(force_initdb => 1, has_archiving => 1, allows_streaming => 1);
+$node2->append_conf('postgresql.conf', 'summarize_wal = on');
+$node2->start;
 
 # Take a full backup from node1.
 my $backup1path = $node1->backup_dir . '/backup1';

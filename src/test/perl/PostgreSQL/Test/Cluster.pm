@@ -503,6 +503,9 @@ parameter allows_streaming => 'logical' or 'physical' (passing 1 will also
 suffice for physical replication) depending on type of replication that
 should be enabled. This is disabled by default.
 
+force_initdb => 1 will force the initialization of the cluster with a new
+initdb rather than copying the data folder from a template.
+
 The new node is set up in a fast but unsafe configuration where fsync is
 disabled.
 
@@ -518,6 +521,7 @@ sub init
 	local %ENV = $self->_get_env();
 
 	$params{allows_streaming} = 0 unless defined $params{allows_streaming};
+	$params{force_initdb} = 0 unless defined $params{force_initdb};
 	$params{has_archiving} = 0 unless defined $params{has_archiving};
 
 	my $initdb_extra_opts_env = $ENV{PG_TEST_INITDB_EXTRA_OPTS};
@@ -529,14 +533,17 @@ sub init
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;
 
-	# If available and if there aren't any parameters, use a previously
-	# initdb'd cluster as a template by copying it. For a lot of tests, that's
-	# substantially cheaper. Do so only if there aren't parameters, it doesn't
-	# seem worth figuring out whether they affect compatibility.
+	# If available, if there aren't any parameters and if force_initdb is
+	# disabled, use a previously initdb'd cluster as a template by copying it.
+	# For a lot of tests, that's substantially cheaper. It does not seem
+	# worth figuring out whether extra parameters affect compatibility, so
+	# initdb is forced if any are defined.
 	#
 	# There's very similar code in pg_regress.c, but we can't easily
 	# deduplicate it until we require perl at build time.
-	if (defined $params{extra} or !defined $ENV{INITDB_TEMPLATE})
+	if (   $params{force_initdb}
+		or defined $params{extra}
+		or !defined $ENV{INITDB_TEMPLATE})
 	{
 		note("initializing database system by running initdb");
 		PostgreSQL::Test::Utils::system_or_bail('initdb', '-D', $pgdata, '-A',
