@@ -12738,9 +12738,6 @@ dropconstraint_internal(Relation rel, HeapTuple constraintTup, DropBehavior beha
 	/* Guard against stack overflow due to overly deep inheritance tree. */
 	check_stack_depth();
 
-	/* since this function recurses, it could be driven to stack overflow */
-	check_stack_depth();
-
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
 		ATSimplePermissions(AT_DropConstraint, rel, ATT_TABLE | ATT_FOREIGN_TABLE);
