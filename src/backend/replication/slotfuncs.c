@@ -413,24 +413,12 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 			nulls[i++] = true;
 		else
 		{
-			switch (slot_contents.data.invalidated)
-			{
-				case RS_INVAL_NONE:
-					nulls[i++] = true;
-					break;
+			ReplicationSlotInvalidationCause cause = slot_contents.data.invalidated;
 
-				case RS_INVAL_WAL_REMOVED:
-					values[i++] = CStringGetTextDatum(SLOT_INVAL_WAL_REMOVED_TEXT);
-					break;
-
-				case RS_INVAL_HORIZON:
-					values[i++] = CStringGetTextDatum(SLOT_INVAL_HORIZON_TEXT);
-					break;
-
-				case RS_INVAL_WAL_LEVEL:
-					values[i++] = CStringGetTextDatum(SLOT_INVAL_WAL_LEVEL_TEXT);
-					break;
-			}
+			if (cause == RS_INVAL_NONE)
+				nulls[i++] = true;
+			else
+				values[i++] = CStringGetTextDatum(SlotInvalidationCauses[cause]);
 		}
 
 		values[i++] = BoolGetDatum(slot_contents.data.failover);

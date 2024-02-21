@@ -40,6 +40,9 @@ typedef enum ReplicationSlotPersistency
 /*
  * Slots can be invalidated, e.g. due to max_slot_wal_keep_size. If so, the
  * 'invalidated' field is set to a value other than _NONE.
+ *
+ * When adding a new invalidation cause here, remember to update
+ * SlotInvalidationCauses and RS_INVAL_MAX_CAUSES.
  */
 typedef enum ReplicationSlotInvalidationCause
 {
@@ -52,13 +55,7 @@ typedef enum ReplicationSlotInvalidationCause
 	RS_INVAL_WAL_LEVEL,
 } ReplicationSlotInvalidationCause;
 
-/*
- * The possible values for 'conflict_reason' returned in
- * pg_get_replication_slots.
- */
-#define SLOT_INVAL_WAL_REMOVED_TEXT "wal_removed"
-#define SLOT_INVAL_HORIZON_TEXT     "rows_removed"
-#define SLOT_INVAL_WAL_LEVEL_TEXT   "wal_level_insufficient"
+extern PGDLLIMPORT const char *const SlotInvalidationCauses[];
 
 /*
  * On-Disk data of a replication slot, preserved across restarts.
@@ -275,6 +272,6 @@ extern void CheckPointReplicationSlots(bool is_shutdown);
 extern void CheckSlotRequirements(void);
 extern void CheckSlotPermissions(void);
 extern ReplicationSlotInvalidationCause
-			GetSlotInvalidationCause(char *conflict_reason);
+			GetSlotInvalidationCause(const char *conflict_reason);
 
 #endif							/* SLOT_H */

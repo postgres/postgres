@@ -77,6 +77,22 @@ typedef struct ReplicationSlotOnDisk
 	ReplicationSlotPersistentData slotdata;
 } ReplicationSlotOnDisk;
 
+/*
+ * Lookup table for slot invalidation causes.
+ */
+const char *const SlotInvalidationCauses[] = {
+	[RS_INVAL_NONE] = "none",
+	[RS_INVAL_WAL_REMOVED] = "wal_removed",
+	[RS_INVAL_HORIZON] = "rows_removed",
+	[RS_INVAL_WAL_LEVEL] = "wal_level_insufficient",
+};
+
+/* Maximum number of invalidation causes */
+#define	RS_INVAL_MAX_CAUSES RS_INVAL_WAL_LEVEL
+
+StaticAssertDecl(lengthof(SlotInvalidationCauses) == (RS_INVAL_MAX_CAUSES + 1),
+				 "array length mismatch");
+
 /* size of version independent data */
 #define ReplicationSlotOnDiskConstantSize \
 	offsetof(ReplicationSlotOnDisk, slotdata)
@@ -2290,23 +2306,26 @@ RestoreSlotFromDisk(const char *name)
 }
 
 /*
- * Maps the pg_replication_slots.conflict_reason text value to
- * ReplicationSlotInvalidationCause enum value
+ * Maps a conflict reason for a replication slot to
+ * ReplicationSlotInvalidationCause.
  */
 ReplicationSlotInvalidationCause
-GetSlotInvalidationCause(char *conflict_reason)
+GetSlotInvalidationCause(const char *conflict_reason)
 {
+	ReplicationSlotInvalidationCause cause;
+	bool		found PG_USED_FOR_ASSERTS_ONLY = false;
+
 	Assert(conflict_reason);
 
-	if (strcmp(conflict_reason, SLOT_INVAL_WAL_REMOVED_TEXT) == 0)
-		return RS_INVAL_WAL_REMOVED;
-	else if (strcmp(conflict_reason, SLOT_INVAL_HORIZON_TEXT) == 0)
-		return RS_INVAL_HORIZON;
-	else if (strcmp(conflict_reason, SLOT_INVAL_WAL_LEVEL_TEXT) == 0)
-		return RS_INVAL_WAL_LEVEL;
-	else
-		Assert(0);
+	for (cause = RS_INVAL_NONE; cause <= RS_INVAL_MAX_CAUSES; cause++)
+	{
+		if (strcmp(SlotInvalidationCauses[cause], conflict_reason) == 0)
+		{
+			found = true;
+			break;
+		}
+	}
 
-	/* Keep compiler quiet */
-	return RS_INVAL_NONE;
+	Assert(found);
+	return cause;
 }
