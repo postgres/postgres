@@ -25552,7 +25552,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         of its children.) You can use the
         <link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link>,
         <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link> and
-        <link linkend="view-pg-hba-file-rules"><structname>pg_ident_file_mappings</structname></link> views
+        <link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link> views
         to check the configuration files for possible errors, before reloading.
        </para></entry>
       </row>
