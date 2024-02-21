@@ -242,7 +242,7 @@ PgArchiverMain(void)
 	 * Advertise our pgprocno so that backends can use our latch to wake us up
 	 * while we're sleeping.
 	 */
-	PgArch->pgprocno = MyProc->pgprocno;
+	PgArch->pgprocno = MyProcNumber;
 
 	/* Create workspace for pgarch_readyXlog() */
 	arch_files = palloc(sizeof(struct arch_files_state));

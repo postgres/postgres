@@ -65,6 +65,7 @@ bool		log_lock_waits = false;
 
 /* Pointer to this process's PGPROC struct, if any */
 PGPROC	   *MyProc = NULL;
+int			MyProcNumber = INVALID_PGPROCNO;
 
 /*
  * This spinlock protects the freelist of recycled PGPROC structures.
@@ -228,7 +229,6 @@ InitProcGlobal(void)
 			InitSharedLatch(&(proc->procLatch));
 			LWLockInitialize(&(proc->fpInfoLock), LWTRANCHE_LOCK_FASTPATH);
 		}
-		proc->pgprocno = i;
 
 		/*
 		 * Newly created PGPROCs for normal backends, autovacuum and bgworkers
@@ -353,6 +353,7 @@ InitProcess(void)
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 				 errmsg("sorry, too many clients already")));
 	}
+	MyProcNumber = GetNumberFromPGProc(MyProc);
 
 	/*
 	 * Cross-check that the PGPROC is of the type we expect; if this were not
@@ -565,6 +566,8 @@ InitAuxiliaryProcess(void)
 	MyProc = auxproc;
 
 	SpinLockRelease(ProcStructLock);
+
+	MyProcNumber = GetNumberFromPGProc(MyProc);
 
 	/*
 	 * Initialize all fields of MyProc, except for those previously
@@ -907,6 +910,7 @@ ProcKill(int code, Datum arg)
 
 	proc = MyProc;
 	MyProc = NULL;
+	MyProcNumber = INVALID_PGPROCNO;
 	DisownLatch(&proc->procLatch);
 
 	procgloballist = proc->procgloballist;
@@ -978,6 +982,7 @@ AuxiliaryProcKill(int code, Datum arg)
 
 	proc = MyProc;
 	MyProc = NULL;
+	MyProcNumber = INVALID_PGPROCNO;
 	DisownLatch(&proc->procLatch);
 
 	SpinLockAcquire(ProcStructLock);
@@ -1903,10 +1908,9 @@ BecomeLockGroupMember(PGPROC *leader, int pid)
 
 	/*
 	 * Get lock protecting the group fields.  Note LockHashPartitionLockByProc
-	 * accesses leader->pgprocno in a PGPROC that might be free.  This is safe
-	 * because all PGPROCs' pgprocno fields are set during shared memory
-	 * initialization and never change thereafter; so we will acquire the
-	 * correct lock even if the leader PGPROC is in process of being recycled.
+	 * calculates the proc number based on the PGPROC slot without looking at
+	 * its contents, so we will acquire the correct lock even if the leader
+	 * PGPROC is in process of being recycled.
 	 */
 	leader_lwlock = LockHashPartitionLockByProc(leader);
 	LWLockAcquire(leader_lwlock, LW_EXCLUSIVE);

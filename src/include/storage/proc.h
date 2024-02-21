@@ -194,11 +194,6 @@ struct PGPROC
 	int			pgxactoff;		/* offset into various ProcGlobal->arrays with
 								 * data mirrored from this PGPROC */
 
-	int			pgprocno;		/* Number of this PGPROC in
-								 * ProcGlobal->allProcs array. This is set
-								 * once by InitProcGlobal().
-								 * ProcGlobal->allProcs[n].pgprocno == n */
-
 	/* These fields are zero while a backend is still starting up: */
 	BackendId	backendId;		/* This backend's backend ID (if assigned) */
 	Oid			databaseId;		/* OID of database this backend is using */
@@ -307,6 +302,7 @@ struct PGPROC
 
 
 extern PGDLLIMPORT PGPROC *MyProc;
+extern PGDLLIMPORT int MyProcNumber;	/* same as GetNumberFromPGProc(MyProc) */
 
 /*
  * There is one ProcGlobal struct for the whole database cluster.
@@ -410,8 +406,9 @@ extern PGDLLIMPORT PROC_HDR *ProcGlobal;
 
 extern PGDLLIMPORT PGPROC *PreparedXactProcs;
 
-/* Accessor for PGPROC given a pgprocno. */
+/* Accessor for PGPROC given a pgprocno, and vice versa. */
 #define GetPGProcByNumber(n) (&ProcGlobal->allProcs[(n)])
+#define GetNumberFromPGProc(proc) ((proc) - &ProcGlobal->allProcs[0])
 
 /*
  * We set aside some extra PGPROC structures for auxiliary processes,
