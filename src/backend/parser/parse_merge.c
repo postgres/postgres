@@ -133,7 +133,11 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 		int			when_type = (mergeWhenClause->matched ? 0 : 1);
 
 		/*
-		 * Collect action types so we can check target permissions
+		 * Collect permissions to check, according to action types. We require
+		 * SELECT privileges for DO NOTHING because it'd be irregular to have
+		 * a target relation with zero privileges checked, in case DO NOTHING
+		 * is the only action.  There's no damage from that: any meaningful
+		 * MERGE command requires at least some access to the table anyway.
 		 */
 		switch (mergeWhenClause->commandType)
 		{
@@ -147,6 +151,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 				targetPerms |= ACL_DELETE;
 				break;
 			case CMD_NOTHING:
+				targetPerms |= ACL_SELECT;
 				break;
 			default:
 				elog(ERROR, "unknown action in MERGE WHEN clause");

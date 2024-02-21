@@ -4,6 +4,8 @@
 
 CREATE USER regress_merge_privs;
 CREATE USER regress_merge_no_privs;
+CREATE USER regress_merge_none;
+
 DROP TABLE IF EXISTS target;
 DROP TABLE IF EXISTS source;
 CREATE TABLE target (tid integer, balance integer)
@@ -118,6 +120,14 @@ DROP MATERIALIZED VIEW mv;
 
 -- permissions
 
+SET SESSION AUTHORIZATION regress_merge_none;
+MERGE INTO target
+USING (SELECT 1) AS s
+ON true
+WHEN MATCHED THEN
+	DO NOTHING;
+
+SET SESSION AUTHORIZATION regress_merge_privs;
 MERGE INTO target
 USING source2
 ON target.tid = source2.sid
@@ -1471,3 +1481,4 @@ DROP TABLE source, source2;
 DROP FUNCTION merge_trigfunc();
 DROP USER regress_merge_privs;
 DROP USER regress_merge_no_privs;
+DROP USER regress_merge_none;
