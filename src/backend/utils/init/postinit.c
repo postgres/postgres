@@ -43,6 +43,7 @@
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
 #include "replication/slot.h"
+#include "replication/slotsync.h"
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
@@ -876,10 +877,11 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	 * Perform client authentication if necessary, then figure out our
 	 * postgres user ID, and see if we are a superuser.
 	 *
-	 * In standalone mode and in autovacuum worker processes, we use a fixed
-	 * ID, otherwise we figure it out from the authenticated user name.
+	 * In standalone mode, autovacuum worker processes and slot sync worker
+	 * process, we use a fixed ID, otherwise we figure it out from the
+	 * authenticated user name.
 	 */
-	if (bootstrap || IsAutoVacuumWorkerProcess())
+	if (bootstrap || IsAutoVacuumWorkerProcess() || IsLogicalSlotSyncWorker())
 	{
 		InitializeSessionUserIdStandalone();
 		am_superuser = true;

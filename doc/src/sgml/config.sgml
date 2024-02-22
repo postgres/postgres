@@ -4943,6 +4943,24 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-sync-replication-slots" xreflabel="sync_replication_slots">
+      <term><varname>sync_replication_slots</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>sync_replication_slots</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        It enables a physical standby to synchronize logical failover slots
+        from the primary server so that logical subscribers can resume
+        replication from the new primary server after failover.
+       </para>
+       <para>
+        It is disabled by default. This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
      </variablelist>
     </sect2>
 

@@ -40,6 +40,7 @@
 #include "postmaster/interrupt.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
+#include "replication/slotsync.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -292,6 +293,9 @@ GetBackendTypeDesc(BackendType backendType)
 			break;
 		case B_LOGGER:
 			backendDesc = "logger";
+			break;
+		case B_SLOTSYNC_WORKER:
+			backendDesc = "slotsync worker";
 			break;
 		case B_STANDALONE_BACKEND:
 			backendDesc = "standalone backend";
@@ -835,9 +839,10 @@ InitializeSessionUserIdStandalone(void)
 {
 	/*
 	 * This function should only be called in single-user mode, in autovacuum
-	 * workers, and in background workers.
+	 * workers, in slot sync worker and in background workers.
 	 */
-	Assert(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || IsBackgroundWorker);
+	Assert(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() ||
+		   IsLogicalSlotSyncWorker() || IsBackgroundWorker);
 
 	/* call only once */
 	Assert(!OidIsValid(AuthenticatedUserId));

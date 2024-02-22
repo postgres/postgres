@@ -115,6 +115,7 @@
 #include "postmaster/syslogger.h"
 #include "postmaster/walsummarizer.h"
 #include "replication/logicallauncher.h"
+#include "replication/slotsync.h"
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -167,11 +168,11 @@
  * they will never become live backends.  dead_end children are not assigned a
  * PMChildSlot.  dead_end children have bkend_type NORMAL.
  *
- * "Special" children such as the startup, bgwriter and autovacuum launcher
- * tasks are not in this list.  They are tracked via StartupPID and other
- * pid_t variables below.  (Thus, there can't be more than one of any given
- * "special" child process type.  We use BackendList entries for any child
- * process there can be more than one of.)
+ * "Special" children such as the startup, bgwriter, autovacuum launcher, and
+ * slot sync worker tasks are not in this list.  They are tracked via StartupPID
+ * and other pid_t variables below.  (Thus, there can't be more than one of any
+ * given "special" child process type.  We use BackendList entries for any
+ * child process there can be more than one of.)
  */
 typedef struct bkend
 {
@@ -254,7 +255,8 @@ static pid_t StartupPID = 0,
 			WalSummarizerPID = 0,
 			AutoVacPID = 0,
 			PgArchPID = 0,
-			SysLoggerPID = 0;
+			SysLoggerPID = 0,
+			SlotSyncWorkerPID = 0;
 
 /* Startup process's status */
 typedef enum
@@ -445,6 +447,7 @@ static void StartAutovacuumWorker(void);
 static void MaybeStartWalReceiver(void);
 static void MaybeStartWalSummarizer(void);
 static void InitPostmasterDeathWatchHandle(void);
+static void MaybeStartSlotSyncWorker(void);
 
 /*
  * Archiver is allowed to start up at the current postmaster state?
@@ -1822,6 +1825,9 @@ ServerLoop(void)
 		if (PgArchPID == 0 && PgArchStartupAllowed())
 			PgArchPID = StartChildProcess(ArchiverProcess);
 
+		/* If we need to start a slot sync worker, try to do that now */
+		MaybeStartSlotSyncWorker();
+
 		/* If we need to signal the autovacuum launcher, do so now */
 		if (avlauncher_needs_signal)
 		{
@@ -2661,6 +2667,8 @@ process_pm_reload_request(void)
 			signal_child(PgArchPID, SIGHUP);
 		if (SysLoggerPID != 0)
 			signal_child(SysLoggerPID, SIGHUP);
+		if (SlotSyncWorkerPID != 0)
+			signal_child(SlotSyncWorkerPID, SIGHUP);
 
 		/* Reload authentication config files too */
 		if (!load_hba())
@@ -3010,6 +3018,7 @@ process_pm_child_exit(void)
 				AutoVacPID = StartAutoVacLauncher();
 			if (PgArchStartupAllowed() && PgArchPID == 0)
 				PgArchPID = StartChildProcess(ArchiverProcess);
+			MaybeStartSlotSyncWorker();
 
 			/* workers may be scheduled to start now */
 			maybe_start_bgworkers();
@@ -3177,6 +3186,22 @@ process_pm_child_exit(void)
 			if (!EXIT_STATUS_0(exitstatus))
 				LogChildExit(LOG, _("system logger process"),
 							 pid, exitstatus);
+			continue;
+		}
+
+		/*
+		 * Was it the slot sync worker? Normal exit or FATAL exit can be
+		 * ignored (FATAL can be caused by libpqwalreceiver on receiving
+		 * shutdown request by the startup process during promotion); we'll
+		 * start a new one at the next iteration of the postmaster's main
+		 * loop, if necessary. Any other exit condition is treated as a crash.
+		 */
+		if (pid == SlotSyncWorkerPID)
+		{
+			SlotSyncWorkerPID = 0;
+			if (!EXIT_STATUS_0(exitstatus) && !EXIT_STATUS_1(exitstatus))
+				HandleChildCrash(pid, exitstatus,
+								 _("slot sync worker process"));
 			continue;
 		}
 
@@ -3384,7 +3409,7 @@ CleanupBackend(int pid,
 
 /*
  * HandleChildCrash -- cleanup after failed backend, bgwriter, checkpointer,
- * walwriter, autovacuum, archiver or background worker.
+ * walwriter, autovacuum, archiver, slot sync worker, or background worker.
  *
  * The objectives here are to clean up our local state about the child
  * process, and to signal all other remaining children to quickdie.
@@ -3546,6 +3571,12 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	else if (PgArchPID != 0 && take_action)
 		sigquit_child(PgArchPID);
 
+	/* Take care of the slot sync worker too */
+	if (pid == SlotSyncWorkerPID)
+		SlotSyncWorkerPID = 0;
+	else if (SlotSyncWorkerPID != 0 && take_action)
+		sigquit_child(SlotSyncWorkerPID);
+
 	/* We do NOT restart the syslogger */
 
 	if (Shutdown != ImmediateShutdown)
@@ -3686,6 +3717,8 @@ PostmasterStateMachine(void)
 			signal_child(WalReceiverPID, SIGTERM);
 		if (WalSummarizerPID != 0)
 			signal_child(WalSummarizerPID, SIGTERM);
+		if (SlotSyncWorkerPID != 0)
+			signal_child(SlotSyncWorkerPID, SIGTERM);
 		/* checkpointer, archiver, stats, and syslogger may continue for now */
 
 		/* Now transition to PM_WAIT_BACKENDS state to wait for them to die */
@@ -3701,13 +3734,13 @@ PostmasterStateMachine(void)
 		/*
 		 * PM_WAIT_BACKENDS state ends when we have no regular backends
 		 * (including autovac workers), no bgworkers (including unconnected
-		 * ones), and no walwriter, autovac launcher or bgwriter.  If we are
-		 * doing crash recovery or an immediate shutdown then we expect the
-		 * checkpointer to exit as well, otherwise not. The stats and
-		 * syslogger processes are disregarded since they are not connected to
-		 * shared memory; we also disregard dead_end children here. Walsenders
-		 * and archiver are also disregarded, they will be terminated later
-		 * after writing the checkpoint record.
+		 * ones), and no walwriter, autovac launcher, bgwriter or slot sync
+		 * worker.  If we are doing crash recovery or an immediate shutdown
+		 * then we expect the checkpointer to exit as well, otherwise not. The
+		 * stats and syslogger processes are disregarded since they are not
+		 * connected to shared memory; we also disregard dead_end children
+		 * here. Walsenders and archiver are also disregarded, they will be
+		 * terminated later after writing the checkpoint record.
 		 */
 		if (CountChildren(BACKEND_TYPE_ALL - BACKEND_TYPE_WALSND) == 0 &&
 			StartupPID == 0 &&
@@ -3717,7 +3750,8 @@ PostmasterStateMachine(void)
 			(CheckpointerPID == 0 ||
 			 (!FatalError && Shutdown < ImmediateShutdown)) &&
 			WalWriterPID == 0 &&
-			AutoVacPID == 0)
+			AutoVacPID == 0 &&
+			SlotSyncWorkerPID == 0)
 		{
 			if (Shutdown >= ImmediateShutdown || FatalError)
 			{
@@ -3815,6 +3849,7 @@ PostmasterStateMachine(void)
 			Assert(CheckpointerPID == 0);
 			Assert(WalWriterPID == 0);
 			Assert(AutoVacPID == 0);
+			Assert(SlotSyncWorkerPID == 0);
 			/* syslogger is not considered here */
 			pmState = PM_NO_CHILDREN;
 		}
@@ -4038,6 +4073,8 @@ TerminateChildren(int signal)
 		signal_child(AutoVacPID, signal);
 	if (PgArchPID != 0)
 		signal_child(PgArchPID, signal);
+	if (SlotSyncWorkerPID != 0)
+		signal_child(SlotSyncWorkerPID, signal);
 }
 
 /*
@@ -4850,6 +4887,7 @@ SubPostmasterMain(int argc, char *argv[])
 	 */
 	if (strcmp(argv[1], "--forkbackend") == 0 ||
 		strcmp(argv[1], "--forkavlauncher") == 0 ||
+		strcmp(argv[1], "--forkssworker") == 0 ||
 		strcmp(argv[1], "--forkavworker") == 0 ||
 		strcmp(argv[1], "--forkaux") == 0 ||
 		strcmp(argv[1], "--forkbgworker") == 0)
@@ -4952,6 +4990,13 @@ SubPostmasterMain(int argc, char *argv[])
 		InitShmemAccess(UsedShmemSegAddr);
 
 		AutoVacWorkerMain(argc - 2, argv + 2);	/* does not return */
+	}
+	if (strcmp(argv[1], "--forkssworker") == 0)
+	{
+		/* Restore basic shared memory pointers */
+		InitShmemAccess(UsedShmemSegAddr);
+
+		ReplSlotSyncWorkerMain(argc - 2, argv + 2); /* does not return */
 	}
 	if (strcmp(argv[1], "--forkbgworker") == 0)
 	{
@@ -5497,6 +5542,24 @@ MaybeStartWalSummarizer(void)
 		WalSummarizerPID = StartChildProcess(WalSummarizerProcess);
 }
 
+
+/*
+ * MaybeStartSlotSyncWorker
+ * 		Start the slot sync worker, if not running and our state allows.
+ *
+ * We allow to start the slot sync worker when we are on a hot standby,
+ * fast or immediate shutdown is not in progress, slot sync parameters
+ * are configured correctly, and it is the first time of worker's launch,
+ * or enough time has passed since the worker was launched last.
+ */
+static void
+MaybeStartSlotSyncWorker(void)
+{
+	if (SlotSyncWorkerPID == 0 && pmState == PM_HOT_STANDBY &&
+		Shutdown <= SmartShutdown && sync_replication_slots &&
+		ValidateSlotSyncParams(LOG) && SlotSyncWorkerCanRestart())
+		SlotSyncWorkerPID = StartSlotSyncWorker();
+}
 
 /*
  * Create the opts file

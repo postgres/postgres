@@ -49,6 +49,7 @@
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
 #include "replication/slot.h"
+#include "replication/slotsync.h"
 #include "replication/walreceiver.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -1466,6 +1467,20 @@ FinishWalRecovery(void)
 	 * start writing WAL.
 	 */
 	XLogShutdownWalRcv();
+
+	/*
+	 * Shutdown the slot sync worker to drop any temporary slots acquired by
+	 * it and to prevent it from keep trying to fetch the failover slots.
+	 *
+	 * We do not update the 'synced' column from true to false here, as any
+	 * failed update could leave 'synced' column false for some slots. This
+	 * could cause issues during slot sync after restarting the server as a
+	 * standby. While updating the 'synced' column after switching to the new
+	 * timeline is an option, it does not simplify the handling for the
+	 * 'synced' column. Therefore, we retain the 'synced' column as true after
+	 * promotion as it may provide useful information about the slot origin.
+	 */
+	ShutDownSlotSync();
 
 	/*
 	 * We are now done reading the xlog from stream. Turn off streaming

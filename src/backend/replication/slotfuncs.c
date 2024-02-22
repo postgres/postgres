@@ -960,10 +960,12 @@ pg_sync_replication_slots(PG_FUNCTION_ARGS)
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("replication slots can only be synchronized to a standby server"));
 
+	ValidateSlotSyncParams(ERROR);
+
 	/* Load the libpq-specific functions */
 	load_file("libpqwalreceiver", false);
 
-	ValidateSlotSyncParams();
+	(void) CheckAndGetDbnameFromConninfo();
 
 	initStringInfo(&app_name);
 	if (cluster_name[0])

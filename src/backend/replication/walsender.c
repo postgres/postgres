@@ -3389,7 +3389,7 @@ WalSndDone(WalSndSendDataCallback send_data)
  * This should only be called when in recovery.
  *
  * This is called either by cascading walsender to find WAL postion to be sent
- * to a cascaded standby or by slot synchronization function to validate remote
+ * to a cascaded standby or by slot synchronization operation to validate remote
  * slot's lsn before syncing it locally.
  *
  * As a side-effect, *tli is updated to the TLI of the last

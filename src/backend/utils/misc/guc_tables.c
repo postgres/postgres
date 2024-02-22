@@ -67,6 +67,7 @@
 #include "postmaster/walwriter.h"
 #include "replication/logicallauncher.h"
 #include "replication/slot.h"
+#include "replication/slotsync.h"
 #include "replication/syncrep.h"
 #include "storage/bufmgr.h"
 #include "storage/large_object.h"
@@ -2051,6 +2052,15 @@ struct config_bool ConfigureNamesBool[] =
 		},
 		&event_triggers,
 		true,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"sync_replication_slots", PGC_SIGHUP, REPLICATION_STANDBY,
+			gettext_noop("Enables a physical standby to synchronize logical failover slots from the primary server."),
+		},
+		&sync_replication_slots,
+		false,
 		NULL, NULL, NULL
 	},
 
