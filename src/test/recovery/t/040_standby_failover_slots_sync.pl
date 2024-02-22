@@ -373,7 +373,7 @@ $standby1->append_conf('postgresql.conf', qq(sync_replication_slots = on));
 $standby1->reload;
 
 # Confirm that the slot sync worker is able to start.
-$standby1->wait_for_log(qr/LOG:  slot sync worker started/,
+$standby1->wait_for_log(qr/slot sync worker started/,
 	$log_offset);
 
 $log_offset = -s $standby1->logfile;
@@ -384,9 +384,9 @@ $standby1->reload;
 
 # Confirm that slot sync worker acknowledge the GUC change and logs the msg
 # about wrong configuration.
-$standby1->wait_for_log(qr/LOG:  slot sync worker will restart because of a parameter change/,
+$standby1->wait_for_log(qr/slot sync worker will restart because of a parameter change/,
 	$log_offset);
-$standby1->wait_for_log(qr/LOG:  slot synchronization requires hot_standby_feedback to be enabled/,
+$standby1->wait_for_log(qr/slot synchronization requires hot_standby_feedback to be enabled/,
 	$log_offset);
 
 $log_offset = -s $standby1->logfile;
@@ -396,7 +396,7 @@ $standby1->append_conf('postgresql.conf', "hot_standby_feedback = on");
 $standby1->reload;
 
 # Confirm that the slot sync worker is able to start now.
-$standby1->wait_for_log(qr/LOG:  slot sync worker started/,
+$standby1->wait_for_log(qr/slot sync worker started/,
 	$log_offset);
 
 ##################################################
