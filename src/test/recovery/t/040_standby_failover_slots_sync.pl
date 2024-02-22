@@ -319,7 +319,7 @@ $standby1->reload;
 ($result, $stdout, $stderr) =
   $standby1->psql('postgres', "SELECT pg_sync_replication_slots();");
 ok( $stderr =~
-	  /HINT:  'dbname' must be specified in "primary_conninfo"/,
+	  /ERROR:  slot synchronization requires dbname to be specified in primary_conninfo/,
 	"cannot sync slots if dbname is not specified in primary_conninfo");
 
 ##################################################
