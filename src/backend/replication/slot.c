@@ -2327,6 +2327,7 @@ ReplicationSlotInvalidationCause
 GetSlotInvalidationCause(const char *conflict_reason)
 {
 	ReplicationSlotInvalidationCause cause;
+	ReplicationSlotInvalidationCause result = RS_INVAL_NONE;
 	bool		found PG_USED_FOR_ASSERTS_ONLY = false;
 
 	Assert(conflict_reason);
@@ -2336,10 +2337,11 @@ GetSlotInvalidationCause(const char *conflict_reason)
 		if (strcmp(SlotInvalidationCauses[cause], conflict_reason) == 0)
 		{
 			found = true;
+			result = cause;
 			break;
 		}
 	}
 
 	Assert(found);
-	return cause;
+	return result;
 }
