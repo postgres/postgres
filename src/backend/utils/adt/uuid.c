@@ -53,10 +53,13 @@ uuid_out(PG_FUNCTION_ARGS)
 {
 	pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
 	static const char hex_chars[] = "0123456789abcdef";
-	StringInfoData buf;
+	char	   *buf,
+			   *p;
 	int			i;
 
-	initStringInfo(&buf);
+	/* counts for the four hyphens and the zero-terminator */
+	buf = palloc(2 * UUID_LEN + 5);
+	p = buf;
 	for (i = 0; i < UUID_LEN; i++)
 	{
 		int			hi;
@@ -68,16 +71,17 @@ uuid_out(PG_FUNCTION_ARGS)
 		 * ("-"). Therefore, add the hyphens at the appropriate places here.
 		 */
 		if (i == 4 || i == 6 || i == 8 || i == 10)
-			appendStringInfoChar(&buf, '-');
+			*p++ = '-';
 
 		hi = uuid->data[i] >> 4;
 		lo = uuid->data[i] & 0x0F;
 
-		appendStringInfoChar(&buf, hex_chars[hi]);
-		appendStringInfoChar(&buf, hex_chars[lo]);
+		*p++ = hex_chars[hi];
+		*p++ = hex_chars[lo];
 	}
+	*p = '\0';
 
-	PG_RETURN_CSTRING(buf.data);
+	PG_RETURN_CSTRING(buf);
 }
 
 /*
