@@ -405,9 +405,9 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 				replace_varno((Node *) otherrel->lateral_vars, relid, subst);
 
 				/*
-				 * Although we pass root->parse through cleanup procedure,
-				 * but parse->rtable and rte contains refs to different copies
-				 * of the subquery.
+				 * Although we pass root->parse through cleanup procedure, but
+				 * parse->rtable and rte contains refs to different copies of
+				 * the subquery.
 				 */
 				if (otherrel->rtekind == RTE_SUBQUERY)
 					query_tree_walker(rte->subquery, replace_varno_walker, &ctx,
