@@ -2566,44 +2566,34 @@ typedef enum ConstrType			/* types of constraints */
 
 typedef struct Constraint
 {
-	pg_node_attr(custom_read_write)
-
 	NodeTag		type;
 	ConstrType	contype;		/* see above */
-
-	/* Fields used for most/all constraint types: */
 	char	   *conname;		/* Constraint name, or NULL if unnamed */
 	bool		deferrable;		/* DEFERRABLE? */
 	bool		initdeferred;	/* INITIALLY DEFERRED? */
-	int			location;		/* token location, or -1 if unknown */
-
-	/* Fields used for constraints with expressions (CHECK and DEFAULT): */
+	bool		skip_validation;	/* skip validation of existing rows? */
+	bool		initially_valid;	/* mark the new constraint as valid? */
 	bool		is_no_inherit;	/* is constraint non-inheritable? */
-	Node	   *raw_expr;		/* expr, as untransformed parse tree */
-	char	   *cooked_expr;	/* expr, as nodeToString representation */
+	Node	   *raw_expr;		/* CHECK or DEFAULT expression, as
+								 * untransformed parse tree */
+	char	   *cooked_expr;	/* CHECK or DEFAULT expression, as
+								 * nodeToString representation */
 	char		generated_when; /* ALWAYS or BY DEFAULT */
-
-	/* Fields used for "raw" NOT NULL constraints: */
-	int			inhcount;		/* initial inheritance count to apply */
-
-	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
+	int			inhcount;		/* initial inheritance count to apply, for
+								 * "raw" NOT NULL constraints */
 	bool		nulls_not_distinct; /* null treatment for UNIQUE constraints */
 	List	   *keys;			/* String nodes naming referenced key
-								 * column(s); also used for NOT NULL */
+								 * column(s); for UNIQUE/PK/NOT NULL */
 	bool		without_overlaps;	/* WITHOUT OVERLAPS specified */
 	List	   *including;		/* String nodes naming referenced nonkey
-								 * column(s) */
-
-	/* Fields used for EXCLUSION constraints: */
-	List	   *exclusions;		/* list of (IndexElem, operator name) pairs */
-
-	/* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */
+								 * column(s); for UNIQUE/PK */
+	List	   *exclusions;		/* list of (IndexElem, operator name) pairs;
+								 * for exclusion constraints */
 	List	   *options;		/* options from WITH clause */
 	char	   *indexname;		/* existing index to use; otherwise NULL */
 	char	   *indexspace;		/* index tablespace; NULL for default */
 	bool		reset_default_tblspc;	/* reset default_tablespace prior to
 										 * creating the index */
-	/* These could be, but currently are not, used for UNIQUE/PKEY: */
 	char	   *access_method;	/* index access method; NULL for default */
 	Node	   *where_clause;	/* partial index predicate */
 
@@ -2619,9 +2609,7 @@ typedef struct Constraint
 	Oid			old_pktable_oid;	/* pg_constraint.confrelid of my former
 									 * self */
 
-	/* Fields used for constraints that allow a NOT VALID specification */
-	bool		skip_validation;	/* skip validation of existing rows? */
-	bool		initially_valid;	/* mark the new constraint as valid? */
+	int			location;		/* token location, or -1 if unknown */
 } Constraint;
 
 /* ----------------------
