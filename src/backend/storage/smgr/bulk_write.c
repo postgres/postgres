@@ -57,7 +57,7 @@ typedef struct PendingWrite
 /*
  * Bulk writer state for one relation fork.
  */
-typedef struct BulkWriteState
+struct BulkWriteState
 {
 	/* Information about the target relation we're writing */
 	SMgrRelation smgr;
@@ -75,7 +75,7 @@ typedef struct BulkWriteState
 	XLogRecPtr	start_RedoRecPtr;
 
 	MemoryContext memcxt;
-} BulkWriteState;
+};
 
 static void smgr_bulk_flush(BulkWriteState *bulkstate);
 

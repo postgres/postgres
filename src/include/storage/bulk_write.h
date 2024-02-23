@@ -17,6 +17,7 @@
 #include "storage/smgr.h"
 #include "utils/rel.h"
 
+/* Bulk writer state, contents are private to bulk_write.c */
 typedef struct BulkWriteState BulkWriteState;
 
 /*
