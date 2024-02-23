@@ -25,7 +25,7 @@
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
-#include "storage/smgr.h"
+#include "storage/bulk_write.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -155,42 +155,27 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 void
 spgbuildempty(Relation index)
 {
-	Buffer		metabuffer,
-				rootbuffer,
-				nullbuffer;
+	BulkWriteState *bulkstate;
+	BulkWriteBuffer buf;
 
-	/*
-	 * Initialize the meta page and root pages
-	 */
-	metabuffer = ReadBufferExtended(index, INIT_FORKNUM, P_NEW, RBM_NORMAL, NULL);
-	LockBuffer(metabuffer, BUFFER_LOCK_EXCLUSIVE);
-	rootbuffer = ReadBufferExtended(index, INIT_FORKNUM, P_NEW, RBM_NORMAL, NULL);
-	LockBuffer(rootbuffer, BUFFER_LOCK_EXCLUSIVE);
-	nullbuffer = ReadBufferExtended(index, INIT_FORKNUM, P_NEW, RBM_NORMAL, NULL);
-	LockBuffer(nullbuffer, BUFFER_LOCK_EXCLUSIVE);
+	bulkstate = smgr_bulk_start_rel(index, INIT_FORKNUM);
 
-	Assert(BufferGetBlockNumber(metabuffer) == SPGIST_METAPAGE_BLKNO);
-	Assert(BufferGetBlockNumber(rootbuffer) == SPGIST_ROOT_BLKNO);
-	Assert(BufferGetBlockNumber(nullbuffer) == SPGIST_NULL_BLKNO);
+	/* Construct metapage. */
+	buf = smgr_bulk_get_buf(bulkstate);
+	SpGistInitMetapage((Page) buf);
+	smgr_bulk_write(bulkstate, SPGIST_METAPAGE_BLKNO, buf, true);
 
-	START_CRIT_SECTION();
+	/* Likewise for the root page. */
+	buf = smgr_bulk_get_buf(bulkstate);
+	SpGistInitPage((Page) buf, SPGIST_LEAF);
+	smgr_bulk_write(bulkstate, SPGIST_ROOT_BLKNO, buf, true);
 
-	SpGistInitMetapage(BufferGetPage(metabuffer));
-	MarkBufferDirty(metabuffer);
-	SpGistInitBuffer(rootbuffer, SPGIST_LEAF);
-	MarkBufferDirty(rootbuffer);
-	SpGistInitBuffer(nullbuffer, SPGIST_LEAF | SPGIST_NULLS);
-	MarkBufferDirty(nullbuffer);
+	/* Likewise for the null-tuples root page. */
+	buf = smgr_bulk_get_buf(bulkstate);
+	SpGistInitPage((Page) buf, SPGIST_LEAF | SPGIST_NULLS);
+	smgr_bulk_write(bulkstate, SPGIST_NULL_BLKNO, buf, true);
 
-	log_newpage_buffer(metabuffer, true);
-	log_newpage_buffer(rootbuffer, true);
-	log_newpage_buffer(nullbuffer, true);
-
-	END_CRIT_SECTION();
-
-	UnlockReleaseBuffer(metabuffer);
-	UnlockReleaseBuffer(rootbuffer);
-	UnlockReleaseBuffer(nullbuffer);
+	smgr_bulk_finish(bulkstate);
 }
 
 /*

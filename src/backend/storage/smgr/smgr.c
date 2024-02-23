@@ -102,6 +102,7 @@ typedef struct f_smgr
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
 								  BlockNumber nblocks);
 	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
+	void		(*smgr_registersync) (SMgrRelation reln, ForkNumber forknum);
 } f_smgr;
 
 static const f_smgr smgrsw[] = {
@@ -123,6 +124,7 @@ static const f_smgr smgrsw[] = {
 		.smgr_nblocks = mdnblocks,
 		.smgr_truncate = mdtruncate,
 		.smgr_immedsync = mdimmedsync,
+		.smgr_registersync = mdregistersync,
 	}
 };
 
@@ -616,6 +618,14 @@ smgrreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  * on disk at return, only dumped out to the kernel.  However,
  * provisions will be made to fsync the write before the next checkpoint.
  *
+ * NB: The mechanism to ensure fsync at next checkpoint assumes that there is
+ * something that prevents a concurrent checkpoint from "racing ahead" of the
+ * write.  One way to prevent that is by holding a lock on the buffer; the
+ * buffer manager's writes are protected by that.  The bulk writer facility
+ * in bulk_write.c checks the redo pointer and calls smgrimmedsync() if a
+ * checkpoint happened; that relies on the fact that no other backend can be
+ * concurrently modifying the page.
+ *
  * skipFsync indicates that the caller will make other provisions to
  * fsync the relation, so we needn't bother.  Temporary relations also
  * do not require fsync.
@@ -734,6 +744,24 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
 }
 
 /*
+ * smgrregistersync() -- Request a relation to be sync'd at next checkpoint
+ *
+ * This can be used after calling smgrwrite() or smgrextend() with skipFsync =
+ * true, to register the fsyncs that were skipped earlier.
+ *
+ * Note: be mindful that a checkpoint could already have happened between the
+ * smgrwrite or smgrextend calls and this!  In that case, the checkpoint
+ * already missed fsyncing this relation, and you should use smgrimmedsync
+ * instead.  Most callers should use the bulk loading facility in bulk_write.c
+ * which handles all that.
+ */
+void
+smgrregistersync(SMgrRelation reln, ForkNumber forknum)
+{
+	smgrsw[reln->smgr_which].smgr_registersync(reln, forknum);
+}
+
+/*
  * smgrimmedsync() -- Force the specified relation to stable storage.
  *
  * Synchronously force all previous writes to the specified relation
@@ -755,6 +783,9 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
  * Note that you need to do FlushRelationBuffers() first if there is
  * any possibility that there are dirty buffers for the relation;
  * otherwise the sync is not very meaningful.
+ *
+ * Most callers should use the bulk loading facility in bulk_write.c
+ * instead of calling this directly.
  */
 void
 smgrimmedsync(SMgrRelation reln, ForkNumber forknum)

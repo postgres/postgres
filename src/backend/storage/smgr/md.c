@@ -1237,6 +1237,49 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 }
 
 /*
+ * mdregistersync() -- Mark whole relation as needing fsync
+ */
+void
+mdregistersync(SMgrRelation reln, ForkNumber forknum)
+{
+	int			segno;
+	int			min_inactive_seg;
+
+	/*
+	 * NOTE: mdnblocks makes sure we have opened all active segments, so that
+	 * the loop below will get them all!
+	 */
+	mdnblocks(reln, forknum);
+
+	min_inactive_seg = segno = reln->md_num_open_segs[forknum];
+
+	/*
+	 * Temporarily open inactive segments, then close them after sync.  There
+	 * may be some inactive segments left opened after error, but that is
+	 * harmless.  We don't bother to clean them up and take a risk of further
+	 * trouble.  The next mdclose() will soon close them.
+	 */
+	while (_mdfd_openseg(reln, forknum, segno, 0) != NULL)
+		segno++;
+
+	while (segno > 0)
+	{
+		MdfdVec    *v = &reln->md_seg_fds[forknum][segno - 1];
+
+		register_dirty_segment(reln, forknum, v);
+
+		/* Close inactive segments immediately */
+		if (segno > min_inactive_seg)
+		{
+			FileClose(v->mdfd_vfd);
+			_fdvec_resize(reln, forknum, segno - 1);
+		}
+
+		segno--;
+	}
+}
+
+/*
  * mdimmedsync() -- Immediately sync a relation to stable storage.
  *
  * Note that only writes already issued are synced; this routine knows
@@ -1255,7 +1298,7 @@ mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 
 	/*
 	 * NOTE: mdnblocks makes sure we have opened all active segments, so that
-	 * fsync loop will get them all!
+	 * the loop below will get them all!
 	 */
 	mdnblocks(reln, forknum);
 

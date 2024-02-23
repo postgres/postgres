@@ -29,11 +29,11 @@
 #include "nodes/execnodes.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
+#include "storage/bulk_write.h"
 #include "storage/condition_variable.h"
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
-#include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"
@@ -154,32 +154,17 @@ void
 btbuildempty(Relation index)
 {
 	bool		allequalimage = _bt_allequalimage(index, false);
-	Buffer		metabuf;
-	Page		metapage;
+	BulkWriteState *bulkstate;
+	BulkWriteBuffer metabuf;
 
-	/*
-	 * Initialize the metapage.
-	 *
-	 * Regular index build bypasses the buffer manager and uses smgr functions
-	 * directly, with an smgrimmedsync() call at the end.  That makes sense
-	 * when the index is large, but for an empty index, it's better to use the
-	 * buffer cache to avoid the smgrimmedsync().
-	 */
-	metabuf = ReadBufferExtended(index, INIT_FORKNUM, P_NEW, RBM_NORMAL, NULL);
-	Assert(BufferGetBlockNumber(metabuf) == BTREE_METAPAGE);
-	_bt_lockbuf(index, metabuf, BT_WRITE);
+	bulkstate = smgr_bulk_start_rel(index, INIT_FORKNUM);
 
-	START_CRIT_SECTION();
+	/* Construct metapage. */
+	metabuf = smgr_bulk_get_buf(bulkstate);
+	_bt_initmetapage((Page) metabuf, P_NONE, 0, allequalimage);
+	smgr_bulk_write(bulkstate, BTREE_METAPAGE, metabuf, true);
 
-	metapage = BufferGetPage(metabuf);
-	_bt_initmetapage(metapage, P_NONE, 0, allequalimage);
-	MarkBufferDirty(metabuf);
-	log_newpage_buffer(metabuf, true);
-
-	END_CRIT_SECTION();
-
-	_bt_unlockbuf(index, metabuf);
-	ReleaseBuffer(metabuf);
+	smgr_bulk_finish(bulkstate);
 }
 
 /*

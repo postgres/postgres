@@ -28,6 +28,7 @@
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
 #include "miscadmin.h"
+#include "storage/bulk_write.h"
 #include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/hsearch.h"
@@ -451,14 +452,11 @@ void
 RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 					ForkNumber forkNum, char relpersistence)
 {
-	PGIOAlignedBlock buf;
-	Page		page;
 	bool		use_wal;
 	bool		copying_initfork;
 	BlockNumber nblocks;
 	BlockNumber blkno;
-
-	page = (Page) buf.data;
+	BulkWriteState *bulkstate;
 
 	/*
 	 * The init fork for an unlogged relation in many respects has to be
@@ -477,16 +475,21 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 	use_wal = XLogIsNeeded() &&
 		(relpersistence == RELPERSISTENCE_PERMANENT || copying_initfork);
 
+	bulkstate = smgr_bulk_start_smgr(dst, forkNum, use_wal);
+
 	nblocks = smgrnblocks(src, forkNum);
 
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
+		BulkWriteBuffer buf;
+
 		/* If we got a cancel signal during the copy of the data, quit */
 		CHECK_FOR_INTERRUPTS();
 
-		smgrread(src, forkNum, blkno, buf.data);
+		buf = smgr_bulk_get_buf(bulkstate);
+		smgrread(src, forkNum, blkno, (Page) buf);
 
-		if (!PageIsVerifiedExtended(page, blkno,
+		if (!PageIsVerifiedExtended((Page) buf, blkno,
 									PIV_LOG_WARNING | PIV_REPORT_STAT))
 		{
 			/*
@@ -507,34 +510,13 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 		}
 
 		/*
-		 * WAL-log the copied page. Unfortunately we don't know what kind of a
-		 * page this is, so we have to log the full page including any unused
-		 * space.
+		 * Queue the page for WAL-logging and writing out.  Unfortunately we
+		 * don't know what kind of a page this is, so we have to log the full
+		 * page including any unused space.
 		 */
-		if (use_wal)
-			log_newpage(&dst->smgr_rlocator.locator, forkNum, blkno, page, false);
-
-		PageSetChecksumInplace(page, blkno);
-
-		/*
-		 * Now write the page.  We say skipFsync = true because there's no
-		 * need for smgr to schedule an fsync for this write; we'll do it
-		 * ourselves below.
-		 */
-		smgrextend(dst, forkNum, blkno, buf.data, true);
+		smgr_bulk_write(bulkstate, blkno, buf, false);
 	}
-
-	/*
-	 * When we WAL-logged rel pages, we must nonetheless fsync them.  The
-	 * reason is that since we're copying outside shared buffers, a CHECKPOINT
-	 * occurring during the copy has no way to flush the previously written
-	 * data to disk (indeed it won't know the new rel even exists).  A crash
-	 * later on would replay WAL from the checkpoint, therefore it wouldn't
-	 * replay our earlier WAL entries. If we do not fsync those pages here,
-	 * they might still not be on disk when the crash occurs.
-	 */
-	if (use_wal || copying_initfork)
-		smgrimmedsync(dst, forkNum);
+	smgr_bulk_finish(bulkstate);
 }
 
 /*

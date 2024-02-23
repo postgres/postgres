@@ -106,6 +106,7 @@ extern BlockNumber smgrnblocks_cached(SMgrRelation reln, ForkNumber forknum);
 extern void smgrtruncate(SMgrRelation reln, ForkNumber *forknum,
 						 int nforks, BlockNumber *nblocks);
 extern void smgrimmedsync(SMgrRelation reln, ForkNumber forknum);
+extern void smgrregistersync(SMgrRelation reln, ForkNumber forknum);
 extern void AtEOXact_SMgr(void);
 extern bool ProcessBarrierSmgrRelease(void);
 
