@@ -231,7 +231,6 @@ F292	UNIQUE null treatment			YES
 F301	CORRESPONDING in query expressions			NO	
 F302	INTERSECT table operator			YES	
 F303	INTERSECT DISTINCT table operator			YES	
-F302	INTERSECT table operator	02	INTERSECT ALL table operator	YES	
 F304	EXCEPT ALL table operator			YES	
 F305	INTERSECT ALL table operator			YES	
 F311	Schema definition statement			YES	
