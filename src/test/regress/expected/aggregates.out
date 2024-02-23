@@ -2728,29 +2728,20 @@ SELECT balk(hundred) FROM tenk1;
 (1 row)
 
 ROLLBACK;
--- GROUP BY optimization by reorder columns
+-- GROUP BY optimization by reordering GROUP BY clauses
 CREATE TABLE btg AS SELECT
-  i % 100 AS x,
-  i % 100 AS y,
+  i % 10 AS x,
+  i % 10 AS y,
   'abc' || i % 10 AS z,
   i AS w
-FROM generate_series(1,10000) AS i;
-CREATE INDEX btg_x_y_idx ON btg(x,y);
+FROM generate_series(1, 100) AS i;
+CREATE INDEX btg_x_y_idx ON btg(x, y);
 ANALYZE btg;
--- GROUP BY optimization by reorder columns by frequency
-SET enable_hashagg=off;
-SET max_parallel_workers= 0;
-SET max_parallel_workers_per_gather = 0;
--- Utilize index scan ordering to avoid a Sort operation
-EXPLAIN (COSTS OFF) SELECT count(*) FROM btg GROUP BY x,y;
-                   QUERY PLAN                   
-------------------------------------------------
- GroupAggregate
-   Group Key: x, y
-   ->  Index Only Scan using btg_x_y_idx on btg
-(3 rows)
-
-EXPLAIN (COSTS OFF) SELECT count(*) FROM btg GROUP BY y,x;
+SET enable_hashagg = off;
+SET enable_seqscan = off;
+-- Utilize the ordering of index scan to avoid a Sort operation
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM btg GROUP BY y, x;
                    QUERY PLAN                   
 ------------------------------------------------
  GroupAggregate
@@ -2759,10 +2750,11 @@ EXPLAIN (COSTS OFF) SELECT count(*) FROM btg GROUP BY y,x;
 (3 rows)
 
 -- Engage incremental sort
-explain (COSTS OFF) SELECT x,y FROM btg GROUP BY x,y,z,w;
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM btg GROUP BY z, y, w, x;
                    QUERY PLAN                    
 -------------------------------------------------
- Group
+ GroupAggregate
    Group Key: x, y, z, w
    ->  Incremental Sort
          Sort Key: x, y, z, w
@@ -2770,46 +2762,13 @@ explain (COSTS OFF) SELECT x,y FROM btg GROUP BY x,y,z,w;
          ->  Index Scan using btg_x_y_idx on btg
 (6 rows)
 
-explain (COSTS OFF) SELECT x,y FROM btg GROUP BY z,y,w,x;
+-- Utilize the ordering of subquery scan to avoid a Sort operation
+EXPLAIN (COSTS OFF) SELECT count(*)
+FROM (SELECT * FROM btg ORDER BY x, y, w, z) AS q1
+GROUP BY w, x, z, y;
                    QUERY PLAN                    
 -------------------------------------------------
- Group
-   Group Key: x, y, z, w
-   ->  Incremental Sort
-         Sort Key: x, y, z, w
-         Presorted Key: x, y
-         ->  Index Scan using btg_x_y_idx on btg
-(6 rows)
-
-explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,z,x,y;
-                   QUERY PLAN                    
--------------------------------------------------
- Group
-   Group Key: x, y, w, z
-   ->  Incremental Sort
-         Sort Key: x, y, w, z
-         Presorted Key: x, y
-         ->  Index Scan using btg_x_y_idx on btg
-(6 rows)
-
-explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,x,z,y;
-                   QUERY PLAN                    
--------------------------------------------------
- Group
-   Group Key: x, y, w, z
-   ->  Incremental Sort
-         Sort Key: x, y, w, z
-         Presorted Key: x, y
-         ->  Index Scan using btg_x_y_idx on btg
-(6 rows)
-
--- Subqueries
-explain (COSTS OFF) SELECT x,y
-FROM (SELECT * FROM btg ORDER BY x,y,w,z) AS q1
-GROUP BY (w,x,z,y);
-                   QUERY PLAN                    
--------------------------------------------------
- Group
+ GroupAggregate
    Group Key: btg.x, btg.y, btg.w, btg.z
    ->  Incremental Sort
          Sort Key: btg.x, btg.y, btg.w, btg.z
@@ -2817,38 +2776,52 @@ GROUP BY (w,x,z,y);
          ->  Index Scan using btg_x_y_idx on btg
 (6 rows)
 
-explain (COSTS OFF) SELECT x,y
-FROM (SELECT * FROM btg ORDER BY x,y,w,z LIMIT 100) AS q1
-GROUP BY (w,x,z,y);
-                      QUERY PLAN                       
--------------------------------------------------------
- Group
-   Group Key: btg.x, btg.y, btg.w, btg.z
-   ->  Limit
-         ->  Incremental Sort
-               Sort Key: btg.x, btg.y, btg.w, btg.z
-               Presorted Key: btg.x, btg.y
-               ->  Index Scan using btg_x_y_idx on btg
-(7 rows)
+-- Utilize the ordering of merge join to avoid a full Sort operation
+SET enable_hashjoin = off;
+SET enable_nestloop = off;
+EXPLAIN (COSTS OFF)
+SELECT count(*)
+  FROM btg t1 JOIN btg t2 ON t1.z = t2.z AND t1.w = t2.w AND t1.x = t2.x
+  GROUP BY t1.x, t1.y, t1.z, t1.w;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ GroupAggregate
+   Group Key: t1.z, t1.w, t1.x, t1.y
+   ->  Incremental Sort
+         Sort Key: t1.z, t1.w, t1.x, t1.y
+         Presorted Key: t1.z, t1.w, t1.x
+         ->  Merge Join
+               Merge Cond: ((t1.z = t2.z) AND (t1.w = t2.w) AND (t1.x = t2.x))
+               ->  Sort
+                     Sort Key: t1.z, t1.w, t1.x
+                     ->  Index Scan using btg_x_y_idx on btg t1
+               ->  Sort
+                     Sort Key: t2.z, t2.w, t2.x
+                     ->  Index Scan using btg_x_y_idx on btg t2
+(13 rows)
 
+RESET enable_nestloop;
+RESET enable_hashjoin;
 -- Should work with and without GROUP-BY optimization
-explain (COSTS OFF) SELECT x,y FROM btg GROUP BY w,x,z,y ORDER BY y,x,z,w;
-          QUERY PLAN          
-------------------------------
- Group
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM btg GROUP BY w, x, z, y ORDER BY y, x, z, w;
+                   QUERY PLAN                    
+-------------------------------------------------
+ GroupAggregate
    Group Key: y, x, z, w
    ->  Sort
          Sort Key: y, x, z, w
-         ->  Seq Scan on btg
+         ->  Index Scan using btg_x_y_idx on btg
 (5 rows)
 
 -- Utilize incremental sort to make the ORDER BY rule a bit cheaper
-explain (COSTS OFF) SELECT x,w FROM btg GROUP BY w,x,y,z ORDER BY x*x,z;
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM btg GROUP BY w, x, y, z ORDER BY x*x, z;
                       QUERY PLAN                       
 -------------------------------------------------------
  Sort
    Sort Key: ((x * x)), z
-   ->  Group
+   ->  GroupAggregate
          Group Key: x, y, w, z
          ->  Incremental Sort
                Sort Key: x, y, w, z
@@ -2856,24 +2829,24 @@ explain (COSTS OFF) SELECT x,w FROM btg GROUP BY w,x,y,z ORDER BY x*x,z;
                ->  Index Scan using btg_x_y_idx on btg
 (8 rows)
 
-SET enable_incremental_sort = off;
--- The case when the number of incoming subtree path keys is more than
+-- Test the case where the number of incoming subtree path keys is more than
 -- the number of grouping keys.
-CREATE INDEX idx_y_x_z ON btg(y,x,w);
+CREATE INDEX btg_y_x_w_idx ON btg(y, x, w);
 EXPLAIN (VERBOSE, COSTS OFF)
-SELECT y,x,array_agg(distinct w) FROM btg WHERE y < 0 GROUP BY x,y;
-                     QUERY PLAN                      
------------------------------------------------------
+SELECT y, x, array_agg(distinct w)
+  FROM btg WHERE y < 0 GROUP BY x, y;
+                       QUERY PLAN                        
+---------------------------------------------------------
  GroupAggregate
    Output: y, x, array_agg(DISTINCT w)
    Group Key: btg.y, btg.x
-   ->  Index Only Scan using idx_y_x_z on public.btg
+   ->  Index Only Scan using btg_y_x_w_idx on public.btg
          Output: y, x, w
          Index Cond: (btg.y < 0)
 (6 rows)
 
-RESET enable_incremental_sort;
--- Check we don't pick aggregate path key instead of grouping path key
+-- Ensure that we do not select the aggregate pathkeys instead of the grouping
+-- pathkeys
 CREATE TABLE group_agg_pk AS SELECT
   i % 10 AS x,
   i % 2 AS y,
@@ -2884,74 +2857,63 @@ FROM generate_series(1,100) AS i;
 ANALYZE group_agg_pk;
 SET enable_nestloop = off;
 SET enable_hashjoin = off;
-SELECT
-  c1.z, c1.w, string_agg(''::text, repeat(''::text, c1.f) ORDER BY c1.x,c1.y)
-FROM group_agg_pk c1 JOIN group_agg_pk c2 ON (c1.x = c2.f)
+EXPLAIN (COSTS OFF)
+SELECT avg(c1.f ORDER BY c1.x, c1.y)
+FROM group_agg_pk c1 JOIN group_agg_pk c2 ON c1.x = c2.x
 GROUP BY c1.w, c1.z;
- z | w | string_agg 
----+---+------------
- 0 | 2 | 
- 1 | 2 | 
+                     QUERY PLAN                      
+-----------------------------------------------------
+ GroupAggregate
+   Group Key: c1.w, c1.z
+   ->  Sort
+         Sort Key: c1.w, c1.z, c1.x, c1.y
+         ->  Merge Join
+               Merge Cond: (c1.x = c2.x)
+               ->  Sort
+                     Sort Key: c1.x
+                     ->  Seq Scan on group_agg_pk c1
+               ->  Sort
+                     Sort Key: c2.x
+                     ->  Seq Scan on group_agg_pk c2
+(12 rows)
+
+SELECT avg(c1.f ORDER BY c1.x, c1.y)
+FROM group_agg_pk c1 JOIN group_agg_pk c2 ON c1.x = c2.x
+GROUP BY c1.w, c1.z;
+        avg         
+--------------------
+ 4.0000000000000000
+ 5.0000000000000000
 (2 rows)
 
 RESET enable_nestloop;
 RESET enable_hashjoin;
 DROP TABLE group_agg_pk;
--- The case, when scanning sort order correspond to aggregate sort order but
--- can not be found in the group-by list
+-- Test the case where the the ordering of scan matches the ordering within the
+-- aggregate but cannot be found in the group-by list
 CREATE TABLE agg_sort_order (c1 int PRIMARY KEY, c2 int);
-CREATE UNIQUE INDEX ON agg_sort_order(c2);
-explain (costs off)
+CREATE UNIQUE INDEX agg_sort_order_c2_idx ON agg_sort_order(c2);
+INSERT INTO agg_sort_order SELECT i, i FROM generate_series(1,100)i;
+ANALYZE agg_sort_order;
+EXPLAIN (COSTS OFF)
 SELECT array_agg(c1 ORDER BY c2),c2
 FROM agg_sort_order WHERE c2 < 100 GROUP BY c1 ORDER BY 2;
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Sort
    Sort Key: c2
    ->  GroupAggregate
          Group Key: c1
          ->  Sort
                Sort Key: c1, c2
-               ->  Bitmap Heap Scan on agg_sort_order
-                     Recheck Cond: (c2 < 100)
-                     ->  Bitmap Index Scan on agg_sort_order_c2_idx
-                           Index Cond: (c2 < 100)
-(10 rows)
+               ->  Index Scan using agg_sort_order_c2_idx on agg_sort_order
+                     Index Cond: (c2 < 100)
+(8 rows)
 
 DROP TABLE agg_sort_order CASCADE;
--- Check, that GROUP-BY reordering optimization can operate with pathkeys, built
--- by planner itself. For example, by MergeJoin.
-SET enable_hashjoin = off;
-SET enable_nestloop = off;
-explain (COSTS OFF)
-SELECT b1.x,b1.w FROM btg b1 JOIN btg b2 ON (b1.z=b2.z AND b1.w=b2.w)
-GROUP BY b1.x,b1.z,b1.w ORDER BY b1.z, b1.w, b1.x*b1.x;
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Incremental Sort
-   Sort Key: b1.z, b1.w, ((b1.x * b1.x))
-   Presorted Key: b1.z, b1.w
-   ->  Group
-         Group Key: b1.z, b1.w, b1.x
-         ->  Incremental Sort
-               Sort Key: b1.z, b1.w, b1.x
-               Presorted Key: b1.z, b1.w
-               ->  Merge Join
-                     Merge Cond: ((b1.z = b2.z) AND (b1.w = b2.w))
-                     ->  Sort
-                           Sort Key: b1.z, b1.w
-                           ->  Seq Scan on btg b1
-                     ->  Sort
-                           Sort Key: b2.z, b2.w
-                           ->  Seq Scan on btg b2
-(16 rows)
-
-RESET enable_hashjoin;
-RESET enable_nestloop;
 DROP TABLE btg;
 RESET enable_hashagg;
-RESET max_parallel_workers;
-RESET max_parallel_workers_per_gather;
+RESET enable_seqscan;
 -- Secondly test the case of a parallel aggregate combiner function
 -- returning NULL. For that use normal transition function, but a
 -- combiner function returning NULL.
