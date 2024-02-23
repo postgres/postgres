@@ -2343,8 +2343,10 @@ select p.* from sj p, sj q where q.a = p.a and q.b = q.a - 1;
 explain (costs off)
 select * from sj p
 where exists (select * from sj q
-				where q.a = p.a and q.b < 10);
-select * from sj p where exists (select * from sj q where q.a = p.a and q.b < 10);
+              where q.a = p.a and q.b < 10);
+select * from sj p
+where exists (select * from sj q
+              where q.a = p.a and q.b < 10);
 
 -- Don't remove self-join for the case of equality of two different unique columns.
 explain (costs off)
@@ -2353,8 +2355,8 @@ select * from sj t1, sj t2 where t1.a = t2.c and t1.b is not null;
 -- Degenerated case.
 explain (costs off)
 select * from
-	(select a as x from sj where false) as q1,
-	(select a as y from sj where false) as q2
+  (select a as x from sj where false) as q1,
+  (select a as y from sj where false) as q2
 where q1.x = q2.y;
 
 -- We can't use a cross-EC generated self join qual because of current logic of
@@ -2363,16 +2365,18 @@ explain (costs off)
 select * from sj t1, sj t2 where t1.a = t1.b and t1.b = t2.b and t2.b = t2.a;
 explain (costs off)
 select * from sj t1, sj t2, sj t3
-where t1.a = t1.b and t1.b = t2.b and t2.b = t2.a
-	and t1.b = t3.b and t3.b = t3.a;
+where t1.a = t1.b and t1.b = t2.b and t2.b = t2.a and
+      t1.b = t3.b and t3.b = t3.a;
 
 -- Double self-join removal.
 -- Use a condition on "b + 1", not on "b", for the second join, so that
 -- the equivalence class is different from the first one, and we can
 -- test the non-ec code path.
 explain (costs off)
-select * from sj t1 join sj t2 on t1.a = t2.a and t1.b = t2.b
-	join sj t3 on t2.a = t3.a and t2.b + 1 = t3.b + 1;
+select *
+from  sj t1
+      join sj t2 on t1.a = t2.a and t1.b = t2.b
+	  join sj t3 on t2.a = t3.a and t2.b + 1 = t3.b + 1;
 
 -- subselect that references the removed relation
 explain (costs off)
@@ -2390,13 +2394,13 @@ select * from sj x join sj y on x.a = y.a
 left join int8_tbl z on y.a = z.q1;
 
 explain (costs off)
-SELECT * FROM (
-  SELECT t1.*, t2.a AS ax FROM sj t1 JOIN sj t2
-  ON (t1.a = t2.a AND t1.c*t1.c = t2.c+2 AND t2.b IS NULL)
-) AS q1
-LEFT JOIN
-  (SELECT t3.* FROM sj t3, sj t4 WHERE t3.c = t4.c) AS q2
-ON q1.ax = q2.a;
+select * from (
+  select t1.*, t2.a as ax from sj t1 join sj t2
+  on (t1.a = t2.a and t1.c * t1.c = t2.c + 2 and t2.b is null)
+) as q1
+left join
+  (select t3.* from sj t3, sj t4 where t3.c = t4.c) as q2
+on q1.ax = q2.a;
 
 -- Test that placeholders are updated correctly after join removal
 explain (costs off)
@@ -2406,17 +2410,22 @@ left join (select coalesce(y.q1, 1) from int8_tbl y
 	on true) z
 on true;
 
--- Test processing target lists in lateral subqueries
+-- Test that references to the removed rel in lateral subqueries are replaced
+-- correctly after join removal
 explain (verbose, costs off)
-SELECT t3.a FROM sj t1, sj t2,
-LATERAL (SELECT t1.a WHERE t1.a <> 1
-		 GROUP BY (t1.a) HAVING t1.a > 0 ORDER BY t1.a LIMIT 1) t3,
-LATERAL (SELECT t1.a,t3.a WHERE t1.a <> t3.a+t2.a
-		 GROUP BY (t3.a) HAVING t1.a > t3.a*t3.a+t2.a/t1.a LIMIT 2) t4,
-LATERAL (SELECT * FROM sj TABLESAMPLE bernoulli(t1.a/t2.a)
-		 REPEATABLE (t1.a+t2.a)) t5,
-LATERAL generate_series(1, t1.a + t2.a) AS t6
-WHERE t1.a = t2.a;
+select t3.a from sj t1
+	join sj t2 on t1.a = t2.a
+	join lateral (select t1.a offset 0) t3 on true;
+
+explain (verbose, costs off)
+select t3.a from sj t1
+	join sj t2 on t1.a = t2.a
+	join lateral (select * from (select t1.a offset 0) offset 0) t3 on true;
+
+explain (verbose, costs off)
+select t4.a from sj t1
+	join sj t2 on t1.a = t2.a
+	join lateral (select t3.a from sj t3, (select t1.a) offset 0) t4 on true;
 
 -- Check updating of Lateral links from top-level query to the removing relation
 explain (COSTS OFF)
@@ -2428,109 +2437,129 @@ SELECT * FROM pg_am am WHERE am.amname IN (
 );
 
 --
--- SJR corner case: uniqueness of an inner is [partially] derived from
+-- SJE corner case: uniqueness of an inner is [partially] derived from
 -- baserestrictinfo clauses.
--- XXX: We really should allow SJR for these corner cases?
+-- XXX: We really should allow SJE for these corner cases?
 --
 
 INSERT INTO sj VALUES (3, 1, 3);
 
-explain (costs off) -- Don't remove SJ
-	SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 2 AND j2.a = 3;
-SELECT * FROM sj j1, sj j2
-WHERE j1.b = j2.b AND j1.a = 2 AND j2.a = 3; -- Return one row
+-- Don't remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 2 AND j2.a = 3;
+-- Return one row
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 2 AND j2.a = 3;
 
-explain (costs off) -- Remove SJ, define uniqueness by a constant
-	SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 2 AND j2.a = 2;
-SELECT * FROM sj j1, sj j2
-WHERE j1.b = j2.b AND j1.a = 2 AND j2.a = 2; -- Return one row
+-- Remove SJ, define uniqueness by a constant
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 2 AND j2.a = 2;
+-- Return one row
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 2 AND j2.a = 2;
 
+-- Remove SJ, define uniqueness by a constant expression
 EXPLAIN (COSTS OFF)
 SELECT * FROM sj j1, sj j2
 WHERE j1.b = j2.b
   AND j1.a = (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int
-  AND (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int = j2.a
-; -- Remove SJ, define uniqueness by a constant expression
+  AND (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int = j2.a;
+-- Return one row
 SELECT * FROM sj j1, sj j2
 WHERE j1.b = j2.b
   AND j1.a = (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int
-  AND (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int = j2.a
-; -- Return one row
+  AND (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int = j2.a;
 
-explain (costs off) -- Remove SJ
-	SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 1 AND j2.a = 1;
-SELECT * FROM sj j1, sj j2
-WHERE j1.b = j2.b AND j1.a = 1 AND j2.a = 1; -- Return no rows
+-- Remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 1 AND j2.a = 1;
+-- Return no rows
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 1 AND j2.a = 1;
 
-explain (costs off) -- Shuffle a clause. Remove SJ
-	SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND 1 = j1.a AND j2.a = 1;
-SELECT * FROM sj j1, sj j2
-WHERE j1.b = j2.b AND 1 = j1.a AND j2.a = 1; -- Return no rows
+-- Shuffle a clause. Remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND 1 = j1.a AND j2.a = 1;
+-- Return no rows
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND 1 = j1.a AND j2.a = 1;
 
 -- SJE Corner case: a 'a.x=a.x' clause, have replaced with 'a.x IS NOT NULL'
 -- after SJ elimination it shouldn't be a mergejoinable clause.
+EXPLAIN (COSTS OFF)
 SELECT t4.*
 FROM (SELECT t1.*, t2.a AS a1 FROM sj t1, sj t2 WHERE t1.b = t2.b) AS t3
 JOIN sj t4 ON (t4.a = t3.a) WHERE t3.a1 = 42;
-EXPLAIN (COSTS OFF)
 SELECT t4.*
 FROM (SELECT t1.*, t2.a AS a1 FROM sj t1, sj t2 WHERE t1.b = t2.b) AS t3
-JOIN sj t4 ON (t4.a = t3.a) WHERE t3.a1 = 42
-; -- SJs must be removed.
+JOIN sj t4 ON (t4.a = t3.a) WHERE t3.a1 = 42;
 
 -- Functional index
 CREATE UNIQUE INDEX sj_fn_idx ON sj((a * a));
-explain (costs off) -- Remove SJ
-	SELECT * FROM sj j1, sj j2
+
+-- Remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2
 	WHERE j1.b = j2.b AND j1.a*j1.a = 1 AND j2.a*j2.a = 1;
-explain (costs off) -- Don't remove SJ
-	SELECT * FROM sj j1, sj j2
+-- Don't remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2
 	WHERE j1.b = j2.b AND j1.a*j1.a = 1 AND j2.a*j2.a = 2;
+
+-- Restriction contains expressions in both sides, Remove SJ.
 EXPLAIN (COSTS OFF)
 SELECT * FROM sj j1, sj j2
 WHERE j1.b = j2.b
   AND (j1.a*j1.a) = (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int
-  AND (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int = (j2.a*j2.a)
-; -- Restriction contains expressions in both sides, Remove SJ.
+  AND (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int = (j2.a*j2.a);
+-- Empty set of rows should be returned
 SELECT * FROM sj j1, sj j2
 WHERE j1.b = j2.b
   AND (j1.a*j1.a) = (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int
-  AND (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int = (j2.a*j2.a)
-; -- Empty set of rows should be returned
+  AND (EXTRACT(DOW FROM current_timestamp(0))/15 + 3)::int = (j2.a*j2.a);
+
+-- Restriction contains volatile function - disable SJE feature.
 EXPLAIN (COSTS OFF)
-SELECT * FROM sj j1, sj j2
-WHERE j1.b = j2.b
-  AND (j1.a*j1.a) = (random()/3 + 3)::int
-  AND (random()/3 + 3)::int = (j2.a*j2.a)
-; -- Restriction contains volatile function - disable SJR feature.
 SELECT * FROM sj j1, sj j2
 WHERE j1.b = j2.b
   AND (j1.a*j1.c/3) = (random()/3 + 3)::int
-  AND (random()/3 + 3)::int = (j2.a*j2.c/3)
-; -- Return one row
+  AND (random()/3 + 3)::int = (j2.a*j2.c/3);
+-- Return one row
+SELECT * FROM sj j1, sj j2
+WHERE j1.b = j2.b
+  AND (j1.a*j1.c/3) = (random()/3 + 3)::int
+  AND (random()/3 + 3)::int = (j2.a*j2.c/3);
 
 -- Multiple filters
 CREATE UNIQUE INDEX sj_temp_idx1 ON sj(a,b,c);
-explain (costs off) -- Remove SJ
-	SELECT * FROM sj j1, sj j2
+
+-- Remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2
 	WHERE j1.b = j2.b AND j1.a = 2 AND j1.c = 3 AND j2.a = 2 AND 3 = j2.c;
-explain (costs off) -- Don't remove SJ
+
+-- Don't remove SJ
+EXPLAIN (COSTS OFF)
 	SELECT * FROM sj j1, sj j2
 	WHERE j1.b = j2.b AND 2 = j1.a AND j1.c = 3 AND j2.a = 1 AND 3 = j2.c;
 
 CREATE UNIQUE INDEX sj_temp_idx ON sj(a,b);
-explain (costs off) -- Don't remove SJ
-	SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 2;
-explain (costs off) -- Don't remove SJ
-	SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND 2 = j2.a;
-explain (costs off) -- Don't remove SJ
-	SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND (j1.a = 1 OR j2.a = 1);
+
+-- Don't remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND j1.a = 2;
+
+-- Don't remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND 2 = j2.a;
+
+-- Don't remove SJ
+EXPLAIN (COSTS OFF)
+SELECT * FROM sj j1, sj j2 WHERE j1.b = j2.b AND (j1.a = 1 OR j2.a = 1);
+
 DROP INDEX sj_fn_idx, sj_temp_idx1, sj_temp_idx;
 
 -- Test that OR predicated are updated correctly after join removal
 CREATE TABLE tab_with_flag ( id INT PRIMARY KEY, is_flag SMALLINT);
 CREATE INDEX idx_test_is_flag ON tab_with_flag (is_flag);
-explain (costs off)
+
+EXPLAIN (COSTS OFF)
 SELECT COUNT(*) FROM tab_with_flag
 WHERE
 	(is_flag IS NULL OR is_flag = 0)
@@ -2581,24 +2610,27 @@ reset enable_seqscan;
 
 -- Check that clauses from the join filter list is not lost on the self-join removal
 CREATE TABLE emp1 (id SERIAL PRIMARY KEY NOT NULL, code int);
-explain (verbose, costs off)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM emp1 e1, emp1 e2 WHERE e1.id = e2.id AND e2.code <> e1.code;
 
 -- Shuffle self-joined relations. Only in the case of iterative deletion
 -- attempts explains of these queries will be identical.
 CREATE UNIQUE INDEX ON emp1((id*id));
-explain (costs off)
+
+EXPLAIN (COSTS OFF)
 SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
 WHERE c1.id=c2.id AND c1.id*c2.id=c3.id*c3.id;
-explain (costs off)
+
+EXPLAIN (COSTS OFF)
 SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
 WHERE c1.id=c3.id AND c1.id*c3.id=c2.id*c2.id;
-explain (costs off)
+
+EXPLAIN (COSTS OFF)
 SELECT count(*) FROM emp1 c1, emp1 c2, emp1 c3
 WHERE c3.id=c2.id AND c3.id*c2.id=c1.id*c1.id;
 
 -- Check the usage of a parse tree by the set operations (bug #18170)
-explain (costs off)
+EXPLAIN (COSTS OFF)
 SELECT c1.code FROM emp1 c1 LEFT JOIN emp1 c2 ON c1.id = c2.id
 WHERE c2.id IS NOT NULL
 EXCEPT ALL
@@ -2637,14 +2669,17 @@ select * from emp1 t1
     left join emp1 t3 on t1.id > 1 and t1.id < 2;
 
 -- Check that SJE doesn't replace the target relation
-explain (costs off)
+EXPLAIN (COSTS OFF)
 WITH t1 AS (SELECT * FROM emp1)
 UPDATE emp1 SET code = t1.code + 1 FROM t1
 WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code, t1.code;
+
 INSERT INTO emp1 VALUES (1, 1), (2, 1);
+
 WITH t1 AS (SELECT * FROM emp1)
 UPDATE emp1 SET code = t1.code + 1 FROM t1
 WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code, t1.code;
+
 TRUNCATE emp1;
 
 EXPLAIN (COSTS OFF)
@@ -2707,27 +2742,13 @@ where t1.b = t2.b and t2.a = 3 and t1.a = 3
   and t1.a IS NOT NULL and t2.a IS NOT NULL;
 
 -- Join qual isn't mergejoinable, but inner is unique.
-explain (COSTS OFF)
+EXPLAIN (COSTS OFF)
 SELECT n2.a FROM sj n1, sj n2 WHERE n1.a <> n2.a AND n2.a = 1;
-explain (COSTS OFF)
-SELECT * FROM
-	(SELECT n2.a FROM sj n1, sj n2 WHERE n1.a <> n2.a) q0, sl
-WHERE q0.a = 1;
 
---
----- Only one side is unique
---select * from sl t1, sl t2 where t1.a = t2.a and t1.b = 1;
---select * from sl t1, sl t2 where t1.a = t2.a and t2.b = 1;
---
----- Several uniques indexes match, and we select a different one
----- for each side, so the join is not removed
---create table sm(a int unique, b int unique, c int unique);
---explain (costs off)
---select * from sm m, sm n where m.a = n.b and m.c = n.c;
---explain (costs off)
---select * from sm m, sm n where m.a = n.c and m.b = n.b;
---explain (costs off)
---select * from sm m, sm n where m.c = n.b and m.a = n.a;
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+(SELECT n2.a FROM sj n1, sj n2 WHERE n1.a <> n2.a) q0, sl
+WHERE q0.a = 1;
 
 -- Check optimization disabling if it will violate special join conditions.
 -- Two identical joined relations satisfies self join removal conditions but
@@ -2763,7 +2784,8 @@ ON sj_t1.id = _t2t3t4.id;
 -- Test RowMarks-related code
 --
 
-EXPLAIN (COSTS OFF) -- Both sides have explicit LockRows marks
+-- Both sides have explicit LockRows marks
+EXPLAIN (COSTS OFF)
 SELECT a1.a FROM sj a1,sj a2 WHERE (a1.a=a2.a) FOR UPDATE;
 
 reset enable_hashjoin;

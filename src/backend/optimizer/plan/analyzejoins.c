@@ -35,15 +35,6 @@
 #include "utils/lsyscache.h"
 
 /*
- * The context for replace_varno_walker() containing source and target relids.
- */
-typedef struct
-{
-	int			from;
-	int			to;
-} ReplaceVarnoContext;
-
-/*
  * The struct containing self-join candidate.  Used to find duplicate reloids.
  */
 typedef struct
@@ -75,11 +66,9 @@ static bool is_innerrel_unique_for(PlannerInfo *root,
 								   JoinType jointype,
 								   List *restrictlist,
 								   List **extra_clauses);
-static Bitmapset *replace_relid(Relids relids, int oldId, int newId);
 static void replace_varno(Node *node, int from, int to);
-static bool replace_varno_walker(Node *node, ReplaceVarnoContext *ctx);
+static Bitmapset *replace_relid(Relids relids, int oldId, int newId);
 static int	self_join_candidates_cmp(const void *a, const void *b);
-
 
 
 /*
@@ -367,7 +356,8 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 	ListCell   *l;
 
 	/*
-	 * Remove references to the rel from other baserels' attr_needed arrays.
+	 * Remove references to the rel from other baserels' attr_needed arrays
+	 * and lateral_vars lists.
 	 */
 	for (rti = 1; rti < root->simple_rel_array_size; rti++)
 	{
@@ -394,35 +384,8 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 				replace_relid(otherrel->attr_needed[attroff], ojrelid, subst);
 		}
 
-		/* Update lateral references. */
-		if (root->hasLateralRTEs)
-		{
-			RangeTblEntry *rte = root->simple_rte_array[rti];
-			ReplaceVarnoContext ctx = {.from = relid,.to = subst};
-
-			if (rte->lateral)
-			{
-				replace_varno((Node *) otherrel->lateral_vars, relid, subst);
-
-				/*
-				 * Although we pass root->parse through cleanup procedure, but
-				 * parse->rtable and rte contains refs to different copies of
-				 * the subquery.
-				 */
-				if (otherrel->rtekind == RTE_SUBQUERY)
-					query_tree_walker(rte->subquery, replace_varno_walker, &ctx,
-									  QTW_EXAMINE_SORTGROUP);
-#ifdef USE_ASSERT_CHECKING
-				/* Just check possibly hidden non-replaced relids */
-				Assert(!bms_is_member(relid, pull_varnos(root, (Node *) rte->tablesample)));
-				Assert(!bms_is_member(relid, pull_varnos(root, (Node *) rte->functions)));
-				Assert(!bms_is_member(relid, pull_varnos(root, (Node *) rte->tablefunc)));
-				Assert(!bms_is_member(relid, pull_varnos(root, (Node *) rte->values_lists)));
-#endif
-			}
-		}
-
-
+		/* Update lateral_vars list. */
+		replace_varno((Node *) otherrel->lateral_vars, relid, subst);
 	}
 
 	/*
@@ -1462,35 +1425,32 @@ is_innerrel_unique_for(PlannerInfo *root,
 }
 
 /*
- * Replace each occurrence of removing relid with the keeping one
+ * replace_varno - find in the given tree any Vars, PlaceHolderVar, and Relids
+ * that reference the removing relid, and change them to the reference to
+ * the replacement relid.
+ *
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * nodes in-place.
  */
-static void
-replace_varno(Node *node, int from, int to)
+
+typedef struct
 {
-	ReplaceVarnoContext ctx;
+	int			from;
+	int			to;
+	int			sublevels_up;
+} ReplaceVarnoContext;
 
-	if (to <= 0)
-		return;
-
-	ctx.from = from;
-	ctx.to = to;
-	replace_varno_walker(node, &ctx);
-}
-
-/*
- * Walker function for replace_varno()
- */
 static bool
 replace_varno_walker(Node *node, ReplaceVarnoContext *ctx)
 {
 	if (node == NULL)
 		return false;
-
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
 
-		if (var->varno == ctx->from)
+		if (var->varno == ctx->from &&
+			var->varlevelsup == ctx->sublevels_up)
 		{
 			var->varno = ctx->to;
 			var->varnosyn = ctx->to;
@@ -1501,10 +1461,28 @@ replace_varno_walker(Node *node, ReplaceVarnoContext *ctx)
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
-		phv->phrels = replace_relid(phv->phrels, ctx->from, ctx->to);
-		phv->phnullingrels = replace_relid(phv->phnullingrels, ctx->from, ctx->to);
+		if (phv->phlevelsup == ctx->sublevels_up)
+		{
+			phv->phrels =
+				replace_relid(phv->phrels, ctx->from, ctx->to);
+			phv->phnullingrels =
+				replace_relid(phv->phnullingrels, ctx->from, ctx->to);
+		}
 
 		/* fall through to recurse into the placeholder's expression */
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		bool		result;
+
+		ctx->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   replace_varno_walker,
+								   (void *) ctx,
+								   QTW_EXAMINE_SORTGROUP);
+		ctx->sublevels_up--;
+		return result;
 	}
 	else if (IsA(node, RestrictInfo))
 	{
@@ -1517,18 +1495,24 @@ replace_varno_walker(Node *node, ReplaceVarnoContext *ctx)
 		{
 			replace_varno((Node *) rinfo->clause, ctx->from, ctx->to);
 			replace_varno((Node *) rinfo->orclause, ctx->from, ctx->to);
-			rinfo->clause_relids = replace_relid(rinfo->clause_relids, ctx->from, ctx->to);
-			rinfo->left_relids = replace_relid(rinfo->left_relids, ctx->from, ctx->to);
-			rinfo->right_relids = replace_relid(rinfo->right_relids, ctx->from, ctx->to);
+			rinfo->clause_relids =
+				replace_relid(rinfo->clause_relids, ctx->from, ctx->to);
+			rinfo->left_relids =
+				replace_relid(rinfo->left_relids, ctx->from, ctx->to);
+			rinfo->right_relids =
+				replace_relid(rinfo->right_relids, ctx->from, ctx->to);
 		}
 
 		if (is_req_equal)
 			rinfo->required_relids = rinfo->clause_relids;
 		else
-			rinfo->required_relids = replace_relid(rinfo->required_relids, ctx->from, ctx->to);
+			rinfo->required_relids =
+				replace_relid(rinfo->required_relids, ctx->from, ctx->to);
 
-		rinfo->outer_relids = replace_relid(rinfo->outer_relids, ctx->from, ctx->to);
-		rinfo->incompatible_relids = replace_relid(rinfo->incompatible_relids, ctx->from, ctx->to);
+		rinfo->outer_relids =
+			replace_relid(rinfo->outer_relids, ctx->from, ctx->to);
+		rinfo->incompatible_relids =
+			replace_relid(rinfo->incompatible_relids, ctx->from, ctx->to);
 
 		if (rinfo->mergeopfamilies &&
 			bms_get_singleton_member(rinfo->clause_relids, &relid) &&
@@ -1556,7 +1540,30 @@ replace_varno_walker(Node *node, ReplaceVarnoContext *ctx)
 
 		return false;
 	}
-	return expression_tree_walker(node, replace_varno_walker, (void *) ctx);
+
+	return expression_tree_walker(node, replace_varno_walker,
+								  (void *) ctx);
+}
+
+static void
+replace_varno(Node *node, int from, int to)
+{
+	ReplaceVarnoContext ctx;
+
+	if (to <= 0)
+		return;
+
+	ctx.from = from;
+	ctx.to = to;
+	ctx.sublevels_up = 0;
+
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree.
+	 */
+	query_or_expression_tree_walker(node,
+									replace_varno_walker,
+									(void *) &ctx,
+									QTW_EXAMINE_SORTGROUP);
 }
 
 /*
@@ -1748,7 +1755,6 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	int			i;
 	List	   *jinfo_candidates = NIL;
 	List	   *binfo_candidates = NIL;
-	ReplaceVarnoContext ctx = {.from = toRemove->relid,.to = toKeep->relid};
 
 	Assert(toKeep->relid != -1);
 
@@ -1925,8 +1931,7 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	}
 
 	/* Replace varno in all the query structures */
-	query_tree_walker(root->parse, replace_varno_walker, &ctx,
-					  QTW_EXAMINE_SORTGROUP);
+	replace_varno((Node *) root->parse, toRemove->relid, toKeep->relid);
 
 	/* See remove_self_joins_one_group() */
 	Assert(root->parse->resultRelation != toRemove->relid);
