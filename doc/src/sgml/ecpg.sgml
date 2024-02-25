@@ -8632,7 +8632,7 @@ int dectodbl(decimal *np, double *dblp);
       <term><function>dectoint</function></term>
       <listitem>
        <para>
-        Convert a variable to type decimal to an integer.
+        Convert a variable of type decimal to an integer.
 <synopsis>
 int dectoint(decimal *np, int *ip);
 </synopsis>
@@ -8658,7 +8658,7 @@ int dectoint(decimal *np, int *ip);
       <term><function>dectolong</function></term>
       <listitem>
        <para>
-        Convert a variable to type decimal to a long integer.
+        Convert a variable of type decimal to a long integer.
 <synopsis>
 int dectolong(decimal *np, long *lngp);
 </synopsis>
