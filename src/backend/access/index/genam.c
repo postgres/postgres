@@ -652,8 +652,10 @@ systable_beginscan_ordered(Relation heapRelation,
 
 	/* REINDEX can probably be a hard error here ... */
 	if (ReindexIsProcessingIndex(RelationGetRelid(indexRelation)))
-		elog(ERROR, "cannot do ordered scan on index \"%s\", because it is being reindexed",
-			 RelationGetRelationName(indexRelation));
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access index \"%s\" while it is being reindexed",
+						RelationGetRelationName(indexRelation))));
 	/* ... but we only throw a warning about violating IgnoreSystemIndexes */
 	if (IgnoreSystemIndexes)
 		elog(WARNING, "using index \"%s\" despite IgnoreSystemIndexes",
