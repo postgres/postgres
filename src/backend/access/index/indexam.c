@@ -64,18 +64,23 @@
  * Note: the ReindexIsProcessingIndex() check in RELATION_CHECKS is there
  * to check that we don't try to scan or do retail insertions into an index
  * that is currently being rebuilt or pending rebuild.  This helps to catch
- * things that don't work when reindexing system catalogs.  The assertion
+ * things that don't work when reindexing system catalogs, as well as prevent
+ * user errors like index expressions that access their own tables.  The check
  * doesn't prevent the actual rebuild because we don't use RELATION_CHECKS
  * when calling the index AM's ambuild routine, and there is no reason for
  * ambuild to call its subsidiary routines through this file.
  * ----------------------------------------------------------------
  */
 #define RELATION_CHECKS \
-( \
-	AssertMacro(RelationIsValid(indexRelation)), \
-	AssertMacro(PointerIsValid(indexRelation->rd_indam)), \
-	AssertMacro(!ReindexIsProcessingIndex(RelationGetRelid(indexRelation))) \
-)
+do { \
+	Assert(RelationIsValid(indexRelation)); \
+	Assert(PointerIsValid(indexRelation->rd_indam)); \
+	if (unlikely(ReindexIsProcessingIndex(RelationGetRelid(indexRelation)))) \
+		ereport(ERROR, \
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
+				 errmsg("cannot access index \"%s\" while it is being reindexed", \
+						RelationGetRelationName(indexRelation)))); \
+} while(0)
 
 #define SCAN_CHECKS \
 ( \
