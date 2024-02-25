@@ -9167,7 +9167,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Terminate any session that spans longer than the specified amount of
-        time in the transaction. The limit applies both to explicit transactions
+        time in a transaction. The limit applies both to explicit transactions
         (started with <command>BEGIN</command>) and to an implicitly started
         transaction corresponding to a single statement.
         If this value is specified without units, it is taken as milliseconds.
@@ -9177,7 +9177,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         If <varname>transaction_timeout</varname> is shorter or equal to
         <varname>idle_in_transaction_session_timeout</varname> or <varname>statement_timeout</varname>
-        <varname>transaction_timeout</varname> will invalidate the longer timeout.
+        then the longer timeout is ignored.
        </para>
 
        <para>

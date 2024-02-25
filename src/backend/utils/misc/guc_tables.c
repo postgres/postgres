@@ -2589,7 +2589,7 @@ struct config_int ConfigureNamesInt[] =
 
 	{
 		{"transaction_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the maximum allowed time in a transaction with a session (not a prepared transaction)."),
+			gettext_noop("Sets the maximum allowed duration of any transaction within a session (not a prepared transaction)."),
 			gettext_noop("A value of 0 turns off the timeout."),
 			GUC_UNIT_MS
 		},
