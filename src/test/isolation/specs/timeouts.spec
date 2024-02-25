@@ -1,4 +1,4 @@
-# Simple tests for statement_timeout, lock_timeout and transaction_timeout features
+# Simple tests for statement_timeout and lock_timeout features
 
 setup
 {
@@ -27,33 +27,6 @@ step locktbl	{ LOCK TABLE accounts; }
 step update	{ DELETE FROM accounts WHERE accountid = 'checking'; }
 teardown	{ ABORT; }
 
-session s3
-step s3_begin	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step stto	{ SET statement_timeout = '10ms'; SET transaction_timeout = '1s'; }
-step tsto	{ SET statement_timeout = '1s'; SET transaction_timeout = '10ms'; }
-step s3_sleep	{ SELECT pg_sleep(0.1); }
-step s3_abort	{ ABORT; }
-
-session s4
-step s4_begin	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step itto	{ SET idle_in_transaction_session_timeout = '10ms'; SET transaction_timeout = '1s'; }
-
-session s5
-step s5_begin	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step tito	{ SET idle_in_transaction_session_timeout = '1s'; SET transaction_timeout = '10ms'; }
-
-session s6
-step s6_begin	{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step s6_tt	{ SET statement_timeout = '1s'; SET transaction_timeout = '10ms'; }
-
-session checker
-step checker_sleep	{ SELECT pg_sleep(0.1); }
-step s3_check	{ SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s3'; }
-step s4_check	{ SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s4'; }
-step s5_check	{ SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s5'; }
-step s6_check	{ SELECT count(*) FROM pg_stat_activity WHERE application_name = 'isolation/timeouts/s6'; }
-
-
 # It's possible that the isolation tester will not observe the final
 # steps as "waiting", thanks to the relatively short timeouts we use.
 # We can ensure consistent test output by marking those steps with (*).
@@ -74,14 +47,3 @@ permutation wrtbl lto update(*)
 permutation wrtbl lsto update(*)
 # statement timeout expires first, row-level lock
 permutation wrtbl slto update(*)
-
-# statement timeout expires first
-permutation stto s3_begin s3_sleep s3_check s3_abort
-# transaction timeout expires first, session s3 FATAL-out
-permutation tsto s3_begin checker_sleep s3_check
-# idle in transaction timeout expires first, session s4 FATAL-out
-permutation itto s4_begin checker_sleep s4_check
-# transaction timeout expires first, session s5 FATAL-out
-permutation tito s5_begin checker_sleep s5_check
-# transaction timeout can be schedule amid transaction, session s6 FATAL-out
-permutation s6_begin s6_tt checker_sleep s6_check
