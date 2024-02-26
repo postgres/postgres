@@ -180,7 +180,7 @@ StatsShmemInit(void)
 		 * With the limit in place, create the dshash table. XXX: It'd be nice
 		 * if there were dshash_create_in_place().
 		 */
-		dsh = dshash_create(dsa, &dsh_params, 0);
+		dsh = dshash_create(dsa, &dsh_params, NULL);
 		ctl->hash_handle = dshash_get_hash_table_handle(dsh);
 
 		/* lift limit set above */

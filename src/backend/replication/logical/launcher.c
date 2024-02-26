@@ -1013,7 +1013,7 @@ logicalrep_launcher_attach_dshmem(void)
 		last_start_times_dsa = dsa_create(LWTRANCHE_LAUNCHER_DSA);
 		dsa_pin(last_start_times_dsa);
 		dsa_pin_mapping(last_start_times_dsa);
-		last_start_times = dshash_create(last_start_times_dsa, &dsh_params, 0);
+		last_start_times = dshash_create(last_start_times_dsa, &dsh_params, NULL);
 
 		/* Store handles in shared memory for other backends to use. */
 		LogicalRepCtx->last_start_dsa = dsa_get_handle(last_start_times_dsa);
