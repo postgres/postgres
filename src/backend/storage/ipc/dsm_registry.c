@@ -50,8 +50,9 @@ typedef struct DSMRegistryEntry
 static const dshash_parameters dsh_params = {
 	offsetof(DSMRegistryEntry, handle),
 	sizeof(DSMRegistryEntry),
-	dshash_memcmp,
-	dshash_memhash,
+	dshash_strcmp,
+	dshash_strhash,
+	dshash_strcpy,
 	LWTRANCHE_DSM_REGISTRY_HASH
 };
 
@@ -132,7 +133,6 @@ GetNamedDSMSegment(const char *name, size_t size,
 {
 	DSMRegistryEntry *entry;
 	MemoryContext oldcontext;
-	char		name_padded[offsetof(DSMRegistryEntry, handle)] = {0};
 	void	   *ret;
 
 	Assert(found);
@@ -155,8 +155,7 @@ GetNamedDSMSegment(const char *name, size_t size,
 	/* Connect to the registry. */
 	init_dsm_registry();
 
-	strcpy(name_padded, name);
-	entry = dshash_find_or_insert(dsm_registry_table, name_padded, found);
+	entry = dshash_find_or_insert(dsm_registry_table, name, found);
 	if (!(*found))
 	{
 		/* Initialize the segment. */

@@ -88,6 +88,7 @@ static const dshash_parameters dsh_params = {
 	sizeof(LauncherLastStartTimesEntry),
 	dshash_memcmp,
 	dshash_memhash,
+	dshash_memcpy,
 	LWTRANCHE_LAUNCHER_HASH
 };
 

@@ -64,6 +64,7 @@ static const dshash_parameters dsh_params = {
 	sizeof(PgStatShared_HashEntry),
 	pgstat_cmp_hash_key,
 	pgstat_hash_hash_key,
+	dshash_memcpy,
 	LWTRANCHE_PGSTATS_HASH
 };
 

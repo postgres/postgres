@@ -188,6 +188,8 @@ static bool delete_item_from_bucket(dshash_table *hash_table,
 static inline dshash_hash hash_key(dshash_table *hash_table, const void *key);
 static inline bool equal_keys(dshash_table *hash_table,
 							  const void *a, const void *b);
+static inline void copy_key(dshash_table *hash_table, void *dest,
+							const void *src);
 
 #define PARTITION_LOCK(hash_table, i)			\
 	(&(hash_table)->control->partitions[(i)].lock)
@@ -584,6 +586,49 @@ dshash_memhash(const void *v, size_t size, void *arg)
 }
 
 /*
+ * A copy function that forwards to memcpy.
+ */
+void
+dshash_memcpy(void *dest, const void *src, size_t size, void *arg)
+{
+	(void) memcpy(dest, src, size);
+}
+
+/*
+ * A compare function that forwards to strcmp.
+ */
+int
+dshash_strcmp(const void *a, const void *b, size_t size, void *arg)
+{
+	Assert(strlen((const char *) a) < size);
+	Assert(strlen((const char *) b) < size);
+
+	return strcmp((const char *) a, (const char *) b);
+}
+
+/*
+ * A hash function that forwards to string_hash.
+ */
+dshash_hash
+dshash_strhash(const void *v, size_t size, void *arg)
+{
+	Assert(strlen((const char *) v) < size);
+
+	return string_hash((const char *) v, size);
+}
+
+/*
+ * A copy function that forwards to strcpy.
+ */
+void
+dshash_strcpy(void *dest, const void *src, size_t size, void *arg)
+{
+	Assert(strlen((const char *) src) < size);
+
+	(void) strcpy((char *) dest, (const char *) src);
+}
+
+/*
  * Sequentially scan through dshash table and return all the elements one by
  * one, return NULL when all elements have been returned.
  *
@@ -949,7 +994,7 @@ insert_into_bucket(dshash_table *hash_table,
 								hash_table->params.entry_size +
 								MAXALIGN(sizeof(dshash_table_item)));
 	item = dsa_get_address(hash_table->area, item_pointer);
-	memcpy(ENTRY_FROM_ITEM(item), key, hash_table->params.key_size);
+	copy_key(hash_table, ENTRY_FROM_ITEM(item), key);
 	insert_item_into_bucket(hash_table, item_pointer, item, bucket);
 	return item;
 }
@@ -1031,4 +1076,15 @@ equal_keys(dshash_table *hash_table, const void *a, const void *b)
 	return hash_table->params.compare_function(a, b,
 											   hash_table->params.key_size,
 											   hash_table->arg) == 0;
+}
+
+/*
+ * Copy a key.
+ */
+static inline void
+copy_key(dshash_table *hash_table, void *dest, const void *src)
+{
+	hash_table->params.copy_function(dest, src,
+									 hash_table->params.key_size,
+									 hash_table->arg);
 }

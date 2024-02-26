@@ -37,6 +37,10 @@ typedef int (*dshash_compare_function) (const void *a, const void *b,
 typedef dshash_hash (*dshash_hash_function) (const void *v, size_t size,
 											 void *arg);
 
+/* A function type for copying keys. */
+typedef void (*dshash_copy_function) (void *dest, const void *src, size_t size,
+									  void *arg);
+
 /*
  * The set of parameters needed to create or attach to a hash table.  The
  * members tranche_id and tranche_name do not need to be initialized when
@@ -55,6 +59,7 @@ typedef struct dshash_parameters
 	size_t		entry_size;		/* Total size of entry */
 	dshash_compare_function compare_function;	/* Compare function */
 	dshash_hash_function hash_function; /* Hash function */
+	dshash_copy_function copy_function; /* Copy function */
 	int			tranche_id;		/* The tranche ID to use for locks */
 } dshash_parameters;
 
@@ -105,9 +110,21 @@ extern void *dshash_seq_next(dshash_seq_status *status);
 extern void dshash_seq_term(dshash_seq_status *status);
 extern void dshash_delete_current(dshash_seq_status *status);
 
-/* Convenience hash and compare functions wrapping memcmp and tag_hash. */
+/*
+ * Convenience hash, compare, and copy functions wrapping memcmp, tag_hash, and
+ * memcpy.
+ */
 extern int	dshash_memcmp(const void *a, const void *b, size_t size, void *arg);
 extern dshash_hash dshash_memhash(const void *v, size_t size, void *arg);
+extern void dshash_memcpy(void *dest, const void *src, size_t size, void *arg);
+
+/*
+ * Convenience hash, compare, and copy functions wrapping strcmp, string_hash,
+ * and strcpy.
+ */
+extern int	dshash_strcmp(const void *a, const void *b, size_t size, void *arg);
+extern dshash_hash dshash_strhash(const void *v, size_t size, void *arg);
+extern void dshash_strcpy(void *dest, const void *src, size_t size, void *arg);
 
 /* Debugging support. */
 extern void dshash_dump(dshash_table *hash_table);
