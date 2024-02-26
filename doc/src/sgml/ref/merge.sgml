@@ -57,7 +57,7 @@ DELETE
 
   <para>
    <command>MERGE</command> performs actions that modify rows in the
-   <replaceable class="parameter">target_table_name</replaceable>,
+   target table identified as <replaceable class="parameter">target_table_name</replaceable>,
    using the <replaceable class="parameter">data_source</replaceable>.
    <command>MERGE</command> provides a single <acronym>SQL</acronym>
    statement that can conditionally <command>INSERT</command>,
@@ -68,7 +68,7 @@ DELETE
   <para>
    First, the <command>MERGE</command> command performs a join
    from <replaceable class="parameter">data_source</replaceable> to
-   <replaceable class="parameter">target_table_name</replaceable>
+   the target table
    producing zero or more candidate change rows.  For each candidate change
    row, the status of <literal>MATCHED</literal> or <literal>NOT MATCHED</literal>
    is set just once, after which <literal>WHEN</literal> clauses are evaluated
@@ -83,7 +83,7 @@ DELETE
    <command>DELETE</command> commands of the same names. The syntax of
    those commands is different, notably that there is no <literal>WHERE</literal>
    clause and no table name is specified.  All actions refer to the
-   <replaceable class="parameter">target_table_name</replaceable>,
+   target table,
    though modifications to other tables may be made using triggers.
   </para>
 
@@ -98,23 +98,27 @@ DELETE
    There is no separate <literal>MERGE</literal> privilege.
    If you specify an update action, you must have the
    <literal>UPDATE</literal> privilege on the column(s)
-   of the <replaceable class="parameter">target_table_name</replaceable>
+   of the target table
    that are referred to in the <literal>SET</literal> clause.
    If you specify an insert action, you must have the <literal>INSERT</literal>
-   privilege on the <replaceable class="parameter">target_table_name</replaceable>.
+   privilege on the target table.
    If you specify a delete action, you must have the <literal>DELETE</literal>
-   privilege on the <replaceable class="parameter">target_table_name</replaceable>.
+   privilege on the target table.
+   If you specify a <literal>DO NOTHING</literal> action, you must have
+   the <literal>SELECT</literal> privilege on at least one column
+   of the target table.
+   You will also need <literal>SELECT</literal> privilege on any column(s)
+   of the <replaceable class="parameter">data_source</replaceable> and
+   of the target table referred to
+   in any <literal>condition</literal> (including <literal>join_condition</literal>)
+   or <literal>expression</literal>.
    Privileges are tested once at statement start and are checked
    whether or not particular <literal>WHEN</literal> clauses are executed.
-   You will require the <literal>SELECT</literal> privilege on any column(s)
-   of the <replaceable class="parameter">data_source</replaceable> and
-   <replaceable class="parameter">target_table_name</replaceable> referred to
-   in any <literal>condition</literal> or <literal>expression</literal>.
   </para>
 
   <para>
    <command>MERGE</command> is not supported if the
-   <replaceable class="parameter">target_table_name</replaceable> is a
+   target table is a
    materialized view, foreign table, or if it has any
    rules defined on it.
   </para>
@@ -175,7 +179,7 @@ DELETE
      <para>
       A query (<command>SELECT</command> statement or <command>VALUES</command>
       statement) that supplies the rows to be merged into the
-      <replaceable class="parameter">target_table_name</replaceable>.
+      target table.
       Refer to the <xref linkend="sql-select"/>
       statement or <xref linkend="sql-values"/>
       statement for a description of the syntax.
@@ -203,16 +207,15 @@ DELETE
       <type>boolean</type> (similar to a <literal>WHERE</literal>
       clause) that specifies which rows in the
       <replaceable class="parameter">data_source</replaceable>
-      match rows in the
-      <replaceable class="parameter">target_table_name</replaceable>.
+      match rows in the target table.
      </para>
      <warning>
       <para>
-       Only columns from <replaceable class="parameter">target_table_name</replaceable>
+       Only columns from the target table
        that attempt to match <replaceable class="parameter">data_source</replaceable>
        rows should appear in <replaceable class="parameter">join_condition</replaceable>.
        <replaceable class="parameter">join_condition</replaceable> subexpressions that
-       only reference <replaceable class="parameter">target_table_name</replaceable>
+       only reference the target table's
        columns can affect which action is taken, often in surprising ways.
       </para>
      </warning>
@@ -228,7 +231,7 @@ DELETE
      <para>
       If the <literal>WHEN</literal> clause specifies <literal>WHEN MATCHED</literal>
       and the candidate change row matches a row in the
-      <replaceable class="parameter">target_table_name</replaceable>,
+      target table,
       the <literal>WHEN</literal> clause is executed if the
       <replaceable class="parameter">condition</replaceable> is
       absent or it evaluates to <literal>true</literal>.
@@ -237,7 +240,7 @@ DELETE
       Conversely, if the <literal>WHEN</literal> clause specifies
       <literal>WHEN NOT MATCHED</literal>
       and the candidate change row does not match a row in the
-      <replaceable class="parameter">target_table_name</replaceable>,
+      target table,
       the <literal>WHEN</literal> clause is executed if the
       <replaceable class="parameter">condition</replaceable> is
       absent or it evaluates to <literal>true</literal>.
@@ -280,10 +283,10 @@ DELETE
       or null if there is none.
      </para>
      <para>
-      If <replaceable class="parameter">target_table_name</replaceable>
+      If the target table
       is a partitioned table, each row is routed to the appropriate partition
       and inserted into it.
-      If <replaceable class="parameter">target_table_name</replaceable>
+      If the target table
       is a partition, an error will occur if any input row violates the
       partition constraint.
      </para>
@@ -304,7 +307,7 @@ DELETE
     <listitem>
      <para>
       The specification of an <literal>UPDATE</literal> action that updates
-      the current row of the <replaceable class="parameter">target_table_name</replaceable>.
+      the current row of the target table.
       Column names may not be specified more than once.
      </para>
      <para>
@@ -318,7 +321,7 @@ DELETE
     <listitem>
      <para>
       Specifies a <literal>DELETE</literal> action that deletes the current row
-      of the <replaceable class="parameter">target_table_name</replaceable>.
+      of the target table.
       Do not include the table name or any other clauses, as you would normally
       do with a <xref linkend="sql-delete"/> command.
      </para>
@@ -329,8 +332,7 @@ DELETE
     <term><replaceable class="parameter">column_name</replaceable></term>
     <listitem>
      <para>
-      The name of a column in the <replaceable
-      class="parameter">target_table_name</replaceable>.  The column name
+      The name of a column in the target table.  The column name
       can be qualified with a subfield name or array subscript, if
       needed.  (Inserting into only some fields of a composite
       column leaves the other fields null.)
