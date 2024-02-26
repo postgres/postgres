@@ -228,7 +228,6 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		/* Initialize locks and shared memory area */
 		char	   *ptr;
 		Size		offset;
-		int			slotno;
 
 		Assert(!found);
 
@@ -268,7 +267,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		}
 
 		ptr += BUFFERALIGN(offset);
-		for (slotno = 0; slotno < nslots; slotno++)
+		for (int slotno = 0; slotno < nslots; slotno++)
 		{
 			LWLockInitialize(&shared->buffer_locks[slotno].lock,
 							 tranche_id);
@@ -530,13 +529,12 @@ int
 SimpleLruReadPage_ReadOnly(SlruCtl ctl, int64 pageno, TransactionId xid)
 {
 	SlruShared	shared = ctl->shared;
-	int			slotno;
 
 	/* Try to find the page while holding only shared lock */
 	LWLockAcquire(shared->ControlLock, LW_SHARED);
 
 	/* See if page is already in a buffer */
-	for (slotno = 0; slotno < shared->num_slots; slotno++)
+	for (int slotno = 0; slotno < shared->num_slots; slotno++)
 	{
 		if (shared->page_number[slotno] == pageno &&
 			shared->page_status[slotno] != SLRU_PAGE_EMPTY &&
@@ -612,9 +610,7 @@ SlruInternalWritePage(SlruCtl ctl, int slotno, SlruWriteAll fdata)
 	/* If we failed, and we're in a flush, better close the files */
 	if (!ok && fdata)
 	{
-		int			i;
-
-		for (i = 0; i < fdata->num_files; i++)
+		for (int i = 0; i < fdata->num_files; i++)
 			CloseTransientFile(fdata->fd[i]);
 	}
 
@@ -815,12 +811,11 @@ SlruPhysicalWritePage(SlruCtl ctl, int64 pageno, int slotno, SlruWriteAll fdata)
 		 * transaction-commit path).
 		 */
 		XLogRecPtr	max_lsn;
-		int			lsnindex,
-					lsnoff;
+		int			lsnindex;
 
 		lsnindex = slotno * shared->lsn_groups_per_page;
 		max_lsn = shared->group_lsn[lsnindex++];
-		for (lsnoff = 1; lsnoff < shared->lsn_groups_per_page; lsnoff++)
+		for (int lsnoff = 1; lsnoff < shared->lsn_groups_per_page; lsnoff++)
 		{
 			XLogRecPtr	this_lsn = shared->group_lsn[lsnindex++];
 
@@ -847,9 +842,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int64 pageno, int slotno, SlruWriteAll fdata)
 	 */
 	if (fdata)
 	{
-		int			i;
-
-		for (i = 0; i < fdata->num_files; i++)
+		for (int i = 0; i < fdata->num_files; i++)
 		{
 			if (fdata->segno[i] == segno)
 			{
@@ -1055,7 +1048,6 @@ SlruSelectLRUPage(SlruCtl ctl, int64 pageno)
 	/* Outer loop handles restart after I/O */
 	for (;;)
 	{
-		int			slotno;
 		int			cur_count;
 		int			bestvalidslot = 0;	/* keep compiler quiet */
 		int			best_valid_delta = -1;
@@ -1065,7 +1057,7 @@ SlruSelectLRUPage(SlruCtl ctl, int64 pageno)
 		int64		best_invalid_page_number = 0;	/* keep compiler quiet */
 
 		/* See if page already has a buffer assigned */
-		for (slotno = 0; slotno < shared->num_slots; slotno++)
+		for (int slotno = 0; slotno < shared->num_slots; slotno++)
 		{
 			if (shared->page_number[slotno] == pageno &&
 				shared->page_status[slotno] != SLRU_PAGE_EMPTY)
@@ -1100,7 +1092,7 @@ SlruSelectLRUPage(SlruCtl ctl, int64 pageno)
 		 * multiple pages with the same lru_count.
 		 */
 		cur_count = (shared->cur_lru_count)++;
-		for (slotno = 0; slotno < shared->num_slots; slotno++)
+		for (int slotno = 0; slotno < shared->num_slots; slotno++)
 		{
 			int			this_delta;
 			int64		this_page_number;
@@ -1200,9 +1192,7 @@ SimpleLruWriteAll(SlruCtl ctl, bool allow_redirtied)
 {
 	SlruShared	shared = ctl->shared;
 	SlruWriteAllData fdata;
-	int			slotno;
 	int64		pageno = 0;
-	int			i;
 	bool		ok;
 
 	/* update the stats counter of flushes */
@@ -1215,7 +1205,7 @@ SimpleLruWriteAll(SlruCtl ctl, bool allow_redirtied)
 
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
-	for (slotno = 0; slotno < shared->num_slots; slotno++)
+	for (int slotno = 0; slotno < shared->num_slots; slotno++)
 	{
 		SlruInternalWritePage(ctl, slotno, &fdata);
 
@@ -1236,7 +1226,7 @@ SimpleLruWriteAll(SlruCtl ctl, bool allow_redirtied)
 	 * Now close any files that were open
 	 */
 	ok = true;
-	for (i = 0; i < fdata.num_files; i++)
+	for (int i = 0; i < fdata.num_files; i++)
 	{
 		if (CloseTransientFile(fdata.fd[i]) != 0)
 		{
@@ -1372,14 +1362,13 @@ void
 SlruDeleteSegment(SlruCtl ctl, int64 segno)
 {
 	SlruShared	shared = ctl->shared;
-	int			slotno;
 	bool		did_write;
 
 	/* Clean out any possibly existing references to the segment. */
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 restart:
 	did_write = false;
-	for (slotno = 0; slotno < shared->num_slots; slotno++)
+	for (int slotno = 0; slotno < shared->num_slots; slotno++)
 	{
 		int			pagesegno = shared->page_number[slotno] / SLRU_PAGES_PER_SEGMENT;
 
