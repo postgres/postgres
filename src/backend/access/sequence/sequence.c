@@ -63,7 +63,7 @@ sequence_close(Relation relation, LOCKMODE lockmode)
 /* ----------------
  *		validate_relation_kind - check the relation's kind
  *
- *		Make sure relkind is from an index
+ *		Make sure relkind is from a sequence.
  * ----------------
  */
 static inline void
