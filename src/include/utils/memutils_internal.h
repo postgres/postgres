@@ -19,9 +19,9 @@
 #include "utils/memutils.h"
 
 /* These functions implement the MemoryContext API for AllocSet context. */
-extern void *AllocSetAlloc(MemoryContext context, Size size);
+extern void *AllocSetAlloc(MemoryContext context, Size size, int flags);
 extern void AllocSetFree(void *pointer);
-extern void *AllocSetRealloc(void *pointer, Size size);
+extern void *AllocSetRealloc(void *pointer, Size size, int flags);
 extern void AllocSetReset(MemoryContext context);
 extern void AllocSetDelete(MemoryContext context);
 extern MemoryContext AllocSetGetChunkContext(void *pointer);
@@ -36,9 +36,9 @@ extern void AllocSetCheck(MemoryContext context);
 #endif
 
 /* These functions implement the MemoryContext API for Generation context. */
-extern void *GenerationAlloc(MemoryContext context, Size size);
+extern void *GenerationAlloc(MemoryContext context, Size size, int flags);
 extern void GenerationFree(void *pointer);
-extern void *GenerationRealloc(void *pointer, Size size);
+extern void *GenerationRealloc(void *pointer, Size size, int flags);
 extern void GenerationReset(MemoryContext context);
 extern void GenerationDelete(MemoryContext context);
 extern MemoryContext GenerationGetChunkContext(void *pointer);
@@ -54,9 +54,9 @@ extern void GenerationCheck(MemoryContext context);
 
 
 /* These functions implement the MemoryContext API for Slab context. */
-extern void *SlabAlloc(MemoryContext context, Size size);
+extern void *SlabAlloc(MemoryContext context, Size size, int flags);
 extern void SlabFree(void *pointer);
-extern void *SlabRealloc(void *pointer, Size size);
+extern void *SlabRealloc(void *pointer, Size size, int flags);
 extern void SlabReset(MemoryContext context);
 extern void SlabDelete(MemoryContext context);
 extern MemoryContext SlabGetChunkContext(void *pointer);
@@ -75,7 +75,7 @@ extern void SlabCheck(MemoryContext context);
  * part of a fully-fledged MemoryContext type.
  */
 extern void AlignedAllocFree(void *pointer);
-extern void *AlignedAllocRealloc(void *pointer, Size size);
+extern void *AlignedAllocRealloc(void *pointer, Size size, int flags);
 extern MemoryContext AlignedAllocGetChunkContext(void *pointer);
 extern Size AlignedAllocGetChunkSpace(void *pointer);
 
@@ -132,5 +132,21 @@ extern void MemoryContextCreate(MemoryContext node,
 								MemoryContextMethodID method_id,
 								MemoryContext parent,
 								const char *name);
+
+extern void *MemoryContextAllocationFailure(MemoryContext context, Size size,
+											int flags);
+
+extern void MemoryContextSizeFailure(MemoryContext context, Size size,
+									 int flags) pg_attribute_noreturn();
+
+static inline void
+MemoryContextCheckSize(MemoryContext context, Size size, int flags)
+{
+	if (unlikely(!AllocSizeIsValid(size)))
+	{
+		if (!(flags & MCXT_ALLOC_HUGE) || !AllocHugeSizeIsValid(size))
+			MemoryContextSizeFailure(context, size, flags);
+	}
+}
 
 #endif							/* MEMUTILS_INTERNAL_H */

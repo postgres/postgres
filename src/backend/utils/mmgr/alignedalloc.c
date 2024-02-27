@@ -57,7 +57,7 @@ AlignedAllocFree(void *pointer)
  *		memory will be uninitialized.
  */
 void *
-AlignedAllocRealloc(void *pointer, Size size)
+AlignedAllocRealloc(void *pointer, Size size, int flags)
 {
 	MemoryChunk *redirchunk = PointerGetMemoryChunk(pointer);
 	Size		alignto;
@@ -97,14 +97,17 @@ AlignedAllocRealloc(void *pointer, Size size)
 #endif
 
 	ctx = GetMemoryChunkContext(unaligned);
-	newptr = MemoryContextAllocAligned(ctx, size, alignto, 0);
+	newptr = MemoryContextAllocAligned(ctx, size, alignto, flags);
 
 	/*
 	 * We may memcpy beyond the end of the original allocation request size,
 	 * so we must mark the entire allocation as defined.
 	 */
-	VALGRIND_MAKE_MEM_DEFINED(pointer, old_size);
-	memcpy(newptr, pointer, Min(size, old_size));
+	if (likely(newptr != NULL))
+	{
+		VALGRIND_MAKE_MEM_DEFINED(pointer, old_size);
+		memcpy(newptr, pointer, Min(size, old_size));
+	}
 	pfree(unaligned);
 
 	return newptr;

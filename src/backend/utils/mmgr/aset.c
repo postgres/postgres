@@ -700,7 +700,7 @@ AllocSetDelete(MemoryContext context)
  * return space that is marked NOACCESS - AllocSetRealloc has to beware!
  */
 void *
-AllocSetAlloc(MemoryContext context, Size size)
+AllocSetAlloc(MemoryContext context, Size size, int flags)
 {
 	AllocSet	set = (AllocSet) context;
 	AllocBlock	block;
@@ -717,6 +717,9 @@ AllocSetAlloc(MemoryContext context, Size size)
 	 */
 	if (size > set->allocChunkLimit)
 	{
+		/* only check size in paths where the limits could be hit */
+		MemoryContextCheckSize(context, size, flags);
+
 #ifdef MEMORY_CONTEXT_CHECKING
 		/* ensure there's always space for the sentinel byte */
 		chunk_size = MAXALIGN(size + 1);
@@ -727,7 +730,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		blksize = chunk_size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) malloc(blksize);
 		if (block == NULL)
-			return NULL;
+			return MemoryContextAllocationFailure(context, size, flags);
 
 		context->mem_allocated += blksize;
 
@@ -940,7 +943,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		}
 
 		if (block == NULL)
-			return NULL;
+			return MemoryContextAllocationFailure(context, size, flags);
 
 		context->mem_allocated += blksize;
 
@@ -1106,7 +1109,7 @@ AllocSetFree(void *pointer)
  * request size.)
  */
 void *
-AllocSetRealloc(void *pointer, Size size)
+AllocSetRealloc(void *pointer, Size size, int flags)
 {
 	AllocBlock	block;
 	AllocSet	set;
@@ -1139,6 +1142,9 @@ AllocSetRealloc(void *pointer, Size size)
 
 		set = block->aset;
 
+		/* only check size in paths where the limits could be hit */
+		MemoryContextCheckSize((MemoryContext) set, size, flags);
+
 		oldchksize = block->endptr - (char *) pointer;
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -1165,7 +1171,7 @@ AllocSetRealloc(void *pointer, Size size)
 		{
 			/* Disallow access to the chunk header. */
 			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
-			return NULL;
+			return MemoryContextAllocationFailure(&set->header, size, flags);
 		}
 
 		/* updated separately, not to underflow when (oldblksize > blksize) */
@@ -1325,15 +1331,15 @@ AllocSetRealloc(void *pointer, Size size)
 		AllocPointer newPointer;
 		Size		oldsize;
 
-		/* allocate new chunk */
-		newPointer = AllocSetAlloc((MemoryContext) set, size);
+		/* allocate new chunk (this also checks size is valid) */
+		newPointer = AllocSetAlloc((MemoryContext) set, size, flags);
 
 		/* leave immediately if request was not completed */
 		if (newPointer == NULL)
 		{
 			/* Disallow access to the chunk header. */
 			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
-			return NULL;
+			return MemoryContextAllocationFailure((MemoryContext) set, size, flags);
 		}
 
 		/*

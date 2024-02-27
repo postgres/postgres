@@ -34,7 +34,7 @@
 
 
 static void BogusFree(void *pointer);
-static void *BogusRealloc(void *pointer, Size size);
+static void *BogusRealloc(void *pointer, Size size, int flags);
 static MemoryContext BogusGetChunkContext(void *pointer);
 static Size BogusGetChunkSpace(void *pointer);
 
@@ -237,7 +237,7 @@ BogusFree(void *pointer)
 }
 
 static void *
-BogusRealloc(void *pointer, Size size)
+BogusRealloc(void *pointer, Size size, int flags)
 {
 	elog(ERROR, "repalloc called with invalid pointer %p (header 0x%016llx)",
 		 pointer, (unsigned long long) GetMemoryChunkHeader(pointer));
@@ -1024,6 +1024,38 @@ MemoryContextCreate(MemoryContext node,
 }
 
 /*
+ * MemoryContextAllocationFailure
+ *		For use by MemoryContextMethods implementations to handle when malloc
+ *		returns NULL.  The behavior is specific to whether MCXT_ALLOC_NO_OOM
+ *		is in 'flags'.
+ */
+void *
+MemoryContextAllocationFailure(MemoryContext context, Size size, int flags)
+{
+	if ((flags & MCXT_ALLOC_NO_OOM) == 0)
+	{
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu in memory context \"%s\".",
+						   size, context->name)));
+	}
+	return NULL;
+}
+
+/*
+ * MemoryContextSizeFailure
+ *		For use by MemoryContextMethods implementations to handle invalid
+ *		memory allocation request sizes.
+ */
+void
+MemoryContextSizeFailure(MemoryContext context, Size size, int flags)
+{
+	elog(ERROR, "invalid memory alloc request size %zu", size);
+}
+
+/*
  * MemoryContextAlloc
  *		Allocate space within the specified context.
  *
@@ -1038,28 +1070,19 @@ MemoryContextAlloc(MemoryContext context, Size size)
 	Assert(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
-	if (!AllocSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
 	context->isReset = false;
 
-	ret = context->methods->alloc(context, size);
-	if (unlikely(ret == NULL))
-	{
-		MemoryContextStats(TopMemoryContext);
-
-		/*
-		 * Here, and elsewhere in this module, we show the target context's
-		 * "name" but not its "ident" (if any) in user-visible error messages.
-		 * The "ident" string might contain security-sensitive data, such as
-		 * values in SQL commands.
-		 */
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu in memory context \"%s\".",
-						   size, context->name)));
-	}
+	/*
+	 * For efficiency reasons, we purposefully offload the handling of
+	 * allocation failures to the MemoryContextMethods implementation as this
+	 * allows these checks to be performed only when an actual malloc needs to
+	 * be done to request more memory from the OS.  Additionally, not having
+	 * to execute any instructions after this call allows the compiler to use
+	 * the sibling call optimization.  If you're considering adding code after
+	 * this call, consider making it the responsibility of the 'alloc'
+	 * function instead.
+	 */
+	ret = context->methods->alloc(context, size, 0);
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
@@ -1081,21 +1104,9 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 	Assert(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
-	if (!AllocSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
 	context->isReset = false;
 
-	ret = context->methods->alloc(context, size);
-	if (unlikely(ret == NULL))
-	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu in memory context \"%s\".",
-						   size, context->name)));
-	}
+	ret = context->methods->alloc(context, size, 0);
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
@@ -1122,20 +1133,9 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 
 	context->isReset = false;
 
-	ret = context->methods->alloc(context, size);
+	ret = context->methods->alloc(context, size, flags);
 	if (unlikely(ret == NULL))
-	{
-		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu in memory context \"%s\".",
-							   size, context->name)));
-		}
 		return NULL;
-	}
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
@@ -1207,22 +1207,21 @@ palloc(Size size)
 	Assert(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
-	if (!AllocSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
 	context->isReset = false;
 
-	ret = context->methods->alloc(context, size);
-	if (unlikely(ret == NULL))
-	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu in memory context \"%s\".",
-						   size, context->name)));
-	}
-
+	/*
+	 * For efficiency reasons, we purposefully offload the handling of
+	 * allocation failures to the MemoryContextMethods implementation as this
+	 * allows these checks to be performed only when an actual malloc needs to
+	 * be done to request more memory from the OS.  Additionally, not having
+	 * to execute any instructions after this call allows the compiler to use
+	 * the sibling call optimization.  If you're considering adding code after
+	 * this call, consider making it the responsibility of the 'alloc'
+	 * function instead.
+	 */
+	ret = context->methods->alloc(context, size, 0);
+	/* We expect OOM to be handled by the alloc function */
+	Assert(ret != NULL);
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	return ret;
@@ -1238,21 +1237,9 @@ palloc0(Size size)
 	Assert(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
-	if (!AllocSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
 	context->isReset = false;
 
-	ret = context->methods->alloc(context, size);
-	if (unlikely(ret == NULL))
-	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu in memory context \"%s\".",
-						   size, context->name)));
-	}
+	ret = context->methods->alloc(context, size, 0);
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
@@ -1271,24 +1258,11 @@ palloc_extended(Size size, int flags)
 	Assert(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
-	if (!((flags & MCXT_ALLOC_HUGE) != 0 ? AllocHugeSizeIsValid(size) :
-		  AllocSizeIsValid(size)))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
 	context->isReset = false;
 
-	ret = context->methods->alloc(context, size);
+	ret = context->methods->alloc(context, size, flags);
 	if (unlikely(ret == NULL))
 	{
-		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu in memory context \"%s\".",
-							   size, context->name)));
-		}
 		return NULL;
 	}
 
@@ -1458,26 +1432,22 @@ repalloc(void *pointer, Size size)
 #endif
 	void	   *ret;
 
-	if (!AllocSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
 	AssertNotInCriticalSection(context);
 
 	/* isReset must be false already */
 	Assert(!context->isReset);
 
-	ret = MCXT_METHOD(pointer, realloc) (pointer, size);
-	if (unlikely(ret == NULL))
-	{
-		MemoryContext cxt = GetMemoryChunkContext(pointer);
-
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu in memory context \"%s\".",
-						   size, cxt->name)));
-	}
+	/*
+	 * For efficiency reasons, we purposefully offload the handling of
+	 * allocation failures to the MemoryContextMethods implementation as this
+	 * allows these checks to be performed only when an actual malloc needs to
+	 * be done to request more memory from the OS.  Additionally, not having
+	 * to execute any instructions after this call allows the compiler to use
+	 * the sibling call optimization.  If you're considering adding code after
+	 * this call, consider making it the responsibility of the 'realloc'
+	 * function instead.
+	 */
+	ret = MCXT_METHOD(pointer, realloc) (pointer, size, 0);
 
 #ifdef USE_VALGRIND
 	if (method != MCTX_ALIGNED_REDIRECT_ID)
@@ -1500,31 +1470,24 @@ repalloc_extended(void *pointer, Size size, int flags)
 #endif
 	void	   *ret;
 
-	if (!((flags & MCXT_ALLOC_HUGE) != 0 ? AllocHugeSizeIsValid(size) :
-		  AllocSizeIsValid(size)))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
 	AssertNotInCriticalSection(context);
 
 	/* isReset must be false already */
 	Assert(!context->isReset);
 
-	ret = MCXT_METHOD(pointer, realloc) (pointer, size);
+	/*
+	 * For efficiency reasons, we purposefully offload the handling of
+	 * allocation failures to the MemoryContextMethods implementation as this
+	 * allows these checks to be performed only when an actual malloc needs to
+	 * be done to request more memory from the OS.  Additionally, not having
+	 * to execute any instructions after this call allows the compiler to use
+	 * the sibling call optimization.  If you're considering adding code after
+	 * this call, consider making it the responsibility of the 'realloc'
+	 * function instead.
+	 */
+	ret = MCXT_METHOD(pointer, realloc) (pointer, size, flags);
 	if (unlikely(ret == NULL))
-	{
-		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
-		{
-			MemoryContext cxt = GetMemoryChunkContext(pointer);
-
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu in memory context \"%s\".",
-							   size, cxt->name)));
-		}
 		return NULL;
-	}
 
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
@@ -1565,21 +1528,19 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 	Assert(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
-	if (!AllocHugeSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
 	context->isReset = false;
 
-	ret = context->methods->alloc(context, size);
-	if (unlikely(ret == NULL))
-	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu in memory context \"%s\".",
-						   size, context->name)));
-	}
+	/*
+	 * For efficiency reasons, we purposefully offload the handling of
+	 * allocation failures to the MemoryContextMethods implementation as this
+	 * allows these checks to be performed only when an actual malloc needs to
+	 * be done to request more memory from the OS.  Additionally, not having
+	 * to execute any instructions after this call allows the compiler to use
+	 * the sibling call optimization.  If you're considering adding code after
+	 * this call, consider making it the responsibility of the 'alloc'
+	 * function instead.
+	 */
+	ret = context->methods->alloc(context, size, MCXT_ALLOC_HUGE);
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
