@@ -83,7 +83,7 @@ typedef struct ObjectAddresses ObjectAddresses;
 
 /*
  * This enum covers all system catalogs whose OIDs can appear in
- * pg_depend.classId or pg_shdepend.classId.  Keep object_classes[] in sync.
+ * pg_depend.classId or pg_shdepend.classId.
  */
 typedef enum ObjectClass
 {
@@ -129,8 +129,6 @@ typedef enum ObjectClass
 	OCLASS_SUBSCRIPTION,		/* pg_subscription */
 	OCLASS_TRANSFORM,			/* pg_transform */
 } ObjectClass;
-
-#define LAST_OCLASS		OCLASS_TRANSFORM
 
 /* flag bits for performDeletion/performMultipleDeletions: */
 #define PERFORM_DELETION_INTERNAL			0x0001	/* internal action */
