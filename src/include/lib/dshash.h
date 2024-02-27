@@ -43,15 +43,13 @@ typedef void (*dshash_copy_function) (void *dest, const void *src, size_t size,
 
 /*
  * The set of parameters needed to create or attach to a hash table.  The
- * members tranche_id and tranche_name do not need to be initialized when
- * attaching to an existing hash table.
+ * tranche_id member does not need to be initialized when attaching to an
+ * existing hash table.
  *
- * Compare and hash functions must be supplied even when attaching, because we
- * can't safely share function pointers between backends in general.  Either
- * the arg variants or the non-arg variants should be supplied; the other
- * function pointers should be NULL.  If the arg variants are supplied then the
- * user data pointer supplied to the create and attach functions will be
- * passed to the hash and compare functions.
+ * Compare, hash, and copy functions must be supplied even when attaching,
+ * because we can't safely share function pointers between backends in general.
+ * The user data pointer supplied to the create and attach functions will be
+ * passed to these functions.
  */
 typedef struct dshash_parameters
 {
