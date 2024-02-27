@@ -1496,17 +1496,17 @@ select jsonb_path_query('"1.23"', '$.double()');
 (1 row)
 
 select jsonb_path_query('"1.23aaa"', '$.double()');
-ERROR:  string argument of jsonpath item method .double() is not a valid representation of a double precision number
+ERROR:  argument "1.23aaa" of jsonpath item method .double() is invalid for type double precision
 select jsonb_path_query('1e1000', '$.double()');
-ERROR:  numeric argument of jsonpath item method .double() is out of range for type double precision
+ERROR:  argument "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" of jsonpath item method .double() is invalid for type double precision
 select jsonb_path_query('"nan"', '$.double()');
-ERROR:  string argument of jsonpath item method .double() is not a valid representation of a double precision number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .double()
 select jsonb_path_query('"NaN"', '$.double()');
-ERROR:  string argument of jsonpath item method .double() is not a valid representation of a double precision number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .double()
 select jsonb_path_query('"inf"', '$.double()');
-ERROR:  string argument of jsonpath item method .double() is not a valid representation of a double precision number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .double()
 select jsonb_path_query('"-inf"', '$.double()');
-ERROR:  string argument of jsonpath item method .double() is not a valid representation of a double precision number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .double()
 select jsonb_path_query('"inf"', '$.double()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1767,19 +1767,19 @@ select jsonb_path_query('{}', '$.bigint()', silent => true);
 (0 rows)
 
 select jsonb_path_query('"1.23"', '$.bigint()');
-ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+ERROR:  argument "1.23" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('"1.23aaa"', '$.bigint()');
-ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+ERROR:  argument "1.23aaa" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('1e1000', '$.bigint()');
-ERROR:  numeric argument of jsonpath item method .bigint() is out of range for type bigint
+ERROR:  argument "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('"nan"', '$.bigint()');
-ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+ERROR:  argument "nan" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('"NaN"', '$.bigint()');
-ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+ERROR:  argument "NaN" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('"inf"', '$.bigint()');
-ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+ERROR:  argument "inf" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('"-inf"', '$.bigint()');
-ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+ERROR:  argument "-inf" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('"inf"', '$.bigint()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1827,9 +1827,9 @@ select jsonb_path_query('"1234567890123"', '$.bigint()');
 (1 row)
 
 select jsonb_path_query('12345678901234567890', '$.bigint()');
-ERROR:  numeric argument of jsonpath item method .bigint() is out of range for type bigint
+ERROR:  argument "12345678901234567890" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('"12345678901234567890"', '$.bigint()');
-ERROR:  string argument of jsonpath item method .bigint() is not a valid representation of a big integer
+ERROR:  argument "12345678901234567890" of jsonpath item method .bigint() is invalid for type bigint
 select jsonb_path_query('"+123"', '$.bigint()');
  jsonb_path_query 
 ------------------
@@ -1882,21 +1882,21 @@ select jsonb_path_query('{}', '$.boolean()', silent => true);
 (0 rows)
 
 select jsonb_path_query('1.23', '$.boolean()');
-ERROR:  numeric argument of jsonpath item method .boolean() is out of range for type boolean
+ERROR:  argument "1.23" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('"1.23"', '$.boolean()');
-ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+ERROR:  argument "1.23" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('"1.23aaa"', '$.boolean()');
-ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+ERROR:  argument "1.23aaa" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('1e1000', '$.boolean()');
-ERROR:  numeric argument of jsonpath item method .boolean() is out of range for type boolean
+ERROR:  argument "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('"nan"', '$.boolean()');
-ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+ERROR:  argument "nan" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('"NaN"', '$.boolean()');
-ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+ERROR:  argument "NaN" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('"inf"', '$.boolean()');
-ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+ERROR:  argument "inf" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('"-inf"', '$.boolean()');
-ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+ERROR:  argument "-inf" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('"inf"', '$.boolean()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1908,7 +1908,7 @@ select jsonb_path_query('"-inf"', '$.boolean()', silent => true);
 (0 rows)
 
 select jsonb_path_query('"100"', '$.boolean()');
-ERROR:  string argument of jsonpath item method .boolean() is not a valid representation of a boolean
+ERROR:  argument "100" of jsonpath item method .boolean() is invalid for type boolean
 select jsonb_path_query('true', '$.boolean()');
  jsonb_path_query 
 ------------------
@@ -2147,7 +2147,7 @@ select jsonb_path_query('"1.23"', '$.decimal()');
 (1 row)
 
 select jsonb_path_query('"1.23aaa"', '$.decimal()');
-ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+ERROR:  argument "1.23aaa" of jsonpath item method .decimal() is invalid for type numeric
 select jsonb_path_query('1e1000', '$.decimal()');
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              jsonb_path_query                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2155,13 +2155,13 @@ select jsonb_path_query('1e1000', '$.decimal()');
 (1 row)
 
 select jsonb_path_query('"nan"', '$.decimal()');
-ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .decimal()
 select jsonb_path_query('"NaN"', '$.decimal()');
-ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .decimal()
 select jsonb_path_query('"inf"', '$.decimal()');
-ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .decimal()
 select jsonb_path_query('"-inf"', '$.decimal()');
-ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .decimal()
 select jsonb_path_query('"inf"', '$.decimal()', silent => true);
  jsonb_path_query 
 ------------------
@@ -2227,7 +2227,7 @@ select jsonb_path_query('12345.678', '$.decimal(6, 1)');
 (1 row)
 
 select jsonb_path_query('12345.678', '$.decimal(6, 2)');
-ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+ERROR:  argument "12345.678" of jsonpath item method .decimal() is invalid for type numeric
 select jsonb_path_query('1234.5678', '$.decimal(6, 2)');
  jsonb_path_query 
 ------------------
@@ -2235,7 +2235,7 @@ select jsonb_path_query('1234.5678', '$.decimal(6, 2)');
 (1 row)
 
 select jsonb_path_query('12345.678', '$.decimal(4, 6)');
-ERROR:  string argument of jsonpath item method .decimal() is not a valid representation of a decimal or number
+ERROR:  argument "12345.678" of jsonpath item method .decimal() is invalid for type numeric
 select jsonb_path_query('12345.678', '$.decimal(0, 6)');
 ERROR:  NUMERIC precision 0 must be between 1 and 1000
 select jsonb_path_query('12345.678', '$.decimal(1001, 6)');
@@ -2321,19 +2321,19 @@ select jsonb_path_query('{}', '$.integer()', silent => true);
 (0 rows)
 
 select jsonb_path_query('"1.23"', '$.integer()');
-ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+ERROR:  argument "1.23" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('"1.23aaa"', '$.integer()');
-ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+ERROR:  argument "1.23aaa" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('1e1000', '$.integer()');
-ERROR:  numeric argument of jsonpath item method .integer() is out of range for type integer
+ERROR:  argument "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('"nan"', '$.integer()');
-ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+ERROR:  argument "nan" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('"NaN"', '$.integer()');
-ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+ERROR:  argument "NaN" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('"inf"', '$.integer()');
-ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+ERROR:  argument "inf" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('"-inf"', '$.integer()');
-ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+ERROR:  argument "-inf" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('"inf"', '$.integer()', silent => true);
  jsonb_path_query 
 ------------------
@@ -2369,9 +2369,9 @@ select jsonb_path_query('1.83', '$.integer()');
 (1 row)
 
 select jsonb_path_query('12345678901', '$.integer()');
-ERROR:  numeric argument of jsonpath item method .integer() is out of range for type integer
+ERROR:  argument "12345678901" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('"12345678901"', '$.integer()');
-ERROR:  string argument of jsonpath item method .integer() is not a valid representation of an integer
+ERROR:  argument "12345678901" of jsonpath item method .integer() is invalid for type integer
 select jsonb_path_query('"+123"', '$.integer()');
  jsonb_path_query 
 ------------------
@@ -2443,7 +2443,7 @@ select jsonb_path_query('"1.23"', '$.number()');
 (1 row)
 
 select jsonb_path_query('"1.23aaa"', '$.number()');
-ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+ERROR:  argument "1.23aaa" of jsonpath item method .number() is invalid for type numeric
 select jsonb_path_query('1e1000', '$.number()');
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              jsonb_path_query                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2451,13 +2451,13 @@ select jsonb_path_query('1e1000', '$.number()');
 (1 row)
 
 select jsonb_path_query('"nan"', '$.number()');
-ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .number()
 select jsonb_path_query('"NaN"', '$.number()');
-ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .number()
 select jsonb_path_query('"inf"', '$.number()');
-ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .number()
 select jsonb_path_query('"-inf"', '$.number()');
-ERROR:  string argument of jsonpath item method .number() is not a valid representation of a decimal or number
+ERROR:  NaN or Infinity is not allowed for jsonpath item method .number()
 select jsonb_path_query('"inf"', '$.number()', silent => true);
  jsonb_path_query 
 ------------------
