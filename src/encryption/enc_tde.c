@@ -20,13 +20,16 @@ static void iv_prefix_debug(const char* iv_prefix, char* out_hex)
 #endif
 
 static void
-SetIVPrefix(ItemPointerData* ip, char* iv_prefix)
+SetIVPrefix(ItemPointerData* ip, CommandId cid, char* iv_prefix)
 {
 	/* We have up to 16 bytes for the entire IV
 	 * The higher bytes (starting with 15) are used for the incrementing counter
 	 * The lower bytes (in this case, 0..5) are used for the tuple identification
 	 * Tuple identification is based on CTID, which currently is 48 bytes in
 	 * postgres: 4 bytes for the block id and 2 bytes for the position id
+	 * After the CTID, we also add the CommandID, which is 4 bytes
+	 * This ensures that even when postgres reuses the same CTID in time,
+	 * with the different CID we still have a unique IV.
 	 */
 	iv_prefix[0] = ip->ip_blkid.bi_hi / 256;
 	iv_prefix[1] = ip->ip_blkid.bi_hi % 256;
@@ -34,6 +37,7 @@ SetIVPrefix(ItemPointerData* ip, char* iv_prefix)
 	iv_prefix[3] = ip->ip_blkid.bi_lo % 256;
 	iv_prefix[4] = ip->ip_posid / 256;
 	iv_prefix[5] = ip->ip_posid % 256;
+	memcpy(iv_prefix + 6, &cid, 4);
 }
 
 /* 
@@ -123,7 +127,7 @@ pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeyData* key, const 
 	char *tup_data = (char*)tuple->t_data + tuple->t_data->t_hoff;
 	char *out_data = (char*)out_tuple->t_data + out_tuple->t_data->t_hoff;
 
-	SetIVPrefix(&tuple->t_self, iv_prefix);
+	SetIVPrefix(&tuple->t_self, tuple->t_data->t_choice.t_heap.t_field3.t_cid, iv_prefix);
 
 #ifdef ENCRYPTION_DEBUG
     ereport(LOG,
@@ -162,7 +166,7 @@ PGTdePageAddItemExtended(RelFileLocator rel,
 
 	ItemPointerSet(&ip, bn, off); 
 
-	SetIVPrefix(&ip, iv_prefix);
+	SetIVPrefix(&ip, ((HeapTupleHeader)item)->t_choice.t_heap.t_field3.t_cid, iv_prefix);
 
 	PG_TDE_ENCRYPT_PAGE_ITEM(iv_prefix, 0, data, data_len, toAddr, key);
 	return off;
