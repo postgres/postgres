@@ -627,13 +627,13 @@ bool		in_hot_standby_guc;
  */
 const char *const GucContext_Names[] =
 {
-	 /* PGC_INTERNAL */ "internal",
-	 /* PGC_POSTMASTER */ "postmaster",
-	 /* PGC_SIGHUP */ "sighup",
-	 /* PGC_SU_BACKEND */ "superuser-backend",
-	 /* PGC_BACKEND */ "backend",
-	 /* PGC_SUSET */ "superuser",
-	 /* PGC_USERSET */ "user"
+	[PGC_INTERNAL] = "internal",
+	[PGC_POSTMASTER] = "postmaster",
+	[PGC_SIGHUP] = "sighup",
+	[PGC_SU_BACKEND] = "superuser-backend",
+	[PGC_BACKEND] = "backend",
+	[PGC_SUSET] = "superuser",
+	[PGC_USERSET] = "user",
 };
 
 StaticAssertDecl(lengthof(GucContext_Names) == (PGC_USERSET + 1),
@@ -646,20 +646,20 @@ StaticAssertDecl(lengthof(GucContext_Names) == (PGC_USERSET + 1),
  */
 const char *const GucSource_Names[] =
 {
-	 /* PGC_S_DEFAULT */ "default",
-	 /* PGC_S_DYNAMIC_DEFAULT */ "default",
-	 /* PGC_S_ENV_VAR */ "environment variable",
-	 /* PGC_S_FILE */ "configuration file",
-	 /* PGC_S_ARGV */ "command line",
-	 /* PGC_S_GLOBAL */ "global",
-	 /* PGC_S_DATABASE */ "database",
-	 /* PGC_S_USER */ "user",
-	 /* PGC_S_DATABASE_USER */ "database user",
-	 /* PGC_S_CLIENT */ "client",
-	 /* PGC_S_OVERRIDE */ "override",
-	 /* PGC_S_INTERACTIVE */ "interactive",
-	 /* PGC_S_TEST */ "test",
-	 /* PGC_S_SESSION */ "session"
+	[PGC_S_DEFAULT] = "default",
+	[PGC_S_DYNAMIC_DEFAULT] = "default",
+	[PGC_S_ENV_VAR] = "environment variable",
+	[PGC_S_FILE] = "configuration file",
+	[PGC_S_ARGV] = "command line",
+	[PGC_S_GLOBAL] = "global",
+	[PGC_S_DATABASE] = "database",
+	[PGC_S_USER] = "user",
+	[PGC_S_DATABASE_USER] = "database user",
+	[PGC_S_CLIENT] = "client",
+	[PGC_S_OVERRIDE] = "override",
+	[PGC_S_INTERACTIVE] = "interactive",
+	[PGC_S_TEST] = "test",
+	[PGC_S_SESSION] = "session",
 };
 
 StaticAssertDecl(lengthof(GucSource_Names) == (PGC_S_SESSION + 1),
@@ -670,96 +670,51 @@ StaticAssertDecl(lengthof(GucSource_Names) == (PGC_S_SESSION + 1),
  */
 const char *const config_group_names[] =
 {
-	/* UNGROUPED */
-	gettext_noop("Ungrouped"),
-	/* FILE_LOCATIONS */
-	gettext_noop("File Locations"),
-	/* CONN_AUTH_SETTINGS */
-	gettext_noop("Connections and Authentication / Connection Settings"),
-	/* CONN_AUTH_TCP */
-	gettext_noop("Connections and Authentication / TCP Settings"),
-	/* CONN_AUTH_AUTH */
-	gettext_noop("Connections and Authentication / Authentication"),
-	/* CONN_AUTH_SSL */
-	gettext_noop("Connections and Authentication / SSL"),
-	/* RESOURCES_MEM */
-	gettext_noop("Resource Usage / Memory"),
-	/* RESOURCES_DISK */
-	gettext_noop("Resource Usage / Disk"),
-	/* RESOURCES_KERNEL */
-	gettext_noop("Resource Usage / Kernel Resources"),
-	/* RESOURCES_VACUUM_DELAY */
-	gettext_noop("Resource Usage / Cost-Based Vacuum Delay"),
-	/* RESOURCES_BGWRITER */
-	gettext_noop("Resource Usage / Background Writer"),
-	/* RESOURCES_ASYNCHRONOUS */
-	gettext_noop("Resource Usage / Asynchronous Behavior"),
-	/* WAL_SETTINGS */
-	gettext_noop("Write-Ahead Log / Settings"),
-	/* WAL_CHECKPOINTS */
-	gettext_noop("Write-Ahead Log / Checkpoints"),
-	/* WAL_ARCHIVING */
-	gettext_noop("Write-Ahead Log / Archiving"),
-	/* WAL_RECOVERY */
-	gettext_noop("Write-Ahead Log / Recovery"),
-	/* WAL_ARCHIVE_RECOVERY */
-	gettext_noop("Write-Ahead Log / Archive Recovery"),
-	/* WAL_RECOVERY_TARGET */
-	gettext_noop("Write-Ahead Log / Recovery Target"),
-	/* WAL_SUMMARIZATION */
-	gettext_noop("Write-Ahead Log / Summarization"),
-	/* REPLICATION_SENDING */
-	gettext_noop("Replication / Sending Servers"),
-	/* REPLICATION_PRIMARY */
-	gettext_noop("Replication / Primary Server"),
-	/* REPLICATION_STANDBY */
-	gettext_noop("Replication / Standby Servers"),
-	/* REPLICATION_SUBSCRIBERS */
-	gettext_noop("Replication / Subscribers"),
-	/* QUERY_TUNING_METHOD */
-	gettext_noop("Query Tuning / Planner Method Configuration"),
-	/* QUERY_TUNING_COST */
-	gettext_noop("Query Tuning / Planner Cost Constants"),
-	/* QUERY_TUNING_GEQO */
-	gettext_noop("Query Tuning / Genetic Query Optimizer"),
-	/* QUERY_TUNING_OTHER */
-	gettext_noop("Query Tuning / Other Planner Options"),
-	/* LOGGING_WHERE */
-	gettext_noop("Reporting and Logging / Where to Log"),
-	/* LOGGING_WHEN */
-	gettext_noop("Reporting and Logging / When to Log"),
-	/* LOGGING_WHAT */
-	gettext_noop("Reporting and Logging / What to Log"),
-	/* PROCESS_TITLE */
-	gettext_noop("Reporting and Logging / Process Title"),
-	/* STATS_MONITORING */
-	gettext_noop("Statistics / Monitoring"),
-	/* STATS_CUMULATIVE */
-	gettext_noop("Statistics / Cumulative Query and Index Statistics"),
-	/* AUTOVACUUM */
-	gettext_noop("Autovacuum"),
-	/* CLIENT_CONN_STATEMENT */
-	gettext_noop("Client Connection Defaults / Statement Behavior"),
-	/* CLIENT_CONN_LOCALE */
-	gettext_noop("Client Connection Defaults / Locale and Formatting"),
-	/* CLIENT_CONN_PRELOAD */
-	gettext_noop("Client Connection Defaults / Shared Library Preloading"),
-	/* CLIENT_CONN_OTHER */
-	gettext_noop("Client Connection Defaults / Other Defaults"),
-	/* LOCK_MANAGEMENT */
-	gettext_noop("Lock Management"),
-	/* COMPAT_OPTIONS_PREVIOUS */
-	gettext_noop("Version and Platform Compatibility / Previous PostgreSQL Versions"),
-	/* COMPAT_OPTIONS_CLIENT */
-	gettext_noop("Version and Platform Compatibility / Other Platforms and Clients"),
-	/* ERROR_HANDLING_OPTIONS */
-	gettext_noop("Error Handling"),
-	/* PRESET_OPTIONS */
-	gettext_noop("Preset Options"),
-	/* CUSTOM_OPTIONS */
-	gettext_noop("Customized Options"),
-	/* DEVELOPER_OPTIONS */
-	gettext_noop("Developer Options"),
+	[UNGROUPED] = gettext_noop("Ungrouped"),
+	[FILE_LOCATIONS] = gettext_noop("File Locations"),
+	[CONN_AUTH_SETTINGS] = gettext_noop("Connections and Authentication / Connection Settings"),
+	[CONN_AUTH_TCP] = gettext_noop("Connections and Authentication / TCP Settings"),
+	[CONN_AUTH_AUTH] = gettext_noop("Connections and Authentication / Authentication"),
+	[CONN_AUTH_SSL] = gettext_noop("Connections and Authentication / SSL"),
+	[RESOURCES_MEM] = gettext_noop("Resource Usage / Memory"),
+	[RESOURCES_DISK] = gettext_noop("Resource Usage / Disk"),
+	[RESOURCES_KERNEL] = gettext_noop("Resource Usage / Kernel Resources"),
+	[RESOURCES_VACUUM_DELAY] = gettext_noop("Resource Usage / Cost-Based Vacuum Delay"),
+	[RESOURCES_BGWRITER] = gettext_noop("Resource Usage / Background Writer"),
+	[RESOURCES_ASYNCHRONOUS] = gettext_noop("Resource Usage / Asynchronous Behavior"),
+	[WAL_SETTINGS] = gettext_noop("Write-Ahead Log / Settings"),
+	[WAL_CHECKPOINTS] = gettext_noop("Write-Ahead Log / Checkpoints"),
+	[WAL_ARCHIVING] = gettext_noop("Write-Ahead Log / Archiving"),
+	[WAL_RECOVERY] = gettext_noop("Write-Ahead Log / Recovery"),
+	[WAL_ARCHIVE_RECOVERY] = gettext_noop("Write-Ahead Log / Archive Recovery"),
+	[WAL_RECOVERY_TARGET] = gettext_noop("Write-Ahead Log / Recovery Target"),
+	[WAL_SUMMARIZATION] = gettext_noop("Write-Ahead Log / Summarization"),
+	[REPLICATION_SENDING] = gettext_noop("Replication / Sending Servers"),
+	[REPLICATION_PRIMARY] = gettext_noop("Replication / Primary Server"),
+	[REPLICATION_STANDBY] = gettext_noop("Replication / Standby Servers"),
+	[REPLICATION_SUBSCRIBERS] = gettext_noop("Replication / Subscribers"),
+	[QUERY_TUNING_METHOD] = gettext_noop("Query Tuning / Planner Method Configuration"),
+	[QUERY_TUNING_COST] = gettext_noop("Query Tuning / Planner Cost Constants"),
+	[QUERY_TUNING_GEQO] = gettext_noop("Query Tuning / Genetic Query Optimizer"),
+	[QUERY_TUNING_OTHER] = gettext_noop("Query Tuning / Other Planner Options"),
+	[LOGGING_WHERE] = gettext_noop("Reporting and Logging / Where to Log"),
+	[LOGGING_WHEN] = gettext_noop("Reporting and Logging / When to Log"),
+	[LOGGING_WHAT] = gettext_noop("Reporting and Logging / What to Log"),
+	[PROCESS_TITLE] = gettext_noop("Reporting and Logging / Process Title"),
+	[STATS_MONITORING] = gettext_noop("Statistics / Monitoring"),
+	[STATS_CUMULATIVE] = gettext_noop("Statistics / Cumulative Query and Index Statistics"),
+	[AUTOVACUUM] = gettext_noop("Autovacuum"),
+	[CLIENT_CONN_STATEMENT] = gettext_noop("Client Connection Defaults / Statement Behavior"),
+	[CLIENT_CONN_LOCALE] = gettext_noop("Client Connection Defaults / Locale and Formatting"),
+	[CLIENT_CONN_PRELOAD] = gettext_noop("Client Connection Defaults / Shared Library Preloading"),
+	[CLIENT_CONN_OTHER] = gettext_noop("Client Connection Defaults / Other Defaults"),
+	[LOCK_MANAGEMENT] = gettext_noop("Lock Management"),
+	[COMPAT_OPTIONS_PREVIOUS] = gettext_noop("Version and Platform Compatibility / Previous PostgreSQL Versions"),
+	[COMPAT_OPTIONS_CLIENT] = gettext_noop("Version and Platform Compatibility / Other Platforms and Clients"),
+	[ERROR_HANDLING_OPTIONS] = gettext_noop("Error Handling"),
+	[PRESET_OPTIONS] = gettext_noop("Preset Options"),
+	[CUSTOM_OPTIONS] = gettext_noop("Customized Options"),
+	[DEVELOPER_OPTIONS] = gettext_noop("Developer Options"),
 	/* help_config wants this array to be null-terminated */
 	NULL
 };
@@ -774,11 +729,11 @@ StaticAssertDecl(lengthof(config_group_names) == (DEVELOPER_OPTIONS + 2),
  */
 const char *const config_type_names[] =
 {
-	 /* PGC_BOOL */ "bool",
-	 /* PGC_INT */ "integer",
-	 /* PGC_REAL */ "real",
-	 /* PGC_STRING */ "string",
-	 /* PGC_ENUM */ "enum"
+	[PGC_BOOL] = "bool",
+	[PGC_INT] = "integer",
+	[PGC_REAL] = "real",
+	[PGC_STRING] = "string",
+	[PGC_ENUM] = "enum",
 };
 
 StaticAssertDecl(lengthof(config_type_names) == (PGC_ENUM + 1),

@@ -31,10 +31,10 @@
  * pg_relation_size().
  */
 const char *const forkNames[] = {
-	"main",						/* MAIN_FORKNUM */
-	"fsm",						/* FSM_FORKNUM */
-	"vm",						/* VISIBILITYMAP_FORKNUM */
-	"init"						/* INIT_FORKNUM */
+	[MAIN_FORKNUM] = "main",
+	[FSM_FORKNUM] = "fsm",
+	[VISIBILITYMAP_FORKNUM] = "vm",
+	[INIT_FORKNUM] = "init",
 };
 
 StaticAssertDecl(lengthof(forkNames) == (MAX_FORKNUM + 1),
