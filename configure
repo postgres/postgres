@@ -845,7 +845,6 @@ with_blocksize
 with_segsize
 with_segsize_blocks
 with_wal_blocksize
-with_CC
 with_llvm
 enable_depend
 enable_cassert
@@ -1557,7 +1556,6 @@ Optional Packages:
                           set table segment size in blocks [0]
   --with-wal-blocksize=BLOCKSIZE
                           set WAL block size in kB [8]
-  --with-CC=CMD           set compiler (deprecated)
   --with-llvm             build with LLVM based JIT support
   --without-icu           build without ICU support
   --with-tcl              build Tcl modules (PL/Tcl)
@@ -3890,31 +3888,6 @@ _ACEOF
 #
 # C compiler
 #
-
-# For historical reasons you can also use --with-CC to specify the C compiler
-# to use, although the standard way to do this is to set the CC environment
-# variable.
-
-
-
-# Check whether --with-CC was given.
-if test "${with_CC+set}" = set; then :
-  withval=$with_CC;
-  case $withval in
-    yes)
-      as_fn_error $? "argument required for --with-CC option" "$LINENO" 5
-      ;;
-    no)
-      as_fn_error $? "argument required for --with-CC option" "$LINENO" 5
-      ;;
-    *)
-      CC=$with_CC
-      ;;
-  esac
-
-fi
-
-
 
 # If you don't specify a list of compilers to test, the AC_PROG_CC and
 # AC_PROG_CXX macros test for a long list of unsupported compilers.
