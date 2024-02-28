@@ -3063,8 +3063,8 @@ pg_stat_force_next_flush
 (1 row)
 
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;
@@ -3117,8 +3117,8 @@ pg_stat_force_next_flush
 (1 row)
 
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s2_big_notify: SELECT pg_notify('stats_test_use',
@@ -3157,8 +3157,8 @@ pg_stat_force_next_flush
 (1 row)
 
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s2_begin: BEGIN;
@@ -3200,8 +3200,8 @@ pg_stat_force_next_flush
 
 step s1_fetch_consistency_none: SET stats_fetch_consistency = 'none';
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;
@@ -3267,8 +3267,8 @@ pg_stat_force_next_flush
 
 step s1_fetch_consistency_cache: SET stats_fetch_consistency = 'cache';
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;
@@ -3334,8 +3334,8 @@ pg_stat_force_next_flush
 
 step s1_fetch_consistency_snapshot: SET stats_fetch_consistency = 'snapshot';
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;
@@ -3401,8 +3401,8 @@ pg_stat_force_next_flush
 
 step s1_fetch_consistency_none: SET stats_fetch_consistency = 'none';
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;
@@ -3474,8 +3474,8 @@ pg_stat_force_next_flush
 
 step s1_fetch_consistency_cache: SET stats_fetch_consistency = 'cache';
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;
@@ -3547,8 +3547,8 @@ pg_stat_force_next_flush
 
 step s1_fetch_consistency_snapshot: SET stats_fetch_consistency = 'snapshot';
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;
@@ -3620,8 +3620,8 @@ pg_stat_force_next_flush
 
 step s1_fetch_consistency_snapshot: SET stats_fetch_consistency = 'snapshot';
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;
@@ -3677,8 +3677,8 @@ pg_stat_force_next_flush
 
 step s1_fetch_consistency_snapshot: SET stats_fetch_consistency = 'snapshot';
 step s1_slru_save_stats: 
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 
 step s1_listen: LISTEN stats_test_nothing;
 step s1_begin: BEGIN;

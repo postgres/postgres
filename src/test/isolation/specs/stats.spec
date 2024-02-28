@@ -107,8 +107,8 @@ step s1_table_stats {
 
 # SLRU stats steps
 step s1_slru_save_stats {
-	INSERT INTO test_slru_stats VALUES('Notify', 'blks_zeroed',
-    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'Notify'));
+	INSERT INTO test_slru_stats VALUES('notify', 'blks_zeroed',
+    (SELECT blks_zeroed FROM pg_stat_slru WHERE name = 'notify'));
 }
 step s1_listen { LISTEN stats_test_nothing; }
 step s1_big_notify { SELECT pg_notify('stats_test_use',

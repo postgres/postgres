@@ -866,21 +866,21 @@ WHERE pg_stat_get_backend_pid(beid) = pg_backend_pid();
 -- Test that resetting stats works for reset timestamp
 -----
 -- Test that reset_slru with a specified SLRU works.
-SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'CommitTs' \gset
-SELECT stats_reset AS slru_notify_reset_ts FROM pg_stat_slru WHERE name = 'Notify' \gset
-SELECT pg_stat_reset_slru('CommitTs');
+SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'commit_timestamp' \gset
+SELECT stats_reset AS slru_notify_reset_ts FROM pg_stat_slru WHERE name = 'notify' \gset
+SELECT pg_stat_reset_slru('commit_timestamp');
  pg_stat_reset_slru 
 --------------------
  
 (1 row)
 
-SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'CommitTs';
+SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'commit_timestamp';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'CommitTs' \gset
+SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'commit_timestamp' \gset
 -- Test that multiple SLRUs are reset when no specific SLRU provided to reset function
 SELECT pg_stat_reset_slru();
  pg_stat_reset_slru 
@@ -888,13 +888,13 @@ SELECT pg_stat_reset_slru();
  
 (1 row)
 
-SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'CommitTs';
+SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'commit_timestamp';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT stats_reset > :'slru_notify_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'Notify';
+SELECT stats_reset > :'slru_notify_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'notify';
  ?column? 
 ----------
  t

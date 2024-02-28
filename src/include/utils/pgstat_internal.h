@@ -269,13 +269,13 @@ typedef struct PgStat_KindInfo
  * definitions.
  */
 static const char *const slru_names[] = {
-	"CommitTs",
-	"MultiXactMember",
-	"MultiXactOffset",
-	"Notify",
-	"Serial",
-	"Subtrans",
-	"Xact",
+	"commit_timestamp",
+	"multixact_member",
+	"multixact_offset",
+	"notify",
+	"serializable",
+	"subtransaction",
+	"transaction",
 	"other"						/* has to be last */
 };
 

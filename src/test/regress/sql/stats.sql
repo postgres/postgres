@@ -447,16 +447,16 @@ WHERE pg_stat_get_backend_pid(beid) = pg_backend_pid();
 -----
 
 -- Test that reset_slru with a specified SLRU works.
-SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'CommitTs' \gset
-SELECT stats_reset AS slru_notify_reset_ts FROM pg_stat_slru WHERE name = 'Notify' \gset
-SELECT pg_stat_reset_slru('CommitTs');
-SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'CommitTs';
-SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'CommitTs' \gset
+SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'commit_timestamp' \gset
+SELECT stats_reset AS slru_notify_reset_ts FROM pg_stat_slru WHERE name = 'notify' \gset
+SELECT pg_stat_reset_slru('commit_timestamp');
+SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'commit_timestamp';
+SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'commit_timestamp' \gset
 
 -- Test that multiple SLRUs are reset when no specific SLRU provided to reset function
 SELECT pg_stat_reset_slru();
-SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'CommitTs';
-SELECT stats_reset > :'slru_notify_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'Notify';
+SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'commit_timestamp';
+SELECT stats_reset > :'slru_notify_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'notify';
 
 -- Test that reset_shared with archiver specified as the stats type works
 SELECT stats_reset AS archiver_reset_ts FROM pg_stat_archiver \gset

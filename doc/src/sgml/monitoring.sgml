@@ -4853,13 +4853,13 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <literal>NULL</literal> or is not specified, all the counters shown in
         the <structname>pg_stat_slru</structname> view for all SLRU caches are
         reset. The argument can be one of
-        <literal>CommitTs</literal>,
-        <literal>MultiXactMember</literal>,
-        <literal>MultiXactOffset</literal>,
-        <literal>Notify</literal>,
-        <literal>Serial</literal>,
-        <literal>Subtrans</literal>, or
-        <literal>Xact</literal>
+        <literal>commit_timestamp</literal>,
+        <literal>multixact_member</literal>,
+        <literal>multixact_offset</literal>,
+        <literal>notify</literal>,
+        <literal>serializable</literal>,
+        <literal>subtransaction</literal>, or
+        <literal>transaction</literal>
         to reset the counters for only that entry.
         If the argument is <literal>other</literal> (or indeed, any
         unrecognized name), then the counters for all other SLRU caches, such

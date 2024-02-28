@@ -200,7 +200,7 @@ void
 SUBTRANSShmemInit(void)
 {
 	SubTransCtl->PagePrecedes = SubTransPagePrecedes;
-	SimpleLruInit(SubTransCtl, "Subtrans", NUM_SUBTRANS_BUFFERS, 0,
+	SimpleLruInit(SubTransCtl, "subtransaction", NUM_SUBTRANS_BUFFERS, 0,
 				  SubtransSLRULock, "pg_subtrans",
 				  LWTRANCHE_SUBTRANS_BUFFER, SYNC_HANDLER_NONE,
 				  false);
