@@ -221,17 +221,17 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlo
  * short lifespan until it is written to disk.
  */
 void
-AesEncryptKey(const keyInfo *master_key_info, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes)
+AesEncryptKey(const TDEMasterKey *master_key, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes)
 {
-		unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-        /* Ensure we are getting a valid pointer here */
-        Assert(master_key_info);
+	/* Ensure we are getting a valid pointer here */
+	Assert(master_key);
 
-        *p_enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
-        memcpy(*p_enc_rel_key_data, rel_key_data, sizeof(RelKeyData));
+	*p_enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
+	memcpy(*p_enc_rel_key_data, rel_key_data, sizeof(RelKeyData));
 
-        AesEncrypt(master_key_info->data.data, iv, ((unsigned char*)&rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *)&(*p_enc_rel_key_data)->internal_key), (int *)enc_key_bytes);
+	AesEncrypt(master_key->keyData, iv, ((unsigned char*)&rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *)&(*p_enc_rel_key_data)->internal_key), (int *)enc_key_bytes);
 }
 
 /*
@@ -241,18 +241,17 @@ AesEncryptKey(const keyInfo *master_key_info, RelKeyData *rel_key_data, RelKeyDa
  * to note that memory is allocated in the TopMemoryContext so we expect this to be added
  * to our key cache.
  */
-void
-AesDecryptKey(const keyInfo *master_key_info, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes)
+void AesDecryptKey(const TDEMasterKey *master_key, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes)
 {
-		unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-        /* Ensure we are getting a valid pointer here */
-        Assert(master_key_info);
-        *p_rel_key_data = (RelKeyData *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeyData));
+	/* Ensure we are getting a valid pointer here */
+	Assert(master_key);
+	*p_rel_key_data = (RelKeyData *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeyData));
 
-        /* Fill in the structure */
-        memcpy(*p_rel_key_data, enc_rel_key_data, sizeof(RelKeyData));
-		(*p_rel_key_data)->internal_key.ctx = NULL;
+	/* Fill in the structure */
+	memcpy(*p_rel_key_data, enc_rel_key_data, sizeof(RelKeyData));
+	(*p_rel_key_data)->internal_key.ctx = NULL;
 
-        AesDecrypt(master_key_info->data.data, iv, ((unsigned char*) &enc_rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *)&(*p_rel_key_data)->internal_key) , (int *)key_bytes);
+	AesDecrypt(master_key->keyData, iv, ((unsigned char*) &enc_rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *)&(*p_rel_key_data)->internal_key) , (int *)key_bytes);
 }

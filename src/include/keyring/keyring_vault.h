@@ -1,19 +1,16 @@
+/*-------------------------------------------------------------------------
+ *
+ * keyring_vault.h
+ *	  Vault-V2 implementation
+ *
+ * src/include/keyring/keyring_vault.h
+ *
+ *-------------------------------------------------------------------------
+ */
 
 #ifndef KEYRING_VAULT_H
 #define KEYRING_VAULT_H
 
-#include "postgres.h"
-
-#include <json.h>
-
-#include "keyring_api.h"
-
-int keyringVaultPreloadCache(void);
-
-int keyringVaultParseConfiguration(json_object* configRoot);
-
-int keyringVaultStoreKey(const keyInfo* ki);
-
-int keyringVaultGetKey(keyName name, keyData* outData);
+extern bool InstallVaultV2Keyring(void);
 
 #endif // KEYRING_FILE_H

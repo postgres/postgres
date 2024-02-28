@@ -1,6 +1,18 @@
 -- A test case for https://github.com/Percona-Lab/pg_tde/pull/21
 -- 
 CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_master_key('test-db-master-key','file-vault');
+ pg_tde_set_master_key 
+-----------------------
+ 
+(1 row)
+
 DROP TABLE IF EXISTS sbtest1;
 NOTICE:  table "sbtest1" does not exist, skipping
 CREATE TABLE sbtest1(

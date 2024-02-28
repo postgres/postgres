@@ -7,195 +7,117 @@
 #include "postgres.h"
 #include "access/xlog.h"
 #include "storage/shmem.h"
+#include "nodes/pg_list.h"
+#include "utils/memutils.h"
 
 #include <assert.h>
 #include <openssl/rand.h>
 
-// TODO: locking!
-
-keyringCache* cache = NULL;
-
-unsigned keyringCacheMemorySize(void)
+typedef struct KeyProviders
 {
-	return sizeof(keyringCache);
-}
+	TDEKeyringRoutine *routine;
+	ProviderType type;
+} KeyProviders;
 
-void keyringInitCache(void)
+List *registeredKeyProviders = NIL;
+static KeyProviders *find_key_provider(ProviderType type);
+
+static KeyProviders *
+find_key_provider(ProviderType type)
 {
-	bool found = false;
-
-	cache = ShmemInitStruct("pgtde_keyring_cache", keyringCacheMemorySize(), &found);
-	if(!found)
+	ListCell *lc;
+	foreach (lc, registeredKeyProviders)
 	{
-		memset(cache, 0, keyringCacheMemorySize());
-	}
-
-	switch(keyringProvider)
-	{
-		case PROVIDER_FILE:
-		keyringFilePreloadCache();
-		break;
-		case PROVIDER_VAULT_V2:
-		keyringVaultPreloadCache();
-		break;
-		case PROVIDER_UNKNOWN:
-		// nop
-		break;
-	}
-}
-
-const keyInfo* keyringCacheStoreKey(keyName name, keyData data)
-{
-	cache->keys[cache->keyCount].name = name;
-	cache->keys[cache->keyCount].data = data;
-	cache->keyCount++;
-
-	return &cache->keys[cache->keyCount-1];
-}
-
-const keyInfo* keyringGetKey(keyName name)
-{
-#if KEYRING_DEBUG
-	fprintf(stderr, "Looking up key: %s\n", name.name);
-#endif
-	for(int i = 0; i < cache->keyCount; ++i)
-	{
-		if(strcmp(cache->keys[i].name.name, name.name) == 0)
+		KeyProviders *kp = (KeyProviders *)lfirst(lc);
+		if (kp->type == type)
 		{
-#if KEYRING_DEBUG
-	fprintf(stderr, " -- found key\n");
-#endif
-			return &cache->keys[i];
+			return kp;
 		}
 	}
-	// not found in cache, try to look up
-	switch(keyringProvider)
-	{
-		case PROVIDER_FILE:
-			// nop, not implmeneted
-		break;
-		case PROVIDER_VAULT_V2:
-		{
-			keyData data;
-			data.len = 0;
-			keyringVaultGetKey(name, &data);
-			if(data.len > 0)
-			{
-				return keyringCacheStoreKey(name, data);
-			}
-			break;
-		}
-		case PROVIDER_UNKNOWN:
-		// nop
-		break;
-	}
-
-#if KEYRING_DEBUG
-	fprintf(stderr, " -- not found\n");
-#endif
 	return NULL;
 }
-
-const keyInfo* keyringStoreKey(keyName name, keyData data)
+bool RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 {
-	const keyInfo* ki = keyringCacheStoreKey(name, data);
-#if KEYRING_DEBUG
-	fprintf(stderr, "Storing key: %s\n", name.name);
-#endif
-	switch(keyringProvider)
+	MemoryContext oldcontext;
+	KeyProviders *kp;
+
+	Assert(routine != NULL);
+	Assert(routine->keyring_get_key != NULL);
+	Assert(routine->keyring_store_key != NULL);
+
+	kp = find_key_provider(type);
+	if (kp)
 	{
-		case PROVIDER_FILE:
-		if(keyringFileStoreKey(ki)) return ki;
-		break;
-		case PROVIDER_VAULT_V2:
-		if(keyringVaultStoreKey(ki)) return ki;
-		break;
-		case PROVIDER_UNKNOWN:
-		// nop
-		break;
+		ereport(ERROR,
+				(errmsg("Key provider of type %d already registered", type)));
+		return false;
 	}
-
-	//  if we are here, storeKey failed, remove from cache
-	cache->keyCount--;
-
-	return NULL;
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	kp = palloc(sizeof(KeyProviders));
+	kp->routine = (TDEKeyringRoutine *)routine;
+	kp->type = type;
+	registeredKeyProviders = lappend(registeredKeyProviders, kp);
+	MemoryContextSwitchTo(oldcontext);
+	return true;
 }
 
-keyName keyringConstructKeyName(const char* internalName, unsigned version)
+keyInfo *
+KeyringGetKey(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *returnCode)
 {
-	keyName name;
-	if(keyringKeyPrefix != NULL && strlen(keyringKeyPrefix) > 0)
+	KeyProviders *kp = find_key_provider(keyring->type);
+	if (kp == NULL)
 	{
-		snprintf(name.name, sizeof(name.name), "%s-%s-%u", keyringKeyPrefix, internalName, version);
-	} else 
-	{
-		snprintf(name.name, sizeof(name.name), "%s-%u", internalName, version);
+		ereport(throw_error ? ERROR : WARNING,
+				(errmsg("Key provider of type %d not registered", keyring->type)));
+		*returnCode = KEYRING_CODE_INVALID_PROVIDER;
+		return NULL;
 	}
-	return name;
+	return kp->routine->keyring_get_key(keyring, key_name, throw_error, returnCode);
 }
 
-const keyInfo* keyringGetLatestKey(const char* internalName)
+KeyringReturnCodes
+KeyringStoreKey(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 {
-	int i = 1;
-	const keyInfo* curr = NULL;
-	const keyInfo* prev = NULL;
-	while((curr = keyringGetKey(keyringConstructKeyName(internalName, i))) != NULL)
+	KeyProviders *kp = find_key_provider(keyring->type);
+	if (kp == NULL)
 	{
-		prev = curr;
-		++i;
+		ereport(throw_error ? ERROR : WARNING,
+				(errmsg("Key provider of type %d not registered", keyring->type)));
+		return KEYRING_CODE_INVALID_PROVIDER;
 	}
-
-	return prev;
+	return kp->routine->keyring_store_key(keyring, key, throw_error);
 }
 
-const keyInfo* keyringGenerateKey(const char* internalName, unsigned keyLen)
+keyInfo *
+KeyringGenerateNewKey(const char *key_name, unsigned key_len)
 {
-	int i = 1;
-	keyData kd;
-
-
-	while(keyringGetKey(keyringConstructKeyName(internalName, i)) != NULL)
+	keyInfo *key;
+	Assert(key_len <= 32);
+	key = palloc(sizeof(keyInfo));
+	key->data.len = key_len;
+	if (!RAND_bytes(key->data.data, key_len))
 	{
-		++i;
+		pfree(key);
+		return NULL; /*openssl error*/
 	}
-
-	assert(keyLen <= 32);
-
-	kd.len = keyLen;
-	if (!RAND_bytes(kd.data, keyLen)) 
-	{
-		return NULL; // openssl error
-	}
-
-
-	return keyringStoreKey(keyringConstructKeyName(internalName, i), kd);
+	strncpy(key->name.name, key_name, sizeof(key->name.name));
+	return key;
 }
 
-/*
- * Simplifying the interface to get the master key without having to worry
- * generating a new one. If master key does not exist, and doGenerateKey is
- * set, a new key is generated. This is useful during write operations.
- *
- * However, when performing a read operation and a master is expected to exist,
- * doGenerateKey should be false and doRaiseError should be set to indicate
- * that master key is expected but could not be accessed.
- */
-const keyInfo* getMasterKey(const char* internalName, bool doGenerateKey, bool doRaiseError)
+keyInfo *
+KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, unsigned key_len, bool throw_error)
 {
-	const keyInfo* key = NULL;
-
-	key = keyringGetLatestKey(internalName);
-
-	if (key == NULL && doGenerateKey)
+	keyInfo *key = KeyringGenerateNewKey(key_name, key_len);
+	if (key == NULL)
 	{
-		key = keyringGenerateKey(internalName, 16);
+		ereport(throw_error ? ERROR : WARNING,
+				(errmsg("Failed to generate key")));
+		return NULL;
 	}
-
-	if (key == NULL && doRaiseError)
+	if (KeyringStoreKey(keyring, key, throw_error) != KEYRING_CODE_SUCCESS)
 	{
-        ereport(ERROR,
-                (errmsg("failed to retrieve master key")));
+		pfree(key);
+		return NULL;
 	}
-
 	return key;
 }

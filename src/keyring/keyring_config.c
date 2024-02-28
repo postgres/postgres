@@ -59,7 +59,6 @@ static void keyringAssignConfigFile(const char *newval, void *extra)
 		//elog(WARNING, "pg_tde.keyringConfigFile is empty. Encryption features will not be available.");
 		return;
 	} 
-	keyringLoadConfiguration(newval);
 }
 
 void keyringRegisterVariables(void)
@@ -88,70 +87,6 @@ void keyringRegisterVariables(void)
 							NULL,	/* assign_hook */
 							NULL	/* show_hook */
 		);
-}
-
-bool keyringLoadConfiguration(const char* configFileName)
-{
-	int ret = 0;
-	json_object *providerO;
-	const char* provider;
-
-	struct json_object *root = json_object_from_file(configFileName);
-
-	if(root == NULL)
-	{
-		elog(ERROR, "pg_tde.keyringConfigFile is not a valid JSON file. Keyring is not available.");
-		return 0;
-	}
-
-	if(!json_object_object_get_ex(root, "provider", &providerO))
-	{
-		elog(ERROR, "Invalid pg_tde.keyringConfigFile: Missing 'provider'. Keyring is not available.");
-		goto cleanup;
-	}
-
-	provider = json_object_get_string(providerO);
-
-	if(provider == NULL || strlen(provider) == 0)
-	{
-		elog(ERROR, "Invalid pg_tde.keyringConfigFile: Empty 'provider'. Keyring is not available.");
-		goto cleanup;
-	}
-	
-
-	if(strncmp("file", provider, 5) == 0)
-	{
-		ret = keyringFileParseConfiguration(root);
-		if(ret)
-		{
-			keyringProvider = PROVIDER_FILE;
-		}
-	}
-
-	if(strncmp("vault-v2", provider, 9) == 0)
-	{
-		ret = keyringVaultParseConfiguration(root);
-		if(ret)
-		{
-			keyringProvider = PROVIDER_VAULT_V2;
-		}
-	}
-
-	if(keyringProvider == PROVIDER_UNKNOWN)
-	{
-		elog(ERROR, "Invalid pg_tde.keyringConfigFile: Unknown 'provider': %s. Currently only 'file' and 'vault-v2', providers are supported. Keyring is not available.", provider);
-	}
-
-
-	if (!ret)
-	{
-		elog(ERROR, "Failed to initialize keyring provider. Keyring is not available.");
-	}
-
-cleanup:
-	json_object_put(root);
-
-	return ret;
 }
 
 const char* keyringParseStringParam(json_object* object)

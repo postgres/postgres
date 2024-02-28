@@ -58,7 +58,7 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlo
 		pg_tde_crypt(_iv_prefix, _iv_prefix_len, _data, _data_len, _out, _key, "ENCRYPT-PAGE-ITEM"); \
 	} while(0)
 
-extern void AesEncryptKey(const keyInfo *master_key_info, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes);
-extern void AesDecryptKey(const keyInfo *master_key_info, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes);
+extern void AesEncryptKey(const TDEMasterKey *master_key, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes);
+extern void AesDecryptKey(const TDEMasterKey *master_key, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes);
 
 #endif /*ENC_TDE_H*/

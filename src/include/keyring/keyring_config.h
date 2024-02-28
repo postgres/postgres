@@ -19,8 +19,6 @@ extern char* keyringKeyPrefix;
 
 void keyringRegisterVariables(void);
 
-bool keyringLoadConfiguration(const char* configFileName);
-
 
 // If it's a hash, tries to retrieve the remote value
 // { type: 'remote'. url: 'http://...' }

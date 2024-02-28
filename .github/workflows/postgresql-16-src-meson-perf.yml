@@ -76,12 +76,13 @@ jobs:
         run: |  
           bin/initdb -D data
           echo "shared_preload_libraries = 'pg_tde'" >> data/postgresql.conf
-          echo "pg_tde.keyringConfigFile = '/tmp/keyring.json'" >> data/postgresql.conf
           bin/pg_ctl -D data start
           bin/createdb sbtest
           bin/createdb sbtest2
           bin/createuser sbtest -s
           bin/psql sbtest2 <<< "CREATE EXTENSION pg_tde;"
+          bin/psql sbtest2 <<< "SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');"
+          bin/psql sbtest2 <<< "SELECT pg_tde_set_master_key('test-db-master-key','file-vault');"
           cp -r ../src/contrib/pg_tde/sysbench .
         working-directory: inst
 

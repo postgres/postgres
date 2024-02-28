@@ -2,6 +2,9 @@
 -- 
 CREATE EXTENSION pg_tde;
 
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+SELECT pg_tde_set_master_key('test-db-master-key','file-vault');
+
 CREATE TABLE albums (
     album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     artist_id INTEGER,

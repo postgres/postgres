@@ -34,6 +34,10 @@ src/keyring/keyring_config.o \
 src/keyring/keyring_file.o \
 src/keyring/keyring_vault.o \
 src/keyring/keyring_api.o \
+src/catalog/tde_keyring.o \
+src/catalog/tde_master_key.o \
+src/common/pg_tde_shmem.o \
+src/common/pg_tde_utils.o \
 src/pg_tde.o
 
 override PG_CPPFLAGS += @tde_CPPFLAGS@

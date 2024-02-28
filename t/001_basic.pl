@@ -41,12 +41,15 @@ $node->stop();
 
 # UPDATE postgresql.conf to include/load pg_tde library
 open $conf, '>>', "$pgdata/postgresql.conf";
-print $conf "pg_tde.keyringConfigFile = '/tmp/keyring.json'\n";
+#print $conf "pg_tde.keyringConfigFile = '/tmp/keyring.json'\n";
 print $conf "pg_tde.keyringKeyPrefix = 'this-is-a-prefix'\n";
 close $conf;
 
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
+
+$rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');", extra_params => ['-a']);
+$rt_value = $node->psql('postgres', "SELECT pg_tde_set_master_key('test-db-master-key','file-vault');", extra_params => ['-a']);
 
 $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING pg_tde;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);

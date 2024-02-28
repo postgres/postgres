@@ -75,20 +75,17 @@ static char db_path[MAXPGPATH] = {0};
 static char db_map_path[MAXPGPATH] = {0};
 static char db_keydata_path[MAXPGPATH] = {0};
 
-/* TODO: should be a user defined */
-static const char *MasterKeyName = "master-key";
-
 static void put_key_into_map(Oid rel_id, RelKeyData *key);
 static void pg_tde_xlog_create_relation(XLogReaderState *record);
 
-static RelKeyData* tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, const keyInfo *master_key_info, bool is_key_decrypted);
-static RelKeyData* tde_encrypt_rel_key(const keyInfo *master_key_info, RelKeyData *rel_key_data);
-static RelKeyData* tde_decrypt_rel_key(const keyInfo *master_key_info, RelKeyData *enc_rel_key_data);
+static RelKeyData* tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, const TDEMasterKey *master_key, bool is_key_decrypted);
+static RelKeyData *tde_encrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *rel_key_data);
+static RelKeyData *tde_decrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *enc_rel_key_data);
 static bool pg_tde_perform_rotate_key(const char *new_master_key_name);
 
 static void pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *str_append);
 static File pg_tde_open_file(char *tde_filename, const char *master_key_name, int fileFlags, bool *is_new_file, off_t *offset);
-static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_key_data, const keyInfo *master_key_info);
+static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_key_data, const TDEMasterKey *master_key);
 
 static int32 pg_tde_write_map_entry(const RelFileLocator *rlocator, char *db_map_path, const char *master_key_name);
 static int32 pg_tde_write_one_map_entry(File map_file, const RelFileLocator *rlocator, int flags, int32 key_index, TDEMapEntry *map_entry, off_t *offset);
@@ -97,7 +94,7 @@ static bool pg_tde_read_one_map_entry(File map_file, const RelFileLocator *rloca
 
 static void pg_tde_write_keydata(char *db_keydata_path, const char *master_key_name, int32 key_index, RelKeyData *enc_rel_key_data);
 static void pg_tde_write_one_keydata(File keydata_file, off_t header_size, int32 key_index, RelKeyData *enc_rel_key_data);
-static RelKeyData* pg_tde_get_key_from_file(const RelFileLocator *rlocator, const char *master_key_name);
+static RelKeyData* pg_tde_get_key_from_file(const RelFileLocator *rlocator);
 static RelKeyData* pg_tde_read_keydata(char *db_keydata_path, int32 key_index, const char *master_key_name);
 static RelKeyData* pg_tde_read_one_keydata(File keydata_file, off_t header_size, int32 key_index, const char *master_key_name);
 
@@ -111,10 +108,14 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
 	InternalKey int_key;
 	RelKeyData *rel_key_data;
 	RelKeyData *enc_rel_key_data;
-	const keyInfo *master_key_info;
+	const TDEMasterKey *master_key;
 
-	/* Get/generate a master, create the key for relation and get the encrypted key with bytes to write */
-	master_key_info = getMasterKey(MasterKeyName, true, true);
+	master_key = GetMasterKey();
+	if (master_key == NULL)
+	{
+		ereport(ERROR,
+				(errmsg("failed to retrieve master key")));
+	}
 
 	memset(&int_key, 0, sizeof(InternalKey));
 
@@ -127,8 +128,8 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
 	}
 
 	/* Encrypt the key */
-	rel_key_data = tde_create_rel_key(newrlocator, &int_key, master_key_info, true);
-	enc_rel_key_data = tde_encrypt_rel_key(master_key_info, rel_key_data);
+	rel_key_data = tde_create_rel_key(newrlocator, &int_key, master_key, true);
+	enc_rel_key_data = tde_encrypt_rel_key(master_key, rel_key_data);
 
 	/* XLOG internal key */
 	XLogBeginInsert();
@@ -139,7 +140,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
 	/*
 	 * Add the encyrpted key to the key map data file structure.
 	 */
-	pg_tde_write_key_map_entry(newrlocator, enc_rel_key_data, master_key_info);
+	pg_tde_write_key_map_entry(newrlocator, enc_rel_key_data, master_key);
 }
 
 /* Head of the key cache (linked list) */
@@ -165,7 +166,7 @@ GetRelationKey(RelFileLocator rel)
 		}
 	}
 
-	key = pg_tde_get_key_from_file(&rel, MasterKeyName);
+	key = pg_tde_get_key_from_file(&rel);
 
 	put_key_into_map(rel.relNumber, key);
 
@@ -200,24 +201,12 @@ tde_sprint_key(InternalKey *k)
 	return buf;
 }
 
-const char *
-tde_sprint_masterkey(const keyData *k)
-{
-	static char buf[256];
-	int 	i;
-
-	for (i = 0; i < k->len; i++)
-		sprintf(buf+i, "%02X", k->data[i]);
-
-	return buf;
-}
-
 /*
  * Creates a key for a relation identified by rlocator. Returns the newly
  * created key.
  */
 RelKeyData *
-tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, const keyInfo *master_key_info, bool is_key_decrypted)
+tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, const TDEMasterKey *master_key, bool is_key_decrypted)
 {
 	RelKeyData 	*rel_key_data;
 	MemoryContext context = (is_key_decrypted ? TopMemoryContext : CurrentMemoryContext);
@@ -226,7 +215,7 @@ tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, const keyIn
 
 	rel_key_data = (RelKeyData *) MemoryContextAlloc(context, sizeof(RelKeyData));
 
-	strncpy(rel_key_data->master_key_name, master_key_info->name.name, MASTER_KEY_NAME_LEN);
+	strncpy(rel_key_data->master_key_name, master_key->keyName, MASTER_KEY_NAME_LEN);
 	memcpy(&rel_key_data->internal_key, key, sizeof(InternalKey));
 	rel_key_data->internal_key.ctx = NULL;
 
@@ -241,12 +230,12 @@ tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, const keyIn
  * Encrypts a given key and returns the encrypted one.
  */
 RelKeyData *
-tde_encrypt_rel_key(const keyInfo *master_key_info, RelKeyData *rel_key_data)
+tde_encrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *rel_key_data)
 {
 	RelKeyData *enc_rel_key_data;
 	size_t enc_key_bytes;
 
-	AesEncryptKey(master_key_info, rel_key_data, &enc_rel_key_data, &enc_key_bytes);
+	AesEncryptKey(master_key, rel_key_data, &enc_rel_key_data, &enc_key_bytes);
 
 	return enc_rel_key_data;
 }
@@ -255,12 +244,12 @@ tde_encrypt_rel_key(const keyInfo *master_key_info, RelKeyData *rel_key_data)
  * Decrypts a given key and returns the decrypted one.
  */
 RelKeyData *
-tde_decrypt_rel_key(const keyInfo *master_key_info, RelKeyData *enc_rel_key_data)
+tde_decrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *enc_rel_key_data)
 {
 	RelKeyData *rel_key_data = NULL;
 	size_t key_bytes;
 
-	AesDecryptKey(master_key_info, &rel_key_data, enc_rel_key_data, &key_bytes);
+	AesDecryptKey(master_key, &rel_key_data, enc_rel_key_data, &key_bytes);
 
 	return rel_key_data;
 }
@@ -691,7 +680,7 @@ pg_tde_read_one_keydata(File keydata_file, off_t header_size, int32 key_index, c
  * The map file must be updated while holding an exclusive lock.
  */
 void
-pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_key_data, const keyInfo *master_key_info)
+pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_key_data, const TDEMasterKey *master_key)
 {
 	int32 key_index = 0;
 
@@ -699,10 +688,10 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_k
 	pg_tde_set_db_file_paths(rlocator, NULL);
 
 	/* Create the map entry and then add the encrypted key to the data file */
-	key_index = pg_tde_write_map_entry(rlocator, db_map_path, master_key_info->name.name);
+	key_index = pg_tde_write_map_entry(rlocator, db_map_path, master_key->keyName);
 
 	/* Add the encrypted key to the data file. */
-	pg_tde_write_keydata(db_keydata_path, master_key_info->name.name, key_index, enc_rel_key_data);
+	pg_tde_write_keydata(db_keydata_path, master_key->keyName, key_index, enc_rel_key_data);
 }
 
 /*
@@ -775,16 +764,21 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset)
  * reads the key data from the keydata file.
  */
 RelKeyData *
-pg_tde_get_key_from_file(const RelFileLocator *rlocator, const char *master_key_name)
+pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 {
 	int32 key_index = 0;
-	const keyInfo *master_key_info;
+	const TDEMasterKey *master_key;
 	RelKeyData *rel_key_data;
 	RelKeyData *enc_rel_key_data;
 	off_t offset = 0;
 
 	/* Get/generate a master, create the key for relation and get the encrypted key with bytes to write */
-	master_key_info = getMasterKey(master_key_name, false, true);
+	master_key = GetMasterKey();
+	if (master_key == NULL)
+	{
+		ereport(ERROR,
+				(errmsg("failed to retrieve master key")));
+	}
 
 	/* Get the file paths */
 	pg_tde_set_db_file_paths(rlocator, NULL);
@@ -793,8 +787,8 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, const char *master_key_
 	key_index = pg_tde_process_map_entry(rlocator, db_map_path, &offset, false);
 
 	/* Add the encrypted key to the data file. */
-	enc_rel_key_data = pg_tde_read_keydata(db_keydata_path, key_index, master_key_info->name.name);
-	rel_key_data = tde_decrypt_rel_key(master_key_info, enc_rel_key_data);
+	enc_rel_key_data = pg_tde_read_keydata(db_keydata_path, key_index, master_key->keyName);
+	rel_key_data = tde_decrypt_rel_key(master_key, enc_rel_key_data);
 
 	return rel_key_data;
 }
@@ -889,7 +883,7 @@ pg_tde_xlog_create_relation(XLogReaderState *record)
 	char			*rec = XLogRecGetData(record);
 	RelFileLocator	rlocator;
 	InternalKey 	int_key;
-	const keyInfo *master_key_info;
+	const TDEMasterKey *master_key;
 	RelKeyData *enc_rel_key_data;
 
 	memset(&int_key, 0, sizeof(InternalKey));
@@ -910,14 +904,13 @@ pg_tde_xlog_create_relation(XLogReaderState *record)
 		(errmsg("xlog internal_key: %s", tde_sprint_key(&int_key))));
 #endif
 
-	/* Get/generate a master, create the key for relation and get the encrypted key with bytes to write */
-	master_key_info = getMasterKey(MasterKeyName, true, true);
+	master_key = GetMasterKey();
 
 	/* Get the the keydata structure for the encrypted key */
-	enc_rel_key_data = tde_create_rel_key(&rlocator, &int_key, master_key_info, true);
+	enc_rel_key_data = tde_create_rel_key(&rlocator, &int_key, master_key, true);
 
 	/* Add the key to key cache */
-	tde_create_rel_key(&rlocator, &enc_rel_key_data->internal_key, master_key_info, false);
+	tde_create_rel_key(&rlocator, &enc_rel_key_data->internal_key, master_key, false);
 
-	pg_tde_write_key_map_entry(&rlocator, enc_rel_key_data, master_key_info);
+	pg_tde_write_key_map_entry(&rlocator, enc_rel_key_data, master_key);
 }
