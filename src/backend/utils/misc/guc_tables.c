@@ -715,11 +715,9 @@ const char *const config_group_names[] =
 	[PRESET_OPTIONS] = gettext_noop("Preset Options"),
 	[CUSTOM_OPTIONS] = gettext_noop("Customized Options"),
 	[DEVELOPER_OPTIONS] = gettext_noop("Developer Options"),
-	/* help_config wants this array to be null-terminated */
-	NULL
 };
 
-StaticAssertDecl(lengthof(config_group_names) == (DEVELOPER_OPTIONS + 2),
+StaticAssertDecl(lengthof(config_group_names) == (DEVELOPER_OPTIONS + 1),
 				 "array length mismatch");
 
 /*
