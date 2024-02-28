@@ -16976,7 +16976,7 @@ _ACEOF
 
 # Compute maximum alignment of any basic type.
 #
-# We require 'double' to have the strictest alignment among base types,
+# We require 'double' to have the strictest alignment among the basic types,
 # because otherwise the C ABI might impose 8-byte alignment on some of the
 # other C types that correspond to TYPALIGN_DOUBLE SQL types.  That could
 # cause a mismatch between the tuple layout and the C struct layout of a
