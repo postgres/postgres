@@ -33,6 +33,7 @@
 #include "pg_trace.h"
 #include "storage/shmem.h"
 #include "utils/builtins.h"
+#include "utils/guc_hooks.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
 
@@ -225,10 +226,11 @@ SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 					 TransactionId *subxids, TimestampTz ts,
 					 RepOriginId nodeid, int64 pageno)
 {
+	LWLock	   *lock = SimpleLruGetBankLock(CommitTsCtl, pageno);
 	int			slotno;
 	int			i;
 
-	LWLockAcquire(CommitTsSLRULock, LW_EXCLUSIVE);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 
 	slotno = SimpleLruReadPage(CommitTsCtl, pageno, true, xid);
 
@@ -238,13 +240,13 @@ SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 
 	CommitTsCtl->shared->page_dirty[slotno] = true;
 
-	LWLockRelease(CommitTsSLRULock);
+	LWLockRelease(lock);
 }
 
 /*
  * Sets the commit timestamp of a single transaction.
  *
- * Must be called with CommitTsSLRULock held
+ * Caller must hold the correct SLRU bank lock, will be held at exit
  */
 static void
 TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
@@ -345,7 +347,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 	if (nodeid)
 		*nodeid = entry.nodeid;
 
-	LWLockRelease(CommitTsSLRULock);
+	LWLockRelease(SimpleLruGetBankLock(CommitTsCtl, pageno));
 	return *ts != 0;
 }
 
@@ -499,14 +501,18 @@ pg_xact_commit_timestamp_origin(PG_FUNCTION_ARGS)
 /*
  * Number of shared CommitTS buffers.
  *
- * We use a very similar logic as for the number of CLOG buffers (except we
- * scale up twice as fast with shared buffers, and the maximum is twice as
- * high); see comments in CLOGShmemBuffers.
+ * If asked to autotune, use 2MB for every 1GB of shared buffers, up to 8MB.
+ * Otherwise just cap the configured amount to be between 16 and the maximum
+ * allowed.
  */
-Size
+static int
 CommitTsShmemBuffers(void)
 {
-	return Min(256, Max(4, NBuffers / 256));
+	/* auto-tune based on shared buffers */
+	if (commit_timestamp_buffers == 0)
+		return SimpleLruAutotuneBuffers(512, 1024);
+
+	return Min(Max(16, commit_timestamp_buffers), SLRU_MAX_ALLOWED_BUFFERS);
 }
 
 /*
@@ -528,10 +534,31 @@ CommitTsShmemInit(void)
 {
 	bool		found;
 
+	/* If auto-tuning is requested, now is the time to do it */
+	if (commit_timestamp_buffers == 0)
+	{
+		char		buf[32];
+
+		snprintf(buf, sizeof(buf), "%d", CommitTsShmemBuffers());
+		SetConfigOption("commit_timestamp_buffers", buf, PGC_POSTMASTER,
+						PGC_S_DYNAMIC_DEFAULT);
+
+		/*
+		 * We prefer to report this value's source as PGC_S_DYNAMIC_DEFAULT.
+		 * However, if the DBA explicitly set commit_timestamp_buffers = 0 in
+		 * the config file, then PGC_S_DYNAMIC_DEFAULT will fail to override
+		 * that and we must force the matter with PGC_S_OVERRIDE.
+		 */
+		if (commit_timestamp_buffers == 0)	/* failed to apply it? */
+			SetConfigOption("commit_timestamp_buffers", buf, PGC_POSTMASTER,
+							PGC_S_OVERRIDE);
+	}
+	Assert(commit_timestamp_buffers != 0);
+
 	CommitTsCtl->PagePrecedes = CommitTsPagePrecedes;
 	SimpleLruInit(CommitTsCtl, "commit_timestamp", CommitTsShmemBuffers(), 0,
-				  CommitTsSLRULock, "pg_commit_ts",
-				  LWTRANCHE_COMMITTS_BUFFER,
+				  "pg_commit_ts", LWTRANCHE_COMMITTS_BUFFER,
+				  LWTRANCHE_COMMITTS_SLRU,
 				  SYNC_HANDLER_COMMIT_TS,
 				  false);
 	SlruPagePrecedesUnitTests(CommitTsCtl, COMMIT_TS_XACTS_PER_PAGE);
@@ -551,6 +578,15 @@ CommitTsShmemInit(void)
 	}
 	else
 		Assert(found);
+}
+
+/*
+ * GUC check_hook for commit_timestamp_buffers
+ */
+bool
+check_commit_ts_buffers(int *newval, void **extra, GucSource source)
+{
+	return check_slru_buffers("commit_timestamp_buffers", newval);
 }
 
 /*
@@ -715,13 +751,14 @@ ActivateCommitTs(void)
 	/* Create the current segment file, if necessary */
 	if (!SimpleLruDoesPhysicalPageExist(CommitTsCtl, pageno))
 	{
+		LWLock	   *lock = SimpleLruGetBankLock(CommitTsCtl, pageno);
 		int			slotno;
 
-		LWLockAcquire(CommitTsSLRULock, LW_EXCLUSIVE);
+		LWLockAcquire(lock, LW_EXCLUSIVE);
 		slotno = ZeroCommitTsPage(pageno, false);
 		SimpleLruWritePage(CommitTsCtl, slotno);
 		Assert(!CommitTsCtl->shared->page_dirty[slotno]);
-		LWLockRelease(CommitTsSLRULock);
+		LWLockRelease(lock);
 	}
 
 	/* Change the activation status in shared memory. */
@@ -760,8 +797,6 @@ DeactivateCommitTs(void)
 	TransamVariables->oldestCommitTsXid = InvalidTransactionId;
 	TransamVariables->newestCommitTsXid = InvalidTransactionId;
 
-	LWLockRelease(CommitTsLock);
-
 	/*
 	 * Remove *all* files.  This is necessary so that there are no leftover
 	 * files; in the case where this feature is later enabled after running
@@ -769,10 +804,16 @@ DeactivateCommitTs(void)
 	 * (We can probably tolerate out-of-sequence files, as they are going to
 	 * be overwritten anyway when we wrap around, but it seems better to be
 	 * tidy.)
+	 *
+	 * Note that we do this with CommitTsLock acquired in exclusive mode. This
+	 * is very heavy-handed, but since this routine can only be called in the
+	 * replica and should happen very rarely, we don't worry too much about
+	 * it.  Note also that no process should be consulting this SLRU if we
+	 * have just deactivated it.
 	 */
-	LWLockAcquire(CommitTsSLRULock, LW_EXCLUSIVE);
 	(void) SlruScanDirectory(CommitTsCtl, SlruScanDirCbDeleteAll, NULL);
-	LWLockRelease(CommitTsSLRULock);
+
+	LWLockRelease(CommitTsLock);
 }
 
 /*
@@ -804,6 +845,7 @@ void
 ExtendCommitTs(TransactionId newestXact)
 {
 	int64		pageno;
+	LWLock	   *lock;
 
 	/*
 	 * Nothing to do if module not enabled.  Note we do an unlocked read of
@@ -824,12 +866,14 @@ ExtendCommitTs(TransactionId newestXact)
 
 	pageno = TransactionIdToCTsPage(newestXact);
 
-	LWLockAcquire(CommitTsSLRULock, LW_EXCLUSIVE);
+	lock = SimpleLruGetBankLock(CommitTsCtl, pageno);
+
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 
 	/* Zero the page and make an XLOG entry about it */
 	ZeroCommitTsPage(pageno, !InRecovery);
 
-	LWLockRelease(CommitTsSLRULock);
+	LWLockRelease(lock);
 }
 
 /*
@@ -983,16 +1027,18 @@ commit_ts_redo(XLogReaderState *record)
 	{
 		int64		pageno;
 		int			slotno;
+		LWLock	   *lock;
 
 		memcpy(&pageno, XLogRecGetData(record), sizeof(pageno));
 
-		LWLockAcquire(CommitTsSLRULock, LW_EXCLUSIVE);
+		lock = SimpleLruGetBankLock(CommitTsCtl, pageno);
+		LWLockAcquire(lock, LW_EXCLUSIVE);
 
 		slotno = ZeroCommitTsPage(pageno, false);
 		SimpleLruWritePage(CommitTsCtl, slotno);
 		Assert(!CommitTsCtl->shared->page_dirty[slotno]);
 
-		LWLockRelease(CommitTsSLRULock);
+		LWLockRelease(lock);
 	}
 	else if (info == COMMIT_TS_TRUNCATE)
 	{

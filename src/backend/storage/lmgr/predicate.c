@@ -213,6 +213,7 @@
 #include "storage/predicate_internals.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "utils/guc_hooks.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
@@ -813,9 +814,9 @@ SerialInit(void)
 	 */
 	SerialSlruCtl->PagePrecedes = SerialPagePrecedesLogically;
 	SimpleLruInit(SerialSlruCtl, "serializable",
-				  NUM_SERIAL_BUFFERS, 0, SerialSLRULock, "pg_serial",
-				  LWTRANCHE_SERIAL_BUFFER, SYNC_HANDLER_NONE,
-				  false);
+				  serializable_buffers, 0, "pg_serial",
+				  LWTRANCHE_SERIAL_BUFFER, LWTRANCHE_SERIAL_SLRU,
+				  SYNC_HANDLER_NONE, false);
 #ifdef USE_ASSERT_CHECKING
 	SerialPagePrecedesLogicallyUnitTests();
 #endif
@@ -842,6 +843,15 @@ SerialInit(void)
 }
 
 /*
+ * GUC check_hook for serializable_buffers
+ */
+bool
+check_serial_buffers(int *newval, void **extra, GucSource source)
+{
+	return check_slru_buffers("serializable_buffers", newval);
+}
+
+/*
  * Record a committed read write serializable xid and the minimum
  * commitSeqNo of any transactions to which this xid had a rw-conflict out.
  * An invalid commitSeqNo means that there were no conflicts out from xid.
@@ -854,15 +864,17 @@ SerialAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	int			slotno;
 	int64		firstZeroPage;
 	bool		isNewPage;
+	LWLock	   *lock;
 
 	Assert(TransactionIdIsValid(xid));
 
 	targetPage = SerialPage(xid);
+	lock = SimpleLruGetBankLock(SerialSlruCtl, targetPage);
 
 	/*
-	 * In this routine, we must hold both SerialControlLock and SerialSLRULock
-	 * simultaneously while making the SLRU data catch up with the new state
-	 * that we determine.
+	 * In this routine, we must hold both SerialControlLock and the SLRU bank
+	 * lock simultaneously while making the SLRU data catch up with the new
+	 * state that we determine.
 	 */
 	LWLockAcquire(SerialControlLock, LW_EXCLUSIVE);
 
@@ -898,7 +910,7 @@ SerialAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	if (isNewPage)
 		serialControl->headPage = targetPage;
 
-	LWLockAcquire(SerialSLRULock, LW_EXCLUSIVE);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 
 	if (isNewPage)
 	{
@@ -916,7 +928,7 @@ SerialAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	SerialValue(slotno, xid) = minConflictCommitSeqNo;
 	SerialSlruCtl->shared->page_dirty[slotno] = true;
 
-	LWLockRelease(SerialSLRULock);
+	LWLockRelease(lock);
 	LWLockRelease(SerialControlLock);
 }
 
@@ -950,13 +962,13 @@ SerialGetMinConflictCommitSeqNo(TransactionId xid)
 		return 0;
 
 	/*
-	 * The following function must be called without holding SerialSLRULock,
+	 * The following function must be called without holding SLRU bank lock,
 	 * but will return with that lock held, which must then be released.
 	 */
 	slotno = SimpleLruReadPage_ReadOnly(SerialSlruCtl,
 										SerialPage(xid), xid);
 	val = SerialValue(slotno, xid);
-	LWLockRelease(SerialSLRULock);
+	LWLockRelease(SimpleLruGetBankLock(SerialSlruCtl, SerialPage(xid)));
 	return val;
 }
 
@@ -1367,7 +1379,7 @@ PredicateLockShmemSize(void)
 
 	/* Shared memory structures for SLRU tracking of old committed xids. */
 	size = add_size(size, sizeof(SerialControlData));
-	size = add_size(size, SimpleLruShmemSize(NUM_SERIAL_BUFFERS, 0));
+	size = add_size(size, SimpleLruShmemSize(serializable_buffers, 0));
 
 	return size;
 }

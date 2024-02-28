@@ -46,6 +46,8 @@ extern bool check_client_connection_check_interval(int *newval, void **extra,
 extern bool check_client_encoding(char **newval, void **extra, GucSource source);
 extern void assign_client_encoding(const char *newval, void *extra);
 extern bool check_cluster_name(char **newval, void **extra, GucSource source);
+extern bool check_commit_ts_buffers(int *newval, void **extra,
+									GucSource source);
 extern const char *show_data_directory_mode(void);
 extern bool check_datestyle(char **newval, void **extra, GucSource source);
 extern void assign_datestyle(const char *newval, void *extra);
@@ -91,6 +93,11 @@ extern bool check_max_worker_processes(int *newval, void **extra,
 									   GucSource source);
 extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
 extern void assign_max_stack_depth(int newval, void *extra);
+extern bool check_multixact_member_buffers(int *newval, void **extra,
+										   GucSource source);
+extern bool check_multixact_offset_buffers(int *newval, void **extra,
+										   GucSource source);
+extern bool check_notify_buffers(int *newval, void **extra, GucSource source);
 extern bool check_primary_slot_name(char **newval, void **extra,
 									GucSource source);
 extern bool check_random_seed(double *newval, void **extra, GucSource source);
@@ -122,12 +129,15 @@ extern void assign_role(const char *newval, void *extra);
 extern const char *show_role(void);
 extern bool check_search_path(char **newval, void **extra, GucSource source);
 extern void assign_search_path(const char *newval, void *extra);
+extern bool check_serial_buffers(int *newval, void **extra, GucSource source);
 extern bool check_session_authorization(char **newval, void **extra, GucSource source);
 extern void assign_session_authorization(const char *newval, void *extra);
 extern void assign_session_replication_role(int newval, void *extra);
 extern void assign_stats_fetch_consistency(int newval, void *extra);
 extern bool check_ssl(bool *newval, void **extra, GucSource source);
 extern bool check_stage_log_stats(bool *newval, void **extra, GucSource source);
+extern bool check_subtrans_buffers(int *newval, void **extra,
+								   GucSource source);
 extern bool check_synchronous_standby_names(char **newval, void **extra,
 											GucSource source);
 extern void assign_synchronous_standby_names(const char *newval, void *extra);
@@ -152,6 +162,7 @@ extern const char *show_timezone(void);
 extern bool check_timezone_abbreviations(char **newval, void **extra,
 										 GucSource source);
 extern void assign_timezone_abbreviations(const char *newval, void *extra);
+extern bool check_transaction_buffers(int *newval, void **extra, GucSource source);
 extern bool check_transaction_deferrable(bool *newval, void **extra, GucSource source);
 extern bool check_transaction_isolation(int *newval, void **extra, GucSource source);
 extern bool check_transaction_read_only(bool *newval, void **extra, GucSource source);

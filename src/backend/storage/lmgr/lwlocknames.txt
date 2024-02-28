@@ -16,11 +16,11 @@ WALBufMappingLock					7
 WALWriteLock						8
 ControlFileLock						9
 # 10 was CheckpointLock
-XactSLRULock						11
-SubtransSLRULock					12
+# 11 was XactSLRULock
+# 12 was SubtransSLRULock
 MultiXactGenLock					13
-MultiXactOffsetSLRULock				14
-MultiXactMemberSLRULock				15
+# 14 was MultiXactOffsetSLRULock
+# 15 was MultiXactMemberSLRULock
 RelCacheInitLock					16
 CheckpointerCommLock				17
 TwoPhaseStateLock					18
@@ -31,19 +31,19 @@ AutovacuumLock						22
 AutovacuumScheduleLock				23
 SyncScanLock						24
 RelationMappingLock					25
-NotifySLRULock						26
+#26 was NotifySLRULock
 NotifyQueueLock						27
 SerializableXactHashLock			28
 SerializableFinishedListLock		29
 SerializablePredicateListLock		30
-SerialSLRULock						31
+# 31 was SerialSLRULock
 SyncRepLock							32
 BackgroundWorkerLock				33
 DynamicSharedMemoryControlLock		34
 AutoFileLock						35
 ReplicationSlotAllocationLock		36
 ReplicationSlotControlLock			37
-CommitTsSLRULock					38
+#38 was CommitTsSLRULock
 CommitTsLock						39
 ReplicationOriginLock				40
 MultiXactTruncationLock				41

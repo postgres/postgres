@@ -157,3 +157,12 @@ int64		VacuumPageDirty = 0;
 
 int			VacuumCostBalance = 0;	/* working state for vacuum */
 bool		VacuumCostActive = false;
+
+/* configurable SLRU buffer sizes */
+int			commit_timestamp_buffers = 0;
+int			multixact_member_buffers = 32;
+int			multixact_offset_buffers = 16;
+int			notify_buffers = 16;
+int			serializable_buffers = 32;
+int			subtransaction_buffers = 0;
+int			transaction_buffers = 0;

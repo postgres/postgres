@@ -27,7 +27,6 @@ extern bool TransactionIdGetCommitTsData(TransactionId xid,
 extern TransactionId GetLatestCommitTsData(TimestampTz *ts,
 										   RepOriginId *nodeid);
 
-extern Size CommitTsShmemBuffers(void);
 extern Size CommitTsShmemSize(void);
 extern void CommitTsShmemInit(void);
 extern void BootStrapCommitTs(void);

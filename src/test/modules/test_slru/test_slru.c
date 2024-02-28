@@ -40,10 +40,6 @@ PG_FUNCTION_INFO_V1(test_slru_delete_all);
 /* Number of SLRU page slots */
 #define NUM_TEST_BUFFERS		16
 
-/* SLRU control lock */
-LWLock		TestSLRULock;
-#define TestSLRULock (&TestSLRULock)
-
 static SlruCtlData TestSlruCtlData;
 #define TestSlruCtl			(&TestSlruCtlData)
 
@@ -63,9 +59,9 @@ test_slru_page_write(PG_FUNCTION_ARGS)
 	int64		pageno = PG_GETARG_INT64(0);
 	char	   *data = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	int			slotno;
+	LWLock	   *lock = SimpleLruGetBankLock(TestSlruCtl, pageno);
 
-	LWLockAcquire(TestSLRULock, LW_EXCLUSIVE);
-
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 	slotno = SimpleLruZeroPage(TestSlruCtl, pageno);
 
 	/* these should match */
@@ -80,7 +76,7 @@ test_slru_page_write(PG_FUNCTION_ARGS)
 			BLCKSZ - 1);
 
 	SimpleLruWritePage(TestSlruCtl, slotno);
-	LWLockRelease(TestSLRULock);
+	LWLockRelease(lock);
 
 	PG_RETURN_VOID();
 }
@@ -99,13 +95,14 @@ test_slru_page_read(PG_FUNCTION_ARGS)
 	bool		write_ok = PG_GETARG_BOOL(1);
 	char	   *data = NULL;
 	int			slotno;
+	LWLock	   *lock = SimpleLruGetBankLock(TestSlruCtl, pageno);
 
 	/* find page in buffers, reading it if necessary */
-	LWLockAcquire(TestSLRULock, LW_EXCLUSIVE);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 	slotno = SimpleLruReadPage(TestSlruCtl, pageno,
 							   write_ok, InvalidTransactionId);
 	data = (char *) TestSlruCtl->shared->page_buffer[slotno];
-	LWLockRelease(TestSLRULock);
+	LWLockRelease(lock);
 
 	PG_RETURN_TEXT_P(cstring_to_text(data));
 }
@@ -116,14 +113,15 @@ test_slru_page_readonly(PG_FUNCTION_ARGS)
 	int64		pageno = PG_GETARG_INT64(0);
 	char	   *data = NULL;
 	int			slotno;
+	LWLock	   *lock = SimpleLruGetBankLock(TestSlruCtl, pageno);
 
 	/* find page in buffers, reading it if necessary */
 	slotno = SimpleLruReadPage_ReadOnly(TestSlruCtl,
 										pageno,
 										InvalidTransactionId);
-	Assert(LWLockHeldByMe(TestSLRULock));
+	Assert(LWLockHeldByMe(lock));
 	data = (char *) TestSlruCtl->shared->page_buffer[slotno];
-	LWLockRelease(TestSLRULock);
+	LWLockRelease(lock);
 
 	PG_RETURN_TEXT_P(cstring_to_text(data));
 }
@@ -133,10 +131,11 @@ test_slru_page_exists(PG_FUNCTION_ARGS)
 {
 	int64		pageno = PG_GETARG_INT64(0);
 	bool		found;
+	LWLock	   *lock = SimpleLruGetBankLock(TestSlruCtl, pageno);
 
-	LWLockAcquire(TestSLRULock, LW_EXCLUSIVE);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 	found = SimpleLruDoesPhysicalPageExist(TestSlruCtl, pageno);
-	LWLockRelease(TestSLRULock);
+	LWLockRelease(lock);
 
 	PG_RETURN_BOOL(found);
 }
@@ -221,6 +220,7 @@ test_slru_shmem_startup(void)
 	const bool	long_segment_names = true;
 	const char	slru_dir_name[] = "pg_test_slru";
 	int			test_tranche_id;
+	int			test_buffer_tranche_id;
 
 	if (prev_shmem_startup_hook)
 		prev_shmem_startup_hook();
@@ -234,12 +234,15 @@ test_slru_shmem_startup(void)
 	/* initialize the SLRU facility */
 	test_tranche_id = LWLockNewTrancheId();
 	LWLockRegisterTranche(test_tranche_id, "test_slru_tranche");
-	LWLockInitialize(TestSLRULock, test_tranche_id);
+
+	test_buffer_tranche_id = LWLockNewTrancheId();
+	LWLockRegisterTranche(test_tranche_id, "test_buffer_tranche");
 
 	TestSlruCtl->PagePrecedes = test_slru_page_precedes_logically;
 	SimpleLruInit(TestSlruCtl, "TestSLRU",
-				  NUM_TEST_BUFFERS, 0, TestSLRULock, slru_dir_name,
-				  test_tranche_id, SYNC_HANDLER_NONE, long_segment_names);
+				  NUM_TEST_BUFFERS, 0, slru_dir_name,
+				  test_buffer_tranche_id, test_tranche_id, SYNC_HANDLER_NONE,
+				  long_segment_names);
 }
 
 void

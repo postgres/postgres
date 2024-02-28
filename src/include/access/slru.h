@@ -17,6 +17,11 @@
 #include "storage/lwlock.h"
 #include "storage/sync.h"
 
+/*
+ * To avoid overflowing internal arithmetic and the size_t data type, the
+ * number of buffers must not exceed this number.
+ */
+#define SLRU_MAX_ALLOWED_BUFFERS ((1024 * 1024 * 1024) / BLCKSZ)
 
 /*
  * Define SLRU segment size.  A page is the same BLCKSZ as is used everywhere
@@ -55,8 +60,6 @@ typedef enum
  */
 typedef struct SlruSharedData
 {
-	LWLock	   *ControlLock;
-
 	/* Number of buffers managed by this SLRU structure */
 	int			num_slots;
 
@@ -69,29 +72,40 @@ typedef struct SlruSharedData
 	bool	   *page_dirty;
 	int64	   *page_number;
 	int		   *page_lru_count;
+
+	/* The buffer_locks protects the I/O on each buffer slots */
 	LWLockPadded *buffer_locks;
+
+	/* Locks to protect the in memory buffer slot access in SLRU bank. */
+	LWLockPadded *bank_locks;
+
+	/*----------
+	 * A bank-wise LRU counter is maintained because we do a victim buffer
+	 * search within a bank. Furthermore, manipulating an individual bank
+	 * counter avoids frequent cache invalidation since we update it every time
+	 * we access the page.
+	 *
+	 * We mark a page "most recently used" by setting
+	 *		page_lru_count[slotno] = ++bank_cur_lru_count[bankno];
+	 * The oldest page in the bank is therefore the one with the highest value
+	 * of
+	 * 		bank_cur_lru_count[bankno] - page_lru_count[slotno]
+	 * The counts will eventually wrap around, but this calculation still
+	 * works as long as no page's age exceeds INT_MAX counts.
+	 *----------
+	 */
+	int		   *bank_cur_lru_count;
 
 	/*
 	 * Optional array of WAL flush LSNs associated with entries in the SLRU
 	 * pages.  If not zero/NULL, we must flush WAL before writing pages (true
-	 * for pg_xact, false for multixact, pg_subtrans, pg_notify).  group_lsn[]
-	 * has lsn_groups_per_page entries per buffer slot, each containing the
+	 * for pg_xact, false for everything else).  group_lsn[] has
+	 * lsn_groups_per_page entries per buffer slot, each containing the
 	 * highest LSN known for a contiguous group of SLRU entries on that slot's
 	 * page.
 	 */
 	XLogRecPtr *group_lsn;
 	int			lsn_groups_per_page;
-
-	/*----------
-	 * We mark a page "most recently used" by setting
-	 *		page_lru_count[slotno] = ++cur_lru_count;
-	 * The oldest page is therefore the one with the highest value of
-	 *		cur_lru_count - page_lru_count[slotno]
-	 * The counts will eventually wrap around, but this calculation still
-	 * works as long as no page's age exceeds INT_MAX counts.
-	 *----------
-	 */
-	int			cur_lru_count;
 
 	/*
 	 * latest_page_number is the page number of the current end of the log;
@@ -115,6 +129,19 @@ typedef struct SlruCtlData
 	SlruShared	shared;
 
 	/*
+	 * Bitmask to determine bank number from page number.
+	 */
+	bits16		bank_mask;
+
+	/*
+	 * If true, use long segment filenames formed from lower 48 bits of the
+	 * segment number, e.g. pg_xact/000000001234. Otherwise, use short
+	 * filenames formed from lower 16 bits of the segment number e.g.
+	 * pg_xact/1234.
+	 */
+	bool		long_segment_names;
+
+	/*
 	 * Which sync handler function to use when handing sync requests over to
 	 * the checkpointer.  SYNC_HANDLER_NONE to disable fsync (eg pg_notify).
 	 */
@@ -133,27 +160,35 @@ typedef struct SlruCtlData
 	bool		(*PagePrecedes) (int64, int64);
 
 	/*
-	 * If true, use long segment filenames formed from lower 48 bits of the
-	 * segment number, e.g. pg_xact/000000001234. Otherwise, use short
-	 * filenames formed from lower 16 bits of the segment number e.g.
-	 * pg_xact/1234.
-	 */
-	bool		long_segment_names;
-
-	/*
 	 * Dir is set during SimpleLruInit and does not change thereafter. Since
 	 * it's always the same, it doesn't need to be in shared memory.
 	 */
 	char		Dir[64];
+
 } SlruCtlData;
 
 typedef SlruCtlData *SlruCtl;
 
+/*
+ * Get the SLRU bank lock for given SlruCtl and the pageno.
+ *
+ * This lock needs to be acquired to access the slru buffer slots in the
+ * respective bank.
+ */
+static inline LWLock *
+SimpleLruGetBankLock(SlruCtl ctl, int64 pageno)
+{
+	int			bankno;
+
+	bankno = pageno & ctl->bank_mask;
+	return &(ctl->shared->bank_locks[bankno].lock);
+}
 
 extern Size SimpleLruShmemSize(int nslots, int nlsns);
+extern int	SimpleLruAutotuneBuffers(int divisor, int max);
 extern void SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
-						  LWLock *ctllock, const char *subdir, int tranche_id,
-						  SyncRequestHandler sync_handler,
+						  const char *subdir, int buffer_tranche_id,
+						  int bank_tranche_id, SyncRequestHandler sync_handler,
 						  bool long_segment_names);
 extern int	SimpleLruZeroPage(SlruCtl ctl, int64 pageno);
 extern int	SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
@@ -182,5 +217,6 @@ extern bool SlruScanDirCbReportPresence(SlruCtl ctl, char *filename,
 										int64 segpage, void *data);
 extern bool SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int64 segpage,
 								   void *data);
+extern bool check_slru_buffers(const char *name, int *newval);
 
 #endif							/* SLRU_H */

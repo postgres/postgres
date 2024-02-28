@@ -28,6 +28,7 @@
 
 #include "access/commit_ts.h"
 #include "access/gin.h"
+#include "access/slru.h"
 #include "access/toast_compression.h"
 #include "access/twophase.h"
 #include "access/xlog_internal.h"
@@ -2281,6 +2282,83 @@ struct config_int ConfigureNamesInt[] =
 		&shared_memory_size_in_huge_pages,
 		-1, -1, INT_MAX,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"commit_timestamp_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size of the dedicated buffer pool used for the commit timestamp cache."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&commit_timestamp_buffers,
+		0, 0, SLRU_MAX_ALLOWED_BUFFERS,
+		check_commit_ts_buffers, NULL, NULL
+	},
+
+	{
+		{"multixact_member_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size of the dedicated buffer pool used for the MultiXact member cache."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&multixact_member_buffers,
+		32, 16, SLRU_MAX_ALLOWED_BUFFERS,
+		check_multixact_member_buffers, NULL, NULL
+	},
+
+	{
+		{"multixact_offset_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size of the dedicated buffer pool used for the MultiXact offset cache."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&multixact_offset_buffers,
+		16, 16, SLRU_MAX_ALLOWED_BUFFERS,
+		check_multixact_offset_buffers, NULL, NULL
+	},
+
+	{
+		{"notify_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size of the dedicated buffer pool used for the LISTEN/NOTIFY message cache."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&notify_buffers,
+		16, 16, SLRU_MAX_ALLOWED_BUFFERS,
+		check_notify_buffers, NULL, NULL
+	},
+
+	{
+		{"serializable_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size of the dedicated buffer pool used for the serializable transaction cache."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&serializable_buffers,
+		32, 16, SLRU_MAX_ALLOWED_BUFFERS,
+		check_serial_buffers, NULL, NULL
+	},
+
+	{
+		{"subtransaction_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size of the dedicated buffer pool used for the sub-transaction cache."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&subtransaction_buffers,
+		0, 0, SLRU_MAX_ALLOWED_BUFFERS,
+		check_subtrans_buffers, NULL, NULL
+	},
+
+	{
+		{"transaction_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Sets the size of the dedicated buffer pool used for the transaction status cache."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&transaction_buffers,
+		0, 0, SLRU_MAX_ALLOWED_BUFFERS,
+		check_transaction_buffers, NULL, NULL
 	},
 
 	{
