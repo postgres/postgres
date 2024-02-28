@@ -257,11 +257,6 @@ CREATE FUNCTION ttdummy ()
     AS :'regresslib'
     LANGUAGE C;
 
-CREATE FUNCTION get_columns_length(oid[])
-    RETURNS int
-    AS :'regresslib'
-    LANGUAGE C STRICT STABLE PARALLEL SAFE;
-
 -- Use hand-rolled hash functions and operator classes to get predictable
 -- result on different machines.  The hash function for int4 simply returns
 -- the sum of the values passed to it and the one for text returns the length
