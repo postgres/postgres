@@ -106,6 +106,13 @@ sub adjust_database_contents
 			'drop extension if exists test_ext7');
 	}
 
+	# we removed this test-support function in v17
+	if ($old_version >= 15 && $old_version < 17)
+	{
+		_add_st($result, 'regression',
+			'drop function get_columns_length(oid[])');
+	}
+
 	# stuff not supported from release 16
 	if ($old_version >= 12 && $old_version < 16)
 	{
