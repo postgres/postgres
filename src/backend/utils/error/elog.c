@@ -911,9 +911,7 @@ errcode_for_file_access(void)
 			/* Wrong object type or state */
 		case ENOTDIR:			/* Not a directory */
 		case EISDIR:			/* Is a directory */
-#if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST) /* same code on AIX */
 		case ENOTEMPTY:			/* Directory not empty */
-#endif
 			edata->sqlerrcode = ERRCODE_WRONG_OBJECT_TYPE;
 			break;
 

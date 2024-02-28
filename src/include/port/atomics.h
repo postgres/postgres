@@ -84,11 +84,9 @@
  * using compiler intrinsics are a good idea.
  */
 /*
- * gcc or compatible, including clang and icc.  Exclude xlc.  The ppc64le "IBM
- * XL C/C++ for Linux, V13.1.2" emulates gcc, but __sync_lock_test_and_set()
- * of one-byte types elicits SIGSEGV.  That bug was gone by V13.1.5 (2016-12).
+ * gcc or compatible, including clang and icc.
  */
-#if (defined(__GNUC__) || defined(__INTEL_COMPILER)) && !(defined(__IBMC__) || defined(__IBMCPP__))
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 #include "port/atomics/generic-gcc.h"
 #elif defined(_MSC_VER)
 #include "port/atomics/generic-msvc.h"

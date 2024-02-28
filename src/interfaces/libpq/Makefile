@@ -114,7 +114,7 @@ backend_src = $(top_srcdir)/src/backend
 # coding rule.
 libpq-refs-stamp: $(shlib)
 ifneq ($(enable_coverage), yes)
-ifeq (,$(filter aix solaris,$(PORTNAME)))
+ifeq (,$(filter solaris,$(PORTNAME)))
 	@if nm -A -u $< 2>/dev/null | grep -v -e __cxa_atexit -e __tsan_func_exit | grep exit; then \
 		echo 'libpq must not be calling any function which invokes exit'; exit 1; \
 	fi

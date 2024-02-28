@@ -196,26 +196,7 @@ endif
 # that purpose.
 portname = host_system
 
-if host_system == 'aix'
-  library_path_var = 'LIBPATH'
-
-  export_file_format = 'aix'
-  export_fmt = '-Wl,-bE:@0@'
-  mod_link_args_fmt = ['-Wl,-bI:@0@']
-  mod_link_with_dir = 'libdir'
-  mod_link_with_name = '@0@.imp'
-
-  # M:SRE sets a flag indicating that an object is a shared library. Seems to
-  # work in some circumstances without, but required in others.
-  ldflags_sl += '-Wl,-bM:SRE'
-  ldflags_be += '-Wl,-brtllib'
-
-  # Native memset() is faster, tested on:
-  # - AIX 5.1 and 5.2, XLC 6.0 (IBM's cc)
-  # - AIX 5.3 ML3, gcc 4.0.1
-  memset_loop_limit = 0
-
-elif host_system == 'cygwin'
+if host_system == 'cygwin'
   sema_kind = 'unnamed_posix'
   cppflags += '-D_GNU_SOURCE'
   dlsuffix = '.dll'
@@ -1499,30 +1480,49 @@ sizeof_long = cc.sizeof('long', args: test_c_args)
 cdata.set('SIZEOF_LONG', sizeof_long)
 if sizeof_long == 8
   cdata.set('HAVE_LONG_INT_64', 1)
-  cdata.set('PG_INT64_TYPE', 'long int')
+  pg_int64_type = 'long int'
   cdata.set_quoted('INT64_MODIFIER', 'l')
 elif sizeof_long == 4 and cc.sizeof('long long', args: test_c_args) == 8
   cdata.set('HAVE_LONG_LONG_INT_64', 1)
-  cdata.set('PG_INT64_TYPE', 'long long int')
+  pg_int64_type = 'long long int'
   cdata.set_quoted('INT64_MODIFIER', 'll')
 else
   error('do not know how to get a 64bit int')
 endif
+cdata.set('PG_INT64_TYPE', pg_int64_type)
 
 if host_machine.endian() == 'big'
   cdata.set('WORDS_BIGENDIAN', 1)
 endif
 
+# Determine memory alignment requirements for the basic C data types.
+
 alignof_types = ['short', 'int', 'long', 'double']
-maxalign = 0
 foreach t : alignof_types
   align = cc.alignment(t, args: test_c_args)
-  if maxalign < align
-    maxalign = align
-  endif
   cdata.set('ALIGNOF_@0@'.format(t.to_upper()), align)
 endforeach
-cdata.set('MAXIMUM_ALIGNOF', maxalign)
+
+# Compute maximum alignment of any basic type.
+#
+# We require 'double' to have the strictest alignment among the basic types,
+# because otherwise the C ABI might impose 8-byte alignment on some of the
+# other C types that correspond to TYPALIGN_DOUBLE SQL types.  That could
+# cause a mismatch between the tuple layout and the C struct layout of a
+# catalog tuple.  We used to carefully order catalog columns such that any
+# fixed-width, attalign=4 columns were at offsets divisible by 8 regardless
+# of MAXIMUM_ALIGNOF to avoid that, but we no longer support any platforms
+# where TYPALIGN_DOUBLE != MAXIMUM_ALIGNOF.
+#
+# We assume without checking that int64's alignment is at least as strong
+# as long, char, short, or int.  Note that we intentionally do not consider
+# any types wider than 64 bits, as allowing MAXIMUM_ALIGNOF to exceed 8
+# would be too much of a penalty for disk and memory space.
+alignof_double = cdata.get('ALIGNOF_DOUBLE')
+if cc.alignment(pg_int64_type, args: test_c_args) > alignof_double
+  error('alignment of int64 is greater than the alignment of double')
+endif
+cdata.set('MAXIMUM_ALIGNOF', alignof_double)
 
 cdata.set('SIZEOF_VOID_P', cc.sizeof('void *', args: test_c_args))
 cdata.set('SIZEOF_SIZE_T', cc.sizeof('size_t', args: test_c_args))
@@ -1571,7 +1571,7 @@ if cc.links('''
   if not meson.is_cross_build()
     r = cc.run('''
     /* This must match the corresponding code in c.h: */
-    #if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
+    #if defined(__GNUC__) || defined(__SUNPRO_C)
     #define pg_attribute_aligned(a) __attribute__((aligned(a)))
     #elif defined(_MSC_VER)
     #define pg_attribute_aligned(a) __declspec(align(a))
@@ -2371,10 +2371,6 @@ endif
 # conflict.
 #
 # We assume C99 support, so we don't need to make this conditional.
-#
-# XXX: Historically we allowed platforms to disable restrict in template
-# files, but that was only added for AIX when building with XLC, which we
-# don't support yet.
 cdata.set('pg_restrict', '__restrict')
 
 

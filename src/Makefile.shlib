@@ -106,20 +106,6 @@ ifdef SO_MAJOR_VERSION
 override CPPFLAGS += -DSO_MAJOR_VERSION=$(SO_MAJOR_VERSION)
 endif
 
-ifeq ($(PORTNAME), aix)
-  LINK.shared		= $(COMPILER)
-  ifdef SO_MAJOR_VERSION
-    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  endif
-  haslibarule   = yes
-  # $(exports_file) is also usable as an import file
-  exports_file		= lib$(NAME).exp
-  BUILD.exports		= ( echo '\#! $(shlib)'; $(AWK) '/^[^\#]/ {printf "%s\n",$$1}' $< ) > $@
-  ifneq (,$(SHLIB_EXPORTS))
-    LINK.shared		+= -Wl,-bE:$(exports_file)
-  endif
-endif
-
 ifeq ($(PORTNAME), darwin)
   ifdef soname
     # linkable library
@@ -268,14 +254,6 @@ $(stlib): $(OBJS) | $(SHLIB_PREREQS)
 	touch $@
 endif #haslibarule
 
-# AIX wraps shared libraries inside a static library, can be used both
-# for static and shared linking
-ifeq ($(PORTNAME), aix)
-$(stlib): $(shlib)
-	rm -f $(stlib)
-	$(AR) $(AROPT) $(stlib) $(shlib)
-endif # aix
-
 ifeq (,$(filter cygwin win32,$(PORTNAME)))
 
 # Normal case
@@ -289,11 +267,8 @@ ifneq ($(shlib), $(shlib_major))
 endif
 # Make sure we have a link to a name without any version numbers
 ifneq ($(shlib), $(shlib_bare))
-# except on AIX, where that's not a thing
-ifneq ($(PORTNAME), aix)
 	rm -f $(shlib_bare)
 	$(LN_S) $(shlib) $(shlib_bare)
-endif # aix
 endif # shlib_bare
 endif # shlib_major
 
@@ -401,9 +376,6 @@ install-lib-static: $(stlib) installdirs-lib
 
 install-lib-shared: $(shlib) installdirs-lib
 ifdef soname
-# we don't install $(shlib) on AIX
-# (see http://archives.postgresql.org/message-id/52EF20B2E3209443BC37736D00C3C1380A6E79FE@EXADV1.host.magwien.gv.at)
-ifneq ($(PORTNAME), aix)
 	$(INSTALL_SHLIB) $< '$(DESTDIR)$(libdir)/$(shlib)'
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
@@ -419,7 +391,6 @@ ifneq ($(shlib), $(shlib_bare))
 endif
 endif # not win32
 endif # not cygwin
-endif # not aix
 ifneq (,$(findstring $(PORTNAME),win32 cygwin))
 	$(INSTALL_SHLIB) $< '$(DESTDIR)$(bindir)/$(shlib)'
 endif

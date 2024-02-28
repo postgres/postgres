@@ -137,7 +137,7 @@ if test x"$pgac_cv__128bit_int" = xyes ; then
   AC_CACHE_CHECK([for __int128 alignment bug], [pgac_cv__128bit_int_bug],
   [AC_RUN_IFELSE([AC_LANG_PROGRAM([
 /* This must match the corresponding code in c.h: */
-#if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
+#if defined(__GNUC__) || defined(__SUNPRO_C)
 #define pg_attribute_aligned(a) __attribute__((aligned(a)))
 #elif defined(_MSC_VER)
 #define pg_attribute_aligned(a) __declspec(align(a))

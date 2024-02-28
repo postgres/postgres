@@ -892,29 +892,6 @@ psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such
 
     <variablelist>
      <varlistentry>
-      <term><systemitem class="osname">AIX</systemitem>
-      <indexterm><primary>AIX</primary><secondary>IPC configuration</secondary></indexterm>
-      </term>
-      <listitem>
-       <para>
-        It should not be necessary to do
-        any special configuration for such parameters as
-        <varname>SHMMAX</varname>, as it appears this is configured to
-        allow all memory to be used as shared memory.  That is the
-        sort of configuration commonly used for other databases such
-        as <application>DB/2</application>.</para>
-
-       <para> It might, however, be necessary to modify the global
-       <command>ulimit</command> information in
-       <filename>/etc/security/limits</filename>, as the default hard
-       limits for file sizes (<varname>fsize</varname>) and numbers of
-       files (<varname>nofiles</varname>) might be too low.
-       </para>
-      </listitem>
-     </varlistentry>
-
-
-     <varlistentry>
       <term><systemitem class="osname">FreeBSD</systemitem>
       <indexterm><primary>FreeBSD</primary><secondary>IPC configuration</secondary></indexterm>
       </term>

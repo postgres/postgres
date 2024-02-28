@@ -7,11 +7,6 @@
 # GNU make uses a make file named "GNUmakefile" in preference to "Makefile"
 # if it exists.  Postgres is shipped with a "GNUmakefile".
 
-
-# AIX make defaults to building *every* target of the first rule.  Start with
-# a single-target, empty rule to make the other targets non-default.
-all:
-
 all install clean check installcheck:
 	@echo "You must use GNU make to use Postgres.  It may be installed"
 	@echo "on your system with the name 'gmake'."

@@ -3401,7 +3401,7 @@ export MANPATH
   <para>
    <productname>PostgreSQL</productname> can be expected to work on current
    versions of these operating systems: Linux, Windows,
-   FreeBSD, OpenBSD, NetBSD, DragonFlyBSD, macOS, AIX, Solaris, and illumos.
+   FreeBSD, OpenBSD, NetBSD, DragonFlyBSD, macOS, Solaris, and illumos.
    Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in
@@ -3422,7 +3422,7 @@ export MANPATH
   <para>
    Historical versions of <productname>PostgreSQL</productname> or POSTGRES
    also ran on CPU architectures including Alpha, Itanium, M32R, M68K,
-   M88K, NS32K, SuperH, and VAX, and operating systems including 4.3BSD, BEOS,
+   M88K, NS32K, SuperH, and VAX, and operating systems including 4.3BSD, AIX, BEOS,
    BSD/OS, DG/UX, Dynix, HP-UX, IRIX, NeXTSTEP, QNX, SCO, SINIX, Sprite, SunOS,
    Tru64 UNIX, and ULTRIX.
   </para>
@@ -3444,123 +3444,6 @@ export MANPATH
    Platforms that are not covered here have no known platform-specific
    installation issues.
   </para>
-
-  <sect2 id="installation-notes-aix">
-   <title>AIX</title>
-
-   <indexterm zone="installation-notes-aix">
-    <primary>AIX</primary>
-    <secondary>installation on</secondary>
-   </indexterm>
-
-   <para>
-    You can use GCC or the native IBM compiler <command>xlc</command>
-    to build <productname>PostgreSQL</productname>
-    on <productname>AIX</productname>.
-   </para>
-
-   <para>
-    <productname>AIX</productname> versions before 7.1 are no longer
-    tested nor supported by the <productname>PostgreSQL</productname>
-    community.
-   </para>
-
-   <sect3 id="installation-notes-aix-mem-management">
-    <title>Memory Management</title>
-    <!-- https://archives.postgresql.org/message-id/603bgqmpl9.fsf@dba2.int.libertyrms.com -->
-
-    <para>
-     AIX can be somewhat peculiar with regards to the way it does
-     memory management.  You can have a server with many multiples of
-     gigabytes of RAM free, but still get out of memory or address
-     space errors when running applications.  One example
-     is loading of extensions failing with unusual errors.
-     For example, running as the owner of the PostgreSQL installation:
-<screen>
-=# CREATE EXTENSION plperl;
-ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": A memory address is not in the address space for the process.
-</screen>
-    Running as a non-owner in the group possessing the PostgreSQL
-    installation:
-<screen>
-=# CREATE EXTENSION plperl;
-ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
-</screen>
-     Another example is out of memory errors in the PostgreSQL server
-     logs, with every memory allocation near or greater than 256 MB
-     failing.
-    </para>
-
-    <para>
-     The overall cause of all these problems is the default bittedness
-     and memory model used by the server process.  By default, all
-     binaries built on AIX are 32-bit.  This does not depend upon
-     hardware type or kernel in use.  These 32-bit processes are
-     limited to 4 GB of memory laid out in 256 MB segments using one
-     of a few models.  The default allows for less than 256 MB in the
-     heap as it shares a single segment with the stack.
-    </para>
-
-    <para>
-     In the case of the <literal>plperl</literal> example, above,
-     check your umask and the permissions of the binaries in your
-     PostgreSQL installation.  The binaries involved in that example
-     were 32-bit and installed as mode 750 instead of 755.  Due to the
-     permissions being set in this fashion, only the owner or a member
-     of the possessing group can load the library.  Since it isn't
-     world-readable, the loader places the object into the process'
-     heap instead of the shared library segments where it would
-     otherwise be placed.
-    </para>
-
-    <para>
-     The <quote>ideal</quote> solution for this is to use a 64-bit
-     build of PostgreSQL, but that is not always practical, because
-     systems with 32-bit processors can build, but not run, 64-bit
-     binaries.
-    </para>
-
-    <para>
-     If a 32-bit binary is desired, set <symbol>LDR_CNTRL</symbol> to
-     <literal>MAXDATA=0x<replaceable>n</replaceable>0000000</literal>,
-     where 1 &lt;= n &lt;= 8, before starting the PostgreSQL server,
-     and try different values and <filename>postgresql.conf</filename>
-     settings to find a configuration that works satisfactorily.  This
-     use of <symbol>LDR_CNTRL</symbol> tells AIX that you want the
-     server to have <symbol>MAXDATA</symbol> bytes set aside for the
-     heap, allocated in 256 MB segments.  When you find a workable
-     configuration,
-     <command>ldedit</command> can be used to modify the binaries so
-     that they default to using the desired heap size.  PostgreSQL can
-     also be rebuilt, passing <literal>configure
-     LDFLAGS="-Wl,-bmaxdata:0x<replaceable>n</replaceable>0000000"</literal>
-     to achieve the same effect.
-    </para>
-
-    <para>
-     For a 64-bit build, set <envar>OBJECT_MODE</envar> to 64 and
-     pass <literal>CC="gcc -maix64"</literal>
-     and <literal>LDFLAGS="-Wl,-bbigtoc"</literal>
-     to <command>configure</command>.  (Options for
-    <command>xlc</command> might differ.)  If you omit the export of
-    <envar>OBJECT_MODE</envar>, your build may fail with linker errors.  When
-    <envar>OBJECT_MODE</envar> is set, it tells AIX's build utilities
-    such as <command>ar</command>, <command>as</command>, and <command>ld</command> what
-    type of objects to default to handling.
-    </para>
-
-    <para>
-     By default, overcommit of paging space can happen.  While we have
-     not seen this occur, AIX will kill processes when it runs out of
-     memory and the overcommit is accessed.  The closest to this that
-     we have seen is fork failing because the system decided that
-     there was not enough memory for another process.  Like many other
-     parts of AIX, the paging space allocation method and
-     out-of-memory kill is configurable on a system- or process-wide
-     basis if this becomes a problem.
-    </para>
-   </sect3>
-  </sect2>
 
   <sect2 id="installation-notes-cygwin">
    <title>Cygwin</title>

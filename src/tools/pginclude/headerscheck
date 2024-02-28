@@ -57,7 +57,6 @@ do
 
 	# These files are platform-specific, and c.h will include the
 	# one that's relevant for our current platform anyway.
-	test "$f" = src/include/port/aix.h && continue
 	test "$f" = src/include/port/cygwin.h && continue
 	test "$f" = src/include/port/darwin.h && continue
 	test "$f" = src/include/port/freebsd.h && continue

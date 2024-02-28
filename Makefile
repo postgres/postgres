@@ -13,6 +13,8 @@
 
 # AIX make defaults to building *every* target of the first rule.  Start with
 # a single-target, empty rule to make the other targets non-default.
+# (We don't support AIX anymore, but if someone tries to build on AIX anyway,
+# at least they'll get the instructions to run 'configure' first.)
 all:
 
 all check install installdirs installcheck installcheck-parallel uninstall clean distclean maintainer-clean dist distcheck world check-world install-world installcheck-world:

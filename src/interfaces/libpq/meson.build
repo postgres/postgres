@@ -54,9 +54,8 @@ libpq_c_args = ['-DSO_MAJOR_VERSION=5']
 #    libpq_st, and {pgport,common}_shlib for libpq_sh
 #
 # We could try to avoid building the source files twice, but it probably adds
-# more complexity than its worth (AIX doesn't support link_whole yet, reusing
-# object files requires also linking to the library on windows or breaks
-# precompiled headers).
+# more complexity than its worth (reusing object files requires also linking
+# to the library on windows or breaks precompiled headers).
 libpq_st = static_library('libpq',
   libpq_sources,
   include_directories: [libpq_inc],

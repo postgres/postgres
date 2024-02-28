@@ -202,23 +202,4 @@ gcc -G -o foo.so foo.o
   server expects to find the shared library files.
  </para>
 
-<!--
-Under AIX, object files are compiled normally but building the shared
-library requires a couple of steps.  First, create the object file:
-.nf
-cc <other flags> -c foo.c
-.fi
-You must then create a symbol \*(lqexports\*(rq file for the object
-file:
-.nf
-mkldexport foo.o `pwd` &gt; foo.exp
-.fi
-Finally, you can create the shared library:
-.nf
-ld <other flags> -H512 -T512 -o foo.so -e _nostart \e
-   -bI:.../lib/postgres.exp -bE:foo.exp foo.o \e
-   -lm -lc 2>/dev/null
-.fi
-  -->
-
 </sect2>
