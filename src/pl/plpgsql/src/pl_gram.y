@@ -2810,10 +2810,7 @@ read_datatype(int tok)
 
 	/*
 	 * If we have a simple or composite identifier, check for %TYPE and
-	 * %ROWTYPE constructs.  (Note that if plpgsql_parse_wordtype et al fail
-	 * to recognize the identifier, we'll fall through and pass the whole
-	 * string to parse_datatype, which will assuredly give an unhelpful
-	 * "syntax error".  Should we try to give a more specific error?)
+	 * %ROWTYPE constructs.
 	 */
 	if (tok == T_WORD)
 	{

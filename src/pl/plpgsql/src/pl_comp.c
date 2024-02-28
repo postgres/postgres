@@ -1599,7 +1599,7 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
  * plpgsql_parse_wordtype	The scanner found word%TYPE. word should be
  *				a pre-existing variable name.
  *
- * Returns datatype struct, or NULL if no match found for word.
+ * Returns datatype struct.  Throws error if no match found for word.
  * ----------
  */
 PLpgSQL_type *
@@ -1623,15 +1623,15 @@ plpgsql_parse_wordtype(char *ident)
 			case PLPGSQL_NSTYPE_REC:
 				return ((PLpgSQL_rec *) (plpgsql_Datums[nse->itemno]))->datatype;
 			default:
-				return NULL;
+				break;
 		}
 	}
 
-	/*
-	 * Nothing found - up to now it's a word without any special meaning for
-	 * us.
-	 */
-	return NULL;
+	/* No match, complain */
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("variable \"%s\" does not exist", ident)));
+	return NULL;				/* keep compiler quiet */
 }
 
 
@@ -1639,7 +1639,8 @@ plpgsql_parse_wordtype(char *ident)
  * plpgsql_parse_cwordtype		Same lookup for compositeword%TYPE
  *
  * Here, we allow either a block-qualified variable name, or a reference
- * to a column of some table.
+ * to a column of some table.  (If we must throw error, we assume that the
+ * latter case was intended.)
  * ----------
  */
 PLpgSQL_type *
@@ -1648,12 +1649,11 @@ plpgsql_parse_cwordtype(List *idents)
 	PLpgSQL_type *dtype = NULL;
 	PLpgSQL_nsitem *nse;
 	int			nnames;
-	const char *fldname;
+	RangeVar   *relvar = NULL;
+	const char *fldname = NULL;
 	Oid			classOid;
-	HeapTuple	classtup = NULL;
 	HeapTuple	attrtup = NULL;
 	HeapTuple	typetup = NULL;
-	Form_pg_class classStruct;
 	Form_pg_attribute attrStruct;
 	MemoryContext oldCxt;
 
@@ -1688,57 +1688,39 @@ plpgsql_parse_cwordtype(List *idents)
 		/*
 		 * First word could also be a table name
 		 */
-		classOid = RelnameGetRelid(strVal(linitial(idents)));
-		if (!OidIsValid(classOid))
-			goto done;
+		relvar = makeRangeVar(NULL,
+							  strVal(linitial(idents)),
+							  -1);
 		fldname = strVal(lsecond(idents));
 	}
-	else if (list_length(idents) == 3)
+	else
 	{
-		RangeVar   *relvar;
-
 		/*
 		 * We could check for a block-qualified reference to a field of a
 		 * record variable, but %TYPE is documented as applying to variables,
 		 * not fields of variables.  Things would get rather ambiguous if we
 		 * allowed either interpretation.
 		 */
-		relvar = makeRangeVar(strVal(linitial(idents)),
-							  strVal(lsecond(idents)),
-							  -1);
-		/* Can't lock relation - we might not have privileges. */
-		classOid = RangeVarGetRelid(relvar, NoLock, true);
-		if (!OidIsValid(classOid))
-			goto done;
-		fldname = strVal(lthird(idents));
+		List	   *rvnames;
+
+		Assert(list_length(idents) > 2);
+		rvnames = list_delete_last(list_copy(idents));
+		relvar = makeRangeVarFromNameList(rvnames);
+		fldname = strVal(llast(idents));
 	}
-	else
-		goto done;
 
-	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(classOid));
-	if (!HeapTupleIsValid(classtup))
-		goto done;
-	classStruct = (Form_pg_class) GETSTRUCT(classtup);
-
-	/*
-	 * It must be a relation, sequence, view, materialized view, composite
-	 * type, or foreign table
-	 */
-	if (classStruct->relkind != RELKIND_RELATION &&
-		classStruct->relkind != RELKIND_SEQUENCE &&
-		classStruct->relkind != RELKIND_VIEW &&
-		classStruct->relkind != RELKIND_MATVIEW &&
-		classStruct->relkind != RELKIND_COMPOSITE_TYPE &&
-		classStruct->relkind != RELKIND_FOREIGN_TABLE &&
-		classStruct->relkind != RELKIND_PARTITIONED_TABLE)
-		goto done;
+	/* Look up relation name.  Can't lock it - we might not have privileges. */
+	classOid = RangeVarGetRelid(relvar, NoLock, false);
 
 	/*
 	 * Fetch the named table field and its type
 	 */
 	attrtup = SearchSysCacheAttName(classOid, fldname);
 	if (!HeapTupleIsValid(attrtup))
-		goto done;
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						fldname, relvar->relname)));
 	attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
 	typetup = SearchSysCache1(TYPEOID,
@@ -1759,8 +1741,6 @@ plpgsql_parse_cwordtype(List *idents)
 	MemoryContextSwitchTo(plpgsql_compile_tmp_cxt);
 
 done:
-	if (HeapTupleIsValid(classtup))
-		ReleaseSysCache(classtup);
 	if (HeapTupleIsValid(attrtup))
 		ReleaseSysCache(attrtup);
 	if (HeapTupleIsValid(typetup))
@@ -1824,16 +1804,12 @@ plpgsql_parse_cwordrowtype(List *idents)
 	 * As above, this is a relation lookup but could be a type lookup if we
 	 * weren't being backwards-compatible about error wording.
 	 */
-	if (list_length(idents) != 2)
-		return NULL;
 
 	/* Avoid memory leaks in long-term function context */
 	oldCxt = MemoryContextSwitchTo(plpgsql_compile_tmp_cxt);
 
 	/* Look up relation name.  Can't lock it - we might not have privileges. */
-	relvar = makeRangeVar(strVal(linitial(idents)),
-						  strVal(lsecond(idents)),
-						  -1);
+	relvar = makeRangeVarFromNameList(idents);
 	classOid = RangeVarGetRelid(relvar, NoLock, false);
 
 	/* Some relkinds lack type OIDs */
@@ -1842,7 +1818,7 @@ plpgsql_parse_cwordrowtype(List *idents)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("relation \"%s\" does not have a composite type",
-						strVal(lsecond(idents)))));
+						relvar->relname)));
 
 	MemoryContextSwitchTo(oldCxt);
 

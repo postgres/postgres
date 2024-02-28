@@ -29,3 +29,39 @@ CREATE OR REPLACE PROCEDURE public.test2(IN x integer)
 BEGIN ATOMIC
  SELECT (x + 2);
 END
+-- Test %TYPE and %ROWTYPE error cases
+create table misc_table(f1 int);
+do $$ declare x foo%type; begin end $$;
+ERROR:  variable "foo" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x notice%type; begin end $$;  -- covers unreserved-keyword case
+ERROR:  variable "notice" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x foo.bar%type; begin end $$;
+ERROR:  relation "foo" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x foo.bar.baz%type; begin end $$;
+ERROR:  schema "foo" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x public.foo.bar%type; begin end $$;
+ERROR:  relation "public.foo" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x public.misc_table.zed%type; begin end $$;
+ERROR:  column "zed" of relation "misc_table" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x foo%rowtype; begin end $$;
+ERROR:  relation "foo" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x notice%rowtype; begin end $$;  -- covers unreserved-keyword case
+ERROR:  relation "notice" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x foo.bar%rowtype; begin end $$;
+ERROR:  schema "foo" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x foo.bar.baz%rowtype; begin end $$;
+ERROR:  cross-database references are not implemented: "foo.bar.baz"
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x public.foo%rowtype; begin end $$;
+ERROR:  relation "public.foo" does not exist
+CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
+do $$ declare x public.misc_table%rowtype; begin end $$;
