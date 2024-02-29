@@ -132,15 +132,25 @@ DELETE
     <term><replaceable class="parameter">target_table_name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of the target table to merge into.
-      If <literal>ONLY</literal> is specified before the table name, matching
-      rows are updated or deleted in the named table only.  If
+      The name (optionally schema-qualified) of the target table or view to
+      merge into.  If <literal>ONLY</literal> is specified before a table
+      name, matching rows are updated or deleted in the named table only.  If
       <literal>ONLY</literal> is not specified, matching rows are also updated
       or deleted in any tables inheriting from the named table.  Optionally,
       <literal>*</literal> can be specified after the table name to explicitly
       indicate that descendant tables are included.  The
       <literal>ONLY</literal> keyword and <literal>*</literal> option do not
       affect insert actions, which always insert into the named table only.
+     </para>
+
+     <para>
+      If <replaceable class="parameter">target_table_name</replaceable> is a
+      view, it must either be automatically updatable with no
+      <literal>INSTEAD OF</literal> triggers, or it must have
+      <literal>INSTEAD OF</literal> triggers for every type of action
+      (<literal>INSERT</literal>, <literal>UPDATE</literal>, and
+      <literal>DELETE</literal>) specified in the <literal>WHEN</literal>
+      clauses.  Views with rules are not supported.
      </para>
     </listitem>
    </varlistentry>
@@ -486,7 +496,11 @@ MERGE <replaceable class="parameter">total_count</replaceable>
              the action's event type.
             </para>
            </listitem>
-          </orderedlist></para>
+          </orderedlist>
+          If the target relation is a view with <literal>INSTEAD OF ROW</literal>
+          triggers for the action's event type, they are used to perform the
+          action instead.
+         </para>
         </listitem>
        </orderedlist></para>
      </listitem>

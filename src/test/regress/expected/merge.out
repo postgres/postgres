@@ -139,16 +139,6 @@ COPY (
 ) TO stdout;
 ERROR:  MERGE not supported in COPY
 -- unsupported relation types
--- view
-CREATE VIEW tv AS SELECT * FROM target;
-MERGE INTO tv t
-USING source s
-ON t.tid = s.sid
-WHEN NOT MATCHED THEN
-	INSERT DEFAULT VALUES;
-ERROR:  cannot execute MERGE on relation "tv"
-DETAIL:  This operation is not supported for views.
-DROP VIEW tv;
 -- materialized view
 CREATE MATERIALIZED VIEW mv AS SELECT * FROM target;
 MERGE INTO mv t

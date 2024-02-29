@@ -100,15 +100,6 @@ COPY (
 ) TO stdout;
 
 -- unsupported relation types
--- view
-CREATE VIEW tv AS SELECT * FROM target;
-MERGE INTO tv t
-USING source s
-ON t.tid = s.sid
-WHEN NOT MATCHED THEN
-	INSERT DEFAULT VALUES;
-DROP VIEW tv;
-
 -- materialized view
 CREATE MATERIALIZED VIEW mv AS SELECT * FROM target;
 MERGE INTO mv t

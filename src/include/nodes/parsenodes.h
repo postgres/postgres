@@ -178,6 +178,14 @@ typedef struct Query
 	/* whether to use outer join */
 	bool		mergeUseOuterJoin pg_node_attr(query_jumble_ignore);
 
+	/*
+	 * rtable index of target relation for MERGE to pull data. Initially, this
+	 * is the same as resultRelation, but after query rewriting, if the target
+	 * relation is a trigger-updatable view, this is the index of the expanded
+	 * view subquery, whereas resultRelation is the index of the target view.
+	 */
+	int			mergeTargetRelation pg_node_attr(query_jumble_ignore);
+
 	List	   *targetList;		/* target list (of TargetEntry) */
 
 	/* OVERRIDING clause */

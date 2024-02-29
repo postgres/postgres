@@ -832,6 +832,7 @@ static const SchemaQuery Query_for_list_of_mergetargets = {
 	.catname = "pg_catalog.pg_class c",
 	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_VIEW) ", "
 	CppAsString2(RELKIND_PARTITIONED_TABLE) ") ",
 	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
 	.namespace = "c.relnamespace",

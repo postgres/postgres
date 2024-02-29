@@ -192,12 +192,14 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
     <listitem>
      <para>
       This option controls the behavior of automatically updatable views.  When
-      this option is specified, <command>INSERT</command> and <command>UPDATE</command>
+      this option is specified, <command>INSERT</command>,
+      <command>UPDATE</command>, and <command>MERGE</command>
       commands on the view will be checked to ensure that new rows satisfy the
       view-defining condition (that is, the new rows are checked to ensure that
       they are visible through the view).  If they are not, the update will be
       rejected.  If the <literal>CHECK OPTION</literal> is not specified,
-      <command>INSERT</command> and <command>UPDATE</command> commands on the view are
+      <command>INSERT</command>, <command>UPDATE</command>, and
+      <command>MERGE</command> commands on the view are
       allowed to create rows that are not visible through the view.  The
       following check options are supported:
 
@@ -247,7 +249,8 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
       <command>INSERT</command> or <command>UPDATE</command> command to be rewritten, then
       all check options will be ignored in the rewritten query, including any
       checks from automatically updatable views defined on top of the relation
-      with the <literal>INSTEAD</literal> rule.
+      with the <literal>INSTEAD</literal> rule.  <command>MERGE</command> is not
+      supported if the view or any of its base relations have rules.
      </para>
     </listitem>
    </varlistentry>
@@ -360,7 +363,8 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
 
    <para>
     Simple views are automatically updatable: the system will allow
-    <command>INSERT</command>, <command>UPDATE</command> and <command>DELETE</command> statements
+    <command>INSERT</command>, <command>UPDATE</command>,
+    <command>DELETE</command>, and <command>MERGE</command> statements
     to be used on the view in the same way as on a regular table.  A view is
     automatically updatable if it satisfies all of the following conditions:
 
@@ -400,13 +404,15 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     An automatically updatable view may contain a mix of updatable and
     non-updatable columns.  A column is updatable if it is a simple reference
     to an updatable column of the underlying base relation; otherwise the
-    column is read-only, and an error will be raised if an <command>INSERT</command>
-    or <command>UPDATE</command> statement attempts to assign a value to it.
+    column is read-only, and an error will be raised if an
+    <command>INSERT</command>, <command>UPDATE</command>, or
+    <command>MERGE</command> statement attempts to assign a value to it.
    </para>
 
    <para>
     If the view is automatically updatable the system will convert any
-    <command>INSERT</command>, <command>UPDATE</command> or <command>DELETE</command> statement
+    <command>INSERT</command>, <command>UPDATE</command>,
+    <command>DELETE</command>, or <command>MERGE</command> statement
     on the view into the corresponding statement on the underlying base
     relation.  <command>INSERT</command> statements that have an <literal>ON
     CONFLICT UPDATE</literal> clause are fully supported.
@@ -415,17 +421,21 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
    <para>
     If an automatically updatable view contains a <literal>WHERE</literal>
     condition, the condition restricts which rows of the base relation are
-    available to be modified by <command>UPDATE</command> and <command>DELETE</command>
-    statements on the view.  However, an <command>UPDATE</command> is allowed to
+    available to be modified by <command>UPDATE</command>,
+    <command>DELETE</command>, and <command>MERGE</command>
+    statements on the view.  However, an <command>UPDATE</command> or
+    <command>MERGE</command> is allowed to
     change a row so that it no longer satisfies the <literal>WHERE</literal>
     condition, and thus is no longer visible through the view.  Similarly,
-    an <command>INSERT</command> command can potentially insert base-relation rows
+    an <command>INSERT</command> or <command>MERGE</command> command can
+    potentially insert base-relation rows
     that do not satisfy the <literal>WHERE</literal> condition and thus are not
     visible through the view (<literal>ON CONFLICT UPDATE</literal> may
     similarly affect an existing row not visible through the view).
     The <literal>CHECK OPTION</literal> may be used to prevent
-    <command>INSERT</command> and <command>UPDATE</command> commands from creating
-    such rows that are not visible through the view.
+    <command>INSERT</command>, <command>UPDATE</command>, and
+    <command>MERGE</command> commands from creating such rows that are not
+    visible through the view.
    </para>
 
    <para>
@@ -443,14 +453,16 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
 
    <para>
     A more complex view that does not satisfy all these conditions is
-    read-only by default: the system will not allow an insert, update, or
-    delete on the view.  You can get the effect of an updatable view by
+    read-only by default: the system will not allow an <command>INSERT</command>,
+    <command>UPDATE</command>, <command>DELETE</command>, or <command>MERGE</command>
+    on the view.  You can get the effect of an updatable view by
     creating <literal>INSTEAD OF</literal> triggers on the view, which must
     convert attempted inserts, etc. on the view into appropriate actions
     on other tables.  For more information see <xref
     linkend="sql-createtrigger"/>.  Another possibility is to create rules
     (see <xref linkend="sql-createrule"/>), but in practice triggers are
-    easier to understand and use correctly.
+    easier to understand and use correctly.  Also note that <command>MERGE</command>
+    is not supported on relations with rules.
    </para>
 
    <para>

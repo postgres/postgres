@@ -797,9 +797,9 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 
 <para>
     What happens if a view is named as the target relation for an
-    <command>INSERT</command>, <command>UPDATE</command>, or
-    <command>DELETE</command>?  Doing the substitutions
-    described above would give a query tree in which the result
+    <command>INSERT</command>, <command>UPDATE</command>,
+    <command>DELETE</command>, or <command>MERGE</command>?  Doing the
+    substitutions described above would give a query tree in which the result
     relation points at a subquery range-table entry, which will not
     work.  There are several ways in which <productname>PostgreSQL</productname>
     can support the appearance of updating a view, however.
@@ -813,11 +813,12 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     If the subquery selects from a single base relation and is simple
     enough, the rewriter can automatically replace the subquery with the
     underlying base relation so that the <command>INSERT</command>,
-    <command>UPDATE</command>, or <command>DELETE</command> is applied to
-    the base relation in the appropriate way.  Views that are
-    <quote>simple enough</quote> for this are called <firstterm>automatically
-    updatable</firstterm>.  For detailed information on the kinds of view that can
-    be automatically updated, see <xref linkend="sql-createview"/>.
+    <command>UPDATE</command>, <command>DELETE</command>, or
+    <command>MERGE</command> is applied to the base relation in the
+    appropriate way.  Views that are <quote>simple enough</quote> for this
+    are called <firstterm>automatically updatable</firstterm>.  For detailed
+    information on the kinds of view that can be automatically updated, see
+    <xref linkend="sql-createview"/>.
 </para>
 
 <para>
@@ -827,10 +828,10 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     Rewriting works slightly differently
     in this case.  For <command>INSERT</command>, the rewriter does
     nothing at all with the view, leaving it as the result relation
-    for the query.  For <command>UPDATE</command> and
-    <command>DELETE</command>, it's still necessary to expand the
+    for the query.  For <command>UPDATE</command>, <command>DELETE</command>,
+    and <command>MERGE</command>, it's still necessary to expand the
     view query to produce the <quote>old</quote> rows that the command will
-    attempt to update or delete.  So the view is expanded as normal,
+    attempt to update, delete, or merge.  So the view is expanded as normal,
     but another unexpanded range-table entry is added to the query
     to represent the view in its capacity as the result relation.
 </para>
@@ -842,13 +843,13 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     list to identify the physical locations of the rows to be updated.
     This does not work if the result relation is a view, because a view
     does not have any <acronym>CTID</acronym>, since its rows do not have
-    actual physical locations. Instead, for an <command>UPDATE</command>
-    or <command>DELETE</command> operation, a special <literal>wholerow</literal>
-    entry is added to the target list, which expands to include all
-    columns from the view. The executor uses this value to supply the
-    <quote>old</quote> row to the <literal>INSTEAD OF</literal> trigger.  It is
-    up to the trigger to work out what to update based on the old and
-    new row values.
+    actual physical locations. Instead, for an <command>UPDATE</command>,
+    <command>DELETE</command>, or <command>MERGE</command> operation, a
+    special <literal>wholerow</literal> entry is added to the target list,
+    which expands to include all columns from the view. The executor uses this
+    value to supply the <quote>old</quote> row to the
+    <literal>INSTEAD OF</literal> trigger.  It is up to the trigger to work
+    out what to update based on the old and new row values.
 </para>
 
 <para>
@@ -857,7 +858,8 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     <command>UPDATE</command>, and <command>DELETE</command> commands on
     a view. These rules will rewrite the command, typically into a command
     that updates one or more tables, rather than views. That is the topic
-    of <xref linkend="rules-update"/>.
+    of <xref linkend="rules-update"/>.  Note that this will not work with
+    <command>MERGE</command>, which currently does not support rules.
 </para>
 
 <para>

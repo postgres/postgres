@@ -198,12 +198,17 @@ transform_MERGE_to_join(Query *parse)
 
 	/*
 	 * Create a JOIN between the target and the source relation.
+	 *
+	 * Here the target is identified by parse->mergeTargetRelation.  For a
+	 * regular table, this will equal parse->resultRelation, but for a
+	 * trigger-updatable view, it will be the expanded view subquery that we
+	 * need to pull data from.
 	 */
 	joinexpr = makeNode(JoinExpr);
 	joinexpr->jointype = jointype;
 	joinexpr->isNatural = false;
 	joinexpr->larg = (Node *) makeNode(RangeTblRef);
-	((RangeTblRef *) joinexpr->larg)->rtindex = parse->resultRelation;
+	((RangeTblRef *) joinexpr->larg)->rtindex = parse->mergeTargetRelation;
 	joinexpr->rarg = linitial(parse->jointree->fromlist);	/* original join */
 	joinexpr->usingClause = NIL;
 	joinexpr->join_using_alias = NULL;
@@ -215,6 +220,19 @@ transform_MERGE_to_join(Query *parse)
 	/* Make the new join be the sole entry in the query's jointree */
 	parse->jointree->fromlist = list_make1(joinexpr);
 	parse->jointree->quals = NULL;
+
+	/*
+	 * If necessary, mark parse->targetlist entries that refer to the target
+	 * as nullable by the join.  Normally the targetlist will be empty for a
+	 * MERGE, but if the target is a trigger-updatable view, it will contain a
+	 * whole-row Var referring to the expanded view query.
+	 */
+	if (parse->targetList != NIL &&
+		(jointype == JOIN_RIGHT || jointype == JOIN_FULL))
+		parse->targetList = (List *)
+			add_nulling_relids((Node *) parse->targetList,
+							   bms_make_singleton(parse->mergeTargetRelation),
+							   bms_make_singleton(joinrti));
 }
 
 /*

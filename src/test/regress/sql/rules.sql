@@ -1277,6 +1277,19 @@ MERGE INTO rule_merge2 t USING (SELECT 1 AS a) s
 	WHEN NOT MATCHED THEN
 		INSERT VALUES (s.a, '');
 
+-- also ok if the rules are disabled
+ALTER TABLE rule_merge1 DISABLE RULE rule1;
+ALTER TABLE rule_merge1 DISABLE RULE rule2;
+ALTER TABLE rule_merge1 DISABLE RULE rule3;
+MERGE INTO rule_merge1 t USING (SELECT 1 AS a) s
+	ON t.a = s.a
+	WHEN MATCHED AND t.a < 2 THEN
+		UPDATE SET b = b || ' updated by merge'
+	WHEN MATCHED AND t.a > 2 THEN
+		DELETE
+	WHEN NOT MATCHED THEN
+		INSERT VALUES (s.a, '');
+
 -- test deparsing
 CREATE TABLE sf_target(id int, data text, filling int[]);
 

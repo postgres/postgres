@@ -150,11 +150,13 @@ static TupleTableSlot *ExecPrepareTupleRouting(ModifyTableState *mtstate,
 static TupleTableSlot *ExecMerge(ModifyTableContext *context,
 								 ResultRelInfo *resultRelInfo,
 								 ItemPointer tupleid,
+								 HeapTuple oldtuple,
 								 bool canSetTag);
 static void ExecInitMerge(ModifyTableState *mtstate, EState *estate);
 static bool ExecMergeMatched(ModifyTableContext *context,
 							 ResultRelInfo *resultRelInfo,
 							 ItemPointer tupleid,
+							 HeapTuple oldtuple,
 							 bool canSetTag);
 static void ExecMergeNotMatched(ModifyTableContext *context,
 								ResultRelInfo *resultRelInfo,
@@ -2712,13 +2714,14 @@ ExecOnConflictUpdate(ModifyTableContext *context,
  */
 static TupleTableSlot *
 ExecMerge(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
-		  ItemPointer tupleid, bool canSetTag)
+		  ItemPointer tupleid, HeapTuple oldtuple, bool canSetTag)
 {
 	bool		matched;
 
 	/*-----
-	 * If we are dealing with a WHEN MATCHED case (tupleid is valid), we
-	 * execute the first action for which the additional WHEN MATCHED AND
+	 * If we are dealing with a WHEN MATCHED case (tupleid or oldtuple is
+	 * valid, depending on whether the result relation is a table or a view),
+	 * we execute the first action for which the additional WHEN MATCHED AND
 	 * quals pass.  If an action without quals is found, that action is
 	 * executed.
 	 *
@@ -2759,9 +2762,10 @@ ExecMerge(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	 * from ExecMergeNotMatched to ExecMergeMatched, there is no risk of a
 	 * livelock.
 	 */
-	matched = tupleid != NULL;
+	matched = tupleid != NULL || oldtuple != NULL;
 	if (matched)
-		matched = ExecMergeMatched(context, resultRelInfo, tupleid, canSetTag);
+		matched = ExecMergeMatched(context, resultRelInfo, tupleid, oldtuple,
+								   canSetTag);
 
 	/*
 	 * Either we were dealing with a NOT MATCHED tuple or ExecMergeMatched()
@@ -2776,8 +2780,10 @@ ExecMerge(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 }
 
 /*
- * Check and execute the first qualifying MATCHED action. The current target
- * tuple is identified by tupleid.
+ * Check and execute the first qualifying MATCHED action.  If the target
+ * relation is a table, the current target tuple is identified by tupleid.
+ * Otherwise, if the target relation is a view, oldtuple is the current target
+ * tuple from the view.
  *
  * We start from the first WHEN MATCHED action and check if the WHEN quals
  * pass, if any. If the WHEN quals for the first action do not pass, we
@@ -2798,7 +2804,7 @@ ExecMerge(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
  */
 static bool
 ExecMergeMatched(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
-				 ItemPointer tupleid, bool canSetTag)
+				 ItemPointer tupleid, HeapTuple oldtuple, bool canSetTag)
 {
 	ModifyTableState *mtstate = context->mtstate;
 	TupleTableSlot *newslot;
@@ -2824,22 +2830,33 @@ ExecMergeMatched(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	econtext->ecxt_innertuple = context->planSlot;
 	econtext->ecxt_outertuple = NULL;
 
+	/*
+	 * This routine is only invoked for matched rows, so we should either have
+	 * the tupleid of the target row, or an old tuple from the target wholerow
+	 * junk attr.
+	 */
+	Assert(tupleid != NULL || oldtuple != NULL);
+	if (oldtuple != NULL)
+		ExecForceStoreHeapTuple(oldtuple, resultRelInfo->ri_oldTupleSlot,
+								false);
+
 lmerge_matched:
 
 	/*
-	 * This routine is only invoked for matched rows, and we must have found
-	 * the tupleid of the target row in that case; fetch that tuple.
+	 * If passed a tupleid, use it to fetch the old target row.
 	 *
 	 * We use SnapshotAny for this because we might get called again after
 	 * EvalPlanQual returns us a new tuple, which may not be visible to our
 	 * MVCC snapshot.
 	 */
-
-	if (!table_tuple_fetch_row_version(resultRelInfo->ri_RelationDesc,
-									   tupleid,
-									   SnapshotAny,
-									   resultRelInfo->ri_oldTupleSlot))
-		elog(ERROR, "failed to fetch the target tuple");
+	if (tupleid != NULL)
+	{
+		if (!table_tuple_fetch_row_version(resultRelInfo->ri_RelationDesc,
+										   tupleid,
+										   SnapshotAny,
+										   resultRelInfo->ri_oldTupleSlot))
+			elog(ERROR, "failed to fetch the target tuple");
+	}
 
 	foreach(l, resultRelInfo->ri_matchedMergeAction)
 	{
@@ -2899,20 +2916,33 @@ lmerge_matched:
 						return true;	/* "do nothing" */
 					break;		/* concurrent update/delete */
 				}
-				result = ExecUpdateAct(context, resultRelInfo, tupleid, NULL,
-									   newslot, canSetTag, &updateCxt);
 
-				/*
-				 * As in ExecUpdate(), if ExecUpdateAct() reports that a
-				 * cross-partition update was done, then there's nothing else
-				 * for us to do --- the UPDATE has been turned into a DELETE
-				 * and an INSERT, and we must not perform any of the usual
-				 * post-update tasks.
-				 */
-				if (updateCxt.crossPartUpdate)
+				/* INSTEAD OF ROW UPDATE Triggers */
+				if (resultRelInfo->ri_TrigDesc &&
+					resultRelInfo->ri_TrigDesc->trig_update_instead_row)
 				{
-					mtstate->mt_merge_updated += 1;
-					return true;
+					if (!ExecIRUpdateTriggers(estate, resultRelInfo,
+											  oldtuple, newslot))
+						return true;	/* "do nothing" */
+				}
+				else
+				{
+					result = ExecUpdateAct(context, resultRelInfo, tupleid,
+										   NULL, newslot, canSetTag,
+										   &updateCxt);
+
+					/*
+					 * As in ExecUpdate(), if ExecUpdateAct() reports that a
+					 * cross-partition update was done, then there's nothing
+					 * else for us to do --- the UPDATE has been turned into a
+					 * DELETE and an INSERT, and we must not perform any of
+					 * the usual post-update tasks.
+					 */
+					if (updateCxt.crossPartUpdate)
+					{
+						mtstate->mt_merge_updated += 1;
+						return true;
+					}
 				}
 
 				if (result == TM_Ok)
@@ -2932,7 +2962,19 @@ lmerge_matched:
 						return true;	/* "do nothing" */
 					break;		/* concurrent update/delete */
 				}
-				result = ExecDeleteAct(context, resultRelInfo, tupleid, false);
+
+				/* INSTEAD OF ROW DELETE Triggers */
+				if (resultRelInfo->ri_TrigDesc &&
+					resultRelInfo->ri_TrigDesc->trig_delete_instead_row)
+				{
+					if (!ExecIRDeleteTriggers(estate, resultRelInfo,
+											  oldtuple))
+						return true;	/* "do nothing" */
+				}
+				else
+					result = ExecDeleteAct(context, resultRelInfo, tupleid,
+										   false);
+
 				if (result == TM_Ok)
 				{
 					ExecDeleteEpilogue(context, resultRelInfo, tupleid, NULL,
@@ -3663,7 +3705,8 @@ ExecModifyTable(PlanState *pstate)
 				{
 					EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
 
-					ExecMerge(&context, node->resultRelInfo, NULL, node->canSetTag);
+					ExecMerge(&context, node->resultRelInfo, NULL, NULL,
+							  node->canSetTag);
 					continue;	/* no RETURNING support yet */
 				}
 
@@ -3741,7 +3784,8 @@ ExecModifyTable(PlanState *pstate)
 					{
 						EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
 
-						ExecMerge(&context, node->resultRelInfo, NULL, node->canSetTag);
+						ExecMerge(&context, node->resultRelInfo, NULL, NULL,
+								  node->canSetTag);
 						continue;	/* no RETURNING support yet */
 					}
 
@@ -3774,9 +3818,28 @@ ExecModifyTable(PlanState *pstate)
 				datum = ExecGetJunkAttribute(slot,
 											 resultRelInfo->ri_RowIdAttNo,
 											 &isNull);
-				/* shouldn't ever get a null result... */
+
+				/*
+				 * For commands other than MERGE, any tuples having a null row
+				 * identifier are errors.  For MERGE, we may need to handle
+				 * them as WHEN NOT MATCHED clauses if any, so do that.
+				 *
+				 * Note that we use the node's toplevel resultRelInfo, not any
+				 * specific partition's.
+				 */
 				if (isNull)
+				{
+					if (operation == CMD_MERGE)
+					{
+						EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
+
+						ExecMerge(&context, node->resultRelInfo, NULL, NULL,
+								  node->canSetTag);
+						continue;	/* no RETURNING support yet */
+					}
+
 					elog(ERROR, "wholerow is NULL");
+				}
 
 				oldtupdata.t_data = DatumGetHeapTupleHeader(datum);
 				oldtupdata.t_len =
@@ -3847,7 +3910,8 @@ ExecModifyTable(PlanState *pstate)
 				break;
 
 			case CMD_MERGE:
-				slot = ExecMerge(&context, resultRelInfo, tupleid, node->canSetTag);
+				slot = ExecMerge(&context, resultRelInfo, tupleid, oldtuple,
+								 node->canSetTag);
 				break;
 
 			default:
@@ -4025,6 +4089,10 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	foreach(l, node->resultRelations)
 	{
 		Index		resultRelation = lfirst_int(l);
+		List	   *mergeActions = NIL;
+
+		if (node->mergeActionLists)
+			mergeActions = list_nth(node->mergeActionLists, i);
 
 		if (resultRelInfo != mtstate->rootResultRelInfo)
 		{
@@ -4046,7 +4114,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		/*
 		 * Verify result relation is a valid target for the current operation
 		 */
-		CheckValidResultRel(resultRelInfo, operation);
+		CheckValidResultRel(resultRelInfo, operation, mergeActions);
 
 		resultRelInfo++;
 		i++;
@@ -4122,8 +4190,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			}
 			else
 			{
-				/* No support for MERGE */
-				Assert(operation != CMD_MERGE);
 				/* Other valid target relkinds must provide wholerow */
 				resultRelInfo->ri_RowIdAttNo =
 					ExecFindJunkAttributeInTlist(subplan->targetlist,
