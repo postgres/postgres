@@ -79,8 +79,8 @@ static void put_key_into_map(Oid rel_id, RelKeyData *key);
 static void pg_tde_xlog_create_relation(XLogReaderState *record);
 
 static RelKeyData* tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, const TDEMasterKey *master_key, bool is_key_decrypted);
-static RelKeyData *tde_encrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *rel_key_data);
-static RelKeyData *tde_decrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *enc_rel_key_data);
+static RelKeyData *tde_encrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *rel_key_data, const RelFileLocator *rlocator);
+static RelKeyData *tde_decrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *enc_rel_key_data, const RelFileLocator *rlocator);
 static bool pg_tde_perform_rotate_key(const char *new_master_key_name);
 
 static void pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *str_append);
@@ -129,7 +129,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
 
 	/* Encrypt the key */
 	rel_key_data = tde_create_rel_key(newrlocator, &int_key, master_key, true);
-	enc_rel_key_data = tde_encrypt_rel_key(master_key, rel_key_data);
+	enc_rel_key_data = tde_encrypt_rel_key(master_key, rel_key_data, newrlocator);
 
 	/* XLOG internal key */
 	XLogBeginInsert();
@@ -230,12 +230,12 @@ tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, const TDEMa
  * Encrypts a given key and returns the encrypted one.
  */
 RelKeyData *
-tde_encrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *rel_key_data)
+tde_encrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *rel_key_data, const RelFileLocator *rlocator)
 {
 	RelKeyData *enc_rel_key_data;
 	size_t enc_key_bytes;
 
-	AesEncryptKey(master_key, rel_key_data, &enc_rel_key_data, &enc_key_bytes);
+	AesEncryptKey(master_key, rlocator, rel_key_data, &enc_rel_key_data, &enc_key_bytes);
 
 	return enc_rel_key_data;
 }
@@ -244,12 +244,12 @@ tde_encrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *rel_key_data)
  * Decrypts a given key and returns the decrypted one.
  */
 RelKeyData *
-tde_decrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *enc_rel_key_data)
+tde_decrypt_rel_key(const TDEMasterKey *master_key, RelKeyData *enc_rel_key_data, const RelFileLocator *rlocator)
 {
 	RelKeyData *rel_key_data = NULL;
 	size_t key_bytes;
 
-	AesDecryptKey(master_key, &rel_key_data, enc_rel_key_data, &key_bytes);
+	AesDecryptKey(master_key, rlocator, &rel_key_data, enc_rel_key_data, &key_bytes);
 
 	return rel_key_data;
 }
@@ -788,7 +788,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 
 	/* Add the encrypted key to the data file. */
 	enc_rel_key_data = pg_tde_read_keydata(db_keydata_path, key_index, master_key->keyName);
-	rel_key_data = tde_decrypt_rel_key(master_key, enc_rel_key_data);
+	rel_key_data = tde_decrypt_rel_key(master_key, enc_rel_key_data, rlocator);
 
 	return rel_key_data;
 }

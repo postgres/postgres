@@ -221,13 +221,16 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlo
  * short lifespan until it is written to disk.
  */
 void
-AesEncryptKey(const TDEMasterKey *master_key, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes)
+AesEncryptKey(const TDEMasterKey *master_key, const RelFileLocator *rlocator, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes)
 {
 	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	/* Ensure we are getting a valid pointer here */
 	Assert(master_key);
 
+	memcpy(iv, &rlocator->spcOid, sizeof(Oid));
+	memcpy(iv + sizeof(Oid), &rlocator->dbOid, sizeof(Oid));
+	
 	*p_enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
 	memcpy(*p_enc_rel_key_data, rel_key_data, sizeof(RelKeyData));
 
@@ -241,12 +244,16 @@ AesEncryptKey(const TDEMasterKey *master_key, RelKeyData *rel_key_data, RelKeyDa
  * to note that memory is allocated in the TopMemoryContext so we expect this to be added
  * to our key cache.
  */
-void AesDecryptKey(const TDEMasterKey *master_key, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes)
+void AesDecryptKey(const TDEMasterKey *master_key, const RelFileLocator *rlocator, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes)
 {
 	unsigned char iv[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	/* Ensure we are getting a valid pointer here */
 	Assert(master_key);
+	
+	memcpy(iv, &rlocator->spcOid, sizeof(Oid));
+	memcpy(iv + sizeof(Oid), &rlocator->dbOid, sizeof(Oid));
+	
 	*p_rel_key_data = (RelKeyData *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeyData));
 
 	/* Fill in the structure */
