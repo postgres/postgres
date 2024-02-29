@@ -74,6 +74,7 @@ tests += {
       'pgtde_is_encrypted',
       'multi_insert',
       'trigger_on_view',
+      'insert_update_delete',
     ],
     'regress_args': ['--temp-config', files('pg_tde.conf')],
     'runningcheck': false,

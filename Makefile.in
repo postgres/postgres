@@ -13,7 +13,8 @@ non_sorted_off_compact \
 update_compare_indexes \
 pgtde_is_encrypted \
 multi_insert \
-trigger_on_view
+trigger_on_view \
+insert_update_delete
 TAP_TESTS = 1
 
 OBJS = src/encryption/enc_tde.o \

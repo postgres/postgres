@@ -1,0 +1,82 @@
+CREATE EXTENSION pg_tde;
+CREATE TABLE albums (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    artist VARCHAR(256),
+    title TEXT NOT NULL,
+    released DATE NOT NULL
+) USING pg_tde;
+INSERT INTO albums (artist, title, released) VALUES
+			('Graindelavoix', 'Jisquin The Undead', '2021-06-12'),
+			('Graindelavoix', 'Tenebrae Responsoria - Carlo Gesualdo', '2019-08-06'),
+			('Graindelavoix', 'Cypriot Vespers', '2015-12-20'),
+			('John Coltrane', 'Blue Train', '1957-09-15'),
+			('V/A Analog Africa', 'Space Echo - The Mystery Behind the Cosmic Sound of Cabo Verde Finally Revealed', '2016-05-27'),
+			('Incapacitants', 'As Loud As Possible', '2022-09-15'),
+			('Chris Corsano & Bill Orcutt', 'Made Out Of Sound', '2021-03-26'),
+			('Jürg Frey (Quatuor Bozzini / Konus Quartett)', 'Continuit​é​, fragilit​é​, r​é​sonance', '2023-04-01'),
+			('clipping.', 'Visions of Bodies Being Burned', '2020-10-23'),
+			('clipping.', 'There Existed an Addiction to Blood', '2019-10-19'),
+			('Autechre', 'elseq 1–5', '2016-05-19'),
+			('Decapitated', 'Winds of Creation', '2000-04-17'),
+			('Ulthar', 'Anthronomicon', '2023-02-17'),
+			('Τζίμης Πανούσης', 'Κάγκελα Παντού', '1986-01-01'),
+			('Воплі Відоплясова', 'Музіка', '1997-01-01');
+SELECT * FROM albums;
+ id |                    artist                    |                                      title                                      |  released  
+----+----------------------------------------------+---------------------------------------------------------------------------------+------------
+  1 | Graindelavoix                                | Jisquin The Undead                                                              | 06-12-2021
+  2 | Graindelavoix                                | Tenebrae Responsoria - Carlo Gesualdo                                           | 08-06-2019
+  3 | Graindelavoix                                | Cypriot Vespers                                                                 | 12-20-2015
+  4 | John Coltrane                                | Blue Train                                                                      | 09-15-1957
+  5 | V/A Analog Africa                            | Space Echo - The Mystery Behind the Cosmic Sound of Cabo Verde Finally Revealed | 05-27-2016
+  6 | Incapacitants                                | As Loud As Possible                                                             | 09-15-2022
+  7 | Chris Corsano & Bill Orcutt                  | Made Out Of Sound                                                               | 03-26-2021
+  8 | Jürg Frey (Quatuor Bozzini / Konus Quartett) | Continuit​é​, fragilit​é​, r​é​sonance                                                | 04-01-2023
+  9 | clipping.                                    | Visions of Bodies Being Burned                                                  | 10-23-2020
+ 10 | clipping.                                    | There Existed an Addiction to Blood                                             | 10-19-2019
+ 11 | Autechre                                     | elseq 1–5                                                                       | 05-19-2016
+ 12 | Decapitated                                  | Winds of Creation                                                               | 04-17-2000
+ 13 | Ulthar                                       | Anthronomicon                                                                   | 02-17-2023
+ 14 | Τζίμης Πανούσης                              | Κάγκελα Παντού                                                                  | 01-01-1986
+ 15 | Воплі Відоплясова                            | Музіка                                                                          | 01-01-1997
+(15 rows)
+
+DELETE FROM albums WHERE id % 4 = 0;
+SELECT * FROM albums;
+ id |           artist            |                                      title                                      |  released  
+----+-----------------------------+---------------------------------------------------------------------------------+------------
+  1 | Graindelavoix               | Jisquin The Undead                                                              | 06-12-2021
+  2 | Graindelavoix               | Tenebrae Responsoria - Carlo Gesualdo                                           | 08-06-2019
+  3 | Graindelavoix               | Cypriot Vespers                                                                 | 12-20-2015
+  5 | V/A Analog Africa           | Space Echo - The Mystery Behind the Cosmic Sound of Cabo Verde Finally Revealed | 05-27-2016
+  6 | Incapacitants               | As Loud As Possible                                                             | 09-15-2022
+  7 | Chris Corsano & Bill Orcutt | Made Out Of Sound                                                               | 03-26-2021
+  9 | clipping.                   | Visions of Bodies Being Burned                                                  | 10-23-2020
+ 10 | clipping.                   | There Existed an Addiction to Blood                                             | 10-19-2019
+ 11 | Autechre                    | elseq 1–5                                                                       | 05-19-2016
+ 13 | Ulthar                      | Anthronomicon                                                                   | 02-17-2023
+ 14 | Τζίμης Πανούσης             | Κάγκελα Παντού                                                                  | 01-01-1986
+ 15 | Воплі Відоплясова           | Музіка                                                                          | 01-01-1997
+(12 rows)
+
+UPDATE albums SET title='Jisquin The Undead: Laments, Deplorations and Dances of Death', released='2021-10-01' WHERE id=1;
+UPDATE albums SET released='2020-04-01' WHERE id=2;
+SELECT * FROM albums;
+ id |           artist            |                                      title                                      |  released  
+----+-----------------------------+---------------------------------------------------------------------------------+------------
+  3 | Graindelavoix               | Cypriot Vespers                                                                 | 12-20-2015
+  5 | V/A Analog Africa           | Space Echo - The Mystery Behind the Cosmic Sound of Cabo Verde Finally Revealed | 05-27-2016
+  6 | Incapacitants               | As Loud As Possible                                                             | 09-15-2022
+  7 | Chris Corsano & Bill Orcutt | Made Out Of Sound                                                               | 03-26-2021
+  9 | clipping.                   | Visions of Bodies Being Burned                                                  | 10-23-2020
+ 10 | clipping.                   | There Existed an Addiction to Blood                                             | 10-19-2019
+ 11 | Autechre                    | elseq 1–5                                                                       | 05-19-2016
+ 13 | Ulthar                      | Anthronomicon                                                                   | 02-17-2023
+ 14 | Τζίμης Πανούσης             | Κάγκελα Παντού                                                                  | 01-01-1986
+ 15 | Воплі Відоплясова           | Музіка                                                                          | 01-01-1997
+  1 | Graindelavoix               | Jisquin The Undead: Laments, Deplorations and Dances of Death                   | 10-01-2021
+  2 | Graindelavoix               | Tenebrae Responsoria - Carlo Gesualdo                                           | 04-01-2020
+(12 rows)
+
+DROP TABLE albums;
+DROP EXTENSION pg_tde;

@@ -121,7 +121,6 @@ static XLogRecPtr log_pg_tde_new_cid(Relation relation, HeapTuple tup);
 static HeapTuple ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_required,
 										bool *copy);
 
-
 /*
  * Each tuple lock mode has a corresponding heavyweight lock, and one or two
  * corresponding MultiXactStatuses (one to merely lock tuples, another one to
@@ -2555,6 +2554,7 @@ pg_tde_delete(Relation relation, ItemPointer tid,
 	bool		all_visible_cleared = false;
 	HeapTuple	old_key_tuple = NULL;	/* replica identity of the tuple */
 	bool		old_key_copied = false;
+	HeapTuple	decrypted_tuple;
 
 	Assert(ItemPointerIsValid(tid));
 
@@ -2776,8 +2776,16 @@ l1:
 	/*
 	 * Compute replica identity tuple before entering the critical section so
 	 * we don't PANIC upon a memory allocation failure.
+	 * 
+	 * ExtractReplicaIdentity has to get a decrypted tuple, otherwise it 
+	 * won't be able to extract varlen attributes.
 	 */
-	old_key_tuple = ExtractReplicaIdentity(relation, &tp, true, &old_key_copied);
+	decrypted_tuple = heap_copytuple(&tp);
+	PG_TDE_DECRYPT_TUPLE(&tp, decrypted_tuple, GetRelationKey(relation->rd_locator));
+
+	old_key_tuple = ExtractReplicaIdentity(relation, decrypted_tuple, true, &old_key_copied);
+
+	pg_tde_freetuple(decrypted_tuple);
 
 	/*
 	 * If this is the first possibly-multixact-able operation in the current
