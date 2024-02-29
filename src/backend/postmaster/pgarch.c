@@ -45,7 +45,6 @@
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/shmem.h"
-#include "storage/spin.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -83,11 +82,9 @@ typedef struct PgArchData
 	int			pgprocno;		/* pgprocno of archiver process */
 
 	/*
-	 * Forces a directory scan in pgarch_readyXlog().  Protected by arch_lck.
+	 * Forces a directory scan in pgarch_readyXlog().
 	 */
-	bool		force_dir_scan;
-
-	slock_t		arch_lck;
+	pg_atomic_uint32 force_dir_scan;
 } PgArchData;
 
 char	   *XLogArchiveLibrary = "";
@@ -174,7 +171,7 @@ PgArchShmemInit(void)
 		/* First time through, so initialize */
 		MemSet(PgArch, 0, PgArchShmemSize());
 		PgArch->pgprocno = INVALID_PGPROCNO;
-		SpinLockInit(&PgArch->arch_lck);
+		pg_atomic_init_u32(&PgArch->force_dir_scan, 0);
 	}
 }
 
@@ -545,18 +542,12 @@ pgarch_readyXlog(char *xlog)
 	char		XLogArchiveStatusDir[MAXPGPATH];
 	DIR		   *rldir;
 	struct dirent *rlde;
-	bool		force_dir_scan;
 
 	/*
 	 * If a directory scan was requested, clear the stored file names and
 	 * proceed.
 	 */
-	SpinLockAcquire(&PgArch->arch_lck);
-	force_dir_scan = PgArch->force_dir_scan;
-	PgArch->force_dir_scan = false;
-	SpinLockRelease(&PgArch->arch_lck);
-
-	if (force_dir_scan)
+	if (pg_atomic_exchange_u32(&PgArch->force_dir_scan, 0) == 1)
 		arch_files->arch_files_size = 0;
 
 	/*
@@ -707,9 +698,7 @@ ready_file_comparator(Datum a, Datum b, void *arg)
 void
 PgArchForceDirScan(void)
 {
-	SpinLockAcquire(&PgArch->arch_lck);
-	PgArch->force_dir_scan = true;
-	SpinLockRelease(&PgArch->arch_lck);
+	pg_atomic_write_membarrier_u32(&PgArch->force_dir_scan, 1);
 }
 
 /*
