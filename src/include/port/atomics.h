@@ -238,6 +238,26 @@ pg_atomic_read_u32(volatile pg_atomic_uint32 *ptr)
 }
 
 /*
+ * pg_atomic_read_membarrier_u32 - read with barrier semantics.
+ *
+ * This read is guaranteed to return the current value, provided that the value
+ * is only ever updated via operations with barrier semantics, such as
+ * pg_atomic_compare_exchange_u32() and pg_atomic_write_membarrier_u32().
+ * While this may be less performant than pg_atomic_read_u32(), it may be
+ * easier to reason about correctness with this function in less performance-
+ * sensitive code.
+ *
+ * Full barrier semantics.
+ */
+static inline uint32
+pg_atomic_read_membarrier_u32(volatile pg_atomic_uint32 *ptr)
+{
+	AssertPointerAlignment(ptr, 4);
+
+	return pg_atomic_read_membarrier_u32_impl(ptr);
+}
+
+/*
  * pg_atomic_write_u32 - write to atomic variable.
  *
  * The write is guaranteed to succeed as a whole, i.e. it's not possible to
@@ -272,6 +292,26 @@ pg_atomic_unlocked_write_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
 	AssertPointerAlignment(ptr, 4);
 
 	pg_atomic_unlocked_write_u32_impl(ptr, val);
+}
+
+/*
+ * pg_atomic_write_membarrier_u32 - write with barrier semantics.
+ *
+ * The write is guaranteed to succeed as a whole, i.e., it's not possible to
+ * observe a partial write for any reader.  Note that this correctly interacts
+ * with both pg_atomic_compare_exchange_u32() and
+ * pg_atomic_read_membarrier_u32().  While this may be less performant than
+ * pg_atomic_write_u32(), it may be easier to reason about correctness with
+ * this function in less performance-sensitive code.
+ *
+ * Full barrier semantics.
+ */
+static inline void
+pg_atomic_write_membarrier_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
+{
+	AssertPointerAlignment(ptr, 4);
+
+	pg_atomic_write_membarrier_u32_impl(ptr, val);
 }
 
 /*
@@ -427,6 +467,15 @@ pg_atomic_read_u64(volatile pg_atomic_uint64 *ptr)
 	return pg_atomic_read_u64_impl(ptr);
 }
 
+static inline uint64
+pg_atomic_read_membarrier_u64(volatile pg_atomic_uint64 *ptr)
+{
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
+	AssertPointerAlignment(ptr, 8);
+#endif
+	return pg_atomic_read_membarrier_u64_impl(ptr);
+}
+
 static inline void
 pg_atomic_write_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
@@ -434,6 +483,15 @@ pg_atomic_write_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 	AssertPointerAlignment(ptr, 8);
 #endif
 	pg_atomic_write_u64_impl(ptr, val);
+}
+
+static inline void
+pg_atomic_write_membarrier_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
+{
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
+	AssertPointerAlignment(ptr, 8);
+#endif
+	pg_atomic_write_membarrier_u64_impl(ptr, val);
 }
 
 static inline uint64
