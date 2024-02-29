@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #define AES_BLOCK_SIZE 		        16
-#define NUM_AES_BLOCKS_IN_BATCH     100
+#define NUM_AES_BLOCKS_IN_BATCH     200
 #define DATA_BYTES_PER_AES_BATCH    (NUM_AES_BLOCKS_IN_BATCH * AES_BLOCK_SIZE)
 
 void AesInit(void);
