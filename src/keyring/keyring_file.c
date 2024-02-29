@@ -60,6 +60,7 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 		if (bytes_read == 0 )
 		{
 			pfree(key);
+			*return_code = KEYRING_CODE_RESOURCE_NOT_AVAILABLE;
 			return NULL;
 		}
 		if (bytes_read != sizeof(keyInfo))

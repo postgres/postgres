@@ -27,6 +27,10 @@ jobs:
             libjson-c-dev libcurl4-openssl-dev
           sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
+          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install -y vault
+
 
       - name: Install PG Distribution Postgresql 16
         run: |
@@ -57,15 +61,20 @@ jobs:
 
       - name: Start pg_tde tests
         run: |
+          TV=$(mktemp)
+          { exec >$TV; vault server -dev; } &
+          sleep 10
+          export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
+          echo "Root token: $ROOT_TOKEN"
+
+          sudo psql -V
+          
           sudo service postgresql stop
           echo "shared_preload_libraries = 'pg_tde'" |
             sudo tee -a /etc/postgresql/16/main/postgresql.conf
-          echo "pg_tde.keyringConfigFile = '/tmp/keyring.json'" |
-            sudo tee -a /etc/postgresql/16/main/postgresql.conf
-          cp keyring.json /tmp/keyring.json
           sudo service postgresql start
-          sudo psql -V
-          sudo -u postgres bash -c 'make installcheck USE_PGXS=1'
+
+          sudo -u postgres bash -c "export ROOT_TOKEN=$ROOT_TOKEN && make installcheck USE_PGXS=1"
         working-directory: src/pg_tde
 
       - name: Report on test fail

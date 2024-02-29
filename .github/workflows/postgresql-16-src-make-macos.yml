@@ -7,7 +7,7 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Install dependencies
-        run: brew install json-c # All other required deps already installed in this image.
+        run: brew install json-c vault gnu-sed # All other required deps already installed in this image.
 
       - name: Clone postgres repository
         uses: actions/checkout@v4
@@ -47,13 +47,15 @@ jobs:
           initdb -D $HOME/pgsql/data
           echo "shared_preload_libraries = 'pg_tde'" >> \
             /$HOME/pgsql/data/postgresql.conf
-          echo "pg_tde.keyringConfigFile = '/tmp/keyring.json'" >> \
-            $HOME/pgsql/data/postgresql.conf
-          cp src/contrib/pg_tde/keyring.json /tmp/keyring.json
           pg_ctl -D $HOME/pgsql/data -l logfile start
 
       - name: Test pg_tde
         run: |
+          TV=$(mktemp)
+          { exec >$TV; vault server -dev; } &
+          sleep 10
+          export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
+          echo "Root token: $ROOT_TOKEN"
           make installcheck
         working-directory: src/contrib/pg_tde
 

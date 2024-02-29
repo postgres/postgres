@@ -33,6 +33,10 @@ jobs:
             sysbench libcurl4-openssl-dev
           sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
+          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install -y vault
+
 
       - name: Clone postgres repository
         uses: actions/checkout@v2
@@ -58,7 +62,12 @@ jobs:
 
       - name: Test pg_tde
         run: |
-          cp ../contrib/pg_tde/keyring.json /tmp/keyring.json
+          TV=$(mktemp)
+          { exec >$TV; vault server -dev; } &
+          sleep 10
+          export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
+          echo "Root token: $ROOT_TOKEN"
+          
           meson test --suite setup -v
           meson test --suite pg_tde -v --num-processes 1
         working-directory: src/build

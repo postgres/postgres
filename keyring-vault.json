@@ -1,6 +1,0 @@
-{
-        "provider": "vault-v2",
-        "token": "ROOT_TOKEN",
-        "url": "http://127.0.0.1:8200",
-        "mountPath": "secret"
-}

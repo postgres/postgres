@@ -14,8 +14,6 @@ enum KeyringProvider
 } ;
 
 extern enum KeyringProvider keyringProvider;
-extern char* keyringConfigFile;
-extern char* keyringKeyPrefix;
 
 void keyringRegisterVariables(void);
 

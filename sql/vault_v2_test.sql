@@ -1,6 +1,7 @@
 CREATE EXTENSION pg_tde;
 
-SELECT pg_tde_add_key_provider_vault_v2('vault-v2','ROOT_TOKEN','http://127.0.0.1:8200','secret',NULL);
+\getenv root_token ROOT_TOKEN
+SELECT pg_tde_add_key_provider_vault_v2('vault-v2',:'root_token','http://127.0.0.1:8200','secret',NULL);
 SELECT pg_tde_set_master_key('vault-v2-master-key','vault-v2');
 
 CREATE TABLE test_enc(

@@ -32,23 +32,13 @@ jobs:
           cd build && ninja && ninja install
         working-directory: src
 
-      - name: Test pg_tde with keyring_file
-        run: |
-          cp ../contrib/pg_tde/keyring.json /tmp/keyring.json
-          meson test --suite setup -v
-          meson test --suite pg_tde -v --num-processes 1
-        working-directory: src/build
-
-      - name: Test pg_tde with keyring_vault
+      - name: Test pg_tde
         run: |
           TV=$(mktemp)
           { exec >$TV; vault server -dev; } &
           sleep 10
-          ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
+          export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
           echo "Root token: $ROOT_TOKEN"
-          cp ../contrib/pg_tde/keyring-vault.json /tmp/keyring.json
-          gsed -i "s/ROOT_TOKEN/$ROOT_TOKEN/g" /tmp/keyring.json
-          cat /tmp/keyring.json
           meson test --suite setup -v
           meson test --suite pg_tde -v --num-processes 1
         working-directory: src/build

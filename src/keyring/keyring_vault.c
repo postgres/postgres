@@ -224,6 +224,12 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 		goto cleanup;
 	}
 
+	if (httpCode == 404)
+	{
+		*return_code = KEYRING_CODE_RESOURCE_NOT_AVAILABLE;
+		goto cleanup;
+	}
+
 	if (httpCode / 100 != 2)
 	{
 		*return_code = KEYRING_CODE_INVALID_RESPONSE;
@@ -292,7 +298,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	key = palloc(sizeof(keyInfo));
 	key->data.len = pg_b64_decode(response_key, strlen(response_key), (char *)key->data.data, MAX_KEY_DATA_SIZE);
 
-	if (key->data.len != MAX_KEY_DATA_SIZE)
+	if (key->data.len > MAX_KEY_DATA_SIZE)
 	{
 		*return_code = KEYRING_CODE_INVALID_KEY_SIZE;
 		ereport(throw_error ? ERROR : WARNING,

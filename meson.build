@@ -75,6 +75,7 @@ tests += {
       'multi_insert',
       'trigger_on_view',
       'insert_update_delete',
+      'vault_v2_test',
     ],
     'regress_args': ['--temp-config', files('pg_tde.conf')],
     'runningcheck': false,

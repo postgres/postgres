@@ -39,12 +39,6 @@ ok($rt_value == 3, "Failing query");
 PGTDE::append_to_file("-- server restart");
 $node->stop();
 
-# UPDATE postgresql.conf to include/load pg_tde library
-open $conf, '>>', "$pgdata/postgresql.conf";
-#print $conf "pg_tde.keyringConfigFile = '/tmp/keyring.json'\n";
-print $conf "pg_tde.keyringKeyPrefix = 'this-is-a-prefix'\n";
-close $conf;
-
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
 
