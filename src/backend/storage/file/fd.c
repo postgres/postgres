@@ -2132,11 +2132,11 @@ FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
 	pgstat_report_wait_end();
 }
 
-int
+ssize_t
 FileReadV(File file, const struct iovec *iov, int iovcnt, off_t offset,
 		  uint32 wait_event_info)
 {
-	int			returnCode;
+	ssize_t		returnCode;
 	Vfd		   *vfdP;
 
 	Assert(FileIsValid(file));
@@ -2188,11 +2188,11 @@ retry:
 	return returnCode;
 }
 
-int
+ssize_t
 FileWriteV(File file, const struct iovec *iov, int iovcnt, off_t offset,
 		   uint32 wait_event_info)
 {
-	int			returnCode;
+	ssize_t		returnCode;
 	Vfd		   *vfdP;
 
 	Assert(FileIsValid(file));

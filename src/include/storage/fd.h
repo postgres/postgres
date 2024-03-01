@@ -107,8 +107,8 @@ extern File PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fil
 extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, off_t amount, uint32 wait_event_info);
-extern int	FileReadV(File file, const struct iovec *ioc, int iovcnt, off_t offset, uint32 wait_event_info);
-extern int	FileWriteV(File file, const struct iovec *ioc, int iovcnt, off_t offset, uint32 wait_event_info);
+extern ssize_t FileReadV(File file, const struct iovec *ioc, int iovcnt, off_t offset, uint32 wait_event_info);
+extern ssize_t FileWriteV(File file, const struct iovec *ioc, int iovcnt, off_t offset, uint32 wait_event_info);
 extern int	FileSync(File file, uint32 wait_event_info);
 extern int	FileZero(File file, off_t offset, off_t amount, uint32 wait_event_info);
 extern int	FileFallocate(File file, off_t offset, off_t amount, uint32 wait_event_info);
@@ -192,7 +192,7 @@ extern int	durable_unlink(const char *fname, int elevel);
 extern void SyncDataDirectory(void);
 extern int	data_sync_elevel(int elevel);
 
-static inline int
+static inline ssize_t
 FileRead(File file, void *buffer, size_t amount, off_t offset,
 		 uint32 wait_event_info)
 {
@@ -204,7 +204,7 @@ FileRead(File file, void *buffer, size_t amount, off_t offset,
 	return FileReadV(file, &iov, 1, offset, wait_event_info);
 }
 
-static inline int
+static inline ssize_t
 FileWrite(File file, const void *buffer, size_t amount, off_t offset,
 		  uint32 wait_event_info)
 {
