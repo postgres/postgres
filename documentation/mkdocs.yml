@@ -18,7 +18,7 @@ theme:
   name: material
   logo: _images/percona-logo.svg
   favicon: _images/percona-favicon.ico
-#  custom_dir: _resource/overrides
+  custom_dir: _resource/overrides
   font:
     text: Roboto
 
@@ -56,16 +56,19 @@ extra_css:
   - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css
   - css/percona.css
   - css/design.css
+  - css/osano.css
 
 extra_javascript:
   - js/version-select.js
   - js/promptremover.js
+  - js/consent.js
 
 markdown_extensions:
   - attr_list
   - toc:
       permalink: True
   - admonition
+  - md_in_html
   - footnotes
   - def_list   # https://michelf.ca/projects/php-markdown/extra/#def-list
   - meta
@@ -78,13 +81,19 @@ markdown_extensions:
   - pymdownx.tabbed:
         alternate_style: true
   - pymdownx.tilde
-  - pymdownx.superfences
   - pymdownx.details
   - pymdownx.highlight:
         linenums: false
+  - pymdownx.snippets:
+        base_path: ["snippets"]
+        auto_append:
+          - services-banner.md
   - pymdownx.emoji:
        emoji_index: !!python/name:material.extensions.emoji.twemoji
        emoji_generator: !!python/name:material.extensions.emoji.to_svg
+       options:
+        custom_icons:
+          - _resource/.icons
 
 
 plugins:
@@ -109,14 +118,24 @@ plugins:
 extra:
   version:
     provider: mike
-#  homepage: https://docs.percona.com
-#  consent:
-#    title: Cookie consent
-#    description: >- 
-#      We use cookies to recognize your repeated visits and preferences, as well
-#      as to measure the effectiveness of our documentation and whether users
-#      find what they're searching for. With your consent, you're helping us to
-#      make our documentation better. Read more about <a class="reference external" href="https://www.percona.com/20180524-cookie-policy" target="_blank">Percona Cookie Policy</a>.
+  analytics:
+    provider: google
+    property: G-J4J70BNH0G
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >- 
+            Thank you for your feedback! Help us improve by using our 
+            <a href="https://docs.google.com/forms/d/1bkWACehjqlwA0AKf-qTJcXvYbOSYgze8iTPXjntqmNo/edit" target="_blank" rel="noopener">
+            feedback form</a>.
 
 nav:
   - Home: index.md
