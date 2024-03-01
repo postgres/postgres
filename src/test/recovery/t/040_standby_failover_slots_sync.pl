@@ -14,7 +14,11 @@ use Test::More;
 
 # Create publisher
 my $publisher = PostgreSQL::Test::Cluster->new('publisher');
-$publisher->init(allows_streaming => 'logical');
+# Make sure pg_hba.conf is set up to allow connections from repl_role.
+# This is only needed on Windows machines that don't use UNIX sockets.
+$publisher->init(
+	allows_streaming => 'logical',
+	auth_extra => [ '--create-role', 'repl_role' ]);
 # Disable autovacuum to avoid generating xid during stats update as otherwise
 # the new XID could then be replicated to standby at some random point making
 # slots at primary lag behind standby during slot sync.
