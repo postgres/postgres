@@ -225,7 +225,8 @@ typedef unsigned int pg_wchar;
  * PostgreSQL encoding identifiers
  *
  * WARNING: If you add some encoding don't forget to update
- *			the pg_enc2name_tbl[] array (in src/common/encnames.c) and
+ *			the pg_enc2name_tbl[] array (in src/common/encnames.c),
+ *			the pg_enc2gettext_tbl[] array (in src/common/encnames.c) and
  *			the pg_wchar_table[] array (in src/common/wchar.c) and to check
  *			PG_ENCODING_BE_LAST macro.
  *
@@ -365,13 +366,7 @@ extern PGDLLIMPORT const pg_enc2name pg_enc2name_tbl[];
 /*
  * Encoding names for gettext
  */
-typedef struct pg_enc2gettext
-{
-	pg_enc		encoding;
-	const char *name;
-} pg_enc2gettext;
-
-extern PGDLLIMPORT const pg_enc2gettext pg_enc2gettext_tbl[];
+extern PGDLLIMPORT const char *pg_enc2gettext_tbl[];
 
 /*
  * pg_wchar stuff

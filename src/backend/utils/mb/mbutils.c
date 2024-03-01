@@ -1188,24 +1188,18 @@ static bool
 raw_pg_bind_textdomain_codeset(const char *domainname, int encoding)
 {
 	bool		elog_ok = (CurrentMemoryContext != NULL);
-	int			i;
 
-	for (i = 0; pg_enc2gettext_tbl[i].name != NULL; i++)
-	{
-		if (pg_enc2gettext_tbl[i].encoding == encoding)
-		{
-			if (bind_textdomain_codeset(domainname,
-										pg_enc2gettext_tbl[i].name) != NULL)
-				return true;
+	if (!PG_VALID_ENCODING(encoding) || pg_enc2gettext_tbl[encoding] == NULL)
+		return false;
 
-			if (elog_ok)
-				elog(LOG, "bind_textdomain_codeset failed");
-			else
-				write_stderr("bind_textdomain_codeset failed");
+	if (bind_textdomain_codeset(domainname,
+								pg_enc2gettext_tbl[encoding]) != NULL)
+		return true;
 
-			break;
-		}
-	}
+	if (elog_ok)
+		elog(LOG, "bind_textdomain_codeset failed");
+	else
+		write_stderr("bind_textdomain_codeset failed");
 
 	return false;
 }

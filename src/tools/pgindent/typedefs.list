@@ -3574,7 +3574,6 @@ pg_cryptohash_errno
 pg_cryptohash_type
 pg_ctype_cache
 pg_enc
-pg_enc2gettext
 pg_enc2name
 pg_encname
 pg_fe_sasl_mech
