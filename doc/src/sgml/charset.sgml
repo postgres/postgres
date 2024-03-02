@@ -788,37 +788,19 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     <title>Standard Collations</title>
 
    <para>
-    On all platforms, the collations named <literal>default</literal>,
-    <literal>C</literal>, and <literal>POSIX</literal> are available.  Additional
-    collations may be available depending on operating system support.
-    The <literal>default</literal> collation selects the <symbol>LC_COLLATE</symbol>
-    and <symbol>LC_CTYPE</symbol> values specified at database creation time.
-    The <literal>C</literal> and <literal>POSIX</literal> collations both specify
-    <quote>traditional C</quote> behavior, in which only the ASCII letters
-    <quote><literal>A</literal></quote> through <quote><literal>Z</literal></quote>
-    are treated as letters, and sorting is done strictly by character
-    code byte values.
-   </para>
-
-   <note>
-    <para>
-     The <literal>C</literal> and <literal>POSIX</literal> locales may behave
-     differently depending on the database encoding.
-    </para>
-   </note>
-
-   <para>
-    Additionally, two SQL standard collation names are available:
+    On all platforms, the following collations are supported:
 
     <variablelist>
      <varlistentry>
       <term><literal>unicode</literal></term>
       <listitem>
        <para>
-        This collation sorts using the Unicode Collation Algorithm with the
-        Default Unicode Collation Element Table.  It is available in all
-        encodings.  ICU support is required to use this collation.  (This
-        collation has the same behavior as the ICU root locale; see <xref
+        This SQL standard collation sorts using the Unicode Collation
+        Algorithm with the Default Unicode Collation Element Table.  It is
+        available in all encodings.  ICU support is required to use this
+        collation, and behavior may change if Postgres is built with a
+        different version of ICU.  (This collation has the same behavior as
+        the ICU root locale; see <xref
         linkend="collation-managing-predefined-icu-und-x-icu"/>.)
        </para>
       </listitem>
@@ -828,14 +810,50 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
       <term><literal>ucs_basic</literal></term>
       <listitem>
        <para>
-        This collation sorts by Unicode code point.  It is only available for
-        encoding <literal>UTF8</literal>.  (This collation has the same
+        This SQL standard collation sorts using the Unicode code point values
+        rather than natural language order, and only the ASCII letters
+        <quote><literal>A</literal></quote> through
+        <quote><literal>Z</literal></quote> are treated as letters.  The
+        behavior is efficient and stable across all versions.  Only available
+        for encoding <literal>UTF8</literal>.  (This collation has the same
         behavior as the libc locale specification <literal>C</literal> in
         <literal>UTF8</literal> encoding.)
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><literal>C</literal> (equivalent to <literal>POSIX</literal>)</term>
+      <listitem>
+       <para>
+        The <literal>C</literal> and <literal>POSIX</literal> collations are
+        based on <quote>traditional C</quote> behavior.  They sort by byte
+        values rather than natural language order, and only the ASCII letters
+        <quote><literal>A</literal></quote> through
+        <quote><literal>Z</literal></quote> are treated as letters.  The
+        behavior is efficient and stable across all versions for a given
+        database encoding, but behavior may vary between different database
+        encodings.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>default</literal></term>
+      <listitem>
+       <para>
+        The <literal>default</literal> collation selects the locale specified
+        at database creation time.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
+   </para>
+
+   <para>
+    Additional collations may be available depending on operating system
+    support.  The efficiency and stability of these additional collations
+    depend on the collation provider, the provider version, and the locale.
    </para>
   </sect3>
 
