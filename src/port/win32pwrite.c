@@ -30,6 +30,9 @@ pg_pwrite(int fd, const void *buf, size_t size, off_t offset)
 		return -1;
 	}
 
+	/* Avoid overflowing DWORD. */
+	size = Min(size, 1024 * 1024 * 1024);
+
 	/* Note that this changes the file position, despite not using it. */
 	overlapped.Offset = offset;
 	if (!WriteFile(handle, buf, size, &result, &overlapped))
