@@ -14,7 +14,7 @@
 #ifndef PROCSIGNAL_H
 #define PROCSIGNAL_H
 
-#include "storage/backendid.h"
+#include "storage/procnumber.h"
 
 
 /*
@@ -64,7 +64,7 @@ extern void ProcSignalShmemInit(void);
 
 extern void ProcSignalInit(void);
 extern int	SendProcSignal(pid_t pid, ProcSignalReason reason,
-						   BackendId backendId);
+						   ProcNumber procNumber);
 
 extern uint64 EmitProcSignalBarrier(ProcSignalBarrierType type);
 extern void WaitForProcSignalBarrier(uint64 generation);

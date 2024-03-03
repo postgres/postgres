@@ -476,7 +476,7 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
 			/* If requested, publish who we're going to wait for. */
 			if (progress)
 			{
-				PGPROC	   *holder = BackendIdGetProc(old_snapshots[i].backendId);
+				PGPROC	   *holder = ProcNumberGetProc(old_snapshots[i].procNumber);
 
 				if (holder)
 					pgstat_progress_update_param(PROGRESS_WAITFOR_CURRENT_PID,

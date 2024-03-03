@@ -79,7 +79,7 @@
 /* Shared memory area for archiver process */
 typedef struct PgArchData
 {
-	int			pgprocno;		/* pgprocno of archiver process */
+	int			pgprocno;		/* proc number of archiver process */
 
 	/*
 	 * Forces a directory scan in pgarch_readyXlog().
@@ -170,7 +170,7 @@ PgArchShmemInit(void)
 	{
 		/* First time through, so initialize */
 		MemSet(PgArch, 0, PgArchShmemSize());
-		PgArch->pgprocno = INVALID_PGPROCNO;
+		PgArch->pgprocno = INVALID_PROC_NUMBER;
 		pg_atomic_init_u32(&PgArch->force_dir_scan, 0);
 	}
 }
@@ -236,8 +236,8 @@ PgArchiverMain(void)
 	on_shmem_exit(pgarch_die, 0);
 
 	/*
-	 * Advertise our pgprocno so that backends can use our latch to wake us up
-	 * while we're sleeping.
+	 * Advertise our proc number so that backends can use our latch to wake us
+	 * up while we're sleeping.
 	 */
 	PgArch->pgprocno = MyProcNumber;
 
@@ -271,7 +271,7 @@ PgArchWakeup(void)
 	 * process' (or no process') latch.  Even in that case the archiver will
 	 * be relaunched shortly and will start archiving.
 	 */
-	if (arch_pgprocno != INVALID_PGPROCNO)
+	if (arch_pgprocno != INVALID_PROC_NUMBER)
 		SetLatch(&ProcGlobal->allProcs[arch_pgprocno].procLatch);
 }
 
@@ -741,7 +741,7 @@ pgarch_archiveDone(char *xlog)
 static void
 pgarch_die(int code, Datum arg)
 {
-	PgArch->pgprocno = INVALID_PGPROCNO;
+	PgArch->pgprocno = INVALID_PROC_NUMBER;
 }
 
 /*

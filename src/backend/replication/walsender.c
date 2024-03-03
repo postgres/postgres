@@ -3646,7 +3646,7 @@ WalSndInitStopping(void)
 		if (pid == 0)
 			continue;
 
-		SendProcSignal(pid, PROCSIG_WALSND_INIT_STOPPING, InvalidBackendId);
+		SendProcSignal(pid, PROCSIG_WALSND_INIT_STOPPING, INVALID_PROC_NUMBER);
 	}
 }
 

@@ -306,7 +306,7 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
  * is no check here or at the call sites for that.
  */
 static int64
-calculate_relation_size(RelFileLocator *rfn, BackendId backend, ForkNumber forknum)
+calculate_relation_size(RelFileLocator *rfn, ProcNumber backend, ForkNumber forknum)
 {
 	int64		totalsize = 0;
 	char	   *relationpath;
@@ -951,7 +951,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Form_pg_class relform;
 	RelFileLocator rlocator;
-	BackendId	backend;
+	ProcNumber	backend;
 	char	   *path;
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
@@ -996,21 +996,21 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 	{
 		case RELPERSISTENCE_UNLOGGED:
 		case RELPERSISTENCE_PERMANENT:
-			backend = InvalidBackendId;
+			backend = INVALID_PROC_NUMBER;
 			break;
 		case RELPERSISTENCE_TEMP:
 			if (isTempOrTempToastNamespace(relform->relnamespace))
-				backend = BackendIdForTempRelations();
+				backend = ProcNumberForTempRelations();
 			else
 			{
 				/* Do it the hard way. */
-				backend = GetTempNamespaceBackendId(relform->relnamespace);
-				Assert(backend != InvalidBackendId);
+				backend = GetTempNamespaceProcNumber(relform->relnamespace);
+				Assert(backend != INVALID_PROC_NUMBER);
 			}
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relform->relpersistence);
-			backend = InvalidBackendId; /* placate compiler */
+			backend = INVALID_PROC_NUMBER;	/* placate compiler */
 			break;
 	}
 

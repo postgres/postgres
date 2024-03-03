@@ -947,7 +947,7 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode, bool progress)
 			/* If requested, publish who we're going to wait for. */
 			if (progress)
 			{
-				PGPROC	   *holder = BackendIdGetProc(lockholders->backendId);
+				PGPROC	   *holder = ProcNumberGetProc(lockholders->procNumber);
 
 				if (holder)
 					pgstat_progress_update_param(PROGRESS_WAITFOR_CURRENT_PID,

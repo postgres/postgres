@@ -94,7 +94,7 @@ typedef struct FixedParallelState
 	bool		is_superuser;
 	PGPROC	   *parallel_leader_pgproc;
 	pid_t		parallel_leader_pid;
-	BackendId	parallel_leader_backend_id;
+	ProcNumber	parallel_leader_proc_number;
 	TimestampTz xact_ts;
 	TimestampTz stmt_ts;
 	SerializableXactHandle serializable_xact_handle;
@@ -337,7 +337,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 						  &fps->temp_toast_namespace_id);
 	fps->parallel_leader_pgproc = MyProc;
 	fps->parallel_leader_pid = MyProcPid;
-	fps->parallel_leader_backend_id = MyBackendId;
+	fps->parallel_leader_proc_number = MyProcNumber;
 	fps->xact_ts = GetCurrentTransactionStartTimestamp();
 	fps->stmt_ts = GetCurrentStatementStartTimestamp();
 	fps->serializable_xact_handle = ShareSerializableXact();
@@ -1351,7 +1351,7 @@ ParallelWorkerMain(Datum main_arg)
 
 	/* Arrange to signal the leader if we exit. */
 	ParallelLeaderPid = fps->parallel_leader_pid;
-	ParallelLeaderBackendId = fps->parallel_leader_backend_id;
+	ParallelLeaderProcNumber = fps->parallel_leader_proc_number;
 	before_shmem_exit(ParallelWorkerShutdown, PointerGetDatum(seg));
 
 	/*
@@ -1367,7 +1367,7 @@ ParallelWorkerMain(Datum main_arg)
 	mqh = shm_mq_attach(mq, seg, NULL);
 	pq_redirect_to_shm_mq(seg, mqh);
 	pq_set_parallel_leader(fps->parallel_leader_pid,
-						   fps->parallel_leader_backend_id);
+						   fps->parallel_leader_proc_number);
 
 	/*
 	 * Send a BackendKeyData message to the process that initiated parallelism
@@ -1594,7 +1594,7 @@ ParallelWorkerShutdown(int code, Datum arg)
 {
 	SendProcSignal(ParallelLeaderPid,
 				   PROCSIG_PARALLEL_MESSAGE,
-				   ParallelLeaderBackendId);
+				   ParallelLeaderProcNumber);
 
 	dsm_detach((dsm_segment *) DatumGetPointer(arg));
 }

@@ -66,7 +66,6 @@ bool		log_lock_waits = false;
 
 /* Pointer to this process's PGPROC struct, if any */
 PGPROC	   *MyProc = NULL;
-int			MyProcNumber = INVALID_PGPROCNO;
 
 /*
  * This spinlock protects the freelist of recycled PGPROC structures.
@@ -181,8 +180,8 @@ InitProcGlobal(void)
 	ProcGlobal->startupBufferPinWaitBufId = -1;
 	ProcGlobal->walwriterLatch = NULL;
 	ProcGlobal->checkpointerLatch = NULL;
-	pg_atomic_init_u32(&ProcGlobal->procArrayGroupFirst, INVALID_PGPROCNO);
-	pg_atomic_init_u32(&ProcGlobal->clogGroupFirst, INVALID_PGPROCNO);
+	pg_atomic_init_u32(&ProcGlobal->procArrayGroupFirst, INVALID_PROC_NUMBER);
+	pg_atomic_init_u32(&ProcGlobal->clogGroupFirst, INVALID_PROC_NUMBER);
 
 	/*
 	 * Create and initialize all the PGPROC structures we'll need.  There are
@@ -275,8 +274,8 @@ InitProcGlobal(void)
 		 * Initialize the atomic variables, otherwise, it won't be safe to
 		 * access them for backends that aren't currently in use.
 		 */
-		pg_atomic_init_u32(&(proc->procArrayGroupNext), INVALID_PGPROCNO);
-		pg_atomic_init_u32(&(proc->clogGroupNext), INVALID_PGPROCNO);
+		pg_atomic_init_u32(&(proc->procArrayGroupNext), INVALID_PROC_NUMBER);
+		pg_atomic_init_u32(&(proc->clogGroupNext), INVALID_PROC_NUMBER);
 		pg_atomic_init_u64(&(proc->waitStart), 0);
 	}
 
@@ -355,7 +354,6 @@ InitProcess(void)
 				 errmsg("sorry, too many clients already")));
 	}
 	MyProcNumber = GetNumberFromPGProc(MyProc);
-	MyBackendId = GetBackendIdFromPGProc(MyProc);
 
 	/*
 	 * Cross-check that the PGPROC is of the type we expect; if this were not
@@ -387,7 +385,7 @@ InitProcess(void)
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
-	MyProc->vxid.backendId = MyBackendId;
+	MyProc->vxid.procNumber = MyProcNumber;
 	MyProc->vxid.lxid = InvalidLocalTransactionId;
 	/* databaseId and roleId will be filled in later */
 	MyProc->databaseId = InvalidOid;
@@ -423,7 +421,7 @@ InitProcess(void)
 	/* Initialize fields for group XID clearing. */
 	MyProc->procArrayGroupMember = false;
 	MyProc->procArrayGroupMemberXid = InvalidTransactionId;
-	Assert(pg_atomic_read_u32(&MyProc->procArrayGroupNext) == INVALID_PGPROCNO);
+	Assert(pg_atomic_read_u32(&MyProc->procArrayGroupNext) == INVALID_PROC_NUMBER);
 
 	/* Check that group locking fields are in a proper initial state. */
 	Assert(MyProc->lockGroupLeader == NULL);
@@ -438,7 +436,7 @@ InitProcess(void)
 	MyProc->clogGroupMemberXidStatus = TRANSACTION_STATUS_IN_PROGRESS;
 	MyProc->clogGroupMemberPage = -1;
 	MyProc->clogGroupMemberLsn = InvalidXLogRecPtr;
-	Assert(pg_atomic_read_u32(&MyProc->clogGroupNext) == INVALID_PGPROCNO);
+	Assert(pg_atomic_read_u32(&MyProc->clogGroupNext) == INVALID_PROC_NUMBER);
 
 	/*
 	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch
@@ -573,7 +571,6 @@ InitAuxiliaryProcess(void)
 
 	MyProc = auxproc;
 	MyProcNumber = GetNumberFromPGProc(MyProc);
-	MyBackendId = GetBackendIdFromPGProc(MyProc);
 
 	/*
 	 * Initialize all fields of MyProc, except for those previously
@@ -585,7 +582,7 @@ InitAuxiliaryProcess(void)
 	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
-	MyProc->vxid.backendId = InvalidBackendId;
+	MyProc->vxid.procNumber = INVALID_PROC_NUMBER;
 	MyProc->vxid.lxid = InvalidLocalTransactionId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
@@ -916,13 +913,12 @@ ProcKill(int code, Datum arg)
 
 	proc = MyProc;
 	MyProc = NULL;
-	MyProcNumber = INVALID_PGPROCNO;
-	MyBackendId = InvalidBackendId;
+	MyProcNumber = INVALID_PROC_NUMBER;
 	DisownLatch(&proc->procLatch);
 
 	/* Mark the proc no longer in use */
 	proc->pid = 0;
-	proc->vxid.backendId = InvalidBackendId;
+	proc->vxid.procNumber = INVALID_PROC_NUMBER;
 	proc->vxid.lxid = InvalidTransactionId;
 
 	procgloballist = proc->procgloballist;
@@ -998,15 +994,14 @@ AuxiliaryProcKill(int code, Datum arg)
 
 	proc = MyProc;
 	MyProc = NULL;
-	MyProcNumber = INVALID_PGPROCNO;
-	MyBackendId = InvalidBackendId;
+	MyProcNumber = INVALID_PROC_NUMBER;
 	DisownLatch(&proc->procLatch);
 
 	SpinLockAcquire(ProcStructLock);
 
 	/* Mark auxiliary proc no longer in use */
 	proc->pid = 0;
-	proc->vxid.backendId = InvalidBackendId;
+	proc->vxid.procNumber = INVALID_PROC_NUMBER;
 	proc->vxid.lxid = InvalidTransactionId;
 
 	/* Update shared estimate of spins_per_delay */
@@ -1863,15 +1858,15 @@ ProcWaitForSignal(uint32 wait_event_info)
 }
 
 /*
- * ProcSendSignal - set the latch of a backend identified by pgprocno
+ * ProcSendSignal - set the latch of a backend identified by ProcNumber
  */
 void
-ProcSendSignal(int pgprocno)
+ProcSendSignal(ProcNumber procNumber)
 {
-	if (pgprocno < 0 || pgprocno >= ProcGlobal->allProcCount)
-		elog(ERROR, "pgprocno out of range");
+	if (procNumber < 0 || procNumber >= ProcGlobal->allProcCount)
+		elog(ERROR, "procNumber out of range");
 
-	SetLatch(&ProcGlobal->allProcs[pgprocno].procLatch);
+	SetLatch(&ProcGlobal->allProcs[procNumber].procLatch);
 }
 
 /*

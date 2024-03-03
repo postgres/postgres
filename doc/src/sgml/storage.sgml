@@ -202,7 +202,7 @@ these files are named after the table or index's <firstterm>filenode</firstterm>
 which can be found in <structname>pg_class</structname>.<structfield>relfilenode</structfield>. But
 for temporary relations, the file name is of the form
 <literal>t<replaceable>BBB</replaceable>_<replaceable>FFF</replaceable></literal>, where <replaceable>BBB</replaceable>
-is the backend ID of the backend which created the file, and <replaceable>FFF</replaceable>
+is the process number of the backend which created the file, and <replaceable>FFF</replaceable>
 is the filenode number.  In either case, in addition to the main file (a/k/a
 main fork), each table and index has a <firstterm>free space map</firstterm> (see <xref
 linkend="storage-fsm"/>), which stores information about free space available in

@@ -1651,7 +1651,7 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 				if (MyBackendType == B_STARTUP)
 					(void) SendProcSignal(active_pid,
 										  PROCSIG_RECOVERY_CONFLICT_LOGICALSLOT,
-										  InvalidBackendId);
+										  INVALID_PROC_NUMBER);
 				else
 					(void) kill(active_pid, SIGTERM);
 

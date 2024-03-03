@@ -15,14 +15,15 @@
 #define RELFILELOCATOR_H
 
 #include "common/relpath.h"
-#include "storage/backendid.h"
+#include "storage/procnumber.h"
 
 /*
  * RelFileLocator must provide all that we need to know to physically access
- * a relation, with the exception of the backend ID, which can be provided
- * separately. Note, however, that a "physical" relation is comprised of
- * multiple files on the filesystem, as each fork is stored as a separate
- * file, and each fork can be divided into multiple segments. See md.c.
+ * a relation, with the exception of the backend's proc number, which can be
+ * provided separately.  Note, however, that a "physical" relation is
+ * comprised of multiple files on the filesystem, as each fork is stored as
+ * a separate file, and each fork can be divided into multiple segments. See
+ * md.c.
  *
  * spcOid identifies the tablespace of the relation.  It corresponds to
  * pg_tablespace.oid.
@@ -62,28 +63,28 @@ typedef struct RelFileLocator
 } RelFileLocator;
 
 /*
- * Augmenting a relfilelocator with the backend ID provides all the information
- * we need to locate the physical storage.  The backend ID is InvalidBackendId
- * for regular relations (those accessible to more than one backend), or the
- * owning backend's ID for backend-local relations.  Backend-local relations
- * are always transient and removed in case of a database crash; they are
- * never WAL-logged or fsync'd.
+ * Augmenting a relfilelocator with the backend's proc number provides all the
+ * information we need to locate the physical storage.  'backend' is
+ * INVALID_PROC_NUMBER for regular relations (those accessible to more than
+ * one backend), or the owning backend's proc number for backend-local
+ * relations.  Backend-local relations are always transient and removed in
+ * case of a database crash; they are never WAL-logged or fsync'd.
  */
 typedef struct RelFileLocatorBackend
 {
 	RelFileLocator locator;
-	BackendId	backend;
+	ProcNumber	backend;
 } RelFileLocatorBackend;
 
 #define RelFileLocatorBackendIsTemp(rlocator) \
-	((rlocator).backend != InvalidBackendId)
+	((rlocator).backend != INVALID_PROC_NUMBER)
 
 /*
  * Note: RelFileLocatorEquals and RelFileLocatorBackendEquals compare relNumber
  * first since that is most likely to be different in two unequal
  * RelFileLocators.  It is probably redundant to compare spcOid if the other
  * fields are found equal, but do it anyway to be sure.  Likewise for checking
- * the backend ID in RelFileLocatorBackendEquals.
+ * the backend number in RelFileLocatorBackendEquals.
  */
 #define RelFileLocatorEquals(locator1, locator2) \
 	((locator1).relNumber == (locator2).relNumber && \

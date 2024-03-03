@@ -26,7 +26,7 @@
 static shm_mq_handle *pq_mq_handle;
 static bool pq_mq_busy = false;
 static pid_t pq_mq_parallel_leader_pid = 0;
-static pid_t pq_mq_parallel_leader_backend_id = InvalidBackendId;
+static pid_t pq_mq_parallel_leader_proc_number = INVALID_PROC_NUMBER;
 
 static void pq_cleanup_redirect_to_shm_mq(dsm_segment *seg, Datum arg);
 static void mq_comm_reset(void);
@@ -75,11 +75,11 @@ pq_cleanup_redirect_to_shm_mq(dsm_segment *seg, Datum arg)
  * message data via the shm_mq.
  */
 void
-pq_set_parallel_leader(pid_t pid, BackendId backend_id)
+pq_set_parallel_leader(pid_t pid, ProcNumber procNumber)
 {
 	Assert(PqCommMethods == &PqCommMqMethods);
 	pq_mq_parallel_leader_pid = pid;
-	pq_mq_parallel_leader_backend_id = backend_id;
+	pq_mq_parallel_leader_proc_number = procNumber;
 }
 
 static void
@@ -168,13 +168,13 @@ mq_putmessage(char msgtype, const char *s, size_t len)
 			if (IsLogicalParallelApplyWorker())
 				SendProcSignal(pq_mq_parallel_leader_pid,
 							   PROCSIG_PARALLEL_APPLY_MESSAGE,
-							   pq_mq_parallel_leader_backend_id);
+							   pq_mq_parallel_leader_proc_number);
 			else
 			{
 				Assert(IsParallelWorker());
 				SendProcSignal(pq_mq_parallel_leader_pid,
 							   PROCSIG_PARALLEL_MESSAGE,
-							   pq_mq_parallel_leader_backend_id);
+							   pq_mq_parallel_leader_proc_number);
 			}
 		}
 

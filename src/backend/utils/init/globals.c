@@ -22,7 +22,7 @@
 #include "libpq/libpq-be.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
-#include "storage/backendid.h"
+#include "storage/procnumber.h"
 
 
 ProtocolVersion FrontendProtocol;
@@ -83,9 +83,9 @@ char		postgres_exec_path[MAXPGPATH];	/* full path to backend */
 /* note: currently this is not valid in backend processes */
 #endif
 
-BackendId	MyBackendId = InvalidBackendId;
+ProcNumber	MyProcNumber = INVALID_PROC_NUMBER;
 
-BackendId	ParallelLeaderBackendId = InvalidBackendId;
+ProcNumber	ParallelLeaderProcNumber = INVALID_PROC_NUMBER;
 
 Oid			MyDatabaseId = InvalidOid;
 

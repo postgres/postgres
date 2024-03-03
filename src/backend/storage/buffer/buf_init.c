@@ -122,7 +122,7 @@ InitBufferPool(void)
 			ClearBufferTag(&buf->tag);
 
 			pg_atomic_init_u32(&buf->state, 0);
-			buf->wait_backend_pgprocno = INVALID_PGPROCNO;
+			buf->wait_backend_pgprocno = INVALID_PROC_NUMBER;
 
 			buf->buf_id = i;
 

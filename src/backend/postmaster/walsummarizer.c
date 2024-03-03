@@ -71,8 +71,8 @@ typedef struct
 	 * and so the LSN might point to the start of the next file even though
 	 * that might happen to be in the middle of a WAL record.
 	 *
-	 * summarizer_pgprocno is the pgprocno value for the summarizer process,
-	 * if one is running, or else INVALID_PGPROCNO.
+	 * summarizer_pgprocno is the proc number of the summarizer process, if
+	 * one is running, or else INVALID_PROC_NUMBER.
 	 *
 	 * pending_lsn is used by the summarizer to advertise the ending LSN of a
 	 * record it has recently read. It shouldn't ever be less than
@@ -83,7 +83,7 @@ typedef struct
 	TimeLineID	summarized_tli;
 	XLogRecPtr	summarized_lsn;
 	bool		lsn_is_exact;
-	int			summarizer_pgprocno;
+	ProcNumber	summarizer_pgprocno;
 	XLogRecPtr	pending_lsn;
 
 	/*
@@ -195,7 +195,7 @@ WalSummarizerShmemInit(void)
 		WalSummarizerCtl->summarized_tli = 0;
 		WalSummarizerCtl->summarized_lsn = InvalidXLogRecPtr;
 		WalSummarizerCtl->lsn_is_exact = false;
-		WalSummarizerCtl->summarizer_pgprocno = INVALID_PGPROCNO;
+		WalSummarizerCtl->summarizer_pgprocno = INVALID_PROC_NUMBER;
 		WalSummarizerCtl->pending_lsn = InvalidXLogRecPtr;
 		ConditionVariableInit(&WalSummarizerCtl->summary_file_cv);
 	}
@@ -444,7 +444,7 @@ GetWalSummarizerState(TimeLineID *summarized_tli, XLogRecPtr *summarized_lsn,
 
 		*summarized_tli = WalSummarizerCtl->summarized_tli;
 		*summarized_lsn = WalSummarizerCtl->summarized_lsn;
-		if (summarizer_pgprocno == INVALID_PGPROCNO)
+		if (summarizer_pgprocno == INVALID_PROC_NUMBER)
 		{
 			/*
 			 * If the summarizer has exited, the fact that it had processed
@@ -613,7 +613,7 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact,
 void
 SetWalSummarizerLatch(void)
 {
-	int			pgprocno;
+	ProcNumber	pgprocno;
 
 	if (WalSummarizerCtl == NULL)
 		return;
@@ -622,7 +622,7 @@ SetWalSummarizerLatch(void)
 	pgprocno = WalSummarizerCtl->summarizer_pgprocno;
 	LWLockRelease(WALSummarizerLock);
 
-	if (pgprocno != INVALID_PGPROCNO)
+	if (pgprocno != INVALID_PROC_NUMBER)
 		SetLatch(&ProcGlobal->allProcs[pgprocno].procLatch);
 }
 
@@ -683,7 +683,7 @@ static void
 WalSummarizerShutdown(int code, Datum arg)
 {
 	LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
-	WalSummarizerCtl->summarizer_pgprocno = INVALID_PGPROCNO;
+	WalSummarizerCtl->summarizer_pgprocno = INVALID_PROC_NUMBER;
 	LWLockRelease(WALSummarizerLock);
 }
 

@@ -4940,7 +4940,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
    access functions can be used; these are shown in <xref
    linkend="monitoring-stats-backend-funcs-table"/>.
    These access functions use the session's backend ID number, which is a
-   small positive integer that is distinct from the backend ID of any
+   small integer (>= 0) that is distinct from the backend ID of any
    concurrent session, although a session's ID can be recycled as soon as
    it exits.  The backend ID is used, among other things, to identify the
    session's temporary schema if it has one.
@@ -6813,7 +6813,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
        arg0 contains the fork to be extended. arg1, arg2, and arg3 contain the
        tablespace, database, and relation OIDs identifying the relation.  arg4
        is the ID of the backend which created the temporary relation for a
-       local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared
+       local buffer, or <symbol>INVALID_PROC_NUMBER</symbol> (-1) for a shared
        buffer. arg5 is the number of blocks the caller would like to extend
        by.</entry>
     </row>
@@ -6824,7 +6824,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
        arg0 contains the fork to be extended. arg1, arg2, and arg3 contain the
        tablespace, database, and relation OIDs identifying the relation.  arg4
        is the ID of the backend which created the temporary relation for a
-       local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared
+       local buffer, or <symbol>INVALID_PROC_NUMBER</symbol> (-1) for a shared
        buffer. arg5 is the number of blocks the relation was extended by, this
        can be less than the number in the
        <literal>buffer-extend-start</literal> due to resource
@@ -6839,7 +6839,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
+      local buffer, or <symbol>INVALID_PROC_NUMBER</symbol> (-1) for a shared buffer.
       </entry>
     </row>
     <row>
@@ -6850,7 +6850,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
+      local buffer, or <symbol>INVALID_PROC_NUMBER</symbol> (-1) for a shared buffer.
       arg6 is true if the buffer was found in the pool, false if not.</entry>
     </row>
     <row>
@@ -6903,7 +6903,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.</entry>
+      local buffer, or <symbol>INVALID_PROC_NUMBER</symbol> (-1) for a shared buffer.</entry>
     </row>
     <row>
      <entry><literal>smgr-md-read-done</literal></entry>
@@ -6913,7 +6913,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
+      local buffer, or <symbol>INVALID_PROC_NUMBER</symbol> (-1) for a shared buffer.
       arg6 is the number of bytes actually read, while arg7 is the number
       requested (if these are different it indicates a short read).</entry>
     </row>
@@ -6925,7 +6925,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.</entry>
+      local buffer, or <symbol>INVALID_PROC_NUMBER</symbol> (-1) for a shared buffer.</entry>
     </row>
     <row>
      <entry><literal>smgr-md-write-done</literal></entry>
@@ -6935,7 +6935,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
+      local buffer, or <symbol>INVALID_PROC_NUMBER</symbol> (-1) for a shared buffer.
       arg6 is the number of bytes actually written, while arg7 is the number
       requested (if these are different it indicates a short write).</entry>
     </row>

@@ -146,7 +146,7 @@ pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	int			pid = PG_GETARG_INT32(0);
 	PGPROC	   *proc;
-	BackendId	backendId = InvalidBackendId;
+	ProcNumber	procNumber = INVALID_PROC_NUMBER;
 
 	/*
 	 * See if the process with given pid is a backend or an auxiliary process.
@@ -175,9 +175,8 @@ pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	}
 
-	if (proc != NULL)
-		backendId = GetBackendIdFromPGProc(proc);
-	if (SendProcSignal(pid, PROCSIG_LOG_MEMORY_CONTEXT, backendId) < 0)
+	procNumber = GetNumberFromPGProc(proc);
+	if (SendProcSignal(pid, PROCSIG_LOG_MEMORY_CONTEXT, procNumber) < 0)
 	{
 		/* Again, just a warning to allow loops */
 		ereport(WARNING,

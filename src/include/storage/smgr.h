@@ -74,7 +74,7 @@ typedef SMgrRelationData *SMgrRelation;
 	RelFileLocatorBackendIsTemp((smgr)->smgr_rlocator)
 
 extern void smgrinit(void);
-extern SMgrRelation smgropen(RelFileLocator rlocator, BackendId backend);
+extern SMgrRelation smgropen(RelFileLocator rlocator, ProcNumber backend);
 extern bool smgrexists(SMgrRelation reln, ForkNumber forknum);
 extern void smgrpin(SMgrRelation reln);
 extern void smgrunpin(SMgrRelation reln);

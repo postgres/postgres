@@ -203,12 +203,12 @@ pg_subtrans and PGPROC are done at the time it is assigned.
 A transaction that has no XID still needs to be identified for various
 purposes, notably holding locks.  For this purpose we assign a "virtual
 transaction ID" or VXID to each top-level transaction.  VXIDs are formed from
-two fields, the backendID and a backend-local counter; this arrangement allows
-assignment of a new VXID at transaction start without any contention for
-shared memory.  To ensure that a VXID isn't re-used too soon after backend
+two fields, the procNumber and a backend-local counter; this arrangement
+allows assignment of a new VXID at transaction start without any contention
+for shared memory.  To ensure that a VXID isn't re-used too soon after backend
 exit, we store the last local counter value into shared memory at backend
-exit, and initialize it from the previous value for the same backendID slot
-at backend start.  All these counters go back to zero at shared memory
+exit, and initialize it from the previous value for the same PGPROC slot at
+backend start.  All these counters go back to zero at shared memory
 re-initialization, but that's OK because VXIDs never appear anywhere on-disk.
 
 Internally, a backend needs a way to identify subtransactions whether or not

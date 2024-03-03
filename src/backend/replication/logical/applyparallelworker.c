@@ -845,7 +845,7 @@ pa_shutdown(int code, Datum arg)
 {
 	SendProcSignal(MyLogicalRepWorker->leader_pid,
 				   PROCSIG_PARALLEL_APPLY_MESSAGE,
-				   InvalidBackendId);
+				   INVALID_PROC_NUMBER);
 
 	dsm_detach((dsm_segment *) DatumGetPointer(arg));
 }
@@ -934,7 +934,7 @@ ParallelApplyWorkerMain(Datum main_arg)
 
 	pq_redirect_to_shm_mq(seg, error_mqh);
 	pq_set_parallel_leader(MyLogicalRepWorker->leader_pid,
-						   InvalidBackendId);
+						   INVALID_PROC_NUMBER);
 
 	MyLogicalRepWorker->last_send_time = MyLogicalRepWorker->last_recv_time =
 		MyLogicalRepWorker->reply_time = 0;

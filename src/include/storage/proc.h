@@ -21,6 +21,7 @@
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
 #include "storage/proclist_types.h"
+#include "storage/procnumber.h"
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
@@ -83,12 +84,6 @@ struct XidCache
  * manager LWLocks.  See storage/lmgr/README for additional details.
  */
 #define		FP_LOCK_SLOTS_PER_BACKEND 16
-
-/*
- * An invalid pgprocno.  Must be larger than the maximum number of PGPROC
- * structures we could possibly have.  See comments for MAX_BACKENDS.
- */
-#define INVALID_PGPROCNO		PG_INT32_MAX
 
 /*
  * Flags for PGPROC.delayChkptFlags
@@ -199,11 +194,11 @@ struct PGPROC
 	 */
 	struct
 	{
-		BackendId	backendId;	/* For regular backends, equal to
-								 * GetBackendIdFromPGProc(proc).  For prepared
+		ProcNumber	procNumber; /* For regular backends, equal to
+								 * GetNumberFromPGProc(proc).  For prepared
 								 * xacts, ID of the original backend that
 								 * processed the transaction. For unused
-								 * PGPROC entries, InvalidBackendID. */
+								 * PGPROC entries, INVALID_PROC_NUMBER. */
 		LocalTransactionId lxid;	/* local id of top-level transaction
 									 * currently * being executed by this
 									 * proc, if running; else
@@ -317,7 +312,19 @@ struct PGPROC
 
 
 extern PGDLLIMPORT PGPROC *MyProc;
-extern PGDLLIMPORT int MyProcNumber;	/* same as GetNumberFromPGProc(MyProc) */
+
+/* Proc number of this backend. Equal to GetNumberFromPGProc(MyProc). */
+extern PGDLLIMPORT ProcNumber MyProcNumber;
+
+/* Our parallel session leader, or INVALID_PROC_NUMBER if none */
+extern PGDLLIMPORT ProcNumber ParallelLeaderProcNumber;
+
+/*
+ * The proc number to use for our session's temp relations is normally our own,
+ * but parallel workers should use their leader's ID.
+ */
+#define ProcNumberForTempRelations() \
+	(ParallelLeaderProcNumber == INVALID_PROC_NUMBER ? MyProcNumber : ParallelLeaderProcNumber)
 
 /*
  * There is one ProcGlobal struct for the whole database cluster.
@@ -422,15 +429,10 @@ extern PGDLLIMPORT PROC_HDR *ProcGlobal;
 extern PGDLLIMPORT PGPROC *PreparedXactProcs;
 
 /*
- * Accessors for getting PGPROC given a pgprocno or BackendId, and vice versa.
- *
- * For historical reasons, some code uses 0-based "proc numbers", while other
- * code uses 1-based backend IDs.
+ * Accessors for getting PGPROC given a ProcNumber and vice versa.
  */
 #define GetPGProcByNumber(n) (&ProcGlobal->allProcs[(n)])
 #define GetNumberFromPGProc(proc) ((proc) - &ProcGlobal->allProcs[0])
-#define GetPGProcByBackendId(n) (&ProcGlobal->allProcs[(n) - 1])
-#define GetBackendIdFromPGProc(proc) (GetNumberFromPGProc(proc) + 1)
 
 /*
  * We set aside some extra PGPROC structures for auxiliary processes,
@@ -477,7 +479,7 @@ extern bool IsWaitingForLock(void);
 extern void LockErrorCleanup(void);
 
 extern void ProcWaitForSignal(uint32 wait_event_info);
-extern void ProcSendSignal(int pgprocno);
+extern void ProcSendSignal(ProcNumber procNumber);
 
 extern PGPROC *AuxiliaryPidGetProc(int pid);
 

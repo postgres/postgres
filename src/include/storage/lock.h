@@ -19,9 +19,9 @@
 #endif
 
 #include "lib/ilist.h"
-#include "storage/backendid.h"
 #include "storage/lockdefs.h"
 #include "storage/lwlock.h"
+#include "storage/procnumber.h"
 #include "storage/shmem.h"
 #include "utils/timestamp.h"
 
@@ -42,7 +42,7 @@ extern PGDLLIMPORT bool Debug_deadlocks;
 
 /*
  * Top-level transactions are identified by VirtualTransactionIDs comprising
- * PGPROC fields backendId and lxid.  For recovered prepared transactions, the
+ * PGPROC fields procNumber and lxid.  For recovered prepared transactions, the
  * LocalTransactionId is an ordinary XID; LOCKTAG_VIRTUALTRANSACTION never
  * refers to that kind.  These are guaranteed unique over the short term, but
  * will be reused after a database restart or XID wraparound; hence they
@@ -50,7 +50,7 @@ extern PGDLLIMPORT bool Debug_deadlocks;
  *
  * Note that struct VirtualTransactionId can not be assumed to be atomically
  * assignable as a whole.  However, type LocalTransactionId is assumed to
- * be atomically assignable, and the backend ID doesn't change often enough
+ * be atomically assignable, and the proc number doesn't change often enough
  * to be a problem, so we can fetch or assign the two fields separately.
  * We deliberately refrain from using the struct within PGPROC, to prevent
  * coding errors from trying to use struct assignment with it; instead use
@@ -58,7 +58,7 @@ extern PGDLLIMPORT bool Debug_deadlocks;
  */
 typedef struct
 {
-	BackendId	backendId;		/* backendId from PGPROC */
+	ProcNumber	procNumber;		/* proc number of the PGPROC */
 	LocalTransactionId localTransactionId;	/* lxid from PGPROC */
 } VirtualTransactionId;
 
@@ -67,15 +67,15 @@ typedef struct
 #define VirtualTransactionIdIsValid(vxid) \
 	(LocalTransactionIdIsValid((vxid).localTransactionId))
 #define VirtualTransactionIdIsRecoveredPreparedXact(vxid) \
-	((vxid).backendId == InvalidBackendId)
+	((vxid).procNumber == INVALID_PROC_NUMBER)
 #define VirtualTransactionIdEquals(vxid1, vxid2) \
-	((vxid1).backendId == (vxid2).backendId && \
+	((vxid1).procNumber == (vxid2).procNumber && \
 	 (vxid1).localTransactionId == (vxid2).localTransactionId)
 #define SetInvalidVirtualTransactionId(vxid) \
-	((vxid).backendId = InvalidBackendId, \
+	((vxid).procNumber = INVALID_PROC_NUMBER, \
 	 (vxid).localTransactionId = InvalidLocalTransactionId)
 #define GET_VXID_FROM_PGPROC(vxid_dst, proc) \
-	((vxid_dst).backendId = (proc).vxid.backendId, \
+	((vxid_dst).procNumber = (proc).vxid.procNumber, \
 		 (vxid_dst).localTransactionId = (proc).vxid.lxid)
 
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
@@ -233,7 +233,7 @@ typedef struct LOCKTAG
 
 /* ID info for a virtual transaction is its VirtualTransactionId */
 #define SET_LOCKTAG_VIRTUALTRANSACTION(locktag,vxid) \
-	((locktag).locktag_field1 = (vxid).backendId, \
+	((locktag).locktag_field1 = (vxid).procNumber, \
 	 (locktag).locktag_field2 = (vxid).localTransactionId, \
 	 (locktag).locktag_field3 = 0, \
 	 (locktag).locktag_field4 = 0, \

@@ -672,7 +672,7 @@ GetIncrementalFilePath(Oid dboid, Oid spcoid, RelFileNumber relfilenumber,
 	char	   *lastslash;
 	char	   *ipath;
 
-	path = GetRelationPath(dboid, spcoid, relfilenumber, InvalidBackendId,
+	path = GetRelationPath(dboid, spcoid, relfilenumber, INVALID_PROC_NUMBER,
 						   forknum);
 
 	lastslash = strrchr(path, '/');

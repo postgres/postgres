@@ -43,10 +43,10 @@
  * observe it only once.)
  *
  * Each process that wants to receive signals registers its process ID
- * in the ProcSignalSlots array. The array is indexed by backend ID to make
+ * in the ProcSignalSlots array. The array is indexed by ProcNumber to make
  * slot allocation simple, and to avoid having to search the array when you
- * know the backend ID of the process you're signaling.  (We do support
- * signaling without backend ID, but it's a bit less efficient.)
+ * know the ProcNumber of the process you're signaling.  (We do support
+ * signaling without ProcNumber, but it's a bit less efficient.)
  *
  * The flags are actually declared as "volatile sig_atomic_t" for maximum
  * portability.  This should ensure that loads and stores of the flag
@@ -83,7 +83,7 @@ typedef struct
 } ProcSignalHeader;
 
 /*
- * We reserve a slot for each possible BackendId, plus one for each
+ * We reserve a slot for each possible ProcNumber, plus one for each
  * possible auxiliary process type.  (This scheme assumes there is not
  * more than one of any auxiliary process type at a time.)
  */
@@ -161,16 +161,16 @@ ProcSignalInit(void)
 	ProcSignalSlot *slot;
 	uint64		barrier_generation;
 
-	if (MyBackendId <= 0)
-		elog(ERROR, "MyBackendId not set");
-	if (MyBackendId > NumProcSignalSlots)
-		elog(ERROR, "unexpected MyBackendId %d in ProcSignalInit (max %d)", MyBackendId, NumProcSignalSlots);
-	slot = &ProcSignal->psh_slot[MyBackendId - 1];
+	if (MyProcNumber < 0)
+		elog(ERROR, "MyProcNumber not set");
+	if (MyProcNumber >= NumProcSignalSlots)
+		elog(ERROR, "unexpected MyProcNumber %d in ProcSignalInit (max %d)", MyProcNumber, NumProcSignalSlots);
+	slot = &ProcSignal->psh_slot[MyProcNumber];
 
 	/* sanity check */
 	if (slot->pss_pid != 0)
 		elog(LOG, "process %d taking over ProcSignal slot %d, but it's not empty",
-			 MyProcPid, MyBackendId - 1);
+			 MyProcPid, MyProcNumber);
 
 	/* Clear out any leftover signal reasons */
 	MemSet(slot->pss_signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
@@ -218,6 +218,7 @@ CleanupProcSignalState(int status, Datum arg)
 	 * won't try to access it after it's no longer ours (and perhaps even
 	 * after we've unmapped the shared memory segment).
 	 */
+	Assert(MyProcSignalSlot != NULL);
 	MyProcSignalSlot = NULL;
 
 	/* sanity check */
@@ -246,7 +247,7 @@ CleanupProcSignalState(int status, Datum arg)
  * SendProcSignal
  *		Send a signal to a Postgres process
  *
- * Providing backendId is optional, but it will speed up the operation.
+ * Providing procNumber is optional, but it will speed up the operation.
  *
  * On success (a signal was sent), zero is returned.
  * On error, -1 is returned, and errno is set (typically to ESRCH or EPERM).
@@ -254,13 +255,13 @@ CleanupProcSignalState(int status, Datum arg)
  * Not to be confused with ProcSendSignal
  */
 int
-SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
+SendProcSignal(pid_t pid, ProcSignalReason reason, ProcNumber procNumber)
 {
 	volatile ProcSignalSlot *slot;
 
-	if (backendId != InvalidBackendId)
+	if (procNumber != INVALID_PROC_NUMBER)
 	{
-		slot = &ProcSignal->psh_slot[backendId - 1];
+		slot = &ProcSignal->psh_slot[procNumber];
 
 		/*
 		 * Note: Since there's no locking, it's possible that the target
@@ -281,10 +282,11 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 	else
 	{
 		/*
-		 * BackendId not provided, so search the array using pid.  We search
+		 * Pronumber not provided, so search the array using pid.  We search
 		 * the array back to front so as to reduce search overhead.  Passing
-		 * InvalidBackendId means that the target is most likely an auxiliary
-		 * process, which will have a slot near the end of the array.
+		 * INVALID_PROC_NUMBER means that the target is most likely an
+		 * auxiliary process, which will have a slot near the end of the
+		 * array.
 		 */
 		int			i;
 

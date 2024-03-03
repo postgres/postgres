@@ -196,7 +196,7 @@ smgrshutdown(int code, Datum arg)
  * This does not attempt to actually open the underlying files.
  */
 SMgrRelation
-smgropen(RelFileLocator rlocator, BackendId backend)
+smgropen(RelFileLocator rlocator, ProcNumber backend)
 {
 	RelFileLocatorBackend brlocator;
 	SMgrRelation reln;

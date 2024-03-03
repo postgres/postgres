@@ -816,7 +816,7 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
  * permanent = false for a RELPERSISTENCE_UNLOGGED relation. This function
  * cannot be used for temporary relations (and making that work might be
  * difficult, unless we only want to read temporary relations for our own
- * BackendId).
+ * ProcNumber).
  */
 Buffer
 ReadBufferWithoutRelcache(RelFileLocator rlocator, ForkNumber forkNum,
@@ -825,7 +825,7 @@ ReadBufferWithoutRelcache(RelFileLocator rlocator, ForkNumber forkNum,
 {
 	bool		hit;
 
-	SMgrRelation smgr = smgropen(rlocator, InvalidBackendId);
+	SMgrRelation smgr = smgropen(rlocator, INVALID_PROC_NUMBER);
 
 	return ReadBuffer_common(smgr, permanent ? RELPERSISTENCE_PERMANENT :
 							 RELPERSISTENCE_UNLOGGED, forkNum, blockNum,
@@ -3322,7 +3322,7 @@ DebugPrintBufferRefcount(Buffer buffer)
 	int32		loccount;
 	char	   *path;
 	char	   *result;
-	BackendId	backend;
+	ProcNumber	backend;
 	uint32		buf_state;
 
 	Assert(BufferIsValid(buffer));
@@ -3330,13 +3330,13 @@ DebugPrintBufferRefcount(Buffer buffer)
 	{
 		buf = GetLocalBufferDescriptor(-buffer - 1);
 		loccount = LocalRefCount[-buffer - 1];
-		backend = MyBackendId;
+		backend = MyProcNumber;
 	}
 	else
 	{
 		buf = GetBufferDescriptor(buffer - 1);
 		loccount = GetPrivateRefCount(buffer);
-		backend = InvalidBackendId;
+		backend = INVALID_PROC_NUMBER;
 	}
 
 	/* theoretically we should lock the bufhdr here */
@@ -3461,7 +3461,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 
 	/* Find smgr relation for buffer */
 	if (reln == NULL)
-		reln = smgropen(BufTagGetRelFileLocator(&buf->tag), InvalidBackendId);
+		reln = smgropen(BufTagGetRelFileLocator(&buf->tag), INVALID_PROC_NUMBER);
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_START(BufTagGetForkNum(&buf->tag),
 										buf->tag.blockNum,
@@ -3696,7 +3696,7 @@ DropRelationBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 	/* If it's a local relation, it's localbuf.c's problem. */
 	if (RelFileLocatorBackendIsTemp(rlocator))
 	{
-		if (rlocator.backend == MyBackendId)
+		if (rlocator.backend == MyProcNumber)
 		{
 			for (j = 0; j < nforks; j++)
 				DropRelationLocalBuffers(rlocator.locator, forkNum[j],
@@ -3826,7 +3826,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 	{
 		if (RelFileLocatorBackendIsTemp(smgr_reln[i]->smgr_rlocator))
 		{
-			if (smgr_reln[i]->smgr_rlocator.backend == MyBackendId)
+			if (smgr_reln[i]->smgr_rlocator.backend == MyProcNumber)
 				DropRelationAllLocalBuffers(smgr_reln[i]->smgr_rlocator.locator);
 		}
 		else
@@ -4090,7 +4090,7 @@ PrintBufferDescs(void)
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
 			 relpathbackend(BufTagGetRelFileLocator(&buf->tag),
-							InvalidBackendId, BufTagGetForkNum(&buf->tag)),
+							INVALID_PROC_NUMBER, BufTagGetForkNum(&buf->tag)),
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, GetPrivateRefCount(b));
 	}
@@ -4364,7 +4364,7 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 	use_wal = XLogIsNeeded() && (permanent || forkNum == INIT_FORKNUM);
 
 	/* Get number of blocks in the source relation. */
-	nblocks = smgrnblocks(smgropen(srclocator, InvalidBackendId),
+	nblocks = smgrnblocks(smgropen(srclocator, INVALID_PROC_NUMBER),
 						  forkNum);
 
 	/* Nothing to copy; just return. */
@@ -4376,7 +4376,7 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 	 * relation before starting to copy block by block.
 	 */
 	memset(buf.data, 0, BLCKSZ);
-	smgrextend(smgropen(dstlocator, InvalidBackendId), forkNum, nblocks - 1,
+	smgrextend(smgropen(dstlocator, INVALID_PROC_NUMBER), forkNum, nblocks - 1,
 			   buf.data, true);
 
 	/* This is a bulk operation, so use buffer access strategies. */
@@ -4443,8 +4443,8 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 	relpersistence = permanent ?
 		RELPERSISTENCE_PERMANENT : RELPERSISTENCE_UNLOGGED;
 
-	src_rel = smgropen(src_rlocator, InvalidBackendId);
-	dst_rel = smgropen(dst_rlocator, InvalidBackendId);
+	src_rel = smgropen(src_rlocator, INVALID_PROC_NUMBER);
+	dst_rel = smgropen(dst_rlocator, INVALID_PROC_NUMBER);
 
 	/*
 	 * Create and copy all forks of the relation.  During create database we
@@ -5348,7 +5348,7 @@ local_buffer_write_error_callback(void *arg)
 	if (bufHdr != NULL)
 	{
 		char	   *path = relpathbackend(BufTagGetRelFileLocator(&bufHdr->tag),
-										  MyBackendId,
+										  MyProcNumber,
 										  BufTagGetForkNum(&bufHdr->tag));
 
 		errcontext("writing block %u of relation %s",
@@ -5653,7 +5653,7 @@ IssuePendingWritebacks(WritebackContext *wb_context, IOContext io_context)
 		i += ahead;
 
 		/* and finally tell the kernel to write the data to storage */
-		reln = smgropen(currlocator, InvalidBackendId);
+		reln = smgropen(currlocator, INVALID_PROC_NUMBER);
 		smgrwriteback(reln, BufTagGetForkNum(&tag), tag.blockNum, nblocks);
 	}
 

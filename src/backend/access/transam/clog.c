@@ -501,7 +501,7 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 		 * still work, just less efficiently -- we handle this case by
 		 * switching to a different bank lock in the loop below.
 		 */
-		if (nextidx != INVALID_PGPROCNO &&
+		if (nextidx != INVALID_PROC_NUMBER &&
 			GetPGProcByNumber(nextidx)->clogGroupMemberPage != proc->clogGroupMemberPage)
 		{
 			/*
@@ -509,7 +509,7 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 			 * needs an XID status update.
 			 */
 			proc->clogGroupMember = false;
-			pg_atomic_write_u32(&proc->clogGroupNext, INVALID_PGPROCNO);
+			pg_atomic_write_u32(&proc->clogGroupNext, INVALID_PROC_NUMBER);
 			return false;
 		}
 
@@ -525,9 +525,9 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	 * If the list was not empty, the leader will update the status of our
 	 * XID. It is impossible to have followers without a leader because the
 	 * first process that has added itself to the list will always have
-	 * nextidx as INVALID_PGPROCNO.
+	 * nextidx as INVALID_PROC_NUMBER.
 	 */
-	if (nextidx != INVALID_PGPROCNO)
+	if (nextidx != INVALID_PROC_NUMBER)
 	{
 		int			extraWaits = 0;
 
@@ -543,7 +543,7 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 		}
 		pgstat_report_wait_end();
 
-		Assert(pg_atomic_read_u32(&proc->clogGroupNext) == INVALID_PGPROCNO);
+		Assert(pg_atomic_read_u32(&proc->clogGroupNext) == INVALID_PROC_NUMBER);
 
 		/* Fix semaphore count for any absorbed wakeups */
 		while (extraWaits-- > 0)
@@ -568,13 +568,13 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	 * group.
 	 */
 	nextidx = pg_atomic_exchange_u32(&procglobal->clogGroupFirst,
-									 INVALID_PGPROCNO);
+									 INVALID_PROC_NUMBER);
 
 	/* Remember head of list so we can perform wakeups after dropping lock. */
 	wakeidx = nextidx;
 
 	/* Walk the list and update the status of all XIDs. */
-	while (nextidx != INVALID_PGPROCNO)
+	while (nextidx != INVALID_PROC_NUMBER)
 	{
 		PGPROC	   *nextproc = &ProcGlobal->allProcs[nextidx];
 		int			thispageno = nextproc->clogGroupMemberPage;
@@ -633,12 +633,12 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	 * clogGroupNext to invalid while saving the semaphores to an array, then
 	 * a single write barrier, then another pass unlocking the semaphores.)
 	 */
-	while (wakeidx != INVALID_PGPROCNO)
+	while (wakeidx != INVALID_PROC_NUMBER)
 	{
 		PGPROC	   *wakeproc = &ProcGlobal->allProcs[wakeidx];
 
 		wakeidx = pg_atomic_read_u32(&wakeproc->clogGroupNext);
-		pg_atomic_write_u32(&wakeproc->clogGroupNext, INVALID_PGPROCNO);
+		pg_atomic_write_u32(&wakeproc->clogGroupNext, INVALID_PROC_NUMBER);
 
 		/* ensure all previous writes are visible before follower continues. */
 		pg_write_barrier();

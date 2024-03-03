@@ -28,7 +28,7 @@
 static inline void
 proclist_init(proclist_head *list)
 {
-	list->head = list->tail = INVALID_PGPROCNO;
+	list->head = list->tail = INVALID_PROC_NUMBER;
 }
 
 /*
@@ -37,7 +37,7 @@ proclist_init(proclist_head *list)
 static inline bool
 proclist_is_empty(const proclist_head *list)
 {
-	return list->head == INVALID_PGPROCNO;
+	return list->head == INVALID_PROC_NUMBER;
 }
 
 /*
@@ -62,20 +62,20 @@ proclist_push_head_offset(proclist_head *list, int procno, size_t node_offset)
 
 	Assert(node->next == 0 && node->prev == 0);
 
-	if (list->head == INVALID_PGPROCNO)
+	if (list->head == INVALID_PROC_NUMBER)
 	{
-		Assert(list->tail == INVALID_PGPROCNO);
-		node->next = node->prev = INVALID_PGPROCNO;
+		Assert(list->tail == INVALID_PROC_NUMBER);
+		node->next = node->prev = INVALID_PROC_NUMBER;
 		list->head = list->tail = procno;
 	}
 	else
 	{
-		Assert(list->tail != INVALID_PGPROCNO);
+		Assert(list->tail != INVALID_PROC_NUMBER);
 		Assert(list->head != procno);
 		Assert(list->tail != procno);
 		node->next = list->head;
 		proclist_node_get(node->next, node_offset)->prev = procno;
-		node->prev = INVALID_PGPROCNO;
+		node->prev = INVALID_PROC_NUMBER;
 		list->head = procno;
 	}
 }
@@ -90,20 +90,20 @@ proclist_push_tail_offset(proclist_head *list, int procno, size_t node_offset)
 
 	Assert(node->next == 0 && node->prev == 0);
 
-	if (list->tail == INVALID_PGPROCNO)
+	if (list->tail == INVALID_PROC_NUMBER)
 	{
-		Assert(list->head == INVALID_PGPROCNO);
-		node->next = node->prev = INVALID_PGPROCNO;
+		Assert(list->head == INVALID_PROC_NUMBER);
+		node->next = node->prev = INVALID_PROC_NUMBER;
 		list->head = list->tail = procno;
 	}
 	else
 	{
-		Assert(list->head != INVALID_PGPROCNO);
+		Assert(list->head != INVALID_PROC_NUMBER);
 		Assert(list->head != procno);
 		Assert(list->tail != procno);
 		node->prev = list->tail;
 		proclist_node_get(node->prev, node_offset)->next = procno;
-		node->next = INVALID_PGPROCNO;
+		node->next = INVALID_PROC_NUMBER;
 		list->tail = procno;
 	}
 }
@@ -118,7 +118,7 @@ proclist_delete_offset(proclist_head *list, int procno, size_t node_offset)
 
 	Assert(node->next != 0 || node->prev != 0);
 
-	if (node->prev == INVALID_PGPROCNO)
+	if (node->prev == INVALID_PROC_NUMBER)
 	{
 		Assert(list->head == procno);
 		list->head = node->next;
@@ -126,7 +126,7 @@ proclist_delete_offset(proclist_head *list, int procno, size_t node_offset)
 	else
 		proclist_node_get(node->prev, node_offset)->next = node->next;
 
-	if (node->next == INVALID_PGPROCNO)
+	if (node->next == INVALID_PROC_NUMBER)
 	{
 		Assert(list->tail == procno);
 		list->tail = node->prev;
@@ -160,8 +160,8 @@ proclist_contains_offset(const proclist_head *list, int procno,
 	 * tail, and that seems worth doing, since in practice that should often
 	 * be enough to catch mistakes.
 	 */
-	Assert(node->prev != INVALID_PGPROCNO || list->head == procno);
-	Assert(node->next != INVALID_PGPROCNO || list->tail == procno);
+	Assert(node->prev != INVALID_PROC_NUMBER || list->head == procno);
+	Assert(node->next != INVALID_PROC_NUMBER || list->tail == procno);
 
 	return true;
 }
@@ -207,12 +207,12 @@ proclist_pop_head_node_offset(proclist_head *list, size_t node_offset)
 	for (AssertVariableIsOfTypeMacro(iter, proclist_mutable_iter),			\
 		 AssertVariableIsOfTypeMacro(lhead, proclist_head *),				\
 		 (iter).cur = (lhead)->head,										\
-		 (iter).next = (iter).cur == INVALID_PGPROCNO ? INVALID_PGPROCNO :	\
+		 (iter).next = (iter).cur == INVALID_PROC_NUMBER ? INVALID_PROC_NUMBER :	\
 			 proclist_node_get((iter).cur,									\
 							   offsetof(PGPROC, link_member))->next;		\
-		 (iter).cur != INVALID_PGPROCNO;									\
+		 (iter).cur != INVALID_PROC_NUMBER;									\
 		 (iter).cur = (iter).next,											\
-		 (iter).next = (iter).cur == INVALID_PGPROCNO ? INVALID_PGPROCNO :	\
+		 (iter).next = (iter).cur == INVALID_PROC_NUMBER ? INVALID_PROC_NUMBER :	\
 			 proclist_node_get((iter).cur,									\
 							   offsetof(PGPROC, link_member))->next)
 

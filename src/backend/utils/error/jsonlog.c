@@ -197,9 +197,9 @@ write_jsonlog(ErrorData *edata)
 
 	/* Virtual transaction id */
 	/* keep VXID format in sync with lockfuncs.c */
-	if (MyProc != NULL && MyProc->vxid.backendId != InvalidBackendId)
+	if (MyProc != NULL && MyProc->vxid.procNumber != INVALID_PROC_NUMBER)
 		appendJSONKeyValueFmt(&buf, "vxid", true, "%d/%u",
-							  MyProc->vxid.backendId, MyProc->vxid.lxid);
+							  MyProc->vxid.procNumber, MyProc->vxid.lxid);
 
 	/* Transaction id */
 	appendJSONKeyValueFmt(&buf, "txid", false, "%u",

@@ -491,7 +491,7 @@ XLogReadBufferExtended(RelFileLocator rlocator, ForkNumber forknum,
 	}
 
 	/* Open the relation at smgr level */
-	smgr = smgropen(rlocator, InvalidBackendId);
+	smgr = smgropen(rlocator, INVALID_PROC_NUMBER);
 
 	/*
 	 * Create the target file if it doesn't already exist.  This lets us cope
@@ -598,7 +598,7 @@ CreateFakeRelcacheEntry(RelFileLocator rlocator)
 	 * We will never be working with temp rels during recovery or while
 	 * syncing WAL-skipped files.
 	 */
-	rel->rd_backend = InvalidBackendId;
+	rel->rd_backend = INVALID_PROC_NUMBER;
 
 	/* It must be a permanent table here */
 	rel->rd_rel->relpersistence = RELPERSISTENCE_PERMANENT;
@@ -620,7 +620,7 @@ CreateFakeRelcacheEntry(RelFileLocator rlocator)
 	 * Set up a non-pinned SMgrRelation reference, so that we don't need to
 	 * worry about unpinning it on error.
 	 */
-	rel->rd_smgr = smgropen(rlocator, InvalidBackendId);
+	rel->rd_smgr = smgropen(rlocator, INVALID_PROC_NUMBER);
 
 	return rel;
 }

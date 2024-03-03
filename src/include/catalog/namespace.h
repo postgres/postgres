@@ -16,6 +16,7 @@
 
 #include "nodes/primnodes.h"
 #include "storage/lock.h"
+#include "storage/procnumber.h"
 
 
 /*
@@ -156,7 +157,7 @@ extern bool isTempOrTempToastNamespace(Oid namespaceId);
 extern bool isAnyTempNamespace(Oid namespaceId);
 extern bool isOtherTempNamespace(Oid namespaceId);
 extern TempNamespaceStatus checkTempNamespaceStatus(Oid namespaceId);
-extern int	GetTempNamespaceBackendId(Oid namespaceId);
+extern ProcNumber GetTempNamespaceProcNumber(Oid namespaceId);
 extern Oid	GetTempToastNamespace(void);
 extern void GetTempNamespaceState(Oid *tempNamespaceId,
 								  Oid *tempToastNamespaceId);

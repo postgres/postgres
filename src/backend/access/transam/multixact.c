@@ -237,11 +237,11 @@ typedef struct MultiXactStateData
 	/*
 	 * Per-backend data starts here.  We have two arrays stored in the area
 	 * immediately following the MultiXactStateData struct. Each is indexed by
-	 * BackendId.
+	 * ProcNumber.
 	 *
-	 * In both arrays, there's a slot for all normal backends (1..MaxBackends)
-	 * followed by a slot for max_prepared_xacts prepared transactions. Valid
-	 * BackendIds start from 1; element zero of each array is never used.
+	 * In both arrays, there's a slot for all normal backends
+	 * (0..MaxBackends-1) followed by a slot for max_prepared_xacts prepared
+	 * transactions.
 	 *
 	 * OldestMemberMXactId[k] is the oldest MultiXactId each backend's current
 	 * transaction(s) could possibly be a member of, or InvalidMultiXactId
@@ -285,8 +285,7 @@ typedef struct MultiXactStateData
 } MultiXactStateData;
 
 /*
- * Last element of OldestMemberMXactId and OldestVisibleMXactId arrays.
- * Valid elements are (1..MaxOldestSlot); element 0 is never used.
+ * Size of OldestMemberMXactId and OldestVisibleMXactId arrays.
  */
 #define MaxOldestSlot	(MaxBackends + max_prepared_xacts)
 
@@ -397,7 +396,7 @@ MultiXactIdCreate(TransactionId xid1, MultiXactStatus status1,
 	Assert(!TransactionIdEquals(xid1, xid2) || (status1 != status2));
 
 	/* MultiXactIdSetOldestMember() must have been called already. */
-	Assert(MultiXactIdIsValid(OldestMemberMXactId[MyBackendId]));
+	Assert(MultiXactIdIsValid(OldestMemberMXactId[MyProcNumber]));
 
 	/*
 	 * Note: unlike MultiXactIdExpand, we don't bother to check that both XIDs
@@ -451,7 +450,7 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	Assert(TransactionIdIsValid(xid));
 
 	/* MultiXactIdSetOldestMember() must have been called already. */
-	Assert(MultiXactIdIsValid(OldestMemberMXactId[MyBackendId]));
+	Assert(MultiXactIdIsValid(OldestMemberMXactId[MyProcNumber]));
 
 	debug_elog5(DEBUG2, "Expand: received multi %u, xid %u status %s",
 				multi, xid, mxstatus_to_string(status));
@@ -626,7 +625,7 @@ MultiXactIdIsRunning(MultiXactId multi, bool isLockOnly)
 void
 MultiXactIdSetOldestMember(void)
 {
-	if (!MultiXactIdIsValid(OldestMemberMXactId[MyBackendId]))
+	if (!MultiXactIdIsValid(OldestMemberMXactId[MyProcNumber]))
 	{
 		MultiXactId nextMXact;
 
@@ -655,12 +654,12 @@ MultiXactIdSetOldestMember(void)
 		if (nextMXact < FirstMultiXactId)
 			nextMXact = FirstMultiXactId;
 
-		OldestMemberMXactId[MyBackendId] = nextMXact;
+		OldestMemberMXactId[MyProcNumber] = nextMXact;
 
 		LWLockRelease(MultiXactGenLock);
 
 		debug_elog4(DEBUG2, "MultiXact: setting OldestMember[%d] = %u",
-					MyBackendId, nextMXact);
+					MyProcNumber, nextMXact);
 	}
 }
 
@@ -683,7 +682,7 @@ MultiXactIdSetOldestMember(void)
 static void
 MultiXactIdSetOldestVisible(void)
 {
-	if (!MultiXactIdIsValid(OldestVisibleMXactId[MyBackendId]))
+	if (!MultiXactIdIsValid(OldestVisibleMXactId[MyProcNumber]))
 	{
 		MultiXactId oldestMXact;
 		int			i;
@@ -699,7 +698,7 @@ MultiXactIdSetOldestVisible(void)
 		if (oldestMXact < FirstMultiXactId)
 			oldestMXact = FirstMultiXactId;
 
-		for (i = 1; i <= MaxOldestSlot; i++)
+		for (i = 0; i < MaxOldestSlot; i++)
 		{
 			MultiXactId thisoldest = OldestMemberMXactId[i];
 
@@ -708,12 +707,12 @@ MultiXactIdSetOldestVisible(void)
 				oldestMXact = thisoldest;
 		}
 
-		OldestVisibleMXactId[MyBackendId] = oldestMXact;
+		OldestVisibleMXactId[MyProcNumber] = oldestMXact;
 
 		LWLockRelease(MultiXactGenLock);
 
 		debug_elog4(DEBUG2, "MultiXact: setting OldestVisible[%d] = %u",
-					MyBackendId, oldestMXact);
+					MyProcNumber, oldestMXact);
 	}
 }
 
@@ -1285,7 +1284,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 * multi.  It cannot possibly still be running.
 	 */
 	if (isLockOnly &&
-		MultiXactIdPrecedes(multi, OldestVisibleMXactId[MyBackendId]))
+		MultiXactIdPrecedes(multi, OldestVisibleMXactId[MyProcNumber]))
 	{
 		debug_elog2(DEBUG2, "GetMembers: a locker-only multi is too old");
 		*members = NULL;
@@ -1752,8 +1751,8 @@ AtEOXact_MultiXact(void)
 	 * We assume that storing a MultiXactId is atomic and so we need not take
 	 * MultiXactGenLock to do this.
 	 */
-	OldestMemberMXactId[MyBackendId] = InvalidMultiXactId;
-	OldestVisibleMXactId[MyBackendId] = InvalidMultiXactId;
+	OldestMemberMXactId[MyProcNumber] = InvalidMultiXactId;
+	OldestVisibleMXactId[MyProcNumber] = InvalidMultiXactId;
 
 	/*
 	 * Discard the local MultiXactId cache.  Since MXactContext was created as
@@ -1773,7 +1772,7 @@ AtEOXact_MultiXact(void)
 void
 AtPrepare_MultiXact(void)
 {
-	MultiXactId myOldestMember = OldestMemberMXactId[MyBackendId];
+	MultiXactId myOldestMember = OldestMemberMXactId[MyProcNumber];
 
 	if (MultiXactIdIsValid(myOldestMember))
 		RegisterTwoPhaseRecord(TWOPHASE_RM_MULTIXACT_ID, 0,
@@ -1793,10 +1792,10 @@ PostPrepare_MultiXact(TransactionId xid)
 	 * Transfer our OldestMemberMXactId value to the slot reserved for the
 	 * prepared transaction.
 	 */
-	myOldestMember = OldestMemberMXactId[MyBackendId];
+	myOldestMember = OldestMemberMXactId[MyProcNumber];
 	if (MultiXactIdIsValid(myOldestMember))
 	{
-		BackendId	dummyBackendId = TwoPhaseGetDummyBackendId(xid, false);
+		ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(xid, false);
 
 		/*
 		 * Even though storing MultiXactId is atomic, acquire lock to make
@@ -1806,8 +1805,8 @@ PostPrepare_MultiXact(TransactionId xid)
 		 */
 		LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 
-		OldestMemberMXactId[dummyBackendId] = myOldestMember;
-		OldestMemberMXactId[MyBackendId] = InvalidMultiXactId;
+		OldestMemberMXactId[dummyProcNumber] = myOldestMember;
+		OldestMemberMXactId[MyProcNumber] = InvalidMultiXactId;
 
 		LWLockRelease(MultiXactGenLock);
 	}
@@ -1820,7 +1819,7 @@ PostPrepare_MultiXact(TransactionId xid)
 	 * We assume that storing a MultiXactId is atomic and so we need not take
 	 * MultiXactGenLock to do this.
 	 */
-	OldestVisibleMXactId[MyBackendId] = InvalidMultiXactId;
+	OldestVisibleMXactId[MyProcNumber] = InvalidMultiXactId;
 
 	/*
 	 * Discard the local MultiXactId cache like in AtEOXact_MultiXact.
@@ -1837,7 +1836,7 @@ void
 multixact_twophase_recover(TransactionId xid, uint16 info,
 						   void *recdata, uint32 len)
 {
-	BackendId	dummyBackendId = TwoPhaseGetDummyBackendId(xid, false);
+	ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(xid, false);
 	MultiXactId oldestMember;
 
 	/*
@@ -1847,7 +1846,7 @@ multixact_twophase_recover(TransactionId xid, uint16 info,
 	Assert(len == sizeof(MultiXactId));
 	oldestMember = *((MultiXactId *) recdata);
 
-	OldestMemberMXactId[dummyBackendId] = oldestMember;
+	OldestMemberMXactId[dummyProcNumber] = oldestMember;
 }
 
 /*
@@ -1858,11 +1857,11 @@ void
 multixact_twophase_postcommit(TransactionId xid, uint16 info,
 							  void *recdata, uint32 len)
 {
-	BackendId	dummyBackendId = TwoPhaseGetDummyBackendId(xid, true);
+	ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(xid, true);
 
 	Assert(len == sizeof(MultiXactId));
 
-	OldestMemberMXactId[dummyBackendId] = InvalidMultiXactId;
+	OldestMemberMXactId[dummyProcNumber] = InvalidMultiXactId;
 }
 
 /*
@@ -1886,9 +1885,9 @@ MultiXactShmemSize(void)
 {
 	Size		size;
 
-	/* We need 2*MaxOldestSlot + 1 perBackendXactIds[] entries */
+	/* We need 2*MaxOldestSlot perBackendXactIds[] entries */
 #define SHARED_MULTIXACT_STATE_SIZE \
-	add_size(offsetof(MultiXactStateData, perBackendXactIds) + sizeof(MultiXactId), \
+	add_size(offsetof(MultiXactStateData, perBackendXactIds), \
 			 mul_size(sizeof(MultiXactId) * 2, MaxOldestSlot))
 
 	size = SHARED_MULTIXACT_STATE_SIZE;
@@ -1938,8 +1937,7 @@ MultiXactShmemInit(void)
 		Assert(found);
 
 	/*
-	 * Set up array pointers.  Note that perBackendXactIds[0] is wasted space
-	 * since we only use indexes 1..MaxOldestSlot in each array.
+	 * Set up array pointers.
 	 */
 	OldestMemberMXactId = MultiXactState->perBackendXactIds;
 	OldestVisibleMXactId = OldestMemberMXactId + MaxOldestSlot;
@@ -2617,7 +2615,7 @@ GetOldestMultiXactId(void)
 		nextMXact = FirstMultiXactId;
 
 	oldestMXact = nextMXact;
-	for (i = 1; i <= MaxOldestSlot; i++)
+	for (i = 0; i < MaxOldestSlot; i++)
 	{
 		MultiXactId thisoldest;
 

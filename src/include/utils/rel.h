@@ -57,7 +57,7 @@ typedef struct RelationData
 	RelFileLocator rd_locator;	/* relation physical identifier */
 	SMgrRelation rd_smgr;		/* cached file handle, or NULL */
 	int			rd_refcnt;		/* reference count */
-	BackendId	rd_backend;		/* owning backend id, if temporary relation */
+	ProcNumber	rd_backend;		/* owning backend's proc number, if temp rel */
 	bool		rd_islocaltemp; /* rel is a temp rel of this session */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isvalid;		/* relcache entry is valid */

@@ -238,7 +238,7 @@ CreateSharedBackendStatus(void)
 
 /*
  * Initialize pgstats backend activity state, and set up our on-proc-exit
- * hook.  Called from InitPostgres and AuxiliaryProcessMain.  MyBackendId must
+ * hook.  Called from InitPostgres and AuxiliaryProcessMain.  MyProcNumber must
  * be set, but we must not have started any transaction yet (since the exit
  * hook must run after the last transaction exit).
  *
@@ -248,9 +248,9 @@ void
 pgstat_beinit(void)
 {
 	/* Initialize MyBEEntry */
-	Assert(MyBackendId != InvalidBackendId);
-	Assert(MyBackendId >= 1 && MyBackendId <= NumBackendStatSlots);
-	MyBEEntry = &BackendStatusArray[MyBackendId - 1];
+	Assert(MyProcNumber != INVALID_PROC_NUMBER);
+	Assert(MyProcNumber >= 0 && MyProcNumber < NumBackendStatSlots);
+	MyBEEntry = &BackendStatusArray[MyProcNumber];
 
 	/* Set up a process-exit hook to clean up */
 	on_shmem_exit(pgstat_beshutdown_hook, 0);
@@ -721,7 +721,7 @@ pgstat_read_current_status(void)
 #ifdef ENABLE_GSS
 	PgBackendGSSStatus *localgssstatus;
 #endif
-	int			i;
+	ProcNumber	procNumber;
 
 	if (localBackendStatusTable)
 		return;					/* already done */
@@ -764,7 +764,7 @@ pgstat_read_current_status(void)
 
 	beentry = BackendStatusArray;
 	localentry = localtable;
-	for (i = 1; i <= NumBackendStatSlots; i++)
+	for (procNumber = 0; procNumber < NumBackendStatSlots; procNumber++)
 	{
 		/*
 		 * Follow the protocol of retrying if st_changecount changes while we
@@ -830,17 +830,17 @@ pgstat_read_current_status(void)
 		if (localentry->backendStatus.st_procpid > 0)
 		{
 			/*
-			 * The BackendStatusArray index is exactly the BackendId of the
+			 * The BackendStatusArray index is exactly the ProcNumber of the
 			 * source backend.  Note that this means localBackendStatusTable
-			 * is in order by backend_id.  pgstat_get_beentry_by_backend_id()
+			 * is in order by proc_number.  pgstat_get_beentry_by_backend_id()
 			 * depends on that.
 			 */
-			localentry->backend_id = i;
-			BackendIdGetTransactionIds(i,
-									   &localentry->backend_xid,
-									   &localentry->backend_xmin,
-									   &localentry->backend_subxact_count,
-									   &localentry->backend_subxact_overflowed);
+			localentry->proc_number = procNumber;
+			ProcNumberGetTransactionIds(procNumber,
+										&localentry->backend_xid,
+										&localentry->backend_xmin,
+										&localentry->backend_subxact_count,
+										&localentry->backend_subxact_overflowed);
 
 			localentry++;
 			localappname += NAMEDATALEN;
@@ -1043,7 +1043,7 @@ pgstat_get_my_query_id(void)
  * cmp_lbestatus
  *
  *	Comparison function for bsearch() on an array of LocalPgBackendStatus.
- *	The backend_id field is used to compare the arguments.
+ *	The proc_number field is used to compare the arguments.
  * ----------
  */
 static int
@@ -1052,17 +1052,17 @@ cmp_lbestatus(const void *a, const void *b)
 	const LocalPgBackendStatus *lbestatus1 = (const LocalPgBackendStatus *) a;
 	const LocalPgBackendStatus *lbestatus2 = (const LocalPgBackendStatus *) b;
 
-	return lbestatus1->backend_id - lbestatus2->backend_id;
+	return lbestatus1->proc_number - lbestatus2->proc_number;
 }
 
 /* ----------
- * pgstat_get_beentry_by_backend_id() -
+ * pgstat_get_beentry_by_proc_number() -
  *
  *	Support function for the SQL-callable pgstat* functions. Returns
  *	our local copy of the current-activity entry for one backend,
  *	or NULL if the given beid doesn't identify any known session.
  *
- *	The beid argument is the BackendId of the desired session
+ *	The argument is the ProcNumber of the desired session
  *	(note that this is unlike pgstat_get_local_beentry_by_index()).
  *
  *	NB: caller is responsible for a check if the user is permitted to see
@@ -1070,9 +1070,9 @@ cmp_lbestatus(const void *a, const void *b)
  * ----------
  */
 PgBackendStatus *
-pgstat_get_beentry_by_backend_id(BackendId beid)
+pgstat_get_beentry_by_proc_number(ProcNumber procNumber)
 {
-	LocalPgBackendStatus *ret = pgstat_get_local_beentry_by_backend_id(beid);
+	LocalPgBackendStatus *ret = pgstat_get_local_beentry_by_proc_number(procNumber);
 
 	if (ret)
 		return &ret->backendStatus;
@@ -1082,12 +1082,12 @@ pgstat_get_beentry_by_backend_id(BackendId beid)
 
 
 /* ----------
- * pgstat_get_local_beentry_by_backend_id() -
+ * pgstat_get_local_beentry_by_proc_number() -
  *
- *	Like pgstat_get_beentry_by_backend_id() but with locally computed additions
+ *	Like pgstat_get_beentry_by_proc_number() but with locally computed additions
  *	(like xid and xmin values of the backend)
  *
- *	The beid argument is the BackendId of the desired session
+ *	The argument is the ProcNumber of the desired session
  *	(note that this is unlike pgstat_get_local_beentry_by_index()).
  *
  *	NB: caller is responsible for checking if the user is permitted to see this
@@ -1095,7 +1095,7 @@ pgstat_get_beentry_by_backend_id(BackendId beid)
  * ----------
  */
 LocalPgBackendStatus *
-pgstat_get_local_beentry_by_backend_id(BackendId beid)
+pgstat_get_local_beentry_by_proc_number(ProcNumber procNumber)
 {
 	LocalPgBackendStatus key;
 
@@ -1105,7 +1105,7 @@ pgstat_get_local_beentry_by_backend_id(BackendId beid)
 	 * Since the localBackendStatusTable is in order by backend_id, we can use
 	 * bsearch() to search it efficiently.
 	 */
-	key.backend_id = beid;
+	key.proc_number = procNumber;
 	return bsearch(&key, localBackendStatusTable, localNumBackends,
 				   sizeof(LocalPgBackendStatus), cmp_lbestatus);
 }

@@ -26,10 +26,10 @@
    Every transaction is identified by a unique
    <literal>VirtualTransactionId</literal> (also called
    <literal>virtualXID</literal> or <literal>vxid</literal>), which
-   is comprised of a backend ID (or <literal>backendID</literal>)
+   is comprised of a backend's process number (or <literal>procNumber</literal>)
    and a sequentially-assigned number local to each backend, known as
    <literal>localXID</literal>.  For example, the virtual transaction
-   ID <literal>4/12532</literal> has a <literal>backendID</literal>
+   ID <literal>4/12532</literal> has a <literal>procNumber</literal>
    of <literal>4</literal> and a <literal>localXID</literal> of
    <literal>12532</literal>.
   </para>

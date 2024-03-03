@@ -7495,7 +7495,7 @@ local0.*    /var/log/postgresql
             </row>
             <row>
              <entry><literal>%v</literal></entry>
-             <entry>Virtual transaction ID (backendID/localXID);  see
+             <entry>Virtual transaction ID (procNumber/localXID);  see
              <xref linkend="transaction-id"/></entry>
              <entry>no</entry>
             </row>
