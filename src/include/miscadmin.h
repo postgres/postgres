@@ -454,8 +454,6 @@ typedef enum
 	WalWriterProcess,
 	WalReceiverProcess,
 	WalSummarizerProcess,
-
-	NUM_AUXPROCTYPES			/* Must be last! */
 } AuxProcType;
 
 extern PGDLLIMPORT AuxProcType MyAuxProcType;

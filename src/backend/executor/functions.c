@@ -799,7 +799,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 											  lazyEvalOK);
 
 	/* Mark fcache with time of creation to show it's valid */
-	fcache->lxid = MyProc->lxid;
+	fcache->lxid = MyProc->vxid.lxid;
 	fcache->subxid = GetCurrentSubTransactionId();
 
 	ReleaseSysCache(procedureTuple);
@@ -1081,7 +1081,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 
 	if (fcache != NULL)
 	{
-		if (fcache->lxid != MyProc->lxid ||
+		if (fcache->lxid != MyProc->vxid.lxid ||
 			!SubTransactionIsActive(fcache->subxid))
 		{
 			/* It's stale; unlink and delete */

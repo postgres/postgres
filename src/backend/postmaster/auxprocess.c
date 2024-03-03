@@ -107,17 +107,7 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 
 	BaseInit();
 
-	/*
-	 * Assign the ProcSignalSlot for an auxiliary process.  Since it doesn't
-	 * have a BackendId, the slot is statically allocated based on the
-	 * auxiliary process type (MyAuxProcType).  Backends use slots indexed in
-	 * the range from 1 to MaxBackends (inclusive), so we use MaxBackends +
-	 * AuxProcType + 1 as the index of the slot for an auxiliary process.
-	 *
-	 * This will need rethinking if we ever want more than one of a particular
-	 * auxiliary process type.
-	 */
-	ProcSignalInit(MaxBackends + MyAuxProcType + 1);
+	ProcSignalInit();
 
 	/*
 	 * Auxiliary processes don't run transactions, but they may need a

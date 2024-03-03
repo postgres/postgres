@@ -74,9 +74,9 @@ typedef struct
 #define SetInvalidVirtualTransactionId(vxid) \
 	((vxid).backendId = InvalidBackendId, \
 	 (vxid).localTransactionId = InvalidLocalTransactionId)
-#define GET_VXID_FROM_PGPROC(vxid, proc) \
-	((vxid).backendId = (proc).backendId, \
-	 (vxid).localTransactionId = (proc).lxid)
+#define GET_VXID_FROM_PGPROC(vxid_dst, proc) \
+	((vxid_dst).backendId = (proc).vxid.backendId, \
+		 (vxid_dst).localTransactionId = (proc).vxid.lxid)
 
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
 #define MAX_LOCKMODES		10
@@ -454,8 +454,7 @@ typedef struct LockInstanceData
 	LOCKTAG		locktag;		/* tag for locked object */
 	LOCKMASK	holdMask;		/* locks held by this PGPROC */
 	LOCKMODE	waitLockMode;	/* lock awaited by this PGPROC, if any */
-	BackendId	backend;		/* backend ID of this PGPROC */
-	LocalTransactionId lxid;	/* local transaction ID of this PGPROC */
+	VirtualTransactionId vxid;	/* virtual transaction ID of this PGPROC */
 	TimestampTz waitStart;		/* time at which this PGPROC started waiting
 								 * for lock */
 	int			pid;			/* pid of this PGPROC */

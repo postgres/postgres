@@ -242,25 +242,25 @@ InitProcGlobal(void)
 		if (i < MaxConnections)
 		{
 			/* PGPROC for normal backend, add to freeProcs list */
-			dlist_push_head(&ProcGlobal->freeProcs, &proc->links);
+			dlist_push_tail(&ProcGlobal->freeProcs, &proc->links);
 			proc->procgloballist = &ProcGlobal->freeProcs;
 		}
 		else if (i < MaxConnections + autovacuum_max_workers + 1)
 		{
 			/* PGPROC for AV launcher/worker, add to autovacFreeProcs list */
-			dlist_push_head(&ProcGlobal->autovacFreeProcs, &proc->links);
+			dlist_push_tail(&ProcGlobal->autovacFreeProcs, &proc->links);
 			proc->procgloballist = &ProcGlobal->autovacFreeProcs;
 		}
 		else if (i < MaxConnections + autovacuum_max_workers + 1 + max_worker_processes)
 		{
 			/* PGPROC for bgworker, add to bgworkerFreeProcs list */
-			dlist_push_head(&ProcGlobal->bgworkerFreeProcs, &proc->links);
+			dlist_push_tail(&ProcGlobal->bgworkerFreeProcs, &proc->links);
 			proc->procgloballist = &ProcGlobal->bgworkerFreeProcs;
 		}
 		else if (i < MaxBackends)
 		{
 			/* PGPROC for walsender, add to walsenderFreeProcs list */
-			dlist_push_head(&ProcGlobal->walsenderFreeProcs, &proc->links);
+			dlist_push_tail(&ProcGlobal->walsenderFreeProcs, &proc->links);
 			proc->procgloballist = &ProcGlobal->walsenderFreeProcs;
 		}
 
@@ -355,6 +355,7 @@ InitProcess(void)
 				 errmsg("sorry, too many clients already")));
 	}
 	MyProcNumber = GetNumberFromPGProc(MyProc);
+	MyBackendId = GetBackendIdFromPGProc(MyProc);
 
 	/*
 	 * Cross-check that the PGPROC is of the type we expect; if this were not
@@ -381,14 +382,14 @@ InitProcess(void)
 	 */
 	dlist_node_init(&MyProc->links);
 	MyProc->waitStatus = PROC_WAIT_STATUS_OK;
-	MyProc->lxid = InvalidLocalTransactionId;
 	MyProc->fpVXIDLock = false;
 	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
-	/* backendId, databaseId and roleId will be filled in later */
-	MyProc->backendId = InvalidBackendId;
+	MyProc->vxid.backendId = MyBackendId;
+	MyProc->vxid.lxid = InvalidLocalTransactionId;
+	/* databaseId and roleId will be filled in later */
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->tempNamespaceId = InvalidOid;
@@ -568,11 +569,11 @@ InitAuxiliaryProcess(void)
 	/* use volatile pointer to prevent code rearrangement */
 	((volatile PGPROC *) auxproc)->pid = MyProcPid;
 
-	MyProc = auxproc;
-
 	SpinLockRelease(ProcStructLock);
 
+	MyProc = auxproc;
 	MyProcNumber = GetNumberFromPGProc(MyProc);
+	MyBackendId = GetBackendIdFromPGProc(MyProc);
 
 	/*
 	 * Initialize all fields of MyProc, except for those previously
@@ -580,12 +581,12 @@ InitAuxiliaryProcess(void)
 	 */
 	dlist_node_init(&MyProc->links);
 	MyProc->waitStatus = PROC_WAIT_STATUS_OK;
-	MyProc->lxid = InvalidLocalTransactionId;
 	MyProc->fpVXIDLock = false;
 	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
-	MyProc->backendId = InvalidBackendId;
+	MyProc->vxid.backendId = InvalidBackendId;
+	MyProc->vxid.lxid = InvalidLocalTransactionId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->tempNamespaceId = InvalidOid;
@@ -916,7 +917,13 @@ ProcKill(int code, Datum arg)
 	proc = MyProc;
 	MyProc = NULL;
 	MyProcNumber = INVALID_PGPROCNO;
+	MyBackendId = InvalidBackendId;
 	DisownLatch(&proc->procLatch);
+
+	/* Mark the proc no longer in use */
+	proc->pid = 0;
+	proc->vxid.backendId = InvalidBackendId;
+	proc->vxid.lxid = InvalidTransactionId;
 
 	procgloballist = proc->procgloballist;
 	SpinLockAcquire(ProcStructLock);
@@ -992,12 +999,15 @@ AuxiliaryProcKill(int code, Datum arg)
 	proc = MyProc;
 	MyProc = NULL;
 	MyProcNumber = INVALID_PGPROCNO;
+	MyBackendId = InvalidBackendId;
 	DisownLatch(&proc->procLatch);
 
 	SpinLockAcquire(ProcStructLock);
 
 	/* Mark auxiliary proc no longer in use */
 	proc->pid = 0;
+	proc->vxid.backendId = InvalidBackendId;
+	proc->vxid.lxid = InvalidTransactionId;
 
 	/* Update shared estimate of spins_per_delay */
 	ProcGlobal->spins_per_delay = update_spins_per_delay(ProcGlobal->spins_per_delay);

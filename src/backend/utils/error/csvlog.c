@@ -152,8 +152,8 @@ write_csvlog(ErrorData *edata)
 
 	/* Virtual transaction id */
 	/* keep VXID format in sync with lockfuncs.c */
-	if (MyProc != NULL && MyProc->backendId != InvalidBackendId)
-		appendStringInfo(&buf, "%d/%u", MyProc->backendId, MyProc->lxid);
+	if (MyProc != NULL && MyProc->vxid.backendId != InvalidBackendId)
+		appendStringInfo(&buf, "%d/%u", MyProc->vxid.backendId, MyProc->vxid.lxid);
 	appendStringInfoChar(&buf, ',');
 
 	/* Transaction id */

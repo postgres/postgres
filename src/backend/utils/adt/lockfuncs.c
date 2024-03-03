@@ -353,7 +353,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		values[10] = VXIDGetDatum(instance->backend, instance->lxid);
+		values[10] = VXIDGetDatum(instance->vxid.backendId, instance->vxid.localTransactionId);
 		if (instance->pid != 0)
 			values[11] = Int32GetDatum(instance->pid);
 		else

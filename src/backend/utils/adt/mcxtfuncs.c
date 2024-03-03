@@ -148,19 +148,11 @@ pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 	PGPROC	   *proc;
 	BackendId	backendId = InvalidBackendId;
 
-	proc = BackendPidGetProc(pid);
-
 	/*
 	 * See if the process with given pid is a backend or an auxiliary process.
-	 *
-	 * If the given process is a backend, use its backend id in
-	 * SendProcSignal() later to speed up the operation. Otherwise, don't do
-	 * that because auxiliary processes (except the startup process) don't
-	 * have a valid backend id.
 	 */
-	if (proc != NULL)
-		backendId = proc->backendId;
-	else
+	proc = BackendPidGetProc(pid);
+	if (proc == NULL)
 		proc = AuxiliaryPidGetProc(pid);
 
 	/*
@@ -183,6 +175,8 @@ pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	}
 
+	if (proc != NULL)
+		backendId = GetBackendIdFromPGProc(proc);
 	if (SendProcSignal(pid, PROCSIG_LOG_MEMORY_CONTEXT, backendId) < 0)
 	{
 		/* Again, just a warning to allow loops */

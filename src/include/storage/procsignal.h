@@ -62,7 +62,7 @@ typedef enum
 extern Size ProcSignalShmemSize(void);
 extern void ProcSignalShmemInit(void);
 
-extern void ProcSignalInit(int pss_idx);
+extern void ProcSignalInit(void);
 extern int	SendProcSignal(pid_t pid, ProcSignalReason reason,
 						   BackendId backendId);
 

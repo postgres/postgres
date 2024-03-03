@@ -19,6 +19,7 @@
 #include "port/atomics.h"		/* for memory barriers */
 #include "storage/ipc.h"
 #include "storage/proc.h"		/* for MyProc */
+#include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "utils/ascii.h"
 #include "utils/backend_status.h"
@@ -29,13 +30,12 @@
 /* ----------
  * Total number of backends including auxiliary
  *
- * We reserve a slot for each possible BackendId, plus one for each
- * possible auxiliary process type.  (This scheme assumes there is not
- * more than one of any auxiliary process type at a time.) MaxBackends
- * includes autovacuum workers and background workers as well.
+ * We reserve a slot for each possible PGPROC entry, including aux processes.
+ * (But not including PGPROC entries reserved for prepared xacts; they are not
+ * real processes.)
  * ----------
  */
-#define NumBackendStatSlots (MaxBackends + NUM_AUXPROCTYPES)
+#define NumBackendStatSlots (MaxBackends + NUM_AUXILIARY_PROCS)
 
 
 /* ----------
@@ -238,10 +238,9 @@ CreateSharedBackendStatus(void)
 
 /*
  * Initialize pgstats backend activity state, and set up our on-proc-exit
- * hook.  Called from InitPostgres and AuxiliaryProcessMain. For auxiliary
- * process, MyBackendId is invalid. Otherwise, MyBackendId must be set, but we
- * must not have started any transaction yet (since the exit hook must run
- * after the last transaction exit).
+ * hook.  Called from InitPostgres and AuxiliaryProcessMain.  MyBackendId must
+ * be set, but we must not have started any transaction yet (since the exit
+ * hook must run after the last transaction exit).
  *
  * NOTE: MyDatabaseId isn't set yet; so the shutdown hook has to be careful.
  */
@@ -249,26 +248,9 @@ void
 pgstat_beinit(void)
 {
 	/* Initialize MyBEEntry */
-	if (MyBackendId != InvalidBackendId)
-	{
-		Assert(MyBackendId >= 1 && MyBackendId <= MaxBackends);
-		MyBEEntry = &BackendStatusArray[MyBackendId - 1];
-	}
-	else
-	{
-		/* Must be an auxiliary process */
-		Assert(MyAuxProcType != NotAnAuxProcess);
-
-		/*
-		 * Assign the MyBEEntry for an auxiliary process.  Since it doesn't
-		 * have a BackendId, the slot is statically allocated based on the
-		 * auxiliary process type (MyAuxProcType).  Backends use slots indexed
-		 * in the range from 0 to MaxBackends (exclusive), so we use
-		 * MaxBackends + AuxProcType as the index of the slot for an auxiliary
-		 * process.
-		 */
-		MyBEEntry = &BackendStatusArray[MaxBackends + MyAuxProcType];
-	}
+	Assert(MyBackendId != InvalidBackendId);
+	Assert(MyBackendId >= 1 && MyBackendId <= NumBackendStatSlots);
+	MyBEEntry = &BackendStatusArray[MyBackendId - 1];
 
 	/* Set up a process-exit hook to clean up */
 	on_shmem_exit(pgstat_beshutdown_hook, 0);
@@ -281,12 +263,12 @@ pgstat_beinit(void)
  *	Initialize this backend's entry in the PgBackendStatus array.
  *	Called from InitPostgres.
  *
- *	Apart from auxiliary processes, MyBackendId, MyDatabaseId,
- *	session userid, and application_name must be set for a
- *	backend (hence, this cannot be combined with pgstat_beinit).
- *	Note also that we must be inside a transaction if this isn't an aux
- *	process, as we may need to do encoding conversion on some strings.
- * ----------
+ *	Apart from auxiliary processes, MyDatabaseId, session userid, and
+ *	application_name must already be set (hence, this cannot be combined
+ *	with pgstat_beinit).  Note also that we must be inside a transaction
+ *	if this isn't an aux process, as we may need to do encoding conversion
+ *	on some strings.
+ *----------
  */
 void
 pgstat_bestart(void)

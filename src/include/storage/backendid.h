@@ -14,11 +14,15 @@
 #ifndef BACKENDID_H
 #define BACKENDID_H
 
-/* ----------------
- *		-cim 8/17/90
- * ----------------
+/*
+ * BackendId uniquely identifies an active backend or auxiliary process.  It's
+ * assigned at backend startup after authentication.  Note that a backend ID
+ * can be reused for a different backend immediately after a backend exits.
+ *
+ * Backend IDs are assigned starting from 1. For historical reasons, BackendId
+ * 0 is unused, but InvalidBackendId is defined as -1.
  */
-typedef int BackendId;			/* unique currently active backend identifier */
+typedef int BackendId;
 
 #define InvalidBackendId		(-1)
 

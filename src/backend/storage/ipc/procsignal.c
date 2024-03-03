@@ -87,7 +87,7 @@ typedef struct
  * possible auxiliary process type.  (This scheme assumes there is not
  * more than one of any auxiliary process type at a time.)
  */
-#define NumProcSignalSlots	(MaxBackends + NUM_AUXPROCTYPES)
+#define NumProcSignalSlots	(MaxBackends + NUM_AUXILIARY_PROCS)
 
 /* Check whether the relevant type bit is set in the flags. */
 #define BARRIER_SHOULD_CHECK(flags, type) \
@@ -154,24 +154,23 @@ ProcSignalShmemInit(void)
 /*
  * ProcSignalInit
  *		Register the current process in the ProcSignal array
- *
- * The passed index should be my BackendId if the process has one,
- * or MaxBackends + aux process type if not.
  */
 void
-ProcSignalInit(int pss_idx)
+ProcSignalInit(void)
 {
 	ProcSignalSlot *slot;
 	uint64		barrier_generation;
 
-	Assert(pss_idx >= 1 && pss_idx <= NumProcSignalSlots);
-
-	slot = &ProcSignal->psh_slot[pss_idx - 1];
+	if (MyBackendId <= 0)
+		elog(ERROR, "MyBackendId not set");
+	if (MyBackendId > NumProcSignalSlots)
+		elog(ERROR, "unexpected MyBackendId %d in ProcSignalInit (max %d)", MyBackendId, NumProcSignalSlots);
+	slot = &ProcSignal->psh_slot[MyBackendId - 1];
 
 	/* sanity check */
 	if (slot->pss_pid != 0)
 		elog(LOG, "process %d taking over ProcSignal slot %d, but it's not empty",
-			 MyProcPid, pss_idx);
+			 MyProcPid, MyBackendId - 1);
 
 	/* Clear out any leftover signal reasons */
 	MemSet(slot->pss_signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
@@ -200,7 +199,7 @@ ProcSignalInit(int pss_idx)
 	MyProcSignalSlot = slot;
 
 	/* Set up to release the slot on process exit */
-	on_shmem_exit(CleanupProcSignalState, Int32GetDatum(pss_idx));
+	on_shmem_exit(CleanupProcSignalState, (Datum) 0);
 }
 
 /*
@@ -212,11 +211,7 @@ ProcSignalInit(int pss_idx)
 static void
 CleanupProcSignalState(int status, Datum arg)
 {
-	int			pss_idx = DatumGetInt32(arg);
-	ProcSignalSlot *slot;
-
-	slot = &ProcSignal->psh_slot[pss_idx - 1];
-	Assert(slot == MyProcSignalSlot);
+	ProcSignalSlot *slot = MyProcSignalSlot;
 
 	/*
 	 * Clear MyProcSignalSlot, so that a SIGUSR1 received after this point
@@ -233,7 +228,7 @@ CleanupProcSignalState(int status, Datum arg)
 		 * infinite loop trying to exit
 		 */
 		elog(LOG, "process %d releasing ProcSignal slot %d, but it contains %d",
-			 MyProcPid, pss_idx, (int) slot->pss_pid);
+			 MyProcPid, (int) (slot - ProcSignal->psh_slot), (int) slot->pss_pid);
 		return;					/* XXX better to zero the slot anyway? */
 	}
 
