@@ -53,7 +53,13 @@ Objects in extension "test_ext7"
  table ext7_table1
  table ext7_table2
  table old_table1
-(6 rows)
+ type ext7_table1
+ type ext7_table1[]
+ type ext7_table2
+ type ext7_table2[]
+ type old_table1
+ type old_table1[]
+(12 rows)
 
 alter extension test_ext7 update to '2.0';
 \dx+ test_ext7
@@ -62,7 +68,9 @@ Objects in extension "test_ext7"
 -------------------------------
  sequence ext7_table2_col2_seq
  table ext7_table2
-(2 rows)
+ type ext7_table2
+ type ext7_table2[]
+(4 rows)
 
 -- test handling of temp objects created by extensions
 create extension test_ext8;
@@ -79,8 +87,13 @@ order by 1;
  function pg_temp.ext8_temp_even(posint)
  table ext8_table1
  table ext8_temp_table1
+ type ext8_table1
+ type ext8_table1[]
+ type ext8_temp_table1
+ type ext8_temp_table1[]
  type posint
-(5 rows)
+ type posint[]
+(10 rows)
 
 -- Should be possible to drop and recreate this extension
 drop extension test_ext8;
@@ -97,8 +110,13 @@ order by 1;
  function pg_temp.ext8_temp_even(posint)
  table ext8_table1
  table ext8_temp_table1
+ type ext8_table1
+ type ext8_table1[]
+ type ext8_temp_table1
+ type ext8_temp_table1[]
  type posint
-(5 rows)
+ type posint[]
+(10 rows)
 
 -- here we want to start a new session and wait till old one is gone
 select pg_backend_pid() as oldpid \gset
@@ -117,11 +135,119 @@ Objects in extension "test_ext8"
 ----------------------------
  function ext8_even(posint)
  table ext8_table1
+ type ext8_table1
+ type ext8_table1[]
  type posint
-(3 rows)
+ type posint[]
+(6 rows)
 
 -- dropping it should still work
 drop extension test_ext8;
+-- check handling of types as extension members
+create extension test_ext9;
+\dx+ test_ext9
+          Objects in extension "test_ext9"
+                 Object description                 
+----------------------------------------------------
+ cast from varbitrange to varbitmultirange
+ function varbitmultirange()
+ function varbitmultirange(varbitrange)
+ function varbitmultirange(varbitrange[])
+ function varbitrange(bit varying,bit varying)
+ function varbitrange(bit varying,bit varying,text)
+ table sometable
+ type somecomposite
+ type somecomposite[]
+ type sometable
+ type sometable[]
+ type varbitmultirange
+ type varbitmultirange[]
+ type varbitrange
+ type varbitrange[]
+(15 rows)
+
+alter extension test_ext9 drop type varbitrange;
+\dx+ test_ext9
+          Objects in extension "test_ext9"
+                 Object description                 
+----------------------------------------------------
+ cast from varbitrange to varbitmultirange
+ function varbitmultirange()
+ function varbitmultirange(varbitrange)
+ function varbitmultirange(varbitrange[])
+ function varbitrange(bit varying,bit varying)
+ function varbitrange(bit varying,bit varying,text)
+ table sometable
+ type somecomposite
+ type somecomposite[]
+ type sometable
+ type sometable[]
+(11 rows)
+
+alter extension test_ext9 add type varbitrange;
+\dx+ test_ext9
+          Objects in extension "test_ext9"
+                 Object description                 
+----------------------------------------------------
+ cast from varbitrange to varbitmultirange
+ function varbitmultirange()
+ function varbitmultirange(varbitrange)
+ function varbitmultirange(varbitrange[])
+ function varbitrange(bit varying,bit varying)
+ function varbitrange(bit varying,bit varying,text)
+ table sometable
+ type somecomposite
+ type somecomposite[]
+ type sometable
+ type sometable[]
+ type varbitmultirange
+ type varbitmultirange[]
+ type varbitrange
+ type varbitrange[]
+(15 rows)
+
+alter extension test_ext9 drop table sometable;
+\dx+ test_ext9
+          Objects in extension "test_ext9"
+                 Object description                 
+----------------------------------------------------
+ cast from varbitrange to varbitmultirange
+ function varbitmultirange()
+ function varbitmultirange(varbitrange)
+ function varbitmultirange(varbitrange[])
+ function varbitrange(bit varying,bit varying)
+ function varbitrange(bit varying,bit varying,text)
+ type somecomposite
+ type somecomposite[]
+ type varbitmultirange
+ type varbitmultirange[]
+ type varbitrange
+ type varbitrange[]
+(12 rows)
+
+alter extension test_ext9 add table sometable;
+\dx+ test_ext9
+          Objects in extension "test_ext9"
+                 Object description                 
+----------------------------------------------------
+ cast from varbitrange to varbitmultirange
+ function varbitmultirange()
+ function varbitmultirange(varbitrange)
+ function varbitmultirange(varbitrange[])
+ function varbitrange(bit varying,bit varying)
+ function varbitrange(bit varying,bit varying,text)
+ table sometable
+ type somecomposite
+ type somecomposite[]
+ type sometable
+ type sometable[]
+ type varbitmultirange
+ type varbitmultirange[]
+ type varbitrange
+ type varbitrange[]
+(15 rows)
+
+drop extension test_ext9;
 -- Test creation of extension in temporary schema with two-phase commit,
 -- which should not work.  This function wrapper is useful for portability.
 -- Avoid noise caused by CONTEXT and NOTICE messages including the temporary
@@ -237,9 +363,12 @@ Objects in extension "test_ext_cor"
 ------------------------------
  function ext_cor_func()
  operator <<@@(point,polygon)
+ type ext_cor_view
+ type ext_cor_view[]
  type test_ext_type
+ type test_ext_type[]
  view ext_cor_view
-(4 rows)
+(7 rows)
 
 --
 -- CREATE IF NOT EXISTS is an entirely unsound thing for an extension
@@ -295,7 +424,13 @@ Objects in extension "test_ext_cine"
  server ext_cine_srv
  table ext_cine_tab1
  table ext_cine_tab2
-(8 rows)
+ type ext_cine_mv
+ type ext_cine_mv[]
+ type ext_cine_tab1
+ type ext_cine_tab1[]
+ type ext_cine_tab2
+ type ext_cine_tab2[]
+(14 rows)
 
 ALTER EXTENSION test_ext_cine UPDATE TO '1.1';
 \dx+ test_ext_cine
@@ -311,7 +446,15 @@ Objects in extension "test_ext_cine"
  table ext_cine_tab1
  table ext_cine_tab2
  table ext_cine_tab3
-(9 rows)
+ type ext_cine_mv
+ type ext_cine_mv[]
+ type ext_cine_tab1
+ type ext_cine_tab1[]
+ type ext_cine_tab2
+ type ext_cine_tab2[]
+ type ext_cine_tab3
+ type ext_cine_tab3[]
+(17 rows)
 
 --
 -- Test @extschema@ syntax.

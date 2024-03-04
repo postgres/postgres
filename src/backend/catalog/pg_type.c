@@ -539,7 +539,7 @@ TypeCreate(Oid newTypeOid,
  * etc.
  *
  * We make an extension-membership dependency if we're in an extension
- * script and makeExtensionDep is true (and isDependentType isn't true).
+ * script and makeExtensionDep is true.
  * makeExtensionDep should be true when creating a new type or replacing a
  * shell type, but not for ALTER TYPE on an existing type.  Passing false
  * causes the type's extension membership to be left alone.
@@ -599,7 +599,7 @@ GenerateTypeDependencies(HeapTuple typeTuple,
 	ObjectAddressSet(myself, TypeRelationId, typeObjectId);
 
 	/*
-	 * Make dependencies on namespace, owner, ACL, extension.
+	 * Make dependencies on namespace, owner, ACL.
 	 *
 	 * Skip these for a dependent type, since it will have such dependencies
 	 * indirectly through its depended-on type or relation.  An exception is
@@ -624,10 +624,17 @@ GenerateTypeDependencies(HeapTuple typeTuple,
 
 		recordDependencyOnNewAcl(TypeRelationId, typeObjectId, 0,
 								 typeForm->typowner, typacl);
-
-		if (makeExtensionDep)
-			recordDependencyOnCurrentExtension(&myself, rebuild);
 	}
+
+	/*
+	 * Make extension dependency if requested.
+	 *
+	 * We used to skip this for dependent types, but it seems better to record
+	 * their extension membership explicitly; otherwise code such as
+	 * postgres_fdw's shippability test will be fooled.
+	 */
+	if (makeExtensionDep)
+		recordDependencyOnCurrentExtension(&myself, rebuild);
 
 	/* Normal dependencies on the I/O and support functions */
 	if (OidIsValid(typeForm->typinput))

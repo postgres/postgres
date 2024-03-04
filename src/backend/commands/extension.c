@@ -129,6 +129,9 @@ static void ApplyExtensionUpdates(Oid extensionOid,
 								  char *origSchemaName,
 								  bool cascade,
 								  bool is_create);
+static void ExecAlterExtensionContentsRecurse(AlterExtensionContentsStmt *stmt,
+											  ObjectAddress extension,
+											  ObjectAddress object);
 static char *read_whole_file(const char *filename, int *length);
 
 
@@ -3292,7 +3295,6 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 	ObjectAddress extension;
 	ObjectAddress object;
 	Relation	relation;
-	Oid			oldExtension;
 
 	switch (stmt->objtype)
 	{
@@ -3346,6 +3348,38 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 	/* Permission check: must own target object, too */
 	check_object_ownership(GetUserId(), stmt->objtype, object,
 						   stmt->object, relation);
+
+	/* Do the update, recursing to any dependent objects */
+	ExecAlterExtensionContentsRecurse(stmt, extension, object);
+
+	/* Finish up */
+	InvokeObjectPostAlterHook(ExtensionRelationId, extension.objectId, 0);
+
+	/*
+	 * If get_object_address() opened the relation for us, we close it to keep
+	 * the reference count correct - but we retain any locks acquired by
+	 * get_object_address() until commit time, to guard against concurrent
+	 * activity.
+	 */
+	if (relation != NULL)
+		relation_close(relation, NoLock);
+
+	return extension;
+}
+
+/*
+ * ExecAlterExtensionContentsRecurse
+ *		Subroutine for ExecAlterExtensionContentsStmt
+ *
+ * Do the bare alteration of object's membership in extension,
+ * without permission checks.  Recurse to dependent objects, if any.
+ */
+static void
+ExecAlterExtensionContentsRecurse(AlterExtensionContentsStmt *stmt,
+								  ObjectAddress extension,
+								  ObjectAddress object)
+{
+	Oid			oldExtension;
 
 	/*
 	 * Check existing extension membership.
@@ -3430,18 +3464,47 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 		removeExtObjInitPriv(object.objectId, object.classId);
 	}
 
-	InvokeObjectPostAlterHook(ExtensionRelationId, extension.objectId, 0);
-
 	/*
-	 * If get_object_address() opened the relation for us, we close it to keep
-	 * the reference count correct - but we retain any locks acquired by
-	 * get_object_address() until commit time, to guard against concurrent
-	 * activity.
+	 * Recurse to any dependent objects; currently, this includes the array
+	 * type of a base type, the multirange type associated with a range type,
+	 * and the rowtype of a table.
 	 */
-	if (relation != NULL)
-		relation_close(relation, NoLock);
+	if (object.classId == TypeRelationId)
+	{
+		ObjectAddress depobject;
 
-	return extension;
+		depobject.classId = TypeRelationId;
+		depobject.objectSubId = 0;
+
+		/* If it has an array type, update that too */
+		depobject.objectId = get_array_type(object.objectId);
+		if (OidIsValid(depobject.objectId))
+			ExecAlterExtensionContentsRecurse(stmt, extension, depobject);
+
+		/* If it is a range type, update the associated multirange too */
+		if (type_is_range(object.objectId))
+		{
+			depobject.objectId = get_range_multirange(object.objectId);
+			if (!OidIsValid(depobject.objectId))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("could not find multirange type for data type %s",
+								format_type_be(object.objectId))));
+			ExecAlterExtensionContentsRecurse(stmt, extension, depobject);
+		}
+	}
+	if (object.classId == RelationRelationId)
+	{
+		ObjectAddress depobject;
+
+		depobject.classId = TypeRelationId;
+		depobject.objectSubId = 0;
+
+		/* It might not have a rowtype, but if it does, update that */
+		depobject.objectId = get_rel_type_id(object.objectId);
+		if (OidIsValid(depobject.objectId))
+			ExecAlterExtensionContentsRecurse(stmt, extension, depobject);
+	}
 }
 
 /*
