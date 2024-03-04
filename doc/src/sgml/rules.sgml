@@ -859,7 +859,8 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     a view. These rules will rewrite the command, typically into a command
     that updates one or more tables, rather than views. That is the topic
     of <xref linkend="rules-update"/>.  Note that this will not work with
-    <command>MERGE</command>, which currently does not support rules.
+    <command>MERGE</command>, which currently does not support rules on
+    the target relation other than <command>SELECT</command> rules.
 </para>
 
 <para>
@@ -873,7 +874,8 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 
 <para>
     Automatic rewriting of an <command>INSERT</command>,
-    <command>UPDATE</command>, or <command>DELETE</command> query on a
+    <command>UPDATE</command>, <command>DELETE</command>, or
+    <command>MERGE</command> query on a
     simple view is always tried last. Therefore, if a view has rules or
     triggers, they will override the default behavior of automatically
     updatable views.
