@@ -23,6 +23,7 @@
 #include "postgres.h"
 
 #include "storage/pg_sema.h"
+#include "storage/shmem.h"
 #include "storage/spin.h"
 
 
