@@ -33,6 +33,7 @@ tests += {
       't/003_timeline.pl',
       't/004_manifest.pl',
       't/005_integrity.pl',
+      't/006_db_file_copy.pl',
     ],
   }
 }

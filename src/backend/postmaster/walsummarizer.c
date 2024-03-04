@@ -29,6 +29,7 @@
 #include "access/xlogutils.h"
 #include "backup/walsummary.h"
 #include "catalog/storage_xlog.h"
+#include "commands/dbcommands_xlog.h"
 #include "common/blkreftable.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -146,6 +147,8 @@ static void HandleWalSummarizerInterrupts(void);
 static XLogRecPtr SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn,
 							   bool exact, XLogRecPtr switch_lsn,
 							   XLogRecPtr maximum_lsn);
+static void SummarizeDbaseRecord(XLogReaderState *xlogreader,
+								 BlockRefTable *brtab);
 static void SummarizeSmgrRecord(XLogReaderState *xlogreader,
 								BlockRefTable *brtab);
 static void SummarizeXactRecord(XLogReaderState *xlogreader,
@@ -961,6 +964,9 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 		/* Special handling for particular types of WAL records. */
 		switch (XLogRecGetRmid(xlogreader))
 		{
+			case RM_DBASE_ID:
+				SummarizeDbaseRecord(xlogreader, brtab);
+				break;
 			case RM_SMGR_ID:
 				SummarizeSmgrRecord(xlogreader, brtab);
 				break;
@@ -1072,6 +1078,75 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	}
 
 	return summary_end_lsn;
+}
+
+/*
+ * Special handling for WAL records with RM_DBASE_ID.
+ */
+static void
+SummarizeDbaseRecord(XLogReaderState *xlogreader, BlockRefTable *brtab)
+{
+	uint8		info = XLogRecGetInfo(xlogreader) & ~XLR_INFO_MASK;
+
+	/*
+	 * We use relfilenode zero for a given database OID and tablespace OID
+	 * to indicate that all relations with that pair of IDs have been
+	 * recreated if they exist at all. Effectively, we're setting a limit
+	 * block of 0 for all such relfilenodes.
+	 *
+	 * Technically, this special handling is only needed in the case of
+	 * XLOG_DBASE_CREATE_FILE_COPY, because that can create a whole bunch
+	 * of relation files in a directory without logging anything
+	 * specific to each one. If we didn't mark the whole DB OID/TS OID
+	 * combination in some way, then a tablespace that was dropped after
+	 * the reference backup and recreated using the FILE_COPY method prior
+	 * to the incremental backup would look just like one that was never
+	 * touched at all, which would be catastrophic.
+	 *
+	 * But it seems best to adopt this treatment for all records that drop
+	 * or create a DB OID/TS OID combination. That's similar to how we
+	 * treat the limit block for individual relations, and it's an extra
+	 * layer of safety here. We can never lose data by marking more stuff
+	 * as needing to be backed up in full.
+	 */
+	if (info == XLOG_DBASE_CREATE_FILE_COPY)
+	{
+		xl_dbase_create_file_copy_rec *xlrec;
+		RelFileLocator rlocator;
+
+		xlrec =
+			(xl_dbase_create_file_copy_rec *) XLogRecGetData(xlogreader);
+		rlocator.spcOid = xlrec->tablespace_id;
+		rlocator.dbOid = xlrec->db_id;
+		rlocator.relNumber = 0;
+		BlockRefTableSetLimitBlock(brtab, &rlocator, MAIN_FORKNUM, 0);
+	}
+	else if (info == XLOG_DBASE_CREATE_WAL_LOG)
+	{
+		xl_dbase_create_wal_log_rec *xlrec;
+		RelFileLocator rlocator;
+
+		xlrec = (xl_dbase_create_wal_log_rec *) XLogRecGetData(xlogreader);
+		rlocator.spcOid = xlrec->tablespace_id;
+		rlocator.dbOid = xlrec->db_id;
+		rlocator.relNumber = 0;
+		BlockRefTableSetLimitBlock(brtab, &rlocator, MAIN_FORKNUM, 0);
+	}
+	else if (info == XLOG_DBASE_DROP)
+	{
+		xl_dbase_drop_rec *xlrec;
+		RelFileLocator rlocator;
+		int		i;
+
+		xlrec = (xl_dbase_drop_rec *) XLogRecGetData(xlogreader);
+		rlocator.dbOid = xlrec->db_id;
+		rlocator.relNumber = 0;
+		for (i = 0; i < xlrec->ntablespaces; ++i)
+		{
+			rlocator.spcOid = xlrec->tablespace_ids[i];
+			BlockRefTableSetLimitBlock(brtab, &rlocator, MAIN_FORKNUM, 0);
+		}
+	}
 }
 
 /*

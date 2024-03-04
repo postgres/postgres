@@ -777,9 +777,25 @@ GetFileBackupMethod(IncrementalBackupInfo *ib, const char *path,
 			return BACK_UP_FILE_FULLY;
 	}
 
-	/* Look up the block reference table entry. */
+	/*
+	 * Look up the special block reference table entry for the database as
+	 * a whole.
+	 */
 	rlocator.spcOid = spcoid;
 	rlocator.dbOid = dboid;
+	rlocator.relNumber = 0;
+	if (BlockRefTableGetEntry(ib->brtab, &rlocator, MAIN_FORKNUM,
+							  &limit_block) != NULL)
+	{
+		/*
+		 * According to the WAL summary, this database OID/tablespace OID
+		 * pairing has been created since the previous backup. So, everything
+		 * in it must be backed up fully.
+		 */
+		return BACK_UP_FILE_FULLY;
+	}
+
+	/* Look up the block reference table entry for this relfilenode. */
 	rlocator.relNumber = relfilenumber;
 	brtentry = BlockRefTableGetEntry(ib->brtab, &rlocator, forknum,
 									 &limit_block);
