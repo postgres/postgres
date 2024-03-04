@@ -778,8 +778,8 @@ GetFileBackupMethod(IncrementalBackupInfo *ib, const char *path,
 	}
 
 	/*
-	 * Look up the special block reference table entry for the database as
-	 * a whole.
+	 * Look up the special block reference table entry for the database as a
+	 * whole.
 	 */
 	rlocator.spcOid = spcoid;
 	rlocator.dbOid = dboid;

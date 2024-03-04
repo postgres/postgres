@@ -1089,25 +1089,25 @@ SummarizeDbaseRecord(XLogReaderState *xlogreader, BlockRefTable *brtab)
 	uint8		info = XLogRecGetInfo(xlogreader) & ~XLR_INFO_MASK;
 
 	/*
-	 * We use relfilenode zero for a given database OID and tablespace OID
-	 * to indicate that all relations with that pair of IDs have been
-	 * recreated if they exist at all. Effectively, we're setting a limit
-	 * block of 0 for all such relfilenodes.
+	 * We use relfilenode zero for a given database OID and tablespace OID to
+	 * indicate that all relations with that pair of IDs have been recreated
+	 * if they exist at all. Effectively, we're setting a limit block of 0 for
+	 * all such relfilenodes.
 	 *
 	 * Technically, this special handling is only needed in the case of
-	 * XLOG_DBASE_CREATE_FILE_COPY, because that can create a whole bunch
-	 * of relation files in a directory without logging anything
-	 * specific to each one. If we didn't mark the whole DB OID/TS OID
-	 * combination in some way, then a tablespace that was dropped after
-	 * the reference backup and recreated using the FILE_COPY method prior
-	 * to the incremental backup would look just like one that was never
-	 * touched at all, which would be catastrophic.
+	 * XLOG_DBASE_CREATE_FILE_COPY, because that can create a whole bunch of
+	 * relation files in a directory without logging anything specific to each
+	 * one. If we didn't mark the whole DB OID/TS OID combination in some way,
+	 * then a tablespace that was dropped after the reference backup and
+	 * recreated using the FILE_COPY method prior to the incremental backup
+	 * would look just like one that was never touched at all, which would be
+	 * catastrophic.
 	 *
-	 * But it seems best to adopt this treatment for all records that drop
-	 * or create a DB OID/TS OID combination. That's similar to how we
-	 * treat the limit block for individual relations, and it's an extra
-	 * layer of safety here. We can never lose data by marking more stuff
-	 * as needing to be backed up in full.
+	 * But it seems best to adopt this treatment for all records that drop or
+	 * create a DB OID/TS OID combination. That's similar to how we treat the
+	 * limit block for individual relations, and it's an extra layer of safety
+	 * here. We can never lose data by marking more stuff as needing to be
+	 * backed up in full.
 	 */
 	if (info == XLOG_DBASE_CREATE_FILE_COPY)
 	{
@@ -1136,7 +1136,7 @@ SummarizeDbaseRecord(XLogReaderState *xlogreader, BlockRefTable *brtab)
 	{
 		xl_dbase_drop_rec *xlrec;
 		RelFileLocator rlocator;
-		int		i;
+		int			i;
 
 		xlrec = (xl_dbase_drop_rec *) XLogRecGetData(xlogreader);
 		rlocator.dbOid = xlrec->db_id;
