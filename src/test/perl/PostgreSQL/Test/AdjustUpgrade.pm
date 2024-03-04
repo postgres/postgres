@@ -109,10 +109,8 @@ sub adjust_database_contents
 	# we removed the adminpack extension in v17
 	if ($old_version < 17)
 	{
-		_add_st($result, 'regression',
-			'drop extension if exists adminpack');
 		_add_st($result, 'postgres',
-			'drop database contrib_regression_adminpack');
+			'drop database if exists contrib_regression_adminpack');
 		delete($dbnames{'contrib_regression_adminpack'});
 	}
 
