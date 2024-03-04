@@ -26,7 +26,6 @@ typedef struct ParallelWorkerInfo
 {
 	BackgroundWorkerHandle *bgwhandle;
 	shm_mq_handle *error_mqh;
-	int32		pid;
 } ParallelWorkerInfo;
 
 typedef struct ParallelContext
