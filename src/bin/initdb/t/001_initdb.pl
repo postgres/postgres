@@ -187,4 +187,18 @@ command_fails(
 command_fails([ 'initdb', '--no-sync', '--set', 'foo=bar', "$tempdir/dataX" ],
 	'fails for invalid --set option');
 
+# Make sure multiple invocations of -c parameters are added case insensitive
+command_ok(
+	[
+		'initdb', '-cwork_mem=128',
+		'-cWork_Mem=256', '-cWORK_MEM=512',
+		"$tempdir/dataY"
+	],
+	'multiple -c options with different case');
+
+my $conf = slurp_file("$tempdir/dataY/postgresql.conf");
+ok($conf !~ qr/^WORK_MEM = /m, "WORK_MEM should not be configured");
+ok($conf !~ qr/^Work_Mem = /m, "Work_Mem should not be configured");
+ok($conf =~ qr/^work_mem = 512/m, "work_mem should be in config");
+
 done_testing();

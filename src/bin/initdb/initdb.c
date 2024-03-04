@@ -482,6 +482,7 @@ replace_guc_value(char **lines, const char *guc_name, const char *guc_value,
 	for (i = 0; lines[i]; i++)
 	{
 		const char *where;
+		const char *namestart;
 
 		/*
 		 * Look for a line assigning to guc_name.  Typically it will be
@@ -492,15 +493,19 @@ replace_guc_value(char **lines, const char *guc_name, const char *guc_value,
 		where = lines[i];
 		while (*where == '#' || isspace((unsigned char) *where))
 			where++;
-		if (strncmp(where, guc_name, namelen) != 0)
+		if (pg_strncasecmp(where, guc_name, namelen) != 0)
 			continue;
+		namestart = where;
 		where += namelen;
 		while (isspace((unsigned char) *where))
 			where++;
 		if (*where != '=')
 			continue;
 
-		/* found it -- append the original comment if any */
+		/* found it -- let's use the canonical casing shown in the file */
+		memcpy(&newline->data[mark_as_comment ? 1 : 0], namestart, namelen);
+
+		/* now append the original comment if any */
 		where = strrchr(where, '#');
 		if (where)
 		{
