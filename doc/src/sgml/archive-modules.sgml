@@ -114,6 +114,18 @@ WARNING:  archive_mode enabled, yet archiving is not configured
     In the latter case, the server will periodically call this function, and
     archiving will proceed only when it returns <literal>true</literal>.
    </para>
+
+   <note>
+    <para>
+     When returning <literal>false</literal>, it may be useful to append some
+     additional information to the generic warning message.  To do that, provide
+     a message to the <function>arch_module_check_errdetail</function> macro
+     before returning <literal>false</literal>.  Like
+     <function>errdetail()</function>, this macro accepts a format string
+     followed by an optional list of arguments.  The resulting string will be
+     emitted as the <literal>DETAIL</literal> line of the warning message.
+    </para>
+   </note>
   </sect2>
 
   <sect2 id="archive-module-archive">

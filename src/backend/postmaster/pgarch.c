@@ -88,6 +88,7 @@ typedef struct PgArchData
 } PgArchData;
 
 char	   *XLogArchiveLibrary = "";
+char	   *arch_module_check_errdetail_string;
 
 
 /* ----------
@@ -401,12 +402,17 @@ pgarch_ArchiverCopyLoop(void)
 			 */
 			HandlePgArchInterrupts();
 
+			/* Reset variables that might be set by the callback */
+			arch_module_check_errdetail_string = NULL;
+
 			/* can't do anything if not configured ... */
 			if (ArchiveCallbacks->check_configured_cb != NULL &&
 				!ArchiveCallbacks->check_configured_cb(archive_module_state))
 			{
 				ereport(WARNING,
-						(errmsg("archive_mode enabled, yet archiving is not configured")));
+						(errmsg("archive_mode enabled, yet archiving is not configured"),
+						 arch_module_check_errdetail_string ?
+						 errdetail_internal("%s", arch_module_check_errdetail_string) : 0));
 				return;
 			}
 
