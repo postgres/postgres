@@ -136,7 +136,7 @@ proc_exit(int code)
 		 */
 		char		gprofDirName[32];
 
-		if (IsAutoVacuumWorkerProcess())
+		if (AmAutoVacuumWorkerProcess())
 			snprintf(gprofDirName, 32, "gprof/avworker");
 		else
 			snprintf(gprofDirName, 32, "gprof/%d", (int) getpid());

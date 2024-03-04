@@ -5000,9 +5000,6 @@ SubPostmasterMain(int argc, char *argv[])
 	}
 	if (strcmp(argv[1], "--forkbgworker") == 0)
 	{
-		/* do this as early as possible; in particular, before InitProcess() */
-		IsBackgroundWorker = true;
-
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
 

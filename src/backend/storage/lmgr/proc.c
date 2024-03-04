@@ -42,7 +42,6 @@
 #include "replication/slot.h"
 #include "replication/slotsync.h"
 #include "replication/syncrep.h"
-#include "replication/walsender.h"
 #include "storage/condition_variable.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
@@ -310,11 +309,11 @@ InitProcess(void)
 		elog(ERROR, "you already exist");
 
 	/* Decide which list should supply our PGPROC. */
-	if (IsAnyAutoVacuumProcess())
+	if (AmAutoVacuumLauncherProcess() || AmAutoVacuumWorkerProcess())
 		procgloballist = &ProcGlobal->autovacFreeProcs;
-	else if (IsBackgroundWorker)
+	else if (AmBackgroundWorkerProcess())
 		procgloballist = &ProcGlobal->bgworkerFreeProcs;
-	else if (am_walsender)
+	else if (AmWalSenderProcess())
 		procgloballist = &ProcGlobal->walsenderFreeProcs;
 	else
 		procgloballist = &ProcGlobal->freeProcs;
@@ -344,7 +343,7 @@ InitProcess(void)
 		 * in the autovacuum case?
 		 */
 		SpinLockRelease(ProcStructLock);
-		if (am_walsender)
+		if (AmWalSenderProcess())
 			ereport(FATAL,
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("number of requested standby connections exceeds max_wal_senders (currently %d)",
@@ -370,8 +369,8 @@ InitProcess(void)
 	 * Slot sync worker also does not participate in it, see comments atop
 	 * 'struct bkend' in postmaster.c.
 	 */
-	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess() &&
-		!IsLogicalSlotSyncWorker())
+	if (IsUnderPostmaster && !AmAutoVacuumLauncherProcess() &&
+		!AmLogicalSlotSyncWorkerProcess())
 		MarkPostmasterChildActive();
 
 	/*
@@ -391,11 +390,11 @@ InitProcess(void)
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->tempNamespaceId = InvalidOid;
-	MyProc->isBackgroundWorker = IsBackgroundWorker;
+	MyProc->isBackgroundWorker = AmBackgroundWorkerProcess();
 	MyProc->delayChkptFlags = 0;
 	MyProc->statusFlags = 0;
 	/* NB -- autovac launcher intentionally does not set IS_AUTOVACUUM */
-	if (IsAutoVacuumWorkerProcess())
+	if (AmAutoVacuumWorkerProcess())
 		MyProc->statusFlags |= PROC_IS_AUTOVACUUM;
 	MyProc->lwWaiting = LW_WS_NOT_WAITING;
 	MyProc->lwWaitMode = 0;
@@ -587,7 +586,7 @@ InitAuxiliaryProcess(void)
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->tempNamespaceId = InvalidOid;
-	MyProc->isBackgroundWorker = IsBackgroundWorker;
+	MyProc->isBackgroundWorker = AmBackgroundWorkerProcess();
 	MyProc->delayChkptFlags = 0;
 	MyProc->statusFlags = 0;
 	MyProc->lwWaiting = LW_WS_NOT_WAITING;
@@ -951,8 +950,8 @@ ProcKill(int code, Datum arg)
 	 * Slot sync worker is also not a postmaster child, so skip this shared
 	 * memory related processing here.
 	 */
-	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess() &&
-		!IsLogicalSlotSyncWorker())
+	if (IsUnderPostmaster && !AmAutoVacuumLauncherProcess() &&
+		!AmLogicalSlotSyncWorkerProcess())
 		MarkPostmasterChildInactive();
 
 	/* wake autovac launcher if needed -- see comments in FreeWorkerInfo */

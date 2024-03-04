@@ -307,7 +307,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	char	  **indnames = NULL;
 
 	verbose = (params->options & VACOPT_VERBOSE) != 0;
-	instrument = (verbose || (IsAutoVacuumWorkerProcess() &&
+	instrument = (verbose || (AmAutoVacuumWorkerProcess() &&
 							  params->log_min_duration >= 0));
 	if (instrument)
 	{
@@ -3087,7 +3087,7 @@ static int
 dead_items_max_items(LVRelState *vacrel)
 {
 	int64		max_items;
-	int			vac_work_mem = IsAutoVacuumWorkerProcess() &&
+	int			vac_work_mem = AmAutoVacuumWorkerProcess() &&
 		autovacuum_work_mem != -1 ?
 		autovacuum_work_mem : maintenance_work_mem;
 

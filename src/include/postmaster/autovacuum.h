@@ -49,11 +49,6 @@ extern PGDLLIMPORT int Log_autovacuum_min_duration;
 
 /* Status inquiry functions */
 extern bool AutoVacuumingActive(void);
-extern bool IsAutoVacuumLauncherProcess(void);
-extern bool IsAutoVacuumWorkerProcess(void);
-
-#define IsAnyAutoVacuumProcess() \
-	(IsAutoVacuumLauncherProcess() || IsAutoVacuumWorkerProcess())
 
 /* Functions to start autovacuum process, called from postmaster */
 extern void autovac_init(void);

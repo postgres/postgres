@@ -136,10 +136,6 @@ int			Log_autovacuum_min_duration = 600000;
 #define MIN_AUTOVAC_SLEEPTIME 100.0 /* milliseconds */
 #define MAX_AUTOVAC_SLEEPTIME 300	/* seconds */
 
-/* Flags to tell if we are in an autovacuum process */
-static bool am_autovacuum_launcher = false;
-static bool am_autovacuum_worker = false;
-
 /*
  * Variables to save the cost-related storage parameters for the current
  * relation being vacuumed by this autovacuum worker. Using these, we can
@@ -435,8 +431,6 @@ NON_EXEC_STATIC void
 AutoVacLauncherMain(int argc, char *argv[])
 {
 	sigjmp_buf	local_sigjmp_buf;
-
-	am_autovacuum_launcher = true;
 
 	MyBackendType = B_AUTOVAC_LAUNCHER;
 	init_ps_display(NULL);
@@ -1490,8 +1484,6 @@ AutoVacWorkerMain(int argc, char *argv[])
 {
 	sigjmp_buf	local_sigjmp_buf;
 	Oid			dbid;
-
-	am_autovacuum_worker = true;
 
 	MyBackendType = B_AUTOVAC_WORKER;
 	init_ps_display(NULL);
@@ -3351,24 +3343,6 @@ autovac_init(void)
 				(errmsg("autovacuum not started because of misconfiguration"),
 				 errhint("Enable the \"track_counts\" option.")));
 }
-
-/*
- * IsAutoVacuum functions
- *		Return whether this is either a launcher autovacuum process or a worker
- *		process.
- */
-bool
-IsAutoVacuumLauncherProcess(void)
-{
-	return am_autovacuum_launcher;
-}
-
-bool
-IsAutoVacuumWorkerProcess(void)
-{
-	return am_autovacuum_worker;
-}
-
 
 /*
  * AutoVacuumShmemSize

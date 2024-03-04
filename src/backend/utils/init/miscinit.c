@@ -841,8 +841,8 @@ InitializeSessionUserIdStandalone(void)
 	 * This function should only be called in single-user mode, in autovacuum
 	 * workers, in slot sync worker and in background workers.
 	 */
-	Assert(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() ||
-		   IsLogicalSlotSyncWorker() || IsBackgroundWorker);
+	Assert(!IsUnderPostmaster || AmAutoVacuumWorkerProcess() ||
+		   AmLogicalSlotSyncWorkerProcess() || AmBackgroundWorkerProcess());
 
 	/* call only once */
 	Assert(!OidIsValid(AuthenticatedUserId));

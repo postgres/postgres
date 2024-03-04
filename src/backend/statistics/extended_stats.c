@@ -173,7 +173,7 @@ BuildRelationExtStatistics(Relation onerel, bool inh, double totalrows,
 									  natts, vacattrstats);
 		if (!stats)
 		{
-			if (!IsAutoVacuumWorkerProcess())
+			if (!AmAutoVacuumWorkerProcess())
 				ereport(WARNING,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("statistics object \"%s.%s\" could not be computed for relation \"%s.%s\"",

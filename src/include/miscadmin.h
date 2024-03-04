@@ -165,7 +165,6 @@ do { \
 extern PGDLLIMPORT pid_t PostmasterPid;
 extern PGDLLIMPORT bool IsPostmasterEnvironment;
 extern PGDLLIMPORT bool IsUnderPostmaster;
-extern PGDLLIMPORT bool IsBackgroundWorker;
 extern PGDLLIMPORT bool IsBinaryUpgrade;
 
 extern PGDLLIMPORT bool ExitOnAnyError;
@@ -369,6 +368,11 @@ typedef enum BackendType
 
 extern PGDLLIMPORT BackendType MyBackendType;
 
+#define AmAutoVacuumLauncherProcess() (MyBackendType == B_AUTOVAC_LAUNCHER)
+#define AmAutoVacuumWorkerProcess()	(MyBackendType == B_AUTOVAC_WORKER)
+#define AmBackgroundWorkerProcess() (MyBackendType == B_BG_WORKER)
+#define AmWalSenderProcess()        (MyBackendType == B_WAL_SENDER)
+#define AmLogicalSlotSyncWorkerProcess() (MyBackendType == B_SLOTSYNC_WORKER)
 #define AmArchiverProcess()			(MyBackendType == B_ARCHIVER)
 #define AmBackgroundWriterProcess() (MyBackendType == B_BG_WRITER)
 #define AmCheckpointerProcess()		(MyBackendType == B_CHECKPOINTER)

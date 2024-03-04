@@ -812,7 +812,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 		 */
 		LockPage(index, GIN_METAPAGE_BLKNO, ExclusiveLock);
 		workMemory =
-			(IsAutoVacuumWorkerProcess() && autovacuum_work_mem != -1) ?
+			(AmAutoVacuumWorkerProcess() && autovacuum_work_mem != -1) ?
 			autovacuum_work_mem : maintenance_work_mem;
 	}
 	else

@@ -34,7 +34,6 @@ extern int	StartSlotSyncWorker(void);
 extern void ShutDownSlotSync(void);
 extern bool SlotSyncWorkerCanRestart(void);
 extern bool IsSyncingReplicationSlots(void);
-extern bool IsLogicalSlotSyncWorker(void);
 extern Size SlotSyncShmemSize(void);
 extern void SlotSyncShmemInit(void);
 extern void SyncReplicationSlots(WalReceiverConn *wrconn);
