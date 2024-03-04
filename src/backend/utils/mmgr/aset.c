@@ -943,8 +943,9 @@ AllocSetAllocFromNewBlock(MemoryContext context, Size size, int flags,
 
 /*
  * AllocSetAlloc
- *		Returns pointer to allocated memory of given size or NULL if
- *		request could not be completed; memory is added to the set.
+ *		Returns a pointer to allocated memory of given size or raises an ERROR
+ *		on allocation failure, or returns NULL when flags contains
+ *		MCXT_ALLOC_NO_OOM.
  *
  * No request may exceed:
  *		MAXALIGN_DOWN(SIZE_MAX) - ALLOC_BLOCKHDRSZ - ALLOC_CHUNKHDRSZ
@@ -955,11 +956,12 @@ AllocSetAllocFromNewBlock(MemoryContext context, Size size, int flags,
  * return space that is marked NOACCESS - AllocSetRealloc has to beware!
  *
  * This function should only contain the most common code paths.  Everything
- * else should be in pg_noinline helper functions, thus avoiding the overheads
- * creating a stack frame for the common cases.  Allocating memory is often a
- * bottleneck in many workloads, so avoiding stack frame setup is worthwhile.
- * Helper functions should always directly return the newly allocated memory
- * so that we can just return that address directly as a tail call.
+ * else should be in pg_noinline helper functions, thus avoiding the overhead
+ * of creating a stack frame for the common cases.  Allocating memory is often
+ * a bottleneck in many workloads, so avoiding stack frame setup is
+ * worthwhile.  Helper functions should always directly return the newly
+ * allocated memory so that we can just return that address directly as a tail
+ * call.
  */
 void *
 AllocSetAlloc(MemoryContext context, Size size, int flags)
