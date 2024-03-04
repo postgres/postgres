@@ -337,7 +337,7 @@ OPTIONS (ADD password_required 'false');
    <variablelist>
 
     <varlistentry>
-     <term><literal>analyze_sampling</literal> (<type>text</type>)</term>
+     <term><literal>analyze_sampling</literal> (<type>string</type>)</term>
      <listitem>
       <para>
        This option, which can be specified for a foreign table or a foreign
