@@ -6,6 +6,9 @@ tests += {
   'bd': meson.current_build_dir(),
   'tap': {
     'test_kwargs': {'priority': 40}, # recovery tests are slow, start early
+    'env': {
+       'enable_injection_points': get_option('injection_points') ? 'yes' : 'no',
+    },
     'tests': [
       't/001_stream_rep.pl',
       't/002_archiving.pl',
@@ -46,6 +49,7 @@ tests += {
       't/038_save_logical_slots_shutdown.pl',
       't/039_end_of_wal.pl',
       't/040_standby_failover_slots_sync.pl',
+      't/041_checkpoint_at_promote.pl',
     ],
   },
 }
