@@ -851,7 +851,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, TupleTableSlot *slot,
 
 			pq_sendbyte(out, LOGICALREP_COLUMN_TEXT);
 			outputstr = OidOutputFunctionCall(typclass->typoutput, values[i]);
-			pq_sendcountedtext(out, outputstr, strlen(outputstr), false);
+			pq_sendcountedtext(out, outputstr, strlen(outputstr));
 			pfree(outputstr);
 		}
 

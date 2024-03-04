@@ -23,8 +23,7 @@ extern void pq_endmessage(StringInfo buf);
 extern void pq_endmessage_reuse(StringInfo buf);
 
 extern void pq_sendbytes(StringInfo buf, const void *data, int datalen);
-extern void pq_sendcountedtext(StringInfo buf, const char *str, int slen,
-							   bool countincludesself);
+extern void pq_sendcountedtext(StringInfo buf, const char *str, int slen);
 extern void pq_sendtext(StringInfo buf, const char *str, int slen);
 extern void pq_sendstring(StringInfo buf, const char *str);
 extern void pq_send_ascii_string(StringInfo buf, const char *str);

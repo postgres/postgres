@@ -95,8 +95,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 
 					pq_sendcountedtext(&buf,
 									   VARDATA_ANY(t),
-									   VARSIZE_ANY_EXHDR(t),
-									   false);
+									   VARSIZE_ANY_EXHDR(t));
 				}
 				break;
 
@@ -107,7 +106,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 					int			len;
 
 					len = pg_ltoa(num, str);
-					pq_sendcountedtext(&buf, str, len, false);
+					pq_sendcountedtext(&buf, str, len);
 				}
 				break;
 
@@ -118,7 +117,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 					int			len;
 
 					len = pg_lltoa(num, str);
-					pq_sendcountedtext(&buf, str, len, false);
+					pq_sendcountedtext(&buf, str, len);
 				}
 				break;
 
@@ -129,7 +128,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 					int			len;
 
 					len = pg_ultoa_n(num, str);
-					pq_sendcountedtext(&buf, str, len, false);
+					pq_sendcountedtext(&buf, str, len);
 				}
 				break;
 

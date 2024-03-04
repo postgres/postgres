@@ -355,7 +355,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			char	   *outputstr;
 
 			outputstr = OutputFunctionCall(&thisState->finfo, attr);
-			pq_sendcountedtext(buf, outputstr, strlen(outputstr), false);
+			pq_sendcountedtext(buf, outputstr, strlen(outputstr));
 		}
 		else
 		{
