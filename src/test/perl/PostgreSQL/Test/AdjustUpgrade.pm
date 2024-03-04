@@ -107,7 +107,7 @@ sub adjust_database_contents
 	}
 
 	# we removed the adminpack extension in v17
-	if ($old_version >= 12 && $old_version < 17)
+	if ($old_version < 17)
 	{
 		_add_st($result, 'regression',
 			'drop extension if exists adminpack');
