@@ -1093,16 +1093,11 @@ explain (costs off) select * from boolpart where a is not true and a is not fals
 (2 rows)
 
 explain (costs off) select * from boolpart where a is unknown;
-                  QUERY PLAN                   
------------------------------------------------
- Append
-   ->  Seq Scan on boolpart_f boolpart_1
-         Filter: (a IS UNKNOWN)
-   ->  Seq Scan on boolpart_t boolpart_2
-         Filter: (a IS UNKNOWN)
-   ->  Seq Scan on boolpart_default boolpart_3
-         Filter: (a IS UNKNOWN)
-(7 rows)
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on boolpart_default boolpart
+   Filter: (a IS UNKNOWN)
+(2 rows)
 
 explain (costs off) select * from boolpart where a is not unknown;
                   QUERY PLAN                   
@@ -1200,6 +1195,18 @@ explain (costs off) select * from boolpart where a is not false;
          Filter: (a IS NOT FALSE)
 (5 rows)
 
+explain (costs off) select * from boolpart where a is not unknown;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Append
+   ->  Seq Scan on boolpart_f boolpart_1
+         Filter: (a IS NOT UNKNOWN)
+   ->  Seq Scan on boolpart_t boolpart_2
+         Filter: (a IS NOT UNKNOWN)
+   ->  Seq Scan on boolpart_default boolpart_3
+         Filter: (a IS NOT UNKNOWN)
+(7 rows)
+
 select * from boolpart where a is not true;
  a 
 ---
@@ -1218,6 +1225,35 @@ select * from boolpart where a is not false;
 ---
  t
  
+(2 rows)
+
+select * from boolpart where a is not unknown;
+ a 
+---
+ f
+ t
+(2 rows)
+
+-- check that all partitions are pruned when faced with conflicting clauses
+explain (costs off) select * from boolpart where a is not unknown and a is unknown;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+explain (costs off) select * from boolpart where a is false and a is unknown;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+explain (costs off) select * from boolpart where a is true and a is unknown;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
 (2 rows)
 
 -- inverse boolean partitioning - a seemingly unlikely design, but we've got
