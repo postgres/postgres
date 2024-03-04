@@ -489,14 +489,14 @@ SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
 				  TransactionId xid)
 {
 	SlruShared	shared = ctl->shared;
+	LWLock	   *banklock = SimpleLruGetBankLock(ctl, pageno);
 
-	Assert(LWLockHeldByMeInMode(SimpleLruGetBankLock(ctl, pageno), LW_EXCLUSIVE));
+	Assert(LWLockHeldByMeInMode(banklock, LW_EXCLUSIVE));
 
 	/* Outer loop handles restart if we must wait for someone else's I/O */
 	for (;;)
 	{
 		int			slotno;
-		int			bankno;
 		bool		ok;
 
 		/* See if page already is in memory; if not, pick victim slot */
@@ -539,10 +539,9 @@ SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
 
 		/* Acquire per-buffer lock (cannot deadlock, see notes at top) */
 		LWLockAcquire(&shared->buffer_locks[slotno].lock, LW_EXCLUSIVE);
-		bankno = SlotGetBankNumber(slotno);
 
 		/* Release bank lock while doing I/O */
-		LWLockRelease(&shared->bank_locks[bankno].lock);
+		LWLockRelease(banklock);
 
 		/* Do the read */
 		ok = SlruPhysicalReadPage(ctl, pageno, slotno);
@@ -551,7 +550,7 @@ SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
 		SimpleLruZeroLSNs(ctl, slotno);
 
 		/* Re-acquire bank control lock and update page state */
-		LWLockAcquire(&shared->bank_locks[bankno].lock, LW_EXCLUSIVE);
+		LWLockAcquire(banklock, LW_EXCLUSIVE);
 
 		Assert(shared->page_number[slotno] == pageno &&
 			   shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS &&
@@ -592,12 +591,13 @@ int
 SimpleLruReadPage_ReadOnly(SlruCtl ctl, int64 pageno, TransactionId xid)
 {
 	SlruShared	shared = ctl->shared;
+	LWLock	   *banklock = SimpleLruGetBankLock(ctl, pageno);
 	int			bankno = pageno & ctl->bank_mask;
 	int			bankstart = bankno * SLRU_BANK_SIZE;
 	int			bankend = bankstart + SLRU_BANK_SIZE;
 
 	/* Try to find the page while holding only shared lock */
-	LWLockAcquire(&shared->bank_locks[bankno].lock, LW_SHARED);
+	LWLockAcquire(banklock, LW_SHARED);
 
 	/* See if page is already in a buffer */
 	for (int slotno = bankstart; slotno < bankend; slotno++)
@@ -617,8 +617,8 @@ SimpleLruReadPage_ReadOnly(SlruCtl ctl, int64 pageno, TransactionId xid)
 	}
 
 	/* No luck, so switch to normal exclusive lock and do regular read */
-	LWLockRelease(&shared->bank_locks[bankno].lock);
-	LWLockAcquire(&shared->bank_locks[bankno].lock, LW_EXCLUSIVE);
+	LWLockRelease(banklock);
+	LWLockAcquire(banklock, LW_EXCLUSIVE);
 
 	return SimpleLruReadPage(ctl, pageno, true, xid);
 }
@@ -1167,7 +1167,7 @@ SlruSelectLRUPage(SlruCtl ctl, int64 pageno)
 		int			bankstart = bankno * SLRU_BANK_SIZE;
 		int			bankend = bankstart + SLRU_BANK_SIZE;
 
-		Assert(LWLockHeldByMe(&shared->bank_locks[bankno].lock));
+		Assert(LWLockHeldByMe(SimpleLruGetBankLock(ctl, pageno)));
 
 		/* See if page already has a buffer assigned */
 		for (int slotno = 0; slotno < shared->num_slots; slotno++)
