@@ -78,13 +78,7 @@ $node_primary->wait_for_replay_catchup($node_standby);
 
 # Wait until the checkpointer is in the middle of the restart point
 # processing.
-ok( $node_standby->poll_query_until(
-		'postgres',
-		qq[SELECT count(*) FROM pg_stat_activity
-           WHERE backend_type = 'checkpointer' AND wait_event = 'create-restart-point' ;],
-		'1'),
-	'checkpointer is waiting in restart point'
-) or die "Timed out while waiting for checkpointer to run restart point";
+$node_standby->wait_for_event('checkpointer', 'create-restart-point');
 
 # Check the logs that the restart point has started on standby.  This is
 # optional, but let's be sure.

@@ -2742,6 +2742,29 @@ sub lsn
 
 =pod
 
+=item $node->wait_for_event(wait_event_name, backend_type)
+
+Poll pg_stat_activity until backend_type reaches wait_event_name.
+
+=cut
+
+sub wait_for_event
+{
+	my ($self, $backend_type, $wait_event_name) = @_;
+
+	$self->poll_query_until(
+		'postgres', qq[
+		SELECT count(*) > 0 FROM pg_stat_activity
+		WHERE backend_type = '$backend_type' AND wait_event = '$wait_event_name'
+	])
+	  or die
+	  qq(timed out when waiting for $backend_type to reach wait event '$wait_event_name');
+
+	return;
+}
+
+=pod
+
 =item $node->wait_for_catchup(standby_name, mode, target_lsn)
 
 Wait for the replication connection with application_name standby_name until
