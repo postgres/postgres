@@ -1247,14 +1247,12 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	MultiXactOffset offset;
 	int			length;
 	int			truelength;
-	int			i;
 	MultiXactId oldestMXact;
 	MultiXactId nextMXact;
 	MultiXactId tmpMXact;
 	MultiXactOffset nextOffset;
 	MultiXactMember *ptr;
 	LWLock	   *lock;
-	LWLock	   *prevlock = NULL;
 
 	debug_elog3(DEBUG2, "GetMembers: asked for %u", multi);
 
@@ -1361,18 +1359,9 @@ retry:
 	pageno = MultiXactIdToOffsetPage(multi);
 	entryno = MultiXactIdToOffsetEntry(multi);
 
-	/*
-	 * If this page falls under a different bank, release the old bank's lock
-	 * and acquire the lock of the new bank.
-	 */
+	/* Acquire the bank lock for the page we need. */
 	lock = SimpleLruGetBankLock(MultiXactOffsetCtl, pageno);
-	if (lock != prevlock)
-	{
-		if (prevlock != NULL)
-			LWLockRelease(prevlock);
-		LWLockAcquire(lock, LW_EXCLUSIVE);
-		prevlock = lock;
-	}
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 
 	slotno = SimpleLruReadPage(MultiXactOffsetCtl, pageno, true, multi);
 	offptr = (MultiXactOffset *) MultiXactOffsetCtl->shared->page_buffer[slotno];
@@ -1407,17 +1396,19 @@ retry:
 
 		if (pageno != prev_pageno)
 		{
+			LWLock	   *newlock;
+
 			/*
 			 * Since we're going to access a different SLRU page, if this page
 			 * falls under a different bank, release the old bank's lock and
 			 * acquire the lock of the new bank.
 			 */
-			lock = SimpleLruGetBankLock(MultiXactOffsetCtl, pageno);
-			if (prevlock != lock)
+			newlock = SimpleLruGetBankLock(MultiXactOffsetCtl, pageno);
+			if (newlock != lock)
 			{
-				LWLockRelease(prevlock);
-				LWLockAcquire(lock, LW_EXCLUSIVE);
-				prevlock = lock;
+				LWLockRelease(lock);
+				LWLockAcquire(newlock, LW_EXCLUSIVE);
+				lock = newlock;
 			}
 			slotno = SimpleLruReadPage(MultiXactOffsetCtl, pageno, true, tmpMXact);
 		}
@@ -1429,8 +1420,7 @@ retry:
 		if (nextMXOffset == 0)
 		{
 			/* Corner case 2: next multixact is still being filled in */
-			LWLockRelease(prevlock);
-			prevlock = NULL;
+			LWLockRelease(lock);
 			CHECK_FOR_INTERRUPTS();
 			pg_usleep(1000L);
 			goto retry;
@@ -1439,14 +1429,14 @@ retry:
 		length = nextMXOffset - offset;
 	}
 
-	LWLockRelease(prevlock);
-	prevlock = NULL;
+	LWLockRelease(lock);
+	lock = NULL;
 
 	ptr = (MultiXactMember *) palloc(length * sizeof(MultiXactMember));
 
 	truelength = 0;
 	prev_pageno = -1;
-	for (i = 0; i < length; i++, offset++)
+	for (int i = 0; i < length; i++, offset++)
 	{
 		TransactionId *xactptr;
 		uint32	   *flagsptr;
@@ -1459,18 +1449,20 @@ retry:
 
 		if (pageno != prev_pageno)
 		{
+			LWLock	   *newlock;
+
 			/*
 			 * Since we're going to access a different SLRU page, if this page
 			 * falls under a different bank, release the old bank's lock and
 			 * acquire the lock of the new bank.
 			 */
-			lock = SimpleLruGetBankLock(MultiXactMemberCtl, pageno);
-			if (lock != prevlock)
+			newlock = SimpleLruGetBankLock(MultiXactMemberCtl, pageno);
+			if (newlock != lock)
 			{
-				if (prevlock)
-					LWLockRelease(prevlock);
-				LWLockAcquire(lock, LW_EXCLUSIVE);
-				prevlock = lock;
+				if (lock)
+					LWLockRelease(lock);
+				LWLockAcquire(newlock, LW_EXCLUSIVE);
+				lock = newlock;
 			}
 
 			slotno = SimpleLruReadPage(MultiXactMemberCtl, pageno, true, multi);
@@ -1496,8 +1488,7 @@ retry:
 		truelength++;
 	}
 
-	if (prevlock)
-		LWLockRelease(prevlock);
+	LWLockRelease(lock);
 
 	/* A multixid with zero members should not happen */
 	Assert(truelength > 0);
