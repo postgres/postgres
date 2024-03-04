@@ -325,29 +325,57 @@ extern void InitProcessLocalLatch(void);
 extern void SwitchToSharedLatch(void);
 extern void SwitchBackToLocalLatch(void);
 
+/*
+ * MyBackendType indicates what kind of a backend this is.
+ */
 typedef enum BackendType
 {
 	B_INVALID = 0,
-	B_ARCHIVER,
+
+	/* Backends and other backend-like processes */
+	B_BACKEND,
 	B_AUTOVAC_LAUNCHER,
 	B_AUTOVAC_WORKER,
-	B_BACKEND,
 	B_BG_WORKER,
+	B_WAL_SENDER,
+	B_SLOTSYNC_WORKER,
+
+	B_STANDALONE_BACKEND,
+
+	/*
+	 * Auxiliary processes. These have PGPROC entries, but they are not
+	 * attached to any particular database. There can be only one of each of
+	 * these running at a time.
+	 *
+	 * If you modify these, make sure to update NUM_AUXILIARY_PROCS and the
+	 * glossary in the docs.
+	 */
+	B_ARCHIVER,
 	B_BG_WRITER,
 	B_CHECKPOINTER,
-	B_LOGGER,
-	B_SLOTSYNC_WORKER,
-	B_STANDALONE_BACKEND,
 	B_STARTUP,
 	B_WAL_RECEIVER,
-	B_WAL_SENDER,
 	B_WAL_SUMMARIZER,
 	B_WAL_WRITER,
+
+	/*
+	 * Logger is not connected to shared memory and does not have a PGPROC
+	 * entry.
+	 */
+	B_LOGGER,
 } BackendType;
 
-#define BACKEND_NUM_TYPES (B_WAL_WRITER + 1)
+#define BACKEND_NUM_TYPES (B_LOGGER + 1)
 
 extern PGDLLIMPORT BackendType MyBackendType;
+
+#define AmArchiverProcess()			(MyBackendType == B_ARCHIVER)
+#define AmBackgroundWriterProcess() (MyBackendType == B_BG_WRITER)
+#define AmCheckpointerProcess()		(MyBackendType == B_CHECKPOINTER)
+#define AmStartupProcess()			(MyBackendType == B_STARTUP)
+#define AmWalReceiverProcess()		(MyBackendType == B_WAL_RECEIVER)
+#define AmWalSummarizerProcess()	(MyBackendType == B_WAL_SUMMARIZER)
+#define AmWalWriterProcess()		(MyBackendType == B_WAL_WRITER)
 
 extern const char *GetBackendTypeDesc(BackendType backendType);
 
@@ -429,37 +457,6 @@ extern PGDLLIMPORT ProcessingMode Mode;
 				  (mode) == NormalProcessing); \
 		Mode = (mode); \
 	} while(0)
-
-
-/*
- * Auxiliary-process type identifiers.  These used to be in bootstrap.h
- * but it seems saner to have them here, with the ProcessingMode stuff.
- * The MyAuxProcType global is defined and set in auxprocess.c.
- *
- * Make sure to list in the glossary any items you add here.
- */
-
-typedef enum
-{
-	NotAnAuxProcess = -1,
-	StartupProcess = 0,
-	BgWriterProcess,
-	ArchiverProcess,
-	CheckpointerProcess,
-	WalWriterProcess,
-	WalReceiverProcess,
-	WalSummarizerProcess,
-} AuxProcType;
-
-extern PGDLLIMPORT AuxProcType MyAuxProcType;
-
-#define AmStartupProcess()			(MyAuxProcType == StartupProcess)
-#define AmBackgroundWriterProcess() (MyAuxProcType == BgWriterProcess)
-#define AmArchiverProcess()			(MyAuxProcType == ArchiverProcess)
-#define AmCheckpointerProcess()		(MyAuxProcType == CheckpointerProcess)
-#define AmWalWriterProcess()		(MyAuxProcType == WalWriterProcess)
-#define AmWalReceiverProcess()		(MyAuxProcType == WalReceiverProcess)
-#define AmWalSummarizerProcess()	(MyAuxProcType == WalSummarizerProcess)
 
 
 /*****************************************************************************

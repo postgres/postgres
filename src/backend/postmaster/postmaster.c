@@ -442,7 +442,7 @@ static int	CountChildren(int target);
 static bool assign_backendlist_entry(RegisteredBgWorker *rw);
 static void maybe_start_bgworkers(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
-static pid_t StartChildProcess(AuxProcType type);
+static pid_t StartChildProcess(BackendType type);
 static void StartAutovacuumWorker(void);
 static void MaybeStartWalReceiver(void);
 static void MaybeStartWalSummarizer(void);
@@ -1452,14 +1452,14 @@ PostmasterMain(int argc, char *argv[])
 
 	/* Start bgwriter and checkpointer so they can help with recovery */
 	if (CheckpointerPID == 0)
-		CheckpointerPID = StartChildProcess(CheckpointerProcess);
+		CheckpointerPID = StartChildProcess(B_CHECKPOINTER);
 	if (BgWriterPID == 0)
-		BgWriterPID = StartChildProcess(BgWriterProcess);
+		BgWriterPID = StartChildProcess(B_BG_WRITER);
 
 	/*
 	 * We're ready to rock and roll...
 	 */
-	StartupPID = StartChildProcess(StartupProcess);
+	StartupPID = StartChildProcess(B_STARTUP);
 	Assert(StartupPID != 0);
 	StartupStatus = STARTUP_RUNNING;
 	pmState = PM_STARTUP;
@@ -1793,9 +1793,9 @@ ServerLoop(void)
 			pmState == PM_HOT_STANDBY || pmState == PM_STARTUP)
 		{
 			if (CheckpointerPID == 0)
-				CheckpointerPID = StartChildProcess(CheckpointerProcess);
+				CheckpointerPID = StartChildProcess(B_CHECKPOINTER);
 			if (BgWriterPID == 0)
-				BgWriterPID = StartChildProcess(BgWriterProcess);
+				BgWriterPID = StartChildProcess(B_BG_WRITER);
 		}
 
 		/*
@@ -1804,7 +1804,7 @@ ServerLoop(void)
 		 * be writing any new WAL).
 		 */
 		if (WalWriterPID == 0 && pmState == PM_RUN)
-			WalWriterPID = StartChildProcess(WalWriterProcess);
+			WalWriterPID = StartChildProcess(B_WAL_WRITER);
 
 		/*
 		 * If we have lost the autovacuum launcher, try to start a new one. We
@@ -1823,7 +1823,7 @@ ServerLoop(void)
 
 		/* If we have lost the archiver, try to start a new one. */
 		if (PgArchPID == 0 && PgArchStartupAllowed())
-			PgArchPID = StartChildProcess(ArchiverProcess);
+			PgArchPID = StartChildProcess(B_ARCHIVER);
 
 		/* If we need to start a slot sync worker, try to do that now */
 		MaybeStartSlotSyncWorker();
@@ -3003,11 +3003,11 @@ process_pm_child_exit(void)
 			 * if this fails, we'll just try again later.
 			 */
 			if (CheckpointerPID == 0)
-				CheckpointerPID = StartChildProcess(CheckpointerProcess);
+				CheckpointerPID = StartChildProcess(B_CHECKPOINTER);
 			if (BgWriterPID == 0)
-				BgWriterPID = StartChildProcess(BgWriterProcess);
+				BgWriterPID = StartChildProcess(B_BG_WRITER);
 			if (WalWriterPID == 0)
-				WalWriterPID = StartChildProcess(WalWriterProcess);
+				WalWriterPID = StartChildProcess(B_WAL_WRITER);
 			MaybeStartWalSummarizer();
 
 			/*
@@ -3017,7 +3017,7 @@ process_pm_child_exit(void)
 			if (!IsBinaryUpgrade && AutoVacuumingActive() && AutoVacPID == 0)
 				AutoVacPID = StartAutoVacLauncher();
 			if (PgArchStartupAllowed() && PgArchPID == 0)
-				PgArchPID = StartChildProcess(ArchiverProcess);
+				PgArchPID = StartChildProcess(B_ARCHIVER);
 			MaybeStartSlotSyncWorker();
 
 			/* workers may be scheduled to start now */
@@ -3173,7 +3173,7 @@ process_pm_child_exit(void)
 				HandleChildCrash(pid, exitstatus,
 								 _("archiver process"));
 			if (PgArchStartupAllowed())
-				PgArchPID = StartChildProcess(ArchiverProcess);
+				PgArchPID = StartChildProcess(B_ARCHIVER);
 			continue;
 		}
 
@@ -3777,7 +3777,7 @@ PostmasterStateMachine(void)
 				Assert(Shutdown > NoShutdown);
 				/* Start the checkpointer if not running */
 				if (CheckpointerPID == 0)
-					CheckpointerPID = StartChildProcess(CheckpointerProcess);
+					CheckpointerPID = StartChildProcess(B_CHECKPOINTER);
 				/* And tell it to shut down */
 				if (CheckpointerPID != 0)
 				{
@@ -3932,7 +3932,7 @@ PostmasterStateMachine(void)
 		/* re-create shared memory and semaphores */
 		CreateSharedMemoryAndSemaphores();
 
-		StartupPID = StartChildProcess(StartupProcess);
+		StartupPID = StartChildProcess(B_STARTUP);
 		Assert(StartupPID != 0);
 		StartupStatus = STARTUP_RUNNING;
 		pmState = PM_STARTUP;
@@ -4967,7 +4967,7 @@ SubPostmasterMain(int argc, char *argv[])
 	}
 	if (strcmp(argv[1], "--forkaux") == 0)
 	{
-		AuxProcType auxtype;
+		BackendType auxtype;
 
 		Assert(argc == 4);
 
@@ -5087,7 +5087,7 @@ process_pm_pmsignal(void)
 		 */
 		Assert(PgArchPID == 0);
 		if (XLogArchivingAlways())
-			PgArchPID = StartChildProcess(ArchiverProcess);
+			PgArchPID = StartChildProcess(B_ARCHIVER);
 
 		/*
 		 * If we aren't planning to enter hot standby mode later, treat
@@ -5313,7 +5313,7 @@ CountChildren(int target)
  * to start subprocess.
  */
 static pid_t
-StartChildProcess(AuxProcType type)
+StartChildProcess(BackendType type)
 {
 	pid_t		pid;
 
@@ -5365,31 +5365,31 @@ StartChildProcess(AuxProcType type)
 		errno = save_errno;
 		switch (type)
 		{
-			case StartupProcess:
+			case B_STARTUP:
 				ereport(LOG,
 						(errmsg("could not fork startup process: %m")));
 				break;
-			case ArchiverProcess:
+			case B_ARCHIVER:
 				ereport(LOG,
 						(errmsg("could not fork archiver process: %m")));
 				break;
-			case BgWriterProcess:
+			case B_BG_WRITER:
 				ereport(LOG,
 						(errmsg("could not fork background writer process: %m")));
 				break;
-			case CheckpointerProcess:
+			case B_CHECKPOINTER:
 				ereport(LOG,
 						(errmsg("could not fork checkpointer process: %m")));
 				break;
-			case WalWriterProcess:
+			case B_WAL_WRITER:
 				ereport(LOG,
 						(errmsg("could not fork WAL writer process: %m")));
 				break;
-			case WalReceiverProcess:
+			case B_WAL_RECEIVER:
 				ereport(LOG,
 						(errmsg("could not fork WAL receiver process: %m")));
 				break;
-			case WalSummarizerProcess:
+			case B_WAL_SUMMARIZER:
 				ereport(LOG,
 						(errmsg("could not fork WAL summarizer process: %m")));
 				break;
@@ -5403,7 +5403,7 @@ StartChildProcess(AuxProcType type)
 		 * fork failure is fatal during startup, but there's no need to choke
 		 * immediately if starting other child types fails.
 		 */
-		if (type == StartupProcess)
+		if (type == B_STARTUP)
 			ExitPostmaster(1);
 		return 0;
 	}
@@ -5522,7 +5522,7 @@ MaybeStartWalReceiver(void)
 		 pmState == PM_HOT_STANDBY) &&
 		Shutdown <= SmartShutdown)
 	{
-		WalReceiverPID = StartChildProcess(WalReceiverProcess);
+		WalReceiverPID = StartChildProcess(B_WAL_RECEIVER);
 		if (WalReceiverPID != 0)
 			WalReceiverRequested = false;
 		/* else leave the flag set, so we'll try again later */
@@ -5539,7 +5539,7 @@ MaybeStartWalSummarizer(void)
 	if (summarize_wal && WalSummarizerPID == 0 &&
 		(pmState == PM_RUN || pmState == PM_HOT_STANDBY) &&
 		Shutdown <= SmartShutdown)
-		WalSummarizerPID = StartChildProcess(WalSummarizerProcess);
+		WalSummarizerPID = StartChildProcess(B_WAL_SUMMARIZER);
 }
 
 

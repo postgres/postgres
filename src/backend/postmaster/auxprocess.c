@@ -38,14 +38,6 @@
 static void ShutdownAuxiliaryProcess(int code, Datum arg);
 
 
-/* ----------------
- *		global variables
- * ----------------
- */
-
-AuxProcType MyAuxProcType = NotAnAuxProcess;	/* declared in miscadmin.h */
-
-
 /*
  *	 AuxiliaryProcessMain
  *
@@ -55,39 +47,11 @@ AuxProcType MyAuxProcType = NotAnAuxProcess;	/* declared in miscadmin.h */
  *	 This code is here just because of historical reasons.
  */
 void
-AuxiliaryProcessMain(AuxProcType auxtype)
+AuxiliaryProcessMain(BackendType auxtype)
 {
 	Assert(IsUnderPostmaster);
 
-	MyAuxProcType = auxtype;
-
-	switch (MyAuxProcType)
-	{
-		case StartupProcess:
-			MyBackendType = B_STARTUP;
-			break;
-		case ArchiverProcess:
-			MyBackendType = B_ARCHIVER;
-			break;
-		case BgWriterProcess:
-			MyBackendType = B_BG_WRITER;
-			break;
-		case CheckpointerProcess:
-			MyBackendType = B_CHECKPOINTER;
-			break;
-		case WalWriterProcess:
-			MyBackendType = B_WAL_WRITER;
-			break;
-		case WalReceiverProcess:
-			MyBackendType = B_WAL_RECEIVER;
-			break;
-		case WalSummarizerProcess:
-			MyBackendType = B_WAL_SUMMARIZER;
-			break;
-		default:
-			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
-			MyBackendType = B_INVALID;
-	}
+	MyBackendType = auxtype;
 
 	init_ps_display(NULL);
 
@@ -126,38 +90,38 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 
 	SetProcessingMode(NormalProcessing);
 
-	switch (MyAuxProcType)
+	switch (MyBackendType)
 	{
-		case StartupProcess:
+		case B_STARTUP:
 			StartupProcessMain();
 			proc_exit(1);
 
-		case ArchiverProcess:
+		case B_ARCHIVER:
 			PgArchiverMain();
 			proc_exit(1);
 
-		case BgWriterProcess:
+		case B_BG_WRITER:
 			BackgroundWriterMain();
 			proc_exit(1);
 
-		case CheckpointerProcess:
+		case B_CHECKPOINTER:
 			CheckpointerMain();
 			proc_exit(1);
 
-		case WalWriterProcess:
+		case B_WAL_WRITER:
 			WalWriterMain();
 			proc_exit(1);
 
-		case WalReceiverProcess:
+		case B_WAL_RECEIVER:
 			WalReceiverMain();
 			proc_exit(1);
 
-		case WalSummarizerProcess:
+		case B_WAL_SUMMARIZER:
 			WalSummarizerMain();
 			proc_exit(1);
 
 		default:
-			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
+			elog(PANIC, "unrecognized process type: %d", (int) MyBackendType);
 			proc_exit(1);
 	}
 }

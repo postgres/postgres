@@ -173,7 +173,6 @@ AutoVacOpts
 AutoVacuumShmemStruct
 AutoVacuumWorkItem
 AutoVacuumWorkItemType
-AuxProcType
 BF_ctx
 BF_key
 BF_word
