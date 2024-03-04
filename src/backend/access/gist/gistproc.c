@@ -21,8 +21,8 @@
 
 #include "access/gist.h"
 #include "access/stratnum.h"
-#include "utils/builtins.h"
 #include "utils/float.h"
+#include "utils/fmgrprotos.h"
 #include "utils/geo_decls.h"
 #include "utils/sortsupport.h"
 

@@ -35,8 +35,8 @@
 #include "storage/freespace.h"
 #include "tcop/tcopprot.h"		/* pgrminclude ignore */
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/fmgrprotos.h"
 #include "utils/guc.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"

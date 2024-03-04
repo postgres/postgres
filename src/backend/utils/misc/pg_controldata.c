@@ -20,7 +20,6 @@
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
-#include "catalog/pg_type.h"
 #include "common/controldata_utils.h"
 #include "funcapi.h"
 #include "miscadmin.h"

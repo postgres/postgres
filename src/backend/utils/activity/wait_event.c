@@ -22,12 +22,10 @@
  */
 #include "postgres.h"
 
-#include "miscadmin.h"
 #include "port/pg_bitutils.h"
 #include "storage/lmgr.h"		/* for GetLockNameFromTagType */
 #include "storage/lwlock.h"		/* for GetLWLockIdentifier */
 #include "storage/spin.h"
-#include "utils/memutils.h"
 #include "utils/wait_event.h"
 
 

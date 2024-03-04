@@ -19,9 +19,7 @@
 
 #include "access/stratnum.h"
 #include "catalog/pg_opfamily.h"
-#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "nodes/plannodes.h"
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"

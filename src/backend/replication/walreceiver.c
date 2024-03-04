@@ -58,8 +58,6 @@
 #include "access/xlogarchive.h"
 #include "access/xlogrecovery.h"
 #include "catalog/pg_authid.h"
-#include "catalog/pg_type.h"
-#include "common/ip.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
@@ -69,7 +67,6 @@
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"
-#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
@@ -78,7 +75,6 @@
 #include "utils/guc.h"
 #include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
-#include "utils/resowner.h"
 #include "utils/timestamp.h"
 
 

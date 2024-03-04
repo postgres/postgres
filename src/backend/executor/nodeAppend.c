@@ -58,8 +58,8 @@
 #include "postgres.h"
 
 #include "executor/execAsync.h"
-#include "executor/execdebug.h"
 #include "executor/execPartition.h"
+#include "executor/executor.h"
 #include "executor/nodeAppend.h"
 #include "miscadmin.h"
 #include "pgstat.h"

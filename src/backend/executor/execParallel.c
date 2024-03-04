@@ -43,12 +43,10 @@
 #include "jit/jit.h"
 #include "nodes/nodeFuncs.h"
 #include "pgstat.h"
-#include "storage/spin.h"
 #include "tcop/tcopprot.h"
 #include "utils/datum.h"
 #include "utils/dsa.h"
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
 #include "utils/snapmgr.h"
 
 /*

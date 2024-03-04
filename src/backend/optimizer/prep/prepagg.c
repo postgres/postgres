@@ -39,7 +39,6 @@
 #include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/pathnodes.h"
-#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/plancat.h"

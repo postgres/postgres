@@ -20,7 +20,6 @@
 #include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
-#include "catalog/catalog.h"
 #include "commands/progress.h"
 #include "lib/qunique.h"
 #include "miscadmin.h"

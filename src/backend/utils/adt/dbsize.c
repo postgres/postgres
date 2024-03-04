@@ -15,7 +15,6 @@
 
 #include "access/htup_details.h"
 #include "access/relation.h"
-#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"

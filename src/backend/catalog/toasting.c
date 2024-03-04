@@ -26,12 +26,9 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_type.h"
 #include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "storage/lock.h"
-#include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 

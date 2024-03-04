@@ -17,7 +17,7 @@
 #include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
 #include "port/pg_bswap.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/guc.h"
 #include "utils/inet.h"
 #include "utils/sortsupport.h"

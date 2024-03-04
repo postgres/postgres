@@ -20,7 +20,6 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/transam.h"
@@ -30,13 +29,11 @@
 #include "storage/bufmgr.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/rls.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
-#include "utils/syscache.h"
 
 
 /* ----------------------------------------------------------------

@@ -16,12 +16,10 @@
 #include "postgres.h"
 
 #include "access/sysattr.h"
-#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_collate.h"
 #include "parser/parsetree.h"
-#include "parser/parser.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_cte.h"
 #include "parser/parse_expr.h"
@@ -29,7 +27,6 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "utils/rel.h"
-#include "utils/relcache.h"
 
 static void setNamespaceForMergeWhen(ParseState *pstate,
 									 MergeWhenClause *mergeWhenClause,

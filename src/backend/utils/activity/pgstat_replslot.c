@@ -26,7 +26,6 @@
 #include "postgres.h"
 
 #include "replication/slot.h"
-#include "utils/builtins.h"		/* for namestrcpy() */
 #include "utils/pgstat_internal.h"
 
 

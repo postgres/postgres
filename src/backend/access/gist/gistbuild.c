@@ -36,11 +36,10 @@
 
 #include "access/genam.h"
 #include "access/gist_private.h"
-#include "access/gistxlog.h"
 #include "access/tableam.h"
 #include "access/xloginsert.h"
-#include "catalog/index.h"
 #include "miscadmin.h"
+#include "nodes/execnodes.h"
 #include "optimizer/optimizer.h"
 #include "storage/bufmgr.h"
 #include "storage/bulk_write.h"

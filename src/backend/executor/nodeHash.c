@@ -30,19 +30,18 @@
 #include "access/parallel.h"
 #include "catalog/pg_statistic.h"
 #include "commands/tablespace.h"
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/hashjoin.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
-#include "pgstat.h"
 #include "port/atomics.h"
 #include "port/pg_bitutils.h"
 #include "utils/dynahash.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "utils/wait_event.h"
 
 static void ExecHashIncreaseNumBatches(HashJoinTable hashtable);
 static void ExecHashIncreaseNumBuckets(HashJoinTable hashtable);

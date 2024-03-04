@@ -92,20 +92,15 @@
 #include <unistd.h>
 
 #include "access/xlog.h"
-#include "catalog/pg_authid.h"
 #include "catalog/pg_control.h"
 #include "common/base64.h"
 #include "common/hmac.h"
 #include "common/saslprep.h"
 #include "common/scram-common.h"
 #include "common/sha2.h"
-#include "libpq/auth.h"
 #include "libpq/crypt.h"
 #include "libpq/sasl.h"
 #include "libpq/scram.h"
-#include "miscadmin.h"
-#include "utils/builtins.h"
-#include "utils/timestamp.h"
 
 static void scram_get_mechanisms(Port *port, StringInfo buf);
 static void *scram_init(Port *port, const char *selected_mech,

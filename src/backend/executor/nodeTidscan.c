@@ -25,12 +25,11 @@
 #include "access/sysattr.h"
 #include "access/tableam.h"
 #include "catalog/pg_type.h"
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeTidscan.h"
 #include "lib/qunique.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "storage/bufmgr.h"
 #include "utils/array.h"
 #include "utils/rel.h"
 

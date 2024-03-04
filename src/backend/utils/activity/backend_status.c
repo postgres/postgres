@@ -12,7 +12,7 @@
 #include "postgres.h"
 
 #include "access/xact.h"
-#include "libpq/libpq.h"
+#include "libpq/libpq-be.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
@@ -22,7 +22,6 @@
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "utils/ascii.h"
-#include "utils/backend_status.h"
 #include "utils/guc.h"			/* for application_name */
 #include "utils/memutils.h"
 

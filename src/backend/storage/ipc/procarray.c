@@ -47,7 +47,6 @@
 
 #include <signal.h>
 
-#include "access/clog.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/twophase.h"

@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -28,7 +27,6 @@
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
-#include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/analyze.h"
 #include "rewrite/rewriteManip.h"

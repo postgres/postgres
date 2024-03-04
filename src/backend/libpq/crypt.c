@@ -20,7 +20,6 @@
 #include "common/scram-common.h"
 #include "libpq/crypt.h"
 #include "libpq/scram.h"
-#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"

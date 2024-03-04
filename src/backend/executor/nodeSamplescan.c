@@ -20,11 +20,7 @@
 #include "common/pg_prng.h"
 #include "executor/executor.h"
 #include "executor/nodeSamplescan.h"
-#include "miscadmin.h"
-#include "pgstat.h"
-#include "storage/bufmgr.h"
-#include "storage/predicate.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/rel.h"
 
 static TupleTableSlot *SampleNext(SampleScanState *node);

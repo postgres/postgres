@@ -23,7 +23,7 @@
 
 #include "access/relation.h"
 #include "access/table.h"
-#include "storage/lmgr.h"
+#include "utils/rel.h"
 
 static inline void validate_relation_kind(Relation r);
 

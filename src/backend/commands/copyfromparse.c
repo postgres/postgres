@@ -74,7 +74,6 @@
 #include "pgstat.h"
 #include "port/pg_bswap.h"
 #include "utils/builtins.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))

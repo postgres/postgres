@@ -15,7 +15,7 @@
 
 #include "access/amvalidate.h"
 #include "access/htup_details.h"
-#include "access/spgist_private.h"
+#include "access/spgist.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"

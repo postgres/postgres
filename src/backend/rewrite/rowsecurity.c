@@ -34,30 +34,19 @@
  */
 #include "postgres.h"
 
-#include "access/htup_details.h"
-#include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/pg_class.h"
-#include "catalog/pg_inherits.h"
-#include "catalog/pg_policy.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
 #include "nodes/pg_list.h"
-#include "nodes/plannodes.h"
-#include "parser/parsetree.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
-#include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rowsecurity.h"
-#include "tcop/utility.h"
 #include "utils/acl.h"
-#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/rls.h"
-#include "utils/syscache.h"
 
 static void get_policies_for_relation(Relation relation,
 									  CmdType cmd, Oid user_id,

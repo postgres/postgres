@@ -19,9 +19,7 @@
 #include <crt_externs.h>
 #endif
 
-#include "libpq/libpq.h"
 #include "miscadmin.h"
-#include "pgstat.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 

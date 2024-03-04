@@ -65,7 +65,6 @@
 #include "miscadmin.h"
 #include "nodes/miscnodes.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parsetree.h"
 #include "pgstat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"

@@ -21,7 +21,6 @@
 #include "access/htup_details.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_proc.h"
-#include "executor/execdebug.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"

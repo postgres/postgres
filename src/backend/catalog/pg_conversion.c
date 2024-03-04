@@ -14,10 +14,8 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/htup_details.h"
-#include "access/sysattr.h"
-#include "access/tableam.h"
+#include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -28,7 +26,6 @@
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
-#include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 

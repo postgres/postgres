@@ -26,24 +26,19 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "access/htup_details.h"
 #include "catalog/pg_collation.h"
-#include "catalog/pg_type.h"
 #include "common/ip.h"
 #include "common/string.h"
-#include "funcapi.h"
+#include "libpq/hba.h"
 #include "libpq/ifaddr.h"
-#include "libpq/libpq.h"
-#include "miscadmin.h"
+#include "libpq/libpq-be.h"
 #include "postmaster/postmaster.h"
 #include "regex/regex.h"
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/conffiles.h"
 #include "utils/guc.h"
-#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/varlena.h"
 

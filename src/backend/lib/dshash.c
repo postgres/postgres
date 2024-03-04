@@ -33,10 +33,8 @@
 
 #include "common/hashfn.h"
 #include "lib/dshash.h"
-#include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
-#include "utils/memutils.h"
 
 /*
  * An item in the hash table.  This wraps the user's entry object in an

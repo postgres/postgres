@@ -22,7 +22,6 @@
 
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
-#include "optimizer/inherit.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/orclauses.h"
 #include "optimizer/pathnode.h"

@@ -47,7 +47,6 @@
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/datum.h"
 #include "utils/jsonfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"

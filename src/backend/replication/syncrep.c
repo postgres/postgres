@@ -81,10 +81,8 @@
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
-#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
-#include "utils/builtins.h"
 #include "utils/guc_hooks.h"
 #include "utils/ps_status.h"
 

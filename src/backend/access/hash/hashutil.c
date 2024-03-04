@@ -18,7 +18,6 @@
 #include "access/reloptions.h"
 #include "access/relscan.h"
 #include "port/pg_bitutils.h"
-#include "storage/buf_internals.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 

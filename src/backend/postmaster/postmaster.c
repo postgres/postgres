@@ -91,18 +91,15 @@
 
 #include "access/xlog.h"
 #include "access/xlogrecovery.h"
-#include "catalog/pg_control.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/ip.h"
 #include "common/pg_prng.h"
 #include "common/string.h"
 #include "lib/ilist.h"
-#include "libpq/auth.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
-#include "nodes/queryjumble.h"
 #include "pg_getopt.h"
 #include "pgstat.h"
 #include "port/pg_bswap.h"
@@ -119,7 +116,6 @@
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
-#include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -133,6 +129,8 @@
 #include "utils/varlena.h"
 
 #ifdef EXEC_BACKEND
+#include "nodes/queryjumble.h"
+#include "storage/pg_shmem.h"
 #include "storage/spin.h"
 #endif
 

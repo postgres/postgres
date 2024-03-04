@@ -49,7 +49,7 @@
 
 #include "access/gist.h"
 #include "access/stratnum.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/inet.h"
 #include "varatt.h"
 

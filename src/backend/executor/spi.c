@@ -23,7 +23,6 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/spi_priv.h"
-#include "miscadmin.h"
 #include "tcop/pquery.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"

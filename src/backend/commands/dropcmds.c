@@ -14,23 +14,18 @@
  */
 #include "postgres.h"
 
-#include "access/htup_details.h"
 #include "access/table.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaddress.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
-#include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
 static void does_not_exist_skipping(ObjectType objtype,

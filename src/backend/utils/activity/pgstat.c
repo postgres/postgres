@@ -93,7 +93,6 @@
 
 #include <unistd.h>
 
-#include "access/transam.h"
 #include "access/xact.h"
 #include "lib/dshash.h"
 #include "pgstat.h"
@@ -101,8 +100,6 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
-#include "storage/pg_shmem.h"
-#include "storage/shmem.h"
 #include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 #include "utils/pgstat_internal.h"

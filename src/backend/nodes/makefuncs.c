@@ -19,7 +19,6 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "utils/errcodes.h"
 #include "utils/lsyscache.h"
 
 

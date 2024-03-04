@@ -21,7 +21,6 @@
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_collation.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_statistic_ext_data.h"
 #include "executor/executor.h"
@@ -29,7 +28,6 @@
 #include "commands/progress.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "parser/parsetree.h"
 #include "pgstat.h"
@@ -47,7 +45,6 @@
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
-#include "utils/typcache.h"
 
 /*
  * To avoid consuming too much memory during analysis and/or too much space

@@ -25,21 +25,18 @@
 #include <fcntl.h>
 #include <sys/file.h>
 
-#include "access/xlog.h"
 #include "access/xlogutils.h"
 #include "commands/tablespace.h"
 #include "common/file_utils.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
-#include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/md.h"
 #include "storage/relfilelocator.h"
 #include "storage/smgr.h"
 #include "storage/sync.h"
-#include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 /*

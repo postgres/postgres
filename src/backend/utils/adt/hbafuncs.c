@@ -18,7 +18,6 @@
 #include "common/ip.h"
 #include "funcapi.h"
 #include "libpq/hba.h"
-#include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"

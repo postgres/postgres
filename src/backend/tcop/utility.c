@@ -16,13 +16,10 @@
  */
 #include "postgres.h"
 
-#include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog.h"
-#include "catalog/catalog.h"
-#include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_inherits.h"
@@ -63,15 +60,11 @@
 #include "parser/parse_utilcmd.h"
 #include "postmaster/bgwriter.h"
 #include "rewrite/rewriteDefine.h"
-#include "rewrite/rewriteRemove.h"
 #include "storage/fd.h"
-#include "tcop/pquery.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
-#include "utils/rel.h"
-#include "utils/syscache.h"
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;

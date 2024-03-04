@@ -23,7 +23,6 @@
 #include "postgres.h"
 
 #include "access/attmap.h"
-#include "access/htup_details.h"
 #include "utils/builtins.h"
 
 

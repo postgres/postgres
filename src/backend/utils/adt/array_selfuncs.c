@@ -17,11 +17,10 @@
 #include <math.h>
 
 #include "access/htup_details.h"
-#include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "utils/array.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/typcache.h"

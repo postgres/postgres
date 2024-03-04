@@ -24,14 +24,12 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "postmaster/bgworker_internals.h"
-#include "postmaster/postmaster.h"
+#include "postmaster/bgworker.h"
 #include "replication/logicallauncher.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/inet.h"
 #include "utils/timestamp.h"
 
 #define UINT32_ACCESS_ONCE(var)		 ((uint32)(*((volatile uint32 *)&(var))))

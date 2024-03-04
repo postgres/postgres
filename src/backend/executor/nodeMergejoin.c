@@ -97,7 +97,6 @@
 #include "executor/nodeMergejoin.h"
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
 
 
 /*

@@ -13,7 +13,6 @@
  */
 #include "postgres.h"
 
-#include "miscadmin.h"
 #include "tcop/cmdtag.h"
 #include "utils/builtins.h"
 

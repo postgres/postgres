@@ -31,13 +31,9 @@
  */
 #include "postgres.h"
 
-#include "backup/basebackup.h"
 #include "backup/basebackup_sink.h"
 #include "commands/progress.h"
-#include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/latch.h"
-#include "utils/timestamp.h"
 
 static void bbsink_progress_begin_backup(bbsink *sink);
 static void bbsink_progress_archive_contents(bbsink *sink, size_t len);

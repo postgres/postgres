@@ -17,8 +17,6 @@
 
 #include <unistd.h>
 
-#include "access/xact.h"
-#include "access/xlog_internal.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "catalog/pg_type.h"
@@ -30,11 +28,9 @@
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/message.h"
-#include "storage/fd.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
-#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
 #include "utils/regproc.h"

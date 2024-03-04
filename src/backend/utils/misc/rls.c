@@ -21,7 +21,7 @@
 #include "catalog/pg_class.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 #include "utils/rls.h"
 #include "utils/syscache.h"

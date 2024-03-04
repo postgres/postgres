@@ -19,7 +19,6 @@
 #include "catalog/partition.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"

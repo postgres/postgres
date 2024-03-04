@@ -13,20 +13,16 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "access/transam.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "utils/date.h"
-#include "utils/datetime.h"
 #include "utils/json.h"
 #include "utils/jsonb.h"
 #include "utils/jsonfuncs.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 #include "utils/typcache.h"
 
 typedef struct JsonbInState

@@ -25,10 +25,8 @@
 #include <sys/stat.h>
 
 #include "access/heapam.h"
-#include "access/htup_details.h"
 #include "access/tableam.h"
 #include "access/xact.h"
-#include "access/xlog.h"
 #include "catalog/namespace.h"
 #include "commands/copy.h"
 #include "commands/copyfrom_internal.h"
@@ -39,8 +37,7 @@
 #include "executor/nodeModifyTable.h"
 #include "executor/tuptable.h"
 #include "foreign/fdwapi.h"
-#include "libpq/libpq.h"
-#include "libpq/pqformat.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/miscnodes.h"
 #include "optimizer/optimizer.h"

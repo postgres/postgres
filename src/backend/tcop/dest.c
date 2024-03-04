@@ -39,7 +39,6 @@
 #include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#include "utils/portal.h"
 
 
 /* ----------------

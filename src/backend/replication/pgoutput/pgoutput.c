@@ -22,7 +22,6 @@
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "nodes/makefuncs.h"
-#include "optimizer/optimizer.h"
 #include "parser/parse_relation.h"
 #include "replication/logical.h"
 #include "replication/logicalproto.h"

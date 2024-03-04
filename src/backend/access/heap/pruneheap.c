@@ -20,13 +20,11 @@
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
-#include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/snapmgr.h"
 #include "utils/rel.h"
-#include "utils/snapmgr.h"
 
 /* Working data for heap_page_prune and subroutines */
 typedef struct

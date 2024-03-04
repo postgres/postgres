@@ -26,7 +26,6 @@
 #include <limits.h>
 #include <math.h>
 
-#include "catalog/pg_type.h"
 #include "common/hashfn.h"
 #include "common/int.h"
 #include "funcapi.h"

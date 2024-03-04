@@ -14,13 +14,11 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/tableam.h"
 #include "catalog/index.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
-#include "utils/builtins.h"
-#include "utils/rel.h"
+#include "utils/fmgrprotos.h"
 #include "utils/snapmgr.h"
 
 

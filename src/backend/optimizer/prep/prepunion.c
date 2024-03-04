@@ -24,9 +24,6 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "access/sysattr.h"
-#include "catalog/partition.h"
-#include "catalog/pg_inherits.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -34,16 +31,11 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_coerce.h"
-#include "parser/parsetree.h"
-#include "utils/lsyscache.h"
-#include "utils/rel.h"
 #include "utils/selfuncs.h"
-#include "utils/syscache.h"
 
 
 static RelOptInfo *recurse_set_operations(Node *setOp, PlannerInfo *root,

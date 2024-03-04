@@ -23,7 +23,6 @@
 
 #include "access/sysattr.h"
 #include "access/table.h"
-#include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/system_fk_info.h"

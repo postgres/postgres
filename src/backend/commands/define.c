@@ -39,8 +39,7 @@
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
-#include "parser/scansup.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 
 /*
  * Extract a string value (otherwise uninterpreted) from a DefElem.

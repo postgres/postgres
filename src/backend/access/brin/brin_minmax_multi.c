@@ -77,7 +77,6 @@
 #include "utils/inet.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/numeric.h"
 #include "utils/pg_lsn.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"

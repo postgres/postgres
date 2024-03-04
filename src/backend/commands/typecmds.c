@@ -32,8 +32,9 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/relation.h"
+#include "access/table.h"
 #include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"
@@ -68,7 +69,6 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"

@@ -17,23 +17,18 @@
 #include "access/relation.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
-#include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/view.h"
-#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
-#include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
-#include "utils/syscache.h"
 
 static void checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc);
 

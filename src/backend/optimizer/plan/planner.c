@@ -19,18 +19,15 @@
 #include <math.h>
 
 #include "access/genam.h"
-#include "access/htup_details.h"
 #include "access/parallel.h"
 #include "access/sysattr.h"
 #include "access/table.h"
-#include "access/xact.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
-#include "executor/nodeAgg.h"
 #include "foreign/fdwapi.h"
 #include "jit/jit.h"
 #include "lib/bipartite_match.h"
@@ -45,7 +42,6 @@
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-#include "optimizer/inherit.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/paramassign.h"
 #include "optimizer/pathnode.h"
@@ -61,12 +57,9 @@
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "partitioning/partdesc.h"
-#include "rewrite/rewriteManip.h"
-#include "storage/dsm_impl.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
-#include "utils/syscache.h"
 
 /* GUC parameters */
 double		cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;

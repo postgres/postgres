@@ -15,7 +15,7 @@
 
 #include "postgres.h"
 
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeWorktablescan.h"
 
 static TupleTableSlot *WorkTableScanNext(WorkTableScanState *node);

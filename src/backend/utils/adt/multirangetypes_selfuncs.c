@@ -22,7 +22,6 @@
 #include "access/htup_details.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
-#include "catalog/pg_type.h"
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"

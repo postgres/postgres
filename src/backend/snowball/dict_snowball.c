@@ -14,7 +14,7 @@
 
 #include "commands/defrem.h"
 #include "tsearch/ts_locale.h"
-#include "tsearch/ts_utils.h"
+#include "tsearch/ts_public.h"
 
 /* Some platforms define MAXINT and/or MININT, causing conflicts */
 #ifdef MAXINT

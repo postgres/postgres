@@ -18,7 +18,7 @@
  */
 #include "postgres.h"
 
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeRecursiveunion.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"

@@ -16,7 +16,7 @@
 #include "access/gin.h"
 #include "access/stratnum.h"
 #include "utils/array.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 
 

@@ -27,14 +27,11 @@
 #include "access/transam.h"
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
-#include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "pg_trace.h"
 #include "storage/shmem.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/guc_hooks.h"
-#include "utils/snapmgr.h"
 #include "utils/timestamp.h"
 
 /*

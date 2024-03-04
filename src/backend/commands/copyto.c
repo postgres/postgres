@@ -18,11 +18,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "access/heapam.h"
-#include "access/htup_details.h"
 #include "access/tableam.h"
-#include "access/xact.h"
-#include "access/xlog.h"
 #include "commands/copy.h"
 #include "commands/progress.h"
 #include "executor/execdesc.h"
@@ -32,14 +28,11 @@
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
-#include "optimizer/optimizer.h"
 #include "pgstat.h"
-#include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/partcache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 

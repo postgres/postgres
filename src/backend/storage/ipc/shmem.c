@@ -65,7 +65,6 @@
 
 #include "postgres.h"
 
-#include "access/transam.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"

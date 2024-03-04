@@ -25,16 +25,15 @@
 
 #include <math.h>
 
-#include "access/htup_details.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_statistic_ext_data.h"
 #include "lib/stringinfo.h"
 #include "statistics/extended_stats_internal.h"
 #include "statistics/statistics.h"
 #include "utils/fmgrprotos.h"
-#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
+#include "varatt.h"
 
 static double ndistinct_for_combination(double totalrows, StatsBuildData *data,
 										int k, int *combination);

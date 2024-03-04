@@ -21,7 +21,6 @@
 #include "foreign/fdwapi.h"
 #include "foreign/foreign.h"
 #include "funcapi.h"
-#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"

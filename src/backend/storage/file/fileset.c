@@ -23,14 +23,11 @@
 
 #include <limits.h>
 
-#include "catalog/pg_tablespace.h"
 #include "commands/tablespace.h"
 #include "common/file_utils.h"
 #include "common/hashfn.h"
 #include "miscadmin.h"
-#include "storage/ipc.h"
 #include "storage/fileset.h"
-#include "utils/builtins.h"
 
 static void FileSetPath(char *path, FileSet *fileset, Oid tablespace);
 static void FilePath(char *path, FileSet *fileset, const char *name);

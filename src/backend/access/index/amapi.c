@@ -17,7 +17,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_opclass.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/syscache.h"
 
 

@@ -24,7 +24,6 @@
 #include "executor/execdebug.h"
 #include "executor/nodeNestloop.h"
 #include "miscadmin.h"
-#include "utils/memutils.h"
 
 
 /* ----------------------------------------------------------------

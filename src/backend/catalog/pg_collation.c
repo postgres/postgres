@@ -14,9 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/htup_details.h"
-#include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -26,8 +24,6 @@
 #include "catalog/pg_namespace.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
-#include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 

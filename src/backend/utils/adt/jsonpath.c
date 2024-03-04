@@ -63,12 +63,11 @@
 
 #include "postgres.h"
 
-#include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "nodes/miscnodes.h"
 #include "miscadmin.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/json.h"
 #include "utils/jsonpath.h"
 

@@ -20,15 +20,15 @@
 #include "postgres.h"
 
 #include "access/timeline.h"
-#include "access/xlog.h"
-#include "access/xlogrecovery.h"
 #include "backup/basebackup_incremental.h"
 #include "backup/walsummary.h"
 #include "common/blkreftable.h"
 #include "common/parse_manifest.h"
 #include "common/hashfn.h"
 #include "common/int.h"
+#include "datatype/timestamp.h"
 #include "postmaster/walsummarizer.h"
+#include "utils/timestamp.h"
 
 #define	BLOCKS_PER_READ			512
 

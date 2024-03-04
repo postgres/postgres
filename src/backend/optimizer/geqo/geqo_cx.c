@@ -35,10 +35,12 @@
 
 
 #include "postgres.h"
-#include "optimizer/geqo_random.h"
-#include "optimizer/geqo_recombination.h"
+#include "optimizer/geqo.h"
 
 #if defined(CX)
+
+#include "optimizer/geqo_random.h"
+#include "optimizer/geqo_recombination.h"
 
 /* cx
  *

@@ -17,7 +17,6 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"
 #include "funcapi.h"

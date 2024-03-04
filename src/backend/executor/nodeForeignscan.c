@@ -25,7 +25,6 @@
 #include "executor/executor.h"
 #include "executor/nodeForeignscan.h"
 #include "foreign/fdwapi.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 
 static TupleTableSlot *ForeignNext(ForeignScanState *node);

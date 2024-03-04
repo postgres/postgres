@@ -19,7 +19,7 @@
 #include "nodes/miscnodes.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/memutils.h"
 #include "varatt.h"
 

@@ -17,8 +17,8 @@
 #include "commands/defrem.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_locale.h"
-#include "tsearch/ts_utils.h"
-#include "utils/builtins.h"
+#include "tsearch/ts_public.h"
+#include "utils/fmgrprotos.h"
 #include "utils/regproc.h"
 
 

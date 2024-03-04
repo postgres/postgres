@@ -15,9 +15,8 @@
 
 #include "postgres.h"
 
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeNamedtuplestorescan.h"
-#include "miscadmin.h"
 #include "utils/queryenvironment.h"
 
 static TupleTableSlot *NamedTuplestoreScanNext(NamedTuplestoreScanState *node);

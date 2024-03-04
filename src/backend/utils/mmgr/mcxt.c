@@ -23,10 +23,6 @@
 
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
-#include "storage/proc.h"
-#include "storage/procarray.h"
-#include "storage/procsignal.h"
-#include "utils/fmgrprotos.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/memutils_internal.h"

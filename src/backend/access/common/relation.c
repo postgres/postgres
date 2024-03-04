@@ -23,7 +23,6 @@
 #include "access/relation.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
-#include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/lmgr.h"
 #include "utils/inval.h"

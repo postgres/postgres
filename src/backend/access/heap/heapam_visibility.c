@@ -69,7 +69,6 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
-#include "access/subtrans.h"
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -77,7 +76,6 @@
 #include "storage/bufmgr.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
-#include "utils/combocid.h"
 #include "utils/snapmgr.h"
 
 

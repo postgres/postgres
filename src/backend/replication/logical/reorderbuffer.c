@@ -103,8 +103,6 @@
 #include "storage/fd.h"
 #include "storage/sinval.h"
 #include "utils/builtins.h"
-#include "utils/combocid.h"
-#include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/relfilenumbermap.h"

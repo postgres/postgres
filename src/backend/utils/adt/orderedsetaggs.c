@@ -24,10 +24,8 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "utils/array.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
-#include "utils/timestamp.h"
 #include "utils/tuplesort.h"
 
 

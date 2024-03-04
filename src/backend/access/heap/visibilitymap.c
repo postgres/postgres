@@ -93,9 +93,9 @@
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
 #include "storage/bufmgr.h"
-#include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "utils/inval.h"
+#include "utils/rel.h"
 
 
 /*#define TRACE_VISIBILITYMAP */

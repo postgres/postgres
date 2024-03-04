@@ -22,7 +22,6 @@
 #include "access/amapi.h"
 #include "access/htup_details.h"
 #include "access/relation.h"
-#include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_am.h"

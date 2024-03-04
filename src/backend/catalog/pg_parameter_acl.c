@@ -17,12 +17,9 @@
 #include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
-#include "catalog/objectaccess.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_parameter_acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
-#include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 

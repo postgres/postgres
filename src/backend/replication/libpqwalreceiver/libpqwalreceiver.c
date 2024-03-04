@@ -22,8 +22,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include "access/xlog.h"
-#include "catalog/pg_type.h"
 #include "common/connect.h"
 #include "funcapi.h"
 #include "libpq-fe.h"

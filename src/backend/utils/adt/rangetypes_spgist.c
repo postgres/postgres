@@ -39,8 +39,8 @@
 #include "access/spgist.h"
 #include "access/stratnum.h"
 #include "catalog/pg_type.h"
-#include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/fmgrprotos.h"
 #include "utils/rangetypes.h"
 
 static int16 getQuadrant(TypeCacheEntry *typcache, const RangeType *centroid,

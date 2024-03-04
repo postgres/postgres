@@ -18,8 +18,8 @@
 #include <math.h>
 
 #include "access/spgist_private.h"
-#include "utils/builtins.h"
 #include "utils/float.h"
+#include "utils/fmgrprotos.h"
 #include "utils/geo_decls.h"
 
 #define point_point_distance(p1,p2) \

@@ -29,8 +29,8 @@
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/fsm_internals.h"
-#include "storage/lmgr.h"
 #include "storage/smgr.h"
+#include "utils/rel.h"
 
 
 /*

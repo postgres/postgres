@@ -15,15 +15,12 @@
 #include "postgres.h"
 
 #include "executor/execExpr.h"
-#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/subscripting.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "utils/jsonb.h"
-#include "utils/jsonfuncs.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
 
 
 /* SubscriptingRefState.workspace for jsonb subscripting execution */

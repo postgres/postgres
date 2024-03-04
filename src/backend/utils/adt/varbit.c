@@ -38,7 +38,7 @@
 #include "nodes/supportnodes.h"
 #include "port/pg_bitutils.h"
 #include "utils/array.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/varbit.h"
 
 #define HEXDIG(z)	 ((z)<10 ? ((z)+'0') : ((z)-10+'A'))

@@ -57,7 +57,7 @@
 
 #include <limits.h>
 
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/sortsupport.h"
 
 #ifdef STRESS_SORT_INT_MIN

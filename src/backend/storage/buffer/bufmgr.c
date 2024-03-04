@@ -36,7 +36,6 @@
 #include "access/tableam.h"
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
-#include "catalog/catalog.h"
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
 #include "executor/instrument.h"

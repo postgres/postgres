@@ -21,7 +21,6 @@
 #include "commands/lockcmds.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parse_clause.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/lmgr.h"
 #include "utils/acl.h"

@@ -95,7 +95,6 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
-#include "storage/sinvaladt.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/fmgroids.h"

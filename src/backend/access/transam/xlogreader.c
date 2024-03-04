@@ -34,9 +34,7 @@
 #include "replication/origin.h"
 
 #ifndef FRONTEND
-#include "miscadmin.h"
 #include "pgstat.h"
-#include "utils/memutils.h"
 #else
 #include "common/logging.h"
 #endif

@@ -28,7 +28,6 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
 typedef enum

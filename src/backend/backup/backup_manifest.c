@@ -15,8 +15,6 @@
 #include "access/timeline.h"
 #include "backup/backup_manifest.h"
 #include "backup/basebackup_sink.h"
-#include "libpq/libpq.h"
-#include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/json.h"

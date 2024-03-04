@@ -13,9 +13,8 @@
  */
 #include "postgres.h"
 
-#include "funcapi.h"
 #include "libpq/pqformat.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/numeric.h"
 #include "utils/pg_lsn.h"
 

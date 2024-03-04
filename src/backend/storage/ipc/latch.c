@@ -60,7 +60,6 @@
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
-#include "storage/shmem.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
 

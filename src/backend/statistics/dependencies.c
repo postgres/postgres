@@ -14,8 +14,6 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "access/sysattr.h"
-#include "catalog/pg_operator.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_statistic_ext_data.h"
 #include "lib/stringinfo.h"
@@ -27,7 +25,6 @@
 #include "parser/parsetree.h"
 #include "statistics/extended_stats_internal.h"
 #include "statistics/statistics.h"
-#include "utils/bytea.h"
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
@@ -35,6 +32,7 @@
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
+#include "varatt.h"
 
 /* size of the struct header fields (magic, type, ndeps) */
 #define SizeOfHeader		(3 * sizeof(uint32))

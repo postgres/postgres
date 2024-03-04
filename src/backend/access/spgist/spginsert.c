@@ -18,12 +18,10 @@
 
 #include "access/genam.h"
 #include "access/spgist_private.h"
-#include "access/spgxlog.h"
 #include "access/tableam.h"
-#include "access/xlog.h"
 #include "access/xloginsert.h"
-#include "catalog/index.h"
 #include "miscadmin.h"
+#include "nodes/execnodes.h"
 #include "storage/bufmgr.h"
 #include "storage/bulk_write.h"
 #include "utils/memutils.h"

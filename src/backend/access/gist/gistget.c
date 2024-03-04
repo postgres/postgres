@@ -20,7 +20,6 @@
 #include "lib/pairingheap.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "utils/float.h"
 #include "utils/memutils.h"

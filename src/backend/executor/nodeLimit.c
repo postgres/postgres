@@ -24,7 +24,6 @@
 #include "executor/executor.h"
 #include "executor/nodeLimit.h"
 #include "miscadmin.h"
-#include "nodes/nodeFuncs.h"
 
 static void recompute_limits(LimitState *node);
 static int64 compute_tuples_needed(LimitState *node);

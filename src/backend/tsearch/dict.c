@@ -15,7 +15,7 @@
 
 #include "catalog/pg_type.h"
 #include "tsearch/ts_cache.h"
-#include "tsearch/ts_utils.h"
+#include "tsearch/ts_public.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 

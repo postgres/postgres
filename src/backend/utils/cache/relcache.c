@@ -32,7 +32,6 @@
 
 #include "access/htup_details.h"
 #include "access/multixact.h"
-#include "access/nbtree.h"
 #include "access/parallel.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
@@ -40,7 +39,6 @@
 #include "access/tableam.h"
 #include "access/tupdesc_details.h"
 #include "access/xact.h"
-#include "access/xlog.h"
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"

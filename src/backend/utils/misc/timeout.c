@@ -17,7 +17,7 @@
 #include <sys/time.h>
 
 #include "miscadmin.h"
-#include "storage/proc.h"
+#include "storage/latch.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 

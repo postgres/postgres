@@ -25,7 +25,6 @@
 #include "access/xlog_internal.h"
 #include "access/xlogrecovery.h"
 #include "pgstat.h"
-#include "postmaster/startup.h"
 #include "replication/walreceiver.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"

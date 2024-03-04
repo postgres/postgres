@@ -33,7 +33,7 @@
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "catalog/pg_am.h"
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeIndexscan.h"
 #include "lib/pairingheap.h"
 #include "miscadmin.h"
@@ -41,7 +41,6 @@
 #include "utils/array.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 
 /*

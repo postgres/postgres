@@ -45,9 +45,9 @@
 #include "access/detoast.h"
 #include "common/hashfn.h"
 #include "fmgr.h"
-#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/expandeddatum.h"
+#include "utils/fmgrprotos.h"
 
 
 /*-------------------------------------------------------------------------

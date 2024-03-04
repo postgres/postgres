@@ -31,7 +31,6 @@
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
-#include "storage/lwlock.h"
 
 /*
  * Attempt to retrieve the specified file from off-line archival storage.

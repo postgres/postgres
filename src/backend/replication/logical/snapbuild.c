@@ -134,7 +134,6 @@
 #include "replication/logical.h"
 #include "replication/reorderbuffer.h"
 #include "replication/snapbuild.h"
-#include "storage/block.h"		/* debugging output */
 #include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"

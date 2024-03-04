@@ -15,7 +15,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/auxprocess.h"
@@ -24,15 +23,11 @@
 #include "postmaster/walsummarizer.h"
 #include "postmaster/walwriter.h"
 #include "replication/walreceiver.h"
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
 #include "storage/condition_variable.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
-#include "tcop/tcopprot.h"
-#include "utils/memutils.h"
+#include "storage/procsignal.h"
 #include "utils/ps_status.h"
-#include "utils/rel.h"
 
 
 static void ShutdownAuxiliaryProcess(int code, Datum arg);

@@ -20,14 +20,8 @@
 
 #include <limits.h>
 
-#include "catalog/pg_tablespace.h"
-#include "commands/tablespace.h"
-#include "common/hashfn.h"
-#include "miscadmin.h"
 #include "storage/dsm.h"
-#include "storage/ipc.h"
 #include "storage/sharedfileset.h"
-#include "utils/builtins.h"
 
 static void SharedFileSetOnDetach(dsm_segment *segment, Datum datum);
 

@@ -26,11 +26,9 @@
 
 #include "postgres.h"
 
-#include "access/hash.h"
-#include "catalog/pg_collation.h"
 #include "common/hashfn.h"
-#include "utils/builtins.h"
 #include "utils/float.h"
+#include "utils/fmgrprotos.h"
 #include "utils/pg_locale.h"
 #include "varatt.h"
 

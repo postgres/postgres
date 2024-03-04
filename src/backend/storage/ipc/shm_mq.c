@@ -22,7 +22,6 @@
 #include "pgstat.h"
 #include "port/pg_bitutils.h"
 #include "postmaster/bgworker.h"
-#include "storage/procsignal.h"
 #include "storage/shm_mq.h"
 #include "storage/spin.h"
 #include "utils/memutils.h"

@@ -39,7 +39,6 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
-#include "replication/slot.h"
 #include "replication/slotsync.h"
 #include "replication/syncrep.h"
 #include "storage/condition_variable.h"

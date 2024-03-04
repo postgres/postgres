@@ -65,7 +65,7 @@
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
 #include "miscadmin.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/jsonb.h"
 #include "utils/jsonpath.h"
 #include "utils/varlena.h"

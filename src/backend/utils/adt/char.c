@@ -18,7 +18,7 @@
 #include <limits.h>
 
 #include "libpq/pqformat.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "varatt.h"
 
 #define ISOCTAL(c)   (((c) >= '0') && ((c) <= '7'))

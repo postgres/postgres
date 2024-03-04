@@ -28,7 +28,6 @@
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 

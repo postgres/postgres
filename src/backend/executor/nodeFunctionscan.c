@@ -26,7 +26,6 @@
 #include "executor/nodeFunctionscan.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
-#include "utils/builtins.h"
 #include "utils/memutils.h"
 
 

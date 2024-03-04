@@ -35,7 +35,7 @@
 
 #include "access/spgist.h"
 #include "catalog/pg_type.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/inet.h"
 #include "varatt.h"
 

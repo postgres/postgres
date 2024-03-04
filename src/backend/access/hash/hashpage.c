@@ -33,9 +33,9 @@
 #include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
-#include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "storage/smgr.h"
+#include "utils/rel.h"
 
 static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,
 								uint32 nblocks);

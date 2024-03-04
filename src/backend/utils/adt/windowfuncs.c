@@ -15,7 +15,7 @@
 
 #include "nodes/parsenodes.h"
 #include "nodes/supportnodes.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "windowapi.h"
 
 /*

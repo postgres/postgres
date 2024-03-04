@@ -25,7 +25,6 @@
 #include "access/table.h"
 #include "catalog/dependency.h"
 #include "catalog/partition.h"
-#include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "foreign/fdwapi.h"

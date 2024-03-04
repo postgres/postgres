@@ -18,7 +18,6 @@
 #include <limits.h>
 #include <ctype.h>
 
-#include "common/int.h"
 #include "utils/builtins.h"
 #include "port/pg_bitutils.h"
 

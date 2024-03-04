@@ -21,10 +21,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "executor/execExpr.h"
 #include "fmgr.h"
 #include "jit/jit.h"
 #include "miscadmin.h"
+#include "nodes/execnodes.h"
+#include "portability/instr_time.h"
 #include "utils/fmgrprotos.h"
 
 /* GUCs */

@@ -30,7 +30,6 @@
 #include "parser/parse_coerce.h"
 #include "partitioning/partbounds.h"
 #include "partitioning/partdesc.h"
-#include "partitioning/partprune.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"

@@ -21,7 +21,6 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "access/sysattr.h"
 #include "catalog/pg_db_role_setting_d.h"
 #include "catalog/pg_depend_d.h"
 #include "catalog/pg_description_d.h"

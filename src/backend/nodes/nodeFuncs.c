@@ -18,7 +18,6 @@
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
-#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/pathnodes.h"
 #include "utils/builtins.h"

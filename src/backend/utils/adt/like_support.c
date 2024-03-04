@@ -37,7 +37,6 @@
 #include <math.h>
 
 #include "access/htup_details.h"
-#include "access/stratnum.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"

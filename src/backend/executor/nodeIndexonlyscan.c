@@ -35,13 +35,12 @@
 #include "access/tableam.h"
 #include "access/tupdesc.h"
 #include "access/visibilitymap.h"
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeIndexscan.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 
 

@@ -27,7 +27,6 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
-#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/supportnodes.h"
 #include "parser/scansup.h"

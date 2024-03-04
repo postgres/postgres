@@ -17,12 +17,11 @@
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_class.h"
 #include "catalog/pg_rewrite.h"
 #include "rewrite/rewriteSupport.h"
-#include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
-#include "utils/rel.h"
 #include "utils/syscache.h"
 
 

@@ -48,7 +48,6 @@
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
 #include "utils/resowner.h"
-#include "utils/timestamp.h"
 
 /*
  * How much data do we want to send in one CopyData message? Note that

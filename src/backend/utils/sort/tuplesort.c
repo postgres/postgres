@@ -101,15 +101,12 @@
 
 #include <limits.h>
 
-#include "catalog/pg_am.h"
 #include "commands/tablespace.h"
-#include "executor/executor.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "storage/shmem.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
-#include "utils/rel.h"
 #include "utils/tuplesort.h"
 
 /*

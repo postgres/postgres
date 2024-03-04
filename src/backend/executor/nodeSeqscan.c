@@ -29,7 +29,7 @@
 
 #include "access/relscan.h"
 #include "access/tableam.h"
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeSeqscan.h"
 #include "utils/rel.h"
 

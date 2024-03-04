@@ -12,7 +12,6 @@
 
 #include "postgres.h"
 
-#include "access/transam.h"
 #include "access/xact.h"
 #include "pgstat.h"
 #include "utils/memutils.h"

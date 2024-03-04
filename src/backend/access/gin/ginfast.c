@@ -31,7 +31,7 @@
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 

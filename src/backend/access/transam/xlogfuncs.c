@@ -22,23 +22,17 @@
 #include "access/xlog_internal.h"
 #include "access/xlogbackup.h"
 #include "access/xlogrecovery.h"
-#include "access/xlogutils.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/walreceiver.h"
 #include "storage/fd.h"
-#include "storage/ipc.h"
-#include "storage/smgr.h"
 #include "storage/standby.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
 #include "utils/memutils.h"
-#include "utils/numeric.h"
 #include "utils/pg_lsn.h"
 #include "utils/timestamp.h"
-#include "utils/tuplestore.h"
 
 /*
  * Backup-related variables.

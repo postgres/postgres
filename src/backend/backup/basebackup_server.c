@@ -11,13 +11,11 @@
 #include "postgres.h"
 
 #include "access/xact.h"
-#include "backup/basebackup.h"
 #include "backup/basebackup_sink.h"
 #include "catalog/pg_authid.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
-#include "utils/timestamp.h"
 #include "utils/wait_event.h"
 
 typedef struct bbsink_server

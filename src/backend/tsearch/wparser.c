@@ -14,13 +14,11 @@
 #include "postgres.h"
 
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
 #include "commands/defrem.h"
-#include "common/jsonapi.h"
 #include "funcapi.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_utils.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/jsonfuncs.h"
 #include "utils/varlena.h"
 

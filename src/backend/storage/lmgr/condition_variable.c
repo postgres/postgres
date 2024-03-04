@@ -21,11 +21,9 @@
 #include "miscadmin.h"
 #include "portability/instr_time.h"
 #include "storage/condition_variable.h"
-#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/proclist.h"
 #include "storage/spin.h"
-#include "utils/memutils.h"
 
 /* Initially, we are not prepared to sleep on any condition variable. */
 static ConditionVariable *cv_sleep_target = NULL;

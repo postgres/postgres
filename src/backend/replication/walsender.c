@@ -49,7 +49,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "access/printtup.h"
 #include "access/timeline.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -84,7 +83,6 @@
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
-#include "storage/procarray.h"
 #include "tcop/dest.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -92,7 +90,6 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
-#include "utils/portal.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"

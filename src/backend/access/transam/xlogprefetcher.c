@@ -27,18 +27,14 @@
 
 #include "postgres.h"
 
-#include "access/xlog.h"
 #include "access/xlogprefetcher.h"
 #include "access/xlogreader.h"
-#include "access/xlogutils.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_control.h"
 #include "catalog/storage_xlog.h"
 #include "commands/dbcommands_xlog.h"
 #include "utils/fmgrprotos.h"
 #include "utils/timestamp.h"
 #include "funcapi.h"
-#include "pgstat.h"
 #include "miscadmin.h"
 #include "port/atomics.h"
 #include "storage/bufmgr.h"

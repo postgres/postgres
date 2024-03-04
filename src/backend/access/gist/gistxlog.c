@@ -16,12 +16,10 @@
 #include "access/bufmask.h"
 #include "access/gist_private.h"
 #include "access/gistxlog.h"
-#include "access/heapam_xlog.h"
 #include "access/transam.h"
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
-#include "miscadmin.h"
-#include "storage/procarray.h"
+#include "storage/standby.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 

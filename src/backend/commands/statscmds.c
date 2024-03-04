@@ -14,9 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/relation.h"
-#include "access/relscan.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -32,11 +30,10 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "statistics/statistics.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/fmgroids.h"
 #include "utils/inval.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"

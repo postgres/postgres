@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "funcapi.h"
@@ -22,7 +23,6 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
@@ -30,7 +30,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
-#include "utils/typcache.h"
 
 static void markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 								 Var *var, int levelsup);

@@ -15,10 +15,8 @@
 #include "postgres.h"
 
 #include "access/xact.h"
-#include "commands/async.h"
 #include "miscadmin.h"
-#include "storage/ipc.h"
-#include "storage/proc.h"
+#include "storage/latch.h"
 #include "storage/sinvaladt.h"
 #include "utils/inval.h"
 

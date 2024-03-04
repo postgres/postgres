@@ -21,7 +21,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "utils/array.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 
 

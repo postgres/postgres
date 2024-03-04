@@ -34,7 +34,6 @@
 #include "common/username.h"
 #include "port/atomics.h"
 #include "postmaster/postmaster.h"
-#include "storage/spin.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"
 #include "utils/memutils.h"

@@ -22,13 +22,10 @@
 #include "access/timeline.h"
 #include "access/xlogrecovery.h"
 #include "access/xlog_internal.h"
-#include "access/xlogprefetcher.h"
 #include "access/xlogutils.h"
 #include "miscadmin.h"
-#include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"
-#include "utils/guc.h"
 #include "utils/hsearch.h"
 #include "utils/rel.h"
 

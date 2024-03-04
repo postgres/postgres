@@ -15,9 +15,7 @@
 #include "postgres.h"
 
 #include "access/ginxlog.h"
-#include "access/xlogutils.h"
 #include "lib/stringinfo.h"
-#include "storage/relfilelocator.h"
 
 static void
 desc_recompress_leaf(StringInfo buf, ginxlogRecompressDataLeaf *insertData)

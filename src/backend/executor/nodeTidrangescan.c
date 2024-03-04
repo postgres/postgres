@@ -18,10 +18,9 @@
 #include "access/sysattr.h"
 #include "access/tableam.h"
 #include "catalog/pg_operator.h"
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeTidrangescan.h"
 #include "nodes/nodeFuncs.h"
-#include "storage/bufmgr.h"
 #include "utils/rel.h"
 
 

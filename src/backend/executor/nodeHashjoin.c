@@ -169,9 +169,8 @@
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
-#include "pgstat.h"
-#include "utils/memutils.h"
 #include "utils/sharedtuplestore.h"
+#include "utils/wait_event.h"
 
 
 /*

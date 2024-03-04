@@ -28,11 +28,11 @@
 #include "parser/parse_coerce.h"
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
-#include "storage/lmgr.h"
-#include "utils/builtins.h"
 #include "utils/catcache.h"
+#include "utils/fmgrprotos.h"
 #include "utils/index_selfuncs.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 

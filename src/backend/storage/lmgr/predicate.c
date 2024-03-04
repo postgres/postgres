@@ -199,7 +199,6 @@
 
 #include "access/parallel.h"
 #include "access/slru.h"
-#include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
@@ -208,7 +207,6 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/pg_lfind.h"
-#include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "storage/predicate_internals.h"
 #include "storage/proc.h"

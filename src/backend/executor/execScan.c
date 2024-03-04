@@ -20,7 +20,6 @@
 
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "utils/memutils.h"
 
 
 

@@ -16,7 +16,6 @@
 #include "postgres.h"
 
 #include "access/parallel.h"
-#include "catalog/catalog.h"
 #include "executor/instrument.h"
 #include "pgstat.h"
 #include "storage/buf_internals.h"

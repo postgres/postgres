@@ -22,7 +22,6 @@
 
 #include "access/genam.h"
 #include "access/htup_details.h"
-#include "access/sysattr.h"
 #include "access/table.h"
 #include "access/transam.h"
 #include "catalog/catalog.h"
@@ -42,7 +41,6 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
-#include "storage/fd.h"
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
 #include "utils/rel.h"

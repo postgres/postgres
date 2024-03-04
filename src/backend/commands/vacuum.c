@@ -38,7 +38,6 @@
 #include "catalog/index.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_namespace.h"
 #include "commands/cluster.h"
 #include "commands/defrem.h"
 #include "commands/vacuum.h"
@@ -58,7 +57,6 @@
 #include "utils/guc.h"
 #include "utils/guc_hooks.h"
 #include "utils/memutils.h"
-#include "utils/pg_rusage.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 

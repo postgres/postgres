@@ -21,7 +21,7 @@
 #include "lib/qunique.h"
 #include "port/pg_bitutils.h"
 #include "tsearch/ts_utils.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/pg_crc.h"
 
 

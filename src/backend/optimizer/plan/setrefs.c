@@ -27,7 +27,6 @@
 #include "optimizer/tlist.h"
 #include "parser/parse_relation.h"
 #include "tcop/utility.h"
-#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 

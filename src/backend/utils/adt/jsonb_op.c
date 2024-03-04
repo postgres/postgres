@@ -14,8 +14,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
-#include "miscadmin.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/jsonb.h"
 
 Datum

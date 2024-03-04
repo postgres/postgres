@@ -14,18 +14,13 @@
 
 #include "postgres.h"
 
-#include "access/relscan.h"
-#include "access/xact.h"
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/execParallel.h"
 #include "executor/nodeGatherMerge.h"
-#include "executor/nodeSubplan.h"
 #include "executor/tqueue.h"
 #include "lib/binaryheap.h"
 #include "miscadmin.h"
 #include "optimizer/optimizer.h"
-#include "utils/memutils.h"
-#include "utils/rel.h"
 
 /*
  * When we read tuples from workers, it's a good idea to read several at once

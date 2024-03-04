@@ -19,7 +19,7 @@
 #include "miscadmin.h"
 #include "tsearch/ts_utils.h"
 #include "utils/array.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 
 static const float weights[] = {0.1f, 0.2f, 0.4f, 1.0f};
 

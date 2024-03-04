@@ -20,7 +20,6 @@
 
 #include "access/htup_details.h"
 #include "access/xact.h"
-#include "catalog/pg_type.h"
 #include "common/int.h"
 #include "common/string.h"
 #include "funcapi.h"
@@ -31,7 +30,6 @@
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/guc.h"
-#include "utils/memutils.h"
 #include "utils/tzparser.h"
 
 static int	DecodeNumber(int flen, char *str, bool haveTextMonth,

@@ -36,7 +36,6 @@
 #include "executor/executor.h"
 #include "executor/nodeUnique.h"
 #include "miscadmin.h"
-#include "utils/memutils.h"
 
 
 /* ----------------------------------------------------------------

@@ -21,16 +21,14 @@
 #include "catalog/pg_inherits.h"
 #include "partitioning/partbounds.h"
 #include "partitioning/partdesc.h"
-#include "storage/bufmgr.h"
-#include "storage/sinval.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/hsearch.h"
-#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/partcache.h"
 #include "utils/rel.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
 typedef struct PartitionDirectoryData
