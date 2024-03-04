@@ -111,7 +111,10 @@ sub adjust_database_contents
 	{
 		_add_st($result, 'postgres',
 			'drop database if exists contrib_regression_adminpack');
+		_add_st($result, 'postgres',
+			'drop database if exists regression_adminpack');
 		delete($dbnames{'contrib_regression_adminpack'});
+		delete($dbnames{'regression_adminpack'});
 	}
 
 	# we removed this test-support function in v17
