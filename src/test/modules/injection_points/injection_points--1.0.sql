@@ -25,6 +25,16 @@ AS 'MODULE_PATHNAME', 'injection_points_run'
 LANGUAGE C STRICT PARALLEL UNSAFE;
 
 --
+-- injection_points_wakeup()
+--
+-- Wakes up a waiting injection point.
+--
+CREATE FUNCTION injection_points_wakeup(IN point_name TEXT)
+RETURNS void
+AS 'MODULE_PATHNAME', 'injection_points_wakeup'
+LANGUAGE C STRICT PARALLEL UNSAFE;
+
+--
 -- injection_points_detach()
 --
 -- Detaches the current action, if any, from the given injection point.
