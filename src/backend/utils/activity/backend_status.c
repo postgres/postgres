@@ -831,8 +831,8 @@ pgstat_read_current_status(void)
 			/*
 			 * The BackendStatusArray index is exactly the ProcNumber of the
 			 * source backend.  Note that this means localBackendStatusTable
-			 * is in order by proc_number.  pgstat_get_beentry_by_proc_number()
-			 * depends on that.
+			 * is in order by proc_number.
+			 * pgstat_get_beentry_by_proc_number() depends on that.
 			 */
 			localentry->proc_number = procNumber;
 			ProcNumberGetTransactionIds(procNumber,
