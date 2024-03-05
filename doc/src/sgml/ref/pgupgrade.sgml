@@ -264,6 +264,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--copy-file-range</option></term>
+      <listitem>
+       <para>
+        Use the <function>copy_file_range</function> system call for efficient
+        copying.  On some file systems this gives results similar to
+        <option>--clone</option>, sharing physical disk blocks, while on others
+        it may still copy blocks, but do so via an optimized path.  At present,
+        it is supported on Linux and FreeBSD.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-?</option></term>
       <term><option>--help</option></term>
       <listitem><para>show help, then exit</para></listitem>

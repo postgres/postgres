@@ -235,6 +235,9 @@ check_new_cluster(void)
 			break;
 		case TRANSFER_MODE_COPY:
 			break;
+		case TRANSFER_MODE_COPY_FILE_RANGE:
+			check_copy_file_range();
+			break;
 		case TRANSFER_MODE_LINK:
 			check_hard_link();
 			break;

@@ -58,7 +58,8 @@ parseCommandLine(int argc, char *argv[])
 		{"verbose", no_argument, NULL, 'v'},
 		{"clone", no_argument, NULL, 1},
 		{"copy", no_argument, NULL, 2},
-		{"sync-method", required_argument, NULL, 3},
+		{"copy-file-range", no_argument, NULL, 3},
+		{"sync-method", required_argument, NULL, 4},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -203,6 +204,9 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			case 3:
+				user_opts.transfer_mode = TRANSFER_MODE_COPY_FILE_RANGE;
+				break;
+			case 4:
 				if (!parse_sync_method(optarg, &unused))
 					exit(1);
 				user_opts.sync_method = pg_strdup(optarg);
@@ -301,6 +305,7 @@ usage(void)
 	printf(_("  -V, --version                 display version information, then exit\n"));
 	printf(_("  --clone                       clone instead of copying files to new cluster\n"));
 	printf(_("  --copy                        copy files to new cluster (default)\n"));
+	printf(_("  --copy-file-range             copy files to new cluster with copy_file_range\n"));
 	printf(_("  --sync-method=METHOD          set method for syncing files to disk\n"));
 	printf(_("  -?, --help                    show this help, then exit\n"));
 	printf(_("\n"

@@ -2420,6 +2420,7 @@ func_checks = [
   ['backtrace_symbols', {'dependencies': [execinfo_dep]}],
   ['clock_gettime', {'dependencies': [rt_dep], 'define': false}],
   ['copyfile'],
+  ['copy_file_range'],
   # gcc/clang's sanitizer helper library provides dlopen but not dlsym, thus
   # when enabling asan the dlopen check doesn't notice that -ldl is actually
   # required. Just checking for dlsym() ought to suffice.

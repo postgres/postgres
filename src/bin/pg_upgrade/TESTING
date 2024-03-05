@@ -20,8 +20,8 @@ export oldinstall=...otherversion/	(old version's install base path)
 See DETAILS below for more information about creation of the dump.
 
 You can also test the different transfer modes (--copy, --link,
---clone) by setting the environment variable PG_TEST_PG_UPGRADE_MODE
-to the respective command-line option, like
+--clone, --copy-file-range) by setting the environment variable
+PG_TEST_PG_UPGRADE_MODE to the respective command-line option, like
 
 	make check PG_TEST_PG_UPGRADE_MODE=--link
 
