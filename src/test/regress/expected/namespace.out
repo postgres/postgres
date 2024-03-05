@@ -114,3 +114,47 @@ SELECT COUNT(*) FROM pg_class WHERE relnamespace =
      0
 (1 row)
 
+--
+-- Verify that search_path is set to a safe value during maintenance
+-- commands.
+--
+CREATE SCHEMA test_maint_search_path;
+SET search_path = test_maint_search_path;
+CREATE FUNCTION fn(INT) RETURNS INT IMMUTABLE LANGUAGE plpgsql AS $$
+  BEGIN
+    RAISE NOTICE 'current search_path: %', current_setting('search_path');
+    RETURN $1;
+  END;
+$$;
+CREATE TABLE test_maint(i INT);
+INSERT INTO test_maint VALUES (1), (2);
+CREATE MATERIALIZED VIEW test_maint_mv AS SELECT fn(i) FROM test_maint;
+NOTICE:  current search_path: test_maint_search_path
+NOTICE:  current search_path: test_maint_search_path
+-- the following commands should see search_path as pg_catalog, pg_temp
+CREATE INDEX test_maint_idx ON test_maint_search_path.test_maint (fn(i));
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
+REINDEX TABLE test_maint_search_path.test_maint;
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
+ANALYZE test_maint_search_path.test_maint;
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
+VACUUM FULL test_maint_search_path.test_maint;
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
+CLUSTER test_maint_search_path.test_maint USING test_maint_idx;
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
+REFRESH MATERIALIZED VIEW test_maint_search_path.test_maint_mv;
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
+RESET search_path;
+DROP SCHEMA test_maint_search_path CASCADE;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to function test_maint_search_path.fn(integer)
+drop cascades to table test_maint_search_path.test_maint
+drop cascades to materialized view test_maint_search_path.test_maint_mv

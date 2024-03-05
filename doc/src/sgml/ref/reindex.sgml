@@ -292,6 +292,12 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { DA
   </para>
 
   <para>
+   While <command>REINDEX</command> is running, the <xref
+   linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+   pg_temp</literal>.
+  </para>
+
+  <para>
    Reindexing a single index or table requires being the owner of that
    index or table.  Reindexing a schema or database requires being the
    owner of that schema or database.  Note specifically that it's thus

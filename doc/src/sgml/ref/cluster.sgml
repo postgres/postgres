@@ -154,6 +154,12 @@ CLUSTER [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
    </para>
 
    <para>
+    While <command>CLUSTER</command> is running, the <xref
+    linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+    pg_temp</literal>.
+   </para>
+
+   <para>
     When an index scan is used, a temporary copy of the table is created that
     contains the table data in the index order.  Temporary copies of each
     index on the table are created as well.  Therefore, you need free space on

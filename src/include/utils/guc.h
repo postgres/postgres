@@ -204,6 +204,12 @@ typedef enum
 #define GUC_QUALIFIER_SEPARATOR '.'
 
 /*
+ * Safe search path when executing code as the table owner, such as during
+ * maintenance operations.
+ */
+#define GUC_SAFE_SEARCH_PATH "pg_catalog, pg_temp"
+
+/*
  * Bit values in "flags" of a GUC variable.  Note that these don't appear
  * on disk, so we can reassign their values freely.
  */

@@ -95,7 +95,9 @@
   </para>
 
   <para>
-   Lastly, the following functions can be used:
+   Lastly, the following functions can be used (while these functions run,
+   <xref linkend="guc-search-path"/> is temporarily changed to
+   <literal>pg_catalog, pg_temp</literal>):
    <simplelist>
     <member>
      <function>brin_summarize_new_values(regclass)</function>

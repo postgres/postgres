@@ -98,6 +98,12 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</
    will be ordered that way; but <command>REFRESH MATERIALIZED
    VIEW</command> does not guarantee to preserve that ordering.
   </para>
+
+  <para>
+   While <command>REFRESH MATERIALIZED VIEW</command> is running, the <xref
+   linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+   pg_temp</literal>.
+  </para>
  </refsect1>
 
  <refsect1>

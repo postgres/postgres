@@ -790,6 +790,12 @@ Indexes:
   </para>
 
   <para>
+   While <command>CREATE INDEX</command> is running, the <xref
+   linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+   pg_temp</literal>.
+  </para>
+
+  <para>
    For most index methods, the speed of creating an index is
    dependent on the setting of <xref linkend="guc-maintenance-work-mem"/>.
    Larger values will reduce the time needed for index creation, so long

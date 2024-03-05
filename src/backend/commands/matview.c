@@ -173,6 +173,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	SetUserIdAndSecContext(relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
+	SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
+					PGC_S_SESSION);
 
 	/* Make sure it is a materialized view. */
 	if (matviewRel->rd_rel->relkind != RELKIND_MATVIEW)

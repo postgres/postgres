@@ -444,6 +444,12 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
    </para>
 
    <para>
+    While <command>VACUUM</command> is running, the <xref
+    linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+    pg_temp</literal>.
+   </para>
+
+   <para>
     <command>VACUUM</command> cannot be executed inside a transaction block.
    </para>
 

@@ -24,6 +24,9 @@
   to hold, we can expect binary searches on the affected page to
   incorrectly guide index scans, resulting in wrong answers to SQL
   queries.  If the structure appears to be valid, no error is raised.
+  While these checking functions are run, the <xref
+  linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+  pg_temp</literal>.
  </para>
  <para>
   Verification is performed using the same procedures as those used by

@@ -206,6 +206,12 @@ ANALYZE [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
   </para>
 
   <para>
+   While <command>ANALYZE</command> is running, the <xref
+   linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+   pg_temp</literal>.
+  </para>
+
+  <para>
    <command>ANALYZE</command>
    requires only a read lock on the target table, so it can run in
    parallel with other non-DDL activity on the table.

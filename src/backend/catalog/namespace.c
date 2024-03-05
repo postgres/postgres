@@ -4697,6 +4697,9 @@ check_search_path(char **newval, void **extra, GucSource source)
 void
 assign_search_path(const char *newval, void *extra)
 {
+	/* don't access search_path during bootstrap */
+	Assert(!IsBootstrapProcessingMode());
+
 	/*
 	 * We mark the path as needing recomputation, but don't do anything until
 	 * it's needed.  This avoids trying to do database access during GUC
