@@ -38,29 +38,40 @@ sudo systemctl restart postgresql.service
 CREATE EXTENSION pg_tde;
 ```
 
-5. Set the location of the keyring configuration file in postgresql.conf: `pg_tde.keyringConfigFile = '/where/to/put/the/keyring.json'`
-6. Create the keyring configuration file [(see example keyring configuration)](#keyring-configuration)
-7. Start or restart the `postgresql` instance to apply the changes.
+5. Create a key provider. Currently, `pg_tde` supports `File` and `Vault-V2` key providers. You can add the required key provider using one of the functions.
+   
+```sql
+-- For Vault-V2 key provider
+pg_tde_add_key_provider_vault_v2(
+                        provider_name VARCHAR(128),
+                        vault_token TEXT,
+                        vault_url TEXT,
+                        vault_mount_path TEXT,
+                        vault_ca_path TEXT);
 
-* On Debian and Ubuntu:
+-- For File key provider
+FUNCTION pg_tde_add_key_provider_file(
+                        provider_name VARCHAR(128), 
+                        file_path TEXT);
 
-```sh
-sudo systemctl restart postgresql.service
 ```
-
-## Keyring configuration
-
-```json
-{
-        "provider": "file",
-        "datafile": "/tmp/pgkeyring"
-}
+**Example**: Add a `File` key provider and name it `file`.
+```sql
+SELECT pg_tde_add_key_provider_file('file','/tmp/pgkeyring');
 ```
+**Note: The `File` provided is intended for development and stores the keys unencrypted in the specified data file.**
+6. Set the master key for the database using the `pg_tde_set_master_key` function.
+```sql
+FUNCTION pg_tde_set_master_key (
+                master_key_name VARCHAR(255), 
+                provider_name VARCHAR(255));
+```
+**Example**: Set the master key named `my-master-key` using the `file` as a key provider.
+```sql
+SELECT pg_tde_set_master_key('my-master-key','file');
+```
+You are all set to create encrypted tables using `pg_tde`.
 
-Currently the keyring configuration only supports the file provider, with a single datafile parameter.
-This datafile is created and managed by Postgres, the only requirement is that postgres should be able to write to the specified path.
-
-This setup is intended for developmenet, and stores the keys unencrypted in the specified data file.
 
 ## Build from source
 
