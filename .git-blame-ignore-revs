@@ -14,6 +14,18 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+0984a3b851abe89bec6c3eff51b03038808e1997 # 2024-03-05 11:16:23 -0800
+# Run pgindent again on the same file.
+
+b406af1806e9fc5c090e58282c7d98f22a4b397f # 2024-03-05 10:58:24 -0800
+# Run pgindent for commit ef4cfdce0e.
+
+dd7ea37c435e10f9c5aa3fb257a05c08814a4ad2 # 2024-03-04 14:37:35 -0500
+# Fix pgindent damage.
+
+3d47b75546d1ef70145f58e162a96f7e0c649389 # 2024-02-22 08:00:58 +0100
+# pgindent fix
+
 49e7c6f78ed608c5d5454080ae19c0e7f1b09a04 # 2024-02-09 11:05:01 +0900
 # Fix indentation of copyto.c
 
