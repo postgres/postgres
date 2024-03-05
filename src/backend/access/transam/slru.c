@@ -433,7 +433,7 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 	SlruShared	shared = ctl->shared;
 	int			bankno = SlotGetBankNumber(slotno);
 
-	Assert(&shared->page_status[slotno] != SLRU_PAGE_EMPTY);
+	Assert(shared->page_status[slotno] != SLRU_PAGE_EMPTY);
 
 	/* See notes at top of file */
 	LWLockRelease(&shared->bank_locks[bankno].lock);
@@ -714,7 +714,7 @@ SlruInternalWritePage(SlruCtl ctl, int slotno, SlruWriteAll fdata)
 void
 SimpleLruWritePage(SlruCtl ctl, int slotno)
 {
-	Assert(&ctl->shared->page_status[slotno] != SLRU_PAGE_EMPTY);
+	Assert(ctl->shared->page_status[slotno] != SLRU_PAGE_EMPTY);
 
 	SlruInternalWritePage(ctl, slotno, NULL);
 }
