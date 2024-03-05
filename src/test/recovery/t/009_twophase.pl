@@ -45,6 +45,10 @@ $node_london->backup('london_backup');
 my $node_paris = PostgreSQL::Test::Cluster->new('paris');
 $node_paris->init_from_backup($node_london, 'london_backup',
 	has_streaming => 1);
+$node_paris->append_conf(
+	'postgresql.conf', qq(
+	subtransaction_buffers = 32
+));
 $node_paris->start;
 
 # Switch to synchronous replication in both directions
@@ -480,5 +484,43 @@ $cur_standby->psql(
 is( $psql_out,
 	qq{27|issued to paris},
 	"Check expected t_009_tbl2 data on standby");
+
+
+# Exercise the 2PC recovery code in StartupSUBTRANS, which is concerned with
+# ensuring that enough pg_subtrans pages exist on disk to cover the range of
+# prepared transactions at server start time.  There's not much we can verify
+# directly, but let's at least get the code to run.
+$cur_standby->stop();
+configure_and_reload($cur_primary, "synchronous_standby_names = ''");
+
+$cur_primary->safe_psql('postgres', "CHECKPOINT");
+
+my $start_lsn =
+  $cur_primary->safe_psql('postgres', 'select pg_current_wal_insert_lsn()');
+$cur_primary->safe_psql('postgres',
+	"CREATE TABLE test(); BEGIN; CREATE TABLE test1(); PREPARE TRANSACTION 'foo';"
+);
+my $osubtrans = $cur_primary->safe_psql('postgres',
+	"select 'pg_subtrans/'||f, s.size from pg_ls_dir('pg_subtrans') f, pg_stat_file('pg_subtrans/'||f) s"
+);
+$cur_primary->pgbench(
+	'--no-vacuum --client=5 --transactions=1000',
+	0,
+	[],
+	[],
+	'pgbench run to cause pg_subtrans traffic',
+	{
+		'009_twophase.pgb' => 'insert into test default values'
+	});
+# StartupSUBTRANS is exercised with a wide range of visible XIDs in this
+# stop/start sequence, because we left a prepared transaction open above.
+# Also, setting subtransaction_buffers to 32 above causes to switch SLRU
+# bank, for additional code coverage.
+$cur_primary->stop;
+$cur_primary->start;
+my $nsubtrans = $cur_primary->safe_psql('postgres',
+	"select 'pg_subtrans/'||f, s.size from pg_ls_dir('pg_subtrans') f, pg_stat_file('pg_subtrans/'||f) s"
+);
+isnt($osubtrans, $nsubtrans, "contents of pg_subtrans/ have changed");
 
 done_testing();

@@ -311,7 +311,7 @@ StartupSUBTRANS(TransactionId oldestActiveXID)
 	FullTransactionId nextXid;
 	int64		startPage;
 	int64		endPage;
-	LWLock	   *prevlock;
+	LWLock	   *prevlock = NULL;
 	LWLock	   *lock;
 
 	/*
@@ -324,42 +324,27 @@ StartupSUBTRANS(TransactionId oldestActiveXID)
 	nextXid = TransamVariables->nextXid;
 	endPage = TransactionIdToPage(XidFromFullTransactionId(nextXid));
 
-	prevlock = SimpleLruGetBankLock(SubTransCtl, startPage);
-	LWLockAcquire(prevlock, LW_EXCLUSIVE);
-	while (startPage != endPage)
+	for (;;)
 	{
 		lock = SimpleLruGetBankLock(SubTransCtl, startPage);
-
-		/*
-		 * Check if we need to acquire the lock on the new bank then release
-		 * the lock on the old bank and acquire on the new bank.
-		 */
 		if (prevlock != lock)
 		{
-			LWLockRelease(prevlock);
+			if (prevlock)
+				LWLockRelease(prevlock);
 			LWLockAcquire(lock, LW_EXCLUSIVE);
 			prevlock = lock;
 		}
 
 		(void) ZeroSUBTRANSPage(startPage);
+		if (startPage == endPage)
+			break;
+
 		startPage++;
 		/* must account for wraparound */
 		if (startPage > TransactionIdToPage(MaxTransactionId))
 			startPage = 0;
 	}
 
-	lock = SimpleLruGetBankLock(SubTransCtl, startPage);
-
-	/*
-	 * Check if we need to acquire the lock on the new bank then release the
-	 * lock on the old bank and acquire on the new bank.
-	 */
-	if (prevlock != lock)
-	{
-		LWLockRelease(prevlock);
-		LWLockAcquire(lock, LW_EXCLUSIVE);
-	}
-	(void) ZeroSUBTRANSPage(startPage);
 	LWLockRelease(lock);
 }
 
