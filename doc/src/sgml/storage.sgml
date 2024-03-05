@@ -1097,8 +1097,10 @@ data. Empty in ordinary tables.</entry>
   <itemizedlist>
    <listitem>
     <para>
-     The update does not modify any columns referenced by the table's
-     indexes, including expression and partial indexes.
+     The update does not modify any columns referenced by the table's indexes,
+     not including summarizing indexes.  The only summarizing index method in
+     the core <productname>PostgreSQL</productname> distribution is <link
+     linkend="brin">BRIN</link>.
      </para>
    </listitem>
    <listitem>
@@ -1114,7 +1116,8 @@ data. Empty in ordinary tables.</entry>
   <itemizedlist>
    <listitem>
     <para>
-     New index entries are not needed to represent updated rows.
+     New index entries are not needed to represent updated rows, however,
+     summary indexes may still need to be updated.
     </para>
    </listitem>
    <listitem>
@@ -1130,14 +1133,12 @@ data. Empty in ordinary tables.</entry>
  </para>
 
  <para>
-  In summary, heap-only tuple updates can only be created
-  if columns used by indexes are not updated.  You can
-  increase the likelihood of sufficient page space for
+  You can increase the likelihood of sufficient page space for
   <acronym>HOT</acronym> updates by decreasing a table's <link
-  linkend="reloption-fillfactor"><literal>fillfactor</literal></link>.
-  If you don't, <acronym>HOT</acronym> updates will still happen because
-  new rows will naturally migrate to new pages and existing pages with
-  sufficient free space for new row versions.  The system view <link
+  linkend="reloption-fillfactor"><literal>fillfactor</literal></link>.  If you
+  don't, <acronym>HOT</acronym> updates will still happen because new rows
+  will naturally migrate to new pages and existing pages with sufficient free
+  space for new row versions.  The system view <link
   linkend="monitoring-pg-stat-all-tables-view">pg_stat_all_tables</link>
   allows monitoring of the occurrence of HOT and non-HOT updates.
  </para>
