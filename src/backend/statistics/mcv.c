@@ -572,7 +572,7 @@ statext_mcv_load(Oid mvoid)
 	if (isnull)
 		elog(ERROR,
 			 "requested statistics kind \"%c\" is not yet built for statistics object %u",
-			 STATS_EXT_DEPENDENCIES, mvoid);
+			 STATS_EXT_MCV, mvoid);
 
 	result = statext_mcv_deserialize(DatumGetByteaP(mcvlist));
 
