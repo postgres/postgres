@@ -1072,8 +1072,8 @@ typedef struct RangeTblEntry
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
 	int			rellockmode;	/* lock level that query requires on the rel */
+	Index		perminfoindex;	/* index of RTEPermissionInfo entry, or 0 */
 	struct TableSampleClause *tablesample;	/* sampling info, or NULL */
-	Index		perminfoindex;
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
