@@ -2378,7 +2378,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 											 Anum_pg_constraint_conkey);
 
 				keyatts = decompile_column_index_array(val, conForm->conrelid, &buf);
-				if (conForm->conwithoutoverlaps)
+				if (conForm->conperiod)
 					appendStringInfoString(&buf, " WITHOUT OVERLAPS");
 
 				appendStringInfoChar(&buf, ')');

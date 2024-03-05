@@ -76,7 +76,7 @@ CreateConstraintEntry(const char *constraintName,
 					  bool conIsLocal,
 					  int conInhCount,
 					  bool conNoInherit,
-					  bool conWithoutOverlaps,
+					  bool conPeriod,
 					  bool is_internal)
 {
 	Relation	conDesc;
@@ -192,7 +192,7 @@ CreateConstraintEntry(const char *constraintName,
 	values[Anum_pg_constraint_conislocal - 1] = BoolGetDatum(conIsLocal);
 	values[Anum_pg_constraint_coninhcount - 1] = Int16GetDatum(conInhCount);
 	values[Anum_pg_constraint_connoinherit - 1] = BoolGetDatum(conNoInherit);
-	values[Anum_pg_constraint_conwithoutoverlaps - 1] = BoolGetDatum(conWithoutOverlaps);
+	values[Anum_pg_constraint_conperiod - 1] = BoolGetDatum(conPeriod);
 
 	if (conkeyArray)
 		values[Anum_pg_constraint_conkey - 1] = PointerGetDatum(conkeyArray);

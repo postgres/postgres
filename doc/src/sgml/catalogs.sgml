@@ -2711,7 +2711,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>conwithoutoverlaps</structfield> <type>bool</type>
+       <structfield>conperiod</structfield> <type>bool</type>
       </para>
       <para>
        This constraint is defined with <literal>WITHOUT OVERLAPS</literal>

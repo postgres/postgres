@@ -111,7 +111,7 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	 * For primary keys and unique constraints, signifies the last column uses
 	 * overlaps instead of equals.
 	 */
-	bool		conwithoutoverlaps;
+	bool		conperiod;
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 
@@ -245,7 +245,7 @@ extern Oid	CreateConstraintEntry(const char *constraintName,
 								  bool conIsLocal,
 								  int conInhCount,
 								  bool conNoInherit,
-								  bool conWithoutOverlaps,
+								  bool conPeriod,
 								  bool is_internal);
 
 extern bool ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
