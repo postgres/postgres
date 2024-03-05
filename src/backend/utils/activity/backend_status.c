@@ -831,7 +831,7 @@ pgstat_read_current_status(void)
 			/*
 			 * The BackendStatusArray index is exactly the ProcNumber of the
 			 * source backend.  Note that this means localBackendStatusTable
-			 * is in order by proc_number.  pgstat_get_beentry_by_backend_id()
+			 * is in order by proc_number.  pgstat_get_beentry_by_proc_number()
 			 * depends on that.
 			 */
 			localentry->proc_number = procNumber;
@@ -1113,11 +1113,11 @@ pgstat_get_local_beentry_by_proc_number(ProcNumber procNumber)
 /* ----------
  * pgstat_get_local_beentry_by_index() -
  *
- *	Like pgstat_get_beentry_by_backend_id() but with locally computed additions
- *	(like xid and xmin values of the backend)
+ *	Like pgstat_get_beentry_by_proc_number() but with locally computed
+ *	additions (like xid and xmin values of the backend)
  *
  *	The idx argument is a 1-based index in the localBackendStatusTable
- *	(note that this is unlike pgstat_get_beentry_by_backend_id()).
+ *	(note that this is unlike pgstat_get_beentry_by_proc_number()).
  *	Returns NULL if the argument is out of range (no current caller does that).
  *
  *	NB: caller is responsible for a check if the user is permitted to see
