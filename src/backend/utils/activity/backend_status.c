@@ -1101,8 +1101,8 @@ pgstat_get_local_beentry_by_proc_number(ProcNumber procNumber)
 	pgstat_read_current_status();
 
 	/*
-	 * Since the localBackendStatusTable is in order by backend_id, we can use
-	 * bsearch() to search it efficiently.
+	 * Since the localBackendStatusTable is in order by proc_number, we can
+	 * use bsearch() to search it efficiently.
 	 */
 	key.proc_number = procNumber;
 	return bsearch(&key, localBackendStatusTable, localNumBackends,
