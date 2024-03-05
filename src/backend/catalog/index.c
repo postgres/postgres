@@ -1464,8 +1464,7 @@ index_concurrently_build(Oid heapRelationId,
 	SetUserIdAndSecContext(heapRel->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
-	SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
-					PGC_S_SESSION);
+	RestrictSearchPath();
 
 	indexRelation = index_open(indexRelationId, RowExclusiveLock);
 
@@ -3018,9 +3017,7 @@ index_build(Relation heapRelation,
 	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
-	if (!IsBootstrapProcessingMode())
-		SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
-						PGC_S_SESSION);
+	RestrictSearchPath();
 
 	/* Set up initial progress report status */
 	{
@@ -3356,8 +3353,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
-	SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
-					PGC_S_SESSION);
+	RestrictSearchPath();
 
 	indexRelation = index_open(indexId, RowExclusiveLock);
 
@@ -3619,8 +3615,7 @@ reindex_index(const ReindexStmt *stmt, Oid indexId,
 	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
-	SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
-					PGC_S_SESSION);
+	RestrictSearchPath();
 
 	if (progress)
 	{

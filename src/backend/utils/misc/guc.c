@@ -67,6 +67,12 @@
  */
 #define REALTYPE_PRECISION 17
 
+/*
+ * Safe search path when executing code as the table owner, such as during
+ * maintenance operations.
+ */
+#define GUC_SAFE_SEARCH_PATH "pg_catalog, pg_temp"
+
 static int	GUC_check_errcode_value;
 
 static List *reserved_class_prefix = NIL;
@@ -2232,6 +2238,19 @@ int
 NewGUCNestLevel(void)
 {
 	return ++GUCNestLevel;
+}
+
+/*
+ * Set search_path to a fixed value for maintenance operations. No effect
+ * during bootstrap, when the search_path is already set to a fixed value and
+ * cannot be changed.
+ */
+void
+RestrictSearchPath(void)
+{
+	if (!IsBootstrapProcessingMode())
+		set_config_option("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 }
 
 /*

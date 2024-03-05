@@ -204,12 +204,6 @@ typedef enum
 #define GUC_QUALIFIER_SEPARATOR '.'
 
 /*
- * Safe search path when executing code as the table owner, such as during
- * maintenance operations.
- */
-#define GUC_SAFE_SEARCH_PATH "pg_catalog, pg_temp"
-
-/*
  * Bit values in "flags" of a GUC variable.  Note that these don't appear
  * on disk, so we can reassign their values freely.
  */
@@ -378,6 +372,7 @@ extern bool SelectConfigFiles(const char *userDoption, const char *progname);
 extern void ResetAllOptions(void);
 extern void AtStart_GUC(void);
 extern int	NewGUCNestLevel(void);
+extern void RestrictSearchPath(void);
 extern void AtEOXact_GUC(bool isCommit, int nestLevel);
 extern void BeginReportingGUCOptions(void);
 extern void ReportChangedGUCOptions(void);

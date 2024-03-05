@@ -2166,8 +2166,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	SetUserIdAndSecContext(rel->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
-	SetConfigOption("search_path", GUC_SAFE_SEARCH_PATH, PGC_USERSET,
-					PGC_S_SESSION);
+	RestrictSearchPath();
 
 	/*
 	 * If PROCESS_MAIN is set (the default), it's time to vacuum the main
