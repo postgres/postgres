@@ -32,6 +32,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <utils/lsyscache.h>
+#include <arpa/inet.h>
 
 #include "access/transam.h"
 #include "access/twophase.h"
@@ -3568,8 +3569,8 @@ static bool starts_with(const char *str, const char *pre) {
 static bool should_refine_cc(uint tid);
 static uint64_t get_cur_time_ns();
 
-LockFeature* LockFeatureVec;
-TrainingState* RLState;
+LockFeature* LockFeatureVec = NULL;
+TrainingState* RLState = NULL;
 
 void TwoPhaseLockingInit()
 {
@@ -3590,8 +3591,9 @@ void TwoPhaseLockingInit()
 void init_rl_state(uint32 xact_id)
 {
 //    printf("2PL lock graph initialized\n");
-    RLState = palloc(sizeof (LockFeature));
+    RLState = (TrainingState*) MemoryContextAlloc(TopTransactionContext, sizeof (TrainingState));
     RLState->cur_xact_id = xact_id;
+    RLState->action = -1;
     RLState->last_reward = 0;
     RLState->xact_start_ts = get_cur_time_ns();
     memset(RLState->conflicts, 0, sizeof(RLState->conflicts));
@@ -3617,6 +3619,7 @@ void init_rl_state(uint32 xact_id)
 #define READ_FACTOR 0.5
 #define ABORT_PENALTY (-10000.0)
 #define NS_TO_US 1000.0
+#define MODEL_REMOTE
 
 
 // lock strategy, isolation level, deadlock detection interval (global), lock timeout.
@@ -3666,32 +3669,16 @@ static bool should_refine_cc(uint tid)
     return true;
 }
 
-void finish_rl_process(uint32 xact_id, bool is_commit)
-{
-    Assert(RLState != NULL);
-    Assert(RLState->cur_xact_id == xact_id);
-    double time_span =  (double)(get_cur_time_ns() - RLState->last_lock_time) / NS_TO_US;
-    RLState->last_reward = is_commit ? 1.0 : ABORT_PENALTY;
-    RLState->last_reward -= 1;
-    RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
-    RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
-
-    printf("The termination of RL state is [xact:%d, reward=%f], current action=%d\n",
-           xact_id,
-           RLState->last_reward,
-           RLState->action);
-}
-
 void refresh_lock_strategy()
 {
 //    int action; // conn_fd,
     uint32 tid = MyProc->lxid;
-    Assert(RLState->cur_xact_id == xact_id);
+    Assert(RLState != NULL);
+    Assert(RLState->cur_xact_id == tid);
 
     if (!should_refine_cc(tid) || SKIP_XACT(tid))
         return;
 
-    print_current_state(tid);
 
     if (!IsolationLearnCC())
         return;
@@ -3720,19 +3707,156 @@ void refresh_lock_strategy()
 
 void report_xact_result(bool is_commit, uint32 xact_id)
 {
+    if (!should_refine_cc(xact_id) || SKIP_XACT(xact_id))       // do not perform validation for system in-build xacts.
+        return;
+    if (!IsolationLearnCC())
+        return;
     finish_rl_process(xact_id, is_commit);
-//    uint64_t cur_latency = get_cur_time_ns() - RLState->xact_start_ts;
-//    Assert(RLState->cur_xact_id == xact_id);
-//    printf("the average latency has been updated, current lag = %d : %d\n", cur_latency, *AverageLatency);
-//    if (*AverageLatency == 0)
-//        *AverageLatency = cur_latency;
-//    else
-//        *AverageLatency = MOVING_AVERAGE_RATE * (double)(*AverageLatency) + (1-MOVING_AVERAGE_RATE) * (double)(cur_latency);
+}
+
+#define RL_PREDICT_HEADER 0
+#define RL_TERMINATE_HEADER 1
+
+void finish_rl_process(uint32 xact_id, bool is_commit)
+{
+    MemoryContext oldContext = MemoryContextSwitchTo(TopTransactionContext);
+    double time_span =  (double)(get_cur_time_ns() - RLState->last_lock_time) / NS_TO_US;
+    Assert(RLState != NULL);
+    printf("%u -- %u -- %u\n", RLState->cur_xact_id, xact_id, MyProc->lxid);
+    Assert(RLState->cur_xact_id == xact_id);
+    RLState->last_reward = is_commit ? 1.0 : ABORT_PENALTY;
+    RLState->last_reward -= 1;
+    RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
+    RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
+
+#ifndef MODEL_REMOTE
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0), ret;
+    int action;
+    struct sockaddr_in serv_addr;
+
+    print_current_state(xact_id);
+    size_t size_f = sizeof (uint8) +
+                    sizeof(RLState->last_reward);  // Last reward
+
+    uint8_t *buffer = malloc(size_f);
+    if (!buffer) {
+        perror("Failed to allocate buffer");
+        exit(EXIT_FAILURE);
+    }
+
+    uint8_t *ptr = buffer;
+    *((uint8 *) ptr) = htonl(RL_TERMINATE_HEADER);
+    ptr += sizeof (uint8);
+    *((double *)ptr) = RLState->last_reward;
+
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(12345);
+    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
+
+    if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("Connection Failed");
+        exit(EXIT_FAILURE);
+    }
+
+    send(sockfd, buffer, size_f, 0);
+    close(sockfd);
+#else
+    printf("The termination of RL state is [xact:%d, reward=%f], current action=%d\n",
+           xact_id,
+           RLState->last_reward,
+           RLState->action);
+#endif
+    MemoryContextSwitchTo(oldContext);
 }
 
 int rl_next_action(uint32 xact_id)
 {
-    return random() % ALG_NUM;
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0), ret;
+    struct sockaddr_in serv_addr;
+    char buffer[50];
+
+#ifdef MODEL_REMOTE
+//    size_t size_f = sizeof (uint8) + sizeof(RLState->conflicts) +    // Conflicts array
+//                    sizeof(RLState->block_info) +   // Block info array
+//                    sizeof(RLState->avg_expected_wait) +
+//                    sizeof(RLState->last_reward);  // Last reward
+//
+//    uint8_t *buffer = palloc(size_f);
+//    uint8_t *ptr = buffer;
+//    if (!buffer) {
+//        perror("Failed to allocate buffer");
+//        exit(EXIT_FAILURE);
+//    }
+//
+//    *((uint8 *) ptr) = htonl(RL_PREDICT_HEADER);
+//    ptr += sizeof (uint8);
+//
+//    for (int i = 0; i < 7; i++)
+//    {
+//        *((uint16 *)ptr) = htons(RLState->conflicts[i]);
+//        ptr += sizeof(RLState->conflicts[i]);
+//    }
+//    for (int i = 0; i < 2; i++)
+//    {
+//        *((uint16 *)ptr) = htons(RLState->block_info[i]);
+//        ptr += sizeof(RLState->block_info[i]);
+//    }
+//    *((double *)ptr) = RLState->avg_expected_wait;
+//    ptr += sizeof(RLState->avg_expected_wait);
+//    *((double *)ptr) = RLState->last_reward;
+//    ptr += sizeof(RLState->last_reward);
+//    printf("length = %d\n", size_f);
+//
+//    Assert(ptr - buffer == size_f);
+//    Assert(strlen(buffer) == size_f);
+    sprintf(buffer, "GET_Q,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.5f,%.5f$",
+            RLState->conflicts[0],
+            RLState->conflicts[1],
+            RLState->conflicts[2],
+            RLState->conflicts[3],
+            RLState->conflicts[4],
+            RLState->conflicts[5],
+            RLState->conflicts[6],
+            RLState->block_info[0],
+            RLState->block_info[1],
+            RLState->avg_expected_wait,
+            RLState->last_reward
+            );
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(12345);
+    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
+
+    if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("Connection write failed");
+        exit(EXIT_FAILURE);
+    }
+
+    send(sockfd, buffer, sizeof (buffer), 0);
+    shutdown(sockfd, SHUT_WR);
+
+    if (read(sockfd, &ret, sizeof (ret)) != sizeof (ret)) {
+        perror("Connection read failed");
+        exit(EXIT_FAILURE);
+    }
+    RLState->action = ntohl(ret);
+    printf("For xact %d, we have got the action %s --> %d\n", xact_id, buffer, RLState->action);
+
+//    pfree(buffer);
+    shutdown(sockfd, SHUT_RDWR);
+    //#else
+//    RLState->action = random() % ALG_NUM;
+//    print_current_state(xact_id);
+#endif
+
+    print_current_state(xact_id);
+    Assert(RLState->action >= 0 && RLState->action < ALG_NUM);
+    return RLState->action;
 }
 
 void print_current_state(uint32 xact_id)
@@ -3853,12 +3977,12 @@ void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool
     SpinLockAcquire(&LockFeatureVec[i].mutex);
     if (is_read)
     {
-        if (!is_release) LockFeatureVec[i].read_intention_cnt --;
+//        if (!is_release) LockFeatureVec[i].read_intention_cnt --;
         LockFeatureVec[i].read_cnt += off;
     }
     else
     {
-        if (!is_release) LockFeatureVec[i].write_intention_cnt --;
+//        if (!is_release) LockFeatureVec[i].write_intention_cnt --;
         LockFeatureVec[i].write_cnt += off;
     }
     if (is_release) {

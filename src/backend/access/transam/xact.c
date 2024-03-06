@@ -2016,7 +2016,7 @@ AtSubCleanup_Memory(void)
  *	AdjustTransaction
  */
 void
-AdjustTransaction(QueryDesc * desc)
+AdjustTransaction()
 {
     TransactionState s;
 //    MemoryContext oldCtx;
@@ -2159,7 +2159,8 @@ StartTransaction(void)
 	 */
 	Assert(MyProc->backendId == vxid.backendId);
 	MyProc->lxid = vxid.localTransactionId;
-    init_rl_state(MyProc->lxid);
+    printf("xact id = %d\n", vxid.localTransactionId);
+    init_rl_state(vxid.localTransactionId);
     if (!IsolationLearnCC())
     {
         XactIsoLevel = DefaultXactIsoLevel;
@@ -2401,8 +2402,9 @@ CommitTransaction(void)
 	AtEOXact_Inval(true);
 
 	AtEOXact_MultiXact();
+    report_xact_result(true, tid);
 
-	ResourceOwnerRelease(TopTransactionResourceOwner,
+    ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 true, true);
 	ResourceOwnerRelease(TopTransactionResourceOwner,
@@ -2459,7 +2461,6 @@ CommitTransaction(void)
 	 * default
 	 */
 	s->state = TRANS_DEFAULT;
-    report_xact_result(true, tid);
 
     RESUME_INTERRUPTS();
 }
@@ -2895,12 +2896,13 @@ AbortTransaction(void)
 	 * RecordTransactionAbort.
 	 */
 	ProcArrayEndTransaction(MyProc, latestXid);
+    report_xact_result(false, tid);
 
-	/*
-	 * Post-abort cleanup.  See notes in CommitTransaction() concerning
-	 * ordering.  We can skip all of it if the transaction failed before
-	 * creating a resource owner.
-	 */
+    /*
+     * Post-abort cleanup.  See notes in CommitTransaction() concerning
+     * ordering.  We can skip all of it if the transaction failed before
+     * creating a resource owner.
+     */
 	if (TopTransactionResourceOwner != NULL)
 	{
 		if (is_parallel_worker)
@@ -2937,7 +2939,6 @@ AbortTransaction(void)
 		pgstat_report_xact_timestamp(0);
 	}
 
-    report_xact_result(false, tid);
 
     /*
      * State remains TRANS_ABORT until CleanupTransaction().

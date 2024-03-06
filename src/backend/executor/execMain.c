@@ -128,7 +128,7 @@ static void EvalPlanQualStart(EPQState *epqstate, Plan *planTree);
 void
 ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
-    AdjustTransaction(queryDesc);
+    AdjustTransaction();
 	if (ExecutorStart_hook)
 		(*ExecutorStart_hook) (queryDesc, eflags);
 	else
@@ -290,7 +290,7 @@ ExecutorRun(QueryDesc *queryDesc,
 			bool execute_once)
 {
 //    printf("called!!!\n");
-    AdjustTransaction(queryDesc);
+    AdjustTransaction();
 	if (ExecutorRun_hook)
 		(*ExecutorRun_hook) (queryDesc, direction, count, execute_once);
 	else

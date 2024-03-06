@@ -158,21 +158,26 @@ typedef enum LockTagType
 
 // LockFeatureData regard the feature for a tuples grouped by hash.
 typedef struct GlobalLockFeatureData {
-    slock_t mutex;
+    double avg_free_time;
+    double utility;
     uint16 read_cnt;
     uint16 write_cnt;
-    double avg_free_time;
     uint16 read_intention_cnt;
     uint16 write_intention_cnt;
-    double utility;
-    char   padding[1];
+    slock_t mutex;
+    unsigned char   padding[3];
 } LockFeature;
 
 typedef struct RealTimeFeature {
-    uint32 cur_xact_id; // for validation propose.
     uint64_t xact_start_ts;
     uint64_t last_lock_time;
 
+    // mu: the expected lock wait time for current transaction to get the lock.
+    // we have also considered the impact of deadlock abort and unifies them with utility value.
+    double avg_expected_wait;
+    double last_reward;
+
+    uint32 cur_xact_id; // for validation propose.
     /* features from local lock graph. */
     // k: features that represents the current xact conflict information.
     uint16 conflicts[7];
@@ -182,16 +187,7 @@ typedef struct RealTimeFeature {
     // B: the expected cost for a transaction to be aborted. Since we consider transaction, we use operation number
     // for feature.
     uint16 block_info[2];
-
-    // mu: the expected lock wait time for current transaction to get the lock.
-    // we have also considered the impact of deadlock abort and unifies them with utility value.
-    double avg_expected_wait;
-
-    double last_reward;
-
     int action;
-
-    char   padding[6];  // cache align padding.
 } TrainingState;
 
 extern const char *const LockTagTypeNames[];

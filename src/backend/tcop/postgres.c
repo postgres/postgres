@@ -2031,7 +2031,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 * case already due to prior BIND).
 	 */
 	start_xact_command();
-    AdjustTransaction(sourceText);
+    AdjustTransaction();
 
 	/*
 	 * If we re-issue an Execute protocol request against an existing portal,

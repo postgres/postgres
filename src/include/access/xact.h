@@ -14,7 +14,7 @@
 #ifndef XACT_H
 #define XACT_H
 
-#include "executor/execdesc.h"
+//#include "executor/execdesc.h"
 #include "access/transam.h"
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
@@ -410,7 +410,7 @@ extern int	GetCurrentTransactionNestLevel(void);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern void CommandCounterIncrement(void);
 extern void ForceSyncCommit(void);
-extern void AdjustTransaction(QueryDesc * desc);
+extern void AdjustTransaction();
 extern void StartTransactionCommand(void);
 extern void SaveTransactionCharacteristics(void);
 extern void RestoreTransactionCharacteristics(void);
