@@ -161,7 +161,7 @@ typedef struct GlobalLockFeatureData {
     slock_t mutex;
     uint16 read_cnt;
     uint16 write_cnt;
-    uint64_t avg_free_time;
+    double avg_free_time;
     uint16 read_intention_cnt;
     uint16 write_intention_cnt;
     double utility;
@@ -185,11 +185,13 @@ typedef struct RealTimeFeature {
 
     // mu: the expected lock wait time for current transaction to get the lock.
     // we have also considered the impact of deadlock abort and unifies them with utility value.
-    uint64_t average_latency;
+    double avg_expected_wait;
 
     double last_reward;
 
-    char   padding[4];  // cache line padding.
+    int action;
+
+    char   padding[6];  // cache align padding.
 } TrainingState;
 
 extern const char *const LockTagTypeNames[];

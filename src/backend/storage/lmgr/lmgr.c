@@ -556,6 +556,15 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
     }
 
 	(void) LockAcquire(&tag, lockmode, false, false);
+
+    if (IsolationNeedLock())
+    {
+        TwoPhaseLockingReportIntention(tag.locktag_field2,
+                                       tag.locktag_field3,
+                                       tag.locktag_field4,
+                                       lockmode == ExclusiveLock? false:true,
+                                       true);
+    }
 }
 
 /*

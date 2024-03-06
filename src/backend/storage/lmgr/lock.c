@@ -3569,15 +3569,12 @@ static bool should_refine_cc(uint tid);
 static uint64_t get_cur_time_ns();
 
 LockFeature* LockFeatureVec;
-uint64_t* AverageLatency;
 TrainingState* RLState;
 
 void TwoPhaseLockingInit()
 {
     printf("2PL lock graph initialized\n");
     LockFeatureVec = ShmemAllocUnlocked(sizeof (LockFeature) * LOCK_FEATURE_LEN);
-    AverageLatency = (uint64_t*) ShmemAllocUnlocked(sizeof (uint128));
-    *AverageLatency = 0;
     for (int i=0;i<LOCK_FEATURE_LEN;i++)
     {
         SpinLockInit(&LockFeatureVec[i].mutex);
@@ -3599,7 +3596,7 @@ void init_rl_state(uint32 xact_id)
     RLState->xact_start_ts = get_cur_time_ns();
     memset(RLState->conflicts, 0, sizeof(RLState->conflicts));
     memset(RLState->block_info, 0, sizeof(RLState->block_info));
-    RLState->average_latency = *AverageLatency;
+    RLState->avg_expected_wait = 0;
     refresh_lock_strategy();
 }
 
@@ -3618,7 +3615,8 @@ void init_rl_state(uint32 xact_id)
 #define READ_OPT 0
 #define UPDATE_OPT 1
 #define READ_FACTOR 0.5
-#define ABORT_PENALTY -10000.0
+#define ABORT_PENALTY (-10000.0)
+#define NS_TO_US 1000.0
 
 
 // lock strategy, isolation level, deadlock detection interval (global), lock timeout.
@@ -3672,20 +3670,21 @@ void finish_rl_process(uint32 xact_id, bool is_commit)
 {
     Assert(RLState != NULL);
     Assert(RLState->cur_xact_id == xact_id);
-    double time_span =  (double)(get_cur_time_ns() - RLState->last_lock_time) / 1000;
+    double time_span =  (double)(get_cur_time_ns() - RLState->last_lock_time) / NS_TO_US;
     RLState->last_reward = is_commit ? 1.0 : ABORT_PENALTY;
     RLState->last_reward -= 1;
     RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
     RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
 
-    printf("The termination of RL state is [xact:%d, reward=%f]\n",
+    printf("The termination of RL state is [xact:%d, reward=%f], current action=%d\n",
            xact_id,
-           RLState->last_reward);
+           RLState->last_reward,
+           RLState->action);
 }
 
 void refresh_lock_strategy()
 {
-    int action; // conn_fd,
+//    int action; // conn_fd,
     uint32 tid = MyProc->lxid;
     Assert(RLState->cur_xact_id == xact_id);
 
@@ -3697,13 +3696,13 @@ void refresh_lock_strategy()
     if (!IsolationLearnCC())
         return;
 
-    action = rl_next_action(tid);
+    RLState->action = rl_next_action(tid);
     RLState->last_reward = 0;
 
-    XactIsoLevel = alg_list[action][0];
-    XactLockStrategy = alg_list[action][1];
-    DeadlockTimeout = alg_list[action][2];
-    LockTimeout = alg_list[action][3];
+    XactIsoLevel = alg_list[RLState->action][0];
+    XactLockStrategy = alg_list[RLState->action][1];
+    DeadlockTimeout = alg_list[RLState->action][2];
+    LockTimeout = alg_list[RLState->action][3];
 
 
     Assert((!IsolationIsSerializable() && !IsolationNeedLock()) || IsolationLearnCC()
@@ -3733,7 +3732,7 @@ void report_xact_result(bool is_commit, uint32 xact_id)
 
 int rl_next_action(uint32 xact_id)
 {
-    return 2;
+    return random() % ALG_NUM;
 }
 
 void print_current_state(uint32 xact_id)
@@ -3746,7 +3745,7 @@ void print_current_state(uint32 xact_id)
 //        printf("Error opening file.\n");
 //        return;
 //    }
-    printf("The current RL state is [xact:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%d-%d, r=%.5f, mu=%d]\n",
+    printf("The current RL state is [xact:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%d-%d, r=%.5f, max_wait=%.5f], the action is %d\n",
            RLState->cur_xact_id,
            RLState->conflicts[0],
            RLState->conflicts[1],
@@ -3758,7 +3757,8 @@ void print_current_state(uint32 xact_id)
            RLState->block_info[0],
            RLState->block_info[1],
            RLState->last_reward,
-           RLState->average_latency);
+           RLState->avg_expected_wait,
+           RLState->action);
 //    fclose(filePtr);
 }
 
@@ -3781,6 +3781,7 @@ void BeforeLock(int i, bool is_read)
 //    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
     SpinLockAcquire(&LockFeatureVec[i].mutex);
 //    print_current_state(MyProc->lxid);
+    RLState->avg_expected_wait = LockFeatureVec[i].avg_free_time;
     if (is_read)
     {
         RLState->conflicts[RW_INTENTION] = LockFeatureVec[i].write_intention_cnt;
@@ -3808,7 +3809,7 @@ void AfterLock(int i, bool is_read)
 {
     uint64_t now = get_cur_time_ns();
 //    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
-    double time_span =  (double)(now - RLState->last_lock_time) / 1000;
+    double time_span =  (double)(now - RLState->last_lock_time) / NS_TO_US;
     RLState->last_lock_time = now;
 //    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
 //    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
@@ -3818,7 +3819,6 @@ void AfterLock(int i, bool is_read)
         RLState->block_info[READ_OPT] ++;
     else
         RLState->block_info[UPDATE_OPT] ++;
-//    SpinLockRelease(&LockFeatureVec[i].mutex);
 
     RLState->last_reward -= 1;
     RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
@@ -3838,7 +3838,7 @@ void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool
     else
         LockFeatureVec[i].write_intention_cnt += cmd;
     SpinLockRelease(&LockFeatureVec[i].mutex);
-    if (!is_release) AfterLock(i, is_read);
+    if (is_release) AfterLock(i, is_read);
 }
 
 void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
@@ -3861,8 +3861,17 @@ void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool
         if (!is_release) LockFeatureVec[i].write_intention_cnt --;
         LockFeatureVec[i].write_cnt += off;
     }
-    if (is_release)
-        LockFeatureVec[i].utility = LockFeatureVec[i].utility * MOVING_AVERAGE_RATE + (1-MOVING_AVERAGE_RATE) * (is_useful? 1.0: -100.0);
+    if (is_release) {
+        LockFeatureVec[i].utility = LockFeatureVec[i].utility * MOVING_AVERAGE_RATE +
+                                    (1 - MOVING_AVERAGE_RATE) * (is_useful ? 1.0 : -100.0);
+        double time_span_lag = (double)(get_cur_time_ns() - RLState->xact_start_ts) / NS_TO_US;
+        if (LockFeatureVec[i].avg_free_time == 0) {
+            LockFeatureVec[i].avg_free_time = time_span_lag;
+        } else {
+            LockFeatureVec[i].avg_free_time = LockFeatureVec[i].avg_free_time * MOVING_AVERAGE_RATE +
+                                        (1 - MOVING_AVERAGE_RATE) * time_span_lag;
+        }
+    }
     SpinLockRelease(&LockFeatureVec[i].mutex);
 }
 
