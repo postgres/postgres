@@ -733,14 +733,126 @@ change_hot_standby_feedback_and_wait_for_xmins(1, 1);
 
 ##################################################
 # Recovery conflict: Invalidate conflicting slots, including in-use slots
-# Scenario 6: incorrect wal_level on primary.
+# Scenario 6: Race condition between slot invalidation and active process
+# termination.
+##################################################
+SKIP:
+{
+	skip "Injection points not supported by this build", 1
+	  if ($ENV{enable_injection_points} ne 'yes');
+
+	# Get the position to search from in the standby logfile
+	$logstart = -s $node_standby->logfile;
+
+	# Drop the slots, re-create them, change hot_standby_feedback,
+	# check xmin and catalog_xmin values, make slot active and reset stat.
+	reactive_slots_change_hfs_and_wait_for_xmins('pruning_', 'injection_', 0,
+		1);
+
+	# Create the injection_points extension.
+	$node_primary->safe_psql('testdb', 'CREATE EXTENSION injection_points;');
+
+	# Wait until the extension has been created on the standby.
+	$node_primary->wait_for_replay_catchup($node_standby);
+
+	# Attach the injection point.
+	$node_standby->safe_psql('testdb',
+		"SELECT injection_points_attach('terminate-process-holding-slot', 'wait');"
+	);
+
+	# Trigger a conflict and insert an XLOG_RUNNING_XACTS before triggering
+	# the vacuum.
+	$node_primary->safe_psql(
+		'testdb', qq[CREATE TABLE injection_test(x integer);
+										  DROP TABLE injection_test;
+										  SELECT pg_log_standby_snapshot();]);
+
+	# Now launch the vacuum.
+	wait_until_vacuum_can_remove('',
+		'CREATE TABLE injection_test2(x integer);', 'pg_class');
+
+	# Wait until the startup process hits the injection point by looking at
+	# pg_stat_activity; the termination LOG message has been emitted and
+	# the process has been killed once we wait at the injection point.
+	$node_standby->wait_for_event('startup',
+		'terminate-process-holding-slot');
+
+	# Note: $node_primary->wait_for_replay_catchup($node_standby) would be
+	# hanging here due to the injection point, so check the log instead.
+
+	ok( $node_standby->log_contains(
+			"terminating process .* to release replication slot \"injection_activeslot\"",
+			$logstart),
+		"terminating process holding the active slot is logged with injection point"
+	);
+
+	# Extract xid_horizon from the logfile.
+	my $log_contents = slurp_file($node_standby->logfile, $logstart);
+	(my $xid_horizon) =
+	  $log_contents =~ m/The slot conflicted with xid horizon ([0-9]*)./
+	  or die "could not get xid horizon";
+
+	# Ensure the slot is not active.
+	$node_standby->poll_query_until('testdb',
+		"SELECT active_pid is NULL from pg_catalog.pg_replication_slots where slot_name = 'injection_activeslot'"
+	) or die "injection_activeslot is still active";
+
+	# Decode changes from the slot to reach
+	# LogicalConfirmReceivedLocation().
+	$node_standby->safe_psql('testdb',
+		qq[SELECT pg_logical_slot_get_changes('injection_activeslot', NULL, NULL);]
+	);
+
+	# Wait until catalog_xmin advances after the xid_horizon.  A conflict
+	# reason has to be reported.
+	$node_standby->poll_query_until('testdb',
+		"SELECT (SELECT catalog_xmin::text::int - $xid_horizon from pg_catalog.pg_replication_slots where slot_name = 'injection_activeslot') > 0"
+	) or die "catalog_xmin did not advance";
+
+	# Get the position to search from in the standby logfile.
+	$logstart = -s $node_standby->logfile;
+
+	# Wakeup the injection point.
+	$node_standby->safe_psql('testdb',
+		"SELECT injection_points_wakeup('terminate-process-holding-slot');");
+
+	# Wait for the standby to catchup.
+	$node_primary->wait_for_replay_catchup($node_standby);
+
+	# Check invalidation in the logfile for the active slot.
+	ok( $node_standby->log_contains(
+			"invalidating obsolete replication slot \"injection_activeslot\"",
+			$logstart),
+		"activeslot slot invalidation is logged with injection point");
+
+	# Verify conflict_reason is 'rows_removed' in pg_replication_slots.
+	check_slots_conflict_reason('injection_', 'rows_removed');
+
+	# Detach from the injection point
+	$node_standby->safe_psql('testdb',
+		"SELECT injection_points_detach('terminate-process-holding-slot');");
+
+	# Turn hot_standby_feedback back on
+	change_hot_standby_feedback_and_wait_for_xmins(1, 1);
+}
+
+##################################################
+# Recovery conflict: Invalidate conflicting slots, including in-use slots
+# Scenario 7: incorrect wal_level on primary.
 ##################################################
 
 # get the position to search from in the standby logfile
 $logstart = -s $node_standby->logfile;
 
 # drop the logical slots
-drop_logical_slots('pruning_');
+if ($ENV{enable_injection_points} ne 'yes')
+{
+	drop_logical_slots('pruning_');
+}
+else
+{
+	drop_logical_slots('injection_');
+}
 
 # create the logical slots
 create_logical_slots($node_standby, 'wal_level_');

@@ -53,6 +53,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
+#include "utils/injection_point.h"
 
 /*
  * Replication slot on-disk data structure.
@@ -1658,6 +1659,14 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 				last_signaled_pid = active_pid;
 				terminated = true;
 				conflict_prev = conflict;
+
+				/*
+				 * This injection point needs to be after kill() to ensure
+				 * that the slot is not "active" anymore.  It also has to be
+				 * after ReportSlotInvalidation() to ensure that the
+				 * invalidation message is logged.
+				 */
+				INJECTION_POINT("terminate-process-holding-slot");
 			}
 
 			/* Wait until the slot is released. */
