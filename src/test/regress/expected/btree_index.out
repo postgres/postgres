@@ -341,3 +341,22 @@ CREATE INDEX btree_part_idx ON btree_part(id);
 ALTER INDEX btree_part_idx ALTER COLUMN id SET (n_distinct=100);
 ERROR:  "btree_part_idx" is not a table, materialized view, or foreign table
 DROP TABLE btree_part;
+-- Test with index expression and predicate that include a parallel unsafe
+-- function.
+CREATE FUNCTION para_unsafe_f() RETURNS int IMMUTABLE PARALLEL UNSAFE
+AS $$
+BEGIN
+    RETURN 0;
+EXCEPTION WHEN OTHERS THEN
+    RETURN 1;
+END$$ LANGUAGE plpgsql;
+CREATE TABLE btree_para_bld(i int);
+ALTER TABLE btree_para_bld SET (parallel_workers = 4);
+SET max_parallel_maintenance_workers TO 4;
+-- With parallel-unsafe expression
+CREATE INDEX ON btree_para_bld((i + para_unsafe_f()));
+-- With parallel-unsafe predicate
+CREATE INDEX ON btree_para_bld(i) WHERE i > para_unsafe_f();
+RESET max_parallel_maintenance_workers;
+DROP TABLE btree_para_bld;
+DROP FUNCTION para_unsafe_f;
