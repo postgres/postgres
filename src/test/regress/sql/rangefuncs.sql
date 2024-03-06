@@ -656,3 +656,12 @@ select *, row_to_json(u) from unnest(array[null::rngfunc2, (1,'foo')::rngfunc2, 
 select *, row_to_json(u) from unnest(array[]::rngfunc2[]) u;
 
 drop type rngfunc2;
+
+-- check detection of mismatching record types with a const-folded expression
+
+with a(b) as (values (row(1,2,3)))
+select * from a, coalesce(b) as c(d int, e int);  -- fail
+with a(b) as (values (row(1,2,3)))
+select * from a, coalesce(b) as c(d int, e int, f int, g int);  -- fail
+with a(b) as (values (row(1,2,3)))
+select * from a, coalesce(b) as c(d int, e int, f float);  -- fail
