@@ -195,8 +195,6 @@ extern Oid	get_range_collation(Oid rangeOid);
 extern Oid	get_range_multirange(Oid rangeOid);
 extern Oid	get_multirange_range(Oid multirangeOid);
 extern Oid	get_index_column_opclass(Oid index_oid, int attno);
-extern List *get_index_expressions(Oid index_oid);
-extern List *get_index_predicate(Oid index_oid);
 extern bool get_index_isreplident(Oid index_oid);
 extern bool get_index_isvalid(Oid index_oid);
 extern bool get_index_isclustered(Oid index_oid);
