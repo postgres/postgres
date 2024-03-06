@@ -11,7 +11,7 @@ endif
 
 # These files are part of the Unicode Character Database. Download them on
 # demand.
-foreach f : ['CompositionExclusions.txt', 'DerivedNormalizationProps.txt', 'EastAsianWidth.txt', 'NormalizationTest.txt', 'UnicodeData.txt']
+foreach f : ['CompositionExclusions.txt', 'DerivedCoreProperties.txt', 'DerivedNormalizationProps.txt', 'EastAsianWidth.txt', 'NormalizationTest.txt', 'PropList.txt', 'UnicodeData.txt']
   url = unicode_baseurl.format(UNICODE_VERSION, f)
   target = custom_target(f,
     output: f,
@@ -26,7 +26,7 @@ update_unicode_targets = []
 
 update_unicode_targets += \
   custom_target('unicode_category_table.h',
-    input: [unicode_data['UnicodeData.txt']],
+    input: [unicode_data['UnicodeData.txt'], unicode_data['DerivedCoreProperties.txt'], unicode_data['PropList.txt']],
     output: ['unicode_category_table.h'],
     command: [
       perl, files('generate-unicode_category_table.pl'),

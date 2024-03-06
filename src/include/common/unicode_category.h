@@ -62,7 +62,30 @@ typedef enum pg_unicode_category
 } pg_unicode_category;
 
 extern pg_unicode_category unicode_category(pg_wchar ucs);
-const char *unicode_category_string(pg_unicode_category category);
-const char *unicode_category_abbrev(pg_unicode_category category);
+extern const char *unicode_category_string(pg_unicode_category category);
+extern const char *unicode_category_abbrev(pg_unicode_category category);
+
+extern bool pg_u_prop_alphabetic(pg_wchar c);
+extern bool pg_u_prop_lowercase(pg_wchar c);
+extern bool pg_u_prop_uppercase(pg_wchar c);
+extern bool pg_u_prop_cased(pg_wchar c);
+extern bool pg_u_prop_case_ignorable(pg_wchar c);
+extern bool pg_u_prop_white_space(pg_wchar c);
+extern bool pg_u_prop_hex_digit(pg_wchar c);
+extern bool pg_u_prop_join_control(pg_wchar c);
+
+extern bool pg_u_isdigit(pg_wchar c, bool posix);
+extern bool pg_u_isalpha(pg_wchar c);
+extern bool pg_u_isalnum(pg_wchar c, bool posix);
+extern bool pg_u_isword(pg_wchar c);
+extern bool pg_u_isupper(pg_wchar c);
+extern bool pg_u_islower(pg_wchar c);
+extern bool pg_u_isblank(pg_wchar c);
+extern bool pg_u_iscntrl(pg_wchar c);
+extern bool pg_u_isgraph(pg_wchar c);
+extern bool pg_u_isprint(pg_wchar c);
+extern bool pg_u_ispunct(pg_wchar c, bool posix);
+extern bool pg_u_isspace(pg_wchar c);
+extern bool pg_u_isxdigit(pg_wchar c, bool posix);
 
 #endif							/* UNICODE_CATEGORY_H */

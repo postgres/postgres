@@ -1,21 +1,34 @@
-This directory contains tools to generate the tables in
-src/include/common/unicode_norm.h, used for Unicode normalization. The
-generated .h file is included in the source tree, so these are normally not
-needed to build PostgreSQL, only if you need to re-generate the .h file
-from the Unicode data files for some reason, e.g. to update to a new version
-of Unicode.
+This directory contains tools to download new Unicode data files and
+generate static tables. These tables are used to normalize or
+determine various properties of Unicode data.
 
-Generating unicode_norm_table.h
--------------------------------
+The generated header files are copied to src/include/common/, and
+included in the source tree, so these tools are not normally required
+to build PostgreSQL.
 
-Run
+Update Unicode Version
+----------------------
+
+Edit src/Makefile.global.in and src/common/unicode/meson.build
+to update the UNICODE_VERSION.
+
+Then, generate the new header files with:
 
     make update-unicode
 
-from the top level of the source tree and commit the result.
+or if using meson:
+
+    ninja update-unicode
+
+from the top level of the source tree. Examine the result to make sure
+the changes look reasonable (that is, that the diff size and scope is
+comparable to the Unicode changes since the last update), and then
+commit it.
 
 Tests
 -----
+
+Normalization tests:
 
 The Unicode consortium publishes a comprehensive test suite for the
 normalization algorithm, in a file called NormalizationTest.txt. This
@@ -26,3 +39,15 @@ To download NormalizationTest.txt and run the tests:
     make normalization-check
 
 This is also run as part of the update-unicode target.
+
+Category & Property tests:
+
+The file category_test.c exhaustively compares the category and
+properties of each code point as determined by the generated tables
+with the category and properties as reported by ICU. For this test to
+be effective, the version of the Unicode data files must be similar to
+the version of Unicode on which ICU is based, so attempt to match the
+versions as closely as possible. A mismatched Unicode will skip over
+codepoints that are assigned in one version and not the other, and may
+falsely report failures. This test is run as a part of the
+update-unicode target.
