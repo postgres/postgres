@@ -546,11 +546,14 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  relation->rd_lockInfo.lockRelId.relId,
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
-    if (IsolationNeedLock()) TwoPhaseLockingReportIntention(tag.locktag_field2,
-                                                           tag.locktag_field3,
-                                                           tag.locktag_field4,
-                                                           lockmode == ExclusiveLock? false:true,
-                                                           false);
+    if (IsolationNeedLock())
+    {
+        TwoPhaseLockingReportIntention(tag.locktag_field2,
+                                       tag.locktag_field3,
+                                       tag.locktag_field4,
+                                       lockmode == ExclusiveLock? false:true,
+                                       false);
+    }
 
 	(void) LockAcquire(&tag, lockmode, false, false);
 }

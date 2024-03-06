@@ -157,15 +157,40 @@ typedef enum LockTagType
 #define LOCKTAG_LAST_TYPE	LOCKTAG_DATABASE_FROZEN_IDS
 
 // LockFeatureData regard the feature for a tuples grouped by hash.
-typedef struct LockFeatureData {
+typedef struct GlobalLockFeatureData {
     slock_t mutex;
     uint16 read_cnt;
     uint16 write_cnt;
+    uint64_t avg_free_time;
     uint16 read_intention_cnt;
     uint16 write_intention_cnt;
     double utility;
     char   padding[1];
 } LockFeature;
+
+typedef struct RealTimeFeature {
+    uint32 cur_xact_id; // for validation propose.
+    uint64_t xact_start_ts;
+    uint64_t last_lock_time;
+
+    /* features from local lock graph. */
+    // k: features that represents the current xact conflict information.
+    uint16 conflicts[7];
+    // the number of locks held by current xact. 2 types.
+
+    /* features from global lock graph. */
+    // B: the expected cost for a transaction to be aborted. Since we consider transaction, we use operation number
+    // for feature.
+    uint16 block_info[2];
+
+    // mu: the expected lock wait time for current transaction to get the lock.
+    // we have also considered the impact of deadlock abort and unifies them with utility value.
+    uint64_t average_latency;
+
+    double last_reward;
+
+    char   padding[4];  // cache line padding.
+} TrainingState;
 
 extern const char *const LockTagTypeNames[];
 
@@ -585,11 +610,20 @@ extern void RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode);
 extern Size LockShmemSize(void);
 extern LockData *GetLockStatusData(void);
 extern void GetTupleLockFeatures(StringInfoData* feature);
+extern void GetCurLockFeatures(StringInfoData* feature);
 void TwoPhaseLockingInit();
 extern void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release);
 extern void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release);
+extern void BeforeLock(int i, bool is_read);
+extern void AfterLock(int i, bool is_read);
 extern void GetRelationLockFeatures(StringInfoData* feature);
 extern BlockedProcsData *GetBlockerStatusData(int blocked_pid);
+extern void init_rl_state(uint32 xact_id);
+extern int rl_next_action(uint32 xact_id);
+extern void print_current_state(uint32 xact_id);
+extern void refresh_lock_strategy();
+extern void finish_rl_process(uint32 xact_id, bool is_commit);
+extern void report_xact_result(bool is_commit, uint32 xact_id);
 
 extern xl_standby_lock *GetRunningTransactionLocks(int *nlocks);
 extern const char *GetLockmodeName(LOCKMETHODID lockmethodid, LOCKMODE mode);

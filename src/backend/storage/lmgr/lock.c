@@ -49,6 +49,7 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner_private.h"
+//#include "smarties.h"
 
 
 /* This configuration variable is used to set the lock table size */
@@ -3558,28 +3559,207 @@ static bool starts_with(const char *str, const char *pre) {
     return strncmp(pre, str, strlen(pre)) == 0;
 }
 
-#define LOG_LOCK_FEATURE 4
+#define LOG_LOCK_FEATURE 5
 #define LOCK_FEATURE_LEN (1<<LOG_LOCK_FEATURE)
 #define LOCK_FEATURE_MASK (LOCK_FEATURE_LEN-1)
 #define REL_ID_MULTI 13
 #define MOVING_AVERAGE_RATE 0.8
 #define LOCK_KEY(rid, pgid, offset) ((pgid) * 4096 + (offset) + (rid) * REL_ID_MULTI)
+static bool should_refine_cc(uint tid);
+static uint64_t get_cur_time_ns();
 
 LockFeature* LockFeatureVec;
+uint64_t* AverageLatency;
+TrainingState* RLState;
 
 void TwoPhaseLockingInit()
 {
     printf("2PL lock graph initialized\n");
     LockFeatureVec = ShmemAllocUnlocked(sizeof (LockFeature) * LOCK_FEATURE_LEN);
+    AverageLatency = (uint64_t*) ShmemAllocUnlocked(sizeof (uint128));
+    *AverageLatency = 0;
     for (int i=0;i<LOCK_FEATURE_LEN;i++)
     {
         SpinLockInit(&LockFeatureVec[i].mutex);
         LockFeatureVec[i].read_cnt = 0;
+        LockFeatureVec[i].avg_free_time = 0;
         LockFeatureVec[i].read_intention_cnt = 0;
         LockFeatureVec[i].write_cnt = 0;
         LockFeatureVec[i].write_intention_cnt = 0;
         LockFeatureVec[i].utility = 1.0;
     }
+}
+
+void init_rl_state(uint32 xact_id)
+{
+//    printf("2PL lock graph initialized\n");
+    RLState = palloc(sizeof (LockFeature));
+    RLState->cur_xact_id = xact_id;
+    RLState->last_reward = 0;
+    RLState->xact_start_ts = get_cur_time_ns();
+    memset(RLState->conflicts, 0, sizeof(RLState->conflicts));
+    memset(RLState->block_info, 0, sizeof(RLState->block_info));
+    RLState->average_latency = *AverageLatency;
+    refresh_lock_strategy();
+}
+
+#define ALG_NUM 12
+#define NUM_OF_SYS_XACTS 1
+#define SKIP_XACT(tid) ((tid) <= NUM_OF_SYS_XACTS)
+#define SEC_TO_NS(sec) ((sec)*1000000000)
+// the intention means the potential conflict dependency caused by parallel requesters. e.e. waiters.
+#define RW_INTENTION 0
+#define WW_INTENTION 1
+#define WR_INTENTION 2
+// the conflict means the number of dependency that will cause conflict.
+#define RW_CONFLICT 3
+#define WR_CONFLICT 4
+#define WW_CONFLICT 5
+#define READ_OPT 0
+#define UPDATE_OPT 1
+#define READ_FACTOR 0.5
+#define ABORT_PENALTY -10000.0
+
+
+// lock strategy, isolation level, deadlock detection interval (global), lock timeout.
+//
+// Deadlocks are situations where transactions are waiting on each other in a cycle,
+// and no progress can be made without intervention. Lock contention,
+// on the other hand, happens when one transaction has to wait for locks held by another,
+// but progress is still possible once the locks are released.
+//
+// For deadlock, a value of 1 second is a compromise between detecting and resolving deadlocks promptly and not
+// performing the detection so frequently that it becomes a performance issue itself. However, in a system where
+// transactions are typically very short, and lock contention is more common, a shorter DL timeout might be justified.
+// This period needs to be long enough to allow most transactions to complete
+// without triggering unnecessary deadlock checks, thus we make it larger than 100ms.
+//
+// For lock timeout, if the system is under high load, a shorter lock_timeout can help in quickly resolving lock contention,
+// ensuring that no single transaction can block others for too long.
+const int alg_list[ALG_NUM][4] = {
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 0},
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 1000},
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 100},
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 10},
+        {LOCK_2PL, XACT_READ_COMMITTED, 1000, 1},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 0},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 1000},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 100},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 10},
+        {LOCK_2PL, XACT_READ_COMMITTED, 100, 1},
+        // 10 types of waiting policy
+        {LOCK_2PL, XACT_READ_COMMITTED, -1, -1},
+        // a special sign: stop learning.
+        {LOCK_ASSERT_ABORT, XACT_READ_COMMITTED, 1000, 0}
+        // a corner case: stop now.
+};
+
+
+static uint64_t get_cur_time_ns()
+{
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+
+    return SEC_TO_NS((uint64_t)ts.tv_sec) + (uint64_t)ts.tv_nsec;
+}
+
+static bool should_refine_cc(uint tid)
+{
+    return true;
+}
+
+void finish_rl_process(uint32 xact_id, bool is_commit)
+{
+    Assert(RLState != NULL);
+    Assert(RLState->cur_xact_id == xact_id);
+    double time_span =  (double)(get_cur_time_ns() - RLState->last_lock_time) / 1000;
+    RLState->last_reward = is_commit ? 1.0 : ABORT_PENALTY;
+    RLState->last_reward -= 1;
+    RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
+    RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
+
+    printf("The termination of RL state is [xact:%d, reward=%f]\n",
+           xact_id,
+           RLState->last_reward);
+}
+
+void refresh_lock_strategy()
+{
+    int action; // conn_fd,
+    uint32 tid = MyProc->lxid;
+    Assert(RLState->cur_xact_id == xact_id);
+
+    if (!should_refine_cc(tid) || SKIP_XACT(tid))
+        return;
+
+    print_current_state(tid);
+
+    if (!IsolationLearnCC())
+        return;
+
+    action = rl_next_action(tid);
+    RLState->last_reward = 0;
+
+    XactIsoLevel = alg_list[action][0];
+    XactLockStrategy = alg_list[action][1];
+    DeadlockTimeout = alg_list[action][2];
+    LockTimeout = alg_list[action][3];
+
+
+    Assert((!IsolationIsSerializable() && !IsolationNeedLock()) || IsolationLearnCC()
+           || XactLockStrategy == DefaultXactLockStrategy || IsolationIsSerializable());
+
+    if (XactLockStrategy == LOCK_ASSERT_ABORT)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                        errmsg("could not serialize access due to cc strategy"),
+                        errdetail_internal("Reason code: Asserted abort by AdjustTransaction."),
+                        errhint("The transaction might succeed if retried.")));
+    }
+}
+
+void report_xact_result(bool is_commit, uint32 xact_id)
+{
+    finish_rl_process(xact_id, is_commit);
+//    uint64_t cur_latency = get_cur_time_ns() - RLState->xact_start_ts;
+//    Assert(RLState->cur_xact_id == xact_id);
+//    printf("the average latency has been updated, current lag = %d : %d\n", cur_latency, *AverageLatency);
+//    if (*AverageLatency == 0)
+//        *AverageLatency = cur_latency;
+//    else
+//        *AverageLatency = MOVING_AVERAGE_RATE * (double)(*AverageLatency) + (1-MOVING_AVERAGE_RATE) * (double)(cur_latency);
+}
+
+int rl_next_action(uint32 xact_id)
+{
+    return 2;
+}
+
+void print_current_state(uint32 xact_id)
+{
+    Assert(RLState != NULL);
+    Assert(RLState->cur_xact_id == xact_id);
+//    FILE *filePtr = fopen("output.txt", "w");
+//    if (filePtr == NULL)
+//    {
+//        printf("Error opening file.\n");
+//        return;
+//    }
+    printf("The current RL state is [xact:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%d-%d, r=%.5f, mu=%d]\n",
+           RLState->cur_xact_id,
+           RLState->conflicts[0],
+           RLState->conflicts[1],
+           RLState->conflicts[2],
+           RLState->conflicts[3],
+           RLState->conflicts[4],
+           RLState->conflicts[5],
+           RLState->conflicts[6],
+           RLState->block_info[0],
+           RLState->block_info[1],
+           RLState->last_reward,
+           RLState->average_latency);
+//    fclose(filePtr);
 }
 
 static LockFeature getTwoPhaseLockingReport(int i) {
@@ -3595,19 +3775,70 @@ static LockFeature getTwoPhaseLockingReport(int i) {
     return res;
 }
 
+void BeforeLock(int i, bool is_read)
+{
+//    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
+//    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+    SpinLockAcquire(&LockFeatureVec[i].mutex);
+//    print_current_state(MyProc->lxid);
+    if (is_read)
+    {
+        RLState->conflicts[RW_INTENTION] = LockFeatureVec[i].write_intention_cnt;
+        RLState->conflicts[WR_INTENTION] = 0;
+        RLState->conflicts[WW_INTENTION] = 0;
+        RLState->conflicts[RW_CONFLICT] = LockFeatureVec[i].write_cnt;
+        RLState->conflicts[WW_CONFLICT] = 0;
+        RLState->conflicts[WR_CONFLICT] = 0;
+    }
+    else
+    {
+        RLState->conflicts[RW_INTENTION] = 0;
+        RLState->conflicts[WR_INTENTION] = LockFeatureVec[i].read_intention_cnt;
+        RLState->conflicts[WW_INTENTION] = LockFeatureVec[i].write_intention_cnt;
+        RLState->conflicts[RW_CONFLICT] = 0;
+        RLState->conflicts[WW_CONFLICT] = LockFeatureVec[i].write_cnt;
+        RLState->conflicts[WR_CONFLICT] = LockFeatureVec[i].read_cnt;
+    }
+    SpinLockRelease(&LockFeatureVec[i].mutex);
+    RLState->last_lock_time = get_cur_time_ns();
+    refresh_lock_strategy();
+}
+
+void AfterLock(int i, bool is_read)
+{
+    uint64_t now = get_cur_time_ns();
+//    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
+    double time_span =  (double)(now - RLState->last_lock_time) / 1000;
+    RLState->last_lock_time = now;
+//    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+//    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
+//    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+//    SpinLockAcquire(&LockFeatureVec[i].mutex);
+    if (is_read)
+        RLState->block_info[READ_OPT] ++;
+    else
+        RLState->block_info[UPDATE_OPT] ++;
+//    SpinLockRelease(&LockFeatureVec[i].mutex);
+
+    RLState->last_reward -= 1;
+    RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
+    RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
+}
+
+
 void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
 {
     int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
     int cmd = is_release? -1:1;
     Assert(i >= 0 && i < LOCK_FEATURE_LEN);
-//    printf("xact%d: lock intention report (%d,%d,%d), mode=%s, %s\n ",
-//           GetCurrentTransactionId(), rid, pgid, offset, is_read? "read":"modify", is_release? "release":"lock");
+    if (!is_release) BeforeLock(i, is_read);
     SpinLockAcquire(&LockFeatureVec[i].mutex);
     if (is_read)
         LockFeatureVec[i].read_intention_cnt += cmd;
     else
         LockFeatureVec[i].write_intention_cnt += cmd;
     SpinLockRelease(&LockFeatureVec[i].mutex);
+    if (!is_release) AfterLock(i, is_read);
 }
 
 void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
