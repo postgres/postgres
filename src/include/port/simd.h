@@ -323,7 +323,7 @@ vector8_highbit_mask(const Vector8 v)
 		1 << 4, 1 << 5, 1 << 6, 1 << 7,
 	};
 
-	uint8x16_t	masked = vandq_u8(vld1q_u8(mask), (uint8x16_t) vshrq_n_s8(v, 7));
+	uint8x16_t	masked = vandq_u8(vld1q_u8(mask), (uint8x16_t) vshrq_n_s8((int8x16_t) v, 7));
 	uint8x16_t	maskedhi = vextq_u8(masked, masked, 8);
 
 	return (uint32) vaddvq_u16((uint16x8_t) vzip1q_u8(masked, maskedhi));
