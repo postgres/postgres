@@ -160,3 +160,25 @@ VACUUM delete_test_table;
 -- The vacuum above should've turned the leaf page into a fast root. We just
 -- need to insert some rows to cause the fast root page to split.
 INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,1000) i;
+
+-- Test with index expression and predicate that include a parallel unsafe
+-- function.
+CREATE FUNCTION para_unsafe_f() RETURNS int IMMUTABLE PARALLEL UNSAFE
+AS $$
+BEGIN
+    RETURN 0;
+EXCEPTION WHEN OTHERS THEN
+    RETURN 1;
+END$$ LANGUAGE plpgsql;
+
+CREATE TABLE btree_para_bld(i int);
+ALTER TABLE btree_para_bld SET (parallel_workers = 4);
+SET max_parallel_maintenance_workers TO 4;
+-- With parallel-unsafe expression
+CREATE INDEX ON btree_para_bld((i + para_unsafe_f()));
+-- With parallel-unsafe predicate
+CREATE INDEX ON btree_para_bld(i) WHERE i > para_unsafe_f();
+
+RESET max_parallel_maintenance_workers;
+DROP TABLE btree_para_bld;
+DROP FUNCTION para_unsafe_f;
