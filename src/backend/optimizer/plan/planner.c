@@ -6306,18 +6306,10 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	 * Currently, parallel workers can't access the leader's temporary tables.
 	 * Furthermore, any index predicate or index expressions must be parallel
 	 * safe.
-	 *
-	 * Fetch the list of expressions and predicates directly from the
-	 * catalogs.  Retrieving this information from the relcache would cause
-	 * the expressions and predicates to be flattened, losing properties that
-	 * can be important to check if parallel workers can be used.  For
-	 * example, immutable parallel-unsafe functions, that cannot be used in
-	 * parallel workers, would be changed to Const nodes, that are safe in
-	 * parallel workers.
 	 */
 	if (heap->rd_rel->relpersistence == RELPERSISTENCE_TEMP ||
-		!is_parallel_safe(root, (Node *) get_index_expressions(indexOid)) ||
-		!is_parallel_safe(root, (Node *) get_index_predicate(indexOid)))
+		!is_parallel_safe(root, (Node *) RelationGetIndexExpressions(index)) ||
+		!is_parallel_safe(root, (Node *) RelationGetIndexPredicate(index)))
 	{
 		parallel_workers = 0;
 		goto done;
