@@ -344,8 +344,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		Node	   *funcexpr = rtfunc->funcexpr;
 		int			colcount = rtfunc->funccolcount;
 		FunctionScanPerFuncState *fs = &scanstate->funcstates[i];
-		TypeFuncClass functypclass;
-		Oid			funcrettype;
 		TupleDesc	tupdesc;
 
 		fs->setexpr =
@@ -362,39 +360,18 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		fs->rowcount = -1;
 
 		/*
-		 * Now determine if the function returns a simple or composite type,
-		 * and build an appropriate tupdesc.  Note that in the composite case,
-		 * the function may now return more columns than it did when the plan
-		 * was made; we have to ignore any columns beyond "colcount".
+		 * Now build a tupdesc showing the result type we expect from the
+		 * function.  If we have a coldeflist then that takes priority (note
+		 * the parser enforces that there is one if the function's nominal
+		 * output type is RECORD).  Otherwise use get_expr_result_type.
+		 *
+		 * Note that if the function returns a named composite type, that may
+		 * now contain more or different columns than it did when the plan was
+		 * made.  For both that and the RECORD case, we need to check tuple
+		 * compatibility.  ExecMakeTableFunctionResult handles some of this,
+		 * and CheckVarSlotCompatibility provides a backstop.
 		 */
-		functypclass = get_expr_result_type(funcexpr,
-											&funcrettype,
-											&tupdesc);
-
-		if (functypclass == TYPEFUNC_COMPOSITE ||
-			functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
-		{
-			/* Composite data type, e.g. a table's row type */
-			Assert(tupdesc);
-			Assert(tupdesc->natts >= colcount);
-			/* Must copy it out of typcache for safety */
-			tupdesc = CreateTupleDescCopy(tupdesc);
-		}
-		else if (functypclass == TYPEFUNC_SCALAR)
-		{
-			/* Base data type, i.e. scalar */
-			tupdesc = CreateTemplateTupleDesc(1);
-			TupleDescInitEntry(tupdesc,
-							   (AttrNumber) 1,
-							   NULL,	/* don't care about the name here */
-							   funcrettype,
-							   -1,
-							   0);
-			TupleDescInitEntryCollation(tupdesc,
-										(AttrNumber) 1,
-										exprCollation(funcexpr));
-		}
-		else if (functypclass == TYPEFUNC_RECORD)
+		if (rtfunc->funccolnames != NIL)
 		{
 			tupdesc = BuildDescFromLists(rtfunc->funccolnames,
 										 rtfunc->funccoltypes,
@@ -410,8 +387,40 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		}
 		else
 		{
-			/* crummy error message, but parser should have caught this */
-			elog(ERROR, "function in FROM has unsupported return type");
+			TypeFuncClass functypclass;
+			Oid			funcrettype;
+
+			functypclass = get_expr_result_type(funcexpr,
+												&funcrettype,
+												&tupdesc);
+
+			if (functypclass == TYPEFUNC_COMPOSITE ||
+				functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
+			{
+				/* Composite data type, e.g. a table's row type */
+				Assert(tupdesc);
+				/* Must copy it out of typcache for safety */
+				tupdesc = CreateTupleDescCopy(tupdesc);
+			}
+			else if (functypclass == TYPEFUNC_SCALAR)
+			{
+				/* Base data type, i.e. scalar */
+				tupdesc = CreateTemplateTupleDesc(1);
+				TupleDescInitEntry(tupdesc,
+								   (AttrNumber) 1,
+								   NULL,	/* don't care about the name here */
+								   funcrettype,
+								   -1,
+								   0);
+				TupleDescInitEntryCollation(tupdesc,
+											(AttrNumber) 1,
+											exprCollation(funcexpr));
+			}
+			else
+			{
+				/* crummy error message, but parser should have caught this */
+				elog(ERROR, "function in FROM has unsupported return type");
+			}
 		}
 
 		fs->tupdesc = tupdesc;
