@@ -2485,3 +2485,16 @@ select * from
  [{"id": "1"}] | 1
 (1 row)
 
+-- check detection of mismatching record types with a const-folded expression
+with a(b) as (values (row(1,2,3)))
+select * from a, coalesce(b) as c(d int, e int);  -- fail
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 3 attributes, but query expects 2.
+with a(b) as (values (row(1,2,3)))
+select * from a, coalesce(b) as c(d int, e int, f int, g int);  -- fail
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 3 attributes, but query expects 4.
+with a(b) as (values (row(1,2,3)))
+select * from a, coalesce(b) as c(d int, e int, f float);  -- fail
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 3, but query expects double precision.
