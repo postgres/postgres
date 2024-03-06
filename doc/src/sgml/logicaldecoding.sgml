@@ -377,9 +377,9 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      <varname>sync_replication_slots</varname></link>
      on the standby, the failover slots can be synchronized periodically in
      the slotsync worker. For the synchronization to work, it is mandatory to
-     have a physical replication slot between the primary and the standby aka
+     have a physical replication slot between the primary and the standby (i.e.,
      <link linkend="guc-primary-slot-name"><varname>primary_slot_name</varname></link>
-     should be configured on the standby, and
+     should be configured on the standby), and
      <link linkend="guc-hot-standby-feedback"><varname>hot_standby_feedback</varname></link>
      must be enabled on the standby. It is also necessary to specify a valid
      <literal>dbname</literal> in the
