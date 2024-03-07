@@ -42,6 +42,7 @@ typedef struct TDEMasterKeyInfo
 
 extern void InitializeMasterKeyInfo(void);
 extern TDEMasterKey* GetMasterKey(void);
-TDEMasterKey* SetMasterKey(const char* key_name, const char* provider_name);
+extern TDEMasterKey* SetMasterKey(const char* key_name, const char* provider_name);
+extern Oid GetMasterKeyProviderId(void);
 
 #endif /*TDE_MASTER_KEY_H*/

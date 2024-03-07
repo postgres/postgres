@@ -15,6 +15,7 @@ pgtde_is_encrypted \
 multi_insert \
 trigger_on_view \
 insert_update_delete \
+keyprovider_dependency \
 vault_v2_test
 TAP_TESTS = 1
 

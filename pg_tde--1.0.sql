@@ -16,6 +16,18 @@ CREATE TABLE percona_tde.pg_tde_key_provider(provider_id SERIAL,
 -- in include/catalog/tde_keyring.h and src/catalog/tde_keyring.c files.
 
 SELECT pg_catalog.pg_extension_config_dump('percona_tde.pg_tde_key_provider', '');
+
+-- Trigger function to check master key dependency on key provider row
+CREATE FUNCTION keyring_delete_dependency_check_trigger()
+RETURNS TRIGGER
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE TRIGGER pg_tde_key_provider_delete_dependency_check_trigger
+BEFORE DELETE ON percona_tde.pg_tde_key_provider
+FOR EACH ROW
+EXECUTE FUNCTION keyring_delete_dependency_check_trigger();
+
 -- Key Provider Management
 
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)

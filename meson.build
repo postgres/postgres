@@ -73,6 +73,7 @@ tests += {
       'update_compare_indexes',
       'pgtde_is_encrypted',
       'multi_insert',
+      'keyprovider_dependency',
       'trigger_on_view',
       'insert_update_delete',
       'vault_v2_test',

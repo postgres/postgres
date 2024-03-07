@@ -445,6 +445,31 @@ SetMasterKey(const char *key_name, const char *provider_name)
 }
 
 /*
+ * Returns the provider ID of the keyring that holds the master key
+ * Return InvalidOid if the master key is not set for the database
+ */
+Oid
+GetMasterKeyProviderId(void)
+{
+    TDEMasterKey *masterKey = NULL;
+    TDEMasterKeyInfo *masterKeyInfo = NULL;
+    Oid keyringId = InvalidOid;
+
+    masterKey = get_master_key_from_cache(true);
+    if (masterKey)
+        return masterKey->keyringId;
+
+    /* Master key not present in cache. Try Loading it from the info file */
+    masterKeyInfo = get_master_key_info();
+    if (masterKeyInfo)
+    {
+        keyringId = masterKeyInfo->keyringId;
+        pfree(masterKeyInfo);
+    }
+    return keyringId;
+}
+
+/*
  * ------------------------------
  * Master key cache realted stuff
  */
