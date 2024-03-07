@@ -2947,8 +2947,29 @@ lmerge_matched:;
 			case TM_SelfModified:
 
 				/*
-				 * The SQL standard disallows this for MERGE.
+				 * The target tuple was already updated or deleted by the
+				 * current command, or by a later command in the current
+				 * transaction.  The former case is explicitly disallowed by
+				 * the SQL standard for MERGE, which insists that the MERGE
+				 * join condition should not join a target row to more than
+				 * one source row.
+				 *
+				 * The latter case arises if the tuple is modified by a
+				 * command in a BEFORE trigger, or perhaps by a command in a
+				 * volatile function used in the query.  In such situations we
+				 * should not ignore the MERGE action, but it is equally
+				 * unsafe to proceed.  We don't want to discard the original
+				 * MERGE action while keeping the triggered actions based on
+				 * it; and it would be no better to allow the original MERGE
+				 * action while discarding the updates that it triggered.  So
+				 * throwing an error is the only safe course.
 				 */
+				if (context->tmfd.cmax != estate->es_output_cid)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
+							 errmsg("tuple to be updated or deleted was already modified by an operation triggered by the current command"),
+							 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
+
 				if (TransactionIdIsCurrentTransactionId(context->tmfd.xmax))
 					ereport(ERROR,
 							(errcode(ERRCODE_CARDINALITY_VIOLATION),
@@ -2956,6 +2977,7 @@ lmerge_matched:;
 							 errmsg("%s command cannot affect row a second time",
 									"MERGE"),
 							 errhint("Ensure that not more than one source row matches any one target row.")));
+
 				/* This shouldn't happen */
 				elog(ERROR, "attempted to update or delete invisible tuple");
 				break;
@@ -3064,19 +3086,27 @@ lmerge_matched:;
 							/*
 							 * This can be reached when following an update
 							 * chain from a tuple updated by another session,
-							 * reaching a tuple that was already updated in
-							 * this transaction. If previously modified by
-							 * this command, ignore the redundant update,
-							 * otherwise error out.
-							 *
-							 * See also response to TM_SelfModified in
-							 * ExecUpdate().
+							 * reaching a tuple that was already updated or
+							 * deleted by the current command, or by a later
+							 * command in the current transaction. As above,
+							 * this should always be treated as an error.
 							 */
 							if (context->tmfd.cmax != estate->es_output_cid)
 								ereport(ERROR,
 										(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
 										 errmsg("tuple to be updated or deleted was already modified by an operation triggered by the current command"),
 										 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
+
+							if (TransactionIdIsCurrentTransactionId(context->tmfd.xmax))
+								ereport(ERROR,
+										(errcode(ERRCODE_CARDINALITY_VIOLATION),
+								/* translator: %s is a SQL command name */
+										 errmsg("%s command cannot affect row a second time",
+												"MERGE"),
+										 errhint("Ensure that not more than one source row matches any one target row.")));
+
+							/* This shouldn't happen */
+							elog(ERROR, "attempted to update or delete invisible tuple");
 							return false;
 
 						default:
