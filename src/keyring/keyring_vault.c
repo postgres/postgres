@@ -1,7 +1,19 @@
+/*-------------------------------------------------------------------------
+ *
+ * keyring_vault.c
+ *      HashiCorp Vault 2 based keyring provider
+ *
+ * IDENTIFICATION
+ *    contrib/pg_tde/src/keyring/keyring_vault.c
+ *
+ *-------------------------------------------------------------------------
+ */
+
 #include "postgres.h"
 
 #include "keyring/keyring_vault.h"
 #include "keyring/keyring_config.h"
+#include "keyring/keyring_curl.h"
 #include "keyring/keyring_api.h"
 #include "pg_tde_defines.h"
 
@@ -12,19 +24,11 @@
 
 #include "common/base64.h"
 
-#define VAULT_URL_MAX_LEN 512
-CURL *curl = NULL;
 struct curl_slist *curlList = NULL;
 
-typedef struct curlString
-{
-	char *ptr;
-	size_t len;
-} curlString;
-
+static bool curl_setup_token(VaultV2Keyring *keyring);
 static char *get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name, char *out, size_t out_size);
-static bool curl_setup_session(VaultV2Keyring *keyring, const char *url, curlString *str);
-static bool curl_perform(VaultV2Keyring *keyring, const char *url, curlString *outStr, long *httpCode, const char *postData);
+static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData);
 
 static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error);
 static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
@@ -40,29 +44,9 @@ bool InstallVaultV2Keyring(void)
 	return RegisterKeyProvider(&keyringVaultV2Routine, VAULT_V2_KEY_PROVIDER);
 }
 
-static size_t writefunc(void *ptr, size_t size, size_t nmemb, struct curlString *s)
-{
-  size_t new_len = s->len + size*nmemb;
-  s->ptr = repalloc(s->ptr, new_len+1);
-  if (s->ptr == NULL) {
-    exit(EXIT_FAILURE);
-  }
-  memcpy(s->ptr+s->len, ptr, size*nmemb);
-  s->ptr[new_len] = '\0';
-  s->len = new_len;
-
-  return size*nmemb;
-}
-
 static bool
-curl_setup_session(VaultV2Keyring *keyring, const char *url, curlString *str)
+curl_setup_token(VaultV2Keyring *keyring)
 {
-	if(curl == NULL)
-	{
-		curl = curl_easy_init();
-		if (curl == NULL) return 0;
-	}
-
 	if(curlList == NULL)
 	{
 		char tokenHeader[256];
@@ -76,26 +60,13 @@ curl_setup_session(VaultV2Keyring *keyring, const char *url, curlString *str)
 		if(curlList == NULL) return 0;
 	}
 
-	if(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curlList) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL) != CURLE_OK) return 0;
-	if (strlen(keyring->vault_ca_path) > 0 &&
-				curl_easy_setopt(curl, CURLOPT_CAINFO, keyring->vault_ca_path) != CURLE_OK)
-		return 0;
-	if(curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_HTTP_VERSION,(long)CURL_HTTP_VERSION_1_1) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,writefunc) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_WRITEDATA,str) != CURLE_OK) return 0;
-	if(curl_easy_setopt(curl, CURLOPT_URL, url) != CURLE_OK) return 0;
+	if(curl_easy_setopt(keyringCurl, CURLOPT_HTTPHEADER, curlList) != CURLE_OK) return 0;
 
 	return 1;
 }
 
 static bool
-curl_perform(VaultV2Keyring *keyring, const char *url, curlString *outStr, long *httpCode, const char *postData)
+curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData)
 {
 	CURLcode ret;
 #if KEYRING_DEBUG
@@ -108,25 +79,25 @@ curl_perform(VaultV2Keyring *keyring, const char *url, curlString *outStr, long 
 	outStr->ptr = palloc0(1);
 	outStr->len = 0;
 
-	if (!curl_setup_session(keyring, url, outStr))
+	if (!curlSetupSession(url, keyring->vault_ca_path, outStr))
+		return 0;
+
+	if (!curl_setup_token(keyring))
 		return 0;
 
 	if(postData != NULL)
 	{
-		if(curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData) != CURLE_OK) return 0;
-	} else
-	{
-		if(curl_easy_setopt(curl, CURLOPT_POSTFIELDS, NULL) != CURLE_OK) return 0;
-		if(curl_easy_setopt(curl, CURLOPT_POST, 0) != CURLE_OK) return 0;
+		if(curl_easy_setopt(keyringCurl, CURLOPT_POSTFIELDS, postData) != CURLE_OK) return 0;
 	}
 
-	ret = curl_easy_perform(curl);
+	ret = curl_easy_perform(keyringCurl);
 	if (ret != CURLE_OK)
 	{
 		elog(LOG, "curl_easy_perform failed with return code: %d", ret);
 		return 0;
 	}
-	if(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, httpCode) != CURLE_OK) return 0;
+
+	if(curl_easy_getinfo(keyringCurl, CURLINFO_RESPONSE_CODE, httpCode) != CURLE_OK) return 0;
 
 #if KEYRING_DEBUG
 	elog(DEBUG2, "Vault response [%li] '%s'", *httpCode, outStr->ptr != NULL ? outStr->ptr : "");
@@ -155,7 +126,7 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 {
 	VaultV2Keyring *vault_keyring = (VaultV2Keyring *)keyring;
 	char url[VAULT_URL_MAX_LEN];
-	curlString str;
+	CurlString str;
 	long httpCode = 0;
 
 	json_object *request = json_object_new_object();
@@ -204,7 +175,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	VaultV2Keyring *vault_keyring = (VaultV2Keyring *)keyring;
 	keyInfo* key = NULL;
 	char url[VAULT_URL_MAX_LEN];
-	curlString str;
+	CurlString str;
 	json_object *response = NULL;
 	long httpCode = 0;
 
@@ -292,7 +263,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	}
 
 #if KEYRING_DEBUG
-	elog(DEBUG1, "Retrieved base64 key: %s", key);
+	elog(DEBUG1, "Retrieved base64 key: %s", response_key);
 #endif
 
 	key = palloc(sizeof(keyInfo));

@@ -1,8 +1,9 @@
 /*-------------------------------------------------------------------------
  *
  * keyring_vault.h
- *	  Vault-V2 implementation
+ *      HashiCorp Vault 2 based keyring provider
  *
+ * IDENTIFICATION
  * src/include/keyring/keyring_vault.h
  *
  *-------------------------------------------------------------------------
