@@ -79,7 +79,7 @@
  */
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
-int         DefaultXactLockStrategy = LOCK_LEARNED;
+int         DefaultXactLockStrategy = LOCK_2PL;
 int         XactLockStrategy;
 
 bool		DefaultXactReadOnly = false;
@@ -2025,40 +2025,9 @@ AdjustTransaction()
     s = &TopTransactionStateData;
     CurrentTransactionState = s;
     tb = s->blockState;
-//    printf("tb = %d\n", tb);
 
     if (tb != TBLOCK_INPROGRESS && tb != TBLOCK_PARALLEL_INPROGRESS)
-        // we only adjust the cc strategy for explicit transactions that has not prepared.
-        // no sub transactions considered currently.
         return;
-
-//    CurTransactionContext = s->curTransactionContext;
-//    if(!FullTransactionIdIsValid(XactTopFullTransactionId))
-//    {
-//        // if the xact has not started, do not adjust.
-//        return;
-//    }
-//    oldCtx = MemoryContextSwitchTo(s->curTransactionContext);
-//     adjust the concurrency control strategy for current xact.
-    if (!IsolationLearnCC())
-    {
-        XactIsoLevel = DefaultXactIsoLevel;
-        XactLockStrategy = DefaultXactLockStrategy;
-        if (!IsolationNeedLock())
-            XactIsoLevel = XACT_SERIALIZABLE;
-        if (IsolationIsSerializable())
-        {
-            // In case of SSI, disable locking based methods.
-            XactLockStrategy = LOCK_NONE;
-            Assert(XactLockStrategy == LOCK_NONE);
-        }
-
-        if (!(IsolationNeedLock() || IsolationIsSerializable()))
-            printf("xact%d is not serializable (iso:%d, lock:%d).\n", MyProc->lxid , XactIsoLevel, XactLockStrategy);
-        return;
-    }
-
-//    MemoryContextSwitchTo(oldCtx);
 }
 
 /*
@@ -2175,7 +2144,24 @@ StartTransaction(void)
 	 */
 	Assert(MyProc->backendId == vxid.backendId);
 	MyProc->lxid = vxid.localTransactionId;
-    init_rl_state(vxid.localTransactionId);
+    if (!IsolationLearnCC())
+    {
+        XactIsoLevel = DefaultXactIsoLevel;
+        XactLockStrategy = DefaultXactLockStrategy;
+        if (!IsolationNeedLock())
+            XactIsoLevel = XACT_SERIALIZABLE;
+        if (IsolationIsSerializable())
+        {
+            // In case of SSI, disable locking based methods.
+            XactLockStrategy = LOCK_NONE;
+            Assert(XactLockStrategy == LOCK_NONE);
+        }
+
+        if (!(IsolationNeedLock() || IsolationIsSerializable()))
+            printf("xact%d is not serializable (iso:%d, lock:%d).\n", MyProc->lxid , XactIsoLevel, XactLockStrategy);
+        return;
+    }
+    else init_rl_state(vxid.localTransactionId);
 
     TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
 

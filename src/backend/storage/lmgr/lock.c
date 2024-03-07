@@ -3619,7 +3619,7 @@ void init_rl_state(uint32 xact_id)
 #define READ_FACTOR 0.5
 #define ABORT_PENALTY (-10000.0)
 #define NS_TO_US 1000.0
-#define MODEL_REMOTE
+//#define MODEL_REMOTE
 
 
 // lock strategy, isolation level, deadlock detection interval (global), lock timeout.
@@ -3683,6 +3683,10 @@ void refresh_lock_strategy()
     if (!IsolationLearnCC())
         return;
 
+    printf("Isolation:%d-%d:, Lock:%d-%d:\n",
+           XactIsoLevel, DefaultXactIsoLevel,
+           XactLockStrategy, DefaultXactLockStrategy);
+
     RLState->action = rl_next_action(tid);
     RLState->last_reward = 0;
 
@@ -3717,10 +3721,9 @@ void report_xact_result(bool is_commit, uint32 xact_id)
 #define RL_PREDICT_HEADER 0
 #define RL_TERMINATE_HEADER 1
 
-void finish_rl_process(uint32 xact_id, bool is_commit)
-{
+void finish_rl_process(uint32 xact_id, bool is_commit) {
 //    MemoryContext oldContext = MemoryContextSwitchTo(TopTransactionContext);
-    double time_span =  (double)(get_cur_time_ns() - RLState->last_lock_time) / NS_TO_US;
+    double time_span = (double) (get_cur_time_ns() - RLState->last_lock_time) / NS_TO_US;
     Assert(RLState != NULL);
 //    printf("%u -- %u -- %u\n", RLState->cur_xact_id, xact_id, MyProc->lxid);
     Assert(RLState->cur_xact_id == xact_id);
@@ -3729,7 +3732,7 @@ void finish_rl_process(uint32 xact_id, bool is_commit)
     RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
     RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
 
-#ifndef MODEL_REMOTE
+#ifdef MODEL_REMOTE
     int sockfd = socket(AF_INET, SOCK_STREAM, 0), ret;
     int action;
     struct sockaddr_in serv_addr;
@@ -3766,54 +3769,21 @@ void finish_rl_process(uint32 xact_id, bool is_commit)
     send(sockfd, buffer, size_f, 0);
     close(sockfd);
 #else
-//    printf("The termination of RL state is [xact:%d, reward=%f], current action=%d\n",
-//           xact_id,
-//           RLState->last_reward,
-//           RLState->action);
+    printf("The termination of RL state is [xact:%d, reward=%f], current action=%d\n",
+           xact_id,
+           RLState->last_reward,
+           RLState->action);
 #endif
 //    MemoryContextSwitchTo(oldContext);
 }
 
 int rl_next_action(uint32 xact_id)
 {
+#ifdef MODEL_REMOTE
     int sockfd = socket(AF_INET, SOCK_STREAM, 0), ret;
     struct sockaddr_in serv_addr;
     char buffer[50];
 
-#ifdef MODEL_REMOTE
-//    size_t size_f = sizeof (uint8) + sizeof(RLState->conflicts) +    // Conflicts array
-//                    sizeof(RLState->block_info) +   // Block info array
-//                    sizeof(RLState->avg_expected_wait) +
-//                    sizeof(RLState->last_reward);  // Last reward
-//
-//    uint8_t *buffer = palloc(size_f);
-//    uint8_t *ptr = buffer;
-//    if (!buffer) {
-//        perror("Failed to allocate buffer");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    *((uint8 *) ptr) = htonl(RL_PREDICT_HEADER);
-//    ptr += sizeof (uint8);
-//
-//    for (int i = 0; i < 7; i++)
-//    {
-//        *((uint16 *)ptr) = htons(RLState->conflicts[i]);
-//        ptr += sizeof(RLState->conflicts[i]);
-//    }
-//    for (int i = 0; i < 2; i++)
-//    {
-//        *((uint16 *)ptr) = htons(RLState->block_info[i]);
-//        ptr += sizeof(RLState->block_info[i]);
-//    }
-//    *((double *)ptr) = RLState->avg_expected_wait;
-//    ptr += sizeof(RLState->avg_expected_wait);
-//    *((double *)ptr) = RLState->last_reward;
-//    ptr += sizeof(RLState->last_reward);
-//    printf("length = %d\n", size_f);
-//
-//    Assert(ptr - buffer == size_f);
-//    Assert(strlen(buffer) == size_f);
     sprintf(buffer, "GET_Q,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.5f,%.5f$",
             RLState->conflicts[0],
             RLState->conflicts[1],
@@ -3848,7 +3818,7 @@ int rl_next_action(uint32 xact_id)
     printf("For xact %d, we have got the action %s --> %d\n", xact_id, buffer, RLState->action);
 
     shutdown(sockfd, SHUT_RDWR);
-    #else
+#else
     RLState->action = random() % ALG_NUM;
     print_current_state(xact_id);
 #endif
@@ -3901,8 +3871,7 @@ static LockFeature getTwoPhaseLockingReport(int i) {
 
 void BeforeLock(int i, bool is_read)
 {
-//    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
-//    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+    if (!IsolationLearnCC()) return;
     SpinLockAcquire(&LockFeatureVec[i].mutex);
 //    print_current_state(MyProc->lxid);
     RLState->avg_expected_wait = LockFeatureVec[i].avg_free_time;
@@ -3931,6 +3900,7 @@ void BeforeLock(int i, bool is_read)
 
 void AfterLock(int i, bool is_read)
 {
+    if (!IsolationLearnCC()) return;
     uint64_t now = get_cur_time_ns();
 //    int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
     double time_span =  (double)(now - RLState->last_lock_time) / NS_TO_US;
@@ -3952,6 +3922,7 @@ void AfterLock(int i, bool is_read)
 
 void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
 {
+    if (!IsolationLearnCC()) return;
     int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
     int cmd = is_release? -1:1;
     Assert(i >= 0 && i < LOCK_FEATURE_LEN);
@@ -3967,6 +3938,7 @@ void TwoPhaseLockingReportIntention(uint32 rid, uint32 pgid, uint16 offset, bool
 
 void TwoPhaseLockingReportTupleLock(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
 {
+    if (!IsolationLearnCC()) return;
     int i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
     int off = is_release? -1:1;
     bool is_useful = IsTransactionUseful();

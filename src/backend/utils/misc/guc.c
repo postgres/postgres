@@ -4299,7 +4299,7 @@ static struct config_enum ConfigureNamesEnum[] =
                     NULL
             },
             &DefaultXactLockStrategy,
-            LOCK_LEARNED, cc_strategy_options,
+            LOCK_2PL, cc_strategy_options,
             NULL, NULL, NULL
     },
 
