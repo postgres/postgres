@@ -4,6 +4,7 @@
 # 1. UPDATEs of PKs that change the join in the ON clause
 # 2. UPDATEs with WHEN conditions that would fail after concurrent update
 # 3. UPDATEs with extra ON conditions that would fail after concurrent update
+# 4. UPDATEs with duplicate source rows
 
 setup
 {
@@ -134,15 +135,26 @@ step "pa_merge2b_when"
   WHEN MATCHED AND t.val like 'initial%' THEN
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val;
 }
+# Duplicate source row should fail
+step "pa_merge2c_dup"
+{
+  MERGE INTO pa_target t
+  USING (VALUES (1), (1)) v(a)
+  ON t.key = v.a
+  WHEN MATCHED THEN
+	UPDATE set val = t.val || ' updated by pa_merge2c_dup';  -- should fail
+}
 step "select2" { SELECT * FROM target; }
 step "pa_select2" { SELECT * FROM pa_target; }
 step "c2" { COMMIT; }
+step "a2" { ABORT; }
 
 # Basic effects
 permutation "merge1" "c1" "select2" "c2"
 
 # One after the other, no concurrency
 permutation "merge1" "c1" "merge2a" "select2" "c2"
+permutation "pa_merge1" "c1" "pa_merge2c_dup" "a2"
 
 # Now with concurrency
 permutation "merge1" "merge2a" "c1" "select2" "c2"
@@ -154,3 +166,4 @@ permutation "pa_merge2" "pa_merge2a" "c1" "pa_select2" "c2" # fails
 permutation "pa_merge2" "c1" "pa_merge2a" "pa_select2" "c2" # succeeds
 permutation "pa_merge3" "pa_merge2b_when" "c1" "pa_select2" "c2" # WHEN not satisfied by updated tuple
 permutation "pa_merge1" "pa_merge2b_when" "c1" "pa_select2" "c2" # WHEN satisfied by updated tuple
+permutation "pa_merge1" "pa_merge2c_dup" "c1" "a2"

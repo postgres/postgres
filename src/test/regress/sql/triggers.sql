@@ -1186,9 +1186,13 @@ insert into child values (10, 1, 'b');
 select * from parent; select * from child;
 
 update parent set val1 = 'b' where aid = 1; -- should fail
+merge into parent p using (values (1)) as v(id) on p.aid = v.id
+  when matched then update set val1 = 'b'; -- should fail
 select * from parent; select * from child;
 
 delete from parent where aid = 1; -- should fail
+merge into parent p using (values (1)) as v(id) on p.aid = v.id
+  when matched then delete; -- should fail
 select * from parent; select * from child;
 
 -- replace the trigger function with one that restarts the deletion after
