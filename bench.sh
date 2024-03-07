@@ -1,3 +1,4 @@
+psql -d postgres -c 'create database sysbench';
 psql -d sysbench -c 'select pg_reload_conf()';
 psql -d sysbench -c 'set default_transaction_isolation="read committed"';
 #psql -d sysbench -c 'set default_cc_strategy="s2pl"';

@@ -3719,10 +3719,10 @@ void report_xact_result(bool is_commit, uint32 xact_id)
 
 void finish_rl_process(uint32 xact_id, bool is_commit)
 {
-    MemoryContext oldContext = MemoryContextSwitchTo(TopTransactionContext);
+//    MemoryContext oldContext = MemoryContextSwitchTo(TopTransactionContext);
     double time_span =  (double)(get_cur_time_ns() - RLState->last_lock_time) / NS_TO_US;
     Assert(RLState != NULL);
-    printf("%u -- %u -- %u\n", RLState->cur_xact_id, xact_id, MyProc->lxid);
+//    printf("%u -- %u -- %u\n", RLState->cur_xact_id, xact_id, MyProc->lxid);
     Assert(RLState->cur_xact_id == xact_id);
     RLState->last_reward = is_commit ? 1.0 : ABORT_PENALTY;
     RLState->last_reward -= 1;
@@ -3766,18 +3766,18 @@ void finish_rl_process(uint32 xact_id, bool is_commit)
     send(sockfd, buffer, size_f, 0);
     close(sockfd);
 #else
-    printf("The termination of RL state is [xact:%d, reward=%f], current action=%d\n",
-           xact_id,
-           RLState->last_reward,
-           RLState->action);
+//    printf("The termination of RL state is [xact:%d, reward=%f], current action=%d\n",
+//           xact_id,
+//           RLState->last_reward,
+//           RLState->action);
 #endif
-    MemoryContextSwitchTo(oldContext);
+//    MemoryContextSwitchTo(oldContext);
 }
 
 int rl_next_action(uint32 xact_id)
 {
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0), ret;
-    struct sockaddr_in serv_addr;
+//    int sockfd = socket(AF_INET, SOCK_STREAM, 0), ret;
+//    struct sockaddr_in serv_addr;
     char buffer[50];
 
 #ifdef MODEL_REMOTE
@@ -3828,33 +3828,34 @@ int rl_next_action(uint32 xact_id)
             RLState->last_reward
             );
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(12345);
-    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
-
-    if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Connection write failed");
-        exit(EXIT_FAILURE);
-    }
-
-    send(sockfd, buffer, sizeof (buffer), 0);
-    shutdown(sockfd, SHUT_WR);
-
-    if (read(sockfd, &ret, sizeof (ret)) != sizeof (ret)) {
-        perror("Connection read failed");
-        exit(EXIT_FAILURE);
-    }
-    RLState->action = ntohl(ret);
-    printf("For xact %d, we have got the action %s --> %d\n", xact_id, buffer, RLState->action);
+//    serv_addr.sin_family = AF_INET;
+//    serv_addr.sin_port = htons(12345);
+//    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
+//
+//    if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+//        perror("Connection write failed");
+//        exit(EXIT_FAILURE);
+//    }
+//
+//    send(sockfd, buffer, sizeof (buffer), 0);
+//    shutdown(sockfd, SHUT_WR);
+//
+//    if (read(sockfd, &ret, sizeof (ret)) != sizeof (ret)) {
+//        perror("Connection read failed");
+//        exit(EXIT_FAILURE);
+//    }
+//    RLState->action = ntohl(ret);
+//    printf("For xact %d, we have got the action %s --> %d\n", xact_id, buffer, RLState->action);
 
 //    pfree(buffer);
-    shutdown(sockfd, SHUT_RDWR);
+//    shutdown(sockfd, SHUT_RDWR);
     //#else
 //    RLState->action = random() % ALG_NUM;
 //    print_current_state(xact_id);
 #endif
 
-    print_current_state(xact_id);
+    RLState->action = 2;
+//    print_current_state(xact_id);
     Assert(RLState->action >= 0 && RLState->action < ALG_NUM);
     return RLState->action;
 }

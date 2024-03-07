@@ -2032,15 +2032,31 @@ AdjustTransaction()
         // no sub transactions considered currently.
         return;
 
-    CurTransactionContext = s->curTransactionContext;
+//    CurTransactionContext = s->curTransactionContext;
 //    if(!FullTransactionIdIsValid(XactTopFullTransactionId))
 //    {
 //        // if the xact has not started, do not adjust.
 //        return;
 //    }
 //    oldCtx = MemoryContextSwitchTo(s->curTransactionContext);
-    // adjust the concurrency control strategy for current xact.
-//    refresh_lock_strategy(MyProc->lxid);
+//     adjust the concurrency control strategy for current xact.
+    if (!IsolationLearnCC())
+    {
+        XactIsoLevel = DefaultXactIsoLevel;
+        XactLockStrategy = DefaultXactLockStrategy;
+        if (!IsolationNeedLock())
+            XactIsoLevel = XACT_SERIALIZABLE;
+        if (IsolationIsSerializable())
+        {
+            // In case of SSI, disable locking based methods.
+            XactLockStrategy = LOCK_NONE;
+            Assert(XactLockStrategy == LOCK_NONE);
+        }
+
+        if (!(IsolationNeedLock() || IsolationIsSerializable()))
+            printf("xact%d is not serializable (iso:%d, lock:%d).\n", MyProc->lxid , XactIsoLevel, XactLockStrategy);
+        return;
+    }
 
 //    MemoryContextSwitchTo(oldCtx);
 }
@@ -2159,25 +2175,7 @@ StartTransaction(void)
 	 */
 	Assert(MyProc->backendId == vxid.backendId);
 	MyProc->lxid = vxid.localTransactionId;
-    printf("xact id = %d\n", vxid.localTransactionId);
     init_rl_state(vxid.localTransactionId);
-    if (!IsolationLearnCC())
-    {
-        XactIsoLevel = DefaultXactIsoLevel;
-        XactLockStrategy = DefaultXactLockStrategy;
-        if (!IsolationNeedLock())
-            XactIsoLevel = XACT_SERIALIZABLE;
-        if (IsolationIsSerializable())
-        {
-            // In case of SSI, disable locking based methods.
-            XactLockStrategy = LOCK_NONE;
-            Assert(XactLockStrategy == LOCK_NONE);
-        }
-
-//        if (!(IsolationNeedLock() || IsolationIsSerializable()))
-//            printf("xact%d is not serializable (iso:%d, lock:%d).\n", tid, XactIsoLevel, XactLockStrategy);
-//        return;
-    }
 
     TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
 
