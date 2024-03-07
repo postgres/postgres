@@ -1745,6 +1745,10 @@ select * from parent; select * from child;
 update parent set val1 = 'b' where aid = 1; -- should fail
 ERROR:  tuple to be updated was already modified by an operation triggered by the current command
 HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
+merge into parent p using (values (1)) as v(id) on p.aid = v.id
+  when matched then update set val1 = 'b'; -- should fail
+ERROR:  tuple to be updated or deleted was already modified by an operation triggered by the current command
+HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
@@ -1758,6 +1762,10 @@ select * from parent; select * from child;
 
 delete from parent where aid = 1; -- should fail
 ERROR:  tuple to be deleted was already modified by an operation triggered by the current command
+HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
+merge into parent p using (values (1)) as v(id) on p.aid = v.id
+  when matched then delete; -- should fail
+ERROR:  tuple to be updated or deleted was already modified by an operation triggered by the current command
 HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
