@@ -1,0 +1,41 @@
+CREATE EXTENSION test_radixtree;
+--
+-- All the logic is in the test_radixtree() function. It will throw
+-- an error if something fails.
+--
+SELECT test_radixtree();
+NOTICE:  testing node node-4 with shift 0 and ascending keys
+NOTICE:  testing node node-4 with shift 0 and descending keys
+NOTICE:  testing node node-4 with shift 8 and ascending keys
+NOTICE:  testing node node-4 with shift 8 and descending keys
+NOTICE:  testing node node-4 with shift 56 and ascending keys
+NOTICE:  testing node node-4 with shift 56 and descending keys
+NOTICE:  testing node node-16-lo with shift 0 and ascending keys
+NOTICE:  testing node node-16-lo with shift 0 and descending keys
+NOTICE:  testing node node-16-lo with shift 8 and ascending keys
+NOTICE:  testing node node-16-lo with shift 8 and descending keys
+NOTICE:  testing node node-16-lo with shift 56 and ascending keys
+NOTICE:  testing node node-16-lo with shift 56 and descending keys
+NOTICE:  testing node node-16-hi with shift 0 and ascending keys
+NOTICE:  testing node node-16-hi with shift 0 and descending keys
+NOTICE:  testing node node-16-hi with shift 8 and ascending keys
+NOTICE:  testing node node-16-hi with shift 8 and descending keys
+NOTICE:  testing node node-16-hi with shift 56 and ascending keys
+NOTICE:  testing node node-16-hi with shift 56 and descending keys
+NOTICE:  testing node node-48 with shift 0 and ascending keys
+NOTICE:  testing node node-48 with shift 0 and descending keys
+NOTICE:  testing node node-48 with shift 8 and ascending keys
+NOTICE:  testing node node-48 with shift 8 and descending keys
+NOTICE:  testing node node-48 with shift 56 and ascending keys
+NOTICE:  testing node node-48 with shift 56 and descending keys
+NOTICE:  testing node node-256 with shift 0 and ascending keys
+NOTICE:  testing node node-256 with shift 0 and descending keys
+NOTICE:  testing node node-256 with shift 8 and ascending keys
+NOTICE:  testing node node-256 with shift 8 and descending keys
+NOTICE:  testing node node-256 with shift 56 and ascending keys
+NOTICE:  testing node node-256 with shift 56 and descending keys
+ test_radixtree 
+----------------
+ 
+(1 row)
+

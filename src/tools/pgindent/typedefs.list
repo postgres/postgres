@@ -3736,6 +3736,7 @@ rewind_source
 rewrite_event
 rf_context
 rm_detail_t
+rt_node_class_test_elem
 role_auth_extra
 rolename_hash
 row_security_policy_hook_type
