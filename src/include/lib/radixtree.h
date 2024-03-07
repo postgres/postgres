@@ -676,7 +676,7 @@ typedef struct RT_RADIX_TREE_CONTROL
 }			RT_RADIX_TREE_CONTROL;
 
 /* Entry point for allocating and accessing the tree */
-typedef struct RT_RADIX_TREE
+struct RT_RADIX_TREE
 {
 	MemoryContext context;
 
@@ -691,7 +691,7 @@ typedef struct RT_RADIX_TREE
 	/* leaf_context is used only for single-value leaves */
 	MemoryContextData *leaf_context;
 #endif
-}			RT_RADIX_TREE;
+};
 
 /*
  * Iteration support.
@@ -714,7 +714,7 @@ typedef struct RT_NODE_ITER
 }			RT_NODE_ITER;
 
 /* state for iterating over the whole radix tree */
-typedef struct RT_ITER
+struct RT_ITER
 {
 	RT_RADIX_TREE *tree;
 
@@ -728,7 +728,7 @@ typedef struct RT_ITER
 
 	/* The key constructed during iteration */
 	uint64		key;
-}			RT_ITER;
+};
 
 
 /* verification (available only in assert-enabled builds) */
