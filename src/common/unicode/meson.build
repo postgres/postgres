@@ -25,6 +25,16 @@ endforeach
 update_unicode_targets = []
 
 update_unicode_targets += \
+  custom_target('unicode_case_table.h',
+    input: [unicode_data['UnicodeData.txt']],
+    output: ['unicode_case_table.h'],
+    command: [
+      perl, files('generate-unicode_case_table.pl'),
+      '--outdir', '@OUTDIR@', '@INPUT@'],
+    build_by_default: false,
+  )
+
+update_unicode_targets += \
   custom_target('unicode_category_table.h',
     input: [unicode_data['UnicodeData.txt'], unicode_data['DerivedCoreProperties.txt'], unicode_data['PropList.txt']],
     output: ['unicode_category_table.h'],
@@ -92,6 +102,17 @@ norm_test_table = custom_target('norm_test_table.h',
 
 inc = include_directories('.')
 
+case_test = executable('case_test',
+  ['case_test.c'],
+  dependencies: [frontend_port_code, icu],
+  include_directories: inc,
+  link_with: [common_static, pgport_static],
+  build_by_default: false,
+  kwargs: default_bin_args + {
+    'install': false,
+  }
+)
+
 category_test = executable('category_test',
   ['category_test.c'],
   dependencies: [frontend_port_code, icu],
@@ -115,6 +136,16 @@ norm_test = executable('norm_test',
 )
 
 update_unicode_dep = []
+
+if not meson.is_cross_build()
+  update_unicode_dep += custom_target('case_test.run',
+    output: 'case_test.run',
+    input: update_unicode_targets,
+    command: [case_test, UNICODE_VERSION],
+    build_by_default: false,
+    build_always_stale: true,
+  )
+endif
 
 if not meson.is_cross_build()
   update_unicode_dep += custom_target('category_test.run',

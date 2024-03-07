@@ -78,6 +78,7 @@ OBJS_COMMON = \
 	scram-common.o \
 	string.o \
 	stringinfo.o \
+	unicode_case.o \
 	unicode_category.o \
 	unicode_norm.o \
 	username.o \

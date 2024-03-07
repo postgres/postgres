@@ -477,8 +477,8 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 
 /*
- * Map a Unicode code point to UTF-8.  utf8string must have 4 bytes of
- * space allocated.
+ * Map a Unicode code point to UTF-8.  utf8string must have at least
+ * unicode_utf8len(c) bytes available.
  */
 unsigned char *
 unicode_to_utf8(pg_wchar c, unsigned char *utf8string)

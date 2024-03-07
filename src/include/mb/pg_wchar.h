@@ -555,6 +555,21 @@ surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second)
 	return ((first & 0x3FF) << 10) + 0x10000 + (second & 0x3FF);
 }
 
+/*
+ * Number of bytes needed to represent the given char in UTF8.
+ */
+static inline int
+unicode_utf8len(pg_wchar c)
+{
+	if (c <= 0x7F)
+		return 1;
+	else if (c <= 0x7FF)
+		return 2;
+	else if (c <= 0xFFFF)
+		return 3;
+	else
+		return 4;
+}
 
 /*
  * The functions in this list are exported by libpq, and we need to be sure
