@@ -503,6 +503,7 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 	{
 		case RTE_RELATION:
 			WRITE_OID_FIELD(relid);
+			WRITE_BOOL_FIELD(inh);
 			WRITE_CHAR_FIELD(relkind);
 			WRITE_INT_FIELD(rellockmode);
 			WRITE_UINT_FIELD(perminfoindex);
@@ -513,6 +514,7 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			WRITE_BOOL_FIELD(security_barrier);
 			/* we re-use these RELATION fields, too: */
 			WRITE_OID_FIELD(relid);
+			WRITE_BOOL_FIELD(inh);
 			WRITE_CHAR_FIELD(relkind);
 			WRITE_INT_FIELD(rellockmode);
 			WRITE_UINT_FIELD(perminfoindex);
@@ -564,7 +566,6 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 	}
 
 	WRITE_BOOL_FIELD(lateral);
-	WRITE_BOOL_FIELD(inh);
 	WRITE_BOOL_FIELD(inFromCl);
 	WRITE_NODE_FIELD(securityQuals);
 }

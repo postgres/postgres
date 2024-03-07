@@ -989,10 +989,6 @@ typedef struct PartitionCmd
  *	  them from the joinaliasvars list, because that would affect the attnums
  *	  of Vars referencing the rest of the list.)
  *
- *	  inh is true for relation references that should be expanded to include
- *	  inheritance children, if the rel has any.  This *must* be false for
- *	  RTEs other than RTE_RELATION entries.
- *
  *	  inFromCl marks those range variables that are listed in the FROM clause.
  *	  It's false for RTEs that are added to a query behind the scenes, such
  *	  as the NEW and OLD variables for a rule, or the subqueries of a UNION.
@@ -1041,6 +1037,13 @@ typedef struct RangeTblEntry
 	/*
 	 * Fields valid for a plain relation RTE (else zero):
 	 *
+	 * inh is true for relation references that should be expanded to include
+	 * inheritance children, if the rel has any.  In the parser, this will
+	 * only be true for RTE_RELATION entries.  The planner also uses this
+	 * field to mark RTE_SUBQUERY entries that contain UNION ALL queries that
+	 * it has flattened into pulled-up subqueries (creating a structure much
+	 * like the effects of inheritance).
+	 *
 	 * rellockmode is really LOCKMODE, but it's declared int to avoid having
 	 * to include lock-related headers here.  It must be RowExclusiveLock if
 	 * the RTE is an INSERT/UPDATE/DELETE/MERGE target, else RowShareLock if
@@ -1070,6 +1073,7 @@ typedef struct RangeTblEntry
 	 * tables to be invalidated if the underlying table is altered.
 	 */
 	Oid			relid;			/* OID of the relation */
+	bool		inh;			/* inheritance requested? */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
 	int			rellockmode;	/* lock level that query requires on the rel */
 	Index		perminfoindex;	/* index of RTEPermissionInfo entry, or 0 */
@@ -1199,7 +1203,6 @@ typedef struct RangeTblEntry
 	Alias	   *alias;			/* user-written alias clause, if any */
 	Alias	   *eref;			/* expanded reference names */
 	bool		lateral;		/* subquery, function, or values is LATERAL? */
-	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause? */
 	List	   *securityQuals;	/* security barrier quals to apply, if any */
 } RangeTblEntry;

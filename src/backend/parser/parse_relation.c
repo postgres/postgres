@@ -1500,6 +1500,7 @@ addRangeTableEntry(ParseState *pstate,
 	 */
 	rel = parserOpenTable(pstate, relation, lockmode);
 	rte->relid = RelationGetRelid(rel);
+	rte->inh = inh;
 	rte->relkind = rel->rd_rel->relkind;
 	rte->rellockmode = lockmode;
 
@@ -1517,7 +1518,6 @@ addRangeTableEntry(ParseState *pstate,
 	 * which is the right thing for all except target tables.
 	 */
 	rte->lateral = false;
-	rte->inh = inh;
 	rte->inFromCl = inFromCl;
 
 	perminfo = addRTEPermissionInfo(&pstate->p_rteperminfos, rte);
@@ -1585,6 +1585,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->rtekind = RTE_RELATION;
 	rte->alias = alias;
 	rte->relid = RelationGetRelid(rel);
+	rte->inh = inh;
 	rte->relkind = rel->rd_rel->relkind;
 	rte->rellockmode = lockmode;
 
@@ -1602,7 +1603,6 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	 * which is the right thing for all except target tables.
 	 */
 	rte->lateral = false;
-	rte->inh = inh;
 	rte->inFromCl = inFromCl;
 
 	perminfo = addRTEPermissionInfo(&pstate->p_rteperminfos, rte);
@@ -1700,7 +1700,6 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	 * addRTEPermissionInfo().
 	 */
 	rte->lateral = lateral;
-	rte->inh = false;			/* never true for subqueries */
 	rte->inFromCl = inFromCl;
 
 	/*
@@ -2023,7 +2022,6 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	 * ExecCheckPermissions()), so no need to perform addRTEPermissionInfo().
 	 */
 	rte->lateral = lateral;
-	rte->inh = false;			/* never true for functions */
 	rte->inFromCl = inFromCl;
 
 	/*
@@ -2108,7 +2106,6 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 	 * ExecCheckPermissions()), so no need to perform addRTEPermissionInfo().
 	 */
 	rte->lateral = lateral;
-	rte->inh = false;			/* never true for tablefunc RTEs */
 	rte->inFromCl = inFromCl;
 
 	/*
@@ -2189,7 +2186,6 @@ addRangeTableEntryForValues(ParseState *pstate,
 	 * addRTEPermissionInfo().
 	 */
 	rte->lateral = lateral;
-	rte->inh = false;			/* never true for values RTEs */
 	rte->inFromCl = inFromCl;
 
 	/*
@@ -2280,7 +2276,6 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	 * addRTEPermissionInfo().
 	 */
 	rte->lateral = false;
-	rte->inh = false;			/* never true for joins */
 	rte->inFromCl = inFromCl;
 
 	/*
@@ -2425,7 +2420,6 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	 * addRTEPermissionInfo().
 	 */
 	rte->lateral = false;
-	rte->inh = false;			/* never true for subqueries */
 	rte->inFromCl = inFromCl;
 
 	/*
@@ -2545,7 +2539,6 @@ addRangeTableEntryForENR(ParseState *pstate,
 	 * addRTEPermissionInfo().
 	 */
 	rte->lateral = false;
-	rte->inh = false;			/* never true for ENRs */
 	rte->inFromCl = inFromCl;
 
 	/*
