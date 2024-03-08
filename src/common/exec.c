@@ -393,8 +393,8 @@ pipe_read_line(char *cmd)
 			log_error(errcode_for_file_access(),
 					  _("could not read from command \"%s\": %m"), cmd);
 		else
-			log_error(errcode_for_file_access(),
-					  _("no data was returned by command \"%s\": %m"), cmd);
+			log_error(errcode(ERRCODE_NO_DATA),
+					  _("no data was returned by command \"%s\""), cmd);
 	}
 
 	(void) pclose_check(pipe_cmd);
