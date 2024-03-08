@@ -378,7 +378,8 @@ pipe_read_line(char *cmd)
 	errno = 0;
 	if ((pipe_cmd = popen(cmd, "r")) == NULL)
 	{
-		perror("popen failure");
+		log_error(errcode(ERRCODE_SYSTEM_ERROR),
+				  _("could not execute command \"%s\": %m"), cmd);
 		return NULL;
 	}
 
