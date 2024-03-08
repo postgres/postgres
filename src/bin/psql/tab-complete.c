@@ -2563,7 +2563,8 @@ psql_completion(const char *text, int start, int end)
 	 * AMs.
 	 */
 	else if (Matches("ALTER", "TABLE", MatchAny, "SET", "ACCESS", "METHOD"))
-		COMPLETE_WITH_QUERY(Query_for_list_of_table_access_methods);
+		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_table_access_methods,
+								 "DEFAULT");
 
 	/*
 	 * If we have ALTER TABLE <sth> SET TABLESPACE provide a list of

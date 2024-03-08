@@ -15202,6 +15202,7 @@ ATExecDropCluster(Relation rel, LOCKMODE lockmode)
  *
  * Check that access method exists.  If it is the same as the table's current
  * access method, it is a no-op.  Otherwise, a table rewrite is necessary.
+ * If amname is NULL, select default_table_access_method as access method.
  */
 static void
 ATPrepSetAccessMethod(AlteredTableInfo *tab, Relation rel, const char *amname)
@@ -15209,7 +15210,8 @@ ATPrepSetAccessMethod(AlteredTableInfo *tab, Relation rel, const char *amname)
 	Oid			amoid;
 
 	/* Check that the table access method exists */
-	amoid = get_table_am_oid(amname, false);
+	amoid = get_table_am_oid(amname ? amname : default_table_access_method,
+							 false);
 
 	if (rel->rd_rel->relam == amoid)
 		return;

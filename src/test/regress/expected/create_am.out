@@ -283,6 +283,27 @@ SELECT COUNT(a), COUNT(1) FILTER(WHERE a=1) FROM heaptable;
      9 |     1
 (1 row)
 
+-- DEFAULT access method
+BEGIN;
+SET LOCAL default_table_access_method TO heap2;
+ALTER TABLE heaptable SET ACCESS METHOD DEFAULT;
+SELECT amname FROM pg_class c, pg_am am
+  WHERE c.relam = am.oid AND c.oid = 'heaptable'::regclass;
+ amname 
+--------
+ heap2
+(1 row)
+
+SET LOCAL default_table_access_method TO heap;
+ALTER TABLE heaptable SET ACCESS METHOD DEFAULT;
+SELECT amname FROM pg_class c, pg_am am
+  WHERE c.relam = am.oid AND c.oid = 'heaptable'::regclass;
+ amname 
+--------
+ heap
+(1 row)
+
+ROLLBACK;
 -- ALTER MATERIALIZED VIEW SET ACCESS METHOD
 CREATE MATERIALIZED VIEW heapmv USING heap AS SELECT * FROM heaptable;
 SELECT amname FROM pg_class c, pg_am am
@@ -308,6 +329,8 @@ SELECT COUNT(a), COUNT(1) FILTER(WHERE a=1) FROM heapmv;
 
 -- No support for multiple subcommands
 ALTER TABLE heaptable SET ACCESS METHOD heap, SET ACCESS METHOD heap2;
+ERROR:  cannot have multiple SET ACCESS METHOD subcommands
+ALTER TABLE heaptable SET ACCESS METHOD DEFAULT, SET ACCESS METHOD heap2;
 ERROR:  cannot have multiple SET ACCESS METHOD subcommands
 ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap, SET ACCESS METHOD heap2;
 ERROR:  cannot have multiple SET ACCESS METHOD subcommands

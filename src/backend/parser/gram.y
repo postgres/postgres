@@ -338,6 +338,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>    alter_identity_column_option_list
 %type <defelt>  alter_identity_column_option
 %type <node>	set_statistics_value
+%type <str>		set_access_method_name
 
 %type <list>	createdb_opt_list createdb_opt_items copy_opt_list
 				transaction_mode_list
@@ -2859,8 +2860,8 @@ alter_table_cmd:
 					n->newowner = $3;
 					$$ = (Node *) n;
 				}
-			/* ALTER TABLE <name> SET ACCESS METHOD <amname> */
-			| SET ACCESS METHOD name
+			/* ALTER TABLE <name> SET ACCESS METHOD { <amname> | DEFAULT } */
+			| SET ACCESS METHOD set_access_method_name
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
@@ -3073,6 +3074,11 @@ alter_identity_column_option:
 
 set_statistics_value:
 			SignedIconst					{ $$ = (Node *) makeInteger($1); }
+			| DEFAULT						{ $$ = NULL; }
+		;
+
+set_access_method_name:
+			ColId							{ $$ = $1; }
 			| DEFAULT						{ $$ = NULL; }
 		;
 
