@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
  *
  * test_radixtree.c
- *		Test module for adapive radix tree.
+ *		Test module for adaptive radix tree.
  *
  * Copyright (c) 2024, PostgreSQL Global Development Group
  *
