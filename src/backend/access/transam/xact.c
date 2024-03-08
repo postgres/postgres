@@ -5583,8 +5583,22 @@ ShowTransactionStateRec(const char *str, TransactionState s)
 {
 	StringInfoData buf;
 
-	initStringInfo(&buf);
+	if (s->parent)
+	{
+		/*
+		 * Since this function recurses, it could be driven to stack overflow.
+		 * This is just a debugging aid, so we can leave out some details
+		 * instead of erroring out with check_stack_depth().
+		 */
+		if (stack_is_too_deep())
+			ereport(DEBUG5,
+					(errmsg_internal("%s(%d): parent omitted to avoid stack overflow",
+									 str, s->nestingLevel)));
+		else
+			ShowTransactionStateRec(str, s->parent);
+	}
 
+	initStringInfo(&buf);
 	if (s->nChildXids > 0)
 	{
 		int			i;
@@ -5593,10 +5607,6 @@ ShowTransactionStateRec(const char *str, TransactionState s)
 		for (i = 1; i < s->nChildXids; i++)
 			appendStringInfo(&buf, " %u", s->childXids[i]);
 	}
-
-	if (s->parent)
-		ShowTransactionStateRec(str, s->parent);
-
 	ereport(DEBUG5,
 			(errmsg_internal("%s(%d) name: %s; blockState: %s; state: %s, xid/subid/cid: %u/%u/%u%s%s",
 							 str, s->nestingLevel,
@@ -5608,7 +5618,6 @@ ShowTransactionStateRec(const char *str, TransactionState s)
 							 (unsigned int) currentCommandId,
 							 currentCommandIdUsed ? " (used)" : "",
 							 buf.data)));
-
 	pfree(buf.data);
 }
 
