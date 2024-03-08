@@ -4761,6 +4761,7 @@ RelationGetIndexList(Relation relation)
 	char		replident = relation->rd_rel->relreplident;
 	Oid			pkeyIndex = InvalidOid;
 	Oid			candidateIndex = InvalidOid;
+	bool		pkdeferrable = false;
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the list. */
@@ -4802,12 +4803,12 @@ RelationGetIndexList(Relation relation)
 		result = lappend_oid(result, index->indexrelid);
 
 		/*
-		 * Non-unique, non-immediate or predicate indexes aren't interesting
-		 * for either oid indexes or replication identity indexes, so don't
-		 * check them.
+		 * Non-unique or predicate indexes aren't interesting for either oid
+		 * indexes or replication identity indexes, so don't check them.
+		 * Deferred ones are not useful for replication identity either; but
+		 * we do include them if they are PKs.
 		 */
 		if (!index->indisunique ||
-			!index->indimmediate ||
 			!heap_attisnull(htup, Anum_pg_index_indpred, NULL))
 			continue;
 
@@ -4832,7 +4833,13 @@ RelationGetIndexList(Relation relation)
 		if (index->indisprimary &&
 			(index->indisvalid ||
 			 relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
+		{
 			pkeyIndex = index->indexrelid;
+			pkdeferrable = !index->indimmediate;
+		}
+
+		if (!index->indimmediate)
+			continue;
 
 		if (!index->indisvalid)
 			continue;
@@ -4854,7 +4861,8 @@ RelationGetIndexList(Relation relation)
 	oldlist = relation->rd_indexlist;
 	relation->rd_indexlist = list_copy(result);
 	relation->rd_pkindex = pkeyIndex;
-	if (replident == REPLICA_IDENTITY_DEFAULT && OidIsValid(pkeyIndex))
+	relation->rd_ispkdeferrable = pkdeferrable;
+	if (replident == REPLICA_IDENTITY_DEFAULT && OidIsValid(pkeyIndex) && !pkdeferrable)
 		relation->rd_replidindex = pkeyIndex;
 	else if (replident == REPLICA_IDENTITY_INDEX && OidIsValid(candidateIndex))
 		relation->rd_replidindex = candidateIndex;
@@ -4957,7 +4965,8 @@ RelationGetStatExtList(Relation relation)
 /*
  * RelationGetPrimaryKeyIndex -- get OID of the relation's primary key index
  *
- * Returns InvalidOid if there is no such index.
+ * Returns InvalidOid if there is no such index, or if the primary key is
+ * DEFERRABLE.
  */
 Oid
 RelationGetPrimaryKeyIndex(Relation relation)
@@ -4972,7 +4981,7 @@ RelationGetPrimaryKeyIndex(Relation relation)
 		Assert(relation->rd_indexvalid);
 	}
 
-	return relation->rd_pkindex;
+	return relation->rd_ispkdeferrable ? InvalidOid : relation->rd_pkindex;
 }
 
 /*
@@ -5190,6 +5199,7 @@ RelationGetIndexPredicate(Relation relation)
  *	INDEX_ATTR_BITMAP_KEY			Columns in non-partial unique indexes not
  *									in expressions (i.e., usable for FKs)
  *	INDEX_ATTR_BITMAP_PRIMARY_KEY	Columns in the table's primary key
+ *									(beware: even if PK is deferrable!)
  *	INDEX_ATTR_BITMAP_IDENTITY_KEY	Columns in the table's replica identity
  *									index (empty if FULL)
  *	INDEX_ATTR_BITMAP_HOT_BLOCKING	Columns that block updates from being HOT
@@ -5197,6 +5207,9 @@ RelationGetIndexPredicate(Relation relation)
  *
  * Attribute numbers are offset by FirstLowInvalidHeapAttributeNumber so that
  * we can include system attributes (e.g., OID) in the bitmap representation.
+ *
+ * Deferred indexes are considered for the primary key, but not for replica
+ * identity.
  *
  * Caller had better hold at least RowExclusiveLock on the target relation
  * to ensure it is safe (deadlock-free) for us to take locks on the relation's

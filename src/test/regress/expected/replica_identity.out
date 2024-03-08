@@ -7,6 +7,7 @@ CREATE TABLE test_replica_identity (
        CONSTRAINT test_replica_identity_unique_nondefer UNIQUE (keya, keyb)
 ) ;
 CREATE TABLE test_replica_identity_othertable (id serial primary key);
+CREATE TABLE test_replica_identity_t3 (id serial constraint pk primary key deferrable);
 CREATE INDEX test_replica_identity_keyab ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_keyab_key ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_nonkey ON test_replica_identity (keya, nonkey);
@@ -57,6 +58,9 @@ ERROR:  "test_replica_identity_othertable_pkey" is not an index for table "test_
 -- fail, deferrable
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_unique_defer;
 ERROR:  cannot use non-immediate index "test_replica_identity_unique_defer" as replica identity
+-- fail, deferrable
+ALTER TABLE test_replica_identity_t3 REPLICA IDENTITY USING INDEX pk;
+ERROR:  cannot use non-immediate index "pk" as replica identity
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
  relreplident 
 --------------
@@ -292,3 +296,4 @@ DROP TABLE test_replica_identity3;
 DROP TABLE test_replica_identity4;
 DROP TABLE test_replica_identity5;
 DROP TABLE test_replica_identity_othertable;
+DROP TABLE test_replica_identity_t3;

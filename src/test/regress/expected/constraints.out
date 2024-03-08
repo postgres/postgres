@@ -1017,6 +1017,98 @@ create table cnn2_part1(a int primary key);
 alter table cnn2_parted attach partition cnn2_part1 for values in (1);
 ERROR:  column "a" in child table must be marked NOT NULL
 drop table cnn2_parted, cnn2_part1;
+-- columns in regular and LIKE inheritance should be marked not-nullable
+-- for primary keys, even if those are deferred
+CREATE TABLE notnull_tbl4 (a INTEGER PRIMARY KEY INITIALLY DEFERRED);
+CREATE TABLE notnull_tbl4_lk (LIKE notnull_tbl4);
+CREATE TABLE notnull_tbl4_lk2 (LIKE notnull_tbl4 INCLUDING INDEXES);
+CREATE TABLE notnull_tbl4_lk3 (LIKE notnull_tbl4 INCLUDING INDEXES, CONSTRAINT a_nn NOT NULL a);
+CREATE TABLE notnull_tbl4_cld () INHERITS (notnull_tbl4);
+CREATE TABLE notnull_tbl4_cld2 (PRIMARY KEY (a) DEFERRABLE) INHERITS (notnull_tbl4);
+CREATE TABLE notnull_tbl4_cld3 (PRIMARY KEY (a) DEFERRABLE, CONSTRAINT a_nn NOT NULL a) INHERITS (notnull_tbl4);
+\d+ notnull_tbl4
+                               Table "public.notnull_tbl4"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Indexes:
+    "notnull_tbl4_pkey" PRIMARY KEY, btree (a) DEFERRABLE INITIALLY DEFERRED
+Child tables: notnull_tbl4_cld,
+              notnull_tbl4_cld2,
+              notnull_tbl4_cld3
+
+\d+ notnull_tbl4_lk
+                              Table "public.notnull_tbl4_lk"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "notnull_tbl4_lk_a_not_null" NOT NULL "a"
+
+\d+ notnull_tbl4_lk2
+                             Table "public.notnull_tbl4_lk2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Indexes:
+    "notnull_tbl4_lk2_pkey" PRIMARY KEY, btree (a) DEFERRABLE INITIALLY DEFERRED
+
+\d+ notnull_tbl4_lk3
+                             Table "public.notnull_tbl4_lk3"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Indexes:
+    "notnull_tbl4_lk3_pkey" PRIMARY KEY, btree (a) DEFERRABLE INITIALLY DEFERRED
+Not-null constraints:
+    "a_nn" NOT NULL "a"
+
+\d+ notnull_tbl4_cld
+                             Table "public.notnull_tbl4_cld"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "notnull_tbl4_cld_a_not_null" NOT NULL "a" (inherited)
+Inherits: notnull_tbl4
+
+\d+ notnull_tbl4_cld2
+                             Table "public.notnull_tbl4_cld2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Indexes:
+    "notnull_tbl4_cld2_pkey" PRIMARY KEY, btree (a) DEFERRABLE
+Not-null constraints:
+    "notnull_tbl4_cld2_a_not_null" NOT NULL "a" (inherited)
+Inherits: notnull_tbl4
+
+\d+ notnull_tbl4_cld3
+                             Table "public.notnull_tbl4_cld3"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Indexes:
+    "notnull_tbl4_cld3_pkey" PRIMARY KEY, btree (a) DEFERRABLE
+Not-null constraints:
+    "a_nn" NOT NULL "a" (local, inherited)
+Inherits: notnull_tbl4
+
+-- leave these tables around for pg_upgrade testing
+-- also, if a NOT NULL is dropped underneath a deferrable PK, the column
+-- should still be nullable afterwards.  This mimics what pg_dump does.
+CREATE TABLE notnull_tbl5 (a INTEGER CONSTRAINT a_nn NOT NULL);
+ALTER TABLE notnull_tbl5 ADD PRIMARY KEY (a) DEFERRABLE;
+ALTER TABLE notnull_tbl5 DROP CONSTRAINT a_nn;
+\d+ notnull_tbl5
+                               Table "public.notnull_tbl5"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Indexes:
+    "notnull_tbl5_pkey" PRIMARY KEY, btree (a) DEFERRABLE
+
+DROP TABLE notnull_tbl5;
 -- Comments
 -- Setup a low-level role to enforce non-superuser checks.
 CREATE ROLE regress_constraint_comments;

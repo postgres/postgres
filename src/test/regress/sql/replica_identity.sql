@@ -8,6 +8,7 @@ CREATE TABLE test_replica_identity (
 ) ;
 
 CREATE TABLE test_replica_identity_othertable (id serial primary key);
+CREATE TABLE test_replica_identity_t3 (id serial constraint pk primary key deferrable);
 
 CREATE INDEX test_replica_identity_keyab ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_keyab_key ON test_replica_identity (keya, keyb);
@@ -40,6 +41,8 @@ ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_iden
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_othertable_pkey;
 -- fail, deferrable
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_unique_defer;
+-- fail, deferrable
+ALTER TABLE test_replica_identity_t3 REPLICA IDENTITY USING INDEX pk;
 
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
 
@@ -137,3 +140,4 @@ DROP TABLE test_replica_identity3;
 DROP TABLE test_replica_identity4;
 DROP TABLE test_replica_identity5;
 DROP TABLE test_replica_identity_othertable;
+DROP TABLE test_replica_identity_t3;

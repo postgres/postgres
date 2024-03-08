@@ -668,6 +668,31 @@ create table cnn2_part1(a int primary key);
 alter table cnn2_parted attach partition cnn2_part1 for values in (1);
 drop table cnn2_parted, cnn2_part1;
 
+-- columns in regular and LIKE inheritance should be marked not-nullable
+-- for primary keys, even if those are deferred
+CREATE TABLE notnull_tbl4 (a INTEGER PRIMARY KEY INITIALLY DEFERRED);
+CREATE TABLE notnull_tbl4_lk (LIKE notnull_tbl4);
+CREATE TABLE notnull_tbl4_lk2 (LIKE notnull_tbl4 INCLUDING INDEXES);
+CREATE TABLE notnull_tbl4_lk3 (LIKE notnull_tbl4 INCLUDING INDEXES, CONSTRAINT a_nn NOT NULL a);
+CREATE TABLE notnull_tbl4_cld () INHERITS (notnull_tbl4);
+CREATE TABLE notnull_tbl4_cld2 (PRIMARY KEY (a) DEFERRABLE) INHERITS (notnull_tbl4);
+CREATE TABLE notnull_tbl4_cld3 (PRIMARY KEY (a) DEFERRABLE, CONSTRAINT a_nn NOT NULL a) INHERITS (notnull_tbl4);
+\d+ notnull_tbl4
+\d+ notnull_tbl4_lk
+\d+ notnull_tbl4_lk2
+\d+ notnull_tbl4_lk3
+\d+ notnull_tbl4_cld
+\d+ notnull_tbl4_cld2
+\d+ notnull_tbl4_cld3
+-- leave these tables around for pg_upgrade testing
+
+-- also, if a NOT NULL is dropped underneath a deferrable PK, the column
+-- should still be nullable afterwards.  This mimics what pg_dump does.
+CREATE TABLE notnull_tbl5 (a INTEGER CONSTRAINT a_nn NOT NULL);
+ALTER TABLE notnull_tbl5 ADD PRIMARY KEY (a) DEFERRABLE;
+ALTER TABLE notnull_tbl5 DROP CONSTRAINT a_nn;
+\d+ notnull_tbl5
+DROP TABLE notnull_tbl5;
 
 -- Comments
 -- Setup a low-level role to enforce non-superuser checks.
