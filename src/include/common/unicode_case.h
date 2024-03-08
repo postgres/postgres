@@ -20,8 +20,8 @@ pg_wchar	unicode_lowercase_simple(pg_wchar ucs);
 pg_wchar	unicode_titlecase_simple(pg_wchar ucs);
 pg_wchar	unicode_uppercase_simple(pg_wchar ucs);
 size_t		unicode_strlower(char *dst, size_t dstsize, const char *src,
-							 size_t srclen);
+							 ssize_t srclen);
 size_t		unicode_strupper(char *dst, size_t dstsize, const char *src,
-							 size_t srclen);
+							 ssize_t srclen);
 
 #endif							/* UNICODE_CASE_H */

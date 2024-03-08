@@ -21,8 +21,8 @@
 #include "mb/pg_wchar.h"
 
 static const pg_case_map *find_case_map(pg_wchar ucs);
-static size_t convert_case(char *dst, size_t dstsize, const char *src, size_t srclen,
-						   CaseKind casekind);
+static size_t convert_case(char *dst, size_t dstsize, const char *src,
+						   ssize_t srclen, CaseKind casekind);
 
 pg_wchar
 unicode_lowercase_simple(pg_wchar code)
@@ -65,7 +65,7 @@ unicode_uppercase_simple(pg_wchar code)
  * required buffer size before allocating.
  */
 size_t
-unicode_strlower(char *dst, size_t dstsize, const char *src, size_t srclen)
+unicode_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen)
 {
 	return convert_case(dst, dstsize, src, srclen, CaseLower);
 }
@@ -87,7 +87,7 @@ unicode_strlower(char *dst, size_t dstsize, const char *src, size_t srclen)
  * required buffer size before allocating.
  */
 size_t
-unicode_strupper(char *dst, size_t dstsize, const char *src, size_t srclen)
+unicode_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen)
 {
 	return convert_case(dst, dstsize, src, srclen, CaseUpper);
 }
@@ -98,7 +98,7 @@ unicode_strupper(char *dst, size_t dstsize, const char *src, size_t srclen)
  * Map each character in the string for which a mapping is available.
  */
 static size_t
-convert_case(char *dst, size_t dstsize, const char *src, size_t srclen,
+convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			 CaseKind casekind)
 {
 	size_t		srcoff = 0;
