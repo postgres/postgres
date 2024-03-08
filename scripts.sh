@@ -26,4 +26,4 @@ alias pg_stop='pg_ctl stop -D $PGDATA -m fast'
 echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
 
 
-psql -d postgres 'create database ycsb'
+psql -d postgres -c 'create database ycsb'

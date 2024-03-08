@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <utils/lsyscache.h>
 #include <arpa/inet.h>
+#include <sys/mman.h>
 
 #include "access/transam.h"
 #include "access/twophase.h"
@@ -3588,19 +3589,6 @@ void TwoPhaseLockingInit()
     }
 }
 
-void init_rl_state(uint32 xact_id)
-{
-//    printf("2PL lock graph initialized\n");
-    RLState = (TrainingState*) MemoryContextAlloc(TopTransactionContext, sizeof (TrainingState));
-    RLState->cur_xact_id = xact_id;
-    RLState->action = -1;
-    RLState->last_reward = 0;
-    RLState->xact_start_ts = get_cur_time_ns();
-    memset(RLState->conflicts, 0, sizeof(RLState->conflicts));
-    memset(RLState->block_info, 0, sizeof(RLState->block_info));
-    RLState->avg_expected_wait = 0;
-    refresh_lock_strategy();
-}
 
 #define ALG_NUM 12
 #define NUM_OF_SYS_XACTS 1
@@ -3619,7 +3607,8 @@ void init_rl_state(uint32 xact_id)
 #define READ_FACTOR 0.5
 #define ABORT_PENALTY (-10000.0)
 #define NS_TO_US 1000.0
-//#define MODEL_REMOTE
+#define FEATURE_MMAP_SIZE 32
+#define MODEL_REMOTE 0
 
 
 // lock strategy, isolation level, deadlock detection interval (global), lock timeout.
@@ -3683,10 +3672,6 @@ void refresh_lock_strategy()
     if (!IsolationLearnCC())
         return;
 
-    printf("Isolation:%d-%d:, Lock:%d-%d:\n",
-           XactIsoLevel, DefaultXactIsoLevel,
-           XactLockStrategy, DefaultXactLockStrategy);
-
     RLState->action = rl_next_action(tid);
     RLState->last_reward = 0;
 
@@ -3721,8 +3706,30 @@ void report_xact_result(bool is_commit, uint32 xact_id)
 #define RL_PREDICT_HEADER 0
 #define RL_TERMINATE_HEADER 1
 
+void init_rl_state(uint32 xact_id)
+{
+    RLState = (TrainingState*) MemoryContextAlloc(TopTransactionContext, sizeof (TrainingState));
+    RLState->cur_xact_id = xact_id;
+#if MODEL_REMOTE == 1
+    RLState->shm_fd = shm_open("my_shared_memory", O_CREAT | O_RDWR, 0666);
+    RLState->ptr = (char*)mmap(0, FEATURE_MMAP_SIZE, PROT_WRITE, MAP_SHARED,  RLState->shm_fd, 0);
+#endif
+    RLState->action = -1;
+    RLState->last_reward = 0;
+    RLState->xact_start_ts = get_cur_time_ns();
+    memset(RLState->conflicts, 0, sizeof(RLState->conflicts));
+    memset(RLState->block_info, 0, sizeof(RLState->block_info));
+    RLState->avg_expected_wait = 0;
+    refresh_lock_strategy();
+}
+
 void finish_rl_process(uint32 xact_id, bool is_commit) {
-//    MemoryContext oldContext = MemoryContextSwitchTo(TopTransactionContext);
+    FILE *filePtr = fopen("eposide.txt", "a");
+    if (filePtr == NULL)
+    {
+        printf("Error opening file.\n");
+        return;
+    }
     double time_span = (double) (get_cur_time_ns() - RLState->last_lock_time) / NS_TO_US;
     Assert(RLState != NULL);
 //    printf("%u -- %u -- %u\n", RLState->cur_xact_id, xact_id, MyProc->lxid);
@@ -3732,59 +3739,22 @@ void finish_rl_process(uint32 xact_id, bool is_commit) {
     RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
     RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
 
-#ifdef MODEL_REMOTE
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0), ret;
-    int action;
-    struct sockaddr_in serv_addr;
-
-    print_current_state(xact_id);
-    size_t size_f = sizeof (uint8) +
-                    sizeof(RLState->last_reward);  // Last reward
-
-    uint8_t *buffer = malloc(size_f);
-    if (!buffer) {
-        perror("Failed to allocate buffer");
-        exit(EXIT_FAILURE);
-    }
-
-    uint8_t *ptr = buffer;
-    *((uint8 *) ptr) = htonl(RL_TERMINATE_HEADER);
-    ptr += sizeof (uint8);
-    *((double *)ptr) = RLState->last_reward;
-
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("Socket creation failed");
-        exit(EXIT_FAILURE);
-    }
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(12345);
-    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
-
-    if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Connection Failed");
-        exit(EXIT_FAILURE);
-    }
-
-    send(sockfd, buffer, size_f, 0);
-    close(sockfd);
+#if MODEL_REMOTE == 1
+    munmap(RLState->ptr, FEATURE_MMAP_SIZE);
+    close(RLState->shm_fd);
 #else
-    printf("The termination of RL state is [xact:%d, reward=%f], current action=%d\n",
+    fprintf(filePtr, "[xact:%d, reward=%f], action=%d\n",
            xact_id,
            RLState->last_reward,
            RLState->action);
+    fclose(filePtr);
 #endif
-//    MemoryContextSwitchTo(oldContext);
 }
 
 int rl_next_action(uint32 xact_id)
 {
-#ifdef MODEL_REMOTE
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0), ret;
-    struct sockaddr_in serv_addr;
-    char buffer[50];
-
-    sprintf(buffer, "GET_Q,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.5f,%.5f$",
+#if MODEL_REMOTE == 1
+    sprintf(RLState->ptr, "GET_Q,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.5f,%.5f$",
             RLState->conflicts[0],
             RLState->conflicts[1],
             RLState->conflicts[2],
@@ -3798,48 +3768,29 @@ int rl_next_action(uint32 xact_id)
             RLState->last_reward
             );
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(12345);
-    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
 
-    if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Connection write failed");
-        exit(EXIT_FAILURE);
-    }
-
-    send(sockfd, buffer, sizeof (buffer), 0);
-    shutdown(sockfd, SHUT_WR);
-
-    if (read(sockfd, &ret, sizeof (ret)) != sizeof (ret)) {
-        perror("Connection read failed");
-        exit(EXIT_FAILURE);
-    }
-    RLState->action = ntohl(ret);
-    printf("For xact %d, we have got the action %s --> %d\n", xact_id, buffer, RLState->action);
-
-    shutdown(sockfd, SHUT_RDWR);
 #else
-    RLState->action = random() % ALG_NUM;
-    print_current_state(xact_id);
+//    RLState->action = random() % ALG_NUM;
+//    print_current_state(xact_id);
 #endif
 
-//    RLState->action = 2;
-//    print_current_state(xact_id);
+    RLState->action = random() % ALG_NUM;
+    print_current_state(xact_id);
     Assert(RLState->action >= 0 && RLState->action < ALG_NUM);
     return RLState->action;
 }
 
 void print_current_state(uint32 xact_id)
 {
+    FILE *filePtr = fopen("eposide.txt", "a");
+    if (filePtr == NULL)
+    {
+        printf("Error opening file.\n");
+        return;
+    }
     Assert(RLState != NULL);
     Assert(RLState->cur_xact_id == xact_id);
-//    FILE *filePtr = fopen("output.txt", "w");
-//    if (filePtr == NULL)
-//    {
-//        printf("Error opening file.\n");
-//        return;
-//    }
-    printf("The current RL state is [xact:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%d-%d, r=%.5f, max_wait=%.5f], the action is %d\n",
+    fprintf(filePtr, "[xact:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%d-%d, r=%.5f, max_wait=%.5f], the action is %d\n",
            RLState->cur_xact_id,
            RLState->conflicts[0],
            RLState->conflicts[1],
@@ -3853,7 +3804,7 @@ void print_current_state(uint32 xact_id)
            RLState->last_reward,
            RLState->avg_expected_wait,
            RLState->action);
-//    fclose(filePtr);
+    fclose(filePtr);
 }
 
 static LockFeature getTwoPhaseLockingReport(int i) {

@@ -188,6 +188,9 @@ typedef struct RealTimeFeature {
     // for feature.
     uint16 block_info[2];
     int action;
+
+    char* ptr;
+    int shm_fd;
 } TrainingState;
 
 extern const char *const LockTagTypeNames[];

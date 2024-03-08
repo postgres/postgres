@@ -2028,6 +2028,19 @@ AdjustTransaction()
 
     if (tb != TBLOCK_INPROGRESS && tb != TBLOCK_PARALLEL_INPROGRESS)
         return;
+    CurTransactionContext = s->curTransactionContext;
+
+    Assert((!IsolationIsSerializable() && !IsolationNeedLock()) || IsolationLearnCC()
+           || XactLockStrategy == DefaultXactLockStrategy || IsolationIsSerializable());
+
+    if (XactLockStrategy == LOCK_ASSERT_ABORT)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+                        errmsg("could not serialize access due to cc strategy"),
+                        errdetail_internal("Reason code: Asserted abort by AdjustTransaction."),
+                        errhint("The transaction might succeed if retried.")));
+    }
 }
 
 /*
