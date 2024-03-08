@@ -1525,10 +1525,11 @@ pgtls_close(PGconn *conn)
  * Obtain reason string for passed SSL errcode
  *
  * ERR_get_error() is used by caller to get errcode to pass here.
+ * The result must be freed after use, using SSLerrfree.
  *
- * Some caution is needed here since ERR_reason_error_string will
- * return NULL if it doesn't recognize the error code.  We don't
- * want to return NULL ever.
+ * Some caution is needed here since ERR_reason_error_string will return NULL
+ * if it doesn't recognize the error code, or (in OpenSSL >= 3) if the code
+ * represents a system errno value.  We don't want to return NULL ever.
  */
 static char ssl_nomem[] = "out of memory allocating error description";
 
@@ -1554,6 +1555,22 @@ SSLerrmessage(unsigned long ecode)
 		strlcpy(errbuf, errreason, SSL_ERR_LEN);
 		return errbuf;
 	}
+
+	/*
+	 * In OpenSSL 3.0.0 and later, ERR_reason_error_string randomly refuses to
+	 * map system errno values.  We can cover that shortcoming with this bit
+	 * of code.  Older OpenSSL versions don't have the ERR_SYSTEM_ERROR macro,
+	 * but that's okay because they don't have the shortcoming either.
+	 */
+#ifdef ERR_SYSTEM_ERROR
+	if (ERR_SYSTEM_ERROR(ecode))
+	{
+		strlcpy(errbuf, strerror(ERR_GET_REASON(ecode)), SSL_ERR_LEN);
+		return errbuf;
+	}
+#endif
+
+	/* No choice but to report the numeric ecode */
 	snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("SSL error code %lu"), ecode);
 	return errbuf;
 }
