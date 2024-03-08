@@ -12,6 +12,7 @@ endif
 
 test_radixtree = shared_module('test_radixtree',
   test_radixtree_sources,
+  link_with: host_system == 'windows' ? pgport_shlib : [],
   kwargs: pg_test_mod_args,
 )
 test_install_libs += test_radixtree
