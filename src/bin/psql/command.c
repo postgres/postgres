@@ -5173,12 +5173,12 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
 	FILE	   *pagerpipe = NULL;
 	int			title_len;
 	int			res = 0;
+	bool		done = false;
 #ifndef WIN32
 	sigset_t	sigalrm_sigchld_sigint;
 	sigset_t	sigalrm_sigchld;
 	sigset_t	sigint;
 	struct itimerval interval;
-	bool		done = false;
 #endif
 
 	if (!query_buf || query_buf->len <= 0)
@@ -5260,7 +5260,6 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
 	if (!pagerpipe)
 		myopt.topt.pager = 0;
 
-
 	/*
 	 * If there's a title in the user configuration, make sure we have room
 	 * for it in the title buffer.  Allow 128 bytes for the timestamp plus 128
@@ -5270,7 +5269,8 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
 	title_len = (user_title ? strlen(user_title) : 0) + 256;
 	title = pg_malloc(title_len);
 
-	for (;;)
+	/* Loop to run query and then sleep awhile */
+	while (!done)
 	{
 		time_t		timer;
 		char		timebuf[128];
@@ -5305,6 +5305,7 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
 		if (iter && (--iter <= 0))
 			break;
 
+		/* Quit if error on pager pipe (probably pager has quit) */
 		if (pagerpipe && ferror(pagerpipe))
 			break;
 
@@ -5314,28 +5315,22 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
 #ifdef WIN32
 
 		/*
-		 * Set up cancellation of 'watch' via SIGINT.  We redo this each time
-		 * through the loop since it's conceivable something inside
-		 * PSQLexecWatch could change sigint_interrupt_jmp.
+		 * Wait a while before running the query again.  Break the sleep into
+		 * short intervals (at most 1s); that's probably unnecessary since
+		 * pg_usleep is interruptible on Windows, but it's cheap insurance.
 		 */
-		if (sigsetjmp(sigint_interrupt_jmp, 1) != 0)
-			break;
-
-		/*
-		 * Enable 'watch' cancellations and wait a while before running the
-		 * query again.  Break the sleep into short intervals (at most 1s).
-		 */
-		sigint_interrupt_enabled = true;
 		for (long i = sleep_ms; i > 0;)
 		{
 			long		s = Min(i, 1000L);
 
 			pg_usleep(s * 1000L);
 			if (cancel_pressed)
+			{
+				done = true;
 				break;
+			}
 			i -= s;
 		}
-		sigint_interrupt_enabled = false;
 #else
 		/* sigwait() will handle SIGINT. */
 		sigprocmask(SIG_BLOCK, &sigint, NULL);
@@ -5369,8 +5364,6 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
 
 		/* Unblock SIGINT so that slow queries can be interrupted. */
 		sigprocmask(SIG_UNBLOCK, &sigint, NULL);
-		if (done)
-			break;
 #endif
 	}
 
