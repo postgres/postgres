@@ -384,6 +384,18 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      must be enabled on the standby. It is also necessary to specify a valid
      <literal>dbname</literal> in the
      <link linkend="guc-primary-conninfo"><varname>primary_conninfo</varname></link>.
+     It's highly recommended that the said physical replication slot is named in
+     <link linkend="guc-standby-slot-names"><varname>standby_slot_names</varname></link>
+     list on the primary, to prevent the subscriber from consuming changes
+     faster than the hot standby. Even when correctly configured, some latency
+     is expected when sending changes to logical subscribers due to the waiting
+     on slots named in
+     <link linkend="guc-standby-slot-names"><varname>standby_slot_names</varname></link>.
+     When <varname>standby_slot_names</varname> is utilized, the
+     primary server will not completely shut down until the corresponding
+     standbys, associated with the physical replication slots specified
+     in <varname>standby_slot_names</varname>, have confirmed
+     receiving the WAL up to the latest flushed position on the primary server.
     </para>
 
     <para>

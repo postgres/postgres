@@ -505,17 +505,257 @@ ok( $standby1->poll_query_until(
 	'restart_lsn and confirmed_flush_lsn of slot lsub1_slot synced to standby');
 
 ##################################################
+# Test that logical failover replication slots wait for the specified
+# physical replication slots to receive the changes first. It uses the
+# following set up:
+#
+#				(physical standbys)
+#				| ----> standby1 (primary_slot_name = sb1_slot)
+#				| ----> standby2 (primary_slot_name = sb2_slot)
+# primary -----	|
+#				(logical replication)
+#				| ----> subscriber1 (failover = true, slot_name = lsub1_slot)
+#				| ----> subscriber2 (failover = false, slot_name = lsub2_slot)
+#
+# standby_slot_names = 'sb1_slot'
+#
+# The setup is configured in such a way that the logical slot of subscriber1 is
+# enabled for failover, and thus the subscriber1 will wait for the physical
+# slot of standby1(sb1_slot) to catch up before receiving the decoded changes.
+##################################################
+
+$backup_name = 'backup3';
+
+$primary->psql('postgres',
+	q{SELECT pg_create_physical_replication_slot('sb2_slot');});
+
+$primary->backup($backup_name);
+
+# Create another standby
+my $standby2 = PostgreSQL::Test::Cluster->new('standby2');
+$standby2->init_from_backup(
+	$primary, $backup_name,
+	has_streaming => 1,
+	has_restoring => 1);
+$standby2->append_conf(
+	'postgresql.conf', qq(
+primary_slot_name = 'sb2_slot'
+));
+$standby2->start;
+$primary->wait_for_replay_catchup($standby2);
+
+# Configure primary to disallow any logical slots that have enabled failover
+# from getting ahead of the specified physical replication slot (sb1_slot).
+$primary->append_conf(
+	'postgresql.conf', qq(
+standby_slot_names = 'sb1_slot'
+));
+$primary->reload;
+
+# Create another subscriber node without enabling failover, wait for sync to
+# complete
+my $subscriber2 = PostgreSQL::Test::Cluster->new('subscriber2');
+$subscriber2->init;
+$subscriber2->start;
+$subscriber2->safe_psql(
+	'postgres', qq[
+	CREATE TABLE tab_int (a int PRIMARY KEY);
+	CREATE SUBSCRIPTION regress_mysub2 CONNECTION '$publisher_connstr' PUBLICATION regress_mypub WITH (slot_name = lsub2_slot);
+]);
+
+$subscriber2->wait_for_subscription_sync;
+
+$subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 ENABLE");
+
+my $offset = -s $primary->logfile;
+
+# Stop the standby associated with the specified physical replication slot
+# (sb1_slot) so that the logical replication slot (lsub1_slot) won't receive
+# changes until the standby comes up.
+$standby1->stop;
+
+# Create some data on the primary
+my $primary_row_count = 20;
+$primary->safe_psql('postgres',
+	"INSERT INTO tab_int SELECT generate_series(11, $primary_row_count);");
+
+# Wait until the standby2 that's still running gets the data from the primary
+$primary->wait_for_replay_catchup($standby2);
+$result = $standby2->safe_psql('postgres',
+	"SELECT count(*) = $primary_row_count FROM tab_int;");
+is($result, 't', "standby2 gets data from primary");
+
+# Wait for regress_mysub2 to get the data from the primary. This subscription
+# was not enabled for failover so it gets the data without waiting for any
+# standbys.
+$primary->wait_for_catchup('regress_mysub2');
+$result = $subscriber2->safe_psql('postgres',
+	"SELECT count(*) = $primary_row_count FROM tab_int;");
+is($result, 't', "subscriber2 gets data from primary");
+
+# Wait until the primary server logs a warning indicating that it is waiting
+# for the sb1_slot to catch up.
+$primary->wait_for_log(
+	qr/replication slot \"sb1_slot\" specified in parameter standby_slot_names does not have active_pid/,
+	$offset);
+
+# The regress_mysub1 was enabled for failover so it doesn't get the data from
+# primary and keeps waiting for the standby specified in standby_slot_names
+# (sb1_slot aka standby1).
+$result =
+  $subscriber1->safe_psql('postgres', "SELECT count(*) <> $primary_row_count FROM tab_int;");
+is($result, 't',
+	"subscriber1 doesn't get data from primary until standby1 acknowledges changes"
+);
+
+# Start the standby specified in standby_slot_names (sb1_slot aka standby1) and
+# wait for it to catch up with the primary.
+$standby1->start;
+$primary->wait_for_replay_catchup($standby1);
+$result = $standby1->safe_psql('postgres',
+	"SELECT count(*) = $primary_row_count FROM tab_int;");
+is($result, 't', "standby1 gets data from primary");
+
+# Now that the standby specified in standby_slot_names is up and running, the
+# primary can send the decoded changes to the subscription enabled for failover
+# (i.e. regress_mysub1). While the standby was down, regress_mysub1 didn't
+# receive any data from the primary. i.e. the primary didn't allow it to go
+# ahead of standby.
+$primary->wait_for_catchup('regress_mysub1');
+$result = $subscriber1->safe_psql('postgres',
+	"SELECT count(*) = $primary_row_count FROM tab_int;");
+is($result, 't',
+	"subscriber1 gets data from primary after standby1 acknowledges changes");
+
+##################################################
+# Verify that when using pg_logical_slot_get_changes to consume changes from a
+# logical failover slot, it will also wait for the slots specified in
+# standby_slot_names to catch up.
+##################################################
+
+# Stop the standby associated with the specified physical replication slot so
+# that the logical replication slot won't receive changes until the standby
+# slot's restart_lsn is advanced or the slot is removed from the
+# standby_slot_names list.
+$primary->safe_psql('postgres', "TRUNCATE tab_int;");
+$primary->wait_for_catchup('regress_mysub1');
+$standby1->stop;
+
+# Disable the regress_mysub1 to prevent the logical walsender from generating
+# more warnings.
+$subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 DISABLE");
+
+# Wait for the replication slot to become inactive on the publisher
+$primary->poll_query_until(
+	'postgres',
+	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'lsub1_slot' AND active = 'f'",
+	1);
+
+# Create a logical 'test_decoding' replication slot with failover enabled
+$primary->safe_psql('postgres',
+	"SELECT pg_create_logical_replication_slot('test_slot', 'test_decoding', false, false, true);"
+);
+
+my $back_q = $primary->background_psql(
+	'postgres',
+	on_error_stop => 0,
+	timeout => $PostgreSQL::Test::Utils::timeout_default);
+
+# pg_logical_slot_get_changes will be blocked until the standby catches up,
+# hence it needs to be executed in a background session.
+$offset = -s $primary->logfile;
+$back_q->query_until(
+	qr/logical_slot_get_changes/, q(
+   \echo logical_slot_get_changes
+   SELECT pg_logical_slot_get_changes('test_slot', NULL, NULL);
+));
+
+# Wait until the primary server logs a warning indicating that it is waiting
+# for the sb1_slot to catch up.
+$primary->wait_for_log(
+	qr/replication slot \"sb1_slot\" specified in parameter standby_slot_names does not have active_pid/,
+	$offset);
+
+# Remove the standby from the standby_slot_names list and reload the
+# configuration.
+$primary->adjust_conf('postgresql.conf', 'standby_slot_names', "''");
+$primary->reload;
+
+# Since there are no slots in standby_slot_names, the function
+# pg_logical_slot_get_changes should now return, and the session can be
+# stopped.
+$back_q->quit;
+
+$primary->safe_psql('postgres',
+	"SELECT pg_drop_replication_slot('test_slot');"
+);
+
+# Add the physical slot (sb1_slot) back to the standby_slot_names for further
+# tests.
+$primary->adjust_conf('postgresql.conf', 'standby_slot_names', "'sb1_slot'");
+$primary->reload;
+
+# Enable the regress_mysub1 for further tests
+$subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 ENABLE");
+
+##################################################
+# Test that logical replication will wait for the user-created inactive
+# physical slot to catch up until we remove the slot from standby_slot_names.
+##################################################
+
+$offset = -s $primary->logfile;
+
+# Create some data on the primary
+$primary_row_count = 10;
+$primary->safe_psql('postgres',
+	"INSERT INTO tab_int SELECT generate_series(1, $primary_row_count);");
+
+# Wait until the primary server logs a warning indicating that it is waiting
+# for the sb1_slot to catch up.
+$primary->wait_for_log(
+	qr/replication slot \"sb1_slot\" specified in parameter standby_slot_names does not have active_pid/,
+	$offset);
+
+# The regress_mysub1 doesn't get the data from primary because the specified
+# standby slot (sb1_slot) in standby_slot_names is inactive.
+$result =
+  $subscriber1->safe_psql('postgres', "SELECT count(*) = 0 FROM tab_int;");
+is($result, 't',
+	"subscriber1 doesn't get data as the sb1_slot doesn't catch up");
+
+# Remove the standby from the standby_slot_names list and reload the
+# configuration.
+$primary->adjust_conf('postgresql.conf', 'standby_slot_names', "''");
+$primary->reload;
+
+# Since there are no slots in standby_slot_names, the primary server should now
+# send the decoded changes to the subscription.
+$primary->wait_for_catchup('regress_mysub1');
+$result = $subscriber1->safe_psql('postgres',
+	"SELECT count(*) = $primary_row_count FROM tab_int;");
+is($result, 't',
+	"subscriber1 gets data from primary after standby1 is removed from the standby_slot_names list"
+);
+
+# Add the physical slot (sb1_slot) back to the standby_slot_names for further
+# tests.
+$primary->adjust_conf('postgresql.conf', 'standby_slot_names', "'sb1_slot'");
+$primary->reload;
+
+##################################################
 # Promote the standby1 to primary. Confirm that:
 # a) the slot 'lsub1_slot' is retained on the new primary
 # b) logical replication for regress_mysub1 is resumed successfully after failover
 ##################################################
+$standby1->start;
+$primary->wait_for_replay_catchup($standby1);
+
 $standby1->promote;
 
 # Update subscription with the new primary's connection info
 my $standby1_conninfo = $standby1->connstr . ' dbname=postgres';
 $subscriber1->safe_psql('postgres',
-	"ALTER SUBSCRIPTION regress_mysub1 CONNECTION '$standby1_conninfo';
-	 ALTER SUBSCRIPTION regress_mysub1 ENABLE; ");
+	"ALTER SUBSCRIPTION regress_mysub1 CONNECTION '$standby1_conninfo';");
 
 # Confirm the synced slot 'lsub1_slot' is retained on the new primary
 is($standby1->safe_psql('postgres',

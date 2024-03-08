@@ -488,6 +488,10 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 	latestFlushPtr = GetStandbyFlushRecPtr(NULL);
 	if (remote_slot->confirmed_lsn > latestFlushPtr)
 	{
+		/*
+		 * Can get here only if GUC 'standby_slot_names' on the primary server
+		 * was not configured correctly.
+		 */
 		ereport(AmLogicalSlotSyncWorkerProcess() ? LOG : ERROR,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("skipping slot synchronization as the received slot sync"
@@ -857,6 +861,13 @@ validate_remote_info(WalReceiverConn *wrconn)
 	remote_in_recovery = DatumGetBool(slot_getattr(tupslot, 1, &isnull));
 	Assert(!isnull);
 
+	/*
+	 * Slot sync is currently not supported on a cascading standby. This is
+	 * because if we allow it, the primary server needs to wait for all the
+	 * cascading standbys, otherwise, logical subscribers can still be ahead
+	 * of one of the cascading standbys which we plan to promote. Thus, to
+	 * avoid this additional complexity, we restrict it for the time being.
+	 */
 	if (remote_in_recovery)
 		ereport(ERROR,
 				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

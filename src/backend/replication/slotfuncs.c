@@ -464,6 +464,12 @@ pg_physical_replication_slot_advance(XLogRecPtr moveto)
 		 * crash, but this makes the data consistent after a clean shutdown.
 		 */
 		ReplicationSlotMarkDirty();
+
+		/*
+		 * Wake up logical walsenders holding logical failover slots after
+		 * updating the restart_lsn of the physical slot.
+		 */
+		PhysicalWakeupLogicalWalSnd();
 	}
 
 	return retlsn;
@@ -503,6 +509,12 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 											   .segment_open = wal_segment_open,
 											   .segment_close = wal_segment_close),
 									NULL, NULL, NULL);
+
+		/*
+		 * Wait for specified streaming replication standby servers (if any)
+		 * to confirm receipt of WAL up to moveto lsn.
+		 */
+		WaitForStandbyConfirmation(moveto);
 
 		/*
 		 * Start reading at the slot's restart_lsn, which we know to point to

@@ -4559,6 +4559,45 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-standby-slot-names" xreflabel="standby_slot_names">
+      <term><varname>standby_slot_names</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>standby_slot_names</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        A comma-separated list of streaming replication standby server slot names
+        that logical WAL sender processes will wait for. Logical WAL sender processes
+        will send decoded changes to plugins only after the specified replication
+        slots confirm receiving WAL. This guarantees that logical replication
+        failover slots do not consume changes until those changes are received
+        and flushed to corresponding physical standbys. If a
+        logical replication connection is meant to switch to a physical standby
+        after the standby is promoted, the physical replication slot for the
+        standby should be listed here. Note that logical replication will not
+        proceed if the slots specified in the
+        <varname>standby_slot_names</varname> do not exist or are invalidated.
+        Additionally, the replication management functions
+        <link linkend="pg-replication-slot-advance">
+        <function>pg_replication_slot_advance</function></link>,
+        <link linkend="pg-logical-slot-get-changes">
+        <function>pg_logical_slot_get_changes</function></link>, and
+        <link linkend="pg-logical-slot-peek-changes">
+        <function>pg_logical_slot_peek_changes</function></link>,
+        when used with logical failover slots, will block until all
+        physical slots specified in <varname>standby_slot_names</varname> have
+        confirmed WAL receipt.
+       </para>
+       <para>
+        The standbys corresponding to the physical replication slots in
+        <varname>standby_slot_names</varname> must configure
+        <literal>sync_replication_slots = true</literal> so they can receive
+        logical failover slot changes from the primary.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
 

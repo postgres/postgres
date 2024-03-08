@@ -172,9 +172,10 @@ is($node_primary->slot('otherdb_slot')->{'slot_name'},
 	undef, 'logical slot was actually dropped with DB');
 
 # Test logical slot advancing and its durability.
+# Passing failover=true (last arg) should not have any impact on advancing.
 my $logical_slot = 'logical_slot';
 $node_primary->safe_psql('postgres',
-	"SELECT pg_create_logical_replication_slot('$logical_slot', 'test_decoding', false);"
+	"SELECT pg_create_logical_replication_slot('$logical_slot', 'test_decoding', false, false, true);"
 );
 $node_primary->psql(
 	'postgres', "

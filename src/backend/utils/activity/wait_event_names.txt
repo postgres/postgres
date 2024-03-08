@@ -78,6 +78,7 @@ GSS_OPEN_SERVER	"Waiting to read data from the client while establishing a GSSAP
 LIBPQWALRECEIVER_CONNECT	"Waiting in WAL receiver to establish connection to remote server."
 LIBPQWALRECEIVER_RECEIVE	"Waiting in WAL receiver to receive data from remote server."
 SSL_OPEN_SERVER	"Waiting for SSL while attempting connection."
+WAIT_FOR_STANDBY_CONFIRMATION	"Waiting for WAL to be received and flushed by the physical standby."
 WAL_SENDER_WAIT_FOR_WAL	"Waiting for WAL to be flushed in WAL sender process."
 WAL_SENDER_WRITE_DATA	"Waiting for any activity when processing replies from WAL receiver in WAL sender process."
 

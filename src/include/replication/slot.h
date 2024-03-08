@@ -226,6 +226,7 @@ extern PGDLLIMPORT ReplicationSlot *MyReplicationSlot;
 
 /* GUCs */
 extern PGDLLIMPORT int max_replication_slots;
+extern PGDLLIMPORT char *standby_slot_names;
 
 /* shmem initialization functions */
 extern Size ReplicationSlotsShmemSize(void);
@@ -273,5 +274,9 @@ extern void CheckSlotRequirements(void);
 extern void CheckSlotPermissions(void);
 extern ReplicationSlotInvalidationCause
 			GetSlotInvalidationCause(const char *conflict_reason);
+
+extern bool SlotExistsInStandbySlotNames(const char *slot_name);
+extern bool StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel);
+extern void WaitForStandbyConfirmation(XLogRecPtr wait_for_lsn);
 
 #endif							/* SLOT_H */
