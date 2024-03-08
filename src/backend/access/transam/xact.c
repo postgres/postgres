@@ -341,6 +341,9 @@ static void CommitTransaction(void);
 static TransactionId RecordTransactionAbort(bool isSubXact);
 static void StartTransaction(void);
 
+static void CommitTransactionCommandInternal(void);
+static void AbortCurrentTransactionInternal(void);
+
 static void StartSubTransaction(void);
 static void CommitSubTransaction(void);
 static void AbortSubTransaction(void);
@@ -3041,15 +3044,57 @@ RestoreTransactionCharacteristics(const SavedTransactionCharacteristics *s)
 	XactDeferrable = s->save_XactDeferrable;
 }
 
-
 /*
- *	CommitTransactionCommand
+ *	CommitTransactionCommand -- a wrapper function handling the
+ *		loop over subtransactions to avoid a potentially dangerous recursion
+ *		in CommitTransactionCommandInternal().
  */
 void
 CommitTransactionCommand(void)
 {
+	while (true)
+	{
+		switch (CurrentTransactionState->blockState)
+		{
+				/*
+				 * The current already-failed subtransaction is ending due to
+				 * a ROLLBACK or ROLLBACK TO command, so pop it and
+				 * recursively examine the parent (which could be in any of
+				 * several states).
+				 */
+			case TBLOCK_SUBABORT_END:
+				CleanupSubTransaction();
+				continue;
+
+				/*
+				 * As above, but it's not dead yet, so abort first.
+				 */
+			case TBLOCK_SUBABORT_PENDING:
+				AbortSubTransaction();
+				CleanupSubTransaction();
+				continue;
+			default:
+				break;
+		}
+		CommitTransactionCommandInternal();
+		break;
+	}
+}
+
+/*
+ *	CommitTransactionCommandInternal - a function doing all the material work
+ *		regarding handling the commit transaction command except for loop over
+ *		subtransactions.
+ */
+static void
+CommitTransactionCommandInternal(void)
+{
 	TransactionState s = CurrentTransactionState;
 	SavedTransactionCharacteristics savetc;
+
+	/* This states are handled in CommitTransactionCommand() */
+	Assert(s->blockState != TBLOCK_SUBABORT_END &&
+		   s->blockState != TBLOCK_SUBABORT_PENDING);
 
 	/* Must save in case we need to restore below */
 	SaveTransactionCharacteristics(&savetc);
@@ -3235,25 +3280,6 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * The current already-failed subtransaction is ending due to a
-			 * ROLLBACK or ROLLBACK TO command, so pop it and recursively
-			 * examine the parent (which could be in any of several states).
-			 */
-		case TBLOCK_SUBABORT_END:
-			CleanupSubTransaction();
-			CommitTransactionCommand();
-			break;
-
-			/*
-			 * As above, but it's not dead yet, so abort first.
-			 */
-		case TBLOCK_SUBABORT_PENDING:
-			AbortSubTransaction();
-			CleanupSubTransaction();
-			CommitTransactionCommand();
-			break;
-
-			/*
 			 * The current subtransaction is the target of a ROLLBACK TO
 			 * command.  Abort and pop it, then start a new subtransaction
 			 * with the same name.
@@ -3310,16 +3336,72 @@ CommitTransactionCommand(void)
 				s->blockState = TBLOCK_SUBINPROGRESS;
 			}
 			break;
+		default:
+			/* Keep compiler quiet */
+			break;
 	}
 }
 
 /*
- *	AbortCurrentTransaction
+ *	AbortCurrentTransaction -- a wrapper function handling the
+ *		loop over subtransactions to avoid potentially dangerous recursion in
+ *		AbortCurrentTransactionInternal().
  */
 void
 AbortCurrentTransaction(void)
 {
+	while (true)
+	{
+		switch (CurrentTransactionState->blockState)
+		{
+				/*
+				 * If we failed while trying to create a subtransaction, clean
+				 * up the broken subtransaction and abort the parent.  The
+				 * same applies if we get a failure while ending a
+				 * subtransaction.
+				 */
+			case TBLOCK_SUBBEGIN:
+			case TBLOCK_SUBRELEASE:
+			case TBLOCK_SUBCOMMIT:
+			case TBLOCK_SUBABORT_PENDING:
+			case TBLOCK_SUBRESTART:
+				AbortSubTransaction();
+				CleanupSubTransaction();
+				continue;
+
+				/*
+				 * Same as above, except the Abort() was already done.
+				 */
+			case TBLOCK_SUBABORT_END:
+			case TBLOCK_SUBABORT_RESTART:
+				CleanupSubTransaction();
+				continue;
+			default:
+				break;
+		}
+		AbortCurrentTransactionInternal();
+		break;
+	}
+}
+
+/*
+ *	AbortCurrentTransactionInternal - a function doing all the material work
+ *		regarding handling the abort transaction command except for loop over
+ *		subtransactions.
+ */
+static void
+AbortCurrentTransactionInternal(void)
+{
 	TransactionState s = CurrentTransactionState;
+
+	/* This states are handled in AbortCurrentTransaction() */
+	Assert(s->blockState != TBLOCK_SUBBEGIN &&
+		   s->blockState != TBLOCK_SUBRELEASE &&
+		   s->blockState != TBLOCK_SUBCOMMIT &&
+		   s->blockState != TBLOCK_SUBABORT_PENDING &&
+		   s->blockState != TBLOCK_SUBRESTART &&
+		   s->blockState != TBLOCK_SUBABORT_END &&
+		   s->blockState != TBLOCK_SUBABORT_RESTART);
 
 	switch (s->blockState)
 	{
@@ -3441,29 +3523,8 @@ AbortCurrentTransaction(void)
 			AbortSubTransaction();
 			s->blockState = TBLOCK_SUBABORT;
 			break;
-
-			/*
-			 * If we failed while trying to create a subtransaction, clean up
-			 * the broken subtransaction and abort the parent.  The same
-			 * applies if we get a failure while ending a subtransaction.
-			 */
-		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBRELEASE:
-		case TBLOCK_SUBCOMMIT:
-		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBRESTART:
-			AbortSubTransaction();
-			CleanupSubTransaction();
-			AbortCurrentTransaction();
-			break;
-
-			/*
-			 * Same as above, except the Abort() was already done.
-			 */
-		case TBLOCK_SUBABORT_END:
-		case TBLOCK_SUBABORT_RESTART:
-			CleanupSubTransaction();
-			AbortCurrentTransaction();
+		default:
+			/* Keep compiler quiet */
 			break;
 	}
 }
