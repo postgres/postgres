@@ -102,6 +102,8 @@ ConditionVariableSleep(ConditionVariable *cv, uint32 wait_event_info)
 /*
  * Wait for a condition variable to be signaled or a timeout to be reached.
  *
+ * The "timeout" is given in milliseconds.
+ *
  * Returns true when timeout expires, otherwise returns false.
  *
  * See ConditionVariableSleep() for general usage.
