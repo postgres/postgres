@@ -255,8 +255,7 @@ if (defined($ENV{oldinstall}))
 		# For simplicity, use the newer version's psql to issue the commands.
 		$newnode->command_ok(
 			[
-				'psql', '-X',
-				'-v', 'ON_ERROR_STOP=1',
+				'psql', '-X', '-v', 'ON_ERROR_STOP=1',
 				'-d', $oldnode->connstr($updb),
 				@command_args,
 			],
@@ -322,7 +321,8 @@ if (defined($ENV{oldinstall}))
 }
 
 # Create an invalid database, will be deleted below
-$oldnode->safe_psql('postgres', qq(
+$oldnode->safe_psql(
+	'postgres', qq(
   CREATE DATABASE regression_invalid;
   UPDATE pg_database SET datconnlimit = -2 WHERE datname = 'regression_invalid';
 ));
@@ -365,7 +365,7 @@ command_checks_all(
 		$mode, '--check',
 	],
 	1,
-	[qr/invalid/], # pg_upgrade prints errors on stdout :(
+	[qr/invalid/],    # pg_upgrade prints errors on stdout :(
 	[qr//],
 	'invalid database causes failure');
 rmtree($newnode->data_dir . "/pg_upgrade_output.d");
