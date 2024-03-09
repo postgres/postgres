@@ -391,7 +391,7 @@ setup(char *argv0, bool *live_check)
  * Copy locale and encoding information into the new cluster's template0.
  *
  * We need to copy the encoding, datlocprovider, datcollate, datctype, and
- * daticulocale. We don't need datcollversion because that's never set for
+ * datlocale. We don't need datcollversion because that's never set for
  * template0.
  */
 static void
@@ -400,7 +400,7 @@ set_locale_and_encoding(void)
 	PGconn	   *conn_new_template1;
 	char	   *datcollate_literal;
 	char	   *datctype_literal;
-	char	   *daticulocale_literal = NULL;
+	char	   *datlocale_literal = NULL;
 	DbLocaleInfo *locale = old_cluster.template0;
 
 	prep_status("Setting locale and encoding for new cluster");
@@ -414,15 +414,29 @@ set_locale_and_encoding(void)
 	datctype_literal = PQescapeLiteral(conn_new_template1,
 									   locale->db_ctype,
 									   strlen(locale->db_ctype));
-	if (locale->db_iculocale)
-		daticulocale_literal = PQescapeLiteral(conn_new_template1,
-											   locale->db_iculocale,
-											   strlen(locale->db_iculocale));
+	if (locale->db_locale)
+		datlocale_literal = PQescapeLiteral(conn_new_template1,
+											locale->db_locale,
+											strlen(locale->db_locale));
 	else
-		daticulocale_literal = pg_strdup("NULL");
+		datlocale_literal = pg_strdup("NULL");
 
 	/* update template0 in new cluster */
-	if (GET_MAJOR_VERSION(new_cluster.major_version) >= 1500)
+	if (GET_MAJOR_VERSION(new_cluster.major_version) >= 1700)
+		PQclear(executeQueryOrDie(conn_new_template1,
+								  "UPDATE pg_catalog.pg_database "
+								  "  SET encoding = %d, "
+								  "      datlocprovider = '%c', "
+								  "      datcollate = %s, "
+								  "      datctype = %s, "
+								  "      datlocale = %s "
+								  "  WHERE datname = 'template0' ",
+								  locale->db_encoding,
+								  locale->db_collprovider,
+								  datcollate_literal,
+								  datctype_literal,
+								  datlocale_literal));
+	else if (GET_MAJOR_VERSION(new_cluster.major_version) >= 1500)
 		PQclear(executeQueryOrDie(conn_new_template1,
 								  "UPDATE pg_catalog.pg_database "
 								  "  SET encoding = %d, "
@@ -435,7 +449,7 @@ set_locale_and_encoding(void)
 								  locale->db_collprovider,
 								  datcollate_literal,
 								  datctype_literal,
-								  daticulocale_literal));
+								  datlocale_literal));
 	else
 		PQclear(executeQueryOrDie(conn_new_template1,
 								  "UPDATE pg_catalog.pg_database "
@@ -449,7 +463,7 @@ set_locale_and_encoding(void)
 
 	PQfreemem(datcollate_literal);
 	PQfreemem(datctype_literal);
-	PQfreemem(daticulocale_literal);
+	PQfreemem(datlocale_literal);
 
 	PQfinish(conn_new_template1);
 

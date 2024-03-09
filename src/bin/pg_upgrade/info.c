@@ -328,18 +328,24 @@ get_template0_info(ClusterInfo *cluster)
 	int			i_datlocprovider;
 	int			i_datcollate;
 	int			i_datctype;
-	int			i_daticulocale;
+	int			i_datlocale;
 
-	if (GET_MAJOR_VERSION(cluster->major_version) >= 1500)
+	if (GET_MAJOR_VERSION(cluster->major_version) >= 1700)
 		dbres = executeQueryOrDie(conn,
 								  "SELECT encoding, datlocprovider, "
-								  "       datcollate, datctype, daticulocale "
+								  "       datcollate, datctype, datlocale "
+								  "FROM	pg_catalog.pg_database "
+								  "WHERE datname='template0'");
+	else if (GET_MAJOR_VERSION(cluster->major_version) >= 1500)
+		dbres = executeQueryOrDie(conn,
+								  "SELECT encoding, datlocprovider, "
+								  "       datcollate, datctype, daticulocale AS datlocale "
 								  "FROM	pg_catalog.pg_database "
 								  "WHERE datname='template0'");
 	else
 		dbres = executeQueryOrDie(conn,
 								  "SELECT encoding, 'c' AS datlocprovider, "
-								  "       datcollate, datctype, NULL AS daticulocale "
+								  "       datcollate, datctype, NULL AS datlocale "
 								  "FROM	pg_catalog.pg_database "
 								  "WHERE datname='template0'");
 
@@ -353,16 +359,16 @@ get_template0_info(ClusterInfo *cluster)
 	i_datlocprovider = PQfnumber(dbres, "datlocprovider");
 	i_datcollate = PQfnumber(dbres, "datcollate");
 	i_datctype = PQfnumber(dbres, "datctype");
-	i_daticulocale = PQfnumber(dbres, "daticulocale");
+	i_datlocale = PQfnumber(dbres, "datlocale");
 
 	locale->db_encoding = atoi(PQgetvalue(dbres, 0, i_datencoding));
 	locale->db_collprovider = PQgetvalue(dbres, 0, i_datlocprovider)[0];
 	locale->db_collate = pg_strdup(PQgetvalue(dbres, 0, i_datcollate));
 	locale->db_ctype = pg_strdup(PQgetvalue(dbres, 0, i_datctype));
-	if (PQgetisnull(dbres, 0, i_daticulocale))
-		locale->db_iculocale = NULL;
+	if (PQgetisnull(dbres, 0, i_datlocale))
+		locale->db_locale = NULL;
 	else
-		locale->db_iculocale = pg_strdup(PQgetvalue(dbres, 0, i_daticulocale));
+		locale->db_locale = pg_strdup(PQgetvalue(dbres, 0, i_datlocale));
 
 	cluster->template0 = locale;
 
@@ -392,12 +398,15 @@ get_db_infos(ClusterInfo *cluster)
 
 	snprintf(query, sizeof(query),
 			 "SELECT d.oid, d.datname, d.encoding, d.datcollate, d.datctype, ");
-	if (GET_MAJOR_VERSION(cluster->major_version) < 1500)
+	if (GET_MAJOR_VERSION(cluster->major_version) >= 1700)
 		snprintf(query + strlen(query), sizeof(query) - strlen(query),
-				 "'c' AS datlocprovider, NULL AS daticulocale, ");
+				 "datlocprovider, datlocale, ");
+	else if (GET_MAJOR_VERSION(cluster->major_version) >= 1500)
+		snprintf(query + strlen(query), sizeof(query) - strlen(query),
+				 "datlocprovider, daticulocale AS datlocale, ");
 	else
 		snprintf(query + strlen(query), sizeof(query) - strlen(query),
-				 "datlocprovider, daticulocale, ");
+				 "'c' AS datlocprovider, NULL AS datlocale, ");
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "pg_catalog.pg_tablespace_location(t.oid) AS spclocation "
 			 "FROM pg_catalog.pg_database d "

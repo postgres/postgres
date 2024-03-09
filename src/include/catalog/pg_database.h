@@ -75,7 +75,7 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	text		datctype BKI_FORCE_NOT_NULL;
 
 	/* ICU locale ID */
-	text		daticulocale;
+	text		datlocale;
 
 	/* ICU collation rules */
 	text		daticurules;

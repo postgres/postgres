@@ -92,6 +92,10 @@ my $oldnode =
   PostgreSQL::Test::Cluster->new('old_node',
 	install_path => $ENV{oldinstall});
 
+# Numeric major version of old cluster, ignoring "devel" suffix.
+# Needed for testing upgrades from development version to itself.
+my $old_major_version = int($oldnode->pg_version =~ s/devel//rg);
+
 my %node_params = ();
 
 # To increase coverage of non-standard segment size and group access without
@@ -111,15 +115,22 @@ if ($oldnode->pg_version >= 11)
 my $original_encoding = "6";    # UTF-8
 my $original_provider = "c";
 my $original_locale = "C";
-my $original_iculocale = "";
+my $original_datlocale = "";
 my $provider_field = "'c' AS datlocprovider";
-my $iculocale_field = "NULL AS daticulocale";
-if ($oldnode->pg_version >= 15 && $ENV{with_icu} eq 'yes')
+my $old_datlocale_field = "NULL AS datlocale";
+if ($old_major_version >= 15 && $ENV{with_icu} eq 'yes')
 {
 	$provider_field = "datlocprovider";
-	$iculocale_field = "daticulocale";
+	if ($old_major_version >= 17)
+	{
+		$old_datlocale_field = "datlocale";
+	}
+	else
+	{
+		$old_datlocale_field = "daticulocale AS datlocale";
+	}
 	$original_provider = "i";
-	$original_iculocale = "fr-CA";
+	$original_datlocale = "fr-CA";
 }
 
 my @initdb_params = @custom_opts;
@@ -139,10 +150,10 @@ $oldnode->start;
 my $result;
 $result = $oldnode->safe_psql(
 	'postgres',
-	"SELECT encoding, $provider_field, datcollate, datctype, $iculocale_field
+	"SELECT encoding, $provider_field, datcollate, datctype, $old_datlocale_field
                  FROM pg_database WHERE datname='template0'");
 is( $result,
-	"$original_encoding|$original_provider|$original_locale|$original_locale|$original_iculocale",
+	"$original_encoding|$original_provider|$original_locale|$original_locale|$original_datlocale",
 	"check locales in original cluster");
 
 # The default location of the source code is the root of this directory.
@@ -426,10 +437,10 @@ if (-d $log_path)
 # Test that upgraded cluster has original locale settings.
 $result = $newnode->safe_psql(
 	'postgres',
-	"SELECT encoding, $provider_field, datcollate, datctype, $iculocale_field
+	"SELECT encoding, $provider_field, datcollate, datctype, datlocale
                  FROM pg_database WHERE datname='template0'");
 is( $result,
-	"$original_encoding|$original_provider|$original_locale|$original_locale|$original_iculocale",
+	"$original_encoding|$original_provider|$original_locale|$original_locale|$original_datlocale",
 	"check that locales in new cluster match original cluster");
 
 # Second dump from the upgraded instance.

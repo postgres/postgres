@@ -29,6 +29,6 @@
 { oid => '963',
   descr => 'sorts using the Unicode Collation Algorithm with default settings',
   collname => 'unicode', collprovider => 'i', collencoding => '-1',
-  colliculocale => 'und' },
+  colllocale => 'und' },
 
 ]

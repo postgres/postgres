@@ -937,14 +937,18 @@ listAllDbs(const char *pattern, bool verbose)
 					  "  d.datctype as \"%s\",\n",
 					  gettext_noop("Collate"),
 					  gettext_noop("Ctype"));
-	if (pset.sversion >= 150000)
+	if (pset.sversion >= 170000)
+		appendPQExpBuffer(&buf,
+						  "  d.datlocale as \"%s\",\n",
+						  gettext_noop("Locale"));
+	else if (pset.sversion >= 150000)
 		appendPQExpBuffer(&buf,
 						  "  d.daticulocale as \"%s\",\n",
-						  gettext_noop("ICU Locale"));
+						  gettext_noop("Locale"));
 	else
 		appendPQExpBuffer(&buf,
 						  "  NULL as \"%s\",\n",
-						  gettext_noop("ICU Locale"));
+						  gettext_noop("Locale"));
 	if (pset.sversion >= 160000)
 		appendPQExpBuffer(&buf,
 						  "  d.daticurules as \"%s\",\n",
@@ -4983,14 +4987,18 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 					  gettext_noop("Collate"),
 					  gettext_noop("Ctype"));
 
-	if (pset.sversion >= 150000)
+	if (pset.sversion >= 170000)
+		appendPQExpBuffer(&buf,
+						  "  c.colllocale AS \"%s\",\n",
+						  gettext_noop("Locale"));
+	else if (pset.sversion >= 150000)
 		appendPQExpBuffer(&buf,
 						  "  c.colliculocale AS \"%s\",\n",
-						  gettext_noop("ICU Locale"));
+						  gettext_noop("Locale"));
 	else
 		appendPQExpBuffer(&buf,
 						  "  c.collcollate AS \"%s\",\n",
-						  gettext_noop("ICU Locale"));
+						  gettext_noop("Locale"));
 
 	if (pset.sversion >= 160000)
 		appendPQExpBuffer(&buf,

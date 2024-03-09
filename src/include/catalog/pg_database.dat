@@ -18,7 +18,7 @@
   datlocprovider => 'LOCALE_PROVIDER', datistemplate => 't',
   datallowconn => 't', dathasloginevt => 'f', datconnlimit => '-1', datfrozenxid => '0',
   datminmxid => '1', dattablespace => 'pg_default', datcollate => 'LC_COLLATE',
-  datctype => 'LC_CTYPE', daticulocale => 'ICU_LOCALE',
+  datctype => 'LC_CTYPE', datlocale => 'DATLOCALE',
   daticurules => 'ICU_RULES', datacl => '_null_' },
 
 ]
