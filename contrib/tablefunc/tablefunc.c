@@ -1527,10 +1527,10 @@ static void
 compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 {
 	int			i;
-	Form_pg_attribute ret_attr;
 	Oid			ret_atttypid;
-	Form_pg_attribute sql_attr;
 	Oid			sql_atttypid;
+	int32		ret_atttypmod;
+	int32		sql_atttypmod;
 
 	if (ret_tupdesc->natts < 2)
 		ereport(ERROR,
@@ -1539,34 +1539,40 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 				 errdetail("Return row must have at least two columns.")));
 	Assert(sql_tupdesc->natts == 3);	/* already checked by caller */
 
-	/* check the rowid types match */
+	/* check the row_name types match */
 	ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
 	sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
-	if (ret_atttypid != sql_atttypid)
+	ret_atttypmod = TupleDescAttr(ret_tupdesc, 0)->atttypmod;
+	sql_atttypmod = TupleDescAttr(sql_tupdesc, 0)->atttypmod;
+	if (ret_atttypid != sql_atttypid ||
+		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("invalid crosstab return type"),
 				 errdetail("Source row_name datatype %s does not match return row_name datatype %s.",
-						   format_type_be(sql_atttypid),
-						   format_type_be(ret_atttypid))));
+						   format_type_with_typemod(sql_atttypid, sql_atttypmod),
+						   format_type_with_typemod(ret_atttypid, ret_atttypmod))));
 
 	/*
-	 * - attribute [1] of the sql tuple is the category; no need to check it -
-	 * attribute [2] of the sql tuple should match attributes [1] to [natts]
+	 * attribute [1] of sql tuple is the category; no need to check it
+	 * attribute [2] of sql tuple should match attributes [1] to [natts - 1]
 	 * of the return tuple
 	 */
-	sql_attr = TupleDescAttr(sql_tupdesc, 2);
+	sql_atttypid = TupleDescAttr(sql_tupdesc, 2)->atttypid;
+	sql_atttypmod = TupleDescAttr(sql_tupdesc, 2)->atttypmod;
 	for (i = 1; i < ret_tupdesc->natts; i++)
 	{
-		ret_attr = TupleDescAttr(ret_tupdesc, i);
+		ret_atttypid = TupleDescAttr(ret_tupdesc, i)->atttypid;
+		ret_atttypmod = TupleDescAttr(ret_tupdesc, i)->atttypmod;
 
-		if (ret_attr->atttypid != sql_attr->atttypid)
+		if (ret_atttypid != sql_atttypid ||
+			(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("invalid crosstab return type"),
 					 errdetail("Source value datatype %s does not match return value datatype %s in column %d.",
-							   format_type_be(sql_attr->atttypid),
-							   format_type_be(ret_attr->atttypid),
+							   format_type_with_typemod(sql_atttypid, sql_atttypmod),
+							   format_type_with_typemod(ret_atttypid, ret_atttypmod),
 							   i + 1)));
 	}
 
