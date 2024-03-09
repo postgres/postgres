@@ -52,7 +52,7 @@ static Tuplestorestate *get_crosstab_tuplestore(char *sql,
 												TupleDesc tupdesc,
 												bool randomAccess);
 static void validateConnectbyTupleDesc(TupleDesc td, bool show_branch, bool show_serial);
-static bool compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc);
+static void compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc);
 static void compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc);
 static void get_normal_pair(float8 *x1, float8 *x2);
 static Tuplestorestate *connectby(char *relname,
@@ -418,9 +418,8 @@ crosstab(PG_FUNCTION_ARGS)
 	if (spi_tupdesc->natts != 3)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid source data SQL statement"),
-				 errdetail("The provided SQL must return 3 "
-						   "columns: rowid, category, and values.")));
+				 errmsg("invalid crosstab source data query"),
+				 errdetail("The query must return 3 columns: row_name, category, and value.")));
 
 	/* get a tuple descriptor for our result type */
 	switch (get_call_result_type(fcinfo, NULL, &tupdesc))
@@ -447,11 +446,7 @@ crosstab(PG_FUNCTION_ARGS)
 	 * Check that return tupdesc is compatible with the data we got from SPI,
 	 * at least based on number and type of attributes
 	 */
-	if (!compatCrosstabTupleDescs(tupdesc, spi_tupdesc))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("return and sql tuple descriptions are " \
-						"incompatible")));
+	compatCrosstabTupleDescs(tupdesc, spi_tupdesc);
 
 	/*
 	 * switch to long-lived memory context
@@ -673,9 +668,9 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	 */
 	if (tupdesc->natts < 2)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("query-specified return tuple and " \
-						"crosstab function are not compatible")));
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("invalid crosstab return type"),
+				 errdetail("Return row must have at least two columns.")));
 
 	/* load up the categories hash table */
 	crosstab_hash = load_categories_hash(cats_sql, per_query_ctx);
@@ -750,9 +745,9 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 		 */
 		if (spi_tupdesc->natts != 1)
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("provided \"categories\" SQL must " \
-							"return 1 column of at least one row")));
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid crosstab categories query"),
+					 errdetail("The query must return one column.")));
 
 		for (i = 0; i < proc; i++)
 		{
@@ -767,9 +762,8 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 			catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
 			if (catname == NULL)
 				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("provided \"categories\" SQL must " \
-								"not return NULL values")));
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("crosstab category value must not be null")));
 
 			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -837,9 +831,8 @@ get_crosstab_tuplestore(char *sql,
 		{
 			/* no qualifying category tuples */
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("provided \"categories\" SQL must " \
-							"return 1 column of at least one row")));
+					(errcode(ERRCODE_CARDINALITY_VIOLATION),
+					 errmsg("crosstab categories query must return at least one row")));
 		}
 
 		/*
@@ -858,20 +851,18 @@ get_crosstab_tuplestore(char *sql,
 		if (ncols < 3)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid source data SQL statement"),
-					 errdetail("The provided SQL must return 3 " \
-							   " columns; rowid, category, and values.")));
+					 errmsg("invalid crosstab source data query"),
+					 errdetail("The query must return at least 3 columns: row_name, category, and value.")));
 
 		result_ncols = (ncols - 2) + num_categories;
 
-		/* Recheck to make sure we tuple descriptor still looks reasonable */
+		/* Recheck to make sure output tuple descriptor looks reasonable */
 		if (tupdesc->natts != result_ncols)
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("invalid return type"),
-					 errdetail("Query-specified return " \
-							   "tuple has %d columns but crosstab " \
-							   "returns %d.", tupdesc->natts, result_ncols)));
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("invalid crosstab return type"),
+					 errdetail("Return row must have %d columns, not %d.",
+							   result_ncols, tupdesc->natts)));
 
 		/* allocate space and make sure it's clear */
 		values = (char **) palloc0(result_ncols * sizeof(char *));
@@ -1422,77 +1413,62 @@ build_tuplestore_recursively(char *key_fld,
 static void
 validateConnectbyTupleDesc(TupleDesc td, bool show_branch, bool show_serial)
 {
-	int			serial_column = 0;
-
-	if (show_serial)
-		serial_column = 1;
+	int			expected_cols;
 
 	/* are there the correct number of columns */
 	if (show_branch)
-	{
-		if (td->natts != (CONNECTBY_NCOLS + serial_column))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("invalid return type"),
-					 errdetail("Query-specified return tuple has " \
-							   "wrong number of columns.")));
-	}
+		expected_cols = CONNECTBY_NCOLS;
 	else
-	{
-		if (td->natts != CONNECTBY_NCOLS_NOBRANCH + serial_column)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("invalid return type"),
-					 errdetail("Query-specified return tuple has " \
-							   "wrong number of columns.")));
-	}
+		expected_cols = CONNECTBY_NCOLS_NOBRANCH;
+	if (show_serial)
+		expected_cols++;
 
-	/* check that the types of the first two columns match */
-	if (TupleDescAttr(td, 0)->atttypid != TupleDescAttr(td, 1)->atttypid)
+	if (td->natts != expected_cols)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("invalid return type"),
-				 errdetail("First two columns must be the same type.")));
+				 errmsg("invalid connectby return type"),
+				 errdetail("Return row must have %d columns, not %d.",
+						   expected_cols, td->natts)));
+
+	/* the first two columns will be checked against the input tuples later */
 
 	/* check that the type of the third column is INT4 */
 	if (TupleDescAttr(td, 2)->atttypid != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("invalid return type"),
-				 errdetail("Third column must be type %s.",
+				 errmsg("invalid connectby return type"),
+				 errdetail("Third return column (depth) must be type %s.",
 						   format_type_be(INT4OID))));
 
-	/* check that the type of the fourth column is TEXT if applicable */
+	/* check that the type of the branch column is TEXT if applicable */
 	if (show_branch && TupleDescAttr(td, 3)->atttypid != TEXTOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("invalid return type"),
-				 errdetail("Fourth column must be type %s.",
+				 errmsg("invalid connectby return type"),
+				 errdetail("Fourth return column (branch) must be type %s.",
 						   format_type_be(TEXTOID))));
 
-	/* check that the type of the fifth column is INT4 */
+	/* check that the type of the serial column is INT4 if applicable */
 	if (show_branch && show_serial &&
 		TupleDescAttr(td, 4)->atttypid != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("query-specified return tuple not valid for Connectby: "
-						"fifth column must be type %s",
-						format_type_be(INT4OID))));
-
-	/* check that the type of the fourth column is INT4 */
+				 errmsg("invalid connectby return type"),
+				 errdetail("Fifth return column (serial) must be type %s.",
+						   format_type_be(INT4OID))));
 	if (!show_branch && show_serial &&
 		TupleDescAttr(td, 3)->atttypid != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("query-specified return tuple not valid for Connectby: "
-						"fourth column must be type %s",
-						format_type_be(INT4OID))));
+				 errmsg("invalid connectby return type"),
+				 errdetail("Fourth return column (serial) must be type %s.",
+						   format_type_be(INT4OID))));
 
 	/* OK, the tupdesc is valid for our purposes */
 }
 
 /*
- * Check if spi sql tupdesc and return tupdesc are compatible
+ * Check if output tupdesc and SQL query's tupdesc are compatible
  */
 static void
 compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
@@ -1503,13 +1479,13 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	int32		sql_atttypmod;
 
 	/*
-	 * Result must have at least 2 columns.
+	 * Query result must have at least 2 columns.
 	 */
 	if (sql_tupdesc->natts < 2)
 		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("invalid return type"),
-				 errdetail("Query must return at least two columns.")));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid connectby source data query"),
+				 errdetail("The query must return at least two columns.")));
 
 	/*
 	 * These columns must match the result type indicated by the calling
@@ -1523,11 +1499,10 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("invalid return type"),
-				 errdetail("SQL key field type %s does " \
-						   "not match return key field type %s.",
-						   format_type_with_typemod(ret_atttypid, ret_atttypmod),
-						   format_type_with_typemod(sql_atttypid, sql_atttypmod))));
+				 errmsg("invalid connectby return type"),
+				 errdetail("Source key type %s does not match return key type %s.",
+						   format_type_with_typemod(sql_atttypid, sql_atttypmod),
+						   format_type_with_typemod(ret_atttypid, ret_atttypmod))));
 
 	ret_atttypid = TupleDescAttr(ret_tupdesc, 1)->atttypid;
 	sql_atttypid = TupleDescAttr(sql_tupdesc, 1)->atttypid;
@@ -1537,19 +1512,18 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("invalid return type"),
-				 errdetail("SQL parent key field type %s does " \
-						   "not match return parent key field type %s.",
-						   format_type_with_typemod(ret_atttypid, ret_atttypmod),
-						   format_type_with_typemod(sql_atttypid, sql_atttypmod))));
+				 errmsg("invalid connectby return type"),
+				 errdetail("Source parent key type %s does not match return parent key type %s.",
+						   format_type_with_typemod(sql_atttypid, sql_atttypmod),
+						   format_type_with_typemod(ret_atttypid, ret_atttypmod))));
 
 	/* OK, the two tupdescs are compatible for our purposes */
 }
 
 /*
- * Check if two tupdescs match in type of attributes
+ * Check if crosstab output tupdesc agrees with input tupdesc
  */
-static bool
+static void
 compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 {
 	int			i;
@@ -1558,9 +1532,12 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	Form_pg_attribute sql_attr;
 	Oid			sql_atttypid;
 
-	if (ret_tupdesc->natts < 2 ||
-		sql_tupdesc->natts < 3)
-		return false;
+	if (ret_tupdesc->natts < 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("invalid crosstab return type"),
+				 errdetail("Return row must have at least two columns.")));
+	Assert(sql_tupdesc->natts == 3);	/* already checked by caller */
 
 	/* check the rowid types match */
 	ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
@@ -1568,9 +1545,10 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	if (ret_atttypid != sql_atttypid)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("invalid return type"),
-				 errdetail("SQL rowid datatype does not match " \
-						   "return rowid datatype.")));
+				 errmsg("invalid crosstab return type"),
+				 errdetail("Source row_name datatype %s does not match return row_name datatype %s.",
+						   format_type_be(sql_atttypid),
+						   format_type_be(ret_atttypid))));
 
 	/*
 	 * - attribute [1] of the sql tuple is the category; no need to check it -
@@ -1583,9 +1561,14 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 		ret_attr = TupleDescAttr(ret_tupdesc, i);
 
 		if (ret_attr->atttypid != sql_attr->atttypid)
-			return false;
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("invalid crosstab return type"),
+					 errdetail("Source value datatype %s does not match return value datatype %s in column %d.",
+							   format_type_be(sql_attr->atttypid),
+							   format_type_be(ret_attr->atttypid),
+							   i + 1)));
 	}
 
 	/* OK, the two tupdescs are compatible for our purposes */
-	return true;
 }

@@ -44,6 +44,16 @@ LANGUAGE C STABLE STRICT;
 
 SELECT * FROM crosstab_out('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
 
+-- check error reporting
+SELECT * FROM crosstab('SELECT rowid, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;')
+  AS ct(row_name text, category_1 text, category_2 text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;')
+  AS ct(row_name text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;')
+  AS ct(row_name int, category_1 text, category_2 text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;')
+  AS ct(row_name text, category_1 text, category_2 int);
+
 --
 -- hash based crosstab
 --
@@ -99,6 +109,12 @@ SELECT * FROM crosstab(
   'SELECT DISTINCT rowdt, attribute FROM cth ORDER BY 2')
 AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
 
+-- if category query generates a NULL value, get expected error
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT NULL::text')
+AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
+
 -- if source query returns zero rows, get zero rows returned
 SELECT * FROM crosstab(
   'SELECT rowid, rowdt, attribute, val FROM cth WHERE false ORDER BY 1',
@@ -110,6 +126,22 @@ SELECT * FROM crosstab(
   'SELECT rowid, rowdt, attribute, val FROM cth WHERE false ORDER BY 1',
   'SELECT DISTINCT attribute FROM cth WHERE false ORDER BY 1')
 AS c(rowid text, rowdt timestamp, temperature text, test_result text, test_startdate text, volts text);
+
+-- check errors with inappropriate input rowtype
+SELECT * FROM crosstab(
+  'SELECT rowid, attribute FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, temperature text, test_result text, test_startdate text, volts text);
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
+
+-- check errors with inappropriate result rowtype
+SELECT * FROM crosstab(
+  'SELECT rowid, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text);
 
 -- check it works with a named result rowtype
 
@@ -186,6 +218,16 @@ SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') A
 
 -- should fail as key field datatype should match return datatype
 SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid float8, parent_keyid float8, level int, branch text);
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid float8, level int, branch text);
+
+-- check other rowtype mismatch cases
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int, branch text);
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level int);
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid text, level int);
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level float, branch float);
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level int, branch float);
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~') AS t(keyid text, parent_keyid text, level int, branch text, pos text);
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'pos', 'row2', 0) AS t(keyid text, parent_keyid text, level int, pos text);
 
 -- tests for values using custom queries
 -- query with one column - failed

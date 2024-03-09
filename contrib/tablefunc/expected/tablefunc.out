@@ -145,6 +145,23 @@ SELECT * FROM crosstab_out('SELECT rowid, attribute, val FROM ct where rowclass 
        | val9 | val10 | val11
 (3 rows)
 
+-- check error reporting
+SELECT * FROM crosstab('SELECT rowid, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;')
+  AS ct(row_name text, category_1 text, category_2 text);
+ERROR:  invalid crosstab source data query
+DETAIL:  The query must return 3 columns: row_name, category, and value.
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;')
+  AS ct(row_name text);
+ERROR:  invalid crosstab return type
+DETAIL:  Return row must have at least two columns.
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;')
+  AS ct(row_name int, category_1 text, category_2 text);
+ERROR:  invalid crosstab return type
+DETAIL:  Source row_name datatype text does not match return row_name datatype integer.
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;')
+  AS ct(row_name text, category_1 text, category_2 int);
+ERROR:  invalid crosstab return type
+DETAIL:  Source value datatype text does not match return value datatype integer in column 3.
 --
 -- hash based crosstab
 --
@@ -216,13 +233,20 @@ SELECT * FROM crosstab(
   'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
   'SELECT DISTINCT attribute FROM cth WHERE attribute = ''a'' ORDER BY 1')
 AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
-ERROR:  provided "categories" SQL must return 1 column of at least one row
+ERROR:  crosstab categories query must return at least one row
 -- if category query generates more than one column, get expected error
 SELECT * FROM crosstab(
   'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
   'SELECT DISTINCT rowdt, attribute FROM cth ORDER BY 2')
 AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
-ERROR:  provided "categories" SQL must return 1 column of at least one row
+ERROR:  invalid crosstab categories query
+DETAIL:  The query must return one column.
+-- if category query generates a NULL value, get expected error
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT NULL::text')
+AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
+ERROR:  crosstab category value must not be null
 -- if source query returns zero rows, get zero rows returned
 SELECT * FROM crosstab(
   'SELECT rowid, rowdt, attribute, val FROM cth WHERE false ORDER BY 1',
@@ -241,6 +265,26 @@ AS c(rowid text, rowdt timestamp, temperature text, test_result text, test_start
 -------+-------+-------------+-------------+----------------+-------
 (0 rows)
 
+-- check errors with inappropriate input rowtype
+SELECT * FROM crosstab(
+  'SELECT rowid, attribute FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, temperature text, test_result text, test_startdate text, volts text);
+ERROR:  invalid crosstab source data query
+DETAIL:  The query must return at least 3 columns: row_name, category, and value.
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
+ERROR:  invalid crosstab return type
+DETAIL:  Return row must have 7 columns, not 6.
+-- check errors with inappropriate result rowtype
+SELECT * FROM crosstab(
+  'SELECT rowid, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text);
+ERROR:  invalid crosstab return type
+DETAIL:  Return row must have at least two columns.
 -- check it works with a named result rowtype
 create type my_crosstab_result as (
   rowid text, rowdt timestamp,
@@ -381,17 +425,42 @@ SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 4, '~') A
 
 -- should fail as first two columns must have the same type
 SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid text, parent_keyid int, level int, branch text);
-ERROR:  invalid return type
-DETAIL:  First two columns must be the same type.
+ERROR:  invalid connectby return type
+DETAIL:  Source key type integer does not match return key type text.
 -- should fail as key field datatype should match return datatype
 SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid float8, parent_keyid float8, level int, branch text);
-ERROR:  invalid return type
-DETAIL:  SQL key field type double precision does not match return key field type integer.
+ERROR:  invalid connectby return type
+DETAIL:  Source key type integer does not match return key type double precision.
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid float8, level int, branch text);
+ERROR:  invalid connectby return type
+DETAIL:  Source parent key type integer does not match return parent key type double precision.
+-- check other rowtype mismatch cases
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int, branch text);
+ERROR:  invalid connectby return type
+DETAIL:  Return row must have 3 columns, not 4.
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level int);
+ERROR:  invalid connectby return type
+DETAIL:  Return row must have 4 columns, not 3.
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid text, level int);
+ERROR:  invalid connectby return type
+DETAIL:  Source parent key type integer does not match return parent key type text.
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level float, branch float);
+ERROR:  invalid connectby return type
+DETAIL:  Third return column (depth) must be type integer.
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level int, branch float);
+ERROR:  invalid connectby return type
+DETAIL:  Fourth return column (branch) must be type text.
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~') AS t(keyid text, parent_keyid text, level int, branch text, pos text);
+ERROR:  invalid connectby return type
+DETAIL:  Fifth return column (serial) must be type integer.
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'pos', 'row2', 0) AS t(keyid text, parent_keyid text, level int, pos text);
+ERROR:  invalid connectby return type
+DETAIL:  Fourth return column (serial) must be type integer.
 -- tests for values using custom queries
 -- query with one column - failed
 SELECT * FROM connectby('connectby_int', '1; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
-ERROR:  invalid return type
-DETAIL:  Query must return at least two columns.
+ERROR:  invalid connectby source data query
+DETAIL:  The query must return at least two columns.
 -- query with two columns first value as NULL
 SELECT * FROM connectby('connectby_int', 'NULL::int, 1::int; --', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
  keyid | parent_keyid | level 
