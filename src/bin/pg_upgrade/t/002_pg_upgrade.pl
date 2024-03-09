@@ -246,15 +246,19 @@ if (defined($ENV{oldinstall}))
 
 	foreach my $updb (keys %$adjust_cmds)
 	{
-		my $upcmds = join(";\n", @{ $adjust_cmds->{$updb} });
+		my @command_args = ();
+		for my $upcmd (@{ $adjust_cmds->{$updb} })
+		{
+			push @command_args, '-c', $upcmd;
+		}
 
 		# For simplicity, use the newer version's psql to issue the commands.
 		$newnode->command_ok(
 			[
 				'psql', '-X',
 				'-v', 'ON_ERROR_STOP=1',
-				'-c', $upcmds,
 				'-d', $oldnode->connstr($updb),
+				@command_args,
 			],
 			"ran version adaptation commands for database $updb");
 	}
