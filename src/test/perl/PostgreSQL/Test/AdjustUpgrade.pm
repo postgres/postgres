@@ -86,13 +86,19 @@ sub adjust_database_contents
 
 	# remove dbs of modules known to cause pg_upgrade to fail
 	# anything not builtin and incompatible should clean up its own db
-	foreach my $bad_module ('test_ddl_deparse', 'tsearch2')
+	foreach my $bad_module ('adminpack', 'test_ddl_deparse', 'tsearch2')
 	{
 		if ($dbnames{"contrib_regression_$bad_module"})
 		{
 			_add_st($result, 'postgres',
 				"drop database contrib_regression_$bad_module");
 			delete($dbnames{"contrib_regression_$bad_module"});
+		}
+		if ($dbnames{"regression_$bad_module"})
+		{
+			_add_st($result, 'postgres',
+				"drop database regression_$bad_module");
+			delete($dbnames{"regression_$bad_module"});
 		}
 	}
 
@@ -104,17 +110,6 @@ sub adjust_database_contents
 			'contrib_regression_test_extensions',
 			'drop extension if exists test_ext_cine',
 			'drop extension if exists test_ext7');
-	}
-
-	# we removed the adminpack extension in v17
-	if ($old_version < 17)
-	{
-		_add_st($result, 'postgres',
-			'drop database if exists contrib_regression_adminpack');
-		_add_st($result, 'postgres',
-			'drop database if exists regression_adminpack');
-		delete($dbnames{'contrib_regression_adminpack'});
-		delete($dbnames{'regression_adminpack'});
 	}
 
 	# we removed this test-support function in v17
