@@ -15,6 +15,14 @@
 # src/tools/pginclude/headerscheck
 # Copyright (c) 2009-2024, PostgreSQL Global Development Group
 
+# option to check for C++ compatibility
+if [ "$1" = "--cplusplus" ]; then
+	cplusplus=true
+	shift
+else
+	cplusplus=false
+fi
+
 if [ -z "$1" ]; then
     srcdir="."
 else
@@ -29,11 +37,15 @@ fi
 
 me=`basename $0`
 
+# These switches are g++ specific, you may override if necessary.
+CXXFLAGS=${CXXFLAGS:- -fsyntax-only -Wall}
+
 # Pull some info from configure's results.
 MGLOB="$builddir/src/Makefile.global"
 CPPFLAGS=`sed -n 's/^CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CFLAGS=`sed -n 's/^CFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CC=`sed -n 's/^CC[ 	]*=[ 	]*//p' "$MGLOB"`
+CXX=`sed -n 's/^CXX[ 	]*=[ 	]*//p' "$MGLOB"`
 PG_SYSROOT=`sed -n 's/^PG_SYSROOT[ 	]*=[ 	]*//p' "$MGLOB"`
 perl_includespec=`sed -n 's/^perl_includespec[ 	]*=[ 	]*//p' "$MGLOB"`
 python_includespec=`sed -n 's/^python_includespec[ 	]*=[ 	]*//p' "$MGLOB"`
@@ -42,6 +54,22 @@ python_includespec=`sed -n 's/^python_includespec[ 	]*=[ 	]*//p' "$MGLOB"`
 CPPFLAGS=`echo "$CPPFLAGS" | sed "s|\\\$(PG_SYSROOT)|$PG_SYSROOT|g"`
 
 # (EXTRAFLAGS is not set here, but user can pass it in if need be.)
+
+if $cplusplus; then
+	ext=cpp
+	COMPILER=${CXX:-g++}
+	# Extract any -I and -D switches from CPPFLAGS.
+	for flag in $CPPFLAGS; do
+	  case $flag in
+	    -I*|-D*) CXXPPFLAGS="$CXXPPFLAGS $flag";;
+	  esac
+	done
+	COMPILER_FLAGS="$CXXPPFLAGS $CXXFLAGS"
+else
+	ext=c
+	COMPILER=${CC:-gcc}
+	COMPILER_FLAGS="$CPPFLAGS $CFLAGS"
+fi
 
 # Create temp directory.
 tmp=`mktemp -d /tmp/$me.XXXXXX`
@@ -69,6 +97,7 @@ do
 	# Additional Windows-specific headers.
 	test "$f" = src/include/port/win32_port.h && continue
 	test "$f" = src/include/port/win32/netdb.h && continue
+	$cplusplus && test "$f" = src/include/port/win32/sys/resource.h && continue
 	test "$f" = src/include/port/win32/sys/socket.h && continue
 	test "$f" = src/include/port/win32_msvc/dirent.h && continue
 	test "$f" = src/include/port/win32_msvc/utime.h && continue
@@ -134,7 +163,7 @@ do
 	test "$f" = src/test/isolation/specparse.h && continue
 
 	# This produces a "no previous prototype" warning.
-	test "$f" = src/include/storage/checksum_impl.h && continue
+	! $cplusplus && test "$f" = src/include/storage/checksum_impl.h && continue
 
 	# ppport.h is not under our control, so we can't make it standalone.
 	test "$f" = src/pl/plperl/ppport.h && continue
@@ -144,8 +173,28 @@ do
 	# printf_hack.h produces "unused function" warnings.
 	test "$f" = src/interfaces/ecpg/test/printf_hack.h && continue
 
+	if $cplusplus; then
+		# pg_trace.h and utils/probes.h can include sys/sdt.h from SystemTap,
+		# which itself contains C++ code and so won't compile with a C++
+		# compiler under extern "C" linkage.
+		test "$f" = src/include/pg_trace.h && continue
+		test "$f" = src/include/utils/probes.h && continue
+
+		# pg_dump is not C++-clean because it uses "public" and "namespace"
+		# as field names, which is unfortunate but we won't change it now.
+		test "$f" = src/bin/pg_dump/compress_gzip.h && continue
+		test "$f" = src/bin/pg_dump/compress_io.h && continue
+		test "$f" = src/bin/pg_dump/compress_lz4.h && continue
+		test "$f" = src/bin/pg_dump/compress_none.h && continue
+		test "$f" = src/bin/pg_dump/compress_zstd.h && continue
+		test "$f" = src/bin/pg_dump/parallel.h && continue
+		test "$f" = src/bin/pg_dump/pg_backup_archiver.h && continue
+		test "$f" = src/bin/pg_dump/pg_dump.h && continue
+	fi
+
 	# OK, create .c file to include this .h file.
 	{
+	    $cplusplus && echo 'extern "C" {'
 	    # Ideally we'd pre-include only the appropriate one of
 	    # postgres.h, postgres_fe.h, or c.h.  We don't always have enough
 	    # info to guess which, but in some subdirectories there's a
@@ -174,7 +223,8 @@ do
 		    echo '#include "postgres.h"' ;;
 	    esac
 	    echo "#include \"$f\""
-	} >$tmp/test.c
+	    $cplusplus && echo '};'
+	} >$tmp/test.$ext
 
 	# Some subdirectories need extra -I switches.
 	case "$f" in
@@ -193,10 +243,10 @@ do
 	esac
 
 	# Run the test.
-	if ! ${CC:-gcc} $CPPFLAGS $CFLAGS -I $builddir -I $srcdir \
+	if ! $COMPILER $COMPILER_FLAGS -I $builddir -I $srcdir \
 		-I $builddir/src/include -I $srcdir/src/include \
 		-I $builddir/src/interfaces/libpq -I $srcdir/src/interfaces/libpq \
-		$EXTRAINCLUDES $EXTRAFLAGS -c $tmp/test.c -o $tmp/test.o
+		$EXTRAINCLUDES $EXTRAFLAGS -c $tmp/test.$ext -o $tmp/test.o
 	then
 		exit_status=1
 	fi
