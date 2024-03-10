@@ -3624,13 +3624,12 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 {
 	ListCell   *lcell;
 	int			nestlevel;
-	const char *delim = " ";
 	StringInfo	buf = context->buf;
+	bool		gotone = false;
 
 	/* Make sure any constants in the exprs are printed portably */
 	nestlevel = set_transmission_modes();
 
-	appendStringInfoString(buf, " ORDER BY");
 	foreach(lcell, pathkeys)
 	{
 		PathKey    *pathkey = lfirst(lcell);
@@ -3664,6 +3663,26 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 		em_expr = em->em_expr;
 
 		/*
+		 * If the member is a Const expression then we needn't add it to the
+		 * ORDER BY clause.  This can happen in UNION ALL queries where the
+		 * union child targetlist has a Const.  Adding these would be
+		 * wasteful, but also, for INT columns, an integer literal would be
+		 * seen as an ordinal column position rather than a value to sort by.
+		 * deparseConst() does have code to handle this, but it seems less
+		 * effort on all accounts just to skip these for ORDER BY clauses.
+		 */
+		if (IsA(em_expr, Const))
+			continue;
+
+		if (!gotone)
+		{
+			appendStringInfoString(buf, " ORDER BY ");
+			gotone = true;
+		}
+		else
+			appendStringInfoString(buf, ", ");
+
+		/*
 		 * Lookup the operator corresponding to the strategy in the opclass.
 		 * The datatype used by the opfamily is not necessarily the same as
 		 * the expression type (for array types for example).
@@ -3677,7 +3696,6 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 				 pathkey->pk_strategy, em->em_datatype, em->em_datatype,
 				 pathkey->pk_opfamily);
 
-		appendStringInfoString(buf, delim);
 		deparseExpr(em_expr, context);
 
 		/*
@@ -3687,7 +3705,6 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 		appendOrderBySuffix(oprid, exprType((Node *) em_expr),
 							pathkey->pk_nulls_first, context);
 
-		delim = ", ";
 	}
 	reset_transmission_modes(nestlevel);
 }
