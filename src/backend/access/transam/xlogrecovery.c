@@ -646,7 +646,8 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 				if (!ReadRecord(xlogprefetcher, LOG, false,
 								checkPoint.ThisTimeLineID))
 					ereport(FATAL,
-							(errmsg("could not find redo location referenced by checkpoint record"),
+							(errmsg("could not find redo location %X/%X referenced by checkpoint record at %X/%X",
+									LSN_FORMAT_ARGS(checkPoint.redo), LSN_FORMAT_ARGS(CheckPointLoc)),
 							 errhint("If you are restoring from a backup, touch \"%s/recovery.signal\" or \"%s/standby.signal\" and add required recovery options.\n"
 									 "If you are not restoring from a backup, try removing the file \"%s/backup_label\".\n"
 									 "Be careful: removing \"%s/backup_label\" will result in a corrupt cluster if restoring from a backup.",
@@ -656,7 +657,8 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 		else
 		{
 			ereport(FATAL,
-					(errmsg("could not locate required checkpoint record"),
+					(errmsg("could not locate required checkpoint record at %X/%X",
+							LSN_FORMAT_ARGS(CheckPointLoc)),
 					 errhint("If you are restoring from a backup, touch \"%s/recovery.signal\" or \"%s/standby.signal\" and add required recovery options.\n"
 							 "If you are not restoring from a backup, try removing the file \"%s/backup_label\".\n"
 							 "Be careful: removing \"%s/backup_label\" will result in a corrupt cluster if restoring from a backup.",
@@ -790,7 +792,8 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 			 * simplify processing around checkpoints.
 			 */
 			ereport(PANIC,
-					(errmsg("could not locate a valid checkpoint record")));
+					(errmsg("could not locate a valid checkpoint record at %X/%X",
+							LSN_FORMAT_ARGS(CheckPointLoc))));
 		}
 		memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
 		wasShutdown = ((record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN);
