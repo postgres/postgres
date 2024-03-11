@@ -1290,7 +1290,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     <varname>synchronous_commit</varname> is set to <literal>on</literal>,
     <literal>remote_apply</literal> or <literal>remote_write</literal> will wait for
     responses from. Such transaction commits may never be completed
-    if any one of synchronous standbys should crash.
+    if any one of the synchronous standbys should crash.
    </para>
 
    <para>
