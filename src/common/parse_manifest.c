@@ -91,6 +91,13 @@ typedef struct
 	char	   *manifest_checksum;
 } JsonManifestParseState;
 
+typedef struct JsonManifestParseIncrementalState
+{
+	JsonLexContext lex;
+	JsonSemAction sem;
+	pg_cryptohash_ctx *manifest_ctx;
+} JsonManifestParseIncrementalState;
+
 static JsonParseErrorType json_manifest_object_start(void *state);
 static JsonParseErrorType json_manifest_object_end(void *state);
 static JsonParseErrorType json_manifest_array_start(void *state);
@@ -104,13 +111,98 @@ static void json_manifest_finalize_system_identifier(JsonManifestParseState *par
 static void json_manifest_finalize_file(JsonManifestParseState *parse);
 static void json_manifest_finalize_wal_range(JsonManifestParseState *parse);
 static void verify_manifest_checksum(JsonManifestParseState *parse,
-									 char *buffer, size_t size);
+									 char *buffer, size_t size,
+									 pg_cryptohash_ctx *incr_ctx);
 static void json_manifest_parse_failure(JsonManifestParseContext *context,
 										char *msg);
 
 static int	hexdecode_char(char c);
 static bool hexdecode_string(uint8 *result, char *input, int nbytes);
 static bool parse_xlogrecptr(XLogRecPtr *result, char *input);
+
+/*
+ * Set up for incremental parsing of the manifest.
+ *
+ */
+
+JsonManifestParseIncrementalState *
+json_parse_manifest_incremental_init(JsonManifestParseContext *context)
+{
+	JsonManifestParseIncrementalState *incstate;
+	JsonManifestParseState *parse;
+	pg_cryptohash_ctx *manifest_ctx;
+
+	incstate = palloc(sizeof(JsonManifestParseIncrementalState));
+	parse = palloc(sizeof(JsonManifestParseState));
+
+	parse->context = context;
+	parse->state = JM_EXPECT_TOPLEVEL_START;
+	parse->saw_version_field = false;
+
+	makeJsonLexContextIncremental(&(incstate->lex), PG_UTF8, true);
+
+	incstate->sem.semstate = parse;
+	incstate->sem.object_start = json_manifest_object_start;
+	incstate->sem.object_end = json_manifest_object_end;
+	incstate->sem.array_start = json_manifest_array_start;
+	incstate->sem.array_end = json_manifest_array_end;
+	incstate->sem.object_field_start = json_manifest_object_field_start;
+	incstate->sem.object_field_end = NULL;
+	incstate->sem.array_element_start = NULL;
+	incstate->sem.array_element_end = NULL;
+	incstate->sem.scalar = json_manifest_scalar;
+
+	manifest_ctx = pg_cryptohash_create(PG_SHA256);
+	if (manifest_ctx == NULL)
+		context->error_cb(context, "out of memory");
+	if (pg_cryptohash_init(manifest_ctx) < 0)
+		context->error_cb(context, "could not initialize checksum of manifest");
+	incstate->manifest_ctx = manifest_ctx;
+
+	return incstate;
+}
+
+/*
+ * parse the manifest in pieces.
+ *
+ * The caller must ensure that the final piece contains the final lines
+ * with the complete checksum.
+ */
+
+void
+json_parse_manifest_incremental_chunk(
+									  JsonManifestParseIncrementalState *incstate, char *chunk, int size,
+									  bool is_last)
+{
+	JsonParseErrorType res,
+				expected;
+	JsonManifestParseState *parse = incstate->sem.semstate;
+	JsonManifestParseContext *context = parse->context;
+
+	res = pg_parse_json_incremental(&(incstate->lex), &(incstate->sem),
+									chunk, size, is_last);
+
+	expected = is_last ? JSON_SUCCESS : JSON_INCOMPLETE;
+
+	if (res != expected)
+		json_manifest_parse_failure(context,
+									json_errdetail(res, &(incstate->lex)));
+
+	if (is_last && parse->state != JM_EXPECT_EOF)
+		json_manifest_parse_failure(context, "manifest ended unexpectedly");
+
+	if (!is_last)
+	{
+		if (pg_cryptohash_update(incstate->manifest_ctx,
+								 (uint8 *) chunk, size) < 0)
+			context->error_cb(context, "could not update checksum of manifest");
+	}
+	else
+	{
+		verify_manifest_checksum(parse, chunk, size, incstate->manifest_ctx);
+	}
+}
+
 
 /*
  * Main entrypoint to parse a JSON-format backup manifest.
@@ -157,7 +249,7 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 		json_manifest_parse_failure(context, "manifest ended unexpectedly");
 
 	/* Verify the manifest checksum. */
-	verify_manifest_checksum(&parse, buffer, size);
+	verify_manifest_checksum(&parse, buffer, size, NULL);
 
 	freeJsonLexContext(lex);
 }
@@ -389,6 +481,8 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
 										"unexpected object field");
 			break;
 	}
+
+	pfree(fname);
 
 	return JSON_SUCCESS;
 }
@@ -698,10 +792,14 @@ json_manifest_finalize_wal_range(JsonManifestParseState *parse)
  * The last line of the manifest file is excluded from the manifest checksum,
  * because the last line is expected to contain the checksum that covers
  * the rest of the file.
+ *
+ * For an incremental parse, this will just be called on the last chunk of the
+ * manifest, and the cryptohash context paswed in. For a non-incremental
+ * parse incr_ctx will be NULL.
  */
 static void
 verify_manifest_checksum(JsonManifestParseState *parse, char *buffer,
-						 size_t size)
+						 size_t size, pg_cryptohash_ctx *incr_ctx)
 {
 	JsonManifestParseContext *context = parse->context;
 	size_t		i;
@@ -736,11 +834,18 @@ verify_manifest_checksum(JsonManifestParseState *parse, char *buffer,
 									"last line not newline-terminated");
 
 	/* Checksum the rest. */
-	manifest_ctx = pg_cryptohash_create(PG_SHA256);
-	if (manifest_ctx == NULL)
-		context->error_cb(context, "out of memory");
-	if (pg_cryptohash_init(manifest_ctx) < 0)
-		context->error_cb(context, "could not initialize checksum of manifest");
+	if (incr_ctx == NULL)
+	{
+		manifest_ctx = pg_cryptohash_create(PG_SHA256);
+		if (manifest_ctx == NULL)
+			context->error_cb(context, "out of memory");
+		if (pg_cryptohash_init(manifest_ctx) < 0)
+			context->error_cb(context, "could not initialize checksum of manifest");
+	}
+	else
+	{
+		manifest_ctx = incr_ctx;
+	}
 	if (pg_cryptohash_update(manifest_ctx, (uint8 *) buffer, penultimate_newline + 1) < 0)
 		context->error_cb(context, "could not update checksum of manifest");
 	if (pg_cryptohash_final(manifest_ctx, manifest_checksum_actual,

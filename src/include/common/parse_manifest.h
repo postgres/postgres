@@ -20,6 +20,7 @@
 
 struct JsonManifestParseContext;
 typedef struct JsonManifestParseContext JsonManifestParseContext;
+typedef struct JsonManifestParseIncrementalState JsonManifestParseIncrementalState;
 
 typedef void (*json_manifest_version_callback) (JsonManifestParseContext *,
 												int manifest_version);
@@ -48,5 +49,9 @@ struct JsonManifestParseContext
 
 extern void json_parse_manifest(JsonManifestParseContext *context,
 								char *buffer, size_t size);
+extern JsonManifestParseIncrementalState *json_parse_manifest_incremental_init(JsonManifestParseContext *context);
+extern void json_parse_manifest_incremental_chunk(
+												  JsonManifestParseIncrementalState *incstate, char *chunk, int size,
+												  bool is_last);
 
 #endif
