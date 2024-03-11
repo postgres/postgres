@@ -36,6 +36,9 @@ typedef enum JsonTokenType
 typedef enum JsonParseErrorType
 {
 	JSON_SUCCESS,
+	JSON_INCOMPLETE,
+	JSON_INVALID_LEXER_TYPE,
+	JSON_NESTING_TOO_DEEP,
 	JSON_ESCAPING_INVALID,
 	JSON_ESCAPING_REQUIRED,
 	JSON_EXPECTED_ARRAY_FIRST,
@@ -57,6 +60,9 @@ typedef enum JsonParseErrorType
 	JSON_SEM_ACTION_FAILED,		/* error should already be reported */
 } JsonParseErrorType;
 
+/* Parser state private to jsonapi.c */
+typedef struct JsonParserStack JsonParserStack;
+typedef struct JsonIncrementalState JsonIncrementalState;
 
 /*
  * All the fields in this structure should be treated as read-only.
@@ -71,6 +77,11 @@ typedef enum JsonParseErrorType
  * AFTER the end of the token, i.e. where there would be a nul byte
  * if we were using nul-terminated strings.
  *
+ * The prev_token_terminator field should not be used when incremental is
+ * true, as the previous token might have started in a previous piece of input,
+ * and thus it can't be used in any pointer arithmetic or other operations in
+ * conjunction with token_start.
+ *
  * JSONLEX_FREE_STRUCT/STRVAL are used to drive freeJsonLexContext.
  */
 #define JSONLEX_FREE_STRUCT			(1 << 0)
@@ -83,11 +94,14 @@ typedef struct JsonLexContext
 	char	   *token_start;
 	char	   *token_terminator;
 	char	   *prev_token_terminator;
+	bool		incremental;
 	JsonTokenType token_type;
 	int			lex_level;
 	bits32		flags;
 	int			line_number;	/* line number, starting from 1 */
 	char	   *line_start;		/* where that line starts within input */
+	JsonParserStack *pstack;
+	JsonIncrementalState *inc_state;
 	StringInfo	strval;
 	StringInfo	errormsg;
 } JsonLexContext;
@@ -141,6 +155,12 @@ typedef struct JsonSemAction
 extern JsonParseErrorType pg_parse_json(JsonLexContext *lex,
 										JsonSemAction *sem);
 
+extern JsonParseErrorType pg_parse_json_incremental(JsonLexContext *lex,
+													JsonSemAction *sem,
+													char *json,
+													int len,
+													bool is_last);
+
 /* the null action object used for pure validation */
 extern PGDLLIMPORT JsonSemAction nullSemAction;
 
@@ -176,6 +196,16 @@ extern JsonLexContext *makeJsonLexContextCstringLen(JsonLexContext *lex,
 													int len,
 													int encoding,
 													bool need_escapes);
+
+/*
+ * make a JsonLexContext suitable for incremental parsing.
+ * the string chunks will be handed to pg_parse_json_incremental,
+ * so there's no need for them here.
+ */
+extern JsonLexContext *makeJsonLexContextIncremental(JsonLexContext *lex,
+													 int encoding,
+													 bool need_escapes);
+
 extern void freeJsonLexContext(JsonLexContext *lex);
 
 /* lex one token */

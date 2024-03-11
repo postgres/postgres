@@ -22,6 +22,7 @@ SUBDIRS = \
 		  test_extensions \
 		  test_ginpostinglist \
 		  test_integerset \
+		  test_json_parser \
 		  test_lfind \
 		  test_misc \
 		  test_oat_hooks \

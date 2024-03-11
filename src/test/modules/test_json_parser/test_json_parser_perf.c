@@ -1,0 +1,86 @@
+/*-------------------------------------------------------------------------
+ *
+ * test_json_parser_perf.c
+ *    Performancet est program for both flavors of the JSON parser
+ *
+ * Copyright (c) 2023, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *    src/test/modules/test_json_parser/test_json_parser_perf.c
+ *
+ * This progam tests either the standard (recursive descent) JSON parser
+ * or the incremental (table driven) parser, but without breaking the input
+ * into chunks in the latter case. Thus it can be used to compare the pure
+ * parsing speed of the two parsers. If the "-i" option is used, then the
+ * table driven parser is used. Otherwise, the recursive descent parser is
+ * used.
+ *
+ * The remaining arguments are the number of parsing iterations to be done
+ * and the file containing the JSON input.
+ *
+ *-------------------------------------------------------------------------
+ */
+
+#include "postgres_fe.h"
+#include "common/jsonapi.h"
+#include "lib/stringinfo.h"
+#include "mb/pg_wchar.h"
+#include <stdio.h>
+#include <string.h>
+
+int
+main(int argc, char **argv)
+{
+	/* max delicious line length is less than this */
+	char		buff[6001];
+	FILE	   *json_file;
+	JsonParseErrorType result;
+	JsonLexContext *lex;
+	StringInfoData json;
+	int			n_read;
+	int			iter;
+	int			use_inc = 0;
+
+	initStringInfo(&json);
+
+	if (strcmp(argv[1], "-i") == 0)
+	{
+		use_inc = 1;
+		argv++;
+	}
+
+	sscanf(argv[1], "%d", &iter);
+
+	json_file = fopen(argv[2], "r");
+	while ((n_read = fread(buff, 1, 6000, json_file)) > 0)
+	{
+		appendBinaryStringInfo(&json, buff, n_read);
+	}
+	fclose(json_file);
+	for (int i = 0; i < iter; i++)
+	{
+		if (use_inc)
+		{
+			lex = makeJsonLexContextIncremental(NULL, PG_UTF8, false);
+			result = pg_parse_json_incremental(lex, &nullSemAction,
+											   json.data, json.len,
+											   true);
+			freeJsonLexContext(lex);
+		}
+		else
+		{
+			lex = makeJsonLexContextCstringLen(NULL, json.data, json.len,
+											   PG_UTF8, false);
+			result = pg_parse_json(lex, &nullSemAction);
+			freeJsonLexContext(lex);
+		}
+		if (result != JSON_SUCCESS)
+		{
+			fprintf(stderr,
+					"unexpected result %d (expecting %d) on parse\n",
+					result, JSON_SUCCESS);
+			exit(1);
+		}
+	}
+	exit(0);
+}

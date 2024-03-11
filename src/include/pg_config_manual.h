@@ -241,6 +241,13 @@
  */
 
 /*
+ * Force use of the non-recursive JSON parser in all cases. This is useful
+ * to validate the working of the parser, and the regression tests should
+ * pass except for some different error messages about the stack limit.
+ */
+/* #define FORCE_JSON_PSTACK */
+
+/*
  * Include Valgrind "client requests", mostly in the memory allocator, so
  * Valgrind understands PostgreSQL memory contexts.  This permits detecting
  * memory errors that Valgrind would not detect on a vanilla build.  It also
