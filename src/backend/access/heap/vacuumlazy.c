@@ -1233,7 +1233,6 @@ find_next_unskippable_block(LVRelState *vacrel, bool *skipsallvis)
 			*skipsallvis = true;
 		}
 
-		vacuum_delay_point();
 		next_unskippable_block++;
 	}
 
