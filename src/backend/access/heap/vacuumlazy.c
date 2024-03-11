@@ -1330,11 +1330,7 @@ lazy_scan_skip(LVRelState *vacrel, Buffer *vmbuffer, BlockNumber next_block,
 
 		/* DISABLE_PAGE_SKIPPING makes all skipping unsafe */
 		if (!vacrel->skipwithvm)
-		{
-			/* Caller shouldn't rely on all_visible_according_to_vm */
-			*next_unskippable_allvis = false;
 			break;
-		}
 
 		/*
 		 * Aggressive VACUUM caller can't skip pages just because they are
