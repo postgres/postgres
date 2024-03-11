@@ -23,7 +23,7 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>clusterdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
-   <group choice="opt"><arg choice="plain"><option>--verbose</option></arg><arg choice="plain"><option>-v</option></arg></group>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
 
    <arg choice="plain" rep="repeat">
      <arg choice="opt">
@@ -35,14 +35,13 @@ PostgreSQL documentation
      </arg>
    </arg>
 
-   <arg choice="opt"><replaceable>dbname</replaceable></arg>
-  </cmdsynopsis>
-
-  <cmdsynopsis>
-   <command>clusterdb</command>
-   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
-   <group choice="opt"><arg choice="plain"><option>--verbose</option></arg><arg choice="plain"><option>-v</option></arg></group>
-   <group choice="plain"><arg choice="plain"><option>--all</option></arg><arg choice="plain"><option>-a</option></arg></group>
+   <arg choice="opt">
+    <group choice="plain">
+     <arg choice="plain"><replaceable>dbname</replaceable></arg>
+     <arg choice="plain"><option>-a</option></arg>
+     <arg choice="plain"><option>--all</option></arg>
+    </group>
+   </arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
