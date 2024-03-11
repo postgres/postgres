@@ -428,11 +428,11 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
          </listitem>
         </varlistentry>
 
-        <varlistentry id="libpq-connection-setenv">
-         <term><symbol>CONNECTION_SETENV</symbol></term>
+        <varlistentry id="libpq-connection-gss-startup">
+         <term><symbol>CONNECTION_GSS_STARTUP</symbol></term>
          <listitem>
           <para>
-           Negotiating environment-driven parameter settings.
+           Negotiating GSS encryption.
           </para>
          </listitem>
         </varlistentry>
@@ -442,6 +442,15 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
          <listitem>
           <para>
            Checking if connection is able to handle write transactions.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-connection-check-standby">
+         <term><symbol>CONNECTION_CHECK_STANDBY</symbol></term>
+         <listitem>
+          <para>
+           Checking if connection is to a server in standby mode.
           </para>
          </listitem>
         </varlistentry>
