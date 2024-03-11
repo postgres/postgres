@@ -29,7 +29,7 @@
 #include "utils/pgstat_internal.h"
 
 
-static int	get_replslot_index(const char *name);
+static int	get_replslot_index(const char *name, bool need_lock);
 
 
 /*
@@ -45,8 +45,10 @@ pgstat_reset_replslot(const char *name)
 
 	Assert(name != NULL);
 
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+
 	/* Check if the slot exits with the given name. */
-	slot = SearchNamedReplicationSlot(name, true);
+	slot = SearchNamedReplicationSlot(name, false);
 
 	if (!slot)
 		ereport(ERROR,
@@ -55,15 +57,14 @@ pgstat_reset_replslot(const char *name)
 						name)));
 
 	/*
-	 * Nothing to do for physical slots as we collect stats only for logical
-	 * slots.
+	 * Reset stats if it is a logical slot. Nothing to do for physical slots
+	 * as we collect stats only for logical slots.
 	 */
-	if (SlotIsPhysical(slot))
-		return;
+	if (SlotIsLogical(slot))
+		pgstat_reset(PGSTAT_KIND_REPLSLOT, InvalidOid,
+					 ReplicationSlotIndex(slot));
 
-	/* reset this one entry */
-	pgstat_reset(PGSTAT_KIND_REPLSLOT, InvalidOid,
-				 ReplicationSlotIndex(slot));
+	LWLockRelease(ReplicationSlotControlLock);
 }
 
 /*
@@ -163,13 +164,20 @@ pgstat_drop_replslot(ReplicationSlot *slot)
 PgStat_StatReplSlotEntry *
 pgstat_fetch_replslot(NameData slotname)
 {
-	int			idx = get_replslot_index(NameStr(slotname));
+	int			idx;
+	PgStat_StatReplSlotEntry *slotentry = NULL;
 
-	if (idx == -1)
-		return NULL;
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 
-	return (PgStat_StatReplSlotEntry *)
-		pgstat_fetch_entry(PGSTAT_KIND_REPLSLOT, InvalidOid, idx);
+	idx = get_replslot_index(NameStr(slotname), false);
+
+	if (idx != -1)
+		slotentry = (PgStat_StatReplSlotEntry *) pgstat_fetch_entry(PGSTAT_KIND_REPLSLOT,
+																	InvalidOid, idx);
+
+	LWLockRelease(ReplicationSlotControlLock);
+
+	return slotentry;
 }
 
 void
@@ -188,7 +196,7 @@ pgstat_replslot_to_serialized_name_cb(const PgStat_HashKey *key, const PgStatSha
 bool
 pgstat_replslot_from_serialized_name_cb(const NameData *name, PgStat_HashKey *key)
 {
-	int			idx = get_replslot_index(NameStr(*name));
+	int			idx = get_replslot_index(NameStr(*name), true);
 
 	/* slot might have been deleted */
 	if (idx == -1)
@@ -208,13 +216,13 @@ pgstat_replslot_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts)
 }
 
 static int
-get_replslot_index(const char *name)
+get_replslot_index(const char *name, bool need_lock)
 {
 	ReplicationSlot *slot;
 
 	Assert(name != NULL);
 
-	slot = SearchNamedReplicationSlot(name, true);
+	slot = SearchNamedReplicationSlot(name, need_lock);
 
 	if (!slot)
 		return -1;
