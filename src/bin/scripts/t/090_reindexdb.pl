@@ -262,4 +262,18 @@ $node->command_ok(
 	[ 'reindexdb', '-j', '2', '--concurrently', '-d', 'postgres' ],
 	'parallel reindexdb on database, concurrently');
 
+# combinations of objects
+$node->issues_sql_like(
+	[ 'reindexdb', '-s', '-t', 'test1', 'postgres' ],
+	qr/statement:\ REINDEX SYSTEM postgres;/,
+	'specify both --system and --table');
+$node->issues_sql_like(
+	[ 'reindexdb', '-s', '-i', 'test1x', 'postgres' ],
+	qr/statement:\ REINDEX INDEX public.test1x;/,
+	'specify both --system and --index');
+$node->issues_sql_like(
+	[ 'reindexdb', '-s', '-S', 'pg_catalog', 'postgres' ],
+	qr/statement:\ REINDEX SCHEMA pg_catalog;/,
+	'specify both --system and --schema');
+
 done_testing();

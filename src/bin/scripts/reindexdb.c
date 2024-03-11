@@ -46,7 +46,10 @@ static void reindex_one_database(ConnParams *cparams, ReindexType type,
 static void reindex_all_databases(ConnParams *cparams,
 								  const char *progname, bool echo,
 								  bool quiet, bool verbose, bool concurrently,
-								  int concurrentCons, const char *tablespace);
+								  int concurrentCons, const char *tablespace,
+								  bool syscatalog, SimpleStringList *schemas,
+								  SimpleStringList *tables,
+								  SimpleStringList *indexes);
 static void run_reindex_command(PGconn *conn, ReindexType type,
 								const char *name, bool echo, bool verbose,
 								bool concurrently, bool async,
@@ -203,62 +206,33 @@ main(int argc, char *argv[])
 
 	setup_cancel_handler(NULL);
 
-	if (alldb)
-	{
-		if (dbname)
-			pg_fatal("cannot reindex all databases and a specific one at the same time");
-		if (syscatalog)
-			pg_fatal("cannot reindex all databases and system catalogs at the same time");
-		if (schemas.head != NULL)
-			pg_fatal("cannot reindex specific schema(s) in all databases");
-		if (tables.head != NULL)
-			pg_fatal("cannot reindex specific table(s) in all databases");
-		if (indexes.head != NULL)
-			pg_fatal("cannot reindex specific index(es) in all databases");
-
-		cparams.dbname = maintenance_db;
-
-		reindex_all_databases(&cparams, progname, echo, quiet, verbose,
-							  concurrently, concurrentCons, tablespace);
-	}
-	else if (syscatalog)
-	{
-		if (schemas.head != NULL)
-			pg_fatal("cannot reindex specific schema(s) and system catalogs at the same time");
-		if (tables.head != NULL)
-			pg_fatal("cannot reindex specific table(s) and system catalogs at the same time");
-		if (indexes.head != NULL)
-			pg_fatal("cannot reindex specific index(es) and system catalogs at the same time");
-
-		if (concurrentCons > 1)
-			pg_fatal("cannot use multiple jobs to reindex system catalogs");
-
-		if (dbname == NULL)
-		{
-			if (getenv("PGDATABASE"))
-				dbname = getenv("PGDATABASE");
-			else if (getenv("PGUSER"))
-				dbname = getenv("PGUSER");
-			else
-				dbname = get_user_name_or_exit(progname);
-		}
-
-		cparams.dbname = dbname;
-
-		reindex_one_database(&cparams, REINDEX_SYSTEM, NULL,
-							 progname, echo, verbose,
-							 concurrently, 1, tablespace);
-	}
-	else
+	if (concurrentCons > 1)
 	{
 		/*
 		 * Index-level REINDEX is not supported with multiple jobs as we
 		 * cannot control the concurrent processing of multiple indexes
 		 * depending on the same relation.
 		 */
-		if (concurrentCons > 1 && indexes.head != NULL)
+		if (indexes.head != NULL)
 			pg_fatal("cannot use multiple jobs to reindex indexes");
 
+		if (syscatalog)
+			pg_fatal("cannot use multiple jobs to reindex system catalogs");
+	}
+
+	if (alldb)
+	{
+		if (dbname)
+			pg_fatal("cannot reindex all databases and a specific one at the same time");
+
+		cparams.dbname = maintenance_db;
+
+		reindex_all_databases(&cparams, progname, echo, quiet, verbose,
+							  concurrently, concurrentCons, tablespace,
+							  syscatalog, &schemas, &tables, &indexes);
+	}
+	else
+	{
 		if (dbname == NULL)
 		{
 			if (getenv("PGDATABASE"))
@@ -270,6 +244,11 @@ main(int argc, char *argv[])
 		}
 
 		cparams.dbname = dbname;
+
+		if (syscatalog)
+			reindex_one_database(&cparams, REINDEX_SYSTEM, NULL,
+								 progname, echo, verbose,
+								 concurrently, 1, tablespace);
 
 		if (schemas.head != NULL)
 			reindex_one_database(&cparams, REINDEX_SCHEMA, &schemas,
@@ -287,10 +266,11 @@ main(int argc, char *argv[])
 								 concurrently, concurrentCons, tablespace);
 
 		/*
-		 * reindex database only if neither index nor table nor schema is
-		 * specified
+		 * reindex database only if neither index nor table nor schema nor
+		 * system catalogs is specified
 		 */
-		if (indexes.head == NULL && tables.head == NULL && schemas.head == NULL)
+		if (!syscatalog && indexes.head == NULL &&
+			tables.head == NULL && schemas.head == NULL)
 			reindex_one_database(&cparams, REINDEX_DATABASE, NULL,
 								 progname, echo, verbose,
 								 concurrently, concurrentCons, tablespace);
@@ -711,7 +691,9 @@ static void
 reindex_all_databases(ConnParams *cparams,
 					  const char *progname, bool echo, bool quiet, bool verbose,
 					  bool concurrently, int concurrentCons,
-					  const char *tablespace)
+					  const char *tablespace, bool syscatalog,
+					  SimpleStringList *schemas, SimpleStringList *tables,
+					  SimpleStringList *indexes)
 {
 	PGconn	   *conn;
 	PGresult   *result;
@@ -735,9 +717,35 @@ reindex_all_databases(ConnParams *cparams,
 
 		cparams->override_dbname = dbname;
 
-		reindex_one_database(cparams, REINDEX_DATABASE, NULL,
-							 progname, echo, verbose, concurrently,
-							 concurrentCons, tablespace);
+		if (syscatalog)
+			reindex_one_database(cparams, REINDEX_SYSTEM, NULL,
+								 progname, echo, verbose,
+								 concurrently, 1, tablespace);
+
+		if (schemas->head != NULL)
+			reindex_one_database(cparams, REINDEX_SCHEMA, schemas,
+								 progname, echo, verbose,
+								 concurrently, concurrentCons, tablespace);
+
+		if (indexes->head != NULL)
+			reindex_one_database(cparams, REINDEX_INDEX, indexes,
+								 progname, echo, verbose,
+								 concurrently, 1, tablespace);
+
+		if (tables->head != NULL)
+			reindex_one_database(cparams, REINDEX_TABLE, tables,
+								 progname, echo, verbose,
+								 concurrently, concurrentCons, tablespace);
+
+		/*
+		 * reindex database only if neither index nor table nor schema nor
+		 * system catalogs is specified
+		 */
+		if (!syscatalog && indexes->head == NULL &&
+			tables->head == NULL && schemas->head == NULL)
+			reindex_one_database(cparams, REINDEX_DATABASE, NULL,
+								 progname, echo, verbose,
+								 concurrently, concurrentCons, tablespace);
 	}
 
 	PQclear(result);

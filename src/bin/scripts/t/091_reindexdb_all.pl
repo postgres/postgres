@@ -13,10 +13,30 @@ $node->start;
 
 $ENV{PGOPTIONS} = '--client-min-messages=WARNING';
 
+$node->safe_psql('postgres',
+	'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a);');
+$node->safe_psql('template1',
+	'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a);');
 $node->issues_sql_like(
 	[ 'reindexdb', '-a' ],
 	qr/statement: REINDEX.*statement: REINDEX/s,
 	'reindex all databases');
+$node->issues_sql_like(
+	[ 'reindexdb', '-a', '-s' ],
+	qr/statement: REINDEX SYSTEM postgres/s,
+	'reindex system catalogs in all databases');
+$node->issues_sql_like(
+	[ 'reindexdb', '-a', '-S', 'public' ],
+	qr/statement: REINDEX SCHEMA public/s,
+	'reindex schema in all databases');
+$node->issues_sql_like(
+	[ 'reindexdb', '-a', '-i', 'test1x' ],
+	qr/statement: REINDEX INDEX public\.test1x/s,
+	'reindex index in all databases');
+$node->issues_sql_like(
+	[ 'reindexdb', '-a', '-t', 'test1' ],
+	qr/statement: REINDEX TABLE public\.test1/s,
+	'reindex table in all databases');
 
 $node->safe_psql(
 	'postgres', q(
