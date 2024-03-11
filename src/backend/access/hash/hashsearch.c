@@ -37,8 +37,8 @@ static void _hash_readnext(IndexScanDesc scan, Buffer *bufp,
  *		be pinned but not locked, and so->currPos.itemIndex identifies
  *		which item was previously returned.
  *
- *		On successful exit, scan->xs_ctup.t_self is set to the TID
- *		of the next heap tuple. so->currPos is updated as needed.
+ *		On successful exit, scan->xs_heaptid is set to the TID of the next
+ *		heap tuple.  so->currPos is updated as needed.
  *
  *		On failure exit (no more tuples), we return false with pin
  *		held on bucket page but no pins or locks held on overflow
@@ -279,7 +279,7 @@ _hash_readprev(IndexScanDesc scan,
  *		overflow page, both pin and lock are released whereas if it is a bucket
  *		page then it is pinned but not locked and data about the matching
  *		tuple(s) on the page has been loaded into so->currPos,
- *		scan->xs_ctup.t_self is set to the heap TID of the current tuple.
+ *		scan->xs_heaptid is set to the heap TID of the current tuple.
  *
  *		On failure exit (no more tuples), we return false, with pin held on
  *		bucket page but no pins or locks held on overflow page.
