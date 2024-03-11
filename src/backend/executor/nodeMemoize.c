@@ -13,7 +13,7 @@
  * Memoize nodes are intended to sit above parameterized nodes in the plan
  * tree in order to cache results from them.  The intention here is that a
  * repeat scan with a parameter value that has already been seen by the node
- * can fetch tuples from the cache rather than having to re-scan the outer
+ * can fetch tuples from the cache rather than having to re-scan the inner
  * node all over again.  The query planner may choose to make use of one of
  * these when it thinks rescans for previously seen values are likely enough
  * to warrant adding the additional node.
@@ -207,7 +207,6 @@ MemoizeHash_hash(struct memoize_hash *tb, const MemoizeKey *key)
 		}
 	}
 
-	ResetExprContext(econtext);
 	MemoryContextSwitchTo(oldcontext);
 	return murmurhash32(hashkey);
 }
@@ -265,7 +264,6 @@ MemoizeHash_equal(struct memoize_hash *tb, const MemoizeKey *key1,
 			}
 		}
 
-		ResetExprContext(econtext);
 		MemoryContextSwitchTo(oldcontext);
 		return match;
 	}
@@ -273,7 +271,7 @@ MemoizeHash_equal(struct memoize_hash *tb, const MemoizeKey *key1,
 	{
 		econtext->ecxt_innertuple = tslot;
 		econtext->ecxt_outertuple = pslot;
-		return ExecQualAndReset(mstate->cache_eq_expr, econtext);
+		return ExecQual(mstate->cache_eq_expr, econtext);
 	}
 }
 
@@ -699,8 +697,17 @@ static TupleTableSlot *
 ExecMemoize(PlanState *pstate)
 {
 	MemoizeState *node = castNode(MemoizeState, pstate);
+	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 	PlanState  *outerNode;
 	TupleTableSlot *slot;
+
+	CHECK_FOR_INTERRUPTS();
+
+	/*
+	 * Reset per-tuple memory context to free any expression evaluation
+	 * storage allocated in the previous tuple cycle.
+	 */
+	ResetExprContext(econtext);
 
 	switch (node->mstatus)
 	{
