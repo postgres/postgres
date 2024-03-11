@@ -36,7 +36,13 @@ PostgreSQL documentation
     </arg>
    </arg>
 
-   <arg choice="opt"><replaceable>dbname</replaceable></arg>
+   <arg choice="opt">
+    <group choice="plain">
+     <arg choice="plain"><replaceable>dbname</replaceable></arg>
+     <arg choice="plain"><option>-a</option></arg>
+     <arg choice="plain"><option>--all</option></arg>
+    </group>
+   </arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
@@ -47,40 +53,44 @@ PostgreSQL documentation
    <arg choice="plain" rep="repeat">
     <arg choice="opt">
      <group choice="plain">
-       <arg choice="plain">
-        <arg choice="opt">
-         <group choice="plain">
-          <arg choice="plain"><option>-n</option></arg>
-          <arg choice="plain"><option>--schema</option></arg>
-         </group>
-         <replaceable>schema</replaceable>
-        </arg>
-       </arg>
-
-       <arg choice="plain">
-        <arg choice="opt">
-         <group choice="plain">
-          <arg choice="plain"><option>-N</option></arg>
-          <arg choice="plain"><option>--exclude-schema</option></arg>
-         </group>
-         <replaceable>schema</replaceable>
-        </arg>
-       </arg>
+      <arg choice="plain"><option>-n</option></arg>
+      <arg choice="plain"><option>--schema</option></arg>
      </group>
+     <replaceable>schema</replaceable>
     </arg>
    </arg>
 
-   <arg choice="opt"><replaceable>dbname</replaceable></arg>
+   <arg choice="opt">
+    <group choice="plain">
+     <arg choice="plain"><replaceable>dbname</replaceable></arg>
+     <arg choice="plain"><option>-a</option></arg>
+     <arg choice="plain"><option>--all</option></arg>
+    </group>
+   </arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <group choice="plain">
-    <arg choice="plain"><option>-a</option></arg>
-    <arg choice="plain"><option>--all</option></arg>
-   </group>
+
+   <arg choice="plain" rep="repeat">
+    <arg choice="opt">
+     <group choice="plain">
+      <arg choice="plain"><option>-N</option></arg>
+      <arg choice="plain"><option>--exclude-schema</option></arg>
+     </group>
+     <replaceable>schema</replaceable>
+    </arg>
+   </arg>
+
+   <arg choice="opt">
+    <group choice="plain">
+     <arg choice="plain"><replaceable>dbname</replaceable></arg>
+     <arg choice="plain"><option>-a</option></arg>
+     <arg choice="plain"><option>--all</option></arg>
+    </group>
+   </arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

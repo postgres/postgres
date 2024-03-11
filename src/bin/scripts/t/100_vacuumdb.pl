@@ -184,18 +184,18 @@ $node->command_fails_like(
 	[ 'vacuumdb', '-n', 'pg_catalog', '-N', '"Foo"', 'postgres' ],
 	qr/cannot vacuum all tables in schema\(s\) and exclude schema\(s\) at the same time/,
 	'cannot use options -n and -N at the same time');
-$node->command_fails_like(
-	[ 'vacuumdb', '-a', '-N', '"Foo"' ],
-	qr/cannot exclude specific schema\(s\) in all databases/,
-	'cannot use options -a and -N at the same time');
-$node->command_fails_like(
-	[ 'vacuumdb', '-a', '-n', '"Foo"' ],
-	qr/cannot vacuum specific schema\(s\) in all databases/,
-	'cannot use options -a and -n at the same time');
-$node->command_fails_like(
-	[ 'vacuumdb', '-a', '-t', '"Foo".bar' ],
-	qr/cannot vacuum specific table\(s\) in all databases/,
-	'cannot use options -a and -t at the same time');
+$node->issues_sql_like(
+	[ 'vacuumdb', '-a', '-N', 'pg_catalog' ],
+	qr/(?:(?!VACUUM \(SKIP_DATABASE_STATS\) pg_catalog.pg_class).)*/,
+	'vacuumdb -a -N');
+$node->issues_sql_like(
+	[ 'vacuumdb', '-a', '-n', 'pg_catalog' ],
+	qr/VACUUM \(SKIP_DATABASE_STATS\) pg_catalog.pg_class/,
+	'vacuumdb -a -n');
+$node->issues_sql_like(
+	[ 'vacuumdb', '-a', '-t', 'pg_class' ],
+	qr/VACUUM \(SKIP_DATABASE_STATS\) pg_catalog.pg_class/,
+	'vacuumdb -a -t');
 $node->command_fails_like(
 	[ 'vacuumdb', '-a', '-d', 'postgres' ],
 	qr/cannot vacuum all databases and a specific one at the same time/,
