@@ -2985,9 +2985,6 @@ RelationCacheInvalidate(bool debug_discard)
 	{
 		relation = idhentry->reldesc;
 
-		/* Must close all smgr references to avoid leaving dangling ptrs */
-		RelationCloseSmgr(relation);
-
 		/*
 		 * Ignore new relations; no other backend will manipulate them before
 		 * we commit.  Likewise, before replacing a relation's relfilelocator,
@@ -3039,11 +3036,10 @@ RelationCacheInvalidate(bool debug_discard)
 	}
 
 	/*
-	 * Now zap any remaining smgr cache entries.  This must happen before we
-	 * start to rebuild entries, since that may involve catalog fetches which
-	 * will re-open catalog files.
+	 * We cannot destroy the SMgrRelations as there might still be references
+	 * to them, but close the underlying file descriptors.
 	 */
-	smgrdestroyall();
+	smgrreleaseall();
 
 	/* Phase 2: rebuild the items found to need rebuild in phase 1 */
 	foreach(l, rebuildFirstList)
