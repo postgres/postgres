@@ -235,15 +235,15 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
      <para>
       When altering the
       <link linkend="sql-createsubscription-params-with-slot-name"><literal>slot_name</literal></link>,
-      the <literal>failover</literal> property value of the named slot may differ from the
+      the <literal>failover</literal> and <literal>two_phase</literal> property
+      values of the named slot may differ from the counterpart
       <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
-      parameter specified in the subscription. When creating the slot,
-      ensure the slot <literal>failover</literal> property matches the
-      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
-      parameter value of the subscription. Otherwise, the slot on the
-      publisher may behave differently from what subscription's
-      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
-      option says. The slot on the publisher could either be
+      and <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
+      parameters specified in the subscription. When creating the slot, ensure
+      the slot properties <literal>failover</literal> and <literal>two_phase</literal>
+      match their counterpart parameters of the subscription.
+      Otherwise, the slot on the publisher may behave differently from what these
+      subscription options say: for example, the slot on the publisher could either be
       synced to the standbys even when the subscription's
       <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
       option is disabled or could be disabled for sync
