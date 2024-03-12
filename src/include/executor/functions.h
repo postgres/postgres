@@ -47,6 +47,7 @@ extern void check_sql_fn_statements(List *queryTreeLists);
 
 extern bool check_sql_fn_retval(List *queryTreeLists,
 								Oid rettype, TupleDesc rettupdesc,
+								char prokind,
 								bool insertDroppedCols,
 								List **resultTargetList);
 
