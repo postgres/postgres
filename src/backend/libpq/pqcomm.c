@@ -193,14 +193,10 @@ pq_init(void)
 	 * nonblocking mode and use latches to implement blocking semantics if
 	 * needed. That allows us to provide safely interruptible reads and
 	 * writes.
-	 *
-	 * Use COMMERROR on failure, because ERROR would try to send the error to
-	 * the client, which might require changing the mode again, leading to
-	 * infinite recursion.
 	 */
 #ifndef WIN32
 	if (!pg_set_noblock(MyProcPort->sock))
-		ereport(COMMERROR,
+		ereport(FATAL,
 				(errmsg("could not set socket to nonblocking mode: %m")));
 #endif
 
