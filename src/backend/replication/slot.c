@@ -1726,7 +1726,6 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 			ReplicationSlotMarkDirty();
 			ReplicationSlotSave();
 			ReplicationSlotRelease();
-			pgstat_drop_replslot(s);
 
 			ReportSlotInvalidation(conflict, false, active_pid,
 								   slotname, restart_lsn,
