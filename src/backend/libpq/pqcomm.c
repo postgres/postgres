@@ -177,7 +177,8 @@ pq_init(ClientSocket *client_sock)
 	/* allocate the Port struct and copy the ClientSocket contents to it */
 	port = palloc0(sizeof(Port));
 	port->sock = client_sock->sock;
-	port->raddr = client_sock->raddr;
+	memcpy(&port->raddr.addr, &client_sock->raddr.addr, client_sock->raddr.salen);
+	port->raddr.salen = client_sock->raddr.salen;
 
 	/* fill in the server (local) address */
 	port->laddr.salen = sizeof(port->laddr.addr);
