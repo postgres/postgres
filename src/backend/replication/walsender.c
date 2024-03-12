@@ -1831,12 +1831,6 @@ WalSndWaitForWal(XLogRecPtr loc)
 		!NeedToWaitForWal(loc, RecentFlushPtr, &wait_event))
 		return RecentFlushPtr;
 
-	/* Get a more recent flush pointer. */
-	if (!RecoveryInProgress())
-		RecentFlushPtr = GetFlushRecPtr(NULL);
-	else
-		RecentFlushPtr = GetXLogReplayRecPtr(NULL);
-
 	/*
 	 * Within the loop, we wait for the necessary WALs to be flushed to disk
 	 * first, followed by waiting for standbys to catch up if there are enough
