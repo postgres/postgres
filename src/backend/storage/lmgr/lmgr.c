@@ -25,6 +25,7 @@
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
+#include "storage/rl_policy.h"
 #include "utils/inval.h"
 
 
@@ -548,7 +549,7 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetOffsetNumber(tid));
     if (IsolationNeedLock())
     {
-        TwoPhaseLockingReportIntention(tag.locktag_field2,
+        report_intention(tag.locktag_field2,
                                        tag.locktag_field3,
                                        tag.locktag_field4,
                                        lockmode == ExclusiveLock? false:true,
@@ -559,7 +560,7 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 
     if (IsolationNeedLock())
     {
-        TwoPhaseLockingReportIntention(tag.locktag_field2,
+        report_intention(tag.locktag_field2,
                                        tag.locktag_field3,
                                        tag.locktag_field4,
                                        lockmode == ExclusiveLock? false:true,
@@ -585,7 +586,7 @@ ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-    if (IsolationNeedLock()) TwoPhaseLockingReportIntention(tag.locktag_field2,
+    if (IsolationNeedLock()) report_intention(tag.locktag_field2,
                                                            tag.locktag_field3,
                                                            tag.locktag_field4,
                                                            lockmode == ExclusiveLock? false:true,
@@ -593,7 +594,7 @@ ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 
 	res =  (LockAcquire(&tag, lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
     if (!res) {
-        if (IsolationNeedLock()) TwoPhaseLockingReportIntention(tag.locktag_field2,
+        if (IsolationNeedLock()) report_intention(tag.locktag_field2,
                                                                 tag.locktag_field3,
                                                                 tag.locktag_field4,
                                                                 lockmode == ExclusiveLock? false:true,

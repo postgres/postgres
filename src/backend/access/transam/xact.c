@@ -61,6 +61,7 @@
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
+#include "storage/rl_policy.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/combocid.h"
@@ -332,6 +333,7 @@ static void CheckTransactionBlock(bool isTopLevel, bool throwError,
 static void CommitTransaction(void);
 static TransactionId RecordTransactionAbort(bool isSubXact);
 static void StartTransaction(void);
+void AdjustTransaction(void);
 
 static void StartSubTransaction(void);
 static void CommitSubTransaction(void);

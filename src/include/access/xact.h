@@ -385,6 +385,7 @@ typedef struct xl_xact_parsed_abort
  *		extern definitions
  * ----------------
  */
+extern void AdjustTransaction();
 extern bool IsTransactionState(void);
 extern bool IsAbortedTransactionBlockState(void);
 extern bool IsTransactionUseful(void);
@@ -410,7 +411,6 @@ extern int	GetCurrentTransactionNestLevel(void);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern void CommandCounterIncrement(void);
 extern void ForceSyncCommit(void);
-extern void AdjustTransaction();
 extern void StartTransactionCommand(void);
 extern void SaveTransactionCharacteristics(void);
 extern void RestoreTransactionCharacteristics(void);
