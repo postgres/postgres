@@ -21,6 +21,26 @@
 #include "libpq-int.h"
 #include "port/pg_bswap.h"
 
+
+/*
+ * pg_cancel (backing struct for PGcancel) stores all data necessary to send a
+ * cancel request.
+ */
+struct pg_cancel
+{
+	SockAddr	raddr;			/* Remote address */
+	int			be_pid;			/* PID of to-be-canceled backend */
+	int			be_key;			/* cancel key of to-be-canceled backend */
+	int			pgtcp_user_timeout; /* tcp user timeout */
+	int			keepalives;		/* use TCP keepalives? */
+	int			keepalives_idle;	/* time between TCP keepalives */
+	int			keepalives_interval;	/* time between TCP keepalive
+										 * retransmits */
+	int			keepalives_count;	/* maximum number of TCP keepalive
+									 * retransmits */
+};
+
+
 /*
  * PQgetCancel: get a PGcancel structure corresponding to a connection.
  *
