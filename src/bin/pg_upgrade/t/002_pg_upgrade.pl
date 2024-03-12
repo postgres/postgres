@@ -92,10 +92,6 @@ my $oldnode =
   PostgreSQL::Test::Cluster->new('old_node',
 	install_path => $ENV{oldinstall});
 
-# Numeric major version of old cluster, ignoring "devel" suffix.
-# Needed for testing upgrades from development version to itself.
-my $old_major_version = int($oldnode->pg_version =~ s/devel//rg);
-
 my %node_params = ();
 
 # To increase coverage of non-standard segment size and group access without
@@ -118,10 +114,10 @@ my $original_locale = "C";
 my $original_datlocale = "";
 my $provider_field = "'c' AS datlocprovider";
 my $old_datlocale_field = "NULL AS datlocale";
-if ($old_major_version >= 15 && $ENV{with_icu} eq 'yes')
+if ($oldnode->pg_version >= 15 && $ENV{with_icu} eq 'yes')
 {
 	$provider_field = "datlocprovider";
-	if ($old_major_version >= 17)
+	if ($oldnode->pg_version >= '17devel')
 	{
 		$old_datlocale_field = "datlocale";
 	}
