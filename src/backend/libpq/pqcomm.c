@@ -29,11 +29,10 @@
  * INTERFACE ROUTINES
  *
  * setup/teardown:
- *		StreamServerPort	- Open postmaster's server port
- *		StreamConnection	- Create new connection with client
- *		StreamClose			- Close a client/backend connection
+ *		ListenServerPort	- Open postmaster's server port
+ *		AcceptConnection	- Accept new connection with client
  *		TouchSocketFiles	- Protect socket files against /tmp cleaners
- *		pq_init			- initialize libpq at backend startup
+ *		pq_init				- initialize libpq at backend startup
  *		socket_comm_reset	- reset libpq during error recovery
  *		socket_close		- shutdown libpq at backend exit
  *
@@ -168,12 +167,17 @@ WaitEventSet *FeBeWaitSet;
  *		pq_init - initialize libpq at backend startup
  * --------------------------------
  */
-void
-pq_init(void)
+Port *
+pq_init(ClientSocket *client_sock)
 {
-	Port	   *port = MyProcPort;
+	Port	   *port;
 	int			socket_pos PG_USED_FOR_ASSERTS_ONLY;
 	int			latch_pos PG_USED_FOR_ASSERTS_ONLY;
+
+	/* allocate the Port struct and copy the ClientSocket contents to it */
+	port = palloc0(sizeof(Port));
+	port->sock = client_sock->sock;
+	port->raddr = client_sock->raddr;
 
 	/* fill in the server (local) address */
 	port->laddr.salen = sizeof(port->laddr.addr);
@@ -310,6 +314,8 @@ pq_init(void)
 	 */
 	Assert(socket_pos == FeBeWaitSetSocketPos);
 	Assert(latch_pos == FeBeWaitSetLatchPos);
+
+	return port;
 }
 
 /* --------------------------------
@@ -384,16 +390,13 @@ socket_close(int code, Datum arg)
 
 
 
-/*
- * Streams -- wrapper around Unix socket system calls
- *
- *
- *		Stream functions are used for vanilla TCP connection protocol.
+/* --------------------------------
+ * Postmaster functions to handle sockets.
+ * --------------------------------
  */
 
-
 /*
- * StreamServerPort -- open a "listening" port to accept connections.
+ * ListenServerPort -- open a "listening" port to accept connections.
  *
  * family should be AF_UNIX or AF_UNSPEC; portNumber is the port number.
  * For AF_UNIX ports, hostName should be NULL and unixSocketDir must be
@@ -408,7 +411,7 @@ socket_close(int code, Datum arg)
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 int
-StreamServerPort(int family, const char *hostName, unsigned short portNumber,
+ListenServerPort(int family, const char *hostName, unsigned short portNumber,
 				 const char *unixSocketDir,
 				 pgsocket ListenSockets[], int *NumListenSockets, int MaxListen)
 {
@@ -774,8 +777,9 @@ Setup_AF_UNIX(const char *sock_path)
 
 
 /*
- * StreamConnection -- create a new connection with client using
- *		server port.  Set port->sock to the FD of the new connection.
+ * AcceptConnection -- accept a new connection with client using
+ *		server port.  Fills *client_sock with the FD and endpoint info
+ *		of the new connection.
  *
  * ASSUME: that this doesn't need to be non-blocking because
  *		the Postmaster waits for the socket to be ready to accept().
@@ -783,13 +787,13 @@ Setup_AF_UNIX(const char *sock_path)
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 int
-StreamConnection(pgsocket server_fd, Port *port)
+AcceptConnection(pgsocket server_fd, ClientSocket *client_sock)
 {
 	/* accept connection and fill in the client (remote) address */
-	port->raddr.salen = sizeof(port->raddr.addr);
-	if ((port->sock = accept(server_fd,
-							 (struct sockaddr *) &port->raddr.addr,
-							 &port->raddr.salen)) == PGINVALID_SOCKET)
+	client_sock->raddr.salen = sizeof(client_sock->raddr.addr);
+	if ((client_sock->sock = accept(server_fd,
+									(struct sockaddr *) &client_sock->raddr.addr,
+									&client_sock->raddr.salen)) == PGINVALID_SOCKET)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
@@ -807,23 +811,6 @@ StreamConnection(pgsocket server_fd, Port *port)
 	}
 
 	return STATUS_OK;
-}
-
-/*
- * StreamClose -- close a client/backend connection
- *
- * NOTE: this is NOT used to terminate a session; it is just used to release
- * the file descriptor in a process that should no longer have the socket
- * open.  (For example, the postmaster calls this after passing ownership
- * of the connection to a child process.)  It is expected that someone else
- * still has the socket open.  So, we only want to close the descriptor,
- * we do NOT want to send anything to the far end.
- */
-void
-StreamClose(pgsocket sock)
-{
-	if (closesocket(sock) != 0)
-		elog(LOG, "could not close client or listen socket: %m");
 }
 
 /*

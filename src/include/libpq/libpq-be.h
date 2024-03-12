@@ -110,12 +110,9 @@ typedef struct ClientConnectionInfo
 } ClientConnectionInfo;
 
 /*
- * This is used by the postmaster in its communication with frontends.  It
- * contains all state information needed during this communication before the
- * backend is run.  The Port structure is kept in malloc'd memory and is
- * still available when a backend is running (see MyProcPort).  The data
- * it points to must also be malloc'd, or else palloc'd in TopMemoryContext,
- * so that it survives into PostgresMain execution!
+ * The Port structure holds state information about a client connection in a
+ * backend process.  It is available in the global variable MyProcPort.  The
+ * struct and all the data it points are kept in TopMemoryContext.
  *
  * remote_hostname is set if we did a successful reverse lookup of the
  * client's IP address during connection setup.
@@ -216,6 +213,17 @@ typedef struct Port
 	X509	   *peer;
 #endif
 } Port;
+
+/*
+ * ClientSocket holds a socket for an accepted connection, along with the
+ * information about the remote endpoint.  This is passed from postmaster to
+ * the backend process.
+ */
+typedef struct ClientSocket
+{
+	pgsocket	sock;			/* File descriptor */
+	SockAddr	raddr;			/* remote addr (client) */
+} ClientSocket;
 
 #ifdef USE_SSL
 /*

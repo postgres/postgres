@@ -388,6 +388,7 @@ ClientCertMode
 ClientCertName
 ClientConnectionInfo
 ClientData
+ClientSocket
 ClonePtrType
 ClosePortalStmt
 ClosePtrType
