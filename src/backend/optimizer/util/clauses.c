@@ -4624,8 +4624,9 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 * Note: we do not try this until we have verified that no rewriting was
 	 * needed; that's probably not important, but let's be careful.
 	 */
-	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree),
-							&modifyTargetList, NULL))
+	if (check_sql_fn_retval_ext(funcid, result_type, funcform->prokind,
+								list_make1(querytree),
+								&modifyTargetList, NULL))
 		goto fail;				/* reject whole-tuple-result cases */
 
 	/* Now we can grab the tlist expression */
@@ -5149,9 +5150,10 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * check_sql_fn_retval, we deliberately exclude domains over composite
 	 * here.)
 	 */
-	if (!check_sql_fn_retval(func_oid, fexpr->funcresulttype,
-							 querytree_list,
-							 &modifyTargetList, NULL) &&
+	if (!check_sql_fn_retval_ext(func_oid, fexpr->funcresulttype,
+								 funcform->prokind,
+								 querytree_list,
+								 &modifyTargetList, NULL) &&
 		(get_typtype(fexpr->funcresulttype) == TYPTYPE_COMPOSITE ||
 		 fexpr->funcresulttype == RECORDOID))
 		goto fail;				/* reject not-whole-tuple-result cases */

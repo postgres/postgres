@@ -68,7 +68,16 @@ AS $$
 CALL ptest4a(a, b);  -- error, not supported
 $$;
 
-DROP PROCEDURE ptest4a;
+-- we used to get confused by a single output argument that is composite
+CREATE PROCEDURE ptest4c(INOUT comp int8_tbl)
+LANGUAGE SQL
+AS $$
+SELECT ROW(1, 2)::int8_tbl;
+$$;
+
+CALL ptest4c(NULL);
+
+DROP PROCEDURE ptest4a, ptest4c;
 
 
 -- named and default parameters

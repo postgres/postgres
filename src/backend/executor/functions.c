@@ -744,11 +744,12 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	 * coerce the returned rowtype to the desired form (unless the result type
 	 * is VOID, in which case there's nothing to coerce to).
 	 */
-	fcache->returnsTuple = check_sql_fn_retval(foid,
-											   rettype,
-											   flat_query_list,
-											   NULL,
-											   &fcache->junkFilter);
+	fcache->returnsTuple = check_sql_fn_retval_ext(foid,
+												   rettype,
+												   procedureStruct->prokind,
+												   flat_query_list,
+												   NULL,
+												   &fcache->junkFilter);
 
 	if (fcache->returnsTuple)
 	{
@@ -1591,6 +1592,20 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					bool *modifyTargetList,
 					JunkFilter **junkFilter)
 {
+	/* Wrapper function to preserve ABI compatibility in released branches */
+	return check_sql_fn_retval_ext(func_id, rettype,
+								   PROKIND_FUNCTION,
+								   queryTreeList,
+								   modifyTargetList,
+								   junkFilter);
+}
+
+bool
+check_sql_fn_retval_ext(Oid func_id, Oid rettype, char prokind,
+						List *queryTreeList,
+						bool *modifyTargetList,
+						JunkFilter **junkFilter)
+{
 	Query	   *parse;
 	List	  **tlist_ptr;
 	List	   *tlist;
@@ -1608,7 +1623,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 	/*
 	 * If it's declared to return VOID, we don't care what's in the function.
-	 * (This takes care of the procedure case, as well.)
+	 * (This takes care of procedures with no output parameters, as well.)
 	 */
 	if (rettype == VOIDOID)
 		return false;
@@ -1753,8 +1768,13 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 * will succeed for any composite restype.  For the moment we rely on
 		 * runtime type checking to catch any discrepancy, but it'd be nice to
 		 * do better at parse time.
+		 *
+		 * We must *not* do this for a procedure, however.  Procedures with
+		 * output parameter(s) have rettype RECORD, and the CALL code expects
+		 * to get results corresponding to the list of output parameters, even
+		 * when there's just one parameter that's composite.
 		 */
-		if (tlistlen == 1)
+		if (tlistlen == 1 && prokind != PROKIND_PROCEDURE)
 		{
 			TargetEntry *tle = (TargetEntry *) linitial(tlist);
 

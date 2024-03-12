@@ -36,6 +36,12 @@ extern bool check_sql_fn_retval(Oid func_id, Oid rettype,
 								bool *modifyTargetList,
 								JunkFilter **junkFilter);
 
+extern bool check_sql_fn_retval_ext(Oid func_id, Oid rettype,
+									char prokind,
+									List *queryTreeList,
+									bool *modifyTargetList,
+									JunkFilter **junkFilter);
+
 extern DestReceiver *CreateSQLFunctionDestReceiver(void);
 
 #endif							/* FUNCTIONS_H */
