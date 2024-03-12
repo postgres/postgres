@@ -733,11 +733,12 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * the rowtype column into multiple columns, since we have no way to
 	 * notify the caller that it should do that.)
 	 */
-	fcache->returnsTuple = check_sql_fn_retval(queryTree_list,
-											   rettype,
-											   rettupdesc,
-											   false,
-											   &resulttlist);
+	fcache->returnsTuple = check_sql_fn_retval_ext(queryTree_list,
+												   rettype,
+												   rettupdesc,
+												   procedureStruct->prokind,
+												   false,
+												   &resulttlist);
 
 	/*
 	 * Construct a JunkFilter we can use to coerce the returned rowtype to the
@@ -1617,6 +1618,21 @@ check_sql_fn_retval(List *queryTreeLists,
 					bool insertDroppedCols,
 					List **resultTargetList)
 {
+	/* Wrapper function to preserve ABI compatibility in released branches */
+	return check_sql_fn_retval_ext(queryTreeLists,
+								   rettype, rettupdesc,
+								   PROKIND_FUNCTION,
+								   insertDroppedCols,
+								   resultTargetList);
+}
+
+bool
+check_sql_fn_retval_ext(List *queryTreeLists,
+						Oid rettype, TupleDesc rettupdesc,
+						char prokind,
+						bool insertDroppedCols,
+						List **resultTargetList)
+{
 	bool		is_tuple_result = false;
 	Query	   *parse;
 	ListCell   *parse_cell;
@@ -1633,7 +1649,7 @@ check_sql_fn_retval(List *queryTreeLists,
 
 	/*
 	 * If it's declared to return VOID, we don't care what's in the function.
-	 * (This takes care of the procedure case, as well.)
+	 * (This takes care of procedures with no output parameters, as well.)
 	 */
 	if (rettype == VOIDOID)
 		return false;
@@ -1787,8 +1803,13 @@ check_sql_fn_retval(List *queryTreeLists,
 		 * or not the record type really matches.  For the moment we rely on
 		 * runtime type checking to catch any discrepancy, but it'd be nice to
 		 * do better at parse time.
+		 *
+		 * We must *not* do this for a procedure, however.  Procedures with
+		 * output parameter(s) have rettype RECORD, and the CALL code expects
+		 * to get results corresponding to the list of output parameters, even
+		 * when there's just one parameter that's composite.
 		 */
-		if (tlistlen == 1)
+		if (tlistlen == 1 && prokind != PROKIND_PROCEDURE)
 		{
 			TargetEntry *tle = (TargetEntry *) linitial(tlist);
 

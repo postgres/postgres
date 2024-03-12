@@ -106,7 +106,19 @@ CALL ptest4a(a, b);  -- error, not supported
 $$;
 ERROR:  calling procedures with output arguments is not supported in SQL functions
 CONTEXT:  SQL function "ptest4b"
-DROP PROCEDURE ptest4a;
+-- we used to get confused by a single output argument that is composite
+CREATE PROCEDURE ptest4c(INOUT comp int8_tbl)
+LANGUAGE SQL
+AS $$
+SELECT ROW(1, 2);
+$$;
+CALL ptest4c(NULL);
+ comp  
+-------
+ (1,2)
+(1 row)
+
+DROP PROCEDURE ptest4a, ptest4c;
 -- named and default parameters
 CREATE OR REPLACE PROCEDURE ptest5(a int, b text, c int default 100)
 LANGUAGE SQL
