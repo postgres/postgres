@@ -113,6 +113,8 @@ pgstat_create_replslot(ReplicationSlot *slot)
 	PgStat_EntryRef *entry_ref;
 	PgStatShared_ReplSlot *shstatent;
 
+	Assert(LWLockHeldByMeInMode(ReplicationSlotAllocationLock, LW_EXCLUSIVE));
+
 	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_REPLSLOT, InvalidOid,
 											ReplicationSlotIndex(slot), false);
 	shstatent = (PgStatShared_ReplSlot *) entry_ref->shared_stats;
@@ -153,6 +155,8 @@ pgstat_acquire_replslot(ReplicationSlot *slot)
 void
 pgstat_drop_replslot(ReplicationSlot *slot)
 {
+	Assert(LWLockHeldByMeInMode(ReplicationSlotAllocationLock, LW_EXCLUSIVE));
+
 	pgstat_drop_entry(PGSTAT_KIND_REPLSLOT, InvalidOid,
 					  ReplicationSlotIndex(slot));
 }
