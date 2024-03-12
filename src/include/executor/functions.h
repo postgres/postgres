@@ -50,6 +50,12 @@ extern bool check_sql_fn_retval(List *queryTreeLists,
 								bool insertDroppedCols,
 								List **resultTargetList);
 
+extern bool check_sql_fn_retval_ext(List *queryTreeLists,
+									Oid rettype, TupleDesc rettupdesc,
+									char prokind,
+									bool insertDroppedCols,
+									List **resultTargetList);
+
 extern DestReceiver *CreateSQLFunctionDestReceiver(void);
 
 #endif							/* FUNCTIONS_H */
