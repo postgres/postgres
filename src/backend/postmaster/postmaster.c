@@ -418,7 +418,19 @@ static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname,
 						 int pid, int exitstatus);
 static void PostmasterStateMachine(void);
-static void BackendInitialize(Port *port);
+
+/* Return value of canAcceptConnections() */
+typedef enum CAC_state
+{
+	CAC_OK,
+	CAC_STARTUP,
+	CAC_SHUTDOWN,
+	CAC_RECOVERY,
+	CAC_NOTCONSISTENT,
+	CAC_TOOMANY,
+} CAC_state;
+
+static void BackendInitialize(Port *port, CAC_state cac);
 static void BackendRun(Port *port) pg_attribute_noreturn();
 static void ExitPostmaster(int status) pg_attribute_noreturn();
 static int	ServerLoop(void);
@@ -477,7 +489,7 @@ typedef struct
 } win32_deadchild_waitinfo;
 #endif							/* WIN32 */
 
-static pid_t backend_forkexec(Port *port);
+static pid_t backend_forkexec(Port *port, CAC_state cac);
 static pid_t internal_forkexec(int argc, char *argv[], Port *port, BackgroundWorker *worker);
 
 /* Type for a socket that can be inherited to a client process */
@@ -4087,6 +4099,7 @@ BackendStartup(Port *port)
 {
 	Backend    *bn;				/* for backend cleanup */
 	pid_t		pid;
+	CAC_state	cac;
 
 	/*
 	 * Create backend data structure.  Better before the fork() so we can
@@ -4118,8 +4131,8 @@ BackendStartup(Port *port)
 	bn->cancel_key = MyCancelKey;
 
 	/* Pass down canAcceptConnections state */
-	port->canAcceptConnections = canAcceptConnections(BACKEND_TYPE_NORMAL);
-	bn->dead_end = (port->canAcceptConnections != CAC_OK);
+	cac = canAcceptConnections(BACKEND_TYPE_NORMAL);
+	bn->dead_end = (cac != CAC_OK);
 
 	/*
 	 * Unless it's a dead_end child, assign it a child slot number
@@ -4133,7 +4146,7 @@ BackendStartup(Port *port)
 	bn->bgworker_notify = false;
 
 #ifdef EXEC_BACKEND
-	pid = backend_forkexec(port);
+	pid = backend_forkexec(port, cac);
 #else							/* !EXEC_BACKEND */
 	pid = fork_process();
 	if (pid == 0)				/* child */
@@ -4145,7 +4158,7 @@ BackendStartup(Port *port)
 		ClosePostmasterPorts(false);
 
 		/* Perform additional initialization and collect startup packet */
-		BackendInitialize(port);
+		BackendInitialize(port, cac);
 
 		/* And run the backend */
 		BackendRun(port);
@@ -4232,7 +4245,7 @@ report_fork_failure_to_client(Port *port, int errnum)
  * but have not yet set up most of our local pointers to shmem structures.
  */
 static void
-BackendInitialize(Port *port)
+BackendInitialize(Port *port, CAC_state cac)
 {
 	int			status;
 	int			ret;
@@ -4367,7 +4380,7 @@ BackendInitialize(Port *port)
 	 */
 	if (status == STATUS_OK)
 	{
-		switch (port->canAcceptConnections)
+		switch (cac)
 		{
 			case CAC_STARTUP:
 				ereport(FATAL,
@@ -4506,14 +4519,18 @@ postmaster_forkexec(int argc, char *argv[])
  * returns the pid of the fork/exec'd process, or -1 on failure
  */
 static pid_t
-backend_forkexec(Port *port)
+backend_forkexec(Port *port, CAC_state cac)
 {
-	char	   *av[4];
+	char	   *av[5];
 	int			ac = 0;
+	char		cacbuf[10];
 
 	av[ac++] = "postgres";
 	av[ac++] = "--forkbackend";
 	av[ac++] = NULL;			/* filled in by internal_forkexec */
+
+	snprintf(cacbuf, sizeof(cacbuf), "%d", (int) cac);
+	av[ac++] = cacbuf;
 
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));
@@ -4921,7 +4938,10 @@ SubPostmasterMain(int argc, char *argv[])
 	/* Run backend or appropriate child */
 	if (strcmp(argv[1], "--forkbackend") == 0)
 	{
-		Assert(argc == 3);		/* shouldn't be any more args */
+		CAC_state	cac;
+
+		Assert(argc == 4);
+		cac = (CAC_state) atoi(argv[3]);
 
 		/*
 		 * Need to reinitialize the SSL library in the backend, since the
@@ -4955,7 +4975,7 @@ SubPostmasterMain(int argc, char *argv[])
 		 * PGPROC slots, we have already initialized libpq and are able to
 		 * report the error to the client.
 		 */
-		BackendInitialize(port);
+		BackendInitialize(port, cac);
 
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
