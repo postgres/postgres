@@ -254,8 +254,8 @@ get_pgpid(bool is_status_request)
 			write_stderr(_("%s: directory \"%s\" does not exist\n"), progname,
 						 pg_data);
 		else
-			write_stderr(_("%s: could not access directory \"%s\": %s\n"), progname,
-						 pg_data, strerror(errno));
+			write_stderr(_("%s: could not access directory \"%s\": %m\n"), progname,
+						 pg_data);
 
 		/*
 		 * The Linux Standard Base Core Specification 3.1 says this should
@@ -280,8 +280,8 @@ get_pgpid(bool is_status_request)
 			return 0;
 		else
 		{
-			write_stderr(_("%s: could not open PID file \"%s\": %s\n"),
-						 progname, pid_file, strerror(errno));
+			write_stderr(_("%s: could not open PID file \"%s\": %m\n"),
+						 progname, pid_file);
 			exit(1);
 		}
 	}
@@ -454,8 +454,8 @@ start_postmaster(void)
 	if (pm_pid < 0)
 	{
 		/* fork failed */
-		write_stderr(_("%s: could not start server: %s\n"),
-					 progname, strerror(errno));
+		write_stderr(_("%s: could not start server: %m\n"),
+					 progname);
 		exit(1);
 	}
 	if (pm_pid > 0)
@@ -474,8 +474,8 @@ start_postmaster(void)
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 	{
-		write_stderr(_("%s: could not start server due to setsid() failure: %s\n"),
-					 progname, strerror(errno));
+		write_stderr(_("%s: could not start server due to setsid() failure: %m\n"),
+					 progname);
 		exit(1);
 	}
 #endif
@@ -496,8 +496,8 @@ start_postmaster(void)
 	(void) execl("/bin/sh", "/bin/sh", "-c", cmd, (char *) NULL);
 
 	/* exec failed */
-	write_stderr(_("%s: could not start server: %s\n"),
-				 progname, strerror(errno));
+	write_stderr(_("%s: could not start server: %m\n"),
+				 progname);
 	exit(1);
 
 	return 0;					/* keep dumb compilers quiet */
@@ -544,8 +544,8 @@ start_postmaster(void)
 			 */
 			if (errno != ENOENT)
 			{
-				write_stderr(_("%s: could not open log file \"%s\": %s\n"),
-							 progname, log_file, strerror(errno));
+				write_stderr(_("%s: could not open log file \"%s\": %m\n"),
+							 progname, log_file);
 				exit(1);
 			}
 		}
@@ -851,8 +851,8 @@ trap_sigint_during_startup(SIGNAL_ARGS)
 	if (postmasterPID != -1)
 	{
 		if (kill(postmasterPID, SIGINT) != 0)
-			write_stderr(_("%s: could not send stop signal (PID: %d): %s\n"),
-						 progname, (int) postmasterPID, strerror(errno));
+			write_stderr(_("%s: could not send stop signal (PID: %d): %m\n"),
+						 progname, (int) postmasterPID);
 	}
 
 	/*
@@ -1035,8 +1035,7 @@ do_stop(void)
 
 	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send stop signal (PID: %d): %s\n"), progname, (int) pid,
-					 strerror(errno));
+		write_stderr(_("%s: could not send stop signal (PID: %d): %m\n"), progname, (int) pid);
 		exit(1);
 	}
 
@@ -1103,8 +1102,7 @@ do_restart(void)
 	{
 		if (kill(pid, sig) != 0)
 		{
-			write_stderr(_("%s: could not send stop signal (PID: %d): %s\n"), progname, (int) pid,
-						 strerror(errno));
+			write_stderr(_("%s: could not send stop signal (PID: %d): %m\n"), progname, (int) pid);
 			exit(1);
 		}
 
@@ -1159,8 +1157,8 @@ do_reload(void)
 
 	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send reload signal (PID: %d): %s\n"),
-					 progname, (int) pid, strerror(errno));
+		write_stderr(_("%s: could not send reload signal (PID: %d): %m\n"),
+					 progname, (int) pid);
 		exit(1);
 	}
 
@@ -1207,25 +1205,25 @@ do_promote(void)
 
 	if ((prmfile = fopen(promote_file, "w")) == NULL)
 	{
-		write_stderr(_("%s: could not create promote signal file \"%s\": %s\n"),
-					 progname, promote_file, strerror(errno));
+		write_stderr(_("%s: could not create promote signal file \"%s\": %m\n"),
+					 progname, promote_file);
 		exit(1);
 	}
 	if (fclose(prmfile))
 	{
-		write_stderr(_("%s: could not write promote signal file \"%s\": %s\n"),
-					 progname, promote_file, strerror(errno));
+		write_stderr(_("%s: could not write promote signal file \"%s\": %m\n"),
+					 progname, promote_file);
 		exit(1);
 	}
 
 	sig = SIGUSR1;
 	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send promote signal (PID: %d): %s\n"),
-					 progname, (int) pid, strerror(errno));
+		write_stderr(_("%s: could not send promote signal (PID: %d): %m\n"),
+					 progname, (int) pid);
 		if (unlink(promote_file) != 0)
-			write_stderr(_("%s: could not remove promote signal file \"%s\": %s\n"),
-						 progname, promote_file, strerror(errno));
+			write_stderr(_("%s: could not remove promote signal file \"%s\": %m\n"),
+						 progname, promote_file);
 		exit(1);
 	}
 
@@ -1280,25 +1278,25 @@ do_logrotate(void)
 
 	if ((logrotatefile = fopen(logrotate_file, "w")) == NULL)
 	{
-		write_stderr(_("%s: could not create log rotation signal file \"%s\": %s\n"),
-					 progname, logrotate_file, strerror(errno));
+		write_stderr(_("%s: could not create log rotation signal file \"%s\": %m\n"),
+					 progname, logrotate_file);
 		exit(1);
 	}
 	if (fclose(logrotatefile))
 	{
-		write_stderr(_("%s: could not write log rotation signal file \"%s\": %s\n"),
-					 progname, logrotate_file, strerror(errno));
+		write_stderr(_("%s: could not write log rotation signal file \"%s\": %m\n"),
+					 progname, logrotate_file);
 		exit(1);
 	}
 
 	sig = SIGUSR1;
 	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send log rotation signal (PID: %d): %s\n"),
-					 progname, (int) pid, strerror(errno));
+		write_stderr(_("%s: could not send log rotation signal (PID: %d): %m\n"),
+					 progname, (int) pid);
 		if (unlink(logrotate_file) != 0)
-			write_stderr(_("%s: could not remove log rotation signal file \"%s\": %s\n"),
-						 progname, logrotate_file, strerror(errno));
+			write_stderr(_("%s: could not remove log rotation signal file \"%s\": %m\n"),
+						 progname, logrotate_file);
 		exit(1);
 	}
 
@@ -1396,8 +1394,8 @@ do_kill(pid_t pid)
 {
 	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send signal %d (PID: %d): %s\n"),
-					 progname, sig, (int) pid, strerror(errno));
+		write_stderr(_("%s: could not send signal %d (PID: %d): %m\n"),
+					 progname, sig, (int) pid);
 		exit(1);
 	}
 }

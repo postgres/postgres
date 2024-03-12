@@ -113,8 +113,7 @@ check_for_data_types_usage(ClusterInfo *cluster,
 		{
 			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s", output_path,
-						 strerror(errno));
+				pg_fatal("could not open file \"%s\": %m", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "In database: %s\n", active_db->db_name);
@@ -289,8 +288,7 @@ old_9_6_invalidate_hash_indexes(ClusterInfo *cluster, bool check_mode)
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s", output_path,
-							 strerror(errno));
+					pg_fatal("could not open file \"%s\": %m", output_path);
 				if (!db_used)
 				{
 					PQExpBufferData connectbuf;
@@ -423,8 +421,7 @@ report_extension_updates(ClusterInfo *cluster)
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s", output_path,
-						 strerror(errno));
+				pg_fatal("could not open file \"%s\": %m", output_path);
 			if (!db_used)
 			{
 				PQExpBufferData connectbuf;

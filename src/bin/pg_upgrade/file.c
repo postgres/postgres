@@ -41,20 +41,20 @@ cloneFile(const char *src, const char *dst,
 {
 #if defined(HAVE_COPYFILE) && defined(COPYFILE_CLONE_FORCE)
 	if (copyfile(src, dst, NULL, COPYFILE_CLONE_FORCE) < 0)
-		pg_fatal("error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s",
-				 schemaName, relName, src, dst, strerror(errno));
+		pg_fatal("error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %m",
+				 schemaName, relName, src, dst);
 #elif defined(__linux__) && defined(FICLONE)
 	int			src_fd;
 	int			dest_fd;
 
 	if ((src_fd = open(src, O_RDONLY | PG_BINARY, 0)) < 0)
-		pg_fatal("error while cloning relation \"%s.%s\": could not open file \"%s\": %s",
-				 schemaName, relName, src, strerror(errno));
+		pg_fatal("error while cloning relation \"%s.%s\": could not open file \"%s\": %m",
+				 schemaName, relName, src);
 
 	if ((dest_fd = open(dst, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 						pg_file_create_mode)) < 0)
-		pg_fatal("error while cloning relation \"%s.%s\": could not create file \"%s\": %s",
-				 schemaName, relName, dst, strerror(errno));
+		pg_fatal("error while cloning relation \"%s.%s\": could not create file \"%s\": %m",
+				 schemaName, relName, dst);
 
 	if (ioctl(dest_fd, FICLONE, src_fd) < 0)
 	{
@@ -88,13 +88,13 @@ copyFile(const char *src, const char *dst,
 	char	   *buffer;
 
 	if ((src_fd = open(src, O_RDONLY | PG_BINARY, 0)) < 0)
-		pg_fatal("error while copying relation \"%s.%s\": could not open file \"%s\": %s",
-				 schemaName, relName, src, strerror(errno));
+		pg_fatal("error while copying relation \"%s.%s\": could not open file \"%s\": %m",
+				 schemaName, relName, src);
 
 	if ((dest_fd = open(dst, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 						pg_file_create_mode)) < 0)
-		pg_fatal("error while copying relation \"%s.%s\": could not create file \"%s\": %s",
-				 schemaName, relName, dst, strerror(errno));
+		pg_fatal("error while copying relation \"%s.%s\": could not create file \"%s\": %m",
+				 schemaName, relName, dst);
 
 	/* copy in fairly large chunks for best efficiency */
 #define COPY_BUF_SIZE (50 * BLCKSZ)
@@ -107,8 +107,8 @@ copyFile(const char *src, const char *dst,
 		ssize_t		nbytes = read(src_fd, buffer, COPY_BUF_SIZE);
 
 		if (nbytes < 0)
-			pg_fatal("error while copying relation \"%s.%s\": could not read file \"%s\": %s",
-					 schemaName, relName, src, strerror(errno));
+			pg_fatal("error while copying relation \"%s.%s\": could not read file \"%s\": %m",
+					 schemaName, relName, src);
 
 		if (nbytes == 0)
 			break;
@@ -119,8 +119,8 @@ copyFile(const char *src, const char *dst,
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
-			pg_fatal("error while copying relation \"%s.%s\": could not write file \"%s\": %s",
-					 schemaName, relName, dst, strerror(errno));
+			pg_fatal("error while copying relation \"%s.%s\": could not write file \"%s\": %m",
+					 schemaName, relName, dst);
 		}
 	}
 
@@ -133,8 +133,8 @@ copyFile(const char *src, const char *dst,
 	if (CopyFile(src, dst, true) == 0)
 	{
 		_dosmaperr(GetLastError());
-		pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s",
-				 schemaName, relName, src, dst, strerror(errno));
+		pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %m",
+				 schemaName, relName, src, dst);
 	}
 
 #endif							/* WIN32 */
@@ -157,20 +157,20 @@ copyFileByRange(const char *src, const char *dst,
 	ssize_t		nbytes;
 
 	if ((src_fd = open(src, O_RDONLY | PG_BINARY, 0)) < 0)
-		pg_fatal("error while copying relation \"%s.%s\": could not open file \"%s\": %s",
-				 schemaName, relName, src, strerror(errno));
+		pg_fatal("error while copying relation \"%s.%s\": could not open file \"%s\": %m",
+				 schemaName, relName, src);
 
 	if ((dest_fd = open(dst, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 						pg_file_create_mode)) < 0)
-		pg_fatal("error while copying relation \"%s.%s\": could not create file \"%s\": %s",
-				 schemaName, relName, dst, strerror(errno));
+		pg_fatal("error while copying relation \"%s.%s\": could not create file \"%s\": %m",
+				 schemaName, relName, dst);
 
 	do
 	{
 		nbytes = copy_file_range(src_fd, NULL, dest_fd, NULL, SSIZE_MAX, 0);
 		if (nbytes < 0)
-			pg_fatal("error while copying relation \"%s.%s\": could not copy file range from \"%s\" to \"%s\": %s",
-					 schemaName, relName, src, dst, strerror(errno));
+			pg_fatal("error while copying relation \"%s.%s\": could not copy file range from \"%s\" to \"%s\": %m",
+					 schemaName, relName, src, dst);
 	}
 	while (nbytes > 0);
 
@@ -191,8 +191,8 @@ linkFile(const char *src, const char *dst,
 		 const char *schemaName, const char *relName)
 {
 	if (link(src, dst) < 0)
-		pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s",
-				 schemaName, relName, src, dst, strerror(errno));
+		pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %m",
+				 schemaName, relName, src, dst);
 }
 
 
@@ -230,17 +230,17 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 	rewriteVmBytesPerPage = (BLCKSZ - SizeOfPageHeaderData) / 2;
 
 	if ((src_fd = open(fromfile, O_RDONLY | PG_BINARY, 0)) < 0)
-		pg_fatal("error while copying relation \"%s.%s\": could not open file \"%s\": %s",
-				 schemaName, relName, fromfile, strerror(errno));
+		pg_fatal("error while copying relation \"%s.%s\": could not open file \"%s\": %m",
+				 schemaName, relName, fromfile);
 
 	if (fstat(src_fd, &statbuf) != 0)
-		pg_fatal("error while copying relation \"%s.%s\": could not stat file \"%s\": %s",
-				 schemaName, relName, fromfile, strerror(errno));
+		pg_fatal("error while copying relation \"%s.%s\": could not stat file \"%s\": %m",
+				 schemaName, relName, fromfile);
 
 	if ((dst_fd = open(tofile, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   pg_file_create_mode)) < 0)
-		pg_fatal("error while copying relation \"%s.%s\": could not create file \"%s\": %s",
-				 schemaName, relName, tofile, strerror(errno));
+		pg_fatal("error while copying relation \"%s.%s\": could not create file \"%s\": %m",
+				 schemaName, relName, tofile);
 
 	/* Save old file size */
 	src_filesize = statbuf.st_size;
@@ -263,8 +263,8 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 		if ((bytesRead = read(src_fd, buffer.data, BLCKSZ)) != BLCKSZ)
 		{
 			if (bytesRead < 0)
-				pg_fatal("error while copying relation \"%s.%s\": could not read file \"%s\": %s",
-						 schemaName, relName, fromfile, strerror(errno));
+				pg_fatal("error while copying relation \"%s.%s\": could not read file \"%s\": %m",
+						 schemaName, relName, fromfile);
 			else
 				pg_fatal("error while copying relation \"%s.%s\": partial page found in file \"%s\"",
 						 schemaName, relName, fromfile);
@@ -341,8 +341,8 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 				/* if write didn't set errno, assume problem is no disk space */
 				if (errno == 0)
 					errno = ENOSPC;
-				pg_fatal("error while copying relation \"%s.%s\": could not write file \"%s\": %s",
-						 schemaName, relName, tofile, strerror(errno));
+				pg_fatal("error while copying relation \"%s.%s\": could not write file \"%s\": %m",
+						 schemaName, relName, tofile);
 			}
 
 			/* Advance for next new page */
@@ -368,25 +368,23 @@ check_file_clone(void)
 
 #if defined(HAVE_COPYFILE) && defined(COPYFILE_CLONE_FORCE)
 	if (copyfile(existing_file, new_link_file, NULL, COPYFILE_CLONE_FORCE) < 0)
-		pg_fatal("could not clone file between old and new data directories: %s",
-				 strerror(errno));
+		pg_fatal("could not clone file between old and new data directories: %m");
 #elif defined(__linux__) && defined(FICLONE)
 	{
 		int			src_fd;
 		int			dest_fd;
 
 		if ((src_fd = open(existing_file, O_RDONLY | PG_BINARY, 0)) < 0)
-			pg_fatal("could not open file \"%s\": %s",
-					 existing_file, strerror(errno));
+			pg_fatal("could not open file \"%s\": %m",
+					 existing_file);
 
 		if ((dest_fd = open(new_link_file, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 							pg_file_create_mode)) < 0)
-			pg_fatal("could not create file \"%s\": %s",
-					 new_link_file, strerror(errno));
+			pg_fatal("could not create file \"%s\": %m",
+					 new_link_file);
 
 		if (ioctl(dest_fd, FICLONE, src_fd) < 0)
-			pg_fatal("could not clone file between old and new data directories: %s",
-					 strerror(errno));
+			pg_fatal("could not clone file between old and new data directories: %m");
 
 		close(src_fd);
 		close(dest_fd);
@@ -414,17 +412,16 @@ check_copy_file_range(void)
 		int			dest_fd;
 
 		if ((src_fd = open(existing_file, O_RDONLY | PG_BINARY, 0)) < 0)
-			pg_fatal("could not open file \"%s\": %s",
-					 existing_file, strerror(errno));
+			pg_fatal("could not open file \"%s\": %m",
+					 existing_file);
 
 		if ((dest_fd = open(new_link_file, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 							pg_file_create_mode)) < 0)
-			pg_fatal("could not create file \"%s\": %s",
-					 new_link_file, strerror(errno));
+			pg_fatal("could not create file \"%s\": %m",
+					 new_link_file);
 
 		if (copy_file_range(src_fd, NULL, dest_fd, NULL, SSIZE_MAX, 0) < 0)
-			pg_fatal("could not copy file range between old and new data directories: %s",
-					 strerror(errno));
+			pg_fatal("could not copy file range between old and new data directories: %m");
 
 		close(src_fd);
 		close(dest_fd);
@@ -447,9 +444,8 @@ check_hard_link(void)
 	unlink(new_link_file);		/* might fail */
 
 	if (link(existing_file, new_link_file) < 0)
-		pg_fatal("could not create hard link between old and new data directories: %s\n"
-				 "In link mode the old and new data directories must be on the same file system.",
-				 strerror(errno));
+		pg_fatal("could not create hard link between old and new data directories: %m\n"
+				 "In link mode the old and new data directories must be on the same file system.");
 
 	unlink(new_link_file);
 }

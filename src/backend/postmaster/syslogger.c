@@ -1173,7 +1173,7 @@ write_syslogger_file(const char *buffer, int count, int destination)
 	 * to our input pipe which would result in a different sort of looping.
 	 */
 	if (rc != count)
-		write_stderr("could not write to log file: %s\n", strerror(errno));
+		write_stderr("could not write to log file: %m\n");
 }
 
 #ifdef WIN32

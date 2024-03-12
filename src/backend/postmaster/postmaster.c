@@ -1375,12 +1375,12 @@ PostmasterMain(int argc, char *argv[])
 
 			/* Make PID file world readable */
 			if (chmod(external_pid_file, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) != 0)
-				write_stderr("%s: could not change permissions of external PID file \"%s\": %s\n",
-							 progname, external_pid_file, strerror(errno));
+				write_stderr("%s: could not change permissions of external PID file \"%s\": %m\n",
+							 progname, external_pid_file);
 		}
 		else
-			write_stderr("%s: could not write external PID file \"%s\": %s\n",
-						 progname, external_pid_file, strerror(errno));
+			write_stderr("%s: could not write external PID file \"%s\": %m\n",
+						 progname, external_pid_file);
 
 		on_proc_exit(unlink_external_pid_file, 0);
 	}
@@ -1589,8 +1589,8 @@ checkControlFile(void)
 	{
 		write_stderr("%s: could not find the database system\n"
 					 "Expected to find it in the directory \"%s\",\n"
-					 "but could not open file \"%s\": %s\n",
-					 progname, DataDir, path, strerror(errno));
+					 "but could not open file \"%s\": %m\n",
+					 progname, DataDir, path);
 		ExitPostmaster(2);
 	}
 	FreeFile(fp);
@@ -6277,15 +6277,13 @@ read_backend_variables(char *id, Port **port, BackgroundWorker **worker)
 	fp = AllocateFile(id, PG_BINARY_R);
 	if (!fp)
 	{
-		write_stderr("could not open backend variables file \"%s\": %s\n",
-					 id, strerror(errno));
+		write_stderr("could not open backend variables file \"%s\": %m\n", id);
 		exit(1);
 	}
 
 	if (fread(&param, sizeof(param), 1, fp) != 1)
 	{
-		write_stderr("could not read from backend variables file \"%s\": %s\n",
-					 id, strerror(errno));
+		write_stderr("could not read from backend variables file \"%s\": %m\n", id);
 		exit(1);
 	}
 
@@ -6293,8 +6291,7 @@ read_backend_variables(char *id, Port **port, BackgroundWorker **worker)
 	FreeFile(fp);
 	if (unlink(id) != 0)
 	{
-		write_stderr("could not remove file \"%s\": %s\n",
-					 id, strerror(errno));
+		write_stderr("could not remove file \"%s\": %m\n", id);
 		exit(1);
 	}
 #else

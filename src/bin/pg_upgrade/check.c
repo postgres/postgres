@@ -505,8 +505,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	prep_status("Creating script to delete old cluster");
 
 	if ((script = fopen_priv(*deletion_script_file_name, "w")) == NULL)
-		pg_fatal("could not open file \"%s\": %s",
-				 *deletion_script_file_name, strerror(errno));
+		pg_fatal("could not open file \"%s\": %m",
+				 *deletion_script_file_name);
 
 #ifndef WIN32
 	/* add shebang header */
@@ -556,8 +556,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 
 #ifndef WIN32
 	if (chmod(*deletion_script_file_name, S_IRWXU) != 0)
-		pg_fatal("could not add execute permission to file \"%s\": %s",
-				 *deletion_script_file_name, strerror(errno));
+		pg_fatal("could not add execute permission to file \"%s\": %m",
+				 *deletion_script_file_name);
 #endif
 
 	check_ok();
@@ -678,8 +678,7 @@ check_proper_datallowconn(ClusterInfo *cluster)
 			if (strcmp(datallowconn, "f") == 0)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s",
-							 output_path, strerror(errno));
+					pg_fatal("could not open file \"%s\": %m", output_path);
 
 				fprintf(script, "%s\n", datname);
 			}
@@ -794,8 +793,7 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s",
-						 output_path, strerror(errno));
+				pg_fatal("could not open file \"%s\": %m", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "In database: %s\n", active_db->db_name);
@@ -889,8 +887,7 @@ check_for_user_defined_postfix_ops(ClusterInfo *cluster)
 		{
 			if (script == NULL &&
 				(script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s",
-						 output_path, strerror(errno));
+				pg_fatal("could not open file \"%s\": %m", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "In database: %s\n", active_db->db_name);
@@ -1018,8 +1015,7 @@ check_for_incompatible_polymorphics(ClusterInfo *cluster)
 		{
 			if (script == NULL &&
 				(script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s",
-						 output_path, strerror(errno));
+				pg_fatal("could not open file \"%s\": %m", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "In database: %s\n", active_db->db_name);
@@ -1095,8 +1091,7 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s",
-						 output_path, strerror(errno));
+				pg_fatal("could not open file \"%s\": %m", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "In database: %s\n", active_db->db_name);
@@ -1374,8 +1369,7 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 	for (int rowno = 0; rowno < ntups; rowno++)
 	{
 		if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-			pg_fatal("could not open file \"%s\": %s",
-					 output_path, strerror(errno));
+			pg_fatal("could not open file \"%s\": %m", output_path);
 		fprintf(script, "%s (oid=%s)\n",
 				PQgetvalue(res, rowno, i_rolname),
 				PQgetvalue(res, rowno, i_roloid));
@@ -1448,8 +1442,7 @@ check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
 		{
 			if (script == NULL &&
 				(script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s",
-						 output_path, strerror(errno));
+				pg_fatal("could not open file \"%s\": %m", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "In database: %s\n", active_db->db_name);
@@ -1631,8 +1624,7 @@ check_old_cluster_for_valid_slots(bool live_check)
 			{
 				if (script == NULL &&
 					(script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s",
-							 output_path, strerror(errno));
+					pg_fatal("could not open file \"%s\": %m", output_path);
 
 				fprintf(script, "The slot \"%s\" is invalid\n",
 						slot->slotname);
@@ -1651,8 +1643,7 @@ check_old_cluster_for_valid_slots(bool live_check)
 			{
 				if (script == NULL &&
 					(script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s",
-							 output_path, strerror(errno));
+					pg_fatal("could not open file \"%s\": %m", output_path);
 
 				fprintf(script,
 						"The slot \"%s\" has not consumed the WAL yet\n",
@@ -1721,8 +1712,7 @@ check_old_cluster_subscription_state(void)
 			for (int i = 0; i < ntup; i++)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s",
-							 output_path, strerror(errno));
+					pg_fatal("could not open file \"%s\": %m", output_path);
 				fprintf(script, "The replication origin is missing for database:\"%s\" subscription:\"%s\"\n",
 						PQgetvalue(res, i, 0),
 						PQgetvalue(res, i, 1));
@@ -1774,8 +1764,7 @@ check_old_cluster_subscription_state(void)
 		for (int i = 0; i < ntup; i++)
 		{
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s",
-						 output_path, strerror(errno));
+				pg_fatal("could not open file \"%s\": %m", output_path);
 
 			fprintf(script, "The table sync state \"%s\" is not allowed for database:\"%s\" subscription:\"%s\" schema:\"%s\" relation:\"%s\"\n",
 					PQgetvalue(res, i, 0),

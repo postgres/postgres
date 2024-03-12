@@ -105,8 +105,8 @@ main(int argc, char **argv)
 	 * output directories with correct permissions.
 	 */
 	if (!GetDataDirectoryCreatePerm(new_cluster.pgdata))
-		pg_fatal("could not read permissions of directory \"%s\": %s",
-				 new_cluster.pgdata, strerror(errno));
+		pg_fatal("could not read permissions of directory \"%s\": %m",
+				 new_cluster.pgdata);
 
 	umask(pg_mode_mask);
 

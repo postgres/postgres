@@ -66,6 +66,6 @@ main(int argc, char *argv[])
 #endif
 
 	if (pg_foreach_ifaddr(callback, NULL) < 0)
-		fprintf(stderr, "pg_foreach_ifaddr failed: %s\n", strerror(errno));
+		fprintf(stderr, "pg_foreach_ifaddr failed: %m\n");
 	return 0;
 }

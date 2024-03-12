@@ -292,7 +292,7 @@ Gzip_getc(CompressFileHandle *CFH)
 	if (ret == EOF)
 	{
 		if (!gzeof(gzfp))
-			pg_fatal("could not read from input file: %s", strerror(errno));
+			pg_fatal("could not read from input file: %m");
 		else
 			pg_fatal("could not read from input file: end of file");
 	}

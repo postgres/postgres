@@ -871,7 +871,7 @@ try_complete_step(TestSpec *testspec, PermutationStep *pstep, int flags)
 		{
 			if (errno == EINTR)
 				continue;
-			fprintf(stderr, "select failed: %s\n", strerror(errno));
+			fprintf(stderr, "select failed: %m\n");
 			exit(1);
 		}
 		else if (ret == 0)		/* select() timeout: check for lock wait */

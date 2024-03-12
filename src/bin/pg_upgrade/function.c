@@ -186,8 +186,7 @@ check_loadable_libraries(void)
 				was_load_failure = true;
 
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s",
-							 output_path, strerror(errno));
+					pg_fatal("could not open file \"%s\": %m", output_path);
 				fprintf(script, _("could not load library \"%s\": %s"),
 						lib,
 						PQerrorMessage(conn));

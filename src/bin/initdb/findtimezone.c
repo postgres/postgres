@@ -680,8 +680,8 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 		if (stat(tzdir, &statbuf) != 0)
 		{
 #ifdef DEBUG_IDENTIFY_TIMEZONE
-			fprintf(stderr, "could not stat \"%s\": %s\n",
-					tzdir, strerror(errno));
+			fprintf(stderr, "could not stat \"%s\": %m\n",
+					tzdir);
 #endif
 			tzdir[tzdir_orig_len] = '\0';
 			continue;

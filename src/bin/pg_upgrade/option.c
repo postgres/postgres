@@ -445,8 +445,7 @@ adjust_data_dir(ClusterInfo *cluster)
 
 	if ((output = popen(cmd, "r")) == NULL ||
 		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
-		pg_fatal("could not get data directory using %s: %s",
-				 cmd, strerror(errno));
+		pg_fatal("could not get data directory using %s: %m", cmd);
 
 	rc = pclose(output);
 	if (rc != 0)
@@ -491,16 +490,15 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 		snprintf(filename, sizeof(filename), "%s/postmaster.pid",
 				 cluster->pgdata);
 		if ((fp = fopen(filename, "r")) == NULL)
-			pg_fatal("could not open file \"%s\": %s",
-					 filename, strerror(errno));
+			pg_fatal("could not open file \"%s\": %m", filename);
 
 		for (lineno = 1;
 			 lineno <= Max(LOCK_FILE_LINE_PORT, LOCK_FILE_LINE_SOCKET_DIR);
 			 lineno++)
 		{
 			if (fgets(line, sizeof(line), fp) == NULL)
-				pg_fatal("could not read line %d from file \"%s\": %s",
-						 lineno, filename, strerror(errno));
+				pg_fatal("could not read line %d from file \"%s\": %m",
+						 lineno, filename);
 
 			/* potentially overwrite user-supplied value */
 			if (lineno == LOCK_FILE_LINE_PORT)

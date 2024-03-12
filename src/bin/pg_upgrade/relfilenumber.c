@@ -218,9 +218,8 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 				if (errno == ENOENT)
 					return;
 				else
-					pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s",
-							 map->nspname, map->relname, old_file, new_file,
-							 strerror(errno));
+					pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %m",
+							 map->nspname, map->relname, old_file, new_file);
 			}
 
 			/* If file is empty, just return */
