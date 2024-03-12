@@ -959,9 +959,10 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 
 			(void) get_func_result_type(funcoid, &rettype, &rettupdesc);
 
-			(void) check_sql_fn_retval(querytree_list,
-									   rettype, rettupdesc,
-									   false, NULL);
+			(void) check_sql_fn_retval_ext(querytree_list,
+										   rettype, rettupdesc,
+										   proc->prokind,
+										   false, NULL);
 		}
 
 		error_context_stack = sqlerrcontext.previous;
