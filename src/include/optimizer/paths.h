@@ -83,7 +83,7 @@ extern bool match_index_to_operand(Node *operand, int indexcol,
 extern void check_index_predicates(PlannerInfo *root, RelOptInfo *rel);
 
 /*
- * tidpath.h
+ * tidpath.c
  *	  routines to generate tid paths
  */
 extern void create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel);
