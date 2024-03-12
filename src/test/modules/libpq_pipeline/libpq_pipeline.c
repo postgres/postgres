@@ -215,6 +215,7 @@ static void
 test_cancel(PGconn *conn)
 {
 	PGcancel   *cancel;
+	PGcancelConn *cancelConn;
 	PGconn	   *monitorConn;
 	char		errorbuf[256];
 
@@ -250,6 +251,126 @@ test_cancel(PGconn *conn)
 	if (!PQrequestCancel(conn))
 		pg_fatal("failed to run PQrequestCancel: %s", PQerrorMessage(conn));
 	confirm_query_canceled(conn);
+
+	/* test PQcancelBlocking */
+	send_cancellable_query(conn, monitorConn);
+	cancelConn = PQcancelCreate(conn);
+	if (!PQcancelBlocking(cancelConn))
+		pg_fatal("failed to run PQcancelBlocking: %s", PQcancelErrorMessage(cancelConn));
+	confirm_query_canceled(conn);
+	PQcancelFinish(cancelConn);
+
+	/* test PQcancelCreate and then polling with PQcancelPoll */
+	send_cancellable_query(conn, monitorConn);
+	cancelConn = PQcancelCreate(conn);
+	if (!PQcancelStart(cancelConn))
+		pg_fatal("bad cancel connection: %s", PQcancelErrorMessage(cancelConn));
+	while (true)
+	{
+		struct timeval tv;
+		fd_set		input_mask;
+		fd_set		output_mask;
+		PostgresPollingStatusType pollres = PQcancelPoll(cancelConn);
+		int			sock = PQcancelSocket(cancelConn);
+
+		if (pollres == PGRES_POLLING_OK)
+			break;
+
+		FD_ZERO(&input_mask);
+		FD_ZERO(&output_mask);
+		switch (pollres)
+		{
+			case PGRES_POLLING_READING:
+				pg_debug("polling for reads\n");
+				FD_SET(sock, &input_mask);
+				break;
+			case PGRES_POLLING_WRITING:
+				pg_debug("polling for writes\n");
+				FD_SET(sock, &output_mask);
+				break;
+			default:
+				pg_fatal("bad cancel connection: %s", PQcancelErrorMessage(cancelConn));
+		}
+
+		if (sock < 0)
+			pg_fatal("sock did not exist: %s", PQcancelErrorMessage(cancelConn));
+
+		tv.tv_sec = 3;
+		tv.tv_usec = 0;
+
+		while (true)
+		{
+			if (select(sock + 1, &input_mask, &output_mask, NULL, &tv) < 0)
+			{
+				if (errno == EINTR)
+					continue;
+				pg_fatal("select() failed: %m");
+			}
+			break;
+		}
+	}
+	if (PQcancelStatus(cancelConn) != CONNECTION_OK)
+		pg_fatal("unexpected cancel connection status: %s", PQcancelErrorMessage(cancelConn));
+	confirm_query_canceled(conn);
+
+	/*
+	 * test PQcancelReset works on the cancel connection and it can be reused
+	 * afterwards
+	 */
+	PQcancelReset(cancelConn);
+
+	send_cancellable_query(conn, monitorConn);
+	if (!PQcancelStart(cancelConn))
+		pg_fatal("bad cancel connection: %s", PQcancelErrorMessage(cancelConn));
+	while (true)
+	{
+		struct timeval tv;
+		fd_set		input_mask;
+		fd_set		output_mask;
+		PostgresPollingStatusType pollres = PQcancelPoll(cancelConn);
+		int			sock = PQcancelSocket(cancelConn);
+
+		if (pollres == PGRES_POLLING_OK)
+			break;
+
+		FD_ZERO(&input_mask);
+		FD_ZERO(&output_mask);
+		switch (pollres)
+		{
+			case PGRES_POLLING_READING:
+				pg_debug("polling for reads\n");
+				FD_SET(sock, &input_mask);
+				break;
+			case PGRES_POLLING_WRITING:
+				pg_debug("polling for writes\n");
+				FD_SET(sock, &output_mask);
+				break;
+			default:
+				pg_fatal("bad cancel connection: %s", PQcancelErrorMessage(cancelConn));
+		}
+
+		if (sock < 0)
+			pg_fatal("sock did not exist: %s", PQcancelErrorMessage(cancelConn));
+
+		tv.tv_sec = 3;
+		tv.tv_usec = 0;
+
+		while (true)
+		{
+			if (select(sock + 1, &input_mask, &output_mask, NULL, &tv) < 0)
+			{
+				if (errno == EINTR)
+					continue;
+				pg_fatal("select() failed: %m");
+			}
+			break;
+		}
+	}
+	if (PQcancelStatus(cancelConn) != CONNECTION_OK)
+		pg_fatal("unexpected cancel connection status: %s", PQcancelErrorMessage(cancelConn));
+	confirm_query_canceled(conn);
+
+	PQcancelFinish(cancelConn);
 
 	fprintf(stderr, "ok\n");
 }

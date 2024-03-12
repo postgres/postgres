@@ -193,3 +193,12 @@ PQsendClosePrepared       190
 PQsendClosePortal         191
 PQchangePassword          192
 PQsendPipelineSync        193
+PQcancelBlocking          194
+PQcancelStart             195
+PQcancelCreate            196
+PQcancelPoll              197
+PQcancelStatus            198
+PQcancelSocket            199
+PQcancelErrorMessage      200
+PQcancelReset             201
+PQcancelFinish            202

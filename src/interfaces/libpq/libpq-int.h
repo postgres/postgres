@@ -409,6 +409,10 @@ struct pg_conn
 	char	   *require_auth;	/* name of the expected auth method */
 	char	   *load_balance_hosts; /* load balance over hosts */
 
+	bool		cancelRequest;	/* true if this connection is used to send a
+								 * cancel request, instead of being a normal
+								 * connection that's used for queries */
+
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
 	int			traceFlags;
@@ -669,6 +673,7 @@ extern void pqClosePGconn(PGconn *conn);
 extern int	pqPacketSend(PGconn *conn, char pack_type,
 						 const void *buf, size_t buf_len);
 extern bool pqGetHomeDirectory(char *buf, int bufsize);
+extern bool pqCopyPGconn(PGconn *srcConn, PGconn *dstConn);
 extern bool pqParseIntParam(const char *value, int *result, PGconn *conn,
 							const char *context);
 
