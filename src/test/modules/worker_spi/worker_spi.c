@@ -39,10 +39,10 @@
 #include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "pgstat.h"
+#include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/snapmgr.h"
-#include "tcop/utility.h"
 
 PG_MODULE_MAGIC;
 

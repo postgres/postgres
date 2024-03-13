@@ -19,8 +19,8 @@
 #include "common/int.h"
 #include "common/logging.h"
 #include "fe_utils/option_utils.h"
-#include "lib/stringinfo.h"
 #include "getopt_long.h"
+#include "lib/stringinfo.h"
 
 typedef struct ws_options
 {

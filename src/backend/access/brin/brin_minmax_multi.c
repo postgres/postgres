@@ -59,16 +59,16 @@
 /* needed for PGSQL_AF_INET */
 #include <sys/socket.h>
 
-#include "access/genam.h"
 #include "access/brin.h"
 #include "access/brin_internal.h"
 #include "access/brin_tuple.h"
+#include "access/genam.h"
+#include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/stratnum.h"
-#include "access/htup_details.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
+#include "catalog/pg_type.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/date.h"

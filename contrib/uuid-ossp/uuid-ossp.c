@@ -13,9 +13,9 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
 #include "common/cryptohash.h"
 #include "common/sha1.h"
+#include "fmgr.h"
 #include "port/pg_bswap.h"
 #include "utils/builtins.h"
 #include "utils/uuid.h"

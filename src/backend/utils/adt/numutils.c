@@ -18,8 +18,8 @@
 #include <limits.h>
 #include <ctype.h>
 
-#include "utils/builtins.h"
 #include "port/pg_bitutils.h"
+#include "utils/builtins.h"
 
 /*
  * A table of all two-digit numbers. This is used to speed up decimal digit

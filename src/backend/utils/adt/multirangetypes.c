@@ -39,11 +39,11 @@
 #include "libpq/pqformat.h"
 #include "nodes/nodes.h"
 #include "port/pg_bitutils.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/rangetypes.h"
 #include "utils/multirangetypes.h"
-#include "utils/array.h"
+#include "utils/rangetypes.h"
 
 /* fn_extra cache entry for one of the range I/O functions */
 typedef struct MultirangeIOData

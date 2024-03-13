@@ -25,8 +25,8 @@
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
-#include "utils/rangetypes.h"
 #include "utils/multirangetypes.h"
+#include "utils/rangetypes.h"
 #include "utils/selfuncs.h"
 #include "utils/typcache.h"
 

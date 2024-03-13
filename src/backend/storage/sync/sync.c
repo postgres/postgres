@@ -18,8 +18,8 @@
 #include <fcntl.h>
 #include <sys/file.h>
 
-#include "access/commit_ts.h"
 #include "access/clog.h"
+#include "access/commit_ts.h"
 #include "access/multixact.h"
 #include "access/xlog.h"
 #include "miscadmin.h"

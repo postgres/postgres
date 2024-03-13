@@ -20,8 +20,8 @@
 
 #include "access/printsimple.h"
 #include "catalog/pg_type.h"
-#include "libpq/protocol.h"
 #include "libpq/pqformat.h"
+#include "libpq/protocol.h"
 #include "utils/builtins.h"
 
 /*

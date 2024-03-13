@@ -13,13 +13,13 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
-#include "libpq/pqformat.h"
 #include "common/int.h"
 #include "common/pg_prng.h"
+#include "libpq/pqformat.h"
 #include "port/pg_bitutils.h"
 #include "utils/array.h"
-#include "utils/datum.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 

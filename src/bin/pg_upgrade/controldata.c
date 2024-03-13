@@ -11,8 +11,8 @@
 
 #include <ctype.h>
 
-#include "pg_upgrade.h"
 #include "common/string.h"
+#include "pg_upgrade.h"
 
 
 /*

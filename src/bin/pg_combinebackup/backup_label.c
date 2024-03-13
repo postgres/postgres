@@ -15,8 +15,8 @@
 
 #include "access/xlogdefs.h"
 #include "backup_label.h"
-#include "common/logging.h"
 #include "common/file_perm.h"
+#include "common/logging.h"
 #include "write_manifest.h"
 
 static int	get_eol_offset(StringInfo buf);

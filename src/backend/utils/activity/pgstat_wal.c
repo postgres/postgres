@@ -17,8 +17,8 @@
 
 #include "postgres.h"
 
-#include "utils/pgstat_internal.h"
 #include "executor/instrument.h"
+#include "utils/pgstat_internal.h"
 
 
 PgStat_PendingWalStats PendingWalStats = {0};

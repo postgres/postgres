@@ -18,14 +18,14 @@
 #include "access/sysattr.h"
 #include "nodes/makefuncs.h"
 #include "parser/analyze.h"
-#include "parser/parse_collate.h"
-#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_cte.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_merge.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "parser/parsetree.h"
 #include "utils/rel.h"
 
 static void setNamespaceForMergeWhen(ParseState *pstate,

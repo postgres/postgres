@@ -14,8 +14,8 @@
 
 #include "postgres_fe.h"
 
-#include "pg_backup_utils.h"
 #include "compress_zstd.h"
+#include "pg_backup_utils.h"
 
 #ifndef USE_ZSTD
 

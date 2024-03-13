@@ -18,8 +18,8 @@
 #endif
 
 #include "bbstreamer.h"
-#include "common/logging.h"
 #include "common/file_perm.h"
+#include "common/logging.h"
 #include "common/string.h"
 
 #ifdef USE_LZ4

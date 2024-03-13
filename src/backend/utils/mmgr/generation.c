@@ -39,8 +39,8 @@
 #include "port/pg_bitutils.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
-#include "utils/memutils_memorychunk.h"
 #include "utils/memutils_internal.h"
+#include "utils/memutils_memorychunk.h"
 
 
 #define Generation_BLOCKHDRSZ	MAXALIGN(sizeof(GenerationBlock))

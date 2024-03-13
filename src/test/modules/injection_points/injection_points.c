@@ -19,9 +19,9 @@
 
 #include "fmgr.h"
 #include "storage/condition_variable.h"
+#include "storage/dsm_registry.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
-#include "storage/dsm_registry.h"
 #include "utils/builtins.h"
 #include "utils/injection_point.h"
 #include "utils/wait_event.h"

@@ -25,9 +25,9 @@
 #include "common/logging.h"
 #include "copy_file.h"
 #include "fe_utils/option_utils.h"
+#include "getopt_long.h"
 #include "lib/stringinfo.h"
 #include "load_manifest.h"
-#include "getopt_long.h"
 #include "reconstruct.h"
 #include "write_manifest.h"
 

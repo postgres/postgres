@@ -27,8 +27,8 @@
 #include "executor/executor.h"
 #include "pg_trace.h"
 #include "utils/datum.h"
-#include "utils/lsyscache.h"
 #include "utils/guc.h"
+#include "utils/lsyscache.h"
 #include "utils/tuplesort.h"
 
 

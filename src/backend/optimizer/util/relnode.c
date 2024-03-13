@@ -29,8 +29,8 @@
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
-#include "rewrite/rewriteManip.h"
 #include "parser/parse_relation.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 

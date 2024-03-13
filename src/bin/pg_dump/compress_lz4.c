@@ -12,9 +12,9 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
-#include "pg_backup_utils.h"
 
 #include "compress_lz4.h"
+#include "pg_backup_utils.h"
 
 #ifdef USE_LZ4
 #include <lz4frame.h>

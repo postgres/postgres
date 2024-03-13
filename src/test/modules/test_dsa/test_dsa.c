@@ -13,8 +13,8 @@
 #include "postgres.h"
 
 #include "fmgr.h"
-#include "utils/dsa.h"
 #include "storage/lwlock.h"
+#include "utils/dsa.h"
 #include "utils/resowner.h"
 
 PG_MODULE_MAGIC;

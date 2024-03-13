@@ -32,16 +32,16 @@
 #include "catalog/pg_control.h"
 #include "catalog/storage_xlog.h"
 #include "commands/dbcommands_xlog.h"
-#include "utils/fmgrprotos.h"
-#include "utils/timestamp.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "port/atomics.h"
 #include "storage/bufmgr.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
+#include "utils/fmgrprotos.h"
 #include "utils/guc_hooks.h"
 #include "utils/hsearch.h"
+#include "utils/timestamp.h"
 
 /*
  * Every time we process this much WAL, we'll update the values in

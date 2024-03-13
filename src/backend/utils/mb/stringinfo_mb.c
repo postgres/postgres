@@ -19,8 +19,8 @@
  */
 #include "postgres.h"
 
-#include "mb/stringinfo_mb.h"
 #include "mb/pg_wchar.h"
+#include "mb/stringinfo_mb.h"
 
 
 /*

@@ -49,8 +49,8 @@
 #include "port/pg_bitutils.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
-#include "utils/memutils_memorychunk.h"
 #include "utils/memutils_internal.h"
+#include "utils/memutils_memorychunk.h"
 
 /*--------------------
  * Chunk freelist k holds chunks of size 1 << (k + ALLOC_MINBITS),

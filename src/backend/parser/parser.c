@@ -21,8 +21,8 @@
 
 #include "postgres.h"
 
-#include "mb/pg_wchar.h"
 #include "gramparse.h"
+#include "mb/pg_wchar.h"
 #include "parser/parser.h"
 #include "parser/scansup.h"
 

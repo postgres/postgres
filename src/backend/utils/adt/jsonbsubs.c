@@ -19,8 +19,8 @@
 #include "nodes/subscripting.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
-#include "utils/jsonb.h"
 #include "utils/builtins.h"
+#include "utils/jsonb.h"
 
 
 /* SubscriptingRefState.workspace for jsonb subscripting execution */

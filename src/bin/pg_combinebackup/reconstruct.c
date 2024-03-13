@@ -15,8 +15,8 @@
 #include <unistd.h>
 
 #include "backup/basebackup_incremental.h"
-#include "common/logging.h"
 #include "common/file_perm.h"
+#include "common/logging.h"
 #include "copy_file.h"
 #include "lib/stringinfo.h"
 #include "reconstruct.h"

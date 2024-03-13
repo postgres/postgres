@@ -18,9 +18,9 @@
 
 #include "postgres_fe.h"
 
-#include "pg_regress.h"
 #include "common/string.h"
 #include "lib/stringinfo.h"
+#include "pg_regress.h"
 
 
 /*

@@ -14,8 +14,8 @@
 #include <unistd.h>
 
 #include "bbstreamer.h"
-#include "common/logging.h"
 #include "common/file_perm.h"
+#include "common/logging.h"
 #include "common/string.h"
 
 typedef struct bbstreamer_plain_writer
