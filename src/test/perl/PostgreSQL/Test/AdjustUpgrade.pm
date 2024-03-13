@@ -300,6 +300,17 @@ sub adjust_old_dumpfile
 		$dump = _mash_view_qualifiers($dump);
 	}
 
+	if ($old_version >= 14 && $old_version < 17)
+	{
+		# Fix up some privilege-set discrepancies.
+		$dump =~
+		  s {^REVOKE SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE}
+			{REVOKE ALL ON TABLE}mg;
+		$dump =~
+		  s {^(GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE),UPDATE ON TABLE}
+			{$1,MAINTAIN,UPDATE ON TABLE}mg;
+	}
+
 	if ($old_version < 14)
 	{
 		# Remove mentions of extended hash functions.

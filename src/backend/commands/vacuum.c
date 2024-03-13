@@ -170,6 +170,9 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	/* By default parallel vacuum is enabled */
 	params.nworkers = 0;
 
+	/* Will be set later if we recurse to a TOAST table. */
+	params.toast_parent = InvalidOid;
+
 	/*
 	 * Set this to an invalid value so it is clear whether or not a
 	 * BUFFER_USAGE_LIMIT was specified when making the access strategy.
@@ -695,32 +698,29 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 }
 
 /*
- * Check if a given relation can be safely vacuumed or analyzed.  If the
- * user is not the relation owner, issue a WARNING log message and return
- * false to let the caller decide what to do with this relation.  This
- * routine is used to decide if a relation can be processed for VACUUM or
- * ANALYZE.
+ * Check if the current user has privileges to vacuum or analyze the relation.
+ * If not, issue a WARNING log message and return false to let the caller
+ * decide what to do with this relation.  This routine is used to decide if a
+ * relation can be processed for VACUUM or ANALYZE.
  */
 bool
-vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, bits32 options)
+vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
+								 bits32 options)
 {
 	char	   *relname;
 
 	Assert((options & (VACOPT_VACUUM | VACOPT_ANALYZE)) != 0);
 
-	/*
-	 * Check permissions.
-	 *
-	 * We allow the user to vacuum or analyze a table if he is superuser, the
-	 * table owner, or the database owner (but in the latter case, only if
-	 * it's not a shared relation).  object_ownercheck includes the superuser
-	 * case.
-	 *
-	 * Note we choose to treat permissions failure as a WARNING and keep
-	 * trying to vacuum or analyze the rest of the DB --- is this appropriate?
+	/*----------
+	 * A role has privileges to vacuum or analyze the relation if any of the
+	 * following are true:
+	 *   - the role owns the current database and the relation is not shared
+	 *   - the role has the MAINTAIN privilege on the relation
+	 *----------
 	 */
-	if (object_ownercheck(RelationRelationId, relid, GetUserId()) ||
-		(object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared))
+	if ((object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) &&
+		 !reltuple->relisshared) ||
+		pg_class_aclcheck(relid, GetUserId(), ACL_MAINTAIN) == ACLCHECK_OK)
 		return true;
 
 	relname = NameStr(reltuple->relname);
@@ -936,10 +936,10 @@ expand_vacuum_rel(VacuumRelation *vrel, MemoryContext vac_context,
 		classForm = (Form_pg_class) GETSTRUCT(tuple);
 
 		/*
-		 * Make a returnable VacuumRelation for this rel if user is a proper
-		 * owner.
+		 * Make a returnable VacuumRelation for this rel if the user has the
+		 * required privileges.
 		 */
-		if (vacuum_is_relation_owner(relid, classForm, options))
+		if (vacuum_is_permitted_for_relation(relid, classForm, options))
 		{
 			oldcontext = MemoryContextSwitchTo(vac_context);
 			vacrels = lappend(vacrels, makeVacuumRelation(vrel->relation,
@@ -1036,7 +1036,7 @@ get_all_vacuum_rels(MemoryContext vac_context, int options)
 			continue;
 
 		/* check permissions of relation */
-		if (!vacuum_is_relation_owner(relid, classForm, options))
+		if (!vacuum_is_permitted_for_relation(relid, classForm, options))
 			continue;
 
 		/*
@@ -1952,6 +1952,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	LOCKMODE	lmode;
 	Relation	rel;
 	LockRelId	lockrelid;
+	Oid			priv_relid;
 	Oid			toast_relid;
 	Oid			save_userid;
 	int			save_sec_context;
@@ -2028,16 +2029,25 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	}
 
 	/*
-	 * Check if relation needs to be skipped based on ownership.  This check
+	 * When recursing to a TOAST table, check privileges on the parent.  NB:
+	 * This is only safe to do because we hold a session lock on the main
+	 * relation that prevents concurrent deletion.
+	 */
+	if (OidIsValid(params->toast_parent))
+		priv_relid = params->toast_parent;
+	else
+		priv_relid = RelationGetRelid(rel);
+
+	/*
+	 * Check if relation needs to be skipped based on privileges.  This check
 	 * happens also when building the relation list to vacuum for a manual
 	 * operation, and needs to be done additionally here as VACUUM could
-	 * happen across multiple transactions where relation ownership could have
-	 * changed in-between.  Make sure to only generate logs for VACUUM in this
-	 * case.
+	 * happen across multiple transactions where privileges could have changed
+	 * in-between.  Make sure to only generate logs for VACUUM in this case.
 	 */
-	if (!vacuum_is_relation_owner(RelationGetRelid(rel),
-								  rel->rd_rel,
-								  params->options & VACOPT_VACUUM))
+	if (!vacuum_is_permitted_for_relation(priv_relid,
+										  rel->rd_rel,
+										  params->options & ~VACOPT_ANALYZE))
 	{
 		relation_close(rel, lmode);
 		PopActiveSnapshot();
@@ -2224,9 +2234,15 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	{
 		VacuumParams toast_vacuum_params;
 
-		/* force VACOPT_PROCESS_MAIN so vacuum_rel() processes it */
+		/*
+		 * Force VACOPT_PROCESS_MAIN so vacuum_rel() processes it.  Likewise,
+		 * set toast_parent so that the privilege checks are done on the main
+		 * relation.  NB: This is only safe to do because we hold a session
+		 * lock on the main relation that prevents concurrent deletion.
+		 */
 		memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
 		toast_vacuum_params.options |= VACOPT_PROCESS_MAIN;
+		toast_vacuum_params.toast_parent = relid;
 
 		vacuum_rel(toast_relid, NULL, &toast_vacuum_params, bstrategy);
 	}

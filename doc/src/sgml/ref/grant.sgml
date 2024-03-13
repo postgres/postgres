@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
+GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | MAINTAIN }
     [, ...] | ALL [ PRIVILEGES ] }
     ON { [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
          | ALL TABLES IN SCHEMA <replaceable class="parameter">schema_name</replaceable> [, ...] }
@@ -193,6 +193,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>USAGE</literal></term>
      <term><literal>SET</literal></term>
      <term><literal>ALTER SYSTEM</literal></term>
+     <term><literal>MAINTAIN</literal></term>
      <listitem>
       <para>
        Specific types of privileges, as defined in <xref linkend="ddl-priv"/>.

@@ -2627,6 +2627,8 @@ string_to_privilege(const char *privname)
 		return ACL_SET;
 	if (strcmp(privname, "alter system") == 0)
 		return ACL_ALTER_SYSTEM;
+	if (strcmp(privname, "maintain") == 0)
+		return ACL_MAINTAIN;
 	if (strcmp(privname, "rule") == 0)
 		return 0;				/* ignore old RULE privileges */
 	ereport(ERROR,
@@ -2668,6 +2670,8 @@ privilege_to_string(AclMode privilege)
 			return "SET";
 		case ACL_ALTER_SYSTEM:
 			return "ALTER SYSTEM";
+		case ACL_MAINTAIN:
+			return "MAINTAIN";
 		default:
 			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}
@@ -3425,6 +3429,17 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 		!(result & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
 		has_privs_of_role(roleid, ROLE_PG_WRITE_ALL_DATA))
 		result |= (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE));
+
+	/*
+	 * Check if ACL_MAINTAIN is being checked and, if so, and not already set
+	 * as part of the result, then check if the user is a member of the
+	 * pg_maintain role, which allows VACUUM, ANALYZE, CLUSTER, REFRESH
+	 * MATERIALIZED VIEW, and REINDEX on all relations.
+	 */
+	if (mask & ACL_MAINTAIN &&
+		!(result & ACL_MAINTAIN) &&
+		has_privs_of_role(roleid, ROLE_PG_MAINTAIN))
+		result |= ACL_MAINTAIN;
 
 	return result;
 }

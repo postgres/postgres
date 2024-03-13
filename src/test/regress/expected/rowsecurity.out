@@ -93,23 +93,23 @@ CREATE POLICY p2r ON document AS RESTRICTIVE TO regress_rls_dave
 CREATE POLICY p1r ON document AS RESTRICTIVE TO regress_rls_dave
     USING (cid <> 44);
 \dp
-                                                                  Access privileges
-       Schema       |   Name   | Type  |              Access privileges              | Column privileges |                  Policies                  
---------------------+----------+-------+---------------------------------------------+-------------------+--------------------------------------------
- regress_rls_schema | category | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | 
-                    |          |       | =arwdDxt/regress_rls_alice                  |                   | 
- regress_rls_schema | document | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | p1:                                       +
-                    |          |       | =arwdDxt/regress_rls_alice                  |                   |   (u): (dlevel <= ( SELECT uaccount.seclv +
-                    |          |       |                                             |                   |    FROM uaccount                          +
-                    |          |       |                                             |                   |   WHERE (uaccount.pguser = CURRENT_USER)))+
-                    |          |       |                                             |                   | p2r (RESTRICTIVE):                        +
-                    |          |       |                                             |                   |   (u): ((cid <> 44) AND (cid < 50))       +
-                    |          |       |                                             |                   |   to: regress_rls_dave                    +
-                    |          |       |                                             |                   | p1r (RESTRICTIVE):                        +
-                    |          |       |                                             |                   |   (u): (cid <> 44)                        +
-                    |          |       |                                             |                   |   to: regress_rls_dave
- regress_rls_schema | uaccount | table | regress_rls_alice=arwdDxt/regress_rls_alice+|                   | 
-                    |          |       | =r/regress_rls_alice                        |                   | 
+                                                                   Access privileges
+       Schema       |   Name   | Type  |              Access privileges               | Column privileges |                  Policies                  
+--------------------+----------+-------+----------------------------------------------+-------------------+--------------------------------------------
+ regress_rls_schema | category | table | regress_rls_alice=arwdDxtm/regress_rls_alice+|                   | 
+                    |          |       | =arwdDxtm/regress_rls_alice                  |                   | 
+ regress_rls_schema | document | table | regress_rls_alice=arwdDxtm/regress_rls_alice+|                   | p1:                                       +
+                    |          |       | =arwdDxtm/regress_rls_alice                  |                   |   (u): (dlevel <= ( SELECT uaccount.seclv +
+                    |          |       |                                              |                   |    FROM uaccount                          +
+                    |          |       |                                              |                   |   WHERE (uaccount.pguser = CURRENT_USER)))+
+                    |          |       |                                              |                   | p2r (RESTRICTIVE):                        +
+                    |          |       |                                              |                   |   (u): ((cid <> 44) AND (cid < 50))       +
+                    |          |       |                                              |                   |   to: regress_rls_dave                    +
+                    |          |       |                                              |                   | p1r (RESTRICTIVE):                        +
+                    |          |       |                                              |                   |   (u): (cid <> 44)                        +
+                    |          |       |                                              |                   |   to: regress_rls_dave
+ regress_rls_schema | uaccount | table | regress_rls_alice=arwdDxtm/regress_rls_alice+|                   | 
+                    |          |       | =r/regress_rls_alice                         |                   | 
 (3 rows)
 
 \d document

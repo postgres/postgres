@@ -149,16 +149,15 @@ analyze_rel(Oid relid, RangeVar *relation,
 		return;
 
 	/*
-	 * Check if relation needs to be skipped based on ownership.  This check
+	 * Check if relation needs to be skipped based on privileges.  This check
 	 * happens also when building the relation list to analyze for a manual
 	 * operation, and needs to be done additionally here as ANALYZE could
-	 * happen across multiple transactions where relation ownership could have
-	 * changed in-between.  Make sure to generate only logs for ANALYZE in
-	 * this case.
+	 * happen across multiple transactions where privileges could have changed
+	 * in-between.  Make sure to generate only logs for ANALYZE in this case.
 	 */
-	if (!vacuum_is_relation_owner(RelationGetRelid(onerel),
-								  onerel->rd_rel,
-								  params->options & VACOPT_ANALYZE))
+	if (!vacuum_is_permitted_for_relation(RelationGetRelid(onerel),
+										  onerel->rd_rel,
+										  params->options & ~VACOPT_VACUUM))
 	{
 		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;

@@ -283,7 +283,7 @@ LockTableAclCheck(Oid reloid, LOCKMODE lockmode, Oid userid)
 	AclMode		aclmask;
 
 	/* any of these privileges permit any lock mode */
-	aclmask = ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
+	aclmask = ACL_MAINTAIN | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
 
 	/* SELECT privileges also permit ACCESS SHARE and below */
 	if (lockmode <= AccessShareLock)

@@ -228,6 +228,7 @@ typedef struct VacuumParams
 									 * default */
 	VacOptValue index_cleanup;	/* Do index vacuum and cleanup */
 	VacOptValue truncate;		/* Truncate empty pages at the end */
+	Oid			toast_parent;	/* for privilege checks when recursing */
 
 	/*
 	 * The number of parallel vacuum workers.  0 by default which means choose
@@ -343,8 +344,8 @@ extern bool vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 extern bool vacuum_xid_failsafe_check(const struct VacuumCutoffs *cutoffs);
 extern void vac_update_datfrozenxid(void);
 extern void vacuum_delay_point(void);
-extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
-									 bits32 options);
+extern bool vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
+											 bits32 options);
 extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
 									 bits32 options, bool verbose,
 									 LOCKMODE lmode);

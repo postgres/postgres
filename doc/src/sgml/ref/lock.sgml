@@ -166,8 +166,8 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
 
    <para>
     To lock a table, the user must have the right privilege for the specified
-    <replaceable class="parameter">lockmode</replaceable>, or be the table's
-    owner or a superuser.  If the user has
+    <replaceable class="parameter">lockmode</replaceable>.
+    If the user has <literal>MAINTAIN</literal>,
     <literal>UPDATE</literal>, <literal>DELETE</literal>, or
     <literal>TRUNCATE</literal> privileges on the table, any <replaceable
     class="parameter">lockmode</replaceable> is permitted. If the user has

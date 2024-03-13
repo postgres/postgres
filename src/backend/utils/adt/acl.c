@@ -330,6 +330,9 @@ aclparse(const char *s, AclItem *aip, Node *escontext)
 			case ACL_ALTER_SYSTEM_CHR:
 				read = ACL_ALTER_SYSTEM;
 				break;
+			case ACL_MAINTAIN_CHR:
+				read = ACL_MAINTAIN;
+				break;
 			case 'R':			/* ignore old RULE privileges */
 				read = 0;
 				break;
@@ -1621,6 +1624,7 @@ makeaclitem(PG_FUNCTION_ARGS)
 		{"CONNECT", ACL_CONNECT},
 		{"SET", ACL_SET},
 		{"ALTER SYSTEM", ACL_ALTER_SYSTEM},
+		{"MAINTAIN", ACL_MAINTAIN},
 		{"RULE", 0},			/* ignore old RULE privileges */
 		{NULL, 0}
 	};
@@ -1729,6 +1733,8 @@ convert_aclright_to_string(int aclright)
 			return "SET";
 		case ACL_ALTER_SYSTEM:
 			return "ALTER SYSTEM";
+		case ACL_MAINTAIN:
+			return "MAINTAIN";
 		default:
 			elog(ERROR, "unrecognized aclright: %d", aclright);
 			return NULL;
@@ -2041,6 +2047,8 @@ convert_table_priv_string(text *priv_type_text)
 		{"REFERENCES WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_REFERENCES)},
 		{"TRIGGER", ACL_TRIGGER},
 		{"TRIGGER WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_TRIGGER)},
+		{"MAINTAIN", ACL_MAINTAIN},
+		{"MAINTAIN WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_MAINTAIN)},
 		{"RULE", 0},			/* ignore old RULE privileges */
 		{"RULE WITH GRANT OPTION", 0},
 		{NULL, 0}

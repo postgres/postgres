@@ -23,7 +23,7 @@ step s1_lock_child     { LOCK cluster_part_tab1 IN SHARE UPDATE EXCLUSIVE MODE; 
 step s1_commit         { COMMIT; }
 
 session s2
-step s2_auth           { SET ROLE regress_cluster_part; }
+step s2_auth           { SET ROLE regress_cluster_part; SET client_min_messages = ERROR; }
 step s2_cluster        { CLUSTER cluster_part_tab USING cluster_part_ind; }
 step s2_reset          { RESET ROLE; }
 

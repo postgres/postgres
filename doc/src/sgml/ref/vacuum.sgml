@@ -434,11 +434,9 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
   <title>Notes</title>
 
    <para>
-    To vacuum a table, one must ordinarily be the table's owner or a
-    superuser.  However, database owners are allowed to
+    To vacuum a table, one must ordinarily have the <literal>MAINTAIN</literal>
+    privilege on the table.  However, database owners are allowed to
     vacuum all tables in their databases, except shared catalogs.
-    (The restriction for shared catalogs means that a true database-wide
-    <command>VACUUM</command> can only be performed by a superuser.)
     <command>VACUUM</command> will skip over any tables that the calling user
     does not have permission to vacuum.
    </para>

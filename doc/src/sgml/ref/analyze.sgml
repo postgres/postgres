@@ -174,11 +174,9 @@ ANALYZE [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
   <title>Notes</title>
 
   <para>
-   To analyze a table, one must ordinarily be the table's owner or a
-   superuser.  However, database owners are allowed to
+   To analyze a table, one must ordinarily have the <literal>MAINTAIN</literal>
+   privilege on the table.  However, database owners are allowed to
    analyze all tables in their databases, except shared catalogs.
-   (The restriction for shared catalogs means that a true database-wide
-   <command>ANALYZE</command> can only be performed by a superuser.)
    <command>ANALYZE</command> will skip over any tables that the calling user
    does not have permission to analyze.
   </para>

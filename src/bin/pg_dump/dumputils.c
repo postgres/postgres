@@ -463,6 +463,7 @@ do { \
 				CONVERT_PRIV('d', "DELETE");
 				CONVERT_PRIV('t', "TRIGGER");
 				CONVERT_PRIV('D', "TRUNCATE");
+				CONVERT_PRIV('m', "MAINTAIN");
 			}
 		}
 

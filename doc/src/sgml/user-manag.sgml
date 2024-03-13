@@ -683,6 +683,18 @@ DROP ROLE doomed_role;
        command.</entry>
       </row>
       <row>
+       <entry>pg_maintain</entry>
+       <entry>Allow executing
+       <link linkend="sql-vacuum"><command>VACUUM</command></link>,
+       <link linkend="sql-analyze"><command>ANALYZE</command></link>,
+       <link linkend="sql-cluster"><command>CLUSTER</command></link>,
+       <link linkend="sql-refreshmaterializedview"><command>REFRESH MATERIALIZED VIEW</command></link>,
+       <link linkend="sql-reindex"><command>REINDEX</command></link>,
+       and <link linkend="sql-lock"><command>LOCK TABLE</command></link> on all
+       relations, as if having <literal>MAINTAIN</literal> rights on those
+       objects, even without having it explicitly.</entry>
+      </row>
+      <row>
        <entry>pg_use_reserved_connections</entry>
        <entry>Allow use of connection slots reserved via
        <xref linkend="guc-reserved-connections"/>.</entry>
