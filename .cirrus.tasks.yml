@@ -126,11 +126,9 @@ task:
   name: FreeBSD - 13 - Meson
 
   env:
-    # FreeBSD on GCP is slow when running with larger number of CPUS /
-    # jobs. Using one more job than cpus seems to work best.
-    CPUS: 2
-    BUILD_JOBS: 3
-    TEST_JOBS: 3
+    CPUS: 4
+    BUILD_JOBS: 4
+    TEST_JOBS: 8
     IMAGE_FAMILY: pg-ci-freebsd-13
     DISK_SIZE: 50
 
