@@ -515,6 +515,9 @@ a	{2}	2
 4	{a, 4}	4
 
 5	{5}	5
+6	a
+7	{7}	a
+8	{8}	8
 \.
 SELECT * FROM check_ign_err;
 
