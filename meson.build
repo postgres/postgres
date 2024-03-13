@@ -222,10 +222,20 @@ elif host_system == 'darwin'
     cflags += ['-isysroot', pg_sysroot]
     ldflags += ['-isysroot', pg_sysroot]
   endif
+
   # meson defaults to -Wl,-undefined,dynamic_lookup for modules, which we
   # don't want because a) it's different from what we do for autoconf, b) it
-  # causes warnings starting in macOS Ventura
-  ldflags_mod += ['-Wl,-undefined,error']
+  # causes warnings in macOS Ventura. But using -Wl,-undefined,error causes a
+  # warning starting in Sonoma. So only add -Wl,-undefined,error if it does
+  # not cause a warning.
+  if cc.has_multi_link_arguments('-Wl,-undefined,error', '-Werror')
+    ldflags_mod += '-Wl,-undefined,error'
+  endif
+
+  # Starting in Sonoma, the linker warns about the same library being
+  # linked twice.  Which can easily happen when multiple dependencies
+  # depend on the same library. Quiesce the ill considered warning.
+  ldflags += cc.get_supported_link_arguments('-Wl,-no_warn_duplicate_libraries')
 
 elif host_system == 'freebsd'
   sema_kind = 'unnamed_posix'
