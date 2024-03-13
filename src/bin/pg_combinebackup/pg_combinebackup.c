@@ -534,7 +534,7 @@ check_control_files(int n_backups, char **backup_dirs)
 
 		controlpath = psprintf("%s/%s", backup_dirs[i], "global/pg_control");
 		pg_log_debug("reading \"%s\"", controlpath);
-		control_file = get_controlfile(backup_dirs[i], &crc_ok);
+		control_file = get_controlfile_by_exact_path(controlpath, &crc_ok);
 
 		/* Control file contents not meaningful if CRC is bad. */
 		if (!crc_ok)

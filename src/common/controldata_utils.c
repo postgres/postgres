@@ -51,9 +51,24 @@
 ControlFileData *
 get_controlfile(const char *DataDir, bool *crc_ok_p)
 {
+	char		ControlFilePath[MAXPGPATH];
+
+	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
+
+	return get_controlfile_by_exact_path(ControlFilePath, crc_ok_p);
+}
+
+/*
+ * get_controlfile_by_exact_path()
+ *
+ * As above, but the caller specifies the path to the control file itself,
+ * rather than the path to the data directory.
+ */
+ControlFileData *
+get_controlfile_by_exact_path(const char *ControlFilePath, bool *crc_ok_p)
+{
 	ControlFileData *ControlFile;
 	int			fd;
-	char		ControlFilePath[MAXPGPATH];
 	pg_crc32c	crc;
 	int			r;
 #ifdef FRONTEND
@@ -64,7 +79,6 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 	Assert(crc_ok_p);
 
 	ControlFile = palloc_object(ControlFileData);
-	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 
 #ifdef FRONTEND
 	INIT_CRC32C(last_crc);
