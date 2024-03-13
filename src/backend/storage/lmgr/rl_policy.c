@@ -53,6 +53,8 @@ static bool starts_with(const char *str, const char *pre) {
 #define WW_CONFLICT 5
 #define READ_OPT 0
 #define UPDATE_OPT 1
+#define READ_CONTENTION 2
+#define UPDATE_CONTENTION 3
 #define READ_FACTOR 0.2
 #define ABORT_PENALTY (-2000.0)
 #define COMMIT_AWARD 0
@@ -62,14 +64,15 @@ static bool starts_with(const char *str, const char *pre) {
 
 // small set of action
 #define ALG_NUM 7
-#define DEFAULT_CC_ALG 1
+#define DEFAULT_CC_ALG 2
 const int alg_list[ALG_NUM][3] = {
-        {LOCK_ASSERT_ABORT, XACT_READ_COMMITTED, 0},
+//        {LOCK_ASSERT_ABORT, XACT_READ_COMMITTED, 0},
         {LOCK_2PL_NW, XACT_READ_COMMITTED, 0},
         {LOCK_2PL, XACT_READ_COMMITTED, 1},
         {LOCK_2PL, XACT_READ_COMMITTED, 10},
         {LOCK_2PL, XACT_READ_COMMITTED, 100},
         {LOCK_2PL, XACT_READ_COMMITTED, 1000},
+        {LOCK_2PL, XACT_READ_COMMITTED, 0},
         {LOCK_2PL, XACT_READ_COMMITTED, 0},
 };
 
@@ -117,6 +120,7 @@ static uint64_t get_cur_time_ns()
 void refresh_lock_strategy()
 {
     uint32 tid = MyProc->lxid;
+    bool is_simple_stmt = false;
     Assert(RLState != NULL);
     Assert(RLState->cur_xact_id == tid);
 
@@ -127,19 +131,22 @@ void refresh_lock_strategy()
     if (!IsolationLearnCC())
         return;
 
+    if (RLState->last_reward == 0) is_simple_stmt = true;
     RLState->action = rl_next_action(tid);
+    RLState->step ++;
     RLState->last_reward = 0;
 
-    XactIsoLevel = alg_list[RLState->action][0];
-    XactLockStrategy = alg_list[RLState->action][1];
+    XactLockStrategy = alg_list[RLState->action][0];
+    XactIsoLevel = alg_list[RLState->action][1];
     LockTimeout = alg_list[RLState->action][2];
 
 
     Assert((!IsolationIsSerializable() && !IsolationNeedLock()) || IsolationLearnCC()
            || XactLockStrategy == DefaultXactLockStrategy || IsolationIsSerializable());
 
-    if (XactLockStrategy == LOCK_ASSERT_ABORT)
+    if (!is_simple_stmt && XactLockStrategy == LOCK_ASSERT_ABORT)
     {
+        // we do not abort during the start command.
         ereport(ERROR,
                 (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
                         errmsg("could not serialize access due to cc strategy"),
@@ -167,17 +174,18 @@ void init_rl_state(uint32 xact_id)
     RLState->action = -1;
     RLState->last_reward = 0;
     RLState->xact_start_ts = get_cur_time_ns();
+    RLState->step = 0;
     RLState->last_lock_time = 0;
     memset(RLState->conflicts, 0, sizeof(RLState->conflicts));
     memset(RLState->block_info, 0, sizeof(RLState->block_info));
     RLState->avg_expected_wait = 0;
-    SpinLockInit(&RLState->mutex);
+//    SpinLockInit(&RLState->mutex);
+    refresh_lock_strategy();
 }
 
 void finish_rl_process(uint32 xact_id, bool is_commit)
 {
     FILE *filePtr = fopen("episode.txt", "a");
-    double time_span;
     if (filePtr == NULL)
     {
         printf("Error opening file.\n");
@@ -185,10 +193,11 @@ void finish_rl_process(uint32 xact_id, bool is_commit)
     }
     if (RLState->last_lock_time == 0) return;
     Assert(RLState->last_lock_time > 0 || XactLockStrategy == LOCK_ASSERT_ABORT);
-    time_span = (double) NS_TO_US(get_cur_time_ns() - RLState->last_lock_time);
     Assert(RLState != NULL);
     Assert(RLState->cur_xact_id == xact_id);
     RLState->last_reward = is_commit ? COMMIT_AWARD : ABORT_PENALTY;
+//    double time_span;
+//    time_span = (double) NS_TO_US(get_cur_time_ns() - RLState->last_lock_time);
 //    RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
 //    RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
 
@@ -209,17 +218,34 @@ int rl_next_action(uint32 xact_id)
 #if MODEL_REMOTE == 1
 #else
 #endif
-//    RLState->action = DEFAULT_CC_ALG;
-    RLState->action = (int)(random()) % ALG_NUM;
-    print_current_state(xact_id);
+    RLState->action = DEFAULT_CC_ALG;
+//    RLState->action = (int)(random()) % ALG_NUM;
+//    print_current_state(xact_id);
     Assert(RLState->action >= 0 && RLState->action < ALG_NUM);
     return RLState->action;
 }
 
 void print_current_state(uint32 xact_id)
 {
+    printf("[xact:%d, step:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%.2f-%.2f-%.2f-%.2f, r=%.2f, max_wait=%.2f], the action is %d\n",
+           RLState->cur_xact_id,
+           RLState->step,
+           RLState->conflicts[0],
+           RLState->conflicts[1],
+           RLState->conflicts[2],
+           RLState->conflicts[3],
+           RLState->conflicts[4],
+           RLState->conflicts[5],
+           RLState->conflicts[6],
+           RLState->block_info[0],
+           RLState->block_info[1],
+           RLState->block_info[2],
+           RLState->block_info[3],
+           RLState->last_reward,
+           RLState->avg_expected_wait,
+           RLState->action);
 #if MODEL_REMOTE == 1
-    printf("[xact:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%.2f-%.2f, r=%.2f, max_wait=%.2f], the action is %d\n",
+    printf("[xact:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%.2f-%.2f-%.2f-%.2f, r=%.2f, max_wait=%.2f], the action is %d\n",
             RLState->cur_xact_id,
             RLState->conflicts[0],
             RLState->conflicts[1],
@@ -230,6 +256,8 @@ void print_current_state(uint32 xact_id)
             RLState->conflicts[6],
             RLState->block_info[0],
             RLState->block_info[1],
+            RLState->block_info[2],
+            RLState->block_info[3],
             RLState->last_reward,
             RLState->avg_expected_wait,
             RLState->action);
@@ -242,8 +270,9 @@ void print_current_state(uint32 xact_id)
     }
     Assert(RLState != NULL);
     Assert(RLState->cur_xact_id == xact_id);
-    fprintf(filePtr, "[xact:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%.2f-%.2f, r=%.2f, max_wait=%.2f], the action is %d\n",
+    fprintf(filePtr, "[xact:%d, step:%d, k:%d-%d-%d-%d-%d-%d-%d, block:%.2f-%.2f-%.2f-%.2f, r=%.2f, max_wait=%.2f], the action is %d\n",
             RLState->cur_xact_id,
+            RLState->step,
             RLState->conflicts[0],
             RLState->conflicts[1],
             RLState->conflicts[2],
@@ -253,6 +282,8 @@ void print_current_state(uint32 xact_id)
             RLState->conflicts[6],
             RLState->block_info[0],
             RLState->block_info[1],
+            RLState->block_info[2],
+            RLState->block_info[3],
             RLState->last_reward,
             RLState->avg_expected_wait,
             RLState->action);
@@ -264,7 +295,7 @@ void before_lock(int i, bool is_read)
 {
     if (!IsolationLearnCC()) return;
     SpinLockAcquire(&LockFeatureVec[i].mutex);
-    SpinLockAcquire(&RLState->mutex);   // we enforce the get lock from a single transaction to be executed in serial.
+//    SpinLockAcquire(&RLState->mutex);   // we enforce the get lock from a single transaction to be executed in serial.
     RLState->avg_expected_wait = LockFeatureVec[i].avg_free_time;
     if (is_read)
     {
@@ -300,17 +331,26 @@ void after_lock(int i, bool is_read)
     RLState->last_lock_time = now;
     SpinLockAcquire(&LockFeatureVec[i].mutex);
     if (is_read)    // cumulative blocking effect.
-        RLState->block_info[READ_OPT] += LockFeatureVec[i].write_intention_cnt;
+    {
+        RLState->block_info[READ_OPT] ++;
+        RLState->block_info[READ_CONTENTION] += LockFeatureVec[i].write_intention_cnt;
+    }
     else
-        RLState->block_info[UPDATE_OPT] +=
+    {
+        RLState->block_info[UPDATE_OPT] ++;
+        RLState->block_info[UPDATE_CONTENTION] +=
                 LockFeatureVec[i].write_intention_cnt + LockFeatureVec[i].read_intention_cnt;
+    }
     SpinLockRelease(&LockFeatureVec[i].mutex);
+    // there is no interleaving lock.
+    Assert(SKIP_XACT(RLState->cur_xact_id) || (uint16)(RLState->block_info[UPDATE_OPT] + RLState->block_info[READ_OPT]) == RLState->step - 1);
+//    Assert();
 
-    RLState->last_reward -= time_span * RLState->block_info[READ_OPT] * READ_FACTOR;
+    RLState->last_reward -= time_span * RLState->block_info[READ_CONTENTION] * READ_FACTOR;
     // the release of a single read operation will not always results in the preceeding of blocked xact.
     // the block of those transactions shall be attributed to all xacts that holds read lock.
-    RLState->last_reward -= time_span * RLState->block_info[UPDATE_OPT];
-    SpinLockRelease(&RLState->mutex);
+    RLState->last_reward -= time_span * RLState->block_info[UPDATE_CONTENTION];
+//    SpinLockRelease(&RLState->mutex);
 }
 
 

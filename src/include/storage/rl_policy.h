@@ -37,9 +37,10 @@ typedef struct XactState {
     uint64_t xact_start_ts;
     uint32 cur_xact_id; // for validation propose.
 
-    slock_t mutex;
+//    slock_t mutex;
     // protected： we enforce the operations in a single transaction to be executed in serial.
-    double block_info[2];
+    double block_info[4];
+    uint16 step;
     uint16 conflicts[7];
     uint64_t last_lock_time;
     double avg_expected_wait;
