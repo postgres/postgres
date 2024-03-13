@@ -454,7 +454,7 @@ InitLocks(void)
 									  16,
 									  &info,
 									  HASH_ELEM | HASH_BLOBS);
-    init_global_feature_collector();
+    if (IsolationLearnCC()) init_global_feature_collector();
 }
 
 
@@ -1477,7 +1477,7 @@ GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode)
 	if (lock->granted[lockmode] == lock->requested[lockmode])
 		lock->waitMask &= LOCKBIT_OFF(lockmode);
 	proclock->holdMask |= LOCKBIT_ON(lockmode);
-    if (IsolationNeedLock() && lock->tag.locktag_type == LOCKTAG_TUPLE)
+    if (IsolationLearnCC() && lock->tag.locktag_type == LOCKTAG_TUPLE)
         report_conflict(lock->tag.locktag_field2,
                                        lock->tag.locktag_field3,
                                        lock->tag.locktag_field4,
@@ -1508,7 +1508,7 @@ UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 	Assert(lock->nGranted <= lock->nRequested);
 
 
-    if (IsolationNeedLock() && lock->tag.locktag_type == LOCKTAG_TUPLE) {
+    if (IsolationLearnCC() && lock->tag.locktag_type == LOCKTAG_TUPLE) {
         report_conflict(lock->tag.locktag_field2,
                         lock->tag.locktag_field3,
                         lock->tag.locktag_field4,

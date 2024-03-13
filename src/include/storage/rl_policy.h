@@ -15,7 +15,6 @@
 // LockFeatureData regard the feature for a tuples grouped by hash.
 typedef struct GlobalLockFeatureData {
     double avg_free_time;
-    double utility;
     uint16 read_cnt;
     uint16 write_cnt;
     uint16 read_intention_cnt;
@@ -34,16 +33,17 @@ typedef struct GlobalLockFeatureData {
 /* features from global lock graph. */
 // B: the expected cost for a transaction to be aborted. Since we consider transaction, we use operation number
 // for feature.
-
-
 typedef struct XactState {
     uint64_t xact_start_ts;
+    uint32 cur_xact_id; // for validation propose.
+
+    slock_t mutex;
+    // protected： we enforce the operations in a single transaction to be executed in serial.
+    double block_info[2];
+    uint16 conflicts[7];
     uint64_t last_lock_time;
     double avg_expected_wait;
     double last_reward;
-    uint32 cur_xact_id; // for validation propose.
-    uint16 conflicts[7];
-    uint16 block_info[2];
     int action;
 } TrainingState;
 
