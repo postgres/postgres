@@ -1277,8 +1277,8 @@ slurp_file(int fd, char *filename, StringInfo buf, int maxlen)
 		if (rb < 0)
 			pg_fatal("could not read file \"%s\": %m", filename);
 		else
-			pg_fatal("could not read file \"%s\": read only %d of %d bytes",
-					 filename, (int) rb, (int) st.st_size);
+			pg_fatal("could not read file \"%s\": read only %zd of %lld bytes",
+					 filename, rb, (long long int) st.st_size);
 	}
 
 	/* Adjust buffer length for new data and restore trailing-\0 invariant */

@@ -511,7 +511,7 @@ read_bytes(rfile *rf, void *buffer, unsigned length)
 		if (rb < 0)
 			pg_fatal("could not read file \"%s\": %m", rf->filename);
 		else
-			pg_fatal("could not read file \"%s\": read only %d of %d bytes",
+			pg_fatal("could not read file \"%s\": read only %d of %u bytes",
 					 rf->filename, rb, length);
 	}
 }
