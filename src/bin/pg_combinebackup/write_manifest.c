@@ -45,7 +45,7 @@ static size_t hex_encode(const uint8 *src, size_t len, char *dst);
  * in the specified directory.
  */
 manifest_writer *
-create_manifest_writer(char *directory)
+create_manifest_writer(char *directory, uint64 system_identifier)
 {
 	manifest_writer *mwriter = pg_malloc(sizeof(manifest_writer));
 
@@ -57,8 +57,10 @@ create_manifest_writer(char *directory)
 	pg_checksum_init(&mwriter->manifest_ctx, CHECKSUM_TYPE_SHA256);
 
 	appendStringInfo(&mwriter->buf,
-					 "{ \"PostgreSQL-Backup-Manifest-Version\": 1,\n"
-					 "\"Files\": [");
+					 "{ \"PostgreSQL-Backup-Manifest-Version\": 2,\n"
+					 "\"System-Identifier\": " UINT64_FORMAT ",\n"
+					 "\"Files\": [",
+					 system_identifier);
 
 	return mwriter;
 }

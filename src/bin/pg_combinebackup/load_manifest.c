@@ -50,6 +50,10 @@ static uint32 hash_string_pointer(char *s);
 #define SH_DEFINE
 #include "lib/simplehash.h"
 
+static void combinebackup_version_cb(JsonManifestParseContext *context,
+									 int manifest_version);
+static void combinebackup_system_identifier_cb(JsonManifestParseContext *context,
+											   uint64 manifest_system_identifier);
 static void combinebackup_per_file_cb(JsonManifestParseContext *context,
 									  char *pathname, size_t size,
 									  pg_checksum_type checksum_type,
@@ -153,6 +157,8 @@ load_backup_manifest(char *backup_directory)
 	result = pg_malloc0(sizeof(manifest_data));
 	result->files = ht;
 	context.private_data = result;
+	context.version_cb = combinebackup_version_cb;
+	context.system_identifier_cb = combinebackup_system_identifier_cb;
 	context.per_file_cb = combinebackup_per_file_cb;
 	context.per_wal_range_cb = combinebackup_per_wal_range_cb;
 	context.error_cb = report_manifest_error;
@@ -179,6 +185,31 @@ report_manifest_error(JsonManifestParseContext *context, const char *fmt,...)
 	va_end(ap);
 
 	exit(1);
+}
+
+/*
+ * This callback to validate the manifest version number for incremental backup.
+ */
+static void
+combinebackup_version_cb(JsonManifestParseContext *context,
+						 int manifest_version)
+{
+	/* Incremental backups supported on manifest version 2 or later */
+	if (manifest_version == 1)
+		pg_fatal("backup manifest version 1 does not support incremental backup");
+}
+
+/*
+ * Record system identifier extracted from the backup manifest.
+ */
+static void
+combinebackup_system_identifier_cb(JsonManifestParseContext *context,
+								   uint64 manifest_system_identifier)
+{
+	manifest_data *manifest = context->private_data;
+
+	/* Validation will be at the later stage */
+	manifest->system_identifier = manifest_system_identifier;
 }
 
 /*

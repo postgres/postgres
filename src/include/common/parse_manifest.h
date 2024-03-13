@@ -21,6 +21,10 @@
 struct JsonManifestParseContext;
 typedef struct JsonManifestParseContext JsonManifestParseContext;
 
+typedef void (*json_manifest_version_callback) (JsonManifestParseContext *,
+												int manifest_version);
+typedef void (*json_manifest_system_identifier_callback) (JsonManifestParseContext *,
+														  uint64 manifest_system_identifier);
 typedef void (*json_manifest_per_file_callback) (JsonManifestParseContext *,
 												 char *pathname,
 												 size_t size, pg_checksum_type checksum_type,
@@ -35,6 +39,8 @@ typedef void (*json_manifest_error_callback) (JsonManifestParseContext *,
 struct JsonManifestParseContext
 {
 	void	   *private_data;
+	json_manifest_version_callback version_cb;
+	json_manifest_system_identifier_callback system_identifier_cb;
 	json_manifest_per_file_callback per_file_cb;
 	json_manifest_per_wal_range_callback per_wal_range_cb;
 	json_manifest_error_callback error_cb;

@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/timeline.h"
+#include "access/xlog.h"
 #include "backup/basebackup_incremental.h"
 #include "backup/walsummary.h"
 #include "common/blkreftable.h"
@@ -113,6 +114,10 @@ struct IncrementalBackupInfo
 	BlockRefTable *brtab;
 };
 
+static void manifest_process_version(JsonManifestParseContext *context,
+									 int manifest_version);
+static void manifest_process_system_identifier(JsonManifestParseContext *context,
+											   uint64 manifest_system_identifier);
 static void manifest_process_file(JsonManifestParseContext *context,
 								  char *pathname,
 								  size_t size,
@@ -199,6 +204,8 @@ FinalizeIncrementalManifest(IncrementalBackupInfo *ib)
 
 	/* Parse the manifest. */
 	context.private_data = ib;
+	context.version_cb = manifest_process_version;
+	context.system_identifier_cb = manifest_process_system_identifier;
 	context.per_file_cb = manifest_process_file;
 	context.per_wal_range_cb = manifest_process_wal_range;
 	context.error_cb = manifest_report_error;
@@ -925,6 +932,39 @@ hash_string_pointer(const char *s)
 	unsigned char *ss = (unsigned char *) s;
 
 	return hash_bytes(ss, strlen(s));
+}
+
+/*
+ * This callback to validate the manifest version for incremental backup.
+ */
+static void
+manifest_process_version(JsonManifestParseContext *context,
+						 int manifest_version)
+{
+	/* Incremental backups don't work with manifest version 1 */
+	if (manifest_version == 1)
+		context->error_cb(context,
+						  "backup manifest version 1 does not support incremental backup");
+}
+
+/*
+ * This callback to validate the manifest system identifier against the current
+ * database server.
+ */
+static void
+manifest_process_system_identifier(JsonManifestParseContext *context,
+								   uint64 manifest_system_identifier)
+{
+	uint64		system_identifier;
+
+	/* Get system identifier of current system */
+	system_identifier = GetSystemIdentifier();
+
+	if (manifest_system_identifier != system_identifier)
+		context->error_cb(context,
+						  "manifest system identifier is %llu, but database system identifier is %llu",
+						  (unsigned long long) manifest_system_identifier,
+						  (unsigned long long) system_identifier);
 }
 
 /*

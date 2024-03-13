@@ -92,7 +92,7 @@ cb_cleanup_dir *cleanup_dir_list = NULL;
 
 static void add_tablespace_mapping(cb_options *opt, char *arg);
 static StringInfo check_backup_label_files(int n_backups, char **backup_dirs);
-static void check_control_files(int n_backups, char **backup_dirs);
+static uint64 check_control_files(int n_backups, char **backup_dirs);
 static void check_input_dir_permissions(char *dir);
 static void cleanup_directories_atexit(void);
 static void create_output_directory(char *dirname, cb_options *opt);
@@ -134,11 +134,13 @@ main(int argc, char *argv[])
 
 	const char *progname;
 	char	   *last_input_dir;
+	int			i;
 	int			optindex;
 	int			c;
 	int			n_backups;
 	int			n_prior_backups;
 	int			version;
+	uint64		system_identifier;
 	char	  **prior_backup_dirs;
 	cb_options	opt;
 	cb_tablespace *tablespaces;
@@ -216,7 +218,7 @@ main(int argc, char *argv[])
 
 	/* Sanity-check control files. */
 	n_backups = argc - optind;
-	check_control_files(n_backups, argv + optind);
+	system_identifier = check_control_files(n_backups, argv + optind);
 
 	/* Sanity-check backup_label files, and get the contents of the last one. */
 	last_backup_label = check_backup_label_files(n_backups, argv + optind);
@@ -230,6 +232,26 @@ main(int argc, char *argv[])
 
 	/* Load backup manifests. */
 	manifests = load_backup_manifests(n_backups, prior_backup_dirs);
+
+	/*
+	 * Validate the manifest system identifier against the backup system
+	 * identifier.
+	 */
+	for (i = 0; i < n_backups; i++)
+	{
+		if (manifests[i] &&
+			manifests[i]->system_identifier != system_identifier)
+		{
+			char	   *controlpath;
+
+			controlpath = psprintf("%s/%s", prior_backup_dirs[i], "global/pg_control");
+
+			pg_fatal("%s: manifest system identifier is %llu, but control file has %llu",
+					 controlpath,
+					 (unsigned long long) manifests[i]->system_identifier,
+					 (unsigned long long) system_identifier);
+		}
+	}
 
 	/* Figure out which tablespaces are going to be included in the output. */
 	last_input_dir = argv[argc - 1];
@@ -256,7 +278,7 @@ main(int argc, char *argv[])
 	/* If we need to write a backup_manifest, prepare to do so. */
 	if (!opt.dry_run && !opt.no_manifest)
 	{
-		mwriter = create_manifest_writer(opt.output);
+		mwriter = create_manifest_writer(opt.output, system_identifier);
 
 		/*
 		 * Verify that we have a backup manifest for the final backup; else we
@@ -517,9 +539,9 @@ check_backup_label_files(int n_backups, char **backup_dirs)
 }
 
 /*
- * Sanity check control files.
+ * Sanity check control files and return system_identifier.
  */
-static void
+static uint64
 check_control_files(int n_backups, char **backup_dirs)
 {
 	int			i;
@@ -564,6 +586,8 @@ check_control_files(int n_backups, char **backup_dirs)
 	 */
 	pg_log_debug("system identifier is %llu",
 				 (unsigned long long) system_identifier);
+
+	return system_identifier;
 }
 
 /*

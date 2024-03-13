@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#include "common/controldata_utils.h"
 #include "common/hashfn.h"
 #include "common/logging.h"
 #include "common/parse_manifest.h"
@@ -98,6 +99,8 @@ typedef struct manifest_wal_range
  */
 typedef struct manifest_data
 {
+	int			version;
+	uint64		system_identifier;
 	manifest_files_hash *files;
 	manifest_wal_range *first_wal_range;
 	manifest_wal_range *last_wal_range;
@@ -116,6 +119,10 @@ typedef struct verifier_context
 } verifier_context;
 
 static manifest_data *parse_manifest_file(char *manifest_path);
+static void verifybackup_version_cb(JsonManifestParseContext *context,
+									int manifest_version);
+static void verifybackup_system_identifier(JsonManifestParseContext *context,
+										   uint64 manifest_system_identifier);
 static void verifybackup_per_file_cb(JsonManifestParseContext *context,
 									 char *pathname, size_t size,
 									 pg_checksum_type checksum_type,
@@ -133,6 +140,8 @@ static void verify_backup_directory(verifier_context *context,
 									char *relpath, char *fullpath);
 static void verify_backup_file(verifier_context *context,
 							   char *relpath, char *fullpath);
+static void verify_control_file(const char *controlpath,
+								uint64 manifest_system_identifier);
 static void report_extra_backup_files(verifier_context *context);
 static void verify_backup_checksums(verifier_context *context);
 static void verify_file_checksum(verifier_context *context,
@@ -375,9 +384,7 @@ main(int argc, char **argv)
 }
 
 /*
- * Parse a manifest file. Construct a hash table with information about
- * all the files it mentions, and a linked list of all the WAL ranges it
- * mentions.
+ * Parse a manifest file and return a data structure describing the contents.
  */
 static manifest_data *
 parse_manifest_file(char *manifest_path)
@@ -432,6 +439,8 @@ parse_manifest_file(char *manifest_path)
 	result = pg_malloc0(sizeof(manifest_data));
 	result->files = ht;
 	context.private_data = result;
+	context.version_cb = verifybackup_version_cb;
+	context.system_identifier_cb = verifybackup_system_identifier;
 	context.per_file_cb = verifybackup_per_file_cb;
 	context.per_wal_range_cb = verifybackup_per_wal_range_cb;
 	context.error_cb = report_manifest_error;
@@ -459,6 +468,32 @@ report_manifest_error(JsonManifestParseContext *context, const char *fmt,...)
 	va_end(ap);
 
 	exit(1);
+}
+
+/*
+ * Record details extracted from the backup manifest.
+ */
+static void
+verifybackup_version_cb(JsonManifestParseContext *context,
+						int manifest_version)
+{
+	manifest_data *manifest = context->private_data;
+
+	/* Validation will be at the later stage */
+	manifest->version = manifest_version;
+}
+
+/*
+ * Record details extracted from the backup manifest.
+ */
+static void
+verifybackup_system_identifier(JsonManifestParseContext *context,
+							   uint64 manifest_system_identifier)
+{
+	manifest_data *manifest = context->private_data;
+
+	/* Validation will be at the later stage */
+	manifest->system_identifier = manifest_system_identifier;
 }
 
 /*
@@ -650,6 +685,14 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 		m->bad = true;
 	}
 
+	/*
+	 * Validate the manifest system identifier, not available in manifest
+	 * version 1.
+	 */
+	if (context->manifest->version != 1 &&
+		strcmp(relpath, "global/pg_control") == 0)
+		verify_control_file(fullpath, context->manifest->system_identifier);
+
 	/* Update statistics for progress report, if necessary */
 	if (show_progress && !skip_checksums && should_verify_checksum(m))
 		total_size += m->size;
@@ -660,6 +703,39 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 	 * afterwards verify the checksums. That's because computing checksums may
 	 * take a while, and we'd like to report more obvious problems quickly.
 	 */
+}
+
+/*
+ * Sanity check control file and validate system identifier against manifest
+ * system identifier.
+ */
+static void
+verify_control_file(const char *controlpath, uint64 manifest_system_identifier)
+{
+	ControlFileData *control_file;
+	bool		crc_ok;
+
+	pg_log_debug("reading \"%s\"", controlpath);
+	control_file = get_controlfile_by_exact_path(controlpath, &crc_ok);
+
+	/* Control file contents not meaningful if CRC is bad. */
+	if (!crc_ok)
+		report_fatal_error("%s: CRC is incorrect", controlpath);
+
+	/* Can't interpret control file if not current version. */
+	if (control_file->pg_control_version != PG_CONTROL_VERSION)
+		report_fatal_error("%s: unexpected control file version",
+						   controlpath);
+
+	/* System identifiers should match. */
+	if (manifest_system_identifier != control_file->system_identifier)
+		report_fatal_error("%s: manifest system identifier is %llu, but control file has %llu",
+						   controlpath,
+						   (unsigned long long) manifest_system_identifier,
+						   (unsigned long long) control_file->system_identifier);
+
+	/* Release memory. */
+	pfree(control_file);
 }
 
 /*

@@ -965,4 +965,20 @@ $backupdir = $node->backup_dir . '/backup3';
 my @dst_tblspc = glob "$backupdir/pg_tblspc/$tblspc_oid/PG_*";
 is(@dst_tblspc, 1, 'tblspc directory copied');
 
+# Can't take backup with referring manifest of different cluster
+#
+# Set up another new database instance with force initdb option. We don't want
+# to initializing database system by copying initdb template for this, because
+# we want it to be a separate cluster with a different system ID.
+my $node2 = PostgreSQL::Test::Cluster->new('node2');
+$node2->init(force_initdb => 1, has_archiving => 1, allows_streaming => 1);
+$node2->append_conf('postgresql.conf', 'summarize_wal = on');
+$node2->start;
+
+$node2->command_fails_like(
+	[ @pg_basebackup_defs, '-D', "$tempdir" . '/diff_sysid',
+		'--incremental', "$backupdir" . '/backup_manifest' ],
+	qr/manifest system identifier is .*, but database system identifier is/,
+	"pg_basebackup fails with different database system manifest");
+
 done_testing();

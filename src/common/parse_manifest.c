@@ -25,6 +25,7 @@ typedef enum
 	JM_EXPECT_TOPLEVEL_END,
 	JM_EXPECT_TOPLEVEL_FIELD,
 	JM_EXPECT_VERSION_VALUE,
+	JM_EXPECT_SYSTEM_IDENTIFIER_VALUE,
 	JM_EXPECT_FILES_START,
 	JM_EXPECT_FILES_NEXT,
 	JM_EXPECT_THIS_FILE_FIELD,
@@ -85,6 +86,8 @@ typedef struct
 
 	/* Miscellaneous other stuff. */
 	bool		saw_version_field;
+	char	   *manifest_version;
+	char	   *manifest_system_identifier;
 	char	   *manifest_checksum;
 } JsonManifestParseState;
 
@@ -96,6 +99,8 @@ static JsonParseErrorType json_manifest_object_field_start(void *state, char *fn
 														   bool isnull);
 static JsonParseErrorType json_manifest_scalar(void *state, char *token,
 											   JsonTokenType tokentype);
+static void json_manifest_finalize_version(JsonManifestParseState *parse);
+static void json_manifest_finalize_system_identifier(JsonManifestParseState *parse);
 static void json_manifest_finalize_file(JsonManifestParseState *parse);
 static void json_manifest_finalize_wal_range(JsonManifestParseState *parse);
 static void verify_manifest_checksum(JsonManifestParseState *parse,
@@ -312,6 +317,13 @@ json_manifest_object_field_start(void *state, char *fname, bool isnull)
 				break;
 			}
 
+			/* Is this the system identifier? */
+			if (strcmp(fname, "System-Identifier") == 0)
+			{
+				parse->state = JM_EXPECT_SYSTEM_IDENTIFIER_VALUE;
+				break;
+			}
+
 			/* Is this the list of files? */
 			if (strcmp(fname, "Files") == 0)
 			{
@@ -404,9 +416,14 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
 	switch (parse->state)
 	{
 		case JM_EXPECT_VERSION_VALUE:
-			if (strcmp(token, "1") != 0)
-				json_manifest_parse_failure(parse->context,
-											"unexpected manifest version");
+			parse->manifest_version = token;
+			json_manifest_finalize_version(parse);
+			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
+			break;
+
+		case JM_EXPECT_SYSTEM_IDENTIFIER_VALUE:
+			parse->manifest_system_identifier = token;
+			json_manifest_finalize_system_identifier(parse);
 			parse->state = JM_EXPECT_TOPLEVEL_FIELD;
 			break;
 
@@ -462,6 +479,59 @@ json_manifest_scalar(void *state, char *token, JsonTokenType tokentype)
 	}
 
 	return JSON_SUCCESS;
+}
+
+/*
+ * Do additional parsing and sanity-checking of the manifest version, and invoke
+ * the callback so that the caller can gets that detail and take actions
+ * accordingly.  This happens for each manifest when the corresponding JSON
+ * object is completely parsed.
+ */
+static void
+json_manifest_finalize_version(JsonManifestParseState *parse)
+{
+	JsonManifestParseContext *context = parse->context;
+	int			version;
+	char	   *ep;
+
+	Assert(parse->saw_version_field);
+
+	/* Parse version. */
+	version = strtoi64(parse->manifest_version, &ep, 10);
+	if (*ep)
+		json_manifest_parse_failure(parse->context,
+									"manifest version not an integer");
+
+	if (version != 1 && version != 2)
+		json_manifest_parse_failure(parse->context,
+									"unexpected manifest version");
+
+	/* Invoke the callback for version */
+	context->version_cb(context, version);
+}
+
+/*
+ * Do additional parsing and sanity-checking of the system identifier, and
+ * invoke the callback so that the caller can gets that detail and take actions
+ * accordingly.
+ */
+static void
+json_manifest_finalize_system_identifier(JsonManifestParseState *parse)
+{
+	JsonManifestParseContext *context = parse->context;
+	uint64		system_identifier;
+	char	   *ep;
+
+	Assert(parse->manifest_system_identifier != NULL);
+
+	/* Parse system identifier. */
+	system_identifier = strtou64(parse->manifest_system_identifier, &ep, 10);
+	if (*ep)
+		json_manifest_parse_failure(parse->context,
+									"manifest system identifier not an integer");
+
+	/* Invoke the callback for system identifier */
+	context->system_identifier_cb(context, system_identifier);
 }
 
 /*

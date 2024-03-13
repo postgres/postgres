@@ -53,9 +53,10 @@ PostgreSQL documentation
    Backup verification proceeds in four stages. First,
    <literal>pg_verifybackup</literal> reads the
    <literal>backup_manifest</literal> file. If that file
-   does not exist, cannot be read, is malformed, or fails verification
-   against its own internal checksum, <literal>pg_verifybackup</literal>
-   will terminate with a fatal error.
+   does not exist, cannot be read, is malformed, fails to match the system
+   identifier with <filename>pg_control</filename> of the backup directory or
+   fails verification against its own internal checksum,
+   <literal>pg_verifybackup</literal> will terminate with a fatal error.
   </para>
 
   <para>

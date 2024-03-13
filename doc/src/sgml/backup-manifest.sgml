@@ -37,7 +37,22 @@
     <term><literal>PostgreSQL-Backup-Manifest-Version</literal></term>
     <listitem>
      <para>
-      The associated value is always the integer 1.
+      The associated value is an integer. Beginning in
+      <productname>PostgreSQL</productname> <literal>17</literal>,
+      it is <literal>2</literal>; in older versions, it is <literal>1</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>System-Identifier</literal></term>
+    <listitem>
+     <para>
+      The database system identifier of the
+      <productname>PostgreSQL</productname> instance where the backup was
+      taken.  This field is present only when
+      <literal>PostgreSQL-Backup-Manifest-Version</literal> is
+      <literal>2</literal>.
      </para>
     </listitem>
    </varlistentry>

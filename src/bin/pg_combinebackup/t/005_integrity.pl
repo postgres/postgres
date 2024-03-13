@@ -8,6 +8,7 @@ use strict;
 use warnings FATAL => 'all';
 use File::Compare;
 use File::Path qw(rmtree);
+use File::Copy;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
@@ -78,6 +79,19 @@ $node1->command_fails_like(
 	[ 'pg_combinebackup', $backup1path, $backupother2path, '-o', $resultpath ],
 	qr/expected system identifier.*but found/,
 	"can't combine backups from different nodes");
+
+# Can't combine when different manifest system identifier
+rename("$backup2path/backup_manifest", "$backup2path/backup_manifest.orig")
+  or die "could not move $backup2path/backup_manifest";
+copy("$backupother2path/backup_manifest", "$backup2path/backup_manifest")
+  or die "could not copy $backupother2path/backup_manifest";
+$node1->command_fails_like(
+	[ 'pg_combinebackup', $backup1path, $backup2path, $backup3path, '-o', $resultpath ],
+	qr/ manifest system identifier is .*, but control file has /,
+	"can't combine backups with different manifest system identifier ");
+# Restore the backup state
+move("$backup2path/backup_manifest.orig", "$backup2path/backup_manifest")
+  or die "could not move $backup2path/backup_manifest";
 
 # Can't omit a required backup.
 $node1->command_fails_like(

@@ -55,6 +55,7 @@ typedef struct manifest_wal_range
  */
 typedef struct manifest_data
 {
+	uint64		system_identifier;
 	manifest_files_hash *files;
 	manifest_wal_range *first_wal_range;
 	manifest_wal_range *last_wal_range;

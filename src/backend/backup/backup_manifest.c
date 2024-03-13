@@ -13,6 +13,7 @@
 #include "postgres.h"
 
 #include "access/timeline.h"
+#include "access/xlog.h"
 #include "backup/backup_manifest.h"
 #include "backup/basebackup_sink.h"
 #include "mb/pg_wchar.h"
@@ -77,8 +78,10 @@ InitializeBackupManifest(backup_manifest_info *manifest,
 
 	if (want_manifest != MANIFEST_OPTION_NO)
 		AppendToManifest(manifest,
-						 "{ \"PostgreSQL-Backup-Manifest-Version\": 1,\n"
-						 "\"Files\": [");
+						 "{ \"PostgreSQL-Backup-Manifest-Version\": 2,\n"
+						 "\"System-Identifier\": " UINT64_FORMAT ",\n"
+						 "\"Files\": [",
+						 GetSystemIdentifier());
 }
 
 /*
