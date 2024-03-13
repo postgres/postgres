@@ -44,7 +44,9 @@ INSERT [( <replaceable class="parameter">column_name</replaceable> [, ...] )]
 <phrase>and <replaceable class="parameter">merge_update</replaceable> is:</phrase>
 
 UPDATE SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
-             ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
+             ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
+             ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
+           } [, ...]
 
 <phrase>and <replaceable class="parameter">merge_delete</replaceable> is:</phrase>
 
@@ -128,6 +130,19 @@ DELETE
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">with_query</replaceable></term>
+    <listitem>
+     <para>
+      The <literal>WITH</literal> clause allows you to specify one or more
+      subqueries that can be referenced by name in the <command>MERGE</command>
+      query. See <xref linkend="queries-with"/> and <xref linkend="sql-select"/>
+      for details.  Note that <literal>WITH RECURSIVE</literal> is not supported
+      by <command>MERGE</command>.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="parameter">target_table_name</replaceable></term>
     <listitem>
@@ -393,9 +408,10 @@ DELETE
       An expression to assign to the column.  If used in a
       <literal>WHEN MATCHED</literal> clause, the expression can use values
       from the original row in the target table, and values from the
-      <replaceable>data_source</replaceable> row.
+      <replaceable class="parameter">data_source</replaceable> row.
       If used in a <literal>WHEN NOT MATCHED</literal> clause, the
-      expression can use values from the <replaceable>data_source</replaceable>.
+      expression can use values from the
+      <replaceable class="parameter">data_source</replaceable> row.
      </para>
     </listitem>
    </varlistentry>
@@ -411,13 +427,17 @@ DELETE
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">with_query</replaceable></term>
+    <term><replaceable class="parameter">sub-SELECT</replaceable></term>
     <listitem>
      <para>
-      The <literal>WITH</literal> clause allows you to specify one or more
-      subqueries that can be referenced by name in the <command>MERGE</command>
-      query. See <xref linkend="queries-with"/> and <xref linkend="sql-select"/>
-      for details.
+      A <literal>SELECT</literal> sub-query that produces as many output columns
+      as are listed in the parenthesized column list preceding it.  The
+      sub-query must yield no more than one row when executed.  If it
+      yields one row, its column values are assigned to the target columns;
+      if it yields no rows, NULL values are assigned to the target columns.
+      The sub-query can refer to values from the original row in the target table,
+      and values from the <replaceable class="parameter">data_source</replaceable>
+      row.
      </para>
     </listitem>
    </varlistentry>
