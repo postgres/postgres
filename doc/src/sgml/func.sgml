@@ -28555,6 +28555,23 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_column_toast_chunk_id</primary>
+        </indexterm>
+        <function>pg_column_toast_chunk_id</function> ( <type>"any"</type> )
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Shows the <structfield>chunk_id</structfield> of an on-disk
+        <acronym>TOAST</acronym>ed value.  Returns <literal>NULL</literal>
+        if the value is un-<acronym>TOAST</acronym>ed or not on-disk.  See
+        <xref linkend="storage-toast"/> for more information about
+        <acronym>TOAST</acronym>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_database_size</primary>
         </indexterm>
         <function>pg_database_size</function> ( <type>name</type> )

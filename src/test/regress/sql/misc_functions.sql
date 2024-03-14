@@ -265,3 +265,15 @@ GRANT pg_monitor TO regress_current_logfile;
 SELECT has_function_privilege('regress_current_logfile',
   'pg_current_logfile()', 'EXECUTE');
 DROP ROLE regress_current_logfile;
+
+-- pg_column_toast_chunk_id
+CREATE TABLE test_chunk_id (a TEXT, b TEXT STORAGE EXTERNAL);
+INSERT INTO test_chunk_id VALUES ('x', repeat('x', 8192));
+SELECT t.relname AS toastrel FROM pg_class c
+  LEFT JOIN pg_class t ON c.reltoastrelid = t.oid
+  WHERE c.relname = 'test_chunk_id'
+\gset
+SELECT pg_column_toast_chunk_id(a) IS NULL,
+  pg_column_toast_chunk_id(b) IN (SELECT chunk_id FROM pg_toast.:toastrel)
+  FROM test_chunk_id;
+DROP TABLE test_chunk_id;

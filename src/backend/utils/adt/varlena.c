@@ -5106,6 +5106,47 @@ pg_column_compression(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Return the chunk_id of the on-disk TOASTed value.  Return NULL if the value
+ * is un-TOASTed or not on-disk.
+ */
+Datum
+pg_column_toast_chunk_id(PG_FUNCTION_ARGS)
+{
+	int			typlen;
+	struct varlena *attr;
+	struct varatt_external toast_pointer;
+
+	/* On first call, get the input type's typlen, and save at *fn_extra */
+	if (fcinfo->flinfo->fn_extra == NULL)
+	{
+		/* Lookup the datatype of the supplied argument */
+		Oid			argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+
+		typlen = get_typlen(argtypeid);
+		if (typlen == 0)		/* should not happen */
+			elog(ERROR, "cache lookup failed for type %u", argtypeid);
+
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													  sizeof(int));
+		*((int *) fcinfo->flinfo->fn_extra) = typlen;
+	}
+	else
+		typlen = *((int *) fcinfo->flinfo->fn_extra);
+
+	if (typlen != -1)
+		PG_RETURN_NULL();
+
+	attr = (struct varlena *) DatumGetPointer(PG_GETARG_DATUM(0));
+
+	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
+		PG_RETURN_NULL();
+
+	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+
+	PG_RETURN_OID(toast_pointer.va_valueid);
+}
+
+/*
  * string_agg - Concatenates values and returns string.
  *
  * Syntax: string_agg(value text, delimiter text) RETURNS text
