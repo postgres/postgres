@@ -7349,13 +7349,24 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	ListCell   *lc;
 	Path	   *cheapest_partial_path;
+	List	   *groupby_pathkeys;
+
+	/*
+	 * This occurs after any partial aggregation has taken place, so trim off
+	 * any pathkeys added for ORDER BY / DISTINCT aggregates.
+	 */
+	if (list_length(root->group_pathkeys) > root->num_groupby_pathkeys)
+		groupby_pathkeys = list_copy_head(root->group_pathkeys,
+										  root->num_groupby_pathkeys);
+	else
+		groupby_pathkeys = root->group_pathkeys;
 
 	/* Try Gather for unordered paths and Gather Merge for ordered ones. */
 	generate_useful_gather_paths(root, rel, true);
 
 	/* Try cheapest partial path + explicit Sort + Gather Merge. */
 	cheapest_partial_path = linitial(rel->partial_pathlist);
-	if (!pathkeys_contained_in(root->group_pathkeys,
+	if (!pathkeys_contained_in(groupby_pathkeys,
 							   cheapest_partial_path->pathkeys))
 	{
 		Path	   *path;
@@ -7364,14 +7375,14 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 		total_groups =
 			cheapest_partial_path->rows * cheapest_partial_path->parallel_workers;
 		path = (Path *) create_sort_path(root, rel, cheapest_partial_path,
-										 root->group_pathkeys,
+										 groupby_pathkeys,
 										 -1.0);
 		path = (Path *)
 			create_gather_merge_path(root,
 									 rel,
 									 path,
 									 rel->reltarget,
-									 root->group_pathkeys,
+									 groupby_pathkeys,
 									 NULL,
 									 &total_groups);
 
@@ -7382,10 +7393,10 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * Consider incremental sort on all partial paths, if enabled.
 	 *
 	 * We can also skip the entire loop when we only have a single-item
-	 * group_pathkeys because then we can't possibly have a presorted prefix
+	 * groupby_pathkeys because then we can't possibly have a presorted prefix
 	 * of the list without having the list be fully sorted.
 	 */
-	if (!enable_incremental_sort || list_length(root->group_pathkeys) == 1)
+	if (!enable_incremental_sort || list_length(groupby_pathkeys) == 1)
 		return;
 
 	/* also consider incremental sort on partial paths, if enabled */
@@ -7396,7 +7407,7 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 		int			presorted_keys;
 		double		total_groups;
 
-		is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
+		is_sorted = pathkeys_count_contained_in(groupby_pathkeys,
 												path->pathkeys,
 												&presorted_keys);
 
@@ -7409,7 +7420,7 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 		path = (Path *) create_incremental_sort_path(root,
 													 rel,
 													 path,
-													 root->group_pathkeys,
+													 groupby_pathkeys,
 													 presorted_keys,
 													 -1.0);
 
@@ -7418,7 +7429,7 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 									 rel,
 									 path,
 									 rel->reltarget,
-									 root->group_pathkeys,
+									 groupby_pathkeys,
 									 NULL,
 									 &total_groups);
 
