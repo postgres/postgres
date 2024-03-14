@@ -7,8 +7,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef TDE_MASTER_KEY_H
-#define TDE_MASTER_KEY_H
+#ifndef PG_TDE_MASTER_KEY_H
+#define PG_TDE_MASTER_KEY_H
 
 
 #include "postgres.h"
@@ -18,31 +18,42 @@
 
 #define MASTER_KEY_NAME_LEN TDE_KEY_NAME_LEN
 
+typedef struct TDEMasterKeyId
+{
+	uint32	version;
+	char	name[MASTER_KEY_NAME_LEN];
+} TDEMasterKeyId;
+
 typedef struct TDEMasterKey
 {
+	TDEMasterKeyId keyId;
 	Oid databaseId;
-	uint32 keyVersion;
 	Oid keyringId;
-	char keyName[MASTER_KEY_NAME_LEN];
 	unsigned char keyData[MAX_KEY_DATA_SIZE];
 	uint32 keyLength;
 } TDEMasterKey;
 
-
 typedef struct TDEMasterKeyInfo
 {
-	Oid keyId;
 	Oid keyringId;
 	Oid databaseId;
+	Oid tablespaceId;
 	Oid userId;
 	struct timeval creationTime;
-	int keyVersion;
-	char keyName[MASTER_KEY_NAME_LEN];
+	TDEMasterKeyId keyId;
 } TDEMasterKeyInfo;
+
+typedef struct XLogMasterKeyCleanup
+{
+	Oid databaseId;
+	Oid tablespaceId;
+} XLogMasterKeyCleanup;
 
 extern void InitializeMasterKeyInfo(void);
 extern TDEMasterKey* GetMasterKey(void);
 extern TDEMasterKey* SetMasterKey(const char* key_name, const char* provider_name);
 extern Oid GetMasterKeyProviderId(void);
+extern void save_master_key_info(TDEMasterKeyInfo *masterKeyInfo);
+extern void cleanup_master_key_info(Oid databaseId, Oid tablespaceId);
 
-#endif /*TDE_MASTER_KEY_H*/
+#endif /*PG_TDE_MASTER_KEY_H*/

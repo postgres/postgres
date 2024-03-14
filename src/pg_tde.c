@@ -19,6 +19,7 @@
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "access/pg_tde_ddl.h"
+#include "access/pg_tde_xlog.h"
 #include "encryption/enc_aes.h"
 #include "access/pg_tde_tdemap.h"
 #include "keyring/keyring_config.h"
