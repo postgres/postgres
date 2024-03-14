@@ -39,10 +39,10 @@
    <para>
      The <literal>login</literal> event occurs when an authenticated user logs
      into the system. Any bug in a trigger procedure for this event may
-     prevent successful login to the system. Such bugs may be fixed by
-     setting <xref linkend="guc-event-triggers"/> is set to <literal>false</literal>
-     either in a connection string or configuration file. Alternative is
-     restarting the system in single-user mode (as event triggers are
+     prevent successful login to the system. Such bugs may be worked around by
+     setting <xref linkend="guc-event-triggers"/> to <literal>false</literal>
+     either in a connection string or configuration file. Alternatively, you can
+     restart the system in single-user mode (as event triggers are
      disabled in this mode). See the <xref linkend="app-postgres"/> reference
      page for details about using single-user mode.
      The <literal>login</literal> event will also fire on standby servers.
@@ -50,7 +50,7 @@
      writing anything to the database when running on a standby.
      Also, it's recommended to avoid long-running queries in
      <literal>login</literal> event triggers.  Note that, for instance,
-     canceling connection in <application>psql</application> wouldn't cancel
+     canceling a connection in <application>psql</application> will not cancel
      the in-progress <literal>login</literal> trigger.
    </para>
 
