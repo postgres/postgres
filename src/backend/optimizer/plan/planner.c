@@ -7320,6 +7320,17 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	ListCell   *lc;
 	Path	   *cheapest_partial_path;
+	List	   *groupby_pathkeys;
+
+	/*
+	 * This occurs after any partial aggregation has taken place, so trim off
+	 * any pathkeys added for ORDER BY / DISTINCT aggregates.
+	 */
+	if (list_length(root->group_pathkeys) > root->num_groupby_pathkeys)
+		groupby_pathkeys = list_copy_head(root->group_pathkeys,
+										  root->num_groupby_pathkeys);
+	else
+		groupby_pathkeys = root->group_pathkeys;
 
 	/* Try Gather for unordered paths and Gather Merge for ordered ones. */
 	generate_useful_gather_paths(root, rel, true);
@@ -7334,7 +7345,7 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 		int			presorted_keys;
 		double		total_groups;
 
-		is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
+		is_sorted = pathkeys_count_contained_in(groupby_pathkeys,
 												path->pathkeys,
 												&presorted_keys);
 
@@ -7360,13 +7371,13 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 		 */
 		if (presorted_keys == 0 || !enable_incremental_sort)
 			path = (Path *) create_sort_path(root, rel, path,
-											 root->group_pathkeys,
+											 groupby_pathkeys,
 											 -1.0);
 		else
 			path = (Path *) create_incremental_sort_path(root,
 														 rel,
 														 path,
-														 root->group_pathkeys,
+														 groupby_pathkeys,
 														 presorted_keys,
 														 -1.0);
 
@@ -7375,7 +7386,7 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 									 rel,
 									 path,
 									 rel->reltarget,
-									 root->group_pathkeys,
+									 groupby_pathkeys,
 									 NULL,
 									 &total_groups);
 
