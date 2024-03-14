@@ -821,7 +821,16 @@ transformAssignmentIndirection(ParseState *pstate,
 			fstore->fieldnums = list_make1_int(attnum);
 			fstore->resulttype = baseTypeId;
 
-			/* If target is a domain, apply constraints */
+			/*
+			 * If target is a domain, apply constraints.  Notice that this
+			 * isn't totally right: the expression tree we build would check
+			 * the domain's constraints on a composite value with only this
+			 * one field populated or updated, possibly leading to an unwanted
+			 * failure.  The rewriter will merge together any subfield
+			 * assignments to the same table column, resulting in the domain's
+			 * constraints being checked only once after we've assigned to all
+			 * the fields that the INSERT or UPDATE means to.
+			 */
 			if (baseTypeId != targetTypeId)
 				return coerce_to_domain((Node *) fstore,
 										baseTypeId, baseTypeMod,
@@ -967,7 +976,12 @@ transformAssignmentSubscripts(ParseState *pstate,
 
 	result = (Node *) sbsref;
 
-	/* If target was a domain over container, need to coerce up to the domain */
+	/*
+	 * If target was a domain over container, need to coerce up to the domain.
+	 * As in transformAssignmentIndirection, this coercion is premature if the
+	 * query assigns to multiple elements of the container; but we'll fix that
+	 * during query rewrite.
+	 */
 	if (containerType != targetTypeId)
 	{
 		Oid			resulttype = exprType(result);
