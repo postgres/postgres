@@ -3016,7 +3016,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Total amount of time that has been spent in the portion of
-       checkpoint processing where files are written to disk, in milliseconds
+       processing checkpoints and restartpoints where files are written to disk,
+       in milliseconds
       </para></entry>
      </row>
 
@@ -3026,8 +3027,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Total amount of time that has been spent in the portion of
-       checkpoint processing where files are synchronized to disk, in
-       milliseconds
+       processing checkpoints and restartpoints where files are synchronized to
+       disk, in milliseconds
       </para></entry>
      </row>
 
@@ -3036,7 +3037,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>buffers_written</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of buffers written during checkpoints
+       Number of buffers written during checkpoints and restartpoints
       </para></entry>
      </row>
 
