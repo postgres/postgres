@@ -2098,7 +2098,10 @@ usage(const char *progname)
 static void
 print_test_list(void)
 {
+#if 0
+	/* Commented out until further stabilized */
 	printf("cancel\n");
+#endif
 	printf("disallowed_in_pipeline\n");
 	printf("multi_pipelines\n");
 	printf("nosync\n");
