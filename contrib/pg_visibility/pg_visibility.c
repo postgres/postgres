@@ -19,6 +19,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/rel.h"
@@ -533,6 +534,63 @@ collect_visibility_data(Oid relid, bool include_pd)
 }
 
 /*
+ * The "strict" version of GetOldestNonRemovableTransactionId().  The
+ * pg_visibility check can tolerate false positives (don't report some of the
+ * errors), but can't tolerate false negatives (report false errors). Normally,
+ * horizons move forwards, but there are cases when it could move backward
+ * (see comment for ComputeXidHorizons()).
+ *
+ * This is why we have to implement our own function for xid horizon, which
+ * would be guaranteed to be newer or equal to any xid horizon computed before.
+ * We have to do the following to achieve this.
+ *
+ * 1. Ignore processes xmin's, because they consider connection to other
+ *    databases that were ignored before.
+ * 2. Ignore KnownAssignedXids, because they are not database-aware. At the
+ *    same time, the primary could compute its horizons database-aware.
+ * 3. Ignore walsender xmin, because it could go backward if some replication
+ *    connections don't use replication slots.
+ *
+ * As a result, we're using only currently running xids to compute the horizon.
+ * Surely these would significantly sacrifice accuracy.  But we have to do so
+ * to avoid reporting false errors.
+ */
+static TransactionId
+GetStrictOldestNonRemovableTransactionId(Relation rel)
+{
+	RunningTransactions runningTransactions;
+
+	if (rel == NULL || rel->rd_rel->relisshared || RecoveryInProgress())
+	{
+		/* Shared relation: take into account all running xids */
+		runningTransactions = GetRunningTransactionData();
+		LWLockRelease(ProcArrayLock);
+		LWLockRelease(XidGenLock);
+		return runningTransactions->oldestRunningXid;
+	}
+	else if (!RELATION_IS_LOCAL(rel))
+	{
+		/*
+		 * Normal relation: take into account xids running within the current
+		 * database
+		 */
+		runningTransactions = GetRunningTransactionData();
+		LWLockRelease(ProcArrayLock);
+		LWLockRelease(XidGenLock);
+		return runningTransactions->oldestDatabaseRunningXid;
+	}
+	else
+	{
+		/*
+		 * For temporary relations, ComputeXidHorizons() uses only
+		 * TransamVariables->latestCompletedXid and MyProc->xid.  These two
+		 * shouldn't go backwards.  So we're fine with this horizon.
+		 */
+		return GetOldestNonRemovableTransactionId(rel);
+	}
+}
+
+/*
  * Returns a list of items whose visibility map information does not match
  * the status of the tuples on the page.
  *
@@ -563,7 +621,7 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 	check_relation_relkind(rel);
 
 	if (all_visible)
-		OldestXmin = GetOldestNonRemovableTransactionId(rel);
+		OldestXmin = GetStrictOldestNonRemovableTransactionId(rel);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
 
@@ -671,11 +729,11 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 				 * retake ProcArrayLock here while we're holding the buffer
 				 * exclusively locked, but it should be safe against
 				 * deadlocks, because surely
-				 * GetOldestNonRemovableTransactionId() should never take a
-				 * buffer lock. And this shouldn't happen often, so it's worth
-				 * being careful so as to avoid false positives.
+				 * GetStrictOldestNonRemovableTransactionId() should never
+				 * take a buffer lock. And this shouldn't happen often, so
+				 * it's worth being careful so as to avoid false positives.
 				 */
-				RecomputedOldestXmin = GetOldestNonRemovableTransactionId(rel);
+				RecomputedOldestXmin = GetStrictOldestNonRemovableTransactionId(rel);
 
 				if (!TransactionIdPrecedes(OldestXmin, RecomputedOldestXmin))
 					record_corrupt_item(items, &tuple.t_self);

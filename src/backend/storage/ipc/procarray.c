@@ -2688,6 +2688,7 @@ GetRunningTransactionData(void)
 	RunningTransactions CurrentRunningXacts = &CurrentRunningXactsData;
 	TransactionId latestCompletedXid;
 	TransactionId oldestRunningXid;
+	TransactionId oldestDatabaseRunningXid;
 	TransactionId *xids;
 	int			index;
 	int			count;
@@ -2732,7 +2733,7 @@ GetRunningTransactionData(void)
 
 	latestCompletedXid =
 		XidFromFullTransactionId(TransamVariables->latestCompletedXid);
-	oldestRunningXid =
+	oldestDatabaseRunningXid = oldestRunningXid =
 		XidFromFullTransactionId(TransamVariables->nextXid);
 
 	/*
@@ -2740,6 +2741,8 @@ GetRunningTransactionData(void)
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
+		int			pgprocno = arrayP->pgprocnos[index];
+		PGPROC	   *proc = &allProcs[pgprocno];
 		TransactionId xid;
 
 		/* Fetch xid just once - see GetNewTransactionId */
@@ -2759,6 +2762,13 @@ GetRunningTransactionData(void)
 		 */
 		if (TransactionIdPrecedes(xid, oldestRunningXid))
 			oldestRunningXid = xid;
+
+		/*
+		 * Also, update the oldest running xid within the current database.
+		 */
+		if (proc->databaseId == MyDatabaseId &&
+			TransactionIdPrecedes(xid, oldestRunningXid))
+			oldestDatabaseRunningXid = xid;
 
 		if (ProcGlobal->subxidStates[index].overflowed)
 			suboverflowed = true;
@@ -2826,6 +2836,7 @@ GetRunningTransactionData(void)
 	CurrentRunningXacts->subxid_overflow = suboverflowed;
 	CurrentRunningXacts->nextXid = XidFromFullTransactionId(TransamVariables->nextXid);
 	CurrentRunningXacts->oldestRunningXid = oldestRunningXid;
+	CurrentRunningXacts->oldestDatabaseRunningXid = oldestDatabaseRunningXid;
 	CurrentRunningXacts->latestCompletedXid = latestCompletedXid;
 
 	Assert(TransactionIdIsValid(CurrentRunningXacts->nextXid));

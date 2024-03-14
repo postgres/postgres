@@ -32,5 +32,9 @@ tests += {
     'sql': [
       'pg_visibility',
     ],
+  'tap': {
+    'tests': [
+      't/001_concurrent_transaction.pl',
+    ],
   },
 }

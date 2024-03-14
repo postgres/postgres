@@ -82,6 +82,8 @@ typedef struct RunningTransactionsData
 	bool		subxid_overflow;	/* snapshot overflowed, subxids missing */
 	TransactionId nextXid;		/* xid from TransamVariables->nextXid */
 	TransactionId oldestRunningXid; /* *not* oldestXmin */
+	TransactionId oldestDatabaseRunningXid; /* same as above, but within the
+											 * current database */
 	TransactionId latestCompletedXid;	/* so we can set xmax */
 
 	TransactionId *xids;		/* array of (sub)xids still running */
