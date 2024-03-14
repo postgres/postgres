@@ -1,6 +1,8 @@
+/postgres.bki
 /schemapg.h
 /syscache_ids.h
 /syscache_info.h
 /system_fk_info.h
+/system_constraints.sql
 /pg_*_d.h
-/header-stamp
+/bki-stamp

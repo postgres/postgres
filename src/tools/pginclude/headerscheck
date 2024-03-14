@@ -142,8 +142,6 @@ do
 	test "$f" = src/include/common/unicode_nonspacing_table.h && continue
 	test "$f" = src/include/common/unicode_east_asian_fw_table.h && continue
 
-	test "$f" = src/backend/catalog/syscache_ids.h && continue
-	test "$f" = src/backend/catalog/syscache_info.h && continue
 	test "$f" = src/include/catalog/syscache_ids.h && continue
 	test "$f" = src/include/catalog/syscache_info.h && continue
 
