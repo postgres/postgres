@@ -45,7 +45,8 @@ bytesToHex(uint8 b[16], char *s)
  *	Calculates the MD5 sum of the bytes in a buffer.
  *
  *	SYNOPSIS	  #include "md5.h"
- *				  int pg_md5_hash(const void *buff, size_t len, char *hexsum)
+ *				  bool pg_md5_hash(const void *buff, size_t len, char *hexsum,
+ *				                   const char **errstr)
  *
  *	INPUT		  buff	  the buffer containing the bytes that you want
  *						  the MD5 sum of.
