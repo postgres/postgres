@@ -72,6 +72,7 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/guc_hooks.h"
+#include "utils/injection_point.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -3411,9 +3412,12 @@ ProcessInterrupts(void)
 		 * interrupt.
 		 */
 		if (IdleInTransactionSessionTimeout > 0)
+		{
+			INJECTION_POINT("idle-in-transaction-session-timeout");
 			ereport(FATAL,
 					(errcode(ERRCODE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT),
 					 errmsg("terminating connection due to idle-in-transaction timeout")));
+		}
 		else
 			IdleInTransactionSessionTimeoutPending = false;
 	}
@@ -3422,9 +3426,12 @@ ProcessInterrupts(void)
 	{
 		/* As above, ignore the signal if the GUC has been reset to zero. */
 		if (TransactionTimeout > 0)
+		{
+			INJECTION_POINT("transaction-timeout");
 			ereport(FATAL,
 					(errcode(ERRCODE_TRANSACTION_TIMEOUT),
 					 errmsg("terminating connection due to transaction timeout")));
+		}
 		else
 			TransactionTimeoutPending = false;
 	}
@@ -3433,9 +3440,12 @@ ProcessInterrupts(void)
 	{
 		/* As above, ignore the signal if the GUC has been reset to zero. */
 		if (IdleSessionTimeout > 0)
+		{
+			INJECTION_POINT("idle-session-timeout");
 			ereport(FATAL,
 					(errcode(ERRCODE_IDLE_SESSION_TIMEOUT),
 					 errmsg("terminating connection due to idle-session timeout")));
+		}
 		else
 			IdleSessionTimeoutPending = false;
 	}
