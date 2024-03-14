@@ -1,0 +1,9 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1a s2a s1b s1c s2c
+step s1a: LOCK TABLE a1 IN ACCESS EXCLUSIVE MODE;
+step s2a: LOCK TABLE a1 IN EXCLUSIVE MODE; <waiting ...>
+step s1b: LOCK TABLE a1 IN SHARE ROW EXCLUSIVE MODE NOWAIT;
+step s1c: COMMIT;
+step s2a: <... completed>
+step s2c: COMMIT;

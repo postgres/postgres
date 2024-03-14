@@ -1043,10 +1043,19 @@ AuxiliaryPidGetProc(int pid)
  * Caller must have set MyProc->heldLocks to reflect locks already held
  * on the lockable object by this process (under all XIDs).
  *
+ * It's not actually guaranteed that we need to wait when this function is
+ * called, because it could be that when we try to find a position at which
+ * to insert ourself into the wait queue, we discover that we must be inserted
+ * ahead of everyone who wants a lock that conflict with ours. In that case,
+ * we get the lock immediately. Beause of this, it's sensible for this function
+ * to have a dontWait argument, despite the name.
+ *
  * The lock table's partition lock must be held at entry, and will be held
  * at exit.
  *
- * Result: PROC_WAIT_STATUS_OK if we acquired the lock, PROC_WAIT_STATUS_ERROR if not (deadlock).
+ * Result: PROC_WAIT_STATUS_OK if we acquired the lock, PROC_WAIT_STATUS_ERROR
+ * if not (if dontWait = true, this is a deadlock; if dontWait = false, we
+ * would have had to wait).
  *
  * ASSUME: that no one will fiddle with the queue until after
  *		we release the partition lock.
@@ -1054,7 +1063,7 @@ AuxiliaryPidGetProc(int pid)
  * NOTES: The process queue is now a priority queue for locking.
  */
 ProcWaitStatus
-ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
+ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable, bool dontWait)
 {
 	LOCKMODE	lockmode = locallock->tag.mode;
 	LOCK	   *lock = locallock->lock;
@@ -1166,6 +1175,13 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			aheadRequests |= LOCKBIT_ON(proc->waitLockMode);
 		}
 	}
+
+	/*
+	 * At this point we know that we'd really need to sleep. If we've been
+	 * commanded not to do that, bail out.
+	 */
+	if (dontWait)
+		return PROC_WAIT_STATUS_ERROR;
 
 	/*
 	 * Insert self into queue, at the position determined above.

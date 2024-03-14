@@ -471,7 +471,9 @@ extern int	GetStartupBufferPinWaitBufId(void);
 extern bool HaveNFreeProcs(int n, int *nfree);
 extern void ProcReleaseLocks(bool isCommit);
 
-extern ProcWaitStatus ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable);
+extern ProcWaitStatus ProcSleep(LOCALLOCK *locallock,
+								LockMethod lockMethodTable,
+								bool dontWait);
 extern void ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus);
 extern void ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock);
 extern void CheckDeadLockAlert(void);
