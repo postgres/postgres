@@ -64,7 +64,10 @@ CollationCreate(const char *collname, Oid collnamespace,
 	Assert(collname);
 	Assert(collnamespace);
 	Assert(collowner);
-	Assert((collcollate && collctype) || colllocale);
+	Assert((collprovider == COLLPROVIDER_LIBC &&
+			collcollate && collctype && !colllocale) ||
+		   (collprovider != COLLPROVIDER_LIBC &&
+			!collcollate && !collctype && colllocale));
 
 	/*
 	 * Make sure there is no existing collation of same name & encoding.

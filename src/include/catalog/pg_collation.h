@@ -68,6 +68,7 @@ MAKE_SYSCACHE(COLLOID, pg_collation_oid_index, 8);
 #ifdef EXPOSE_TO_CLIENT_CODE
 
 #define COLLPROVIDER_DEFAULT	'd'
+#define COLLPROVIDER_BUILTIN	'b'
 #define COLLPROVIDER_ICU		'i'
 #define COLLPROVIDER_LIBC		'c'
 
@@ -76,6 +77,8 @@ collprovider_name(char c)
 {
 	switch (c)
 	{
+		case COLLPROVIDER_BUILTIN:
+			return "builtin";
 		case COLLPROVIDER_ICU:
 			return "icu";
 		case COLLPROVIDER_LIBC:

@@ -162,6 +162,11 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         linkend="create-database-lc-ctype"/>, or <xref
         linkend="create-database-icu-locale"/> individually.
        </para>
+       <para>
+        If <xref linkend="create-database-locale-provider"/> is
+        <literal>builtin</literal>, then <replaceable>locale</replaceable>
+        must be specified and set to <literal>C</literal>.
+       </para>
        <tip>
         <para>
          The other locale settings <xref linkend="guc-lc-messages"/>, <xref
@@ -243,7 +248,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <listitem>
        <para>
         Specifies the provider to use for the default collation in this
-        database.  Possible values are
+        database.  Possible values are <literal>builtin</literal>,
         <literal>icu</literal><indexterm><primary>ICU</primary></indexterm>
         (if the server was built with ICU support) or <literal>libc</literal>.
         By default, the provider is the same as that of the <xref

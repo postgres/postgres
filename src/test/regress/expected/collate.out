@@ -650,6 +650,22 @@ EXPLAIN (COSTS OFF)
 (3 rows)
 
 -- CREATE/DROP COLLATION
+CREATE COLLATION builtin_c ( PROVIDER = builtin, LOCALE = "C" );
+SELECT b FROM collate_test1 ORDER BY b COLLATE builtin_c;
+  b  
+-----
+ ABD
+ Abc
+ abc
+ bbc
+(4 rows)
+
+CREATE COLLATION builtin2 ( PROVIDER = builtin ); -- fails
+ERROR:  parameter "locale" must be specified
+CREATE COLLATION builtin2 ( PROVIDER = builtin, LOCALE = "en_US" ); -- fails
+ERROR:  invalid locale name "en_US" for builtin provider
+CREATE COLLATION builtin2 ( PROVIDER = builtin, LC_CTYPE = "C", LC_COLLATE = "C" ); -- fails
+ERROR:  parameter "locale" must be specified
 CREATE COLLATION mycoll1 FROM "C";
 CREATE COLLATION mycoll2 ( LC_COLLATE = "POSIX", LC_CTYPE = "POSIX" );
 CREATE COLLATION mycoll3 FROM "default";  -- intentionally unsupported
@@ -754,7 +770,7 @@ DETAIL:  FROM cannot be specified together with any other options.
 -- must get rid of them.
 --
 DROP SCHEMA collate_tests CASCADE;
-NOTICE:  drop cascades to 19 other objects
+NOTICE:  drop cascades to 20 other objects
 DETAIL:  drop cascades to table collate_test1
 drop cascades to table collate_test_like
 drop cascades to table collate_test2
@@ -771,6 +787,7 @@ drop cascades to function dup(anyelement)
 drop cascades to table collate_test20
 drop cascades to table collate_test21
 drop cascades to table collate_test22
+drop cascades to collation builtin_c
 drop cascades to collation mycoll2
 drop cascades to table collate_test23
 drop cascades to view collate_on_int

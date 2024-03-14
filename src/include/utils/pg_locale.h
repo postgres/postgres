@@ -76,6 +76,10 @@ struct pg_locale_struct
 	bool		deterministic;
 	union
 	{
+		struct
+		{
+			const char *locale;
+		}			builtin;
 		locale_t	lt;
 #ifdef USE_ICU
 		struct
@@ -113,6 +117,7 @@ extern size_t pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
 extern size_t pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 								 size_t srclen, pg_locale_t locale);
 
+extern const char *builtin_validate_locale(int encoding, const char *loc_str);
 extern void icu_validate_locale(const char *loc_str);
 extern char *icu_language_tag(const char *loc_str, int elevel);
 

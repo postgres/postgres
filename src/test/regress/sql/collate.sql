@@ -244,6 +244,14 @@ EXPLAIN (COSTS OFF)
 
 -- CREATE/DROP COLLATION
 
+CREATE COLLATION builtin_c ( PROVIDER = builtin, LOCALE = "C" );
+
+SELECT b FROM collate_test1 ORDER BY b COLLATE builtin_c;
+
+CREATE COLLATION builtin2 ( PROVIDER = builtin ); -- fails
+CREATE COLLATION builtin2 ( PROVIDER = builtin, LOCALE = "en_US" ); -- fails
+CREATE COLLATION builtin2 ( PROVIDER = builtin, LC_CTYPE = "C", LC_COLLATE = "C" ); -- fails
+
 CREATE COLLATION mycoll1 FROM "C";
 CREATE COLLATION mycoll2 ( LC_COLLATE = "POSIX", LC_CTYPE = "POSIX" );
 CREATE COLLATION mycoll3 FROM "default";  -- intentionally unsupported

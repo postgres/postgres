@@ -342,22 +342,14 @@ initdb --locale=sv_SE
    <title>Locale Providers</title>
 
    <para>
-    <productname>PostgreSQL</productname> supports multiple <firstterm>locale
-    providers</firstterm>.  This specifies which library supplies the locale
-    data.  One standard provider name is <literal>libc</literal>, which uses
-    the locales provided by the operating system C library.  These are the
-    locales used by most tools provided by the operating system.  Another
-    provider is <literal>icu</literal>, which uses the external
-    ICU<indexterm><primary>ICU</primary></indexterm> library.  ICU locales can
-    only be used if support for ICU was configured when PostgreSQL was built.
+    A locale provider specifies which library defines the locale behavior for
+    collations and character classifications.
    </para>
 
    <para>
     The commands and tools that select the locale settings, as described
-    above, each have an option to select the locale provider.  The examples
-    shown earlier all use the <literal>libc</literal> provider, which is the
-    default.  Here is an example to initialize a database cluster using the
-    ICU provider:
+    above, each have an option to select the locale provider. Here is an
+    example to initialize a database cluster using the ICU provider:
 <programlisting>
 initdb --locale-provider=icu --icu-locale=en
 </programlisting>
@@ -370,12 +362,76 @@ initdb --locale-provider=icu --icu-locale=en
    </para>
 
    <para>
-    Which locale provider to use depends on individual requirements.  For most
-    basic uses, either provider will give adequate results.  For the libc
-    provider, it depends on what the operating system offers; some operating
-    systems are better than others.  For advanced uses, ICU offers more locale
-    variants and customization options.
+    Regardless of the locale provider, the operating system is still used to
+    provide some locale-aware behavior, such as messages (see <xref
+    linkend="guc-lc-messages"/>).
    </para>
+
+   <para>
+    The available locale providers are listed below:
+   </para>
+
+   <variablelist>
+    <varlistentry>
+     <term><literal>builtin</literal></term>
+     <listitem>
+      <para>
+       The <literal>builtin</literal> provider uses built-in operations. Only
+       the <literal>C</literal> locale is supported for this provider.
+      </para>
+      <para>
+       The <literal>C</literal> locale behavior is identical to the
+       <literal>C</literal> locale in the libc provider. When using this
+       locale, the behavior may depend on the database encoding.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>icu</literal></term>
+     <listitem>
+      <para>
+       The <literal>icu</literal> provider uses the external
+       ICU<indexterm><primary>ICU</primary></indexterm>
+       library. <productname>PostgreSQL</productname> must have been
+       configured with support.
+      </para>
+      <para>
+       ICU provides collation and character classification behavior that is
+       independent of the operating system and database encoding, which is
+       preferable if you expect to transition to other platforms without any
+       change in results. <literal>LC_COLLATE</literal> and
+       <literal>LC_CTYPE</literal> can be set independently of the ICU
+       locale.
+      </para>
+      <note>
+       <para>
+        For the ICU provider, results may depend on the version of the ICU
+        library used, as it is updated to reflect changes in natural language
+        over time.
+       </para>
+      </note>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>libc</literal></term>
+     <listitem>
+      <para>
+       The <literal>libc</literal> provider uses the operating system's C
+       library. The collation and character classification behavior is
+       controlled by the settings <literal>LC_COLLATE</literal> and
+       <literal>LC_CTYPE</literal>, so they cannot be set independently.
+      </para>
+      <note>
+       <para>
+        The same locale name may have different behavior on different
+        platforms when using the libc provider.
+       </para>
+      </note>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </sect2>
 
   <sect2 id="icu-locales">

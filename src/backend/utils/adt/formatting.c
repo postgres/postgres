@@ -1680,6 +1680,8 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		else
 #endif
 		{
+			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
+
 			if (pg_database_encoding_max_length() > 1)
 			{
 				wchar_t    *workspace;
@@ -1798,6 +1800,8 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		else
 #endif
 		{
+			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
+
 			if (pg_database_encoding_max_length() > 1)
 			{
 				wchar_t    *workspace;
@@ -1917,6 +1921,8 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		else
 #endif
 		{
+			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
+
 			if (pg_database_encoding_max_length() > 1)
 			{
 				wchar_t    *workspace;

@@ -104,19 +104,13 @@ if ($oldnode->pg_version >= 11)
 	push @custom_opts, '--allow-group-access';
 }
 
-# Set up the locale settings for the original cluster, so that we
-# can test that pg_upgrade copies the locale settings of template0
-# from the old to the new cluster.
+my $old_provider_field;
+my $old_datlocale_field;
 
-my $original_encoding = "6";    # UTF-8
-my $original_provider = "c";
-my $original_locale = "C";
-my $original_datlocale = "";
-my $provider_field = "'c' AS datlocprovider";
-my $old_datlocale_field = "NULL AS datlocale";
-if ($oldnode->pg_version >= 15 && $ENV{with_icu} eq 'yes')
+# account for field additions and changes
+if ($oldnode->pg_version >= 15)
 {
-	$provider_field = "datlocprovider";
+	$old_provider_field = "datlocprovider";
 	if ($oldnode->pg_version >= '17devel')
 	{
 		$old_datlocale_field = "datlocale";
@@ -125,18 +119,65 @@ if ($oldnode->pg_version >= 15 && $ENV{with_icu} eq 'yes')
 	{
 		$old_datlocale_field = "daticulocale AS datlocale";
 	}
+}
+else
+{
+	$old_provider_field = "'c' AS datlocprovider";
+	$old_datlocale_field = "NULL AS datlocale";
+}
+
+# Set up the locale settings for the original cluster, so that we
+# can test that pg_upgrade copies the locale settings of template0
+# from the old to the new cluster.
+
+my $original_enc_name;
+my $original_provider;
+my $original_datcollate = "C";
+my $original_datctype = "C";
+my $original_datlocale;
+
+if ($oldnode->pg_version >= '17devel')
+{
+	$original_enc_name = "UTF-8";
+	$original_provider = "b";
+	$original_datlocale = "C";
+}
+elsif ($oldnode->pg_version >= 15 && $ENV{with_icu} eq 'yes')
+{
+	$original_enc_name = "UTF-8";
 	$original_provider = "i";
 	$original_datlocale = "fr-CA";
 }
+else
+{
+	$original_enc_name = "SQL_ASCII";
+	$original_provider = "c";
+	$original_datlocale = "";
+}
+
+my %encodings = ('UTF-8' => 6, 'SQL_ASCII' => 0);
+my $original_encoding = $encodings{$original_enc_name};
 
 my @initdb_params = @custom_opts;
 
-push @initdb_params, ('--encoding', 'UTF-8');
-push @initdb_params, ('--locale', $original_locale);
-if ($original_provider eq "i")
+push @initdb_params, ('--encoding', $original_enc_name);
+push @initdb_params, ('--lc-collate', $original_datcollate);
+push @initdb_params, ('--lc-ctype', $original_datctype);
+
+# add --locale-provider, if supported
+my %provider_name = ('b' => 'builtin', 'i' => 'icu', 'c' => 'libc');
+if ($oldnode->pg_version >= 15)
 {
-	push @initdb_params, ('--locale-provider', 'icu');
-	push @initdb_params, ('--icu-locale', 'fr-CA');
+	push @initdb_params,
+	  ('--locale-provider', $provider_name{$original_provider});
+	if ($original_provider eq 'b')
+	{
+		push @initdb_params, ('--builtin-locale', $original_datlocale);
+	}
+	elsif ($original_provider eq 'i')
+	{
+		push @initdb_params, ('--icu-locale', $original_datlocale);
+	}
 }
 
 $node_params{extra} = \@initdb_params;
@@ -146,10 +187,10 @@ $oldnode->start;
 my $result;
 $result = $oldnode->safe_psql(
 	'postgres',
-	"SELECT encoding, $provider_field, datcollate, datctype, $old_datlocale_field
+	"SELECT encoding, $old_provider_field, datcollate, datctype, $old_datlocale_field
                  FROM pg_database WHERE datname='template0'");
 is( $result,
-	"$original_encoding|$original_provider|$original_locale|$original_locale|$original_datlocale",
+	"$original_encoding|$original_provider|$original_datcollate|$original_datctype|$original_datlocale",
 	"check locales in original cluster");
 
 # The default location of the source code is the root of this directory.
@@ -433,10 +474,10 @@ if (-d $log_path)
 # Test that upgraded cluster has original locale settings.
 $result = $newnode->safe_psql(
 	'postgres',
-	"SELECT encoding, $provider_field, datcollate, datctype, datlocale
+	"SELECT encoding, datlocprovider, datcollate, datctype, datlocale
                  FROM pg_database WHERE datname='template0'");
 is( $result,
-	"$original_encoding|$original_provider|$original_locale|$original_locale|$original_datlocale",
+	"$original_encoding|$original_provider|$original_datcollate|$original_datctype|$original_datlocale",
 	"check that locales in new cluster match original cluster");
 
 # Second dump from the upgraded instance.

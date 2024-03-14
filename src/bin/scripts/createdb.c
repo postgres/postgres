@@ -40,8 +40,9 @@ main(int argc, char *argv[])
 		{"locale", required_argument, NULL, 'l'},
 		{"maintenance-db", required_argument, NULL, 3},
 		{"locale-provider", required_argument, NULL, 4},
-		{"icu-locale", required_argument, NULL, 5},
-		{"icu-rules", required_argument, NULL, 6},
+		{"builtin-locale", required_argument, NULL, 5},
+		{"icu-locale", required_argument, NULL, 6},
+		{"icu-rules", required_argument, NULL, 7},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -67,6 +68,7 @@ main(int argc, char *argv[])
 	char	   *lc_ctype = NULL;
 	char	   *locale = NULL;
 	char	   *locale_provider = NULL;
+	char	   *builtin_locale = NULL;
 	char	   *icu_locale = NULL;
 	char	   *icu_rules = NULL;
 
@@ -134,9 +136,12 @@ main(int argc, char *argv[])
 				locale_provider = pg_strdup(optarg);
 				break;
 			case 5:
-				icu_locale = pg_strdup(optarg);
+				builtin_locale = pg_strdup(optarg);
 				break;
 			case 6:
+				icu_locale = pg_strdup(optarg);
+				break;
+			case 7:
 				icu_rules = pg_strdup(optarg);
 				break;
 			default:
@@ -216,6 +221,11 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(&sql, " LOCALE ");
 		appendStringLiteralConn(&sql, locale, conn);
 	}
+	if (builtin_locale)
+	{
+		appendPQExpBufferStr(&sql, " BUILTIN_LOCALE ");
+		appendStringLiteralConn(&sql, builtin_locale, conn);
+	}
 	if (lc_collate)
 	{
 		appendPQExpBufferStr(&sql, " LC_COLLATE ");
@@ -294,9 +304,10 @@ help(const char *progname)
 	printf(_("  -l, --locale=LOCALE          locale settings for the database\n"));
 	printf(_("      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"));
 	printf(_("      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"));
+	printf(_("      --builtin-locale=LOCALE  builtin locale setting for the database\n"));
 	printf(_("      --icu-locale=LOCALE      ICU locale setting for the database\n"));
 	printf(_("      --icu-rules=RULES        ICU rules setting for the database\n"));
-	printf(_("      --locale-provider={libc|icu}\n"
+	printf(_("      --locale-provider={builtin|libc|icu}\n"
 			 "                               locale provider for the database's default collation\n"));
 	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));
 	printf(_("  -S, --strategy=STRATEGY      database creation strategy wal_log or file_copy\n"));

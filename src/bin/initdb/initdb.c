@@ -145,7 +145,9 @@ static char *lc_numeric = NULL;
 static char *lc_time = NULL;
 static char *lc_messages = NULL;
 static char locale_provider = COLLPROVIDER_LIBC;
+static bool builtin_locale_specified = false;
 static char *datlocale = NULL;
+static bool icu_locale_specified = false;
 static char *icu_rules = NULL;
 static const char *default_text_search_config = NULL;
 static char *username = NULL;
@@ -2368,7 +2370,7 @@ setlocales(void)
 			lc_monetary = locale;
 		if (!lc_messages)
 			lc_messages = locale;
-		if (!datlocale && locale_provider == COLLPROVIDER_ICU)
+		if (!datlocale && locale_provider != COLLPROVIDER_LIBC)
 			datlocale = locale;
 	}
 
@@ -2395,13 +2397,19 @@ setlocales(void)
 	lc_messages = canonname;
 #endif
 
-	if (locale_provider == COLLPROVIDER_ICU)
+	if (locale_provider != COLLPROVIDER_LIBC && datlocale == NULL)
+		pg_fatal("locale must be specified if provider is %s",
+				 collprovider_name(locale_provider));
+
+	if (locale_provider == COLLPROVIDER_BUILTIN)
+	{
+		if (strcmp(datlocale, "C") != 0)
+			pg_fatal("invalid locale name \"%s\" for builtin provider",
+					 datlocale);
+	}
+	else if (locale_provider == COLLPROVIDER_ICU)
 	{
 		char	   *langtag;
-
-		/* acquire default locale from the environment, if not specified */
-		if (datlocale == NULL)
-			pg_fatal("ICU locale must be specified");
 
 		/* canonicalize to a language tag */
 		langtag = icu_language_tag(datlocale);
@@ -2447,7 +2455,8 @@ usage(const char *progname)
 			 "                            set default locale in the respective category for\n"
 			 "                            new databases (default taken from environment)\n"));
 	printf(_("      --no-locale           equivalent to --locale=C\n"));
-	printf(_("      --locale-provider={libc|icu}\n"
+	printf(_("      --builtin-locale=LOCALE   set builtin locale name for new databases\n"));
+	printf(_("      --locale-provider={builtin|libc|icu}\n"
 			 "                            set default locale provider for new databases\n"));
 	printf(_("      --pwfile=FILE         read password for the new superuser from file\n"));
 	printf(_("  -T, --text-search-config=CFG\n"
@@ -2609,9 +2618,9 @@ setup_locale_encoding(void)
 	else
 	{
 		printf(_("The database cluster will be initialized with this locale configuration:\n"));
-		printf(_("  provider:    %s\n"), collprovider_name(locale_provider));
-		if (datlocale)
-			printf(_("  ICU locale:  %s\n"), datlocale);
+		printf(_("  default collation provider:  %s\n"), collprovider_name(locale_provider));
+		if (locale_provider != COLLPROVIDER_LIBC)
+			printf(_("  default collation locale:    %s\n"), datlocale);
 		printf(_("  LC_COLLATE:  %s\n"
 				 "  LC_CTYPE:    %s\n"
 				 "  LC_MESSAGES: %s\n"
@@ -3104,9 +3113,10 @@ main(int argc, char *argv[])
 		{"allow-group-access", no_argument, NULL, 'g'},
 		{"discard-caches", no_argument, NULL, 14},
 		{"locale-provider", required_argument, NULL, 15},
-		{"icu-locale", required_argument, NULL, 16},
-		{"icu-rules", required_argument, NULL, 17},
-		{"sync-method", required_argument, NULL, 18},
+		{"builtin-locale", required_argument, NULL, 16},
+		{"icu-locale", required_argument, NULL, 17},
+		{"icu-rules", required_argument, NULL, 18},
+		{"sync-method", required_argument, NULL, 19},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -3274,7 +3284,9 @@ main(int argc, char *argv[])
 										 "-c debug_discard_caches=1");
 				break;
 			case 15:
-				if (strcmp(optarg, "icu") == 0)
+				if (strcmp(optarg, "builtin") == 0)
+					locale_provider = COLLPROVIDER_BUILTIN;
+				else if (strcmp(optarg, "icu") == 0)
 					locale_provider = COLLPROVIDER_ICU;
 				else if (strcmp(optarg, "libc") == 0)
 					locale_provider = COLLPROVIDER_LIBC;
@@ -3283,11 +3295,16 @@ main(int argc, char *argv[])
 				break;
 			case 16:
 				datlocale = pg_strdup(optarg);
+				builtin_locale_specified = true;
 				break;
 			case 17:
-				icu_rules = pg_strdup(optarg);
+				datlocale = pg_strdup(optarg);
+				icu_locale_specified = true;
 				break;
 			case 18:
+				icu_rules = pg_strdup(optarg);
+				break;
+			case 19:
 				if (!parse_sync_method(optarg, &sync_method))
 					exit(1);
 				break;
@@ -3317,7 +3334,11 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (datlocale && locale_provider != COLLPROVIDER_ICU)
+	if (builtin_locale_specified && locale_provider != COLLPROVIDER_BUILTIN)
+		pg_fatal("%s cannot be specified unless locale provider \"%s\" is chosen",
+				 "--builtin-locale", "builtin");
+
+	if (icu_locale_specified && locale_provider != COLLPROVIDER_ICU)
 		pg_fatal("%s cannot be specified unless locale provider \"%s\" is chosen",
 				 "--icu-locale", "icu");
 
