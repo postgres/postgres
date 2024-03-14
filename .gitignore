@@ -31,6 +31,7 @@ win32ver.rc
 *.exe
 lib*dll.def
 lib*.pc
+.vscode
 
 # Local excludes in root directory
 /GNUmakefile
