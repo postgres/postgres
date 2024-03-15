@@ -1,6 +1,4 @@
 
-# libjson-c-dev on ubuntu
-jsondep = dependency('json-c')
 curldep = dependency('libcurl')
 
 pg_tde_sources = files(
@@ -37,7 +35,7 @@ pg_tde_sources = files(
 
 incdir = include_directories('src/include')
 
-deps_update = {'dependencies': contrib_mod_args.get('dependencies') + [jsondep, curldep]}
+deps_update = {'dependencies': contrib_mod_args.get('dependencies') + [curldep]}
 
 mod_args = contrib_mod_args + deps_update
 

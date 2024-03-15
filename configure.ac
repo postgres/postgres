@@ -45,7 +45,6 @@ AC_DEFUN([REQUIRE_LIB], [ {
 
 #=======================================
 
-REQUIRE_LIB(jsonc, json-c, json-c, json_object_get, json-c, json_object.h)
 REQUIRE_LIB(libcurl, curl, curl, curl_easy_setopt, curl, curl/curl.h)
 
 case $host_os in

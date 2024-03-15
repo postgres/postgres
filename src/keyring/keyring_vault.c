@@ -16,9 +16,11 @@
 #include "keyring/keyring_curl.h"
 #include "keyring/keyring_api.h"
 #include "pg_tde_defines.h"
-
+#include "fmgr.h"
+#include "utils/fmgrprotos.h"
+#include "utils/builtins.h"
+	
 #include <stdio.h>
-#include <json.h>
 
 #include <curl/curl.h>
 
@@ -128,18 +130,18 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 	char url[VAULT_URL_MAX_LEN];
 	CurlString str;
 	long httpCode = 0;
-
-	json_object *request = json_object_new_object();
-	json_object *data = json_object_new_object();
+	char jsonText[512];
 	char keyData[64];
 	int keyLen = 0;
 
 	Assert(key != NULL);
 
+	// Since we are only building a very limited JSON with a single base64 string, we build it by hand
+	// Simpler than using the limited pg json api
 	keyLen = pg_b64_encode((char *)key->data.data, key->data.len, keyData, 64);
 	keyData[keyLen] = 0;
-	json_object_object_add(data, "key", json_object_new_string(keyData));
-	json_object_object_add(request, "data", data);
+	
+	snprintf(jsonText, 512, "{\"data\":{\"key\":\"%s\"}}", keyData);
 
 #if KEYRING_DEBUG
 	elog(DEBUG1, "Sending base64 key: %s", keyData);
@@ -147,11 +149,10 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 
 	get_keyring_vault_url(vault_keyring, key->name.name, url, sizeof(url));
 
-	if (!curl_perform(vault_keyring, url, &str, &httpCode, json_object_to_json_string(request)))
+	if (!curl_perform(vault_keyring, url, &str, &httpCode, jsonText))
 	{
 		if (str.ptr != NULL)
 			pfree(str.ptr);
-		json_object_put(request);
 
 		ereport(throw_error ? ERROR : WARNING,
 				(errmsg("HTTP(S) request to keyring provider \"%s\" failed",
@@ -160,12 +161,12 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 		return KEYRING_CODE_INVALID_RESPONSE;
 	}
 
-	json_object_put(request);
 	if (str.ptr != NULL)
 		pfree(str.ptr);
 
 	if (httpCode / 100 == 2)
 		return KEYRING_CODE_SUCCESS;
+
 	return KEYRING_CODE_INVALID_RESPONSE;
 }
 
@@ -176,13 +177,13 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	keyInfo* key = NULL;
 	char url[VAULT_URL_MAX_LEN];
 	CurlString str;
-	json_object *response = NULL;
 	long httpCode = 0;
 
-	json_object *data = NULL;
-	json_object *data2 = NULL;
-	json_object *keyO = NULL;
-	const char *response_key = NULL;
+	Datum dataJson;
+	Datum data2Json;
+	Datum keyJson;
+
+	const char* responseKey;
 
 	get_keyring_vault_url(vault_keyring, key_name, url, sizeof(url));
 
@@ -210,64 +211,29 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 		goto cleanup;
 	}
 
-	response = json_tokener_parse(str.ptr);
-
-	if (response == NULL)
+	PG_TRY();
+	{
+		dataJson = DirectFunctionCall2(json_object_field_text, CStringGetTextDatum(str.ptr), CStringGetTextDatum("data"));
+		data2Json = DirectFunctionCall2(json_object_field_text, dataJson, CStringGetTextDatum("data"));
+		keyJson = DirectFunctionCall2(json_object_field_text, data2Json, CStringGetTextDatum("key"));
+		responseKey = TextDatumGetCString(keyJson);
+	}
+	PG_CATCH();
 	{
 		*return_code = KEYRING_CODE_INVALID_RESPONSE;
 		ereport(throw_error ? ERROR : WARNING,
-				(errmsg("keyring provider \"%s\" returned invalid JSON",
+				(errmsg("HTTP(S) request to keyring provider \"%s\" returned incorrect JSON response",
 						vault_keyring->keyring.provider_name)));
 		goto cleanup;
 	}
-
-	if (!json_object_object_get_ex(response, "data", &data))
-	{
-		*return_code = KEYRING_CODE_INVALID_RESPONSE;
-		ereport(throw_error ? ERROR : WARNING,
-				(errmsg("keyring provider \"%s\" returned invalid JSON",
-						vault_keyring->keyring.provider_name),
-				 errdetail("No data attribute in Vault response.")));
-		goto cleanup;
-	}
-
-	if (!json_object_object_get_ex(data, "data", &data2))
-	{
-		*return_code = KEYRING_CODE_INVALID_RESPONSE;
-		ereport(throw_error ? ERROR : WARNING,
-				(errmsg("keyring provider \"%s\" returned invalid JSON",
-						vault_keyring->keyring.provider_name),
-				 errdetail("No data.data attribute in Vault response.")));
-		goto cleanup;
-	}
-
-	if (!json_object_object_get_ex(data2, "key", &keyO))
-	{
-		*return_code = KEYRING_CODE_INVALID_RESPONSE;
-		ereport(throw_error ? ERROR : WARNING,
-				(errmsg("keyring provider \"%s\" returned invalid JSON",
-						vault_keyring->keyring.provider_name),
-				 errdetail("No data.data.key attribute in Vault response.")));
-		goto cleanup;
-	}
-
-	response_key = json_object_get_string(keyO);
-	if (response_key == NULL || strlen(response_key) == 0)
-	{
-		*return_code = KEYRING_CODE_INVALID_RESPONSE;
-		ereport(throw_error ? ERROR : WARNING,
-				(errmsg("keyring provider \"%s\" returned invalid JSON",
-						vault_keyring->keyring.provider_name),
-				 errdetail("Key doesn't exist or empty.")));
-		goto cleanup;
-	}
+	PG_END_TRY();
 
 #if KEYRING_DEBUG
 	elog(DEBUG1, "Retrieved base64 key: %s", response_key);
 #endif
 
 	key = palloc(sizeof(keyInfo));
-	key->data.len = pg_b64_decode(response_key, strlen(response_key), (char *)key->data.data, MAX_KEY_DATA_SIZE);
+	key->data.len = pg_b64_decode(responseKey, strlen(responseKey), (char *)key->data.data, MAX_KEY_DATA_SIZE);
 
 	if (key->data.len > MAX_KEY_DATA_SIZE)
 	{
@@ -282,6 +248,5 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 
 cleanup:
 	if(str.ptr != NULL) pfree(str.ptr);
-	if(response != NULL) json_object_put(response);
 	return key;
 }

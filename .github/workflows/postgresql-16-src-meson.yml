@@ -26,7 +26,7 @@ jobs:
             libxml2-dev libxslt-dev xsltproc libkrb5-dev libldap2-dev \
             libsystemd-dev gettext tcl-dev libperl-dev pkg-config clang-11 \
             llvm-11 llvm-11-dev libselinux1-dev python3-dev \
-            uuid-dev liblz4-dev meson ninja-build libjson-c-dev \
+            uuid-dev liblz4-dev meson ninja-build  \
             gpg wget libcurl4-openssl-dev
           sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'

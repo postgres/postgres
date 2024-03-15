@@ -79,12 +79,12 @@ You are all set to create encrypted tables using `pg_tde`.
 
 * On Debian and Ubuntu:
 ```sh
-sudo apt install make gcc autoconf libjson-c-dev libcurl4-openssl-dev postgresql-server-dev-16
+sudo apt install make gcc autoconf libcurl4-openssl-dev postgresql-server-dev-16
 ```
 
 * On MacOS:
 ```sh
-brew install make autoconf curl json-c gettext postresql@16
+brew install make autoconf curl gettext postresql@16
 ```
 
 2. Install or build postgresql 16 [(see reference commit below)](#base-commit)

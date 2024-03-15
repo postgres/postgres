@@ -15,7 +15,6 @@
 #include "access/skey.h"
 #include "access/relscan.h"
 #include "utils/builtins.h"
-#include "utils/builtins.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
 #include "utils/lsyscache.h"

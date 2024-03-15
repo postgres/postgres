@@ -24,7 +24,7 @@ jobs:
         run: |
           sudo apt-get install -y libreadline6-dev systemtap-sdt-dev wget \
             zlib1g-dev libssl-dev libpam0g-dev bison flex libipc-run-perl \
-            libjson-c-dev libcurl4-openssl-dev
+            libcurl4-openssl-dev
           sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
           wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg

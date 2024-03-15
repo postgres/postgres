@@ -21,7 +21,7 @@ Install `pg_tde` using one of available installation methods:
     1. To build `pg_tde` from source code, you require the following on Ubuntu/Debian:
 
         ```sh
-        sudo apt install make gcc libjson-c-dev postgresql-server-dev-16 libcurl4-openssl-dev
+        sudo apt install make gcc postgresql-server-dev-16 libcurl4-openssl-dev
         ```
 
     2. [Install Percona Distribution for PostgreSQL 16](https://docs.percona.com/postgresql/16/installing.html) or [upstream PostgreSQL 16](https://www.postgresql.org/download/)
