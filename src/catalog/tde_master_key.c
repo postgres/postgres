@@ -71,7 +71,7 @@ static TDEMasterKeyInfo *create_master_key_info(TDEMasterKey *master_key, Generi
 static inline dshash_table *get_master_key_Hash(void);
 static TDEMasterKey *get_master_key_from_cache(Oid dbOid, bool acquire_lock);
 static void push_master_key_to_cache(TDEMasterKey *masterKey);
-static TDEMasterKey *set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring);
+static TDEMasterKey *set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key);
 
 static const TDEShmemSetupRoutine master_key_info_shmem_routine = {
     .init_shared_state = initialize_shared_state,
@@ -249,7 +249,7 @@ GetMasterKey(void)
         return NULL;
     }
 
-    keyInfo = KeyringGetKey(keyring, masterKeyInfo->keyId.name, false, &keyring_ret);
+    keyInfo = KeyringGetKey(keyring, masterKeyInfo->keyId.versioned_name, false, &keyring_ret);
     if (keyInfo == NULL)
     {
         ereport(ERROR,
@@ -283,7 +283,7 @@ GetMasterKey(void)
  */
 
 static TDEMasterKey *
-set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
+set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key)
 {
     TDEMasterKey *masterKey = NULL;
     TDEMasterKeyInfo *masterKeyInfo = NULL;
@@ -332,11 +332,30 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
         masterKey->keyInfo.keyId.version = DEFAULT_MASTER_KEY_VERSION;
         masterKey->keyInfo.keyringId = keyring->key_id;
         strncpy(masterKey->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
-        /* We need to get the key from keyring */
+        strncpy(masterKey->keyInfo.keyId.versioned_name, key_name, TDE_KEY_NAME_LEN);
 
-        keyInfo = KeyringGetKey(keyring, key_name, false, &keyring_ret);
-        if (keyInfo == NULL) /* TODO: check if the key was not present or there was a problem with key provider*/
-            keyInfo = KeyringGenerateNewKeyAndStore(keyring, key_name, INTERNAL_KEY_LEN, false);
+        /* We need to get the key from keyring */
+        while (true)
+        {
+            keyInfo = KeyringGetKey(keyring, masterKey->keyInfo.keyId.versioned_name, false, &keyring_ret);
+            if (keyInfo == NULL || ensure_new_key == false)
+                break;
+
+            masterKey->keyInfo.keyId.version++;
+
+            snprintf(masterKey->keyInfo.keyId.versioned_name, TDE_KEY_NAME_LEN, "%s_%d", key_name, masterKey->keyInfo.keyId.version);
+            if (masterKey->keyInfo.keyId.version > MAX_MASTER_KEY_VERSION_NUM)
+            {
+                LWLockRelease(shared_state->Lock);
+                ereport(ERROR,
+                        (errmsg("Failed to generate new key name")));
+                break;
+            }
+            /* TODO: check if the key was not present or there was a problem with key provider*/
+        }
+
+        if (keyInfo == NULL)
+            keyInfo = KeyringGenerateNewKeyAndStore(keyring, masterKey->keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, false);
 
         if (keyInfo == NULL)
         {
@@ -379,7 +398,7 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
 bool
 SetMasterKey(const char *key_name, const char *provider_name)
 {
-    TDEMasterKey *master_key = set_master_key_with_keyring(key_name, GetKeyProviderByName(provider_name));
+    TDEMasterKey *master_key = set_master_key_with_keyring(key_name, GetKeyProviderByName(provider_name), false);
 
     return (master_key != NULL);
 }
@@ -392,6 +411,7 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name)
     const keyInfo *keyInfo = NULL;
     KeyringReturnCodes keyring_ret;
     GenericKeyring *keyring;
+    bool ensure_new_key = true;
 
     /*
      * Let's set everything the same as the older master key and
@@ -406,6 +426,8 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name)
     else
     {
         strncpy(new_master_key.keyInfo.keyId.name, new_key_name, sizeof(new_master_key.keyInfo.keyId.name));
+        strncpy(new_master_key.keyInfo.keyId.versioned_name, new_key_name, sizeof(new_master_key.keyInfo.keyId.name));
+
         new_master_key.keyInfo.keyId.version = DEFAULT_MASTER_KEY_VERSION;
 
         if (new_provider_name != NULL)
@@ -417,11 +439,28 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name)
     /* We need a valid keyring structure */
     keyring = GetKeyProviderByID(new_master_key.keyInfo.keyringId);
 
-    /* Retrieve or generate new key */
-    keyInfo = KeyringGetKey(keyring, new_key_name, false, &keyring_ret);
+
+    /* We need to get the key from keyring */
+    while (true)
+    {
+        keyInfo = KeyringGetKey(keyring, new_master_key.keyInfo.keyId.versioned_name, false, &keyring_ret);
+        if (keyInfo == NULL || ensure_new_key == false)
+            break;
+
+        new_master_key.keyInfo.keyId.version++;
+
+        snprintf(new_master_key.keyInfo.keyId.versioned_name, TDE_KEY_NAME_LEN, "%s_%d", new_key_name, new_master_key.keyInfo.keyId.version);
+
+        if (new_master_key.keyInfo.keyId.version > MAX_MASTER_KEY_VERSION_NUM)
+        {
+            ereport(ERROR,
+                    (errmsg("Failed to generate new key name")));
+            break;
+        }
+    }
 
     if (keyInfo == NULL)
-        keyInfo = KeyringGenerateNewKeyAndStore(keyring, new_key_name, INTERNAL_KEY_LEN, false);
+        keyInfo = KeyringGenerateNewKeyAndStore(keyring, new_master_key.keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, false);
 
     if (keyInfo == NULL)
     {

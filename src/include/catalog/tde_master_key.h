@@ -17,11 +17,14 @@
 #include "nodes/pg_list.h"
 
 #define MASTER_KEY_NAME_LEN TDE_KEY_NAME_LEN
+#define MAX_MASTER_KEY_VERSION_NUM 1000
+#define DEFAULUT_MASTER_KEY_VERSION 1
 
 typedef struct TDEMasterKeyId
 {
 	uint32	version;
 	char	name[MASTER_KEY_NAME_LEN];
+	char	versioned_name[MASTER_KEY_NAME_LEN + 4];
 } TDEMasterKeyId;
 
 typedef struct TDEMasterKeyInfo
