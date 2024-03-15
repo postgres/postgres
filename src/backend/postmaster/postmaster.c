@@ -5741,7 +5741,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 		case -1:
 			/* in postmaster, fork failed ... */
 			ereport(LOG,
-					(errmsg("could not fork worker process: %m")));
+					(errmsg("could not fork background worker process: %m")));
 			/* undo what assign_backendlist_entry did */
 			ReleasePostmasterChildSlot(rw->rw_child_slot);
 			rw->rw_child_slot = 0;
@@ -5853,7 +5853,7 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("no slot available for new worker process")));
+				 errmsg("no slot available for new background worker process")));
 		return false;
 	}
 
