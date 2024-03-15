@@ -4,6 +4,9 @@ EXTRA_INSTALL = src/test/modules/injection_points
 
 REGRESS = gin_incomplete_splits
 
+# The injection points are cluster-wide, so disable installcheck
+NO_INSTALLCHECK = 1
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

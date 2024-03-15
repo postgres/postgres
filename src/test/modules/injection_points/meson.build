@@ -33,5 +33,7 @@ tests += {
     'sql': [
       'injection_points',
     ],
+    # The injection points are cluster-wide, so disable installcheck
+    'runningcheck': false,
   },
 }
