@@ -67,7 +67,6 @@ static int  required_locks_count(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void master_key_startup_cleanup(int tde_tbl_count, void *arg);
 
-static TDEMasterKeyInfo *create_master_key_info(TDEMasterKey *master_key, GenericKeyring *keyring);
 static inline dshash_table *get_master_key_Hash(void);
 static TDEMasterKey *get_master_key_from_cache(Oid dbOid, bool acquire_lock);
 static void push_master_key_to_cache(TDEMasterKey *masterKey);
@@ -182,25 +181,6 @@ shared_memory_shutdown(int code, Datum arg)
     masterKeyLocalState.sharedMasterKeyState = NULL;
 }
 
-static TDEMasterKeyInfo *
-create_master_key_info(TDEMasterKey *master_key, GenericKeyring *keyring)
-{
-    TDEMasterKeyInfo *masterKeyInfo = NULL;
-
-    Assert(master_key != NULL);
-    Assert(keyring != NULL);
-
-    masterKeyInfo = palloc(sizeof(TDEMasterKeyInfo));
-    masterKeyInfo->databaseId = MyDatabaseId;
-    masterKeyInfo->tablespaceId = MyDatabaseTableSpace;
-    masterKeyInfo->keyId.version = DEFAULT_MASTER_KEY_VERSION;
-    gettimeofday(&masterKeyInfo->creationTime, NULL);
-    strncpy(masterKeyInfo->keyId.name, master_key->keyInfo.keyId.name, MASTER_KEY_NAME_LEN);
-    masterKeyInfo->keyringId = keyring->key_id;
-
-    return masterKeyInfo;
-}
-
 bool
 save_master_key_info(TDEMasterKeyInfo *master_key_info)
 {
@@ -253,7 +233,7 @@ GetMasterKey(void)
     if (keyInfo == NULL)
     {
         ereport(ERROR,
-                (errmsg("failed to retrieve master key from keyring")));
+                (errmsg("failed to retrieve master key from keyring %s", masterKeyInfo->keyId.versioned_name)));
         return NULL;
     }
 
@@ -286,7 +266,6 @@ static TDEMasterKey *
 set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key)
 {
     TDEMasterKey *masterKey = NULL;
-    TDEMasterKeyInfo *masterKeyInfo = NULL;
     TdeMasterKeySharedState *shared_state = masterKeyLocalState.sharedMasterKeyState;
     Oid dbOid = MyDatabaseId;
 
@@ -304,8 +283,7 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool 
         return NULL;
     }
     /*  Check if valid master key info exists in the file. There is no need for a lock here as the key might be in the file and not in the cache, but it must be in the file if it's in the cache and we check the cache under the lock later. */
-    masterKeyInfo = pg_tde_get_master_key(dbOid);
-    if (masterKeyInfo)
+    if (pg_tde_get_master_key(dbOid))
     {
         ereport(ERROR,
                 (errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -333,6 +311,7 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool 
         masterKey->keyInfo.keyringId = keyring->key_id;
         strncpy(masterKey->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
         strncpy(masterKey->keyInfo.keyId.versioned_name, key_name, TDE_KEY_NAME_LEN);
+        gettimeofday(&masterKey->keyInfo.creationTime, NULL);
 
         /* We need to get the key from keyring */
         while (true)
@@ -367,12 +346,11 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool 
         masterKey->keyLength = keyInfo->data.len;
         memcpy(masterKey->keyData, keyInfo->data.data, keyInfo->data.len);
 
-        masterKeyInfo = create_master_key_info(masterKey, keyring);
-        save_master_key_info(masterKeyInfo);
+        save_master_key_info(&masterKey->keyInfo);
 
         /* XLog the new key*/
         XLogBeginInsert();
-	    XLogRegisterData((char *) masterKeyInfo, sizeof(TDEMasterKeyInfo));
+	    XLogRegisterData((char *) &masterKey->keyInfo, sizeof(TDEMasterKeyInfo));
 	    XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_MASTER_KEY);
         
         push_master_key_to_cache(masterKey);
