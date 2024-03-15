@@ -24,24 +24,22 @@ typedef struct TDEMasterKeyId
 	char	name[MASTER_KEY_NAME_LEN];
 } TDEMasterKeyId;
 
-typedef struct TDEMasterKey
-{
-	TDEMasterKeyId keyId;
-	Oid databaseId;
-	Oid keyringId;
-	unsigned char keyData[MAX_KEY_DATA_SIZE];
-	uint32 keyLength;
-} TDEMasterKey;
-
 typedef struct TDEMasterKeyInfo
 {
-	Oid keyringId;
 	Oid databaseId;
 	Oid tablespaceId;
 	Oid userId;
+	Oid keyringId;
 	struct timeval creationTime;
 	TDEMasterKeyId keyId;
 } TDEMasterKeyInfo;
+
+typedef struct TDEMasterKey
+{
+	TDEMasterKeyInfo keyInfo;
+	unsigned char keyData[MAX_KEY_DATA_SIZE];
+	uint32 keyLength;
+} TDEMasterKey;
 
 typedef struct XLogMasterKeyCleanup
 {
@@ -50,10 +48,10 @@ typedef struct XLogMasterKeyCleanup
 } XLogMasterKeyCleanup;
 
 extern void InitializeMasterKeyInfo(void);
-extern TDEMasterKey* GetMasterKey(void);
+extern TDEMasterKey* GetMasterKey(Oid dbOid);
 extern TDEMasterKey* SetMasterKey(const char* key_name, const char* provider_name);
 extern Oid GetMasterKeyProviderId(void);
-extern void save_master_key_info(TDEMasterKeyInfo *masterKeyInfo);
+extern bool save_master_key_info(TDEMasterKeyInfo *masterKeyInfo);
 extern void cleanup_master_key_info(Oid databaseId, Oid tablespaceId);
 
 #endif /*PG_TDE_MASTER_KEY_H*/

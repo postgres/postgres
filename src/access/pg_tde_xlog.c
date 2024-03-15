@@ -32,7 +32,7 @@ pg_tde_rmgr_redo(XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, false);
+		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, NULL);
 	}
 	else if (info == XLOG_TDE_ADD_MASTER_KEY)
 	{
