@@ -3,6 +3,8 @@
 
 use strict;
 use warnings;
+use locale;
+
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Time::HiRes qw(usleep);
@@ -35,14 +37,16 @@ my $psql_session = $node->background_psql('postgres');
 
 # The following query will generate a stream of SELECT 1 queries. This is done
 # so to exercise transaction timeout in the presence of short queries.
+# Note: the interval value is parsed with locale-aware strtod()
 $psql_session->query_until(
-	qr/starting_bg_psql/, q(
-   \echo starting_bg_psql
-   SET transaction_timeout to '10ms';
-   BEGIN;
-   SELECT 1 \watch 0.001
-   \q
-));
+	qr/starting_bg_psql/,
+	sprintf(
+		q(\echo starting_bg_psql
+		SET transaction_timeout to '10ms';
+		BEGIN;
+		SELECT 1 \watch %g
+		\q
+), 0.001));
 
 # Wait until the backend enters the timeout injection point. Will get an error
 # here if anything goes wrong.
