@@ -54,7 +54,7 @@ psql_start_test(const char *testname,
 			 outputdir, testname);
 
 	snprintf(expectfile, sizeof(expectfile), "%s/expected/%s.out",
-			 outputdir, testname);
+			 expecteddir, testname);
 	if (!file_exists(expectfile))
 		snprintf(expectfile, sizeof(expectfile), "%s/expected/%s.out",
 				 inputdir, testname);
