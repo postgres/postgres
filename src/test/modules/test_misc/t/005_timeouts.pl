@@ -44,7 +44,7 @@ $psql_session->query_until(
    \q
 ));
 
-# Wait until the backend is in the timeout injection point. Will get an error
+# Wait until the backend enters the timeout injection point. Will get an error
 # here if anything goes wrong.
 $node->wait_for_event('client backend', 'transaction-timeout');
 
@@ -58,13 +58,13 @@ $node->safe_psql('postgres',
 $node->wait_for_log('terminating connection due to transaction timeout',
 	$log_offset);
 
-# If we send \q with $psql_session->quit it can get to pump already closed.
-# So \q is in initial script, here we only finish IPC::Run.
+# If we send \q with $psql_session->quit the command can be sent to the session
+# already closed. So \q is in initial script, here we only finish IPC::Run.
 $psql_session->{run}->finish;
 
 
 #
-# 2. Test of the sidle in transaction timeout
+# 2. Test of the idle in transaction timeout
 #
 
 $node->safe_psql('postgres',
@@ -80,7 +80,7 @@ $psql_session->query_until(
    BEGIN;
 ));
 
-# Wait until the backend is in the timeout injection point.
+# Wait until the backend enters the timeout injection point.
 $node->wait_for_event('client backend',
 	'idle-in-transaction-session-timeout');
 
@@ -111,7 +111,7 @@ $psql_session->query_until(
    SET idle_session_timeout to '10ms';
 ));
 
-# Wait until the backend is in the timeout injection point.
+# Wait until the backend enters the timeout injection point.
 $node->wait_for_event('client backend', 'idle-session-timeout');
 
 $log_offset = -s $node->logfile;
