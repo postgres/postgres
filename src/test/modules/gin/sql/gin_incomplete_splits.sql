@@ -48,6 +48,7 @@ declare
   i integer;
 begin
   -- Insert arrays with 'step' elements each, until an error occurs.
+  i := 0;
   loop
     begin
       select insert_n(next_i, step) into next_i;
@@ -56,12 +57,12 @@ begin
       exit;
     end;
 
-    -- The caller is expected to set an injection point that eventuall
+    -- The caller is expected to set an injection point that eventually
     -- causes an error. But bail out if still no error after 10000
     -- attempts, so that we don't get stuck in an infinite loop.
     i := i + 1;
     if i = 10000 then
-      raise 'no error on inserts after ';
+      raise 'no error on inserts after % iterations', i;
     end if;
   end loop;
 
