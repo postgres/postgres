@@ -42,6 +42,8 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 	keyInfo* key = NULL;
 	File file = -1;
 	FileKeyring* file_keyring = (FileKeyring*)keyring;
+	off_t bytes_read = 0;
+	off_t curr_pos = 0;
 
 	file = PathNameOpenFile(file_keyring->file_name, O_CREAT | O_RDWR | PG_BINARY);
 	if (file < 0)
@@ -55,8 +57,9 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 	key = palloc(sizeof(keyInfo));
 	while(true)
 	{
-		off_t bytes_read = 0;
-		bytes_read = FileRead(file, key, sizeof(keyInfo), 0, WAIT_EVENT_DATA_FILE_READ);
+		bytes_read = FileRead(file, key, sizeof(keyInfo), curr_pos, WAIT_EVENT_DATA_FILE_READ);
+		curr_pos += bytes_read;
+
 		if (bytes_read == 0 )
 		{
 			pfree(key);

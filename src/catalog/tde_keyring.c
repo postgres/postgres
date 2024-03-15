@@ -164,6 +164,13 @@ GetKeyProviderByName(const char *provider_name)
 	heap_endscan(scan);
 	relation_close(kp_table_relation, AccessShareLock);
 
+    if (keyring == NULL)
+    {
+        ereport(ERROR,
+                (errmsg("Key provider \"%s\" does not exists", provider_name),
+                 errhint("Use create_key_provider interface to create the key provider")));
+    }
+
 	return keyring;
 }
 

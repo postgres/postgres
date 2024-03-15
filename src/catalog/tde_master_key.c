@@ -29,6 +29,8 @@
 
 #include "access/pg_tde_tdemap.h"
 
+#define DEFAULT_MASTER_KEY_VERSION      1
+
 typedef struct TdeMasterKeySharedState
 {
     LWLock *Lock;
@@ -191,7 +193,7 @@ create_master_key_info(TDEMasterKey *master_key, GenericKeyring *keyring)
     masterKeyInfo = palloc(sizeof(TDEMasterKeyInfo));
     masterKeyInfo->databaseId = MyDatabaseId;
     masterKeyInfo->tablespaceId = MyDatabaseTableSpace;
-    masterKeyInfo->keyId.version = 1;
+    masterKeyInfo->keyId.version = DEFAULT_MASTER_KEY_VERSION;
     gettimeofday(&masterKeyInfo->creationTime, NULL);
     strncpy(masterKeyInfo->keyId.name, master_key->keyInfo.keyId.name, MASTER_KEY_NAME_LEN);
     masterKeyInfo->keyringId = keyring->key_id;
@@ -215,13 +217,14 @@ save_master_key_info(TDEMasterKeyInfo *master_key_info)
  * throws an error.
  */
 TDEMasterKey *
-GetMasterKey(Oid dbOid)
+GetMasterKey(void)
 {
     TDEMasterKey *masterKey = NULL;
     TDEMasterKeyInfo *masterKeyInfo = NULL;
     GenericKeyring *keyring = NULL;
     const keyInfo *keyInfo = NULL;
     KeyringReturnCodes keyring_ret;
+    Oid dbOid = MyDatabaseId;
 
     masterKey = get_master_key_from_cache(dbOid, true);
     if (masterKey)
@@ -326,7 +329,7 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
 
         masterKey = palloc(sizeof(TDEMasterKey));
         masterKey->keyInfo.databaseId = MyDatabaseId;
-        masterKey->keyInfo.keyId.version = 1;
+        masterKey->keyInfo.keyId.version = DEFAULT_MASTER_KEY_VERSION;
         masterKey->keyInfo.keyringId = keyring->key_id;
         strncpy(masterKey->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
         /* We need to get the key from keyring */
@@ -373,18 +376,63 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
     return masterKey;
 }
 
-TDEMasterKey *
+bool
 SetMasterKey(const char *key_name, const char *provider_name)
 {
-    GenericKeyring *keyring = GetKeyProviderByName(provider_name);
-    if (keyring == NULL)
+    TDEMasterKey *master_key = set_master_key_with_keyring(key_name, GetKeyProviderByName(provider_name));
+
+    return (master_key != NULL);
+}
+
+bool
+RotateMasterKey(const char *new_key_name, const char *new_provider_name)
+{
+    TDEMasterKey *master_key = GetMasterKey();
+    TDEMasterKey new_master_key;
+    const keyInfo *keyInfo = NULL;
+    KeyringReturnCodes keyring_ret;
+    GenericKeyring *keyring;
+
+    /*
+     * Let's set everything the same as the older master key and
+     * update only the required attributes.
+     * */
+    memcpy(&new_master_key, master_key, sizeof(TDEMasterKey));
+
+    if (new_key_name == NULL)
+    {
+        new_master_key.keyInfo.keyId.version++;
+    }
+    else
+    {
+        strncpy(new_master_key.keyInfo.keyId.name, new_key_name, sizeof(new_master_key.keyInfo.keyId.name));
+        new_master_key.keyInfo.keyId.version = DEFAULT_MASTER_KEY_VERSION;
+
+        if (new_provider_name != NULL)
+        {
+            new_master_key.keyInfo.keyringId = GetKeyProviderByName(new_provider_name)->key_id;
+        }
+    }
+
+    /* We need a valid keyring structure */
+    keyring = GetKeyProviderByID(new_master_key.keyInfo.keyringId);
+
+    /* Retrieve or generate new key */
+    keyInfo = KeyringGetKey(keyring, new_key_name, false, &keyring_ret);
+
+    if (keyInfo == NULL)
+        keyInfo = KeyringGenerateNewKeyAndStore(keyring, new_key_name, INTERNAL_KEY_LEN, false);
+
+    if (keyInfo == NULL)
     {
         ereport(ERROR,
-                (errmsg("Key provider \"%s\" does not exists", provider_name),
-                 errhint("Use create_key_provider interface to create the key provider")));
-        return NULL;
+                (errmsg("failed to retrieve master key")));
     }
-    return set_master_key_with_keyring(key_name, keyring);
+
+    new_master_key.keyLength = keyInfo->data.len;
+    memcpy(new_master_key.keyData, keyInfo->data.data, keyInfo->data.len);
+
+    return pg_tde_perform_rotate_key(master_key, &new_master_key);
 }
 
 /*
@@ -535,8 +583,25 @@ Datum pg_tde_set_master_key(PG_FUNCTION_ARGS)
 {
     char *master_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
     char *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	bool ret;
 
     ereport(LOG, (errmsg("Setting master key [%s : %s] for the database", master_key_name, provider_name)));
-    SetMasterKey(master_key_name, provider_name);
-    PG_RETURN_NULL();
+    ret = SetMasterKey(master_key_name, provider_name);
+	PG_RETURN_BOOL(ret);
+}
+
+/*
+ * SQL interface for key rotation
+ */
+PG_FUNCTION_INFO_V1(pg_tde_rotate_key);
+Datum
+pg_tde_rotate_key(PG_FUNCTION_ARGS)
+{
+    char *new_master_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+    char *new_provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	bool ret;
+
+    ereport(LOG, (errmsg("Rotating master key to [%s : %s] for the database", new_master_key_name, new_provider_name)));
+	ret = RotateMasterKey(new_master_key_name, new_provider_name);
+	PG_RETURN_BOOL(ret);
 }

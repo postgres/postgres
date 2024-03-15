@@ -46,16 +46,20 @@ typedef struct XLogRelKey
 	RelKeyData      relKey;
 } XLogRelKey;
 
+extern void pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel);
 extern void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_key_data, TDEMasterKeyInfo *master_key_info);
 extern void pg_tde_delete_key_map_entry(const RelFileLocator *rlocator);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset);
-extern void pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel);
+
 extern RelKeyData *pg_tde_get_key_from_fork(const RelFileLocator *rlocator);
 extern RelKeyData *GetRelationKey(RelFileLocator rel);
+
 extern void pg_tde_cleanup_path_vars(void);
 extern void pg_tde_delete_tde_files(Oid dbOid);
-extern bool pg_tde_save_master_key(TDEMasterKeyInfo *master_key_info);
+
 extern TDEMasterKeyInfo *pg_tde_get_master_key(Oid dbOid);
+extern bool pg_tde_save_master_key(TDEMasterKeyInfo *master_key_info);
+extern bool pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key);
 
 const char * tde_sprint_key(InternalKey *k);
 

@@ -81,13 +81,13 @@ RETURNS boolean
 AS $$ SELECT amname = 'pg_tde' FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = table_name $$
 LANGUAGE SQL;
 
-CREATE FUNCTION pg_tde_rotate_key(key_name VARCHAR)
+CREATE FUNCTION pg_tde_rotate_key(new_master_key_name VARCHAR(255), new_provider_name VARCHAR(255))
 RETURNS boolean
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
 CREATE FUNCTION pg_tde_set_master_key(master_key_name VARCHAR(255), provider_name VARCHAR(255))
-RETURNS VOID
+RETURNS boolean
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 

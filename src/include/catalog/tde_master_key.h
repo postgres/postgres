@@ -48,10 +48,13 @@ typedef struct XLogMasterKeyCleanup
 } XLogMasterKeyCleanup;
 
 extern void InitializeMasterKeyInfo(void);
-extern TDEMasterKey* GetMasterKey(Oid dbOid);
-extern TDEMasterKey* SetMasterKey(const char* key_name, const char* provider_name);
-extern Oid GetMasterKeyProviderId(void);
-extern bool save_master_key_info(TDEMasterKeyInfo *masterKeyInfo);
 extern void cleanup_master_key_info(Oid databaseId, Oid tablespaceId);
+
+extern bool save_master_key_info(TDEMasterKeyInfo *masterKeyInfo);
+
+extern Oid GetMasterKeyProviderId(void);
+extern TDEMasterKey* GetMasterKey(void);
+extern bool SetMasterKey(const char *key_name, const char *provider_name);
+extern bool RotateMasterKey(const char *new_key_name, const char *new_provider_name);
 
 #endif /*PG_TDE_MASTER_KEY_H*/
