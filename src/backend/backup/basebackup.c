@@ -397,8 +397,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 		endtli = backup_state->stoptli;
 
 		/* Deallocate backup-related variables. */
-		pfree(tablespace_map->data);
-		pfree(tablespace_map);
+		destroyStringInfo(tablespace_map);
 		pfree(backup_state);
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(false));

@@ -506,8 +506,7 @@ check_publications(WalReceiverConn *wrconn, List *publications)
 	appendStringInfoChar(cmd, ')');
 
 	res = walrcv_exec(wrconn, cmd->data, 1, tableRow);
-	pfree(cmd->data);
-	pfree(cmd);
+	destroyStringInfo(cmd);
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,

@@ -526,10 +526,7 @@ check_backup_label_files(int n_backups, char **backup_dirs)
 
 	/* Free memory that we don't need any more. */
 	if (lastbuf != buf)
-	{
-		pfree(buf->data);
-		pfree(buf);
-	}
+		destroyStringInfo(buf);
 
 	/*
 	 * Return the data from the first backup_info that we read (which is the

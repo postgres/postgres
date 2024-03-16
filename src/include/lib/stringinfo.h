@@ -87,7 +87,8 @@ typedef StringInfoData *StringInfo;
  *		to be len + 1 in size.
  *
  * To destroy a StringInfo, pfree() the data buffer, and then pfree() the
- * StringInfoData if it was palloc'd.  There's no special support for this.
+ * StringInfoData if it was palloc'd.  For StringInfos created with
+ * makeStringInfo(), destroyStringInfo() is provided for this purpose.
  * However, if the StringInfo was initialized using initReadOnlyStringInfo()
  * then the caller will need to consider if it is safe to pfree the data
  * buffer.
@@ -232,5 +233,11 @@ extern void appendBinaryStringInfoNT(StringInfo str,
  * Make sure a StringInfo's buffer can hold at least 'needed' more bytes.
  */
 extern void enlargeStringInfo(StringInfo str, int needed);
+
+/*------------------------
+ * destroyStringInfo
+ * Frees a StringInfo and its buffer (opposite of makeStringInfo()).
+ */
+extern void destroyStringInfo(StringInfo str);
 
 #endif							/* STRINGINFO_H */

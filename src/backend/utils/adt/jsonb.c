@@ -133,8 +133,7 @@ jsonb_send(PG_FUNCTION_ARGS)
 	pq_begintypsend(&buf);
 	pq_sendint8(&buf, version);
 	pq_sendtext(&buf, jtext->data, jtext->len);
-	pfree(jtext->data);
-	pfree(jtext);
+	destroyStringInfo(jtext);
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
