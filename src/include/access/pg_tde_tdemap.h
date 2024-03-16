@@ -60,6 +60,7 @@ extern void pg_tde_delete_tde_files(Oid dbOid);
 extern TDEMasterKeyInfo *pg_tde_get_master_key(Oid dbOid);
 extern bool pg_tde_save_master_key(TDEMasterKeyInfo *master_key_info);
 extern bool pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key);
+extern bool xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec);
 
 const char * tde_sprint_key(InternalKey *k);
 

@@ -15,6 +15,8 @@
 #define XLOG_TDE_ADD_RELATION_KEY	0x00
 #define XLOG_TDE_ADD_MASTER_KEY		0x10
 #define XLOG_TDE_CLEAN_MASTER_KEY	0x20
+#define XLOG_TDE_ROTATE_KEY			0x30
+
 /* TODO: ID has to be registedred and changed: https://wiki.postgresql.org/wiki/CustomWALResourceManagers */
 #define RM_TDERMGR_ID	RM_EXPERIMENTAL_ID
 #define RM_TDERMGR_NAME	"test_pg_tde_custom_rmgr"

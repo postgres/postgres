@@ -18,7 +18,6 @@
 
 #define MASTER_KEY_NAME_LEN TDE_KEY_NAME_LEN
 #define MAX_MASTER_KEY_VERSION_NUM 1000
-#define DEFAULUT_MASTER_KEY_VERSION 1
 
 typedef struct TDEMasterKeyId
 {
@@ -43,6 +42,16 @@ typedef struct TDEMasterKey
 	unsigned char keyData[MAX_KEY_DATA_SIZE];
 	uint32 keyLength;
 } TDEMasterKey;
+
+typedef struct XLogMasterKeyRotate
+{
+	Oid databaseId;
+	off_t map_size;
+	off_t keydata_size;
+	char  buff[FLEXIBLE_ARRAY_MEMBER];
+} XLogMasterKeyRotate;
+
+#define SizeoOfXLogMasterKeyRotate	offsetof(XLogMasterKeyRotate, buff)
 
 typedef struct XLogMasterKeyCleanup
 {

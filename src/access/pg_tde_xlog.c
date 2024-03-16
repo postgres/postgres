@@ -46,6 +46,12 @@ pg_tde_rmgr_redo(XLogReaderState *record)
 
 		cleanup_master_key_info(xlrec->databaseId, xlrec->tablespaceId);
 	}
+	else if (info == XLOG_TDE_ROTATE_KEY)
+	{
+		XLogMasterKeyRotate *xlrec = (XLogMasterKeyRotate *) XLogRecGetData(record);
+
+		xl_tde_perform_rotate_key(xlrec);
+	}
 	else
 	{
 		elog(PANIC, "pg_tde_redo: unknown op code %u", info);
@@ -74,6 +80,12 @@ pg_tde_rmgr_desc(StringInfo buf, XLogReaderState *record)
 		XLogMasterKeyCleanup *xlrec = (XLogMasterKeyCleanup *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "cleanup tde master key info for db %u/%u", xlrec->databaseId, xlrec->tablespaceId);
+	}
+	if (info == XLOG_TDE_ROTATE_KEY)
+	{
+		XLogMasterKeyRotate *xlrec = (XLogMasterKeyRotate *) XLogRecGetData(record);
+
+		appendStringInfo(buf, "rotate master key for %u", xlrec->databaseId);
 	}
 }
 

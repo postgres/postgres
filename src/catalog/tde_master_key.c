@@ -233,7 +233,7 @@ GetMasterKey(void)
     if (keyInfo == NULL)
     {
         ereport(ERROR,
-                (errmsg("failed to retrieve master key from keyring %s", masterKeyInfo->keyId.versioned_name)));
+                (errmsg("failed to retrieve master key \"%s\" from keyring.", masterKeyInfo->keyId.versioned_name)));
         return NULL;
     }
 

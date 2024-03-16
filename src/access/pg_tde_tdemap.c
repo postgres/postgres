@@ -102,6 +102,9 @@ static RelKeyData* pg_tde_get_key_from_file(const RelFileLocator *rlocator);
 static RelKeyData* pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEMasterKey *master_key);
 static RelKeyData* pg_tde_read_one_keydata(File keydata_file, int32 key_index, TDEMasterKey *master_key);
 
+static File keyrotation_init_file(TDEMasterKeyInfo *new_master_key_info, char *rotated_filename, char *filename, bool *is_new_file, off_t *curr_pos);
+static void finalize_key_rotation(char *m_path_old, char *k_path_old, char *m_path_new, char *k_path_new);
+
 /*
  * Generate an encrypted key for the relation and store it in the keymap file.
  */
@@ -135,8 +138,8 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
 	rel_key_data = tde_create_rel_key(newrlocator, &int_key, &master_key->keyInfo);
 	enc_rel_key_data = tde_encrypt_rel_key(master_key, rel_key_data, newrlocator);
 
-	/* 
-	 * XLOG internal key 
+	/*
+	 * XLOG internal key
 	 */
 	xlrec.rlocator = *newrlocator;
 	xlrec.relKey = *enc_rel_key_data;
@@ -953,9 +956,39 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 }
 
 /*
- * TODO:
- * 		- How do we get the old key name and the key itself?
- * 		- We need to specify this for a current or all databases?
+ * Accepts the unrotated filename and returns the rotation temp
+ * filename. Both the strings are expected to be of the size
+ * MAXPGPATH.
+ *
+ * No error checking by this function.
+ */
+File
+keyrotation_init_file(TDEMasterKeyInfo *new_master_key_info, char *rotated_filename, char *filename, bool *is_new_file, off_t *curr_pos)
+{
+	/* Set the new filenames for the key rotation process - temporary at the moment */
+	snprintf(rotated_filename, MAXPGPATH, "%s.r", filename);
+
+	/* Create file, truncate if the rotate file already exits */
+	return pg_tde_open_file(rotated_filename, new_master_key_info, false, O_RDWR | O_CREAT | O_TRUNC, is_new_file, curr_pos);
+}
+
+/*
+ * Do the final steps in the key rotation.
+ */
+void
+finalize_key_rotation(char *m_path_old, char *k_path_old, char *m_path_new, char *k_path_new)
+{
+	/* Remove old files */
+	durable_unlink(m_path_old, LOG);
+	durable_unlink(k_path_old, LOG);
+
+	/* Rename the new files to required filenames */
+	durable_rename(m_path_new, m_path_old, LOG);
+	durable_rename(k_path_new, k_path_old, LOG);
+}
+
+/*
+ * Rotate keys and generates the WAL record for it.
  */
 bool
 pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key)
@@ -978,6 +1011,10 @@ pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key
 	bool found = false;
 	off_t read_pos_tmp = 0;
 	bool is_new_file;
+	off_t map_size;
+	off_t keydata_size;
+	XLogMasterKeyRotate *xlrec;
+	off_t xlrec_size;
 
 	/* Set the file paths */
 	pg_tde_set_db_file_paths(master_key->keyInfo.databaseId);
@@ -986,17 +1023,12 @@ pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key
 	strncpy(m_path[OLD_MASTER_KEY], db_map_path, MAXPGPATH);
 	strncpy(k_path[OLD_MASTER_KEY], db_keydata_path, MAXPGPATH);
 
-	/* Set the file name and postfix it with .r to identify it as part of a key rotation process. */
-	snprintf(m_path[NEW_MASTER_KEY], MAXPGPATH, "%s.r", m_path[OLD_MASTER_KEY]);
-	snprintf(k_path[NEW_MASTER_KEY], MAXPGPATH, "%s.r", k_path[OLD_MASTER_KEY]);
-
-	/* Open both files in read only mode. */
+	/* Open both files in read only mode. We don't need to track the current position of the keydata file. We always use the key index */
 	m_file[OLD_MASTER_KEY] = pg_tde_open_file(m_path[OLD_MASTER_KEY], &master_key->keyInfo, false, O_RDONLY, &is_new_file, &curr_pos[OLD_MASTER_KEY]);
 	k_file[OLD_MASTER_KEY] = pg_tde_open_file(k_path[OLD_MASTER_KEY], &master_key->keyInfo, false, O_RDONLY, &is_new_file, &read_pos_tmp);
 
-	/* Create both files, truncate if the rotate file already exits */
-	m_file[NEW_MASTER_KEY] = pg_tde_open_file(m_path[NEW_MASTER_KEY], &new_master_key->keyInfo, false, O_RDWR | O_CREAT | O_TRUNC, &is_new_file, &curr_pos[NEW_MASTER_KEY]);
-	k_file[NEW_MASTER_KEY] = pg_tde_open_file(k_path[NEW_MASTER_KEY], &new_master_key->keyInfo, false, O_RDWR | O_CREAT | O_TRUNC, &is_new_file, &read_pos_tmp);
+	m_file[NEW_MASTER_KEY] = keyrotation_init_file(&new_master_key->keyInfo, m_path[NEW_MASTER_KEY], m_path[OLD_MASTER_KEY], &is_new_file, &curr_pos[NEW_MASTER_KEY]);
+	k_file[NEW_MASTER_KEY] = keyrotation_init_file(&new_master_key->keyInfo, k_path[NEW_MASTER_KEY], k_path[OLD_MASTER_KEY], &is_new_file, &read_pos_tmp);
 
 	/* Read all entries until EOF */
 	for(key_index[OLD_MASTER_KEY] = 0; ; key_index[OLD_MASTER_KEY]++)
@@ -1033,19 +1065,40 @@ pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key
 		key_index[NEW_MASTER_KEY]++;
 	}
 
-	/* Close open files */
+	/* Close unrotated files */
 	FileClose(m_file[OLD_MASTER_KEY]);
 	FileClose(k_file[OLD_MASTER_KEY]);
+
+	/* Let's calculate sizes */
+	map_size = FileSize(m_file[NEW_MASTER_KEY]);
+	keydata_size = FileSize(k_file[NEW_MASTER_KEY]);
+	xlrec_size = map_size + keydata_size + SizeoOfXLogMasterKeyRotate;
+
+	/* palloc and fill in the structure */
+	xlrec = (XLogMasterKeyRotate *) palloc(xlrec_size);
+
+	xlrec->databaseId = master_key->keyInfo.databaseId;
+	xlrec->map_size = map_size;
+	xlrec->keydata_size = keydata_size;
+
+	FileRead(m_file[NEW_MASTER_KEY], xlrec->buff, xlrec->map_size, 0, WAIT_EVENT_DATA_FILE_READ);
+	FileRead(k_file[NEW_MASTER_KEY], &xlrec->buff[xlrec->map_size], xlrec->keydata_size, 0, WAIT_EVENT_DATA_FILE_READ);
+
+	/* Close the files */
 	FileClose(m_file[NEW_MASTER_KEY]);
 	FileClose(k_file[NEW_MASTER_KEY]);
 
-	/* Remove old files */
-	durable_unlink(m_path[OLD_MASTER_KEY], LOG);
-	durable_unlink(k_path[OLD_MASTER_KEY], LOG);
+	/* Insert the XLog record */
+	XLogBeginInsert();
+	XLogRegisterData((char *) xlrec, xlrec_size);
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ROTATE_KEY);
 
-	/* Rename the new files to required filenames */
-	durable_rename(m_path[NEW_MASTER_KEY], m_path[OLD_MASTER_KEY], LOG);
-	durable_rename(k_path[NEW_MASTER_KEY], k_path[OLD_MASTER_KEY], LOG);
+	/* Do the final steps */
+	finalize_key_rotation(m_path[OLD_MASTER_KEY], k_path[OLD_MASTER_KEY],
+						  m_path[NEW_MASTER_KEY], k_path[NEW_MASTER_KEY]);
+
+	/* Free up the palloc'ed data */
+	pfree(xlrec);
 
 	/* TODO: Remove the existing ones from cache etc. */
 	return true;
@@ -1053,4 +1106,55 @@ pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key
 #undef OLD_MASTER_KEY
 #undef NEW_MASTER_KEY
 #undef MASTER_KEY_COUNT
+}
+
+/*
+ * Rotate keys on a standby.
+ */
+bool
+xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
+{
+	TDEFileHeader *fheader;
+	char m_path_new[MAXPGPATH];
+	char k_path_new[MAXPGPATH];
+	File m_file_new;
+	File k_file_new;
+	bool is_new_file;
+	off_t curr_pos = 0;
+	off_t read_pos_tmp = 0;
+
+	/* Let's get the header. Buff should start with the map file header. */
+	fheader = (TDEFileHeader *) xlrec->buff;
+
+	ereport(LOG, (errmsg("xl_tde_rotate => %s", fheader->master_key_info.keyId.name)));
+
+	/* Set the file paths */
+	pg_tde_set_db_file_paths(fheader->master_key_info.databaseId);
+
+	/* Initialize the new files and set the names */
+	m_file_new = keyrotation_init_file(&fheader->master_key_info, m_path_new, db_map_path, &is_new_file, &curr_pos);
+	k_file_new = keyrotation_init_file(&fheader->master_key_info, k_path_new, db_keydata_path, &is_new_file, &read_pos_tmp);
+
+	if (FileWrite(m_file_new, xlrec->buff, xlrec->map_size, 0, WAIT_EVENT_DATA_FILE_WRITE) != xlrec->map_size)
+	{
+		ereport(WARNING,
+				(errcode_for_file_access(),
+					errmsg("Could not write tde file \"%s\": %m",
+						m_path_new)));
+	}
+
+	if (FileWrite(k_file_new, &xlrec->buff[xlrec->map_size], xlrec->keydata_size, 0, WAIT_EVENT_DATA_FILE_WRITE) != xlrec->keydata_size)
+	{
+		ereport(WARNING,
+				(errcode_for_file_access(),
+					errmsg("Could not write tde file \"%s\": %m",
+						k_path_new)));
+	}
+
+	FileClose(m_file_new);
+	FileClose(k_file_new);
+
+	finalize_key_rotation(db_map_path, db_keydata_path, m_path_new, k_path_new);
+
+	return true;
 }
