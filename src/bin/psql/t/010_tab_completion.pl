@@ -413,6 +413,14 @@ check_completion(
 
 clear_query();
 
+# check completion for psql variable test
+check_completion(
+	"\\echo :{?VERB\t",
+	qr/:\{\?VERBOSITY} /,
+	"complete a psql variable test");
+
+clear_query();
+
 # check no-completions code path
 check_completion("blarg \t\t", qr//, "check completion failure path");
 

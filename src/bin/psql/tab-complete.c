@@ -76,7 +76,7 @@
 #endif
 
 /* word break characters */
-#define WORD_BREAKS		"\t\n@><=;|&{() "
+#define WORD_BREAKS		"\t\n@><=;|&() "
 
 /*
  * Since readline doesn't let us pass any state through to the tab completion
@@ -1786,6 +1786,8 @@ psql_completion(const char *text, int start, int end)
 			matches = complete_from_variables(text, ":'", "'", true);
 		else if (text[1] == '"')
 			matches = complete_from_variables(text, ":\"", "\"", true);
+		else if (text[1] == '{' && text[2] == '?')
+			matches = complete_from_variables(text, ":{?", "}", true);
 		else
 			matches = complete_from_variables(text, ":", "", true);
 	}
