@@ -850,6 +850,7 @@ FormData_pg_ts_parser
 FormData_pg_ts_template
 FormData_pg_type
 FormData_pg_user_mapping
+FormExtraData_pg_attribute
 Form_pg_aggregate
 Form_pg_am
 Form_pg_amop

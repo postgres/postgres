@@ -208,6 +208,19 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
  */
 typedef FormData_pg_attribute *Form_pg_attribute;
 
+/*
+ * FormExtraData_pg_attribute contains (some of) the fields that are not in
+ * FormData_pg_attribute because they are excluded by CATALOG_VARLEN.  It is
+ * meant to be used by DDL code so that the combination of
+ * FormData_pg_attribute (often via tuple descriptor) and
+ * FormExtraData_pg_attribute can be used to pass around all the information
+ * about an attribute.  Fields can be included here as needed.
+ */
+typedef struct FormExtraData_pg_attribute
+{
+	NullableDatum attoptions;
+} FormExtraData_pg_attribute;
+
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnam_index, 2658, AttributeRelidNameIndexId, pg_attribute, btree(attrelid oid_ops, attname name_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_attribute_relid_attnum_index, 2659, AttributeRelidNumIndexId, pg_attribute, btree(attrelid oid_ops, attnum int2_ops));
 

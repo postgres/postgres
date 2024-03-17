@@ -512,6 +512,20 @@ AppendAttributeTuples(Relation indexRelation, const Datum *attopts)
 	Relation	pg_attribute;
 	CatalogIndexState indstate;
 	TupleDesc	indexTupDesc;
+	FormExtraData_pg_attribute *attrs_extra = NULL;
+
+	if (attopts)
+	{
+		attrs_extra = palloc0_array(FormExtraData_pg_attribute, indexRelation->rd_att->natts);
+
+		for (int i = 0; i < indexRelation->rd_att->natts; i++)
+		{
+			if (attopts[i])
+				attrs_extra[i].attoptions.value = attopts[i];
+			else
+				attrs_extra[i].attoptions.isnull = true;
+		}
+	}
 
 	/*
 	 * open the attribute relation and its indexes
@@ -525,7 +539,7 @@ AppendAttributeTuples(Relation indexRelation, const Datum *attopts)
 	 */
 	indexTupDesc = RelationGetDescr(indexRelation);
 
-	InsertPgAttributeTuples(pg_attribute, indexTupDesc, InvalidOid, attopts, indstate);
+	InsertPgAttributeTuples(pg_attribute, indexTupDesc, InvalidOid, attrs_extra, indstate);
 
 	CatalogCloseIndexes(indstate);
 
