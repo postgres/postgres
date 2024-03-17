@@ -54,6 +54,7 @@ static Node *transformAExprDistinct(ParseState *pstate, A_Expr *a);
 static Node *transformAExprNullIf(ParseState *pstate, A_Expr *a);
 static Node *transformAExprIn(ParseState *pstate, A_Expr *a);
 static Node *transformAExprBetween(ParseState *pstate, A_Expr *a);
+static Node *transformMergeSupportFunc(ParseState *pstate, MergeSupportFunc *f);
 static Node *transformBoolExpr(ParseState *pstate, BoolExpr *a);
 static Node *transformFuncCall(ParseState *pstate, FuncCall *fn);
 static Node *transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref);
@@ -225,6 +226,11 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 
 		case T_GroupingFunc:
 			result = transformGroupingFunc(pstate, (GroupingFunc *) expr);
+			break;
+
+		case T_MergeSupportFunc:
+			result = transformMergeSupportFunc(pstate,
+											   (MergeSupportFunc *) expr);
 			break;
 
 		case T_NamedArgExpr:
@@ -541,6 +547,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		case EXPR_KIND_LIMIT:
 		case EXPR_KIND_OFFSET:
 		case EXPR_KIND_RETURNING:
+		case EXPR_KIND_MERGE_RETURNING:
 		case EXPR_KIND_VALUES:
 		case EXPR_KIND_VALUES_SINGLE:
 		case EXPR_KIND_CHECK_CONSTRAINT:
@@ -1354,6 +1361,31 @@ transformAExprBetween(ParseState *pstate, A_Expr *a)
 }
 
 static Node *
+transformMergeSupportFunc(ParseState *pstate, MergeSupportFunc *f)
+{
+	/*
+	 * All we need to do is check that we're in the RETURNING list of a MERGE
+	 * command.  If so, we just return the node as-is.
+	 */
+	if (pstate->p_expr_kind != EXPR_KIND_MERGE_RETURNING)
+	{
+		ParseState *parent_pstate = pstate->parentParseState;
+
+		while (parent_pstate &&
+			   parent_pstate->p_expr_kind != EXPR_KIND_MERGE_RETURNING)
+			parent_pstate = parent_pstate->parentParseState;
+
+		if (!parent_pstate)
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("MERGE_ACTION() can only be used in the RETURNING list of a MERGE command"),
+					parser_errposition(pstate, f->location));
+	}
+
+	return (Node *) f;
+}
+
+static Node *
 transformBoolExpr(ParseState *pstate, BoolExpr *a)
 {
 	List	   *args = NIL;
@@ -1767,6 +1799,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_LIMIT:
 		case EXPR_KIND_OFFSET:
 		case EXPR_KIND_RETURNING:
+		case EXPR_KIND_MERGE_RETURNING:
 		case EXPR_KIND_VALUES:
 		case EXPR_KIND_VALUES_SINGLE:
 		case EXPR_KIND_CYCLE_MARK:
@@ -3115,6 +3148,7 @@ ParseExprKindName(ParseExprKind exprKind)
 		case EXPR_KIND_OFFSET:
 			return "OFFSET";
 		case EXPR_KIND_RETURNING:
+		case EXPR_KIND_MERGE_RETURNING:
 			return "RETURNING";
 		case EXPR_KIND_VALUES:
 		case EXPR_KIND_VALUES_SINGLE:

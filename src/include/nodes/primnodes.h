@@ -572,6 +572,27 @@ typedef struct WindowFunc
 } WindowFunc;
 
 /*
+ * MergeSupportFunc
+ *
+ * A MergeSupportFunc is a merge support function expression that can only
+ * appear in the RETURNING list of a MERGE command.  It returns information
+ * about the currently executing merge action.
+ *
+ * Currently, the only supported function is MERGE_ACTION(), which returns the
+ * command executed ("INSERT", "UPDATE", or "DELETE").
+ */
+typedef struct MergeSupportFunc
+{
+	Expr		xpr;
+	/* type Oid of result */
+	Oid			msftype;
+	/* OID of collation, or InvalidOid if none */
+	Oid			msfcollid;
+	/* token location, or -1 if unknown */
+	int			location;
+} MergeSupportFunc;
+
+/*
  * SubscriptingRef: describes a subscripting operation over a container
  * (array, etc).
  *

@@ -992,6 +992,27 @@ WHEN MATCHED THEN
 	UPDATE SET dnotes = dnotes || ' notes added by merge8 '
 WHEN NOT MATCHED THEN
 	INSERT VALUES (13, 44, 1, 'regress_rls_bob', 'new manga');
+SELECT * FROM document WHERE did = 13;
+
+-- but not OK if RETURNING is used
+MERGE INTO document d
+USING (SELECT 14 as sdid) s
+ON did = s.sdid
+WHEN MATCHED THEN
+	UPDATE SET dnotes = dnotes || ' notes added by merge9 '
+WHEN NOT MATCHED THEN
+	INSERT VALUES (14, 44, 1, 'regress_rls_bob', 'new manga')
+RETURNING *;
+
+-- but OK if new row is visible
+MERGE INTO document d
+USING (SELECT 14 as sdid) s
+ON did = s.sdid
+WHEN MATCHED THEN
+	UPDATE SET dnotes = dnotes || ' notes added by merge10 '
+WHEN NOT MATCHED THEN
+	INSERT VALUES (14, 11, 1, 'regress_rls_bob', 'new novel')
+RETURNING *;
 
 RESET SESSION AUTHORIZATION;
 -- drop the restrictive SELECT policy so that we can look at the

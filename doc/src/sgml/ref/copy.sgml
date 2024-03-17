@@ -130,16 +130,19 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       A <link linkend="sql-select"><command>SELECT</command></link>,
       <link linkend="sql-values"><command>VALUES</command></link>,
       <link linkend="sql-insert"><command>INSERT</command></link>,
-      <link linkend="sql-update"><command>UPDATE</command></link>, or
-      <link linkend="sql-delete"><command>DELETE</command></link> command whose results are to be
-      copied.  Note that parentheses are required around the query.
+      <link linkend="sql-update"><command>UPDATE</command></link>,
+      <link linkend="sql-delete"><command>DELETE</command></link>, or
+      <link linkend="sql-merge"><command>MERGE</command></link> command
+      whose results are to be copied.  Note that parentheses are required
+      around the query.
      </para>
      <para>
-      For <command>INSERT</command>, <command>UPDATE</command> and
-      <command>DELETE</command> queries a <literal>RETURNING</literal> clause
-      must be provided, and the target relation must not have a conditional
-      rule, nor an <literal>ALSO</literal> rule, nor an
-      <literal>INSTEAD</literal> rule that expands to multiple statements.
+      For <command>INSERT</command>, <command>UPDATE</command>,
+      <command>DELETE</command>, and <command>MERGE</command> queries a
+      <literal>RETURNING</literal> clause must be provided, and the target
+      relation must not have a conditional rule, nor an
+      <literal>ALSO</literal> rule, nor an <literal>INSTEAD</literal> rule
+      that expands to multiple statements.
      </para>
     </listitem>
    </varlistentry>

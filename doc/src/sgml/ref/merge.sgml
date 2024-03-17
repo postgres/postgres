@@ -25,6 +25,7 @@ PostgreSQL documentation
 MERGE INTO [ ONLY ] <replaceable class="parameter">target_table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">target_alias</replaceable> ]
 USING <replaceable class="parameter">data_source</replaceable> ON <replaceable class="parameter">join_condition</replaceable>
 <replaceable class="parameter">when_clause</replaceable> [...]
+[ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 
 <phrase>where <replaceable class="parameter">data_source</replaceable> is:</phrase>
 
@@ -94,6 +95,18 @@ DELETE
    skipped. Since actions are evaluated in their specified order, <literal>DO
    NOTHING</literal> can be handy to skip non-interesting source rows before
    more fine-grained handling.
+  </para>
+
+  <para>
+   The optional <literal>RETURNING</literal> clause causes <command>MERGE</command>
+   to compute and return value(s) based on each row inserted, updated, or
+   deleted.  Any expression using the source or target table's columns, or
+   the <xref linkend="merge_action"/> function can be computed.  When an
+   <command>INSERT</command> or <command>UPDATE</command> action is performed,
+   the new values of the target table's columns are used.  When a
+   <command>DELETE</command> is performed, the old values of the target table's
+   columns are used.  The syntax of the <literal>RETURNING</literal> list is
+   identical to that of the output list of <command>SELECT</command>.
   </para>
 
   <para>
@@ -442,6 +455,36 @@ DELETE
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><replaceable class="parameter">output_expression</replaceable></term>
+    <listitem>
+     <para>
+      An expression to be computed and returned by the <command>MERGE</command>
+      command after each row is changed (whether inserted, updated, or deleted).
+      The expression can use any columns of the source or target tables, or the
+      <xref linkend="merge_action"/> function to return additional information
+      about the action executed.
+     </para>
+     <para>
+      Writing <literal>*</literal> will return all columns from the source
+      table, followed by all columns from the target table.  Often this will
+      lead to a lot of duplication, since it is common for the source and
+      target tables to have a lot of the same columns.  This can be avoided by
+      qualifying the <literal>*</literal> with the name or alias of the source
+      or target table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">output_name</replaceable></term>
+    <listitem>
+     <para>
+      A name to use for a returned column.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
@@ -460,6 +503,13 @@ MERGE <replaceable class="parameter">total_count</replaceable>
    were changed in any way.
   </para>
 
+  <para>
+   If the <command>MERGE</command> command contains a <literal>RETURNING</literal>
+   clause, the result will be similar to that of a <command>SELECT</command>
+   statement containing the columns and values defined in the
+   <literal>RETURNING</literal> list, computed over the row(s) inserted, updated,
+   or deleted by the command.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -580,13 +630,6 @@ MERGE <replaceable class="parameter">total_count</replaceable>
   </para>
 
   <para>
-   There is no <literal>RETURNING</literal> clause with
-   <command>MERGE</command>.  Actions of <command>INSERT</command>,
-   <command>UPDATE</command> and <command>DELETE</command> cannot contain
-   <literal>RETURNING</literal> or <literal>WITH</literal> clauses.
-  </para>
-
-  <para>
    When <command>MERGE</command> is run concurrently with other commands
    that modify the target table, the usual transaction isolation rules
    apply; see <xref linkend="transaction-iso"/> for an explanation
@@ -638,7 +681,8 @@ WHEN NOT MATCHED THEN
   <para>
    Attempt to insert a new stock item along with the quantity of stock. If
    the item already exists, instead update the stock count of the existing
-   item. Don't allow entries that have zero stock.
+   item. Don't allow entries that have zero stock. Return details of all
+   changes made.
 <programlisting>
 MERGE INTO wines w
 USING wine_stock_changes s
@@ -648,7 +692,8 @@ WHEN NOT MATCHED AND s.stock_delta > 0 THEN
 WHEN MATCHED AND w.stock + s.stock_delta > 0 THEN
   UPDATE SET stock = w.stock + s.stock_delta
 WHEN MATCHED THEN
-  DELETE;
+  DELETE
+RETURNING merge_action(), w.*;
 </programlisting>
 
    The <literal>wine_stock_changes</literal> table might be, for example, a
@@ -663,8 +708,9 @@ WHEN MATCHED THEN
     This command conforms to the <acronym>SQL</acronym> standard.
   </para>
    <para>
-    The <literal>WITH</literal> clause and <literal>DO NOTHING</literal>
-    action are extensions to the <acronym>SQL</acronym> standard.
+    The <literal>WITH</literal> clause, <literal>DO NOTHING</literal> action,
+    and <literal>RETURNING</literal> clause are extensions to the
+    <acronym>SQL</acronym> standard.
   </para>
  </refsect1>
 </refentry>

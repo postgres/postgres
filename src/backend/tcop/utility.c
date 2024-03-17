@@ -2138,11 +2138,10 @@ QueryReturnsTuples(Query *parsetree)
 		case CMD_SELECT:
 			/* returns tuples */
 			return true;
-		case CMD_MERGE:
-			return false;
 		case CMD_INSERT:
 		case CMD_UPDATE:
 		case CMD_DELETE:
+		case CMD_MERGE:
 			/* the forms with RETURNING return tuples */
 			if (parsetree->returningList)
 				return true;

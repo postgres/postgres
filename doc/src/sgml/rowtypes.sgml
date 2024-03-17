@@ -348,7 +348,7 @@ SELECT m.* FROM some_table, LATERAL myfunc(x) AS m;
    column expansion of this kind when it appears at the top level of
    a <link linkend="queries-select-lists"><command>SELECT</command> output
    list</link>, a <link linkend="dml-returning"><literal>RETURNING</literal>
-   list</link> in <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>,
+   list</link> in <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>/<command>MERGE</command>,
    a <link linkend="queries-values"><literal>VALUES</literal> clause</link>, or
    a <link linkend="sql-syntax-row-constructors">row constructor</link>.
    In all other contexts (including when nested inside one of those

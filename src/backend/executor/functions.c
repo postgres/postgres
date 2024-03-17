@@ -1662,8 +1662,8 @@ check_sql_fn_retval(List *queryTreeLists,
 
 	/*
 	 * If it's a plain SELECT, it returns whatever the targetlist says.
-	 * Otherwise, if it's INSERT/UPDATE/DELETE with RETURNING, it returns
-	 * that. Otherwise, the function return type must be VOID.
+	 * Otherwise, if it's INSERT/UPDATE/DELETE/MERGE with RETURNING, it
+	 * returns that. Otherwise, the function return type must be VOID.
 	 *
 	 * Note: eventually replace this test with QueryReturnsTuples?	We'd need
 	 * a more general method of determining the output type, though.  Also, it
@@ -1681,7 +1681,8 @@ check_sql_fn_retval(List *queryTreeLists,
 	else if (parse &&
 			 (parse->commandType == CMD_INSERT ||
 			  parse->commandType == CMD_UPDATE ||
-			  parse->commandType == CMD_DELETE) &&
+			  parse->commandType == CMD_DELETE ||
+			  parse->commandType == CMD_MERGE) &&
 			 parse->returningList)
 	{
 		tlist = parse->returningList;
@@ -1695,7 +1696,7 @@ check_sql_fn_retval(List *queryTreeLists,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("return type mismatch in function declared to return %s",
 						format_type_be(rettype)),
-				 errdetail("Function's final statement must be SELECT or INSERT/UPDATE/DELETE RETURNING.")));
+				 errdetail("Function's final statement must be SELECT or INSERT/UPDATE/DELETE/MERGE RETURNING.")));
 		return false;			/* keep compiler quiet */
 	}
 

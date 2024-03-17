@@ -155,6 +155,7 @@ void	   *referenced_functions[] =
 	ExecEvalFuncExprFusage,
 	ExecEvalFuncExprStrictFusage,
 	ExecEvalGroupingFunc,
+	ExecEvalMergeSupportFunc,
 	ExecEvalMinMax,
 	ExecEvalNextValueExpr,
 	ExecEvalParamExec,

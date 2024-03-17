@@ -479,7 +479,15 @@ MERGE INTO rw_view1 t
                 (2, 'ROW 2'), (3, 'ROW 3')) AS v(a,b) ON t.a = v.a
   WHEN MATCHED AND t.a <= 1 THEN UPDATE SET b = v.b
   WHEN MATCHED THEN DELETE
-  WHEN NOT MATCHED AND a > 0 THEN INSERT (a) VALUES (v.a);
+  WHEN NOT MATCHED AND a > 0 THEN INSERT (a) VALUES (v.a)
+  RETURNING merge_action(), v.*, t.*;
+ merge_action | a |   b   | a |      b      
+--------------+---+-------+---+-------------
+ UPDATE       | 1 | ROW 1 | 1 | ROW 1
+ DELETE       | 3 | ROW 3 | 3 | Row 3
+ INSERT       | 2 | ROW 2 | 2 | Unspecified
+(3 rows)
+
 SELECT * FROM base_tbl ORDER BY a;
  a  |      b      
 ----+-------------
@@ -631,7 +639,15 @@ MERGE INTO rw_view2 t
   USING (VALUES (3, 'R3'), (4, 'R4'), (5, 'R5')) AS v(a,b) ON aaa = v.a
   WHEN MATCHED AND aaa = 3 THEN DELETE
   WHEN MATCHED THEN UPDATE SET bbb = v.b
-  WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a);
+  WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a)
+  RETURNING merge_action(), v.*, t.*;
+ merge_action | a | b  | aaa |     bbb     
+--------------+---+----+-----+-------------
+ DELETE       | 3 | R3 |   3 | Row 3
+ UPDATE       | 4 | R4 |   4 | R4
+ INSERT       | 5 | R5 |   5 | Unspecified
+(3 rows)
+
 SELECT * FROM rw_view2 ORDER BY aaa;
  aaa |     bbb     
 -----+-------------
@@ -1071,7 +1087,15 @@ MERGE INTO rw_view2 t
   USING (SELECT x, 'R'||x FROM generate_series(0,3) x) AS s(a,b) ON t.a = s.a
   WHEN MATCHED AND t.a <= 1 THEN DELETE
   WHEN MATCHED THEN UPDATE SET b = s.b
-  WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b);
+  WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b)
+  RETURNING merge_action(), s.*, t.*;
+ merge_action | a | b  | a |   b   
+--------------+---+----+---+-------
+ DELETE       | 1 | R1 | 1 | Row 1
+ UPDATE       | 2 | R2 | 2 | R2
+ INSERT       | 3 | R3 | 3 | R3
+(3 rows)
+
 SELECT * FROM base_tbl ORDER BY a;
  a  |   b    
 ----+--------

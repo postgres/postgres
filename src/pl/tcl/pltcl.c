@@ -2456,6 +2456,7 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 		case SPI_OK_INSERT_RETURNING:
 		case SPI_OK_DELETE_RETURNING:
 		case SPI_OK_UPDATE_RETURNING:
+		case SPI_OK_MERGE_RETURNING:
 
 			/*
 			 * Process the tuples we got

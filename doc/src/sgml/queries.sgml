@@ -2063,9 +2063,10 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
    Table Expressions or <acronym>CTE</acronym>s, can be thought of as defining
    temporary tables that exist just for one query.  Each auxiliary statement
    in a <literal>WITH</literal> clause can be a <command>SELECT</command>,
-   <command>INSERT</command>, <command>UPDATE</command>, or <command>DELETE</command>; and the
+   <command>INSERT</command>, <command>UPDATE</command>, <command>DELETE</command>,
+   or <command>MERGE</command>; and the
    <literal>WITH</literal> clause itself is attached to a primary statement that can
-   be a <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
+   also be a <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
    <command>DELETE</command>, or <command>MERGE</command>.
   </para>
 
@@ -2599,8 +2600,8 @@ SELECT * FROM w AS w1 JOIN w AS w2 ON w1.f = w2.f;
    <title>Data-Modifying Statements in <literal>WITH</literal></title>
 
    <para>
-    You can use most data-modifying statements (<command>INSERT</command>,
-    <command>UPDATE</command>, or <command>DELETE</command>, but not
+    You can use data-modifying statements (<command>INSERT</command>,
+    <command>UPDATE</command>, <command>DELETE</command>, or
     <command>MERGE</command>) in <literal>WITH</literal>.  This
     allows you to perform several different operations in the same query.
     An example is:

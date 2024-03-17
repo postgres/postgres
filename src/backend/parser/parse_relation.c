@@ -2341,9 +2341,10 @@ addRangeTableEntryForCTE(ParseState *pstate,
 		cte->cterefcount++;
 
 	/*
-	 * We throw error if the CTE is INSERT/UPDATE/DELETE without RETURNING.
-	 * This won't get checked in case of a self-reference, but that's OK
-	 * because data-modifying CTEs aren't allowed to be recursive anyhow.
+	 * We throw error if the CTE is INSERT/UPDATE/DELETE/MERGE without
+	 * RETURNING.  This won't get checked in case of a self-reference, but
+	 * that's OK because data-modifying CTEs aren't allowed to be recursive
+	 * anyhow.
 	 */
 	if (IsA(cte->ctequery, Query))
 	{

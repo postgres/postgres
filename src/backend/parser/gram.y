@@ -733,7 +733,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
 	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P LOCKED LOGGED
 
-	MAPPING MATCH MATCHED MATERIALIZED MAXVALUE MERGE METHOD
+	MAPPING MATCH MATCHED MATERIALIZED MAXVALUE MERGE MERGE_ACTION METHOD
 	MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NFC NFD NFKC NFKD NO NONE
@@ -12374,6 +12374,7 @@ MergeStmt:
 			USING table_ref
 			ON a_expr
 			merge_when_list
+			returning_clause
 				{
 					MergeStmt  *m = makeNode(MergeStmt);
 
@@ -12382,6 +12383,7 @@ MergeStmt:
 					m->sourceRelation = $6;
 					m->joinCondition = $8;
 					m->mergeWhenClauses = $9;
+					m->returningList = $10;
 
 					$$ = (Node *) m;
 				}
@@ -15795,6 +15797,14 @@ func_expr_common_subexpr:
 					n->location = @1;
 					$$ = (Node *) n;
 				}
+			| MERGE_ACTION '(' ')'
+				{
+					MergeSupportFunc *m = makeNode(MergeSupportFunc);
+
+					m->msftype = TEXTOID;
+					m->location = @1;
+					$$ = (Node *) m;
+				}
 			;
 
 
@@ -17492,6 +17502,7 @@ col_name_keyword:
 			| JSON_SCALAR
 			| JSON_SERIALIZE
 			| LEAST
+			| MERGE_ACTION
 			| NATIONAL
 			| NCHAR
 			| NONE
@@ -17881,6 +17892,7 @@ bare_label_keyword:
 			| MATERIALIZED
 			| MAXVALUE
 			| MERGE
+			| MERGE_ACTION
 			| METHOD
 			| MINVALUE
 			| MODE

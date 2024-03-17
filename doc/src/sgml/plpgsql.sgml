@@ -1043,8 +1043,8 @@ INSERT INTO mytable VALUES (1,'one'), (2,'two');
     </para>
 
     <para>
-     If the command does return rows (for example <command>SELECT</command>,
-     or <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>
+     If the command does return rows (for example <command>SELECT</command>, or
+     <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>/<command>MERGE</command>
      with <literal>RETURNING</literal>), there are two ways to proceed.
      When the command will return at most one row, or you only care about
      the first row of output, write the command as usual but add
@@ -1172,6 +1172,7 @@ SELECT <replaceable>select_expressions</replaceable> INTO <optional>STRICT</opti
 INSERT ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRICT</optional> <replaceable>target</replaceable>;
 UPDATE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRICT</optional> <replaceable>target</replaceable>;
 DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRICT</optional> <replaceable>target</replaceable>;
+MERGE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRICT</optional> <replaceable>target</replaceable>;
 </synopsis>
 
      where <replaceable>target</replaceable> can be a record variable, a row
@@ -1182,8 +1183,8 @@ DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRIC
      <literal>INTO</literal> clause) just as described above,
      and the plan is cached in the same way.
      This works for <command>SELECT</command>,
-     <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command> with
-     <literal>RETURNING</literal>, and certain utility commands
+     <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>/<command>MERGE</command>
+     with <literal>RETURNING</literal>, and certain utility commands
      that return row sets, such as <command>EXPLAIN</command>.
      Except for the <literal>INTO</literal> clause, the SQL command is the same
      as it would be written outside <application>PL/pgSQL</application>.
@@ -1259,7 +1260,7 @@ END;
     </para>
 
     <para>
-     For <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command> with
+     For <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>/<command>MERGE</command> with
      <literal>RETURNING</literal>, <application>PL/pgSQL</application> reports
      an error for more than one returned row, even when
      <literal>STRICT</literal> is not specified.  This is because there
@@ -2657,8 +2658,9 @@ $$ LANGUAGE plpgsql;
      The <replaceable>query</replaceable> used in this type of <literal>FOR</literal>
      statement can be any SQL command that returns rows to the caller:
      <command>SELECT</command> is the most common case,
-     but you can also use <command>INSERT</command>, <command>UPDATE</command>, or
-     <command>DELETE</command> with a <literal>RETURNING</literal> clause.  Some utility
+     but you can also use <command>INSERT</command>, <command>UPDATE</command>,
+     <command>DELETE</command>, or <command>MERGE</command> with a
+     <literal>RETURNING</literal> clause.  Some utility
      commands such as <command>EXPLAIN</command> will work too.
     </para>
 

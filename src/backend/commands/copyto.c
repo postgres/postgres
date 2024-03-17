@@ -503,7 +503,8 @@ BeginCopyTo(ParseState *pstate,
 		{
 			Assert(query->commandType == CMD_INSERT ||
 				   query->commandType == CMD_UPDATE ||
-				   query->commandType == CMD_DELETE);
+				   query->commandType == CMD_DELETE ||
+				   query->commandType == CMD_MERGE);
 
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

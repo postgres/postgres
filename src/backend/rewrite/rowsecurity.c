@@ -384,10 +384,10 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	 * on the final action we take.
 	 *
 	 * We already fetched the SELECT policies above, to check existing rows,
-	 * but we must also check that new rows created by UPDATE actions are
-	 * visible, if SELECT rights are required for this relation. We don't do
-	 * this for INSERT actions, since an INSERT command would only do this
-	 * check if it had a RETURNING list, and MERGE does not support RETURNING.
+	 * but we must also check that new rows created by INSERT/UPDATE actions
+	 * are visible, if SELECT rights are required. For INSERT actions, we only
+	 * do this if RETURNING is specified, to be consistent with a plain INSERT
+	 * command, which can only require SELECT rights when RETURNING is used.
 	 *
 	 * We don't push the UPDATE/DELETE USING quals to the RTE because we don't
 	 * really want to apply them while scanning the relation since we don't
@@ -409,6 +409,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		List	   *merge_delete_restrictive_policies;
 		List	   *merge_insert_permissive_policies;
 		List	   *merge_insert_restrictive_policies;
+		List	   *merge_select_permissive_policies = NIL;
+		List	   *merge_select_restrictive_policies = NIL;
 
 		/*
 		 * Fetch the UPDATE policies and set them up to execute on the
@@ -446,9 +448,6 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		 */
 		if (perminfo->requiredPerms & ACL_SELECT)
 		{
-			List	   *merge_select_permissive_policies;
-			List	   *merge_select_restrictive_policies;
-
 			get_policies_for_relation(rel, CMD_SELECT, user_id,
 									  &merge_select_permissive_policies,
 									  &merge_select_restrictive_policies);
@@ -497,6 +496,21 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 							   withCheckOptions,
 							   hasSubLinks,
 							   false);
+
+		/*
+		 * Add ALL/SELECT policies as WCO_RLS_INSERT_CHECK WCOs, to ensure
+		 * that the inserted row is visible when executing an INSERT action,
+		 * if RETURNING is specified and SELECT rights are required for this
+		 * relation.
+		 */
+		if (perminfo->requiredPerms & ACL_SELECT && root->returningList)
+			add_with_check_options(rel, rt_index,
+								   WCO_RLS_INSERT_CHECK,
+								   merge_select_permissive_policies,
+								   merge_select_restrictive_policies,
+								   withCheckOptions,
+								   hasSubLinks,
+								   true);
 	}
 
 	table_close(rel, NoLock);

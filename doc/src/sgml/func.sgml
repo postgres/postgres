@@ -22421,6 +22421,85 @@ SELECT count(*) FROM sometable;
 
  </sect1>
 
+ <sect1 id="functions-merge-support">
+  <title>Merge Support Functions</title>
+
+  <indexterm>
+   <primary>MERGE</primary>
+   <secondary>RETURNING</secondary>
+  </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> includes one merge support function
+   that may be used in the <literal>RETURNING</literal> list of a
+   <xref linkend="sql-merge"/> command to identify the action taken for each
+   row.
+  </para>
+
+  <table id="functions-merge-support-table">
+   <title>Merge Support Functions</title>
+
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       Function
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       <indexterm>
+        <primary>merge_action</primary>
+       </indexterm>
+       <function id="merge_action">merge_action</function> ( )
+       <returnvalue>text</returnvalue>
+      </para>
+      <para>
+       Returns the merge action command executed for the current row.  This
+       will be <literal>'INSERT'</literal>, <literal>'UPDATE'</literal>, or
+       <literal>'DELETE'</literal>.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Example:
+<screen><![CDATA[
+MERGE INTO products p
+  USING stock s ON p.product_id = s.product_id
+  WHEN MATCHED AND s.quantity > 0 THEN
+    UPDATE SET in_stock = true, quantity = s.quantity
+  WHEN MATCHED THEN
+    UPDATE SET in_stock = false, quantity = 0
+  WHEN NOT MATCHED THEN
+    INSERT (product_id, in_stock, quantity)
+      VALUES (s.product_id, true, s.quantity)
+  RETURNING merge_action(), p.*;
+
+ merge_action | product_id | in_stock | quantity
+--------------+------------+----------+----------
+ UPDATE       |       1001 | t        |       50
+ UPDATE       |       1002 | f        |        0
+ INSERT       |       1003 | t        |       10
+]]></screen>
+  </para>
+
+  <para>
+   Note that this function can only be used in the <literal>RETURNING</literal>
+   list of a <command>MERGE</command> command.  It is an error to use it in any
+   other part of a query.
+  </para>
+
+ </sect1>
+
  <sect1 id="functions-subquery">
   <title>Subquery Expressions</title>
 

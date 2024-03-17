@@ -1325,6 +1325,9 @@ typedef struct ModifyTableState
 	/* Flags showing which subcommands are present INS/UPD/DEL/DO NOTHING */
 	int			mt_merge_subcommands;
 
+	/* For MERGE, the action currently being executed */
+	MergeActionState *mt_merge_action;
+
 	/* tuple counters for MERGE */
 	double		mt_merge_inserted;
 	double		mt_merge_updated;

@@ -74,7 +74,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 
 <phrase>and <replaceable class="parameter">with_query</replaceable> is:</phrase>
 
-    <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS [ [ NOT ] MATERIALIZED ] ( <replaceable class="parameter">select</replaceable> | <replaceable class="parameter">values</replaceable> | <replaceable class="parameter">insert</replaceable> | <replaceable class="parameter">update</replaceable> | <replaceable class="parameter">delete</replaceable> )
+    <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS [ [ NOT ] MATERIALIZED ] ( <replaceable class="parameter">select</replaceable> | <replaceable class="parameter">values</replaceable> | <replaceable class="parameter">insert</replaceable> | <replaceable class="parameter">update</replaceable> | <replaceable class="parameter">delete</replaceable> | <replaceable class="parameter">merge</replaceable> )
         [ SEARCH { BREADTH | DEPTH } FIRST BY <replaceable>column_name</replaceable> [, ...] SET <replaceable>search_seq_col_name</replaceable> ]
         [ CYCLE <replaceable>column_name</replaceable> [, ...] SET <replaceable>cycle_mark_col_name</replaceable> [ TO <replaceable>cycle_mark_value</replaceable> DEFAULT <replaceable>cycle_mark_default</replaceable> ] USING <replaceable>cycle_path_col_name</replaceable> ]
 
@@ -230,10 +230,10 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     The subqueries effectively act as temporary tables or views
     for the duration of the primary query.
     Each subquery can be a <command>SELECT</command>, <command>TABLE</command>, <command>VALUES</command>,
-    <command>INSERT</command>, <command>UPDATE</command> or
-    <command>DELETE</command> statement.
+    <command>INSERT</command>, <command>UPDATE</command>,
+    <command>DELETE</command>, or <command>MERGE</command> statement.
     When writing a data-modifying statement (<command>INSERT</command>,
-    <command>UPDATE</command> or <command>DELETE</command>) in
+    <command>UPDATE</command>, <command>DELETE</command>, or <command>MERGE</command>) in
     <literal>WITH</literal>, it is usual to include a <literal>RETURNING</literal> clause.
     It is the output of <literal>RETURNING</literal>, <emphasis>not</emphasis> the underlying
     table that the statement modifies, that forms the temporary table that is
@@ -2184,7 +2184,8 @@ SELECT 2+2;
 
    <para>
     <productname>PostgreSQL</productname> allows <command>INSERT</command>,
-    <command>UPDATE</command>, and <command>DELETE</command> to be used as <literal>WITH</literal>
+    <command>UPDATE</command>, <command>DELETE</command>, and
+    <command>MERGE</command> to be used as <literal>WITH</literal>
     queries.  This is not found in the SQL standard.
    </para>
   </refsect2>

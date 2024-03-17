@@ -1986,6 +1986,12 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
+			case EEOP_MERGE_SUPPORT_FUNC:
+				build_EvalXFunc(b, mod, "ExecEvalMergeSupportFunc",
+								v_state, op, v_econtext);
+				LLVMBuildBr(b, opblocks[opno + 1]);
+				break;
+
 			case EEOP_SUBPLAN:
 				build_EvalXFunc(b, mod, "ExecEvalSubPlan",
 								v_state, op, v_econtext);

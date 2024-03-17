@@ -1820,6 +1820,10 @@ FigureColnameInternal(Node *node, char **name)
 			/* make GROUPING() act like a regular function */
 			*name = "grouping";
 			return 2;
+		case T_MergeSupportFunc:
+			/* make MERGE_ACTION() act like a regular function */
+			*name = "merge_action";
+			return 2;
 		case T_SubLink:
 			switch (((SubLink *) node)->subLinkType)
 			{

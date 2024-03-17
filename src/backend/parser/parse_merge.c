@@ -234,6 +234,10 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	 */
 	qry->jointree = makeFromExpr(pstate->p_joinlist, joinExpr);
 
+	/* Transform the RETURNING list, if any */
+	qry->returningList = transformReturningList(pstate, stmt->returningList,
+												EXPR_KIND_MERGE_RETURNING);
+
 	/*
 	 * We now have a good query shape, so now look at the WHEN conditions and
 	 * action targetlists.
@@ -390,9 +394,6 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	}
 
 	qry->mergeActionList = mergeActionList;
-
-	/* RETURNING could potentially be added in the future, but not in SQL std */
-	qry->returningList = NULL;
 
 	qry->hasTargetSRFs = false;
 	qry->hasSubLinks = pstate->p_hasSubLinks;

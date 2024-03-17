@@ -609,8 +609,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * Build the RETURNING projection for the partition.  Note that we didn't
 	 * build the returningList for partitions within the planner, but simple
 	 * translation of varattnos will suffice.  This only occurs for the INSERT
-	 * case or in the case of UPDATE tuple routing where we didn't find a
-	 * result rel to reuse.
+	 * case or in the case of UPDATE/MERGE tuple routing where we didn't find
+	 * a result rel to reuse.
 	 */
 	if (node && node->returningLists != NIL)
 	{
@@ -619,11 +619,13 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		List	   *returningList;
 
 		/* See the comment above for WCO lists. */
-		/* (except no RETURNING support for MERGE yet) */
 		Assert((node->operation == CMD_INSERT &&
 				list_length(node->returningLists) == 1 &&
 				list_length(node->resultRelations) == 1) ||
 			   (node->operation == CMD_UPDATE &&
+				list_length(node->returningLists) ==
+				list_length(node->resultRelations)) ||
+			   (node->operation == CMD_MERGE &&
 				list_length(node->returningLists) ==
 				list_length(node->resultRelations)));
 

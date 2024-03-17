@@ -4267,9 +4267,9 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	/*
 	 * If we have INTO, then we only need one row back ... but if we have INTO
 	 * STRICT or extra check too_many_rows, ask for two rows, so that we can
-	 * verify the statement returns only one.  INSERT/UPDATE/DELETE are always
-	 * treated strictly. Without INTO, just run the statement to completion
-	 * (tcount = 0).
+	 * verify the statement returns only one.  INSERT/UPDATE/DELETE/MERGE are
+	 * always treated strictly. Without INTO, just run the statement to
+	 * completion (tcount = 0).
 	 *
 	 * We could just ask for two rows always when using INTO, but there are
 	 * some cases where demanding the extra row costs significant time, eg by
@@ -4307,10 +4307,11 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
+		case SPI_OK_MERGE:
 		case SPI_OK_INSERT_RETURNING:
 		case SPI_OK_UPDATE_RETURNING:
 		case SPI_OK_DELETE_RETURNING:
-		case SPI_OK_MERGE:
+		case SPI_OK_MERGE_RETURNING:
 			Assert(stmt->mod_stmt);
 			exec_set_found(estate, (SPI_processed != 0));
 			break;
@@ -4489,10 +4490,11 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
+		case SPI_OK_MERGE:
 		case SPI_OK_INSERT_RETURNING:
 		case SPI_OK_UPDATE_RETURNING:
 		case SPI_OK_DELETE_RETURNING:
-		case SPI_OK_MERGE:
+		case SPI_OK_MERGE_RETURNING:
 		case SPI_OK_UTILITY:
 		case SPI_OK_REWRITTEN:
 			break;

@@ -3833,9 +3833,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 	ListCell   *lc1;
 
 	/*
-	 * First, recursively process any insert/update/delete statements in WITH
-	 * clauses.  (We have to do this first because the WITH clauses may get
-	 * copied into rule actions below.)
+	 * First, recursively process any insert/update/delete/merge statements in
+	 * WITH clauses.  (We have to do this first because the WITH clauses may
+	 * get copied into rule actions below.)
 	 */
 	foreach(lc1, parsetree->cteList)
 	{
@@ -3860,7 +3860,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length)
 			if (!(ctequery->commandType == CMD_SELECT ||
 				  ctequery->commandType == CMD_UPDATE ||
 				  ctequery->commandType == CMD_INSERT ||
-				  ctequery->commandType == CMD_DELETE))
+				  ctequery->commandType == CMD_DELETE ||
+				  ctequery->commandType == CMD_MERGE))
 			{
 				/*
 				 * Currently it could only be NOTIFY; this error message will

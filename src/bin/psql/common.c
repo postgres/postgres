@@ -983,13 +983,17 @@ PrintQueryResult(PGresult *result, bool last,
 			else
 				success = true;
 
-			/* if it's INSERT/UPDATE/DELETE RETURNING, also print status */
+			/*
+			 * If it's INSERT/UPDATE/DELETE/MERGE RETURNING, also print
+			 * status.
+			 */
 			if (last || pset.show_all_results)
 			{
 				cmdstatus = PQcmdStatus(result);
 				if (strncmp(cmdstatus, "INSERT", 6) == 0 ||
 					strncmp(cmdstatus, "UPDATE", 6) == 0 ||
-					strncmp(cmdstatus, "DELETE", 6) == 0)
+					strncmp(cmdstatus, "DELETE", 6) == 0 ||
+					strncmp(cmdstatus, "MERGE", 5) == 0)
 					PrintQueryStatus(result, printStatusFout);
 			}
 

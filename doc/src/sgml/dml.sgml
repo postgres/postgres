@@ -283,10 +283,15 @@ DELETE FROM products;
    <secondary>RETURNING</secondary>
   </indexterm>
 
+  <indexterm zone="dml-returning">
+   <primary>MERGE</primary>
+   <secondary>RETURNING</secondary>
+  </indexterm>
+
   <para>
    Sometimes it is useful to obtain data from modified rows while they are
    being manipulated.  The <command>INSERT</command>, <command>UPDATE</command>,
-   and <command>DELETE</command> commands all have an
+   <command>DELETE</command>, and <command>MERGE</command> commands all have an
    optional <literal>RETURNING</literal> clause that supports this.  Use
    of <literal>RETURNING</literal> avoids performing an extra database query to
    collect the data, and is especially valuable when it would otherwise be
@@ -336,6 +341,21 @@ UPDATE products SET price = price * 1.10
 DELETE FROM products
   WHERE obsoletion_date = 'today'
   RETURNING *;
+</programlisting>
+  </para>
+
+  <para>
+   In a <command>MERGE</command>, the data available to <literal>RETURNING</literal> is
+   the content of the source row plus the content of the inserted, updated, or
+   deleted target row.  Since it is quite common for the source and target to
+   have many of the same columns, specifying <literal>RETURNING *</literal>
+   can lead to a lot of duplicated columns, so it is often more useful to
+   qualify it so as to return just the source or target row.  For example:
+<programlisting>
+MERGE INTO products p USING new_products n ON p.product_no = n.product_no
+  WHEN NOT MATCHED THEN INSERT VALUES (n.product_no, n.name, n.price)
+  WHEN MATCHED THEN UPDATE SET name = n.name, price = n.price
+  RETURNING p.*;
 </programlisting>
   </para>
 

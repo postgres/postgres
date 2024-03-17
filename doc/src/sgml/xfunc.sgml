@@ -177,7 +177,8 @@
     statements separated by semicolons.  A semicolon after the last
     statement is optional.  Unless the function is declared to return
     <type>void</type>, the last statement must be a <command>SELECT</command>,
-    or an <command>INSERT</command>, <command>UPDATE</command>, or <command>DELETE</command>
+    or an <command>INSERT</command>, <command>UPDATE</command>,
+    <command>DELETE</command>, or <command>MERGE</command>
     that has a <literal>RETURNING</literal> clause.
    </para>
 
@@ -1236,8 +1237,9 @@ SELECT x, CASE WHEN x &gt; 0 THEN generate_series(1, 5) ELSE 0 END FROM tab;
 
     <note>
      <para>
-      If a function's last command is <command>INSERT</command>, <command>UPDATE</command>,
-      or <command>DELETE</command> with <literal>RETURNING</literal>, that command will
+      If a function's last command is <command>INSERT</command>,
+      <command>UPDATE</command>, <command>DELETE</command>, or
+      <command>MERGE</command> with <literal>RETURNING</literal>, that command will
       always be executed to completion, even if the function is not declared
       with <literal>SETOF</literal> or the calling query does not fetch all the
       result rows.  Any extra rows produced by the <literal>RETURNING</literal>

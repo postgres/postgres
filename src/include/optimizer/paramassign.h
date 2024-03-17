@@ -20,6 +20,8 @@ extern Param *replace_outer_placeholdervar(PlannerInfo *root,
 										   PlaceHolderVar *phv);
 extern Param *replace_outer_agg(PlannerInfo *root, Aggref *agg);
 extern Param *replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp);
+extern Param *replace_outer_merge_support(PlannerInfo *root,
+										  MergeSupportFunc *msf);
 extern Param *replace_nestloop_param_var(PlannerInfo *root, Var *var);
 extern Param *replace_nestloop_param_placeholdervar(PlannerInfo *root,
 													PlaceHolderVar *phv);

@@ -88,12 +88,12 @@ MERGE INTO target
 USING target
 ON tid = tid
 WHEN MATCHED THEN DO NOTHING;
--- used in a CTE
+-- used in a CTE without RETURNING
 WITH foo AS (
   MERGE INTO target USING source ON (true)
   WHEN MATCHED THEN DELETE
 ) SELECT * FROM foo;
--- used in COPY
+-- used in COPY without RETURNING
 COPY (
   MERGE INTO target USING source ON (true)
   WHEN MATCHED THEN DELETE
@@ -817,7 +817,7 @@ BEGIN;
 MERGE INTO sq_target
 USING v
 ON tid = sid
-WHEN MATCHED AND tid > 2 THEN
+WHEN MATCHED AND tid >= 2 THEN
     UPDATE SET balance = balance + delta
 WHEN NOT MATCHED THEN
 	INSERT (balance, tid) VALUES (balance + delta, sid)
@@ -830,7 +830,7 @@ INSERT INTO sq_source (sid, balance, delta) VALUES (-1, -1, -10);
 MERGE INTO sq_target t
 USING v
 ON tid = sid
-WHEN MATCHED AND tid > 2 THEN
+WHEN MATCHED AND tid >= 2 THEN
     UPDATE SET balance = t.balance + delta
 WHEN NOT MATCHED THEN
 	INSERT (balance, tid) VALUES (balance + delta, sid)
@@ -848,7 +848,7 @@ WITH targq AS (
 MERGE INTO sq_target t
 USING v
 ON tid = sid
-WHEN MATCHED AND tid > 2 THEN
+WHEN MATCHED AND tid >= 2 THEN
     UPDATE SET balance = t.balance + delta
 WHEN NOT MATCHED THEN
 	INSERT (balance, tid) VALUES (balance + delta, sid)
@@ -857,18 +857,149 @@ WHEN MATCHED AND tid < 2 THEN
 ROLLBACK;
 
 -- RETURNING
+SELECT * FROM sq_source ORDER BY sid;
+SELECT * FROM sq_target ORDER BY tid;
+
 BEGIN;
-INSERT INTO sq_source (sid, balance, delta) VALUES (-1, -1, -10);
+CREATE TABLE merge_actions(action text, abbrev text);
+INSERT INTO merge_actions VALUES ('INSERT', 'ins'), ('UPDATE', 'upd'), ('DELETE', 'del');
 MERGE INTO sq_target t
-USING v
+USING sq_source s
 ON tid = sid
-WHEN MATCHED AND tid > 2 THEN
+WHEN MATCHED AND tid >= 2 THEN
     UPDATE SET balance = t.balance + delta
 WHEN NOT MATCHED THEN
-	INSERT (balance, tid) VALUES (balance + delta, sid)
+    INSERT (balance, tid) VALUES (balance + delta, sid)
 WHEN MATCHED AND tid < 2 THEN
-	DELETE
-RETURNING *;
+    DELETE
+RETURNING (SELECT abbrev FROM merge_actions
+            WHERE action = merge_action()) AS action,
+          t.*,
+          CASE merge_action()
+              WHEN 'INSERT' THEN 'Inserted '||t
+              WHEN 'UPDATE' THEN 'Added '||delta||' to balance'
+              WHEN 'DELETE' THEN 'Removed '||t
+          END AS description;
+ROLLBACK;
+
+-- error when using merge_action() outside MERGE
+SELECT merge_action() FROM sq_target;
+UPDATE sq_target SET balance = balance + 1 RETURNING merge_action();
+
+-- RETURNING in CTEs
+CREATE TABLE sq_target_merge_log (tid integer NOT NULL, last_change text);
+INSERT INTO sq_target_merge_log VALUES (1, 'Original value');
+BEGIN;
+WITH m AS (
+    MERGE INTO sq_target t
+    USING sq_source s
+    ON tid = sid
+    WHEN MATCHED AND tid >= 2 THEN
+        UPDATE SET balance = t.balance + delta
+    WHEN NOT MATCHED THEN
+        INSERT (balance, tid) VALUES (balance + delta, sid)
+    WHEN MATCHED AND tid < 2 THEN
+        DELETE
+    RETURNING merge_action() AS action, t.*,
+              CASE merge_action()
+                  WHEN 'INSERT' THEN 'Inserted '||t
+                  WHEN 'UPDATE' THEN 'Added '||delta||' to balance'
+                  WHEN 'DELETE' THEN 'Removed '||t
+              END AS description
+), m2 AS (
+    MERGE INTO sq_target_merge_log l
+    USING m
+    ON l.tid = m.tid
+    WHEN MATCHED THEN
+        UPDATE SET last_change = description
+    WHEN NOT MATCHED THEN
+        INSERT VALUES (m.tid, description)
+    RETURNING action, merge_action() AS log_action, l.*
+)
+SELECT * FROM m2;
+SELECT * FROM sq_target_merge_log ORDER BY tid;
+ROLLBACK;
+
+-- COPY (MERGE ... RETURNING) TO ...
+BEGIN;
+COPY (
+    MERGE INTO sq_target t
+    USING sq_source s
+    ON tid = sid
+    WHEN MATCHED AND tid >= 2 THEN
+        UPDATE SET balance = t.balance + delta
+    WHEN NOT MATCHED THEN
+        INSERT (balance, tid) VALUES (balance + delta, sid)
+    WHEN MATCHED AND tid < 2 THEN
+        DELETE
+    RETURNING merge_action(), t.*
+) TO stdout;
+ROLLBACK;
+
+-- SQL function with MERGE ... RETURNING
+BEGIN;
+CREATE FUNCTION merge_into_sq_target(sid int, balance int, delta int,
+                                     OUT action text, OUT tid int, OUT new_balance int)
+LANGUAGE sql AS
+$$
+    MERGE INTO sq_target t
+    USING (VALUES ($1, $2, $3)) AS v(sid, balance, delta)
+    ON tid = v.sid
+    WHEN MATCHED AND tid >= 2 THEN
+        UPDATE SET balance = t.balance + v.delta
+    WHEN NOT MATCHED THEN
+        INSERT (balance, tid) VALUES (v.balance + v.delta, v.sid)
+    WHEN MATCHED AND tid < 2 THEN
+        DELETE
+    RETURNING merge_action(), t.*;
+$$;
+SELECT m.*
+FROM (VALUES (1, 0, 0), (3, 0, 20), (4, 100, 10)) AS v(sid, balance, delta),
+LATERAL (SELECT action, tid, new_balance FROM merge_into_sq_target(sid, balance, delta)) m;
+ROLLBACK;
+
+-- SQL SRF with MERGE ... RETURNING
+BEGIN;
+CREATE FUNCTION merge_sq_source_into_sq_target()
+RETURNS TABLE (action text, tid int, balance int)
+LANGUAGE sql AS
+$$
+    MERGE INTO sq_target t
+    USING sq_source s
+    ON tid = sid
+    WHEN MATCHED AND tid >= 2 THEN
+        UPDATE SET balance = t.balance + delta
+    WHEN NOT MATCHED THEN
+        INSERT (balance, tid) VALUES (balance + delta, sid)
+    WHEN MATCHED AND tid < 2 THEN
+        DELETE
+    RETURNING merge_action(), t.*;
+$$;
+SELECT * FROM merge_sq_source_into_sq_target();
+ROLLBACK;
+
+-- PL/pgSQL function with MERGE ... RETURNING ... INTO
+BEGIN;
+CREATE FUNCTION merge_into_sq_target(sid int, balance int, delta int,
+                                     OUT r_action text, OUT r_tid int, OUT r_balance int)
+LANGUAGE plpgsql AS
+$$
+BEGIN
+    MERGE INTO sq_target t
+    USING (VALUES ($1, $2, $3)) AS v(sid, balance, delta)
+    ON tid = v.sid
+    WHEN MATCHED AND tid >= 2 THEN
+        UPDATE SET balance = t.balance + v.delta
+    WHEN NOT MATCHED THEN
+        INSERT (balance, tid) VALUES (v.balance + v.delta, v.sid)
+    WHEN MATCHED AND tid < 2 THEN
+        DELETE
+    RETURNING merge_action(), t.* INTO r_action, r_tid, r_balance;
+END;
+$$;
+SELECT m.*
+FROM (VALUES (1, 0, 0), (3, 0, 20), (4, 100, 10)) AS v(sid, balance, delta),
+LATERAL (SELECT r_action, r_tid, r_balance FROM merge_into_sq_target(sid, balance, delta)) m;
 ROLLBACK;
 
 -- EXPLAIN
@@ -984,7 +1115,7 @@ WHEN MATCHED THEN
 SELECT * FROM sq_target WHERE tid = 1;
 ROLLBACK;
 
-DROP TABLE sq_target, sq_source CASCADE;
+DROP TABLE sq_target, sq_target_merge_log, sq_source CASCADE;
 
 CREATE TABLE pa_target (tid integer, balance float, val text)
 	PARTITION BY LIST (tid);
@@ -1048,6 +1179,17 @@ RETURN result;
 END;
 $$;
 SELECT merge_func();
+SELECT * FROM pa_target ORDER BY tid;
+ROLLBACK;
+
+-- update partition key to partition not initially scanned
+BEGIN;
+MERGE INTO pa_target t
+  USING pa_source s
+  ON t.tid = s.sid AND t.tid = 1
+  WHEN MATCHED THEN
+    UPDATE SET tid = tid + 1, balance = balance + delta, val = val || ' updated by merge'
+  RETURNING merge_action(), t.*;
 SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 
@@ -1227,7 +1369,8 @@ MERGE INTO pa_target t
   WHEN MATCHED THEN
     UPDATE SET balance = balance + delta, val = val || ' updated by merge'
   WHEN NOT MATCHED THEN
-    INSERT VALUES (slogts::timestamp, sid, delta, 'inserted by merge');
+    INSERT VALUES (slogts::timestamp, sid, delta, 'inserted by merge')
+  RETURNING merge_action(), t.*;
 SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 

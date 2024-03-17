@@ -66,6 +66,9 @@ exprType(const Node *expr)
 		case T_WindowFunc:
 			type = ((const WindowFunc *) expr)->wintype;
 			break;
+		case T_MergeSupportFunc:
+			type = ((const MergeSupportFunc *) expr)->msftype;
+			break;
 		case T_SubscriptingRef:
 			type = ((const SubscriptingRef *) expr)->refrestype;
 			break;
@@ -809,6 +812,9 @@ exprCollation(const Node *expr)
 		case T_WindowFunc:
 			coll = ((const WindowFunc *) expr)->wincollid;
 			break;
+		case T_MergeSupportFunc:
+			coll = ((const MergeSupportFunc *) expr)->msfcollid;
+			break;
 		case T_SubscriptingRef:
 			coll = ((const SubscriptingRef *) expr)->refcollid;
 			break;
@@ -1084,6 +1090,9 @@ exprSetCollation(Node *expr, Oid collation)
 		case T_WindowFunc:
 			((WindowFunc *) expr)->wincollid = collation;
 			break;
+		case T_MergeSupportFunc:
+			((MergeSupportFunc *) expr)->msfcollid = collation;
+			break;
 		case T_SubscriptingRef:
 			((SubscriptingRef *) expr)->refcollid = collation;
 			break;
@@ -1341,6 +1350,9 @@ exprLocation(const Node *expr)
 		case T_WindowFunc:
 			/* function name should always be the first thing */
 			loc = ((const WindowFunc *) expr)->location;
+			break;
+		case T_MergeSupportFunc:
+			loc = ((const MergeSupportFunc *) expr)->location;
 			break;
 		case T_SubscriptingRef:
 			/* just use container argument's location */
@@ -2034,6 +2046,7 @@ expression_tree_walker_impl(Node *node,
 		case T_RangeTblRef:
 		case T_SortGroupClause:
 		case T_CTESearchClause:
+		case T_MergeSupportFunc:
 			/* primitive node types with no expression subnodes */
 			break;
 		case T_WithCheckOption:
@@ -2868,6 +2881,7 @@ expression_tree_mutator_impl(Node *node,
 		case T_RangeTblRef:
 		case T_SortGroupClause:
 		case T_CTESearchClause:
+		case T_MergeSupportFunc:
 			return (Node *) copyObject(node);
 		case T_WithCheckOption:
 			{
@@ -3832,6 +3846,7 @@ raw_expression_tree_walker_impl(Node *node,
 		case T_ParamRef:
 		case T_A_Const:
 		case T_A_Star:
+		case T_MergeSupportFunc:
 			/* primitive node types with no subnodes */
 			break;
 		case T_Alias:
@@ -4051,6 +4066,8 @@ raw_expression_tree_walker_impl(Node *node,
 				if (WALK(stmt->joinCondition))
 					return true;
 				if (WALK(stmt->mergeWhenClauses))
+					return true;
+				if (WALK(stmt->returningList))
 					return true;
 				if (WALK(stmt->withClause))
 					return true;

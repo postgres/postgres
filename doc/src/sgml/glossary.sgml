@@ -1442,9 +1442,9 @@
      to a <glossterm linkend="glossary-client">client</glossterm> upon the
      completion of an <acronym>SQL</acronym> command, usually a
      <command>SELECT</command> but it can be an
-     <command>INSERT</command>, <command>UPDATE</command>, or
-     <command>DELETE</command> command if the <literal>RETURNING</literal>
-     clause is specified.
+     <command>INSERT</command>, <command>UPDATE</command>,
+     <command>DELETE</command>, or <command>MERGE</command> command if the
+     <literal>RETURNING</literal> clause is specified.
     </para>
     <para>
      The fact that a result set is a relation means that a query can be used

@@ -301,8 +301,9 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar RETURNING *", false, 5);
    is returned in the global variable <varname>SPI_processed</varname>.
    If the return value of the function is <symbol>SPI_OK_SELECT</symbol>,
    <symbol>SPI_OK_INSERT_RETURNING</symbol>,
-   <symbol>SPI_OK_DELETE_RETURNING</symbol>, or
-   <symbol>SPI_OK_UPDATE_RETURNING</symbol>,
+   <symbol>SPI_OK_DELETE_RETURNING</symbol>,
+   <symbol>SPI_OK_UPDATE_RETURNING</symbol>, or
+   <symbol>SPI_OK_MERGE_RETURNING</symbol>,
    then you can use the
    global pointer <literal>SPITupleTable *SPI_tuptable</literal> to
    access the result rows.  Some utility commands (such as
@@ -469,6 +470,15 @@ typedef struct SPITupleTable
      <listitem>
       <para>
        if an <command>UPDATE RETURNING</command> was executed
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_OK_MERGE_RETURNING</symbol></term>
+     <listitem>
+      <para>
+       if a <command>MERGE RETURNING</command> was executed
       </para>
      </listitem>
     </varlistentry>
