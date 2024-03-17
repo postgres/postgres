@@ -437,7 +437,7 @@ ProcedureCreate(const char *procedureName,
 			if (olddesc == NULL && newdesc == NULL)
 				 /* ok, both are runtime-defined RECORDs */ ;
 			else if (olddesc == NULL || newdesc == NULL ||
-					 !equalTupleDescs(olddesc, newdesc))
+					 !equalRowTypes(olddesc, newdesc))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("cannot change return type of existing function"),

@@ -414,11 +414,6 @@ DecrTupleDescRefCount(TupleDesc tupdesc)
 
 /*
  * Compare two TupleDesc structures for logical equality
- *
- * Note: we deliberately do not check the attrelid and tdtypmod fields.
- * This allows typcache.c to use this routine to see if a cached record type
- * matches a requested type, and is harmless for relcache.c's uses.
- * We don't compare tdrefcount, either.
  */
 bool
 equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
@@ -430,6 +425,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		return false;
 	if (tupdesc1->tdtypeid != tupdesc2->tdtypeid)
 		return false;
+
+	/* tdtypmod and tdrefcount are not checked */
 
 	for (i = 0; i < tupdesc1->natts; i++)
 	{
@@ -561,17 +558,68 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 }
 
 /*
- * hashTupleDesc
- *		Compute a hash value for a tuple descriptor.
+ * equalRowTypes
  *
- * If two tuple descriptors would be considered equal by equalTupleDescs()
+ * This determines whether two tuple descriptors have equal row types.  This
+ * only checks those fields in pg_attribute that are applicable for row types,
+ * while ignoring those fields that define the physical row storage or those
+ * that define table column metadata.
+ *
+ * Specifically, this checks:
+ *
+ * - same number of attributes
+ * - same composite type ID (but could both be zero)
+ * - corresponding attributes (in order) have same the name, type, typmod,
+ *   collation
+ *
+ * This is used to check whether two record types are compatible, whether
+ * function return row types are the same, and other similar situations.
+ *
+ * (XXX There was some discussion whether attndims should be checked here, but
+ * for now it has been decided not to.)
+ *
+ * Note: We deliberately do not check the tdtypmod field.  This allows
+ * typcache.c to use this routine to see if a cached record type matches a
+ * requested type.
+ */
+bool
+equalRowTypes(TupleDesc tupdesc1, TupleDesc tupdesc2)
+{
+	if (tupdesc1->natts != tupdesc2->natts)
+		return false;
+	if (tupdesc1->tdtypeid != tupdesc2->tdtypeid)
+		return false;
+
+	for (int i = 0; i < tupdesc1->natts; i++)
+	{
+		Form_pg_attribute attr1 = TupleDescAttr(tupdesc1, i);
+		Form_pg_attribute attr2 = TupleDescAttr(tupdesc2, i);
+
+		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
+			return false;
+		if (attr1->atttypid != attr2->atttypid)
+			return false;
+		if (attr1->atttypmod != attr2->atttypmod)
+			return false;
+		if (attr1->attcollation != attr2->attcollation)
+			return false;
+
+		/* Record types derived from tables could have dropped fields. */
+		if (attr1->attisdropped != attr2->attisdropped)
+			return false;
+	}
+
+	return true;
+}
+
+/*
+ * hashRowType
+ *
+ * If two tuple descriptors would be considered equal by equalRowTypes()
  * then their hash value will be equal according to this function.
- *
- * Note that currently contents of constraint are not hashed - it'd be a bit
- * painful to do so, and conflicts just due to constraints are unlikely.
  */
 uint32
-hashTupleDesc(TupleDesc desc)
+hashRowType(TupleDesc desc)
 {
 	uint32		s;
 	int			i;

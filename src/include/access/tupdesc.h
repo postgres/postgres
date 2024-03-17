@@ -126,8 +126,8 @@ extern void DecrTupleDescRefCount(TupleDesc tupdesc);
 	} while (0)
 
 extern bool equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
-
-extern uint32 hashTupleDesc(TupleDesc desc);
+extern bool equalRowTypes(TupleDesc tupdesc1, TupleDesc tupdesc2);
+extern uint32 hashRowType(TupleDesc desc);
 
 extern void TupleDescInitEntry(TupleDesc desc,
 							   AttrNumber attributeNumber,

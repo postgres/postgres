@@ -727,8 +727,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
 		PopActiveSnapshot();
 
 	/*
-	 * Check or update the result tupdesc.  XXX should we use a weaker
-	 * condition than equalTupleDescs() here?
+	 * Check or update the result tupdesc.
 	 *
 	 * We assume the parameter types didn't change from the first time, so no
 	 * need to update that.
@@ -739,7 +738,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
 		/* OK, doesn't return tuples */
 	}
 	else if (resultDesc == NULL || plansource->resultDesc == NULL ||
-			 !equalTupleDescs(resultDesc, plansource->resultDesc))
+			 !equalRowTypes(resultDesc, plansource->resultDesc))
 	{
 		/* can we give a better error message? */
 		if (plansource->fixed_result)
