@@ -22453,11 +22453,11 @@ SELECT count(*) FROM sometable;
 
     <tbody>
      <row>
-      <entry role="func_table_entry"><para role="func_signature">
+      <entry id="merge-action" role="func_table_entry"><para role="func_signature">
        <indexterm>
         <primary>merge_action</primary>
        </indexterm>
-       <function id="merge_action">merge_action</function> ( )
+       <function>merge_action</function> ( )
        <returnvalue>text</returnvalue>
       </para>
       <para>

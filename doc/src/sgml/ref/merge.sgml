@@ -101,12 +101,13 @@ DELETE
    The optional <literal>RETURNING</literal> clause causes <command>MERGE</command>
    to compute and return value(s) based on each row inserted, updated, or
    deleted.  Any expression using the source or target table's columns, or
-   the <xref linkend="merge_action"/> function can be computed.  When an
-   <command>INSERT</command> or <command>UPDATE</command> action is performed,
-   the new values of the target table's columns are used.  When a
-   <command>DELETE</command> is performed, the old values of the target table's
-   columns are used.  The syntax of the <literal>RETURNING</literal> list is
-   identical to that of the output list of <command>SELECT</command>.
+   the <link linkend="merge-action"><function>merge_action()</function></link>
+   function can be computed.  When an <command>INSERT</command> or
+   <command>UPDATE</command> action is performed, the new values of the target
+   table's columns are used.  When a <command>DELETE</command> is performed,
+   the old values of the target table's columns are used.  The syntax of the
+   <literal>RETURNING</literal> list is identical to that of the output list
+   of <command>SELECT</command>.
   </para>
 
   <para>
@@ -462,8 +463,8 @@ DELETE
       An expression to be computed and returned by the <command>MERGE</command>
       command after each row is changed (whether inserted, updated, or deleted).
       The expression can use any columns of the source or target tables, or the
-      <xref linkend="merge_action"/> function to return additional information
-      about the action executed.
+      <link linkend="merge-action"><function>merge_action()</function></link>
+      function to return additional information about the action executed.
      </para>
      <para>
       Writing <literal>*</literal> will return all columns from the source
