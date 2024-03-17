@@ -1473,6 +1473,56 @@ WHEN MATCHED AND t.a < 10 THEN
 
 DROP TABLE ex_msource, ex_mtarget;
 DROP FUNCTION explain_merge(text);
+-- EXPLAIN SubPlans and InitPlans
+CREATE TABLE src (a int, b int, c int, d int);
+CREATE TABLE tgt (a int, b int, c int, d int);
+CREATE TABLE ref (ab int, cd int);
+EXPLAIN (verbose, costs off)
+MERGE INTO tgt t
+USING (SELECT *, (SELECT count(*) FROM ref r
+                   WHERE r.ab = s.a + s.b
+                     AND r.cd = s.c - s.d) cnt
+         FROM src s) s
+ON t.a = s.a AND t.b < s.cnt
+WHEN MATCHED AND t.c > s.cnt THEN
+  UPDATE SET (b, c) = (SELECT s.b, s.cnt);
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Merge on public.tgt t
+   ->  Hash Join
+         Output: t.ctid, s.a, s.b, s.c, s.d, s.ctid
+         Hash Cond: (t.a = s.a)
+         Join Filter: (t.b < (SubPlan 1))
+         ->  Seq Scan on public.tgt t
+               Output: t.ctid, t.a, t.b
+         ->  Hash
+               Output: s.a, s.b, s.c, s.d, s.ctid
+               ->  Seq Scan on public.src s
+                     Output: s.a, s.b, s.c, s.d, s.ctid
+         SubPlan 1
+           ->  Aggregate
+                 Output: count(*)
+                 ->  Seq Scan on public.ref r
+                       Output: r.ab, r.cd
+                       Filter: ((r.ab = (s.a + s.b)) AND (r.cd = (s.c - s.d)))
+   SubPlan 4
+     ->  Aggregate
+           Output: count(*)
+           ->  Seq Scan on public.ref r_2
+                 Output: r_2.ab, r_2.cd
+                 Filter: ((r_2.ab = (s.a + s.b)) AND (r_2.cd = (s.c - s.d)))
+   SubPlan 3 (returns $9,$10)
+     ->  Result
+           Output: s.b, $8
+           InitPlan 2 (returns $8)
+             ->  Aggregate
+                   Output: count(*)
+                   ->  Seq Scan on public.ref r_1
+                         Output: r_1.ab, r_1.cd
+                         Filter: ((r_1.ab = (s.a + s.b)) AND (r_1.cd = (s.c - s.d)))
+(32 rows)
+
+DROP TABLE src, tgt, ref;
 -- Subqueries
 BEGIN;
 MERGE INTO sq_target t
