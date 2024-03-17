@@ -26,7 +26,7 @@ PostgreSQL documentation
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
-ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET STATISTICS <replaceable class="parameter">new_target</replaceable>
+ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET STATISTICS { <replaceable class="parameter">new_target</replaceable> | DEFAULT }
 </synopsis>
  </refsynopsisdiv>
 
@@ -101,10 +101,11 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET STATISTIC
        <para>
         The statistic-gathering target for this statistics object for subsequent
         <link linkend="sql-analyze"><command>ANALYZE</command></link> operations.
-        The target can be set in the range 0 to 10000; alternatively, set it
-        to -1 to revert to using the maximum of the statistics target of the
-        referenced columns, if set, or the system default statistics
-        target (<xref linkend="guc-default-statistics-target"/>).
+        The target can be set in the range 0 to 10000.  Set it to
+        <literal>DEFAULT</literal> to revert to using the system default
+        statistics target (<xref linkend="guc-default-statistics-target"/>).
+        (Setting to a value of -1 is an obsolete way spelling to get the same
+        outcome.)
         For more information on the use of statistics by the
         <productname>PostgreSQL</productname> query planner, refer to
         <xref linkend="planner-stats"/>.

@@ -8712,6 +8712,7 @@ static ObjectAddress
 ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newValue, LOCKMODE lockmode)
 {
 	int			newtarget;
+	bool		newtarget_default;
 	Relation	attrelation;
 	HeapTuple	tuple,
 				newtuple;
@@ -8733,35 +8734,35 @@ ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot refer to non-index column by number")));
 
-	if (newValue)
+	/* -1 was used in previous versions for the default setting */
+	if (newValue && intVal(newValue) != -1)
 	{
 		newtarget = intVal(newValue);
+		newtarget_default = false;
 	}
 	else
+		newtarget_default = true;
+
+	if (!newtarget_default)
 	{
 		/*
-		 * -1 was used in previous versions to represent the default setting
+		 * Limit target to a sane range
 		 */
-		newtarget = -1;
-	}
-
-	/*
-	 * Limit target to a sane range
-	 */
-	if (newtarget < -1)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("statistics target %d is too low",
-						newtarget)));
-	}
-	else if (newtarget > MAX_STATISTICS_TARGET)
-	{
-		newtarget = MAX_STATISTICS_TARGET;
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("lowering statistics target to %d",
-						newtarget)));
+		if (newtarget < 0)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("statistics target %d is too low",
+							newtarget)));
+		}
+		else if (newtarget > MAX_STATISTICS_TARGET)
+		{
+			newtarget = MAX_STATISTICS_TARGET;
+			ereport(WARNING,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("lowering statistics target to %d",
+							newtarget)));
+		}
 	}
 
 	attrelation = table_open(AttributeRelationId, RowExclusiveLock);
@@ -8815,7 +8816,7 @@ ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 	/* Build new tuple. */
 	memset(repl_null, false, sizeof(repl_null));
 	memset(repl_repl, false, sizeof(repl_repl));
-	if (newtarget != -1)
+	if (!newtarget_default)
 		repl_val[Anum_pg_attribute_attstattarget - 1] = newtarget;
 	else
 		repl_null[Anum_pg_attribute_attstattarget - 1] = true;

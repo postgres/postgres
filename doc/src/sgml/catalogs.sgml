@@ -7659,23 +7659,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>stxstattarget</structfield> <type>int2</type>
-      </para>
-      <para>
-       <structfield>stxstattarget</structfield> controls the level of detail
-       of statistics accumulated for this statistics object by
-       <link linkend="sql-analyze"><command>ANALYZE</command></link>.
-       A zero value indicates that no statistics should be collected.
-       A negative value says to use the maximum of the statistics targets of
-       the referenced columns, if set, or the system default statistics target.
-       Positive values of <structfield>stxstattarget</structfield>
-       determine the target number of <quote>most common values</quote>
-       to collect.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>stxkeys</structfield> <type>int2vector</type>
        (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
       </para>
@@ -7684,6 +7667,23 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        covered by this statistics object;
        for example a value of <literal>1 3</literal> would
        mean that the first and the third table columns are covered
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stxstattarget</structfield> <type>int2</type>
+      </para>
+      <para>
+       <structfield>stxstattarget</structfield> controls the level of detail
+       of statistics accumulated for this statistics object by
+       <link linkend="sql-analyze"><command>ANALYZE</command></link>.
+       A zero value indicates that no statistics should be collected.
+       A null value says to use the maximum of the statistics targets of
+       the referenced columns, if set, or the system default statistics target.
+       Positive values of <structfield>stxstattarget</structfield>
+       determine the target number of <quote>most common values</quote>
+       to collect.
       </para></entry>
      </row>
 

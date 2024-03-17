@@ -2804,7 +2804,8 @@ describeOneTableDetails(const char *schemaname,
 									  PQgetvalue(result, i, 1));
 
 					/* Show the stats target if it's not default */
-					if (strcmp(PQgetvalue(result, i, 8), "-1") != 0)
+					if (!PQgetisnull(result, i, 8) &&
+						strcmp(PQgetvalue(result, i, 8), "-1") != 0)
 						appendPQExpBuffer(&buf, "; STATISTICS %s",
 										  PQgetvalue(result, i, 8));
 

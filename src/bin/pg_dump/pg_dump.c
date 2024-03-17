@@ -7580,7 +7580,7 @@ getExtendedStatistics(Archive *fout)
 
 	if (fout->remoteVersion < 130000)
 		appendPQExpBufferStr(query, "SELECT tableoid, oid, stxname, "
-							 "stxnamespace, stxowner, stxrelid, (-1) AS stxstattarget "
+							 "stxnamespace, stxowner, stxrelid, NULL AS stxstattarget "
 							 "FROM pg_catalog.pg_statistic_ext");
 	else
 		appendPQExpBufferStr(query, "SELECT tableoid, oid, stxname, "
@@ -7613,7 +7613,10 @@ getExtendedStatistics(Archive *fout)
 		statsextinfo[i].rolname = getRoleName(PQgetvalue(res, i, i_stxowner));
 		statsextinfo[i].stattable =
 			findTableByOid(atooid(PQgetvalue(res, i, i_stxrelid)));
-		statsextinfo[i].stattarget = atoi(PQgetvalue(res, i, i_stattarget));
+		if (PQgetisnull(res, i, i_stattarget))
+			statsextinfo[i].stattarget = -1;
+		else
+			statsextinfo[i].stattarget = atoi(PQgetvalue(res, i, i_stattarget));
 
 		/* Decide whether we want to dump it */
 		selectDumpableStatisticsObject(&(statsextinfo[i]), fout);
@@ -17062,8 +17065,7 @@ dumpStatisticsExt(Archive *fout, const StatsExtInfo *statsextinfo)
 
 	/*
 	 * We only issue an ALTER STATISTICS statement if the stxstattarget entry
-	 * for this statistics object is non-negative (i.e. it's not the default
-	 * value).
+	 * for this statistics object is not the default value.
 	 */
 	if (statsextinfo->stattarget >= 0)
 	{

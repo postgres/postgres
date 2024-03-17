@@ -454,12 +454,14 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 		entry->statOid = staForm->oid;
 		entry->schema = get_namespace_name(staForm->stxnamespace);
 		entry->name = pstrdup(NameStr(staForm->stxname));
-		entry->stattarget = staForm->stxstattarget;
 		for (i = 0; i < staForm->stxkeys.dim1; i++)
 		{
 			entry->columns = bms_add_member(entry->columns,
 											staForm->stxkeys.values[i]);
 		}
+
+		datum = SysCacheGetAttr(STATEXTOID, htup, Anum_pg_statistic_ext_stxstattarget, &isnull);
+		entry->stattarget = isnull ? -1 : DatumGetInt16(datum);
 
 		/* decode the stxkind char array into a list of chars */
 		datum = SysCacheGetAttrNotNull(STATEXTOID, htup,
