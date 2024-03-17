@@ -218,6 +218,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
  */
 typedef struct FormExtraData_pg_attribute
 {
+	NullableDatum attstattarget;
 	NullableDatum attoptions;
 } FormExtraData_pg_attribute;
 

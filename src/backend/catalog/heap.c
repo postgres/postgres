@@ -758,18 +758,21 @@ InsertPgAttributeTuples(Relation pg_attribute_rel,
 		slot[slotCount]->tts_values[Anum_pg_attribute_attcollation - 1] = ObjectIdGetDatum(attrs->attcollation);
 		if (attrs_extra)
 		{
+			slot[slotCount]->tts_values[Anum_pg_attribute_attstattarget - 1] = attrs_extra->attstattarget.value;
+			slot[slotCount]->tts_isnull[Anum_pg_attribute_attstattarget - 1] = attrs_extra->attstattarget.isnull;
+
 			slot[slotCount]->tts_values[Anum_pg_attribute_attoptions - 1] = attrs_extra->attoptions.value;
 			slot[slotCount]->tts_isnull[Anum_pg_attribute_attoptions - 1] = attrs_extra->attoptions.isnull;
 		}
 		else
 		{
+			slot[slotCount]->tts_isnull[Anum_pg_attribute_attstattarget - 1] = true;
 			slot[slotCount]->tts_isnull[Anum_pg_attribute_attoptions - 1] = true;
 		}
 
 		/*
 		 * The remaining fields are not set for new columns.
 		 */
-		slot[slotCount]->tts_isnull[Anum_pg_attribute_attstattarget - 1] = true;
 		slot[slotCount]->tts_isnull[Anum_pg_attribute_attacl - 1] = true;
 		slot[slotCount]->tts_isnull[Anum_pg_attribute_attfdwoptions - 1] = true;
 		slot[slotCount]->tts_isnull[Anum_pg_attribute_attmissingval - 1] = true;
