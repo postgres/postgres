@@ -89,6 +89,7 @@ typedef struct JsonLexContext
 	int			line_number;	/* line number, starting from 1 */
 	char	   *line_start;		/* where that line starts within input */
 	StringInfo	strval;
+	StringInfo	errormsg;
 } JsonLexContext;
 
 typedef JsonParseErrorType (*json_struct_action) (void *state);
