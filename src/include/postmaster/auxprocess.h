@@ -13,8 +13,6 @@
 #ifndef AUXPROCESS_H
 #define AUXPROCESS_H
 
-#include "miscadmin.h"
-
-extern void AuxiliaryProcessMain(BackendType auxtype) pg_attribute_noreturn();
+extern void AuxiliaryProcessMainCommon(void);
 
 #endif							/* AUXPROCESS_H */

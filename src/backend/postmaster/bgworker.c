@@ -720,15 +720,29 @@ bgworker_die(SIGNAL_ARGS)
  * Main entry point for background worker processes.
  */
 void
-BackgroundWorkerMain(void)
+BackgroundWorkerMain(char *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
-	BackgroundWorker *worker = MyBgworkerEntry;
+	BackgroundWorker *worker;
 	bgworker_main_type entrypt;
 
-	if (worker == NULL)
+	if (startup_data == NULL)
 		elog(FATAL, "unable to find bgworker entry");
+	Assert(startup_data_len == sizeof(BackgroundWorker));
+	worker = MemoryContextAlloc(TopMemoryContext, sizeof(BackgroundWorker));
+	memcpy(worker, startup_data, sizeof(BackgroundWorker));
 
+	/*
+	 * Now that we're done reading the startup data, release postmaster's
+	 * working memory context.
+	 */
+	if (PostmasterContext)
+	{
+		MemoryContextDelete(PostmasterContext);
+		PostmasterContext = NULL;
+	}
+
+	MyBgworkerEntry = worker;
 	MyBackendType = B_BG_WORKER;
 	init_ps_display(worker->bgw_name);
 

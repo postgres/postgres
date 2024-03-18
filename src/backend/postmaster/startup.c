@@ -24,6 +24,7 @@
 #include "access/xlogutils.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "postmaster/auxprocess.h"
 #include "postmaster/startup.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
@@ -212,8 +213,13 @@ StartupProcExit(int code, Datum arg)
  * ----------------------------------
  */
 void
-StartupProcessMain(void)
+StartupProcessMain(char *startup_data, size_t startup_data_len)
 {
+	Assert(startup_data_len == 0);
+
+	MyBackendType = B_STARTUP;
+	AuxiliaryProcessMainCommon();
+
 	/* Arrange to clean up at startup process exit */
 	on_shmem_exit(StartupProcExit, 0);
 

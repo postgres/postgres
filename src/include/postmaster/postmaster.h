@@ -13,6 +13,8 @@
 #ifndef _POSTMASTER_H
 #define _POSTMASTER_H
 
+#include "miscadmin.h"
+
 /* GUC options */
 extern PGDLLIMPORT bool EnableSSL;
 extern PGDLLIMPORT int SuperuserReservedConnections;
@@ -58,17 +60,25 @@ extern int	MaxLivePostmasterChildren(void);
 
 extern bool PostmasterMarkPIDForWorkerNotify(int);
 
+extern void BackendMain(char *startup_data, size_t startup_data_len) pg_attribute_noreturn();
+
 #ifdef EXEC_BACKEND
-
-extern pid_t postmaster_forkexec(int argc, char *argv[]);
-extern void SubPostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
-
 extern Size ShmemBackendArraySize(void);
 extern void ShmemBackendArrayAllocation(void);
 
 #ifdef WIN32
 extern void pgwin32_register_deadchild_callback(HANDLE procHandle, DWORD procId);
 #endif
+#endif
+
+/* defined in globals.c */
+extern struct ClientSocket *MyClientSocket;
+
+/* prototypes for functions in launch_backend.c */
+extern pid_t postmaster_child_launch(BackendType child_type, char *startup_data, size_t startup_data_len, struct ClientSocket *sock);
+const char *PostmasterChildName(BackendType child_type);
+#ifdef EXEC_BACKEND
+extern void SubPostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
 #endif
 
 /*

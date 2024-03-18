@@ -49,7 +49,9 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/startup.h"
 #include "postmaster/syslogger.h"
+#include "postmaster/walsummarizer.h"
 #include "postmaster/walwriter.h"
+#include "replication/slotsync.h"
 #include "replication/walreceiver.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -89,13 +91,6 @@ typedef int InheritableSocket;
  */
 typedef struct
 {
-	bool		has_client_sock;
-	ClientSocket client_sock;
-	InheritableSocket inh_sock;
-
-	bool		has_bgworker;
-	BackgroundWorker bgworker;
-
 	char		DataDir[MAXPGPATH];
 	int32		MyCancelKey;
 	int			MyPMChildSlot;
@@ -138,22 +133,144 @@ typedef struct
 #endif
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
+
+	/*
+	 * These are only used by backend processes, but are here because passing
+	 * a socket needs some special handling on Windows. 'client_sock' is an
+	 * explicit argument to postmaster_child_launch, but is stored in
+	 * MyClientSocket in the child process.
+	 */
+	ClientSocket client_sock;
+	InheritableSocket inh_sock;
+
+	/*
+	 * Extra startup data, content depends on the child process.
+	 */
+	size_t		startup_data_len;
+	char		startup_data[FLEXIBLE_ARRAY_MEMBER];
 } BackendParameters;
 
 #define SizeOfBackendParameters(startup_data_len) (offsetof(BackendParameters, startup_data) + startup_data_len)
 
-void		read_backend_variables(char *id, ClientSocket **client_sock, BackgroundWorker **worker);
-static void restore_backend_variables(BackendParameters *param, ClientSocket **client_sock, BackgroundWorker **worker);
+static void read_backend_variables(char *id, char **startup_data, size_t *startup_data_len);
+static void restore_backend_variables(BackendParameters *param);
 
-#ifndef WIN32
-static bool save_backend_variables(BackendParameters *param, ClientSocket *client_sock, BackgroundWorker *worker);
-#else
-static bool save_backend_variables(BackendParameters *param, ClientSocket *client_sock, BackgroundWorker *worker,
-								   HANDLE childProcess, pid_t childPid);
+static bool save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
+#ifdef WIN32
+								   HANDLE childProcess, pid_t childPid,
 #endif
+								   char *startup_data, size_t startup_data_len);
 
-pid_t		internal_forkexec(int argc, char *argv[], ClientSocket *client_sock, BackgroundWorker *worker);
+static pid_t internal_forkexec(const char *child_kind, char *startup_data, size_t startup_data_len, ClientSocket *client_sock);
 
+#endif							/* EXEC_BACKEND */
+
+/*
+ * Information needed to launch different kinds of child processes.
+ */
+typedef struct
+{
+	const char *name;
+	void		(*main_fn) (char *startup_data, size_t startup_data_len) pg_attribute_noreturn();
+	bool		shmem_attach;
+} child_process_kind;
+
+child_process_kind child_process_kinds[] = {
+	[B_INVALID] = {"invalid", NULL, false},
+
+	[B_BACKEND] = {"backend", BackendMain, true},
+	[B_AUTOVAC_LAUNCHER] = {"autovacuum launcher", AutoVacLauncherMain, true},
+	[B_AUTOVAC_WORKER] = {"autovacuum worker", AutoVacWorkerMain, true},
+	[B_BG_WORKER] = {"bgworker", BackgroundWorkerMain, true},
+
+	/*
+	 * WAL senders start their life as regular backend processes, and change
+	 * their type after authenticating the client for replication.  We list it
+	 * here forPostmasterChildName() but cannot launch them directly.
+	 */
+	[B_WAL_SENDER] = {"wal sender", NULL, true},
+	[B_SLOTSYNC_WORKER] = {"slot sync worker", ReplSlotSyncWorkerMain, true},
+
+	[B_STANDALONE_BACKEND] = {"standalone backend", NULL, false},
+
+	[B_ARCHIVER] = {"archiver", PgArchiverMain, true},
+	[B_BG_WRITER] = {"bgwriter", BackgroundWriterMain, true},
+	[B_CHECKPOINTER] = {"checkpointer", CheckpointerMain, true},
+	[B_STARTUP] = {"startup", StartupProcessMain, true},
+	[B_WAL_RECEIVER] = {"wal_receiver", WalReceiverMain, true},
+	[B_WAL_SUMMARIZER] = {"wal_summarizer", WalSummarizerMain, true},
+	[B_WAL_WRITER] = {"wal_writer", WalWriterMain, true},
+
+	[B_LOGGER] = {"syslogger", SysLoggerMain, false},
+};
+
+const char *
+PostmasterChildName(BackendType child_type)
+{
+	Assert(child_type >= 0 && child_type < lengthof(child_process_kinds));
+	return child_process_kinds[child_type].name;
+}
+
+/*
+ * Start a new postmaster child process.
+ *
+ * The child process will be restored to roughly the same state whether
+ * EXEC_BACKEND is used or not: it will be attached to shared memory, and fds
+ * and other resources that we've inherited from postmaster that are not
+ * needed in a child process have been closed.
+ *
+ * 'startup_data' is an optional contiguous chunk of data that is passed to
+ * the child process.
+ */
+pid_t
+postmaster_child_launch(BackendType child_type,
+						char *startup_data, size_t startup_data_len,
+						ClientSocket *client_sock)
+{
+	pid_t		pid;
+
+	Assert(child_type >= 0 && child_type < lengthof(child_process_kinds));
+	Assert(IsPostmasterEnvironment && !IsUnderPostmaster);
+
+#ifdef EXEC_BACKEND
+	pid = internal_forkexec(child_process_kinds[child_type].name,
+							startup_data, startup_data_len, client_sock);
+	/* the child process will arrive in SubPostmasterMain */
+#else							/* !EXEC_BACKEND */
+	pid = fork_process();
+	if (pid == 0)				/* child */
+	{
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(child_type == B_LOGGER);
+
+		/* Detangle from postmaster */
+		InitPostmasterChild();
+
+		/*
+		 * Enter the Main function with TopMemoryContext.  The startup data is
+		 * allocated in PostmasterContext, so we cannot release it here yet.
+		 * The Main function will do it after it's done handling the startup
+		 * data.
+		 */
+		MemoryContextSwitchTo(TopMemoryContext);
+
+		if (client_sock)
+		{
+			MyClientSocket = palloc(sizeof(ClientSocket));
+			memcpy(MyClientSocket, client_sock, sizeof(ClientSocket));
+		}
+
+		/*
+		 * Run the appropriate Main function
+		 */
+		child_process_kinds[child_type].main_fn(startup_data, startup_data_len);
+		pg_unreachable();		/* main_fn never returns */
+	}
+#endif							/* EXEC_BACKEND */
+	return pid;
+}
+
+#ifdef EXEC_BACKEND
 #ifndef WIN32
 
 /*
@@ -162,25 +279,32 @@ pid_t		internal_forkexec(int argc, char *argv[], ClientSocket *client_sock, Back
  * - writes out backend variables to the parameter file
  * - fork():s, and then exec():s the child process
  */
-pid_t
-internal_forkexec(int argc, char *argv[], ClientSocket *client_sock, BackgroundWorker *worker)
+static pid_t
+internal_forkexec(const char *child_kind, char *startup_data, size_t startup_data_len, ClientSocket *client_sock)
 {
 	static unsigned long tmpBackendFileNum = 0;
 	pid_t		pid;
 	char		tmpfilename[MAXPGPATH];
-	BackendParameters param;
+	size_t		paramsz;
+	BackendParameters *param;
 	FILE	   *fp;
+	char	   *argv[4];
+	char		forkav[MAXPGPATH];
 
 	/*
-	 * Make sure padding bytes are initialized, to prevent Valgrind from
-	 * complaining about writing uninitialized bytes to the file.  This isn't
-	 * performance critical, and the win32 implementation initializes the
-	 * padding bytes to zeros, so do it even when not using Valgrind.
+	 * Use palloc0 to make sure padding bytes are initialized, to prevent
+	 * Valgrind from complaining about writing uninitialized bytes to the
+	 * file.  This isn't performance critical, and the win32 implementation
+	 * initializes the padding bytes to zeros, so do it even when not using
+	 * Valgrind.
 	 */
-	memset(&param, 0, sizeof(BackendParameters));
-
-	if (!save_backend_variables(&param, client_sock, worker))
+	paramsz = SizeOfBackendParameters(startup_data_len);
+	param = palloc0(paramsz);
+	if (!save_backend_variables(param, client_sock, startup_data, startup_data_len))
+	{
+		pfree(param);
 		return -1;				/* log made by save_backend_variables */
+	}
 
 	/* Calculate name for temp file */
 	snprintf(tmpfilename, MAXPGPATH, "%s/%s.backend_var.%d.%lu",
@@ -204,18 +328,21 @@ internal_forkexec(int argc, char *argv[], ClientSocket *client_sock, BackgroundW
 					(errcode_for_file_access(),
 					 errmsg("could not create file \"%s\": %m",
 							tmpfilename)));
+			pfree(param);
 			return -1;
 		}
 	}
 
-	if (fwrite(&param, sizeof(param), 1, fp) != 1)
+	if (fwrite(param, paramsz, 1, fp) != 1)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", tmpfilename)));
 		FreeFile(fp);
+		pfree(param);
 		return -1;
 	}
+	pfree(param);
 
 	/* Release file */
 	if (FreeFile(fp))
@@ -226,14 +353,13 @@ internal_forkexec(int argc, char *argv[], ClientSocket *client_sock, BackgroundW
 		return -1;
 	}
 
-	/* Make sure caller set up argv properly */
-	Assert(argc >= 3);
-	Assert(argv[argc] == NULL);
-	Assert(strncmp(argv[1], "--fork", 6) == 0);
-	Assert(argv[2] == NULL);
-
-	/* Insert temp file name after --fork argument */
+	/* set up argv properly */
+	argv[0] = "postgres";
+	snprintf(forkav, MAXPGPATH, "--forkchild=%s", child_kind);
+	argv[1] = forkav;
+	/* Insert temp file name after --forkchild argument */
 	argv[2] = tmpfilename;
+	argv[3] = NULL;
 
 	/* Fire off execv in child */
 	if ((pid = fork_process()) == 0)
@@ -262,25 +388,21 @@ internal_forkexec(int argc, char *argv[], ClientSocket *client_sock, BackgroundW
  * - resumes execution of the new process once the backend parameter
  *	 file is complete.
  */
-pid_t
-internal_forkexec(int argc, char *argv[], ClientSocket *client_sock, BackgroundWorker *worker)
+static pid_t
+internal_forkexec(const char *child_kind, char *startup_data, size_t startup_data_len, ClientSocket *client_sock)
 {
 	int			retry_count = 0;
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
-	int			i;
-	int			j;
 	char		cmdLine[MAXPGPATH * 2];
 	HANDLE		paramHandle;
 	BackendParameters *param;
 	SECURITY_ATTRIBUTES sa;
+	size_t		paramsz;
 	char		paramHandleStr[32];
+	int			l;
 
-	/* Make sure caller set up argv properly */
-	Assert(argc >= 3);
-	Assert(argv[argc] == NULL);
-	Assert(strncmp(argv[1], "--fork", 6) == 0);
-	Assert(argv[2] == NULL);
+	paramsz = SizeOfBackendParameters(startup_data_len);
 
 	/* Resume here if we need to retry */
 retry:
@@ -293,7 +415,7 @@ retry:
 									&sa,
 									PAGE_READWRITE,
 									0,
-									sizeof(BackendParameters),
+									paramsz,
 									NULL);
 	if (paramHandle == INVALID_HANDLE_VALUE)
 	{
@@ -302,8 +424,7 @@ retry:
 						GetLastError())));
 		return -1;
 	}
-
-	param = MapViewOfFile(paramHandle, FILE_MAP_WRITE, 0, 0, sizeof(BackendParameters));
+	param = MapViewOfFile(paramHandle, FILE_MAP_WRITE, 0, 0, paramsz);
 	if (!param)
 	{
 		ereport(LOG,
@@ -313,25 +434,15 @@ retry:
 		return -1;
 	}
 
-	/* Insert temp file name after --fork argument */
+	/* Format the cmd line */
 #ifdef _WIN64
 	sprintf(paramHandleStr, "%llu", (LONG_PTR) paramHandle);
 #else
 	sprintf(paramHandleStr, "%lu", (DWORD) paramHandle);
 #endif
-	argv[2] = paramHandleStr;
-
-	/* Format the cmd line */
-	cmdLine[sizeof(cmdLine) - 1] = '\0';
-	cmdLine[sizeof(cmdLine) - 2] = '\0';
-	snprintf(cmdLine, sizeof(cmdLine) - 1, "\"%s\"", postgres_exec_path);
-	i = 0;
-	while (argv[++i] != NULL)
-	{
-		j = strlen(cmdLine);
-		snprintf(cmdLine + j, sizeof(cmdLine) - 1 - j, " \"%s\"", argv[i]);
-	}
-	if (cmdLine[sizeof(cmdLine) - 2] != '\0')
+	l = snprintf(cmdLine, sizeof(cmdLine) - 1, "\"%s\" --forkchild=\"%s\" %s",
+				 postgres_exec_path, child_kind, paramHandleStr);
+	if (l >= sizeof(cmdLine))
 	{
 		ereport(LOG,
 				(errmsg("subprocess command line too long")));
@@ -359,7 +470,7 @@ retry:
 		return -1;
 	}
 
-	if (!save_backend_variables(param, client_sock, worker, pi.hProcess, pi.dwProcessId))
+	if (!save_backend_variables(param, client_sock, pi.hProcess, pi.dwProcessId, startup_data, startup_data_len))
 	{
 		/*
 		 * log made by save_backend_variables, but we have to clean up the
@@ -446,6 +557,119 @@ retry:
 #endif							/* WIN32 */
 
 /*
+ * SubPostmasterMain -- Get the fork/exec'd process into a state equivalent
+ *			to what it would be if we'd simply forked on Unix, and then
+ *			dispatch to the appropriate place.
+ *
+ * The first two command line arguments are expected to be "--forkchild=<name>",
+ * where <name> indicates which postmaster child we are to become, and
+ * the name of a variables file that we can read to load data that would
+ * have been inherited by fork() on Unix.
+ */
+void
+SubPostmasterMain(int argc, char *argv[])
+{
+	char	   *startup_data;
+	size_t		startup_data_len;
+	char	   *child_kind;
+	BackendType child_type;
+	bool		found = false;
+
+	/* In EXEC_BACKEND case we will not have inherited these settings */
+	IsPostmasterEnvironment = true;
+	whereToSendOutput = DestNone;
+
+	/* Setup essential subsystems (to ensure elog() behaves sanely) */
+	InitializeGUCOptions();
+
+	/* Check we got appropriate args */
+	if (argc != 3)
+		elog(FATAL, "invalid subpostmaster invocation");
+
+	/* Find the entry in child_process_kinds */
+	if (strncmp(argv[1], "--forkchild=", 12) != 0)
+		elog(FATAL, "invalid subpostmaster invocation (--forkchild argument missing)");
+	child_kind = argv[1] + 12;
+	found = false;
+	for (int idx = 0; idx < lengthof(child_process_kinds); idx++)
+	{
+		if (strcmp(child_process_kinds[idx].name, child_kind) == 0)
+		{
+			child_type = (BackendType) idx;
+			found = true;
+			break;
+		}
+	}
+	if (!found)
+		elog(ERROR, "unknown child kind %s", child_kind);
+
+	/* Read in the variables file */
+	read_backend_variables(argv[2], &startup_data, &startup_data_len);
+
+	/* Close the postmaster's sockets (as soon as we know them) */
+	ClosePostmasterPorts(child_type == B_LOGGER);
+
+	/* Setup as postmaster child */
+	InitPostmasterChild();
+
+	/*
+	 * If appropriate, physically re-attach to shared memory segment. We want
+	 * to do this before going any further to ensure that we can attach at the
+	 * same address the postmaster used.  On the other hand, if we choose not
+	 * to re-attach, we may have other cleanup to do.
+	 *
+	 * If testing EXEC_BACKEND on Linux, you should run this as root before
+	 * starting the postmaster:
+	 *
+	 * sysctl -w kernel.randomize_va_space=0
+	 *
+	 * This prevents using randomized stack and code addresses that cause the
+	 * child process's memory map to be different from the parent's, making it
+	 * sometimes impossible to attach to shared memory at the desired address.
+	 * Return the setting to its old value (usually '1' or '2') when finished.
+	 */
+	if (child_process_kinds[child_type].shmem_attach)
+		PGSharedMemoryReAttach();
+	else
+		PGSharedMemoryNoReAttach();
+
+	/* Read in remaining GUC variables */
+	read_nondefault_variables();
+
+	/*
+	 * Check that the data directory looks valid, which will also check the
+	 * privileges on the data directory and update our umask and file/group
+	 * variables for creating files later.  Note: this should really be done
+	 * before we create any files or directories.
+	 */
+	checkDataDir();
+
+	/*
+	 * (re-)read control file, as it contains config. The postmaster will
+	 * already have read this, but this process doesn't know about that.
+	 */
+	LocalProcessControlFile(false);
+
+	/*
+	 * Reload any libraries that were preloaded by the postmaster.  Since we
+	 * exec'd this process, those libraries didn't come along with us; but we
+	 * should load them into all child processes to be consistent with the
+	 * non-EXEC_BACKEND behavior.
+	 */
+	process_shared_preload_libraries();
+
+	/* Restore basic shared memory pointers */
+	if (UsedShmemSegAddr != NULL)
+		InitShmemAccess(UsedShmemSegAddr);
+
+	/*
+	 * Run the appropriate Main function
+	 */
+	child_process_kinds[child_type].main_fn(startup_data, startup_data_len);
+	pg_unreachable();			/* main_fn never returns */
+}
+
+/*
  * The following need to be available to the save/restore_backend_variables
  * functions.  They are marked NON_EXEC_STATIC in their home modules.
  */
@@ -469,38 +693,21 @@ static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
 
 
 /* Save critical backend variables into the BackendParameters struct */
-#ifndef WIN32
 static bool
-save_backend_variables(BackendParameters *param, ClientSocket *client_sock, BackgroundWorker *worker)
-#else
-static bool
-save_backend_variables(BackendParameters *param, ClientSocket *client_sock, BackgroundWorker *worker,
-					   HANDLE childProcess, pid_t childPid)
+save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
+#ifdef WIN32
+					   HANDLE childProcess, pid_t childPid,
 #endif
+					   char *startup_data, size_t startup_data_len)
 {
 	if (client_sock)
-	{
 		memcpy(&param->client_sock, client_sock, sizeof(ClientSocket));
-		if (!write_inheritable_socket(&param->inh_sock, client_sock->sock, childPid))
-			return false;
-		param->has_client_sock = true;
-	}
 	else
-	{
 		memset(&param->client_sock, 0, sizeof(ClientSocket));
-		param->has_client_sock = false;
-	}
-
-	if (worker)
-	{
-		memcpy(&param->bgworker, worker, sizeof(BackgroundWorker));
-		param->has_bgworker = true;
-	}
-	else
-	{
-		memset(&param->bgworker, 0, sizeof(BackgroundWorker));
-		param->has_bgworker = false;
-	}
+	if (!write_inheritable_socket(&param->inh_sock,
+								  client_sock ? client_sock->sock : PGINVALID_SOCKET,
+								  childPid))
+		return false;
 
 	strlcpy(param->DataDir, DataDir, MAXPGPATH);
 
@@ -556,6 +763,9 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock, Back
 	strlcpy(param->my_exec_path, my_exec_path, MAXPGPATH);
 
 	strlcpy(param->pkglib_path, pkglib_path, MAXPGPATH);
+
+	param->startup_data_len = startup_data_len;
+	memcpy(param->startup_data, startup_data, startup_data_len);
 
 	return true;
 }
@@ -653,8 +863,8 @@ read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
 }
 #endif
 
-void
-read_backend_variables(char *id, ClientSocket **client_sock, BackgroundWorker **worker)
+static void
+read_backend_variables(char *id, char **startup_data, size_t *startup_data_len)
 {
 	BackendParameters param;
 
@@ -675,6 +885,21 @@ read_backend_variables(char *id, ClientSocket **client_sock, BackgroundWorker **
 		write_stderr("could not read from backend variables file \"%s\": %m\n", id);
 		exit(1);
 	}
+
+	/* read startup data */
+	*startup_data_len = param.startup_data_len;
+	if (param.startup_data_len > 0)
+	{
+		*startup_data = palloc(*startup_data_len);
+		if (fread(*startup_data, *startup_data_len, 1, fp) != 1)
+		{
+			write_stderr("could not read startup data from backend variables file \"%s\": %m\n",
+						 id);
+			exit(1);
+		}
+	}
+	else
+		*startup_data = NULL;
 
 	/* Release file */
 	FreeFile(fp);
@@ -703,6 +928,16 @@ read_backend_variables(char *id, ClientSocket **client_sock, BackgroundWorker **
 
 	memcpy(&param, paramp, sizeof(BackendParameters));
 
+	/* read startup data */
+	*startup_data_len = param.startup_data_len;
+	if (param.startup_data_len > 0)
+	{
+		*startup_data = palloc(paramp->startup_data_len);
+		memcpy(*startup_data, paramp->startup_data, param.startup_data_len);
+	}
+	else
+		*startup_data = NULL;
+
 	if (!UnmapViewOfFile(paramp))
 	{
 		write_stderr("could not unmap view of backend variables: error code %lu\n",
@@ -718,30 +953,19 @@ read_backend_variables(char *id, ClientSocket **client_sock, BackgroundWorker **
 	}
 #endif
 
-	restore_backend_variables(&param, client_sock, worker);
+	restore_backend_variables(&param);
 }
 
 /* Restore critical backend variables from the BackendParameters struct */
 static void
-restore_backend_variables(BackendParameters *param, ClientSocket **client_sock, BackgroundWorker **worker)
+restore_backend_variables(BackendParameters *param)
 {
-	if (param->has_client_sock)
+	if (param->client_sock.sock != PGINVALID_SOCKET)
 	{
-		*client_sock = (ClientSocket *) MemoryContextAlloc(TopMemoryContext, sizeof(ClientSocket));
-		memcpy(*client_sock, &param->client_sock, sizeof(ClientSocket));
-		read_inheritable_socket(&(*client_sock)->sock, &param->inh_sock);
+		MyClientSocket = MemoryContextAlloc(TopMemoryContext, sizeof(ClientSocket));
+		memcpy(MyClientSocket, &param->client_sock, sizeof(ClientSocket));
+		read_inheritable_socket(&MyClientSocket->sock, &param->inh_sock);
 	}
-	else
-		*client_sock = NULL;
-
-	if (param->has_bgworker)
-	{
-		*worker = (BackgroundWorker *)
-			MemoryContextAlloc(TopMemoryContext, sizeof(BackgroundWorker));
-		memcpy(*worker, &param->bgworker, sizeof(BackgroundWorker));
-	}
-	else
-		*worker = NULL;
 
 	SetDataDir(param->DataDir);
 

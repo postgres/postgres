@@ -139,11 +139,6 @@ typedef struct RemoteSlot
 	ReplicationSlotInvalidationCause invalidated;
 } RemoteSlot;
 
-#ifdef EXEC_BACKEND
-static pid_t slotsyncworker_forkexec(void);
-#endif
-NON_EXEC_STATIC void ReplSlotSyncWorkerMain(int argc, char *argv[]) pg_attribute_noreturn();
-
 static void slotsync_failure_callback(int code, Datum arg);
 
 /*
@@ -1113,14 +1108,16 @@ wait_for_slot_activity(bool some_slot_updated)
  * It connects to the primary server, fetches logical failover slots
  * information periodically in order to create and sync the slots.
  */
-NON_EXEC_STATIC void
-ReplSlotSyncWorkerMain(int argc, char *argv[])
+void
+ReplSlotSyncWorkerMain(char *startup_data, size_t startup_data_len)
 {
 	WalReceiverConn *wrconn = NULL;
 	char	   *dbname;
 	char	   *err;
 	sigjmp_buf	local_sigjmp_buf;
 	StringInfoData app_name;
+
+	Assert(startup_data_len == 0);
 
 	MyBackendType = B_SLOTSYNC_WORKER;
 
@@ -1298,67 +1295,6 @@ ReplSlotSyncWorkerMain(int argc, char *argv[])
 	 */
 	Assert(false);
 }
-
-/*
- * Main entry point for slot sync worker process, to be called from the
- * postmaster.
- */
-int
-StartSlotSyncWorker(void)
-{
-	pid_t		pid;
-
-#ifdef EXEC_BACKEND
-	switch ((pid = slotsyncworker_forkexec()))
-	{
-#else
-	switch ((pid = fork_process()))
-	{
-		case 0:
-			/* in postmaster child ... */
-			InitPostmasterChild();
-
-			/* Close the postmaster's sockets */
-			ClosePostmasterPorts(false);
-
-			ReplSlotSyncWorkerMain(0, NULL);
-			break;
-#endif
-		case -1:
-			ereport(LOG,
-					(errmsg("could not fork slot sync worker process: %m")));
-			return 0;
-
-		default:
-			return (int) pid;
-	}
-
-	/* shouldn't get here */
-	return 0;
-}
-
-#ifdef EXEC_BACKEND
-/*
- * The forkexec routine for the slot sync worker process.
- *
- * Format up the arglist, then fork and exec.
- */
-static pid_t
-slotsyncworker_forkexec(void)
-{
-	char	   *av[10];
-	int			ac = 0;
-
-	av[ac++] = "postgres";
-	av[ac++] = "--forkssworker";
-	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
-	av[ac] = NULL;
-
-	Assert(ac < lengthof(av));
-
-	return postmaster_forkexec(ac, av);
-}
-#endif
 
 /*
  * Shut down the slot sync worker.

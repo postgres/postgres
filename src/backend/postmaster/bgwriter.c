@@ -35,6 +35,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "postmaster/auxprocess.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/interrupt.h"
 #include "storage/buf_internals.h"
@@ -83,12 +84,17 @@ static XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
  * basic execution environment, but not enabled signals yet.
  */
 void
-BackgroundWriterMain(void)
+BackgroundWriterMain(char *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext bgwriter_context;
 	bool		prev_hibernate;
 	WritebackContext wb_context;
+
+	Assert(startup_data_len == 0);
+
+	MyBackendType = B_BG_WRITER;
+	AuxiliaryProcessMainCommon();
 
 	/*
 	 * Properly accept or ignore signals that might be sent to us.

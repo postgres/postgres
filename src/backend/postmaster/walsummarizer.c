@@ -33,6 +33,7 @@
 #include "common/blkreftable.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "postmaster/auxprocess.h"
 #include "postmaster/interrupt.h"
 #include "postmaster/walsummarizer.h"
 #include "replication/walreceiver.h"
@@ -206,7 +207,7 @@ WalSummarizerShmemInit(void)
  * Entry point for walsummarizer process.
  */
 void
-WalSummarizerMain(void)
+WalSummarizerMain(char *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext context;
@@ -227,6 +228,11 @@ WalSummarizerMain(void)
 	bool		exact;
 	XLogRecPtr	switch_lsn = InvalidXLogRecPtr;
 	TimeLineID	switch_tli = 0;
+
+	Assert(startup_data_len == 0);
+
+	MyBackendType = B_WAL_SUMMARIZER;
+	AuxiliaryProcessMainCommon();
 
 	ereport(DEBUG1,
 			(errmsg_internal("WAL summarizer started")));
