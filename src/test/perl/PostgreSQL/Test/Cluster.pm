@@ -62,9 +62,6 @@ PostgreSQL::Test::Cluster - class representing PostgreSQL server instance
   # Do an online pg_basebackup
   my $ret = $node->backup('testbackup1');
 
-  # Take a backup of a running server
-  my $ret = $node->backup_fs_hot('testbackup2');
-
   # Take a backup of a stopped server
   $node->stop;
   my $ret = $node->backup_fs_cold('testbackup3')
@@ -759,7 +756,7 @@ Create a backup with a filesystem level copy in subdirectory B<backup_name> of
 B<< $node->backup_dir >>, including WAL. The server must be
 stopped as no attempt to handle concurrent writes is made.
 
-Use B<backup> or B<backup_fs_hot> if you want to back up a running server.
+Use B<backup> if you want to back up a running server.
 
 =cut
 
