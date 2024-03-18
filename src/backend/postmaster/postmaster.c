@@ -476,6 +476,7 @@ static void MaybeStartSlotSyncWorker(void);
 
 static pid_t waitpid(pid_t pid, int *exitstatus, int options);
 static void WINAPI pgwin32_deadchild_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired);
+static void pgwin32_register_deadchild_callback(HANDLE procHandle, DWORD procId);
 
 static HANDLE win32ChildQueue;
 
@@ -4623,7 +4624,6 @@ internal_forkexec(int argc, char *argv[], ClientSocket *client_sock, BackgroundW
 	BackendParameters *param;
 	SECURITY_ATTRIBUTES sa;
 	char		paramHandleStr[32];
-	win32_deadchild_waitinfo *childinfo;
 
 	/* Make sure caller set up argv properly */
 	Assert(argc >= 3);
@@ -4783,26 +4783,10 @@ retry:
 		return -1;
 	}
 
-	/*
-	 * Queue a waiter to signal when this child dies. The wait will be handled
-	 * automatically by an operating system thread pool.  The memory will be
-	 * freed by a later call to waitpid().
-	 */
-	childinfo = palloc(sizeof(win32_deadchild_waitinfo));
-	childinfo->procHandle = pi.hProcess;
-	childinfo->procId = pi.dwProcessId;
+	/* Set up notification when the child process dies */
+	pgwin32_register_deadchild_callback(pi.hProcess, pi.dwProcessId);
 
-	if (!RegisterWaitForSingleObject(&childinfo->waitHandle,
-									 pi.hProcess,
-									 pgwin32_deadchild_callback,
-									 childinfo,
-									 INFINITE,
-									 WT_EXECUTEONLYONCE | WT_EXECUTEINWAITTHREAD))
-		ereport(FATAL,
-				(errmsg_internal("could not register process for wait: error code %lu",
-								 GetLastError())));
-
-	/* Don't close pi.hProcess here - waitpid() needs access to it */
+	/* Don't close pi.hProcess, it's owned by the deadchild callback now */
 
 	CloseHandle(pi.hThread);
 
@@ -6526,6 +6510,32 @@ pgwin32_deadchild_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 	/* Queue SIGCHLD signal. */
 	pg_queue_signal(SIGCHLD);
 }
+
+/*
+ * Queue a waiter to signal when this child dies.  The wait will be handled
+ * automatically by an operating system thread pool.  The memory and the
+ * process handle will be freed by a later call to waitpid().
+ */
+static void
+pgwin32_register_deadchild_callback(HANDLE procHandle, DWORD procId)
+{
+	win32_deadchild_waitinfo *childinfo;
+
+	childinfo = palloc(sizeof(win32_deadchild_waitinfo));
+	childinfo->procHandle = procHandle;
+	childinfo->procId = procId;
+
+	if (!RegisterWaitForSingleObject(&childinfo->waitHandle,
+									 procHandle,
+									 pgwin32_deadchild_callback,
+									 childinfo,
+									 INFINITE,
+									 WT_EXECUTEONLYONCE | WT_EXECUTEINWAITTHREAD))
+		ereport(FATAL,
+				(errmsg_internal("could not register process for wait: error code %lu",
+								 GetLastError())));
+}
+
 #endif							/* WIN32 */
 
 /*
