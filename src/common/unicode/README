@@ -40,14 +40,13 @@ To download NormalizationTest.txt and run the tests:
 
 This is also run as part of the update-unicode target.
 
-Category & Property tests:
+Category, Property and Case tests:
 
-The file category_test.c exhaustively compares the category and
-properties of each code point as determined by the generated tables
-with the category and properties as reported by ICU. For this test to
-be effective, the version of the Unicode data files must be similar to
-the version of Unicode on which ICU is based, so attempt to match the
-versions as closely as possible. A mismatched Unicode will skip over
+The files case_test.c and category_test.c test Unicode categories,
+properties, and case mapping by exhaustively comparing results with
+ICU. For these tests to be effective, the version of the Unicode data
+files must be similar to the version of Unicode on which ICU is
+based. Mismatched Unicode versions will cause the tests to skip over
 codepoints that are assigned in one version and not the other, and may
 falsely report failures. This test is run as a part of the
 update-unicode target.
