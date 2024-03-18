@@ -62,8 +62,18 @@ is( $node1->psql(
 	0,
 	"C locale works for ICU");
 
+# Test that LOCALE works for ICU locales if LC_COLLATE and LC_CTYPE
+# are specified
+is( $node1->psql(
+		'postgres',
+		q{CREATE DATABASE dbicu2 LOCALE_PROVIDER icu LOCALE '@colStrength=primary'
+          LC_COLLATE='C' LC_CTYPE='C' TEMPLATE template0 ENCODING UTF8}
+	),
+	0,
+	"LOCALE works for ICU locales if LC_COLLATE and LC_CTYPE are specified");
+
 my ($ret, $stdout, $stderr) = $node1->psql('postgres',
-	q{CREATE DATABASE dbicu LOCALE_PROVIDER builtin LOCALE 'C' TEMPLATE dbicu}
+	q{CREATE DATABASE dbicu3 LOCALE_PROVIDER builtin LOCALE 'C' TEMPLATE dbicu}
 );
 isnt($ret, 0, "locale provider must match template: exit code not 0");
 like(

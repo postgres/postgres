@@ -29,6 +29,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
            [ LOCALE [=] <replaceable class="parameter">locale</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
+           [ BUILTIN_LOCALE [=] <replaceable class="parameter">builtin_locale</replaceable> ]
            [ ICU_LOCALE [=] <replaceable class="parameter">icu_locale</replaceable> ]
            [ ICU_RULES [=] <replaceable class="parameter">icu_rules</replaceable> ]
            [ LOCALE_PROVIDER [=] <replaceable class="parameter">locale_provider</replaceable> ]
@@ -212,6 +213,23 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         <literal>libc</literal>, also sets the default character
         classification to use in the new database, overriding the setting
         <xref linkend="create-database-locale"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="create-database-builtin-locale">
+      <term><replaceable class="parameter">builtin_locale</replaceable></term>
+      <listitem>
+       <para>
+        Specifies the builtin provider locale for the database default
+        collation order and character classification, overriding the setting
+        <xref linkend="create-database-locale"/>.  The <link
+        linkend="create-database-locale-provider">locale provider</link> must
+        be <literal>builtin</literal>.  The default is the setting of <xref
+        linkend="create-database-locale"/> if specified; otherwise the same
+        setting as the template database.  Currently, the only available
+        locale for the <literal>builtin</literal> provider is
+        <literal>C</literal>.
        </para>
       </listitem>
      </varlistentry>

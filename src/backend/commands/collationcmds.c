@@ -318,7 +318,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 
 		if (collprovider == COLLPROVIDER_BUILTIN)
 		{
-			collencoding = GetDatabaseEncoding();
+			collencoding = builtin_locale_encoding(colllocale);
 		}
 		else if (collprovider == COLLPROVIDER_ICU)
 		{
