@@ -8711,7 +8711,7 @@ ATExecDropExpression(Relation rel, const char *colName, bool missing_ok, LOCKMOD
 static ObjectAddress
 ATExecSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newValue, LOCKMODE lockmode)
 {
-	int			newtarget;
+	int			newtarget = 0;
 	bool		newtarget_default;
 	Relation	attrelation;
 	HeapTuple	tuple,

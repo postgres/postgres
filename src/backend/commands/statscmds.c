@@ -606,7 +606,7 @@ AlterStatistics(AlterStatsStmt *stmt)
 	bool		repl_null[Natts_pg_statistic_ext];
 	bool		repl_repl[Natts_pg_statistic_ext];
 	ObjectAddress address;
-	int			newtarget;
+	int			newtarget = 0;
 	bool		newtarget_default;
 
 	/* -1 was used in previous versions for the default setting */
