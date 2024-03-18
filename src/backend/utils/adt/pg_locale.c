@@ -2501,28 +2501,23 @@ pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 	return result;
 }
 
+/*
+ * Validate the locale and encoding combination, and return the canonical form
+ * of the locale name.
+ *
+ * The only supported locale for the builtin provider is "C", and it's
+ * available for any encoding.
+ */
 const char *
 builtin_validate_locale(int encoding, const char *locale)
 {
-	const char *canonical_name = NULL;
-	int			required_encoding = -1;
-
-	if (strcmp(locale, "C") == 0)
-		canonical_name = "C";
-
-	if (!canonical_name)
+	if (strcmp(locale, "C") != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid locale name \"%s\" for builtin provider",
 						locale)));
 
-	if (required_encoding >= 0 && encoding != required_encoding)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("encoding \"%s\" does not match locale \"%s\"",
-						pg_encoding_to_char(encoding), locale)));
-
-	return canonical_name;
+	return "C";
 }
 
 
