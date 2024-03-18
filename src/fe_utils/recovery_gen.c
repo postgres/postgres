@@ -20,7 +20,7 @@ static char *escape_quotes(const char *src);
  * return it.
  */
 PQExpBuffer
-GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
+GenerateRecoveryConfig(PGconn *pgconn, const char *replication_slot)
 {
 	PQconninfoOption *connOptions;
 	PQExpBufferData conninfo_buf;
@@ -102,7 +102,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
  * configuration is written to recovery.conf.
  */
 void
-WriteRecoveryConfig(PGconn *pgconn, char *target_dir, PQExpBuffer contents)
+WriteRecoveryConfig(PGconn *pgconn, const char *target_dir, PQExpBuffer contents)
 {
 	char		filename[MAXPGPATH];
 	FILE	   *cf;
