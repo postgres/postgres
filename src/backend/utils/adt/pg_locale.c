@@ -2505,13 +2505,13 @@ pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 int
 builtin_locale_encoding(const char *locale)
 {
-	if (strcmp(locale, "C") == 0)
-		return -1;
-	else
+	if (strcmp(locale, "C") != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid locale name \"%s\" for builtin provider",
 						locale)));
+
+	return -1;
 }
 
 
