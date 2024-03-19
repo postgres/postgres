@@ -467,7 +467,7 @@ sub set_replication_conf
 	$self->host eq $test_pghost
 	  or croak "set_replication_conf only works with the default host";
 
-	open my $hba, '>>', "$pgdata/pg_hba.conf";
+	open my $hba, '>>', "$pgdata/pg_hba.conf" or die $!;
 	print $hba
 	  "\n# Allow replication (set up by PostgreSQL::Test::Cluster.pm)\n";
 	if ($PostgreSQL::Test::Utils::windows_os
@@ -580,7 +580,7 @@ sub init
 	PostgreSQL::Test::Utils::system_or_bail($ENV{PG_REGRESS},
 		'--config-auth', $pgdata, @{ $params{auth_extra} });
 
-	open my $conf, '>>', "$pgdata/postgresql.conf";
+	open my $conf, '>>', "$pgdata/postgresql.conf" or die $!;
 	print $conf "\n# Added by PostgreSQL::Test::Cluster.pm\n";
 	print $conf "fsync = off\n";
 	print $conf "restart_after_crash = off\n";
@@ -862,7 +862,7 @@ sub init_from_backup
 		rmdir($data_path);
 		PostgreSQL::Test::RecursiveCopy::copypath($backup_path, $data_path);
 	}
-	chmod(0700, $data_path);
+	chmod(0700, $data_path) or die $!;
 
 	# Base configuration for this node
 	$self->append_conf(
@@ -1688,16 +1688,16 @@ sub _reserve_port
 		if (kill 0, $pid)
 		{
 			# process exists and is owned by us, so we can't reserve this port
-			flock($portfile, LOCK_UN);
+			flock($portfile, LOCK_UN) || die $!;
 			close($portfile);
 			return 0;
 		}
 	}
 	# All good, go ahead and reserve the port
-	seek($portfile, 0, SEEK_SET);
+	seek($portfile, 0, SEEK_SET) || die $!;
 	# print the pid with a fixed width so we don't leave any trailing junk
 	print $portfile sprintf("%10d\n", $$);
-	flock($portfile, LOCK_UN);
+	flock($portfile, LOCK_UN) || die $!;
 	close($portfile);
 	push(@port_reservation_files, $filename);
 	return 1;

@@ -33,7 +33,7 @@ my $ddir = $node->data_dir;
 # install certificate and protected key
 copy("server.crt", $ddir);
 copy("server.key", $ddir);
-chmod 0600, "$ddir/server.key";
+chmod 0600, "$ddir/server.key" or die $!;
 
 $node->start;
 

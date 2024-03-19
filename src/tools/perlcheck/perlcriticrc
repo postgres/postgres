@@ -29,3 +29,11 @@ severity = 5
 
 [BuiltinFunctions::ProhibitVoidMap]
 severity = 5
+
+# Require checking return value of system calls.  The excluded ones
+# are currently consistently checked, but more checking could be
+# added.
+[InputOutput::RequireCheckedSyscalls]
+severity = 5
+functions = :builtins
+exclude_functions = binmode chdir close closedir kill mkdir print rmdir setsockopt sleep truncate umask unlink waitpid

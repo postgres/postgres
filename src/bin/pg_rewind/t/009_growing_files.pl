@@ -69,7 +69,7 @@ isnt($standby_size, $primary_size, "File sizes should differ");
 # Extract the last line from the verbose output as that should have the error
 # message for the unexpected file size
 my $last;
-open my $f, '<', "$standby_pgdata/tst_both_dir/file1";
+open my $f, '<', "$standby_pgdata/tst_both_dir/file1" or die $!;
 $last = $_ while (<$f>);
 close $f;
 like($last, qr/error: size of source file/, "Check error message");

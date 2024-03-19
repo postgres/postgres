@@ -80,12 +80,14 @@ my $filtered_typedefs_fh;
 
 sub check_indent
 {
-	system("$indent -? < $devnull > $devnull 2>&1");
-	if ($? >> 8 != 1)
+	if (system("$indent -? < $devnull > $devnull 2>&1") != 0)
 	{
-		print STDERR
-		  "You do not appear to have $indent installed on your system.\n";
-		exit 1;
+		if ($? >> 8 != 1)
+		{
+			print STDERR
+			  "You do not appear to have $indent installed on your system.\n";
+			exit 1;
+		}
 	}
 
 	if (`$indent --version` !~ m/ $INDENT_VERSION /)
@@ -95,8 +97,7 @@ sub check_indent
 		exit 1;
 	}
 
-	system("$indent -gnu < $devnull > $devnull 2>&1");
-	if ($? == 0)
+	if (system("$indent -gnu < $devnull > $devnull 2>&1") == 0)
 	{
 		print STDERR
 		  "You appear to have GNU indent rather than BSD indent.\n";
@@ -283,7 +284,7 @@ sub run_indent
 
 	unlink "$filename.BAK";
 
-	open(my $src_out, '<', $filename);
+	open(my $src_out, '<', $filename) || die $!;
 	local ($/) = undef;
 	$source = <$src_out>;
 	close($src_out);

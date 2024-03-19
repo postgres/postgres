@@ -211,10 +211,10 @@ INIT
 	  or die "could not open STDOUT to logfile \"$test_logfile\": $!";
 
 	# Hijack STDOUT and STDERR to the log file
-	open(my $orig_stdout, '>&', \*STDOUT);
-	open(my $orig_stderr, '>&', \*STDERR);
-	open(STDOUT, '>&', $testlog);
-	open(STDERR, '>&', $testlog);
+	open(my $orig_stdout, '>&', \*STDOUT) or die $!;
+	open(my $orig_stderr, '>&', \*STDERR) or die $!;
+	open(STDOUT, '>&', $testlog) or die $!;
+	open(STDERR, '>&', $testlog) or die $!;
 
 	# The test output (ok ...) needs to be printed to the original STDOUT so
 	# that the 'prove' program can parse it, and display it to the user in
@@ -564,7 +564,7 @@ Find and replace string of a given file.
 sub string_replace_file
 {
 	my ($filename, $find, $replace) = @_;
-	open(my $in, '<', $filename);
+	open(my $in, '<', $filename) or croak $!;
 	my $content = '';
 	while (<$in>)
 	{
@@ -572,7 +572,7 @@ sub string_replace_file
 		$content = $content . $_;
 	}
 	close $in;
-	open(my $out, '>', $filename);
+	open(my $out, '>', $filename) or croak $!;
 	print $out $content;
 	close($out);
 
@@ -789,11 +789,11 @@ sub dir_symlink
 			# need some indirection on msys
 			$cmd = qq{echo '$cmd' | \$COMSPEC /Q};
 		}
-		system($cmd);
+		system($cmd) == 0 or die;
 	}
 	else
 	{
-		symlink $oldname, $newname;
+		symlink $oldname, $newname or die $!;
 	}
 	die "No $newname" unless -e $newname;
 }

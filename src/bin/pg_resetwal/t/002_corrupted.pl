@@ -21,7 +21,7 @@ my $size = -s $pg_control;
 my $data;
 open my $fh, '<', $pg_control or BAIL_OUT($!);
 binmode $fh;
-read $fh, $data, 16;
+read $fh, $data, 16 or die $!;
 close $fh;
 
 # Fill pg_control with zeros

@@ -23,7 +23,7 @@ command_ok([ 'pg_ctl', 'initdb', '-D', "$tempdir/data", '-o', '-N' ],
 command_ok([ $ENV{PG_REGRESS}, '--config-auth', "$tempdir/data" ],
 	'configure authentication');
 my $node_port = PostgreSQL::Test::Cluster::get_free_port();
-open my $conf, '>>', "$tempdir/data/postgresql.conf";
+open my $conf, '>>', "$tempdir/data/postgresql.conf" or die $!;
 print $conf "fsync = off\n";
 print $conf "port = $node_port\n";
 print $conf PostgreSQL::Test::Utils::slurp_file($ENV{TEMP_CONFIG})

@@ -111,7 +111,7 @@ $krb5_version = $1;
 # Construct a pgpass file to make sure we don't use it
 append_to_file($pgpass, '*:*:*:*:abc123');
 
-chmod 0600, $pgpass;
+chmod 0600, $pgpass or die $!;
 
 # Build the krb5.conf to use.
 #

@@ -311,8 +311,8 @@ sub run_pg_rewind
 		# Make sure that directories have the right umask as this is
 		# required by a follow-up check on permissions, and better
 		# safe than sorry.
-		chmod(0700, $node_primary->archive_dir);
-		chmod(0700, $node_primary->data_dir . "/pg_wal");
+		chmod(0700, $node_primary->archive_dir) or die $!;
+		chmod(0700, $node_primary->data_dir . "/pg_wal") or die $!;
 
 		# Add appropriate restore_command to the target cluster
 		$node_primary->enable_restoring($node_primary, 0);
