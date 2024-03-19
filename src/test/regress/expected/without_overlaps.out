@@ -276,18 +276,18 @@ DROP TABLE temporal3;
 -- test PK inserts
 --
 -- okay:
-INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-01-02', '2018-02-03'));
-INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-03-03', '2018-04-04'));
-INSERT INTO temporal_rng VALUES ('[2,2]', daterange('2018-01-01', '2018-01-05'));
-INSERT INTO temporal_rng VALUES ('[3,3]', daterange('2018-01-01', NULL));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-01-02', '2018-02-03'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-03-03', '2018-04-04'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', daterange('2018-01-01', NULL));
 -- should fail:
-INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-01-01', '2018-01-05'));
 ERROR:  conflicting key value violates exclusion constraint "temporal_rng_pk"
 DETAIL:  Key (id, valid_at)=([1,2), [2018-01-01,2018-01-05)) conflicts with existing key (id, valid_at)=([1,2), [2018-01-02,2018-02-03)).
-INSERT INTO temporal_rng VALUES (NULL, daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng (id, valid_at) VALUES (NULL, daterange('2018-01-01', '2018-01-05'));
 ERROR:  null value in column "id" of relation "temporal_rng" violates not-null constraint
 DETAIL:  Failing row contains (null, [2018-01-01,2018-01-05)).
-INSERT INTO temporal_rng VALUES ('[3,3]', NULL);
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', NULL);
 ERROR:  null value in column "valid_at" of relation "temporal_rng" violates not-null constraint
 DETAIL:  Failing row contains ([3,4), null).
 --
@@ -303,8 +303,8 @@ CREATE TABLE temporal3 (
 );
 INSERT INTO temporal3 (id, valid_at, id2, name)
   VALUES
-  ('[1,1]', daterange('2000-01-01', '2010-01-01'), '[7,7]', 'foo'),
-  ('[2,2]', daterange('2000-01-01', '2010-01-01'), '[9,9]', 'bar')
+  ('[1,2)', daterange('2000-01-01', '2010-01-01'), '[7,8)', 'foo'),
+  ('[2,3)', daterange('2000-01-01', '2010-01-01'), '[9,10)', 'bar')
 ;
 DROP TABLE temporal3;
 --
@@ -331,12 +331,12 @@ CREATE TABLE temporal_partitioned (
   name text,
 	CONSTRAINT temporal_paritioned_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
-CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,1]', '[2,2]');
-CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,3]', '[4,4]');
-INSERT INTO temporal_partitioned VALUES
-  ('[1,1]', daterange('2000-01-01', '2000-02-01'), 'one'),
-  ('[1,1]', daterange('2000-02-01', '2000-03-01'), 'one'),
-  ('[3,3]', daterange('2000-01-01', '2010-01-01'), 'three');
+CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
+CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
+INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
+  ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
+  ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three');
 SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
   id   |        valid_at         | name  
 -------+-------------------------+-------
@@ -366,12 +366,12 @@ CREATE TABLE temporal_partitioned (
   name text,
 	CONSTRAINT temporal_paritioned_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
-CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,1]', '[2,2]');
-CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,3]', '[4,4]');
-INSERT INTO temporal_partitioned VALUES
-  ('[1,1]', daterange('2000-01-01', '2000-02-01'), 'one'),
-  ('[1,1]', daterange('2000-02-01', '2000-03-01'), 'one'),
-  ('[3,3]', daterange('2000-01-01', '2010-01-01'), 'three');
+CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
+CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
+INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
+  ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
+  ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three');
 SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
   id   |        valid_at         | name  
 -------+-------------------------+-------

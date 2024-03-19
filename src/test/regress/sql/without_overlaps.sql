@@ -206,15 +206,15 @@ DROP TABLE temporal3;
 --
 
 -- okay:
-INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-01-02', '2018-02-03'));
-INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-03-03', '2018-04-04'));
-INSERT INTO temporal_rng VALUES ('[2,2]', daterange('2018-01-01', '2018-01-05'));
-INSERT INTO temporal_rng VALUES ('[3,3]', daterange('2018-01-01', NULL));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-01-02', '2018-02-03'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-03-03', '2018-04-04'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', daterange('2018-01-01', NULL));
 
 -- should fail:
-INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-01-01', '2018-01-05'));
-INSERT INTO temporal_rng VALUES (NULL, daterange('2018-01-01', '2018-01-05'));
-INSERT INTO temporal_rng VALUES ('[3,3]', NULL);
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng (id, valid_at) VALUES (NULL, daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', NULL);
 
 --
 -- test a range with both a PK and a UNIQUE constraint
@@ -230,8 +230,8 @@ CREATE TABLE temporal3 (
 );
 INSERT INTO temporal3 (id, valid_at, id2, name)
   VALUES
-  ('[1,1]', daterange('2000-01-01', '2010-01-01'), '[7,7]', 'foo'),
-  ('[2,2]', daterange('2000-01-01', '2010-01-01'), '[9,9]', 'bar')
+  ('[1,2)', daterange('2000-01-01', '2010-01-01'), '[7,8)', 'foo'),
+  ('[2,3)', daterange('2000-01-01', '2010-01-01'), '[9,10)', 'bar')
 ;
 DROP TABLE temporal3;
 
@@ -262,12 +262,12 @@ CREATE TABLE temporal_partitioned (
   name text,
 	CONSTRAINT temporal_paritioned_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
-CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,1]', '[2,2]');
-CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,3]', '[4,4]');
-INSERT INTO temporal_partitioned VALUES
-  ('[1,1]', daterange('2000-01-01', '2000-02-01'), 'one'),
-  ('[1,1]', daterange('2000-02-01', '2000-03-01'), 'one'),
-  ('[3,3]', daterange('2000-01-01', '2010-01-01'), 'three');
+CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
+CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
+INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
+  ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
+  ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three');
 SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
 SELECT * FROM tp1 ORDER BY id, valid_at;
 SELECT * FROM tp2 ORDER BY id, valid_at;
@@ -280,12 +280,12 @@ CREATE TABLE temporal_partitioned (
   name text,
 	CONSTRAINT temporal_paritioned_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
 ) PARTITION BY LIST (id);
-CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,1]', '[2,2]');
-CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,3]', '[4,4]');
-INSERT INTO temporal_partitioned VALUES
-  ('[1,1]', daterange('2000-01-01', '2000-02-01'), 'one'),
-  ('[1,1]', daterange('2000-02-01', '2000-03-01'), 'one'),
-  ('[3,3]', daterange('2000-01-01', '2010-01-01'), 'three');
+CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
+CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
+INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
+  ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
+  ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three');
 SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
 SELECT * FROM tp1 ORDER BY id, valid_at;
 SELECT * FROM tp2 ORDER BY id, valid_at;
