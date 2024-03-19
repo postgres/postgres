@@ -139,6 +139,24 @@ $node->command_ok(
 	],
 	'create database with provider "builtin" and LC_CTYPE=C');
 
+$node->command_ok(
+	[
+		'createdb', '-T',
+		'template0', '--locale-provider=builtin',
+		'-E UTF-8', '--builtin-locale=C.UTF8',
+		'tbuiltin5'
+	],
+	'create database with --builtin-locale C.UTF-8 and -E UTF-8');
+
+$node->command_fails(
+	[
+		'createdb', '-T',
+		'template0', '--locale-provider=builtin',
+		'-E LATIN1', '--builtin-locale=C.UTF-8',
+		'tbuiltin6'
+	],
+	'create database with --builtin-locale C.UTF-8 and -E LATIN1');
+
 $node->command_fails(
 	[
 		'createdb', '-T',

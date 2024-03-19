@@ -199,6 +199,23 @@ command_ok(
 command_ok(
 	[
 		'initdb', '--no-sync',
+		'--locale-provider=builtin', '-E UTF-8',
+		'--builtin-locale=C.UTF-8', "$tempdir/data8"
+	],
+	'locale provider builtin with -E UTF-8 --builtin-locale=C.UTF-8');
+
+command_fails(
+	[
+		'initdb', '--no-sync',
+		'--locale-provider=builtin', '-E SQL_ASCII',
+		'--builtin-locale=C.UTF-8', "$tempdir/data9"
+	],
+	'locale provider builtin with --builtin-locale=C.UTF-8 fails for SQL_ASCII'
+);
+
+command_ok(
+	[
+		'initdb', '--no-sync',
 		'--locale-provider=builtin', '--lc-ctype=C',
 		'--locale=C', "$tempdir/data10"
 	],

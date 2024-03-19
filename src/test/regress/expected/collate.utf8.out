@@ -1,0 +1,136 @@
+/*
+ * This test is for collations and character operations when using the
+ * builtin provider with the C.UTF-8 locale.
+ */
+/* skip test if not UTF8 server encoding */
+SELECT getdatabaseencoding() <> 'UTF8' AS skip_test \gset
+\if :skip_test
+\quit
+\endif
+SET client_encoding TO UTF8;
+--
+-- Test PG_C_UTF8
+--
+CREATE COLLATION regress_pg_c_utf8 (
+  provider = builtin, locale = 'C_UTF8'); -- fails
+ERROR:  invalid locale name "C_UTF8" for builtin provider
+CREATE COLLATION regress_pg_c_utf8 (
+  provider = builtin, locale = 'C.UTF8');
+DROP COLLATION regress_pg_c_utf8;
+CREATE COLLATION regress_pg_c_utf8 (
+  provider = builtin, locale = 'C.UTF-8');
+CREATE TABLE test_pg_c_utf8 (
+  t TEXT COLLATE PG_C_UTF8
+);
+INSERT INTO test_pg_c_utf8 VALUES
+  ('abc DEF 123abc'),
+  ('ábc sßs ßss DÉF'),
+  ('ǄxxǄ ǆxxǅ ǅxxǆ'),
+  ('ȺȺȺ'),
+  ('ⱥⱥⱥ'),
+  ('ⱥȺ');
+SELECT
+    t, lower(t), initcap(t), upper(t),
+    length(convert_to(t, 'UTF8')) AS t_bytes,
+    length(convert_to(lower(t), 'UTF8')) AS lower_t_bytes,
+    length(convert_to(initcap(t), 'UTF8')) AS initcap_t_bytes,
+    length(convert_to(upper(t), 'UTF8')) AS upper_t_bytes
+  FROM test_pg_c_utf8;
+        t        |      lower      |     initcap     |      upper      | t_bytes | lower_t_bytes | initcap_t_bytes | upper_t_bytes 
+-----------------+-----------------+-----------------+-----------------+---------+---------------+-----------------+---------------
+ abc DEF 123abc  | abc def 123abc  | Abc Def 123abc  | ABC DEF 123ABC  |      14 |            14 |              14 |            14
+ ábc sßs ßss DÉF | ábc sßs ßss déf | Ábc Sßs ßss Déf | ÁBC SßS ßSS DÉF |      19 |            19 |              19 |            19
+ ǄxxǄ ǆxxǅ ǅxxǆ  | ǆxxǆ ǆxxǆ ǆxxǆ  | Ǆxxǆ Ǆxxǆ Ǆxxǆ  | ǄXXǄ ǄXXǄ ǄXXǄ  |      20 |            20 |              20 |            20
+ ȺȺȺ             | ⱥⱥⱥ             | Ⱥⱥⱥ             | ȺȺȺ             |       6 |             9 |               8 |             6
+ ⱥⱥⱥ             | ⱥⱥⱥ             | Ⱥⱥⱥ             | ȺȺȺ             |       9 |             9 |               8 |             6
+ ⱥȺ              | ⱥⱥ              | Ⱥⱥ              | ȺȺ              |       5 |             6 |               5 |             4
+(6 rows)
+
+DROP TABLE test_pg_c_utf8;
+-- negative test: Final_Sigma not used for builtin locale C.UTF-8
+SELECT lower('ΑΣ' COLLATE PG_C_UTF8);
+ lower 
+-------
+ ασ
+(1 row)
+
+SELECT lower('ΑͺΣͺ' COLLATE PG_C_UTF8);
+ lower 
+-------
+ αͺσͺ
+(1 row)
+
+SELECT lower('Α΄Σ΄' COLLATE PG_C_UTF8);
+ lower 
+-------
+ α΄σ΄
+(1 row)
+
+-- properties
+SELECT 'xyz' ~ '[[:alnum:]]' COLLATE PG_C_UTF8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'xyz' !~ '[[:upper:]]' COLLATE PG_C_UTF8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '@' !~ '[[:alnum:]]' COLLATE PG_C_UTF8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '=' ~ '[[:punct:]]' COLLATE PG_C_UTF8; -- symbols are punctuation in posix
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'a8a' ~ '[[:digit:]]' COLLATE PG_C_UTF8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '൧' !~ '\d' COLLATE PG_C_UTF8; -- only 0-9 considered digits in posix
+ ?column? 
+----------
+ t
+(1 row)
+
+-- case mapping
+SELECT 'xYz' ~* 'XyZ' COLLATE PG_C_UTF8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'xAb' ~* '[W-Y]' COLLATE PG_C_UTF8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'xAb' !~* '[c-d]' COLLATE PG_C_UTF8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'Δ' ~* '[γ-λ]' COLLATE PG_C_UTF8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'δ' ~* '[Γ-Λ]' COLLATE PG_C_UTF8; -- same as above with cases reversed
+ ?column? 
+----------
+ t
+(1 row)
+

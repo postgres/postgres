@@ -377,12 +377,20 @@ initdb --locale-provider=icu --icu-locale=en
      <listitem>
       <para>
        The <literal>builtin</literal> provider uses built-in operations. Only
-       the <literal>C</literal> locale is supported for this provider.
+       the <literal>C</literal> and <literal>C.UTF-8</literal> locales are
+       supported for this provider.
       </para>
       <para>
        The <literal>C</literal> locale behavior is identical to the
        <literal>C</literal> locale in the libc provider. When using this
        locale, the behavior may depend on the database encoding.
+      </para>
+      <para>
+       The <literal>C.UTF-8</literal> locale is available only for when the
+       database encoding is <literal>UTF-8</literal>, and the behavior is
+       based on Unicode. The collation uses the code point values only. The
+       regular expression character classes are based on the "POSIX
+       Compatible" semantics, and the case mapping is the "simple" variant.
       </para>
      </listitem>
     </varlistentry>
@@ -874,6 +882,23 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
         for encoding <literal>UTF8</literal>.  (This collation has the same
         behavior as the libc locale specification <literal>C</literal> in
         <literal>UTF8</literal> encoding.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>pg_c_utf8</literal></term>
+      <listitem>
+       <para>
+        This collation sorts by Unicode code point values rather than natural
+        language order.  For the functions <function>lower</function>,
+        <function>initcap</function>, and <function>upper</function>, it uses
+        Unicode simple case mapping.  For pattern matching (including regular
+        expressions), it uses the POSIX Compatible variant of Unicode <ulink
+        url="https://www.unicode.org/reports/tr18/#Compatibility_Properties">Compatibility
+        Properties</ulink>.  Behavior is efficient and stable within a
+        <productname>Postgres</productname> major version.  This collation is
+        only available for encoding <literal>UTF8</literal>.
        </para>
       </listitem>
      </varlistentry>

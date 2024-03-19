@@ -2403,9 +2403,16 @@ setlocales(void)
 
 	if (locale_provider == COLLPROVIDER_BUILTIN)
 	{
-		if (strcmp(datlocale, "C") != 0)
+		if (strcmp(datlocale, "C") == 0)
+			canonname = "C";
+		else if (strcmp(datlocale, "C.UTF-8") == 0 ||
+				 strcmp(datlocale, "C.UTF8") == 0)
+			canonname = "C.UTF-8";
+		else
 			pg_fatal("invalid locale name \"%s\" for builtin provider",
 					 datlocale);
+
+		datlocale = canonname;
 	}
 	else if (locale_provider == COLLPROVIDER_ICU)
 	{
@@ -2694,6 +2701,13 @@ setup_locale_encoding(void)
 	if (!check_locale_encoding(lc_ctype, encodingid) ||
 		!check_locale_encoding(lc_collate, encodingid))
 		exit(1);				/* check_locale_encoding printed the error */
+
+	if (locale_provider == COLLPROVIDER_BUILTIN)
+	{
+		if (strcmp(datlocale, "C.UTF-8") == 0 && encodingid != PG_UTF8)
+			pg_fatal("builtin provider locale \"%s\" requires encoding \"%s\"",
+					 datlocale, "UTF-8");
+	}
 
 	if (locale_provider == COLLPROVIDER_ICU &&
 		!check_icu_locale_encoding(encodingid))

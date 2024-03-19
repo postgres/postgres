@@ -77,6 +77,8 @@
 
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "common/unicode_case.h"
+#include "common/unicode_category.h"
 #include "mb/pg_wchar.h"
 #include "nodes/miscnodes.h"
 #include "parser/scansup.h"
@@ -1679,6 +1681,34 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 #endif
+		if (mylocale && mylocale->provider == COLLPROVIDER_BUILTIN)
+		{
+			const char *src = buff;
+			size_t		srclen = nbytes;
+			size_t		dstsize;
+			char	   *dst;
+			size_t		needed;
+
+			Assert(GetDatabaseEncoding() == PG_UTF8);
+
+			/* first try buffer of equal size plus terminating NUL */
+			dstsize = srclen + 1;
+			dst = palloc(dstsize);
+
+			needed = unicode_strlower(dst, dstsize, src, srclen);
+			if (needed + 1 > dstsize)
+			{
+				/* grow buffer if needed and retry */
+				dstsize = needed + 1;
+				dst = repalloc(dst, dstsize);
+				needed = unicode_strlower(dst, dstsize, src, srclen);
+				Assert(needed + 1 == dstsize);
+			}
+
+			Assert(dst[needed] == '\0');
+			result = dst;
+		}
+		else
 		{
 			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
 
@@ -1799,6 +1829,34 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 #endif
+		if (mylocale && mylocale->provider == COLLPROVIDER_BUILTIN)
+		{
+			const char *src = buff;
+			size_t		srclen = nbytes;
+			size_t		dstsize;
+			char	   *dst;
+			size_t		needed;
+
+			Assert(GetDatabaseEncoding() == PG_UTF8);
+
+			/* first try buffer of equal size plus terminating NUL */
+			dstsize = srclen + 1;
+			dst = palloc(dstsize);
+
+			needed = unicode_strupper(dst, dstsize, src, srclen);
+			if (needed + 1 > dstsize)
+			{
+				/* grow buffer if needed and retry */
+				dstsize = needed + 1;
+				dst = repalloc(dst, dstsize);
+				needed = unicode_strupper(dst, dstsize, src, srclen);
+				Assert(needed + 1 == dstsize);
+			}
+
+			Assert(dst[needed] == '\0');
+			result = dst;
+		}
+		else
 		{
 			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
 
@@ -1920,6 +1978,60 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 #endif
+		if (mylocale && mylocale->provider == COLLPROVIDER_BUILTIN)
+		{
+			const unsigned char *src = (unsigned char *) buff;
+			size_t		srclen = nbytes;
+			unsigned char *dst;
+			size_t		dstsize;
+			int			srcoff = 0;
+			int			dstoff = 0;
+
+			Assert(GetDatabaseEncoding() == PG_UTF8);
+
+			/* overflow paranoia */
+			if ((srclen + 1) > (INT_MAX / MAX_MULTIBYTE_CHAR_LEN))
+				ereport(ERROR,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory")));
+
+			/* result is at most srclen codepoints plus terminating NUL */
+			dstsize = srclen * MAX_MULTIBYTE_CHAR_LEN + 1;
+			dst = (unsigned char *) palloc(dstsize);
+
+			while (srcoff < nbytes)
+			{
+				pg_wchar	u1 = utf8_to_unicode(src + srcoff);
+				pg_wchar	u2;
+				int			u1len = unicode_utf8len(u1);
+				int			u2len;
+
+				if (wasalnum)
+					u2 = unicode_lowercase_simple(u1);
+				else
+					u2 = unicode_uppercase_simple(u1);
+
+				u2len = unicode_utf8len(u2);
+
+				Assert(dstoff + u2len + 1 <= dstsize);
+
+				wasalnum = pg_u_isalnum(u2, true);
+
+				unicode_to_utf8(u2, dst + dstoff);
+				srcoff += u1len;
+				dstoff += u2len;
+			}
+
+			Assert(dstoff + 1 <= dstsize);
+			*(dst + dstoff) = '\0';
+			dstoff++;
+
+			/* allocate result buffer of the right size and free workspace */
+			result = palloc(dstoff);
+			memcpy(result, dst, dstoff);
+			pfree(dst);
+		}
+		else
 		{
 			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
 

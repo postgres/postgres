@@ -1,0 +1,8 @@
+/*
+ * This test is for collations and character operations when using the
+ * builtin provider with the C.UTF-8 locale.
+ */
+/* skip test if not UTF8 server encoding */
+SELECT getdatabaseencoding() <> 'UTF8' AS skip_test \gset
+\if :skip_test
+\quit

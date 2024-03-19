@@ -140,7 +140,7 @@ if ($oldnode->pg_version >= '17devel')
 {
 	$original_enc_name = "UTF-8";
 	$original_provider = "b";
-	$original_datlocale = "C";
+	$original_datlocale = "C.UTF-8";
 }
 elsif ($oldnode->pg_version >= 15 && $ENV{with_icu} eq 'yes')
 {
