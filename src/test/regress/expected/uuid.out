@@ -168,5 +168,44 @@ SELECT count(DISTINCT guid_field) FROM guid1;
      2
 (1 row)
 
+-- extract functions
+-- version
+SELECT uuid_extract_version('11111111-1111-5111-8111-111111111111');  -- 5
+ uuid_extract_version 
+----------------------
+                    5
+(1 row)
+
+SELECT uuid_extract_version(gen_random_uuid());  -- 4
+ uuid_extract_version 
+----------------------
+                    4
+(1 row)
+
+SELECT uuid_extract_version('11111111-1111-1111-1111-111111111111');  -- null
+ uuid_extract_version 
+----------------------
+                     
+(1 row)
+
+-- timestamp
+SELECT uuid_extract_timestamp('C232AB00-9414-11EC-B3C8-9F6BDECED846') = 'Tuesday, February 22, 2022 2:22:22.00 PM GMT+05:00';  -- RFC 4122bis test vector
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT uuid_extract_timestamp(gen_random_uuid());  -- null
+ uuid_extract_timestamp 
+------------------------
+ 
+(1 row)
+
+SELECT uuid_extract_timestamp('11111111-1111-1111-1111-111111111111');  -- null
+ uuid_extract_timestamp 
+------------------------
+ 
+(1 row)
+
 -- clean up
 DROP TABLE guid1, guid2 CASCADE;

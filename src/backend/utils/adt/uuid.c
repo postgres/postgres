@@ -20,6 +20,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/guc.h"
 #include "utils/sortsupport.h"
+#include "utils/timestamp.h"
 #include "utils/uuid.h"
 
 /* sortsupport for uuid */
@@ -424,4 +425,67 @@ gen_random_uuid(PG_FUNCTION_ARGS)
 	uuid->data[8] = (uuid->data[8] & 0x3f) | 0x80;	/* clock_seq_hi_and_reserved */
 
 	PG_RETURN_UUID_P(uuid);
+}
+
+#define UUIDV1_EPOCH_JDATE  2299161 /* == date2j(1582,10,15) */
+
+/*
+ * Extract timestamp from UUID.
+ *
+ * Returns null if not RFC 4122 variant or not a version that has a timestamp.
+ */
+Datum
+uuid_extract_timestamp(PG_FUNCTION_ARGS)
+{
+	pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
+	int			version;
+	uint64		tms;
+	TimestampTz ts;
+
+	/* check if RFC 4122 variant */
+	if ((uuid->data[8] & 0xc0) != 0x80)
+		PG_RETURN_NULL();
+
+	version = uuid->data[6] >> 4;
+
+	if (version == 1)
+	{
+		tms = ((uint64) uuid->data[0] << 24)
+			+ ((uint64) uuid->data[1] << 16)
+			+ ((uint64) uuid->data[2] << 8)
+			+ ((uint64) uuid->data[3])
+			+ ((uint64) uuid->data[4] << 40)
+			+ ((uint64) uuid->data[5] << 32)
+			+ (((uint64) uuid->data[6] & 0xf) << 56)
+			+ ((uint64) uuid->data[7] << 48);
+
+		/* convert 100-ns intervals to us, then adjust */
+		ts = (TimestampTz) (tms / 10) -
+			((uint64) POSTGRES_EPOCH_JDATE - UUIDV1_EPOCH_JDATE) * SECS_PER_DAY * USECS_PER_SEC;
+
+		PG_RETURN_TIMESTAMPTZ(ts);
+	}
+
+	/* not a timestamp-containing UUID version */
+	PG_RETURN_NULL();
+}
+
+/*
+ * Extract UUID version.
+ *
+ * Returns null if not RFC 4122 variant.
+ */
+Datum
+uuid_extract_version(PG_FUNCTION_ARGS)
+{
+	pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
+	uint16		version;
+
+	/* check if RFC 4122 variant */
+	if ((uuid->data[8] & 0xc0) != 0x80)
+		PG_RETURN_NULL();
+
+	version = uuid->data[6] >> 4;
+
+	PG_RETURN_UINT16(version);
 }

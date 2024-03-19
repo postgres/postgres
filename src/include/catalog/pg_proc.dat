@@ -9170,6 +9170,13 @@
 { oid => '3432', descr => 'generate random UUID',
   proname => 'gen_random_uuid', proleakproof => 't', provolatile => 'v',
   prorettype => 'uuid', proargtypes => '', prosrc => 'gen_random_uuid' },
+{ oid => '9897', descr => 'extract timestamp from UUID',
+  proname => 'uuid_extract_timestamp', proleakproof => 't',
+  prorettype => 'timestamptz', proargtypes => 'uuid',
+  prosrc => 'uuid_extract_timestamp' },
+{ oid => '9898', descr => 'extract version from RFC 4122 UUID',
+  proname => 'uuid_extract_version', proleakproof => 't', prorettype => 'int2',
+  proargtypes => 'uuid', prosrc => 'uuid_extract_version' },
 
 # pg_lsn
 { oid => '3229', descr => 'I/O',

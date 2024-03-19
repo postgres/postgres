@@ -85,5 +85,19 @@ INSERT INTO guid1 (guid_field) VALUES (gen_random_uuid());
 INSERT INTO guid1 (guid_field) VALUES (gen_random_uuid());
 SELECT count(DISTINCT guid_field) FROM guid1;
 
+
+-- extract functions
+
+-- version
+SELECT uuid_extract_version('11111111-1111-5111-8111-111111111111');  -- 5
+SELECT uuid_extract_version(gen_random_uuid());  -- 4
+SELECT uuid_extract_version('11111111-1111-1111-1111-111111111111');  -- null
+
+-- timestamp
+SELECT uuid_extract_timestamp('C232AB00-9414-11EC-B3C8-9F6BDECED846') = 'Tuesday, February 22, 2022 2:22:22.00 PM GMT+05:00';  -- RFC 4122bis test vector
+SELECT uuid_extract_timestamp(gen_random_uuid());  -- null
+SELECT uuid_extract_timestamp('11111111-1111-1111-1111-111111111111');  -- null
+
+
 -- clean up
 DROP TABLE guid1, guid2 CASCADE;
