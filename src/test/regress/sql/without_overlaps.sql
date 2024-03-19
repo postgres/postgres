@@ -4,6 +4,8 @@
 -- temporal_rng, temporal_rng2,
 -- temporal_fk_rng2rng.
 
+SET datestyle TO ISO, YMD;
+
 --
 -- test input parser
 --
@@ -11,7 +13,7 @@
 -- PK with no columns just WITHOUT OVERLAPS:
 
 CREATE TABLE temporal_rng (
-	valid_at tsrange,
+	valid_at daterange,
 	CONSTRAINT temporal_rng_pk PRIMARY KEY (valid_at WITHOUT OVERLAPS)
 );
 
@@ -37,7 +39,7 @@ CREATE TABLE temporal_rng (
 	-- use an int4range instead of an int.
 	-- (The rangetypes regression test uses the same trick.)
 	id int4range,
-	valid_at tsrange,
+	valid_at daterange,
 	CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
 );
 \d temporal_rng
@@ -49,7 +51,7 @@ SELECT pg_get_indexdef(conindid, 0, true) FROM pg_constraint WHERE conname = 'te
 CREATE TABLE temporal_rng2 (
 	id1 int4range,
 	id2 int4range,
-	valid_at tsrange,
+	valid_at daterange,
 	CONSTRAINT temporal_rng2_pk PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
 );
 \d temporal_rng2
@@ -79,7 +81,7 @@ CREATE TABLE temporal_mltrng (
 -- UNIQUE with no columns just WITHOUT OVERLAPS:
 
 CREATE TABLE temporal_rng3 (
-	valid_at tsrange,
+	valid_at daterange,
 	CONSTRAINT temporal_rng3_uq UNIQUE (valid_at WITHOUT OVERLAPS)
 );
 
@@ -102,7 +104,7 @@ CREATE TABLE temporal_rng3 (
 
 CREATE TABLE temporal_rng3 (
 	id int4range,
-	valid_at tsrange,
+	valid_at daterange,
 	CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
 );
 \d temporal_rng3
@@ -114,7 +116,7 @@ DROP TABLE temporal_rng3;
 CREATE TABLE temporal_rng3 (
 	id1 int4range,
 	id2 int4range,
-	valid_at tsrange,
+	valid_at daterange,
 	CONSTRAINT temporal_rng3_uq UNIQUE (id1, id2, valid_at WITHOUT OVERLAPS)
 );
 \d temporal_rng3
@@ -140,7 +142,7 @@ DROP TYPE textrange2;
 DROP TABLE temporal_rng;
 CREATE TABLE temporal_rng (
 	id int4range,
-	valid_at tsrange
+	valid_at daterange
 );
 ALTER TABLE temporal_rng
 	ADD CONSTRAINT temporal_rng_pk
@@ -149,7 +151,7 @@ ALTER TABLE temporal_rng
 -- PK with USING INDEX (not possible):
 CREATE TABLE temporal3 (
 	id int4range,
-	valid_at tsrange
+	valid_at daterange
 );
 CREATE INDEX idx_temporal3_uq ON temporal3 USING gist (id, valid_at);
 ALTER TABLE temporal3
@@ -160,7 +162,7 @@ DROP TABLE temporal3;
 -- UNIQUE with USING INDEX (not possible):
 CREATE TABLE temporal3 (
 	id int4range,
-	valid_at tsrange
+	valid_at daterange
 );
 CREATE INDEX idx_temporal3_uq ON temporal3 USING gist (id, valid_at);
 ALTER TABLE temporal3
@@ -171,7 +173,7 @@ DROP TABLE temporal3;
 -- UNIQUE with USING [UNIQUE] INDEX (possible but not a temporal constraint):
 CREATE TABLE temporal3 (
 	id int4range,
-	valid_at tsrange
+	valid_at daterange
 );
 CREATE UNIQUE INDEX idx_temporal3_uq ON temporal3 (id, valid_at);
 ALTER TABLE temporal3
@@ -184,7 +186,7 @@ CREATE TABLE temporal3 (
 	id int4range
 );
 ALTER TABLE temporal3
-	ADD COLUMN valid_at tsrange,
+	ADD COLUMN valid_at daterange,
 	ADD CONSTRAINT temporal3_pk
 	PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
 DROP TABLE temporal3;
@@ -194,7 +196,7 @@ CREATE TABLE temporal3 (
 	id int4range
 );
 ALTER TABLE temporal3
-	ADD COLUMN valid_at tsrange,
+	ADD COLUMN valid_at daterange,
 	ADD CONSTRAINT temporal3_uq
 	UNIQUE (id, valid_at WITHOUT OVERLAPS);
 DROP TABLE temporal3;
@@ -204,14 +206,14 @@ DROP TABLE temporal3;
 --
 
 -- okay:
-INSERT INTO temporal_rng VALUES ('[1,1]', tsrange('2018-01-02', '2018-02-03'));
-INSERT INTO temporal_rng VALUES ('[1,1]', tsrange('2018-03-03', '2018-04-04'));
-INSERT INTO temporal_rng VALUES ('[2,2]', tsrange('2018-01-01', '2018-01-05'));
-INSERT INTO temporal_rng VALUES ('[3,3]', tsrange('2018-01-01', NULL));
+INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-01-02', '2018-02-03'));
+INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-03-03', '2018-04-04'));
+INSERT INTO temporal_rng VALUES ('[2,2]', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng VALUES ('[3,3]', daterange('2018-01-01', NULL));
 
 -- should fail:
-INSERT INTO temporal_rng VALUES ('[1,1]', tsrange('2018-01-01', '2018-01-05'));
-INSERT INTO temporal_rng VALUES (NULL, tsrange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng VALUES ('[1,1]', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng VALUES (NULL, daterange('2018-01-01', '2018-01-05'));
 INSERT INTO temporal_rng VALUES ('[3,3]', NULL);
 
 --
@@ -239,7 +241,7 @@ DROP TABLE temporal3;
 
 CREATE TABLE temporal3 (
 	id int4range,
-	valid_at tsrange,
+	valid_at daterange,
 	CONSTRAINT temporal3_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
 );
 
@@ -288,3 +290,5 @@ SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
 SELECT * FROM tp1 ORDER BY id, valid_at;
 SELECT * FROM tp2 ORDER BY id, valid_at;
 DROP TABLE temporal_partitioned;
+
+RESET datestyle;
