@@ -151,6 +151,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--builtin-locale=<replaceable class="parameter">locale</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the locale name when the builtin provider is used. Locale support
+        is described in <xref linkend="locale"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--icu-locale=<replaceable class="parameter">locale</replaceable></option></term>
       <listitem>
        <para>

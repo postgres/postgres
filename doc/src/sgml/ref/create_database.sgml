@@ -160,7 +160,8 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        <para>
         Can be overridden by setting <xref
         linkend="create-database-lc-collate"/>, <xref
-        linkend="create-database-lc-ctype"/>, or <xref
+        linkend="create-database-lc-ctype"/>, <xref
+        linkend="create-database-builtin-locale"/>, or <xref
         linkend="create-database-icu-locale"/> individually.
        </para>
        <para>
