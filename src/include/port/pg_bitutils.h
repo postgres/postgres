@@ -302,16 +302,15 @@ pg_ceil_log2_64(uint64 num)
 /* Attempt to use the POPCNT instruction, but perform a runtime check first */
 extern PGDLLIMPORT int (*pg_popcount32) (uint32 word);
 extern PGDLLIMPORT int (*pg_popcount64) (uint64 word);
+extern PGDLLIMPORT uint64 (*pg_popcount) (const char *buf, int bytes);
 
 #else
 /* Use a portable implementation -- no need for a function pointer. */
 extern int	pg_popcount32(uint32 word);
 extern int	pg_popcount64(uint64 word);
+extern uint64 pg_popcount(const char *buf, int bytes);
 
 #endif							/* TRY_POPCNT_FAST */
-
-/* Count the number of one-bits in a byte array */
-extern uint64 pg_popcount(const char *buf, int bytes);
 
 /*
  * Rotate the bits of "word" to the right/left by n bits.

@@ -103,18 +103,22 @@ const uint8 pg_number_of_ones[256] = {
 	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };
 
-static int	pg_popcount32_slow(uint32 word);
-static int	pg_popcount64_slow(uint64 word);
+static inline int pg_popcount32_slow(uint32 word);
+static inline int pg_popcount64_slow(uint64 word);
+static uint64 pg_popcount_slow(const char *buf, int bytes);
 
 #ifdef TRY_POPCNT_FAST
 static bool pg_popcount_available(void);
 static int	pg_popcount32_choose(uint32 word);
 static int	pg_popcount64_choose(uint64 word);
-static int	pg_popcount32_fast(uint32 word);
-static int	pg_popcount64_fast(uint64 word);
+static uint64 pg_popcount_choose(const char *buf, int bytes);
+static inline int pg_popcount32_fast(uint32 word);
+static inline int pg_popcount64_fast(uint64 word);
+static uint64 pg_popcount_fast(const char *buf, int bytes);
 
 int			(*pg_popcount32) (uint32 word) = pg_popcount32_choose;
 int			(*pg_popcount64) (uint64 word) = pg_popcount64_choose;
+uint64		(*pg_popcount) (const char *buf, int bytes) = pg_popcount_choose;
 #endif							/* TRY_POPCNT_FAST */
 
 #ifdef TRY_POPCNT_FAST
@@ -151,11 +155,13 @@ pg_popcount32_choose(uint32 word)
 	{
 		pg_popcount32 = pg_popcount32_fast;
 		pg_popcount64 = pg_popcount64_fast;
+		pg_popcount = pg_popcount_fast;
 	}
 	else
 	{
 		pg_popcount32 = pg_popcount32_slow;
 		pg_popcount64 = pg_popcount64_slow;
+		pg_popcount = pg_popcount_slow;
 	}
 
 	return pg_popcount32(word);
@@ -168,21 +174,42 @@ pg_popcount64_choose(uint64 word)
 	{
 		pg_popcount32 = pg_popcount32_fast;
 		pg_popcount64 = pg_popcount64_fast;
+		pg_popcount = pg_popcount_fast;
 	}
 	else
 	{
 		pg_popcount32 = pg_popcount32_slow;
 		pg_popcount64 = pg_popcount64_slow;
+		pg_popcount = pg_popcount_slow;
 	}
 
 	return pg_popcount64(word);
+}
+
+static uint64
+pg_popcount_choose(const char *buf, int bytes)
+{
+	if (pg_popcount_available())
+	{
+		pg_popcount32 = pg_popcount32_fast;
+		pg_popcount64 = pg_popcount64_fast;
+		pg_popcount = pg_popcount_fast;
+	}
+	else
+	{
+		pg_popcount32 = pg_popcount32_slow;
+		pg_popcount64 = pg_popcount64_slow;
+		pg_popcount = pg_popcount_slow;
+	}
+
+	return pg_popcount(buf, bytes);
 }
 
 /*
  * pg_popcount32_fast
  *		Return the number of 1 bits set in word
  */
-static int
+static inline int
 pg_popcount32_fast(uint32 word)
 {
 #ifdef _MSC_VER
@@ -199,7 +226,7 @@ __asm__ __volatile__(" popcntl %1,%0\n":"=q"(res):"rm"(word):"cc");
  * pg_popcount64_fast
  *		Return the number of 1 bits set in word
  */
-static int
+static inline int
 pg_popcount64_fast(uint64 word)
 {
 #ifdef _MSC_VER
@@ -212,6 +239,52 @@ __asm__ __volatile__(" popcntq %1,%0\n":"=q"(res):"rm"(word):"cc");
 #endif
 }
 
+/*
+ * pg_popcount_fast
+ *		Returns the number of 1-bits in buf
+ */
+static uint64
+pg_popcount_fast(const char *buf, int bytes)
+{
+	uint64		popcnt = 0;
+
+#if SIZEOF_VOID_P >= 8
+	/* Process in 64-bit chunks if the buffer is aligned. */
+	if (buf == (const char *) TYPEALIGN(8, buf))
+	{
+		const uint64 *words = (const uint64 *) buf;
+
+		while (bytes >= 8)
+		{
+			popcnt += pg_popcount64_fast(*words++);
+			bytes -= 8;
+		}
+
+		buf = (const char *) words;
+	}
+#else
+	/* Process in 32-bit chunks if the buffer is aligned. */
+	if (buf == (const char *) TYPEALIGN(4, buf))
+	{
+		const uint32 *words = (const uint32 *) buf;
+
+		while (bytes >= 4)
+		{
+			popcnt += pg_popcount32_fast(*words++);
+			bytes -= 4;
+		}
+
+		buf = (const char *) words;
+	}
+#endif
+
+	/* Process any remaining bytes */
+	while (bytes--)
+		popcnt += pg_number_of_ones[(unsigned char) *buf++];
+
+	return popcnt;
+}
+
 #endif							/* TRY_POPCNT_FAST */
 
 
@@ -219,7 +292,7 @@ __asm__ __volatile__(" popcntq %1,%0\n":"=q"(res):"rm"(word):"cc");
  * pg_popcount32_slow
  *		Return the number of 1 bits set in word
  */
-static int
+static inline int
 pg_popcount32_slow(uint32 word)
 {
 #ifdef HAVE__BUILTIN_POPCOUNT
@@ -241,7 +314,7 @@ pg_popcount32_slow(uint32 word)
  * pg_popcount64_slow
  *		Return the number of 1 bits set in word
  */
-static int
+static inline int
 pg_popcount64_slow(uint64 word)
 {
 #ifdef HAVE__BUILTIN_POPCOUNT
@@ -265,6 +338,52 @@ pg_popcount64_slow(uint64 word)
 #endif							/* HAVE__BUILTIN_POPCOUNT */
 }
 
+/*
+ * pg_popcount_slow
+ *		Returns the number of 1-bits in buf
+ */
+static uint64
+pg_popcount_slow(const char *buf, int bytes)
+{
+	uint64		popcnt = 0;
+
+#if SIZEOF_VOID_P >= 8
+	/* Process in 64-bit chunks if the buffer is aligned. */
+	if (buf == (const char *) TYPEALIGN(8, buf))
+	{
+		const uint64 *words = (const uint64 *) buf;
+
+		while (bytes >= 8)
+		{
+			popcnt += pg_popcount64_slow(*words++);
+			bytes -= 8;
+		}
+
+		buf = (const char *) words;
+	}
+#else
+	/* Process in 32-bit chunks if the buffer is aligned. */
+	if (buf == (const char *) TYPEALIGN(4, buf))
+	{
+		const uint32 *words = (const uint32 *) buf;
+
+		while (bytes >= 4)
+		{
+			popcnt += pg_popcount32_slow(*words++);
+			bytes -= 4;
+		}
+
+		buf = (const char *) words;
+	}
+#endif
+
+	/* Process any remaining bytes */
+	while (bytes--)
+		popcnt += pg_number_of_ones[(unsigned char) *buf++];
+
+	return popcnt;
+}
+
 #ifndef TRY_POPCNT_FAST
 
 /*
@@ -286,8 +405,6 @@ pg_popcount64(uint64 word)
 	return pg_popcount64_slow(word);
 }
 
-#endif							/* !TRY_POPCNT_FAST */
-
 /*
  * pg_popcount
  *		Returns the number of 1-bits in buf
@@ -295,41 +412,7 @@ pg_popcount64(uint64 word)
 uint64
 pg_popcount(const char *buf, int bytes)
 {
-	uint64		popcnt = 0;
-
-#if SIZEOF_VOID_P >= 8
-	/* Process in 64-bit chunks if the buffer is aligned. */
-	if (buf == (const char *) TYPEALIGN(8, buf))
-	{
-		const uint64 *words = (const uint64 *) buf;
-
-		while (bytes >= 8)
-		{
-			popcnt += pg_popcount64(*words++);
-			bytes -= 8;
-		}
-
-		buf = (const char *) words;
-	}
-#else
-	/* Process in 32-bit chunks if the buffer is aligned. */
-	if (buf == (const char *) TYPEALIGN(4, buf))
-	{
-		const uint32 *words = (const uint32 *) buf;
-
-		while (bytes >= 4)
-		{
-			popcnt += pg_popcount32(*words++);
-			bytes -= 4;
-		}
-
-		buf = (const char *) words;
-	}
-#endif
-
-	/* Process any remaining bytes */
-	while (bytes--)
-		popcnt += pg_number_of_ones[(unsigned char) *buf++];
-
-	return popcnt;
+	return pg_popcount_slow(buf, bytes);
 }
+
+#endif							/* !TRY_POPCNT_FAST */
