@@ -979,12 +979,12 @@ void
 finalize_key_rotation(char *m_path_old, char *k_path_old, char *m_path_new, char *k_path_new)
 {
 	/* Remove old files */
-	durable_unlink(m_path_old, LOG);
-	durable_unlink(k_path_old, LOG);
+	durable_unlink(m_path_old, ERROR);
+	durable_unlink(k_path_old, ERROR);
 
 	/* Rename the new files to required filenames */
-	durable_rename(m_path_new, m_path_old, LOG);
-	durable_rename(k_path_new, k_path_old, LOG);
+	durable_rename(m_path_new, m_path_old, ERROR);
+	durable_rename(k_path_new, k_path_old, ERROR);
 }
 
 /*

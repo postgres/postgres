@@ -432,7 +432,7 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name)
         if (new_master_key.keyInfo.keyId.version > MAX_MASTER_KEY_VERSION_NUM)
         {
             ereport(ERROR,
-                    (errmsg("Failed to generate new key name")));
+                    (errmsg("failed to retrieve master key")));
             break;
         }
     }
@@ -443,7 +443,7 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name)
     if (keyInfo == NULL)
     {
         ereport(ERROR,
-                (errmsg("failed to retrieve master key")));
+                (errmsg("Failed to generate new key name")));
     }
 
     new_master_key.keyLength = keyInfo->data.len;
