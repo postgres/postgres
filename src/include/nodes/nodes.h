@@ -230,6 +230,15 @@ extern bool equal(const void *a, const void *b);
 
 
 /*
+ * Typedef for parse location.  This is just an int, but this way
+ * gen_node_support.pl knows which fields should get special treatment for
+ * location values.
+ *
+ * -1 is used for unknown.
+ */
+typedef int ParseLoc;
+
+/*
  * Typedefs for identifying qualifier selectivities, plan costs, and row
  * counts as such.  These are just plain "double"s, but declaring a variable
  * as Selectivity, Cost, or Cardinality makes the intent more obvious.

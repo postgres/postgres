@@ -1963,6 +1963,7 @@ ParamsErrorCbData
 ParentMapEntry
 ParseCallbackState
 ParseExprKind
+ParseLoc
 ParseNamespaceColumn
 ParseNamespaceItem
 ParseParamRefHook

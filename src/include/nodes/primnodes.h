@@ -91,7 +91,7 @@ typedef struct RangeVar
 	Alias	   *alias;
 
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } RangeVar;
 
 /*
@@ -128,7 +128,7 @@ typedef struct TableFunc
 	/* counts from 0; -1 if none specified */
 	int			ordinalitycol pg_node_attr(query_jumble_ignore);
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } TableFunc;
 
 /*
@@ -276,7 +276,7 @@ typedef struct Var
 	AttrNumber	varattnosyn pg_node_attr(equal_ignore, query_jumble_ignore);
 
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } Var;
 
 /*
@@ -318,7 +318,7 @@ typedef struct Const
 	 * token location, or -1 if unknown.  All constants are tracked as
 	 * locations in query jumbling, to be marked as parameters.
 	 */
-	int			location pg_node_attr(query_jumble_location);
+	ParseLoc	location pg_node_attr(query_jumble_location);
 } Const;
 
 /*
@@ -367,7 +367,7 @@ typedef struct Param
 	/* OID of collation, or InvalidOid if none */
 	Oid			paramcollid pg_node_attr(query_jumble_ignore);
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } Param;
 
 /*
@@ -490,7 +490,7 @@ typedef struct Aggref
 	int			aggtransno pg_node_attr(query_jumble_ignore);
 
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } Aggref;
 
 /*
@@ -537,7 +537,7 @@ typedef struct GroupingFunc
 	Index		agglevelsup;
 
 	/* token location */
-	int			location;
+	ParseLoc	location;
 } GroupingFunc;
 
 /*
@@ -568,7 +568,7 @@ typedef struct WindowFunc
 	/* is function a simple aggregate? */
 	bool		winagg pg_node_attr(query_jumble_ignore);
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } WindowFunc;
 
 /*
@@ -589,7 +589,7 @@ typedef struct MergeSupportFunc
 	/* OID of collation, or InvalidOid if none */
 	Oid			msfcollid;
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } MergeSupportFunc;
 
 /*
@@ -723,7 +723,7 @@ typedef struct FuncExpr
 	/* arguments to the function */
 	List	   *args;
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } FuncExpr;
 
 /*
@@ -750,7 +750,7 @@ typedef struct NamedArgExpr
 	/* argument's number in positional notation */
 	int			argnumber;
 	/* argument name location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } NamedArgExpr;
 
 /*
@@ -792,7 +792,7 @@ typedef struct OpExpr
 	List	   *args;
 
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } OpExpr;
 
 /*
@@ -872,7 +872,7 @@ typedef struct ScalarArrayOpExpr
 	List	   *args;
 
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } ScalarArrayOpExpr;
 
 /*
@@ -894,7 +894,7 @@ typedef struct BoolExpr
 	Expr		xpr;
 	BoolExprType boolop;
 	List	   *args;			/* arguments to this expression */
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } BoolExpr;
 
 /*
@@ -971,7 +971,7 @@ typedef struct SubLink
 	List	   *operName pg_node_attr(query_jumble_ignore);
 	/* subselect as Query* or raw parsetree */
 	Node	   *subselect;
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } SubLink;
 
 /*
@@ -1145,7 +1145,7 @@ typedef struct RelabelType
 	Oid			resultcollid pg_node_attr(query_jumble_ignore);
 	/* how to display this node */
 	CoercionForm relabelformat pg_node_attr(query_jumble_ignore);
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } RelabelType;
 
 /* ----------------
@@ -1167,7 +1167,7 @@ typedef struct CoerceViaIO
 	Oid			resultcollid pg_node_attr(query_jumble_ignore);
 	/* how to display this node */
 	CoercionForm coerceformat pg_node_attr(query_jumble_ignore);
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } CoerceViaIO;
 
 /* ----------------
@@ -1195,7 +1195,7 @@ typedef struct ArrayCoerceExpr
 	Oid			resultcollid pg_node_attr(query_jumble_ignore);
 	/* how to display this node */
 	CoercionForm coerceformat pg_node_attr(query_jumble_ignore);
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } ArrayCoerceExpr;
 
 /* ----------------
@@ -1219,7 +1219,7 @@ typedef struct ConvertRowtypeExpr
 	/* Like RowExpr, we deliberately omit a typmod and collation here */
 	/* how to display this node */
 	CoercionForm convertformat pg_node_attr(query_jumble_ignore);
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } ConvertRowtypeExpr;
 
 /*----------
@@ -1234,7 +1234,7 @@ typedef struct CollateExpr
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	Oid			collOid;		/* collation's OID */
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } CollateExpr;
 
 /*----------
@@ -1269,7 +1269,7 @@ typedef struct CaseExpr
 	Expr	   *arg;			/* implicit equality comparison argument */
 	List	   *args;			/* the arguments (list of WHEN clauses) */
 	Expr	   *defresult;		/* the default result (ELSE clause) */
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } CaseExpr;
 
 /*
@@ -1280,7 +1280,7 @@ typedef struct CaseWhen
 	Expr		xpr;
 	Expr	   *expr;			/* condition expression */
 	Expr	   *result;			/* substitution result */
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } CaseWhen;
 
 /*
@@ -1337,7 +1337,7 @@ typedef struct ArrayExpr
 	/* true if elements are sub-arrays */
 	bool		multidims pg_node_attr(query_jumble_ignore);
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } ArrayExpr;
 
 /*
@@ -1388,7 +1388,7 @@ typedef struct RowExpr
 	/* list of String, or NIL */
 	List	   *colnames pg_node_attr(query_jumble_ignore);
 
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } RowExpr;
 
 /*
@@ -1447,7 +1447,7 @@ typedef struct CoalesceExpr
 	/* the arguments */
 	List	   *args;
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } CoalesceExpr;
 
 /*
@@ -1473,7 +1473,7 @@ typedef struct MinMaxExpr
 	/* the arguments */
 	List	   *args;
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } MinMaxExpr;
 
 /*
@@ -1517,7 +1517,7 @@ typedef struct SQLValueFunction
 	 */
 	Oid			type pg_node_attr(query_jumble_ignore);
 	int32		typmod;
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } SQLValueFunction;
 
 /*
@@ -1570,7 +1570,7 @@ typedef struct XmlExpr
 	Oid			type pg_node_attr(query_jumble_ignore);
 	int32		typmod pg_node_attr(query_jumble_ignore);
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } XmlExpr;
 
 /*
@@ -1606,7 +1606,7 @@ typedef struct JsonFormat
 	NodeTag		type;
 	JsonFormatType format_type; /* format type */
 	JsonEncoding encoding;		/* JSON encoding */
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } JsonFormat;
 
 /*
@@ -1662,7 +1662,7 @@ typedef struct JsonConstructorExpr
 	JsonReturning *returning;	/* RETURNING clause */
 	bool		absent_on_null; /* ABSENT ON NULL? */
 	bool		unique;			/* WITH UNIQUE KEYS? (JSON_OBJECT[AGG] only) */
-	int			location;
+	ParseLoc	location;
 } JsonConstructorExpr;
 
 /*
@@ -1688,7 +1688,7 @@ typedef struct JsonIsPredicate
 	JsonFormat *format;			/* FORMAT clause, if specified */
 	JsonValueType item_type;	/* JSON item type */
 	bool		unique_keys;	/* check key uniqueness? */
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } JsonIsPredicate;
 
 /* ----------------
@@ -1722,7 +1722,7 @@ typedef struct NullTest
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
 	/* T to perform field-by-field null checks */
 	bool		argisrow pg_node_attr(query_jumble_ignore);
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } NullTest;
 
 /*
@@ -1744,7 +1744,7 @@ typedef struct BooleanTest
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	BoolTestType booltesttype;	/* test type */
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } BooleanTest;
 
 
@@ -1786,7 +1786,7 @@ typedef struct CoerceToDomain
 	Oid			resultcollid pg_node_attr(query_jumble_ignore);
 	/* how to display this node */
 	CoercionForm coercionformat pg_node_attr(query_jumble_ignore);
-	int			location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } CoerceToDomain;
 
 /*
@@ -1808,7 +1808,7 @@ typedef struct CoerceToDomainValue
 	/* collation for the substituted value */
 	Oid			collation pg_node_attr(query_jumble_ignore);
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } CoerceToDomainValue;
 
 /*
@@ -1828,7 +1828,7 @@ typedef struct SetToDefault
 	/* collation for the substituted value */
 	Oid			collation pg_node_attr(query_jumble_ignore);
 	/* token location, or -1 if unknown */
-	int			location;
+	ParseLoc	location;
 } SetToDefault;
 
 /*

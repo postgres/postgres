@@ -777,7 +777,7 @@ _equal${n}(const $n *a, const $n *b)
 			print $eff "\tCOMPARE_BITMAPSET_FIELD($f);\n"
 			  unless $equal_ignore;
 		}
-		elsif ($t eq 'int' && $f =~ 'location$')
+		elsif ($t eq 'ParseLoc')
 		{
 			print $cff "\tCOPY_LOCATION_FIELD($f);\n" unless $copy_ignore;
 			print $eff "\tCOMPARE_LOCATION_FIELD($f);\n" unless $equal_ignore;
@@ -1010,7 +1010,7 @@ _read${n}(void)
 			print $off "\tWRITE_BOOL_FIELD($f);\n";
 			print $rff "\tREAD_BOOL_FIELD($f);\n" unless $no_read;
 		}
-		elsif ($t eq 'int' && $f =~ 'location$')
+		elsif ($t eq 'ParseLoc')
 		{
 			print $off "\tWRITE_LOCATION_FIELD($f);\n";
 			print $rff "\tREAD_LOCATION_FIELD($f);\n" unless $no_read;
@@ -1303,7 +1303,7 @@ _jumble${n}(JumbleState *jstate, Node *node)
 			print $jff "\tJUMBLE_NODE($f);\n"
 			  unless $query_jumble_ignore;
 		}
-		elsif ($t eq 'int' && $f =~ 'location$')
+		elsif ($t eq 'ParseLoc')
 		{
 			# Track the node's location only if directly requested.
 			if ($query_jumble_location)

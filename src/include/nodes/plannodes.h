@@ -95,8 +95,8 @@ typedef struct PlannedStmt
 	Node	   *utilityStmt;	/* non-null if this is utility stmt */
 
 	/* statement location in source string (copied from Query) */
-	int			stmt_location;	/* start location, or -1 if unknown */
-	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
+	ParseLoc	stmt_location;	/* start location, or -1 if unknown */
+	ParseLoc	stmt_len;		/* length in bytes; 0 means "rest of string" */
 } PlannedStmt;
 
 /* macro for fetching the Plan associated with a SubPlan node */
