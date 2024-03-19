@@ -298,6 +298,8 @@ extern Path *reparameterize_path(PlannerInfo *root, Path *path,
 								 double loop_count);
 extern Path *reparameterize_path_by_child(PlannerInfo *root, Path *path,
 										  RelOptInfo *child_rel);
+extern bool path_is_reparameterizable_by_child(Path *path,
+											   RelOptInfo *child_rel);
 
 /*
  * prototypes for relnode.c

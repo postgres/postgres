@@ -505,6 +505,98 @@ SELECT t1.a, ss.t2a, ss.t2c FROM prt1 t1 LEFT JOIN LATERAL
  550 |     | 
 (12 rows)
 
+-- lateral reference in sample scan
+EXPLAIN (COSTS OFF)
+SELECT * FROM prt1 t1 JOIN LATERAL
+			  (SELECT * FROM prt1 t2 TABLESAMPLE SYSTEM (t1.a) REPEATABLE(t1.b)) s
+			  ON t1.a = s.a;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Append
+   ->  Nested Loop
+         ->  Seq Scan on prt1_p1 t1_1
+         ->  Sample Scan on prt1_p1 t2_1
+               Sampling: system (t1_1.a) REPEATABLE (t1_1.b)
+               Filter: (t1_1.a = a)
+   ->  Nested Loop
+         ->  Seq Scan on prt1_p2 t1_2
+         ->  Sample Scan on prt1_p2 t2_2
+               Sampling: system (t1_2.a) REPEATABLE (t1_2.b)
+               Filter: (t1_2.a = a)
+   ->  Nested Loop
+         ->  Seq Scan on prt1_p3 t1_3
+         ->  Sample Scan on prt1_p3 t2_3
+               Sampling: system (t1_3.a) REPEATABLE (t1_3.b)
+               Filter: (t1_3.a = a)
+(16 rows)
+
+-- lateral reference in scan's restriction clauses
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM prt1 t1 LEFT JOIN LATERAL
+			  (SELECT t1.b AS t1b, t2.* FROM prt2 t2) s
+			  ON t1.a = s.b WHERE s.t1b = s.a;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Aggregate
+   ->  Append
+         ->  Nested Loop
+               ->  Seq Scan on prt1_p1 t1_1
+               ->  Index Scan using iprt2_p1_b on prt2_p1 t2_1
+                     Index Cond: (b = t1_1.a)
+                     Filter: (t1_1.b = a)
+         ->  Nested Loop
+               ->  Seq Scan on prt1_p2 t1_2
+               ->  Index Scan using iprt2_p2_b on prt2_p2 t2_2
+                     Index Cond: (b = t1_2.a)
+                     Filter: (t1_2.b = a)
+         ->  Nested Loop
+               ->  Seq Scan on prt1_p3 t1_3
+               ->  Index Scan using iprt2_p3_b on prt2_p3 t2_3
+                     Index Cond: (b = t1_3.a)
+                     Filter: (t1_3.b = a)
+(17 rows)
+
+SELECT count(*) FROM prt1 t1 LEFT JOIN LATERAL
+			  (SELECT t1.b AS t1b, t2.* FROM prt2 t2) s
+			  ON t1.a = s.b WHERE s.t1b = s.a;
+ count 
+-------
+   100
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM prt1 t1 LEFT JOIN LATERAL
+			  (SELECT t1.b AS t1b, t2.* FROM prt2 t2) s
+			  ON t1.a = s.b WHERE s.t1b = s.b;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Aggregate
+   ->  Append
+         ->  Nested Loop
+               ->  Seq Scan on prt1_p1 t1_1
+               ->  Index Only Scan using iprt2_p1_b on prt2_p1 t2_1
+                     Index Cond: (b = t1_1.a)
+                     Filter: (b = t1_1.b)
+         ->  Nested Loop
+               ->  Seq Scan on prt1_p2 t1_2
+               ->  Index Only Scan using iprt2_p2_b on prt2_p2 t2_2
+                     Index Cond: (b = t1_2.a)
+                     Filter: (b = t1_2.b)
+         ->  Nested Loop
+               ->  Seq Scan on prt1_p3 t1_3
+               ->  Index Only Scan using iprt2_p3_b on prt2_p3 t2_3
+                     Index Cond: (b = t1_3.a)
+                     Filter: (b = t1_3.b)
+(17 rows)
+
+SELECT count(*) FROM prt1 t1 LEFT JOIN LATERAL
+			  (SELECT t1.b AS t1b, t2.* FROM prt2 t2) s
+			  ON t1.a = s.b WHERE s.t1b = s.b;
+ count 
+-------
+     5
+(1 row)
+
 -- bug with inadequate sort key representation
 SET enable_partitionwise_aggregate TO true;
 SET enable_hashjoin TO false;
@@ -1943,6 +2035,82 @@ SELECT * FROM prt1_l t1 LEFT JOIN LATERAL
  500 | 0 | 0000 |     |      |     |     |      
  550 | 0 | 0002 |     |      |     |     |      
 (12 rows)
+
+-- partitionwise join with lateral reference in sample scan
+EXPLAIN (COSTS OFF)
+SELECT * FROM prt1_l t1 JOIN LATERAL
+			  (SELECT * FROM prt1_l t2 TABLESAMPLE SYSTEM (t1.a) REPEATABLE(t1.b)) s
+			  ON t1.a = s.a AND t1.b = s.b AND t1.c = s.c;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Append
+   ->  Nested Loop
+         ->  Seq Scan on prt1_l_p1 t1_1
+         ->  Sample Scan on prt1_l_p1 t2_1
+               Sampling: system (t1_1.a) REPEATABLE (t1_1.b)
+               Filter: ((t1_1.a = a) AND (t1_1.b = b) AND ((t1_1.c)::text = (c)::text))
+   ->  Nested Loop
+         ->  Seq Scan on prt1_l_p2_p1 t1_2
+         ->  Sample Scan on prt1_l_p2_p1 t2_2
+               Sampling: system (t1_2.a) REPEATABLE (t1_2.b)
+               Filter: ((t1_2.a = a) AND (t1_2.b = b) AND ((t1_2.c)::text = (c)::text))
+   ->  Nested Loop
+         ->  Seq Scan on prt1_l_p2_p2 t1_3
+         ->  Sample Scan on prt1_l_p2_p2 t2_3
+               Sampling: system (t1_3.a) REPEATABLE (t1_3.b)
+               Filter: ((t1_3.a = a) AND (t1_3.b = b) AND ((t1_3.c)::text = (c)::text))
+   ->  Nested Loop
+         ->  Seq Scan on prt1_l_p3_p1 t1_4
+         ->  Sample Scan on prt1_l_p3_p1 t2_4
+               Sampling: system (t1_4.a) REPEATABLE (t1_4.b)
+               Filter: ((t1_4.a = a) AND (t1_4.b = b) AND ((t1_4.c)::text = (c)::text))
+   ->  Nested Loop
+         ->  Seq Scan on prt1_l_p3_p2 t1_5
+         ->  Sample Scan on prt1_l_p3_p2 t2_5
+               Sampling: system (t1_5.a) REPEATABLE (t1_5.b)
+               Filter: ((t1_5.a = a) AND (t1_5.b = b) AND ((t1_5.c)::text = (c)::text))
+(26 rows)
+
+-- partitionwise join with lateral reference in scan's restriction clauses
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM prt1_l t1 LEFT JOIN LATERAL
+			  (SELECT t1.b AS t1b, t2.* FROM prt2_l t2) s
+			  ON t1.a = s.b AND t1.b = s.a AND t1.c = s.c
+			  WHERE s.t1b = s.a;
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Append
+         ->  Nested Loop
+               ->  Seq Scan on prt1_l_p1 t1_1
+               ->  Seq Scan on prt2_l_p1 t2_1
+                     Filter: ((a = t1_1.b) AND (t1_1.a = b) AND (t1_1.b = a) AND ((t1_1.c)::text = (c)::text))
+         ->  Nested Loop
+               ->  Seq Scan on prt1_l_p2_p1 t1_2
+               ->  Seq Scan on prt2_l_p2_p1 t2_2
+                     Filter: ((a = t1_2.b) AND (t1_2.a = b) AND (t1_2.b = a) AND ((t1_2.c)::text = (c)::text))
+         ->  Nested Loop
+               ->  Seq Scan on prt1_l_p2_p2 t1_3
+               ->  Seq Scan on prt2_l_p2_p2 t2_3
+                     Filter: ((a = t1_3.b) AND (t1_3.a = b) AND (t1_3.b = a) AND ((t1_3.c)::text = (c)::text))
+         ->  Nested Loop
+               ->  Seq Scan on prt1_l_p3_p1 t1_4
+               ->  Seq Scan on prt2_l_p3_p1 t2_4
+                     Filter: ((a = t1_4.b) AND (t1_4.a = b) AND (t1_4.b = a) AND ((t1_4.c)::text = (c)::text))
+         ->  Nested Loop
+               ->  Seq Scan on prt1_l_p3_p2 t1_5
+               ->  Seq Scan on prt2_l_p3_p2 t2_5
+                     Filter: ((a = t1_5.b) AND (t1_5.a = b) AND (t1_5.b = a) AND ((t1_5.c)::text = (c)::text))
+(22 rows)
+
+SELECT COUNT(*) FROM prt1_l t1 LEFT JOIN LATERAL
+			  (SELECT t1.b AS t1b, t2.* FROM prt2_l t2) s
+			  ON t1.a = s.b AND t1.b = s.a AND t1.c = s.c
+			  WHERE s.t1b = s.a;
+ count 
+-------
+   100
+(1 row)
 
 -- join with one side empty
 EXPLAIN (COSTS OFF)

@@ -30,8 +30,9 @@
 set_join_pathlist_hook_type set_join_pathlist_hook = NULL;
 
 /*
- * Paths parameterized by the parent can be considered to be parameterized by
- * any of its child.
+ * Paths parameterized by a parent rel can be considered to be parameterized
+ * by any of its children, when we are performing partitionwise joins.  These
+ * macros simplify checking for such cases.  Beware multiple eval of args.
  */
 #define PATH_PARAM_BY_PARENT(path, rel)	\
 	((path)->param_info && bms_overlap(PATH_REQ_OUTER(path),	\
@@ -785,6 +786,20 @@ try_nestloop_path(PlannerInfo *root,
 	Assert(!have_unsafe_outer_join_ref(root, outerrelids, inner_paramrels));
 
 	/*
+	 * If the inner path is parameterized, it is parameterized by the topmost
+	 * parent of the outer rel, not the outer rel itself.  We will need to
+	 * translate the parameterization, if this path is chosen, during
+	 * create_plan().  Here we just check whether we will be able to perform
+	 * the translation, and if not avoid creating a nestloop path.
+	 */
+	if (PATH_PARAM_BY_PARENT(inner_path, outer_path->parent) &&
+		!path_is_reparameterizable_by_child(inner_path, outer_path->parent))
+	{
+		bms_free(required_outer);
+		return;
+	}
+
+	/*
 	 * Do a precheck to quickly eliminate obviously-inferior paths.  We
 	 * calculate a cheap lower bound on the path's cost and then use
 	 * add_path_precheck() to see if the path is clearly going to be dominated
@@ -800,27 +815,6 @@ try_nestloop_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  pathkeys, required_outer))
 	{
-		/*
-		 * If the inner path is parameterized, it is parameterized by the
-		 * topmost parent of the outer rel, not the outer rel itself.  Fix
-		 * that.
-		 */
-		if (PATH_PARAM_BY_PARENT(inner_path, outer_path->parent))
-		{
-			inner_path = reparameterize_path_by_child(root, inner_path,
-													  outer_path->parent);
-
-			/*
-			 * If we could not translate the path, we can't create nest loop
-			 * path.
-			 */
-			if (!inner_path)
-			{
-				bms_free(required_outer);
-				return;
-			}
-		}
-
 		add_path(joinrel, (Path *)
 				 create_nestloop_path(root,
 									  joinrel,
@@ -884,6 +878,17 @@ try_partial_nestloop_path(PlannerInfo *root,
 	}
 
 	/*
+	 * If the inner path is parameterized, it is parameterized by the topmost
+	 * parent of the outer rel, not the outer rel itself.  We will need to
+	 * translate the parameterization, if this path is chosen, during
+	 * create_plan().  Here we just check whether we will be able to perform
+	 * the translation, and if not avoid creating a nestloop path.
+	 */
+	if (PATH_PARAM_BY_PARENT(inner_path, outer_path->parent) &&
+		!path_is_reparameterizable_by_child(inner_path, outer_path->parent))
+		return;
+
+	/*
 	 * Before creating a path, get a quick lower bound on what it is likely to
 	 * cost.  Bail out right away if it looks terrible.
 	 */
@@ -891,22 +896,6 @@ try_partial_nestloop_path(PlannerInfo *root,
 						  outer_path, inner_path, extra);
 	if (!add_partial_path_precheck(joinrel, workspace.total_cost, pathkeys))
 		return;
-
-	/*
-	 * If the inner path is parameterized, it is parameterized by the topmost
-	 * parent of the outer rel, not the outer rel itself.  Fix that.
-	 */
-	if (PATH_PARAM_BY_PARENT(inner_path, outer_path->parent))
-	{
-		inner_path = reparameterize_path_by_child(root, inner_path,
-												  outer_path->parent);
-
-		/*
-		 * If we could not translate the path, we can't create nest loop path.
-		 */
-		if (!inner_path)
-			return;
-	}
 
 	/* Might be good enough to be worth trying, so let's try it. */
 	add_partial_path(joinrel, (Path *)
