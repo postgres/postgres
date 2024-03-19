@@ -342,7 +342,7 @@ WHERE unique1 < 3
 ----------------------------------------------------------------
  Index Scan using tenk1_unique1 on tenk1 t0
    Index Cond: (unique1 < 3)
-   Filter: (SubPlan 1)
+   Filter: EXISTS(SubPlan 1)
    SubPlan 1
      ->  Nested Loop
            ->  Index Scan using tenk1_hundred on tenk1 t2

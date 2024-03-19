@@ -3100,7 +3100,7 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
    CTE cte_init
      ->  Result
            Output: 1, 'cte_init val'::text
-   InitPlan 2 (returns $1)
+   InitPlan 2
      ->  Limit
            Output: ((cte_init.b || ' merge update'::text))
            ->  CTE Scan on cte_init
@@ -3143,11 +3143,11 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.a, o.b || (SELECT merge_source_cte.*::text
    CTE merge_source_cte
      ->  Result
            Output: 15, 'merge_source_cte val'::text
-   InitPlan 2 (returns $1)
+   InitPlan 2
      ->  CTE Scan on merge_source_cte merge_source_cte_1
            Output: ((merge_source_cte_1.b || (merge_source_cte_1.*)::text) || ' merge update'::text)
            Filter: (merge_source_cte_1.a = 15)
-   InitPlan 3 (returns $2)
+   InitPlan 3
      ->  CTE Scan on merge_source_cte merge_source_cte_2
            Output: ((merge_source_cte_2.*)::text || ' merge insert'::text)
    ->  Hash Right Join

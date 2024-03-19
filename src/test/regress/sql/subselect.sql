@@ -82,6 +82,20 @@ SELECT f1 AS "Correlated Field"
   WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
                      WHERE f3 IS NOT NULL);
 
+-- Check ROWCOMPARE cases, both correlated and not
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT ROW(1, 2) = (SELECT f1, f2) AS eq FROM SUBSELECT_TBL;
+
+SELECT ROW(1, 2) = (SELECT f1, f2) AS eq FROM SUBSELECT_TBL;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT ROW(1, 2) = (SELECT 3, 4) AS eq FROM SUBSELECT_TBL;
+
+SELECT ROW(1, 2) = (SELECT 3, 4) AS eq FROM SUBSELECT_TBL;
+
+SELECT ROW(1, 2) = (SELECT f1, f2 FROM SUBSELECT_TBL);  -- error
+
 -- Subselects without aliases
 
 SELECT count FROM (SELECT COUNT(DISTINCT name) FROM road);

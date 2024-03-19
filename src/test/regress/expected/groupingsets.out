@@ -559,7 +559,7 @@ explain (costs off)
                          QUERY PLAN                         
 ------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan using tenk1_unique1 on tenk1
                  Index Cond: (unique1 IS NOT NULL)
@@ -2109,14 +2109,14 @@ order by a, b, c;
 -- test handling of outer GroupingFunc within subqueries
 explain (costs off)
 select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
-        QUERY PLAN         
----------------------------
+          QUERY PLAN           
+-------------------------------
  MixedAggregate
-   Hash Key: $2
+   Hash Key: (InitPlan 3).col1
    Group Key: ()
-   InitPlan 1 (returns $1)
+   InitPlan 1
      ->  Result
-   InitPlan 3 (returns $2)
+   InitPlan 3
      ->  Result
    ->  Result
    SubPlan 2
@@ -2132,12 +2132,12 @@ select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
 
 explain (costs off)
 select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
-        QUERY PLAN         
----------------------------
+   QUERY PLAN   
+----------------
  GroupAggregate
-   InitPlan 1 (returns $1)
+   InitPlan 1
      ->  Result
-   InitPlan 3 (returns $2)
+   InitPlan 3
      ->  Result
    ->  Result
    SubPlan 2

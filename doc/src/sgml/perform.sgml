@@ -573,8 +573,106 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     which shows that the planner thinks that sorting <literal>onek</literal> by
     index-scanning is about 12% more expensive than sequential-scan-and-sort.
     Of course, the next question is whether it's right about that.
-    We can investigate that using <command>EXPLAIN ANALYZE</command>, as discussed
-    below.
+    We can investigate that using <command>EXPLAIN ANALYZE</command>, as
+    discussed <link linkend="using-explain-analyze">below</link>.
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>subplan</primary>
+    </indexterm>
+    Some query plans involve <firstterm>subplans</firstterm>, which arise
+    from sub-<literal>SELECT</literal>s in the original query.  Such
+    queries can sometimes be transformed into ordinary join plans, but
+    when they cannot be, we get plans like:
+
+<screen>
+EXPLAIN VERBOSE SELECT unique1
+FROM tenk1 t
+WHERE t.ten &lt; ALL (SELECT o.ten FROM onek o WHERE o.four = t.four);
+
+                               QUERY PLAN
+-------------------------------------------------------------------&zwsp;------
+ Seq Scan on public.tenk1 t  (cost=0.00..586095.00 rows=5000 width=4)
+   Output: t.unique1
+   Filter: (ALL (t.ten &lt; (SubPlan 1).col1))
+   SubPlan 1
+     -&gt;  Seq Scan on public.onek o  (cost=0.00..116.50 rows=250 width=4)
+           Output: o.ten
+           Filter: (o.four = t.four)
+</screen>
+
+    This rather artificial example serves to illustrate a couple of
+    points: values from the outer plan level can be passed down into a
+    subplan (here, <literal>t.four</literal> is passed down) and the
+    results of the sub-select are available to the outer plan.  Those
+    result values are shown by <command>EXPLAIN</command> with notations
+    like
+    <literal>(<replaceable>subplan_name</replaceable>).col<replaceable>N</replaceable></literal>,
+    which refers to the <replaceable>N</replaceable>'th output column of
+    the sub-<literal>SELECT</literal>.
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>subplan</primary>
+     <secondary>hashed</secondary>
+    </indexterm>
+    In the example above, the <literal>ALL</literal> operator runs the
+    subplan again for each row of the outer query (which accounts for the
+    high estimated cost).  Some queries can use a <firstterm>hashed
+    subplan</firstterm> to avoid that:
+
+<screen>
+EXPLAIN SELECT *
+FROM tenk1 t
+WHERE t.unique1 NOT IN (SELECT o.unique1 FROM onek o);
+
+                                         QUERY PLAN
+-------------------------------------------------------------------&zwsp;-------------------------
+ Seq Scan on tenk1 t  (cost=61.77..531.77 rows=5000 width=244)
+   Filter: (NOT (ANY (unique1 = (hashed SubPlan 1).col1)))
+   SubPlan 1
+     -&gt;  Index Only Scan using onek_unique1 on onek o  (cost=0.28..59.27 rows=1000 width=4)
+(4 rows)
+</screen>
+
+    Here, the subplan is run a single time and its output is loaded into
+    an in-memory hash table, which is then probed by the
+    outer <literal>ANY</literal> operator.  This requires that the
+    sub-<literal>SELECT</literal> not reference any variables of the outer
+    query, and that the <literal>ANY</literal>'s comparison operator be
+    amenable to hashing.
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>initplan</primary>
+    </indexterm>
+    If, in addition to not referencing any variables of the outer query,
+    the sub-<literal>SELECT</literal> cannot return more than one row,
+    it may instead be implemented as an <firstterm>initplan</firstterm>:
+
+<screen>
+EXPLAIN VERBOSE SELECT unique1
+FROM tenk1 t1 WHERE t1.ten = (SELECT (random() * 10)::integer);
+
+                             QUERY PLAN
+------------------------------------------------------------&zwsp;--------
+ Seq Scan on public.tenk1 t1  (cost=0.02..470.02 rows=1000 width=4)
+   Output: t1.unique1
+   Filter: (t1.ten = (InitPlan 1).col1)
+   InitPlan 1
+     -&gt;  Result  (cost=0.00..0.02 rows=1 width=4)
+           Output: ((random() * '10'::double precision))::integer
+</screen>
+
+    An initplan is run only once per execution of the outer plan, and its
+    results are saved for re-use in later rows of the outer plan.  So in
+    this example <literal>random()</literal> is evaluated only once and
+    all the values of <literal>t1.ten</literal> are compared to the same
+    randomly-chosen integer.  That's quite different from what would
+    happen without the sub-<literal>SELECT</literal> construct.
    </para>
 
   </sect2>

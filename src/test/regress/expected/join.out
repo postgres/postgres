@@ -3028,10 +3028,10 @@ where unique1 in (select unique2 from tenk1 b);
 explain (costs off)
 select a.* from tenk1 a
 where unique1 not in (select unique2 from tenk1 b);
-                       QUERY PLAN                       
---------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Seq Scan on tenk1 a
-   Filter: (NOT (hashed SubPlan 1))
+   Filter: (NOT (ANY (unique1 = (hashed SubPlan 1).col1)))
    SubPlan 1
      ->  Index Only Scan using tenk1_unique2 on tenk1 b
 (4 rows)
@@ -5278,12 +5278,12 @@ explain (costs off)
 select a.unique1, b.unique2
   from onek a left join onek b on a.unique1 = b.unique2
   where (b.unique2, random() > 0) = any (select q1, random() > 0 from int8_tbl c where c.q1 < b.unique1);
-                        QUERY PLAN                        
-----------------------------------------------------------
+                                                    QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
  Hash Join
    Hash Cond: (b.unique2 = a.unique1)
    ->  Seq Scan on onek b
-         Filter: (SubPlan 1)
+         Filter: (ANY ((unique2 = (SubPlan 1).col1) AND ((random() > '0'::double precision) = (SubPlan 1).col2)))
          SubPlan 1
            ->  Seq Scan on int8_tbl c
                  Filter: (q1 < b.unique1)
@@ -8262,8 +8262,8 @@ lateral (select * from int8_tbl t1,
                                      where q2 = (select greatest(t1.q1,t2.q2))
                                        and (select v.id=0)) offset 0) ss2) ss
          where t1.q1 = ss.q2) ss0;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
  Nested Loop
    Output: "*VALUES*".column1, t1.q1, t1.q2, ss2.q1, ss2.q2
    ->  Seq Scan on public.int8_tbl t1
@@ -8277,20 +8277,20 @@ lateral (select * from int8_tbl t1,
                Filter: (t1.q1 = ss2.q2)
                ->  Seq Scan on public.int8_tbl t2
                      Output: t2.q1, t2.q2
-                     Filter: (SubPlan 3)
+                     Filter: (ANY ((t2.q1 = (SubPlan 3).col1) AND ((random() > '0'::double precision) = (SubPlan 3).col2)))
                      SubPlan 3
                        ->  Result
                              Output: t3.q2, (random() > '0'::double precision)
-                             One-Time Filter: $4
-                             InitPlan 1 (returns $2)
+                             One-Time Filter: (InitPlan 2).col1
+                             InitPlan 1
                                ->  Result
                                      Output: GREATEST(t1.q1, t2.q2)
-                             InitPlan 2 (returns $4)
+                             InitPlan 2
                                ->  Result
                                      Output: ("*VALUES*".column1 = 0)
                              ->  Seq Scan on public.int8_tbl t3
                                    Output: t3.q1, t3.q2
-                                   Filter: (t3.q2 = $2)
+                                   Filter: (t3.q2 = (InitPlan 1).col1)
 (27 rows)
 
 select * from (values (0), (1)) v(id),

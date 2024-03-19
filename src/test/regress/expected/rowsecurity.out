@@ -265,27 +265,27 @@ NOTICE:  f_leak => awesome science fiction
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
-                     QUERY PLAN                     
-----------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Seq Scan on document
-   Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   InitPlan 1 (returns $0)
+   Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
-                        QUERY PLAN                         
------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Hash Join
    Hash Cond: (category.cid = document.cid)
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
    ->  Seq Scan on category
    ->  Hash
          ->  Seq Scan on document
-               Filter: ((dlevel <= $0) AND f_leak(dtitle))
+               Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
 (9 rows)
 
 -- viewpoint from regress_rls_dave
@@ -329,27 +329,27 @@ NOTICE:  f_leak => awesome technology book
 (7 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
-                                          QUERY PLAN                                          
-----------------------------------------------------------------------------------------------
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
  Seq Scan on document
-   Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0) AND f_leak(dtitle))
-   InitPlan 1 (returns $0)
+   Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
-                                                QUERY PLAN                                                
-----------------------------------------------------------------------------------------------------------
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
  Hash Join
    Hash Cond: (category.cid = document.cid)
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
    ->  Seq Scan on category
    ->  Hash
          ->  Seq Scan on document
-               Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= $0) AND f_leak(dtitle))
+               Filter: ((cid <> 44) AND (cid <> 44) AND (cid < 50) AND (dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
 (9 rows)
 
 -- 44 would technically fail for both p2r and p1r, but we should get an error
@@ -987,18 +987,18 @@ NOTICE:  f_leak => my first satire
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                         QUERY PLAN                         
-------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Append
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
    ->  Seq Scan on part_document_fiction part_document_1
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
    ->  Seq Scan on part_document_satire part_document_2
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
    ->  Seq Scan on part_document_nonfiction part_document_3
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
 (10 rows)
 
 -- viewpoint from regress_rls_carol
@@ -1029,18 +1029,18 @@ NOTICE:  f_leak => awesome technology book
 (10 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                         QUERY PLAN                         
-------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Append
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
    ->  Seq Scan on part_document_fiction part_document_1
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
    ->  Seq Scan on part_document_satire part_document_2
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
    ->  Seq Scan on part_document_nonfiction part_document_3
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
 (10 rows)
 
 -- viewpoint from regress_rls_dave
@@ -1059,11 +1059,11 @@ NOTICE:  f_leak => awesome science fiction
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                          QUERY PLAN                          
---------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Seq Scan on part_document_fiction part_document
-   Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
-   InitPlan 1 (returns $0)
+   Filter: ((cid < 55) AND (dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
 (5 rows)
@@ -1137,11 +1137,11 @@ NOTICE:  f_leak => awesome science fiction
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                          QUERY PLAN                          
---------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Seq Scan on part_document_fiction part_document
-   Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
-   InitPlan 1 (returns $0)
+   Filter: ((cid < 55) AND (dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
 (5 rows)
@@ -1176,18 +1176,18 @@ NOTICE:  f_leak => awesome technology book
 (11 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                         QUERY PLAN                         
-------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Append
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
    ->  Seq Scan on part_document_fiction part_document_1
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
    ->  Seq Scan on part_document_satire part_document_2
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
    ->  Seq Scan on part_document_nonfiction part_document_3
-         Filter: ((dlevel <= $0) AND f_leak(dtitle))
+         Filter: ((dlevel <= (InitPlan 1).col1) AND f_leak(dtitle))
 (10 rows)
 
 -- only owner can change policies
@@ -1437,10 +1437,10 @@ NOTICE:  f_leak => 03b26944890929ff751653acb2f2af79
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM only s1 WHERE f_leak(b);
-                        QUERY PLAN                         
------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Seq Scan on s1
-   Filter: ((hashed SubPlan 1) AND f_leak(b))
+   Filter: ((ANY (a = (hashed SubPlan 1).col1)) AND f_leak(b))
    SubPlan 1
      ->  Seq Scan on s2
            Filter: (((x % 2) = 0) AND (y ~~ '%2f%'::text))
@@ -1457,10 +1457,10 @@ NOTICE:  f_leak => 03b26944890929ff751653acb2f2af79
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM s1 WHERE f_leak(b);
-                        QUERY PLAN                         
------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Seq Scan on s1
-   Filter: ((hashed SubPlan 1) AND f_leak(b))
+   Filter: ((ANY (a = (hashed SubPlan 1).col1)) AND f_leak(b))
    SubPlan 1
      ->  Seq Scan on s2
            Filter: (((x % 2) = 0) AND (y ~~ '%af%'::text))
@@ -1480,7 +1480,7 @@ EXPLAIN (COSTS OFF) SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like
    SubPlan 2
      ->  Limit
            ->  Seq Scan on s1
-                 Filter: (hashed SubPlan 1)
+                 Filter: (ANY (a = (hashed SubPlan 1).col1))
                  SubPlan 1
                    ->  Seq Scan on s2 s2_1
                          Filter: (((x % 2) = 0) AND (y ~~ '%af%'::text))
@@ -2717,10 +2717,10 @@ NOTICE:  f_leak => bbb
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Seq Scan on z1
-   Filter: ((NOT (hashed SubPlan 1)) AND ((a % 2) = 0) AND f_leak(b))
+   Filter: ((NOT (ANY (a = (hashed SubPlan 1).col1))) AND ((a % 2) = 0) AND f_leak(b))
    SubPlan 1
      ->  Seq Scan on z1_blacklist
 (4 rows)
@@ -2735,10 +2735,10 @@ NOTICE:  f_leak => bbb
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Seq Scan on z1
-   Filter: ((NOT (hashed SubPlan 1)) AND ((a % 2) = 0) AND f_leak(b))
+   Filter: ((NOT (ANY (a = (hashed SubPlan 1).col1))) AND ((a % 2) = 0) AND f_leak(b))
    SubPlan 1
      ->  Seq Scan on z1_blacklist
 (4 rows)
@@ -2907,10 +2907,10 @@ NOTICE:  f_leak => bbb
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Seq Scan on z1
-   Filter: ((NOT (hashed SubPlan 1)) AND ((a % 2) = 0) AND f_leak(b))
+   Filter: ((NOT (ANY (a = (hashed SubPlan 1).col1))) AND ((a % 2) = 0) AND f_leak(b))
    SubPlan 1
      ->  Seq Scan on z1_blacklist
 (4 rows)
@@ -2933,10 +2933,10 @@ NOTICE:  f_leak => aba
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Seq Scan on z1
-   Filter: ((NOT (hashed SubPlan 1)) AND ((a % 2) = 1) AND f_leak(b))
+   Filter: ((NOT (ANY (a = (hashed SubPlan 1).col1))) AND ((a % 2) = 1) AND f_leak(b))
    SubPlan 1
      ->  Seq Scan on z1_blacklist
 (4 rows)

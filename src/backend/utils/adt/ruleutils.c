@@ -437,6 +437,10 @@ static void resolve_special_varno(Node *node, deparse_context *context,
 								  rsv_callback callback, void *callback_arg);
 static Node *find_param_referent(Param *param, deparse_context *context,
 								 deparse_namespace **dpns_p, ListCell **ancestor_cell_p);
+static SubPlan *find_param_generator(Param *param, deparse_context *context,
+									 int *column_p);
+static SubPlan *find_param_generator_initplan(Param *param, Plan *plan,
+											  int *column_p);
 static void get_parameter(Param *param, deparse_context *context);
 static const char *get_simple_binary_op_name(OpExpr *expr);
 static bool isSimpleNode(Node *node, Node *parentNode, int prettyFlags);
@@ -8135,6 +8139,128 @@ find_param_referent(Param *param, deparse_context *context,
 }
 
 /*
+ * Try to find a subplan/initplan that emits the value for a PARAM_EXEC Param.
+ *
+ * If successful, return the generating subplan/initplan and set *column_p
+ * to the subplan's 0-based output column number.
+ * Otherwise, return NULL.
+ */
+static SubPlan *
+find_param_generator(Param *param, deparse_context *context, int *column_p)
+{
+	/* Initialize output parameter to prevent compiler warnings */
+	*column_p = 0;
+
+	/*
+	 * If it's a PARAM_EXEC parameter, search the current plan node as well as
+	 * ancestor nodes looking for a subplan or initplan that emits the value
+	 * for the Param.  It could appear in the setParams of an initplan or
+	 * MULTIEXPR_SUBLINK subplan, or in the paramIds of an ancestral SubPlan.
+	 */
+	if (param->paramkind == PARAM_EXEC)
+	{
+		SubPlan    *result;
+		deparse_namespace *dpns;
+		ListCell   *lc;
+
+		dpns = (deparse_namespace *) linitial(context->namespaces);
+
+		/* First check the innermost plan node's initplans */
+		result = find_param_generator_initplan(param, dpns->plan, column_p);
+		if (result)
+			return result;
+
+		/*
+		 * The plan's targetlist might contain MULTIEXPR_SUBLINK SubPlans,
+		 * which can be referenced by Params elsewhere in the targetlist.
+		 * (Such Params should always be in the same targetlist, so there's no
+		 * need to do this work at upper plan nodes.)
+		 */
+		foreach_node(TargetEntry, tle, dpns->plan->targetlist)
+		{
+			if (tle->expr && IsA(tle->expr, SubPlan))
+			{
+				SubPlan    *subplan = (SubPlan *) tle->expr;
+
+				if (subplan->subLinkType == MULTIEXPR_SUBLINK)
+				{
+					foreach_int(paramid, subplan->setParam)
+					{
+						if (paramid == param->paramid)
+						{
+							/* Found a match, so return it. */
+							*column_p = foreach_current_index(paramid);
+							return subplan;
+						}
+					}
+				}
+			}
+		}
+
+		/* No luck, so check the ancestor nodes */
+		foreach(lc, dpns->ancestors)
+		{
+			Node	   *ancestor = (Node *) lfirst(lc);
+
+			/*
+			 * If ancestor is a SubPlan, check the paramIds it provides.
+			 */
+			if (IsA(ancestor, SubPlan))
+			{
+				SubPlan    *subplan = (SubPlan *) ancestor;
+
+				foreach_int(paramid, subplan->paramIds)
+				{
+					if (paramid == param->paramid)
+					{
+						/* Found a match, so return it. */
+						*column_p = foreach_current_index(paramid);
+						return subplan;
+					}
+				}
+
+				/* SubPlan isn't a kind of Plan, so skip the rest */
+				continue;
+			}
+
+			/*
+			 * Otherwise, it's some kind of Plan node, so check its initplans.
+			 */
+			result = find_param_generator_initplan(param, (Plan *) ancestor,
+												   column_p);
+			if (result)
+				return result;
+
+			/* No luck, crawl up to next ancestor */
+		}
+	}
+
+	/* No generator found */
+	return NULL;
+}
+
+/*
+ * Subroutine for find_param_generator: search one Plan node's initplans
+ */
+static SubPlan *
+find_param_generator_initplan(Param *param, Plan *plan, int *column_p)
+{
+	foreach_node(SubPlan, subplan, plan->initPlan)
+	{
+		foreach_int(paramid, subplan->setParam)
+		{
+			if (paramid == param->paramid)
+			{
+				/* Found a match, so return it. */
+				*column_p = foreach_current_index(paramid);
+				return subplan;
+			}
+		}
+	}
+	return NULL;
+}
+
+/*
  * Display a Param appropriately.
  */
 static void
@@ -8143,12 +8269,13 @@ get_parameter(Param *param, deparse_context *context)
 	Node	   *expr;
 	deparse_namespace *dpns;
 	ListCell   *ancestor_cell;
+	SubPlan    *subplan;
+	int			column;
 
 	/*
 	 * If it's a PARAM_EXEC parameter, try to locate the expression from which
-	 * the parameter was computed.  Note that failing to find a referent isn't
-	 * an error, since the Param might well be a subplan output rather than an
-	 * input.
+	 * the parameter was computed.  This stanza handles only cases in which
+	 * the Param represents an input to the subplan we are currently in.
 	 */
 	expr = find_param_referent(param, context, &dpns, &ancestor_cell);
 	if (expr)
@@ -8188,6 +8315,24 @@ get_parameter(Param *param, deparse_context *context)
 		context->varprefix = save_varprefix;
 
 		pop_ancestor_plan(dpns, &save_dpns);
+
+		return;
+	}
+
+	/*
+	 * Alternatively, maybe it's a subplan output, which we print as a
+	 * reference to the subplan.  (We could drill down into the subplan and
+	 * print the relevant targetlist expression, but that has been deemed too
+	 * confusing since it would violate normal SQL scope rules.  Also, we're
+	 * relying on this reference to show that the testexpr containing the
+	 * Param has anything to do with that subplan at all.)
+	 */
+	subplan = find_param_generator(param, context, &column);
+	if (subplan)
+	{
+		appendStringInfo(context->buf, "(%s%s).col%d",
+						 subplan->useHashTable ? "hashed " : "",
+						 subplan->plan_name, column + 1);
 
 		return;
 	}
@@ -8240,7 +8385,12 @@ get_parameter(Param *param, deparse_context *context)
 
 	/*
 	 * Not PARAM_EXEC, or couldn't find referent: just print $N.
+	 *
+	 * It's a bug if we get here for anything except PARAM_EXTERN Params, but
+	 * in production builds printing $N seems more useful than failing.
 	 */
+	Assert(param->paramkind == PARAM_EXTERN);
+
 	appendStringInfo(context->buf, "$%d", param->paramid);
 }
 
@@ -8881,12 +9031,79 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * We cannot see an already-planned subplan in rule deparsing,
 				 * only while EXPLAINing a query plan.  We don't try to
 				 * reconstruct the original SQL, just reference the subplan
-				 * that appears elsewhere in EXPLAIN's result.
+				 * that appears elsewhere in EXPLAIN's result.  It does seem
+				 * useful to show the subLinkType and testexpr (if any), and
+				 * we also note whether the subplan will be hashed.
 				 */
-				if (subplan->useHashTable)
-					appendStringInfo(buf, "(hashed %s)", subplan->plan_name);
+				switch (subplan->subLinkType)
+				{
+					case EXISTS_SUBLINK:
+						appendStringInfoString(buf, "EXISTS(");
+						Assert(subplan->testexpr == NULL);
+						break;
+					case ALL_SUBLINK:
+						appendStringInfoString(buf, "(ALL ");
+						Assert(subplan->testexpr != NULL);
+						break;
+					case ANY_SUBLINK:
+						appendStringInfoString(buf, "(ANY ");
+						Assert(subplan->testexpr != NULL);
+						break;
+					case ROWCOMPARE_SUBLINK:
+						/* Parenthesizing the testexpr seems sufficient */
+						appendStringInfoChar(buf, '(');
+						Assert(subplan->testexpr != NULL);
+						break;
+					case EXPR_SUBLINK:
+						/* No need to decorate these subplan references */
+						appendStringInfoChar(buf, '(');
+						Assert(subplan->testexpr == NULL);
+						break;
+					case MULTIEXPR_SUBLINK:
+						/* MULTIEXPR isn't executed in the normal way */
+						appendStringInfoString(buf, "(rescan ");
+						Assert(subplan->testexpr == NULL);
+						break;
+					case ARRAY_SUBLINK:
+						appendStringInfoString(buf, "ARRAY(");
+						Assert(subplan->testexpr == NULL);
+						break;
+					case CTE_SUBLINK:
+						/* This case is unreachable within expressions */
+						appendStringInfoString(buf, "CTE(");
+						Assert(subplan->testexpr == NULL);
+						break;
+				}
+
+				if (subplan->testexpr != NULL)
+				{
+					deparse_namespace *dpns;
+
+					/*
+					 * Push SubPlan into ancestors list while deparsing
+					 * testexpr, so that we can handle PARAM_EXEC references
+					 * to the SubPlan's paramIds.  (This makes it look like
+					 * the SubPlan is an "ancestor" of the current plan node,
+					 * which is a little weird, but it does no harm.)  In this
+					 * path, we don't need to mention the SubPlan explicitly,
+					 * because the referencing Params will show its existence.
+					 */
+					dpns = (deparse_namespace *) linitial(context->namespaces);
+					dpns->ancestors = lcons(subplan, dpns->ancestors);
+
+					get_rule_expr(subplan->testexpr, context, showimplicit);
+					appendStringInfoChar(buf, ')');
+
+					dpns->ancestors = list_delete_first(dpns->ancestors);
+				}
 				else
-					appendStringInfo(buf, "(%s)", subplan->plan_name);
+				{
+					/* No referencing Params, so show the SubPlan's name */
+					if (subplan->useHashTable)
+						appendStringInfo(buf, "hashed %s)", subplan->plan_name);
+					else
+						appendStringInfo(buf, "%s)", subplan->plan_name);
+				}
 			}
 			break;
 

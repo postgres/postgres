@@ -1697,10 +1697,10 @@ WHEN MATCHED AND t.c > s.cnt THEN
            ->  Seq Scan on public.ref r_2
                  Output: r_2.ab, r_2.cd
                  Filter: ((r_2.ab = (s.a + s.b)) AND (r_2.cd = (s.c - s.d)))
-   SubPlan 3 (returns $9,$10)
+   SubPlan 3
      ->  Result
-           Output: s.b, $8
-           InitPlan 2 (returns $8)
+           Output: s.b, (InitPlan 2).col1
+           InitPlan 2
              ->  Aggregate
                    Output: count(*)
                    ->  Seq Scan on public.ref r_1

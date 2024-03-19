@@ -1064,8 +1064,8 @@ SELECT JSON_ARRAY(SELECT i FROM (VALUES (1), (2), (NULL), (4)) foo(i) RETURNING 
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Result
-   Output: $0
-   InitPlan 1 (returns $0)
+   Output: (InitPlan 1).col1
+   InitPlan 1
      ->  Aggregate
            Output: JSON_ARRAYAGG("*VALUES*".column1 RETURNING jsonb)
            ->  Values Scan on "*VALUES*"

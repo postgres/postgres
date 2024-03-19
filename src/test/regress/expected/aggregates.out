@@ -738,7 +738,7 @@ select array(select sum(x+y) s
                             QUERY PLAN                             
 -------------------------------------------------------------------
  Function Scan on pg_catalog.generate_series x
-   Output: (SubPlan 1)
+   Output: ARRAY(SubPlan 1)
    Function Call: generate_series(1, 3)
    SubPlan 1
      ->  Sort
@@ -915,7 +915,7 @@ explain (costs off)
                          QUERY PLAN                         
 ------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan using tenk1_unique1 on tenk1
                  Index Cond: (unique1 IS NOT NULL)
@@ -932,7 +932,7 @@ explain (costs off)
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                  Index Cond: (unique1 IS NOT NULL)
@@ -949,7 +949,7 @@ explain (costs off)
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                  Index Cond: ((unique1 IS NOT NULL) AND (unique1 < 42))
@@ -966,7 +966,7 @@ explain (costs off)
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                  Index Cond: ((unique1 IS NOT NULL) AND (unique1 > 42))
@@ -989,7 +989,7 @@ explain (costs off)
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                  Index Cond: ((unique1 IS NOT NULL) AND (unique1 > 42000))
@@ -1008,7 +1008,7 @@ explain (costs off)
                                  QUERY PLAN                                 
 ----------------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_thous_tenthous on tenk1
                  Index Cond: ((thousand = 33) AND (tenthous IS NOT NULL))
@@ -1025,7 +1025,7 @@ explain (costs off)
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan using tenk1_thous_tenthous on tenk1
                  Index Cond: ((thousand = 33) AND (tenthous IS NOT NULL))
@@ -1046,7 +1046,7 @@ explain (costs off)
  Seq Scan on int4_tbl
    SubPlan 2
      ->  Result
-           InitPlan 1 (returns $1)
+           InitPlan 1
              ->  Limit
                    ->  Index Only Scan using tenk1_unique1 on tenk1
                          Index Cond: ((unique1 IS NOT NULL) AND (unique1 > int4_tbl.f1))
@@ -1069,8 +1069,8 @@ explain (costs off)
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  HashAggregate
-   Group Key: $0
-   InitPlan 1 (returns $0)
+   Group Key: (InitPlan 1).col1
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
@@ -1088,8 +1088,8 @@ explain (costs off)
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Sort
-   Sort Key: ($0)
-   InitPlan 1 (returns $0)
+   Sort Key: ((InitPlan 1).col1)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
@@ -1107,8 +1107,8 @@ explain (costs off)
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Sort
-   Sort Key: ($0)
-   InitPlan 1 (returns $0)
+   Sort Key: ((InitPlan 1).col1)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
@@ -1126,8 +1126,8 @@ explain (costs off)
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Sort
-   Sort Key: (($0 + 1))
-   InitPlan 1 (returns $0)
+   Sort Key: (((InitPlan 1).col1 + 1))
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
@@ -1146,7 +1146,7 @@ explain (costs off)
 ---------------------------------------------------------------------
  Sort
    Sort Key: (generate_series(1, 3)) DESC
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
@@ -1168,7 +1168,7 @@ explain (costs off)
                      QUERY PLAN                     
 ----------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Result
                  One-Time Filter: (100 IS NOT NULL)
@@ -1199,7 +1199,7 @@ explain (costs off)
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Merge Append
                  Sort Key: minmaxtest.f1
@@ -1210,7 +1210,7 @@ explain (costs off)
                  ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2 minmaxtest_3
                        Index Cond: (f1 IS NOT NULL)
                  ->  Index Only Scan using minmaxtest3i on minmaxtest3 minmaxtest_4
-   InitPlan 2 (returns $1)
+   InitPlan 2
      ->  Limit
            ->  Merge Append
                  Sort Key: minmaxtest_5.f1 DESC
@@ -1235,7 +1235,7 @@ explain (costs off)
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Unique
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Merge Append
                  Sort Key: minmaxtest.f1
@@ -1246,7 +1246,7 @@ explain (costs off)
                  ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2 minmaxtest_3
                        Index Cond: (f1 IS NOT NULL)
                  ->  Index Only Scan using minmaxtest3i on minmaxtest3 minmaxtest_4
-   InitPlan 2 (returns $1)
+   InitPlan 2
      ->  Limit
            ->  Merge Append
                  Sort Key: minmaxtest_5.f1 DESC
@@ -1258,7 +1258,7 @@ explain (costs off)
                        Index Cond: (f1 IS NOT NULL)
                  ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest_9
    ->  Sort
-         Sort Key: ($0), ($1)
+         Sort Key: ((InitPlan 1).col1), ((InitPlan 2).col1)
          ->  Result
 (26 rows)
 

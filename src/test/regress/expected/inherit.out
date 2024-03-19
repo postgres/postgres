@@ -1643,8 +1643,8 @@ explain (verbose, costs off) select min(1-id) from matest0;
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
  Result
-   Output: $0
-   InitPlan 1 (returns $0)
+   Output: (InitPlan 1).col1
+   InitPlan 1
      ->  Limit
            Output: ((1 - matest0.id))
            ->  Result
@@ -1800,7 +1800,7 @@ SELECT min(x) FROM
                              QUERY PLAN                             
 --------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Merge Append
                  Sort Key: a.unique1
@@ -1818,7 +1818,7 @@ SELECT min(y) FROM
                              QUERY PLAN                             
 --------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Merge Append
                  Sort Key: a.unique1
@@ -1898,19 +1898,19 @@ insert into inhpar select x, x::text from generate_series(1,5) x;
 insert into inhcld select x::text, x from generate_series(6,10) x;
 explain (verbose, costs off)
 update inhpar i set (f1, f2) = (select i.f1, i.f2 || '-' from int4_tbl limit 1);
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
  Update on public.inhpar i
    Update on public.inhpar i_1
    Update on public.inhcld i_2
    ->  Result
-         Output: $2, $3, (SubPlan 1 (returns $2,$3)), i.tableoid, i.ctid
+         Output: (SubPlan 1).col1, (SubPlan 1).col2, (rescan SubPlan 1), i.tableoid, i.ctid
          ->  Append
                ->  Seq Scan on public.inhpar i_1
                      Output: i_1.f1, i_1.f2, i_1.tableoid, i_1.ctid
                ->  Seq Scan on public.inhcld i_2
                      Output: i_2.f1, i_2.f2, i_2.tableoid, i_2.ctid
-         SubPlan 1 (returns $2,$3)
+         SubPlan 1
            ->  Limit
                  Output: (i.f1), (((i.f2)::text || '-'::text))
                  ->  Seq Scan on public.int4_tbl
@@ -1946,21 +1946,21 @@ alter table inhpar attach partition inhcld2 for values from (5) to (100);
 insert into inhpar select x, x::text from generate_series(1,10) x;
 explain (verbose, costs off)
 update inhpar i set (f1, f2) = (select i.f1, i.f2 || '-' from int4_tbl limit 1);
-                                    QUERY PLAN                                     
------------------------------------------------------------------------------------
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
  Update on public.inhpar i
    Update on public.inhcld1 i_1
    Update on public.inhcld2 i_2
    ->  Append
          ->  Seq Scan on public.inhcld1 i_1
-               Output: $2, $3, (SubPlan 1 (returns $2,$3)), i_1.tableoid, i_1.ctid
-               SubPlan 1 (returns $2,$3)
+               Output: (SubPlan 1).col1, (SubPlan 1).col2, (rescan SubPlan 1), i_1.tableoid, i_1.ctid
+               SubPlan 1
                  ->  Limit
                        Output: (i_1.f1), (((i_1.f2)::text || '-'::text))
                        ->  Seq Scan on public.int4_tbl
                              Output: i_1.f1, ((i_1.f2)::text || '-'::text)
          ->  Seq Scan on public.inhcld2 i_2
-               Output: $2, $3, (SubPlan 1 (returns $2,$3)), i_2.tableoid, i_2.ctid
+               Output: (SubPlan 1).col1, (SubPlan 1).col2, (rescan SubPlan 1), i_2.tableoid, i_2.ctid
 (13 rows)
 
 update inhpar i set (f1, f2) = (select i.f1, i.f2 || '-' from int4_tbl limit 1);
@@ -2845,11 +2845,11 @@ explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
                                            QUERY PLAN                                           
 ------------------------------------------------------------------------------------------------
  Result
-   InitPlan 1 (returns $0)
+   InitPlan 1
      ->  Limit
            ->  Index Only Scan using parted_minmax1i on parted_minmax1 parted_minmax
                  Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))
-   InitPlan 2 (returns $1)
+   InitPlan 2
      ->  Limit
            ->  Index Only Scan Backward using parted_minmax1i on parted_minmax1 parted_minmax_1
                  Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))

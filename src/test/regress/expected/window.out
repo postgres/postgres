@@ -4279,7 +4279,7 @@ WHERE c = 1;
  Subquery Scan on emp
    Filter: (emp.c = 1)
    ->  WindowAgg
-         InitPlan 1 (returns $0)
+         InitPlan 1
            ->  Result
          ->  Sort
                Sort Key: empsalary.empno DESC

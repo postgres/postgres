@@ -1249,8 +1249,8 @@ with cte(c) as materialized (select row(1, 2)),
 select * from cte2 as t
 where (select * from (select c as c1) s
        where (select (c1).f1 > 0)) is not null;
-                 QUERY PLAN                 
---------------------------------------------
+                  QUERY PLAN                  
+----------------------------------------------
  CTE Scan on cte
    Output: cte.c
    Filter: ((SubPlan 3) IS NOT NULL)
@@ -1260,8 +1260,8 @@ where (select * from (select c as c1) s
    SubPlan 3
      ->  Result
            Output: cte.c
-           One-Time Filter: $2
-           InitPlan 2 (returns $2)
+           One-Time Filter: (InitPlan 2).col1
+           InitPlan 2
              ->  Result
                    Output: ((cte.c).f1 > 0)
 (13 rows)

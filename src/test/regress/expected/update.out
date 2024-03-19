@@ -178,15 +178,15 @@ EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE update_test t
   SET (a, b) = (SELECT b, a FROM update_test s WHERE s.a = t.a)
   WHERE CURRENT_USER = SESSION_USER;
-                         QUERY PLAN                          
--------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Update on public.update_test t
    ->  Result
-         Output: $1, $2, (SubPlan 1 (returns $1,$2)), t.ctid
+         Output: (SubPlan 1).col1, (SubPlan 1).col2, (rescan SubPlan 1), t.ctid
          One-Time Filter: (CURRENT_USER = SESSION_USER)
          ->  Seq Scan on public.update_test t
                Output: t.a, t.ctid
-         SubPlan 1 (returns $1,$2)
+         SubPlan 1
            ->  Seq Scan on public.update_test s
                  Output: s.b, s.a
                  Filter: (s.a = t.a)
