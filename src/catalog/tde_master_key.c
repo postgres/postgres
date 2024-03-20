@@ -435,7 +435,8 @@ load_latest_versioned_key_name(TDEMasterKeyInfo *mastere_key_info, GenericKeyrin
     while (true)
     {
         keyInfo = KeyringGetKey(keyring, mastere_key_info->keyId.versioned_name, false, &kr_ret);
-        if (kr_ret != KEYRING_CODE_SUCCESS)
+        /* vault-v2 returns 404 (KEYRING_CODE_RESOURCE_NOT_AVAILABLE) when key is not found */
+        if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
         {
             ereport(ERROR,
                 (errmsg("failed to retrieve master key from keyring provider :\"%s\"", keyring->provider_name),
