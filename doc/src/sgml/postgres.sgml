@@ -258,12 +258,7 @@ break is not needed in a wider output rendering.
   &indexam;
   &generic-wal;
   &custom-rmgr;
-  &btree;
-  &gist;
-  &spgist;
-  &gin;
-  &brin;
-  &hash;
+  &indextypes;
   &storage;
   &transaction;
   &bki;

@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/spgist.sgml -->
 
-<chapter id="spgist">
+<sect1 id="spgist">
 <title>SP-GiST Indexes</title>
 
    <indexterm>
@@ -8,7 +8,7 @@
     <secondary>SP-GiST</secondary>
    </indexterm>
 
-<sect1 id="spgist-intro">
+<sect2 id="spgist-intro">
  <title>Introduction</title>
 
  <para>
@@ -51,9 +51,9 @@
   <ulink url="http://www.sai.msu.su/~megera/wiki/spgist_dev">web site</ulink>.
  </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="spgist-builtin-opclasses">
+<sect2 id="spgist-builtin-opclasses">
  <title>Built-in Operator Classes</title>
 
  <para>
@@ -191,9 +191,9 @@
   search over indexed point or polygon data sets.
  </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="spgist-extensibility">
+<sect2 id="spgist-extensibility">
  <title>Extensibility</title>
 
  <para>
@@ -933,9 +933,9 @@ LANGUAGE C STRICT;
    <function>PG_GET_COLLATION()</function> mechanism.
   </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="spgist-implementation">
+<sect2 id="spgist-implementation">
  <title>Implementation</title>
 
   <para>
@@ -944,7 +944,7 @@ LANGUAGE C STRICT;
    know.
   </para>
 
- <sect2 id="spgist-limits">
+ <sect3 id="spgist-limits">
   <title>SP-GiST Limits</title>
 
   <para>
@@ -991,9 +991,9 @@ LANGUAGE C STRICT;
    leaf datum does not become any smaller within ten cycles
    of <function>choose</function> method calls.
   </para>
- </sect2>
+ </sect3>
 
- <sect2 id="spgist-null-labels">
+ <sect3 id="spgist-null-labels">
   <title>SP-GiST Without Node Labels</title>
 
   <para>
@@ -1018,9 +1018,9 @@ LANGUAGE C STRICT;
    for <function>choose</function> to return <literal>spgAddNode</literal>, since the set
    of nodes is supposed to be fixed in such cases.
   </para>
- </sect2>
+ </sect3>
 
- <sect2 id="spgist-all-the-same">
+ <sect3 id="spgist-all-the-same">
   <title><quote>All-the-Same</quote> Inner Tuples</title>
 
   <para>
@@ -1056,11 +1056,11 @@ LANGUAGE C STRICT;
    depending on how much the <function>inner_consistent</function> function normally
    assumes about the meaning of the nodes.
   </para>
- </sect2>
+ </sect3>
 
-</sect1>
+</sect2>
 
-<sect1 id="spgist-examples">
+<sect2 id="spgist-examples">
  <title>Examples</title>
 
  <para>
@@ -1071,6 +1071,6 @@ LANGUAGE C STRICT;
   and <filename>src/backend/utils/adt/</filename> to see the code.
  </para>
 
-</sect1>
+</sect2>
 
-</chapter>
+</sect1>

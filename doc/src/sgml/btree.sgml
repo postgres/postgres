@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/btree.sgml -->
 
-<chapter id="btree">
+<sect1 id="btree">
 <title>B-Tree Indexes</title>
 
    <indexterm>
@@ -8,7 +8,7 @@
     <secondary>B-Tree</secondary>
    </indexterm>
 
-<sect1 id="btree-intro">
+<sect2 id="btree-intro">
  <title>Introduction</title>
 
  <para>
@@ -30,9 +30,9 @@
   btree <acronym>AM</acronym> make use of them.
  </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="btree-behavior">
+<sect2 id="btree-behavior">
  <title>Behavior of B-Tree Operator Classes</title>
 
  <para>
@@ -200,9 +200,9 @@
   planner relies on them for optimization purposes.
  </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="btree-support-funcs">
+<sect2 id="btree-support-funcs">
  <title>B-Tree Support Functions</title>
 
  <para>
@@ -585,9 +585,9 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
   </varlistentry>
  </variablelist>
 
-</sect1>
+</sect2>
 
-<sect1 id="btree-implementation">
+<sect2 id="btree-implementation">
  <title>Implementation</title>
 
  <para>
@@ -597,7 +597,7 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
   distribution for a much more detailed, internals-focused description
   of the B-Tree implementation.
  </para>
- <sect2 id="btree-structure">
+ <sect3 id="btree-structure">
   <title>B-Tree Structure</title>
   <para>
    <productname>PostgreSQL</productname> B-Tree indexes are
@@ -627,9 +627,9 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    the tree structure by creating a new root page that is one level
    above the original root page.
   </para>
- </sect2>
+ </sect3>
 
- <sect2 id="btree-deletion">
+ <sect3 id="btree-deletion">
   <title>Bottom-up Index Deletion</title>
   <para>
    B-Tree indexes are not directly aware that under MVCC, there might
@@ -731,9 +731,9 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    two logical rows whose lifetimes span the same
    <command>VACUUM</command> cycle).
   </para>
- </sect2>
+ </sect3>
 
- <sect2 id="btree-deduplication">
+ <sect3 id="btree-deduplication">
   <title>Deduplication</title>
   <para>
    A duplicate is a leaf page tuple (a tuple that points to a table
@@ -908,7 +908,7 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    </itemizedlist>
   </para>
 
- </sect2>
-</sect1>
+ </sect3>
+</sect2>
 
-</chapter>
+</sect1>

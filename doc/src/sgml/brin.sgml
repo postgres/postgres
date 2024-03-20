@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/brin.sgml -->
 
-<chapter id="brin">
+<sect1 id="brin">
 <title>BRIN Indexes</title>
 
    <indexterm>
@@ -8,7 +8,7 @@
     <secondary>BRIN</secondary>
    </indexterm>
 
-<sect1 id="brin-intro">
+<sect2 id="brin-intro">
  <title>Introduction</title>
 
  <para>
@@ -64,7 +64,7 @@
   be more precise and more data blocks can be skipped during an index scan.
  </para>
 
- <sect2 id="brin-operation">
+ <sect3 id="brin-operation">
   <title>Index Maintenance</title>
 
   <para>
@@ -136,10 +136,10 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
    See <xref linkend="functions-admin-index"/> for details.
   </para>
 
- </sect2>
-</sect1>
+ </sect3>
+</sect2>
 
-<sect1 id="brin-builtin-opclasses">
+<sect2 id="brin-builtin-opclasses">
  <title>Built-in Operator Classes</title>
 
  <para>
@@ -743,7 +743,7 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
   </tgroup>
  </table>
 
-  <sect2 id="brin-builtin-opclasses--parameters">
+  <sect3 id="brin-builtin-opclasses--parameters">
    <title>Operator Class Parameters</title>
 
    <para>
@@ -808,11 +808,11 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
    </varlistentry>
 
    </variablelist>
-  </sect2>
+  </sect3>
 
-</sect1>
+</sect2>
 
-<sect1 id="brin-extensibility">
+<sect2 id="brin-extensibility">
  <title>Extensibility</title>
 
  <para>
@@ -1340,5 +1340,5 @@ typedef struct BrinOpcInfo
     <literal>float4_minmax_ops</literal> as an example of minmax, and
     <literal>box_inclusion_ops</literal> as an example of inclusion.
  </para>
+</sect2>
 </sect1>
-</chapter>

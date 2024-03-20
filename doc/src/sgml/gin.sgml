@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/gin.sgml -->
 
-<chapter id="gin">
+<sect1 id="gin">
 <title>GIN Indexes</title>
 
    <indexterm>
@@ -8,7 +8,7 @@
     <secondary>GIN</secondary>
    </indexterm>
 
-<sect1 id="gin-intro">
+<sect2 id="gin-intro">
  <title>Introduction</title>
 
  <para>
@@ -60,9 +60,9 @@
   information about <acronym>GIN</acronym> on their
   <ulink url="http://www.sai.msu.su/~megera/wiki/Gin">website</ulink>.
  </para>
-</sect1>
+</sect2>
 
-<sect1 id="gin-builtin-opclasses">
+<sect2 id="gin-builtin-opclasses">
  <title>Built-in Operator Classes</title>
 
  <para>
@@ -140,9 +140,9 @@
   See <xref linkend="json-indexing"/> for details.
  </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="gin-extensibility">
+<sect2 id="gin-extensibility">
  <title>Extensibility</title>
 
  <para>
@@ -458,9 +458,9 @@
   though the actual type might be something else depending on the operator.
  </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="gin-implementation">
+<sect2 id="gin-implementation">
  <title>Implementation</title>
 
  <para>
@@ -497,7 +497,7 @@
   </mediaobject>
  </figure>
 
- <sect2 id="gin-fast-update">
+ <sect3 id="gin-fast-update">
   <title>GIN Fast Update Technique</title>
 
   <para>
@@ -535,9 +535,9 @@
    <acronym>GIN</acronym> index.  See <xref linkend="sql-createindex"/>
    for details.
   </para>
- </sect2>
+ </sect3>
 
- <sect2 id="gin-partial-match">
+ <sect3 id="gin-partial-match">
   <title>Partial Match Algorithm</title>
 
   <para>
@@ -554,11 +554,11 @@
    to be searched, or greater than zero if the index key is past the range
    that could match.
   </para>
- </sect2>
+ </sect3>
 
-</sect1>
+</sect2>
 
-<sect1 id="gin-tips">
+<sect2 id="gin-tips">
 <title>GIN Tips and Tricks</title>
 
  <variablelist>
@@ -653,9 +653,9 @@
   </varlistentry>
  </variablelist>
 
-</sect1>
+</sect2>
 
-<sect1 id="gin-limit">
+<sect2 id="gin-limit">
  <title>Limitations</title>
 
  <para>
@@ -667,9 +667,9 @@
   however that null key values contained within a non-null composite item
   or query value are supported.
  </para>
-</sect1>
+</sect2>
 
-<sect1 id="gin-examples">
+<sect2 id="gin-examples">
  <title>Examples</title>
 
  <para>
@@ -709,6 +709,6 @@
   </varlistentry>
  </variablelist>
  </para>
-</sect1>
+</sect2>
 
-</chapter>
+</sect1>

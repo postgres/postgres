@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/hash.sgml -->
 
-<chapter id="hash-index">
+<sect1 id="hash-index">
 <title>Hash Indexes</title>
 
    <indexterm>
@@ -8,7 +8,7 @@
     <secondary>Hash</secondary>
    </indexterm>
 
-<sect1 id="hash-intro">
+<sect2 id="hash-intro">
  <title>Overview</title>
 
  <para>
@@ -108,9 +108,9 @@
   with rapidly increasing number of rows.
  </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="hash-implementation">
+<sect2 id="hash-implementation">
  <title>Implementation</title>
 
  <para>
@@ -157,6 +157,6 @@
   successfully.
  </para>
 
-</sect1>
+</sect2>
 
-</chapter>
+</sect1>

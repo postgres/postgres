@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/gist.sgml -->
 
-<chapter id="gist">
+<sect1 id="gist">
 <title>GiST Indexes</title>
 
    <indexterm>
@@ -8,7 +8,7 @@
     <secondary>GiST</secondary>
    </indexterm>
 
-<sect1 id="gist-intro">
+<sect2 id="gist-intro">
  <title>Introduction</title>
 
  <para>
@@ -38,9 +38,9 @@
     <ulink url="http://www.sai.msu.su/~megera/postgres/gist/">web site</ulink>.
   </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="gist-builtin-opclasses">
+<sect2 id="gist-builtin-opclasses">
  <title>Built-in Operator Classes</title>
 
  <para>
@@ -222,9 +222,9 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
 </programlisting>
  </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="gist-extensibility">
+<sect2 id="gist-extensibility">
  <title>Extensibility</title>
 
  <para>
@@ -1260,12 +1260,12 @@ my_stratnum(PG_FUNCTION_ARGS)
    will accumulate for the duration of the operation.
   </para>
 
-</sect1>
+</sect2>
 
-<sect1 id="gist-implementation">
+<sect2 id="gist-implementation">
  <title>Implementation</title>
 
- <sect2 id="gist-buffering-build">
+ <sect3 id="gist-buffering-build">
   <title>GiST Index Build Methods</title>
 
   <para>
@@ -1314,10 +1314,10 @@ my_stratnum(PG_FUNCTION_ARGS)
    is ordered.
   </para>
 
- </sect2>
-</sect1>
+ </sect3>
+</sect2>
 
-<sect1 id="gist-examples">
+<sect2 id="gist-examples">
  <title>Examples</title>
 
  <para>
@@ -1382,6 +1382,6 @@ my_stratnum(PG_FUNCTION_ARGS)
  </variablelist>
  </para>
 
-</sect1>
+</sect2>
 
-</chapter>
+</sect1>
