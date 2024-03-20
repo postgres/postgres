@@ -29,8 +29,6 @@
 /* Working data for heap_page_prune and subroutines */
 typedef struct
 {
-	Relation	rel;
-
 	/* tuple visibility test, initialized for the relation */
 	GlobalVisState *vistest;
 	/* whether or not dead items can be set LP_UNUSED during pruning */
@@ -235,7 +233,6 @@ heap_page_prune(Relation relation, Buffer buffer,
 	 * initialize the rest of our working state.
 	 */
 	prstate.new_prune_xid = InvalidTransactionId;
-	prstate.rel = relation;
 	prstate.vistest = vistest;
 	prstate.mark_unused_now = mark_unused_now;
 	prstate.snapshotConflictHorizon = InvalidTransactionId;
@@ -250,7 +247,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 	presult->nnewlpdead = 0;
 
 	maxoff = PageGetMaxOffsetNumber(page);
-	tup.t_tableOid = RelationGetRelid(prstate.rel);
+	tup.t_tableOid = RelationGetRelid(relation);
 
 	/*
 	 * Determine HTSV for all tuples.
