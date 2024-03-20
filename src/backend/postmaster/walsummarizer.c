@@ -140,7 +140,7 @@ static XLogRecPtr redo_pointer_at_last_summary_removal = InvalidXLogRecPtr;
  * GUC parameters
  */
 bool		summarize_wal = false;
-int			wal_summary_keep_time = 10 * 24 * 60;
+int			wal_summary_keep_time = 10 * HOURS_PER_DAY * MINS_PER_HOUR;
 
 static void WalSummarizerShutdown(int code, Datum arg);
 static XLogRecPtr GetLatestLSN(TimeLineID *tli);
@@ -1480,7 +1480,7 @@ MaybeRemoveOldWalSummaries(void)
 	 * Files should only be removed if the last modification time precedes the
 	 * cutoff time we compute here.
 	 */
-	cutoff_time = time(NULL) - 60 * wal_summary_keep_time;
+	cutoff_time = time(NULL) - wal_summary_keep_time * SECS_PER_MINUTE;
 
 	/* Get all the summaries that currently exist. */
 	wslist = GetWalSummaries(0, InvalidXLogRecPtr, InvalidXLogRecPtr);

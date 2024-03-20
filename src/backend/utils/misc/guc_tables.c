@@ -3293,9 +3293,9 @@ struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MIN,
 		},
 		&wal_summary_keep_time,
-		10 * 24 * 60,			/* 10 days */
+		10 * HOURS_PER_DAY * MINS_PER_HOUR, /* 10 days */
 		0,
-		INT_MAX,
+		INT_MAX / SECS_PER_MINUTE,
 		NULL, NULL, NULL
 	},
 
