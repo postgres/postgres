@@ -24872,7 +24872,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
      <tbody>
       <row>
-       <entry role="func_table_entry"><para role="func_signature">
+       <entry id="format-type" xreflabel="format_type" role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>format_type</primary>
         </indexterm>
@@ -25387,18 +25387,8 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         OID for comparison purposes but displays as a type name.
        </para>
        <para>
-        For example:
-<programlisting>
-SELECT pg_typeof(33);
- pg_typeof
------------
- integer
-
-SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
- typlen
---------
-      4
-</programlisting>
+        <literal>pg_typeof(33)</literal>
+        <returnvalue>integer</returnvalue>
        </para></entry>
       </row>
 
@@ -25418,18 +25408,12 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
         collatable data type, then an error is raised.
        </para>
        <para>
-        For example:
-<programlisting>
-SELECT collation for (description) FROM pg_description LIMIT 1;
- pg_collation_for
-------------------
- "default"
-
-SELECT collation for ('foo' COLLATE "de_DE");
- pg_collation_for
-------------------
- "de_DE"
-</programlisting>
+        <literal>collation for ('foo'::text)</literal>
+        <returnvalue>"default"</returnvalue>
+       </para>
+       <para>
+        <literal>collation for ('foo' COLLATE "de_DE")</literal>
+        <returnvalue>"de_DE"</returnvalue>
        </para></entry>
       </row>
 
@@ -25570,7 +25554,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
       </row>
 
       <row>
-       <entry role="func_table_entry"><para role="func_signature">
+       <entry id="to-regtype" xreflabel="to_regtype" role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>to_regtype</primary>
         </indexterm>
@@ -25578,11 +25562,42 @@ SELECT collation for ('foo' COLLATE "de_DE");
         <returnvalue>regtype</returnvalue>
        </para>
        <para>
-        Translates a textual type name to its OID.  A similar result is
-        obtained by casting the string to type <type>regtype</type> (see
-        <xref linkend="datatype-oid"/>); however, this function will return
-        <literal>NULL</literal> rather than throwing an error if the name is
-        not found.
+        Parses a string of text, extracts a potential type name from it,
+        and translates that name into a type OID.  A syntax error in the
+        string will result in an error; but if the string is a
+        syntactically valid type name that happens not to be found in the
+        catalogs, the result is <literal>NULL</literal>.  A similar result
+        is obtained by casting the string to type <type>regtype</type>
+        (see <xref linkend="datatype-oid"/>), except that that will throw
+        error for name not found.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>to_regtypemod</primary>
+        </indexterm>
+        <function>to_regtypemod</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Parses a string of text, extracts a potential type name from it,
+        and translates its type modifier, if any.  A syntax error in the
+        string will result in an error; but if the string is a
+        syntactically valid type name that happens not to be found in the
+        catalogs, the result is <literal>NULL</literal>.  The result is
+        <literal>-1</literal> if no type modifier is present.
+       </para>
+       <para>
+        <function>to_regtypemod</function> can be combined with
+        <xref linkend="to-regtype"/> to produce appropriate inputs for
+        <xref linkend="format-type"/>, allowing a string representing a
+        type name to be canonicalized.
+       </para>
+       <para>
+        <literal>format_type(to_regtype('varchar(32)'), to_regtypemod('varchar(32)'))</literal>
+        <returnvalue>character varying(32)</returnvalue>
        </para></entry>
       </row>
      </tbody>

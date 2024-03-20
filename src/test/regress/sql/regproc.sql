@@ -123,6 +123,14 @@ SELECT to_regnamespace('Nonexistent');
 SELECT to_regnamespace('"Nonexistent"');
 SELECT to_regnamespace('foo.bar');
 
+-- Test to_regtypemod
+SELECT to_regtypemod('text');
+SELECT to_regtypemod('timestamp(4)');
+SELECT to_regtypemod('no_such_type(4)');
+SELECT format_type(to_regtype('varchar(32)'), to_regtypemod('varchar(32)'));
+SELECT format_type(to_regtype('bit'), to_regtypemod('bit'));
+SELECT format_type(to_regtype('"bit"'), to_regtypemod('"bit"'));
+
 -- Test soft-error API
 
 SELECT * FROM pg_input_error_info('ng_catalog.pg_class', 'regclass');

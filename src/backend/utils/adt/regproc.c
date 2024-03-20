@@ -1221,6 +1221,26 @@ to_regtype(PG_FUNCTION_ARGS)
 }
 
 /*
+ * to_regtypemod	- converts "typename" to type modifier
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regtypemod(PG_FUNCTION_ARGS)
+{
+	char	   *typ_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Oid			typid;
+	int32		typmod;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+	/* We rely on parseTypeString to parse the input. */
+	if (!parseTypeString(typ_name, &typid, &typmod, (Node *) &escontext))
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT32(typmod);
+}
+
+/*
  * regtypeout		- converts type OID to "typ_name"
  */
 Datum

@@ -447,6 +447,43 @@ SELECT to_regnamespace('foo.bar');
  
 (1 row)
 
+-- Test to_regtypemod
+SELECT to_regtypemod('text');
+ to_regtypemod 
+---------------
+            -1
+(1 row)
+
+SELECT to_regtypemod('timestamp(4)');
+ to_regtypemod 
+---------------
+             4
+(1 row)
+
+SELECT to_regtypemod('no_such_type(4)');
+ to_regtypemod 
+---------------
+              
+(1 row)
+
+SELECT format_type(to_regtype('varchar(32)'), to_regtypemod('varchar(32)'));
+      format_type      
+-----------------------
+ character varying(32)
+(1 row)
+
+SELECT format_type(to_regtype('bit'), to_regtypemod('bit'));
+ format_type 
+-------------
+ bit(1)
+(1 row)
+
+SELECT format_type(to_regtype('"bit"'), to_regtypemod('"bit"'));
+ format_type 
+-------------
+ "bit"
+(1 row)
+
 -- Test soft-error API
 SELECT * FROM pg_input_error_info('ng_catalog.pg_class', 'regclass');
                     message                    | detail | hint | sql_error_code 
