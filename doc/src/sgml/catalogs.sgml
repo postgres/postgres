@@ -2010,9 +2010,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The tablespace in which this relation is stored.  If zero,
-       the database's default tablespace is implied.  (Not meaningful
-       if the relation has no on-disk file.)
+       The tablespace in which this relation is stored.
+       If zero, the database's default tablespace is implied.
+       Not meaningful if the relation has no on-disk file,
+       except for partitioned tables, where this is the tablespace
+       in which partitions will be created when one is not
+       specified in the creation command.
       </para></entry>
      </row>
 
