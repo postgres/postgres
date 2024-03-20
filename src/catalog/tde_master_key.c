@@ -67,7 +67,7 @@ static int  required_locks_count(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void master_key_startup_cleanup(int tde_tbl_count, void *arg);
 static keyInfo *load_latest_versioned_key_name(TDEMasterKeyInfo *mastere_key_info, GenericKeyring *keyring, bool ensure_new_key);
-
+static void clear_master_key_cache(Oid databaseId, Oid tablespaceId) ;
 static inline dshash_table *get_master_key_Hash(void);
 static TDEMasterKey *get_master_key_from_cache(Oid dbOid, bool acquire_lock);
 static void push_master_key_to_cache(TDEMasterKey *masterKey);
@@ -407,7 +407,7 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool en
 
     new_master_key.keyLength = keyInfo->data.len;
     memcpy(new_master_key.keyData, keyInfo->data.data, keyInfo->data.len);
-
+    clear_master_key_cache(MyDatabaseId, MyDatabaseTableSpace);
     return pg_tde_perform_rotate_key(master_key, &new_master_key);
 }
 
@@ -595,6 +595,19 @@ master_key_startup_cleanup(int tde_tbl_count, void* arg)
 void
 cleanup_master_key_info(Oid databaseId, Oid tablespaceId)
 {
+    clear_master_key_cache(databaseId, tablespaceId);
+    /*
+        * TODO: Although should never happen. Still verify if any table in the
+        * database is using tde
+        */
+
+    /* Remove the tde files */
+    pg_tde_delete_tde_files(databaseId);
+}
+
+static void
+clear_master_key_cache(Oid databaseId, Oid tablespaceId)
+{
     TDEMasterKey *cache_entry;
 
     /* Start with deleting the cache entry for the database */
@@ -604,14 +617,6 @@ cleanup_master_key_info(Oid databaseId, Oid tablespaceId)
     {
         dshash_delete_entry(get_master_key_Hash(), cache_entry);
     }
-
-    /*
-     * TODO: Although should never happen. Still verify if any table in the
-     * database is using tde
-     */
-
-    /* Remove the tde files */
-    pg_tde_delete_tde_files(databaseId);
 }
 
 /*

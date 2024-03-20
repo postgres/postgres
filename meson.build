@@ -84,6 +84,7 @@ tests += {
   'tap': {
     'tests': [
       't/001_basic.pl',
+      't/002_rotate_key.pl',
     ],
   },
 }
