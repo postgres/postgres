@@ -197,18 +197,17 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * array following array truncation by us.
  *
  * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
- * (see heap_prune_satisfies_vacuum and
- * HeapTupleSatisfiesVacuum).
+ * (see heap_prune_satisfies_vacuum).
  *
- * mark_unused_now indicates whether or not dead items can be set LP_UNUSED during
- * pruning.
- *
- * off_loc is the offset location required by the caller to use in error
- * callback.
+ * mark_unused_now indicates whether or not dead items can be set LP_UNUSED
+ * during pruning.
  *
  * presult contains output parameters needed by callers such as the number of
  * tuples removed and the number of line pointers newly marked LP_DEAD.
  * heap_page_prune() is responsible for initializing it.
+ *
+ * off_loc is the offset location required by the caller to use in error
+ * callback.
  */
 void
 heap_page_prune(Relation relation, Buffer buffer,
