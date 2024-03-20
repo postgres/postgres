@@ -17,7 +17,7 @@
 #include "nodes/pg_list.h"
 
 #define MASTER_KEY_NAME_LEN TDE_KEY_NAME_LEN
-#define MAX_MASTER_KEY_VERSION_NUM 1000
+#define MAX_MASTER_KEY_VERSION_NUM 100000
 
 typedef struct TDEMasterKeyId
 {
@@ -66,7 +66,7 @@ extern bool save_master_key_info(TDEMasterKeyInfo *masterKeyInfo);
 
 extern Oid GetMasterKeyProviderId(void);
 extern TDEMasterKey* GetMasterKey(void);
-extern bool SetMasterKey(const char *key_name, const char *provider_name);
-extern bool RotateMasterKey(const char *new_key_name, const char *new_provider_name);
+extern bool SetMasterKey(const char *key_name, const char *provider_name, bool ensure_new_key);
+extern bool RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool ensure_new_key);
 
 #endif /*PG_TDE_MASTER_KEY_H*/

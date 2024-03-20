@@ -45,14 +45,11 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 	off_t bytes_read = 0;
 	off_t curr_pos = 0;
 
-	file = PathNameOpenFile(file_keyring->file_name, O_CREAT | O_RDWR | PG_BINARY);
+	*return_code = KEYRING_CODE_SUCCESS;
+
+	file = PathNameOpenFile(file_keyring->file_name, PG_BINARY);
 	if (file < 0)
-	{
-		*return_code = KEYRING_CODE_RESOURCE_NOT_ACCESSABLE;
-			ereport(throw_error ? ERROR : NOTICE,
-					(errmsg("Failed to open keyring file :%s %m", file_keyring->file_name)));
 		return NULL;
-	}
 
 	key = palloc(sizeof(keyInfo));
 	while(true)
@@ -62,19 +59,24 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 
 		if (bytes_read == 0 )
 		{
+			/*
+			 * Empty keyring file is considered as a valid keyring file that has no keys
+			 */
+			FileClose(file);
 			pfree(key);
-			*return_code = KEYRING_CODE_RESOURCE_NOT_AVAILABLE;
 			return NULL;
 		}
 		if (bytes_read != sizeof(keyInfo))
 		{
+			FileClose(file);
 			pfree(key);
 			/* Corrupt file */
 			*return_code = KEYRING_CODE_DATA_CORRUPTED;
 			ereport(throw_error?ERROR:WARNING,
 				(errcode_for_file_access(),
 					errmsg("keyring file \"%s\" is corrupted: %m",
-						file_keyring->file_name)));
+						file_keyring->file_name),
+						errdetail("invalid key size %d expected %d", bytes_read, sizeof(keyInfo))));
 			return NULL;
 		}
 		if (strncasecmp(key->name.name, key_name, sizeof(key->name.name)) == 0)
@@ -83,7 +85,6 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 			return key;
 		}
 	}
-	*return_code = KEYRING_CODE_SUCCESS;
 	FileClose(file);
 	pfree(key);
     return NULL;
@@ -93,7 +94,8 @@ static KeyringReturnCodes
 set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 {
     off_t bytes_written = 0;
-	File file;
+	off_t curr_pos = 0;
+		File file;
 	FileKeyring* file_keyring = (FileKeyring*)keyring;
 	keyInfo *existing_key;
 	KeyringReturnCodes return_code = KEYRING_CODE_SUCCESS;
@@ -118,9 +120,11 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
         return KEYRING_CODE_RESOURCE_NOT_ACCESSABLE;
     }
 	/* Write key to the end of file */
-	lseek(file, 0, SEEK_END);
-	bytes_written = FileWrite(file, key, sizeof(keyInfo), 0, WAIT_EVENT_DATA_FILE_WRITE);
-    if (bytes_written != sizeof(keyInfo))
+	curr_pos = FileSize(file);
+	ereport(NOTICE,
+			(errmsg("Writing key to file %s at offset %ld", file_keyring->file_name, curr_pos)));
+	bytes_written = FileWrite(file, key, sizeof(keyInfo), curr_pos, WAIT_EVENT_DATA_FILE_WRITE);
+	if (bytes_written != sizeof(keyInfo))
     {
         FileClose(file);
         ereport(throw_error?ERROR:WARNING,
