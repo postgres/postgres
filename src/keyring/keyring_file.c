@@ -76,7 +76,7 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 				(errcode_for_file_access(),
 					errmsg("keyring file \"%s\" is corrupted: %m",
 						file_keyring->file_name),
-						errdetail("invalid key size %d expected %d", bytes_read, sizeof(keyInfo))));
+						errdetail("invalid key size %lu expected %lu", bytes_read, sizeof(keyInfo))));
 			return NULL;
 		}
 		if (strncasecmp(key->name.name, key_name, sizeof(key->name.name)) == 0)

@@ -1112,7 +1112,7 @@ pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key
  * Rotate keys on a standby.
  */
 bool
-xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
+pg_tde_write_map_keydata_files(off_t map_size, char *m_file_data, off_t keydata_size, char *k_file_data)
 {
 	TDEFileHeader *fheader;
 	char m_path_new[MAXPGPATH];
@@ -1124,9 +1124,7 @@ xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
 	off_t read_pos_tmp = 0;
 
 	/* Let's get the header. Buff should start with the map file header. */
-	fheader = (TDEFileHeader *) xlrec->buff;
-
-	ereport(LOG, (errmsg("xl_tde_rotate => %s", fheader->master_key_info.keyId.name)));
+	fheader = (TDEFileHeader *) m_file_data;
 
 	/* Set the file paths */
 	pg_tde_set_db_file_paths(fheader->master_key_info.databaseId);
@@ -1135,7 +1133,7 @@ xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
 	m_file_new = keyrotation_init_file(&fheader->master_key_info, m_path_new, db_map_path, &is_new_file, &curr_pos);
 	k_file_new = keyrotation_init_file(&fheader->master_key_info, k_path_new, db_keydata_path, &is_new_file, &read_pos_tmp);
 
-	if (FileWrite(m_file_new, xlrec->buff, xlrec->map_size, 0, WAIT_EVENT_DATA_FILE_WRITE) != xlrec->map_size)
+	if (FileWrite(m_file_new, m_file_data, map_size, 0, WAIT_EVENT_DATA_FILE_WRITE) != map_size)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
@@ -1143,7 +1141,7 @@ xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
 						m_path_new)));
 	}
 
-	if (FileWrite(k_file_new, &xlrec->buff[xlrec->map_size], xlrec->keydata_size, 0, WAIT_EVENT_DATA_FILE_WRITE) != xlrec->keydata_size)
+	if (FileWrite(k_file_new, k_file_data, keydata_size, 0, WAIT_EVENT_DATA_FILE_WRITE) != keydata_size)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),

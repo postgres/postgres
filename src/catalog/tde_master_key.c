@@ -412,6 +412,20 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool en
 }
 
 /*
+ * Rotate keys on a standby.
+ */
+bool
+xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
+{
+    bool ret;
+
+    ret = pg_tde_write_map_keydata_files(xlrec->map_size, xlrec->buff, xlrec->keydata_size, &xlrec->buff[xlrec->map_size]);
+    clear_master_key_cache(MyDatabaseId, MyDatabaseTableSpace);
+
+	return ret;
+}
+
+/*
 * Load the latest versioned key name for the master key
 * If ensure_new_key is true, then we will keep on incrementing the version number
 * till we get a key name that is not present in the keyring

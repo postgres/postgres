@@ -68,5 +68,6 @@ extern Oid GetMasterKeyProviderId(void);
 extern TDEMasterKey* GetMasterKey(void);
 extern bool SetMasterKey(const char *key_name, const char *provider_name, bool ensure_new_key);
 extern bool RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool ensure_new_key);
+extern bool xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec);
 
 #endif /*PG_TDE_MASTER_KEY_H*/
