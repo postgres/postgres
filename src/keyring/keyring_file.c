@@ -121,8 +121,6 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
     }
 	/* Write key to the end of file */
 	curr_pos = FileSize(file);
-	ereport(NOTICE,
-			(errmsg("Writing key to file %s at offset %ld", file_keyring->file_name, curr_pos)));
 	bytes_written = FileWrite(file, key, sizeof(keyInfo), curr_pos, WAIT_EVENT_DATA_FILE_WRITE);
 	if (bytes_written != sizeof(keyInfo))
     {
