@@ -208,7 +208,6 @@ child_process_kind child_process_kinds[] = {
 const char *
 PostmasterChildName(BackendType child_type)
 {
-	Assert(child_type >= 0 && child_type < lengthof(child_process_kinds));
 	return child_process_kinds[child_type].name;
 }
 
@@ -230,7 +229,6 @@ postmaster_child_launch(BackendType child_type,
 {
 	pid_t		pid;
 
-	Assert(child_type >= 0 && child_type < lengthof(child_process_kinds));
 	Assert(IsPostmasterEnvironment && !IsUnderPostmaster);
 
 #ifdef EXEC_BACKEND

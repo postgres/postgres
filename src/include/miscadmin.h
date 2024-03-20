@@ -326,6 +326,9 @@ extern void SwitchBackToLocalLatch(void);
 
 /*
  * MyBackendType indicates what kind of a backend this is.
+ *
+ * If you add entries, please also update the child_process_kinds array in
+ * launch_backend.c.
  */
 typedef enum BackendType
 {
