@@ -220,6 +220,19 @@ my %pgdump_runs = (
 			'--extension=test_pg_dump', 'postgres',
 		],
 	},
+	exclude_extension => {
+		dump_cmd => [
+			'pg_dump', '--no-sync', "--file=$tempdir/exclude_extension.sql",
+			'--exclude-extension=test_pg_dump', 'postgres',
+		],
+	},
+	exclude_extension_filter => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			"--file=$tempdir/exclude_extension_filter.sql",
+			"--filter=$tempdir/exclude_extension_filter.txt", 'postgres',
+		],
+	},
 
 	# plpgsql in the list blocks the dump of extension test_pg_dump
 	without_extension => {
@@ -299,6 +312,8 @@ my %full_runs = (
 	no_owner => 1,
 	privileged_internals => 1,
 	with_extension => 1,
+	exclude_extension => 1,
+	exclude_extension_filter => 1,
 	without_extension => 1);
 
 my %tests = (
@@ -325,7 +340,12 @@ my %tests = (
 			schema_only => 1,
 			section_pre_data => 1,
 		},
-		unlike => { binary_upgrade => 1, without_extension => 1 },
+		unlike => {
+			binary_upgrade => 1,
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1
+		},
 	},
 
 	'CREATE ROLE regress_dump_test_role' => {
@@ -434,7 +454,11 @@ my %tests = (
 			section_data => 1,
 			extension_schema => 1,
 		},
-		unlike => { without_extension => 1, },
+		unlike => {
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1,
+		},
 	},
 
 	'CREATE TABLE regress_pg_dump_table' => {
@@ -460,6 +484,8 @@ my %tests = (
 		unlike => {
 			binary_upgrade => 1,
 			exclude_table => 1,
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
 			without_extension => 1,
 		},
 	},
@@ -483,7 +509,12 @@ my %tests = (
 			schema_only => 1,
 			section_pre_data => 1,
 		},
-		unlike => { no_privs => 1, without_extension => 1, },
+		unlike => {
+			no_privs => 1,
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1,
+		},
 	},
 
 	'REVOKE GRANT OPTION FOR UPDATE ON SEQUENCE wgo_then_regular' => {
@@ -500,7 +531,12 @@ my %tests = (
 			schema_only => 1,
 			section_pre_data => 1,
 		},
-		unlike => { no_privs => 1, without_extension => 1, },
+		unlike => {
+			no_privs => 1,
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1,
+		},
 	},
 
 	'CREATE ACCESS METHOD regress_test_am' => {
@@ -520,7 +556,11 @@ my %tests = (
 			schema_only => 1,
 			section_pre_data => 1,
 		},
-		unlike => { without_extension => 1, },
+		unlike => {
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1,
+		},
 	},
 
 	'GRANT SELECT regress_pg_dump_table_added pre-ALTER EXTENSION' => {
@@ -545,7 +585,12 @@ my %tests = (
 			schema_only => 1,
 			section_pre_data => 1,
 		},
-		unlike => { no_privs => 1, without_extension => 1, },
+		unlike => {
+			no_privs => 1,
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1,
+		},
 	},
 
 	'GRANT SELECT ON TABLE regress_pg_dump_table' => {
@@ -579,7 +624,12 @@ my %tests = (
 			schema_only => 1,
 			section_pre_data => 1,
 		},
-		unlike => { no_privs => 1, without_extension => 1 },
+		unlike => {
+			no_privs => 1,
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1
+		},
 	  },
 
 	'GRANT USAGE ON regress_pg_dump_table_col1_seq TO regress_dump_test_role'
@@ -595,7 +645,12 @@ my %tests = (
 			schema_only => 1,
 			section_pre_data => 1,
 		},
-		unlike => { no_privs => 1, without_extension => 1, },
+		unlike => {
+			no_privs => 1,
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1,
+		},
 	  },
 
 	'GRANT USAGE ON regress_pg_dump_seq TO regress_dump_test_role' => {
@@ -617,7 +672,12 @@ my %tests = (
 			schema_only => 1,
 			section_pre_data => 1,
 		},
-		unlike => { no_privs => 1, without_extension => 1, },
+		unlike => {
+			no_privs => 1,
+			exclude_extension => 1,
+			exclude_extension_filter => 1,
+			without_extension => 1,
+		},
 	},
 
 	# Objects included in extension part of a schema created by this extension */
@@ -817,6 +877,16 @@ foreach my $test (
 
 # Send the combined set of commands to psql
 $node->safe_psql('postgres', $create_sql);
+
+#########################################
+# Create filter file for exclude_extension_filter test
+
+my $filterfile;
+
+open $filterfile, '>', "$tempdir/exclude_extension_filter.txt"
+  or die "unable to open filter file for writing";
+print $filterfile "exclude extension test_pg_dump\n";
+close $filterfile;
 
 #########################################
 # Run all runs
