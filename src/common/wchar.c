@@ -477,39 +477,6 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 
 /*
- * Map a Unicode code point to UTF-8.  utf8string must have at least
- * unicode_utf8len(c) bytes available.
- */
-unsigned char *
-unicode_to_utf8(pg_wchar c, unsigned char *utf8string)
-{
-	if (c <= 0x7F)
-	{
-		utf8string[0] = c;
-	}
-	else if (c <= 0x7FF)
-	{
-		utf8string[0] = 0xC0 | ((c >> 6) & 0x1F);
-		utf8string[1] = 0x80 | (c & 0x3F);
-	}
-	else if (c <= 0xFFFF)
-	{
-		utf8string[0] = 0xE0 | ((c >> 12) & 0x0F);
-		utf8string[1] = 0x80 | ((c >> 6) & 0x3F);
-		utf8string[2] = 0x80 | (c & 0x3F);
-	}
-	else
-	{
-		utf8string[0] = 0xF0 | ((c >> 18) & 0x07);
-		utf8string[1] = 0x80 | ((c >> 12) & 0x3F);
-		utf8string[2] = 0x80 | ((c >> 6) & 0x3F);
-		utf8string[3] = 0x80 | (c & 0x3F);
-	}
-
-	return utf8string;
-}
-
-/*
  * Trivial conversion from pg_wchar to UTF-8.
  * caller should allocate enough space for "to"
  * len: length of from.
@@ -668,34 +635,6 @@ ucs_wcwidth(pg_wchar ucs)
 		return 2;
 
 	return 1;
-}
-
-/*
- * Convert a UTF-8 character to a Unicode code point.
- * This is a one-character version of pg_utf2wchar_with_len.
- *
- * No error checks here, c must point to a long-enough string.
- */
-pg_wchar
-utf8_to_unicode(const unsigned char *c)
-{
-	if ((*c & 0x80) == 0)
-		return (pg_wchar) c[0];
-	else if ((*c & 0xe0) == 0xc0)
-		return (pg_wchar) (((c[0] & 0x1f) << 6) |
-						   (c[1] & 0x3f));
-	else if ((*c & 0xf0) == 0xe0)
-		return (pg_wchar) (((c[0] & 0x0f) << 12) |
-						   ((c[1] & 0x3f) << 6) |
-						   (c[2] & 0x3f));
-	else if ((*c & 0xf8) == 0xf0)
-		return (pg_wchar) (((c[0] & 0x07) << 18) |
-						   ((c[1] & 0x3f) << 12) |
-						   ((c[2] & 0x3f) << 6) |
-						   (c[3] & 0x3f));
-	else
-		/* that is an invalid code on purpose */
-		return 0xffffffff;
 }
 
 static int
