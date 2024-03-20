@@ -18,7 +18,6 @@ OBJS = \
 	lmgr.o \
 	lock.o \
 	lwlock.o \
-	lwlocknames.o \
 	predicate.o \
 	proc.o \
 	s_lock.o \
@@ -35,11 +34,7 @@ s_lock_test: s_lock.c $(top_builddir)/src/common/libpgcommon.a $(top_builddir)/s
 		$(TASPATH) -L $(top_builddir)/src/common -lpgcommon \
 		-L $(top_builddir)/src/port -lpgport -lm -o s_lock_test
 
-# see notes in src/backend/parser/Makefile
-lwlocknames.c: lwlocknames.h
-	touch $@
-
-lwlocknames.h: $(top_srcdir)/src/backend/storage/lmgr/lwlocknames.txt $(top_srcdir)/src/backend/utils/activity/wait_event_names.txt generate-lwlocknames.pl
+lwlocknames.h: ../../../include/storage/lwlocklist.h ../../utils/activity/wait_event_names.txt generate-lwlocknames.pl
 	$(PERL) $(srcdir)/generate-lwlocknames.pl $^
 
 check: s_lock_test
@@ -47,4 +42,4 @@ check: s_lock_test
 
 clean:
 	rm -f s_lock_test
-	rm -f lwlocknames.h lwlocknames.c
+	rm -f lwlocknames.h

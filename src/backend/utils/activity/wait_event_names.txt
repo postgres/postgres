@@ -280,9 +280,9 @@ Extension	"Waiting in an extension."
 # This class of wait events has its own set of C structure, so these are
 # only used for the documentation.
 #
-# NB: Predefined LWLocks (i.e., those declared in lwlocknames.txt) must be
+# NB: Predefined LWLocks (i.e., those declared in lwlocklist.h) must be
 # listed in the top section of locks and must be listed in the same order as in
-# lwlocknames.txt.
+# lwlocklist.h.
 #
 
 Section: ClassName - WaitEventLWLock
@@ -333,9 +333,9 @@ SerialControl	"Waiting to read or update shared <filename>pg_serial</filename> s
 #
 # END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)
 #
-# Predefined LWLocks (i.e., those declared in lwlocknames.txt) must be listed
+# Predefined LWLocks (i.e., those declared in lwlocknames.h) must be listed
 # in the section above and must be listed in the same order as in
-# lwlocknames.txt.  Other LWLocks must be listed in the section below.
+# lwlocknames.h.  Other LWLocks must be listed in the section below.
 #
 
 XactBuffer	"Waiting for I/O on a transaction status SLRU buffer."

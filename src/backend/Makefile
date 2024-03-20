@@ -110,8 +110,8 @@ $(top_builddir)/src/port/libpgport_srv.a: | submake-libpgport
 parser/gram.h: parser/gram.y
 	$(MAKE) -C parser gram.h
 
-storage/lmgr/lwlocknames.h: storage/lmgr/generate-lwlocknames.pl storage/lmgr/lwlocknames.txt utils/activity/wait_event_names.txt
-	$(MAKE) -C storage/lmgr lwlocknames.h lwlocknames.c
+storage/lmgr/lwlocknames.h: storage/lmgr/generate-lwlocknames.pl ../include/storage/lwlocklist.h utils/activity/wait_event_names.txt
+	$(MAKE) -C storage/lmgr lwlocknames.h
 
 utils/activity/wait_event_types.h: utils/activity/generate-wait_event_types.pl utils/activity/wait_event_names.txt
 	$(MAKE) -C utils/activity wait_event_types.h pgstat_wait_event.c wait_event_funcs_data.c

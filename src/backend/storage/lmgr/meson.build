@@ -11,5 +11,3 @@ backend_sources += files(
   's_lock.c',
   'spin.c',
 )
-
-generated_backend_sources += lwlocknames[1]
