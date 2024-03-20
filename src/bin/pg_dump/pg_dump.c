@@ -7865,7 +7865,7 @@ getDomainConstraints(Archive *fout, TypeInfo *tyinfo)
 							 "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
 							 "convalidated "
 							 "FROM pg_catalog.pg_constraint "
-							 "WHERE contypid = $1 "
+							 "WHERE contypid = $1 AND contype = 'c' "
 							 "ORDER BY conname");
 
 		ExecuteSqlStatement(fout, query->data);

@@ -1071,7 +1071,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 			Expr	   *check_expr;
 			DomainConstraintState *r;
 
-			/* Ignore non-CHECK constraints (presently, shouldn't be any) */
+			/* Ignore non-CHECK constraints */
 			if (c->contype != CONSTRAINT_CHECK)
 				continue;
 

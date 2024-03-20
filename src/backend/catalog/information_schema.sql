@@ -445,7 +445,7 @@ CREATE VIEW check_constraints AS
     SELECT current_database()::information_schema.sql_identifier AS constraint_catalog,
            rs.nspname::information_schema.sql_identifier AS constraint_schema,
            con.conname::information_schema.sql_identifier AS constraint_name,
-           pg_catalog.format('%s IS NOT NULL', at.attname)::information_schema.character_data AS check_clause
+           pg_catalog.format('%s IS NOT NULL', coalesce(at.attname, 'VALUE'))::information_schema.character_data AS check_clause
      FROM pg_constraint con
             LEFT JOIN pg_namespace rs ON rs.oid = con.connamespace
             LEFT JOIN pg_class c ON c.oid = con.conrelid

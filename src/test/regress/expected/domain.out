@@ -798,6 +798,42 @@ alter domain con drop constraint nonexistent;
 ERROR:  constraint "nonexistent" of domain "con" does not exist
 alter domain con drop constraint if exists nonexistent;
 NOTICE:  constraint "nonexistent" of domain "con" does not exist, skipping
+-- not-null constraints
+create domain connotnull integer;
+create table domconnotnulltest
+( col1 connotnull
+, col2 connotnull
+);
+insert into domconnotnulltest default values;
+alter domain connotnull add not null value; -- fails
+ERROR:  column "col1" of table "domconnotnulltest" contains null values
+update domconnotnulltest set col1 = 5;
+alter domain connotnull add not null value; -- fails
+ERROR:  column "col2" of table "domconnotnulltest" contains null values
+update domconnotnulltest set col2 = 6;
+alter domain connotnull add constraint constr1 not null value;
+select count(*) from pg_constraint where contypid = 'connotnull'::regtype and contype = 'n';
+ count 
+-------
+     1
+(1 row)
+
+alter domain connotnull add constraint constr1bis not null value;  -- redundant
+select count(*) from pg_constraint where contypid = 'connotnull'::regtype and contype = 'n';
+ count 
+-------
+     1
+(1 row)
+
+update domconnotnulltest set col1 = null; -- fails
+ERROR:  domain connotnull does not allow null values
+alter domain connotnull drop constraint constr1;
+update domconnotnulltest set col1 = null;
+drop domain connotnull cascade;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to column col2 of table domconnotnulltest
+drop cascades to column col1 of table domconnotnulltest
+drop table domconnotnulltest;
 -- Test ALTER DOMAIN .. CONSTRAINT .. NOT VALID
 create domain things AS INT;
 CREATE TABLE thethings (stuff things);
@@ -1223,12 +1259,13 @@ SELECT * FROM information_schema.column_domain_usage
 SELECT * FROM information_schema.domain_constraints
   WHERE domain_name IN ('con', 'dom', 'pos_int', 'things')
   ORDER BY constraint_name;
- constraint_catalog | constraint_schema | constraint_name | domain_catalog | domain_schema | domain_name | is_deferrable | initially_deferred 
---------------------+-------------------+-----------------+----------------+---------------+-------------+---------------+--------------------
- regression         | public            | con_check       | regression     | public        | con         | NO            | NO
- regression         | public            | meow            | regression     | public        | things      | NO            | NO
- regression         | public            | pos_int_check   | regression     | public        | pos_int     | NO            | NO
-(3 rows)
+ constraint_catalog | constraint_schema | constraint_name  | domain_catalog | domain_schema | domain_name | is_deferrable | initially_deferred 
+--------------------+-------------------+------------------+----------------+---------------+-------------+---------------+--------------------
+ regression         | public            | con_check        | regression     | public        | con         | NO            | NO
+ regression         | public            | meow             | regression     | public        | things      | NO            | NO
+ regression         | public            | pos_int_check    | regression     | public        | pos_int     | NO            | NO
+ regression         | public            | pos_int_not_null | regression     | public        | pos_int     | NO            | NO
+(4 rows)
 
 SELECT * FROM information_schema.domains
   WHERE domain_name IN ('con', 'dom', 'pos_int', 'things')
@@ -1247,10 +1284,11 @@ SELECT * FROM information_schema.check_constraints
             FROM information_schema.domain_constraints
             WHERE domain_name IN ('con', 'dom', 'pos_int', 'things'))
   ORDER BY constraint_name;
- constraint_catalog | constraint_schema | constraint_name | check_clause 
---------------------+-------------------+-----------------+--------------
- regression         | public            | con_check       | (VALUE > 0)
- regression         | public            | meow            | (VALUE < 11)
- regression         | public            | pos_int_check   | (VALUE > 0)
-(3 rows)
+ constraint_catalog | constraint_schema | constraint_name  |   check_clause    
+--------------------+-------------------+------------------+-------------------
+ regression         | public            | con_check        | (VALUE > 0)
+ regression         | public            | meow             | (VALUE < 11)
+ regression         | public            | pos_int_check    | (VALUE > 0)
+ regression         | public            | pos_int_not_null | VALUE IS NOT NULL
+(4 rows)
 
