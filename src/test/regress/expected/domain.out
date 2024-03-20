@@ -1207,3 +1207,50 @@ create domain testdomain1 as int constraint unsigned check (value > 0);
 alter domain testdomain1 rename constraint unsigned to unsigned_foo;
 alter domain testdomain1 drop constraint unsigned_foo;
 drop domain testdomain1;
+--
+-- Information schema
+--
+SELECT * FROM information_schema.column_domain_usage
+  WHERE domain_name IN ('con', 'dom', 'pos_int', 'things')
+  ORDER BY domain_name;
+ domain_catalog | domain_schema | domain_name | table_catalog | table_schema | table_name | column_name 
+----------------+---------------+-------------+---------------+--------------+------------+-------------
+ regression     | public        | con         | regression    | public       | domcontest | col1
+ regression     | public        | dom         | regression    | public       | domview    | col1
+ regression     | public        | things      | regression    | public       | thethings  | stuff
+(3 rows)
+
+SELECT * FROM information_schema.domain_constraints
+  WHERE domain_name IN ('con', 'dom', 'pos_int', 'things')
+  ORDER BY constraint_name;
+ constraint_catalog | constraint_schema | constraint_name | domain_catalog | domain_schema | domain_name | is_deferrable | initially_deferred 
+--------------------+-------------------+-----------------+----------------+---------------+-------------+---------------+--------------------
+ regression         | public            | con_check       | regression     | public        | con         | NO            | NO
+ regression         | public            | meow            | regression     | public        | things      | NO            | NO
+ regression         | public            | pos_int_check   | regression     | public        | pos_int     | NO            | NO
+(3 rows)
+
+SELECT * FROM information_schema.domains
+  WHERE domain_name IN ('con', 'dom', 'pos_int', 'things')
+  ORDER BY domain_name;
+ domain_catalog | domain_schema | domain_name | data_type | character_maximum_length | character_octet_length | character_set_catalog | character_set_schema | character_set_name | collation_catalog | collation_schema | collation_name | numeric_precision | numeric_precision_radix | numeric_scale | datetime_precision | interval_type | interval_precision | domain_default | udt_catalog | udt_schema | udt_name | scope_catalog | scope_schema | scope_name | maximum_cardinality | dtd_identifier 
+----------------+---------------+-------------+-----------+--------------------------+------------------------+-----------------------+----------------------+--------------------+-------------------+------------------+----------------+-------------------+-------------------------+---------------+--------------------+---------------+--------------------+----------------+-------------+------------+----------+---------------+--------------+------------+---------------------+----------------
+ regression     | public        | con         | integer   |                          |                        |                       |                      |                    |                   |                  |                |                32 |                       2 |             0 |                    |               |                    |                | regression  | pg_catalog | int4     |               |              |            |                     | 1
+ regression     | public        | dom         | integer   |                          |                        |                       |                      |                    |                   |                  |                |                32 |                       2 |             0 |                    |               |                    |                | regression  | pg_catalog | int4     |               |              |            |                     | 1
+ regression     | public        | pos_int     | integer   |                          |                        |                       |                      |                    |                   |                  |                |                32 |                       2 |             0 |                    |               |                    |                | regression  | pg_catalog | int4     |               |              |            |                     | 1
+ regression     | public        | things      | integer   |                          |                        |                       |                      |                    |                   |                  |                |                32 |                       2 |             0 |                    |               |                    |                | regression  | pg_catalog | int4     |               |              |            |                     | 1
+(4 rows)
+
+SELECT * FROM information_schema.check_constraints
+  WHERE (constraint_schema, constraint_name)
+        IN (SELECT constraint_schema, constraint_name
+            FROM information_schema.domain_constraints
+            WHERE domain_name IN ('con', 'dom', 'pos_int', 'things'))
+  ORDER BY constraint_name;
+ constraint_catalog | constraint_schema | constraint_name | check_clause 
+--------------------+-------------------+-----------------+--------------
+ regression         | public            | con_check       | (VALUE > 0)
+ regression         | public            | meow            | (VALUE < 11)
+ regression         | public            | pos_int_check   | (VALUE > 0)
+(3 rows)
+
