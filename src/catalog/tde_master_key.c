@@ -29,6 +29,8 @@
 
 #include "access/pg_tde_tdemap.h"
 
+#define DEFAULT_MASTER_KEY_VERSION      1
+
 typedef struct TdeMasterKeySharedState
 {
     LWLock *Lock;
@@ -64,12 +66,12 @@ static Size required_shared_mem_size(void);
 static int  required_locks_count(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void master_key_startup_cleanup(int tde_tbl_count, void *arg);
-
-static TDEMasterKeyInfo *create_master_key_info(TDEMasterKey *master_key, GenericKeyring *keyring);
+static keyInfo *load_latest_versioned_key_name(TDEMasterKeyInfo *mastere_key_info, GenericKeyring *keyring, bool ensure_new_key);
+static void clear_master_key_cache(Oid databaseId, Oid tablespaceId) ;
 static inline dshash_table *get_master_key_Hash(void);
 static TDEMasterKey *get_master_key_from_cache(Oid dbOid, bool acquire_lock);
 static void push_master_key_to_cache(TDEMasterKey *masterKey);
-static TDEMasterKey *set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring);
+static TDEMasterKey *set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key);
 
 static const TDEShmemSetupRoutine master_key_info_shmem_routine = {
     .init_shared_state = initialize_shared_state,
@@ -180,25 +182,6 @@ shared_memory_shutdown(int code, Datum arg)
     masterKeyLocalState.sharedMasterKeyState = NULL;
 }
 
-static TDEMasterKeyInfo *
-create_master_key_info(TDEMasterKey *master_key, GenericKeyring *keyring)
-{
-    TDEMasterKeyInfo *masterKeyInfo = NULL;
-
-    Assert(master_key != NULL);
-    Assert(keyring != NULL);
-
-    masterKeyInfo = palloc(sizeof(TDEMasterKeyInfo));
-    masterKeyInfo->databaseId = MyDatabaseId;
-    masterKeyInfo->tablespaceId = MyDatabaseTableSpace;
-    masterKeyInfo->keyId.version = 1;
-    gettimeofday(&masterKeyInfo->creationTime, NULL);
-    strncpy(masterKeyInfo->keyId.name, master_key->keyInfo.keyId.name, MASTER_KEY_NAME_LEN);
-    masterKeyInfo->keyringId = keyring->key_id;
-
-    return masterKeyInfo;
-}
-
 bool
 save_master_key_info(TDEMasterKeyInfo *master_key_info)
 {
@@ -215,13 +198,14 @@ save_master_key_info(TDEMasterKeyInfo *master_key_info)
  * throws an error.
  */
 TDEMasterKey *
-GetMasterKey(Oid dbOid)
+GetMasterKey(void)
 {
     TDEMasterKey *masterKey = NULL;
     TDEMasterKeyInfo *masterKeyInfo = NULL;
     GenericKeyring *keyring = NULL;
     const keyInfo *keyInfo = NULL;
     KeyringReturnCodes keyring_ret;
+    Oid dbOid = MyDatabaseId;
 
     masterKey = get_master_key_from_cache(dbOid, true);
     if (masterKey)
@@ -246,11 +230,11 @@ GetMasterKey(Oid dbOid)
         return NULL;
     }
 
-    keyInfo = KeyringGetKey(keyring, masterKeyInfo->keyId.name, false, &keyring_ret);
+    keyInfo = KeyringGetKey(keyring, masterKeyInfo->keyId.versioned_name, false, &keyring_ret);
     if (keyInfo == NULL)
     {
         ereport(ERROR,
-                (errmsg("failed to retrieve master key from keyring")));
+                (errmsg("failed to retrieve master key \"%s\" from keyring.", masterKeyInfo->keyId.versioned_name)));
         return NULL;
     }
 
@@ -280,10 +264,9 @@ GetMasterKey(Oid dbOid)
  */
 
 static TDEMasterKey *
-set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
+set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key)
 {
     TDEMasterKey *masterKey = NULL;
-    TDEMasterKeyInfo *masterKeyInfo = NULL;
     TdeMasterKeySharedState *shared_state = masterKeyLocalState.sharedMasterKeyState;
     Oid dbOid = MyDatabaseId;
 
@@ -301,8 +284,7 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
         return NULL;
     }
     /*  Check if valid master key info exists in the file. There is no need for a lock here as the key might be in the file and not in the cache, but it must be in the file if it's in the cache and we check the cache under the lock later. */
-    masterKeyInfo = pg_tde_get_master_key(dbOid);
-    if (masterKeyInfo)
+    if (pg_tde_get_master_key(dbOid))
     {
         ereport(ERROR,
                 (errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -322,18 +304,18 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
     if (!masterKey)
     {
         const keyInfo *keyInfo = NULL;
-        KeyringReturnCodes keyring_ret;
 
         masterKey = palloc(sizeof(TDEMasterKey));
         masterKey->keyInfo.databaseId = MyDatabaseId;
-        masterKey->keyInfo.keyId.version = 1;
+        masterKey->keyInfo.keyId.version = DEFAULT_MASTER_KEY_VERSION;
         masterKey->keyInfo.keyringId = keyring->key_id;
         strncpy(masterKey->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
-        /* We need to get the key from keyring */
+        gettimeofday(&masterKey->keyInfo.creationTime, NULL);
 
-        keyInfo = KeyringGetKey(keyring, key_name, false, &keyring_ret);
-        if (keyInfo == NULL) /* TODO: check if the key was not present or there was a problem with key provider*/
-            keyInfo = KeyringGenerateNewKeyAndStore(keyring, key_name, INTERNAL_KEY_LEN, false);
+        keyInfo = load_latest_versioned_key_name(&masterKey->keyInfo, keyring, ensure_new_key);
+
+        if (keyInfo == NULL)
+            keyInfo = KeyringGenerateNewKeyAndStore(keyring, masterKey->keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, false);
 
         if (keyInfo == NULL)
         {
@@ -345,12 +327,11 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
         masterKey->keyLength = keyInfo->data.len;
         memcpy(masterKey->keyData, keyInfo->data.data, keyInfo->data.len);
 
-        masterKeyInfo = create_master_key_info(masterKey, keyring);
-        save_master_key_info(masterKeyInfo);
+        save_master_key_info(&masterKey->keyInfo);
 
         /* XLog the new key*/
         XLogBeginInsert();
-	    XLogRegisterData((char *) masterKeyInfo, sizeof(TDEMasterKeyInfo));
+	    XLogRegisterData((char *) &masterKey->keyInfo, sizeof(TDEMasterKeyInfo));
 	    XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_MASTER_KEY);
         
         push_master_key_to_cache(masterKey);
@@ -373,20 +354,142 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring)
     return masterKey;
 }
 
-TDEMasterKey *
-SetMasterKey(const char *key_name, const char *provider_name)
+bool
+SetMasterKey(const char *key_name, const char *provider_name, bool ensure_new_key)
 {
-    GenericKeyring *keyring = GetKeyProviderByName(provider_name);
-    if (keyring == NULL)
-    {
-        ereport(ERROR,
-                (errmsg("Key provider \"%s\" does not exists", provider_name),
-                 errhint("Use create_key_provider interface to create the key provider")));
-        return NULL;
-    }
-    return set_master_key_with_keyring(key_name, keyring);
+    TDEMasterKey *master_key = set_master_key_with_keyring(key_name, GetKeyProviderByName(provider_name), ensure_new_key);
+
+    return (master_key != NULL);
 }
 
+bool
+RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool ensure_new_key)
+{
+    TDEMasterKey *master_key = GetMasterKey();
+    TDEMasterKey new_master_key;
+    const keyInfo *keyInfo = NULL;
+    GenericKeyring *keyring;
+
+    /*
+     * Let's set everything the same as the older master key and
+     * update only the required attributes.
+     * */
+    memcpy(&new_master_key, master_key, sizeof(TDEMasterKey));
+
+    if (new_key_name == NULL)
+    {
+        new_master_key.keyInfo.keyId.version++;
+    }
+    else
+    {
+        strncpy(new_master_key.keyInfo.keyId.name, new_key_name, sizeof(new_master_key.keyInfo.keyId.name));
+        new_master_key.keyInfo.keyId.version = DEFAULT_MASTER_KEY_VERSION;
+
+        if (new_provider_name != NULL)
+        {
+            new_master_key.keyInfo.keyringId = GetKeyProviderByName(new_provider_name)->key_id;
+        }
+    }
+
+    /* We need a valid keyring structure */
+    keyring = GetKeyProviderByID(new_master_key.keyInfo.keyringId);
+
+    keyInfo = load_latest_versioned_key_name(&new_master_key.keyInfo, keyring, ensure_new_key);
+
+    if (keyInfo == NULL)
+        keyInfo = KeyringGenerateNewKeyAndStore(keyring, new_master_key.keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, false);
+
+    if (keyInfo == NULL)
+    {
+        ereport(ERROR,
+                (errmsg("Failed to generate new key name")));
+    }
+
+    new_master_key.keyLength = keyInfo->data.len;
+    memcpy(new_master_key.keyData, keyInfo->data.data, keyInfo->data.len);
+    clear_master_key_cache(MyDatabaseId, MyDatabaseTableSpace);
+    return pg_tde_perform_rotate_key(master_key, &new_master_key);
+}
+
+/*
+ * Rotate keys on a standby.
+ */
+bool
+xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
+{
+    bool ret;
+
+    ret = pg_tde_write_map_keydata_files(xlrec->map_size, xlrec->buff, xlrec->keydata_size, &xlrec->buff[xlrec->map_size]);
+    clear_master_key_cache(MyDatabaseId, MyDatabaseTableSpace);
+
+	return ret;
+}
+
+/*
+* Load the latest versioned key name for the master key
+* If ensure_new_key is true, then we will keep on incrementing the version number
+* till we get a key name that is not present in the keyring
+*/
+static keyInfo *
+load_latest_versioned_key_name(TDEMasterKeyInfo *mastere_key_info, GenericKeyring *keyring, bool ensure_new_key)
+{
+    KeyringReturnCodes kr_ret;
+    keyInfo *keyInfo = NULL;
+    int base_version = mastere_key_info->keyId.version;
+    Assert(mastere_key_info != NULL);
+    Assert(keyring != NULL);
+    Assert(strlen(mastere_key_info->keyId.name) > 0);
+    /* Start with the passed in version number
+     * We expect the name and the version number are already properly initialized
+     * and contain the correct values
+     */
+    snprintf(mastere_key_info->keyId.versioned_name, TDE_KEY_NAME_LEN,
+             "%s_%d", mastere_key_info->keyId.name, mastere_key_info->keyId.version);
+
+    while (true)
+    {
+        keyInfo = KeyringGetKey(keyring, mastere_key_info->keyId.versioned_name, false, &kr_ret);
+        /* vault-v2 returns 404 (KEYRING_CODE_RESOURCE_NOT_AVAILABLE) when key is not found */
+        if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
+        {
+            ereport(ERROR,
+                (errmsg("failed to retrieve master key from keyring provider :\"%s\"", keyring->provider_name),
+                    errdetail("Error code: %d", kr_ret)));
+        }
+        if (keyInfo == NULL)
+        {
+            if (ensure_new_key == false)
+            {
+                /*
+                 * If ensure_key is false and we are not at the base version,
+                 * We should return the last existent version.
+                 */
+                if (base_version < mastere_key_info->keyId.version)
+                {
+                    /* Not optimal but keep the things simple */
+                    mastere_key_info->keyId.version -= 1;
+                    snprintf(mastere_key_info->keyId.versioned_name, TDE_KEY_NAME_LEN,
+                             "%s_%d", mastere_key_info->keyId.name, mastere_key_info->keyId.version);
+                    keyInfo = KeyringGetKey(keyring, mastere_key_info->keyId.versioned_name, false, &kr_ret);
+                }
+            }
+            return keyInfo;
+        }
+
+        mastere_key_info->keyId.version++;
+        snprintf(mastere_key_info->keyId.versioned_name, TDE_KEY_NAME_LEN, "%s_%d", mastere_key_info->keyId.name, mastere_key_info->keyId.version);
+
+        /*
+         * Not really required. Just to break the infinite loop in case the key provider is not behaving sane.
+         */
+        if (mastere_key_info->keyId.version > MAX_MASTER_KEY_VERSION_NUM)
+        {
+            ereport(ERROR,
+                    (errmsg("failed to retrieve master key. %d versions already exist", MAX_MASTER_KEY_VERSION_NUM)));
+        }
+    }
+    return NULL; /* Just to keep compiler quite */
+}
 /*
  * Returns the provider ID of the keyring that holds the master key
  * Return InvalidOid if the master key is not set for the database
@@ -506,6 +609,19 @@ master_key_startup_cleanup(int tde_tbl_count, void* arg)
 void
 cleanup_master_key_info(Oid databaseId, Oid tablespaceId)
 {
+    clear_master_key_cache(databaseId, tablespaceId);
+    /*
+        * TODO: Although should never happen. Still verify if any table in the
+        * database is using tde
+        */
+
+    /* Remove the tde files */
+    pg_tde_delete_tde_files(databaseId);
+}
+
+static void
+clear_master_key_cache(Oid databaseId, Oid tablespaceId)
+{
     TDEMasterKey *cache_entry;
 
     /* Start with deleting the cache entry for the database */
@@ -515,14 +631,6 @@ cleanup_master_key_info(Oid databaseId, Oid tablespaceId)
     {
         dshash_delete_entry(get_master_key_Hash(), cache_entry);
     }
-
-    /*
-     * TODO: Although should never happen. Still verify if any table in the
-     * database is using tde
-     */
-
-    /* Remove the tde files */
-    pg_tde_delete_tde_files(databaseId);
 }
 
 /*
@@ -535,8 +643,34 @@ Datum pg_tde_set_master_key(PG_FUNCTION_ARGS)
 {
     char *master_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
     char *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+    bool ensure_new_key = PG_GETARG_BOOL(2);
+	bool ret;
 
     ereport(LOG, (errmsg("Setting master key [%s : %s] for the database", master_key_name, provider_name)));
-    SetMasterKey(master_key_name, provider_name);
-    PG_RETURN_NULL();
+    ret = SetMasterKey(master_key_name, provider_name, ensure_new_key);
+    PG_RETURN_BOOL(ret);
+}
+
+/*
+ * SQL interface for key rotation
+ */
+PG_FUNCTION_INFO_V1(pg_tde_rotate_key);
+Datum
+pg_tde_rotate_key(PG_FUNCTION_ARGS)
+{
+    char *new_master_key_name = NULL;
+    char *new_provider_name =  NULL;
+    bool ensure_new_key;
+    bool ret;
+
+    if (!PG_ARGISNULL(0))
+        new_master_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+    if (!PG_ARGISNULL(1))
+        new_provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+    ensure_new_key = PG_GETARG_BOOL(2);
+
+
+    ereport(LOG, (errmsg("Rotating master key to [%s : %s] for the database", new_master_key_name, new_provider_name)));
+    ret = RotateMasterKey(new_master_key_name, new_provider_name, ensure_new_key);
+    PG_RETURN_BOOL(ret);
 }

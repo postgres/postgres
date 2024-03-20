@@ -185,6 +185,8 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 
 	const char* responseKey;
 
+	*return_code = KEYRING_CODE_SUCCESS;
+
 	get_keyring_vault_url(vault_keyring, key_name, url, sizeof(url));
 
 	if (!curl_perform(vault_keyring, url, &str, &httpCode, NULL))
