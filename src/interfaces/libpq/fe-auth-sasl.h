@@ -22,6 +22,17 @@
 #include "libpq-fe.h"
 
 /*
+ * Possible states for the SASL exchange, see the comment on exchange for an
+ * explanation of these.
+ */
+typedef enum
+{
+	SASL_COMPLETE = 0,
+	SASL_FAILED,
+	SASL_CONTINUE,
+} SASLStatus;
+
+/*
  * Frontend SASL mechanism callbacks.
  *
  * To implement a frontend mechanism, declare a pg_be_sasl_mech struct with
@@ -59,7 +70,8 @@ typedef struct pg_fe_sasl_mech
 	 * Produces a client response to a server challenge.  As a special case
 	 * for client-first SASL mechanisms, exchange() is called with a NULL
 	 * server response once at the start of the authentication exchange to
-	 * generate an initial response.
+	 * generate an initial response. Returns a SASLStatus indicating the
+	 * state and status of the exchange.
 	 *
 	 * Input parameters:
 	 *
@@ -79,22 +91,23 @@ typedef struct pg_fe_sasl_mech
 	 *
 	 *	output:	   A malloc'd buffer containing the client's response to
 	 *			   the server (can be empty), or NULL if the exchange should
-	 *			   be aborted.  (*success should be set to false in the
+	 *			   be aborted.  (The callback should return SASL_FAILED in the
 	 *			   latter case.)
 	 *
 	 *	outputlen: The length (0 or higher) of the client response buffer,
 	 *			   ignored if output is NULL.
 	 *
-	 *	done:      Set to true if the SASL exchange should not continue,
-	 *			   because the exchange is either complete or failed
+	 * Return value:
 	 *
-	 *	success:   Set to true if the SASL exchange completed successfully.
-	 *			   Ignored if *done is false.
+	 *	SASL_CONTINUE:	The output buffer is filled with a client response.
+	 *					Additional server challenge is expected
+	 *	SASL_COMPLETE:	The SASL exchange has completed successfully.
+	 *	SASL_FAILED:	The exchange has failed and the connection should be
+	 *					dropped.
 	 *--------
 	 */
-	void		(*exchange) (void *state, char *input, int inputlen,
-							 char **output, int *outputlen,
-							 bool *done, bool *success);
+	SASLStatus	(*exchange) (void *state, char *input, int inputlen,
+							 char **output, int *outputlen);
 
 	/*--------
 	 * channel_bound()

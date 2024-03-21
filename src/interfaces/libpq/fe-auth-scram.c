@@ -24,9 +24,8 @@
 /* The exported SCRAM callback mechanism. */
 static void *scram_init(PGconn *conn, const char *password,
 						const char *sasl_mechanism);
-static void scram_exchange(void *opaq, char *input, int inputlen,
-						   char **output, int *outputlen,
-						   bool *done, bool *success);
+static SASLStatus scram_exchange(void *opaq, char *input, int inputlen,
+								 char **output, int *outputlen);
 static bool scram_channel_bound(void *opaq);
 static void scram_free(void *opaq);
 
@@ -202,17 +201,14 @@ scram_free(void *opaq)
 /*
  * Exchange a SCRAM message with backend.
  */
-static void
+static SASLStatus
 scram_exchange(void *opaq, char *input, int inputlen,
-			   char **output, int *outputlen,
-			   bool *done, bool *success)
+			   char **output, int *outputlen)
 {
 	fe_scram_state *state = (fe_scram_state *) opaq;
 	PGconn	   *conn = state->conn;
 	const char *errstr = NULL;
 
-	*done = false;
-	*success = false;
 	*output = NULL;
 	*outputlen = 0;
 
@@ -225,12 +221,12 @@ scram_exchange(void *opaq, char *input, int inputlen,
 		if (inputlen == 0)
 		{
 			libpq_append_conn_error(conn, "malformed SCRAM message (empty message)");
-			goto error;
+			return SASL_FAILED;
 		}
 		if (inputlen != strlen(input))
 		{
 			libpq_append_conn_error(conn, "malformed SCRAM message (length mismatch)");
-			goto error;
+			return SASL_FAILED;
 		}
 	}
 
@@ -240,61 +236,59 @@ scram_exchange(void *opaq, char *input, int inputlen,
 			/* Begin the SCRAM handshake, by sending client nonce */
 			*output = build_client_first_message(state);
 			if (*output == NULL)
-				goto error;
+				return SASL_FAILED;
 
 			*outputlen = strlen(*output);
-			*done = false;
 			state->state = FE_SCRAM_NONCE_SENT;
-			break;
+			return SASL_CONTINUE;
 
 		case FE_SCRAM_NONCE_SENT:
 			/* Receive salt and server nonce, send response. */
 			if (!read_server_first_message(state, input))
-				goto error;
+				return SASL_FAILED;
 
 			*output = build_client_final_message(state);
 			if (*output == NULL)
-				goto error;
+				return SASL_FAILED;
 
 			*outputlen = strlen(*output);
-			*done = false;
 			state->state = FE_SCRAM_PROOF_SENT;
-			break;
+			return SASL_CONTINUE;
 
 		case FE_SCRAM_PROOF_SENT:
-			/* Receive server signature */
-			if (!read_server_final_message(state, input))
-				goto error;
-
-			/*
-			 * Verify server signature, to make sure we're talking to the
-			 * genuine server.
-			 */
-			if (!verify_server_signature(state, success, &errstr))
 			{
-				libpq_append_conn_error(conn, "could not verify server signature: %s", errstr);
-				goto error;
-			}
+				bool		match;
 
-			if (!*success)
-			{
-				libpq_append_conn_error(conn, "incorrect server signature");
+				/* Receive server signature */
+				if (!read_server_final_message(state, input))
+					return SASL_FAILED;
+
+				/*
+				 * Verify server signature, to make sure we're talking to the
+				 * genuine server.
+				 */
+				if (!verify_server_signature(state, &match, &errstr))
+				{
+					libpq_append_conn_error(conn, "could not verify server signature: %s", errstr);
+					return SASL_FAILED;
+				}
+
+				if (!match)
+				{
+					libpq_append_conn_error(conn, "incorrect server signature");
+				}
+				state->state = FE_SCRAM_FINISHED;
+				state->conn->client_finished_auth = true;
+				return match ? SASL_COMPLETE : SASL_FAILED;
 			}
-			*done = true;
-			state->state = FE_SCRAM_FINISHED;
-			state->conn->client_finished_auth = true;
-			break;
 
 		default:
 			/* shouldn't happen */
 			libpq_append_conn_error(conn, "invalid SCRAM exchange state");
-			goto error;
+			break;
 	}
-	return;
 
-error:
-	*done = true;
-	*success = false;
+	return SASL_FAILED;
 }
 
 /*

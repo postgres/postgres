@@ -423,11 +423,10 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 {
 	char	   *initialresponse = NULL;
 	int			initialresponselen;
-	bool		done;
-	bool		success;
 	const char *selected_mechanism;
 	PQExpBufferData mechanism_buf;
 	char	   *password;
+	SASLStatus	status;
 
 	initPQExpBuffer(&mechanism_buf);
 
@@ -575,12 +574,11 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		goto oom_error;
 
 	/* Get the mechanism-specific Initial Client Response, if any */
-	conn->sasl->exchange(conn->sasl_state,
-						 NULL, -1,
-						 &initialresponse, &initialresponselen,
-						 &done, &success);
+	status = conn->sasl->exchange(conn->sasl_state,
+								  NULL, -1,
+								  &initialresponse, &initialresponselen);
 
-	if (done && !success)
+	if (status == SASL_FAILED)
 		goto error;
 
 	/*
@@ -629,10 +627,9 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 {
 	char	   *output;
 	int			outputlen;
-	bool		done;
-	bool		success;
 	int			res;
 	char	   *challenge;
+	SASLStatus	status;
 
 	/* Read the SASL challenge from the AuthenticationSASLContinue message. */
 	challenge = malloc(payloadlen + 1);
@@ -651,13 +648,12 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 	/* For safety and convenience, ensure the buffer is NULL-terminated. */
 	challenge[payloadlen] = '\0';
 
-	conn->sasl->exchange(conn->sasl_state,
-						 challenge, payloadlen,
-						 &output, &outputlen,
-						 &done, &success);
+	status = conn->sasl->exchange(conn->sasl_state,
+								  challenge, payloadlen,
+								  &output, &outputlen);
 	free(challenge);			/* don't need the input anymore */
 
-	if (final && !done)
+	if (final && status == SASL_CONTINUE)
 	{
 		if (outputlen != 0)
 			free(output);
@@ -670,7 +666,7 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 	 * If the exchange is not completed yet, we need to make sure that the
 	 * SASL mechanism has generated a message to send back.
 	 */
-	if (output == NULL && !done)
+	if (output == NULL && status == SASL_CONTINUE)
 	{
 		libpq_append_conn_error(conn, "no client response found after SASL exchange success");
 		return STATUS_ERROR;
@@ -692,7 +688,7 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 			return STATUS_ERROR;
 	}
 
-	if (done && !success)
+	if (status == SASL_FAILED)
 		return STATUS_ERROR;
 
 	return STATUS_OK;
