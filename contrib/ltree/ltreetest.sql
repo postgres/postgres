@@ -19,3 +19,4 @@ INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Galaxies');
 INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Astronauts');
 CREATE INDEX path_gist_idx ON test USING gist(path);
 CREATE INDEX path_idx ON test USING btree(path);
+CREATE INDEX path_hash_idx ON test USING hash(path);

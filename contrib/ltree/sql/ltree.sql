@@ -282,8 +282,20 @@ SELECT ('{3456,1.2.3.4}'::ltree[] ?<@ '1.2.5') is null;
 SELECT '{ltree.asd, tree.awdfg}'::ltree[] ?@ 'tree & aWdfg@'::ltxtquery;
 SELECT '{j.k.l.m, g.b.c.d.e}'::ltree[] ?~ 'A*@|g.b.c.d.e';
 
+-- Check that the hash_ltree() and hash_ltree_extended() function's lower
+-- 32 bits match when the seed is 0 and do not match when the seed != 0
+SELECT v as value, hash_ltree(v)::bit(32) as standard,
+       hash_ltree_extended(v, 0)::bit(32) as extended0,
+       hash_ltree_extended(v, 1)::bit(32) as extended1
+FROM   (VALUES (NULL::ltree), (''::ltree), ('0'::ltree), ('0.1'::ltree),
+       ('0.1.2'::ltree), ('0'::ltree), ('0_asd.1_ASD'::ltree)) x(v)
+WHERE  hash_ltree(v)::bit(32) != hash_ltree_extended(v, 0)::bit(32)
+       OR hash_ltree(v)::bit(32) = hash_ltree_extended(v, 1)::bit(32);
+
 CREATE TABLE ltreetest (t ltree);
 \copy ltreetest FROM 'data/ltree.data'
+
+SELECT count(*) from ltreetest;
 
 SELECT * FROM ltreetest WHERE t <  '12.3' order by t asc;
 SELECT * FROM ltreetest WHERE t <= '12.3' order by t asc;
@@ -329,6 +341,41 @@ SELECT * FROM ltreetest WHERE t ~ '23.*.2' order by t asc;
 SELECT * FROM ltreetest WHERE t ? '{23.*.1,23.*.2}' order by t asc;
 
 drop index tstidx;
+
+--- test hash index
+
+create index tstidx on ltreetest using hash (t);
+set enable_seqscan=off;
+set enable_bitmapscan=off;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM ltreetest WHERE t =  '12.3' order by t asc;
+SELECT * FROM ltreetest WHERE t =  '12.3' order by t asc;
+
+reset enable_seqscan;
+reset enable_bitmapscan;
+
+-- test hash aggregate
+
+set enable_hashagg=on;
+set enable_sort=off;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM (
+SELECT t FROM (SELECT * FROM ltreetest UNION ALL SELECT * FROM ltreetest) t1 GROUP BY t
+) t2;
+
+SELECT count(*) FROM (
+SELECT t FROM (SELECT * FROM ltreetest UNION ALL SELECT * FROM ltreetest) t1 GROUP BY t
+) t2;
+
+reset enable_hashagg;
+reset enable_sort;
+
+drop index tstidx;
+
+-- test gist index
+
 create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=0));
 create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2025));
 create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2028));

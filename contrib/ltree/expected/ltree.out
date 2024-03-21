@@ -1433,8 +1433,27 @@ SELECT '{j.k.l.m, g.b.c.d.e}'::ltree[] ?~ 'A*@|g.b.c.d.e';
  g.b.c.d.e
 (1 row)
 
+-- Check that the hash_ltree() and hash_ltree_extended() function's lower
+-- 32 bits match when the seed is 0 and do not match when the seed != 0
+SELECT v as value, hash_ltree(v)::bit(32) as standard,
+       hash_ltree_extended(v, 0)::bit(32) as extended0,
+       hash_ltree_extended(v, 1)::bit(32) as extended1
+FROM   (VALUES (NULL::ltree), (''::ltree), ('0'::ltree), ('0.1'::ltree),
+       ('0.1.2'::ltree), ('0'::ltree), ('0_asd.1_ASD'::ltree)) x(v)
+WHERE  hash_ltree(v)::bit(32) != hash_ltree_extended(v, 0)::bit(32)
+       OR hash_ltree(v)::bit(32) = hash_ltree_extended(v, 1)::bit(32);
+ value | standard | extended0 | extended1 
+-------+----------+-----------+-----------
+(0 rows)
+
 CREATE TABLE ltreetest (t ltree);
 \copy ltreetest FROM 'data/ltree.data'
+SELECT count(*) from ltreetest;
+ count 
+-------
+  1006
+(1 row)
+
 SELECT * FROM ltreetest WHERE t <  '12.3' order by t asc;
                 t                 
 ----------------------------------
@@ -7833,6 +7852,55 @@ SELECT * FROM ltreetest WHERE t ? '{23.*.1,23.*.2}' order by t asc;
 (4 rows)
 
 drop index tstidx;
+--- test hash index
+create index tstidx on ltreetest using hash (t);
+set enable_seqscan=off;
+set enable_bitmapscan=off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM ltreetest WHERE t =  '12.3' order by t asc;
+              QUERY PLAN              
+--------------------------------------
+ Index Scan using tstidx on ltreetest
+   Index Cond: (t = '12.3'::ltree)
+(2 rows)
+
+SELECT * FROM ltreetest WHERE t =  '12.3' order by t asc;
+  t   
+------
+ 12.3
+(1 row)
+
+reset enable_seqscan;
+reset enable_bitmapscan;
+-- test hash aggregate
+set enable_hashagg=on;
+set enable_sort=off;
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM (
+SELECT t FROM (SELECT * FROM ltreetest UNION ALL SELECT * FROM ltreetest) t1 GROUP BY t
+) t2;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Aggregate
+   ->  HashAggregate
+         Group Key: ltreetest.t
+         ->  Append
+               ->  Seq Scan on ltreetest
+               ->  Seq Scan on ltreetest ltreetest_1
+(6 rows)
+
+SELECT count(*) FROM (
+SELECT t FROM (SELECT * FROM ltreetest UNION ALL SELECT * FROM ltreetest) t1 GROUP BY t
+) t2;
+ count 
+-------
+  1006
+(1 row)
+
+reset enable_hashagg;
+reset enable_sort;
+drop index tstidx;
+-- test gist index
 create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=0));
 ERROR:  value 0 out of bounds for option "siglen"
 DETAIL:  Valid values are between "4" and "2024".

@@ -625,6 +625,13 @@ Europe &amp; Russia*@ &amp; !Transportation
    </listitem>
    <listitem>
     <para>
+     Hash index over <type>ltree</type>:
+     <literal>=</literal>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      GiST index over <type>ltree</type> (<literal>gist_ltree_ops</literal>
      opclass):
      <literal>&lt;</literal>, <literal>&lt;=</literal>, <literal>=</literal>,
@@ -712,6 +719,7 @@ INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Galaxies');
 INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Astronauts');
 CREATE INDEX path_gist_idx ON test USING GIST (path);
 CREATE INDEX path_idx ON test USING BTREE (path);
+CREATE INDEX path_hash_idx ON test USING HASH (path);
 </programlisting>
 
   <para>

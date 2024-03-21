@@ -30,8 +30,9 @@ contrib_targets += ltree
 install_data(
   'ltree.control',
   'ltree--1.0--1.1.sql',
-  'ltree--1.1--1.2.sql',
   'ltree--1.1.sql',
+  'ltree--1.1--1.2.sql',
+  'ltree--1.2--1.3.sql',
   kwargs: contrib_data_args,
 )
 
