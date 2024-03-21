@@ -425,7 +425,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 	int			initialresponselen;
 	const char *selected_mechanism;
 	PQExpBufferData mechanism_buf;
-	char	   *password;
+	char	   *password = NULL;
 	SASLStatus	status;
 
 	initPQExpBuffer(&mechanism_buf);
@@ -446,8 +446,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 	/*
 	 * Parse the list of SASL authentication mechanisms in the
 	 * AuthenticationSASL message, and select the best mechanism that we
-	 * support.  SCRAM-SHA-256-PLUS and SCRAM-SHA-256 are the only ones
-	 * supported at the moment, listed by order of decreasing importance.
+	 * support. Mechanisms are listed by order of decreasing importance.
 	 */
 	selected_mechanism = NULL;
 	for (;;)
@@ -487,6 +486,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 				{
 					selected_mechanism = SCRAM_SHA_256_PLUS_NAME;
 					conn->sasl = &pg_scram_mech;
+					conn->password_needed = true;
 				}
 #else
 				/*
@@ -522,6 +522,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		{
 			selected_mechanism = SCRAM_SHA_256_NAME;
 			conn->sasl = &pg_scram_mech;
+			conn->password_needed = true;
 		}
 	}
 
@@ -545,18 +546,19 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 
 	/*
 	 * First, select the password to use for the exchange, complaining if
-	 * there isn't one.  Currently, all supported SASL mechanisms require a
-	 * password, so we can just go ahead here without further distinction.
+	 * there isn't one and the selected SASL mechanism needs it.
 	 */
-	conn->password_needed = true;
-	password = conn->connhost[conn->whichhost].password;
-	if (password == NULL)
-		password = conn->pgpass;
-	if (password == NULL || password[0] == '\0')
+	if (conn->password_needed)
 	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 PQnoPasswordSupplied);
-		goto error;
+		password = conn->connhost[conn->whichhost].password;
+		if (password == NULL)
+			password = conn->pgpass;
+		if (password == NULL || password[0] == '\0')
+		{
+			appendPQExpBufferStr(&conn->errorMessage,
+								 PQnoPasswordSupplied);
+			goto error;
+		}
 	}
 
 	Assert(conn->sasl);
