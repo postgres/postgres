@@ -4065,3 +4065,8 @@ rfile
 ws_options
 ws_file_info
 PathKeyInfo
+TidStore
+TidStoreIter
+TidStoreIterResult
+BlocktableEntry
+ItemArray
