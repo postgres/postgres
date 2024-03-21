@@ -167,6 +167,12 @@ struct TupleTableSlotOps
 	Datum		(*getsysattr) (TupleTableSlot *slot, int attnum, bool *isnull);
 
 	/*
+	 * Check if the tuple is created by the current transaction. Throws an
+	 * error if the slot doesn't contain the storage tuple.
+	 */
+	bool		(*is_current_xact_tuple) (TupleTableSlot *slot);
+
+	/*
 	 * Make the contents of the slot solely depend on the slot, and not on
 	 * underlying resources (like another memory context, buffers, etc).
 	 */
@@ -424,6 +430,21 @@ slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 
 	/* Fetch the system attribute from the underlying tuple. */
 	return slot->tts_ops->getsysattr(slot, attnum, isnull);
+}
+
+/*
+ * slot_is_current_xact_tuple - check if the slot's current tuple is created
+ *								by the current transaction.
+ *
+ *  If the slot does not contain a storage tuple, this will throw an error.
+ *  Hence before calling this function, callers should make sure that the
+ *  slot type supports storage tuples and that there is currently one inside
+ *  the slot.
+ */
+static inline bool
+slot_is_current_xact_tuple(TupleTableSlot *slot)
+{
+	return slot->tts_ops->is_current_xact_tuple(slot);
 }
 
 /*

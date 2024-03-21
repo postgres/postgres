@@ -60,6 +60,7 @@
 #include "access/heaptoast.h"
 #include "access/htup_details.h"
 #include "access/tupdesc_details.h"
+#include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
@@ -146,6 +147,22 @@ tts_virtual_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 			 errmsg("cannot retrieve a system column in this context")));
 
 	return 0;					/* silence compiler warnings */
+}
+
+/*
+ * VirtualTupleTableSlots never have storage tuples.  We generally
+ * shouldn't get here, but provide a user-friendly message if we do.
+ */
+static bool
+tts_virtual_is_current_xact_tuple(TupleTableSlot *slot)
+{
+	Assert(!TTS_EMPTY(slot));
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("don't have a storage tuple in this context")));
+
+	return false;				/* silence compiler warnings */
 }
 
 /*
@@ -354,6 +371,29 @@ tts_heap_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 						   slot->tts_tupleDescriptor, isnull);
 }
 
+static bool
+tts_heap_is_current_xact_tuple(TupleTableSlot *slot)
+{
+	HeapTupleTableSlot *hslot = (HeapTupleTableSlot *) slot;
+	TransactionId xmin;
+
+	Assert(!TTS_EMPTY(slot));
+
+	/*
+	 * In some code paths it's possible to get here with a non-materialized
+	 * slot, in which case we can't check if tuple is created by the current
+	 * transaction.
+	 */
+	if (!hslot->tuple)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("don't have a storage tuple in this context")));
+
+	xmin = HeapTupleHeaderGetRawXmin(hslot->tuple->t_data);
+
+	return TransactionIdIsCurrentTransactionId(xmin);
+}
+
 static void
 tts_heap_materialize(TupleTableSlot *slot)
 {
@@ -519,6 +559,18 @@ tts_minimal_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 			 errmsg("cannot retrieve a system column in this context")));
 
 	return 0;					/* silence compiler warnings */
+}
+
+static bool
+tts_minimal_is_current_xact_tuple(TupleTableSlot *slot)
+{
+	Assert(!TTS_EMPTY(slot));
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("don't have a storage tuple in this context")));
+
+	return false;				/* silence compiler warnings */
 }
 
 static void
@@ -712,6 +764,29 @@ tts_buffer_heap_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 
 	return heap_getsysattr(bslot->base.tuple, attnum,
 						   slot->tts_tupleDescriptor, isnull);
+}
+
+static bool
+tts_buffer_is_current_xact_tuple(TupleTableSlot *slot)
+{
+	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
+	TransactionId xmin;
+
+	Assert(!TTS_EMPTY(slot));
+
+	/*
+	 * In some code paths it's possible to get here with a non-materialized
+	 * slot, in which case we can't check if tuple is created by the current
+	 * transaction.
+	 */
+	if (!bslot->base.tuple)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("don't have a storage tuple in this context")));
+
+	xmin = HeapTupleHeaderGetRawXmin(bslot->base.tuple->t_data);
+
+	return TransactionIdIsCurrentTransactionId(xmin);
 }
 
 static void
@@ -1029,6 +1104,7 @@ const TupleTableSlotOps TTSOpsVirtual = {
 	.getsomeattrs = tts_virtual_getsomeattrs,
 	.getsysattr = tts_virtual_getsysattr,
 	.materialize = tts_virtual_materialize,
+	.is_current_xact_tuple = tts_virtual_is_current_xact_tuple,
 	.copyslot = tts_virtual_copyslot,
 
 	/*
@@ -1048,6 +1124,7 @@ const TupleTableSlotOps TTSOpsHeapTuple = {
 	.clear = tts_heap_clear,
 	.getsomeattrs = tts_heap_getsomeattrs,
 	.getsysattr = tts_heap_getsysattr,
+	.is_current_xact_tuple = tts_heap_is_current_xact_tuple,
 	.materialize = tts_heap_materialize,
 	.copyslot = tts_heap_copyslot,
 	.get_heap_tuple = tts_heap_get_heap_tuple,
@@ -1065,6 +1142,7 @@ const TupleTableSlotOps TTSOpsMinimalTuple = {
 	.clear = tts_minimal_clear,
 	.getsomeattrs = tts_minimal_getsomeattrs,
 	.getsysattr = tts_minimal_getsysattr,
+	.is_current_xact_tuple = tts_minimal_is_current_xact_tuple,
 	.materialize = tts_minimal_materialize,
 	.copyslot = tts_minimal_copyslot,
 
@@ -1082,6 +1160,7 @@ const TupleTableSlotOps TTSOpsBufferHeapTuple = {
 	.clear = tts_buffer_heap_clear,
 	.getsomeattrs = tts_buffer_heap_getsomeattrs,
 	.getsysattr = tts_buffer_heap_getsysattr,
+	.is_current_xact_tuple = tts_buffer_is_current_xact_tuple,
 	.materialize = tts_buffer_heap_materialize,
 	.copyslot = tts_buffer_heap_copyslot,
 	.get_heap_tuple = tts_buffer_heap_get_heap_tuple,
