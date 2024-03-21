@@ -2158,3 +2158,34 @@ jsonb_float8(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATUM(retValue);
 }
+
+/*
+ * Convert jsonb to a C-string stripping quotes from scalar strings.
+ */
+char *
+JsonbUnquote(Jsonb *jb)
+{
+	if (JB_ROOT_IS_SCALAR(jb))
+	{
+		JsonbValue	v;
+
+		(void) JsonbExtractScalar(&jb->root, &v);
+
+		if (v.type == jbvString)
+			return pnstrdup(v.val.string.val, v.val.string.len);
+		else if (v.type == jbvBool)
+			return pstrdup(v.val.boolean ? "true" : "false");
+		else if (v.type == jbvNumeric)
+			return DatumGetCString(DirectFunctionCall1(numeric_out,
+													   PointerGetDatum(v.val.numeric)));
+		else if (v.type == jbvNull)
+			return pstrdup("null");
+		else
+		{
+			elog(ERROR, "unrecognized jsonb value type %d", v.type);
+			return NULL;
+		}
+	}
+	else
+		return JsonbToCString(NULL, &jb->root, VARSIZE(jb));
+}

@@ -116,5 +116,7 @@ extern Node *makeJsonKeyValue(Node *key, Node *value);
 extern Node *makeJsonIsPredicate(Node *expr, JsonFormat *format,
 								 JsonValueType item_type, bool unique_keys,
 								 int location);
+extern JsonBehavior *makeJsonBehavior(JsonBehaviorType btype, Node *expr,
+									  int location);
 
 #endif							/* MAKEFUNC_H */

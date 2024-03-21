@@ -1716,6 +1716,48 @@ typedef struct JsonOutput
 } JsonOutput;
 
 /*
+ * JsonArgument -
+ *		representation of argument from JSON PASSING clause
+ */
+typedef struct JsonArgument
+{
+	NodeTag		type;
+	JsonValueExpr *val;			/* argument value expression */
+	char	   *name;			/* argument name */
+} JsonArgument;
+
+/*
+ * JsonQuotes -
+ *		representation of [KEEP|OMIT] QUOTES clause for JSON_QUERY()
+ */
+typedef enum JsonQuotes
+{
+	JS_QUOTES_UNSPEC,			/* unspecified */
+	JS_QUOTES_KEEP,				/* KEEP QUOTES */
+	JS_QUOTES_OMIT,				/* OMIT QUOTES */
+} JsonQuotes;
+
+/*
+ * JsonFuncExpr -
+ *		untransformed representation of function expressions for
+ *		SQL/JSON query functions
+ */
+typedef struct JsonFuncExpr
+{
+	NodeTag		type;
+	JsonExprOp	op;				/* expression type */
+	JsonValueExpr *context_item;	/* context item expression */
+	Node	   *pathspec;		/* JSON path specification expression */
+	List	   *passing;		/* list of PASSING clause arguments, if any */
+	JsonOutput *output;			/* output clause, if specified */
+	JsonBehavior *on_empty;		/* ON EMPTY behavior */
+	JsonBehavior *on_error;		/* ON ERROR behavior */
+	JsonWrapper wrapper;		/* array wrapper behavior (JSON_QUERY only) */
+	JsonQuotes	quotes;			/* omit or keep quotes? (JSON_QUERY only) */
+	int			location;		/* token location, or -1 if unknown */
+} JsonFuncExpr;
+
+/*
  * JsonKeyValue -
  *		untransformed representation of JSON object key-value pair for
  *		JSON_OBJECT() and JSON_OBJECTAGG()

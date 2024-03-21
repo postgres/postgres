@@ -236,6 +236,20 @@ exprType(const Node *expr)
 		case T_JsonIsPredicate:
 			type = BOOLOID;
 			break;
+		case T_JsonExpr:
+			{
+				const JsonExpr *jexpr = (const JsonExpr *) expr;
+
+				type = jexpr->returning->typid;
+				break;
+			}
+		case T_JsonBehavior:
+			{
+				const JsonBehavior *behavior = (const JsonBehavior *) expr;
+
+				type = exprType(behavior->expr);
+				break;
+			}
 		case T_NullTest:
 			type = BOOLOID;
 			break;
@@ -495,6 +509,20 @@ exprTypmod(const Node *expr)
 			return exprTypmod((Node *) ((const JsonValueExpr *) expr)->formatted_expr);
 		case T_JsonConstructorExpr:
 			return ((const JsonConstructorExpr *) expr)->returning->typmod;
+		case T_JsonExpr:
+			{
+				const JsonExpr *jexpr = (const JsonExpr *) expr;
+
+				return jexpr->returning->typmod;
+			}
+			break;
+		case T_JsonBehavior:
+			{
+				const JsonBehavior *behavior = (const JsonBehavior *) expr;
+
+				return exprTypmod(behavior->expr);
+			}
+			break;
 		case T_CoerceToDomain:
 			return ((const CoerceToDomain *) expr)->resulttypmod;
 		case T_CoerceToDomainValue:
@@ -974,6 +1002,26 @@ exprCollation(const Node *expr)
 			/* IS JSON's result is boolean ... */
 			coll = InvalidOid;	/* ... so it has no collation */
 			break;
+		case T_JsonExpr:
+			{
+				const JsonExpr *jsexpr = (JsonExpr *) expr;
+
+				if (jsexpr->coercion_expr)
+					coll = exprCollation(jsexpr->coercion_expr);
+				else
+					coll = jsexpr->collation;
+			}
+			break;
+		case T_JsonBehavior:
+			{
+				const JsonBehavior *behavior = (JsonBehavior *) expr;
+
+				if (behavior->expr)
+					coll = exprCollation(behavior->expr);
+				else
+					coll = InvalidOid;
+			}
+			break;
 		case T_NullTest:
 			/* NullTest's result is boolean ... */
 			coll = InvalidOid;	/* ... so it has no collation */
@@ -1212,6 +1260,24 @@ exprSetCollation(Node *expr, Oid collation)
 			break;
 		case T_JsonIsPredicate:
 			Assert(!OidIsValid(collation)); /* result is always boolean */
+			break;
+		case T_JsonExpr:
+			{
+				JsonExpr   *jexpr = (JsonExpr *) expr;
+
+				if (jexpr->coercion_expr)
+					exprSetCollation((Node *) jexpr->coercion_expr, collation);
+				else
+					jexpr->collation = collation;
+			}
+			break;
+		case T_JsonBehavior:
+			{
+				JsonBehavior *behavior = (JsonBehavior *) expr;
+
+				if (behavior->expr)
+					exprSetCollation(behavior->expr, collation);
+			}
 			break;
 		case T_NullTest:
 			/* NullTest's result is boolean ... */
@@ -1518,6 +1584,18 @@ exprLocation(const Node *expr)
 			break;
 		case T_JsonIsPredicate:
 			loc = ((const JsonIsPredicate *) expr)->location;
+			break;
+		case T_JsonExpr:
+			{
+				const JsonExpr *jsexpr = (const JsonExpr *) expr;
+
+				/* consider both function name and leftmost arg */
+				loc = leftmostLoc(jsexpr->location,
+								  exprLocation(jsexpr->formatted_expr));
+			}
+			break;
+		case T_JsonBehavior:
+			loc = exprLocation(((JsonBehavior *) expr)->expr);
 			break;
 		case T_NullTest:
 			{
@@ -2272,6 +2350,33 @@ expression_tree_walker_impl(Node *node,
 			break;
 		case T_JsonIsPredicate:
 			return WALK(((JsonIsPredicate *) node)->expr);
+		case T_JsonExpr:
+			{
+				JsonExpr   *jexpr = (JsonExpr *) node;
+
+				if (WALK(jexpr->formatted_expr))
+					return true;
+				if (WALK(jexpr->path_spec))
+					return true;
+				if (WALK(jexpr->coercion_expr))
+					return true;
+				if (WALK(jexpr->passing_values))
+					return true;
+				/* we assume walker doesn't care about passing_names */
+				if (WALK(jexpr->on_empty))
+					return true;
+				if (WALK(jexpr->on_error))
+					return true;
+			}
+			break;
+		case T_JsonBehavior:
+			{
+				JsonBehavior *behavior = (JsonBehavior *) node;
+
+				if (WALK(behavior->expr))
+					return true;
+			}
+			break;
 		case T_NullTest:
 			return WALK(((NullTest *) node)->arg);
 		case T_BooleanTest:
@@ -3276,6 +3381,32 @@ expression_tree_mutator_impl(Node *node,
 
 				return (Node *) newnode;
 			}
+		case T_JsonExpr:
+			{
+				JsonExpr   *jexpr = (JsonExpr *) node;
+				JsonExpr   *newnode;
+
+				FLATCOPY(newnode, jexpr, JsonExpr);
+				MUTATE(newnode->formatted_expr, jexpr->formatted_expr, Node *);
+				MUTATE(newnode->path_spec, jexpr->path_spec, Node *);
+				MUTATE(newnode->coercion_expr, jexpr->coercion_expr, Node *);
+				MUTATE(newnode->passing_values, jexpr->passing_values, List *);
+				/* assume mutator does not care about passing_names */
+				MUTATE(newnode->on_empty, jexpr->on_empty, JsonBehavior *);
+				MUTATE(newnode->on_error, jexpr->on_error, JsonBehavior *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_JsonBehavior:
+			{
+				JsonBehavior *behavior = (JsonBehavior *) node;
+				JsonBehavior *newnode;
+
+				FLATCOPY(newnode, behavior, JsonBehavior);
+				MUTATE(newnode->expr, behavior->expr, Node *);
+				return (Node *) newnode;
+			}
+			break;
 		case T_NullTest:
 			{
 				NullTest   *ntest = (NullTest *) node;
@@ -3965,6 +4096,34 @@ raw_expression_tree_walker_impl(Node *node,
 			break;
 		case T_JsonIsPredicate:
 			return WALK(((JsonIsPredicate *) node)->expr);
+		case T_JsonArgument:
+			return WALK(((JsonArgument *) node)->val);
+		case T_JsonFuncExpr:
+			{
+				JsonFuncExpr *jfe = (JsonFuncExpr *) node;
+
+				if (WALK(jfe->context_item))
+					return true;
+				if (WALK(jfe->pathspec))
+					return true;
+				if (WALK(jfe->passing))
+					return true;
+				if (WALK(jfe->output))
+					return true;
+				if (WALK(jfe->on_empty))
+					return true;
+				if (WALK(jfe->on_error))
+					return true;
+			}
+			break;
+		case T_JsonBehavior:
+			{
+				JsonBehavior *jb = (JsonBehavior *) node;
+
+				if (WALK(jb->expr))
+					return true;
+			}
+			break;
 		case T_NullTest:
 			return WALK(((NullTest *) node)->arg);
 		case T_BooleanTest:

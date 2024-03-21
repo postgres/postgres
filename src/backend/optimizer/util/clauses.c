@@ -50,6 +50,7 @@
 #include "utils/fmgroids.h"
 #include "utils/json.h"
 #include "utils/jsonb.h"
+#include "utils/jsonpath.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -412,6 +413,25 @@ contain_mutable_functions_walker(Node *node, void *context)
 		}
 
 		/* Check all subnodes */
+	}
+
+	if (IsA(node, JsonExpr))
+	{
+		JsonExpr   *jexpr = castNode(JsonExpr, node);
+		Const	   *cnst;
+
+		if (!IsA(jexpr->path_spec, Const))
+			return true;
+
+		cnst = castNode(Const, jexpr->path_spec);
+
+		Assert(cnst->consttype == JSONPATHOID);
+		if (cnst->constisnull)
+			return false;
+
+		if (jspIsMutable(DatumGetJsonPathP(cnst->constvalue),
+						 jexpr->passing_names, jexpr->passing_values))
+			return true;
 	}
 
 	if (IsA(node, SQLValueFunction))

@@ -1691,6 +1691,128 @@ typedef struct JsonIsPredicate
 	ParseLoc	location;		/* token location, or -1 if unknown */
 } JsonIsPredicate;
 
+/* Nodes used in SQL/JSON query functions */
+
+/*
+ * JsonWrapper -
+ *		representation of WRAPPER clause for JSON_QUERY()
+ */
+typedef enum JsonWrapper
+{
+	JSW_UNSPEC,
+	JSW_NONE,
+	JSW_CONDITIONAL,
+	JSW_UNCONDITIONAL,
+} JsonWrapper;
+
+/*
+ * JsonBehaviorType -
+ *		enumeration of behavior types used in SQL/JSON ON ERROR/EMPTY clauses
+ *
+ * 		If enum members are reordered, get_json_behavior() from ruleutils.c
+ * 		must be updated accordingly.
+ */
+typedef enum JsonBehaviorType
+{
+	JSON_BEHAVIOR_NULL = 0,
+	JSON_BEHAVIOR_ERROR,
+	JSON_BEHAVIOR_EMPTY,
+	JSON_BEHAVIOR_TRUE,
+	JSON_BEHAVIOR_FALSE,
+	JSON_BEHAVIOR_UNKNOWN,
+	JSON_BEHAVIOR_EMPTY_ARRAY,
+	JSON_BEHAVIOR_EMPTY_OBJECT,
+	JSON_BEHAVIOR_DEFAULT,
+} JsonBehaviorType;
+
+/*
+ * JsonBehavior
+ *		Specifications for ON ERROR / ON EMPTY behaviors of SQL/JSON
+ *		query functions specified by a JsonExpr
+ *
+ * 'expr' is the expression to emit when a given behavior (EMPTY or ERROR)
+ * occurs on evaluating the SQL/JSON query function.  'coerce' is set to true
+ * if 'expr' isn't already of the expected target type given by
+ * JsonExpr.returning.
+ */
+typedef struct JsonBehavior
+{
+	NodeTag		type;
+
+	JsonBehaviorType btype;
+	Node	   *expr;
+	bool		coerce;
+	int			location;		/* token location, or -1 if unknown */
+} JsonBehavior;
+
+/*
+ * JsonExprOp -
+ *		enumeration of SQL/JSON query function types
+ */
+typedef enum JsonExprOp
+{
+	JSON_EXISTS_OP,				/* JSON_EXISTS() */
+	JSON_QUERY_OP,				/* JSON_QUERY() */
+	JSON_VALUE_OP,				/* JSON_VALUE() */
+} JsonExprOp;
+
+/*
+ * JsonExpr -
+ *		Transformed representation of JSON_VALUE(), JSON_QUERY(), and
+ *		JSON_EXISTS()
+ */
+typedef struct JsonExpr
+{
+	Expr		xpr;
+
+	JsonExprOp	op;
+
+	/* jsonb-valued expression to query */
+	Node	   *formatted_expr;
+
+	/* Format of the above expression needed by ruleutils.c */
+	JsonFormat *format;
+
+	/* jsopath-valued expression containing the query pattern */
+	Node	   *path_spec;
+
+	/* Expected type/format of the output. */
+	JsonReturning *returning;
+
+	/* Information about the PASSING argument expressions */
+	List	   *passing_names;
+	List	   *passing_values;
+
+	/* User-specified or default ON EMPTY and ON ERROR behaviors */
+	JsonBehavior *on_empty;
+	JsonBehavior *on_error;
+
+	/*
+	 * Information about converting the result of jsonpath functions
+	 * JsonPathQuery() and JsonPathValue() to the RETURNING type.
+	 *
+	 * coercion_expr is a cast expression if the parser can find it for the
+	 * source and the target type.  If not, either use_io_coercion or
+	 * use_json_coercion is set to determine the coercion method to use at
+	 * runtime; see coerceJsonExprOutput() and ExecInitJsonExpr().
+	 */
+	Node	   *coercion_expr;
+	bool		use_io_coercion;
+	bool		use_json_coercion;
+
+	/* WRAPPER specification for JSON_QUERY */
+	JsonWrapper wrapper;
+
+	/* KEEP or OMIT QUOTES for singleton scalars returned by JSON_QUERY() */
+	bool		omit_quotes;
+
+	/* JsonExpr's collation, if coercion_expr is NULL. */
+	Oid			collation;
+
+	/* Original JsonFuncExpr's location */
+	int			location;
+} JsonExpr;
+
 /* ----------------
  * NullTest
  *

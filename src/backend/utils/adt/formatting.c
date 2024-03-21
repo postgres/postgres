@@ -4584,6 +4584,50 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 }
 
 /*
+ * Parses the datetime format string in 'fmt_str' and returns true if it
+ * contains a timezone specifier, false if not.
+ */
+bool
+datetime_format_has_tz(const char *fmt_str)
+{
+	bool		incache;
+	int			fmt_len = strlen(fmt_str);
+	int			result;
+	FormatNode *format;
+
+	if (fmt_len > DCH_CACHE_SIZE)
+	{
+		/*
+		 * Allocate new memory if format picture is bigger than static cache
+		 * and do not use cache (call parser always)
+		 */
+		incache = false;
+
+		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
+
+		parse_format(format, fmt_str, DCH_keywords,
+					 DCH_suff, DCH_index, DCH_FLAG, NULL);
+	}
+	else
+	{
+		/*
+		 * Use cache buffers
+		 */
+		DCHCacheEntry *ent = DCH_cache_fetch(fmt_str, false);
+
+		incache = true;
+		format = ent->format;
+	}
+
+	result = DCH_datetime_type(format);
+
+	if (!incache)
+		pfree(format);
+
+	return result & DCH_ZONED;
+}
+
+/*
  * do_to_timestamp: shared code for to_timestamp and to_date
  *
  * Parse the 'date_txt' according to 'fmt', return results as a struct pg_tm,

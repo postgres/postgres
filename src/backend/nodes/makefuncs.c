@@ -857,6 +857,22 @@ makeJsonValueExpr(Expr *raw_expr, Expr *formatted_expr,
 }
 
 /*
+ * makeJsonBehavior -
+ *	  creates a JsonBehavior node
+ */
+JsonBehavior *
+makeJsonBehavior(JsonBehaviorType btype, Node *expr, int location)
+{
+	JsonBehavior *behavior = makeNode(JsonBehavior);
+
+	behavior->btype = btype;
+	behavior->expr = expr;
+	behavior->location = location;
+
+	return behavior;
+}
+
+/*
  * makeJsonKeyValue -
  *	  creates a JsonKeyValue node
  */

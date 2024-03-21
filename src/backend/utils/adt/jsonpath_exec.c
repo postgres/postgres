@@ -229,6 +229,12 @@ static JsonPathExecResult appendBoolResult(JsonPathExecContext *cxt,
 										   JsonPathItem *jsp, JsonValueList *found, JsonPathBool res);
 static void getJsonPathItem(JsonPathExecContext *cxt, JsonPathItem *item,
 							JsonbValue *value);
+static JsonbValue *GetJsonPathVar(void *cxt, char *varName, int varNameLen,
+								  JsonbValue *baseObject, int *baseObjectId);
+static int	CountJsonPathVars(void *cxt);
+static void JsonItemFromDatum(Datum val, Oid typid, int32 typmod,
+							  JsonbValue *res);
+static void JsonbValueInitNumericDatum(JsonbValue *jbv, Datum num);
 static void getJsonPathVariable(JsonPathExecContext *cxt,
 								JsonPathItem *variable, JsonbValue *value);
 static int	countVariablesFromJsonb(void *varsJsonb);
@@ -2861,6 +2867,155 @@ getJsonPathItem(JsonPathExecContext *cxt, JsonPathItem *item,
 }
 
 /*
+ * Returns the computed value of a JSON path variable with given name.
+ */
+static JsonbValue *
+GetJsonPathVar(void *cxt, char *varName, int varNameLen,
+			   JsonbValue *baseObject, int *baseObjectId)
+{
+	JsonPathVariable *var = NULL;
+	List	   *vars = cxt;
+	ListCell   *lc;
+	JsonbValue *result;
+	int			id = 1;
+
+	foreach(lc, vars)
+	{
+		JsonPathVariable *curvar = lfirst(lc);
+
+		if (!strncmp(curvar->name, varName, varNameLen))
+		{
+			var = curvar;
+			break;
+		}
+
+		id++;
+	}
+
+	if (var == NULL)
+	{
+		*baseObjectId = -1;
+		return NULL;
+	}
+
+	result = palloc(sizeof(JsonbValue));
+	if (var->isnull)
+	{
+		*baseObjectId = 0;
+		result->type = jbvNull;
+	}
+	else
+		JsonItemFromDatum(var->value, var->typid, var->typmod, result);
+
+	*baseObject = *result;
+	*baseObjectId = id;
+
+	return result;
+}
+
+static int
+CountJsonPathVars(void *cxt)
+{
+	List	   *vars = (List *) cxt;
+
+	return list_length(vars);
+}
+
+
+/*
+ * Initialize JsonbValue to pass to jsonpath executor from given
+ * datum value of the specified type.
+ */
+static void
+JsonItemFromDatum(Datum val, Oid typid, int32 typmod, JsonbValue *res)
+{
+	switch (typid)
+	{
+		case BOOLOID:
+			res->type = jbvBool;
+			res->val.boolean = DatumGetBool(val);
+			break;
+		case NUMERICOID:
+			JsonbValueInitNumericDatum(res, val);
+			break;
+		case INT2OID:
+			JsonbValueInitNumericDatum(res, DirectFunctionCall1(int2_numeric, val));
+			break;
+		case INT4OID:
+			JsonbValueInitNumericDatum(res, DirectFunctionCall1(int4_numeric, val));
+			break;
+		case INT8OID:
+			JsonbValueInitNumericDatum(res, DirectFunctionCall1(int8_numeric, val));
+			break;
+		case FLOAT4OID:
+			JsonbValueInitNumericDatum(res, DirectFunctionCall1(float4_numeric, val));
+			break;
+		case FLOAT8OID:
+			JsonbValueInitNumericDatum(res, DirectFunctionCall1(float8_numeric, val));
+			break;
+		case TEXTOID:
+		case VARCHAROID:
+			res->type = jbvString;
+			res->val.string.val = VARDATA_ANY(val);
+			res->val.string.len = VARSIZE_ANY_EXHDR(val);
+			break;
+		case DATEOID:
+		case TIMEOID:
+		case TIMETZOID:
+		case TIMESTAMPOID:
+		case TIMESTAMPTZOID:
+			res->type = jbvDatetime;
+			res->val.datetime.value = val;
+			res->val.datetime.typid = typid;
+			res->val.datetime.typmod = typmod;
+			res->val.datetime.tz = 0;
+			break;
+		case JSONBOID:
+			{
+				JsonbValue *jbv = res;
+				Jsonb	   *jb = DatumGetJsonbP(val);
+
+				if (JsonContainerIsScalar(&jb->root))
+				{
+					bool		result PG_USED_FOR_ASSERTS_ONLY;
+
+					result = JsonbExtractScalar(&jb->root, jbv);
+					Assert(result);
+				}
+				else
+					JsonbInitBinary(jbv, jb);
+				break;
+			}
+		case JSONOID:
+			{
+				text	   *txt = DatumGetTextP(val);
+				char	   *str = text_to_cstring(txt);
+				Jsonb	   *jb;
+
+				jb = DatumGetJsonbP(DirectFunctionCall1(jsonb_in,
+														CStringGetDatum(str)));
+				pfree(str);
+
+				JsonItemFromDatum(JsonbPGetDatum(jb), JSONBOID, -1, res);
+				break;
+			}
+		default:
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("could not convert value of type %s to jsonpath",
+						   format_type_be(typid)));
+	}
+}
+
+/* Initialize numeric value from the given datum */
+static void
+JsonbValueInitNumericDatum(JsonbValue *jbv, Datum num)
+{
+	jbv->type = jbvNumeric;
+	jbv->val.numeric = DatumGetNumeric(num);
+}
+
+/*
  * Get the value of variable passed to jsonpath executor
  */
 static void
@@ -3595,4 +3750,171 @@ compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 		return 0;				/* cast error */
 
 	return DatumGetInt32(DirectFunctionCall2(cmpfunc, val1, val2));
+}
+
+/*
+ * Executor-callable JSON_EXISTS implementation
+ *
+ * Returns NULL instead of throwing errors if 'error' is not NULL, setting
+ * *error to true.
+ */
+bool
+JsonPathExists(Datum jb, JsonPath *jp, bool *error, List *vars)
+{
+	JsonPathExecResult res;
+
+	res = executeJsonPath(jp, vars,
+						  GetJsonPathVar, CountJsonPathVars,
+						  DatumGetJsonbP(jb), !error, NULL, true);
+
+	Assert(error || !jperIsError(res));
+
+	if (error && jperIsError(res))
+		*error = true;
+
+	return res == jperOk;
+}
+
+/*
+ * Executor-callable JSON_QUERY implementation
+ *
+ * Returns NULL instead of throwing errors if 'error' is not NULL, setting
+ * *error to true.  *empty is set to true if no match is found.
+ */
+Datum
+JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
+			  bool *error, List *vars)
+{
+	JsonbValue *singleton;
+	bool		wrap;
+	JsonValueList found = {0};
+	JsonPathExecResult res;
+	int			count;
+
+	res = executeJsonPath(jp, vars,
+						  GetJsonPathVar, CountJsonPathVars,
+						  DatumGetJsonbP(jb), !error, &found, true);
+	Assert(error || !jperIsError(res));
+	if (error && jperIsError(res))
+	{
+		*error = true;
+		*empty = false;
+		return (Datum) 0;
+	}
+
+	/* WRAP or not? */
+	count = JsonValueListLength(&found);
+	singleton = count > 0 ? JsonValueListHead(&found) : NULL;
+	if (singleton == NULL)
+		wrap = false;
+	else if (wrapper == JSW_NONE || wrapper == JSW_UNSPEC)
+		wrap = false;
+	else if (wrapper == JSW_UNCONDITIONAL)
+		wrap = true;
+	else if (wrapper == JSW_CONDITIONAL)
+		wrap = count > 1 ||
+			IsAJsonbScalar(singleton) ||
+			(singleton->type == jbvBinary &&
+			 JsonContainerIsScalar(singleton->val.binary.data));
+	else
+	{
+		elog(ERROR, "unrecognized json wrapper %d", wrapper);
+		wrap = false;
+	}
+
+	if (wrap)
+		return JsonbPGetDatum(JsonbValueToJsonb(wrapItemsInArray(&found)));
+
+	/* No wrapping means only one item is expected. */
+	if (count > 1)
+	{
+		if (error)
+		{
+			*error = true;
+			return (Datum) 0;
+		}
+
+		ereport(ERROR,
+				(errcode(ERRCODE_MORE_THAN_ONE_SQL_JSON_ITEM),
+				 errmsg("JSON path expression in JSON_QUERY should return singleton item without wrapper"),
+				 errhint("Use WITH WRAPPER clause to wrap SQL/JSON item sequence into array.")));
+	}
+
+	if (singleton)
+		return JsonbPGetDatum(JsonbValueToJsonb(singleton));
+
+	*empty = true;
+	return PointerGetDatum(NULL);
+}
+
+/*
+ * Executor-callable JSON_VALUE implementation
+ *
+ * Returns NULL instead of throwing errors if 'error' is not NULL, setting
+ * *error to true.  *empty is set to true if no match is found.
+ */
+JsonbValue *
+JsonPathValue(Datum jb, JsonPath *jp, bool *empty, bool *error, List *vars)
+{
+	JsonbValue *res;
+	JsonValueList found = {0};
+	JsonPathExecResult jper PG_USED_FOR_ASSERTS_ONLY;
+	int			count;
+
+	jper = executeJsonPath(jp, vars, GetJsonPathVar, CountJsonPathVars,
+						   DatumGetJsonbP(jb),
+						   !error, &found, true);
+
+	Assert(error || !jperIsError(jper));
+
+	if (error && jperIsError(jper))
+	{
+		*error = true;
+		*empty = false;
+		return NULL;
+	}
+
+	count = JsonValueListLength(&found);
+
+	*empty = (count == 0);
+
+	if (*empty)
+		return NULL;
+
+	/* JSON_VALUE expects to get only singletons. */
+	if (count > 1)
+	{
+		if (error)
+		{
+			*error = true;
+			return NULL;
+		}
+
+		ereport(ERROR,
+				(errcode(ERRCODE_MORE_THAN_ONE_SQL_JSON_ITEM),
+				 errmsg("JSON path expression in JSON_VALUE should return singleton scalar item")));
+	}
+
+	res = JsonValueListHead(&found);
+	if (res->type == jbvBinary && JsonContainerIsScalar(res->val.binary.data))
+		JsonbExtractScalar(res->val.binary.data, res);
+
+	/* JSON_VALUE expects to get only scalars. */
+	if (!IsAJsonbScalar(res))
+	{
+		if (error)
+		{
+			*error = true;
+			return NULL;
+		}
+
+		ereport(ERROR,
+				(errcode(ERRCODE_SQL_JSON_SCALAR_REQUIRED),
+				 errmsg("JSON path expression in JSON_VALUE should return singleton scalar item")));
+	}
+
+	if (res->type == jbvNull)
+		return NULL;
+
+	return res;
 }

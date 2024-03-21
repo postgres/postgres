@@ -2006,6 +2006,24 @@ FigureColnameInternal(Node *node, char **name)
 			/* make JSON_ARRAYAGG act like a regular function */
 			*name = "json_arrayagg";
 			return 2;
+		case T_JsonFuncExpr:
+			/* make SQL/JSON functions act like a regular function */
+			switch (((JsonFuncExpr *) node)->op)
+			{
+				case JSON_EXISTS_OP:
+					*name = "json_exists";
+					return 2;
+				case JSON_QUERY_OP:
+					*name = "json_query";
+					return 2;
+				case JSON_VALUE_OP:
+					*name = "json_value";
+					return 2;
+				default:
+					elog(ERROR, "unrecognized JsonExpr op: %d",
+						 (int) ((JsonFuncExpr *) node)->op);
+			}
+			break;
 		default:
 			break;
 	}

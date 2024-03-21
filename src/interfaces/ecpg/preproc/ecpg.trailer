@@ -651,6 +651,34 @@ var_type:	simple_type
 			$$.type_index = mm_strdup("-1");
 			$$.type_sizeof = NULL;
 		}
+		| STRING_P
+		{
+			if (INFORMIX_MODE)
+			{
+				/* In Informix mode, "string" is automatically a typedef */
+				$$.type_enum = ECPGt_string;
+				$$.type_str = mm_strdup("char");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
+				$$.type_sizeof = NULL;
+			}
+			else
+			{
+				/* Otherwise, legal only if user typedef'ed it */
+				struct typedefs *this = get_typedef("string", false);
+
+				$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? EMPTY : mm_strdup(this->name);
+				$$.type_enum = this->type->type_enum;
+				$$.type_dimension = this->type->type_dimension;
+				$$.type_index = this->type->type_index;
+				if (this->type->type_sizeof && strlen(this->type->type_sizeof) != 0)
+					$$.type_sizeof = this->type->type_sizeof;
+				else
+					$$.type_sizeof = cat_str(3, mm_strdup("sizeof("), mm_strdup(this->name), mm_strdup(")"));
+
+				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+			}
+		}
 		| INTERVAL ecpg_interval
 		{
 			$$.type_enum = ECPGt_interval;

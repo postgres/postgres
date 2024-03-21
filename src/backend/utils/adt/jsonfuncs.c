@@ -2830,15 +2830,15 @@ populate_array_dim_jsonb(PopulateArrayContext *ctx, /* context */
 
 	check_stack_depth();
 
-	if (jbv->type != jbvBinary || !JsonContainerIsArray(jbc))
+	/* Even scalars can end up here thanks to ExecEvalJsonCoercion(). */
+	if (jbv->type != jbvBinary || !JsonContainerIsArray(jbc) ||
+		JsonContainerIsScalar(jbc))
 	{
 		populate_array_report_expected_array(ctx, ndim - 1);
 		/* Getting here means the error was reported softly. */
 		Assert(SOFT_ERROR_OCCURRED(ctx->escontext));
 		return false;
 	}
-
-	Assert(!JsonContainerIsScalar(jbc));
 
 	it = JsonbIteratorInit(jbc);
 
@@ -3321,6 +3321,62 @@ prepare_column_cache(ColumnIOData *column,
 	}
 
 	ReleaseSysCache(tup);
+}
+
+/*
+ * Populate and return the value of specified type from a given json/jsonb
+ * value 'json_val'.  'cache' is caller-specified pointer to save the
+ * ColumnIOData that will be initialized on the 1st call and then reused
+ * during any subsequent calls.  'mcxt' gives the memory context to allocate
+ * the ColumnIOData and any other subsidiary memory in.  'escontext',
+ * if not NULL, tells that any errors that occur should be handled softly.
+ */
+Datum
+json_populate_type(Datum json_val, Oid json_type,
+				   Oid typid, int32 typmod,
+				   void **cache, MemoryContext mcxt,
+				   bool *isnull,
+				   Node *escontext)
+{
+	JsValue		jsv = {0};
+	JsonbValue	jbv;
+
+	jsv.is_json = json_type == JSONOID;
+
+	if (*isnull)
+	{
+		if (jsv.is_json)
+			jsv.val.json.str = NULL;
+		else
+			jsv.val.jsonb = NULL;
+	}
+	else if (jsv.is_json)
+	{
+		text	   *json = DatumGetTextPP(json_val);
+
+		jsv.val.json.str = VARDATA_ANY(json);
+		jsv.val.json.len = VARSIZE_ANY_EXHDR(json);
+		jsv.val.json.type = JSON_TOKEN_INVALID; /* not used in
+												 * populate_composite() */
+	}
+	else
+	{
+		Jsonb	   *jsonb = DatumGetJsonbP(json_val);
+
+		jsv.val.jsonb = &jbv;
+
+		/* fill binary jsonb value pointing to jb */
+		jbv.type = jbvBinary;
+		jbv.val.binary.data = &jsonb->root;
+		jbv.val.binary.len = VARSIZE(jsonb) - VARHDRSZ;
+	}
+
+	if (*cache == NULL)
+		*cache = MemoryContextAllocZero(mcxt, sizeof(ColumnIOData));
+
+	return populate_record_field(*cache, typid, typmod, NULL, mcxt,
+								 PointerGetDatum(NULL), &jsv, isnull,
+								 escontext);
 }
 
 /* recursively populate a record field or an array element from a json/jsonb value */

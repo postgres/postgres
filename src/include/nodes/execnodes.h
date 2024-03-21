@@ -1008,6 +1008,79 @@ typedef struct DomainConstraintState
 	ExprState  *check_exprstate;	/* check_expr's eval state, or NULL */
 } DomainConstraintState;
 
+/*
+ * State for JsonExpr evaluation, too big to inline.
+ *
+ * This contains the information going into and coming out of the
+ * EEOP_JSONEXPR_PATH eval step.
+ */
+typedef struct JsonExprState
+{
+	/* original expression node */
+	JsonExpr   *jsexpr;
+
+	/* value/isnull for formatted_expr */
+	NullableDatum formatted_expr;
+
+	/* value/isnull for pathspec */
+	NullableDatum pathspec;
+
+	/* JsonPathVariable entries for passing_values */
+	List	   *args;
+
+	/*
+	 * Output variables that drive the EEOP_JUMP_IF_NOT_TRUE steps that are
+	 * added for ON ERROR and ON EMPTY expressions, if any.
+	 *
+	 * Reset for each evaluation of EEOP_JSONEXPR_PATH.
+	 */
+
+	/* Set to true if jsonpath evaluation cause an error.  */
+	NullableDatum error;
+
+	/* Set to true if the jsonpath evaluation returned 0 items. */
+	NullableDatum empty;
+
+	/*
+	 * Addresses of steps that implement the non-ERROR variant of ON EMPTY and
+	 * ON ERROR behaviors, respectively.
+	 */
+	int			jump_empty;
+	int			jump_error;
+
+	/*
+	 * Address of the step to coerce the result value of jsonpath evaluation
+	 * to the RETURNING type using JsonExpr.coercion_expr.  -1 if no coercion
+	 * is necessary or if either JsonExpr.use_io_coercion or
+	 * JsonExpr.use_json_coercion is true.
+	 */
+	int			jump_eval_coercion;
+
+	/*
+	 * Address to jump to when skipping all the steps after performing
+	 * ExecEvalJsonExprPath() so as to return whatever the JsonPath* function
+	 * returned as is, that is, in the cases where there's no error and no
+	 * coercion is necessary.
+	 */
+	int			jump_end;
+
+	/*
+	 * RETURNING type input function invocation info when
+	 * JsonExpr.use_io_coercion is true.
+	 */
+	FmgrInfo   *input_finfo;
+	FunctionCallInfo input_fcinfo;
+
+	/*
+	 * For error-safe evaluation of coercions.  When the ON ERROR behavior is
+	 * not ERROR, a pointer to this is passed to ExecInitExprRec() when
+	 * initializing the coercion expressions or to ExecInitJsonCoercion().
+	 *
+	 * Reset for each evaluation of EEOP_JSONEXPR_PATH.
+	 */
+	ErrorSaveContext escontext;
+} JsonExprState;
+
 
 /* ----------------------------------------------------------------
  *				 Executor State Trees

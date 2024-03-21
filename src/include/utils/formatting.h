@@ -29,5 +29,6 @@ extern char *asc_initcap(const char *buff, size_t nbytes);
 extern Datum parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 							Oid *typid, int32 *typmod, int *tz,
 							struct Node *escontext);
+extern bool datetime_format_has_tz(const char *fmt_str);
 
 #endif

@@ -63,11 +63,14 @@
 
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "nodes/miscnodes.h"
+#include "nodes/nodeFuncs.h"
 #include "utils/fmgrprotos.h"
+#include "utils/formatting.h"
 #include "utils/json.h"
 #include "utils/jsonpath.h"
 
@@ -1238,4 +1241,282 @@ jspGetArraySubscript(JsonPathItem *v, JsonPathItem *from, JsonPathItem *to,
 	jspInitByBuffer(to, v->base, v->content.array.elems[i].to);
 
 	return true;
+}
+
+/* SQL/JSON datatype status: */
+enum JsonPathDatatypeStatus
+{
+	jpdsNonDateTime,			/* null, bool, numeric, string, array, object */
+	jpdsUnknownDateTime,		/* unknown datetime type */
+	jpdsDateTimeZoned,			/* timetz, timestamptz */
+	jpdsDateTimeNonZoned,		/* time, timestamp, date */
+};
+
+/* Context for jspIsMutableWalker() */
+struct JsonPathMutableContext
+{
+	List	   *varnames;		/* list of variable names */
+	List	   *varexprs;		/* list of variable expressions */
+	enum JsonPathDatatypeStatus current;	/* status of @ item */
+	bool		lax;			/* jsonpath is lax or strict */
+	bool		mutable;		/* resulting mutability status */
+};
+
+static enum JsonPathDatatypeStatus jspIsMutableWalker(JsonPathItem *jpi,
+													  struct JsonPathMutableContext *cxt);
+
+/*
+ * Function to check whether jsonpath expression is mutable to be used in the
+ * planner function contain_mutable_functions().
+ */
+bool
+jspIsMutable(JsonPath *path, List *varnames, List *varexprs)
+{
+	struct JsonPathMutableContext cxt;
+	JsonPathItem jpi;
+
+	cxt.varnames = varnames;
+	cxt.varexprs = varexprs;
+	cxt.current = jpdsNonDateTime;
+	cxt.lax = (path->header & JSONPATH_LAX) != 0;
+	cxt.mutable = false;
+
+	jspInit(&jpi, path);
+	(void) jspIsMutableWalker(&jpi, &cxt);
+
+	return cxt.mutable;
+}
+
+/*
+ * Recursive walker for jspIsMutable()
+ */
+static enum JsonPathDatatypeStatus
+jspIsMutableWalker(JsonPathItem *jpi, struct JsonPathMutableContext *cxt)
+{
+	JsonPathItem next;
+	enum JsonPathDatatypeStatus status = jpdsNonDateTime;
+
+	while (!cxt->mutable)
+	{
+		JsonPathItem arg;
+		enum JsonPathDatatypeStatus leftStatus;
+		enum JsonPathDatatypeStatus rightStatus;
+
+		switch (jpi->type)
+		{
+			case jpiRoot:
+				Assert(status == jpdsNonDateTime);
+				break;
+
+			case jpiCurrent:
+				Assert(status == jpdsNonDateTime);
+				status = cxt->current;
+				break;
+
+			case jpiFilter:
+				{
+					enum JsonPathDatatypeStatus prevStatus = cxt->current;
+
+					cxt->current = status;
+					jspGetArg(jpi, &arg);
+					jspIsMutableWalker(&arg, cxt);
+
+					cxt->current = prevStatus;
+					break;
+				}
+
+			case jpiVariable:
+				{
+					int32		len;
+					const char *name = jspGetString(jpi, &len);
+					ListCell   *lc1;
+					ListCell   *lc2;
+
+					Assert(status == jpdsNonDateTime);
+
+					forboth(lc1, cxt->varnames, lc2, cxt->varexprs)
+					{
+						String	   *varname = lfirst_node(String, lc1);
+						Node	   *varexpr = lfirst(lc2);
+
+						if (strncmp(varname->sval, name, len))
+							continue;
+
+						switch (exprType(varexpr))
+						{
+							case DATEOID:
+							case TIMEOID:
+							case TIMESTAMPOID:
+								status = jpdsDateTimeNonZoned;
+								break;
+
+							case TIMETZOID:
+							case TIMESTAMPTZOID:
+								status = jpdsDateTimeZoned;
+								break;
+
+							default:
+								status = jpdsNonDateTime;
+								break;
+						}
+
+						break;
+					}
+					break;
+				}
+
+			case jpiEqual:
+			case jpiNotEqual:
+			case jpiLess:
+			case jpiGreater:
+			case jpiLessOrEqual:
+			case jpiGreaterOrEqual:
+				Assert(status == jpdsNonDateTime);
+				jspGetLeftArg(jpi, &arg);
+				leftStatus = jspIsMutableWalker(&arg, cxt);
+
+				jspGetRightArg(jpi, &arg);
+				rightStatus = jspIsMutableWalker(&arg, cxt);
+
+				/*
+				 * Comparison of datetime type with different timezone status
+				 * is mutable.
+				 */
+				if (leftStatus != jpdsNonDateTime &&
+					rightStatus != jpdsNonDateTime &&
+					(leftStatus == jpdsUnknownDateTime ||
+					 rightStatus == jpdsUnknownDateTime ||
+					 leftStatus != rightStatus))
+					cxt->mutable = true;
+				break;
+
+			case jpiNot:
+			case jpiIsUnknown:
+			case jpiExists:
+			case jpiPlus:
+			case jpiMinus:
+				Assert(status == jpdsNonDateTime);
+				jspGetArg(jpi, &arg);
+				jspIsMutableWalker(&arg, cxt);
+				break;
+
+			case jpiAnd:
+			case jpiOr:
+			case jpiAdd:
+			case jpiSub:
+			case jpiMul:
+			case jpiDiv:
+			case jpiMod:
+			case jpiStartsWith:
+				Assert(status == jpdsNonDateTime);
+				jspGetLeftArg(jpi, &arg);
+				jspIsMutableWalker(&arg, cxt);
+				jspGetRightArg(jpi, &arg);
+				jspIsMutableWalker(&arg, cxt);
+				break;
+
+			case jpiIndexArray:
+				for (int i = 0; i < jpi->content.array.nelems; i++)
+				{
+					JsonPathItem from;
+					JsonPathItem to;
+
+					if (jspGetArraySubscript(jpi, &from, &to, i))
+						jspIsMutableWalker(&to, cxt);
+
+					jspIsMutableWalker(&from, cxt);
+				}
+				/* FALLTHROUGH */
+
+			case jpiAnyArray:
+				if (!cxt->lax)
+					status = jpdsNonDateTime;
+				break;
+
+			case jpiAny:
+				if (jpi->content.anybounds.first > 0)
+					status = jpdsNonDateTime;
+				break;
+
+			case jpiDatetime:
+				if (jpi->content.arg)
+				{
+					char	   *template;
+
+					jspGetArg(jpi, &arg);
+					if (arg.type != jpiString)
+					{
+						status = jpdsNonDateTime;
+						break;	/* there will be runtime error */
+					}
+
+					template = jspGetString(&arg, NULL);
+					if (datetime_format_has_tz(template))
+						status = jpdsDateTimeZoned;
+					else
+						status = jpdsDateTimeNonZoned;
+				}
+				else
+				{
+					status = jpdsUnknownDateTime;
+				}
+				break;
+
+			case jpiLikeRegex:
+				Assert(status == jpdsNonDateTime);
+				jspInitByBuffer(&arg, jpi->base, jpi->content.like_regex.expr);
+				jspIsMutableWalker(&arg, cxt);
+				break;
+
+				/* literals */
+			case jpiNull:
+			case jpiString:
+			case jpiNumeric:
+			case jpiBool:
+				break;
+				/* accessors */
+			case jpiKey:
+			case jpiAnyKey:
+				/* special items */
+			case jpiSubscript:
+			case jpiLast:
+				/* item methods */
+			case jpiType:
+			case jpiSize:
+			case jpiAbs:
+			case jpiFloor:
+			case jpiCeiling:
+			case jpiDouble:
+			case jpiKeyValue:
+			case jpiBigint:
+			case jpiBoolean:
+			case jpiDecimal:
+			case jpiInteger:
+			case jpiNumber:
+			case jpiStringFunc:
+				status = jpdsNonDateTime;
+				break;
+
+			case jpiTime:
+			case jpiDate:
+			case jpiTimestamp:
+				status = jpdsDateTimeNonZoned;
+				cxt->mutable = true;
+				break;
+
+			case jpiTimeTz:
+			case jpiTimestampTz:
+				status = jpdsDateTimeNonZoned;
+				cxt->mutable = true;
+				break;
+
+		}
+
+		if (!jspGetNext(jpi, &next))
+			break;
+
+		jpi = &next;
+	}
+
+	return status;
 }

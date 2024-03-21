@@ -15,6 +15,7 @@
 #define JSONFUNCS_H
 
 #include "common/jsonapi.h"
+#include "nodes/nodes.h"
 #include "utils/jsonb.h"
 
 /*
@@ -87,5 +88,11 @@ extern Datum datum_to_json(Datum val, JsonTypeCategory tcategory,
 extern Datum datum_to_jsonb(Datum val, JsonTypeCategory tcategory,
 							Oid outfuncoid);
 extern Datum jsonb_from_text(text *js, bool unique_keys);
+
+extern Datum json_populate_type(Datum json_val, Oid json_type,
+								Oid typid, int32 typmod,
+								void **cache, MemoryContext mcxt,
+								bool *isnull,
+								Node *escontext);
 
 #endif
