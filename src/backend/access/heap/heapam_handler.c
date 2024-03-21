@@ -237,7 +237,7 @@ heapam_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
  * ----------------------------------------------------------------------------
  */
 
-static void
+static TupleTableSlot *
 heapam_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 					int options, BulkInsertState bistate)
 {
@@ -254,6 +254,8 @@ heapam_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 
 	if (shouldFree)
 		pfree(tuple);
+
+	return slot;
 }
 
 static void
