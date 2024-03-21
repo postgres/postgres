@@ -1122,11 +1122,17 @@ data. Empty in ordinary tables.</entry>
    </listitem>
    <listitem>
     <para>
-     Old versions of updated rows can be completely removed during normal
-     operation, including <command>SELECT</command>s, instead of requiring
-     periodic vacuum operations.  (This is possible because indexes
-     do not reference their <link linkend="storage-page-layout">page
-     item identifiers</link>.)
+     When a row is updated multiple times, row versions other than the oldest
+     and the newest can be completely removed during normal operation,
+     including <command>SELECT</command>s, instead of requiring periodic vacuum
+     operations.  (Indexes always refer to the
+     <link linkend="storage-page-layout">page item identifier</link> of the
+     original row version. The tuple data associated with that row version
+     is removed, and its item identifier is converted to a redirect that
+     points to the oldest version that may still be visible to some concurrent
+     transaction. Intermediate row versions that are no longer visible to
+     anyone are completely removed, and the associated page item identifiers
+     are made available for reuse.)
     </para>
    </listitem>
   </itemizedlist>
