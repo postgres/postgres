@@ -783,6 +783,19 @@ my $checksum = $node->safe_psql('postgres', 'SHOW data_checksums;');
 is($checksum, 'on', 'checksums are enabled');
 rmtree("$tempdir/backupxs_sl_R");
 
+$node->command_ok(
+	[
+		@pg_basebackup_defs, '-D', "$tempdir/backup_dbname_R", '-X',
+		'stream', '-d', "dbname=db1", '-R',
+	],
+	'pg_basebackup with dbname and -R runs');
+like(
+	slurp_file("$tempdir/backup_dbname_R/postgresql.auto.conf"),
+	qr/dbname=db1/m,
+	'recovery conf file sets dbname');
+
+rmtree("$tempdir/backup_dbname_R");
+
 # create tables to corrupt and get their relfilenodes
 my $file_corrupt1 = $node->safe_psql('postgres',
 	q{CREATE TABLE corrupt1 AS SELECT a FROM generate_series(1,10000) AS a; ALTER TABLE corrupt1 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt1')}

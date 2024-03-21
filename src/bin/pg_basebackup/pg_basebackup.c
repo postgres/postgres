@@ -1807,10 +1807,18 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	}
 
 	/*
-	 * Build contents of configuration file if requested
+	 * Build contents of configuration file if requested.
+	 *
+	 * Note that we don't use the dbname from key-value pair in conn as that
+	 * would have been filled by the default dbname (dbname=replication) in
+	 * case the user didn't specify the one. The dbname written in the config
+	 * file as part of primary_conninfo would be used by slotsync worker which
+	 * doesn't use a replication connection so the default won't work for it.
 	 */
 	if (writerecoveryconf)
-		recoveryconfcontents = GenerateRecoveryConfig(conn, replication_slot);
+		recoveryconfcontents = GenerateRecoveryConfig(conn,
+													  replication_slot,
+													  GetDbnameFromConnectionOptions());
 
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline

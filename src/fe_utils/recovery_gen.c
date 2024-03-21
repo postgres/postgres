@@ -18,9 +18,14 @@ static char *escape_quotes(const char *src);
 /*
  * Write recovery configuration contents into a fresh PQExpBuffer, and
  * return it.
+ *
+ * This accepts the dbname which will be appended to the primary_conninfo.
+ * The dbname will be ignored by walreciever process but slotsync worker uses
+ * it to connect to the primary server.
  */
 PQExpBuffer
-GenerateRecoveryConfig(PGconn *pgconn, const char *replication_slot)
+GenerateRecoveryConfig(PGconn *pgconn, const char *replication_slot,
+					   char *dbname)
 {
 	PQconninfoOption *connOptions;
 	PQExpBufferData conninfo_buf;
@@ -66,6 +71,20 @@ GenerateRecoveryConfig(PGconn *pgconn, const char *replication_slot)
 		appendPQExpBuffer(&conninfo_buf, "%s=", opt->keyword);
 		appendConnStrVal(&conninfo_buf, opt->val);
 	}
+
+	if (dbname)
+	{
+		/*
+		 * If dbname is specified in the connection, append the dbname. This
+		 * will be used later for logical replication slot synchronization.
+		 */
+		if (conninfo_buf.len != 0)
+			appendPQExpBufferChar(&conninfo_buf, ' ');
+
+		appendPQExpBuffer(&conninfo_buf, "%s=", "dbname");
+		appendConnStrVal(&conninfo_buf, dbname);
+	}
+
 	if (PQExpBufferDataBroken(conninfo_buf))
 		pg_fatal("out of memory");
 

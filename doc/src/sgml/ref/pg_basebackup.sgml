@@ -243,7 +243,11 @@ PostgreSQL documentation
         The <filename>postgresql.auto.conf</filename> file will record the connection
         settings and, if specified, the replication slot
         that <application>pg_basebackup</application> is using, so that
-        streaming replication will use the same settings later on.
+        streaming replication and <link linkend="logicaldecoding-replication-slots-synchronization">
+        logical replication slot synchronization</link> will use the same
+        settings later on. The dbname will be recorded only if the dbname was
+        specified explicitly in the connection string or <link linkend="libpq-envars">
+        environment variable</link>.
        </para>
 
       </listitem>
@@ -809,7 +813,9 @@ PostgreSQL documentation
         name in the connection string will be ignored
         by <productname>PostgreSQL</productname>. Middleware, or proxies, used in
         connecting to <productname>PostgreSQL</productname> might however
-        utilize the value.
+        utilize the value. The database name specified in connection string can
+        also be used by <link linkend="logicaldecoding-replication-slots-synchronization">
+        logical replication slot synchronization</link>.
        </para>
       </listitem>
      </varlistentry>
