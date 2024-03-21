@@ -18,4 +18,21 @@ VALUES('0.55859909742449630.44658969494913570.54075930161272720.1731171579130146
 SELECT * FROM src2;
 
 DROP TABLE src2;
+
+-- https://github.com/Percona-Lab/pg_tde/issues/82 
+CREATE TABLE indtoasttest(descr text, cnt int DEFAULT 0, f1 text, f2 text) using pg_tde;
+
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('two-compressed', repeat('1234567890',1000), repeat('1234567890',1000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('two-toasted', repeat('1234567890',30000), repeat('1234567890',50000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-compressed,one-null', NULL, repeat('1234567890',1000));
+INSERT INTO indtoasttest(descr, f1, f2) VALUES('one-toasted,one-null', NULL, repeat('1234567890',50000));
+
+UPDATE indtoasttest SET cnt = cnt +1 RETURNING substring(indtoasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1 RETURNING substring(indtoasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(indtoasttest::text, 1, 200);
+UPDATE indtoasttest SET cnt = cnt +1, f1 = f1||'' RETURNING substring(indtoasttest::text, 1, 200);
+UPDATE indtoasttest SET  f2 = '+'||f2||'-' ;
+
+DROP TABLE indtoasttest;
+
 DROP EXTENSION pg_tde;
