@@ -709,6 +709,14 @@ typedef struct TableAmRoutine
 	 */
 
 	/*
+	 * This callback frees relation private cache data stored in rd_amcache.
+	 * After the call all memory related to rd_amcache must be freed,
+	 * rd_amcache must be set to NULL. If this callback is not provided,
+	 * rd_amcache is assumed to point to a single memory chunk.
+	 */
+	void		(*free_rd_amcache) (Relation rel);
+
+	/*
 	 * See table_relation_size().
 	 *
 	 * Note that currently a few callers use the MAIN_FORKNUM size to figure
@@ -1846,6 +1854,32 @@ table_index_validate_scan(Relation table_rel,
  * Miscellaneous functionality
  * ----------------------------------------------------------------------------
  */
+
+/*
+ * Frees relation private cache data stored in rd_amcache.  Uses
+ * free_rd_amcache method if provided.  Assumes rd_amcache to point to single
+ * memory chunk otherwise.
+ */
+static inline void
+table_free_rd_amcache(Relation rel)
+{
+	if (rel->rd_tableam && rel->rd_tableam->free_rd_amcache)
+	{
+		rel->rd_tableam->free_rd_amcache(rel);
+
+		/*
+		 * We are assuming free_rd_amcache() did clear the cache and left NULL
+		 * in rd_amcache.
+		 */
+		Assert(rel->rd_amcache == NULL);
+	}
+	else
+	{
+		if (rel->rd_amcache)
+			pfree(rel->rd_amcache);
+		rel->rd_amcache = NULL;
+	}
+}
 
 /*
  * Return the current size of `rel` in bytes. If `forkNumber` is
