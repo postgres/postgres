@@ -4586,9 +4586,7 @@ transformJsonBehavior(ParseState *pstate, JsonBehavior *behavior,
 				!IsA(expr, OpExpr))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("can only specify constant, non-aggregate"
-								" function, or operator expression for"
-								" DEFAULT"),
+						 errmsg("can only specify a constant, non-aggregate function, or operator expression for DEFAULT"),
 						 parser_errposition(pstate, exprLocation(expr))));
 			if (contain_var_clause(expr))
 				ereport(ERROR,

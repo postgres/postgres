@@ -1203,11 +1203,11 @@ ERROR:  DEFAULT expression must not contain column references
 LINE 1: SELECT JSON_QUERY(js, '$'  RETURNING int DEFAULT b + 1 ON ER...
                                                          ^
 SELECT JSON_QUERY(js, '$'  RETURNING int DEFAULT sum(1) over() ON ERROR) FROM test_jsonb_mutability;
-ERROR:  can only specify constant, non-aggregate function, or operator expression for DEFAULT
+ERROR:  can only specify a constant, non-aggregate function, or operator expression for DEFAULT
 LINE 1: SELECT JSON_QUERY(js, '$'  RETURNING int DEFAULT sum(1) over...
                                                          ^
 SELECT JSON_QUERY(js, '$'  RETURNING int DEFAULT (SELECT 1) ON ERROR) FROM test_jsonb_mutability;
-ERROR:  can only specify constant, non-aggregate function, or operator expression for DEFAULT
+ERROR:  can only specify a constant, non-aggregate function, or operator expression for DEFAULT
 LINE 1: SELECT JSON_QUERY(js, '$'  RETURNING int DEFAULT (SELECT 1) ...
                                                          ^
 DROP TABLE test_jsonb_mutability;
