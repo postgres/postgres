@@ -792,7 +792,7 @@ dumpRoles(PGconn *conn)
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, "
 						  "false as rolbypassrls, "
-						  "pg_catalog.shobj_description(oid, pg_authid') as rolcomment, "
+						  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
 						  "FROM %s "
 						  "ORDER BY 2", role_catalog);
