@@ -78,7 +78,13 @@ LANGUAGE C;
 
 CREATE FUNCTION pgtde_is_encrypted(table_name VARCHAR)
 RETURNS boolean
-AS $$ SELECT amname = 'pg_tde' FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = table_name $$
+AS $$
+SELECT EXISTS (
+    SELECT 1
+    FROM   pg_catalog.pg_class
+    WHERE  relname = table_name
+    AND    relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'pg_tde')
+    )$$
 LANGUAGE SQL;
 
 CREATE FUNCTION pg_tde_rotate_key(new_master_key_name VARCHAR(255) DEFAULT NULL, new_provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT TRUE)
