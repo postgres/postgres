@@ -348,6 +348,8 @@ pgstat_bestart(void)
 		be_tls_get_peer_subject_name(MyProcPort, lsslstatus.ssl_client_dn, NAMEDATALEN);
 		be_tls_get_peer_serial(MyProcPort, lsslstatus.ssl_client_serial, NAMEDATALEN);
 		be_tls_get_peer_issuer_name(MyProcPort, lsslstatus.ssl_issuer_dn, NAMEDATALEN);
+		be_tls_get_peer_not_before(MyProcPort, &lsslstatus.ssl_not_before);
+		be_tls_get_peer_not_after(MyProcPort, &lsslstatus.ssl_not_after);
 	}
 	else
 	{

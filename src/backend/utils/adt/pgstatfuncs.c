@@ -302,7 +302,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_activity(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_ACTIVITY_COLS	31
+#define PG_STAT_GET_ACTIVITY_COLS	33
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;
 	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
@@ -394,7 +394,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			pfree(clipped_activity);
 
 			/* leader_pid */
-			nulls[29] = true;
+			nulls[31] = true;
 
 			proc = BackendPidGetProc(beentry->st_procpid);
 
@@ -431,8 +431,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				 */
 				if (leader && leader->pid != beentry->st_procpid)
 				{
-					values[29] = Int32GetDatum(leader->pid);
-					nulls[29] = false;
+					values[31] = Int32GetDatum(leader->pid);
+					nulls[31] = false;
 				}
 				else if (beentry->st_backendType == B_BG_WORKER)
 				{
@@ -440,8 +440,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 					if (leader_pid != InvalidPid)
 					{
-						values[29] = Int32GetDatum(leader_pid);
-						nulls[29] = false;
+						values[31] = Int32GetDatum(leader_pid);
+						nulls[31] = false;
 					}
 				}
 			}
@@ -586,35 +586,45 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					values[24] = CStringGetTextDatum(beentry->st_sslstatus->ssl_issuer_dn);
 				else
 					nulls[24] = true;
+
+				if (beentry->st_sslstatus->ssl_not_before != 0)
+					values[25] = TimestampTzGetDatum(beentry->st_sslstatus->ssl_not_before);
+				else
+					nulls[25] = true;
+
+				if (beentry->st_sslstatus->ssl_not_after != 0)
+					values[26] = TimestampTzGetDatum(beentry->st_sslstatus->ssl_not_after);
+				else
+					nulls[26] = true;
 			}
 			else
 			{
 				values[18] = BoolGetDatum(false);	/* ssl */
-				nulls[19] = nulls[20] = nulls[21] = nulls[22] = nulls[23] = nulls[24] = true;
+				nulls[19] = nulls[20] = nulls[21] = nulls[22] = nulls[23] = nulls[24] = nulls[25] = nulls[26] = true;
 			}
 
 			/* GSSAPI information */
 			if (beentry->st_gss)
 			{
-				values[25] = BoolGetDatum(beentry->st_gssstatus->gss_auth); /* gss_auth */
-				values[26] = CStringGetTextDatum(beentry->st_gssstatus->gss_princ);
-				values[27] = BoolGetDatum(beentry->st_gssstatus->gss_enc);	/* GSS Encryption in use */
-				values[28] = BoolGetDatum(beentry->st_gssstatus->gss_delegation);	/* GSS credentials
+				values[27] = BoolGetDatum(beentry->st_gssstatus->gss_auth); /* gss_auth */
+				values[28] = CStringGetTextDatum(beentry->st_gssstatus->gss_princ);
+				values[29] = BoolGetDatum(beentry->st_gssstatus->gss_enc);	/* GSS Encryption in use */
+				values[30] = BoolGetDatum(beentry->st_gssstatus->gss_delegation);	/* GSS credentials
 																					 * delegated */
 			}
 			else
 			{
-				values[25] = BoolGetDatum(false);	/* gss_auth */
-				nulls[26] = true;	/* No GSS principal */
-				values[27] = BoolGetDatum(false);	/* GSS Encryption not in
+				values[27] = BoolGetDatum(false);	/* gss_auth */
+				nulls[28] = true;	/* No GSS principal */
+				values[29] = BoolGetDatum(false);	/* GSS Encryption not in
 													 * use */
-				values[28] = BoolGetDatum(false);	/* GSS credentials not
+				values[30] = BoolGetDatum(false);	/* GSS credentials not
 													 * delegated */
 			}
 			if (beentry->st_query_id == 0)
-				nulls[30] = true;
+				nulls[32] = true;
 			else
-				values[30] = UInt64GetDatum(beentry->st_query_id);
+				values[32] = UInt64GetDatum(beentry->st_query_id);
 		}
 		else
 		{
@@ -644,6 +654,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[28] = true;
 			nulls[29] = true;
 			nulls[30] = true;
+			nulls[31] = true;
+			nulls[32] = true;
 		}
 
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);

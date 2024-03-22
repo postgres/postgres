@@ -26,6 +26,7 @@ install_data(
   'sslinfo--1.0--1.1.sql',
   'sslinfo--1.1--1.2.sql',
   'sslinfo--1.2.sql',
+  'sslinfo--1.2--1.3.sql',
   'sslinfo.control',
   kwargs: contrib_data_args,
 )

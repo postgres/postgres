@@ -27,6 +27,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
+#include "common/int.h"
 #include "common/string.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -36,6 +37,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/timestamp.h"
 
 /*
  * These SSL-related #includes must come after all system-provided headers.
@@ -72,6 +74,7 @@ static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
 static const char *SSLerrmessage(unsigned long ecode);
 
 static char *X509_NAME_to_cstring(X509_NAME *name);
+static TimestampTz ASN1_TIME_to_timestamptz(ASN1_TIME *time);
 
 static SSL_CTX *SSL_context = NULL;
 static bool SSL_initialized = false;
@@ -1431,6 +1434,24 @@ be_tls_get_peer_issuer_name(Port *port, char *ptr, size_t len)
 }
 
 void
+be_tls_get_peer_not_before(Port *port, TimestampTz *ptr)
+{
+	if (port->peer)
+		*ptr = ASN1_TIME_to_timestamptz(X509_get_notBefore(port->peer));
+	else
+		*ptr = 0;
+}
+
+void
+be_tls_get_peer_not_after(Port *port, TimestampTz *ptr)
+{
+	if (port->peer)
+		*ptr = ASN1_TIME_to_timestamptz(X509_get_notAfter(port->peer));
+	else
+		*ptr = 0;
+}
+
+void
 be_tls_get_peer_serial(Port *port, char *ptr, size_t len)
 {
 	if (port->peer)
@@ -1569,6 +1590,63 @@ X509_NAME_to_cstring(X509_NAME *name)
 		pfree(dp);
 	if (BIO_free(membuf) != 1)
 		elog(ERROR, "could not free OpenSSL BIO structure");
+
+	return result;
+}
+
+/*
+ * Convert an ASN1_TIME to a Timestamptz. OpenSSL 1.0.2 doesn't expose a function
+ * to convert an ASN1_TIME to a tm struct, it's only available in 1.1.1 and
+ * onwards. Instead we can ask for the difference between the ASN1_TIME and a
+ * known timestamp and get the actual timestamp that way. Until support for
+ * OpenSSL 1.0.2 is retired we have to do it this way.
+ */
+static TimestampTz
+ASN1_TIME_to_timestamptz(ASN1_TIME *ASN1_cert_ts)
+{
+	int			days;
+	int			seconds;
+	const char	postgres_epoch[] = "20000101000000Z";
+	ASN1_TIME  *ASN1_epoch;
+	int64		result_days;
+	int64		result_seconds;
+	int64		result;
+
+	/* Create an epoch to compare against */
+	ASN1_epoch = ASN1_TIME_new();
+	if (!ASN1_epoch)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("could not allocate memory for ASN1 TIME structure")));
+
+	/*
+	 * Calculate the diff from the epoch to the certificate timestamp.
+	 * POSTGRES_EPOCH_JDATE cannot be used here since OpenSSL needs an epoch
+	 * in the ASN.1 format.
+	 */
+	if (!ASN1_TIME_set_string(ASN1_epoch, postgres_epoch) ||
+		!ASN1_TIME_diff(&days, &seconds, ASN1_epoch, ASN1_cert_ts))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("failed to read certificate validity")));
+
+	/*
+	 * Unlike when freeing other OpenSSL memory structures, there is no error
+	 * return on freeing ASN1 strings.
+	 */
+	ASN1_TIME_free(ASN1_epoch);
+
+	/*
+	 * Convert the reported date into usecs to be used as a TimestampTz. The
+	 * date should really not overflow an int64 but rather than trusting the
+	 * certificate we take overflow into consideration.
+	 */
+	if (pg_mul_s64_overflow(days, USECS_PER_DAY, &result_days) ||
+		pg_mul_s64_overflow(seconds, USECS_PER_SEC, &result_seconds) ||
+		pg_add_s64_overflow(result_seconds, result_days, &result))
+	{
+		return 0;
+	}
 
 	return result;
 }

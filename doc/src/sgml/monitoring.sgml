@@ -2292,6 +2292,26 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        This field is truncated like <structfield>client_dn</structfield>.
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>not_before</structfield> <type>text</type>
+      </para>
+      <para>
+       Not before timestamp of the client certificate, or NULL if no client
+       certificate was supplied.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>not_after</structfield> <type>text</type>
+      </para>
+      <para>
+       Not after timestamp of the client certificate, or NULL if no client
+       certificate was supplied.
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

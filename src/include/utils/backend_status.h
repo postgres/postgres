@@ -61,6 +61,9 @@ typedef struct PgBackendSSLStatus
 	char		ssl_client_serial[NAMEDATALEN];
 
 	char		ssl_issuer_dn[NAMEDATALEN];
+	/* Certificate validity in postgres epoch format */
+	TimestampTz	ssl_not_before;
+	TimestampTz	ssl_not_after;
 } PgBackendSSLStatus;
 
 /*
