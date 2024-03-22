@@ -2498,7 +2498,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	/*
 	 * Now load data from the first page of the scan.
 	 */
-	if (!_bt_readpage(scan, dir, start, false))
+	if (!_bt_readpage(scan, dir, start, true))
 	{
 		/*
 		 * There's no actually-matching data on this page.  Try to advance to
