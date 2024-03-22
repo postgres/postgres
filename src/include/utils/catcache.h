@@ -62,6 +62,11 @@ typedef struct catcache
 	ScanKeyData cc_skey[CATCACHE_MAXKEYS];	/* precomputed key info for heap
 											 * scans */
 
+	/* These fields are placed here to avoid ABI breakage in v16 */
+	int			cc_nlist;		/* # of CatCLists currently in this cache */
+	int			cc_nlbuckets;	/* # of CatCList hash buckets in this cache */
+	dlist_head *cc_lbucket;		/* hash buckets for CatCLists */
+
 	/*
 	 * Keep these at the end, so that compiling catcache.c with CATCACHE_STATS
 	 * doesn't break ABI for other modules
