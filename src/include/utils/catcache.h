@@ -51,9 +51,11 @@ typedef struct catcache
 	CCFastEqualFN cc_fastequal[CATCACHE_MAXKEYS];	/* fast equal function for
 													 * each key */
 	int			cc_keyno[CATCACHE_MAXKEYS]; /* AttrNumber of each key */
-	dlist_head	cc_lists;		/* list of CatCList structs */
-	int			cc_ntup;		/* # of tuples currently in this cache */
 	int			cc_nkeys;		/* # of keys (1..CATCACHE_MAXKEYS) */
+	int			cc_ntup;		/* # of tuples currently in this cache */
+	int			cc_nlist;		/* # of CatCLists currently in this cache */
+	int			cc_nlbuckets;	/* # of CatCList hash buckets in this cache */
+	dlist_head *cc_lbucket;		/* hash buckets for CatCLists */
 	const char *cc_relname;		/* name of relation the tuples come from */
 	Oid			cc_reloid;		/* OID of relation the tuples come from */
 	Oid			cc_indexoid;	/* OID of index matching cache keys */
