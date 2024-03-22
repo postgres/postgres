@@ -38,7 +38,7 @@ print(const void *obj)
 	char	   *s;
 	char	   *f;
 
-	s = nodeToString(obj);
+	s = nodeToStringWithLocations(obj);
 	f = format_node_dump(s);
 	pfree(s);
 	printf("%s\n", f);
@@ -56,7 +56,7 @@ pprint(const void *obj)
 	char	   *s;
 	char	   *f;
 
-	s = nodeToString(obj);
+	s = nodeToStringWithLocations(obj);
 	f = pretty_format_node_dump(s);
 	pfree(s);
 	printf("%s\n", f);
@@ -74,7 +74,7 @@ elog_node_display(int lev, const char *title, const void *obj, bool pretty)
 	char	   *s;
 	char	   *f;
 
-	s = nodeToString(obj);
+	s = nodeToStringWithLocations(obj);
 	if (pretty)
 		f = pretty_format_node_dump(s);
 	else

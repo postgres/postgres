@@ -641,7 +641,7 @@ pg_parse_query(const char *query_string)
 	 */
 #ifdef WRITE_READ_PARSE_PLAN_TREES
 	{
-		char	   *str = nodeToString(raw_parsetree_list);
+		char	   *str = nodeToStringWithLocations(raw_parsetree_list);
 		List	   *new_list = stringToNodeWithLocations(str);
 
 		pfree(str);
@@ -849,7 +849,7 @@ pg_rewrite_query(Query *query)
 		foreach(lc, querytree_list)
 		{
 			Query	   *curr_query = lfirst_node(Query, lc);
-			char	   *str = nodeToString(curr_query);
+			char	   *str = nodeToStringWithLocations(curr_query);
 			Query	   *new_query = stringToNodeWithLocations(str);
 
 			/*
@@ -931,7 +931,7 @@ pg_plan_query(Query *querytree, const char *query_string, int cursorOptions,
 		char	   *str;
 		PlannedStmt *new_plan;
 
-		str = nodeToString(plan);
+		str = nodeToStringWithLocations(plan);
 		new_plan = stringToNodeWithLocations(str);
 		pfree(str);
 

@@ -195,6 +195,7 @@ extern void outBitmapset(struct StringInfoData *str,
 extern void outDatum(struct StringInfoData *str, uintptr_t value,
 					 int typlen, bool typbyval);
 extern char *nodeToString(const void *obj);
+extern char *nodeToStringWithLocations(const void *obj);
 extern char *bmsToString(const struct Bitmapset *bms);
 
 /*
