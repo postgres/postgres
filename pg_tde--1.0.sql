@@ -44,7 +44,18 @@ AS $$
 -- load_file_keyring_provider_options function.
 
     SELECT pg_tde_add_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path,'')));
+                json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path JSON)
+RETURNS INT
+AS $$
+-- JSON keys in the options must be matched to the keys in
+-- load_file_keyring_provider_options function.
+
+    SELECT pg_tde_add_key_provider('file', provider_name,
+                json_object('type' VALUE 'file', 'path' VALUE file_path));
 $$
 LANGUAGE SQL;
 

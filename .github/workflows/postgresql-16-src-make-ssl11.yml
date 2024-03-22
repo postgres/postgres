@@ -25,7 +25,7 @@ jobs:
             libipc-run-perl -y docbook-xsl docbook-xsl libxml2 libxml2-utils \
             libxml2-dev libxslt-dev xsltproc libkrb5-dev libldap2-dev \
             libsystemd-dev gettext tcl-dev libperl-dev pkg-config \
-            libselinux1-dev python3-dev \
+            libselinux1-dev python3-dev libhttp-server-simple-perl\
             uuid-dev liblz4-dev libcurl4-openssl-dev
           sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'

@@ -30,7 +30,7 @@ jobs:
             libsystemd-dev gettext tcl-dev libperl-dev pkg-config clang-11 \
             llvm-11 llvm-11-dev libselinux1-dev python3-dev \
             uuid-dev liblz4-dev meson ninja-build \
-            sysbench libcurl4-openssl-dev
+            sysbench libcurl4-openssl-dev libhttp-server-simple-perl
           sudo /usr/bin/perl -MCPAN -e 'install IPC::RUN'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
           wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg

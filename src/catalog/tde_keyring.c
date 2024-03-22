@@ -14,15 +14,16 @@
 #include "catalog/tde_master_key.h"
 #include "access/skey.h"
 #include "access/relscan.h"
-#include "utils/builtins.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
 #include "utils/lsyscache.h"
 #include "access/heapam.h"
 #include "utils/snapmgr.h"
 #include "utils/fmgroids.h"
+#include "common/pg_tde_utils.h"
 #include "executor/spi.h"
-#include "fmgr.h"
+#include "unistd.h"
+#include "utils/builtins.h"
 
 PG_FUNCTION_INFO_V1(keyring_delete_dependency_check_trigger);
 
@@ -227,11 +228,17 @@ load_keyring_provider_options(ProviderType provider_type, Datum keyring_options)
 static FileKeyring *
 load_file_keyring_provider_options(Datum keyring_options)
 {
-	Datum file_path;
+	const char* file_path = extract_json_option_value(keyring_options, FILE_KEYRING_PATH_KEY);
 	FileKeyring *file_keyring = palloc0(sizeof(FileKeyring));
-	file_path = DirectFunctionCall2(json_object_field_text, keyring_options, CStringGetTextDatum(FILE_KEYRING_PATH_KEY));
+	
+	if(file_path == NULL)
+	{
+		/* TODO: report error */
+		return NULL;
+	}
+
 	file_keyring->keyring.type = FILE_KEY_PROVIDER;
-	strncpy(file_keyring->file_name, TextDatumGetCString(file_path), sizeof(file_keyring->file_name));
+	strncpy(file_keyring->file_name, file_path, sizeof(file_keyring->file_name));
 	return file_keyring;
 }
 
@@ -239,16 +246,22 @@ static VaultV2Keyring *
 load_vaultV2_keyring_provider_options(Datum keyring_options)
 {
 	VaultV2Keyring *vaultV2_keyring = palloc0(sizeof(VaultV2Keyring));
-	Datum token = DirectFunctionCall2(json_object_field_text, keyring_options, CStringGetTextDatum(VAULTV2_KEYRING_TOKEN_KEY));
-	Datum url = DirectFunctionCall2(json_object_field_text, keyring_options, CStringGetTextDatum(VAULTV2_KEYRING_URL_KEY));
-	Datum mount_path = DirectFunctionCall2(json_object_field_text, keyring_options, CStringGetTextDatum(VAULTV2_KEYRING_MOUNT_PATH_KEY));
-	Datum ca_path = DirectFunctionCall2(json_object_field_text, keyring_options, CStringGetTextDatum(VAULTV2_KEYRING_CA_PATH_KEY));
+	const char* token = extract_json_option_value(keyring_options, VAULTV2_KEYRING_TOKEN_KEY);
+	const char* url = extract_json_option_value(keyring_options, VAULTV2_KEYRING_URL_KEY);
+	const char* mount_path = extract_json_option_value(keyring_options, VAULTV2_KEYRING_MOUNT_PATH_KEY);
+	const char* ca_path = extract_json_option_value(keyring_options, VAULTV2_KEYRING_CA_PATH_KEY);
+
+	if(token == NULL || url == NULL || mount_path == NULL)
+	{
+		/* TODO: report error */
+		return NULL;
+	}
 
 	vaultV2_keyring->keyring.type = VAULT_V2_KEY_PROVIDER;
-	strncpy(vaultV2_keyring->vault_token, TextDatumGetCString(token), sizeof(vaultV2_keyring->vault_token));
-	strncpy(vaultV2_keyring->vault_url, TextDatumGetCString(url), sizeof(vaultV2_keyring->vault_url));
-	strncpy(vaultV2_keyring->vault_mount_path, TextDatumGetCString(mount_path), sizeof(vaultV2_keyring->vault_mount_path));
-	strncpy(vaultV2_keyring->vault_ca_path, TextDatumGetCString(ca_path), sizeof(vaultV2_keyring->vault_ca_path));
+	strncpy(vaultV2_keyring->vault_token, token, sizeof(vaultV2_keyring->vault_token));
+	strncpy(vaultV2_keyring->vault_url, url, sizeof(vaultV2_keyring->vault_url));
+	strncpy(vaultV2_keyring->vault_mount_path, mount_path, sizeof(vaultV2_keyring->vault_mount_path));
+	strncpy(vaultV2_keyring->vault_ca_path, ca_path ? ca_path : "", sizeof(vaultV2_keyring->vault_ca_path));
 	return vaultV2_keyring;
 }
 

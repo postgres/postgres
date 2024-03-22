@@ -85,6 +85,8 @@ tests += {
     'tests': [
       't/001_basic.pl',
       't/002_rotate_key.pl',
+      't/003_remote_config.pl',
+      't/004_file_config.pl'
     ],
   },
 }

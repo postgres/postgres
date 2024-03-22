@@ -7,7 +7,9 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Install dependencies
-        run: brew install vault gnu-sed # All other required deps already installed in this image.
+        run: |
+          brew install vault gnu-sed
+          sudo /usr/bin/perl -MCPAN -e 'install HTTP::Server::Simple'
 
       - name: Clone postgres repository
         uses: actions/checkout@v4
