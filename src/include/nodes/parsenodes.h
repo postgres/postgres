@@ -1067,18 +1067,26 @@ typedef struct RangeTblEntry
 	 * relation.  This allows plans referencing AFTER trigger transition
 	 * tables to be invalidated if the underlying table is altered.
 	 */
-	Oid			relid;			/* OID of the relation */
-	bool		inh;			/* inheritance requested? */
-	char		relkind;		/* relation kind (see pg_class.relkind) */
-	int			rellockmode;	/* lock level that query requires on the rel */
-	Index		perminfoindex;	/* index of RTEPermissionInfo entry, or 0 */
-	struct TableSampleClause *tablesample;	/* sampling info, or NULL */
+	/* OID of the relation */
+	Oid			relid;
+	/* inheritance requested? */
+	bool		inh;
+	/* relation kind (see pg_class.relkind) */
+	char		relkind;
+	/* lock level that query requires on the rel */
+	int			rellockmode;
+	/* index of RTEPermissionInfo entry, or 0 */
+	Index		perminfoindex;
+	/* sampling info, or NULL */
+	struct TableSampleClause *tablesample;
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
 	 */
-	Query	   *subquery;		/* the sub-query */
-	bool		security_barrier;	/* is from security_barrier view? */
+	/* the sub-query */
+	Query	   *subquery;
+	/* is from security_barrier view? */
+	bool		security_barrier;
 
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
@@ -1123,11 +1131,15 @@ typedef struct RangeTblEntry
 	 * merged columns could not be dropped); this is not accounted for in
 	 * joinleftcols/joinrighttcols.
 	 */
-	JoinType	jointype;		/* type of join */
-	int			joinmergedcols; /* number of merged (JOIN USING) columns */
-	List	   *joinaliasvars;	/* list of alias-var expansions */
-	List	   *joinleftcols;	/* left-side input column numbers */
-	List	   *joinrightcols;	/* right-side input column numbers */
+	JoinType	jointype;
+	/* number of merged (JOIN USING) columns */
+	int			joinmergedcols;
+	/* list of alias-var expansions */
+	List	   *joinaliasvars;
+	/* left-side input column numbers */
+	List	   *joinleftcols;
+	/* right-side input column numbers */
+	List	   *joinrightcols;
 
 	/*
 	 * join_using_alias is an alias clause attached directly to JOIN/USING. It
@@ -1144,8 +1156,10 @@ typedef struct RangeTblEntry
 	 * implicit, and must be accounted for "by hand" in places such as
 	 * expandRTE().
 	 */
-	List	   *functions;		/* list of RangeTblFunction nodes */
-	bool		funcordinality; /* is this called WITH ORDINALITY? */
+	/* list of RangeTblFunction nodes */
+	List	   *functions;
+	/* is this called WITH ORDINALITY? */
+	bool		funcordinality;
 
 	/*
 	 * Fields valid for a TableFunc RTE (else NULL):
@@ -1155,14 +1169,18 @@ typedef struct RangeTblEntry
 	/*
 	 * Fields valid for a values RTE (else NIL):
 	 */
-	List	   *values_lists;	/* list of expression lists */
+	/* list of expression lists */
+	List	   *values_lists;
 
 	/*
 	 * Fields valid for a CTE RTE (else NULL/zero):
 	 */
-	char	   *ctename;		/* name of the WITH list item */
-	Index		ctelevelsup;	/* number of query levels up */
-	bool		self_reference; /* is this a recursive self-reference? */
+	/* name of the WITH list item */
+	char	   *ctename;
+	/* number of query levels up */
+	Index		ctelevelsup;
+	/* is this a recursive self-reference? */
+	bool		self_reference;
 
 	/*
 	 * Fields valid for CTE, VALUES, ENR, and TableFunc RTEs (else NIL):
@@ -1182,24 +1200,34 @@ typedef struct RangeTblEntry
 	 * all three lists (as well as an empty-string entry in eref).  Testing
 	 * for zero coltype is the standard way to detect a dropped column.
 	 */
-	List	   *coltypes;		/* OID list of column type OIDs */
-	List	   *coltypmods;		/* integer list of column typmods */
-	List	   *colcollations;	/* OID list of column collation OIDs */
+	/* OID list of column type OIDs */
+	List	   *coltypes;
+	/* integer list of column typmods */
+	List	   *coltypmods;
+	/* OID list of column collation OIDs */
+	List	   *colcollations;
 
 	/*
 	 * Fields valid for ENR RTEs (else NULL/zero):
 	 */
-	char	   *enrname;		/* name of ephemeral named relation */
-	Cardinality enrtuples;		/* estimated or actual from caller */
+	/* name of ephemeral named relation */
+	char	   *enrname;
+	/* estimated or actual from caller */
+	Cardinality enrtuples;
 
 	/*
 	 * Fields valid in all RTEs:
 	 */
-	Alias	   *alias;			/* user-written alias clause, if any */
-	Alias	   *eref;			/* expanded reference names */
-	bool		lateral;		/* was LATERAL specified? */
-	bool		inFromCl;		/* present in FROM clause? */
-	List	   *securityQuals;	/* security barrier quals to apply, if any */
+	/* user-written alias clause, if any */
+	Alias	   *alias;
+	/* expanded reference names */
+	Alias	   *eref;
+	/* was LATERAL specified? */
+	bool		lateral;
+	/* present in FROM clause? */
+	bool		inFromCl;
+	/* security barrier quals to apply, if any */
+	List	   *securityQuals;
 } RangeTblEntry;
 
 /*
