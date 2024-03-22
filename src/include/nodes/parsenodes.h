@@ -1023,7 +1023,7 @@ typedef enum RTEKind
 
 typedef struct RangeTblEntry
 {
-	pg_node_attr(custom_read_write, custom_query_jumble)
+	pg_node_attr(custom_read_write)
 
 	NodeTag		type;
 
@@ -1072,11 +1072,11 @@ typedef struct RangeTblEntry
 	/* inheritance requested? */
 	bool		inh;
 	/* relation kind (see pg_class.relkind) */
-	char		relkind;
+	char		relkind pg_node_attr(query_jumble_ignore);
 	/* lock level that query requires on the rel */
-	int			rellockmode;
+	int			rellockmode pg_node_attr(query_jumble_ignore);
 	/* index of RTEPermissionInfo entry, or 0 */
-	Index		perminfoindex;
+	Index		perminfoindex pg_node_attr(query_jumble_ignore);
 	/* sampling info, or NULL */
 	struct TableSampleClause *tablesample;
 
@@ -1086,7 +1086,7 @@ typedef struct RangeTblEntry
 	/* the sub-query */
 	Query	   *subquery;
 	/* is from security_barrier view? */
-	bool		security_barrier;
+	bool		security_barrier pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
@@ -1133,20 +1133,20 @@ typedef struct RangeTblEntry
 	 */
 	JoinType	jointype;
 	/* number of merged (JOIN USING) columns */
-	int			joinmergedcols;
+	int			joinmergedcols pg_node_attr(query_jumble_ignore);
 	/* list of alias-var expansions */
-	List	   *joinaliasvars;
+	List	   *joinaliasvars pg_node_attr(query_jumble_ignore);
 	/* left-side input column numbers */
-	List	   *joinleftcols;
+	List	   *joinleftcols pg_node_attr(query_jumble_ignore);
 	/* right-side input column numbers */
-	List	   *joinrightcols;
+	List	   *joinrightcols pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * join_using_alias is an alias clause attached directly to JOIN/USING. It
 	 * is different from the alias field (below) in that it does not hide the
 	 * range variables of the tables being joined.
 	 */
-	Alias	   *join_using_alias;
+	Alias	   *join_using_alias pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * Fields valid for a function RTE (else NIL/zero):
@@ -1180,7 +1180,7 @@ typedef struct RangeTblEntry
 	/* number of query levels up */
 	Index		ctelevelsup;
 	/* is this a recursive self-reference? */
-	bool		self_reference;
+	bool		self_reference pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * Fields valid for CTE, VALUES, ENR, and TableFunc RTEs (else NIL):
@@ -1201,11 +1201,11 @@ typedef struct RangeTblEntry
 	 * for zero coltype is the standard way to detect a dropped column.
 	 */
 	/* OID list of column type OIDs */
-	List	   *coltypes;
+	List	   *coltypes pg_node_attr(query_jumble_ignore);
 	/* integer list of column typmods */
-	List	   *coltypmods;
+	List	   *coltypmods pg_node_attr(query_jumble_ignore);
 	/* OID list of column collation OIDs */
-	List	   *colcollations;
+	List	   *colcollations pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * Fields valid for ENR RTEs (else NULL/zero):
@@ -1213,21 +1213,21 @@ typedef struct RangeTblEntry
 	/* name of ephemeral named relation */
 	char	   *enrname;
 	/* estimated or actual from caller */
-	Cardinality enrtuples;
+	Cardinality enrtuples pg_node_attr(query_jumble_ignore);
 
 	/*
 	 * Fields valid in all RTEs:
 	 */
 	/* user-written alias clause, if any */
-	Alias	   *alias;
+	Alias	   *alias pg_node_attr(query_jumble_ignore);
 	/* expanded reference names */
-	Alias	   *eref;
+	Alias	   *eref pg_node_attr(query_jumble_ignore);
 	/* was LATERAL specified? */
-	bool		lateral;
+	bool		lateral pg_node_attr(query_jumble_ignore);
 	/* present in FROM clause? */
-	bool		inFromCl;
+	bool		inFromCl pg_node_attr(query_jumble_ignore);
 	/* security barrier quals to apply, if any */
-	List	   *securityQuals;
+	List	   *securityQuals pg_node_attr(query_jumble_ignore);
 } RangeTblEntry;
 
 /*
