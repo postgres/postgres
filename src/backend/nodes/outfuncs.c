@@ -494,7 +494,6 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 {
 	WRITE_NODE_TYPE("RANGETBLENTRY");
 
-	/* put alias + eref first to make dump more legible */
 	WRITE_NODE_FIELD(alias);
 	WRITE_NODE_FIELD(eref);
 	WRITE_ENUM_FIELD(rtekind, RTEKind);

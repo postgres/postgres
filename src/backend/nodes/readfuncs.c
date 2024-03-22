@@ -348,7 +348,6 @@ _readRangeTblEntry(void)
 {
 	READ_LOCALS(RangeTblEntry);
 
-	/* put alias + eref first to make dump more legible */
 	READ_NODE_FIELD(alias);
 	READ_NODE_FIELD(eref);
 	READ_ENUM_FIELD(rtekind, RTEKind);
