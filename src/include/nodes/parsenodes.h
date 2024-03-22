@@ -1197,7 +1197,7 @@ typedef struct RangeTblEntry
 	 */
 	Alias	   *alias;			/* user-written alias clause, if any */
 	Alias	   *eref;			/* expanded reference names */
-	bool		lateral;		/* subquery, function, or values is LATERAL? */
+	bool		lateral;		/* was LATERAL specified? */
 	bool		inFromCl;		/* present in FROM clause? */
 	List	   *securityQuals;	/* security barrier quals to apply, if any */
 } RangeTblEntry;
