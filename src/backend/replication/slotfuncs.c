@@ -239,7 +239,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 Datum
 pg_get_replication_slots(PG_FUNCTION_ARGS)
 {
-#define PG_GET_REPLICATION_SLOTS_COLS 17
+#define PG_GET_REPLICATION_SLOTS_COLS 18
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	XLogRecPtr	currlsn;
 	int			slotno;
@@ -263,6 +263,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		bool		nulls[PG_GET_REPLICATION_SLOTS_COLS];
 		WALAvailability walstate;
 		int			i;
+		ReplicationSlotInvalidationCause cause;
 
 		if (!slot->in_use)
 			continue;
@@ -409,17 +410,27 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 		values[i++] = BoolGetDatum(slot_contents.data.two_phase);
 
-		if (slot_contents.data.database == InvalidOid)
+		cause = slot_contents.data.invalidated;
+
+		if (SlotIsPhysical(&slot_contents))
 			nulls[i++] = true;
 		else
 		{
-			ReplicationSlotInvalidationCause cause = slot_contents.data.invalidated;
-
-			if (cause == RS_INVAL_NONE)
-				nulls[i++] = true;
+			/*
+			 * rows_removed and wal_level_insufficient are the only two
+			 * reasons for the logical slot's conflict with recovery.
+			 */
+			if (cause == RS_INVAL_HORIZON ||
+				cause == RS_INVAL_WAL_LEVEL)
+				values[i++] = BoolGetDatum(true);
 			else
-				values[i++] = CStringGetTextDatum(SlotInvalidationCauses[cause]);
+				values[i++] = BoolGetDatum(false);
 		}
+
+		if (cause == RS_INVAL_NONE)
+			nulls[i++] = true;
+		else
+			values[i++] = CStringGetTextDatum(SlotInvalidationCauses[cause]);
 
 		values[i++] = BoolGetDatum(slot_contents.data.failover);
 

@@ -228,7 +228,7 @@ $standby1->safe_psql('postgres', "CHECKPOINT");
 # Check if the synced slot is invalidated
 is( $standby1->safe_psql(
 		'postgres',
-		q{SELECT conflict_reason = 'wal_removed' FROM pg_replication_slots WHERE slot_name = 'lsub1_slot';}
+		q{SELECT invalidation_reason = 'wal_removed' FROM pg_replication_slots WHERE slot_name = 'lsub1_slot';}
 	),
 	"t",
 	'synchronized slot has been invalidated');
@@ -274,7 +274,7 @@ $standby1->wait_for_log(qr/dropped replication slot "lsub1_slot" of dbid [0-9]+/
 # flagged as 'synced'
 is( $standby1->safe_psql(
 		'postgres',
-		q{SELECT conflict_reason IS NULL AND synced AND NOT temporary FROM pg_replication_slots WHERE slot_name = 'lsub1_slot';}
+		q{SELECT invalidation_reason IS NULL AND synced AND NOT temporary FROM pg_replication_slots WHERE slot_name = 'lsub1_slot';}
 	),
 	"t",
 	'logical slot is re-synced');

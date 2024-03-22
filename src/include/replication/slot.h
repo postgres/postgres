@@ -273,7 +273,7 @@ extern void CheckPointReplicationSlots(bool is_shutdown);
 extern void CheckSlotRequirements(void);
 extern void CheckSlotPermissions(void);
 extern ReplicationSlotInvalidationCause
-			GetSlotInvalidationCause(const char *conflict_reason);
+			GetSlotInvalidationCause(const char *invalidation_reason);
 
 extern bool SlotExistsInStandbySlotNames(const char *slot_name);
 extern bool StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel);

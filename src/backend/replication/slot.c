@@ -1525,14 +1525,14 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 	XLogRecPtr	initial_effective_xmin = InvalidXLogRecPtr;
 	XLogRecPtr	initial_catalog_effective_xmin = InvalidXLogRecPtr;
 	XLogRecPtr	initial_restart_lsn = InvalidXLogRecPtr;
-	ReplicationSlotInvalidationCause conflict_prev PG_USED_FOR_ASSERTS_ONLY = RS_INVAL_NONE;
+	ReplicationSlotInvalidationCause invalidation_cause_prev PG_USED_FOR_ASSERTS_ONLY = RS_INVAL_NONE;
 
 	for (;;)
 	{
 		XLogRecPtr	restart_lsn;
 		NameData	slotname;
 		int			active_pid = 0;
-		ReplicationSlotInvalidationCause conflict = RS_INVAL_NONE;
+		ReplicationSlotInvalidationCause invalidation_cause = RS_INVAL_NONE;
 
 		Assert(LWLockHeldByMeInMode(ReplicationSlotControlLock, LW_SHARED));
 
@@ -1554,17 +1554,14 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 
 		restart_lsn = s->data.restart_lsn;
 
-		/*
-		 * If the slot is already invalid or is a non conflicting slot, we
-		 * don't need to do anything.
-		 */
+		/* we do nothing if the slot is already invalid */
 		if (s->data.invalidated == RS_INVAL_NONE)
 		{
 			/*
 			 * The slot's mutex will be released soon, and it is possible that
 			 * those values change since the process holding the slot has been
 			 * terminated (if any), so record them here to ensure that we
-			 * would report the correct conflict cause.
+			 * would report the correct invalidation cause.
 			 */
 			if (!terminated)
 			{
@@ -1578,7 +1575,7 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 				case RS_INVAL_WAL_REMOVED:
 					if (initial_restart_lsn != InvalidXLogRecPtr &&
 						initial_restart_lsn < oldestLSN)
-						conflict = cause;
+						invalidation_cause = cause;
 					break;
 				case RS_INVAL_HORIZON:
 					if (!SlotIsLogical(s))
@@ -1589,15 +1586,15 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 					if (TransactionIdIsValid(initial_effective_xmin) &&
 						TransactionIdPrecedesOrEquals(initial_effective_xmin,
 													  snapshotConflictHorizon))
-						conflict = cause;
+						invalidation_cause = cause;
 					else if (TransactionIdIsValid(initial_catalog_effective_xmin) &&
 							 TransactionIdPrecedesOrEquals(initial_catalog_effective_xmin,
 														   snapshotConflictHorizon))
-						conflict = cause;
+						invalidation_cause = cause;
 					break;
 				case RS_INVAL_WAL_LEVEL:
 					if (SlotIsLogical(s))
-						conflict = cause;
+						invalidation_cause = cause;
 					break;
 				case RS_INVAL_NONE:
 					pg_unreachable();
@@ -1605,14 +1602,14 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 		}
 
 		/*
-		 * The conflict cause recorded previously should not change while the
-		 * process owning the slot (if any) has been terminated.
+		 * The invalidation cause recorded previously should not change while
+		 * the process owning the slot (if any) has been terminated.
 		 */
-		Assert(!(conflict_prev != RS_INVAL_NONE && terminated &&
-				 conflict_prev != conflict));
+		Assert(!(invalidation_cause_prev != RS_INVAL_NONE && terminated &&
+				 invalidation_cause_prev != invalidation_cause));
 
-		/* if there's no conflict, we're done */
-		if (conflict == RS_INVAL_NONE)
+		/* if there's no invalidation, we're done */
+		if (invalidation_cause == RS_INVAL_NONE)
 		{
 			SpinLockRelease(&s->mutex);
 			if (released_lock)
@@ -1632,13 +1629,13 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 		{
 			MyReplicationSlot = s;
 			s->active_pid = MyProcPid;
-			s->data.invalidated = conflict;
+			s->data.invalidated = invalidation_cause;
 
 			/*
 			 * XXX: We should consider not overwriting restart_lsn and instead
 			 * just rely on .invalidated.
 			 */
-			if (conflict == RS_INVAL_WAL_REMOVED)
+			if (invalidation_cause == RS_INVAL_WAL_REMOVED)
 				s->data.restart_lsn = InvalidXLogRecPtr;
 
 			/* Let caller know */
@@ -1681,7 +1678,7 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 			 */
 			if (last_signaled_pid != active_pid)
 			{
-				ReportSlotInvalidation(conflict, true, active_pid,
+				ReportSlotInvalidation(invalidation_cause, true, active_pid,
 									   slotname, restart_lsn,
 									   oldestLSN, snapshotConflictHorizon);
 
@@ -1694,7 +1691,7 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 
 				last_signaled_pid = active_pid;
 				terminated = true;
-				conflict_prev = conflict;
+				invalidation_cause_prev = invalidation_cause;
 			}
 
 			/* Wait until the slot is released. */
@@ -1727,7 +1724,7 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 			ReplicationSlotSave();
 			ReplicationSlotRelease();
 
-			ReportSlotInvalidation(conflict, false, active_pid,
+			ReportSlotInvalidation(invalidation_cause, false, active_pid,
 								   slotname, restart_lsn,
 								   oldestLSN, snapshotConflictHorizon);
 
@@ -2356,21 +2353,21 @@ RestoreSlotFromDisk(const char *name)
 }
 
 /*
- * Maps a conflict reason for a replication slot to
+ * Maps an invalidation reason for a replication slot to
  * ReplicationSlotInvalidationCause.
  */
 ReplicationSlotInvalidationCause
-GetSlotInvalidationCause(const char *conflict_reason)
+GetSlotInvalidationCause(const char *invalidation_reason)
 {
 	ReplicationSlotInvalidationCause cause;
 	ReplicationSlotInvalidationCause result = RS_INVAL_NONE;
 	bool		found PG_USED_FOR_ASSERTS_ONLY = false;
 
-	Assert(conflict_reason);
+	Assert(invalidation_reason);
 
 	for (cause = RS_INVAL_NONE; cause <= RS_INVAL_MAX_CAUSES; cause++)
 	{
-		if (strcmp(SlotInvalidationCauses[cause], conflict_reason) == 0)
+		if (strcmp(SlotInvalidationCauses[cause], invalidation_reason) == 0)
 		{
 			found = true;
 			result = cause;
