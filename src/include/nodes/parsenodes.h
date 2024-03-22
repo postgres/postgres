@@ -1030,12 +1030,6 @@ typedef struct RangeTblEntry
 	RTEKind		rtekind;		/* see above */
 
 	/*
-	 * XXX the fields applicable to only some rte kinds should be merged into
-	 * a union.  I didn't do this yet because the diffs would impact a lot of
-	 * code that is being actively worked on.  FIXME someday.
-	 */
-
-	/*
 	 * Fields valid for a plain relation RTE (else zero):
 	 *
 	 * inh is true for relation references that should be expanded to include
