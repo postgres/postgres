@@ -23,6 +23,7 @@
  */
 #include "postgres.h"
 
+#include "access/heaptoast.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "access/table.h"
@@ -2678,6 +2679,18 @@ bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
 							ItemPointerGetBlockNumber(&(itup->t_tid)),
 							ItemPointerGetOffsetNumber(&(itup->t_tid)),
 							RelationGetRelationName(state->rel))));
+		else if (!VARATT_IS_COMPRESSED(DatumGetPointer(normalized[i])) &&
+				 VARSIZE(DatumGetPointer(normalized[i])) > TOAST_INDEX_TARGET &&
+				 (att->attstorage == TYPSTORAGE_EXTENDED ||
+				  att->attstorage == TYPSTORAGE_MAIN))
+		{
+			/*
+			 * This value will be compressed by index_form_tuple() with the
+			 * current storage settings.  We may be here because this tuple
+			 * was formed with different storage settings.  So, force forming.
+			 */
+			formnewtup = true;
+		}
 		else if (VARATT_IS_COMPRESSED(DatumGetPointer(normalized[i])))
 		{
 			formnewtup = true;
