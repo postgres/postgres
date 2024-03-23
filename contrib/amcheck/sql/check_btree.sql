@@ -140,6 +140,12 @@ x
 CREATE INDEX varlena_bug_idx on varlena_bug(v);
 SELECT bt_index_check('varlena_bug_idx', true);
 
+-- Also check that we compress varlena values, which were previously stored
+-- uncompressed in index.
+INSERT INTO varlena_bug VALUES (repeat('Test', 250));
+ALTER TABLE varlena_bug ALTER COLUMN v SET STORAGE extended;
+SELECT bt_index_check('varlena_bug_idx', true);
+
 -- cleanup
 DROP TABLE bttest_a;
 DROP TABLE bttest_b;
