@@ -2185,7 +2185,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				strat = RTOverlapStrategyNumber;
 			else
 				strat = RTEqualStrategyNumber;
-			GetOperatorFromWellKnownStrategy(opclassOids[attn], atttype,
+			GetOperatorFromWellKnownStrategy(opclassOids[attn], InvalidOid,
 											 &opid, &strat);
 			indexInfo->ii_ExclusionOps[attn] = opid;
 			indexInfo->ii_ExclusionProcs[attn] = get_opcode(opid);
@@ -2425,7 +2425,7 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
  * GetOperatorFromWellKnownStrategy
  *
  * opclass - the opclass to use
- * atttype - the type to ask about
+ * rhstype - the type for the right-hand side, or InvalidOid to use the type of the given opclass.
  * opid - holds the operator we found
  * strat - holds the input and output strategy number
  *
@@ -2438,14 +2438,14 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
  * InvalidStrategy.
  */
 void
-GetOperatorFromWellKnownStrategy(Oid opclass, Oid atttype,
+GetOperatorFromWellKnownStrategy(Oid opclass, Oid rhstype,
 								 Oid *opid, StrategyNumber *strat)
 {
 	Oid			opfamily;
 	Oid			opcintype;
 	StrategyNumber instrat = *strat;
 
-	Assert(instrat == RTEqualStrategyNumber || instrat == RTOverlapStrategyNumber);
+	Assert(instrat == RTEqualStrategyNumber || instrat == RTOverlapStrategyNumber || instrat == RTContainedByStrategyNumber);
 
 	*opid = InvalidOid;
 
@@ -2468,16 +2468,21 @@ GetOperatorFromWellKnownStrategy(Oid opclass, Oid atttype,
 
 			ereport(ERROR,
 					errcode(ERRCODE_UNDEFINED_OBJECT),
-					instrat == RTEqualStrategyNumber ?
-					errmsg("could not identify an equality operator for type %s", format_type_be(atttype)) :
-					errmsg("could not identify an overlaps operator for type %s", format_type_be(atttype)),
+					instrat == RTEqualStrategyNumber ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
+					instrat == RTOverlapStrategyNumber ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
+					instrat == RTContainedByStrategyNumber ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
 					errdetail("Could not translate strategy number %d for operator class \"%s\" for access method \"%s\".",
 							  instrat, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
-
-			ReleaseSysCache(tuple);
 		}
 
-		*opid = get_opfamily_member(opfamily, opcintype, opcintype, *strat);
+		/*
+		 * We parameterize rhstype so foreign keys can ask for a <@ operator
+		 * whose rhs matches the aggregate function. For example range_agg
+		 * returns anymultirange.
+		 */
+		if (!OidIsValid(rhstype))
+			rhstype = opcintype;
+		*opid = get_opfamily_member(opfamily, opcintype, rhstype, *strat);
 	}
 
 	if (!OidIsValid(*opid))
@@ -2490,9 +2495,9 @@ GetOperatorFromWellKnownStrategy(Oid opclass, Oid atttype,
 
 		ereport(ERROR,
 				errcode(ERRCODE_UNDEFINED_OBJECT),
-				instrat == RTEqualStrategyNumber ?
-				errmsg("could not identify an equality operator for type %s", format_type_be(atttype)) :
-				errmsg("could not identify an overlaps operator for type %s", format_type_be(atttype)),
+				instrat == RTEqualStrategyNumber ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
+				instrat == RTOverlapStrategyNumber ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
+				instrat == RTContainedByStrategyNumber ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
 				errdetail("There is no suitable operator in operator family \"%s\" for access method \"%s\".",
 						  NameStr(((Form_pg_opfamily) GETSTRUCT(tuple))->opfname), "gist"));
 	}

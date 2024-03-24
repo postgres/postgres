@@ -99,20 +99,50 @@ CREATE TABLE temporal_rng3 (
 ALTER TABLE temporal_rng3 DROP CONSTRAINT temporal_rng3_pk;
 DROP TABLE temporal_rng3;
 DROP TYPE textrange2;
--- PK with a multirange:
+-- PK with one column plus a multirange:
 CREATE TABLE temporal_mltrng (
   id int4range,
-  valid_at tsmultirange,
+  valid_at datemultirange,
   CONSTRAINT temporal_mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
 );
 \d temporal_mltrng
-              Table "public.temporal_mltrng"
-  Column  |     Type     | Collation | Nullable | Default 
-----------+--------------+-----------+----------+---------
- id       | int4range    |           | not null | 
- valid_at | tsmultirange |           | not null | 
+               Table "public.temporal_mltrng"
+  Column  |      Type      | Collation | Nullable | Default 
+----------+----------------+-----------+----------+---------
+ id       | int4range      |           | not null | 
+ valid_at | datemultirange |           | not null | 
 Indexes:
     "temporal_mltrng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+
+-- PK with two columns plus a multirange:
+-- We don't drop this table because tests below also need multiple scalar columns.
+CREATE TABLE temporal_mltrng2 (
+	id1 int4range,
+	id2 int4range,
+	valid_at datemultirange,
+	CONSTRAINT temporal_mltrng2_pk PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+);
+\d temporal_mltrng2
+              Table "public.temporal_mltrng2"
+  Column  |      Type      | Collation | Nullable | Default 
+----------+----------------+-----------+----------+---------
+ id1      | int4range      |           | not null | 
+ id2      | int4range      |           | not null | 
+ valid_at | datemultirange |           | not null | 
+Indexes:
+    "temporal_mltrng2_pk" PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_mltrng2_pk';
+               pg_get_constraintdef                
+---------------------------------------------------
+ PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+(1 row)
+
+SELECT pg_get_indexdef(conindid, 0, true) FROM pg_constraint WHERE conname = 'temporal_mltrng2_pk';
+                                       pg_get_indexdef                                       
+---------------------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX temporal_mltrng2_pk ON temporal_mltrng2 USING gist (id1, id2, valid_at)
+(1 row)
 
 -- UNIQUE with no columns just WITHOUT OVERLAPS:
 CREATE TABLE temporal_rng3 (
@@ -290,6 +320,30 @@ DETAIL:  Failing row contains (null, [2018-01-01,2018-01-05)).
 INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', NULL);
 ERROR:  null value in column "valid_at" of relation "temporal_rng" violates not-null constraint
 DETAIL:  Failing row contains ([3,4), null).
+-- okay:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-02', '2018-02-03')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-03-03', '2018-04-04')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[3,4)', datemultirange(daterange('2018-01-01', NULL)));
+-- should fail:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+ERROR:  conflicting key value violates exclusion constraint "temporal_mltrng_pk"
+DETAIL:  Key (id, valid_at)=([1,2), {[2018-01-01,2018-01-05)}) conflicts with existing key (id, valid_at)=([1,2), {[2018-01-02,2018-02-03)}).
+INSERT INTO temporal_mltrng (id, valid_at) VALUES (NULL, datemultirange(daterange('2018-01-01', '2018-01-05')));
+ERROR:  null value in column "id" of relation "temporal_mltrng" violates not-null constraint
+DETAIL:  Failing row contains (null, {[2018-01-01,2018-01-05)}).
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[3,4)', NULL);
+ERROR:  null value in column "valid_at" of relation "temporal_mltrng" violates not-null constraint
+DETAIL:  Failing row contains ([3,4), null).
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2018-01-02,2018-02-03)}
+ [1,2) | {[2018-03-03,2018-04-04)}
+ [2,3) | {[2018-01-01,2018-01-05)}
+ [3,4) | {[2018-01-01,)}
+(4 rows)
+
 --
 -- test a range with both a PK and a UNIQUE constraint
 --
@@ -394,4 +448,1095 @@ SELECT * FROM tp2 ORDER BY id, valid_at;
 (1 row)
 
 DROP TABLE temporal_partitioned;
+--
+-- test FK dependencies
+--
+-- can't drop a range referenced by an FK, unless with CASCADE
+CREATE TABLE temporal3 (
+	id int4range,
+	valid_at daterange,
+	CONSTRAINT temporal3_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal3 (id, PERIOD valid_at)
+);
+ALTER TABLE temporal3 DROP COLUMN valid_at;
+ERROR:  cannot drop column valid_at of table temporal3 because other objects depend on it
+DETAIL:  constraint temporal_fk_rng2rng_fk on table temporal_fk_rng2rng depends on column valid_at of table temporal3
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER TABLE temporal3 DROP COLUMN valid_at CASCADE;
+NOTICE:  drop cascades to constraint temporal_fk_rng2rng_fk on table temporal_fk_rng2rng
+DROP TABLE temporal_fk_rng2rng;
+DROP TABLE temporal3;
+--
+-- test FOREIGN KEY, range references range
+--
+-- test table setup
+DROP TABLE temporal_rng;
+CREATE TABLE temporal_rng (id int4range, valid_at daterange);
+ALTER TABLE temporal_rng
+  ADD CONSTRAINT temporal_rng_pk
+  PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+-- Can't create a FK with a mismatched range type
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at int4range,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk2 PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk2 FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_rng (id, PERIOD valid_at)
+);
+ERROR:  foreign key constraint "temporal_fk_rng2rng_fk2" cannot be implemented
+DETAIL:  Key columns "valid_at" and "valid_at" are of incompatible types: int4range and daterange.
+-- works: PERIOD for both referenced and referencing
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_rng (id, PERIOD valid_at)
+);
+DROP TABLE temporal_fk_rng2rng;
+-- with mismatched PERIOD columns:
+-- (parent_id, PERIOD valid_at) REFERENCES (id, valid_at)
+-- REFERENCES part should specify PERIOD
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_rng (id, valid_at)
+);
+ERROR:  foreign key uses PERIOD on the referencing table but not the referenced table
+-- (parent_id, valid_at) REFERENCES (id, valid_at)
+-- both should specify PERIOD:
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, valid_at)
+		REFERENCES temporal_rng (id, valid_at)
+);
+ERROR:  foreign key must use PERIOD when referencing a primary using WITHOUT OVERLAPS
+-- (parent_id, valid_at) REFERENCES (id, PERIOD valid_at)
+-- FOREIGN KEY part should specify PERIOD
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, valid_at)
+		REFERENCES temporal_rng (id, PERIOD valid_at)
+);
+ERROR:  foreign key uses PERIOD on the referenced table but not the referencing table
+-- (parent_id, valid_at) REFERENCES [implicit]
+-- FOREIGN KEY part should specify PERIOD
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, valid_at)
+		REFERENCES temporal_rng
+);
+ERROR:  foreign key uses PERIOD on the referenced table but not the referencing table
+-- (parent_id, PERIOD valid_at) REFERENCES (id)
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_rng (id)
+);
+ERROR:  foreign key uses PERIOD on the referencing table but not the referenced table
+-- (parent_id) REFERENCES (id, PERIOD valid_at)
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id)
+		REFERENCES temporal_rng (id, PERIOD valid_at)
+);
+ERROR:  foreign key uses PERIOD on the referenced table but not the referencing table
+-- with inferred PK on the referenced table:
+-- (parent_id, PERIOD valid_at) REFERENCES [implicit]
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_rng
+);
+DROP TABLE temporal_fk_rng2rng;
+-- (parent_id) REFERENCES [implicit]
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id)
+		REFERENCES temporal_rng
+);
+ERROR:  foreign key uses PERIOD on the referenced table but not the referencing table
+-- should fail because of duplicate referenced columns:
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, PERIOD parent_id)
+		REFERENCES temporal_rng (id, PERIOD id)
+);
+ERROR:  foreign key referenced-columns list must not contain duplicates
+-- Two scalar columns
+DROP TABLE temporal_rng2;
+CREATE TABLE temporal_rng2 (
+  id1 int4range,
+  id2 int4range,
+  valid_at daterange,
+  CONSTRAINT temporal_rng2_pk PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+);
+CREATE TABLE temporal_fk2_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id1 int4range,
+	parent_id2 int4range,
+	CONSTRAINT temporal_fk2_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk2_rng2rng_fk FOREIGN KEY (parent_id1, parent_id2, PERIOD valid_at)
+		REFERENCES temporal_rng2 (id1, id2, PERIOD valid_at)
+);
+\d temporal_fk2_rng2rng
+           Table "public.temporal_fk2_rng2rng"
+   Column   |   Type    | Collation | Nullable | Default 
+------------+-----------+-----------+----------+---------
+ id         | int4range |           | not null | 
+ valid_at   | daterange |           | not null | 
+ parent_id1 | int4range |           |          | 
+ parent_id2 | int4range |           |          | 
+Indexes:
+    "temporal_fk2_rng2rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+Foreign-key constraints:
+    "temporal_fk2_rng2rng_fk" FOREIGN KEY (parent_id1, parent_id2, PERIOD valid_at) REFERENCES temporal_rng2(id1, id2, PERIOD valid_at)
+
+DROP TABLE temporal_fk2_rng2rng;
+--
+-- test ALTER TABLE ADD CONSTRAINT
+--
+CREATE TABLE temporal_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng (id, PERIOD valid_at);
+-- Two scalar columns:
+CREATE TABLE temporal_fk2_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id1 int4range,
+	parent_id2 int4range,
+	CONSTRAINT temporal_fk2_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+ALTER TABLE temporal_fk2_rng2rng
+	ADD CONSTRAINT temporal_fk2_rng2rng_fk
+	FOREIGN KEY (parent_id1, parent_id2, PERIOD valid_at)
+	REFERENCES temporal_rng2 (id1, id2, PERIOD valid_at);
+\d temporal_fk2_rng2rng
+           Table "public.temporal_fk2_rng2rng"
+   Column   |   Type    | Collation | Nullable | Default 
+------------+-----------+-----------+----------+---------
+ id         | int4range |           | not null | 
+ valid_at   | daterange |           | not null | 
+ parent_id1 | int4range |           |          | 
+ parent_id2 | int4range |           |          | 
+Indexes:
+    "temporal_fk2_rng2rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+Foreign-key constraints:
+    "temporal_fk2_rng2rng_fk" FOREIGN KEY (parent_id1, parent_id2, PERIOD valid_at) REFERENCES temporal_rng2(id1, id2, PERIOD valid_at)
+
+-- with inferred PK on the referenced table, and wrong column type:
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk,
+	ALTER COLUMN valid_at TYPE tsrange USING tsrange(lower(valid_at), upper(valid_at));
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng;
+ERROR:  foreign key constraint "temporal_fk_rng2rng_fk" cannot be implemented
+DETAIL:  Key columns "valid_at" and "valid_at" are of incompatible types: tsrange and daterange.
+ALTER TABLE temporal_fk_rng2rng
+	ALTER COLUMN valid_at TYPE daterange USING daterange(lower(valid_at)::date, upper(valid_at)::date);
+-- with inferred PK on the referenced table:
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng;
+-- should fail because of duplicate referenced columns:
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk2
+	FOREIGN KEY (parent_id, PERIOD parent_id)
+	REFERENCES temporal_rng (id, PERIOD id);
+ERROR:  foreign key referenced-columns list must not contain duplicates
+--
+-- test with rows already
+--
+DELETE FROM temporal_fk_rng2rng;
+DELETE FROM temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES
+  ('[1,2)', daterange('2018-01-02', '2018-02-03')),
+  ('[1,2)', daterange('2018-03-03', '2018-04-04')),
+  ('[2,3)', daterange('2018-01-01', '2018-01-05')),
+  ('[3,4)', daterange('2018-01-01', NULL));
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk;
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[1,2)', daterange('2018-01-02', '2018-02-01'), '[1,2)');
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng;
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk;
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[2,3)', daterange('2018-01-02', '2018-04-01'), '[1,2)');
+-- should fail:
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng;
+ERROR:  insert or update on table "temporal_fk_rng2rng" violates foreign key constraint "temporal_fk_rng2rng_fk"
+DETAIL:  Key (parent_id, valid_at)=([1,2), [2018-01-02,2018-04-01)) is not present in table "temporal_rng".
+-- okay again:
+DELETE FROM temporal_fk_rng2rng;
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng;
+--
+-- test pg_get_constraintdef
+--
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_fk_rng2rng_fk';
+                                 pg_get_constraintdef                                  
+---------------------------------------------------------------------------------------
+ FOREIGN KEY (parent_id, PERIOD valid_at) REFERENCES temporal_rng(id, PERIOD valid_at)
+(1 row)
+
+--
+-- test FK referencing inserts
+--
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[1,2)', daterange('2018-01-02', '2018-02-01'), '[1,2)');
+-- should fail:
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[2,3)', daterange('2018-01-02', '2018-04-01'), '[1,2)');
+ERROR:  insert or update on table "temporal_fk_rng2rng" violates foreign key constraint "temporal_fk_rng2rng_fk"
+DETAIL:  Key (parent_id, valid_at)=([1,2), [2018-01-02,2018-04-01)) is not present in table "temporal_rng".
+-- now it should work:
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-02-03', '2018-03-03'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[2,3)', daterange('2018-01-02', '2018-04-01'), '[1,2)');
+--
+-- test FK referencing updates
+--
+UPDATE temporal_fk_rng2rng SET valid_at = daterange('2018-01-02', '2018-03-01') WHERE id = '[1,2)';
+-- should fail:
+UPDATE temporal_fk_rng2rng SET valid_at = daterange('2018-01-02', '2018-05-01') WHERE id = '[1,2)';
+ERROR:  insert or update on table "temporal_fk_rng2rng" violates foreign key constraint "temporal_fk_rng2rng_fk"
+DETAIL:  Key (parent_id, valid_at)=([1,2), [2018-01-02,2018-05-01)) is not present in table "temporal_rng".
+UPDATE temporal_fk_rng2rng SET parent_id = '[8,9)' WHERE id = '[1,2)';
+ERROR:  insert or update on table "temporal_fk_rng2rng" violates foreign key constraint "temporal_fk_rng2rng_fk"
+DETAIL:  Key (parent_id, valid_at)=([8,9), [2018-01-02,2018-03-01)) is not present in table "temporal_rng".
+-- ALTER FK DEFERRABLE
+BEGIN;
+  INSERT INTO temporal_rng (id, valid_at) VALUES
+    ('[5,6)', daterange('2018-01-01', '2018-02-01')),
+    ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+  INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES
+    ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+  ALTER TABLE temporal_fk_rng2rng
+    ALTER CONSTRAINT temporal_fk_rng2rng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  DELETE FROM temporal_rng WHERE id = '[5,6)'; --should not fail yet.
+COMMIT; -- should fail here.
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+--
+-- test FK referenced updates NO ACTION
+--
+TRUNCATE temporal_rng, temporal_fk_rng2rng;
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk;
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng
+	ON UPDATE NO ACTION;
+-- a PK update that succeeds because the numeric id isn't referenced:
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-01-01', '2018-02-01'));
+UPDATE temporal_rng SET valid_at = daterange('2016-01-01', '2016-02-01') WHERE id = '[5,6)';
+-- a PK update that succeeds even though the numeric id is referenced because the range isn't:
+DELETE FROM temporal_rng WHERE id = '[5,6)';
+INSERT INTO temporal_rng (id, valid_at) VALUES
+  ('[5,6)', daterange('2018-01-01', '2018-02-01')),
+  ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+UPDATE temporal_rng SET valid_at = daterange('2016-02-01', '2016-03-01')
+WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
+-- a PK update that fails because both are referenced:
+UPDATE temporal_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
+WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+-- a PK update that fails because both are referenced, but not 'til commit:
+BEGIN;
+  ALTER TABLE temporal_fk_rng2rng
+    ALTER CONSTRAINT temporal_fk_rng2rng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  UPDATE temporal_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
+  WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+COMMIT;
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+-- changing the scalar part fails:
+UPDATE temporal_rng SET id = '[7,8)'
+WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+-- then delete the objecting FK record and the same PK update succeeds:
+DELETE FROM temporal_fk_rng2rng WHERE id = '[3,4)';
+UPDATE temporal_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
+WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+--
+-- test FK referenced updates RESTRICT
+--
+TRUNCATE temporal_rng, temporal_fk_rng2rng;
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk;
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng
+	ON UPDATE RESTRICT;
+-- a PK update that succeeds because the numeric id isn't referenced:
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-01-01', '2018-02-01'));
+UPDATE temporal_rng SET valid_at = daterange('2016-01-01', '2016-02-01') WHERE id = '[5,6)';
+-- a PK update that succeeds even though the numeric id is referenced because the range isn't:
+DELETE FROM temporal_rng WHERE id = '[5,6)';
+INSERT INTO temporal_rng (id, valid_at) VALUES
+  ('[5,6)', daterange('2018-01-01', '2018-02-01')),
+  ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+UPDATE temporal_rng SET valid_at = daterange('2016-02-01', '2016-03-01')
+WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
+-- a PK update that fails because both are referenced (even before commit):
+BEGIN;
+  ALTER TABLE temporal_fk_rng2rng
+    ALTER CONSTRAINT temporal_fk_rng2rng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  UPDATE temporal_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
+  WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+ROLLBACK;
+-- changing the scalar part fails:
+UPDATE temporal_rng SET id = '[7,8)'
+WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+-- then delete the objecting FK record and the same PK update succeeds:
+DELETE FROM temporal_fk_rng2rng WHERE id = '[3,4)';
+UPDATE temporal_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
+WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+--
+-- test FK referenced deletes NO ACTION
+--
+TRUNCATE temporal_rng, temporal_fk_rng2rng;
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk;
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng;
+-- a PK delete that succeeds because the numeric id isn't referenced:
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-01-01', '2018-02-01'));
+DELETE FROM temporal_rng WHERE id = '[5,6)';
+-- a PK delete that succeeds even though the numeric id is referenced because the range isn't:
+INSERT INTO temporal_rng (id, valid_at) VALUES
+  ('[5,6)', daterange('2018-01-01', '2018-02-01')),
+  ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
+-- a PK delete that fails because both are referenced:
+DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+-- a PK delete that fails because both are referenced, but not 'til commit:
+BEGIN;
+  ALTER TABLE temporal_fk_rng2rng
+    ALTER CONSTRAINT temporal_fk_rng2rng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+COMMIT;
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+-- then delete the objecting FK record and the same PK delete succeeds:
+DELETE FROM temporal_fk_rng2rng WHERE id = '[3,4)';
+DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+--
+-- test FK referenced deletes RESTRICT
+--
+TRUNCATE temporal_rng, temporal_fk_rng2rng;
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk;
+ALTER TABLE temporal_fk_rng2rng
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_rng
+	ON DELETE RESTRICT;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-01-01', '2018-02-01'));
+DELETE FROM temporal_rng WHERE id = '[5,6)';
+-- a PK delete that succeeds even though the numeric id is referenced because the range isn't:
+INSERT INTO temporal_rng (id, valid_at) VALUES
+  ('[5,6)', daterange('2018-01-01', '2018-02-01')),
+  ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
+-- a PK delete that fails because both are referenced (even before commit):
+BEGIN;
+  ALTER TABLE temporal_fk_rng2rng
+    ALTER CONSTRAINT temporal_fk_rng2rng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "temporal_rng" violates foreign key constraint "temporal_fk_rng2rng_fk" on table "temporal_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_fk_rng2rng".
+ROLLBACK;
+-- then delete the objecting FK record and the same PK delete succeeds:
+DELETE FROM temporal_fk_rng2rng WHERE id = '[3,4)';
+DELETE FROM temporal_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+--
+-- test ON UPDATE/DELETE options
+--
+-- test FK referenced updates CASCADE
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[6,7)', daterange('2018-01-01', '2021-01-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[4,5)', daterange('2018-01-01', '2021-01-01'), '[6,7)');
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk,
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+		FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_rng
+		ON DELETE CASCADE ON UPDATE CASCADE;
+ERROR:  unsupported ON UPDATE action for foreign key constraint using PERIOD
+-- test FK referenced updates SET NULL
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[9,10)', daterange('2018-01-01', '2021-01-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[6,7)', daterange('2018-01-01', '2021-01-01'), '[9,10)');
+ALTER TABLE temporal_fk_rng2rng
+	DROP CONSTRAINT temporal_fk_rng2rng_fk,
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+		FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_rng
+		ON DELETE SET NULL ON UPDATE SET NULL;
+ERROR:  unsupported ON UPDATE action for foreign key constraint using PERIOD
+-- test FK referenced updates SET DEFAULT
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[-1,-1]', daterange(null, null));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[12,13)', daterange('2018-01-01', '2021-01-01'));
+INSERT INTO temporal_fk_rng2rng (id, valid_at, parent_id) VALUES ('[8,9)', daterange('2018-01-01', '2021-01-01'), '[12,13)');
+ALTER TABLE temporal_fk_rng2rng
+  ALTER COLUMN parent_id SET DEFAULT '[-1,-1]',
+	DROP CONSTRAINT temporal_fk_rng2rng_fk,
+	ADD CONSTRAINT temporal_fk_rng2rng_fk
+		FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_rng
+		ON DELETE SET DEFAULT ON UPDATE SET DEFAULT;
+ERROR:  unsupported ON UPDATE action for foreign key constraint using PERIOD
+--
+-- test FOREIGN KEY, multirange references multirange
+--
+-- Can't create a FK with a mismatched multirange type
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at int4multirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk2 PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk2 FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_mltrng (id, PERIOD valid_at)
+);
+ERROR:  foreign key constraint "temporal_fk_mltrng2mltrng_fk2" cannot be implemented
+DETAIL:  Key columns "valid_at" and "valid_at" are of incompatible types: int4multirange and datemultirange.
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_mltrng (id, PERIOD valid_at)
+);
+DROP TABLE temporal_fk_mltrng2mltrng;
+-- with mismatched PERIOD columns:
+-- (parent_id, PERIOD valid_at) REFERENCES (id, valid_at)
+-- REFERENCES part should specify PERIOD
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_mltrng (id, valid_at)
+);
+ERROR:  foreign key uses PERIOD on the referencing table but not the referenced table
+-- (parent_id, valid_at) REFERENCES (id, valid_at)
+-- both should specify PERIOD:
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, valid_at)
+		REFERENCES temporal_mltrng (id, valid_at)
+);
+ERROR:  foreign key must use PERIOD when referencing a primary using WITHOUT OVERLAPS
+-- (parent_id, valid_at) REFERENCES (id, PERIOD valid_at)
+-- FOREIGN KEY part should specify PERIOD
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, valid_at)
+		REFERENCES temporal_mltrng (id, PERIOD valid_at)
+);
+ERROR:  foreign key uses PERIOD on the referenced table but not the referencing table
+-- (parent_id, valid_at) REFERENCES [implicit]
+-- FOREIGN KEY part should specify PERIOD
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, valid_at)
+		REFERENCES temporal_mltrng
+);
+ERROR:  foreign key uses PERIOD on the referenced table but not the referencing table
+-- (parent_id, PERIOD valid_at) REFERENCES (id)
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_mltrng (id)
+);
+ERROR:  foreign key uses PERIOD on the referencing table but not the referenced table
+-- (parent_id) REFERENCES (id, PERIOD valid_at)
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id)
+		REFERENCES temporal_mltrng (id, PERIOD valid_at)
+);
+ERROR:  foreign key uses PERIOD on the referenced table but not the referencing table
+-- with inferred PK on the referenced table:
+-- (parent_id, PERIOD valid_at) REFERENCES [implicit]
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_mltrng
+);
+DROP TABLE temporal_fk_mltrng2mltrng;
+-- (parent_id) REFERENCES [implicit]
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id)
+		REFERENCES temporal_mltrng
+);
+ERROR:  foreign key uses PERIOD on the referenced table but not the referencing table
+-- should fail because of duplicate referenced columns:
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, PERIOD parent_id)
+		REFERENCES temporal_mltrng (id, PERIOD id)
+);
+ERROR:  foreign key referenced-columns list must not contain duplicates
+-- Two scalar columns
+CREATE TABLE temporal_fk2_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id1 int4range,
+	parent_id2 int4range,
+	CONSTRAINT temporal_fk2_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_fk2_mltrng2mltrng_fk FOREIGN KEY (parent_id1, parent_id2, PERIOD valid_at)
+		REFERENCES temporal_mltrng2 (id1, id2, PERIOD valid_at)
+);
+\d temporal_fk2_mltrng2mltrng
+          Table "public.temporal_fk2_mltrng2mltrng"
+   Column   |      Type      | Collation | Nullable | Default 
+------------+----------------+-----------+----------+---------
+ id         | int4range      |           | not null | 
+ valid_at   | datemultirange |           | not null | 
+ parent_id1 | int4range      |           |          | 
+ parent_id2 | int4range      |           |          | 
+Indexes:
+    "temporal_fk2_mltrng2mltrng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+Foreign-key constraints:
+    "temporal_fk2_mltrng2mltrng_fk" FOREIGN KEY (parent_id1, parent_id2, PERIOD valid_at) REFERENCES temporal_mltrng2(id1, id2, PERIOD valid_at)
+
+DROP TABLE temporal_fk2_mltrng2mltrng;
+--
+-- test ALTER TABLE ADD CONSTRAINT
+--
+CREATE TABLE temporal_fk_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id int4range,
+	CONSTRAINT temporal_fk_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_mltrng (id, PERIOD valid_at);
+-- Two scalar columns:
+CREATE TABLE temporal_fk2_mltrng2mltrng (
+	id int4range,
+	valid_at datemultirange,
+	parent_id1 int4range,
+	parent_id2 int4range,
+	CONSTRAINT temporal_fk2_mltrng2mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+ALTER TABLE temporal_fk2_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk2_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id1, parent_id2, PERIOD valid_at)
+	REFERENCES temporal_mltrng2 (id1, id2, PERIOD valid_at);
+\d temporal_fk2_mltrng2mltrng
+          Table "public.temporal_fk2_mltrng2mltrng"
+   Column   |      Type      | Collation | Nullable | Default 
+------------+----------------+-----------+----------+---------
+ id         | int4range      |           | not null | 
+ valid_at   | datemultirange |           | not null | 
+ parent_id1 | int4range      |           |          | 
+ parent_id2 | int4range      |           |          | 
+Indexes:
+    "temporal_fk2_mltrng2mltrng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+Foreign-key constraints:
+    "temporal_fk2_mltrng2mltrng_fk" FOREIGN KEY (parent_id1, parent_id2, PERIOD valid_at) REFERENCES temporal_mltrng2(id1, id2, PERIOD valid_at)
+
+-- should fail because of duplicate referenced columns:
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk2
+	FOREIGN KEY (parent_id, PERIOD parent_id)
+	REFERENCES temporal_mltrng (id, PERIOD id);
+ERROR:  foreign key referenced-columns list must not contain duplicates
+--
+-- test with rows already
+--
+DELETE FROM temporal_fk_mltrng2mltrng;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	DROP CONSTRAINT temporal_fk_mltrng2mltrng_fk;
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[1,2)', datemultirange(daterange('2018-01-02', '2018-02-01')), '[1,2)');
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_mltrng (id, PERIOD valid_at);
+ALTER TABLE temporal_fk_mltrng2mltrng
+	DROP CONSTRAINT temporal_fk_mltrng2mltrng_fk;
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[2,3)', datemultirange(daterange('2018-01-02', '2018-04-01')), '[1,2)');
+-- should fail:
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_mltrng (id, PERIOD valid_at);
+ERROR:  insert or update on table "temporal_fk_mltrng2mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk"
+DETAIL:  Key (parent_id, valid_at)=([1,2), {[2018-01-02,2018-04-01)}) is not present in table "temporal_mltrng".
+-- okay again:
+DELETE FROM temporal_fk_mltrng2mltrng;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_mltrng (id, PERIOD valid_at);
+--
+-- test pg_get_constraintdef
+--
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_fk_mltrng2mltrng_fk';
+                                   pg_get_constraintdef                                   
+------------------------------------------------------------------------------------------
+ FOREIGN KEY (parent_id, PERIOD valid_at) REFERENCES temporal_mltrng(id, PERIOD valid_at)
+(1 row)
+
+--
+-- test FK referencing inserts
+--
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[1,2)', datemultirange(daterange('2018-01-02', '2018-02-01')), '[1,2)');
+-- should fail:
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[2,3)', datemultirange(daterange('2018-01-02', '2018-04-01')), '[1,2)');
+ERROR:  insert or update on table "temporal_fk_mltrng2mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk"
+DETAIL:  Key (parent_id, valid_at)=([1,2), {[2018-01-02,2018-04-01)}) is not present in table "temporal_mltrng".
+-- now it should work:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-02-03', '2018-03-03')));
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[2,3)', datemultirange(daterange('2018-01-02', '2018-04-01')), '[1,2)');
+--
+-- test FK referencing updates
+--
+UPDATE temporal_fk_mltrng2mltrng SET valid_at = datemultirange(daterange('2018-01-02', '2018-03-01')) WHERE id = '[1,2)';
+-- should fail:
+UPDATE temporal_fk_mltrng2mltrng SET valid_at = datemultirange(daterange('2018-01-02', '2018-05-01')) WHERE id = '[1,2)';
+ERROR:  insert or update on table "temporal_fk_mltrng2mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk"
+DETAIL:  Key (parent_id, valid_at)=([1,2), {[2018-01-02,2018-05-01)}) is not present in table "temporal_mltrng".
+UPDATE temporal_fk_mltrng2mltrng SET parent_id = '[8,9)' WHERE id = '[1,2)';
+ERROR:  insert or update on table "temporal_fk_mltrng2mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk"
+DETAIL:  Key (parent_id, valid_at)=([8,9), {[2018-01-02,2018-03-01)}) is not present in table "temporal_mltrng".
+-- ALTER FK DEFERRABLE
+BEGIN;
+  INSERT INTO temporal_mltrng (id, valid_at) VALUES
+    ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01'))),
+    ('[5,6)', datemultirange(daterange('2018-02-01', '2018-03-01')));
+  INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES
+    ('[3,4)', datemultirange(daterange('2018-01-05', '2018-01-10')), '[5,6)');
+  ALTER TABLE temporal_fk_mltrng2mltrng
+    ALTER CONSTRAINT temporal_fk_mltrng2mltrng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  DELETE FROM temporal_mltrng WHERE id = '[5,6)'; --should not fail yet.
+COMMIT; -- should fail here.
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+--
+-- test FK referenced updates NO ACTION
+--
+TRUNCATE temporal_mltrng, temporal_fk_mltrng2mltrng;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	DROP CONSTRAINT temporal_fk_mltrng2mltrng_fk;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_mltrng (id, PERIOD valid_at)
+	ON UPDATE NO ACTION;
+-- a PK update that succeeds because the numeric id isn't referenced:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01')));
+UPDATE temporal_mltrng SET valid_at = datemultirange(daterange('2016-01-01', '2016-02-01')) WHERE id = '[5,6)';
+-- a PK update that succeeds even though the numeric id is referenced because the range isn't:
+DELETE FROM temporal_mltrng WHERE id = '[5,6)';
+INSERT INTO temporal_mltrng (id, valid_at) VALUES
+  ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01'))),
+  ('[5,6)', datemultirange(daterange('2018-02-01', '2018-03-01')));
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[3,4)', datemultirange(daterange('2018-01-05', '2018-01-10')), '[5,6)');
+UPDATE temporal_mltrng SET valid_at = datemultirange(daterange('2016-02-01', '2016-03-01'))
+WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-02-01', '2018-03-01'));
+-- a PK update that fails because both are referenced:
+UPDATE temporal_mltrng SET valid_at = datemultirange(daterange('2016-01-01', '2016-02-01'))
+WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+-- a PK update that fails because both are referenced, but not 'til commit:
+BEGIN;
+  ALTER TABLE temporal_fk_mltrng2mltrng
+    ALTER CONSTRAINT temporal_fk_mltrng2mltrng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  UPDATE temporal_mltrng SET valid_at = datemultirange(daterange('2016-01-01', '2016-02-01'))
+  WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+COMMIT;
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+-- changing the scalar part fails:
+UPDATE temporal_mltrng SET id = '[7,8)'
+WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+--
+-- test FK referenced updates RESTRICT
+--
+TRUNCATE temporal_mltrng, temporal_fk_mltrng2mltrng;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	DROP CONSTRAINT temporal_fk_mltrng2mltrng_fk;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_mltrng (id, PERIOD valid_at)
+	ON UPDATE RESTRICT;
+-- a PK update that succeeds because the numeric id isn't referenced:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01')));
+UPDATE temporal_mltrng SET valid_at = datemultirange(daterange('2016-01-01', '2016-02-01')) WHERE id = '[5,6)';
+-- a PK update that succeeds even though the numeric id is referenced because the range isn't:
+DELETE FROM temporal_mltrng WHERE id = '[5,6)';
+INSERT INTO temporal_mltrng (id, valid_at) VALUES
+  ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01'))),
+  ('[5,6)', datemultirange(daterange('2018-02-01', '2018-03-01')));
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[3,4)', datemultirange(daterange('2018-01-05', '2018-01-10')), '[5,6)');
+UPDATE temporal_mltrng SET valid_at = datemultirange(daterange('2016-02-01', '2016-03-01'))
+WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-02-01', '2018-03-01'));
+-- a PK update that fails because both are referenced (even before commit):
+BEGIN;
+  ALTER TABLE temporal_fk_mltrng2mltrng
+    ALTER CONSTRAINT temporal_fk_mltrng2mltrng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  UPDATE temporal_mltrng SET valid_at = datemultirange(daterange('2016-01-01', '2016-02-01'))
+  WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+ROLLBACK;
+-- changing the scalar part fails:
+UPDATE temporal_mltrng SET id = '[7,8)'
+WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+--
+-- test FK referenced deletes NO ACTION
+--
+TRUNCATE temporal_mltrng, temporal_fk_mltrng2mltrng;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	DROP CONSTRAINT temporal_fk_mltrng2mltrng_fk;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_mltrng (id, PERIOD valid_at);
+-- a PK delete that succeeds because the numeric id isn't referenced:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01')));
+DELETE FROM temporal_mltrng WHERE id = '[5,6)';
+-- a PK delete that succeeds even though the numeric id is referenced because the range isn't:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES
+  ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01'))),
+  ('[5,6)', datemultirange(daterange('2018-02-01', '2018-03-01')));
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[3,4)', datemultirange(daterange('2018-01-05', '2018-01-10')), '[5,6)');
+DELETE FROM temporal_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-02-01', '2018-03-01'));
+-- a PK delete that fails because both are referenced:
+DELETE FROM temporal_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+-- a PK delete that fails because both are referenced, but not 'til commit:
+BEGIN;
+  ALTER TABLE temporal_fk_mltrng2mltrng
+    ALTER CONSTRAINT temporal_fk_mltrng2mltrng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  DELETE FROM temporal_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+COMMIT;
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+--
+-- test FK referenced deletes RESTRICT
+--
+TRUNCATE temporal_mltrng, temporal_fk_mltrng2mltrng;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	DROP CONSTRAINT temporal_fk_mltrng2mltrng_fk;
+ALTER TABLE temporal_fk_mltrng2mltrng
+	ADD CONSTRAINT temporal_fk_mltrng2mltrng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_mltrng (id, PERIOD valid_at)
+	ON DELETE RESTRICT;
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01')));
+DELETE FROM temporal_mltrng WHERE id = '[5,6)';
+-- a PK delete that succeeds even though the numeric id is referenced because the range isn't:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES
+  ('[5,6)', datemultirange(daterange('2018-01-01', '2018-02-01'))),
+  ('[5,6)', datemultirange(daterange('2018-02-01', '2018-03-01')));
+INSERT INTO temporal_fk_mltrng2mltrng (id, valid_at, parent_id) VALUES ('[3,4)', datemultirange(daterange('2018-01-05', '2018-01-10')), '[5,6)');
+DELETE FROM temporal_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-02-01', '2018-03-01'));
+-- a PK delete that fails because both are referenced (even before commit):
+BEGIN;
+  ALTER TABLE temporal_fk_mltrng2mltrng
+    ALTER CONSTRAINT temporal_fk_mltrng2mltrng_fk
+    DEFERRABLE INITIALLY DEFERRED;
+  DELETE FROM temporal_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
+ERROR:  update or delete on table "temporal_mltrng" violates foreign key constraint "temporal_fk_mltrng2mltrng_fk" on table "temporal_fk_mltrng2mltrng"
+DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_fk_mltrng2mltrng".
+ROLLBACK;
+--
+-- test FOREIGN KEY, box references box
+-- (not allowed: PERIOD part must be a range or multirange)
+--
+CREATE TABLE temporal_box (
+  id int4range,
+  valid_at box,
+  CONSTRAINT temporal_box_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+\d temporal_box
+              Table "public.temporal_box"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           | not null | 
+ valid_at | box       |           | not null | 
+Indexes:
+    "temporal_box_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+
+CREATE TABLE temporal_fk_box2box (
+  id int4range,
+  valid_at box,
+  parent_id int4range,
+  CONSTRAINT temporal_fk_box2box_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+  CONSTRAINT temporal_fk_box2box_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+    REFERENCES temporal_box (id, PERIOD valid_at)
+);
+ERROR:  invalid type for PERIOD part of foreign key
+DETAIL:  Only range and multirange are supported.
+--
+-- FK between partitioned tables
+--
+CREATE TABLE temporal_partitioned_rng (
+	id int4range,
+	valid_at daterange,
+  name text,
+	CONSTRAINT temporal_paritioned_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+) PARTITION BY LIST (id);
+CREATE TABLE tp1 partition OF temporal_partitioned_rng FOR VALUES IN ('[1,2)', '[3,4)', '[5,6)', '[7,8)', '[9,10)', '[11,12)');
+CREATE TABLE tp2 partition OF temporal_partitioned_rng FOR VALUES IN ('[2,3)', '[4,5)', '[6,7)', '[8,9)', '[10,11)', '[12,13)');
+INSERT INTO temporal_partitioned_rng (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
+  ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
+  ('[2,3)', daterange('2000-01-01', '2010-01-01'), 'two');
+CREATE TABLE temporal_partitioned_fk_rng2rng (
+	id int4range,
+	valid_at daterange,
+	parent_id int4range,
+	CONSTRAINT temporal_partitioned_fk_rng2rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+	CONSTRAINT temporal_partitioned_fk_rng2rng_fk FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_partitioned_rng (id, PERIOD valid_at)
+) PARTITION BY LIST (id);
+CREATE TABLE tfkp1 partition OF temporal_partitioned_fk_rng2rng FOR VALUES IN ('[1,2)', '[3,4)', '[5,6)', '[7,8)', '[9,10)', '[11,12)');
+CREATE TABLE tfkp2 partition OF temporal_partitioned_fk_rng2rng FOR VALUES IN ('[2,3)', '[4,5)', '[6,7)', '[8,9)', '[10,11)', '[12,13)');
+--
+-- partitioned FK referencing inserts
+--
+INSERT INTO temporal_partitioned_fk_rng2rng (id, valid_at, parent_id) VALUES
+  ('[1,2)', daterange('2000-01-01', '2000-02-15'), '[1,2)'),
+  ('[1,2)', daterange('2001-01-01', '2002-01-01'), '[2,3)'),
+  ('[2,3)', daterange('2000-01-01', '2000-02-15'), '[1,2)');
+-- should fail:
+INSERT INTO temporal_partitioned_fk_rng2rng (id, valid_at, parent_id) VALUES
+  ('[3,4)', daterange('2010-01-01', '2010-02-15'), '[1,2)');
+ERROR:  insert or update on table "tfkp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_fk"
+DETAIL:  Key (parent_id, valid_at)=([1,2), [2010-01-01,2010-02-15)) is not present in table "temporal_partitioned_rng".
+INSERT INTO temporal_partitioned_fk_rng2rng (id, valid_at, parent_id) VALUES
+  ('[3,4)', daterange('2000-01-01', '2000-02-15'), '[3,4)');
+ERROR:  insert or update on table "tfkp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_fk"
+DETAIL:  Key (parent_id, valid_at)=([3,4), [2000-01-01,2000-02-15)) is not present in table "temporal_partitioned_rng".
+--
+-- partitioned FK referencing updates
+--
+UPDATE temporal_partitioned_fk_rng2rng SET valid_at = daterange('2000-01-01', '2000-02-13') WHERE id = '[2,3)';
+-- move a row from the first partition to the second
+UPDATE temporal_partitioned_fk_rng2rng SET id = '[4,5)' WHERE id = '[1,2)';
+-- move a row from the second partition to the first
+UPDATE temporal_partitioned_fk_rng2rng SET id = '[1,2)' WHERE id = '[4,5)';
+-- should fail:
+UPDATE temporal_partitioned_fk_rng2rng SET valid_at = daterange('2000-01-01', '2000-04-01') WHERE id = '[1,2)';
+ERROR:  conflicting key value violates exclusion constraint "tfkp1_pkey"
+DETAIL:  Key (id, valid_at)=([1,2), [2000-01-01,2000-04-01)) conflicts with existing key (id, valid_at)=([1,2), [2000-01-01,2000-04-01)).
+--
+-- partitioned FK referenced updates NO ACTION
+--
+TRUNCATE temporal_partitioned_rng, temporal_partitioned_fk_rng2rng;
+INSERT INTO temporal_partitioned_rng (id, valid_at) VALUES ('[5,6)', daterange('2016-01-01', '2016-02-01'));
+UPDATE temporal_partitioned_rng SET valid_at = daterange('2018-01-01', '2018-02-01') WHERE id = '[5,6)';
+INSERT INTO temporal_partitioned_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+INSERT INTO temporal_partitioned_fk_rng2rng (id, valid_at, parent_id) VALUES ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+UPDATE temporal_partitioned_rng SET valid_at = daterange('2016-02-01', '2016-03-01')
+  WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
+-- should fail:
+UPDATE temporal_partitioned_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
+  WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_parent_id_valid_at_fkey" on table "temporal_partitioned_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_partitioned_fk_rng2rng".
+--
+-- partitioned FK referenced deletes NO ACTION
+--
+TRUNCATE temporal_partitioned_rng, temporal_partitioned_fk_rng2rng;
+INSERT INTO temporal_partitioned_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-01-01', '2018-02-01'));
+INSERT INTO temporal_partitioned_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+INSERT INTO temporal_partitioned_fk_rng2rng (id, valid_at, parent_id) VALUES ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+DELETE FROM temporal_partitioned_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
+-- should fail:
+DELETE FROM temporal_partitioned_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_parent_id_valid_at_fkey" on table "temporal_partitioned_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_partitioned_fk_rng2rng".
+--
+-- partitioned FK referenced updates RESTRICT
+--
+TRUNCATE temporal_partitioned_rng, temporal_partitioned_fk_rng2rng;
+ALTER TABLE temporal_partitioned_fk_rng2rng
+	DROP CONSTRAINT temporal_partitioned_fk_rng2rng_fk;
+ALTER TABLE temporal_partitioned_fk_rng2rng
+	ADD CONSTRAINT temporal_partitioned_fk_rng2rng_fk
+	FOREIGN KEY (parent_id, PERIOD valid_at)
+	REFERENCES temporal_partitioned_rng
+	ON DELETE RESTRICT;
+INSERT INTO temporal_partitioned_rng (id, valid_at) VALUES ('[5,6)', daterange('2016-01-01', '2016-02-01'));
+UPDATE temporal_partitioned_rng SET valid_at = daterange('2018-01-01', '2018-02-01') WHERE id = '[5,6)';
+INSERT INTO temporal_partitioned_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+INSERT INTO temporal_partitioned_fk_rng2rng (id, valid_at, parent_id) VALUES ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+UPDATE temporal_partitioned_rng SET valid_at = daterange('2016-02-01', '2016-03-01')
+  WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
+-- should fail:
+UPDATE temporal_partitioned_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
+  WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_parent_id_valid_at_fkey" on table "temporal_partitioned_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_partitioned_fk_rng2rng".
+--
+-- partitioned FK referenced deletes RESTRICT
+--
+TRUNCATE temporal_partitioned_rng, temporal_partitioned_fk_rng2rng;
+INSERT INTO temporal_partitioned_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-01-01', '2018-02-01'));
+INSERT INTO temporal_partitioned_rng (id, valid_at) VALUES ('[5,6)', daterange('2018-02-01', '2018-03-01'));
+INSERT INTO temporal_partitioned_fk_rng2rng (id, valid_at, parent_id) VALUES ('[3,4)', daterange('2018-01-05', '2018-01-10'), '[5,6)');
+DELETE FROM temporal_partitioned_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
+-- should fail:
+DELETE FROM temporal_partitioned_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
+ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_parent_id_valid_at_fkey" on table "temporal_partitioned_fk_rng2rng"
+DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_partitioned_fk_rng2rng".
+--
+-- partitioned FK referenced updates CASCADE
+--
+ALTER TABLE temporal_partitioned_fk_rng2rng
+	DROP CONSTRAINT temporal_partitioned_fk_rng2rng_fk,
+	ADD CONSTRAINT temporal_partitioned_fk_rng2rng_fk
+		FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_partitioned_rng
+		ON DELETE CASCADE ON UPDATE CASCADE;
+ERROR:  unsupported ON UPDATE action for foreign key constraint using PERIOD
+--
+-- partitioned FK referenced deletes CASCADE
+--
+--
+-- partitioned FK referenced updates SET NULL
+--
+ALTER TABLE temporal_partitioned_fk_rng2rng
+	DROP CONSTRAINT temporal_partitioned_fk_rng2rng_fk,
+	ADD CONSTRAINT temporal_partitioned_fk_rng2rng_fk
+		FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_partitioned_rng
+		ON DELETE SET NULL ON UPDATE SET NULL;
+ERROR:  unsupported ON UPDATE action for foreign key constraint using PERIOD
+--
+-- partitioned FK referenced deletes SET NULL
+--
+--
+-- partitioned FK referenced updates SET DEFAULT
+--
+ALTER TABLE temporal_partitioned_fk_rng2rng
+  ALTER COLUMN parent_id SET DEFAULT '[-1,-1]',
+	DROP CONSTRAINT temporal_partitioned_fk_rng2rng_fk,
+	ADD CONSTRAINT temporal_partitioned_fk_rng2rng_fk
+		FOREIGN KEY (parent_id, PERIOD valid_at)
+		REFERENCES temporal_partitioned_rng
+		ON DELETE SET DEFAULT ON UPDATE SET DEFAULT;
+ERROR:  unsupported ON UPDATE action for foreign key constraint using PERIOD
+--
+-- partitioned FK referenced deletes SET DEFAULT
+--
+DROP TABLE temporal_partitioned_fk_rng2rng;
+DROP TABLE temporal_partitioned_rng;
 RESET datestyle;
