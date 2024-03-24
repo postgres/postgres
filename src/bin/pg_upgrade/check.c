@@ -521,6 +521,8 @@ check_for_data_types_usage(ClusterInfo *cluster, DataTypesUsageChecks * checks)
 	if (found)
 		pg_fatal("Data type checks failed: %s", report.data);
 
+	pg_free(results);
+
 	check_ok();
 }
 
