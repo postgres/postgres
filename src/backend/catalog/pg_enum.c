@@ -36,17 +36,35 @@
 Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
 
 /*
- * Hash table of enum value OIDs created during the current transaction by
- * AddEnumLabel.  We disallow using these values until the transaction is
+ * We keep two transaction-lifespan hash tables, one containing the OIDs
+ * of enum types made in the current transaction, and one containing the
+ * OIDs of enum values created during the current transaction by
+ * AddEnumLabel (but only if their enum type is not in the first hash).
+ *
+ * We disallow using enum values in the second hash until the transaction is
  * committed; otherwise, they might get into indexes where we can't clean
  * them up, and then if the transaction rolls back we have a broken index.
  * (See comments for check_safe_enum_use() in enum.c.)  Values created by
  * EnumValuesCreate are *not* entered into the table; we assume those are
  * created during CREATE TYPE, so they can't go away unless the enum type
  * itself does.
+ *
+ * The motivation for treating enum values as safe if their type OID is
+ * in the first hash is to allow CREATE TYPE AS ENUM; ALTER TYPE ADD VALUE;
+ * followed by a use of the value in the same transaction.  This pattern
+ * is really just as safe as creating the value during CREATE TYPE.
+ * We need to support this because pg_dump in binary upgrade mode produces
+ * commands like that.  But currently we only support it when the commands
+ * are at the outermost transaction level, which is as much as we need for
+ * pg_dump.  We could track subtransaction nesting of the commands to
+ * analyze things more precisely, but for now we don't bother.
  */
-static HTAB *uncommitted_enums = NULL;
+static HTAB *uncommitted_enum_types = NULL;
+static HTAB *uncommitted_enum_values = NULL;
 
+static void init_uncommitted_enum_types(void);
+static void init_uncommitted_enum_values(void);
+static bool EnumTypeUncommitted(Oid typ_id);
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
 static int	sort_order_cmp(const void *p1, const void *p2);
 
@@ -56,6 +74,11 @@ static int	sort_order_cmp(const void *p1, const void *p2);
  *		Create an entry in pg_enum for each of the supplied enum values.
  *
  * vals is a list of String values.
+ *
+ * We assume that this is called only by CREATE TYPE AS ENUM, and that it
+ * will be called even if the vals list is empty.  So we can enter the
+ * enum type's OID into uncommitted_enum_types here, rather than needing
+ * another entry point to do it.
  */
 void
 EnumValuesCreate(Oid enumTypeOid, List *vals)
@@ -69,6 +92,21 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	int			nslots;
 	CatalogIndexState indstate;
 	TupleTableSlot **slot;
+
+	/*
+	 * Remember the type OID as being made in the current transaction, but not
+	 * if we're in a subtransaction.  (We could remember the OID anyway, in
+	 * case a subsequent ALTER ADD VALUE occurs at outer level.  But that
+	 * usage pattern seems unlikely enough that we'd probably just be wasting
+	 * hashtable maintenance effort.)
+	 */
+	if (GetCurrentTransactionNestLevel() == 1)
+	{
+		if (uncommitted_enum_types == NULL)
+			init_uncommitted_enum_types();
+		(void) hash_search(uncommitted_enum_types, &enumTypeOid,
+						   HASH_ENTER, NULL);
+	}
 
 	num_elems = list_length(vals);
 
@@ -211,20 +249,37 @@ EnumValuesDelete(Oid enumTypeOid)
 }
 
 /*
- * Initialize the uncommitted enum table for this transaction.
+ * Initialize the uncommitted enum types table for this transaction.
  */
 static void
-init_uncommitted_enums(void)
+init_uncommitted_enum_types(void)
 {
 	HASHCTL		hash_ctl;
 
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(Oid);
 	hash_ctl.hcxt = TopTransactionContext;
-	uncommitted_enums = hash_create("Uncommitted enums",
-									32,
-									&hash_ctl,
-									HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+	uncommitted_enum_types = hash_create("Uncommitted enum types",
+										 32,
+										 &hash_ctl,
+										 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+}
+
+/*
+ * Initialize the uncommitted enum values table for this transaction.
+ */
+static void
+init_uncommitted_enum_values(void)
+{
+	HASHCTL		hash_ctl;
+
+	hash_ctl.keysize = sizeof(Oid);
+	hash_ctl.entrysize = sizeof(Oid);
+	hash_ctl.hcxt = TopTransactionContext;
+	uncommitted_enum_values = hash_create("Uncommitted enum values",
+										  32,
+										  &hash_ctl,
+										  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 }
 
 /*
@@ -520,12 +575,27 @@ restart:
 
 	table_close(pg_enum, RowExclusiveLock);
 
-	/* Set up the uncommitted enum table if not already done in this tx */
-	if (uncommitted_enums == NULL)
-		init_uncommitted_enums();
+	/*
+	 * If the enum type itself is uncommitted, we need not enter the new enum
+	 * value into uncommitted_enum_values, because the type won't survive if
+	 * the value doesn't.  (This is basically the same reasoning as for values
+	 * made directly by CREATE TYPE AS ENUM.)  However, apply this rule only
+	 * when we are not inside a subtransaction; if we're more deeply nested
+	 * than the CREATE TYPE then the conclusion doesn't hold.  We could expend
+	 * more effort to track the subtransaction level of CREATE TYPE, but for
+	 * now we're only concerned about making the world safe for pg_dump in
+	 * binary upgrade mode, and that won't use subtransactions.
+	 */
+	if (GetCurrentTransactionNestLevel() == 1 &&
+		EnumTypeUncommitted(enumTypeOid))
+		return;
+
+	/* Set up the uncommitted values table if not already done in this tx */
+	if (uncommitted_enum_values == NULL)
+		init_uncommitted_enum_values();
 
 	/* Add the new value to the table */
-	(void) hash_search(uncommitted_enums, &newOid, HASH_ENTER, NULL);
+	(void) hash_search(uncommitted_enum_values, &newOid, HASH_ENTER, NULL);
 }
 
 
@@ -614,19 +684,37 @@ RenameEnumLabel(Oid enumTypeOid,
 
 
 /*
- * Test if the given enum value is in the table of uncommitted enums.
+ * Test if the given type OID is in the table of uncommitted enum types.
+ */
+static bool
+EnumTypeUncommitted(Oid typ_id)
+{
+	bool		found;
+
+	/* If we've made no uncommitted types table, it's not in the table */
+	if (uncommitted_enum_types == NULL)
+		return false;
+
+	/* Else, is it in the table? */
+	(void) hash_search(uncommitted_enum_types, &typ_id, HASH_FIND, &found);
+	return found;
+}
+
+
+/*
+ * Test if the given enum value is in the table of uncommitted enum values.
  */
 bool
 EnumUncommitted(Oid enum_id)
 {
 	bool		found;
 
-	/* If we've made no uncommitted table, all values are safe */
-	if (uncommitted_enums == NULL)
+	/* If we've made no uncommitted values table, it's not in the table */
+	if (uncommitted_enum_values == NULL)
 		return false;
 
 	/* Else, is it in the table? */
-	(void) hash_search(uncommitted_enums, &enum_id, HASH_FIND, &found);
+	(void) hash_search(uncommitted_enum_values, &enum_id, HASH_FIND, &found);
 	return found;
 }
 
@@ -638,11 +726,12 @@ void
 AtEOXact_Enum(void)
 {
 	/*
-	 * Reset the uncommitted table, as all our enum values are now committed.
-	 * The memory will go away automatically when TopTransactionContext is
-	 * freed; it's sufficient to clear our pointer.
+	 * Reset the uncommitted tables, as all our tuples are now committed. The
+	 * memory will go away automatically when TopTransactionContext is freed;
+	 * it's sufficient to clear our pointers.
 	 */
-	uncommitted_enums = NULL;
+	uncommitted_enum_types = NULL;
+	uncommitted_enum_values = NULL;
 }
 
 
@@ -723,15 +812,15 @@ sort_order_cmp(const void *p1, const void *p2)
 Size
 EstimateUncommittedEnumsSpace(void)
 {
-	size_t		entries;
+	size_t		entries = 0;
 
-	if (uncommitted_enums)
-		entries = hash_get_num_entries(uncommitted_enums);
-	else
-		entries = 0;
+	if (uncommitted_enum_types)
+		entries += hash_get_num_entries(uncommitted_enum_types);
+	if (uncommitted_enum_values)
+		entries += hash_get_num_entries(uncommitted_enum_values);
 
-	/* Add one for the terminator. */
-	return sizeof(Oid) * (entries + 1);
+	/* Add two for the terminators. */
+	return sizeof(Oid) * (entries + 2);
 }
 
 void
@@ -740,30 +829,44 @@ SerializeUncommittedEnums(void *space, Size size)
 	Oid		   *serialized = (Oid *) space;
 
 	/*
-	 * Make sure the hash table hasn't changed in size since the caller
+	 * Make sure the hash tables haven't changed in size since the caller
 	 * reserved the space.
 	 */
 	Assert(size == EstimateUncommittedEnumsSpace());
 
-	/* Write out all the values from the hash table, if there is one. */
-	if (uncommitted_enums)
+	/* Write out all the OIDs from the types hash table, if there is one. */
+	if (uncommitted_enum_types)
 	{
 		HASH_SEQ_STATUS status;
 		Oid		   *value;
 
-		hash_seq_init(&status, uncommitted_enums);
+		hash_seq_init(&status, uncommitted_enum_types);
 		while ((value = (Oid *) hash_seq_search(&status)))
 			*serialized++ = *value;
 	}
 
 	/* Write out the terminator. */
-	*serialized = InvalidOid;
+	*serialized++ = InvalidOid;
+
+	/* Write out all the OIDs from the values hash table, if there is one. */
+	if (uncommitted_enum_values)
+	{
+		HASH_SEQ_STATUS status;
+		Oid		   *value;
+
+		hash_seq_init(&status, uncommitted_enum_values);
+		while ((value = (Oid *) hash_seq_search(&status)))
+			*serialized++ = *value;
+	}
+
+	/* Write out the terminator. */
+	*serialized++ = InvalidOid;
 
 	/*
 	 * Make sure the amount of space we actually used matches what was
 	 * estimated.
 	 */
-	Assert((char *) (serialized + 1) == ((char *) space) + size);
+	Assert((char *) serialized == ((char *) space) + size);
 }
 
 void
@@ -771,20 +874,33 @@ RestoreUncommittedEnums(void *space)
 {
 	Oid		   *serialized = (Oid *) space;
 
-	Assert(!uncommitted_enums);
+	Assert(!uncommitted_enum_types);
+	Assert(!uncommitted_enum_values);
 
 	/*
-	 * As a special case, if the list is empty then don't even bother to
-	 * create the hash table.  This is the usual case, since enum alteration
-	 * is expected to be rare.
+	 * If either list is empty then don't even bother to create that hash
+	 * table.  This is the common case, since most transactions don't create
+	 * or alter enums.
 	 */
-	if (!OidIsValid(*serialized))
-		return;
-
-	/* Read all the values into a new hash table. */
-	init_uncommitted_enums();
-	do
+	if (OidIsValid(*serialized))
 	{
-		hash_search(uncommitted_enums, serialized++, HASH_ENTER, NULL);
-	} while (OidIsValid(*serialized));
+		/* Read all the types into a new hash table. */
+		init_uncommitted_enum_types();
+		do
+		{
+			(void) hash_search(uncommitted_enum_types, serialized++,
+							   HASH_ENTER, NULL);
+		} while (OidIsValid(*serialized));
+	}
+	serialized++;
+	if (OidIsValid(*serialized))
+	{
+		/* Read all the values into a new hash table. */
+		init_uncommitted_enum_values();
+		do
+		{
+			(void) hash_search(uncommitted_enum_values, serialized++,
+							   HASH_ENTER, NULL);
+		} while (OidIsValid(*serialized));
+	}
 }

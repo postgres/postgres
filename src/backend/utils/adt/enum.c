@@ -49,11 +49,12 @@ static ArrayType *enum_range_internal(Oid enumtypoid, Oid lower, Oid upper);
  * We don't implement that fully right now, but we do allow free use of enum
  * values created during CREATE TYPE AS ENUM, which are surely of the same
  * lifespan as the enum type.  (This case is required by "pg_restore -1".)
- * Values added by ALTER TYPE ADD VALUE are currently restricted, but could
- * be allowed if the enum type could be proven to have been created earlier
- * in the same transaction.  (Note that comparing tuple xmins would not work
- * for that, because the type tuple might have been updated in the current
- * transaction.  Subtransactions also create hazards to be accounted for.)
+ * Values added by ALTER TYPE ADD VALUE are also allowed if the enum type
+ * is known to have been created earlier in the same transaction.  (Note that
+ * we have to track that explicitly; comparing tuple xmins is insufficient,
+ * because the type tuple might have been updated in the current transaction.
+ * Subtransactions also create hazards to be accounted for; currently,
+ * pg_enum.c only handles ADD VALUE at the outermost transaction level.)
  *
  * This function needs to be called (directly or indirectly) in any of the
  * functions below that could return an enum value to SQL operations.
@@ -81,10 +82,10 @@ check_safe_enum_use(HeapTuple enumval_tup)
 		return;
 
 	/*
-	 * Check if the enum value is uncommitted.  If not, it's safe, because it
-	 * was made during CREATE TYPE AS ENUM and can't be shorter-lived than its
-	 * owning type.  (This'd also be false for values made by other
-	 * transactions; but the previous tests should have handled all of those.)
+	 * Check if the enum value is listed as uncommitted.  If not, it's safe,
+	 * because it can't be shorter-lived than its owning type.  (This'd also
+	 * be false for values made by other transactions; but the previous tests
+	 * should have handled all of those.)
 	 */
 	if (!EnumUncommitted(en->oid))
 		return;
