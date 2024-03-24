@@ -104,7 +104,7 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 	size_t		srcoff = 0;
 	size_t		result_len = 0;
 
-	while (src[srcoff] != '\0' && (srclen < 0 || srcoff < srclen))
+	while ((srclen < 0 || srcoff < srclen) && src[srcoff] != '\0')
 	{
 		pg_wchar	u1 = utf8_to_unicode((unsigned char *) src + srcoff);
 		int			u1len = unicode_utf8len(u1);
@@ -115,7 +115,7 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_wchar	u2 = casemap->simplemap[casekind];
 			pg_wchar	u2len = unicode_utf8len(u2);
 
-			if (result_len + u2len < dstsize)
+			if (result_len + u2len <= dstsize)
 				unicode_to_utf8(u2, (unsigned char *) dst + result_len);
 
 			result_len += u2len;
@@ -123,7 +123,7 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 		else
 		{
 			/* no mapping; copy bytes from src */
-			if (result_len + u1len < dstsize)
+			if (result_len + u1len <= dstsize)
 				memcpy(dst + result_len, src + srcoff, u1len);
 
 			result_len += u1len;
