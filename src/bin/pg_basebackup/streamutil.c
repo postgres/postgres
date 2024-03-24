@@ -34,7 +34,7 @@
 int			WalSegSz;
 
 static bool RetrieveDataDirCreatePerm(PGconn *conn);
-static void FindDbnameInConnParams(PQconninfoOption *conn_opts, char **dbname);
+static char *FindDbnameInConnParams(PQconninfoOption *conn_opts);
 
 /* SHOW command for replication connection was introduced in version 10 */
 #define MINIMUM_VERSION_FOR_SHOW_CMD 100000
@@ -272,21 +272,21 @@ GetConnection(void)
  * FindDbnameInConnParams
  *
  * This is a helper function for GetDbnameFromConnectionOptions(). Extract
- * the value of dbname from PQconninfoOption parameters.
+ * the value of dbname from PQconninfoOption parameters, if it's present.
+ * Returns a strdup'd result or NULL.
  */
-static void
-FindDbnameInConnParams(PQconninfoOption *conn_opts, char **dbname)
+static char *
+FindDbnameInConnParams(PQconninfoOption *conn_opts)
 {
 	PQconninfoOption *conn_opt;
 
-	Assert(dbname != NULL);
-
 	for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 	{
-		if ((strcmp(conn_opt->keyword, "dbname") == 0) &&
+		if (strcmp(conn_opt->keyword, "dbname") == 0 &&
 			conn_opt->val != NULL && conn_opt->val[0] != '\0')
-			*dbname = pg_strdup(conn_opt->val);
+			return pg_strdup(conn_opt->val);
 	}
+	return NULL;
 }
 
 /*
@@ -304,9 +304,9 @@ FindDbnameInConnParams(PQconninfoOption *conn_opts, char **dbname)
 char *
 GetDbnameFromConnectionOptions(void)
 {
-	PQconninfoOption *conn_opts = NULL;
+	PQconninfoOption *conn_opts;
 	char	   *err_msg = NULL;
-	char	   *dbname = NULL;
+	char	   *dbname;
 
 	/* First try to get the dbname from connection string. */
 	if (connection_string)
@@ -315,12 +315,11 @@ GetDbnameFromConnectionOptions(void)
 		if (conn_opts == NULL)
 			pg_fatal("%s", err_msg);
 
-		FindDbnameInConnParams(conn_opts, &dbname);
+		dbname = FindDbnameInConnParams(conn_opts);
+
+		PQconninfoFree(conn_opts);
 		if (dbname)
-		{
-			PQconninfoFree(conn_opts);
 			return dbname;
-		}
 	}
 
 	/*
@@ -331,7 +330,7 @@ GetDbnameFromConnectionOptions(void)
 	if (conn_opts == NULL)
 		pg_fatal("out of memory");
 
-	FindDbnameInConnParams(conn_opts, &dbname);
+	dbname = FindDbnameInConnParams(conn_opts);
 
 	PQconninfoFree(conn_opts);
 	return dbname;
