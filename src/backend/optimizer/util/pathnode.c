@@ -1707,8 +1707,9 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->subpath = subpath;
 
 	/*
-	 * Under GEQO, the sjinfo might be short-lived, so we'd better make copies
-	 * of data structures we extract from it.
+	 * Under GEQO and when planning child joins, the sjinfo might be
+	 * short-lived, so we'd better make copies of data structures we extract
+	 * from it.
 	 */
 	pathnode->in_operators = copyObject(sjinfo->semi_operators);
 	pathnode->uniq_exprs = copyObject(sjinfo->semi_rhs_exprs);

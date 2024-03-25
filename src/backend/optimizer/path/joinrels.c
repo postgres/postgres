@@ -45,6 +45,7 @@ static void try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1,
 static SpecialJoinInfo *build_child_join_sjinfo(PlannerInfo *root,
 												SpecialJoinInfo *parent_sjinfo,
 												Relids left_relids, Relids right_relids);
+static void free_child_join_sjinfo(SpecialJoinInfo *child_sjinfo);
 static void compute_partition_bounds(PlannerInfo *root, RelOptInfo *rel1,
 									 RelOptInfo *rel2, RelOptInfo *joinrel,
 									 SpecialJoinInfo *parent_sjinfo,
@@ -1659,6 +1660,7 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 									child_restrictlist);
 
 		pfree(appinfos);
+		free_child_join_sjinfo(child_sjinfo);
 	}
 }
 
@@ -1666,6 +1668,9 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
  * Construct the SpecialJoinInfo for a child-join by translating
  * SpecialJoinInfo for the join between parents. left_relids and right_relids
  * are the relids of left and right side of the join respectively.
+ *
+ * If translations are added to or removed from this function, consider
+ * updating free_child_join_sjinfo() accordingly.
  */
 static SpecialJoinInfo *
 build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
@@ -1703,6 +1708,37 @@ build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
 	pfree(right_appinfos);
 
 	return sjinfo;
+}
+
+/*
+ * free_child_join_sjinfo
+ *		Free memory consumed by a SpecialJoinInfo created by
+ *		build_child_join_sjinfo()
+ *
+ * Only members that are translated copies of their counterpart in the parent
+ * SpecialJoinInfo are freed here.
+ */
+static void
+free_child_join_sjinfo(SpecialJoinInfo *sjinfo)
+{
+	/*
+	 * Dummy SpecialJoinInfos of inner joins do not have any translated fields
+	 * and hence no fields that to be freed.
+	 */
+	if (sjinfo->jointype != JOIN_INNER)
+	{
+		bms_free(sjinfo->min_lefthand);
+		bms_free(sjinfo->min_righthand);
+		bms_free(sjinfo->syn_lefthand);
+		bms_free(sjinfo->syn_righthand);
+
+		/*
+		 * semi_rhs_exprs may in principle be freed, but a simple pfree() does
+		 * not suffice, so we leave it alone.
+		 */
+	}
+
+	pfree(sjinfo);
 }
 
 /*
