@@ -1615,10 +1615,11 @@ RT_EXTEND_DOWN(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, uint64 key, int
 		node = child;
 		shift -= RT_SPAN;
 	}
+	Assert(shift == 0);
 
 	/* Reserve slot for the value. */
 	n4 = (RT_NODE_4 *) node.local;
-	n4->chunks[0] = RT_GET_KEY_CHUNK(key, shift);
+	n4->chunks[0] = RT_GET_KEY_CHUNK(key, 0);
 	n4->base.count = 1;
 
 	return &n4->children[0];
