@@ -2192,6 +2192,7 @@ ProjectionPath
 PromptInterruptContext
 ProtocolVersion
 PrsStorage
+PruneReason
 PruneResult
 PruneState
 PruneStepResult
@@ -3968,8 +3969,6 @@ xl_hash_update_meta_page
 xl_hash_vacuum_one_page
 xl_heap_confirm
 xl_heap_delete
-xl_heap_freeze_page
-xl_heap_freeze_plan
 xl_heap_header
 xl_heap_inplace
 xl_heap_insert
@@ -3981,7 +3980,6 @@ xl_heap_prune
 xl_heap_rewrite_mapping
 xl_heap_truncate
 xl_heap_update
-xl_heap_vacuum
 xl_heap_visible
 xl_invalid_page
 xl_invalid_page_key
@@ -4021,6 +4019,9 @@ xl_xact_stats_items
 xl_xact_subxacts
 xl_xact_twophase
 xl_xact_xinfo
+xlhp_freeze_plan
+xlhp_freeze_plans
+xlhp_prune_items
 xmlBuffer
 xmlBufferPtr
 xmlChar

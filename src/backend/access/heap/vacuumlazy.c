@@ -1462,7 +1462,7 @@ lazy_scan_prune(LVRelState *vacrel,
 	 * false otherwise.
 	 */
 	heap_page_prune(rel, buf, vacrel->vistest, vacrel->nindexes == 0,
-					&presult, &vacrel->offnum);
+					&presult, PRUNE_VACUUM_SCAN, &vacrel->offnum);
 
 	/*
 	 * We will update the VM after collecting LP_DEAD items and freezing
@@ -2546,20 +2546,14 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 	/* XLOG stuff */
 	if (RelationNeedsWAL(vacrel->rel))
 	{
-		xl_heap_vacuum xlrec;
-		XLogRecPtr	recptr;
-
-		xlrec.nunused = nunused;
-
-		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfHeapVacuum);
-
-		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
-		XLogRegisterBufData(0, (char *) unused, nunused * sizeof(OffsetNumber));
-
-		recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_VACUUM);
-
-		PageSetLSN(page, recptr);
+		log_heap_prune_and_freeze(vacrel->rel, buffer,
+								  InvalidTransactionId,
+								  false,	/* no cleanup lock required */
+								  PRUNE_VACUUM_CLEANUP,
+								  NULL, 0,	/* frozen */
+								  NULL, 0,	/* redirected */
+								  NULL, 0,	/* dead */
+								  unused, nunused);
 	}
 
 	/*

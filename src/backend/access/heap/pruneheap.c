@@ -153,7 +153,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 			 * that during on-access pruning with the current implementation.
 			 */
 			heap_page_prune(relation, buffer, vistest, false,
-							&presult, NULL);
+							&presult, PRUNE_ON_ACCESS, NULL);
 
 			/*
 			 * Report the number of tuples reclaimed to pgstats.  This is
@@ -204,6 +204,9 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * tuples removed and the number of line pointers newly marked LP_DEAD.
  * heap_page_prune() is responsible for initializing it.
  *
+ * reason indicates why the pruning is performed.  It is included in the WAL
+ * record for debugging and analysis purposes, but otherwise has no effect.
+ *
  * off_loc is the offset location required by the caller to use in error
  * callback.
  */
@@ -212,6 +215,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
 				bool mark_unused_now,
 				PruneResult *presult,
+				PruneReason reason,
 				OffsetNumber *off_loc)
 {
 	Page		page = BufferGetPage(buffer);
@@ -338,7 +342,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 		 * Apply the planned item changes, then repair page fragmentation, and
 		 * update the page's hint bit about whether it has free line pointers.
 		 */
-		heap_page_prune_execute(buffer,
+		heap_page_prune_execute(buffer, false,
 								prstate.redirected, prstate.nredirected,
 								prstate.nowdead, prstate.ndead,
 								prstate.nowunused, prstate.nunused);
@@ -359,44 +363,17 @@ heap_page_prune(Relation relation, Buffer buffer,
 		MarkBufferDirty(buffer);
 
 		/*
-		 * Emit a WAL XLOG_HEAP2_PRUNE record showing what we did
+		 * Emit a WAL XLOG_HEAP2_PRUNE_FREEZE record showing what we did
 		 */
 		if (RelationNeedsWAL(relation))
 		{
-			xl_heap_prune xlrec;
-			XLogRecPtr	recptr;
-
-			xlrec.isCatalogRel = RelationIsAccessibleInLogicalDecoding(relation);
-			xlrec.snapshotConflictHorizon = prstate.snapshotConflictHorizon;
-			xlrec.nredirected = prstate.nredirected;
-			xlrec.ndead = prstate.ndead;
-
-			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec, SizeOfHeapPrune);
-
-			XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
-
-			/*
-			 * The OffsetNumber arrays are not actually in the buffer, but we
-			 * pretend that they are.  When XLogInsert stores the whole
-			 * buffer, the offset arrays need not be stored too.
-			 */
-			if (prstate.nredirected > 0)
-				XLogRegisterBufData(0, (char *) prstate.redirected,
-									prstate.nredirected *
-									sizeof(OffsetNumber) * 2);
-
-			if (prstate.ndead > 0)
-				XLogRegisterBufData(0, (char *) prstate.nowdead,
-									prstate.ndead * sizeof(OffsetNumber));
-
-			if (prstate.nunused > 0)
-				XLogRegisterBufData(0, (char *) prstate.nowunused,
-									prstate.nunused * sizeof(OffsetNumber));
-
-			recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_PRUNE);
-
-			PageSetLSN(BufferGetPage(buffer), recptr);
+			log_heap_prune_and_freeze(relation, buffer,
+									  prstate.snapshotConflictHorizon,
+									  true, reason,
+									  NULL, 0,
+									  prstate.redirected, prstate.nredirected,
+									  prstate.nowdead, prstate.ndead,
+									  prstate.nowunused, prstate.nunused);
 		}
 	}
 	else
@@ -827,11 +804,16 @@ heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
 
 /*
  * Perform the actual page changes needed by heap_page_prune.
- * It is expected that the caller has a full cleanup lock on the
- * buffer.
+ *
+ * If 'lp_truncate_only' is set, we are merely marking LP_DEAD line pointers
+ * as unused, not redirecting or removing anything else.  The
+ * PageRepairFragmentation() call is skipped in that case.
+ *
+ * If 'lp_truncate_only' is not set, the caller must hold a cleanup lock on
+ * the buffer.  If it is set, an ordinary exclusive lock suffices.
  */
 void
-heap_page_prune_execute(Buffer buffer,
+heap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
 						OffsetNumber *redirected, int nredirected,
 						OffsetNumber *nowdead, int ndead,
 						OffsetNumber *nowunused, int nunused)
@@ -842,6 +824,9 @@ heap_page_prune_execute(Buffer buffer,
 
 	/* Shouldn't be called unless there's something to do */
 	Assert(nredirected > 0 || ndead > 0 || nunused > 0);
+
+	/* If 'lp_truncate_only', we can only remove already-dead line pointers */
+	Assert(!lp_truncate_only || (nredirected == 0 && ndead == 0));
 
 	/* Update all redirected line pointers */
 	offnum = redirected;
@@ -941,23 +926,29 @@ heap_page_prune_execute(Buffer buffer,
 
 #ifdef USE_ASSERT_CHECKING
 
-		/*
-		 * When heap_page_prune() was called, mark_unused_now may have been
-		 * passed as true, which allows would-be LP_DEAD items to be made
-		 * LP_UNUSED instead. This is only possible if the relation has no
-		 * indexes. If there are any dead items, then mark_unused_now was not
-		 * true and every item being marked LP_UNUSED must refer to a
-		 * heap-only tuple.
-		 */
-		if (ndead > 0)
+		if (lp_truncate_only)
 		{
-			Assert(ItemIdHasStorage(lp) && ItemIdIsNormal(lp));
-			htup = (HeapTupleHeader) PageGetItem(page, lp);
-			Assert(HeapTupleHeaderIsHeapOnly(htup));
+			/* Setting LP_DEAD to LP_UNUSED in vacuum's second pass */
+			Assert(ItemIdIsDead(lp) && !ItemIdHasStorage(lp));
 		}
 		else
 		{
-			Assert(ItemIdIsUsed(lp));
+			/*
+			 * When heap_page_prune() was called, mark_unused_now may have
+			 * been passed as true, which allows would-be LP_DEAD items to be
+			 * made LP_UNUSED instead.  This is only possible if the relation
+			 * has no indexes.  If there are any dead items, then
+			 * mark_unused_now was not true and every item being marked
+			 * LP_UNUSED must refer to a heap-only tuple.
+			 */
+			if (ndead > 0)
+			{
+				Assert(ItemIdHasStorage(lp) && ItemIdIsNormal(lp));
+				htup = (HeapTupleHeader) PageGetItem(page, lp);
+				Assert(HeapTupleHeaderIsHeapOnly(htup));
+			}
+			else
+				Assert(ItemIdIsUsed(lp));
 		}
 
 #endif
@@ -965,17 +956,22 @@ heap_page_prune_execute(Buffer buffer,
 		ItemIdSetUnused(lp);
 	}
 
-	/*
-	 * Finally, repair any fragmentation, and update the page's hint bit about
-	 * whether it has free pointers.
-	 */
-	PageRepairFragmentation(page);
+	if (lp_truncate_only)
+		PageTruncateLinePointerArray(page);
+	else
+	{
+		/*
+		 * Finally, repair any fragmentation, and update the page's hint bit
+		 * about whether it has free pointers.
+		 */
+		PageRepairFragmentation(page);
 
-	/*
-	 * Now that the page has been modified, assert that redirect items still
-	 * point to valid targets.
-	 */
-	page_verify_redirects(page);
+		/*
+		 * Now that the page has been modified, assert that redirect items
+		 * still point to valid targets.
+		 */
+		page_verify_redirects(page);
+	}
 }
 
 
@@ -1143,4 +1139,289 @@ heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 			priorXmax = HeapTupleHeaderGetUpdateXid(htup);
 		}
 	}
+}
+
+
+/*
+ * Compare fields that describe actions required to freeze tuple with caller's
+ * open plan.  If everything matches then the frz tuple plan is equivalent to
+ * caller's plan.
+ */
+static inline bool
+heap_log_freeze_eq(xlhp_freeze_plan *plan, HeapTupleFreeze *frz)
+{
+	if (plan->xmax == frz->xmax &&
+		plan->t_infomask2 == frz->t_infomask2 &&
+		plan->t_infomask == frz->t_infomask &&
+		plan->frzflags == frz->frzflags)
+		return true;
+
+	/* Caller must call heap_log_freeze_new_plan again for frz */
+	return false;
+}
+
+/*
+ * Comparator used to deduplicate XLOG_HEAP2_FREEZE_PAGE freeze plans
+ */
+static int
+heap_log_freeze_cmp(const void *arg1, const void *arg2)
+{
+	HeapTupleFreeze *frz1 = (HeapTupleFreeze *) arg1;
+	HeapTupleFreeze *frz2 = (HeapTupleFreeze *) arg2;
+
+	if (frz1->xmax < frz2->xmax)
+		return -1;
+	else if (frz1->xmax > frz2->xmax)
+		return 1;
+
+	if (frz1->t_infomask2 < frz2->t_infomask2)
+		return -1;
+	else if (frz1->t_infomask2 > frz2->t_infomask2)
+		return 1;
+
+	if (frz1->t_infomask < frz2->t_infomask)
+		return -1;
+	else if (frz1->t_infomask > frz2->t_infomask)
+		return 1;
+
+	if (frz1->frzflags < frz2->frzflags)
+		return -1;
+	else if (frz1->frzflags > frz2->frzflags)
+		return 1;
+
+	/*
+	 * heap_log_freeze_eq would consider these tuple-wise plans to be equal.
+	 * (So the tuples will share a single canonical freeze plan.)
+	 *
+	 * We tiebreak on page offset number to keep each freeze plan's page
+	 * offset number array individually sorted. (Unnecessary, but be tidy.)
+	 */
+	if (frz1->offset < frz2->offset)
+		return -1;
+	else if (frz1->offset > frz2->offset)
+		return 1;
+
+	Assert(false);
+	return 0;
+}
+
+/*
+ * Start new plan initialized using tuple-level actions.  At least one tuple
+ * will have steps required to freeze described by caller's plan during REDO.
+ */
+static inline void
+heap_log_freeze_new_plan(xlhp_freeze_plan *plan, HeapTupleFreeze *frz)
+{
+	plan->xmax = frz->xmax;
+	plan->t_infomask2 = frz->t_infomask2;
+	plan->t_infomask = frz->t_infomask;
+	plan->frzflags = frz->frzflags;
+	plan->ntuples = 1;			/* for now */
+}
+
+/*
+ * Deduplicate tuple-based freeze plans so that each distinct set of
+ * processing steps is only stored once in XLOG_HEAP2_FREEZE_PAGE records.
+ * Called during original execution of freezing (for logged relations).
+ *
+ * Return value is number of plans set in *plans_out for caller.  Also writes
+ * an array of offset numbers into *offsets_out output argument for caller
+ * (actually there is one array per freeze plan, but that's not of immediate
+ * concern to our caller).
+ */
+static int
+heap_log_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
+					 xlhp_freeze_plan *plans_out,
+					 OffsetNumber *offsets_out)
+{
+	int			nplans = 0;
+
+	/* Sort tuple-based freeze plans in the order required to deduplicate */
+	qsort(tuples, ntuples, sizeof(HeapTupleFreeze), heap_log_freeze_cmp);
+
+	for (int i = 0; i < ntuples; i++)
+	{
+		HeapTupleFreeze *frz = tuples + i;
+
+		if (i == 0)
+		{
+			/* New canonical freeze plan starting with first tup */
+			heap_log_freeze_new_plan(plans_out, frz);
+			nplans++;
+		}
+		else if (heap_log_freeze_eq(plans_out, frz))
+		{
+			/* tup matches open canonical plan -- include tup in it */
+			Assert(offsets_out[i - 1] < frz->offset);
+			plans_out->ntuples++;
+		}
+		else
+		{
+			/* Tup doesn't match current plan -- done with it now */
+			plans_out++;
+
+			/* New canonical freeze plan starting with this tup */
+			heap_log_freeze_new_plan(plans_out, frz);
+			nplans++;
+		}
+
+		/*
+		 * Save page offset number in dedicated buffer in passing.
+		 *
+		 * REDO routine relies on the record's offset numbers array grouping
+		 * offset numbers by freeze plan.  The sort order within each grouping
+		 * is ascending offset number order, just to keep things tidy.
+		 */
+		offsets_out[i] = frz->offset;
+	}
+
+	Assert(nplans > 0 && nplans <= ntuples);
+
+	return nplans;
+}
+
+/*
+ * Write an XLOG_HEAP2_PRUNE_FREEZE WAL record
+ *
+ * This is used for several different page maintenance operations:
+ *
+ * - Page pruning, in VACUUM's 1st pass or on access: Some items are
+ *   redirected, some marked dead, and some removed altogether.
+ *
+ * - Freezing: Items are marked as 'frozen'.
+ *
+ * - Vacuum, 2nd pass: Items that are already LP_DEAD are marked as unused.
+ *
+ * They have enough commonalities that we use a single WAL record for them
+ * all.
+ *
+ * If replaying the record requires a cleanup lock, pass cleanup_lock = true.
+ * Replaying 'redirected' or 'dead' items always requires a cleanup lock, but
+ * replaying 'unused' items depends on whether they were all previously marked
+ * as dead.
+ *
+ * Note: This function scribbles on the 'frozen' array.
+ *
+ * Note: This is called in a critical section, so careful what you do here.
+ */
+void
+log_heap_prune_and_freeze(Relation relation, Buffer buffer,
+						  TransactionId conflict_xid,
+						  bool cleanup_lock,
+						  PruneReason reason,
+						  HeapTupleFreeze *frozen, int nfrozen,
+						  OffsetNumber *redirected, int nredirected,
+						  OffsetNumber *dead, int ndead,
+						  OffsetNumber *unused, int nunused)
+{
+	xl_heap_prune xlrec;
+	XLogRecPtr	recptr;
+	uint8		info;
+
+	/* The following local variables hold data registered in the WAL record: */
+	xlhp_freeze_plan plans[MaxHeapTuplesPerPage];
+	xlhp_freeze_plans freeze_plans;
+	xlhp_prune_items redirect_items;
+	xlhp_prune_items dead_items;
+	xlhp_prune_items unused_items;
+	OffsetNumber frz_offsets[MaxHeapTuplesPerPage];
+
+	xlrec.flags = 0;
+
+	/*
+	 * Prepare data for the buffer.  The arrays are not actually in the
+	 * buffer, but we pretend that they are.  When XLogInsert stores a full
+	 * page image, the arrays can be omitted.
+	 */
+	XLogBeginInsert();
+	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
+	if (nfrozen > 0)
+	{
+		int			nplans;
+
+		xlrec.flags |= XLHP_HAS_FREEZE_PLANS;
+
+		/*
+		 * Prepare deduplicated representation for use in the WAL record. This
+		 * destructively sorts frozen tuples array in-place.
+		 */
+		nplans = heap_log_freeze_plan(frozen, nfrozen, plans, frz_offsets);
+
+		freeze_plans.nplans = nplans;
+		XLogRegisterBufData(0, (char *) &freeze_plans,
+							offsetof(xlhp_freeze_plans, plans));
+		XLogRegisterBufData(0, (char *) plans,
+							sizeof(xlhp_freeze_plan) * nplans);
+	}
+	if (nredirected > 0)
+	{
+		xlrec.flags |= XLHP_HAS_REDIRECTIONS;
+
+		redirect_items.ntargets = nredirected;
+		XLogRegisterBufData(0, (char *) &redirect_items,
+							offsetof(xlhp_prune_items, data));
+		XLogRegisterBufData(0, (char *) redirected,
+							sizeof(OffsetNumber[2]) * nredirected);
+	}
+	if (ndead > 0)
+	{
+		xlrec.flags |= XLHP_HAS_DEAD_ITEMS;
+
+		dead_items.ntargets = ndead;
+		XLogRegisterBufData(0, (char *) &dead_items,
+							offsetof(xlhp_prune_items, data));
+		XLogRegisterBufData(0, (char *) dead,
+							sizeof(OffsetNumber) * ndead);
+	}
+	if (nunused > 0)
+	{
+		xlrec.flags |= XLHP_HAS_NOW_UNUSED_ITEMS;
+
+		unused_items.ntargets = nunused;
+		XLogRegisterBufData(0, (char *) &unused_items,
+							offsetof(xlhp_prune_items, data));
+		XLogRegisterBufData(0, (char *) unused,
+							sizeof(OffsetNumber) * nunused);
+	}
+	if (nfrozen > 0)
+		XLogRegisterBufData(0, (char *) frz_offsets,
+							sizeof(OffsetNumber) * nfrozen);
+
+	/*
+	 * Prepare the main xl_heap_prune record.  We already set the XLPH_HAS_*
+	 * flag above.
+	 */
+	if (RelationIsAccessibleInLogicalDecoding(relation))
+		xlrec.flags |= XLHP_IS_CATALOG_REL;
+	if (TransactionIdIsValid(conflict_xid))
+		xlrec.flags |= XLHP_HAS_CONFLICT_HORIZON;
+	if (cleanup_lock)
+		xlrec.flags |= XLHP_CLEANUP_LOCK;
+	else
+	{
+		Assert(nredirected == 0 && ndead == 0);
+		/* also, any items in 'unused' must've been LP_DEAD previously */
+	}
+	XLogRegisterData((char *) &xlrec, SizeOfHeapPrune);
+	if (TransactionIdIsValid(conflict_xid))
+		XLogRegisterData((char *) &conflict_xid, sizeof(TransactionId));
+
+	switch (reason)
+	{
+		case PRUNE_ON_ACCESS:
+			info = XLOG_HEAP2_PRUNE_ON_ACCESS;
+			break;
+		case PRUNE_VACUUM_SCAN:
+			info = XLOG_HEAP2_PRUNE_VACUUM_SCAN;
+			break;
+		case PRUNE_VACUUM_CLEANUP:
+			info = XLOG_HEAP2_PRUNE_VACUUM_CLEANUP;
+			break;
+		default:
+			elog(ERROR, "unrecognized prune reason: %d", (int) reason);
+			break;
+	}
+	recptr = XLogInsert(RM_HEAP2_ID, info);
+
+	PageSetLSN(BufferGetPage(buffer), recptr);
 }

@@ -211,6 +211,14 @@ typedef struct PruneResult
 	int8		htsv[MaxHeapTuplesPerPage + 1];
 } PruneResult;
 
+/* 'reason' codes for heap_page_prune() */
+typedef enum
+{
+	PRUNE_ON_ACCESS,			/* on-access pruning */
+	PRUNE_VACUUM_SCAN,			/* VACUUM 1st heap pass */
+	PRUNE_VACUUM_CLEANUP,		/* VACUUM 2nd heap pass */
+} PruneReason;
+
 /*
  * Pruning calculates tuple visibility once and saves the results in an array
  * of int8. See PruneResult.htsv for details. This helper function is meant to
@@ -322,12 +330,21 @@ extern void heap_page_prune(Relation relation, Buffer buffer,
 							struct GlobalVisState *vistest,
 							bool mark_unused_now,
 							PruneResult *presult,
+							PruneReason reason,
 							OffsetNumber *off_loc);
-extern void heap_page_prune_execute(Buffer buffer,
+extern void heap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
 									OffsetNumber *redirected, int nredirected,
 									OffsetNumber *nowdead, int ndead,
 									OffsetNumber *nowunused, int nunused);
 extern void heap_get_root_tuples(Page page, OffsetNumber *root_offsets);
+extern void log_heap_prune_and_freeze(Relation relation, Buffer buffer,
+									  TransactionId conflict_xid,
+									  bool lp_truncate_only,
+									  PruneReason reason,
+									  HeapTupleFreeze *frozen, int nfrozen,
+									  OffsetNumber *redirected, int nredirected,
+									  OffsetNumber *dead, int ndead,
+									  OffsetNumber *unused, int nunused);
 
 /* in heap/vacuumlazy.c */
 struct VacuumParams;

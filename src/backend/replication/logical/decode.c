@@ -445,9 +445,9 @@ heap2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			 * Everything else here is just low level physical stuff we're not
 			 * interested in.
 			 */
-		case XLOG_HEAP2_FREEZE_PAGE:
-		case XLOG_HEAP2_PRUNE:
-		case XLOG_HEAP2_VACUUM:
+		case XLOG_HEAP2_PRUNE_ON_ACCESS:
+		case XLOG_HEAP2_PRUNE_VACUUM_SCAN:
+		case XLOG_HEAP2_PRUNE_VACUUM_CLEANUP:
 		case XLOG_HEAP2_VISIBLE:
 		case XLOG_HEAP2_LOCK_UPDATED:
 			break;
