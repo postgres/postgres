@@ -16656,7 +16656,8 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 		if (RELKIND_HAS_TABLESPACE(tbinfo->relkind))
 			tablespace = tbinfo->reltablespace;
 
-		if (RELKIND_HAS_TABLE_AM(tbinfo->relkind))
+		if (RELKIND_HAS_TABLE_AM(tbinfo->relkind) ||
+			tbinfo->relkind == RELKIND_PARTITIONED_TABLE)
 			tableam = tbinfo->amname;
 
 		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,

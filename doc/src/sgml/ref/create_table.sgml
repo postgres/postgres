@@ -1365,6 +1365,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       method is chosen for the new table. See <xref
       linkend="guc-default-table-access-method"/> for more information.
      </para>
+     <para>
+      When creating a partition, the table access method is the access method
+      of its partitioned table, if set.
+     </para>
     </listitem>
    </varlistentry>
 

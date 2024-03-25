@@ -732,10 +732,20 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>SET ACCESS METHOD</literal></term>
     <listitem>
      <para>
-      This form changes the access method of the table by rewriting it. See
-      <xref linkend="tableam"/> for more information. Writing
-      <literal>DEFAULT</literal> changes the access method of the table
-      to <xref linkend="guc-default-table-access-method"/>.
+      This form changes the access method of the table by rewriting it
+      using the indicated access method; specifying
+      <literal>DEFAULT</literal> selects the access method set as the
+      <xref linkend="guc-default-table-access-method"/> configuration
+      parameter.
+      See <xref linkend="tableam"/> for more information.
+     </para>
+     <para>
+      When applied to a partitioned table, there is no data to rewrite,
+      but partitions created afterwards will default to the given access
+      method unless overridden by a <literal>USING</literal> clause.
+      Specifying <varname>DEFAULT</varname> removes a previous value,
+      causing future partitions to default to
+      <varname>default_table_access_method</varname>.
      </para>
     </listitem>
    </varlistentry>

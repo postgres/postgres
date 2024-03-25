@@ -2069,6 +2069,28 @@ get_rel_persistence(Oid relid)
 	return result;
 }
 
+/*
+ * get_rel_relam
+ *
+ *		Returns the relam associated with a given relation.
+ */
+Oid
+get_rel_relam(Oid relid)
+{
+	HeapTuple	tp;
+	Form_pg_class reltup;
+	Oid			result;
+
+	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+	reltup = (Form_pg_class) GETSTRUCT(tp);
+	result = reltup->relam;
+	ReleaseSysCache(tp);
+
+	return result;
+}
+
 
 /*				---------- TRANSFORM CACHE ----------						 */
 

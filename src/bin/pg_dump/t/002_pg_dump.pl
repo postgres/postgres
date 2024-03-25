@@ -4587,6 +4587,41 @@ my %tests = (
 			no_table_access_method => 1,
 			only_dump_measurement => 1,
 		},
+	},
+
+	# CREATE TABLE with partitioned table and various AMs.  One
+	# partition uses the same default as the parent, and a second
+	# uses its own AM.
+	'CREATE TABLE regress_pg_dump_table_part' => {
+		create_order => 19,
+		create_sql => '
+			CREATE TABLE dump_test.regress_pg_dump_table_am_parent (id int) PARTITION BY LIST (id);
+			ALTER TABLE dump_test.regress_pg_dump_table_am_parent SET ACCESS METHOD regress_table_am;
+			CREATE TABLE dump_test.regress_pg_dump_table_am_child_1
+			  PARTITION OF dump_test.regress_pg_dump_table_am_parent FOR VALUES IN (1) USING heap;
+			CREATE TABLE dump_test.regress_pg_dump_table_am_child_2
+			  PARTITION OF dump_test.regress_pg_dump_table_am_parent FOR VALUES IN (2);',
+		regexp => qr/^
+			\QSET default_table_access_method = regress_table_am;\E
+			(\n(?!SET[^;]+;)[^\n]*)*
+			\n\QCREATE TABLE dump_test.regress_pg_dump_table_am_parent (\E
+			(.*\n)*
+			\QSET default_table_access_method = heap;\E
+			(\n(?!SET[^;]+;)[^\n]*)*
+			\n\QCREATE TABLE dump_test.regress_pg_dump_table_am_child_1 (\E
+			(.*\n)*
+			\QSET default_table_access_method = regress_table_am;\E
+			(\n(?!SET[^;]+;)[^\n]*)*
+			\n\QCREATE TABLE dump_test.regress_pg_dump_table_am_child_2 (\E
+			(.*\n)*/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			no_table_access_method => 1,
+			only_dump_measurement => 1,
+		},
 	});
 
 #########################################

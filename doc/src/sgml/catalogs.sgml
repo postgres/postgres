@@ -1988,9 +1988,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-am"><structname>pg_am</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       If this is a table or an index, the access method used (heap,
-       B-tree, hash, etc.); otherwise zero (zero occurs for sequences,
-       as well as relations without storage, such as views)
+       The access method used to access this table or index.
+       Not meaningful if the relation is a sequence or
+       has no on-disk file,
+       except for partitioned tables, where, if set, it takes
+       precedence over <varname>default_table_access_method</varname>
+       when determining the access method to use for partitions created
+       when one is not specified in the creation command.
       </para></entry>
      </row>
 
