@@ -1472,14 +1472,19 @@ explain (costs off) select * from t union select * from t order by 1,3;
    Sort Key: t.a, t.c
    Presorted Key: t.a
    ->  Unique
-         ->  Sort
+         ->  Merge Append
                Sort Key: t.a, t.b, t.c
-               ->  Gather
+               ->  Gather Merge
                      Workers Planned: 2
-                     ->  Parallel Append
+                     ->  Sort
+                           Sort Key: t.a, t.b, t.c
                            ->  Parallel Seq Scan on t
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Sort
+                           Sort Key: t_1.a, t_1.b, t_1.c
                            ->  Parallel Seq Scan on t t_1
-(11 rows)
+(16 rows)
 
 -- Full sort, not just incremental sort can be pushed below a gather merge path
 -- by generate_useful_gather_paths.

@@ -53,6 +53,6 @@ extern void preprocess_aggrefs(PlannerInfo *root, Node *clause);
  * prototypes for prepunion.c
  */
 extern RelOptInfo *plan_set_operations(PlannerInfo *root);
-
+extern bool set_operation_ordered_results_useful(SetOperationStmt *setop);
 
 #endif							/* PREP_H */

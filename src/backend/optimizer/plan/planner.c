@@ -54,6 +54,7 @@
 #include "optimizer/tlist.h"
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "partitioning/partdesc.h"
@@ -119,6 +120,8 @@ typedef struct
 {
 	List	   *activeWindows;	/* active windows, if any */
 	grouping_sets_data *gset_data;	/* grouping sets data, if any */
+	SetOperationStmt *setop;	/* parent set operation or NULL if not a
+								 * subquery belonging to a set operation */
 } standard_qp_extra;
 
 /* Local functions */
@@ -249,6 +252,8 @@ static bool group_by_has_partkey(RelOptInfo *input_rel,
 								 List *targetList,
 								 List *groupClause);
 static int	common_prefix_cmp(const void *a, const void *b);
+static List *generate_setop_child_grouplist(SetOperationStmt *op,
+											List *targetlist);
 
 
 /*****************************************************************************
@@ -1499,6 +1504,18 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/* Set up data needed by standard_qp_callback */
 		qp_extra.activeWindows = activeWindows;
 		qp_extra.gset_data = gset_data;
+
+		/*
+		 * Check if we're a subquery for a set operation.  If we are, store
+		 * the SetOperationStmt in qp_extra.
+		 */
+		if (root->parent_root != NULL &&
+			root->parent_root->parse->setOperations != NULL &&
+			IsA(root->parent_root->parse->setOperations, SetOperationStmt))
+			qp_extra.setop =
+				(SetOperationStmt *) root->parent_root->parse->setOperations;
+		else
+			qp_extra.setop = NULL;
 
 		/*
 		 * Generate the best unsorted and presorted paths for the scan/join
@@ -3433,6 +3450,27 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 									  parse->sortClause,
 									  tlist);
 
+	/* setting setop_pathkeys might be useful to the union planner */
+	if (qp_extra->setop != NULL &&
+		set_operation_ordered_results_useful(qp_extra->setop))
+	{
+		List	   *groupClauses;
+		bool		sortable;
+
+		groupClauses = generate_setop_child_grouplist(qp_extra->setop, tlist);
+
+		root->setop_pathkeys =
+			make_pathkeys_for_sortclauses_extended(root,
+												   &groupClauses,
+												   tlist,
+												   false,
+												   &sortable);
+		if (!sortable)
+			root->setop_pathkeys = NIL;
+	}
+	else
+		root->setop_pathkeys = NIL;
+
 	/*
 	 * Figure out whether we want a sorted result from query_planner.
 	 *
@@ -3442,7 +3480,9 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 	 * sortable DISTINCT clause that's more rigorous than the ORDER BY clause,
 	 * we try to produce output that's sufficiently well sorted for the
 	 * DISTINCT.  Otherwise, if there is an ORDER BY clause, we want to sort
-	 * by the ORDER BY clause.
+	 * by the ORDER BY clause.  Otherwise, if we're a subquery being planned
+	 * for a set operation which can benefit from presorted results and have a
+	 * sortable targetlist, we want to sort by the target list.
 	 *
 	 * Note: if we have both ORDER BY and GROUP BY, and ORDER BY is a superset
 	 * of GROUP BY, it would be tempting to request sort by ORDER BY --- but
@@ -3460,6 +3500,8 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 		root->query_pathkeys = root->distinct_pathkeys;
 	else if (root->sort_pathkeys)
 		root->query_pathkeys = root->sort_pathkeys;
+	else if (root->setop_pathkeys != NIL)
+		root->query_pathkeys = root->setop_pathkeys;
 	else
 		root->query_pathkeys = NIL;
 }
@@ -7865,4 +7907,45 @@ group_by_has_partkey(RelOptInfo *input_rel,
 	}
 
 	return true;
+}
+
+/*
+ * generate_setop_child_grouplist
+ *		Build a SortGroupClause list defining the sort/grouping properties
+ *		of the child of a set operation.
+ *
+ * This is similar to generate_setop_grouplist() but differs as the setop
+ * child query's targetlist entries may already have a tleSortGroupRef
+ * assigned for other purposes, such as GROUP BYs.  Here we keep the
+ * SortGroupClause list in the same order as 'op' groupClauses and just adjust
+ * the tleSortGroupRef to reference the TargetEntry's 'ressortgroupref'.
+ */
+static List *
+generate_setop_child_grouplist(SetOperationStmt *op, List *targetlist)
+{
+	List	   *grouplist = copyObject(op->groupClauses);
+	ListCell   *lg;
+	ListCell   *lt;
+
+	lg = list_head(grouplist);
+	foreach(lt, targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lt);
+		SortGroupClause *sgc;
+
+		/* resjunk columns could have sortgrouprefs.  Leave these alone */
+		if (tle->resjunk)
+			continue;
+
+		/* we expect every non-resjunk target to have a SortGroupClause */
+		Assert(lg != NULL);
+		sgc = (SortGroupClause *) lfirst(lg);
+		lg = lnext(grouplist, lg);
+
+		/* assign a tleSortGroupRef, or reuse the existing one */
+		sgc->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
+		tle->ressortgroupref = sgc->tleSortGroupRef;
+	}
+	Assert(lg == NULL);
+	return grouplist;
 }

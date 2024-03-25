@@ -302,12 +302,12 @@ select except select;
 set enable_hashagg = true;
 set enable_sort = false;
 
-explain (costs off)
-select from generate_series(1,5) union select from generate_series(1,3);
+-- We've no way to check hashed UNION as the empty pathkeys in the Append are
+-- fine to make use of Unique, which is cheaper than HashAggregate and we've
+-- no means to disable Unique.
 explain (costs off)
 select from generate_series(1,5) intersect select from generate_series(1,3);
 
-select from generate_series(1,5) union select from generate_series(1,3);
 select from generate_series(1,5) union all select from generate_series(1,3);
 select from generate_series(1,5) intersect select from generate_series(1,3);
 select from generate_series(1,5) intersect all select from generate_series(1,3);
@@ -361,6 +361,7 @@ INSERT INTO t2 VALUES ('ab'), ('xy');
 set enable_seqscan = off;
 set enable_indexscan = on;
 set enable_bitmapscan = off;
+set enable_sort = off;
 
 explain (costs off)
  SELECT * FROM
@@ -407,6 +408,7 @@ explain (costs off)
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
+reset enable_sort;
 
 -- This simpler variant of the above test has been observed to fail differently
 

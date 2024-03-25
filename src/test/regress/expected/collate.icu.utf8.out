@@ -1396,6 +1396,7 @@ SELECT x FROM test3cs WHERE x ~ 'a';
  abc
 (1 row)
 
+SET enable_hashagg TO off;
 SELECT x FROM test1cs UNION SELECT x FROM test2cs ORDER BY x;
   x  
 -----
@@ -1448,6 +1449,7 @@ SELECT DISTINCT x FROM test3cs ORDER BY x;
  ghi
 (4 rows)
 
+RESET enable_hashagg;
 SELECT count(DISTINCT x) FROM test3cs;
  count 
 -------

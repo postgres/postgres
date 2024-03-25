@@ -1890,7 +1890,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * For now, we don't support resjunk sort clauses on the output of a
 	 * setOperation tree --- you can only use the SQL92-spec options of
 	 * selecting an output column by name or number.  Enforce by checking that
-	 * transformSortClause doesn't add any items to tlist.
+	 * transformSortClause doesn't add any items to tlist.  Note, if changing
+	 * this, add_setop_child_rel_equivalences() will need to be updated.
 	 */
 	tllen = list_length(qry->targetList);
 
