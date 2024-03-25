@@ -44,10 +44,13 @@ BBOBJS = \
 	bbstreamer_tar.o \
 	bbstreamer_zstd.o
 
-all: pg_basebackup pg_receivewal pg_recvlogical
+all: pg_basebackup pg_createsubscriber pg_receivewal pg_recvlogical
 
 pg_basebackup: $(BBOBJS) $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $(BBOBJS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+
+pg_createsubscriber: pg_createsubscriber.o $(WIN32RES) | submake-libpq submake-libpgport submake-libpgfeutils
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 pg_receivewal: pg_receivewal.o $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) pg_receivewal.o $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
@@ -57,6 +60,7 @@ pg_recvlogical: pg_recvlogical.o $(OBJS) | submake-libpq submake-libpgport subma
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_basebackup$(X) '$(DESTDIR)$(bindir)/pg_basebackup$(X)'
+	$(INSTALL_PROGRAM) pg_createsubscriber$(X) '$(DESTDIR)$(bindir)/pg_createsubscriber$(X)'
 	$(INSTALL_PROGRAM) pg_receivewal$(X) '$(DESTDIR)$(bindir)/pg_receivewal$(X)'
 	$(INSTALL_PROGRAM) pg_recvlogical$(X) '$(DESTDIR)$(bindir)/pg_recvlogical$(X)'
 
@@ -65,12 +69,13 @@ installdirs:
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_basebackup$(X)'
+	rm -f '$(DESTDIR)$(bindir)/pg_createsubscriber$(X)'
 	rm -f '$(DESTDIR)$(bindir)/pg_receivewal$(X)'
 	rm -f '$(DESTDIR)$(bindir)/pg_recvlogical$(X)'
 
 clean distclean:
-	rm -f pg_basebackup$(X) pg_receivewal$(X) pg_recvlogical$(X) \
-		$(BBOBJS) pg_receivewal.o pg_recvlogical.o \
+	rm -f pg_basebackup$(X) pg_createsubscriber$(X) pg_receivewal$(X) pg_recvlogical$(X) \
+		$(BBOBJS) pg_createsubscriber.o pg_receivewal.o pg_recvlogical.o \
 		$(OBJS)
 	rm -rf tmp_check
 

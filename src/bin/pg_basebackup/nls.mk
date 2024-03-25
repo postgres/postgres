@@ -8,6 +8,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    bbstreamer_tar.c \
                    bbstreamer_zstd.c \
                    pg_basebackup.c \
+                   pg_createsubscriber.c \
                    pg_receivewal.c \
                    pg_recvlogical.c \
                    receivelog.c \

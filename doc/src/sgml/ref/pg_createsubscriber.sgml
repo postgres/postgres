@@ -1,0 +1,523 @@
+<!--
+doc/src/sgml/ref/pg_createsubscriber.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pgcreatesubscriber">
+ <indexterm zone="app-pgcreatesubscriber">
+  <primary>pg_createsubscriber</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle><application>pg_createsubscriber</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_createsubscriber</refname>
+  <refpurpose>convert a physical replica into a new logical replica</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_createsubscriber</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <group choice="plain">
+    <group choice="req">
+     <arg choice="plain"><option>-d</option></arg>
+     <arg choice="plain"><option>--database</option></arg>
+    </group>
+    <replaceable>dbname</replaceable>
+    <group choice="req">
+     <arg choice="plain"><option>-D</option> </arg>
+     <arg choice="plain"><option>--pgdata</option></arg>
+    </group>
+    <replaceable>datadir</replaceable>
+    <group choice="req">
+     <arg choice="plain"><option>-P</option></arg>
+     <arg choice="plain"><option>--publisher-server</option></arg>
+    </group>
+    <replaceable>connstr</replaceable>
+   </group>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <application>pg_createsubscriber</application> creates a new logical
+   replica from a physical standby server.  All tables in the specified
+   database are included in the logical replication setup.  A pair of
+   publication and subscription objects are created for each database.  It
+   must be run at the target server.
+  </para>
+
+  <para>
+   After a successful run, the state of the target server is analogous to a
+   fresh logical replication setup.  The main difference between the logical
+   replication setup and <application>pg_createsubscriber</application> is the
+   initial data copy.  It does only the synchronization phase, which ensures
+   each table is brought up to a synchronized state.
+  </para>
+
+  <para>
+   The <application>pg_createsubscriber</application> targets large database
+   systems because in logical replication setup, most of the time is spent
+   doing the initial data copy.  Furthermore, a side effect of this long time
+   spent synchronizing data is usually a large amount of changes to be applied
+   (that were produced during the initial data copy), which increases even
+   more the time when the logical replica will be available. For smaller
+   databases, <link linkend="logical-replication">initial data
+   synchronization</link> is recommended.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+  <para>
+   <application>pg_createsubscriber</application> accepts the following
+   command-line arguments:
+
+   <variablelist>
+    <varlistentry>
+     <term><option>-d <replaceable class="parameter">dbname</replaceable></option></term>
+     <term><option>--database=<replaceable class="parameter">dbname</replaceable></option></term>
+     <listitem>
+      <para>
+       The database name to create the subscription.  Multiple databases can
+       be selected by writing multiple <option>-d</option> switches.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
+     <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
+     <listitem>
+      <para>
+       The target directory that contains a cluster directory from a physical
+       replica.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-n</option></term>
+     <term><option>--dry-run</option></term>
+     <listitem>
+      <para>
+       Do everything except actually modifying the target directory.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+     <term><option>--subscriber-port=<replaceable class="parameter">port</replaceable></option></term>
+     <listitem>
+      <para>
+       The port number on which the target server is listening for
+       connections.  Defaults to running the target server on port 50432 to
+       avoid unintended client connections.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-P <replaceable class="parameter">connstr</replaceable></option></term>
+     <term><option>--publisher-server=<replaceable class="parameter">connstr</replaceable></option></term>
+     <listitem>
+      <para>
+       The connection string to the publisher.  For details see <xref
+       linkend="libpq-connstring"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-s <replaceable class="parameter">dir</replaceable></option></term>
+     <term><option>--socket-directory=<replaceable class="parameter">dir</replaceable></option></term>
+     <listitem>
+      <para>
+       The directory to use for postmaster sockets on target server.  The
+       default is current directory.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-t <replaceable class="parameter">seconds</replaceable></option></term>
+     <term><option>--recovery-timeout=<replaceable class="parameter">seconds</replaceable></option></term>
+     <listitem>
+      <para>
+       The maximum number of seconds to wait for recovery to end.  Setting to
+       0 disables.  The default is 0.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
+     <term><option>--subscriber-username=<replaceable class="parameter">username</replaceable></option></term>
+     <listitem>
+      <para>
+       The user name to connect as on target server.  Defaults to the current
+       operating system user name.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-v</option></term>
+     <term><option>--verbose</option></term>
+     <listitem>
+      <para>
+       Enables verbose mode.  This will cause
+       <application>pg_createsubscriber</application> to output progress
+       messages and detailed information about each step to standard error.
+       Repeating the option causes additional debug-level messages to appear
+       on standard error.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--config-file=<replaceable class="parameter">filename</replaceable></option></term>
+     <listitem>
+      <para>
+       Use the specified main server configuration file for the target data
+       directory.  The <application>pg_createsubscriber</application> uses
+       internally the <application>pg_ctl</application> command to start and
+       stop the target server.  It allows you to specify the actual
+       <filename>postgresql.conf</filename> configuration file if it is stored
+       outside the data directory.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--publication=<replaceable class="parameter">name</replaceable></option></term>
+     <listitem>
+      <para>
+       The publication name to set up the logical replication.  Multiple
+       publications can be specified by writing multiple
+       <option>--publication</option> switches.  The number of publication
+       names must match the number of specified databases, otherwise an error
+       is reported.  The order of the multiple publication name switches must
+       match the order of database switches.  If this option is not specified,
+       a generated name is assigned to the publication name.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--subscription=<replaceable class="parameter">name</replaceable></option></term>
+     <listitem>
+      <para>
+       The subscription name to set up the logical replication.  Multiple
+       subscriptions can be specified by writing multiple
+       <option>--subscription</option> switches.  The number of subscription
+       names must match the number of specified databases, otherwise an error
+       is reported.  The order of the multiple subscription name switches must
+       match the order of database switches.  If this option is not specified,
+       a generated name is assigned to the subscription name.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--replication-slot=<replaceable class="parameter">name</replaceable></option></term>
+     <listitem>
+      <para>
+       The replication slot name to set up the logical replication.  Multiple
+       replication slots can be specified by writing multiple
+       <option>--replication-slot</option> switches.  The number of
+       replication slot names must match the number of specified databases,
+       otherwise an error is reported.  The order of the multiple replication
+       slot name switches must match the order of database switches.  If this
+       option is not specified, the subscription name is assigned to the
+       replication slot name.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-?</option></term>
+     <term><option>--help</option></term>
+     <listitem>
+      <para>
+       Show help about <application>pg_createsubscriber</application> command
+       line arguments, and exit.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-V</option></term>
+     <term><option>--version</option></term>
+     <listitem>
+      <para>
+       Print the <application>pg_createsubscriber</application> version and exit.
+      </para>
+     </listitem>
+    </varlistentry>
+    </variablelist>
+   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <refsect2>
+   <title>Prerequisites</title>
+
+   <para>
+    There are some prerequisites for
+    <application>pg_createsubscriber</application> to convert the target server
+    into a logical replica.  If these are not met, an error will be reported.
+    The source and target servers must have the same major version as the
+    <application>pg_createsubscriber</application>.  The given target data
+    directory must have the same system identifier as the source data
+    directory.  The given database user for the target data directory must have
+    privileges for creating <link
+    linkend="sql-createsubscription">subscriptions</link> and using <link
+    linkend="pg-replication-origin-advance"><function>pg_replication_origin_advance()</function></link>.
+   </para>
+
+   <para>
+    The target server must be used as a physical standby.  The target server
+    must have <xref linkend="guc-max-replication-slots"/> and <xref
+    linkend="guc-max-logical-replication-workers"/> configured to a value
+    greater than or equal to the number of specified databases.  The target
+    server must have <xref linkend="guc-max-worker-processes"/> configured to a
+    value greater than the number of specified databases.  The target server
+    must accept local connections.
+   </para>
+
+   <para>
+    The source server must accept connections from the target server.  The
+    source server must not be in recovery. The source server must have <xref
+    linkend="guc-wal-level"/> as <literal>logical</literal>.  The source server
+    must have <xref linkend="guc-max-replication-slots"/> configured to a value
+    greater than or equal to the number of specified databases plus existing
+    replication slots.  The source server must have <xref
+    linkend="guc-max-wal-senders"/> configured to a value greater than or equal
+    to the number of specified databases and existing WAL sender processes.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Warnings</title>
+
+   <para>
+    If <application>pg_createsubscriber</application> fails after the target
+    server was promoted, then the data directory is likely not in a state that
+    can be recovered.  In such case, creating a new standby server is
+    recommended.
+   </para>
+
+   <para>
+    <application>pg_createsubscriber</application> usually starts the target
+    server with different connection settings during transformation.  Hence,
+    connections to the target server should fail.
+   </para>
+
+   <para>
+    During the recovery process, if the target server disconnects from the
+    source server, <application>pg_createsubscriber</application> will check a
+    few times if the connection has been reestablished to stream the required
+    WAL.  After a few attempts, it terminates with an error.
+   </para>
+
+   <para>
+    Since DDL commands are not replicated by logical replication, avoid
+    executing DDL commands that change the database schema while running
+    <application>pg_createsubscriber</application>.  If the target server has
+    already been converted to logical replica, the DDL commands might not be
+    replicated, which might cause an error.
+   </para>
+
+   <para>
+    If <application>pg_createsubscriber</application> fails while processing,
+    objects (publications, replication slots) created on the source server are
+    removed.  The removal might fail if the target server cannot connect to
+    the source server.  In such a case, a warning message will inform the
+    objects left.  If the target server is running, it will be stopped.
+   </para>
+
+   <para>
+    If the replication is using <xref linkend="guc-primary-slot-name"/>, it
+    will be removed from the source server after the logical replication
+    setup.
+   </para>
+
+   <para>
+    If the target server is a synchronous replica, transaction commits on the
+    primary might wait for replication while running
+    <application>pg_createsubscriber</application>.
+   </para>
+
+   <para>
+    <application>pg_createsubscriber</application> changes the system
+    identifier using <application>pg_resetwal</application>.  It would avoid
+    situations in which the target server might use WAL files from the source
+    server.  If the target server has a standby, replication will break and a
+    fresh standby should be created.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>How It Works</title>
+
+   <para>
+    The basic idea is to have a replication start point from the source server
+    and set up a logical replication to start from this point:
+   </para>
+
+   <procedure>
+    <step>
+     <para>
+      Start the target server with the specified command-line options.  If the
+      target server is already running,
+      <application>pg_createsubscriber</application> will terminate with an
+      error.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Check if the target server can be converted.  There are also a few
+      checks on the source server.  If any of the prerequisites are not met,
+      <application>pg_createsubscriber</application> will terminate with an
+      error.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Create a publication and replication slot for each specified database on
+      the source server.  Each publication is created using <link
+      linkend="sql-createpublication-params-for-all-tables"><literal>FOR ALL
+      TABLES</literal></link>.  If <option>publication-name</option> option is
+      not specified, it has the following name pattern:
+      <quote><literal>pg_createsubscriber_%u_%x</literal></quote> (parameter:
+      database <parameter>oid</parameter>, random <parameter>int</parameter>).
+      If <option>replication-slot-name</option> is not specified, the
+      replication slot has the following name pattern:
+      <quote><literal>pg_createsubscriber_%u_%x</literal></quote> (parameters:
+      database <parameter>oid</parameter>, random <parameter>int</parameter>).
+      These replication slots will be used by the subscriptions in a future
+      step.  The last replication slot LSN is used as a stopping point in the
+      <xref linkend="guc-recovery-target-lsn"/> parameter and by the
+      subscriptions as a replication start point.  It guarantees that no
+      transaction will be lost.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Write recovery parameters into the target data directory and restart the
+      target server.  It specifies an LSN (<xref
+      linkend="guc-recovery-target-lsn"/>) of the write-ahead log location up
+      to which recovery will proceed.  It also specifies
+      <literal>promote</literal> as the action that the server should take
+      once the recovery target is reached.  Additional <link
+      linkend="runtime-config-wal-recovery-target">recovery parameters</link>
+      are added to avoid unexpected behavior during the recovery process such
+      as end of the recovery as soon as a consistent state is reached (WAL
+      should be applied until the replication start location) and multiple
+      recovery targets that can cause a failure.  This step finishes once the
+      server ends standby mode and is accepting read-write transactions.  If
+      <option>--recovery-timeout</option> option is set,
+      <application>pg_createsubscriber</application> terminates if recovery
+      does not end until the given number of seconds.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Create a subscription for each specified database on the target server.
+      If <option>subscription-name</option> is not specified, the subscription
+      has the following name pattern:
+      <quote><literal>pg_createsubscriber_%u_%x</literal></quote> (parameters:
+      database <parameter>oid</parameter>, random <parameter>int</parameter>).
+      It does not copy existing data from the source server.  It does not
+      create a replication slot.  Instead, it uses the replication slot that
+      was created in a previous step.  The subscription is created but it is
+      not enabled yet.  The reason is the replication progress must be set to
+      the replication start point before starting the replication.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Drop publications on the target server that were replicated because they
+      were created before the replication start location.  It has no use on
+      the subscriber.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Set the replication progress to the replication start point for each
+      subscription.  When the target server starts the recovery process, it
+      catches up to the replication start point.  This is the exact LSN to be
+      used as a initial replication location for each subscription.  The
+      replication origin name is obtained since the subscription was created.
+      The replication origin name and the replication start point are used in
+      <link
+      linkend="pg-replication-origin-advance"><function>pg_replication_origin_advance()</function></link>
+      to set up the initial replication location.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Enable the subscription for each specified database on the target server.
+      The subscription starts applying transactions from the replication start
+      point.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      If the standby server was using <xref linkend="guc-primary-slot-name"/>,
+      it has no use from now on so drop it.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Update the system identifier on the target server. The
+      <xref linkend="app-pgresetwal"/> is run to modify the system identifier.
+      The target server is stopped as a <command>pg_resetwal</command> requirement.
+     </para>
+    </step>
+   </procedure>
+  </refsect2>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To create a logical replica for databases <literal>hr</literal> and
+   <literal>finance</literal> from a physical replica at
+   <literal>foo</literal>:
+<screen>
+<prompt>$</prompt> <userinput>pg_createsubscriber -D /usr/local/pgsql/data -P "host=foo" -d hr -d finance</userinput>
+</screen>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-pgbasebackup"/></member>
+  </simplelist>
+ </refsect1>
+</refentry>

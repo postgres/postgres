@@ -1,4 +1,5 @@
 /pg_basebackup
+/pg_createsubscriber
 /pg_receivewal
 /pg_recvlogical
 
