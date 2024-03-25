@@ -3360,6 +3360,71 @@ run_target('help',
 
 
 ###############################################################
+# Distribution archive
+###############################################################
+
+# Meson has its own distribution building command (meson dist), but we
+# are not using that at this point.  The main problem is that, the way
+# they have implemented it, it is not deterministic.  Also, we want it
+# to be equivalent to the "make" version for the time being.  But the
+# target name "dist" in meson is reserved for that reason, so we call
+# the custom target "pgdist".
+
+git = find_program('git', required: false, native: true, disabler: true)
+bzip2 = find_program('bzip2', required: false, native: true)
+
+distdir = meson.project_name() + '-' + meson.project_version()
+
+# Note: core.autocrlf=false is needed to avoid line-ending conversion
+# in case the environment has a different setting.  Without this, a
+# tarball created on Windows might be different than on, and unusable
+# on, Unix machines.
+
+tar_gz = custom_target('tar.gz',
+  build_always_stale: true,
+  command: [git, '-C', '@SOURCE_ROOT@',
+            '-c', 'core.autocrlf=false',
+            'archive',
+            '--format', 'tar.gz',
+            '-9',
+            '--prefix', distdir + '/',
+            '-o', join_paths(meson.build_root(), '@OUTPUT@'),
+            'HEAD', '.'],
+  output: distdir + '.tar.gz',
+)
+
+if bzip2.found()
+  tar_bz2 = custom_target('tar.bz2',
+    build_always_stale: true,
+    command: [git, '-C', '@SOURCE_ROOT@',
+              '-c', 'core.autocrlf=false',
+              '-c', 'tar.tar.bz2.command="@0@" -c'.format(bzip2.path()),
+              'archive',
+              '--format', 'tar.bz2',
+              '--prefix', distdir + '/',
+              '-o', join_paths(meson.build_root(), '@OUTPUT@'),
+              'HEAD', '.'],
+    output: distdir + '.tar.bz2',
+  )
+else
+  tar_bz2 = custom_target('tar.bz2',
+    command: [perl, '-e', 'exit 1'],
+    output: distdir + '.tar.bz2',
+  )
+endif
+
+alias_target('pgdist', [tar_gz, tar_bz2])
+
+# Make the standard "dist" command fail, to prevent accidental use.
+# But not if we are in a subproject, in case the parent project wants to
+# create a dist using the standard Meson command.
+if not meson.is_subproject()
+  meson.add_dist_script(perl, '-e', 'exit 1')
+endif
+
+
+
+###############################################################
 # The End, The End, My Friend
 ###############################################################
 
