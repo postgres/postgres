@@ -2390,9 +2390,10 @@ int PGTYPESnumeric_to_long(numeric *nv, long *lp);
        The function converts the numeric value from the variable that
        <literal>nv</literal> points to into the long integer variable that
        <literal>lp</literal> points to. It returns 0 on success and -1 if an error
-       occurs, including overflow. On overflow, the global variable
+       occurs, including overflow and underflow. On overflow, the global variable
        <literal>errno</literal> will be set to <literal>PGTYPES_NUM_OVERFLOW</literal>
-       additionally.
+       and on underflow <literal>errno</literal> will be set to
+       <literal>PGTYPES_NUM_UNDERFLOW</literal>.
       </para>
      </listitem>
     </varlistentry>
