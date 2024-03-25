@@ -467,8 +467,11 @@ task:
       openssl \
       p5.34-io-tty \
       p5.34-ipc-run \
+      python312 \
       tcl \
       zstd
+    # system python doesn't provide headers
+    sudo /opt/local/bin/port select python3 python312
     # Make macports install visible for subsequent steps
     echo PATH=/opt/local/sbin/:/opt/local/bin/:$PATH >> $CIRRUS_ENV
   upload_caches: macports
