@@ -1174,10 +1174,8 @@ LogicalTapeTell(LogicalTape *lt, int64 *blocknum, int *offset)
 }
 
 /*
- * Obtain total disk space currently used by a LogicalTapeSet, in blocks.
- *
- * This should not be called while there are open write buffers; otherwise it
- * may not account for buffered data.
+ * Obtain total disk space currently used by a LogicalTapeSet, in blocks. Does
+ * not account for open write buffer, if any.
  */
 int64
 LogicalTapeSetBlocks(LogicalTapeSet *lts)
