@@ -162,7 +162,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
     <variablelist>
 
      <varlistentry id="pgbench-option-dbname">
-      <term><replaceable class="parameter">dbname</replaceable></term>
+      <term><option><optional>-d</optional> <replaceable class="parameter">dbname</replaceable></option></term>
+      <term><option><optional>--dbname=</optional><replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
        <para>
         Specifies the name of the database to test in. If this is
@@ -463,7 +464,6 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry id="pgbench-option-debug">
-      <term><option>-d</option></term>
       <term><option>--debug</option></term>
       <listitem>
        <para>

@@ -933,7 +933,8 @@ usage(void)
 		   "  --show-script=NAME       show builtin script code, then exit\n"
 		   "  --verbose-errors         print messages of all errors\n"
 		   "\nCommon options:\n"
-		   "  -d, --debug              print debugging output\n"
+		   "  --debug                  print debugging output\n"
+		   "  -d, --dbname=DBNAME      database name to connect to\n"
 		   "  -h, --host=HOSTNAME      database server host or socket directory\n"
 		   "  -p, --port=PORT          database server port number\n"
 		   "  -U, --username=USERNAME  connect as specified database user\n"
@@ -6620,7 +6621,7 @@ main(int argc, char **argv)
 		{"builtin", required_argument, NULL, 'b'},
 		{"client", required_argument, NULL, 'c'},
 		{"connect", no_argument, NULL, 'C'},
-		{"debug", no_argument, NULL, 'd'},
+		{"dbname", required_argument, NULL, 'd'},
 		{"define", required_argument, NULL, 'D'},
 		{"file", required_argument, NULL, 'f'},
 		{"fillfactor", required_argument, NULL, 'F'},
@@ -6661,6 +6662,7 @@ main(int argc, char **argv)
 		{"max-tries", required_argument, NULL, 14},
 		{"verbose-errors", no_argument, NULL, 15},
 		{"exit-on-abort", no_argument, NULL, 16},
+		{"debug", no_argument, NULL, 17},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -6732,7 +6734,7 @@ main(int argc, char **argv)
 	if (!set_random_seed(getenv("PGBENCH_RANDOM_SEED")))
 		pg_fatal("error while setting random seed from PGBENCH_RANDOM_SEED environment variable");
 
-	while ((c = getopt_long(argc, argv, "b:c:CdD:f:F:h:iI:j:lL:M:nNp:P:qrR:s:St:T:U:v", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "b:c:Cd:D:f:F:h:iI:j:lL:M:nNp:P:qrR:s:St:T:U:v", long_options, &optindex)) != -1)
 	{
 		char	   *script;
 
@@ -6773,7 +6775,7 @@ main(int argc, char **argv)
 				is_connect = true;
 				break;
 			case 'd':
-				pg_logging_increase_verbosity();
+				dbName = pg_strdup(optarg);
 				break;
 			case 'D':
 				{
@@ -6998,6 +7000,9 @@ main(int argc, char **argv)
 				benchmarking_option_set = true;
 				exit_on_abort = true;
 				break;
+			case 17:			/* debug */
+				pg_logging_increase_verbosity();
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -7048,16 +7053,19 @@ main(int argc, char **argv)
 	 */
 	throttle_delay *= nthreads;
 
-	if (argc > optind)
-		dbName = argv[optind++];
-	else
+	if (dbName == NULL)
 	{
-		if ((env = getenv("PGDATABASE")) != NULL && *env != '\0')
-			dbName = env;
-		else if ((env = getenv("PGUSER")) != NULL && *env != '\0')
-			dbName = env;
+		if (argc > optind)
+			dbName = argv[optind++];
 		else
-			dbName = get_user_name_or_exit(progname);
+		{
+			if ((env = getenv("PGDATABASE")) != NULL && *env != '\0')
+				dbName = env;
+			else if ((env = getenv("PGUSER")) != NULL && *env != '\0')
+				dbName = env;
+			else
+				dbName = get_user_name_or_exit(progname);
+		}
 	}
 
 	if (optind < argc)

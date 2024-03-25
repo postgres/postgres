@@ -1352,7 +1352,7 @@ my $err_pattern =
   . "\\1";
 
 $node->pgbench(
-	"-n -c 2 -t 1 -d --verbose-errors --max-tries 2",
+	"-n -c 2 -t 1 --debug --verbose-errors --max-tries 2",
 	0,
 	[
 		qr{processed: 2/2\b},
