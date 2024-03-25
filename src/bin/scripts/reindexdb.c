@@ -206,19 +206,8 @@ main(int argc, char *argv[])
 
 	setup_cancel_handler(NULL);
 
-	if (concurrentCons > 1)
-	{
-		/*
-		 * Index-level REINDEX is not supported with multiple jobs as we
-		 * cannot control the concurrent processing of multiple indexes
-		 * depending on the same relation.
-		 */
-		if (indexes.head != NULL)
-			pg_fatal("cannot use multiple jobs to reindex indexes");
-
-		if (syscatalog)
-			pg_fatal("cannot use multiple jobs to reindex system catalogs");
-	}
+	if (concurrentCons > 1 && syscatalog)
+		pg_fatal("cannot use multiple jobs to reindex system catalogs");
 
 	if (alldb)
 	{
@@ -258,7 +247,7 @@ main(int argc, char *argv[])
 		if (indexes.head != NULL)
 			reindex_one_database(&cparams, REINDEX_INDEX, &indexes,
 								 progname, echo, verbose,
-								 concurrently, 1, tablespace);
+								 concurrently, concurrentCons, tablespace);
 
 		if (tables.head != NULL)
 			reindex_one_database(&cparams, REINDEX_TABLE, &tables,
@@ -288,12 +277,16 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 {
 	PGconn	   *conn;
 	SimpleStringListCell *cell;
+	SimpleStringListCell *indices_tables_cell;
 	bool		parallel = concurrentCons > 1;
 	SimpleStringList *process_list = user_list;
+	SimpleStringList *indices_tables_list = NULL;
 	ReindexType process_type = type;
 	ParallelSlotArray *sa;
 	bool		failed = false;
 	int			items_count = 0;
+	char	   *prev_index_table_name = NULL;
+	ParallelSlot *free_slot = NULL;
 
 	conn = connectDatabase(cparams, progname, echo, false, true);
 
@@ -363,8 +356,25 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 					return;
 				break;
 
-			case REINDEX_SYSTEM:
 			case REINDEX_INDEX:
+				Assert(user_list != NULL);
+
+				/*
+				 * Build a list of relations from the indices.  This will
+				 * accordingly reorder the list of indices too.
+				 */
+				indices_tables_list = get_parallel_object_list(conn, process_type,
+															   user_list, echo);
+
+				if (indices_tables_list)
+					indices_tables_cell = indices_tables_list->head;
+
+				/* Bail out if nothing to process */
+				if (process_list == NULL)
+					return;
+				break;
+
+			case REINDEX_SYSTEM:
 				/* not supported */
 				Assert(false);
 				break;
@@ -404,7 +414,7 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 	do
 	{
 		const char *objname = cell->val;
-		ParallelSlot *free_slot = NULL;
+		bool		need_new_slot = true;
 
 		if (CancelRequested)
 		{
@@ -412,14 +422,33 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 			goto finish;
 		}
 
-		free_slot = ParallelSlotsGetIdle(sa, NULL);
-		if (!free_slot)
+		/*
+		 * For parallel index-level REINDEX, the indices of the same table are
+		 * ordered together and they are to be processed by the same job.  So,
+		 * we don't switch the job as soon as the index belongs to the same
+		 * table as the previous one.
+		 */
+		if (parallel && process_type == REINDEX_INDEX)
 		{
-			failed = true;
-			goto finish;
+			if (prev_index_table_name != NULL &&
+				strcmp(prev_index_table_name, indices_tables_cell->val) == 0)
+				need_new_slot = false;
+			prev_index_table_name = indices_tables_cell->val;
+			indices_tables_cell = indices_tables_cell->next;
 		}
 
-		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
+		if (need_new_slot)
+		{
+			free_slot = ParallelSlotsGetIdle(sa, NULL);
+			if (!free_slot)
+			{
+				failed = true;
+				goto finish;
+			}
+
+			ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
+		}
+
 		run_reindex_command(free_slot->connection, process_type, objname,
 							echo, verbose, concurrently, true, tablespace);
 
@@ -434,6 +463,12 @@ finish:
 	{
 		simple_string_list_destroy(process_list);
 		pg_free(process_list);
+	}
+
+	if (indices_tables_list)
+	{
+		simple_string_list_destroy(indices_tables_list);
+		pg_free(indices_tables_list);
 	}
 
 	ParallelSlotsTerminate(sa);
@@ -647,8 +682,61 @@ get_parallel_object_list(PGconn *conn, ReindexType type,
 			}
 			break;
 
-		case REINDEX_SYSTEM:
 		case REINDEX_INDEX:
+			{
+				SimpleStringListCell *cell;
+
+				Assert(user_list != NULL);
+
+				/*
+				 * Straight-forward index-level REINDEX is not supported with
+				 * multiple jobs as we cannot control the concurrent
+				 * processing of multiple indexes depending on the same
+				 * relation.  But we can extract the appropriate table name
+				 * for the index and put REINDEX INDEX commands into different
+				 * jobs, according to the parent tables.
+				 *
+				 * We will order the results to group the same tables
+				 * together. We fetch index names as well to build a new list
+				 * of them with matching order.
+				 */
+				appendPQExpBufferStr(&catalog_query,
+									 "SELECT t.relname, n.nspname, i.relname\n"
+									 "FROM pg_catalog.pg_index x\n"
+									 "JOIN pg_catalog.pg_class t ON t.oid = x.indrelid\n"
+									 "JOIN pg_catalog.pg_class i ON i.oid = x.indexrelid\n"
+									 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.relnamespace\n"
+									 "WHERE x.indexrelid OPERATOR(pg_catalog.=) ANY(ARRAY['");
+
+				for (cell = user_list->head; cell; cell = cell->next)
+				{
+					if (cell != user_list->head)
+						appendPQExpBufferStr(&catalog_query, "', '");
+
+					appendQualifiedRelation(&catalog_query, cell->val, conn, echo);
+				}
+
+				/*
+				 * Order tables by the size of its greatest index.  Within the
+				 * table, order indexes by their sizes.
+				 */
+				appendPQExpBufferStr(&catalog_query,
+									 "']::pg_catalog.regclass[])\n"
+									 "ORDER BY max(i.relpages) OVER \n"
+									 "    (PARTITION BY n.nspname, t.relname),\n"
+									 "  n.nspname, t.relname, i.relpages;\n");
+
+				/*
+				 * We're going to re-order the user_list to match the order of
+				 * tables.  So, empty the user_list to fill it from the query
+				 * result.
+				 */
+				simple_string_list_destroy(user_list);
+				user_list->head = user_list->tail = NULL;
+			}
+			break;
+
+		case REINDEX_SYSTEM:
 		case REINDEX_TABLE:
 			Assert(false);
 			break;
@@ -680,6 +768,20 @@ get_parallel_object_list(PGconn *conn, ReindexType type,
 
 		simple_string_list_append(tables, buf.data);
 		resetPQExpBuffer(&buf);
+
+		if (type == REINDEX_INDEX)
+		{
+			/*
+			 * For index-level REINDEX, rebuild the list of indexes to match
+			 * the order of tables list.
+			 */
+			appendPQExpBufferStr(&buf,
+								 fmtQualifiedId(PQgetvalue(res, i, 1),
+												PQgetvalue(res, i, 2)));
+
+			simple_string_list_append(user_list, buf.data);
+			resetPQExpBuffer(&buf);
+		}
 	}
 	termPQExpBuffer(&buf);
 	PQclear(res);

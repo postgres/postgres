@@ -179,8 +179,7 @@ PostgreSQL documentation
         setting is high enough to accommodate all connections.
        </para>
        <para>
-        Note that this option is incompatible with the <option>--index</option>
-        and <option>--system</option> options.
+        Note that this option is incompatible with the <option>--system</option> option.
        </para>
       </listitem>
      </varlistentry>
