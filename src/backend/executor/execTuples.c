@@ -160,7 +160,7 @@ tts_virtual_is_current_xact_tuple(TupleTableSlot *slot)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("don't have a storage tuple in this context")));
+			 errmsg("don't have transaction information for this type of tuple")));
 
 	return false;				/* silence compiler warnings */
 }
@@ -577,7 +577,7 @@ tts_minimal_is_current_xact_tuple(TupleTableSlot *slot)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("don't have a storage tuple in this context")));
+			 errmsg("don't have transaction information for this type of tuple")));
 
 	return false;				/* silence compiler warnings */
 }
