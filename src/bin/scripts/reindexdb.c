@@ -277,7 +277,7 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 {
 	PGconn	   *conn;
 	SimpleStringListCell *cell;
-	SimpleStringListCell *indices_tables_cell;
+	SimpleStringListCell *indices_tables_cell = NULL;
 	bool		parallel = concurrentCons > 1;
 	SimpleStringList *process_list = user_list;
 	SimpleStringList *indices_tables_list = NULL;
@@ -366,12 +366,20 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 				indices_tables_list = get_parallel_object_list(conn, process_type,
 															   user_list, echo);
 
-				if (indices_tables_list)
-					indices_tables_cell = indices_tables_list->head;
-
-				/* Bail out if nothing to process */
-				if (process_list == NULL)
+				/*
+				 * Bail out if nothing to process.  'user_list' was modified
+				 * in-place, so check if it has at least one cell.
+				 */
+				if (user_list->head == NULL)
 					return;
+
+				/*
+				 * Assuming 'user_list' is not empty, 'indices_tables_list'
+				 * shouldn't be empty as well.
+				 */
+				Assert(indices_tables_list != NULL);
+				indices_tables_cell = indices_tables_list->head;
+
 				break;
 
 			case REINDEX_SYSTEM:
