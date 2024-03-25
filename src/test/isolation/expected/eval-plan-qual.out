@@ -746,6 +746,36 @@ savings  |    600|    1200
 (2 rows)
 
 
+starting permutation: read wx2 wb1 c2 c1 read
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid|balance|balance2
+---------+-------+--------
+checking |    600|    1200
+savings  |    600|    1200
+(2 rows)
+
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance
+-------
+   1050
+(1 row)
+
+step wb1: DELETE FROM accounts WHERE balance = 600 RETURNING *; <waiting ...>
+step c2: COMMIT;
+step wb1: <... completed>
+accountid|balance|balance2
+---------+-------+--------
+savings  |    600|    1200
+(1 row)
+
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid|balance|balance2
+---------+-------+--------
+checking |   1050|    2100
+(1 row)
+
+
 starting permutation: upsert1 upsert2 c1 c2 read
 step upsert1: 
 	WITH upsert AS

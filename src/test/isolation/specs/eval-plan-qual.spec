@@ -76,6 +76,8 @@ setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step wx1	{ UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance; }
 # wy1 then wy2 checks the case where quals pass then fail
 step wy1	{ UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking' RETURNING balance; }
+# wx2 then wb1 checks the case of re-fetching up-to-date values for DELETE ... RETURNING ...
+step wb1	{ DELETE FROM accounts WHERE balance = 600 RETURNING *; }
 
 step wxext1	{ UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance; }
 step tocds1	{ UPDATE accounts SET accountid = 'cds' WHERE accountid = 'checking'; }
@@ -353,6 +355,8 @@ permutation wx1 delwcte c1 c2 read
 # test that a delete to a self-modified row throws error when
 # previously updated by a different cid
 permutation wx1 delwctefail c1 c2 read
+# test that a delete re-fetches up-to-date values for returning clause
+permutation read wx2 wb1 c2 c1 read
 
 permutation upsert1 upsert2 c1 c2 read
 permutation readp1 writep1 readp2 c1 c2
