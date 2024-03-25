@@ -19,6 +19,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/orclauses.h"
+#include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
 
 
@@ -325,24 +326,10 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 		 * Make up a SpecialJoinInfo for JOIN_INNER semantics.  (Compare
 		 * approx_tuple_count() in costsize.c.)
 		 */
-		sjinfo.type = T_SpecialJoinInfo;
-		sjinfo.min_lefthand = bms_difference(join_or_rinfo->clause_relids,
-											 rel->relids);
-		sjinfo.min_righthand = rel->relids;
-		sjinfo.syn_lefthand = sjinfo.min_lefthand;
-		sjinfo.syn_righthand = sjinfo.min_righthand;
-		sjinfo.jointype = JOIN_INNER;
-		sjinfo.ojrelid = 0;
-		sjinfo.commute_above_l = NULL;
-		sjinfo.commute_above_r = NULL;
-		sjinfo.commute_below_l = NULL;
-		sjinfo.commute_below_r = NULL;
-		/* we don't bother trying to make the remaining fields valid */
-		sjinfo.lhs_strict = false;
-		sjinfo.semi_can_btree = false;
-		sjinfo.semi_can_hash = false;
-		sjinfo.semi_operators = NIL;
-		sjinfo.semi_rhs_exprs = NIL;
+		init_dummy_sjinfo(&sjinfo,
+						  bms_difference(join_or_rinfo->clause_relids,
+										 rel->relids),
+						  rel->relids);
 
 		/* Compute inner-join size */
 		orig_selec = clause_selectivity(root, (Node *) join_or_rinfo,

@@ -656,8 +656,9 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 /*
  * init_dummy_sjinfo
- *    Populate the given SpecialJoinInfo for a plain inner join between rel1
- *    and rel2
+ *    Populate the given SpecialJoinInfo for a plain inner join between the
+ *    left and right relations specified by left_relids and right_relids
+ *    respectively.
  *
  * Normally, an inner join does not have a SpecialJoinInfo node associated with
  * it. But some functions involved in join planning require one containing at
