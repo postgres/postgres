@@ -98,7 +98,7 @@ PQcancelCreate(PGconn *conn)
 		return (PGcancelConn *) cancelConn;
 
 	/*
-	 * Copy cancellation token data from the original connnection
+	 * Copy cancellation token data from the original connection
 	 */
 	cancelConn->be_pid = conn->be_pid;
 	cancelConn->be_key = conn->be_key;
