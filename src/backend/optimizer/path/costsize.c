@@ -5050,23 +5050,7 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	/*
 	 * Also get the normal inner-join selectivity of the join clauses.
 	 */
-	norm_sjinfo.type = T_SpecialJoinInfo;
-	norm_sjinfo.min_lefthand = outerrel->relids;
-	norm_sjinfo.min_righthand = innerrel->relids;
-	norm_sjinfo.syn_lefthand = outerrel->relids;
-	norm_sjinfo.syn_righthand = innerrel->relids;
-	norm_sjinfo.jointype = JOIN_INNER;
-	norm_sjinfo.ojrelid = 0;
-	norm_sjinfo.commute_above_l = NULL;
-	norm_sjinfo.commute_above_r = NULL;
-	norm_sjinfo.commute_below_l = NULL;
-	norm_sjinfo.commute_below_r = NULL;
-	/* we don't bother trying to make the remaining fields valid */
-	norm_sjinfo.lhs_strict = false;
-	norm_sjinfo.semi_can_btree = false;
-	norm_sjinfo.semi_can_hash = false;
-	norm_sjinfo.semi_operators = NIL;
-	norm_sjinfo.semi_rhs_exprs = NIL;
+	init_dummy_sjinfo(&norm_sjinfo, outerrel->relids, innerrel->relids);
 
 	nselec = clauselist_selectivity(root,
 									joinquals,
@@ -5219,23 +5203,8 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 	/*
 	 * Make up a SpecialJoinInfo for JOIN_INNER semantics.
 	 */
-	sjinfo.type = T_SpecialJoinInfo;
-	sjinfo.min_lefthand = path->outerjoinpath->parent->relids;
-	sjinfo.min_righthand = path->innerjoinpath->parent->relids;
-	sjinfo.syn_lefthand = path->outerjoinpath->parent->relids;
-	sjinfo.syn_righthand = path->innerjoinpath->parent->relids;
-	sjinfo.jointype = JOIN_INNER;
-	sjinfo.ojrelid = 0;
-	sjinfo.commute_above_l = NULL;
-	sjinfo.commute_above_r = NULL;
-	sjinfo.commute_below_l = NULL;
-	sjinfo.commute_below_r = NULL;
-	/* we don't bother trying to make the remaining fields valid */
-	sjinfo.lhs_strict = false;
-	sjinfo.semi_can_btree = false;
-	sjinfo.semi_can_hash = false;
-	sjinfo.semi_operators = NIL;
-	sjinfo.semi_rhs_exprs = NIL;
+	init_dummy_sjinfo(&sjinfo, path->outerjoinpath->parent->relids,
+					  path->innerjoinpath->parent->relids);
 
 	/* Get the approximate selectivity */
 	foreach(l, quals)
