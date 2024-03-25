@@ -119,6 +119,22 @@ test_predtest(PG_FUNCTION_ARGS)
 	}
 
 	/*
+	 * Strong refutation implies weak refutation, so we should never observe
+	 * s_r_holds = true with w_r_holds = false.
+	 *
+	 * We can't make a comparable assertion for implication since moving from
+	 * strong to weak implication expands the allowed values of "A" from true
+	 * to either true or NULL.
+	 *
+	 * If this fails it constitutes a bug not with the proofs but with either
+	 * this test module or a more core part of expression evaluation since we
+	 * are validating the logical correctness of the observed result rather
+	 * than the proof.
+	 */
+	if (s_r_holds && !w_r_holds)
+		elog(WARNING, "s_r_holds was true; w_r_holds must not be false");
+
+	/*
 	 * Now, dig the clause querytrees out of the plan, and see what predtest.c
 	 * does with them.
 	 */
@@ -178,6 +194,19 @@ test_predtest(PG_FUNCTION_ARGS)
 		elog(WARNING, "strong_refuted_by result is incorrect");
 	if (weak_refuted_by && !w_r_holds)
 		elog(WARNING, "weak_refuted_by result is incorrect");
+
+	/*
+	 * As with our earlier check of the logical consistency of whether strong
+	 * and weak refutation hold, we ought never prove strong refutation
+	 * without also proving weak refutation.
+	 *
+	 * Also as earlier we cannot make the same guarantee about implication
+	 * proofs.
+	 *
+	 * A warning here suggests a bug in the proof code.
+	 */
+	if (strong_refuted_by && !weak_refuted_by)
+		elog(WARNING, "strong_refuted_by was proven; weak_refuted_by should also be proven");
 
 	/*
 	 * Clean up and return a record of the results.
