@@ -549,6 +549,10 @@ tts_minimal_getsomeattrs(TupleTableSlot *slot, int natts)
 	slot_deform_heap_tuple(slot, mslot->tuple, &mslot->off, natts);
 }
 
+/*
+ * MinimalTupleTableSlots never provide system attributes. We generally
+ * shouldn't get here, but provide a user-friendly message if we do.
+ */
 static Datum
 tts_minimal_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
@@ -561,6 +565,11 @@ tts_minimal_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 	return 0;					/* silence compiler warnings */
 }
 
+/*
+ * Within MinimalTuple abstraction transaction information is unavailable.
+ * We generally shouldn't get here, but provide a user-friendly message if
+ * we do.
+ */
 static bool
 tts_minimal_is_current_xact_tuple(TupleTableSlot *slot)
 {
