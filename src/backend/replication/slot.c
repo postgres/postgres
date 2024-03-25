@@ -687,10 +687,10 @@ ReplicationSlotRelease(void)
 	}
 
 	/*
-	 * Set the last inactive time after marking the slot inactive. We don't set
-	 * it for the slots currently being synced from the primary to the standby
-	 * because such slots are typically inactive as decoding is not allowed on
-	 * those.
+	 * Set the last inactive time after marking the slot inactive. We don't
+	 * set it for the slots currently being synced from the primary to the
+	 * standby because such slots are typically inactive as decoding is not
+	 * allowed on those.
 	 */
 	if (!(RecoveryInProgress() && slot->data.synced))
 		now = GetCurrentTimestamp();
