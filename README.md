@@ -1,6 +1,6 @@
 # pg_tde
 
-This is an `experimental` encrypted access method for PostgreSQL 16.
+This is an `experimental` encrypted access method for PostgreSQL 16. [We need your feedback!](https://github.com/Percona-Lab/pg_tde/discussions/151)
 
 ## Latest test release
 
