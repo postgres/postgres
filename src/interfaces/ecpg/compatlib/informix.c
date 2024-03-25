@@ -435,6 +435,7 @@ dectoint(decimal *np, int *ip)
 {
 	int			ret;
 	numeric    *nres = PGTYPESnumeric_new();
+	int			errnum;
 
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
@@ -445,10 +446,12 @@ dectoint(decimal *np, int *ip)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 	}
 
+	errno = 0;
 	ret = PGTYPESnumeric_to_int(nres, ip);
+	errnum = errno;
 	PGTYPESnumeric_free(nres);
 
-	if (ret == PGTYPES_NUM_OVERFLOW)
+	if (ret == -1 && errnum == PGTYPES_NUM_OVERFLOW)
 		ret = ECPG_INFORMIX_NUM_OVERFLOW;
 
 	return ret;
@@ -459,6 +462,7 @@ dectolong(decimal *np, long *lngp)
 {
 	int			ret;
 	numeric    *nres = PGTYPESnumeric_new();
+	int			errnum;
 
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
@@ -469,10 +473,12 @@ dectolong(decimal *np, long *lngp)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 	}
 
+	errno = 0;
 	ret = PGTYPESnumeric_to_long(nres, lngp);
+	errnum = errno;
 	PGTYPESnumeric_free(nres);
 
-	if (ret == PGTYPES_NUM_OVERFLOW)
+	if (ret == -1 && errnum == PGTYPES_NUM_OVERFLOW)
 		ret = ECPG_INFORMIX_NUM_OVERFLOW;
 
 	return ret;

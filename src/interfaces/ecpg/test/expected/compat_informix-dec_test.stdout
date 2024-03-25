@@ -3,8 +3,8 @@
 (no errno set) - dec[0,3]: r: -1, *
 (no errno set) - dec[0,4]: r: -1, *
 dec[0,5]: r: 0, 0.00
-(errno == PGTYPES_NUM_OVERFLOW) - dec[0,6]: 0 (r: -1)
-(errno == PGTYPES_NUM_OVERFLOW) - dec[0,8]: 0 (r: -1)
+(errno == PGTYPES_NUM_OVERFLOW) - dec[0,6]: 0 (r: -1200)
+(errno == PGTYPES_NUM_OVERFLOW) - dec[0,8]: 0 (r: -1200)
 (errno == PGTYPES_NUM_OVERFLOW) - dec[0,10]: 0 (r: -1)
 
 dec[1,1]: r: 0, -2
@@ -45,8 +45,8 @@ dec[4,2]: r: 0, 592490000000000000000000
 dec[4,3]: r: 0, 592490000000000000000000.0
 dec[4,4]: r: 0, 592490000000000000000000.00
 dec[4,5]: r: 0, 0.00
-(errno == PGTYPES_NUM_OVERFLOW) - dec[4,6]: 0 (r: -1)
-(errno == PGTYPES_NUM_OVERFLOW) - dec[4,8]: 0 (r: -1)
+(errno == PGTYPES_NUM_OVERFLOW) - dec[4,6]: 0 (r: -1200)
+(errno == PGTYPES_NUM_OVERFLOW) - dec[4,8]: 0 (r: -1200)
 dec[4,10]: 5.9249e+23 (r: 0)
 
 dec[5,1]: r: 0, -328400
@@ -141,8 +141,8 @@ dec[13,2]: r: 0, 1234567890123456789012345679
 dec[13,3]: r: 0, 1234567890123456789012345678.9
 dec[13,4]: r: 0, 1234567890123456789012345678.91
 dec[13,5]: r: 0, 0.00
-(errno == PGTYPES_NUM_OVERFLOW) - dec[13,6]: 0 (r: -1)
-(errno == PGTYPES_NUM_OVERFLOW) - dec[13,8]: 0 (r: -1)
+(errno == PGTYPES_NUM_OVERFLOW) - dec[13,6]: 0 (r: -1200)
+(errno == PGTYPES_NUM_OVERFLOW) - dec[13,8]: 0 (r: -1200)
 dec[13,10]: 1.23457e+27 (r: 0)
 
 (errno == PGTYPES_NUM_OVERFLOW) - dec[14,0]: r: -1200
