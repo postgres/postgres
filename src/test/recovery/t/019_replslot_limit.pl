@@ -410,4 +410,156 @@ kill 'CONT', $receiverpid;
 $node_primary3->stop;
 $node_standby3->stop;
 
+# =============================================================================
+# Testcase start: Check last_inactive_time property of the streaming standby's slot
+#
+
+# Initialize primary node
+my $primary4 = PostgreSQL::Test::Cluster->new('primary4');
+$primary4->init(allows_streaming => 'logical');
+$primary4->start;
+
+# Take backup
+$backup_name = 'my_backup4';
+$primary4->backup($backup_name);
+
+# Create a standby linking to the primary using the replication slot
+my $standby4 = PostgreSQL::Test::Cluster->new('standby4');
+$standby4->init_from_backup($primary4, $backup_name, has_streaming => 1);
+
+my $sb4_slot = 'sb4_slot';
+$standby4->append_conf('postgresql.conf', "primary_slot_name = '$sb4_slot'");
+
+my $slot_creation_time = $primary4->safe_psql(
+	'postgres', qq[
+    SELECT current_timestamp;
+]);
+
+$primary4->safe_psql(
+	'postgres', qq[
+    SELECT pg_create_physical_replication_slot(slot_name := '$sb4_slot');
+]);
+
+# Get last_inactive_time value after the slot's creation. Note that the slot
+# is still inactive till it's used by the standby below.
+my $last_inactive_time =
+	capture_and_validate_slot_last_inactive_time($primary4, $sb4_slot, $slot_creation_time);
+
+$standby4->start;
+
+# Wait until standby has replayed enough data
+$primary4->wait_for_catchup($standby4);
+
+# Now the slot is active so last_inactive_time value must be NULL
+is( $primary4->safe_psql(
+		'postgres',
+		qq[SELECT last_inactive_time IS NULL FROM pg_replication_slots WHERE slot_name = '$sb4_slot';]
+	),
+	't',
+	'last inactive time for an active physical slot is NULL');
+
+# Stop the standby to check its last_inactive_time value is updated
+$standby4->stop;
+
+# Let's restart the primary so that the last_inactive_time is set upon
+# loading the slot from the disk.
+$primary4->restart;
+
+is( $primary4->safe_psql(
+		'postgres',
+		qq[SELECT last_inactive_time > '$last_inactive_time'::timestamptz FROM pg_replication_slots WHERE slot_name = '$sb4_slot' AND last_inactive_time IS NOT NULL;]
+	),
+	't',
+	'last inactive time for an inactive physical slot is updated correctly');
+
+$standby4->stop;
+
+# Testcase end: Check last_inactive_time property of the streaming standby's slot
+# =============================================================================
+
+# =============================================================================
+# Testcase start: Check last_inactive_time property of the logical subscriber's slot
+my $publisher4 = $primary4;
+
+# Create subscriber node
+my $subscriber4 = PostgreSQL::Test::Cluster->new('subscriber4');
+$subscriber4->init;
+
+# Setup logical replication
+my $publisher4_connstr = $publisher4->connstr . ' dbname=postgres';
+$publisher4->safe_psql('postgres', "CREATE PUBLICATION pub FOR ALL TABLES");
+
+$slot_creation_time = $publisher4->safe_psql(
+	'postgres', qq[
+    SELECT current_timestamp;
+]);
+
+my $lsub4_slot = 'lsub4_slot';
+$publisher4->safe_psql('postgres',
+	"SELECT pg_create_logical_replication_slot(slot_name := '$lsub4_slot', plugin := 'pgoutput');"
+);
+
+# Get last_inactive_time value after the slot's creation. Note that the slot
+# is still inactive till it's used by the subscriber below.
+$last_inactive_time =
+	capture_and_validate_slot_last_inactive_time($publisher4, $lsub4_slot, $slot_creation_time);
+
+$subscriber4->start;
+$subscriber4->safe_psql('postgres',
+	"CREATE SUBSCRIPTION sub CONNECTION '$publisher4_connstr' PUBLICATION pub WITH (slot_name = '$lsub4_slot', create_slot = false)"
+);
+
+# Wait until subscriber has caught up
+$subscriber4->wait_for_subscription_sync($publisher4, 'sub');
+
+# Now the slot is active so last_inactive_time value must be NULL
+is( $publisher4->safe_psql(
+		'postgres',
+		qq[SELECT last_inactive_time IS NULL FROM pg_replication_slots WHERE slot_name = '$lsub4_slot';]
+	),
+	't',
+	'last inactive time for an active logical slot is NULL');
+
+# Stop the subscriber to check its last_inactive_time value is updated
+$subscriber4->stop;
+
+# Let's restart the publisher so that the last_inactive_time is set upon
+# loading the slot from the disk.
+$publisher4->restart;
+
+is( $publisher4->safe_psql(
+		'postgres',
+		qq[SELECT last_inactive_time > '$last_inactive_time'::timestamptz FROM pg_replication_slots WHERE slot_name = '$lsub4_slot' AND last_inactive_time IS NOT NULL;]
+	),
+	't',
+	'last inactive time for an inactive logical slot is updated correctly');
+
+# Testcase end: Check last_inactive_time property of the logical subscriber's slot
+# =============================================================================
+
+$publisher4->stop;
+$subscriber4->stop;
+
+# Capture and validate last_inactive_time of a given slot.
+sub capture_and_validate_slot_last_inactive_time
+{
+	my ($node, $slot_name, $slot_creation_time) = @_;
+
+	my $last_inactive_time = $node->safe_psql('postgres',
+		qq(SELECT last_inactive_time FROM pg_replication_slots
+			WHERE slot_name = '$slot_name' AND last_inactive_time IS NOT NULL;)
+		);
+
+	# Check that the captured time is sane
+	is( $node->safe_psql(
+			'postgres',
+			qq[SELECT '$last_inactive_time'::timestamptz > to_timestamp(0) AND
+				'$last_inactive_time'::timestamptz >= '$slot_creation_time'::timestamptz;]
+		),
+		't',
+		"last inactive time for an active slot $slot_name is sane");
+
+	return $last_inactive_time;
+}
+
 done_testing();

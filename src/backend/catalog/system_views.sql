@@ -1023,6 +1023,7 @@ CREATE VIEW pg_replication_slots AS
             L.wal_status,
             L.safe_wal_size,
             L.two_phase,
+            L.last_inactive_time,
             L.conflicting,
             L.invalidation_reason,
             L.failover,

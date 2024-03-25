@@ -239,7 +239,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 Datum
 pg_get_replication_slots(PG_FUNCTION_ARGS)
 {
-#define PG_GET_REPLICATION_SLOTS_COLS 18
+#define PG_GET_REPLICATION_SLOTS_COLS 19
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	XLogRecPtr	currlsn;
 	int			slotno;
@@ -409,6 +409,11 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		}
 
 		values[i++] = BoolGetDatum(slot_contents.data.two_phase);
+
+		if (slot_contents.last_inactive_time > 0)
+			values[i++] = TimestampTzGetDatum(slot_contents.last_inactive_time);
+		else
+			nulls[i++] = true;
 
 		cause = slot_contents.data.invalidated;
 
