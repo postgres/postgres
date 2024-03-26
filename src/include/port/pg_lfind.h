@@ -80,6 +80,51 @@ pg_lfind8_le(uint8 key, uint8 *base, uint32 nelem)
 	return false;
 }
 
+#ifndef USE_NO_SIMD
+/*
+ * pg_lfind32_simd_helper
+ *
+ * Searches one 4-register-block of integers.  The caller is responsible for
+ * ensuring that there are at least 4-registers-worth of integers remaining.
+ */
+static inline bool
+pg_lfind32_simd_helper(const Vector32 keys, uint32 *base)
+{
+	const uint32 nelem_per_vector = sizeof(Vector32) / sizeof(uint32);
+	Vector32	vals1,
+				vals2,
+				vals3,
+				vals4,
+				result1,
+				result2,
+				result3,
+				result4,
+				tmp1,
+				tmp2,
+				result;
+
+	/* load the next block into 4 registers */
+	vector32_load(&vals1, base);
+	vector32_load(&vals2, &base[nelem_per_vector]);
+	vector32_load(&vals3, &base[nelem_per_vector * 2]);
+	vector32_load(&vals4, &base[nelem_per_vector * 3]);
+
+	/* compare each value to the key */
+	result1 = vector32_eq(keys, vals1);
+	result2 = vector32_eq(keys, vals2);
+	result3 = vector32_eq(keys, vals3);
+	result4 = vector32_eq(keys, vals4);
+
+	/* combine the results into a single variable */
+	tmp1 = vector32_or(result1, result2);
+	tmp2 = vector32_or(result3, result4);
+	result = vector32_or(tmp1, tmp2);
+
+	/* return whether there was a match */
+	return vector32_is_highbit_set(result);
+}
+#endif							/* ! USE_NO_SIMD */
+
 /*
  * pg_lfind32
  *
@@ -95,8 +140,7 @@ pg_lfind32(uint32 key, uint32 *base, uint32 nelem)
 
 	/*
 	 * For better instruction-level parallelism, each loop iteration operates
-	 * on a block of four registers.  Testing for SSE2 has showed this is ~40%
-	 * faster than using a block of two registers.
+	 * on a block of four registers.
 	 */
 	const Vector32 keys = vector32_broadcast(key);	/* load copies of key */
 	const uint32 nelem_per_vector = sizeof(Vector32) / sizeof(uint32);
@@ -109,9 +153,9 @@ pg_lfind32(uint32 key, uint32 *base, uint32 nelem)
 	bool		assert_result = false;
 
 	/* pre-compute the result for assert checking */
-	for (i = 0; i < nelem; i++)
+	for (int j = 0; j < nelem; j++)
 	{
-		if (key == base[i])
+		if (key == base[j])
 		{
 			assert_result = true;
 			break;
@@ -119,47 +163,41 @@ pg_lfind32(uint32 key, uint32 *base, uint32 nelem)
 	}
 #endif
 
-	for (i = 0; i < tail_idx; i += nelem_per_iteration)
+	/*
+	 * If there aren't enough elements for the SIMD code, jump to the standard
+	 * one-by-one linear search code.
+	 */
+	if (nelem < nelem_per_iteration)
+		goto one_by_one;
+
+	/*
+	 * Process as many elements as possible with a block of 4 registers.
+	 */
+	do
 	{
-		Vector32	vals1,
-					vals2,
-					vals3,
-					vals4,
-					result1,
-					result2,
-					result3,
-					result4,
-					tmp1,
-					tmp2,
-					result;
-
-		/* load the next block into 4 registers */
-		vector32_load(&vals1, &base[i]);
-		vector32_load(&vals2, &base[i + nelem_per_vector]);
-		vector32_load(&vals3, &base[i + nelem_per_vector * 2]);
-		vector32_load(&vals4, &base[i + nelem_per_vector * 3]);
-
-		/* compare each value to the key */
-		result1 = vector32_eq(keys, vals1);
-		result2 = vector32_eq(keys, vals2);
-		result3 = vector32_eq(keys, vals3);
-		result4 = vector32_eq(keys, vals4);
-
-		/* combine the results into a single variable */
-		tmp1 = vector32_or(result1, result2);
-		tmp2 = vector32_or(result3, result4);
-		result = vector32_or(tmp1, tmp2);
-
-		/* see if there was a match */
-		if (vector32_is_highbit_set(result))
+		if (pg_lfind32_simd_helper(keys, &base[i]))
 		{
 			Assert(assert_result == true);
 			return true;
 		}
-	}
+
+		i += nelem_per_iteration;
+
+	} while (i < tail_idx);
+
+	/*
+	 * Process the last 'nelem_per_iteration' elements in the array with a
+	 * 4-register block.  This will cause us to check a subset of the elements
+	 * more than once, but that won't affect correctness, and testing has
+	 * demonstrated that this helps more cases than it harms.
+	 */
+	Assert(assert_result == pg_lfind32_simd_helper(keys, &base[nelem - nelem_per_iteration]));
+	return pg_lfind32_simd_helper(keys, &base[nelem - nelem_per_iteration]);
+
 #endif							/* ! USE_NO_SIMD */
 
-	/* Process the remaining elements one at a time. */
+one_by_one:
+	/* Process the elements one at a time. */
 	for (; i < nelem; i++)
 	{
 		if (key == base[i])
