@@ -21,12 +21,16 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_authid.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_event_trigger.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"
+#include "catalog/pg_parameter_acl.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_type.h"
@@ -1125,6 +1129,8 @@ EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata)
 
 /*
  * Do event triggers support this object type?
+ *
+ * See also event trigger support matrix in event-trigger.sgml.
  */
 bool
 EventTriggerSupportsObjectType(ObjectType obtype)
@@ -1135,133 +1141,39 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_TABLESPACE:
 		case OBJECT_ROLE:
 		case OBJECT_PARAMETER_ACL:
-			/* no support for global objects */
+			/* no support for global objects (except subscriptions) */
 			return false;
 		case OBJECT_EVENT_TRIGGER:
 			/* no support for event triggers on event triggers */
 			return false;
-		case OBJECT_ACCESS_METHOD:
-		case OBJECT_AGGREGATE:
-		case OBJECT_AMOP:
-		case OBJECT_AMPROC:
-		case OBJECT_ATTRIBUTE:
-		case OBJECT_CAST:
-		case OBJECT_COLUMN:
-		case OBJECT_COLLATION:
-		case OBJECT_CONVERSION:
-		case OBJECT_DEFACL:
-		case OBJECT_DEFAULT:
-		case OBJECT_DOMAIN:
-		case OBJECT_DOMCONSTRAINT:
-		case OBJECT_EXTENSION:
-		case OBJECT_FDW:
-		case OBJECT_FOREIGN_SERVER:
-		case OBJECT_FOREIGN_TABLE:
-		case OBJECT_FUNCTION:
-		case OBJECT_INDEX:
-		case OBJECT_LANGUAGE:
-		case OBJECT_LARGEOBJECT:
-		case OBJECT_MATVIEW:
-		case OBJECT_OPCLASS:
-		case OBJECT_OPERATOR:
-		case OBJECT_OPFAMILY:
-		case OBJECT_POLICY:
-		case OBJECT_PROCEDURE:
-		case OBJECT_PUBLICATION:
-		case OBJECT_PUBLICATION_NAMESPACE:
-		case OBJECT_PUBLICATION_REL:
-		case OBJECT_ROUTINE:
-		case OBJECT_RULE:
-		case OBJECT_SCHEMA:
-		case OBJECT_SEQUENCE:
-		case OBJECT_SUBSCRIPTION:
-		case OBJECT_STATISTIC_EXT:
-		case OBJECT_TABCONSTRAINT:
-		case OBJECT_TABLE:
-		case OBJECT_TRANSFORM:
-		case OBJECT_TRIGGER:
-		case OBJECT_TSCONFIGURATION:
-		case OBJECT_TSDICTIONARY:
-		case OBJECT_TSPARSER:
-		case OBJECT_TSTEMPLATE:
-		case OBJECT_TYPE:
-		case OBJECT_USER_MAPPING:
-		case OBJECT_VIEW:
+		default:
 			return true;
-
-			/*
-			 * There's intentionally no default: case here; we want the
-			 * compiler to warn if a new ObjectType hasn't been handled above.
-			 */
 	}
-
-	/* Shouldn't get here, but if we do, say "no support" */
-	return false;
 }
 
 /*
  * Do event triggers support this object class?
+ *
+ * See also event trigger support matrix in event-trigger.sgml.
  */
 bool
-EventTriggerSupportsObjectClass(ObjectClass objclass)
+EventTriggerSupportsObject(const ObjectAddress *object)
 {
-	switch (objclass)
+	switch (object->classId)
 	{
-		case OCLASS_DATABASE:
-		case OCLASS_TBLSPACE:
-		case OCLASS_ROLE:
-		case OCLASS_ROLE_MEMBERSHIP:
-		case OCLASS_PARAMETER_ACL:
-			/* no support for global objects */
+		case DatabaseRelationId:
+		case TableSpaceRelationId:
+		case AuthIdRelationId:
+		case AuthMemRelationId:
+		case ParameterAclRelationId:
+			/* no support for global objects (except subscriptions) */
 			return false;
-		case OCLASS_EVENT_TRIGGER:
+		case EventTriggerRelationId:
 			/* no support for event triggers on event triggers */
 			return false;
-		case OCLASS_CLASS:
-		case OCLASS_PROC:
-		case OCLASS_TYPE:
-		case OCLASS_CAST:
-		case OCLASS_COLLATION:
-		case OCLASS_CONSTRAINT:
-		case OCLASS_CONVERSION:
-		case OCLASS_DEFAULT:
-		case OCLASS_LANGUAGE:
-		case OCLASS_LARGEOBJECT:
-		case OCLASS_OPERATOR:
-		case OCLASS_OPCLASS:
-		case OCLASS_OPFAMILY:
-		case OCLASS_AM:
-		case OCLASS_AMOP:
-		case OCLASS_AMPROC:
-		case OCLASS_REWRITE:
-		case OCLASS_TRIGGER:
-		case OCLASS_SCHEMA:
-		case OCLASS_STATISTIC_EXT:
-		case OCLASS_TSPARSER:
-		case OCLASS_TSDICT:
-		case OCLASS_TSTEMPLATE:
-		case OCLASS_TSCONFIG:
-		case OCLASS_FDW:
-		case OCLASS_FOREIGN_SERVER:
-		case OCLASS_USER_MAPPING:
-		case OCLASS_DEFACL:
-		case OCLASS_EXTENSION:
-		case OCLASS_POLICY:
-		case OCLASS_PUBLICATION:
-		case OCLASS_PUBLICATION_NAMESPACE:
-		case OCLASS_PUBLICATION_REL:
-		case OCLASS_SUBSCRIPTION:
-		case OCLASS_TRANSFORM:
+		default:
 			return true;
-
-			/*
-			 * There's intentionally no default: case here; we want the
-			 * compiler to warn if a new OCLASS hasn't been handled above.
-			 */
 	}
-
-	/* Shouldn't get here, but if we do, say "no support" */
-	return false;
 }
 
 /*
@@ -1373,7 +1285,7 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 	if (!currentEventTriggerState)
 		return;
 
-	Assert(EventTriggerSupportsObjectClass(getObjectClass(object)));
+	Assert(EventTriggerSupportsObject(object));
 
 	/* don't report temp schemas except my own */
 	if (object->classId == NamespaceRelationId &&

@@ -51,7 +51,7 @@ extern ObjectAddress AlterEventTriggerOwner(const char *name, Oid newOwnerId);
 extern void AlterEventTriggerOwner_oid(Oid, Oid newOwnerId);
 
 extern bool EventTriggerSupportsObjectType(ObjectType obtype);
-extern bool EventTriggerSupportsObjectClass(ObjectClass objclass);
+extern bool EventTriggerSupportsObject(const ObjectAddress *object);
 extern void EventTriggerDDLCommandStart(Node *parsetree);
 extern void EventTriggerDDLCommandEnd(Node *parsetree);
 extern void EventTriggerSQLDrop(Node *parsetree);

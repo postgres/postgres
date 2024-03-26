@@ -44,6 +44,8 @@
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_policy.h"
+#include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
@@ -13977,9 +13979,9 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 		foundObject.objectId = foundDep->objid;
 		foundObject.objectSubId = foundDep->objsubid;
 
-		switch (getObjectClass(&foundObject))
+		switch (foundObject.classId)
 		{
-			case OCLASS_CLASS:
+			case RelationRelationId:
 				{
 					char		relKind = get_rel_relkind(foundObject.objectId);
 
@@ -14006,12 +14008,12 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 					break;
 				}
 
-			case OCLASS_CONSTRAINT:
+			case ConstraintRelationId:
 				Assert(foundObject.objectSubId == 0);
 				RememberConstraintForRebuilding(foundObject.objectId, tab);
 				break;
 
-			case OCLASS_REWRITE:
+			case RewriteRelationId:
 				/* XXX someday see if we can cope with revising views */
 				if (subtype == AT_AlterColumnType)
 					ereport(ERROR,
@@ -14022,7 +14024,7 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 									   colName)));
 				break;
 
-			case OCLASS_TRIGGER:
+			case TriggerRelationId:
 
 				/*
 				 * A trigger can depend on a column because the column is
@@ -14042,7 +14044,7 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 									   colName)));
 				break;
 
-			case OCLASS_POLICY:
+			case PolicyRelationId:
 
 				/*
 				 * A policy can depend on a column because the column is
@@ -14061,7 +14063,7 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 									   colName)));
 				break;
 
-			case OCLASS_DEFAULT:
+			case AttrDefaultRelationId:
 				{
 					ObjectAddress col = GetAttrDefaultColumnAddress(foundObject.objectId);
 
@@ -14096,7 +14098,7 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 					break;
 				}
 
-			case OCLASS_STATISTIC_EXT:
+			case StatisticExtRelationId:
 
 				/*
 				 * Give the extended-stats machinery a chance to fix anything
@@ -14105,53 +14107,15 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 				RememberStatisticsForRebuilding(foundObject.objectId, tab);
 				break;
 
-			case OCLASS_PROC:
-			case OCLASS_TYPE:
-			case OCLASS_CAST:
-			case OCLASS_COLLATION:
-			case OCLASS_CONVERSION:
-			case OCLASS_LANGUAGE:
-			case OCLASS_LARGEOBJECT:
-			case OCLASS_OPERATOR:
-			case OCLASS_OPCLASS:
-			case OCLASS_OPFAMILY:
-			case OCLASS_AM:
-			case OCLASS_AMOP:
-			case OCLASS_AMPROC:
-			case OCLASS_SCHEMA:
-			case OCLASS_TSPARSER:
-			case OCLASS_TSDICT:
-			case OCLASS_TSTEMPLATE:
-			case OCLASS_TSCONFIG:
-			case OCLASS_ROLE:
-			case OCLASS_ROLE_MEMBERSHIP:
-			case OCLASS_DATABASE:
-			case OCLASS_TBLSPACE:
-			case OCLASS_FDW:
-			case OCLASS_FOREIGN_SERVER:
-			case OCLASS_USER_MAPPING:
-			case OCLASS_DEFACL:
-			case OCLASS_EXTENSION:
-			case OCLASS_EVENT_TRIGGER:
-			case OCLASS_PARAMETER_ACL:
-			case OCLASS_PUBLICATION:
-			case OCLASS_PUBLICATION_NAMESPACE:
-			case OCLASS_PUBLICATION_REL:
-			case OCLASS_SUBSCRIPTION:
-			case OCLASS_TRANSFORM:
+			default:
 
 				/*
-				 * We don't expect any of these sorts of objects to depend on
-				 * a column.
+				 * We don't expect any other sorts of objects to depend on a
+				 * column.
 				 */
 				elog(ERROR, "unexpected object depending on column: %s",
 					 getObjectDescription(&foundObject, false));
 				break;
-
-				/*
-				 * There's intentionally no default: case here; we want the
-				 * compiler to warn if a new OCLASS hasn't been handled above.
-				 */
 		}
 	}
 

@@ -206,7 +206,7 @@ deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
 			if (extra->flags & DEPFLAG_REVERSE)
 				normal = true;
 
-			if (EventTriggerSupportsObjectClass(getObjectClass(thisobj)))
+			if (EventTriggerSupportsObject(thisobj))
 			{
 				EventTriggerSQLDropAddObject(thisobj, original, normal);
 			}
@@ -1349,9 +1349,9 @@ deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 static void
 doDeletion(const ObjectAddress *object, int flags)
 {
-	switch (getObjectClass(object))
+	switch (object->classId)
 	{
-		case OCLASS_CLASS:
+		case RelationRelationId:
 			{
 				char		relKind = get_rel_relkind(object->objectId);
 
@@ -1382,104 +1382,102 @@ doDeletion(const ObjectAddress *object, int flags)
 				break;
 			}
 
-		case OCLASS_PROC:
+		case ProcedureRelationId:
 			RemoveFunctionById(object->objectId);
 			break;
 
-		case OCLASS_TYPE:
+		case TypeRelationId:
 			RemoveTypeById(object->objectId);
 			break;
 
-		case OCLASS_CONSTRAINT:
+		case ConstraintRelationId:
 			RemoveConstraintById(object->objectId);
 			break;
 
-		case OCLASS_DEFAULT:
+		case AttrDefaultRelationId:
 			RemoveAttrDefaultById(object->objectId);
 			break;
 
-		case OCLASS_LARGEOBJECT:
+		case LargeObjectRelationId:
 			LargeObjectDrop(object->objectId);
 			break;
 
-		case OCLASS_OPERATOR:
+		case OperatorRelationId:
 			RemoveOperatorById(object->objectId);
 			break;
 
-		case OCLASS_REWRITE:
+		case RewriteRelationId:
 			RemoveRewriteRuleById(object->objectId);
 			break;
 
-		case OCLASS_TRIGGER:
+		case TriggerRelationId:
 			RemoveTriggerById(object->objectId);
 			break;
 
-		case OCLASS_STATISTIC_EXT:
+		case StatisticExtRelationId:
 			RemoveStatisticsById(object->objectId);
 			break;
 
-		case OCLASS_TSCONFIG:
+		case TSConfigRelationId:
 			RemoveTSConfigurationById(object->objectId);
 			break;
 
-		case OCLASS_EXTENSION:
+		case ExtensionRelationId:
 			RemoveExtensionById(object->objectId);
 			break;
 
-		case OCLASS_POLICY:
+		case PolicyRelationId:
 			RemovePolicyById(object->objectId);
 			break;
 
-		case OCLASS_PUBLICATION_NAMESPACE:
+		case PublicationNamespaceRelationId:
 			RemovePublicationSchemaById(object->objectId);
 			break;
 
-		case OCLASS_PUBLICATION_REL:
+		case PublicationRelRelationId:
 			RemovePublicationRelById(object->objectId);
 			break;
 
-		case OCLASS_PUBLICATION:
+		case PublicationRelationId:
 			RemovePublicationById(object->objectId);
 			break;
 
-		case OCLASS_CAST:
-		case OCLASS_COLLATION:
-		case OCLASS_CONVERSION:
-		case OCLASS_LANGUAGE:
-		case OCLASS_OPCLASS:
-		case OCLASS_OPFAMILY:
-		case OCLASS_AM:
-		case OCLASS_AMOP:
-		case OCLASS_AMPROC:
-		case OCLASS_SCHEMA:
-		case OCLASS_TSPARSER:
-		case OCLASS_TSDICT:
-		case OCLASS_TSTEMPLATE:
-		case OCLASS_FDW:
-		case OCLASS_FOREIGN_SERVER:
-		case OCLASS_USER_MAPPING:
-		case OCLASS_DEFACL:
-		case OCLASS_EVENT_TRIGGER:
-		case OCLASS_TRANSFORM:
-		case OCLASS_ROLE_MEMBERSHIP:
+		case CastRelationId:
+		case CollationRelationId:
+		case ConversionRelationId:
+		case LanguageRelationId:
+		case OperatorClassRelationId:
+		case OperatorFamilyRelationId:
+		case AccessMethodRelationId:
+		case AccessMethodOperatorRelationId:
+		case AccessMethodProcedureRelationId:
+		case NamespaceRelationId:
+		case TSParserRelationId:
+		case TSDictionaryRelationId:
+		case TSTemplateRelationId:
+		case ForeignDataWrapperRelationId:
+		case ForeignServerRelationId:
+		case UserMappingRelationId:
+		case DefaultAclRelationId:
+		case EventTriggerRelationId:
+		case TransformRelationId:
+		case AuthMemRelationId:
 			DropObjectById(object);
 			break;
 
 			/*
 			 * These global object types are not supported here.
 			 */
-		case OCLASS_ROLE:
-		case OCLASS_DATABASE:
-		case OCLASS_TBLSPACE:
-		case OCLASS_SUBSCRIPTION:
-		case OCLASS_PARAMETER_ACL:
+		case AuthIdRelationId:
+		case DatabaseRelationId:
+		case TableSpaceRelationId:
+		case SubscriptionRelationId:
+		case ParameterAclRelationId:
 			elog(ERROR, "global objects cannot be deleted by doDeletion");
 			break;
 
-			/*
-			 * There's intentionally no default: case here; we want the
-			 * compiler to warn if a new OCLASS hasn't been handled above.
-			 */
+		default:
+			elog(ERROR, "unsupported object class: %u", object->classId);
 	}
 }
 
@@ -2772,153 +2770,6 @@ free_object_addresses(ObjectAddresses *addrs)
 	if (addrs->extras)
 		pfree(addrs->extras);
 	pfree(addrs);
-}
-
-/*
- * Determine the class of a given object identified by objectAddress.
- *
- * We implement it as a function instead of an array because the OIDs aren't
- * consecutive.
- */
-ObjectClass
-getObjectClass(const ObjectAddress *object)
-{
-	/* only pg_class entries can have nonzero objectSubId */
-	if (object->classId != RelationRelationId &&
-		object->objectSubId != 0)
-		elog(ERROR, "invalid non-zero objectSubId for object class %u",
-			 object->classId);
-
-	switch (object->classId)
-	{
-		case RelationRelationId:
-			/* caller must check objectSubId */
-			return OCLASS_CLASS;
-
-		case ProcedureRelationId:
-			return OCLASS_PROC;
-
-		case TypeRelationId:
-			return OCLASS_TYPE;
-
-		case CastRelationId:
-			return OCLASS_CAST;
-
-		case CollationRelationId:
-			return OCLASS_COLLATION;
-
-		case ConstraintRelationId:
-			return OCLASS_CONSTRAINT;
-
-		case ConversionRelationId:
-			return OCLASS_CONVERSION;
-
-		case AttrDefaultRelationId:
-			return OCLASS_DEFAULT;
-
-		case LanguageRelationId:
-			return OCLASS_LANGUAGE;
-
-		case LargeObjectRelationId:
-			return OCLASS_LARGEOBJECT;
-
-		case OperatorRelationId:
-			return OCLASS_OPERATOR;
-
-		case OperatorClassRelationId:
-			return OCLASS_OPCLASS;
-
-		case OperatorFamilyRelationId:
-			return OCLASS_OPFAMILY;
-
-		case AccessMethodRelationId:
-			return OCLASS_AM;
-
-		case AccessMethodOperatorRelationId:
-			return OCLASS_AMOP;
-
-		case AccessMethodProcedureRelationId:
-			return OCLASS_AMPROC;
-
-		case RewriteRelationId:
-			return OCLASS_REWRITE;
-
-		case TriggerRelationId:
-			return OCLASS_TRIGGER;
-
-		case NamespaceRelationId:
-			return OCLASS_SCHEMA;
-
-		case StatisticExtRelationId:
-			return OCLASS_STATISTIC_EXT;
-
-		case TSParserRelationId:
-			return OCLASS_TSPARSER;
-
-		case TSDictionaryRelationId:
-			return OCLASS_TSDICT;
-
-		case TSTemplateRelationId:
-			return OCLASS_TSTEMPLATE;
-
-		case TSConfigRelationId:
-			return OCLASS_TSCONFIG;
-
-		case AuthIdRelationId:
-			return OCLASS_ROLE;
-
-		case AuthMemRelationId:
-			return OCLASS_ROLE_MEMBERSHIP;
-
-		case DatabaseRelationId:
-			return OCLASS_DATABASE;
-
-		case TableSpaceRelationId:
-			return OCLASS_TBLSPACE;
-
-		case ForeignDataWrapperRelationId:
-			return OCLASS_FDW;
-
-		case ForeignServerRelationId:
-			return OCLASS_FOREIGN_SERVER;
-
-		case UserMappingRelationId:
-			return OCLASS_USER_MAPPING;
-
-		case DefaultAclRelationId:
-			return OCLASS_DEFACL;
-
-		case ExtensionRelationId:
-			return OCLASS_EXTENSION;
-
-		case EventTriggerRelationId:
-			return OCLASS_EVENT_TRIGGER;
-
-		case ParameterAclRelationId:
-			return OCLASS_PARAMETER_ACL;
-
-		case PolicyRelationId:
-			return OCLASS_POLICY;
-
-		case PublicationNamespaceRelationId:
-			return OCLASS_PUBLICATION_NAMESPACE;
-
-		case PublicationRelationId:
-			return OCLASS_PUBLICATION;
-
-		case PublicationRelRelationId:
-			return OCLASS_PUBLICATION_REL;
-
-		case SubscriptionRelationId:
-			return OCLASS_SUBSCRIPTION;
-
-		case TransformRelationId:
-			return OCLASS_TRANSFORM;
-	}
-
-	/* shouldn't get here */
-	elog(ERROR, "unrecognized object class: %u", object->classId);
-	return OCLASS_CLASS;		/* keep compiler quiet */
 }
 
 /*
