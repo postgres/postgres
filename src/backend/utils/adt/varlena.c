@@ -891,8 +891,9 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 	int32		E;				/* end position */
 
 	/*
-	 * SQL99 says S can be zero or negative, but we still must fetch from the
-	 * start of the string.
+	 * SQL99 says S can be zero or negative (which we don't document), but we
+	 * still must fetch from the start of the string.
+	 * https://www.postgresql.org/message-id/170905442373.643.11536838320909376197%40wrigleys.postgresql.org
 	 */
 	S1 = Max(S, 1);
 
