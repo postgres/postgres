@@ -217,8 +217,7 @@ select * from pg_visibility_map('copyfreeze');
 -------+-------------+------------
      0 | t           | t
      1 | t           | t
-     2 | t           | t
-(3 rows)
+(2 rows)
 
 select * from pg_check_frozen('copyfreeze');
  t_ctid 
