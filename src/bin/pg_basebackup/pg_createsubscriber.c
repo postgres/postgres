@@ -372,8 +372,7 @@ check_data_directory(const char *datadir)
 		if (errno == ENOENT)
 			pg_fatal("data directory \"%s\" does not exist", datadir);
 		else
-			pg_fatal("could not access directory \"%s\": %s", datadir,
-					 strerror(errno));
+			pg_fatal("could not access directory \"%s\": %m", datadir);
 	}
 
 	snprintf(versionfile, MAXPGPATH, "%s/PG_VERSION", datadir);
@@ -684,7 +683,7 @@ generate_object_name(PGconn *conn)
 
 	if (PQntuples(res) != 1)
 	{
-		pg_log_error("could not obtain database OID: got %d rows, expected %d rows",
+		pg_log_error("could not obtain database OID: got %d rows, expected %d row",
 					 PQntuples(res), 1);
 		disconnect_database(conn, true);
 	}
@@ -920,7 +919,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 
 	if (strcmp(wal_level, "logical") != 0)
 	{
-		pg_log_error("publisher requires wal_level >= logical");
+		pg_log_error("publisher requires wal_level >= \"logical\"");
 		failed = true;
 	}
 
@@ -1649,7 +1648,7 @@ set_replication_progress(PGconn *conn, const struct LogicalRepInfo *dbinfo, cons
 
 	if (PQntuples(res) != 1 && !dry_run)
 	{
-		pg_log_error("could not obtain subscription OID: got %d rows, expected %d rows",
+		pg_log_error("could not obtain subscription OID: got %d rows, expected %d row",
 					 PQntuples(res), 1);
 		disconnect_database(conn, true);
 	}
