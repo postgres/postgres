@@ -130,7 +130,7 @@ TidStoreCreate(size_t max_bytes, dsa_area *area, int tranche_id)
 	ts->context = CurrentMemoryContext;
 
 	/* choose the maxBlockSize to be no larger than 1/16 of max_bytes */
-	while (16 * maxBlockSize > max_bytes * 1024L)
+	while (16 * maxBlockSize > max_bytes)
 		maxBlockSize >>= 1;
 
 	if (maxBlockSize < ALLOCSET_DEFAULT_INITSIZE)
