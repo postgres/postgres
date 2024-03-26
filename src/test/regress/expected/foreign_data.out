@@ -892,24 +892,29 @@ ERROR:  column "no_column" of relation "ft1" does not exist
 ALTER FOREIGN TABLE ft1 DROP COLUMN IF EXISTS no_column;
 NOTICE:  column "no_column" of relation "ft1" does not exist, skipping
 ALTER FOREIGN TABLE ft1 DROP COLUMN c9;
+ALTER FOREIGN TABLE ft1 ADD COLUMN c11 serial;
 ALTER FOREIGN TABLE ft1 SET SCHEMA foreign_schema;
 ALTER FOREIGN TABLE ft1 SET TABLESPACE ts;                      -- ERROR
 ERROR:  relation "ft1" does not exist
+ALTER SEQUENCE foreign_schema.ft1_c11_seq SET SCHEMA public;    -- ERROR
+ERROR:  cannot move an owned sequence into another schema
+DETAIL:  Sequence "ft1_c11_seq" is linked to table "ft1".
 ALTER FOREIGN TABLE foreign_schema.ft1 RENAME c1 TO foreign_column_1;
 ALTER FOREIGN TABLE foreign_schema.ft1 RENAME TO foreign_table_1;
 \d foreign_schema.foreign_table_1
-                        Foreign table "foreign_schema.foreign_table_1"
-      Column      |  Type   | Collation | Nullable | Default |          FDW options           
-------------------+---------+-----------+----------+---------+--------------------------------
- foreign_column_1 | integer |           | not null |         | ("param 1" 'val1')
- c2               | text    |           |          |         | (param2 'val2', param3 'val3')
- c3               | date    |           |          |         | 
- c4               | integer |           |          | 0       | 
- c5               | integer |           |          |         | 
- c6               | integer |           | not null |         | 
- c7               | integer |           |          |         | (p1 'v1', p2 'v2')
- c8               | text    |           |          |         | (p2 'V2')
- c10              | integer |           |          |         | (p1 'v1')
+                                            Foreign table "foreign_schema.foreign_table_1"
+      Column      |  Type   | Collation | Nullable |                     Default                     |          FDW options           
+------------------+---------+-----------+----------+-------------------------------------------------+--------------------------------
+ foreign_column_1 | integer |           | not null |                                                 | ("param 1" 'val1')
+ c2               | text    |           |          |                                                 | (param2 'val2', param3 'val3')
+ c3               | date    |           |          |                                                 | 
+ c4               | integer |           |          | 0                                               | 
+ c5               | integer |           |          |                                                 | 
+ c6               | integer |           | not null |                                                 | 
+ c7               | integer |           |          |                                                 | (p1 'v1', p2 'v2')
+ c8               | text    |           |          |                                                 | (p2 'V2')
+ c10              | integer |           |          |                                                 | (p1 'v1')
+ c11              | integer |           | not null | nextval('foreign_schema.ft1_c11_seq'::regclass) | 
 Check constraints:
     "ft1_c2_check" CHECK (c2 <> ''::text)
     "ft1_c3_check" CHECK (c3 >= '01-01-1994'::date AND c3 <= '01-31-1994'::date)
