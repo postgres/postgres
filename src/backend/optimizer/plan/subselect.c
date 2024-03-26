@@ -65,8 +65,8 @@ typedef struct inline_cte_walker_context
 } inline_cte_walker_context;
 
 
-static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
-						   List *plan_params,
+static Node *build_subplan(PlannerInfo *root, Plan *plan, Path *path,
+						   PlannerInfo *subroot, List *plan_params,
 						   SubLinkType subLinkType, int subLinkId,
 						   Node *testexpr, List *testexpr_paramids,
 						   bool unknownEqFalse);
@@ -236,7 +236,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	plan = create_plan(subroot, best_path);
 
 	/* And convert to SubPlan or InitPlan format. */
-	result = build_subplan(root, plan, subroot, plan_params,
+	result = build_subplan(root, plan, best_path,
+						   subroot, plan_params,
 						   subLinkType, subLinkId,
 						   testexpr, NIL, isTopQual);
 
@@ -288,8 +289,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 
 				/* ... and convert to SubPlan format */
 				hashplan = castNode(SubPlan,
-									build_subplan(root, plan, subroot,
-												  plan_params,
+									build_subplan(root, plan, best_path,
+												  subroot, plan_params,
 												  ANY_SUBLINK, 0,
 												  newtestexpr,
 												  paramIds,
@@ -317,8 +318,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
  * make it an InitPlan, as explained in the comments for make_subplan.
  */
 static Node *
-build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
-			  List *plan_params,
+build_subplan(PlannerInfo *root, Plan *plan, Path *path,
+			  PlannerInfo *subroot, List *plan_params,
 			  SubLinkType subLinkType, int subLinkId,
 			  Node *testexpr, List *testexpr_paramids,
 			  bool unknownEqFalse)
@@ -539,9 +540,10 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	}
 
 	/*
-	 * Add the subplan and its PlannerInfo to the global lists.
+	 * Add the subplan, its path, and its PlannerInfo to the global lists.
 	 */
 	root->glob->subplans = lappend(root->glob->subplans, plan);
+	root->glob->subpaths = lappend(root->glob->subpaths, path);
 	root->glob->subroots = lappend(root->glob->subroots, subroot);
 	splan->plan_id = list_length(root->glob->subplans);
 
@@ -1029,9 +1031,10 @@ SS_process_ctes(PlannerInfo *root)
 		splan->setParam = list_make1_int(paramid);
 
 		/*
-		 * Add the subplan and its PlannerInfo to the global lists.
+		 * Add the subplan, its path, and its PlannerInfo to the global lists.
 		 */
 		root->glob->subplans = lappend(root->glob->subplans, plan);
+		root->glob->subpaths = lappend(root->glob->subpaths, best_path);
 		root->glob->subroots = lappend(root->glob->subroots, subroot);
 		splan->plan_id = list_length(root->glob->subplans);
 
@@ -3021,9 +3024,14 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 	SubPlan    *node;
 
 	/*
-	 * Add the subplan and its PlannerInfo to the global lists.
+	 * Add the subplan and its PlannerInfo, as well as a dummy path entry, to
+	 * the global lists.  Ideally we'd save a real path, but right now our
+	 * sole caller doesn't build a path that exactly matches the plan.  Since
+	 * we're not currently going to need the path for an initplan, it's not
+	 * worth requiring construction of such a path.
 	 */
 	root->glob->subplans = lappend(root->glob->subplans, plan);
+	root->glob->subpaths = lappend(root->glob->subpaths, NULL);
 	root->glob->subroots = lappend(root->glob->subroots, subroot);
 
 	/*

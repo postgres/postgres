@@ -104,6 +104,9 @@ typedef struct PlannerGlobal
 	/* Plans for SubPlan nodes */
 	List	   *subplans;
 
+	/* Paths from which the SubPlan Plans were made */
+	List	   *subpaths;
+
 	/* PlannerInfos for SubPlan nodes */
 	List	   *subroots pg_node_attr(read_write_ignore);
 
