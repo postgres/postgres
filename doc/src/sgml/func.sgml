@@ -1865,6 +1865,39 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>random</primary>
+        </indexterm>
+        <function>random</function> ( <parameter>min</parameter> <type>integer</type>, <parameter>max</parameter> <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>random</function> ( <parameter>min</parameter> <type>bigint</type>, <parameter>max</parameter> <type>bigint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>random</function> ( <parameter>min</parameter> <type>numeric</type>, <parameter>max</parameter> <type>numeric</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para>
+        Returns a random value in the range
+        <parameter>min</parameter> &lt;= x &lt;= <parameter>max</parameter>.
+        For type <type>numeric</type>, the result will have the same number of
+        fractional decimal digits as <parameter>min</parameter> or
+        <parameter>max</parameter>, whichever has more.
+       </para>
+       <para>
+        <literal>random(1, 10)</literal>
+        <returnvalue>7</returnvalue>
+       </para>
+       <para>
+        <literal>random(-0.499, 0.499)</literal>
+        <returnvalue>0.347</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>random_normal</primary>
         </indexterm>
 
@@ -1906,19 +1939,19 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
    </table>
 
   <para>
-   The <function>random()</function> function uses a deterministic
-   pseudo-random number generator.
+   The <function>random()</function> and <function>random_normal()</function>
+   functions listed in <xref linkend="functions-math-random-table"/> use a
+   deterministic pseudo-random number generator.
    It is fast but not suitable for cryptographic
    applications; see the <xref linkend="pgcrypto"/> module for a more
    secure alternative.
    If <function>setseed()</function> is called, the series of results of
-   subsequent <function>random()</function> calls in the current session
+   subsequent calls to these functions in the current session
    can be repeated by re-issuing <function>setseed()</function> with the same
    argument.
    Without any prior <function>setseed()</function> call in the same
-   session, the first <function>random()</function> call obtains a seed
+   session, the first call to any of these functions obtains a seed
    from a platform-dependent source of random bits.
-   These remarks hold equally for <function>random_normal()</function>.
   </para>
 
   <para>

@@ -82,6 +82,7 @@ OBJS = \
 	pg_lsn.o \
 	pg_upgrade_support.o \
 	pgstatfuncs.o \
+	pseudorandomfuncs.o \
 	pseudotypes.o \
 	quote.o \
 	rangetypes.o \

@@ -69,6 +69,7 @@ backend_sources += files(
   'pg_lsn.c',
   'pg_upgrade_support.c',
   'pgstatfuncs.c',
+  'pseudorandomfuncs.c',
   'pseudotypes.c',
   'quote.c',
   'rangetypes.c',

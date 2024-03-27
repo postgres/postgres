@@ -51,6 +51,7 @@ extern uint64 pg_prng_uint64(pg_prng_state *state);
 extern uint64 pg_prng_uint64_range(pg_prng_state *state, uint64 rmin, uint64 rmax);
 extern int64 pg_prng_int64(pg_prng_state *state);
 extern int64 pg_prng_int64p(pg_prng_state *state);
+extern int64 pg_prng_int64_range(pg_prng_state *state, int64 rmin, int64 rmax);
 extern uint32 pg_prng_uint32(pg_prng_state *state);
 extern int32 pg_prng_int32(pg_prng_state *state);
 extern int32 pg_prng_int32p(pg_prng_state *state);

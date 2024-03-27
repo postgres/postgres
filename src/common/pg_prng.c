@@ -185,6 +185,42 @@ pg_prng_int64p(pg_prng_state *state)
 }
 
 /*
+ * Select a random int64 uniformly from the range [rmin, rmax].
+ * If the range is empty, rmin is always produced.
+ */
+int64
+pg_prng_int64_range(pg_prng_state *state, int64 rmin, int64 rmax)
+{
+	int64		val;
+
+	if (likely(rmax > rmin))
+	{
+		uint64		uval;
+
+		/*
+		 * Use pg_prng_uint64_range().  Can't simply pass it rmin and rmax,
+		 * since (uint64) rmin will be larger than (uint64) rmax if rmin < 0.
+		 */
+		uval = (uint64) rmin +
+			pg_prng_uint64_range(state, 0, (uint64) rmax - (uint64) rmin);
+
+		/*
+		 * Safely convert back to int64, avoiding implementation-defined
+		 * behavior for values larger than PG_INT64_MAX.  Modern compilers
+		 * will reduce this to a simple assignment.
+		 */
+		if (uval > PG_INT64_MAX)
+			val = (int64) (uval - PG_INT64_MIN) + PG_INT64_MIN;
+		else
+			val = (int64) uval;
+	}
+	else
+		val = rmin;
+
+	return val;
+}
+
+/*
  * Select a random uint32 uniformly from the range [0, PG_UINT32_MAX].
  */
 uint32
