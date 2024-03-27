@@ -194,9 +194,10 @@ pg_lfind32(uint32 key, uint32 *base, uint32 nelem)
 	Assert(assert_result == pg_lfind32_simd_helper(keys, &base[nelem - nelem_per_iteration]));
 	return pg_lfind32_simd_helper(keys, &base[nelem - nelem_per_iteration]);
 
+one_by_one:
+
 #endif							/* ! USE_NO_SIMD */
 
-one_by_one:
 	/* Process the elements one at a time. */
 	for (; i < nelem; i++)
 	{
