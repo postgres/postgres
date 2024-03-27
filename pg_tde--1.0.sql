@@ -113,6 +113,15 @@ RETURNS VOID
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
+CREATE FUNCTION tde_master_key_info()
+RETURNS TABLE ( master_key_name text,
+                key_provider_name text,
+                key_provider_id integer,
+                master_key_internal_name text,
+                master_key_version integer,
+                key_createion_time timestamp with time zone)
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
 
 -- Access method
 CREATE ACCESS METHOD pg_tde TYPE TABLE HANDLER pg_tdeam_handler;

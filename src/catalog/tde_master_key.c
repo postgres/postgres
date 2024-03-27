@@ -19,6 +19,7 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/wait_event.h"
+#include "utils/timestamp.h"
 #include "common/relpath.h"
 #include "miscadmin.h"
 #include "funcapi.h"
@@ -673,4 +674,67 @@ pg_tde_rotate_key(PG_FUNCTION_ARGS)
     ereport(LOG, (errmsg("Rotating master key to [%s : %s] for the database", new_master_key_name, new_provider_name)));
     ret = RotateMasterKey(new_master_key_name, new_provider_name, ensure_new_key);
     PG_RETURN_BOOL(ret);
+}
+
+PG_FUNCTION_INFO_V1(tde_master_key_info);
+Datum tde_master_key_info(PG_FUNCTION_ARGS)
+{
+    TupleDesc tupdesc;
+    Datum values[6];
+    bool isnull[6];
+    HeapTuple tuple;
+    Datum result;
+    TDEMasterKey *master_key;
+    TimestampTz ts;
+    GenericKeyring *keyring;
+
+    /* Build a tuple descriptor for our result type */
+    if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                    errmsg("function returning record called in context that cannot accept type record")));
+
+    master_key = GetMasterKey();
+    if (master_key == NULL)
+        PG_RETURN_NULL();
+
+    keyring = GetKeyProviderByID(master_key->keyInfo.keyringId);
+
+    /* Initialize the values and null flags */
+
+    /* TEXT: Master key name */
+    values[0] = CStringGetTextDatum(master_key->keyInfo.keyId.name);
+    isnull[0] = false;
+    /* TEXT: Keyring provider name */
+    if (keyring)
+    {
+        values[1] = CStringGetTextDatum(keyring->provider_name);
+        isnull[1] = false;
+    }
+    else
+        isnull[1] = true;
+
+    /* INTEGERT:  key provider id */
+    values[2] = Int32GetDatum(master_key->keyInfo.keyringId);
+    isnull[2] = false;
+
+    /* TEXT: Master key versioned name */
+    values[3] = CStringGetTextDatum(master_key->keyInfo.keyId.versioned_name);
+    isnull[3] = false;
+    /* INTEGERT: Master key version */
+    values[4] = Int32GetDatum(master_key->keyInfo.keyId.version);
+    isnull[4] = false;
+    /* TIMESTAMP TZ: Master key creation time */
+    ts = (TimestampTz)master_key->keyInfo.creationTime.tv_sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+    ts = (ts * USECS_PER_SEC) + master_key->keyInfo.creationTime.tv_usec;
+    values[5] = TimestampTzGetDatum(ts);
+    isnull[5] = false;
+
+    /* Form the tuple */
+    tuple = heap_form_tuple(tupdesc, values, isnull);
+
+    /* Make the tuple into a datum */
+    result = HeapTupleGetDatum(tuple);
+
+    PG_RETURN_DATUM(result);
 }
