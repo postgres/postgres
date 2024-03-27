@@ -3412,7 +3412,7 @@ l2:
 
 		/*
 		 * If we're asked to lock the updated tuple, we just fetch the
-		 * existing tuple.  That let's the caller save some resouces on
+		 * existing tuple.  That lets the caller save some resources on
 		 * placing the lock.
 		 */
 		if (result == TM_Updated &&

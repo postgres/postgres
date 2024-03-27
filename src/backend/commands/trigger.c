@@ -2784,8 +2784,8 @@ ExecARDeleteTriggers(EState *estate,
 		(transition_capture && transition_capture->tcs_delete_old_table))
 	{
 		/*
-		 * Put the FDW old tuple to the slot.  Otherwise, caller is expected
-		 * to have old tuple alredy fetched to the slot.
+		 * Put the FDW old tuple to the slot.  Otherwise, the caller is
+		 * expected to have an old tuple already fetched to the slot.
 		 */
 		if (fdw_trigtuple != NULL)
 			ExecForceStoreHeapTuple(fdw_trigtuple, slot, false);
