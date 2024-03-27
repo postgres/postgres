@@ -411,7 +411,7 @@ $node_primary3->stop;
 $node_standby3->stop;
 
 # =============================================================================
-# Testcase start: Check last_inactive_time property of the streaming standby's slot
+# Testcase start: Check inactive_since property of the streaming standby's slot
 #
 
 # Initialize primary node
@@ -440,45 +440,45 @@ $primary4->safe_psql(
     SELECT pg_create_physical_replication_slot(slot_name := '$sb4_slot');
 ]);
 
-# Get last_inactive_time value after the slot's creation. Note that the slot
-# is still inactive till it's used by the standby below.
-my $last_inactive_time =
-	capture_and_validate_slot_last_inactive_time($primary4, $sb4_slot, $slot_creation_time);
+# Get inactive_since value after the slot's creation. Note that the slot is
+# still inactive till it's used by the standby below.
+my $inactive_since =
+	capture_and_validate_slot_inactive_since($primary4, $sb4_slot, $slot_creation_time);
 
 $standby4->start;
 
 # Wait until standby has replayed enough data
 $primary4->wait_for_catchup($standby4);
 
-# Now the slot is active so last_inactive_time value must be NULL
+# Now the slot is active so inactive_since value must be NULL
 is( $primary4->safe_psql(
 		'postgres',
-		qq[SELECT last_inactive_time IS NULL FROM pg_replication_slots WHERE slot_name = '$sb4_slot';]
+		qq[SELECT inactive_since IS NULL FROM pg_replication_slots WHERE slot_name = '$sb4_slot';]
 	),
 	't',
 	'last inactive time for an active physical slot is NULL');
 
-# Stop the standby to check its last_inactive_time value is updated
+# Stop the standby to check its inactive_since value is updated
 $standby4->stop;
 
-# Let's restart the primary so that the last_inactive_time is set upon
-# loading the slot from the disk.
+# Let's restart the primary so that the inactive_since is set upon loading the
+# slot from the disk.
 $primary4->restart;
 
 is( $primary4->safe_psql(
 		'postgres',
-		qq[SELECT last_inactive_time > '$last_inactive_time'::timestamptz FROM pg_replication_slots WHERE slot_name = '$sb4_slot' AND last_inactive_time IS NOT NULL;]
+		qq[SELECT inactive_since > '$inactive_since'::timestamptz FROM pg_replication_slots WHERE slot_name = '$sb4_slot' AND inactive_since IS NOT NULL;]
 	),
 	't',
 	'last inactive time for an inactive physical slot is updated correctly');
 
 $standby4->stop;
 
-# Testcase end: Check last_inactive_time property of the streaming standby's slot
+# Testcase end: Check inactive_since property of the streaming standby's slot
 # =============================================================================
 
 # =============================================================================
-# Testcase start: Check last_inactive_time property of the logical subscriber's slot
+# Testcase start: Check inactive_since property of the logical subscriber's slot
 my $publisher4 = $primary4;
 
 # Create subscriber node
@@ -499,10 +499,10 @@ $publisher4->safe_psql('postgres',
 	"SELECT pg_create_logical_replication_slot(slot_name := '$lsub4_slot', plugin := 'pgoutput');"
 );
 
-# Get last_inactive_time value after the slot's creation. Note that the slot
-# is still inactive till it's used by the subscriber below.
-$last_inactive_time =
-	capture_and_validate_slot_last_inactive_time($publisher4, $lsub4_slot, $slot_creation_time);
+# Get inactive_since value after the slot's creation. Note that the slot is
+# still inactive till it's used by the subscriber below.
+$inactive_since =
+	capture_and_validate_slot_inactive_since($publisher4, $lsub4_slot, $slot_creation_time);
 
 $subscriber4->start;
 $subscriber4->safe_psql('postgres',
@@ -512,54 +512,54 @@ $subscriber4->safe_psql('postgres',
 # Wait until subscriber has caught up
 $subscriber4->wait_for_subscription_sync($publisher4, 'sub');
 
-# Now the slot is active so last_inactive_time value must be NULL
+# Now the slot is active so inactive_since value must be NULL
 is( $publisher4->safe_psql(
 		'postgres',
-		qq[SELECT last_inactive_time IS NULL FROM pg_replication_slots WHERE slot_name = '$lsub4_slot';]
+		qq[SELECT inactive_since IS NULL FROM pg_replication_slots WHERE slot_name = '$lsub4_slot';]
 	),
 	't',
 	'last inactive time for an active logical slot is NULL');
 
-# Stop the subscriber to check its last_inactive_time value is updated
+# Stop the subscriber to check its inactive_since value is updated
 $subscriber4->stop;
 
-# Let's restart the publisher so that the last_inactive_time is set upon
+# Let's restart the publisher so that the inactive_since is set upon
 # loading the slot from the disk.
 $publisher4->restart;
 
 is( $publisher4->safe_psql(
 		'postgres',
-		qq[SELECT last_inactive_time > '$last_inactive_time'::timestamptz FROM pg_replication_slots WHERE slot_name = '$lsub4_slot' AND last_inactive_time IS NOT NULL;]
+		qq[SELECT inactive_since > '$inactive_since'::timestamptz FROM pg_replication_slots WHERE slot_name = '$lsub4_slot' AND inactive_since IS NOT NULL;]
 	),
 	't',
 	'last inactive time for an inactive logical slot is updated correctly');
 
-# Testcase end: Check last_inactive_time property of the logical subscriber's slot
+# Testcase end: Check inactive_since property of the logical subscriber's slot
 # =============================================================================
 
 $publisher4->stop;
 $subscriber4->stop;
 
-# Capture and validate last_inactive_time of a given slot.
-sub capture_and_validate_slot_last_inactive_time
+# Capture and validate inactive_since of a given slot.
+sub capture_and_validate_slot_inactive_since
 {
 	my ($node, $slot_name, $slot_creation_time) = @_;
 
-	my $last_inactive_time = $node->safe_psql('postgres',
-		qq(SELECT last_inactive_time FROM pg_replication_slots
-			WHERE slot_name = '$slot_name' AND last_inactive_time IS NOT NULL;)
+	my $inactive_since = $node->safe_psql('postgres',
+		qq(SELECT inactive_since FROM pg_replication_slots
+			WHERE slot_name = '$slot_name' AND inactive_since IS NOT NULL;)
 		);
 
 	# Check that the captured time is sane
 	is( $node->safe_psql(
 			'postgres',
-			qq[SELECT '$last_inactive_time'::timestamptz > to_timestamp(0) AND
-				'$last_inactive_time'::timestamptz >= '$slot_creation_time'::timestamptz;]
+			qq[SELECT '$inactive_since'::timestamptz > to_timestamp(0) AND
+				'$inactive_since'::timestamptz >= '$slot_creation_time'::timestamptz;]
 		),
 		't',
 		"last inactive time for an active slot $slot_name is sane");
 
-	return $last_inactive_time;
+	return $inactive_since;
 }
 
 done_testing();

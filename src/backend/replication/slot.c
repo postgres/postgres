@@ -409,7 +409,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	slot->candidate_restart_valid = InvalidXLogRecPtr;
 	slot->candidate_restart_lsn = InvalidXLogRecPtr;
 	slot->last_saved_confirmed_flush = InvalidXLogRecPtr;
-	slot->last_inactive_time = 0;
+	slot->inactive_since = 0;
 
 	/*
 	 * Create the slot on disk.  We haven't actually marked the slot allocated
@@ -623,9 +623,12 @@ retry:
 	if (SlotIsLogical(s))
 		pgstat_acquire_replslot(s);
 
-	/* Reset the last inactive time as the slot is active now. */
+	/*
+	 * Reset the time since the slot has become inactive as the slot is active
+	 * now.
+	 */
 	SpinLockAcquire(&s->mutex);
-	s->last_inactive_time = 0;
+	s->inactive_since = 0;
 	SpinLockRelease(&s->mutex);
 
 	if (am_walsender)
@@ -703,14 +706,14 @@ ReplicationSlotRelease(void)
 		 */
 		SpinLockAcquire(&slot->mutex);
 		slot->active_pid = 0;
-		slot->last_inactive_time = now;
+		slot->inactive_since = now;
 		SpinLockRelease(&slot->mutex);
 		ConditionVariableBroadcast(&slot->active_cv);
 	}
 	else
 	{
 		SpinLockAcquire(&slot->mutex);
-		slot->last_inactive_time = now;
+		slot->inactive_since = now;
 		SpinLockRelease(&slot->mutex);
 	}
 
@@ -2373,9 +2376,9 @@ RestoreSlotFromDisk(const char *name)
 		 * inactive as decoding is not allowed on those.
 		 */
 		if (!(RecoveryInProgress() && slot->data.synced))
-			slot->last_inactive_time = GetCurrentTimestamp();
+			slot->inactive_since = GetCurrentTimestamp();
 		else
-			slot->last_inactive_time = 0;
+			slot->inactive_since = 0;
 
 		restored = true;
 		break;

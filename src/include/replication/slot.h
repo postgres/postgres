@@ -202,8 +202,8 @@ typedef struct ReplicationSlot
 	 */
 	XLogRecPtr	last_saved_confirmed_flush;
 
-	/* The time at which this slot becomes inactive */
-	TimestampTz last_inactive_time;
+	/* The time since the slot has become inactive */
+	TimestampTz inactive_since;
 } ReplicationSlot;
 
 #define SlotIsPhysical(slot) ((slot)->data.database == InvalidOid)

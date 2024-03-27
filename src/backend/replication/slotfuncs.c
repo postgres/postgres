@@ -410,8 +410,8 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 		values[i++] = BoolGetDatum(slot_contents.data.two_phase);
 
-		if (slot_contents.last_inactive_time > 0)
-			values[i++] = TimestampTzGetDatum(slot_contents.last_inactive_time);
+		if (slot_contents.inactive_since > 0)
+			values[i++] = TimestampTzGetDatum(slot_contents.inactive_since);
 		else
 			nulls[i++] = true;
 
