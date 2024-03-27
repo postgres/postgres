@@ -320,7 +320,7 @@ in sync when changing the above synopsis!
         existing roles to be automatically added as members, with the
         <literal>SET</literal> option enabled. This in effect makes the
         new role a <quote>group</quote>.  Roles named in this clause
-        with role-level the <literal>INHERIT</literal> attribute will have
+        with the role-level <literal>INHERIT</literal> attribute will have
         the <literal>INHERIT</literal> option enabled in the new membership.
         New memberships will have the <literal>ADMIN</literal> option disabled.
        </para>
