@@ -314,6 +314,9 @@ $new_sub->restart;
 $new_sub->safe_psql('postgres', "ALTER SUBSCRIPTION regress_sub5 ENABLE");
 $new_sub->wait_for_subscription_sync($publisher, 'regress_sub5');
 
+# wait for regress_sub4 to catchup as well
+$publisher->wait_for_catchup('regress_sub4');
+
 # Rows on tab_upgraded1 and tab_upgraded2 should have been replicated
 $result =
   $new_sub->safe_psql('postgres', "SELECT count(*) FROM tab_upgraded1");
