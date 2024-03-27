@@ -394,8 +394,8 @@ PostgreSQL documentation
         On Linux, <literal>syncfs</literal> may be used instead to ask the
         operating system to synchronize the whole file systems that contain the
         data directory, the WAL files, and each tablespace.  See
-        <xref linkend="syncfs"/> for more information about using
-        <function>syncfs()</function>.
+        <xref linkend="guc-recovery-init-sync-method"/> for information about
+        the caveats to be aware of when using <literal>syncfs</literal>.
        </para>
        <para>
         This option has no effect when <option>--no-sync</option> is used.

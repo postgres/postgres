@@ -182,7 +182,6 @@
 <!ENTITY acronyms   SYSTEM "acronyms.sgml">
 <!ENTITY glossary   SYSTEM "glossary.sgml">
 <!ENTITY color      SYSTEM "color.sgml">
-<!ENTITY syncfs     SYSTEM "syncfs.sgml">
 
 <!ENTITY features-supported   SYSTEM "features-supported.sgml">
 <!ENTITY features-unsupported SYSTEM "features-unsupported.sgml">

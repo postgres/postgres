@@ -176,8 +176,8 @@ PostgreSQL documentation
         backup directory.  When the plain format is used,
         <command>pg_combinebackup</command> will also synchronize the file systems
         that contain the WAL files and each tablespace.  See
-        <xref linkend="syncfs"/> for more information about using
-        <function>syncfs()</function>.
+        <xref linkend="guc-recovery-init-sync-method"/> for information about
+        the caveats to be aware of when using <literal>syncfs</literal>.
        </para>
        <para>
         This option has no effect when <option>--no-sync</option> is used.

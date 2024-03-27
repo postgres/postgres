@@ -10870,9 +10870,15 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         On Linux, <literal>syncfs</literal> may be used instead, to ask the
         operating system to synchronize the file systems that contain the
         data directory, the WAL files and each tablespace (but not any other
-        file systems that may be reachable through symbolic links).  See
-        <xref linkend="syncfs"/> for more information about using
-        <function>syncfs()</function>.
+        file systems that may be reachable through symbolic links).  This may
+        be a lot faster than the <literal>fsync</literal> setting, because it
+        doesn't need to open each file one by one.  On the other hand, it may
+        be slower if a file system is shared by other applications that
+        modify a lot of files, since those files will also be written to disk.
+        Furthermore, on versions of Linux before 5.8, I/O errors encountered
+        while writing data to disk may not be reported to
+        <productname>PostgreSQL</productname>, and relevant error messages may
+        appear only in kernel logs.
        </para>
        <para>
         This parameter can only be set in the

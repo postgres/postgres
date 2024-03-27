@@ -1319,8 +1319,9 @@ PostgreSQL documentation
        <para>
         On Linux, <literal>syncfs</literal> may be used instead to ask the
         operating system to synchronize the whole file system that contains the
-        archive directory.  See <xref linkend="syncfs"/> for more information
-        about using <function>syncfs()</function>.
+        archive directory.  See <xref linkend="guc-recovery-init-sync-method"/>
+        for information about the caveats to be aware of when using
+        <literal>syncfs</literal>.
        </para>
        <para>
         This option has no effect when <option>--no-sync</option> is used or
