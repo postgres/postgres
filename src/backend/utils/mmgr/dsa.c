@@ -60,14 +60,6 @@
 #include "utils/resowner.h"
 
 /*
- * The size of the initial DSM segment that backs a dsa_area created by
- * dsa_create.  After creating some number of segments of this size we'll
- * double this size, and so on.  Larger segments may be created if necessary
- * to satisfy large requests.
- */
-#define DSA_INITIAL_SEGMENT_SIZE ((size_t) (1 * 1024 * 1024))
-
-/*
  * How many segments to create before we double the segment size.  If this is
  * low, then there is likely to be a lot of wasted space in the largest
  * segment.  If it is high, then we risk running out of segment slots (see
@@ -75,17 +67,6 @@
  * an area can manage when using small pointers.
  */
 #define DSA_NUM_SEGMENTS_AT_EACH_SIZE 2
-
-/*
- * The number of bits used to represent the offset part of a dsa_pointer.
- * This controls the maximum size of a segment, the maximum possible
- * allocation size and also the maximum number of segments per area.
- */
-#if SIZEOF_DSA_POINTER == 4
-#define DSA_OFFSET_WIDTH 27		/* 32 segments of size up to 128MB */
-#else
-#define DSA_OFFSET_WIDTH 40		/* 1024 segments of size up to 1TB */
-#endif
 
 /*
  * The maximum number of DSM segments that an area can own, determined by
@@ -96,9 +77,6 @@
 
 /* The bitmask for extracting the offset from a dsa_pointer. */
 #define DSA_OFFSET_BITMASK (((dsa_pointer) 1 << DSA_OFFSET_WIDTH) - 1)
-
-/* The maximum size of a DSM segment. */
-#define DSA_MAX_SEGMENT_SIZE ((size_t) 1 << DSA_OFFSET_WIDTH)
 
 /* Number of pages (see FPM_PAGE_SIZE) per regular superblock. */
 #define DSA_PAGES_PER_SUPERBLOCK		16
@@ -318,6 +296,10 @@ typedef struct
 	dsa_segment_index segment_bins[DSA_NUM_SEGMENT_BINS];
 	/* The object pools for each size class. */
 	dsa_area_pool pools[DSA_NUM_SIZE_CLASSES];
+	/* initial allocation segment size */
+	size_t		init_segment_size;
+	/* maximum allocation segment size */
+	size_t		max_segment_size;
 	/* The total size of all active segments. */
 	size_t		total_segment_size;
 	/* The maximum total size of backing storage we are allowed. */
@@ -417,7 +399,9 @@ static dsa_segment_map *make_new_segment(dsa_area *area, size_t requested_pages)
 static dsa_area *create_internal(void *place, size_t size,
 								 int tranche_id,
 								 dsm_handle control_handle,
-								 dsm_segment *control_segment);
+								 dsm_segment *control_segment,
+								 size_t init_segment_size,
+								 size_t max_segment_size);
 static dsa_area *attach_internal(void *place, dsm_segment *segment,
 								 dsa_handle handle);
 static void check_for_freed_segments(dsa_area *area);
@@ -434,7 +418,7 @@ static void rebin_segment(dsa_area *area, dsa_segment_map *segment_map);
  * we require the caller to provide one.
  */
 dsa_area *
-dsa_create(int tranche_id)
+dsa_create_ext(int tranche_id, size_t init_segment_size, size_t max_segment_size)
 {
 	dsm_segment *segment;
 	dsa_area   *area;
@@ -443,7 +427,7 @@ dsa_create(int tranche_id)
 	 * Create the DSM segment that will hold the shared control object and the
 	 * first segment of usable space.
 	 */
-	segment = dsm_create(DSA_INITIAL_SEGMENT_SIZE, 0);
+	segment = dsm_create(init_segment_size, 0);
 
 	/*
 	 * All segments backing this area are pinned, so that DSA can explicitly
@@ -455,9 +439,10 @@ dsa_create(int tranche_id)
 
 	/* Create a new DSA area with the control object in this segment. */
 	area = create_internal(dsm_segment_address(segment),
-						   DSA_INITIAL_SEGMENT_SIZE,
+						   init_segment_size,
 						   tranche_id,
-						   dsm_segment_handle(segment), segment);
+						   dsm_segment_handle(segment), segment,
+						   init_segment_size, max_segment_size);
 
 	/* Clean up when the control segment detaches. */
 	on_dsm_detach(segment, &dsa_on_dsm_detach_release_in_place,
@@ -483,13 +468,15 @@ dsa_create(int tranche_id)
  * See dsa_create() for a note about the tranche arguments.
  */
 dsa_area *
-dsa_create_in_place(void *place, size_t size,
-					int tranche_id, dsm_segment *segment)
+dsa_create_in_place_ext(void *place, size_t size,
+						int tranche_id, dsm_segment *segment,
+						size_t init_segment_size, size_t max_segment_size)
 {
 	dsa_area   *area;
 
 	area = create_internal(place, size, tranche_id,
-						   DSM_HANDLE_INVALID, NULL);
+						   DSM_HANDLE_INVALID, NULL,
+						   init_segment_size, max_segment_size);
 
 	/*
 	 * Clean up when the control segment detaches, if a containing DSM segment
@@ -1231,7 +1218,8 @@ static dsa_area *
 create_internal(void *place, size_t size,
 				int tranche_id,
 				dsm_handle control_handle,
-				dsm_segment *control_segment)
+				dsm_segment *control_segment,
+				size_t init_segment_size, size_t max_segment_size)
 {
 	dsa_area_control *control;
 	dsa_area   *area;
@@ -1240,6 +1228,11 @@ create_internal(void *place, size_t size,
 	size_t		total_pages;
 	size_t		metadata_bytes;
 	int			i;
+
+	/* Check the initial and maximum block sizes */
+	Assert(init_segment_size >= DSA_MIN_SEGMENT_SIZE);
+	Assert(max_segment_size >= init_segment_size);
+	Assert(max_segment_size <= DSA_MAX_SEGMENT_SIZE);
 
 	/* Sanity check on the space we have to work in. */
 	if (size < dsa_minimum_size())
@@ -1270,8 +1263,10 @@ create_internal(void *place, size_t size,
 	control->segment_header.prev = DSA_SEGMENT_INDEX_NONE;
 	control->segment_header.usable_pages = usable_pages;
 	control->segment_header.freed = false;
-	control->segment_header.size = DSA_INITIAL_SEGMENT_SIZE;
+	control->segment_header.size = size;
 	control->handle = control_handle;
+	control->init_segment_size = init_segment_size;
+	control->max_segment_size = max_segment_size;
 	control->max_total_segment_size = (size_t) -1;
 	control->total_segment_size = size;
 	control->segment_handles[0] = control_handle;
@@ -2127,9 +2122,9 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 	 * move to huge pages in the future.  Then we work back to the number of
 	 * pages we can fit.
 	 */
-	total_size = DSA_INITIAL_SEGMENT_SIZE *
+	total_size = area->control->init_segment_size *
 		((size_t) 1 << (new_index / DSA_NUM_SEGMENTS_AT_EACH_SIZE));
-	total_size = Min(total_size, DSA_MAX_SEGMENT_SIZE);
+	total_size = Min(total_size, area->control->max_segment_size);
 	total_size = Min(total_size,
 					 area->control->max_total_segment_size -
 					 area->control->total_segment_size);
