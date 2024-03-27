@@ -2399,6 +2399,9 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->ss.ps.state = estate;
 	winstate->ss.ps.ExecProcNode = ExecWindowAgg;
 
+	/* copy frame options to state node for easy access */
+	winstate->frameOptions = frameOptions;
+
 	/*
 	 * Create expression contexts.  We need two, one for per-input-tuple
 	 * processing and one for per-output-tuple processing.  We cheat a little
@@ -2649,9 +2652,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	/* Set the status to running */
 	winstate->status = WINDOWAGG_RUN;
 
-	/* copy frame options to state node for easy access */
-	winstate->frameOptions = frameOptions;
-
 	/* initialize frame bound offset expressions */
 	winstate->startOffset = ExecInitExpr((Expr *) node->startOffset,
 										 (PlanState *) winstate);
@@ -2802,7 +2802,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 
 	/*
 	 * Figure out whether we want to use the moving-aggregate implementation,
-	 * and collect the right set of fields from the pg_attribute entry.
+	 * and collect the right set of fields from the pg_aggregate entry.
 	 *
 	 * It's possible that an aggregate would supply a safe moving-aggregate
 	 * implementation and an unsafe normal one, in which case our hand is
