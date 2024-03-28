@@ -545,10 +545,10 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
   </para>
 
   <para>
-    Functions and aggregates must be marked <literal>PARALLEL UNSAFE</literal> if
-    they write to the database, access sequences, change the transaction state
-    even temporarily (e.g., a PL/pgSQL function that establishes an
-    <literal>EXCEPTION</literal> block to catch errors), or make persistent changes to
+    Functions and aggregates must be marked <literal>PARALLEL UNSAFE</literal>
+    if they write to the database, change the transaction state (other than by
+    using a subtransaction for error recovery), access sequences, or make
+    persistent changes to
     settings.  Similarly, functions must be marked <literal>PARALLEL
     RESTRICTED</literal> if they access temporary tables, client connection state,
     cursors, prepared statements, or miscellaneous backend-local state that

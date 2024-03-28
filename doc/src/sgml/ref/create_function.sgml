@@ -428,22 +428,24 @@ CREATE [ OR REPLACE ] FUNCTION
     <term><literal>PARALLEL</literal></term>
 
     <listitem>
-     <para><literal>PARALLEL UNSAFE</literal> indicates that the function
-      can't be executed in parallel mode and the presence of such a
+     <para>
+      <literal>PARALLEL UNSAFE</literal> indicates that the function
+      can't be executed in parallel mode; the presence of such a
       function in an SQL statement forces a serial execution plan.  This is
       the default.  <literal>PARALLEL RESTRICTED</literal> indicates that
-      the function can be executed in parallel mode, but the execution is
-      restricted to parallel group leader.  <literal>PARALLEL SAFE</literal>
+      the function can be executed in parallel mode, but only in the parallel
+      group leader process.  <literal>PARALLEL SAFE</literal>
       indicates that the function is safe to run in parallel mode without
-      restriction.
+      restriction, including in parallel worker processes.
      </para>
 
      <para>
       Functions should be labeled parallel unsafe if they modify any database
-      state, or if they make changes to the transaction such as using
-      sub-transactions, or if they access sequences or attempt to make
-      persistent changes to settings (e.g., <literal>setval</literal>).  They should
-      be labeled as parallel restricted if they access temporary tables,
+      state, change the transaction state (other than by using a
+      subtransaction for error recovery), access sequences (e.g., by
+      calling <literal>currval</literal>) or make persistent changes to
+      settings.  They should
+      be labeled parallel restricted if they access temporary tables,
       client connection state, cursors, prepared statements, or miscellaneous
       backend-local state which the system cannot synchronize in parallel mode
       (e.g.,  <literal>setseed</literal> cannot be executed other than by the group

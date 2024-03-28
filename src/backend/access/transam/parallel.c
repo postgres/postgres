@@ -1226,10 +1226,8 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 /*
  * End-of-subtransaction cleanup for parallel contexts.
  *
- * Currently, it's forbidden to enter or leave a subtransaction while
- * parallel mode is in effect, so we could just blow away everything.  But
- * we may want to relax that restriction in the future, so this code
- * contemplates that there may be multiple subtransaction IDs in pcxt_list.
+ * Here we remove only parallel contexts initiated within the current
+ * subtransaction.
  */
 void
 AtEOSubXact_Parallel(bool isCommit, SubTransactionId mySubId)
@@ -1249,6 +1247,8 @@ AtEOSubXact_Parallel(bool isCommit, SubTransactionId mySubId)
 
 /*
  * End-of-transaction cleanup for parallel contexts.
+ *
+ * We nuke all remaining parallel contexts.
  */
 void
 AtEOXact_Parallel(bool isCommit)

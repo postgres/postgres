@@ -4032,7 +4032,7 @@ declare v int := 0;
 begin
   return 10 / v;
 end;
-$$ language plpgsql;
+$$ language plpgsql parallel safe;
 create or replace function raise_test() returns void as $$
 begin
   raise exception 'custom exception'
@@ -4099,8 +4099,37 @@ $$ language plpgsql;
 select stacked_diagnostics_test();
 ERROR:  GET STACKED DIAGNOSTICS cannot be used outside an exception handler
 CONTEXT:  PL/pgSQL function stacked_diagnostics_test() line 6 at GET STACKED DIAGNOSTICS
-drop function zero_divide();
 drop function stacked_diagnostics_test();
+-- Test that an error recovery subtransaction is parallel safe
+create function error_trap_test() returns text as $$
+begin
+  perform zero_divide();
+  return 'no error detected!';
+exception when division_by_zero then
+  return 'division_by_zero detected';
+end;
+$$ language plpgsql parallel safe;
+set debug_parallel_query to on;
+explain (verbose, costs off) select error_trap_test();
+            QUERY PLAN             
+-----------------------------------
+ Gather
+   Output: (error_trap_test())
+   Workers Planned: 1
+   Single Copy: true
+   ->  Result
+         Output: error_trap_test()
+(6 rows)
+
+select error_trap_test();
+      error_trap_test      
+---------------------------
+ division_by_zero detected
+(1 row)
+
+reset debug_parallel_query;
+drop function error_trap_test();
+drop function zero_divide();
 -- check cases where implicit SQLSTATE variable could be confused with
 -- SQLSTATE as a keyword, cf bug #5524
 create or replace function raise_test() returns void as $$

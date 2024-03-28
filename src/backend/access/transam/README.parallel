@@ -137,7 +137,7 @@ Transaction Integration
 =======================
 
 Regardless of what the TransactionState stack looks like in the parallel
-leader, each parallel worker ends up with a stack of depth 1.  This stack
+leader, each parallel worker begins with a stack of depth 1.  This stack
 entry is marked with the special transaction block state
 TBLOCK_PARALLEL_INPROGRESS so that it's not confused with an ordinary
 toplevel transaction.  The XID of this TransactionState is set to the XID of
@@ -153,18 +153,18 @@ associated with the memory contexts or resource owners of intermediate
 subtransactions.
 
 No meaningful change to the transaction state can be made while in parallel
-mode.  No XIDs can be assigned, and no subtransactions can start or end,
+mode.  No XIDs can be assigned, and no command counter increments can happen,
 because we have no way of communicating these state changes to cooperating
 backends, or of synchronizing them.  It's clearly unworkable for the initiating
 backend to exit any transaction or subtransaction that was in progress when
 parallelism was started before all parallel workers have exited; and it's even
 more clearly crazy for a parallel worker to try to subcommit or subabort the
 current subtransaction and execute in some other transaction context than was
-present in the initiating backend.  It might be practical to allow internal
-sub-transactions (e.g. to implement a PL/pgSQL EXCEPTION block) to be used in
-parallel mode, provided that they are XID-less, because other backends
-wouldn't really need to know about those transactions or do anything
-differently because of them.  Right now, we don't even allow that.
+present in the initiating backend.  However, we allow internal subtransactions
+(e.g. those used to implement a PL/pgSQL EXCEPTION block) to be used in
+parallel mode, provided that they remain XID-less, because other backends
+don't really need to know about those transactions or do anything differently
+because of them.
 
 At the end of a parallel operation, which can happen either because it
 completed successfully or because it was interrupted by an error, parallel
