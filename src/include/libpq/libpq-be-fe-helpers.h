@@ -390,7 +390,7 @@ libpqsrv_cancel(PGconn *conn, TimestampTz endtime)
 
 	cancel_conn = PQcancelCreate(conn);
 	if (cancel_conn == NULL)
-		return _("out of memory");
+		return "out of memory";
 
 	/* In what follows, do not leak any PGcancelConn on any errors. */
 
@@ -418,7 +418,7 @@ libpqsrv_cancel(PGconn *conn, TimestampTz endtime)
 			cur_timeout = TimestampDifferenceMilliseconds(now, endtime);
 			if (cur_timeout <= 0)
 			{
-				error = _("cancel request timed out");
+				error = "cancel request timed out";
 				break;
 			}
 
