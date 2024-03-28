@@ -29,9 +29,9 @@ typedef struct TidStoreIterResult
 	OffsetNumber *offsets;
 } TidStoreIterResult;
 
-extern TidStore *TidStoreCreate(size_t max_bytes, dsa_area *area,
-								int tranche_id);
-extern TidStore *TidStoreAttach(dsa_area *area, dsa_pointer handle);
+extern TidStore *TidStoreCreateLocal(size_t max_bytes);
+extern TidStore *TidStoreCreateShared(size_t max_bytes, int tranche_id);
+extern TidStore *TidStoreAttach(dsa_handle area_handle, dsa_pointer handle);
 extern void TidStoreDetach(TidStore *ts);
 extern void TidStoreLockExclusive(TidStore *ts);
 extern void TidStoreLockShare(TidStore *ts);
@@ -45,5 +45,6 @@ extern TidStoreIterResult *TidStoreIterateNext(TidStoreIter *iter);
 extern void TidStoreEndIterate(TidStoreIter *iter);
 extern size_t TidStoreMemoryUsage(TidStore *ts);
 extern dsa_pointer TidStoreGetHandle(TidStore *ts);
+extern dsa_area *TidStoreGetDSA(TidStore *ts);
 
 #endif							/* TIDSTORE_H */

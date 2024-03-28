@@ -34,7 +34,6 @@ PG_FUNCTION_INFO_V1(test_is_full);
 PG_FUNCTION_INFO_V1(test_destroy);
 
 static TidStore *tidstore = NULL;
-static dsa_area *dsa = NULL;
 static size_t tidstore_empty_size;
 
 /* array for verification of some tests */
@@ -94,7 +93,6 @@ test_create(PG_FUNCTION_ARGS)
 	size_t		array_init_size = 1024;
 
 	Assert(tidstore == NULL);
-	Assert(dsa == NULL);
 
 	/*
 	 * Create the TidStore on TopMemoryContext so that the same process use it
@@ -109,18 +107,16 @@ test_create(PG_FUNCTION_ARGS)
 		tranche_id = LWLockNewTrancheId();
 		LWLockRegisterTranche(tranche_id, "test_tidstore");
 
-		dsa = dsa_create(tranche_id);
+		tidstore = TidStoreCreateShared(tidstore_max_size, tranche_id);
 
 		/*
 		 * Remain attached until end of backend or explicitly detached so that
 		 * the same process use the tidstore for subsequent tests.
 		 */
-		dsa_pin_mapping(dsa);
-
-		tidstore = TidStoreCreate(tidstore_max_size, dsa, tranche_id);
+		dsa_pin_mapping(TidStoreGetDSA(tidstore));
 	}
 	else
-		tidstore = TidStoreCreate(tidstore_max_size, NULL, 0);
+		tidstore = TidStoreCreateLocal(tidstore_max_size);
 
 	tidstore_empty_size = TidStoreMemoryUsage(tidstore);
 
@@ -308,10 +304,6 @@ test_destroy(PG_FUNCTION_ARGS)
 	pfree(items.insert_tids);
 	pfree(items.lookup_tids);
 	pfree(items.iter_tids);
-
-	if (dsa)
-		dsa_detach(dsa);
-	dsa = NULL;
 
 	PG_RETURN_VOID();
 }

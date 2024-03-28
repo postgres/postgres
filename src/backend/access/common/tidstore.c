@@ -7,9 +7,9 @@
  * Internally it uses a radix tree as the storage for TIDs. The key is the
  * BlockNumber and the value is a bitmap of offsets, BlocktableEntry.
  *
- * TidStore can be shared among parallel worker processes by passing DSA area
- * to TidStoreCreate(). Other backends can attach to the shared TidStore by
- * TidStoreAttach().
+ * TidStore can be shared among parallel worker processes by using
+ * TidStoreCreateShared(). Other backends can attach to the shared TidStore
+ * by TidStoreAttach().
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -111,15 +111,16 @@ static void tidstore_iter_extract_tids(TidStoreIter *iter, BlockNumber blkno,
 /*
  * Create a TidStore. The TidStore will live in the memory context that is
  * CurrentMemoryContext at the time of this call. The TID storage, backed
- * by a radix tree, will live in its child memory context, rt_context. The
- * TidStore will be limited to (approximately) max_bytes total memory
- * consumption. If the 'area' is non-NULL, the radix tree is created in the
- * DSA area.
+ * by a radix tree, will live in its child memory context, rt_context.
  *
- * The returned object is allocated in backend-local memory.
+ * "max_bytes" is not an internally-enforced limit; it is used only as a
+ * hint to cap the memory block size of the memory context for TID storage.
+ * This reduces space wastage due to over-allocation. If the caller wants to
+ * monitor memory usage, it must compare its limit with the value reported
+ * by TidStoreMemoryUsage().
  */
 TidStore *
-TidStoreCreate(size_t max_bytes, dsa_area *area, int tranche_id)
+TidStoreCreateLocal(size_t max_bytes)
 {
 	TidStore   *ts;
 	size_t		initBlockSize = ALLOCSET_DEFAULT_INITSIZE;
@@ -143,32 +144,73 @@ TidStoreCreate(size_t max_bytes, dsa_area *area, int tranche_id)
 										   initBlockSize,
 										   maxBlockSize);
 
-	if (area != NULL)
-	{
-		ts->tree.shared = shared_ts_create(ts->rt_context, area,
-										   tranche_id);
-		ts->area = area;
-	}
-	else
-		ts->tree.local = local_ts_create(ts->rt_context);
+	ts->tree.local = local_ts_create(ts->rt_context);
 
 	return ts;
 }
 
 /*
- * Attach to the shared TidStore using the given  handle. The returned object
- * is allocated in backend-local memory using the CurrentMemoryContext.
+ * Similar to TidStoreCreateLocal() but create a shared TidStore on a
+ * DSA area. The TID storage will live in the DSA area, and the memory
+ * context rt_context will have only meta data of the radix tree.
+ *
+ * The returned object is allocated in backend-local memory.
  */
 TidStore *
-TidStoreAttach(dsa_area *area, dsa_pointer handle)
+TidStoreCreateShared(size_t max_bytes, int tranche_id)
 {
 	TidStore   *ts;
+	dsa_area   *area;
+	size_t		dsa_init_size = DSA_DEFAULT_INIT_SEGMENT_SIZE;
+	size_t		dsa_max_size = DSA_MAX_SEGMENT_SIZE;
 
-	Assert(area != NULL);
+	ts = palloc0(sizeof(TidStore));
+	ts->context = CurrentMemoryContext;
+
+	ts->rt_context = AllocSetContextCreate(CurrentMemoryContext,
+										   "TID storage meta data",
+										   ALLOCSET_SMALL_SIZES);
+
+	/*
+	 * Choose the initial and maximum DSA segment sizes to be no longer than
+	 * 1/8 of max_bytes.
+	 */
+	while (8 * dsa_max_size > max_bytes)
+		dsa_max_size >>= 1;
+
+	if (dsa_max_size < DSA_MIN_SEGMENT_SIZE)
+		dsa_max_size = DSA_MIN_SEGMENT_SIZE;
+
+	if (dsa_init_size > dsa_max_size)
+		dsa_init_size = dsa_max_size;
+
+	area = dsa_create_ext(tranche_id, dsa_init_size, dsa_max_size);
+	ts->tree.shared = shared_ts_create(ts->rt_context, area,
+									   tranche_id);
+	ts->area = area;
+
+	return ts;
+}
+
+/*
+ * Attach to the shared TidStore. 'area_handle' is the DSA handle where
+ * the TidStore is created. 'handle' is the dsa_pointer returned by
+ * TidStoreGetHandle(). The returned object is allocated in backend-local
+ * memory using the CurrentMemoryContext.
+ */
+TidStore *
+TidStoreAttach(dsa_handle area_handle, dsa_pointer handle)
+{
+	TidStore   *ts;
+	dsa_area   *area;
+
+	Assert(area_handle != DSA_HANDLE_INVALID);
 	Assert(DsaPointerIsValid(handle));
 
 	/* create per-backend state */
 	ts = palloc0(sizeof(TidStore));
+
+	area = dsa_attach(area_handle);
 
 	/* Find the shared the shared radix tree */
 	ts->tree.shared = shared_ts_attach(area, handle);
@@ -178,10 +220,8 @@ TidStoreAttach(dsa_area *area, dsa_pointer handle)
 }
 
 /*
- * Detach from a TidStore. This detaches from radix tree and frees the
- * backend-local resources. The radix tree will continue to exist until
- * it is either explicitly destroyed, or the area that backs it is returned
- * to the operating system.
+ * Detach from a TidStore. This also detaches from radix tree and frees
+ * the backend-local resources.
  */
 void
 TidStoreDetach(TidStore *ts)
@@ -189,6 +229,8 @@ TidStoreDetach(TidStore *ts)
 	Assert(TidStoreIsShared(ts));
 
 	shared_ts_detach(ts->tree.shared);
+	dsa_detach(ts->area);
+
 	pfree(ts);
 }
 
@@ -234,7 +276,11 @@ TidStoreDestroy(TidStore *ts)
 {
 	/* Destroy underlying radix tree */
 	if (TidStoreIsShared(ts))
+	{
 		shared_ts_free(ts->tree.shared);
+
+		dsa_detach(ts->area);
+	}
 	else
 		local_ts_free(ts->tree.local);
 
@@ -418,6 +464,17 @@ TidStoreMemoryUsage(TidStore *ts)
 		return shared_ts_memory_usage(ts->tree.shared);
 	else
 		return local_ts_memory_usage(ts->tree.local);
+}
+
+/*
+ * Return the DSA area where the TidStore lives.
+ */
+dsa_area *
+TidStoreGetDSA(TidStore *ts)
+{
+	Assert(TidStoreIsShared(ts));
+
+	return ts->area;
 }
 
 dsa_pointer
