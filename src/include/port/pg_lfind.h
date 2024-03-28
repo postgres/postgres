@@ -80,6 +80,24 @@ pg_lfind8_le(uint8 key, uint8 *base, uint32 nelem)
 	return false;
 }
 
+/*
+ * pg_lfind32_one_by_one_helper
+ *
+ * Searches the array of integers one-by-one.  The caller is responsible for
+ * ensuring that there are at least "nelem" integers in the array.
+ */
+static inline bool
+pg_lfind32_one_by_one_helper(uint32 key, const uint32 *base, uint32 nelem)
+{
+	for (uint32 i = 0; i < nelem; i++)
+	{
+		if (key == base[i])
+			return true;
+	}
+
+	return false;
+}
+
 #ifndef USE_NO_SIMD
 /*
  * pg_lfind32_simd_helper
@@ -88,7 +106,7 @@ pg_lfind8_le(uint8 key, uint8 *base, uint32 nelem)
  * ensuring that there are at least 4-registers-worth of integers remaining.
  */
 static inline bool
-pg_lfind32_simd_helper(const Vector32 keys, uint32 *base)
+pg_lfind32_simd_helper(const Vector32 keys, const uint32 *base)
 {
 	const uint32 nelem_per_vector = sizeof(Vector32) / sizeof(uint32);
 	Vector32	vals1,
@@ -132,11 +150,10 @@ pg_lfind32_simd_helper(const Vector32 keys, uint32 *base)
  * return false.
  */
 static inline bool
-pg_lfind32(uint32 key, uint32 *base, uint32 nelem)
+pg_lfind32(uint32 key, const uint32 *base, uint32 nelem)
 {
-	uint32		i = 0;
-
 #ifndef USE_NO_SIMD
+	uint32		i = 0;
 
 	/*
 	 * For better instruction-level parallelism, each loop iteration operates
@@ -150,25 +167,15 @@ pg_lfind32(uint32 key, uint32 *base, uint32 nelem)
 	const uint32 tail_idx = nelem & ~(nelem_per_iteration - 1);
 
 #if defined(USE_ASSERT_CHECKING)
-	bool		assert_result = false;
-
-	/* pre-compute the result for assert checking */
-	for (int j = 0; j < nelem; j++)
-	{
-		if (key == base[j])
-		{
-			assert_result = true;
-			break;
-		}
-	}
+	bool		assert_result = pg_lfind32_one_by_one_helper(key, base, nelem);
 #endif
 
 	/*
-	 * If there aren't enough elements for the SIMD code, jump to the standard
+	 * If there aren't enough elements for the SIMD code, use the standard
 	 * one-by-one linear search code.
 	 */
 	if (nelem < nelem_per_iteration)
-		goto one_by_one;
+		return pg_lfind32_one_by_one_helper(key, base, nelem);
 
 	/*
 	 * Process as many elements as possible with a block of 4 registers.
@@ -193,27 +200,10 @@ pg_lfind32(uint32 key, uint32 *base, uint32 nelem)
 	 */
 	Assert(assert_result == pg_lfind32_simd_helper(keys, &base[nelem - nelem_per_iteration]));
 	return pg_lfind32_simd_helper(keys, &base[nelem - nelem_per_iteration]);
-
-one_by_one:
-
-#endif							/* ! USE_NO_SIMD */
-
+#else
 	/* Process the elements one at a time. */
-	for (; i < nelem; i++)
-	{
-		if (key == base[i])
-		{
-#ifndef USE_NO_SIMD
-			Assert(assert_result == true);
+	return pg_lfind32_one_by_one_helper(key, base, nelem);
 #endif
-			return true;
-		}
-	}
-
-#ifndef USE_NO_SIMD
-	Assert(assert_result == false);
-#endif
-	return false;
 }
 
 #endif							/* PG_LFIND_H */
