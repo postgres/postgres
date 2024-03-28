@@ -547,6 +547,9 @@ CREATE TABLE i_am_a_failure() USING "I do not exist AM";
 ERROR:  access method "I do not exist AM" does not exist
 CREATE TABLE i_am_a_failure() USING "btree";
 ERROR:  access method "btree" is not of type TABLE
+-- Other weird invalid cases that cause problems
+CREATE FOREIGN TABLE fp PARTITION OF pg_am DEFAULT SERVER x;
+ERROR:  "pg_am" is not partitioned
 -- Drop table access method, which fails as objects depends on it
 DROP ACCESS METHOD heap2;
 ERROR:  cannot drop access method heap2 because other objects depend on it

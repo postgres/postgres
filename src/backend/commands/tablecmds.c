@@ -958,22 +958,26 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	}
 
 	/*
-	 * Select access method to use: an explicitly indicated one, or (in the
-	 * case of a partitioned table) the parent's, if it has one.
+	 * For relations with table AM and partitioned tables, select access
+	 * method to use: an explicitly indicated one, or (in the case of a
+	 * partitioned table) the parent's, if it has one.
 	 */
 	if (stmt->accessMethod != NULL)
-		accessMethodId = get_table_am_oid(stmt->accessMethod, false);
-	else if (stmt->partbound)
 	{
-		Assert(list_length(inheritOids) == 1);
-		accessMethodId = get_rel_relam(linitial_oid(inheritOids));
+		Assert(RELKIND_HAS_TABLE_AM(relkind) || relkind == RELKIND_PARTITIONED_TABLE);
+		accessMethodId = get_table_am_oid(stmt->accessMethod, false);
 	}
-	else
-		accessMethodId = InvalidOid;
+	else if (RELKIND_HAS_TABLE_AM(relkind) || relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		if (stmt->partbound)
+		{
+			Assert(list_length(inheritOids) == 1);
+			accessMethodId = get_rel_relam(linitial_oid(inheritOids));
+		}
 
-	/* still nothing? use the default */
-	if (RELKIND_HAS_TABLE_AM(relkind) && !OidIsValid(accessMethodId))
-		accessMethodId = get_table_am_oid(default_table_access_method, false);
+		if (RELKIND_HAS_TABLE_AM(relkind) && !OidIsValid(accessMethodId))
+			accessMethodId = get_table_am_oid(default_table_access_method, false);
+	}
 
 	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in
