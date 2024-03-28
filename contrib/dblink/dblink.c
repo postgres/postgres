@@ -1347,25 +1347,16 @@ Datum
 dblink_cancel_query(PG_FUNCTION_ARGS)
 {
 	PGconn	   *conn;
-	PGcancelConn *cancelConn;
 	char	   *msg;
+	TimestampTz endtime;
 
 	dblink_init();
 	conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
-	cancelConn = PQcancelCreate(conn);
-
-	PG_TRY();
-	{
-		if (!PQcancelBlocking(cancelConn))
-			msg = pchomp(PQcancelErrorMessage(cancelConn));
-		else
-			msg = "OK";
-	}
-	PG_FINALLY();
-	{
-		PQcancelFinish(cancelConn);
-	}
-	PG_END_TRY();
+	endtime = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
+										  30000);
+	msg = libpqsrv_cancel(conn, endtime);
+	if (msg == NULL)
+		msg = "OK";
 
 	PG_RETURN_TEXT_P(cstring_to_text(msg));
 }
