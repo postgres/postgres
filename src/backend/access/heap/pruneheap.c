@@ -435,12 +435,8 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
  * This is OK because a RECENTLY_DEAD tuple preceding a DEAD tuple is really
  * DEAD, our visibility test is just too coarse to detect it.
  *
- * In general, pruning must never leave behind a DEAD tuple that still has
- * tuple storage.  VACUUM isn't prepared to deal with that case.  That's why
- * VACUUM prunes the same heap page a second time (without dropping its lock
- * in the interim) when it sees a newly DEAD tuple that we initially saw as
- * in-progress.  Retrying pruning like this can only happen when an inserting
- * transaction concurrently aborts.
+ * Pruning must never leave behind a DEAD tuple that still has tuple storage.
+ * VACUUM isn't prepared to deal with that case.
  *
  * The root line pointer is redirected to the tuple immediately after the
  * latest DEAD tuple.  If all tuples in the chain are DEAD, the root line
