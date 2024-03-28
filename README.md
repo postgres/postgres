@@ -70,8 +70,17 @@ FUNCTION pg_tde_set_master_key (
 ```sql
 SELECT pg_tde_set_master_key('my-master-key','file');
 ```
-You are all set to create encrypted tables using `pg_tde`.
 
+7. You are all set to create encrypted tables. For that, specify `USING pg_tde` in the `CREATE TABLE` statement.
+**For example**:
+```sql
+CREATE TABLE albums (
+    album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    artist_id INTEGER,
+    title TEXT NOT NULL,
+    released DATE NOT NULL
+) USING pg_tde;
+```
 
 ## Build from source
 
