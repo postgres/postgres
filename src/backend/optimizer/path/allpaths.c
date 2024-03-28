@@ -2180,9 +2180,9 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 
 	/*
 	 * We set the cheapest-path fields immediately, just in case they were
-	 * pointing at some discarded path.  This is redundant when we're called
-	 * from set_rel_size(), but not when called from elsewhere, and doing it
-	 * twice is harmless anyway.
+	 * pointing at some discarded path.  This is redundant in current usage
+	 * because set_rel_pathlist will do it later, but it's cheap so we keep it
+	 * for safety and consistency with mark_dummy_rel.
 	 */
 	set_cheapest(rel);
 }
