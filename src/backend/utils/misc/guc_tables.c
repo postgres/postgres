@@ -494,6 +494,7 @@ extern const struct config_enum_entry dynamic_shared_memory_options[];
 /*
  * GUC option variables that are exported from this module
  */
+bool		AllowAlterSystem = true;
 bool		log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
@@ -1038,6 +1039,22 @@ struct config_bool ConfigureNamesBool[] =
 		},
 		&current_role_is_superuser,
 		false,
+		NULL, NULL, NULL
+	},
+	{
+		/*
+		 * This setting itself cannot be set by ALTER SYSTEM to avoid an
+		 * operator turning this setting off by using ALTER SYSTEM, without a
+		 * way to turn it back on.
+		 */
+		{"allow_alter_system", PGC_SIGHUP, COMPAT_OPTIONS_OTHER,
+			gettext_noop("Allows running the ALTER SYSTEM command."),
+			gettext_noop("Can be set to off for environments where global configuration "
+						 "changes should be made using a different method."),
+			GUC_DISALLOW_IN_AUTO_FILE
+		},
+		&AllowAlterSystem,
+		true,
 		NULL, NULL, NULL
 	},
 	{

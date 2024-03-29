@@ -805,6 +805,7 @@
 # - Other Platforms and Clients -
 
 #transform_null_equals = off
+#allow_alter_system = on
 
 
 #------------------------------------------------------------------------------

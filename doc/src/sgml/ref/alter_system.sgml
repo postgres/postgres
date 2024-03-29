@@ -104,12 +104,20 @@ ALTER SYSTEM RESET ALL
 
   <para>
    This command can't be used to set <xref linkend="guc-data-directory"/>,
+   <xref linkend="guc-allow-alter-system"/>,
    nor parameters that are not allowed in <filename>postgresql.conf</filename>
    (e.g., <link linkend="runtime-config-preset">preset options</link>).
   </para>
 
   <para>
    See <xref linkend="config-setting"/> for other ways to set the parameters.
+  </para>
+
+  <para>
+   <literal>ALTER SYSTEM</literal> can be disabled by setting
+   <xref linkend="guc-allow-alter-system"/> to <literal>off</literal>, but this
+   is not a security mechanism (as explained in detail in the documentation for
+   this parameter).
   </para>
  </refsect1>
 

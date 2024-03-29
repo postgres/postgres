@@ -199,7 +199,8 @@ shared_buffers = 128MB
     <para>
      External tools may also
      modify <filename>postgresql.auto.conf</filename>.  It is not
-     recommended to do this while the server is running, since a
+     recommended to do this while the server is running unless <xref
+     linkend="guc-allow-alter-system"/> is set to <literal>off</literal>, since a
      concurrent <command>ALTER SYSTEM</command> command could overwrite
      such changes.  Such tools might simply append new settings to the end,
      or they might choose to remove duplicate settings and/or comments
@@ -10763,6 +10764,54 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
        <para>
         Refer to <xref linkend="functions-comparison"/> for related information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-allow-alter-system" xreflabel="allow_alter_system">
+      <term><varname>allow_alter_system</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>allow_alter_system</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When <literal>allow_alter_system</literal> is set to
+        <literal>off</literal>, an error is returned if the <command>ALTER
+        SYSTEM</command> command is executed. This parameter can only be set in
+        the <filename>postgresql.conf</filename> file or on the server command
+        line. The default value is <literal>on</literal>.
+       </para>
+
+       <para>
+        Note that this setting must not be regarded as a security feature. It
+        only disables the <literal>ALTER SYSTEM</literal> command. It does not
+        prevent a superuser from changing the configuration using other SQL
+        commands. A superuser has many ways of executing shell commands at
+        the operating system level, and can therefore modify
+        <literal>postgresql.auto.conf</literal> regardless of the value of
+        this setting.
+       </para>
+
+       <para>
+        Turning this setting off is intended for environments where the
+        configuration of <productname>PostgreSQL</productname> is managed by
+        some external tool.
+        In such environments, a well intentioned superuser might
+        <emphasis>mistakenly</emphasis> use <command>ALTER SYSTEM</command>
+        to change the configuration instead of using the external tool.
+        This might result in unintended behavior, such as the external tool
+        overwriting the change at some later point in time when it updates the
+        configuration.
+        Setting this parameter to <literal>off</literal> can
+        help avoid such mistakes.
+       </para>
+
+       <para>
+        This parameter only controls the use of <command>ALTER SYSTEM</command>.
+        The settings stored in <filename>postgresql.auto.conf</filename>
+        take effect even if <literal>allow_alter_system</literal> is set to
+        <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>

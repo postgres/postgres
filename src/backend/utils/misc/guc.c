@@ -4563,6 +4563,11 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	 */
 	name = altersysstmt->setstmt->name;
 
+	if (!AllowAlterSystem)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ALTER SYSTEM is not allowed in this environment")));
+
 	switch (altersysstmt->setstmt->kind)
 	{
 		case VAR_SET_VALUE:
