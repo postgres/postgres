@@ -199,7 +199,7 @@ check_set_block_offsets(PG_FUNCTION_ARGS)
 	TidStoreIterResult *iter_result;
 	int			num_iter_tids = 0;
 	int			num_lookup_tids = 0;
-	BlockNumber prevblkno = 0;;
+	BlockNumber prevblkno = 0;
 
 	/* lookup each member in the verification array */
 	for (int i = 0; i < items.num_tids; i++)

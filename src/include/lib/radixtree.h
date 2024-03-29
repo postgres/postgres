@@ -2499,7 +2499,7 @@ RT_REMOVE_CHILD_4(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PTR
 	}
 	else
 	{
-		int			deletepos = slot - n4->children;;
+		int			deletepos = slot - n4->children;
 
 		Assert(deletepos >= 0);
 		Assert(n4->chunks[deletepos] == chunk);
