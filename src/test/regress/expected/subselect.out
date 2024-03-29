@@ -1977,7 +1977,7 @@ select * from x for update;
    Output: subselect_tbl.f1, subselect_tbl.f2, subselect_tbl.f3
 (2 rows)
 
--- Pull-up the direct-correlated ANY_SUBLINK
+-- Pull up direct-correlated ANY_SUBLINKs
 explain (costs off)
 select * from tenk1 A where hundred in (select hundred from tenk2 B where B.odd = A.odd);
                          QUERY PLAN                         
@@ -2009,7 +2009,7 @@ WHERE c.odd = b.odd));
 (8 rows)
 
 -- we should only try to pull up the sublink into RHS of a left join
--- but a.hundred is not avaiable.
+-- but a.hundred is not available.
 explain (costs off)
 SELECT * FROM tenk1 A LEFT JOIN tenk2 B
 ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
@@ -2026,7 +2026,7 @@ ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
 (8 rows)
 
 -- we should only try to pull up the sublink into RHS of a left join
--- but a.odd is not avaiable for this.
+-- but a.odd is not available for this.
 explain (costs off)
 SELECT * FROM tenk1 A LEFT JOIN tenk2 B
 ON B.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = a.odd);
@@ -2042,7 +2042,7 @@ ON B.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = a.odd);
            Filter: (odd = a.odd)
 (8 rows)
 
--- should be able to pull up since all the references is available
+-- should be able to pull up since all the references are available.
 explain (costs off)
 SELECT * FROM tenk1 A LEFT JOIN tenk2 B
 ON B.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
@@ -2063,7 +2063,8 @@ ON B.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
 -- we can pull up the sublink into the inner JoinExpr.
 explain (costs off)
 SELECT * FROM tenk1 A INNER JOIN tenk2 B
-ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
+ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd)
+WHERE a.thousand < 750;
                    QUERY PLAN                    
 -------------------------------------------------
  Hash Join
@@ -2071,13 +2072,14 @@ ON A.hundred in (SELECT c.hundred FROM tenk2 C WHERE c.odd = b.odd);
    ->  Hash Join
          Hash Cond: (a.hundred = c.hundred)
          ->  Seq Scan on tenk1 a
+               Filter: (thousand < 750)
          ->  Hash
                ->  HashAggregate
                      Group Key: c.odd, c.hundred
                      ->  Seq Scan on tenk2 c
    ->  Hash
          ->  Seq Scan on tenk2 b
-(11 rows)
+(12 rows)
 
 -- we can pull up the aggregate sublink into RHS of a left join.
 explain (costs off)
