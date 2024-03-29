@@ -25,13 +25,13 @@
   collcollate => 'POSIX', collctype => 'POSIX' },
 { oid => '962', descr => 'sorts by Unicode code point, C character semantics',
   collname => 'ucs_basic', collprovider => 'b', collencoding => '6',
-  colllocale => 'C' },
+  colllocale => 'C', collversion => '1' },
 { oid => '963',
   descr => 'sorts using the Unicode Collation Algorithm with default settings',
   collname => 'unicode', collprovider => 'i', collencoding => '-1',
   colllocale => 'und' },
 { oid => '811', descr => 'sorts by Unicode code point; Unicode and POSIX character semantics',
   collname => 'pg_c_utf8', collprovider => 'b', collencoding => '6',
-  colllocale => 'C.UTF-8' },
+  colllocale => 'C.UTF-8', collversion => '1' },
 
 ]

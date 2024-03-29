@@ -1732,13 +1732,23 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 
 	/*
 	 * The only two supported locales (C and C.UTF-8) are both based on memcmp
-	 * and are not expected to change.
+	 * and are not expected to change, but track the version anyway.
 	 *
 	 * Note that the character semantics may change for some locales, but the
 	 * collation version only tracks changes to sort order.
 	 */
 	if (collprovider == COLLPROVIDER_BUILTIN)
-		return NULL;
+	{
+		if (strcmp(collcollate, "C") == 0)
+			return "1";
+		else if (strcmp(collcollate, "C.UTF-8") == 0)
+			return "1";
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid locale name \"%s\" for builtin provider",
+							collcollate)));
+	}
 
 #ifdef USE_ICU
 	if (collprovider == COLLPROVIDER_ICU)
