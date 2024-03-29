@@ -54,6 +54,17 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
        sudo systemctl restart postgresql-16
        ```
 
+7. You are all set to create encrypted tables. For that, specify `USING pg_tde` in the `CREATE TABLE` statement.
+**For example**:
+```sql
+CREATE TABLE albums (
+    album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    artist_id INTEGER,
+    title TEXT NOT NULL,
+    released DATE NOT NULL
+) USING pg_tde;
+```
+
 ## Keyring configuration
 
 Create the keyring configuration file with the following contents:
