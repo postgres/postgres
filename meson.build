@@ -1,6 +1,18 @@
 
 curldep = dependency('libcurl')
 
+pg_tde_version = 'Alpha 1.0'
+
+conf_data = configuration_data()
+conf_data.set_quoted('PACKAGE_NAME', 'pg_tde')
+conf_data.set_quoted('PACKAGE_BUGREPORT', 'https://github.com/Percona-Lab/pg_tde/issues')
+conf_data.set_quoted('PACKAGE_VERSION', pg_tde_version)
+conf_data.set_quoted('PACKAGE_STRING', 'pg_tde ' + pg_tde_version)
+conf_data.set_quoted('PACKAGE_TARNAME', 'pg_tde')
+
+configure_file(output : 'config.h',
+               configuration : conf_data)
+
 pg_tde_sources = files(
         'src/pg_tde.c',
         'src/transam/pg_tde_xact_handler.c',
@@ -30,10 +42,11 @@ pg_tde_sources = files(
         'src/catalog/tde_master_key.c',
         'src/common/pg_tde_shmem.c',
         'src/common/pg_tde_utils.c',
+        'src/pg_tde_defs.c',
         'src/pg_tde.c',
 )
 
-incdir = include_directories('src/include')
+incdir = include_directories('src/include', '.')
 
 deps_update = {'dependencies': contrib_mod_args.get('dependencies') + [curldep]}
 

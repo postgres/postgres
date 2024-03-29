@@ -43,6 +43,7 @@ src/catalog/tde_keyring.o \
 src/catalog/tde_master_key.o \
 src/common/pg_tde_shmem.o \
 src/common/pg_tde_utils.o \
+src/pg_tde_defs.o \
 src/pg_tde.o
 
 override PG_CPPFLAGS += @tde_CPPFLAGS@

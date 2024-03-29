@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 # configure.ac
 
-AC_INIT([pg_tde], [0.1-mvp], [https://github.com/Percona-Lab/pg_tde/issues])
+AC_INIT([pg_tde], [Alpha 1.0], [https://github.com/Percona-Lab/pg_tde/issues], [pg_tde])
 
 AC_CANONICAL_HOST
 
@@ -43,6 +43,8 @@ AC_DEFUN([REQUIRE_LIB], [ {
 	])
 } ] )
 
+ AC_CONFIG_HEADERS(src/include/config.h)
+ 
 #=======================================
 
 REQUIRE_LIB(libcurl, curl, curl, curl_easy_setopt, curl, curl/curl.h)

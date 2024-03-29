@@ -12,4 +12,4 @@ typedef void (*pg_tde_on_ext_install_callback)(int tde_tbl_count, void* arg);
 
 extern void on_ext_install(pg_tde_on_ext_install_callback function, void* arg);
 
-#endif /*PG_TDE_UTILS_H*/
+#endif /*PG_TDE_H*/

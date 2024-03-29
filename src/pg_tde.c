@@ -29,6 +29,8 @@
 #include "catalog/tde_master_key.h"
 #include "keyring/keyring_file.h"
 #include "keyring/keyring_vault.h"
+#include "utils/builtins.h"
+#include "pg_tde_defs.h"
 
 #define MAX_ON_INSTALLS 5
 
@@ -45,12 +47,13 @@ static int on_ext_install_index = 0;
 static void run_extension_install_callbacks(void);
 void _PG_init(void);
 Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS);
+Datum pg_tde_version(PG_FUNCTION_ARGS);
 
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
 static shmem_request_hook_type prev_shmem_request_hook = NULL;
 
 PG_FUNCTION_INFO_V1(pg_tde_extension_initialize);
-
+PG_FUNCTION_INFO_V1(pg_tde_version);
 static void
 tde_shmem_request(void)
 {
@@ -143,4 +146,11 @@ run_extension_install_callbacks(void)
 	for (i = 0; i < on_ext_install_index; i++)
 		on_ext_install_list[i]
 			.function(tde_table_count, on_ext_install_list[i].arg);
+}
+
+/* Returns package version */
+Datum
+pg_tde_version(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TEXT_P(cstring_to_text(pg_tde_package_string()));
 }
