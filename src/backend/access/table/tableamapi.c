@@ -13,9 +13,11 @@
 
 #include "access/tableam.h"
 #include "access/xact.h"
+#include "catalog/pg_am.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "utils/guc_hooks.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -96,6 +98,29 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->scan_sample_next_tuple != NULL);
 
 	return routine;
+}
+
+/*
+ * GetTableAmRoutineByAmOid
+ *		Given the table access method oid get its TableAmRoutine struct, which
+ *		will be palloc'd in the caller's memory context.
+ */
+const TableAmRoutine *
+GetTableAmRoutineByAmOid(Oid amoid)
+{
+	HeapTuple	ht_am;
+	Form_pg_am	amrec;
+	const TableAmRoutine *tableam = NULL;
+
+	ht_am = SearchSysCache1(AMOID, ObjectIdGetDatum(amoid));
+	if (!HeapTupleIsValid(ht_am))
+		elog(ERROR, "cache lookup failed for access method %u",
+			 amoid);
+	amrec = (Form_pg_am) GETSTRUCT(ht_am);
+
+	tableam = GetTableAmRoutine(amrec->amhandler);
+	ReleaseSysCache(ht_am);
+	return tableam;
 }
 
 /* check_hook: validate new default_table_access_method */

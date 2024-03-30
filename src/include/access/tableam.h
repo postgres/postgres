@@ -737,6 +737,28 @@ typedef struct TableAmRoutine
 											   int32 slicelength,
 											   struct varlena *result);
 
+	/*
+	 * This callback parses and validates the reloptions array for a table.
+	 *
+	 * This is called only when a non-null reloptions array exists for the
+	 * table.  'reloptions' is a text array containing entries of the form
+	 * "name=value".  The function should construct a bytea value, which will
+	 * be copied into the rd_options field of the table's relcache entry. The
+	 * data contents of the bytea value are open for the access method to
+	 * define.
+	 *
+	 * When 'validate' is true, the function should report a suitable error
+	 * message if any of the options are unrecognized or have invalid values;
+	 * when 'validate' is false, invalid entries should be silently ignored.
+	 * ('validate' is false when loading options already stored in pg_catalog;
+	 * an invalid entry could only be found if the access method has changed
+	 * its rules for options, and in that case ignoring obsolete entries is
+	 * appropriate.)
+	 *
+	 * It is OK to return NULL if default behavior is wanted.
+	 */
+	bytea	   *(*reloptions) (char relkind, Datum reloptions, bool validate);
+
 
 	/* ------------------------------------------------------------------------
 	 * Planner related functions.
@@ -1925,6 +1947,26 @@ table_relation_fetch_toast_slice(Relation toastrel, Oid valueid,
 													 result);
 }
 
+/*
+ * Parse options for given table.
+ */
+static inline bytea *
+table_reloptions(Relation rel, char relkind,
+				 Datum reloptions, bool validate)
+{
+	return rel->rd_tableam->reloptions(relkind, reloptions, validate);
+}
+
+/*
+ * Parse table options without knowledge of particular table.
+ */
+static inline bytea *
+tableam_reloptions(const TableAmRoutine *tableam, char relkind,
+				   Datum reloptions, bool validate)
+{
+	return tableam->reloptions(relkind, reloptions, validate);
+}
+
 
 /* ----------------------------------------------------------------------------
  * Planner related functionality
@@ -2102,6 +2144,7 @@ extern void table_block_relation_estimate_size(Relation rel,
  */
 
 extern const TableAmRoutine *GetTableAmRoutine(Oid amhandler);
+extern const TableAmRoutine *GetTableAmRoutineByAmOid(Oid amoid);
 
 /* ----------------------------------------------------------------------------
  * Functions in heapam_handler.c
