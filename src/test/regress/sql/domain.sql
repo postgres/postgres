@@ -839,6 +839,18 @@ alter domain testdomain1 rename constraint unsigned to unsigned_foo;
 alter domain testdomain1 drop constraint unsigned_foo;
 drop domain testdomain1;
 
+--
+-- Get the base type of a domain
+--
+create domain mytext as text;
+create domain mytext_child_1 as mytext;
+
+select pg_basetype('mytext'::regtype);
+select pg_basetype('mytext_child_1'::regtype);
+select pg_basetype(1);  -- expect NULL not error
+
+drop domain mytext cascade;
+
 
 --
 -- Information schema
