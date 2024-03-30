@@ -1251,8 +1251,10 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_ReturningSlot = NULL;
 	resultRelInfo->ri_TrigOldSlot = NULL;
 	resultRelInfo->ri_TrigNewSlot = NULL;
-	resultRelInfo->ri_matchedMergeAction = NIL;
-	resultRelInfo->ri_notMatchedMergeAction = NIL;
+	resultRelInfo->ri_MergeActions[MERGE_WHEN_MATCHED] = NIL;
+	resultRelInfo->ri_MergeActions[MERGE_WHEN_NOT_MATCHED_BY_SOURCE] = NIL;
+	resultRelInfo->ri_MergeActions[MERGE_WHEN_NOT_MATCHED_BY_TARGET] = NIL;
+	resultRelInfo->ri_MergeJoinCondition = NULL;
 
 	/*
 	 * Only ExecInitPartitionInfo() and ExecInitPartitionDispatchInfo() pass

@@ -1338,7 +1338,26 @@ END;
 
 \sf merge_sf_test
 
+CREATE FUNCTION merge_sf_test2()
+ RETURNS void
+ LANGUAGE sql
+BEGIN ATOMIC
+ MERGE INTO sf_target t
+   USING rule_merge1 s
+   ON (s.a = t.id)
+WHEN NOT MATCHED
+   THEN INSERT (data, id)
+   VALUES (s.a, s.a)
+WHEN MATCHED
+   THEN UPDATE SET data = s.b
+WHEN NOT MATCHED BY SOURCE
+   THEN DELETE;
+END;
+
+\sf merge_sf_test2
+
 DROP FUNCTION merge_sf_test;
+DROP FUNCTION merge_sf_test2;
 DROP TABLE sf_target;
 
 --

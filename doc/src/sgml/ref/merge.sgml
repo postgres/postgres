@@ -34,7 +34,8 @@ USING <replaceable class="parameter">data_source</replaceable> ON <replaceable c
 <phrase>and <replaceable class="parameter">when_clause</replaceable> is:</phrase>
 
 { WHEN MATCHED [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_update</replaceable> | <replaceable class="parameter">merge_delete</replaceable> | DO NOTHING } |
-  WHEN NOT MATCHED [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_insert</replaceable> | DO NOTHING } }
+  WHEN NOT MATCHED BY SOURCE [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_update</replaceable> | <replaceable class="parameter">merge_delete</replaceable> | DO NOTHING } |
+  WHEN NOT MATCHED [ BY TARGET ] [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_insert</replaceable> | DO NOTHING } }
 
 <phrase>and <replaceable class="parameter">merge_insert</replaceable> is:</phrase>
 
@@ -73,7 +74,9 @@ DELETE
    from <replaceable class="parameter">data_source</replaceable> to
    the target table
    producing zero or more candidate change rows.  For each candidate change
-   row, the status of <literal>MATCHED</literal> or <literal>NOT MATCHED</literal>
+   row, the status of <literal>MATCHED</literal>,
+   <literal>NOT MATCHED BY SOURCE</literal>,
+   or <literal>NOT MATCHED [BY TARGET]</literal>
    is set just once, after which <literal>WHEN</literal> clauses are evaluated
    in the order specified.  For each candidate change row, the first clause to
    evaluate as true is executed.  No more than one <literal>WHEN</literal>
@@ -257,6 +260,16 @@ DELETE
        only reference the target table's
        columns can affect which action is taken, often in surprising ways.
       </para>
+      <para>
+       If both <literal>WHEN NOT MATCHED BY SOURCE</literal> and
+       <literal>WHEN NOT MATCHED [BY TARGET]</literal> clauses are specified,
+       the <command>MERGE</command> command will perform a <literal>FULL</literal>
+       join between <replaceable class="parameter">data_source</replaceable>
+       and the target table.  For this to work, at least one
+       <replaceable class="parameter">join_condition</replaceable> subexpression
+       must use an operator that can support a hash join, or all of the
+       subexpressions must use operators that can support a merge join.
+      </para>
      </warning>
     </listitem>
    </varlistentry>
@@ -268,18 +281,40 @@ DELETE
       At least one <literal>WHEN</literal> clause is required.
      </para>
      <para>
+      The <literal>WHEN</literal> clause may specify <literal>WHEN MATCHED</literal>,
+      <literal>WHEN NOT MATCHED BY SOURCE</literal>, or
+      <literal>WHEN NOT MATCHED [BY TARGET]</literal>.
+      Note that the <acronym>SQL</acronym> standard only defines
+      <literal>WHEN MATCHED</literal> and <literal>WHEN NOT MATCHED</literal>
+      (which is defined to mean no matching target row).
+      <literal>WHEN NOT MATCHED BY SOURCE</literal> is an extension to the
+      <acronym>SQL</acronym> standard, as is the option to append
+      <literal>BY TARGET</literal> to <literal>WHEN NOT MATCHED</literal>, to
+      make its meaning more explicit.
+     </para>
+     <para>
       If the <literal>WHEN</literal> clause specifies <literal>WHEN MATCHED</literal>
       and the candidate change row matches a row in the
-      target table,
-      the <literal>WHEN</literal> clause is executed if the
+      <replaceable class="parameter">data_source</replaceable> to a row in the
+      target table, the <literal>WHEN</literal> clause is executed if the
       <replaceable class="parameter">condition</replaceable> is
       absent or it evaluates to <literal>true</literal>.
      </para>
      <para>
-      Conversely, if the <literal>WHEN</literal> clause specifies
-      <literal>WHEN NOT MATCHED</literal>
-      and the candidate change row does not match a row in the
-      target table,
+      If the <literal>WHEN</literal> clause specifies
+      <literal>WHEN NOT MATCHED BY SOURCE</literal> and the candidate change
+      row represents a row in the target table that does not match a row in the
+      <replaceable class="parameter">data_source</replaceable>, the
+      <literal>WHEN</literal> clause is executed if the
+      <replaceable class="parameter">condition</replaceable> is
+      absent or it evaluates to <literal>true</literal>.
+     </para>
+     <para>
+      If the <literal>WHEN</literal> clause specifies
+      <literal>WHEN NOT MATCHED [BY TARGET]</literal> and the candidate change
+      row represents a row in the
+      <replaceable class="parameter">data_source</replaceable> that does not
+      match a row in the target table,
       the <literal>WHEN</literal> clause is executed if the
       <replaceable class="parameter">condition</replaceable> is
       absent or it evaluates to <literal>true</literal>.
@@ -299,7 +334,10 @@ DELETE
      <para>
       A condition on a <literal>WHEN MATCHED</literal> clause can refer to columns
       in both the source and the target relations. A condition on a
-      <literal>WHEN NOT MATCHED</literal> clause can only refer to columns from
+      <literal>WHEN NOT MATCHED BY SOURCE</literal> clause can only refer to
+      columns from the target relation, since by definition there is no matching
+      source row. A condition on a <literal>WHEN NOT MATCHED [BY TARGET]</literal>
+      clause can only refer to columns from
       the source relation, since by definition there is no matching target row.
       Only the system attributes from the target table are accessible.
      </para>
@@ -423,8 +461,10 @@ DELETE
       <literal>WHEN MATCHED</literal> clause, the expression can use values
       from the original row in the target table, and values from the
       <replaceable class="parameter">data_source</replaceable> row.
-      If used in a <literal>WHEN NOT MATCHED</literal> clause, the
-      expression can use values from the
+      If used in a <literal>WHEN NOT MATCHED BY SOURCE</literal> clause, the
+      expression can only use values from the original row in the target table.
+      If used in a <literal>WHEN NOT MATCHED [BY TARGET]</literal> clause, the
+      expression can only use values from the
       <replaceable class="parameter">data_source</replaceable> row.
      </para>
     </listitem>
@@ -449,9 +489,12 @@ DELETE
       sub-query must yield no more than one row when executed.  If it
       yields one row, its column values are assigned to the target columns;
       if it yields no rows, NULL values are assigned to the target columns.
-      The sub-query can refer to values from the original row in the target table,
-      and values from the <replaceable class="parameter">data_source</replaceable>
-      row.
+      If used in a <literal>WHEN MATCHED</literal> clause, the sub-query can
+      refer to values from the original row in the target table, and values
+      from the <replaceable class="parameter">data_source</replaceable> row.
+      If used in a <literal>WHEN NOT MATCHED BY SOURCE</literal> clause, the
+      sub-query can only refer to values from the original row in the target
+      table.
      </para>
     </listitem>
    </varlistentry>
@@ -535,8 +578,9 @@ MERGE <replaceable class="parameter">total_count</replaceable>
        <orderedlist>
         <listitem>
          <para>
-          Evaluate whether each row is <literal>MATCHED</literal> or
-          <literal>NOT MATCHED</literal>.
+          Evaluate whether each row is <literal>MATCHED</literal>,
+          <literal>NOT MATCHED BY SOURCE</literal>, or
+          <literal>NOT MATCHED [BY TARGET]</literal>.
          </para>
         </listitem>
         <listitem>
@@ -615,7 +659,8 @@ MERGE <replaceable class="parameter">total_count</replaceable>
   <para>
    If a <literal>WHEN</literal> clause omits an <literal>AND</literal>
    sub-clause, it becomes the final reachable clause of that
-   kind (<literal>MATCHED</literal> or <literal>NOT MATCHED</literal>).
+   kind (<literal>MATCHED</literal>, <literal>NOT MATCHED BY SOURCE</literal>,
+   or <literal>NOT MATCHED [BY TARGET]</literal>).
    If a later <literal>WHEN</literal> clause of that kind
    is specified it would be provably unreachable and an error is raised.
    If no final reachable clause is specified of either kind, it is
@@ -701,6 +746,23 @@ RETURNING merge_action(), w.*;
    temporary table recently loaded into the database.
   </para>
 
+  <para>
+   Update <literal>wines</literal> based on a replacement wine list, inserting
+   rows for any new stock, updating modified stock entries, and deleting any
+   wines not present in the new list.
+<programlisting>
+MERGE INTO wines w
+USING new_wine_list s
+ON s.winename = w.winename
+WHEN NOT MATCHED BY TARGET THEN
+  INSERT VALUES(s.winename, s.stock)
+WHEN MATCHED AND w.stock != s.stock THEN
+  UPDATE SET stock = s.stock
+WHEN NOT MATCHED BY SOURCE THEN
+  DELETE;
+</programlisting>
+  </para>
+
  </refsect1>
 
  <refsect1>
@@ -709,7 +771,9 @@ RETURNING merge_action(), w.*;
     This command conforms to the <acronym>SQL</acronym> standard.
   </para>
    <para>
-    The <literal>WITH</literal> clause, <literal>DO NOTHING</literal> action,
+    The <literal>WITH</literal> clause, <literal>BY SOURCE</literal> and
+    <literal>BY TARGET</literal> qualifiers to
+    <literal>WHEN NOT MATCHED</literal>, <literal>DO NOTHING</literal> action,
     and <literal>RETURNING</literal> clause are extensions to the
     <acronym>SQL</acronym> standard.
   </para>

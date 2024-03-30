@@ -1875,10 +1875,18 @@ typedef struct BooleanTest
  *
  * Transformed representation of a WHEN clause in a MERGE statement
  */
+
+typedef enum MergeMatchKind
+{
+	MERGE_WHEN_MATCHED,
+	MERGE_WHEN_NOT_MATCHED_BY_SOURCE,
+	MERGE_WHEN_NOT_MATCHED_BY_TARGET
+} MergeMatchKind;
+
 typedef struct MergeAction
 {
 	NodeTag		type;
-	bool		matched;		/* true=MATCHED, false=NOT MATCHED */
+	MergeMatchKind matchKind;	/* MATCHED/NOT MATCHED BY SOURCE/TARGET */
 	CmdType		commandType;	/* INSERT/UPDATE/DELETE/DO NOTHING */
 	/* OVERRIDING clause */
 	OverridingKind override pg_node_attr(query_jumble_ignore);

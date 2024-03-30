@@ -2701,6 +2701,8 @@ query_tree_walker_impl(Query *query,
 		return true;
 	if (WALK(query->mergeActionList))
 		return true;
+	if (WALK(query->mergeJoinCondition))
+		return true;
 	if (WALK(query->returningList))
 		return true;
 	if (WALK(query->jointree))
@@ -3752,6 +3754,7 @@ query_tree_mutator_impl(Query *query,
 	MUTATE(query->withCheckOptions, query->withCheckOptions, List *);
 	MUTATE(query->onConflict, query->onConflict, OnConflictExpr *);
 	MUTATE(query->mergeActionList, query->mergeActionList, List *);
+	MUTATE(query->mergeJoinCondition, query->mergeJoinCondition, Node *);
 	MUTATE(query->returningList, query->returningList, List *);
 	MUTATE(query->jointree, query->jointree, FromExpr *);
 	MUTATE(query->setOperations, query->setOperations, Node *);

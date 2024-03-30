@@ -2372,6 +2372,8 @@ typedef struct ModifyTablePath
 	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
 	List	   *mergeActionLists;	/* per-target-table lists of actions for
 									 * MERGE */
+	List	   *mergeJoinConditions;	/* per-target-table join conditions
+										 * for MERGE */
 } ModifyTablePath;
 
 /*

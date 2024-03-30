@@ -544,9 +544,11 @@ typedef struct ResultRelInfo
 	/* ON CONFLICT evaluation state */
 	OnConflictSetState *ri_onConflict;
 
-	/* for MERGE, lists of MergeActionState */
-	List	   *ri_matchedMergeAction;
-	List	   *ri_notMatchedMergeAction;
+	/* for MERGE, lists of MergeActionState (one per MergeMatchKind) */
+	List	   *ri_MergeActions[3];
+
+	/* for MERGE, expr state for checking the join condition */
+	ExprState  *ri_MergeJoinCondition;
 
 	/* partition check expression state (NULL if not set up yet) */
 	ExprState  *ri_PartitionCheckExpr;
@@ -1400,6 +1402,13 @@ typedef struct ModifyTableState
 
 	/* For MERGE, the action currently being executed */
 	MergeActionState *mt_merge_action;
+
+	/*
+	 * For MERGE, if there is a pending NOT MATCHED [BY TARGET] action to be
+	 * performed, this will be the last tuple read from the subplan; otherwise
+	 * it will be NULL --- see the comments in ExecMerge().
+	 */
+	TupleTableSlot *mt_merge_pending_not_matched;
 
 	/* tuple counters for MERGE */
 	double		mt_merge_inserted;

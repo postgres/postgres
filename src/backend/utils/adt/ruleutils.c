@@ -7112,6 +7112,7 @@ get_merge_query_def(Query *query, deparse_context *context,
 	StringInfo	buf = context->buf;
 	RangeTblEntry *rte;
 	ListCell   *lc;
+	bool		haveNotMatchedBySource;
 
 	/* Insert the WITH clause if given */
 	get_with_clause(query, context);
@@ -7137,7 +7138,26 @@ get_merge_query_def(Query *query, deparse_context *context,
 	get_from_clause(query, " USING ", context);
 	appendContextKeyword(context, " ON ",
 						 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
-	get_rule_expr(query->jointree->quals, context, false);
+	get_rule_expr(query->mergeJoinCondition, context, false);
+
+	/*
+	 * Test for any NOT MATCHED BY SOURCE actions.  If there are none, then
+	 * any NOT MATCHED BY TARGET actions are output as "WHEN NOT MATCHED", per
+	 * SQL standard.  Otherwise, we have a non-SQL-standard query, so output
+	 * "BY SOURCE" / "BY TARGET" qualifiers for all NOT MATCHED actions, to be
+	 * more explicit.
+	 */
+	haveNotMatchedBySource = false;
+	foreach(lc, query->mergeActionList)
+	{
+		MergeAction *action = lfirst_node(MergeAction, lc);
+
+		if (action->matchKind == MERGE_WHEN_NOT_MATCHED_BY_SOURCE)
+		{
+			haveNotMatchedBySource = true;
+			break;
+		}
+	}
 
 	/* Print each merge action */
 	foreach(lc, query->mergeActionList)
@@ -7146,7 +7166,24 @@ get_merge_query_def(Query *query, deparse_context *context,
 
 		appendContextKeyword(context, " WHEN ",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
-		appendStringInfo(buf, "%sMATCHED", action->matched ? "" : "NOT ");
+		switch (action->matchKind)
+		{
+			case MERGE_WHEN_MATCHED:
+				appendStringInfo(buf, "MATCHED");
+				break;
+			case MERGE_WHEN_NOT_MATCHED_BY_SOURCE:
+				appendStringInfo(buf, "NOT MATCHED BY SOURCE");
+				break;
+			case MERGE_WHEN_NOT_MATCHED_BY_TARGET:
+				if (haveNotMatchedBySource)
+					appendStringInfo(buf, "NOT MATCHED BY TARGET");
+				else
+					appendStringInfo(buf, "NOT MATCHED");
+				break;
+			default:
+				elog(ERROR, "unrecognized matchKind: %d",
+					 (int) action->matchKind);
+		}
 
 		if (action->qual)
 		{

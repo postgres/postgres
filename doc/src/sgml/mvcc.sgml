@@ -394,10 +394,14 @@
     conditions for each action are re-evaluated on the updated version of
     the row, starting from the first action, even if the action that had
     originally matched appears later in the list of actions.
-    On the other hand, if the row is concurrently updated or deleted so
-    that the join condition fails, then <command>MERGE</command> will
-    evaluate the condition's <literal>NOT MATCHED</literal> actions next,
-    and execute the first one that succeeds.
+    On the other hand, if the row is concurrently updated so that the join
+    condition fails, then <command>MERGE</command> will evaluate the
+    command's <literal>NOT MATCHED BY SOURCE</literal> and
+    <literal>NOT MATCHED [BY TARGET]</literal> actions next, and execute
+    the first one of each kind that succeeds.
+    If the row is concurrently deleted, then <command>MERGE</command>
+    will evaluate the command's <literal>NOT MATCHED [BY TARGET]</literal>
+    actions, and execute the first one that succeeds.
     If <command>MERGE</command> attempts an <command>INSERT</command>
     and a unique index is present and a duplicate row is concurrently
     inserted, then a uniqueness violation error is raised;

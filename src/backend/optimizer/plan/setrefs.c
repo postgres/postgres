@@ -1143,7 +1143,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 */
 				if (splan->mergeActionLists != NIL)
 				{
+					List	   *newMJC = NIL;
 					ListCell   *lca,
+							   *lcj,
 							   *lcr;
 
 					/*
@@ -1164,10 +1166,12 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 
 					itlist = build_tlist_index(subplan->targetlist);
 
-					forboth(lca, splan->mergeActionLists,
-							lcr, splan->resultRelations)
+					forthree(lca, splan->mergeActionLists,
+							 lcj, splan->mergeJoinConditions,
+							 lcr, splan->resultRelations)
 					{
 						List	   *mergeActionList = lfirst(lca);
+						Node	   *mergeJoinCondition = lfirst(lcj);
 						Index		resultrel = lfirst_int(lcr);
 
 						foreach(l, mergeActionList)
@@ -1192,7 +1196,19 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 																  NRM_EQUAL,
 																  NUM_EXEC_QUAL(plan));
 						}
+
+						/* Fix join condition too. */
+						mergeJoinCondition = (Node *)
+							fix_join_expr(root,
+										  (List *) mergeJoinCondition,
+										  NULL, itlist,
+										  resultrel,
+										  rtoffset,
+										  NRM_EQUAL,
+										  NUM_EXEC_QUAL(plan));
+						newMJC = lappend(newMJC, mergeJoinCondition);
 					}
+					splan->mergeJoinConditions = newMJC;
 				}
 
 				splan->nominalRelation += rtoffset;

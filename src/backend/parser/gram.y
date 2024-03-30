@@ -275,6 +275,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	struct SelectLimit *selectlimit;
 	SetQuantifier setquantifier;
 	struct GroupClause *groupclause;
+	MergeMatchKind mergematch;
 	MergeWhenClause *mergewhen;
 	struct KeyActions *keyactions;
 	struct KeyAction *keyaction;
@@ -516,6 +517,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <onconflict> opt_on_conflict
 %type <mergewhen>	merge_insert merge_update merge_delete
 
+%type <mergematch> merge_when_tgt_matched merge_when_tgt_not_matched
 %type <node>	merge_when_clause opt_merge_when_condition
 %type <list>	merge_when_list
 
@@ -770,11 +772,11 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	SAVEPOINT SCALAR SCHEMA SCHEMAS SCROLL SEARCH SECOND_P SECURITY SELECT
 	SEQUENCE SEQUENCES
 	SERIALIZABLE SERVER SESSION SESSION_USER SET SETS SETOF SHARE SHOW
-	SIMILAR SIMPLE SKIP SMALLINT SNAPSHOT SOME SQL_P STABLE STANDALONE_P
+	SIMILAR SIMPLE SKIP SMALLINT SNAPSHOT SOME SOURCE SQL_P STABLE STANDALONE_P
 	START STATEMENT STATISTICS STDIN STDOUT STORAGE STORED STRICT_P STRING_P STRIP_P
 	SUBSCRIPTION SUBSTRING SUPPORT SYMMETRIC SYSID SYSTEM_P SYSTEM_USER
 
-	TABLE TABLES TABLESAMPLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN
+	TABLE TABLES TABLESAMPLE TABLESPACE TARGET TEMP TEMPLATE TEMPORARY TEXT_P THEN
 	TIES TIME TIMESTAMP TO TRAILING TRANSACTION TRANSFORM
 	TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P TYPES_P
@@ -12424,48 +12426,64 @@ merge_when_list:
 			| merge_when_list merge_when_clause		{ $$ = lappend($1,$2); }
 		;
 
+/*
+ * A WHEN clause may be WHEN MATCHED, WHEN NOT MATCHED BY SOURCE, or WHEN NOT
+ * MATCHED [BY TARGET]. The first two cases match target tuples, and support
+ * UPDATE/DELETE/DO NOTHING actions. The third case does not match target
+ * tuples, and only supports INSERT/DO NOTHING actions.
+ */
 merge_when_clause:
-			WHEN MATCHED opt_merge_when_condition THEN merge_update
+			merge_when_tgt_matched opt_merge_when_condition THEN merge_update
 				{
-					$5->matched = true;
-					$5->condition = $3;
+					$4->matchKind = $1;
+					$4->condition = $2;
 
-					$$ = (Node *) $5;
+					$$ = (Node *) $4;
 				}
-			| WHEN MATCHED opt_merge_when_condition THEN merge_delete
+			| merge_when_tgt_matched opt_merge_when_condition THEN merge_delete
 				{
-					$5->matched = true;
-					$5->condition = $3;
+					$4->matchKind = $1;
+					$4->condition = $2;
 
-					$$ = (Node *) $5;
+					$$ = (Node *) $4;
 				}
-			| WHEN NOT MATCHED opt_merge_when_condition THEN merge_insert
+			| merge_when_tgt_not_matched opt_merge_when_condition THEN merge_insert
 				{
-					$6->matched = false;
-					$6->condition = $4;
+					$4->matchKind = $1;
+					$4->condition = $2;
 
-					$$ = (Node *) $6;
+					$$ = (Node *) $4;
 				}
-			| WHEN MATCHED opt_merge_when_condition THEN DO NOTHING
-				{
-					MergeWhenClause *m = makeNode(MergeWhenClause);
-
-					m->matched = true;
-					m->commandType = CMD_NOTHING;
-					m->condition = $3;
-
-					$$ = (Node *) m;
-				}
-			| WHEN NOT MATCHED opt_merge_when_condition THEN DO NOTHING
+			| merge_when_tgt_matched opt_merge_when_condition THEN DO NOTHING
 				{
 					MergeWhenClause *m = makeNode(MergeWhenClause);
 
-					m->matched = false;
+					m->matchKind = $1;
 					m->commandType = CMD_NOTHING;
-					m->condition = $4;
+					m->condition = $2;
 
 					$$ = (Node *) m;
 				}
+			| merge_when_tgt_not_matched opt_merge_when_condition THEN DO NOTHING
+				{
+					MergeWhenClause *m = makeNode(MergeWhenClause);
+
+					m->matchKind = $1;
+					m->commandType = CMD_NOTHING;
+					m->condition = $2;
+
+					$$ = (Node *) m;
+				}
+		;
+
+merge_when_tgt_matched:
+			WHEN MATCHED					{ $$ = MERGE_WHEN_MATCHED; }
+			| WHEN NOT MATCHED BY SOURCE	{ $$ = MERGE_WHEN_NOT_MATCHED_BY_SOURCE; }
+		;
+
+merge_when_tgt_not_matched:
+			WHEN NOT MATCHED				{ $$ = MERGE_WHEN_NOT_MATCHED_BY_TARGET; }
+			| WHEN NOT MATCHED BY TARGET	{ $$ = MERGE_WHEN_NOT_MATCHED_BY_TARGET; }
 		;
 
 opt_merge_when_condition:
@@ -17576,6 +17594,7 @@ unreserved_keyword:
 			| SIMPLE
 			| SKIP
 			| SNAPSHOT
+			| SOURCE
 			| SQL_P
 			| STABLE
 			| STANDALONE_P
@@ -17595,6 +17614,7 @@ unreserved_keyword:
 			| SYSTEM_P
 			| TABLES
 			| TABLESPACE
+			| TARGET
 			| TEMP
 			| TEMPLATE
 			| TEMPORARY
@@ -18206,6 +18226,7 @@ bare_label_keyword:
 			| SMALLINT
 			| SNAPSHOT
 			| SOME
+			| SOURCE
 			| SQL_P
 			| STABLE
 			| STANDALONE_P
@@ -18230,6 +18251,7 @@ bare_label_keyword:
 			| TABLES
 			| TABLESAMPLE
 			| TABLESPACE
+			| TARGET
 			| TEMP
 			| TEMPLATE
 			| TEMPORARY

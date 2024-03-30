@@ -4336,17 +4336,35 @@ psql_completion(const char *text, int start, int end)
 			 TailMatches("USING", MatchAny, MatchAny, "ON", MatchAny, MatchAny, MatchAny, "WHEN"))
 		COMPLETE_WITH("MATCHED", "NOT MATCHED");
 
-	/* Complete ... WHEN [NOT] MATCHED with THEN/AND */
+	/*
+	 * Complete ... WHEN MATCHED and WHEN NOT MATCHED BY SOURCE|TARGET with
+	 * THEN/AND
+	 */
 	else if (TailMatches("WHEN", "MATCHED") ||
-			 TailMatches("WHEN", "NOT", "MATCHED"))
+			 TailMatches("WHEN", "NOT", "MATCHED", "BY", "SOURCE|TARGET"))
 		COMPLETE_WITH("THEN", "AND");
 
-	/* Complete ... WHEN MATCHED THEN with UPDATE SET/DELETE/DO NOTHING */
-	else if (TailMatches("WHEN", "MATCHED", "THEN"))
+	/* Complete ... WHEN NOT MATCHED with BY/THEN/AND */
+	else if (TailMatches("WHEN", "NOT", "MATCHED"))
+		COMPLETE_WITH("BY", "THEN", "AND");
+
+	/* Complete ... WHEN NOT MATCHED BY with SOURCE/TARGET */
+	else if (TailMatches("WHEN", "NOT", "MATCHED", "BY"))
+		COMPLETE_WITH("SOURCE", "TARGET");
+
+	/*
+	 * Complete ... WHEN MATCHED THEN and WHEN NOT MATCHED BY SOURCE THEN with
+	 * UPDATE SET/DELETE/DO NOTHING
+	 */
+	else if (TailMatches("WHEN", "MATCHED", "THEN") ||
+			 TailMatches("WHEN", "NOT", "MATCHED", "BY", "SOURCE", "THEN"))
 		COMPLETE_WITH("UPDATE SET", "DELETE", "DO NOTHING");
 
-	/* Complete ... WHEN NOT MATCHED THEN with INSERT/DO NOTHING */
-	else if (TailMatches("WHEN", "NOT", "MATCHED", "THEN"))
+	/*
+	 * Complete ... WHEN NOT MATCHED [BY TARGET] THEN with INSERT/DO NOTHING
+	 */
+	else if (TailMatches("WHEN", "NOT", "MATCHED", "THEN") ||
+			 TailMatches("WHEN", "NOT", "MATCHED", "BY", "TARGET", "THEN"))
 		COMPLETE_WITH("INSERT", "DO NOTHING");
 
 /* NOTIFY --- can be inside EXPLAIN, RULE, etc */

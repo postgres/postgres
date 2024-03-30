@@ -880,6 +880,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		List	   *firstMergeActionList = linitial(node->mergeActionLists);
 		ListCell   *lc;
 		ExprContext *econtext = mtstate->ps.ps_ExprContext;
+		Node	   *joinCondition;
 
 		if (part_attmap == NULL)
 			part_attmap =
@@ -890,23 +891,31 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		if (unlikely(!leaf_part_rri->ri_projectNewInfoValid))
 			ExecInitMergeTupleSlots(mtstate, leaf_part_rri);
 
+		/* Initialize state for join condition checking. */
+		joinCondition =
+			map_variable_attnos(linitial(node->mergeJoinConditions),
+								firstVarno, 0,
+								part_attmap,
+								RelationGetForm(partrel)->reltype,
+								&found_whole_row);
+		/* We ignore the value of found_whole_row. */
+		leaf_part_rri->ri_MergeJoinCondition =
+			ExecInitQual((List *) joinCondition, &mtstate->ps);
+
 		foreach(lc, firstMergeActionList)
 		{
 			/* Make a copy for this relation to be safe.  */
 			MergeAction *action = copyObject(lfirst(lc));
 			MergeActionState *action_state;
-			List	  **list;
 
 			/* Generate the action's state for this relation */
 			action_state = makeNode(MergeActionState);
 			action_state->mas_action = action;
 
 			/* And put the action in the appropriate list */
-			if (action->matched)
-				list = &leaf_part_rri->ri_matchedMergeAction;
-			else
-				list = &leaf_part_rri->ri_notMatchedMergeAction;
-			*list = lappend(*list, action_state);
+			leaf_part_rri->ri_MergeActions[action->matchKind] =
+				lappend(leaf_part_rri->ri_MergeActions[action->matchKind],
+						action_state);
 
 			switch (action->commandType)
 			{

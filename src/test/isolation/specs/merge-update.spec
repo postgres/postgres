@@ -92,7 +92,10 @@ step "merge2a"
   WHEN NOT MATCHED THEN
 	INSERT VALUES (s.key, s.val)
   WHEN MATCHED THEN
-	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val;
+	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
+  WHEN NOT MATCHED BY SOURCE THEN
+	UPDATE set key = t.key + 1, val = t.val || ' source not matched by merge2a'
+  RETURNING merge_action(), t.*;
 }
 step "merge2b"
 {
@@ -122,7 +125,10 @@ step "pa_merge2a"
   WHEN NOT MATCHED THEN
 	INSERT VALUES (s.key, s.val)
   WHEN MATCHED THEN
-	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val;
+	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
+  WHEN NOT MATCHED BY SOURCE THEN
+	UPDATE set key = t.key + 1, val = t.val || ' source not matched by pa_merge2a'
+  RETURNING merge_action(), t.*;
 }
 # MERGE proceeds only if 'val' unchanged
 step "pa_merge2b_when"

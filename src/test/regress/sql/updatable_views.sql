@@ -179,6 +179,16 @@ MERGE INTO rw_view1 t
   RETURNING merge_action(), v.*, t.*;
 SELECT * FROM base_tbl ORDER BY a;
 
+MERGE INTO rw_view1 t
+  USING (VALUES (0, 'R0'), (1, 'R1'),
+                (2, 'R2'), (3, 'R3')) AS v(a,b) ON t.a = v.a
+  WHEN MATCHED AND t.a <= 1 THEN UPDATE SET b = v.b
+  WHEN MATCHED THEN DELETE
+  WHEN NOT MATCHED BY SOURCE THEN DELETE
+  WHEN NOT MATCHED AND a > 0 THEN INSERT (a) VALUES (v.a)
+  RETURNING merge_action(), v.*, t.*;
+SELECT * FROM base_tbl ORDER BY a;
+
 EXPLAIN (costs off) UPDATE rw_view1 SET a=6 WHERE a=5;
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE a=5;
 
@@ -190,6 +200,11 @@ EXPLAIN (costs off)
 MERGE INTO rw_view1 t
   USING (SELECT * FROM generate_series(1,5)) AS s(a) ON t.a = s.a
   WHEN MATCHED THEN UPDATE SET b = 'Updated';
+
+EXPLAIN (costs off)
+MERGE INTO rw_view1 t
+  USING (SELECT * FROM generate_series(1,5)) AS s(a) ON t.a = s.a
+  WHEN NOT MATCHED BY SOURCE THEN DELETE;
 
 EXPLAIN (costs off)
 MERGE INTO rw_view1 t
@@ -248,6 +263,15 @@ MERGE INTO rw_view2 t
   WHEN MATCHED AND aaa = 3 THEN DELETE
   WHEN MATCHED THEN UPDATE SET bbb = v.b
   WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a)
+  RETURNING merge_action(), v.*, t.*;
+SELECT * FROM rw_view2 ORDER BY aaa;
+
+MERGE INTO rw_view2 t
+  USING (VALUES (4, 'r4'), (5, 'r5'), (6, 'r6')) AS v(a,b) ON aaa = v.a
+  WHEN MATCHED AND aaa = 4 THEN DELETE
+  WHEN MATCHED THEN UPDATE SET bbb = v.b
+  WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a)
+  WHEN NOT MATCHED BY SOURCE THEN UPDATE SET bbb = 'Not matched by source'
   RETURNING merge_action(), v.*, t.*;
 SELECT * FROM rw_view2 ORDER BY aaa;
 
@@ -461,6 +485,14 @@ MERGE INTO rw_view2 t
   WHEN MATCHED AND t.a <= 1 THEN DELETE
   WHEN MATCHED THEN UPDATE SET b = s.b
   WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b)
+  RETURNING merge_action(), s.*, t.*;
+SELECT * FROM base_tbl ORDER BY a;
+
+MERGE INTO rw_view2 t
+  USING (SELECT x, 'r'||x FROM generate_series(0,2) x) AS s(a,b) ON t.a = s.a
+  WHEN MATCHED THEN UPDATE SET b = s.b
+  WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b)
+  WHEN NOT MATCHED BY SOURCE THEN UPDATE SET b = 'Not matched by source'
   RETURNING merge_action(), s.*, t.*;
 SELECT * FROM base_tbl ORDER BY a;
 

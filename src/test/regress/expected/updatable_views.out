@@ -499,6 +499,32 @@ SELECT * FROM base_tbl ORDER BY a;
   5 | Unspecified
 (6 rows)
 
+MERGE INTO rw_view1 t
+  USING (VALUES (0, 'R0'), (1, 'R1'),
+                (2, 'R2'), (3, 'R3')) AS v(a,b) ON t.a = v.a
+  WHEN MATCHED AND t.a <= 1 THEN UPDATE SET b = v.b
+  WHEN MATCHED THEN DELETE
+  WHEN NOT MATCHED BY SOURCE THEN DELETE
+  WHEN NOT MATCHED AND a > 0 THEN INSERT (a) VALUES (v.a)
+  RETURNING merge_action(), v.*, t.*;
+ merge_action | a | b  | a |      b      
+--------------+---+----+---+-------------
+ UPDATE       | 1 | R1 | 1 | R1
+ DELETE       |   |    | 5 | Unspecified
+ DELETE       | 2 | R2 | 2 | Unspecified
+ INSERT       | 3 | R3 | 3 | Unspecified
+(4 rows)
+
+SELECT * FROM base_tbl ORDER BY a;
+ a  |      b      
+----+-------------
+ -2 | Row -2
+ -1 | Row -1
+  0 | Row 0
+  1 | R1
+  3 | Unspecified
+(5 rows)
+
 EXPLAIN (costs off) UPDATE rw_view1 SET a=6 WHERE a=5;
                     QUERY PLAN                    
 --------------------------------------------------
@@ -533,6 +559,23 @@ MERGE INTO rw_view1 t
 -------------------------------------------------------------------
  Merge on base_tbl
    ->  Hash Join
+         Hash Cond: (base_tbl.a = generate_series.generate_series)
+         ->  Bitmap Heap Scan on base_tbl
+               Recheck Cond: (a > 0)
+               ->  Bitmap Index Scan on base_tbl_pkey
+                     Index Cond: (a > 0)
+         ->  Hash
+               ->  Function Scan on generate_series
+(9 rows)
+
+EXPLAIN (costs off)
+MERGE INTO rw_view1 t
+  USING (SELECT * FROM generate_series(1,5)) AS s(a) ON t.a = s.a
+  WHEN NOT MATCHED BY SOURCE THEN DELETE;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Merge on base_tbl
+   ->  Hash Left Join
          Hash Cond: (base_tbl.a = generate_series.generate_series)
          ->  Bitmap Heap Scan on base_tbl
                Recheck Cond: (a > 0)
@@ -654,6 +697,29 @@ SELECT * FROM rw_view2 ORDER BY aaa;
    1 | Row 1
    4 | R4
    5 | Unspecified
+(3 rows)
+
+MERGE INTO rw_view2 t
+  USING (VALUES (4, 'r4'), (5, 'r5'), (6, 'r6')) AS v(a,b) ON aaa = v.a
+  WHEN MATCHED AND aaa = 4 THEN DELETE
+  WHEN MATCHED THEN UPDATE SET bbb = v.b
+  WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a)
+  WHEN NOT MATCHED BY SOURCE THEN UPDATE SET bbb = 'Not matched by source'
+  RETURNING merge_action(), v.*, t.*;
+ merge_action | a | b  | aaa |          bbb          
+--------------+---+----+-----+-----------------------
+ UPDATE       |   |    |   1 | Not matched by source
+ DELETE       | 4 | r4 |   4 | R4
+ UPDATE       | 5 | r5 |   5 | r5
+ INSERT       | 6 | r6 |   6 | Unspecified
+(4 rows)
+
+SELECT * FROM rw_view2 ORDER BY aaa;
+ aaa |          bbb          
+-----+-----------------------
+   1 | Not matched by source
+   5 | r5
+   6 | Unspecified
 (3 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET aaa=5 WHERE aaa=4;
@@ -1105,6 +1171,30 @@ SELECT * FROM base_tbl ORDER BY a;
   2 | R2
   3 | R3
 (5 rows)
+
+MERGE INTO rw_view2 t
+  USING (SELECT x, 'r'||x FROM generate_series(0,2) x) AS s(a,b) ON t.a = s.a
+  WHEN MATCHED THEN UPDATE SET b = s.b
+  WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b)
+  WHEN NOT MATCHED BY SOURCE THEN UPDATE SET b = 'Not matched by source'
+  RETURNING merge_action(), s.*, t.*;
+ merge_action | a | b  | a |           b           
+--------------+---+----+---+-----------------------
+ UPDATE       | 2 | r2 | 2 | r2
+ UPDATE       |   |    | 3 | Not matched by source
+ INSERT       | 1 | r1 | 1 | r1
+(3 rows)
+
+SELECT * FROM base_tbl ORDER BY a;
+ a  |           b           
+----+-----------------------
+ -2 | Row -2
+ -1 | Row -1
+  0 | Row 0
+  1 | r1
+  2 | r2
+  3 | Not matched by source
+(6 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET a=3 WHERE a=2;
                         QUERY PLAN                        
