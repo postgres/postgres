@@ -740,9 +740,10 @@ ALTER VIEW v4 OWNER TO regress_view_owner;
 -- Make sure this big CROSS JOIN query is pushed down
 EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 CROSS JOIN ft2 CROSS JOIN ft4 CROSS JOIN ft5;
 -- Make sure query cancellation works
-SET statement_timeout = '10ms';
+BEGIN;
+SET LOCAL statement_timeout = '10ms';
 select count(*) from ft1 CROSS JOIN ft2 CROSS JOIN ft4 CROSS JOIN ft5; -- this takes very long
-RESET statement_timeout;
+COMMIT;
 
 -- ====================================================================
 -- Check that userid to use when querying the remote table is correctly
