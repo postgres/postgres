@@ -282,7 +282,7 @@ extern void heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 						int options, BulkInsertState bistate);
 extern void heap_multi_insert(Relation relation, struct TupleTableSlot **slots,
 							  int ntuples, CommandId cid, int options,
-							  BulkInsertState bistate);
+							  BulkInsertState bistate, bool *insert_indexes);
 extern TM_Result heap_delete(Relation relation, ItemPointer tid,
 							 CommandId cid, Snapshot crosscheck, int options,
 							 struct TM_FailureData *tmfd, bool changingPart,

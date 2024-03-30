@@ -476,6 +476,7 @@ static bool
 transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_transientrel *myState = (DR_transientrel *) self;
+	bool		insertIndexes;
 
 	/*
 	 * Note that the input slot might not be of the type of the target
@@ -490,7 +491,8 @@ transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 					   slot,
 					   myState->output_cid,
 					   myState->ti_options,
-					   myState->bistate);
+					   myState->bistate,
+					   &insertIndexes);
 
 	/* We know this is a newly created relation, so there are no indexes */
 

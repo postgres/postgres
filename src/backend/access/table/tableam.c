@@ -273,9 +273,11 @@ table_tuple_get_latest_tid(TableScanDesc scan, ItemPointer tid)
  * default command ID and not allowing access to the speedup options.
  */
 void
-simple_table_tuple_insert(Relation rel, TupleTableSlot *slot)
+simple_table_tuple_insert(Relation rel, TupleTableSlot *slot,
+						  bool *insert_indexes)
 {
-	table_tuple_insert(rel, slot, GetCurrentCommandId(true), 0, NULL);
+	table_tuple_insert(rel, slot, GetCurrentCommandId(true), 0, NULL,
+					   insert_indexes);
 }
 
 /*

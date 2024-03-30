@@ -1135,13 +1135,15 @@ ExecInsert(ModifyTableContext *context,
 		}
 		else
 		{
+			bool		insertIndexes;
+
 			/* insert the tuple normally */
 			slot = table_tuple_insert(resultRelationDesc, slot,
 									  estate->es_output_cid,
-									  0, NULL);
+									  0, NULL, &insertIndexes);
 
 			/* insert index entries for tuple */
-			if (resultRelInfo->ri_NumIndices > 0)
+			if (insertIndexes && resultRelInfo->ri_NumIndices > 0)
 				recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
 													   slot, estate, false,
 													   false, NULL, NIL,
