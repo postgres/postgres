@@ -50,7 +50,6 @@ static TM_Result heapam_tuple_lock(Relation relation, ItemPointer tid,
 								   CommandId cid, LockTupleMode mode,
 								   LockWaitPolicy wait_policy, uint8 flags,
 								   TM_FailureData *tmfd);
-
 static void reform_and_rewrite_tuple(HeapTuple tuple,
 									 Relation OldHeap, Relation NewHeap,
 									 Datum *values, bool *isnull, RewriteState rwstate);
@@ -1052,7 +1051,15 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	pfree(isnull);
 }
 
-static bool
+/*
+ * Prepare to analyze block `blockno` of `scan`.  The scan has been started
+ * with SO_TYPE_ANALYZE option.
+ *
+ * This routine holds a buffer pin and lock on the heap page.  They are held
+ * until heapam_scan_analyze_next_tuple() returns false.  That is until all the
+ * items of the heap page are analyzed.
+ */
+void
 heapam_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
 							   BufferAccessStrategy bstrategy)
 {
@@ -1072,12 +1079,19 @@ heapam_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
 	hscan->rs_cbuf = ReadBufferExtended(scan->rs_rd, MAIN_FORKNUM,
 										blockno, RBM_NORMAL, bstrategy);
 	LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
-
-	/* in heap all blocks can contain tuples, so always return true */
-	return true;
 }
 
-static bool
+/*
+ * Iterate over tuples in the block selected with
+ * heapam_scan_analyze_next_block().  If a tuple that's suitable for sampling
+ * is found, true is returned and a tuple is stored in `slot`.  When no more
+ * tuples for sampling, false is returned and the pin and lock acquired by
+ * heapam_scan_analyze_next_block() are released.
+ *
+ * *liverows and *deadrows are incremented according to the encountered
+ * tuples.
+ */
+bool
 heapam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 							   double *liverows, double *deadrows,
 							   TupleTableSlot *slot)
@@ -2637,10 +2651,9 @@ static const TableAmRoutine heapam_methods = {
 	.relation_copy_data = heapam_relation_copy_data,
 	.relation_copy_for_cluster = heapam_relation_copy_for_cluster,
 	.relation_vacuum = heap_vacuum_rel,
-	.scan_analyze_next_block = heapam_scan_analyze_next_block,
-	.scan_analyze_next_tuple = heapam_scan_analyze_next_tuple,
 	.index_build_range_scan = heapam_index_build_range_scan,
 	.index_validate_scan = heapam_index_validate_scan,
+	.relation_analyze = heapam_analyze,
 
 	.free_rd_amcache = NULL,
 	.relation_size = table_block_relation_size,

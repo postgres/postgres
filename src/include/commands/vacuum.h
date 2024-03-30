@@ -175,6 +175,21 @@ typedef struct VacAttrStats
 	int			rowstride;
 } VacAttrStats;
 
+/*
+ * AcquireSampleRowsFunc - a function for the sampling statistics collection.
+ *
+ * A random sample of up to `targrows` rows should be collected from the
+ * table and stored into the caller-provided `rows` array.  The actual number
+ * of rows collected must be returned.  In addition, a function should store
+ * estimates of the total numbers of live and dead rows in the table into the
+ * output parameters `*totalrows` and `*totaldeadrows1.  (Set `*totaldeadrows`
+ * to zero if the storage does not have any concept of dead rows.)
+ */
+typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
+									  HeapTuple *rows, int targrows,
+									  double *totalrows,
+									  double *totaldeadrows);
+
 /* flag bits for VacuumParams->options */
 #define VACOPT_VACUUM 0x01		/* do VACUUM */
 #define VACOPT_ANALYZE 0x02		/* do ANALYZE */
@@ -380,6 +395,10 @@ extern void parallel_vacuum_main(dsm_segment *seg, shm_toc *toc);
 extern void analyze_rel(Oid relid, RangeVar *relation,
 						VacuumParams *params, List *va_cols, bool in_outer_xact,
 						BufferAccessStrategy bstrategy);
+extern void heapam_analyze(Relation relation, AcquireSampleRowsFunc *func,
+						   BlockNumber *totalpages,
+						   BufferAccessStrategy bstrategy);
+
 extern bool std_typanalyze(VacAttrStats *stats);
 
 /* in utils/misc/sampling.c --- duplicate of declarations in utils/sampling.h */

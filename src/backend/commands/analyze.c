@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include "access/detoast.h"
+#include "access/heapam.h"
 #include "access/genam.h"
 #include "access/multixact.h"
 #include "access/relation.h"
@@ -190,10 +191,9 @@ analyze_rel(Oid relid, RangeVar *relation,
 	if (onerel->rd_rel->relkind == RELKIND_RELATION ||
 		onerel->rd_rel->relkind == RELKIND_MATVIEW)
 	{
-		/* Regular table, so we'll use the regular row acquisition function */
-		acquirefunc = acquire_sample_rows;
-		/* Also get regular table's size */
-		relpages = RelationGetNumberOfBlocks(onerel);
+		/* Use row acquisition function provided by table AM */
+		table_relation_analyze(onerel, &acquirefunc,
+							   &relpages, vac_strategy);
 	}
 	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
@@ -1103,15 +1103,15 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 }
 
 /*
- * acquire_sample_rows -- acquire a random sample of rows from the table
+ * acquire_sample_rows -- acquire a random sample of rows from the heap
  *
  * Selected rows are returned in the caller-allocated array rows[], which
  * must have at least targrows entries.
  * The actual number of rows selected is returned as the function result.
- * We also estimate the total numbers of live and dead rows in the table,
+ * We also estimate the total numbers of live and dead rows in the heap,
  * and return them into *totalrows and *totaldeadrows, respectively.
  *
- * The returned list of tuples is in order by physical position in the table.
+ * The returned list of tuples is in order by physical position in the heap.
  * (We will rely on this later to derive correlation estimates.)
  *
  * As of May 2004 we use a new two-stage method:  Stage one selects up
@@ -1133,7 +1133,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
  * look at a statistically unbiased set of blocks, we should get
  * unbiased estimates of the average numbers of live and dead rows per
  * block.  The previous sampling method put too much credence in the row
- * density near the start of the table.
+ * density near the start of the heap.
  */
 static int
 acquire_sample_rows(Relation onerel, int elevel,
@@ -1184,7 +1184,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 	/* Prepare for sampling rows */
 	reservoir_init_selection_state(&rstate, targrows);
 
-	scan = table_beginscan_analyze(onerel);
+	scan = heap_beginscan(onerel, NULL, 0, NULL, NULL, SO_TYPE_ANALYZE);
 	slot = table_slot_create(onerel, NULL);
 
 #ifdef USE_PREFETCH
@@ -1214,7 +1214,6 @@ acquire_sample_rows(Relation onerel, int elevel,
 	/* Outer loop over blocks to sample */
 	while (BlockSampler_HasMore(&bs))
 	{
-		bool		block_accepted;
 		BlockNumber targblock = BlockSampler_Next(&bs);
 #ifdef USE_PREFETCH
 		BlockNumber prefetch_targblock = InvalidBlockNumber;
@@ -1230,29 +1229,19 @@ acquire_sample_rows(Relation onerel, int elevel,
 
 		vacuum_delay_point();
 
-		block_accepted = table_scan_analyze_next_block(scan, targblock, vac_strategy);
+		heapam_scan_analyze_next_block(scan, targblock, vac_strategy);
 
 #ifdef USE_PREFETCH
 
 		/*
 		 * When pre-fetching, after we get a block, tell the kernel about the
 		 * next one we will want, if there's any left.
-		 *
-		 * We want to do this even if the table_scan_analyze_next_block() call
-		 * above decides against analyzing the block it picked.
 		 */
 		if (prefetch_maximum && prefetch_targblock != InvalidBlockNumber)
 			PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, prefetch_targblock);
 #endif
 
-		/*
-		 * Don't analyze if table_scan_analyze_next_block() indicated this
-		 * block is unsuitable for analyzing.
-		 */
-		if (!block_accepted)
-			continue;
-
-		while (table_scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
+		while (heapam_scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
 		{
 			/*
 			 * The first targrows sample rows are simply copied into the
@@ -1302,7 +1291,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 	}
 
 	ExecDropSingleTupleTableSlot(slot);
-	table_endscan(scan);
+	heap_endscan(scan);
 
 	/*
 	 * If we didn't find as many tuples as we wanted then we're done. No sort
@@ -1371,6 +1360,19 @@ compare_rows(const void *a, const void *b, void *arg)
 	if (oa > ob)
 		return 1;
 	return 0;
+}
+
+/*
+ * heapam_analyze -- implementation of relation_analyze() table access method
+ *					 callback for heap
+ */
+void
+heapam_analyze(Relation relation, AcquireSampleRowsFunc *func,
+			   BlockNumber *totalpages, BufferAccessStrategy bstrategy)
+{
+	*func = acquire_sample_rows;
+	*totalpages = RelationGetNumberOfBlocks(relation);
+	vac_strategy = bstrategy;
 }
 
 
@@ -1462,9 +1464,9 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		if (childrel->rd_rel->relkind == RELKIND_RELATION ||
 			childrel->rd_rel->relkind == RELKIND_MATVIEW)
 		{
-			/* Regular table, so use the regular row acquisition function */
-			acquirefunc = acquire_sample_rows;
-			relpages = RelationGetNumberOfBlocks(childrel);
+			/* Use row acquisition function provided by table AM */
+			table_relation_analyze(childrel, &acquirefunc,
+								   &relpages, vac_strategy);
 		}
 		else if (childrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		{
