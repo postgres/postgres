@@ -4283,18 +4283,20 @@ CREATE TABLE measurement_y2008m02 PARTITION OF measurement
     TABLESPACE fasttablespace;
 </programlisting>
 
-     As an alternative, it is sometimes more convenient to create the
-     new table outside the partition structure, and attach it as a
-     partition later. This allows new data to be loaded, checked, and
-     transformed prior to it appearing in the partitioned table.
+     As an alternative to creating a new partition, it is sometimes more
+     convenient to create a new table separate from the partition structure
+     and attach it as a partition later.  This allows new data to be loaded,
+     checked, and transformed prior to it appearing in the partitioned table.
      Moreover, the <literal>ATTACH PARTITION</literal> operation requires
-     only <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the
-     partitioned table, as opposed to the <literal>ACCESS
-     EXCLUSIVE</literal> lock that is required by <command>CREATE TABLE
-     ... PARTITION OF</command>, so it is more friendly to concurrent
-     operations on the partitioned table.
-     The <literal>CREATE TABLE ... LIKE</literal> option is helpful
-     to avoid tediously repeating the parent table's definition:
+     only a <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the
+     partitioned table rather than the <literal>ACCESS EXCLUSIVE</literal>
+     lock required by <command>CREATE TABLE ... PARTITION OF</command>,
+     so it is more friendly to concurrent operations on the partitioned table;
+     see <link linkend="sql-altertable-attach-partition"><literal>ALTER TABLE ... ATTACH PARTITION</literal></link>
+     for additional details.  The
+     <link linkend="sql-createtable-parms-like"><literal>CREATE TABLE ... LIKE</literal></link>
+     option can be helpful to avoid tediously repeating the parent table's
+     definition; for example:
 
 <programlisting>
 CREATE TABLE measurement_y2008m02
@@ -4313,17 +4315,15 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
     </para>
 
     <para>
-     Before running the <command>ATTACH PARTITION</command> command, it is
-     recommended to create a <literal>CHECK</literal> constraint on the table to
-     be attached that matches the expected partition constraint, as
-     illustrated above. That way, the system will be able to skip the scan
-     which is otherwise needed to validate the implicit
-     partition constraint. Without the <literal>CHECK</literal> constraint,
+     Note that when running the <command>ATTACH PARTITION</command> command,
      the table will be scanned to validate the partition constraint while
      holding an <literal>ACCESS EXCLUSIVE</literal> lock on that partition.
-     It is recommended to drop the now-redundant <literal>CHECK</literal>
-     constraint after the <command>ATTACH PARTITION</command> is complete.  If
-     the table being attached is itself a partitioned table, then each of its
+     As shown above, it is recommended to avoid this scan by creating a
+     <literal>CHECK</literal> constraint matching the expected partition
+     constraint on the table prior to attaching it.  Once the
+     <command>ATTACH PARTITION</command> is complete, it is recommended to drop
+     the now-redundant <literal>CHECK</literal> constraint.
+     If the table being attached is itself a partitioned table, then each of its
      sub-partitions will be recursively locked and scanned until either a
      suitable <literal>CHECK</literal> constraint is encountered or the leaf
      partitions are reached.
@@ -4333,7 +4333,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      Similarly, if the partitioned table has a <literal>DEFAULT</literal>
      partition, it is recommended to create a <literal>CHECK</literal>
      constraint which excludes the to-be-attached partition's constraint.  If
-     this is not done then the <literal>DEFAULT</literal> partition will be
+     this is not done, the <literal>DEFAULT</literal> partition will be
      scanned to verify that it contains no records which should be located in
      the partition being attached.  This operation will be performed whilst
      holding an <literal>ACCESS EXCLUSIVE</literal> lock on the <literal>
@@ -4344,21 +4344,21 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
     </para>
 
     <para>
-     As explained above, it is possible to create indexes on partitioned tables
-     so that they are applied automatically to the entire hierarchy.
-     This is very
-     convenient, as not only will the existing partitions become indexed, but
-     also any partitions that are created in the future will.  One limitation is
-     that it's not possible to use the <literal>CONCURRENTLY</literal>
-     qualifier when creating such a partitioned index.  To avoid long lock
-     times, it is possible to use <command>CREATE INDEX ON ONLY</command>
-     the partitioned table; such an index is marked invalid, and the partitions
-     do not get the index applied automatically.  The indexes on partitions can
-     be created individually using <literal>CONCURRENTLY</literal>, and then
-     <firstterm>attached</firstterm> to the index on the parent using
-     <command>ALTER INDEX .. ATTACH PARTITION</command>.  Once indexes for all
-     partitions are attached to the parent index, the parent index is marked
-     valid automatically.  Example:
+     As mentioned earlier, it is possible to create indexes on partitioned
+     tables so that they are applied automatically to the entire hierarchy.
+     This can be very convenient as not only will all existing partitions be
+     indexed, but any future partitions will be as well.  However, one
+     limitation when creating new indexes on partitioned tables is that it
+     is not possible to use the <literal>CONCURRENTLY</literal>
+     qualifier, which could lead to long lock times.  To avoid this, you can
+     use <command>CREATE INDEX ON ONLY</command> the partitioned table, which
+     creates the new index marked as invalid, preventing automatic application
+     to existing partitions.  Instead, indexes can then be created individually
+     on each partition using <literal>CONCURRENTLY</literal> and
+     <firstterm>attached</firstterm> to the partitioned index on the parent
+     using <command>ALTER INDEX ... ATTACH PARTITION</command>.  Once indexes for
+     all the partitions are attached to the parent index, the parent index will
+     be marked valid automatically.  Example:
 <programlisting>
 CREATE INDEX measurement_usls_idx ON ONLY measurement (unitsales);
 
