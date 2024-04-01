@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 # configure.ac
 
-AC_INIT([pg_tde], [Alpha 1.0], [https://github.com/Percona-Lab/pg_tde/issues], [pg_tde])
+AC_INIT([pg_tde], [1.0.0-alpha], [https://github.com/Percona-Lab/pg_tde/issues], [pg_tde])
 
 AC_CANONICAL_HOST
 
