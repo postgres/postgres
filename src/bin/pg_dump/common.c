@@ -47,6 +47,8 @@ static DumpId lastDumpId = 0;	/* Note: 0 is InvalidDumpId */
  * expects that it can move them around when resizing the table.  So we
  * cannot make the DumpableObjects be elements of the hash table directly;
  * instead, the hash table elements contain pointers to DumpableObjects.
+ * This does have the advantage of letting us map multiple CatalogIds
+ * to one DumpableObject, which is useful for blobs.
  *
  * It turns out to be convenient to also use this data structure to map
  * CatalogIds to owning extensions, if any.  Since extension membership
@@ -698,6 +700,30 @@ AssignDumpId(DumpableObject *dobj)
 		Assert(entry->dobj == NULL);
 		entry->dobj = dobj;
 	}
+}
+
+/*
+ * recordAdditionalCatalogID
+ *	  Record an additional catalog ID for the given DumpableObject
+ */
+void
+recordAdditionalCatalogID(CatalogId catId, DumpableObject *dobj)
+{
+	CatalogIdMapEntry *entry;
+	bool		found;
+
+	/* CatalogId hash table must exist, if we have a DumpableObject */
+	Assert(catalogIdHash != NULL);
+
+	/* Add reference to CatalogId hash */
+	entry = catalogid_insert(catalogIdHash, catId, &found);
+	if (!found)
+	{
+		entry->dobj = NULL;
+		entry->ext = NULL;
+	}
+	Assert(entry->dobj == NULL);
+	entry->dobj = dobj;
 }
 
 /*

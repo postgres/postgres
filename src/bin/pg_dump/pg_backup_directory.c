@@ -5,8 +5,10 @@
  *	A directory format dump is a directory, which contains a "toc.dat" file
  *	for the TOC, and a separate file for each data entry, named "<oid>.dat".
  *	Large objects are stored in separate files named "blob_<oid>.dat",
- *	and there's a plain-text TOC file for them called "blobs.toc". If
- *	compression is used, each data file is individually compressed and the
+ *	and there's a plain-text TOC file for each BLOBS TOC entry named
+ *	"blobs_<dumpID>.toc" (or just "blobs.toc" in archive versions before 16).
+ *
+ *	If compression is used, each data file is individually compressed and the
  *	".gz" suffix is added to the filenames. The TOC files are never
  *	compressed by pg_dump, however they are accepted with the .gz suffix too,
  *	in case the user has manually compressed them with 'gzip'.
@@ -51,7 +53,7 @@ typedef struct
 	char	   *directory;
 
 	CompressFileHandle *dataFH; /* currently open data file */
-	CompressFileHandle *LOsTocFH;	/* file handle for blobs.toc */
+	CompressFileHandle *LOsTocFH;	/* file handle for blobs_NNN.toc */
 	ParallelState *pstate;		/* for parallel backup / restore */
 } lclContext;
 
@@ -81,7 +83,7 @@ static void _StartLOs(ArchiveHandle *AH, TocEntry *te);
 static void _StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
 static void _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
 static void _EndLOs(ArchiveHandle *AH, TocEntry *te);
-static void _LoadLOs(ArchiveHandle *AH);
+static void _LoadLOs(ArchiveHandle *AH, TocEntry *te);
 
 static void _PrepParallelRestore(ArchiveHandle *AH);
 static void _Clone(ArchiveHandle *AH);
@@ -142,10 +144,6 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 
 	ctx->dataFH = NULL;
 	ctx->LOsTocFH = NULL;
-
-	/* Initialize LO buffering */
-	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *) pg_malloc(LOBBUFSIZE);
 
 	/*
 	 * Now open the TOC file
@@ -236,7 +234,10 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 
 	tctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
 	if (strcmp(te->desc, "BLOBS") == 0)
-		tctx->filename = pg_strdup("blobs.toc");
+	{
+		snprintf(fn, MAXPGPATH, "blobs_%d.toc", te->dumpId);
+		tctx->filename = pg_strdup(fn);
+	}
 	else if (te->dataDumper)
 	{
 		snprintf(fn, MAXPGPATH, "%d.dat", te->dumpId);
@@ -419,7 +420,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 		return;
 
 	if (strcmp(te->desc, "BLOBS") == 0)
-		_LoadLOs(AH);
+		_LoadLOs(AH, te);
 	else
 	{
 		char		fname[MAXPGPATH];
@@ -430,17 +431,23 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 }
 
 static void
-_LoadLOs(ArchiveHandle *AH)
+_LoadLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
+	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 	CompressFileHandle *CFH;
 	char		tocfname[MAXPGPATH];
 	char		line[MAXPGPATH];
 
 	StartRestoreLOs(AH);
 
-	setFilePath(AH, tocfname, "blobs.toc");
+	/*
+	 * Note: before archive v16, there was always only one BLOBS TOC entry,
+	 * now there can be multiple.  We don't need to worry what version we are
+	 * reading though, because tctx->filename should be correct either way.
+	 */
+	setFilePath(AH, tocfname, tctx->filename);
 
 	CFH = ctx->LOsTocFH = InitDiscoverCompressFileHandle(tocfname, PG_BINARY_R);
 
@@ -636,7 +643,7 @@ _ReopenArchive(ArchiveHandle *AH)
  */
 
 /*
- * Called by the archiver when starting to save all BLOB DATA (not schema).
+ * Called by the archiver when starting to save BLOB DATA (not schema).
  * It is called just prior to the dumper's DataDumper routine.
  *
  * We open the large object TOC file here, so that we can append a line to
@@ -646,10 +653,11 @@ static void
 _StartLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 	pg_compress_specification compression_spec = {0};
 	char		fname[MAXPGPATH];
 
-	setFilePath(AH, fname, "blobs.toc");
+	setFilePath(AH, fname, tctx->filename);
 
 	/* The LO TOC file is never compressed */
 	compression_spec.algorithm = PG_COMPRESSION_NONE;
@@ -694,7 +702,7 @@ _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 		pg_fatal("could not close LO data file: %m");
 	ctx->dataFH = NULL;
 
-	/* register the LO in blobs.toc */
+	/* register the LO in blobs_NNN.toc */
 	len = snprintf(buf, sizeof(buf), "%u blob_%u.dat\n", oid, oid);
 	if (!CFH->write_func(buf, len, CFH))
 	{
@@ -707,7 +715,7 @@ _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 }
 
 /*
- * Called by the archiver when finishing saving all BLOB DATA.
+ * Called by the archiver when finishing saving BLOB DATA.
  *
  * We close the LOs TOC file.
  */
@@ -799,7 +807,7 @@ _PrepParallelRestore(ArchiveHandle *AH)
 		}
 
 		/*
-		 * If this is the BLOBS entry, what we stat'd was blobs.toc, which
+		 * If this is a BLOBS entry, what we stat'd was blobs_NNN.toc, which
 		 * most likely is a lot smaller than the actual blob data.  We don't
 		 * have a cheap way to estimate how much smaller, but fortunately it
 		 * doesn't matter too much as long as we get the LOs processed
@@ -823,8 +831,6 @@ _Clone(ArchiveHandle *AH)
 	ctx = (lclContext *) AH->formatData;
 
 	/*
-	 * Note: we do not make a local lo_buf because we expect at most one BLOBS
-	 * entry per archive, so no parallelism is possible.  Likewise,
 	 * TOC-entry-local state isn't an issue because any one TOC entry is
 	 * touched by just one worker child.
 	 */

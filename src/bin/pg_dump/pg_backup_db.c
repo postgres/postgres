@@ -541,29 +541,122 @@ CommitTransaction(Archive *AHX)
 	ExecuteSqlCommand(AH, "COMMIT", "could not commit database transaction");
 }
 
+/*
+ * Issue per-blob commands for the large object(s) listed in the TocEntry
+ *
+ * The TocEntry's defn string is assumed to consist of large object OIDs,
+ * one per line.  Wrap these in the given SQL command fragments and issue
+ * the commands.  (cmdEnd need not include a semicolon.)
+ */
+void
+IssueCommandPerBlob(ArchiveHandle *AH, TocEntry *te,
+					const char *cmdBegin, const char *cmdEnd)
+{
+	/* Make a writable copy of the command string */
+	char	   *buf = pg_strdup(te->defn);
+	char	   *st;
+	char	   *en;
+
+	st = buf;
+	while ((en = strchr(st, '\n')) != NULL)
+	{
+		*en++ = '\0';
+		ahprintf(AH, "%s%s%s;\n", cmdBegin, st, cmdEnd);
+		st = en;
+	}
+	ahprintf(AH, "\n");
+	pg_free(buf);
+}
+
+/*
+ * Process a "LARGE OBJECTS" ACL TocEntry.
+ *
+ * To save space in the dump file, the TocEntry contains only one copy
+ * of the required GRANT/REVOKE commands, written to apply to the first
+ * blob in the group (although we do not depend on that detail here).
+ * We must expand the text to generate commands for all the blobs listed
+ * in the associated BLOB METADATA entry.
+ */
+void
+IssueACLPerBlob(ArchiveHandle *AH, TocEntry *te)
+{
+	TocEntry   *blobte = getTocEntryByDumpId(AH, te->dependencies[0]);
+	char	   *buf;
+	char	   *st;
+	char	   *st2;
+	char	   *en;
+	bool		inquotes;
+
+	if (!blobte)
+		pg_fatal("could not find entry for ID %d", te->dependencies[0]);
+	Assert(strcmp(blobte->desc, "BLOB METADATA") == 0);
+
+	/* Make a writable copy of the ACL commands string */
+	buf = pg_strdup(te->defn);
+
+	/*
+	 * We have to parse out the commands sufficiently to locate the blob OIDs
+	 * and find the command-ending semicolons.  The commands should not
+	 * contain anything hard to parse except for double-quoted role names,
+	 * which are easy to ignore.  Once we've split apart the first and second
+	 * halves of a command, apply IssueCommandPerBlob.  (This means the
+	 * updates on the blobs are interleaved if there's multiple commands, but
+	 * that should cause no trouble.)
+	 */
+	inquotes = false;
+	st = en = buf;
+	st2 = NULL;
+	while (*en)
+	{
+		/* Ignore double-quoted material */
+		if (*en == '"')
+			inquotes = !inquotes;
+		if (inquotes)
+		{
+			en++;
+			continue;
+		}
+		/* If we found "LARGE OBJECT", that's the end of the first half */
+		if (strncmp(en, "LARGE OBJECT ", 13) == 0)
+		{
+			/* Terminate the first-half string */
+			en += 13;
+			Assert(isdigit((unsigned char) *en));
+			*en++ = '\0';
+			/* Skip the rest of the blob OID */
+			while (isdigit((unsigned char) *en))
+				en++;
+			/* Second half starts here */
+			Assert(st2 == NULL);
+			st2 = en;
+		}
+		/* If we found semicolon, that's the end of the second half */
+		else if (*en == ';')
+		{
+			/* Terminate the second-half string */
+			*en++ = '\0';
+			Assert(st2 != NULL);
+			/* Issue this command for each blob */
+			IssueCommandPerBlob(AH, blobte, st, st2);
+			/* For neatness, skip whitespace before the next command */
+			while (isspace((unsigned char) *en))
+				en++;
+			/* Reset for new command */
+			st = en;
+			st2 = NULL;
+		}
+		else
+			en++;
+	}
+	pg_free(buf);
+}
+
 void
 DropLOIfExists(ArchiveHandle *AH, Oid oid)
 {
-	/*
-	 * If we are not restoring to a direct database connection, we have to
-	 * guess about how to detect whether the LO exists.  Assume new-style.
-	 */
-	if (AH->connection == NULL ||
-		PQserverVersion(AH->connection) >= 90000)
-	{
-		ahprintf(AH,
-				 "SELECT pg_catalog.lo_unlink(oid) "
-				 "FROM pg_catalog.pg_largeobject_metadata "
-				 "WHERE oid = '%u';\n",
-				 oid);
-	}
-	else
-	{
-		/* Restoring to pre-9.0 server, so do it the old way */
-		ahprintf(AH,
-				 "SELECT CASE WHEN EXISTS("
-				 "SELECT 1 FROM pg_catalog.pg_largeobject WHERE loid = '%u'"
-				 ") THEN pg_catalog.lo_unlink('%u') END;\n",
-				 oid, oid);
-	}
+	ahprintf(AH,
+			 "SELECT pg_catalog.lo_unlink(oid) "
+			 "FROM pg_catalog.pg_largeobject_metadata "
+			 "WHERE oid = '%u';\n",
+			 oid);
 }

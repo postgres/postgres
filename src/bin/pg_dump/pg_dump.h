@@ -582,11 +582,21 @@ typedef struct _defaultACLInfo
 	char		defaclobjtype;
 } DefaultACLInfo;
 
+/*
+ * LoInfo represents a group of large objects (blobs) that share the same
+ * owner and ACL setting.  dobj.components has the DUMP_COMPONENT_COMMENT bit
+ * set if any blob in the group has a comment; similarly for sec labels.
+ * If there are many blobs with the same owner/ACL, we can divide them into
+ * multiple LoInfo groups, which will each spawn a BLOB METADATA and a BLOBS
+ * (data) TOC entry.  This allows more parallelism during restore.
+ */
 typedef struct _loInfo
 {
 	DumpableObject dobj;
 	DumpableAcl dacl;
 	const char *rolname;
+	int			numlos;
+	Oid			looids[FLEXIBLE_ARRAY_MEMBER];
 } LoInfo;
 
 /*
@@ -695,6 +705,7 @@ typedef struct _SubRelInfo
 extern TableInfo *getSchemaData(Archive *fout, int *numTablesPtr);
 
 extern void AssignDumpId(DumpableObject *dobj);
+extern void recordAdditionalCatalogID(CatalogId catId, DumpableObject *dobj);
 extern DumpId createDumpId(void);
 extern DumpId getMaxDumpId(void);
 extern DumpableObject *findObjectByDumpId(DumpId dumpId);

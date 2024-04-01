@@ -140,10 +140,6 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 
-	/* Initialize LO buffering */
-	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *) pg_malloc(LOBBUFSIZE);
-
 	/*
 	 * Now open the file
 	 */
@@ -342,7 +338,7 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
 }
 
 /*
- * Called by the archiver when starting to save all BLOB DATA (not schema).
+ * Called by the archiver when starting to save BLOB DATA (not schema).
  * This routine should save whatever format-specific information is needed
  * to read the LOs back into memory.
  *
@@ -402,7 +398,7 @@ _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 }
 
 /*
- * Called by the archiver when finishing saving all BLOB DATA.
+ * Called by the archiver when finishing saving BLOB DATA.
  *
  * Optional.
  */
@@ -902,9 +898,6 @@ _Clone(ArchiveHandle *AH)
 	 * share knowledge about where the data blocks are across threads.
 	 * _PrintTocData has to be careful about the order of operations on that
 	 * state, though.
-	 *
-	 * Note: we do not make a local lo_buf because we expect at most one BLOBS
-	 * entry per archive, so no parallelism is possible.
 	 */
 }
 
