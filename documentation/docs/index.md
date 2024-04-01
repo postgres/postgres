@@ -6,6 +6,8 @@
 
     This is the MVP version of the extension and is not meant for production use yet.
 
+[What's new](release-notes/tech-preview.md){.md-button}
+
 ## What's encrypted
 
 `pg_tde` encrypts the following:

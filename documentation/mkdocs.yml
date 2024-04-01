@@ -144,8 +144,8 @@ nav:
     - "Install": "install.md"
     - "Set up": "setup.md"
     - Test TDE: "test.md"
-  - How to:
-    - Configure streaming replication: replication.md
+  - Release notes:
+    - "pg_tde tech preview": release-notes/release-notes.md
   - uninstall.md
   - contribute.md
 
