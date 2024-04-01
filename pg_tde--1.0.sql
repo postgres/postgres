@@ -113,7 +113,7 @@ RETURNS VOID
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION tde_master_key_info()
+CREATE FUNCTION pg_tde_master_key_info()
 RETURNS TABLE ( master_key_name text,
                 key_provider_name text,
                 key_provider_id integer,

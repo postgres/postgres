@@ -719,8 +719,8 @@ pg_tde_rotate_key(PG_FUNCTION_ARGS)
     PG_RETURN_BOOL(ret);
 }
 
-PG_FUNCTION_INFO_V1(tde_master_key_info);
-Datum tde_master_key_info(PG_FUNCTION_ARGS)
+PG_FUNCTION_INFO_V1(pg_tde_master_key_info);
+Datum pg_tde_master_key_info(PG_FUNCTION_ARGS)
 {
     TupleDesc tupdesc;
     Datum values[6];
