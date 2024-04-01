@@ -16,6 +16,15 @@
 
 #define TDE_TRANCHE_NAME "pg_tde_tranche"
 
+typedef enum
+{
+    TDE_LWLOCK_MK_CACHE,
+    TDE_LWLOCK_MK_FILES,
+
+    /* Must be the last entry in the enum */
+    TDE_LWLOCK_COUNT
+} TDELockTypes;
+
 typedef struct TDEShmemSetupRoutine
 {
     /* init_shared_state gets called at the time of extension load

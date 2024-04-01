@@ -15,6 +15,7 @@
 #include "catalog/tde_keyring.h"
 #include "keyring/keyring_api.h"
 #include "nodes/pg_list.h"
+#include "storage/lwlock.h"
 
 #define MASTER_KEY_NAME_LEN TDE_KEY_NAME_LEN
 #define MAX_MASTER_KEY_VERSION_NUM 100000
@@ -61,6 +62,8 @@ typedef struct XLogMasterKeyCleanup
 
 extern void InitializeMasterKeyInfo(void);
 extern void cleanup_master_key_info(Oid databaseId, Oid tablespaceId);
+extern LWLock *tde_lwlock_mk_files(void);
+extern LWLock *tde_lwlock_mk_cache(void);
 
 extern bool save_master_key_info(TDEMasterKeyInfo *masterKeyInfo);
 

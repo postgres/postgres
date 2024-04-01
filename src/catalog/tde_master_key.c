@@ -34,7 +34,7 @@
 
 typedef struct TdeMasterKeySharedState
 {
-    LWLock *Lock;
+    LWLock *Locks;
     int hashTrancheId;
     dshash_table_handle hashHandle;
     void *rawDsaArea; /* DSA area pointer */
@@ -70,7 +70,7 @@ static void master_key_startup_cleanup(int tde_tbl_count, void *arg);
 static keyInfo *load_latest_versioned_key_name(TDEMasterKeyInfo *mastere_key_info, GenericKeyring *keyring, bool ensure_new_key);
 static void clear_master_key_cache(Oid databaseId, Oid tablespaceId) ;
 static inline dshash_table *get_master_key_Hash(void);
-static TDEMasterKey *get_master_key_from_cache(Oid dbOid, bool acquire_lock);
+static TDEMasterKey *get_master_key_from_cache(Oid dbOid);
 static void push_master_key_to_cache(TDEMasterKey *masterKey);
 static TDEMasterKey *set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key);
 
@@ -89,11 +89,26 @@ void InitializeMasterKeyInfo(void)
     on_ext_install(master_key_startup_cleanup, NULL);
 }
 
+LWLock *
+tde_lwlock_mk_files(void)
+{
+    Assert(masterKeyLocalState.sharedMasterKeyState);
+
+    return &masterKeyLocalState.sharedMasterKeyState->Locks[TDE_LWLOCK_MK_FILES];
+}
+
+LWLock *
+tde_lwlock_mk_cache(void)
+{
+    Assert(masterKeyLocalState.sharedMasterKeyState);
+
+    return &masterKeyLocalState.sharedMasterKeyState->Locks[TDE_LWLOCK_MK_CACHE];
+}
+
 static int
 required_locks_count(void)
 {
-    /* We just need one lock as for now */
-    return 1;
+    return TDE_LWLOCK_COUNT;
 }
 
 static Size
@@ -123,7 +138,7 @@ initialize_shared_state(void *start_address)
     masterKeyLocalState.dsa = NULL;
     masterKeyLocalState.sharedHash = NULL;
 
-    sharedState->Lock = GetNewLWLock();
+    sharedState->Locks = GetNewLWLock();
     masterKeyLocalState.sharedMasterKeyState = sharedState;
     return sizeof(TdeMasterKeySharedState);
 }
@@ -207,15 +222,39 @@ GetMasterKey(void)
     const keyInfo *keyInfo = NULL;
     KeyringReturnCodes keyring_ret;
     Oid dbOid = MyDatabaseId;
+    LWLock *lock_files = tde_lwlock_mk_files();
+    LWLock *lock_cache = tde_lwlock_mk_cache();
 
-    masterKey = get_master_key_from_cache(dbOid, true);
+    LWLockAcquire(lock_cache, LW_SHARED);
+    masterKey = get_master_key_from_cache(dbOid);
+    LWLockRelease(lock_cache);
+
     if (masterKey)
         return masterKey;
+
+    /*
+     * We should hold an exclusive lock here to ensure that a valid master key, if found, is added
+     * to the cache without any interference.
+     */
+    LWLockAcquire(lock_files, LW_SHARED);
+    LWLockAcquire(lock_cache, LW_EXCLUSIVE);
+
+    masterKey = get_master_key_from_cache(dbOid);
+
+    if (masterKey)
+    {
+        LWLockRelease(lock_cache);
+        LWLockRelease(lock_files);
+        return masterKey;
+    }
 
     /* Master key not present in cache. Load from the keyring */
     masterKeyInfo = pg_tde_get_master_key(dbOid);
     if (masterKeyInfo == NULL)
     {
+        LWLockRelease(lock_cache);
+        LWLockRelease(lock_files);
+
         ereport(ERROR,
                 (errmsg("Master key does not exists for the database"),
                  errhint("Use set_master_key interface to set the master key")));
@@ -226,6 +265,9 @@ GetMasterKey(void)
     keyring = GetKeyProviderByID(masterKeyInfo->keyringId);
     if (keyring == NULL)
     {
+        LWLockRelease(lock_cache);
+        LWLockRelease(lock_files);
+
         ereport(ERROR,
                 (errmsg("Key provider with ID:\"%d\" does not exists", masterKeyInfo->keyringId)));
         return NULL;
@@ -234,6 +276,9 @@ GetMasterKey(void)
     keyInfo = KeyringGetKey(keyring, masterKeyInfo->keyId.versioned_name, false, &keyring_ret);
     if (keyInfo == NULL)
     {
+        LWLockRelease(lock_cache);
+        LWLockRelease(lock_files);
+
         ereport(ERROR,
                 (errmsg("failed to retrieve master key \"%s\" from keyring.", masterKeyInfo->keyId.versioned_name)));
         return NULL;
@@ -248,7 +293,12 @@ GetMasterKey(void)
     Assert(MyDatabaseId == masterKey->keyInfo.databaseId);
     push_master_key_to_cache(masterKey);
 
-    pfree(masterKeyInfo);
+    /* Release the exclusive locks here */
+    LWLockRelease(lock_cache);
+    LWLockRelease(lock_files);
+
+    if (masterKeyInfo)
+        pfree(masterKeyInfo);
 
     return masterKey;
 }
@@ -268,41 +318,25 @@ static TDEMasterKey *
 set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key)
 {
     TDEMasterKey *masterKey = NULL;
-    TdeMasterKeySharedState *shared_state = masterKeyLocalState.sharedMasterKeyState;
     Oid dbOid = MyDatabaseId;
+    LWLock *lock_files = tde_lwlock_mk_files();
+    LWLock *lock_cache = tde_lwlock_mk_cache();
+    bool is_dup_key = false;
 
     /*
-     * Try to get master key from cache. If the cache entry exists
-     * throw an error
-     * */
-    masterKey = get_master_key_from_cache(dbOid, true);
-    if (masterKey)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_DUPLICATE_OBJECT),
-                 errmsg("Master key already exists for the database"),
-                 errhint("Use rotate_key interface to change the master key")));
-        return NULL;
-    }
-    /*  Check if valid master key info exists in the file. There is no need for a lock here as the key might be in the file and not in the cache, but it must be in the file if it's in the cache and we check the cache under the lock later. */
-    if (pg_tde_get_master_key(dbOid))
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_DUPLICATE_OBJECT),
-                 errmsg("Master key already exists for the database"),
-                 errhint("Use rotate_key interface to change the master key")));
-        return NULL;
-    }
-    /* Acquire the exclusive lock to disallow concurrent set master key calls */
-    LWLockAcquire(shared_state->Lock, LW_EXCLUSIVE);
-    /*
-     * Make sure just before we got the lock, some other backend
-     * has pushed the master key for this database
-     * Since we already have the exclusive lock, so do not ask for
-     * the lock again
+     * Try to get master key from cache.
      */
-    masterKey = get_master_key_from_cache(dbOid, false);
-    if (!masterKey)
+    LWLockAcquire(lock_files, LW_EXCLUSIVE);
+    LWLockAcquire(lock_cache, LW_EXCLUSIVE);
+
+    masterKey = get_master_key_from_cache(dbOid);
+    is_dup_key = (masterKey != NULL);
+
+    /*  TODO: Add the key in the cache? */
+    if (is_dup_key == false)
+        is_dup_key = (pg_tde_get_master_key(dbOid) != NULL);
+
+    if (is_dup_key == false)
     {
         const keyInfo *keyInfo = NULL;
 
@@ -320,7 +354,9 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool 
 
         if (keyInfo == NULL)
         {
-            LWLockRelease(shared_state->Lock);
+            LWLockRelease(lock_cache);
+            LWLockRelease(lock_files);
+
             ereport(ERROR,
                     (errmsg("failed to retrieve master key")));
         }
@@ -337,20 +373,22 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool 
         
         push_master_key_to_cache(masterKey);
     }
-    else
+
+    LWLockRelease(lock_cache);
+    LWLockRelease(lock_files);
+
+    if (is_dup_key)
     {
         /*
          * Seems like just before we got the lock, the key was installed by some other caller
          * Throw an error and mover no
          */
-        LWLockRelease(shared_state->Lock);
+
         ereport(ERROR,
             (errcode(ERRCODE_DUPLICATE_OBJECT),
                  errmsg("Master key already exists for the database"),
                  errhint("Use rotate_key interface to change the master key")));
     }
-
-    LWLockRelease(shared_state->Lock);
 
     return masterKey;
 }
@@ -502,18 +540,29 @@ GetMasterKeyProviderId(void)
     TDEMasterKeyInfo *masterKeyInfo = NULL;
     Oid keyringId = InvalidOid;
     Oid dbOid = MyDatabaseId;
+    LWLock *lock_files = tde_lwlock_mk_files();
+    LWLock *lock_cache = tde_lwlock_mk_cache();
 
-    masterKey = get_master_key_from_cache(dbOid, true);
+    LWLockAcquire(lock_files, LW_SHARED);
+    LWLockAcquire(lock_cache, LW_SHARED);
+
+    masterKey = get_master_key_from_cache(dbOid);
     if (masterKey)
-        return masterKey->keyInfo.keyringId;
-
-    /* Master key not present in cache. Try Loading it from the info file */
-    masterKeyInfo = pg_tde_get_master_key(dbOid);
-    if (masterKeyInfo)
     {
-        keyringId = masterKeyInfo->keyringId;
-        pfree(masterKeyInfo);
+        keyringId = masterKey->keyInfo.keyringId;
     }
+    {
+        /* Master key not present in cache. Try Loading it from the info file */
+        masterKeyInfo = pg_tde_get_master_key(dbOid);
+        if (masterKeyInfo)
+        {
+            keyringId = masterKeyInfo->keyringId;
+            pfree(masterKeyInfo);
+        }
+    }
+
+    LWLockRelease(lock_cache);
+    LWLockRelease(lock_files);
 
     return keyringId;
 }
@@ -534,21 +583,15 @@ get_master_key_Hash(void)
  * Gets the master key for current database from cache
  */
 static TDEMasterKey *
-get_master_key_from_cache(Oid dbOid, bool acquire_lock)
+get_master_key_from_cache(Oid dbOid)
 {
     TDEMasterKey *cacheEntry = NULL;
-    TdeMasterKeySharedState *shared_state = masterKeyLocalState.sharedMasterKeyState;
-
-    if (acquire_lock)
-        LWLockAcquire(shared_state->Lock, LW_SHARED);
 
     cacheEntry = (TDEMasterKey *)dshash_find(get_master_key_Hash(),
                                              &dbOid, false);
     if (cacheEntry)
         dshash_release_lock(get_master_key_Hash(), cacheEntry);
 
-    if (acquire_lock)
-        LWLockRelease(shared_state->Lock);
     return cacheEntry;
 }
 
