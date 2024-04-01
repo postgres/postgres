@@ -81,6 +81,10 @@ COPY x from stdin (on_error ignore, on_error ignore);
 ERROR:  conflicting or redundant options
 LINE 1: COPY x from stdin (on_error ignore, on_error ignore);
                                             ^
+COPY x from stdin (log_verbosity default, log_verbosity verbose);
+ERROR:  conflicting or redundant options
+LINE 1: COPY x from stdin (log_verbosity default, log_verbosity verb...
+                                                  ^
 -- incorrect options
 COPY x to stdin (format BINARY, delimiter ',');
 ERROR:  cannot specify DELIMITER in BINARY mode
@@ -108,6 +112,10 @@ COPY x to stdin (format BINARY, on_error unsupported);
 ERROR:  COPY ON_ERROR cannot be used with COPY TO
 LINE 1: COPY x to stdin (format BINARY, on_error unsupported);
                                         ^
+COPY x to stdout (log_verbosity unsupported);
+ERROR:  COPY LOG_VERBOSITY "unsupported" not recognized
+LINE 1: COPY x to stdout (log_verbosity unsupported);
+                          ^
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  column "d" specified more than once
@@ -729,8 +737,31 @@ CREATE TABLE check_ign_err (n int, m int[], k int);
 COPY check_ign_err FROM STDIN WITH (on_error stop);
 ERROR:  invalid input syntax for type integer: "a"
 CONTEXT:  COPY check_ign_err, line 2, column n: "a"
-COPY check_ign_err FROM STDIN WITH (on_error ignore);
+-- want context for notices
+\set SHOW_CONTEXT always
+COPY check_ign_err FROM STDIN WITH (on_error ignore, log_verbosity verbose);
+NOTICE:  skipping row due to data type incompatibility at line 2 for column n: "a"
+CONTEXT:  COPY check_ign_err
+NOTICE:  skipping row due to data type incompatibility at line 3 for column k: "3333333333"
+CONTEXT:  COPY check_ign_err
+NOTICE:  skipping row due to data type incompatibility at line 4 for column m: "{a, 4}"
+CONTEXT:  COPY check_ign_err
+NOTICE:  skipping row due to data type incompatibility at line 5 for column n: ""
+CONTEXT:  COPY check_ign_err
+NOTICE:  skipping row due to data type incompatibility at line 7 for column m: "a"
+CONTEXT:  COPY check_ign_err
+NOTICE:  skipping row due to data type incompatibility at line 8 for column k: "a"
+CONTEXT:  COPY check_ign_err
 NOTICE:  6 rows were skipped due to data type incompatibility
+-- tests for on_error option with log_verbosity and null constraint via domain
+CREATE DOMAIN dcheck_ign_err2 varchar(15) NOT NULL;
+CREATE TABLE check_ign_err2 (n int, m int[], k int, l dcheck_ign_err2);
+COPY check_ign_err2 FROM STDIN WITH (on_error ignore, log_verbosity verbose);
+NOTICE:  skipping row due to data type incompatibility at line 2 for column l: null input
+CONTEXT:  COPY check_ign_err2
+NOTICE:  1 row was skipped due to data type incompatibility
+-- reset context choice
+\set SHOW_CONTEXT errors
 SELECT * FROM check_ign_err;
  n |  m  | k 
 ---+-----+---
@@ -738,6 +769,12 @@ SELECT * FROM check_ign_err;
  5 | {5} | 5
  8 | {8} | 8
 (3 rows)
+
+SELECT * FROM check_ign_err2;
+ n |  m  | k |   l   
+---+-----+---+-------
+ 1 | {1} | 1 | 'foo'
+(1 row)
 
 -- test datatype error that can't be handled as soft: should fail
 CREATE TABLE hard_err(foo widget);
@@ -767,6 +804,8 @@ DROP VIEW instead_of_insert_tbl_view;
 DROP VIEW instead_of_insert_tbl_view_2;
 DROP FUNCTION fun_instead_of_insert_tbl();
 DROP TABLE check_ign_err;
+DROP TABLE check_ign_err2;
+DROP DOMAIN dcheck_ign_err2;
 DROP TABLE hard_err;
 --
 -- COPY FROM ... DEFAULT

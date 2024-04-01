@@ -101,8 +101,6 @@ typedef struct CopyMultiInsertInfo
 
 
 /* non-export function prototypes */
-static char *limit_printout_length(const char *str);
-
 static void ClosePipeFromProgram(CopyFromState cstate);
 
 /*
@@ -141,7 +139,7 @@ CopyFromErrorCallback(void *arg)
 			/* error is relevant to a particular column */
 			char	   *attval;
 
-			attval = limit_printout_length(cstate->cur_attval);
+			attval = CopyLimitPrintoutLength(cstate->cur_attval);
 			errcontext("COPY %s, line %llu, column %s: \"%s\"",
 					   cstate->cur_relname,
 					   (unsigned long long) cstate->cur_lineno,
@@ -168,7 +166,7 @@ CopyFromErrorCallback(void *arg)
 			{
 				char	   *lineval;
 
-				lineval = limit_printout_length(cstate->line_buf.data);
+				lineval = CopyLimitPrintoutLength(cstate->line_buf.data);
 				errcontext("COPY %s, line %llu: \"%s\"",
 						   cstate->cur_relname,
 						   (unsigned long long) cstate->cur_lineno, lineval);
@@ -189,8 +187,8 @@ CopyFromErrorCallback(void *arg)
  *
  * Returns a pstrdup'd copy of the input.
  */
-static char *
-limit_printout_length(const char *str)
+char *
+CopyLimitPrintoutLength(const char *str)
 {
 #define MAX_COPY_DATA_DISPLAY 100
 
