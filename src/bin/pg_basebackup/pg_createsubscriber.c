@@ -251,8 +251,8 @@ usage(void)
 static char *
 get_base_conninfo(const char *conninfo, char **dbname)
 {
-	PQExpBuffer buf = createPQExpBuffer();
-	PQconninfoOption *conn_opts = NULL;
+	PQExpBuffer buf;
+	PQconninfoOption *conn_opts;
 	PQconninfoOption *conn_opt;
 	char	   *errmsg = NULL;
 	char	   *ret;
@@ -262,9 +262,11 @@ get_base_conninfo(const char *conninfo, char **dbname)
 	if (conn_opts == NULL)
 	{
 		pg_log_error("could not parse connection string: %s", errmsg);
+		PQfreemem(errmsg);
 		return NULL;
 	}
 
+	buf = createPQExpBuffer();
 	i = 0;
 	for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 	{
@@ -497,9 +499,10 @@ connect_database(const char *conninfo, bool exit_on_error)
 	{
 		pg_log_error("connection to database failed: %s",
 					 PQerrorMessage(conn));
+		PQfinish(conn);
+
 		if (exit_on_error)
 			exit(1);
-
 		return NULL;
 	}
 
@@ -509,9 +512,11 @@ connect_database(const char *conninfo, bool exit_on_error)
 	{
 		pg_log_error("could not clear search_path: %s",
 					 PQresultErrorMessage(res));
+		PQclear(res);
+		PQfinish(conn);
+
 		if (exit_on_error)
 			exit(1);
-
 		return NULL;
 	}
 	PQclear(res);
@@ -941,6 +946,8 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 		failed = true;
 	}
 
+	pg_free(wal_level);
+
 	if (failed)
 		exit(1);
 }
@@ -1209,6 +1216,8 @@ create_logical_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo)
 			pg_log_error("could not create replication slot \"%s\" on database \"%s\": %s",
 						 slot_name, dbinfo->dbname,
 						 PQresultErrorMessage(res));
+			PQclear(res);
+			destroyPQExpBuffer(str);
 			return NULL;
 		}
 
