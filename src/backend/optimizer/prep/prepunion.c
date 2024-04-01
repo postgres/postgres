@@ -244,6 +244,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 	{
 		RangeTblRef *rtr = (RangeTblRef *) setOp;
 		RangeTblEntry *rte = root->simple_rte_array[rtr->rtindex];
+		SetOperationStmt *setops;
 		Query	   *subquery = rte->subquery;
 		PlannerInfo *subroot;
 		List	   *tlist;
@@ -257,11 +258,16 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		/* plan_params should not be in use in current query level */
 		Assert(root->plan_params == NIL);
 
+		/*
+		 * Pass the set operation details to the subquery_planner to have it
+		 * consider generating Paths correctly ordered for the set operation.
+		 */
+		setops = castNode(SetOperationStmt, root->parse->setOperations);
+
 		/* Generate a subroot and Paths for the subquery */
-		subroot = rel->subroot = subquery_planner(root->glob, subquery,
-												  root,
-												  false,
-												  root->tuple_fraction);
+		subroot = rel->subroot = subquery_planner(root->glob, subquery, root,
+												  false, root->tuple_fraction,
+												  setops);
 
 		/*
 		 * It should not be possible for the primitive query to contain any
