@@ -36,6 +36,9 @@
 #define HEAP_INSERT_NO_LOGICAL	TABLE_INSERT_NO_LOGICAL
 #define HEAP_INSERT_SPECULATIVE 0x0010
 
+/* "options" flag bits for heap_page_prune */
+#define HEAP_PAGE_PRUNE_MARK_UNUSED_NOW		(1 << 0)
+
 typedef struct BulkInsertStateData *BulkInsertState;
 struct TupleTableSlot;
 struct VacuumCutoffs;
@@ -331,7 +334,7 @@ struct GlobalVisState;
 extern void heap_page_prune_opt(Relation relation, Buffer buffer);
 extern void heap_page_prune(Relation relation, Buffer buffer,
 							struct GlobalVisState *vistest,
-							bool mark_unused_now,
+							int options,
 							PruneResult *presult,
 							PruneReason reason,
 							OffsetNumber *off_loc);

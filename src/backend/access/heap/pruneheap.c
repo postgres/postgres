@@ -166,7 +166,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 			 * not the relation has indexes, since we cannot safely determine
 			 * that during on-access pruning with the current implementation.
 			 */
-			heap_page_prune(relation, buffer, vistest, false,
+			heap_page_prune(relation, buffer, vistest, 0,
 							&presult, PRUNE_ON_ACCESS, &dummy_off_loc);
 
 			/*
@@ -211,8 +211,9 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
  * (see heap_prune_satisfies_vacuum).
  *
- * mark_unused_now indicates whether or not dead items can be set LP_UNUSED
- * during pruning.
+ * options:
+ *   MARK_UNUSED_NOW indicates that dead items can be set LP_UNUSED during
+ *   pruning.
  *
  * presult contains output parameters needed by callers such as the number of
  * tuples removed and the number of line pointers newly marked LP_DEAD.
@@ -227,7 +228,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 void
 heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
-				bool mark_unused_now,
+				int options,
 				PruneResult *presult,
 				PruneReason reason,
 				OffsetNumber *off_loc)
@@ -252,7 +253,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 	 */
 	prstate.new_prune_xid = InvalidTransactionId;
 	prstate.vistest = vistest;
-	prstate.mark_unused_now = mark_unused_now;
+	prstate.mark_unused_now = (options & HEAP_PAGE_PRUNE_MARK_UNUSED_NOW) != 0;
 	prstate.snapshotConflictHorizon = InvalidTransactionId;
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
 	prstate.ndeleted = 0;

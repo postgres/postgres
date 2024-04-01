@@ -1425,6 +1425,7 @@ lazy_scan_prune(LVRelState *vacrel,
 	bool		all_visible,
 				all_frozen;
 	TransactionId visibility_cutoff_xid;
+	int			prune_options = 0;
 	int64		fpi_before = pgWalUsage.wal_fpi;
 	OffsetNumber deadoffsets[MaxHeapTuplesPerPage];
 	HeapTupleFreeze frozen[MaxHeapTuplesPerPage];
@@ -1458,10 +1459,12 @@ lazy_scan_prune(LVRelState *vacrel,
 	 * that were deleted from indexes.
 	 *
 	 * If the relation has no indexes, we can immediately mark would-be dead
-	 * items LP_UNUSED, so mark_unused_now should be true if no indexes and
-	 * false otherwise.
+	 * items LP_UNUSED.
 	 */
-	heap_page_prune(rel, buf, vacrel->vistest, vacrel->nindexes == 0,
+	prune_options = 0;
+	if (vacrel->nindexes == 0)
+		prune_options = HEAP_PAGE_PRUNE_MARK_UNUSED_NOW;
+	heap_page_prune(rel, buf, vacrel->vistest, prune_options,
 					&presult, PRUNE_VACUUM_SCAN, &vacrel->offnum);
 
 	/*
