@@ -1,10 +1,10 @@
-# `pg_tde` documentation
+# `pg_tde` documentation [Tech preview]
 
-`pg_tde` is the extension that brings in [Transparent Data Encryption (TDE)](tde.md) to PostgreSQL and enables users to keep sensitive data safe and secure. 
+`pg_tde` is the extension that brings in [Transparent Data Encryption (TDE)](tde.md) to PostgreSQL and enables users to keep sensitive data safe and secure. It enables users to configure encryption differently for each database, encrypting specific tables in some databases with different encryption keys, while keeping others non encrypted. 
 
 !!! important 
 
-    This is the MVP version of the extension and is not meant for production use yet.
+    This is the tech preview version of the extension and is not meant for production use yet.
 
 [What's new](release-notes/tech-preview.md){.md-button}
 
@@ -22,7 +22,7 @@
 * Keys in the local keyfile are stored unencrypted.
 * Indexes and `NULL` bitmaps of tuples are currently not encrypted. 
 
-<i warning>:material-alert: Warning:</i> Note that introducing encryption/decryption affects performance. Our benchmark tests show less than 10% performance overhead.
+<i warning>:material-alert: Warning:</i> Note that introducing encryption/decryption affects performance. Our benchmark tests show less than 10% performance overhead for most situations. However, in some specific applications such as those using JSONB operations, performance degradation might be higher.
 
 [Get started](install.md){.md-button}
 
@@ -35,8 +35,6 @@
 The following is planned for future releases of `pg_tde`:
 
 * Encryption of indexes and `NULL` bitmaps of tuples
-* Master key rotation
-* Multi-tenancy support
 * Logical replication support
 
 

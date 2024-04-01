@@ -19,7 +19,17 @@ To check if the data is encrypted, do the following:
 2. Run the following function:
 
     ```sql
-    select pgtde_is_encrypted('table_name');
+    SELECT pg_tde_is_encrypted('table_name');
     ```
 
     The function returns `t` if the table is encrypted and `f` - if not.
+
+3. Rotate the master key when needed:
+
+    ```sql
+    SELECT pg_tde_rotate_key(); -- uses automatic key versionin
+    -- or
+    SELECT pg_tde_rotate_key('new-master-key', NULL); -- specify new key name
+    -- or
+    SELECT pg_tde_rotate_key('new-master-key', 'new-provider'); -- change provider
+    ```
