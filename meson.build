@@ -1,7 +1,7 @@
 
 curldep = dependency('libcurl')
 
-pg_tde_version = 'Alpha 1.0'
+pg_tde_version = '1.0.0-alpha'
 
 conf_data = configuration_data()
 conf_data.set_quoted('PACKAGE_NAME', 'pg_tde')
