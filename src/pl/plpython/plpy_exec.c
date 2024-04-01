@@ -702,7 +702,7 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 			   *pltrelid,
 			   *plttablename,
 			   *plttableschema,
-			   *pltargs = NULL,
+			   *pltargs,
 			   *pytnew,
 			   *pytold,
 			   *pltdata;
@@ -725,6 +725,11 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 			Py_DECREF(pltdata);
 			return NULL;
 		}
+	}
+	else
+	{
+		Py_INCREF(Py_None);
+		pltargs = Py_None;
 	}
 
 	PG_TRY();
@@ -869,7 +874,7 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 			PyObject   *pltarg;
 
 			/* pltargs should have been allocated before the PG_TRY block. */
-			Assert(pltargs);
+			Assert(pltargs && pltargs != Py_None);
 
 			for (i = 0; i < tdata->tg_trigger->tgnargs; i++)
 			{
@@ -883,8 +888,7 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 		}
 		else
 		{
-			Py_INCREF(Py_None);
-			pltargs = Py_None;
+			Assert(pltargs == Py_None);
 		}
 		PyDict_SetItemString(pltdata, "args", pltargs);
 		Py_DECREF(pltargs);
