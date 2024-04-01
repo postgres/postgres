@@ -324,6 +324,9 @@ struct _archiveHandle
 	char	   *currTablespace; /* current tablespace, or NULL */
 	char	   *currTableAm;	/* current table access method, or NULL */
 
+	/* in --transaction-size mode, this counts objects emitted in cur xact */
+	int			txnCount;
+
 	void	   *lo_buf;
 	size_t		lo_buf_used;
 	size_t		lo_buf_size;

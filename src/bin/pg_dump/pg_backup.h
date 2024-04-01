@@ -149,7 +149,9 @@ typedef struct _restoreOptions
 												 * compression */
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
 										 * to stderr */
-	bool		single_txn;
+
+	bool		single_txn;		/* restore all TOCs in one transaction */
+	int			txn_size;		/* restore this many TOCs per txn, if > 0 */
 
 	bool	   *idWanted;		/* array showing which dump IDs to emit */
 	int			enable_row_security;

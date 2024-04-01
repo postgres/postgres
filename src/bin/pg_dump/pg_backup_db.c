@@ -554,6 +554,7 @@ IssueCommandPerBlob(ArchiveHandle *AH, TocEntry *te,
 {
 	/* Make a writable copy of the command string */
 	char	   *buf = pg_strdup(te->defn);
+	RestoreOptions *ropt = AH->public.ropt;
 	char	   *st;
 	char	   *en;
 
@@ -562,6 +563,23 @@ IssueCommandPerBlob(ArchiveHandle *AH, TocEntry *te,
 	{
 		*en++ = '\0';
 		ahprintf(AH, "%s%s%s;\n", cmdBegin, st, cmdEnd);
+
+		/* In --transaction-size mode, count each command as an action */
+		if (ropt && ropt->txn_size > 0)
+		{
+			if (++AH->txnCount >= ropt->txn_size)
+			{
+				if (AH->connection)
+				{
+					CommitTransaction(&AH->public);
+					StartTransaction(&AH->public);
+				}
+				else
+					ahprintf(AH, "COMMIT;\nBEGIN;\n\n");
+				AH->txnCount = 0;
+			}
+		}
+
 		st = en;
 	}
 	ahprintf(AH, "\n");

@@ -51,6 +51,13 @@
 #include "fe_utils/string_utils.h"
 #include "pg_upgrade.h"
 
+/*
+ * Maximum number of pg_restore actions (TOC entries) to process within one
+ * transaction.  At some point we might want to make this user-controllable,
+ * but for now a hard-wired setting will suffice.
+ */
+#define RESTORE_TRANSACTION_SIZE 1000
+
 static void set_locale_and_encoding(void);
 static void prepare_new_cluster(void);
 static void prepare_new_globals(void);
@@ -562,10 +569,12 @@ create_new_objects(void)
 				  true,
 				  true,
 				  "\"%s/pg_restore\" %s %s --exit-on-error --verbose "
+				  "--transaction-size=%d "
 				  "--dbname postgres \"%s/%s\"",
 				  new_cluster.bindir,
 				  cluster_conn_opts(&new_cluster),
 				  create_opts,
+				  RESTORE_TRANSACTION_SIZE,
 				  log_opts.dumpdir,
 				  sql_file_name);
 
@@ -578,6 +587,7 @@ create_new_objects(void)
 					log_file_name[MAXPGPATH];
 		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
 		const char *create_opts;
+		int			txn_size;
 
 		/* Skip template1 in this pass */
 		if (strcmp(old_db->db_name, "template1") == 0)
@@ -597,13 +607,28 @@ create_new_objects(void)
 		else
 			create_opts = "--create";
 
+		/*
+		 * In parallel mode, reduce the --transaction-size of each restore job
+		 * so that the total number of locks that could be held across all the
+		 * jobs stays in bounds.
+		 */
+		txn_size = RESTORE_TRANSACTION_SIZE;
+		if (user_opts.jobs > 1)
+		{
+			txn_size /= user_opts.jobs;
+			/* Keep some sanity if -j is huge */
+			txn_size = Max(txn_size, 10);
+		}
+
 		parallel_exec_prog(log_file_name,
 						   NULL,
 						   "\"%s/pg_restore\" %s %s --exit-on-error --verbose "
+						   "--transaction-size=%d "
 						   "--dbname template1 \"%s/%s\"",
 						   new_cluster.bindir,
 						   cluster_conn_opts(&new_cluster),
 						   create_opts,
+						   txn_size,
 						   log_opts.dumpdir,
 						   sql_file_name);
 	}

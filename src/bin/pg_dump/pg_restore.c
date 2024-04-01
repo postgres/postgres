@@ -120,6 +120,7 @@ main(int argc, char **argv)
 		{"role", required_argument, NULL, 2},
 		{"section", required_argument, NULL, 3},
 		{"strict-names", no_argument, &strict_names, 1},
+		{"transaction-size", required_argument, NULL, 5},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-comments", no_argument, &no_comments, 1},
 		{"no-publications", no_argument, &no_publications, 1},
@@ -289,8 +290,16 @@ main(int argc, char **argv)
 				set_dump_section(optarg, &(opts->dumpSections));
 				break;
 
-			case 4:
+			case 4:				/* filter */
 				read_restore_filters(optarg, opts);
+				break;
+
+			case 5:				/* transaction-size */
+				if (!option_parse_int(optarg, "--transaction-size",
+									  1, INT_MAX,
+									  &opts->txn_size))
+					exit(1);
+				opts->exit_on_error = true;
 				break;
 
 			default:
@@ -336,6 +345,9 @@ main(int argc, char **argv)
 
 	if (opts->dataOnly && opts->dropSchema)
 		pg_fatal("options -c/--clean and -a/--data-only cannot be used together");
+
+	if (opts->single_txn && opts->txn_size > 0)
+		pg_fatal("options -1/--single-transaction and --transaction-size cannot be used together");
 
 	/*
 	 * -C is not compatible with -1, because we can't create a database inside
@@ -484,6 +496,7 @@ usage(const char *progname)
 	printf(_("  --section=SECTION            restore named section (pre-data, data, or post-data)\n"));
 	printf(_("  --strict-names               require table and/or schema include patterns to\n"
 			 "                               match at least one entity each\n"));
+	printf(_("  --transaction-size=N         commit after every N objects\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
