@@ -781,7 +781,6 @@ initialize_SSL(PGconn *conn)
 	bool		have_homedir;
 	bool		have_cert;
 	bool		have_rootcert;
-	EVP_PKEY   *pkey = NULL;
 
 	/*
 	 * We'll need the home directory if any of the relevant parameters are
@@ -1117,6 +1116,7 @@ initialize_SSL(PGconn *conn)
 			/* Colon, but not in second character, treat as engine:key */
 			char	   *engine_str = strdup(conn->sslkey);
 			char	   *engine_colon;
+			EVP_PKEY   *pkey;
 
 			if (engine_str == NULL)
 			{
