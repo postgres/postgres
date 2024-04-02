@@ -92,6 +92,8 @@ extern void SpeculativeInsertionWait(TransactionId xid, uint32 token);
 /* Lock a general object (other than a relation) of the current database */
 extern void LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 							   LOCKMODE lockmode);
+extern bool ConditionalLockDatabaseObject(Oid classid, Oid objid,
+										  uint16 objsubid, LOCKMODE lockmode);
 extern void UnlockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 								 LOCKMODE lockmode);
 
