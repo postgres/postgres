@@ -25,6 +25,7 @@
 #include "access/xlogprefetcher.h"
 #include "access/xlogrecovery.h"
 #include "commands/async.h"
+#include "commands/waitlsn.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
@@ -152,6 +153,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, WaitEventExtensionShmemSize());
 	size = add_size(size, InjectionPointShmemSize());
 	size = add_size(size, SlotSyncShmemSize());
+	size = add_size(size, WaitLSNShmemSize());
 #ifdef EXEC_BACKEND
 	size = add_size(size, ShmemBackendArraySize());
 #endif
@@ -243,6 +245,11 @@ CreateSharedMemoryAndSemaphores(void)
 
 	/* Initialize subsystems */
 	CreateOrAttachShmemStructs();
+
+	/*
+	 * Init array of Latches in shared memory for wait lsn
+	 */
+	WaitLSNShmemInit();
 
 #ifdef EXEC_BACKEND
 
