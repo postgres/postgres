@@ -33,7 +33,6 @@
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/parallel.h"
-#include "access/relation.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/table.h"
@@ -465,7 +464,6 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 {
 	bytea	   *options;
 	amoptions_function amoptsfn;
-	const TableAmRoutine *tableam = NULL;
 
 	relation->rd_options = NULL;
 
@@ -480,7 +478,6 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 		case RELKIND_VIEW:
 		case RELKIND_MATVIEW:
 		case RELKIND_PARTITIONED_TABLE:
-			tableam = relation->rd_tableam;
 			amoptsfn = NULL;
 			break;
 		case RELKIND_INDEX:
@@ -496,8 +493,7 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	 * we might not have any other for pg_class yet (consider executing this
 	 * code for pg_class itself)
 	 */
-	options = extractRelOptions(tuple, GetPgClassDescriptor(),
-								tableam, amoptsfn);
+	options = extractRelOptions(tuple, GetPgClassDescriptor(), amoptsfn);
 
 	/*
 	 * Copy parsed data into CacheMemoryContext.  To guard against the
