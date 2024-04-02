@@ -898,7 +898,7 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 		if (p.nuls[0] == '\0' && p.nuls[1] == '\0' &&
 			p.len > 0 && p.len <= PIPE_MAX_PAYLOAD &&
 			p.pid != 0 &&
-			pg_popcount((char *) &dest_flags, 1) == 1)
+			pg_number_of_ones[dest_flags] == 1)
 		{
 			List	   *buffer_list;
 			ListCell   *cell;
