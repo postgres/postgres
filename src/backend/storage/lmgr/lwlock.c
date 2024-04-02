@@ -168,6 +168,7 @@ static const char *const BuiltinTrancheNames[] = {
 	[LWTRANCHE_SERIAL_SLRU] = "SerialSLRU",
 	[LWTRANCHE_SUBTRANS_SLRU] = "SubtransSLRU",
 	[LWTRANCHE_XACT_SLRU] = "XactSLRU",
+	[LWTRANCHE_PARALLEL_VACUUM_DSA] = "ParallelVacuumDSA",
 };
 
 StaticAssertDecl(lengthof(BuiltinTrancheNames) ==

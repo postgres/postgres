@@ -2050,8 +2050,8 @@ pg_stat_progress_vacuum| SELECT s.pid,
     s.param3 AS heap_blks_scanned,
     s.param4 AS heap_blks_vacuumed,
     s.param5 AS index_vacuum_count,
-    s.param6 AS max_dead_tuples,
-    s.param7 AS num_dead_tuples,
+    s.param6 AS max_dead_tuple_bytes,
+    s.param7 AS dead_tuple_bytes,
     s.param8 AS indexes_total,
     s.param9 AS indexes_processed
    FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)

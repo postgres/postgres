@@ -376,6 +376,7 @@ NotifySLRU	"Waiting to access the <command>NOTIFY</command> message SLRU cache."
 SerialSLRU	"Waiting to access the serializable transaction conflict SLRU cache."
 SubtransSLRU	"Waiting to access the sub-transaction SLRU cache."
 XactSLRU	"Waiting to access the transaction status SLRU cache."
+ParallelVacuumDSA	"Waiting for parallel vacuum dynamic shared memory allocation."
 
 
 #

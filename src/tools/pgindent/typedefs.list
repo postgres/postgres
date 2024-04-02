@@ -2985,7 +2985,7 @@ UserMapping
 UserOpts
 VacAttrStats
 VacAttrStatsP
-VacDeadItems
+VacDeadItemsInfo
 VacErrPhase
 VacObjFilter
 VacOptValue
