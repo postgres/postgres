@@ -262,6 +262,41 @@ PGconn *PQsetdb(char *pghost,
      </listitem>
     </varlistentry>
 
+    <varlistentry id="libpq-PQsocketPoll">
+     <term><function>PQsocketPoll</function><indexterm><primary>PQsocketPoll</primary></indexterm></term>
+     <listitem>
+      <para>
+       <indexterm><primary>nonblocking connection</primary></indexterm>
+       Poll a connection&apos;s underlying socket descriptor retrieved with <xref linkend="libpq-PQsocket"/>.
+<synopsis>
+int PQsocketPoll(int sock, int forRead, int forWrite, time_t end_time);
+</synopsis>
+      </para>
+
+      <para>
+       This function sets up polling of a file descriptor. The underlying function is either
+       <function>poll(2)</function> or <function>select(2)</function>, depending on platform
+       support. The primary use of this function is iterating through the connection sequence
+       described in the documentation of <xref linkend="libpq-PQconnectStartParams"/>. If
+       <parameter>forRead</parameter> is specified, the function waits for the socket to be ready
+       for reading. If <parameter>forWrite</parameter> is specified, the function waits for the
+       socket to be ready for write. See <literal>POLLIN</literal> and <literal>POLLOUT</literal>
+       from <function>poll(2)</function>, or <parameter>readfds</parameter> and
+       <parameter>writefds</parameter> from <function>select(2)</function> for more information. If
+       <parameter>end_time</parameter> is not <literal>-1</literal>, it specifies the time at which
+       this function should stop waiting for the condition to be met.
+      </para>
+
+      <para>
+       The function returns a value greater than <literal>0</literal> if the specified condition
+       is met, <literal>0</literal> if a timeout occurred, or <literal>-1</literal> if an error
+       occurred. The error can be retrieved by checking the <literal>errno(3)</literal> value. In
+       the event <literal>forRead</literal> and <literal>forWrite</literal> are not set, the
+       function immediately returns a timeout condition.
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry id="libpq-PQconnectStartParams">
      <term><function>PQconnectStartParams</function><indexterm><primary>PQconnectStartParams</primary></indexterm></term>
      <term><function>PQconnectStart</function><indexterm><primary>PQconnectStart</primary></indexterm></term>
@@ -358,7 +393,10 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
        Loop thus: If <function>PQconnectPoll(conn)</function> last returned
        <symbol>PGRES_POLLING_READING</symbol>, wait until the socket is ready to
        read (as indicated by <function>select()</function>, <function>poll()</function>, or
-       similar system function).
+       similar system function).  Note that <function>PQsocketPoll</function>
+       can help reduce boilerplate by abstracting the setup of
+       <function>select(2)</function> or <function>poll(2)</function> if it is
+       available on your system.
        Then call <function>PQconnectPoll(conn)</function> again.
        Conversely, if <function>PQconnectPoll(conn)</function> last returned
        <symbol>PGRES_POLLING_WRITING</symbol>, wait until the socket is ready

@@ -202,3 +202,4 @@ PQcancelSocket            199
 PQcancelErrorMessage      200
 PQcancelReset             201
 PQcancelFinish            202
+PQsocketPoll              203

@@ -21,6 +21,7 @@ extern "C"
 #endif
 
 #include <stdio.h>
+#include <time.h>
 
 /*
  * postgres_ext.h defines the backend's externally visible types,
@@ -669,6 +670,9 @@ extern int	lo_export(PGconn *conn, Oid lobjId, const char *filename);
 
 /* Get the version of the libpq library in use */
 extern int	PQlibVersion(void);
+
+/* Poll a socket for reading and/or writing with an optional timeout */
+extern int	PQsocketPoll(int sock, int forRead, int forWrite, time_t end_time);
 
 /* Determine length of multibyte encoded char at *s */
 extern int	PQmblen(const char *s, int encoding);

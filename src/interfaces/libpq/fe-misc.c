@@ -55,7 +55,6 @@ static int	pqPutMsgBytes(const void *buf, size_t len, PGconn *conn);
 static int	pqSendSome(PGconn *conn, int len);
 static int	pqSocketCheck(PGconn *conn, int forRead, int forWrite,
 						  time_t end_time);
-static int	pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time);
 
 /*
  * PQlibVersion: return the libpq version number
@@ -1059,7 +1058,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 
 	/* We will retry as long as we get EINTR */
 	do
-		result = pqSocketPoll(conn->sock, forRead, forWrite, end_time);
+		result = PQsocketPoll(conn->sock, forRead, forWrite, end_time);
 	while (result < 0 && SOCK_ERRNO == EINTR);
 
 	if (result < 0)
@@ -1083,8 +1082,8 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
  * Timeout is infinite if end_time is -1.  Timeout is immediate (no blocking)
  * if end_time is 0 (or indeed, any time before now).
  */
-static int
-pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
+int
+PQsocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 {
 	/* We use poll(2) if available, otherwise select(2) */
 #ifdef HAVE_POLL
