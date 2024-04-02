@@ -246,11 +246,6 @@ CreateSharedMemoryAndSemaphores(void)
 	/* Initialize subsystems */
 	CreateOrAttachShmemStructs();
 
-	/*
-	 * Init array of Latches in shared memory for wait lsn
-	 */
-	WaitLSNShmemInit();
-
 #ifdef EXEC_BACKEND
 
 	/*
@@ -364,6 +359,7 @@ CreateOrAttachShmemStructs(void)
 	StatsShmemInit();
 	WaitEventExtensionShmemInit();
 	InjectionPointShmemInit();
+	WaitLSNShmemInit();
 }
 
 /*
