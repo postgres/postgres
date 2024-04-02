@@ -3130,6 +3130,20 @@ struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"io_combine_limit",
+			PGC_USERSET,
+			RESOURCES_ASYNCHRONOUS,
+			gettext_noop("Limit on the size of data reads and writes."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&io_combine_limit,
+		DEFAULT_IO_COMBINE_LIMIT,
+		1, MAX_IO_COMBINE_LIMIT,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"backend_flush_after", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
 			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
 			NULL,

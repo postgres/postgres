@@ -2708,6 +2708,20 @@ include_dir 'conf.d'
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-io-combine-limit" xreflabel="io_combine_limit">
+       <term><varname>io_combine_limit</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>io_combine_limit</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Controls the largest I/O size in operations that combine I/O.
+         The default is 128kB.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-max-worker-processes" xreflabel="max_worker_processes">
        <term><varname>max_worker_processes</varname> (<type>integer</type>)
        <indexterm>
