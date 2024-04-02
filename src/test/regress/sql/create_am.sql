@@ -349,7 +349,7 @@ CREATE TABLE i_am_a_failure() USING "I do not exist AM";
 CREATE TABLE i_am_a_failure() USING "btree";
 
 -- Other weird invalid cases that cause problems
-CREATE FOREIGN TABLE fp PARTITION OF pg_am DEFAULT SERVER x;
+CREATE FOREIGN TABLE fp PARTITION OF tableam_parted_a_heap2 DEFAULT SERVER x;
 
 -- Drop table access method, which fails as objects depends on it
 DROP ACCESS METHOD heap2;
