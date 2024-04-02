@@ -85,6 +85,7 @@ tests += {
       'non_sorted_off_compact',
       'update_compare_indexes',
       'pgtde_is_encrypted',
+      'test_issue_153_fix',
       'multi_insert',
       'keyprovider_dependency',
       'trigger_on_view',
