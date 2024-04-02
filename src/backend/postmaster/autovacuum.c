@@ -76,6 +76,7 @@
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "common/int.h"
@@ -2175,6 +2176,24 @@ do_autovacuum(void)
 			continue;
 		}
 
+		/*
+		 * Try to lock the temp namespace, too.  Even though we have lock on
+		 * the table itself, there's a risk of deadlock against an incoming
+		 * backend trying to clean out the temp namespace, in case this table
+		 * has dependencies (such as sequences) that the backend's
+		 * performDeletion call might visit in a different order.  If we can
+		 * get AccessShareLock on the namespace, that's sufficient to ensure
+		 * we're not running concurrently with RemoveTempRelations.  If we
+		 * can't, back off and let RemoveTempRelations do its thing.
+		 */
+		if (!ConditionalLockDatabaseObject(NamespaceRelationId,
+										   classForm->relnamespace, 0,
+										   AccessShareLock))
+		{
+			UnlockRelationOid(relid, AccessExclusiveLock);
+			continue;
+		}
+
 		/* OK, let's delete it */
 		ereport(LOG,
 				(errmsg("autovacuum: dropping orphan temp table \"%s.%s.%s\"",
@@ -2192,7 +2211,7 @@ do_autovacuum(void)
 
 		/*
 		 * To commit the deletion, end current transaction and start a new
-		 * one.  Note this also releases the lock we took.
+		 * one.  Note this also releases the locks we took.
 		 */
 		CommitTransactionCommand();
 		StartTransactionCommand();

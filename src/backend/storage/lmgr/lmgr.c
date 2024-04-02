@@ -1019,6 +1019,44 @@ LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 }
 
 /*
+ *		ConditionalLockDatabaseObject
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns true iff the lock was acquired.
+ */
+bool
+ConditionalLockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
+							  LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+	LOCALLOCK  *locallock;
+	LockAcquireResult res;
+
+	SET_LOCKTAG_OBJECT(tag,
+					   MyDatabaseId,
+					   classid,
+					   objid,
+					   objsubid);
+
+	res = LockAcquireExtended(&tag, lockmode, false, true, true, &locallock);
+
+	if (res == LOCKACQUIRE_NOT_AVAIL)
+		return false;
+
+	/*
+	 * Now that we have the lock, check for invalidation messages; see notes
+	 * in LockRelationOid.
+	 */
+	if (res != LOCKACQUIRE_ALREADY_CLEAR)
+	{
+		AcceptInvalidationMessages();
+		MarkLockClear(locallock);
+	}
+
+	return true;
+}
+
+/*
  *		UnlockDatabaseObject
  */
 void
