@@ -1215,6 +1215,7 @@ InjectionPointCacheEntry
 InjectionPointEntry
 InjectionPointSharedState
 InlineCodeBlock
+InProgressIO
 InsertStmt
 Instrumentation
 Int128AggState
@@ -2295,6 +2296,7 @@ ReadExtraTocPtrType
 ReadFunc
 ReadLocalXLogPageNoWaitPrivate
 ReadReplicationSlotCmd
+ReadStream
 ReassignOwnedStmt
 RecheckForeignScan_function
 RecordCacheArrayEntry
