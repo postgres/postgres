@@ -19,6 +19,7 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/read_stream.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -37,6 +38,25 @@ typedef enum
 } PrewarmType;
 
 static PGIOAlignedBlock blockbuffer;
+
+struct pg_prewarm_read_stream_private
+{
+	BlockNumber blocknum;
+	int64		last_block;
+};
+
+static BlockNumber
+pg_prewarm_read_stream_next_block(ReadStream *stream,
+								  void *callback_private_data,
+								  void *per_buffer_data)
+{
+	struct pg_prewarm_read_stream_private *p = callback_private_data;
+
+	if (p->blocknum <= p->last_block)
+		return p->blocknum++;
+
+	return InvalidBlockNumber;
+}
 
 /*
  * pg_prewarm(regclass, mode text, fork text,
@@ -183,18 +203,36 @@ pg_prewarm(PG_FUNCTION_ARGS)
 	}
 	else if (ptype == PREWARM_BUFFER)
 	{
+		struct pg_prewarm_read_stream_private p;
+		ReadStream *stream;
+
 		/*
 		 * In buffer mode, we actually pull the data into shared_buffers.
 		 */
+
+		/* Set up the private state for our streaming buffer read callback. */
+		p.blocknum = first_block;
+		p.last_block = last_block;
+
+		stream = read_stream_begin_relation(READ_STREAM_FULL,
+											NULL,
+											rel,
+											forkNumber,
+											pg_prewarm_read_stream_next_block,
+											&p,
+											0);
+
 		for (block = first_block; block <= last_block; ++block)
 		{
 			Buffer		buf;
 
 			CHECK_FOR_INTERRUPTS();
-			buf = ReadBufferExtended(rel, forkNumber, block, RBM_NORMAL, NULL);
+			buf = read_stream_next_buffer(stream, NULL);
 			ReleaseBuffer(buf);
 			++blocks_done;
 		}
+		Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
+		read_stream_end(stream);
 	}
 
 	/* Close relation, release lock. */
