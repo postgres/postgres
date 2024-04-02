@@ -1339,17 +1339,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction,
 	if (parse->setOperations)
 	{
 		/*
-		 * If there's a top-level ORDER BY, assume we have to fetch all the
-		 * tuples.  This might be too simplistic given all the hackery below
-		 * to possibly avoid the sort; but the odds of accurate estimates here
-		 * are pretty low anyway.  XXX try to get rid of this in favor of
-		 * letting plan_set_operations generate both fast-start and
-		 * cheapest-total paths.
-		 */
-		if (parse->sortClause)
-			root->tuple_fraction = 0.0;
-
-		/*
 		 * Construct Paths for set operations.  The results will not need any
 		 * work except perhaps a top-level sort and/or LIMIT.  Note that any
 		 * special work for recursive unions is the responsibility of
