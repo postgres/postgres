@@ -137,7 +137,7 @@
  *	SerialControlLock
  *		- Protects SerialControlData members
  *
- *	SerialSLRULock
+ *	SLRU per-bank locks
  *		- Protects SerialSlruCtl
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
@@ -908,20 +908,25 @@ SerialAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	if (isNewPage)
 		serialControl->headPage = targetPage;
 
-	LWLockAcquire(lock, LW_EXCLUSIVE);
-
 	if (isNewPage)
 	{
-		/* Initialize intervening pages. */
-		while (firstZeroPage != targetPage)
+		/* Initialize intervening pages; might involve trading locks */
+		for (;;)
 		{
-			(void) SimpleLruZeroPage(SerialSlruCtl, firstZeroPage);
+			lock = SimpleLruGetBankLock(SerialSlruCtl, firstZeroPage);
+			LWLockAcquire(lock, LW_EXCLUSIVE);
+			slotno = SimpleLruZeroPage(SerialSlruCtl, firstZeroPage);
+			if (firstZeroPage == targetPage)
+				break;
 			firstZeroPage = SerialNextPage(firstZeroPage);
+			LWLockRelease(lock);
 		}
-		slotno = SimpleLruZeroPage(SerialSlruCtl, targetPage);
 	}
 	else
+	{
+		LWLockAcquire(lock, LW_EXCLUSIVE);
 		slotno = SimpleLruReadPage(SerialSlruCtl, targetPage, true, xid);
+	}
 
 	SerialValue(slotno, xid) = minConflictCommitSeqNo;
 	SerialSlruCtl->shared->page_dirty[slotno] = true;
