@@ -30,25 +30,24 @@ static void sift_up(binaryheap *heap, int node_off);
 /*
  * binaryheap_allocate
  *
- * Returns a pointer to a newly-allocated heap that has the capacity to
- * store the given number of nodes, with the heap property defined by
- * the given comparator function, which will be invoked with the additional
- * argument specified by 'arg'.
+ * Returns a pointer to a newly-allocated heap with the given initial number
+ * of nodes, and with the heap property defined by the given comparator
+ * function, which will be invoked with the additional argument specified by
+ * 'arg'.
  */
 binaryheap *
-binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
+binaryheap_allocate(int num_nodes, binaryheap_comparator compare, void *arg)
 {
-	int			sz;
 	binaryheap *heap;
 
-	sz = offsetof(binaryheap, bh_nodes) + sizeof(bh_node_type) * capacity;
-	heap = (binaryheap *) palloc(sz);
-	heap->bh_space = capacity;
+	heap = (binaryheap *) palloc(sizeof(binaryheap));
+	heap->bh_space = num_nodes;
 	heap->bh_compare = compare;
 	heap->bh_arg = arg;
 
 	heap->bh_size = 0;
 	heap->bh_has_heap_property = true;
+	heap->bh_nodes = (bh_node_type *) palloc(sizeof(bh_node_type) * num_nodes);
 
 	return heap;
 }
@@ -74,6 +73,7 @@ binaryheap_reset(binaryheap *heap)
 void
 binaryheap_free(binaryheap *heap)
 {
+	pfree(heap->bh_nodes);
 	pfree(heap);
 }
 
@@ -105,6 +105,17 @@ parent_offset(int i)
 }
 
 /*
+ * Double the space allocated for nodes.
+ */
+static void
+enlarge_node_array(binaryheap *heap)
+{
+	heap->bh_space *= 2;
+	heap->bh_nodes = repalloc(heap->bh_nodes,
+							  sizeof(bh_node_type) * heap->bh_space);
+}
+
+/*
  * binaryheap_add_unordered
  *
  * Adds the given datum to the end of the heap's list of nodes in O(1) without
@@ -115,14 +126,10 @@ parent_offset(int i)
 void
 binaryheap_add_unordered(binaryheap *heap, bh_node_type d)
 {
+	/* make sure enough space for a new node */
 	if (heap->bh_size >= heap->bh_space)
-	{
-#ifdef FRONTEND
-		pg_fatal("out of binary heap slots");
-#else
-		elog(ERROR, "out of binary heap slots");
-#endif
-	}
+		enlarge_node_array(heap);
+
 	heap->bh_has_heap_property = false;
 	heap->bh_nodes[heap->bh_size] = d;
 	heap->bh_size++;
@@ -153,14 +160,10 @@ binaryheap_build(binaryheap *heap)
 void
 binaryheap_add(binaryheap *heap, bh_node_type d)
 {
+	/* make sure enough space for a new node */
 	if (heap->bh_size >= heap->bh_space)
-	{
-#ifdef FRONTEND
-		pg_fatal("out of binary heap slots");
-#else
-		elog(ERROR, "out of binary heap slots");
-#endif
-	}
+		enlarge_node_array(heap);
+
 	heap->bh_nodes[heap->bh_size] = d;
 	heap->bh_size++;
 	sift_up(heap, heap->bh_size - 1);

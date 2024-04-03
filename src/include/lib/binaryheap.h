@@ -46,10 +46,10 @@ typedef struct binaryheap
 	bool		bh_has_heap_property;	/* debugging cross-check */
 	binaryheap_comparator bh_compare;
 	void	   *bh_arg;
-	bh_node_type bh_nodes[FLEXIBLE_ARRAY_MEMBER];
+	bh_node_type *bh_nodes;
 } binaryheap;
 
-extern binaryheap *binaryheap_allocate(int capacity,
+extern binaryheap *binaryheap_allocate(int num_nodes,
 									   binaryheap_comparator compare,
 									   void *arg);
 extern void binaryheap_reset(binaryheap *heap);
