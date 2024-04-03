@@ -140,12 +140,21 @@ typedef bool (*ArchiveFileCB) (ArchiveModuleState *state, const char *file, cons
 
     If <literal>true</literal> is returned, the server proceeds as if the file
     was successfully archived, which may include recycling or removing the
-    original WAL file.  If <literal>false</literal> is returned, the server will
+    original WAL file.  If <literal>false</literal> is returned or an error is thrown, the server will
     keep the original WAL file and retry archiving later.
     <replaceable>file</replaceable> will contain just the file name of the WAL
     file to archive, while <replaceable>path</replaceable> contains the full
     path of the WAL file (including the file name).
    </para>
+
+   <note>
+    <para>
+     The <function>archive_file_cb</function> callback is called in a
+     short-lived memory context that will be reset between invocations.  If you
+     need longer-lived storage, create a memory context in the module's
+     <function>startup_cb</function> callback.
+    </para>
+   </note>
   </sect2>
 
   <sect2 id="archive-module-shutdown">

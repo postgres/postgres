@@ -40,26 +40,18 @@
 
 PG_MODULE_MAGIC;
 
-typedef struct BasicArchiveData
-{
-	MemoryContext context;
-} BasicArchiveData;
-
 static char *archive_directory = NULL;
 
-static void basic_archive_startup(ArchiveModuleState *state);
 static bool basic_archive_configured(ArchiveModuleState *state);
 static bool basic_archive_file(ArchiveModuleState *state, const char *file, const char *path);
-static void basic_archive_file_internal(const char *file, const char *path);
 static bool check_archive_directory(char **newval, void **extra, GucSource source);
 static bool compare_files(const char *file1, const char *file2);
-static void basic_archive_shutdown(ArchiveModuleState *state);
 
 static const ArchiveModuleCallbacks basic_archive_callbacks = {
-	.startup_cb = basic_archive_startup,
+	.startup_cb = NULL,
 	.check_configured_cb = basic_archive_configured,
 	.archive_file_cb = basic_archive_file,
-	.shutdown_cb = basic_archive_shutdown
+	.shutdown_cb = NULL
 };
 
 /*
@@ -91,24 +83,6 @@ const ArchiveModuleCallbacks *
 _PG_archive_module_init(void)
 {
 	return &basic_archive_callbacks;
-}
-
-/*
- * basic_archive_startup
- *
- * Creates the module's memory context.
- */
-void
-basic_archive_startup(ArchiveModuleState *state)
-{
-	BasicArchiveData *data;
-
-	data = (BasicArchiveData *) MemoryContextAllocZero(TopMemoryContext,
-													   sizeof(BasicArchiveData));
-	data->context = AllocSetContextCreate(TopMemoryContext,
-										  "basic_archive",
-										  ALLOCSET_DEFAULT_SIZES);
-	state->private_data = (void *) data;
 }
 
 /*
@@ -177,74 +151,6 @@ basic_archive_configured(ArchiveModuleState *state)
 static bool
 basic_archive_file(ArchiveModuleState *state, const char *file, const char *path)
 {
-	sigjmp_buf	local_sigjmp_buf;
-	MemoryContext oldcontext;
-	BasicArchiveData *data = (BasicArchiveData *) state->private_data;
-	MemoryContext basic_archive_context = data->context;
-
-	/*
-	 * We run basic_archive_file_internal() in our own memory context so that
-	 * we can easily reset it during error recovery (thus avoiding memory
-	 * leaks).
-	 */
-	oldcontext = MemoryContextSwitchTo(basic_archive_context);
-
-	/*
-	 * Since the archiver operates at the bottom of the exception stack,
-	 * ERRORs turn into FATALs and cause the archiver process to restart.
-	 * However, using ereport(ERROR, ...) when there are problems is easy to
-	 * code and maintain.  Therefore, we create our own exception handler to
-	 * catch ERRORs and return false instead of restarting the archiver
-	 * whenever there is a failure.
-	 */
-	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
-	{
-		/* Since not using PG_TRY, must reset error stack by hand */
-		error_context_stack = NULL;
-
-		/* Prevent interrupts while cleaning up */
-		HOLD_INTERRUPTS();
-
-		/* Report the error and clear ErrorContext for next time */
-		EmitErrorReport();
-		FlushErrorState();
-
-		/* Close any files left open by copy_file() or compare_files() */
-		AtEOSubXact_Files(false, InvalidSubTransactionId, InvalidSubTransactionId);
-
-		/* Reset our memory context and switch back to the original one */
-		MemoryContextSwitchTo(oldcontext);
-		MemoryContextReset(basic_archive_context);
-
-		/* Remove our exception handler */
-		PG_exception_stack = NULL;
-
-		/* Now we can allow interrupts again */
-		RESUME_INTERRUPTS();
-
-		/* Report failure so that the archiver retries this file */
-		return false;
-	}
-
-	/* Enable our exception handler */
-	PG_exception_stack = &local_sigjmp_buf;
-
-	/* Archive the file! */
-	basic_archive_file_internal(file, path);
-
-	/* Remove our exception handler */
-	PG_exception_stack = NULL;
-
-	/* Reset our memory context and switch back to the original one */
-	MemoryContextSwitchTo(oldcontext);
-	MemoryContextReset(basic_archive_context);
-
-	return true;
-}
-
-static void
-basic_archive_file_internal(const char *file, const char *path)
-{
 	char		destination[MAXPGPATH];
 	char		temp[MAXPGPATH + 256];
 	struct stat st;
@@ -277,7 +183,7 @@ basic_archive_file_internal(const char *file, const char *path)
 			fsync_fname(destination, false);
 			fsync_fname(archive_directory, true);
 
-			return;
+			return true;
 		}
 
 		ereport(ERROR,
@@ -317,6 +223,8 @@ basic_archive_file_internal(const char *file, const char *path)
 
 	ereport(DEBUG1,
 			(errmsg("archived \"%s\" via basic_archive", file)));
+
+	return true;
 }
 
 /*
@@ -398,36 +306,4 @@ compare_files(const char *file1, const char *file2)
 				 errmsg("could not close file \"%s\": %m", file2)));
 
 	return ret;
-}
-
-/*
- * basic_archive_shutdown
- *
- * Frees our allocated state.
- */
-static void
-basic_archive_shutdown(ArchiveModuleState *state)
-{
-	BasicArchiveData *data = (BasicArchiveData *) state->private_data;
-	MemoryContext basic_archive_context;
-
-	/*
-	 * If we didn't get to storing the pointer to our allocated state, we
-	 * don't have anything to clean up.
-	 */
-	if (data == NULL)
-		return;
-
-	basic_archive_context = data->context;
-	Assert(CurrentMemoryContext != basic_archive_context);
-
-	if (MemoryContextIsValid(basic_archive_context))
-		MemoryContextDelete(basic_archive_context);
-	data->context = NULL;
-
-	/*
-	 * Finally, free the state.
-	 */
-	pfree(data);
-	state->private_data = NULL;
 }

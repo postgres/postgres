@@ -39,6 +39,7 @@
 #include "postmaster/auxprocess.h"
 #include "postmaster/interrupt.h"
 #include "postmaster/pgarch.h"
+#include "storage/condition_variable.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -49,6 +50,8 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/resowner.h"
+#include "utils/timeout.h"
 
 
 /* ----------
@@ -100,6 +103,7 @@ static time_t last_sigterm_time = 0;
 static PgArchData *PgArch = NULL;
 static const ArchiveModuleCallbacks *ArchiveCallbacks;
 static ArchiveModuleState *archive_module_state;
+static MemoryContext archive_context;
 
 
 /*
@@ -256,6 +260,11 @@ PgArchiverMain(char *startup_data, size_t startup_data_len)
 	arch_files->arch_heap = binaryheap_allocate(NUM_FILES_PER_DIRECTORY_SCAN,
 												ready_file_comparator, false,
 												NULL);
+
+	/* Initialize our memory context. */
+	archive_context = AllocSetContextCreate(TopMemoryContext,
+											"archiver",
+											ALLOCSET_DEFAULT_SIZES);
 
 	/* Load the archive_library. */
 	LoadArchiveLibrary();
@@ -507,6 +516,8 @@ pgarch_ArchiverCopyLoop(void)
 static bool
 pgarch_archiveXlog(char *xlog)
 {
+	sigjmp_buf	local_sigjmp_buf;
+	MemoryContext oldcontext;
 	char		pathname[MAXPGPATH];
 	char		activitymsg[MAXFNAMELEN + 16];
 	bool		ret;
@@ -517,7 +528,87 @@ pgarch_archiveXlog(char *xlog)
 	snprintf(activitymsg, sizeof(activitymsg), "archiving %s", xlog);
 	set_ps_display(activitymsg);
 
-	ret = ArchiveCallbacks->archive_file_cb(archive_module_state, xlog, pathname);
+	oldcontext = MemoryContextSwitchTo(archive_context);
+
+	/*
+	 * Since the archiver operates at the bottom of the exception stack,
+	 * ERRORs turn into FATALs and cause the archiver process to restart.
+	 * However, using ereport(ERROR, ...) when there are problems is easy to
+	 * code and maintain.  Therefore, we create our own exception handler to
+	 * catch ERRORs and return false instead of restarting the archiver
+	 * whenever there is a failure.
+	 *
+	 * We assume ERRORs from the archiving callback are the most common
+	 * exceptions experienced by the archiver, so we opt to handle exceptions
+	 * here instead of PgArchiverMain() to avoid reinitializing the archiver
+	 * too frequently.  We could instead add a sigsetjmp() block to
+	 * PgArchiverMain() and use PG_TRY/PG_CATCH here, but the extra code to
+	 * avoid the odd archiver restart doesn't seem worth it.
+	 */
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	{
+		/* Since not using PG_TRY, must reset error stack by hand */
+		error_context_stack = NULL;
+
+		/* Prevent interrupts while cleaning up */
+		HOLD_INTERRUPTS();
+
+		/* Report the error to the server log. */
+		EmitErrorReport();
+
+		/*
+		 * Try to clean up anything the archive module left behind.  We try to
+		 * cover anything that an archive module could conceivably have left
+		 * behind, but it is of course possible that modules could be doing
+		 * unexpected things that require additional cleanup.  Module authors
+		 * should be sure to do any extra required cleanup in a PG_CATCH block
+		 * within the archiving callback, and they are encouraged to notify
+		 * the pgsql-hackers mailing list so that we can add it here.
+		 */
+		disable_all_timeouts(false);
+		LWLockReleaseAll();
+		ConditionVariableCancelSleep();
+		pgstat_report_wait_end();
+		ReleaseAuxProcessResources(false);
+		AtEOXact_Files(false);
+		AtEOXact_HashTables(false);
+
+		/*
+		 * Return to the original memory context and clear ErrorContext for
+		 * next time.
+		 */
+		MemoryContextSwitchTo(oldcontext);
+		FlushErrorState();
+
+		/* Flush any leaked data */
+		MemoryContextReset(archive_context);
+
+		/* Remove our exception handler */
+		PG_exception_stack = NULL;
+
+		/* Now we can allow interrupts again */
+		RESUME_INTERRUPTS();
+
+		/* Report failure so that the archiver retries this file */
+		ret = false;
+	}
+	else
+	{
+		/* Enable our exception handler */
+		PG_exception_stack = &local_sigjmp_buf;
+
+		/* Archive the file! */
+		ret = ArchiveCallbacks->archive_file_cb(archive_module_state,
+												xlog, pathname);
+
+		/* Remove our exception handler */
+		PG_exception_stack = NULL;
+
+		/* Reset our memory context and switch back to the original one */
+		MemoryContextSwitchTo(oldcontext);
+		MemoryContextReset(archive_context);
+	}
+
 	if (ret)
 		snprintf(activitymsg, sizeof(activitymsg), "last was %s", xlog);
 	else
