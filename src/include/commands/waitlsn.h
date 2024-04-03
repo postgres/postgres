@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * waitlsn.h
- *	  Declarations for LSN waiting routines.
+ *	  Declarations for LSN replay waiting routines.
  *
  * Copyright (c) 2024, PostgreSQL Global Development Group
  *
@@ -12,23 +12,57 @@
 #ifndef WAIT_LSN_H
 #define WAIT_LSN_H
 
+#include "lib/pairingheap.h"
 #include "postgres.h"
 #include "port/atomics.h"
 #include "storage/spin.h"
 #include "tcop/dest.h"
 
-/* Shared memory structures */
+/*
+ * WaitLSNProcInfo – the shared memory structure representing information
+ * about the single process, which may wait for LSN replay.  An item of
+ * waitLSN->procInfos array.
+ */
 typedef struct WaitLSNProcInfo
 {
+	/*
+	 * A process number, same as the index of this item in waitLSN->procInfos.
+	 * Stored for convenience.
+	 */
 	int			procnum;
+
+	/* LSN, which this process is waiting for */
 	XLogRecPtr	waitLSN;
+
+	/* A pairing heap node for participation in waitLSN->waitersHeap */
+	pairingheap_node phNode;
+
+	/* A flag indicating that this item is added to waitLSN->waitersHeap */
+	bool		inHeap;
 } WaitLSNProcInfo;
 
+/*
+ * WaitLSNState - the shared memory state for the replay LSN waiting facility.
+ */
 typedef struct WaitLSNState
 {
-	pg_atomic_uint64 minLSN;
-	slock_t		mutex;
-	int			numWaitedProcs;
+	/*
+	 * The minimum LSN value some process is waiting for.  Used for the
+	 * fast-path checking if we need to wake up any waiters after replaying a
+	 * WAL record.
+	 */
+	pg_atomic_uint64 minWaitedLSN;
+
+	/*
+	 * A pairing heap of waiting processes order by LSN values (least LSN is
+	 * on top).
+	 */
+	pairingheap waitersHeap;
+
+	/* A mutex protecting the pairing heap above */
+	slock_t		waitersHeapMutex;
+
+	/* An array with per-process information, indexed by the process number */
 	WaitLSNProcInfo procInfos[FLEXIBLE_ARRAY_MEMBER];
 } WaitLSNState;
 
