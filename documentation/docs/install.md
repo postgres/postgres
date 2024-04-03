@@ -16,6 +16,23 @@ You can use the following options to manage encryption keys:
 
 Install `pg_tde` using one of available installation methods:
 
+
+=== "Package manager" 
+
+    Starting with Aplha1 version, you can install the extension as package from Percona repositories using the `percona-release` tool. The packages are available for the following operating systems:
+    
+    - Red Hat Enterprise Linux and CentOS 7
+    - Red Hat Enterprise Linux 8 and compatible derivatives
+    - Red Hat Enterprise Linux 9 and compatible derivatives
+    - Ubuntu 20.04 (Focal Fossa)
+    - Ubuntu 22.04 (Jammy Jellyfish)
+    - Debian 10 (Buster)
+    - Debian 11 (Bullseye) 
+    - Debian 12 (Bookworm)
+
+    [Install on Debian or Ubuntu](apt.md){.md-button}
+    [Install on RHEL or derivatives](yum.md){.md-button}
+
 === "Build from source"
 
     1. To build `pg_tde` from source code, you require the following on Ubuntu/Debian:
@@ -41,22 +58,6 @@ Install `pg_tde` using one of available installation methods:
         ./configure
         make USE_PGXS=1
         sudo make USE_PGXS=1 install
-        ```
-
-=== "Package manager" 
-
-    Currently only DEB packages for Ubuntu 22.04 are available. If you are running RPM-based operating system, consider [building the extension from source](#build-from-source) or [running it in Docker](#run-in-docker)
-
-    1. Download the latest [release package](https://github.com/Percona-Lab/pg_tde/releases)
-
-        ``` sh
-        wget https://github.com/Percona-Lab/pg_tde/releases/download/latest/pgtde-pgdg16.deb
-        ```
-
-    2. Install the package
-
-        ``` sh
-        sudo dpkg -i pgtde-pgdg16.deb
         ```
 
 === "Run in Docker"

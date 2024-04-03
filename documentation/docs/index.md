@@ -1,12 +1,10 @@
-# `pg_tde` documentation [Tech preview]
+# `pg_tde` documentation [Aplha1]
 
 `pg_tde` is the extension that brings in [Transparent Data Encryption (TDE)](tde.md) to PostgreSQL and enables users to keep sensitive data safe and secure. It enables users to configure encryption differently for each database, encrypting specific tables in some databases with different encryption keys, while keeping others non encrypted. 
 
 !!! important 
 
-    This is the tech preview version of the extension and is not meant for production use yet.
-
-[What's new](release-notes/tech-preview.md){.md-button}
+    This is the Alpha1 version of the extension and is not meant for production use yet.
 
 ## What's encrypted
 

@@ -81,7 +81,6 @@
     font-weight: bold;
 }
 .md-typeset h1 {
-    font-weight: normal;
     color: inherit;
 }
 .md-typeset h1 {
@@ -149,15 +148,19 @@
 .md-content .md-button {
     margin: 0 0.25em 0.5em 0;
 }
-.md-typeset .tabbed-labels>label {
+.md-typeset .tabbed-labels > label {
     font-size: 0.75rem;
     padding: 0.75em 1em;
 }
 .js .md-typeset .tabbed-labels:before {
     height: 4px;
+    background-color: var(--md-accent-fg-color);
 }
 .md-typeset [class*="moji"] {
     vertical-align: -0.25em;
+}
+.md-typeset .tabbed-set>input:first-child:checked~.tabbed-labels>:first-child, .md-typeset .tabbed-set>input:nth-child(10):checked~.tabbed-labels>:nth-child(10), .md-typeset .tabbed-set>input:nth-child(11):checked~.tabbed-labels>:nth-child(11), .md-typeset .tabbed-set>input:nth-child(12):checked~.tabbed-labels>:nth-child(12), .md-typeset .tabbed-set>input:nth-child(13):checked~.tabbed-labels>:nth-child(13), .md-typeset .tabbed-set>input:nth-child(14):checked~.tabbed-labels>:nth-child(14), .md-typeset .tabbed-set>input:nth-child(15):checked~.tabbed-labels>:nth-child(15), .md-typeset .tabbed-set>input:nth-child(16):checked~.tabbed-labels>:nth-child(16), .md-typeset .tabbed-set>input:nth-child(17):checked~.tabbed-labels>:nth-child(17), .md-typeset .tabbed-set>input:nth-child(18):checked~.tabbed-labels>:nth-child(18), .md-typeset .tabbed-set>input:nth-child(19):checked~.tabbed-labels>:nth-child(19), .md-typeset .tabbed-set>input:nth-child(2):checked~.tabbed-labels>:nth-child(2), .md-typeset .tabbed-set>input:nth-child(20):checked~.tabbed-labels>:nth-child(20), .md-typeset .tabbed-set>input:nth-child(3):checked~.tabbed-labels>:nth-child(3), .md-typeset .tabbed-set>input:nth-child(4):checked~.tabbed-labels>:nth-child(4), .md-typeset .tabbed-set>input:nth-child(5):checked~.tabbed-labels>:nth-child(5), .md-typeset .tabbed-set>input:nth-child(6):checked~.tabbed-labels>:nth-child(6), .md-typeset .tabbed-set>input:nth-child(7):checked~.tabbed-labels>:nth-child(7), .md-typeset .tabbed-set>input:nth-child(8):checked~.tabbed-labels>:nth-child(8), .md-typeset .tabbed-set>input:nth-child(9):checked~.tabbed-labels>:nth-child(9) {
+    color: var(--md-accent-fg-color);
 }
 .md-typeset .md-button [class*="moji"],
 .md-typeset .tabbed-set [class*="moji"] {
@@ -175,10 +178,20 @@
     color: var(--md-default-fg-color--lighter);
 }
 .md-typeset hr {
+    margin: 3em 0;
     border-color: var(--md-default-fg-color--lighter)
 }
 .md-typeset .tabbed-labels {
     box-shadow: 0 -0.05rem var(--md-default-fg-color--lighter) inset;
+}
+.md-typeset .tabbed-button {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.0625rem;
+}
+.md-typeset .tabbed-control {
+    width: 2.25rem;
+    height: 2.25rem;
 }
 
 /* Content re-styling */
@@ -199,8 +212,8 @@
 .md-tabs__link {
     font-size: 0.67rem;
 }
-.md-tabs__link--active,
-.md-tabs__link--active a {
+.md-tabs__item--active .md-tabs__link,
+.md-tabs__item--active .md-tabs__link a {
     font-weight: bold;
     border-bottom: 0.15em solid currentColor;
 }
@@ -240,6 +253,12 @@
 }
 [data-banner] a [class*="moji"] svg {
     width: 1.3333em;
+}
+[data-banner="logo"] > p:first-child {
+    margin-top: 0;
+}
+[data-banner="logo"] > p:first-child [class*="moji"] {
+    font-size: 4em;
 }
 [data-grid] {
     display: flex;
