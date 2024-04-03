@@ -302,15 +302,49 @@ pg_ceil_log2_64(uint64 num)
 /* Attempt to use the POPCNT instruction, but perform a runtime check first */
 extern PGDLLIMPORT int (*pg_popcount32) (uint32 word);
 extern PGDLLIMPORT int (*pg_popcount64) (uint64 word);
-extern PGDLLIMPORT uint64 (*pg_popcount) (const char *buf, int bytes);
+extern PGDLLIMPORT uint64 (*pg_popcount_optimized) (const char *buf, int bytes);
 
 #else
 /* Use a portable implementation -- no need for a function pointer. */
 extern int	pg_popcount32(uint32 word);
 extern int	pg_popcount64(uint64 word);
-extern uint64 pg_popcount(const char *buf, int bytes);
+extern uint64 pg_popcount_optimized(const char *buf, int bytes);
 
 #endif							/* TRY_POPCNT_FAST */
+
+/*
+ * Returns the number of 1-bits in buf.
+ *
+ * If there aren't many bytes to process, the function call overhead of the
+ * optimized versions isn't worth taking, so we inline a loop that consults
+ * pg_number_of_ones in that case.  If there are many bytes to process, we
+ * accept the function call overhead because the optimized versions are likely
+ * to be faster.
+ */
+static inline uint64
+pg_popcount(const char *buf, int bytes)
+{
+	/*
+	 * We set the threshold to the point at which we'll first use special
+	 * instructions in the optimized version.
+	 */
+#if SIZEOF_VOID_P >= 8
+	int			threshold = 8;
+#else
+	int			threshold = 4;
+#endif
+
+	if (bytes < threshold)
+	{
+		uint64		popcnt = 0;
+
+		while (bytes--)
+			popcnt += pg_number_of_ones[(unsigned char) *buf++];
+		return popcnt;
+	}
+
+	return pg_popcount_optimized(buf, bytes);
+}
 
 /*
  * Rotate the bits of "word" to the right/left by n bits.

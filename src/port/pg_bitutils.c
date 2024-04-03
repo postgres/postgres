@@ -118,7 +118,7 @@ static uint64 pg_popcount_fast(const char *buf, int bytes);
 
 int			(*pg_popcount32) (uint32 word) = pg_popcount32_choose;
 int			(*pg_popcount64) (uint64 word) = pg_popcount64_choose;
-uint64		(*pg_popcount) (const char *buf, int bytes) = pg_popcount_choose;
+uint64		(*pg_popcount_optimized) (const char *buf, int bytes) = pg_popcount_choose;
 #endif							/* TRY_POPCNT_FAST */
 
 #ifdef TRY_POPCNT_FAST
@@ -155,13 +155,13 @@ choose_popcount_functions(void)
 	{
 		pg_popcount32 = pg_popcount32_fast;
 		pg_popcount64 = pg_popcount64_fast;
-		pg_popcount = pg_popcount_fast;
+		pg_popcount_optimized = pg_popcount_fast;
 	}
 	else
 	{
 		pg_popcount32 = pg_popcount32_slow;
 		pg_popcount64 = pg_popcount64_slow;
-		pg_popcount = pg_popcount_slow;
+		pg_popcount_optimized = pg_popcount_slow;
 	}
 }
 
@@ -183,7 +183,7 @@ static uint64
 pg_popcount_choose(const char *buf, int bytes)
 {
 	choose_popcount_functions();
-	return pg_popcount(buf, bytes);
+	return pg_popcount_optimized(buf, bytes);
 }
 
 /*
@@ -387,11 +387,11 @@ pg_popcount64(uint64 word)
 }
 
 /*
- * pg_popcount
+ * pg_popcount_optimized
  *		Returns the number of 1-bits in buf
  */
 uint64
-pg_popcount(const char *buf, int bytes)
+pg_popcount_optimized(const char *buf, int bytes)
 {
 	return pg_popcount_slow(buf, bytes);
 }
