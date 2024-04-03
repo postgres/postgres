@@ -1350,7 +1350,9 @@ CopyXLogRecordToWAL(int write_len, bool isLogSwitch, XLogRecData *rdata,
 	}
 
 	if (CurrPos != EndPos)
-		elog(PANIC, "space reserved for WAL record does not match what was written");
+		ereport(PANIC,
+				errcode(ERRCODE_DATA_CORRUPTED),
+				errmsg_internal("space reserved for WAL record does not match what was written"));
 }
 
 /*
@@ -4036,7 +4038,8 @@ ValidateXLOGDirectoryStructure(void)
 	if (stat(XLOGDIR, &stat_buf) != 0 ||
 		!S_ISDIR(stat_buf.st_mode))
 		ereport(FATAL,
-				(errmsg("required WAL directory \"%s\" does not exist",
+				(errcode_for_file_access(),
+				 errmsg("required WAL directory \"%s\" does not exist",
 						XLOGDIR)));
 
 	/* Check for archive_status */
@@ -4046,7 +4049,8 @@ ValidateXLOGDirectoryStructure(void)
 		/* Check for weird cases where it exists but isn't a directory */
 		if (!S_ISDIR(stat_buf.st_mode))
 			ereport(FATAL,
-					(errmsg("required WAL directory \"%s\" does not exist",
+					(errcode_for_file_access(),
+					 errmsg("required WAL directory \"%s\" does not exist",
 							path)));
 	}
 	else
@@ -4055,7 +4059,8 @@ ValidateXLOGDirectoryStructure(void)
 				(errmsg("creating missing WAL directory \"%s\"", path)));
 		if (MakePGDirectory(path) < 0)
 			ereport(FATAL,
-					(errmsg("could not create missing directory \"%s\": %m",
+					(errcode_for_file_access(),
+					 errmsg("could not create missing directory \"%s\": %m",
 							path)));
 	}
 
@@ -4292,7 +4297,8 @@ ReadControlFile(void)
 
 	if (ControlFile->pg_control_version != PG_CONTROL_VERSION && ControlFile->pg_control_version % 65536 == 0 && ControlFile->pg_control_version / 65536 != 0)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with PG_CONTROL_VERSION %d (0x%08x),"
 						   " but the server was compiled with PG_CONTROL_VERSION %d (0x%08x).",
 						   ControlFile->pg_control_version, ControlFile->pg_control_version,
@@ -4301,7 +4307,8 @@ ReadControlFile(void)
 
 	if (ControlFile->pg_control_version != PG_CONTROL_VERSION)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with PG_CONTROL_VERSION %d,"
 						   " but the server was compiled with PG_CONTROL_VERSION %d.",
 						   ControlFile->pg_control_version, PG_CONTROL_VERSION),
@@ -4316,7 +4323,8 @@ ReadControlFile(void)
 
 	if (!EQ_CRC32C(crc, ControlFile->crc))
 		ereport(FATAL,
-				(errmsg("incorrect checksum in control file")));
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("incorrect checksum in control file")));
 
 	/*
 	 * Do compatibility checking immediately.  If the database isn't
@@ -4325,68 +4333,78 @@ ReadControlFile(void)
 	 */
 	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with CATALOG_VERSION_NO %d,"
 						   " but the server was compiled with CATALOG_VERSION_NO %d.",
 						   ControlFile->catalog_version_no, CATALOG_VERSION_NO),
 				 errhint("It looks like you need to initdb.")));
 	if (ControlFile->maxAlign != MAXIMUM_ALIGNOF)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with MAXALIGN %d,"
 						   " but the server was compiled with MAXALIGN %d.",
 						   ControlFile->maxAlign, MAXIMUM_ALIGNOF),
 				 errhint("It looks like you need to initdb.")));
 	if (ControlFile->floatFormat != FLOATFORMAT_VALUE)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster appears to use a different floating-point number format than the server executable."),
 				 errhint("It looks like you need to initdb.")));
 	if (ControlFile->blcksz != BLCKSZ)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with BLCKSZ %d,"
 						   " but the server was compiled with BLCKSZ %d.",
 						   ControlFile->blcksz, BLCKSZ),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->relseg_size != RELSEG_SIZE)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with RELSEG_SIZE %d,"
 						   " but the server was compiled with RELSEG_SIZE %d.",
 						   ControlFile->relseg_size, RELSEG_SIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->xlog_blcksz != XLOG_BLCKSZ)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with XLOG_BLCKSZ %d,"
 						   " but the server was compiled with XLOG_BLCKSZ %d.",
 						   ControlFile->xlog_blcksz, XLOG_BLCKSZ),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->nameDataLen != NAMEDATALEN)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with NAMEDATALEN %d,"
 						   " but the server was compiled with NAMEDATALEN %d.",
 						   ControlFile->nameDataLen, NAMEDATALEN),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->indexMaxKeys != INDEX_MAX_KEYS)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with INDEX_MAX_KEYS %d,"
 						   " but the server was compiled with INDEX_MAX_KEYS %d.",
 						   ControlFile->indexMaxKeys, INDEX_MAX_KEYS),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->toast_max_chunk_size != TOAST_MAX_CHUNK_SIZE)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with TOAST_MAX_CHUNK_SIZE %d,"
 						   " but the server was compiled with TOAST_MAX_CHUNK_SIZE %d.",
 						   ControlFile->toast_max_chunk_size, (int) TOAST_MAX_CHUNK_SIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->loblksize != LOBLKSIZE)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with LOBLKSIZE %d,"
 						   " but the server was compiled with LOBLKSIZE %d.",
 						   ControlFile->loblksize, (int) LOBLKSIZE),
@@ -4395,14 +4413,16 @@ ReadControlFile(void)
 #ifdef USE_FLOAT8_BYVAL
 	if (ControlFile->float8ByVal != true)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized without USE_FLOAT8_BYVAL"
 						   " but the server was compiled with USE_FLOAT8_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #else
 	if (ControlFile->float8ByVal != false)
 		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with USE_FLOAT8_BYVAL"
 						   " but the server was compiled without USE_FLOAT8_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
@@ -5271,7 +5291,8 @@ CheckRequiredParameterValues(void)
 	if (ArchiveRecoveryRequested && ControlFile->wal_level == WAL_LEVEL_MINIMAL)
 	{
 		ereport(FATAL,
-				(errmsg("WAL was generated with wal_level=minimal, cannot continue recovering"),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("WAL was generated with wal_level=minimal, cannot continue recovering"),
 				 errdetail("This happens if you temporarily set wal_level=minimal on the server."),
 				 errhint("Use a backup taken after setting wal_level to higher than minimal.")));
 	}
@@ -5337,7 +5358,8 @@ StartupXLOG(void)
 	 */
 	if (!XRecOffIsValid(ControlFile->checkPoint))
 		ereport(FATAL,
-				(errmsg("control file contains invalid checkpoint location")));
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("control file contains invalid checkpoint location")));
 
 	switch (ControlFile->state)
 	{
@@ -5388,7 +5410,8 @@ StartupXLOG(void)
 
 		default:
 			ereport(FATAL,
-					(errmsg("control file contains invalid database cluster state")));
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("control file contains invalid database cluster state")));
 	}
 
 	/* This is just to allow attaching to startup process with a debugger */
@@ -5774,11 +5797,13 @@ StartupXLOG(void)
 		{
 			if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint) || ControlFile->backupEndRequired)
 				ereport(FATAL,
-						(errmsg("WAL ends before end of online backup"),
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("WAL ends before end of online backup"),
 						 errhint("All WAL generated while online backup was taken must be available at recovery.")));
 			else
 				ereport(FATAL,
-						(errmsg("WAL ends before consistent recovery point")));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("WAL ends before consistent recovery point")));
 		}
 	}
 
@@ -8565,7 +8590,9 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 			Assert(false);
 			break;
 		default:
-			elog(PANIC, "unrecognized wal_sync_method: %d", wal_sync_method);
+			ereport(PANIC,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg_internal("unrecognized wal_sync_method: %d", wal_sync_method));
 			break;
 	}
 

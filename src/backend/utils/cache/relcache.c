@@ -4211,8 +4211,10 @@ RelationCacheInitializePhase3(void)
 			htup = SearchSysCache1(RELOID,
 								   ObjectIdGetDatum(RelationGetRelid(relation)));
 			if (!HeapTupleIsValid(htup))
-				elog(FATAL, "cache lookup failed for relation %u",
-					 RelationGetRelid(relation));
+				ereport(FATAL,
+						errcode(ERRCODE_UNDEFINED_OBJECT),
+						errmsg_internal("cache lookup failed for relation %u",
+										RelationGetRelid(relation)));
 			relp = (Form_pg_class) GETSTRUCT(htup);
 
 			/*
@@ -4345,7 +4347,9 @@ load_critical_index(Oid indexoid, Oid heapoid)
 	LockRelationOid(indexoid, AccessShareLock);
 	ird = RelationBuildDesc(indexoid, true);
 	if (ird == NULL)
-		elog(PANIC, "could not open critical system index %u", indexoid);
+		ereport(PANIC,
+				errcode(ERRCODE_DATA_CORRUPTED),
+				errmsg_internal("could not open critical system index %u", indexoid));
 	ird->rd_isnailed = true;
 	ird->rd_refcnt = 1;
 	UnlockRelationOid(indexoid, AccessShareLock);
@@ -6527,7 +6531,9 @@ write_relcache_init_file(bool shared)
 	 */
 	magic = RELCACHE_INIT_FILEMAGIC;
 	if (fwrite(&magic, 1, sizeof(magic), fp) != sizeof(magic))
-		elog(FATAL, "could not write init file");
+		ereport(FATAL,
+				errcode_for_file_access(),
+				errmsg_internal("could not write init file: %m"));
 
 	/*
 	 * Write all the appropriate reldescs (in no particular order).
@@ -6628,7 +6634,9 @@ write_relcache_init_file(bool shared)
 	}
 
 	if (FreeFile(fp))
-		elog(FATAL, "could not write init file");
+		ereport(FATAL,
+				errcode_for_file_access(),
+				errmsg_internal("could not write init file: %m"));
 
 	/*
 	 * Now we have to check whether the data we've so painstakingly
@@ -6678,9 +6686,13 @@ static void
 write_item(const void *data, Size len, FILE *fp)
 {
 	if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-		elog(FATAL, "could not write init file");
+		ereport(FATAL,
+				errcode_for_file_access(),
+				errmsg_internal("could not write init file: %m"));
 	if (len > 0 && fwrite(data, 1, len, fp) != len)
-		elog(FATAL, "could not write init file");
+		ereport(FATAL,
+				errcode_for_file_access(),
+				errmsg_internal("could not write init file: %m"));
 }
 
 /*
