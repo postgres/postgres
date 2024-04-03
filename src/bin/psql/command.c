@@ -3784,8 +3784,8 @@ wait_until_connected(PGconn *conn)
 		/*
 		 * If the user sends SIGINT between the cancel_pressed check, and
 		 * polling of the socket, it will not be recognized. Instead, we will
-		 * just wait until the next step in the connection sequence or forever,
-		 * which might require users to send SIGTERM or SIGQUIT.
+		 * just wait until the next step in the connection sequence or
+		 * forever, which might require users to send SIGTERM or SIGQUIT.
 		 *
 		 * Some solutions would include the "self-pipe trick," using
 		 * pselect(2) and ppoll(2), or using a timeout.
