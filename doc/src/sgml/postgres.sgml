@@ -162,7 +162,6 @@ break is not needed in a wider output rendering.
   &backup;
   &high-availability;
   &monitoring;
-  &diskusage;
   &wal;
   &logical-replication;
   &jit;

@@ -34,7 +34,6 @@
 <!ENTITY backup        SYSTEM "backup.sgml">
 <!ENTITY charset       SYSTEM "charset.sgml">
 <!ENTITY client-auth   SYSTEM "client-auth.sgml">
-<!ENTITY diskusage     SYSTEM "diskusage.sgml">
 <!ENTITY high-availability      SYSTEM "high-availability.sgml">
 <!ENTITY installbin    SYSTEM "install-binaries.sgml">
 <!ENTITY installation  SYSTEM "installation.sgml">
