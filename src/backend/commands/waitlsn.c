@@ -18,28 +18,18 @@
 #include <math.h>
 
 #include "pgstat.h"
-#include "fmgr.h"
-#include "access/transam.h"
-#include "access/xact.h"
 #include "access/xlog.h"
-#include "access/xlogdefs.h"
 #include "access/xlogrecovery.h"
-#include "catalog/pg_type.h"
 #include "commands/waitlsn.h"
-#include "executor/spi.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "storage/ipc.h"
 #include "storage/latch.h"
-#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/shmem.h"
-#include "storage/sinvaladt.h"
-#include "utils/builtins.h"
 #include "utils/pg_lsn.h"
 #include "utils/snapmgr.h"
-#include "utils/timestamp.h"
 #include "utils/fmgrprotos.h"
+#include "utils/wait_event_types.h"
 
 /* Add to / delete from shared memory array */
 static void addLSNWaiter(XLogRecPtr lsn);
@@ -88,10 +78,10 @@ addLSNWaiter(XLogRecPtr lsn)
 	WaitLSNProcInfo cur;
 	int			i;
 
-	SpinLockAcquire(&waitLSN->mutex);
-
 	cur.procnum = MyProcNumber;
 	cur.waitLSN = lsn;
+
+	SpinLockAcquire(&waitLSN->mutex);
 
 	for (i = 0; i < waitLSN->numWaitedProcs; i++)
 	{
@@ -226,7 +216,7 @@ void
 WaitForLSN(XLogRecPtr targetLSN, int64 timeout)
 {
 	XLogRecPtr	currentLSN;
-	TimestampTz endtime;
+	TimestampTz endtime = 0;
 
 	/* Shouldn't be called when shmem isn't initialized */
 	Assert(waitLSN);
