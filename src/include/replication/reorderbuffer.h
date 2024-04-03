@@ -10,6 +10,7 @@
 #define REORDERBUFFER_H
 
 #include "access/htup_details.h"
+#include "lib/binaryheap.h"
 #include "lib/ilist.h"
 #include "storage/sinval.h"
 #include "utils/hsearch.h"
@@ -630,6 +631,9 @@ struct ReorderBuffer
 
 	/* memory accounting */
 	Size		size;
+
+	/* Max-heap for sizes of all top-level and sub transactions */
+	binaryheap *txn_heap;
 
 	/*
 	 * Statistics about transactions spilled to disk.
