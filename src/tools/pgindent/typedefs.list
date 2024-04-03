@@ -2195,7 +2195,7 @@ PromptInterruptContext
 ProtocolVersion
 PrsStorage
 PruneReason
-PruneResult
+PruneFreezeResult
 PruneState
 PruneStepResult
 PsqlScanCallbacks

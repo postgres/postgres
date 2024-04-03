@@ -1122,7 +1122,7 @@ heapam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 		 * We ignore unused and redirect line pointers.  DEAD line pointers
 		 * should be counted as dead, because we need vacuum to run to get rid
 		 * of them.  Note that this rule agrees with the way that
-		 * heap_page_prune() counts things.
+		 * heap_page_prune_and_freeze() counts things.
 		 */
 		if (!ItemIdIsNormal(itemid))
 		{

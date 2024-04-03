@@ -1715,9 +1715,9 @@ TransactionIdIsActive(TransactionId xid)
  * Note: the approximate horizons (see definition of GlobalVisState) are
  * updated by the computations done here. That's currently required for
  * correctness and a small optimization. Without doing so it's possible that
- * heap vacuum's call to heap_page_prune() uses a more conservative horizon
- * than later when deciding which tuples can be removed - which the code
- * doesn't expect (breaking HOT).
+ * heap vacuum's call to heap_page_prune_and_freeze() uses a more conservative
+ * horizon than later when deciding which tuples can be removed - which the
+ * code doesn't expect (breaking HOT).
  */
 static void
 ComputeXidHorizons(ComputeXidHorizonsResult *h)
