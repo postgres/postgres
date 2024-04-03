@@ -2134,3 +2134,26 @@ CheckPointSnapBuild(void)
 	}
 	FreeDir(snap_dir);
 }
+
+/*
+ * Check if a logical snapshot at the specified point has been serialized.
+ */
+bool
+SnapBuildSnapshotExists(XLogRecPtr lsn)
+{
+	char		path[MAXPGPATH];
+	int			ret;
+	struct stat stat_buf;
+
+	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
+			LSN_FORMAT_ARGS(lsn));
+
+	ret = stat(path, &stat_buf);
+
+	if (ret != 0 && errno != ENOENT)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m", path)));
+
+	return ret == 0;
+}
