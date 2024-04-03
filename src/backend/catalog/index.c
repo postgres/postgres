@@ -2874,7 +2874,11 @@ index_update_stats(Relation rel,
 		dirty = true;
 	}
 
-	if (reltuples >= 0)
+	/*
+	 * Avoid updating statistics during binary upgrade, because the indexes
+	 * are created before the data is moved into place.
+	 */
+	if (reltuples >= 0 && !IsBinaryUpgrade)
 	{
 		BlockNumber relpages = RelationGetNumberOfBlocks(rel);
 		BlockNumber relallvisible;
