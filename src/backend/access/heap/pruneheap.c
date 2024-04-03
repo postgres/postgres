@@ -78,7 +78,11 @@ static void heap_prune_record_redirect(PruneState *prstate,
 static void heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum, bool was_normal);
 static void heap_prune_record_dead_or_unused(PruneState *prstate, OffsetNumber offnum, bool was_normal);
 static void heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum, bool was_normal);
-static void heap_prune_record_unchanged(PruneState *prstate, OffsetNumber offnum);
+
+static void heap_prune_record_unchanged_lp_unused(Page page, PruneState *prstate, OffsetNumber offnum);
+static void heap_prune_record_unchanged_lp_normal(Page page, int8 *htsv, PruneState *prstate, OffsetNumber offnum);
+static void heap_prune_record_unchanged_lp_dead(Page page, PruneState *prstate, OffsetNumber offnum);
+static void heap_prune_record_unchanged_lp_redirect(PruneState *prstate, OffsetNumber offnum);
 
 static void page_verify_redirects(Page page);
 
@@ -311,7 +315,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 		/* Nothing to do if slot doesn't contain a tuple */
 		if (!ItemIdIsUsed(itemid))
 		{
-			heap_prune_record_unchanged(&prstate, offnum);
+			heap_prune_record_unchanged_lp_unused(page, &prstate, offnum);
 			continue;
 		}
 
@@ -324,7 +328,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 			if (unlikely(prstate.mark_unused_now))
 				heap_prune_record_unused(&prstate, offnum, false);
 			else
-				heap_prune_record_unchanged(&prstate, offnum);
+				heap_prune_record_unchanged_lp_dead(page, &prstate, offnum);
 			continue;
 		}
 
@@ -434,7 +438,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 			}
 		}
 		else
-			heap_prune_record_unchanged(&prstate, offnum);
+			heap_prune_record_unchanged_lp_normal(page, presult->htsv, &prstate, offnum);
 	}
 
 	/* We should now have processed every tuple exactly once  */
@@ -652,9 +656,6 @@ heap_prune_chain(Page page, BlockNumber blockno, OffsetNumber maxoff,
 		 */
 		chainitems[nchain++] = offnum;
 
-		/*
-		 * Check tuple's visibility status.
-		 */
 		switch (htsv_get_valid_status(htsv[offnum]))
 		{
 			case HEAPTUPLE_DEAD:
@@ -670,9 +671,6 @@ heap_prune_chain(Page page, BlockNumber blockno, OffsetNumber maxoff,
 			case HEAPTUPLE_RECENTLY_DEAD:
 
 				/*
-				 * This tuple may soon become DEAD.  Update the hint field so
-				 * that the page is reconsidered for pruning in future.
-				 *
 				 * We don't need to advance the conflict horizon for
 				 * RECENTLY_DEAD tuples, even if we are removing them.  This
 				 * is because we only remove RECENTLY_DEAD tuples if they
@@ -681,8 +679,6 @@ heap_prune_chain(Page page, BlockNumber blockno, OffsetNumber maxoff,
 				 * tuple by virtue of being later in the chain.  We will have
 				 * advanced the conflict horizon for the DEAD tuple.
 				 */
-				heap_prune_record_prunable(prstate,
-										   HeapTupleHeaderGetUpdateXid(htup));
 
 				/*
 				 * Advance past RECENTLY_DEAD tuples just in case there's a
@@ -693,24 +689,8 @@ heap_prune_chain(Page page, BlockNumber blockno, OffsetNumber maxoff,
 				break;
 
 			case HEAPTUPLE_DELETE_IN_PROGRESS:
-
-				/*
-				 * This tuple may soon become DEAD.  Update the hint field so
-				 * that the page is reconsidered for pruning in future.
-				 */
-				heap_prune_record_prunable(prstate,
-										   HeapTupleHeaderGetUpdateXid(htup));
-				goto process_chain;
-
 			case HEAPTUPLE_LIVE:
 			case HEAPTUPLE_INSERT_IN_PROGRESS:
-
-				/*
-				 * If we wanted to optimize for aborts, we might consider
-				 * marking the page prunable when we see INSERT_IN_PROGRESS.
-				 * But we don't.  See related decisions about when to mark the
-				 * page prunable in heapam.c.
-				 */
 				goto process_chain;
 
 			default:
@@ -757,8 +737,15 @@ process_chain:
 		 * No DEAD tuple was found, so the chain is entirely composed of
 		 * normal, unchanged tuples.  Leave it alone.
 		 */
-		for (int i = 0; i < nchain; i++)
-			heap_prune_record_unchanged(prstate, chainitems[i]);
+		int			i = 0;
+
+		if (ItemIdIsRedirected(rootlp))
+		{
+			heap_prune_record_unchanged_lp_redirect(prstate, rootoffnum);
+			i++;
+		}
+		for (; i < nchain; i++)
+			heap_prune_record_unchanged_lp_normal(page, htsv, prstate, chainitems[i]);
 	}
 	else if (ndeadchain == nchain)
 	{
@@ -784,7 +771,7 @@ process_chain:
 
 		/* the rest of tuples in the chain are normal, unchanged tuples */
 		for (int i = ndeadchain; i < nchain; i++)
-			heap_prune_record_unchanged(prstate, chainitems[i]);
+			heap_prune_record_unchanged_lp_normal(page, htsv, prstate, chainitems[i]);
 	}
 }
 
@@ -894,9 +881,81 @@ heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum, bool was_norm
 		prstate->ndeleted++;
 }
 
-/* Record a line pointer that is left unchanged */
+/*
+ * Record an unused line pointer that is left unchanged.
+ */
 static void
-heap_prune_record_unchanged(PruneState *prstate, OffsetNumber offnum)
+heap_prune_record_unchanged_lp_unused(Page page, PruneState *prstate, OffsetNumber offnum)
+{
+	Assert(!prstate->processed[offnum]);
+	prstate->processed[offnum] = true;
+}
+
+/*
+ * Record LP_NORMAL line pointer that is left unchanged.
+ */
+static void
+heap_prune_record_unchanged_lp_normal(Page page, int8 *htsv, PruneState *prstate, OffsetNumber offnum)
+{
+	HeapTupleHeader htup;
+
+	Assert(!prstate->processed[offnum]);
+	prstate->processed[offnum] = true;
+
+	switch (htsv[offnum])
+	{
+		case HEAPTUPLE_LIVE:
+		case HEAPTUPLE_INSERT_IN_PROGRESS:
+
+			/*
+			 * If we wanted to optimize for aborts, we might consider marking
+			 * the page prunable when we see INSERT_IN_PROGRESS.  But we
+			 * don't.  See related decisions about when to mark the page
+			 * prunable in heapam.c.
+			 */
+			break;
+
+		case HEAPTUPLE_RECENTLY_DEAD:
+		case HEAPTUPLE_DELETE_IN_PROGRESS:
+
+			htup = (HeapTupleHeader) PageGetItem(page, PageGetItemId(page, offnum));
+
+			/*
+			 * This tuple may soon become DEAD.  Update the hint field so that
+			 * the page is reconsidered for pruning in future.
+			 */
+			heap_prune_record_prunable(prstate,
+									   HeapTupleHeaderGetUpdateXid(htup));
+			break;
+
+
+		default:
+
+			/*
+			 * DEAD tuples should've been passed to heap_prune_record_dead()
+			 * or heap_prune_record_unused() instead.
+			 */
+			elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result %d", htsv[offnum]);
+			break;
+	}
+}
+
+
+/*
+ * Record line pointer that was already LP_DEAD and is left unchanged.
+ */
+static void
+heap_prune_record_unchanged_lp_dead(Page page, PruneState *prstate, OffsetNumber offnum)
+{
+	Assert(!prstate->processed[offnum]);
+	prstate->processed[offnum] = true;
+}
+
+/*
+ * Record LP_REDIRECT that is left unchanged.
+ */
+static void
+heap_prune_record_unchanged_lp_redirect(PruneState *prstate, OffsetNumber offnum)
 {
 	Assert(!prstate->processed[offnum]);
 	prstate->processed[offnum] = true;
