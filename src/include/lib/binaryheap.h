@@ -30,6 +30,29 @@ typedef Datum bh_node_type;
 typedef int (*binaryheap_comparator) (bh_node_type a, bh_node_type b, void *arg);
 
 /*
+ * Struct for a hash table element to store the node's index in the bh_nodes
+ * array.
+ */
+typedef struct bh_nodeidx_entry
+{
+	bh_node_type key;
+	int			index;			/* entry's index within the node array */
+	char		status;			/* hash status */
+	uint32		hash;			/* hash values (cached) */
+} bh_nodeidx_entry;
+
+/* Define parameters necessary to generate the hash table interface. */
+#define SH_PREFIX bh_nodeidx
+#define SH_ELEMENT_TYPE bh_nodeidx_entry
+#define SH_KEY_TYPE bh_node_type
+#define SH_SCOPE extern
+#ifdef FRONTEND
+#define SH_RAW_ALLOCATOR pg_malloc0
+#endif
+#define SH_DECLARE
+#include "lib/simplehash.h"
+
+/*
  * binaryheap
  *
  *		bh_size			how many nodes are currently in "nodes"
@@ -47,11 +70,18 @@ typedef struct binaryheap
 	binaryheap_comparator bh_compare;
 	void	   *bh_arg;
 	bh_node_type *bh_nodes;
+
+	/*
+	 * If bh_nodeidx is not NULL, the bh_nodeidx is used to track of each
+	 * node's index in bh_nodes. This enables the caller to perform
+	 * binaryheap_remove_node_ptr(), binaryheap_update_up/down in O(log n).
+	 */
+	bh_nodeidx_hash *bh_nodeidx;
 } binaryheap;
 
 extern binaryheap *binaryheap_allocate(int num_nodes,
 									   binaryheap_comparator compare,
-									   void *arg);
+									   bool indexed, void *arg);
 extern void binaryheap_reset(binaryheap *heap);
 extern void binaryheap_free(binaryheap *heap);
 extern void binaryheap_add_unordered(binaryheap *heap, bh_node_type d);
@@ -60,10 +90,14 @@ extern void binaryheap_add(binaryheap *heap, bh_node_type d);
 extern bh_node_type binaryheap_first(binaryheap *heap);
 extern bh_node_type binaryheap_remove_first(binaryheap *heap);
 extern void binaryheap_remove_node(binaryheap *heap, int n);
+extern void binaryheap_remove_node_ptr(binaryheap *heap, bh_node_type d);
 extern void binaryheap_replace_first(binaryheap *heap, bh_node_type d);
+extern void binaryheap_update_up(binaryheap *heap, bh_node_type d);
+extern void binaryheap_update_down(binaryheap *heap, bh_node_type d);
 
 #define binaryheap_empty(h)			((h)->bh_size == 0)
 #define binaryheap_size(h)			((h)->bh_size)
 #define binaryheap_get_node(h, n)	((h)->bh_nodes[n])
+#define binaryheap_indexed(h)		((h)->bh_nodeidx != NULL)
 
 #endif							/* BINARYHEAP_H */
