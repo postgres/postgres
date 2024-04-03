@@ -96,6 +96,7 @@ typedef enum
 	DestSQLFunction,			/* results sent to SQL-language func mgr */
 	DestTransientRel,			/* results sent to transient relation */
 	DestTupleQueue,				/* results sent to tuple queue */
+	DestExplainSerialize,		/* results are serialized and discarded */
 } CommandDest;
 
 /* ----------------

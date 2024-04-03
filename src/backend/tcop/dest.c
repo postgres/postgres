@@ -33,6 +33,7 @@
 #include "access/xact.h"
 #include "commands/copy.h"
 #include "commands/createas.h"
+#include "commands/explain.h"
 #include "commands/matview.h"
 #include "executor/functions.h"
 #include "executor/tqueue.h"
@@ -151,6 +152,9 @@ CreateDestReceiver(CommandDest dest)
 
 		case DestTupleQueue:
 			return CreateTupleQueueDestReceiver(NULL);
+
+		case DestExplainSerialize:
+			return CreateExplainSerializeDestReceiver(NULL);
 	}
 
 	/* should never get here */
@@ -186,6 +190,7 @@ EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_o
 		case DestSQLFunction:
 		case DestTransientRel:
 		case DestTupleQueue:
+		case DestExplainSerialize:
 			break;
 	}
 }
@@ -231,6 +236,7 @@ NullCommand(CommandDest dest)
 		case DestSQLFunction:
 		case DestTransientRel:
 		case DestTupleQueue:
+		case DestExplainSerialize:
 			break;
 	}
 }
@@ -274,6 +280,7 @@ ReadyForQuery(CommandDest dest)
 		case DestSQLFunction:
 		case DestTransientRel:
 		case DestTupleQueue:
+		case DestExplainSerialize:
 			break;
 	}
 }

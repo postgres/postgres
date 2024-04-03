@@ -20,6 +20,7 @@
 #include "commands/prepare.h"
 #include "foreign/fdwapi.h"
 #include "jit/jit.h"
+#include "libpq/pqformat.h"
 #include "nodes/extensible.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -47,6 +48,14 @@ ExplainOneQuery_hook_type ExplainOneQuery_hook = NULL;
 explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 
 
+/* Instrumentation data for SERIALIZE option */
+typedef struct SerializeMetrics
+{
+	uint64		bytesSent;		/* # of bytes serialized */
+	instr_time	timeSpent;		/* time spent serializing */
+	BufferUsage bufferUsage;	/* buffers accessed during serialization */
+} SerializeMetrics;
+
 /* OR-able flags for ExplainXMLTag() */
 #define X_OPENING 0
 #define X_CLOSING 1
@@ -59,6 +68,8 @@ static void ExplainOneQuery(Query *query, int cursorOptions,
 							QueryEnvironment *queryEnv);
 static void ExplainPrintJIT(ExplainState *es, int jit_flags,
 							JitInstrumentation *ji);
+static void ExplainPrintSerialize(ExplainState *es,
+								  SerializeMetrics *metrics);
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 							ExplainState *es);
 static double elapsed_time(instr_time *starttime);
@@ -153,6 +164,7 @@ static void ExplainIndentText(ExplainState *es);
 static void ExplainJSONLineEnding(ExplainState *es);
 static void ExplainYAMLLineStarting(ExplainState *es);
 static void escape_yaml(StringInfo buf, const char *str);
+static SerializeMetrics GetSerializationMetrics(DestReceiver *dest);
 
 
 
@@ -204,6 +216,31 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 		}
 		else if (strcmp(opt->defname, "memory") == 0)
 			es->memory = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "serialize") == 0)
+		{
+			if (opt->arg)
+			{
+				char	   *p = defGetString(opt);
+
+				if (strcmp(p, "off") == 0 || strcmp(p, "none") == 0)
+					es->serialize = EXPLAIN_SERIALIZE_NONE;
+				else if (strcmp(p, "text") == 0)
+					es->serialize = EXPLAIN_SERIALIZE_TEXT;
+				else if (strcmp(p, "binary") == 0)
+					es->serialize = EXPLAIN_SERIALIZE_BINARY;
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
+									opt->defname, p),
+							 parser_errposition(pstate, opt->location)));
+			}
+			else
+			{
+				/* SERIALIZE without an argument is taken as 'text' */
+				es->serialize = EXPLAIN_SERIALIZE_TEXT;
+			}
+		}
 		else if (strcmp(opt->defname, "format") == 0)
 		{
 			char	   *p = defGetString(opt);
@@ -245,6 +282,12 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option TIMING requires ANALYZE")));
+
+	/* check that serialize is used with EXPLAIN ANALYZE */
+	if (es->serialize != EXPLAIN_SERIALIZE_NONE && !es->analyze)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("EXPLAIN option SERIALIZE requires ANALYZE")));
 
 	/* check that GENERIC_PLAN is not used with EXPLAIN ANALYZE */
 	if (es->generic && es->analyze)
@@ -576,6 +619,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	double		totaltime = 0;
 	int			eflags;
 	int			instrument_option = 0;
+	SerializeMetrics serializeMetrics = {0};
 
 	Assert(plannedstmt->commandType != CMD_UTILITY);
 
@@ -604,11 +648,17 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	UpdateActiveSnapshotCommandId();
 
 	/*
-	 * Normally we discard the query's output, but if explaining CREATE TABLE
-	 * AS, we'd better use the appropriate tuple receiver.
+	 * We discard the output if we have no use for it.  If we're explaining
+	 * CREATE TABLE AS, we'd better use the appropriate tuple receiver, while
+	 * the SERIALIZE option requires its own tuple receiver.  (If you specify
+	 * SERIALIZE while explaining CREATE TABLE AS, you'll see zeroes for the
+	 * results, which is appropriate since no data would have gone to the
+	 * client.)
 	 */
 	if (into)
 		dest = CreateIntoRelDestReceiver(into);
+	else if (es->serialize != EXPLAIN_SERIALIZE_NONE)
+		dest = CreateExplainSerializeDestReceiver(es);
 	else
 		dest = None_Receiver;
 
@@ -650,6 +700,13 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 		/* We can't run ExecutorEnd 'till we're done printing the stats... */
 		totaltime += elapsed_time(&starttime);
 	}
+
+	/* grab serialization metrics before we destroy the DestReceiver */
+	if (es->serialize != EXPLAIN_SERIALIZE_NONE)
+		serializeMetrics = GetSerializationMetrics(dest);
+
+	/* call the DestReceiver's destroy method even during explain */
+	dest->rDestroy(dest);
 
 	ExplainOpenGroup("Query", NULL, true, es);
 
@@ -699,6 +756,10 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	 */
 	if (es->costs)
 		ExplainPrintJITSummary(es, queryDesc);
+
+	/* Print info about serialization of output */
+	if (es->serialize != EXPLAIN_SERIALIZE_NONE)
+		ExplainPrintSerialize(es, &serializeMetrics);
 
 	/*
 	 * Close down the query and free resources.  Include time for this in the
@@ -1031,6 +1092,62 @@ ExplainPrintJIT(ExplainState *es, int jit_flags, JitInstrumentation *ji)
 	}
 
 	ExplainCloseGroup("JIT", "JIT", true, es);
+}
+
+/*
+ * ExplainPrintSerialize -
+ *	  Append information about query output volume to es->str.
+ */
+static void
+ExplainPrintSerialize(ExplainState *es, SerializeMetrics *metrics)
+{
+	const char *format;
+
+	/* We shouldn't get called for EXPLAIN_SERIALIZE_NONE */
+	if (es->serialize == EXPLAIN_SERIALIZE_TEXT)
+		format = "text";
+	else
+	{
+		Assert(es->serialize == EXPLAIN_SERIALIZE_BINARY);
+		format = "binary";
+	}
+
+	ExplainOpenGroup("Serialization", "Serialization", true, es);
+
+	if (es->format == EXPLAIN_FORMAT_TEXT)
+	{
+		ExplainIndentText(es);
+		if (es->timing)
+			appendStringInfo(es->str, "Serialization: time=%.3f ms  output=" INT64_FORMAT "kB  format=%s\n",
+							 1000.0 * INSTR_TIME_GET_DOUBLE(metrics->timeSpent),
+							 (metrics->bytesSent + 512) / 1024,
+							 format);
+		else
+			appendStringInfo(es->str, "Serialization: output=" INT64_FORMAT "kB  format=%s\n",
+							 (metrics->bytesSent + 512) / 1024,
+							 format);
+
+		if (es->buffers && peek_buffer_usage(es, &metrics->bufferUsage))
+		{
+			es->indent++;
+			show_buffer_usage(es, &metrics->bufferUsage);
+			es->indent--;
+		}
+	}
+	else
+	{
+		if (es->timing)
+			ExplainPropertyFloat("Time", "ms",
+								 1000.0 * INSTR_TIME_GET_DOUBLE(metrics->timeSpent),
+								 3, es);
+		ExplainPropertyUInteger("Output Volume", "kB",
+								(metrics->bytesSent + 512) / 1024, es);
+		ExplainPropertyText("Format", format, es);
+		if (es->buffers)
+			show_buffer_usage(es, &metrics->bufferUsage);
+	}
+
+	ExplainCloseGroup("Serialization", "Serialization", true, es);
 }
 
 /*
@@ -5160,4 +5277,294 @@ static void
 escape_yaml(StringInfo buf, const char *str)
 {
 	escape_json(buf, str);
+}
+
+
+/*
+ * DestReceiver functions for SERIALIZE option
+ *
+ * A DestReceiver for query tuples, that serializes passed rows into RowData
+ * messages while measuring the resources expended and total serialized size,
+ * while never sending the data to the client.  This allows measuring the
+ * overhead of deTOASTing and datatype out/sendfuncs, which are not otherwise
+ * exercisable without actually hitting the network.
+ */
+typedef struct SerializeDestReceiver
+{
+	DestReceiver pub;
+	ExplainState *es;			/* this EXPLAIN statement's ExplainState */
+	int8		format;			/* text or binary, like pq wire protocol */
+	TupleDesc	attrinfo;		/* the output tuple desc */
+	int			nattrs;			/* current number of columns */
+	FmgrInfo   *finfos;			/* precomputed call info for output fns */
+	MemoryContext tmpcontext;	/* per-row temporary memory context */
+	StringInfoData buf;			/* buffer to hold the constructed message */
+	SerializeMetrics metrics;	/* collected metrics */
+} SerializeDestReceiver;
+
+/*
+ * Get the function lookup info that we'll need for output.
+ *
+ * This is a subset of what printtup_prepare_info() does.  We don't need to
+ * cope with format choices varying across columns, so it's slightly simpler.
+ */
+static void
+serialize_prepare_info(SerializeDestReceiver *receiver,
+					   TupleDesc typeinfo, int nattrs)
+{
+	/* get rid of any old data */
+	if (receiver->finfos)
+		pfree(receiver->finfos);
+	receiver->finfos = NULL;
+
+	receiver->attrinfo = typeinfo;
+	receiver->nattrs = nattrs;
+	if (nattrs <= 0)
+		return;
+
+	receiver->finfos = (FmgrInfo *) palloc0(nattrs * sizeof(FmgrInfo));
+
+	for (int i = 0; i < nattrs; i++)
+	{
+		FmgrInfo   *finfo = receiver->finfos + i;
+		Form_pg_attribute attr = TupleDescAttr(typeinfo, i);
+		Oid			typoutput;
+		Oid			typsend;
+		bool		typisvarlena;
+
+		if (receiver->format == 0)
+		{
+			/* wire protocol format text */
+			getTypeOutputInfo(attr->atttypid,
+							  &typoutput,
+							  &typisvarlena);
+			fmgr_info(typoutput, finfo);
+		}
+		else if (receiver->format == 1)
+		{
+			/* wire protocol format binary */
+			getTypeBinaryOutputInfo(attr->atttypid,
+									&typsend,
+									&typisvarlena);
+			fmgr_info(typsend, finfo);
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unsupported format code: %d", receiver->format)));
+	}
+}
+
+/*
+ * serializeAnalyzeReceive - collect tuples for EXPLAIN (SERIALIZE)
+ *
+ * This should match printtup() in printtup.c as closely as possible,
+ * except for the addition of measurement code.
+ */
+static bool
+serializeAnalyzeReceive(TupleTableSlot *slot, DestReceiver *self)
+{
+	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
+	SerializeDestReceiver *myState = (SerializeDestReceiver *) self;
+	MemoryContext oldcontext;
+	StringInfo	buf = &myState->buf;
+	int			natts = typeinfo->natts;
+	instr_time	start,
+				end;
+	BufferUsage instr_start;
+
+	/* only measure time, buffers if requested */
+	if (myState->es->timing)
+		INSTR_TIME_SET_CURRENT(start);
+	if (myState->es->buffers)
+		instr_start = pgBufferUsage;
+
+	/* Set or update my derived attribute info, if needed */
+	if (myState->attrinfo != typeinfo || myState->nattrs != natts)
+		serialize_prepare_info(myState, typeinfo, natts);
+
+	/* Make sure the tuple is fully deconstructed */
+	slot_getallattrs(slot);
+
+	/* Switch into per-row context so we can recover memory below */
+	oldcontext = MemoryContextSwitchTo(myState->tmpcontext);
+
+	/*
+	 * Prepare a DataRow message (note buffer is in per-query context)
+	 *
+	 * Note that we fill a StringInfo buffer the same as printtup() does, so
+	 * as to capture the costs of manipulating the strings accurately.
+	 */
+	pq_beginmessage_reuse(buf, 'D');
+
+	pq_sendint16(buf, natts);
+
+	/*
+	 * send the attributes of this tuple
+	 */
+	for (int i = 0; i < natts; i++)
+	{
+		FmgrInfo   *finfo = myState->finfos + i;
+		Datum		attr = slot->tts_values[i];
+
+		if (slot->tts_isnull[i])
+		{
+			pq_sendint32(buf, -1);
+			continue;
+		}
+
+		if (myState->format == 0)
+		{
+			/* Text output */
+			char	   *outputstr;
+
+			outputstr = OutputFunctionCall(finfo, attr);
+			pq_sendcountedtext(buf, outputstr, strlen(outputstr));
+		}
+		else
+		{
+			/* Binary output */
+			bytea	   *outputbytes;
+
+			outputbytes = SendFunctionCall(finfo, attr);
+			pq_sendint32(buf, VARSIZE(outputbytes) - VARHDRSZ);
+			pq_sendbytes(buf, VARDATA(outputbytes),
+						 VARSIZE(outputbytes) - VARHDRSZ);
+		}
+	}
+
+	/*
+	 * We mustn't call pq_endmessage_reuse(), since that would actually send
+	 * the data to the client.  Just count the data, instead.  We can leave
+	 * the buffer alone; it'll be reset on the next iteration (as would also
+	 * happen in printtup()).
+	 */
+	myState->metrics.bytesSent += buf->len;
+
+	/* Return to caller's context, and flush row's temporary memory */
+	MemoryContextSwitchTo(oldcontext);
+	MemoryContextReset(myState->tmpcontext);
+
+	/* Update timing data */
+	if (myState->es->timing)
+	{
+		INSTR_TIME_SET_CURRENT(end);
+		INSTR_TIME_ACCUM_DIFF(myState->metrics.timeSpent, end, start);
+	}
+
+	/* Update buffer metrics */
+	if (myState->es->buffers)
+		BufferUsageAccumDiff(&myState->metrics.bufferUsage,
+							 &pgBufferUsage,
+							 &instr_start);
+
+	return true;
+}
+
+/*
+ * serializeAnalyzeStartup - start up the serializeAnalyze receiver
+ */
+static void
+serializeAnalyzeStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
+{
+	SerializeDestReceiver *receiver = (SerializeDestReceiver *) self;
+
+	Assert(receiver->es != NULL);
+
+	switch (receiver->es->serialize)
+	{
+		case EXPLAIN_SERIALIZE_NONE:
+			Assert(false);
+			break;
+		case EXPLAIN_SERIALIZE_TEXT:
+			receiver->format = 0;	/* wire protocol format text */
+			break;
+		case EXPLAIN_SERIALIZE_BINARY:
+			receiver->format = 1;	/* wire protocol format binary */
+			break;
+	}
+
+	/* Create per-row temporary memory context */
+	receiver->tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
+												 "SerializeTupleReceive",
+												 ALLOCSET_DEFAULT_SIZES);
+
+	/* The output buffer is re-used across rows, as in printtup.c */
+	initStringInfo(&receiver->buf);
+
+	/* Initialize results counters */
+	memset(&receiver->metrics, 0, sizeof(SerializeMetrics));
+	INSTR_TIME_SET_ZERO(receiver->metrics.timeSpent);
+}
+
+/*
+ * serializeAnalyzeShutdown - shut down the serializeAnalyze receiver
+ */
+static void
+serializeAnalyzeShutdown(DestReceiver *self)
+{
+	SerializeDestReceiver *receiver = (SerializeDestReceiver *) self;
+
+	if (receiver->finfos)
+		pfree(receiver->finfos);
+	receiver->finfos = NULL;
+
+	if (receiver->buf.data)
+		pfree(receiver->buf.data);
+	receiver->buf.data = NULL;
+
+	if (receiver->tmpcontext)
+		MemoryContextDelete(receiver->tmpcontext);
+	receiver->tmpcontext = NULL;
+}
+
+/*
+ * serializeAnalyzeDestroy - destroy the serializeAnalyze receiver
+ */
+static void
+serializeAnalyzeDestroy(DestReceiver *self)
+{
+	pfree(self);
+}
+
+/*
+ * Build a DestReceiver for EXPLAIN (SERIALIZE) instrumentation.
+ */
+DestReceiver *
+CreateExplainSerializeDestReceiver(ExplainState *es)
+{
+	SerializeDestReceiver *self;
+
+	self = (SerializeDestReceiver *) palloc0(sizeof(SerializeDestReceiver));
+
+	self->pub.receiveSlot = serializeAnalyzeReceive;
+	self->pub.rStartup = serializeAnalyzeStartup;
+	self->pub.rShutdown = serializeAnalyzeShutdown;
+	self->pub.rDestroy = serializeAnalyzeDestroy;
+	self->pub.mydest = DestExplainSerialize;
+
+	self->es = es;
+
+	return (DestReceiver *) self;
+}
+
+/*
+ * GetSerializationMetrics - collect metrics
+ *
+ * We have to be careful here since the receiver could be an IntoRel
+ * receiver if the subject statement is CREATE TABLE AS.  In that
+ * case, return all-zeroes stats.
+ */
+static SerializeMetrics
+GetSerializationMetrics(DestReceiver *dest)
+{
+	SerializeMetrics empty;
+
+	if (dest->mydest == DestExplainSerialize)
+		return ((SerializeDestReceiver *) dest)->metrics;
+
+	memset(&empty, 0, sizeof(SerializeMetrics));
+	INSTR_TIME_SET_ZERO(empty.timeSpent);
+
+	return empty;
 }

@@ -41,6 +41,7 @@ EXPLAIN [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] <rep
     SETTINGS [ <replaceable class="parameter">boolean</replaceable> ]
     GENERIC_PLAN [ <replaceable class="parameter">boolean</replaceable> ]
     BUFFERS [ <replaceable class="parameter">boolean</replaceable> ]
+    SERIALIZE [ { NONE | TEXT | BINARY } ]
     WAL [ <replaceable class="parameter">boolean</replaceable> ]
     TIMING [ <replaceable class="parameter">boolean</replaceable> ]
     SUMMARY [ <replaceable class="parameter">boolean</replaceable> ]
@@ -202,6 +203,34 @@ ROLLBACK;
       upper-level node includes those used by all its child nodes.  In text
       format, only non-zero values are printed.  This parameter defaults to
       <literal>FALSE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SERIALIZE</literal></term>
+    <listitem>
+     <para>
+      Include information on the cost
+      of <firstterm>serializing</firstterm> the query's output data, that
+      is converting it to text or binary format to send to the client.
+      This can be a significant part of the time required for regular
+      execution of the query, if the datatype output functions are
+      expensive or if <acronym>TOAST</acronym>ed values must be fetched
+      from out-of-line storage.  <command>EXPLAIN</command>'s default
+      behavior, <literal>SERIALIZE NONE</literal>, does not perform these
+      conversions.  If <literal>SERIALIZE TEXT</literal>
+      or <literal>SERIALIZE BINARY</literal> is specified, the appropriate
+      conversions are performed, and the time spent doing so is measured
+      (unless <literal>TIMING OFF</literal> is specified).  If
+      the <literal>BUFFERS</literal> option is also specified, then any
+      buffer accesses involved in the conversions are counted too.
+      In no case, however, will <command>EXPLAIN</command> actually send
+      the resulting data to the client; hence network transmission costs
+      cannot be investigated this way.
+      Serialization may only be enabled when <literal>ANALYZE</literal> is
+      also enabled.  If <literal>SERIALIZE</literal> is written without an
+      argument, <literal>TEXT</literal> is assumed.
      </para>
     </listitem>
    </varlistentry>

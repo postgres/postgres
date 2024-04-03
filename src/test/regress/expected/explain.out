@@ -135,7 +135,7 @@ select explain_filter('explain (analyze, buffers, format xml) select * from int8
  </explain>
 (1 row)
 
-select explain_filter('explain (analyze, buffers, format yaml) select * from int8_tbl i8');
+select explain_filter('explain (analyze, serialize, buffers, format yaml) select * from int8_tbl i8');
         explain_filter         
 -------------------------------
  - Plan:                      +
@@ -175,6 +175,20 @@ select explain_filter('explain (analyze, buffers, format yaml) select * from int
      Temp Written Blocks: N   +
    Planning Time: N.N         +
    Triggers:                  +
+   Serialization:             +
+     Time: N.N                +
+     Output Volume: N         +
+     Format: "text"           +
+     Shared Hit Blocks: N     +
+     Shared Read Blocks: N    +
+     Shared Dirtied Blocks: N +
+     Shared Written Blocks: N +
+     Local Hit Blocks: N      +
+     Local Read Blocks: N     +
+     Local Dirtied Blocks: N  +
+     Local Written Blocks: N  +
+     Temp Read Blocks: N      +
+     Temp Written Blocks: N   +
    Execution Time: N.N
 (1 row)
 
@@ -638,4 +652,42 @@ select explain_filter('explain (verbose) select * from int8_tbl i8');
    Output: q1, q2
  Query Identifier: N
 (3 rows)
+
+-- Test SERIALIZE option
+select explain_filter('explain (analyze,serialize) select * from int8_tbl i8');
+                                        explain_filter                                         
+-----------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+ Planning Time: N.N ms
+ Serialization: time=N.N ms  output=NkB  format=text
+ Execution Time: N.N ms
+(4 rows)
+
+select explain_filter('explain (analyze,serialize text,buffers,timing off) select * from int8_tbl i8');
+                                 explain_filter                                  
+---------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual rows=N loops=N)
+ Planning Time: N.N ms
+ Serialization: output=NkB  format=text
+ Execution Time: N.N ms
+(4 rows)
+
+select explain_filter('explain (analyze,serialize binary,buffers,timing) select * from int8_tbl i8');
+                                        explain_filter                                         
+-----------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+ Planning Time: N.N ms
+ Serialization: time=N.N ms  output=NkB  format=binary
+ Execution Time: N.N ms
+(4 rows)
+
+-- this tests an edge case where we have no data to return
+select explain_filter('explain (analyze,serialize) create temp table explain_temp as select * from int8_tbl i8');
+                                        explain_filter                                         
+-----------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+ Planning Time: N.N ms
+ Serialization: time=N.N ms  output=NkB  format=text
+ Execution Time: N.N ms
+(4 rows)
 

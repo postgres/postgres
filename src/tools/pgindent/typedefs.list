@@ -713,6 +713,7 @@ ExplainForeignModify_function
 ExplainForeignScan_function
 ExplainFormat
 ExplainOneQuery_hook_type
+ExplainSerializeOption
 ExplainState
 ExplainStmt
 ExplainWorkersState
@@ -2536,6 +2537,8 @@ SerCommitSeqNo
 SerialControl
 SerialIOData
 SerializableXactHandle
+SerializeDestReceiver
+SerializeMetrics
 SerializedActiveRelMaps
 SerializedClientConnectionInfo
 SerializedRanges

@@ -66,7 +66,7 @@ select explain_filter('explain (analyze) select * from int8_tbl i8');
 select explain_filter('explain (analyze, verbose) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers, format text) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers, format xml) select * from int8_tbl i8');
-select explain_filter('explain (analyze, buffers, format yaml) select * from int8_tbl i8');
+select explain_filter('explain (analyze, serialize, buffers, format yaml) select * from int8_tbl i8');
 select explain_filter('explain (buffers, format text) select * from int8_tbl i8');
 select explain_filter('explain (buffers, format json) select * from int8_tbl i8');
 
@@ -162,3 +162,10 @@ select explain_filter('explain (verbose) select * from t1 where pg_temp.mysin(f1
 -- Test compute_query_id
 set compute_query_id = on;
 select explain_filter('explain (verbose) select * from int8_tbl i8');
+
+-- Test SERIALIZE option
+select explain_filter('explain (analyze,serialize) select * from int8_tbl i8');
+select explain_filter('explain (analyze,serialize text,buffers,timing off) select * from int8_tbl i8');
+select explain_filter('explain (analyze,serialize binary,buffers,timing) select * from int8_tbl i8');
+-- this tests an edge case where we have no data to return
+select explain_filter('explain (analyze,serialize) create temp table explain_temp as select * from int8_tbl i8');

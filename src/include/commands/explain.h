@@ -17,6 +17,13 @@
 #include "lib/stringinfo.h"
 #include "parser/parse_node.h"
 
+typedef enum ExplainSerializeOption
+{
+	EXPLAIN_SERIALIZE_NONE,
+	EXPLAIN_SERIALIZE_TEXT,
+	EXPLAIN_SERIALIZE_BINARY,
+} ExplainSerializeOption;
+
 typedef enum ExplainFormat
 {
 	EXPLAIN_FORMAT_TEXT,
@@ -48,6 +55,7 @@ typedef struct ExplainState
 	bool		memory;			/* print planner's memory usage information */
 	bool		settings;		/* print modified settings */
 	bool		generic;		/* generate a generic plan */
+	ExplainSerializeOption serialize;	/* serialize the query's output? */
 	ExplainFormat format;		/* output format */
 	/* state for output formatting --- not reset for each new plan tree */
 	int			indent;			/* current indentation level */
@@ -131,5 +139,7 @@ extern void ExplainOpenGroup(const char *objtype, const char *labelname,
 							 bool labeled, ExplainState *es);
 extern void ExplainCloseGroup(const char *objtype, const char *labelname,
 							  bool labeled, ExplainState *es);
+
+extern DestReceiver *CreateExplainSerializeDestReceiver(ExplainState *es);
 
 #endif							/* EXPLAIN_H */

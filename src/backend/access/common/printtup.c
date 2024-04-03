@@ -294,6 +294,9 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 
 /* ----------------
  *		printtup --- send a tuple to the client
+ *
+ * Note: if you change this function, see also serializeAnalyzeReceive
+ * in explain.c, which is meant to replicate the computations done here.
  * ----------------
  */
 static bool
@@ -317,7 +320,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 	oldcontext = MemoryContextSwitchTo(myState->tmpcontext);
 
 	/*
-	 * Prepare a DataRow message (note buffer is in per-row context)
+	 * Prepare a DataRow message (note buffer is in per-query context)
 	 */
 	pq_beginmessage_reuse(buf, 'D');
 

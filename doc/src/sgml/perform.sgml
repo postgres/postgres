@@ -144,11 +144,11 @@ EXPLAIN SELECT * FROM tenk1;
     It's important to understand that the cost of an upper-level node includes
     the cost of all its child nodes.  It's also important to realize that
     the cost only reflects things that the planner cares about.
-    In particular, the cost does not consider the time spent transmitting
-    result rows to the client, which could be an important
-    factor in the real elapsed time; but the planner ignores it because
-    it cannot change it by altering the plan.  (Every correct plan will
-    output the same row set, we trust.)
+    In particular, the cost does not consider the time spent to convert
+    output values to text form or to transmit them to the client, which
+    could be important factors in the real elapsed time; but the planner
+    ignores those costs because it cannot change them by altering the
+    plan.  (Every correct plan will output the same row set, we trust.)
    </para>
 
    <para>
@@ -956,6 +956,17 @@ EXPLAIN UPDATE parent SET f2 = f2 + 1 WHERE f1 = 101;
     <command>EXPLAIN ANALYZE</command>.
    </para>
 
+   <para>
+    The time shown for the top-level node does not include any time needed
+    to convert the query's output data into displayable form or to send it
+    to the client.  While <command>EXPLAIN ANALYZE</command> will never
+    send the data to the client, it can be told to convert the query's
+    output data to displayable form and measure the time needed for that,
+    by specifying the <literal>SERIALIZE</literal> option.  That time will
+    be shown separately, and it's also included in the
+    total <literal>Execution time</literal>.
+   </para>
+
   </sect2>
 
   <sect2 id="using-explain-caveats">
@@ -965,7 +976,8 @@ EXPLAIN UPDATE parent SET f2 = f2 + 1 WHERE f1 = 101;
     There are two significant ways in which run times measured by
     <command>EXPLAIN ANALYZE</command> can deviate from normal execution of
     the same query.  First, since no output rows are delivered to the client,
-    network transmission costs and I/O conversion costs are not included.
+    network transmission costs are not included.  I/O conversion costs are
+    not included either unless <literal>SERIALIZE</literal> is specified.
     Second, the measurement overhead added by <command>EXPLAIN
     ANALYZE</command> can be significant, especially on machines with slow
     <function>gettimeofday()</function> operating-system calls. You can use the
