@@ -91,12 +91,13 @@ typedef struct
 	char	   *manifest_checksum;
 } JsonManifestParseState;
 
-typedef struct JsonManifestParseIncrementalState
+/* typedef appears in parse_manifest.h */
+struct JsonManifestParseIncrementalState
 {
 	JsonLexContext lex;
 	JsonSemAction sem;
 	pg_cryptohash_ctx *manifest_ctx;
-} JsonManifestParseIncrementalState;
+};
 
 static JsonParseErrorType json_manifest_object_start(void *state);
 static JsonParseErrorType json_manifest_object_end(void *state);

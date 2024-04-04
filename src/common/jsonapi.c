@@ -78,8 +78,10 @@ typedef enum
  * struct containing the 3 stacks used in non-recursive parsing,
  * and the token and value for scalars that need to be preserved
  * across calls.
+ *
+ * typedef appears in jsonapi.h
  */
-typedef struct JsonParserStack
+struct JsonParserStack
 {
 	int			stack_size;
 	char	   *prediction;
@@ -89,18 +91,20 @@ typedef struct JsonParserStack
 	bool	   *fnull;
 	JsonTokenType scalar_tok;
 	char	   *scalar_val;
-} JsonParserStack;
+};
 
 /*
  * struct containing state used when there is a possible partial token at the
  * end of a json chunk when we are doing incremental parsing.
+ *
+ * typedef appears in jsonapi.h
  */
-typedef struct JsonIncrementalState
+struct JsonIncrementalState
 {
 	bool		is_last_chunk;
 	bool		partial_completed;
 	StringInfoData partial_token;
-} JsonIncrementalState;
+};
 
 /*
  * constants and macros used in the nonrecursive parser
