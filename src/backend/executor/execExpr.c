@@ -2436,7 +2436,16 @@ ExecInitExprRec(Expr *node, ExprState *state,
 			{
 				JsonExpr   *jsexpr = castNode(JsonExpr, node);
 
-				ExecInitJsonExpr(jsexpr, state, resv, resnull, &scratch);
+				/*
+				 * No need to initialize a full JsonExprState For
+				 * JSON_TABLE(), because the upstream caller tfuncFetchRows()
+				 * is only interested in the value of formatted_expr.
+				 */
+				if (jsexpr->op == JSON_TABLE_OP)
+					ExecInitExprRec((Expr *) jsexpr->formatted_expr, state,
+									resv, resnull);
+				else
+					ExecInitJsonExpr(jsexpr, state, resv, resnull, &scratch);
 				break;
 			}
 

@@ -4245,7 +4245,8 @@ transformJsonSerializeExpr(ParseState *pstate, JsonSerializeExpr *expr)
 }
 
 /*
- * Transform JSON_VALUE, JSON_QUERY, JSON_EXISTS functions into a JsonExpr node.
+ * Transform JSON_VALUE, JSON_QUERY, JSON_EXISTS, JSON_TABLE functions into
+ * a JsonExpr node.
  */
 static Node *
 transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
@@ -4268,6 +4269,9 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 		case JSON_VALUE_OP:
 			func_name = "JSON_VALUE";
 			default_format = JS_FORMAT_DEFAULT;
+			break;
+		case JSON_TABLE_OP:
+			func_name = "JSON_TABLE";
 			break;
 		default:
 			elog(ERROR, "invalid JsonFuncExpr op %d", (int) func->op);
@@ -4350,6 +4354,42 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 				jsexpr->returning->typmod = -1;
 			}
 
+			/* JSON_TABLE() COLUMNS can specify a non-boolean type. */
+			if (jsexpr->returning->typid != BOOLOID)
+			{
+				Node	   *coercion_expr;
+				CaseTestExpr *placeholder = makeNode(CaseTestExpr);
+				int			location = exprLocation((Node *) jsexpr);
+
+				/*
+				 * We abuse CaseTestExpr here as placeholder to pass the
+				 * result of evaluating JSON_EXISTS to the coercion
+				 * expression.
+				 */
+				placeholder->typeId = BOOLOID;
+				placeholder->typeMod = -1;
+				placeholder->collation = InvalidOid;
+
+				coercion_expr =
+					coerce_to_target_type(pstate, (Node *) placeholder, BOOLOID,
+										  jsexpr->returning->typid,
+										  jsexpr->returning->typmod,
+										  COERCION_EXPLICIT,
+										  COERCE_IMPLICIT_CAST,
+										  location);
+
+				if (coercion_expr == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_CANNOT_COERCE),
+							 errmsg("cannot cast type %s to %s",
+									format_type_be(BOOLOID),
+									format_type_be(jsexpr->returning->typid)),
+							 parser_coercion_errposition(pstate, location, (Node *) jsexpr)));
+
+				if (coercion_expr != (Node *) placeholder)
+					jsexpr->coercion_expr = coercion_expr;
+			}
+
 			jsexpr->on_error = transformJsonBehavior(pstate, func->on_error,
 													 JSON_BEHAVIOR_FALSE,
 													 jsexpr->returning);
@@ -4411,6 +4451,17 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 														 jsexpr->returning);
 			jsexpr->on_error = transformJsonBehavior(pstate, func->on_error,
 													 JSON_BEHAVIOR_NULL,
+													 jsexpr->returning);
+			break;
+
+		case JSON_TABLE_OP:
+			if (!OidIsValid(jsexpr->returning->typid))
+			{
+				jsexpr->returning->typid = exprType(jsexpr->formatted_expr);
+				jsexpr->returning->typmod = -1;
+			}
+			jsexpr->on_error = transformJsonBehavior(pstate, func->on_error,
+													 JSON_BEHAVIOR_EMPTY,
 													 jsexpr->returning);
 			break;
 

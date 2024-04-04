@@ -100,6 +100,7 @@ extern IndexInfo *makeIndexInfo(int numattrs, int numkeyattrs, Oid amoid,
 								bool isready, bool concurrent,
 								bool summarizing);
 
+extern Node *makeStringConst(char *str, int location);
 extern DefElem *makeDefElem(char *name, Node *arg, int location);
 extern DefElem *makeDefElemExtended(char *nameSpace, char *name, Node *arg,
 									DefElemAction defaction, int location);
@@ -118,5 +119,9 @@ extern Node *makeJsonIsPredicate(Node *expr, JsonFormat *format,
 								 int location);
 extern JsonBehavior *makeJsonBehavior(JsonBehaviorType btype, Node *expr,
 									  int location);
+extern JsonTablePath *makeJsonTablePath(Const *pathvalue, char *pathname);
+extern JsonTablePathSpec *makeJsonTablePathSpec(char *string, char *name,
+												int string_location,
+												int name_location);
 
 #endif							/* MAKEFUNC_H */

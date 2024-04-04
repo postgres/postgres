@@ -2019,6 +2019,7 @@ FigureColnameInternal(Node *node, char **name)
 				case JSON_VALUE_OP:
 					*name = "json_value";
 					return 2;
+					/* JSON_TABLE_OP can't happen here. */
 				default:
 					elog(ERROR, "unrecognized JsonExpr op: %d",
 						 (int) ((JsonFuncExpr *) node)->op);

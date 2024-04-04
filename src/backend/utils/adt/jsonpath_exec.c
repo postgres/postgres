@@ -61,9 +61,11 @@
 
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "executor/execExpr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/miscnodes.h"
+#include "nodes/nodeFuncs.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -71,6 +73,8 @@
 #include "utils/float.h"
 #include "utils/formatting.h"
 #include "utils/jsonpath.h"
+#include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/timestamp.h"
 
 /*
@@ -153,6 +157,63 @@ typedef struct JsonValueListIterator
 	List	   *list;
 	ListCell   *next;
 } JsonValueListIterator;
+
+/* Structures for JSON_TABLE execution  */
+
+/*
+ * Struct holding the result of jsonpath evaluation, to be used as source row
+ * for JsonTableGetValue() which in turn computes the values of individual
+ * JSON_TABLE columns.
+ */
+typedef struct JsonTablePlanRowSource
+{
+	Datum		value;
+	bool		isnull;
+} JsonTablePlanRowSource;
+
+/*
+ * State of evaluation of row pattern derived by applying jsonpath given in
+ * a JsonTablePlan to an input document given in the parent TableFunc.
+ */
+typedef struct JsonTablePlanState
+{
+	/* Original plan */
+	JsonTablePlan *plan;
+
+	/* The following fields are only valid for JsonTablePathScan plans */
+
+	/* jsonpath to evaluate against the input doc to get the row pattern */
+	JsonPath   *path;
+
+	/*
+	 * Memory context to use when evaluating the row pattern from the jsonpath
+	 */
+	MemoryContext mcxt;
+
+	/* PASSING arguments passed to jsonpath executor */
+	List	   *args;
+
+	/* List and iterator of jsonpath result values */
+	JsonValueList found;
+	JsonValueListIterator iter;
+
+	/* Currently selected row for JsonTableGetValue() to use */
+	JsonTablePlanRowSource current;
+
+	/* Counter for ORDINAL columns */
+	int			ordinal;
+} JsonTablePlanState;
+
+/* Random number to identify JsonTableExecContext for sanity checking */
+#define JSON_TABLE_EXEC_CONTEXT_MAGIC		418352867
+
+typedef struct JsonTableExecContext
+{
+	int			magic;
+
+	/* State of the plan providing a row evaluated from "root" jsonpath */
+	JsonTablePlanState *rootplanstate;
+} JsonTableExecContext;
 
 /* strict/lax flags is decomposed into four [un]wrap/error flags */
 #define jspStrictAbsenceOfErrors(cxt)	(!(cxt)->laxMode)
@@ -253,6 +314,7 @@ static JsonPathExecResult getArrayIndex(JsonPathExecContext *cxt,
 										JsonPathItem *jsp, JsonbValue *jb, int32 *index);
 static JsonBaseObjectInfo setBaseObject(JsonPathExecContext *cxt,
 										JsonbValue *jbv, int32 id);
+static void JsonValueListClear(JsonValueList *jvl);
 static void JsonValueListAppend(JsonValueList *jvl, JsonbValue *jbv);
 static int	JsonValueListLength(const JsonValueList *jvl);
 static bool JsonValueListIsEmpty(JsonValueList *jvl);
@@ -271,6 +333,31 @@ static int	compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 							bool useTz, bool *cast_error);
 static void checkTimezoneIsUsedForCast(bool useTz, const char *type1,
 									   const char *type2);
+
+static void JsonTableInitOpaque(TableFuncScanState *state, int natts);
+static JsonTablePlanState *JsonTableInitPlan(JsonTableExecContext *cxt,
+											 JsonTablePlan *plan,
+											 List *args,
+											 MemoryContext mcxt);
+static void JsonTableSetDocument(TableFuncScanState *state, Datum value);
+static void JsonTableResetRowPattern(JsonTablePlanState *plan, Datum item);
+static bool JsonTableFetchRow(TableFuncScanState *state);
+static Datum JsonTableGetValue(TableFuncScanState *state, int colnum,
+							   Oid typid, int32 typmod, bool *isnull);
+static void JsonTableDestroyOpaque(TableFuncScanState *state);
+static bool JsonTablePlanNextRow(JsonTablePlanState *planstate);
+
+const TableFuncRoutine JsonbTableRoutine =
+{
+	.InitOpaque = JsonTableInitOpaque,
+	.SetDocument = JsonTableSetDocument,
+	.SetNamespace = NULL,
+	.SetRowFilter = NULL,
+	.SetColumnFilter = NULL,
+	.FetchRow = JsonTableFetchRow,
+	.GetValue = JsonTableGetValue,
+	.DestroyOpaque = JsonTableDestroyOpaque
+};
 
 /****************** User interface to JsonPath executor ********************/
 
@@ -3384,6 +3471,13 @@ setBaseObject(JsonPathExecContext *cxt, JsonbValue *jbv, int32 id)
 }
 
 static void
+JsonValueListClear(JsonValueList *jvl)
+{
+	jvl->singleton = NULL;
+	jvl->list = NIL;
+}
+
+static void
 JsonValueListAppend(JsonValueList *jvl, JsonbValue *jbv)
 {
 	if (jvl->singleton)
@@ -3917,4 +4011,282 @@ JsonPathValue(Datum jb, JsonPath *jp, bool *empty, bool *error, List *vars)
 		return NULL;
 
 	return res;
+}
+
+/************************ JSON_TABLE functions ***************************/
+
+/*
+ * Sanity-checks and returns the opaque JsonTableExecContext from the
+ * given executor state struct.
+ */
+static inline JsonTableExecContext *
+GetJsonTableExecContext(TableFuncScanState *state, const char *fname)
+{
+	JsonTableExecContext *result;
+
+	if (!IsA(state, TableFuncScanState))
+		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
+	result = (JsonTableExecContext *) state->opaque;
+	if (result->magic != JSON_TABLE_EXEC_CONTEXT_MAGIC)
+		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
+
+	return result;
+}
+
+/*
+ * JsonTableInitOpaque
+ *		Fill in TableFuncScanState->opaque for processing JSON_TABLE
+ *
+ * This initializes the PASSING arguments and the JsonTablePlanState for
+ * JsonTablePlan given in TableFunc.
+ */
+static void
+JsonTableInitOpaque(TableFuncScanState *state, int natts)
+{
+	JsonTableExecContext *cxt;
+	PlanState  *ps = &state->ss.ps;
+	TableFuncScan *tfs = castNode(TableFuncScan, ps->plan);
+	TableFunc  *tf = tfs->tablefunc;
+	JsonTablePlan *rootplan = (JsonTablePlan *) tf->plan;
+	JsonExpr   *je = castNode(JsonExpr, tf->docexpr);
+	List	   *args = NIL;
+
+	cxt = palloc0(sizeof(JsonTableExecContext));
+	cxt->magic = JSON_TABLE_EXEC_CONTEXT_MAGIC;
+
+	/*
+	 * Evaluate JSON_TABLE() PASSING arguments to be passed to the jsonpath
+	 * executor via JsonPathVariables.
+	 */
+	if (state->passingvalexprs)
+	{
+		ListCell   *exprlc;
+		ListCell   *namelc;
+
+		Assert(list_length(state->passingvalexprs) ==
+			   list_length(je->passing_names));
+		forboth(exprlc, state->passingvalexprs,
+				namelc, je->passing_names)
+		{
+			ExprState  *state = lfirst_node(ExprState, exprlc);
+			String	   *name = lfirst_node(String, namelc);
+			JsonPathVariable *var = palloc(sizeof(*var));
+
+			var->name = pstrdup(name->sval);
+			var->typid = exprType((Node *) state->expr);
+			var->typmod = exprTypmod((Node *) state->expr);
+
+			/*
+			 * Evaluate the expression and save the value to be returned by
+			 * GetJsonPathVar().
+			 */
+			var->value = ExecEvalExpr(state, ps->ps_ExprContext,
+									  &var->isnull);
+
+			args = lappend(args, var);
+		}
+	}
+
+	/* Initialize plan */
+	cxt->rootplanstate = JsonTableInitPlan(cxt, rootplan, args,
+										   CurrentMemoryContext);
+
+	state->opaque = cxt;
+}
+
+/*
+ * JsonTableDestroyOpaque
+ *		Resets state->opaque
+ */
+static void
+JsonTableDestroyOpaque(TableFuncScanState *state)
+{
+	JsonTableExecContext *cxt =
+		GetJsonTableExecContext(state, "JsonTableDestroyOpaque");
+
+	/* not valid anymore */
+	cxt->magic = 0;
+
+	state->opaque = NULL;
+}
+
+/*
+ * JsonTableInitPlan
+ *		Initialize information for evaluating jsonpath in the given
+ *		JsonTablePlan
+ */
+static JsonTablePlanState *
+JsonTableInitPlan(JsonTableExecContext *cxt, JsonTablePlan *plan,
+				  List *args, MemoryContext mcxt)
+{
+	JsonTablePlanState *planstate = palloc0(sizeof(*planstate));
+
+	planstate->plan = plan;
+
+	if (IsA(plan, JsonTablePathScan))
+	{
+		JsonTablePathScan *scan = (JsonTablePathScan *) plan;
+
+		planstate->path = DatumGetJsonPathP(scan->path->value->constvalue);
+		planstate->args = args;
+		planstate->mcxt = AllocSetContextCreate(mcxt, "JsonTableExecContext",
+												ALLOCSET_DEFAULT_SIZES);
+
+		/* No row pattern evaluated yet. */
+		planstate->current.value = PointerGetDatum(NULL);
+		planstate->current.isnull = true;
+	}
+
+	return planstate;
+}
+
+/*
+ * JsonTableSetDocument
+ *		Install the input document and evaluate the row pattern
+ */
+static void
+JsonTableSetDocument(TableFuncScanState *state, Datum value)
+{
+	JsonTableExecContext *cxt =
+		GetJsonTableExecContext(state, "JsonTableSetDocument");
+
+	JsonTableResetRowPattern(cxt->rootplanstate, value);
+}
+
+/*
+ * Evaluate a JsonTablePlan's jsonpath to get a new row pattren from
+ * the given context item
+ */
+static void
+JsonTableResetRowPattern(JsonTablePlanState *planstate, Datum item)
+{
+	JsonTablePathScan *scan = castNode(JsonTablePathScan, planstate->plan);
+	MemoryContext oldcxt;
+	JsonPathExecResult res;
+	Jsonb	   *js = (Jsonb *) DatumGetJsonbP(item);
+
+	JsonValueListClear(&planstate->found);
+
+	MemoryContextResetOnly(planstate->mcxt);
+
+	oldcxt = MemoryContextSwitchTo(planstate->mcxt);
+
+	res = executeJsonPath(planstate->path, planstate->args,
+						  GetJsonPathVar, CountJsonPathVars,
+						  js, scan->errorOnError,
+						  &planstate->found,
+						  true);
+
+	MemoryContextSwitchTo(oldcxt);
+
+	if (jperIsError(res))
+	{
+		Assert(!scan->errorOnError);
+		JsonValueListClear(&planstate->found);
+	}
+
+	/* Reset plan iterator to the beginning of the item list */
+	JsonValueListInitIterator(&planstate->found, &planstate->iter);
+	planstate->current.value = PointerGetDatum(NULL);
+	planstate->current.isnull = true;
+	planstate->ordinal = 0;
+}
+
+/*
+ * Fetch next row from a JsonTablePlan's path evaluation result.
+ *
+ * Returns false if the plan has run out of rows, true otherwise.
+ */
+static bool
+JsonTablePlanNextRow(JsonTablePlanState *planstate)
+{
+	JsonbValue *jbv = JsonValueListNext(&planstate->found, &planstate->iter);
+	MemoryContext oldcxt;
+
+	/* End of list? */
+	if (jbv == NULL)
+	{
+		planstate->current.value = PointerGetDatum(NULL);
+		planstate->current.isnull = true;
+		return false;
+	}
+
+	/*
+	 * Set current row item for subsequent JsonTableGetValue() calls for
+	 * evaluating individual columns.
+	 */
+	oldcxt = MemoryContextSwitchTo(planstate->mcxt);
+	planstate->current.value = JsonbPGetDatum(JsonbValueToJsonb(jbv));
+	planstate->current.isnull = false;
+	MemoryContextSwitchTo(oldcxt);
+
+	/* Next row! */
+	planstate->ordinal++;
+
+	return true;
+}
+
+/*
+ * JsonTableFetchRow
+ *		Prepare the next "current" row for upcoming GetValue calls.
+ *
+ * Returns false if no more rows can be returned.
+ */
+static bool
+JsonTableFetchRow(TableFuncScanState *state)
+{
+	JsonTableExecContext *cxt =
+		GetJsonTableExecContext(state, "JsonTableFetchRow");
+
+	return JsonTablePlanNextRow(cxt->rootplanstate);
+}
+
+/*
+ * JsonTableGetValue
+ *		Return the value for column number 'colnum' for the current row.
+ *
+ * This leaks memory, so be sure to reset often the context in which it's
+ * called.
+ */
+static Datum
+JsonTableGetValue(TableFuncScanState *state, int colnum,
+				  Oid typid, int32 typmod, bool *isnull)
+{
+	JsonTableExecContext *cxt =
+		GetJsonTableExecContext(state, "JsonTableGetValue");
+	ExprContext *econtext = state->ss.ps.ps_ExprContext;
+	ExprState  *estate = list_nth(state->colvalexprs, colnum);
+	JsonTablePlanState *planstate = cxt->rootplanstate;
+	JsonTablePlanRowSource *current = &planstate->current;
+	Datum		result;
+
+	/* Row pattern value is NULL */
+	if (current->isnull)
+	{
+		result = (Datum) 0;
+		*isnull = true;
+	}
+	/* Evaluate JsonExpr. */
+	else if (estate)
+	{
+		Datum		saved_caseValue = econtext->caseValue_datum;
+		bool		saved_caseIsNull = econtext->caseValue_isNull;
+
+		/* Pass the row pattern value via CaseTestExpr. */
+		econtext->caseValue_datum = current->value;
+		econtext->caseValue_isNull = false;
+
+		result = ExecEvalExpr(estate, econtext, isnull);
+
+		econtext->caseValue_datum = saved_caseValue;
+		econtext->caseValue_isNull = saved_caseIsNull;
+	}
+	/* ORDINAL column */
+	else
+	{
+		result = Int32GetDatum(planstate->ordinal);
+		*isnull = false;
+	}
+
+	return result;
 }

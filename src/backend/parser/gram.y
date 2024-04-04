@@ -170,7 +170,6 @@ static void updateRawStmtEnd(RawStmt *rs, int end_location);
 static Node *makeColumnRef(char *colname, List *indirection,
 						   int location, core_yyscan_t yyscanner);
 static Node *makeTypeCast(Node *arg, TypeName *typename, int location);
-static Node *makeStringConst(char *str, int location);
 static Node *makeStringConstCast(char *str, int location, TypeName *typename);
 static Node *makeIntConst(int val, int location);
 static Node *makeFloatConst(char *str, int location);
@@ -659,12 +658,17 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				json_argument
 				json_behavior
 				json_on_error_clause_opt
+				json_table
+				json_table_column_definition
+				json_table_column_path_clause_opt
 %type <list>	json_name_and_value_list
 				json_value_expr_list
 				json_array_aggregate_order_by_clause_opt
 				json_arguments
 				json_behavior_clause_opt
 				json_passing_clause_opt
+				json_table_column_definition_list
+%type <str>		json_table_path_name_opt
 %type <ival>	json_behavior_type
 				json_predicate_type_constraint
 				json_quotes_clause_opt
@@ -737,7 +741,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
 	JOIN JSON JSON_ARRAY JSON_ARRAYAGG JSON_EXISTS JSON_OBJECT JSON_OBJECTAGG
-	JSON_QUERY JSON_SCALAR JSON_SERIALIZE JSON_VALUE
+	JSON_QUERY JSON_SCALAR JSON_SERIALIZE JSON_TABLE JSON_VALUE
 
 	KEEP KEY KEYS
 
@@ -748,8 +752,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	MAPPING MATCH MATCHED MATERIALIZED MAXVALUE MERGE MERGE_ACTION METHOD
 	MINUTE_P MINVALUE MODE MONTH_P MOVE
 
-	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NFC NFD NFKC NFKD NO NONE
-	NORMALIZE NORMALIZED
+	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NFC NFD NFKC NFKD NO
+	NONE NORMALIZE NORMALIZED
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
 	NULLS_P NUMERIC
 
@@ -757,8 +761,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	ORDER ORDINALITY OTHERS OUT_P OUTER_P
 	OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER
 
-	PARALLEL PARAMETER PARSER PARTIAL PARTITION PASSING PASSWORD
-	PERIOD PLACING PLANS POLICY
+	PARALLEL PARAMETER PARSER PARTIAL PARTITION PASSING PASSWORD PATH
+	PERIOD PLACING PLAN PLANS POLICY
+
 	POSITION PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROCEDURES PROGRAM PUBLICATION
 
@@ -877,9 +882,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  * json_predicate_type_constraint and json_key_uniqueness_constraint_opt
  * productions (see comments there).
  */
-%nonassoc	UNBOUNDED		/* ideally would have same precedence as IDENT */
+%nonassoc	UNBOUNDED /* ideally would have same precedence as IDENT */
 %nonassoc	IDENT PARTITION RANGE ROWS GROUPS PRECEDING FOLLOWING CUBE ROLLUP
-			SET KEYS OBJECT_P SCALAR VALUE_P WITH WITHOUT
+			SET KEYS OBJECT_P SCALAR VALUE_P WITH WITHOUT PATH
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %left		'+' '-'
 %left		'*' '/' '%'
@@ -13493,6 +13498,21 @@ table_ref:	relation_expr opt_alias_clause
 					$2->alias = $4;
 					$$ = (Node *) $2;
 				}
+			| json_table opt_alias_clause
+				{
+					JsonTable  *jt = castNode(JsonTable, $1);
+
+					jt->alias = $2;
+					$$ = (Node *) jt;
+				}
+			| LATERAL_P json_table opt_alias_clause
+				{
+					JsonTable  *jt = castNode(JsonTable, $2);
+
+					jt->alias = $3;
+					jt->lateral = true;
+					$$ = (Node *) jt;
+				}
 		;
 
 
@@ -14060,6 +14080,8 @@ xmltable_column_option_el:
 				{ $$ = makeDefElem("is_not_null", (Node *) makeBoolean(true), @1); }
 			| NULL_P
 				{ $$ = makeDefElem("is_not_null", (Node *) makeBoolean(false), @1); }
+			| PATH b_expr
+				{ $$ = makeDefElem("path", $2, @1); }
 		;
 
 xml_namespace_list:
@@ -14086,6 +14108,123 @@ xml_namespace_el:
 					$$->val = $2;
 					$$->location = @1;
 				}
+		;
+
+json_table:
+			JSON_TABLE '('
+				json_value_expr ',' a_expr json_table_path_name_opt
+				json_passing_clause_opt
+				COLUMNS '(' json_table_column_definition_list ')'
+				json_on_error_clause_opt
+			')'
+				{
+					JsonTable *n = makeNode(JsonTable);
+					char	  *pathstring;
+
+					n->context_item = (JsonValueExpr *) $3;
+					if (!IsA($5, A_Const) ||
+						castNode(A_Const, $5)->val.node.type != T_String)
+						ereport(ERROR,
+								errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("only string constants are supported in JSON_TABLE path specification"),
+								parser_errposition(@5));
+					pathstring = castNode(A_Const, $5)->val.sval.sval;
+					n->pathspec = makeJsonTablePathSpec(pathstring, $6, @5, @6);
+					n->passing = $7;
+					n->columns = $10;
+					n->on_error = (JsonBehavior *) $12;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+		;
+
+json_table_path_name_opt:
+			AS name			{ $$ = $2; }
+			| /* empty */	{ $$ = NULL; }
+		;
+
+json_table_column_definition_list:
+			json_table_column_definition
+				{ $$ = list_make1($1); }
+			| json_table_column_definition_list ',' json_table_column_definition
+				{ $$ = lappend($1, $3); }
+		;
+
+json_table_column_definition:
+			ColId FOR ORDINALITY
+				{
+					JsonTableColumn *n = makeNode(JsonTableColumn);
+
+					n->coltype = JTC_FOR_ORDINALITY;
+					n->name = $1;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| ColId Typename
+				json_table_column_path_clause_opt
+				json_wrapper_behavior
+				json_quotes_clause_opt
+				json_behavior_clause_opt
+				{
+					JsonTableColumn *n = makeNode(JsonTableColumn);
+
+					n->coltype = JTC_REGULAR;
+					n->name = $1;
+					n->typeName = $2;
+					n->format = makeJsonFormat(JS_FORMAT_DEFAULT, JS_ENC_DEFAULT, -1);
+					n->pathspec = (JsonTablePathSpec *) $3;
+					n->wrapper = $4;
+					n->quotes = $5;
+					n->on_empty = (JsonBehavior *) linitial($6);
+					n->on_error = (JsonBehavior *) lsecond($6);
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| ColId Typename json_format_clause
+				json_table_column_path_clause_opt
+				json_wrapper_behavior
+				json_quotes_clause_opt
+				json_behavior_clause_opt
+				{
+					JsonTableColumn *n = makeNode(JsonTableColumn);
+
+					n->coltype = JTC_FORMATTED;
+					n->name = $1;
+					n->typeName = $2;
+					n->format = (JsonFormat *) $3;
+					n->pathspec = (JsonTablePathSpec *) $4;
+					n->wrapper = $5;
+					n->quotes = $6;
+					n->on_empty = (JsonBehavior *) linitial($7);
+					n->on_error = (JsonBehavior *) lsecond($7);
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| ColId Typename
+				EXISTS json_table_column_path_clause_opt
+				json_behavior_clause_opt
+				{
+					JsonTableColumn *n = makeNode(JsonTableColumn);
+
+					n->coltype = JTC_EXISTS;
+					n->name = $1;
+					n->typeName = $2;
+					n->format = makeJsonFormat(JS_FORMAT_DEFAULT, JS_ENC_DEFAULT, -1);
+					n->wrapper = JSW_NONE;
+					n->quotes = JS_QUOTES_UNSPEC;
+					n->pathspec = (JsonTablePathSpec *) $4;
+					n->on_empty = (JsonBehavior *) linitial($5);
+					n->on_error = (JsonBehavior *) lsecond($5);
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+		;
+
+json_table_column_path_clause_opt:
+			PATH Sconst
+				{ $$ = (Node *) makeJsonTablePathSpec($2, NULL, @2, -1); }
+			| /* EMPTY */
+				{ $$ = NULL; }
 		;
 
 /*****************************************************************************
@@ -17531,7 +17670,9 @@ unreserved_keyword:
 			| PARTITION
 			| PASSING
 			| PASSWORD
+			| PATH
 			| PERIOD
+			| PLAN
 			| PLANS
 			| POLICY
 			| PRECEDING
@@ -17698,6 +17839,7 @@ col_name_keyword:
 			| JSON_QUERY
 			| JSON_SCALAR
 			| JSON_SERIALIZE
+			| JSON_TABLE
 			| JSON_VALUE
 			| LEAST
 			| MERGE_ACTION
@@ -18067,6 +18209,7 @@ bare_label_keyword:
 			| JSON_QUERY
 			| JSON_SCALAR
 			| JSON_SERIALIZE
+			| JSON_TABLE
 			| JSON_VALUE
 			| KEEP
 			| KEY
@@ -18151,8 +18294,10 @@ bare_label_keyword:
 			| PARTITION
 			| PASSING
 			| PASSWORD
+			| PATH
 			| PERIOD
 			| PLACING
+			| PLAN
 			| PLANS
 			| POLICY
 			| POSITION
@@ -18420,18 +18565,6 @@ makeTypeCast(Node *arg, TypeName *typename, int location)
 	n->typeName = typename;
 	n->location = location;
 	return (Node *) n;
-}
-
-static Node *
-makeStringConst(char *str, int location)
-{
-	A_Const	   *n = makeNode(A_Const);
-
-	n->val.sval.type = T_String;
-	n->val.sval.sval = str;
-	n->location = location;
-
-   return (Node *) n;
 }
 
 static Node *

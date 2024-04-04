@@ -14,6 +14,7 @@
 #ifndef JSONPATH_H
 #define JSONPATH_H
 
+#include "executor/tablefunc.h"
 #include "fmgr.h"
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
@@ -302,5 +303,7 @@ extern Datum JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper,
 						   bool *empty, bool *error, List *vars);
 extern JsonbValue *JsonPathValue(Datum jb, JsonPath *jp, bool *empty,
 								 bool *error, List *vars);
+
+extern PGDLLIMPORT const TableFuncRoutine JsonbTableRoutine;
 
 #endif

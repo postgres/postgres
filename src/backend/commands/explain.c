@@ -4087,9 +4087,24 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			}
 			break;
 		case T_TableFuncScan:
-			Assert(rte->rtekind == RTE_TABLEFUNC);
-			objectname = "xmltable";
-			objecttag = "Table Function Name";
+			{
+				TableFunc  *tablefunc = ((TableFuncScan *) plan)->tablefunc;
+
+				Assert(rte->rtekind == RTE_TABLEFUNC);
+				switch (tablefunc->functype)
+				{
+					case TFT_XMLTABLE:
+						objectname = "xmltable";
+						break;
+					case TFT_JSON_TABLE:
+						objectname = "json_table";
+						break;
+					default:
+						elog(ERROR, "invalid TableFunc type %d",
+							 (int) tablefunc->functype);
+				}
+				objecttag = "Table Function Name";
+			}
 			break;
 		case T_ValuesScan:
 			Assert(rte->rtekind == RTE_VALUES);

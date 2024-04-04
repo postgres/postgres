@@ -524,6 +524,8 @@ static char *flatten_reloptions(Oid relid);
 static void get_reloptions(StringInfo buf, Datum reloptions);
 static void get_json_path_spec(Node *path_spec, deparse_context *context,
 							   bool showimplicit);
+static void get_json_table_columns(TableFunc *tf, deparse_context *context,
+								   bool showimplicit);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -8833,7 +8835,8 @@ get_json_behavior(JsonBehavior *behavior, deparse_context *context,
 /*
  * get_json_expr_options
  *
- * Parse back common options for JSON_QUERY, JSON_VALUE, JSON_EXISTS.
+ * Parse back common options for JSON_QUERY, JSON_VALUE, JSON_EXISTS and
+ * JSON_TABLE columns.
  */
 static void
 get_json_expr_options(JsonExpr *jsexpr, deparse_context *context,
@@ -11519,15 +11522,13 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 
 
 /* ----------
- * get_tablefunc			- Parse back a table function
+ * get_xmltable			- Parse back a XMLTABLE function
  * ----------
  */
 static void
-get_tablefunc(TableFunc *tf, deparse_context *context, bool showimplicit)
+get_xmltable(TableFunc *tf, deparse_context *context, bool showimplicit)
 {
 	StringInfo	buf = context->buf;
-
-	/* XMLTABLE is the only existing implementation.  */
 
 	appendStringInfoString(buf, "XMLTABLE(");
 
@@ -11617,6 +11618,180 @@ get_tablefunc(TableFunc *tf, deparse_context *context, bool showimplicit)
 	}
 
 	appendStringInfoChar(buf, ')');
+}
+
+/*
+ * get_json_table_columns - Parse back JSON_TABLE columns
+ */
+static void
+get_json_table_columns(TableFunc *tf, deparse_context *context,
+					   bool showimplicit)
+{
+	StringInfo	buf = context->buf;
+	JsonExpr   *jexpr = castNode(JsonExpr, tf->docexpr);
+	ListCell   *lc_colname;
+	ListCell   *lc_coltype;
+	ListCell   *lc_coltypmod;
+	ListCell   *lc_colvalexpr;
+	int			colnum = 0;
+
+	appendStringInfoChar(buf, ' ');
+	appendContextKeyword(context, "COLUMNS (", 0, 0, 0);
+
+	if (PRETTY_INDENT(context))
+		context->indentLevel += PRETTYINDENT_VAR;
+
+	forfour(lc_colname, tf->colnames,
+			lc_coltype, tf->coltypes,
+			lc_coltypmod, tf->coltypmods,
+			lc_colvalexpr, tf->colvalexprs)
+	{
+		char	   *colname = strVal(lfirst(lc_colname));
+		JsonExpr   *colexpr;
+		Oid			typid;
+		int32		typmod;
+		bool		ordinality;
+		JsonBehaviorType default_behavior;
+
+		typid = lfirst_oid(lc_coltype);
+		typmod = lfirst_int(lc_coltypmod);
+		colexpr = castNode(JsonExpr, lfirst(lc_colvalexpr));
+
+		if (colnum > 0)
+			appendStringInfoString(buf, ", ");
+
+		colnum++;
+
+		ordinality = !colexpr;
+
+		appendContextKeyword(context, "", 0, 0, 0);
+
+		appendStringInfo(buf, "%s %s", quote_identifier(colname),
+						 ordinality ? "FOR ORDINALITY" :
+						 format_type_with_typemod(typid, typmod));
+		if (ordinality)
+			continue;
+
+		if (colexpr->op == JSON_EXISTS_OP)
+		{
+			appendStringInfoString(buf, " EXISTS");
+			default_behavior = JSON_BEHAVIOR_FALSE;
+		}
+		else
+		{
+			if (colexpr->op == JSON_QUERY_OP)
+			{
+				char		typcategory;
+				bool		typispreferred;
+
+				get_type_category_preferred(typid, &typcategory, &typispreferred);
+
+				if (typcategory == TYPCATEGORY_STRING)
+					appendStringInfoString(buf,
+										   colexpr->format->format_type == JS_FORMAT_JSONB ?
+										   " FORMAT JSONB" : " FORMAT JSON");
+			}
+
+			default_behavior = JSON_BEHAVIOR_NULL;
+		}
+
+		if (jexpr->on_error->btype == JSON_BEHAVIOR_ERROR)
+			default_behavior = JSON_BEHAVIOR_ERROR;
+
+		appendStringInfoString(buf, " PATH ");
+
+		get_json_path_spec(colexpr->path_spec, context, showimplicit);
+
+		get_json_expr_options(colexpr, context, default_behavior);
+	}
+
+	if (PRETTY_INDENT(context))
+		context->indentLevel -= PRETTYINDENT_VAR;
+
+	appendContextKeyword(context, ")", 0, 0, 0);
+}
+
+/* ----------
+ * get_json_table			- Parse back a JSON_TABLE function
+ * ----------
+ */
+static void
+get_json_table(TableFunc *tf, deparse_context *context, bool showimplicit)
+{
+	StringInfo	buf = context->buf;
+	JsonExpr   *jexpr = castNode(JsonExpr, tf->docexpr);
+	JsonTablePathScan *root = castNode(JsonTablePathScan, tf->plan);
+
+	appendStringInfoString(buf, "JSON_TABLE(");
+
+	if (PRETTY_INDENT(context))
+		context->indentLevel += PRETTYINDENT_VAR;
+
+	appendContextKeyword(context, "", 0, 0, 0);
+
+	get_rule_expr(jexpr->formatted_expr, context, showimplicit);
+
+	appendStringInfoString(buf, ", ");
+
+	get_const_expr(root->path->value, context, -1);
+
+	appendStringInfo(buf, " AS %s", quote_identifier(root->path->name));
+
+	if (jexpr->passing_values)
+	{
+		ListCell   *lc1,
+				   *lc2;
+		bool		needcomma = false;
+
+		appendStringInfoChar(buf, ' ');
+		appendContextKeyword(context, "PASSING ", 0, 0, 0);
+
+		if (PRETTY_INDENT(context))
+			context->indentLevel += PRETTYINDENT_VAR;
+
+		forboth(lc1, jexpr->passing_names,
+				lc2, jexpr->passing_values)
+		{
+			if (needcomma)
+				appendStringInfoString(buf, ", ");
+			needcomma = true;
+
+			appendContextKeyword(context, "", 0, 0, 0);
+
+			get_rule_expr((Node *) lfirst(lc2), context, false);
+			appendStringInfo(buf, " AS %s",
+							 quote_identifier((lfirst_node(String, lc1))->sval)
+				);
+		}
+
+		if (PRETTY_INDENT(context))
+			context->indentLevel -= PRETTYINDENT_VAR;
+	}
+
+	get_json_table_columns(tf, context, showimplicit);
+
+	if (jexpr->on_error->btype != JSON_BEHAVIOR_EMPTY)
+		get_json_behavior(jexpr->on_error, context, "ERROR");
+
+	if (PRETTY_INDENT(context))
+		context->indentLevel -= PRETTYINDENT_VAR;
+
+	appendContextKeyword(context, ")", 0, 0, 0);
+}
+
+/* ----------
+ * get_tablefunc			- Parse back a table function
+ * ----------
+ */
+static void
+get_tablefunc(TableFunc *tf, deparse_context *context, bool showimplicit)
+{
+	/* XMLTABLE and JSON_TABLE are the only existing implementations.  */
+
+	if (tf->functype == TFT_XMLTABLE)
+		get_xmltable(tf, context, showimplicit);
+	else if (tf->functype == TFT_JSON_TABLE)
+		get_json_table(tf, context, showimplicit);
 }
 
 /* ----------
