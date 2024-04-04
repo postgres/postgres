@@ -3815,8 +3815,6 @@ wait_until_connected(PGconn *conn)
 				pg_unreachable();
 		}
 	}
-
-	pg_unreachable();
 }
 
 void
