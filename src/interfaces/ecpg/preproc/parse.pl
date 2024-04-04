@@ -24,7 +24,8 @@ my $brace_indent          = 0;
 my $yaccmode              = 0;
 my $in_rule               = 0;
 my $header_included       = 0;
-my $feature_not_supported = 0;
+my $has_feature_not_supported = 0;
+my $has_if_command        = 0;
 my $tokenmode             = 0;
 
 my (%buff, $infield, $comment, %tokens, %addons);
@@ -130,12 +131,6 @@ sub main
 {
   line: while (<>)
 	{
-		if (/ERRCODE_FEATURE_NOT_SUPPORTED/)
-		{
-			$feature_not_supported = 1;
-			next line;
-		}
-
 		chomp;
 
 		# comment out the line below to make the result file match (blank line wise)
@@ -159,6 +154,13 @@ sub main
 			$copymode  = 1;
 			$yaccmode++;
 			$infield = 0;
+		}
+
+		if ($yaccmode == 1)
+		{
+			# Check for rules that throw FEATURE_NOT_SUPPORTED
+			$has_feature_not_supported = 1 if /ERRCODE_FEATURE_NOT_SUPPORTED/;
+			$has_if_command = 1 if /^\s*if/;
 		}
 
 		my $prec = 0;
@@ -506,20 +508,17 @@ sub dump_fields
 
 		#Normal
 		add_to_buffer('rules', $ln);
-		if ($feature_not_supported == 1)
+		if ($has_feature_not_supported and not $has_if_command)
 		{
-
-			# we found an unsupported feature, but we have to
-			# filter out ExecuteStmt: CREATE OptTemp TABLE ...
-			# because the warning there is only valid in some situations
-			if ($flds->[0] ne 'create' || $flds->[2] ne 'table')
-			{
-				add_to_buffer('rules',
-					'mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to server");'
-				);
-			}
-			$feature_not_supported = 0;
+			# The backend unconditionally reports
+			# FEATURE_NOT_SUPPORTED in this rule, so let's emit
+			# a warning on the ecpg side.
+			add_to_buffer('rules',
+				'mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to server");'
+			);
 		}
+		$has_feature_not_supported = 0;
+		$has_if_command = 0;
 
 		if ($len == 0)
 		{
