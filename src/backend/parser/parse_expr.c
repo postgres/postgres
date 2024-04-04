@@ -4272,6 +4272,7 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			break;
 		case JSON_TABLE_OP:
 			func_name = "JSON_TABLE";
+			default_format = JS_FORMAT_JSONB;
 			break;
 		default:
 			elog(ERROR, "invalid JsonFuncExpr op %d", (int) func->op);
