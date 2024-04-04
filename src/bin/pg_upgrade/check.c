@@ -135,7 +135,7 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 			"SELECT 'pg_catalog.line'::pg_catalog.regtype AS oid",
 			.report_text =
 			gettext_noop("Your installation contains the \"line\" data type in user tables.\n"
-						 "this data type changed its internal and input/output format\n"
+						 "This data type changed its internal and input/output format\n"
 						 "between your old and new versions so this\n"
 						 "cluster cannot currently be upgraded.  You can\n"
 						 "drop the problem columns and restart the upgrade.\n"),
