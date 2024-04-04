@@ -26,6 +26,13 @@
 # When adding a new wait event, make sure it is placed in the appropriate
 # ClassName section.
 #
+# Wait events added in stable branches should be appended to the lists in
+# the "ABI_compatibility:" region of their related ClassName section to
+# preserve ABI compatibility of the C code generated from this file's data,
+# respecting the order of any wait event already listed there.  The
+# "ABI_compatibility:" regions should remain empty on the master branch and
+# on unreleased branches.
+#
 # WaitEventLWLock and WaitEventLock have their own C code for their wait event
 # enums and function names.  Hence, for these, only the SGML documentation is
 # generated.
@@ -61,6 +68,7 @@ WAL_SENDER_MAIN	"Waiting in main loop of WAL sender process."
 WAL_SUMMARIZER_WAL	"Waiting in WAL summarizer for more WAL to be generated."
 WAL_WRITER_MAIN	"Waiting in main loop of WAL writer process."
 
+ABI_compatibility:
 
 #
 # Wait Events - Client
@@ -83,6 +91,7 @@ WAIT_FOR_WAL_REPLAY	"Waiting for a replay of the particular WAL position on the 
 WAL_SENDER_WAIT_FOR_WAL	"Waiting for WAL to be flushed in WAL sender process."
 WAL_SENDER_WRITE_DATA	"Waiting for any activity when processing replies from WAL receiver in WAL sender process."
 
+ABI_compatibility:
 
 #
 # Wait Events - IPC
@@ -150,6 +159,7 @@ WAL_RECEIVER_WAIT_START	"Waiting for startup process to send initial data for st
 WAL_SUMMARY_READY	"Waiting for a new WAL summary to be generated."
 XACT_GROUP_UPDATE	"Waiting for the group leader to update transaction status at end of a parallel operation."
 
+ABI_compatibility:
 
 #
 # Wait Events - Timeout
@@ -170,6 +180,7 @@ VACUUM_DELAY	"Waiting in a cost-based vacuum delay point."
 VACUUM_TRUNCATE	"Waiting to acquire an exclusive lock to truncate off any empty pages at the end of a table vacuumed."
 WAL_SUMMARIZER_ERROR	"Waiting after a WAL summarizer error."
 
+ABI_compatibility:
 
 #
 # Wait Events - IO
@@ -257,6 +268,7 @@ WAL_SYNC	"Waiting for a WAL file to reach durable storage."
 WAL_SYNC_METHOD_ASSIGN	"Waiting for data to reach durable storage while assigning a new WAL sync method."
 WAL_WRITE	"Waiting for a write to a WAL file."
 
+ABI_compatibility:
 
 #
 # Wait Events - Buffer Pin
@@ -266,6 +278,7 @@ Section: ClassName - WaitEventBufferPin
 
 BUFFER_PIN	"Waiting to acquire an exclusive pin on a buffer."
 
+ABI_compatibility:
 
 #
 # Wait Events - Extension
@@ -274,6 +287,8 @@ BUFFER_PIN	"Waiting to acquire an exclusive pin on a buffer."
 Section: ClassName - WaitEventExtension
 
 Extension	"Waiting in an extension."
+
+ABI_compatibility:
 
 #
 # Wait Events - LWLock
@@ -379,6 +394,7 @@ SubtransSLRU	"Waiting to access the sub-transaction SLRU cache."
 XactSLRU	"Waiting to access the transaction status SLRU cache."
 ParallelVacuumDSA	"Waiting for parallel vacuum dynamic shared memory allocation."
 
+# No "ABI_compatibility" region here as WaitEventLWLock has its own C code.
 
 #
 # Wait Events - Lock
@@ -401,3 +417,5 @@ object	"Waiting to acquire a lock on a non-relation database object."
 userlock	"Waiting to acquire a user lock."
 advisory	"Waiting to acquire an advisory user lock."
 applytransaction	"Waiting to acquire a lock on a remote transaction being applied by a logical replication subscriber."
+
+# No "ABI_compatibility" region here as WaitEventLock has its own C code.

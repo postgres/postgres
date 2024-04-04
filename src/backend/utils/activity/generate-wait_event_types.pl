@@ -38,7 +38,9 @@ die "Not possible to specify --docs and --code simultaneously"
 
 open my $wait_event_names, '<', $ARGV[0] or die;
 
+my @abi_compatibility_lines;
 my @lines;
+my $abi_compatibility = 0;
 my $section_name;
 my $note;
 my $note_name;
@@ -59,16 +61,40 @@ while (<$wait_event_names>)
 	{
 		$section_name = $_;
 		$section_name =~ s/^.*- //;
+		$abi_compatibility = 0;
 		next;
 	}
 
-	push(@lines, $section_name . "\t" . $_);
+	# ABI_compatibility region, preserving ABI compatibility of the code
+	# generated.  Any wait events listed in this part of the file will
+	# not be sorted during the code generation.
+	if (/^ABI_compatibility:$/)
+	{
+		$abi_compatibility = 1;
+		next;
+	}
+
+	if ($gen_code && $abi_compatibility)
+	{
+		push(@abi_compatibility_lines, $section_name . "\t" . $_);
+	}
+	else
+	{
+		push(@lines, $section_name . "\t" . $_);
+	}
 }
 
 # Sort the lines based on the second column.
 # uc() is being used to force the comparison to be case-insensitive.
 my @lines_sorted =
   sort { uc((split(/\t/, $a))[1]) cmp uc((split(/\t/, $b))[1]) } @lines;
+
+# If we are generating code, concat @lines_sorted and then
+# @abi_compatibility_lines.
+if ($gen_code)
+{
+	push(@lines_sorted, @abi_compatibility_lines);
+}
 
 # Read the sorted lines and populate the hash table
 foreach my $line (@lines_sorted)
