@@ -154,7 +154,7 @@ static int	recursion_depth = 0;	/* to detect actual recursion */
 
 /*
  * Saved timeval and buffers for formatted timestamps that might be used by
- * both log_line_prefix and csv logs.
+ * log_line_prefix, csv logs and JSON logs.
  */
 static struct timeval saved_timeval;
 static bool saved_timeval_set = false;
@@ -1679,6 +1679,14 @@ EmitErrorReport(void)
 	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	/*
+	 * Reset the formatted timestamp fields before emitting any logs.  This
+	 * includes all the log destinations and emit_log_hook, as the latter
+	 * could use log_line_prefix or the formatted timestamps.
+	 */
+	saved_timeval_set = false;
+	formatted_log_time[0] = '\0';
+
+	/*
 	 * Call hook before sending message to log.  The hook function is allowed
 	 * to turn off edata->output_to_server, so we must recheck that afterward.
 	 * Making any other change in the content of edata is not considered
@@ -2632,7 +2640,7 @@ get_formatted_log_time(void)
 	/*
 	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
 	 * least with a minimal GMT value) before Log_line_prefix can become
-	 * nonempty or CSV mode can be selected.
+	 * nonempty or CSV/JSON mode can be selected.
 	 */
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
 	/* leave room for milliseconds... */
@@ -2673,7 +2681,7 @@ get_formatted_start_time(void)
 	/*
 	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
 	 * least with a minimal GMT value) before Log_line_prefix can become
-	 * nonempty or CSV mode can be selected.
+	 * nonempty or CSV/JSON mode can be selected.
 	 */
 	pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
 				"%Y-%m-%d %H:%M:%S %Z",
@@ -3150,9 +3158,6 @@ send_message_to_server_log(ErrorData *edata)
 	bool		fallback_to_stderr = false;
 
 	initStringInfo(&buf);
-
-	saved_timeval_set = false;
-	formatted_log_time[0] = '\0';
 
 	log_line_prefix(&buf, edata);
 	appendStringInfo(&buf, "%s:  ", _(error_severity(edata->elevel)));
