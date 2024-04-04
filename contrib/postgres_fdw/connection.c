@@ -1417,6 +1417,8 @@ pgfdw_exec_cleanup_query(PGconn *conn, const char *query, bool ignore_errors)
 static bool
 pgfdw_exec_cleanup_query_begin(PGconn *conn, const char *query)
 {
+	Assert(query != NULL);
+
 	/*
 	 * Submit a query.  Since we don't use non-blocking mode, this also can
 	 * block.  But its risk is relatively small, so we ignore that for now.
@@ -1438,6 +1440,8 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 	PGresult   *result = NULL;
 	bool		timed_out;
 
+	Assert(query != NULL);
+
 	/*
 	 * If requested, consume whatever data is available from the socket. (Note
 	 * that if all data is available, this allows pgfdw_get_cleanup_result to
@@ -1456,7 +1460,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 		if (timed_out)
 			ereport(WARNING,
 					(errmsg("could not get query result due to timeout"),
-					 query ? errcontext("remote SQL command: %s", query) : 0));
+					 errcontext("remote SQL command: %s", query)));
 		else
 			pgfdw_report_error(WARNING, NULL, conn, false, query);
 
