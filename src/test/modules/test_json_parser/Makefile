@@ -23,13 +23,11 @@ all: test_json_parser_incremental$(X) test_json_parser_perf$(X)
 
 %.o: $(top_srcdir)/$(subdir)/%.c
 
-PARSER_LIBS = $(top_builddir)/src/common/libpgcommon.a $(top_builddir)/src/port/libpgport.a
+test_json_parser_incremental$(X): test_json_parser_incremental.o
+	$(CC) $(CFLAGS) $^ $(PG_LIBS_INTERNAL) $(LDFLAGS) $(LDFLAGS_EX) $(PG_LIBS) $(LIBS) -o $@
 
-test_json_parser_incremental$(X): test_json_parser_incremental.o $(PARSER_LIBS)
-	$(CC) $(CFLAGS) $^ -o $@
-
-test_json_parser_perf$(X): test_json_parser_perf.o $(PARSER_LIBS)
-	$(CC) $(CFLAGS) $^ -o $@
+test_json_parser_perf$(X): test_json_parser_perf.o
+	$(CC) $(CFLAGS) $^ $(PG_LIBS_INTERNAL) $(LDFLAGS) $(LDFLAGS_EX) $(PG_LIBS) $(LIBS) -o $@
 
 speed-check: test_json_parser_perf$(X)
 	@echo Standard parser:
