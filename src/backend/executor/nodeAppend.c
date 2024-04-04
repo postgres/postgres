@@ -1043,26 +1043,25 @@ ExecAppendAsyncEventWait(AppendState *node)
 		}
 
 		/*
-		 * No need for further processing if there are no configured events
-		 * other than the postmaster death event.
+		 * If there are no configured events other than the postmaster death
+		 * event, we don't need to wait or poll.
 		 */
 		if (GetNumRegisteredWaitEvents(node->as_eventset) == 1)
+			noccurred = 0;
+		else
 		{
-			FreeWaitEventSet(node->as_eventset);
-			node->as_eventset = NULL;
-			return;
+			/* Return at most EVENT_BUFFER_SIZE events in one call. */
+			if (nevents > EVENT_BUFFER_SIZE)
+				nevents = EVENT_BUFFER_SIZE;
+
+			/*
+			 * If the timeout is -1, wait until at least one event occurs.  If
+			 * the timeout is 0, poll for events, but do not wait at all.
+			 */
+			noccurred = WaitEventSetWait(node->as_eventset, timeout,
+										 occurred_event, nevents,
+										 WAIT_EVENT_APPEND_READY);
 		}
-
-		/* Return at most EVENT_BUFFER_SIZE events in one call. */
-		if (nevents > EVENT_BUFFER_SIZE)
-			nevents = EVENT_BUFFER_SIZE;
-
-		/*
-		 * If the timeout is -1, wait until at least one event occurs.  If the
-		 * timeout is 0, poll for events, but do not wait at all.
-		 */
-		noccurred = WaitEventSetWait(node->as_eventset, timeout, occurred_event,
-									 nevents, WAIT_EVENT_APPEND_READY);
 	}
 	PG_FINALLY();
 	{
