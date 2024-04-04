@@ -360,17 +360,17 @@ heap_setscanlimits(TableScanDesc sscan, BlockNumber startBlk, BlockNumber numBlk
 }
 
 /*
- * heapgetpage - subroutine for heapgettup()
+ * heap_prepare_pagescan - Prepare current scan page to be scanned in pagemode
  *
- * This routine reads and pins the specified page of the relation.
- * In page-at-a-time mode it performs additional work, namely determining
- * which tuples on the page are visible.
+ * Preparation currently consists of 1. prune the scan's rs_cbuf page, and 2.
+ * fill the rs_vistuples[] array with the OffsetNumbers of visible tuples.
  */
 void
-heapgetpage(TableScanDesc sscan, BlockNumber block)
+heap_prepare_pagescan(TableScanDesc sscan)
 {
 	HeapScanDesc scan = (HeapScanDesc) sscan;
-	Buffer		buffer;
+	Buffer		buffer = scan->rs_cbuf;
+	BlockNumber block = scan->rs_cblock;
 	Snapshot	snapshot;
 	Page		page;
 	int			lines;
@@ -378,31 +378,10 @@ heapgetpage(TableScanDesc sscan, BlockNumber block)
 	OffsetNumber lineoff;
 	bool		all_visible;
 
-	Assert(block < scan->rs_nblocks);
+	Assert(BufferGetBlockNumber(buffer) == block);
 
-	/* release previous scan buffer, if any */
-	if (BufferIsValid(scan->rs_cbuf))
-	{
-		ReleaseBuffer(scan->rs_cbuf);
-		scan->rs_cbuf = InvalidBuffer;
-	}
-
-	/*
-	 * Be sure to check for interrupts at least once per page.  Checks at
-	 * higher code levels won't be able to stop a seqscan that encounters many
-	 * pages' worth of consecutive dead tuples.
-	 */
-	CHECK_FOR_INTERRUPTS();
-
-	/* read page using selected strategy */
-	scan->rs_cbuf = ReadBufferExtended(scan->rs_base.rs_rd, MAIN_FORKNUM, block,
-									   RBM_NORMAL, scan->rs_strategy);
-	scan->rs_cblock = block;
-
-	if (!(scan->rs_base.rs_flags & SO_ALLOW_PAGEMODE))
-		return;
-
-	buffer = scan->rs_cbuf;
+	/* ensure we're not accidentally being used when not in pagemode */
+	Assert(scan->rs_base.rs_flags & SO_ALLOW_PAGEMODE);
 	snapshot = scan->rs_base.rs_snapshot;
 
 	/*
@@ -473,6 +452,37 @@ heapgetpage(TableScanDesc sscan, BlockNumber block)
 
 	Assert(ntup <= MaxHeapTuplesPerPage);
 	scan->rs_ntuples = ntup;
+}
+
+/*
+ * heapfetchbuf - read and pin the given MAIN_FORKNUM block number.
+ *
+ * Read the specified block of the scan relation into a buffer and pin that
+ * buffer before saving it in the scan descriptor.
+ */
+static inline void
+heapfetchbuf(HeapScanDesc scan, BlockNumber block)
+{
+	Assert(block < scan->rs_nblocks);
+
+	/* release previous scan buffer, if any */
+	if (BufferIsValid(scan->rs_cbuf))
+	{
+		ReleaseBuffer(scan->rs_cbuf);
+		scan->rs_cbuf = InvalidBuffer;
+	}
+
+	/*
+	 * Be sure to check for interrupts at least once per page.  Checks at
+	 * higher code levels won't be able to stop a seqscan that encounters many
+	 * pages' worth of consecutive dead tuples.
+	 */
+	CHECK_FOR_INTERRUPTS();
+
+	/* read page using selected strategy */
+	scan->rs_cbuf = ReadBufferExtended(scan->rs_base.rs_rd, MAIN_FORKNUM, block,
+									   RBM_NORMAL, scan->rs_strategy);
+	scan->rs_cblock = block;
 }
 
 /*
@@ -748,7 +758,7 @@ heapgettup(HeapScanDesc scan,
 	 */
 	while (block != InvalidBlockNumber)
 	{
-		heapgetpage((TableScanDesc) scan, block);
+		heapfetchbuf(scan, block);
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 		page = heapgettup_start_page(scan, dir, &linesleft, &lineoff);
 continue_page:
@@ -869,7 +879,11 @@ heapgettup_pagemode(HeapScanDesc scan,
 	 */
 	while (block != InvalidBlockNumber)
 	{
-		heapgetpage((TableScanDesc) scan, block);
+		/* read the page */
+		heapfetchbuf(scan, block);
+
+		/* prune the page and determine visible tuple offsets */
+		heap_prepare_pagescan((TableScanDesc) scan);
 		page = BufferGetPage(scan->rs_cbuf);
 		linesleft = scan->rs_ntuples;
 		lineindex = ScanDirectionIsForward(dir) ? 0 : linesleft - 1;
