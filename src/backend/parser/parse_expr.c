@@ -4334,7 +4334,7 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 				 parser_errposition(pstate, exprLocation(path_spec))));
 	jsexpr->path_spec = path_spec;
 
-	/* Transform and coerce the PASSING arguments to to jsonb. */
+	/* Transform and coerce the PASSING arguments to jsonb. */
 	transformJsonPassingArgs(pstate, func_name,
 							 JS_FORMAT_JSONB,
 							 func->passing,
