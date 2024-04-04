@@ -3419,7 +3419,10 @@ alias_target('pgdist', [tar_gz, tar_bz2])
 # But not if we are in a subproject, in case the parent project wants to
 # create a dist using the standard Meson command.
 if not meson.is_subproject()
-  meson.add_dist_script(perl, '-e', 'exit 1')
+  # We can only pass the identifier perl here when we depend on >= 0.55
+  if meson.version().version_compare('>=0.55')
+    meson.add_dist_script(perl, '-e', 'exit 1')
+  endif
 endif
 
 
