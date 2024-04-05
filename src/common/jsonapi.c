@@ -279,6 +279,8 @@ IsValidJsonNumber(const char *str, int len)
 		return false;
 
 	dummy_lex.incremental = false;
+	dummy_lex.inc_state = NULL;
+	dummy_lex.pstack = NULL;
 
 	/*
 	 * json_lex_number expects a leading  '-' to have been eaten already.
@@ -296,6 +298,8 @@ IsValidJsonNumber(const char *str, int len)
 		dummy_lex.input = unconstify(char *, str);
 		dummy_lex.input_length = len;
 	}
+
+	dummy_lex.token_start = dummy_lex.input;
 
 	json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error, &total_len);
 
@@ -2018,6 +2022,9 @@ json_lex_number(JsonLexContext *lex, char *s,
 	{
 		appendBinaryStringInfo(&lex->inc_state->partial_token,
 							   lex->token_start, s - lex->token_start);
+		if (num_err != NULL)
+			*num_err = error;
+
 		return JSON_INCOMPLETE;
 	}
 	else if (num_err != NULL)
