@@ -472,6 +472,14 @@ make_incremental_rfile(char *filename)
 		sizeof(rf->truncation_block_length) +
 		sizeof(BlockNumber) * rf->num_blocks;
 
+	/*
+	 * Round header length to a multiple of BLCKSZ, so that blocks contents
+	 * are properly aligned. Only do this when the file actually has data for
+	 * some blocks.
+	 */
+	if ((rf->num_blocks > 0) && ((rf->header_length % BLCKSZ) != 0))
+		rf->header_length += (BLCKSZ - (rf->header_length % BLCKSZ));
+
 	return rf;
 }
 

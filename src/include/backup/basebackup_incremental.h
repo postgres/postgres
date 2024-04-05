@@ -51,5 +51,6 @@ extern FileBackupMethod GetFileBackupMethod(IncrementalBackupInfo *ib,
 											BlockNumber *relative_block_numbers,
 											unsigned *truncation_block_length);
 extern size_t GetIncrementalFileSize(unsigned num_blocks_required);
+extern size_t GetIncrementalHeaderSize(unsigned num_blocks_required);
 
 #endif
