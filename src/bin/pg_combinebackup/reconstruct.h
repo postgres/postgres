@@ -14,6 +14,7 @@
 #define RECONSTRUCT_H
 
 #include "common/checksum_helper.h"
+#include "copy_file.h"
 #include "load_manifest.h"
 
 extern void reconstruct_from_incremental_file(char *input_filename,
