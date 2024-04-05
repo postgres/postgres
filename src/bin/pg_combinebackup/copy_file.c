@@ -126,7 +126,6 @@ checksum_file(const char *src, pg_checksum_context *checksum_ctx)
 	uint8	   *buffer;
 	const int	buffer_size = 50 * BLCKSZ;
 	ssize_t		rb;
-	unsigned	offset = 0;
 
 	/* bail out if no checksum needed */
 	if (checksum_ctx->type == CHECKSUM_TYPE_NONE)
@@ -141,8 +140,6 @@ checksum_file(const char *src, pg_checksum_context *checksum_ctx)
 	{
 		if (pg_checksum_update(checksum_ctx, buffer, rb) < 0)
 			pg_fatal("could not update checksum of file \"%s\"", src);
-
-		offset += rb;
 	}
 
 	if (rb < 0)
