@@ -4,7 +4,7 @@ on:
     branches: 
       - main
     paths:
-      - documentation
+      - 'documentation/**'
      
 jobs:
   build:
@@ -45,27 +45,10 @@ jobs:
 
      
      
-     # Deploy docs
+      # Deploy docs
       - name: Deploy docs
         run: |
           cd documentation
           mike deploy main -p
           mike set-default main -p
           mike retitle main "Alpha1" -p
-          
-
-# - name: Install Node.js 14.x
-#        uses: percona-platform/setup-node@v2
-#        with:
-#          node-version: "14"
-#
-#      - name: Spelling
-#        run: |
-#          npx markdown-spellcheck --report --en-us --ignore-acronyms --ignore-numbers "docs/**/*.md" || true
-          # Ignore errors, just inspect results
-#      - name: Grammar
-#        run: |
-#          npx write-good --no-passive docs/**/*.md || true
-#          # Ignore errors, just inspect results
-
-          
