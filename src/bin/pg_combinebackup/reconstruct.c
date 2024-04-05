@@ -89,6 +89,7 @@ reconstruct_from_incremental_file(char *input_filename,
 								  pg_checksum_type checksum_type,
 								  int *checksum_length,
 								  uint8 **checksum_payload,
+								  CopyMethod copy_method,
 								  bool debug,
 								  bool dry_run)
 {
@@ -319,7 +320,7 @@ reconstruct_from_incremental_file(char *input_filename,
 	 */
 	if (copy_source != NULL)
 		copy_file(copy_source->filename, output_filename,
-				  &checksum_ctx, dry_run);
+				  &checksum_ctx, copy_method, dry_run);
 	else
 	{
 		write_reconstructed_file(input_filename, output_filename,

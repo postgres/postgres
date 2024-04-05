@@ -480,6 +480,7 @@ CopyFromState
 CopyFromStateData
 CopyHeaderChoice
 CopyInsertMethod
+CopyMethod
 CopyLogVerbosityChoice
 CopyMultiInsertBuffer
 CopyMultiInsertInfo

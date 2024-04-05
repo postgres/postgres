@@ -69,6 +69,7 @@ typedef struct cb_options
 	pg_checksum_type manifest_checksums;
 	bool		no_manifest;
 	DataDirSyncMethod sync_method;
+	CopyMethod	copy_method;
 } cb_options;
 
 /*
@@ -129,6 +130,8 @@ main(int argc, char *argv[])
 		{"manifest-checksums", required_argument, NULL, 1},
 		{"no-manifest", no_argument, NULL, 2},
 		{"sync-method", required_argument, NULL, 3},
+		{"clone", no_argument, NULL, 4},
+		{"copy-file-range", no_argument, NULL, 5},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -156,6 +159,7 @@ main(int argc, char *argv[])
 	memset(&opt, 0, sizeof(opt));
 	opt.manifest_checksums = CHECKSUM_TYPE_CRC32C;
 	opt.sync_method = DATA_DIR_SYNC_METHOD_FSYNC;
+	opt.copy_method = COPY_METHOD_COPY;
 
 	/* process command-line options */
 	while ((c = getopt_long(argc, argv, "dnNPo:T:",
@@ -192,6 +196,12 @@ main(int argc, char *argv[])
 				if (!parse_sync_method(optarg, &opt.sync_method))
 					exit(1);
 				break;
+			case 4:
+				opt.copy_method = COPY_METHOD_CLONE;
+				break;
+			case 5:
+				opt.copy_method = COPY_METHOD_COPY_FILE_RANGE;
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -212,6 +222,35 @@ main(int argc, char *argv[])
 	/* If no manifest is needed, no checksums are needed, either. */
 	if (opt.no_manifest)
 		opt.manifest_checksums = CHECKSUM_TYPE_NONE;
+
+	/* Check that the platform supports the requested copy method. */
+	if (opt.copy_method == COPY_METHOD_CLONE)
+	{
+#if (defined(HAVE_COPYFILE) && defined(COPYFILE_CLONE_FORCE)) || \
+	(defined(__linux__) && defined(FICLONE))
+
+		if (opt.dry_run)
+			pg_log_debug("would use cloning to copy files");
+		else
+			pg_log_debug("will use cloning to copy files");
+
+#else
+		pg_fatal("file cloning not supported on this platform");
+#endif
+	}
+	else if (opt.copy_method == COPY_METHOD_COPY_FILE_RANGE)
+	{
+#if defined(HAVE_COPY_FILE_RANGE)
+
+		if (opt.dry_run)
+			pg_log_debug("would use copy_file_range to copy blocks");
+		else
+			pg_log_debug("will use copy_file_range to copy blocks");
+
+#else
+		pg_fatal("copy_file_range not supported on this platform");
+#endif
+	}
 
 	/* Read the server version from the final backup. */
 	version = read_pg_version_file(argv[argc - 1]);
@@ -696,6 +735,8 @@ help(const char *progname)
 			 "                            use algorithm for manifest checksums\n"));
 	printf(_("      --no-manifest         suppress generation of backup manifest\n"));
 	printf(_("      --sync-method=METHOD  set method for syncing files to disk\n"));
+	printf(_("      --clone               clone (reflink) instead of copying files\n"));
+	printf(_("      --copy-file-range     copy using copy_file_range() syscall\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
@@ -936,6 +977,7 @@ process_directory_recursively(Oid tsoid,
 											  checksum_type,
 											  &checksum_length,
 											  &checksum_payload,
+											  opt->copy_method,
 											  opt->debug,
 											  opt->dry_run);
 		}
@@ -993,7 +1035,8 @@ process_directory_recursively(Oid tsoid,
 
 			/* Actually copy the file. */
 			snprintf(ofullpath, MAXPGPATH, "%s/%s", ofulldir, de->d_name);
-			copy_file(ifullpath, ofullpath, &checksum_ctx, opt->dry_run);
+			copy_file(ifullpath, ofullpath, &checksum_ctx,
+					  opt->copy_method, opt->dry_run);
 
 			/*
 			 * If copy_file() performed a checksum calculation for us, then

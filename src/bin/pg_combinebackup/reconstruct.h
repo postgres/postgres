@@ -27,6 +27,7 @@ extern void reconstruct_from_incremental_file(char *input_filename,
 											  pg_checksum_type checksum_type,
 											  int *checksum_length,
 											  uint8 **checksum_payload,
+											  CopyMethod copy_method,
 											  bool debug,
 											  bool dry_run);
 

@@ -186,6 +186,51 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--clone</option></term>
+      <listitem>
+       <para>
+        Use efficient file cloning (also known as <quote>reflinks</quote> on
+        some systems) instead of copying files to the new data directory,
+        which can result in near-instantaneous copying of the data files.
+       </para>
+
+       <para>
+        If a backup manifest is not available or does not contain checksum of
+        the right type, file cloning will be used to copy the file, but the
+        file will be also read block-by-block for the checksum calculation.
+       </para>
+
+       <para>
+        File cloning is only supported on some operating systems and file
+        systems.  If it is selected but not supported, the
+        <application>pg_combinebackup</application> run will error.  At present,
+        it is supported on Linux (kernel 4.5 or later) with Btrfs and XFS (on
+        file systems created with reflink support), and on macOS with APFS.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--copy-file-range</option></term>
+      <listitem>
+       <para>
+        Use the <function>copy_file_range</function> system call for efficient
+        copying.  On some file systems this gives results similar to
+        <option>--clone</option>, sharing physical disk blocks, while on others
+        it may still copy blocks, but do so via an optimized path.  At present,
+        it is supported on Linux and FreeBSD.
+       </para>
+
+       <para>
+        If a backup manifest is not available or does not contain checksum of
+        the right type, <function>copy_file_range</function> will be used to
+        copy the file, but the file will be also read block-by-block for the
+        checksum calculation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>-V</option></term>
        <term><option>--version</option></term>
        <listitem>
