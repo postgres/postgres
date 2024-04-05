@@ -382,11 +382,11 @@ libpqsrv_get_result(PGconn *conn, uint32 wait_event_info)
  * Note: this function leaks a string's worth of memory when reporting
  * libpq errors.  Make sure to call it in a transient memory context.
  */
-static inline char *
+static inline const char *
 libpqsrv_cancel(PGconn *conn, TimestampTz endtime)
 {
 	PGcancelConn *cancel_conn;
-	char	   *error = NULL;
+	const char *error = NULL;
 
 	cancel_conn = PQcancelCreate(conn);
 	if (cancel_conn == NULL)

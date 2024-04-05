@@ -1332,7 +1332,7 @@ pgfdw_cancel_query(PGconn *conn)
 static bool
 pgfdw_cancel_query_begin(PGconn *conn, TimestampTz endtime)
 {
-	char	   *errormsg = libpqsrv_cancel(conn, endtime);
+	const char *errormsg = libpqsrv_cancel(conn, endtime);
 
 	if (errormsg != NULL)
 		ereport(WARNING,

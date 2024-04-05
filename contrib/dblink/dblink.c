@@ -1347,7 +1347,7 @@ Datum
 dblink_cancel_query(PG_FUNCTION_ARGS)
 {
 	PGconn	   *conn;
-	char	   *msg;
+	const char *msg;
 	TimestampTz endtime;
 
 	dblink_init();
