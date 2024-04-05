@@ -4276,6 +4276,7 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			break;
 		default:
 			elog(ERROR, "invalid JsonFuncExpr op %d", (int) func->op);
+			default_format = JS_FORMAT_DEFAULT; /* keep compiler quiet */
 			break;
 	}
 
