@@ -35,6 +35,13 @@ my $subscriber1 = PostgreSQL::Test::Cluster->new('subscriber1');
 $subscriber1->init;
 $subscriber1->start;
 
+# Capture the time before the logical failover slot is created on the
+# primary. We later call this publisher as primary anyway.
+my $slot_creation_time_on_primary = $publisher->safe_psql(
+	'postgres', qq[
+    SELECT current_timestamp;
+]);
+
 # Create a slot on the publisher with failover disabled
 $publisher->safe_psql('postgres',
 	"SELECT 'init' FROM pg_create_logical_replication_slot('lsub1_slot', 'pgoutput', false, false, false);"
@@ -174,6 +181,11 @@ $primary->poll_query_until(
 	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'lsub1_slot' AND active = 'f'",
 	1);
 
+# Capture the inactive_since of the slot from the primary. Note that the slot
+# will be inactive since the corresponding subscription is disabled.
+my $inactive_since_on_primary =
+	$primary->validate_slot_inactive_since('lsub1_slot', $slot_creation_time_on_primary);
+
 # Wait for the standby to catch up so that the standby is not lagging behind
 # the subscriber.
 $primary->wait_for_replay_catchup($standby1);
@@ -189,6 +201,18 @@ is( $standby1->safe_psql(
 	),
 	"t",
 	'logical slots have synced as true on standby');
+
+# Capture the inactive_since of the synced slot on the standby
+my $inactive_since_on_standby =
+	$standby1->validate_slot_inactive_since('lsub1_slot', $slot_creation_time_on_primary);
+
+# Synced slot on the standby must get its own inactive_since
+is( $standby1->safe_psql(
+		'postgres',
+		"SELECT '$inactive_since_on_primary'::timestamptz < '$inactive_since_on_standby'::timestamptz;"
+	),
+	"t",
+	'synchronized slot has got its own inactive_since');
 
 ##################################################
 # Test that the synchronized slot will be dropped if the corresponding remote
@@ -237,6 +261,13 @@ is( $standby1->safe_psql(
 $standby1->append_conf('postgresql.conf', 'max_slot_wal_keep_size = -1');
 $standby1->reload;
 
+# Capture the time before the logical failover slot is created on the primary.
+# Note that the subscription creates the slot again on the primary.
+$slot_creation_time_on_primary = $publisher->safe_psql(
+	'postgres', qq[
+    SELECT current_timestamp;
+]);
+
 # To ensure that restart_lsn has moved to a recent WAL position, we re-create
 # the subscription and the logical slot.
 $subscriber1->safe_psql(
@@ -256,6 +287,11 @@ $primary->poll_query_until(
 	'postgres',
 	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'lsub1_slot' AND active = 'f'",
 	1);
+
+# Capture the inactive_since of the slot from the primary. Note that the slot
+# will be inactive since the corresponding subscription is disabled.
+$inactive_since_on_primary =
+	$primary->validate_slot_inactive_since('lsub1_slot', $slot_creation_time_on_primary);
 
 # Wait for the standby to catch up so that the standby is not lagging behind
 # the subscriber.
@@ -808,7 +844,27 @@ $primary->reload;
 $standby1->start;
 $primary->wait_for_replay_catchup($standby1);
 
+# Capture the time before the standby is promoted
+my $promotion_time_on_primary = $standby1->safe_psql(
+	'postgres', qq[
+    SELECT current_timestamp;
+]);
+
 $standby1->promote;
+
+# Capture the inactive_since of the synced slot after the promotion.
+# The expectation here is that the slot gets its inactive_since as part of the
+# promotion. We do this check before the slot is enabled on the new primary
+# below, otherwise, the slot gets active setting inactive_since to NULL.
+my $inactive_since_on_new_primary =
+	$standby1->validate_slot_inactive_since('lsub1_slot', $promotion_time_on_primary);
+
+is( $standby1->safe_psql(
+		'postgres',
+		"SELECT '$inactive_since_on_new_primary'::timestamptz > '$inactive_since_on_primary'::timestamptz"
+	),
+	"t",
+	'synchronized slot has got its own inactive_since on the new primary after promotion');
 
 # Update subscription with the new primary's connection info
 my $standby1_conninfo = $standby1->connstr . ' dbname=postgres';

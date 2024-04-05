@@ -690,13 +690,10 @@ ReplicationSlotRelease(void)
 	}
 
 	/*
-	 * Set the last inactive time after marking the slot inactive. We don't
-	 * set it for the slots currently being synced from the primary to the
-	 * standby because such slots are typically inactive as decoding is not
-	 * allowed on those.
+	 * Set the time since the slot has become inactive. We get the current
+	 * time beforehand to avoid system call while holding the spinlock.
 	 */
-	if (!(RecoveryInProgress() && slot->data.synced))
-		now = GetCurrentTimestamp();
+	now = GetCurrentTimestamp();
 
 	if (slot->data.persistency == RS_PERSISTENT)
 	{
@@ -2369,16 +2366,11 @@ RestoreSlotFromDisk(const char *name)
 		slot->active_pid = 0;
 
 		/*
-		 * We set the last inactive time after loading the slot from the disk
-		 * into memory. Whoever acquires the slot i.e. makes the slot active
-		 * will reset it. We don't set it for the slots currently being synced
-		 * from the primary to the standby because such slots are typically
-		 * inactive as decoding is not allowed on those.
+		 * Set the time since the slot has become inactive after loading the
+		 * slot from the disk into memory. Whoever acquires the slot i.e.
+		 * makes the slot active will reset it.
 		 */
-		if (!(RecoveryInProgress() && slot->data.synced))
-			slot->inactive_since = GetCurrentTimestamp();
-		else
-			slot->inactive_since = 0;
+		slot->inactive_since = GetCurrentTimestamp();
 
 		restored = true;
 		break;

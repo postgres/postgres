@@ -443,7 +443,7 @@ $primary4->safe_psql(
 # Get inactive_since value after the slot's creation. Note that the slot is
 # still inactive till it's used by the standby below.
 my $inactive_since =
-	capture_and_validate_slot_inactive_since($primary4, $sb4_slot, $slot_creation_time);
+	$primary4->validate_slot_inactive_since($sb4_slot, $slot_creation_time);
 
 $standby4->start;
 
@@ -502,7 +502,7 @@ $publisher4->safe_psql('postgres',
 # Get inactive_since value after the slot's creation. Note that the slot is
 # still inactive till it's used by the subscriber below.
 $inactive_since =
-	capture_and_validate_slot_inactive_since($publisher4, $lsub4_slot, $slot_creation_time);
+	$publisher4->validate_slot_inactive_since($lsub4_slot, $slot_creation_time);
 
 $subscriber4->start;
 $subscriber4->safe_psql('postgres',
@@ -539,27 +539,5 @@ is( $publisher4->safe_psql(
 
 $publisher4->stop;
 $subscriber4->stop;
-
-# Capture and validate inactive_since of a given slot.
-sub capture_and_validate_slot_inactive_since
-{
-	my ($node, $slot_name, $slot_creation_time) = @_;
-
-	my $inactive_since = $node->safe_psql('postgres',
-		qq(SELECT inactive_since FROM pg_replication_slots
-			WHERE slot_name = '$slot_name' AND inactive_since IS NOT NULL;)
-		);
-
-	# Check that the captured time is sane
-	is( $node->safe_psql(
-			'postgres',
-			qq[SELECT '$inactive_since'::timestamptz > to_timestamp(0) AND
-				'$inactive_since'::timestamptz >= '$slot_creation_time'::timestamptz;]
-		),
-		't',
-		"last inactive time for an active slot $slot_name is sane");
-
-	return $inactive_since;
-}
 
 done_testing();

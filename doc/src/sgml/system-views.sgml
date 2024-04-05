@@ -2530,6 +2530,13 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <para>
         The time since the slot has become inactive.
         <literal>NULL</literal> if the slot is currently being used.
+        Note that for slots on the standby that are being synced from a
+        primary server (whose <structfield>synced</structfield> field is
+        <literal>true</literal>), the
+        <structfield>inactive_since</structfield> indicates the last
+        synchronization (see
+        <xref linkend="logicaldecoding-replication-slots-synchronization"/>)
+        time.
       </para></entry>
      </row>
 

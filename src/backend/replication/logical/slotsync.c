@@ -150,6 +150,7 @@ typedef struct RemoteSlot
 } RemoteSlot;
 
 static void slotsync_failure_callback(int code, Datum arg);
+static void update_synced_slots_inactive_since(void);
 
 /*
  * If necessary, update the local synced slot's metadata based on the data
@@ -584,6 +585,11 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 		 * overwriting 'invalidated' flag to remote_slot's value. See
 		 * InvalidatePossiblyObsoleteSlot() where it invalidates slot directly
 		 * if the slot is not acquired by other processes.
+		 *
+		 * XXX: If it ever turns out that slot acquire/release is costly for
+		 * cases when none of the slot properties is changed then we can do a
+		 * pre-check to ensure that at least one of the slot properties is
+		 * changed before acquiring the slot.
 		 */
 		ReplicationSlotAcquire(remote_slot->name, true);
 
@@ -1356,6 +1362,54 @@ ReplSlotSyncWorkerMain(char *startup_data, size_t startup_data_len)
 }
 
 /*
+ * Update the inactive_since property for synced slots.
+ *
+ * Note that this function is currently called when we shutdown the slot
+ * sync machinery.
+ */
+static void
+update_synced_slots_inactive_since(void)
+{
+	TimestampTz now = 0;
+
+	/*
+	 * We need to update inactive_since only when we are promoting standby to
+	 * correctly interpret the inactive_since if the standby gets promoted
+	 * without a restart. We don't want the slots to appear inactive for a
+	 * long time after promotion if they haven't been synchronized recently.
+	 * Whoever acquires the slot i.e.makes the slot active will reset it.
+	 */
+	if (!StandbyMode)
+		return;
+
+	/* The slot sync worker mustn't be running by now */
+	Assert(SlotSyncCtx->pid == InvalidPid);
+
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+
+	for (int i = 0; i < max_replication_slots; i++)
+	{
+		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
+
+		/* Check if it is a synchronized slot */
+		if (s->in_use && s->data.synced)
+		{
+			Assert(SlotIsLogical(s));
+
+			/* Use the same inactive_since time for all the slots. */
+			if (now == 0)
+				now = GetCurrentTimestamp();
+
+			SpinLockAcquire(&s->mutex);
+			s->inactive_since = now;
+			SpinLockRelease(&s->mutex);
+		}
+	}
+
+	LWLockRelease(ReplicationSlotControlLock);
+}
+
+/*
  * Shut down the slot sync worker.
  */
 void
@@ -1368,6 +1422,7 @@ ShutDownSlotSync(void)
 	if (SlotSyncCtx->pid == InvalidPid)
 	{
 		SpinLockRelease(&SlotSyncCtx->mutex);
+		update_synced_slots_inactive_since();
 		return;
 	}
 	SpinLockRelease(&SlotSyncCtx->mutex);
@@ -1400,6 +1455,8 @@ ShutDownSlotSync(void)
 	}
 
 	SpinLockRelease(&SlotSyncCtx->mutex);
+
+	update_synced_slots_inactive_since();
 }
 
 /*
