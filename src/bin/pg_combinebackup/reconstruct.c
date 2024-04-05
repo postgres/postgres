@@ -672,6 +672,7 @@ write_reconstructed_file(char *input_filename,
 		}
 		else					/* use copy_file_range */
 		{
+#if defined(HAVE_COPY_FILE_RANGE)
 			/* copy_file_range modifies the offset, so use a local copy */
 			off_t		off = offsetmap[i];
 			size_t		nwritten = 0;
@@ -706,6 +707,9 @@ write_reconstructed_file(char *input_filename,
 			if (pg_checksum_update(checksum_ctx, buffer, BLCKSZ) < 0)
 				pg_fatal("could not update checksum of file \"%s\"",
 						 output_filename);
+#else
+			pg_fatal("copy_file_range not supported on this platform");
+#endif
 		}
 	}
 
