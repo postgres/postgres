@@ -410,7 +410,11 @@ BlockRefTableEntryGetBlocks(BlockRefTableEntry *entry,
 		if (chunkno == start_chunkno)
 			start_offset = start_blkno % BLOCKS_PER_CHUNK;
 		if (chunkno == stop_chunkno - 1)
-			stop_offset = stop_blkno % BLOCKS_PER_CHUNK;
+		{
+			Assert(stop_blkno > chunkno * BLOCKS_PER_CHUNK);
+			stop_offset = stop_blkno - (chunkno * BLOCKS_PER_CHUNK);
+			Assert(stop_offset <= BLOCKS_PER_CHUNK);
+		}
 
 		/*
 		 * Handling differs depending on whether this is an array of offsets
