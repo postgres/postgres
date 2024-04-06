@@ -178,6 +178,21 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			}
 #endif							/* USE_PREFETCH */
 		}
+
+		/*
+		 * If this is the first scan of the underlying table, create the table
+		 * scan descriptor and begin the scan.
+		 */
+		if (!scan)
+		{
+			scan = table_beginscan_bm(node->ss.ss_currentRelation,
+									  node->ss.ps.state->es_snapshot,
+									  0,
+									  NULL);
+
+			node->ss.ss_currentScanDesc = scan;
+		}
+
 		node->initialized = true;
 	}
 
@@ -601,7 +616,8 @@ ExecReScanBitmapHeapScan(BitmapHeapScanState *node)
 	PlanState  *outerPlan = outerPlanState(node);
 
 	/* rescan to release any page pin */
-	table_rescan(node->ss.ss_currentScanDesc, NULL);
+	if (node->ss.ss_currentScanDesc)
+		table_rescan(node->ss.ss_currentScanDesc, NULL);
 
 	/* release bitmaps and buffers if any */
 	if (node->tbmiterator)
@@ -678,7 +694,9 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	/*
 	 * close heap scan
 	 */
-	table_endscan(scanDesc);
+	if (scanDesc)
+		table_endscan(scanDesc);
+
 }
 
 /* ----------------------------------------------------------------
@@ -782,11 +800,6 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 		get_tablespace_io_concurrency(currentRelation->rd_rel->reltablespace);
 
 	scanstate->ss.ss_currentRelation = currentRelation;
-
-	scanstate->ss.ss_currentScanDesc = table_beginscan_bm(currentRelation,
-														  estate->es_snapshot,
-														  0,
-														  NULL);
 
 	/*
 	 * all done.
