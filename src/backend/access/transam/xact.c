@@ -38,6 +38,7 @@
 #include "commands/async.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
+#include "commands/waitlsn.h"
 #include "common/pg_prng.h"
 #include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
@@ -2770,6 +2771,11 @@ AbortTransaction(void)
 	 * while cleaning up!
 	 */
 	LWLockReleaseAll();
+
+	/*
+	 * Cleanup waiting for LSN if any.
+	 */
+	WaitLSNCleanup();
 
 	/* Clear wait information and command progress indicator */
 	pgstat_report_wait_end();
