@@ -4064,6 +4064,19 @@ description | Waiting for a newly initialized WAL file to reach durable storage
    </para>
   </note>
 
+  <note>
+   <para>
+    Queries that use certain <acronym>SQL</acronym> constructs to search for
+    rows matching any value out of a list or array of multiple scalar values
+    (see <xref linkend="functions-comparisons"/>) perform multiple
+    <quote>primitive</quote> index scans (up to one primitive scan per scalar
+    value) during query execution.  Each internal primitive index scan
+    increments <structname>pg_stat_all_indexes</structname>.<structfield>idx_scan</structfield>,
+    so it's possible for the count of index scans to significantly exceed the
+    total number of index scan executor node executions.
+   </para>
+  </note>
+
  </sect2>
 
  <sect2 id="monitoring-pg-statio-all-tables-view">

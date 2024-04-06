@@ -628,6 +628,8 @@ ExecIndexOnlyScanEstimate(IndexOnlyScanState *node,
 	EState	   *estate = node->ss.ps.state;
 
 	node->ioss_PscanLen = index_parallelscan_estimate(node->ioss_RelationDesc,
+													  node->ioss_NumScanKeys,
+													  node->ioss_NumOrderByKeys,
 													  estate->es_snapshot);
 	shm_toc_estimate_chunk(&pcxt->estimator, node->ioss_PscanLen);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);

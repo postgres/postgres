@@ -208,8 +208,10 @@ BTPageStat
 BTPageState
 BTParallelScanDesc
 BTPendingFSM
+BTReadPageState
 BTScanInsert
 BTScanInsertData
+BTScanKeyPreproc
 BTScanOpaque
 BTScanOpaqueData
 BTScanPos

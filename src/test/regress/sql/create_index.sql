@@ -668,6 +668,7 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IN (-1, 0, 1);
 
 DROP INDEX onek_nulltest;
 
@@ -753,7 +754,7 @@ SELECT count(*) FROM dupindexcols
   WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
 
 --
--- Check ordering of =ANY indexqual results (bug in 9.2.0)
+-- Check that index scans with =ANY indexquals return rows in index order
 --
 
 explain (costs off)
@@ -765,6 +766,7 @@ SELECT unique1 FROM tenk1
 WHERE unique1 IN (1,42,7)
 ORDER BY unique1;
 
+-- Non-required array scan key on "tenthous":
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
@@ -774,18 +776,68 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
-SET enable_indexonlyscan = OFF;
-
+-- Non-required array scan key on "tenthous", backward scan:
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
-ORDER BY thousand;
+ORDER BY thousand DESC, tenthous DESC;
 
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
-ORDER BY thousand;
+ORDER BY thousand DESC, tenthous DESC;
 
-RESET enable_indexonlyscan;
+--
+-- Check elimination of redundant and contradictory index quals
+--
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = ANY('{7, 8, 9}');
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = ANY('{7, 8, 9}');
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{7, 14, 22}') and unique1 = ANY('{33, 44}'::bigint[]);
+
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{7, 14, 22}') and unique1 = ANY('{33, 44}'::bigint[]);
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 1;
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 1;
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 12345;
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 12345;
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 >= 42;
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 >= 42;
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 > 42;
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 > 42;
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 > 9996 and unique1 >= 9999;
+
+SELECT unique1 FROM tenk1 WHERE unique1 > 9996 and unique1 >= 9999;
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 < 3 and unique1 <= 3;
+
+SELECT unique1 FROM tenk1 WHERE unique1 < 3 and unique1 <= 3;
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 < 3 and unique1 < (-1)::bigint;
+
+SELECT unique1 FROM tenk1 WHERE unique1 < 3 and unique1 < (-1)::bigint;
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 < (-1)::bigint;
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 < (-1)::bigint;
 
 --
 -- Check elimination of constant-NULL subexpressions

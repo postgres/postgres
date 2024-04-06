@@ -1644,6 +1644,8 @@ ExecIndexScanEstimate(IndexScanState *node,
 	EState	   *estate = node->ss.ps.state;
 
 	node->iss_PscanLen = index_parallelscan_estimate(node->iss_RelationDesc,
+													 node->iss_NumScanKeys,
+													 node->iss_NumOrderByKeys,
 													 estate->es_snapshot);
 	shm_toc_estimate_chunk(&pcxt->estimator, node->iss_PscanLen);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);

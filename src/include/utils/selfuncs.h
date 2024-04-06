@@ -117,6 +117,9 @@ typedef struct VariableStatData
  * Callers should initialize all fields of GenericCosts to zero.  In addition,
  * they can set numIndexTuples to some positive value if they have a better
  * than default way of estimating the number of leaf index tuples visited.
+ * Similarly, they can set num_sa_scans to some value >= 1 for an index AM
+ * that doesn't necessarily perform exactly one primitive index scan per
+ * distinct combination of ScalarArrayOp array elements.
  */
 typedef struct
 {

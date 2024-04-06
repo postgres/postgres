@@ -361,6 +361,7 @@ alter table tenk2 reset (parallel_workers);
 -- test parallel index scans.
 set enable_seqscan to off;
 set enable_bitmapscan to off;
+set random_page_cost = 2;
 explain (costs off)
 	select  count((unique1)) from tenk1 where hundred > 1;
                              QUERY PLAN                             
@@ -377,6 +378,30 @@ select  count((unique1)) from tenk1 where hundred > 1;
  count 
 -------
   9800
+(1 row)
+
+-- Parallel ScalarArrayOp index scan
+explain (costs off)
+  select count((unique1)) from tenk1
+  where hundred = any ((select array_agg(i) from generate_series(1, 100, 15) i)::int[]);
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Finalize Aggregate
+   InitPlan 1
+     ->  Aggregate
+           ->  Function Scan on generate_series i
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Parallel Index Scan using tenk1_hundred on tenk1
+                     Index Cond: (hundred = ANY ((InitPlan 1).col1))
+(9 rows)
+
+select count((unique1)) from tenk1
+where hundred = any ((select array_agg(i) from generate_series(1, 100, 15) i)::int[]);
+ count 
+-------
+   700
 (1 row)
 
 -- test parallel index-only scans.

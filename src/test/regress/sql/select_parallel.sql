@@ -137,10 +137,18 @@ alter table tenk2 reset (parallel_workers);
 -- test parallel index scans.
 set enable_seqscan to off;
 set enable_bitmapscan to off;
+set random_page_cost = 2;
 
 explain (costs off)
 	select  count((unique1)) from tenk1 where hundred > 1;
 select  count((unique1)) from tenk1 where hundred > 1;
+
+-- Parallel ScalarArrayOp index scan
+explain (costs off)
+  select count((unique1)) from tenk1
+  where hundred = any ((select array_agg(i) from generate_series(1, 100, 15) i)::int[]);
+select count((unique1)) from tenk1
+where hundred = any ((select array_agg(i) from generate_series(1, 100, 15) i)::int[]);
 
 -- test parallel index-only scans.
 explain (costs off)

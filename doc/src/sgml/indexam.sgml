@@ -809,12 +809,20 @@ amrestrpos (IndexScanDesc scan);
   <para>
 <programlisting>
 Size
-amestimateparallelscan (void);
+amestimateparallelscan (int nkeys,
+                        int norderbys);
 </programlisting>
    Estimate and return the number of bytes of dynamic shared memory which
    the access method will be needed to perform a parallel scan.  (This number
    is in addition to, not in lieu of, the amount of space needed for
    AM-independent data in <structname>ParallelIndexScanDescData</structname>.)
+  </para>
+
+  <para>
+   The <literal>nkeys</literal> and <literal>norderbys</literal>
+   parameters indicate the number of quals and ordering operators that will be
+   used in the scan; the same values will be passed to <function>amrescan</function>.
+   Note that the actual values of the scan keys aren't provided yet.
   </para>
 
   <para>

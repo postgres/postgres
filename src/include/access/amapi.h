@@ -194,7 +194,7 @@ typedef void (*amrestrpos_function) (IndexScanDesc scan);
  */
 
 /* estimate size of parallel scan descriptor */
-typedef Size (*amestimateparallelscan_function) (void);
+typedef Size (*amestimateparallelscan_function) (int nkeys, int norderbys);
 
 /* prepare for parallel index scan */
 typedef void (*aminitparallelscan_function) (void *target);

@@ -136,6 +136,21 @@ select hundred, twenty from tenk1 where hundred <= 48 order by hundred desc limi
 select hundred, twenty from tenk1 where hundred <= 48 order by hundred desc limit 1;
 
 --
+-- Add coverage for ScalarArrayOp btree quals with pivot tuple constants
+--
+explain (costs off)
+select distinct hundred from tenk1 where hundred in (47, 48, 72, 82);
+select distinct hundred from tenk1 where hundred in (47, 48, 72, 82);
+
+explain (costs off)
+select distinct hundred from tenk1 where hundred in (47, 48, 72, 82) order by hundred desc;
+select distinct hundred from tenk1 where hundred in (47, 48, 72, 82) order by hundred desc;
+
+explain (costs off)
+select thousand from tenk1 where thousand in (364, 366,380) and tenthous = 200000;
+select thousand from tenk1 where thousand in (364, 366,380) and tenthous = 200000;
+
+--
 -- Check correct optimization of LIKE (special index operator support)
 -- for both indexscan and bitmapscan cases
 --

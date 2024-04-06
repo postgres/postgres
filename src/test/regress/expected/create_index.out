@@ -1698,6 +1698,12 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
      0
 (1 row)
 
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IN (-1, 0, 1);
+ count 
+-------
+     1
+(1 row)
+
 DROP INDEX onek_nulltest;
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc nulls last,unique1);
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
@@ -1910,7 +1916,7 @@ SELECT count(*) FROM dupindexcols
 (1 row)
 
 --
--- Check ordering of =ANY indexqual results (bug in 9.2.0)
+-- Check that index scans with =ANY indexquals return rows in index order
 --
 explain (costs off)
 SELECT unique1 FROM tenk1
@@ -1932,49 +1938,186 @@ ORDER BY unique1;
       42
 (3 rows)
 
+-- Non-required array scan key on "tenthous":
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
-                      QUERY PLAN                       
--------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Index Only Scan using tenk1_thous_tenthous on tenk1
-   Index Cond: (thousand < 2)
-   Filter: (tenthous = ANY ('{1001,3000}'::integer[]))
+   Index Cond: ((thousand < 2) AND (tenthous = ANY ('{1001,3000}'::integer[])))
+(2 rows)
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 2 AND tenthous IN (1001,3000)
+ORDER BY thousand;
+ thousand | tenthous 
+----------+----------
+        0 |     3000
+        1 |     1001
+(2 rows)
+
+-- Non-required array scan key on "tenthous", backward scan:
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 2 AND tenthous IN (1001,3000)
+ORDER BY thousand DESC, tenthous DESC;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Index Only Scan Backward using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand < 2) AND (tenthous = ANY ('{1001,3000}'::integer[])))
+(2 rows)
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 2 AND tenthous IN (1001,3000)
+ORDER BY thousand DESC, tenthous DESC;
+ thousand | tenthous 
+----------+----------
+        1 |     1001
+        0 |     3000
+(2 rows)
+
+--
+-- Check elimination of redundant and contradictory index quals
+--
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = ANY('{7, 8, 9}');
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 = ANY ('{1,42,7}'::integer[])) AND (unique1 = ANY ('{7,8,9}'::integer[])))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = ANY('{7, 8, 9}');
+ unique1 
+---------
+       7
+(1 row)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{7, 14, 22}') and unique1 = ANY('{33, 44}'::bigint[]);
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 = ANY ('{7,14,22}'::integer[])) AND (unique1 = ANY ('{33,44}'::bigint[])))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{7, 14, 22}') and unique1 = ANY('{33, 44}'::bigint[]);
+ unique1 
+---------
+(0 rows)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 1;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 = ANY ('{1,42,7}'::integer[])) AND (unique1 = 1))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 1;
+ unique1 
+---------
+       1
+(1 row)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 12345;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 = ANY ('{1,42,7}'::integer[])) AND (unique1 = 12345))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 12345;
+ unique1 
+---------
+(0 rows)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 >= 42;
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 = ANY ('{1,42,7}'::integer[])) AND (unique1 >= 42))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 >= 42;
+ unique1 
+---------
+      42
+(1 row)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 > 42;
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 = ANY ('{1,42,7}'::integer[])) AND (unique1 > 42))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 > 42;
+ unique1 
+---------
+(0 rows)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 > 9996 and unique1 >= 9999;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 > 9996) AND (unique1 >= 9999))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 > 9996 and unique1 >= 9999;
+ unique1 
+---------
+    9999
+(1 row)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 < 3 and unique1 <= 3;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 < 3) AND (unique1 <= 3))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 < 3 and unique1 <= 3;
+ unique1 
+---------
+       0
+       1
+       2
 (3 rows)
 
-SELECT thousand, tenthous FROM tenk1
-WHERE thousand < 2 AND tenthous IN (1001,3000)
-ORDER BY thousand;
- thousand | tenthous 
-----------+----------
-        0 |     3000
-        1 |     1001
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 < 3 and unique1 < (-1)::bigint;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 < 3) AND (unique1 < '-1'::bigint))
 (2 rows)
 
-SET enable_indexonlyscan = OFF;
+SELECT unique1 FROM tenk1 WHERE unique1 < 3 and unique1 < (-1)::bigint;
+ unique1 
+---------
+(0 rows)
+
 explain (costs off)
-SELECT thousand, tenthous FROM tenk1
-WHERE thousand < 2 AND tenthous IN (1001,3000)
-ORDER BY thousand;
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 < (-1)::bigint;
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
- Sort
-   Sort Key: thousand
-   ->  Index Scan using tenk1_thous_tenthous on tenk1
-         Index Cond: ((thousand < 2) AND (tenthous = ANY ('{1001,3000}'::integer[])))
-(4 rows)
-
-SELECT thousand, tenthous FROM tenk1
-WHERE thousand < 2 AND tenthous IN (1001,3000)
-ORDER BY thousand;
- thousand | tenthous 
-----------+----------
-        0 |     3000
-        1 |     1001
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 = ANY ('{1,42,7}'::integer[])) AND (unique1 < '-1'::bigint))
 (2 rows)
 
-RESET enable_indexonlyscan;
+SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 < (-1)::bigint;
+ unique1 
+---------
+(0 rows)
+
 --
 -- Check elimination of constant-NULL subexpressions
 --

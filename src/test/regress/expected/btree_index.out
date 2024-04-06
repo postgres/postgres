@@ -190,6 +190,58 @@ select hundred, twenty from tenk1 where hundred <= 48 order by hundred desc limi
 (1 row)
 
 --
+-- Add coverage for ScalarArrayOp btree quals with pivot tuple constants
+--
+explain (costs off)
+select distinct hundred from tenk1 where hundred in (47, 48, 72, 82);
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Unique
+   ->  Index Only Scan using tenk1_hundred on tenk1
+         Index Cond: (hundred = ANY ('{47,48,72,82}'::integer[]))
+(3 rows)
+
+select distinct hundred from tenk1 where hundred in (47, 48, 72, 82);
+ hundred 
+---------
+      47
+      48
+      72
+      82
+(4 rows)
+
+explain (costs off)
+select distinct hundred from tenk1 where hundred in (47, 48, 72, 82) order by hundred desc;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Unique
+   ->  Index Only Scan Backward using tenk1_hundred on tenk1
+         Index Cond: (hundred = ANY ('{47,48,72,82}'::integer[]))
+(3 rows)
+
+select distinct hundred from tenk1 where hundred in (47, 48, 72, 82) order by hundred desc;
+ hundred 
+---------
+      82
+      72
+      48
+      47
+(4 rows)
+
+explain (costs off)
+select thousand from tenk1 where thousand in (364, 366,380) and tenthous = 200000;
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Index Only Scan using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand = ANY ('{364,366,380}'::integer[])) AND (tenthous = 200000))
+(2 rows)
+
+select thousand from tenk1 where thousand in (364, 366,380) and tenthous = 200000;
+ thousand 
+----------
+(0 rows)
+
+--
 -- Check correct optimization of LIKE (special index operator support)
 -- for both indexscan and bitmapscan cases
 --

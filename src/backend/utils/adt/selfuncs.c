@@ -6572,21 +6572,26 @@ genericcostestimate(PlannerInfo *root,
 	selectivityQuals = add_predicate_to_index_quals(index, indexQuals);
 
 	/*
-	 * Check for ScalarArrayOpExpr index quals, and estimate the number of
-	 * index scans that will be performed.
+	 * If caller didn't give us an estimate for ScalarArrayOpExpr index scans,
+	 * just assume that the number of index descents is the number of distinct
+	 * combinations of array elements from all of the scan's SAOP clauses.
 	 */
-	num_sa_scans = 1;
-	foreach(l, indexQuals)
+	num_sa_scans = costs->num_sa_scans;
+	if (num_sa_scans < 1)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-
-		if (IsA(rinfo->clause, ScalarArrayOpExpr))
+		num_sa_scans = 1;
+		foreach(l, indexQuals)
 		{
-			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) rinfo->clause;
-			double		alength = estimate_array_length(root, lsecond(saop->args));
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-			if (alength > 1)
-				num_sa_scans *= alength;
+			if (IsA(rinfo->clause, ScalarArrayOpExpr))
+			{
+				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) rinfo->clause;
+				double		alength = estimate_array_length(root, lsecond(saop->args));
+
+				if (alength > 1)
+					num_sa_scans *= alength;
+			}
 		}
 	}
 
@@ -6813,9 +6818,9 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * For a RowCompareExpr, we consider only the first column, just as
 	 * rowcomparesel() does.
 	 *
-	 * If there's a ScalarArrayOpExpr in the quals, we'll actually perform N
-	 * index scans not one, but the ScalarArrayOpExpr's operator can be
-	 * considered to act the same as it normally does.
+	 * If there's a ScalarArrayOpExpr in the quals, we'll actually perform up
+	 * to N index descents (not just one), but the ScalarArrayOpExpr's
+	 * operator can be considered to act the same as it normally does.
 	 */
 	indexBoundQuals = NIL;
 	indexcol = 0;
@@ -6867,7 +6872,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 
 				clause_op = saop->opno;
 				found_saop = true;
-				/* count number of SA scans induced by indexBoundQuals only */
+				/* estimate SA descents by indexBoundQuals only */
 				if (alength > 1)
 					num_sa_scans *= alength;
 			}
@@ -6931,9 +6936,47 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 		numIndexTuples = btreeSelectivity * index->rel->tuples;
 
 		/*
+		 * btree automatically combines individual ScalarArrayOpExpr primitive
+		 * index scans whenever the tuples covered by the next set of array
+		 * keys are close to tuples covered by the current set.  That puts a
+		 * natural ceiling on the worst case number of descents -- there
+		 * cannot possibly be more than one descent per leaf page scanned.
+		 *
+		 * Clamp the number of descents to at most 1/3 the number of index
+		 * pages.  This avoids implausibly high estimates with low selectivity
+		 * paths, where scans usually require only one or two descents.  This
+		 * is most likely to help when there are several SAOP clauses, where
+		 * naively accepting the total number of distinct combinations of
+		 * array elements as the number of descents would frequently lead to
+		 * wild overestimates.
+		 *
+		 * We somewhat arbitrarily don't just make the cutoff the total number
+		 * of leaf pages (we make it 1/3 the total number of pages instead) to
+		 * give the btree code credit for its ability to continue on the leaf
+		 * level with low selectivity scans.
+		 */
+		num_sa_scans = Min(num_sa_scans, ceil(index->pages * 0.3333333));
+		num_sa_scans = Max(num_sa_scans, 1);
+
+		/*
 		 * As in genericcostestimate(), we have to adjust for any
 		 * ScalarArrayOpExpr quals included in indexBoundQuals, and then round
 		 * to integer.
+		 *
+		 * It is tempting to make genericcostestimate behave as if SAOP
+		 * clauses work in almost the same way as scalar operators during
+		 * btree scans, making the top-level scan look like a continuous scan
+		 * (as opposed to num_sa_scans-many primitive index scans).  After
+		 * all, btree scans mostly work like that at runtime.  However, such a
+		 * scheme would badly bias genericcostestimate's simplistic appraoch
+		 * to calculating numIndexPages through prorating.
+		 *
+		 * Stick with the approach taken by non-native SAOP scans for now.
+		 * genericcostestimate will use the Mackert-Lohman formula to
+		 * compensate for repeat page fetches, even though that definitely
+		 * won't happen during btree scans (not for leaf pages, at least).
+		 * We're usually very pessimistic about the number of primitive index
+		 * scans that will be required, but it's not clear how to do better.
 		 */
 		numIndexTuples = rint(numIndexTuples / num_sa_scans);
 	}
@@ -6942,6 +6985,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * Now do generic index cost estimation.
 	 */
 	costs.numIndexTuples = numIndexTuples;
+	costs.num_sa_scans = num_sa_scans;
 
 	genericcostestimate(root, path, loop_count, &costs);
 
@@ -6952,9 +6996,9 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * comparisons to descend a btree of N leaf tuples.  We charge one
 	 * cpu_operator_cost per comparison.
 	 *
-	 * If there are ScalarArrayOpExprs, charge this once per SA scan.  The
-	 * ones after the first one are not startup cost so far as the overall
-	 * plan is concerned, so add them only to "total" cost.
+	 * If there are ScalarArrayOpExprs, charge this once per estimated SA
+	 * index descent.  The ones after the first one are not startup cost so
+	 * far as the overall plan goes, so just add them to "total" cost.
 	 */
 	if (index->tuples > 1)		/* avoid computing log(0) */
 	{
@@ -6971,7 +7015,8 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * in cases where only a single leaf page is expected to be visited.  This
 	 * cost is somewhat arbitrarily set at 50x cpu_operator_cost per page
 	 * touched.  The number of such pages is btree tree height plus one (ie,
-	 * we charge for the leaf page too).  As above, charge once per SA scan.
+	 * we charge for the leaf page too).  As above, charge once per estimated
+	 * SA index descent.
 	 */
 	descentCost = (index->tree_height + 1) * DEFAULT_PAGE_CPU_MULTIPLIER * cpu_operator_cost;
 	costs.indexStartupCost += descentCost;

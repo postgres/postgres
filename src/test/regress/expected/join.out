@@ -8880,10 +8880,9 @@ where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1 and j2.id1 >= any (array[1,5]);
    Merge Cond: (j1.id1 = j2.id1)
    Join Filter: (j2.id2 = j1.id2)
    ->  Index Scan using j1_id1_idx on j1
-   ->  Index Only Scan using j2_pkey on j2
+   ->  Index Scan using j2_id1_idx on j2
          Index Cond: (id1 >= ANY ('{1,5}'::integer[]))
-         Filter: ((id1 % 1000) = 1)
-(7 rows)
+(6 rows)
 
 select * from j1
 inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2

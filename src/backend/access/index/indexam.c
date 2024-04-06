@@ -449,13 +449,10 @@ index_restrpos(IndexScanDesc scan)
 
 /*
  * index_parallelscan_estimate - estimate shared memory for parallel scan
- *
- * Currently, we don't pass any information to the AM-specific estimator,
- * so it can probably only return a constant.  In the future, we might need
- * to pass more information.
  */
 Size
-index_parallelscan_estimate(Relation indexRelation, Snapshot snapshot)
+index_parallelscan_estimate(Relation indexRelation, int nkeys, int norderbys,
+							Snapshot snapshot)
 {
 	Size		nbytes;
 
@@ -474,7 +471,8 @@ index_parallelscan_estimate(Relation indexRelation, Snapshot snapshot)
 	 */
 	if (indexRelation->rd_indam->amestimateparallelscan != NULL)
 		nbytes = add_size(nbytes,
-						  indexRelation->rd_indam->amestimateparallelscan());
+						  indexRelation->rd_indam->amestimateparallelscan(nkeys,
+																		  norderbys));
 
 	return nbytes;
 }
