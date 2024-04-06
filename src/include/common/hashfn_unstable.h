@@ -370,4 +370,24 @@ fasthash32(const char *k, size_t len, uint64 seed)
 	return fasthash_reduce32(fasthash64(k, len, seed));
 }
 
+/*
+ * Convenience function for hashing NUL-terminated strings
+ */
+static inline uint32
+hash_string(const char *s)
+{
+	fasthash_state hs;
+	size_t		s_len;
+
+	fasthash_init(&hs, 0);
+
+	/*
+	 * Combine string into the hash and save the length for tweaking the final
+	 * mix.
+	 */
+	s_len = fasthash_accum_cstring(&hs, s);
+
+	return fasthash_final32(&hs, s_len);
+}
+
 #endif							/* HASHFN_UNSTABLE_H */

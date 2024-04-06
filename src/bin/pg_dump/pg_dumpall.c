@@ -21,7 +21,7 @@
 #include "catalog/pg_authid_d.h"
 #include "common/connect.h"
 #include "common/file_utils.h"
-#include "common/hashfn.h"
+#include "common/hashfn_unstable.h"
 #include "common/logging.h"
 #include "common/string.h"
 #include "dumputils.h"
@@ -32,8 +32,6 @@
 
 /* version string we expect back from pg_dump */
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
-
-static uint32 hash_string_pointer(char *s);
 
 typedef struct
 {
@@ -46,7 +44,7 @@ typedef struct
 #define SH_ELEMENT_TYPE	RoleNameEntry
 #define SH_KEY_TYPE	char *
 #define SH_KEY		rolename
-#define SH_HASH_KEY(tb, key)	hash_string_pointer(key)
+#define SH_HASH_KEY(tb, key)	hash_string(key)
 #define SH_EQUAL(tb, a, b)		(strcmp(a, b) == 0)
 #define SH_STORE_HASH
 #define SH_GET_HASH(tb, a)		(a)->hashval
@@ -1936,17 +1934,6 @@ dumpTimestamp(const char *msg)
 
 	if (strftime(buf, sizeof(buf), PGDUMP_STRFTIME_FMT, localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
-}
-
-/*
- * Helper function for rolename_hash hash table.
- */
-static uint32
-hash_string_pointer(char *s)
-{
-	unsigned char *ss = (unsigned char *) s;
-
-	return hash_bytes(ss, strlen(s));
 }
 
 /*

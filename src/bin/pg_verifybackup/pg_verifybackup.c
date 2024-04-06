@@ -19,7 +19,7 @@
 #include <time.h>
 
 #include "common/controldata_utils.h"
-#include "common/hashfn.h"
+#include "common/hashfn_unstable.h"
 #include "common/logging.h"
 #include "common/parse_manifest.h"
 #include "fe_utils/simple_list.h"
@@ -68,12 +68,11 @@ typedef struct manifest_file
  * Define a hash table which we can use to store information about the files
  * mentioned in the backup manifest.
  */
-static uint32 hash_string_pointer(char *s);
 #define SH_PREFIX		manifest_files
 #define SH_ELEMENT_TYPE	manifest_file
 #define SH_KEY_TYPE		char *
 #define	SH_KEY			pathname
-#define SH_HASH_KEY(tb, key)	hash_string_pointer(key)
+#define SH_HASH_KEY(tb, key)	hash_string(key)
 #define SH_EQUAL(tb, a, b)		(strcmp(a, b) == 0)
 #define	SH_SCOPE		static inline
 #define SH_RAW_ALLOCATOR	pg_malloc0
@@ -1026,17 +1025,6 @@ should_ignore_relpath(verifier_context *context, char *relpath)
 	}
 
 	return false;
-}
-
-/*
- * Helper function for manifest_files hash table.
- */
-static uint32
-hash_string_pointer(char *s)
-{
-	unsigned char *ss = (unsigned char *) s;
-
-	return hash_bytes(ss, strlen(s));
 }
 
 /*
