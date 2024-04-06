@@ -361,7 +361,7 @@ fasthash64(const char *k, size_t len, uint64 seed)
 }
 
 /* like fasthash64, but returns a 32-bit hashcode */
-static inline uint64
+static inline uint32
 fasthash32(const char *k, size_t len, uint64 seed)
 {
 	return fasthash_reduce32(fasthash64(k, len, seed));
