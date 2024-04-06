@@ -55,12 +55,9 @@ typedef struct WaitLSNState
 
 	/*
 	 * A pairing heap of waiting processes order by LSN values (least LSN is
-	 * on top).
+	 * on top).  Protected by WaitLSNLock.
 	 */
 	pairingheap waitersHeap;
-
-	/* A mutex protecting the pairing heap above */
-	slock_t		waitersHeapMutex;
 
 	/* An array with per-process information, indexed by the process number */
 	WaitLSNProcInfo procInfos[FLEXIBLE_ARRAY_MEMBER];
