@@ -305,6 +305,8 @@ extern bool BgBufferSync(struct WritebackContext *wb_context);
 extern void LimitAdditionalPins(uint32 *additional_pins);
 extern void LimitAdditionalLocalPins(uint32 *additional_pins);
 
+extern bool EvictUnpinnedBuffer(Buffer buf);
+
 /* in buf_init.c */
 extern void InitBufferPool(void);
 extern Size BufferShmemSize(void);

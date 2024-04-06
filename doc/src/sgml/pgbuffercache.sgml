@@ -11,6 +11,8 @@
  <para>
   The <filename>pg_buffercache</filename> module provides a means for
   examining what's happening in the shared buffer cache in real time.
+  It also offers a low-level way to evict data from it, for testing
+  purposes.
  </para>
 
  <indexterm>
@@ -21,11 +23,16 @@
   <primary>pg_buffercache_summary</primary>
  </indexterm>
 
+ <indexterm>
+  <primary>pg_buffercache_evict</primary>
+ </indexterm>
+
  <para>
   This module provides the <function>pg_buffercache_pages()</function>
   function (wrapped in the <structname>pg_buffercache</structname> view),
-  the <function>pg_buffercache_summary()</function> function, and the
-  <function>pg_buffercache_usage_counts()</function> function.
+  the <function>pg_buffercache_summary()</function> function, the
+  <function>pg_buffercache_usage_counts()</function> function and
+  the <function>pg_buffercache_evict()</function> function.
  </para>
 
  <para>
@@ -47,9 +54,15 @@
  </para>
 
  <para>
-  By default, use is restricted to superusers and roles with privileges of the
-  <literal>pg_monitor</literal> role. Access may be granted to others
-  using <command>GRANT</command>.
+  By default, use of the above functions is restricted to superusers and roles
+  with privileges of the <literal>pg_monitor</literal> role. Access may be
+  granted to others using <command>GRANT</command>.
+ </para>
+
+ <para>
+  The <function>pg_buffercache_evict()</function> function allows a block to
+  be evicted from the buffer pool given a buffer identifier.  Use of this
+  function is restricted to superusers only.
  </para>
 
  <sect2 id="pgbuffercache-pg-buffercache">
@@ -351,7 +364,21 @@
   </para>
  </sect2>
 
- <sect2 id="pgbuffercache-sample-output">
+ <sect2 id="pgbuffercache-pg-buffercache-evict">
+  <title>The <structname>pg_buffercache_evict</structname> Function</title>
+  <para>
+   The <function>pg_buffercache_evict()</function> function takes a buffer
+   identifier, as shown in the <structfield>bufferid</structfield> column of
+   the <structname>pg_buffercache</structname> view.  It returns true on success,
+   and false if the buffer wasn't valid, if it couldn't be evicted because it
+   was pinned, or if it became dirty again after an attempt to write it out.
+   The result is immediately out of date upon return, as the buffer might
+   become valid again at any time due to concurrent activity.  The function is
+   intended for developer testing only.
+  </para>
+ </sect2>
+
+<sect2 id="pgbuffercache-sample-output">
   <title>Sample Output</title>
 
 <screen>
