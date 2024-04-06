@@ -52,7 +52,7 @@
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);
 static inline void BitmapDoneInitializingSharedState(ParallelBitmapHeapState *pstate);
 static inline void BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
-												TBMIterateResult *tbmres);
+												BlockNumber blockno);
 static inline void BitmapAdjustPrefetchTarget(BitmapHeapScanState *node);
 static inline void BitmapPrefetch(BitmapHeapScanState *node,
 								  TableScanDesc scan);
@@ -231,7 +231,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				break;
 			}
 
-			BitmapAdjustPrefetchIterator(node, tbmres);
+			BitmapAdjustPrefetchIterator(node, tbmres->blockno);
 
 			valid_block = table_scan_bitmap_next_block(scan, tbmres);
 
@@ -342,7 +342,7 @@ BitmapDoneInitializingSharedState(ParallelBitmapHeapState *pstate)
  */
 static inline void
 BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
-							 TBMIterateResult *tbmres)
+							 BlockNumber blockno)
 {
 #ifdef USE_PREFETCH
 	ParallelBitmapHeapState *pstate = node->pstate;
@@ -361,7 +361,7 @@ BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
 			/* Do not let the prefetch iterator get behind the main one */
 			TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
 
-			if (tbmpre == NULL || tbmpre->blockno != tbmres->blockno)
+			if (tbmpre == NULL || tbmpre->blockno != blockno)
 				elog(ERROR, "prefetch and main iterators are out of sync");
 		}
 		return;
