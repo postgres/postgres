@@ -49,4 +49,6 @@ extern char *get_range_partbound_string(List *bound_datums);
 
 extern char *pg_get_statisticsobjdef_string(Oid statextid);
 
+extern char *get_list_partvalue_string(Const *val);
+
 #endif							/* RULEUTILS_H */

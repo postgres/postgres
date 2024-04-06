@@ -2411,6 +2411,7 @@ typedef enum AlterTableType
 	AT_AttachPartition,			/* ATTACH PARTITION */
 	AT_DetachPartition,			/* DETACH PARTITION */
 	AT_DetachPartitionFinalize, /* DETACH PARTITION FINALIZE */
+	AT_SplitPartition,			/* SPLIT PARTITION */
 	AT_MergePartitions,			/* MERGE PARTITIONS */
 	AT_AddIdentity,				/* ADD IDENTITY */
 	AT_SetIdentity,				/* SET identity column options */
