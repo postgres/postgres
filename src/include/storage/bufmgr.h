@@ -318,6 +318,7 @@ extern BufferAccessStrategy GetAccessStrategy(BufferAccessStrategyType btype);
 extern BufferAccessStrategy GetAccessStrategyWithSize(BufferAccessStrategyType btype,
 													  int ring_size_kb);
 extern int	GetAccessStrategyBufferCount(BufferAccessStrategy strategy);
+extern int	GetAccessStrategyPinLimit(BufferAccessStrategy strategy);
 
 extern void FreeAccessStrategy(BufferAccessStrategy strategy);
 

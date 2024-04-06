@@ -419,6 +419,7 @@ read_stream_begin_relation(int flags,
 	size_t		size;
 	int16		queue_size;
 	int16		max_ios;
+	int			strategy_pin_limit;
 	uint32		max_pinned_buffers;
 	Oid			tablespace_id;
 	SMgrRelation smgr;
@@ -459,6 +460,10 @@ read_stream_begin_relation(int flags,
 	max_pinned_buffers = Max(max_ios * 4, io_combine_limit);
 	max_pinned_buffers = Min(max_pinned_buffers,
 							 PG_INT16_MAX - io_combine_limit - 1);
+
+	/* Give the strategy a chance to limit the number of buffers we pin. */
+	strategy_pin_limit = GetAccessStrategyPinLimit(strategy);
+	max_pinned_buffers = Min(strategy_pin_limit, max_pinned_buffers);
 
 	/* Don't allow this backend to pin more than its share of buffers. */
 	if (SmgrIsTemp(smgr))
