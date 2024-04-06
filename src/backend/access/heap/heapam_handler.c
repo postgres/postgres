@@ -27,6 +27,7 @@
 #include "access/syncscan.h"
 #include "access/tableam.h"
 #include "access/tsmapi.h"
+#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
@@ -2199,6 +2200,24 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	hscan->rs_ntuples = 0;
 
 	/*
+	 * We can skip fetching the heap page if we don't need any fields from the
+	 * heap, the bitmap entries don't need rechecking, and all tuples on the
+	 * page are visible to our transaction.
+	 */
+	if (!(scan->rs_flags & SO_NEED_TUPLES) &&
+		!tbmres->recheck &&
+		VM_ALL_VISIBLE(scan->rs_rd, tbmres->blockno, &hscan->rs_vmbuffer))
+	{
+		/* can't be lossy in the skip_fetch case */
+		Assert(tbmres->ntuples >= 0);
+		Assert(hscan->rs_empty_tuples_pending >= 0);
+
+		hscan->rs_empty_tuples_pending += tbmres->ntuples;
+
+		return true;
+	}
+
+	/*
 	 * Ignore any claimed entries past what we think is the end of the
 	 * relation. It may have been extended after the start of our scan (we
 	 * only hold an AccessShareLock, and it could be inserts from this
@@ -2309,6 +2328,16 @@ heapam_scan_bitmap_next_tuple(TableScanDesc scan,
 	OffsetNumber targoffset;
 	Page		page;
 	ItemId		lp;
+
+	if (hscan->rs_empty_tuples_pending > 0)
+	{
+		/*
+		 * If we don't have to fetch the tuple, just return nulls.
+		 */
+		ExecStoreAllNullTuple(slot);
+		hscan->rs_empty_tuples_pending--;
+		return true;
+	}
 
 	/*
 	 * Out of range?  If so, nothing more to look at on this page
