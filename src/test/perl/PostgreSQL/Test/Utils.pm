@@ -189,6 +189,11 @@ Set to true when running under MSYS2.
 
 INIT
 {
+	# See https://github.com/cpan-authors/IPC-Run/commit/fc9288c for how this
+	# reduces idle time.  Remove this when IPC::Run 20231003.0 is too old to
+	# matter (when all versions that matter provide the optimization).
+	$SIG{CHLD} = sub { }
+	  unless defined $SIG{CHLD};
 
 	# Return EPIPE instead of killing the process with SIGPIPE.  An affected
 	# test may still fail, but it's more likely to report useful facts.
