@@ -4977,3 +4977,210 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(rowHash % modulus == remainder);
 }
+
+/*
+ * check_two_partitions_bounds_range
+ *
+ * (function for BY RANGE partitioning)
+ *
+ * This is a helper function for check_partitions_for_split() and
+ * calculate_partition_bound_for_merge().
+ * This function compares upper bound of first_bound and lower bound of
+ * second_bound. These bounds should be equals except case
+ * "defaultPart == true" (this means that one of split partitions is DEFAULT).
+ * In this case upper bound of first_bound can be less than lower bound of
+ * second_bound because space between of these bounds will be included in
+ * DEFAULT partition.
+ *
+ * parent:			partitioned table
+ * first_name:		name of first partition
+ * first_bound:		bound of first partition
+ * second_name:		name of second partition
+ * second_bound:	bound of second partition
+ * defaultPart:		true if one of split partitions is DEFAULT
+ * pstate:			pointer to ParseState struct for determine error position
+ */
+static void
+check_two_partitions_bounds_range(Relation parent,
+								  RangeVar *first_name,
+								  PartitionBoundSpec *first_bound,
+								  RangeVar *second_name,
+								  PartitionBoundSpec *second_bound,
+								  bool defaultPart,
+								  ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionRangeBound *first_upper;
+	PartitionRangeBound *second_lower;
+	int			cmpval;
+
+	Assert(key->strategy == PARTITION_STRATEGY_RANGE);
+
+	first_upper = make_one_partition_rbound(key, -1, first_bound->upperdatums, false);
+	second_lower = make_one_partition_rbound(key, -1, second_bound->lowerdatums, true);
+
+	/*
+	 * lower1=false (the second to last argument) for correct comparison lower
+	 * and upper bounds.
+	 */
+	cmpval = partition_rbound_cmp(key->partnatts,
+								  key->partsupfunc,
+								  key->partcollation,
+								  second_lower->datums, second_lower->kind,
+								  false, first_upper);
+	if ((!defaultPart && cmpval) || (defaultPart && cmpval < 0))
+	{
+		PartitionRangeDatum *datum = linitial(second_bound->lowerdatums);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("lower bound of partition \"%s\" conflicts with upper bound of previous partition \"%s\"",
+						second_name->relname, first_name->relname),
+				 parser_errposition(pstate, datum->location)));
+	}
+}
+
+/*
+ * get_partition_bound_spec
+ *
+ * Returns description of partition with Oid "partOid" and name "name".
+ */
+static PartitionBoundSpec *
+get_partition_bound_spec(Oid partOid, RangeVar *name)
+{
+	HeapTuple	tuple;
+	Datum		datum;
+	bool		isnull;
+	PartitionBoundSpec *boundspec = NULL;
+
+	/* Try fetching the tuple from the catcache, for speed. */
+	tuple = SearchSysCache1(RELOID, partOid);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation \"%s\"",
+			 name->relname);
+
+	datum = SysCacheGetAttr(RELOID, tuple,
+							Anum_pg_class_relpartbound,
+							&isnull);
+	if (isnull)
+		elog(ERROR, "partition bound for relation \"%s\" is null",
+			 name->relname);
+
+	boundspec = stringToNode(TextDatumGetCString(datum));
+
+	if (!IsA(boundspec, PartitionBoundSpec))
+		elog(ERROR, "expected PartitionBoundSpec for relation \"%s\"",
+			 name->relname);
+
+	ReleaseSysCache(tuple);
+	return boundspec;
+}
+
+/*
+ * calculate_partition_bound_for_merge
+ *
+ * Calculates the bound of merged partition "spec" by using the bounds of
+ * partitions to be merged.
+ *
+ * parent:			partitioned table
+ * partNames:		names of partitions to be merged
+ * partOids:		Oids of partitions to be merged
+ * spec (out):		bounds specification of the merged partition
+ * pstate:			pointer to ParseState struct for determine error position
+ */
+void
+calculate_partition_bound_for_merge(Relation parent,
+									List *partNames,
+									List *partOids,
+									PartitionBoundSpec *spec,
+									ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionBoundSpec *bound;
+
+	Assert(!spec->is_default);
+
+	switch (key->strategy)
+	{
+		case PARTITION_STRATEGY_RANGE:
+			{
+				int			i;
+				PartitionRangeBound **lower_bounds;
+				int			nparts = list_length(partOids);
+				List	   *bounds = NIL;
+
+				lower_bounds = (PartitionRangeBound **)
+					palloc0(nparts * sizeof(PartitionRangeBound *));
+
+				/*
+				 * Create array of lower bounds and list of
+				 * PartitionBoundSpec.
+				 */
+				for (i = 0; i < nparts; i++)
+				{
+					bound = get_partition_bound_spec(list_nth_oid(partOids, i),
+													 (RangeVar *) list_nth(partNames, i));
+
+					lower_bounds[i] = make_one_partition_rbound(key, i, bound->lowerdatums, true);
+					bounds = lappend(bounds, bound);
+				}
+
+				/* Sort array of lower bounds. */
+				qsort_arg(lower_bounds, nparts, sizeof(PartitionRangeBound *),
+						  qsort_partition_rbound_cmp, (void *) key);
+
+				/* Ranges of partitions should not overlap. */
+				for (i = 1; i < nparts; i++)
+				{
+					int			index = lower_bounds[i]->index;
+					int			prev_index = lower_bounds[i - 1]->index;
+
+					check_two_partitions_bounds_range(parent,
+													  (RangeVar *) list_nth(partNames, prev_index),
+													  (PartitionBoundSpec *) list_nth(bounds, prev_index),
+													  (RangeVar *) list_nth(partNames, index),
+													  (PartitionBoundSpec *) list_nth(bounds, index),
+													  false, pstate);
+				}
+
+				/*
+				 * Lower bound of first partition is a lower bound of merged
+				 * partition.
+				 */
+				spec->lowerdatums =
+					((PartitionBoundSpec *) list_nth(bounds, lower_bounds[0]->index))->lowerdatums;
+
+				/*
+				 * Upper bound of last partition is a upper bound of merged
+				 * partition.
+				 */
+				spec->upperdatums =
+					((PartitionBoundSpec *) list_nth(bounds, lower_bounds[nparts - 1]->index))->upperdatums;
+
+				pfree(lower_bounds);
+				list_free(bounds);
+				break;
+			}
+
+		case PARTITION_STRATEGY_LIST:
+			{
+				ListCell   *listptr,
+						   *listptr2;
+
+				/* Consolidate bounds for all partitions in the list. */
+				forboth(listptr, partOids, listptr2, partNames)
+				{
+					RangeVar   *name = (RangeVar *) lfirst(listptr2);
+					Oid			curOid = lfirst_oid(listptr);
+
+					bound = get_partition_bound_spec(curOid, name);
+					spec->listdatums = list_concat(spec->listdatums, bound->listdatums);
+				}
+				break;
+			}
+
+		default:
+			elog(ERROR, "unexpected partition strategy: %d",
+				 (int) key->strategy);
+	}
+}

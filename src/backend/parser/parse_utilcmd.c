@@ -58,6 +58,8 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
+#include "partitioning/partdesc.h"
+#include "partitioning/partbounds.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -3414,6 +3416,80 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 
 /*
+ * transformPartitionCmdForMerge
+ *		Analyze the ALTER TABLLE ... MERGE PARTITIONS command
+ *
+ * Does simple checks for merged partitions. Calculates bound of result
+ * partition.
+ */
+static void
+transformPartitionCmdForMerge(CreateStmtContext *cxt, PartitionCmd *partcmd)
+{
+	Oid			defaultPartOid;
+	Oid			partOid;
+	Relation	parent = cxt->rel;
+	PartitionKey key;
+	char		strategy;
+	ListCell   *listptr,
+			   *listptr2;
+	bool		isDefaultPart = false;
+	List	   *partOids = NIL;
+
+	if (parent->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("\"%s\" is not a partitioned table", RelationGetRelationName(parent))));
+
+	key = RelationGetPartitionKey(parent);
+	strategy = get_partition_strategy(key);
+
+	if (strategy == PARTITION_STRATEGY_HASH)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("partition of hash-partitioned table cannot be merged")));
+
+	/* Is current partition a DEFAULT partition? */
+	defaultPartOid = get_default_oid_from_partdesc(
+												   RelationGetPartitionDesc(parent, true));
+
+	foreach(listptr, partcmd->partlist)
+	{
+		RangeVar   *name = (RangeVar *) lfirst(listptr);
+
+		/* Partitions in the list should have different names. */
+		for_each_cell(listptr2, partcmd->partlist, lnext(partcmd->partlist, listptr))
+		{
+			RangeVar   *name2 = (RangeVar *) lfirst(listptr2);
+
+			if (equal(name, name2))
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_TABLE),
+						 errmsg("partition with name \"%s\" already used", name->relname)),
+						parser_errposition(cxt->pstate, name2->location));
+		}
+
+		/* Search DEFAULT partition in the list. */
+		partOid = RangeVarGetRelid(name, NoLock, false);
+		if (partOid == defaultPartOid)
+			isDefaultPart = true;
+		partOids = lappend_oid(partOids, partOid);
+	}
+
+	/* Allocate bound of result partition. */
+	Assert(partcmd->bound == NULL);
+	partcmd->bound = makeNode(PartitionBoundSpec);
+
+	/* Fill partition bound. */
+	partcmd->bound->strategy = strategy;
+	partcmd->bound->location = -1;
+	partcmd->bound->is_default = isDefaultPart;
+	if (!isDefaultPart)
+		calculate_partition_bound_for_merge(parent, partcmd->partlist,
+											partOids, partcmd->bound,
+											cxt->pstate);
+}
+
+/*
  * transformAlterTableStmt -
  *		parse analysis for ALTER TABLE
  *
@@ -3682,6 +3758,19 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 				newcmds = lappend(newcmds, cmd);
 				break;
+
+			case AT_MergePartitions:
+				{
+					PartitionCmd *partcmd = (PartitionCmd *) cmd->def;
+
+					if (list_length(partcmd->partlist) < 2)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("list of new partitions should contains at least two items")));
+					transformPartitionCmdForMerge(&cxt, partcmd);
+					newcmds = lappend(newcmds, cmd);
+					break;
+				}
 
 			default:
 
