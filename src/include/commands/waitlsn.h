@@ -49,7 +49,7 @@ typedef struct WaitLSNState
 	/*
 	 * The minimum LSN value some process is waiting for.  Used for the
 	 * fast-path checking if we need to wake up any waiters after replaying a
-	 * WAL record.
+	 * WAL record.  Could be read lock-less.  Update protected by WaitLSNLock.
 	 */
 	pg_atomic_uint64 minWaitedLSN;
 
@@ -59,7 +59,10 @@ typedef struct WaitLSNState
 	 */
 	pairingheap waitersHeap;
 
-	/* An array with per-process information, indexed by the process number */
+	/*
+	 * An array with per-process information, indexed by the process number.
+	 * Protected by WaitLSNLock.
+	 */
 	WaitLSNProcInfo procInfos[FLEXIBLE_ARRAY_MEMBER];
 } WaitLSNState;
 

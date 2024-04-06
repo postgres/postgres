@@ -109,12 +109,12 @@ addLSNWaiter(XLogRecPtr lsn)
 {
 	WaitLSNProcInfo *procInfo = &waitLSN->procInfos[MyProcNumber];
 
+	LWLockAcquire(WaitLSNLock, LW_EXCLUSIVE);
+
 	Assert(!procInfo->inHeap);
 
 	procInfo->procnum = MyProcNumber;
 	procInfo->waitLSN = lsn;
-
-	LWLockAcquire(WaitLSNLock, LW_EXCLUSIVE);
 
 	pairingheap_add(&waitLSN->waitersHeap, &procInfo->phNode);
 	procInfo->inHeap = true;
@@ -203,6 +203,12 @@ WaitLSNSetLatches(XLogRecPtr currentLSN)
 void
 WaitLSNCleanup(void)
 {
+	/*
+	 * We do a fast-path check of the 'inHeap' flag without the lock.  This
+	 * flag is set to true only by the process itself.  So, it's only possible
+	 * to get a false positive.  But that will be eliminated by a recheck
+	 * inside deleteLSNWaiter().
+	 */
 	if (waitLSN->procInfos[MyProcNumber].inHeap)
 		deleteLSNWaiter();
 }
