@@ -136,6 +136,19 @@
 #endif
 
 /*
+ * This macro will disable address safety instrumentation for a function
+ * when running with "-fsanitize=address". Think twice before using this!
+ */
+#if defined(__clang__) || __GNUC__ >= 8
+#define pg_attribute_no_sanitize_address() __attribute__((no_sanitize("address")))
+#elif __has_attribute(no_sanitize_address)
+/* This would work for clang, but it's deprecated. */
+#define pg_attribute_no_sanitize_address() __attribute__((no_sanitize_address))
+#else
+#define pg_attribute_no_sanitize_address()
+#endif
+
+/*
  * Place this macro before functions that should be allowed to make misaligned
  * accesses.  Think twice before using it on non-x86-specific code!
  * Testing can be done with "-fsanitize=alignment -fsanitize-trap=alignment"

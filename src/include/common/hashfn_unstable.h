@@ -213,8 +213,11 @@ fasthash_accum_cstring_unaligned(fasthash_state *hs, const char *str)
  *
  * With an aligned pointer, we consume the string a word at a time.
  * Loading the word containing the NUL terminator cannot segfault since
- * allocation boundaries are suitably aligned.
+ * allocation boundaries are suitably aligned. To keep from setting
+ * off alarms with address sanitizers, exclude this function from
+ * such testing.
  */
+pg_attribute_no_sanitize_address()
 static inline size_t
 fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 {
