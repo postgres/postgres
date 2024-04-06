@@ -561,7 +561,7 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 			ring_size_kb = 16 * 1024;
 			break;
 		case BAS_VACUUM:
-			ring_size_kb = 256;
+			ring_size_kb = 2048;
 			break;
 
 		default:
