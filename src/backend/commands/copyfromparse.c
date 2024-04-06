@@ -1206,9 +1206,6 @@ CopyReadLineText(CopyFromState cstate)
 	 * value and are put in line_buf.  We keep just enough state to know if we
 	 * are currently in a quoted field or not.
 	 *
-	 * These four characters, and the CSV escape and quote characters, are
-	 * assumed the same in frontend and backend encodings.
-	 *
 	 * The input has already been converted to the database encoding.  All
 	 * supported server encodings have the property that all bytes in a
 	 * multi-byte sequence have the high bit set, so a multibyte character
