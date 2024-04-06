@@ -475,14 +475,9 @@ BitmapPrefetch(BitmapHeapScanState *node, TableScanDesc scan)
 				 * skip this prefetch call, but continue to run the prefetch
 				 * logic normally.  (Would it be better not to increment
 				 * prefetch_pages?)
-				 *
-				 * This depends on the assumption that the index AM will
-				 * report the same recheck flag for this future heap page as
-				 * it did for the current heap page; which is not a certainty
-				 * but is true in many cases.
 				 */
 				skip_fetch = (!(scan->rs_flags & SO_NEED_TUPLES) &&
-							  (node->tbmres ? !node->tbmres->recheck : false) &&
+							  !tbmpre->recheck &&
 							  VM_ALL_VISIBLE(node->ss.ss_currentRelation,
 											 tbmpre->blockno,
 											 &node->pvmbuffer));
@@ -533,7 +528,7 @@ BitmapPrefetch(BitmapHeapScanState *node, TableScanDesc scan)
 
 				/* As above, skip prefetch if we expect not to need page */
 				skip_fetch = (!(scan->rs_flags & SO_NEED_TUPLES) &&
-							  (node->tbmres ? !node->tbmres->recheck : false) &&
+							  !tbmpre->recheck &&
 							  VM_ALL_VISIBLE(node->ss.ss_currentRelation,
 											 tbmpre->blockno,
 											 &node->pvmbuffer));
