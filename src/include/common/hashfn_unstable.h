@@ -131,9 +131,6 @@ fasthash_combine(fasthash_state *hs)
 {
 	hs->hash ^= fasthash_mix(hs->accum, 0);
 	hs->hash *= 0x880355f21e6d1965;
-
-	/* reset hash state for next input */
-	hs->accum = 0;
 }
 
 /* accumulate up to 8 bytes of input and combine it into the hash */
@@ -142,9 +139,44 @@ fasthash_accum(fasthash_state *hs, const char *k, size_t len)
 {
 	uint32		lower_four;
 
-	Assert(hs->accum == 0);
 	Assert(len <= FH_SIZEOF_ACCUM);
+	hs->accum = 0;
 
+	/*
+	 * For consistency, bytewise loads must match the platform's endianness.
+	 */
+#ifdef WORDS_BIGENDIAN
+	switch (len)
+	{
+		case 8:
+			memcpy(&hs->accum, k, 8);
+			break;
+		case 7:
+			hs->accum |= (uint64) k[6] << 8;
+			/* FALLTHROUGH */
+		case 6:
+			hs->accum |= (uint64) k[5] << 16;
+			/* FALLTHROUGH */
+		case 5:
+			hs->accum |= (uint64) k[4] << 24;
+			/* FALLTHROUGH */
+		case 4:
+			memcpy(&lower_four, k, sizeof(lower_four));
+			hs->accum |= (uint64) lower_four << 32;
+			break;
+		case 3:
+			hs->accum |= (uint64) k[2] << 40;
+			/* FALLTHROUGH */
+		case 2:
+			hs->accum |= (uint64) k[1] << 48;
+			/* FALLTHROUGH */
+		case 1:
+			hs->accum |= (uint64) k[0] << 56;
+			break;
+		case 0:
+			return;
+	}
+#else
 	switch (len)
 	{
 		case 8:
@@ -175,6 +207,7 @@ fasthash_accum(fasthash_state *hs, const char *k, size_t len)
 		case 0:
 			return;
 	}
+#endif
 
 	fasthash_combine(hs);
 }
@@ -288,7 +321,8 @@ fasthash_accum_cstring(fasthash_state *hs, const char *str)
 	if (PointerIsAligned(str, uint64))
 	{
 		len = fasthash_accum_cstring_aligned(hs, str);
-		Assert(hs_check.hash == hs->hash && len_check == len);
+		Assert(len_check == len);
+		Assert(hs_check.hash == hs->hash);
 		return len;
 	}
 #endif							/* SIZEOF_VOID_P */
