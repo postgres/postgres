@@ -57,49 +57,88 @@ use File::Basename;
 # private variables
 my ($slapd, $ldap_schema_dir, @servers);
 
-# visible variable
-our ($setup);
+# visible variables
+our ($setup, $setup_error);
 
 INIT
 {
+	# Find the OpenLDAP server binary and directory containing schema
+	# definition files.  On success, $setup is set to 1. On failure,
+	# it's set to 0, and an error message is set in $setup_error.
 	$setup = 1;
-	if ($^O eq 'darwin' && -d '/opt/homebrew/opt/openldap')
+	if ($^O eq 'darwin')
 	{
-		# typical paths for Homebrew on ARM
-		$slapd = '/opt/homebrew/opt/openldap/libexec/slapd';
-		$ldap_schema_dir = '/opt/homebrew/etc/openldap/schema';
-	}
-	elsif ($^O eq 'darwin' && -d '/usr/local/opt/openldap')
-	{
-		# typical paths for Homebrew on Intel
-		$slapd = '/usr/local/opt/openldap/libexec/slapd';
-		$ldap_schema_dir = '/usr/local/etc/openldap/schema';
-	}
-	elsif ($^O eq 'darwin' && -d '/opt/local/etc/openldap')
-	{
-		# typical paths for MacPorts
-		$slapd = '/opt/local/libexec/slapd';
-		$ldap_schema_dir = '/opt/local/etc/openldap/schema';
+		if (-d '/opt/homebrew/opt/openldap')
+		{
+			# typical paths for Homebrew on ARM
+			$slapd = '/opt/homebrew/opt/openldap/libexec/slapd';
+			$ldap_schema_dir = '/opt/homebrew/etc/openldap/schema';
+		}
+		elsif (-d '/usr/local/opt/openldap')
+		{
+			# typical paths for Homebrew on Intel
+			$slapd = '/usr/local/opt/openldap/libexec/slapd';
+			$ldap_schema_dir = '/usr/local/etc/openldap/schema';
+		}
+		elsif (-d '/opt/local/etc/openldap')
+		{
+			# typical paths for MacPorts
+			$slapd = '/opt/local/libexec/slapd';
+			$ldap_schema_dir = '/opt/local/etc/openldap/schema';
+		}
+		else
+		{
+			$setup_error = "OpenLDAP server installation not found";
+			$setup = 0;
+		}
 	}
 	elsif ($^O eq 'linux')
 	{
-		$slapd = '/usr/sbin/slapd';
-		$ldap_schema_dir = '/etc/ldap/schema' if -d '/etc/ldap/schema';
-		$ldap_schema_dir = '/etc/openldap/schema'
-		  if -d '/etc/openldap/schema';
+		if (-d '/etc/ldap/schema')
+		{
+			$slapd = '/usr/sbin/slapd';
+			$ldap_schema_dir = '/etc/ldap/schema';
+		}
+		elsif (-d '/etc/openldap/schema')
+		{
+			$slapd = '/usr/sbin/slapd';
+			$ldap_schema_dir = '/etc/openldap/schema';
+		}
+		else
+		{
+			$setup_error = "OpenLDAP server installation not found";
+			$setup = 0;
+		}
 	}
 	elsif ($^O eq 'freebsd')
 	{
-		$slapd = '/usr/local/libexec/slapd';
-		$ldap_schema_dir = '/usr/local/etc/openldap/schema';
+		if (-d '/usr/local/etc/openldap/schema')
+		{
+			$slapd = '/usr/local/libexec/slapd';
+			$ldap_schema_dir = '/usr/local/etc/openldap/schema';
+		}
+		else
+		{
+			$setup_error = "OpenLDAP server installation not found";
+			$setup = 0;
+		}
 	}
 	elsif ($^O eq 'openbsd')
 	{
-		$slapd = '/usr/local/libexec/slapd';
-		$ldap_schema_dir = '/usr/local/share/examples/openldap/schema';
+		if (-d '/usr/local/share/examples/openldap/schema')
+		{
+			$slapd = '/usr/local/libexec/slapd';
+			$ldap_schema_dir = '/usr/local/share/examples/openldap/schema';
+		}
+		else
+		{
+			$setup_error = "OpenLDAP server installation not found";
+			$setup = 0;
+		}
 	}
 	else
 	{
+		$setup_error = "ldap tests not supported on $^O";
 		$setup = 0;
 	}
 }
