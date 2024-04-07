@@ -57,7 +57,8 @@
 #define Bump_CHUNK_FRACTION	8
 
 /* The keeper block is allocated in the same allocation as the set */
-#define KeeperBlock(set) ((BumpBlock *) ((char *) (set) + sizeof(BumpContext)))
+#define KeeperBlock(set) ((BumpBlock *) ((char *) (set) + \
+			MAXALIGN(sizeof(BumpContext))))
 #define IsKeeperBlock(set, blk) (KeeperBlock(set) == (blk))
 
 typedef struct BumpBlock BumpBlock; /* forward reference */
@@ -198,7 +199,7 @@ BumpContextCreate(MemoryContext parent, const char *name, Size minContextSize,
 	dlist_init(&set->blocks);
 
 	/* Fill in the initial block's block header */
-	block = (BumpBlock *) (((char *) set) + MAXALIGN(sizeof(BumpContext)));
+	block = KeeperBlock(set);
 	/* determine the block size and initialize it */
 	firstBlockSize = allocSize - MAXALIGN(sizeof(BumpContext));
 	BumpBlockInit(set, block, firstBlockSize);
