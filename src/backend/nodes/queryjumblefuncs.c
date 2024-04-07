@@ -141,6 +141,33 @@ JumbleQuery(Query *query)
 	return jstate;
 }
 
+JumbleState *
+JumbleExpr(Expr *expr, uint64 *exprId)
+{
+	JumbleState *jstate = NULL;
+
+	Assert(exprId != NULL);
+
+	jstate = (JumbleState *) palloc(sizeof(JumbleState));
+
+	/* Set up workspace for query jumbling */
+	jstate->jumble = (unsigned char *) palloc(JUMBLE_SIZE);
+	jstate->jumble_len = 0;
+	jstate->clocations_buf_size = 32;
+	jstate->clocations = (LocationLen *)
+		palloc(jstate->clocations_buf_size * sizeof(LocationLen));
+	jstate->clocations_count = 0;
+	jstate->highest_extern_param_id = 0;
+
+	/* Compute query ID */
+	_jumbleNode(jstate, (Node *) expr);
+	*exprId = DatumGetUInt64(hash_any_extended(jstate->jumble,
+											   jstate->jumble_len,
+											   0));
+
+	return jstate;
+}
+
 /*
  * Enables query identifier computation.
  *

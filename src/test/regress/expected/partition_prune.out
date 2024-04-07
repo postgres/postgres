@@ -3,6 +3,7 @@
 --
 -- Force generic plans to be used for all prepared statements in this file.
 set plan_cache_mode = force_generic_plan;
+set or_to_any_transform_limit = 0;
 create table lp (a char) partition by list (a);
 create table lp_default partition of lp default;
 create table lp_ef partition of lp for values in ('e', 'f');
@@ -82,23 +83,23 @@ explain (costs off) select * from lp where a is null;
 (2 rows)
 
 explain (costs off) select * from lp where a = 'a' or a = 'c';
-                        QUERY PLAN                        
-----------------------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Append
    ->  Seq Scan on lp_ad lp_1
-         Filter: ((a = 'a'::bpchar) OR (a = 'c'::bpchar))
+         Filter: (a = ANY ('{a,c}'::bpchar[]))
    ->  Seq Scan on lp_bc lp_2
-         Filter: ((a = 'a'::bpchar) OR (a = 'c'::bpchar))
+         Filter: (a = ANY ('{a,c}'::bpchar[]))
 (5 rows)
 
 explain (costs off) select * from lp where a is not null and (a = 'a' or a = 'c');
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Append
    ->  Seq Scan on lp_ad lp_1
-         Filter: ((a IS NOT NULL) AND ((a = 'a'::bpchar) OR (a = 'c'::bpchar)))
+         Filter: ((a IS NOT NULL) AND (a = ANY ('{a,c}'::bpchar[])))
    ->  Seq Scan on lp_bc lp_2
-         Filter: ((a IS NOT NULL) AND ((a = 'a'::bpchar) OR (a = 'c'::bpchar)))
+         Filter: ((a IS NOT NULL) AND (a = ANY ('{a,c}'::bpchar[])))
 (5 rows)
 
 explain (costs off) select * from lp where a <> 'g';
@@ -515,10 +516,10 @@ explain (costs off) select * from rlp where a <= 31;
 (27 rows)
 
 explain (costs off) select * from rlp where a = 1 or a = 7;
-           QUERY PLAN           
---------------------------------
+                QUERY PLAN                
+------------------------------------------
  Seq Scan on rlp2 rlp
-   Filter: ((a = 1) OR (a = 7))
+   Filter: (a = ANY ('{1,7}'::integer[]))
 (2 rows)
 
 explain (costs off) select * from rlp where a = 1 or b = 'ab';
@@ -596,13 +597,13 @@ explain (costs off) select * from rlp where a < 1 or (a > 20 and a < 25);
 
 -- where clause contradicts sub-partition's constraint
 explain (costs off) select * from rlp where a = 20 or a = 40;
-               QUERY PLAN               
-----------------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Append
    ->  Seq Scan on rlp4_1 rlp_1
-         Filter: ((a = 20) OR (a = 40))
+         Filter: (a = ANY ('{20,40}'::integer[]))
    ->  Seq Scan on rlp5_default rlp_2
-         Filter: ((a = 20) OR (a = 40))
+         Filter: (a = ANY ('{20,40}'::integer[]))
 (5 rows)
 
 explain (costs off) select * from rlp3 where a = 20;   /* empty */
@@ -2072,10 +2073,10 @@ explain (costs off) select * from hp where a = 1 and b = 'abcde';
 
 explain (costs off) select * from hp where a = 1 and b = 'abcde' and
   (c = 2 or c = 3);
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Seq Scan on hp2 hp
-   Filter: ((a = 1) AND (b = 'abcde'::text) AND ((c = 2) OR (c = 3)))
+   Filter: ((c = ANY ('{2,3}'::integer[])) AND (a = 1) AND (b = 'abcde'::text))
 (2 rows)
 
 drop table hp2;

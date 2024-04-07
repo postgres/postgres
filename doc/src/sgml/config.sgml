@@ -6304,6 +6304,63 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-or-to-any-transform-limit" xreflabel="or_to_any_transform_limit">
+      <term><varname>or_to_any_transform_limit</varname> (<type>boolean</type>)
+       <indexterm>
+        <primary><varname>or_to_any_transform_limit</varname> configuration parameter</primary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the minimum length of arguments in an <literal>OR</literal>
+        expression exceeding which planner will try to lookup and group
+        multiple similar <literal>OR</literal> expressions to
+        <literal>ANY</literal> (<xref linkend="functions-comparisons-any-some"/>)
+        expressions.  The grouping technique of this transformation is based
+        on the equivalence of variable sides.  One side of such an expression
+        must be a constant clause, and the other must contain a variable
+        clause.  The default value is <literal>5</literal>.  The value of
+        <literal>-1</literal> completely disables the transformation.
+       </para>
+       <para>
+        The advantage of this <literal>OR-to-ANY</literal> transformation is
+        faster query planning and execution.  In certain cases, this
+        transformation also leads to more effective plans containing
+        a single index scan instead of multiple bitmap scans.  However, it
+        may also cause a planning regression when distinct
+        <literal>OR</literal> arguments are better to match to distinct indexes.
+        This may happen when they have different matching partial indexes or
+        have different distributions of other columns used in the query.
+        Generally, more groupable <literal>OR</literal> arguments mean that
+        transformation will be more likely to win than to lose.
+       </para>
+       <para>
+        For example, this query has its set of five <literal>OR</literal>
+        expressions transformed to <literal>ANY</literal> with the default
+        value of <varname>or_to_any_transform_limit</varname>.  But not with
+        the increased value.
+<programlisting>
+# EXPLAIN SELECT * FROM tbl WHERE key = 1 OR key = 2 OR key = 3 OR key = 4 OR key = 5;
+                     QUERY PLAN
+-----------------------------------------------------
+ Seq Scan on tbl  (cost=0.00..51.44 rows=64 width=4)
+   Filter: (key = ANY ('{1,2,3,4,5}'::integer[]))
+(2 rows)
+
+# SET or_to_any_transform_limit = 6;
+SET
+
+# EXPLAIN SELECT * FROM tbl WHERE key = 1 OR key = 2 OR key = 3 OR key = 4 OR key = 5;
+                                QUERY PLAN
+---------------------------------------------------------------------------
+ Seq Scan on tbl  (cost=0.00..67.38 rows=63 width=4)
+   Filter: ((key = 1) OR (key = 2) OR (key = 3) OR (key = 4) OR (key = 5))
+(2 rows)
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-plan-cache-mode" xreflabel="plan_cache_mode">
       <term><varname>plan_cache_mode</varname> (<type>enum</type>)
       <indexterm>
