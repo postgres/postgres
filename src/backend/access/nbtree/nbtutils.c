@@ -557,7 +557,13 @@ _bt_preprocess_array_keys_final(IndexScanDesc scan, int *keyDataMap)
 	int			last_equal_output_ikey PG_USED_FOR_ASSERTS_ONLY = -1;
 
 	Assert(so->qual_ok);
-	Assert(so->numArrayKeys);
+
+	/*
+	 * Nothing for us to do when _bt_preprocess_array_keys only had to deal
+	 * with array inequalities
+	 */
+	if (so->numArrayKeys == 0)
+		return;
 
 	for (int output_ikey = 0; output_ikey < so->numberOfKeys; output_ikey++)
 	{
