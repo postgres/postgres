@@ -951,8 +951,8 @@ sub start
 
 	if ($ret != 0)
 	{
-		print "# pg_ctl start failed; logfile:\n";
-		print PostgreSQL::Test::Utils::slurp_file($self->logfile);
+		print "# pg_ctl start failed; see logfile for details: "
+		  . $self->logfile . "\n";
 
 		# pg_ctl could have timed out, so check to see if there's a pid file;
 		# otherwise our END block will fail to shut down the new postmaster.
@@ -1090,8 +1090,8 @@ sub restart
 
 	if ($ret != 0)
 	{
-		print "# pg_ctl restart failed; logfile:\n";
-		print PostgreSQL::Test::Utils::slurp_file($self->logfile);
+		print "# pg_ctl restart failed; see logfile for details: "
+		  . $self->logfile . "\n";
 
 		# pg_ctl could have timed out, so check to see if there's a pid file;
 		# otherwise our END block will fail to shut down the new postmaster.
