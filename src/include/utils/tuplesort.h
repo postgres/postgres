@@ -98,6 +98,15 @@ typedef enum
 /* specifies if the tuplesort is able to support bounded sorts */
 #define TUPLESORT_ALLOWBOUNDED			(1 << 1)
 
+/*
+ * For bounded sort, tuples get pfree'd when they fall outside of the bound.
+ * When bounded sorts are not required, we can use a bump context for tuple
+ * allocation as there's no risk that pfree will ever be called for a tuple.
+ * Define a macro to make it easier for code to figure out if we're using a
+ * bump allocator.
+ */
+#define TupleSortUseBumpTupleCxt(opt) (((opt) & TUPLESORT_ALLOWBOUNDED) == 0)
+
 typedef struct TuplesortInstrumentation
 {
 	TuplesortMethod sortMethod; /* sort algorithm used */
@@ -109,10 +118,11 @@ typedef struct TuplesortInstrumentation
  * The objects we actually sort are SortTuple structs.  These contain
  * a pointer to the tuple proper (might be a MinimalTuple or IndexTuple),
  * which is a separate palloc chunk --- we assume it is just one chunk and
- * can be freed by a simple pfree() (except during merge, when we use a
- * simple slab allocator).  SortTuples also contain the tuple's first key
- * column in Datum/nullflag format, and a source/input tape number that
- * tracks which tape each heap element/slot belongs to during merging.
+ * can be freed by a simple pfree() (except during merge, where we use a
+ * simple slab allocator, and during a non-bounded sort where we use a bump
+ * allocator).  SortTuples also contain the tuple's first key column in
+ * Datum/nullflag format, and a source/input tape number that tracks which
+ * tape each heap element/slot belongs to during merging.
  *
  * Storing the first key column lets us save heap_getattr or index_getattr
  * calls during tuple comparisons.  We could extract and save all the key
@@ -367,7 +377,8 @@ extern Tuplesortstate *tuplesort_begin_common(int workMem,
 extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);
 extern bool tuplesort_used_bound(Tuplesortstate *state);
 extern void tuplesort_puttuple_common(Tuplesortstate *state,
-									  SortTuple *tuple, bool useAbbrev);
+									  SortTuple *tuple, bool useAbbrev,
+									  Size tuplen);
 extern void tuplesort_performsort(Tuplesortstate *state);
 extern bool tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 									  SortTuple *stup);

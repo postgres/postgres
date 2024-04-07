@@ -191,6 +191,11 @@ struct Tuplesortstate
 								 * tuples to return? */
 	bool		boundUsed;		/* true if we made use of a bounded heap */
 	int			bound;			/* if bounded, the maximum number of tuples */
+	int64		tupleMem;		/* memory consumed by individual tuples.
+								 * storing this separately from what we track
+								 * in availMem allows us to subtract the
+								 * memory consumed by all tuples when dumping
+								 * tuples to tape */
 	int64		availMem;		/* remaining memory available, in bytes */
 	int64		allowedMem;		/* total memory allowed, in bytes */
 	int			maxTapes;		/* max number of input tapes to merge in each
@@ -764,18 +769,18 @@ tuplesort_begin_batch(Tuplesortstate *state)
 	 * in the parent context, not this context, because there is no need to
 	 * free memtuples early.  For bounded sorts, tuples may be pfreed in any
 	 * order, so we use a regular aset.c context so that it can make use of
-	 * free'd memory.  When the sort is not bounded, we make use of a
-	 * generation.c context as this keeps allocations more compact with less
-	 * wastage.  Allocations are also slightly more CPU efficient.
+	 * free'd memory.  When the sort is not bounded, we make use of a bump.c
+	 * context as this keeps allocations more compact with less wastage.
+	 * Allocations are also slightly more CPU efficient.
 	 */
-	if (state->base.sortopt & TUPLESORT_ALLOWBOUNDED)
+	if (TupleSortUseBumpTupleCxt(state->base.sortopt))
+		state->base.tuplecontext = BumpContextCreate(state->base.sortcontext,
+													 "Caller tuples",
+													 ALLOCSET_DEFAULT_SIZES);
+	else
 		state->base.tuplecontext = AllocSetContextCreate(state->base.sortcontext,
 														 "Caller tuples",
 														 ALLOCSET_DEFAULT_SIZES);
-	else
-		state->base.tuplecontext = GenerationContextCreate(state->base.sortcontext,
-														   "Caller tuples",
-														   ALLOCSET_DEFAULT_SIZES);
 
 
 	state->status = TSS_INITIAL;
@@ -1181,15 +1186,16 @@ noalloc:
  * Shared code for tuple and datum cases.
  */
 void
-tuplesort_puttuple_common(Tuplesortstate *state, SortTuple *tuple, bool useAbbrev)
+tuplesort_puttuple_common(Tuplesortstate *state, SortTuple *tuple,
+						  bool useAbbrev, Size tuplen)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->base.sortcontext);
 
 	Assert(!LEADER(state));
 
-	/* Count the size of the out-of-line data */
-	if (tuple->tuple != NULL)
-		USEMEM(state, GetMemoryChunkSpace(tuple->tuple));
+	/* account for the memory used for this tuple */
+	USEMEM(state, tuplen);
+	state->tupleMem += tuplen;
 
 	if (!useAbbrev)
 	{
@@ -2397,13 +2403,6 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 		SortTuple  *stup = &state->memtuples[i];
 
 		WRITETUP(state, state->destTape, stup);
-
-		/*
-		 * Account for freeing the tuple, but no need to do the actual pfree
-		 * since the tuplecontext is being reset after the loop.
-		 */
-		if (stup->tuple != NULL)
-			FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
 	}
 
 	state->memtupcount = 0;
@@ -2411,11 +2410,18 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 	/*
 	 * Reset tuple memory.  We've freed all of the tuples that we previously
 	 * allocated.  It's important to avoid fragmentation when there is a stark
-	 * change in the sizes of incoming tuples.  Fragmentation due to
-	 * AllocSetFree's bucketing by size class might be particularly bad if
-	 * this step wasn't taken.
+	 * change in the sizes of incoming tuples.  In bounded sorts,
+	 * fragmentation due to AllocSetFree's bucketing by size class might be
+	 * particularly bad if this step wasn't taken.
 	 */
 	MemoryContextReset(state->base.tuplecontext);
+
+	/*
+	 * Now update the memory accounting to subtract the memory used by the
+	 * tuple.
+	 */
+	FREEMEM(state, state->tupleMem);
+	state->tupleMem = 0;
 
 	markrunend(state->destTape);
 
