@@ -365,6 +365,56 @@ heap_setscanlimits(TableScanDesc sscan, BlockNumber startBlk, BlockNumber numBlk
 }
 
 /*
+ * Per-tuple loop for heapgetpage() in pagemode. Pulled out so it can be
+ * called multiple times, with constant arguments for all_visible,
+ * check_serializable.
+ */
+pg_attribute_always_inline
+static int
+heapgetpage_collect(HeapScanDesc scan, Snapshot snapshot,
+					Page page, Buffer buffer,
+					BlockNumber block, int lines,
+					bool all_visible, bool check_serializable)
+{
+	int			ntup = 0;
+	OffsetNumber lineoff;
+
+	for (lineoff = FirstOffsetNumber; lineoff <= lines; lineoff++)
+	{
+		ItemId		lpp = PageGetItemId(page, lineoff);
+		HeapTupleData loctup;
+		bool		valid;
+
+		if (!ItemIdIsNormal(lpp))
+			continue;
+
+		loctup.t_data = (HeapTupleHeader) PageGetItem(page, lpp);
+		loctup.t_len = ItemIdGetLength(lpp);
+		loctup.t_tableOid = RelationGetRelid(scan->rs_base.rs_rd);
+		ItemPointerSet(&(loctup.t_self), block, lineoff);
+
+		if (all_visible)
+			valid = true;
+		else
+			valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
+
+		if (check_serializable)
+			HeapCheckForSerializableConflictOut(valid, scan->rs_base.rs_rd,
+												&loctup, buffer, snapshot);
+
+		if (valid)
+		{
+			scan->rs_vistuples[ntup] = lineoff;
+			ntup++;
+		}
+	}
+
+	Assert(ntup <= MaxHeapTuplesPerPage);
+
+	return ntup;
+}
+
+/*
  * heap_prepare_pagescan - Prepare current scan page to be scanned in pagemode
  *
  * Preparation currently consists of 1. prune the scan's rs_cbuf page, and 2.
@@ -379,9 +429,8 @@ heap_prepare_pagescan(TableScanDesc sscan)
 	Snapshot	snapshot;
 	Page		page;
 	int			lines;
-	int			ntup;
-	OffsetNumber lineoff;
 	bool		all_visible;
+	bool		check_serializable;
 
 	Assert(BufferGetBlockNumber(buffer) == block);
 
@@ -403,7 +452,6 @@ heap_prepare_pagescan(TableScanDesc sscan)
 
 	page = BufferGetPage(buffer);
 	lines = PageGetMaxOffsetNumber(page);
-	ntup = 0;
 
 	/*
 	 * If the all-visible flag indicates that all tuples on the page are
@@ -426,37 +474,35 @@ heap_prepare_pagescan(TableScanDesc sscan)
 	 * tuple for visibility the hard way.
 	 */
 	all_visible = PageIsAllVisible(page) && !snapshot->takenDuringRecovery;
+	check_serializable =
+		CheckForSerializableConflictOutNeeded(scan->rs_base.rs_rd, snapshot);
 
-	for (lineoff = FirstOffsetNumber; lineoff <= lines; lineoff++)
+	/*
+	 * We call heapgetpage_collect() with constant arguments, to get the
+	 * compiler to constant fold the constant arguments. Separate calls with
+	 * constant arguments, rather than variables, are needed on several
+	 * compilers to actually perform constant folding.
+	 */
+	if (likely(all_visible))
 	{
-		ItemId		lpp = PageGetItemId(page, lineoff);
-		HeapTupleData loctup;
-		bool		valid;
-
-		if (!ItemIdIsNormal(lpp))
-			continue;
-
-		loctup.t_tableOid = RelationGetRelid(scan->rs_base.rs_rd);
-		loctup.t_data = (HeapTupleHeader) PageGetItem(page, lpp);
-		loctup.t_len = ItemIdGetLength(lpp);
-		ItemPointerSet(&(loctup.t_self), block, lineoff);
-
-		if (all_visible)
-			valid = true;
+		if (likely(!check_serializable))
+			scan->rs_ntuples = heapgetpage_collect(scan, snapshot, page, buffer,
+												   block, lines, true, false);
 		else
-			valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
-
-		HeapCheckForSerializableConflictOut(valid, scan->rs_base.rs_rd,
-											&loctup, buffer, snapshot);
-
-		if (valid)
-			scan->rs_vistuples[ntup++] = lineoff;
+			scan->rs_ntuples = heapgetpage_collect(scan, snapshot, page, buffer,
+												   block, lines, true, true);
+	}
+	else
+	{
+		if (likely(!check_serializable))
+			scan->rs_ntuples = heapgetpage_collect(scan, snapshot, page, buffer,
+												   block, lines, false, false);
+		else
+			scan->rs_ntuples = heapgetpage_collect(scan, snapshot, page, buffer,
+												   block, lines, false, true);
 	}
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-
-	Assert(ntup <= MaxHeapTuplesPerPage);
-	scan->rs_ntuples = ntup;
 }
 
 /*
