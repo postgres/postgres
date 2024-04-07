@@ -104,21 +104,29 @@ extern Size AlignedAllocGetChunkSpace(void *pointer);
  */
 typedef enum MemoryContextMethodID
 {
-	MCTX_UNUSED1_ID,			/* 000 occurs in never-used memory */
-	MCTX_UNUSED2_ID,			/* glibc malloc'd chunks usually match 001 */
-	MCTX_UNUSED3_ID,			/* glibc malloc'd chunks > 128kB match 010 */
+	MCTX_0_RESERVED_UNUSEDMEM_ID,	/* 0000 occurs in never-used memory */
+	MCTX_1_RESERVED_GLIBC_ID,	/* glibc malloc'd chunks usually match 0001 */
+	MCTX_2_RESERVED_GLIBC_ID,	/* glibc malloc'd chunks > 128kB match 0010 */
 	MCTX_ASET_ID,
 	MCTX_GENERATION_ID,
 	MCTX_SLAB_ID,
 	MCTX_ALIGNED_REDIRECT_ID,
-	MCTX_UNUSED4_ID,			/* 111 occurs in wipe_mem'd memory */
+	MCTX_7_UNUSED_ID,
+	MCTX_8_UNUSED_ID,
+	MCTX_9_UNUSED_ID,
+	MCTX_10_UNUSED_ID,
+	MCTX_11_UNUSED_ID,
+	MCTX_12_UNUSED_ID,
+	MCTX_13_UNUSED_ID,
+	MCTX_14_UNUSED_ID,
+	MCTX_15_RESERVED_WIPEDMEM_ID	/* 1111 occurs in wipe_mem'd memory */
 } MemoryContextMethodID;
 
 /*
  * The number of bits that 8-byte memory chunk headers can use to encode the
  * MemoryContextMethodID.
  */
-#define MEMORY_CONTEXT_METHODID_BITS 3
+#define MEMORY_CONTEXT_METHODID_BITS 4
 #define MEMORY_CONTEXT_METHODID_MASK \
 	((((uint64) 1) << MEMORY_CONTEXT_METHODID_BITS) - 1)
 

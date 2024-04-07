@@ -12,7 +12,7 @@
  * Although MemoryChunks are used by each of our MemoryContexts, future
  * implementations may choose to implement their own method for storing chunk
  * headers.  The only requirement is that the header ends with an 8-byte value
- * which the least significant 3-bits of are set to the MemoryContextMethodID
+ * which the least significant 4-bits of are set to the MemoryContextMethodID
  * of the given context.
  *
  * By default, a MemoryChunk is 8 bytes in size, however, when
@@ -25,14 +25,22 @@
  * used to encode 4 separate pieces of information.  Starting with the least
  * significant bits of 'hdrmask', the bit space is reserved as follows:
  *
- * 1.	3-bits to indicate the MemoryContextMethodID as defined by
+ * 1.	4-bits to indicate the MemoryContextMethodID as defined by
  *		MEMORY_CONTEXT_METHODID_MASK
  * 2.	1-bit to denote an "external" chunk (see below)
  * 3.	30-bits reserved for the MemoryContext to use for anything it
- *		requires.  Most MemoryContext likely want to store the size of the
+ *		requires.  Most MemoryContexts likely want to store the size of the
  *		chunk here.
  * 4.	30-bits for the number of bytes that must be subtracted from the chunk
  *		to obtain the address of the block that the chunk is stored on.
+ *
+ * If you're paying close attention, you'll notice this adds up to 65 bits
+ * rather than 64 bits.  This is because the highest-order bit of #3 is the
+ * same bit as the lowest-order bit of #4.  We can do this as we insist that
+ * the chunk and block pointers are both MAXALIGNed, therefore the relative
+ * offset between those will always be a MAXALIGNed value which means the
+ * lowest order bit is always 0.  When fetching the chunk to block offset we
+ * mask out the lowest-order bit to ensure it's still zero.
  *
  * In some cases, for example when memory allocations become large, it's
  * possible fields 3 and 4 above are not large enough to store the values
@@ -93,10 +101,16 @@
  */
 #define MEMORYCHUNK_MAX_BLOCKOFFSET		UINT64CONST(0x3FFFFFFF)
 
+/*
+ * As above, but mask out the lowest-order (always zero) bit as this is shared
+ * with the MemoryChunkGetValue field.
+ */
+#define MEMORYCHUNK_BLOCKOFFSET_MASK 	UINT64CONST(0x3FFFFFFE)
+
 /* define the least significant base-0 bit of each portion of the hdrmask */
 #define MEMORYCHUNK_EXTERNAL_BASEBIT	MEMORY_CONTEXT_METHODID_BITS
 #define MEMORYCHUNK_VALUE_BASEBIT		(MEMORYCHUNK_EXTERNAL_BASEBIT + 1)
-#define MEMORYCHUNK_BLOCKOFFSET_BASEBIT	(MEMORYCHUNK_VALUE_BASEBIT + 30)
+#define MEMORYCHUNK_BLOCKOFFSET_BASEBIT	(MEMORYCHUNK_VALUE_BASEBIT + 29)
 
 /*
  * A magic number for storing in the free bits of an external chunk.  This
@@ -131,11 +145,11 @@ typedef struct MemoryChunk
 	(((hdrmask) >> MEMORYCHUNK_VALUE_BASEBIT) & MEMORYCHUNK_MAX_VALUE)
 
 /*
- * We should have used up all the bits here, so the compiler is likely to
- * optimize out the & MEMORYCHUNK_MAX_BLOCKOFFSET.
+ * Shift the block offset down to the 0th bit position and mask off the single
+ * bit that's shared with the MemoryChunkGetValue field.
  */
 #define HdrMaskBlockOffset(hdrmask) \
-	(((hdrmask) >> MEMORYCHUNK_BLOCKOFFSET_BASEBIT) & MEMORYCHUNK_MAX_BLOCKOFFSET)
+	(((hdrmask) >> MEMORYCHUNK_BLOCKOFFSET_BASEBIT) & MEMORYCHUNK_BLOCKOFFSET_MASK)
 
 /* For external chunks only, check the magic number matches */
 #define HdrMaskCheckMagic(hdrmask) \
@@ -149,6 +163,7 @@ typedef struct MemoryChunk
  * The number of bytes between 'block' and 'chunk' must be <=
  * MEMORYCHUNK_MAX_BLOCKOFFSET.
  * 'value' must be <= MEMORYCHUNK_MAX_VALUE.
+ * Both 'chunk' and 'block' must be MAXALIGNed pointers.
  */
 static inline void
 MemoryChunkSetHdrMask(MemoryChunk *chunk, void *block,
@@ -157,7 +172,7 @@ MemoryChunkSetHdrMask(MemoryChunk *chunk, void *block,
 	Size		blockoffset = (char *) chunk - (char *) block;
 
 	Assert((char *) chunk >= (char *) block);
-	Assert(blockoffset <= MEMORYCHUNK_MAX_BLOCKOFFSET);
+	Assert((blockoffset & MEMORYCHUNK_BLOCKOFFSET_MASK) == blockoffset);
 	Assert(value <= MEMORYCHUNK_MAX_VALUE);
 	Assert((int) methodid <= MEMORY_CONTEXT_METHODID_MASK);
 
@@ -225,6 +240,7 @@ MemoryChunkGetBlock(MemoryChunk *chunk)
 }
 
 /* cleanup all internal definitions */
+#undef MEMORYCHUNK_BLOCKOFFSET_MASK
 #undef MEMORYCHUNK_EXTERNAL_BASEBIT
 #undef MEMORYCHUNK_VALUE_BASEBIT
 #undef MEMORYCHUNK_BLOCKOFFSET_BASEBIT

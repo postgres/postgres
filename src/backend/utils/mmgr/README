@@ -395,14 +395,14 @@ relevant MemoryContext as a parameter, operations like free and
 realloc are trickier.  To make those work, we require all memory
 context types to produce allocated chunks that are immediately,
 without any padding, preceded by a uint64 value of which the least
-significant 3 bits are set to the owning context's MemoryContextMethodID.
+significant 4 bits are set to the owning context's MemoryContextMethodID.
 This allows the code to determine the correct MemoryContextMethods to
-use by looking up the mcxt_methods[] array using the 3 bits as an index
+use by looking up the mcxt_methods[] array using the 4 bits as an index
 into that array.
 
 If a type of allocator needs additional information about its chunks,
 like e.g. the size of the allocation, that information can in turn
-either be encoded into the remaining 61 bits of the preceding uint64 value
+either be encoded into the remaining 60 bits of the preceding uint64 value
 or if more space is required, additional values may be stored directly prior
 to the uint64 value.  It is up to the context implementation to manage this.
 
@@ -420,13 +420,20 @@ pfree(void *pointer)
 
 All of the current memory contexts make use of the MemoryChunk header type
 which is defined in memutils_memorychunk.h.  This suits all of the existing
-context types well as it makes use of the remaining 61-bits of the uint64
+context types well as it makes use of the remaining 60-bits of the uint64
 header to efficiently encode the size of the chunk of memory (or freelist
 index, in the case of aset.c) and the number of bytes which must be subtracted
 from the chunk in order to obtain a reference to the block that the chunk
-belongs to.  30 bits are used for each of these.  If more than 30 bits are
-required then the memory context must manage that itself.  This can be done by
-calling the MemoryChunkSetHdrMaskExternal() function on the given chunk.
+belongs to.  30 bits are used for each of these, but only a total of 59 bits
+as the lowest bit for the chunk to block offset is the same bit as the highest
+bit of the chunk size.  This overlapping is possible as the relative offset
+between the block and the chunk is expected to be a MAXALIGNed value which
+guarantees the lowest bit is always 0.  If more than 30 bits are required for
+each of these fields then the memory context must manage that itself.  This
+can be done by calling the MemoryChunkSetHdrMaskExternal() function on the
+given chunk.  Whether a chunk is an external chunk can be determined by the 1
+remaining bit from the 64-bit MemoryChunk.
+
 Currently, each memory context type stores large allocations on dedicated
 blocks (which always contain only a single chunk).  For these, finding the
 block is simple as we know that the chunk must be the first on the given

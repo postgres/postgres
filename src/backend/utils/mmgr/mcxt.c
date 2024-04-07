@@ -37,6 +37,11 @@ static Size BogusGetChunkSpace(void *pointer);
 /*****************************************************************************
  *	  GLOBAL MEMORY															 *
  *****************************************************************************/
+#define BOGUS_MCTX(id) \
+	[id].free_p = BogusFree, \
+	[id].realloc = BogusRealloc, \
+	[id].get_chunk_context = BogusGetChunkContext, \
+	[id].get_chunk_space = BogusGetChunkSpace
 
 static const MemoryContextMethods mcxt_methods[] = {
 	/* aset.c */
@@ -97,32 +102,26 @@ static const MemoryContextMethods mcxt_methods[] = {
 
 
 	/*
-	 * Unused (as yet) IDs should have dummy entries here.  This allows us to
-	 * fail cleanly if a bogus pointer is passed to pfree or the like.  It
+	 * Reserved and unused IDs should have dummy entries here.  This allows us
+	 * to fail cleanly if a bogus pointer is passed to pfree or the like.  It
 	 * seems sufficient to provide routines for the methods that might get
 	 * invoked from inspection of a chunk (see MCXT_METHOD calls below).
 	 */
-
-	[MCTX_UNUSED1_ID].free_p = BogusFree,
-	[MCTX_UNUSED1_ID].realloc = BogusRealloc,
-	[MCTX_UNUSED1_ID].get_chunk_context = BogusGetChunkContext,
-	[MCTX_UNUSED1_ID].get_chunk_space = BogusGetChunkSpace,
-
-	[MCTX_UNUSED2_ID].free_p = BogusFree,
-	[MCTX_UNUSED2_ID].realloc = BogusRealloc,
-	[MCTX_UNUSED2_ID].get_chunk_context = BogusGetChunkContext,
-	[MCTX_UNUSED2_ID].get_chunk_space = BogusGetChunkSpace,
-
-	[MCTX_UNUSED3_ID].free_p = BogusFree,
-	[MCTX_UNUSED3_ID].realloc = BogusRealloc,
-	[MCTX_UNUSED3_ID].get_chunk_context = BogusGetChunkContext,
-	[MCTX_UNUSED3_ID].get_chunk_space = BogusGetChunkSpace,
-
-	[MCTX_UNUSED4_ID].free_p = BogusFree,
-	[MCTX_UNUSED4_ID].realloc = BogusRealloc,
-	[MCTX_UNUSED4_ID].get_chunk_context = BogusGetChunkContext,
-	[MCTX_UNUSED4_ID].get_chunk_space = BogusGetChunkSpace,
+	BOGUS_MCTX(MCTX_1_RESERVED_GLIBC_ID),
+	BOGUS_MCTX(MCTX_2_RESERVED_GLIBC_ID),
+	BOGUS_MCTX(MCTX_7_UNUSED_ID),
+	BOGUS_MCTX(MCTX_8_UNUSED_ID),
+	BOGUS_MCTX(MCTX_9_UNUSED_ID),
+	BOGUS_MCTX(MCTX_10_UNUSED_ID),
+	BOGUS_MCTX(MCTX_11_UNUSED_ID),
+	BOGUS_MCTX(MCTX_12_UNUSED_ID),
+	BOGUS_MCTX(MCTX_13_UNUSED_ID),
+	BOGUS_MCTX(MCTX_14_UNUSED_ID),
+	BOGUS_MCTX(MCTX_0_RESERVED_UNUSEDMEM_ID),
+	BOGUS_MCTX(MCTX_15_RESERVED_WIPEDMEM_ID)
 };
+
+#undef BOGUS_MCTX
 
 /*
  * CurrentMemoryContext
