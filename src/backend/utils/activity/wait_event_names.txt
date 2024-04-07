@@ -139,6 +139,7 @@ MESSAGE_QUEUE_INTERNAL	"Waiting for another process to be attached to a shared m
 MESSAGE_QUEUE_PUT_MESSAGE	"Waiting to write a protocol message to a shared message queue."
 MESSAGE_QUEUE_RECEIVE	"Waiting to receive bytes from a shared message queue."
 MESSAGE_QUEUE_SEND	"Waiting to send bytes to a shared message queue."
+MULTIXACT_CREATION	"Waiting for a multixact creation to complete."
 PARALLEL_BITMAP_SCAN	"Waiting for parallel bitmap scan to become initialized."
 PARALLEL_CREATE_INDEX_SCAN	"Waiting for parallel <command>CREATE INDEX</command> workers to finish heap scan."
 PARALLEL_FINISH	"Waiting for parallel workers to finish computing."

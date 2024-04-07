@@ -82,6 +82,7 @@
 #include "lib/ilist.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+#include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
@@ -231,6 +232,12 @@ typedef struct MultiXactStateData
 
 	/* support for members anti-wraparound measures */
 	MultiXactOffset offsetStopLimit;	/* known if oldestOffsetKnown */
+
+	/*
+	 * This is used to sleep until a multixact offset is written when we want
+	 * to create the next one.
+	 */
+	ConditionVariable nextoff_cv;
 
 	/*
 	 * Per-backend data starts here.  We have two arrays stored in the area
@@ -895,6 +902,12 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
 	/* Release MultiXactOffset SLRU lock. */
 	LWLockRelease(lock);
 
+	/*
+	 * If anybody was waiting to know the offset of this multixact ID we just
+	 * wrote, they can read it now, so wake them up.
+	 */
+	ConditionVariableBroadcast(&MultiXactState->nextoff_cv);
+
 	prev_pageno = -1;
 
 	for (i = 0; i < nmembers; i++, offset++)
@@ -1253,6 +1266,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	MultiXactOffset nextOffset;
 	MultiXactMember *ptr;
 	LWLock	   *lock;
+	bool		slept = false;
 
 	debug_elog3(DEBUG2, "GetMembers: asked for %u", multi);
 
@@ -1340,7 +1354,9 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 * (because we are careful to pre-zero offset pages). Because
 	 * GetNewMultiXactId will never return zero as the starting offset for a
 	 * multixact, when we read zero as the next multixact's offset, we know we
-	 * have this case.  We sleep for a bit and try again.
+	 * have this case.  We handle this by sleeping on the condition variable
+	 * we have just for this; the process in charge will signal the CV as soon
+	 * as it has finished writing the multixact offset.
 	 *
 	 * 3. Because GetNewMultiXactId increments offset zero to offset one to
 	 * handle case #2, there is an ambiguity near the point of offset
@@ -1422,7 +1438,10 @@ retry:
 			/* Corner case 2: next multixact is still being filled in */
 			LWLockRelease(lock);
 			CHECK_FOR_INTERRUPTS();
-			pg_usleep(1000L);
+
+			ConditionVariableSleep(&MultiXactState->nextoff_cv,
+								   WAIT_EVENT_MULTIXACT_CREATION);
+			slept = true;
 			goto retry;
 		}
 
@@ -1431,6 +1450,12 @@ retry:
 
 	LWLockRelease(lock);
 	lock = NULL;
+
+	/*
+	 * If we slept above, clean up state; it's no longer needed.
+	 */
+	if (slept)
+		ConditionVariableCancelSleep();
 
 	ptr = (MultiXactMember *) palloc(length * sizeof(MultiXactMember));
 
@@ -1921,6 +1946,7 @@ MultiXactShmemInit(void)
 
 		/* Make sure we zero out the per-backend state */
 		MemSet(MultiXactState, 0, SHARED_MULTIXACT_STATE_SIZE);
+		ConditionVariableInit(&MultiXactState->nextoff_cv);
 	}
 	else
 		Assert(found);
