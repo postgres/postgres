@@ -441,7 +441,45 @@ COMMIT;
    <literal>c_films</literal> is currently positioned:
 <programlisting>
 UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;
-</programlisting></para>
+</programlisting>
+  </para>
+
+  <para id="update-limit">
+   Updates affecting many rows can have negative effects on system
+   performance, such as table bloat, increased replica lag, and increased
+   lock contention.  In such situations it can make sense to perform the
+   operation in smaller batches, possibly with a <command>VACUUM</command>
+   operation on the table between batches.  While there is
+   no <literal>LIMIT</literal> clause for <command>UPDATE</command>, it is
+   possible to get a similar effect through the use of
+   a <link linkend="queries-with">Common Table Expression</link> and a
+   self-join.  With the standard <productname>PostgreSQL</productname>
+   table access method, a self-join on the system
+   column <link linkend="ddl-system-columns-ctid">ctid</link> is very
+   efficient:
+<programlisting>
+WITH exceeded_max_retries AS (
+  SELECT w.ctid FROM work_item AS w
+    WHERE w.status = 'active' AND w.num_retries &gt; 10
+    ORDER BY w.retry_timestamp
+    FOR UPDATE
+    LIMIT 5000
+)
+UPDATE work_item SET status = 'failed'
+  FROM exceeded_max_retries AS emr
+  WHERE work_item.ctid = emr.ctid;
+</programlisting>
+   This command will need to be repeated until no rows remain to be updated.
+   Use of an <literal>ORDER BY</literal> clause allows the command to
+   prioritize which rows will be updated; it can also prevent deadlock
+   with other update operations if they use the same ordering.
+   If lock contention is a concern, then <literal>SKIP LOCKED</literal>
+   can be added to the <acronym>CTE</acronym> to prevent multiple commands
+   from updating the same row.  However, then a
+   final <command>UPDATE</command> without <literal>SKIP LOCKED</literal>
+   or <literal>LIMIT</literal> will be needed to ensure that no matching
+   rows were overlooked.
+  </para>
  </refsect1>
 
  <refsect1>

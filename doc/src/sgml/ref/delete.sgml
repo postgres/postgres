@@ -260,12 +260,32 @@ DELETE FROM tasks WHERE status = 'DONE' RETURNING *;
 </programlisting>
   </para>
 
-   <para>
+  <para>
    Delete the row of <structname>tasks</structname> on which the cursor
    <literal>c_tasks</literal> is currently positioned:
 <programlisting>
 DELETE FROM tasks WHERE CURRENT OF c_tasks;
-</programlisting></para>
+</programlisting>
+  </para>
+
+  <para>
+   While there is no <literal>LIMIT</literal> clause
+   for <command>DELETE</command>, it is possible to get a similar effect
+   using the same method described in <link linkend="update-limit">the
+   documentation of <command>UPDATE</command></link>:
+<programlisting>
+WITH delete_batch AS (
+  SELECT l.ctid FROM user_logs AS l
+    WHERE l.status = 'archived'
+    ORDER BY l.creation_date
+    FOR UPDATE
+    LIMIT 10000
+)
+DELETE FROM user_logs AS dl
+  USING delete_batch AS del
+  WHERE dl.ctid = del.ctid;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>
