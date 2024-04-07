@@ -79,6 +79,22 @@ extern void *AlignedAllocRealloc(void *pointer, Size size, int flags);
 extern MemoryContext AlignedAllocGetChunkContext(void *pointer);
 extern Size AlignedAllocGetChunkSpace(void *pointer);
 
+ /* These functions implement the MemoryContext API for the Bump context. */
+extern void *BumpAlloc(MemoryContext context, Size size, int flags);
+extern void BumpFree(void *pointer);
+extern void *BumpRealloc(void *pointer, Size size, int flags);
+extern void BumpReset(MemoryContext context);
+extern void BumpDelete(MemoryContext context);
+extern MemoryContext BumpGetChunkContext(void *pointer);
+extern Size BumpGetChunkSpace(void *pointer);
+extern bool BumpIsEmpty(MemoryContext context);
+extern void BumpStats(MemoryContext context, MemoryStatsPrintFunc printfunc,
+					  void *passthru, MemoryContextCounters *totals,
+					  bool print_to_stderr);
+#ifdef MEMORY_CONTEXT_CHECKING
+extern void BumpCheck(MemoryContext context);
+#endif
+
 /*
  * How many extra bytes do we need to request in order to ensure that we can
  * align a pointer to 'alignto'.  Since palloc'd pointers are already aligned
@@ -111,7 +127,7 @@ typedef enum MemoryContextMethodID
 	MCTX_GENERATION_ID,
 	MCTX_SLAB_ID,
 	MCTX_ALIGNED_REDIRECT_ID,
-	MCTX_7_UNUSED_ID,
+	MCTX_BUMP_ID,
 	MCTX_8_UNUSED_ID,
 	MCTX_9_UNUSED_ID,
 	MCTX_10_UNUSED_ID,

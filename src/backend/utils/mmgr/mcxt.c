@@ -100,6 +100,20 @@ static const MemoryContextMethods mcxt_methods[] = {
 	[MCTX_ALIGNED_REDIRECT_ID].check = NULL,	/* not required */
 #endif
 
+	/* bump.c */
+	[MCTX_BUMP_ID].alloc = BumpAlloc,
+	[MCTX_BUMP_ID].free_p = BumpFree,
+	[MCTX_BUMP_ID].realloc = BumpRealloc,
+	[MCTX_BUMP_ID].reset = BumpReset,
+	[MCTX_BUMP_ID].delete_context = BumpDelete,
+	[MCTX_BUMP_ID].get_chunk_context = BumpGetChunkContext,
+	[MCTX_BUMP_ID].get_chunk_space = BumpGetChunkSpace,
+	[MCTX_BUMP_ID].is_empty = BumpIsEmpty,
+	[MCTX_BUMP_ID].stats = BumpStats,
+#ifdef MEMORY_CONTEXT_CHECKING
+	[MCTX_BUMP_ID].check = BumpCheck,
+#endif
+
 
 	/*
 	 * Reserved and unused IDs should have dummy entries here.  This allows us
@@ -109,7 +123,6 @@ static const MemoryContextMethods mcxt_methods[] = {
 	 */
 	BOGUS_MCTX(MCTX_1_RESERVED_GLIBC_ID),
 	BOGUS_MCTX(MCTX_2_RESERVED_GLIBC_ID),
-	BOGUS_MCTX(MCTX_7_UNUSED_ID),
 	BOGUS_MCTX(MCTX_8_UNUSED_ID),
 	BOGUS_MCTX(MCTX_9_UNUSED_ID),
 	BOGUS_MCTX(MCTX_10_UNUSED_ID),

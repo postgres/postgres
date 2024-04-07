@@ -143,6 +143,13 @@ extern MemoryContext GenerationContextCreate(MemoryContext parent,
 											 Size initBlockSize,
 											 Size maxBlockSize);
 
+/* bump.c */
+extern MemoryContext BumpContextCreate(MemoryContext parent,
+									   const char *name,
+									   Size minContextSize,
+									   Size initBlockSize,
+									   Size maxBlockSize);
+
 /*
  * Recommended default alloc parameters, suitable for "ordinary" contexts
  * that might hold quite a lot of data.

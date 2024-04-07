@@ -337,6 +337,8 @@ BulkInsertState
 BulkInsertStateData
 BulkWriteBuffer
 BulkWriteState
+BumpBlock
+BumpContext
 CACHESIGN
 CAC_state
 CCFastEqualFN
