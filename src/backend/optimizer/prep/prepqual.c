@@ -578,10 +578,11 @@ transform_or_to_any(List *orlist)
 			HeapTuple	opertup;
 			Form_pg_operator operform;
 			List	   *namelist = NIL;
+			ListCell   *lc2;
 
-			foreach(lc, entry->consts)
+			foreach(lc2, entry->consts)
 			{
-				Node	   *node = (Node *) lfirst(lc);
+				Node	   *node = (Node *) lfirst(lc2);
 
 				node = coerce_to_common_type(NULL, node, scalar_type,
 											 "OR ANY Transformation");
