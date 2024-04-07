@@ -161,7 +161,7 @@ psql_like(
 	'\errverbose with no previous error');
 
 # There are three main ways to run a query that might affect
-# \errverbose: The normal way, using a cursor by setting FETCH_COUNT,
+# \errverbose: The normal way, piecemeal retrieval using FETCH_COUNT,
 # and using \gdesc.  Test them all.
 
 like(
@@ -184,10 +184,10 @@ like(
 			"\\set FETCH_COUNT 1\nSELECT error;\n\\errverbose",
 			on_error_stop => 0))[2],
 	qr/\A^psql:<stdin>:2: ERROR:  .*$
-^LINE 2: SELECT error;$
+^LINE 1: SELECT error;$
 ^ *^.*$
 ^psql:<stdin>:3: error: ERROR:  [0-9A-Z]{5}: .*$
-^LINE 2: SELECT error;$
+^LINE 1: SELECT error;$
 ^ *^.*$
 ^LOCATION: .*$/m,
 	'\errverbose after FETCH_COUNT query with error');
