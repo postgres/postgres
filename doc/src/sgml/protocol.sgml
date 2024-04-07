@@ -3141,6 +3141,13 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
     </varlistentry>
    </variablelist>
   </para>
+
+  <para>
+   In all the above commands,
+   when specifying a parameter of type <type>boolean</type> the
+   <replaceable class="parameter">value</replaceable> part can be omitted,
+   which is equivalent to specifying <literal>TRUE</literal>.
+  </para>
  </sect1>
 
 <sect1 id="protocol-logical-replication">
