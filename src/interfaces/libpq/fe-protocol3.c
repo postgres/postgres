@@ -379,7 +379,8 @@ pqParseInput3(PGconn *conn)
 					break;
 				case PqMsg_DataRow:
 					if (conn->result != NULL &&
-						conn->result->resultStatus == PGRES_TUPLES_OK)
+						(conn->result->resultStatus == PGRES_TUPLES_OK ||
+						 conn->result->resultStatus == PGRES_TUPLES_CHUNK))
 					{
 						/* Read another tuple of a normal query response */
 						if (getAnotherTuple(conn, msgLength))

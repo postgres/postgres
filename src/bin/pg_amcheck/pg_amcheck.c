@@ -991,6 +991,7 @@ should_processing_continue(PGresult *res)
 		case PGRES_SINGLE_TUPLE:
 		case PGRES_PIPELINE_SYNC:
 		case PGRES_PIPELINE_ABORTED:
+		case PGRES_TUPLES_CHUNK:
 			return false;
 	}
 	return true;

@@ -3588,6 +3588,20 @@ ExecStatusType PQresultStatus(const PGresult *res);
           </listitem>
          </varlistentry>
 
+         <varlistentry id="libpq-pgres-tuples-chunk">
+          <term><literal>PGRES_TUPLES_CHUNK</literal></term>
+          <listitem>
+           <para>
+            The <structname>PGresult</structname> contains several result tuples
+            from the current command.  This status occurs only when
+            chunked mode has been selected for the query
+            (see <xref linkend="libpq-single-row-mode"/>).
+            The number of tuples will not exceed the limit passed to
+            <xref linkend="libpq-PQsetChunkedRowsMode"/>.
+           </para>
+          </listitem>
+         </varlistentry>
+
          <varlistentry id="libpq-pgres-pipeline-sync">
           <term><literal>PGRES_PIPELINE_SYNC</literal></term>
           <listitem>
@@ -3617,8 +3631,9 @@ ExecStatusType PQresultStatus(const PGresult *res);
 
         </variablelist>
 
-        If the result status is <literal>PGRES_TUPLES_OK</literal> or
-        <literal>PGRES_SINGLE_TUPLE</literal>, then
+        If the result status is <literal>PGRES_TUPLES_OK</literal>,
+        <literal>PGRES_SINGLE_TUPLE</literal>, or
+        <literal>PGRES_TUPLES_CHUNK</literal>, then
         the functions described below can be used to retrieve the rows
         returned by the query.  Note that a <command>SELECT</command>
         command that happens to retrieve zero rows still shows
@@ -4030,7 +4045,9 @@ void PQclear(PGresult *res);
     These functions are used to extract information from a
     <structname>PGresult</structname> object that represents a successful
     query result (that is, one that has status
-    <literal>PGRES_TUPLES_OK</literal> or <literal>PGRES_SINGLE_TUPLE</literal>).
+    <literal>PGRES_TUPLES_OK</literal>,
+    <literal>PGRES_SINGLE_TUPLE</literal>, or
+    <literal>PGRES_TUPLES_CHUNK</literal>).
     They can also be used to extract
     information from a successful Describe operation: a Describe's result
     has all the same column information that actual execution of the query
@@ -5235,7 +5252,8 @@ PGresult *PQgetResult(PGconn *conn);
   <para>
    Another frequently-desired feature that can be obtained with
    <xref linkend="libpq-PQsendQuery"/> and <xref linkend="libpq-PQgetResult"/>
-   is retrieving large query results a row at a time.  This is discussed
+   is retrieving large query results a limited number of rows at a time.
+   This is discussed
    in <xref linkend="libpq-single-row-mode"/>.
   </para>
 
@@ -5597,15 +5615,6 @@ int PQflush(PGconn *conn);
      The client may choose to defer result processing until the complete
      pipeline has been sent, or interleave that with sending further
      queries in the pipeline; see <xref linkend="libpq-pipeline-interleave"/>.
-    </para>
-
-    <para>
-     To enter single-row mode, call <function>PQsetSingleRowMode</function>
-     before retrieving results with <function>PQgetResult</function>.
-     This mode selection is effective only for the query currently
-     being processed. For more information on the use of
-     <function>PQsetSingleRowMode</function>,
-     refer to <xref linkend="libpq-single-row-mode"/>.
     </para>
 
     <para>
@@ -5972,12 +5981,18 @@ UPDATE mytable SET x = x + 1 WHERE id = 42;
   </sect2>
  </sect1>
 
+ <!-- keep this not-too-apropos sect1 ID for stability of doc URLs -->
  <sect1 id="libpq-single-row-mode">
-  <title>Retrieving Query Results Row-by-Row</title>
+  <title>Retrieving Query Results in Chunks</title>
 
   <indexterm zone="libpq-single-row-mode">
    <primary>libpq</primary>
    <secondary>single-row mode</secondary>
+  </indexterm>
+
+  <indexterm zone="libpq-single-row-mode">
+   <primary>libpq</primary>
+   <secondary>chunked mode</secondary>
   </indexterm>
 
   <para>
@@ -5986,22 +6001,29 @@ UPDATE mytable SET x = x + 1 WHERE id = 42;
    <structname>PGresult</structname>.  This can be unworkable for commands
    that return a large number of rows.  For such cases, applications can use
    <xref linkend="libpq-PQsendQuery"/> and <xref linkend="libpq-PQgetResult"/> in
-   <firstterm>single-row mode</firstterm>.  In this mode, the result row(s) are
-   returned to the application one at a time, as they are received from the
-   server.
+   <firstterm>single-row mode</firstterm> or <firstterm>chunked
+   mode</firstterm>.  In these modes, result row(s) are returned to the
+   application as they are received from the server, one at a time for
+   single-row mode or in groups for chunked mode.
   </para>
 
   <para>
-   To enter single-row mode, call <xref linkend="libpq-PQsetSingleRowMode"/>
+   To enter one of these modes, call <xref linkend="libpq-PQsetSingleRowMode"/>
+    or <xref linkend="libpq-PQsetChunkedRowsMode"/>
    immediately after a successful call of <xref linkend="libpq-PQsendQuery"/>
    (or a sibling function).  This mode selection is effective only for the
    currently executing query.  Then call <xref linkend="libpq-PQgetResult"/>
    repeatedly, until it returns null, as documented in <xref
    linkend="libpq-async"/>.  If the query returns any rows, they are returned
-   as individual <structname>PGresult</structname> objects, which look like
+   as one or more <structname>PGresult</structname> objects, which look like
    normal query results except for having status code
-   <literal>PGRES_SINGLE_TUPLE</literal> instead of
-   <literal>PGRES_TUPLES_OK</literal>.  After the last row, or immediately if
+   <literal>PGRES_SINGLE_TUPLE</literal> for single-row mode or
+   <literal>PGRES_TUPLES_CHUNK</literal> for chunked mode, instead of
+   <literal>PGRES_TUPLES_OK</literal>.  There is exactly one result row in
+   each <literal>PGRES_SINGLE_TUPLE</literal> object, while
+   a <literal>PGRES_TUPLES_CHUNK</literal> object contains at least one
+   row but not more than the specified number of rows per chunk.
+   After the last row, or immediately if
    the query returns zero rows, a zero-row object with status
    <literal>PGRES_TUPLES_OK</literal> is returned; this is the signal that no
    more rows will arrive.  (But note that it is still necessary to continue
@@ -6013,9 +6035,9 @@ UPDATE mytable SET x = x + 1 WHERE id = 42;
   </para>
 
   <para>
-   When using pipeline mode, single-row mode needs to be activated for each
-   query in the pipeline before retrieving results for that query
-   with <function>PQgetResult</function>.
+   When using pipeline mode, single-row or chunked mode needs to be
+   activated for each query in the pipeline before retrieving results for
+   that query with <function>PQgetResult</function>.
    See <xref linkend="libpq-pipeline-mode"/> for more information.
   </para>
 
@@ -6046,6 +6068,36 @@ int PQsetSingleRowMode(PGconn *conn);
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry id="libpq-PQsetChunkedRowsMode">
+     <term><function>PQsetChunkedRowsMode</function><indexterm><primary>PQsetChunkedRowsMode</primary></indexterm></term>
+
+     <listitem>
+      <para>
+       Select chunked mode for the currently-executing query.
+
+<synopsis>
+int PQsetChunkedRowsMode(PGconn *conn, int chunkSize);
+</synopsis>
+      </para>
+
+      <para>
+       This function is similar to
+       <xref linkend="libpq-PQsetSingleRowMode"/>, except that it
+       specifies retrieval of up to <replaceable>chunkSize</replaceable> rows
+       per <structname>PGresult</structname>, not necessarily just one row.
+       This function can only be called immediately after
+       <xref linkend="libpq-PQsendQuery"/> or one of its sibling functions,
+       before any other operation on the connection such as
+       <xref linkend="libpq-PQconsumeInput"/> or
+       <xref linkend="libpq-PQgetResult"/>.  If called at the correct time,
+       the function activates chunked mode for the current query and
+       returns 1.  Otherwise the mode stays unchanged and the function
+       returns 0.  In any case, the mode reverts to normal after
+       completion of the current query.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
 
@@ -6054,9 +6106,10 @@ int PQsetSingleRowMode(PGconn *conn);
     While processing a query, the server may return some rows and then
     encounter an error, causing the query to be aborted.  Ordinarily,
     <application>libpq</application> discards any such rows and reports only the
-    error.  But in single-row mode, those rows will have already been
-    returned to the application.  Hence, the application will see some
-    <literal>PGRES_SINGLE_TUPLE</literal> <structname>PGresult</structname>
+    error.  But in single-row or chunked mode, some rows may have already
+    been returned to the application. Hence, the application will see some
+    <literal>PGRES_SINGLE_TUPLE</literal> or <literal>PGRES_TUPLES_CHUNK</literal>
+    <structname>PGresult</structname>
     objects followed by a <literal>PGRES_FATAL_ERROR</literal> object.  For
     proper transactional behavior, the application must be designed to
     discard or undo whatever has been done with the previously-processed

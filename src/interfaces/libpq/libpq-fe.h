@@ -112,8 +112,9 @@ typedef enum
 	PGRES_COPY_BOTH,			/* Copy In/Out data transfer in progress */
 	PGRES_SINGLE_TUPLE,			/* single tuple from larger resultset */
 	PGRES_PIPELINE_SYNC,		/* pipeline synchronization point */
-	PGRES_PIPELINE_ABORTED		/* Command didn't run because of an abort
+	PGRES_PIPELINE_ABORTED,		/* Command didn't run because of an abort
 								 * earlier in a pipeline */
+	PGRES_TUPLES_CHUNK			/* chunk of tuples from larger resultset */
 } ExecStatusType;
 
 typedef enum
@@ -489,6 +490,7 @@ extern int	PQsendQueryPrepared(PGconn *conn,
 								const int *paramFormats,
 								int resultFormat);
 extern int	PQsetSingleRowMode(PGconn *conn);
+extern int	PQsetChunkedRowsMode(PGconn *conn, int chunkSize);
 extern PGresult *PQgetResult(PGconn *conn);
 
 /* Routines for managing an asynchronous query */

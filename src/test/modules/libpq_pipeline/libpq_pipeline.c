@@ -1719,6 +1719,46 @@ test_singlerowmode(PGconn *conn)
 	if (PQgetResult(conn) != NULL)
 		pg_fatal("expected NULL result");
 
+	/*
+	 * Try chunked mode as well; make sure that it correctly delivers a
+	 * partial final chunk.
+	 */
+	if (PQsendQueryParams(conn, "SELECT generate_series(1, 5)",
+						  0, NULL, NULL, NULL, NULL, 0) != 1)
+		pg_fatal("failed to send query: %s",
+				 PQerrorMessage(conn));
+	if (PQsendFlushRequest(conn) != 1)
+		pg_fatal("failed to send flush request");
+	if (PQsetChunkedRowsMode(conn, 3) != 1)
+		pg_fatal("PQsetChunkedRowsMode() failed");
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_TUPLES_CHUNK)
+		pg_fatal("Expected PGRES_TUPLES_CHUNK, got %s: %s",
+				 PQresStatus(PQresultStatus(res)),
+				 PQerrorMessage(conn));
+	if (PQntuples(res) != 3)
+		pg_fatal("Expected 3 rows, got %d", PQntuples(res));
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_TUPLES_CHUNK)
+		pg_fatal("Expected PGRES_TUPLES_CHUNK, got %s",
+				 PQresStatus(PQresultStatus(res)));
+	if (PQntuples(res) != 2)
+		pg_fatal("Expected 2 rows, got %d", PQntuples(res));
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("Expected PGRES_TUPLES_OK, got %s",
+				 PQresStatus(PQresultStatus(res)));
+	if (PQntuples(res) != 0)
+		pg_fatal("Expected 0 rows, got %d", PQntuples(res));
+	if (PQgetResult(conn) != NULL)
+		pg_fatal("expected NULL result");
+
 	if (PQexitPipelineMode(conn) != 1)
 		pg_fatal("failed to end pipeline mode: %s", PQerrorMessage(conn));
 

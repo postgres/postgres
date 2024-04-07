@@ -434,7 +434,10 @@ struct pg_conn
 	bool		nonblocking;	/* whether this connection is using nonblock
 								 * sending semantics */
 	PGpipelineStatus pipelineStatus;	/* status of pipeline mode */
+	bool		partialResMode; /* true if single-row or chunked mode */
 	bool		singleRowMode;	/* return current query result row-by-row? */
+	int			maxChunkSize;	/* return query result in chunks not exceeding
+								 * this number of rows */
 	char		copy_is_binary; /* 1 = copy binary, 0 = copy text */
 	int			copy_already_done;	/* # bytes already returned in COPY OUT */
 	PGnotify   *notifyHead;		/* oldest unreported Notify msg */
@@ -535,12 +538,13 @@ struct pg_conn
 	 * and error_result is true, then we need to return a PGRES_FATAL_ERROR
 	 * result, but haven't yet constructed it; text for the error has been
 	 * appended to conn->errorMessage.  (Delaying construction simplifies
-	 * dealing with out-of-memory cases.)  If next_result isn't NULL, it is a
-	 * PGresult that will replace "result" after we return that one.
+	 * dealing with out-of-memory cases.)  If saved_result isn't NULL, it is a
+	 * PGresult that will replace "result" after we return that one; we use
+	 * that in partial-result mode to remember the query's tuple metadata.
 	 */
 	PGresult   *result;			/* result being constructed */
 	bool		error_result;	/* do we need to make an ERROR result? */
-	PGresult   *next_result;	/* next result (used in single-row mode) */
+	PGresult   *saved_result;	/* original, empty result in partialResMode */
 
 	/* Assorted state for SASL, SSL, GSS, etc */
 	const pg_fe_sasl_mech *sasl;
