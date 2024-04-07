@@ -163,6 +163,11 @@ choose_popcount_functions(void)
 		pg_popcount64 = pg_popcount64_slow;
 		pg_popcount_optimized = pg_popcount_slow;
 	}
+
+#ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
+	if (pg_popcount_avx512_available())
+		pg_popcount_optimized = pg_popcount_avx512;
+#endif
 }
 
 static int

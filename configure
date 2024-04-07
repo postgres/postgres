@@ -647,6 +647,9 @@ MSGFMT_FLAGS
 MSGFMT
 PG_CRC32C_OBJS
 CFLAGS_CRC
+PG_POPCNT_OBJS
+CFLAGS_POPCNT
+CFLAGS_XSAVE
 LIBOBJS
 OPENSSL
 ZSTD
@@ -17404,6 +17407,40 @@ $as_echo "#define HAVE__GET_CPUID 1" >>confdefs.h
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __get_cpuid_count" >&5
+$as_echo_n "checking for __get_cpuid_count... " >&6; }
+if ${pgac_cv__get_cpuid_count+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <cpuid.h>
+int
+main ()
+{
+unsigned int exx[4] = {0, 0, 0, 0};
+  __get_cpuid_count(7, 0, &exx[0], &exx[1], &exx[2], &exx[3]);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv__get_cpuid_count="yes"
+else
+  pgac_cv__get_cpuid_count="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv__get_cpuid_count" >&5
+$as_echo "$pgac_cv__get_cpuid_count" >&6; }
+if test x"$pgac_cv__get_cpuid_count" = x"yes"; then
+
+$as_echo "#define HAVE__GET_CPUID_COUNT 1" >>confdefs.h
+
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __cpuid" >&5
 $as_echo_n "checking for __cpuid... " >&6; }
 if ${pgac_cv__cpuid+:} false; then :
@@ -17437,6 +17474,221 @@ if test x"$pgac_cv__cpuid" = x"yes"; then
 $as_echo "#define HAVE__CPUID 1" >>confdefs.h
 
 fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __cpuidex" >&5
+$as_echo_n "checking for __cpuidex... " >&6; }
+if ${pgac_cv__cpuidex+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <intrin.h>
+int
+main ()
+{
+unsigned int exx[4] = {0, 0, 0, 0};
+  __get_cpuidex(exx[0], 7, 0);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv__cpuidex="yes"
+else
+  pgac_cv__cpuidex="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv__cpuidex" >&5
+$as_echo "$pgac_cv__cpuidex" >&6; }
+if test x"$pgac_cv__cpuidex" = x"yes"; then
+
+$as_echo "#define HAVE__CPUIDEX 1" >>confdefs.h
+
+fi
+
+# Check for XSAVE intrinsics
+#
+CFLAGS_XSAVE=""
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _xgetbv with CFLAGS=" >&5
+$as_echo_n "checking for _xgetbv with CFLAGS=... " >&6; }
+if ${pgac_cv_xsave_intrinsics_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS "
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <immintrin.h>
+int
+main ()
+{
+return _xgetbv(0) & 0xe0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_xsave_intrinsics_=yes
+else
+  pgac_cv_xsave_intrinsics_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_xsave_intrinsics_" >&5
+$as_echo "$pgac_cv_xsave_intrinsics_" >&6; }
+if test x"$pgac_cv_xsave_intrinsics_" = x"yes"; then
+  CFLAGS_XSAVE=""
+  pgac_xsave_intrinsics=yes
+fi
+
+if test x"$pgac_xsave_intrinsics" != x"yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _xgetbv with CFLAGS=-mxsave" >&5
+$as_echo_n "checking for _xgetbv with CFLAGS=-mxsave... " >&6; }
+if ${pgac_cv_xsave_intrinsics__mxsave+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -mxsave"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <immintrin.h>
+int
+main ()
+{
+return _xgetbv(0) & 0xe0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_xsave_intrinsics__mxsave=yes
+else
+  pgac_cv_xsave_intrinsics__mxsave=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_xsave_intrinsics__mxsave" >&5
+$as_echo "$pgac_cv_xsave_intrinsics__mxsave" >&6; }
+if test x"$pgac_cv_xsave_intrinsics__mxsave" = x"yes"; then
+  CFLAGS_XSAVE="-mxsave"
+  pgac_xsave_intrinsics=yes
+fi
+
+fi
+if test x"$pgac_xsave_intrinsics" = x"yes"; then
+
+$as_echo "#define HAVE_XSAVE_INTRINSICS 1" >>confdefs.h
+
+fi
+
+
+# Check for AVX-512 popcount intrinsics
+#
+CFLAGS_POPCNT=""
+PG_POPCNT_OBJS=""
+if test x"$host_cpu" = x"x86_64"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _mm512_popcnt_epi64 with CFLAGS=" >&5
+$as_echo_n "checking for _mm512_popcnt_epi64 with CFLAGS=... " >&6; }
+if ${pgac_cv_avx512_popcnt_intrinsics_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS "
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <immintrin.h>
+int
+main ()
+{
+const char buf[sizeof(__m512i)];
+   PG_INT64_TYPE popcnt = 0;
+   __m512i accum = _mm512_setzero_si512();
+   const __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
+   const __m512i cnt = _mm512_popcnt_epi64(val);
+   accum = _mm512_add_epi64(accum, cnt);
+   popcnt = _mm512_reduce_add_epi64(accum);
+   /* return computed value, to prevent the above being optimized away */
+   return popcnt == 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_avx512_popcnt_intrinsics_=yes
+else
+  pgac_cv_avx512_popcnt_intrinsics_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_avx512_popcnt_intrinsics_" >&5
+$as_echo "$pgac_cv_avx512_popcnt_intrinsics_" >&6; }
+if test x"$pgac_cv_avx512_popcnt_intrinsics_" = x"yes"; then
+  CFLAGS_POPCNT=""
+  pgac_avx512_popcnt_intrinsics=yes
+fi
+
+  if test x"$pgac_avx512_popcnt_intrinsics" != x"yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _mm512_popcnt_epi64 with CFLAGS=-mavx512vpopcntdq -mavx512bw" >&5
+$as_echo_n "checking for _mm512_popcnt_epi64 with CFLAGS=-mavx512vpopcntdq -mavx512bw... " >&6; }
+if ${pgac_cv_avx512_popcnt_intrinsics__mavx512vpopcntdq__mavx512bw+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -mavx512vpopcntdq -mavx512bw"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <immintrin.h>
+int
+main ()
+{
+const char buf[sizeof(__m512i)];
+   PG_INT64_TYPE popcnt = 0;
+   __m512i accum = _mm512_setzero_si512();
+   const __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
+   const __m512i cnt = _mm512_popcnt_epi64(val);
+   accum = _mm512_add_epi64(accum, cnt);
+   popcnt = _mm512_reduce_add_epi64(accum);
+   /* return computed value, to prevent the above being optimized away */
+   return popcnt == 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_avx512_popcnt_intrinsics__mavx512vpopcntdq__mavx512bw=yes
+else
+  pgac_cv_avx512_popcnt_intrinsics__mavx512vpopcntdq__mavx512bw=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_avx512_popcnt_intrinsics__mavx512vpopcntdq__mavx512bw" >&5
+$as_echo "$pgac_cv_avx512_popcnt_intrinsics__mavx512vpopcntdq__mavx512bw" >&6; }
+if test x"$pgac_cv_avx512_popcnt_intrinsics__mavx512vpopcntdq__mavx512bw" = x"yes"; then
+  CFLAGS_POPCNT="-mavx512vpopcntdq -mavx512bw"
+  pgac_avx512_popcnt_intrinsics=yes
+fi
+
+  fi
+  if test x"$pgac_avx512_popcnt_intrinsics" = x"yes"; then
+    PG_POPCNT_OBJS="pg_popcount_avx512.o pg_popcount_avx512_choose.o"
+
+$as_echo "#define USE_AVX512_POPCNT_WITH_RUNTIME_CHECK 1" >>confdefs.h
+
+  fi
+fi
+
+
 
 # Check for Intel SSE 4.2 intrinsics to do CRC calculations.
 #

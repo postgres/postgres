@@ -740,6 +740,30 @@ SELECT bit_count(B'1111111111'::bit(10));
         10
 (1 row)
 
+SELECT bit_count(repeat('0', 100)::bit(100));
+ bit_count 
+-----------
+         0
+(1 row)
+
+SELECT bit_count(repeat('1', 100)::bit(100));
+ bit_count 
+-----------
+       100
+(1 row)
+
+SELECT bit_count(repeat('01', 500)::bit(1000));
+ bit_count 
+-----------
+       500
+(1 row)
+
+SELECT bit_count(repeat('10101', 200)::bit(1000));
+ bit_count 
+-----------
+       600
+(1 row)
+
 -- This table is intentionally left around to exercise pg_dump/pg_upgrade
 CREATE TABLE bit_defaults(
   b1 bit(4) DEFAULT '1001',

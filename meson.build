@@ -1783,6 +1783,30 @@ elif cc.links('''
 endif
 
 
+# Check for __get_cpuid_count() and __cpuidex() in a similar fashion.
+if cc.links('''
+    #include <cpuid.h>
+    int main(int arg, char **argv)
+    {
+        unsigned int exx[4] = {0, 0, 0, 0};
+        __get_cpuid_count(7, 0, &exx[0], &exx[1], &exx[2], &exx[3]);
+    }
+    ''', name: '__get_cpuid_count',
+    args: test_c_args)
+  cdata.set('HAVE__GET_CPUID_COUNT', 1)
+elif cc.links('''
+    #include <intrin.h>
+    int main(int arg, char **argv)
+    {
+        unsigned int exx[4] = {0, 0, 0, 0};
+        __cpuidex(exx, 7, 0);
+    }
+    ''', name: '__cpuidex',
+    args: test_c_args)
+  cdata.set('HAVE__CPUIDEX', 1)
+endif
+
+
 # Defend against clang being used on x86-32 without SSE2 enabled.  As current
 # versions of clang do not understand -fexcess-precision=standard, the use of
 # x87 floating point operations leads to problems like isinf possibly returning
@@ -1995,6 +2019,69 @@ int main(void)
 
 endif
 
+
+###############################################################
+# Check for the availability of XSAVE intrinsics.
+###############################################################
+
+cflags_xsave = []
+if host_cpu == 'x86' or host_cpu == 'x86_64'
+
+  prog = '''
+#include <immintrin.h>
+
+int main(void)
+{
+    return _xgetbv(0) & 0xe0;
+}
+'''
+
+  if cc.links(prog, name: 'XSAVE intrinsics without -mxsave',
+        args: test_c_args)
+    cdata.set('HAVE_XSAVE_INTRINSICS', 1)
+  elif cc.links(prog, name: 'XSAVE intrinsics with -mxsave',
+        args: test_c_args + ['-mxsave'])
+    cdata.set('HAVE_XSAVE_INTRINSICS', 1)
+    cflags_xsave += '-mxsave'
+  endif
+
+endif
+
+
+###############################################################
+# Check for the availability of AVX-512 popcount intrinsics.
+###############################################################
+
+cflags_popcnt = []
+if host_cpu == 'x86_64'
+
+  prog = '''
+#include <immintrin.h>
+
+int main(void)
+{
+    const char buf[sizeof(__m512i)];
+    INT64 popcnt = 0;
+    __m512i accum = _mm512_setzero_si512();
+    const __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
+    const __m512i cnt = _mm512_popcnt_epi64(val);
+    accum = _mm512_add_epi64(accum, cnt);
+    popcnt = _mm512_reduce_add_epi64(accum);
+    /* return computed value, to prevent the above being optimized away */
+    return popcnt == 0;
+}
+'''
+
+  if cc.links(prog, name: 'AVX-512 popcount without -mavx512vpopcntdq -mavx512bw',
+        args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))])
+    cdata.set('USE_AVX512_POPCNT_WITH_RUNTIME_CHECK', 1)
+  elif cc.links(prog, name: 'AVX-512 popcount with -mavx512vpopcntdq -mavx512bw',
+        args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))] + ['-mavx512vpopcntdq'] + ['-mavx512bw'])
+    cdata.set('USE_AVX512_POPCNT_WITH_RUNTIME_CHECK', 1)
+    cflags_popcnt += ['-mavx512vpopcntdq'] + ['-mavx512bw']
+  endif
+
+endif
 
 
 ###############################################################

@@ -2052,6 +2052,17 @@ if test x"$pgac_cv__get_cpuid" = x"yes"; then
   AC_DEFINE(HAVE__GET_CPUID, 1, [Define to 1 if you have __get_cpuid.])
 fi
 
+AC_CACHE_CHECK([for __get_cpuid_count], [pgac_cv__get_cpuid_count],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <cpuid.h>],
+  [[unsigned int exx[4] = {0, 0, 0, 0};
+  __get_cpuid_count(7, 0, &exx[0], &exx[1], &exx[2], &exx[3]);
+  ]])],
+  [pgac_cv__get_cpuid_count="yes"],
+  [pgac_cv__get_cpuid_count="no"])])
+if test x"$pgac_cv__get_cpuid_count" = x"yes"; then
+  AC_DEFINE(HAVE__GET_CPUID_COUNT, 1, [Define to 1 if you have __get_cpuid_count.])
+fi
+
 AC_CACHE_CHECK([for __cpuid], [pgac_cv__cpuid],
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <intrin.h>],
   [[unsigned int exx[4] = {0, 0, 0, 0};
@@ -2062,6 +2073,46 @@ AC_CACHE_CHECK([for __cpuid], [pgac_cv__cpuid],
 if test x"$pgac_cv__cpuid" = x"yes"; then
   AC_DEFINE(HAVE__CPUID, 1, [Define to 1 if you have __cpuid.])
 fi
+
+AC_CACHE_CHECK([for __cpuidex], [pgac_cv__cpuidex],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <intrin.h>],
+  [[unsigned int exx[4] = {0, 0, 0, 0};
+  __get_cpuidex(exx[0], 7, 0);
+  ]])],
+  [pgac_cv__cpuidex="yes"],
+  [pgac_cv__cpuidex="no"])])
+if test x"$pgac_cv__cpuidex" = x"yes"; then
+  AC_DEFINE(HAVE__CPUIDEX, 1, [Define to 1 if you have __cpuidex.])
+fi
+
+# Check for XSAVE intrinsics
+#
+CFLAGS_XSAVE=""
+PGAC_XSAVE_INTRINSICS([])
+if test x"$pgac_xsave_intrinsics" != x"yes"; then
+  PGAC_XSAVE_INTRINSICS([-mxsave])
+fi
+if test x"$pgac_xsave_intrinsics" = x"yes"; then
+  AC_DEFINE(HAVE_XSAVE_INTRINSICS, 1, [Define to 1 if you have XSAVE intrinsics.])
+fi
+AC_SUBST(CFLAGS_XSAVE)
+
+# Check for AVX-512 popcount intrinsics
+#
+CFLAGS_POPCNT=""
+PG_POPCNT_OBJS=""
+if test x"$host_cpu" = x"x86_64"; then
+  PGAC_AVX512_POPCNT_INTRINSICS([])
+  if test x"$pgac_avx512_popcnt_intrinsics" != x"yes"; then
+    PGAC_AVX512_POPCNT_INTRINSICS([-mavx512vpopcntdq -mavx512bw])
+  fi
+  if test x"$pgac_avx512_popcnt_intrinsics" = x"yes"; then
+    PG_POPCNT_OBJS="pg_popcount_avx512.o pg_popcount_avx512_choose.o"
+    AC_DEFINE(USE_AVX512_POPCNT_WITH_RUNTIME_CHECK, 1, [Define to 1 to use AVX-512 popcount instructions with a runtime check.])
+  fi
+fi
+AC_SUBST(CFLAGS_POPCNT)
+AC_SUBST(PG_POPCNT_OBJS)
 
 # Check for Intel SSE 4.2 intrinsics to do CRC calculations.
 #
