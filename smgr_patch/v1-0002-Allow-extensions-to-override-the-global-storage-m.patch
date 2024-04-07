@@ -1,0 +1,93 @@
+From 59a667f079c9b040c23921e4c43fae94b88776f2 Mon Sep 17 00:00:00 2001
+From: Tristan Partin <tristan@neon.tech>
+Date: Fri, 13 Oct 2023 14:00:44 -0500
+Subject: [PATCH v1 2/5] Allow extensions to override the global storage
+ manager
+
+---
+ src/backend/storage/smgr/md.c     | 2 +-
+ src/backend/storage/smgr/smgr.c   | 5 ++++-
+ src/backend/utils/init/miscinit.c | 2 ++
+ src/include/storage/md.h          | 2 ++
+ src/include/storage/smgr.h        | 2 ++
+ 5 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/src/backend/storage/smgr/md.c b/src/backend/storage/smgr/md.c
+index 66a93101ab..13ec9da236 100644
+--- a/src/backend/storage/smgr/md.c
++++ b/src/backend/storage/smgr/md.c
+@@ -140,7 +140,7 @@ void mdsmgr_register(void)
+ {
+ 	/* magnetic disk */
+ 	f_smgr md_smgr = (f_smgr) {
+-		.name = "md",
++		.name = MdSMgrName,
+ 		.smgr_init = mdinit,
+ 		.smgr_shutdown = NULL,
+ 		.smgr_open = mdopen,
+diff --git a/src/backend/storage/smgr/smgr.c b/src/backend/storage/smgr/smgr.c
+index b586e6e25a..0814330b8a 100644
+--- a/src/backend/storage/smgr/smgr.c
++++ b/src/backend/storage/smgr/smgr.c
+@@ -37,6 +37,9 @@ static int NSmgr = 0;
+ 
+ static Size LargestSMgrRelationSize = 0;
+ 
++char *storage_manager_string;
++SMgrId storage_manager_id;
++
+ /*
+  * Each backend has a hashtable that stores all extant SMgrRelation objects.
+  * In addition, "unowned" SMgrRelation objects are chained together in a list.
+@@ -182,7 +185,7 @@ smgropen(RelFileLocator rlocator, BackendId backend)
+ 		for (int i = 0; i <= MAX_FORKNUM; ++i)
+ 			reln->smgr_cached_nblocks[i] = InvalidBlockNumber;
+ 
+-		reln->smgr_which = MdSMgrId;	/* we only have md.c at present */
++		reln->smgr_which = storage_manager_id;
+ 
+ 		/* implementation-specific initialization */
+ 		smgrsw[reln->smgr_which].smgr_open(reln);
+diff --git a/src/backend/utils/init/miscinit.c b/src/backend/utils/init/miscinit.c
+index 4ec7619302..f44f511f69 100644
+--- a/src/backend/utils/init/miscinit.c
++++ b/src/backend/utils/init/miscinit.c
+@@ -1871,6 +1871,8 @@ void
+ register_builtin_dynamic_managers(void)
+ {
+ 	mdsmgr_register();
++
++	storage_manager_id = MdSMgrId;
+ }
+ 
+ /*
+diff --git a/src/include/storage/md.h b/src/include/storage/md.h
+index 734bae07e1..fdafb2c8e3 100644
+--- a/src/include/storage/md.h
++++ b/src/include/storage/md.h
+@@ -19,6 +19,8 @@
+ #include "storage/smgr.h"
+ #include "storage/sync.h"
+ 
++#define MdSMgrName "md"
++
+ /* registration function for md storage manager */
+ extern void mdsmgr_register(void);
+ extern SMgrId MdSMgrId;
+diff --git a/src/include/storage/smgr.h b/src/include/storage/smgr.h
+index 95927b8bdd..ee4fc27265 100644
+--- a/src/include/storage/smgr.h
++++ b/src/include/storage/smgr.h
+@@ -22,6 +22,8 @@ typedef uint8 SMgrId;
+ 
+ #define MaxSMgrId UINT8_MAX
+ 
++extern PGDLLIMPORT SMgrId storage_manager_id;
++
+ /*
+  * smgr.c maintains a table of SMgrRelation objects, which are essentially
+  * cached file handles.  An SMgrRelation is created (if not already present)
+-- 
+Tristan Partin
+Neon (https://neon.tech)
+

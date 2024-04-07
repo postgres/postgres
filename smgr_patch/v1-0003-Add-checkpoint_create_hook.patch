@@ -1,0 +1,60 @@
+From 9ed9b8ca36cdb75b44deccdfea619c7494fcc6ef Mon Sep 17 00:00:00 2001
+From: Tristan Partin <tristan@neon.tech>
+Date: Fri, 13 Oct 2023 13:57:18 -0500
+Subject: [PATCH v1 3/5] Add checkpoint_create_hook
+
+Allows an extension to hook into CheckPointCreate().
+---
+ src/backend/access/transam/xlog.c | 5 +++++
+ src/include/access/xlog.h         | 4 ++++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/src/backend/access/transam/xlog.c b/src/backend/access/transam/xlog.c
+index 478377c4a2..61ae5b63b8 100644
+--- a/src/backend/access/transam/xlog.c
++++ b/src/backend/access/transam/xlog.c
+@@ -212,6 +212,8 @@ const struct config_enum_entry archive_mode_options[] = {
+  */
+ CheckpointStatsData CheckpointStats;
+ 
++checkpoint_create_hook_type checkpoint_create_hook = NULL;
++
+ /*
+  * During recovery, lastFullPageWrites keeps track of full_page_writes that
+  * the replayed WAL records indicate. It's initialized with full_page_writes
+@@ -6875,6 +6877,9 @@ CreateCheckPoint(int flags)
+ 	 */
+ 	END_CRIT_SECTION();
+ 
++	if (checkpoint_create_hook != NULL)
++		checkpoint_create_hook(&checkPoint);
++
+ 	/*
+ 	 * In some cases there are groups of actions that must all occur on one
+ 	 * side or the other of a checkpoint record. Before flushing the
+diff --git a/src/include/access/xlog.h b/src/include/access/xlog.h
+index 301c5fa11f..437f2a994b 100644
+--- a/src/include/access/xlog.h
++++ b/src/include/access/xlog.h
+@@ -13,6 +13,7 @@
+ 
+ #include "access/xlogbackup.h"
+ #include "access/xlogdefs.h"
++#include "catalog/pg_control.h"
+ #include "datatype/timestamp.h"
+ #include "lib/stringinfo.h"
+ #include "nodes/pg_list.h"
+@@ -57,6 +58,9 @@ extern PGDLLIMPORT int wal_decode_buffer_size;
+ 
+ extern PGDLLIMPORT int CheckPointSegments;
+ 
++typedef void (*checkpoint_create_hook_type)(const CheckPoint *);
++extern PGDLLIMPORT checkpoint_create_hook_type checkpoint_create_hook;
++
+ /* Archive modes */
+ typedef enum ArchiveMode
+ {
+-- 
+Tristan Partin
+Neon (https://neon.tech)
+
