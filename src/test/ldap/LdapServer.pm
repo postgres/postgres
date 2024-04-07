@@ -145,6 +145,9 @@ INIT
 
 END
 {
+	# take care not to change the script's exit value
+	my $exit_code = $?;
+
 	foreach my $server (@servers)
 	{
 		next unless -f $server->{pidfile};
@@ -152,6 +155,8 @@ END
 		chomp $pid;
 		kill 'INT', $pid;
 	}
+
+	$? = $exit_code;
 }
 
 =pod
