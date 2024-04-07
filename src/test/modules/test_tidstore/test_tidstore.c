@@ -116,7 +116,8 @@ test_create(PG_FUNCTION_ARGS)
 		dsa_pin_mapping(TidStoreGetDSA(tidstore));
 	}
 	else
-		tidstore = TidStoreCreateLocal(tidstore_max_size);
+		/* VACUUM uses insert only, so we test the other option. */
+		tidstore = TidStoreCreateLocal(tidstore_max_size, false);
 
 	tidstore_empty_size = TidStoreMemoryUsage(tidstore);
 

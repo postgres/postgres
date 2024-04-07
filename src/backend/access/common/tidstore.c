@@ -120,7 +120,7 @@ static void tidstore_iter_extract_tids(TidStoreIter *iter, BlockNumber blkno,
  * by TidStoreMemoryUsage().
  */
 TidStore *
-TidStoreCreateLocal(size_t max_bytes)
+TidStoreCreateLocal(size_t max_bytes, bool insert_only)
 {
 	TidStore   *ts;
 	size_t		initBlockSize = ALLOCSET_DEFAULT_INITSIZE;
@@ -138,11 +138,22 @@ TidStoreCreateLocal(size_t max_bytes)
 		maxBlockSize = ALLOCSET_DEFAULT_INITSIZE;
 
 	/* Create a memory context for the TID storage */
-	ts->rt_context = AllocSetContextCreate(CurrentMemoryContext,
+	if (insert_only)
+	{
+		ts->rt_context = BumpContextCreate(CurrentMemoryContext,
 										   "TID storage",
 										   minContextSize,
 										   initBlockSize,
 										   maxBlockSize);
+	}
+	else
+	{
+		ts->rt_context = AllocSetContextCreate(CurrentMemoryContext,
+											   "TID storage",
+											   minContextSize,
+											   initBlockSize,
+											   maxBlockSize);
+	}
 
 	ts->tree.local = local_ts_create(ts->rt_context);
 

@@ -691,6 +691,7 @@ struct RT_RADIX_TREE
 	/* leaf_context is used only for single-value leaves */
 	MemoryContextData *leaf_context;
 #endif
+	MemoryContextData *iter_context;
 };
 
 /*
@@ -1796,6 +1797,14 @@ RT_CREATE(MemoryContext ctx)
 	tree = (RT_RADIX_TREE *) palloc0(sizeof(RT_RADIX_TREE));
 	tree->context = ctx;
 
+	/*
+	 * Separate context for iteration in case the tree context doesn't support
+	 * pfree
+	 */
+	tree->iter_context = AllocSetContextCreate(ctx,
+											   RT_STR(RT_PREFIX) "radix_tree iter context",
+											   ALLOCSET_SMALL_SIZES);
+
 #ifdef RT_SHMEM
 	tree->dsa = dsa;
 	dp = dsa_allocate0(dsa, sizeof(RT_RADIX_TREE_CONTROL));
@@ -2038,7 +2047,7 @@ RT_BEGIN_ITERATE(RT_RADIX_TREE * tree)
 	RT_ITER    *iter;
 	RT_CHILD_PTR root;
 
-	iter = (RT_ITER *) MemoryContextAllocZero(tree->context,
+	iter = (RT_ITER *) MemoryContextAllocZero(tree->iter_context,
 											  sizeof(RT_ITER));
 	iter->tree = tree;
 

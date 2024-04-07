@@ -29,7 +29,7 @@ typedef struct TidStoreIterResult
 	OffsetNumber *offsets;
 } TidStoreIterResult;
 
-extern TidStore *TidStoreCreateLocal(size_t max_bytes);
+extern TidStore *TidStoreCreateLocal(size_t max_bytes, bool insert_only);
 extern TidStore *TidStoreCreateShared(size_t max_bytes, int tranche_id);
 extern TidStore *TidStoreAttach(dsa_handle area_handle, dsa_pointer handle);
 extern void TidStoreDetach(TidStore *ts);
