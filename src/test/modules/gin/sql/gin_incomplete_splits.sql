@@ -143,3 +143,5 @@ select insert_n(:next_i, 10) as next_i
 \gset
 -- Verify that a scan still works
 select verify(:next_i);
+
+SELECT injection_points_detach('gin-finish-incomplete-split');
