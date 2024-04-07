@@ -2855,6 +2855,33 @@ keep_going:						/* We will come back to here until there is
 					/* Remember current address for possible use later */
 					memcpy(&conn->raddr, &addr_cur->addr, sizeof(SockAddr));
 
+#ifdef ENABLE_GSS
+
+					/*
+					 * Before establishing the connection, check if it's
+					 * doomed to fail because gssencmode='require' but GSSAPI
+					 * is not available.
+					 */
+					if (conn->gssencmode[0] == 'r')
+					{
+						if (conn->raddr.addr.ss_family == AF_UNIX)
+						{
+							libpq_append_conn_error(conn,
+													"GSSAPI encryption required but it is not supported over a local socket)");
+							goto error_return;
+						}
+						if (conn->gcred == GSS_C_NO_CREDENTIAL)
+						{
+							if (!pg_GSS_have_cred_cache(&conn->gcred))
+							{
+								libpq_append_conn_error(conn,
+														"GSSAPI encryption required but no credential cache");
+								goto error_return;
+							}
+						}
+					}
+#endif
+
 					/*
 					 * Set connip, too.  Note we purposely ignore strdup
 					 * failure; not a big problem if it fails.
@@ -3218,7 +3245,7 @@ keep_going:						/* We will come back to here until there is
 				 * for GSSAPI Encryption (and skip past SSL negotiation and
 				 * regular startup below).
 				 */
-				if (conn->try_gss && !conn->gctx)
+				if (conn->try_gss && !conn->gctx && conn->gcred == GSS_C_NO_CREDENTIAL)
 					conn->try_gss = pg_GSS_have_cred_cache(&conn->gcred);
 				if (conn->try_gss && !conn->gctx)
 				{
@@ -3237,8 +3264,9 @@ keep_going:						/* We will come back to here until there is
 				}
 				else if (!conn->gctx && conn->gssencmode[0] == 'r')
 				{
+					/* XXX: shouldn't happen */
 					libpq_append_conn_error(conn,
-											"GSSAPI encryption required but was impossible (possibly no credential cache, no server support, or using a local socket)");
+											"GSSAPI encryption required but was impossible");
 					goto error_return;
 				}
 #endif
