@@ -791,7 +791,6 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("incremental backups cannot be taken unless WAL summarization is enabled")));
-			opt->incremental = defGetBoolean(defel);
 			o_incremental = true;
 		}
 		else if (strcmp(defel->defname, "max_rate") == 0)
