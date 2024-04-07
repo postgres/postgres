@@ -20,7 +20,7 @@ env:
   MTEST_ARGS: --print-errorlogs --no-rebuild -C build
   PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
-  PG_TEST_EXTRA: kerberos ldap ssl load_balance
+  PG_TEST_EXTRA: kerberos ldap ssl libpq_encryption load_balance
 
 
 # What files to preserve in case tests fail

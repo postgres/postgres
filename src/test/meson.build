@@ -4,6 +4,7 @@ subdir('regress')
 subdir('isolation')
 
 subdir('authentication')
+subdir('libpq_encryption')
 subdir('recovery')
 subdir('subscription')
 subdir('modules')
