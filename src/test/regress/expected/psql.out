@@ -4788,6 +4788,8 @@ error code: 00000
 \echo 'number of rows:' :ROW_COUNT
 number of rows: 19
 -- chunked results with an error after the first chunk
+-- (we must disable parallel query here, else the behavior is timing-dependent)
+set debug_parallel_query = off;
 select 1/(15-unique2) from tenk1 order by unique2 limit 19;
  ?column? 
 ----------
@@ -4812,6 +4814,7 @@ number of rows: 0
 last error message: division by zero
 \echo 'last error code:' :LAST_ERROR_SQLSTATE
 last error code: 22012
+reset debug_parallel_query;
 \unset FETCH_COUNT
 create schema testpart;
 create role regress_partitioning_role;
