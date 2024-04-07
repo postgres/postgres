@@ -363,7 +363,7 @@ read_stream_look_ahead(ReadStream *stream, bool suppress_advice)
 		}
 
 		/* We have to start the pending read before we can build another. */
-		if (stream->pending_read_nblocks > 0)
+		while (stream->pending_read_nblocks > 0)
 		{
 			read_stream_start_pending_read(stream, suppress_advice);
 			suppress_advice = false;
