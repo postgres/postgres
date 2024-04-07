@@ -209,6 +209,8 @@ const struct config_enum_entry archive_mode_options[] = {
  */
 CheckpointStatsData CheckpointStats;
 
+checkpoint_create_hook_type checkpoint_create_hook = NULL;
+
 /*
  * During recovery, lastFullPageWrites keeps track of full_page_writes that
  * the replayed WAL records indicate. It's initialized with full_page_writes
@@ -7094,6 +7096,9 @@ CreateCheckPoint(int flags)
 	 * panic. Accordingly, exit critical section while doing it.
 	 */
 	END_CRIT_SECTION();
+
+	if (checkpoint_create_hook != NULL)
+		checkpoint_create_hook(&checkPoint);
 
 	/*
 	 * In some cases there are groups of actions that must all occur on one

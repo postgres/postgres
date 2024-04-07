@@ -500,6 +500,7 @@ extern void TouchSocketLockFiles(void);
 extern void AddToDataDirLockFile(int target_line, const char *str);
 extern bool RecheckDataDirLockFile(void);
 extern void ValidatePgVersion(const char *path);
+extern void register_builtin_dynamic_managers(void);
 extern void process_shared_preload_libraries(void);
 extern void process_session_preload_libraries(void);
 extern void process_shmem_requests(void);

@@ -19,6 +19,12 @@
 #include "storage/smgr.h"
 #include "storage/sync.h"
 
+#define MdSMgrName "md"
+
+/* registration function for md storage manager */
+extern void mdsmgr_register(void);
+extern SMgrId MdSMgrId;
+
 /* md storage manager functionality */
 extern void mdinit(void);
 extern void mdopen(SMgrRelation reln);
