@@ -104,7 +104,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
 <phrase><replaceable class="parameter">exclude_element</replaceable> in an <literal>EXCLUDE</literal> constraint is:</phrase>
 
-{ <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ]
+{ <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> [ ( <replaceable class="parameter">opclass_parameter</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] ) ] ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ]
 </synopsis>
 
  </refsynopsisdiv>
@@ -998,6 +998,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       no two rows in the table contain overlapping circles
       (see <xref linkend="datatype-geometric"/>) by using the
       <literal>&amp;&amp;</literal> operator.
+      The operator(s) are required to be commutative.
      </para>
 
      <para>
@@ -1006,11 +1007,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       appropriate operator class
       (see <xref linkend="indexes-opclass"/>) for the index access
       method <replaceable>index_method</replaceable>.
-      The operators are required to be commutative.
       Each <replaceable class="parameter">exclude_element</replaceable>
-      can optionally specify an operator class and/or ordering options;
-      these are described fully under
-      <xref linkend="sql-createindex"/>.
+      defines a column of the index, so it can optionally specify a collation,
+      an operator class, operator class parameters, and/or ordering options;
+      these are described fully under <xref linkend="sql-createindex"/>.
      </para>
 
      <para>
