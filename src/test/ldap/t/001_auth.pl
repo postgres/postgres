@@ -150,7 +150,12 @@ system_or_bail $slapd, '-f', $slapd_conf,'-s0', '-h', "$ldap_url $ldaps_url";
 
 END
 {
+	# take care not to change the script's exit value
+	my $exit_code = $?;
+
 	kill 'INT', `cat $slapd_pidfile` if -f $slapd_pidfile;
+
+	$? = $exit_code;
 }
 
 append_to_file($ldap_pwfile, $ldap_rootpw);
