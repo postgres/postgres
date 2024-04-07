@@ -96,6 +96,7 @@
 
 /* XXX these should appear in other modules' header files */
 extern bool Log_disconnections;
+extern bool Trace_connection_negotiation;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *default_tablespace;
@@ -1221,6 +1222,16 @@ struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&Log_connections,
+		false,
+		NULL, NULL, NULL
+	},
+	{
+		{"trace_connection_negotiation", PGC_POSTMASTER, DEVELOPER_OPTIONS,
+			gettext_noop("Log details of pre-authentication connection handshake."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Trace_connection_negotiation,
 		false,
 		NULL, NULL, NULL
 	},
