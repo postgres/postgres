@@ -303,6 +303,7 @@ pg_ceil_log2_64(uint64 num)
 extern PGDLLIMPORT int (*pg_popcount32) (uint32 word);
 extern PGDLLIMPORT int (*pg_popcount64) (uint64 word);
 extern PGDLLIMPORT uint64 (*pg_popcount_optimized) (const char *buf, int bytes);
+extern PGDLLIMPORT uint64 (*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask);
 
 /*
  * We can also try to use the AVX-512 popcount instruction on some systems.
@@ -313,6 +314,7 @@ extern PGDLLIMPORT uint64 (*pg_popcount_optimized) (const char *buf, int bytes);
 #ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
 extern bool pg_popcount_avx512_available(void);
 extern uint64 pg_popcount_avx512(const char *buf, int bytes);
+extern uint64 pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask);
 #endif
 
 #else
@@ -320,6 +322,7 @@ extern uint64 pg_popcount_avx512(const char *buf, int bytes);
 extern int	pg_popcount32(uint32 word);
 extern int	pg_popcount64(uint64 word);
 extern uint64 pg_popcount_optimized(const char *buf, int bytes);
+extern uint64 pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask);
 
 #endif							/* TRY_POPCNT_FAST */
 
@@ -355,6 +358,37 @@ pg_popcount(const char *buf, int bytes)
 	}
 
 	return pg_popcount_optimized(buf, bytes);
+}
+
+/*
+ * Returns the number of 1-bits in buf after applying the mask to each byte.
+ *
+ * Similar to pg_popcount(), we only take on the function pointer overhead when
+ * it's likely to be faster.
+ */
+static inline uint64
+pg_popcount_masked(const char *buf, int bytes, bits8 mask)
+{
+	/*
+	 * We set the threshold to the point at which we'll first use special
+	 * instructions in the optimized version.
+	 */
+#if SIZEOF_VOID_P >= 8
+	int			threshold = 8;
+#else
+	int			threshold = 4;
+#endif
+
+	if (bytes < threshold)
+	{
+		uint64		popcnt = 0;
+
+		while (bytes--)
+			popcnt += pg_number_of_ones[(unsigned char) *buf++ & mask];
+		return popcnt;
+	}
+
+	return pg_popcount_masked_optimized(buf, bytes, mask);
 }
 
 /*

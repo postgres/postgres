@@ -119,10 +119,8 @@
 #define HEAPBLK_TO_OFFSET(x) (((x) % HEAPBLOCKS_PER_BYTE) * BITS_PER_HEAPBLOCK)
 
 /* Masks for counting subsets of bits in the visibility map. */
-#define VISIBLE_MASK64	UINT64CONST(0x5555555555555555) /* The lower bit of each
-														 * bit pair */
-#define FROZEN_MASK64	UINT64CONST(0xaaaaaaaaaaaaaaaa) /* The upper bit of each
-														 * bit pair */
+#define VISIBLE_MASK8	(0x55)	/* The lower bit of each bit pair */
+#define FROZEN_MASK8	(0xaa)	/* The upper bit of each bit pair */
 
 /* prototypes for internal routines */
 static Buffer vm_readbuf(Relation rel, BlockNumber blkno, bool extend);
@@ -396,7 +394,6 @@ visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_fro
 	{
 		Buffer		mapBuffer;
 		uint64	   *map;
-		int			i;
 
 		/*
 		 * Read till we fall off the end of the map.  We assume that any extra
@@ -414,21 +411,9 @@ visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_fro
 		 */
 		map = (uint64 *) PageGetContents(BufferGetPage(mapBuffer));
 
-		StaticAssertStmt(MAPSIZE % sizeof(uint64) == 0,
-						 "unsupported MAPSIZE");
-		if (all_frozen == NULL)
-		{
-			for (i = 0; i < MAPSIZE / sizeof(uint64); i++)
-				nvisible += pg_popcount64(map[i] & VISIBLE_MASK64);
-		}
-		else
-		{
-			for (i = 0; i < MAPSIZE / sizeof(uint64); i++)
-			{
-				nvisible += pg_popcount64(map[i] & VISIBLE_MASK64);
-				nfrozen += pg_popcount64(map[i] & FROZEN_MASK64);
-			}
-		}
+		nvisible += pg_popcount_masked((const char *) map, MAPSIZE, VISIBLE_MASK8);
+		if (all_frozen)
+			nfrozen += pg_popcount_masked((const char *) map, MAPSIZE, FROZEN_MASK8);
 
 		ReleaseBuffer(mapBuffer);
 	}
