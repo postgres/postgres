@@ -180,7 +180,12 @@ system_or_bail $krb5kdc, '-P', $kdc_pidfile;
 
 END
 {
-	kill 'INT', `cat $kdc_pidfile` if -f $kdc_pidfile;
+	# take care not to change the script's exit value
+	my $exit_code = $?;
+
+	kill 'INT', `cat $kdc_pidfile` if defined($kdc_pidfile) && -f $kdc_pidfile;
+
+	$? = $exit_code;
 }
 
 note "setting up PostgreSQL instance";
