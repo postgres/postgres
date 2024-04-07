@@ -25,8 +25,7 @@ elsif ($ENV{PG_TEST_EXTRA} !~ /\bldap\b/)
 }
 elsif (!$LdapServer::setup)
 {
-	plan skip_all =>
-	  "ldap tests not supported on $^O or dependencies not installed";
+	plan skip_all => $LdapServer::setup_error;
 }
 
 note "setting up LDAP server";
