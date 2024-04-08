@@ -36,6 +36,20 @@ SELECT do_set_block_offsets(blk, array_agg(off)::int2[])
     (VALUES (0), (1), (:maxblkno / 2), (:maxblkno - 1), (:maxblkno)) AS blocks(blk),
     (VALUES (1), (2), (:maxoffset / 2), (:maxoffset - 1), (:maxoffset)) AS offsets(off)
   GROUP BY blk;
+-- Test offsets embedded in the bitmap header.
+SELECT do_set_block_offsets(501, array[greatest((random() * :maxoffset)::int, 1)]::int2[]);
+ do_set_block_offsets 
+----------------------
+                  501
+(1 row)
+
+SELECT do_set_block_offsets(502, array_agg(DISTINCT greatest((random() * :maxoffset)::int, 1))::int2[])
+  FROM generate_series(1, 3);
+ do_set_block_offsets 
+----------------------
+                  502
+(1 row)
+
 -- Add enough TIDs to cause the store to appear "full", compared
 -- to the allocated memory it started out with. This is easier
 -- with memory contexts in local memory.
@@ -71,6 +85,20 @@ SELECT test_create(true);
  test_create 
 -------------
  
+(1 row)
+
+-- Test offsets embedded in the bitmap header.
+SELECT do_set_block_offsets(501, array[greatest((random() * :maxoffset)::int, 1)]::int2[]);
+ do_set_block_offsets 
+----------------------
+                  501
+(1 row)
+
+SELECT do_set_block_offsets(502, array_agg(DISTINCT greatest((random() * :maxoffset)::int, 1))::int2[])
+  FROM generate_series(1, 3);
+ do_set_block_offsets 
+----------------------
+                  502
 (1 row)
 
 -- Random TIDs test. The offset numbers are randomized and must be

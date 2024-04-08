@@ -34,6 +34,9 @@
 /* number of active words for a page: */
 #define WORDS_PER_PAGE(n) ((n) / BITS_PER_BITMAPWORD + 1)
 
+/* number of offsets we can store in the header of a BlocktableEntry */
+#define NUM_FULL_OFFSETS ((sizeof(bitmapword) - sizeof(uint16)) / sizeof(OffsetNumber))
+
 /*
  * This is named similarly to PagetableEntry in tidbitmap.c
  * because the two have a similar function.
@@ -41,6 +44,13 @@
 typedef struct BlocktableEntry
 {
 	uint16		nwords;
+
+	/*
+	 * We can store a small number of offsets here to avoid wasting space with
+	 * a sparse bitmap.
+	 */
+	OffsetNumber full_offsets[NUM_FULL_OFFSETS];
+
 	bitmapword	words[FLEXIBLE_ARRAY_MEMBER];
 } BlocktableEntry;
 #define MaxBlocktableEntrySize \
@@ -331,33 +341,53 @@ TidStoreSetBlockOffsets(TidStore *ts, BlockNumber blkno, OffsetNumber *offsets,
 	for (int i = 1; i < num_offsets; i++)
 		Assert(offsets[i] > offsets[i - 1]);
 
-	for (wordnum = 0, next_word_threshold = BITS_PER_BITMAPWORD;
-		 wordnum <= WORDNUM(offsets[num_offsets - 1]);
-		 wordnum++, next_word_threshold += BITS_PER_BITMAPWORD)
-	{
-		word = 0;
+	memset(page, 0, offsetof(BlocktableEntry, words));
 
-		while (idx < num_offsets)
+	if (num_offsets <= NUM_FULL_OFFSETS)
+	{
+		for (int i = 0; i < num_offsets; i++)
 		{
-			OffsetNumber off = offsets[idx];
+			OffsetNumber off = offsets[i];
 
 			/* safety check to ensure we don't overrun bit array bounds */
 			if (!OffsetNumberIsValid(off))
 				elog(ERROR, "tuple offset out of range: %u", off);
 
-			if (off >= next_word_threshold)
-				break;
-
-			word |= ((bitmapword) 1 << BITNUM(off));
-			idx++;
+			page->full_offsets[i] = off;
 		}
 
-		/* write out offset bitmap for this wordnum */
-		page->words[wordnum] = word;
+		page->nwords = 0;
 	}
+	else
+	{
+		for (wordnum = 0, next_word_threshold = BITS_PER_BITMAPWORD;
+			 wordnum <= WORDNUM(offsets[num_offsets - 1]);
+			 wordnum++, next_word_threshold += BITS_PER_BITMAPWORD)
+		{
+			word = 0;
 
-	page->nwords = wordnum;
-	Assert(page->nwords == WORDS_PER_PAGE(offsets[num_offsets - 1]));
+			while (idx < num_offsets)
+			{
+				OffsetNumber off = offsets[idx];
+
+				/* safety check to ensure we don't overrun bit array bounds */
+				if (!OffsetNumberIsValid(off))
+					elog(ERROR, "tuple offset out of range: %u", off);
+
+				if (off >= next_word_threshold)
+					break;
+
+				word |= ((bitmapword) 1 << BITNUM(off));
+				idx++;
+			}
+
+			/* write out offset bitmap for this wordnum */
+			page->words[wordnum] = word;
+		}
+
+		page->nwords = wordnum;
+		Assert(page->nwords == WORDS_PER_PAGE(offsets[num_offsets - 1]));
+	}
 
 	if (TidStoreIsShared(ts))
 		shared_ts_set(ts->tree.shared, blkno, page);
@@ -384,14 +414,27 @@ TidStoreIsMember(TidStore *ts, ItemPointer tid)
 	if (page == NULL)
 		return false;
 
-	wordnum = WORDNUM(off);
-	bitnum = BITNUM(off);
-
-	/* no bitmap for the off */
-	if (wordnum >= page->nwords)
+	if (page->nwords == 0)
+	{
+		/* we have offsets in the header */
+		for (int i = 0; i < NUM_FULL_OFFSETS; i++)
+		{
+			if (page->full_offsets[i] == off)
+				return true;
+		}
 		return false;
+	}
+	else
+	{
+		wordnum = WORDNUM(off);
+		bitnum = BITNUM(off);
 
-	return (page->words[wordnum] & ((bitmapword) 1 << bitnum)) != 0;
+		/* no bitmap for the off */
+		if (wordnum >= page->nwords)
+			return false;
+
+		return (page->words[wordnum] & ((bitmapword) 1 << bitnum)) != 0;
+	}
 }
 
 /*
@@ -511,25 +554,37 @@ tidstore_iter_extract_tids(TidStoreIter *iter, BlockNumber blkno,
 	result->num_offsets = 0;
 	result->blkno = blkno;
 
-	for (wordnum = 0; wordnum < page->nwords; wordnum++)
+	if (page->nwords == 0)
 	{
-		bitmapword	w = page->words[wordnum];
-		int			off = wordnum * BITS_PER_BITMAPWORD;
-
-		/* Make sure there is enough space to add offsets */
-		if ((result->num_offsets + BITS_PER_BITMAPWORD) > result->max_offset)
+		/* we have offsets in the header */
+		for (int i = 0; i < NUM_FULL_OFFSETS; i++)
 		{
-			result->max_offset *= 2;
-			result->offsets = repalloc(result->offsets,
-									   sizeof(OffsetNumber) * result->max_offset);
+			if (page->full_offsets[i] != InvalidOffsetNumber)
+				result->offsets[result->num_offsets++] = page->full_offsets[i];
 		}
-
-		while (w != 0)
+	}
+	else
+	{
+		for (wordnum = 0; wordnum < page->nwords; wordnum++)
 		{
-			if (w & 1)
-				result->offsets[result->num_offsets++] = (OffsetNumber) off;
-			off++;
-			w >>= 1;
+			bitmapword	w = page->words[wordnum];
+			int			off = wordnum * BITS_PER_BITMAPWORD;
+
+			/* Make sure there is enough space to add offsets */
+			if ((result->num_offsets + BITS_PER_BITMAPWORD) > result->max_offset)
+			{
+				result->max_offset *= 2;
+				result->offsets = repalloc(result->offsets,
+										   sizeof(OffsetNumber) * result->max_offset);
+			}
+
+			while (w != 0)
+			{
+				if (w & 1)
+					result->offsets[result->num_offsets++] = (OffsetNumber) off;
+				off++;
+				w >>= 1;
+			}
 		}
 	}
 }
