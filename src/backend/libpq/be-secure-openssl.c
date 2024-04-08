@@ -1324,7 +1324,7 @@ alpn_cb(SSL *ssl,
 	retval = SSL_select_next_proto((unsigned char **) out, outlen,
 								   alpn_protos, sizeof(alpn_protos),
 								   in, inlen);
-	if (*out == NULL || *outlen > sizeof(alpn_protos) || outlen <= 0)
+	if (*out == NULL || *outlen > sizeof(alpn_protos) || *outlen <= 0)
 		return SSL_TLSEXT_ERR_NOACK;	/* can't happen */
 
 	if (retval == OPENSSL_NPN_NEGOTIATED)
