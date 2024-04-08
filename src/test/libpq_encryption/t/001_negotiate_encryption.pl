@@ -135,7 +135,8 @@ if ($ssl_supported != 0)
 	  || die "copying server.crt: $!";
 	copy "$certdir/server-cn-only.key", "$pgdata/server.key"
 	  || die "copying server.key: $!";
-	chmod(0600, "$pgdata/server.key");
+	chmod(0600, "$pgdata/server.key")
+	  or die "failed to change permissions on server keys: $!";
 
 	# Start with SSL disabled.
 	$node->append_conf('postgresql.conf', "ssl = off\n");
@@ -181,7 +182,7 @@ $$;
 
 # Only accept SSL connections from $servercidr. Our tests don't depend on this
 # but seems best to keep it as narrow as possible for security reasons.
-open my $hba, '>', "$pgdata/pg_hba.conf";
+open my $hba, '>', "$pgdata/pg_hba.conf" or die $!;
 print $hba qq{
 # TYPE        DATABASE        USER            ADDRESS                 METHOD             OPTIONS
 local         postgres        localuser                               trust
