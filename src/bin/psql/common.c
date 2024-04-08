@@ -1625,6 +1625,8 @@ ExecQueryAndProcessResults(const char *query,
 
 		if (cancel_pressed)
 		{
+			/* drop this next result, as well as any others not yet read */
+			ClearOrSaveResult(result);
 			ClearOrSaveAllResults();
 			break;
 		}
