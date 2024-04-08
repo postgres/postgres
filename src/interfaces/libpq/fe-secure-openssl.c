@@ -885,6 +885,9 @@ destroy_ssl_system(void)
 #endif
 }
 
+/* See pqcomm.h comments on OpenSSL implementation of ALPN (RFC 7301) */
+static unsigned char alpn_protos[] = PG_ALPN_PROTOCOL_VECTOR;
+
 /*
  *	Create per-connection SSL object, and load the client certificate,
  *	private key, and trusted CA certs.
@@ -1230,6 +1233,22 @@ initialize_SSL(PGconn *conn)
 				SSLerrfree(err);
 				return -1;
 			}
+		}
+	}
+
+	/* Set ALPN */
+	{
+		int			retval;
+
+		retval = SSL_set_alpn_protos(conn->ssl, alpn_protos, sizeof(alpn_protos));
+
+		if (retval != 0)
+		{
+			char	   *err = SSLerrmessage(ERR_get_error());
+
+			libpq_append_conn_error(conn, "could not set ssl alpn extension: %s", err);
+			SSLerrfree(err);
+			return -1;
 		}
 	}
 
@@ -1754,6 +1773,7 @@ PQsslAttributeNames(PGconn *conn)
 		"cipher",
 		"compression",
 		"protocol",
+		"alpn",
 		NULL
 	};
 	static const char *const empty_attrs[] = {NULL};
@@ -1807,6 +1827,21 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 
 	if (strcmp(attribute_name, "protocol") == 0)
 		return SSL_get_version(conn->ssl);
+
+	if (strcmp(attribute_name, "alpn") == 0)
+	{
+		const unsigned char *data;
+		unsigned int len;
+		static char alpn_str[256];	/* alpn doesn't support longer than 255
+									 * bytes */
+
+		SSL_get0_alpn_selected(conn->ssl, &data, &len);
+		if (data == NULL || len == 0 || len > sizeof(alpn_str) - 1)
+			return NULL;
+		memcpy(alpn_str, data, len);
+		alpn_str[len] = 0;
+		return alpn_str;
+	}
 
 	return NULL;				/* unknown attribute */
 }

@@ -67,6 +67,12 @@ static int	ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdat
 static int	dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static void info_cb(const SSL *ssl, int type, int args);
+static int	alpn_cb(SSL *ssl,
+					const unsigned char **out,
+					unsigned char *outlen,
+					const unsigned char *in,
+					unsigned int inlen,
+					void *userdata);
 static bool initialize_dh(SSL_CTX *context, bool isServerStart);
 static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
 static const char *SSLerrmessage(unsigned long ecode);
@@ -432,6 +438,9 @@ be_tls_open_server(Port *port)
 	/* set up debugging/info callback */
 	SSL_CTX_set_info_callback(SSL_context, info_cb);
 
+	/* enable ALPN */
+	SSL_CTX_set_alpn_select_cb(SSL_context, alpn_cb, port);
+
 	if (!(port->ssl = SSL_new(SSL_context)))
 	{
 		ereport(COMMERROR,
@@ -569,6 +578,32 @@ aloop:
 				break;
 		}
 		return -1;
+	}
+
+	/* Get the protocol selected by ALPN */
+	port->alpn_used = false;
+	{
+		const unsigned char *selected;
+		unsigned int len;
+
+		SSL_get0_alpn_selected(port->ssl, &selected, &len);
+
+		/* If ALPN is used, check that we negotiated the expected protocol */
+		if (selected != NULL)
+		{
+			if (len == strlen(PG_ALPN_PROTOCOL) &&
+				memcmp(selected, PG_ALPN_PROTOCOL, strlen(PG_ALPN_PROTOCOL)) == 0)
+			{
+				port->alpn_used = true;
+			}
+			else
+			{
+				/* shouldn't happen */
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("received SSL connection request with unexpected ALPN protocol")));
+			}
+		}
 	}
 
 	/* Get client certificate, if available. */
@@ -1258,6 +1293,48 @@ info_cb(const SSL *ssl, int type, int args)
 			break;
 	}
 }
+
+/* See pqcomm.h comments on OpenSSL implementation of ALPN (RFC 7301) */
+static const unsigned char alpn_protos[] = PG_ALPN_PROTOCOL_VECTOR;
+
+/*
+ * Server callback for ALPN negotiation. We use the standard "helper" function
+ * even though currently we only accept one value.
+ */
+static int
+alpn_cb(SSL *ssl,
+		const unsigned char **out,
+		unsigned char *outlen,
+		const unsigned char *in,
+		unsigned int inlen,
+		void *userdata)
+{
+	/*
+	 * Why does OpenSSL provide a helper function that requires a nonconst
+	 * vector when the callback is declared to take a const vector? What are
+	 * we to do with that?
+	 */
+	int			retval;
+
+	Assert(userdata != NULL);
+	Assert(out != NULL);
+	Assert(outlen != NULL);
+	Assert(in != NULL);
+
+	retval = SSL_select_next_proto((unsigned char **) out, outlen,
+								   alpn_protos, sizeof(alpn_protos),
+								   in, inlen);
+	if (*out == NULL || *outlen > sizeof(alpn_protos) || outlen <= 0)
+		return SSL_TLSEXT_ERR_NOACK;	/* can't happen */
+
+	if (retval == OPENSSL_NPN_NEGOTIATED)
+		return SSL_TLSEXT_ERR_OK;
+	else if (retval == OPENSSL_NPN_NO_OVERLAP)
+		return SSL_TLSEXT_ERR_NOACK;
+	else
+		return SSL_TLSEXT_ERR_NOACK;
+}
+
 
 /*
  * Set DH parameters for generating ephemeral DH keys.  The

@@ -2944,6 +2944,18 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
            </para>
           </listitem>
          </varlistentry>
+        <varlistentry>
+         <term><literal>alpn</literal></term>
+          <listitem>
+           <para>
+            Application protocol selected by the TLS Application-Layer
+            Protocol Negotiation (ALPN) extension.  The only protocol
+            supported by libpq is <literal>TBD-pgsql</literal>, so this is
+            mainly useful for checking whether the server supported ALPN or
+            not. Empty string if ALPN was not used.
+           </para>
+          </listitem>
+         </varlistentry>
        </variablelist>
       </para>
 

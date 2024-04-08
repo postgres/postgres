@@ -407,6 +407,14 @@ ProcessSSLStartup(Port *port)
 	}
 	Assert(port->ssl_in_use);
 
+	if (!port->alpn_used)
+	{
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("received direct SSL connection request without ALPN protocol negotiation extension")));
+		goto reject;
+	}
+
 	if (Trace_connection_negotiation)
 		ereport(LOG,
 				(errmsg("direct SSL connection accepted")));

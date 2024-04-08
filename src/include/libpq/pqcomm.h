@@ -139,6 +139,25 @@ typedef struct CancelRequestPacket
 	uint32		cancelAuthCode; /* secret key to authorize cancel */
 } CancelRequestPacket;
 
+/* Application-Layer Protocol Negotiation is required for direct connections
+ * to avoid protocol confusion attacks (e.g https://alpaca-attack.com/).
+ *
+ * ALPN is specified in RFC 7301
+ *
+ * This string should be registered at:
+ * https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
+ *
+ * OpenSSL uses this wire-format for the list of alpn protocols even in the
+ * API. Both server and client take the same format parameter but the client
+ * actually sends it to the server as-is and the server it specifies the
+ * preference order to use to choose the one selected to send back.
+ *
+ * c.f. https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_alpn_select_cb.html
+ *
+ * The #define can be used to initialize a char[] vector to use directly in the API
+ */
+#define PG_ALPN_PROTOCOL "TBD-pgsql"
+#define PG_ALPN_PROTOCOL_VECTOR { 9, 'T','B','D','-','p','g','s','q','l' }
 
 /*
  * A client can also start by sending a SSL or GSSAPI negotiation request to
