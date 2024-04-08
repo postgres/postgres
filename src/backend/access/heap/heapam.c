@@ -434,13 +434,13 @@ heap_setscanlimits(TableScanDesc sscan, BlockNumber startBlk, BlockNumber numBlk
 }
 
 /*
- * Per-tuple loop for heapgetpage() in pagemode. Pulled out so it can be
- * called multiple times, with constant arguments for all_visible,
+ * Per-tuple loop for heap_prepare_pagescan(). Pulled out so it can be called
+ * multiple times, with constant arguments for all_visible,
  * check_serializable.
  */
 pg_attribute_always_inline
 static int
-heapgetpage_collect(HeapScanDesc scan, Snapshot snapshot,
+page_collect_tuples(HeapScanDesc scan, Snapshot snapshot,
 					Page page, Buffer buffer,
 					BlockNumber block, int lines,
 					bool all_visible, bool check_serializable)
@@ -547,7 +547,7 @@ heap_prepare_pagescan(TableScanDesc sscan)
 		CheckForSerializableConflictOutNeeded(scan->rs_base.rs_rd, snapshot);
 
 	/*
-	 * We call heapgetpage_collect() with constant arguments, to get the
+	 * We call page_collect_tuples() with constant arguments, to get the
 	 * compiler to constant fold the constant arguments. Separate calls with
 	 * constant arguments, rather than variables, are needed on several
 	 * compilers to actually perform constant folding.
@@ -555,19 +555,19 @@ heap_prepare_pagescan(TableScanDesc sscan)
 	if (likely(all_visible))
 	{
 		if (likely(!check_serializable))
-			scan->rs_ntuples = heapgetpage_collect(scan, snapshot, page, buffer,
+			scan->rs_ntuples = page_collect_tuples(scan, snapshot, page, buffer,
 												   block, lines, true, false);
 		else
-			scan->rs_ntuples = heapgetpage_collect(scan, snapshot, page, buffer,
+			scan->rs_ntuples = page_collect_tuples(scan, snapshot, page, buffer,
 												   block, lines, true, true);
 	}
 	else
 	{
 		if (likely(!check_serializable))
-			scan->rs_ntuples = heapgetpage_collect(scan, snapshot, page, buffer,
+			scan->rs_ntuples = page_collect_tuples(scan, snapshot, page, buffer,
 												   block, lines, false, false);
 		else
-			scan->rs_ntuples = heapgetpage_collect(scan, snapshot, page, buffer,
+			scan->rs_ntuples = page_collect_tuples(scan, snapshot, page, buffer,
 												   block, lines, false, true);
 	}
 
