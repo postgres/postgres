@@ -231,6 +231,12 @@ typedef enum
 	PGASYNC_PIPELINE_IDLE,		/* "Idle" between commands in pipeline mode */
 } PGAsyncStatusType;
 
+/* Bitmasks for allowed_enc_methods and failed_enc_methods */
+#define ENC_ERROR			0
+#define ENC_PLAINTEXT		0x01
+#define ENC_GSSAPI			0x02
+#define ENC_NEGOTIATED_SSL	0x04
+
 /* Target server type (decoded value of target_session_attrs) */
 typedef enum
 {
@@ -551,15 +557,16 @@ struct pg_conn
 	void	   *sasl_state;
 	int			scram_sha_256_iterations;
 
+	uint8		allowed_enc_methods;
+	uint8		failed_enc_methods;
+	uint8		current_enc_method;
+
 	/* SSL structures */
 	bool		ssl_in_use;
 	bool		ssl_cert_requested; /* Did the server ask us for a cert? */
 	bool		ssl_cert_sent;	/* Did we send one in reply? */
 
 #ifdef USE_SSL
-	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
-	bool		wait_ssl_try;	/* Delay SSL negotiation until after
-								 * attempting normal connection */
 #ifdef USE_OPENSSL
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 	X509	   *peer;			/* X509 cert of server */
@@ -582,7 +589,6 @@ struct pg_conn
 	gss_name_t	gtarg_nam;		/* GSS target name */
 
 	/* The following are encryption-only */
-	bool		try_gss;		/* GSS attempting permitted */
 	bool		gssenc;			/* GSS encryption is usable */
 	gss_cred_id_t gcred;		/* GSS credential temp storage. */
 

@@ -387,6 +387,12 @@ static const char uri_designator[] = "postgresql://";
 static const char short_uri_designator[] = "postgres://";
 
 static bool connectOptions1(PGconn *conn, const char *conninfo);
+static bool init_allowed_encryption_methods(PGconn *conn);
+#if defined(USE_SSL) || defined(USE_GSS)
+static int	encryption_negotiation_failed(PGconn *conn);
+#endif
+static bool connection_failed(PGconn *conn);
+static bool select_next_encryption_method(PGconn *conn, bool negotiation_failure);
 static PGPing internal_ping(PGconn *conn);
 static void pqFreeCommandQueue(PGcmdQueueEntry *queue);
 static bool fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
@@ -1564,12 +1570,6 @@ pqConnectOptions2(PGconn *conn)
 				return false;
 		}
 #endif
-	}
-	else
-	{
-		conn->sslmode = strdup(DefaultSSLMode);
-		if (!conn->sslmode)
-			goto oom_error;
 	}
 
 #ifdef USE_SSL
@@ -2789,15 +2789,9 @@ keep_going:						/* We will come back to here until there is
 		 */
 		conn->pversion = PG_PROTOCOL(3, 0);
 		conn->send_appname = true;
-#ifdef USE_SSL
-		/* initialize these values based on SSL mode */
-		conn->allow_ssl_try = (conn->sslmode[0] != 'd');	/* "disable" */
-		conn->wait_ssl_try = (conn->sslmode[0] == 'a'); /* "allow" */
-#endif
-#ifdef ENABLE_GSS
-		conn->try_gss = (conn->gssencmode[0] != 'd');	/* "disable" */
-#endif
-
+		conn->failed_enc_methods = 0;
+		conn->current_enc_method = 0;
+		conn->allowed_enc_methods = 0;
 		reset_connection_state_machine = false;
 		need_new_connection = true;
 	}
@@ -2822,6 +2816,34 @@ keep_going:						/* We will come back to here until there is
 
 		need_new_connection = false;
 	}
+
+	/* Decide what to do next, if SSL or GSS negotiation fails */
+#define ENCRYPTION_NEGOTIATION_FAILED() \
+	do { \
+		switch (encryption_negotiation_failed(conn)) \
+		{ \
+			case 0: \
+				goto error_return; \
+			case 1: \
+				conn->status = CONNECTION_MADE; \
+				return PGRES_POLLING_WRITING; \
+			case 2: \
+				need_new_connection = true; \
+				goto keep_going; \
+		} \
+	} while(0);
+
+	/* Decide what to do next, if connection fails */
+#define CONNECTION_FAILED() \
+	do { \
+		if (connection_failed(conn)) \
+		{ \
+			need_new_connection = true; \
+			goto keep_going; \
+		} \
+		else \
+			goto error_return; \
+	} while(0);
 
 	/* Now try to advance the state machine for this connection */
 	switch (conn->status)
@@ -2881,6 +2903,16 @@ keep_going:						/* We will come back to here until there is
 						}
 					}
 #endif
+
+					/*
+					 * Choose the encryption method to try first.  Do this
+					 * before establishing the connection, so that if none of
+					 * the modes allowed by the connections options are
+					 * available, we can error out before establishing the
+					 * connection.
+					 */
+					if (!init_allowed_encryption_methods(conn))
+						goto error_return;
 
 					/*
 					 * Set connip, too.  Note we purposely ignore strdup
@@ -3165,18 +3197,6 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				/*
-				 * Make sure we can write before advancing to next step.
-				 */
-				conn->status = CONNECTION_MADE;
-				return PGRES_POLLING_WRITING;
-			}
-
-		case CONNECTION_MADE:
-			{
-				char	   *startpacket;
-				int			packetlen;
-
-				/*
 				 * Implement requirepeer check, if requested and it's a
 				 * Unix-domain socket.
 				 */
@@ -3224,30 +3244,27 @@ keep_going:						/* We will come back to here until there is
 #endif							/* WIN32 */
 				}
 
-				if (conn->raddr.addr.ss_family == AF_UNIX)
-				{
-					/* Don't request SSL or GSSAPI over Unix sockets */
-#ifdef USE_SSL
-					conn->allow_ssl_try = false;
-#endif
-#ifdef ENABLE_GSS
-					conn->try_gss = false;
-#endif
-				}
+				/*
+				 * Make sure we can write before advancing to next step.
+				 */
+				conn->status = CONNECTION_MADE;
+				return PGRES_POLLING_WRITING;
+			}
+
+		case CONNECTION_MADE:
+			{
+				char	   *startpacket;
+				int			packetlen;
 
 #ifdef ENABLE_GSS
 
 				/*
-				 * If GSSAPI encryption is enabled, then call
-				 * pg_GSS_have_cred_cache() which will return true if we can
-				 * acquire credentials (and give us a handle to use in
-				 * conn->gcred), and then send a packet to the server asking
-				 * for GSSAPI Encryption (and skip past SSL negotiation and
-				 * regular startup below).
+				 * If GSSAPI encryption is enabled, send a packet to the
+				 * server asking for GSSAPI Encryption and proceed with GSSAPI
+				 * handshake.  We will come back here after GSSAPI encryption
+				 * has been established, with conn->gctx set.
 				 */
-				if (conn->try_gss && !conn->gctx && conn->gcred == GSS_C_NO_CREDENTIAL)
-					conn->try_gss = pg_GSS_have_cred_cache(&conn->gcred);
-				if (conn->try_gss && !conn->gctx)
+				if (conn->current_enc_method == ENC_GSSAPI && !conn->gctx)
 				{
 					ProtocolVersion pv = pg_hton32(NEGOTIATE_GSS_CODE);
 
@@ -3261,13 +3278,6 @@ keep_going:						/* We will come back to here until there is
 					/* Ok, wait for response */
 					conn->status = CONNECTION_GSS_STARTUP;
 					return PGRES_POLLING_READING;
-				}
-				else if (!conn->gctx && conn->gssencmode[0] == 'r')
-				{
-					/* XXX: shouldn't happen */
-					libpq_append_conn_error(conn,
-											"GSSAPI encryption required but was impossible");
-					goto error_return;
 				}
 #endif
 
@@ -3284,16 +3294,11 @@ keep_going:						/* We will come back to here until there is
 					goto error_return;
 
 				/*
-				 * If SSL is enabled and we haven't already got encryption of
-				 * some sort running, request SSL instead of sending the
-				 * startup message.
+				 * If SSL is enabled, request SSL and proceed with SSL
+				 * handshake.  We will come back here after SSL encryption has
+				 * been established, with ssl_in_use set.
 				 */
-				if (conn->allow_ssl_try && !conn->wait_ssl_try &&
-					!conn->ssl_in_use
-#ifdef ENABLE_GSS
-					&& !conn->gssenc
-#endif
-					)
+				if (conn->current_enc_method == ENC_NEGOTIATED_SSL && !conn->ssl_in_use)
 				{
 					ProtocolVersion pv;
 
@@ -3341,8 +3346,11 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				/*
-				 * Build the startup packet.
+				 * We have now established encryption, or we are happy to
+				 * proceed without.
 				 */
+
+				/* Build the startup packet. */
 				startpacket = pqBuildStartupPacket3(conn, &packetlen,
 													EnvironmentOptions);
 				if (!startpacket)
@@ -3382,9 +3390,10 @@ keep_going:						/* We will come back to here until there is
 
 				/*
 				 * On first time through, get the postmaster's response to our
-				 * SSL negotiation packet.
+				 * SSL negotiation packet. If we are trying a direct ssl
+				 * connection, go straight to initiating ssl.
 				 */
-				if (!conn->ssl_in_use)
+				if (!conn->ssl_in_use && conn->current_enc_method == ENC_NEGOTIATED_SSL)
 				{
 					/*
 					 * We use pqReadData here since it has the logic to
@@ -3414,34 +3423,14 @@ keep_going:						/* We will come back to here until there is
 					{
 						/* mark byte consumed */
 						conn->inStart = conn->inCursor;
-
-						/*
-						 * Set up global SSL state if required.  The crypto
-						 * state has already been set if libpq took care of
-						 * doing that, so there is no need to make that happen
-						 * again.
-						 */
-						if (pqsecure_initialize(conn, true, false) != 0)
-							goto error_return;
 					}
 					else if (SSLok == 'N')
 					{
 						/* mark byte consumed */
 						conn->inStart = conn->inCursor;
 						/* OK to do without SSL? */
-						if (conn->sslmode[0] == 'r' ||	/* "require" */
-							conn->sslmode[0] == 'v')	/* "verify-ca" or
-														 * "verify-full" */
-						{
-							/* Require SSL, but server does not want it */
-							libpq_append_conn_error(conn, "server does not support SSL, but SSL was required");
-							goto error_return;
-						}
-						/* Otherwise, proceed with normal startup */
-						conn->allow_ssl_try = false;
 						/* We can proceed using this connection */
-						conn->status = CONNECTION_MADE;
-						return PGRES_POLLING_WRITING;
+						ENCRYPTION_NEGOTIATION_FAILED();
 					}
 					else if (SSLok == 'E')
 					{
@@ -3467,6 +3456,14 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				/*
+				 * Set up global SSL state if required.  The crypto state has
+				 * already been set if libpq took care of doing that, so there
+				 * is no need to make that happen again.
+				 */
+				if (pqsecure_initialize(conn, true, false) != 0)
+					goto error_return;
+
+				/*
 				 * Begin or continue the SSL negotiation process.
 				 */
 				pollres = pqsecure_open_client(conn);
@@ -3490,21 +3487,7 @@ keep_going:						/* We will come back to here until there is
 				}
 				if (pollres == PGRES_POLLING_FAILED)
 				{
-					/*
-					 * Failed ... if sslmode is "prefer" then do a non-SSL
-					 * retry
-					 */
-					if (conn->sslmode[0] == 'p' /* "prefer" */
-						&& conn->allow_ssl_try	/* redundant? */
-						&& !conn->wait_ssl_try) /* redundant? */
-					{
-						/* only retry once */
-						conn->allow_ssl_try = false;
-						need_new_connection = true;
-						goto keep_going;
-					}
-					/* Else it's a hard failure */
-					goto error_return;
+					CONNECTION_FAILED();
 				}
 				/* Else, return POLLING_READING or POLLING_WRITING status */
 				return pollres;
@@ -3523,7 +3506,7 @@ keep_going:						/* We will come back to here until there is
 				 * If we haven't yet, get the postmaster's response to our
 				 * negotiation packet
 				 */
-				if (conn->try_gss && !conn->gctx)
+				if (!conn->gctx)
 				{
 					char		gss_ok;
 					int			rdresult = pqReadData(conn);
@@ -3547,9 +3530,7 @@ keep_going:						/* We will come back to here until there is
 						 * error message on retry).  Server gets fussy if we
 						 * don't hang up the socket, though.
 						 */
-						conn->try_gss = false;
-						need_new_connection = true;
-						goto keep_going;
+						CONNECTION_FAILED();
 					}
 
 					/* mark byte consumed */
@@ -3557,17 +3538,8 @@ keep_going:						/* We will come back to here until there is
 
 					if (gss_ok == 'N')
 					{
-						/* Server doesn't want GSSAPI; fall back if we can */
-						if (conn->gssencmode[0] == 'r')
-						{
-							libpq_append_conn_error(conn, "server doesn't support GSSAPI encryption, but it was required");
-							goto error_return;
-						}
-
-						conn->try_gss = false;
 						/* We can proceed using this connection */
-						conn->status = CONNECTION_MADE;
-						return PGRES_POLLING_WRITING;
+						ENCRYPTION_NEGOTIATION_FAILED();
 					}
 					else if (gss_ok != 'G')
 					{
@@ -3599,18 +3571,7 @@ keep_going:						/* We will come back to here until there is
 				}
 				else if (pollres == PGRES_POLLING_FAILED)
 				{
-					if (conn->gssencmode[0] == 'p')
-					{
-						/*
-						 * We failed, but we can retry on "prefer".  Have to
-						 * drop the current connection to do so, though.
-						 */
-						conn->try_gss = false;
-						need_new_connection = true;
-						goto keep_going;
-					}
-					/* Else it's a hard failure */
-					goto error_return;
+					CONNECTION_FAILED();
 				}
 				/* Else, return POLLING_READING or POLLING_WRITING status */
 				return pollres;
@@ -3786,55 +3747,7 @@ keep_going:						/* We will come back to here until there is
 					/* Check to see if we should mention pgpassfile */
 					pgpassfileWarning(conn);
 
-#ifdef ENABLE_GSS
-
-					/*
-					 * If gssencmode is "prefer" and we're using GSSAPI, retry
-					 * without it.
-					 */
-					if (conn->gssenc && conn->gssencmode[0] == 'p')
-					{
-						/* only retry once */
-						conn->try_gss = false;
-						need_new_connection = true;
-						goto keep_going;
-					}
-#endif
-
-#ifdef USE_SSL
-
-					/*
-					 * if sslmode is "allow" and we haven't tried an SSL
-					 * connection already, then retry with an SSL connection
-					 */
-					if (conn->sslmode[0] == 'a' /* "allow" */
-						&& !conn->ssl_in_use
-						&& conn->allow_ssl_try
-						&& conn->wait_ssl_try)
-					{
-						/* only retry once */
-						conn->wait_ssl_try = false;
-						need_new_connection = true;
-						goto keep_going;
-					}
-
-					/*
-					 * if sslmode is "prefer" and we're in an SSL connection,
-					 * then do a non-SSL retry
-					 */
-					if (conn->sslmode[0] == 'p' /* "prefer" */
-						&& conn->ssl_in_use
-						&& conn->allow_ssl_try	/* redundant? */
-						&& !conn->wait_ssl_try) /* redundant? */
-					{
-						/* only retry once */
-						conn->allow_ssl_try = false;
-						need_new_connection = true;
-						goto keep_going;
-					}
-#endif
-
-					goto error_return;
+					CONNECTION_FAILED();
 				}
 				else if (beresp == PqMsg_NegotiateProtocolVersion)
 				{
@@ -4280,6 +4193,168 @@ error_return:
 	return PGRES_POLLING_FAILED;
 }
 
+/*
+ * Initialize the state machine for negotiating encryption
+ */
+static bool
+init_allowed_encryption_methods(PGconn *conn)
+{
+	if (conn->raddr.addr.ss_family == AF_UNIX)
+	{
+		/* Don't request SSL or GSSAPI over Unix sockets */
+		conn->allowed_enc_methods &= ~(ENC_NEGOTIATED_SSL | ENC_GSSAPI);
+
+		/*
+		 * XXX: we probably should not do this. sslmode=require works
+		 * differently
+		 */
+		if (conn->gssencmode[0] == 'r')
+		{
+			libpq_append_conn_error(conn,
+									"GSSAPI encryption required but it is not supported over a local socket)");
+			conn->allowed_enc_methods = 0;
+			conn->current_enc_method = ENC_ERROR;
+			return false;
+		}
+
+		conn->allowed_enc_methods = ENC_PLAINTEXT;
+		conn->current_enc_method = ENC_PLAINTEXT;
+		return true;
+	}
+
+	/* initialize based on sslmode and gssencmode */
+	conn->allowed_enc_methods = 0;
+
+#ifdef USE_SSL
+	/* sslmode anything but 'disable', and GSSAPI not required */
+	if (conn->sslmode[0] != 'd' && conn->gssencmode[0] != 'r')
+		conn->allowed_enc_methods |= ENC_NEGOTIATED_SSL;
+#endif
+
+#ifdef ENABLE_GSS
+	if (conn->gssencmode[0] != 'd')
+		conn->allowed_enc_methods |= ENC_GSSAPI;
+#endif
+
+	if ((conn->sslmode[0] == 'd' || conn->sslmode[0] == 'p' || conn->sslmode[0] == 'a') &&
+		(conn->gssencmode[0] == 'd' || conn->gssencmode[0] == 'p'))
+	{
+		conn->allowed_enc_methods |= ENC_PLAINTEXT;
+	}
+
+	return select_next_encryption_method(conn, false);
+}
+
+/*
+ * Out-of-line portion of the ENCRYPTION_NEGOTIATION_FAILED() macro in the
+ * PQconnectPoll state machine.
+ *
+ * Return value:
+ *  0: connection failed and we are out of encryption methods to try. return an error
+ *  1: Retry with next connection method. The TCP connection is still valid and in
+ *     known state, so we can proceed with the negotiating next method without
+ *     reconnecting.
+ *  2: Disconnect, and retry with next connection method.
+ *
+ * conn->current_enc_method is updated to the next method to try.
+ */
+#if defined(USE_SSL) || defined(USE_GSS)
+static int
+encryption_negotiation_failed(PGconn *conn)
+{
+	Assert((conn->failed_enc_methods & conn->current_enc_method) == 0);
+	conn->failed_enc_methods |= conn->current_enc_method;
+
+	if (select_next_encryption_method(conn, true))
+		return 1;
+	else
+		return 0;
+}
+#endif
+
+/*
+ * Out-of-line portion of the CONNECTION_FAILED() macro
+ *
+ * Returns true, if we should reconnect and retry with a different encryption
+ * method.  conn->current_enc_method is updated to the next method to try.
+ */
+static bool
+connection_failed(PGconn *conn)
+{
+	Assert((conn->failed_enc_methods & conn->current_enc_method) == 0);
+	conn->failed_enc_methods |= conn->current_enc_method;
+
+	return select_next_encryption_method(conn, false);
+}
+
+/*
+ * Choose the next encryption method to try. If this is a retry,
+ * conn->failed_enc_methods has already been updated. The function sets
+ * conn->current_enc_method to the next method to try. Returns false if no
+ * encryption methods remain.
+ */
+static bool
+select_next_encryption_method(PGconn *conn, bool have_valid_connection)
+{
+	int			remaining_methods;
+
+#define SELECT_NEXT_METHOD(method) \
+	do { \
+		if ((remaining_methods & method) != 0) \
+		{ \
+			conn->current_enc_method = method; \
+			return true; \
+		} \
+	} while (false)
+
+	remaining_methods = conn->allowed_enc_methods & ~conn->failed_enc_methods;
+
+	/*
+	 * Try GSSAPI before SSL
+	 */
+#ifdef ENABLE_GSS
+	if ((remaining_methods & ENC_GSSAPI) != 0)
+	{
+		/*
+		 * If GSSAPI encryption is enabled, then call pg_GSS_have_cred_cache()
+		 * which will return true if we can acquire credentials (and give us a
+		 * handle to use in conn->gcred), and then send a packet to the server
+		 * asking for GSSAPI Encryption (and skip past SSL negotiation and
+		 * regular startup below).
+		 */
+		if (!conn->gctx)
+		{
+			if (!pg_GSS_have_cred_cache(&conn->gcred))
+			{
+				conn->allowed_enc_methods &= ~ENC_GSSAPI;
+				remaining_methods &= ~ENC_GSSAPI;
+
+				if (conn->gssencmode[0] == 'r')
+				{
+					libpq_append_conn_error(conn,
+											"GSSAPI encryption required but no credential cache");
+				}
+			}
+		}
+	}
+
+	SELECT_NEXT_METHOD(ENC_GSSAPI);
+#endif
+
+	/* With sslmode=allow, try plaintext connection before SSL. */
+	if (conn->sslmode[0] == 'a')
+		SELECT_NEXT_METHOD(ENC_PLAINTEXT);
+
+	SELECT_NEXT_METHOD(ENC_NEGOTIATED_SSL);
+
+	if (conn->sslmode[0] != 'a')
+		SELECT_NEXT_METHOD(ENC_PLAINTEXT);
+
+	/* No more options */
+	conn->current_enc_method = ENC_ERROR;
+	return false;
+#undef SELECT_NEXT_METHOD
+}
 
 /*
  * internal_ping

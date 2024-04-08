@@ -292,13 +292,7 @@ testuser    disable      disable      connect, authok              -> plain
 .           .            require      connect, gssaccept, authok   -> gss  # If both GSS and SSL is possible, GSS is chosen over SSL, even if sslmode=require
 
 gssuser     disable      disable      connect, authfail            -> fail
-
-# XXX: after the reconnection and SSL negotiation failure, libpq tries
-# again to authenticate in plaintext. That's unnecessariy and doomed
-# to fail. We already know the server doesn't accept that because of
-# the first authentication failure.
-.           .            allow        connect, authfail, reconnect, sslreject, authfail -> fail
-
+.           .            allow        connect, authfail, reconnect, sslreject -> fail
 .           .            prefer       connect, sslreject, authfail -> fail
 .           .            require      connect, sslreject           -> fail
 .           prefer       *            connect, gssaccept, authok   -> gss
@@ -312,13 +306,7 @@ nogssuser   disable      disable      connect, authok              -> plain
 .           .            allow        connect, gssaccept, authfail, reconnect, authok             -> plain
 .           .            prefer       connect, gssaccept, authfail, reconnect, sslreject, authok  -> plain
 .           .            require      connect, gssaccept, authfail, reconnect, sslreject          -> fail
-.           require      disable      connect, gssaccept, authfail -> fail
-
-# XXX: libpq retries the connection unnecessarily in this case:
-.           .            allow        connect, gssaccept, authfail, reconnect, gssaccept, authfail -> fail
-
-.           .            prefer       connect, gssaccept, authfail -> fail
-.           .            require      connect, gssaccept, authfail -> fail
+.           require      *            connect, gssaccept, authfail -> fail
 };
 
 	# Sanity check that the connection fails when no kerberos ticket
@@ -376,10 +364,7 @@ ssluser     disable      disable      connect, authfail            -> fail
 .           .            prefer       connect, gssaccept, authfail, reconnect, sslaccept, authok -> ssl
 .           .            require      connect, gssaccept, authfail, reconnect, sslaccept, authok -> ssl
 .           require      disable      connect, gssaccept, authfail -> fail
-
-# XXX: libpq retries the connection unnecessarily in this case:
-.           .            allow        connect, gssaccept, authfail, reconnect, gssaccept, authfail -> fail
-
+.           .            allow        connect, gssaccept, authfail -> fail
 .           .            prefer       connect, gssaccept, authfail -> fail
 .           .            require      connect, gssaccept, authfail -> fail         # If both GSS and SSL are required, the sslmode=require is effectively ignored and GSS is required
 
@@ -392,10 +377,7 @@ nogssuser   disable      disable      connect, authok              -> plain
 .           .            prefer       connect, gssaccept, authfail, reconnect, sslaccept, authok   -> ssl
 .           .            require      connect, gssaccept, authfail, reconnect, sslaccept, authok   -> ssl
 .           require      disable      connect, gssaccept, authfail -> fail
-
-# XXX: libpq retries the connection unnecessarily in this case:
-.           .            allow        connect, gssaccept, authfail, reconnect, gssaccept, authfail -> fail
-
+.           .            allow        connect, gssaccept, authfail -> fail
 .           .            prefer       connect, gssaccept, authfail -> fail
 .           .            require      connect, gssaccept, authfail -> fail
 
