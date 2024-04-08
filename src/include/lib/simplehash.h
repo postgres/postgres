@@ -1102,6 +1102,9 @@ SH_STAT(SH_TYPE * tb)
 			max_collisions = curcoll;
 	}
 
+	/* large enough to be worth freeing, even if just used for debugging */
+	pfree(collisions);
+
 	if (tb->members > 0)
 	{
 		fillfactor = tb->members / ((double) tb->size);
