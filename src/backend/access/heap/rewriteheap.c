@@ -641,8 +641,8 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 						len, MaxHeapTupleSize)));
 
 	/* Compute desired extra freespace due to fillfactor option */
-	saveFreeSpace = RelationGetTargetPageFreeSpace(state->rs_new_rel,
-												   HEAP_DEFAULT_FILLFACTOR);
+	saveFreeSpace = HeapGetTargetPageFreeSpace(state->rs_new_rel,
+											   HEAP_DEFAULT_FILLFACTOR);
 
 	/* Now we can check to see if there's enough free space already. */
 	page = (Page) state->rs_buffer;

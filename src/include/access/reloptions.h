@@ -21,6 +21,7 @@
 
 #include "access/amapi.h"
 #include "access/htup.h"
+#include "access/tableam.h"
 #include "access/tupdesc.h"
 #include "nodes/pg_list.h"
 #include "storage/lock.h"
@@ -224,7 +225,9 @@ extern Datum transformRelOptions(Datum oldOptions, List *defList,
 								 bool acceptOidsOff, bool isReset);
 extern List *untransformRelOptions(Datum options);
 extern bytea *extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
-								amoptions_function amoptions);
+								const TableAmRoutine *tableam,
+								amoptions_function amoptions,
+								CommonRdOptions *common);
 extern void *build_reloptions(Datum reloptions, bool validate,
 							  relopt_kind kind,
 							  Size relopt_struct_size,
@@ -233,9 +236,8 @@ extern void *build_reloptions(Datum reloptions, bool validate,
 extern void *build_local_reloptions(local_relopts *relopts, Datum options,
 									bool validate);
 
-extern bytea *default_reloptions(Datum reloptions, bool validate,
-								 relopt_kind kind);
-extern bytea *heap_reloptions(char relkind, Datum reloptions, bool validate);
+extern bytea *heap_reloptions(char relkind, Datum reloptions,
+							  CommonRdOptions *common, bool validate);
 extern bytea *view_reloptions(Datum reloptions, bool validate);
 extern bytea *partitioned_table_reloptions(Datum reloptions, bool validate);
 extern bytea *index_reloptions(amoptions_function amoptions, Datum reloptions,

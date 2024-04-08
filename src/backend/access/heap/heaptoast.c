@@ -32,6 +32,13 @@
 #include "access/toast_internals.h"
 #include "utils/fmgroids.h"
 
+/*
+ * HeapGetToastTupleTarget
+ *      Returns the heap relation's toast_tuple_target.  Note multiple eval of argument!
+ */
+#define HeapGetToastTupleTarget(relation, defaulttarg) \
+		((HeapRdOptions *) (relation)->rd_options ? \
+		((HeapRdOptions *) (relation)->rd_options)->toast_tuple_target : (defaulttarg))
 
 /* ----------
  * heap_toast_delete -
@@ -174,7 +181,7 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		hoff += BITMAPLEN(numAttrs);
 	hoff = MAXALIGN(hoff);
 	/* now convert to a limit on the tuple data size */
-	maxDataLen = RelationGetToastTupleTarget(rel, TOAST_TUPLE_TARGET) - hoff;
+	maxDataLen = HeapGetToastTupleTarget(rel, TOAST_TUPLE_TARGET) - hoff;
 
 	/*
 	 * Look for attributes with attstorage EXTENDED to compress.  Also find

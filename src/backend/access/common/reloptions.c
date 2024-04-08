@@ -24,6 +24,7 @@
 #include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/spgist_private.h"
+#include "access/tableam.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/tablespace.h"
@@ -44,7 +45,7 @@
  * value, upper and lower bounds (if applicable); for strings, consider a
  * validation routine.
  * (ii) add a record below (or use add_<type>_reloption).
- * (iii) add it to the appropriate options struct (perhaps StdRdOptions)
+ * (iii) add it to the appropriate options struct (perhaps HeapRdOptions)
  * (iv) add it to the appropriate handling routine (perhaps
  * default_reloptions)
  * (v) make sure the lock level is set correctly for that operation
@@ -1374,10 +1375,16 @@ untransformRelOptions(Datum options)
  * tupdesc is pg_class' tuple descriptor.  amoptions is a pointer to the index
  * AM's options parser function in the case of a tuple corresponding to an
  * index, or NULL otherwise.
+ *
+ * If common pointer is provided, then the corresponding struct will be
+ * filled with options that table AM exposes for external usage.  That must
+ * be filled with defaults before passing here.
  */
+
 bytea *
 extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
-				  amoptions_function amoptions)
+				  const TableAmRoutine *tableam, amoptions_function amoptions,
+				  CommonRdOptions *common)
 {
 	bytea	   *options;
 	bool		isnull;
@@ -1399,7 +1406,8 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
-			options = heap_reloptions(classForm->relkind, datum, false);
+			options = tableam_reloptions(tableam, classForm->relkind,
+										 datum, common, false);
 			break;
 		case RELKIND_PARTITIONED_TABLE:
 			options = partitioned_table_reloptions(datum, false);
@@ -1695,7 +1703,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
  * Given the result from parseRelOptions, allocate a struct that's of the
  * specified base size plus any extra space that's needed for string variables.
  *
- * "base" should be sizeof(struct) of the reloptions struct (StdRdOptions or
+ * "base" should be sizeof(struct) of the reloptions struct (HeapRdOptions or
  * equivalent).
  */
 static void *
@@ -1832,59 +1840,95 @@ fillRelOptions(void *rdopts, Size basesize,
 
 
 /*
- * Option parser for anything that uses StdRdOptions.
+ * Option parser for anything that uses HeapRdOptions.
  */
-bytea *
+static bytea *
 default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 {
 	static const relopt_parse_elt tab[] = {
-		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
+		{"fillfactor", RELOPT_TYPE_INT, offsetof(HeapRdOptions, fillfactor)},
 		{"autovacuum_enabled", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, enabled)},
 		{"autovacuum_vacuum_threshold", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_threshold)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, vacuum_threshold)},
 		{"autovacuum_vacuum_insert_threshold", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_ins_threshold)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, vacuum_ins_threshold)},
 		{"autovacuum_analyze_threshold", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_threshold)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, analyze_threshold)},
 		{"autovacuum_vacuum_cost_limit", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_limit)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, vacuum_cost_limit)},
 		{"autovacuum_freeze_min_age", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_min_age)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, freeze_min_age)},
 		{"autovacuum_freeze_max_age", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_max_age)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, freeze_max_age)},
 		{"autovacuum_freeze_table_age", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_table_age)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, freeze_table_age)},
 		{"autovacuum_multixact_freeze_min_age", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, multixact_freeze_min_age)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, multixact_freeze_min_age)},
 		{"autovacuum_multixact_freeze_max_age", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, multixact_freeze_max_age)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, multixact_freeze_max_age)},
 		{"autovacuum_multixact_freeze_table_age", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, multixact_freeze_table_age)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, multixact_freeze_table_age)},
 		{"log_autovacuum_min_duration", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, log_min_duration)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, log_min_duration)},
 		{"toast_tuple_target", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, toast_tuple_target)},
+		offsetof(HeapRdOptions, toast_tuple_target)},
 		{"autovacuum_vacuum_cost_delay", RELOPT_TYPE_REAL,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_delay)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, vacuum_cost_delay)},
 		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_scale_factor)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_vacuum_insert_scale_factor", RELOPT_TYPE_REAL,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_ins_scale_factor)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, vacuum_ins_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_scale_factor)},
+			offsetof(HeapRdOptions, common) +
+			offsetof(CommonRdOptions, autovacuum) +
+		offsetof(AutoVacOpts, analyze_scale_factor)},
 		{"user_catalog_table", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, user_catalog_table)},
+			offsetof(HeapRdOptions, common) +
+		offsetof(CommonRdOptions, user_catalog_table)},
 		{"parallel_workers", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, parallel_workers)},
+			offsetof(HeapRdOptions, common) +
+		offsetof(CommonRdOptions, parallel_workers)},
 		{"vacuum_index_cleanup", RELOPT_TYPE_ENUM,
-		offsetof(StdRdOptions, vacuum_index_cleanup)},
+			offsetof(HeapRdOptions, common) +
+		offsetof(CommonRdOptions, vacuum_index_cleanup)},
 		{"vacuum_truncate", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, vacuum_truncate)}
+			offsetof(HeapRdOptions, common) +
+		offsetof(CommonRdOptions, vacuum_truncate)}
 	};
 
 	return (bytea *) build_reloptions(reloptions, validate, kind,
-									  sizeof(StdRdOptions),
+									  sizeof(HeapRdOptions),
 									  tab, lengthof(tab));
 }
 
@@ -2016,26 +2060,33 @@ view_reloptions(Datum reloptions, bool validate)
  * Parse options for heaps, views and toast tables.
  */
 bytea *
-heap_reloptions(char relkind, Datum reloptions, bool validate)
+heap_reloptions(char relkind, Datum reloptions,
+				CommonRdOptions *common, bool validate)
 {
-	StdRdOptions *rdopts;
+	HeapRdOptions *rdopts;
 
 	switch (relkind)
 	{
 		case RELKIND_TOASTVALUE:
-			rdopts = (StdRdOptions *)
+			rdopts = (HeapRdOptions *)
 				default_reloptions(reloptions, validate, RELOPT_KIND_TOAST);
 			if (rdopts != NULL)
 			{
 				/* adjust default-only parameters for TOAST relations */
 				rdopts->fillfactor = 100;
-				rdopts->autovacuum.analyze_threshold = -1;
-				rdopts->autovacuum.analyze_scale_factor = -1;
+				rdopts->common.autovacuum.analyze_threshold = -1;
+				rdopts->common.autovacuum.analyze_scale_factor = -1;
 			}
+			if (rdopts != NULL && common != NULL)
+				*common = rdopts->common;
 			return (bytea *) rdopts;
 		case RELKIND_RELATION:
 		case RELKIND_MATVIEW:
-			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
+			rdopts = (HeapRdOptions *)
+				default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
+			if (rdopts != NULL && common != NULL)
+				*common = rdopts->common;
+			return (bytea *) rdopts;
 		default:
 			/* other relkinds are not supported */
 			return NULL;

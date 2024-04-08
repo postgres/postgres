@@ -442,6 +442,7 @@ CommentStmt
 CommitTimestampEntry
 CommitTimestampShared
 CommonEntry
+CommonRdOptions
 CommonTableExpr
 CompareScalarsContext
 CompiledExprState
@@ -1129,8 +1130,10 @@ HbaLine
 HeadlineJsonState
 HeadlineParsedText
 HeadlineWordEntry
+HeapAlterRdOptions
 HeapCheckContext
 HeapPageFreeze
+HeapRdOptions
 HeapScanDesc
 HeapTuple
 HeapTupleData
@@ -2723,7 +2726,6 @@ StatsElem
 StatsExtInfo
 StdAnalyzeData
 StdRdOptIndexCleanup
-StdRdOptions
 Step
 StopList
 StrategyNumber
