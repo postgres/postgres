@@ -302,11 +302,11 @@ CREATE OR REPLACE VIEW public.jsonb_table_view3 AS
                 1 + 2 AS a,
                 '"foo"'::json AS "b c"
             COLUMNS (
-                js json PATH '$',
-                jb jsonb PATH '$',
-                jst text FORMAT JSON PATH '$',
-                jsc character(4) FORMAT JSON PATH '$',
-                jsv character varying(4) FORMAT JSON PATH '$'
+                js json PATH '$' WITHOUT WRAPPER KEEP QUOTES,
+                jb jsonb PATH '$' WITHOUT WRAPPER KEEP QUOTES,
+                jst text FORMAT JSON PATH '$' WITHOUT WRAPPER KEEP QUOTES,
+                jsc character(4) FORMAT JSON PATH '$' WITHOUT WRAPPER KEEP QUOTES,
+                jsv character varying(4) FORMAT JSON PATH '$' WITHOUT WRAPPER KEEP QUOTES
             )
         )
 \sv jsonb_table_view4
@@ -321,8 +321,8 @@ CREATE OR REPLACE VIEW public.jsonb_table_view4 AS
                 1 + 2 AS a,
                 '"foo"'::json AS "b c"
             COLUMNS (
-                jsb jsonb PATH '$',
-                jsbq jsonb PATH '$' OMIT QUOTES,
+                jsb jsonb PATH '$' WITHOUT WRAPPER KEEP QUOTES,
+                jsbq jsonb PATH '$' WITHOUT WRAPPER OMIT QUOTES,
                 aaa integer PATH '$."aaa"',
                 aaa1 integer PATH '$."aaa"'
             )
@@ -357,12 +357,12 @@ CREATE OR REPLACE VIEW public.jsonb_table_view6 AS
                 1 + 2 AS a,
                 '"foo"'::json AS "b c"
             COLUMNS (
-                js2 json PATH '$',
-                jsb2w jsonb PATH '$' WITH UNCONDITIONAL WRAPPER,
-                jsb2q jsonb PATH '$' OMIT QUOTES,
-                ia integer[] PATH '$',
-                ta text[] PATH '$',
-                jba jsonb[] PATH '$'
+                js2 json PATH '$' WITHOUT WRAPPER KEEP QUOTES,
+                jsb2w jsonb PATH '$' WITH UNCONDITIONAL WRAPPER KEEP QUOTES,
+                jsb2q jsonb PATH '$' WITHOUT WRAPPER OMIT QUOTES,
+                ia integer[] PATH '$' WITHOUT WRAPPER KEEP QUOTES,
+                ta text[] PATH '$' WITHOUT WRAPPER KEEP QUOTES,
+                jba jsonb[] PATH '$' WITHOUT WRAPPER KEEP QUOTES
             )
         )
 EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM jsonb_table_view2;
@@ -374,19 +374,19 @@ EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM jsonb_table_view2;
 (3 rows)
 
 EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM jsonb_table_view3;
-                                                                                                                                        QUERY PLAN                                                                                                                                        
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                                                                                              QUERY PLAN                                                                                                                                                                                                              
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Table Function Scan on "json_table"
    Output: "json_table".js, "json_table".jb, "json_table".jst, "json_table".jsc, "json_table".jsv
-   Table Function Call: JSON_TABLE('null'::jsonb, '$[*]' AS json_table_path_0 PASSING 3 AS a, '"foo"'::jsonb AS "b c" COLUMNS (js json PATH '$', jb jsonb PATH '$', jst text FORMAT JSON PATH '$', jsc character(4) FORMAT JSON PATH '$', jsv character varying(4) FORMAT JSON PATH '$'))
+   Table Function Call: JSON_TABLE('null'::jsonb, '$[*]' AS json_table_path_0 PASSING 3 AS a, '"foo"'::jsonb AS "b c" COLUMNS (js json PATH '$' WITHOUT WRAPPER KEEP QUOTES, jb jsonb PATH '$' WITHOUT WRAPPER KEEP QUOTES, jst text FORMAT JSON PATH '$' WITHOUT WRAPPER KEEP QUOTES, jsc character(4) FORMAT JSON PATH '$' WITHOUT WRAPPER KEEP QUOTES, jsv character varying(4) FORMAT JSON PATH '$' WITHOUT WRAPPER KEEP QUOTES))
 (3 rows)
 
 EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM jsonb_table_view4;
-                                                                                                                  QUERY PLAN                                                                                                                  
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                        QUERY PLAN                                                                                                                                        
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Table Function Scan on "json_table"
    Output: "json_table".jsb, "json_table".jsbq, "json_table".aaa, "json_table".aaa1
-   Table Function Call: JSON_TABLE('null'::jsonb, '$[*]' AS json_table_path_0 PASSING 3 AS a, '"foo"'::jsonb AS "b c" COLUMNS (jsb jsonb PATH '$', jsbq jsonb PATH '$' OMIT QUOTES, aaa integer PATH '$."aaa"', aaa1 integer PATH '$."aaa"'))
+   Table Function Call: JSON_TABLE('null'::jsonb, '$[*]' AS json_table_path_0 PASSING 3 AS a, '"foo"'::jsonb AS "b c" COLUMNS (jsb jsonb PATH '$' WITHOUT WRAPPER KEEP QUOTES, jsbq jsonb PATH '$' WITHOUT WRAPPER OMIT QUOTES, aaa integer PATH '$."aaa"', aaa1 integer PATH '$."aaa"'))
 (3 rows)
 
 EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM jsonb_table_view5;
@@ -398,11 +398,11 @@ EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM jsonb_table_view5;
 (3 rows)
 
 EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM jsonb_table_view6;
-                                                                                                                                              QUERY PLAN                                                                                                                                               
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                                                                                                    QUERY PLAN                                                                                                                                                                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Table Function Scan on "json_table"
    Output: "json_table".js2, "json_table".jsb2w, "json_table".jsb2q, "json_table".ia, "json_table".ta, "json_table".jba
-   Table Function Call: JSON_TABLE('null'::jsonb, '$[*]' AS json_table_path_0 PASSING 3 AS a, '"foo"'::jsonb AS "b c" COLUMNS (js2 json PATH '$', jsb2w jsonb PATH '$' WITH UNCONDITIONAL WRAPPER, jsb2q jsonb PATH '$' OMIT QUOTES, ia integer[] PATH '$', ta text[] PATH '$', jba jsonb[] PATH '$'))
+   Table Function Call: JSON_TABLE('null'::jsonb, '$[*]' AS json_table_path_0 PASSING 3 AS a, '"foo"'::jsonb AS "b c" COLUMNS (js2 json PATH '$' WITHOUT WRAPPER KEEP QUOTES, jsb2w jsonb PATH '$' WITH UNCONDITIONAL WRAPPER KEEP QUOTES, jsb2q jsonb PATH '$' WITHOUT WRAPPER OMIT QUOTES, ia integer[] PATH '$' WITHOUT WRAPPER KEEP QUOTES, ta text[] PATH '$' WITHOUT WRAPPER KEEP QUOTES, jba jsonb[] PATH '$' WITHOUT WRAPPER KEEP QUOTES))
 (3 rows)
 
 -- JSON_TABLE() with alias

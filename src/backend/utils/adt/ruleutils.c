@@ -8848,9 +8848,15 @@ get_json_expr_options(JsonExpr *jsexpr, deparse_context *context,
 			appendStringInfo(context->buf, " WITH CONDITIONAL WRAPPER");
 		else if (jsexpr->wrapper == JSW_UNCONDITIONAL)
 			appendStringInfo(context->buf, " WITH UNCONDITIONAL WRAPPER");
+		/* The default */
+		else if (jsexpr->wrapper == JSW_NONE || jsexpr->wrapper == JSW_UNSPEC)
+			appendStringInfo(context->buf, " WITHOUT WRAPPER");
 
 		if (jsexpr->omit_quotes)
 			appendStringInfo(context->buf, " OMIT QUOTES");
+		/* The default */
+		else
+			appendStringInfo(context->buf, " KEEP QUOTES");
 	}
 
 	if (jsexpr->on_empty && jsexpr->on_empty->btype != default_behavior)
