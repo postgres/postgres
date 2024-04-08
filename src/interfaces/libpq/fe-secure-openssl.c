@@ -1612,6 +1612,7 @@ pgtls_close(PGconn *conn)
 			SSL_free(conn->ssl);
 			conn->ssl = NULL;
 			conn->ssl_in_use = false;
+			conn->ssl_handshake_started = false;
 
 			destroy_needed = true;
 		}
@@ -1825,9 +1826,10 @@ static BIO_METHOD *my_bio_methods;
 static int
 my_sock_read(BIO *h, char *buf, int size)
 {
+	PGconn	   *conn = (PGconn *) BIO_get_app_data(h);
 	int			res;
 
-	res = pqsecure_raw_read((PGconn *) BIO_get_app_data(h), buf, size);
+	res = pqsecure_raw_read(conn, buf, size);
 	BIO_clear_retry_flags(h);
 	if (res < 0)
 	{
@@ -1848,6 +1850,9 @@ my_sock_read(BIO *h, char *buf, int size)
 				break;
 		}
 	}
+
+	if (res > 0)
+		conn->ssl_handshake_started = true;
 
 	return res;
 }

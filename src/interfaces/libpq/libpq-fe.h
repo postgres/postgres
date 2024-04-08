@@ -73,7 +73,7 @@ typedef enum
 	CONNECTION_AUTH_OK,			/* Received authentication; waiting for
 								 * backend startup. */
 	CONNECTION_SETENV,			/* This state is no longer used. */
-	CONNECTION_SSL_STARTUP,		/* Negotiating SSL. */
+	CONNECTION_SSL_STARTUP,		/* Performing SSL handshake. */
 	CONNECTION_NEEDED,			/* Internal state: connect() needed. */
 	CONNECTION_CHECK_WRITABLE,	/* Checking if session is read-write. */
 	CONNECTION_CONSUME,			/* Consuming any extra messages. */
@@ -81,7 +81,7 @@ typedef enum
 	CONNECTION_CHECK_TARGET,	/* Internal state: checking target server
 								 * properties. */
 	CONNECTION_CHECK_STANDBY,	/* Checking if server is in standby mode. */
-	CONNECTION_ALLOCATED		/* Waiting for connection attempt to be
+	CONNECTION_ALLOCATED,		/* Waiting for connection attempt to be
 								 * started.  */
 } ConnStatusType;
 

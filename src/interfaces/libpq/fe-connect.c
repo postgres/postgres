@@ -129,6 +129,7 @@ static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #define DefaultSSLMode	"disable"
 #define DefaultSSLCertMode "disable"
 #endif
+#define DefaultSSLNegotiation	"postgres"
 #ifdef ENABLE_GSS
 #include "fe-gssapi-common.h"
 #define DefaultGSSMode "prefer"
@@ -271,6 +272,10 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 		"SSL-Mode", "", 12,		/* sizeof("verify-full") == 12 */
 	offsetof(struct pg_conn, sslmode)},
+
+	{"sslnegotiation", "PGSSLNEGOTIATION", DefaultSSLNegotiation, NULL,
+		"SSL-Negotiation", "", 14,	/* sizeof("requiredirect") == 14 */
+	offsetof(struct pg_conn, sslnegotiation)},
 
 	{"sslcompression", "PGSSLCOMPRESSION", "0", NULL,
 		"SSL-Compression", "", 1,
@@ -1570,6 +1575,39 @@ pqConnectOptions2(PGconn *conn)
 				return false;
 		}
 #endif
+	}
+
+	/*
+	 * validate sslnegotiation option, default is "postgres" for the postgres
+	 * style negotiated connection with an extra round trip but more options.
+	 */
+	if (conn->sslnegotiation)
+	{
+		if (strcmp(conn->sslnegotiation, "postgres") != 0
+			&& strcmp(conn->sslnegotiation, "direct") != 0
+			&& strcmp(conn->sslnegotiation, "requiredirect") != 0)
+		{
+			conn->status = CONNECTION_BAD;
+			libpq_append_conn_error(conn, "invalid %s value: \"%s\"",
+									"sslnegotiation", conn->sslnegotiation);
+			return false;
+		}
+
+#ifndef USE_SSL
+		if (conn->sslnegotiation[0] != 'p')
+		{
+			conn->status = CONNECTION_BAD;
+			libpq_append_conn_error(conn, "sslnegotiation value \"%s\" invalid when SSL support is not compiled in",
+									conn->sslnegotiation);
+			return false;
+		}
+#endif
+	}
+	else
+	{
+		conn->sslnegotiation = strdup(DefaultSSLNegotiation);
+		if (!conn->sslnegotiation)
+			goto oom_error;
 	}
 
 #ifdef USE_SSL
@@ -3294,9 +3332,20 @@ keep_going:						/* We will come back to here until there is
 					goto error_return;
 
 				/*
-				 * If SSL is enabled, request SSL and proceed with SSL
-				 * handshake.  We will come back here after SSL encryption has
-				 * been established, with ssl_in_use set.
+				 * If direct SSL is enabled, jump right into SSL handshake. We
+				 * will come back here after SSL encryption has been
+				 * established, with ssl_in_use set.
+				 */
+				if (conn->current_enc_method == ENC_DIRECT_SSL && !conn->ssl_in_use)
+				{
+					conn->status = CONNECTION_SSL_STARTUP;
+					return PGRES_POLLING_WRITING;
+				}
+
+				/*
+				 * If negotiated SSL is enabled, request SSL and proceed with
+				 * SSL handshake.  We will come back here after SSL encryption
+				 * has been established, with ssl_in_use set.
 				 */
 				if (conn->current_enc_method == ENC_NEGOTIATED_SSL && !conn->ssl_in_use)
 				{
@@ -3487,6 +3536,10 @@ keep_going:						/* We will come back to here until there is
 				}
 				if (pollres == PGRES_POLLING_FAILED)
 				{
+					/*
+					 * Failed direct ssl connection, possibly try a new
+					 * connection with postgres negotiation
+					 */
 					CONNECTION_FAILED();
 				}
 				/* Else, return POLLING_READING or POLLING_WRITING status */
@@ -4202,7 +4255,7 @@ init_allowed_encryption_methods(PGconn *conn)
 	if (conn->raddr.addr.ss_family == AF_UNIX)
 	{
 		/* Don't request SSL or GSSAPI over Unix sockets */
-		conn->allowed_enc_methods &= ~(ENC_NEGOTIATED_SSL | ENC_GSSAPI);
+		conn->allowed_enc_methods &= ~(ENC_DIRECT_SSL | ENC_NEGOTIATED_SSL | ENC_GSSAPI);
 
 		/*
 		 * XXX: we probably should not do this. sslmode=require works
@@ -4228,7 +4281,14 @@ init_allowed_encryption_methods(PGconn *conn)
 #ifdef USE_SSL
 	/* sslmode anything but 'disable', and GSSAPI not required */
 	if (conn->sslmode[0] != 'd' && conn->gssencmode[0] != 'r')
-		conn->allowed_enc_methods |= ENC_NEGOTIATED_SSL;
+	{
+		if (conn->sslnegotiation[0] == 'p')
+			conn->allowed_enc_methods |= ENC_NEGOTIATED_SSL;
+		else if (conn->sslnegotiation[0] == 'd')
+			conn->allowed_enc_methods |= ENC_DIRECT_SSL | ENC_NEGOTIATED_SSL;
+		else if (conn->sslnegotiation[0] == 'r')
+			conn->allowed_enc_methods |= ENC_DIRECT_SSL;
+	}
 #endif
 
 #ifdef ENABLE_GSS
@@ -4266,7 +4326,12 @@ encryption_negotiation_failed(PGconn *conn)
 	conn->failed_enc_methods |= conn->current_enc_method;
 
 	if (select_next_encryption_method(conn, true))
-		return 1;
+	{
+		if (conn->current_enc_method == ENC_DIRECT_SSL)
+			return 2;
+		else
+			return 1;
+	}
 	else
 		return 0;
 }
@@ -4283,6 +4348,18 @@ connection_failed(PGconn *conn)
 {
 	Assert((conn->failed_enc_methods & conn->current_enc_method) == 0);
 	conn->failed_enc_methods |= conn->current_enc_method;
+
+	/*
+	 * If the server reported an error after the SSL handshake, no point in
+	 * retrying with negotiated vs direct SSL.
+	 */
+	if ((conn->current_enc_method & (ENC_DIRECT_SSL | ENC_NEGOTIATED_SSL)) != 0 &&
+		conn->ssl_handshake_started)
+	{
+		conn->failed_enc_methods |= (ENC_DIRECT_SSL | ENC_NEGOTIATED_SSL) & conn->allowed_enc_methods;
+	}
+	else
+		conn->failed_enc_methods |= conn->current_enc_method;
 
 	return select_next_encryption_method(conn, false);
 }
@@ -4345,6 +4422,18 @@ select_next_encryption_method(PGconn *conn, bool have_valid_connection)
 	if (conn->sslmode[0] == 'a')
 		SELECT_NEXT_METHOD(ENC_PLAINTEXT);
 
+	/*
+	 * If enabled, try direct SSL. Unless we have a valid TCP connection that
+	 * failed negotiating GSSAPI encryption or a plaintext connection in case
+	 * of sslmode='allow'; in that case we prefer to reuse the connection with
+	 * negotiated SSL, instead of reconnecting to do direct SSL. The point of
+	 * direct SSL is to avoid the roundtrip from the negotiation, but
+	 * reconnecting would also incur a roundtrip.
+	 */
+	if (have_valid_connection)
+		SELECT_NEXT_METHOD(ENC_NEGOTIATED_SSL);
+
+	SELECT_NEXT_METHOD(ENC_DIRECT_SSL);
 	SELECT_NEXT_METHOD(ENC_NEGOTIATED_SSL);
 
 	if (conn->sslmode[0] != 'a')
@@ -4567,6 +4656,7 @@ freePGconn(PGconn *conn)
 	free(conn->keepalives_interval);
 	free(conn->keepalives_count);
 	free(conn->sslmode);
+	free(conn->sslnegotiation);
 	free(conn->sslcert);
 	free(conn->sslkey);
 	if (conn->sslpassword)

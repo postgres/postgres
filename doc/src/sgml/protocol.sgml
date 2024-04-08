@@ -1530,8 +1530,44 @@ SELCT 1/0;<!-- this typo is intentional -->
    </para>
 
    <para>
+     Likewise the server expects the client to not begin
+     the <acronym>SSL</acronym> negotiation until it receives the server's
+     single byte response to the <acronym>SSL</acronym> request.  If the
+     client begins the <acronym>SSL</acronym> negotiation immediately without
+     waiting for the server response to be received it can reduce connection
+     latency by one round-trip.  However this comes at the cost of not being
+     able to handle the case where the server sends a negative response to the
+     <acronym>SSL</acronym> request.  In that case instead of continuing with either GSSAPI or an
+     unencrypted connection or a protocol error the server will simply
+     disconnect.
+   </para>
+
+   <para>
     An initial SSLRequest can also be used in a connection that is being
     opened to send a CancelRequest message.
+   </para>
+
+   <para>
+     A second alternate way to initiate <acronym>SSL</acronym> encryption is
+     available.  The server will recognize connections which immediately
+     begin <acronym>SSL</acronym> negotiation without any previous SSLRequest
+     packets.  Once the <acronym>SSL</acronym> connection is established the
+     server will expect a normal startup-request packet and continue
+     negotiation over the encrypted channel.  In this case any other requests
+     for encryption will be refused.  This method is not preferred for general
+     purpose tools as it cannot negotiate the best connection encryption
+     available or handle unencrypted connections.  However it is useful for
+     environments where both the server and client are controlled together.
+     In that case it avoids one round trip of latency and allows the use of
+     network tools that depend on standard <acronym>SSL</acronym> connections.
+     When using <acronym>SSL</acronym> connections in this style the client is
+     required to use the ALPN extension defined
+     by <ulink url="https://tools.ietf.org/html/rfc7301">RFC 7301</ulink> to
+     protect against protocol confusion attacks.
+     The <productname>PostgreSQL</productname> protocol is "TBD-pgsql" as
+     registered
+     at <ulink url="https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">IANA
+     TLS ALPN Protocol IDs</ulink> registry.
    </para>
 
    <para>

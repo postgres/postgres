@@ -1740,8 +1740,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         encryption, regardless of the value of <literal>sslmode</literal>.
         To force use of <acronym>SSL</acronym> encryption in an
         environment that has working <acronym>GSSAPI</acronym>
-        infrastructure (such as a Kerberos server), also
-        set <literal>gssencmode</literal> to <literal>disable</literal>.
+        infrastructure (such as a Kerberos server), also set
+        <literal>gssencmode</literal> to <literal>disable</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -1764,6 +1764,67 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         the server (equivalent to <literal>sslmode</literal>
         <literal>prefer</literal>).  This option is only available if
         <productname>PostgreSQL</productname> is compiled with SSL support.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslnegotiation" xreflabel="sslnegotiation">
+      <term><literal>sslnegotiation</literal></term>
+      <listitem>
+       <para>
+        This option controls whether <productname>PostgreSQL</productname>
+        will perform its protocol negotiation to request encryption from the
+        server or will just directly make a standard <acronym>SSL</acronym>
+        connection.  Traditional <productname>PostgreSQL</productname>
+        protocol negotiation is the default and the most flexible with
+        different server configurations. If the server is known to support
+        direct <acronym>SSL</acronym> connections then the latter requires one
+        fewer round trip reducing connection latency and also allows the use
+        of protocol agnostic SSL network tools.
+       </para>
+
+        <variablelist>
+         <varlistentry>
+          <term><literal>postgres</literal></term>
+          <listitem>
+           <para>
+             perform <productname>PostgreSQL</productname> protocol
+             negotiation. This is the default if the option is not provided.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>direct</literal></term>
+          <listitem>
+           <para>
+             first attempt to establish a standard SSL connection and if that
+             fails reconnect and perform the negotiation. This fallback
+             process adds significant latency if the initial SSL connection
+             fails.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>requiredirect</literal></term>
+          <listitem>
+           <para>
+             attempt to establish a standard SSL connection and if that fails
+             return a connection failure immediately.
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+
+       <para>
+        Note that if <literal>gssencmode</literal> is set
+        to <literal>prefer</literal>, a <acronym>GSS</acronym> connection is
+        attempted first. If the server ejectes GSS encryption, SSL is
+        negotiated over the same TCP connection using the traditional postgres
+        protocol, regardless of <literal>sslnegotiation</literal>. In other
+        words, the direct SSL handshake is not used, if a TCP connection has
+        already been established and can be used for the SSL handshake.
        </para>
       </listitem>
      </varlistentry>
@@ -2001,11 +2062,13 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
 
        <para>
         The Server Name Indication can be used by SSL-aware proxies to route
-        connections without having to decrypt the SSL stream.  (Note that this
-        requires a proxy that is aware of the PostgreSQL protocol handshake,
-        not just any SSL proxy.)  However, <acronym>SNI</acronym> makes the
-        destination host name appear in cleartext in the network traffic, so
-        it might be undesirable in some cases.
+        connections without having to decrypt the SSL stream.  (Note that
+        unless the proxy is aware of the PostgreSQL protocol handshake this
+        would require setting <literal>sslnegotiation</literal>
+        to <literal>direct</literal> or <literal>requiredirect</literal>.)
+        However, <acronym>SNI</acronym> makes the destination host name appear
+        in cleartext in the network traffic, so it might be undesirable in
+        some cases.
        </para>
       </listitem>
      </varlistentry>
@@ -8673,6 +8736,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGHOST</envar> behaves the same as the <xref
       linkend="libpq-connect-host"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGSSLNEGOTIATION</envar></primary>
+      </indexterm>
+      <envar>PGSSLNEGOTIATION</envar> behaves the same as the <xref
+      linkend="libpq-connect-sslnegotiation"/> connection parameter.
      </para>
     </listitem>
 
