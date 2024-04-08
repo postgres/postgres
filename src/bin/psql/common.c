@@ -832,10 +832,7 @@ ExecQueryTuples(const PGresult *result)
 				c;
 
 	/*
-	 * We must turn off gexec_flag to avoid infinite recursion.  Note that
-	 * this allows ExecQueryUsingCursor to be applied to the individual query
-	 * results.  SendQuery prevents it from being applied when fetching the
-	 * queries-to-execute, because it can't handle recursion either.
+	 * We must turn off gexec_flag to avoid infinite recursion.
 	 */
 	pset.gexec_flag = false;
 
@@ -955,30 +952,39 @@ HandleCopyResult(PGresult **resultp, FILE *copystream)
 
 /*
  * PrintQueryStatus: report command status as required
- *
- * Note: Utility function for use by PrintQueryResult() only.
  */
 static void
 PrintQueryStatus(PGresult *result, FILE *printQueryFout)
 {
 	char		buf[16];
+	const char *cmdstatus = PQcmdStatus(result);
 	FILE	   *fout = printQueryFout ? printQueryFout : pset.queryFout;
+
+	/* Do nothing if it's a TUPLES_OK result that isn't from RETURNING */
+	if (PQresultStatus(result) == PGRES_TUPLES_OK)
+	{
+		if (!(strncmp(cmdstatus, "INSERT", 6) == 0 ||
+			  strncmp(cmdstatus, "UPDATE", 6) == 0 ||
+			  strncmp(cmdstatus, "DELETE", 6) == 0 ||
+			  strncmp(cmdstatus, "MERGE", 5) == 0))
+			return;
+	}
 
 	if (!pset.quiet)
 	{
 		if (pset.popt.topt.format == PRINT_HTML)
 		{
 			fputs("<p>", fout);
-			html_escaped_print(PQcmdStatus(result), fout);
+			html_escaped_print(cmdstatus, fout);
 			fputs("</p>\n", fout);
 		}
 		else
-			fprintf(fout, "%s\n", PQcmdStatus(result));
+			fprintf(fout, "%s\n", cmdstatus);
 		fflush(fout);
 	}
 
 	if (pset.logfile)
-		fprintf(pset.logfile, "%s\n", PQcmdStatus(result));
+		fprintf(pset.logfile, "%s\n", cmdstatus);
 
 	snprintf(buf, sizeof(buf), "%u", (unsigned int) PQoidValue(result));
 	SetVariable(pset.vars, "LASTOID", buf);
@@ -987,8 +993,6 @@ PrintQueryStatus(PGresult *result, FILE *printQueryFout)
 
 /*
  * PrintQueryResult: print out (or store or execute) query result as required
- *
- * Note: Utility function for use by SendQuery() only.
  *
  * last is true if this is the last result of a command string.
  * opt and printQueryFout are defined as for PrintQueryTuples.
@@ -1002,7 +1006,6 @@ PrintQueryResult(PGresult *result, bool last,
 				 FILE *printStatusFout)
 {
 	bool		success;
-	const char *cmdstatus;
 
 	if (!result)
 		return false;
@@ -1027,14 +1030,7 @@ PrintQueryResult(PGresult *result, bool last,
 			 * status.
 			 */
 			if (last || pset.show_all_results)
-			{
-				cmdstatus = PQcmdStatus(result);
-				if (strncmp(cmdstatus, "INSERT", 6) == 0 ||
-					strncmp(cmdstatus, "UPDATE", 6) == 0 ||
-					strncmp(cmdstatus, "DELETE", 6) == 0 ||
-					strncmp(cmdstatus, "MERGE", 5) == 0)
-					PrintQueryStatus(result, printStatusFout);
-			}
+				PrintQueryStatus(result, printStatusFout);
 
 			break;
 
@@ -1443,6 +1439,9 @@ DescribeQuery(const char *query, double *elapsed_msec)
  * For other commands, the results are processed normally, depending on their
  * status.
  *
+ * When invoked from \watch, is_watch is true and min_rows is the value
+ * of that option, or 0 if it wasn't set.
+ *
  * Returns 1 on complete success, 0 on interrupt and -1 or errors.  Possible
  * failure modes include purely client-side problems; check the transaction
  * status for the server-side opinion.
@@ -1488,11 +1487,21 @@ ExecQueryAndProcessResults(const char *query,
 	}
 
 	/*
-	 * Fetch the result in chunks if FETCH_COUNT is set.  But we don't enable
-	 * chunking if SHOW_ALL_RESULTS is false, since that requires us to
-	 * accumulate all rows before we can tell what should be displayed, which
-	 * would counter the idea of FETCH_COUNT.  Chunking is also disabled when
-	 * \crosstab, \gexec, \gset or \watch is used.
+	 * Fetch the result in chunks if FETCH_COUNT is set, except when:
+	 *
+	 * * SHOW_ALL_RESULTS is false, since that requires us to complete the
+	 * query before we can tell if its results should be displayed.
+	 *
+	 * * We're doing \crosstab, which likewise needs to see all the rows at
+	 * once.
+	 *
+	 * * We're doing \gexec: we must complete the data fetch to make the
+	 * connection free for issuing the resulting commands.
+	 *
+	 * * We're doing \gset: only one result row is allowed anyway.
+	 *
+	 * * We're doing \watch: users probably don't want us to force use of the
+	 * pager for that, plus chunking could break the min_rows check.
 	 */
 	if (pset.fetch_count > 0 && pset.show_all_results &&
 		!pset.crosstab_flag && !pset.gexec_flag &&
@@ -1644,8 +1653,8 @@ ExecQueryAndProcessResults(const char *query,
 		/* If we have a chunked result, collect and print all chunks */
 		if (result_status == PGRES_TUPLES_CHUNK)
 		{
-			FILE	   *tuples_fout = printQueryFout ? printQueryFout : stdout;
-			printQueryOpt my_popt = pset.popt;
+			FILE	   *tuples_fout = printQueryFout ? printQueryFout : pset.queryFout;
+			printQueryOpt my_popt = opt ? *opt : pset.popt;
 			int64		total_tuples = 0;
 			bool		is_pager = false;
 			int			flush_error = 0;
@@ -1670,8 +1679,13 @@ ExecQueryAndProcessResults(const char *query,
 			do
 			{
 				/*
-				 * display the current chunk of results, unless the output
-				 * stream stopped working or we got cancelled
+				 * Display the current chunk of results, unless the output
+				 * stream stopped working or we got cancelled.  We skip use of
+				 * PrintQueryResult and go directly to printQuery, so that we
+				 * can pass the correct is_pager value and because we don't
+				 * want PrintQueryStatus to happen yet.  Above, we rejected
+				 * use of chunking for all cases in which PrintQueryResult
+				 * would send the result to someplace other than printQuery.
 				 */
 				if (success && !flush_error && !cancel_pressed)
 				{
@@ -1709,6 +1723,12 @@ ExecQueryAndProcessResults(const char *query,
 
 				if (is_pager)
 					ClosePager(tuples_fout);
+
+				/*
+				 * It's possible the data is from a RETURNING clause, in which
+				 * case we need to print query status.
+				 */
+				PrintQueryStatus(result, printQueryFout);
 
 				/*
 				 * We must do a fake SetResultVariables(), since we don't have
