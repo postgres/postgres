@@ -1227,7 +1227,7 @@ struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"trace_connection_negotiation", PGC_POSTMASTER, DEVELOPER_OPTIONS,
-			gettext_noop("Log details of pre-authentication connection handshake."),
+			gettext_noop("Logs details of pre-authentication connection handshake."),
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
