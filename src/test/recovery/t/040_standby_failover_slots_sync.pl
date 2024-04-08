@@ -123,12 +123,14 @@ ok( $stderr =~
 	"cannot sync slots on a non-standby server");
 
 ##################################################
-# Test logical failover slots on the standby
+# Test logical failover slots corresponding to different plugins can be
+# synced to the standby.
+#
 # Configure standby1 to replicate and synchronize logical slots configured
 # for failover on the primary
 #
-#              failover slot lsub1_slot ->| ----> subscriber1 (connected via logical replication)
-#              failover slot lsub2_slot   |       inactive
+#              failover slot lsub1_slot   |       output_plugin: pgoutput
+#              failover slot lsub2_slot   |       output_plugin: test_decoding
 # primary --->                            |
 #              physical slot sb1_slot --->| ----> standby1 (connected via streaming replication)
 #                                         |                 lsub1_slot, lsub2_slot (synced_slot)
@@ -159,6 +161,16 @@ log_min_messages = 'debug2'
 $primary->append_conf('postgresql.conf', "log_min_messages = 'debug2'");
 $primary->reload;
 
+# Drop the subscription to prevent further advancement of the restart_lsn for
+# the lsub1_slot.
+$subscriber1->safe_psql('postgres', "DROP SUBSCRIPTION regress_mysub1;");
+
+# To ensure that restart_lsn has moved to a recent WAL position, we re-create
+# the lsub1_slot.
+$primary->psql('postgres',
+	q{SELECT pg_create_logical_replication_slot('lsub1_slot', 'pgoutput', false, false, true);}
+);
+
 $primary->psql('postgres',
 	q{SELECT pg_create_logical_replication_slot('lsub2_slot', 'test_decoding', false, false, true);}
 );
@@ -169,25 +181,13 @@ $primary->psql('postgres',
 # Start the standby so that slot syncing can begin
 $standby1->start;
 
-$primary->wait_for_catchup('regress_mysub1');
-
-# Do not allow any further advancement of the restart_lsn for the lsub1_slot.
-$subscriber1->safe_psql('postgres',
-	"ALTER SUBSCRIPTION regress_mysub1 DISABLE");
-
-# Wait for the replication slot to become inactive on the publisher
-$primary->poll_query_until(
-	'postgres',
-	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'lsub1_slot' AND active = 'f'",
-	1);
-
 # Capture the inactive_since of the slot from the primary. Note that the slot
-# will be inactive since the corresponding subscription is disabled.
+# will be inactive since the corresponding subscription was dropped.
 my $inactive_since_on_primary =
 	$primary->validate_slot_inactive_since('lsub1_slot', $slot_creation_time_on_primary);
 
 # Wait for the standby to catch up so that the standby is not lagging behind
-# the subscriber.
+# the failover slots.
 $primary->wait_for_replay_catchup($standby1);
 
 # Synchronize the primary server slots to the standby.
@@ -262,39 +262,26 @@ $standby1->append_conf('postgresql.conf', 'max_slot_wal_keep_size = -1');
 $standby1->reload;
 
 # Capture the time before the logical failover slot is created on the primary.
-# Note that the subscription creates the slot again on the primary.
 $slot_creation_time_on_primary = $publisher->safe_psql(
 	'postgres', qq[
     SELECT current_timestamp;
 ]);
 
 # To ensure that restart_lsn has moved to a recent WAL position, we re-create
-# the subscription and the logical slot.
-$subscriber1->safe_psql(
+# the lsub1_slot.
+$primary->safe_psql(
 	'postgres', qq[
-	DROP SUBSCRIPTION regress_mysub1;
-	CREATE SUBSCRIPTION regress_mysub1 CONNECTION '$publisher_connstr' PUBLICATION regress_mypub WITH (slot_name = lsub1_slot, copy_data = false, failover = true);
+	SELECT pg_drop_replication_slot('lsub1_slot');
+	SELECT pg_create_logical_replication_slot('lsub1_slot', 'pgoutput', false, false, true);
 ]);
 
-$primary->wait_for_catchup('regress_mysub1');
-
-# Do not allow any further advancement of the restart_lsn for the lsub1_slot.
-$subscriber1->safe_psql('postgres',
-	"ALTER SUBSCRIPTION regress_mysub1 DISABLE");
-
-# Wait for the replication slot to become inactive on the publisher
-$primary->poll_query_until(
-	'postgres',
-	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'lsub1_slot' AND active = 'f'",
-	1);
-
 # Capture the inactive_since of the slot from the primary. Note that the slot
-# will be inactive since the corresponding subscription is disabled.
+# will be inactive since the corresponding subscription was dropped.
 $inactive_since_on_primary =
 	$primary->validate_slot_inactive_since('lsub1_slot', $slot_creation_time_on_primary);
 
 # Wait for the standby to catch up so that the standby is not lagging behind
-# the subscriber.
+# the failover slots.
 $primary->wait_for_replay_catchup($standby1);
 
 my $log_offset = -s $standby1->logfile;
@@ -571,8 +558,7 @@ $primary->safe_psql(
 $subscriber1->safe_psql(
 	'postgres', qq[
 	CREATE TABLE tab_int (a int PRIMARY KEY);
-	ALTER SUBSCRIPTION regress_mysub1 ENABLE;
-	ALTER SUBSCRIPTION regress_mysub1 REFRESH PUBLICATION;
+	CREATE SUBSCRIPTION regress_mysub1 CONNECTION '$publisher_connstr' PUBLICATION regress_mypub WITH (slot_name = lsub1_slot, failover = true, create_slot = false);
 ]);
 
 $subscriber1->wait_for_subscription_sync;
