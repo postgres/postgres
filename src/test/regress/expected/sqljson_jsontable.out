@@ -591,15 +591,18 @@ SELECT * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text FORMAT JSON PAT
  ["world"]
 (1 row)
 
--- Error: QUOTES clause meaningless when WITH WRAPPER is present
-SELECT * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text FORMAT JSON PATH '$' WITH WRAPPER KEEP QUOTES));
-ERROR:  SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used
-LINE 1: ...T * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text ...
-                                                             ^
+-- Error: OMIT QUOTES should not be specified when WITH WRAPPER is present
 SELECT * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text PATH '$' WITH WRAPPER OMIT QUOTES));
 ERROR:  SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used
 LINE 1: ...T * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text ...
                                                              ^
+-- But KEEP QUOTES (the default) is fine
+SELECT * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text FORMAT JSON PATH '$' WITH WRAPPER KEEP QUOTES));
+   item    
+-----------
+ ["world"]
+(1 row)
+
 -- Test PASSING args
 SELECT *
 FROM JSON_TABLE(

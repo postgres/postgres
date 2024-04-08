@@ -4300,7 +4300,7 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 
 	/* OMIT QUOTES is meaningless when strings are wrapped. */
 	if (func->op == JSON_QUERY_OP &&
-		func->quotes != JS_QUOTES_UNSPEC &&
+		func->quotes == JS_QUOTES_OMIT &&
 		(func->wrapper == JSW_CONDITIONAL ||
 		 func->wrapper == JSW_UNCONDITIONAL))
 		ereport(ERROR,

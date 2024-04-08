@@ -193,15 +193,16 @@ SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING char(2) OMIT QUOTES);
 SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT 'bbb' ON EMPTY);
 SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT '"bbb"'::jsonb ON EMPTY);
 
--- QUOTES behavior should not be specified when WITH WRAPPER used:
+-- OMIT QUOTES behavior should not be specified when WITH WRAPPER used:
 -- Should fail
 SELECT JSON_QUERY(jsonb '[1]', '$' WITH WRAPPER OMIT QUOTES);
-SELECT JSON_QUERY(jsonb '[1]', '$' WITH WRAPPER KEEP QUOTES);
-SELECT JSON_QUERY(jsonb '[1]', '$' WITH CONDITIONAL WRAPPER KEEP QUOTES);
 SELECT JSON_QUERY(jsonb '[1]', '$' WITH CONDITIONAL WRAPPER OMIT QUOTES);
 -- Should succeed
-SELECT JSON_QUERY(jsonb '[1]', '$' WITHOUT WRAPPER OMIT QUOTES);
-SELECT JSON_QUERY(jsonb '[1]', '$' WITHOUT WRAPPER KEEP QUOTES);
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITH CONDITIONAL WRAPPER KEEP QUOTES);
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITH UNCONDITIONAL WRAPPER KEEP QUOTES);
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITH WRAPPER KEEP QUOTES);
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITHOUT WRAPPER OMIT QUOTES);
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITHOUT WRAPPER KEEP QUOTES);
 
 -- test QUOTES behavior.
 SELECT JSON_QUERY(jsonb'{"rec": "{1,2,3}"}', '$.rec' returning int[] omit quotes);

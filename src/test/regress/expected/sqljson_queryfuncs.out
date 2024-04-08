@@ -656,35 +656,45 @@ SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT '"b
  "b
 (1 row)
 
--- QUOTES behavior should not be specified when WITH WRAPPER used:
+-- OMIT QUOTES behavior should not be specified when WITH WRAPPER used:
 -- Should fail
 SELECT JSON_QUERY(jsonb '[1]', '$' WITH WRAPPER OMIT QUOTES);
 ERROR:  SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used
 LINE 1: SELECT JSON_QUERY(jsonb '[1]', '$' WITH WRAPPER OMIT QUOTES)...
-               ^
-SELECT JSON_QUERY(jsonb '[1]', '$' WITH WRAPPER KEEP QUOTES);
-ERROR:  SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used
-LINE 1: SELECT JSON_QUERY(jsonb '[1]', '$' WITH WRAPPER KEEP QUOTES)...
-               ^
-SELECT JSON_QUERY(jsonb '[1]', '$' WITH CONDITIONAL WRAPPER KEEP QUOTES);
-ERROR:  SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used
-LINE 1: SELECT JSON_QUERY(jsonb '[1]', '$' WITH CONDITIONAL WRAPPER ...
                ^
 SELECT JSON_QUERY(jsonb '[1]', '$' WITH CONDITIONAL WRAPPER OMIT QUOTES);
 ERROR:  SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used
 LINE 1: SELECT JSON_QUERY(jsonb '[1]', '$' WITH CONDITIONAL WRAPPER ...
                ^
 -- Should succeed
-SELECT JSON_QUERY(jsonb '[1]', '$' WITHOUT WRAPPER OMIT QUOTES);
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITH CONDITIONAL WRAPPER KEEP QUOTES);
  json_query 
 ------------
- [1]
+ ["1"]
 (1 row)
 
-SELECT JSON_QUERY(jsonb '[1]', '$' WITHOUT WRAPPER KEEP QUOTES);
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITH UNCONDITIONAL WRAPPER KEEP QUOTES);
  json_query 
 ------------
- [1]
+ ["1"]
+(1 row)
+
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITH WRAPPER KEEP QUOTES);
+ json_query 
+------------
+ ["1"]
+(1 row)
+
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITHOUT WRAPPER OMIT QUOTES);
+ json_query 
+------------
+ 1
+(1 row)
+
+SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITHOUT WRAPPER KEEP QUOTES);
+ json_query 
+------------
+ "1"
 (1 row)
 
 -- test QUOTES behavior.
