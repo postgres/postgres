@@ -303,8 +303,12 @@ void
 TidStoreSetBlockOffsets(TidStore *ts, BlockNumber blkno, OffsetNumber *offsets,
 						int num_offsets)
 {
-	char		data[MaxBlocktableEntrySize];
-	BlocktableEntry *page = (BlocktableEntry *) data;
+	union
+	{
+		char		data[MaxBlocktableEntrySize];
+		BlocktableEntry force_align_entry;
+	}			data;
+	BlocktableEntry *page = (BlocktableEntry *) data.data;
 	bitmapword	word;
 	int			wordnum;
 	int			next_word_threshold;
