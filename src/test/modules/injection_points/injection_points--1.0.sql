@@ -35,6 +35,17 @@ AS 'MODULE_PATHNAME', 'injection_points_wakeup'
 LANGUAGE C STRICT PARALLEL UNSAFE;
 
 --
+-- injection_points_set_local()
+--
+-- Trigger switch to link any future injection points attached to the
+-- current process, useful to make SQL tests concurrently-safe.
+--
+CREATE FUNCTION injection_points_set_local()
+RETURNS void
+AS 'MODULE_PATHNAME', 'injection_points_set_local'
+LANGUAGE C STRICT PARALLEL UNSAFE;
+
+--
 -- injection_points_detach()
 --
 -- Detaches the current action, if any, from the given injection point.
