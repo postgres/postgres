@@ -236,6 +236,7 @@ extern void *build_reloptions(Datum reloptions, bool validate,
 extern void *build_local_reloptions(local_relopts *relopts, Datum options,
 									bool validate);
 
+extern void fill_default_common_reloptions(CommonRdOptions *common);
 extern bytea *heap_reloptions(char relkind, Datum reloptions,
 							  CommonRdOptions *common, bool validate);
 extern bytea *view_reloptions(Datum reloptions, bool validate);

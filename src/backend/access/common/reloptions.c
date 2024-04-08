@@ -2057,6 +2057,34 @@ view_reloptions(Datum reloptions, bool validate)
 }
 
 /*
+ * Fill CommonRdOptions with the default values.
+ */
+void
+fill_default_common_reloptions(CommonRdOptions *common)
+{
+	common->autovacuum.enabled = true;
+	common->autovacuum.vacuum_threshold = -1;
+	common->autovacuum.vacuum_ins_threshold = -2;
+	common->autovacuum.analyze_threshold = -1;
+	common->autovacuum.vacuum_cost_limit = -1;
+	common->autovacuum.freeze_min_age = -1;
+	common->autovacuum.freeze_max_age = -1;
+	common->autovacuum.freeze_table_age = -1;
+	common->autovacuum.multixact_freeze_min_age = -1;
+	common->autovacuum.multixact_freeze_max_age = -1;
+	common->autovacuum.multixact_freeze_table_age = -1;
+	common->autovacuum.log_min_duration = -1;
+	common->autovacuum.vacuum_cost_delay = -1;
+	common->autovacuum.vacuum_scale_factor = -1;
+	common->autovacuum.vacuum_ins_scale_factor = -1;
+	common->autovacuum.analyze_scale_factor = -1;
+	common->parallel_workers = -1;
+	common->user_catalog_table = false;
+	common->vacuum_index_cleanup = STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO;
+	common->vacuum_truncate = true;
+}
+
+/*
  * Parse options for heaps, views and toast tables.
  */
 bytea *
