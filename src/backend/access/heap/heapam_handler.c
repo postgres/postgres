@@ -2666,6 +2666,18 @@ SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
 	}
 }
 
+/*
+ * heapap_analyze -- implementation of relation_analyze() for heap
+ *					 table access method
+ */
+static void
+heapam_analyze(Relation relation, AcquireSampleRowsFunc *func,
+			   BlockNumber *totalpages, BufferAccessStrategy bstrategy)
+{
+	block_level_table_analyze(relation, func, totalpages, bstrategy,
+							  heapam_scan_analyze_next_block,
+							  heapam_scan_analyze_next_tuple);
+}
 
 /* ------------------------------------------------------------------------
  * Definition of the heap table access method.

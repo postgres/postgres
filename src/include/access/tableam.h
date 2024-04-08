@@ -1021,6 +1021,19 @@ table_beginscan_tid(Relation rel, Snapshot snapshot)
 }
 
 /*
+ * table_beginscan_analyze is an alternative entry point for setting up a
+ * TableScanDesc for an ANALYZE scan.  As with bitmap scans, it's worth using
+ * the same data structure although the behavior is rather different.
+ */
+static inline TableScanDesc
+table_beginscan_analyze(Relation rel)
+{
+	uint32		flags = SO_TYPE_ANALYZE;
+
+	return rel->rd_tableam->scan_begin(rel, NULL, 0, NULL, NULL, flags);
+}
+
+/*
  * End relation scan.
  */
 static inline void

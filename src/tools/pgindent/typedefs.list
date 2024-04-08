@@ -2535,6 +2535,8 @@ ScalarIOData
 ScalarItem
 ScalarMCVItem
 Scan
+ScanAnalyzeNextBlockFunc
+ScanAnalyzeNextTupleFunc
 ScanDirection
 ScanKey
 ScanKeyData

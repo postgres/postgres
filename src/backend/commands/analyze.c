@@ -76,6 +76,8 @@ int			default_statistics_target = 100;
 /* A few variables that don't seem worth passing around as parameters */
 static MemoryContext anl_context = NULL;
 static BufferAccessStrategy vac_strategy;
+static ScanAnalyzeNextBlockFunc scan_analyze_next_block;
+static ScanAnalyzeNextTupleFunc scan_analyze_next_tuple;
 
 
 static void do_analyze_rel(Relation onerel,
@@ -88,9 +90,6 @@ static void compute_index_stats(Relation onerel, double totalrows,
 								MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 									   Node *index_expr);
-static int	acquire_sample_rows(Relation onerel, int elevel,
-								HeapTuple *rows, int targrows,
-								double *totalrows, double *totaldeadrows);
 static int	compare_rows(const void *a, const void *b, void *arg);
 static int	acquire_inherited_sample_rows(Relation onerel, int elevel,
 										  HeapTuple *rows, int targrows,
@@ -191,7 +190,10 @@ analyze_rel(Oid relid, RangeVar *relation,
 	if (onerel->rd_rel->relkind == RELKIND_RELATION ||
 		onerel->rd_rel->relkind == RELKIND_MATVIEW)
 	{
-		/* Use row acquisition function provided by table AM */
+		/*
+		 * Get row acquisition function, blocks and tuples iteration callbacks
+		 * provided by table AM
+		 */
 		table_relation_analyze(onerel, &acquirefunc,
 							   &relpages, vac_strategy);
 	}
@@ -1117,15 +1119,17 @@ block_sampling_read_stream_next(ReadStream *stream,
 }
 
 /*
- * acquire_sample_rows -- acquire a random sample of rows from the heap
+ * acquire_sample_rows -- acquire a random sample of rows from the
+ * block-based relation
  *
  * Selected rows are returned in the caller-allocated array rows[], which
  * must have at least targrows entries.
  * The actual number of rows selected is returned as the function result.
- * We also estimate the total numbers of live and dead rows in the heap,
+ * We also estimate the total numbers of live and dead rows in the relation,
  * and return them into *totalrows and *totaldeadrows, respectively.
  *
- * The returned list of tuples is in order by physical position in the heap.
+ * The returned list of tuples is in order by physical position in the
+ * relation.
  * (We will rely on this later to derive correlation estimates.)
  *
  * As of May 2004 we use a new two-stage method:  Stage one selects up
@@ -1147,7 +1151,7 @@ block_sampling_read_stream_next(ReadStream *stream,
  * look at a statistically unbiased set of blocks, we should get
  * unbiased estimates of the average numbers of live and dead rows per
  * block.  The previous sampling method put too much credence in the row
- * density near the start of the heap.
+ * density near the start of the relation.
  */
 static int
 acquire_sample_rows(Relation onerel, int elevel,
@@ -1188,7 +1192,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 	/* Prepare for sampling rows */
 	reservoir_init_selection_state(&rstate, targrows);
 
-	scan = heap_beginscan(onerel, NULL, 0, NULL, NULL, SO_TYPE_ANALYZE);
+	scan = table_beginscan_analyze(onerel);
 	slot = table_slot_create(onerel, NULL);
 
 	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE,
@@ -1200,11 +1204,11 @@ acquire_sample_rows(Relation onerel, int elevel,
 										0);
 
 	/* Outer loop over blocks to sample */
-	while (heapam_scan_analyze_next_block(scan, stream))
+	while (scan_analyze_next_block(scan, stream))
 	{
 		vacuum_delay_point();
 
-		while (heapam_scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
+		while (scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
 		{
 			/*
 			 * The first targrows sample rows are simply copied into the
@@ -1256,7 +1260,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 	read_stream_end(stream);
 
 	ExecDropSingleTupleTableSlot(slot);
-	heap_endscan(scan);
+	table_endscan(scan);
 
 	/*
 	 * If we didn't find as many tuples as we wanted then we're done. No sort
@@ -1328,16 +1332,22 @@ compare_rows(const void *a, const void *b, void *arg)
 }
 
 /*
- * heapam_analyze -- implementation of relation_analyze() table access method
- *					 callback for heap
+ * block_level_table_analyze -- implementation of relation_analyze() for
+ *								block-level table access methods
  */
 void
-heapam_analyze(Relation relation, AcquireSampleRowsFunc *func,
-			   BlockNumber *totalpages, BufferAccessStrategy bstrategy)
+block_level_table_analyze(Relation relation,
+						  AcquireSampleRowsFunc *func,
+						  BlockNumber *totalpages,
+						  BufferAccessStrategy bstrategy,
+						  ScanAnalyzeNextBlockFunc scan_analyze_next_block_cb,
+						  ScanAnalyzeNextTupleFunc scan_analyze_next_tuple_cb)
 {
 	*func = acquire_sample_rows;
 	*totalpages = RelationGetNumberOfBlocks(relation);
 	vac_strategy = bstrategy;
+	scan_analyze_next_block = scan_analyze_next_block_cb;
+	scan_analyze_next_tuple = scan_analyze_next_tuple_cb;
 }
 
 
