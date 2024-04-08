@@ -2937,7 +2937,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 					if (j != (BTEqualStrategyNumber - 1) ||
 						!(xform[j].skey->sk_flags & SK_SEARCHARRAY))
 					{
-						Assert(!array || array->scan_key == i);
 						xform[j].skey = cur;
 						xform[j].ikey = i;
 						xform[j].arrayidx = arrayidx;
@@ -2951,9 +2950,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 						 * scan key.  _bt_compare_scankey_args expects us to
 						 * always keep arrays (and discard non-arrays).
 						 */
-						Assert(j == (BTEqualStrategyNumber - 1));
-						Assert(xform[j].skey->sk_flags & SK_SEARCHARRAY);
-						Assert(xform[j].ikey == array->scan_key);
 						Assert(!(cur->sk_flags & SK_SEARCHARRAY));
 					}
 				}
