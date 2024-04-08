@@ -4986,7 +4986,7 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
  * This is a helper function for check_partitions_for_split() and
  * calculate_partition_bound_for_merge().
  * This function compares upper bound of first_bound and lower bound of
- * second_bound. These bounds should be equals except case
+ * second_bound. These bounds should be equal except case
  * "defaultPart == true" (this means that one of split partitions is DEFAULT).
  * In this case upper bound of first_bound can be less than lower bound of
  * second_bound because space between of these bounds will be included in
@@ -5262,7 +5262,7 @@ check_partition_bounds_for_split_range(Relation parent,
 					 errmsg("%s bound of partition \"%s\" is %s %s bound of split partition",
 							first ? "lower" : "upper",
 							relname,
-							defaultPart ? (first ? "less than" : "greater than") : "not equals to",
+							defaultPart ? (first ? "less than" : "greater than") : "not equal to",
 							first ? "lower" : "upper"),
 					 parser_errposition(pstate, datum->location)));
 		}
@@ -5483,7 +5483,11 @@ check_parent_values_in_new_partitions(Relation parent,
 		Const	   *notFoundVal;
 
 		if (!searchNull)
-			/* Make Const for get string representation of not found value. */
+
+			/*
+			 * Make Const for getting string representation of not found
+			 * value.
+			 */
 			notFoundVal = makeConst(key->parttypid[0],
 									key->parttypmod[0],
 									key->parttypcoll[0],

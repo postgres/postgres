@@ -956,8 +956,8 @@ typedef struct PartitionCmd
 	NodeTag		type;
 	RangeVar   *name;			/* name of partition to attach/detach */
 	PartitionBoundSpec *bound;	/* FOR VALUES, if attaching */
-	List	   *partlist;		/* list of partitions, for SPLIT PARTITION
-								 * command */
+	List	   *partlist;		/* list of partitions, for MERGE/SPLIT
+								 * PARTITION command */
 	bool		concurrent;
 } PartitionCmd;
 

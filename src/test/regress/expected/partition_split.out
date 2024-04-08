@@ -46,7 +46,7 @@ DETAIL:  Specified lower bound ('03-01-2022') is greater than or equal to upper 
 --ERROR:  list of split partitions should contains at least two items
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-10-01'));
-ERROR:  list of new partitions should contains at least two items
+ERROR:  list of new partitions should contain at least two items
 -- ERROR:  lower bound of partition "sales_feb2022" is less than lower bound of split partition
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-01-01') TO ('2022-03-01'),
@@ -101,7 +101,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-02') TO ('2022-03-01'),
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
-ERROR:  lower bound of partition "sales_feb2022" is not equals to lower bound of split partition
+ERROR:  lower bound of partition "sales_feb2022" is not equal to lower bound of split partition
 LINE 2:   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-02') TO...
                                                     ^
 DROP TABLE sales_range;

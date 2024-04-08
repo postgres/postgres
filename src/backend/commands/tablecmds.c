@@ -19099,7 +19099,7 @@ QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 }
 
 /*
- * attachPartitionTable: attach new partition to partitioned table
+ * attachPartitionTable: attach a new partition to the partitioned table
  *
  * wqueue: the ALTER TABLE work queue; can be NULL when not running as part
  *   of an ALTER TABLE sequence.
@@ -20892,10 +20892,10 @@ GetAttributeStorage(Oid atttypid, const char *storagemode)
  */
 typedef struct SplitPartitionContext
 {
-	ExprState  *partqualstate;	/* expression for check slot for partition
+	ExprState  *partqualstate;	/* expression for checking slot for partition
 								 * (NULL for DEFAULT partition) */
 	BulkInsertState bistate;	/* state of bulk inserts for partition */
-	TupleTableSlot *dstslot;	/* slot for insert row into partition */
+	TupleTableSlot *dstslot;	/* slot for inserting row into partition */
 	Relation	partRel;		/* relation for partition */
 } SplitPartitionContext;
 
@@ -21142,7 +21142,7 @@ moveSplitTableRows(Relation rel, Relation splitRel, List *partlist, List *newPar
 }
 
 /*
- * createPartitionTable: create table for new partition with given name
+ * createPartitionTable: create table for a new partition with given name
  * (newPartName) like table (modelRelName)
  *
  * Emulates command: CREATE TABLE <newPartName> (LIKE <modelRelName>
@@ -21219,7 +21219,7 @@ ATExecSplitPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * We are going to detach and remove this partition: need to use exclusive
-	 * lock for prevent DML-queries to the partition.
+	 * lock for preventing DML-queries to the partition.
 	 */
 	splitRel = table_openrv(cmd->name, AccessExclusiveLock);
 
@@ -21269,13 +21269,13 @@ ATExecSplitPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * If new partition has the same name as split partition then we should
-	 * rename split partition for reuse name.
+	 * rename split partition for reusing name.
 	 */
 	if (isSameName)
 	{
 		/*
 		 * We must bump the command counter to make the split partition tuple
-		 * visible for rename.
+		 * visible for renaming.
 		 */
 		CommandCounterIncrement();
 		/* Rename partition. */
@@ -21284,7 +21284,7 @@ ATExecSplitPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		/*
 		 * We must bump the command counter to make the split partition tuple
-		 * visible after rename.
+		 * visible after renaming.
 		 */
 		CommandCounterIncrement();
 	}
@@ -21459,7 +21459,7 @@ ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		/*
 		 * We are going to detach and remove this partition: need to use
-		 * exclusive lock for prevent DML-queries to the partition.
+		 * exclusive lock for preventing DML-queries to the partition.
 		 */
 		mergingPartition = table_openrv(name, AccessExclusiveLock);
 
