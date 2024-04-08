@@ -1844,6 +1844,7 @@ typedef enum JsonTableColumnType
 	JTC_REGULAR,
 	JTC_EXISTS,
 	JTC_FORMATTED,
+	JTC_NESTED,
 } JsonTableColumnType;
 
 /*
@@ -1860,6 +1861,7 @@ typedef struct JsonTableColumn
 	JsonFormat *format;			/* JSON format clause, if specified */
 	JsonWrapper wrapper;		/* WRAPPER behavior for formatted columns */
 	JsonQuotes	quotes;			/* omit or keep quotes on scalar strings? */
+	List	   *columns;		/* nested columns */
 	JsonBehavior *on_empty;		/* ON EMPTY behavior */
 	JsonBehavior *on_error;		/* ON ERROR behavior */
 	int			location;		/* token location, or -1 if unknown */

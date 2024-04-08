@@ -553,7 +553,7 @@ T823	SQL/JSON: PASSING clause			YES
 T824	JSON_TABLE: specific PLAN clause			NO	
 T825	SQL/JSON: ON EMPTY and ON ERROR clauses			YES	
 T826	General value expression in ON ERROR or ON EMPTY clauses			YES	
-T827	JSON_TABLE: sibling NESTED COLUMNS clauses			NO	
+T827	JSON_TABLE: sibling NESTED COLUMNS clauses			YES	
 T828	JSON_QUERY			YES	
 T829	JSON_QUERY: array wrapper options			YES	
 T830	Enforcing unique keys in SQL/JSON constructor functions			YES	

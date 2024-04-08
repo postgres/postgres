@@ -12,5 +12,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 20: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 26: query: select foo from json_table ( jsonb '[{"foo":"1"}]' , '$[*]' as p0 columns ( nested '$' as p1 columns ( nested path '$' as p11 columns ( foo int ) ) ) ) jt ( foo ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 26: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 26: correctly got 1 tuples with 1 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 26: RESULT: 1 offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

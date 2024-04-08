@@ -755,7 +755,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	MAPPING MATCH MATCHED MATERIALIZED MAXVALUE MERGE MERGE_ACTION METHOD
 	MINUTE_P MINVALUE MODE MONTH_P MOVE
 
-	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NFC NFD NFKC NFKD NO
+	NAME_P NAMES NATIONAL NATURAL NCHAR NESTED NEW NEXT NFC NFD NFKC NFKD NO
 	NONE NORMALIZE NORMALIZED
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
 	NULLS_P NUMERIC
@@ -884,8 +884,11 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  * the same precedence as IDENT.  This allows resolving conflicts in the
  * json_predicate_type_constraint and json_key_uniqueness_constraint_opt
  * productions (see comments there).
+ *
+ * Like the UNBOUNDED PRECEDING/FOLLOWING case, NESTED is assigned a lower
+ * precedence than PATH to fix ambiguity in the json_table production.
  */
-%nonassoc	UNBOUNDED /* ideally would have same precedence as IDENT */
+%nonassoc	UNBOUNDED NESTED /* ideally would have same precedence as IDENT */
 %nonassoc	IDENT PARTITION RANGE ROWS GROUPS PRECEDING FOLLOWING CUBE ROLLUP
 			SET KEYS OBJECT_P SCALAR VALUE_P WITH WITHOUT PATH
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
@@ -14270,6 +14273,35 @@ json_table_column_definition:
 					n->location = @1;
 					$$ = (Node *) n;
 				}
+			| NESTED path_opt Sconst
+				COLUMNS '(' json_table_column_definition_list ')'
+				{
+					JsonTableColumn *n = makeNode(JsonTableColumn);
+
+					n->coltype = JTC_NESTED;
+					n->pathspec = (JsonTablePathSpec *)
+						makeJsonTablePathSpec($3, NULL, @3, -1);
+					n->columns = $6;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| NESTED path_opt Sconst AS name
+				COLUMNS '(' json_table_column_definition_list ')'
+				{
+					JsonTableColumn *n = makeNode(JsonTableColumn);
+
+					n->coltype = JTC_NESTED;
+					n->pathspec = (JsonTablePathSpec *)
+						makeJsonTablePathSpec($3, $5, @3, @5);
+					n->columns = $8;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+		;
+
+path_opt:
+			PATH
+			| /* EMPTY */
 		;
 
 json_table_column_path_clause_opt:
@@ -17688,6 +17720,7 @@ unreserved_keyword:
 			| MOVE
 			| NAME_P
 			| NAMES
+			| NESTED
 			| NEW
 			| NEXT
 			| NFC
@@ -18304,6 +18337,7 @@ bare_label_keyword:
 			| NATIONAL
 			| NATURAL
 			| NCHAR
+			| NESTED
 			| NEW
 			| NEXT
 			| NFC

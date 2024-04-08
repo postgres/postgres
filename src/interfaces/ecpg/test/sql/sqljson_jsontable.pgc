@@ -23,6 +23,14 @@ EXEC SQL END DECLARE SECTION;
 	)) jt (foo);
   printf("Found foo=%d\n", foo);
 
+  EXEC SQL SELECT foo INTO :foo FROM JSON_TABLE(jsonb '[{"foo":"1"}]', '$[*]' AS p0
+	COLUMNS (
+		NESTED '$' AS p1 COLUMNS (
+			NESTED PATH '$' AS p11 COLUMNS ( foo int )
+		)
+	)) jt (foo);
+  printf("Found foo=%d\n", foo);
+
   EXEC SQL DISCONNECT;
 
   return 0;

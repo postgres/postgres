@@ -4159,6 +4159,8 @@ raw_expression_tree_walker_impl(Node *node,
 					return true;
 				if (WALK(jtc->on_error))
 					return true;
+				if (WALK(jtc->columns))
+					return true;
 			}
 			break;
 		case T_JsonTablePathSpec:

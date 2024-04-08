@@ -132,11 +132,21 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   printf("Found foo=%d\n", foo);
 
-  { ECPGdisconnect(__LINE__, "CURRENT");
-#line 26 "sqljson_jsontable.pgc"
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select foo from json_table ( jsonb '[{\"foo\":\"1\"}]' , '$[*]' as p0 columns ( nested '$' as p1 columns ( nested path '$' as p11 columns ( foo int ) ) ) ) jt ( foo )", ECPGt_EOIT, 
+	ECPGt_int,&(foo),(long)1,(long)1,sizeof(int), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
+#line 31 "sqljson_jsontable.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 26 "sqljson_jsontable.pgc"
+#line 31 "sqljson_jsontable.pgc"
+
+  printf("Found foo=%d\n", foo);
+
+  { ECPGdisconnect(__LINE__, "CURRENT");
+#line 34 "sqljson_jsontable.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 34 "sqljson_jsontable.pgc"
 
 
   return 0;

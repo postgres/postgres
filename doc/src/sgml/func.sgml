@@ -18894,6 +18894,24 @@ DETAIL:  Missing "]" after array dimensions.
   </para>
 
   <para>
+   JSON data stored at a nested level of the row pattern can be extracted using
+   the <literal>NESTED PATH</literal> clause.  Each
+   <literal>NESTED PATH</literal> clause can be used to generate one or more
+   columns using the data from a nested level of the row pattern.  Those
+   columns can be specified using a <literal>COLUMNS</literal> clause that
+   looks similar to the top-level COLUMNS clause.  Rows constructed from
+   NESTED COLUMNS are called <firstterm>child rows</firstterm> and are joined
+   against the row constructed from the columns specified in the parent
+   <literal>COLUMNS</literal> clause to get the row in the final view.  Child
+   columns themselves may contain a <literal>NESTED PATH</literal>
+   specification thus allowing to extract data located at arbitrary nesting
+   levels.  Columns produced by multiple <literal>NESTED PATH</literal>s at the
+   same level are considered to be <firstterm>siblings</firstterm> of each
+   other and their rows after joining with the parent row are combined using
+   UNION.
+  </para>
+
+  <para>
    The rows produced by <function>JSON_TABLE</function> are laterally
    joined to the row that generated them, so you do not have to explicitly join
    the constructed view with the original table holding <acronym>JSON</acronym>
@@ -18924,6 +18942,7 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
         <optional> { ERROR | NULL | EMPTY { ARRAY | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON ERROR </optional>
   | <replaceable>name</replaceable> <replaceable>type</replaceable> EXISTS <optional> PATH <replaceable>path_expression</replaceable> </optional>
         <optional> { ERROR | TRUE | FALSE | UNKNOWN } ON ERROR </optional>
+  | NESTED <optional> PATH </optional> <replaceable>json_path_specification</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> COLUMNS ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
 </synopsis>
 
   <para>
@@ -18971,7 +18990,8 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
     <listitem>
     <para>
      Adds an ordinality column that provides sequential row numbering starting
-     from 1.
+     from 1.  Each <literal>NESTED PATH</literal> (see below) gets its own
+     counter for any nested ordinality columns.
     </para>
     </listitem>
    </varlistentry>
@@ -19059,6 +19079,33 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
      </para>
     </note>
       </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+      <literal>NESTED <optional> PATH </optional></literal> <replaceable>json_path_specification</replaceable> <optional> <literal>AS</literal> <replaceable>json_path_name</replaceable> </optional>
+          <literal>COLUMNS</literal> ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
+    </term>
+    <listitem>
+
+    <para>
+     Extracts SQL/JSON values from nested levels of the row pattern,
+     generates one or more columns as defined by the <literal>COLUMNS</literal>
+     subclause, and inserts the extracted SQL/JSON values into those
+     columns.  The <replaceable>json_table_column</replaceable>
+     expression in the <literal>COLUMNS</literal> subclause uses the same
+     syntax as in the parent <literal>COLUMNS</literal> clause.
+    </para>
+
+    <para>
+     The <literal>NESTED PATH</literal> syntax is recursive,
+     so you can go down multiple nested levels by specifying several
+     <literal>NESTED PATH</literal> subclauses within each other.
+     It allows to unnest the hierarchy of JSON objects and arrays
+     in a single function invocation rather than chaining several
+     <function>JSON_TABLE</function> expressions in an SQL statement.
+    </para>
+    </listitem>
    </varlistentry>
   </variablelist>
 
@@ -19189,6 +19236,111 @@ SELECT jt.* FROM
   1 | horror   | Psycho  | "Alfred Hitchcock"
   2 | thriller | Vertigo | "Alfred Hitchcock"
 (2 rows)
+</screen>
+
+     </para>
+     <para>
+      The following is a modified version of the above query to show the usage
+      of <literal>NESTED PATH</literal> for populating title and director
+      columns, illustrating how they are joined to the parent columns id and
+      kind:
+
+<programlisting>
+SELECT jt.* FROM
+ my_films,
+ JSON_TABLE ( js, '$.favorites[*] ? (@.films[*].director == $filter)'
+   PASSING 'Alfred Hitchcock' AS filter
+   COLUMNS (
+    id FOR ORDINALITY,
+    kind text PATH '$.kind',
+    NESTED PATH '$.films[*]' COLUMNS (
+      title text FORMAT JSON PATH '$.title' OMIT QUOTES,
+      director text PATH '$.director' KEEP QUOTES))) AS jt;
+</programlisting>
+
+<screen>
+ id |   kind   |  title  |      director
+----+----------+---------+--------------------
+  1 | horror   | Psycho  | "Alfred Hitchcock"
+  2 | thriller | Vertigo | "Alfred Hitchcock"
+(2 rows)
+</screen>
+
+     </para>
+
+     <para>
+      The following is the same query but without the filter in the root
+      path:
+
+<programlisting>
+SELECT jt.* FROM
+ my_films,
+ JSON_TABLE ( js, '$.favorites[*]'
+   COLUMNS (
+    id FOR ORDINALITY,
+    kind text PATH '$.kind',
+    NESTED PATH '$.films[*]' COLUMNS (
+      title text FORMAT JSON PATH '$.title' OMIT QUOTES,
+      director text PATH '$.director' KEEP QUOTES))) AS jt;
+</programlisting>
+
+<screen>
+ id |   kind   |      title      |      director
+----+----------+-----------------+--------------------
+  1 | comedy   | Bananas         | "Woody Allen"
+  1 | comedy   | The Dinner Game | "Francis Veber"
+  2 | horror   | Psycho          | "Alfred Hitchcock"
+  3 | thriller | Vertigo         | "Alfred Hitchcock"
+  4 | drama    | Yojimbo         | "Akira Kurosawa"
+(5 rows)
+</screen>
+
+     </para>
+
+     <para>
+      The following shows another query using a different <type>JSON</type>
+      object as input.  It shows the UNION "sibling join" between
+      <literal>NESTED</literal> paths <literal>$.movies[*]</literal> and
+      <literal>$.books[*]</literal> and also the usage of
+      <literal>FOR ORDINALITY</literal> column at <literal>NESTED</literal>
+      levels (columns <literal>movie_id</literal>, <literal>book_id</literal>,
+      and <literal>author_id</literal>):
+
+<programlisting>
+SELECT * FROM JSON_TABLE (
+'{"favorites":
+    {"movies":
+      [{"name": "One", "director": "John Doe"},
+       {"name": "Two", "director": "Don Joe"}],
+     "books":
+      [{"name": "Mystery", "authors": [{"name": "Brown Dan"}]},
+       {"name": "Wonder", "authors": [{"name": "Jun Murakami"}, {"name":"Craig Doe"}]}]
+}}'::json, '$.favs[*]'
+COLUMNS (user_id FOR ORDINALITY,
+  NESTED '$.movies[*]'
+    COLUMNS (
+    movie_id FOR ORDINALITY,
+    mname text PATH '$.name',
+    director text),
+  NESTED '$.books[*]'
+    COLUMNS (
+      book_id FOR ORDINALITY,
+      bname text PATH '$.name',
+      NESTED '$.authors[*]'
+        COLUMNS (
+          author_id FOR ORDINALITY,
+          author_name text PATH '$.name'))));
+</programlisting>
+
+<screen>
+ user_id | movie_id | mname | director | book_id |  bname  | author_id | author_name
+---------+----------+-------+----------+---------+---------+-----------+--------------
+       1 |        1 | One   | John Doe |         |         |           |
+       1 |        2 | Two   | Don Joe  |         |         |           |
+       1 |          |       |          |       1 | Mystery |         1 | Brown Dan
+       1 |          |       |          |       2 | Wonder  |         1 | Jun Murakami
+       1 |          |       |          |       2 | Wonder  |         2 | Craig Doe
+(5 rows)
 </screen>
 
      </para>

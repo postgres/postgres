@@ -1855,7 +1855,10 @@ typedef struct JsonTablePlan
 	NodeTag		type;
 } JsonTablePlan;
 
-/* JSON_TABLE plan to evaluate a JSON path expression */
+/*
+ * JSON_TABLE plan to evaluate a JSON path expression and NESTED paths, if
+ * any.
+ */
 typedef struct JsonTablePathScan
 {
 	JsonTablePlan plan;
@@ -1863,9 +1866,36 @@ typedef struct JsonTablePathScan
 	/* JSON path to evaluate */
 	JsonTablePath *path;
 
-	/* ERROR/EMPTY ON ERROR behavior */
+	/*
+	 * ERROR/EMPTY ON ERROR behavior; only significant in the plan for the
+	 * top-level path.
+	 */
 	bool		errorOnError;
+
+	/* Plan(s) for nested columns, if any. */
+	JsonTablePlan *child;
+
+	/*
+	 * 0-based index in TableFunc.colvalexprs of the 1st and the last column
+	 * covered by this plan.  Both are -1 if all columns are nested and thus
+	 * computed by the child plan(s).
+	 */
+	int			colMin;
+	int			colMax;
 } JsonTablePathScan;
+
+/*
+ * JsonTableSiblingJoin -
+ *		Plan to join rows of sibling NESTED COLUMNS clauses in the same parent
+ *		COLUMNS clause
+ */
+typedef struct JsonTableSiblingJoin
+{
+	JsonTablePlan plan;
+
+	JsonTablePlan *lplan;
+	JsonTablePlan *rplan;
+} JsonTableSiblingJoin;
 
 /* ----------------
  * NullTest

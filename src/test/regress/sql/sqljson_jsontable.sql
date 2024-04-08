@@ -289,3 +289,213 @@ FROM JSON_TABLE(
 
 -- Should fail (not supported)
 SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || 'a' COLUMNS (foo int));
+
+-- JSON_TABLE: nested paths
+
+-- Duplicate path names
+SELECT * FROM JSON_TABLE(
+	jsonb '[]', '$' AS a
+	COLUMNS (
+		b int,
+		NESTED PATH '$' AS a
+		COLUMNS (
+			c int
+		)
+	)
+) jt;
+
+SELECT * FROM JSON_TABLE(
+	jsonb '[]', '$' AS a
+	COLUMNS (
+		b int,
+		NESTED PATH '$' AS n_a
+		COLUMNS (
+			c int
+		)
+	)
+) jt;
+
+SELECT * FROM JSON_TABLE(
+	jsonb '[]', '$'
+	COLUMNS (
+		b int,
+		NESTED PATH '$' AS b
+		COLUMNS (
+			c int
+		)
+	)
+) jt;
+
+SELECT * FROM JSON_TABLE(
+	jsonb '[]', '$'
+	COLUMNS (
+		NESTED PATH '$' AS a
+		COLUMNS (
+			b int
+		),
+		NESTED PATH '$'
+		COLUMNS (
+			NESTED PATH '$' AS a
+			COLUMNS (
+				c int
+			)
+		)
+	)
+) jt;
+
+
+-- JSON_TABLE: plan execution
+
+CREATE TEMP TABLE jsonb_table_test (js jsonb);
+
+INSERT INTO jsonb_table_test
+VALUES (
+	'[
+		{"a":  1,  "b": [], "c": []},
+		{"a":  2,  "b": [1, 2, 3], "c": [10, null, 20]},
+		{"a":  3,  "b": [1, 2], "c": []},
+		{"x": "4", "b": [1, 2], "c": 123}
+	 ]'
+);
+
+select
+	jt.*
+from
+	jsonb_table_test jtt,
+	json_table (
+		jtt.js,'strict $[*]' as p
+		columns (
+			n for ordinality,
+			a int path 'lax $.a' default -1 on empty,
+			nested path 'strict $.b[*]' as pb columns (b_id for ordinality, b int path '$' ),
+			nested path 'strict $.c[*]' as pc columns (c_id for ordinality, c int path '$' )
+		)
+	) jt;
+
+
+-- PASSING arguments are passed to nested paths and their columns' paths
+SELECT *
+FROM
+	generate_series(1, 3) x,
+	generate_series(1, 3) y,
+	JSON_TABLE(jsonb
+		'[[1,2,3],[2,3,4,5],[3,4,5,6]]',
+		'strict $[*] ? (@[*] <= $x)'
+		PASSING x AS x, y AS y
+		COLUMNS (
+			y text FORMAT JSON PATH '$',
+			NESTED PATH 'strict $[*] ? (@ == $y)'
+			COLUMNS (
+				z int PATH '$'
+			)
+		)
+	) jt;
+
+-- JSON_TABLE: Test backward parsing with nested paths
+
+CREATE VIEW jsonb_table_view_nested AS
+SELECT * FROM
+	JSON_TABLE(
+		jsonb 'null', 'lax $[*]' PASSING 1 + 2 AS a, json '"foo"' AS "b c"
+		COLUMNS (
+			id FOR ORDINALITY,
+			NESTED PATH '$[1]' AS p1 COLUMNS (
+				a1 int,
+				NESTED PATH '$[*]' AS "p1 1" COLUMNS (
+					a11 text
+				),
+				b1 text
+			),
+			NESTED PATH '$[2]' AS p2 COLUMNS (
+				NESTED PATH '$[*]' AS "p2:1" COLUMNS (
+					a21 text
+				),
+				NESTED PATH '$[*]' AS p22 COLUMNS (
+					a22 text
+				)
+			)
+		)
+	);
+
+\sv jsonb_table_view_nested
+DROP VIEW jsonb_table_view_nested;
+
+CREATE TABLE s (js jsonb);
+INSERT INTO s VALUES
+	('{"a":{"za":[{"z1": [11,2222]},{"z21": [22, 234,2345]},{"z22": [32, 204,145]}]},"c": 3}'),
+	('{"a":{"za":[{"z1": [21,4222]},{"z21": [32, 134,1345]}]},"c": 10}');
+
+-- error
+SELECT sub.* FROM s,
+	JSON_TABLE(js, '$' PASSING 32 AS x, 13 AS y COLUMNS (
+		xx int path '$.c',
+		NESTED PATH '$.a.za[1]' columns (NESTED PATH '$.z21[*]' COLUMNS (z21 int path '$?(@ >= $"x")' ERROR ON ERROR))
+	)) sub;
+
+-- Parent columns xx1, xx appear before NESTED ones
+SELECT sub.* FROM s,
+	(VALUES (23)) x(x), generate_series(13, 13) y,
+	JSON_TABLE(js, '$' AS c1 PASSING x AS x, y AS y COLUMNS (
+		NESTED PATH '$.a.za[2]' COLUMNS (
+			NESTED PATH '$.z22[*]' as z22 COLUMNS (c int PATH '$')),
+			NESTED PATH '$.a.za[1]' columns (d int[] PATH '$.z21'),
+			NESTED PATH '$.a.za[0]' columns (NESTED PATH '$.z1[*]' as z1 COLUMNS (a int PATH  '$')),
+			xx1 int PATH '$.c',
+			NESTED PATH '$.a.za[1]'  columns (NESTED PATH '$.z21[*]' as z21 COLUMNS (b int PATH '$')),
+			xx int PATH '$.c'
+	)) sub;
+
+-- Test applying PASSING variables at different nesting levels
+SELECT sub.* FROM s,
+	(VALUES (23)) x(x), generate_series(13, 13) y,
+	JSON_TABLE(js, '$' AS c1 PASSING x AS x, y AS y COLUMNS (
+		xx1 int PATH '$.c',
+		NESTED PATH '$.a.za[0].z1[*]' COLUMNS (NESTED PATH '$ ?(@ >= ($"x" -2))' COLUMNS (a int PATH '$')),
+		NESTED PATH '$.a.za[0]' COLUMNS (NESTED PATH '$.z1[*] ? (@ >= ($"x" -2))' COLUMNS (b int PATH '$'))
+	)) sub;
+
+-- Test applying PASSING variable to paths all the levels
+SELECT sub.* FROM s,
+	(VALUES (23)) x(x),
+	generate_series(13, 13) y,
+	JSON_TABLE(js, '$' AS c1 PASSING x AS x, y AS y
+	COLUMNS (
+		xx1 int PATH '$.c',
+		NESTED PATH '$.a.za[1]'
+			COLUMNS (NESTED PATH '$.z21[*]' COLUMNS (b int PATH '$')),
+		NESTED PATH '$.a.za[1] ? (@.z21[*] >= ($"x"-1))' COLUMNS
+			(NESTED PATH '$.z21[*] ? (@ >= ($"y" + 3))' as z22 COLUMNS (a int PATH '$ ? (@ >= ($"y" + 12))')),
+		NESTED PATH '$.a.za[1]' COLUMNS
+			(NESTED PATH '$.z21[*] ? (@ >= ($"y" +121))' as z21 COLUMNS (c int PATH '$ ? (@ > ($"x" +111))'))
+	)) sub;
+
+----- test on empty behavior
+SELECT sub.* FROM s,
+	(values(23)) x(x),
+	generate_series(13, 13) y,
+	JSON_TABLE(js, '$' AS c1 PASSING x AS x, y AS y
+	COLUMNS (
+		xx1 int PATH '$.c',
+		NESTED PATH '$.a.za[2]' COLUMNS (NESTED PATH '$.z22[*]' as z22 COLUMNS (c int PATH '$')),
+		NESTED PATH '$.a.za[1]' COLUMNS (d json PATH '$ ? (@.z21[*] == ($"x" -1))'),
+		NESTED PATH '$.a.za[0]' COLUMNS (NESTED PATH '$.z1[*] ? (@ >= ($"x" -2))' as z1 COLUMNS (a int PATH '$')),
+		NESTED PATH '$.a.za[1]' COLUMNS
+			(NESTED PATH '$.z21[*] ? (@ >= ($"y" +121))' as z21 COLUMNS (b int PATH '$ ? (@ > ($"x" +111))' DEFAULT 0 ON EMPTY))
+	)) sub;
+
+CREATE OR REPLACE VIEW jsonb_table_view7 AS
+SELECT sub.* FROM s,
+	(values(23)) x(x),
+	generate_series(13, 13) y,
+	JSON_TABLE(js, '$' AS c1 PASSING x AS x, y AS y
+	COLUMNS (
+		xx1 int PATH '$.c',
+		NESTED PATH '$.a.za[2]' COLUMNS (NESTED PATH '$.z22[*]' as z22 COLUMNS (c int PATH '$' WITHOUT WRAPPER OMIT QUOTES)),
+		NESTED PATH '$.a.za[1]' COLUMNS (d json PATH '$ ? (@.z21[*] == ($"x" -1))' WITH WRAPPER),
+		NESTED PATH '$.a.za[0]' COLUMNS (NESTED PATH '$.z1[*] ? (@ >= ($"x" -2))' as z1 COLUMNS (a int PATH '$' KEEP QUOTES)),
+		NESTED PATH '$.a.za[1]' COLUMNS
+			(NESTED PATH '$.z21[*] ? (@ >= ($"y" +121))' as z21 COLUMNS (b int PATH '$ ? (@ > ($"x" +111))' DEFAULT 0 ON EMPTY))
+	)) sub;
+\sv jsonb_table_view7
+DROP VIEW jsonb_table_view7;
+DROP TABLE s;
