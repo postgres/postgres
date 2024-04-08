@@ -413,9 +413,8 @@ extern bool HeapTupleIsSurelyDead(HeapTuple htup,
 								  struct GlobalVisState *vistest);
 
 /* in heap/heapam_handler.c*/
-extern void heapam_scan_analyze_next_block(TableScanDesc scan,
-										   BlockNumber blockno,
-										   BufferAccessStrategy bstrategy);
+extern bool heapam_scan_analyze_next_block(TableScanDesc scan,
+										   ReadStream *stream);
 extern bool heapam_scan_analyze_next_tuple(TableScanDesc scan,
 										   TransactionId OldestXmin,
 										   double *liverows, double *deadrows,

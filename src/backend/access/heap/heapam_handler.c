@@ -1055,33 +1055,36 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 }
 
 /*
- * Prepare to analyze block `blockno` of `scan`.  The scan has been started
+ * Prepare to analyze the next block in the read stream.  Returns false if
+ * the stream is exhausted and true otherwise. The scan must have been started
  * with SO_TYPE_ANALYZE option.
  *
  * This routine holds a buffer pin and lock on the heap page.  They are held
  * until heapam_scan_analyze_next_tuple() returns false.  That is until all the
  * items of the heap page are analyzed.
  */
-void
-heapam_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
-							   BufferAccessStrategy bstrategy)
+bool
+heapam_scan_analyze_next_block(TableScanDesc scan, ReadStream *stream)
 {
 	HeapScanDesc hscan = (HeapScanDesc) scan;
 
 	/*
 	 * We must maintain a pin on the target page's buffer to ensure that
 	 * concurrent activity - e.g. HOT pruning - doesn't delete tuples out from
-	 * under us.  Hence, pin the page until we are done looking at it.  We
-	 * also choose to hold sharelock on the buffer throughout --- we could
-	 * release and re-acquire sharelock for each tuple, but since we aren't
-	 * doing much work per tuple, the extra lock traffic is probably better
-	 * avoided.
+	 * under us.  It comes from the stream already pinned.   We also choose to
+	 * hold sharelock on the buffer throughout --- we could release and
+	 * re-acquire sharelock for each tuple, but since we aren't doing much
+	 * work per tuple, the extra lock traffic is probably better avoided.
 	 */
-	hscan->rs_cblock = blockno;
-	hscan->rs_cindex = FirstOffsetNumber;
-	hscan->rs_cbuf = ReadBufferExtended(scan->rs_rd, MAIN_FORKNUM,
-										blockno, RBM_NORMAL, bstrategy);
+	hscan->rs_cbuf = read_stream_next_buffer(stream, NULL);
+	if (!BufferIsValid(hscan->rs_cbuf))
+		return false;
+
 	LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
+
+	hscan->rs_cblock = BufferGetBlockNumber(hscan->rs_cbuf);
+	hscan->rs_cindex = FirstOffsetNumber;
+	return true;
 }
 
 /*
