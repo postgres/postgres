@@ -35,7 +35,7 @@
 #define WORDS_PER_PAGE(n) ((n) / BITS_PER_BITMAPWORD + 1)
 
 /* number of offsets we can store in the header of a BlocktableEntry */
-#define NUM_FULL_OFFSETS ((sizeof(bitmapword) - sizeof(uint16)) / sizeof(OffsetNumber))
+#define NUM_FULL_OFFSETS ((sizeof(uintptr_t) - sizeof(uint8) - sizeof(int8)) / sizeof(OffsetNumber))
 
 /*
  * This is named similarly to PagetableEntry in tidbitmap.c
@@ -43,19 +43,50 @@
  */
 typedef struct BlocktableEntry
 {
-	uint16		nwords;
+	union
+	{
+		struct
+		{
+#ifndef WORDS_BIGENDIAN
+			/*
+			 * We need to position this member so that the backing radix tree
+			 * can use the lowest bit for a pointer tag. In particular, it
+			 * must be placed within 'header' so that it corresponds to the
+			 * lowest byte in 'ptr'. We position 'nwords' along with it to
+			 * avoid struct padding.
+			 */
+			uint8		flags;
 
-	/*
-	 * We can store a small number of offsets here to avoid wasting space with
-	 * a sparse bitmap.
-	 */
-	OffsetNumber full_offsets[NUM_FULL_OFFSETS];
+			int8		nwords;
+#endif
+
+			/*
+			 * We can store a small number of offsets here to avoid wasting
+			 * space with a sparse bitmap.
+			 */
+			OffsetNumber full_offsets[NUM_FULL_OFFSETS];
+
+#ifdef WORDS_BIGENDIAN
+			int8		nwords;
+			uint8		flags;
+#endif
+		};
+		uintptr_t	ptr;
+	}			header;
 
 	bitmapword	words[FLEXIBLE_ARRAY_MEMBER];
 } BlocktableEntry;
+
+/*
+ * The type of 'nwords' limits the max number of words in the 'words' array.
+ * This computes the max offset we can actually store in the bitmap. In
+ * practice, it's almost always the same as MaxOffsetNumber.
+ */
+#define MAX_OFFSET_IN_BITMAP Min(BITS_PER_BITMAPWORD * PG_INT8_MAX - 1, MaxOffsetNumber)
+
 #define MaxBlocktableEntrySize \
 	offsetof(BlocktableEntry, words) + \
-		(sizeof(bitmapword) * WORDS_PER_PAGE(MaxOffsetNumber))
+		(sizeof(bitmapword) * WORDS_PER_PAGE(MAX_OFFSET_IN_BITMAP))
 
 #define RT_PREFIX local_ts
 #define RT_SCOPE static
@@ -64,7 +95,8 @@ typedef struct BlocktableEntry
 #define RT_VALUE_TYPE BlocktableEntry
 #define RT_VARLEN_VALUE_SIZE(page) \
 	(offsetof(BlocktableEntry, words) + \
-	sizeof(bitmapword) * (page)->nwords)
+	sizeof(bitmapword) * (page)->header.nwords)
+#define RT_RUNTIME_EMBEDDABLE_VALUE
 #include "lib/radixtree.h"
 
 #define RT_PREFIX shared_ts
@@ -75,7 +107,8 @@ typedef struct BlocktableEntry
 #define RT_VALUE_TYPE BlocktableEntry
 #define RT_VARLEN_VALUE_SIZE(page) \
 	(offsetof(BlocktableEntry, words) + \
-	sizeof(bitmapword) * (page)->nwords)
+	sizeof(bitmapword) * (page)->header.nwords)
+#define RT_RUNTIME_EMBEDDABLE_VALUE
 #include "lib/radixtree.h"
 
 /* Per-backend state for a TidStore */
@@ -350,13 +383,13 @@ TidStoreSetBlockOffsets(TidStore *ts, BlockNumber blkno, OffsetNumber *offsets,
 			OffsetNumber off = offsets[i];
 
 			/* safety check to ensure we don't overrun bit array bounds */
-			if (!OffsetNumberIsValid(off))
+			if (off == InvalidOffsetNumber || off > MAX_OFFSET_IN_BITMAP)
 				elog(ERROR, "tuple offset out of range: %u", off);
 
-			page->full_offsets[i] = off;
+			page->header.full_offsets[i] = off;
 		}
 
-		page->nwords = 0;
+		page->header.nwords = 0;
 	}
 	else
 	{
@@ -371,7 +404,7 @@ TidStoreSetBlockOffsets(TidStore *ts, BlockNumber blkno, OffsetNumber *offsets,
 				OffsetNumber off = offsets[idx];
 
 				/* safety check to ensure we don't overrun bit array bounds */
-				if (!OffsetNumberIsValid(off))
+				if (off == InvalidOffsetNumber || off > MAX_OFFSET_IN_BITMAP)
 					elog(ERROR, "tuple offset out of range: %u", off);
 
 				if (off >= next_word_threshold)
@@ -385,8 +418,8 @@ TidStoreSetBlockOffsets(TidStore *ts, BlockNumber blkno, OffsetNumber *offsets,
 			page->words[wordnum] = word;
 		}
 
-		page->nwords = wordnum;
-		Assert(page->nwords == WORDS_PER_PAGE(offsets[num_offsets - 1]));
+		page->header.nwords = wordnum;
+		Assert(page->header.nwords == WORDS_PER_PAGE(offsets[num_offsets - 1]));
 	}
 
 	if (TidStoreIsShared(ts))
@@ -414,12 +447,12 @@ TidStoreIsMember(TidStore *ts, ItemPointer tid)
 	if (page == NULL)
 		return false;
 
-	if (page->nwords == 0)
+	if (page->header.nwords == 0)
 	{
 		/* we have offsets in the header */
 		for (int i = 0; i < NUM_FULL_OFFSETS; i++)
 		{
-			if (page->full_offsets[i] == off)
+			if (page->header.full_offsets[i] == off)
 				return true;
 		}
 		return false;
@@ -430,7 +463,7 @@ TidStoreIsMember(TidStore *ts, ItemPointer tid)
 		bitnum = BITNUM(off);
 
 		/* no bitmap for the off */
-		if (wordnum >= page->nwords)
+		if (wordnum >= page->header.nwords)
 			return false;
 
 		return (page->words[wordnum] & ((bitmapword) 1 << bitnum)) != 0;
@@ -554,18 +587,18 @@ tidstore_iter_extract_tids(TidStoreIter *iter, BlockNumber blkno,
 	result->num_offsets = 0;
 	result->blkno = blkno;
 
-	if (page->nwords == 0)
+	if (page->header.nwords == 0)
 	{
 		/* we have offsets in the header */
 		for (int i = 0; i < NUM_FULL_OFFSETS; i++)
 		{
-			if (page->full_offsets[i] != InvalidOffsetNumber)
-				result->offsets[result->num_offsets++] = page->full_offsets[i];
+			if (page->header.full_offsets[i] != InvalidOffsetNumber)
+				result->offsets[result->num_offsets++] = page->header.full_offsets[i];
 		}
 	}
 	else
 	{
-		for (wordnum = 0; wordnum < page->nwords; wordnum++)
+		for (wordnum = 0; wordnum < page->header.nwords; wordnum++)
 		{
 			bitmapword	w = page->words[wordnum];
 			int			off = wordnum * BITS_PER_BITMAPWORD;

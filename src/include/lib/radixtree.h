@@ -105,6 +105,10 @@
  *   involving a pointer to the value type, to calculate size.
  *     NOTE: implies that the value is in fact variable-length,
  *     so do not set for fixed-length values.
+ * - RT_RUNTIME_EMBEDDABLE_VALUE - for variable length values, allows
+ *   storing the value in a child pointer slot, rather than as a single-
+ *   value leaf, if small enough. This requires that the value, when
+ *   read as a child pointer, can be tagged in the lowest bit.
  *
  * Optional parameters:
  * - RT_SHMEM - if defined, the radix tree is created in the DSA area
@@ -437,7 +441,13 @@ static inline bool
 RT_VALUE_IS_EMBEDDABLE(RT_VALUE_TYPE * value_p)
 {
 #ifdef RT_VARLEN_VALUE_SIZE
+
+#ifdef RT_RUNTIME_EMBEDDABLE_VALUE
+	return RT_GET_VALUE_SIZE(value_p) <= sizeof(RT_PTR_ALLOC);
+#else
 	return false;
+#endif
+
 #else
 	return RT_GET_VALUE_SIZE(value_p) <= sizeof(RT_PTR_ALLOC);
 #endif
@@ -451,7 +461,19 @@ static inline bool
 RT_CHILDPTR_IS_VALUE(RT_PTR_ALLOC child)
 {
 #ifdef RT_VARLEN_VALUE_SIZE
+
+#ifdef RT_RUNTIME_EMBEDDABLE_VALUE
+	/* check for pointer tag */
+#ifdef RT_SHMEM
+	return child & 1;
+#else
+	return ((uintptr_t) child) & 1;
+#endif
+
+#else
 	return false;
+#endif
+
 #else
 	return sizeof(RT_VALUE_TYPE) <= sizeof(RT_PTR_ALLOC);
 #endif
@@ -1729,6 +1751,15 @@ have_slot:
 	{
 		/* store value directly in child pointer slot */
 		memcpy(slot, value_p, value_sz);
+
+#ifdef RT_RUNTIME_EMBEDDABLE_VALUE
+		/* tag child pointer */
+#ifdef RT_SHMEM
+		*slot |= 1;
+#else
+		*((uintptr_t *) slot) |= 1;
+#endif
+#endif
 	}
 	else
 	{
@@ -2888,6 +2919,7 @@ RT_DUMP_NODE(RT_NODE * node)
 #undef RT_DEFINE
 #undef RT_VALUE_TYPE
 #undef RT_VARLEN_VALUE_SIZE
+#undef RT_RUNTIME_EMBEDDABLE_VALUE
 #undef RT_SHMEM
 #undef RT_USE_DELETE
 #undef RT_DEBUG
