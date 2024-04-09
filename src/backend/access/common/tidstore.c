@@ -43,36 +43,35 @@
  */
 typedef struct BlocktableEntry
 {
-	union
+	struct
 	{
-		struct
-		{
 #ifndef WORDS_BIGENDIAN
-			/*
-			 * We need to position this member so that the backing radix tree
-			 * can use the lowest bit for a pointer tag. In particular, it
-			 * must be placed within 'header' so that it corresponds to the
-			 * lowest byte in 'ptr'. We position 'nwords' along with it to
-			 * avoid struct padding.
-			 */
-			uint8		flags;
+		/*
+		 * We need to position this member to reserve space for the backing
+		 * radix tree to tag the lowest bit when struct 'header' is stored
+		 * inside a pointer or DSA pointer.
+		 */
+		uint8		flags;
 
-			int8		nwords;
+		int8		nwords;
 #endif
 
-			/*
-			 * We can store a small number of offsets here to avoid wasting
-			 * space with a sparse bitmap.
-			 */
-			OffsetNumber full_offsets[NUM_FULL_OFFSETS];
+		/*
+		 * We can store a small number of offsets here to avoid wasting space
+		 * with a sparse bitmap.
+		 */
+		OffsetNumber full_offsets[NUM_FULL_OFFSETS];
 
 #ifdef WORDS_BIGENDIAN
-			int8		nwords;
-			uint8		flags;
+		int8		nwords;
+		uint8		flags;
 #endif
-		};
-		uintptr_t	ptr;
 	}			header;
+
+	/*
+	 * We don't expect any padding space here, but to be cautious, code
+	 * creating new entries should zero out space up to 'words'.
+	 */
 
 	bitmapword	words[FLEXIBLE_ARRAY_MEMBER];
 } BlocktableEntry;
