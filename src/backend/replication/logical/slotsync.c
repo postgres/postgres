@@ -1311,7 +1311,7 @@ ReplSlotSyncWorkerMain(char *startup_data, size_t startup_data_len)
 	if (cluster_name[0])
 		appendStringInfo(&app_name, "%s_%s", cluster_name, "slotsync worker");
 	else
-		appendStringInfo(&app_name, "%s", "slotsync worker");
+		appendStringInfoString(&app_name, "slotsync worker");
 
 	/*
 	 * Establish the connection to the primary server for slot

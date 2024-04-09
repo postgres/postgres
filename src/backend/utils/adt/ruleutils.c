@@ -7176,16 +7176,16 @@ get_merge_query_def(Query *query, deparse_context *context,
 		switch (action->matchKind)
 		{
 			case MERGE_WHEN_MATCHED:
-				appendStringInfo(buf, "MATCHED");
+				appendStringInfoString(buf, "MATCHED");
 				break;
 			case MERGE_WHEN_NOT_MATCHED_BY_SOURCE:
-				appendStringInfo(buf, "NOT MATCHED BY SOURCE");
+				appendStringInfoString(buf, "NOT MATCHED BY SOURCE");
 				break;
 			case MERGE_WHEN_NOT_MATCHED_BY_TARGET:
 				if (haveNotMatchedBySource)
-					appendStringInfo(buf, "NOT MATCHED BY TARGET");
+					appendStringInfoString(buf, "NOT MATCHED BY TARGET");
 				else
-					appendStringInfo(buf, "NOT MATCHED");
+					appendStringInfoString(buf, "NOT MATCHED");
 				break;
 			default:
 				elog(ERROR, "unrecognized matchKind: %d",
@@ -8850,18 +8850,18 @@ get_json_expr_options(JsonExpr *jsexpr, deparse_context *context,
 	if (jsexpr->op == JSON_QUERY_OP)
 	{
 		if (jsexpr->wrapper == JSW_CONDITIONAL)
-			appendStringInfo(context->buf, " WITH CONDITIONAL WRAPPER");
+			appendStringInfoString(context->buf, " WITH CONDITIONAL WRAPPER");
 		else if (jsexpr->wrapper == JSW_UNCONDITIONAL)
-			appendStringInfo(context->buf, " WITH UNCONDITIONAL WRAPPER");
+			appendStringInfoString(context->buf, " WITH UNCONDITIONAL WRAPPER");
 		/* The default */
 		else if (jsexpr->wrapper == JSW_NONE || jsexpr->wrapper == JSW_UNSPEC)
-			appendStringInfo(context->buf, " WITHOUT WRAPPER");
+			appendStringInfoString(context->buf, " WITHOUT WRAPPER");
 
 		if (jsexpr->omit_quotes)
-			appendStringInfo(context->buf, " OMIT QUOTES");
+			appendStringInfoString(context->buf, " OMIT QUOTES");
 		/* The default */
 		else
-			appendStringInfo(context->buf, " KEEP QUOTES");
+			appendStringInfoString(context->buf, " KEEP QUOTES");
 	}
 
 	if (jsexpr->on_empty && jsexpr->on_empty->btype != default_behavior)
@@ -10206,7 +10206,7 @@ get_rule_expr(Node *node, deparse_context *context,
 									  JSON_BEHAVIOR_NULL :
 									  JSON_BEHAVIOR_FALSE);
 
-				appendStringInfoString(buf, ")");
+				appendStringInfoChar(buf, ')');
 			}
 			break;
 

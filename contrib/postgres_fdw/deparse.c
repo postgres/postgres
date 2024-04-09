@@ -1887,7 +1887,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 				}
 
 				/* Close parentheses for EXISTS subquery */
-				appendStringInfo(&str, ")");
+				appendStringInfoChar(&str, ')');
 
 				*additional_conds = lappend(*additional_conds, str.data);
 			}
@@ -1921,7 +1921,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		 */
 		if (fpinfo->jointype == JOIN_SEMI)
 		{
-			appendStringInfo(buf, "%s", join_sql_o.data);
+			appendBinaryStringInfo(buf, join_sql_o.data, join_sql_o.len);
 		}
 		else
 		{
