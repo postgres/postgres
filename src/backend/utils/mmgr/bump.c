@@ -101,13 +101,6 @@ struct BumpBlock
 	(PointerIsValid(set) && IsA(set, BumpContext))
 
 /*
- * BumpBlockIsValid
- *		True iff block is valid block of a bump context
- */
-#define BumpBlockIsValid(block) \
-	(PointerIsValid(block) && BumpIsValid((block)->context))
-
-/*
  * We always store external chunks on a dedicated block.  This makes fetching
  * the block from an external chunk easy since it's always the first and only
  * chunk on the block.
