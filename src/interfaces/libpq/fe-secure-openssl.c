@@ -1246,7 +1246,7 @@ initialize_SSL(PGconn *conn)
 		{
 			char	   *err = SSLerrmessage(ERR_get_error());
 
-			libpq_append_conn_error(conn, "could not set ssl alpn extension: %s", err);
+			libpq_append_conn_error(conn, "could not set SSL ALPN extension: %s", err);
 			SSLerrfree(err);
 			return -1;
 		}

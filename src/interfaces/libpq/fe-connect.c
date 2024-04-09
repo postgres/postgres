@@ -2927,7 +2927,7 @@ keep_going:						/* We will come back to here until there is
 						if (conn->raddr.addr.ss_family == AF_UNIX)
 						{
 							libpq_append_conn_error(conn,
-													"GSSAPI encryption required but it is not supported over a local socket)");
+													"GSSAPI encryption required but it is not supported over a local socket");
 							goto error_return;
 						}
 						if (conn->gcred == GSS_C_NO_CREDENTIAL)
