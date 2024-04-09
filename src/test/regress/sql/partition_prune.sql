@@ -4,7 +4,6 @@
 
 -- Force generic plans to be used for all prepared statements in this file.
 set plan_cache_mode = force_generic_plan;
-set or_to_any_transform_limit = 0;
 
 create table lp (a char) partition by list (a);
 create table lp_default partition of lp default;
@@ -22,7 +21,6 @@ explain (costs off) select * from lp where a is not null;
 explain (costs off) select * from lp where a is null;
 explain (costs off) select * from lp where a = 'a' or a = 'c';
 explain (costs off) select * from lp where a is not null and (a = 'a' or a = 'c');
-
 explain (costs off) select * from lp where a <> 'g';
 explain (costs off) select * from lp where a <> 'a' and a <> 'd';
 explain (costs off) select * from lp where a not in ('a', 'd');
