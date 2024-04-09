@@ -547,7 +547,7 @@ EOF
     </varlistentry>
 
     <varlistentry>
-      <term><option>-X,</option></term>
+      <term><option>-X</option></term>
       <term><option>--no-psqlrc</option></term>
       <listitem>
       <para>
