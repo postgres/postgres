@@ -241,6 +241,9 @@ FinalizeIncrementalManifest(IncrementalBackupInfo *ib)
 	pfree(ib->buf.data);
 	ib->buf.data = NULL;
 
+	/* Done with inc_state, so release that memory too */
+	json_parse_manifest_incremental_shutdown(ib->inc_state);
+
 	/* Switch back to previous memory context. */
 	MemoryContextSwitchTo(oldcontext);
 }

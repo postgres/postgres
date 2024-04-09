@@ -53,5 +53,6 @@ extern JsonManifestParseIncrementalState *json_parse_manifest_incremental_init(J
 extern void json_parse_manifest_incremental_chunk(
 												  JsonManifestParseIncrementalState *incstate, char *chunk, int size,
 												  bool is_last);
+extern void json_parse_manifest_incremental_shutdown(JsonManifestParseIncrementalState *incstate);
 
 #endif

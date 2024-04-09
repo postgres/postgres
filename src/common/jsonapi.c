@@ -488,19 +488,18 @@ freeJsonLexContext(JsonLexContext *lex)
 	if (lex->errormsg)
 		destroyStringInfo(lex->errormsg);
 
-	if (lex->flags & JSONLEX_FREE_STRUCT)
+	if (lex->incremental)
 	{
-		if (lex->incremental)
-		{
-			pfree(lex->inc_state->partial_token.data);
-			pfree(lex->inc_state);
-			pfree(lex->pstack->prediction);
-			pfree(lex->pstack->fnames);
-			pfree(lex->pstack->fnull);
-			pfree(lex->pstack);
-		}
-		pfree(lex);
+		pfree(lex->inc_state->partial_token.data);
+		pfree(lex->inc_state);
+		pfree(lex->pstack->prediction);
+		pfree(lex->pstack->fnames);
+		pfree(lex->pstack->fnull);
+		pfree(lex->pstack);
 	}
+
+	if (lex->flags & JSONLEX_FREE_STRUCT)
+		pfree(lex);
 }
 
 /*

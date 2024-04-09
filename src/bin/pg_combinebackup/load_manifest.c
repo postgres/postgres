@@ -208,6 +208,9 @@ load_backup_manifest(char *backup_directory)
 												  inc_state, buffer, rc, bytes_left == 0);
 		}
 
+		/* Release the incremental state memory */
+		json_parse_manifest_incremental_shutdown(inc_state);
+
 		close(fd);
 	}
 
