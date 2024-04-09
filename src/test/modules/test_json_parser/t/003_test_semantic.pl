@@ -28,9 +28,3 @@ is($stdout, "", "no output diff");
 is($stderr, "", "no diff error");
 
 done_testing();
-
-
-
-
-
-

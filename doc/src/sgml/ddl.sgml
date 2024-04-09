@@ -4410,7 +4410,7 @@ ALTER TABLE measurement
      this operation is not supported for hash-partitioned tables and acquires
      an <literal>ACCESS EXCLUSIVE</literal> lock, which could impact high-load
      systems due to the lock's restrictive nature.  For example, we can split
-     the quarter partition back to monthly partitions: 
+     the quarter partition back to monthly partitions:
 <programlisting>
 ALTER TABLE measurement SPLIT PARTITION measurement_y2006q1 INTO
    (PARTITION measurement_y2006m01 FOR VALUES FROM ('2006-01-01') TO ('2006-02-01'),
