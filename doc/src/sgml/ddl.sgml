@@ -5479,7 +5479,7 @@ CREATE FUNCTION get_color_note (rainbow) RETURNS text AS
   </para>
 
   <para>
-   On the other hand, for a SQL-language function or procedure whose body
+   On the other hand, for an SQL-language function or procedure whose body
    is written in SQL-standard style, the body is parsed at function
    definition time and all dependencies recognized by the parser are
    stored.  Thus, if we write the function above as
