@@ -1820,7 +1820,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        <para>
         Note that if <literal>gssencmode</literal> is set
         to <literal>prefer</literal>, a <acronym>GSS</acronym> connection is
-        attempted first. If the server ejectes GSS encryption, SSL is
+        attempted first. If the server rejects GSS encryption, SSL is
         negotiated over the same TCP connection using the traditional postgres
         protocol, regardless of <literal>sslnegotiation</literal>. In other
         words, the direct SSL handshake is not used, if a TCP connection has
