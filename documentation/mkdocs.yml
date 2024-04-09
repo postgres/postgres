@@ -51,6 +51,7 @@ theme:
     - navigation.tracking
 
 
+
 extra_css:
   - https://unicons.iconscout.com/release/v3.0.3/css/line.css
   - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css
@@ -73,27 +74,27 @@ markdown_extensions:
   - def_list   # https://michelf.ca/projects/php-markdown/extra/#def-list
   - meta
   - smarty:
-        smart_angled_quotes: true
+      smart_angled_quotes: true
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.tilde
   - pymdownx.superfences
   - pymdownx.tabbed:
-        alternate_style: true
+      alternate_style: true
   - pymdownx.tilde
   - pymdownx.details
   - pymdownx.highlight:
-        linenums: false
+      linenums: false
   - pymdownx.snippets:
-        base_path: ["snippets"]
-        auto_append:
-          - services-banner.md
+      base_path: ["snippets"]
+      auto_append:
+        - services-banner.md
   - pymdownx.emoji:
-       emoji_index: !!python/name:material.extensions.emoji.twemoji
-       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-       options:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      options:
         custom_icons:
-          - _resource/.icons
+         - _resource/.icons
 
 
 plugins:
@@ -142,11 +143,13 @@ nav:
   - tde.md
   - Get started:
     - "Install": "install.md"
+    - "Via apt": apt.md
+    - "Via yum": yum.md   
     - "Set up": "setup.md"
-    - Test TDE: "test.md"
+    - "Test TDE": "test.md"
   - functions.md
   - How to:
-    - Configure streaming replication: replication.md
+    - Use reference to external parameters: external-parameters.md
   - Release notes:
     - "pg_tde tech preview": release-notes/release-notes.md
   - uninstall.md
