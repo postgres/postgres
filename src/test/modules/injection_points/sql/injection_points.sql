@@ -1,5 +1,14 @@
 CREATE EXTENSION injection_points;
 
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+\set regresslib :libdir '/regress' :dlsuffix
+
+CREATE FUNCTION wait_pid(int)
+  RETURNS void
+  AS :'regresslib'
+  LANGUAGE C STRICT;
+
 SELECT injection_points_attach('TestInjectionBooh', 'booh');
 SELECT injection_points_attach('TestInjectionError', 'error');
 SELECT injection_points_attach('TestInjectionLog', 'notice');
@@ -40,8 +49,14 @@ SELECT injection_points_attach('TestConditionLocal1', 'error');
 SELECT injection_points_attach('TestConditionLocal2', 'notice');
 SELECT injection_points_run('TestConditionLocal1'); -- error
 SELECT injection_points_run('TestConditionLocal2'); -- notice
+
+SELECT pg_backend_pid() AS oldpid \gset
+
 -- reload, local injection points should be gone.
 \c
+-- Wait for the previous backend process to exit, ensuring that its local
+-- injection points are cleaned up.
+SELECT wait_pid(:'oldpid');
 SELECT injection_points_run('TestConditionLocal1'); -- nothing
 SELECT injection_points_run('TestConditionLocal2'); -- nothing
 SELECT injection_points_run('TestConditionError'); -- error
@@ -52,3 +67,4 @@ SELECT injection_points_attach('TestConditionLocal1', 'error');
 SELECT injection_points_detach('TestConditionLocal1');
 
 DROP EXTENSION injection_points;
+DROP FUNCTION wait_pid;
