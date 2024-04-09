@@ -67,6 +67,7 @@ main(int argc, char *argv[])
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_walsummary"));
 	handle_help_version_opts(argc, argv, progname, help);
 
 	/* process command-line options */
