@@ -806,7 +806,7 @@ json_manifest_finalize_wal_range(JsonManifestParseState *parse)
  * the rest of the file.
  *
  * For an incremental parse, this will just be called on the last chunk of the
- * manifest, and the cryptohash context paswed in. For a non-incremental
+ * manifest, and the cryptohash context passed in. For a non-incremental
  * parse incr_ctx will be NULL.
  */
 static void

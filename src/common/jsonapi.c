@@ -356,7 +356,7 @@ makeJsonLexContextCstringLen(JsonLexContext *lex, char *json,
  * need explicit stacks for predictions, field names and null indicators, but
  * we don't need the input, that will be handed in bit by bit to the
  * parse routine. We also need an accumulator for partial tokens in case
- * the boundary between chunks happns to fall in the middle of a token.
+ * the boundary between chunks happens to fall in the middle of a token.
  */
 #define JS_STACK_CHUNK_SIZE 64
 #define JS_MAX_PROD_LEN 10		/* more than we need */
@@ -1414,9 +1414,9 @@ json_lex(JsonLexContext *lex)
 			}
 
 			/*
-			 * Add any remaining alpha_numeric chars. This takes care of the
+			 * Add any remaining alphanumeric chars. This takes care of the
 			 * {null, false, true} literals as well as any trailing
-			 * alpha-numeric junk on non-string tokens.
+			 * alphanumeric junk on non-string tokens.
 			 */
 			for (int i = added; i < lex->input_length; i++)
 			{

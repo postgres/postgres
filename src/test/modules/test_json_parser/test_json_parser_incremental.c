@@ -3,16 +3,17 @@
  * test_json_parser_incremental.c
  *    Test program for incremental JSON parser
  *
- * Copyright (c) 2023, PostgreSQL Global Development Group
+ * Copyright (c) 2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *    src/test/modules/test_json_parser/test_json_parser_incremental.c
  *
- * This progam tests incremental parsing of json. The input is fed into
+ * This program tests incremental parsing of json. The input is fed into
  * the parser in very small chunks. In practice you would normally use
  * much larger chunks, but doing this makes it more likely that the
- * full range of incement handling, especially in the lexer, is exercised.
- * If the "-c SIZE" option is provided, that chunk size is used instead.
+ * full range of increment handling, especially in the lexer, is exercised.
+ * If the "-c SIZE" option is provided, that chunk size is used instead
+ * of the default of 60.
  *
  * The argument specifies the file containing the JSON input.
  *
@@ -30,6 +31,9 @@
 #include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "pg_getopt.h"
+
+#define BUFSIZE 6000
+#define DEFAULT_CHUNK_SIZE 60
 
 typedef struct DoState
 {
@@ -67,14 +71,13 @@ JsonSemAction sem = {
 int
 main(int argc, char **argv)
 {
-	/* max delicious line length is less than this */
-	char		buff[6001];
+	char		buff[BUFSIZE];
 	FILE	   *json_file;
 	JsonParseErrorType result;
 	JsonLexContext lex;
 	StringInfoData json;
 	int			n_read;
-	size_t		chunk_size = 60;
+	size_t		chunk_size = DEFAULT_CHUNK_SIZE;
 	struct stat statbuf;
 	off_t		bytes_left;
 	JsonSemAction *testsem = &nullSemAction;
@@ -88,6 +91,11 @@ main(int argc, char **argv)
 		{
 			case 'c':			/* chunksize */
 				sscanf(optarg, "%zu", &chunk_size);
+				if (chunk_size > BUFSIZE)
+				{
+					fprintf(stderr, "chunk size cannot exceed %d\n", BUFSIZE);
+					exit(1);
+				}
 				break;
 			case 's':			/* do semantic processing */
 				testsem = &sem;
@@ -121,6 +129,12 @@ main(int argc, char **argv)
 	{
 		n_read = fread(buff, 1, chunk_size, json_file);
 		appendBinaryStringInfo(&json, buff, n_read);
+
+		/*
+		 * Append some trailing junk to the buffer passed to the parser. This
+		 * helps us ensure that the parser does the right thing even if the
+		 * chunk isn't terminated with a '\0'.
+		 */
 		appendStringInfoString(&json, "1+23 trailing junk");
 		bytes_left -= n_read;
 		if (bytes_left > 0)

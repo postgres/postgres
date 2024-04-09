@@ -34,7 +34,7 @@
 #define	BLOCKS_PER_READ			512
 
 /*
- * we expect the find the last lines of the manifest, including the checksum,
+ * We expect to find the last lines of the manifest, including the checksum,
  * in the last MIN_CHUNK bytes of the manifest. We trigger an incremental
  * parse step if we are about to overflow MAX_CHUNK bytes.
  */
@@ -88,8 +88,8 @@ struct IncrementalBackupInfo
 	 * Files extracted from the backup manifest.
 	 *
 	 * We don't really need this information, because we use WAL summaries to
-	 * figure what's changed. It would be unsafe to just rely on the list of
-	 * files that existed before, because it's possible for a file to be
+	 * figure out what's changed. It would be unsafe to just rely on the list
+	 * of files that existed before, because it's possible for a file to be
 	 * removed and a new one created with the same name and different
 	 * contents. In such cases, the whole file must still be sent. We can tell
 	 * from the WAL summaries whether that happened, but not from the file

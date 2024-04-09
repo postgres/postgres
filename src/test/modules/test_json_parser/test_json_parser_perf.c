@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * test_json_parser_perf.c
- *    Performancet est program for both flavors of the JSON parser
+ *    Performance test program for both flavors of the JSON parser
  *
- * Copyright (c) 2023, PostgreSQL Global Development Group
+ * Copyright (c) 2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *    src/test/modules/test_json_parser/test_json_parser_perf.c
  *
- * This progam tests either the standard (recursive descent) JSON parser
+ * This program tests either the standard (recursive descent) JSON parser
  * or the incremental (table driven) parser, but without breaking the input
  * into chunks in the latter case. Thus it can be used to compare the pure
  * parsing speed of the two parsers. If the "-i" option is used, then the
@@ -28,11 +28,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#define BUFSIZE 6000
+
 int
 main(int argc, char **argv)
 {
-	/* max delicious line length is less than this */
-	char		buff[6001];
+	char		buff[BUFSIZE];
 	FILE	   *json_file;
 	JsonParseErrorType result;
 	JsonLexContext *lex;
