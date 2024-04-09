@@ -1118,12 +1118,12 @@ ExplainPrintSerialize(ExplainState *es, SerializeMetrics *metrics)
 	{
 		ExplainIndentText(es);
 		if (es->timing)
-			appendStringInfo(es->str, "Serialization: time=%.3f ms  output=" INT64_FORMAT "kB  format=%s\n",
+			appendStringInfo(es->str, "Serialization: time=%.3f ms  output=" UINT64_FORMAT "kB  format=%s\n",
 							 1000.0 * INSTR_TIME_GET_DOUBLE(metrics->timeSpent),
 							 (metrics->bytesSent + 512) / 1024,
 							 format);
 		else
-			appendStringInfo(es->str, "Serialization: output=" INT64_FORMAT "kB  format=%s\n",
+			appendStringInfo(es->str, "Serialization: output=" UINT64_FORMAT "kB  format=%s\n",
 							 (metrics->bytesSent + 512) / 1024,
 							 format);
 
