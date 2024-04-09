@@ -830,4 +830,19 @@ SELECT * FROM sales_others;
 DROP TABLE sales_range;
 
 --
+-- Try to SPLIT partition of another table.
+--
+CREATE TABLE t1(i int, t text) PARTITION BY LIST (t);
+CREATE TABLE t1pa PARTITION OF t1 FOR VALUES IN ('A');
+CREATE TABLE t2 (i int, t text) PARTITION BY RANGE (t);
+
+-- ERROR:  relation "t1pa" is not a partition of relation "t2"
+ALTER TABLE t2 SPLIT PARTITION t1pa INTO
+   (PARTITION t2a FOR VALUES FROM ('A') TO ('B'),
+    PARTITION t2b FOR VALUES FROM ('B') TO ('C'));
+
+DROP TABLE t2;
+DROP TABLE t1;
+
+--
 DROP SCHEMA partition_split_schema;

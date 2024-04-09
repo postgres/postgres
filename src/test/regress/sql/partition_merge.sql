@@ -28,7 +28,7 @@ CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
 
 -- ERROR:  partition with name "sales_feb2022" already used
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_feb2022) INTO sales_feb_mar_apr2022;
--- ERROR:  cannot merge non-table partition "sales_apr2022"
+-- ERROR:  "sales_apr2022" is not a table
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_apr2022) INTO sales_feb_mar_apr2022;
 -- ERROR:  invalid partitions order, partition "sales_mar2022" can not be merged
 -- (space between sections sales_jan2022 and sales_mar2022)
@@ -350,9 +350,9 @@ CREATE TABLE sales_others2 PARTITION OF sales_list2 DEFAULT;
 CREATE TABLE sales_external (LIKE sales_list);
 CREATE TABLE sales_external2 (vch VARCHAR(5));
 
--- ERROR:  partition bound for relation "sales_external" is null
+-- ERROR:  "sales_external" is not a partition
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_external) INTO sales_all;
--- ERROR:  partition bound for relation "sales_external2" is null
+-- ERROR:  "sales_external2" is not a partition
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_external2) INTO sales_all;
 -- ERROR:  relation "sales_nord2" is not a partition of relation "sales_list"
 ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_nord2, sales_east) INTO sales_all;
@@ -425,6 +425,24 @@ SELECT * FROM sales_list WHERE salesman_name = 'Ivanov';
 RESET enable_seqscan;
 
 DROP TABLE sales_list;
+
+--
+-- Try to MERGE partitions of another table.
+--
+CREATE TABLE t1 (i int, a int, b int, c int) PARTITION BY RANGE (a, b);
+CREATE TABLE t1p1 PARTITION OF t1 FOR VALUES FROM (1, 1) TO (1, 2);
+CREATE TABLE t2 (i int, t text) PARTITION BY RANGE (t);
+CREATE TABLE t2pa PARTITION OF t2 FOR VALUES FROM ('A') TO ('C');
+CREATE TABLE t3 (i int, t text);
+
+-- ERROR:  relation "t1p1" is not a partition of relation "t2"
+ALTER TABLE t2 MERGE PARTITIONS (t1p1, t2pa) INTO t2p;
+-- ERROR:  "t3" is not a partition
+ALTER TABLE t2 MERGE PARTITIONS (t2pa, t3) INTO t2p;
+
+DROP TABLE t3;
+DROP TABLE t2;
+DROP TABLE t1;
 
 --
 DROP SCHEMA partitions_merge_schema;
