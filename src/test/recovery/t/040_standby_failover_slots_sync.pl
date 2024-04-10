@@ -400,6 +400,10 @@ $primary->safe_psql('postgres',
 	"SELECT pg_create_logical_replication_slot('snap_test_slot', 'test_decoding', false, false, true);"
 );
 
+# Wait for the standby to catch up so that the standby is not lagging behind
+# the failover slots.
+$primary->wait_for_replay_catchup($standby1);
+
 $standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
 
 # Two xl_running_xacts logs are generated here. When decoding the first log, it
@@ -420,8 +424,6 @@ $primary->safe_psql(
 		COMMIT;
 ));
 
-$primary->wait_for_replay_catchup($standby1);
-
 # Advance the restart_lsn to the position of the first xl_running_xacts log
 # generated above. Note that there might be concurrent xl_running_xacts logs
 # written by the bgwriter, which could cause the position to be advanced to an
@@ -430,6 +432,10 @@ $primary->wait_for_replay_catchup($standby1);
 $primary->safe_psql('postgres',
 	"SELECT pg_replication_slot_advance('snap_test_slot', pg_current_wal_lsn());"
 );
+
+# Wait for the standby to catch up so that the standby is not lagging behind
+# the failover slots.
+$primary->wait_for_replay_catchup($standby1);
 
 # Log a message that will be consumed on the standby after promotion using the
 # synced slot. See the test where we promote standby (Promote the standby1 to
