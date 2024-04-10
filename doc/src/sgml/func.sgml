@@ -4783,7 +4783,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
      <listitem>
       <para>
        The <literal>base64</literal> format is that
-       of <ulink url="https://tools.ietf.org/html/rfc2045#section-6.8">RFC
+       of <ulink url="https://datatracker.ietf.org/doc/html/rfc2045#section-6.8">RFC
        2045 Section 6.8</ulink>.  As per the <acronym>RFC</acronym>, encoded lines are
        broken at 76 characters.  However instead of the MIME CRLF
        end-of-line marker, only a newline is used for end-of-line.
@@ -15268,7 +15268,7 @@ table2-mapping
    values, with an additional SQL/JSON null value, and composite data structures
    that use JSON arrays and objects. The model is a formalization of the implied
    data model in the JSON specification
-   <ulink url="https://tools.ietf.org/html/rfc7159">RFC 7159</ulink>.
+   <ulink url="https://datatracker.ietf.org/doc/html/rfc7159">RFC 7159</ulink>.
   </para>
 
   <para>

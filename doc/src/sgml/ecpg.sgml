@@ -3316,7 +3316,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
            <literal>%z</literal> - is replaced by the time zone offset from
            UTC; a leading plus sign stands for east of UTC, a minus sign for
            west of UTC, hours and minutes follow with two digits each and no
-           delimiter between them (common form for <ulink url="https://tools.ietf.org/html/rfc822">RFC 822</ulink> date headers).
+           delimiter between them (common form for <ulink url="https://datatracker.ietf.org/doc/html/rfc822">RFC 822</ulink> date headers).
           </para>
          </listitem>
          <listitem>
