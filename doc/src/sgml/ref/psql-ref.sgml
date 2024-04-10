@@ -2833,7 +2833,7 @@ lo_import 152801
           </indexterm>
           writes column values separated by commas, applying the quoting
           rules described in
-          <ulink url="https://tools.ietf.org/html/rfc4180">RFC 4180</ulink>.
+          <ulink url="https://datatracker.ietf.org/doc/html/rfc4180">RFC 4180</ulink>.
           This output is compatible with the CSV format of the server's
           <command>COPY</command> command.
           A header line with column names is generated unless
