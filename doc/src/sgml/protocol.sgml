@@ -1585,7 +1585,7 @@ SELCT 1/0;<!-- this typo is intentional -->
     respectively.  The frontend might close the connection at this point
     if it is dissatisfied with the response.  To continue after
     <literal>G</literal>, using the GSSAPI C bindings as discussed in
-    <ulink url="https://tools.ietf.org/html/rfc2744">RFC 2744</ulink>
+    <ulink url="https://datatracker.ietf.org/doc/html/rfc2744">RFC 2744</ulink>
     or equivalent, perform a <acronym>GSSAPI</acronym> initialization by
     calling <function>gss_init_sec_context()</function> in a loop and sending
     the result to the server, starting with an empty input and then with each
@@ -1722,8 +1722,8 @@ ErrorMessage.
    The implemented SASL mechanisms at the moment
    are <literal>SCRAM-SHA-256</literal> and its variant with channel
    binding <literal>SCRAM-SHA-256-PLUS</literal>. They are described in
-   detail in <ulink url="https://tools.ietf.org/html/rfc7677">RFC 7677</ulink>
-   and <ulink url="https://tools.ietf.org/html/rfc5802">RFC 5802</ulink>.
+   detail in <ulink url="https://datatracker.ietf.org/doc/html/rfc7677">RFC 7677</ulink>
+   and <ulink url="https://datatracker.ietf.org/doc/html/rfc5802">RFC 5802</ulink>.
   </para>
 
   <para>

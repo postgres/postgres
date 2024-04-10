@@ -836,7 +836,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
 
     See <ulink url="https://www.unicode.org/reports/tr35/tr35-collation.html">Unicode
     Technical Standard #35</ulink>
-    and <ulink url="https://tools.ietf.org/html/bcp47">BCP 47</ulink> for
+    and <ulink url="https://www.rfc-editor.org/info/bcp47">BCP 47</ulink> for
     details.  The list of possible collation types (<literal>co</literal>
     subtag) can be found in
     the <ulink url="https://github.com/unicode-org/cldr/blob/master/common/bcp47/collation.xml">CLDR
@@ -2620,7 +2620,7 @@ RESET client_encoding;
       </varlistentry>
 
       <varlistentry>
-       <term><ulink url="https://tools.ietf.org/html/rfc3629">RFC 3629</ulink></term>
+       <term><ulink url="https://datatracker.ietf.org/doc/html/rfc3629">RFC 3629</ulink></term>
 
        <listitem>
         <para>

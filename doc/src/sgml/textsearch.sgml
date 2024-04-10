@@ -2218,7 +2218,7 @@ LIMIT 10;
 
    <para>
     <literal>email</literal> does not support all valid email characters as
-    defined by <ulink url="https://tools.ietf.org/html/rfc5322">RFC 5322</ulink>.
+    defined by <ulink url="https://datatracker.ietf.org/doc/html/rfc5322">RFC 5322</ulink>.
     Specifically, the only non-alphanumeric characters supported for
     email user names are period, dash, and underscore.
    </para>
