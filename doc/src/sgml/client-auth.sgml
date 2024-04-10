@@ -1079,7 +1079,7 @@ omicron         bryanh                  guest1
       <para>
        The method <literal>scram-sha-256</literal> performs SCRAM-SHA-256
        authentication, as described in
-       <ulink url="https://tools.ietf.org/html/rfc7677">RFC 7677</ulink>.  It
+       <ulink url="https://datatracker.ietf.org/doc/html/rfc7677">RFC 7677</ulink>.  It
        is a challenge-response scheme that prevents password sniffing on
        untrusted connections and supports storing passwords on the server in a
        cryptographically hashed form that is thought to be secure.
@@ -1191,7 +1191,7 @@ omicron         bryanh                  guest1
    <para>
     <productname>GSSAPI</productname> is an industry-standard protocol
     for secure authentication defined in
-    <ulink url="https://tools.ietf.org/html/rfc2743">RFC 2743</ulink>.
+    <ulink url="https://datatracker.ietf.org/doc/html/rfc2743">RFC 2743</ulink>.
     <productname>PostgreSQL</productname>
     supports <productname>GSSAPI</productname> for authentication,
     communications encryption, or both.
