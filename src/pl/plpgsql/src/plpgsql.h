@@ -1311,6 +1311,7 @@ extern void plpgsql_dumptree(PLpgSQL_function *func);
  */
 extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
+extern int	plpgsql_token_length(void);
 extern void plpgsql_push_back_token(int token);
 extern bool plpgsql_token_is_unreserved_keyword(int token);
 extern void plpgsql_append_source_text(StringInfo buf,
