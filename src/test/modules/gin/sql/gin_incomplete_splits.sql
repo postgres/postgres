@@ -14,6 +14,9 @@
 -- splits in "incomplete" state
 create extension injection_points;
 
+-- Make all injection points local to this process, for concurrency.
+SELECT injection_points_set_local();
+
 -- Use the index for all the queries
 set enable_seqscan=off;
 

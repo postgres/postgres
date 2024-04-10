@@ -12,6 +12,13 @@
 -- This uses injection points to cause errors that leave some page
 -- splits in "incomplete" state
 create extension injection_points;
+-- Make all injection points local to this process, for concurrency.
+SELECT injection_points_set_local();
+ injection_points_set_local 
+----------------------------
+ 
+(1 row)
+
 -- Use the index for all the queries
 set enable_seqscan=off;
 -- Print a NOTICE whenever an incomplete split gets fixed

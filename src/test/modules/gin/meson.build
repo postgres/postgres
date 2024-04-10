@@ -12,7 +12,5 @@ tests += {
     'sql': [
       'gin_incomplete_splits',
     ],
-    # The injection points are cluster-wide, so disable installcheck
-    'runningcheck': false,
   },
 }
