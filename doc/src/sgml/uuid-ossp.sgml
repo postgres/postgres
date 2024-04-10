@@ -29,7 +29,7 @@
    <xref linkend="uuid-ossp-functions"/> shows the functions available to
    generate UUIDs.
    The relevant standards ITU-T Rec. X.667, ISO/IEC 9834-8:2005, and
-   <ulink url="https://tools.ietf.org/html/rfc4122">RFC 4122</ulink>
+   <ulink url="https://datatracker.ietf.org/doc/html/rfc4122">RFC 4122</ulink>
    specify four algorithms for generating UUIDs, identified by the
    version numbers 1, 3, 4, and 5.  (There is no version 2 algorithm.)
    Each of these algorithms could be suitable for a different set of

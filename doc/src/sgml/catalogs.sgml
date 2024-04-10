@@ -1625,7 +1625,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 </synopsis>
    where <replaceable>salt</replaceable>, <replaceable>StoredKey</replaceable> and
    <replaceable>ServerKey</replaceable> are in Base64 encoded format. This format is
-   the same as that specified by <ulink url="https://tools.ietf.org/html/rfc5803">RFC 5803</ulink>.
+   the same as that specified by <ulink url="https://datatracker.ietf.org/doc/html/rfc5803">RFC 5803</ulink>.
   </para>
 
   <para>
