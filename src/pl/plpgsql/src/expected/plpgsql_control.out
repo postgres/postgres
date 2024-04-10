@@ -681,3 +681,20 @@ select case_test(13);
  other
 (1 row)
 
+-- test line comment between WHEN and THEN
+create or replace function case_comment(int) returns text as $$
+begin
+  case $1
+    when 1 -- comment before THEN
+      then return 'one';
+    else
+      return 'other';
+  end case;
+end;
+$$ language plpgsql immutable;
+select case_comment(1);
+ case_comment 
+--------------
+ one
+(1 row)
+
