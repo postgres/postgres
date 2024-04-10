@@ -442,7 +442,7 @@ gen_salt(type text [, iter_count integer ]) returns text
 
   <para>
    The functions here implement the encryption part of the OpenPGP
-   (<ulink url="https://tools.ietf.org/html/rfc4880">RFC 4880</ulink>)
+   (<ulink url="https://datatracker.ietf.org/doc/html/rfc4880">RFC 4880</ulink>)
    standard.  Supported are both symmetric-key and public-key encryption.
   </para>
 

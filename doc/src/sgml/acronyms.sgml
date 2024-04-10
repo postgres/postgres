@@ -606,7 +606,7 @@
       <ulink
       url="https://en.wikipedia.org/wiki/Server_Name_Indication">
        Server Name Indication</ulink>,
-      <ulink url="https://tools.ietf.org/html/rfc6066#section-3">RFC 6066</ulink>
+      <ulink url="https://datatracker.ietf.org/doc/html/rfc6066#section-3">RFC 6066</ulink>
      </para>
     </listitem>
    </varlistentry>
