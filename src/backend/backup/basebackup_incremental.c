@@ -727,7 +727,7 @@ GetIncrementalFilePath(Oid dboid, Oid spcoid, RelFileNumber relfilenumber,
  *
  * If the return value is BACK_UP_FILE_FULLY, caller should back up the whole
  * file just as if this were not an incremental backup.  The contents of the
- * relative_block_numbers array is unspecified in this case.
+ * relative_block_numbers array are unspecified in this case.
  *
  * If the return value is BACK_UP_FILE_INCREMENTALLY, caller should include
  * an incremental file in the backup instead of the entire file. On return,
