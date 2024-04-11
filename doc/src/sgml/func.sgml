@@ -8401,11 +8401,11 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        use some non-digit character or template after <literal>YYYY</literal>,
        otherwise the year is always interpreted as 4 digits. For example
        (with the year 20000):
-       <literal>to_date('200001131', 'YYYYMMDD')</literal> will be
+       <literal>to_date('200001130', 'YYYYMMDD')</literal> will be
        interpreted as a 4-digit year; instead use a non-digit
        separator after the year, like
-       <literal>to_date('20000-1131', 'YYYY-MMDD')</literal> or
-       <literal>to_date('20000Nov31', 'YYYYMonDD')</literal>.
+       <literal>to_date('20000-1130', 'YYYY-MMDD')</literal> or
+       <literal>to_date('20000Nov30', 'YYYYMonDD')</literal>.
       </para>
      </listitem>
 
