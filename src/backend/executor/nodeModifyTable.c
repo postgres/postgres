@@ -1127,9 +1127,9 @@ ExecInsert(ModifyTableContext *context,
 		else
 		{
 			/* insert the tuple normally */
-			slot = table_tuple_insert(resultRelationDesc, slot,
-									  estate->es_output_cid,
-									  0, NULL);
+			table_tuple_insert(resultRelationDesc, slot,
+							   estate->es_output_cid,
+							   0, NULL);
 
 			/* insert index entries for tuple */
 			if (resultRelInfo->ri_NumIndices > 0)

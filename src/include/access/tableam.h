@@ -508,9 +508,9 @@ typedef struct TableAmRoutine
 	 */
 
 	/* see table_tuple_insert() for reference about parameters */
-	TupleTableSlot *(*tuple_insert) (Relation rel, TupleTableSlot *slot,
-									 CommandId cid, int options,
-									 struct BulkInsertStateData *bistate);
+	void		(*tuple_insert) (Relation rel, TupleTableSlot *slot,
+								 CommandId cid, int options,
+								 struct BulkInsertStateData *bistate);
 
 	/* see table_tuple_insert_speculative() for reference about parameters */
 	void		(*tuple_insert_speculative) (Relation rel,
@@ -1374,19 +1374,16 @@ table_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
  * behavior) is also just passed through to RelationGetBufferForTuple. If
  * `bistate` is provided, table_finish_bulk_insert() needs to be called.
  *
- * Returns the slot containing the inserted tuple, which may differ from the
- * given slot. For instance, the source slot may be VirtualTupleTableSlot, but
- * the result slot may correspond to the table AM. On return the slot's
- * tts_tid and tts_tableOid are updated to reflect the insertion. But note
- * that any toasting of fields within the slot is NOT reflected in the slots
- * contents.
+ * On return the slot's tts_tid and tts_tableOid are updated to reflect the
+ * insertion. But note that any toasting of fields within the slot is NOT
+ * reflected in the slots contents.
  */
-static inline TupleTableSlot *
+static inline void
 table_tuple_insert(Relation rel, TupleTableSlot *slot, CommandId cid,
 				   int options, struct BulkInsertStateData *bistate)
 {
-	return rel->rd_tableam->tuple_insert(rel, slot, cid, options,
-										 bistate);
+	rel->rd_tableam->tuple_insert(rel, slot, cid, options,
+								  bistate);
 }
 
 /*

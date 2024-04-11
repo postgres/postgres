@@ -21086,8 +21086,8 @@ moveSplitTableRows(Relation rel, Relation splitRel, List *partlist, List *newPar
 		}
 
 		/* Write the tuple out to the new relation. */
-		(void) table_tuple_insert(pc->partRel, insertslot, mycid,
-								  ti_options, pc->bistate);
+		table_tuple_insert(pc->partRel, insertslot, mycid,
+						   ti_options, pc->bistate);
 
 		ResetExprContext(econtext);
 
@@ -21381,8 +21381,8 @@ moveMergedTablesRows(Relation rel, List *mergingPartitionsList,
 			}
 
 			/* Write the tuple out to the new relation. */
-			(void) table_tuple_insert(newPartRel, insertslot, mycid,
-									  ti_options, bistate);
+			table_tuple_insert(newPartRel, insertslot, mycid,
+							   ti_options, bistate);
 
 			CHECK_FOR_INTERRUPTS();
 		}
