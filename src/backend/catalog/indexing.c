@@ -273,14 +273,12 @@ void
 CatalogTuplesMultiInsertWithInfo(Relation heapRel, TupleTableSlot **slot,
 								 int ntuples, CatalogIndexState indstate)
 {
-	bool		insertIndexes;
-
 	/* Nothing to do */
 	if (ntuples <= 0)
 		return;
 
 	heap_multi_insert(heapRel, slot, ntuples,
-					  GetCurrentCommandId(true), 0, NULL, &insertIndexes);
+					  GetCurrentCommandId(true), 0, NULL);
 
 	/*
 	 * There is no equivalent to heap_multi_insert for the catalog indexes, so

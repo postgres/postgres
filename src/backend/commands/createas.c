@@ -578,7 +578,6 @@ static bool
 intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
-	bool		insertIndexes;
 
 	/* Nothing to insert if WITH NO DATA is specified. */
 	if (!myState->into->skipData)
@@ -595,8 +594,7 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 						   slot,
 						   myState->output_cid,
 						   myState->ti_options,
-						   myState->bistate,
-						   &insertIndexes);
+						   myState->bistate);
 	}
 
 	/* We know this is a newly created relation, so there are no indexes */

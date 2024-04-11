@@ -519,8 +519,7 @@ typedef struct TableAmRoutine
 	/* see table_tuple_insert() for reference about parameters */
 	TupleTableSlot *(*tuple_insert) (Relation rel, TupleTableSlot *slot,
 									 CommandId cid, int options,
-									 struct BulkInsertStateData *bistate,
-									 bool *insert_indexes);
+									 struct BulkInsertStateData *bistate);
 
 	/* see table_tuple_insert_speculative() for reference about parameters */
 	void		(*tuple_insert_speculative) (Relation rel,
@@ -538,8 +537,7 @@ typedef struct TableAmRoutine
 
 	/* see table_multi_insert() for reference about parameters */
 	void		(*multi_insert) (Relation rel, TupleTableSlot **slots, int nslots,
-								 CommandId cid, int options, struct BulkInsertStateData *bistate,
-								 bool *insert_indexes);
+								 CommandId cid, int options, struct BulkInsertStateData *bistate);
 
 	/* see table_tuple_delete() for reference about parameters */
 	TM_Result	(*tuple_delete) (Relation rel,
@@ -1387,12 +1385,6 @@ table_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
  * behavior) is also just passed through to RelationGetBufferForTuple. If
  * `bistate` is provided, table_finish_bulk_insert() needs to be called.
  *
- * The table AM's implementation of tuple_insert should set `*insert_indexes`
- * to true if it expects the caller to insert the relevant index tuples
- * (as heap table AM does).  It should set `*insert_indexes` to false if
- * it cares about index inserts itself and doesn't want the caller to do
- * index inserts.
- *
  * Returns the slot containing the inserted tuple, which may differ from the
  * given slot. For instance, the source slot may be VirtualTupleTableSlot, but
  * the result slot may correspond to the table AM. On return the slot's
@@ -1402,11 +1394,10 @@ table_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
  */
 static inline TupleTableSlot *
 table_tuple_insert(Relation rel, TupleTableSlot *slot, CommandId cid,
-				   int options, struct BulkInsertStateData *bistate,
-				   bool *insert_indexes)
+				   int options, struct BulkInsertStateData *bistate)
 {
 	return rel->rd_tableam->tuple_insert(rel, slot, cid, options,
-										 bistate, insert_indexes);
+										 bistate);
 }
 
 /*
@@ -1458,11 +1449,10 @@ table_tuple_complete_speculative(Relation rel, TupleTableSlot *slot,
  */
 static inline void
 table_multi_insert(Relation rel, TupleTableSlot **slots, int nslots,
-				   CommandId cid, int options, struct BulkInsertStateData *bistate,
-				   bool *insert_indexes)
+				   CommandId cid, int options, struct BulkInsertStateData *bistate)
 {
 	rel->rd_tableam->multi_insert(rel, slots, nslots,
-								  cid, options, bistate, insert_indexes);
+								  cid, options, bistate);
 }
 
 /*
@@ -2087,8 +2077,7 @@ table_scan_sample_next_tuple(TableScanDesc scan,
  * ----------------------------------------------------------------------------
  */
 
-extern void simple_table_tuple_insert(Relation rel, TupleTableSlot *slot,
-									  bool *insert_indexes);
+extern void simple_table_tuple_insert(Relation rel, TupleTableSlot *slot);
 extern void simple_table_tuple_delete(Relation rel, ItemPointer tid,
 									  Snapshot snapshot,
 									  TupleTableSlot *oldSlot);

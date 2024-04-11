@@ -509,7 +509,6 @@ ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,
 	if (!skip_tuple)
 	{
 		List	   *recheckIndexes = NIL;
-		bool		insertIndexes;
 
 		/* Compute stored generated columns */
 		if (rel->rd_att->constr &&
@@ -524,10 +523,9 @@ ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,
 			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 		/* OK, store the tuple and create index entries for it */
-		simple_table_tuple_insert(resultRelInfo->ri_RelationDesc, slot,
-								  &insertIndexes);
+		simple_table_tuple_insert(resultRelInfo->ri_RelationDesc, slot);
 
-		if (insertIndexes && resultRelInfo->ri_NumIndices > 0)
+		if (resultRelInfo->ri_NumIndices > 0)
 			recheckIndexes = ExecInsertIndexTuples(resultRelInfo,
 												   slot, estate, false, false,
 												   NULL, NIL, false);
