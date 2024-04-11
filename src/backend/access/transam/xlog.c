@@ -66,7 +66,6 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "catalog/pg_database.h"
-#include "commands/waitlsn.h"
 #include "common/controldata_utils.h"
 #include "common/file_utils.h"
 #include "executor/instrument.h"
@@ -6129,12 +6128,6 @@ StartupXLOG(void)
 
 	UpdateControlFile();
 	LWLockRelease(ControlFileLock);
-
-	/*
-	 * Wake up all waiters for replay LSN.  They need to report an error that
-	 * recovery was ended before achieving the target LSN.
-	 */
-	WaitLSNSetLatches(InvalidXLogRecPtr);
 
 	/*
 	 * Shutdown the recovery environment.  This must occur after

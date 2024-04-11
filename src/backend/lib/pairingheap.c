@@ -44,26 +44,12 @@ pairingheap_allocate(pairingheap_comparator compare, void *arg)
 	pairingheap *heap;
 
 	heap = (pairingheap *) palloc(sizeof(pairingheap));
-	pairingheap_initialize(heap, compare, arg);
-
-	return heap;
-}
-
-/*
- * pairingheap_initialize
- *
- * Same as pairingheap_allocate(), but initializes the pairing heap in-place
- * rather than allocating a new chunk of memory.  Useful to store the pairing
- * heap in a shared memory.
- */
-void
-pairingheap_initialize(pairingheap *heap, pairingheap_comparator compare,
-					   void *arg)
-{
 	heap->ph_compare = compare;
 	heap->ph_arg = arg;
 
 	heap->ph_root = NULL;
+
+	return heap;
 }
 
 /*
