@@ -750,7 +750,7 @@ table_block_relation_estimate_size(Relation rel, int32 *attr_widths,
 		 * The other branch considers it implicitly by calculating density
 		 * from actual relpages/reltuples statistics.
 		 */
-		fillfactor = HeapGetFillFactor(rel, HEAP_DEFAULT_FILLFACTOR);
+		fillfactor = RelationGetFillFactor(rel, HEAP_DEFAULT_FILLFACTOR);
 
 		tuple_width = get_rel_data_width(rel, attr_widths);
 		tuple_width += overhead_bytes_per_tuple;

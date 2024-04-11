@@ -2121,11 +2121,11 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	{
 		StdRdOptIndexCleanup vacuum_index_cleanup;
 
-		if (rel->rd_common_options == NULL)
+		if (rel->rd_options == NULL)
 			vacuum_index_cleanup = STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO;
 		else
 			vacuum_index_cleanup =
-				rel->rd_common_options->vacuum_index_cleanup;
+				((StdRdOptions *) rel->rd_options)->vacuum_index_cleanup;
 
 		if (vacuum_index_cleanup == STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO)
 			params->index_cleanup = VACOPTVALUE_AUTO;
@@ -2145,8 +2145,8 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	if (params->truncate == VACOPTVALUE_UNSPECIFIED)
 	{
-		if (rel->rd_common_options == NULL ||
-			rel->rd_common_options->vacuum_truncate)
+		if (rel->rd_options == NULL ||
+			((StdRdOptions *) rel->rd_options)->vacuum_truncate)
 			params->truncate = VACOPTVALUE_ENABLED;
 		else
 			params->truncate = VACOPTVALUE_DISABLED;

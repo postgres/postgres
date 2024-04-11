@@ -48,52 +48,6 @@ typedef struct LockInfoData
 
 typedef LockInfoData *LockInfo;
 
- /* autovacuum-related reloptions. */
-typedef struct AutoVacOpts
-{
-	bool		enabled;
-	int			vacuum_threshold;
-	int			vacuum_ins_threshold;
-	int			analyze_threshold;
-	int			vacuum_cost_limit;
-	int			freeze_min_age;
-	int			freeze_max_age;
-	int			freeze_table_age;
-	int			multixact_freeze_min_age;
-	int			multixact_freeze_max_age;
-	int			multixact_freeze_table_age;
-	int			log_min_duration;
-	float8		vacuum_cost_delay;
-	float8		vacuum_scale_factor;
-	float8		vacuum_ins_scale_factor;
-	float8		analyze_scale_factor;
-} AutoVacOpts;
-
-/* StdRdOptions->vacuum_index_cleanup values */
-typedef enum StdRdOptIndexCleanup
-{
-	STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO = 0,
-	STDRD_OPTION_VACUUM_INDEX_CLEANUP_OFF,
-	STDRD_OPTION_VACUUM_INDEX_CLEANUP_ON,
-} StdRdOptIndexCleanup;
-
-/*
- * CommonRdOptions
- *		Contents of rd_common_options for tables.  It contains the options,
- *		which the table access method exposes for autovacuum, query planner,
- *		and others.  These options could be by decision of table AM directly
- *		specified by a user or calculated in some way.
- */
-typedef struct CommonRdOptions
-{
-	AutoVacOpts autovacuum;		/* autovacuum-related options */
-	bool		user_catalog_table; /* use as an additional catalog relation */
-	int			parallel_workers;	/* max number of parallel workers */
-	StdRdOptIndexCleanup vacuum_index_cleanup;	/* controls index vacuuming */
-	bool		vacuum_truncate;	/* enables vacuum to truncate a relation */
-} CommonRdOptions;
-
-
 /*
  * Here are the contents of a relation cache entry.
  */
@@ -214,19 +168,11 @@ typedef struct RelationData
 	PublicationDesc *rd_pubdesc;	/* publication descriptor, or NULL */
 
 	/*
-	 * rd_options and rd_common_options are set whenever rd_rel is loaded into
-	 * the relcache entry. Note that you can NOT look into rd_rel for this
-	 * data. NULLs means "use defaults".
+	 * rd_options is set whenever rd_rel is loaded into the relcache entry.
+	 * Note that you can NOT look into rd_rel for this data.  NULL means "use
+	 * defaults".
 	 */
-	CommonRdOptions *rd_common_options; /* the options, which table AM exposes
-										 * for external usage */
-
-	/*
-	 * am-specific part of pg_class.reloptions parsed by table am specific
-	 * structure (e.g. struct HeapRdOptions) Contents are not to be accessed
-	 * outside of table am
-	 */
-	bytea	   *rd_options;
+	bytea	   *rd_options;		/* parsed pg_class.reloptions */
 
 	/*
 	 * Oid of the handler for this relation. For an index this is a function
@@ -351,42 +297,88 @@ typedef struct ForeignKeyCacheInfo
 	Oid			conpfeqop[INDEX_MAX_KEYS] pg_node_attr(array_size(nkeys));
 } ForeignKeyCacheInfo;
 
+
 /*
- * HeapRdOptions
- *		Contents of rd_options specific for heap tables.
+ * StdRdOptions
+ *		Standard contents of rd_options for heaps.
+ *
+ * RelationGetFillFactor() and RelationGetTargetPageFreeSpace() can only
+ * be applied to relations that use this format or a superset for
+ * private options data.
  */
-typedef struct HeapRdOptions
+ /* autovacuum-related reloptions. */
+typedef struct AutoVacOpts
+{
+	bool		enabled;
+	int			vacuum_threshold;
+	int			vacuum_ins_threshold;
+	int			analyze_threshold;
+	int			vacuum_cost_limit;
+	int			freeze_min_age;
+	int			freeze_max_age;
+	int			freeze_table_age;
+	int			multixact_freeze_min_age;
+	int			multixact_freeze_max_age;
+	int			multixact_freeze_table_age;
+	int			log_min_duration;
+	float8		vacuum_cost_delay;
+	float8		vacuum_scale_factor;
+	float8		vacuum_ins_scale_factor;
+	float8		analyze_scale_factor;
+} AutoVacOpts;
+
+/* StdRdOptions->vacuum_index_cleanup values */
+typedef enum StdRdOptIndexCleanup
+{
+	STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO = 0,
+	STDRD_OPTION_VACUUM_INDEX_CLEANUP_OFF,
+	STDRD_OPTION_VACUUM_INDEX_CLEANUP_ON,
+} StdRdOptIndexCleanup;
+
+typedef struct StdRdOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	CommonRdOptions common;
 	int			fillfactor;		/* page fill factor in percent (0..100) */
 	int			toast_tuple_target; /* target for tuple toasting */
-} HeapRdOptions;
+	AutoVacOpts autovacuum;		/* autovacuum-related options */
+	bool		user_catalog_table; /* use as an additional catalog relation */
+	int			parallel_workers;	/* max number of parallel workers */
+	StdRdOptIndexCleanup vacuum_index_cleanup;	/* controls index vacuuming */
+	bool		vacuum_truncate;	/* enables vacuum to truncate a relation */
+} StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10
 #define HEAP_DEFAULT_FILLFACTOR		100
 
 /*
- * HeapGetFillFactor
- *		Returns the heap relation's fillfactor.  Note multiple eval of argument!
+ * RelationGetToastTupleTarget
+ *		Returns the relation's toast_tuple_target.  Note multiple eval of argument!
  */
-#define HeapGetFillFactor(relation, defaultff) \
+#define RelationGetToastTupleTarget(relation, defaulttarg) \
 	((relation)->rd_options ? \
-	 ((HeapRdOptions *) (relation)->rd_options)->fillfactor : (defaultff))
+	 ((StdRdOptions *) (relation)->rd_options)->toast_tuple_target : (defaulttarg))
 
 /*
- * HeapGetTargetPageUsage
+ * RelationGetFillFactor
+ *		Returns the relation's fillfactor.  Note multiple eval of argument!
+ */
+#define RelationGetFillFactor(relation, defaultff) \
+	((relation)->rd_options ? \
+	 ((StdRdOptions *) (relation)->rd_options)->fillfactor : (defaultff))
+
+/*
+ * RelationGetTargetPageUsage
  *		Returns the relation's desired space usage per page in bytes.
  */
-#define HeapGetTargetPageUsage(relation, defaultff) \
-	(BLCKSZ * HeapGetFillFactor(relation, defaultff) / 100)
+#define RelationGetTargetPageUsage(relation, defaultff) \
+	(BLCKSZ * RelationGetFillFactor(relation, defaultff) / 100)
 
 /*
- * HeapGetTargetPageFreeSpace
+ * RelationGetTargetPageFreeSpace
  *		Returns the relation's desired freespace per page in bytes.
  */
-#define HeapGetTargetPageFreeSpace(relation, defaultff) \
-	(BLCKSZ * (100 - HeapGetFillFactor(relation, defaultff)) / 100)
+#define RelationGetTargetPageFreeSpace(relation, defaultff) \
+	(BLCKSZ * (100 - RelationGetFillFactor(relation, defaultff)) / 100)
 
 /*
  * RelationIsUsedAsCatalogTable
@@ -394,10 +386,10 @@ typedef struct HeapRdOptions
  *		from the pov of logical decoding.  Note multiple eval of argument!
  */
 #define RelationIsUsedAsCatalogTable(relation)	\
- ((relation)->rd_common_options && \
-  ((relation)->rd_rel->relkind == RELKIND_RELATION || \
+	((relation)->rd_options && \
+	 ((relation)->rd_rel->relkind == RELKIND_RELATION || \
 	  (relation)->rd_rel->relkind == RELKIND_MATVIEW) ? \
-	 (relation)->rd_common_options->user_catalog_table : false)
+	 ((StdRdOptions *) (relation)->rd_options)->user_catalog_table : false)
 
 /*
  * RelationGetParallelWorkers
@@ -405,8 +397,8 @@ typedef struct HeapRdOptions
  *		Note multiple eval of argument!
  */
 #define RelationGetParallelWorkers(relation, defaultpw) \
- ((relation)->rd_common_options ? \
-  (relation)->rd_common_options->parallel_workers : (defaultpw))
+	((relation)->rd_options ? \
+	 ((StdRdOptions *) (relation)->rd_options)->parallel_workers : (defaultpw))
 
 /* ViewOptions->check_option values */
 typedef enum ViewOptCheckOption

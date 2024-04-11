@@ -2674,22 +2674,19 @@ static AutoVacOpts *
 extract_autovac_opts(HeapTuple tup, TupleDesc pg_class_desc)
 {
 	bytea	   *relopts;
-	CommonRdOptions common;
 	AutoVacOpts *av;
 
 	Assert(((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_RELATION ||
 		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_MATVIEW ||
 		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_TOASTVALUE);
 
-	fill_default_common_reloptions(&common);
-	relopts = extractRelOptions(tup, pg_class_desc,
-								GetTableAmRoutineByAmOid(((Form_pg_class) GETSTRUCT(tup))->relam),
-								NULL, &common);
-	if (relopts)
-		pfree(relopts);
+	relopts = extractRelOptions(tup, pg_class_desc, NULL);
+	if (relopts == NULL)
+		return NULL;
 
 	av = palloc(sizeof(AutoVacOpts));
-	memcpy(av, &(common.autovacuum), sizeof(AutoVacOpts));
+	memcpy(av, &(((StdRdOptions *) relopts)->autovacuum), sizeof(AutoVacOpts));
+	pfree(relopts);
 
 	return av;
 }

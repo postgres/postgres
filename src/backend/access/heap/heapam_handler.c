@@ -23,7 +23,6 @@
 #include "access/heapam.h"
 #include "access/heaptoast.h"
 #include "access/multixact.h"
-#include "access/reloptions.h"
 #include "access/rewriteheap.h"
 #include "access/syncscan.h"
 #include "access/tableam.h"
@@ -2162,17 +2161,6 @@ heapam_relation_toast_am(Relation rel)
 	return rel->rd_rel->relam;
 }
 
-static bytea *
-heapam_reloptions(char relkind, Datum reloptions,
-				  CommonRdOptions *common, bool validate)
-{
-	Assert(relkind == RELKIND_RELATION ||
-		   relkind == RELKIND_TOASTVALUE ||
-		   relkind == RELKIND_MATVIEW);
-
-	return heap_reloptions(relkind, reloptions, common, validate);
-}
-
 
 /* ------------------------------------------------------------------------
  * Planner related callbacks for the heap AM
@@ -2734,7 +2722,6 @@ static const TableAmRoutine heapam_methods = {
 	.relation_needs_toast_table = heapam_relation_needs_toast_table,
 	.relation_toast_am = heapam_relation_toast_am,
 	.relation_fetch_toast_slice = heap_fetch_toast_slice,
-	.reloptions = heapam_reloptions,
 
 	.relation_estimate_size = heapam_estimate_rel_size,
 

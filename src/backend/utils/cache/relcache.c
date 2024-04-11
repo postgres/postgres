@@ -33,7 +33,6 @@
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/parallel.h"
-#include "access/relation.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/table.h"
@@ -465,28 +464,8 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 {
 	bytea	   *options;
 	amoptions_function amoptsfn;
-	CommonRdOptions *common = NULL;
-	const TableAmRoutine *tableam = NULL;
 
 	relation->rd_options = NULL;
-
-	/*
-	 * Fill the rd_common_options with default values for appropriate
-	 * relkinds. The values might be later changed by extractRelOptions().
-	 */
-	if (relation->rd_rel->relkind == RELKIND_RELATION ||
-		relation->rd_rel->relkind == RELKIND_TOASTVALUE ||
-		relation->rd_rel->relkind == RELKIND_MATVIEW)
-	{
-		common = MemoryContextAlloc(CacheMemoryContext,
-									sizeof(CommonRdOptions));
-		fill_default_common_reloptions(common);
-		relation->rd_common_options = common;
-	}
-	else
-	{
-		relation->rd_common_options = NULL;
-	}
 
 	/*
 	 * Look up any AM-specific parse function; fall out if relkind should not
@@ -499,7 +478,6 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 		case RELKIND_VIEW:
 		case RELKIND_MATVIEW:
 		case RELKIND_PARTITIONED_TABLE:
-			tableam = relation->rd_tableam;
 			amoptsfn = NULL;
 			break;
 		case RELKIND_INDEX:
@@ -515,8 +493,7 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	 * we might not have any other for pg_class yet (consider executing this
 	 * code for pg_class itself)
 	 */
-	options = extractRelOptions(tuple, GetPgClassDescriptor(),
-								tableam, amoptsfn, common);
+	options = extractRelOptions(tuple, GetPgClassDescriptor(), amoptsfn);
 
 	/*
 	 * Copy parsed data into CacheMemoryContext.  To guard against the
@@ -2323,8 +2300,6 @@ RelationReloadIndexInfo(Relation relation)
 	/* Reload reloptions in case they changed */
 	if (relation->rd_options)
 		pfree(relation->rd_options);
-	if (relation->rd_common_options)
-		pfree(relation->rd_common_options);
 	RelationParseRelOptions(relation, pg_class_tuple);
 	/* done with pg_class tuple */
 	heap_freetuple(pg_class_tuple);
@@ -2512,8 +2487,6 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		pfree(relation->rd_pubdesc);
 	if (relation->rd_options)
 		pfree(relation->rd_options);
-	if (relation->rd_common_options)
-		pfree(relation->rd_common_options);
 	if (relation->rd_indextuple)
 		pfree(relation->rd_indextuple);
 	table_free_rd_amcache(relation);
@@ -4253,8 +4226,6 @@ RelationCacheInitializePhase3(void)
 			/* Update rd_options while we have the tuple */
 			if (relation->rd_options)
 				pfree(relation->rd_options);
-			if (relation->rd_common_options)
-				pfree(relation->rd_common_options);
 			RelationParseRelOptions(relation, htup);
 
 			/*
@@ -6191,7 +6162,7 @@ load_relcache_init_file(bool shared)
 			has_not_null |= attr->attnotnull;
 		}
 
-		/* next read the access method specific fields */
+		/* next read the access method specific field */
 		if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 			goto read_failed;
 		if (len > 0)
@@ -6205,21 +6176,6 @@ load_relcache_init_file(bool shared)
 		else
 		{
 			rel->rd_options = NULL;
-		}
-
-		if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
-			goto read_failed;
-		if (len > 0)
-		{
-			if (len != sizeof(CommonRdOptions))
-				goto read_failed;
-			rel->rd_common_options = palloc(len);
-			if (fread(rel->rd_common_options, 1, len, fp) != len)
-				goto read_failed;
-		}
-		else
-		{
-			rel->rd_common_options = NULL;
 		}
 
 		/* mark not-null status */
@@ -6623,13 +6579,9 @@ write_relcache_init_file(bool shared)
 					   ATTRIBUTE_FIXED_PART_SIZE, fp);
 		}
 
-		/* next, do the access method specific fields */
+		/* next, do the access method specific field */
 		write_item(rel->rd_options,
 				   (rel->rd_options ? VARSIZE(rel->rd_options) : 0),
-				   fp);
-
-		write_item(rel->rd_common_options,
-				   (rel->rd_common_options ? sizeof(CommonRdOptions) : 0),
 				   fp);
 
 		/*

@@ -720,7 +720,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	ObjectAddress address;
 	LOCKMODE	parentLockmode;
 	Oid			accessMethodId = InvalidOid;
-	const TableAmRoutine *tableam = NULL;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -857,28 +856,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		ownerId = GetUserId();
 
 	/*
-	 * For relations with table AM and partitioned tables, select access
-	 * method to use: an explicitly indicated one, or (in the case of a
-	 * partitioned table) the parent's, if it has one.
-	 */
-	if (stmt->accessMethod != NULL)
-	{
-		Assert(RELKIND_HAS_TABLE_AM(relkind) || relkind == RELKIND_PARTITIONED_TABLE);
-		accessMethodId = get_table_am_oid(stmt->accessMethod, false);
-	}
-	else if (RELKIND_HAS_TABLE_AM(relkind) || relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		if (stmt->partbound)
-		{
-			Assert(list_length(inheritOids) == 1);
-			accessMethodId = get_rel_relam(linitial_oid(inheritOids));
-		}
-
-		if (RELKIND_HAS_TABLE_AM(relkind) && !OidIsValid(accessMethodId))
-			accessMethodId = get_table_am_oid(default_table_access_method, false);
-	}
-
-	/*
 	 * Parse and validate reloptions, if any.
 	 */
 	reloptions = transformRelOptions((Datum) 0, stmt->options, NULL, validnsps,
@@ -886,12 +863,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 	switch (relkind)
 	{
-		case RELKIND_RELATION:
-		case RELKIND_TOASTVALUE:
-		case RELKIND_MATVIEW:
-			tableam = GetTableAmRoutineByAmOid(accessMethodId);
-			(void) tableam_reloptions(tableam, relkind, reloptions, NULL, true);
-			break;
 		case RELKIND_VIEW:
 			(void) view_reloptions(reloptions, true);
 			break;
@@ -899,12 +870,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			(void) partitioned_table_reloptions(reloptions, true);
 			break;
 		default:
-			if (OidIsValid(accessMethodId))
-			{
-				tableam = GetTableAmRoutineByAmOid(accessMethodId);
-				(void) tableam_reloptions(tableam, relkind, reloptions, NULL, true);
-			}
-			break;
+			(void) heap_reloptions(relkind, reloptions, true);
 	}
 
 	if (stmt->ofTypename)
@@ -994,6 +960,28 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			cookedDefaults = lappend(cookedDefaults, cooked);
 			attr->atthasdef = true;
 		}
+	}
+
+	/*
+	 * For relations with table AM and partitioned tables, select access
+	 * method to use: an explicitly indicated one, or (in the case of a
+	 * partitioned table) the parent's, if it has one.
+	 */
+	if (stmt->accessMethod != NULL)
+	{
+		Assert(RELKIND_HAS_TABLE_AM(relkind) || relkind == RELKIND_PARTITIONED_TABLE);
+		accessMethodId = get_table_am_oid(stmt->accessMethod, false);
+	}
+	else if (RELKIND_HAS_TABLE_AM(relkind) || relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		if (stmt->partbound)
+		{
+			Assert(list_length(inheritOids) == 1);
+			accessMethodId = get_rel_relam(linitial_oid(inheritOids));
+		}
+
+		if (RELKIND_HAS_TABLE_AM(relkind) && !OidIsValid(accessMethodId))
+			accessMethodId = get_table_am_oid(default_table_access_method, false);
 	}
 
 	/*
@@ -15583,8 +15571,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
-			(void) table_reloptions(rel, rel->rd_rel->relkind,
-									newOptions, NULL, true);
+			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true);
 			break;
 		case RELKIND_PARTITIONED_TABLE:
 			(void) partitioned_table_reloptions(newOptions, true);
@@ -15697,7 +15684,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 										 defList, "toast", validnsps, false,
 										 operation == AT_ResetRelOptions);
 
-		(void) table_reloptions(rel, RELKIND_TOASTVALUE, newOptions, NULL, true);
+		(void) heap_reloptions(RELKIND_TOASTVALUE, newOptions, true);
 
 		memset(repl_val, 0, sizeof(repl_val));
 		memset(repl_null, false, sizeof(repl_null));

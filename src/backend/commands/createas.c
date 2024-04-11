@@ -85,9 +85,6 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	Datum		toast_options;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	ObjectAddress intoRelationAddr;
-	const TableAmRoutine *tableam = NULL;
-	Oid			accessMethodId = InvalidOid;
-	Relation	rel;
 
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
 	is_matview = (into->viewQuery != NULL);
@@ -128,15 +125,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 										validnsps,
 										true, false);
 
-	rel = relation_open(intoRelationAddr.objectId, AccessShareLock);
-	accessMethodId = table_relation_toast_am(rel);
-	relation_close(rel, AccessShareLock);
-
-	if (OidIsValid(accessMethodId))
-	{
-		tableam = GetTableAmRoutineByAmOid(accessMethodId);
-		(void) tableam_reloptions(tableam, RELKIND_TOASTVALUE, toast_options, NULL, true);
-	}
+	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
 	NewRelationCreateToastTable(intoRelationAddr.objectId, toast_options);
 
