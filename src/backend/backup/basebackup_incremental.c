@@ -726,7 +726,8 @@ GetIncrementalFilePath(Oid dboid, Oid spcoid, RelFileNumber relfilenumber,
  * How should we back up a particular file as part of an incremental backup?
  *
  * If the return value is BACK_UP_FILE_FULLY, caller should back up the whole
- * file just as if this were not an incremental backup.
+ * file just as if this were not an incremental backup.  The contents of the
+ * relative_block_numbers array is unspecified in this case.
  *
  * If the return value is BACK_UP_FILE_INCREMENTALLY, caller should include
  * an incremental file in the backup instead of the entire file. On return,
@@ -745,7 +746,6 @@ GetFileBackupMethod(IncrementalBackupInfo *ib, const char *path,
 					BlockNumber *relative_block_numbers,
 					unsigned *truncation_block_length)
 {
-	BlockNumber absolute_block_numbers[RELSEG_SIZE];
 	BlockNumber limit_block;
 	BlockNumber start_blkno;
 	BlockNumber stop_blkno;
@@ -872,8 +872,13 @@ GetFileBackupMethod(IncrementalBackupInfo *ib, const char *path,
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg_internal("overflow computing block number bounds for segment %u with size %zu",
 								segno, size));
+
+	/*
+	 * This will write *absolute* block numbers into the output array, but
+	 * we'll transpose them below.
+	 */
 	nblocks = BlockRefTableEntryGetBlocks(brtentry, start_blkno, stop_blkno,
-										  absolute_block_numbers, RELSEG_SIZE);
+										  relative_block_numbers, RELSEG_SIZE);
 	Assert(nblocks <= RELSEG_SIZE);
 
 	/*
@@ -892,19 +897,22 @@ GetFileBackupMethod(IncrementalBackupInfo *ib, const char *path,
 		return BACK_UP_FILE_FULLY;
 
 	/*
-	 * Looks like we can send an incremental file, so sort the absolute the
-	 * block numbers and then transpose absolute block numbers to relative
-	 * block numbers.
+	 * Looks like we can send an incremental file, so sort the block numbers
+	 * and then transpose them from absolute block numbers to relative block
+	 * numbers if necessary.
 	 *
 	 * NB: If the block reference table was using the bitmap representation
 	 * for a given chunk, the block numbers in that chunk will already be
 	 * sorted, but when the array-of-offsets representation is used, we can
 	 * receive block numbers here out of order.
 	 */
-	qsort(absolute_block_numbers, nblocks, sizeof(BlockNumber),
+	qsort(relative_block_numbers, nblocks, sizeof(BlockNumber),
 		  compare_block_numbers);
-	for (i = 0; i < nblocks; ++i)
-		relative_block_numbers[i] = absolute_block_numbers[i] - start_blkno;
+	if (start_blkno != 0)
+	{
+		for (i = 0; i < nblocks; ++i)
+			relative_block_numbers[i] -= start_blkno;
+	}
 	*num_blocks_required = nblocks;
 
 	/*
