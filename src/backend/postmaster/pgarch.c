@@ -258,8 +258,7 @@ PgArchiverMain(char *startup_data, size_t startup_data_len)
 
 	/* Initialize our max-heap for prioritizing files to archive. */
 	arch_files->arch_heap = binaryheap_allocate(NUM_FILES_PER_DIRECTORY_SCAN,
-												ready_file_comparator, false,
-												NULL);
+												ready_file_comparator, NULL);
 
 	/* Initialize our memory context. */
 	archive_context = AllocSetContextCreate(TopMemoryContext,

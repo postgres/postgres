@@ -1303,7 +1303,6 @@ ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	/* allocate heap */
 	state->heap = binaryheap_allocate(state->nr_txns,
 									  ReorderBufferIterCompare,
-									  false,
 									  state);
 
 	/* Now that the state fields are initialized, it is safe to return it. */

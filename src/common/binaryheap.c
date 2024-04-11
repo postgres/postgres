@@ -22,29 +22,7 @@
 #ifdef FRONTEND
 #include "common/logging.h"
 #endif
-#include "common/hashfn.h"
 #include "lib/binaryheap.h"
-
-/*
- * Define parameters for hash table code generation. The interface is *also*
- * declared in binaryheap.h (to generate the types, which are externally
- * visible).
- */
-#define SH_PREFIX bh_nodeidx
-#define SH_ELEMENT_TYPE bh_nodeidx_entry
-#define SH_KEY_TYPE bh_node_type
-#define SH_KEY key
-#define SH_HASH_KEY(tb, key) \
-	hash_bytes((const unsigned char *) &key, sizeof(bh_node_type))
-#define SH_EQUAL(tb, a, b) (memcmp(&a, &b, sizeof(bh_node_type)) == 0)
-#define SH_SCOPE extern
-#ifdef FRONTEND
-#define SH_RAW_ALLOCATOR pg_malloc0
-#endif
-#define SH_STORE_HASH
-#define SH_GET_HASH(tb, a) a->hash
-#define SH_DEFINE
-#include "lib/simplehash.h"
 
 static void sift_down(binaryheap *heap, int node_off);
 static void sift_up(binaryheap *heap, int node_off);
@@ -52,40 +30,25 @@ static void sift_up(binaryheap *heap, int node_off);
 /*
  * binaryheap_allocate
  *
- * Returns a pointer to a newly-allocated heap with the given initial number
- * of nodes, and with the heap property defined by the given comparator
- * function, which will be invoked with the additional argument specified by
- * 'arg'.
- *
- * If 'indexed' is true, we create a hash table to track each node's
- * index in the heap, enabling to perform some operations such as
- * binaryheap_remove_node_ptr() etc.
+ * Returns a pointer to a newly-allocated heap that has the capacity to
+ * store the given number of nodes, with the heap property defined by
+ * the given comparator function, which will be invoked with the additional
+ * argument specified by 'arg'.
  */
 binaryheap *
-binaryheap_allocate(int num_nodes, binaryheap_comparator compare,
-					bool indexed, void *arg)
+binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
 {
+	int			sz;
 	binaryheap *heap;
 
-	heap = (binaryheap *) palloc(sizeof(binaryheap));
-	heap->bh_space = num_nodes;
+	sz = offsetof(binaryheap, bh_nodes) + sizeof(bh_node_type) * capacity;
+	heap = (binaryheap *) palloc(sz);
+	heap->bh_space = capacity;
 	heap->bh_compare = compare;
 	heap->bh_arg = arg;
 
 	heap->bh_size = 0;
 	heap->bh_has_heap_property = true;
-	heap->bh_nodes = (bh_node_type *) palloc(sizeof(bh_node_type) * num_nodes);
-	heap->bh_nodeidx = NULL;
-
-	if (indexed)
-	{
-#ifdef FRONTEND
-		heap->bh_nodeidx = bh_nodeidx_create(num_nodes, NULL);
-#else
-		heap->bh_nodeidx = bh_nodeidx_create(CurrentMemoryContext, num_nodes,
-											 NULL);
-#endif
-	}
 
 	return heap;
 }
@@ -101,9 +64,6 @@ binaryheap_reset(binaryheap *heap)
 {
 	heap->bh_size = 0;
 	heap->bh_has_heap_property = true;
-
-	if (binaryheap_indexed(heap))
-		bh_nodeidx_reset(heap->bh_nodeidx);
 }
 
 /*
@@ -114,10 +74,6 @@ binaryheap_reset(binaryheap *heap)
 void
 binaryheap_free(binaryheap *heap)
 {
-	if (binaryheap_indexed(heap))
-		bh_nodeidx_destroy(heap->bh_nodeidx);
-
-	pfree(heap->bh_nodes);
 	pfree(heap);
 }
 
@@ -149,78 +105,6 @@ parent_offset(int i)
 }
 
 /*
- * Double the space allocated for nodes.
- */
-static void
-enlarge_node_array(binaryheap *heap)
-{
-	heap->bh_space *= 2;
-	heap->bh_nodes = repalloc(heap->bh_nodes,
-							  sizeof(bh_node_type) * heap->bh_space);
-}
-
-/*
- * Set the given node at the 'index' and track it if required.
- *
- * Return true if the node's index is already tracked.
- */
-static bool
-set_node(binaryheap *heap, bh_node_type node, int index)
-{
-	bool		found = false;
-
-	/* Set the node to the nodes array */
-	heap->bh_nodes[index] = node;
-
-	if (binaryheap_indexed(heap))
-	{
-		bh_nodeidx_entry *ent;
-
-		/* Keep track of the node index */
-		ent = bh_nodeidx_insert(heap->bh_nodeidx, node, &found);
-		ent->index = index;
-	}
-
-	return found;
-}
-
-/*
- * Remove the node's index from the hash table if the heap is indexed.
- */
-static inline void
-delete_nodeidx(binaryheap *heap, bh_node_type node)
-{
-	if (binaryheap_indexed(heap))
-		bh_nodeidx_delete(heap->bh_nodeidx, node);
-}
-
-/*
- * Replace the existing node at 'idx' with the given 'new_node'. Also
- * update their positions accordingly. Note that we assume the new_node's
- * position is already tracked if enabled, i.e. the new_node is already
- * present in the heap.
- */
-static void
-replace_node(binaryheap *heap, int index, bh_node_type new_node)
-{
-	bool		found PG_USED_FOR_ASSERTS_ONLY;
-
-	/* Quick return if not necessary to move */
-	if (heap->bh_nodes[index] == new_node)
-		return;
-
-	/* Remove the overwritten node's index */
-	delete_nodeidx(heap, heap->bh_nodes[index]);
-
-	/*
-	 * Replace it with the given new node. This node's position must also be
-	 * tracked as we assume to replace the node with the existing node.
-	 */
-	found = set_node(heap, new_node, index);
-	Assert(!binaryheap_indexed(heap) || found);
-}
-
-/*
  * binaryheap_add_unordered
  *
  * Adds the given datum to the end of the heap's list of nodes in O(1) without
@@ -231,12 +115,16 @@ replace_node(binaryheap *heap, int index, bh_node_type new_node)
 void
 binaryheap_add_unordered(binaryheap *heap, bh_node_type d)
 {
-	/* make sure enough space for a new node */
 	if (heap->bh_size >= heap->bh_space)
-		enlarge_node_array(heap);
-
+	{
+#ifdef FRONTEND
+		pg_fatal("out of binary heap slots");
+#else
+		elog(ERROR, "out of binary heap slots");
+#endif
+	}
 	heap->bh_has_heap_property = false;
-	set_node(heap, d, heap->bh_size);
+	heap->bh_nodes[heap->bh_size] = d;
 	heap->bh_size++;
 }
 
@@ -265,11 +153,15 @@ binaryheap_build(binaryheap *heap)
 void
 binaryheap_add(binaryheap *heap, bh_node_type d)
 {
-	/* make sure enough space for a new node */
 	if (heap->bh_size >= heap->bh_space)
-		enlarge_node_array(heap);
-
-	set_node(heap, d, heap->bh_size);
+	{
+#ifdef FRONTEND
+		pg_fatal("out of binary heap slots");
+#else
+		elog(ERROR, "out of binary heap slots");
+#endif
+	}
+	heap->bh_nodes[heap->bh_size] = d;
 	heap->bh_size++;
 	sift_up(heap, heap->bh_size - 1);
 }
@@ -310,8 +202,6 @@ binaryheap_remove_first(binaryheap *heap)
 	if (heap->bh_size == 1)
 	{
 		heap->bh_size--;
-		delete_nodeidx(heap, result);
-
 		return result;
 	}
 
@@ -319,7 +209,7 @@ binaryheap_remove_first(binaryheap *heap)
 	 * Remove the last node, placing it in the vacated root entry, and sift
 	 * the new root node down to its correct position.
 	 */
-	replace_node(heap, 0, heap->bh_nodes[--heap->bh_size]);
+	heap->bh_nodes[0] = heap->bh_nodes[--heap->bh_size];
 	sift_down(heap, 0);
 
 	return result;
@@ -345,84 +235,13 @@ binaryheap_remove_node(binaryheap *heap, int n)
 						   heap->bh_arg);
 
 	/* remove the last node, placing it in the vacated entry */
-	replace_node(heap, n, heap->bh_nodes[heap->bh_size]);
+	heap->bh_nodes[n] = heap->bh_nodes[heap->bh_size];
 
 	/* sift as needed to preserve the heap property */
 	if (cmp > 0)
 		sift_up(heap, n);
 	else if (cmp < 0)
 		sift_down(heap, n);
-}
-
-/*
- * binaryheap_remove_node_ptr
- *
- * Similar to binaryheap_remove_node() but removes the given node. The caller
- * must ensure that the given node is in the heap. O(log n) worst case.
- *
- * This function can be used only if the heap is indexed.
- */
-void
-binaryheap_remove_node_ptr(binaryheap *heap, bh_node_type d)
-{
-	bh_nodeidx_entry *ent;
-
-	Assert(!binaryheap_empty(heap) && heap->bh_has_heap_property);
-	Assert(binaryheap_indexed(heap));
-
-	ent = bh_nodeidx_lookup(heap->bh_nodeidx, d);
-	Assert(ent);
-
-	binaryheap_remove_node(heap, ent->index);
-}
-
-/*
- * Workhorse for binaryheap_update_up and binaryheap_update_down.
- */
-static void
-resift_node(binaryheap *heap, bh_node_type node, bool sift_dir_up)
-{
-	bh_nodeidx_entry *ent;
-
-	Assert(!binaryheap_empty(heap) && heap->bh_has_heap_property);
-	Assert(binaryheap_indexed(heap));
-
-	ent = bh_nodeidx_lookup(heap->bh_nodeidx, node);
-	Assert(ent);
-	Assert(ent->index >= 0 && ent->index < heap->bh_size);
-
-	if (sift_dir_up)
-		sift_up(heap, ent->index);
-	else
-		sift_down(heap, ent->index);
-}
-
-/*
- * binaryheap_update_up
- *
- * Sift the given node up after the node's key is updated. The caller must
- * ensure that the given node is in the heap. O(log n) worst case.
- *
- * This function can be used only if the heap is indexed.
- */
-void
-binaryheap_update_up(binaryheap *heap, bh_node_type d)
-{
-	resift_node(heap, d, true);
-}
-
-/*
- * binaryheap_update_down
- *
- * Sift the given node down after the node's key is updated. The caller must
- * ensure that the given node is in the heap. O(log n) worst case.
- *
- * This function can be used only if the heap is indexed.
- */
-void
-binaryheap_update_down(binaryheap *heap, bh_node_type d)
-{
-	resift_node(heap, d, false);
 }
 
 /*
@@ -437,7 +256,7 @@ binaryheap_replace_first(binaryheap *heap, bh_node_type d)
 {
 	Assert(!binaryheap_empty(heap) && heap->bh_has_heap_property);
 
-	replace_node(heap, 0, d);
+	heap->bh_nodes[0] = d;
 
 	if (heap->bh_size > 1)
 		sift_down(heap, 0);
@@ -479,11 +298,11 @@ sift_up(binaryheap *heap, int node_off)
 		 * Otherwise, swap the parent value with the hole, and go on to check
 		 * the node's new parent.
 		 */
-		set_node(heap, parent_val, node_off);
+		heap->bh_nodes[node_off] = parent_val;
 		node_off = parent_off;
 	}
 	/* Re-fill the hole */
-	set_node(heap, node_val, node_off);
+	heap->bh_nodes[node_off] = node_val;
 }
 
 /*
@@ -538,9 +357,9 @@ sift_down(binaryheap *heap, int node_off)
 		 * Otherwise, swap the hole with the child that violates the heap
 		 * property; then go on to check its children.
 		 */
-		set_node(heap, heap->bh_nodes[swap_off], node_off);
+		heap->bh_nodes[node_off] = heap->bh_nodes[swap_off];
 		node_off = swap_off;
 	}
 	/* Re-fill the hole */
-	set_node(heap, node_val, node_off);
+	heap->bh_nodes[node_off] = node_val;
 }

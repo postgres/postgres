@@ -125,7 +125,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	mergestate->ms_nplans = nplans;
 
 	mergestate->ms_slots = (TupleTableSlot **) palloc0(sizeof(TupleTableSlot *) * nplans);
-	mergestate->ms_heap = binaryheap_allocate(nplans, heap_compare_slots, false,
+	mergestate->ms_heap = binaryheap_allocate(nplans, heap_compare_slots,
 											  mergestate);
 
 	/*

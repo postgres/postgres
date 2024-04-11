@@ -405,7 +405,7 @@ TopoSort(DumpableObject **objs,
 		return true;
 
 	/* Create workspace for the above-described heap */
-	pendingHeap = binaryheap_allocate(numObjs, int_cmp, false, NULL);
+	pendingHeap = binaryheap_allocate(numObjs, int_cmp, NULL);
 
 	/*
 	 * Scan the constraints, and for each item in the input, generate a count

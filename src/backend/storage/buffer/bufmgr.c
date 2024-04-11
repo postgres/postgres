@@ -3014,7 +3014,6 @@ BufferSync(int flags)
 	 */
 	ts_heap = binaryheap_allocate(num_spaces,
 								  ts_ckpt_progress_comparator,
-								  false,
 								  NULL);
 
 	for (i = 0; i < num_spaces; i++)

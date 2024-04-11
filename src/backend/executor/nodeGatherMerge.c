@@ -422,7 +422,6 @@ gather_merge_setup(GatherMergeState *gm_state)
 	/* Allocate the resources for the merge */
 	gm_state->gm_heap = binaryheap_allocate(nreaders + 1,
 											heap_compare_slots,
-											false,
 											gm_state);
 }
 
