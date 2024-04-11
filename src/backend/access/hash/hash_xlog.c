@@ -666,6 +666,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 		char	   *data;
 		Size		datalen;
 		uint16		ninserted = 0;
+		bool		mod_wbuf = false;
 
 		data = begin = XLogRecGetBlockData(record, 1, &datalen);
 
@@ -695,6 +696,17 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 
 				ninserted++;
 			}
+
+			mod_wbuf = true;
+		}
+		else
+		{
+			/*
+			 * Ensure that the required flags are set when there are no
+			 * tuples.  See _hash_freeovflpage().
+			 */
+			Assert(xldata->is_prim_bucket_same_wrt ||
+				   xldata->is_prev_bucket_same_wrt);
 		}
 
 		/*
@@ -711,10 +723,15 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 			HashPageOpaque writeopaque = HashPageGetOpaque(writepage);
 
 			writeopaque->hasho_nextblkno = xldata->nextblkno;
+			mod_wbuf = true;
 		}
 
-		PageSetLSN(writepage, lsn);
-		MarkBufferDirty(writebuf);
+		/* Set LSN and mark writebuf dirty iff it is modified */
+		if (mod_wbuf)
+		{
+			PageSetLSN(writepage, lsn);
+			MarkBufferDirty(writebuf);
+		}
 	}
 
 	/* replay the record for initializing overflow buffer */
