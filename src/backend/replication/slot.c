@@ -1545,8 +1545,8 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 	int			last_signaled_pid = 0;
 	bool		released_lock = false;
 	bool		terminated = false;
-	XLogRecPtr	initial_effective_xmin = InvalidXLogRecPtr;
-	XLogRecPtr	initial_catalog_effective_xmin = InvalidXLogRecPtr;
+	TransactionId initial_effective_xmin = InvalidTransactionId;
+	TransactionId initial_catalog_effective_xmin = InvalidTransactionId;
 	XLogRecPtr	initial_restart_lsn = InvalidXLogRecPtr;
 	ReplicationSlotInvalidationCause invalidation_cause_prev PG_USED_FOR_ASSERTS_ONLY = RS_INVAL_NONE;
 
