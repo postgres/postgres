@@ -9,7 +9,7 @@
 # We test all combinations of:
 #
 # - all the libpq client options that affect the protocol negotiations
-#   (gssencmode, sslmode)
+#   (gssencmode, sslmode, sslnegotiation)
 # - server accepting or rejecting the authentication due to
 #   pg_hba.conf entries
 # - SSL and GSS enabled/disabled in the server
@@ -216,7 +216,9 @@ my $server_config = {
 ###
 ### Run tests with GSS and SSL disabled in the server
 ###
-my $test_table = q{
+my $test_table;
+if ($ssl_supported) {
+	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                      -> OUTCOME
 testuser    disable      disable      *              connect, authok             -> plain
 .           .            allow        *              connect, authok             -> plain
@@ -227,24 +229,45 @@ testuser    disable      disable      *              connect, authok            
 .           .            .            direct         connect, directsslreject, reconnect, sslreject -> fail
 .           .            .            requiredirect  connect, directsslreject    -> fail
 .           prefer       disable      *              connect, authok             -> plain
-.           .            allow        postgres       connect, authok             -> plain
-.           .            .            direct         connect, authok             -> plain
-.           .            .            requiredirect  connect, authok             -> plain
+.           .            allow        *              connect, authok             -> plain
 .           .            prefer       postgres       connect, sslreject, authok  -> plain
 .           .            .            direct         connect, directsslreject, reconnect, sslreject, authok  -> plain
 .           .            .            requiredirect  connect, directsslreject, reconnect, authok -> plain
 .           .            require      postgres       connect, sslreject          -> fail
 .           .            .            direct         connect, directsslreject, reconnect, sslreject -> fail
 .           .            .            requiredirect  connect, directsslreject    -> fail
+	};
+} else {
+	# Compiled without SSL support
+	$test_table = q{
+# USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                      -> OUTCOME
+testuser    disable      disable      postgres       connect, authok             -> plain
+.           .            allow        postgres       connect, authok             -> plain
+.           .            prefer       postgres       connect, authok             -> plain
+.           prefer       disable      postgres       connect, authok             -> plain
+.           .            allow        postgres       connect, authok             -> plain
+.           .            prefer       postgres       connect, authok             -> plain
+
+# Without SSL support, sslmode=require and sslnegotiation=direct/requiredirect
+# are not accepted at all.
+.           *            require      *              -     -> fail
+.           *            *            direct         -     -> fail
+.           *            *            requiredirect  -     -> fail
+	};
+}
 
 # All attempts with gssencmode=require fail without connecting because
-# no credential cache has been configured in the client
-.           require      *            *              - -> fail
+# no credential cache has been configured in the client. (Or if GSS
+# support is not compiled in, they will fail because of that.)
+$test_table .= q{
+testuser    require      *            *              - -> fail
 };
+
 note("Running tests with SSL and GSS disabled in the server");
 test_matrix($node, $server_config,
-			['testuser'],
-			\@all_sslmodes, \@all_gssencmodes, parse_table($test_table));
+			['testuser'], \@all_gssencmodes, \@all_sslmodes, \@all_sslnegotiations,
+			parse_table($test_table));
+
 
 ###
 ### Run tests with GSS disabled and SSL enabled in the server
@@ -293,7 +316,8 @@ nossluser   .            disable      *              connect, authok            
 	note("Running tests with SSL enabled in server");
 	test_matrix($node, $server_config,
 				['testuser', 'ssluser', 'nossluser'],
-				\@all_sslmodes, ['disable'], parse_table($test_table));
+				['disable'], \@all_sslmodes, \@all_sslnegotiations,
+				parse_table($test_table));
 
 	# Disable SSL again
 	$node->adjust_conf('postgresql.conf', 'ssl', 'off');
@@ -307,6 +331,11 @@ nossluser   .            disable      *              connect, authok            
 SKIP:
 {
 	skip "GSSAPI/Kerberos not supported by this build" if $gss_supported == 0;
+
+	$krb->create_principal('gssuser', $gssuser_password);
+	$krb->create_ticket('gssuser', $gssuser_password);
+	$server_config->{server_gss} = 1;
+
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                       -> OUTCOME
 testuser    disable      disable      *              connect, authok              -> plain
@@ -357,20 +386,26 @@ nogssuser   disable      disable      *              connect, authok            
 .           .            allow        *              connect, gssaccept, authfail -> fail
 .           .            prefer       *              connect, gssaccept, authfail -> fail
 .           .            require      *              connect, gssaccept, authfail -> fail   # If both GSSAPI and sslmode are required, and GSS is not available -> fail
-};
+	};
 
-	# Sanity check that the connection fails when no kerberos ticket
-	# is present in the client
-	connect_test($node, 'user=testuser gssencmode=require sslmode=disable', '- -> fail');
-
-	$krb->create_principal('gssuser', $gssuser_password);
-	$krb->create_ticket('gssuser', $gssuser_password);
-	$server_config->{server_gss} = 1;
+	# The expected events and outcomes above assume that SSL support
+	# is enabled. When libpq is compiled without SSL support, all
+	# attempts to connect with sslmode=require or
+	# sslnegotition=direct/requiredirectwould fail immediately without
+	# even connecting to the server. Skip those, because we tested
+	# them earlier already.
+	my ($sslmodes, $sslnegotiations);
+	if ($ssl_supported != 0) {
+		($sslmodes, $sslnegotiations) = (\@all_sslmodes, \@all_sslnegotiations);
+	} else {
+		($sslmodes, $sslnegotiations) = (['disable'], ['postgres']);
+	}
 
 	note("Running tests with GSS enabled in server");
 	test_matrix($node, $server_config,
 				['testuser', 'gssuser', 'nogssuser'],
-				\@all_sslmodes, \@all_gssencmodes, parse_table($test_table));
+				\@all_gssencmodes, $sslmodes, $sslnegotiations,
+				parse_table($test_table));
 }
 
 ###
@@ -379,6 +414,14 @@ nogssuser   disable      disable      *              connect, authok            
 SKIP:
 {
 	skip "GSSAPI/Kerberos or SSL not supported by this build" unless ($ssl_supported && $gss_supported);
+
+	# Sanity check that GSSAPI is still enabled from previous test.
+	connect_test($node, 'user=testuser gssencmode=prefer sslmode=prefer', 'connect, gssaccept, authok -> gss');
+
+	# Enable SSL
+	$node->adjust_conf('postgresql.conf', 'ssl', 'on');
+	$node->reload;
+	$server_config->{server_ssl} = 1;
 
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                       -> OUTCOME
@@ -476,20 +519,13 @@ nossluser   disable      disable      *              connect, authok            
 .           .            .            requiredirect  connect, directsslaccept, authfail -> fail
 .           prefer       *            *              connect, gssaccept, authok   -> gss
 .           require      *            *              connect, gssaccept, authok   -> gss
-};
-
-	# Sanity check that GSSAPI is still enabled from previous test.
-	connect_test($node, 'user=testuser gssencmode=prefer sslmode=prefer', 'connect, gssaccept, authok -> gss');
-
-	# Enable SSL
-	$node->adjust_conf('postgresql.conf', 'ssl', 'on');
-	$node->reload;
-	$server_config->{server_ssl} = 1;
+	};
 
 	note("Running tests with both GSS and SSL enabled in server");
 	test_matrix($node, $server_config,
 				['testuser', 'gssuser', 'ssluser', 'nogssuser', 'nossluser'],
-				\@all_sslmodes, \@all_gssencmodes, parse_table($test_table));
+				\@all_gssencmodes, \@all_sslmodes, \@all_sslnegotiations,
+				parse_table($test_table));
 }
 
 ###
@@ -499,7 +535,9 @@ SKIP:
 {
 	skip "Unix domain sockets not supported" unless ($unixdir ne "");
 
-	connect_test($node, "user=localuser gssencmode=prefer sslmode=require host=$unixdir", 'connect, authok -> plain');
+	# libpq doesn't attempt SSL or GSSAPI over Unix domain
+	# sockets. The server would reject them too.
+	connect_test($node, "user=localuser gssencmode=prefer sslmode=prefer host=$unixdir", 'connect, authok -> plain');
 	connect_test($node, "user=localuser gssencmode=require sslmode=prefer host=$unixdir", '- -> fail');
 }
 
@@ -514,7 +552,7 @@ sub test_matrix
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
 	my ($pg_node, $node_conf,
-		$test_users, $sslmodes, $gssencmodes, %expected) = @_;
+		$test_users, $gssencmodes, $sslmodes, $sslnegotiations, %expected) = @_;
 
 	foreach my $test_user (@{$test_users})
 	{
@@ -524,7 +562,7 @@ sub test_matrix
 			{
 				# sslnegotiation only makes a difference if SSL is enabled. This saves a few combinations.
 				my ($key, $expected_events);
-				foreach my $negotiation (@all_sslnegotiations)
+				foreach my $negotiation (@{$sslnegotiations})
 				{
 					$key = "$test_user $gssencmode $client_mode $negotiation";
 					$expected_events = $expected{$key};
