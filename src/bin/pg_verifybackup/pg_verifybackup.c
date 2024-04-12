@@ -144,7 +144,8 @@ static void verify_control_file(const char *controlpath,
 static void report_extra_backup_files(verifier_context *context);
 static void verify_backup_checksums(verifier_context *context);
 static void verify_file_checksum(verifier_context *context,
-								 manifest_file *m, char *fullpath);
+								 manifest_file *m, char *fullpath,
+								 uint8 *buffer);
 static void parse_required_wal(verifier_context *context,
 							   char *pg_waldump_path,
 							   char *wal_directory);
@@ -480,8 +481,8 @@ parse_manifest_file(char *manifest_path)
 							 (long long int) statbuf.st_size);
 			}
 			bytes_left -= rc;
-			json_parse_manifest_incremental_chunk(
-												  inc_state, buffer, rc, bytes_left == 0);
+			json_parse_manifest_incremental_chunk(inc_state, buffer, rc,
+												  bytes_left == 0);
 		}
 
 		/* Release the incremental state memory */
@@ -812,8 +813,11 @@ verify_backup_checksums(verifier_context *context)
 	manifest_data *manifest = context->manifest;
 	manifest_files_iterator it;
 	manifest_file *m;
+	uint8	   *buffer;
 
 	progress_report(false);
+
+	buffer = pg_malloc(READ_CHUNK_SIZE * sizeof(uint8));
 
 	manifest_files_start_iterate(manifest->files, &it);
 	while ((m = manifest_files_iterate(manifest->files, &it)) != NULL)
@@ -828,12 +832,14 @@ verify_backup_checksums(verifier_context *context)
 								m->pathname);
 
 			/* Do the actual checksum verification. */
-			verify_file_checksum(context, m, fullpath);
+			verify_file_checksum(context, m, fullpath, buffer);
 
 			/* Avoid leaking memory. */
 			pfree(fullpath);
 		}
 	}
+
+	pfree(buffer);
 
 	progress_report(true);
 }
@@ -843,14 +849,13 @@ verify_backup_checksums(verifier_context *context)
  */
 static void
 verify_file_checksum(verifier_context *context, manifest_file *m,
-					 char *fullpath)
+					 char *fullpath, uint8 *buffer)
 {
 	pg_checksum_context checksum_ctx;
 	char	   *relpath = m->pathname;
 	int			fd;
 	int			rc;
 	size_t		bytes_read = 0;
-	uint8		buffer[READ_CHUNK_SIZE];
 	uint8		checksumbuf[PG_CHECKSUM_MAX_LENGTH];
 	int			checksumlen;
 
