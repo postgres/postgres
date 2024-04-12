@@ -129,7 +129,7 @@ if ($gss_supported != 0)
 
 if ($ssl_supported != 0)
 {
-	my $certdir = dirname(__FILE__) . "/../../ssl/ssl";
+	my $certdir = dirname(__FILE__) . "/../../../test/ssl/ssl";
 
 	copy "$certdir/server-cn-only.crt", "$pgdata/server.crt"
 	  || die "copying server.crt: $!";

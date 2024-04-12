@@ -118,8 +118,13 @@ tests += {
       't/002_api.pl',
       't/003_load_balance_host_list.pl',
       't/004_load_balance_dns.pl',
+      't/005_negotiate_encryption.pl',
     ],
-    'env': {'with_ssl': ssl_library},
+    'env': {
+      'with_ssl': ssl_library,
+      'with_gssapi': gssapi.found() ? 'yes' : 'no',
+      'with_krb_srvnam': 'postgres',
+    },
   },
 }
 
