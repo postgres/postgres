@@ -393,7 +393,7 @@ static const char short_uri_designator[] = "postgres://";
 
 static bool connectOptions1(PGconn *conn, const char *conninfo);
 static bool init_allowed_encryption_methods(PGconn *conn);
-#if defined(USE_SSL) || defined(USE_GSS)
+#if defined(USE_SSL) || defined(ENABLE_GSS)
 static int	encryption_negotiation_failed(PGconn *conn);
 #endif
 static bool connection_failed(PGconn *conn);
@@ -4318,7 +4318,7 @@ init_allowed_encryption_methods(PGconn *conn)
  *
  * conn->current_enc_method is updated to the next method to try.
  */
-#if defined(USE_SSL) || defined(USE_GSS)
+#if defined(USE_SSL) || defined(ENABLE_GSS)
 static int
 encryption_negotiation_failed(PGconn *conn)
 {
