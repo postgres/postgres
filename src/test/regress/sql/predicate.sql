@@ -120,3 +120,30 @@ SELECT * FROM pred_tab t1
     LEFT JOIN pred_tab t3 ON t2.a IS NULL OR t2.c IS NULL;
 
 DROP TABLE pred_tab;
+
+-- Validate we handle IS NULL and IS NOT NULL quals correctly with inheritance
+-- parents.
+CREATE TABLE pred_parent (a int);
+CREATE TABLE pred_child () INHERITS (pred_parent);
+ALTER TABLE ONLY pred_parent ALTER a SET NOT NULL;
+
+-- Ensure that the scan on pred_child contains the IS NOT NULL qual.
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_parent WHERE a IS NOT NULL;
+
+-- Ensure we only scan pred_child and not pred_parent
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_parent WHERE a IS NULL;
+
+ALTER TABLE pred_parent ALTER a DROP NOT NULL;
+ALTER TABLE pred_child ALTER a SET NOT NULL;
+
+-- Ensure the IS NOT NULL qual is removed from the pred_child scan.
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_parent WHERE a IS NOT NULL;
+
+-- Ensure we only scan pred_parent and not pred_child
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_parent WHERE a IS NULL;
+
+DROP TABLE pred_parent, pred_child;

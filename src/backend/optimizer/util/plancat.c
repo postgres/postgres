@@ -161,22 +161,33 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	rel->attr_widths = (int32 *)
 		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
 
-	/* record which columns are defined as NOT NULL */
-	for (int i = 0; i < relation->rd_att->natts; i++)
+	/*
+	 * Record which columns are defined as NOT NULL.  We leave this
+	 * unpopulated for non-partitioned inheritance parent relations as it's
+	 * ambiguous as to what it means.  Some child tables may have a NOT NULL
+	 * constraint for a column while others may not.  We could work harder and
+	 * build a unioned set of all child relations notnullattnums, but there's
+	 * currently no need.  The RelOptInfo corresponding to the !inh
+	 * RangeTblEntry does get populated.
+	 */
+	if (!inhparent || relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		FormData_pg_attribute *attr = &relation->rd_att->attrs[i];
-
-		if (attr->attnotnull)
+		for (int i = 0; i < relation->rd_att->natts; i++)
 		{
-			rel->notnullattnums = bms_add_member(rel->notnullattnums,
-												 attr->attnum);
+			FormData_pg_attribute *attr = &relation->rd_att->attrs[i];
 
-			/*
-			 * Per RemoveAttributeById(), dropped columns will have their
-			 * attnotnull unset, so we needn't check for dropped columns in
-			 * the above condition.
-			 */
-			Assert(!attr->attisdropped);
+			if (attr->attnotnull)
+			{
+				rel->notnullattnums = bms_add_member(rel->notnullattnums,
+													 attr->attnum);
+
+				/*
+				 * Per RemoveAttributeById(), dropped columns will have their
+				 * attnotnull unset, so we needn't check for dropped columns
+				 * in the above condition.
+				 */
+				Assert(!attr->attisdropped);
+			}
 		}
 	}
 

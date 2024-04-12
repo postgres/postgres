@@ -242,3 +242,51 @@ SELECT * FROM pred_tab t1
 (9 rows)
 
 DROP TABLE pred_tab;
+-- Validate we handle IS NULL and IS NOT NULL quals correctly with inheritance
+-- parents.
+CREATE TABLE pred_parent (a int);
+CREATE TABLE pred_child () INHERITS (pred_parent);
+ALTER TABLE ONLY pred_parent ALTER a SET NOT NULL;
+-- Ensure that the scan on pred_child contains the IS NOT NULL qual.
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_parent WHERE a IS NOT NULL;
+                 QUERY PLAN                  
+---------------------------------------------
+ Append
+   ->  Seq Scan on pred_parent pred_parent_1
+   ->  Seq Scan on pred_child pred_parent_2
+         Filter: (a IS NOT NULL)
+(4 rows)
+
+-- Ensure we only scan pred_child and not pred_parent
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_parent WHERE a IS NULL;
+             QUERY PLAN             
+------------------------------------
+ Seq Scan on pred_child pred_parent
+   Filter: (a IS NULL)
+(2 rows)
+
+ALTER TABLE pred_parent ALTER a DROP NOT NULL;
+ALTER TABLE pred_child ALTER a SET NOT NULL;
+-- Ensure the IS NOT NULL qual is removed from the pred_child scan.
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_parent WHERE a IS NOT NULL;
+                 QUERY PLAN                  
+---------------------------------------------
+ Append
+   ->  Seq Scan on pred_parent pred_parent_1
+         Filter: (a IS NOT NULL)
+   ->  Seq Scan on pred_child pred_parent_2
+(4 rows)
+
+-- Ensure we only scan pred_parent and not pred_child
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_parent WHERE a IS NULL;
+       QUERY PLAN        
+-------------------------
+ Seq Scan on pred_parent
+   Filter: (a IS NULL)
+(2 rows)
+
+DROP TABLE pred_parent, pred_child;
