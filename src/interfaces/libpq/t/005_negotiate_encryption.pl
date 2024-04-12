@@ -83,8 +83,11 @@ if (!$ENV{PG_TEST_EXTRA} || $ENV{PG_TEST_EXTRA} !~ /\blibpq_encryption\b/)
 	  'Potentially unsafe test libpq_encryption not enabled in PG_TEST_EXTRA';
 }
 
-my $ssl_supported = $ENV{with_ssl} eq 'openssl';
+# Only run the GSSAPI tests when compiled with GSSAPI support and
+# PG_TEST_EXTRA includes 'kerberos'
 my $gss_supported = $ENV{with_gssapi} eq 'yes';
+my $kerberos_enabled = $ENV{PG_TEST_EXTRA} && $ENV{PG_TEST_EXTRA} =~ /\bkerberos\b/;
+my $ssl_supported = $ENV{with_ssl} eq 'openssl';
 
 ###
 ### Prepare test server for GSSAPI and SSL authentication, with a few
@@ -118,7 +121,7 @@ my $gssuser_password = 'secret1';
 
 my $krb;
 
-if ($gss_supported != 0)
+if ($gss_supported != 0 && $kerberos_enabled != 0)
 {
 	note "setting up Kerberos";
 
@@ -197,7 +200,7 @@ hostssl       postgres        ssluser         $servercidr             trust
 
 print $hba qq{
 hostgssenc    postgres        gssuser         $servercidr             trust
-} if ($gss_supported != 0);
+} if ($gss_supported != 0 && $kerberos_enabled != 0);
 close $hba;
 $node->reload;
 
@@ -331,6 +334,7 @@ nossluser   .            disable      *              connect, authok            
 SKIP:
 {
 	skip "GSSAPI/Kerberos not supported by this build" if $gss_supported == 0;
+	skip "kerberos not enabled in PG_TEST_EXTRA" if $kerberos_enabled == 0;
 
 	$krb->create_principal('gssuser', $gssuser_password);
 	$krb->create_ticket('gssuser', $gssuser_password);
@@ -413,7 +417,9 @@ nogssuser   disable      disable      *              connect, authok            
 ###
 SKIP:
 {
-	skip "GSSAPI/Kerberos or SSL not supported by this build" unless ($ssl_supported && $gss_supported);
+	skip "SSL not supported by this build" if $ssl_supported == 0;
+	skip "GSSAPI/Kerberos not supported by this build" if $gss_supported == 0;
+	skip "kerberos not enabled in PG_TEST_EXTRA" if $kerberos_enabled == 0;
 
 	# Sanity check that GSSAPI is still enabled from previous test.
 	connect_test($node, 'user=testuser gssencmode=prefer sslmode=prefer', 'connect, gssaccept, authok -> gss');
