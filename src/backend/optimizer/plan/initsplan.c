@@ -2644,7 +2644,7 @@ add_base_clause_to_rel(PlannerInfo *root, Index relid,
 	 * apply_child_basequals() sees, whereas the inh==false one is what's used
 	 * for the scan node in the final plan.
 	 *
-	 * We make an exception to this is for partitioned tables.  For these, we
+	 * We make an exception to this for partitioned tables.  For these, we
 	 * always apply the constant-TRUE and constant-FALSE transformations.  A
 	 * qual which is either of these for a partitioned table must also be that
 	 * for all of its child partitions.
