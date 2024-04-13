@@ -287,8 +287,8 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    details on inheritance.  If it is set to <literal>TRUE</literal>,
    it causes the new member to inherit from the granted role. If
    set to <literal>FALSE</literal>, the new member does not inherit.
-   If unspecified when create a new role membership this defaults to
-   the inheritance attribute of the role being added.
+   If unspecified when creating a new role membership, this defaults to the
+   inheritance attribute of the new member.
   </para>
 
   <para>
