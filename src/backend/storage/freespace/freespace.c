@@ -112,6 +112,7 @@ static BlockNumber fsm_search(Relation rel, uint8 min_cat);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr,
 							 BlockNumber start, BlockNumber end,
 							 bool *eof_p);
+static bool fsm_does_block_exist(Relation rel, BlockNumber blknumber);
 
 
 /******** Public API ********/
@@ -128,6 +129,9 @@ static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr,
  * amount of free space available on that page and then try again (see
  * RecordAndGetPageWithFreeSpace).  If InvalidBlockNumber is returned,
  * extend the relation.
+ *
+ * This can trigger FSM updates if any FSM entry is found to point to a block
+ * past the end of the relation.
  */
 BlockNumber
 GetPageWithFreeSpace(Relation rel, Size spaceNeeded)
@@ -166,9 +170,17 @@ RecordAndGetPageWithFreeSpace(Relation rel, BlockNumber oldPage,
 	 * Otherwise, search as usual.
 	 */
 	if (search_slot != -1)
-		return fsm_get_heap_blk(addr, search_slot);
-	else
-		return fsm_search(rel, search_cat);
+	{
+		BlockNumber blknum = fsm_get_heap_blk(addr, search_slot);
+
+		/*
+		 * Check that the blknum is actually in the relation. Don't try to
+		 * update the FSM in that case, just fall back to the other case
+		 */
+		if (fsm_does_block_exist(rel, blknum))
+			return blknum;
+	}
+	return fsm_search(rel, search_cat);
 }
 
 /*
@@ -297,14 +309,25 @@ FreeSpaceMapPrepareTruncateRel(Relation rel, BlockNumber nblocks)
 		fsm_truncate_avail(BufferGetPage(buf), first_removed_slot);
 
 		/*
-		 * Truncation of a relation is WAL-logged at a higher-level, and we
-		 * will be called at WAL replay. But if checksums are enabled, we need
-		 * to still write a WAL record to protect against a torn page, if the
-		 * page is flushed to disk before the truncation WAL record. We cannot
-		 * use MarkBufferDirtyHint here, because that will not dirty the page
-		 * during recovery.
+		 * This change is non-critical, because fsm_does_block_exist() would
+		 * stop us from returning a truncated-away block.  However, since this
+		 * may remove up to SlotsPerFSMPage slots, it's nice to avoid the cost
+		 * of that many fsm_does_block_exist() rejections.  Use a full
+		 * MarkBufferDirty(), not MarkBufferDirtyHint().
 		 */
 		MarkBufferDirty(buf);
+
+		/*
+		 * WAL-log like MarkBufferDirtyHint() might have done, just to avoid
+		 * differing from the rest of the file in this respect.  This is
+		 * optional; see README mention of full page images.  XXX consider
+		 * XLogSaveBufferForHint() for even closer similarity.
+		 *
+		 * A higher-level operation calls us at WAL replay.  If we crash
+		 * before the XLOG_SMGR_TRUNCATE flushes to disk, main fork length has
+		 * not changed, and our fork remains valid.  If we crash after that
+		 * flush, redo will return here.
+		 */
 		if (!InRecovery && RelationNeedsWAL(rel) && XLogHintBitIsNeeded())
 			log_newpage_buffer(buf, false);
 
@@ -681,8 +704,15 @@ fsm_search(Relation rel, uint8 min_cat)
 									(addr.level == FSM_BOTTOM_LEVEL),
 									false);
 			if (slot == -1)
+			{
 				max_avail = fsm_get_max_avail(BufferGetPage(buf));
-			UnlockReleaseBuffer(buf);
+				UnlockReleaseBuffer(buf);
+			}
+			else
+			{
+				/* Keep the pin for possible update below */
+				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+			}
 		}
 		else
 			slot = -1;
@@ -694,8 +724,37 @@ fsm_search(Relation rel, uint8 min_cat)
 			 * bottom.
 			 */
 			if (addr.level == FSM_BOTTOM_LEVEL)
-				return fsm_get_heap_blk(addr, slot);
+			{
+				BlockNumber blkno = fsm_get_heap_blk(addr, slot);
+				Page		page;
 
+				if (fsm_does_block_exist(rel, blkno))
+				{
+					ReleaseBuffer(buf);
+					return blkno;
+				}
+
+				/*
+				 * Block is past the end of the relation.  Update FSM, and
+				 * restart from root.  The usual "advancenext" behavior is
+				 * pessimal for this rare scenario, since every later slot is
+				 * unusable in the same way.  We could zero all affected slots
+				 * on the same FSM page, but don't bet on the benefits of that
+				 * optimization justifying its compiled code bulk.
+				 */
+				page = BufferGetPage(buf);
+				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+				fsm_set_avail(page, slot, 0);
+				MarkBufferDirtyHint(buf, false);
+				UnlockReleaseBuffer(buf);
+				if (restarts++ > 10000) /* same rationale as below */
+					return InvalidBlockNumber;
+				addr = FSM_ROOT_ADDRESS;
+			}
+			else
+			{
+				ReleaseBuffer(buf);
+			}
 			addr = fsm_get_child(addr, slot);
 		}
 		else if (addr.level == FSM_ROOT_LEVEL)
@@ -862,4 +921,27 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 	ReleaseBuffer(buf);
 
 	return max_avail;
+}
+
+
+/*
+ * Check whether a block number is past the end of the relation.  This can
+ * happen after WAL replay, if the FSM reached disk but newly-extended pages
+ * it refers to did not.
+ */
+static bool
+fsm_does_block_exist(Relation rel, BlockNumber blknumber)
+{
+	SMgrRelation smgr = RelationGetSmgr(rel);
+
+	/*
+	 * If below the cached nblocks, the block surely exists.  Otherwise, we
+	 * face a trade-off.  We opt to compare to a fresh nblocks, incurring
+	 * lseek() overhead.  The alternative would be to assume the block does
+	 * not exist, but that would cause FSM to set zero space available for
+	 * blocks that main fork extension just recorded.
+	 */
+	return ((BlockNumberIsValid(smgr->smgr_cached_nblocks[MAIN_FORKNUM]) &&
+			 blknumber < smgr->smgr_cached_nblocks[MAIN_FORKNUM]) ||
+			blknumber < RelationGetNumberOfBlocks(rel));
 }
