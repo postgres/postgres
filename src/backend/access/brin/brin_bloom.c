@@ -800,7 +800,7 @@ brin_bloom_summary_out(PG_FUNCTION_ARGS)
 	StringInfoData str;
 
 	/* detoast the data to get value with a full 4B header */
-	filter = (BloomFilter *) PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
+	filter = (BloomFilter *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 
 	initStringInfo(&str);
 	appendStringInfoChar(&str, '{');
