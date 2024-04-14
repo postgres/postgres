@@ -691,6 +691,9 @@ brin_bloom_union(PG_FUNCTION_ARGS)
 	for (i = 0; i < nbytes; i++)
 		filter_a->data[i] |= filter_b->data[i];
 
+	/* update the number of bits set in the filter */
+	filter_a->nbits_set = pg_popcount((const char *) filter_a->data, nbytes);
+
 	PG_RETURN_VOID();
 }
 
