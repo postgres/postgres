@@ -1638,11 +1638,12 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 
 		/*
 		 * Add padding to align header to a multiple of BLCKSZ, but only if
-		 * the incremental file has some blocks. If there are no blocks we
-		 * don't want make the file unnecessarily large, as that might make
-		 * some filesystem optimizations impossible.
+		 * the incremental file has some blocks, and the alignment is actually
+		 * needed (i.e. header is not already a multiple of BLCKSZ). If there
+		 * are no blocks we don't want to make the file unnecessarily large,
+		 * as that might make some filesystem optimizations impossible.
 		 */
-		if (num_incremental_blocks > 0)
+		if ((num_incremental_blocks > 0) && (header_bytes_done % BLCKSZ != 0))
 		{
 			paddinglen = (BLCKSZ - (header_bytes_done % BLCKSZ));
 
