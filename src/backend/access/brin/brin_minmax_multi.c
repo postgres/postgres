@@ -3015,7 +3015,7 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 	 * Detoast to get value with full 4B header (can't be stored in a toast
 	 * table, but can use 1B header).
 	 */
-	ranges = (SerializedRanges *) PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
+	ranges = (SerializedRanges *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 
 	/* lookup output func for the type */
 	getTypeOutputInfo(ranges->typid, &outfunc, &isvarlena);
