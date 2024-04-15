@@ -24,9 +24,9 @@ PostgreSQL documentation
 CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replaceable class="parameter">data_type</replaceable>
     [ COLLATE <replaceable>collation</replaceable> ]
     [ DEFAULT <replaceable>expression</replaceable> ]
-    [ <replaceable class="parameter">constraint</replaceable> [ ... ] ]
+    [ <replaceable class="parameter">domain_constraint</replaceable> [ ... ] ]
 
-<phrase>where <replaceable class="parameter">constraint</replaceable> is:</phrase>
+<phrase>where <replaceable class="parameter">domain_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { NOT NULL | NULL | CHECK (<replaceable class="parameter">expression</replaceable>) }
@@ -190,7 +190,7 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
   </variablelist>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-createdomain-notes">
   <title>Notes</title>
 
   <para>
@@ -278,6 +278,17 @@ CREATE TABLE us_snail_addy (
   <para>
    The command <command>CREATE DOMAIN</command> conforms to the SQL
    standard.
+  </para>
+
+  <para>
+   The syntax <literal>NOT NULL</literal> in this command is a
+   <productname>PostgreSQL</productname> extension.  (A standard-conforming
+   way to write the same would be <literal>CHECK (VALUE IS NOT
+   NULL)</literal>.  However, per <xref linkend="sql-createdomain-notes"/>,
+   such constraints are best avoided in practice anyway.)  The
+   <literal>NULL</literal> <quote>constraint</quote> is a
+   <productname>PostgreSQL</productname> extension (see also <xref
+   linkend="sql-createtable-compatibility"/>).
   </para>
  </refsect1>
 

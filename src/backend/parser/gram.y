@@ -524,7 +524,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <vsetstmt> generic_set set_rest set_rest_more generic_reset reset_rest
 				 SetResetClause FunctionSetResetClause
 
-%type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
+%type <node>	TableElement TypedTableElement ConstraintElem DomainConstraintElem TableFuncElement
 %type <node>	columnDef columnOptions optionalPeriodName
 %type <defelt>	def_elem reloption_elem old_aggr_elem operator_def_elem
 %type <node>	def_arg columnElem where_clause where_or_current_clause
@@ -596,7 +596,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <keyword> col_name_keyword reserved_keyword
 %type <keyword> bare_label_keyword
 
-%type <node>	TableConstraint TableLikeClause
+%type <node>	DomainConstraint TableConstraint TableLikeClause
 %type <ival>	TableLikeOptionList TableLikeOption
 %type <str>		column_compression opt_column_compression column_storage opt_column_storage
 %type <list>	ColQualList
@@ -4330,6 +4330,60 @@ ConstraintElem:
 								   &n->skip_validation, NULL,
 								   yyscanner);
 					n->initially_valid = !n->skip_validation;
+					$$ = (Node *) n;
+				}
+		;
+
+/*
+ * DomainConstraint is separate from TableConstraint because the syntax for
+ * NOT NULL constraints is different.  For table constraints, we need to
+ * accept a column name, but for domain constraints, we don't.  (We could
+ * accept something like NOT NULL VALUE, but that seems weird.)  CREATE DOMAIN
+ * (which uses ColQualList) has for a long time accepted NOT NULL without a
+ * column name, so it makes sense that ALTER DOMAIN (which uses
+ * DomainConstraint) does as well.  None of these syntaxes are per SQL
+ * standard; we are just living with the bits of inconsistency that have built
+ * up over time.
+ */
+DomainConstraint:
+			CONSTRAINT name DomainConstraintElem
+				{
+					Constraint *n = castNode(Constraint, $3);
+
+					n->conname = $2;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+			| DomainConstraintElem					{ $$ = $1; }
+		;
+
+DomainConstraintElem:
+			CHECK '(' a_expr ')' ConstraintAttributeSpec
+				{
+					Constraint *n = makeNode(Constraint);
+
+					n->contype = CONSTR_CHECK;
+					n->location = @1;
+					n->raw_expr = $3;
+					n->cooked_expr = NULL;
+					processCASbits($5, @5, "CHECK",
+								   NULL, NULL, &n->skip_validation,
+								   &n->is_no_inherit, yyscanner);
+					n->initially_valid = !n->skip_validation;
+					$$ = (Node *) n;
+				}
+			| NOT NULL_P ConstraintAttributeSpec
+				{
+					Constraint *n = makeNode(Constraint);
+
+					n->contype = CONSTR_NOTNULL;
+					n->location = @1;
+					n->keys = list_make1(makeString("value"));
+					/* no NOT VALID support yet */
+					processCASbits($3, @3, "NOT NULL",
+								   NULL, NULL, NULL,
+								   &n->is_no_inherit, yyscanner);
+					n->initially_valid = true;
 					$$ = (Node *) n;
 				}
 		;
@@ -11586,7 +11640,7 @@ AlterDomainStmt:
 					$$ = (Node *) n;
 				}
 			/* ALTER DOMAIN <domain> ADD CONSTRAINT ... */
-			| ALTER DOMAIN_P any_name ADD_P TableConstraint
+			| ALTER DOMAIN_P any_name ADD_P DomainConstraint
 				{
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 

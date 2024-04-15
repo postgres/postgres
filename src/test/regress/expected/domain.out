@@ -785,6 +785,13 @@ alter domain con add constraint t check (VALUE < 1); -- fails
 ERROR:  column "col1" of table "domcontest" contains values that violate the new constraint
 alter domain con add constraint t check (VALUE < 34);
 alter domain con add check (VALUE > 0);
+\dD con
+                                         List of domains
+ Schema | Name |  Type   | Collation | Nullable | Default |                Check                 
+--------+------+---------+-----------+----------+---------+--------------------------------------
+ public | con  | integer |           |          |         | CHECK (VALUE < 34) CHECK (VALUE > 0)
+(1 row)
+
 insert into domcontest values (-5); -- fails
 ERROR:  value for domain con violates check constraint "con_check"
 insert into domcontest values (42); -- fails
@@ -805,24 +812,31 @@ create table domconnotnulltest
 , col2 connotnull
 );
 insert into domconnotnulltest default values;
-alter domain connotnull add not null value; -- fails
+alter domain connotnull add not null; -- fails
 ERROR:  column "col1" of table "domconnotnulltest" contains null values
 update domconnotnulltest set col1 = 5;
-alter domain connotnull add not null value; -- fails
+alter domain connotnull add not null; -- fails
 ERROR:  column "col2" of table "domconnotnulltest" contains null values
 update domconnotnulltest set col2 = 6;
-alter domain connotnull add constraint constr1 not null value;
+alter domain connotnull add constraint constr1 not null;
 select count(*) from pg_constraint where contypid = 'connotnull'::regtype and contype = 'n';
  count 
 -------
      1
 (1 row)
 
-alter domain connotnull add constraint constr1bis not null value;  -- redundant
+alter domain connotnull add constraint constr1bis not null;  -- redundant
 select count(*) from pg_constraint where contypid = 'connotnull'::regtype and contype = 'n';
  count 
 -------
      1
+(1 row)
+
+\dD connotnull
+                            List of domains
+ Schema |    Name    |  Type   | Collation | Nullable | Default | Check 
+--------+------------+---------+-----------+----------+---------+-------
+ public | connotnull | integer |           | not null |         | 
 (1 row)
 
 update domconnotnulltest set col1 = null; -- fails

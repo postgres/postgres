@@ -2523,7 +2523,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				else if (conForm->contypid)
 				{
 					/* conkey is null for domain not-null constraints */
-					appendStringInfoString(&buf, "NOT NULL VALUE");
+					appendStringInfoString(&buf, "NOT NULL");
 				}
 				break;
 			}
