@@ -2385,7 +2385,11 @@ process_function_rte_ref(RangeTblEntry *rte, AttrNumber attnum,
 		{
 			TupleDesc	tupdesc;
 
-			tupdesc = get_expr_result_tupdesc(rtfunc->funcexpr, true);
+			/* If it has a coldeflist, it certainly returns RECORD */
+			if (rtfunc->funccolnames != NIL)
+				tupdesc = NULL; /* no need to work hard */
+			else
+				tupdesc = get_expr_result_tupdesc(rtfunc->funcexpr, true);
 			if (tupdesc && tupdesc->tdtypeid != RECORDOID)
 			{
 				/*
