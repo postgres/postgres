@@ -824,3 +824,4 @@ with a(b) as (values (row(1,2,3)))
 select * from a, coalesce(b) as c(d int, e int, f int, g int);  -- fail
 with a(b) as (values (row(1,2,3)))
 select * from a, coalesce(b) as c(d int, e int, f float);  -- fail
+select * from int8_tbl, coalesce(row(1)) as (a int, b int);  -- fail
