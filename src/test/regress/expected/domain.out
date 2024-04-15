@@ -789,7 +789,7 @@ alter domain con add check (VALUE > 0);
                                          List of domains
  Schema | Name |  Type   | Collation | Nullable | Default |                Check                 
 --------+------+---------+-----------+----------+---------+--------------------------------------
- public | con  | integer |           |          |         | CHECK (VALUE < 34) CHECK (VALUE > 0)
+ public | con  | integer |           |          |         | CHECK (VALUE > 0) CHECK (VALUE < 34)
 (1 row)
 
 insert into domcontest values (-5); -- fails
