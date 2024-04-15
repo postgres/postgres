@@ -2627,12 +2627,17 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				{
 					RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
 					TypeFuncClass functypclass;
-					Oid			funcrettype;
-					TupleDesc	tupdesc;
+					Oid			funcrettype = InvalidOid;
+					TupleDesc	tupdesc = NULL;
 
-					functypclass = get_expr_result_type(rtfunc->funcexpr,
-														&funcrettype,
-														&tupdesc);
+					/* If it has a coldeflist, it returns RECORD */
+					if (rtfunc->funccolnames != NIL)
+						functypclass = TYPEFUNC_RECORD;
+					else
+						functypclass = get_expr_result_type(rtfunc->funcexpr,
+															&funcrettype,
+															&tupdesc);
+
 					if (functypclass == TYPEFUNC_COMPOSITE ||
 						functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
 					{
@@ -3241,6 +3246,10 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 						attnum <= atts_done + rtfunc->funccolcount)
 					{
 						TupleDesc	tupdesc;
+
+						/* If it has a coldeflist, it returns RECORD */
+						if (rtfunc->funccolnames != NIL)
+							return false;	/* can't have any dropped columns */
 
 						tupdesc = get_expr_result_tupdesc(rtfunc->funcexpr,
 														  true);
