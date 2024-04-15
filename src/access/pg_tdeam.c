@@ -430,7 +430,9 @@ pg_tde_getpage(TableScanDesc sscan, BlockNumber block)
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 	page = BufferGetPage(buffer);
+#if PG_VERSION_NUM < 170000
 	TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
+#endif
 	lines = PageGetMaxOffsetNumber(page);
 	ntup = 0;
 
@@ -569,9 +571,9 @@ pg_tde_gettup_start_page(HeapScanDesc scan, ScanDirection dir, int *linesleft,
 
 	/* Caller is responsible for ensuring buffer is locked if needed */
 	page = BufferGetPage(scan->rs_cbuf);
-
+#if PG_VERSION_NUM < 170000
 	TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-
+#endif
 	*linesleft = PageGetMaxOffsetNumber(page) - FirstOffsetNumber + 1;
 
 	if (ScanDirectionIsForward(dir))
@@ -602,9 +604,9 @@ pg_tde_gettup_continue_page(HeapScanDesc scan, ScanDirection dir, int *linesleft
 
 	/* Caller is responsible for ensuring buffer is locked if needed */
 	page = BufferGetPage(scan->rs_cbuf);
-
+#if PG_VERSION_NUM < 170000
 	TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-
+#endif
 	if (ScanDirectionIsForward(dir))
 	{
 		*lineoff = OffsetNumberNext(scan->rs_coffset);
@@ -869,8 +871,9 @@ pg_tde_gettup_pagemode(HeapScanDesc scan,
 		/* continue from previously returned page/tuple */
 		block = scan->rs_cblock;	/* current page */
 		page = BufferGetPage(scan->rs_cbuf);
+#if PG_VERSION_NUM < 170000
 		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-
+#endif
 		lineindex = scan->rs_cindex + dir;
 		if (ScanDirectionIsForward(dir))
 			linesleft = scan->rs_ntuples - lineindex;
@@ -889,7 +892,9 @@ pg_tde_gettup_pagemode(HeapScanDesc scan,
 	{
 		pg_tde_getpage((TableScanDesc) scan, block);
 		page = BufferGetPage(scan->rs_cbuf);
+#if PG_VERSION_NUM < 170000
 		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
+#endif
 		linesleft = scan->rs_ntuples;
 		lineindex = ScanDirectionIsForward(dir) ? 0 : linesleft - 1;
 
@@ -1377,8 +1382,9 @@ pg_tde_fetch(Relation relation,
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 	page = BufferGetPage(buffer);
+#if PG_VERSION_NUM < 170000
 	TestForOldSnapshot(snapshot, relation, page);
-
+#endif
 	/*
 	 * We'd better check for out-of-range offnum in case of VACUUM since the
 	 * TID was obtained.
@@ -1668,8 +1674,9 @@ pg_tde_get_latest_tid(TableScanDesc sscan,
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&ctid));
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		page = BufferGetPage(buffer);
+#if PG_VERSION_NUM < 170000
 		TestForOldSnapshot(snapshot, relation, page);
-
+#endif
 		/*
 		 * Check for bogus item number.  This is not treated as an error
 		 * condition because it can happen while following a t_ctid link. We

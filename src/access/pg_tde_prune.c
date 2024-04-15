@@ -127,6 +127,7 @@ pg_tde_page_prune_opt(Relation relation, Buffer buffer)
 	if (RecoveryInProgress())
 		return;
 
+#if PG_VERSION_NUM < 170000
 	/*
 	 * XXX: Magic to keep old_snapshot_threshold tests appear "working". They
 	 * currently are broken, and discussion of what to do about them is
@@ -135,7 +136,7 @@ pg_tde_page_prune_opt(Relation relation, Buffer buffer)
 	 */
 	if (old_snapshot_threshold == 0)
 		SnapshotTooOldMagicForTest();
-
+#endif
 	/*
 	 * First check whether there's any chance there's something to prune,
 	 * determining the appropriate horizon is a waste if there's no prune_xid
@@ -166,14 +167,14 @@ pg_tde_page_prune_opt(Relation relation, Buffer buffer)
 
 	if (!GlobalVisTestIsRemovableXid(vistest, prune_xid))
 	{
-		if (!OldSnapshotThresholdActive())
+#if PG_VERSION_NUM < 170000
+		if ( !OldSnapshotThresholdActive())
 			return;
-
 		if (!TransactionIdLimitedForOldSnapshots(GlobalVisTestNonRemovableHorizon(vistest),
 												 relation,
 												 &limited_xmin, &limited_ts))
 			return;
-
+#endif
 		if (!TransactionIdPrecedes(prune_xid, limited_xmin))
 			return;
 	}
@@ -539,6 +540,7 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 	 */
 	if (GlobalVisTestIsRemovableXid(prstate->vistest, dead_after))
 		res = HEAPTUPLE_DEAD;
+#if PG_VERSION_NUM < 170000
 	else if (OldSnapshotThresholdActive())
 	{
 		/* haven't determined limited horizon yet, requests */
@@ -566,7 +568,7 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 			res = HEAPTUPLE_DEAD;
 		}
 	}
-
+#endif
 	return res;
 }
 
