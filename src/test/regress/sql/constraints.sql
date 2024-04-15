@@ -657,6 +657,13 @@ ALTER TABLE cnn_parent ADD PRIMARY KEY USING INDEX b_uq;
 ALTER TABLE cnn_parent DROP CONSTRAINT cnn_parent_pkey;
 -- keeps these tables around, for pg_upgrade testing
 
+-- A primary key shouldn't attach to a unique constraint
+create table cnn2_parted (a int primary key) partition by list (a);
+create table cnn2_part1 (a int unique);
+alter table cnn2_parted attach partition cnn2_part1 for values in (1);
+\d+ cnn2_part1
+drop table cnn2_parted;
+
 -- ensure columns in partitions are marked not-null
 create table cnn2_parted(a int primary key) partition by list (a);
 create table cnn2_part1(a int);

@@ -1133,6 +1133,28 @@ get_constraint_index(Oid conoid)
 		return InvalidOid;
 }
 
+/*
+ * get_constraint_type
+ *		Return the pg_constraint.contype value for the given constraint.
+ *
+ * No frills.
+ */
+char
+get_constraint_type(Oid conoid)
+{
+	HeapTuple	tp;
+	char		contype;
+
+	tp = SearchSysCache1(CONSTROID, ObjectIdGetDatum(conoid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for constraint %u", conoid);
+
+	contype = ((Form_pg_constraint) GETSTRUCT(tp))->contype;
+	ReleaseSysCache(tp);
+
+	return contype;
+}
+
 /*				---------- LANGUAGE CACHE ----------					 */
 
 char *

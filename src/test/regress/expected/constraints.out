@@ -1006,6 +1006,22 @@ Inherits: cnn_grandchild,
 ALTER TABLE cnn_parent DROP CONSTRAINT cnn_parent_pkey;
 ERROR:  constraint "cnn_parent_pkey" of relation "cnn_parent" does not exist
 -- keeps these tables around, for pg_upgrade testing
+-- A primary key shouldn't attach to a unique constraint
+create table cnn2_parted (a int primary key) partition by list (a);
+create table cnn2_part1 (a int unique);
+alter table cnn2_parted attach partition cnn2_part1 for values in (1);
+\d+ cnn2_part1
+                                Table "public.cnn2_part1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Partition of: cnn2_parted FOR VALUES IN (1)
+Partition constraint: ((a IS NOT NULL) AND (a = 1))
+Indexes:
+    "cnn2_part1_pkey" PRIMARY KEY, btree (a)
+    "cnn2_part1_a_key" UNIQUE CONSTRAINT, btree (a)
+
+drop table cnn2_parted;
 -- ensure columns in partitions are marked not-null
 create table cnn2_parted(a int primary key) partition by list (a);
 create table cnn2_part1(a int);
