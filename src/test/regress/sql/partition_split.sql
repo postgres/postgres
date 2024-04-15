@@ -42,7 +42,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-02-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
 
---ERROR:  list of split partitions should contains at least two items
+--ERROR:  list of split partitions should contain at least two items
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-10-01'));
 
@@ -52,14 +52,14 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
 
--- ERROR:  name "sales_feb_mar_apr2022" already used
+-- ERROR:  name "sales_feb_mar_apr2022" is already used
 -- (We can create partition with the same name as split partition, but can't create two partitions with the same name)
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb_mar_apr2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_feb_mar_apr2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
 
--- ERROR:  name "sales_feb2022" already used
+-- ERROR:  name "sales_feb2022" is already used
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_feb2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
@@ -77,7 +77,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-06-01'));
 
--- ERROR:  lower bound of partition "sales_mar2022" is not equals to upper bound of previous partition
+-- ERROR:  lower bound of partition "sales_mar2022" conflicts with upper bound of previous partition "sales_feb2022"
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-02-01') TO ('2022-04-01'),
@@ -86,7 +86,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
 -- Tests for spaces between partitions, them should be executed without DEFAULT partition
 ALTER TABLE sales_range DETACH PARTITION sales_others;
 
--- ERROR:  lower bound of partition "sales_feb2022" is not equals to lower bound of split partition
+-- ERROR:  lower bound of partition "sales_feb2022" is not equal to lower bound of split partition
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-02') TO ('2022-03-01'),
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
@@ -133,7 +133,7 @@ SELECT * FROM sales_others;
 DROP TABLE sales_range CASCADE;
 
 --
--- Add split partition then add rows into partitioned table
+-- Add split partition, then add rows into partitioned table
 --
 CREATE TABLE sales_range (salesman_id INT, salesman_name VARCHAR(30), sales_amount INT, sales_date DATE) PARTITION BY RANGE (sales_date);
 CREATE TABLE sales_jan2022 PARTITION OF sales_range FOR VALUES FROM ('2022-01-01') TO ('2022-02-01');
@@ -219,7 +219,7 @@ SELECT * FROM sales_jan_feb2022;
 DROP TABLE sales_date CASCADE;
 
 --
--- Test: split DEFAULT partition; using a index on partition key; check index after split
+-- Test: split DEFAULT partition; use an index on partition key; check index after split
 --
 CREATE TABLE sales_range (salesman_id INT, salesman_name VARCHAR(30), sales_amount INT, sales_date DATE) PARTITION BY RANGE (sales_date);
 CREATE TABLE sales_jan2022 PARTITION OF sales_range FOR VALUES FROM ('2022-01-01') TO ('2022-02-01');
@@ -250,7 +250,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'),
    PARTITION sales_others DEFAULT);
 
--- Use indexscan for test indexes
+-- Use indexscan for testing indexes
 SET enable_indexscan = ON;
 SET enable_seqscan = OFF;
 
@@ -270,7 +270,7 @@ SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'part
 DROP TABLE sales_range CASCADE;
 
 --
--- Test: some cases for split DEFAULT partition (different bounds)
+-- Test: some cases for splitting DEFAULT partition (different bounds)
 --
 CREATE TABLE sales_range (salesman_id INT, salesman_name VARCHAR(30), sales_amount INT, sales_date INT) PARTITION BY RANGE (sales_date);
 CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
@@ -299,7 +299,7 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
    PARTITION sales_feb2022 FOR VALUES FROM (20220201) TO (20220301),
    PARTITION sales_others DEFAULT);
 
--- sales_error intersects with sales_dec2022 (exact the same bounds)
+-- sales_error intersects with sales_dec2022 (exactly the same bounds)
 -- ERROR:  lower bound of partition "sales_error" conflicts with upper bound of previous partition "sales_dec2022"
 ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
   (PARTITION sales_dec2022 FOR VALUES FROM (20211201) TO (20220101),
@@ -307,13 +307,13 @@ ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
    PARTITION sales_feb2022 FOR VALUES FROM (20220201) TO (20220301),
    PARTITION sales_others DEFAULT);
 
--- ERROR:  any partition in the list should be DEFAULT because split partition is DEFAULT
+-- ERROR:  all partitions in the list should be DEFAULT because split partition is DEFAULT
 ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
   (PARTITION sales_dec2022 FOR VALUES FROM (20211201) TO (20220101),
    PARTITION sales_jan2022 FOR VALUES FROM (20220101) TO (20220201),
    PARTITION sales_feb2022 FOR VALUES FROM (20220201) TO (20220301));
 
--- no error: bounds of sales_noerror between sales_dec2022 and sales_feb2022
+-- no error: bounds of sales_noerror are between sales_dec2022 and sales_feb2022
 ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
   (PARTITION sales_dec2022 FOR VALUES FROM (20211201) TO (20220101),
    PARTITION sales_noerror FOR VALUES FROM (20220110) TO (20220120),
@@ -325,7 +325,7 @@ DROP TABLE sales_range;
 CREATE TABLE sales_range (salesman_id INT, salesman_name VARCHAR(30), sales_amount INT, sales_date INT) PARTITION BY RANGE (sales_date);
 CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
 
--- no error: bounds of sales_noerror equals to lower and upper bounds of sales_dec2022 and sales_feb2022
+-- no error: bounds of sales_noerror are equal to lower and upper bounds of sales_dec2022 and sales_feb2022
 ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
   (PARTITION sales_dec2022 FOR VALUES FROM (20211201) TO (20220101),
    PARTITION sales_noerror FOR VALUES FROM (20210101) TO (20210201),
@@ -361,7 +361,7 @@ SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conre
 SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_mar2022'::regclass::oid;
 SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_apr2022'::regclass::oid;
 
--- ERROR:  new row for relation "sales_mar2022" violates check constraint "sales_range_salesman_id_check"
+-- ERROR:  new row for relation "sales_mar2022" violates check constraint "sales_range_sales_amount_check"
 INSERT INTO sales_range VALUES (1, 0, '2022-03-11');
 -- ERROR:  insert or update on table "sales_mar2022" violates foreign key constraint "sales_range_salesman_id_fkey"
 INSERT INTO sales_range VALUES (-1, 10, '2022-03-11');
@@ -372,7 +372,7 @@ DROP TABLE sales_range CASCADE;
 DROP TABLE salesmans CASCADE;
 
 --
--- Test: split partition on partitioned table in case exists FOREIGN KEY reference from another table
+-- Test: split partition on partitioned table in case of existing FOREIGN KEY reference from another table
 --
 CREATE TABLE salesmans(salesman_id INT PRIMARY KEY, salesman_name VARCHAR(30)) PARTITION BY RANGE (salesman_id);
 CREATE TABLE sales (salesman_id INT REFERENCES salesmans(salesman_id), sales_amount INT, sales_date DATE);
@@ -470,12 +470,12 @@ DROP FUNCTION after_insert_row_trigger();
 
 --
 -- Test: split partition witch identity column
--- If split partition column is identity-column, columns of new partitions are identity-columns too.
+-- If split partition column is identity column, columns of new partitions are identity columns too.
 --
 CREATE TABLE salesmans(salesman_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, salesman_name VARCHAR(30)) PARTITION BY RANGE (salesman_id);
 
 CREATE TABLE salesmans1_2 PARTITION OF salesmans FOR VALUES FROM (1) TO (2);
--- Create new partition with identity-column:
+-- Create new partition with identity column:
 CREATE TABLE salesmans2_5(salesman_id INT NOT NULL, salesman_name VARCHAR(30));
 ALTER TABLE salesmans ATTACH PARTITION salesmans2_5 FOR VALUES FROM (2) TO (5);
 
@@ -484,7 +484,7 @@ INSERT INTO salesmans (salesman_name) VALUES ('Ivanov');
 
 SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salesmans'::regclass::oid;
 SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salesmans1_2'::regclass::oid;
--- Split partition has identity-column:
+-- Split partition has identity column:
 SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salesmans2_5'::regclass::oid;
 
 ALTER TABLE salesmans SPLIT PARTITION salesmans2_5 INTO
@@ -609,7 +609,7 @@ CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Oslo', 'St. Pete
 CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Bejing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok');
 CREATE TABLE sales_others PARTITION OF sales_list DEFAULT;
 
--- ERROR:  partition "sales_east" would overlap partition "sales_nord"
+-- ERROR:  new partition "sales_east" would overlap with another (not split) partition "sales_nord"
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
    PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok', 'Helsinki'),
@@ -631,8 +631,8 @@ DROP TABLE sales_list;
 
 --
 -- Test: two specific errors for BY LIST partitioning:
---   * new partitions not has NULL value that split partition has.
---   * new partitions not has a value that split partition has.
+--   * new partitions do not have NULL value, which split partition has.
+--   * new partitions do not have a value that split partition has.
 --
 CREATE TABLE sales_list
 (salesman_id INT,
@@ -645,13 +645,13 @@ PARTITION BY LIST (sales_state);
 CREATE TABLE sales_nord PARTITION OF sales_list FOR VALUES IN ('Helsinki', 'St. Petersburg', 'Oslo');
 CREATE TABLE sales_all PARTITION OF sales_list FOR VALUES IN ('Warsaw', 'Lisbon', 'New York', 'Madrid', 'Bejing', 'Berlin', 'Delhi', 'Kyiv', 'Vladivostok', NULL);
 
--- ERROR:  new partitions not have value NULL but split partition has
+-- ERROR:  new partitions do not have value NULL but split partition does
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
    PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
    PARTITION sales_central FOR VALUES IN ('Warsaw', 'Berlin', 'Kyiv'));
 
--- ERROR:  new partitions not have value 'Kyiv' but split partition has
+-- ERROR:  new partitions do not have value 'Kyiv' but split partition does
 ALTER TABLE sales_list SPLIT PARTITION sales_all INTO
   (PARTITION sales_west FOR VALUES IN ('Lisbon', 'New York', 'Madrid'),
    PARTITION sales_east FOR VALUES IN ('Bejing', 'Delhi', 'Vladivostok'),
@@ -703,7 +703,7 @@ SELECT * FROM sales_east;
 SELECT * FROM sales_nord;
 SELECT * FROM sales_central;
 
--- Use indexscan for test indexes after split partition
+-- Use indexscan for testing indexes after splitting partition
 SET enable_indexscan = ON;
 SET enable_seqscan = OFF;
 

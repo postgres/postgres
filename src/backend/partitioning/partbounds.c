@@ -3214,8 +3214,9 @@ check_new_partition_bound(char *relname, Relation parent,
 						PartitionRangeDatum *datum;
 
 						/*
-						 * Point to problematic key in the lower datums list;
-						 * if we have equality, point to the first one.
+						 * Point to problematic key in the list of lower
+						 * datums; if we have equality, point to the first
+						 * one.
 						 */
 						datum = cmpval == 0 ? linitial(spec->lowerdatums) :
 							list_nth(spec->lowerdatums, abs(cmpval) - 1);
@@ -4986,10 +4987,10 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
  * This is a helper function for check_partitions_for_split() and
  * calculate_partition_bound_for_merge().
  * This function compares upper bound of first_bound and lower bound of
- * second_bound. These bounds should be equal except case
+ * second_bound. These bounds should be equal except when
  * "defaultPart == true" (this means that one of split partitions is DEFAULT).
  * In this case upper bound of first_bound can be less than lower bound of
- * second_bound because space between of these bounds will be included in
+ * second_bound because space between these bounds will be included in
  * DEFAULT partition.
  *
  * parent:			partitioned table
@@ -4998,7 +4999,7 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
  * second_name:		name of second partition
  * second_bound:	bound of second partition
  * defaultPart:		true if one of split partitions is DEFAULT
- * pstate:			pointer to ParseState struct for determine error position
+ * pstate:			pointer to ParseState struct for determining error position
  */
 static void
 check_two_partitions_bounds_range(Relation parent,
@@ -5020,8 +5021,8 @@ check_two_partitions_bounds_range(Relation parent,
 	second_lower = make_one_partition_rbound(key, -1, second_bound->lowerdatums, true);
 
 	/*
-	 * lower1=false (the second to last argument) for correct comparison lower
-	 * and upper bounds.
+	 * lower1=false (the second to last argument) for correct comparison of
+	 * lower and upper bounds.
 	 */
 	cmpval = partition_rbound_cmp(key->partnatts,
 								  key->partsupfunc,
@@ -5140,7 +5141,7 @@ get_partition_bound_spec(Oid partOid, RangeVar *name)
  *
  * (function for BY RANGE partitioning)
  *
- * Checks that bounds of new partition "spec" is inside bounds of split
+ * Checks that bounds of new partition "spec" are inside bounds of split
  * partition (with Oid splitPartOid). If first=true (this means that "spec" is
  * the first of new partitions) then lower bound of "spec" should be equal (or
  * greater than or equal in case defaultPart=true) to lower bound of split
@@ -5274,7 +5275,7 @@ check_partition_bounds_for_split_range(Relation parent,
  *
  * (function for BY LIST partitioning)
  *
- * Checks that bounds of new partition is inside bounds of split partition
+ * Checks that bounds of new partition are inside bounds of split partition
  * (with Oid splitPartOid).
  *
  * parent:			partitioned table
@@ -5445,8 +5446,8 @@ check_parent_values_in_new_partitions(Relation parent,
 	Assert(key->strategy == PARTITION_STRATEGY_LIST);
 
 	/*
-	 * Special processing for NULL value. Search NULL-value if it contains
-	 * split partition (partOid).
+	 * Special processing for NULL value. Search NULL value if the split
+	 * partition (partOid) contains it.
 	 */
 	if (partition_bound_accepts_nulls(boundinfo) &&
 		partdesc->oids[boundinfo->null_index] == partOid)
@@ -5461,7 +5462,7 @@ check_parent_values_in_new_partitions(Relation parent,
 
 	/*
 	 * Search all values of split partition with partOid in PartitionDesc of
-	 * partitionde table.
+	 * partitioned table.
 	 */
 	for (i = 0; i < boundinfo->ndatums; i++)
 	{
@@ -5498,7 +5499,7 @@ check_parent_values_in_new_partitions(Relation parent,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("new partitions not have value %s but split partition has",
+				 errmsg("new partitions do not have value %s but split partition does",
 						searchNull ? "NULL" : get_list_partvalue_string(notFoundVal))));
 	}
 }
@@ -5645,7 +5646,7 @@ check_partitions_for_split(Relation parent,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("any partition in the list should be DEFAULT because split partition is DEFAULT")),
+				 errmsg("one partition in the list should be DEFAULT because split partition is DEFAULT")),
 				parser_errposition(pstate, ((SinglePartitionSpec *) linitial(partlist))->name->location));
 	}
 	else if (!isSplitPartDefault && (default_index >= 0) && OidIsValid(defaultPartOid))
@@ -5714,7 +5715,7 @@ check_partitions_for_split(Relation parent,
 			if (equal(sps->name, sps2->name))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_TABLE),
-						 errmsg("name \"%s\" already used", sps2->name->relname)),
+						 errmsg("name \"%s\" is already used", sps2->name->relname)),
 						parser_errposition(pstate, sps2->name->location));
 		}
 	}
@@ -5805,14 +5806,14 @@ calculate_partition_bound_for_merge(Relation parent,
 				}
 
 				/*
-				 * Lower bound of first partition is a lower bound of merged
+				 * Lower bound of first partition is the lower bound of merged
 				 * partition.
 				 */
 				spec->lowerdatums =
 					((PartitionBoundSpec *) list_nth(bounds, lower_bounds[0]->index))->lowerdatums;
 
 				/*
-				 * Upper bound of last partition is a upper bound of merged
+				 * Upper bound of last partition is the upper bound of merged
 				 * partition.
 				 */
 				spec->upperdatums =

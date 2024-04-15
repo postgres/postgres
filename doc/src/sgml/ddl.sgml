@@ -4387,7 +4387,7 @@ ALTER INDEX measurement_city_id_logdate_key
      a single partition using the
      <link linkend="sql-altertable-merge-partitions"><command>ALTER TABLE ... MERGE PARTITIONS</command></link>.
      This feature simplifies the management of partitioned tables by allowing
-     administrators to combine partitions that are no longer needed as
+     users to combine partitions that are no longer needed as
      separate entities.  It's important to note that this operation is not
      supported for hash-partitioned tables and acquires an
      <literal>ACCESS EXCLUSIVE</literal> lock, which could impact high-load

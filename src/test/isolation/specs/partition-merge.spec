@@ -38,7 +38,7 @@ step s2s	{ SELECT * FROM tpart; }
 
 
 # s2 inserts row into table. s1 starts MERGE PARTITIONS then
-# s2 trying to update inserted row and waits until s1 finished
+# s2 is trying to update inserted row and waits until s1 finishes
 # MERGE operation.
 
 permutation s2b s2i s2c s1b s1merg s2b s2u s1c s2c s2s

@@ -1175,7 +1175,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <itemizedlist>
        <listitem>
         <para>
-         For range-partitioned tables is necessary that the ranges
+         For range-partitioned tables it is necessary that the ranges
          of the partitions <replaceable class="parameter">partition_name1</replaceable>,
          <replaceable class="parameter">partition_name2</replaceable> [, ...] can
          be merged into one range without spaces and overlaps (otherwise an error
@@ -1185,10 +1185,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        </listitem>
        <listitem>
         <para>
-         For list-partitioned tables the values lists of all partitions
+         For list-partitioned tables the value lists of all partitions
          <replaceable class="parameter">partition_name1</replaceable>,
          <replaceable class="parameter">partition_name2</replaceable> [, ...] are
-         combined and form a list of values of partition
+         combined and form the list of values of partition
          <replaceable class="parameter">partition_name</replaceable>.
         </para>
        </listitem>

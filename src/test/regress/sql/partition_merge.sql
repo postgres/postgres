@@ -26,14 +26,14 @@ ALTER TABLE sales_range ATTACH PARTITION sales_apr2022 FOR VALUES FROM ('2022-04
 
 CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
 
--- ERROR:  partition with name "sales_feb2022" already used
+-- ERROR:  partition with name "sales_feb2022" is already used
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_feb2022) INTO sales_feb_mar_apr2022;
 -- ERROR:  "sales_apr2022" is not a table
 ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_apr2022) INTO sales_feb_mar_apr2022;
--- ERROR:  invalid partitions order, partition "sales_mar2022" can not be merged
+-- ERROR:  lower bound of partition "sales_mar2022" conflicts with upper bound of previous partition "sales_jan2022"
 -- (space between sections sales_jan2022 and sales_mar2022)
 ALTER TABLE sales_range MERGE PARTITIONS (sales_jan2022, sales_mar2022) INTO sales_jan_mar2022;
--- ERROR:  invalid partitions order, partition "sales_jan2022" can not be merged
+-- ERROR:  lower bound of partition "sales_jan2022" conflicts with upper bound of previous partition "sales_dec2021"
 -- (space between sections sales_dec2021 and sales_jan2022)
 ALTER TABLE sales_range MERGE PARTITIONS (sales_dec2021, sales_jan2022, sales_feb2022) INTO sales_dec_jan_feb2022;
 
@@ -48,7 +48,7 @@ SELECT c.oid::pg_catalog.regclass, c.relkind, inhdetachpending, pg_catalog.pg_ge
 DROP TABLE sales_range;
 
 --
--- Add rows into partitioned table then merge partitions
+-- Add rows into partitioned table, then merge partitions
 --
 CREATE TABLE sales_range (salesman_id INT, salesman_name VARCHAR(30), sales_amount INT, sales_date DATE) PARTITION BY RANGE (sales_date);
 CREATE TABLE sales_jan2022 PARTITION OF sales_range FOR VALUES FROM ('2022-01-01') TO ('2022-02-01');
@@ -96,7 +96,7 @@ SELECT * FROM sales_jan2022;
 SELECT * FROM sales_feb_mar_apr2022;
 SELECT * FROM sales_others;
 
--- Use indexscan for test indexes
+-- Use indexscan for testing indexes
 SET enable_seqscan = OFF;
 
 SELECT * FROM sales_feb_mar_apr2022 where sales_date > '2022-01-01';
@@ -415,7 +415,7 @@ SELECT * FROM sales_list;
 SELECT * FROM sales_nord;
 SELECT * FROM sales_all;
 
--- Use indexscan for test indexes after merge partitions
+-- Use indexscan for testing indexes after merging partitions
 SET enable_seqscan = OFF;
 
 SELECT * FROM sales_all WHERE sales_state = 'Warsaw';

@@ -3492,7 +3492,7 @@ transformPartitionCmdForSplit(CreateStmtContext *cxt, PartitionCmd *partcmd)
  * transformPartitionCmdForMerge
  *		Analyze the ALTER TABLLE ... MERGE PARTITIONS command
  *
- * Does simple checks for merged partitions. Calculates bound of result
+ * Does simple checks for merged partitions. Calculates bound of resulting
  * partition.
  */
 static void
@@ -3537,7 +3537,7 @@ transformPartitionCmdForMerge(CreateStmtContext *cxt, PartitionCmd *partcmd)
 			if (equal(name, name2))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_TABLE),
-						 errmsg("partition with name \"%s\" already used", name->relname)),
+						 errmsg("partition with name \"%s\" is already used", name->relname)),
 						parser_errposition(cxt->pstate, name2->location));
 		}
 
@@ -3551,7 +3551,7 @@ transformPartitionCmdForMerge(CreateStmtContext *cxt, PartitionCmd *partcmd)
 		partOids = lappend_oid(partOids, partOid);
 	}
 
-	/* Allocate bound of result partition. */
+	/* Allocate bound of resulting partition. */
 	Assert(partcmd->bound == NULL);
 	partcmd->bound = makeNode(PartitionBoundSpec);
 
