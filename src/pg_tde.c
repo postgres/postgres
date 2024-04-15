@@ -31,6 +31,7 @@
 #include "keyring/keyring_vault.h"
 #include "utils/builtins.h"
 #include "pg_tde_defs.h"
+#include "smgr/pg_tde_smgr.h"
 
 #define MAX_ON_INSTALLS 5
 
@@ -98,6 +99,8 @@ _PG_init(void)
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
 	RegisterCustomRmgr(RM_TDERMGR_ID, &pg_tde_rmgr);
+
+	RegisterStorageMgr();
 }
 
 Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS)
