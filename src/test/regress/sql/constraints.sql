@@ -661,12 +661,19 @@ ALTER TABLE cnn_parent DROP CONSTRAINT cnn_parent_pkey;
 create table cnn2_parted(a int primary key) partition by list (a);
 create table cnn2_part1(a int);
 alter table cnn2_parted attach partition cnn2_part1 for values in (1);
+insert into cnn2_part1 values (null);
 drop table cnn2_parted, cnn2_part1;
 
 create table cnn2_parted(a int not null) partition by list (a);
 create table cnn2_part1(a int primary key);
 alter table cnn2_parted attach partition cnn2_part1 for values in (1);
 drop table cnn2_parted, cnn2_part1;
+
+create table cnn2_parted(a int) partition by list (a);
+create table cnn_part1 partition of cnn2_parted for values in (1, null);
+insert into cnn_part1 values (null);
+alter table cnn2_parted add primary key (a);
+drop table cnn2_parted;
 
 -- columns in regular and LIKE inheritance should be marked not-nullable
 -- for primary keys, even if those are deferred

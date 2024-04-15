@@ -804,6 +804,13 @@ alter table pp1 alter column f1 drop not null;
 alter table pp1 add primary key (f1);
 -- Leave these tables around, for pg_upgrade testing
 
+-- Test a not-null addition that must walk down the hierarchy
+CREATE TABLE inh_parent ();
+CREATE TABLE inh_child (i int) INHERITS (inh_parent);
+CREATE TABLE inh_grandchild () INHERITS (inh_parent, inh_child);
+ALTER TABLE inh_parent ADD COLUMN i int NOT NULL;
+drop table inh_parent, inh_child, inh_grandchild;
+
 -- Test the same constraint name for different columns in different parents
 create table inh_parent1(a int constraint nn not null);
 create table inh_parent2(b int constraint nn not null);

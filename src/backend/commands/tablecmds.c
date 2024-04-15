@@ -7757,6 +7757,10 @@ set_attnotnull(List **wqueue, Relation rel, AttrNumber attnum, bool recurse,
 		List	   *children;
 		ListCell   *lc;
 
+		/* Make above update visible, for multiple inheritance cases */
+		if (retval)
+			CommandCounterIncrement();
+
 		children = find_inheritance_children(RelationGetRelid(rel), lockmode);
 		foreach(lc, children)
 		{
