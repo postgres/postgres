@@ -2111,3 +2111,6 @@ with a(b) as (values (row(1,2,3)))
 select * from a, coalesce(b) as c(d int, e int, f float);  -- fail
 ERROR:  function return row and query-specified return row do not match
 DETAIL:  Returned type integer at ordinal position 3, but query expects double precision.
+select * from int8_tbl, coalesce(row(1)) as (a int, b int);  -- fail
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 1 attribute, but query expects 2.
