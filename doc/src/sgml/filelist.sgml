@@ -107,6 +107,7 @@
 <!ENTITY storage    SYSTEM "storage.sgml">
 <!ENTITY transaction     SYSTEM "xact.sgml">
 <!ENTITY tablesample-method SYSTEM "tablesample-method.sgml">
+<!ENTITY wal-for-extensions SYSTEM "wal-for-extensions.sgml">
 <!ENTITY generic-wal SYSTEM "generic-wal.sgml">
 <!ENTITY custom-rmgr SYSTEM "custom-rmgr.sgml">
 <!ENTITY backup-manifest SYSTEM "backup-manifest.sgml">

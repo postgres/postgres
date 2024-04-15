@@ -256,8 +256,7 @@ break is not needed in a wider output rendering.
   &geqo;
   &tableam;
   &indexam;
-  &generic-wal;
-  &custom-rmgr;
+  &wal-for-extensions;
   &indextypes;
   &storage;
   &transaction;

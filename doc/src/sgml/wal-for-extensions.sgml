@@ -1,0 +1,32 @@
+<!-- doc/src/sgml/wal-for-extensions.sgml -->
+
+<chapter id="wal-for-extensions">
+ <title>Write Ahead Logging for Extensions</title>
+
+  <para>
+   Certain extensions, principally extensions that implement custom access
+   methods, may need to perform write-ahead logging in order to ensure
+   crash-safety. <productname>PostgreSQL</productname> provides two ways
+   for extensions to achieve this goal.
+  </para>
+
+  <para>
+   First, extensions can choose to use <link linkend="generic-wal">generic
+   WAL</link>, a special type of WAL record which describes changes to pages
+   in a generic way. This method is simple to implement and does not require
+   that an extension library be loaded in order to apply the records. However,
+   generic WAL records will be ignored when performing logical decoding.
+  </para>
+
+  <para>
+   Second, extensions can choose to use a <link linkend="custom-rmgr">custom
+   resource manager</link>. This method is more flexible, supports logical
+   decoding, and can sometimes generate much smaller write-ahead log records
+   than would be possible with generic WAL. However, it is more complex for an
+   extension to implement.
+  </para>
+
+&generic-wal;
+&custom-rmgr;
+
+</chapter>

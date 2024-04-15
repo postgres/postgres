@@ -1,10 +1,10 @@
 <!-- doc/src/sgml/custom-rmgr.sgml -->
 
-<chapter id="custom-rmgr">
+<sect1 id="custom-rmgr">
  <title>Custom WAL Resource Managers</title>
 
  <para>
-  This chapter explains the interface between the core
+  This section explains the interface between the core
   <productname>PostgreSQL</productname> system and custom WAL resource
   managers, which enable extensions to integrate directly with the <link
   linkend="wal"><acronym>WAL</acronym></link>.
@@ -13,10 +13,7 @@
   An extension, especially a <link linkend="tableam">Table Access
   Method</link> or <link linkend="indexam">Index Access Method</link>, may
   need to use WAL for recovery, replication, and/or <link
-  linkend="logicaldecoding">Logical Decoding</link>. Custom resource managers
-  are a more flexible alternative to <link linkend="generic-wal">Generic
-  WAL</link> (which does not support logical decoding), but more complex for
-  an extension to implement.
+  linkend="logicaldecoding">Logical Decoding</link>.
  </para>
  <para>
   To create a new custom WAL resource manager, first define an
@@ -102,4 +99,4 @@ extern void RegisterCustomRmgr(RmgrId rmid, const RmgrData *rmgr);
     the custom WAL records, which may prevent the server from starting.
    </para>
  </note>
-</chapter>
+</sect1>
