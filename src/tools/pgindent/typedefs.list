@@ -22,6 +22,7 @@ AclItem
 AclMaskHow
 AclMode
 AclResult
+AcquireSampleRowsFunc
 ActionList
 ActiveSnapshotElt
 AddForeignUpdateTargets_function
