@@ -5842,6 +5842,37 @@ select * from
  3 | 3
 (6 rows)
 
+-- check for generation of join EC conditions at wrong level (bug #18429)
+explain (costs off)
+select * from (
+  select arrayd.ad, coalesce(c.hundred, 0) as h
+  from unnest(array[1]) as arrayd(ad)
+  left join lateral (
+    select hundred from tenk1 where unique2 = arrayd.ad
+  ) c on true
+) c2
+where c2.h * c2.ad = c2.h * (c2.ad + 1);
+                                              QUERY PLAN                                               
+-------------------------------------------------------------------------------------------------------
+ Nested Loop Left Join
+   Filter: ((COALESCE(tenk1.hundred, 0) * arrayd.ad) = (COALESCE(tenk1.hundred, 0) * (arrayd.ad + 1)))
+   ->  Function Scan on unnest arrayd
+   ->  Index Scan using tenk1_unique2 on tenk1
+         Index Cond: (unique2 = arrayd.ad)
+(5 rows)
+
+select * from (
+  select arrayd.ad, coalesce(c.hundred, 0) as h
+  from unnest(array[1]) as arrayd(ad)
+  left join lateral (
+    select hundred from tenk1 where unique2 = arrayd.ad
+  ) c on true
+) c2
+where c2.h * c2.ad = c2.h * (c2.ad + 1);
+ ad | h 
+----+---
+(0 rows)
+
 -- check the number of columns specified
 SELECT * FROM (int8_tbl i cross join int4_tbl j) ss(a,b,c,d);
 ERROR:  join expression "ss" has 3 columns available but 4 columns specified
