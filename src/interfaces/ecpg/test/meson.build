@@ -45,9 +45,10 @@ ecpg_preproc_test_command_start = [
   '--regression',
   '-I@CURRENT_SOURCE_DIR@',
   '-I@SOURCE_ROOT@' + '/src/interfaces/ecpg/include/',
+  '-o', '@OUTPUT@',
 ]
 ecpg_preproc_test_command_end = [
-  '-o', '@OUTPUT@', '@INPUT@'
+  '@INPUT@'
 ]
 
 ecpg_test_dependencies = []

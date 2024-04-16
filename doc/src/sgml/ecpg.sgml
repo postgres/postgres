@@ -5790,6 +5790,14 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
     embedded SQL query because in this case the embedded SQL precompiler is not
     able to see this declaration.
    </para>
+
+   <para>
+    If multiple input files are named on the <command>ecpg</command>
+    preprocessor's command line, the effects of <literal>EXEC SQL
+    DEFINE</literal> and <literal>EXEC SQL UNDEF</literal> do not carry
+    across files: each file starts with only the symbols defined
+    by <option>-D</option> switches on the command line.
+   </para>
   </sect2>
 
   <sect2 id="ecpg-ifdef">
