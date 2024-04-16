@@ -20,8 +20,8 @@
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/xact.h"
-#include "commands/vacuum.h"
 #include "executor/tuptable.h"
+#include "storage/read_stream.h"
 #include "utils/rel.h"
 #include "utils/snapshot.h"
 
@@ -655,6 +655,50 @@ typedef struct TableAmRoutine
 									struct VacuumParams *params,
 									BufferAccessStrategy bstrategy);
 
+	/*
+	 * Prepare to analyze the next block in the read stream.  Returns false if
+	 * the stream is exhausted and true otherwise. The scan must have been
+	 * started with SO_TYPE_ANALYZE option.
+	 *
+	 * This routine holds a buffer pin and lock on the heap page.  They are
+	 * held until heapam_scan_analyze_next_tuple() returns false.  That is
+	 * until all the items of the heap page are analyzed.
+	 */
+
+	/*
+	 * Prepare to analyze block `blockno` of `scan`. The scan has been started
+	 * with table_beginscan_analyze().  See also
+	 * table_scan_analyze_next_block().
+	 *
+	 * The callback may acquire resources like locks that are held until
+	 * table_scan_analyze_next_tuple() returns false. It e.g. can make sense
+	 * to hold a lock until all tuples on a block have been analyzed by
+	 * scan_analyze_next_tuple.
+	 *
+	 * The callback can return false if the block is not suitable for
+	 * sampling, e.g. because it's a metapage that could never contain tuples.
+	 *
+	 * XXX: This obviously is primarily suited for block-based AMs. It's not
+	 * clear what a good interface for non block based AMs would be, so there
+	 * isn't one yet.
+	 */
+	bool		(*scan_analyze_next_block) (TableScanDesc scan,
+											ReadStream *stream);
+
+	/*
+	 * See table_scan_analyze_next_tuple().
+	 *
+	 * Not every AM might have a meaningful concept of dead rows, in which
+	 * case it's OK to not increment *deadrows - but note that that may
+	 * influence autovacuum scheduling (see comment for relation_vacuum
+	 * callback).
+	 */
+	bool		(*scan_analyze_next_tuple) (TableScanDesc scan,
+											TransactionId OldestXmin,
+											double *liverows,
+											double *deadrows,
+											TupleTableSlot *slot);
+
 	/* see table_index_build_range_scan for reference about parameters */
 	double		(*index_build_range_scan) (Relation table_rel,
 										   Relation index_rel,
@@ -674,12 +718,6 @@ typedef struct TableAmRoutine
 										struct IndexInfo *index_info,
 										Snapshot snapshot,
 										struct ValidateIndexState *state);
-
-	/* See table_relation_analyze() */
-	void		(*relation_analyze) (Relation relation,
-									 AcquireSampleRowsFunc *func,
-									 BlockNumber *totalpages,
-									 BufferAccessStrategy bstrategy);
 
 
 	/* ------------------------------------------------------------------------
@@ -1683,6 +1721,40 @@ table_relation_vacuum(Relation rel, struct VacuumParams *params,
 }
 
 /*
+ * Prepare to analyze the next block in the read stream. The scan needs to
+ * have been  started with table_beginscan_analyze().  Note that this routine
+ * might acquire resources like locks that are held until
+ * table_scan_analyze_next_tuple() returns false.
+ *
+ * Returns false if block is unsuitable for sampling, true otherwise.
+ */
+static inline bool
+table_scan_analyze_next_block(TableScanDesc scan, ReadStream *stream)
+{
+	return scan->rs_rd->rd_tableam->scan_analyze_next_block(scan, stream);
+}
+
+/*
+ * Iterate over tuples in the block selected with
+ * table_scan_analyze_next_block() (which needs to have returned true, and
+ * this routine may not have returned false for the same block before). If a
+ * tuple that's suitable for sampling is found, true is returned and a tuple
+ * is stored in `slot`.
+ *
+ * *liverows and *deadrows are incremented according to the encountered
+ * tuples.
+ */
+static inline bool
+table_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
+							  double *liverows, double *deadrows,
+							  TupleTableSlot *slot)
+{
+	return scan->rs_rd->rd_tableam->scan_analyze_next_tuple(scan, OldestXmin,
+															liverows, deadrows,
+															slot);
+}
+
+/*
  * table_index_build_scan - scan the table to find tuples to be indexed
  *
  * This is called back from an access-method-specific index build procedure
@@ -1787,21 +1859,6 @@ table_index_validate_scan(Relation table_rel,
 											   state);
 }
 
-/*
- * table_relation_analyze - fill the infromation for a sampling statistics
- *							acquisition
- *
- * The pointer to a function that will collect sample rows from the table
- * should be stored to `*func`, plus the estimated size of the table in pages
- * should br stored to `*totalpages`.
- */
-static inline void
-table_relation_analyze(Relation relation, AcquireSampleRowsFunc *func,
-					   BlockNumber *totalpages, BufferAccessStrategy bstrategy)
-{
-	relation->rd_tableam->relation_analyze(relation, func,
-										   totalpages, bstrategy);
-}
 
 /* ----------------------------------------------------------------------------
  * Miscellaneous functionality

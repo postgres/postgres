@@ -22,7 +22,6 @@ AclItem
 AclMaskHow
 AclMode
 AclResult
-AcquireSampleRowsFunc
 ActionList
 ActiveSnapshotElt
 AddForeignUpdateTargets_function
@@ -2530,8 +2529,6 @@ ScalarIOData
 ScalarItem
 ScalarMCVItem
 Scan
-ScanAnalyzeNextBlockFunc
-ScanAnalyzeNextTupleFunc
 ScanDirection
 ScanKey
 ScanKeyData

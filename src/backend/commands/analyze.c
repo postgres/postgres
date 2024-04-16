@@ -17,7 +17,6 @@
 #include <math.h>
 
 #include "access/detoast.h"
-#include "access/heapam.h"
 #include "access/genam.h"
 #include "access/multixact.h"
 #include "access/relation.h"
@@ -76,8 +75,6 @@ int			default_statistics_target = 100;
 /* A few variables that don't seem worth passing around as parameters */
 static MemoryContext anl_context = NULL;
 static BufferAccessStrategy vac_strategy;
-static ScanAnalyzeNextBlockFunc scan_analyze_next_block;
-static ScanAnalyzeNextTupleFunc scan_analyze_next_tuple;
 
 
 static void do_analyze_rel(Relation onerel,
@@ -90,6 +87,9 @@ static void compute_index_stats(Relation onerel, double totalrows,
 								MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 									   Node *index_expr);
+static int	acquire_sample_rows(Relation onerel, int elevel,
+								HeapTuple *rows, int targrows,
+								double *totalrows, double *totaldeadrows);
 static int	compare_rows(const void *a, const void *b, void *arg);
 static int	acquire_inherited_sample_rows(Relation onerel, int elevel,
 										  HeapTuple *rows, int targrows,
@@ -190,12 +190,10 @@ analyze_rel(Oid relid, RangeVar *relation,
 	if (onerel->rd_rel->relkind == RELKIND_RELATION ||
 		onerel->rd_rel->relkind == RELKIND_MATVIEW)
 	{
-		/*
-		 * Get row acquisition function, blocks and tuples iteration callbacks
-		 * provided by table AM
-		 */
-		table_relation_analyze(onerel, &acquirefunc,
-							   &relpages, vac_strategy);
+		/* Regular table, so we'll use the regular row acquisition function */
+		acquirefunc = acquire_sample_rows;
+		/* Also get regular table's size */
+		relpages = RelationGetNumberOfBlocks(onerel);
 	}
 	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
@@ -1119,17 +1117,15 @@ block_sampling_read_stream_next(ReadStream *stream,
 }
 
 /*
- * acquire_sample_rows -- acquire a random sample of rows from the
- * block-based relation
+ * acquire_sample_rows -- acquire a random sample of rows from the table
  *
  * Selected rows are returned in the caller-allocated array rows[], which
  * must have at least targrows entries.
  * The actual number of rows selected is returned as the function result.
- * We also estimate the total numbers of live and dead rows in the relation,
+ * We also estimate the total numbers of live and dead rows in the table,
  * and return them into *totalrows and *totaldeadrows, respectively.
  *
- * The returned list of tuples is in order by physical position in the
- * relation.
+ * The returned list of tuples is in order by physical position in the table.
  * (We will rely on this later to derive correlation estimates.)
  *
  * As of May 2004 we use a new two-stage method:  Stage one selects up
@@ -1151,7 +1147,7 @@ block_sampling_read_stream_next(ReadStream *stream,
  * look at a statistically unbiased set of blocks, we should get
  * unbiased estimates of the average numbers of live and dead rows per
  * block.  The previous sampling method put too much credence in the row
- * density near the start of the relation.
+ * density near the start of the table.
  */
 static int
 acquire_sample_rows(Relation onerel, int elevel,
@@ -1204,11 +1200,11 @@ acquire_sample_rows(Relation onerel, int elevel,
 										0);
 
 	/* Outer loop over blocks to sample */
-	while (scan_analyze_next_block(scan, stream))
+	while (table_scan_analyze_next_block(scan, stream))
 	{
 		vacuum_delay_point();
 
-		while (scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
+		while (table_scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
 		{
 			/*
 			 * The first targrows sample rows are simply copied into the
@@ -1331,25 +1327,6 @@ compare_rows(const void *a, const void *b, void *arg)
 	return 0;
 }
 
-/*
- * block_level_table_analyze -- implementation of relation_analyze() for
- *								block-level table access methods
- */
-void
-block_level_table_analyze(Relation relation,
-						  AcquireSampleRowsFunc *func,
-						  BlockNumber *totalpages,
-						  BufferAccessStrategy bstrategy,
-						  ScanAnalyzeNextBlockFunc scan_analyze_next_block_cb,
-						  ScanAnalyzeNextTupleFunc scan_analyze_next_tuple_cb)
-{
-	*func = acquire_sample_rows;
-	*totalpages = RelationGetNumberOfBlocks(relation);
-	vac_strategy = bstrategy;
-	scan_analyze_next_block = scan_analyze_next_block_cb;
-	scan_analyze_next_tuple = scan_analyze_next_tuple_cb;
-}
-
 
 /*
  * acquire_inherited_sample_rows -- acquire sample rows from inheritance tree
@@ -1439,9 +1416,9 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		if (childrel->rd_rel->relkind == RELKIND_RELATION ||
 			childrel->rd_rel->relkind == RELKIND_MATVIEW)
 		{
-			/* Use row acquisition function provided by table AM */
-			table_relation_analyze(childrel, &acquirefunc,
-								   &relpages, vac_strategy);
+			/* Regular table, so use the regular row acquisition function */
+			acquirefunc = acquire_sample_rows;
+			relpages = RelationGetNumberOfBlocks(childrel);
 		}
 		else if (childrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		{
