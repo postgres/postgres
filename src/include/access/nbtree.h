@@ -267,7 +267,7 @@ BTPageGetDeleteXid(Page page)
 	opaque = BTPageGetOpaque(page);
 	Assert(P_ISDELETED(opaque));
 
-	/* pg_upgrade'd deleted page -- must be safe to delete now */
+	/* pg_upgrade'd deleted page -- must be safe to recycle now */
 	if (!P_HAS_FULLXID(opaque))
 		return FirstNormalFullTransactionId;
 
