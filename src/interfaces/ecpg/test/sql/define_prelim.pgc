@@ -1,0 +1,6 @@
+/*
+ * Test that the effects of these commands don't carry over to the next
+ * file named on the ecpg command line.
+ */
+exec sql define CMDLINESYM 999;
+exec sql define NONCMDLINESYM 1234;

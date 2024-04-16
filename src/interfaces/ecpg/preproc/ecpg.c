@@ -80,35 +80,46 @@ add_include_path(char *path)
 	}
 }
 
+/*
+ * Process a command line -D switch
+ */
 static void
 add_preprocessor_define(char *define)
 {
-	struct _defines *pd = defines;
-	char	   *ptr,
-			   *define_copy = mm_strdup(define);
+	/* copy the argument to avoid relying on argv storage */
+	char	   *define_copy = mm_strdup(define);
+	char	   *ptr;
+	struct _defines *newdef;
 
-	defines = mm_alloc(sizeof(struct _defines));
+	newdef = mm_alloc(sizeof(struct _defines));
 
 	/* look for = sign */
 	ptr = strchr(define_copy, '=');
 	if (ptr != NULL)
 	{
+		/* symbol has a value */
 		char	   *tmp;
 
-		/* symbol has a value */
-		for (tmp = ptr - 1; *tmp == ' '; tmp--);
+		/* strip any spaces between name and '=' */
+		for (tmp = ptr - 1; tmp >= define_copy && *tmp == ' '; tmp--);
 		tmp[1] = '\0';
-		defines->olddef = define_copy;
-		defines->newdef = ptr + 1;
+
+		/*
+		 * Note we don't bother to separately malloc cmdvalue; it will never
+		 * be freed so that's not necessary.
+		 */
+		newdef->cmdvalue = ptr + 1;
 	}
 	else
 	{
-		defines->olddef = define_copy;
-		defines->newdef = mm_strdup("1");
+		/* define it as "1"; again no need to malloc it */
+		newdef->cmdvalue = "1";
 	}
-	defines->pertinent = true;
-	defines->used = NULL;
-	defines->next = pd;
+	newdef->name = define_copy;
+	newdef->value = mm_strdup(newdef->cmdvalue);
+	newdef->used = NULL;
+	newdef->next = defines;
+	defines = newdef;
 }
 
 #define ECPG_GETOPT_LONG_REGRESSION		1
@@ -345,6 +356,8 @@ main(int argc, char *const argv[])
 			{
 				struct cursor *ptr;
 				struct _defines *defptr;
+				struct _defines *prevdefptr;
+				struct _defines *nextdefptr;
 				struct typedefs *typeptr;
 
 				/* remove old cursor definitions if any are still there */
@@ -372,28 +385,28 @@ main(int argc, char *const argv[])
 				}
 				cur = NULL;
 
-				/* remove non-pertinent old defines as well */
-				while (defines && !defines->pertinent)
+				/* restore defines to their command-line state */
+				prevdefptr = NULL;
+				for (defptr = defines; defptr != NULL; defptr = nextdefptr)
 				{
-					defptr = defines;
-					defines = defines->next;
-
-					free(defptr->newdef);
-					free(defptr->olddef);
-					free(defptr);
-				}
-
-				for (defptr = defines; defptr != NULL; defptr = defptr->next)
-				{
-					struct _defines *this = defptr->next;
-
-					if (this && !this->pertinent)
+					nextdefptr = defptr->next;
+					if (defptr->cmdvalue != NULL)
 					{
-						defptr->next = this->next;
-
-						free(this->newdef);
-						free(this->olddef);
-						free(this);
+						/* keep it, resetting the value */
+						free(defptr->value);
+						defptr->value = mm_strdup(defptr->cmdvalue);
+						prevdefptr = defptr;
+					}
+					else
+					{
+						/* remove it */
+						if (prevdefptr != NULL)
+							prevdefptr->next = nextdefptr;
+						else
+							defines = nextdefptr;
+						free(defptr->name);
+						free(defptr->value);
+						free(defptr);
 					}
 				}
 

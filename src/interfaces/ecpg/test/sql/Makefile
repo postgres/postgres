@@ -31,5 +31,8 @@ TESTS = array array.c \
 
 all: $(TESTS)
 
+define.c: define.pgc define_prelim.pgc $(ECPG_TEST_DEPENDENCIES)
+	$(ECPG) -DCMDLINESYM=123 -o $@ $(srcdir)/define_prelim.pgc $<
+
 oldexec.c: oldexec.pgc $(ECPG_TEST_DEPENDENCIES)
 	$(ECPG) -r questionmarks -o $@ $<
