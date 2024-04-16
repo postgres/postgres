@@ -73,7 +73,7 @@ jobs:
         working-directory: src/build
 
       - name: Report on test fail
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
           name: Regressions diff and postgresql log
@@ -125,7 +125,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
         working-directory: inst
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr_perf_results
           path: inst/pr_perf_results

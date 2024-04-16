@@ -82,7 +82,7 @@ jobs:
         working-directory: src/contrib/pg_tde
 
       - name: Report on test fail
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
           name: Regressions diff and postgresql log
