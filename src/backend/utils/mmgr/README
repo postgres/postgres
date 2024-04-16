@@ -471,25 +471,32 @@ thrashing.
 Alternative Memory Context Implementations
 ------------------------------------------
 
-aset.c is our default general-purpose implementation, working fine
-in most situations. We also have two implementations optimized for
-special use cases, providing either better performance or lower memory
-usage compared to aset.c (or both).
+aset.c (AllocSetContext) is our default general-purpose allocator.  Three other
+allocator types also exist which are special-purpose:
 
-* slab.c (SlabContext) is designed for allocations of fixed-length
-  chunks, and does not allow allocations of chunks with different size.
+* slab.c (SlabContext) is designed for allocations of fixed-sized
+  chunks.  The fixed chunk size must be specified when creating the context.
+  New chunks are allocated to the fullest block, keeping used chunks densely
+  packed together to avoid memory fragmentation.  This also increases the
+  chances that pfree'ing a chunk will result in a block becoming empty of all
+  chunks and allow it to be free'd back to the operating system.
 
-* generation.c (GenerationContext) is designed for cases when chunks
-  are allocated in groups with similar lifespan (generations), or
-  roughly in FIFO order.
+* generation.c (GenerationContext) is best suited for cases when chunks are
+  allocated in groups with similar lifespan (generations), or roughly in FIFO
+  order.  No attempt is made to reuse space left by pfree'd chunks.  Blocks
+  are returned to the operating system when all chunks on them have been
+  pfree'd.
 
-Both memory contexts aim to free memory back to the operating system
-(unlike aset.c, which keeps the freed chunks in a freelist, and only
-returns the memory when reset/deleted).
+* bump.c (BumpContext) is best suited for use cases that require densely
+  allocated chunks of memory that never need to be individually pfree'd or
+  repalloc'd.  These operations are unsupported due to BumpContext chunks
+  having no chunk header.  No chunk header means more densely packed chunks,
+  which is especially useful for workloads that perform lots of small
+  allocations.  Blocks are only free'd back to the operating system when the
+  context is reset or deleted.
 
-These memory contexts were initially developed for ReorderBuffer, but
-may be useful elsewhere as long as the allocation patterns match.
-
+For further details, please read the header comment in the corresponding .c
+file.
 
 Memory Accounting
 -----------------
