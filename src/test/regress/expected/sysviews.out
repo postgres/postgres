@@ -47,7 +47,7 @@ select name, parent, total_bytes > 0, total_nblocks, free_bytes > 0, free_chunks
 from pg_backend_memory_contexts where name = 'Caller tuples';
      name      |     parent     | ?column? | total_nblocks | ?column? | free_chunks 
 ---------------+----------------+----------+---------------+----------+-------------
- Caller tuples | TupleSort sort | t        |             3 | t        |           0
+ Caller tuples | TupleSort sort | t        |             2 | t        |           0
 (1 row)
 
 rollback;
