@@ -656,7 +656,7 @@ BTreeTupleGetHeapTID(IndexTuple itup)
 
 /*
  * Get maximum heap TID attribute, which could be the only TID in the case of
- * a non-pivot tuple that does not have a posting list tuple.
+ * a non-pivot tuple that does not have a posting list.
  *
  * Works with non-pivot tuples only.
  */
