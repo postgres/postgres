@@ -52,7 +52,7 @@ extern PGDLLIMPORT int postmaster_alive_fds[2];
 
 extern PGDLLIMPORT const char *progname;
 
-extern bool LoadedSSL;
+extern PGDLLIMPORT bool LoadedSSL;
 
 extern void PostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
 extern void ClosePostmasterPorts(bool am_syslogger);
@@ -74,7 +74,7 @@ extern void pgwin32_register_deadchild_callback(HANDLE procHandle, DWORD procId)
 #endif
 
 /* defined in globals.c */
-extern struct ClientSocket *MyClientSocket;
+extern PGDLLIMPORT struct ClientSocket *MyClientSocket;
 
 /* prototypes for functions in launch_backend.c */
 extern pid_t postmaster_child_launch(BackendType child_type, char *startup_data, size_t startup_data_len, struct ClientSocket *sock);
