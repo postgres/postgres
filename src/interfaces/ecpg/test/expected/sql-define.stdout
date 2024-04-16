@@ -1,1 +1,4 @@
 i: 1, s: 29-abcdef
+original CMDLINESYM: 123
+redefined CMDLINESYM: 42
+redefined CMDLINESYM: 43
