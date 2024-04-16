@@ -154,7 +154,7 @@ typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
 									  double *totaldeadrows);
 
 typedef bool (*AnalyzeForeignTable_function) (Relation relation,
-											  AcquireSampleRowsFunc * func,
+											  AcquireSampleRowsFunc *func,
 											  BlockNumber *totalpages);
 
 typedef List *(*ImportForeignSchema_function) (ImportForeignSchemaStmt *stmt,
