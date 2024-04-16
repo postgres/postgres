@@ -93,10 +93,12 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-D <replaceable>symbol</replaceable></option></term>
+     <term><option>-D <replaceable>symbol</replaceable>[=<replaceable>value</replaceable>]</option></term>
      <listitem>
       <para>
-       Define a C preprocessor symbol.
+       Define a preprocessor symbol, equivalently to the <command>EXEC SQL
+       DEFINE</command> directive.  If no <replaceable>value</replaceable> is
+       specified, the symbol is defined with the value <literal>1</literal>.
       </para>
      </listitem>
     </varlistentry>

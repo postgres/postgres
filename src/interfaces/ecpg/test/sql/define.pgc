@@ -53,6 +53,31 @@ int main(void)
    exec sql SET TIMEZONE TO TZVAR;
    exec sql endif;
 
+   /* test handling of a macro defined on the command line */
+   exec sql select CMDLINESYM INTO :i;
+   printf("original CMDLINESYM: %d\n", i);
+
+   exec sql define CMDLINESYM 42;
+
+   exec sql select CMDLINESYM INTO :i;
+   printf("redefined CMDLINESYM: %d\n", i);
+
+   exec sql define CMDLINESYM 43;
+
+   exec sql select CMDLINESYM INTO :i;
+   printf("redefined CMDLINESYM: %d\n", i);
+
+   exec sql undef CMDLINESYM;
+
+   exec sql ifdef CMDLINESYM;
+   exec sql insert into test values (NUMBER, 'no string');
+   exec sql endif;
+
+   /* this macro should not have carried over from define_prelim.pgc */
+   exec sql ifdef NONCMDLINESYM;
+   exec sql insert into test values (NUMBER, 'no string');
+   exec sql endif;
+
    exec sql disconnect;
    return 0;
 }
