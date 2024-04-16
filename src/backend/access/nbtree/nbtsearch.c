@@ -1051,7 +1051,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 					 ScanDirectionIsForward(dir) :
 					 ScanDirectionIsBackward(dir)))
 				{
-					/* Yes, so build the key in notnullkeys[keysCount] */
+					/* Yes, so build the key in notnullkeys[keysz] */
 					chosen = &notnullkeys[keysz];
 					ScanKeyEntryInitialize(chosen,
 										   (SK_SEARCHNOTNULL | SK_ISNULL |
