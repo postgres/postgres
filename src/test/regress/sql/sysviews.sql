@@ -17,6 +17,21 @@ select count(*) >= 0 as ok from pg_available_extensions;
 select name, ident, parent, level, total_bytes >= free_bytes
   from pg_backend_memory_contexts where level = 0;
 
+-- We can exercise some MemoryContext type stats functions.  Most of the
+-- column values are too platform-dependant to display.
+
+-- Ensure stats from the bump allocator look sane.  Bump isn't a commonly
+-- used context, but it is used in tuplesort.c, so open a cursor to keep
+-- the tuplesort alive long enough for us to query the context stats.
+begin;
+declare cur cursor for select left(a,10), b
+  from (values(repeat('a', 512 * 1024),1),(repeat('b', 512),2)) v(a,b)
+  order by v.a desc;
+fetch 1 from cur;
+select name, parent, total_bytes > 0, total_nblocks, free_bytes > 0, free_chunks
+from pg_backend_memory_contexts where name = 'Caller tuples';
+rollback;
+
 -- At introduction, pg_config had 23 entries; it may grow
 select count(*) > 20 as ok from pg_config;
 
