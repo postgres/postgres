@@ -34,14 +34,14 @@ jobs:
           sudo apt update && sudo apt install -y vault
 
       - name: Clone postgres repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: 'postgres/postgres'
           ref: 'a81e5516fa4bc53e332cb35eefe231147c0e1749'
           path: 'src'
 
       - name: Clone pg_tde repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: 'src/contrib/pg_tde'
 
