@@ -56,7 +56,7 @@ DROP TABLE test1;
 DROP TABLE test2;
 
 -- Test that parallel index build produces the same BRIN index as serial build.
-CREATE TABLE brin_parallel_test (a int, b text, c bigint) WITH (fillfactor=40);
+CREATE TEMPORARY TABLE brin_parallel_test (a int, b text, c bigint) WITH (fillfactor=40);
 
 -- Generate a table with a mix of NULLs and non-NULL values (and data suitable
 -- for the different opclasses we build later).
