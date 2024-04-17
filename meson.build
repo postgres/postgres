@@ -2301,6 +2301,14 @@ decl_checks += [
   ['pwritev', 'sys/uio.h'],
 ]
 
+# Check presence of some optional LLVM functions.
+if llvm.found()
+  decl_checks += [
+    ['LLVMCreateGDBRegistrationListener', 'llvm-c/ExecutionEngine.h'],
+    ['LLVMCreatePerfJITEventListener', 'llvm-c/ExecutionEngine.h'],
+  ]
+endif
+
 foreach c : decl_checks
   func = c.get(0)
   header = c.get(1)
