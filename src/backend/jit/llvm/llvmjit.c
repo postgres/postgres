@@ -1033,20 +1033,12 @@ llvm_shutdown(int code, Datum arg)
 
 		if (llvm_opt3_orc)
 		{
-#if defined(HAVE_DECL_LLVMORCREGISTERPERF) && HAVE_DECL_LLVMORCREGISTERPERF
-			if (jit_profiling_support)
-				LLVMOrcUnregisterPerf(llvm_opt3_orc);
-#endif
 			LLVMOrcDisposeInstance(llvm_opt3_orc);
 			llvm_opt3_orc = NULL;
 		}
 
 		if (llvm_opt0_orc)
 		{
-#if defined(HAVE_DECL_LLVMORCREGISTERPERF) && HAVE_DECL_LLVMORCREGISTERPERF
-			if (jit_profiling_support)
-				LLVMOrcUnregisterPerf(llvm_opt0_orc);
-#endif
 			LLVMOrcDisposeInstance(llvm_opt0_orc);
 			llvm_opt0_orc = NULL;
 		}
