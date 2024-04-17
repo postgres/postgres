@@ -107,8 +107,6 @@ typedef struct GlobalVisState GlobalVisState;
 extern GlobalVisState *GlobalVisTestFor(Relation rel);
 extern bool GlobalVisTestIsRemovableXid(GlobalVisState *state, TransactionId xid);
 extern bool GlobalVisTestIsRemovableFullXid(GlobalVisState *state, FullTransactionId fxid);
-extern FullTransactionId GlobalVisTestNonRemovableFullHorizon(GlobalVisState *state);
-extern TransactionId GlobalVisTestNonRemovableHorizon(GlobalVisState *state);
 extern bool GlobalVisCheckRemovableXid(Relation rel, TransactionId xid);
 extern bool GlobalVisCheckRemovableFullXid(Relation rel, FullTransactionId fxid);
 

@@ -4263,36 +4263,6 @@ GlobalVisTestIsRemovableXid(GlobalVisState *state, TransactionId xid)
 }
 
 /*
- * Return FullTransactionId below which all transactions are not considered
- * running anymore.
- *
- * Note: This is less efficient than testing with
- * GlobalVisTestIsRemovableFullXid as it likely requires building an accurate
- * cutoff, even in the case all the XIDs compared with the cutoff are outside
- * [maybe_needed, definitely_needed).
- */
-FullTransactionId
-GlobalVisTestNonRemovableFullHorizon(GlobalVisState *state)
-{
-	/* acquire accurate horizon if not already done */
-	if (GlobalVisTestShouldUpdate(state))
-		GlobalVisUpdate();
-
-	return state->maybe_needed;
-}
-
-/* Convenience wrapper around GlobalVisTestNonRemovableFullHorizon */
-TransactionId
-GlobalVisTestNonRemovableHorizon(GlobalVisState *state)
-{
-	FullTransactionId cutoff;
-
-	cutoff = GlobalVisTestNonRemovableFullHorizon(state);
-
-	return XidFromFullTransactionId(cutoff);
-}
-
-/*
  * Convenience wrapper around GlobalVisTestFor() and
  * GlobalVisTestIsRemovableFullXid(), see their comments.
  */
