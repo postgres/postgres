@@ -111,7 +111,7 @@ static void validate_table_rewrite_tags(const char *filtervar, List *taglist);
 static void EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata);
 static const char *stringify_grant_objtype(ObjectType objtype);
 static const char *stringify_adefprivs_objtype(ObjectType objtype);
-static void SetDatatabaseHasLoginEventTriggers(void);
+static void SetDatabaseHasLoginEventTriggers(void);
 
 /*
  * Create an event trigger.
@@ -315,7 +315,7 @@ insert_event_trigger_tuple(const char *trigname, const char *eventname, Oid evtO
 	 * faster lookups in hot codepaths. Set the flag unless already True.
 	 */
 	if (strcmp(eventname, "login") == 0)
-		SetDatatabaseHasLoginEventTriggers();
+		SetDatabaseHasLoginEventTriggers();
 
 	/* Depend on owner. */
 	recordDependencyOnOwner(EventTriggerRelationId, trigoid, evtOwner);
@@ -383,7 +383,7 @@ filter_list_to_array(List *filterlist)
  * current database has on login event triggers.
  */
 void
-SetDatatabaseHasLoginEventTriggers(void)
+SetDatabaseHasLoginEventTriggers(void)
 {
 	/* Set dathasloginevt flag in pg_database */
 	Form_pg_database db;
@@ -453,7 +453,7 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 	 */
 	if (namestrcmp(&evtForm->evtevent, "login") == 0 &&
 		tgenabled != TRIGGER_DISABLED)
-		SetDatatabaseHasLoginEventTriggers();
+		SetDatabaseHasLoginEventTriggers();
 
 	InvokeObjectPostAlterHook(EventTriggerRelationId,
 							  trigoid, 0);
@@ -925,7 +925,7 @@ EventTriggerOnLogin(void)
 	/*
 	 * There is no active login event trigger, but our
 	 * pg_database.dathasloginevt is set. Try to unset this flag.  We use the
-	 * lock to prevent concurrent SetDatatabaseHasLoginEventTriggers(), but we
+	 * lock to prevent concurrent SetDatabaseHasLoginEventTriggers(), but we
 	 * don't want to hang the connection waiting on the lock.  Thus, we are
 	 * just trying to acquire the lock conditionally.
 	 */
