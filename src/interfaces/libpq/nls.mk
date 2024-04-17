@@ -2,6 +2,7 @@
 CATALOG_NAME     = libpq
 GETTEXT_FILES    = fe-auth.c \
                    fe-auth-scram.c \
+                   fe-cancel.c \
                    fe-connect.c \
                    fe-exec.c \
                    fe-gssapi-common.c \
