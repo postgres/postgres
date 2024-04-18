@@ -69,8 +69,8 @@ PostgreSQL documentation
    spent synchronizing data is usually a large amount of changes to be applied
    (that were produced during the initial data copy), which increases even
    more the time when the logical replica will be available. For smaller
-   databases, <link linkend="logical-replication">initial data
-   synchronization</link> is recommended.
+   databases, <link linkend="logical-replication-row-filter-initial-data-sync">
+   initial data synchronization</link> is recommended.
   </para>
  </refsect1>
 
