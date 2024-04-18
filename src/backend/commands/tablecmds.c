@@ -9336,7 +9336,6 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 {
 	List	   *children;
 	List	   *newconstrs = NIL;
-	ListCell   *lc;
 	IndexStmt  *indexstmt;
 
 	/* No work if not creating a primary key */
@@ -9351,11 +9350,19 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		!rel->rd_rel->relhassubclass)
 		return;
 
-	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+	/*
+	 * Acquire locks all the way down the hierarchy.  The recursion to lower
+	 * levels occurs at execution time as necessary, so we don't need to do it
+	 * here, and we don't need the returned list either.
+	 */
+	(void) find_all_inheritors(RelationGetRelid(rel), lockmode, NULL);
 
-	foreach(lc, indexstmt->indexParams)
+	/*
+	 * Construct the list of constraints that we need to add to each child
+	 * relation.
+	 */
+	foreach_node(IndexElem, elem, indexstmt->indexParams)
 	{
-		IndexElem  *elem = lfirst_node(IndexElem, lc);
 		Constraint *nnconstr;
 
 		Assert(elem->expr == NULL);
@@ -9374,9 +9381,10 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		newconstrs = lappend(newconstrs, nnconstr);
 	}
 
-	foreach(lc, children)
+	/* Finally, add AT subcommands to add each constraint to each child. */
+	children = find_inheritance_children(RelationGetRelid(rel), NoLock);
+	foreach_oid(childrelid, children)
 	{
-		Oid			childrelid = lfirst_oid(lc);
 		Relation	childrel = table_open(childrelid, NoLock);
 		AlterTableCmd *newcmd = makeNode(AlterTableCmd);
 		ListCell   *lc2;
@@ -12941,6 +12949,31 @@ dropconstraint_internal(Relation rel, HeapTuple constraintTup, DropBehavior beha
 
 	con = (Form_pg_constraint) GETSTRUCT(constraintTup);
 	constrName = NameStr(con->conname);
+
+	/*
+	 * If we're asked to drop a constraint which is both defined locally and
+	 * inherited, we can simply mark it as no longer having a local
+	 * definition, and no further changes are required.
+	 *
+	 * XXX We do this for not-null constraints only, not CHECK, because the
+	 * latter have historically not behaved this way and it might be confusing
+	 * to change the behavior now.
+	 */
+	if (con->contype == CONSTRAINT_NOTNULL &&
+		con->conislocal && con->coninhcount > 0)
+	{
+		HeapTuple	copytup;
+
+		copytup = heap_copytuple(constraintTup);
+		con = (Form_pg_constraint) GETSTRUCT(copytup);
+		con->conislocal = false;
+		CatalogTupleUpdate(conrel, &copytup->t_self, copytup);
+		ObjectAddressSet(conobj, ConstraintRelationId, con->oid);
+
+		CommandCounterIncrement();
+		table_close(conrel, RowExclusiveLock);
+		return conobj;
+	}
 
 	/* Don't allow drop of inherited constraints */
 	if (con->coninhcount > 0 && !recursing)
@@ -16620,7 +16653,25 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 						errmsg("too many inheritance parents"));
 			if (child_con->contype == CONSTRAINT_NOTNULL &&
 				child_con->connoinherit)
+			{
+				/*
+				 * If the child has children, it's not possible to turn a NO
+				 * INHERIT constraint into an inheritable one: we would need
+				 * to recurse to create constraints in those children, but
+				 * this is not a good place to do that.
+				 */
+				if (child_rel->rd_rel->relhassubclass)
+					ereport(ERROR,
+							errmsg("cannot add NOT NULL constraint to column \"%s\" of relation \"%s\" with inheritance children",
+								   get_attname(RelationGetRelid(child_rel),
+											   extractNotNullColumn(child_tuple),
+											   false),
+								   RelationGetRelationName(child_rel)),
+							errdetail("Existing constraint \"%s\" is marked NO INHERIT.",
+									  NameStr(child_con->conname)));
+
 				child_con->connoinherit = false;
+			}
 
 			/*
 			 * In case of partitions, an inherited constraint must be
@@ -20225,7 +20276,7 @@ ATExecDetachPartitionFinalize(Relation rel, RangeVar *name)
  * DetachAddConstraintIfNeeded
  *		Subroutine for ATExecDetachPartition.  Create a constraint that
  *		takes the place of the partition constraint, but avoid creating
- *		a dupe if an constraint already exists which implies the needed
+ *		a dupe if a constraint already exists which implies the needed
  *		constraint.
  */
 static void

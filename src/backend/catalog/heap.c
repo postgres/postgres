@@ -2539,6 +2539,7 @@ AddRelationNewConstraints(Relation rel,
 			CookedConstraint *nncooked;
 			AttrNumber	colnum;
 			char	   *nnname;
+			int			existing;
 
 			/* Determine which column to modify */
 			colnum = get_attnum(RelationGetRelid(rel), strVal(linitial(cdef->keys)));
@@ -2547,12 +2548,39 @@ AddRelationNewConstraints(Relation rel,
 					 strVal(linitial(cdef->keys)), RelationGetRelid(rel));
 
 			/*
-			 * If the column already has a not-null constraint, we need only
-			 * update its catalog status and we're done.
+			 * If the column already has an inheritable not-null constraint,
+			 * we need only adjust its inheritance status and we're done.  If
+			 * the constraint is there but marked NO INHERIT, then it is
+			 * updated in the same way, but we also recurse to the children
+			 * (if any) to add the constraint there as well.
 			 */
-			if (AdjustNotNullInheritance1(RelationGetRelid(rel), colnum,
-										  cdef->inhcount, cdef->is_no_inherit))
+			existing = AdjustNotNullInheritance1(RelationGetRelid(rel), colnum,
+												 cdef->inhcount, cdef->is_no_inherit);
+			if (existing == 1)
+				continue;		/* all done! */
+			else if (existing == -1)
+			{
+				List	   *children;
+
+				children = find_inheritance_children(RelationGetRelid(rel), NoLock);
+				foreach_oid(childoid, children)
+				{
+					Relation	childrel = table_open(childoid, NoLock);
+
+					AddRelationNewConstraints(childrel,
+											  NIL,
+											  list_make1(copyObject(cdef)),
+											  allow_merge,
+											  is_local,
+											  is_internal,
+											  queryString);
+					/* these constraints are not in the return list -- good? */
+
+					table_close(childrel, NoLock);
+				}
+
 				continue;
+			}
 
 			/*
 			 * If a constraint name is specified, check that it isn't already

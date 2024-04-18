@@ -321,6 +321,62 @@ ALTER TABLE ATACC1 ADD NOT NULL a NO INHERIT;
 Inherits: atacc1
 
 DROP TABLE ATACC1, ATACC2;
+-- overridding a no-inherit constraint with an inheritable one
+CREATE TABLE ATACC2 (a int, CONSTRAINT a_is_not_null NOT NULL a NO INHERIT);
+CREATE TABLE ATACC1 (a int);
+CREATE TABLE ATACC3 (a int) INHERITS (ATACC2);
+NOTICE:  merging column "a" with inherited definition
+INSERT INTO ATACC3 VALUES (null);	-- make sure we scan atacc3
+ALTER TABLE ATACC2 INHERIT ATACC1;
+ALTER TABLE ATACC1 ADD CONSTRAINT ditto NOT NULL a;
+ERROR:  column "a" of relation "atacc3" contains null values
+DELETE FROM ATACC3;
+ALTER TABLE ATACC1 ADD CONSTRAINT ditto NOT NULL a;
+\d+ ATACC[123]
+                                  Table "public.atacc1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "ditto" NOT NULL "a"
+Child tables: atacc2
+
+                                  Table "public.atacc2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "a_is_not_null" NOT NULL "a" (local, inherited)
+Inherits: atacc1
+Child tables: atacc3
+
+                                  Table "public.atacc3"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "ditto" NOT NULL "a" (inherited)
+Inherits: atacc2
+
+ALTER TABLE ATACC2 DROP CONSTRAINT a_is_not_null;
+ALTER TABLE ATACC1 DROP CONSTRAINT ditto;
+\d+ ATACC3
+                                  Table "public.atacc3"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+Inherits: atacc2
+
+DROP TABLE ATACC1, ATACC2, ATACC3;
+-- The same cannot be achieved this way
+CREATE TABLE ATACC2 (a int, CONSTRAINT a_is_not_null NOT NULL a NO INHERIT);
+CREATE TABLE ATACC1 (a int, CONSTRAINT ditto NOT NULL a);
+CREATE TABLE ATACC3 (a int) INHERITS (ATACC2);
+NOTICE:  merging column "a" with inherited definition
+ALTER TABLE ATACC2 INHERIT ATACC1;
+ERROR:  cannot add NOT NULL constraint to column "a" of relation "atacc2" with inheritance children
+DETAIL:  Existing constraint "a_is_not_null" is marked NO INHERIT.
+DROP TABLE ATACC1, ATACC2, ATACC3;
 --
 -- Check constraints on INSERT INTO
 --

@@ -9096,8 +9096,21 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			}
 			else if (use_throwaway_notnull)
 			{
-				tbinfo->notnull_constrs[j] =
-					psprintf("pgdump_throwaway_notnull_%d", notnullcount++);
+				/*
+				 * Decide on a name for this constraint.  If it is not an
+				 * inherited constraint, give it a throwaway name to avoid any
+				 * possible conflicts, since we're going to drop it soon
+				 * anyway.  If it is inherited then try harder, because it may
+				 * (but not necessarily) persist after the restore.
+				 */
+				if (tbinfo->notnull_inh[j])
+					/* XXX maybe try harder if the name is overlength */
+					tbinfo->notnull_constrs[j] =
+						psprintf("%s_%s_not_null",
+								 tbinfo->dobj.name, tbinfo->attnames[j]);
+				else
+					tbinfo->notnull_constrs[j] =
+						psprintf("pgdump_throwaway_notnull_%d", notnullcount++);
 				tbinfo->notnull_throwaway[j] = true;
 				tbinfo->notnull_inh[j] = false;
 			}
@@ -17325,10 +17338,15 @@ dumpConstraint(Archive *fout, const ConstraintInfo *coninfo)
 		 * similar code in dumpIndex!
 		 */
 
-		/* Drop any not-null constraints that were added to support the PK */
+		/*
+		 * Drop any not-null constraints that were added to support the PK,
+		 * but leave them alone if they have a definition coming from their
+		 * parent.
+		 */
 		if (coninfo->contype == 'p')
 			for (int i = 0; i < tbinfo->numatts; i++)
-				if (tbinfo->notnull_throwaway[i])
+				if (tbinfo->notnull_throwaway[i] &&
+					!tbinfo->notnull_inh[i])
 					appendPQExpBuffer(q, "\nALTER TABLE ONLY %s DROP CONSTRAINT %s;",
 									  fmtQualifiedDumpable(tbinfo),
 									  tbinfo->notnull_constrs[i]);

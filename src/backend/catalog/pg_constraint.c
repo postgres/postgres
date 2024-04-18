@@ -565,8 +565,8 @@ ChooseConstraintName(const char *name1, const char *name2,
 }
 
 /*
- * Find and return the pg_constraint tuple that implements a validated
- * not-null constraint for the given column of the given relation.
+ * Find and return a copy of the pg_constraint tuple that implements a
+ * validated not-null constraint for the given column of the given relation.
  *
  * XXX This would be easier if we had pg_attribute.notnullconstr with the OID
  * of the constraint that implements the not-null constraint for that column.
@@ -709,36 +709,53 @@ extractNotNullColumn(HeapTuple constrTup)
  * AdjustNotNullInheritance1
  *		Adjust inheritance count for a single not-null constraint
  *
- * Adjust inheritance count, and possibly islocal status, for the not-null
- * constraint row of the given column, if it exists, and return true.
- * If no not-null constraint is found for the column, return false.
+ * If no not-null constraint is found for the column, return 0.
+ * Caller can create one.
+ * If the constraint does exist and it's inheritable, adjust its
+ * inheritance count (and possibly islocal status) and return 1.
+ * No further action needs to be taken.
+ * If the constraint exists but is marked NO INHERIT, adjust it as above
+ * and reset connoinherit to false, and return -1.  Caller is
+ * responsible for adding the same constraint to the children, if any.
  */
-bool
+int
 AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count,
 						  bool is_no_inherit)
 {
 	HeapTuple	tup;
+
+	Assert(count >= 0);
 
 	tup = findNotNullConstraintAttnum(relid, attnum);
 	if (HeapTupleIsValid(tup))
 	{
 		Relation	pg_constraint;
 		Form_pg_constraint conform;
+		int			retval = 1;
 
 		pg_constraint = table_open(ConstraintRelationId, RowExclusiveLock);
 		conform = (Form_pg_constraint) GETSTRUCT(tup);
 
 		/*
-		 * Don't let the NO INHERIT status change (but don't complain
-		 * unnecessarily.)  In the future it might be useful to let an
-		 * inheritable constraint replace a non-inheritable one, but we'd need
-		 * to recurse to children to get it added there.
+		 * If we're asked for a NO INHERIT constraint and this relation
+		 * already has an inheritable one, throw an error.
 		 */
-		if (is_no_inherit != conform->connoinherit)
+		if (is_no_inherit && !conform->connoinherit)
 			ereport(ERROR,
 					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					errmsg("cannot change NO INHERIT status of inherited NOT NULL constraint \"%s\" on relation \"%s\"",
 						   NameStr(conform->conname), get_rel_name(relid)));
+
+		/*
+		 * If the constraint already exists in this relation but it's marked
+		 * NO INHERIT, we can just remove that flag, and instruct caller to
+		 * recurse to add the constraint to children.
+		 */
+		if (!is_no_inherit && conform->connoinherit)
+		{
+			conform->connoinherit = false;
+			retval = -1;		/* caller must add constraint on child rels */
+		}
 
 		if (count > 0)
 			conform->coninhcount += count;
@@ -761,10 +778,10 @@ AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count,
 
 		table_close(pg_constraint, RowExclusiveLock);
 
-		return true;
+		return retval;
 	}
 
-	return false;
+	return 0;
 }
 
 /*
