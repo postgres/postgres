@@ -411,6 +411,33 @@ SELECT JSON_QUERY(js, '$'  RETURNING int DEFAULT (SELECT 1) ON ERROR) FROM test_
 DROP TABLE test_jsonb_mutability;
 DROP FUNCTION ret_setint;
 
+CREATE DOMAIN jsonb_test_domain AS text CHECK (value <> 'foo');
+SELECT JSON_VALUE(jsonb '{"d1": "H"}', '$.a2' RETURNING jsonb_test_domain DEFAULT 'foo'::jsonb_test_domain ON ERROR);
+SELECT JSON_VALUE(jsonb '{"d1": "H"}', '$.a2' RETURNING jsonb_test_domain DEFAULT 'foo1'::jsonb_test_domain ON ERROR);
+SELECT JSON_VALUE(jsonb '{"d1": "H"}', '$.a2' RETURNING jsonb_test_domain DEFAULT '"foo1"'::jsonb::text ON ERROR);
+SELECT JSON_VALUE(jsonb '{"d1": "foo"}', '$.a2' RETURNING jsonb_test_domain DEFAULT 'foo1'::jsonb_test_domain ON ERROR);
+
+-- Check the cases where a coercion-related expression is masking an
+-- unsupported expressions
+
+-- CoerceViaIO
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING int DEFAULT (SELECT '"1"')::jsonb ON ERROR);
+-- CoerceToDomain
+SELECT JSON_QUERY('"a"', '$.a' RETURNING jsonb_test_domain DEFAULT (select '"1"')::jsonb_test_domain ON ERROR);
+-- RelabelType
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING int DEFAULT (SELECT 1)::oid::int ON ERROR);
+-- ArrayCoerceExpr
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING int[] DEFAULT (SELECT '{1}')::oid[]::int[] ON ERROR);
+-- CollateExpr
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING int[] DEFAULT (SELECT '{1}')::text COLLATE "C" ON ERROR);
+-- ConvertRowtypeExpr
+CREATE TABLE someparent (a int);
+CREATE TABLE somechild () INHERITS (someparent);
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING someparent DEFAULT (SELECT '(1)')::somechild::someparent ON ERROR);
+
+DROP DOMAIN jsonb_test_domain;
+DROP TABLE someparent, somechild;
+
 -- Extension: non-constant JSON path
 SELECT JSON_EXISTS(jsonb '{"a": 123}', '$' || '.' || 'a');
 SELECT JSON_VALUE(jsonb '{"a": 123}', '$' || '.' || 'a');

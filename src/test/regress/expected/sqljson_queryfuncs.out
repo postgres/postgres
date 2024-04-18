@@ -1222,6 +1222,63 @@ LINE 1: SELECT JSON_QUERY(js, '$'  RETURNING int DEFAULT (SELECT 1) ...
                                                          ^
 DROP TABLE test_jsonb_mutability;
 DROP FUNCTION ret_setint;
+CREATE DOMAIN jsonb_test_domain AS text CHECK (value <> 'foo');
+SELECT JSON_VALUE(jsonb '{"d1": "H"}', '$.a2' RETURNING jsonb_test_domain DEFAULT 'foo'::jsonb_test_domain ON ERROR);
+ERROR:  value for domain jsonb_test_domain violates check constraint "jsonb_test_domain_check"
+SELECT JSON_VALUE(jsonb '{"d1": "H"}', '$.a2' RETURNING jsonb_test_domain DEFAULT 'foo1'::jsonb_test_domain ON ERROR);
+ json_value 
+------------
+ foo1
+(1 row)
+
+SELECT JSON_VALUE(jsonb '{"d1": "H"}', '$.a2' RETURNING jsonb_test_domain DEFAULT '"foo1"'::jsonb::text ON ERROR);
+ json_value 
+------------
+ "foo1"
+(1 row)
+
+SELECT JSON_VALUE(jsonb '{"d1": "foo"}', '$.a2' RETURNING jsonb_test_domain DEFAULT 'foo1'::jsonb_test_domain ON ERROR);
+ json_value 
+------------
+ foo1
+(1 row)
+
+-- Check the cases where a coercion-related expression is masking an
+-- unsupported expressions
+-- CoerceViaIO
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING int DEFAULT (SELECT '"1"')::jsonb ON ERROR);
+ERROR:  can only specify a constant, non-aggregate function, or operator expression for DEFAULT
+LINE 1: ...CT JSON_QUERY('"a"', '$.a'  RETURNING int DEFAULT (SELECT '"...
+                                                             ^
+-- CoerceToDomain
+SELECT JSON_QUERY('"a"', '$.a' RETURNING jsonb_test_domain DEFAULT (select '"1"')::jsonb_test_domain ON ERROR);
+ERROR:  can only specify a constant, non-aggregate function, or operator expression for DEFAULT
+LINE 1: ...('"a"', '$.a' RETURNING jsonb_test_domain DEFAULT (select '"...
+                                                             ^
+-- RelabelType
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING int DEFAULT (SELECT 1)::oid::int ON ERROR);
+ERROR:  can only specify a constant, non-aggregate function, or operator expression for DEFAULT
+LINE 1: ...CT JSON_QUERY('"a"', '$.a'  RETURNING int DEFAULT (SELECT 1)...
+                                                             ^
+-- ArrayCoerceExpr
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING int[] DEFAULT (SELECT '{1}')::oid[]::int[] ON ERROR);
+ERROR:  can only specify a constant, non-aggregate function, or operator expression for DEFAULT
+LINE 1: ... JSON_QUERY('"a"', '$.a'  RETURNING int[] DEFAULT (SELECT '{...
+                                                             ^
+-- CollateExpr
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING int[] DEFAULT (SELECT '{1}')::text COLLATE "C" ON ERROR);
+ERROR:  can only specify a constant, non-aggregate function, or operator expression for DEFAULT
+LINE 1: ... JSON_QUERY('"a"', '$.a'  RETURNING int[] DEFAULT (SELECT '{...
+                                                             ^
+-- ConvertRowtypeExpr
+CREATE TABLE someparent (a int);
+CREATE TABLE somechild () INHERITS (someparent);
+SELECT JSON_QUERY('"a"', '$.a'  RETURNING someparent DEFAULT (SELECT '(1)')::somechild::someparent ON ERROR);
+ERROR:  can only specify a constant, non-aggregate function, or operator expression for DEFAULT
+LINE 1: ..._QUERY('"a"', '$.a'  RETURNING someparent DEFAULT (SELECT '(...
+                                                             ^
+DROP DOMAIN jsonb_test_domain;
+DROP TABLE someparent, somechild;
 -- Extension: non-constant JSON path
 SELECT JSON_EXISTS(jsonb '{"a": 123}', '$' || '.' || 'a');
  json_exists 

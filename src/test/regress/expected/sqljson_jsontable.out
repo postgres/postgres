@@ -217,6 +217,38 @@ FROM json_table_test vals
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 11 |     |      | "\"str\""    | ["\"str\""]    | "str"        |    |    | 
 (14 rows)
 
+-- Test using casts in DEFAULT .. ON ERROR expression
+SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT '"foo1"'::jsonb::text ON ERROR));
+  js1   
+--------
+ "foo1"
+(1 row)
+
+SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo'::jsonb_test_domain ON ERROR));
+ERROR:  value for domain jsonb_test_domain violates check constraint "jsonb_test_domain_check"
+SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo1'::jsonb_test_domain ON ERROR));
+ js1  
+------
+ foo1
+(1 row)
+
+SELECT * FROM JSON_TABLE(jsonb '{"d1": "foo"}', '$'
+    COLUMNS (js1 jsonb_test_domain PATH '$.d1' DEFAULT 'foo2'::jsonb_test_domain ON ERROR));
+ js1  
+------
+ foo2
+(1 row)
+
+SELECT * FROM JSON_TABLE(jsonb '{"d1": "foo"}', '$'
+    COLUMNS (js1 oid[] PATH '$.d2' DEFAULT '{1}'::int[]::oid[] ON ERROR));
+ js1 
+-----
+ {1}
+(1 row)
+
 -- JSON_TABLE: Test backward parsing
 CREATE VIEW jsonb_table_view2 AS
 SELECT * FROM

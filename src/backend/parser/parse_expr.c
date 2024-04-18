@@ -4617,6 +4617,40 @@ coerceJsonExprOutput(ParseState *pstate, JsonExpr *jsexpr)
 }
 
 /*
+ * Recursively checks if the given expression, or its sub-node in some cases,
+ * is valid for using as an ON ERROR / ON EMPTY DEFAULT expression.
+ */
+static bool
+ValidJsonBehaviorDefaultExpr(Node *expr, void *context)
+{
+	if (expr == NULL)
+		return false;
+
+	switch (nodeTag(expr))
+	{
+			/* Acceptable expression nodes */
+		case T_Const:
+		case T_FuncExpr:
+		case T_OpExpr:
+			return true;
+
+			/* Acceptable iff arg of the following nodes is one of the above */
+		case T_CoerceViaIO:
+		case T_CoerceToDomain:
+		case T_ArrayCoerceExpr:
+		case T_ConvertRowtypeExpr:
+		case T_RelabelType:
+		case T_CollateExpr:
+			return expression_tree_walker(expr, ValidJsonBehaviorDefaultExpr,
+										  context);
+		default:
+			break;
+	}
+
+	return false;
+}
+
+/*
  * Transform a JSON BEHAVIOR clause.
  */
 static JsonBehavior *
@@ -4636,8 +4670,7 @@ transformJsonBehavior(ParseState *pstate, JsonBehavior *behavior,
 		if (btype == JSON_BEHAVIOR_DEFAULT)
 		{
 			expr = transformExprRecurse(pstate, behavior->expr);
-			if (!IsA(expr, Const) && !IsA(expr, FuncExpr) &&
-				!IsA(expr, OpExpr))
+			if (!ValidJsonBehaviorDefaultExpr(expr, NULL))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("can only specify a constant, non-aggregate function, or operator expression for DEFAULT"),
