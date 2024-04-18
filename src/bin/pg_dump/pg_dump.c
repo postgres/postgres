@@ -9097,20 +9097,10 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			else if (use_throwaway_notnull)
 			{
 				/*
-				 * Decide on a name for this constraint.  If it is not an
-				 * inherited constraint, give it a throwaway name to avoid any
-				 * possible conflicts, since we're going to drop it soon
-				 * anyway.  If it is inherited then try harder, because it may
-				 * (but not necessarily) persist after the restore.
+				 * Give this constraint a throwaway name.
 				 */
-				if (tbinfo->notnull_inh[j])
-					/* XXX maybe try harder if the name is overlength */
-					tbinfo->notnull_constrs[j] =
-						psprintf("%s_%s_not_null",
-								 tbinfo->dobj.name, tbinfo->attnames[j]);
-				else
-					tbinfo->notnull_constrs[j] =
-						psprintf("pgdump_throwaway_notnull_%d", notnullcount++);
+				tbinfo->notnull_constrs[j] =
+					psprintf("pgdump_throwaway_notnull_%d", notnullcount++);
 				tbinfo->notnull_throwaway[j] = true;
 				tbinfo->notnull_inh[j] = false;
 			}
