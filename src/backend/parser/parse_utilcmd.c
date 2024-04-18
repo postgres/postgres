@@ -3451,7 +3451,7 @@ checkPartition(Relation rel, Oid partRelOid)
 
 /*
  * transformPartitionCmdForSplit
- *		Analyze the ALTER TABLLE ... SPLIT PARTITION command
+ *		Analyze the ALTER TABLE ... SPLIT PARTITION command
  *
  * For each new partition sps->bound is set to the transformed value of bound.
  * Does checks for bounds of new partitions.
@@ -3490,7 +3490,7 @@ transformPartitionCmdForSplit(CreateStmtContext *cxt, PartitionCmd *partcmd)
 
 /*
  * transformPartitionCmdForMerge
- *		Analyze the ALTER TABLLE ... MERGE PARTITIONS command
+ *		Analyze the ALTER TABLE ... MERGE PARTITIONS command
  *
  * Does simple checks for merged partitions. Calculates bound of resulting
  * partition.

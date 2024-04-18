@@ -88,7 +88,7 @@
  * overwrites.
  *
  * The 'last_start_time' is needed by postmaster to start the slot sync worker
- * once per SLOTSYNC_RESTART_INTERVAL_SEC. In cases where a immediate restart
+ * once per SLOTSYNC_RESTART_INTERVAL_SEC. In cases where an immediate restart
  * is expected (e.g., slot sync GUCs change), slot sync worker will reset
  * last_start_time before exiting, so that postmaster can start the worker
  * without waiting for SLOTSYNC_RESTART_INTERVAL_SEC.

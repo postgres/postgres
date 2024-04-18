@@ -2867,7 +2867,7 @@ typedef struct PlaceHolderVar
  * are not set meaningfully within such structs.
  *
  * We also create transient SpecialJoinInfos for child joins during
- * partiotionwise join planning, which are also not present in join_info_list.
+ * partitionwise join planning, which are also not present in join_info_list.
  */
 #ifndef HAVE_SPECIALJOININFO_TYPEDEF
 typedef struct SpecialJoinInfo SpecialJoinInfo;

@@ -306,8 +306,8 @@ CREATE TABLE parted_si_p_odd PARTITION OF parted_si FOR VALUES IN (1);
 
 -- Test that bulk relation extension handles reusing a single BulkInsertState
 -- across partitions.  Without the fix applied, this reliably reproduces
--- #18130 unless shared_buffers is extremely small (preventing any use use of
--- bulk relation extension). See
+-- #18130 unless shared_buffers is extremely small (preventing any use of bulk
+-- relation extension). See
 -- https://postgr.es/m/18130-7a86a7356a75209d%40postgresql.org
 -- https://postgr.es/m/257696.1695670946%40sss.pgh.pa.us
 \set filename :abs_srcdir '/data/desc.data'

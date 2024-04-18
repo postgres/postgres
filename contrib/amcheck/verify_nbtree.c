@@ -3036,7 +3036,7 @@ bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
 	 * In the heap, tuples may contain short varlena datums with both 1B
 	 * header and 4B headers.  But the corresponding index tuple should always
 	 * have such varlena's with 1B headers.  So, if there is a short varlena
-	 * with 4B header, we need to convert it for for fingerprinting.
+	 * with 4B header, we need to convert it for fingerprinting.
 	 *
 	 * Note that we rely on deterministic index_form_tuple() TOAST compression
 	 * of normalized input.

@@ -756,7 +756,7 @@ write_block(int fd, char *output_filename,
 }
 
 /*
- * Read a block of data (BLCKSZ bytes) into the the buffer.
+ * Read a block of data (BLCKSZ bytes) into the buffer.
  */
 static void
 read_block(rfile *s, off_t off, uint8 *buffer)

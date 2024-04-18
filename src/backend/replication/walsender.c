@@ -3493,7 +3493,7 @@ WalSndDone(WalSndSendDataCallback send_data)
  * Returns the latest point in WAL that has been safely flushed to disk.
  * This should only be called when in recovery.
  *
- * This is called either by cascading walsender to find WAL postion to be sent
+ * This is called either by cascading walsender to find WAL position to be sent
  * to a cascaded standby or by slot synchronization operation to validate remote
  * slot's lsn before syncing it locally.
  *

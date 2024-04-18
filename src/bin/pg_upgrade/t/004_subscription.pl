@@ -241,7 +241,7 @@ my $tab_upgraded2_oid = $old_sub->safe_psql('postgres',
 
 $old_sub->stop;
 
-# Change configuration so that initial table sync sync does not get started
+# Change configuration so that initial table sync does not get started
 # automatically
 $new_sub->append_conf('postgresql.conf',
 	"max_logical_replication_workers = 0");

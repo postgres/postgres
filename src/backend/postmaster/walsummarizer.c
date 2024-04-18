@@ -108,7 +108,7 @@ static WalSummarizerData *WalSummarizerCtl;
 
 /*
  * When we reach end of WAL and need to read more, we sleep for a number of
- * milliseconds that is a integer multiple of MS_PER_SLEEP_QUANTUM. This is
+ * milliseconds that is an integer multiple of MS_PER_SLEEP_QUANTUM. This is
  * the multiplier. It should vary between 1 and MAX_SLEEP_QUANTA, depending
  * on system activity. See summarizer_wait_for_wal() for how we adjust this.
  */

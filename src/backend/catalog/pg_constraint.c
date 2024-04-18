@@ -1668,7 +1668,7 @@ DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
 }
 
 /*
- * FindFkPeriodOpers -
+ * FindFKPeriodOpers -
  *
  * Looks up the operator oids used for the PERIOD part of a temporal foreign key.
  * The opclass should be the opclass of that PERIOD element.

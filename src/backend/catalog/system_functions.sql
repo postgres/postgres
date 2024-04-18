@@ -5,7 +5,7 @@
  *
  * src/backend/catalog/system_functions.sql
  *
- * This file redefines certain built-in functions that it's impractical
+ * This file redefines certain built-in functions that are impractical
  * to fully define in pg_proc.dat.  In most cases that's because they use
  * SQL-standard function bodies and/or default expressions.  The node
  * tree representations of those are too unreadable, platform-dependent,

@@ -70,7 +70,7 @@ static JsonTablePlan *makeJsonTableSiblingJoin(JsonTablePlan *lplan,
  * (jt->context_item) and the column-generating expressions (jt->columns) to
  * populate TableFunc.docexpr and TableFunc.colvalexprs, respectively. Also,
  * the PASSING values (jt->passing) are transformed and added into
- * TableFunc.passvalexprs.
+ * TableFunc.passingvalexprs.
  */
 ParseNamespaceItem *
 transformJsonTable(ParseState *pstate, JsonTable *jt)

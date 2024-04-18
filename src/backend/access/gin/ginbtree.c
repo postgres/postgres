@@ -766,7 +766,7 @@ ginFinishSplit(GinBtree btree, GinBtreeStack *stack, bool freestack,
 /*
  * An entry point to ginFinishSplit() that is used when we stumble upon an
  * existing incompletely split page in the tree, as opposed to completing a
- * split that we just made outselves. The difference is that stack->buffer may
+ * split that we just made ourselves. The difference is that stack->buffer may
  * be merely share-locked on entry, and will be upgraded to exclusive mode.
  *
  * Note: Upgrading the lock momentarily releases it. Doing that in a scan

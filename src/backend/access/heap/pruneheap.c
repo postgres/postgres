@@ -33,7 +33,7 @@
 typedef struct
 {
 	/*-------------------------------------------------------
-	 * Arguments passed to heap_page_and_freeze()
+	 * Arguments passed to heap_page_prune_and_freeze()
 	 *-------------------------------------------------------
 	 */
 
@@ -306,7 +306,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * If the HEAP_PRUNE_FREEZE option is set, we will also freeze tuples if it's
  * required in order to advance relfrozenxid / relminmxid, or if it's
  * considered advantageous for overall system performance to do so now.  The
- * 'cutoffs', 'presult', 'new_refrozen_xid' and 'new_relmin_mxid' arguments
+ * 'cutoffs', 'presult', 'new_relfrozen_xid' and 'new_relmin_mxid' arguments
  * are required when freezing.  When HEAP_PRUNE_FREEZE option is set, we also
  * set presult->all_visible and presult->all_frozen on exit, to indicate if
  * the VM bits can be set.  They are always set to false when the
@@ -337,7 +337,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * off_loc is the offset location required by the caller to use in error
  * callback.
  *
- * new_relfrozen_xid and new_relmin_xid must provided by the caller if the
+ * new_relfrozen_xid and new_relmin_mxid must provided by the caller if the
  * HEAP_PRUNE_FREEZE option is set.  On entry, they contain the oldest XID and
  * multi-XID seen on the relation so far.  They will be updated with oldest
  * values present on the page after pruning.  After processing the whole

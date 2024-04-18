@@ -1257,7 +1257,7 @@ RESET enable_nestloop;
 RESET enable_hashjoin;
 DROP TABLE group_agg_pk;
 
--- Test the case where the the ordering of scan matches the ordering within the
+-- Test the case where the ordering of the scan matches the ordering within the
 -- aggregate but cannot be found in the group-by list
 CREATE TABLE agg_sort_order (c1 int PRIMARY KEY, c2 int);
 CREATE UNIQUE INDEX agg_sort_order_c2_idx ON agg_sort_order(c2);

@@ -6968,7 +6968,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 		 * btree scans, making the top-level scan look like a continuous scan
 		 * (as opposed to num_sa_scans-many primitive index scans).  After
 		 * all, btree scans mostly work like that at runtime.  However, such a
-		 * scheme would badly bias genericcostestimate's simplistic appraoch
+		 * scheme would badly bias genericcostestimate's simplistic approach
 		 * to calculating numIndexPages through prorating.
 		 *
 		 * Stick with the approach taken by non-native SAOP scans for now.

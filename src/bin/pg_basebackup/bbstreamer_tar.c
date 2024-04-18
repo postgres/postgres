@@ -345,7 +345,7 @@ bbstreamer_tar_parser_free(bbstreamer *streamer)
 }
 
 /*
- * Create an bbstreamer that can generate a tar archive.
+ * Create a bbstreamer that can generate a tar archive.
  *
  * This is intended to be usable either for generating a brand-new tar archive
  * or for modifying one on the fly. The input should be a series of typed

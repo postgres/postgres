@@ -187,7 +187,7 @@ child_process_kind child_process_kinds[] = {
 	/*
 	 * WAL senders start their life as regular backend processes, and change
 	 * their type after authenticating the client for replication.  We list it
-	 * here forPostmasterChildName() but cannot launch them directly.
+	 * here for PostmasterChildName() but cannot launch them directly.
 	 */
 	[B_WAL_SENDER] = {"wal sender", NULL, true},
 	[B_SLOTSYNC_WORKER] = {"slot sync worker", ReplSlotSyncWorkerMain, true},

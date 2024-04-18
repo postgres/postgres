@@ -541,8 +541,8 @@ GenerationAlloc(MemoryContext context, Size size, int flags)
 #endif
 
 	/*
-	 * If requested size exceeds maximum for chunks we hand the the request
-	 * off to GenerationAllocLarge().
+	 * If requested size exceeds maximum for chunks we hand the request off to
+	 * GenerationAllocLarge().
 	 */
 	if (chunk_size > set->allocChunkLimit)
 		return GenerationAllocLarge(context, size, flags);

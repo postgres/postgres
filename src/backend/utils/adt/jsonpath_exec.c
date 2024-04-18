@@ -4221,7 +4221,7 @@ JsonTableSetDocument(TableFuncScanState *state, Datum value)
 }
 
 /*
- * Evaluate a JsonTablePlan's jsonpath to get a new row pattren from
+ * Evaluate a JsonTablePlan's jsonpath to get a new row pattern from
  * the given context item
  */
 static void
@@ -4339,7 +4339,7 @@ JsonTablePlanScanNextRow(JsonTablePlanState *planstate)
 		/*
 		 * Now fetch the nested plan's current row to be joined against the
 		 * parent row.  Any further nested plans' paths will be re-evaluated
-		 * reursively, level at a time, after setting each nested plan's
+		 * recursively, level at a time, after setting each nested plan's
 		 * current row.
 		 */
 		(void) JsonTablePlanNextRow(planstate->nested);

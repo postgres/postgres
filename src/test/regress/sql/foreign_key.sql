@@ -1943,7 +1943,7 @@ INSERT INTO fkpart10.tbl1 VALUES (0), (1);
 COMMIT;
 
 -- test that cross-partition updates correctly enforces the foreign key
--- restriction (specifically testing INITIAILLY DEFERRED)
+-- restriction (specifically testing INITIALLY DEFERRED)
 BEGIN;
 UPDATE fkpart10.tbl1 SET f1 = 3 WHERE f1 = 0;
 UPDATE fkpart10.tbl3 SET f1 = f1 * -1;

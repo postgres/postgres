@@ -1756,7 +1756,7 @@ _bt_start_prim_scan(IndexScanDesc scan, ScanDirection dir)
  *
  * (The rules are the same for backwards scans, except that the operators are
  * flipped: just replace the precondition's >= operator with a <=, and the
- * postcondition's <= operator with with a >=.  In other words, just swap the
+ * postcondition's <= operator with a >=.  In other words, just swap the
  * precondition with the postcondition.)
  *
  * We also deal with "advancing" non-required arrays here.  Callers whose
@@ -4133,7 +4133,7 @@ _bt_checkkeys_look_ahead(IndexScanDesc scan, BTReadPageState *pstate,
 	else
 	{
 		/*
-		 * Failure -- "ahead" tuple is too far ahead (we were too aggresive).
+		 * Failure -- "ahead" tuple is too far ahead (we were too aggressive).
 		 *
 		 * Reset the number of rechecks, and aggressively reduce the target
 		 * distance (we're much more aggressive here than we were when the

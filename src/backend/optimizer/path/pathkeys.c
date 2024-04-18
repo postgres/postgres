@@ -384,7 +384,7 @@ group_keys_reorder_by_pathkeys(List *pathkeys, List **group_pathkeys,
 	 * *group_pathkeys containing grouping pathkeys altogether with aggregate
 	 * pathkeys.  If we process aggregate pathkeys we could get an invalid
 	 * result of get_sortgroupref_clause_noerr(), because their
-	 * pathkey->pk_eclass->ec_sortref doesn't referece query targetlist.  So,
+	 * pathkey->pk_eclass->ec_sortref doesn't reference query targetlist.  So,
 	 * we allocate a separate list of pathkeys for lookups.
 	 */
 	grouping_pathkeys = list_copy_head(*group_pathkeys, num_groupby_pathkeys);

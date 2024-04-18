@@ -996,7 +996,7 @@ CopyFrom(CopyFromState cstate)
 			cstate->escontext->error_occurred)
 		{
 			/*
-			 * Soft error occured, skip this tuple and deal with error
+			 * Soft error occurred, skip this tuple and deal with error
 			 * information according to ON_ERROR.
 			 */
 			if (cstate->opts.on_error == COPY_ON_ERROR_IGNORE)

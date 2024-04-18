@@ -689,7 +689,7 @@ CREATE TEXT SEARCH DICTIONARY tsdict_case
 ERROR:  unrecognized Ispell parameter: "DictFile"
 -- Test grammar for configurations
 CREATE TEXT SEARCH CONFIGURATION dummy_tst (COPY=english);
--- Overriden mapping change with duplicated tokens.
+-- Overridden mapping change with duplicated tokens.
 ALTER TEXT SEARCH CONFIGURATION dummy_tst
   ALTER MAPPING FOR word, word WITH ispell;
 -- Not a token supported by the configuration's parser, fails.

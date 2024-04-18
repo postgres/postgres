@@ -30,7 +30,7 @@ step s1_create_temp_objects {
         CREATE OR REPLACE FUNCTION pg_temp.long() RETURNS text LANGUAGE sql AS $body$ SELECT %L; $body$$outer$,
 	(SELECT string_agg(g.i::text||':'||random()::text, '|') FROM generate_series(1, 100) g(i))));
 
-    -- The above bug requirs function removal to happen after a catalog
+    -- The above bug requires function removal to happen after a catalog
     -- invalidation. dependency.c sorts objects in descending oid order so
     -- that newer objects are deleted before older objects, so create a
     -- table after.

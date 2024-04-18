@@ -3312,7 +3312,7 @@ dbase_redo(XLogReaderState *record)
 		 */
 		FlushDatabaseBuffers(xlrec->src_db_id);
 
-		/* Close all sgmr fds in all backends. */
+		/* Close all smgr fds in all backends. */
 		WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
 
 		/*
@@ -3378,7 +3378,7 @@ dbase_redo(XLogReaderState *record)
 		/* Clean out the xlog relcache too */
 		XLogDropDatabase(xlrec->db_id);
 
-		/* Close all sgmr fds in all backends. */
+		/* Close all smgr fds in all backends. */
 		WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
 
 		for (i = 0; i < xlrec->ntablespaces; i++)

@@ -8,7 +8,7 @@
  *
  * In a parallel vacuum, we perform both index bulk deletion and index cleanup
  * with parallel worker processes.  Individual indexes are processed by one
- * vacuum process.  ParalleVacuumState contains shared information as well as
+ * vacuum process.  ParallelVacuumState contains shared information as well as
  * the memory space for storing dead items allocated in the DSA area.  We
  * launch parallel worker processes at the start of parallel index
  * bulk-deletion and index cleanup and once all indexes are processed, the

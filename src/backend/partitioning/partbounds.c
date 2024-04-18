@@ -5146,7 +5146,7 @@ get_partition_bound_spec(Oid partOid, RangeVar *name)
  * the first of new partitions) then lower bound of "spec" should be equal (or
  * greater than or equal in case defaultPart=true) to lower bound of split
  * partition. If last=true (this means that "spec" is the last of new
- * partitions) then upper bound of of "spec" should be equal (or less than or
+ * partitions) then upper bound of "spec" should be equal (or less than or
  * equal in case defaultPart=true) to upper bound of split partition.
  *
  * parent:			partitioned table
@@ -5245,8 +5245,8 @@ check_partition_bounds_for_split_range(Relation parent,
 										  false, split_upper);
 
 			/*
-			 * Upper bound of of "spec" should be equal (or less than or equal
-			 * in case defaultPart=true) to upper bound of split partition.
+			 * Upper bound of "spec" should be equal (or less than or equal in
+			 * case defaultPart=true) to upper bound of split partition.
 			 */
 			if ((!defaultPart && cmpval) || (defaultPart && cmpval > 0))
 				overlap = true;

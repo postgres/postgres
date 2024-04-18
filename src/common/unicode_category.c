@@ -23,7 +23,7 @@
 /*
  * Create bitmasks from pg_unicode_category values for efficient comparison of
  * multiple categories. For instance, PG_U_MN_MASK is a bitmask representing
- * the general cateogry Mn; and PG_U_M_MASK represents general categories Mn,
+ * the general category Mn; and PG_U_M_MASK represents general categories Mn,
  * Me, and Mc.
  *
  * The number of Unicode General Categories should never grow, so a 32-bit

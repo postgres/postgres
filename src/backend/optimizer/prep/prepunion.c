@@ -214,7 +214,8 @@ set_operation_ordered_results_useful(SetOperationStmt *setop)
  *
  * Returns a RelOptInfo for the subtree, as well as these output parameters:
  * *pTargetList: receives the fully-fledged tlist for the subtree's top plan
- * *istrivial_tlist: true iif datatypes between parent and child match.
+ * *istrivial_tlist: true if, and only if, datatypes between parent and child
+ * match.
  *
  * The pTargetList output parameter is mostly redundant with the pathtarget
  * of the returned RelOptInfo, but for the moment we need it because much of

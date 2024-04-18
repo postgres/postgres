@@ -1655,7 +1655,7 @@ pgtls_close(PGconn *conn)
 	{
 		/*
 		 * In the non-SSL case, just remove the crypto callbacks if the
-		 * connection has then loaded.  This code path has no dependency on
+		 * connection has them loaded.  This code path has no dependency on
 		 * any pending SSL calls.
 		 */
 		if (conn->crypto_loaded)

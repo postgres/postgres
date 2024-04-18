@@ -979,8 +979,8 @@ AllocSetAlloc(MemoryContext context, Size size, int flags)
 	Assert(set->blocks != NULL);
 
 	/*
-	 * If requested size exceeds maximum for chunks we hand the the request
-	 * off to AllocSetAllocLarge().
+	 * If requested size exceeds maximum for chunks we hand the request off to
+	 * AllocSetAllocLarge().
 	 */
 	if (size > set->allocChunkLimit)
 		return AllocSetAllocLarge(context, size, flags);

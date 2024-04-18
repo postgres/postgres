@@ -73,7 +73,7 @@
  *
  * For longer or variable-length input, fasthash_accum() is a more
  * flexible, but more verbose method. The standalone functions use this
- * internally, so see fasthash64() for an an example of this.
+ * internally, so see fasthash64() for an example of this.
  *
  * After all inputs have been mixed in, finalize the hash:
  *

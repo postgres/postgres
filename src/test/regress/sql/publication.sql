@@ -603,10 +603,10 @@ ALTER TABLE rf_tbl_abcd_part_pk ATTACH PARTITION rf_tbl_abcd_part_pk_1 FOR VALUE
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub6 FOR TABLE rf_tbl_abcd_pk (a, b);
 RESET client_min_messages;
--- ok - (a,b) coverts all PK cols
+-- ok - (a,b) covers all PK cols
 UPDATE rf_tbl_abcd_pk SET a = 1;
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk (a, b, c);
--- ok - (a,b,c) coverts all PK cols
+-- ok - (a,b,c) covers all PK cols
 UPDATE rf_tbl_abcd_pk SET a = 1;
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk (a);
 -- fail - "b" is missing from the column list

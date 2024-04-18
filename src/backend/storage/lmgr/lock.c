@@ -1032,7 +1032,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 
 		/*
 		 * Sleep till someone wakes me up. We do this even in the dontWait
-		 * case, beause while trying to go to sleep, we may discover that we
+		 * case, because while trying to go to sleep, we may discover that we
 		 * can acquire the lock immediately after all.
 		 */
 

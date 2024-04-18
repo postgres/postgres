@@ -207,7 +207,7 @@ if docs_dep.found()
   alias_target('man', man)
   alias_target('install-man', install_doc_man)
 
-  # built and installed as part of the the docs target
+  # built and installed as part of the docs target
   installdocs += install_doc_man
   docs += man
 endif

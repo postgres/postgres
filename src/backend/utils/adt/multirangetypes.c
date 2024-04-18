@@ -330,7 +330,7 @@ multirange_out(PG_FUNCTION_ARGS)
 }
 
 /*
- * Binary representation: First a int32-sized count of ranges, followed by
+ * Binary representation: First an int32-sized count of ranges, followed by
  * ranges in their native binary representation.
  */
 Datum

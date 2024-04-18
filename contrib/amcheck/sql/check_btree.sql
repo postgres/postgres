@@ -3,7 +3,7 @@ CREATE TABLE bttest_b(id int8);
 CREATE TABLE bttest_multi(id int8, data int8);
 CREATE TABLE delete_test_table (a bigint, b bigint, c bigint, d bigint);
 
--- Stabalize tests
+-- Stabilize tests
 ALTER TABLE bttest_a SET (autovacuum_enabled = false);
 ALTER TABLE bttest_b SET (autovacuum_enabled = false);
 ALTER TABLE bttest_multi SET (autovacuum_enabled = false);

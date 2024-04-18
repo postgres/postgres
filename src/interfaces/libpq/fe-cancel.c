@@ -210,7 +210,7 @@ PQcancelPoll(PGcancelConn *cancelConn)
 	int			n;
 
 	/*
-	 * We leave most of the  connection establishement to PQconnectPoll, since
+	 * We leave most of the connection establishment to PQconnectPoll, since
 	 * it's very similar to normal connection establishment. But once we get
 	 * to the CONNECTION_AWAITING_RESPONSE we need to start doing our own
 	 * thing.

@@ -1177,7 +1177,7 @@ remember_to_cleanup_directory(char *target_path, bool rmtopdir)
 }
 
 /*
- * Empty out the list of directories scheduled for cleanup a exit.
+ * Empty out the list of directories scheduled for cleanup at exit.
  *
  * We want to remove the output directories only on a failure, so call this
  * function when we know that the operation has succeeded.

@@ -802,7 +802,7 @@ HINT:  Execute a database-wide VACUUM in that database.
     <para>
      Similar to the XID case, if autovacuum fails to clear old MXIDs from a table, the
      system will begin to emit warning messages when the database's oldest MXIDs reach forty
-     million transactions from the wraparound point.  And, just as an the XID case, if these
+     million transactions from the wraparound point.  And, just as in the XID case, if these
      warnings are ignored, the system will refuse to generate new MXIDs once there are fewer
      than three million left until wraparound.
     </para>

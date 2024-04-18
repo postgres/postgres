@@ -4400,7 +4400,7 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	/*
 	 * Add a special step, if needed, to check if the coercion evaluation ran
 	 * into an error but was not thrown because the ON ERROR behavior is not
-	 * ERROR.  It will set jsesestate->error if an error did occur.
+	 * ERROR.  It will set jsestate->error if an error did occur.
 	 */
 	if (jsestate->jump_eval_coercion >= 0 && escontext != NULL)
 	{

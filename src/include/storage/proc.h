@@ -202,7 +202,7 @@ struct PGPROC
 		LocalTransactionId lxid;	/* local id of top-level transaction
 									 * currently * being executed by this
 									 * proc, if running; else
-									 * InvalidLocaltransactionId */
+									 * InvalidLocalTransactionId */
 	}			vxid;
 
 	/* These fields are zero while a backend is still starting up: */

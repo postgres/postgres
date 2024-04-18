@@ -2885,7 +2885,7 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 /*
  * add_setop_child_rel_equivalences
  *		Add equivalence members for each non-resjunk target in 'child_tlist'
- *		to the EquivalenceClass in the corresponding setop_pathkey's pk_class.
+ *		to the EquivalenceClass in the corresponding setop_pathkey's pk_eclass.
  *
  * 'root' is the PlannerInfo belonging to the top-level set operation.
  * 'child_rel' is the RelOptInfo of the child relation we're adding

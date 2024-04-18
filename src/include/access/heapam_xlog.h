@@ -287,7 +287,7 @@ typedef struct xl_heap_prune
 	uint8		flags;
 
 	/*
-	 * If XLHP_HAS_CONFLICT_HORIZON is set, the conflict horzion XID follows,
+	 * If XLHP_HAS_CONFLICT_HORIZON is set, the conflict horizon XID follows,
 	 * unaligned
 	 */
 } xl_heap_prune;
@@ -322,7 +322,7 @@ typedef struct xl_heap_prune
 #define		XLHP_HAS_FREEZE_PLANS		(1 << 4)
 
 /*
- * XLHP_HAS_REDIRECTIONS, XLHP_HAS_DEAD_ITEMS, and XLHP_HAS_NOW_UNUSED
+ * XLHP_HAS_REDIRECTIONS, XLHP_HAS_DEAD_ITEMS, and XLHP_HAS_NOW_UNUSED_ITEMS
  * indicate that xlhp_prune_items sub-records with redirected, dead, and
  * unused item offsets are present.
  */
@@ -354,9 +354,9 @@ typedef struct xlhp_freeze_plan
  *
  * The backup block's data contains an array of xlhp_freeze_plan structs (with
  * nplans elements).  The individual item offsets are located in an array at
- * the end of the entire record with with nplans * (each plan's ntuples)
- * members.  Those offsets are in the same order as the plans.  The REDO
- * routine uses the offsets to freeze the corresponding heap tuples.
+ * the end of the entire record with nplans * (each plan's ntuples) members
+ * Those offsets are in the same order as the plans.  The REDO routine uses
+ * the offsets to freeze the corresponding heap tuples.
  *
  * (As of PostgreSQL 17, XLOG_HEAP2_PRUNE_VACUUM_SCAN records replace the
  * separate XLOG_HEAP2_FREEZE_PAGE records.)

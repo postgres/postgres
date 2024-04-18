@@ -5687,7 +5687,7 @@ ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			case AT_AddIndex:
 
 				/*
-				 * A primary key on a inheritance parent needs supporting NOT
+				 * A primary key on an inheritance parent needs supporting NOT
 				 * NULL constraint on its children; enqueue commands to create
 				 * those or mark them inherited if they already exist.
 				 */

@@ -541,9 +541,9 @@ read_stream_begin_relation(int flags,
 		stream->distance = 1;
 
 	/*
-	 * Since we always always access the same relation, we can initialize
-	 * parts of the ReadBuffersOperation objects and leave them that way, to
-	 * avoid wasting CPU cycles writing to them for each read.
+	 * Since we always access the same relation, we can initialize parts of
+	 * the ReadBuffersOperation objects and leave them that way, to avoid
+	 * wasting CPU cycles writing to them for each read.
 	 */
 	for (int i = 0; i < max_ios; ++i)
 	{
