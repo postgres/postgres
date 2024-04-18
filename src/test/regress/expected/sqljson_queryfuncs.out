@@ -339,7 +339,7 @@ SELECT JSON_VALUE(jsonb '[]', '$');
 (1 row)
 
 SELECT JSON_VALUE(jsonb '[]', '$' ERROR ON ERROR);
-ERROR:  JSON path expression in JSON_VALUE should return singleton scalar item
+ERROR:  JSON path expression in JSON_VALUE should return single scalar item
 SELECT JSON_VALUE(jsonb '{}', '$');
  json_value 
 ------------
@@ -347,7 +347,7 @@ SELECT JSON_VALUE(jsonb '{}', '$');
 (1 row)
 
 SELECT JSON_VALUE(jsonb '{}', '$' ERROR ON ERROR);
-ERROR:  JSON path expression in JSON_VALUE should return singleton scalar item
+ERROR:  JSON path expression in JSON_VALUE should return single scalar item
 SELECT JSON_VALUE(jsonb '1', '$.a');
  json_value 
 ------------
@@ -363,9 +363,9 @@ SELECT JSON_VALUE(jsonb '1', 'strict $.a' DEFAULT 'error' ON ERROR);
 (1 row)
 
 SELECT JSON_VALUE(jsonb '1', 'lax $.a' ERROR ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_VALUE(jsonb '1', 'lax $.a' ERROR ON EMPTY ERROR ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_VALUE(jsonb '1', 'strict $.a' DEFAULT 2 ON ERROR);
  json_value 
 ------------
@@ -397,9 +397,9 @@ SELECT JSON_VALUE(jsonb '1', 'lax $.a' DEFAULT '2' ON EMPTY DEFAULT '3' ON ERROR
 (1 row)
 
 SELECT JSON_VALUE(jsonb '1', 'lax $.a' ERROR ON EMPTY DEFAULT '3' ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_VALUE(jsonb '[1,2]', '$[*]' ERROR ON ERROR);
-ERROR:  JSON path expression in JSON_VALUE should return singleton scalar item
+ERROR:  JSON path expression in JSON_VALUE should return single scalar item
 SELECT JSON_VALUE(jsonb '[1,2]', '$[*]' DEFAULT '0' ON ERROR);
  json_value 
 ------------
@@ -758,7 +758,7 @@ SELECT JSON_QUERY(jsonb '[]', '$[*]' EMPTY OBJECT ON EMPTY);
 (1 row)
 
 SELECT JSON_QUERY(jsonb '[]', '$[*]' ERROR ON EMPTY);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_QUERY(jsonb '[]', '$[*]' DEFAULT '"empty"' ON EMPTY);
  json_query 
 ------------
@@ -766,18 +766,18 @@ SELECT JSON_QUERY(jsonb '[]', '$[*]' DEFAULT '"empty"' ON EMPTY);
 (1 row)
 
 SELECT JSON_QUERY(jsonb '[]', '$[*]' ERROR ON EMPTY NULL ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_QUERY(jsonb '[]', '$[*]' ERROR ON EMPTY EMPTY ARRAY ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_QUERY(jsonb '[]', '$[*]' ERROR ON EMPTY EMPTY OBJECT ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_QUERY(jsonb '[]', '$[*]' ERROR ON EMPTY ERROR ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_QUERY(jsonb '[]', '$[*]' ERROR ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' ERROR ON ERROR);
-ERROR:  JSON path expression in JSON_QUERY should return singleton item without wrapper
-HINT:  Use WITH WRAPPER clause to wrap SQL/JSON item sequence into array.
+ERROR:  JSON path expression in JSON_QUERY should return single item without wrapper
+HINT:  Use WITH WRAPPER clause to wrap SQL/JSON items into array.
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' DEFAULT '"empty"' ON ERROR);
  json_query 
 ------------
@@ -1033,7 +1033,7 @@ SELECT JSON_QUERY(jsonb '{"a": 1}', '$.b' RETURNING sqljsonb_int_not_null);
 (1 row)
 
 SELECT JSON_QUERY(jsonb '{"a": 1}', '$.b' RETURNING sqljsonb_int_not_null ERROR ON ERROR);
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path
 -- Test timestamptz passing and output
 SELECT JSON_QUERY(jsonb 'null', '$ts' PASSING timestamptz '2018-02-21 12:34:56 +10' AS ts);
          json_query          

@@ -492,11 +492,11 @@ FROM
 		ON true;
 ERROR:  invalid input syntax for type integer: "err"
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH '$.a' ERROR ON EMPTY)) jt;
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path of column "a"
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH 'strict $.a' ERROR ON ERROR) ERROR ON ERROR) jt;
 ERROR:  jsonpath member accessor can only be applied to an object
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH 'lax $.a' ERROR ON EMPTY) ERROR ON ERROR) jt;
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path of column "a"
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH '$'   DEFAULT 1 ON EMPTY DEFAULT 2 ON ERROR)) jt;
  a 
 ---
@@ -637,6 +637,10 @@ SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || 'a' COLUMNS (foo int)
 ERROR:  only string constants are supported in JSON_TABLE path specification
 LINE 1: SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || '...
                                                      ^
+-- JsonPathQuery() error message mentioning column name
+SELECT * FROM JSON_TABLE('{"a": [{"b": "1"}, {"b": "2"}]}', '$' COLUMNS (b json path '$.a[*].b' ERROR ON ERROR));
+ERROR:  JSON path expression for column "b" should return single item without wrapper
+HINT:  Use WITH WRAPPER clause to wrap SQL/JSON items into array.
 -- JSON_TABLE: nested paths
 -- Duplicate path names
 SELECT * FROM JSON_TABLE(
@@ -849,7 +853,7 @@ SELECT sub.* FROM s,
 		xx int path '$.c',
 		NESTED PATH '$.a.za[1]' columns (NESTED PATH '$.z21[*]' COLUMNS (z21 int path '$?(@ >= $"x")' ERROR ON ERROR))
 	)) sub;
-ERROR:  no SQL/JSON item
+ERROR:  no SQL/JSON item found for specified path of column "z21"
 -- Parent columns xx1, xx appear before NESTED ones
 SELECT sub.* FROM s,
 	(VALUES (23)) x(x), generate_series(13, 13) y,

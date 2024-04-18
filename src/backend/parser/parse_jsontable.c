@@ -402,18 +402,16 @@ transformJsonTableColumn(JsonTableColumn *jtc, Node *contextItemExpr,
 	Node	   *pathspec;
 	JsonFuncExpr *jfexpr = makeNode(JsonFuncExpr);
 
-	/*
-	 * XXX consider inventing JSON_TABLE_VALUE_OP, etc. and pass the column
-	 * name via JsonExpr so that JsonPathValue(), etc. can provide error
-	 * message tailored to JSON_TABLE(), such as by mentioning the column
-	 * names in the message.
-	 */
 	if (jtc->coltype == JTC_REGULAR)
 		jfexpr->op = JSON_VALUE_OP;
 	else if (jtc->coltype == JTC_EXISTS)
 		jfexpr->op = JSON_EXISTS_OP;
 	else
 		jfexpr->op = JSON_QUERY_OP;
+
+	/* Pass the column name so any runtime JsonExpr errors can print it. */
+	Assert(jtc->name != NULL);
+	jfexpr->column_name = pstrdup(jtc->name);
 
 	jfexpr->context_item = makeJsonValueExpr((Expr *) contextItemExpr, NULL,
 											 makeJsonFormat(JS_FORMAT_DEFAULT,

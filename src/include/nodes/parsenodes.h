@@ -1791,6 +1791,8 @@ typedef struct JsonFuncExpr
 {
 	NodeTag		type;
 	JsonExprOp	op;				/* expression type */
+	char	   *column_name;	/* JSON_TABLE() column name or NULL if this is
+								 * not for a JSON_TABLE() */
 	JsonValueExpr *context_item;	/* context item expression */
 	Node	   *pathspec;		/* JSON path specification expression */
 	List	   *passing;		/* list of PASSING clause arguments, if any */

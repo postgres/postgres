@@ -300,9 +300,11 @@ typedef struct JsonPathVariable
 /* SQL/JSON item */
 extern bool JsonPathExists(Datum jb, JsonPath *path, bool *error, List *vars);
 extern Datum JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper,
-						   bool *empty, bool *error, List *vars);
+						   bool *empty, bool *error, List *vars,
+						   const char *column_name);
 extern JsonbValue *JsonPathValue(Datum jb, JsonPath *jp, bool *empty,
-								 bool *error, List *vars);
+								 bool *error, List *vars,
+								 const char *column_name);
 
 extern PGDLLIMPORT const TableFuncRoutine JsonbTableRoutine;
 

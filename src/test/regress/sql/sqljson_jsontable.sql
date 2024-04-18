@@ -290,6 +290,9 @@ FROM JSON_TABLE(
 -- Should fail (not supported)
 SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || 'a' COLUMNS (foo int));
 
+-- JsonPathQuery() error message mentioning column name
+SELECT * FROM JSON_TABLE('{"a": [{"b": "1"}, {"b": "2"}]}', '$' COLUMNS (b json path '$.a[*].b' ERROR ON ERROR));
+
 -- JSON_TABLE: nested paths
 
 -- Duplicate path names

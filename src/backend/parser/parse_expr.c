@@ -4311,6 +4311,7 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 	jsexpr = makeNode(JsonExpr);
 	jsexpr->location = func->location;
 	jsexpr->op = func->op;
+	jsexpr->column_name = func->column_name;
 
 	/*
 	 * jsonpath machinery can only handle jsonb documents, so coerce the input
