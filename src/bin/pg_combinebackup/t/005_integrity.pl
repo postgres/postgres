@@ -19,6 +19,15 @@ $node1->init(has_archiving => 1, allows_streaming => 1);
 $node1->append_conf('postgresql.conf', 'summarize_wal = on');
 $node1->start;
 
+# Create a file called INCREMENTAL.config in the root directory of the
+# first database instance. We only recognize INCREMENTAL.${original_name}
+# files under base and global and in tablespace directories, so this shouldn't
+# cause anything to fail.
+my $strangely_named_config_file = $node1->data_dir . '/INCREMENTAL.config';
+open(my $icfg, '>', $strangely_named_config_file)
+	|| die "$strangely_named_config_file: $!";
+close($icfg);
+
 # Set up another new database instance.  force_initdb is used because
 # we want it to be a separate cluster with a different system ID.
 my $node2 = PostgreSQL::Test::Cluster->new('node2');

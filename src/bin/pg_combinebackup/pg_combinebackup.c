@@ -799,25 +799,45 @@ process_directory_recursively(Oid tsoid,
 	char		manifest_prefix[MAXPGPATH];
 	DIR		   *dir;
 	struct dirent *de;
-	bool		is_pg_tblspc;
-	bool		is_pg_wal;
+	bool		is_pg_tblspc = false;
+	bool		is_pg_wal = false;
+	bool		is_incremental_dir = false;
 	manifest_data *latest_manifest = manifests[n_prior_backups];
 	pg_checksum_type checksum_type;
 
 	/*
-	 * pg_tblspc and pg_wal are special cases, so detect those here.
+	 * Classify this directory.
 	 *
-	 * pg_tblspc is only special at the top level, but subdirectories of
-	 * pg_wal are just as special as the top level directory.
+	 * We set is_pg_tblspc only for the toplevel pg_tblspc directory, because
+	 * the symlinks in that specific directory require special handling.
 	 *
-	 * Since incremental backup does not exist in pre-v10 versions, we don't
-	 * have to worry about the old pg_xlog naming.
+	 * We set is_pg_wal for the toplevel WAL directory and all of its
+	 * subdirectories, because those files are not included in the backup
+	 * manifest and hence need special treatement. (Since incremental backup
+	 * does not exist in pre-v10 versions, we don't have to worry about the
+	 * old pg_xlog naming.)
+	 *
+	 * We set is_incremental_dir for directories that can contain incremental
+	 * files requiring reconstruction. If such files occur outside these
+	 * directories, we want to just copy them straight to the output
+	 * directory. This is to protect against a user creating a file with a
+	 * strange name like INCREMENTAL.config and then compaining that
+	 * incremental backups don't work properly. The test here is a bit tricky:
+	 * incremental files occur in subdirectories of base, in pg_global itself,
+	 * and in subdirectories of pg_tblspc only if in-place tablespaces are
+	 * used.
 	 */
-	is_pg_tblspc = !OidIsValid(tsoid) && relative_path != NULL &&
-		strcmp(relative_path, "pg_tblspc") == 0;
-	is_pg_wal = !OidIsValid(tsoid) && relative_path != NULL &&
-		(strcmp(relative_path, "pg_wal") == 0 ||
-		 strncmp(relative_path, "pg_wal/", 7) == 0);
+	if (OidIsValid(tsoid))
+		is_incremental_dir = true;
+	else if (relative_path != NULL)
+	{
+		is_pg_tblspc = strcmp(relative_path, "pg_tblspc") == 0;
+		is_pg_wal = (strcmp(relative_path, "pg_wal") == 0 ||
+					 strncmp(relative_path, "pg_wal/", 7) == 0);
+		is_incremental_dir = strncmp(relative_path, "base/", 5) == 0 ||
+			strcmp(relative_path, "global") == 0 ||
+			strncmp(relative_path, "pg_tblspc/", 10) == 0;
+	}
 
 	/*
 	 * If we're under pg_wal, then we don't need checksums, because these
@@ -955,7 +975,8 @@ process_directory_recursively(Oid tsoid,
 		 * If it's an incremental file, hand it off to the reconstruction
 		 * code, which will figure out what to do.
 		 */
-		if (strncmp(de->d_name, INCREMENTAL_PREFIX,
+		if (is_incremental_dir &&
+			strncmp(de->d_name, INCREMENTAL_PREFIX,
 					INCREMENTAL_PREFIX_LENGTH) == 0)
 		{
 			/* Output path should not include "INCREMENTAL." prefix. */
