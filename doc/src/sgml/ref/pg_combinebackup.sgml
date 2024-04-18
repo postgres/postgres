@@ -45,12 +45,16 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Although <application>pg_combinebackup</application> will attempt to verify
+   <application>pg_combinebackup</application> will attempt to verify
    that the backups you specify form a legal backup chain from which a correct
-   full backup can be reconstructed, it is not designed to help you keep track
-   of which backups depend on which other backups. If you remove the one or
-   more of the previous backups upon which your incremental
-   backup relies, you will not be able to restore it.
+   full backup can be reconstructed. However, it is not designed to help you
+   keep track of which backups depend on which other backups. If you remove
+   the one or more of the previous backups upon which your incremental
+   backup relies, you will not be able to restore it. Moreover,
+   <application>pg_combinebackup</application> only attempts to verify that the
+   backups have the correct relationship to each other, not that each
+   individual backup is intact; for that, use
+   <xref linkend="app-pgverifybackup" />.
   </para>
 
   <para>
