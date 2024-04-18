@@ -3935,7 +3935,7 @@ JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
 			 JsonContainerIsScalar(singleton->val.binary.data));
 	else
 	{
-		elog(ERROR, "unrecognized json wrapper %d", wrapper);
+		elog(ERROR, "unrecognized json wrapper %d", (int) wrapper);
 		wrap = false;
 	}
 

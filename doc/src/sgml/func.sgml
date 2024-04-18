@@ -18942,7 +18942,7 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
         <optional> { ERROR | NULL | EMPTY { ARRAY | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON ERROR </optional>
   | <replaceable>name</replaceable> <replaceable>type</replaceable> EXISTS <optional> PATH <replaceable>path_expression</replaceable> </optional>
         <optional> { ERROR | TRUE | FALSE | UNKNOWN } ON ERROR </optional>
-  | NESTED <optional> PATH </optional> <replaceable>json_path_specification</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> COLUMNS ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
+  | NESTED <optional> PATH </optional> <replaceable>path_expression</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> COLUMNS ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
 </synopsis>
 
   <para>
@@ -19083,7 +19083,7 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
 
    <varlistentry>
     <term>
-      <literal>NESTED <optional> PATH </optional></literal> <replaceable>json_path_specification</replaceable> <optional> <literal>AS</literal> <replaceable>json_path_name</replaceable> </optional>
+      <literal>NESTED <optional> PATH </optional></literal> <replaceable>path_expression</replaceable> <optional> <literal>AS</literal> <replaceable>json_path_name</replaceable> </optional>
           <literal>COLUMNS</literal> ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
     </term>
     <listitem>
@@ -19315,8 +19315,9 @@ SELECT * FROM JSON_TABLE (
      "books":
       [{"name": "Mystery", "authors": [{"name": "Brown Dan"}]},
        {"name": "Wonder", "authors": [{"name": "Jun Murakami"}, {"name":"Craig Doe"}]}]
-}}'::json, '$.favs[*]'
-COLUMNS (user_id FOR ORDINALITY,
+}}'::json, '$.favorites[*]'
+COLUMNS (
+  user_id FOR ORDINALITY,
   NESTED '$.movies[*]'
     COLUMNS (
     movie_id FOR ORDINALITY,
