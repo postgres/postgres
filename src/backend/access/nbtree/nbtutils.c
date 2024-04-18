@@ -3394,6 +3394,13 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 		return true;
 	}
 
+	if (skey->sk_strategy == InvalidStrategy)
+	{
+		/* Already-eliminated array scan key; don't need to fix anything */
+		Assert(skey->sk_flags & SK_SEARCHARRAY);
+		return true;
+	}
+
 	/* Adjust strategy for DESC, if we didn't already */
 	if ((addflags & SK_BT_DESC) && !(skey->sk_flags & SK_BT_DESC))
 		skey->sk_strategy = BTCommuteStrategyNumber(skey->sk_strategy);
