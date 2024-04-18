@@ -1,10 +1,11 @@
 src/tools/pginclude/README
 
-NOTE: headerscheck and cpluspluscheck are in current use, and any
-problems they find should generally get fixed.  The other scripts
-in this directory have not been used in some time, and have issues.
-pgrminclude in particular has a history of creating more problems
-than it fixes.  Be very wary of applying their results blindly.
+NOTE: headerscheck and headerscheck --cplusplus are in current use,
+and any problems they find should generally get fixed.  The other
+scripts in this directory have not been used in some time, and have
+issues.  pgrminclude in particular has a history of creating more
+problems than it fixes.  Be very wary of applying their results
+blindly.
 
 
 pginclude
@@ -84,16 +85,17 @@ prerequisite, even if postgres_fe.h or c.h would be more appropriate.
 Also note that the contents of macros are not checked; this is intentional.
 
 
-cpluspluscheck
-==============
+headerscheck --cplusplus
+========================
 
-This script can be run to verify that all Postgres include files meet
-the project convention that they will compile as C++ code.  Although
-the project's coding language is C, some people write extensions in C++,
-so it's helpful for include files to be C++-clean.
+The headerscheck in --cplusplus mode can be run to verify that all
+Postgres include files meet the project convention that they will
+compile as C++ code.  Although the project's coding language is C,
+some people write extensions in C++, so it's helpful for include files
+to be C++-clean.
 
 A small number of header files are exempted from this requirement,
-and are skipped by the cpluspluscheck script.
+and are skipped by the script in the --cplusplus mode.
 
 The easy way to run the script is to say "make -s cpluspluscheck" in
 the top-level build directory after completing a build.  You should
