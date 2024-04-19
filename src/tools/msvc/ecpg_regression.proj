@@ -51,6 +51,9 @@
   <CreateProperty Value="-i" Condition="'%(Pgc.FileName)'=='strings'">
    <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
   </CreateProperty>
+  <CreateProperty Value="-DCMDLINESYM=123" Condition="'%(Pgc.FileName)'=='define'">
+   <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
+  </CreateProperty>
   <CreateProperty Value="define_prelim.pgc" Condition="'%(Pgc.FileName)'=='define'">
    <Output TaskParameter="Value" PropertyName="ECPGEXTRA" />
   </CreateProperty>
