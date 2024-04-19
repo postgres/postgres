@@ -1970,6 +1970,8 @@ typedef enum MergeMatchKind
 	MERGE_WHEN_NOT_MATCHED_BY_TARGET
 } MergeMatchKind;
 
+#define NUM_MERGE_MATCH_KINDS (MERGE_WHEN_NOT_MATCHED_BY_TARGET + 1)
+
 typedef struct MergeAction
 {
 	NodeTag		type;

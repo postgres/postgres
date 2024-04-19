@@ -545,7 +545,7 @@ typedef struct ResultRelInfo
 	OnConflictSetState *ri_onConflict;
 
 	/* for MERGE, lists of MergeActionState (one per MergeMatchKind) */
-	List	   *ri_MergeActions[3];
+	List	   *ri_MergeActions[NUM_MERGE_MATCH_KINDS];
 
 	/* for MERGE, expr state for checking the join condition */
 	ExprState  *ri_MergeJoinCondition;

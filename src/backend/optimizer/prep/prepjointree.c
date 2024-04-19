@@ -153,7 +153,7 @@ transform_MERGE_to_join(Query *parse)
 {
 	RangeTblEntry *joinrte;
 	JoinExpr   *joinexpr;
-	bool		have_action[3];
+	bool		have_action[NUM_MERGE_MATCH_KINDS];
 	JoinType	jointype;
 	int			joinrti;
 	List	   *vars;

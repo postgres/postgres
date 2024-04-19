@@ -109,7 +109,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	Query	   *qry = makeNode(Query);
 	ListCell   *l;
 	AclMode		targetPerms = ACL_NO_RIGHTS;
-	bool		is_terminal[3];
+	bool		is_terminal[NUM_MERGE_MATCH_KINDS];
 	Index		sourceRTI;
 	List	   *mergeActionList;
 	ParseNamespaceItem *nsitem;
