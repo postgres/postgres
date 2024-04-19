@@ -7,7 +7,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my $tempdir = PostgreSQL::Test::Utils::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir_short();
 
 # Set up a new database instance.
 my $primary = PostgreSQL::Test::Cluster->new('primary');
