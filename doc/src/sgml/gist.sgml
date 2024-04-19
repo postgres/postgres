@@ -66,9 +66,9 @@
     </thead>
     <tbody>
      <row>
-      <entry valign="middle" morerows="13"><literal>box_ops</literal></entry>
+      <entry valign="middle" morerows="11"><literal>box_ops</literal></entry>
       <entry><literal>&lt;&lt; (box, box)</literal></entry>
-      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (box, point)</literal></entry>
+      <entry valign="middle" morerows="11"><literal>&lt;-&gt; (box, point)</literal></entry>
      </row>
      <row><entry><literal>&amp;&lt; (box, box)</literal></entry></row>
      <row><entry><literal>&amp;&amp; (box, box)</literal></entry></row>
@@ -81,13 +81,11 @@
      <row><entry><literal>&lt;&lt;| (box, box)</literal></entry></row>
      <row><entry><literal>|&gt;&gt; (box, box)</literal></entry></row>
      <row><entry><literal>|&amp;&gt; (box, box)</literal></entry></row>
-     <row><entry><literal>~ (box, box)</literal></entry></row>
-     <row><entry><literal>@ (box, box)</literal></entry></row>
 
      <row>
-      <entry valign="middle" morerows="13"><literal>circle_ops</literal></entry>
+      <entry valign="middle" morerows="11"><literal>circle_ops</literal></entry>
       <entry><literal>&lt;&lt; (circle, circle)</literal></entry>
-      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (circle, point)</literal></entry>
+      <entry valign="middle" morerows="11"><literal>&lt;-&gt; (circle, point)</literal></entry>
      </row>
      <row><entry><literal>&amp;&lt; (circle, circle)</literal></entry></row>
      <row><entry><literal>&amp;&gt; (circle, circle)</literal></entry></row>
@@ -100,8 +98,6 @@
      <row><entry><literal>&lt;&lt;| (circle, circle)</literal></entry></row>
      <row><entry><literal>&amp;&lt;| (circle, circle)</literal></entry></row>
      <row><entry><literal>|&amp;&gt; (circle, circle)</literal></entry></row>
-     <row><entry><literal>@ (circle, circle)</literal></entry></row>
-     <row><entry><literal>~ (circle, circle)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="10"><literal>inet_ops</literal></entry>
@@ -156,9 +152,9 @@
      <row><entry><literal>&lt;@ (point, circle)</literal></entry></row>
 
      <row>
-      <entry valign="middle" morerows="13"><literal>poly_ops</literal></entry>
+      <entry valign="middle" morerows="11"><literal>poly_ops</literal></entry>
       <entry><literal>&lt;&lt; (polygon, polygon)</literal></entry>
-      <entry valign="middle" morerows="13"><literal>&lt;-&gt; (polygon, point)</literal></entry>
+      <entry valign="middle" morerows="11"><literal>&lt;-&gt; (polygon, point)</literal></entry>
      </row>
      <row><entry><literal>&amp;&lt; (polygon, polygon)</literal></entry></row>
      <row><entry><literal>&amp;&gt; (polygon, polygon)</literal></entry></row>
@@ -171,8 +167,6 @@
      <row><entry><literal>&amp;&lt;| (polygon, polygon)</literal></entry></row>
      <row><entry><literal>|&amp;&gt; (polygon, polygon)</literal></entry></row>
      <row><entry><literal>|&gt;&gt; (polygon, polygon)</literal></entry></row>
-     <row><entry><literal>@ (polygon, polygon)</literal></entry></row>
-     <row><entry><literal>~ (polygon, polygon)</literal></entry></row>
 
      <row>
       <entry valign="middle" morerows="17"><literal>range_ops</literal></entry>
