@@ -407,12 +407,25 @@ SKIP:
 
 	my $node2 = PostgreSQL::Test::Cluster->new('replica');
 
-	# Recover the backup
+	# Recover main data directory
+	$node2->init_from_backup($node, 'tarbackup2', tar_program => $tar);
+
+	# Recover tablespace into a new directory (not where it was!)
+	my $repTsDir = "$tempdir/tblspc1replica";
+	my $realRepTsDir = "$real_sys_tempdir/tblspc1replica";
+	mkdir $repTsDir;
+	PostgreSQL::Test::Utils::system_or_bail($tar, 'xf', $tblspc_tars[0],
+		'-C', $repTsDir);
+
+	# Update tablespace map to point to new directory.
+	# XXX Ideally pg_basebackup would handle this.
 	$tblspc_tars[0] =~ m|/([0-9]*)\.tar$|;
 	my $tblspcoid = $1;
-	my $realRepTsDir = "$real_sys_tempdir/tblspc1replica";
-	$node2->init_from_backup($node, 'tarbackup2', tar_program => $tar,
-		'tablespace_map' => { $tblspcoid => $realRepTsDir });
+	my $escapedRepTsDir = $realRepTsDir;
+	$escapedRepTsDir =~ s/\\/\\\\/g;
+	open my $mapfile, '>', $node2->data_dir . '/tablespace_map' or die $!;
+	print $mapfile "$tblspcoid $escapedRepTsDir\n";
+	close $mapfile;
 
 	$node2->start;
 	my $result = $node2->safe_psql('postgres', 'SELECT * FROM test1');

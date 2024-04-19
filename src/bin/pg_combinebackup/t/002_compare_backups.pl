@@ -7,15 +7,11 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my $tempdir = PostgreSQL::Test::Utils::tempdir_short();
-
 # Set up a new database instance.
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(has_archiving => 1, allows_streaming => 1);
 $primary->append_conf('postgresql.conf', 'summarize_wal = on');
 $primary->start;
-my $tsprimary = $tempdir . '/ts';
-mkdir($tsprimary) || die "mkdir $tsprimary: $!";
 
 # Create some test tables, each containing one row of data, plus a whole
 # extra database.
@@ -33,37 +29,24 @@ INSERT INTO will_get_dropped VALUES (1, 'initial test row');
 CREATE TABLE will_get_rewritten (a int, b text);
 INSERT INTO will_get_rewritten VALUES (1, 'initial test row');
 CREATE DATABASE db_will_get_dropped;
-CREATE TABLESPACE ts1 LOCATION '$tsprimary';
-CREATE TABLE will_not_change_in_ts (a int, b text) TABLESPACE ts1;
-INSERT INTO will_not_change_in_ts VALUES (1, 'initial test row');
-CREATE TABLE will_change_in_ts (a int, b text) TABLESPACE ts1;
-INSERT INTO will_change_in_ts VALUES (1, 'initial test row');
-CREATE TABLE will_get_dropped_in_ts (a int, b text);
-INSERT INTO will_get_dropped_in_ts VALUES (1, 'initial test row');
 EOM
 
 # Take a full backup.
 my $backup1path = $primary->backup_dir . '/backup1';
-my $tsbackup1path = $tempdir . '/ts1backup';
-mkdir($tsbackup1path) || die "mkdir $tsbackup1path: $!";
 $primary->command_ok(
-	[ 'pg_basebackup', '-D', $backup1path, '--no-sync', '-cfast',
-      "-T${tsprimary}=${tsbackup1path}" ], "full backup");
+	[ 'pg_basebackup', '-D', $backup1path, '--no-sync', '-cfast' ],
+	"full backup");
 
 # Now make some database changes.
 $primary->safe_psql('postgres', <<EOM);
 UPDATE will_change SET b = 'modified value' WHERE a = 1;
-UPDATE will_change_in_ts SET b = 'modified value' WHERE a = 1;
 INSERT INTO will_grow
 	SELECT g, 'additional row' FROM generate_series(2, 5000) g;
 TRUNCATE will_shrink;
 VACUUM will_get_vacuumed;
 DROP TABLE will_get_dropped;
-DROP TABLE will_get_dropped_in_ts;
 CREATE TABLE newly_created (a int, b text);
 INSERT INTO newly_created VALUES (1, 'row for new table');
-CREATE TABLE newly_created_in_ts (a int, b text) TABLESPACE ts1;
-INSERT INTO newly_created_in_ts VALUES (1, 'row for new table');
 VACUUM FULL will_get_rewritten;
 DROP DATABASE db_will_get_dropped;
 CREATE DATABASE db_newly_created;
@@ -71,11 +54,8 @@ EOM
 
 # Take an incremental backup.
 my $backup2path = $primary->backup_dir . '/backup2';
-my $tsbackup2path = $tempdir . '/tsbackup2';
-mkdir($tsbackup2path) || die "mkdir $tsbackup2path: $!";
 $primary->command_ok(
 	[ 'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
-      "-T${tsprimary}=${tsbackup2path}",
 	  '--incremental', $backup1path . '/backup_manifest' ],
 	"incremental backup");
 
@@ -98,11 +78,9 @@ $primary->poll_query_until('postgres', $archive_wait_query)
 # Perform PITR from the full backup. Disable archive_mode so that the archive
 # doesn't find out about the new timeline; that way, the later PITR below will
 # choose the same timeline.
-my $tspitr1path = $tempdir . '/tspitr1';
 my $pitr1 = PostgreSQL::Test::Cluster->new('pitr1');
 $pitr1->init_from_backup($primary, 'backup1',
-						 standby => 1, has_restoring => 1,
-						 tablespace_map => { $tsbackup1path => $tspitr1path });
+						 standby => 1, has_restoring => 1);
 $pitr1->append_conf('postgresql.conf', qq{
 recovery_target_lsn = '$lsn'
 recovery_target_action = 'promote'
@@ -112,12 +90,10 @@ $pitr1->start();
 
 # Perform PITR to the same LSN from the incremental backup. Use the same
 # basic configuration as before.
-my $tspitr2path = $tempdir . '/tspitr2';
 my $pitr2 = PostgreSQL::Test::Cluster->new('pitr2');
 $pitr2->init_from_backup($primary, 'backup2',
 						 standby => 1, has_restoring => 1,
-						 combine_with_prior => [ 'backup1' ],
-						 tablespace_map => { $tsbackup2path => $tspitr2path });
+						 combine_with_prior => [ 'backup1' ]);
 $pitr2->append_conf('postgresql.conf', qq{
 recovery_target_lsn = '$lsn'
 recovery_target_action = 'promote'

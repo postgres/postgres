@@ -777,7 +777,7 @@ sub backup_fs_cold
 
 =pod
 
-=item $node->init_from_backup(root_node, backup_name, %params)
+=item $node->init_from_backup(root_node, backup_name)
 
 Initialize a node from a backup, which may come from this node or a different
 node. root_node must be a PostgreSQL::Test::Cluster reference, backup_name the string name
@@ -787,13 +787,8 @@ Does not start the node after initializing it.
 
 By default, the backup is assumed to be plain format.  To restore from
 a tar-format backup, pass the name of the tar program to use in the
-keyword parameter tar_program.
-
-If there are tablespace present in the backup, include tablespace_map as
-a keyword parameter whose values is a hash. When tar_program is used, the
-hash keys are tablespace OIDs; otherwise, they are the tablespace pathnames
-used in the backup. In either case, the values are the tablespace pathnames
-that should be used for the target cluster.
+keyword parameter tar_program.  Note that tablespace tar files aren't
+handled here.
 
 To restore from an incremental backup, pass the parameter combine_with_prior
 as a reference to an array of prior backup names with which this backup
@@ -848,20 +843,12 @@ sub init_from_backup
 		}
 
 		local %ENV = $self->_get_env();
-		my @combineargs = ('pg_combinebackup', '-d');
-		if (exists $params{tablespace_map})
-		{
-			while (my ($olddir, $newdir) = each %{$params{tablespace_map}})
-			{
-				push @combineargs, "-T$olddir=$newdir";
-			}
-		}
-		push @combineargs, @prior_backup_path, $backup_path, '-o', $data_path;
-		PostgreSQL::Test::Utils::system_or_bail(@combineargs);
+		PostgreSQL::Test::Utils::system_or_bail('pg_combinebackup', '-d',
+			@prior_backup_path, $backup_path, '-o', $data_path);
 	}
 	elsif (defined $params{tar_program})
 	{
-		mkdir($data_path) || die "mkdir $data_path: $!";
+		mkdir($data_path);
 		PostgreSQL::Test::Utils::system_or_bail($params{tar_program}, 'xf',
 			$backup_path . '/base.tar',
 			'-C', $data_path);
@@ -869,77 +856,11 @@ sub init_from_backup
 			$params{tar_program}, 'xf',
 			$backup_path . '/pg_wal.tar', '-C',
 			$data_path . '/pg_wal');
-
-		# We need to generate a tablespace_map file.
-		open(my $tsmap, ">", "$data_path/tablespace_map")
-			|| die "$data_path/tablespace_map: $!";
-
-		# Extract tarfiles and add tablespace_map entries
-		my @tstars = grep { /^\d+.tar/ }
-			PostgreSQL::Test::Utils::slurp_dir($backup_path);
-		for my $tstar (@tstars)
-		{
-			my $tsoid = $tstar;
-			$tsoid =~ s/\.tar$//;
-
-			die "no tablespace mapping for $tstar"
-				if !exists $params{tablespace_map} ||
-				   !exists $params{tablespace_map}{$tsoid};
-			my $newdir = $params{tablespace_map}{$tsoid};
-
-			mkdir($newdir) || die "mkdir $newdir: $!";
-			PostgreSQL::Test::Utils::system_or_bail($params{tar_program}, 'xf',
-				$backup_path . '/' . $tstar, '-C', $newdir);
-
-			my $escaped_newdir = $newdir;
-			$escaped_newdir =~ s/\\/\\\\/g;
-			print $tsmap "$tsoid $escaped_newdir\n";
-		}
-
-		# Close tablespace_map.
-		close($tsmap);
 	}
 	else
 	{
-		my @tsoids;
 		rmdir($data_path);
-
-		# Copy the main backup. Exclude tablespace links, but remember them.
-		PostgreSQL::Test::RecursiveCopy::copypath($backup_path, $data_path,
-			'filterfn' => sub {
-				my ($path) = @_;
-				if ($path =~ /^pg_tblspc\/(\d+)$/ && -l "$backup_path/$path")
-				{
-					push @tsoids, $1;
-					return 0;
-				}
-				return 1;
-			});
-
-		# We need to generate a tablespace_map file.
-		open(my $tsmap, ">", "$data_path/tablespace_map")
-			|| die "$data_path/tablespace_map: $!";
-
-		# Now use the list of tablespace links to copy each tablespace.
-		for my $tsoid (@tsoids)
-		{
-			my $olddir = readlink("$backup_path/pg_tblspc/$tsoid")
-				|| die "readlink $backup_path/pg_tblspc/$tsoid: $!";
-
-			die "no tablespace mapping for $olddir"
-				if !exists $params{tablespace_map} ||
-				   !exists $params{tablespace_map}{$olddir};
-
-			my $newdir = $params{tablespace_map}{$olddir};
-			PostgreSQL::Test::RecursiveCopy::copypath($olddir, $newdir);
-
-			my $escaped_newdir = $newdir;
-			$escaped_newdir =~ s/\\/\\\\/g;
-			print $tsmap "$tsoid $escaped_newdir\n";
-		}
-
-		# Close tablespace_map.
-		close($tsmap);
+		PostgreSQL::Test::RecursiveCopy::copypath($backup_path, $data_path);
 	}
 	chmod(0700, $data_path) or die $!;
 
