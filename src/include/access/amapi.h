@@ -114,7 +114,8 @@ typedef bool (*aminsert_function) (Relation indexRelation,
 								   struct IndexInfo *indexInfo);
 
 /* cleanup after insert */
-typedef void (*aminsertcleanup_function) (struct IndexInfo *indexInfo);
+typedef void (*aminsertcleanup_function) (Relation indexRelation,
+										  struct IndexInfo *indexInfo);
 
 /* bulk delete */
 typedef IndexBulkDeleteResult *(*ambulkdelete_function) (IndexVacuumInfo *info,

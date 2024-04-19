@@ -575,6 +575,7 @@ DROP TABLE brintest_unlogged;
 -- test that the insert optimization works if no rows end up inserted
 CREATE TABLE brin_insert_optimization (a int);
 INSERT INTO brin_insert_optimization VALUES (1);
-CREATE INDEX ON brin_insert_optimization USING brin (a);
+CREATE INDEX brin_insert_optimization_idx ON brin_insert_optimization USING brin (a);
 UPDATE brin_insert_optimization SET a = a;
+REINDEX INDEX CONCURRENTLY brin_insert_optimization_idx;
 DROP TABLE brin_insert_optimization;

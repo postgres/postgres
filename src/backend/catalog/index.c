@@ -3402,6 +3402,9 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	/* Done with tuplesort object */
 	tuplesort_end(state.tuplesort);
 
+	/* Make sure to release resources cached in indexInfo (if needed). */
+	index_insert_cleanup(indexRelation, indexInfo);
+
 	elog(DEBUG2,
 		 "validate_index found %.0f heap tuples, %.0f index tuples; inserted %.0f missing tuples",
 		 state.htups, state.itups, state.tups_inserted);

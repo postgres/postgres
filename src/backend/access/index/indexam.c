@@ -242,10 +242,9 @@ index_insert_cleanup(Relation indexRelation,
 					 IndexInfo *indexInfo)
 {
 	RELATION_CHECKS;
-	Assert(indexInfo);
 
-	if (indexRelation->rd_indam->aminsertcleanup && indexInfo->ii_AmCache)
-		indexRelation->rd_indam->aminsertcleanup(indexInfo);
+	if (indexRelation->rd_indam->aminsertcleanup)
+		indexRelation->rd_indam->aminsertcleanup(indexRelation, indexInfo);
 }
 
 /*

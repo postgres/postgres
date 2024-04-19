@@ -500,11 +500,13 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
  * Callback to clean up the BrinInsertState once all tuple inserts are done.
  */
 void
-brininsertcleanup(IndexInfo *indexInfo)
+brininsertcleanup(Relation index, IndexInfo *indexInfo)
 {
 	BrinInsertState *bistate = (BrinInsertState *) indexInfo->ii_AmCache;
 
-	Assert(bistate);
+	/* bail out if cache not initialized */
+	if (indexInfo->ii_AmCache == NULL)
+		return;
 
 	/*
 	 * Clean up the revmap. Note that the brinDesc has already been cleaned up

@@ -367,21 +367,21 @@ aminsert (Relation indexRelation,
    within an SQL statement, it can allocate space
    in <literal>indexInfo-&gt;ii_Context</literal> and store a pointer to the
    data in <literal>indexInfo-&gt;ii_AmCache</literal> (which will be NULL
-   initially). After the index insertions complete, the memory will be freed
-   automatically. If additional cleanup is required (e.g. if the cache contains
-   buffers and tuple descriptors), the AM may define an optional function
-   <literal>aminsertcleanup</literal>, called before the memory is released.
+   initially).  If resources other than memory have to be released after
+   index insertions, <function>aminsertcleanup</function> may be provided,
+   which will be called before the memory is released.
   </para>
 
   <para>
 <programlisting>
 void
-aminsertcleanup (IndexInfo *indexInfo);
+aminsertcleanup (Relation indexRelation,
+                 IndexInfo *indexInfo);
 </programlisting>
    Clean up state that was maintained across successive inserts in
    <literal>indexInfo-&gt;ii_AmCache</literal>. This is useful if the data
-   requires additional cleanup steps, and simply releasing the memory is not
-   sufficient.
+   requires additional cleanup steps (e.g., releasing pinned buffers), and
+   simply releasing the memory is not sufficient.
   </para>
 
   <para>
