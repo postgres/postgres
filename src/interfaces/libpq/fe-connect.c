@@ -397,7 +397,7 @@ static bool init_allowed_encryption_methods(PGconn *conn);
 static int	encryption_negotiation_failed(PGconn *conn);
 #endif
 static bool connection_failed(PGconn *conn);
-static bool select_next_encryption_method(PGconn *conn, bool negotiation_failure);
+static bool select_next_encryption_method(PGconn *conn, bool have_valid_connection);
 static PGPing internal_ping(PGconn *conn);
 static void pqFreeCommandQueue(PGcmdQueueEntry *queue);
 static bool fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
