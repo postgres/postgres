@@ -990,7 +990,7 @@ process_directory_recursively(Oid tsoid,
 
 			/* Reconstruction logic will do the rest. */
 			reconstruct_from_incremental_file(ifullpath, ofullpath,
-											  relative_path,
+											  manifest_prefix,
 											  de->d_name + INCREMENTAL_PREFIX_LENGTH,
 											  n_prior_backups,
 											  prior_backup_dirs,

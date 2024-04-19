@@ -75,9 +75,10 @@ static void read_block(rfile *s, off_t off, uint8 *buffer);
  * output_filename should be the path where the reconstructed file is to be
  * written.
  *
- * relative_path should be the relative path to the directory containing this
- * file. bare_file_name should be the name of the file within that directory,
- * without "INCREMENTAL.".
+ * relative_path should be the path to the directory containing this file,
+ * relative to the root of the backup (NOT relative to the root of the
+ * tablespace). bare_file_name should be the name of the file within that
+ * directory, without "INCREMENTAL.".
  *
  * n_prior_backups is the number of prior backups, and prior_backup_dirs is
  * an array of pathnames where those backups can be found.
