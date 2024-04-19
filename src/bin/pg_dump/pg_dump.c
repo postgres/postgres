@@ -8788,12 +8788,15 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 						 "), E',\n    ') AS attfdwoptions,\n");
 
 	/*
-	 * Find out any NOT NULL markings for each column.  In 17 and up we have
-	 * to read pg_constraint, and keep track whether it's NO INHERIT; in older
-	 * versions we rely on pg_attribute.attnotnull.
+	 * Find out any NOT NULL markings for each column.  In 17 and up we read
+	 * pg_constraint to obtain the constraint name.  notnull_noinherit is set
+	 * according to the NO INHERIT property.  For versions prior to 17, we
+	 * store an empty string as the name when a constraint is marked as
+	 * attnotnull (this cues dumpTableSchema to print the NOT NULL clause
+	 * without a name); also, such cases are never NO INHERIT.
 	 *
-	 * We also track whether the constraint was defined directly in this table
-	 * or via an ancestor, for binary upgrade.
+	 * We track in notnull_inh whether the constraint was defined directly in
+	 * this table or via an ancestor, for binary upgrade.
 	 *
 	 * Lastly, we need to know if the PK for the table involves each column;
 	 * for columns that are there we need a NOT NULL marking even if there's
@@ -8801,13 +8804,24 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	 * NULLs after the data is loaded when the PK is created, later in the
 	 * dump; for this case we add throwaway constraints that are dropped once
 	 * the PK is created.
+	 *
+	 * Another complication arises from columns that have attnotnull set, but
+	 * for which no corresponding not-null nor PK constraint exists.  This can
+	 * happen if, for example, a primary key is dropped indirectly -- say,
+	 * because one of its columns is dropped.  This is an irregular condition,
+	 * so we don't work hard to preserve it, and instead act as though an
+	 * unnamed not-null constraint exists.
 	 */
 	if (fout->remoteVersion >= 170000)
 		appendPQExpBufferStr(q,
-							 "co.conname AS notnull_name,\n"
-							 "co.connoinherit AS notnull_noinherit,\n"
+							 "CASE WHEN co.conname IS NOT NULL THEN co.conname "
+							 "  WHEN a.attnotnull AND copk.conname IS NULL THEN '' ELSE NULL END AS notnull_name,\n"
+							 "CASE WHEN co.conname IS NOT NULL THEN co.connoinherit "
+							 "  WHEN a.attnotnull THEN false ELSE NULL END AS notnull_noinherit,\n"
 							 "copk.conname IS NOT NULL as notnull_is_pk,\n"
-							 "coalesce(NOT co.conislocal, true) AS notnull_inh,\n");
+							 "CASE WHEN co.conname IS NOT NULL THEN "
+							 "  coalesce(NOT co.conislocal, true) "
+							 "ELSE false END as notnull_inh,\n");
 	else
 		appendPQExpBufferStr(q,
 							 "CASE WHEN a.attnotnull THEN '' ELSE NULL END AS notnull_name,\n"
