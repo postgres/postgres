@@ -222,7 +222,7 @@ static bool add_values_to_range(Relation idxRel, BrinDesc *bdesc,
 								BrinMemTuple *dtup, const Datum *values, const bool *nulls);
 static bool check_null_keys(BrinValues *bval, ScanKey *nullkeys, int nnullkeys);
 static void brin_fill_empty_ranges(BrinBuildState *state,
-								   BlockNumber prevRange, BlockNumber maxRange);
+								   BlockNumber prevRange, BlockNumber nextRange);
 
 /* parallel index builds */
 static void _brin_begin_parallel(BrinBuildState *buildstate, Relation heap, Relation index,
@@ -1151,8 +1151,8 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 *
 	 * XXX plan_create_index_workers makes the number of workers dependent on
 	 * maintenance_work_mem, requiring 32MB for each worker. That makes sense
-	 * for btree, but not for BRIN, which can do away with much less memory.
-	 * So maybe make that somehow less strict, optionally?
+	 * for btree, but not for BRIN, which can do with much less memory. So
+	 * maybe make that somehow less strict, optionally?
 	 */
 	if (indexInfo->ii_ParallelWorkers > 0)
 		_brin_begin_parallel(state, heap, index, indexInfo->ii_Concurrent,
@@ -2621,7 +2621,7 @@ _brin_parallel_merge(BrinBuildState *state)
 
 	/*
 	 * Initialize BrinMemTuple we'll use to union summaries from workers (in
-	 * case they happened to produce parts of the same paga range).
+	 * case they happened to produce parts of the same page range).
 	 */
 	memtuple = brin_new_memtuple(state->bs_bdesc);
 
@@ -2932,7 +2932,7 @@ _brin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
  * specified block number. The empty tuple is initialized only once, when it's
  * needed for the first time, stored in the memory context bs_context to ensure
  * proper life span, and reused on following calls. All empty tuples are
- * exactly the same except for the bs_blkno field, which is set to the value
+ * exactly the same except for the bt_blkno field, which is set to the value
  * in blkno parameter.
  */
 static void

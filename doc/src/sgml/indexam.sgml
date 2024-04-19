@@ -370,7 +370,7 @@ aminsert (Relation indexRelation,
    initially). After the index insertions complete, the memory will be freed
    automatically. If additional cleanup is required (e.g. if the cache contains
    buffers and tuple descriptors), the AM may define an optional function
-   <literal>indexinsertcleanup</literal>, called before the memory is released.
+   <literal>aminsertcleanup</literal>, called before the memory is released.
   </para>
 
   <para>
