@@ -292,15 +292,21 @@
   </para>
 
   <para>
-   As a rule of thumb, <structfield>queryid</structfield> values can be assumed to be
-   stable and comparable only so long as the underlying server version and
-   catalog metadata details stay exactly the same.  Two servers
-   participating in replication based on physical WAL replay can be expected
-   to have identical <structfield>queryid</structfield> values for the same query.
-   However, logical replication schemes do not promise to keep replicas
-   identical in all relevant details, so <structfield>queryid</structfield> will
-   not be a useful identifier for accumulating costs across a set of logical
-   replicas.  If in doubt, direct testing is recommended.
+   Two servers participating in replication based on physical WAL replay can
+   be expected to have identical <structfield>queryid</structfield> values for
+   the same query.  However, logical replication schemes do not promise to
+   keep replicas identical in all relevant details, so
+   <structfield>queryid</structfield> will not be a useful identifier for
+   accumulating costs across a set of logical replicas.
+   If in doubt, direct testing is recommended.
+  </para>
+
+  <para>
+   Generally, it can be assumed that <structfield>queryid</structfield> values
+   are stable between minor version releases of <productname>PostgreSQL</productname>,
+   providing that instances are running on the same machine architecture and
+   the catalog metadata details match.  Compatibility will only be broken
+   between minor versions as a last resort.
   </para>
 
   <para>
