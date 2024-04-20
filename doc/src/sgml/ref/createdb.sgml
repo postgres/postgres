@@ -201,7 +201,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-S <replaceable class="parameter">template</replaceable></option></term>
+      <term><option>-S <replaceable class="parameter">strategy</replaceable></option></term>
       <term><option>--strategy=<replaceable class="parameter">strategy</replaceable></option></term>
       <listitem>
        <para>
