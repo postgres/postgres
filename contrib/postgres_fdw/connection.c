@@ -612,10 +612,12 @@ configure_remote_session(PGconn *conn)
 	 * anyway.  However it makes the regression test outputs more predictable.
 	 *
 	 * We don't risk setting remote zone equal to ours, since the remote
-	 * server might use a different timezone database.  Instead, use UTC
-	 * (quoted, because very old servers are picky about case).
+	 * server might use a different timezone database.  Instead, use GMT
+	 * (quoted, because very old servers are picky about case).  That's
+	 * guaranteed to work regardless of the remote's timezone database,
+	 * because pg_tzset() hard-wires it (at least in PG 9.2 and later).
 	 */
-	do_sql_command(conn, "SET timezone = 'UTC'");
+	do_sql_command(conn, "SET timezone = 'GMT'");
 
 	/*
 	 * Set values needed to ensure unambiguous data output from remote.  (This
