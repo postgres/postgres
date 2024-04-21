@@ -1,9 +1,13 @@
+/case_test
+/category_test
 /norm_test
 /norm_test_table.h
 
 # Downloaded files
 /CompositionExclusions.txt
+/DerivedCoreProperties.txt
 /DerivedNormalizationProps.txt
 /EastAsianWidth.txt
 /NormalizationTest.txt
+/PropList.txt
 /UnicodeData.txt
