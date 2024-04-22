@@ -392,7 +392,6 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 		elemtype = cur->sk_subtype;
 		if (elemtype == InvalidOid)
 			elemtype = rel->rd_opcintype[cur->sk_attno - 1];
-		Assert(elemtype == ARR_ELEMTYPE(arrayval));
 
 		/*
 		 * If the comparison operator is not equality, then the array qual
