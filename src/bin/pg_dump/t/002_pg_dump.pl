@@ -4587,19 +4587,19 @@ my %tests = (
 			CREATE TABLE dump_test.regress_pg_dump_table_am_parent (id int) PARTITION BY LIST (id);
 			ALTER TABLE dump_test.regress_pg_dump_table_am_parent SET ACCESS METHOD regress_table_am;
 			CREATE TABLE dump_test.regress_pg_dump_table_am_child_1
-			  PARTITION OF dump_test.regress_pg_dump_table_am_parent FOR VALUES IN (1) USING heap;
+			  PARTITION OF dump_test.regress_pg_dump_table_am_parent FOR VALUES IN (1);
 			CREATE TABLE dump_test.regress_pg_dump_table_am_child_2
-			  PARTITION OF dump_test.regress_pg_dump_table_am_parent FOR VALUES IN (2);',
+			  PARTITION OF dump_test.regress_pg_dump_table_am_parent FOR VALUES IN (2) USING heap;',
 		regexp => qr/^
-			\QSET default_table_access_method = regress_table_am;\E
-			(\n(?!SET[^;]+;)[^\n]*)*
 			\n\QCREATE TABLE dump_test.regress_pg_dump_table_am_parent (\E
+			(\n(?!SET[^;]+;)[^\n]*)*
+			\QALTER TABLE dump_test.regress_pg_dump_table_am_parent SET ACCESS METHOD regress_table_am;\E
 			(.*\n)*
-			\QSET default_table_access_method = heap;\E
+			\QSET default_table_access_method = regress_table_am;\E
 			(\n(?!SET[^;]+;)[^\n]*)*
 			\n\QCREATE TABLE dump_test.regress_pg_dump_table_am_child_1 (\E
 			(.*\n)*
-			\QSET default_table_access_method = regress_table_am;\E
+			\QSET default_table_access_method = heap;\E
 			(\n(?!SET[^;]+;)[^\n]*)*
 			\n\QCREATE TABLE dump_test.regress_pg_dump_table_am_child_2 (\E
 			(.*\n)*/xm,

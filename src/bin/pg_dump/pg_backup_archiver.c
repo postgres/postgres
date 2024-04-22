@@ -30,6 +30,7 @@
 #include <io.h>
 #endif
 
+#include "catalog/pg_class_d.h"
 #include "common/string.h"
 #include "compress_io.h"
 #include "dumputils.h"
@@ -62,6 +63,8 @@ static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 static void _selectTablespace(ArchiveHandle *AH, const char *tablespace);
 static void _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam);
+static void _printTableAccessMethodNoStorage(ArchiveHandle *AH,
+											 TocEntry *te);
 static void processEncodingEntry(ArchiveHandle *AH, TocEntry *te);
 static void processStdStringsEntry(ArchiveHandle *AH, TocEntry *te);
 static void processSearchPathEntry(ArchiveHandle *AH, TocEntry *te);
@@ -1222,6 +1225,7 @@ ArchiveEntry(Archive *AHX, CatalogId catalogId, DumpId dumpId,
 	newToc->namespace = opts->namespace ? pg_strdup(opts->namespace) : NULL;
 	newToc->tablespace = opts->tablespace ? pg_strdup(opts->tablespace) : NULL;
 	newToc->tableam = opts->tableam ? pg_strdup(opts->tableam) : NULL;
+	newToc->relkind = opts->relkind;
 	newToc->owner = opts->owner ? pg_strdup(opts->owner) : NULL;
 	newToc->desc = pg_strdup(opts->description);
 	newToc->defn = opts->createStmt ? pg_strdup(opts->createStmt) : NULL;
@@ -2602,6 +2606,7 @@ WriteToc(ArchiveHandle *AH)
 		WriteStr(AH, te->namespace);
 		WriteStr(AH, te->tablespace);
 		WriteStr(AH, te->tableam);
+		WriteInt(AH, te->relkind);
 		WriteStr(AH, te->owner);
 		WriteStr(AH, "false");
 
@@ -2706,6 +2711,9 @@ ReadToc(ArchiveHandle *AH)
 
 		if (AH->version >= K_VERS_1_14)
 			te->tableam = ReadStr(AH);
+
+		if (AH->version >= K_VERS_1_16)
+			te->relkind = ReadInt(AH);
 
 		te->owner = ReadStr(AH);
 		is_supported = true;
@@ -3568,6 +3576,51 @@ _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam)
 }
 
 /*
+ * Set the proper default table access method for a table without storage.
+ * Currently, this is required only for partitioned tables with a table AM.
+ */
+static void
+_printTableAccessMethodNoStorage(ArchiveHandle *AH, TocEntry *te)
+{
+	RestoreOptions *ropt = AH->public.ropt;
+	const char *tableam = te->tableam;
+	PQExpBuffer cmd;
+
+	/* do nothing in --no-table-access-method mode */
+	if (ropt->noTableAm)
+		return;
+
+	if (!tableam)
+		return;
+
+	Assert(te->relkind == RELKIND_PARTITIONED_TABLE);
+
+	cmd = createPQExpBuffer();
+
+	appendPQExpBufferStr(cmd, "ALTER TABLE ");
+	appendPQExpBuffer(cmd, "%s ", fmtQualifiedId(te->namespace, te->tag));
+	appendPQExpBuffer(cmd, "SET ACCESS METHOD %s;",
+					  fmtId(tableam));
+
+	if (RestoringToDB(AH))
+	{
+		PGresult   *res;
+
+		res = PQexec(AH->connection, cmd->data);
+
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			warn_or_exit_horribly(AH,
+								  "could not alter table access method: %s",
+								  PQerrorMessage(AH->connection));
+		PQclear(res);
+	}
+	else
+		ahprintf(AH, "%s\n\n", cmd->data);
+
+	destroyPQExpBuffer(cmd);
+}
+
+/*
  * Extract an object description for a TOC entry, and append it to buf.
  *
  * This is used for ALTER ... OWNER TO.
@@ -3673,11 +3726,17 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 {
 	RestoreOptions *ropt = AH->public.ropt;
 
-	/* Select owner, schema, tablespace and default AM as necessary */
+	/*
+	 * Select owner, schema, tablespace and default AM as necessary. The
+	 * default access method for partitioned tables is handled after
+	 * generating the object definition, as it requires an ALTER command
+	 * rather than SET.
+	 */
 	_becomeOwner(AH, te);
 	_selectOutputSchema(AH, te->namespace);
 	_selectTablespace(AH, te->tablespace);
-	_selectTableAccessMethod(AH, te->tableam);
+	if (te->relkind != RELKIND_PARTITIONED_TABLE)
+		_selectTableAccessMethod(AH, te->tableam);
 
 	/* Emit header comment for item */
 	if (!AH->noTocComments)
@@ -3811,6 +3870,13 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 			termPQExpBuffer(&temp);
 		}
 	}
+
+	/*
+	 * Select a partitioned table's default AM, once the table definition has
+	 * been generated.
+	 */
+	if (te->relkind == RELKIND_PARTITIONED_TABLE)
+		_printTableAccessMethodNoStorage(AH, te);
 
 	/*
 	 * If it's an ACL entry, it might contain SET SESSION AUTHORIZATION
