@@ -34,39 +34,13 @@
 #ifdef TRY_POPCNT_FAST
 
 /*
- * Returns true if the CPU supports the instructions required for the AVX-512
- * pg_popcount() implementation.
+ * Does CPUID say there's support for XSAVE instructions?
  */
-bool
-pg_popcount_avx512_available(void)
+static inline bool
+xsave_available(void)
 {
 	unsigned int exx[4] = {0, 0, 0, 0};
 
-	/* Does CPUID say there's support for AVX-512 popcount instructions? */
-#if defined(HAVE__GET_CPUID_COUNT)
-	__get_cpuid_count(7, 0, &exx[0], &exx[1], &exx[2], &exx[3]);
-#elif defined(HAVE__CPUIDEX)
-	__cpuidex(exx, 7, 0);
-#else
-#error cpuid instruction not available
-#endif
-	if ((exx[2] & (1 << 14)) == 0)	/* avx512-vpopcntdq */
-		return false;
-
-	/* Does CPUID say there's support for AVX-512 byte and word instructions? */
-	memset(exx, 0, sizeof(exx));
-#if defined(HAVE__GET_CPUID_COUNT)
-	__get_cpuid_count(7, 0, &exx[0], &exx[1], &exx[2], &exx[3]);
-#elif defined(HAVE__CPUIDEX)
-	__cpuidex(exx, 7, 0);
-#else
-#error cpuid instruction not available
-#endif
-	if ((exx[1] & (1 << 30)) == 0)	/* avx512-bw */
-		return false;
-
-	/* Does CPUID say there's support for XSAVE instructions? */
-	memset(exx, 0, sizeof(exx));
 #if defined(HAVE__GET_CPUID)
 	__get_cpuid(1, &exx[0], &exx[1], &exx[2], &exx[3]);
 #elif defined(HAVE__CPUID)
@@ -74,15 +48,55 @@ pg_popcount_avx512_available(void)
 #else
 #error cpuid instruction not available
 #endif
-	if ((exx[2] & (1 << 26)) == 0)	/* xsave */
-		return false;
+	return (exx[2] & (1 << 27)) != 0;	/* osxsave */
+}
 
-	/* Does XGETBV say the ZMM registers are enabled? */
+/*
+ * Does XGETBV say the ZMM registers are enabled?
+ *
+ * NB: Caller is responsible for verifying that xsave_available() returns true
+ * before calling this.
+ */
+static inline bool
+zmm_regs_available(void)
+{
 #ifdef HAVE_XSAVE_INTRINSICS
-	return (_xgetbv(0) & 0xe0) != 0;
+	return (_xgetbv(0) & 0xe6) == 0xe6;
 #else
 	return false;
 #endif
+}
+
+/*
+ * Does CPUID say there's support for AVX-512 popcount and byte-and-word
+ * instructions?
+ */
+static inline bool
+avx512_popcnt_available(void)
+{
+	unsigned int exx[4] = {0, 0, 0, 0};
+
+#if defined(HAVE__GET_CPUID_COUNT)
+	__get_cpuid_count(7, 0, &exx[0], &exx[1], &exx[2], &exx[3]);
+#elif defined(HAVE__CPUIDEX)
+	__cpuidex(exx, 7, 0);
+#else
+#error cpuid instruction not available
+#endif
+	return (exx[2] & (1 << 14)) != 0 && /* avx512-vpopcntdq */
+		(exx[1] & (1 << 30)) != 0;	/* avx512-bw */
+}
+
+/*
+ * Returns true if the CPU supports the instructions required for the AVX-512
+ * pg_popcount() implementation.
+ */
+bool
+pg_popcount_avx512_available(void)
+{
+	return xsave_available() &&
+		zmm_regs_available() &&
+		avx512_popcnt_available();
 }
 
 #endif							/* TRY_POPCNT_FAST */
