@@ -1,3 +1,9 @@
+
+# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+
+# Test the incremental JSON parser with semantic routines, and compare the
+# output with the expected output.
+
 use strict;
 use warnings;
 
@@ -12,17 +18,18 @@ my $test_out = "$FindBin::RealBin/../tiny.out";
 
 my $exe = "test_json_parser_incremental";
 
-my ($stdout, $stderr) = run_command( [$exe, "-s", $test_file] );
+my ($stdout, $stderr) = run_command([ $exe, "-s", $test_file ]);
 
 is($stderr, "", "no error output");
 
-my ($fh, $fname) = tempfile();
+my $dir = PostgreSQL::Test::Utils::tempdir;
+my ($fh, $fname) = tempfile(DIR => $dir);
 
-print $fh $stdout,"\n";
+print $fh $stdout, "\n";
 
 close($fh);
 
-($stdout, $stderr) = run_command(["diff", "-u", $fname, $test_out]);
+($stdout, $stderr) = run_command([ "diff", "-u", $fname, $test_out ]);
 
 is($stdout, "", "no output diff");
 is($stderr, "", "no diff error");

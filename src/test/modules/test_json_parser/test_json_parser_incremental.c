@@ -15,6 +15,9 @@
  * If the "-c SIZE" option is provided, that chunk size is used instead
  * of the default of 60.
  *
+ * If the -s flag is given, the program does semantic processing. This should
+ * just mirror back the json, albeit with white space changes.
+ *
  * The argument specifies the file containing the JSON input.
  *
  *-------------------------------------------------------------------------
@@ -28,6 +31,7 @@
 #include <unistd.h>
 
 #include "common/jsonapi.h"
+#include "common/logging.h"
 #include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "pg_getopt.h"
@@ -92,10 +96,7 @@ main(int argc, char **argv)
 			case 'c':			/* chunksize */
 				sscanf(optarg, "%zu", &chunk_size);
 				if (chunk_size > BUFSIZE)
-				{
-					fprintf(stderr, "chunk size cannot exceed %d\n", BUFSIZE);
-					exit(1);
-				}
+					pg_fatal("chunk size cannot exceed %d", BUFSIZE);
 				break;
 			case 's':			/* do semantic processing */
 				testsem = &sem;
@@ -121,13 +122,25 @@ main(int argc, char **argv)
 	makeJsonLexContextIncremental(&lex, PG_UTF8, need_strings);
 	initStringInfo(&json);
 
-	json_file = fopen(testfile, "r");
-	fstat(fileno(json_file), &statbuf);
+	if ((json_file = fopen(testfile, "r")) == NULL)
+		pg_fatal("error opening input: %m");
+
+	if (fstat(fileno(json_file), &statbuf) != 0)
+		pg_fatal("error statting input: %m");
+
 	bytes_left = statbuf.st_size;
 
 	for (;;)
 	{
+		/* We will break when there's nothing left to read */
+
+		if (bytes_left < chunk_size)
+			chunk_size = bytes_left;
+
 		n_read = fread(buff, 1, chunk_size, json_file);
+		if (n_read < chunk_size)
+			pg_fatal("error reading input file: %d", ferror(json_file));
+
 		appendBinaryStringInfo(&json, buff, n_read);
 
 		/*
