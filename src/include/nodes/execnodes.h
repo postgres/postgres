@@ -1070,7 +1070,6 @@ typedef struct JsonExprState
 	 * RETURNING type input function invocation info when
 	 * JsonExpr.use_io_coercion is true.
 	 */
-	FmgrInfo   *input_finfo;
 	FunctionCallInfo input_fcinfo;
 
 	/*
@@ -1835,7 +1834,6 @@ typedef struct BitmapHeapScanState
  *		NumTids		   number of tids in this scan
  *		TidPtr		   index of currently fetched tid
  *		TidList		   evaluated item pointers (array of size NumTids)
- *		htup		   currently-fetched tuple, if any
  * ----------------
  */
 typedef struct TidScanState
@@ -1846,7 +1844,6 @@ typedef struct TidScanState
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	ItemPointerData *tss_TidList;
-	HeapTupleData tss_htup;
 } TidScanState;
 
 /* ----------------
@@ -2530,7 +2527,6 @@ typedef struct AggState
 #define FIELDNO_AGGSTATE_ALL_PERGROUPS 53
 	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
 										 * ->hash_pergroup */
-	ProjectionInfo *combinedproj;	/* projection machinery */
 	SharedAggInfo *shared_info; /* one entry per worker */
 } AggState;
 

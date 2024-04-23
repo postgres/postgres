@@ -4393,7 +4393,6 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 		fcinfo->args[2].isnull = false;
 		fcinfo->context = (Node *) escontext;
 
-		jsestate->input_finfo = finfo;
 		jsestate->input_fcinfo = fcinfo;
 	}
 
