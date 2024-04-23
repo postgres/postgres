@@ -3173,15 +3173,20 @@ parse_and_validate_value(struct config_generic *record,
 				if (newval->intval < conf->min || newval->intval > conf->max)
 				{
 					const char *unit = get_config_unit_name(conf->gen.flags);
+					const char *unitspace;
+
+					if (unit)
+						unitspace = " ";
+					else
+						unit = unitspace = "";
 
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("%d%s%s is outside the valid range for parameter \"%s\" (%d .. %d)",
-									newval->intval,
-									unit ? " " : "",
-									unit ? unit : "",
+							 errmsg("%d%s%s is outside the valid range for parameter \"%s\" (%d%s%s .. %d%s%s)",
+									newval->intval, unitspace, unit,
 									name,
-									conf->min, conf->max)));
+									conf->min, unitspace, unit,
+									conf->max, unitspace, unit)));
 					return false;
 				}
 
@@ -3209,15 +3214,20 @@ parse_and_validate_value(struct config_generic *record,
 				if (newval->realval < conf->min || newval->realval > conf->max)
 				{
 					const char *unit = get_config_unit_name(conf->gen.flags);
+					const char *unitspace;
+
+					if (unit)
+						unitspace = " ";
+					else
+						unit = unitspace = "";
 
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("%g%s%s is outside the valid range for parameter \"%s\" (%g .. %g)",
-									newval->realval,
-									unit ? " " : "",
-									unit ? unit : "",
+							 errmsg("%g%s%s is outside the valid range for parameter \"%s\" (%g%s%s .. %g%s%s)",
+									newval->realval, unitspace, unit,
 									name,
-									conf->min, conf->max)));
+									conf->min, unitspace, unit,
+									conf->max, unitspace, unit)));
 					return false;
 				}
 

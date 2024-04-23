@@ -510,7 +510,7 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 SET seq_page_cost TO 'NaN';
 ERROR:  invalid value for parameter "seq_page_cost": "NaN"
 SET vacuum_cost_delay TO '10s';
-ERROR:  10000 ms is outside the valid range for parameter "vacuum_cost_delay" (0 .. 100)
+ERROR:  10000 ms is outside the valid range for parameter "vacuum_cost_delay" (0 ms .. 100 ms)
 SET no_such_variable TO 42;
 ERROR:  unrecognized configuration parameter "no_such_variable"
 -- Test "custom" GUCs created on the fly (which aren't really an
