@@ -89,8 +89,6 @@ CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PU
 ERROR:  connect = false and enabled = true are mutually exclusive options
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, create_slot = true);
 ERROR:  connect = false and create_slot = true are mutually exclusive options
-CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, failover = true);
-ERROR:  connect = false and failover = true are mutually exclusive options
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, enabled = true);
 ERROR:  slot_name = NONE and enabled = true are mutually exclusive options
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, enabled = false, create_slot = true);
@@ -472,6 +470,11 @@ REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 ALTER SUBSCRIPTION regress_testsub RENAME TO regress_testsub2;
 ERROR:  permission denied for database regression
+-- fail - cannot do ALTER SUBSCRIPTION SET (failover) inside transaction block
+BEGIN;
+ALTER SUBSCRIPTION regress_testsub SET (failover);
+ERROR:  ALTER SUBSCRIPTION ... SET (failover) cannot run inside a transaction block
+COMMIT;
 -- ok, owning it is enough for this stuff
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = NONE);
 DROP SUBSCRIPTION regress_testsub;

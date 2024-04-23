@@ -54,7 +54,6 @@ SET SESSION AUTHORIZATION 'regress_subscription_user';
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, copy_data = true);
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, enabled = true);
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, create_slot = true);
-CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, failover = true);
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, enabled = true);
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, enabled = false, create_slot = true);
 CREATE SUBSCRIPTION regress_testsub2 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (slot_name = NONE);
@@ -332,6 +331,11 @@ RESET SESSION AUTHORIZATION;
 REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 ALTER SUBSCRIPTION regress_testsub RENAME TO regress_testsub2;
+
+-- fail - cannot do ALTER SUBSCRIPTION SET (failover) inside transaction block
+BEGIN;
+ALTER SUBSCRIPTION regress_testsub SET (failover);
+COMMIT;
 
 -- ok, owning it is enough for this stuff
 ALTER SUBSCRIPTION regress_testsub SET (slot_name = NONE);

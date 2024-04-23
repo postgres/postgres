@@ -42,26 +42,12 @@ my $slot_creation_time_on_primary = $publisher->safe_psql(
     SELECT current_timestamp;
 ]);
 
-# Create a slot on the publisher with failover disabled
-$publisher->safe_psql('postgres',
-	"SELECT 'init' FROM pg_create_logical_replication_slot('lsub1_slot', 'pgoutput', false, false, false);"
-);
-
-# Confirm that the failover flag on the slot is turned off
-is( $publisher->safe_psql(
-		'postgres',
-		q{SELECT failover from pg_replication_slots WHERE slot_name = 'lsub1_slot';}
-	),
-	"f",
-	'logical slot has failover false on the publisher');
-
-# Create a subscription (using the same slot created above) that enables
-# failover.
+# Create a subscription that enables failover.
 $subscriber1->safe_psql('postgres',
-	"CREATE SUBSCRIPTION regress_mysub1 CONNECTION '$publisher_connstr' PUBLICATION regress_mypub WITH (slot_name = lsub1_slot, copy_data=false, failover = true, create_slot = false, enabled = false);"
+	"CREATE SUBSCRIPTION regress_mysub1 CONNECTION '$publisher_connstr' PUBLICATION regress_mypub WITH (slot_name = lsub1_slot, copy_data = false, failover = true, enabled = false);"
 );
 
-# Confirm that the failover flag on the slot has now been turned on
+# Confirm that the failover flag on the slot is turned on
 is( $publisher->safe_psql(
 		'postgres',
 		q{SELECT failover from pg_replication_slots WHERE slot_name = 'lsub1_slot';}

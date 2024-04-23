@@ -66,10 +66,11 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
   </para>
 
   <para>
-   Commands <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command> and
+   Commands <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command>,
    <command>ALTER SUBSCRIPTION ... {SET|ADD|DROP} PUBLICATION ...</command>
-   with <literal>refresh</literal> option as <literal>true</literal> cannot be
-   executed inside a transaction block.
+   with <literal>refresh</literal> option as <literal>true</literal> and
+   <command>ALTER SUBSCRIPTION ... SET (failover = on|off)</command>
+   cannot be executed inside a transaction block.
 
    These commands also cannot be executed when the subscription has
    <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
