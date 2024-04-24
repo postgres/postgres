@@ -46,7 +46,8 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON TYPES
     TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
-GRANT { USAGE | CREATE | ALL [ PRIVILEGES ] }
+GRANT { { USAGE | CREATE }
+    [, ...] | ALL [ PRIVILEGES ] }
     ON SCHEMAS
     TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
@@ -77,7 +78,8 @@ REVOKE [ GRANT OPTION FOR ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
-    { USAGE | CREATE | ALL [ PRIVILEGES ] }
+    { { USAGE | CREATE }
+    [, ...] | ALL [ PRIVILEGES ] }
     ON SCHEMAS
     FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
