@@ -547,6 +547,8 @@ aloop:
 					case SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:
 #ifdef SSL_R_VERSION_TOO_HIGH
 					case SSL_R_VERSION_TOO_HIGH:
+#endif
+#ifdef SSL_R_VERSION_TOO_LOW
 					case SSL_R_VERSION_TOO_LOW:
 #endif
 						give_proto_hint = true;
