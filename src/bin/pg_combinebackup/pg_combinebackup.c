@@ -732,12 +732,12 @@ help(const char *progname)
 	printf(_("  -o, --output              output directory\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
 			 "                            relocate tablespace in OLDDIR to NEWDIR\n"));
+	printf(_("      --clone               clone (reflink) instead of copying files\n"));
+	printf(_("      --copy-file-range     copy using copy_file_range() syscall\n"));
 	printf(_("      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 			 "                            use algorithm for manifest checksums\n"));
 	printf(_("      --no-manifest         suppress generation of backup manifest\n"));
 	printf(_("      --sync-method=METHOD  set method for syncing files to disk\n"));
-	printf(_("      --clone               clone (reflink) instead of copying files\n"));
-	printf(_("      --copy-file-range     copy using copy_file_range() syscall\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
