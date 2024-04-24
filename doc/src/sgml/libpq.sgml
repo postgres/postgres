@@ -1840,11 +1840,11 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
 
        <para>
         SSL compression is nowadays considered insecure and its use is no
-        longer recommended.  <productname>OpenSSL</productname> 1.1.0 disables
+        longer recommended.  <productname>OpenSSL</productname> 1.1.0 disabled
         compression by default, and many operating system distributions
-        disable it in prior versions as well, so setting this parameter to on
+        disabled it in prior versions as well, so setting this parameter to on
         will not have any effect if the server does not accept compression.
-        <productname>PostgreSQL</productname> 14 disables compression
+        <productname>PostgreSQL</productname> 14 disabled compression
         completely in the backend.
        </para>
 
