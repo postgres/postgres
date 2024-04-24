@@ -270,6 +270,7 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -i, --individual          list block numbers individually, not as ranges\n"));
 	printf(_("  -q, --quiet               don't print anything, just parse the files\n"));
+	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
