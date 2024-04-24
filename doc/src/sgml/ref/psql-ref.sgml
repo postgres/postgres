@@ -5309,9 +5309,9 @@ This second example shows a multiplication table with rows sorted in reverse
 numerical order and columns with an independent, ascending numerical order.
 <programlisting>
 testdb=&gt; <userinput>SELECT t1.first as "A", t2.first+100 AS "B", t1.first*(t2.first+100) as "AxB",</userinput>
-testdb(&gt; <userinput>row_number() over(order by t2.first) AS ord</userinput>
-testdb(&gt; <userinput>FROM my_table t1 CROSS JOIN my_table t2 ORDER BY 1 DESC</userinput>
-testdb(&gt; <userinput>\crosstabview "A" "B" "AxB" ord</userinput>
+testdb-&gt; <userinput>row_number() over(order by t2.first) AS ord</userinput>
+testdb-&gt; <userinput>FROM my_table t1 CROSS JOIN my_table t2 ORDER BY 1 DESC</userinput>
+testdb-&gt; <userinput>\crosstabview "A" "B" "AxB" ord</userinput>
  A | 101 | 102 | 103 | 104
 ---+-----+-----+-----+-----
  4 | 404 | 408 | 412 | 416
