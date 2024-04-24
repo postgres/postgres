@@ -214,21 +214,6 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>--subscription=<replaceable class="parameter">name</replaceable></option></term>
-     <listitem>
-      <para>
-       The subscription name to set up the logical replication.  Multiple
-       subscriptions can be specified by writing multiple
-       <option>--subscription</option> switches.  The number of subscription
-       names must match the number of specified databases, otherwise an error
-       is reported.  The order of the multiple subscription name switches must
-       match the order of database switches.  If this option is not specified,
-       a generated name is assigned to the subscription name.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><option>--replication-slot=<replaceable class="parameter">name</replaceable></option></term>
      <listitem>
       <para>
@@ -245,12 +230,16 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-?</option></term>
-     <term><option>--help</option></term>
+     <term><option>--subscription=<replaceable class="parameter">name</replaceable></option></term>
      <listitem>
       <para>
-       Show help about <application>pg_createsubscriber</application> command
-       line arguments, and exit.
+       The subscription name to set up the logical replication.  Multiple
+       subscriptions can be specified by writing multiple
+       <option>--subscription</option> switches.  The number of subscription
+       names must match the number of specified databases, otherwise an error
+       is reported.  The order of the multiple subscription name switches must
+       match the order of database switches.  If this option is not specified,
+       a generated name is assigned to the subscription name.
       </para>
      </listitem>
     </varlistentry>
@@ -261,6 +250,17 @@ PostgreSQL documentation
      <listitem>
       <para>
        Print the <application>pg_createsubscriber</application> version and exit.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-?</option></term>
+     <term><option>--help</option></term>
+     <listitem>
+      <para>
+       Show help about <application>pg_createsubscriber</application> command
+       line arguments, and exit.
       </para>
      </listitem>
     </varlistentry>
