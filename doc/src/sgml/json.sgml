@@ -794,21 +794,20 @@ UPDATE table_name SET jsonb_field[1]['a'] = '1';
    In particular, the way to write a double quote within an embedded string
    literal is <literal>\"</literal>, and to write a backslash itself, you
    must write <literal>\\</literal>.  Other special backslash sequences
-   include those recognized in JSON strings:
+   include those recognized in JavaScript strings:
    <literal>\b</literal>,
    <literal>\f</literal>,
    <literal>\n</literal>,
    <literal>\r</literal>,
    <literal>\t</literal>,
    <literal>\v</literal>
-   for various ASCII control characters, and
-   <literal>\u<replaceable>NNNN</replaceable></literal> for a Unicode
-   character identified by its 4-hex-digit code point.  The backslash
-   syntax also includes two cases not allowed by JSON:
+   for various ASCII control characters,
    <literal>\x<replaceable>NN</replaceable></literal> for a character code
-   written with only two hex digits, and
-   <literal>\u{<replaceable>N...</replaceable>}</literal> for a character
-   code written with 1 to 6 hex digits.
+   written with only two hex digits,
+   <literal>\u<replaceable>NNNN</replaceable></literal> for a Unicode
+   character identified by its 4-hex-digit code point, and
+   <literal>\u{<replaceable>N...</replaceable>}</literal> for a Unicode
+   character code point written with 1 to 6 hex digits.
   </para>
 
   <para>
