@@ -1115,7 +1115,6 @@ help(const char *progname)
 	printf(_("  -c, --clean                  clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create                 include commands to create database in dump\n"));
 	printf(_("  -e, --extension=PATTERN      dump the specified extension(s) only\n"));
-	printf(_("  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"));
 	printf(_("  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"));
 	printf(_("  -n, --schema=PATTERN         dump the specified schema(s) only\n"));
 	printf(_("  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"));
@@ -1132,6 +1131,7 @@ help(const char *progname)
 	printf(_("  --disable-triggers           disable triggers during data-only restore\n"));
 	printf(_("  --enable-row-security        enable row security (dump only content user has\n"
 			 "                               access to)\n"));
+	printf(_("  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"));
 	printf(_("  --exclude-table-and-children=PATTERN\n"
 			 "                               do NOT dump the specified table(s), including\n"
 			 "                               child and partition tables\n"));
