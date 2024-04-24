@@ -17725,28 +17725,28 @@ ERROR:  jsonpath member accessor can only be applied to an object
     The unwrapping behavior of lax mode can lead to surprising results. For
     instance, the following query using the <literal>.**</literal> accessor
     selects every <literal>HR</literal> value twice:
- <screen>
- <prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.**.HR');</userinput>
-  jsonb_path_query
- ------------------
-  73
-  135
-  73
-  135
- </screen>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.**.HR');</userinput>
+ jsonb_path_query
+------------------
+ 73
+ 135
+ 73
+ 135
+</screen>
     This happens because the <literal>.**</literal> accessor selects both
     the <literal>segments</literal> array and each of its elements, while
     the <literal>.HR</literal> accessor automatically unwraps arrays when
     using lax mode. To avoid surprising results, we recommend using
     the <literal>.**</literal> accessor only in strict mode. The
     following query selects each <literal>HR</literal> value just once:
- <screen>
- <prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.**.HR');</userinput>
-  jsonb_path_query
- ------------------
-  73
-  135
- </screen>
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.**.HR');</userinput>
+ jsonb_path_query
+------------------
+ 73
+ 135
+</screen>
    </para>
 
    <para>

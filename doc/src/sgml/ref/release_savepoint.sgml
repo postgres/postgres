@@ -116,8 +116,8 @@ BEGIN;
    now only choose one of these two commands, since all other commands
    will be ignored:
 <programlisting>
-   ROLLBACK;
-   ROLLBACK TO SAVEPOINT sp1;
+ROLLBACK;
+ROLLBACK TO SAVEPOINT sp1;
 </programlisting>
    Choosing <command>ROLLBACK</command> will abort everything, including
    value 1, whereas <command>ROLLBACK TO SAVEPOINT sp1</command> will retain
