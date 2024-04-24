@@ -29,6 +29,7 @@
 #include "access/xlog_internal.h"
 #include "access/xlogreader.h"
 #include "access/xlogrecord.h"
+#include "access/xlog_smgr.h"
 #include "catalog/pg_control.h"
 #include "common/pg_lzcompress.h"
 #include "replication/origin.h"
@@ -62,6 +63,21 @@ static void WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
  * to use the 'oversized' memory allocation code path.
  */
 #define DEFAULT_DECODE_BUFFER_SIZE (64 * 1024)
+
+/* 
+ * XLog storage manager
+ *
+ * TODO: should be in xlog.c or new xlog_smgr.c ?
+ * Now it's here because pg_rewind and other tools compile only
+ * w/ xlogreader.c  
+ */
+XLogSmgr *xlog_smgr = &xlog_smgr_standard;
+
+void 
+SetXLogSmgr(XLogSmgr *xlsmgr)
+{
+	xlog_smgr = xlsmgr;
+}
 
 /*
  * Construct a string in state->errormsg_buf explaining what's wrong with
@@ -1557,7 +1573,7 @@ WALRead(XLogReaderState *state,
 
 		/* Reset errno first; eases reporting non-errno-affecting errors */
 		errno = 0;
-		readbytes = pg_pread(state->seg.ws_file, p, segbytes, (off_t) startoff);
+		readbytes = xlog_smgr->seg_read(state->seg.ws_file, p, segbytes, (off_t) startoff);
 
 #ifndef FRONTEND
 		pgstat_report_wait_end();

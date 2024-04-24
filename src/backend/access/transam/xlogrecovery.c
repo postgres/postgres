@@ -39,6 +39,7 @@
 #include "access/xlogprefetcher.h"
 #include "access/xlogreader.h"
 #include "access/xlogrecovery.h"
+#include "access/xlog_smgr.h"
 #include "access/xlogutils.h"
 #include "backup/basebackup.h"
 #include "catalog/pg_control.h"
@@ -3397,7 +3398,7 @@ retry:
 	readOff = targetPageOff;
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_READ);
-	r = pg_pread(readFile, readBuf, XLOG_BLCKSZ, (off_t) readOff);
+	r = xlog_smgr->seg_read(readFile, readBuf, XLOG_BLCKSZ, (off_t) readOff);
 	if (r != XLOG_BLCKSZ)
 	{
 		char		fname[MAXFNAMELEN];
