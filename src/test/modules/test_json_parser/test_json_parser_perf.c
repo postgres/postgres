@@ -43,6 +43,8 @@ main(int argc, char **argv)
 	int			iter;
 	int			use_inc = 0;
 
+	pg_logging_init(argv[0]);
+
 	initStringInfo(&json);
 
 	if (strcmp(argv[1], "-i") == 0)

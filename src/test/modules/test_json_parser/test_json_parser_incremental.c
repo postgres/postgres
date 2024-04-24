@@ -89,6 +89,8 @@ main(int argc, char **argv)
 	int			c;
 	bool		need_strings = false;
 
+	pg_logging_init(argv[0]);
+
 	while ((c = getopt(argc, argv, "c:s")) != -1)
 	{
 		switch (c)
