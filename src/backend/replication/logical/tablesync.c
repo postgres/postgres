@@ -120,7 +120,14 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
-static bool table_states_valid = false;
+typedef enum
+{
+	SYNC_TABLE_STATE_NEEDS_REBUILD,
+	SYNC_TABLE_STATE_REBUILD_STARTED,
+	SYNC_TABLE_STATE_VALID,
+} SyncingTablesState;
+
+static SyncingTablesState table_states_validity = SYNC_TABLE_STATE_NEEDS_REBUILD;
 static List *table_states_not_ready = NIL;
 static bool FetchTableStates(bool *started_tx);
 
@@ -270,7 +277,7 @@ wait_for_worker_state_change(char expected_state)
 void
 invalidate_syncing_table_states(Datum arg, int cacheid, uint32 hashvalue)
 {
-	table_states_valid = false;
+	table_states_validity = SYNC_TABLE_STATE_NEEDS_REBUILD;
 }
 
 /*
@@ -1465,12 +1472,14 @@ FetchTableStates(bool *started_tx)
 
 	*started_tx = false;
 
-	if (!table_states_valid)
+	if (table_states_validity != SYNC_TABLE_STATE_VALID)
 	{
 		MemoryContext oldctx;
 		List	   *rstates;
 		ListCell   *lc;
 		SubscriptionRelState *rstate;
+
+		table_states_validity = SYNC_TABLE_STATE_REBUILD_STARTED;
 
 		/* Clean the old lists. */
 		list_free_deep(table_states_not_ready);
@@ -1505,7 +1514,15 @@ FetchTableStates(bool *started_tx)
 		has_subrels = (list_length(table_states_not_ready) > 0) ||
 			HasSubscriptionRelations(MySubscription->oid);
 
-		table_states_valid = true;
+		/*
+		 * If the subscription relation cache has been invalidated since we
+		 * entered this routine, we still use and return the relations we just
+		 * finished constructing, to avoid infinite loops, but we leave the
+		 * table states marked as stale so that we'll rebuild it again on next
+		 * access. Otherwise, we mark the table states as valid.
+		 */
+		if (table_states_validity == SYNC_TABLE_STATE_REBUILD_STARTED)
+			table_states_validity = SYNC_TABLE_STATE_VALID;
 	}
 
 	return has_subrels;
