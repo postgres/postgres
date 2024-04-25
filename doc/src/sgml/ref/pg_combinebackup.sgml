@@ -261,6 +261,26 @@ PostgreSQL documentation
 
  </refsect1>
 
+ <refsect1 id="app-pgcombinebackup-limitations">
+  <title>Limitations</title>
+
+  <para>
+   <literal>pg_combinebackup</literal> does not recompute page checksums when
+   writing the output directory. Therefore, if any of the backups used for
+   reconstruction were taken with checksums disabled, but the final backup was
+   taken with checksums enabled, the resulting directory may contain pages
+   with invalid checksums.
+  </para>
+
+  <para>
+   To avoid this problem, taking a new full backup after changing the checksum
+   state of the cluster using <xref linkend="app-pgchecksums "/> is
+   recommended. Otherwise, you can disable and then optionally reenable
+   checksums on the directory produced by <literal>pg_combinebackup</literal>
+   in order to correct the problem.
+  </para>
+ </refsect1>
+
  <refsect1>
   <title>Environment</title>
 

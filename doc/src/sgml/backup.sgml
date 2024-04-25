@@ -892,7 +892,11 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
     only the incremental backup itself but also all earlier backups that
     are required to supply the blocks omitted from the incremental backup.
     See <xref linkend="app-pgcombinebackup"/> for further information about
-    this requirement.
+    this requirement. Note that there are restrictions on the use of
+    <literal>pg_combinebackup</literal> when the checksum status of the
+    cluster has been changed; see
+    <link linkend="app-pgcombinebackup-limitations">pg_combinebackup
+    limitations</link>.
    </para>
 
    <para>

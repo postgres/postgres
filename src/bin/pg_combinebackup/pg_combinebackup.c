@@ -583,6 +583,8 @@ check_control_files(int n_backups, char **backup_dirs)
 {
 	int			i;
 	uint64		system_identifier = 0;	/* placate compiler */
+	uint32		data_checksum_version = 0;	/* placate compiler */
+	bool		data_checksum_mismatch = false;
 
 	/* Try to read each control file in turn, last to first. */
 	for (i = n_backups - 1; i >= 0; --i)
@@ -612,6 +614,16 @@ check_control_files(int n_backups, char **backup_dirs)
 					 controlpath, (unsigned long long) system_identifier,
 					 (unsigned long long) control_file->system_identifier);
 
+		/*
+		 * Detect checksum mismatches, but only if the last backup in the
+		 * chain has checksums enabled.
+		 */
+		if (i == n_backups - 1)
+			data_checksum_version = control_file->data_checksum_version;
+		else if (data_checksum_version != 0 &&
+				 data_checksum_version != control_file->data_checksum_version)
+			data_checksum_mismatch = true;
+
 		/* Release memory. */
 		pfree(control_file);
 		pfree(controlpath);
@@ -623,6 +635,16 @@ check_control_files(int n_backups, char **backup_dirs)
 	 */
 	pg_log_debug("system identifier is %llu",
 				 (unsigned long long) system_identifier);
+
+	/*
+	 * Warn the user if not all backups are in the same state with regards to
+	 * checksums.
+	 */
+	if (data_checksum_mismatch)
+	{
+		pg_log_warning("only some backups have checksums enabled");
+		pg_log_warning_hint("disable, and optionally reenable, checksums on the output directory to avoid failures");
+	}
 
 	return system_identifier;
 }
