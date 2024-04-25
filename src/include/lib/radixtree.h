@@ -1749,6 +1749,10 @@ have_slot:
 
 	if (RT_VALUE_IS_EMBEDDABLE(value_p))
 	{
+		/* free the existing leaf */
+		if (found && !RT_CHILDPTR_IS_VALUE(*slot))
+			RT_FREE_LEAF(tree, *slot);
+
 		/* store value directly in child pointer slot */
 		memcpy(slot, value_p, value_sz);
 
@@ -1765,7 +1769,7 @@ have_slot:
 	{
 		RT_CHILD_PTR leaf;
 
-		if (found)
+		if (found && !RT_CHILDPTR_IS_VALUE(*slot))
 		{
 			Assert(RT_PTR_ALLOC_IS_VALID(*slot));
 			leaf.alloc = *slot;

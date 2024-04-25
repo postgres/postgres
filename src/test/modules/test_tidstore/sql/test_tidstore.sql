@@ -1,8 +1,3 @@
--- Note: The test code use an array of TIDs for verification similar
--- to vacuum's dead item array pre-PG17. To avoid adding duplicates,
--- each call to do_set_block_offsets() should use different block
--- numbers.
-
 CREATE EXTENSION test_tidstore;
 
 -- To hide the output of do_set_block_offsets()
@@ -50,6 +45,22 @@ SELECT test_is_full();
 
 -- Re-create the TID store for randommized tests.
 SELECT test_destroy();
+
+
+-- Test replacements crossing RT_CHILDPTR_IS_VALUE in both directions
+SELECT test_create(false);
+SELECT do_set_block_offsets(1, array[1]::int2[]); SELECT check_set_block_offsets();
+SELECT do_set_block_offsets(1, array[1,2]::int2[]); SELECT check_set_block_offsets();
+SELECT do_set_block_offsets(1, array[1,2,3]::int2[]); SELECT check_set_block_offsets();
+SELECT do_set_block_offsets(1, array[1,2,3,4]::int2[]); SELECT check_set_block_offsets();
+SELECT do_set_block_offsets(1, array[1,2,3,4,100]::int2[]); SELECT check_set_block_offsets();
+SELECT do_set_block_offsets(1, array[1,2,3,4]::int2[]); SELECT check_set_block_offsets();
+SELECT do_set_block_offsets(1, array[1,2,3]::int2[]); SELECT check_set_block_offsets();
+SELECT do_set_block_offsets(1, array[1,2]::int2[]); SELECT check_set_block_offsets();
+SELECT do_set_block_offsets(1, array[1]::int2[]); SELECT check_set_block_offsets();
+SELECT test_destroy();
+
+
 -- Use shared memory this time. We can't do that in test_radixtree.sql,
 -- because unused static functions would raise warnings there.
 SELECT test_create(true);

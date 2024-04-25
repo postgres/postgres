@@ -146,6 +146,18 @@ sanity_check_array(ArrayType *ta)
 				 errmsg("argument must be empty or one-dimensional array")));
 }
 
+static void
+purge_from_verification_array(BlockNumber blkno)
+{
+	int			dst = 0;
+
+	for (int src = 0; src < items.num_tids; src++)
+		if (ItemPointerGetBlockNumber(&items.insert_tids[src]) != blkno)
+			items.insert_tids[dst++] = items.insert_tids[src];
+	items.num_tids = dst;
+}
+
+
 /* Set the given block and offsets pairs */
 Datum
 do_set_block_offsets(PG_FUNCTION_ARGS)
@@ -164,6 +176,9 @@ do_set_block_offsets(PG_FUNCTION_ARGS)
 	TidStoreLockExclusive(tidstore);
 	TidStoreSetBlockOffsets(tidstore, blkno, offs, noffs);
 	TidStoreUnlock(tidstore);
+
+	/* Remove the existing items of blkno from the verification array */
+	purge_from_verification_array(blkno);
 
 	/* Set TIDs in verification array */
 	for (int i = 0; i < noffs; i++)
