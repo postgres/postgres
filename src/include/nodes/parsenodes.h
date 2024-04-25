@@ -4070,7 +4070,12 @@ typedef struct DeallocateStmt
 	NodeTag		type;
 	/* The name of the plan to remove, NULL if DEALLOCATE ALL */
 	char	   *name pg_node_attr(query_jumble_ignore);
-	/* true if DEALLOCATE ALL */
+
+	/*
+	 * True if DEALLOCATE ALL.  This is redundant with "name == NULL", but we
+	 * make it a separate field so that exactly this condition (and not the
+	 * precise name) will be accounted for in query jumbling.
+	 */
 	bool		isall;
 	/* token location, or -1 if unknown */
 	ParseLoc	location pg_node_attr(query_jumble_location);
