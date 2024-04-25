@@ -2764,6 +2764,7 @@ SupportRequestSelectivity
 SupportRequestSimplify
 SupportRequestWFuncMonotonic
 Syn
+SyncingTablesState
 SyncOps
 SyncRepConfigData
 SyncRepStandbyData
