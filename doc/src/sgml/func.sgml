@@ -23193,7 +23193,7 @@ SELECT count(*) FROM sometable;
    <productname>PostgreSQL</productname> includes one merge support function
    that may be used in the <literal>RETURNING</literal> list of a
    <xref linkend="sql-merge"/> command to identify the action taken for each
-   row.
+   row; see <xref linkend="functions-merge-support-table"/>.
   </para>
 
   <table id="functions-merge-support-table">
