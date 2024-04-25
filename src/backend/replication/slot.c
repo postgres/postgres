@@ -237,7 +237,7 @@ ReplicationSlotShmemExit(int code, Datum arg)
 		ReplicationSlotRelease();
 
 	/* Also cleanup all the temporary slots. */
-	ReplicationSlotCleanup();
+	ReplicationSlotCleanup(false);
 }
 
 /*
@@ -736,10 +736,13 @@ ReplicationSlotRelease(void)
 }
 
 /*
- * Cleanup all temporary slots created in current session.
+ * Cleanup temporary slots created in current session.
+ *
+ * Cleanup only synced temporary slots if 'synced_only' is true, else
+ * cleanup all temporary slots.
  */
 void
-ReplicationSlotCleanup(void)
+ReplicationSlotCleanup(bool synced_only)
 {
 	int			i;
 
@@ -755,7 +758,8 @@ restart:
 			continue;
 
 		SpinLockAcquire(&s->mutex);
-		if (s->active_pid == MyProcPid)
+		if ((s->active_pid == MyProcPid &&
+			 (!synced_only || s->data.synced)))
 		{
 			Assert(s->data.persistency == RS_TEMPORARY);
 			SpinLockRelease(&s->mutex);

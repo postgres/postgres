@@ -247,7 +247,7 @@ extern void ReplicationSlotAlter(const char *name, bool failover);
 
 extern void ReplicationSlotAcquire(const char *name, bool nowait);
 extern void ReplicationSlotRelease(void);
-extern void ReplicationSlotCleanup(void);
+extern void ReplicationSlotCleanup(bool synced_only);
 extern void ReplicationSlotSave(void);
 extern void ReplicationSlotMarkDirty(void);
 

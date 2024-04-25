@@ -336,7 +336,7 @@ WalSndErrorCleanup(void)
 	if (MyReplicationSlot != NULL)
 		ReplicationSlotRelease();
 
-	ReplicationSlotCleanup();
+	ReplicationSlotCleanup(false);
 
 	replication_active = false;
 
