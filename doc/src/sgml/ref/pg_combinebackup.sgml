@@ -128,7 +128,7 @@ PostgreSQL documentation
         Relocates the tablespace in directory <replaceable>olddir</replaceable>
         to <replaceable>newdir</replaceable> during the backup.
         <replaceable>olddir</replaceable> is the absolute path of the tablespace
-        as it exists in the first backup specified on the command line,
+        as it exists in the final backup specified on the command line,
         and <replaceable>newdir</replaceable> is the absolute path to use for the
         tablespace in the reconstructed backup.  If either path needs to contain
         an equal sign (<literal>=</literal>), precede that with a backslash.

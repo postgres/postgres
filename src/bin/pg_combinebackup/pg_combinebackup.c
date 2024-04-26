@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 		{"dry-run", no_argument, NULL, 'n'},
 		{"no-sync", no_argument, NULL, 'N'},
 		{"output", required_argument, NULL, 'o'},
-		{"tablespace-mapping", no_argument, NULL, 'T'},
+		{"tablespace-mapping", required_argument, NULL, 'T'},
 		{"manifest-checksums", required_argument, NULL, 1},
 		{"no-manifest", no_argument, NULL, 2},
 		{"sync-method", required_argument, NULL, 3},
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 	opt.copy_method = COPY_METHOD_COPY;
 
 	/* process command-line options */
-	while ((c = getopt_long(argc, argv, "dnNPo:T:",
+	while ((c = getopt_long(argc, argv, "dnNo:T:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -749,7 +749,7 @@ help(const char *progname)
 	printf(_("  %s [OPTION]... DIRECTORY...\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
-	printf(_("  -n, --dry-run             don't actually do anything\n"));
+	printf(_("  -n, --dry-run             do not actually do anything\n"));
 	printf(_("  -N, --no-sync             do not wait for changes to be written safely to disk\n"));
 	printf(_("  -o, --output              output directory\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
