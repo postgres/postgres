@@ -643,27 +643,27 @@ typedef struct RT_SIZE_CLASS_ELEM
 
 static const RT_SIZE_CLASS_ELEM RT_SIZE_CLASS_INFO[] = {
 	[RT_CLASS_4] = {
-		.name = RT_STR(RT_PREFIX) "radix_tree node4",
+		.name = RT_STR(RT_PREFIX) "_radix_tree node4",
 		.fanout = RT_FANOUT_4,
 		.allocsize = sizeof(RT_NODE_4) + RT_FANOUT_4 * sizeof(RT_PTR_ALLOC),
 	},
 	[RT_CLASS_16_LO] = {
-		.name = RT_STR(RT_PREFIX) "radix_tree node16_lo",
+		.name = RT_STR(RT_PREFIX) "_radix_tree node16_lo",
 		.fanout = RT_FANOUT_16_LO,
 		.allocsize = sizeof(RT_NODE_16) + RT_FANOUT_16_LO * sizeof(RT_PTR_ALLOC),
 	},
 	[RT_CLASS_16_HI] = {
-		.name = RT_STR(RT_PREFIX) "radix_tree node16_hi",
+		.name = RT_STR(RT_PREFIX) "_radix_tree node16_hi",
 		.fanout = RT_FANOUT_16_HI,
 		.allocsize = sizeof(RT_NODE_16) + RT_FANOUT_16_HI * sizeof(RT_PTR_ALLOC),
 	},
 	[RT_CLASS_48] = {
-		.name = RT_STR(RT_PREFIX) "radix_tree node48",
+		.name = RT_STR(RT_PREFIX) "_radix_tree node48",
 		.fanout = RT_FANOUT_48,
 		.allocsize = sizeof(RT_NODE_48) + RT_FANOUT_48 * sizeof(RT_PTR_ALLOC),
 	},
 	[RT_CLASS_256] = {
-		.name = RT_STR(RT_PREFIX) "radix_tree node256",
+		.name = RT_STR(RT_PREFIX) "_radix_tree node256",
 		.fanout = RT_FANOUT_256,
 		.allocsize = sizeof(RT_NODE_256),
 	},
@@ -1837,7 +1837,7 @@ RT_CREATE(MemoryContext ctx)
 	 * pfree
 	 */
 	tree->iter_context = AllocSetContextCreate(ctx,
-											   RT_STR(RT_PREFIX) "radix_tree iter context",
+											   RT_STR(RT_PREFIX) "_radix_tree iter context",
 											   ALLOCSET_SMALL_SIZES);
 
 #ifdef RT_SHMEM
@@ -1873,7 +1873,7 @@ RT_CREATE(MemoryContext ctx)
 	 */
 	if (sizeof(RT_VALUE_TYPE) > sizeof(RT_PTR_ALLOC))
 		tree->leaf_context = SlabContextCreate(ctx,
-											   RT_STR(RT_PREFIX) "radix_tree leaf contex",
+											   RT_STR(RT_PREFIX) "_radix_tree leaf context",
 											   RT_SLAB_BLOCK_SIZE(sizeof(RT_VALUE_TYPE)),
 											   sizeof(RT_VALUE_TYPE));
 #endif							/* !RT_VARLEN_VALUE_SIZE */
@@ -2305,7 +2305,7 @@ RT_COPY_ARRAYS_AND_DELETE(uint8 *dst_chunks, RT_PTR_ALLOC * dst_children,
 /*
  * Note: While all node-growing functions are called to perform an insertion
  * when no more space is available, shrinking is not a hard-and-fast requirement.
- * When shrinking nodes, we generally wait until the count is about 3/4* of
+ * When shrinking nodes, we generally wait until the count is about 3/4 of
  * the next lower node's fanout. This prevents ping-ponging between different
  * node sizes.
  *
@@ -2556,9 +2556,7 @@ RT_REMOVE_CHILD_4(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PTR
 }
 
 /*
- * Search for the child pointer corresponding to "key" in the given node.
- *
- * Delete the node and return true if the key is found, otherwise return false.
+ * Delete the child pointer corresponding to "key" in the given node.
  */
 static inline void
 RT_NODE_DELETE(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PTR node, uint8 chunk, RT_PTR_ALLOC * slot)
@@ -2662,7 +2660,7 @@ RT_DELETE(RT_RADIX_TREE * tree, uint64 key)
 	return deleted;
 }
 
-#endif							/* USE_RT_DELETE */
+#endif							/* RT_USE_DELETE */
 
 /***************** UTILITY FUNCTIONS *****************/
 
@@ -2999,7 +2997,6 @@ RT_DUMP_NODE(RT_NODE * node)
 #undef RT_BEGIN_ITERATE
 #undef RT_ITERATE_NEXT
 #undef RT_END_ITERATE
-#undef RT_USE_DELETE
 #undef RT_DELETE
 #undef RT_MEMORY_USAGE
 #undef RT_DUMP_NODE
