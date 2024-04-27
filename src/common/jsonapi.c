@@ -50,16 +50,16 @@ typedef enum					/* contexts of JSON parser */
  * tokens, non-terminals, and semantic action markers.
  */
 
-typedef enum
+enum JsonNonTerminal
 {
 	JSON_NT_JSON = 32,
 	JSON_NT_ARRAY_ELEMENTS,
 	JSON_NT_MORE_ARRAY_ELEMENTS,
 	JSON_NT_KEY_PAIRS,
 	JSON_NT_MORE_KEY_PAIRS,
-} JsonNonTerminal;
+};
 
-typedef enum
+enum JsonParserSem
 {
 	JSON_SEM_OSTART = 64,
 	JSON_SEM_OEND,
@@ -72,7 +72,7 @@ typedef enum
 	JSON_SEM_AELEM_END,
 	JSON_SEM_SCALAR_INIT,
 	JSON_SEM_SCALAR_CALL,
-} JsonParserSem;
+};
 
 /*
  * struct containing the 3 stacks used in non-recursive parsing,
