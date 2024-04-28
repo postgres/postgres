@@ -13,7 +13,7 @@
  * autovacuum_work_mem) memory space to keep track of dead TIDs.  If the
  * TID store is full, we must call lazy_vacuum to vacuum indexes (and to vacuum
  * the pages that we've pruned). This frees up the memory space dedicated to
- * to store dead TIDs.
+ * store dead TIDs.
  *
  * In practice VACUUM will often complete its initial pass over the target
  * heap relation without ever running out of space to store TIDs.  This means

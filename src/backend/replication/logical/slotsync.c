@@ -599,7 +599,7 @@ update_and_persist_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid)
  * metadata of the slot as per the data received from the primary server.
  *
  * The slot is created as a temporary slot and stays in the same state until the
- * the remote_slot catches up with locally reserved position and local slot is
+ * remote_slot catches up with locally reserved position and local slot is
  * updated. The slot is then persisted and is considered as sync-ready for
  * periodic syncs.
  *

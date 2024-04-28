@@ -108,7 +108,7 @@
  * (if one exists).
  *
  * activeSearchPath is always the actually active path; it points to
- * to baseSearchPath which is the list derived from namespace_search_path.
+ * baseSearchPath which is the list derived from namespace_search_path.
  *
  * If baseSearchPathValid is false, then baseSearchPath (and other derived
  * variables) need to be recomputed from namespace_search_path, or retrieved

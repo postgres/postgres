@@ -1122,7 +1122,7 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	/*
 	 * Set up a read stream for sequential scans and TID range scans. This
 	 * should be done after initscan() because initscan() allocates the
-	 * BufferAccessStrategy object passed to the streaming read API.
+	 * BufferAccessStrategy object passed to the read stream API.
 	 */
 	if (scan->rs_base.rs_flags & SO_TYPE_SEQSCAN ||
 		scan->rs_base.rs_flags & SO_TYPE_TIDRANGESCAN)

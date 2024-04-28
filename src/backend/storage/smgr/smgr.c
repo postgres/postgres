@@ -244,7 +244,7 @@ smgropen(RelFileLocator rlocator, ProcNumber backend)
 
 /*
  * smgrpin() -- Prevent an SMgrRelation object from being destroyed at end of
- *				of transaction
+ *				transaction
  */
 void
 smgrpin(SMgrRelation reln)
