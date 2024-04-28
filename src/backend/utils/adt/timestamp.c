@@ -2854,7 +2854,10 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
 
-			tm->tm_mon += span->month;
+			if (pg_add_s32_overflow(tm->tm_mon, span->month, &tm->tm_mon))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 			if (tm->tm_mon > MONTHS_PER_YEAR)
 			{
 				tm->tm_year += (tm->tm_mon - 1) / MONTHS_PER_YEAR;
@@ -2906,7 +2909,10 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 						 errmsg("timestamp out of range")));
 		}
 
-		timestamp += span->time;
+		if (pg_add_s64_overflow(timestamp, span->time, &timestamp))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 
 		if (!IS_VALID_TIMESTAMP(timestamp))
 			ereport(ERROR,
@@ -2968,7 +2974,10 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
 
-			tm->tm_mon += span->month;
+			if (pg_add_s32_overflow(tm->tm_mon, span->month, &tm->tm_mon))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 			if (tm->tm_mon > MONTHS_PER_YEAR)
 			{
 				tm->tm_year += (tm->tm_mon - 1) / MONTHS_PER_YEAR;
@@ -3027,7 +3036,10 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 						 errmsg("timestamp out of range")));
 		}
 
-		timestamp += span->time;
+		if (pg_add_s64_overflow(timestamp, span->time, &timestamp))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 
 		if (!IS_VALID_TIMESTAMP(timestamp))
 			ereport(ERROR,
