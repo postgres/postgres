@@ -1803,6 +1803,15 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
              process adds significant latency if the initial SSL connection
              fails.
            </para>
+           <para>
+             An exception is if <literal>gssencmode</literal> is set
+             to <literal>prefer</literal>, but the server rejects GSS encryption.
+             In that case, SSL is negotiated over the same TCP connection using
+             <productname>PostgreSQL</productname> protocol negotiation. In
+             other words, the direct SSL handshake is not used, if a TCP
+             connection has already been established and can be used for the
+             SSL handshake.
+           </para>
           </listitem>
          </varlistentry>
 
@@ -1816,16 +1825,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
           </listitem>
          </varlistentry>
         </variablelist>
-
-       <para>
-        Note that if <literal>gssencmode</literal> is set
-        to <literal>prefer</literal>, a <acronym>GSS</acronym> connection is
-        attempted first. If the server rejects GSS encryption, SSL is
-        negotiated over the same TCP connection using the traditional postgres
-        protocol, regardless of <literal>sslnegotiation</literal>. In other
-        words, the direct SSL handshake is not used, if a TCP connection has
-        already been established and can be used for the SSL handshake.
-       </para>
       </listitem>
      </varlistentry>
 

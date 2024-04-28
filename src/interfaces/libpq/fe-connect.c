@@ -4430,11 +4430,12 @@ select_next_encryption_method(PGconn *conn, bool have_valid_connection)
 
 	/*
 	 * If enabled, try direct SSL. Unless we have a valid TCP connection that
-	 * failed negotiating GSSAPI encryption or a plaintext connection in case
-	 * of sslmode='allow'; in that case we prefer to reuse the connection with
-	 * negotiated SSL, instead of reconnecting to do direct SSL. The point of
-	 * direct SSL is to avoid the roundtrip from the negotiation, but
-	 * reconnecting would also incur a roundtrip.
+	 * failed negotiating GSSAPI encryption; in that case we prefer to reuse
+	 * the connection with negotiated SSL, instead of reconnecting to do
+	 * direct SSL. The point of sslnegotiation=direct is to avoid the
+	 * roundtrip from the negotiation, but reconnecting would also incur a
+	 * roundtrip. (In sslnegotiation=requiredirect mode, negotiated SSL is not
+	 * in the list of allowed methods and we will reconnect.)
 	 */
 	if (have_valid_connection)
 		SELECT_NEXT_METHOD(ENC_NEGOTIATED_SSL);
