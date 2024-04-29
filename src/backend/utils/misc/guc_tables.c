@@ -531,7 +531,6 @@ int			log_temp_files = -1;
 double		log_statement_sample_rate = 1.0;
 double		log_xact_sample_rate = 0;
 char	   *backtrace_functions;
-bool		backtrace_on_internal_error = false;
 
 int			temp_file_limit = -1;
 
@@ -770,16 +769,6 @@ StaticAssertDecl(lengthof(config_type_names) == (PGC_ENUM + 1),
 
 struct config_bool ConfigureNamesBool[] =
 {
-	{
-		{"backtrace_on_internal_error", PGC_SUSET, DEVELOPER_OPTIONS,
-			gettext_noop("Log backtrace for any error with error code XX000 (internal error)."),
-			NULL,
-			GUC_NOT_IN_SAMPLE
-		},
-		&backtrace_on_internal_error,
-		false,
-		NULL, NULL, NULL
-	},
 	{
 		{"enable_seqscan", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of sequential-scan plans."),
