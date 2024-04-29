@@ -13,8 +13,6 @@ tests += {
     'sql': [
       'test_pg_dump',
     ],
-    # doesn't delete its user
-    'runningcheck': false,
   },
   'tap': {
     'tests': [
