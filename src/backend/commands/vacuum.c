@@ -1200,7 +1200,7 @@ vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 	aggressiveXIDCutoff = nextXID - freeze_table_age;
 	if (!TransactionIdIsNormal(aggressiveXIDCutoff))
 		aggressiveXIDCutoff = FirstNormalTransactionId;
-	if (TransactionIdPrecedesOrEquals(rel->rd_rel->relfrozenxid,
+	if (TransactionIdPrecedesOrEquals(cutoffs->relfrozenxid,
 									  aggressiveXIDCutoff))
 		return true;
 
@@ -1221,7 +1221,7 @@ vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 	aggressiveMXIDCutoff = nextMXID - multixact_freeze_table_age;
 	if (aggressiveMXIDCutoff < FirstMultiXactId)
 		aggressiveMXIDCutoff = FirstMultiXactId;
-	if (MultiXactIdPrecedesOrEquals(rel->rd_rel->relminmxid,
+	if (MultiXactIdPrecedesOrEquals(cutoffs->relminmxid,
 									aggressiveMXIDCutoff))
 		return true;
 

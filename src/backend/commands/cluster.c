@@ -919,18 +919,24 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
 	 * backwards, so take the max.
 	 */
-	if (TransactionIdIsValid(OldHeap->rd_rel->relfrozenxid) &&
-		TransactionIdPrecedes(cutoffs.FreezeLimit,
-							  OldHeap->rd_rel->relfrozenxid))
-		cutoffs.FreezeLimit = OldHeap->rd_rel->relfrozenxid;
+	{
+		TransactionId relfrozenxid = OldHeap->rd_rel->relfrozenxid;
+
+		if (TransactionIdIsValid(relfrozenxid) &&
+			TransactionIdPrecedes(cutoffs.FreezeLimit, relfrozenxid))
+			cutoffs.FreezeLimit = relfrozenxid;
+	}
 
 	/*
 	 * MultiXactCutoff, similarly, shouldn't go backwards either.
 	 */
-	if (MultiXactIdIsValid(OldHeap->rd_rel->relminmxid) &&
-		MultiXactIdPrecedes(cutoffs.MultiXactCutoff,
-							OldHeap->rd_rel->relminmxid))
-		cutoffs.MultiXactCutoff = OldHeap->rd_rel->relminmxid;
+	{
+		MultiXactId relminmxid = OldHeap->rd_rel->relminmxid;
+
+		if (MultiXactIdIsValid(relminmxid) &&
+			MultiXactIdPrecedes(cutoffs.MultiXactCutoff, relminmxid))
+			cutoffs.MultiXactCutoff = relminmxid;
+	}
 
 	/*
 	 * Decide whether to use an indexscan or seqscan-and-optional-sort to scan

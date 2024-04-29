@@ -2938,6 +2938,7 @@ relation_needs_vacanalyze(Oid relid,
 	int			freeze_max_age;
 	int			multixact_freeze_max_age;
 	TransactionId xidForceLimit;
+	TransactionId relfrozenxid;
 	MultiXactId multiForceLimit;
 
 	Assert(classForm != NULL);
@@ -2989,16 +2990,18 @@ relation_needs_vacanalyze(Oid relid,
 	xidForceLimit = recentXid - freeze_max_age;
 	if (xidForceLimit < FirstNormalTransactionId)
 		xidForceLimit -= FirstNormalTransactionId;
-	force_vacuum = (TransactionIdIsNormal(classForm->relfrozenxid) &&
-					TransactionIdPrecedes(classForm->relfrozenxid,
-										  xidForceLimit));
+	relfrozenxid = classForm->relfrozenxid;
+	force_vacuum = (TransactionIdIsNormal(relfrozenxid) &&
+					TransactionIdPrecedes(relfrozenxid, xidForceLimit));
 	if (!force_vacuum)
 	{
+		MultiXactId relminmxid = classForm->relminmxid;
+
 		multiForceLimit = recentMulti - multixact_freeze_max_age;
 		if (multiForceLimit < FirstMultiXactId)
 			multiForceLimit -= FirstMultiXactId;
-		force_vacuum = MultiXactIdIsValid(classForm->relminmxid) &&
-			MultiXactIdPrecedes(classForm->relminmxid, multiForceLimit);
+		force_vacuum = MultiXactIdIsValid(relminmxid) &&
+			MultiXactIdPrecedes(relminmxid, multiForceLimit);
 	}
 	*wraparound = force_vacuum;
 
