@@ -1336,10 +1336,14 @@ alpn_cb(SSL *ssl,
 
 	if (retval == OPENSSL_NPN_NEGOTIATED)
 		return SSL_TLSEXT_ERR_OK;
-	else if (retval == OPENSSL_NPN_NO_OVERLAP)
-		return SSL_TLSEXT_ERR_NOACK;
 	else
-		return SSL_TLSEXT_ERR_NOACK;
+	{
+		/*
+		 * The client doesn't support our protocol.  Reject the connection
+		 * with TLS "no_application_protocol" alert, per RFC 7301.
+		 */
+		return SSL_TLSEXT_ERR_ALERT_FATAL;
+	}
 }
 
 
