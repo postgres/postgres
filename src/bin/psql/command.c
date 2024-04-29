@@ -3896,7 +3896,7 @@ printSSLInfo(void)
 		   protocol ? protocol : _("unknown"),
 		   cipher ? cipher : _("unknown"),
 		   (compression && strcmp(compression, "off") != 0) ? _("on") : _("off"),
-		   alpn ? alpn : _("none"));
+		   (alpn && alpn[0] != '\0') ? alpn : _("none"));
 }
 
 /*

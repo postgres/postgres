@@ -1837,7 +1837,7 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 
 		SSL_get0_alpn_selected(conn->ssl, &data, &len);
 		if (data == NULL || len == 0 || len > sizeof(alpn_str) - 1)
-			return NULL;
+			return "";
 		memcpy(alpn_str, data, len);
 		alpn_str[len] = 0;
 		return alpn_str;
