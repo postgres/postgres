@@ -2861,12 +2861,17 @@ keep_going:						/* We will come back to here until there is
 		need_new_connection = false;
 	}
 
-	/* Decide what to do next, if SSL or GSS negotiation fails */
-#define ENCRYPTION_NEGOTIATION_FAILED() \
+	/*
+	 * Decide what to do next, if server rejects SSL or GSS negotiation, but
+	 * the connection is still valid.  If there are no options left, error out
+	 * with 'msg'.
+	 */
+#define ENCRYPTION_NEGOTIATION_FAILED(msg) \
 	do { \
 		switch (encryption_negotiation_failed(conn)) \
 		{ \
 			case 0: \
+				libpq_append_conn_error(conn, (msg)); \
 				goto error_return; \
 			case 1: \
 				conn->status = CONNECTION_MADE; \
@@ -2877,7 +2882,11 @@ keep_going:						/* We will come back to here until there is
 		} \
 	} while(0);
 
-	/* Decide what to do next, if connection fails */
+	/*
+	 * Decide what to do next, if connection fails.  If there are no options
+	 * left, return with an error.  The error message has already been written
+	 * to the connection's error buffer.
+	 */
 #define CONNECTION_FAILED() \
 	do { \
 		if (connection_failed(conn)) \
@@ -3483,9 +3492,13 @@ keep_going:						/* We will come back to here until there is
 					{
 						/* mark byte consumed */
 						conn->inStart = conn->inCursor;
-						/* OK to do without SSL? */
-						/* We can proceed using this connection */
-						ENCRYPTION_NEGOTIATION_FAILED();
+
+						/*
+						 * The connection is still valid, so if it's OK to
+						 * continue without SSL, we can proceed using this
+						 * connection.  Otherwise return with an error.
+						 */
+						ENCRYPTION_NEGOTIATION_FAILED("server does not support SSL, but SSL was required");
 					}
 					else if (SSLok == 'E')
 					{
@@ -3583,13 +3596,17 @@ keep_going:						/* We will come back to here until there is
 					if (gss_ok == 'E')
 					{
 						/*
-						 * Server failure of some sort.  Assume it's a
-						 * protocol version support failure, and let's see if
-						 * we can't recover (if it's not, we'll get a better
-						 * error message on retry).  Server gets fussy if we
-						 * don't hang up the socket, though.
+						 * Server failure of some sort, possibly protocol
+						 * version support failure.  We need to process and
+						 * report the error message, which might be formatted
+						 * according to either protocol 2 or protocol 3.
+						 * Rather than duplicate the code for that, we flip
+						 * into AWAITING_RESPONSE state and let the code there
+						 * deal with it.  Note we have *not* consumed the "E"
+						 * byte here.
 						 */
-						CONNECTION_FAILED();
+						conn->status = CONNECTION_AWAITING_RESPONSE;
+						goto keep_going;
 					}
 
 					/* mark byte consumed */
@@ -3597,8 +3614,12 @@ keep_going:						/* We will come back to here until there is
 
 					if (gss_ok == 'N')
 					{
-						/* We can proceed using this connection */
-						ENCRYPTION_NEGOTIATION_FAILED();
+						/*
+						 * The connection is still valid, so if it's OK to
+						 * continue without GSS, we can proceed using this
+						 * connection.  Otherwise return with an error.
+						 */
+						ENCRYPTION_NEGOTIATION_FAILED("server doesn't support GSSAPI encryption, but it was required");
 					}
 					else if (gss_ok != 'G')
 					{
