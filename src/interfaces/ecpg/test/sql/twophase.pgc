@@ -29,10 +29,10 @@ int main(void)
 	exec sql insert into t1 values(1);
 
 	strcpy(msg, "prepare transaction");
-	exec sql prepare transaction 'gxid';
+	exec sql prepare transaction 'ecpg_twophase';
 
 	strcpy(msg, "commit prepared");
-	exec sql commit prepared 'gxid';
+	exec sql commit prepared 'ecpg_twophase';
 
 	strcpy(msg, "drop");
 	exec sql drop table t1;

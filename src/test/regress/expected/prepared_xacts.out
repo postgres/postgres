@@ -17,7 +17,7 @@ SELECT * FROM pxtest1;
  bbb
 (1 row)
 
-PREPARE TRANSACTION 'foo1';
+PREPARE TRANSACTION 'regress_foo1';
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -25,21 +25,21 @@ SELECT * FROM pxtest1;
 (1 row)
 
 -- Test pg_prepared_xacts system view
-SELECT gid FROM pg_prepared_xacts;
- gid  
-------
- foo1
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
+     gid      
+--------------
+ regress_foo1
 (1 row)
 
 -- Test ROLLBACK PREPARED
-ROLLBACK PREPARED 'foo1';
+ROLLBACK PREPARED 'regress_foo1';
 SELECT * FROM pxtest1;
  foobar 
 --------
  aaa
 (1 row)
 
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
@@ -54,14 +54,14 @@ SELECT * FROM pxtest1;
  ddd
 (2 rows)
 
-PREPARE TRANSACTION 'foo2';
+PREPARE TRANSACTION 'regress_foo2';
 SELECT * FROM pxtest1;
  foobar 
 --------
  aaa
 (1 row)
 
-COMMIT PREPARED 'foo2';
+COMMIT PREPARED 'regress_foo2';
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -79,18 +79,18 @@ SELECT * FROM pxtest1;
  eee
 (2 rows)
 
-PREPARE TRANSACTION 'foo3';
-SELECT gid FROM pg_prepared_xacts;
- gid  
-------
- foo3
+PREPARE TRANSACTION 'regress_foo3';
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
+     gid      
+--------------
+ regress_foo3
 (1 row)
 
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 INSERT INTO pxtest1 VALUES ('fff');
 -- This should fail, because the gid foo3 is already in use
-PREPARE TRANSACTION 'foo3';
-ERROR:  transaction identifier "foo3" is already in use
+PREPARE TRANSACTION 'regress_foo3';
+ERROR:  transaction identifier "regress_foo3" is already in use
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -98,7 +98,7 @@ SELECT * FROM pxtest1;
  ddd
 (2 rows)
 
-ROLLBACK PREPARED 'foo3';
+ROLLBACK PREPARED 'regress_foo3';
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -116,11 +116,11 @@ SELECT * FROM pxtest1;
  eee
 (2 rows)
 
-PREPARE TRANSACTION 'foo4';
-SELECT gid FROM pg_prepared_xacts;
- gid  
-------
- foo4
+PREPARE TRANSACTION 'regress_foo4';
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
+     gid      
+--------------
+ regress_foo4
 (1 row)
 
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -136,15 +136,15 @@ INSERT INTO pxtest1 VALUES ('fff');
 ERROR:  could not serialize access due to read/write dependencies among transactions
 DETAIL:  Reason code: Canceled on identification as a pivot, during write.
 HINT:  The transaction might succeed if retried.
-PREPARE TRANSACTION 'foo5';
-SELECT gid FROM pg_prepared_xacts;
- gid  
-------
- foo4
+PREPARE TRANSACTION 'regress_foo5';
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
+     gid      
+--------------
+ regress_foo4
 (1 row)
 
-ROLLBACK PREPARED 'foo4';
-SELECT gid FROM pg_prepared_xacts;
+ROLLBACK PREPARED 'regress_foo4';
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
@@ -165,7 +165,7 @@ SELECT pg_advisory_xact_lock_shared(1);
  
 (1 row)
 
-PREPARE TRANSACTION 'foo6';  -- fails
+PREPARE TRANSACTION 'regress_foo6';  -- fails
 ERROR:  cannot PREPARE while holding both session-level and transaction-level locks on the same object
 -- Test subtransactions
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -176,7 +176,7 @@ BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
   ROLLBACK TO a;
   SAVEPOINT b;
   INSERT INTO pxtest2 VALUES (3);
-PREPARE TRANSACTION 'regress-one';
+PREPARE TRANSACTION 'regress_sub1';
 CREATE TABLE pxtest3(fff int);
 -- Test shared invalidation
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -192,7 +192,7 @@ BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
  1
 (1 row)
 
-PREPARE TRANSACTION 'regress-two';
+PREPARE TRANSACTION 'regress_sub2';
 -- No such cursor
 FETCH 1 FROM foo;
 ERROR:  cursor "foo" does not exist
@@ -202,11 +202,11 @@ ERROR:  relation "pxtest2" does not exist
 LINE 1: SELECT * FROM pxtest2;
                       ^
 -- There should be two prepared transactions
-SELECT gid FROM pg_prepared_xacts;
-     gid     
--------------
- regress-one
- regress-two
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
+     gid      
+--------------
+ regress_sub1
+ regress_sub2
 (2 rows)
 
 -- pxtest3 should be locked because of the pending DROP
@@ -217,11 +217,11 @@ rollback;
 -- Disconnect, we will continue testing in a different backend
 \c -
 -- There should still be two prepared transactions
-SELECT gid FROM pg_prepared_xacts;
-     gid     
--------------
- regress-one
- regress-two
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
+     gid      
+--------------
+ regress_sub1
+ regress_sub2
 (2 rows)
 
 -- pxtest3 should still be locked because of the pending DROP
@@ -230,7 +230,7 @@ lock table pxtest3 in access share mode nowait;
 ERROR:  could not obtain lock on relation "pxtest3"
 rollback;
 -- Commit table creation
-COMMIT PREPARED 'regress-one';
+COMMIT PREPARED 'regress_sub1';
 \d pxtest2
               Table "public.pxtest2"
  Column |  Type   | Collation | Nullable | Default 
@@ -245,20 +245,20 @@ SELECT * FROM pxtest2;
 (2 rows)
 
 -- There should be one prepared transaction
-SELECT gid FROM pg_prepared_xacts;
-     gid     
--------------
- regress-two
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
+     gid      
+--------------
+ regress_sub2
 (1 row)
 
 -- Commit table drop
-COMMIT PREPARED 'regress-two';
+COMMIT PREPARED 'regress_sub2';
 SELECT * FROM pxtest3;
 ERROR:  relation "pxtest3" does not exist
 LINE 1: SELECT * FROM pxtest3;
                       ^
 -- There should be no prepared transactions
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)

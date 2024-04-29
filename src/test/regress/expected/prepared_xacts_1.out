@@ -17,7 +17,7 @@ SELECT * FROM pxtest1;
  bbb
 (1 row)
 
-PREPARE TRANSACTION 'foo1';
+PREPARE TRANSACTION 'regress_foo1';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
 SELECT * FROM pxtest1;
@@ -27,21 +27,21 @@ SELECT * FROM pxtest1;
 (1 row)
 
 -- Test pg_prepared_xacts system view
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
 
 -- Test ROLLBACK PREPARED
-ROLLBACK PREPARED 'foo1';
-ERROR:  prepared transaction with identifier "foo1" does not exist
+ROLLBACK PREPARED 'regress_foo1';
+ERROR:  prepared transaction with identifier "regress_foo1" does not exist
 SELECT * FROM pxtest1;
  foobar 
 --------
  aaa
 (1 row)
 
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
@@ -56,7 +56,7 @@ SELECT * FROM pxtest1;
  ddd
 (2 rows)
 
-PREPARE TRANSACTION 'foo2';
+PREPARE TRANSACTION 'regress_foo2';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
 SELECT * FROM pxtest1;
@@ -65,8 +65,8 @@ SELECT * FROM pxtest1;
  aaa
 (1 row)
 
-COMMIT PREPARED 'foo2';
-ERROR:  prepared transaction with identifier "foo2" does not exist
+COMMIT PREPARED 'regress_foo2';
+ERROR:  prepared transaction with identifier "regress_foo2" does not exist
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -82,10 +82,10 @@ SELECT * FROM pxtest1;
  aaa
 (1 row)
 
-PREPARE TRANSACTION 'foo3';
+PREPARE TRANSACTION 'regress_foo3';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
@@ -93,7 +93,7 @@ SELECT gid FROM pg_prepared_xacts;
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 INSERT INTO pxtest1 VALUES ('fff');
 -- This should fail, because the gid foo3 is already in use
-PREPARE TRANSACTION 'foo3';
+PREPARE TRANSACTION 'regress_foo3';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
 SELECT * FROM pxtest1;
@@ -102,8 +102,8 @@ SELECT * FROM pxtest1;
  aaa
 (1 row)
 
-ROLLBACK PREPARED 'foo3';
-ERROR:  prepared transaction with identifier "foo3" does not exist
+ROLLBACK PREPARED 'regress_foo3';
+ERROR:  prepared transaction with identifier "regress_foo3" does not exist
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -119,10 +119,10 @@ SELECT * FROM pxtest1;
  aaa
 (1 row)
 
-PREPARE TRANSACTION 'foo4';
+PREPARE TRANSACTION 'regress_foo4';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
@@ -136,17 +136,17 @@ SELECT * FROM pxtest1;
 
 -- This should fail, because the two transactions have a write-skew anomaly
 INSERT INTO pxtest1 VALUES ('fff');
-PREPARE TRANSACTION 'foo5';
+PREPARE TRANSACTION 'regress_foo5';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
 
-ROLLBACK PREPARED 'foo4';
-ERROR:  prepared transaction with identifier "foo4" does not exist
-SELECT gid FROM pg_prepared_xacts;
+ROLLBACK PREPARED 'regress_foo4';
+ERROR:  prepared transaction with identifier "regress_foo4" does not exist
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
@@ -167,7 +167,7 @@ SELECT pg_advisory_xact_lock_shared(1);
  
 (1 row)
 
-PREPARE TRANSACTION 'foo6';  -- fails
+PREPARE TRANSACTION 'regress_foo6';  -- fails
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
 -- Test subtransactions
@@ -179,7 +179,7 @@ BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
   ROLLBACK TO a;
   SAVEPOINT b;
   INSERT INTO pxtest2 VALUES (3);
-PREPARE TRANSACTION 'regress-one';
+PREPARE TRANSACTION 'regress_sub1';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
 CREATE TABLE pxtest3(fff int);
@@ -197,7 +197,7 @@ BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
  1
 (1 row)
 
-PREPARE TRANSACTION 'regress-two';
+PREPARE TRANSACTION 'regress_sub2';
 ERROR:  prepared transactions are disabled
 HINT:  Set max_prepared_transactions to a nonzero value.
 -- No such cursor
@@ -209,7 +209,7 @@ ERROR:  relation "pxtest2" does not exist
 LINE 1: SELECT * FROM pxtest2;
                       ^
 -- There should be two prepared transactions
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
@@ -221,7 +221,7 @@ rollback;
 -- Disconnect, we will continue testing in a different backend
 \c -
 -- There should still be two prepared transactions
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
@@ -231,29 +231,29 @@ begin;
 lock table pxtest3 in access share mode nowait;
 rollback;
 -- Commit table creation
-COMMIT PREPARED 'regress-one';
-ERROR:  prepared transaction with identifier "regress-one" does not exist
+COMMIT PREPARED 'regress_sub1';
+ERROR:  prepared transaction with identifier "regress_sub1" does not exist
 \d pxtest2
 SELECT * FROM pxtest2;
 ERROR:  relation "pxtest2" does not exist
 LINE 1: SELECT * FROM pxtest2;
                       ^
 -- There should be one prepared transaction
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)
 
 -- Commit table drop
-COMMIT PREPARED 'regress-two';
-ERROR:  prepared transaction with identifier "regress-two" does not exist
+COMMIT PREPARED 'regress_sub2';
+ERROR:  prepared transaction with identifier "regress_sub2" does not exist
 SELECT * FROM pxtest3;
  fff 
 -----
 (0 rows)
 
 -- There should be no prepared transactions
-SELECT gid FROM pg_prepared_xacts;
+SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
 (0 rows)

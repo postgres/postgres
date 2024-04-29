@@ -79,7 +79,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	strcpy(msg, "prepare transaction");
-	{ ECPGtrans(__LINE__, NULL, "prepare transaction 'gxid'");
+	{ ECPGtrans(__LINE__, NULL, "prepare transaction 'ecpg_twophase'");
 #line 32 "twophase.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -87,7 +87,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	strcpy(msg, "commit prepared");
-	{ ECPGtrans(__LINE__, NULL, "commit prepared 'gxid'");
+	{ ECPGtrans(__LINE__, NULL, "commit prepared 'ecpg_twophase'");
 #line 35 "twophase.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
