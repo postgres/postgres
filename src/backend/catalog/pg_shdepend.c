@@ -84,6 +84,11 @@ static void shdepChangeDep(Relation sdepRel,
 						   Oid classid, Oid objid, int32 objsubid,
 						   Oid refclassid, Oid refobjid,
 						   SharedDependencyType deptype);
+static void updateAclDependenciesWorker(Oid classId, Oid objectId,
+										int32 objsubId, Oid ownerId,
+										SharedDependencyType deptype,
+										int noldmembers, Oid *oldmembers,
+										int nnewmembers, Oid *newmembers);
 static void shdepAddDependency(Relation sdepRel,
 							   Oid classId, Oid objectId, int32 objsubId,
 							   Oid refclassId, Oid refobjId,
@@ -340,6 +345,11 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
 						AuthIdRelationId, newOwnerId,
 						SHARED_DEPENDENCY_ACL);
 
+	/* The same applies to SHARED_DEPENDENCY_INITACL */
+	shdepDropDependency(sdepRel, classId, objectId, 0, true,
+						AuthIdRelationId, newOwnerId,
+						SHARED_DEPENDENCY_INITACL);
+
 	table_close(sdepRel, RowExclusiveLock);
 }
 
@@ -479,6 +489,38 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 					  int noldmembers, Oid *oldmembers,
 					  int nnewmembers, Oid *newmembers)
 {
+	updateAclDependenciesWorker(classId, objectId, objsubId,
+								ownerId, SHARED_DEPENDENCY_ACL,
+								noldmembers, oldmembers,
+								nnewmembers, newmembers);
+}
+
+/*
+ * updateInitAclDependencies
+ *		Update the pg_shdepend info for a pg_init_privs entry.
+ *
+ * Exactly like updateAclDependencies, except we are considering a
+ * pg_init_privs ACL for the specified object.
+ */
+void
+updateInitAclDependencies(Oid classId, Oid objectId, int32 objsubId,
+						  Oid ownerId,
+						  int noldmembers, Oid *oldmembers,
+						  int nnewmembers, Oid *newmembers)
+{
+	updateAclDependenciesWorker(classId, objectId, objsubId,
+								ownerId, SHARED_DEPENDENCY_INITACL,
+								noldmembers, oldmembers,
+								nnewmembers, newmembers);
+}
+
+/* Common code for the above two functions */
+static void
+updateAclDependenciesWorker(Oid classId, Oid objectId, int32 objsubId,
+							Oid ownerId, SharedDependencyType deptype,
+							int noldmembers, Oid *oldmembers,
+							int nnewmembers, Oid *newmembers)
+{
 	Relation	sdepRel;
 	int			i;
 
@@ -513,7 +555,7 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 
 			shdepAddDependency(sdepRel, classId, objectId, objsubId,
 							   AuthIdRelationId, roleid,
-							   SHARED_DEPENDENCY_ACL);
+							   deptype);
 		}
 
 		/* Drop no-longer-used old dependencies */
@@ -532,7 +574,7 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 			shdepDropDependency(sdepRel, classId, objectId, objsubId,
 								false,	/* exact match on objsubId */
 								AuthIdRelationId, roleid,
-								SHARED_DEPENDENCY_ACL);
+								deptype);
 		}
 
 		table_close(sdepRel, RowExclusiveLock);
@@ -1249,6 +1291,8 @@ storeObjectDescription(StringInfo descs,
 				appendStringInfo(descs, _("owner of %s"), objdesc);
 			else if (deptype == SHARED_DEPENDENCY_ACL)
 				appendStringInfo(descs, _("privileges for %s"), objdesc);
+			else if (deptype == SHARED_DEPENDENCY_INITACL)
+				appendStringInfo(descs, _("initial privileges for %s"), objdesc);
 			else if (deptype == SHARED_DEPENDENCY_POLICY)
 				appendStringInfo(descs, _("target of %s"), objdesc);
 			else if (deptype == SHARED_DEPENDENCY_TABLESPACE)
@@ -1430,6 +1474,14 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 						}
 						add_exact_object_address(&obj, deleteobjs);
 					}
+					break;
+				case SHARED_DEPENDENCY_INITACL:
+					/* Shouldn't see a role grant here */
+					Assert(sdepForm->classid != AuthMemRelationId);
+					RemoveRoleFromInitPriv(roleid,
+										   sdepForm->classid,
+										   sdepForm->objid,
+										   sdepForm->objsubid);
 					break;
 			}
 		}

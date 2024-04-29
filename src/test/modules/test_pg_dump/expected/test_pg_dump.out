@@ -62,6 +62,113 @@ GRANT SELECT ON ft1 TO regress_dump_test_role;
 GRANT UPDATE ON test_pg_dump_mv1 TO regress_dump_test_role;
 GRANT USAGE ON SCHEMA test_pg_dump_s1 TO regress_dump_test_role;
 GRANT USAGE ON TYPE test_pg_dump_e1 TO regress_dump_test_role;
+-- Substitute for current user's name to keep test output consistent
+SELECT s.obj,
+  CASE WHEN a.grantor::regrole::name = current_user THEN 'postgres'
+    ELSE a.grantor::regrole END,
+  CASE WHEN a.grantee::regrole::name = current_user THEN 'postgres'
+    ELSE a.grantee::regrole END,
+  a.privilege_type, a.is_grantable
+FROM
+  (SELECT pg_describe_object(classoid,objoid,objsubid) AS obj, initprivs
+   FROM pg_init_privs WHERE privtype = 'e' ORDER BY 1) s,
+  aclexplode(s.initprivs) a;
+                        obj                         | grantor  |        grantee         | privilege_type | is_grantable 
+----------------------------------------------------+----------+------------------------+----------------+--------------
+ column col1 of table regress_pg_dump_table         | postgres | -                      | SELECT         | f
+ function regress_pg_dump_schema.test_agg(smallint) | postgres | -                      | EXECUTE        | f
+ function regress_pg_dump_schema.test_agg(smallint) | postgres | postgres               | EXECUTE        | f
+ function regress_pg_dump_schema.test_agg(smallint) | postgres | regress_dump_test_role | EXECUTE        | f
+ function regress_pg_dump_schema.test_func()        | postgres | -                      | EXECUTE        | f
+ function regress_pg_dump_schema.test_func()        | postgres | postgres               | EXECUTE        | f
+ function regress_pg_dump_schema.test_func()        | postgres | regress_dump_test_role | EXECUTE        | f
+ function wgo_then_no_access()                      | postgres | -                      | EXECUTE        | f
+ function wgo_then_no_access()                      | postgres | postgres               | EXECUTE        | f
+ function wgo_then_no_access()                      | postgres | pg_signal_backend      | EXECUTE        | t
+ sequence regress_pg_dump_schema.test_seq           | postgres | postgres               | SELECT         | f
+ sequence regress_pg_dump_schema.test_seq           | postgres | postgres               | UPDATE         | f
+ sequence regress_pg_dump_schema.test_seq           | postgres | postgres               | USAGE          | f
+ sequence regress_pg_dump_schema.test_seq           | postgres | regress_dump_test_role | USAGE          | f
+ sequence regress_pg_dump_seq                       | postgres | postgres               | SELECT         | f
+ sequence regress_pg_dump_seq                       | postgres | postgres               | UPDATE         | f
+ sequence regress_pg_dump_seq                       | postgres | postgres               | USAGE          | f
+ sequence regress_pg_dump_seq                       | postgres | regress_dump_test_role | USAGE          | f
+ sequence regress_seq_dumpable                      | postgres | postgres               | SELECT         | f
+ sequence regress_seq_dumpable                      | postgres | postgres               | UPDATE         | f
+ sequence regress_seq_dumpable                      | postgres | postgres               | USAGE          | f
+ sequence regress_seq_dumpable                      | postgres | -                      | SELECT         | f
+ sequence wgo_then_regular                          | postgres | postgres               | SELECT         | f
+ sequence wgo_then_regular                          | postgres | postgres               | UPDATE         | f
+ sequence wgo_then_regular                          | postgres | postgres               | USAGE          | f
+ sequence wgo_then_regular                          | postgres | pg_signal_backend      | SELECT         | f
+ sequence wgo_then_regular                          | postgres | pg_signal_backend      | UPDATE         | t
+ sequence wgo_then_regular                          | postgres | pg_signal_backend      | USAGE          | t
+ table regress_pg_dump_schema.test_table            | postgres | postgres               | INSERT         | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres               | SELECT         | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres               | UPDATE         | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres               | DELETE         | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres               | TRUNCATE       | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres               | REFERENCES     | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres               | TRIGGER        | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres               | MAINTAIN       | f
+ table regress_pg_dump_schema.test_table            | postgres | regress_dump_test_role | SELECT         | f
+ table regress_pg_dump_table                        | postgres | postgres               | INSERT         | f
+ table regress_pg_dump_table                        | postgres | postgres               | SELECT         | f
+ table regress_pg_dump_table                        | postgres | postgres               | UPDATE         | f
+ table regress_pg_dump_table                        | postgres | postgres               | DELETE         | f
+ table regress_pg_dump_table                        | postgres | postgres               | TRUNCATE       | f
+ table regress_pg_dump_table                        | postgres | postgres               | REFERENCES     | f
+ table regress_pg_dump_table                        | postgres | postgres               | TRIGGER        | f
+ table regress_pg_dump_table                        | postgres | postgres               | MAINTAIN       | f
+ table regress_pg_dump_table                        | postgres | regress_dump_test_role | SELECT         | f
+ table regress_table_dumpable                       | postgres | postgres               | INSERT         | f
+ table regress_table_dumpable                       | postgres | postgres               | SELECT         | f
+ table regress_table_dumpable                       | postgres | postgres               | UPDATE         | f
+ table regress_table_dumpable                       | postgres | postgres               | DELETE         | f
+ table regress_table_dumpable                       | postgres | postgres               | TRUNCATE       | f
+ table regress_table_dumpable                       | postgres | postgres               | REFERENCES     | f
+ table regress_table_dumpable                       | postgres | postgres               | TRIGGER        | f
+ table regress_table_dumpable                       | postgres | postgres               | MAINTAIN       | f
+ table regress_table_dumpable                       | postgres | -                      | SELECT         | f
+ type regress_pg_dump_schema.test_type              | postgres | -                      | USAGE          | f
+ type regress_pg_dump_schema.test_type              | postgres | postgres               | USAGE          | f
+ type regress_pg_dump_schema.test_type              | postgres | regress_dump_test_role | USAGE          | f
+(58 rows)
+
+SELECT pg_describe_object(classid,objid,objsubid) AS obj,
+  pg_describe_object(refclassid,refobjid,0) AS refobj,
+  deptype
+  FROM pg_shdepend JOIN pg_database d ON dbid = d.oid
+  WHERE d.datname = current_database()
+  ORDER BY 1, 3;
+                        obj                         |           refobj            | deptype 
+----------------------------------------------------+-----------------------------+---------
+ column c1 of foreign table ft1                     | role regress_dump_test_role | a
+ column c1 of table test_pg_dump_t1                 | role regress_dump_test_role | a
+ foreign table ft1                                  | role regress_dump_test_role | a
+ foreign-data wrapper dummy                         | role regress_dump_test_role | a
+ function regress_pg_dump_schema.test_agg(smallint) | role regress_dump_test_role | a
+ function regress_pg_dump_schema.test_agg(smallint) | role regress_dump_test_role | i
+ function regress_pg_dump_schema.test_func()        | role regress_dump_test_role | a
+ function regress_pg_dump_schema.test_func()        | role regress_dump_test_role | i
+ function test_pg_dump(integer)                     | role regress_dump_test_role | a
+ materialized view test_pg_dump_mv1                 | role regress_dump_test_role | a
+ schema test_pg_dump_s1                             | role regress_dump_test_role | a
+ sequence regress_pg_dump_schema.test_seq           | role regress_dump_test_role | a
+ sequence regress_pg_dump_schema.test_seq           | role regress_dump_test_role | i
+ sequence regress_pg_dump_seq                       | role regress_dump_test_role | a
+ sequence regress_pg_dump_seq                       | role regress_dump_test_role | i
+ server s0                                          | role regress_dump_test_role | a
+ table regress_pg_dump_schema.test_table            | role regress_dump_test_role | a
+ table regress_pg_dump_schema.test_table            | role regress_dump_test_role | i
+ table regress_pg_dump_table                        | role regress_dump_test_role | a
+ table regress_pg_dump_table                        | role regress_dump_test_role | i
+ type regress_pg_dump_schema.test_type              | role regress_dump_test_role | a
+ type regress_pg_dump_schema.test_type              | role regress_dump_test_role | i
+ type test_pg_dump_e1                               | role regress_dump_test_role | a
+ view test_pg_dump_v1                               | role regress_dump_test_role | a
+(24 rows)
+
 ALTER EXTENSION test_pg_dump ADD ACCESS METHOD gist2;
 ALTER EXTENSION test_pg_dump ADD AGGREGATE newavg(int4);
 ALTER EXTENSION test_pg_dump ADD CAST (text AS casttesttype);
@@ -92,4 +199,80 @@ ALTER EXTENSION test_pg_dump DROP TABLE test_pg_dump_t1;
 ALTER EXTENSION test_pg_dump DROP TYPE test_pg_dump_e1;
 ALTER EXTENSION test_pg_dump DROP VIEW test_pg_dump_v1;
 DROP OWNED BY regress_dump_test_role RESTRICT;
+-- Substitute for current user's name to keep test output consistent
+SELECT s.obj,
+  CASE WHEN a.grantor::regrole::name = current_user THEN 'postgres'
+    ELSE a.grantor::regrole END,
+  CASE WHEN a.grantee::regrole::name = current_user THEN 'postgres'
+    ELSE a.grantee::regrole END,
+  a.privilege_type, a.is_grantable
+FROM
+  (SELECT pg_describe_object(classoid,objoid,objsubid) AS obj, initprivs
+   FROM pg_init_privs WHERE privtype = 'e' ORDER BY 1) s,
+  aclexplode(s.initprivs) a;
+                        obj                         | grantor  |      grantee      | privilege_type | is_grantable 
+----------------------------------------------------+----------+-------------------+----------------+--------------
+ column col1 of table regress_pg_dump_table         | postgres | -                 | SELECT         | f
+ function regress_pg_dump_schema.test_agg(smallint) | postgres | -                 | EXECUTE        | f
+ function regress_pg_dump_schema.test_agg(smallint) | postgres | postgres          | EXECUTE        | f
+ function regress_pg_dump_schema.test_func()        | postgres | -                 | EXECUTE        | f
+ function regress_pg_dump_schema.test_func()        | postgres | postgres          | EXECUTE        | f
+ function wgo_then_no_access()                      | postgres | -                 | EXECUTE        | f
+ function wgo_then_no_access()                      | postgres | postgres          | EXECUTE        | f
+ function wgo_then_no_access()                      | postgres | pg_signal_backend | EXECUTE        | t
+ sequence regress_pg_dump_schema.test_seq           | postgres | postgres          | SELECT         | f
+ sequence regress_pg_dump_schema.test_seq           | postgres | postgres          | UPDATE         | f
+ sequence regress_pg_dump_schema.test_seq           | postgres | postgres          | USAGE          | f
+ sequence regress_pg_dump_seq                       | postgres | postgres          | SELECT         | f
+ sequence regress_pg_dump_seq                       | postgres | postgres          | UPDATE         | f
+ sequence regress_pg_dump_seq                       | postgres | postgres          | USAGE          | f
+ sequence regress_seq_dumpable                      | postgres | postgres          | SELECT         | f
+ sequence regress_seq_dumpable                      | postgres | postgres          | UPDATE         | f
+ sequence regress_seq_dumpable                      | postgres | postgres          | USAGE          | f
+ sequence regress_seq_dumpable                      | postgres | -                 | SELECT         | f
+ sequence wgo_then_regular                          | postgres | postgres          | SELECT         | f
+ sequence wgo_then_regular                          | postgres | postgres          | UPDATE         | f
+ sequence wgo_then_regular                          | postgres | postgres          | USAGE          | f
+ sequence wgo_then_regular                          | postgres | pg_signal_backend | SELECT         | f
+ sequence wgo_then_regular                          | postgres | pg_signal_backend | UPDATE         | t
+ sequence wgo_then_regular                          | postgres | pg_signal_backend | USAGE          | t
+ table regress_pg_dump_schema.test_table            | postgres | postgres          | INSERT         | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres          | SELECT         | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres          | UPDATE         | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres          | DELETE         | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres          | TRUNCATE       | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres          | REFERENCES     | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres          | TRIGGER        | f
+ table regress_pg_dump_schema.test_table            | postgres | postgres          | MAINTAIN       | f
+ table regress_pg_dump_table                        | postgres | postgres          | INSERT         | f
+ table regress_pg_dump_table                        | postgres | postgres          | SELECT         | f
+ table regress_pg_dump_table                        | postgres | postgres          | UPDATE         | f
+ table regress_pg_dump_table                        | postgres | postgres          | DELETE         | f
+ table regress_pg_dump_table                        | postgres | postgres          | TRUNCATE       | f
+ table regress_pg_dump_table                        | postgres | postgres          | REFERENCES     | f
+ table regress_pg_dump_table                        | postgres | postgres          | TRIGGER        | f
+ table regress_pg_dump_table                        | postgres | postgres          | MAINTAIN       | f
+ table regress_table_dumpable                       | postgres | postgres          | INSERT         | f
+ table regress_table_dumpable                       | postgres | postgres          | SELECT         | f
+ table regress_table_dumpable                       | postgres | postgres          | UPDATE         | f
+ table regress_table_dumpable                       | postgres | postgres          | DELETE         | f
+ table regress_table_dumpable                       | postgres | postgres          | TRUNCATE       | f
+ table regress_table_dumpable                       | postgres | postgres          | REFERENCES     | f
+ table regress_table_dumpable                       | postgres | postgres          | TRIGGER        | f
+ table regress_table_dumpable                       | postgres | postgres          | MAINTAIN       | f
+ table regress_table_dumpable                       | postgres | -                 | SELECT         | f
+ type regress_pg_dump_schema.test_type              | postgres | -                 | USAGE          | f
+ type regress_pg_dump_schema.test_type              | postgres | postgres          | USAGE          | f
+(51 rows)
+
+SELECT pg_describe_object(classid,objid,objsubid) AS obj,
+  pg_describe_object(refclassid,refobjid,0) AS refobj,
+  deptype
+  FROM pg_shdepend JOIN pg_database d ON dbid = d.oid
+  WHERE d.datname = current_database()
+  ORDER BY 1, 3;
+ obj | refobj | deptype 
+-----+--------+---------
+(0 rows)
+
 DROP ROLE regress_dump_test_role;
