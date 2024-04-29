@@ -1585,6 +1585,34 @@ open_client_SSL(PGconn *conn)
 		}
 	}
 
+	/* ALPN is mandatory with direct SSL connections */
+	if (conn->current_enc_method == ENC_DIRECT_SSL)
+	{
+		const unsigned char *selected;
+		unsigned int len;
+
+		SSL_get0_alpn_selected(conn->ssl, &selected, &len);
+
+		if (selected == NULL)
+		{
+			libpq_append_conn_error(conn, "direct SSL connection was established without ALPN protocol negotiation extension");
+			pgtls_close(conn);
+			return PGRES_POLLING_FAILED;
+		}
+
+		/*
+		 * We only support one protocol so that's what the negotiation should
+		 * always choose, but doesn't hurt to check.
+		 */
+		if (len != strlen(PG_ALPN_PROTOCOL) ||
+			memcmp(selected, PG_ALPN_PROTOCOL, strlen(PG_ALPN_PROTOCOL)) != 0)
+		{
+			libpq_append_conn_error(conn, "SSL connection was established with unexpected ALPN protocol");
+			pgtls_close(conn);
+			return PGRES_POLLING_FAILED;
+		}
+	}
+
 	/*
 	 * We already checked the server certificate in initialize_SSL() using
 	 * SSL_CTX_set_verify(), if root.crt exists.
