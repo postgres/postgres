@@ -21503,9 +21503,6 @@ ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	ListCell   *listptr;
 	List	   *mergingPartitionsList = NIL;
 	Oid			defaultPartOid;
-	char		tmpRelName[NAMEDATALEN];
-	RangeVar   *mergePartName = cmd->name;
-	bool		isSameName = false;
 
 	/*
 	 * Lock all merged partitions, check them and create list with partitions
@@ -21527,8 +21524,28 @@ ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * function transformPartitionCmdForMerge().
 		 */
 		if (equal(name, cmd->name))
+		{
 			/* One new partition can have the same name as merged partition. */
-			isSameName = true;
+			char		tmpRelName[NAMEDATALEN];
+
+			/* Generate temporary name. */
+			sprintf(tmpRelName, "merge-%u-%X-tmp", RelationGetRelid(rel), MyProcPid);
+
+			/*
+			 * Rename the existing partition with a temporary name, leaving it
+			 * free for the new partition.  We don't need to care about this
+			 * in the future because we're going to eventually drop the
+			 * existing partition anyway.
+			 */
+			RenameRelationInternal(RelationGetRelid(mergingPartition),
+								   tmpRelName, false, false);
+
+			/*
+			 * We must bump the command counter to make the new partition
+			 * tuple visible for rename.
+			 */
+			CommandCounterIncrement();
+		}
 
 		/* Store a next merging partition into the list. */
 		mergingPartitionsList = lappend(mergingPartitionsList,
@@ -21548,15 +21565,7 @@ ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		DetachPartitionFinalize(rel, mergingPartition, false, defaultPartOid);
 	}
 
-	/* Create table for new partition, use partitioned table as model. */
-	if (isSameName)
-	{
-		/* Create partition table with generated temporary name. */
-		sprintf(tmpRelName, "merge-%u-%X-tmp", RelationGetRelid(rel), MyProcPid);
-		mergePartName = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-									 tmpRelName, -1);
-	}
-	createPartitionTable(mergePartName,
+	createPartitionTable(cmd->name,
 						 makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
 									  RelationGetRelationName(rel), -1),
 						 context);
@@ -21567,18 +21576,12 @@ ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * excessive, but this is the way we make sure nobody is planning queries
 	 * involving merging partitions.
 	 */
-	newPartRel = table_openrv(mergePartName, AccessExclusiveLock);
+	newPartRel = table_openrv(cmd->name, AccessExclusiveLock);
 
 	/* Copy data from merged partitions to new partition. */
 	moveMergedTablesRows(rel, mergingPartitionsList, newPartRel);
 
-	/*
-	 * Attach a new partition to the partitioned table. wqueue = NULL:
-	 * verification for each cloned constraint is not need.
-	 */
-	attachPartitionTable(NULL, rel, newPartRel, cmd->bound);
-
-	/* Unlock and drop merged partitions. */
+	/* Drop the current partitions before attaching the new one. */
 	foreach(listptr, mergingPartitionsList)
 	{
 		ObjectAddress object;
@@ -21596,18 +21599,12 @@ ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 	list_free(mergingPartitionsList);
 
-	/* Rename new partition if it is needed. */
-	if (isSameName)
-	{
-		/*
-		 * We must bump the command counter to make the new partition tuple
-		 * visible for rename.
-		 */
-		CommandCounterIncrement();
-		/* Rename partition. */
-		RenameRelationInternal(RelationGetRelid(newPartRel),
-							   cmd->name->relname, false, false);
-	}
+	/*
+	 * Attach a new partition to the partitioned table. wqueue = NULL:
+	 * verification for each cloned constraint is not needed.
+	 */
+	attachPartitionTable(NULL, rel, newPartRel, cmd->bound);
+
 	/* Keep the lock until commit. */
 	table_close(newPartRel, NoLock);
 }
