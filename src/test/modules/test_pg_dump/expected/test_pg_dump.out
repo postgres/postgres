@@ -65,9 +65,9 @@ GRANT USAGE ON TYPE test_pg_dump_e1 TO regress_dump_test_role;
 -- Substitute for current user's name to keep test output consistent
 SELECT s.obj,
   CASE WHEN a.grantor::regrole::name = current_user THEN 'postgres'
-    ELSE a.grantor::regrole END,
+    ELSE a.grantor::regrole::name END,
   CASE WHEN a.grantee::regrole::name = current_user THEN 'postgres'
-    ELSE a.grantee::regrole END,
+    ELSE a.grantee::regrole::name END,
   a.privilege_type, a.is_grantable
 FROM
   (SELECT pg_describe_object(classoid,objoid,objsubid) AS obj, initprivs
@@ -202,9 +202,9 @@ DROP OWNED BY regress_dump_test_role RESTRICT;
 -- Substitute for current user's name to keep test output consistent
 SELECT s.obj,
   CASE WHEN a.grantor::regrole::name = current_user THEN 'postgres'
-    ELSE a.grantor::regrole END,
+    ELSE a.grantor::regrole::name END,
   CASE WHEN a.grantee::regrole::name = current_user THEN 'postgres'
-    ELSE a.grantee::regrole END,
+    ELSE a.grantee::regrole::name END,
   a.privilege_type, a.is_grantable
 FROM
   (SELECT pg_describe_object(classoid,objoid,objsubid) AS obj, initprivs
