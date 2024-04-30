@@ -21209,18 +21209,30 @@ moveSplitTableRows(Relation rel, Relation splitRel, List *partlist, List *newPar
 
 /*
  * createPartitionTable: create table for a new partition with given name
- * (newPartName) like table (modelRelName)
+ * (newPartName) like table (modelRel)
  *
- * Emulates command: CREATE TABLE <newPartName> (LIKE <modelRelName>
+ * Emulates command: CREATE [TEMP] TABLE <newPartName> (LIKE <modelRel's name>
  * INCLUDING ALL EXCLUDING INDEXES EXCLUDING IDENTITY)
+ * Function returns the created relation (locked in AccessExclusiveLock mode).
  */
-static void
-createPartitionTable(RangeVar *newPartName, RangeVar *modelRelName,
+static Relation
+createPartitionTable(RangeVar *newPartName, Relation modelRel,
 					 AlterTableUtilityContext *context)
 {
 	CreateStmt *createStmt;
 	TableLikeClause *tlc;
 	PlannedStmt *wrapper;
+	Relation	newRel;
+
+	/* If existing rel is temp, it must belong to this session */
+	if (modelRel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
+		!modelRel->rd_islocaltemp)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot create as partition of temporary relation of another session")));
+
+	/* New partition should have the same persistence as modelRel */
+	newPartName->relpersistence = modelRel->rd_rel->relpersistence;
 
 	createStmt = makeNode(CreateStmt);
 	createStmt->relation = newPartName;
@@ -21233,7 +21245,8 @@ createPartitionTable(RangeVar *newPartName, RangeVar *modelRelName,
 	createStmt->if_not_exists = false;
 
 	tlc = makeNode(TableLikeClause);
-	tlc->relation = modelRelName;
+	tlc->relation = makeRangeVar(get_namespace_name(RelationGetNamespace(modelRel)),
+								 RelationGetRelationName(modelRel), -1);
 
 	/*
 	 * Indexes will be inherited on "attach new partitions" stage, after data
@@ -21259,6 +21272,35 @@ createPartitionTable(RangeVar *newPartName, RangeVar *modelRelName,
 				   NULL,
 				   None_Receiver,
 				   NULL);
+
+	/*
+	 * Open the new partition with no lock, because we already have
+	 * AccessExclusiveLock placed there after creation.
+	 */
+	newRel = table_openrv(newPartName, NoLock);
+
+	/*
+	 * We intended to create the partition with the same persistence as the
+	 * parent table, but we still need to recheck because that might be
+	 * affected by the search_path.  If the parent is permanent, so must be
+	 * all of its partitions.
+	 */
+	if (modelRel->rd_rel->relpersistence != RELPERSISTENCE_TEMP &&
+		newRel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot create a temporary relation as partition of permanent relation \"%s\"",
+						RelationGetRelationName(modelRel))));
+
+	/* Permanent rels cannot be partitions belonging to temporary parent */
+	if (newRel->rd_rel->relpersistence != RELPERSISTENCE_TEMP &&
+		modelRel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot create a permanent relation as partition of temporary relation \"%s\"",
+						RelationGetRelationName(modelRel))));
+
+	return newRel;
 }
 
 /*
@@ -21278,7 +21320,6 @@ ATExecSplitPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	char		tmpRelName[NAMEDATALEN];
 	List	   *newPartRels = NIL;
 	ObjectAddress object;
-	RangeVar   *parentName;
 	Oid			defaultPartOid;
 
 	defaultPartOid = get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, true));
@@ -21350,18 +21391,12 @@ ATExecSplitPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 
 	/* Create new partitions (like split partition), without indexes. */
-	parentName = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-							  RelationGetRelationName(rel), -1);
 	foreach(listptr, cmd->partlist)
 	{
 		SinglePartitionSpec *sps = (SinglePartitionSpec *) lfirst(listptr);
 		Relation	newPartRel;
 
-		createPartitionTable(sps->name, parentName, context);
-
-		/* Open the new partition and acquire exclusive lock on it. */
-		newPartRel = table_openrv(sps->name, AccessExclusiveLock);
-
+		newPartRel = createPartitionTable(sps->name, rel, context);
 		newPartRels = lappend(newPartRels, newPartRel);
 	}
 
@@ -21565,18 +21600,8 @@ ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		DetachPartitionFinalize(rel, mergingPartition, false, defaultPartOid);
 	}
 
-	createPartitionTable(cmd->name,
-						 makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-									  RelationGetRelationName(rel), -1),
-						 context);
-
-	/*
-	 * Open the new partition and acquire exclusive lock on it.  This will
-	 * stop all the operations with partitioned table.  This might seem
-	 * excessive, but this is the way we make sure nobody is planning queries
-	 * involving merging partitions.
-	 */
-	newPartRel = table_openrv(cmd->name, AccessExclusiveLock);
+	/* Create table for new partition, use partitioned table as model. */
+	newPartRel = createPartitionTable(cmd->name, rel, context);
 
 	/* Copy data from merged partitions to new partition. */
 	moveMergedTablesRows(rel, mergingPartitionsList, newPartRel);

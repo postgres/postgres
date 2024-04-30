@@ -4,6 +4,7 @@
 --
 
 CREATE SCHEMA partitions_merge_schema;
+CREATE SCHEMA partitions_merge_schema2;
 SET search_path = partitions_merge_schema, public;
 
 --
@@ -37,8 +38,13 @@ ALTER TABLE sales_range MERGE PARTITIONS (sales_jan2022, sales_mar2022) INTO sal
 -- (space between sections sales_dec2021 and sales_jan2022)
 ALTER TABLE sales_range MERGE PARTITIONS (sales_dec2021, sales_jan2022, sales_feb2022) INTO sales_dec_jan_feb2022;
 
--- NO ERROR: test for custom partitions order
-ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_jan2022) INTO sales_jan_feb_mar2022;
+-- NO ERROR: test for custom partitions order, source partitions not in the search_path
+SET search_path = partitions_merge_schema2, public;
+ALTER TABLE partitions_merge_schema.sales_range MERGE PARTITIONS (
+  partitions_merge_schema.sales_feb2022,
+  partitions_merge_schema.sales_mar2022,
+  partitions_merge_schema.sales_jan2022) INTO sales_jan_feb_mar2022;
+SET search_path = partitions_merge_schema, public;
 
 SELECT c.oid::pg_catalog.regclass, c.relkind, inhdetachpending, pg_catalog.pg_get_expr(c.relpartbound, c.oid)
   FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
@@ -81,7 +87,8 @@ SELECT c.oid::pg_catalog.regclass, c.relkind, inhdetachpending, pg_catalog.pg_ge
   WHERE c.oid = i.inhrelid AND i.inhparent = 'sales_range'::regclass
   ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
 
-ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_apr2022) INTO sales_feb_mar_apr2022;
+-- check schema-qualified name of the new partition
+ALTER TABLE sales_range MERGE PARTITIONS (sales_feb2022, sales_mar2022, sales_apr2022) INTO partitions_merge_schema2.sales_feb_mar_apr2022;
 
 -- show partitions with conditions:
 SELECT c.oid::pg_catalog.regclass, c.relkind, inhdetachpending, pg_catalog.pg_get_expr(c.relpartbound, c.oid)
@@ -89,17 +96,17 @@ SELECT c.oid::pg_catalog.regclass, c.relkind, inhdetachpending, pg_catalog.pg_ge
   WHERE c.oid = i.inhrelid AND i.inhparent = 'sales_range'::regclass
   ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
 
-SELECT * FROM pg_indexes WHERE tablename = 'sales_feb_mar_apr2022' and schemaname = 'partitions_merge_schema';
+SELECT * FROM pg_indexes WHERE tablename = 'sales_feb_mar_apr2022' and schemaname = 'partitions_merge_schema2';
 
 SELECT * FROM sales_range;
 SELECT * FROM sales_jan2022;
-SELECT * FROM sales_feb_mar_apr2022;
+SELECT * FROM partitions_merge_schema2.sales_feb_mar_apr2022;
 SELECT * FROM sales_others;
 
 -- Use indexscan for testing indexes
 SET enable_seqscan = OFF;
 
-SELECT * FROM sales_feb_mar_apr2022 where sales_date > '2022-01-01';
+SELECT * FROM partitions_merge_schema2.sales_feb_mar_apr2022 where sales_date > '2022-01-01';
 
 RESET enable_seqscan;
 
@@ -445,6 +452,28 @@ DROP TABLE t2;
 DROP TABLE t1;
 
 --
+-- Try to MERGE partitions of temporary table.
+--
+CREATE TEMP TABLE t (i int) PARTITION BY RANGE (i);
+CREATE TEMP TABLE tp_0_1 PARTITION OF t FOR VALUES FROM (0) TO (1);
+CREATE TEMP TABLE tp_1_2 PARTITION OF t FOR VALUES FROM (1) TO (2);
+
+SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid), c.relpersistence
+  FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
+  WHERE c.oid = i.inhrelid AND i.inhparent = 't'::regclass
+  ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
+
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+
+-- Partition should be temporary.
+SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid), c.relpersistence
+  FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
+  WHERE c.oid = i.inhrelid AND i.inhparent = 't'::regclass
+  ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
+
+DROP TABLE t;
+
+--
 -- Check the partition index name if the partition name is the same as one
 -- of the merged partitions.
 --
@@ -463,4 +492,51 @@ ALTER TABLE t MERGE PARTITIONS (tp_1_2, tp_0_1) INTO tp_1_2;
 DROP TABLE t;
 
 --
+-- Try mixing permanent and temporary partitions.
+--
+SET search_path = partitions_merge_schema, pg_temp, public;
+CREATE TABLE t (i int) PARTITION BY RANGE (i);
+CREATE TABLE tp_0_1 PARTITION OF t FOR VALUES FROM (0) TO (1);
+CREATE TABLE tp_1_2 PARTITION OF t FOR VALUES FROM (1) TO (2);
+
+SELECT c.oid::pg_catalog.regclass, c.relpersistence FROM pg_catalog.pg_class c WHERE c.oid = 't'::regclass;
+SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid), c.relpersistence
+  FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
+  WHERE c.oid = i.inhrelid AND i.inhparent = 't'::regclass
+  ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
+
+SET search_path = pg_temp, partitions_merge_schema, public;
+
+-- Can't merge persistent partitions into a temporary partition
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+
+SET search_path = partitions_merge_schema, public;
+
+-- Can't merge persistent partitions into a temporary partition
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO pg_temp.tp_0_2;
+DROP TABLE t;
+
+SET search_path = pg_temp, partitions_merge_schema, public;
+
+BEGIN;
+CREATE TABLE t (i int) PARTITION BY RANGE (i);
+CREATE TABLE tp_0_1 PARTITION OF t FOR VALUES FROM (0) TO (1);
+CREATE TABLE tp_1_2 PARTITION OF t FOR VALUES FROM (1) TO (2);
+
+SELECT c.oid::pg_catalog.regclass, c.relpersistence FROM pg_catalog.pg_class c WHERE c.oid = 't'::regclass;
+SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid), c.relpersistence
+  FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
+  WHERE c.oid = i.inhrelid AND i.inhparent = 't'::regclass
+  ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
+
+SET search_path = partitions_merge_schema, pg_temp, public;
+
+-- Can't merge temporary partitions into a persistent partition
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+ROLLBACK;
+
+RESET search_path;
+
+--
 DROP SCHEMA partitions_merge_schema;
+DROP SCHEMA partitions_merge_schema2;

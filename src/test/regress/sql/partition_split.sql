@@ -4,6 +4,7 @@
 --
 
 CREATE SCHEMA partition_split_schema;
+CREATE SCHEMA partition_split_schema2;
 SET search_path = partition_split_schema, public;
 
 --
@@ -92,6 +93,16 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
 
+-- Check the source partition not in the search path
+SET search_path = partition_split_schema2, public;
+ALTER TABLE partition_split_schema.sales_range
+SPLIT PARTITION partition_split_schema.sales_feb_mar_apr2022 INTO
+  (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
+   PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
+   PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
+SET search_path = partition_split_schema, public;
+\d+ sales_range
+
 DROP TABLE sales_range;
 DROP TABLE sales_others;
 
@@ -140,10 +151,12 @@ CREATE TABLE sales_jan2022 PARTITION OF sales_range FOR VALUES FROM ('2022-01-01
 CREATE TABLE sales_feb_mar_apr2022 PARTITION OF sales_range FOR VALUES FROM ('2022-02-01') TO ('2022-05-01');
 CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
 
+-- Split partition, also check schema qualification of new partitions
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
-  (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
-   PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
+  (PARTITION partition_split_schema.sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
+   PARTITION partition_split_schema2.sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
+\d+ sales_range
 
 INSERT INTO sales_range VALUES (1,  'May',      1000, '2022-01-31');
 INSERT INTO sales_range VALUES (2,  'Smirnoff', 500,  '2022-02-10');
@@ -163,7 +176,7 @@ INSERT INTO sales_range VALUES (14, 'Smith',    510,  '2022-05-04');
 SELECT * FROM sales_range;
 SELECT * FROM sales_jan2022;
 SELECT * FROM sales_feb2022;
-SELECT * FROM sales_mar2022;
+SELECT * FROM partition_split_schema2.sales_mar2022;
 SELECT * FROM sales_apr2022;
 SELECT * FROM sales_others;
 
@@ -845,4 +858,28 @@ DROP TABLE t2;
 DROP TABLE t1;
 
 --
+-- Try to SPLIT partition of temporary table.
+--
+CREATE TEMP TABLE t (i int) PARTITION BY RANGE (i);
+CREATE TEMP TABLE tp_0_2 PARTITION OF t FOR VALUES FROM (0) TO (2);
+
+SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid), c.relpersistence
+  FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
+  WHERE c.oid = i.inhrelid AND i.inhparent = 't'::regclass
+  ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
+
+ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
+  (PARTITION tp_0_1 FOR VALUES FROM (0) TO (1),
+   PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
+
+-- Partitions should be temporary.
+SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid), c.relpersistence
+  FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
+  WHERE c.oid = i.inhrelid AND i.inhparent = 't'::regclass
+  ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
+
+DROP TABLE t;
+
+--
 DROP SCHEMA partition_split_schema;
+DROP SCHEMA partition_split_schema2;

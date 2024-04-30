@@ -3,6 +3,7 @@
 -- Tests for "ALTER TABLE ... SPLIT PARTITION ..." command
 --
 CREATE SCHEMA partition_split_schema;
+CREATE SCHEMA partition_split_schema2;
 SET search_path = partition_split_schema, public;
 --
 -- BY RANGE partitioning
@@ -104,6 +105,28 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
 ERROR:  lower bound of partition "sales_feb2022" is not equal to lower bound of split partition
 LINE 2:   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-02') TO...
                                                     ^
+-- Check the source partition not in the search path
+SET search_path = partition_split_schema2, public;
+ALTER TABLE partition_split_schema.sales_range
+SPLIT PARTITION partition_split_schema.sales_feb_mar_apr2022 INTO
+  (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
+   PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
+   PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
+SET search_path = partition_split_schema, public;
+\d+ sales_range
+                             Partitioned table "partition_split_schema.sales_range"
+    Column     |         Type          | Collation | Nullable | Default | Storage  | Stats target | Description 
+---------------+-----------------------+-----------+----------+---------+----------+--------------+-------------
+ salesman_id   | integer               |           |          |         | plain    |              | 
+ salesman_name | character varying(30) |           |          |         | extended |              | 
+ sales_amount  | integer               |           |          |         | plain    |              | 
+ sales_date    | date                  |           |          |         | plain    |              | 
+Partition key: RANGE (sales_date)
+Partitions: partition_split_schema2.sales_apr2022 FOR VALUES FROM ('04-01-2022') TO ('05-01-2022'),
+            partition_split_schema2.sales_feb2022 FOR VALUES FROM ('02-01-2022') TO ('03-01-2022'),
+            partition_split_schema2.sales_mar2022 FOR VALUES FROM ('03-01-2022') TO ('04-01-2022'),
+            sales_jan2022 FOR VALUES FROM ('01-01-2022') TO ('02-01-2022')
+
 DROP TABLE sales_range;
 DROP TABLE sales_others;
 --
@@ -197,10 +220,26 @@ CREATE TABLE sales_range (salesman_id INT, salesman_name VARCHAR(30), sales_amou
 CREATE TABLE sales_jan2022 PARTITION OF sales_range FOR VALUES FROM ('2022-01-01') TO ('2022-02-01');
 CREATE TABLE sales_feb_mar_apr2022 PARTITION OF sales_range FOR VALUES FROM ('2022-02-01') TO ('2022-05-01');
 CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
+-- Split partition, also check schema qualification of new partitions
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
-  (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
-   PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
+  (PARTITION partition_split_schema.sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
+   PARTITION partition_split_schema2.sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
+\d+ sales_range
+                             Partitioned table "partition_split_schema.sales_range"
+    Column     |         Type          | Collation | Nullable | Default | Storage  | Stats target | Description 
+---------------+-----------------------+-----------+----------+---------+----------+--------------+-------------
+ salesman_id   | integer               |           |          |         | plain    |              | 
+ salesman_name | character varying(30) |           |          |         | extended |              | 
+ sales_amount  | integer               |           |          |         | plain    |              | 
+ sales_date    | date                  |           |          |         | plain    |              | 
+Partition key: RANGE (sales_date)
+Partitions: partition_split_schema2.sales_mar2022 FOR VALUES FROM ('03-01-2022') TO ('04-01-2022'),
+            sales_apr2022 FOR VALUES FROM ('04-01-2022') TO ('05-01-2022'),
+            sales_feb2022 FOR VALUES FROM ('02-01-2022') TO ('03-01-2022'),
+            sales_jan2022 FOR VALUES FROM ('01-01-2022') TO ('02-01-2022'),
+            sales_others DEFAULT
+
 INSERT INTO sales_range VALUES (1,  'May',      1000, '2022-01-31');
 INSERT INTO sales_range VALUES (2,  'Smirnoff', 500,  '2022-02-10');
 INSERT INTO sales_range VALUES (3,  'Ford',     2000, '2022-04-30');
@@ -250,7 +289,7 @@ SELECT * FROM sales_feb2022;
            8 | Ericsson      |          185 | 02-23-2022
 (3 rows)
 
-SELECT * FROM sales_mar2022;
+SELECT * FROM partition_split_schema2.sales_mar2022;
  salesman_id | salesman_name | sales_amount | sales_date 
 -------------+---------------+--------------+------------
            7 | Li            |          175 | 03-08-2022
@@ -1427,4 +1466,34 @@ ERROR:  relation "t1pa" is not a partition of relation "t2"
 DROP TABLE t2;
 DROP TABLE t1;
 --
+-- Try to SPLIT partition of temporary table.
+--
+CREATE TEMP TABLE t (i int) PARTITION BY RANGE (i);
+CREATE TEMP TABLE tp_0_2 PARTITION OF t FOR VALUES FROM (0) TO (2);
+SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid), c.relpersistence
+  FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
+  WHERE c.oid = i.inhrelid AND i.inhparent = 't'::regclass
+  ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
+  oid   |        pg_get_expr         | relpersistence 
+--------+----------------------------+----------------
+ tp_0_2 | FOR VALUES FROM (0) TO (2) | t
+(1 row)
+
+ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
+  (PARTITION tp_0_1 FOR VALUES FROM (0) TO (1),
+   PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
+-- Partitions should be temporary.
+SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid), c.relpersistence
+  FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i
+  WHERE c.oid = i.inhrelid AND i.inhparent = 't'::regclass
+  ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT', c.oid::pg_catalog.regclass::pg_catalog.text;
+  oid   |        pg_get_expr         | relpersistence 
+--------+----------------------------+----------------
+ tp_0_1 | FOR VALUES FROM (0) TO (1) | t
+ tp_1_2 | FOR VALUES FROM (1) TO (2) | t
+(2 rows)
+
+DROP TABLE t;
+--
 DROP SCHEMA partition_split_schema;
+DROP SCHEMA partition_split_schema2;
