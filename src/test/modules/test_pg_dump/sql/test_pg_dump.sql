@@ -83,7 +83,7 @@ SELECT s.obj,
     ELSE a.grantee::regrole::name END,
   a.privilege_type, a.is_grantable
 FROM
-  (SELECT pg_describe_object(classoid,objoid,objsubid) AS obj, initprivs
+  (SELECT pg_describe_object(classoid,objoid,objsubid) COLLATE "C" AS obj, initprivs
    FROM pg_init_privs WHERE privtype = 'e' ORDER BY 1) s,
   aclexplode(s.initprivs) a;
 SELECT pg_describe_object(classid,objid,objsubid) AS obj,
@@ -135,7 +135,7 @@ SELECT s.obj,
     ELSE a.grantee::regrole::name END,
   a.privilege_type, a.is_grantable
 FROM
-  (SELECT pg_describe_object(classoid,objoid,objsubid) AS obj, initprivs
+  (SELECT pg_describe_object(classoid,objoid,objsubid) COLLATE "C" AS obj, initprivs
    FROM pg_init_privs WHERE privtype = 'e' ORDER BY 1) s,
   aclexplode(s.initprivs) a;
 SELECT pg_describe_object(classid,objid,objsubid) AS obj,
