@@ -30,6 +30,7 @@
 #include "catalog/pg_rewrite.h"
 #include "catalog/storage.h"
 #include "commands/policy.h"
+#include "commands/tablecmds.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_utilcmd.h"
@@ -422,6 +423,9 @@ DefineQueryRewrite(const char *rulename,
 		 * whole business of converting relations to views is just an obsolete
 		 * kluge to allow dump/reload of views that participate in circular
 		 * dependencies.)
+		 *
+		 * Also ensure the relation isn't being manipulated in any outer SQL
+		 * command of our own session.
 		 */
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW &&
 			event_relation->rd_rel->relkind != RELKIND_MATVIEW)
@@ -429,6 +433,8 @@ DefineQueryRewrite(const char *rulename,
 			TableScanDesc scanDesc;
 			Snapshot	snapshot;
 			TupleTableSlot *slot;
+
+			CheckTableNotInUse(event_relation, "CREATE RULE");
 
 			if (event_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 				ereport(ERROR,
