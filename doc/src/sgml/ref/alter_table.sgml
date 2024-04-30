@@ -1158,6 +1158,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       SQL command <literal>CREATE TABLE <replaceable class="parameter">partition_nameN</replaceable> (LIKE <replaceable class="parameter">name</replaceable> INCLUDING ALL EXCLUDING INDEXES EXCLUDING IDENTITY)</literal>.
       The indexes and identity are created later, after moving the data
       into the new partitions.
+      New partitions will have the same table access method as the parent.
       If the parent table is persistent then new partitions are created
       persistent.  If the parent table is temporary then new partitions
       are also created temporary.
@@ -1227,6 +1228,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       SQL command <literal>CREATE TABLE <replaceable class="parameter">partition_name</replaceable> (LIKE <replaceable class="parameter">name</replaceable> INCLUDING ALL EXCLUDING INDEXES EXCLUDING IDENTITY)</literal>.
       The indexes and identity are created later, after moving the data
       into the new partition.
+      The new partition will have the same table access method as the parent.
       If the parent table is persistent then the new partition is created
       persistent.  If the parent table is temporary then the new partition
       is also created temporary.

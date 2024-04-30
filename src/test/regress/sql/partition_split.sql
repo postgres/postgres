@@ -880,6 +880,20 @@ SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid)
 
 DROP TABLE t;
 
+-- Check new partitions inherits parent's table access method
+CREATE ACCESS METHOD partition_split_heap TYPE TABLE HANDLER heap_tableam_handler;
+CREATE TABLE t (i int) PARTITION BY RANGE (i) USING partition_split_heap;
+CREATE TABLE tp_0_2 PARTITION OF t FOR VALUES FROM (0) TO (2);
+ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
+  (PARTITION tp_0_1 FOR VALUES FROM (0) TO (1),
+   PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
+SELECT c.relname, a.amname
+FROM pg_class c JOIN pg_am a ON c.relam = a.oid
+WHERE c.oid IN ('t'::regclass, 'tp_0_1'::regclass, 'tp_1_2'::regclass);
+DROP TABLE t;
+DROP ACCESS METHOD partition_split_heap;
+
+
 --
 DROP SCHEMA partition_split_schema;
 DROP SCHEMA partition_split_schema2;

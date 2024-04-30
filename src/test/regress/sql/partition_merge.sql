@@ -535,6 +535,19 @@ SET search_path = partitions_merge_schema, pg_temp, public;
 ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 ROLLBACK;
 
+-- Check the new partition inherits parent's table access method
+SET search_path = partitions_merge_schema, public;
+CREATE ACCESS METHOD partitions_merge_heap TYPE TABLE HANDLER heap_tableam_handler;
+CREATE TABLE t (i int) PARTITION BY RANGE (i) USING partitions_merge_heap;
+CREATE TABLE tp_0_1 PARTITION OF t FOR VALUES FROM (0) TO (1);
+CREATE TABLE tp_1_2 PARTITION OF t FOR VALUES FROM (1) TO (2);
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+SELECT c.relname, a.amname
+FROM pg_class c JOIN pg_am a ON c.relam = a.oid
+WHERE c.oid IN ('t'::regclass, 'tp_0_2'::regclass);
+DROP TABLE t;
+DROP ACCESS METHOD partitions_merge_heap;
+
 RESET search_path;
 
 --

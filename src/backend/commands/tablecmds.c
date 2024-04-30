@@ -21213,6 +21213,11 @@ moveSplitTableRows(Relation rel, Relation splitRel, List *partlist, List *newPar
  *
  * Emulates command: CREATE [TEMP] TABLE <newPartName> (LIKE <modelRel's name>
  * INCLUDING ALL EXCLUDING INDEXES EXCLUDING IDENTITY)
+ *
+ * Also, this function sets the new partition access method same as parent
+ * table access methods (similarly to CREATE TABLE ... PARTITION OF).  It
+ * checks that parent and child tables have compatible persistence.
+ *
  * Function returns the created relation (locked in AccessExclusiveLock mode).
  */
 static Relation
@@ -21243,6 +21248,7 @@ createPartitionTable(RangeVar *newPartName, Relation modelRel,
 	createStmt->oncommit = ONCOMMIT_NOOP;
 	createStmt->tablespacename = NULL;
 	createStmt->if_not_exists = false;
+	createStmt->accessMethod = get_am_name(modelRel->rd_rel->relam);
 
 	tlc = makeNode(TableLikeClause);
 	tlc->relation = makeRangeVar(get_namespace_name(RelationGetNamespace(modelRel)),

@@ -85,8 +85,8 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-06-01'));
 ERROR:  upper bound of partition "sales_apr2022" is greater than upper bound of split partition
-LINE 4:    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO...
-                                                    ^
+LINE 4: ... sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-06-0...
+                                                             ^
 -- ERROR:  lower bound of partition "sales_mar2022" conflicts with upper bound of previous partition "sales_feb2022"
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
@@ -1494,6 +1494,25 @@ SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid)
 (2 rows)
 
 DROP TABLE t;
+-- Check new partitions inherits parent's table access method
+CREATE ACCESS METHOD partition_split_heap TYPE TABLE HANDLER heap_tableam_handler;
+CREATE TABLE t (i int) PARTITION BY RANGE (i) USING partition_split_heap;
+CREATE TABLE tp_0_2 PARTITION OF t FOR VALUES FROM (0) TO (2);
+ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
+  (PARTITION tp_0_1 FOR VALUES FROM (0) TO (1),
+   PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
+SELECT c.relname, a.amname
+FROM pg_class c JOIN pg_am a ON c.relam = a.oid
+WHERE c.oid IN ('t'::regclass, 'tp_0_1'::regclass, 'tp_1_2'::regclass);
+ relname |        amname        
+---------+----------------------
+ t       | partition_split_heap
+ tp_0_1  | partition_split_heap
+ tp_1_2  | partition_split_heap
+(3 rows)
+
+DROP TABLE t;
+DROP ACCESS METHOD partition_split_heap;
 --
 DROP SCHEMA partition_split_schema;
 DROP SCHEMA partition_split_schema2;
