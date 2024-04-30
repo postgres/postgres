@@ -1741,17 +1741,21 @@ SSLerrmessage(unsigned long ecode)
 		return errbuf;
 	}
 
+	/*
+	 * Server aborted the connection with TLS "no_application_protocol" alert.
+	 * The ERR_reason_error_string() function doesn't give any error string
+	 * for that for some reason, so do it ourselves.  See
+	 * https://github.com/openssl/openssl/issues/24300.  This is available in
+	 * OpenSSL 1.1.0 and later, but as of this writing not in LibreSSL.
+	 */
+#ifdef SSL_AD_NO_APPLICATION_PROTOCOL
 	if (ERR_GET_LIB(ecode) == ERR_LIB_SSL &&
 		ERR_GET_REASON(ecode) == SSL_AD_REASON_OFFSET + SSL_AD_NO_APPLICATION_PROTOCOL)
 	{
-		/*
-		 * Server aborted the connection with TLS "no_application_protocol"
-		 * alert.  The ERR_reason_error_string() function doesn't give any
-		 * error string for that for some reason, so do it ourselves.
-		 */
 		snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("no application protocol"));
 		return errbuf;
 	}
+#endif
 
 	/*
 	 * In OpenSSL 3.0.0 and later, ERR_reason_error_string randomly refuses to
