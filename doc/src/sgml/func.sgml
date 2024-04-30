@@ -26879,21 +26879,12 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         directly.
        </para>
        <para>
-        <literal>select * from pg_input_error_info('42000000000', 'integer')</literal>
+        <literal>SELECT * FROM pg_input_error_info('42000000000', 'integer')</literal>
         <returnvalue></returnvalue>
 <programlisting>
                        message                        | detail | hint | sql_error_code
 ------------------------------------------------------+--------+------+----------------
  value "42000000000" is out of range for type integer |        |      | 22003
-</programlisting>
-       </para>
-       <para>
-        <literal>select message, detail from pg_input_error_info('1234.567', 'numeric(7,4)')</literal>
-        <returnvalue></returnvalue>
-<programlisting>
-        message         |                                      detail
-------------------------+----------------------------------&zwsp;-------------------------------------------------
- numeric field overflow | A field with precision 7, scale 4 must round to an absolute value less than 10^3.
 </programlisting>
        </para></entry>
       </row>
