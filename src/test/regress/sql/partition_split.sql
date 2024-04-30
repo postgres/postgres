@@ -889,7 +889,8 @@ ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
    PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
 SELECT c.relname, a.amname
 FROM pg_class c JOIN pg_am a ON c.relam = a.oid
-WHERE c.oid IN ('t'::regclass, 'tp_0_1'::regclass, 'tp_1_2'::regclass);
+WHERE c.oid IN ('t'::regclass, 'tp_0_1'::regclass, 'tp_1_2'::regclass)
+ORDER BY c.relname;
 DROP TABLE t;
 DROP ACCESS METHOD partition_split_heap;
 

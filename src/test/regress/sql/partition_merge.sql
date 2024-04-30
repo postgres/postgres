@@ -544,7 +544,8 @@ CREATE TABLE tp_1_2 PARTITION OF t FOR VALUES FROM (1) TO (2);
 ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 SELECT c.relname, a.amname
 FROM pg_class c JOIN pg_am a ON c.relam = a.oid
-WHERE c.oid IN ('t'::regclass, 'tp_0_2'::regclass);
+WHERE c.oid IN ('t'::regclass, 'tp_0_2'::regclass)
+ORDER BY c.relname;
 DROP TABLE t;
 DROP ACCESS METHOD partitions_merge_heap;
 
