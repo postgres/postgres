@@ -135,7 +135,7 @@ FROM
  type regress_pg_dump_schema.test_type              | postgres | regress_dump_test_role | USAGE          | f
 (58 rows)
 
-SELECT pg_describe_object(classid,objid,objsubid) AS obj,
+SELECT pg_describe_object(classid,objid,objsubid) COLLATE "C" AS obj,
   pg_describe_object(refclassid,refobjid,0) AS refobj,
   deptype
   FROM pg_shdepend JOIN pg_database d ON dbid = d.oid
@@ -265,7 +265,7 @@ FROM
  type regress_pg_dump_schema.test_type              | postgres | postgres          | USAGE          | f
 (51 rows)
 
-SELECT pg_describe_object(classid,objid,objsubid) AS obj,
+SELECT pg_describe_object(classid,objid,objsubid) COLLATE "C" AS obj,
   pg_describe_object(refclassid,refobjid,0) AS refobj,
   deptype
   FROM pg_shdepend JOIN pg_database d ON dbid = d.oid

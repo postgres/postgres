@@ -86,7 +86,7 @@ FROM
   (SELECT pg_describe_object(classoid,objoid,objsubid) COLLATE "C" AS obj, initprivs
    FROM pg_init_privs WHERE privtype = 'e' ORDER BY 1) s,
   aclexplode(s.initprivs) a;
-SELECT pg_describe_object(classid,objid,objsubid) AS obj,
+SELECT pg_describe_object(classid,objid,objsubid) COLLATE "C" AS obj,
   pg_describe_object(refclassid,refobjid,0) AS refobj,
   deptype
   FROM pg_shdepend JOIN pg_database d ON dbid = d.oid
@@ -138,7 +138,7 @@ FROM
   (SELECT pg_describe_object(classoid,objoid,objsubid) COLLATE "C" AS obj, initprivs
    FROM pg_init_privs WHERE privtype = 'e' ORDER BY 1) s,
   aclexplode(s.initprivs) a;
-SELECT pg_describe_object(classid,objid,objsubid) AS obj,
+SELECT pg_describe_object(classid,objid,objsubid) COLLATE "C" AS obj,
   pg_describe_object(refclassid,refobjid,0) AS refobj,
   deptype
   FROM pg_shdepend JOIN pg_database d ON dbid = d.oid
