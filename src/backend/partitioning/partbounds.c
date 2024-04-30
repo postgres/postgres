@@ -5211,7 +5211,7 @@ check_partition_bounds_for_split_range(Relation parent,
 	if (first || last)
 	{
 		PartitionBoundSpec *split_spec = get_partition_bound_spec(splitPartOid, splitPartName);
-		bool		overlap = false;
+		PartitionRangeDatum *datum;
 
 		if (first)
 		{
@@ -5229,8 +5229,30 @@ check_partition_bounds_for_split_range(Relation parent,
 			 * Lower bound of "spec" should be equal (or greater than or equal
 			 * in case defaultPart=true) to lower bound of split partition.
 			 */
-			if ((!defaultPart && cmpval) || (defaultPart && cmpval < 0))
-				overlap = true;
+			if (!defaultPart)
+			{
+				if (cmpval != 0)
+				{
+					datum = list_nth(spec->lowerdatums, abs(cmpval) - 1);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("lower bound of partition \"%s\" is not equal to lower bound of split partition",
+									relname),
+							 parser_errposition(pstate, datum->location)));
+				}
+			}
+			else
+			{
+				if (cmpval < 0)
+				{
+					datum = list_nth(spec->lowerdatums, abs(cmpval) - 1);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("lower bound of partition \"%s\" is less than lower bound of split partition",
+									relname),
+							 parser_errposition(pstate, datum->location)));
+				}
+			}
 		}
 		else
 		{
@@ -5248,24 +5270,30 @@ check_partition_bounds_for_split_range(Relation parent,
 			 * Upper bound of "spec" should be equal (or less than or equal in
 			 * case defaultPart=true) to upper bound of split partition.
 			 */
-			if ((!defaultPart && cmpval) || (defaultPart && cmpval > 0))
-				overlap = true;
-		}
-
-		if (overlap)
-		{
-			PartitionRangeDatum *datum;
-
-			datum = list_nth(first ? spec->lowerdatums : spec->upperdatums, abs(cmpval) - 1);
-
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("%s bound of partition \"%s\" is %s %s bound of split partition",
-							first ? "lower" : "upper",
-							relname,
-							defaultPart ? (first ? "less than" : "greater than") : "not equal to",
-							first ? "lower" : "upper"),
-					 parser_errposition(pstate, datum->location)));
+			if (!defaultPart)
+			{
+				if (cmpval != 0)
+				{
+					datum = list_nth(spec->upperdatums, abs(cmpval) - 1);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("upper bound of partition \"%s\" is not equal to upper bound of split partition",
+									relname),
+							 parser_errposition(pstate, datum->location)));
+				}
+			}
+			else
+			{
+				if (cmpval > 0)
+				{
+					datum = list_nth(spec->upperdatums, abs(cmpval) - 1);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("upper bound of partition \"%s\" is greater than upper bound of split partition",
+									relname),
+							 parser_errposition(pstate, datum->location)));
+				}
+			}
 		}
 	}
 }
