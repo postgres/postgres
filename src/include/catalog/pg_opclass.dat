@@ -91,8 +91,11 @@
 # Here's an ugly little hack to save space in the system catalog indexes.
 # btree doesn't ordinarily allow a storage type different from input type;
 # but cstring and name are the same thing except for trailing padding,
-# and we can safely omit that within an index entry.  So we declare the
-# btree opclass for name as using cstring storage type.
+# so we choose to omit that within an index entry.  Here we declare the
+# btree opclass for name as using cstring storage type.  This does require
+# that we pad the cstring out with the full NAMEDATALEN bytes when performing
+# index-only scans.  See corresponding hacks in ExecInitIndexOnlyScan() and
+# StoreIndexTuple().
 { opcmethod => 'btree', opcname => 'name_ops', opcfamily => 'btree/text_ops',
   opcintype => 'name', opckeytype => 'cstring' },
 
