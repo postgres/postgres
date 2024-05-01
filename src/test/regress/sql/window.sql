@@ -1068,14 +1068,14 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM
   (SELECT empno,
           salary,
-          count(empno) OVER (ORDER BY salary DESC) c
+          count(1) OVER (ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
 
 SELECT * FROM
   (SELECT empno,
           salary,
-          count(empno) OVER (ORDER BY salary DESC) c
+          count(1) OVER (ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
 
@@ -1131,13 +1131,13 @@ SELECT empno, depname FROM
    FROM empsalary) emp
 WHERE rn < 3;
 
--- likewise with count(empno) instead of row_number()
+-- likewise with count(1) instead of row_number()
 EXPLAIN (COSTS OFF)
 SELECT * FROM
   (SELECT empno,
           depname,
           salary,
-          count(empno) OVER (PARTITION BY depname ORDER BY salary DESC) c
+          count(1) OVER (PARTITION BY depname ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
 
@@ -1146,7 +1146,7 @@ SELECT * FROM
   (SELECT empno,
           depname,
           salary,
-          count(empno) OVER (PARTITION BY depname ORDER BY salary DESC) c
+          count(1) OVER (PARTITION BY depname ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
 
@@ -1157,7 +1157,7 @@ SELECT * FROM
   (SELECT empno,
           depname,
           salary,
-          count(empno) OVER () c
+          count(1) OVER () c
    FROM empsalary) emp
 WHERE c = 1;
 
@@ -1165,7 +1165,7 @@ WHERE c = 1;
 EXPLAIN (COSTS OFF)
 SELECT * FROM
   (SELECT *,
-          count(salary) OVER (PARTITION BY depname || '') c1, -- w1
+          count(1) OVER (PARTITION BY depname || '') c1, -- w1
           row_number() OVER (PARTITION BY depname) rn, -- w2
           count(*) OVER (PARTITION BY depname) c2, -- w2
           count(*) OVER (PARTITION BY '' || depname) c3 -- w3
@@ -1175,7 +1175,7 @@ SELECT * FROM
 -- Ensure we correctly filter out all of the run conditions from each window
 SELECT * FROM
   (SELECT *,
-          count(salary) OVER (PARTITION BY depname || '') c1, -- w1
+          count(1) OVER (PARTITION BY depname || '') c1, -- w1
           row_number() OVER (PARTITION BY depname) rn, -- w2
           count(*) OVER (PARTITION BY depname) c2, -- w2
           count(*) OVER (PARTITION BY '' || depname) c3 -- w3
@@ -1212,6 +1212,15 @@ SELECT * FROM
   (SELECT empno,
           salary,
           count(random()) OVER (ORDER BY empno DESC) c
+   FROM empsalary) emp
+WHERE c = 1;
+
+-- Ensure we don't use a run condition when the WindowFunc arg contains a Var
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT empno,
+          salary,
+          count(empno) OVER (ORDER BY empno DESC) c
    FROM empsalary) emp
 WHERE c = 1;
 

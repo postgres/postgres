@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "nodes/supportnodes.h"
+#include "optimizer/optimizer.h"
 #include "utils/builtins.h"
 #include "windowapi.h"
 
