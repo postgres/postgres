@@ -318,7 +318,8 @@ if (defined($ENV{oldinstall}))
 }
 
 # Create an invalid database, will be deleted below
-$oldnode->safe_psql('postgres', qq(
+$oldnode->safe_psql(
+	'postgres', qq(
   CREATE DATABASE regression_invalid;
   UPDATE pg_database SET datconnlimit = -2 WHERE datname = 'regression_invalid';
 ));
@@ -352,19 +353,31 @@ ok(-d $newnode->data_dir . "/pg_upgrade_output.d",
 rmtree($newnode->data_dir . "/pg_upgrade_output.d");
 
 # Check that pg_upgrade aborts when encountering an invalid database
-command_checks_all(
-	[
-		'pg_upgrade', '--no-sync', '-d', $oldnode->data_dir,
-		'-D', $newnode->data_dir, '-b', $oldbindir,
-		'-B', $newbindir, '-s', $newnode->host,
-		'-p', $oldnode->port, '-P', $newnode->port,
-		$mode, '--check',
-	],
-	1,
-	[qr/invalid/], # pg_upgrade prints errors on stdout :(
-	[qr//],
-	'invalid database causes failure');
-rmtree($newnode->data_dir . "/pg_upgrade_output.d");
+# (However, versions that were out of support by commit c66a7d75e652 don't
+# know how to do this, so skip this test there.)
+SKIP:
+{
+	skip "database invalidation not implemented", 1
+	  if $oldnode->pg_version < 11;
+
+	command_checks_all(
+		[
+			'pg_upgrade', '--no-sync',
+			'-d', $oldnode->data_dir,
+			'-D', $newnode->data_dir,
+			'-b', $oldbindir,
+			'-B', $newbindir,
+			'-s', $newnode->host,
+			'-p', $oldnode->port,
+			'-P', $newnode->port,
+			$mode, '--check',
+		],
+		1,
+		[qr/invalid/],    # pg_upgrade prints errors on stdout :(
+		[qr/^$/],
+		'invalid database causes failure');
+	rmtree($newnode->data_dir . "/pg_upgrade_output.d");
+}
 
 # And drop it, so we can continue
 $oldnode->start;
