@@ -1467,6 +1467,8 @@ typedef struct IndexScanState
  *		TableSlot		   slot for holding tuples fetched from the table
  *		VMBuffer		   buffer in use for visibility map testing, if any
  *		PscanLen		   size of parallel index-only scan descriptor
+ *		NameCStringAttNums attnums of name typed columns to pad to NAMEDATALEN
+ *		NameCStringCount   number of elements in the NameCStringAttNums array
  * ----------------
  */
 typedef struct IndexOnlyScanState
@@ -1486,6 +1488,8 @@ typedef struct IndexOnlyScanState
 	TupleTableSlot *ioss_TableSlot;
 	Buffer		ioss_VMBuffer;
 	Size		ioss_PscanLen;
+	AttrNumber *ioss_NameCStringAttNums;
+	int			ioss_NameCStringCount;
 } IndexOnlyScanState;
 
 /* ----------------
