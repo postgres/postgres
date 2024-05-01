@@ -26,12 +26,12 @@
  *
  * B) I/O is necessary, but fadvise is undesirable because the access is
  * sequential, or impossible because direct I/O is enabled or the system
- * doesn't support advice.  There is no benefit in looking ahead more than
- * io_combine_limit, because in this case only goal is larger read system
+ * doesn't support fadvise.  There is no benefit in looking ahead more than
+ * io_combine_limit, because in this case the only goal is larger read system
  * calls.  Looking further ahead would pin many buffers and perform
  * speculative work looking ahead for no benefit.
  *
- * C) I/O is necesssary, it appears random, and this system supports fadvise.
+ * C) I/O is necessary, it appears random, and this system supports fadvise.
  * We'll look further ahead in order to reach the configured level of I/O
  * concurrency.
  *
@@ -418,7 +418,7 @@ read_stream_begin_relation(int flags,
 	ReadStream *stream;
 	size_t		size;
 	int16		queue_size;
-	int16		max_ios;
+	int			max_ios;
 	int			strategy_pin_limit;
 	uint32		max_pinned_buffers;
 	Oid			tablespace_id;
@@ -447,6 +447,8 @@ read_stream_begin_relation(int flags,
 		max_ios = get_tablespace_maintenance_io_concurrency(tablespace_id);
 	else
 		max_ios = get_tablespace_io_concurrency(tablespace_id);
+
+	/* Cap to INT16_MAX to avoid overflowing below */
 	max_ios = Min(max_ios, PG_INT16_MAX);
 
 	/*
