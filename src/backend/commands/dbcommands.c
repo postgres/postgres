@@ -1073,7 +1073,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("BUILTIN_LOCALE cannot be specified unless locale provider is builtin")));
 	}
-	else if (dblocprovider != COLLPROVIDER_ICU)
+
+	if (dblocprovider != COLLPROVIDER_ICU)
 	{
 		if (diculocale)
 			ereport(ERROR,
