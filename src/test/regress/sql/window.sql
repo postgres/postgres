@@ -1120,14 +1120,14 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM
   (SELECT empno,
           salary,
-          count(empno) OVER (ORDER BY salary DESC) c
+          count(1) OVER (ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
 
 SELECT * FROM
   (SELECT empno,
           salary,
-          count(empno) OVER (ORDER BY salary DESC) c
+          count(1) OVER (ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
 
@@ -1183,13 +1183,13 @@ SELECT empno, depname FROM
    FROM empsalary) emp
 WHERE rn < 3;
 
--- likewise with count(empno) instead of row_number()
+-- likewise with count(1) instead of row_number()
 EXPLAIN (COSTS OFF)
 SELECT * FROM
   (SELECT empno,
           depname,
           salary,
-          count(empno) OVER (PARTITION BY depname ORDER BY salary DESC) c
+          count(1) OVER (PARTITION BY depname ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
 
@@ -1198,7 +1198,7 @@ SELECT * FROM
   (SELECT empno,
           depname,
           salary,
-          count(empno) OVER (PARTITION BY depname ORDER BY salary DESC) c
+          count(1) OVER (PARTITION BY depname ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
 
@@ -1209,7 +1209,7 @@ SELECT * FROM
   (SELECT empno,
           depname,
           salary,
-          count(empno) OVER () c
+          count(1) OVER () c
    FROM empsalary) emp
 WHERE c = 1;
 
@@ -1217,7 +1217,7 @@ WHERE c = 1;
 EXPLAIN (COSTS OFF)
 SELECT * FROM
   (SELECT *,
-          count(salary) OVER (PARTITION BY depname || '') c1, -- w1
+          count(1) OVER (PARTITION BY depname || '') c1, -- w1
           row_number() OVER (PARTITION BY depname) rn, -- w2
           count(*) OVER (PARTITION BY depname) c2, -- w2
           count(*) OVER (PARTITION BY '' || depname) c3, -- w3
@@ -1228,22 +1228,13 @@ SELECT * FROM
 -- Ensure we correctly filter out all of the run conditions from each window
 SELECT * FROM
   (SELECT *,
-          count(salary) OVER (PARTITION BY depname || '') c1, -- w1
+          count(1) OVER (PARTITION BY depname || '') c1, -- w1
           row_number() OVER (PARTITION BY depname) rn, -- w2
           count(*) OVER (PARTITION BY depname) c2, -- w2
           count(*) OVER (PARTITION BY '' || depname) c3, -- w3
           ntile(2) OVER (PARTITION BY depname) nt -- w2
    FROM empsalary
 ) e WHERE rn <= 1 AND c1 <= 3 AND nt < 2;
-
--- Ensure we remove references to reduced outer joins as nulling rels in run
--- conditions
-EXPLAIN (COSTS OFF)
-SELECT 1 FROM
-  (SELECT ntile(e2.salary) OVER (PARTITION BY e1.depname) AS c
-   FROM empsalary e1 LEFT JOIN empsalary e2 ON TRUE
-   WHERE e1.empno = e2.empno) s
-WHERE s.c = 1;
 
 -- Tests to ensure we don't push down the run condition when it's not valid to
 -- do so.
@@ -1277,6 +1268,24 @@ SELECT * FROM
           count(random()) OVER (ORDER BY empno DESC) c
    FROM empsalary) emp
 WHERE c = 1;
+
+-- Ensure we don't use a run condition when the WindowFunc arg contains a Var
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT empno,
+          salary,
+          count(empno) OVER (ORDER BY empno DESC) c
+   FROM empsalary) emp
+WHERE c = 1;
+
+-- As above but with ntile().
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT empno,
+          salary,
+          ntile(empno::int) OVER (ORDER BY empno DESC) nt
+   FROM empsalary) emp
+WHERE nt = 1;
 
 -- Ensure we don't use a run condition when the WindowFunc contains subplans
 EXPLAIN (COSTS OFF)

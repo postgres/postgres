@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "nodes/supportnodes.h"
+#include "optimizer/optimizer.h"
 #include "utils/builtins.h"
 #include "windowapi.h"
 
@@ -486,13 +487,29 @@ window_ntile_support(PG_FUNCTION_ARGS)
 	if (IsA(rawreq, SupportRequestWFuncMonotonic))
 	{
 		SupportRequestWFuncMonotonic *req = (SupportRequestWFuncMonotonic *) rawreq;
+		WindowFunc *wfunc = req->window_func;
 
-		/*
-		 * ntile() is monotonically increasing as the number of buckets cannot
-		 * change after the first call
-		 */
-		req->monotonic = MONOTONICFUNC_INCREASING;
-		PG_RETURN_POINTER(req);
+		if (list_length(wfunc->args) == 1)
+		{
+			Node *expr = eval_const_expressions(NULL, linitial(wfunc->args));
+
+			/*
+			 * Due to the Node representation of WindowClause runConditions in
+			 * version prior to v17, we need to insist that ntile arg is Const
+			 * to allow safe application of the runCondition optimization.
+			 */
+			if (IsA(expr, Const))
+			{
+				/*
+				 * ntile() is monotonically increasing as the number of
+				 * buckets cannot change after the first call
+				 */
+				req->monotonic = MONOTONICFUNC_INCREASING;
+				PG_RETURN_POINTER(req);
+			}
+		}
+
+		PG_RETURN_POINTER(NULL);
 	}
 
 	if (IsA(rawreq, SupportRequestOptimizeWindowClause))
