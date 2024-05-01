@@ -399,3 +399,28 @@ Indexes:
     "tbl_c1_c2_c3_c4_key" UNIQUE CONSTRAINT, btree (c1, c2) INCLUDE (c3, c4)
 
 DROP TABLE tbl;
+/*
+ * 10. Test coverage for names stored as cstrings in indexes
+ */
+CREATE TABLE nametbl (c1 int, c2 name, c3 float);
+CREATE INDEX nametbl_c1_c2_idx ON nametbl (c2, c1) INCLUDE (c3);
+INSERT INTO nametbl VALUES(1, 'two', 3.0);
+VACUUM nametbl;
+SET enable_seqscan = 0;
+-- Ensure we get an index only scan plan
+EXPLAIN (COSTS OFF) SELECT c2, c1, c3 FROM nametbl WHERE c2 = 'two' AND c1 = 1;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Index Only Scan using nametbl_c1_c2_idx on nametbl
+   Index Cond: ((c2 = 'two'::name) AND (c1 = 1))
+(2 rows)
+
+-- Validate the results look sane
+SELECT c2, c1, c3 FROM nametbl WHERE c2 = 'two' AND c1 = 1;
+ c2  | c1 | c3 
+-----+----+----
+ two |  1 |  3
+(1 row)
+
+RESET enable_seqscan;
+DROP TABLE nametbl;
