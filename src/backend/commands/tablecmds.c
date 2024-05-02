@@ -46,6 +46,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_publication_rel.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_tablespace.h"
@@ -14225,6 +14226,21 @@ RememberAllDependentForRebuilding(AlteredTableInfo *tab, AlterTableType subtype,
 				 * that this column type change would break.
 				 */
 				RememberStatisticsForRebuilding(foundObject.objectId, tab);
+				break;
+
+			case PublicationRelRelationId:
+
+				/*
+				 * Column reference in a PUBLICATION ... FOR TABLE ... WHERE
+				 * clause.  Same issues as above.  FIXME someday.
+				 */
+				if (subtype == AT_AlterColumnType)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot alter type of a column used by a publication WHERE clause"),
+							 errdetail("%s depends on column \"%s\"",
+									   getObjectDescription(&foundObject, false),
+									   colName)));
 				break;
 
 			default:
