@@ -721,7 +721,7 @@ extractNotNullColumn(HeapTuple constrTup)
  */
 int
 AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count,
-						  bool is_no_inherit)
+						  bool is_no_inherit, bool allow_noinherit_change)
 {
 	HeapTuple	tup;
 
@@ -744,16 +744,23 @@ AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count,
 		if (is_no_inherit && !conform->connoinherit)
 			ereport(ERROR,
 					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					errmsg("cannot change NO INHERIT status of inherited NOT NULL constraint \"%s\" on relation \"%s\"",
+					errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" on relation \"%s\"",
 						   NameStr(conform->conname), get_rel_name(relid)));
 
 		/*
 		 * If the constraint already exists in this relation but it's marked
-		 * NO INHERIT, we can just remove that flag, and instruct caller to
-		 * recurse to add the constraint to children.
+		 * NO INHERIT, we can just remove that flag (provided caller allows
+		 * such a change), and instruct caller to recurse to add the
+		 * constraint to children.
 		 */
 		if (!is_no_inherit && conform->connoinherit)
 		{
+			if (!allow_noinherit_change)
+				ereport(ERROR,
+						errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" in relation \"%s\"",
+							   NameStr(conform->conname), get_rel_name(relid)));
+
 			conform->connoinherit = false;
 			retval = -1;		/* caller must add constraint on child rels */
 		}

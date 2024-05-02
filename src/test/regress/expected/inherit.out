@@ -2126,7 +2126,7 @@ ERROR:  cannot define not-null constraint on column "a2" with NO INHERIT
 DETAIL:  The column has an inherited not-null constraint.
 -- change NO INHERIT status of inherited constraint: no dice, it's inherited
 alter table cc2 add not null a2 no inherit;
-ERROR:  cannot change NO INHERIT status of inherited NOT NULL constraint "nn" on relation "cc2"
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "nn" on relation "cc2"
 -- remove constraint from cc2: no dice, it's inherited
 alter table cc2 alter column a2 drop not null;
 ERROR:  cannot drop inherited constraint "nn" of relation "cc2"
@@ -2277,6 +2277,34 @@ Child tables: inh_nn_child,
               inh_nn_child2
 
 drop table inh_nn_parent, inh_nn_child, inh_nn_child2;
+CREATE TABLE inh_nn_parent (a int, NOT NULL a NO INHERIT);
+CREATE TABLE inh_nn_child() INHERITS (inh_nn_parent);
+ALTER TABLE inh_nn_parent ADD CONSTRAINT nna NOT NULL a;
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" in relation "inh_nn_parent"
+ALTER TABLE inh_nn_parent ALTER a SET NOT NULL;
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" in relation "inh_nn_parent"
+DROP TABLE inh_nn_parent cascade;
+NOTICE:  drop cascades to table inh_nn_child
+-- Adding a PK at the top level of a hierarchy should cause all descendants
+-- to be checked for nulls, even past a no-inherit constraint
+CREATE TABLE inh_nn_lvl1 (a int);
+CREATE TABLE inh_nn_lvl2 () INHERITS (inh_nn_lvl1);
+CREATE TABLE inh_nn_lvl3 (CONSTRAINT foo NOT NULL a NO INHERIT) INHERITS (inh_nn_lvl2);
+CREATE TABLE inh_nn_lvl4 () INHERITS (inh_nn_lvl3);
+CREATE TABLE inh_nn_lvl5 () INHERITS (inh_nn_lvl4);
+INSERT INTO inh_nn_lvl2 VALUES (NULL);
+ALTER TABLE inh_nn_lvl1 ADD PRIMARY KEY (a);
+ERROR:  column "a" of relation "inh_nn_lvl2" contains null values
+DELETE FROM inh_nn_lvl2;
+INSERT INTO inh_nn_lvl5 VALUES (NULL);
+ALTER TABLE inh_nn_lvl1 ADD PRIMARY KEY (a);
+ERROR:  column "a" of relation "inh_nn_lvl5" contains null values
+DROP TABLE inh_nn_lvl1 CASCADE;
+NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to table inh_nn_lvl2
+drop cascades to table inh_nn_lvl3
+drop cascades to table inh_nn_lvl4
+drop cascades to table inh_nn_lvl5
 --
 -- test inherit/deinherit
 --

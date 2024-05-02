@@ -844,6 +844,26 @@ select conrelid::regclass, conname, contype, conkey,
 \d+ inh_nn*
 drop table inh_nn_parent, inh_nn_child, inh_nn_child2;
 
+CREATE TABLE inh_nn_parent (a int, NOT NULL a NO INHERIT);
+CREATE TABLE inh_nn_child() INHERITS (inh_nn_parent);
+ALTER TABLE inh_nn_parent ADD CONSTRAINT nna NOT NULL a;
+ALTER TABLE inh_nn_parent ALTER a SET NOT NULL;
+DROP TABLE inh_nn_parent cascade;
+
+-- Adding a PK at the top level of a hierarchy should cause all descendants
+-- to be checked for nulls, even past a no-inherit constraint
+CREATE TABLE inh_nn_lvl1 (a int);
+CREATE TABLE inh_nn_lvl2 () INHERITS (inh_nn_lvl1);
+CREATE TABLE inh_nn_lvl3 (CONSTRAINT foo NOT NULL a NO INHERIT) INHERITS (inh_nn_lvl2);
+CREATE TABLE inh_nn_lvl4 () INHERITS (inh_nn_lvl3);
+CREATE TABLE inh_nn_lvl5 () INHERITS (inh_nn_lvl4);
+INSERT INTO inh_nn_lvl2 VALUES (NULL);
+ALTER TABLE inh_nn_lvl1 ADD PRIMARY KEY (a);
+DELETE FROM inh_nn_lvl2;
+INSERT INTO inh_nn_lvl5 VALUES (NULL);
+ALTER TABLE inh_nn_lvl1 ADD PRIMARY KEY (a);
+DROP TABLE inh_nn_lvl1 CASCADE;
+
 --
 -- test inherit/deinherit
 --

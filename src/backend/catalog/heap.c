@@ -2549,13 +2549,23 @@ AddRelationNewConstraints(Relation rel,
 
 			/*
 			 * If the column already has an inheritable not-null constraint,
-			 * we need only adjust its inheritance status and we're done.  If
-			 * the constraint is there but marked NO INHERIT, then it is
-			 * updated in the same way, but we also recurse to the children
-			 * (if any) to add the constraint there as well.
+			 * we need only adjust its coninhcount and we're done.  In certain
+			 * cases (see below), if the constraint is there but marked NO
+			 * INHERIT, then we mark it as no longer such and coninhcount
+			 * updated, plus we must also recurse to the children (if any) to
+			 * add the constraint there.
+			 *
+			 * We only allow the inheritability status to change during binary
+			 * upgrade (where it's used to add the not-null constraints for
+			 * children of tables with primary keys), or when we're recursing
+			 * processing a table down an inheritance hierarchy; directly
+			 * allowing a constraint to change from NO INHERIT to INHERIT
+			 * during ALTER TABLE ADD CONSTRAINT would be far too surprising
+			 * behavior.
 			 */
 			existing = AdjustNotNullInheritance1(RelationGetRelid(rel), colnum,
-												 cdef->inhcount, cdef->is_no_inherit);
+												 cdef->inhcount, cdef->is_no_inherit,
+												 IsBinaryUpgrade || allow_merge);
 			if (existing == 1)
 				continue;		/* all done! */
 			else if (existing == -1)

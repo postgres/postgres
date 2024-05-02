@@ -4980,10 +4980,12 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
 			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_FOREIGN_TABLE);
-			/* Recursion occurs during execution phase */
-			/* No command-specific prep needed except saving recurse flag */
 			if (recurse)
+			{
+				/* recurses at exec time; lock descendants and set flag */
+				(void) find_all_inheritors(RelationGetRelid(rel), lockmode, NULL);
 				cmd->recurse = true;
+			}
 			pass = AT_PASS_ADD_CONSTR;
 			break;
 		case AT_AddIndexConstraint: /* ADD CONSTRAINT USING INDEX */
@@ -7891,6 +7893,17 @@ ATExecSetNotNull(List **wqueue, Relation rel, char *conName, char *colName,
 
 		copytup = heap_copytuple(tuple);
 		conForm = (Form_pg_constraint) GETSTRUCT(copytup);
+
+		/*
+		 * Don't let a NO INHERIT constraint be changed into inherit.
+		 */
+		if (conForm->connoinherit && recurse)
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" in relation \"%s\"",
+						   NameStr(conForm->conname),
+						   RelationGetRelationName(rel)));
+
 
 		/*
 		 * If we find an appropriate constraint, we're almost done, but just
