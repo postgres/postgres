@@ -6517,7 +6517,7 @@ int PQcancelSocket(const PGcancelConn *cancelConn);
        A valid descriptor will be greater than or equal to 0;
        a result of -1 indicates that no server connection is currently open.
        This might change as a result of calling any of the functions
-       in this section on the <structname>PQcancelConn</structname>
+       in this section on the <structname>PGcancelConn</structname>
        (except for <xref linkend="libpq-PQcancelErrorMessage"/> and
        <function>PQcancelSocket</function> itself).
       </para>
