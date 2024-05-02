@@ -139,7 +139,7 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
        logically equal by the comparison.  PostgreSQL breaks ties using a
        byte-wise comparison.  Comparison that is not deterministic can make the
        collation be, say, case- or accent-insensitive.  For that, you need to
-       choose an appropriate <literal>LC_COLLATE</literal> setting
+       choose an appropriate <literal>LOCALE</literal> setting
        <emphasis>and</emphasis> set the collation to not deterministic here.
       </para>
 
