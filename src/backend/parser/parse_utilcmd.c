@@ -679,6 +679,10 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				break;
 
 			case CONSTR_NOTNULL:
+				if (cxt->ispartitioned && constraint->is_no_inherit)
+					ereport(ERROR,
+							errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("not-null constraints on partitioned tables cannot be NO INHERIT"));
 
 				/*
 				 * Disallow conflicting [NOT] NULL markings
@@ -969,6 +973,12 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 			break;
 
 		case CONSTR_NOTNULL:
+			if (cxt->ispartitioned && constraint->is_no_inherit)
+				ereport(ERROR,
+						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("not-null constraints on partitioned tables cannot be NO INHERIT"));
+
+
 			cxt->nnconstraints = lappend(cxt->nnconstraints, constraint);
 			break;
 

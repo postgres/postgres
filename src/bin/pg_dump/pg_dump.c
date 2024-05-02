@@ -9052,7 +9052,15 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 								 tbinfo->attnames[j]);
 				}
 				else if (PQgetvalue(res, r, i_notnull_is_pk)[0] == 't')
-					use_throwaway_notnull = true;
+				{
+					/*
+					 * We want this flag to be set for columns of a primary
+					 * key in which data is going to be loaded by the dump we
+					 * produce; thus a partitioned table doesn't need it.
+					 */
+					if (tbinfo->relkind != RELKIND_PARTITIONED_TABLE)
+						use_throwaway_notnull = true;
+				}
 				else if (!PQgetisnull(res, r, i_notnull_name))
 					use_unnamed_notnull = true;
 			}
@@ -9092,7 +9100,11 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 					}
 				}
 				else if (PQgetvalue(res, r, i_notnull_is_pk)[0] == 't')
-					use_throwaway_notnull = true;
+				{
+					/* see above */
+					if (tbinfo->relkind != RELKIND_PARTITIONED_TABLE)
+						use_throwaway_notnull = true;
+				}
 			}
 
 			if (use_unnamed_notnull)

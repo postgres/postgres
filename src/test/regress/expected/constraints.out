@@ -321,6 +321,11 @@ ALTER TABLE ATACC1 ADD NOT NULL a NO INHERIT;
 Inherits: atacc1
 
 DROP TABLE ATACC1, ATACC2;
+-- no can do
+CREATE TABLE ATACC1 (a int NOT NULL NO INHERIT) PARTITION BY LIST (a);
+ERROR:  not-null constraints on partitioned tables cannot be NO INHERIT
+CREATE TABLE ATACC1 (a int, NOT NULL a NO INHERIT) PARTITION BY LIST (a);
+ERROR:  not-null constraints on partitioned tables cannot be NO INHERIT
 -- overridding a no-inherit constraint with an inheritable one
 CREATE TABLE ATACC2 (a int, CONSTRAINT a_is_not_null NOT NULL a NO INHERIT);
 CREATE TABLE ATACC1 (a int);
