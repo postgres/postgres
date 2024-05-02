@@ -149,7 +149,7 @@ documentation.  See standalone-profile.xsl for details.
 
     <listitem>
      <para>
-      The ICU locale provider (see <xref linkend="locale-providers"/>) is used by default. If you don't want to use it then you must specify the <option>--without-icu</option> option to <filename>configure</filename>. Using this option disables support for ICU collation features (see <xref linkend="collation"/>).
+      The ICU library is used by default. If you don't want to use it then you must specify the <option>--without-icu</option> option to <filename>configure</filename>. Using this option disables support for ICU collation features (see <xref linkend="collation"/>).
      </para>
      <para>
       ICU support requires the <productname>ICU4C</productname> package to be
