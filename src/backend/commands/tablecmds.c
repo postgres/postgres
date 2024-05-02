@@ -12843,6 +12843,20 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				RememberStatisticsForRebuilding(foundObject.objectId, tab);
 				break;
 
+			case OCLASS_PUBLICATION_REL:
+
+				/*
+				 * Column reference in a PUBLICATION ... FOR TABLE ... WHERE
+				 * clause.  Same issues as above.  FIXME someday.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot alter type of a column used by a publication WHERE clause"),
+						 errdetail("%s depends on column \"%s\"",
+								   getObjectDescription(&foundObject, false),
+								   colName)));
+				break;
+
 			case OCLASS_TYPE:
 			case OCLASS_CAST:
 			case OCLASS_COLLATION:
@@ -12873,7 +12887,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			case OCLASS_PARAMETER_ACL:
 			case OCLASS_PUBLICATION:
 			case OCLASS_PUBLICATION_NAMESPACE:
-			case OCLASS_PUBLICATION_REL:
 			case OCLASS_SUBSCRIPTION:
 			case OCLASS_TRANSFORM:
 
