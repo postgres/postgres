@@ -57,7 +57,6 @@ static void RecordConstLocation(JumbleState *jstate, int location);
 static void _jumbleNode(JumbleState *jstate, Node *node);
 static void _jumbleA_Const(JumbleState *jstate, Node *node);
 static void _jumbleList(JumbleState *jstate, Node *node);
-static void _jumbleRangeTblEntry(JumbleState *jstate, Node *node);
 
 /*
  * Given a possibly multi-statement source string, confine our attention to the

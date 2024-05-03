@@ -4,7 +4,7 @@
 # Test the JSON parser performance tester. Here we are just checking that
 # the performance tester can run, both with the standard parser and the
 # incremental parser. An actual performance test will run with thousands
-# of iterations onstead of just one.
+# of iterations instead of just one.
 
 use strict;
 use warnings;

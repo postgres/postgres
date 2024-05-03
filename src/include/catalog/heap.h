@@ -116,7 +116,7 @@ extern List *AddRelationNewConstraints(Relation rel,
 									   const char *queryString);
 extern List *AddRelationNotNullConstraints(Relation rel,
 										   List *constraints,
-										   List *additional_notnulls);
+										   List *old_notnulls);
 
 extern void RelationClearMissing(Relation rel);
 extern void SetAttrMissing(Oid relid, char *attname, char *value);

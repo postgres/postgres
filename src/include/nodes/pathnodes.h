@@ -1867,7 +1867,7 @@ typedef struct ForeignPath
  *
  * We provide a set of hooks here - which the provider must take care to set
  * up correctly - to allow extensions to supply their own methods of scanning
- * a relation or joing relations.  For example, a provider might provide GPU
+ * a relation or join relations.  For example, a provider might provide GPU
  * acceleration, a cache-based scan, or some other kind of logic we haven't
  * dreamed up yet.
  *

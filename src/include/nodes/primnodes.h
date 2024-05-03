@@ -1641,7 +1641,7 @@ typedef struct JsonReturning
  *
  * The actual value is obtained by evaluating formatted_expr.  raw_expr is
  * only there for displaying the original user-written expression and is not
- * evaluated by ExecInterpExpr() and eval_const_exprs_mutator().
+ * evaluated by ExecInterpExpr() and eval_const_expressions_mutator().
  */
 typedef struct JsonValueExpr
 {

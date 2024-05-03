@@ -11,7 +11,7 @@ Code Targets:
   backend                       Build backend and related modules
   bin                           Build frontend binaries
   contrib                       Build contrib modules
-  pl                            Build procedual languages
+  pl                            Build procedural languages
 
 Developer Targets:
   reformat-dat-files            Rewrite catalog data files into standard format

@@ -6284,7 +6284,7 @@ unicode_norm_form_from_string(const char *formstr)
 /*
  * Returns version of Unicode used by Postgres in "major.minor" format (the
  * same format as the Unicode version reported by ICU). The third component
- * ("update version") never involves additions to the character repertiore and
+ * ("update version") never involves additions to the character repertoire and
  * is unimportant for most purposes.
  *
  * See: https://unicode.org/versions/

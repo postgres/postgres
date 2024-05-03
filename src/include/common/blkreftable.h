@@ -44,7 +44,7 @@ typedef struct BlockRefTableWriter BlockRefTableWriter;
  * report_error_fn should not return.
  */
 typedef int (*io_callback_fn) (void *callback_arg, void *data, int length);
-typedef void (*report_error_fn) (void *calblack_arg, char *msg,...) pg_attribute_printf(2, 3);
+typedef void (*report_error_fn) (void *callback_arg, char *msg,...) pg_attribute_printf(2, 3);
 
 
 /*

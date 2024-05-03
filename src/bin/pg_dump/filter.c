@@ -204,7 +204,7 @@ filter_get_keyword(const char **line, int *size)
 }
 
 /*
- * read_quoted_pattern - read quoted possibly multi line string
+ * read_quoted_string - read quoted possibly multi line string
  *
  * Reads a quoted string which can span over multiple lines and returns a
  * pointer to next char after ending double quotes; it will exit on errors.

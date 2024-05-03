@@ -395,7 +395,7 @@ nogssuser   disable      disable      *              connect, authok            
 	# The expected events and outcomes above assume that SSL support
 	# is enabled. When libpq is compiled without SSL support, all
 	# attempts to connect with sslmode=require or
-	# sslnegotition=direct/requiredirectwould fail immediately without
+	# sslnegotiation=direct/requiredirect would fail immediately without
 	# even connecting to the server. Skip those, because we tested
 	# them earlier already.
 	my ($sslmodes, $sslnegotiations);
@@ -552,7 +552,7 @@ done_testing();
 
 ### Helper functions
 
-# Test the cube of parameters: user, gssencmode, sslmode, and sslnegotitation
+# Test the cube of parameters: user, gssencmode, sslmode, and sslnegotiation
 sub test_matrix
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;

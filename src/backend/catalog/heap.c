@@ -2465,7 +2465,7 @@ AddRelationNewConstraints(Relation rel,
 				 * Check against pre-existing constraints.  If we are allowed
 				 * to merge with an existing constraint, there's no more to do
 				 * here. (We omit the duplicate constraint from the result,
-				 * which is what ATAddCheckConstraint wants.)
+				 * which is what ATAddCheckNNConstraint wants.)
 				 */
 				if (MergeWithExistingConstraint(rel, ccname, expr,
 												allow_merge, is_local,

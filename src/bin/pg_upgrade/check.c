@@ -1945,7 +1945,7 @@ check_old_cluster_subscription_state(void)
 									"	ON o.roname = 'pg_' || s.oid "
 									"INNER JOIN pg_catalog.pg_database d "
 									"	ON d.oid = s.subdbid "
-									"WHERE o.roname iS NULL;");
+									"WHERE o.roname IS NULL;");
 
 			ntup = PQntuples(res);
 			for (int i = 0; i < ntup; i++)

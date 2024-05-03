@@ -20,7 +20,7 @@ static char *escape_quotes(const char *src);
  * return it.
  *
  * This accepts the dbname which will be appended to the primary_conninfo.
- * The dbname will be ignored by walreciever process but slotsync worker uses
+ * The dbname will be ignored by walreceiver process but slotsync worker uses
  * it to connect to the primary server.
  */
 PQExpBuffer

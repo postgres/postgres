@@ -2598,7 +2598,7 @@ _brin_parallel_heapscan(BrinBuildState *state)
  *
  * After waiting for all workers to finish, merge the per-worker results into
  * the complete index. The results from each worker are sorted by block number
- * (start of the page range). While combinig the per-worker results we merge
+ * (start of the page range). While combining the per-worker results we merge
  * summaries for the same page range, and also fill-in empty summaries for
  * ranges without any tuples.
  *

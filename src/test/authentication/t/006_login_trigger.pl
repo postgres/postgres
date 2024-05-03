@@ -143,7 +143,7 @@ psql_command(
 	log_exact => '2',
 	err_like => [qr/You are welcome/]);
 
-# Try to login as allowed Alice.  We don't check the Mallroy login, because
+# Try to login as allowed Alice.  We don't check the Mallory login, because
 # FATAL error could cause a timing-dependant panic of IPC::Run.
 psql_command(
 	$node, 'SELECT 1;', 0, 'try regress_alice',

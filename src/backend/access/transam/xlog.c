@@ -8507,7 +8507,7 @@ xlog_redo(XLogReaderState *record)
 
 /*
  * Return the extra open flags used for opening a file, depending on the
- * value of the GUCs wal_sync_method, fsync and io_direct.
+ * value of the GUCs wal_sync_method, fsync and debug_io_direct.
  */
 static int
 get_sync_bit(int method)

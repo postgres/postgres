@@ -1041,8 +1041,8 @@ ValidateSlotSyncParams(int elevel)
 	/*
 	 * Logical slot sync/creation requires wal_level >= logical.
 	 *
-	 * Sincle altering the wal_level requires a server restart, so error out
-	 * in this case regardless of elevel provided by caller.
+	 * Since altering the wal_level requires a server restart, so error out in
+	 * this case regardless of elevel provided by caller.
 	 */
 	if (wal_level < WAL_LEVEL_LOGICAL)
 		ereport(ERROR,

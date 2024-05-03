@@ -844,7 +844,7 @@ process_directory_recursively(Oid tsoid,
 	 * files requiring reconstruction. If such files occur outside these
 	 * directories, we want to just copy them straight to the output
 	 * directory. This is to protect against a user creating a file with a
-	 * strange name like INCREMENTAL.config and then compaining that
+	 * strange name like INCREMENTAL.config and then complaining that
 	 * incremental backups don't work properly. The test here is a bit tricky:
 	 * incremental files occur in subdirectories of base, in pg_global itself,
 	 * and in subdirectories of pg_tblspc only if in-place tablespaces are

@@ -1086,7 +1086,7 @@ bt_entry_unique_check(BtreeCheckState *state, IndexTuple itup,
 
 	/*
 	 * Current tuple has no posting list. If TID is visible save info about it
-	 * for the next comparisons in the loop in bt_page_check(). Report
+	 * for the next comparisons in the loop in bt_target_page_check(). Report
 	 * duplicate if lVis_tid is already valid.
 	 */
 	else
@@ -1953,7 +1953,7 @@ bt_target_page_check(BtreeCheckState *state)
  * Note that !readonly callers must reverify that target page has not
  * been concurrently deleted.
  *
- * Save rightfirstdataoffset for detailed error message.
+ * Save rightfirstoffset for detailed error message.
  */
 static BTScanInsert
 bt_right_page_check_scankey(BtreeCheckState *state, OffsetNumber *rightfirstoffset)

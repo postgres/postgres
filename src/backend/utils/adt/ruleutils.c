@@ -11632,7 +11632,7 @@ get_xmltable(TableFunc *tf, deparse_context *context, bool showimplicit)
 }
 
 /*
- * get_json_nested_columns - Parse back nested JSON_TABLE columns
+ * get_json_table_nested_columns - Parse back nested JSON_TABLE columns
  */
 static void
 get_json_table_nested_columns(TableFunc *tf, JsonTablePlan *plan,

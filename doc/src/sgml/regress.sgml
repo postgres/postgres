@@ -331,7 +331,7 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
      <term><literal>xid_wraparound</literal></term>
      <listitem>
       <para>
-       Runs the test suite under <filename>src/test/module/xid_wrapround</filename>.
+       Runs the test suite under <filename>src/test/modules/xid_wraparound</filename>.
        Not enabled by default because it is resource intensive.
       </para>
      </listitem>

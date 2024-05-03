@@ -228,7 +228,6 @@ SimpleLruAutotuneBuffers(int divisor, int max)
  * name: name of SLRU.  (This is user-visible, pick with care!)
  * nslots: number of page slots to use.
  * nlsns: number of LSN groups per page (set to zero if not relevant).
- * ctllock: LWLock to use to control access to the shared control structure.
  * subdir: PGDATA-relative subdirectory that will contain the files.
  * buffer_tranche_id: tranche ID to use for the SLRU's per-buffer LWLocks.
  * bank_tranche_id: tranche ID to use for the bank LWLocks.
