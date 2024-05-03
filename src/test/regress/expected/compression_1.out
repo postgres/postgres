@@ -216,13 +216,16 @@ SELECT pg_column_compression(f1) FROM cmpart2;
 -----------------------
 (0 rows)
 
--- test compression with inheritance, error
-CREATE TABLE cminh() INHERITS(cmdata, cmdata1);
+-- test compression with inheritance
+CREATE TABLE cminh() INHERITS(cmdata, cmdata1); -- error
 ERROR:  relation "cmdata1" does not exist
-CREATE TABLE cminh(f1 TEXT COMPRESSION lz4) INHERITS(cmdata);
+CREATE TABLE cminh(f1 TEXT COMPRESSION lz4) INHERITS(cmdata); -- error
 NOTICE:  merging column "f1" with inherited definition
 ERROR:  column "f1" has a compression method conflict
 DETAIL:  pglz versus lz4
+CREATE TABLE cmdata3(f1 text);
+CREATE TABLE cminh() INHERITS (cmdata, cmdata3);
+NOTICE:  merging multiple inherited definitions of column "f1"
 -- test default_toast_compression GUC
 SET default_toast_compression = '';
 ERROR:  invalid value for parameter "default_toast_compression": ""
@@ -246,6 +249,7 @@ INSERT INTO cmdata VALUES (repeat('123456789', 4004));
  f1     | text |           |          |         | extended | pglz        |              | 
 Indexes:
     "idx" btree (f1)
+Child tables: cminh
 
 SELECT pg_column_compression(f1) FROM cmdata;
  pg_column_compression 
