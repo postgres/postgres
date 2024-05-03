@@ -93,9 +93,11 @@ INSERT INTO cmpart VALUES (repeat('123456789', 4004));
 SELECT pg_column_compression(f1) FROM cmpart1;
 SELECT pg_column_compression(f1) FROM cmpart2;
 
--- test compression with inheritance, error
-CREATE TABLE cminh() INHERITS(cmdata, cmdata1);
-CREATE TABLE cminh(f1 TEXT COMPRESSION lz4) INHERITS(cmdata);
+-- test compression with inheritance
+CREATE TABLE cminh() INHERITS(cmdata, cmdata1); -- error
+CREATE TABLE cminh(f1 TEXT COMPRESSION lz4) INHERITS(cmdata); -- error
+CREATE TABLE cmdata3(f1 text);
+CREATE TABLE cminh() INHERITS (cmdata, cmdata3);
 
 -- test default_toast_compression GUC
 SET default_toast_compression = '';

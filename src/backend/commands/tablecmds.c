@@ -3432,12 +3432,16 @@ MergeInheritedAttribute(List *inh_columns,
 	 */
 	if (prevdef->compression == NULL)
 		prevdef->compression = newdef->compression;
-	else if (strcmp(prevdef->compression, newdef->compression) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("column \"%s\" has a compression method conflict",
-						attributeName),
-				 errdetail("%s versus %s", prevdef->compression, newdef->compression)));
+	else if (newdef->compression != NULL)
+	{
+		if (strcmp(prevdef->compression, newdef->compression) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("column \"%s\" has a compression method conflict",
+							attributeName),
+					 errdetail("%s versus %s",
+							   prevdef->compression, newdef->compression)));
+	}
 
 	/*
 	 * Check for GENERATED conflicts
