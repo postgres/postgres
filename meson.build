@@ -3469,6 +3469,8 @@ bzip2 = find_program('bzip2', required: false, native: true)
 
 distdir = meson.project_name() + '-' + meson.project_version()
 
+pg_git_revision = get_option('PG_GIT_REVISION')
+
 # Note: core.autocrlf=false is needed to avoid line-ending conversion
 # in case the environment has a different setting.  Without this, a
 # tarball created on Windows might be different than on, and unusable
@@ -3483,7 +3485,7 @@ tar_gz = custom_target('tar.gz',
             '-9',
             '--prefix', distdir + '/',
             '-o', join_paths(meson.build_root(), '@OUTPUT@'),
-            'HEAD', '.'],
+            pg_git_revision],
   output: distdir + '.tar.gz',
 )
 
@@ -3497,7 +3499,7 @@ if bzip2.found()
               '--format', 'tar.bz2',
               '--prefix', distdir + '/',
               '-o', join_paths(meson.build_root(), '@OUTPUT@'),
-              'HEAD', '.'],
+              pg_git_revision],
     output: distdir + '.tar.bz2',
   )
 else

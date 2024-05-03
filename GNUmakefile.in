@@ -87,6 +87,9 @@ update-unicode: | submake-generated-headers submake-libpgport
 distdir	= postgresql-$(VERSION)
 dummy	= =install=
 
+# git revision to be packaged
+PG_GIT_REVISION = HEAD
+
 GIT = git
 
 dist: $(distdir).tar.gz $(distdir).tar.bz2
@@ -102,10 +105,10 @@ distdir-location:
 # on, Unix machines.
 
 $(distdir).tar.gz:
-	$(GIT) -C $(srcdir) -c core.autocrlf=false archive --format tar.gz -9 --prefix $(distdir)/ HEAD -o $(abs_top_builddir)/$@
+	$(GIT) -C $(srcdir) -c core.autocrlf=false archive --format tar.gz -9 --prefix $(distdir)/ $(PG_GIT_REVISION) -o $(abs_top_builddir)/$@
 
 $(distdir).tar.bz2:
-	$(GIT) -C $(srcdir) -c core.autocrlf=false -c tar.tar.bz2.command='$(BZIP2) -c' archive --format tar.bz2 --prefix $(distdir)/ HEAD -o $(abs_top_builddir)/$@
+	$(GIT) -C $(srcdir) -c core.autocrlf=false -c tar.tar.bz2.command='$(BZIP2) -c' archive --format tar.bz2 --prefix $(distdir)/ $(PG_GIT_REVISION) -o $(abs_top_builddir)/$@
 
 distcheck: dist
 	rm -rf $(dummy)
