@@ -1549,8 +1549,6 @@ typedef struct WindowClause
 	int			frameOptions;	/* frame_clause options, see WindowDef */
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
-	/* qual to help short-circuit execution */
-	List	   *runCondition pg_node_attr(query_jumble_ignore);
 	/* in_range function for startOffset */
 	Oid			startInRangeFunc pg_node_attr(query_jumble_ignore);
 	/* in_range function for endOffset */

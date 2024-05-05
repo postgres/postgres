@@ -2699,7 +2699,7 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 						  wc->inRangeColl,
 						  wc->inRangeAsc,
 						  wc->inRangeNullsFirst,
-						  wc->runCondition,
+						  best_path->runCondition,
 						  best_path->qual,
 						  best_path->topwindow,
 						  subplan);

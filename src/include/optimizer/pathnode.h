@@ -250,6 +250,7 @@ extern WindowAggPath *create_windowagg_path(PlannerInfo *root,
 											Path *subpath,
 											PathTarget *target,
 											List *windowFuncs,
+											List *runCondition,
 											WindowClause *winclause,
 											List *qual,
 											bool topwindow);

@@ -575,6 +575,8 @@ typedef struct WindowFunc
 	List	   *args;
 	/* FILTER expression, if any */
 	Expr	   *aggfilter;
+	/* List of WindowFuncRunConditions to help short-circuit execution */
+	List	   *runCondition pg_node_attr(query_jumble_ignore);
 	/* index of associated WindowClause */
 	Index		winref;
 	/* true if argument list was really '*' */
@@ -584,6 +586,34 @@ typedef struct WindowFunc
 	/* token location, or -1 if unknown */
 	ParseLoc	location;
 } WindowFunc;
+
+/*
+ * WindowFuncRunCondition
+ *
+ * Represents intermediate OpExprs which will be used by WindowAgg to
+ * short-circuit execution.
+ */
+typedef struct WindowFuncRunCondition
+{
+	Expr		xpr;
+
+	/* PG_OPERATOR OID of the operator */
+	Oid			opno;
+	/* OID of collation that operator should use */
+	Oid			inputcollid pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * true of WindowFunc belongs on the left of the resulting OpExpr or false
+	 * if the WindowFunc is on the right.
+	 */
+	bool		wfunc_left;
+
+	/*
+	 * The Expr being compared to the WindowFunc to use in the OpExpr in the
+	 * WindowAgg's runCondition
+	 */
+	Expr	   *arg;
+} WindowFuncRunCondition;
 
 /*
  * MergeSupportFunc

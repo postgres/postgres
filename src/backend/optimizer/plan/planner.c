@@ -870,9 +870,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 												EXPRKIND_LIMIT);
 		wc->endOffset = preprocess_expression(root, wc->endOffset,
 											  EXPRKIND_LIMIT);
-		wc->runCondition = (List *) preprocess_expression(root,
-														  (Node *) wc->runCondition,
-														  EXPRKIND_TARGET);
 	}
 
 	parse->limitOffset = preprocess_expression(root, parse->limitOffset,
@@ -4527,9 +4524,11 @@ create_one_window_path(PlannerInfo *root,
 	{
 		WindowClause *wc = lfirst_node(WindowClause, l);
 		List	   *window_pathkeys;
+		List	   *runcondition = NIL;
 		int			presorted_keys;
 		bool		is_sorted;
 		bool		topwindow;
+		ListCell   *lc2;
 
 		window_pathkeys = make_pathkeys_for_window(root,
 												   wc,
@@ -4577,7 +4576,6 @@ create_one_window_path(PlannerInfo *root,
 			 * we do need to account for the increase in tlist width.
 			 */
 			int64		tuple_width = window_target->width;
-			ListCell   *lc2;
 
 			window_target = copy_pathtarget(window_target);
 			foreach(lc2, wflists->windowFuncs[wc->winref])
@@ -4599,17 +4597,53 @@ create_one_window_path(PlannerInfo *root,
 		topwindow = foreach_current_index(l) == list_length(activeWindows) - 1;
 
 		/*
-		 * Accumulate all of the runConditions from each intermediate
-		 * WindowClause.  The top-level WindowAgg must pass these as a qual so
-		 * that it filters out unwanted tuples correctly.
+		 * Collect the WindowFuncRunConditions from each WindowFunc and
+		 * convert them into OpExprs
 		 */
-		if (!topwindow)
-			topqual = list_concat(topqual, wc->runCondition);
+		foreach(lc2, wflists->windowFuncs[wc->winref])
+		{
+			ListCell   *lc3;
+			WindowFunc *wfunc = lfirst_node(WindowFunc, lc2);
+
+			foreach(lc3, wfunc->runCondition)
+			{
+				WindowFuncRunCondition *wfuncrc =
+					lfirst_node(WindowFuncRunCondition, lc3);
+				Expr	   *opexpr;
+				Expr	   *leftop;
+				Expr	   *rightop;
+
+				if (wfuncrc->wfunc_left)
+				{
+					leftop = (Expr *) copyObject(wfunc);
+					rightop = copyObject(wfuncrc->arg);
+				}
+				else
+				{
+					leftop = copyObject(wfuncrc->arg);
+					rightop = (Expr *) copyObject(wfunc);
+				}
+
+				opexpr = make_opclause(wfuncrc->opno,
+									   BOOLOID,
+									   false,
+									   leftop,
+									   rightop,
+									   InvalidOid,
+									   wfuncrc->inputcollid);
+
+				runcondition = lappend(runcondition, opexpr);
+
+				if (!topwindow)
+					topqual = lappend(topqual, opexpr);
+			}
+		}
 
 		path = (Path *)
 			create_windowagg_path(root, window_rel, path, window_target,
 								  wflists->windowFuncs[wc->winref],
-								  wc, topwindow ? topqual : NIL, topwindow);
+								  runcondition, wc,
+								  topwindow ? topqual : NIL, topwindow);
 	}
 
 	add_path(window_rel, path);

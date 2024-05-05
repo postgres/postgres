@@ -3826,6 +3826,7 @@ transformJsonAggConstructor(ParseState *pstate, JsonAggConstructor *agg_ctor,
 		/* wincollid and inputcollid will be set by parse_collate.c */
 		wfunc->args = args;
 		wfunc->aggfilter = aggfilter;
+		wfunc->runCondition = NIL;
 		/* winref will be set by transformWindowFuncCall */
 		wfunc->winstar = false;
 		wfunc->winagg = true;

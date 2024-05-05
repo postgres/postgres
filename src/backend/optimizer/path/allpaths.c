@@ -2205,7 +2205,7 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
  * the run condition will handle all of the required filtering.
  *
  * Returns true if 'opexpr' was found to be useful and was added to the
- * WindowClauses runCondition.  We also set *keep_original accordingly and add
+ * WindowFunc's runCondition.  We also set *keep_original accordingly and add
  * 'attno' to *run_cond_attrs offset by FirstLowInvalidHeapAttributeNumber.
  * If the 'opexpr' cannot be used then we set *keep_original to true and
  * return false.
@@ -2358,7 +2358,7 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 			*keep_original = true;
 			runopexpr = opexpr;
 
-			/* determine the operator to use for the runCondition qual */
+			/* determine the operator to use for the WindowFuncRunCondition */
 			runoperator = get_opfamily_member(opinfo->opfamily_id,
 											  opinfo->oplefttype,
 											  opinfo->oprighttype,
@@ -2369,27 +2369,15 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 
 	if (runopexpr != NULL)
 	{
-		Expr	   *newexpr;
+		WindowFuncRunCondition *wfuncrc;
 
-		/*
-		 * Build the qual required for the run condition keeping the
-		 * WindowFunc on the same side as it was originally.
-		 */
-		if (wfunc_left)
-			newexpr = make_opclause(runoperator,
-									runopexpr->opresulttype,
-									runopexpr->opretset, (Expr *) wfunc,
-									otherexpr, runopexpr->opcollid,
-									runopexpr->inputcollid);
-		else
-			newexpr = make_opclause(runoperator,
-									runopexpr->opresulttype,
-									runopexpr->opretset,
-									otherexpr, (Expr *) wfunc,
-									runopexpr->opcollid,
-									runopexpr->inputcollid);
+		wfuncrc = makeNode(WindowFuncRunCondition);
+		wfuncrc->opno = runoperator;
+		wfuncrc->inputcollid = runopexpr->inputcollid;
+		wfuncrc->wfunc_left = wfunc_left;
+		wfuncrc->arg = copyObject(otherexpr);
 
-		wclause->runCondition = lappend(wclause->runCondition, newexpr);
+		wfunc->runCondition = lappend(wfunc->runCondition, wfuncrc);
 
 		/* record that this attno was used in a run condition */
 		*run_cond_attrs = bms_add_member(*run_cond_attrs,
@@ -2403,9 +2391,9 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 
 /*
  * check_and_push_window_quals
- *		Check if 'clause' is a qual that can be pushed into a WindowFunc's
- *		WindowClause as a 'runCondition' qual.  These, when present, allow
- *		some unnecessary work to be skipped during execution.
+ *		Check if 'clause' is a qual that can be pushed into a WindowFunc
+ *		as a 'runCondition' qual.  These, when present, allow some unnecessary
+ *		work to be skipped during execution.
  *
  * 'run_cond_attrs' will be populated with all targetlist resnos of subquery
  * targets (offset by FirstLowInvalidHeapAttributeNumber) that we pushed
