@@ -325,24 +325,6 @@ Branch: REL_15_STABLE [faba2f8f3] 2024-05-01 12:34:01 +0900
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_15_STABLE [bf379b555] 2024-04-30 15:22:55 -0400
-Branch: REL_14_STABLE [51189f98a] 2024-04-30 15:22:55 -0400
-Branch: REL_13_STABLE [1ee22d1e8] 2024-04-30 15:22:55 -0400
-Branch: REL_12_STABLE [56d30fb10] 2024-04-30 15:22:56 -0400
--->
-     <para>
-      Disallow converting a table to a view within an outer SQL command
-      that is using that table (Tom Lane)
-     </para>
-
-     <para>
-      This avoids possible crashes.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [03107b4ed] 2024-04-16 11:22:51 -0400
 Branch: REL_16_STABLE [91800af13] 2024-04-16 11:03:43 -0400
 Branch: REL_15_STABLE [5aacfa64e] 2024-04-16 11:22:39 -0400
