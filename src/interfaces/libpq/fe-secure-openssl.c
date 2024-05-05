@@ -1746,7 +1746,8 @@ SSLerrmessage(unsigned long ecode)
 	 * The ERR_reason_error_string() function doesn't give any error string
 	 * for that for some reason, so do it ourselves.  See
 	 * https://github.com/openssl/openssl/issues/24300.  This is available in
-	 * OpenSSL 1.1.0 and later, but as of this writing not in LibreSSL.
+	 * OpenSSL 1.1.0 and later, as well as in LibreSSL 3.4.3 (OpenBSD 7.0) and
+	 * later.
 	 */
 #ifdef SSL_AD_NO_APPLICATION_PROTOCOL
 	if (ERR_GET_LIB(ecode) == ERR_LIB_SSL &&
