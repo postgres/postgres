@@ -4934,14 +4934,17 @@ RemoveRoleFromInitPriv(Oid roleid, Oid classid, Oid objid, int32 objsubid)
 	/*
 	 * Generate new ACL.  Grantor of rights is always the same as the owner.
 	 */
-	new_acl = merge_acl_with_grant(old_acl,
-								   false,	/* is_grant */
-								   false,	/* grant_option */
-								   DROP_RESTRICT,
-								   list_make1_oid(roleid),
-								   ACLITEM_ALL_PRIV_BITS,
-								   ownerId,
-								   ownerId);
+	if (old_acl != NULL)
+		new_acl = merge_acl_with_grant(old_acl,
+									   false,	/* is_grant */
+									   false,	/* grant_option */
+									   DROP_RESTRICT,
+									   list_make1_oid(roleid),
+									   ACLITEM_ALL_PRIV_BITS,
+									   ownerId,
+									   ownerId);
+	else
+		new_acl = NULL;			/* this case shouldn't happen, probably */
 
 	/* If we end with an empty ACL, delete the pg_init_privs entry. */
 	if (new_acl == NULL || ACL_NUM(new_acl) == 0)
