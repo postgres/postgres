@@ -2441,10 +2441,7 @@ pg_stats_ext| SELECT cn.nspname AS schemaname,
             array_agg(pg_mcv_list_items.frequency) AS most_common_freqs,
             array_agg(pg_mcv_list_items.base_frequency) AS most_common_base_freqs
            FROM pg_mcv_list_items(sd.stxdmcv) pg_mcv_list_items(index, "values", nulls, frequency, base_frequency)) m ON ((sd.stxdmcv IS NOT NULL)))
-  WHERE ((NOT (EXISTS ( SELECT 1
-           FROM (unnest(s.stxkeys) k(k)
-             JOIN pg_attribute a ON (((a.attrelid = s.stxrelid) AND (a.attnum = k.k))))
-          WHERE (NOT has_column_privilege(c.oid, a.attnum, 'select'::text))))) AND ((c.relrowsecurity = false) OR (NOT row_security_active(c.oid))));
+  WHERE (pg_has_role(c.relowner, 'USAGE'::text) AND ((c.relrowsecurity = false) OR (NOT row_security_active(c.oid))));
 pg_stats_ext_exprs| SELECT cn.nspname AS schemaname,
     c.relname AS tablename,
     sn.nspname AS statistics_schemaname,
@@ -2516,7 +2513,8 @@ pg_stats_ext_exprs| SELECT cn.nspname AS schemaname,
      LEFT JOIN pg_namespace cn ON ((cn.oid = c.relnamespace)))
      LEFT JOIN pg_namespace sn ON ((sn.oid = s.stxnamespace)))
      JOIN LATERAL ( SELECT unnest(pg_get_statisticsobjdef_expressions(s.oid)) AS expr,
-            unnest(sd.stxdexpr) AS a) stat ON ((stat.expr IS NOT NULL)));
+            unnest(sd.stxdexpr) AS a) stat ON ((stat.expr IS NOT NULL)))
+  WHERE (pg_has_role(c.relowner, 'USAGE'::text) AND ((c.relrowsecurity = false) OR (NOT row_security_active(c.oid))));
 pg_tables| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     pg_get_userbyid(c.relowner) AS tableowner,

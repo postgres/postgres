@@ -283,12 +283,7 @@ CREATE VIEW pg_stats_ext WITH (security_barrier) AS
                             array_agg(base_frequency) AS most_common_base_freqs
                      FROM pg_mcv_list_items(sd.stxdmcv)
                    ) m ON sd.stxdmcv IS NOT NULL
-    WHERE NOT EXISTS
-              ( SELECT 1
-                FROM unnest(stxkeys) k
-                     JOIN pg_attribute a
-                          ON (a.attrelid = s.stxrelid AND a.attnum = k)
-                WHERE NOT has_column_privilege(c.oid, a.attnum, 'select') )
+    WHERE pg_has_role(c.relowner, 'USAGE')
     AND (c.relrowsecurity = false OR NOT row_security_active(c.oid));
 
 CREATE VIEW pg_stats_ext_exprs WITH (security_barrier) AS
@@ -357,7 +352,9 @@ CREATE VIEW pg_stats_ext_exprs WITH (security_barrier) AS
          JOIN LATERAL (
              SELECT unnest(pg_get_statisticsobjdef_expressions(s.oid)) AS expr,
                     unnest(sd.stxdexpr)::pg_statistic AS a
-         ) stat ON (stat.expr IS NOT NULL);
+         ) stat ON (stat.expr IS NOT NULL)
+    WHERE pg_has_role(c.relowner, 'USAGE')
+    AND (c.relrowsecurity = false OR NOT row_security_active(c.oid));
 
 -- unprivileged users may read pg_statistic_ext but not pg_statistic_ext_data
 REVOKE ALL ON pg_statistic_ext_data FROM public;
