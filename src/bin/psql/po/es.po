@@ -1258,7 +1258,7 @@ msgstr "vista"
 
 #: describe.c:1148 describe.c:4112
 msgid "materialized view"
-msgstr "vistas materializadas"
+msgstr "vista materializada"
 
 #: describe.c:1149 describe.c:1311 describe.c:4114
 msgid "sequence"

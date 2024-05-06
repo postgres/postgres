@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-11-03 09:09+0300\n"
+"POT-Creation-Date: 2024-02-02 18:11+0300\n"
 "PO-Revision-Date: 2023-11-03 09:24+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -295,8 +295,8 @@ msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Проверка несоответствия при передаче bigint в contrib/isn"
 
 #: check.c:882 check.c:983 check.c:1108 check.c:1188 check.c:1245 check.c:1304
-#: check.c:1367 check.c:1485 function.c:262 version.c:278 version.c:316
-#: version.c:460
+#: check.c:1338 check.c:1367 check.c:1485 function.c:262 version.c:278
+#: version.c:316 version.c:460
 #, c-format
 msgid "fatal\n"
 msgstr "сбой\n"
@@ -452,11 +452,6 @@ msgstr ""
 #, c-format
 msgid "Checking for removed \"%s\" data type in user tables"
 msgstr "Проверка удалённого типа данных \"%s\" в пользовательских таблицах"
-
-#: check.c:1338
-#, c-format
-msgid "fatal"
-msgstr "сбой"
 
 #: check.c:1339
 #, c-format
@@ -2161,6 +2156,10 @@ msgstr ""
 "будучи выполненным администратором БД в psql, обновит все\n"
 "эти расширения.\n"
 "\n"
+
+#, c-format
+#~ msgid "fatal"
+#~ msgstr "сбой"
 
 #~ msgid "Creating script to analyze new cluster"
 #~ msgstr "Создание скрипта для анализа нового кластера"
