@@ -16004,7 +16004,7 @@ table2-mapping
    Some functions in this table have a <literal>RETURNING</literal> clause,
    which specifies the data type returned.  It must be one of <type>json</type>,
    <type>jsonb</type>, <type>bytea</type>, a character string type (<type>text</type>,
-   <type>char</type>, <type>varchar</type>, or <type>nchar</type>), or a type
+   <type>char</type>, or <type>varchar</type>), or a type
    for which there is a cast from <type>json</type> to that type.
    By default, the <type>json</type> type is returned.
   </para>
