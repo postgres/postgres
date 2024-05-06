@@ -23,7 +23,16 @@
    </para>
 
    <para>
-    However, if you are upgrading from a version earlier than 14.11,
+    However, a security vulnerability was found in the system
+    views <structname>pg_stats_ext</structname>
+    and <structname>pg_stats_ext_exprs</structname>, potentially allowing
+    authenticated database users to see data they shouldn't.  If this is
+    of concern in your installation, follow the steps in the first
+    changelog entry below to rectify it.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 14.11,
     see <xref linkend="release-14-11"/>.
    </para>
   </sect2>
@@ -32,6 +41,90 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [521a7156a] 2024-05-06 09:00:00 -0500
+Branch: REL_16_STABLE [2485a85e9] 2024-05-06 09:00:07 -0500
+Branch: REL_15_STABLE [9cc2b6289] 2024-05-06 09:00:13 -0500
+Branch: REL_14_STABLE [c3425383b] 2024-05-06 09:00:19 -0500
+-->
+     <para>
+      Restrict visibility of <structname>pg_stats_ext</structname> and
+      <structname>pg_stats_ext_exprs</structname> entries to the table
+      owner (Nathan Bossart)
+     </para>
+
+     <para>
+      These views failed to hide statistics for expressions that involve
+      columns the accessing user does not have permission to read.  View
+      columns such as <structfield>most_common_vals</structfield> might
+      expose security-relevant data.  The potential interactions here are
+      not fully clear, so in the interest of erring on the side of safety,
+      make rows in these views visible only to the owner of the associated
+      table.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Lukas Fittl for reporting this problem.
+      (CVE-2024-4317)
+     </para>
+
+     <para>
+      By itself, this fix will only fix the behavior in newly initdb'd
+      database clusters.  If you wish to apply this change in an existing
+      cluster, you will need to do the following:
+     </para>
+
+     <procedure>
+      <step>
+       <para>
+        Find the SQL script <filename>fix-CVE-2024-4317.sql</filename> in
+        the <replaceable>share</replaceable> directory of
+        the <productname>PostgreSQL</productname> installation (typically
+        located someplace like <filename>/usr/share/postgresql/</filename>).
+        Be sure to use the script appropriate to
+        your <productname>PostgreSQL</productname> major version.
+        If you do not see this file, either your version is not vulnerable
+        (only v14&ndash;v16 are affected) or your minor version is too
+        old to have the fix.
+       </para>
+      </step>
+
+      <step>
+       <para>
+        In <emphasis>each</emphasis> database of the cluster, run
+        the <filename>fix-CVE-2024-4317.sql</filename> script as superuser.
+        In <application>psql</application> this would look like
+<programlisting>
+\i /usr/share/postgresql/fix-CVE-2024-4317.sql
+</programlisting>
+        (adjust the file path as appropriate).  Any error probably indicates
+        that you've used the wrong script version.  It will not hurt to run
+        the script more than once.
+       </para>
+      </step>
+
+      <step>
+       <para>
+        Do not forget to include the <literal>template0</literal>
+        and <literal>template1</literal> databases, or the vulnerability
+        will still exist in databases you create later.  To
+        fix <literal>template0</literal>, you'll need to temporarily make
+        it accept connections.  Do that with
+<programlisting>
+ALTER DATABASE template0 WITH ALLOW_CONNECTIONS true;
+</programlisting>
+        and then after fixing <literal>template0</literal>, undo it with
+<programlisting>
+ALTER DATABASE template0 WITH ALLOW_CONNECTIONS false;
+</programlisting>
+       </para>
+      </step>
+     </procedure>
+    </listitem>
 
     <listitem>
 <!--
