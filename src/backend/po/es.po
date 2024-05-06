@@ -4510,7 +4510,7 @@ msgstr "tipo de objeto «%s» no reconocido"
 #: catalog/objectaddress.c:2772
 #, c-format
 msgid "column %s of %s"
-msgstr " columna %s de %s"
+msgstr "columna %s de %s"
 
 #: catalog/objectaddress.c:2782
 #, c-format

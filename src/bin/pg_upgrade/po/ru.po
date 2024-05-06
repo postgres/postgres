@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-11-03 09:10+0300\n"
+"POT-Creation-Date: 2024-02-02 18:12+0300\n"
 "PO-Revision-Date: 2023-11-03 09:24+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -298,7 +298,7 @@ msgstr "Целевой кластер содержит подготовленн�
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Проверка несоответствия при передаче bigint в contrib/isn"
 
-#: check.c:930 check.c:1009 check.c:1066 check.c:1125 check.c:1188
+#: check.c:930 check.c:1009 check.c:1066 check.c:1125 check.c:1159 check.c:1188
 #: function.c:268 version.c:281 version.c:318 version.c:461
 #, c-format
 msgid "fatal\n"
@@ -405,11 +405,6 @@ msgstr ""
 #, c-format
 msgid "Checking for removed \"%s\" data type in user tables"
 msgstr "Проверка удалённого типа данных \"%s\" в пользовательских таблицах"
-
-#: check.c:1159
-#, c-format
-msgid "fatal"
-msgstr "сбой"
 
 #: check.c:1160
 #, c-format
@@ -2069,6 +2064,10 @@ msgstr ""
 "будучи выполненным администратором БД в psql, обновит все\n"
 "эти расширения.\n"
 "\n"
+
+#, c-format
+#~ msgid "fatal"
+#~ msgstr "сбой"
 
 #~ msgid ""
 #~ "Optimizer statistics and free space information are not transferred\n"
