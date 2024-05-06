@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-02 18:11+0300\n"
+"POT-Creation-Date: 2024-05-04 10:36+0300\n"
 "PO-Revision-Date: 2023-08-30 15:22+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -269,17 +269,17 @@ msgstr "повторный исходный файл \"%s\""
 msgid "unexpected page modification for non-regular file \"%s\""
 msgstr "неожиданная модификация страницы для файла особого вида \"%s\""
 
-#: filemap.c:679 filemap.c:773
+#: filemap.c:683 filemap.c:777
 #, c-format
 msgid "unknown file type for \"%s\""
 msgstr "неизвестный тип файла \"%s\""
 
-#: filemap.c:706
+#: filemap.c:710
 #, c-format
 msgid "file \"%s\" is of different type in source and target"
 msgstr "файл \"%s\" имеет разный тип в исходном и целевом кластере"
 
-#: filemap.c:778
+#: filemap.c:782
 #, c-format
 msgid "could not decide what to do with file \"%s\""
 msgstr "не удалось определить, что делать с файлом \"%s\""
