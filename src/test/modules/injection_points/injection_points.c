@@ -159,10 +159,17 @@ injection_point_allowed(const char *name)
 static void
 injection_points_cleanup(int code, Datum arg)
 {
+	char		names[INJ_MAX_CONDITION][INJ_NAME_MAXLEN] = {0};
+	int			count = 0;
+
 	/* Leave if nothing is tracked locally */
 	if (!injection_point_local)
 		return;
 
+	/*
+	 * This is done in three steps: detect the points to detach, detach them
+	 * and release their conditions.
+	 */
 	SpinLockAcquire(&inj_state->lock);
 	for (int i = 0; i < INJ_MAX_CONDITION; i++)
 	{
@@ -174,8 +181,28 @@ injection_points_cleanup(int code, Datum arg)
 		if (condition->pid != MyProcPid)
 			continue;
 
-		/* Detach the injection point and unregister condition */
-		InjectionPointDetach(condition->name);
+		/* Extract the point name to detach */
+		strlcpy(names[count], condition->name, INJ_NAME_MAXLEN);
+		count++;
+	}
+	SpinLockRelease(&inj_state->lock);
+
+	/* Detach, without holding the spinlock */
+	for (int i = 0; i < count; i++)
+		InjectionPointDetach(names[i]);
+
+	/* Clear all the conditions */
+	SpinLockAcquire(&inj_state->lock);
+	for (int i = 0; i < INJ_MAX_CONDITION; i++)
+	{
+		InjectionPointCondition *condition = &inj_state->conditions[i];
+
+		if (condition->name[0] == '\0')
+			continue;
+
+		if (condition->pid != MyProcPid)
+			continue;
+
 		condition->name[0] = '\0';
 		condition->pid = 0;
 	}
