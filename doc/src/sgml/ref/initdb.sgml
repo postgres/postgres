@@ -343,76 +343,12 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry id="app-initdb-option-no-sync">
-      <term><option>-N</option></term>
-      <term><option>--no-sync</option></term>
-      <listitem>
-       <para>
-        By default, <command>initdb</command> will wait for all files to be
-        written safely to disk.  This option causes <command>initdb</command>
-        to return without waiting, which is faster, but means that a
-        subsequent operating system crash can leave the data directory
-        corrupt.  Generally, this option is useful for testing, but should not
-        be used when creating a production installation.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="app-initdb-option-no-instructions">
-      <term><option>--no-instructions</option></term>
-      <listitem>
-       <para>
-        By default, <command>initdb</command> will write instructions for how
-        to start the cluster at the end of its output. This option causes
-        those instructions to be left out. This is primarily intended for use
-        by tools that wrap <command>initdb</command> in platform-specific
-        behavior, where those instructions are likely to be incorrect.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="app-initdb-option-pwfile">
       <term><option>--pwfile=<replaceable>filename</replaceable></option></term>
       <listitem>
        <para>
         Makes <command>initdb</command> read the bootstrap superuser's password
         from a file.  The first line of the file is taken as the password.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="app-initdb-option-sync-method">
-      <term><option>--sync-method=<replaceable>method</replaceable></option></term>
-      <listitem>
-       <para>
-        When set to <literal>fsync</literal>, which is the default,
-        <command>initdb</command> will recursively open and synchronize all
-        files in the data directory.  The search for files will follow symbolic
-        links for the WAL directory and each configured tablespace.
-       </para>
-       <para>
-        On Linux, <literal>syncfs</literal> may be used instead to ask the
-        operating system to synchronize the whole file systems that contain the
-        data directory, the WAL files, and each tablespace.  See
-        <xref linkend="guc-recovery-init-sync-method"/> for information about
-        the caveats to be aware of when using <literal>syncfs</literal>.
-       </para>
-       <para>
-        This option has no effect when <option>--no-sync</option> is used.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="app-initdb-option-sync-only">
-      <term><option>-S</option></term>
-      <term><option>--sync-only</option></term>
-      <listitem>
-       <para>
-        Safely write all database files to disk and exit.  This does not
-        perform any of the normal <application>initdb</application> operations.
-        Generally, this option is useful for ensuring reliable recovery after
-        changing <xref linkend="guc-fsync"/> from <literal>off</literal> to
-        <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -557,6 +493,70 @@ PostgreSQL documentation
         cluster, it removes any files it might have created before discovering
         that it cannot finish the job. This option inhibits tidying-up and is
         thus useful for debugging.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="app-initdb-option-no-sync">
+      <term><option>-N</option></term>
+      <term><option>--no-sync</option></term>
+      <listitem>
+       <para>
+        By default, <command>initdb</command> will wait for all files to be
+        written safely to disk.  This option causes <command>initdb</command>
+        to return without waiting, which is faster, but means that a
+        subsequent operating system crash can leave the data directory
+        corrupt.  Generally, this option is useful for testing, but should not
+        be used when creating a production installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="app-initdb-option-no-instructions">
+      <term><option>--no-instructions</option></term>
+      <listitem>
+       <para>
+        By default, <command>initdb</command> will write instructions for how
+        to start the cluster at the end of its output. This option causes
+        those instructions to be left out. This is primarily intended for use
+        by tools that wrap <command>initdb</command> in platform-specific
+        behavior, where those instructions are likely to be incorrect.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="app-initdb-option-sync-method">
+      <term><option>--sync-method=<replaceable>method</replaceable></option></term>
+      <listitem>
+       <para>
+        When set to <literal>fsync</literal>, which is the default,
+        <command>initdb</command> will recursively open and synchronize all
+        files in the data directory.  The search for files will follow symbolic
+        links for the WAL directory and each configured tablespace.
+       </para>
+       <para>
+        On Linux, <literal>syncfs</literal> may be used instead to ask the
+        operating system to synchronize the whole file systems that contain the
+        data directory, the WAL files, and each tablespace.  See
+        <xref linkend="guc-recovery-init-sync-method"/> for information about
+        the caveats to be aware of when using <literal>syncfs</literal>.
+       </para>
+       <para>
+        This option has no effect when <option>--no-sync</option> is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="app-initdb-option-sync-only">
+      <term><option>-S</option></term>
+      <term><option>--sync-only</option></term>
+      <listitem>
+       <para>
+        Safely write all database files to disk and exit.  This does not
+        perform any of the normal <application>initdb</application> operations.
+        Generally, this option is useful for ensuring reliable recovery after
+        changing <xref linkend="guc-fsync"/> from <literal>off</literal> to
+        <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
