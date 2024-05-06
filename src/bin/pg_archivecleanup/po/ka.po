@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 15\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-07-02 04:50+0000\n"
-"PO-Revision-Date: 2022-07-04 09:06+0200\n"
+"POT-Creation-Date: 2024-02-11 09:52+0000\n"
+"PO-Revision-Date: 2024-02-11 14:42+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -38,43 +38,43 @@ msgstr "დეტალები: "
 msgid "hint: "
 msgstr "მინიშნება: "
 
-#: pg_archivecleanup.c:66
+#: pg_archivecleanup.c:68
 #, c-format
 msgid "archive location \"%s\" does not exist"
 msgstr "არქივის მდებარეობა არ არსებობს: %s"
 
-#: pg_archivecleanup.c:151
-#, c-format
-msgid "could not remove file \"%s\": %m"
-msgstr "ფაილის წაშლის შეცდომა \"%s\": %m"
-
-#: pg_archivecleanup.c:157
-#, c-format
-msgid "could not read archive location \"%s\": %m"
-msgstr "არქივის მდებარეობის წაკითხვის შეცდომა\"%s\": %m"
-
-#: pg_archivecleanup.c:160
-#, c-format
-msgid "could not close archive location \"%s\": %m"
-msgstr "არქივის მდებარეობის დაყენების შეცდომა\"%s\": %m"
-
-#: pg_archivecleanup.c:164
+#: pg_archivecleanup.c:100
 #, c-format
 msgid "could not open archive location \"%s\": %m"
 msgstr "არქივის მდებარეობის გახსნის შეცდომა\"%s\": %m"
 
-#: pg_archivecleanup.c:237
+#: pg_archivecleanup.c:164
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "ფაილის წაშლის შეცდომა \"%s\": %m"
+
+#: pg_archivecleanup.c:169
+#, c-format
+msgid "could not read archive location \"%s\": %m"
+msgstr "არქივის მდებარეობის წაკითხვის შეცდომა\"%s\": %m"
+
+#: pg_archivecleanup.c:172
+#, c-format
+msgid "could not close archive location \"%s\": %m"
+msgstr "არქივის მდებარეობის დაყენების შეცდომა\"%s\": %m"
+
+#: pg_archivecleanup.c:245
 #, c-format
 msgid "invalid file name argument"
 msgstr "ფაილის სახელის არასწორი არგუმენტი"
 
-#: pg_archivecleanup.c:238 pg_archivecleanup.c:313 pg_archivecleanup.c:333
-#: pg_archivecleanup.c:345 pg_archivecleanup.c:352
+#: pg_archivecleanup.c:246 pg_archivecleanup.c:334 pg_archivecleanup.c:354
+#: pg_archivecleanup.c:366 pg_archivecleanup.c:373
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: pg_archivecleanup.c:251
+#: pg_archivecleanup.c:259
 #, c-format
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
@@ -83,17 +83,17 @@ msgstr ""
 "%s PostgreSQL-ის არქივებიდან ძველი WAL ფაილების წაშლა.\n"
 "\n"
 
-#: pg_archivecleanup.c:252
+#: pg_archivecleanup.c:260
 #, c-format
 msgid "Usage:\n"
 msgstr "გამოყენება:\n"
 
-#: pg_archivecleanup.c:253
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 msgstr "  %s [პარამეტრი]... არქივისმდგომარეობა უძველესიშენახულიWALფაილი\n"
 
-#: pg_archivecleanup.c:254
+#: pg_archivecleanup.c:262
 #, c-format
 msgid ""
 "\n"
@@ -102,72 +102,76 @@ msgstr ""
 "\n"
 "პარამეტრები\n"
 
-#: pg_archivecleanup.c:255
+#: pg_archivecleanup.c:263
 #, c-format
-msgid "  -d             generate debug output (verbose mode)\n"
-msgstr ""
-"  -d, --debug               გასამართი ინფორმაციის გენერაცია(verbose mode)\n"
+msgid "  -b, --clean-backup-history  clean up files including backup history files\n"
+msgstr "  -b, --clean-backup-history  ფაილების მოსუფთავება მარქაფი ისტორიის ფაილების ჩათვლით\n"
 
-#: pg_archivecleanup.c:256
+#: pg_archivecleanup.c:264
+#, c-format
+msgid "  -d, --debug                 generate debug output (verbose mode)\n"
+msgstr "  -d, --debug               გასამართი ინფორმაციის გამოტანა(დამატებითი შეტყობინებების რეჟიმი)\n"
+
+#: pg_archivecleanup.c:265
 #, c-format
 msgid ""
-"  -n             dry run, show the names of the files that would be "
-"removed\n"
+"  -n, --dry-run               dry run, show the names of the files that would be\n"
+"                              removed\n"
 msgstr ""
-"  -n             მშრალი გაშვება. ფაილების წაშლის მაგიერ მხოლოდ მათი "
-"სახელების ჩვენება\n"
+"  -n, --dry-run             მშრალი გაშვება. ფაილების წაშლის მაგიერ მხოლოდ მათი \n"
+"                                    სახელების ჩვენება\n"
 
-#: pg_archivecleanup.c:257
+#: pg_archivecleanup.c:267
 #, c-format
-msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V, --version              ვერსიის ჩვენება და გასვლა\n"
+msgid "  -V, --version               output version information, then exit\n"
+msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: pg_archivecleanup.c:258
+#: pg_archivecleanup.c:268
 #, c-format
-msgid "  -x EXT         clean up files if they have this extension\n"
+#| msgid ""
+#| "  -L, --use-list=FILENAME      use table of contents from this file for\n"
+#| "                               selecting/ordering output\n"
+msgid ""
+"  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
+"                              clean up\n"
 msgstr ""
-"  -x EXT         ფაილების გასუფთავება, თუ მათ ეს გაფართოება გააჩნიათ\n"
+"  -x, --strip-extension=გაფ   ამ გაფართოების მოცილებაფაილის მოსასუფთავებლების\n"
+"                              სიაში ჩასმამდე\n"
 
-#: pg_archivecleanup.c:259
+#: pg_archivecleanup.c:270
 #, c-format
-msgid "  -?, --help     show this help, then exit\n"
+msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: pg_archivecleanup.c:260
+#: pg_archivecleanup.c:271
 #, c-format
 msgid ""
 "\n"
 "For use as archive_cleanup_command in postgresql.conf:\n"
-"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION "
-"%%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
 "e.g.\n"
-"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir "
-"%%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 msgstr ""
 "\n"
 "გამოსაყენებლად, როგორც archive_cleanup_command postgresql.conf-ში: \n"
-"  archive_cleanup_command = 'pg_archivecleanup [პარამეტრი]... "
-"არქივისმდებარეობა %%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup [პარამეტრი]... არქივისმდებარეობა %%r'\n"
 "მაგ: \n"
-"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir "
-"%%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 
-#: pg_archivecleanup.c:265
+#: pg_archivecleanup.c:276
 #, c-format
 msgid ""
 "\n"
 "Or for use as a standalone archive cleaner:\n"
 "e.g.\n"
-"  pg_archivecleanup /mnt/server/archiverdir "
-"000000010000000000000010.00000020.backup\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 msgstr ""
 "\n"
 "ან ეული არქივის გამწმენდად გამოყენება:\n"
 "მაგ:\n"
-"  pg_archivecleanup /mnt/server/archiverdir "
-"000000010000000000000010.00000020.backup\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:269
+#: pg_archivecleanup.c:280
 #, c-format
 msgid ""
 "\n"
@@ -176,22 +180,34 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: pg_archivecleanup.c:270
+#: pg_archivecleanup.c:281
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
 
-#: pg_archivecleanup.c:332
+#: pg_archivecleanup.c:353
 #, c-format
 msgid "must specify archive location"
 msgstr "არქივის მდებარეობის მითითება აუცილებელია"
 
-#: pg_archivecleanup.c:344
+#: pg_archivecleanup.c:365
 #, c-format
 msgid "must specify oldest kept WAL file"
 msgstr "დატოვებული უძველესი WAL ფაილის მითითება აუცილებელია"
 
-#: pg_archivecleanup.c:351
+#: pg_archivecleanup.c:372
 #, c-format
 msgid "too many command-line arguments"
 msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი"
+
+#, c-format
+#~ msgid "  -?, --help     show this help, then exit\n"
+#~ msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
+
+#, c-format
+#~ msgid "  -V, --version  output version information, then exit\n"
+#~ msgstr "  -V, --version              ვერსიის ჩვენება და გასვლა\n"
+
+#, c-format
+#~ msgid "  -x EXT         clean up files if they have this extension\n"
+#~ msgstr "  -x EXT         ფაილების გასუფთავება, თუ მათ ეს გაფართოება გააჩნიათ\n"

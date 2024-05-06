@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-07-29 09:17+0000\n"
-"PO-Revision-Date: 2023-07-30 08:21+0200\n"
+"PO-Revision-Date: 2023-09-05 09:52+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -2765,7 +2765,7 @@ msgstr "Rapporter les bogues à <%s>.\n"
 #: help.c:149
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: help.c:191
 msgid "General\n"
@@ -3472,7 +3472,6 @@ msgid ""
 msgstr ""
 "  HIDE_TOAST_COMPRESSION\n"
 "    si activé, les méthodes de compression methods ne sont pas affichées\n"
-"\n"
 
 #: help.c:421
 msgid ""

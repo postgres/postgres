@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libpq (PostgreSQL) 16\n"
+"Project-Id-Version: libpq (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-07-05 06:10+0000\n"
-"PO-Revision-Date: 2023-07-05 12:29+0200\n"
+"POT-Creation-Date: 2024-04-18 21:40+0000\n"
+"PO-Revision-Date: 2024-04-19 01:51+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -18,164 +18,165 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.3.2\n"
 
-#: ../../port/thread.c:50 ../../port/thread.c:86
+#: ../../port/user.c:43 ../../port/user.c:79
 #, c-format
 msgid "could not look up local user ID %d: %s"
 msgstr "ლოკალური მომხმარებლის ID-ის (%d) ამოხსნა შეუძლებელია: %s"
 
-#: ../../port/thread.c:55 ../../port/thread.c:91
+#: ../../port/user.c:48 ../../port/user.c:84
 #, c-format
 msgid "local user with ID %d does not exist"
 msgstr "ლოკალური მომხმარებელი ID-ით %d არ არსებობს"
 
-#: fe-auth-scram.c:227
+#: fe-auth-scram.c:223
 #, c-format
 msgid "malformed SCRAM message (empty message)"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (ცარიელი შეტყობინება)"
 
-#: fe-auth-scram.c:232
+#: fe-auth-scram.c:228
 #, c-format
 msgid "malformed SCRAM message (length mismatch)"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (სიგრძე არ ემთხვევა)"
 
-#: fe-auth-scram.c:275
+#: fe-auth-scram.c:272
 #, c-format
 msgid "could not verify server signature: %s"
 msgstr "სერვერის ხელმოწერის შემოწმება შეუძლებელია: %s"
 
-#: fe-auth-scram.c:281
+#: fe-auth-scram.c:278
 #, c-format
 msgid "incorrect server signature"
 msgstr "სერვერის არასწორი ხელმოწერა"
 
-#: fe-auth-scram.c:290
+#: fe-auth-scram.c:287
 #, c-format
 msgid "invalid SCRAM exchange state"
 msgstr "არასწორი SCRAM-ის გაცვლის მდგომარეობა"
 
-#: fe-auth-scram.c:317
+#: fe-auth-scram.c:311
 #, c-format
 msgid "malformed SCRAM message (attribute \"%c\" expected)"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (აკლია ატრიბუტი \"%c\")"
 
-#: fe-auth-scram.c:326
+#: fe-auth-scram.c:320
 #, c-format
 msgid "malformed SCRAM message (expected character \"=\" for attribute \"%c\")"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (აკლია \"=\" ატრიბუტი \"%c\"-სთვის)"
 
-#: fe-auth-scram.c:366
+#: fe-auth-scram.c:360
 #, c-format
 msgid "could not generate nonce"
 msgstr "ერთჯერადი კოდის გენერაციის შეცდომა"
 
-#: fe-auth-scram.c:375 fe-auth-scram.c:448 fe-auth-scram.c:600
-#: fe-auth-scram.c:620 fe-auth-scram.c:644 fe-auth-scram.c:658
-#: fe-auth-scram.c:704 fe-auth-scram.c:740 fe-auth-scram.c:914 fe-auth.c:295
-#: fe-auth.c:368 fe-auth.c:402 fe-auth.c:617 fe-auth.c:728 fe-auth.c:1209
-#: fe-auth.c:1374 fe-connect.c:925 fe-connect.c:1759 fe-connect.c:1921
-#: fe-connect.c:3291 fe-connect.c:4496 fe-connect.c:5161 fe-connect.c:5416
-#: fe-connect.c:5534 fe-connect.c:5781 fe-connect.c:5861 fe-connect.c:5959
-#: fe-connect.c:6210 fe-connect.c:6237 fe-connect.c:6313 fe-connect.c:6336
-#: fe-connect.c:6360 fe-connect.c:6395 fe-connect.c:6481 fe-connect.c:6489
-#: fe-connect.c:6846 fe-connect.c:6996 fe-exec.c:527 fe-exec.c:1321
-#: fe-exec.c:3111 fe-exec.c:4071 fe-exec.c:4235 fe-gssapi-common.c:109
-#: fe-lobj.c:870 fe-protocol3.c:204 fe-protocol3.c:228 fe-protocol3.c:256
-#: fe-protocol3.c:273 fe-protocol3.c:353 fe-protocol3.c:720 fe-protocol3.c:959
-#: fe-protocol3.c:1770 fe-protocol3.c:2170 fe-secure-common.c:110
-#: fe-secure-gssapi.c:500 fe-secure-openssl.c:434 fe-secure-openssl.c:1285
+#: fe-auth-scram.c:369 fe-auth-scram.c:442 fe-auth-scram.c:594
+#: fe-auth-scram.c:614 fe-auth-scram.c:638 fe-auth-scram.c:652
+#: fe-auth-scram.c:698 fe-auth-scram.c:734 fe-auth-scram.c:908 fe-auth.c:296
+#: fe-auth.c:369 fe-auth.c:403 fe-auth.c:618 fe-auth.c:727 fe-auth.c:1199
+#: fe-auth.c:1362 fe-cancel.c:159 fe-connect.c:936 fe-connect.c:976
+#: fe-connect.c:1842 fe-connect.c:2004 fe-connect.c:3413 fe-connect.c:4751
+#: fe-connect.c:5063 fe-connect.c:5318 fe-connect.c:5436 fe-connect.c:5683
+#: fe-connect.c:5763 fe-connect.c:5861 fe-connect.c:6112 fe-connect.c:6139
+#: fe-connect.c:6215 fe-connect.c:6238 fe-connect.c:6262 fe-connect.c:6297
+#: fe-connect.c:6383 fe-connect.c:6391 fe-connect.c:6748 fe-connect.c:6898
+#: fe-exec.c:530 fe-exec.c:1315 fe-exec.c:3254 fe-exec.c:4234 fe-exec.c:4398
+#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:209 fe-protocol3.c:232
+#: fe-protocol3.c:255 fe-protocol3.c:272 fe-protocol3.c:293 fe-protocol3.c:369
+#: fe-protocol3.c:737 fe-protocol3.c:976 fe-protocol3.c:1787
+#: fe-protocol3.c:2187 fe-secure-common.c:110 fe-secure-gssapi.c:496
+#: fe-secure-openssl.c:427 fe-secure-openssl.c:1277
 #, c-format
 msgid "out of memory"
 msgstr "მეხსიერებას გარეთ"
 
-#: fe-auth-scram.c:382
+#: fe-auth-scram.c:376
 #, c-format
 msgid "could not encode nonce"
 msgstr "ერთჯერადი კოდის კოდირების შეცდომა"
 
-#: fe-auth-scram.c:570
+#: fe-auth-scram.c:564
 #, c-format
 msgid "could not calculate client proof: %s"
 msgstr "კლიენტის მტკიცებულების გამოთვლის შეცდომა: %s"
 
-#: fe-auth-scram.c:585
+#: fe-auth-scram.c:579
 #, c-format
 msgid "could not encode client proof"
 msgstr "კლიენტის მტკიცებულების კოდირების შეცდომა"
 
-#: fe-auth-scram.c:637
+#: fe-auth-scram.c:631
 #, c-format
 msgid "invalid SCRAM response (nonce mismatch)"
 msgstr "არასწორი SCRAM-ის პასუხი (ერთჯერადი კოდი არ ემთხვევა)"
 
-#: fe-auth-scram.c:667
+#: fe-auth-scram.c:661
 #, c-format
 msgid "malformed SCRAM message (invalid salt)"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (არასწორი მარილი)"
 
-#: fe-auth-scram.c:680
+#: fe-auth-scram.c:674
 #, c-format
 msgid "malformed SCRAM message (invalid iteration count)"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (იტერაციების არასწორი რიცხვი)"
 
-#: fe-auth-scram.c:685
+#: fe-auth-scram.c:679
 #, c-format
 msgid "malformed SCRAM message (garbage at end of server-first-message)"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (ნაპოვნია ნაგავი სერვერისთვის გასაგზავნი პირველი შეტყობინების ბოლოში)"
 
-#: fe-auth-scram.c:719
+#: fe-auth-scram.c:713
 #, c-format
 msgid "error received from server in SCRAM exchange: %s"
 msgstr "მიღებულია სერვერის შეცდომა SCRAM გგაცვლაში: %s"
 
-#: fe-auth-scram.c:734
+#: fe-auth-scram.c:728
 #, c-format
 msgid "malformed SCRAM message (garbage at end of server-final-message)"
 msgstr "დამახინჯებული SCRAM შეტყობინება (ნაგავი სერვერის-საბოლოო-შეტყობინების ბოლოში)"
 
-#: fe-auth-scram.c:751
+#: fe-auth-scram.c:745
 #, c-format
 msgid "malformed SCRAM message (invalid server signature)"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (სერვერის არასწორი ხელმოწერა)"
 
-#: fe-auth-scram.c:923
+#: fe-auth-scram.c:917
 msgid "could not generate random salt"
 msgstr "შემთხვევითი მარილის გენერაციის შეცდომა"
 
-#: fe-auth.c:76
+#: fe-auth.c:77
 #, c-format
 msgid "out of memory allocating GSSAPI buffer (%d)"
 msgstr "არასაკმარისი მეხსიერება GSSAPI-ის ბაფერის გამოყოფისას (%d)"
 
-#: fe-auth.c:137
+#: fe-auth.c:138
 msgid "GSSAPI continuation error"
 msgstr "GSSAPI-ის განგრძობადობის შეცდომა"
 
-#: fe-auth.c:167 fe-auth.c:396 fe-gssapi-common.c:97 fe-secure-common.c:99
+#: fe-auth.c:168 fe-auth.c:397 fe-gssapi-common.c:97 fe-secure-common.c:99
 #: fe-secure-common.c:173
 #, c-format
 msgid "host name must be specified"
 msgstr "ჰოსტის სახელის მითითება აუცილებელია"
 
-#: fe-auth.c:173
+#: fe-auth.c:174
 #, c-format
 msgid "duplicate GSS authentication request"
 msgstr "დუბლირებული GSS ავთენტიკაციის მოთხოვნა"
 
-#: fe-auth.c:237
+#: fe-auth.c:238
 #, c-format
 msgid "out of memory allocating SSPI buffer (%d)"
 msgstr "არასაკმარისი მეხსიერება SSPI-ის ბაფერის გამოყოფისას (%d)"
 
-#: fe-auth.c:284
+#: fe-auth.c:285
 msgid "SSPI continuation error"
 msgstr "SSPI-ის განგრძობადობის შეცდომა"
 
-#: fe-auth.c:358
+#: fe-auth.c:359
 #, c-format
 msgid "duplicate SSPI authentication request"
 msgstr "დუბლირებული SSPI ავთენტიკაციის მოთხოვნა"
 
-#: fe-auth.c:383
+#: fe-auth.c:384
 msgid "could not acquire SSPI credentials"
 msgstr "შეცდომა SSPI-ის მომხმ./პაროლის მიღებისას"
 
@@ -199,12 +200,12 @@ msgstr "არხის მიბმა აუცილებელია, მ�
 msgid "server offered SCRAM-SHA-256-PLUS authentication over a non-SSL connection"
 msgstr "სერვერი გვთავაზობს SCRAM-SHA-256-PLUS ავთენტიკაციას მაშინ, როცა SSL გამორთულია"
 
-#: fe-auth.c:530
+#: fe-auth.c:531
 #, c-format
 msgid "none of the server's SASL authentication mechanisms are supported"
 msgstr "სერვერის SASL ავთენტიკაციის არც ერთი მექანიზმი მხარდაჭერილი არაა"
 
-#: fe-auth.c:537
+#: fe-auth.c:538
 #, c-format
 msgid "channel binding is required, but server did not offer an authentication method that supports channel binding"
 msgstr "მოთხოვნილია არხზე მიბმა, მაგრამ სერვერმა არ შემოგვთავაზა ავთენტიკაციის მექანიზმი, რომელსაც არხზე მიბმის მხარდაჭერა გააჩნია"
@@ -214,721 +215,756 @@ msgstr "მოთხოვნილია არხზე მიბმა, მ�
 msgid "out of memory allocating SASL buffer (%d)"
 msgstr "არასაკმარისი მეხსიერება SASL ბაფერის გამოყოფისას (%d)"
 
-#: fe-auth.c:664
+#: fe-auth.c:663
 #, c-format
 msgid "AuthenticationSASLFinal received from server, but SASL authentication was not completed"
 msgstr "სერვერიდან AuthenticationSASLFinal მიღებულია, მაგრამ SASL ავთენტიკაცია არ დასრულებულა"
 
-#: fe-auth.c:674
+#: fe-auth.c:673
 #, c-format
 msgid "no client response found after SASL exchange success"
 msgstr "კლიენტის SASL გაცვლის წარმატების შემდეგ პასუხი არ გამოუგზავნია"
 
-#: fe-auth.c:737 fe-auth.c:744 fe-auth.c:1357 fe-auth.c:1368
+#: fe-auth.c:736 fe-auth.c:743 fe-auth.c:1345 fe-auth.c:1356
 #, c-format
 msgid "could not encrypt password: %s"
 msgstr "პაროლის დაშიფვრის შეცდომა: %s"
 
-#: fe-auth.c:772
+#: fe-auth.c:771
 msgid "server requested a cleartext password"
 msgstr "სერვერმა ღია პაროლი მოითხოვა"
 
-#: fe-auth.c:774
+#: fe-auth.c:773
 msgid "server requested a hashed password"
 msgstr "სერვერმა დაჰეშილი პაროლი მოითხოვა"
 
-#: fe-auth.c:777
+#: fe-auth.c:776
 msgid "server requested GSSAPI authentication"
 msgstr "დუბლირებული SSPI ავთენტიკაციის მოთხოვნა"
 
-#: fe-auth.c:779
+#: fe-auth.c:778
 msgid "server requested SSPI authentication"
 msgstr "დუბლირებული SSPI ავთენტიკაციის მოთხოვნა"
 
-#: fe-auth.c:783
+#: fe-auth.c:782
 msgid "server requested SASL authentication"
 msgstr "დუბლირებული SASL ავთენტიკაციის მოთხოვნა"
 
-#: fe-auth.c:786
+#: fe-auth.c:785
 msgid "server requested an unknown authentication type"
 msgstr "სერვერმა უცნობი ავთენტიკაციის ტიპი მოითხოვა"
 
-#: fe-auth.c:819
+#: fe-auth.c:818
 #, c-format
 msgid "server did not request an SSL certificate"
 msgstr "სერვერს SSL სერტიფიკატი არ მოუთხოვია"
 
-#: fe-auth.c:824
+#: fe-auth.c:823
 #, c-format
 msgid "server accepted connection without a valid SSL certificate"
 msgstr "სერვერი მიერთების მცდელობას სწორი SSL სერტიფიკატის გარეშე დაეთანხმა"
 
-#: fe-auth.c:878
+#: fe-auth.c:877
 msgid "server did not complete authentication"
 msgstr "სერვერმა ავთენტიკაცია არ დაასრულა"
 
-#: fe-auth.c:912
+#: fe-auth.c:911
 #, c-format
 msgid "authentication method requirement \"%s\" failed: %s"
 msgstr "ავთენტიკაციის მეთოდის (\"%s\") მოთხოვნის შეცდომა: %s"
 
-#: fe-auth.c:935
+#: fe-auth.c:934
 #, c-format
 msgid "channel binding required, but server authenticated client without channel binding"
 msgstr "არხზე მიბმა მოთხოვნილია, მაგრამ სერვერმა კლიენტის ავთენტიკაცია არხზე მიბმის გარეშე მოახდინა"
 
-#: fe-auth.c:940
+#: fe-auth.c:939
 #, c-format
 msgid "channel binding required but not supported by server's authentication request"
 msgstr "არხზე მიბმა მოთხოვნილია, მაგრამ მხარდაუჭერელია სერვერის ავთენტიკაციის მოთხოვნის მიერ"
 
-#: fe-auth.c:974
+#: fe-auth.c:973
 #, c-format
 msgid "Kerberos 4 authentication not supported"
 msgstr "Kerberos 4 ავთენტიკაცია მხარდაჭერილი არაა"
 
-#: fe-auth.c:978
+#: fe-auth.c:977
 #, c-format
 msgid "Kerberos 5 authentication not supported"
 msgstr "Kerberos 5 ავთენტიკაცია მხარდაჭერილი არაა"
 
-#: fe-auth.c:1048
+#: fe-auth.c:1047
 #, c-format
 msgid "GSSAPI authentication not supported"
 msgstr "GSSAPI ავთენტიკაცია მხარდაჭერილი არაა"
 
-#: fe-auth.c:1079
+#: fe-auth.c:1078
 #, c-format
 msgid "SSPI authentication not supported"
 msgstr "SSPI ავთენტიკაცია მხარდაუჭერელია"
 
-#: fe-auth.c:1086
+#: fe-auth.c:1085
 #, c-format
 msgid "Crypt authentication not supported"
 msgstr "Crypt ავთენტიკაცია მხარდაჭერილი არაა"
 
-#: fe-auth.c:1150
+#: fe-auth.c:1149
 #, c-format
 msgid "authentication method %u not supported"
 msgstr "ავთენტიკაციის მეთოდი მხარდაუჭერელია: %u"
 
-#: fe-auth.c:1196
+#: fe-auth.c:1186
 #, c-format
 msgid "user name lookup failure: error code %lu"
 msgstr "მომხარებლის სახელის ამოხსნის პრობლემა: შეცდომის კოდი: %lu"
 
-#: fe-auth.c:1320
+#: fe-auth.c:1308
 #, c-format
 msgid "unexpected shape of result set returned for SHOW"
 msgstr "ბრძანებისთვის SHOW დაბრუნებული შედეგის მოხაზულობა მოულოდნელია"
 
-#: fe-auth.c:1328
+#: fe-auth.c:1316
 #, c-format
 msgid "password_encryption value too long"
 msgstr "password_encryption -ის მნიშვნელობა ძალიან გრძელია"
 
-#: fe-auth.c:1378
+#: fe-auth.c:1366
 #, c-format
 msgid "unrecognized password encryption algorithm \"%s\""
 msgstr "პაროლის დაშიფვრის უცნობი ალგორითმი: \"%s\""
 
-#: fe-connect.c:1132
+#: fe-cancel.c:76
+#, c-format
+msgid "passed connection was NULL"
+msgstr "გადაცემული მიერთება ნულოვანია"
+
+#: fe-cancel.c:82
+#, c-format
+msgid "passed connection is not open"
+msgstr "გადაცემული მიერთება ღია არაა"
+
+#: fe-cancel.c:193
+#, c-format
+msgid "cancel request is already being sent on this connection"
+msgstr "ამ მიერთებით გაუქმების მოთხოვნის გაგზავნა უკვე მიმდინარეობს"
+
+#: fe-cancel.c:263
+#, c-format
+msgid "received unexpected response from server"
+msgstr "სერვერიდან მიღებულია მოულოდნელი პასუხი"
+
+#: fe-connect.c:1182
 #, c-format
 msgid "could not match %d host names to %d hostaddr values"
 msgstr "%d ჰოსტის სახელები %d ჰოსტის მისამართების მნიშვნელობებს არ ემთხვევა"
 
-#: fe-connect.c:1212
+#: fe-connect.c:1262
 #, c-format
 msgid "could not match %d port numbers to %d hosts"
 msgstr "%d პორტის ნომრები %d ჰოსტს არ ემთხვევა"
 
-#: fe-connect.c:1337
+#: fe-connect.c:1387
 #, c-format
 msgid "negative require_auth method \"%s\" cannot be mixed with non-negative methods"
 msgstr "უარყოფითი require_auth მეთოდი \"%s\" არ შეიძლება სხვა არაუარყოფით მეთოდებს შეურიოთ"
 
-#: fe-connect.c:1350
+#: fe-connect.c:1400
 #, c-format
 msgid "require_auth method \"%s\" cannot be mixed with negative methods"
 msgstr "require_auth-ის მეთოდს \"%s\" უარყოფით მეთოდებს ვერ შეურევთ"
 
-#: fe-connect.c:1410 fe-connect.c:1461 fe-connect.c:1503 fe-connect.c:1559
-#: fe-connect.c:1567 fe-connect.c:1598 fe-connect.c:1644 fe-connect.c:1684
-#: fe-connect.c:1705
+#: fe-connect.c:1460 fe-connect.c:1511 fe-connect.c:1553 fe-connect.c:1597
+#: fe-connect.c:1642 fe-connect.c:1650 fe-connect.c:1681 fe-connect.c:1727
+#: fe-connect.c:1767 fe-connect.c:1788
 #, c-format
 msgid "invalid %s value: \"%s\""
 msgstr "%s-ის არასწორი მნიშვნელობა: \"%s\""
 
-#: fe-connect.c:1443
+#: fe-connect.c:1493
 #, c-format
 msgid "require_auth method \"%s\" is specified more than once"
 msgstr "პარამეტრი \"%s\" ერთზე მეტჯერაა მითითებული"
 
-#: fe-connect.c:1484 fe-connect.c:1523 fe-connect.c:1606
+#: fe-connect.c:1534 fe-connect.c:1573 fe-connect.c:1689
 #, c-format
 msgid "%s value \"%s\" invalid when SSL support is not compiled in"
 msgstr "%s-ის მნიშვნელობა \"%s\" არასწორია, როცა SSL-ის მხარდაჭერა გამორთული იყო აგების დროს"
 
-#: fe-connect.c:1546
+#: fe-connect.c:1606
+#, c-format
+msgid "sslnegotiation value \"%s\" invalid when SSL support is not compiled in"
+msgstr "sslnegotiation-ის მნიშვნელობა \"%s\" არასწორია, როცა SSL-ის მხარდაჭერა გამორთული იყო აგების დროს"
+
+#: fe-connect.c:1629
 #, c-format
 msgid "weak sslmode \"%s\" may not be used with sslrootcert=system (use \"verify-full\")"
 msgstr "სუსტი sslmode \"%s\" არ შეიძლება გამოყენებული იქნას sslrootcert=system-თან ერთად (გამოიყენეთ \"verify-full\")"
 
-#: fe-connect.c:1584
+#: fe-connect.c:1667
 #, c-format
 msgid "invalid SSL protocol version range"
 msgstr "არასწორი SSL პროტოკოლის ვერსიის დიაპაზონი"
 
-#: fe-connect.c:1621
+#: fe-connect.c:1704
 #, c-format
 msgid "%s value \"%s\" is not supported (check OpenSSL version)"
 msgstr "%s-ის მნიშვნელობა \"%s\" მხარდაჭერილი არაა (შეამოწმეთ OpenSSL-ის ვერსია)"
 
-#: fe-connect.c:1651
+#: fe-connect.c:1734
 #, c-format
 msgid "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in"
 msgstr "gssencmode -ის მნიშვნელობა \"%s\" არასწორია. GSSAPI-ის მხარდაჭერა გამორთული იყო აგების დროს"
 
-#: fe-connect.c:1944
+#: fe-connect.c:2027
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s"
 msgstr "სოკეტის TCP no_delay რეჟიმის ჩართვის შეცდომა: %s"
 
-#: fe-connect.c:2003
+#: fe-connect.c:2086
 #, c-format
 msgid "connection to server on socket \"%s\" failed: "
 msgstr "სოკეტით (\"%s\")სერვერთან მიერთების შეცდომა: "
 
-#: fe-connect.c:2029
+#: fe-connect.c:2112
 #, c-format
 msgid "connection to server at \"%s\" (%s), port %s failed: "
 msgstr "სერვერის (\"%s\" (%s)) %s-ე პორტზე მიერთების შეცდომა: "
 
-#: fe-connect.c:2034
+#: fe-connect.c:2117
 #, c-format
 msgid "connection to server at \"%s\", port %s failed: "
 msgstr "სერვერის (\"%s\" ) %s-ე პორტზე მიერთების შეცდომა: "
 
-#: fe-connect.c:2057
+#: fe-connect.c:2140
 #, c-format
 msgid "\tIs the server running locally and accepting connections on that socket?"
 msgstr "\tარს სერვერი ლოკალურად გაშვებული და მზადაა სოკეტითა დასაკავშირებლად?"
 
-#: fe-connect.c:2059
+#: fe-connect.c:2142
 #, c-format
 msgid "\tIs the server running on that host and accepting TCP/IP connections?"
 msgstr "\tარის სერვერი გაშვებული ამ ჰოსტზე და ეთანხმება TCP/IP შეერთებებს?"
 
-#: fe-connect.c:2122
-#, c-format
-msgid "invalid integer value \"%s\" for connection option \"%s\""
-msgstr "არასწორი მნიშვნელობა: \"%s\" (უნდა იყოს მთელი რიცხვი) შეერთების პარამეტრისთვის \"%s\""
-
-#: fe-connect.c:2151 fe-connect.c:2185 fe-connect.c:2220 fe-connect.c:2318
-#: fe-connect.c:2973
+#: fe-connect.c:2188 fe-connect.c:2222 fe-connect.c:2257 fe-connect.c:2355
+#: fe-connect.c:3084
 #, c-format
 msgid "%s(%s) failed: %s"
 msgstr "%s(%s) -ის შეცდომა: %s"
 
-#: fe-connect.c:2284
+#: fe-connect.c:2321
 #, c-format
 msgid "%s(%s) failed: error code %d"
 msgstr "%s(%s) -ის შეცდომა: შეცდომის კოდი %d"
 
-#: fe-connect.c:2597
+#: fe-connect.c:2645
 #, c-format
 msgid "invalid connection state, probably indicative of memory corruption"
 msgstr "შეერთების არასწორი მდგომარეობა. დიდი შანსით ნიშნავს მეხსიერების დაზიანებას"
 
-#: fe-connect.c:2676
+#: fe-connect.c:2728
 #, c-format
 msgid "invalid port number: \"%s\""
 msgstr "პორტის არასწორი ნომერი: \"%s\""
 
-#: fe-connect.c:2690
+#: fe-connect.c:2742
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s"
 msgstr "ჰოსტის სახელის (%s) მისამართში თარგმნის შეცდომა: %s"
 
-#: fe-connect.c:2702
+#: fe-connect.c:2754
 #, c-format
 msgid "could not parse network address \"%s\": %s"
 msgstr "ქსელური მისამართის (\"%s\") დამუშავების პრობლემა: %s"
 
-#: fe-connect.c:2713
+#: fe-connect.c:2765
 #, c-format
 msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)"
 msgstr "Unix-დომენის სოკეტის მისამართი \"%s\" ძალიან გრძელია (დასაშვებია %d ბაიტი)"
 
-#: fe-connect.c:2727
+#: fe-connect.c:2779
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s"
 msgstr "unix-დომენის სოკეტის ბილიკის (\"%s\") მისამართად თარგმნის შეცდომა: %s"
 
-#: fe-connect.c:2901
+#: fe-connect.c:2936
+#, c-format
+msgid "GSSAPI encryption required but it is not supported over a local socket"
+msgstr "GSSAPI დაშიფვრა მოთხოვნილია, მაგრამ შეუძლებელია ლოკალური სოკეტის გამოყენებით"
+
+#: fe-connect.c:2944 fe-connect.c:4418
+#, c-format
+msgid "GSSAPI encryption required but no credential cache"
+msgstr "GSSAPI დაშიფვრა მოთხოვნილია, მაგრამ ავტორიზაციის დეტალების კეში არ არსებობს"
+
+#: fe-connect.c:3012
 #, c-format
 msgid "could not create socket: %s"
 msgstr "სოკეტის შექმნის შეცდომა: %s"
 
-#: fe-connect.c:2932
+#: fe-connect.c:3043
 #, c-format
 msgid "could not set socket to nonblocking mode: %s"
 msgstr "სოკეტის არაბლოკირებული რეჟიმის დაყენების შეცდომა: %s"
 
-#: fe-connect.c:2943
+#: fe-connect.c:3054
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s"
 msgstr "სოკეტის დახურვა-შესრულებისას რეჟიმის დაყენების შეცდომა: %s"
 
-#: fe-connect.c:2961
+#: fe-connect.c:3072
 #, c-format
 msgid "keepalives parameter must be an integer"
 msgstr "პარამეტრი keepalives მთელი რიცხვი უნდა იყოს"
 
-#: fe-connect.c:3100
+#: fe-connect.c:3211
 #, c-format
 msgid "could not get socket error status: %s"
 msgstr "სოკეტის შეცდომის სტატუსის მიღების შეცდომა: %s"
 
-#: fe-connect.c:3127
+#: fe-connect.c:3238
 #, c-format
 msgid "could not get client address from socket: %s"
 msgstr "კლიენტის მისამართის სოკეტიდან მიღების შეცდომა: %s"
 
-#: fe-connect.c:3165
+#: fe-connect.c:3264
 #, c-format
 msgid "requirepeer parameter is not supported on this platform"
 msgstr "პარამეტრი requirepeer ამ პლატფორმაზე მხარდაჭერილი არაა"
 
-#: fe-connect.c:3167
+#: fe-connect.c:3266
 #, c-format
 msgid "could not get peer credentials: %s"
 msgstr "პარტნიორის ავტორიზაციის დეტალების მიღების შეცდომა: %s"
 
-#: fe-connect.c:3180
+#: fe-connect.c:3279
 #, c-format
 msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\""
 msgstr "requrepeer-ის მნიშვნელობაა \"%s\", მაგრამ პარტნიორის მომხმარებლის ნამდვილი ასხელია: \"%s\""
 
-#: fe-connect.c:3221
+#: fe-connect.c:3317
 #, c-format
 msgid "could not send GSSAPI negotiation packet: %s"
 msgstr "შეცდომა GSSAPI-ის მიმოცვლის პაკეტის გაგზავნისას: %s"
 
-#: fe-connect.c:3233
-#, c-format
-msgid "GSSAPI encryption required but was impossible (possibly no credential cache, no server support, or using a local socket)"
-msgstr "GSSAPI დაშიფვრა მოთხოვნილია, მაგრამ შეუძლებელი (შესაძლო მიზეზებია მომხმ/პაროლის ქეშის არარსებობა, სერვერის მხარეს მხარდაჭერის არ არსებობა ან ლოკალური სოკეტის გამოყენება)"
-
-#: fe-connect.c:3274
+#: fe-connect.c:3370
 #, c-format
 msgid "could not send SSL negotiation packet: %s"
 msgstr "შეცდომა SSL მიმოცვლის პაკეტის გაგზავნისას: %s"
 
-#: fe-connect.c:3303
+#: fe-connect.c:3395
+#, c-format
+msgid "could not send cancel packet: %s"
+msgstr "გაუქმების პაკეტის გაგზავნა შეუძლებელია: %s"
+
+#: fe-connect.c:3425
 #, c-format
 msgid "could not send startup packet: %s"
 msgstr "გაშვების პაკეტის გაგზავნის შეცდომა: %s"
 
-#: fe-connect.c:3378
-#, c-format
-msgid "server does not support SSL, but SSL was required"
-msgstr "სერვერს SSL-ის მხარდაჭერა არ გააჩნია, მაგრამ SSL-ი აუცილებელია"
-
-#: fe-connect.c:3404
+#: fe-connect.c:3507
 #, c-format
 msgid "received invalid response to SSL negotiation: %c"
 msgstr "არასწორი პასუხი SSL მიმოცვლისას: %c"
 
-#: fe-connect.c:3424
+#: fe-connect.c:3535
 #, c-format
 msgid "received unencrypted data after SSL response"
 msgstr "'SSL' პასუხის შემდეგ მიღებული მონაცემები დაუშიფრავია"
 
-#: fe-connect.c:3504
-#, c-format
-msgid "server doesn't support GSSAPI encryption, but it was required"
-msgstr "სერვერს GSSAPI დაშიფვრის მხარდაჭერა არ გააჩნა, მაგრამ ის მოთხოვილია"
-
-#: fe-connect.c:3515
+#: fe-connect.c:3605
 #, c-format
 msgid "received invalid response to GSSAPI negotiation: %c"
 msgstr "'GSSAPI' მიმოცვლის არასწორი პასუხი: %c"
 
-#: fe-connect.c:3533
+#: fe-connect.c:3623
 #, c-format
 msgid "received unencrypted data after GSSAPI encryption response"
 msgstr "'GSSAPI' პასუხის შემდეგ მიღებული მონაცემები დაუშიფრავია"
 
-#: fe-connect.c:3598
+#: fe-connect.c:3679
 #, c-format
 msgid "expected authentication request from server, but received %c"
 msgstr "სერვერიდან მოსალოდნელი იყო ავთენტიკაციის მოთხოვნა, მაგრამ მიღებულია %c"
 
-#: fe-connect.c:3625 fe-connect.c:3794
+#: fe-connect.c:3707 fe-connect.c:3830
 #, c-format
 msgid "received invalid authentication request"
 msgstr "დუბლირებული GSS ავთენტიკაციის მოთხოვნა"
 
-#: fe-connect.c:3630 fe-connect.c:3779
+#: fe-connect.c:3713 fe-connect.c:3815
 #, c-format
 msgid "received invalid protocol negotiation message"
 msgstr "მიღებულია არასწორი პროტოკოლის მიმოცვლის შეტყობინება"
 
-#: fe-connect.c:3648 fe-connect.c:3702
+#: fe-connect.c:3732 fe-connect.c:3786
 #, c-format
 msgid "received invalid error message"
 msgstr "მიღებულია არასწორი შეცდომის შეტყობინება"
 
-#: fe-connect.c:3865
+#: fe-connect.c:3901
 #, c-format
 msgid "unexpected message from server during startup"
 msgstr "სერვერის გაშვებისას მიღებულია მოულოდნელი შეტყობინება"
 
-#: fe-connect.c:3956
+#: fe-connect.c:3992
 #, c-format
 msgid "session is read-only"
 msgstr "სესია მხოლოდ კითხვადია"
 
-#: fe-connect.c:3958
+#: fe-connect.c:3994
 #, c-format
 msgid "session is not read-only"
 msgstr "სესია მხოლოდ კითხვადი არა"
 
-#: fe-connect.c:4011
+#: fe-connect.c:4047
 #, c-format
 msgid "server is in hot standby mode"
 msgstr "სერვერი მზა-უქმე რეჟიმშია"
 
-#: fe-connect.c:4013
+#: fe-connect.c:4049
 #, c-format
 msgid "server is not in hot standby mode"
 msgstr "სერვერი მზა-უქმე რეჟიმში არაა"
 
-#: fe-connect.c:4129 fe-connect.c:4179
+#: fe-connect.c:4171 fe-connect.c:4221
 #, c-format
 msgid "\"%s\" failed"
 msgstr "\"%s\"-ის შეცდომა"
 
-#: fe-connect.c:4193
+#: fe-connect.c:4235
 #, c-format
 msgid "invalid connection state %d, probably indicative of memory corruption"
 msgstr "შეერთების არასწორი მდგომარეობა (%d). დიდი შანსით ნიშნავს მეხსიერების დაზიანებას"
 
-#: fe-connect.c:5174
+#: fe-connect.c:4273
+#, c-format
+msgid "GSSAPI encryption required but it is not supported over a local socket)"
+msgstr "GSSAPI დაშიფვრა მოთხოვნილია, მაგრამ შეუძლებელია ლოკალური სოკეტის გამოყენებით)"
+
+#: fe-connect.c:5076
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://"
 msgstr "'LDAP'-ის არასწორი URL: \"%s\": სქემა ldap:// უნდა იყოს"
 
-#: fe-connect.c:5189
+#: fe-connect.c:5091
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name"
 msgstr "'LDAP'-ის არასწორი URL: \"%s\": აკლია გამოყოფილი სახელი"
 
-#: fe-connect.c:5201 fe-connect.c:5259
+#: fe-connect.c:5103 fe-connect.c:5161
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute"
 msgstr "'LDAP'-ის არასწორი URL \"%s\": ზუსტად ერთი ატრიბუტი უნდა ჰქონდეს"
 
-#: fe-connect.c:5213 fe-connect.c:5275
+#: fe-connect.c:5115 fe-connect.c:5177
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)"
 msgstr "'LDAP'-ის არასწორი URL: \"%s\": საჭიროა ძებნის ფარგლების ქონა (საბაზისო/ერთი/ქვე)"
 
-#: fe-connect.c:5225
+#: fe-connect.c:5127
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter"
 msgstr "'LDAP'-ის არასწორი URL: \"%s\":ფილტრი არ არსებობს"
 
-#: fe-connect.c:5247
+#: fe-connect.c:5149
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number"
 msgstr "'LDAP'-ის არასწორი URL: \"%s\": პორტის არასწორი ნომერი"
 
-#: fe-connect.c:5284
+#: fe-connect.c:5186
 #, c-format
 msgid "could not create LDAP structure"
 msgstr "შეცდომა LDAP-ის სტრუქტურის შექმნისას"
 
-#: fe-connect.c:5359
+#: fe-connect.c:5261
 #, c-format
 msgid "lookup on LDAP server failed: %s"
 msgstr "'LDAP' სერვერის მოძებნის შეცდომა: %s"
 
-#: fe-connect.c:5369
+#: fe-connect.c:5271
 #, c-format
 msgid "more than one entry found on LDAP lookup"
 msgstr "ძებნისას (LDAP) ნაპოვნია ერთზე მეტი ჩანაწერი"
 
-#: fe-connect.c:5371 fe-connect.c:5382
+#: fe-connect.c:5273 fe-connect.c:5284
 #, c-format
 msgid "no entry found on LDAP lookup"
 msgstr "ძებნისას (LDAP) ჩანაწერები ნაპოვნი არაა"
 
-#: fe-connect.c:5392 fe-connect.c:5404
+#: fe-connect.c:5294 fe-connect.c:5306
 #, c-format
 msgid "attribute has no values on LDAP lookup"
 msgstr "'LDAP' ძებნის ატრიბუტს მნიშვნელობა არ გააჩნია"
 
-#: fe-connect.c:5455 fe-connect.c:5474 fe-connect.c:5998
+#: fe-connect.c:5357 fe-connect.c:5376 fe-connect.c:5900
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string"
 msgstr "შეერთების სტრიქონში \"%s\"-ის შემდეგ \"=\" აკლია"
 
-#: fe-connect.c:5545 fe-connect.c:6181 fe-connect.c:6979
+#: fe-connect.c:5447 fe-connect.c:6083 fe-connect.c:6881
 #, c-format
 msgid "invalid connection option \"%s\""
 msgstr "შეერთების არასწორი პარამეტრი: \"%s\""
 
-#: fe-connect.c:5560 fe-connect.c:6046
+#: fe-connect.c:5462 fe-connect.c:5948
 #, c-format
 msgid "unterminated quoted string in connection info string"
 msgstr "შეერთების ინფორმაციის სტრიქონში ბრჭყალებში ჩასმული სტრიქონი დაუსრულებელია"
 
-#: fe-connect.c:5640
+#: fe-connect.c:5542
 #, c-format
 msgid "definition of service \"%s\" not found"
 msgstr "სერვისის აღწერა არ არსებობს: \"%s\""
 
-#: fe-connect.c:5666
+#: fe-connect.c:5568
 #, c-format
 msgid "service file \"%s\" not found"
 msgstr "სერვისის ფაილი არ არსებობს: \"%s\""
 
-#: fe-connect.c:5679
+#: fe-connect.c:5581
 #, c-format
 msgid "line %d too long in service file \"%s\""
 msgstr "ძალიან გრძელი ხაზი (%d) სერვისის ფაილში \"%s\""
 
-#: fe-connect.c:5750 fe-connect.c:5793
+#: fe-connect.c:5652 fe-connect.c:5695
 #, c-format
 msgid "syntax error in service file \"%s\", line %d"
 msgstr "სინტაქსის შეცდომა სერვისის ფაილში \"%s\" ხაზზე %d"
 
-#: fe-connect.c:5761
+#: fe-connect.c:5663
 #, c-format
 msgid "nested service specifications not supported in service file \"%s\", line %d"
 msgstr "სერვისის ფაილში \"%s\" ჩადგმული სერვისის მითითება მხარდაუჭერელია. ხაზი %d"
 
-#: fe-connect.c:6500
+#: fe-connect.c:6402
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\""
 msgstr "დამუშავებს შიდა ფუნქციაში გადაცემული URI არასწორია: %s"
 
-#: fe-connect.c:6577
+#: fe-connect.c:6479
 #, c-format
 msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\""
 msgstr "სტრიქონის დასასრული \"]\"-ს IPv6 ჰოსტის მისამართში URI-ში ძებნისას: \"%s\""
 
-#: fe-connect.c:6584
+#: fe-connect.c:6486
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\""
 msgstr "ჰოსტის IPv6 მისამართი URI-ში ცარიელი ვერ იქნება: \"%s\""
 
-#: fe-connect.c:6599
+#: fe-connect.c:6501
 #, c-format
 msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\""
 msgstr "უცნობი სიმბოლო (\"%c\") URI-ში პოზიციაზე %d (მოველოდი \":\"-ს ან \"/\"-ს): \"%s\""
 
-#: fe-connect.c:6728
+#: fe-connect.c:6630
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\""
 msgstr "მოთხოვნის URI არამეტრში მითითებულია გასაღები/მნიშვნელობის ზედმეტი \"=\": \"%s\""
 
-#: fe-connect.c:6748
+#: fe-connect.c:6650
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\""
 msgstr "მოთხოვნის URI პარამეტრში მითითებულია გასაღები/მნიშვნელობის წყვილს \"=\" აკლია: \"%s\""
 
-#: fe-connect.c:6800
+#: fe-connect.c:6702
 #, c-format
 msgid "invalid URI query parameter: \"%s\""
 msgstr "მოთხოვნის არასწორი პარამეტრი: \"%s\""
 
-#: fe-connect.c:6874
+#: fe-connect.c:6776
 #, c-format
 msgid "invalid percent-encoded token: \"%s\""
 msgstr "არასწორი პროცენტულად-კოდირებული კოდი: \"%s\""
 
-#: fe-connect.c:6884
+#: fe-connect.c:6786
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\""
 msgstr "პროცენტში კოდირებული მნიშვნელობის აკრძალული მნიშვნელობა %%00: \"%s\""
 
-#: fe-connect.c:7248
+#: fe-connect.c:7150
 msgid "connection pointer is NULL\n"
 msgstr "შეერთების მაჩვენებელი ნულოვანია\n"
 
-#: fe-connect.c:7256 fe-exec.c:710 fe-exec.c:970 fe-exec.c:3292
-#: fe-protocol3.c:974 fe-protocol3.c:1007
+#: fe-connect.c:7158 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3459
+#: fe-protocol3.c:991 fe-protocol3.c:1024
 msgid "out of memory\n"
 msgstr "არასაკმარისი მეხსიერება\n"
 
-#: fe-connect.c:7547
+#: fe-connect.c:7449
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "გაფრთხილება. პაროლის ფაილი \"%s\" უბრალოდ ფაილს არ წარმოადგენს\n"
 
-#: fe-connect.c:7556
+#: fe-connect.c:7458
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "გაფრთხილება: პაროლების ფაილს \"%s\" ჯგუფზე ან დანარჩენ ყველაზე წვდომა გააჩნია. წვდომა 0600 ან ნაკლები უნდა იყოს\n"
 
-#: fe-connect.c:7663
+#: fe-connect.c:7565
 #, c-format
 msgid "password retrieved from file \"%s\""
 msgstr "პაროლი მიღებულია ფაილიდან \"%s\""
 
-#: fe-exec.c:466 fe-exec.c:3366
+#: fe-connect.c:7717
+#, c-format
+msgid "invalid integer value \"%s\" for connection option \"%s\""
+msgstr "არასწორი მნიშვნელობა: \"%s\" (უნდა იყოს მთელი რიცხვი) შეერთების პარამეტრისთვის \"%s\""
+
+#: fe-exec.c:469 fe-exec.c:3533
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "მწკრივების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:528 fe-protocol3.c:1976
+#: fe-exec.c:531 fe-protocol3.c:1993
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-exec.c:831
+#: fe-exec.c:834
 #, c-format
 msgid "write to server failed"
 msgstr "სერვერზე ჩაწერის შეცდომა"
 
-#: fe-exec.c:869
+#: fe-exec.c:874
 #, c-format
 msgid "no error text available"
 msgstr "შეცდომის ტექსტი ხელმიუწვდომელია"
 
-#: fe-exec.c:958
+#: fe-exec.c:963
 msgid "NOTICE"
 msgstr "გაფრთხილება"
 
-#: fe-exec.c:1016
+#: fe-exec.c:1021
 msgid "PGresult cannot support more than INT_MAX tuples"
 msgstr "PGresult-ს INT_MAX-ზე მეტი სტრუქტურის მხარდაჭერა არ გააჩნია"
 
-#: fe-exec.c:1028
+#: fe-exec.c:1033
 msgid "size_t overflow"
 msgstr "size_t -ის გადავსება"
 
-#: fe-exec.c:1444 fe-exec.c:1513 fe-exec.c:1559
+#: fe-exec.c:1438 fe-exec.c:1507 fe-exec.c:1553
 #, c-format
 msgid "command string is a null pointer"
 msgstr "ბრძანების სტრიქონი ნულოვანი მაჩვენებელია"
 
-#: fe-exec.c:1450 fe-exec.c:2888
+#: fe-exec.c:1444 fe-exec.c:3003
 #, c-format
 msgid "%s not allowed in pipeline mode"
 msgstr "კომუნიკაციის არხის რეჟიმში %s დაუშვებელია"
 
-#: fe-exec.c:1518 fe-exec.c:1564 fe-exec.c:1658
+#: fe-exec.c:1512 fe-exec.c:1558 fe-exec.c:1652
 #, c-format
 msgid "number of parameters must be between 0 and %d"
 msgstr "პარამეტრების რაოდენობა 0-სა და %d-ს შორის შეიძლება იყოს"
 
-#: fe-exec.c:1554 fe-exec.c:1653
+#: fe-exec.c:1548 fe-exec.c:1647
 #, c-format
 msgid "statement name is a null pointer"
 msgstr "გამოსახულების სახელი ნულოვანი მაჩვენებელია"
 
-#: fe-exec.c:1695 fe-exec.c:3220
+#: fe-exec.c:1689 fe-exec.c:3379
 #, c-format
 msgid "no connection to the server"
 msgstr "სერვერთან შეერთება არ არსებობს"
 
-#: fe-exec.c:1703 fe-exec.c:3228
+#: fe-exec.c:1697 fe-exec.c:3387
 #, c-format
 msgid "another command is already in progress"
 msgstr "უკვე გაშვებულია სხვა ბრძანება"
 
-#: fe-exec.c:1733
+#: fe-exec.c:1727
 #, c-format
 msgid "cannot queue commands during COPY"
 msgstr "როცა გაშვებულია ბრძანება COPY, სხვა ბრძანებებს ვერ გაუშვებთ"
 
-#: fe-exec.c:1850
+#: fe-exec.c:1846
 #, c-format
 msgid "length must be given for binary parameter"
 msgstr "ბინარული პარამეტრისთვის სიგრძის მითითება აუცილებელია"
 
-#: fe-exec.c:2171
+#: fe-exec.c:2205
 #, c-format
 msgid "unexpected asyncStatus: %d"
 msgstr "მოულოდნელი asyncStatus: %d"
 
-#: fe-exec.c:2327
+#: fe-exec.c:2361
 #, c-format
 msgid "synchronous command execution functions are not allowed in pipeline mode"
 msgstr "კომუნიკაციის არხის რეჟიმში ბრძანების სინქრონული შესრულების ფუნქციები მიუწვდომელია"
 
-#: fe-exec.c:2344
+#: fe-exec.c:2378
 msgid "COPY terminated by new PQexec"
 msgstr "COPY შეწყვეტილია ახალი PQexec-ის მიერ"
 
-#: fe-exec.c:2360
+#: fe-exec.c:2394
 #, c-format
 msgid "PQexec not allowed during COPY BOTH"
 msgstr "COPY BOTH-ის დროს PQexec დაუშვებელია"
 
-#: fe-exec.c:2586 fe-exec.c:2641 fe-exec.c:2709 fe-protocol3.c:1907
+#: fe-exec.c:2630
+#, c-format
+msgid "unknown command type provided"
+msgstr "მითითებულია უცნობი ბრძანების ტიპი"
+
+#: fe-exec.c:2702 fe-exec.c:2756 fe-exec.c:2824 fe-protocol3.c:1924
 #, c-format
 msgid "no COPY in progress"
 msgstr "ბრძანება COPY გაშვებული არაა"
 
-#: fe-exec.c:2895
+#: fe-exec.c:3010
 #, c-format
 msgid "connection in wrong state"
 msgstr "შეერთების მდგომარეობა არასწორია"
 
-#: fe-exec.c:2938
+#: fe-exec.c:3053
 #, c-format
 msgid "cannot enter pipeline mode, connection not idle"
 msgstr "კომუნიკაციის არხის რეჟიმზე გადართვის შეცდომა. შეერთება უქმე არაა"
 
-#: fe-exec.c:2974 fe-exec.c:2995
+#: fe-exec.c:3089 fe-exec.c:3110
 #, c-format
 msgid "cannot exit pipeline mode with uncollected results"
 msgstr "მოგროვებული შედეგების გარეშე კომუნიკაციის არხის რეჟიმიდან ვერ გახვალთ"
 
-#: fe-exec.c:2978
+#: fe-exec.c:3093
 #, c-format
 msgid "cannot exit pipeline mode while busy"
 msgstr "კომუნიკაციის არხის რეჟიმიდან გასვლა მაშინ, როცა ის დაკავებულია, შეუძლებელია"
 
-#: fe-exec.c:2989
+#: fe-exec.c:3104
 #, c-format
 msgid "cannot exit pipeline mode while in COPY"
 msgstr "კომუნიკაციის არხის რეჟიმიდან გასვლა მაშინ, როცა ის დაკავებულია, შეუძლებელია"
 
-#: fe-exec.c:3154
+#: fe-exec.c:3303
 #, c-format
 msgid "cannot send pipeline when not in pipeline mode"
 msgstr "კომუნიკაციის არხის გაგზავნა, როცა კომუნიკაციის არხის რეჟიმში არ ხართ, შეუძლებელია"
 
-#: fe-exec.c:3255
+#: fe-exec.c:3422
 msgid "invalid ExecStatusType code"
 msgstr "'ExecStatusType'-ის არასწორი კოდი"
 
-#: fe-exec.c:3282
+#: fe-exec.c:3449
 msgid "PGresult is not an error result\n"
 msgstr "PGresult შეცდომითი შედეგი არაა\n"
 
-#: fe-exec.c:3350 fe-exec.c:3373
+#: fe-exec.c:3517 fe-exec.c:3540
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "სვეტების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:3388
+#: fe-exec.c:3555
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "პარამეტრების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:3699
+#: fe-exec.c:3866
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "სერვერის პასუხის გაურკვეველია: %s"
 
-#: fe-exec.c:3964 fe-exec.c:4054
+#: fe-exec.c:4127 fe-exec.c:4217
 #, c-format
 msgid "incomplete multibyte character"
 msgstr "დაუსრულებელი მრავალბაიტიანი სიმბოლო"
@@ -979,23 +1015,23 @@ msgstr "ფაილში (\"%s\") ჩაწერის შეცდომა:
 msgid "query to initialize large object functions did not return data"
 msgstr "დიდი ობიექტის ფუნქციების ინიციალიზაციის მოთხოვნას შედეგ არ დაუბრუნებია"
 
-#: fe-misc.c:240
+#: fe-misc.c:239
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "%lu-ის მთელი რიცხვის ზომა მხარდაუჭერელია pqGetInt-is მიერ"
 
-#: fe-misc.c:273
+#: fe-misc.c:272
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "%lu-ის მთელი რიცხვის ზომა მხარდაუჭერელია pqPutInt-is მიერ"
 
-#: fe-misc.c:573
+#: fe-misc.c:572
 #, c-format
 msgid "connection not open"
 msgstr "შეერთება ღია არაა"
 
-#: fe-misc.c:751 fe-secure-openssl.c:215 fe-secure-openssl.c:315
-#: fe-secure.c:257 fe-secure.c:419
+#: fe-misc.c:750 fe-secure-openssl.c:203 fe-secure-openssl.c:309
+#: fe-secure.c:237 fe-secure.c:404
 #, c-format
 msgid ""
 "server closed the connection unexpectedly\n"
@@ -1006,172 +1042,172 @@ msgstr ""
 "\tეს დიდი ალბათობით ნიშნავს, რომ სერვერის პროცესი \n"
 "\tმოულოდნელად, მოთხოვნამდე ან მოთხოვნის შესრულებსას დასრულდა."
 
-#: fe-misc.c:818
+#: fe-misc.c:817
 msgid "connection not open\n"
 msgstr "შეერთება ღია არაა\n"
 
-#: fe-misc.c:1003
+#: fe-misc.c:1002
 #, c-format
 msgid "timeout expired"
 msgstr "მოლოდინის დრო გავიდა"
 
-#: fe-misc.c:1047
+#: fe-misc.c:1046
 #, c-format
 msgid "invalid socket"
 msgstr "არასწორი სოკეტი"
 
-#: fe-misc.c:1069
+#: fe-misc.c:1068
 #, c-format
 msgid "%s() failed: %s"
 msgstr "%s()-ის შეცდომა: %s"
 
-#: fe-protocol3.c:182
+#: fe-protocol3.c:187
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "შეტყობინების ტიპი 0x%02x მოვიდა სერვერიდან, როცა უქმე ვიყავი"
 
-#: fe-protocol3.c:385
+#: fe-protocol3.c:402
 #, c-format
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
 msgstr "სერვერმა მონაცემები (\"D\" შეტყობინება) მწკრივების წინასწარი აღწერის (\"T\" შეტყობინება) გარეშე გამოაგზავნა"
 
-#: fe-protocol3.c:427
+#: fe-protocol3.c:444
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\""
 msgstr "სერვერის მოულოდნელი პასუხი; პირველი მიღებული სიმბოლოა \"%c\""
 
-#: fe-protocol3.c:450
+#: fe-protocol3.c:467
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\""
 msgstr "შეტყობინების შიგთავსი შეტყობინების ამ ტიპის (%c) სიგრძეს არ ემთხვევა"
 
-#: fe-protocol3.c:468
+#: fe-protocol3.c:485
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d"
 msgstr "სერვერთან სინქრონიზაციის შეცდომა: შეტყობინების ტიპი: \"%c\", სიგრძე %d"
 
-#: fe-protocol3.c:520 fe-protocol3.c:560
+#: fe-protocol3.c:537 fe-protocol3.c:577
 msgid "insufficient data in \"T\" message"
 msgstr "არასაკმარისი მონაცემები \"T\" შეტყობინებაში"
 
-#: fe-protocol3.c:631 fe-protocol3.c:837
+#: fe-protocol3.c:648 fe-protocol3.c:854
 msgid "out of memory for query result"
 msgstr "არასაკმარისი მეხსიერება მოთხოვნის შედეგისთვის"
 
-#: fe-protocol3.c:700
+#: fe-protocol3.c:717
 msgid "insufficient data in \"t\" message"
 msgstr "არასაკმარისი მონაცემები \"t\" შეტყობინებაში"
 
-#: fe-protocol3.c:759 fe-protocol3.c:791 fe-protocol3.c:809
+#: fe-protocol3.c:776 fe-protocol3.c:808 fe-protocol3.c:826
 msgid "insufficient data in \"D\" message"
 msgstr "არასაკმარისი მონაცემები \"D\" შეტყობინებაში"
 
-#: fe-protocol3.c:765
+#: fe-protocol3.c:782
 msgid "unexpected field count in \"D\" message"
 msgstr "ველების მოულოდნელი რაოდენობა \"D\" შეტყობინებაში"
 
-#: fe-protocol3.c:1020
+#: fe-protocol3.c:1037
 msgid "no error message available\n"
 msgstr "შეცდომის შეტყობინების გარეშე\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1068 fe-protocol3.c:1087
+#: fe-protocol3.c:1085 fe-protocol3.c:1104
 #, c-format
 msgid " at character %s"
 msgstr " სიმბოლოსთან %s"
 
-#: fe-protocol3.c:1100
+#: fe-protocol3.c:1117
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "დეტალი:  %s\n"
 
-#: fe-protocol3.c:1103
+#: fe-protocol3.c:1120
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "მინიშნება:  %s\n"
 
-#: fe-protocol3.c:1106
+#: fe-protocol3.c:1123
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "მოთხოვნა:  %s\n"
 
-#: fe-protocol3.c:1113
+#: fe-protocol3.c:1130
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "კონტექსტი:  %s\n"
 
-#: fe-protocol3.c:1122
+#: fe-protocol3.c:1139
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "სქემის სახელი:  %s\n"
 
-#: fe-protocol3.c:1126
+#: fe-protocol3.c:1143
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "ცხრილის სახელი:  %s\n"
 
-#: fe-protocol3.c:1130
+#: fe-protocol3.c:1147
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "სვეტის სახელი:  %s\n"
 
-#: fe-protocol3.c:1134
+#: fe-protocol3.c:1151
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "მონ. ტიპის სახელი:  %s\n"
 
-#: fe-protocol3.c:1138
+#: fe-protocol3.c:1155
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "შეზღუდვის სახელი:  %s\n"
 
-#: fe-protocol3.c:1150
+#: fe-protocol3.c:1167
 msgid "LOCATION:  "
 msgstr "მდებარეობა:  "
 
-#: fe-protocol3.c:1152
+#: fe-protocol3.c:1169
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1154
+#: fe-protocol3.c:1171
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1349
+#: fe-protocol3.c:1366
 #, c-format
 msgid "LINE %d: "
 msgstr "ხაზი %d: "
 
-#: fe-protocol3.c:1423
+#: fe-protocol3.c:1440
 #, c-format
 msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u"
 msgstr "პროტოკოლის ვერსია სერვერის მიერ მხარდაჭერილი არაა: კლიენტი იყენებს %u.%u, სერვერის მხარდაჭერილი ვერსიის მაქსიმუმია %u.%u"
 
-#: fe-protocol3.c:1429
+#: fe-protocol3.c:1446
 #, c-format
 msgid "protocol extension not supported by server: %s"
 msgid_plural "protocol extensions not supported by server: %s"
 msgstr[0] "პროტოკოლის გაფართოება სერვერის მიერ მხარდაჭერილი არაა: %s"
 msgstr[1] "პროტოკოლის გაფართოებები სერვერის მიერ მხარდაჭერილი არაა: %s"
 
-#: fe-protocol3.c:1437
+#: fe-protocol3.c:1454
 #, c-format
 msgid "invalid %s message"
 msgstr "არასწორი %s შეტყობინება"
 
-#: fe-protocol3.c:1802
+#: fe-protocol3.c:1819
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: ტექსტის COPY OUT-ს არ გავაკეთებ"
 
-#: fe-protocol3.c:2176
+#: fe-protocol3.c:2193
 #, c-format
 msgid "protocol error: no function result"
 msgstr "პროტოკოლის შეცდომა: ფუნქციის შედეგის გარეშე"
 
-#: fe-protocol3.c:2187
+#: fe-protocol3.c:2204
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "პროტოკოლის შეცდომა: id=0x%x"
@@ -1213,132 +1249,132 @@ msgstr "სერვერის სერტიფიკატი \"%s\"-თვ
 msgid "could not get server's host name from server certificate"
 msgstr "სერვერის სერტიფიკატიდან ჰოსტის სახელის მიღების შეცდომა"
 
-#: fe-secure-gssapi.c:201
+#: fe-secure-gssapi.c:194
 msgid "GSSAPI wrap error"
 msgstr "GSSAPI -ის გადატანის შეცდომა"
 
-#: fe-secure-gssapi.c:208
+#: fe-secure-gssapi.c:201
 #, c-format
 msgid "outgoing GSSAPI message would not use confidentiality"
 msgstr "გამავალი GSSAPI შეტყობინება კონფიდენციალობას ვერ იყენებს"
 
-#: fe-secure-gssapi.c:215
+#: fe-secure-gssapi.c:208
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)"
 msgstr "კლიენტი ძალიან დიდი GSSAPI პაკეტების გაგზავნას ცდილობს (%zu > %zu)"
 
-#: fe-secure-gssapi.c:351 fe-secure-gssapi.c:593
+#: fe-secure-gssapi.c:347 fe-secure-gssapi.c:589
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)"
 msgstr "სერვერის მიერ გამოგზავნილი GSSAPI-ის პაკეტი ძალიან დიდია (%zu > %zu)"
 
-#: fe-secure-gssapi.c:390
+#: fe-secure-gssapi.c:386
 msgid "GSSAPI unwrap error"
 msgstr "GSSAPI-ის გადატანის მოხსნის შეცდომა"
 
-#: fe-secure-gssapi.c:399
+#: fe-secure-gssapi.c:395
 #, c-format
 msgid "incoming GSSAPI message did not use confidentiality"
 msgstr "შემომავალი GSSAPI შეტყობინება კონფიდენციალობას ვერ იყენებს"
 
-#: fe-secure-gssapi.c:656
+#: fe-secure-gssapi.c:652
 msgid "could not initiate GSSAPI security context"
 msgstr "'GSSAPI' უსაფრთხოების კონტექსტის დაწყების შეცდომა"
 
-#: fe-secure-gssapi.c:685
+#: fe-secure-gssapi.c:681
 msgid "GSSAPI size check error"
 msgstr "GSSAPI-ის ზომის შემოწმების შეცდომა"
 
-#: fe-secure-gssapi.c:696
+#: fe-secure-gssapi.c:692
 msgid "GSSAPI context establishment error"
 msgstr "GSSAPI-ის კონტექსტის დამყარებულობის შეცდომა"
 
-#: fe-secure-openssl.c:219 fe-secure-openssl.c:319 fe-secure-openssl.c:1531
+#: fe-secure-openssl.c:207 fe-secure-openssl.c:313 fe-secure-openssl.c:1524
 #, c-format
 msgid "SSL SYSCALL error: %s"
 msgstr "SSL SYSCALL-ის შეცდომა: %s"
 
-#: fe-secure-openssl.c:225 fe-secure-openssl.c:325 fe-secure-openssl.c:1534
+#: fe-secure-openssl.c:213 fe-secure-openssl.c:319 fe-secure-openssl.c:1527
 #, c-format
 msgid "SSL SYSCALL error: EOF detected"
 msgstr "SSL SYSCALL -ის შეცდომა: ნაპოვნია EOF"
 
-#: fe-secure-openssl.c:235 fe-secure-openssl.c:335 fe-secure-openssl.c:1542
+#: fe-secure-openssl.c:223 fe-secure-openssl.c:329 fe-secure-openssl.c:1535
 #, c-format
 msgid "SSL error: %s"
 msgstr "SSL-ის შეცდომა: %s"
 
-#: fe-secure-openssl.c:249 fe-secure-openssl.c:349
+#: fe-secure-openssl.c:237 fe-secure-openssl.c:343
 #, c-format
 msgid "SSL connection has been closed unexpectedly"
 msgstr "SSL შეერთება მოულოდნელად დაიხურა"
 
-#: fe-secure-openssl.c:254 fe-secure-openssl.c:354 fe-secure-openssl.c:1589
+#: fe-secure-openssl.c:242 fe-secure-openssl.c:348 fe-secure-openssl.c:1582
 #, c-format
 msgid "unrecognized SSL error code: %d"
 msgstr "უცნობი SSL-ის შეცდომის კოდი: %d"
 
-#: fe-secure-openssl.c:397
+#: fe-secure-openssl.c:390
 #, c-format
 msgid "could not determine server certificate signature algorithm"
 msgstr "სერვერის სერტიფიკატის ხელმოწერის ალგორითმის დადგენა შეუძლებელია"
 
-#: fe-secure-openssl.c:417
+#: fe-secure-openssl.c:410
 #, c-format
 msgid "could not find digest for NID %s"
 msgstr "'NID'-ისთვის (%s) დაიჯესტის პოვნა შეუძლებელია"
 
-#: fe-secure-openssl.c:426
+#: fe-secure-openssl.c:419
 #, c-format
 msgid "could not generate peer certificate hash"
 msgstr "პარტნიორის სერტიფიკატის ჰეშის გენერირების შეცდომა"
 
-#: fe-secure-openssl.c:509
+#: fe-secure-openssl.c:501
 #, c-format
 msgid "SSL certificate's name entry is missing"
 msgstr "SSL სერტიფიკატის სახელის ჩანაწერი არ არსებობს"
 
-#: fe-secure-openssl.c:543
+#: fe-secure-openssl.c:535
 #, c-format
 msgid "SSL certificate's address entry is missing"
 msgstr "SSL სერტიფიკატის მისამართის ჩანაწერი არ არსებობს"
 
-#: fe-secure-openssl.c:960
+#: fe-secure-openssl.c:935
 #, c-format
 msgid "could not create SSL context: %s"
 msgstr "შეცდომა SSL კონტექსტის შექმნისას: %s"
 
-#: fe-secure-openssl.c:1002
+#: fe-secure-openssl.c:977
 #, c-format
 msgid "invalid value \"%s\" for minimum SSL protocol version"
 msgstr "'SSL' პროტოკოლის ვერსიის არასწორი მინიმალური მნიშვნელობა: %s"
 
-#: fe-secure-openssl.c:1012
+#: fe-secure-openssl.c:987
 #, c-format
 msgid "could not set minimum SSL protocol version: %s"
 msgstr "'SSL' პროტოკოლის ვერსიის მინიმალური მნიშვნელობის დაყენების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1028
+#: fe-secure-openssl.c:1003
 #, c-format
 msgid "invalid value \"%s\" for maximum SSL protocol version"
 msgstr "'SSL' პროტოკოლის ვერსიის არასწორი მაქსიმალური მნიშვნელობა: %s"
 
-#: fe-secure-openssl.c:1038
+#: fe-secure-openssl.c:1013
 #, c-format
 msgid "could not set maximum SSL protocol version: %s"
 msgstr "'SSL' პროტოკოლის ვერსიის მაქსიმალური მნიშვნელობის დაყენების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1076
+#: fe-secure-openssl.c:1051
 #, c-format
 msgid "could not load system root certificate paths: %s"
 msgstr "სისტემური root სერტიფიკატების ბილიკების ჩატვირთვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1093
+#: fe-secure-openssl.c:1068
 #, c-format
 msgid "could not read root certificate file \"%s\": %s"
 msgstr "root სერტიფიკატის ფაილის (\"%s\") წაკითხვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1145
+#: fe-secure-openssl.c:1120
 #, c-format
 msgid ""
 "could not get home directory to locate root certificate file\n"
@@ -1347,7 +1383,7 @@ msgstr ""
 "root სერტიფიკატის ფაილის მოსაძებნად საწყისი საქაღალდის მიღება შეუძლებელია\n"
 "ამ წარმოადგინეთ ფაილი, ან გამოიყენეთ სისტემის სანდო root-ები პარამეტრით sslrootcert=system, ან sslmode სერვერის სერტიფიკატის შემოწმება გამორთეთ."
 
-#: fe-secure-openssl.c:1148
+#: fe-secure-openssl.c:1123
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1356,112 +1392,117 @@ msgstr ""
 "root სერტიფიკატის ფაილი \"%s\" არ არსებობს\n"
 "წარმოადგინეთ ფაილი ან გამორთეთ sslmode სერვერის სერტიფიკატის შემოწმება."
 
-#: fe-secure-openssl.c:1183
+#: fe-secure-openssl.c:1158
 #, c-format
 msgid "could not open certificate file \"%s\": %s"
 msgstr "სერტიფიკატის ფაილის გახსნის შეცდომა \"%s\": %s"
 
-#: fe-secure-openssl.c:1201
+#: fe-secure-openssl.c:1176
 #, c-format
 msgid "could not read certificate file \"%s\": %s"
 msgstr "სერტიფიკატის ფაილის წაკითხვის შეცდომა \"%s\": %s"
 
-#: fe-secure-openssl.c:1225
+#: fe-secure-openssl.c:1200
 #, c-format
 msgid "could not establish SSL connection: %s"
 msgstr "'SSL' შეერთების დამყარების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1257
+#: fe-secure-openssl.c:1232
 #, c-format
 msgid "could not set SSL Server Name Indication (SNI): %s"
 msgstr "'SSL' სერვერის სახელის ინდიკაციის (SNI) დაყენების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1300
+#: fe-secure-openssl.c:1249
+#, c-format
+msgid "could not set SSL ALPN extension: %s"
+msgstr "\"SSL ALPN\" გაფართოების დაყენების შეცდომა: %s"
+
+#: fe-secure-openssl.c:1292
 #, c-format
 msgid "could not load SSL engine \"%s\": %s"
 msgstr "'SSL' ძრავის (\"%s\") ჩატვირთვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1311
+#: fe-secure-openssl.c:1303
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s"
 msgstr "'SSL' ძრავის (\"%s\") ინიციალიზაციის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1326
+#: fe-secure-openssl.c:1318
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s"
 msgstr "'SSL'-ის პირადი გასაღების (\"%s\") ძრავიდან (\"%s\") წაკითხვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1339
+#: fe-secure-openssl.c:1331
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s"
 msgstr "'SSL'-ის პირადი გასაღების (\"%s\") ძრავიდან (\"%s\") წაკითხვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1376
+#: fe-secure-openssl.c:1368
 #, c-format
 msgid "certificate present, but not private key file \"%s\""
 msgstr "სერტიფიკატისგან განსხვავებით, პირადი გასაღების ფაილი \"%s\" არ არსებობს"
 
-#: fe-secure-openssl.c:1379
+#: fe-secure-openssl.c:1371
 #, c-format
 msgid "could not stat private key file \"%s\": %m"
 msgstr "პირადი გასაღების ფაილი \"%s\" არ არსებობს: %m"
 
-#: fe-secure-openssl.c:1387
+#: fe-secure-openssl.c:1379
 #, c-format
 msgid "private key file \"%s\" is not a regular file"
 msgstr "პირადი გასაღების ფაილი \"%s\" ჩვეულებრივი ფაილი არაა"
 
-#: fe-secure-openssl.c:1420
+#: fe-secure-openssl.c:1412
 #, c-format
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root"
 msgstr "პირადი გასაღების ფაილს \"%s\" აქვს ჯგუფური ან ყველა სხვაზე წვდომა; ფაილს უნდა ჰქონდეს ნებართვები u=rw (0600) ან ნაკლები, თუ ეკუთვნის ამჟამინდელ მომხმარებელს, ან ნებართვები u=rw,g=r (0640) ან ნაკლები, თუ ეკუთვნის root-ს"
 
-#: fe-secure-openssl.c:1444
+#: fe-secure-openssl.c:1436
 #, c-format
 msgid "could not load private key file \"%s\": %s"
 msgstr "პირადი გასაღების ფაილის \"%s\" ჩატვირთვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1460
+#: fe-secure-openssl.c:1452
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s"
 msgstr "სერტიფიკატი პირადი გასაღების ფაილს (\"%s\") არ ემთხვევა: %s"
 
-#: fe-secure-openssl.c:1528
+#: fe-secure-openssl.c:1521
 #, c-format
 msgid "SSL error: certificate verify failed: %s"
 msgstr "SSL-ის შეცდომა: სერტიფიკატის გადამოწმების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1573
+#: fe-secure-openssl.c:1566
 #, c-format
 msgid "This may indicate that the server does not support any SSL protocol version between %s and %s."
 msgstr "ეს შეიძლება ნიშნავდეს, რომ სერვერს SSL პროტოკოლის %s-სა და %s-ს შორის ვერსიების მხარდაჭერა არ გააჩნია."
 
-#: fe-secure-openssl.c:1606
+#: fe-secure-openssl.c:1599
 #, c-format
 msgid "certificate could not be obtained: %s"
 msgstr "სერტიფიკატის მიღების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1711
+#: fe-secure-openssl.c:1706
 #, c-format
 msgid "no SSL error reported"
 msgstr "'SSL'-ის შეცდომების გარეშე"
 
-#: fe-secure-openssl.c:1720
+#: fe-secure-openssl.c:1731
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL-ის შეცდომის კოდი %lu"
 
-#: fe-secure-openssl.c:1986
+#: fe-secure-openssl.c:2030
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "გაფრთხილება: sslpasswrord შეკვეცილია\n"
 
-#: fe-secure.c:263
+#: fe-secure.c:248
 #, c-format
 msgid "could not receive data from server: %s"
 msgstr "სერვერიდან მონაცემების მიღების შეცდომა: %s"
 
-#: fe-secure.c:434
+#: fe-secure.c:419
 #, c-format
 msgid "could not send data to server: %s"
 msgstr "სერვერისთვის მონაცემების გაგზავნის შეცდომა: %s"
@@ -1513,8 +1554,12 @@ msgstr "სოკეტის უცნობი შეცდომა: 0x%08X/%
 #~ msgstr "პირადი გასაღების ფაილი \"%s\" ჩვეულებრივი ფაილი არაა\n"
 
 #, c-format
-#~ msgid "sslrootcert value \"%s\" invalid when SSL support is not compiled in"
-#~ msgstr "sslmode-ის მნიშვნელობა \"%s\" არასწორია, როცა SSL-ის მხარდაჭერა გამორთული იყო აგების დროს"
+#~ msgid "server does not support SSL, but SSL was required"
+#~ msgstr "სერვერს SSL-ის მხარდაჭერა არ გააჩნია, მაგრამ SSL-ი აუცილებელია"
+
+#, c-format
+#~ msgid "server doesn't support GSSAPI encryption, but it was required"
+#~ msgstr "სერვერს GSSAPI დაშიფვრის მხარდაჭერა არ გააჩნა, მაგრამ ის მოთხოვილია"
 
 #, c-format
 #~ msgid "unrecognized SSL error code: %d\n"

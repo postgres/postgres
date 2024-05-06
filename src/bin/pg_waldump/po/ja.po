@@ -1,13 +1,13 @@
 # Japanese message translation file for pg_waldump
-# Copyright (C) 2022 PostgreSQL Global Development Group
+# Copyright (C) 2022-2024 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL 16)\n"
+"Project-Id-Version: pg_waldump (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-19 12:26+0900\n"
-"PO-Revision-Date: 2023-04-19 12:30+0900\n"
+"POT-Creation-Date: 2023-09-15 09:29+0900\n"
+"PO-Revision-Date: 2023-09-15 10:40+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -52,73 +52,78 @@ msgstr "ディレクトリ\"%s\"は存在しますが、空ではありません
 msgid "could not access directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"にアクセスできませんでした: %m"
 
-#: pg_waldump.c:199 pg_waldump.c:527
+#: pg_waldump.c:199 pg_waldump.c:532
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: pg_waldump.c:255
+#: pg_waldump.c:256
 #, c-format
-msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
-msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
-msgstr[0] "WALセグメントのサイズは1MBと1GBの間の2の累乗でなければなりません、しかしWALファイル\"%s\"のヘッダでは%dバイトとなっています"
+msgid "invalid WAL segment size in WAL file \"%s\" (%d byte)"
+msgid_plural "invalid WAL segment size in WAL file \"%s\" (%d bytes)"
+msgstr[0] "WALファイル\"%s\"中の不正なWALセグメントサイズ (%dバイト)"
 
-#: pg_waldump.c:261
+#: pg_waldump.c:260
+#, c-format
+msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
+msgstr "WALセグメントサイズは1MBから1GBまでの間の2の累乗でなければなりません。"
+
+#: pg_waldump.c:265
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
-#: pg_waldump.c:264
+#: pg_waldump.c:268
 #, c-format
 msgid "could not read file \"%s\": read %d of %d"
 msgstr "ファイル\"%1$s\"を読み取れませんでした: %3$d中%2$d"
 
-#: pg_waldump.c:325
+#: pg_waldump.c:329
 #, c-format
 msgid "could not locate WAL file \"%s\""
 msgstr "WALファイル\"%s\"がありませんでした"
 
-#: pg_waldump.c:327
+#: pg_waldump.c:331
 #, c-format
 msgid "could not find any WAL file"
 msgstr "WALファイルが全くありません"
 
-#: pg_waldump.c:368
+#: pg_waldump.c:372
 #, c-format
 msgid "could not find file \"%s\": %m"
 msgstr "ファイル\"%s\"が見つかりませんでした: %m"
 
-#: pg_waldump.c:417
-#, c-format
-msgid "could not read from file %s, offset %d: %m"
-msgstr "ファイル %s、オフセット%dから読み取れませんでした: %m"
-
 #: pg_waldump.c:421
 #, c-format
-msgid "could not read from file %s, offset %d: read %d of %d"
-msgstr "ファイル%1$s、オフセット%2$dから読み取れませんでした: %4$d中%3$d"
+msgid "could not read from file \"%s\", offset %d: %m"
+msgstr "ファイル \"%s\"、オフセット%dから読み取れませんでした: %m"
 
-#: pg_waldump.c:511
+#: pg_waldump.c:425
+#, c-format
+msgid "could not read from file \"%s\", offset %d: read %d of %d"
+msgstr "ファイル \"%1$s\"、オフセット%2$dから読み取れませんでした: %4$d中%3$d"
+
+#: pg_waldump.c:515
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_waldump.c:519
+#: pg_waldump.c:523
 #, c-format
 msgid "invalid fork number: %u"
 msgstr "不正なフォーク番号です: %u"
 
-#: pg_waldump.c:530
+#: pg_waldump.c:535
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: pg_waldump.c:533
+#: pg_waldump.c:538
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ファイル\"%s\"をクローズできませんでした: %m"
 
-#: pg_waldump.c:753
+#: pg_waldump.c:758
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
@@ -127,17 +132,17 @@ msgstr ""
 "%sはデバッグのためにPostgreSQLの先行書き込みログをデコードして表示します。\n"
 "\n"
 
-#: pg_waldump.c:755
+#: pg_waldump.c:760
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_waldump.c:756
+#: pg_waldump.c:761
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr " %s [オプション] ... [開始セグメント [終了セグメント]]\n"
 
-#: pg_waldump.c:757
+#: pg_waldump.c:762
 #, c-format
 msgid ""
 "\n"
@@ -146,29 +151,29 @@ msgstr ""
 "\n"
 "オプション:\n"
 
-#: pg_waldump.c:758
+#: pg_waldump.c:763
 #, c-format
 msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
 msgstr "  -b, --bkp-details      バックアップブロックに関する詳細情報を出力\n"
 
-#: pg_waldump.c:759
+#: pg_waldump.c:764
 #, c-format
 msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
 msgstr ""
 "  -B, --block=N          --relationと共に指定することでこのブロックNを更新する\n"
 "                         レコードのみを表示\n"
 
-#: pg_waldump.c:760
+#: pg_waldump.c:765
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
 msgstr "  -e, --end=RECPTR       WAL位置RECPTRで読み込みを停止\n"
 
-#: pg_waldump.c:761
+#: pg_waldump.c:766
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
 msgstr "  -f, --follow           WALの終端に達してからもリトライを続ける\n"
 
-#: pg_waldump.c:762
+#: pg_waldump.c:767
 #, c-format
 msgid ""
 "  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
@@ -177,12 +182,12 @@ msgstr ""
 "  -F, --fork=FORK        指定フォークのブロックを更新するレコードのみ表示;\n"
 "                         指定可能な名前はmain, fsm, vm, init\n"
 
-#: pg_waldump.c:764
+#: pg_waldump.c:769
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          表示するレコード数\n"
 
-#: pg_waldump.c:765
+#: pg_waldump.c:770
 #, c-format
 msgid ""
 "  -p, --path=PATH        directory in which to find WAL segment files or a\n"
@@ -194,12 +199,12 @@ msgstr ""
 "                         (デフォルト: カレントディレクトリ, ./pg_wal,\n"
 "                         $PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:768
+#: pg_waldump.c:773
 #, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
 msgstr "  -q, --quiet            エラー以外何も出力しない\n"
 
-#: pg_waldump.c:769
+#: pg_waldump.c:774
 #, c-format
 msgid ""
 "  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
@@ -208,17 +213,17 @@ msgstr ""
 "  -r, --rmgr=RMGR        指定のリソースマネージャーで生成されたレコードのみ表示\n"
 "                         --rmgr=list で有効なリソースマネージャーの一覧を表示\n"
 
-#: pg_waldump.c:771
+#: pg_waldump.c:776
 #, c-format
 msgid "  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"
 msgstr "  -R, --relation=T/D/R   リレーションT/D/Rのブロックを更新するレコードのみ表示\n"
 
-#: pg_waldump.c:772
+#: pg_waldump.c:777
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
 msgstr "  -s, --start=RECPTR     WAL位置RECPTRから読み込みを開始\n"
 
-#: pg_waldump.c:773
+#: pg_waldump.c:778
 #, c-format
 msgid ""
 "  -t, --timeline=TLI     timeline from which to read WAL records\n"
@@ -227,22 +232,22 @@ msgstr ""
 "  -t, --timeline=TLI     WALレコードを読み込むタイムライン\n"
 "                         (デフォルト: 1 またはSTARTSEGで使われた値)\n"
 
-#: pg_waldump.c:775
+#: pg_waldump.c:780
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          バージョン情報を表示して終了\n"
 
-#: pg_waldump.c:776
+#: pg_waldump.c:781
 #, c-format
 msgid "  -w, --fullpage         only show records with a full page write\n"
 msgstr "  -w, --fullpage         全ページ書き込みを含むレコードのみを表示\n"
 
-#: pg_waldump.c:777
+#: pg_waldump.c:782
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
 msgstr "  -x, --xid=XID          トランザクションIDがXIDのレコードのみを表示する\n"
 
-#: pg_waldump.c:778
+#: pg_waldump.c:783
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
@@ -251,17 +256,17 @@ msgstr ""
 "  -z, --stats[=レコード] レコードの代わりに統計情報を表示する\n"
 "                         (オプションで、レコードごとの統計を表示する)\n"
 
-#: pg_waldump.c:780
+#: pg_waldump.c:785
 #, c-format
 msgid "  --save-fullpage=DIR    save full page images to DIR\n"
 msgstr "  --save-fullpage=DIR    フルページイメージをDIRに保存\n"
 
-#: pg_waldump.c:781
+#: pg_waldump.c:786
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             このヘルプを表示して終了\n"
 
-#: pg_waldump.c:782
+#: pg_waldump.c:787
 #, c-format
 msgid ""
 "\n"
@@ -270,133 +275,133 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_waldump.c:783
+#: pg_waldump.c:788
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
 
-#: pg_waldump.c:879
+#: pg_waldump.c:884
 #, c-format
 msgid "no arguments specified"
 msgstr "引数が指定されていません"
 
-#: pg_waldump.c:895
+#: pg_waldump.c:900
 #, c-format
 msgid "invalid block number: \"%s\""
 msgstr "不正なブロック番号: \"%s\""
 
-#: pg_waldump.c:904 pg_waldump.c:1002
+#: pg_waldump.c:909 pg_waldump.c:1007
 #, c-format
 msgid "invalid WAL location: \"%s\""
 msgstr "不正なWAL LSN: \"%s\""
 
-#: pg_waldump.c:917
+#: pg_waldump.c:922
 #, c-format
 msgid "invalid fork name: \"%s\""
 msgstr "不正なフォーク名: \"%s\""
 
-#: pg_waldump.c:925 pg_waldump.c:1028
+#: pg_waldump.c:930 pg_waldump.c:1033
 #, c-format
 msgid "invalid value \"%s\" for option %s"
 msgstr "オプション%2$sに対する不正な値\"%1$s\""
 
-#: pg_waldump.c:956
+#: pg_waldump.c:961
 #, c-format
 msgid "custom resource manager \"%s\" does not exist"
 msgstr "独自リソースマネージャー\"%s\"は存在しません"
 
-#: pg_waldump.c:977
+#: pg_waldump.c:982
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "リソースマネージャー\"%s\"は存在しません"
 
-#: pg_waldump.c:992
+#: pg_waldump.c:997
 #, c-format
 msgid "invalid relation specification: \"%s\""
 msgstr "不正なリレーション指定: \"%s\""
 
-#: pg_waldump.c:993
+#: pg_waldump.c:998
 #, c-format
 msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
 msgstr "\"テーブル空間OID/データベースOID/リレーション・ファイルノード”を期待しています。"
 
-#: pg_waldump.c:1035
+#: pg_waldump.c:1040
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%sは%u..%uの範囲でなければなりません"
 
-#: pg_waldump.c:1050
+#: pg_waldump.c:1055
 #, c-format
 msgid "invalid transaction ID specification: \"%s\""
 msgstr "不正なトランザクションID指定: \"%s\""
 
-#: pg_waldump.c:1065
+#: pg_waldump.c:1070
 #, c-format
 msgid "unrecognized value for option %s: %s"
 msgstr "%sオプションに対する認識できない値: %s"
 
-#: pg_waldump.c:1082
+#: pg_waldump.c:1087
 #, c-format
 msgid "option %s requires option %s to be specified"
 msgstr "%sオプション指定時は%sオプションも必要です"
 
-#: pg_waldump.c:1089
+#: pg_waldump.c:1094
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "コマンドライン引数が多すぎます(先頭は\"%s\")"
 
-#: pg_waldump.c:1099 pg_waldump.c:1122
+#: pg_waldump.c:1104 pg_waldump.c:1127
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: pg_waldump.c:1128 pg_waldump.c:1158
+#: pg_waldump.c:1133 pg_waldump.c:1163
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "ファイル\"%s\"を開くことができませんでした"
 
-#: pg_waldump.c:1138
+#: pg_waldump.c:1143
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
 msgstr "WALの開始位置%X/%Xはファイル\"%s\"の中ではありません"
 
-#: pg_waldump.c:1165
+#: pg_waldump.c:1170
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "ENDSEG%sがSTARTSEG %sより前に現れました"
 
-#: pg_waldump.c:1180
+#: pg_waldump.c:1185
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
 msgstr "WALの終了位置%X/%Xはファイル\"%s\"の中ではありません"
 
-#: pg_waldump.c:1192
+#: pg_waldump.c:1197
 #, c-format
 msgid "no start WAL location given"
 msgstr "WALの開始位置が指定されていません"
 
-#: pg_waldump.c:1206
+#: pg_waldump.c:1211
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
 msgstr "WAL読み取り機構でのメモリ割り当てに中にメモリ不足"
 
-#: pg_waldump.c:1212
+#: pg_waldump.c:1217
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "%X/%Xの後に有効なレコードが見つかりませんでした"
 
-#: pg_waldump.c:1222
+#: pg_waldump.c:1227
 #, c-format
-msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
-msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr[0] "先頭レコードが%X/%Xの後の%X/%Xの位置にありました。%uバイト分をスキップしています\n"
+msgid "first record is after %X/%X, at %X/%X, skipping over %u byte"
+msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes"
+msgstr[0] "先頭レコードが%X/%Xの後の%X/%Xの後にあります。%uバイト分をスキップします"
 
-#: pg_waldump.c:1307
+#: pg_waldump.c:1312
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "WALレコードの%X/%Xでエラー: %s"
 
-#: pg_waldump.c:1316
+#: pg_waldump.c:1321
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
@@ -411,7 +416,7 @@ msgstr "%X/%Xのレコードオフセットが不正です:最低でも%uを期�
 msgid "contrecord is requested by %X/%X"
 msgstr "%X/%Xでは継続レコードが必要です"
 
-#: xlogreader.c:676 xlogreader.c:1123
+#: xlogreader.c:676 xlogreader.c:1119
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "%X/%Xのレコード長が不正です:最低でも%uを期待していましたが、実際は%uでした"
@@ -436,137 +441,132 @@ msgstr "%X/%Xでcontrecordフラグがありません"
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "%3$X/%4$Xの継続レコードの長さ%1$u(正しくは%2$lld)は不正です"
 
-#: xlogreader.c:924
-#, c-format
-msgid "missing contrecord at %X/%X"
-msgstr "%X/%Xに継続レコードがありません"
-
-#: xlogreader.c:1131
+#: xlogreader.c:1127
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "%2$X/%3$XのリソースマネージャID %1$uは不正です"
 
-#: xlogreader.c:1144 xlogreader.c:1160
+#: xlogreader.c:1140 xlogreader.c:1156
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "%3$X/%4$Xのレコードの後方リンク%1$X/%2$Xが不正です"
 
-#: xlogreader.c:1196
+#: xlogreader.c:1192
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "%X/%Xのレコード内のリソースマネージャデータのチェックサムが不正です"
 
-#: xlogreader.c:1230
+#: xlogreader.c:1226
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "WALセグメント%2$s、LSN %3$X/%4$X、オフセット%5$uで不正なマジックナンバー%1$04X"
 
-#: xlogreader.c:1245 xlogreader.c:1287
+#: xlogreader.c:1241 xlogreader.c:1283
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "WALセグメント %2$s、LSN %3$X/%4$X、オフセット%5$uで不正な情報ビット列%1$04X"
 
-#: xlogreader.c:1261
+#: xlogreader.c:1257
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WALファイルは異なるデータベースシステム由来のものです: WALファイルのデータベースシステム識別子は %lluで、pg_control におけるデータベースシステム識別子は %lluです"
 
-#: xlogreader.c:1269
+#: xlogreader.c:1265
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのセグメントサイズが正しくありません"
 
-#: xlogreader.c:1275
+#: xlogreader.c:1271
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのXLOG_BLCKSZが正しくありません"
 
-#: xlogreader.c:1307
+#: xlogreader.c:1303
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "WALセグメント%3$s、LSN %4$X/%5$X、オフセット%6$uで想定外のページアドレス%1$X/%2$X"
 
-#: xlogreader.c:1333
+#: xlogreader.c:1329
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "WALセグメント%3$s、LSN %4$X/%5$X、オフセット%6$uで異常な順序のタイムラインID %1$u(%2$uの後)"
 
-#: xlogreader.c:1739
+#: xlogreader.c:1735
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "block_id %uが%X/%Xで不正です"
 
-#: xlogreader.c:1763
+#: xlogreader.c:1759
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATAが設定されていますが、%X/%Xにデータがありません"
 
-#: xlogreader.c:1770
+#: xlogreader.c:1766
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATAが設定されていませんが、%2$X/%3$Xのデータ長は%1$uです"
 
-#: xlogreader.c:1806
+#: xlogreader.c:1802
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLEが設定されていますが、%4$X/%5$Xでホールオフセット%1$u、長さ%2$u、ブロックイメージ長%3$uです"
 
-#: xlogreader.c:1822
+#: xlogreader.c:1818
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLEが設定されていませんが、%3$X/%4$Xにおけるホールオフセット%1$uの長さが%2$uです"
 
-#: xlogreader.c:1836
+#: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSEDが設定されていますが、%2$X/%3$Xにおいてブロックイメージ長が%1$uです"
 
-#: xlogreader.c:1851
+#: xlogreader.c:1847
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLEもBKPIMAGE_COMPRESSEDも設定されていませんが、%2$X/%3$Xにおいてブロックイメージ長が%1$uです"
 
-#: xlogreader.c:1867
+#: xlogreader.c:1863
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_RELが設定されていますが、%X/%Xにおいて以前のリレーションがありません"
 
-#: xlogreader.c:1879
+#: xlogreader.c:1875
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "%2$X/%3$Xにおけるblock_id %1$uが不正です"
 
-#: xlogreader.c:1946
+#: xlogreader.c:1942
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "%X/%Xのレコードのサイズが不正です"
 
-#: xlogreader.c:1972
+#: xlogreader.c:1968
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "WALレコード中のID %dのバックアップブロックを特定できませんでした"
 
-#: xlogreader.c:2056
+#: xlogreader.c:2052
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "%X/%Xで不正なブロック%dが指定されているためイメージが復元できませんでした"
 
-#: xlogreader.c:2063
+#: xlogreader.c:2059
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "%X/%Xでブロック%dのイメージが不正な状態であるため復元できませんでした"
 
-#: xlogreader.c:2090 xlogreader.c:2107
+#: xlogreader.c:2086 xlogreader.c:2103
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "%1$X/%2$Xで、ブロック%4$dがこのビルドでサポートされない圧縮方式%3$sで圧縮されているため復元できませんでした"
 
-#: xlogreader.c:2116
+#: xlogreader.c:2112
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "%X/%Xでブロック%dのイメージが不明な方式で圧縮されているため復元できませんでした"
 
-#: xlogreader.c:2124
+#: xlogreader.c:2120
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "%X/%Xのブロック%dが伸張できませんでした"

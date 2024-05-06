@@ -1,0 +1,115 @@
+# LANGUAGE message translation file for pg_walsummary
+# Copyright (C) 2024 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_walsummary (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_walsummary (PostgreSQL) 17\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2024-02-11 23:52+0000\n"
+"PO-Revision-Date: 2024-02-12 04:18+0100\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: \n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "შეცდომა: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "გაფრთხილება: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "დეტალები: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "მინიშნება: "
+
+#: pg_walsummary.c:85 pg_walsummary.c:93
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
+
+#: pg_walsummary.c:92
+#, c-format
+msgid "%s: no input files specified"
+msgstr "%s: შეყვანის ფაილები მითითებული არაა"
+
+#: pg_walsummary.c:107
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: pg_walsummary.c:255
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: pg_walsummary.c:270
+#, c-format
+msgid ""
+"%s prints the contents of a WAL summary file.\n"
+"\n"
+msgstr ""
+"%s WAL შეჯამების ფაილის შემცველობას გამოიტანს.\n"
+"\n"
+
+#: pg_walsummary.c:271
+#, c-format
+msgid "Usage:\n"
+msgstr "გამოყენება:\n"
+
+#: pg_walsummary.c:272
+#, c-format
+msgid "  %s [OPTION]... FILE...\n"
+msgstr "  %s [პარამეტრი]... ფაილი...\n"
+
+#: pg_walsummary.c:273
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"პარამეტრები:\n"
+
+#: pg_walsummary.c:274
+#, c-format
+msgid "  -i, --individual          list block numbers individually, not as ranges\n"
+msgstr "  -i, --individual          ბლოკის ნომრების ცალ-ცალკე გამოტანა, შუალედების მაგიერ\n"
+
+#: pg_walsummary.c:275
+#, c-format
+msgid "  -q, --quiet               don't print anything, just parse the files\n"
+msgstr "  -q, --quiet               ეკრანზე არაფერი გამოიტანო. უბრალოდ, ფაილები დაამუშავე\n"
+
+#: pg_walsummary.c:276
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
+
+#: pg_walsummary.c:278
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"შეცდომების შესახებ მიწერეთ: %s\n"
+
+#: pg_walsummary.c:279
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s-ის საწყისი გვერდია: <%s>\n"

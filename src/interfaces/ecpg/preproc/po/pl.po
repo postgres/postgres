@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-03-14 17:38+0000\n"
-"PO-Revision-Date: 2017-03-14 19:42+0200\n"
+"PO-Revision-Date: 2023-09-05 08:41+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -120,7 +120,7 @@ msgstr "  -i             parsuje również systemowe pliki nagłówkowe\n"
 #: ecpg.c:51
 #, c-format
 msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
-msgstr "  -I FOLDER   przeszukuje FOLDER w poszukiwaniu plików nagłówkowych\n"
+msgstr "  -I FOLDER      przeszukuje FOLDER w poszukiwaniu plików nagłówkowych\n"
 
 #: ecpg.c:52
 #, c-format

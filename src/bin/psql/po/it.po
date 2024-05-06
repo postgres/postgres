@@ -21,7 +21,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:16+0000\n"
-"PO-Revision-Date: 2022-09-26 15:03+0200\n"
+"PO-Revision-Date: 2023-09-05 09:53+0200\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -2729,7 +2729,7 @@ msgid ""
 "  \\g [(OPTIONS)] [FILE]  execute query (and send result to file or |pipe);\n"
 "                         \\g with no arguments is equivalent to a semicolon\n"
 msgstr ""
-" \\g [(OPZIONI)] [FILE] esegue la query (e invia il risultato a file o |pipe);\n"
+"  \\g [(OPZIONI)] [FILE]  esegue la query (e invia il risultato a file o |pipe);\n"
 "                         \\g senza argomenti equivale a un punto e virgola\n"
 
 #: help.c:197
@@ -2746,9 +2746,7 @@ msgstr "  \\gset [PREFIX]         esegui la query e salva il risultato in una va
 
 #: help.c:200
 msgid "  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n"
-msgstr ""
-" \\gx [(OPZIONI)] [FILE] come \\g, ma forza la modalità di output espansa\n"
-"\n"
+msgstr "  \\gx [(OPZIONI)] [FILE] come \\g, ma forza la modalità di output espansa\n\n"
 
 #: help.c:201
 msgid "  \\q                     quit psql\n"
@@ -2831,7 +2829,7 @@ msgstr "  \\copy ...              esegui una SQL COPY con flusso di dati dal cli
 
 #: help.c:227
 msgid "  \\echo [-n] [STRING]    write string to standard output (-n for no newline)\n"
-msgstr " \\echo [-n] [STRING]     scrive la stringa nello standard output (-n per nessuna nuova riga)\n"
+msgstr "  \\echo [-n] [STRING]     scrive la stringa nello standard output (-n per nessuna nuova riga)\n"
 
 #: help.c:228
 msgid "  \\i FILE                execute commands from file\n"
@@ -2851,13 +2849,11 @@ msgstr ""
 
 #: help.c:231
 msgid "  \\qecho [-n] [STRING]   write string to \\o output stream (-n for no newline)\n"
-msgstr ""
-" \\qecho [-n] [STRING]   scrive la stringa in \\o flusso di output (-n per nessuna nuova riga)\n"
-"\n"
+msgstr "  \\qecho [-n] [STRING]   scrive la stringa in \\o flusso di output (-n per nessuna nuova riga)\n\n"
 
 #: help.c:232
 msgid "  \\warn [-n] [STRING]    write string to standard error (-n for no newline)\n"
-msgstr " \\warn [-n] [STRING] scrive la stringa nell'errore standard (-n per nessuna nuova riga)\n"
+msgstr "  \\warn [-n] [STRING]    scrive la stringa nell'errore standard (-n per nessuna nuova riga)\n"
 
 #: help.c:235
 msgid "Conditional\n"
@@ -2905,19 +2901,19 @@ msgstr "  \\dA[+]  [MODELLO]      elenca i metodi di accesso\n"
 
 #: help.c:248
 msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"
-msgstr " \\dAc[+] [AMPTRN [TYPEPTRN]] elenca le classi di operatori\n"
+msgstr "  \\dAc[+] [AMPTRN [TYPEPTRN]] elenca le classi di operatori\n"
 
 #: help.c:249
 msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"
-msgstr " \\dAf[+] [AMPTRN [TYPEPTRN]]   elenca le famiglie di operatori\n"
+msgstr "  \\dAf[+] [AMPTRN [TYPEPTRN]]   elenca le famiglie di operatori\n"
 
 #: help.c:250
 msgid "  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"
-msgstr " \\dAo[+] [AMPTRN [OPFPTRN]]    elenca gli operatori delle famiglie di operatori\n"
+msgstr "  \\dAo[+] [AMPTRN [OPFPTRN]]    elenca gli operatori delle famiglie di operatori\n"
 
 #: help.c:251
 msgid "  \\dAp[+] [AMPTRN [OPFPTRN]]   list support functions of operator families\n"
-msgstr " \\dAp[+] [AMPTRN [OPFPTRN]] elenca le funzioni di supporto delle famiglie di operatori\n"
+msgstr "  \\dAp[+] [AMPTRN [OPFPTRN]] elenca le funzioni di supporto delle famiglie di operatori\n"
 
 #: help.c:252
 msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
@@ -2929,7 +2925,7 @@ msgstr "  \\dc[S+] [MODELLO]      elenca le conversioni di codifica\n"
 
 #: help.c:254
 msgid "  \\dconfig[+] [PATTERN]  list configuration parameters\n"
-msgstr " \\dconfig[+] [PATTERN]    elenca i parametri di configurazione\n"
+msgstr "  \\dconfig[+] [PATTERN]  elenca i parametri di configurazione\n"
 
 #: help.c:255
 msgid "  \\dC[+]  [PATTERN]      list casts\n"
@@ -2972,7 +2968,7 @@ msgid ""
 "  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
 "                         list [only agg/normal/procedure/trigger/window] functions\n"
 msgstr ""
-" \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
+"  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
 "                         elenco funzioni di [solo agg/normal/procedura/trigger/finestra]\n"
 
 #: help.c:266
@@ -3001,7 +2997,7 @@ msgstr "  \\di[S+] [MODELLO]      elenca gli indici\n"
 
 #: help.c:272
 msgid "  \\dl[+]                 list large objects, same as \\lo_list\n"
-msgstr "  \\dl[+]                elenca i large object, stesso risultato di \\lo_list\n"
+msgstr "  \\dl[+]                 elenca i large object, stesso risultato di \\lo_list\n"
 
 #: help.c:273
 msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
@@ -3020,7 +3016,7 @@ msgid ""
 "  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
 "                         list operators\n"
 msgstr ""
-" \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
+"  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
 "                         operatori di liste\n"
 
 #: help.c:278
@@ -3035,11 +3031,11 @@ msgstr ""
 
 #: help.c:280
 msgid "  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n"
-msgstr " \\dP[itn+] [PATTERN] list [solo indice/tabella] relazioni partizionate [n=nidificato]\n"
+msgstr "  \\dP[itn+] [PATTERN] list [solo indice/tabella] relazioni partizionate [n=nidificato]\n"
 
 #: help.c:281
 msgid "  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n"
-msgstr " \\drds [ROLEPTRN [DBPTRN]] elenca le impostazioni del ruolo per database\n"
+msgstr "  \\drds [ROLEPTRN [DBPTRN]] elenca le impostazioni del ruolo per database\n"
 
 #: help.c:282
 msgid "  \\dRp[+] [PATTERN]      list replication publications\n"
@@ -3075,7 +3071,7 @@ msgstr "  \\dx[+]  [MODELLO]      elenca le estensioni\n"
 
 #: help.c:290
 msgid "  \\dX     [PATTERN]      list extended statistics\n"
-msgstr " \\dX [PATTERN] elenca le statistiche estese\n"
+msgstr "  \\dX [PATTERN] elenca le statistiche estese\n"
 
 #: help.c:291
 msgid "  \\dy[+]  [PATTERN]      list event triggers\n"
@@ -3103,23 +3099,23 @@ msgstr "Large Object\n"
 
 #: help.c:299
 msgid "  \\lo_export LOBOID FILE write large object to file\n"
-msgstr " \\lo_export FILE LOBOID scrive un oggetto di grandi dimensioni su un file\n"
+msgstr "  \\lo_export FILE LOBOID scrive un oggetto di grandi dimensioni su un file\n"
 
 #: help.c:300
 msgid ""
 "  \\lo_import FILE [COMMENT]\n"
 "                         read large object from file\n"
 msgstr ""
-" \\lo_import FILE [COMMENTO]\n"
+"  \\lo_import FILE [COMMENTO]\n"
 "                         leggi oggetti di grandi dimensioni da file\n"
 
 #: help.c:302
 msgid "  \\lo_list[+]            list large objects\n"
-msgstr " \\lo_list[+]            elenca gli oggetti di grandi dimensioni\n"
+msgstr "  \\lo_list[+]            elenca gli oggetti di grandi dimensioni\n"
 
 #: help.c:303
 msgid "  \\lo_unlink LOBOID      delete a large object\n"
-msgstr " \\lo_unlink LOBOID      elimina un oggetto di grandi dimensioni\n"
+msgstr "  \\lo_unlink LOBOID      elimina un oggetto di grandi dimensioni\n"
 
 #: help.c:306
 msgid "Formatting\n"
@@ -3228,7 +3224,7 @@ msgstr "  \\cd [DIRECTORY]        cambia la directory di lavoro\n"
 
 #: help.c:341
 msgid "  \\getenv PSQLVAR ENVVAR fetch environment variable\n"
-msgstr " \\getenv PSQLVAR ENVVAR recupera la variabile di ambiente\n"
+msgstr "  \\getenv PSQLVAR ENVVAR recupera la variabile di ambiente\n"
 
 #: help.c:342
 msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
@@ -3320,7 +3316,7 @@ msgid ""
 "    [all, errors, none, queries]\n"
 msgstr ""
 "  ECHO\n"
-"    controlla quale input è scritto su stardard output\n"
+"    controlla quale input è scritto su standard output\n"
 "    [all, errors, none, queries]\n"
 
 #: help.c:406
@@ -3362,7 +3358,7 @@ msgid ""
 "  HIDE_TABLEAM\n"
 "    if set, table access methods are not displayed\n"
 msgstr ""
-" NASCONDI_TABELLA\n"
+"  HIDE_TABLEAM\n"
 "    se impostato, i metodi di accesso alla tabella non vengono visualizzati\n"
 
 #: help.c:417
@@ -3370,7 +3366,7 @@ msgid ""
 "  HIDE_TOAST_COMPRESSION\n"
 "    if set, compression methods are not displayed\n"
 msgstr ""
-" HIDE_TOAST_COMPRESSION\n"
+"  HIDE_TOAST_COMPRESSION\n"
 "    se impostato, i metodi di compressione non vengono visualizzati\n"
 
 #: help.c:419
@@ -3512,7 +3508,7 @@ msgid ""
 "  SHOW_ALL_RESULTS\n"
 "    show all results of a combined query (\\;) instead of only the last\n"
 msgstr ""
-" SHOW_ALL_RESULTS\n"
+"  SHOW_ALL_RESULTS\n"
 "    mostra tutti i risultati di una query combinata (\\;) anziché solo l'ultima\n"
 
 #: help.c:455
@@ -3561,7 +3557,7 @@ msgid ""
 "  VERBOSITY\n"
 "    controls verbosity of error reports [default, verbose, terse, sqlstate]\n"
 msgstr ""
-" VERBOSITÀ\n"
+"  VERBOSITY\n"
 "    controlla la verbosità dei rapporti di errore [predefinito, dettagliato, conciso, sqlstate]\n"
 
 #: help.c:467

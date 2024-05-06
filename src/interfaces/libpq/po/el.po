@@ -7,1225 +7,1524 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libpq (PostgreSQL) 14\n"
+"Project-Id-Version: libpq (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-07-14 05:09+0000\n"
-"PO-Revision-Date: 2021-07-14 10:16+0200\n"
+"POT-Creation-Date: 2023-08-14 23:10+0000\n"
+"PO-Revision-Date: 2023-08-15 11:46+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.3.2\n"
 
-#: fe-auth-scram.c:213
-msgid "malformed SCRAM message (empty message)\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (κενό μήνυμα)\n"
-
-#: fe-auth-scram.c:219
-msgid "malformed SCRAM message (length mismatch)\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (αναντιστοιχία μήκους)\n"
-
-#: fe-auth-scram.c:263
-msgid "could not verify server signature\n"
-msgstr "δεν ήταν δυνατή πιστοποίηση της υπογραφής του διακομιστή\n"
-
-#: fe-auth-scram.c:270
-msgid "incorrect server signature\n"
-msgstr "λανθασμένη υπογραφή διακομιστή\n"
-
-#: fe-auth-scram.c:279
-msgid "invalid SCRAM exchange state\n"
-msgstr "άκυρη κατάσταση ανταλλαγής SCRAM\n"
-
-#: fe-auth-scram.c:306
+#: ../../port/thread.c:50 ../../port/thread.c:86
 #, c-format
-msgid "malformed SCRAM message (attribute \"%c\" expected)\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (αναμένεται χαρακτηριστικό «%c»)\n"
+msgid "could not look up local user ID %d: %s"
+msgstr "δεν ήταν δυνατή η αναζήτηση ID τοπικού χρήστη %d: %s"
 
-#: fe-auth-scram.c:315
+#: ../../port/thread.c:55 ../../port/thread.c:91
 #, c-format
-msgid "malformed SCRAM message (expected character \"=\" for attribute \"%c\")\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (αναμένεται χαρακτήρας «=» για το χαρακτηριστικό «%c»)\n"
+msgid "local user with ID %d does not exist"
+msgstr "δεν υπάρχει τοπικός χρήστης με ID %d"
 
-#: fe-auth-scram.c:356
-msgid "could not generate nonce\n"
-msgstr "δεν δύναται να δημιουργήσει nonce\n"
+#: fe-auth-scram.c:227
+#, c-format
+msgid "malformed SCRAM message (empty message)"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (κενό μήνυμα)"
 
-#: fe-auth-scram.c:366 fe-auth-scram.c:441 fe-auth-scram.c:595
-#: fe-auth-scram.c:616 fe-auth-scram.c:642 fe-auth-scram.c:657
-#: fe-auth-scram.c:707 fe-auth-scram.c:746 fe-auth.c:290 fe-auth.c:362
-#: fe-auth.c:398 fe-auth.c:615 fe-auth.c:774 fe-auth.c:1132 fe-auth.c:1282
-#: fe-connect.c:911 fe-connect.c:1455 fe-connect.c:1624 fe-connect.c:2976
-#: fe-connect.c:4657 fe-connect.c:4918 fe-connect.c:5037 fe-connect.c:5289
-#: fe-connect.c:5370 fe-connect.c:5469 fe-connect.c:5725 fe-connect.c:5754
-#: fe-connect.c:5826 fe-connect.c:5850 fe-connect.c:5868 fe-connect.c:5969
-#: fe-connect.c:5978 fe-connect.c:6336 fe-connect.c:6486 fe-exec.c:1209
-#: fe-exec.c:3029 fe-exec.c:3212 fe-exec.c:3985 fe-exec.c:4150
-#: fe-gssapi-common.c:111 fe-lobj.c:881 fe-protocol3.c:1016 fe-protocol3.c:1724
-#: fe-secure-common.c:110 fe-secure-gssapi.c:504 fe-secure-openssl.c:440
-#: fe-secure-openssl.c:1133
-msgid "out of memory\n"
-msgstr "έλλειψη μνήμης\n"
+#: fe-auth-scram.c:232
+#, c-format
+msgid "malformed SCRAM message (length mismatch)"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (αναντιστοιχία μήκους)"
 
-#: fe-auth-scram.c:374
-msgid "could not encode nonce\n"
-msgstr "δεν δύναται να κωδικοποιήσει nonce\n"
+#: fe-auth-scram.c:275
+#, c-format
+msgid "could not verify server signature: %s"
+msgstr "δεν ήταν δυνατή πιστοποίηση της υπογραφής του διακομιστή: %s"
 
-#: fe-auth-scram.c:563
-msgid "could not calculate client proof\n"
-msgstr "δεν δύναται να υπολογίσει την απόδειξη του πελάτη\n"
+#: fe-auth-scram.c:281
+#, c-format
+msgid "incorrect server signature"
+msgstr "λανθασμένη υπογραφή διακομιστή"
 
-#: fe-auth-scram.c:579
-msgid "could not encode client proof\n"
-msgstr "δεν δύναται να κωδικοποιήσει την απόδειξη του πελάτη\n"
+#: fe-auth-scram.c:290
+#, c-format
+msgid "invalid SCRAM exchange state"
+msgstr "άκυρη κατάσταση ανταλλαγής SCRAM"
 
-#: fe-auth-scram.c:634
-msgid "invalid SCRAM response (nonce mismatch)\n"
-msgstr "μη έγκυρη απόκριση SCRAM (ασυμφωνία nonce)\n"
+#: fe-auth-scram.c:317
+#, c-format
+msgid "malformed SCRAM message (attribute \"%c\" expected)"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (αναμένεται χαρακτηριστικό «%c»)"
+
+#: fe-auth-scram.c:326
+#, c-format
+msgid "malformed SCRAM message (expected character \"=\" for attribute \"%c\")"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (αναμένεται χαρακτήρας «=» για το χαρακτηριστικό «%c»)"
+
+#: fe-auth-scram.c:366
+#, c-format
+msgid "could not generate nonce"
+msgstr "δεν δύναται να δημιουργήσει nonce"
+
+#: fe-auth-scram.c:375 fe-auth-scram.c:448 fe-auth-scram.c:600
+#: fe-auth-scram.c:620 fe-auth-scram.c:644 fe-auth-scram.c:658
+#: fe-auth-scram.c:704 fe-auth-scram.c:740 fe-auth-scram.c:914 fe-auth.c:296
+#: fe-auth.c:369 fe-auth.c:403 fe-auth.c:618 fe-auth.c:729 fe-auth.c:1210
+#: fe-auth.c:1375 fe-connect.c:925 fe-connect.c:1759 fe-connect.c:1921
+#: fe-connect.c:3291 fe-connect.c:4496 fe-connect.c:5161 fe-connect.c:5416
+#: fe-connect.c:5534 fe-connect.c:5781 fe-connect.c:5861 fe-connect.c:5959
+#: fe-connect.c:6210 fe-connect.c:6237 fe-connect.c:6313 fe-connect.c:6336
+#: fe-connect.c:6360 fe-connect.c:6395 fe-connect.c:6481 fe-connect.c:6489
+#: fe-connect.c:6846 fe-connect.c:6996 fe-exec.c:527 fe-exec.c:1321
+#: fe-exec.c:3111 fe-exec.c:4071 fe-exec.c:4235 fe-gssapi-common.c:109
+#: fe-lobj.c:870 fe-protocol3.c:204 fe-protocol3.c:228 fe-protocol3.c:256
+#: fe-protocol3.c:273 fe-protocol3.c:353 fe-protocol3.c:720 fe-protocol3.c:959
+#: fe-protocol3.c:1770 fe-protocol3.c:2170 fe-secure-common.c:110
+#: fe-secure-gssapi.c:500 fe-secure-openssl.c:434 fe-secure-openssl.c:1285
+#, c-format
+msgid "out of memory"
+msgstr "έλλειψη μνήμης"
+
+#: fe-auth-scram.c:382
+#, c-format
+msgid "could not encode nonce"
+msgstr "δεν δύναται να κωδικοποιήσει nonce"
+
+#: fe-auth-scram.c:570
+#, c-format
+msgid "could not calculate client proof: %s"
+msgstr "δεν μπόρεσε να υπολογίσει την απόδειξη του πελάτη: %s"
+
+#: fe-auth-scram.c:585
+#, c-format
+msgid "could not encode client proof"
+msgstr "δεν δύναται να κωδικοποιήσει την απόδειξη του πελάτη"
+
+#: fe-auth-scram.c:637
+#, c-format
+msgid "invalid SCRAM response (nonce mismatch)"
+msgstr "μη έγκυρη απόκριση SCRAM (ασυμφωνία nonce)"
 
 #: fe-auth-scram.c:667
-msgid "malformed SCRAM message (invalid salt)\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (άκυρο salt)\n"
-
-#: fe-auth-scram.c:681
-msgid "malformed SCRAM message (invalid iteration count)\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (άκυρη μέτρηση επαναλήψεων)\n"
-
-#: fe-auth-scram.c:687
-msgid "malformed SCRAM message (garbage at end of server-first-message)\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (σκουπίδια στο τέλος του πρώτου-μηνύματος-διακομιστή)\n"
-
-#: fe-auth-scram.c:723
 #, c-format
-msgid "error received from server in SCRAM exchange: %s\n"
-msgstr "ελήφθει σφάλμα από τον διακομιστή κατά την ανταλλαγή SCRAM: %s\n"
+msgid "malformed SCRAM message (invalid salt)"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (άκυρο salt)"
 
-#: fe-auth-scram.c:739
-msgid "malformed SCRAM message (garbage at end of server-final-message)\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (σκουπίδια στο τέλος του τελικού-μηνύματος-διακομιστή)\n"
-
-#: fe-auth-scram.c:758
-msgid "malformed SCRAM message (invalid server signature)\n"
-msgstr "κακοσχηματισμένο μήνυμα SCRAM (άκυρη υπογραφή διακομιστή)\n"
-
-#: fe-auth.c:76
+#: fe-auth-scram.c:680
 #, c-format
-msgid "out of memory allocating GSSAPI buffer (%d)\n"
-msgstr "η μνήμη δεν επαρκεί για την εκχώρηση της ενδιάμεσης μνήμης του GSSAPI (%d)\n"
+msgid "malformed SCRAM message (invalid iteration count)"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (άκυρη μέτρηση επαναλήψεων)"
 
-#: fe-auth.c:131
+#: fe-auth-scram.c:685
+#, c-format
+msgid "malformed SCRAM message (garbage at end of server-first-message)"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (σκουπίδια στο τέλος του πρώτου-μηνύματος-διακομιστή)"
+
+#: fe-auth-scram.c:719
+#, c-format
+msgid "error received from server in SCRAM exchange: %s"
+msgstr "ελήφθει σφάλμα από τον διακομιστή κατά την ανταλλαγή SCRAM: %s"
+
+#: fe-auth-scram.c:734
+#, c-format
+msgid "malformed SCRAM message (garbage at end of server-final-message)"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (σκουπίδια στο τέλος του τελικού-μηνύματος-διακομιστή)"
+
+#: fe-auth-scram.c:751
+#, c-format
+msgid "malformed SCRAM message (invalid server signature)"
+msgstr "κακοσχηματισμένο μήνυμα SCRAM (άκυρη υπογραφή διακομιστή)"
+
+#: fe-auth-scram.c:923
+msgid "could not generate random salt"
+msgstr "δεν δύναται να δημιουργήσει τυχαίο salt"
+
+#: fe-auth.c:77
+#, c-format
+msgid "out of memory allocating GSSAPI buffer (%d)"
+msgstr "η μνήμη δεν επαρκεί για την εκχώρηση της ενδιάμεσης μνήμης του GSSAPI (%d)"
+
+#: fe-auth.c:138
 msgid "GSSAPI continuation error"
 msgstr "σφάλμα συνέχισης GSSAPI"
 
-#: fe-auth.c:158 fe-auth.c:391 fe-gssapi-common.c:98 fe-secure-common.c:98
-msgid "host name must be specified\n"
-msgstr "πρέπει να καθοριστεί το όνομα κεντρικού υπολογιστή\n"
-
-#: fe-auth.c:165
-msgid "duplicate GSS authentication request\n"
-msgstr "διπλότυπη αίτηση ελέγχου ταυτότητας GSS\n"
-
-#: fe-auth.c:230
+#: fe-auth.c:168 fe-auth.c:397 fe-gssapi-common.c:97 fe-secure-common.c:99
+#: fe-secure-common.c:173
 #, c-format
-msgid "out of memory allocating SSPI buffer (%d)\n"
-msgstr "η μνήμη δεν επαρκεί για την εκχώρηση της ενδιάμεσης μνήμης του SSPI (%d)\n"
+msgid "host name must be specified"
+msgstr "πρέπει να καθοριστεί το όνομα κεντρικού υπολογιστή"
 
-#: fe-auth.c:278
+#: fe-auth.c:174
+#, c-format
+msgid "duplicate GSS authentication request"
+msgstr "διπλότυπη αίτηση ελέγχου ταυτότητας GSS"
+
+#: fe-auth.c:238
+#, c-format
+msgid "out of memory allocating SSPI buffer (%d)"
+msgstr "η μνήμη δεν επαρκεί για την εκχώρηση της ενδιάμεσης μνήμης του SSPI (%d)"
+
+#: fe-auth.c:285
 msgid "SSPI continuation error"
 msgstr "σφάλμα συνέχισης SSPI"
 
-#: fe-auth.c:351
-msgid "duplicate SSPI authentication request\n"
-msgstr "διπλότυπη αίτηση ελέγχου ταυτότητας SSPI\n"
+#: fe-auth.c:359
+#, c-format
+msgid "duplicate SSPI authentication request"
+msgstr "διπλότυπη αίτηση ελέγχου ταυτότητας SSPI"
 
-#: fe-auth.c:377
+#: fe-auth.c:384
 msgid "could not acquire SSPI credentials"
 msgstr "δεν δύναται η απόκτηση διαπιστευτηρίων SSPI"
 
-#: fe-auth.c:433
-msgid "channel binding required, but SSL not in use\n"
-msgstr "απαιτείται σύνδεση καναλιού, αλλά δεν χρησιμοποιείται SSL\n"
-
-#: fe-auth.c:440
-msgid "duplicate SASL authentication request\n"
-msgstr "διπλότυπη αίτηση ελέγχου ταυτότητας SASL\n"
-
-#: fe-auth.c:496
-msgid "channel binding is required, but client does not support it\n"
-msgstr "απαιτείται σύνδεση καναλιού, αλλά ο πελάτης δεν την υποστηρίζει\n"
-
-#: fe-auth.c:513
-msgid "server offered SCRAM-SHA-256-PLUS authentication over a non-SSL connection\n"
-msgstr "ο διακομιστής προσέφερε έλεγχο ταυτότητας SCRAM-SHA-256-PLUS μέσω σύνδεσης που δεν είναι SSL\n"
-
-#: fe-auth.c:525
-msgid "none of the server's SASL authentication mechanisms are supported\n"
-msgstr "δεν υποστηρίζεται κανένας από τους μηχανισμούς ελέγχου ταυτότητας SASL του διακομιστή\n"
-
-#: fe-auth.c:533
-msgid "channel binding is required, but server did not offer an authentication method that supports channel binding\n"
-msgstr "απαιτείται σύνδεση καναλιού, αλλά ο διακομιστής δεν προσέφερε καμία μέθοδο ελέγχου ταυτότητας που να υποστηρίζει σύνδεση καναλιού\n"
-
-#: fe-auth.c:639
+#: fe-auth.c:437
 #, c-format
-msgid "out of memory allocating SASL buffer (%d)\n"
-msgstr "η μνήμη δεν επαρκεί για την εκχώρηση της ενδιάμεσης μνήμης του SASL (%d)\n"
+msgid "channel binding required, but SSL not in use"
+msgstr "απαιτείται σύνδεση καναλιού, αλλά δεν χρησιμοποιείται SSL"
 
-#: fe-auth.c:664
-msgid "AuthenticationSASLFinal received from server, but SASL authentication was not completed\n"
-msgstr "παραλήφθηκε AuthenticationSASLFinal από το διακομιστή, αλλά ο έλεγχος ταυτότητας SASL έχει ολοκληρωθεί\n"
-
-#: fe-auth.c:741
-msgid "SCM_CRED authentication method not supported\n"
-msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης SCM_CRED\n"
-
-#: fe-auth.c:836
-msgid "channel binding required, but server authenticated client without channel binding\n"
-msgstr "απαιτείται σύνδεση καναλιού, αλλά ο διακομιστής πιστοποίησε τον πελάτη χωρίς σύνδεση καναλιού\n"
-
-#: fe-auth.c:842
-msgid "channel binding required but not supported by server's authentication request\n"
-msgstr "απαιτείται σύνδεση καναλιού αλλά αυτή δεν υποστηρίζεται από την αίτηση ελέγχου ταυτότητας του διακομιστή\n"
-
-#: fe-auth.c:877
-msgid "Kerberos 4 authentication not supported\n"
-msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης Kerberos 4\n"
-
-#: fe-auth.c:882
-msgid "Kerberos 5 authentication not supported\n"
-msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης Kerberos 5\n"
-
-#: fe-auth.c:953
-msgid "GSSAPI authentication not supported\n"
-msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης GSSAPI\n"
-
-#: fe-auth.c:985
-msgid "SSPI authentication not supported\n"
-msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης SSPI\n"
-
-#: fe-auth.c:993
-msgid "Crypt authentication not supported\n"
-msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης Crypt\n"
-
-#: fe-auth.c:1060
+#: fe-auth.c:443
 #, c-format
-msgid "authentication method %u not supported\n"
-msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης %u\n"
+msgid "duplicate SASL authentication request"
+msgstr "διπλότυπη αίτηση ελέγχου ταυτότητας SASL"
 
-#: fe-auth.c:1107
+#: fe-auth.c:501
 #, c-format
-msgid "user name lookup failure: error code %lu\n"
-msgstr "αποτυχία αναζήτησης ονόματος χρήστη: κωδικός σφάλματος % lu\n"
+msgid "channel binding is required, but client does not support it"
+msgstr "απαιτείται σύνδεση καναλιού, αλλά ο πελάτης δεν την υποστηρίζει"
 
-#: fe-auth.c:1117 fe-connect.c:2851
+#: fe-auth.c:517
 #, c-format
-msgid "could not look up local user ID %d: %s\n"
-msgstr "δεν ήταν δυνατή η αναζήτηση ID τοπικού χρήστη %d: %s\n"
+msgid "server offered SCRAM-SHA-256-PLUS authentication over a non-SSL connection"
+msgstr "ο διακομιστής προσέφερε έλεγχο ταυτότητας SCRAM-SHA-256-PLUS μέσω σύνδεσης που δεν είναι SSL"
 
-#: fe-auth.c:1122 fe-connect.c:2856
+#: fe-auth.c:531
 #, c-format
-msgid "local user with ID %d does not exist\n"
-msgstr "δεν υπάρχει τοπικός χρήστης με ID %d\n"
+msgid "none of the server's SASL authentication mechanisms are supported"
+msgstr "δεν υποστηρίζεται κανένας από τους μηχανισμούς ελέγχου ταυτότητας SASL του διακομιστή"
 
-#: fe-auth.c:1226
-msgid "unexpected shape of result set returned for SHOW\n"
-msgstr "μη αναμενόμενο σχήμα συνόλου αποτελεσμάτων που επιστράφηκε από την εντολή SHOW\n"
-
-#: fe-auth.c:1235
-msgid "password_encryption value too long\n"
-msgstr "πολύ μακρυά τιμή password_encryption\n"
-
-#: fe-auth.c:1275
+#: fe-auth.c:538
 #, c-format
-msgid "unrecognized password encryption algorithm \"%s\"\n"
-msgstr "μη αναγνωρίσιμος αλγόριθμος κρυπτογράφησης «%s» κωδικού πρόσβασης\n"
+msgid "channel binding is required, but server did not offer an authentication method that supports channel binding"
+msgstr "απαιτείται σύνδεση καναλιού, αλλά ο διακομιστής δεν προσέφερε καμία μέθοδο ελέγχου ταυτότητας που να υποστηρίζει σύνδεση καναλιού"
 
-#: fe-connect.c:1094
+#: fe-auth.c:641
 #, c-format
-msgid "could not match %d host names to %d hostaddr values\n"
-msgstr "δεν μπόρεσε να ταιριάξει %d ονομασίες διακομιστών με %d τιμές hostaddr\n"
+msgid "out of memory allocating SASL buffer (%d)"
+msgstr "η μνήμη δεν επαρκεί για την εκχώρηση της ενδιάμεσης μνήμης του SASL (%d)"
 
-#: fe-connect.c:1175
+#: fe-auth.c:665
 #, c-format
-msgid "could not match %d port numbers to %d hosts\n"
-msgstr "δεν μπόρεσε να ταιριάξει %d αριθμούς θυρών με %d διακομιστές\n"
+msgid "AuthenticationSASLFinal received from server, but SASL authentication was not completed"
+msgstr "παραλήφθηκε AuthenticationSASLFinal από το διακομιστή, αλλά ο έλεγχος ταυτότητας SASL δεν έχει ολοκληρωθεί"
 
-#: fe-connect.c:1268 fe-connect.c:1294 fe-connect.c:1336 fe-connect.c:1345
-#: fe-connect.c:1378 fe-connect.c:1422
+#: fe-auth.c:675
 #, c-format
-msgid "invalid %s value: \"%s\"\n"
-msgstr "άκυρο %s τιμή: «%s»\n"
+msgid "no client response found after SASL exchange success"
+msgstr "δεν βρέθηκε απάντηση πελάτη μετά την επιτυχία της ανταλλαγής SASL"
 
-#: fe-connect.c:1315
+#: fe-auth.c:738 fe-auth.c:745 fe-auth.c:1358 fe-auth.c:1369
 #, c-format
-msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
-msgstr "η τιμή SSLmode «%s» είναι άκυρη όταν η υποστήριξη SSL δεν έχει μεταγλωττιστεί (compiled)\n"
+msgid "could not encrypt password: %s"
+msgstr "δεν ήταν δυνατή η κρυπτογράφηση του κωδικού πρόσβασης : %s"
 
-#: fe-connect.c:1363
-msgid "invalid SSL protocol version range\n"
-msgstr "άκυρο εύρος εκδόσεων πρωτοκόλλου SSL\n"
+#: fe-auth.c:773
+msgid "server requested a cleartext password"
+msgstr "ο διακομιστής απαίτησε έναν κωδικό πρόσβασης καθαρού κειμένου"
 
-#: fe-connect.c:1388
+#: fe-auth.c:775
+msgid "server requested a hashed password"
+msgstr "ο διακομιστής απαίτησε έναν κατακερματισμένο κωδικό πρόσβασης"
+
+#: fe-auth.c:778
+msgid "server requested GSSAPI authentication"
+msgstr "ο διακομιστής απαίτησε έλεγχο ταυτότητας GSSAPI"
+
+#: fe-auth.c:780
+msgid "server requested SSPI authentication"
+msgstr "ο διακομιστής απαίτησε έλεγχο ταυτότητας SSPI"
+
+#: fe-auth.c:784
+msgid "server requested SASL authentication"
+msgstr "ο διακομιστής απαίτησε έλεγχο ταυτότητας SASL"
+
+#: fe-auth.c:787
+msgid "server requested an unknown authentication type"
+msgstr "ο διακομιστής απαίτησε έναν άγνωστο τύπο ελέγχου ταυτότητας"
+
+#: fe-auth.c:820
 #, c-format
-msgid "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in\n"
-msgstr "η τιμή SSLmode «%s» είναι άκυρη όταν η υποστήριξη GSSAPI δεν έχει μεταγλωττιστεί (compiled)\n"
+msgid "server did not request an SSL certificate"
+msgstr "ο διακομιστής δεν απαίτησε πιστοποιητικό SSL"
 
-#: fe-connect.c:1648
+#: fe-auth.c:825
 #, c-format
-msgid "could not set socket to TCP no delay mode: %s\n"
-msgstr "δεν μπόρεσε να ορίσει τον υποδοχέα σε λειτουργία TCP χωρίς καθυστέρηση: %s\n"
+msgid "server accepted connection without a valid SSL certificate"
+msgstr "ο διακομιστής αποδέχθηκε σύνδεση χωρίς έγκυρο πιστοποιητικό SSL"
 
-#: fe-connect.c:1710
+#: fe-auth.c:879
+msgid "server did not complete authentication"
+msgstr "ο διακομιστής δεν ολοκλήρωσε την πιστοποίηση"
+
+#: fe-auth.c:913
+#, c-format
+msgid "authentication method requirement \"%s\" failed: %s"
+msgstr "η απαιτούμενη μέθοδος πιστοποίησης «%s» απέτυχε: %s"
+
+#: fe-auth.c:936
+#, c-format
+msgid "channel binding required, but server authenticated client without channel binding"
+msgstr "απαιτείται σύνδεση καναλιού, αλλά ο διακομιστής πιστοποίησε τον πελάτη χωρίς σύνδεση καναλιού"
+
+#: fe-auth.c:941
+#, c-format
+msgid "channel binding required but not supported by server's authentication request"
+msgstr "απαιτείται σύνδεση καναλιού αλλά αυτή δεν υποστηρίζεται από την αίτηση ελέγχου ταυτότητας του διακομιστή"
+
+#: fe-auth.c:975
+#, c-format
+msgid "Kerberos 4 authentication not supported"
+msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης Kerberos 4"
+
+#: fe-auth.c:979
+#, c-format
+msgid "Kerberos 5 authentication not supported"
+msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης Kerberos 5"
+
+#: fe-auth.c:1049
+#, c-format
+msgid "GSSAPI authentication not supported"
+msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης GSSAPI"
+
+#: fe-auth.c:1080
+#, c-format
+msgid "SSPI authentication not supported"
+msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης SSPI"
+
+#: fe-auth.c:1087
+#, c-format
+msgid "Crypt authentication not supported"
+msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης Crypt"
+
+#: fe-auth.c:1151
+#, c-format
+msgid "authentication method %u not supported"
+msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης %u"
+
+#: fe-auth.c:1197
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "αποτυχία αναζήτησης ονόματος χρήστη: κωδικός σφάλματος %lu"
+
+#: fe-auth.c:1321
+#, c-format
+msgid "unexpected shape of result set returned for SHOW"
+msgstr "μη αναμενόμενο σχήμα συνόλου αποτελεσμάτων που επιστράφηκε από την εντολή SHOW"
+
+#: fe-auth.c:1329
+#, c-format
+msgid "password_encryption value too long"
+msgstr "πολύ μακρυά τιμή password_encryption"
+
+#: fe-auth.c:1379
+#, c-format
+msgid "unrecognized password encryption algorithm \"%s\""
+msgstr "μη αναγνωρίσιμος αλγόριθμος κρυπτογράφησης «%s» κωδικού πρόσβασης"
+
+#: fe-connect.c:1132
+#, c-format
+msgid "could not match %d host names to %d hostaddr values"
+msgstr "δεν μπόρεσε να ταιριάξει %d ονομασίες διακομιστών με %d τιμές hostaddr"
+
+#: fe-connect.c:1212
+#, c-format
+msgid "could not match %d port numbers to %d hosts"
+msgstr "δεν μπόρεσε να ταιριάξει %d αριθμούς θυρών με %d διακομιστές"
+
+#: fe-connect.c:1337
+#, c-format
+msgid "negative require_auth method \"%s\" cannot be mixed with non-negative methods"
+msgstr "η αρνητική μέθοδος require_auth «%s» δεν μπορεί να συνδυαστεί με μη αρνητικές μεθόδους"
+
+#: fe-connect.c:1350
+#, c-format
+msgid "require_auth method \"%s\" cannot be mixed with negative methods"
+msgstr "η μέθοδος require_auth «%s»  δεν μπορεί να συνδυαστεί με αρνητικές μεθόδους"
+
+#: fe-connect.c:1410 fe-connect.c:1461 fe-connect.c:1503 fe-connect.c:1559
+#: fe-connect.c:1567 fe-connect.c:1598 fe-connect.c:1644 fe-connect.c:1684
+#: fe-connect.c:1705
+#, c-format
+msgid "invalid %s value: \"%s\""
+msgstr "άκυρο %s τιμή: «%s»"
+
+#: fe-connect.c:1443
+#, c-format
+msgid "require_auth method \"%s\" is specified more than once"
+msgstr "η μέθοδος require_auth «%s» χρησιμοποιείται περισσότερες από μία φορές"
+
+#: fe-connect.c:1484 fe-connect.c:1523 fe-connect.c:1606
+#, c-format
+msgid "%s value \"%s\" invalid when SSL support is not compiled in"
+msgstr "%s τιμή «%s» είναι άκυρη όταν η υποστήριξη SSL δεν έχει μεταγλωττιστεί (compiled)"
+
+#: fe-connect.c:1546
+#, c-format
+msgid "weak sslmode \"%s\" may not be used with sslrootcert=system (use \"verify-full\")"
+msgstr "το αδύναμο sslmode «%s» δεν μπορεί να χρησιμοποιηθεί με sslrootcert=system (χρησιμοποιήστε το «verify-full»)"
+
+#: fe-connect.c:1584
+#, c-format
+msgid "invalid SSL protocol version range"
+msgstr "άκυρο εύρος εκδόσεων πρωτοκόλλου SSL"
+
+#: fe-connect.c:1621
+#, c-format
+msgid "%s value \"%s\" is not supported (check OpenSSL version)"
+msgstr "%s τιμή «%s» δεν υποστοιρίζεται (έλεγξε την έκδοση OpenSSL)"
+
+#: fe-connect.c:1651
+#, c-format
+msgid "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in"
+msgstr "η τιμή SSLmode «%s» είναι άκυρη όταν η υποστήριξη GSSAPI δεν έχει μεταγλωττιστεί (compiled)"
+
+#: fe-connect.c:1944
+#, c-format
+msgid "could not set socket to TCP no delay mode: %s"
+msgstr "δεν μπόρεσε να ορίσει τον υποδοχέα σε λειτουργία TCP χωρίς καθυστέρηση: %s"
+
+#: fe-connect.c:2003
 #, c-format
 msgid "connection to server on socket \"%s\" failed: "
 msgstr "σύνδεση στον διακομιστή στην υποδοχή «%s» απέτυχε: "
 
-#: fe-connect.c:1737
+#: fe-connect.c:2029
 #, c-format
 msgid "connection to server at \"%s\" (%s), port %s failed: "
 msgstr "σύνδεση στον διακομιστή σε «%s» (%s), θύρα %s απέτυχε: "
 
-#: fe-connect.c:1742
+#: fe-connect.c:2034
 #, c-format
 msgid "connection to server at \"%s\", port %s failed: "
 msgstr "σύνδεση στον διακομιστή σε «%s», θύρα %s απέτυχε: "
 
-#: fe-connect.c:1767
-msgid "\tIs the server running locally and accepting connections on that socket?\n"
-msgstr "\tΕκτελείται τοπικά ο διακομιστής και αποδέχεται συνδέσεις σε αυτή την υποδοχή;\n"
-
-#: fe-connect.c:1771
-msgid "\tIs the server running on that host and accepting TCP/IP connections?\n"
-msgstr "\tΕκτελείται ο διακομιστής σε αυτόν τον κεντρικό υπολογιστή και αποδέχεται συνδέσεις TCP/IP;\n"
-
-#: fe-connect.c:1835
+#: fe-connect.c:2057
 #, c-format
-msgid "invalid integer value \"%s\" for connection option \"%s\"\n"
-msgstr "άκυρη τιμή ακεραίου »%s» για την επιλογή σύνδεσης «%s»\n"
+msgid "\tIs the server running locally and accepting connections on that socket?"
+msgstr "\tΕκτελείται τοπικά ο διακομιστής και αποδέχεται συνδέσεις σε αυτή την υποδοχή;"
 
-#: fe-connect.c:1865 fe-connect.c:1900 fe-connect.c:1936 fe-connect.c:2025
-#: fe-connect.c:2639
+#: fe-connect.c:2059
 #, c-format
-msgid "%s(%s) failed: %s\n"
-msgstr "%s(%s) απέτυχε: %s\n"
+msgid "\tIs the server running on that host and accepting TCP/IP connections?"
+msgstr "\tΕκτελείται ο διακομιστής σε αυτόν τον κεντρικό υπολογιστή και αποδέχεται συνδέσεις TCP/IP;"
 
-#: fe-connect.c:1990
+#: fe-connect.c:2122
 #, c-format
-msgid "%s(%s) failed: error code %d\n"
-msgstr "%s(%s) απέτυχε: κωδικός σφάλματος %d\n"
+msgid "invalid integer value \"%s\" for connection option \"%s\""
+msgstr "άκυρη τιμή ακεραίου »%s» για την επιλογή σύνδεσης «%s»"
 
-#: fe-connect.c:2305
-msgid "invalid connection state, probably indicative of memory corruption\n"
-msgstr "μη έγκυρη κατάσταση σύνδεσης, πιθανώς ενδεικτική αλλοίωσης μνήμης\n"
-
-#: fe-connect.c:2384
+#: fe-connect.c:2151 fe-connect.c:2185 fe-connect.c:2220 fe-connect.c:2318
+#: fe-connect.c:2973
 #, c-format
-msgid "invalid port number: \"%s\"\n"
-msgstr "μη έγκυρος αριθμός πύλης: «%s»\n"
+msgid "%s(%s) failed: %s"
+msgstr "%s(%s) απέτυχε: %s"
 
-#: fe-connect.c:2400
+#: fe-connect.c:2284
 #, c-format
-msgid "could not translate host name \"%s\" to address: %s\n"
-msgstr "δεν ήταν δυνατή η μετάφραση του ονόματος κεντρικού υπολογιστή «%s» στη διεύθυνση: %s\n"
+msgid "%s(%s) failed: error code %d"
+msgstr "%s(%s) απέτυχε: κωδικός σφάλματος %d"
 
-#: fe-connect.c:2413
+#: fe-connect.c:2597
 #, c-format
-msgid "could not parse network address \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η ανάλυση της διεύθυνσης δικτύου «%s»: %s\n"
+msgid "invalid connection state, probably indicative of memory corruption"
+msgstr "μη έγκυρη κατάσταση σύνδεσης, πιθανώς ενδεικτική αλλοίωσης μνήμης"
 
-#: fe-connect.c:2426
+#: fe-connect.c:2676
 #, c-format
-msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"
-msgstr "η διαδρομή υποδοχής τομέα Unix «%s» είναι πολύ μακρυά (μέγιστο %d bytes)\n"
+msgid "invalid port number: \"%s\""
+msgstr "μη έγκυρος αριθμός πύλης: «%s»"
 
-#: fe-connect.c:2441
+#: fe-connect.c:2690
 #, c-format
-msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr "δεν ήταν δυνατή η μετάφραση της διαδρομής υποδοχής πεδίου-Unix «%s» στη διεύθυνση: %s\n"
+msgid "could not translate host name \"%s\" to address: %s"
+msgstr "δεν ήταν δυνατή η μετάφραση του ονόματος κεντρικού υπολογιστή «%s» στη διεύθυνση: %s"
 
-#: fe-connect.c:2567
+#: fe-connect.c:2702
 #, c-format
-msgid "could not create socket: %s\n"
-msgstr "δεν ήταν δυνατή η δημιουργία υποδοχέα: %s\n"
+msgid "could not parse network address \"%s\": %s"
+msgstr "δεν ήταν δυνατή η ανάλυση της διεύθυνσης δικτύου «%s»: %s"
 
-#: fe-connect.c:2598
+#: fe-connect.c:2713
 #, c-format
-msgid "could not set socket to nonblocking mode: %s\n"
-msgstr "δεν ήταν δυνατή η ρύθμιση της υποδοχής σε λειτουργία μη αποκλεισμού: %s\n"
+msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)"
+msgstr "η διαδρομή υποδοχής τομέα Unix «%s» είναι πολύ μακρυά (μέγιστο %d bytes)"
 
-#: fe-connect.c:2608
+#: fe-connect.c:2727
 #, c-format
-msgid "could not set socket to close-on-exec mode: %s\n"
-msgstr "δεν ήταν δυνατή η ρύθμιση της υποδοχής σε λειτουργία close-on-exec: %s\n"
+msgid "could not translate Unix-domain socket path \"%s\" to address: %s"
+msgstr "δεν ήταν δυνατή η μετάφραση της διαδρομής υποδοχής πεδίου-Unix «%s» στη διεύθυνση: %s"
 
-#: fe-connect.c:2626
-msgid "keepalives parameter must be an integer\n"
-msgstr "η παράμετρος keepalives πρέπει να είναι ακέραιος\n"
-
-#: fe-connect.c:2767
+#: fe-connect.c:2901
 #, c-format
-msgid "could not get socket error status: %s\n"
-msgstr "δεν ήταν δυνατή η απόκτηση κατάστασης σφάλματος της υποδοχής: %s\n"
+msgid "could not create socket: %s"
+msgstr "δεν ήταν δυνατή η δημιουργία υποδοχέα: %s"
 
-#: fe-connect.c:2795
+#: fe-connect.c:2932
 #, c-format
-msgid "could not get client address from socket: %s\n"
-msgstr "δεν ήταν δυνατή η απόκτηση διεύθυνσης πελάτη από την υποδοχή: %s\n"
+msgid "could not set socket to nonblocking mode: %s"
+msgstr "δεν ήταν δυνατή η ρύθμιση της υποδοχής σε λειτουργία μη αποκλεισμού: %s"
 
-#: fe-connect.c:2837
-msgid "requirepeer parameter is not supported on this platform\n"
-msgstr "η παράμετρος requirepeer δεν υποστηρίζεται από την παρούσα πλατφόρμα\n"
-
-#: fe-connect.c:2840
+#: fe-connect.c:2943
 #, c-format
-msgid "could not get peer credentials: %s\n"
-msgstr "δεν ήταν δυνατή η απόκτηση διαπιστευτηρίων από peer: %s\n"
+msgid "could not set socket to close-on-exec mode: %s"
+msgstr "δεν ήταν δυνατή η ρύθμιση της υποδοχής σε λειτουργία close-on-exec: %s"
 
-#: fe-connect.c:2864
+#: fe-connect.c:2961
 #, c-format
-msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"
-msgstr "το requirepeer καθορίζει «%s», αλλά το πραγματικό όνομα ομότιμου χρήστη είναι «%s»\n"
+msgid "keepalives parameter must be an integer"
+msgstr "η παράμετρος keepalives πρέπει να είναι ακέραιος"
 
-#: fe-connect.c:2904
+#: fe-connect.c:3100
 #, c-format
-msgid "could not send GSSAPI negotiation packet: %s\n"
-msgstr "δεν ήταν δυνατή η αποστολή GSSAPI πακέτου διαπραγμάτευσης: %s\n"
+msgid "could not get socket error status: %s"
+msgstr "δεν ήταν δυνατή η απόκτηση κατάστασης σφάλματος της υποδοχής: %s"
 
-#: fe-connect.c:2916
-msgid "GSSAPI encryption required but was impossible (possibly no credential cache, no server support, or using a local socket)\n"
-msgstr "GSSAPI κρυπτογράφηση απαιτείται αλλά ήταν αδύνατη (πιθανώς απουσία cache διαπιστευτηρίων, απουσία υποστήριξης διακομιστή, ή χρησιμοποιείται τοπική υποδοχή)\n"
-
-#: fe-connect.c:2958
+#: fe-connect.c:3127
 #, c-format
-msgid "could not send SSL negotiation packet: %s\n"
-msgstr ""
-"δεν ήταν δυνατή η αποστολή SSL πακέτου διαπραγμάτευσης: %s\n"
-"\n"
+msgid "could not get client address from socket: %s"
+msgstr "δεν ήταν δυνατή η απόκτηση διεύθυνσης πελάτη από την υποδοχή: %s"
 
-#: fe-connect.c:2989
+#: fe-connect.c:3165
 #, c-format
-msgid "could not send startup packet: %s\n"
-msgstr "δεν ήταν δυνατή η αποστολή πακέτου εκκίνησης: %s\n"
+msgid "requirepeer parameter is not supported on this platform"
+msgstr "η παράμετρος requirepeer δεν υποστηρίζεται από την παρούσα πλατφόρμα"
 
-#: fe-connect.c:3065
-msgid "server does not support SSL, but SSL was required\n"
-msgstr "ο διακομιστής δεν υποστηρίζει SSL, αλλά απαιτείται SSL\n"
-
-#: fe-connect.c:3092
+#: fe-connect.c:3167
 #, c-format
-msgid "received invalid response to SSL negotiation: %c\n"
-msgstr "έλαβε μη έγκυρη απάντηση κατά τη διαπραγμάτευση SSL: %c\n"
+msgid "could not get peer credentials: %s"
+msgstr "δεν ήταν δυνατή η απόκτηση διαπιστευτηρίων από peer: %s"
 
-#: fe-connect.c:3181
-msgid "server doesn't support GSSAPI encryption, but it was required\n"
-msgstr "ο διακομιστής δεν υποστηρίζει κρυπτογράφηση GSSAPI, αλλά αυτή ήταν απαραίτητη\n"
-
-#: fe-connect.c:3193
+#: fe-connect.c:3180
 #, c-format
-msgid "received invalid response to GSSAPI negotiation: %c\n"
-msgstr "έλαβε μη έγκυρη απάντηση κατά τη διαπραγμάτευση GSSAPI: %c\n"
+msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\""
+msgstr "το requirepeer καθορίζει «%s», αλλά το πραγματικό όνομα ομότιμου χρήστη είναι «%s»"
 
-#: fe-connect.c:3259 fe-connect.c:3284
+#: fe-connect.c:3221
 #, c-format
-msgid "expected authentication request from server, but received %c\n"
-msgstr "ανέμενε αίτηση ελέγχου ταυτότητας από το διακομιστή, αλλά αντί αυτής ελήφθη %c\n"
+msgid "could not send GSSAPI negotiation packet: %s"
+msgstr "δεν ήταν δυνατή η αποστολή GSSAPI πακέτου διαπραγμάτευσης: %s"
 
-#: fe-connect.c:3491
-msgid "unexpected message from server during startup\n"
-msgstr "μη αναμενόμενο μήνυμα από το διακομιστή κατά την εκκίνηση\n"
-
-#: fe-connect.c:3583
-msgid "session is read-only\n"
-msgstr "η περίοδος λειτουργίας είναι μόνο για ανάγνωση\n"
-
-#: fe-connect.c:3586
-msgid "session is not read-only\n"
-msgstr "η περίοδος λειτουργίας δεν είναι μόνο για ανάγνωση\n"
-
-#: fe-connect.c:3640
-msgid "server is in hot standby mode\n"
-msgstr "%s: ο διακομιστής βρίσκεται σε hot κατάσταση αναμονής\n"
-
-#: fe-connect.c:3643
-msgid "server is not in hot standby mode\n"
-msgstr "ο διακομιστής δεν βρίσκεται σε hot κατάσταση αναμονής\n"
-
-#: fe-connect.c:3754 fe-connect.c:3806
+#: fe-connect.c:3233
 #, c-format
-msgid "\"%s\" failed\n"
-msgstr "«%s» απέτυχε.\n"
+msgid "GSSAPI encryption required but was impossible (possibly no credential cache, no server support, or using a local socket)"
+msgstr "GSSAPI κρυπτογράφηση απαιτείται αλλά ήταν αδύνατη (πιθανώς απουσία cache διαπιστευτηρίων, απουσία υποστήριξης διακομιστή, ή χρησιμοποιείται τοπική υποδοχή)"
 
-#: fe-connect.c:3820
+#: fe-connect.c:3274
 #, c-format
-msgid "invalid connection state %d, probably indicative of memory corruption\n"
-msgstr "κατάσταση μη έγκυρης σύνδεσης %d, πιθανώς ενδεικτική αλλοίωσης της μνήμης\n"
+msgid "could not send SSL negotiation packet: %s"
+msgstr "δεν ήταν δυνατή η αποστολή SSL πακέτου διαπραγμάτευσης: %s"
 
-#: fe-connect.c:4266 fe-connect.c:4326
+#: fe-connect.c:3303
 #, c-format
-msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
-msgstr "PGEventProc «%s» απέτυχε κατά τη διάρκεια συμβάντος PGEVT_CONNRESET\n"
+msgid "could not send startup packet: %s"
+msgstr "δεν ήταν δυνατή η αποστολή πακέτου εκκίνησης: %s"
 
-#: fe-connect.c:4670
+#: fe-connect.c:3378
 #, c-format
-msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
-msgstr "άκυρη διεύθυνση URL LDAP «%s»: ο συνδυασμός πρέπει να είναι ldap://\n"
+msgid "server does not support SSL, but SSL was required"
+msgstr "ο διακομιστής δεν υποστηρίζει SSL, αλλά απαιτείται SSL"
 
-#: fe-connect.c:4685
+#: fe-connect.c:3404
 #, c-format
-msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
-msgstr "άκυρη διεύθυνση URL LDAP «%s»: λείπει το αποκλειστικό όνομα\n"
+msgid "received invalid response to SSL negotiation: %c"
+msgstr "έλαβε μη έγκυρη απάντηση κατά τη διαπραγμάτευση SSL: %c"
 
-#: fe-connect.c:4697 fe-connect.c:4755
+#: fe-connect.c:3424
 #, c-format
-msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
-msgstr "άκυρη διεύθυνση URL LDAP «%s»: πρέπει να περιέχει ακριβώς ένα χαρακτηριστικό\n"
+msgid "received unencrypted data after SSL response"
+msgstr "έλαβε μη κρυπτογραφημένα δεδομένα μετά την απάντηση SSL"
 
-#: fe-connect.c:4709 fe-connect.c:4771
+#: fe-connect.c:3504
 #, c-format
-msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
-msgstr "άκυρη διεύθυνση URL LDAP «%s»: πρέπει να έχει εμβέλεια αναζήτησης (base/one/sub)\n"
+msgid "server doesn't support GSSAPI encryption, but it was required"
+msgstr "ο διακομιστής δεν υποστηρίζει κρυπτογράφηση GSSAPI, αλλά αυτή ήταν απαραίτητη"
 
-#: fe-connect.c:4721
+#: fe-connect.c:3515
 #, c-format
-msgid "invalid LDAP URL \"%s\": no filter\n"
-msgstr "άκυρη διεύθυνση URL LDAP «%s»: κανένα φίλτρο\n"
+msgid "received invalid response to GSSAPI negotiation: %c"
+msgstr "έλαβε μη έγκυρη απάντηση κατά τη διαπραγμάτευση GSSAPI: %c"
 
-#: fe-connect.c:4743
+#: fe-connect.c:3533
 #, c-format
-msgid "invalid LDAP URL \"%s\": invalid port number\n"
-msgstr "άκυρη διεύθυνση URL LDAP «%s»: άκυρος αριθμός θύρας\n"
+msgid "received unencrypted data after GSSAPI encryption response"
+msgstr "λήψη μη κρυπτογραφημένων δεδομένων μετά την απάντηση κρυπτογράφησης GSSAPI"
 
-#: fe-connect.c:4781
-msgid "could not create LDAP structure\n"
-msgstr "δεν ήταν δυνατή η δημιουργία δομής LDAP\n"
-
-#: fe-connect.c:4857
+#: fe-connect.c:3598
 #, c-format
-msgid "lookup on LDAP server failed: %s\n"
-msgstr "απέτυχε η αναζήτηση στον διακομιστή LDAP: %s\n"
+msgid "expected authentication request from server, but received %c"
+msgstr "ανέμενε αίτηση ελέγχου ταυτότητας από το διακομιστή, αλλά αντί αυτής ελήφθη %c"
 
-#: fe-connect.c:4868
-msgid "more than one entry found on LDAP lookup\n"
-msgstr "βρέθηκαν περισσότερες από μία καταχωρήσεις στην αναζήτηση LDAP\n"
-
-#: fe-connect.c:4869 fe-connect.c:4881
-msgid "no entry found on LDAP lookup\n"
-msgstr "δεν βρέθηκε καταχώρηση στην αναζήτηση LDAP\n"
-
-#: fe-connect.c:4892 fe-connect.c:4905
-msgid "attribute has no values on LDAP lookup\n"
-msgstr "το χαρακτηριστικό δεν έχει τιμές στην αναζήτηση LDAP\n"
-
-#: fe-connect.c:4957 fe-connect.c:4976 fe-connect.c:5508
+#: fe-connect.c:3625 fe-connect.c:3794
 #, c-format
-msgid "missing \"=\" after \"%s\" in connection info string\n"
-msgstr "λείπει το «=» μετά από «%s» στην συμβολοσειρά πληροφορίας σύνδεσης\n"
+msgid "received invalid authentication request"
+msgstr "έλαβε μη έγκυρη αίτηση πιστοποίησης"
 
-#: fe-connect.c:5049 fe-connect.c:5693 fe-connect.c:6469
+#: fe-connect.c:3630 fe-connect.c:3779
 #, c-format
-msgid "invalid connection option \"%s\"\n"
-msgstr "άκυρη επιλογή σύνδεσης «%s»\n"
+msgid "received invalid protocol negotiation message"
+msgstr "έλαβε μη έγκυρο μήνυμα διαπραγμάτευσης πρωτοκόλλου"
 
-#: fe-connect.c:5065 fe-connect.c:5557
-msgid "unterminated quoted string in connection info string\n"
-msgstr "ατερμάτιστη συμβολοσειρά με εισαγωγικά στην συμβολοσειρά πληροφορίας σύνδεσης\n"
-
-#: fe-connect.c:5146
+#: fe-connect.c:3648 fe-connect.c:3702
 #, c-format
-msgid "definition of service \"%s\" not found\n"
-msgstr "δεν βρέθηκε ο ορισμός της υπηρεσίας «%s»\n"
+msgid "received invalid error message"
+msgstr "έλαβε άκυρο μήνυμα σφάλματος"
 
-#: fe-connect.c:5172
+#: fe-connect.c:3865
 #, c-format
-msgid "service file \"%s\" not found\n"
-msgstr "δεν βρέθηκε αρχείο υπηρεσίας «%s»\n"
+msgid "unexpected message from server during startup"
+msgstr "μη αναμενόμενο μήνυμα από το διακομιστή κατά την εκκίνηση"
 
-#: fe-connect.c:5186
+#: fe-connect.c:3956
 #, c-format
-msgid "line %d too long in service file \"%s\"\n"
-msgstr "Πολύ μακρυά γραμμή %d στο αρχείο υπηρεσίας «%s»\n"
+msgid "session is read-only"
+msgstr "η περίοδος λειτουργίας είναι μόνο για ανάγνωση"
 
-#: fe-connect.c:5257 fe-connect.c:5301
+#: fe-connect.c:3958
 #, c-format
-msgid "syntax error in service file \"%s\", line %d\n"
-msgstr "συντακτικό σφάλμα στο αρχείο υπηρεσίας «%s», γραμμή %d\n"
+msgid "session is not read-only"
+msgstr "η περίοδος λειτουργίας δεν είναι μόνο για ανάγνωση"
 
-#: fe-connect.c:5268
+#: fe-connect.c:4011
 #, c-format
-msgid "nested service specifications not supported in service file \"%s\", line %d\n"
-msgstr "οι ένθετες προδιαγραφές υπηρεσίας δεν υποστηρίζονται στο αρχείο υπηρεσίας «%s», γραμμή %d\n"
+msgid "server is in hot standby mode"
+msgstr "ο διακομιστής βρίσκεται σε hot κατάσταση αναμονής"
 
-#: fe-connect.c:5989
+#: fe-connect.c:4013
 #, c-format
-msgid "invalid URI propagated to internal parser routine: \"%s\"\n"
-msgstr "μη έγκυρο URI διαδόθηκε στη ρουτίνα εσωτερικής ανάλυσης: «%s»\n"
+msgid "server is not in hot standby mode"
+msgstr "ο διακομιστής δεν βρίσκεται σε hot κατάσταση αναμονής"
 
-#: fe-connect.c:6066
+#: fe-connect.c:4129 fe-connect.c:4179
 #, c-format
-msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\"\n"
-msgstr "έφτασε στο τέλος της συμβολοσειράς κατά την αναζήτηση αντίστοιχου «]» στη διεύθυνση IPv6 κεντρικού υπολογιστή στο URI: «%s»\n"
+msgid "\"%s\" failed"
+msgstr "«%s» απέτυχε"
 
-#: fe-connect.c:6073
+#: fe-connect.c:4193
 #, c-format
-msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
-msgstr "η διεύθυνση IPv6 κεντρικού υπολογιστή δεν δύναται να είναι κενή στο URI: «%s»\n"
+msgid "invalid connection state %d, probably indicative of memory corruption"
+msgstr "κατάσταση μη έγκυρης σύνδεσης %d, πιθανώς ενδεικτική αλλοίωσης της μνήμης"
 
-#: fe-connect.c:6088
+#: fe-connect.c:5174
 #, c-format
-msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\"\n"
-msgstr "μη αναμενόμενος χαρακτήρας «%c» στη θέση %d του URI (αναμένεται «:» ή «/»): «%s»\n"
+msgid "invalid LDAP URL \"%s\": scheme must be ldap://"
+msgstr "άκυρη διεύθυνση URL LDAP «%s»: ο συνδυασμός πρέπει να είναι ldap://"
 
-#: fe-connect.c:6218
+#: fe-connect.c:5189
 #, c-format
-msgid "extra key/value separator \"=\" in URI query parameter: \"%s\"\n"
-msgstr "επιπλέον διαχωριστικό κλειδιού/τιμής «=» στην παράμετρο ερωτήματος URI: «%s»\n"
+msgid "invalid LDAP URL \"%s\": missing distinguished name"
+msgstr "άκυρη διεύθυνση URL LDAP «%s»: λείπει το αποκλειστικό όνομα"
 
-#: fe-connect.c:6238
+#: fe-connect.c:5201 fe-connect.c:5259
 #, c-format
-msgid "missing key/value separator \"=\" in URI query parameter: \"%s\"\n"
-msgstr "λείπει διαχωριστικό κλειδιού/τιμής «=» στην παράμετρο ερωτήματος URI: «%s»\n"
+msgid "invalid LDAP URL \"%s\": must have exactly one attribute"
+msgstr "άκυρη διεύθυνση URL LDAP «%s»: πρέπει να περιέχει ακριβώς ένα χαρακτηριστικό"
 
-#: fe-connect.c:6290
+#: fe-connect.c:5213 fe-connect.c:5275
 #, c-format
-msgid "invalid URI query parameter: \"%s\"\n"
-msgstr "άκυρη παράμετρος ερωτήματος URI: «%s»\n"
+msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)"
+msgstr "άκυρη διεύθυνση URL LDAP «%s»: πρέπει να έχει εμβέλεια αναζήτησης (base/one/sub)"
 
-#: fe-connect.c:6364
+#: fe-connect.c:5225
 #, c-format
-msgid "invalid percent-encoded token: \"%s\"\n"
-msgstr "άκυρο διακριτικό με κωδικοποίηση ποσοστού: «%s»\n"
+msgid "invalid LDAP URL \"%s\": no filter"
+msgstr "άκυρη διεύθυνση URL LDAP «%s»: κανένα φίλτρο"
 
-#: fe-connect.c:6374
+#: fe-connect.c:5247
 #, c-format
-msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
-msgstr "απαγορευμένη τιμή %%00 σε τιμή κωδικοποιημένου ποσοστού: «%s»\n"
+msgid "invalid LDAP URL \"%s\": invalid port number"
+msgstr "άκυρη διεύθυνση URL LDAP «%s»: άκυρος αριθμός θύρας"
 
-#: fe-connect.c:6744
+#: fe-connect.c:5284
+#, c-format
+msgid "could not create LDAP structure"
+msgstr "δεν ήταν δυνατή η δημιουργία δομής LDAP"
+
+#: fe-connect.c:5359
+#, c-format
+msgid "lookup on LDAP server failed: %s"
+msgstr "απέτυχε η αναζήτηση στον διακομιστή LDAP: %s"
+
+#: fe-connect.c:5369
+#, c-format
+msgid "more than one entry found on LDAP lookup"
+msgstr "βρέθηκαν περισσότερες από μία καταχωρήσεις στην αναζήτηση LDAP"
+
+#: fe-connect.c:5371 fe-connect.c:5382
+#, c-format
+msgid "no entry found on LDAP lookup"
+msgstr "δεν βρέθηκε καταχώρηση στην αναζήτηση LDAP"
+
+#: fe-connect.c:5392 fe-connect.c:5404
+#, c-format
+msgid "attribute has no values on LDAP lookup"
+msgstr "το χαρακτηριστικό δεν έχει τιμές στην αναζήτηση LDAP"
+
+#: fe-connect.c:5455 fe-connect.c:5474 fe-connect.c:5998
+#, c-format
+msgid "missing \"=\" after \"%s\" in connection info string"
+msgstr "λείπει το «=» μετά από «%s» στην συμβολοσειρά πληροφορίας σύνδεσης"
+
+#: fe-connect.c:5545 fe-connect.c:6181 fe-connect.c:6979
+#, c-format
+msgid "invalid connection option \"%s\""
+msgstr "άκυρη επιλογή σύνδεσης «%s»"
+
+#: fe-connect.c:5560 fe-connect.c:6046
+#, c-format
+msgid "unterminated quoted string in connection info string"
+msgstr "ατερμάτιστη συμβολοσειρά με εισαγωγικά στην συμβολοσειρά πληροφορίας σύνδεσης"
+
+#: fe-connect.c:5640
+#, c-format
+msgid "definition of service \"%s\" not found"
+msgstr "δεν βρέθηκε ο ορισμός της υπηρεσίας «%s»"
+
+#: fe-connect.c:5666
+#, c-format
+msgid "service file \"%s\" not found"
+msgstr "δεν βρέθηκε αρχείο υπηρεσίας «%s»"
+
+#: fe-connect.c:5679
+#, c-format
+msgid "line %d too long in service file \"%s\""
+msgstr "πολύ μακρυά γραμμή %d στο αρχείο υπηρεσίας «%s»"
+
+#: fe-connect.c:5750 fe-connect.c:5793
+#, c-format
+msgid "syntax error in service file \"%s\", line %d"
+msgstr "συντακτικό σφάλμα στο αρχείο υπηρεσίας «%s», γραμμή %d"
+
+#: fe-connect.c:5761
+#, c-format
+msgid "nested service specifications not supported in service file \"%s\", line %d"
+msgstr "οι ένθετες προδιαγραφές υπηρεσίας δεν υποστηρίζονται στο αρχείο υπηρεσίας «%s», γραμμή %d"
+
+#: fe-connect.c:6500
+#, c-format
+msgid "invalid URI propagated to internal parser routine: \"%s\""
+msgstr "μη έγκυρο URI διαδόθηκε στη ρουτίνα εσωτερικής ανάλυσης: «%s»"
+
+#: fe-connect.c:6577
+#, c-format
+msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\""
+msgstr "έφτασε στο τέλος της συμβολοσειράς κατά την αναζήτηση αντίστοιχου «]» στη διεύθυνση IPv6 κεντρικού υπολογιστή στο URI: «%s»"
+
+#: fe-connect.c:6584
+#, c-format
+msgid "IPv6 host address may not be empty in URI: \"%s\""
+msgstr "η διεύθυνση IPv6 κεντρικού υπολογιστή δεν δύναται να είναι κενή στο URI: «%s»"
+
+#: fe-connect.c:6599
+#, c-format
+msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\""
+msgstr "μη αναμενόμενος χαρακτήρας «%c» στη θέση %d του URI (αναμένεται «:» ή «/»): «%s»"
+
+#: fe-connect.c:6728
+#, c-format
+msgid "extra key/value separator \"=\" in URI query parameter: \"%s\""
+msgstr "επιπλέον διαχωριστικό κλειδιού/τιμής «=» στην παράμετρο ερωτήματος URI: «%s»"
+
+#: fe-connect.c:6748
+#, c-format
+msgid "missing key/value separator \"=\" in URI query parameter: \"%s\""
+msgstr "λείπει διαχωριστικό κλειδιού/τιμής «=» στην παράμετρο ερωτήματος URI: «%s»"
+
+#: fe-connect.c:6800
+#, c-format
+msgid "invalid URI query parameter: \"%s\""
+msgstr "άκυρη παράμετρος ερωτήματος URI: «%s»"
+
+#: fe-connect.c:6874
+#, c-format
+msgid "invalid percent-encoded token: \"%s\""
+msgstr "άκυρο διακριτικό με κωδικοποίηση ποσοστού: «%s»"
+
+#: fe-connect.c:6884
+#, c-format
+msgid "forbidden value %%00 in percent-encoded value: \"%s\""
+msgstr "απαγορευμένη τιμή %%00 σε τιμή κωδικοποιημένου ποσοστού: «%s»"
+
+#: fe-connect.c:7248
 msgid "connection pointer is NULL\n"
 msgstr "ο δείκτης σύνδεσης είναι NULL\n"
 
-#: fe-connect.c:7024
+#: fe-connect.c:7256 fe-exec.c:710 fe-exec.c:970 fe-exec.c:3292
+#: fe-protocol3.c:974 fe-protocol3.c:1007
+msgid "out of memory\n"
+msgstr "έλλειψη μνήμης\n"
+
+#: fe-connect.c:7547
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: το αρχείο κωδικών πρόσβασης «%s» δεν είναι ένα απλό αρχείο\n"
 
-#: fe-connect.c:7033
+#: fe-connect.c:7556
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: το αρχείο κωδικού πρόσβασης «%s» έχει ομαδική ή παγκόσμια πρόσβαση· τα δικαιώματα πρέπει να είναι U=RW (0600) ή λιγότερα\n"
 
-#: fe-connect.c:7141
+#: fe-connect.c:7663
 #, c-format
-msgid "password retrieved from file \"%s\"\n"
-msgstr "ο κωδικός πρόσβασης ελήφθει από αρχείο «%s»\n"
+msgid "password retrieved from file \"%s\""
+msgstr "ο κωδικός πρόσβασης ελήφθει από αρχείο «%s»"
 
-#: fe-exec.c:449 fe-exec.c:3286
+#: fe-exec.c:466 fe-exec.c:3366
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "ο αριθμός σειράς %d βρίσκεται εκτός εύρους 0..%d"
 
-#: fe-exec.c:510 fe-protocol3.c:219 fe-protocol3.c:244 fe-protocol3.c:273
-#: fe-protocol3.c:291 fe-protocol3.c:371 fe-protocol3.c:743 fe-protocol3.c:975
-msgid "out of memory"
-msgstr "έλλειψη μνήμης"
-
-#: fe-exec.c:511 fe-protocol3.c:1932
+#: fe-exec.c:528 fe-protocol3.c:1976
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-exec.c:778
-msgid "write to server failed\n"
-msgstr "απέτυχε η εγγραφή στον διακομιστή\n"
+#: fe-exec.c:831
+#, c-format
+msgid "write to server failed"
+msgstr "απέτυχε η εγγραφή στον διακομιστή"
 
-#: fe-exec.c:850
+#: fe-exec.c:869
+#, c-format
+msgid "no error text available"
+msgstr "κανένα μήνυμα σφάλματος διαθέσιμο"
+
+#: fe-exec.c:958
 msgid "NOTICE"
 msgstr "NOTICE"
 
-#: fe-exec.c:908
+#: fe-exec.c:1016
 msgid "PGresult cannot support more than INT_MAX tuples"
 msgstr "το PGresult δεν μπορεί να υποστηρίξει περισσότερες πλείαδες από INT_MAX"
 
-#: fe-exec.c:920
+#: fe-exec.c:1028
 msgid "size_t overflow"
 msgstr "υπερχείλιση overflow"
 
-#: fe-exec.c:1335 fe-exec.c:1440 fe-exec.c:1489
-msgid "command string is a null pointer\n"
-msgstr "η συμβολοσειρά εντολής είναι ένας κενός δείκτης\n"
-
-#: fe-exec.c:1446 fe-exec.c:1495 fe-exec.c:1591
+#: fe-exec.c:1444 fe-exec.c:1513 fe-exec.c:1559
 #, c-format
-msgid "number of parameters must be between 0 and %d\n"
-msgstr "ο αριθμός των παραμέτρων πρέπει να είναι μεταξύ 0 και %d\n"
+msgid "command string is a null pointer"
+msgstr "η συμβολοσειρά εντολής είναι ένας κενός δείκτης"
 
-#: fe-exec.c:1483 fe-exec.c:1585
-msgid "statement name is a null pointer\n"
-msgstr "η ονομασία της δήλωσης είναι ένας κενός δείκτης\n"
-
-#: fe-exec.c:1627 fe-exec.c:3139
-msgid "no connection to the server\n"
-msgstr "καμία σύνδεση στον διακομιστή\n"
-
-#: fe-exec.c:1636 fe-exec.c:3148
-msgid "another command is already in progress\n"
-msgstr "υπάρχει άλλη εντολή σε πρόοδο\n"
-
-#: fe-exec.c:1665
-msgid "cannot queue commands during COPY\n"
-msgstr "δεν είναι δυνατή η ουρά εντολών κατά τη διάρκεια του COPY\n"
-
-#: fe-exec.c:1783
-msgid "length must be given for binary parameter\n"
-msgstr "το μήκος πρέπει να περαστεί ως δυαδική παράμετρος\n"
-
-#: fe-exec.c:2103
+#: fe-exec.c:1450 fe-exec.c:2888
 #, c-format
-msgid "unexpected asyncStatus: %d\n"
-msgstr "μη αναμενόμενο asyncStatus: %d\n"
+msgid "%s not allowed in pipeline mode"
+msgstr "%s δεν επιτρέπεται σε λειτουργία αγωγού"
 
-#: fe-exec.c:2123
+#: fe-exec.c:1518 fe-exec.c:1564 fe-exec.c:1658
 #, c-format
-msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
-msgstr "PGEventProc «%s» κατά τη διάρκεια συμβάντος PGEVT_RESULTCREATE\n"
+msgid "number of parameters must be between 0 and %d"
+msgstr "ο αριθμός των παραμέτρων πρέπει να είναι μεταξύ 0 και %d"
 
-#: fe-exec.c:2271
-msgid "synchronous command execution functions are not allowed in pipeline mode\n"
-msgstr "οι συναρτήσεις σύγχρονης εκτέλεσης εντολών δεν επιτρέπονται σε λειτουργία διοχέτευσης\n"
+#: fe-exec.c:1554 fe-exec.c:1653
+#, c-format
+msgid "statement name is a null pointer"
+msgstr "η ονομασία της δήλωσης είναι ένας κενός δείκτης"
 
-#: fe-exec.c:2293
+#: fe-exec.c:1695 fe-exec.c:3220
+#, c-format
+msgid "no connection to the server"
+msgstr "καμία σύνδεση στον διακομιστή"
+
+#: fe-exec.c:1703 fe-exec.c:3228
+#, c-format
+msgid "another command is already in progress"
+msgstr "υπάρχει άλλη εντολή σε πρόοδο"
+
+#: fe-exec.c:1733
+#, c-format
+msgid "cannot queue commands during COPY"
+msgstr "δεν είναι δυνατή η ουρά εντολών κατά τη διάρκεια του COPY"
+
+#: fe-exec.c:1850
+#, c-format
+msgid "length must be given for binary parameter"
+msgstr "το μήκος πρέπει να περαστεί ως δυαδική παράμετρος"
+
+#: fe-exec.c:2171
+#, c-format
+msgid "unexpected asyncStatus: %d"
+msgstr "μη αναμενόμενο asyncStatus: %d"
+
+#: fe-exec.c:2327
+#, c-format
+msgid "synchronous command execution functions are not allowed in pipeline mode"
+msgstr "οι συναρτήσεις σύγχρονης εκτέλεσης εντολών δεν επιτρέπονται σε λειτουργία διοχέτευσης"
+
+#: fe-exec.c:2344
 msgid "COPY terminated by new PQexec"
 msgstr "COPY τερματίστηκε από νέο PQexec"
 
-#: fe-exec.c:2310
-msgid "PQexec not allowed during COPY BOTH\n"
-msgstr "PQexec δεν επιτρέπεται κατά τη διάρκεια COPY BOTH\n"
+#: fe-exec.c:2360
+#, c-format
+msgid "PQexec not allowed during COPY BOTH"
+msgstr "PQexec δεν επιτρέπεται κατά τη διάρκεια COPY BOTH"
 
-#: fe-exec.c:2538 fe-exec.c:2594 fe-exec.c:2663 fe-protocol3.c:1863
-msgid "no COPY in progress\n"
-msgstr "κανένα COPY σε εξέλιξη\n"
+#: fe-exec.c:2586 fe-exec.c:2641 fe-exec.c:2709 fe-protocol3.c:1907
+#, c-format
+msgid "no COPY in progress"
+msgstr "κανένα COPY σε εξέλιξη"
 
-#: fe-exec.c:2840
-msgid "PQfn not allowed in pipeline mode\n"
-msgstr "το PQfn δεν επιτρέπεται σε λειτουργία διοχέτευσης\n"
+#: fe-exec.c:2895
+#, c-format
+msgid "connection in wrong state"
+msgstr "σύνδεση σε λανθάνουσα κατάσταση"
 
-#: fe-exec.c:2848
-msgid "connection in wrong state\n"
-msgstr "σύνδεση σε λανθάνουσα κατάσταση\n"
+#: fe-exec.c:2938
+#, c-format
+msgid "cannot enter pipeline mode, connection not idle"
+msgstr "δεν ήταν δυνατή η είσοδος σε λειτουργία διοχέτευσης, σύνδεση μη αδρανή"
 
-#: fe-exec.c:2892
-msgid "cannot enter pipeline mode, connection not idle\n"
-msgstr "δεν ήταν δυνατή η είσοδος σε λειτουργία διοχέτευσης, σύνδεση μη αδρανή\n"
+#: fe-exec.c:2974 fe-exec.c:2995
+#, c-format
+msgid "cannot exit pipeline mode with uncollected results"
+msgstr "δεν είναι δυνατή η έξοδος από τη λειτουργία διοχέτευσης με μη λαμβανόμενα αποτελέσματα"
 
-#: fe-exec.c:2926 fe-exec.c:2943
-msgid "cannot exit pipeline mode with uncollected results\n"
-msgstr "δεν είναι δυνατή η έξοδος από τη λειτουργία διοχέτευσης με μη λαμβανόμενα αποτελέσματα\n"
+#: fe-exec.c:2978
+#, c-format
+msgid "cannot exit pipeline mode while busy"
+msgstr "δεν είναι δυνατή η έξοδος από τη λειτουργία διοχέτευσης ενώ απασχολείται"
 
-#: fe-exec.c:2931
-msgid "cannot exit pipeline mode while busy\n"
-msgstr "δεν είναι δυνατή η έξοδος από τη λειτουργία διοχέτευσης ενώ απασχολείται\n"
+#: fe-exec.c:2989
+#, c-format
+msgid "cannot exit pipeline mode while in COPY"
+msgstr "δεν μπορεί να εξέλθει από τη λειτουργία αγωγού ενώ βρίσκεται σε COPY"
 
-#: fe-exec.c:3073
-msgid "cannot send pipeline when not in pipeline mode\n"
-msgstr "δεν είναι δυνατή η αποστολή διοχέτευσης όταν δεν βρίσκεται σε λειτουργία διοχέτευσης\n"
+#: fe-exec.c:3154
+#, c-format
+msgid "cannot send pipeline when not in pipeline mode"
+msgstr "δεν είναι δυνατή η αποστολή διοχέτευσης όταν δεν βρίσκεται σε λειτουργία διοχέτευσης"
 
-#: fe-exec.c:3175
+#: fe-exec.c:3255
 msgid "invalid ExecStatusType code"
 msgstr "άκυρος κωδικός ExecStatusType"
 
-#: fe-exec.c:3202
+#: fe-exec.c:3282
 msgid "PGresult is not an error result\n"
 msgstr "PGresult δεν είναι ένα αποτέλεσμα σφάλματος\n"
 
-#: fe-exec.c:3270 fe-exec.c:3293
+#: fe-exec.c:3350 fe-exec.c:3373
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "αριθμός στήλης %d βρίσκεται εκτός εύρους 0..%d"
 
-#: fe-exec.c:3308
+#: fe-exec.c:3388
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "αριθμός παραμέτρου %d βρίσκεται εκτός εύρους 0..%d"
 
-#: fe-exec.c:3618
+#: fe-exec.c:3699
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "δεν μπόρεσε να ερμηνεύσει το αποτέλεσμα από τον διακομιστή: %s"
 
-#: fe-exec.c:3878 fe-exec.c:3967
-msgid "incomplete multibyte character\n"
-msgstr "ελλιπής χαρακτήρας πολλαπλών byte\n"
+#: fe-exec.c:3964 fe-exec.c:4054
+#, c-format
+msgid "incomplete multibyte character"
+msgstr "ελλιπής χαρακτήρας πολλαπλών byte"
 
-#: fe-gssapi-common.c:124
+#: fe-gssapi-common.c:122
 msgid "GSSAPI name import error"
 msgstr "σφάλμα εισαγωγής ονόματος GSSAPI"
 
-#: fe-lobj.c:145 fe-lobj.c:210 fe-lobj.c:403 fe-lobj.c:494 fe-lobj.c:568
-#: fe-lobj.c:969 fe-lobj.c:977 fe-lobj.c:985 fe-lobj.c:993 fe-lobj.c:1001
-#: fe-lobj.c:1009 fe-lobj.c:1017 fe-lobj.c:1025
+#: fe-lobj.c:144 fe-lobj.c:207 fe-lobj.c:397 fe-lobj.c:487 fe-lobj.c:560
+#: fe-lobj.c:956 fe-lobj.c:963 fe-lobj.c:970 fe-lobj.c:977 fe-lobj.c:984
+#: fe-lobj.c:991 fe-lobj.c:998 fe-lobj.c:1005
 #, c-format
-msgid "cannot determine OID of function %s\n"
-msgstr "δεν ήταν δυνατός ο προσδιορισμός του OID της συνάρτησης %s\n"
+msgid "cannot determine OID of function %s"
+msgstr "δεν ήταν δυνατός ο προσδιορισμός του OID της συνάρτησης %s"
 
-#: fe-lobj.c:162
-msgid "argument of lo_truncate exceeds integer range\n"
-msgstr "η παράμετρος του lo_truncate υπερβαίνει το εύρος ακέραιων\n"
-
-#: fe-lobj.c:266
-msgid "argument of lo_read exceeds integer range\n"
-msgstr "η παράμετρος του lo_read υπερβαίνει το εύρος ακέραιων\n"
-
-#: fe-lobj.c:318
-msgid "argument of lo_write exceeds integer range\n"
-msgstr "η παράμετρος του lo_write υπερβαίνει το εύρος ακέραιων\n"
-
-#: fe-lobj.c:678 fe-lobj.c:789
+#: fe-lobj.c:160
 #, c-format
-msgid "could not open file \"%s\": %s\n"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %s\n"
+msgid "argument of lo_truncate exceeds integer range"
+msgstr "η παράμετρος του lo_truncate υπερβαίνει το εύρος ακέραιων"
 
-#: fe-lobj.c:734
+#: fe-lobj.c:262
 #, c-format
-msgid "could not read from file \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η ανάγνωση από το αρχείο «%s»: %s\n"
+msgid "argument of lo_read exceeds integer range"
+msgstr "η παράμετρος του lo_read υπερβαίνει το εύρος ακέραιων"
 
-#: fe-lobj.c:810 fe-lobj.c:834
+#: fe-lobj.c:313
 #, c-format
-msgid "could not write to file \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η εγγραφή στο αρχείο »%s»: %s\n"
+msgid "argument of lo_write exceeds integer range"
+msgstr "η παράμετρος του lo_write υπερβαίνει το εύρος ακέραιων"
 
-#: fe-lobj.c:920
-msgid "query to initialize large object functions did not return data\n"
-msgstr "το ερώτημα αρχικοποίησης συναρτήσεων μεγάλων αντικειμένων δεν επέστρεψε δεδομένα\n"
+#: fe-lobj.c:669 fe-lobj.c:780
+#, c-format
+msgid "could not open file \"%s\": %s"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %s"
 
-#: fe-misc.c:242
+#: fe-lobj.c:725
+#, c-format
+msgid "could not read from file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η ανάγνωση από το αρχείο «%s»: %s"
+
+#: fe-lobj.c:801 fe-lobj.c:824
+#, c-format
+msgid "could not write to file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η εγγραφή στο αρχείο »%s»: %s"
+
+#: fe-lobj.c:908
+#, c-format
+msgid "query to initialize large object functions did not return data"
+msgstr "το ερώτημα αρχικοποίησης συναρτήσεων μεγάλων αντικειμένων δεν επέστρεψε δεδομένα"
+
+#: fe-misc.c:240
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "ακέραιος μεγέθους %lu δεν υποστηρίζεται από pqGetInt"
 
-#: fe-misc.c:275
+#: fe-misc.c:273
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "ακέραιος μεγέθους %lu δεν υποστηρίζεται από pqPutInt"
 
-#: fe-misc.c:576 fe-misc.c:822
-msgid "connection not open\n"
-msgstr "μη ανοικτή σύνδεση\n"
+#: fe-misc.c:573
+#, c-format
+msgid "connection not open"
+msgstr "μη ανοικτή σύνδεση"
 
-#: fe-misc.c:755 fe-secure-openssl.c:209 fe-secure-openssl.c:316
-#: fe-secure.c:260 fe-secure.c:373
+#: fe-misc.c:751 fe-secure-openssl.c:215 fe-secure-openssl.c:315
+#: fe-secure.c:257 fe-secure.c:419
+#, c-format
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
-"\tbefore or while processing the request.\n"
+"\tbefore or while processing the request."
 msgstr ""
 "ο διακομιστής έκλεισε απροσδόκητα τη σύνδεση\n"
 "\tΑυτό πιθανώς σημαίνει ότι ο διακομιστής τερματίστηκε ασυνήθιστα\n"
-"\tπριν ή κατά την επεξεργασία του αιτήματος.\n"
+"\tπριν ή κατά την επεξεργασία του αιτήματος."
 
-#: fe-misc.c:1015
-msgid "timeout expired\n"
-msgstr "έληξε το χρονικό όριο\n"
+#: fe-misc.c:818
+msgid "connection not open\n"
+msgstr "μη ανοικτή σύνδεση\n"
 
-#: fe-misc.c:1060
-msgid "invalid socket\n"
-msgstr "άκυρος υποδοχέας\n"
-
-#: fe-misc.c:1083
+#: fe-misc.c:1003
 #, c-format
-msgid "%s() failed: %s\n"
-msgstr "%s() απέτυχε: %s\n"
+msgid "timeout expired"
+msgstr "έληξε το χρονικό όριο"
 
-#: fe-protocol3.c:196
+#: fe-misc.c:1047
+#, c-format
+msgid "invalid socket"
+msgstr "άκυρος υποδοχέας"
+
+#: fe-misc.c:1069
+#, c-format
+msgid "%s() failed: %s"
+msgstr "%s() απέτυχε: %s"
+
+#: fe-protocol3.c:182
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "μήνυμα τύπου 0x%02x έφτασε από το διακομιστή ενώ αυτός ήταν αδρανής"
 
-#: fe-protocol3.c:403
-msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
-msgstr "ο διακομιστής έστειλε δεδομένα («D» μήνυμα) χωρίς προηγούμενη περιγραφή γραμμής («T» μήνυμα)\n"
-
-#: fe-protocol3.c:446
+#: fe-protocol3.c:385
 #, c-format
-msgid "unexpected response from server; first received character was \"%c\"\n"
-msgstr "μη αναμενόμενη απόκριση από το διακομιστή· πρώτος χαρακτήρας που ελήφθη ήταν «%c»\n"
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
+msgstr "ο διακομιστής έστειλε δεδομένα («D» μήνυμα) χωρίς προηγούμενη περιγραφή γραμμής («T» μήνυμα)"
 
-#: fe-protocol3.c:471
+#: fe-protocol3.c:427
 #, c-format
-msgid "message contents do not agree with length in message type \"%c\"\n"
-msgstr "τα περιεχόμενα του μηνύματος δεν συμφωνούν με το μήκος του σε τύπο μηνύματος «%c»\n"
+msgid "unexpected response from server; first received character was \"%c\""
+msgstr "μη αναμενόμενη απόκριση από το διακομιστή· πρώτος χαρακτήρας που ελήφθη ήταν «%c»"
 
-#: fe-protocol3.c:491
+#: fe-protocol3.c:450
 #, c-format
-msgid "lost synchronization with server: got message type \"%c\", length %d\n"
-msgstr "χάθηκε ο συγχρονισμός με το διακομιστή: ελήφθει τύπος μηνύματος «%c», μήκους %d\n"
+msgid "message contents do not agree with length in message type \"%c\""
+msgstr "τα περιεχόμενα του μηνύματος δεν συμφωνούν με το μήκος του σε τύπο μηνύματος «%c»"
 
-#: fe-protocol3.c:543 fe-protocol3.c:583
+#: fe-protocol3.c:468
+#, c-format
+msgid "lost synchronization with server: got message type \"%c\", length %d"
+msgstr "χάθηκε ο συγχρονισμός με το διακομιστή: ελήφθει τύπος μηνύματος «%c», μήκους %d"
+
+#: fe-protocol3.c:520 fe-protocol3.c:560
 msgid "insufficient data in \"T\" message"
 msgstr "ανεπαρκή δεδομένα σε «T» μήνυμα"
 
-#: fe-protocol3.c:654 fe-protocol3.c:860
+#: fe-protocol3.c:631 fe-protocol3.c:837
 msgid "out of memory for query result"
 msgstr "έλλειψη μνήμης για το αποτέλεσμα ερωτήματος"
 
-#: fe-protocol3.c:723
+#: fe-protocol3.c:700
 msgid "insufficient data in \"t\" message"
 msgstr "ανεπαρκή δεδομένα σε «t» μήνυμα"
 
-#: fe-protocol3.c:782 fe-protocol3.c:814 fe-protocol3.c:832
+#: fe-protocol3.c:759 fe-protocol3.c:791 fe-protocol3.c:809
 msgid "insufficient data in \"D\" message"
 msgstr "ανεπαρκή δεδομένα σε «D» μήνυμα"
 
-#: fe-protocol3.c:788
+#: fe-protocol3.c:765
 msgid "unexpected field count in \"D\" message"
 msgstr "μη αναμενόμενο πλήθος πεδίων σε »D» μήνυμα"
 
-#: fe-protocol3.c:1029
+#: fe-protocol3.c:1020
 msgid "no error message available\n"
 msgstr "κανένα μήνυμα σφάλματος διαθέσιμο\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1077 fe-protocol3.c:1096
+#: fe-protocol3.c:1068 fe-protocol3.c:1087
 #, c-format
 msgid " at character %s"
-msgstr "σε χαρακτήρα %s"
+msgstr " στο χαρακτήρα %s"
 
-#: fe-protocol3.c:1109
+#: fe-protocol3.c:1100
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETAIL:  %s\n"
 
-#: fe-protocol3.c:1112
+#: fe-protocol3.c:1103
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "HINT:  %s\n"
 
-#: fe-protocol3.c:1115
+#: fe-protocol3.c:1106
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "ΕΡΩΤΗΜΑ: %s\n"
 
-#: fe-protocol3.c:1122
+#: fe-protocol3.c:1113
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "CONTEXT:  %s\n"
 
-#: fe-protocol3.c:1131
+#: fe-protocol3.c:1122
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "SCHEMA NAME:  %s\n"
 
-#: fe-protocol3.c:1135
+#: fe-protocol3.c:1126
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "TABLE NAME:  %s\n"
 
-#: fe-protocol3.c:1139
+#: fe-protocol3.c:1130
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "COLUMN NAME:  %s\n"
 
-#: fe-protocol3.c:1143
+#: fe-protocol3.c:1134
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "DATATYPE NAME:  %s\n"
 
-#: fe-protocol3.c:1147
+#: fe-protocol3.c:1138
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "CONSTRAINT NAME:  %s\n"
 
-#: fe-protocol3.c:1159
+#: fe-protocol3.c:1150
 msgid "LOCATION:  "
 msgstr "LOCATION:  "
 
-#: fe-protocol3.c:1161
+#: fe-protocol3.c:1152
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1163
+#: fe-protocol3.c:1154
 #, c-format
 msgid "%s:%s"
 msgstr "%s: %s"
 
-#: fe-protocol3.c:1358
+#: fe-protocol3.c:1349
 #, c-format
 msgid "LINE %d: "
 msgstr "ΓΡΑΜΜΗ %d: "
 
-#: fe-protocol3.c:1757
-msgid "PQgetline: not doing text COPY OUT\n"
-msgstr "PQgetline: δεν κάνει το κείμενο COPY OUT\n"
-
-#: fe-protocol3.c:2123
+#: fe-protocol3.c:1423
 #, c-format
-msgid "protocol error: id=0x%x\n"
-msgstr "σφάλμα πρωτοκόλλου: id=0x%x\n"
+msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u"
+msgstr "έκδοση πρωτοκόλλου που δεν υποστηρίζεται από τον διακομιστή: ο πελάτης χρησιμοποιεί %u.%u, ο διακομιστής υποστηρίζει έως και %u.%u"
 
-#: fe-secure-common.c:124
-msgid "SSL certificate's name contains embedded null\n"
-msgstr "το όνομα του πιστοποιητικού SSL περιέχει ενσωματωμένο null\n"
-
-#: fe-secure-common.c:171
-msgid "host name must be specified for a verified SSL connection\n"
-msgstr "το όνομα κεντρικού υπολογιστή πρέπει να έχει καθοριστεί για μια επαληθευμένη σύνδεση SSL\n"
-
-#: fe-secure-common.c:196
+#: fe-protocol3.c:1429
 #, c-format
-msgid "server certificate for \"%s\" does not match host name \"%s\"\n"
-msgstr "το πιστοποιητικό διακομιστή για το «%s» δεν ταιριάζει με το όνομα κεντρικού υπολογιστή «%s»\n"
+msgid "protocol extension not supported by server: %s"
+msgid_plural "protocol extensions not supported by server: %s"
+msgstr[0] "η επέκταση πρωτοκόλλου δεν υποστηρίζεται από τον διακομιστή: %s"
+msgstr[1] "οι επεκτάσεις πρωτοκόλλου δεν υποστηρίζονται από τον διακομιστή: %s"
 
-#: fe-secure-common.c:202
-msgid "could not get server's host name from server certificate\n"
-msgstr "δεν ήταν δυνατή η απόκτηση του όνοματος κεντρικού υπολογιστή του διακομιστή από το πιστοποιητικό διακομιστή\n"
+#: fe-protocol3.c:1437
+#, c-format
+msgid "invalid %s message"
+msgstr "μη έγκυρη μήνυμα %s"
+
+#: fe-protocol3.c:1802
+#, c-format
+msgid "PQgetline: not doing text COPY OUT"
+msgstr "PQgetline: δεν κάνει το κείμενο COPY OUT"
+
+#: fe-protocol3.c:2176
+#, c-format
+msgid "protocol error: no function result"
+msgstr "σφάλμα πρωτοκόλλου: κανένα αποτέλεσμα συνάρτησης"
+
+#: fe-protocol3.c:2187
+#, c-format
+msgid "protocol error: id=0x%x"
+msgstr "σφάλμα πρωτοκόλλου: id=0x%x"
+
+#: fe-secure-common.c:123
+#, c-format
+msgid "SSL certificate's name contains embedded null"
+msgstr "το όνομα του πιστοποιητικού SSL περιέχει ενσωματωμένο null"
+
+#: fe-secure-common.c:228
+#, c-format
+msgid "certificate contains IP address with invalid length %zu"
+msgstr "το πιστοποιητικό περιέχει διεύθυνση IP με μη έγκυρο μήκος %zu"
+
+#: fe-secure-common.c:237
+#, c-format
+msgid "could not convert certificate's IP address to string: %s"
+msgstr "δεν μπόρεσε να μετατρέψει τη διεύθυνση IP του πιστοποιητικού σε συμβολοσειρά: %s"
+
+#: fe-secure-common.c:269
+#, c-format
+msgid "host name must be specified for a verified SSL connection"
+msgstr "το όνομα κεντρικού υπολογιστή πρέπει να έχει καθοριστεί για μια επαληθευμένη σύνδεση SSL"
+
+#: fe-secure-common.c:286
+#, c-format
+msgid "server certificate for \"%s\" (and %d other name) does not match host name \"%s\""
+msgid_plural "server certificate for \"%s\" (and %d other names) does not match host name \"%s\""
+msgstr[0] "το πιστοποιητικό διακομιστή για το «%s» (όπως και %d άλλο όνομα) δεν ταιριάζει με το όνομα κεντρικού υπολογιστή «%s»"
+msgstr[1] "το πιστοποιητικό διακομιστή για το «%s» (όπως και %d άλλα ονόματα) δεν ταιριάζει με το όνομα κεντρικού υπολογιστή «%s»"
+
+#: fe-secure-common.c:294
+#, c-format
+msgid "server certificate for \"%s\" does not match host name \"%s\""
+msgstr "το πιστοποιητικό διακομιστή για το «%s» δεν ταιριάζει με το όνομα κεντρικού υπολογιστή «%s»"
+
+#: fe-secure-common.c:299
+#, c-format
+msgid "could not get server's host name from server certificate"
+msgstr "δεν ήταν δυνατή η απόκτηση του όνοματος κεντρικού υπολογιστή του διακομιστή από το πιστοποιητικό διακομιστή"
 
 #: fe-secure-gssapi.c:201
 msgid "GSSAPI wrap error"
 msgstr "σφάλμα αναδίπλωσης GSSAPI"
 
-#: fe-secure-gssapi.c:209
-msgid "outgoing GSSAPI message would not use confidentiality\n"
-msgstr "το εξερχόμενο μήνυμα GSSAPI δεν θα χρησιμοποιούσε εμπιστευτικότητα\n"
-
-#: fe-secure-gssapi.c:217
+#: fe-secure-gssapi.c:208
 #, c-format
-msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
-msgstr "ο πελάτης προσπάθησε να στείλει υπερμέγεθες πακέτο GSSAPI (%zu > %zu)\n"
+msgid "outgoing GSSAPI message would not use confidentiality"
+msgstr "το εξερχόμενο μήνυμα GSSAPI δεν θα χρησιμοποιούσε εμπιστευτικότητα"
 
-#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:596
+#: fe-secure-gssapi.c:215
 #, c-format
-msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
-msgstr "ο διακομιστής έστειλε υπερμέγεθες πακέτο GSSAPI (%zu > %zu)\n"
+msgid "client tried to send oversize GSSAPI packet (%zu > %zu)"
+msgstr "ο πελάτης προσπάθησε να στείλει υπερμέγεθες πακέτο GSSAPI (%zu > %zu)"
 
-#: fe-secure-gssapi.c:393
+#: fe-secure-gssapi.c:351 fe-secure-gssapi.c:593
+#, c-format
+msgid "oversize GSSAPI packet sent by the server (%zu > %zu)"
+msgstr "ο διακομιστής έστειλε υπερμέγεθες πακέτο GSSAPI (%zu > %zu)"
+
+#: fe-secure-gssapi.c:390
 msgid "GSSAPI unwrap error"
 msgstr "σφάλμα ξεδιπλώσης GSSAPI"
 
-#: fe-secure-gssapi.c:403
-msgid "incoming GSSAPI message did not use confidentiality\n"
-msgstr "εισερχόμενο μήνυμα GSSAPI δεν χρησιμοποίησε εμπιστευτικότητα\n"
+#: fe-secure-gssapi.c:399
+#, c-format
+msgid "incoming GSSAPI message did not use confidentiality"
+msgstr "εισερχόμενο μήνυμα GSSAPI δεν χρησιμοποίησε εμπιστευτικότητα"
 
-#: fe-secure-gssapi.c:642
+#: fe-secure-gssapi.c:656
 msgid "could not initiate GSSAPI security context"
 msgstr "δεν ήταν δυνατή η έναρξη περιεχομένου ασφαλείας GSSAPI"
 
-#: fe-secure-gssapi.c:670
+#: fe-secure-gssapi.c:685
 msgid "GSSAPI size check error"
 msgstr "σφάλμα ελέγχου μεγέθους GSSAPI"
 
-#: fe-secure-gssapi.c:681
+#: fe-secure-gssapi.c:696
 msgid "GSSAPI context establishment error"
 msgstr "σφάλμα δημιουργίας περιεχομένου GSSAPI"
 
-#: fe-secure-openssl.c:214 fe-secure-openssl.c:321 fe-secure-openssl.c:1333
+#: fe-secure-openssl.c:219 fe-secure-openssl.c:319 fe-secure-openssl.c:1531
 #, c-format
-msgid "SSL SYSCALL error: %s\n"
-msgstr "SSL SYSCALL σφάλμα: %s\n"
+msgid "SSL SYSCALL error: %s"
+msgstr "SSL SYSCALL σφάλμα: %s"
 
-#: fe-secure-openssl.c:221 fe-secure-openssl.c:328 fe-secure-openssl.c:1337
-msgid "SSL SYSCALL error: EOF detected\n"
-msgstr "SSL SYSCALL σφάλμα: ανιχνεύτηκε EOF\n"
-
-#: fe-secure-openssl.c:232 fe-secure-openssl.c:339 fe-secure-openssl.c:1346
+#: fe-secure-openssl.c:225 fe-secure-openssl.c:325 fe-secure-openssl.c:1534
 #, c-format
-msgid "SSL error: %s\n"
-msgstr "SSL σφάλμα: %s\n"
+msgid "SSL SYSCALL error: EOF detected"
+msgstr "SSL SYSCALL σφάλμα: ανιχνεύτηκε EOF"
 
-#: fe-secure-openssl.c:247 fe-secure-openssl.c:354
-msgid "SSL connection has been closed unexpectedly\n"
-msgstr "η σύνδεση SSL έκλεισε απροσδόκητα\n"
-
-#: fe-secure-openssl.c:253 fe-secure-openssl.c:360 fe-secure-openssl.c:1396
+#: fe-secure-openssl.c:235 fe-secure-openssl.c:335 fe-secure-openssl.c:1542
 #, c-format
-msgid "unrecognized SSL error code: %d\n"
-msgstr "μη αναγνωρίσιμος κωδικός σφάλματος SSL: %d\n"
+msgid "SSL error: %s"
+msgstr "SSL σφάλμα: %s"
 
-#: fe-secure-openssl.c:400
-msgid "could not determine server certificate signature algorithm\n"
-msgstr "δεν μπόρεσε να προσδιορίσει τον αλγόριθμο υπογραφής πιστοποιητικού διακομιστή\n"
-
-#: fe-secure-openssl.c:421
+#: fe-secure-openssl.c:249 fe-secure-openssl.c:349
 #, c-format
-msgid "could not find digest for NID %s\n"
-msgstr "δεν μπόρεσε να βρεθεί σύνοψη (digest) για NID %s\n"
+msgid "SSL connection has been closed unexpectedly"
+msgstr "η σύνδεση SSL έκλεισε απροσδόκητα"
 
-#: fe-secure-openssl.c:431
-msgid "could not generate peer certificate hash\n"
-msgstr "δεν ήταν δυνατή η δημιουργία ομότιμου πιστοποιητικού hash\n"
-
-#: fe-secure-openssl.c:488
-msgid "SSL certificate's name entry is missing\n"
-msgstr "λείπει καταχώρηση ονόματος του πιστοποιητικού SSL\n"
-
-#: fe-secure-openssl.c:822
+#: fe-secure-openssl.c:254 fe-secure-openssl.c:354 fe-secure-openssl.c:1589
 #, c-format
-msgid "could not create SSL context: %s\n"
-msgstr "δεν ήταν δυνατή η δημιουργία περιεχομένου SSL: %s\n"
+msgid "unrecognized SSL error code: %d"
+msgstr "μη αναγνωρίσιμος κωδικός σφάλματος SSL: %d"
 
-#: fe-secure-openssl.c:861
+#: fe-secure-openssl.c:397
 #, c-format
-msgid "invalid value \"%s\" for minimum SSL protocol version\n"
-msgstr "άκυρη τιμή «%s» για την ελάχιστη έκδοση πρωτοκόλλου SSL\n"
+msgid "could not determine server certificate signature algorithm"
+msgstr "δεν μπόρεσε να προσδιορίσει τον αλγόριθμο υπογραφής πιστοποιητικού διακομιστή"
 
-#: fe-secure-openssl.c:872
+#: fe-secure-openssl.c:417
 #, c-format
-msgid "could not set minimum SSL protocol version: %s\n"
-msgstr "δεν ήταν δυνατό να ορίσει ελάχιστη έκδοση πρωτοκόλλου SSL: %s\n"
+msgid "could not find digest for NID %s"
+msgstr "δεν μπόρεσε να βρεθεί σύνοψη (digest) για NID %s"
 
-#: fe-secure-openssl.c:890
+#: fe-secure-openssl.c:426
 #, c-format
-msgid "invalid value \"%s\" for maximum SSL protocol version\n"
-msgstr "άκυρη τιμή «%s» για μέγιστη έκδοση πρωτοκόλλου SSL\n"
+msgid "could not generate peer certificate hash"
+msgstr "δεν ήταν δυνατή η δημιουργία ομότιμου πιστοποιητικού hash"
 
-#: fe-secure-openssl.c:901
+#: fe-secure-openssl.c:509
 #, c-format
-msgid "could not set maximum SSL protocol version: %s\n"
-msgstr "δεν ήταν δυνατό να ορίσει μέγιστη έκδοση πρωτοκόλλου SSL: %s\n"
+msgid "SSL certificate's name entry is missing"
+msgstr "λείπει καταχώρηση ονόματος του πιστοποιητικού SSL"
 
-#: fe-secure-openssl.c:937
+#: fe-secure-openssl.c:543
 #, c-format
-msgid "could not read root certificate file \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η ανάγνωση βασικού αρχείου πιστοποιητικού «%s»: %s\n"
+msgid "SSL certificate's address entry is missing"
+msgstr "λείπει καταχώρηση ονόματος του πιστοποιητικού SSL"
 
-#: fe-secure-openssl.c:990
+#: fe-secure-openssl.c:960
+#, c-format
+msgid "could not create SSL context: %s"
+msgstr "δεν ήταν δυνατή η δημιουργία περιεχομένου SSL: %s"
+
+#: fe-secure-openssl.c:1002
+#, c-format
+msgid "invalid value \"%s\" for minimum SSL protocol version"
+msgstr "άκυρη τιμή «%s» για την ελάχιστη έκδοση πρωτοκόλλου SSL"
+
+#: fe-secure-openssl.c:1012
+#, c-format
+msgid "could not set minimum SSL protocol version: %s"
+msgstr "δεν ήταν δυνατό να ορίσει ελάχιστη έκδοση πρωτοκόλλου SSL: %s"
+
+#: fe-secure-openssl.c:1028
+#, c-format
+msgid "invalid value \"%s\" for maximum SSL protocol version"
+msgstr "άκυρη τιμή «%s» για μέγιστη έκδοση πρωτοκόλλου SSL"
+
+#: fe-secure-openssl.c:1038
+#, c-format
+msgid "could not set maximum SSL protocol version: %s"
+msgstr "δεν ήταν δυνατό να ορίσει μέγιστη έκδοση πρωτοκόλλου SSL: %s"
+
+#: fe-secure-openssl.c:1076
+#, c-format
+msgid "could not load system root certificate paths: %s"
+msgstr "δεν ήταν δυνατή η φόρτωση διαδρομών βασικών αρχείων πιστοποιητικών: %s"
+
+#: fe-secure-openssl.c:1093
+#, c-format
+msgid "could not read root certificate file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η ανάγνωση βασικού αρχείου πιστοποιητικού «%s»: %s"
+
+#: fe-secure-openssl.c:1145
+#, c-format
 msgid ""
 "could not get home directory to locate root certificate file\n"
-"Either provide the file or change sslmode to disable server certificate verification.\n"
+"Either provide the file, use the system's trusted roots with sslrootcert=system, or change sslmode to disable server certificate verification."
 msgstr ""
 "δεν ήταν δυνατή η δημιουργία του προσωπικού καταλόγου για τον εντοπισμό βασικού αρχείου πιστοποιητικού\n"
-"Δώστε το αρχείο ή αλλάξτε το sslmode για να απενεργοποιήσετε την επαλήθευση πιστοποιητικού διακομιστή.\n"
+"Δώστε το αρχείο ή αλλάξτε το sslmode για να απενεργοποιήσετε την επαλήθευση πιστοποιητικού διακομιστή."
 
-#: fe-secure-openssl.c:994
+#: fe-secure-openssl.c:1148
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
-"Either provide the file or change sslmode to disable server certificate verification.\n"
+"Either provide the file, use the system's trusted roots with sslrootcert=system, or change sslmode to disable server certificate verification."
 msgstr ""
-"βασικό αρχείο πιστοποιητικού \"%s\" δεν υπάρχει\n"
-"Είτε παρουσιάστε το αρχείο ή αλλάξτε το sslmode για να απενεργοποιήσετε την επαλήθευση πιστοποιητικού διακομιστή.\n"
+"βασικό αρχείο πιστοποιητικού «%s» δεν υπάρχει\n"
+"Είτε παρουσιάστε το αρχείο, χρησιμοποιήστε τις επαληθευμένες roots του συστήματος με sslrootcert=system, ή αλλάξτε το sslmode για να απενεργοποιήσετε την επαλήθευση πιστοποιητικού διακομιστή."
 
-#: fe-secure-openssl.c:1025
+#: fe-secure-openssl.c:1183
 #, c-format
-msgid "could not open certificate file \"%s\": %s\n"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου πιστοποιητικού «%s»: %s\n"
+msgid "could not open certificate file \"%s\": %s"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου πιστοποιητικού «%s»: %s"
 
-#: fe-secure-openssl.c:1044
+#: fe-secure-openssl.c:1201
 #, c-format
-msgid "could not read certificate file \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η ανάγνωση αρχείου πιστοποιητικού «%s»: %s\n"
+msgid "could not read certificate file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η ανάγνωση αρχείου πιστοποιητικού «%s»: %s"
 
-#: fe-secure-openssl.c:1069
+#: fe-secure-openssl.c:1225
 #, c-format
-msgid "could not establish SSL connection: %s\n"
-msgstr "δεν ήταν δυνατή η δημιουργία σύνδεσης SSL: %s\n"
+msgid "could not establish SSL connection: %s"
+msgstr "δεν ήταν δυνατή η δημιουργία σύνδεσης SSL: %s"
 
-#: fe-secure-openssl.c:1103
+#: fe-secure-openssl.c:1257
 #, c-format
-msgid "could not set SSL Server Name Indication (SNI): %s\n"
-msgstr "δεν ήταν δυνατός ο ορισμός SSL Server Name Indication (SNI): %s\n"
+msgid "could not set SSL Server Name Indication (SNI): %s"
+msgstr "δεν ήταν δυνατός ο ορισμός SSL Server Name Indication (SNI): %s"
 
-#: fe-secure-openssl.c:1149
+#: fe-secure-openssl.c:1300
 #, c-format
-msgid "could not load SSL engine \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η φόρτωση της μηχανής SSL «%s»: %s\n"
+msgid "could not load SSL engine \"%s\": %s"
+msgstr "δεν ήταν δυνατή η φόρτωση της μηχανής SSL «%s»: %s"
 
-#: fe-secure-openssl.c:1161
+#: fe-secure-openssl.c:1311
 #, c-format
-msgid "could not initialize SSL engine \"%s\": %s\n"
-msgstr ""
-"δεν ήταν δυνατή η εκκίνηση του κινητήρα SSL »%s»: %s\n"
-"\n"
+msgid "could not initialize SSL engine \"%s\": %s"
+msgstr "δεν ήταν δυνατή η εκκίνηση του κινητήρα SSL «%s»: %s"
 
-#: fe-secure-openssl.c:1177
+#: fe-secure-openssl.c:1326
 #, c-format
-msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η ανάγνωση του ιδιωτικού κλειδιού SSL «%s» από την μηχανή «%s»: %s\n"
+msgid "could not read private SSL key \"%s\" from engine \"%s\": %s"
+msgstr "δεν ήταν δυνατή η ανάγνωση του ιδιωτικού κλειδιού SSL «%s» από την μηχανή «%s»: %s"
 
-#: fe-secure-openssl.c:1191
+#: fe-secure-openssl.c:1339
 #, c-format
-msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η φόρτωση του ιδιωτικού κλειδιού SSL «%s» από την μηχανή «%s»: %s\n"
+msgid "could not load private SSL key \"%s\" from engine \"%s\": %s"
+msgstr "δεν ήταν δυνατή η φόρτωση του ιδιωτικού κλειδιού SSL «%s» από την μηχανή «%s»: %s"
 
-#: fe-secure-openssl.c:1228
+#: fe-secure-openssl.c:1376
 #, c-format
-msgid "certificate present, but not private key file \"%s\"\n"
-msgstr "υπάρχει πιστοποιητικό, αλλά όχι αρχείο ιδιωτικού κλειδιού «%s»\n"
-
-#: fe-secure-openssl.c:1236
-#, c-format
-msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
-msgstr "αρχείο ιδιωτικού κλειδιού «%s» έχει ομαδική ή παγκόσμια πρόσβαση· τα δικαιώματα πρέπει να είναι U=RW (0600) ή λιγότερα\n"
-
-#: fe-secure-openssl.c:1261
-#, c-format
-msgid "could not load private key file \"%s\": %s\n"
-msgstr "δεν ήταν δυνατή η φόρτωση αρχείου ιδιωτικού κλειδιού «%s»: %s\n"
-
-#: fe-secure-openssl.c:1279
-#, c-format
-msgid "certificate does not match private key file \"%s\": %s\n"
-msgstr "το πιστοποιητικό δεν ταιριάζει με το αρχείο ιδιωτικού κλειδιού «%s»: %s\n"
+msgid "certificate present, but not private key file \"%s\""
+msgstr "υπάρχει πιστοποιητικό, αλλά όχι αρχείο ιδιωτικού κλειδιού «%s»"
 
 #: fe-secure-openssl.c:1379
 #, c-format
-msgid "This may indicate that the server does not support any SSL protocol version between %s and %s.\n"
-msgstr "Αυτό μπορεί να υποδεικνύει ότι ο διακομιστής δεν υποστηρίζει καμία έκδοση πρωτοκόλλου SSL μεταξύ %s και %s.\n"
+msgid "could not stat private key file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η φόρτωση αρχείου ιδιωτικού κλειδιού «%s»: %m"
 
-#: fe-secure-openssl.c:1415
+#: fe-secure-openssl.c:1387
 #, c-format
-msgid "certificate could not be obtained: %s\n"
-msgstr ""
-"δεν ήταν δυνατή η λήψη πιστοποιητικού: %s\n"
-"\n"
+msgid "private key file \"%s\" is not a regular file"
+msgstr "το αρχείο ιδιωτικού κλειδιού «%s» δεν είναι κανονικό αρχείο"
 
-#: fe-secure-openssl.c:1521
+#: fe-secure-openssl.c:1420
+#, c-format
+msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root"
+msgstr "το αρχείο ιδιωτικού κλειδιού «%s» έχει πρόσβαση σε ομάδα ή κόσμο- το αρχείο πρέπει να έχει δικαιώματα u=rw (0600) ή λιγότερα αν ανήκει στον τρέχοντα χρήστη, ή δικαιώματα u=rw,g=r (0640) ή λιγότερα αν ανήκει στον υπερχρήστη"
+
+#: fe-secure-openssl.c:1444
+#, c-format
+msgid "could not load private key file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η φόρτωση αρχείου ιδιωτικού κλειδιού «%s»: %s"
+
+#: fe-secure-openssl.c:1460
+#, c-format
+msgid "certificate does not match private key file \"%s\": %s"
+msgstr "το πιστοποιητικό δεν ταιριάζει με το αρχείο ιδιωτικού κλειδιού «%s»: %s"
+
+#: fe-secure-openssl.c:1528
+#, c-format
+msgid "SSL error: certificate verify failed: %s"
+msgstr "SSL σφάλμα: η επαλήθευση πιστοποιητικού απέτυχε: %s"
+
+#: fe-secure-openssl.c:1573
+#, c-format
+msgid "This may indicate that the server does not support any SSL protocol version between %s and %s."
+msgstr "Αυτό μπορεί να υποδεικνύει ότι ο διακομιστής δεν υποστηρίζει καμία έκδοση πρωτοκόλλου SSL μεταξύ %s και %s."
+
+#: fe-secure-openssl.c:1606
+#, c-format
+msgid "certificate could not be obtained: %s"
+msgstr "δεν ήταν δυνατή η λήψη πιστοποιητικού: %s"
+
+#: fe-secure-openssl.c:1711
 #, c-format
 msgid "no SSL error reported"
 msgstr "δεν αναφέρθηκε κανένα σφάλμα SSL"
 
-#: fe-secure-openssl.c:1530
+#: fe-secure-openssl.c:1720
 #, c-format
 msgid "SSL error code %lu"
 msgstr "κωδικός σφάλματος SSL %lu"
 
-#: fe-secure-openssl.c:1777
+#: fe-secure-openssl.c:1986
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "WARNING: περικομμένο sslpassword\n"
 
-#: fe-secure.c:267
+#: fe-secure.c:263
 #, c-format
-msgid "could not receive data from server: %s\n"
-msgstr "δεν ήταν δυνατή η λήψη δεδομένων από το διακομιστή: %s\n"
+msgid "could not receive data from server: %s"
+msgstr "δεν ήταν δυνατή η λήψη δεδομένων από το διακομιστή: %s"
 
-#: fe-secure.c:380
+#: fe-secure.c:434
 #, c-format
-msgid "could not send data to server: %s\n"
-msgstr "δεν ήταν δυνατή η αποστολή δεδομένων στο διακομιστή: %s\n"
+msgid "could not send data to server: %s"
+msgstr "δεν ήταν δυνατή η αποστολή δεδομένων στο διακομιστή: %s"
 
-#: win32.c:314
+#: win32.c:310
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "μη αναγνωρίσιμο σφάλμα υποδοχής: 0x%08X/%d"
 
-#~ msgid "invalid channel_binding value: \"%s\"\n"
-#~ msgstr "άκυρη τιμή channel_binding: «%s»\n"
+#~ msgid "COPY IN state must be terminated first\n"
+#~ msgstr ""
+#~ "πρέπει πρώτα να τερματιστεί η κατάσταση COPY IN\n"
+#~ "\n"
 
-#~ msgid "invalid ssl_min_protocol_version value: \"%s\"\n"
-#~ msgstr "άκυρη τιμή ssl_min_protocol_version: «%s»\n"
+#~ msgid "COPY OUT state must be terminated first\n"
+#~ msgstr "πρέπει πρώτα να τερματιστεί η κατάσταση COPY OUT\n"
 
-#~ msgid "invalid ssl_max_protocol_version value: \"%s\"\n"
-#~ msgstr "άκυρη τιμή ssl_max_protocol_version: «%s»\n"
+#~ msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
+#~ msgstr "PGEventProc «%s» απέτυχε κατά τη διάρκεια συμβάντος PGEVT_CONNRESET\n"
 
-#~ msgid "invalid gssencmode value: \"%s\"\n"
-#~ msgstr "άκυρη τιμή gssencmode: «%s»\n"
+#~ msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
+#~ msgstr "PGEventProc «%s» κατά τη διάρκεια συμβάντος PGEVT_RESULTCREATE\n"
 
-#~ msgid "invalid target_session_attrs value: \"%s\"\n"
-#~ msgstr "άκυρη τιμή target_session_attrs: «%s»\n"
+#~ msgid "SCM_CRED authentication method not supported\n"
+#~ msgstr "δεν υποστηρίζεται η μέθοδος πιστοποίησης SCM_CRED\n"
+
+#~ msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"
+#~ msgstr "WSAIoctl(SIO_KEEPALIVE_VALS) απέτυχε: %ui\n"
+
+#~ msgid "cannot determine OID of function lo_creat\n"
+#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lo_creat\n"
+
+#~ msgid "cannot determine OID of function lo_create\n"
+#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_create\n"
+
+#~ msgid "cannot determine OID of function lo_lseek\n"
+#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lo_lseek\n"
+
+#~ msgid "cannot determine OID of function lo_lseek64\n"
+#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_lseek64\n"
+
+#~ msgid "cannot determine OID of function lo_open\n"
+#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lo_open\n"
+
+#~ msgid "cannot determine OID of function lo_tell64\n"
+#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_tell64\n"
+
+#~ msgid "cannot determine OID of function lo_truncate\n"
+#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_truncate\n"
+
+#~ msgid "cannot determine OID of function lo_truncate64\n"
+#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_truncate64\n"
+
+#~ msgid "cannot determine OID of function lo_unlink\n"
+#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lo_unlink\n"
+
+#~ msgid "cannot determine OID of function loread\n"
+#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης loread\n"
+
+#~ msgid "cannot determine OID of function lowrite\n"
+#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lowrite\n"
 
 #~ msgid ""
 #~ "could not connect to server: %s\n"
@@ -1236,79 +1535,53 @@ msgstr "μη αναγνωρίσιμο σφάλμα υποδοχής: 0x%08X/%d"
 #~ "\tΕκτελείται ο διακομιστής στον κεντρικό υπολογιστή »%s» (%s) και αποδέχεται\n"
 #~ "\tσυνδέσεις TCP/IP στην θύρα %s;\n"
 
-#~ msgid "setsockopt(%s) failed: %s\n"
-#~ msgstr "setsockopt(%s) απέτυχε: %s\n"
-
-#~ msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"
-#~ msgstr "WSAIoctl(SIO_KEEPALIVE_VALS) απέτυχε: %ui\n"
-
 #~ msgid "could not make a writable connection to server \"%s:%s\"\n"
 #~ msgstr "δεν ήταν δυνατή η πραγματοποίηση εγγράψιμης σύνδεσης με το διακομιστή \"%s:%s\"\n"
-
-#~ msgid "test \"SHOW transaction_read_only\" failed on server \"%s:%s\"\n"
-#~ msgstr "το τεστ «SHOW transaction_read_only» απέτυχε στον διακομιστή «%s:%s»\n"
 
 #~ msgid "function requires at least protocol version 3.0\n"
 #~ msgstr "η συνάρτηση απαιτεί πρωτόκολλο ελάχιστης έκδοσης 3.0\n"
 
-#~ msgid "COPY IN state must be terminated first\n"
-#~ msgstr ""
-#~ "πρέπει πρώτα να τερματιστεί η κατάσταση COPY IN\n"
-#~ "\n"
+#~ msgid "invalid channel_binding value: \"%s\"\n"
+#~ msgstr "άκυρη τιμή channel_binding: «%s»\n"
 
-#~ msgid "COPY OUT state must be terminated first\n"
-#~ msgstr "πρέπει πρώτα να τερματιστεί η κατάσταση COPY OUT\n"
-
-#~ msgid "cannot determine OID of function lo_truncate\n"
-#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_truncate\n"
-
-#~ msgid "cannot determine OID of function lo_truncate64\n"
-#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_truncate64\n"
-
-#~ msgid "cannot determine OID of function lo_lseek64\n"
-#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_lseek64\n"
-
-#~ msgid "cannot determine OID of function lo_create\n"
-#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_create\n"
-
-#~ msgid "cannot determine OID of function lo_tell64\n"
-#~ msgstr "δεν μπόρεσε να προσδιορίσει το OID της συνάρτησης lo_tell64\n"
-
-#~ msgid "cannot determine OID of function lo_open\n"
-#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lo_open\n"
-
-#~ msgid "cannot determine OID of function lo_creat\n"
-#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lo_creat\n"
-
-#~ msgid "cannot determine OID of function lo_unlink\n"
-#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lo_unlink\n"
-
-#~ msgid "cannot determine OID of function lo_lseek\n"
-#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lo_lseek\n"
-
-#~ msgid "cannot determine OID of function loread\n"
-#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης loread\n"
-
-#~ msgid "cannot determine OID of function lowrite\n"
-#~ msgstr "δεν είναι δυνατός ο προσδιορισμός του OID της συνάρτησης lowrite\n"
-
-#~ msgid "select() failed: %s\n"
-#~ msgstr "απέτυχε το select(): %s\n"
+#~ msgid "invalid gssencmode value: \"%s\"\n"
+#~ msgstr "άκυρη τιμή gssencmode: «%s»\n"
 
 #~ msgid "invalid setenv state %c, probably indicative of memory corruption\n"
 #~ msgstr "μη έγκυρη κατάσταση %c setenv, πιθανώς ενδεικτική αλλοίωσης μνήμης\n"
 
+#~ msgid "invalid ssl_max_protocol_version value: \"%s\"\n"
+#~ msgstr "άκυρη τιμή ssl_max_protocol_version: «%s»\n"
+
+#~ msgid "invalid ssl_min_protocol_version value: \"%s\"\n"
+#~ msgstr "άκυρη τιμή ssl_min_protocol_version: «%s»\n"
+
 #~ msgid "invalid state %c, probably indicative of memory corruption\n"
 #~ msgstr "μη έγκυρη κατάσταση %c, πιθανώς ενδεικτική αλλοίωσης μνήμης\n"
 
-#~ msgid "unexpected character %c following empty query response (\"I\" message)"
-#~ msgstr "μη αναμενόμενος χαρακτήρας %c μετά από κενή απόκριση ερωτήματος («I» μήνυμα)"
+#~ msgid "invalid target_session_attrs value: \"%s\"\n"
+#~ msgstr "άκυρη τιμή target_session_attrs: «%s»\n"
 
-#~ msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
-#~ msgstr "ο διακομιστής έστειλε δεδομένα («D» μήνυμα) χωρίς προηγούμενη περιγραφή γραμμής («T» μήνυμα)"
+#~ msgid "lost synchronization with server, resetting connection"
+#~ msgstr "χάθηκε ο συγχρονισμός με τον διακομιστή, επαναρυθμίζεται η σύνδεση"
+
+#~ msgid "select() failed: %s\n"
+#~ msgstr "απέτυχε το select(): %s\n"
 
 #~ msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
 #~ msgstr "ο διακομιστής έστειλε δυαδικά δεδομένα («B»  μήνυμα) χωρίς προηγούμενη περιγραφή γραμμής («T» μήνυμα)"
 
-#~ msgid "lost synchronization with server, resetting connection"
-#~ msgstr "χάθηκε ο συγχρονισμός με τον διακομιστή, επαναρυθμίζεται η σύνδεση"
+#~ msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
+#~ msgstr "ο διακομιστής έστειλε δεδομένα («D» μήνυμα) χωρίς προηγούμενη περιγραφή γραμμής («T» μήνυμα)\n"
+
+#~ msgid "setsockopt(%s) failed: %s\n"
+#~ msgstr "setsockopt(%s) απέτυχε: %s\n"
+
+#~ msgid "test \"SHOW transaction_read_only\" failed on server \"%s:%s\"\n"
+#~ msgstr "το τεστ «SHOW transaction_read_only» απέτυχε στον διακομιστή «%s:%s»\n"
+
+#~ msgid "unexpected character %c following empty query response (\"I\" message)"
+#~ msgstr "μη αναμενόμενος χαρακτήρας %c μετά από κενή απόκριση ερωτήματος («I» μήνυμα)"
+
+#~ msgid "user name lookup failure: error code %lu\n"
+#~ msgstr "αποτυχία αναζήτησης ονόματος χρήστη: κωδικός σφάλματος %lu\n"

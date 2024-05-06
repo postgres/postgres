@@ -1,16 +1,16 @@
 # Brazilian Portuguese message translation file for pg_ctl
 #
-# Copyright (C) 2004-2022 PostgreSQL Global Development Group
+# Copyright (C) 2004-2023 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Euler Taveira <euler@eulerto.com>, 2004-2022.
+# Euler Taveira <euler@eulerto.com>, 2004-2024.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:16+0200\n"
+"POT-Creation-Date: 2024-01-02 13:01-0300\n"
+"PO-Revision-Date: 2005-10-04 22:15-0300\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -34,10 +34,9 @@ msgid "could not find a \"%s\" to execute"
 msgstr "não pôde encontrar o \"%s\" para executá-lo"
 
 #: ../../common/exec.c:250
-#, fuzzy, c-format
-#| msgid "could not reopen file \"%s\" as stderr: %m"
+#, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
-msgstr "não pôde reabrir arquivo \"%s\" como saída stderr: %m"
+msgstr "não pôde resolver caminho \"%s\" para forma absoluta: %m"
 
 #: ../../common/exec.c:412
 #, c-format

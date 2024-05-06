@@ -266,9 +266,7 @@ msgstr "Numero di versione del catalogo:            %u\n"
 #: pg_controldata.c:232
 #, c-format
 msgid "Database system identifier:           %llu\n"
-msgstr ""
-"Identificatore di sistema del database:           %llu\n"
-"\n"
+msgstr "Identificatore di sistema del database:     %llu\n"
 
 #: pg_controldata.c:234
 #, c-format
@@ -439,9 +437,7 @@ msgstr "impostazione di max_worker_processes:       %d\n"
 #: pg_controldata.c:295
 #, c-format
 msgid "max_wal_senders setting:              %d\n"
-msgstr ""
-"impostazione di max_wal_senders:              %d\n"
-"\n"
+msgstr "impostazione di max_wal_senders:            %d\n"
 
 #: pg_controldata.c:297
 #, c-format

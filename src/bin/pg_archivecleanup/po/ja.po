@@ -1,13 +1,13 @@
 # Japanese message translation file for pg_archivecleanup
-# Copyright (C) 2022 PostgreSQL Global Development Group
+# Copyright (C) 2022-2024 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL 16)\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-07-04 09:43+0900\n"
-"PO-Revision-Date: 2023-07-04 09:48+0900\n"
+"POT-Creation-Date: 2024-01-09 10:22+0900\n"
+"PO-Revision-Date: 2024-01-09 11:54+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -15,6 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.13\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -36,43 +37,43 @@ msgstr "詳細: "
 msgid "hint: "
 msgstr "ヒント: "
 
-#: pg_archivecleanup.c:66
+#: pg_archivecleanup.c:68
 #, c-format
 msgid "archive location \"%s\" does not exist"
 msgstr "アーカイブの場所\"%s\"が存在しません"
 
-#: pg_archivecleanup.c:151
-#, c-format
-msgid "could not remove file \"%s\": %m"
-msgstr "ファイル\"%s\"を削除できませんでした: %m"
-
-#: pg_archivecleanup.c:157
-#, c-format
-msgid "could not read archive location \"%s\": %m"
-msgstr "アーカイブの場所\"%s\"を読み込めませんでした: %m"
-
-#: pg_archivecleanup.c:160
-#, c-format
-msgid "could not close archive location \"%s\": %m"
-msgstr "アーカイブの場所\"%s\"をクローズできませんでした: %m"
-
-#: pg_archivecleanup.c:164
+#: pg_archivecleanup.c:100
 #, c-format
 msgid "could not open archive location \"%s\": %m"
 msgstr "アーカイブの場所\"%s\"をオープンできませんでした: %m"
 
-#: pg_archivecleanup.c:237
+#: pg_archivecleanup.c:164
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "ファイル\"%s\"を削除できませんでした: %m"
+
+#: pg_archivecleanup.c:169
+#, c-format
+msgid "could not read archive location \"%s\": %m"
+msgstr "アーカイブの場所\"%s\"を読み込めませんでした: %m"
+
+#: pg_archivecleanup.c:172
+#, c-format
+msgid "could not close archive location \"%s\": %m"
+msgstr "アーカイブの場所\"%s\"をクローズできませんでした: %m"
+
+#: pg_archivecleanup.c:245
 #, c-format
 msgid "invalid file name argument"
 msgstr "ファイル名引数が無効です"
 
-#: pg_archivecleanup.c:238 pg_archivecleanup.c:313 pg_archivecleanup.c:333
-#: pg_archivecleanup.c:345 pg_archivecleanup.c:352
+#: pg_archivecleanup.c:246 pg_archivecleanup.c:334 pg_archivecleanup.c:354
+#: pg_archivecleanup.c:366 pg_archivecleanup.c:373
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_archivecleanup.c:251
+#: pg_archivecleanup.c:259
 #, c-format
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
@@ -81,17 +82,17 @@ msgstr ""
 "%sはPostgreSQLのアーカイブから古いWALファイルを削除します。\n"
 "\n"
 
-#: pg_archivecleanup.c:252
+#: pg_archivecleanup.c:260
 #, c-format
 msgid "Usage:\n"
 msgstr "使用法:\n"
 
-#: pg_archivecleanup.c:253
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 msgstr "%s [オプション] ... {アーカイブの場所} {保存する最古の WAL ファイル名}\n"
 
-#: pg_archivecleanup.c:254
+#: pg_archivecleanup.c:262
 #, c-format
 msgid ""
 "\n"
@@ -100,32 +101,41 @@ msgstr ""
 "\n"
 "オプション:\n"
 
-#: pg_archivecleanup.c:255
+#: pg_archivecleanup.c:263
 #, c-format
-msgid "  -d             generate debug output (verbose mode)\n"
-msgstr "  -d             デバッグ情報を出力(冗長モード)\n"
+msgid "  -b, --clean-backup-history  clean up files including backup history files\n"
+msgstr "  -b, --clean-backup-history  バックアップヒストリファイルを含めて削除する\n"
 
-#: pg_archivecleanup.c:256
+#: pg_archivecleanup.c:264
 #, c-format
-msgid "  -n             dry run, show the names of the files that would be removed\n"
-msgstr "  -n             リハーサル、削除対象のファイル名を表示\n"
+msgid "  -d, --debug                 generate debug output (verbose mode)\n"
+msgstr "  -d, --debug                 デバッグ情報を出力(冗長モード)\n"
 
-#: pg_archivecleanup.c:257
+#: pg_archivecleanup.c:265
 #, c-format
-msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V, --version  バージョン情報を表示して、終了します\n"
+msgid ""
+"  -n, --dry-run               dry run, show the names of the files that would be\n"
+"                              removed\n"
+msgstr "  -n, --dry-run               リハーサル、削除対象のファイル名を表示\n"
 
-#: pg_archivecleanup.c:258
+#: pg_archivecleanup.c:267
 #, c-format
-msgid "  -x EXT         clean up files if they have this extension\n"
-msgstr "  -x EXT         この拡張子を持つファイルを削除する\n"
+msgid "  -V, --version               output version information, then exit\n"
+msgstr "  -V, --version               バージョン情報を表示して終了\n"
 
-#: pg_archivecleanup.c:259
+#: pg_archivecleanup.c:268
 #, c-format
-msgid "  -?, --help     show this help, then exit\n"
-msgstr "  -?, --help     このヘルプを表示して、終了します\n"
+msgid ""
+"  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
+"                              clean up\n"
+msgstr "  -x, --strip-extension=EXT   削除対象のファイルの確認前にこの拡張子を削除する\n"
 
-#: pg_archivecleanup.c:260
+#: pg_archivecleanup.c:270
+#, c-format
+msgid "  -?, --help                  show this help, then exit\n"
+msgstr "  -?, --help                  このヘルプを表示して終了\n"
+
+#: pg_archivecleanup.c:271
 #, c-format
 msgid ""
 "\n"
@@ -140,7 +150,7 @@ msgstr ""
 "例としては:\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 
-#: pg_archivecleanup.c:265
+#: pg_archivecleanup.c:276
 #, c-format
 msgid ""
 "\n"
@@ -153,7 +163,7 @@ msgstr ""
 "使用例\n"
 "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:269
+#: pg_archivecleanup.c:280
 #, c-format
 msgid ""
 "\n"
@@ -162,22 +172,22 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_archivecleanup.c:270
+#: pg_archivecleanup.c:281
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
 
-#: pg_archivecleanup.c:332
+#: pg_archivecleanup.c:353
 #, c-format
 msgid "must specify archive location"
 msgstr "アーカイブの場所を指定してください"
 
-#: pg_archivecleanup.c:344
+#: pg_archivecleanup.c:365
 #, c-format
 msgid "must specify oldest kept WAL file"
 msgstr "保存する最古のWALファイルを指定してください"
 
-#: pg_archivecleanup.c:351
+#: pg_archivecleanup.c:372
 #, c-format
 msgid "too many command-line arguments"
 msgstr "コマンドライン引数が多すぎます"

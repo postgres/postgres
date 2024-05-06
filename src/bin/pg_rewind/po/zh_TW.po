@@ -1,0 +1,1093 @@
+# Traditional Chinese message translation file for pg_rewind
+# Copyright (C) 2023 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_rewind (PostgreSQL) package.
+# Zhenbang Wei <znbang@gmail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_rewind (PostgreSQL) 16\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2023-09-11 20:51+0000\n"
+"PO-Revision-Date: 2023-11-06 08:49+0800\n"
+"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
+"Language-Team: \n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.1\n"
+
+# libpq/be-secure.c:294 libpq/be-secure.c:387
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "錯誤: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "詳細內容: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "記憶體用盡\n"
+
+# common.c:78
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "無法複製 null 指標(內部錯誤)\n"
+
+# utils/misc/guc.c:3792
+#: ../../common/percentrepl.c:79 ../../common/percentrepl.c:118
+#, c-format
+msgid "invalid value for parameter \"%s\": \"%s\""
+msgstr "給參數\"%s\"的值不合法: \"%s\""
+
+#: ../../common/percentrepl.c:80
+#, c-format
+msgid "String ends unexpectedly after escape character \"%%\"."
+msgstr "字串在轉義字元 \"%%\" 後意外結束。"
+
+#: ../../common/percentrepl.c:119
+#, c-format
+msgid "String contains unexpected placeholder \"%%%c\"."
+msgstr "字串包含非預期的佔位符 \"%%%c\"。"
+
+# port/win32/security.c:39
+#: ../../common/restricted_token.c:60
+#, c-format
+msgid "could not open process token: error code %lu"
+msgstr "無法開啟行程 token: 錯誤碼 %lu"
+
+# port/pg_sema.c:117 port/sysv_sema.c:117
+#: ../../common/restricted_token.c:74
+#, c-format
+msgid "could not allocate SIDs: error code %lu"
+msgstr "無法配置 SID: 錯誤碼 %lu"
+
+# port/win32/signal.c:239
+#: ../../common/restricted_token.c:94
+#, c-format
+msgid "could not create restricted token: error code %lu"
+msgstr "無法建立受限 token: 錯誤碼 %lu"
+
+#: ../../common/restricted_token.c:115
+#, c-format
+msgid "could not start process for command \"%s\": error code %lu"
+msgstr "無法為指令 \"%s\" 啟動行程: 錯誤碼 %lu"
+
+# port/win32/signal.c:239
+#: ../../common/restricted_token.c:153
+#, c-format
+msgid "could not re-execute with restricted token: error code %lu"
+msgstr "無法使用受限 token 重新執行: 錯誤碼 %lu"
+
+#: ../../common/restricted_token.c:168
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "無法從子行程取得結束碼: 錯誤碼 %lu"
+
+#: ../../fe_utils/archive.c:69
+#, c-format
+msgid "unexpected file size for \"%s\": %lld instead of %lld"
+msgstr "\"%s\" 的檔案大小與預期不同: %lld 而不是 %lld"
+
+#: ../../fe_utils/archive.c:77
+#, c-format
+msgid "could not open file \"%s\" restored from archive: %m"
+msgstr "無法開啟從封存檔還原的檔案 \"%s\": %m"
+
+# access/transam/xlog.c:1936 access/transam/xlog.c:2038
+# access/transam/xlog.c:5291
+#: ../../fe_utils/archive.c:86 file_ops.c:417
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "無法取得檔案 \"%s\" 的狀態: %m"
+
+#: ../../fe_utils/archive.c:98
+#, c-format
+msgid "restore_command failed: %s"
+msgstr "restore_command 失敗: %s"
+
+#: ../../fe_utils/archive.c:105
+#, c-format
+msgid "could not restore file \"%s\" from archive"
+msgstr "無法從封存檔還原檔案 \"%s\""
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
+#: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
+#: ../../fe_utils/recovery_gen.c:149
+#, c-format
+msgid "out of memory"
+msgstr "記憶體不足"
+
+# access/transam/slru.c:638 access/transam/xlog.c:1631
+# access/transam/xlog.c:2742 access/transam/xlog.c:2832
+# access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
+# utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
+# utils/misc/database.c:68
+#: ../../fe_utils/recovery_gen.c:121 parsexlog.c:312
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "無法開啟檔案 \"%s\": %m"
+
+# access/transam/xlog.c:1555 access/transam/xlog.c:1679
+# access/transam/xlog.c:2964 access/transam/xlog.c:3002 commands/copy.c:1117
+# commands/tablespace.c:668 commands/tablespace.c:674
+# postmaster/postmaster.c:3430 utils/init/miscinit.c:832
+# utils/init/miscinit.c:841 utils/misc/guc.c:4934 utils/misc/guc.c:4998
+#: ../../fe_utils/recovery_gen.c:124
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "無法寫入檔案 \"%s\": %m"
+
+# access/transam/slru.c:645 access/transam/xlog.c:1526
+# access/transam/xlog.c:1646 access/transam/xlog.c:2911
+# access/transam/xlog.c:5308 access/transam/xlog.c:5426
+# postmaster/postmaster.c:3366
+#: ../../fe_utils/recovery_gen.c:133
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "無法建立檔案 \"%s\": %m"
+
+#: file_ops.c:67
+#, c-format
+msgid "could not open target file \"%s\": %m"
+msgstr "無法開啟目標檔 \"%s\": %m"
+
+#: file_ops.c:81
+#, c-format
+msgid "could not close target file \"%s\": %m"
+msgstr "無法關閉目標檔 \"%s\": %m"
+
+#: file_ops.c:101
+#, c-format
+msgid "could not seek in target file \"%s\": %m"
+msgstr "無法在目標檔 \"%s\" 中 seek: %m"
+
+# access/transam/xlog.c:5319 access/transam/xlog.c:5439
+#: file_ops.c:117
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "無法寫入檔案 \"%s\": %m"
+
+#: file_ops.c:150 file_ops.c:177
+#, c-format
+msgid "undefined file type for \"%s\""
+msgstr "\"%s\" 的檔案類型未定義"
+
+#: file_ops.c:173
+#, c-format
+msgid "invalid action (CREATE) for regular file"
+msgstr "對於一般檔案無效的動作(CREATE)"
+
+# access/transam/xlog.c:1944 access/transam/xlog.c:5453
+# access/transam/xlog.c:5607 postmaster/postmaster.c:3504
+#: file_ops.c:200
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "無法刪除檔案 \"%s\": %m"
+
+#: file_ops.c:218
+#, c-format
+msgid "could not open file \"%s\" for truncation: %m"
+msgstr "無法開啟檔案 \"%s\" 進行縮短: %m"
+
+#: file_ops.c:222
+#, c-format
+msgid "could not truncate file \"%s\" to %u: %m"
+msgstr "無法將檔案 \"%s\" 縮短到 %u: %m"
+
+# commands/tablespace.c:154 commands/tablespace.c:162
+# commands/tablespace.c:168
+#: file_ops.c:238
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "無法建立目錄 \"%s\": %m"
+
+# commands/tablespace.c:610
+#: file_ops.c:252
+#, c-format
+msgid "could not remove directory \"%s\": %m"
+msgstr "無法刪除目錄 \"%s\": %m"
+
+#: file_ops.c:266
+#, c-format
+msgid "could not create symbolic link at \"%s\": %m"
+msgstr "無法在 \"%s\" 建立符號連結: %m"
+
+# commands/tablespace.c:355 commands/tablespace.c:984
+#: file_ops.c:280
+#, c-format
+msgid "could not remove symbolic link \"%s\": %m"
+msgstr "無法刪除symbolic link \"%s\": %m"
+
+# commands/copy.c:1031
+#: file_ops.c:326 file_ops.c:330
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "無法開啟檔案 \"%s\" 進行讀取: %m"
+
+# access/transam/xlog.c:1659 access/transam/xlog.c:2942
+# access/transam/xlog.c:5397 access/transam/xlog.c:5448
+# access/transam/xlog.c:5520 access/transam/xlog.c:5545
+# access/transam/xlog.c:5583
+#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:350
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "無法讀取檔案 \"%s\": %m"
+
+#: file_ops.c:344 parsexlog.c:352
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "無法讀取檔案 \"%s\": 已讀取 %d / %zu"
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: file_ops.c:388
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "無法開啟目錄 \"%s\": %m"
+
+# commands/tablespace.c:355 commands/tablespace.c:984
+#: file_ops.c:441
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "無法讀取符號連結 \"%s\": %m"
+
+#: file_ops.c:444
+#, c-format
+msgid "symbolic link \"%s\" target is too long"
+msgstr "符號連結 \"%s\" 的目標太長"
+
+# access/transam/slru.c:967 commands/tablespace.c:577
+# commands/tablespace.c:721
+#: file_ops.c:462
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "無法讀取目錄\"%s\": %m"
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: file_ops.c:466
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "無法關閉目錄 \"%s\": %m"
+
+#: filemap.c:236
+#, c-format
+msgid "data file \"%s\" in source is not a regular file"
+msgstr "來源的資料檔 \"%s\" 不是一般檔案"
+
+#: filemap.c:241 filemap.c:274
+#, c-format
+msgid "duplicate source file \"%s\""
+msgstr "重複的來源檔 \"%s\""
+
+#: filemap.c:329
+#, c-format
+msgid "unexpected page modification for non-regular file \"%s\""
+msgstr "非一般檔案 \"%s\" 的資料頁出現非預期的修改"
+
+#: filemap.c:679 filemap.c:773
+#, c-format
+msgid "unknown file type for \"%s\""
+msgstr "\"%s\" 的檔案類型未知"
+
+#: filemap.c:706
+#, c-format
+msgid "file \"%s\" is of different type in source and target"
+msgstr "檔案 \"%s\" 在來源和目標中的類型不同"
+
+#: filemap.c:778
+#, c-format
+msgid "could not decide what to do with file \"%s\""
+msgstr "無法決定如何處理檔案 \"%s\""
+
+#: libpq_source.c:130
+#, c-format
+msgid "could not clear search_path: %s"
+msgstr "無法清除 search_path: %s"
+
+#: libpq_source.c:141
+#, c-format
+msgid "full_page_writes must be enabled in the source server"
+msgstr "來源伺服器必須啟動 full_page_writes"
+
+#: libpq_source.c:152
+#, c-format
+msgid "could not prepare statement to fetch file contents: %s"
+msgstr "無法準備用來擷取檔案內容的陳述式: %s"
+
+#: libpq_source.c:171
+#, c-format
+msgid "error running query (%s) on source server: %s"
+msgstr "來源伺服器執行查詢(%s)時發生錯誤: %s"
+
+#: libpq_source.c:176
+#, c-format
+msgid "unexpected result set from query"
+msgstr "查詢出現非預期的結果集"
+
+#: libpq_source.c:198
+#, c-format
+msgid "error running query (%s) in source server: %s"
+msgstr "來源伺服器執行查詢(%s)時發生錯誤: %s"
+
+#: libpq_source.c:219
+#, c-format
+msgid "unrecognized result \"%s\" for current WAL insert location"
+msgstr "無法識別目前 WAL 插入位置的結果 \"%s\""
+
+#: libpq_source.c:270
+#, c-format
+msgid "could not fetch file list: %s"
+msgstr "無法擷取檔案清單: %s"
+
+#: libpq_source.c:275
+#, c-format
+msgid "unexpected result set while fetching file list"
+msgstr "擷取檔案清單時出現非預期的結果集"
+
+#: libpq_source.c:467
+#, c-format
+msgid "could not send query: %s"
+msgstr "無法傳送查詢: %s"
+
+#: libpq_source.c:470
+#, c-format
+msgid "could not set libpq connection to single row mode"
+msgstr "無法將 libpq 連線設為單列模式"
+
+#: libpq_source.c:500
+#, c-format
+msgid "unexpected result while fetching remote files: %s"
+msgstr "擷取遠端檔案時出現非預期的結果: %s"
+
+#: libpq_source.c:505
+#, c-format
+msgid "received more data chunks than requested"
+msgstr "收到比請求更多的資料塊"
+
+#: libpq_source.c:509
+#, c-format
+msgid "unexpected result set size while fetching remote files"
+msgstr "擷取遠端檔案時出現非預期的結果集大小"
+
+#: libpq_source.c:515
+#, c-format
+msgid "unexpected data types in result set while fetching remote files: %u %u %u"
+msgstr "擷取遠端檔案時結果集出現非預期的資料型別: %u %u %u"
+
+#: libpq_source.c:523
+#, c-format
+msgid "unexpected result format while fetching remote files"
+msgstr "擷取遠端檔案時出現非預期的結果格式"
+
+#: libpq_source.c:529
+#, c-format
+msgid "unexpected null values in result while fetching remote files"
+msgstr "擷取遠端檔案時結果中出現非預期的 null 值"
+
+#: libpq_source.c:533
+#, c-format
+msgid "unexpected result length while fetching remote files"
+msgstr "擷取遠端檔案時出現非預期的結果長度"
+
+#: libpq_source.c:566
+#, c-format
+msgid "received data for file \"%s\", when requested for \"%s\""
+msgstr "收到檔案 \"%s\" 的資料，但請求的是 \"%s\" 的資料"
+
+#: libpq_source.c:570
+#, c-format
+msgid "received data at offset %lld of file \"%s\", when requested for offset %lld"
+msgstr "收到檔案 \"%2$s\" 位移 %1$lld 處的資料，但請求的是位移 %3$lld 的資料"
+
+#: libpq_source.c:582
+#, c-format
+msgid "received more than requested for file \"%s\""
+msgstr "收到的資料超過對檔案 \"%s\" 的請求"
+
+#: libpq_source.c:595
+#, c-format
+msgid "unexpected number of data chunks received"
+msgstr "收到非預期數量的資料塊"
+
+#: libpq_source.c:638
+#, c-format
+msgid "could not fetch remote file \"%s\": %s"
+msgstr "無法擷取遠端檔案 \"%s\": %s"
+
+#: libpq_source.c:643
+#, c-format
+msgid "unexpected result set while fetching remote file \"%s\""
+msgstr "擷取遠端檔案 \"%s\" 時出現非預期的結果集"
+
+#: local_source.c:90 local_source.c:142
+#, c-format
+msgid "could not open source file \"%s\": %m"
+msgstr "無法開啟來源檔 \"%s\": %m"
+
+#: local_source.c:117
+#, c-format
+msgid "size of source file \"%s\" changed concurrently: %d bytes expected, %d copied"
+msgstr "來源檔 \"%s\" 的大小同時發生變化: 預期 %d 位元組，已複製 %d 位元組"
+
+# access/transam/slru.c:680 access/transam/xlog.c:1567
+# access/transam/xlog.c:1691 access/transam/xlog.c:3013
+#: local_source.c:121 local_source.c:172
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "無法關閉檔案 \"%s\": %m"
+
+#: local_source.c:146
+#, c-format
+msgid "could not seek in source file: %m"
+msgstr "無法在來源檔中 seek: %m"
+
+#: local_source.c:165
+#, c-format
+msgid "unexpected EOF while reading file \"%s\""
+msgstr "讀取檔案 \"%s\" 時發生預期外的 EOF"
+
+#: parsexlog.c:80 parsexlog.c:139 parsexlog.c:199
+#, c-format
+msgid "out of memory while allocating a WAL reading processor"
+msgstr "配置 WAL 讀取處理器時耗盡記憶體"
+
+#: parsexlog.c:92 parsexlog.c:146
+#, c-format
+msgid "could not read WAL record at %X/%X: %s"
+msgstr "無法讀取先前的 WAL 紀錄，位置 %X/%X: %s"
+
+#: parsexlog.c:96 parsexlog.c:149
+#, c-format
+msgid "could not read WAL record at %X/%X"
+msgstr "無法讀取先前的 WAL 紀錄，位置 %X/%X"
+
+#: parsexlog.c:108
+#, c-format
+msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
+msgstr "結束指標 %X/%X 不是有效的結束點，預期是 %X/%X"
+
+#: parsexlog.c:212
+#, c-format
+msgid "could not find previous WAL record at %X/%X: %s"
+msgstr "無法找到先前的 WAL 紀錄，位置 %X/%X: %s"
+
+#: parsexlog.c:216
+#, c-format
+msgid "could not find previous WAL record at %X/%X"
+msgstr "無法找到先前的 WAL 紀錄，位置 %X/%X"
+
+# access/transam/slru.c:638 access/transam/xlog.c:1631
+# access/transam/xlog.c:2742 access/transam/xlog.c:2832
+# access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
+# utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
+# utils/misc/database.c:68
+#: parsexlog.c:341
+#, c-format
+msgid "could not seek in file \"%s\": %m"
+msgstr "無法 seek 檔案 \"%s\": %m"
+
+#: parsexlog.c:440
+#, c-format
+msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
+msgstr "WAL 紀錄修改了關聯，但無法識別記錄類型: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
+
+#: pg_rewind.c:92
+#, c-format
+msgid ""
+"%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
+"\n"
+msgstr ""
+"%s 將 PostgreSQL 叢集與另一個叢集重新同步\n"
+"\n"
+
+# postmaster/postmaster.c:1016
+#: pg_rewind.c:93
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]...\n"
+"\n"
+msgstr ""
+"用法: \n"
+"  %s [OPTION]...\n"
+"\n"
+
+# postmaster/postmaster.c:1017 tcop/postgres.c:2115
+#: pg_rewind.c:94
+#, c-format
+msgid "Options:\n"
+msgstr "選項: \n"
+
+#: pg_rewind.c:95
+#, c-format
+msgid ""
+"  -c, --restore-target-wal       use restore_command in target configuration to\n"
+"                                 retrieve WAL files from archives\n"
+msgstr ""
+"  -c, --restore-target-wal       使用目標設定中的 restore_command 來擷取\n"
+"                                 封存檔中的 WAL 檔\n"
+
+#: pg_rewind.c:97
+#, c-format
+msgid "  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"
+msgstr "  -D, --target-pgdata=DIRECTORY  要修改的現有資料目錄\n"
+
+#: pg_rewind.c:98
+#, c-format
+msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
+msgstr "      --source-pgdata=DIRECTORY  要同步的來源資料目錄\n"
+
+#: pg_rewind.c:99
+#, c-format
+msgid "      --source-server=CONNSTR    source server to synchronize with\n"
+msgstr "      --source-server=CONNSTR    要同步的來源伺服器\n"
+
+#: pg_rewind.c:100
+#, c-format
+msgid "  -n, --dry-run                  stop before modifying anything\n"
+msgstr "  -n, --dry-run                  在修改任何內容之前停止\n"
+
+#: pg_rewind.c:101
+#, c-format
+msgid ""
+"  -N, --no-sync                  do not wait for changes to be written\n"
+"                                 safely to disk\n"
+msgstr "  -N, --no-sync                  不等待變更安全寫入磁碟\n"
+
+#: pg_rewind.c:103
+#, c-format
+msgid "  -P, --progress                 write progress messages\n"
+msgstr "  -P, --progress                 顯示進度資訊\n"
+
+#: pg_rewind.c:104
+#, c-format
+msgid ""
+"  -R, --write-recovery-conf      write configuration for replication\n"
+"                                 (requires --source-server)\n"
+msgstr "  -R, --write-recovery-conf      寫入複寫組態(需要 --source-server)\n"
+
+#: pg_rewind.c:106
+#, c-format
+msgid ""
+"      --config-file=FILENAME     use specified main server configuration\n"
+"                                 file when running target cluster\n"
+msgstr "      --config-file=FILENAME     執行目標叢集時使用指定的主伺服器組態\n"
+
+#: pg_rewind.c:108
+#, c-format
+msgid "      --debug                    write a lot of debug messages\n"
+msgstr "      --debug                    輸出大量除錯訊息\n"
+
+#: pg_rewind.c:109
+#, c-format
+msgid "      --no-ensure-shutdown       do not automatically fix unclean shutdown\n"
+msgstr "      --no-ensure-shutdown       不自動修復不正常停止\n"
+
+#: pg_rewind.c:110
+#, c-format
+msgid "  -V, --version                  output version information, then exit\n"
+msgstr "  -V, --version                  顯示版本，然後結束\n"
+
+#: pg_rewind.c:111
+#, c-format
+msgid "  -?, --help                     show this help, then exit\n"
+msgstr "  -?, --help                     顯示說明，然後結束\n"
+
+#: pg_rewind.c:112
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"回報錯誤至 <%s>。\n"
+
+#: pg_rewind.c:113
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 網站: <%s>\n"
+
+# tcop/postgres.c:2636 tcop/postgres.c:2652
+#: pg_rewind.c:223 pg_rewind.c:231 pg_rewind.c:238 pg_rewind.c:245
+#: pg_rewind.c:252 pg_rewind.c:260
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "用 \"%s --help\" 取得更多資訊。"
+
+#: pg_rewind.c:230
+#, c-format
+msgid "no source specified (--source-pgdata or --source-server)"
+msgstr "未指定來源(--source-pgdata 或 --source-server)"
+
+#: pg_rewind.c:237
+#, c-format
+msgid "only one of --source-pgdata or --source-server can be specified"
+msgstr "只能指定 --source-pgdata 或 --source-server 中的其中一個"
+
+#: pg_rewind.c:244
+#, c-format
+msgid "no target data directory specified (--target-pgdata)"
+msgstr "未指定目標資料目錄(--target-pgdata)"
+
+#: pg_rewind.c:251
+#, c-format
+msgid "no source server information (--source-server) specified for --write-recovery-conf"
+msgstr "未指定 --write-recovery-conf 的來源伺服器資訊(--source-server)"
+
+#: pg_rewind.c:258
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "命令列參數過多(第一個是 \"%s\")"
+
+#: pg_rewind.c:273
+#, c-format
+msgid "cannot be executed by \"root\""
+msgstr "無法用 \"root\" 執行"
+
+#: pg_rewind.c:274
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser."
+msgstr "您必須以 PostgreSQL 超級使用者身分執行 %s。"
+
+# postmaster/postmaster.c:897
+#: pg_rewind.c:284
+#, c-format
+msgid "could not read permissions of directory \"%s\": %m"
+msgstr "無法讀取目錄\"%s\"的權限: %m"
+
+# commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
+# nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
+#: pg_rewind.c:302
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_rewind.c:305
+#, c-format
+msgid "connected to server"
+msgstr "已連線至伺服器"
+
+#: pg_rewind.c:366
+#, c-format
+msgid "source and target cluster are on the same timeline"
+msgstr "來源和目標叢集在相同的時間軸上"
+
+#: pg_rewind.c:387
+#, c-format
+msgid "servers diverged at WAL location %X/%X on timeline %u"
+msgstr "伺服器分岐，WAL 位置 %X/%X，時間軸 %u"
+
+#: pg_rewind.c:442
+#, c-format
+msgid "no rewind required"
+msgstr "無需回溯"
+
+#: pg_rewind.c:451
+#, c-format
+msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
+msgstr "從最後的共同檢查點回溯，位置 %X/%X，時間軸 %u"
+
+#: pg_rewind.c:461
+#, c-format
+msgid "reading source file list"
+msgstr "讀取來源檔案清單"
+
+#: pg_rewind.c:465
+#, c-format
+msgid "reading target file list"
+msgstr "讀取目標檔案清單"
+
+#: pg_rewind.c:474
+#, c-format
+msgid "reading WAL in target"
+msgstr "讀取目標的 WAL"
+
+#: pg_rewind.c:495
+#, c-format
+msgid "need to copy %lu MB (total source directory size is %lu MB)"
+msgstr "需要複製 %lu MB(來源目錄的總大小為 %lu MB)"
+
+#: pg_rewind.c:513
+#, c-format
+msgid "syncing target data directory"
+msgstr "同步目標資料目錄"
+
+#: pg_rewind.c:529
+#, c-format
+msgid "Done!"
+msgstr "完成!"
+
+#: pg_rewind.c:609
+#, c-format
+msgid "no action decided for file \"%s\""
+msgstr "尚未決定對檔案 \"%s\" 採取任何動作"
+
+#: pg_rewind.c:641
+#, c-format
+msgid "source system was modified while pg_rewind was running"
+msgstr "來源系統在 pg_rewind 執行期間被修改"
+
+#: pg_rewind.c:645
+#, c-format
+msgid "creating backup label and updating control file"
+msgstr "建立備份標籤並更新控制檔"
+
+#: pg_rewind.c:695
+#, c-format
+msgid "source system was in unexpected state at end of rewind"
+msgstr "來源系統在回溯結束時處於非預期的狀態"
+
+#: pg_rewind.c:727
+#, c-format
+msgid "source and target clusters are from different systems"
+msgstr "來源和目標叢集來自不同的系統"
+
+#: pg_rewind.c:735
+#, c-format
+msgid "clusters are not compatible with this version of pg_rewind"
+msgstr "叢集與此版本的 pg_rewind 不相容"
+
+#: pg_rewind.c:745
+#, c-format
+msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
+msgstr "目標伺服器需要使用資料檢查碼或 \"wal_log_hints = on\""
+
+#: pg_rewind.c:756
+#, c-format
+msgid "target server must be shut down cleanly"
+msgstr "目標伺服器必須被乾淨地關閉"
+
+#: pg_rewind.c:766
+#, c-format
+msgid "source data directory must be shut down cleanly"
+msgstr "來源資料目錄必須被乾淨地關閉"
+
+#: pg_rewind.c:813
+#, c-format
+msgid "%*s/%s kB (%d%%) copied"
+msgstr "%*s/%s kB (%d%%) 已被複製"
+
+#: pg_rewind.c:941
+#, c-format
+msgid "could not find common ancestor of the source and target cluster's timelines"
+msgstr "找不到來源叢集和目標叢集時間軸的共同祖先"
+
+#: pg_rewind.c:982
+#, c-format
+msgid "backup label buffer too small"
+msgstr "備份標籤緩衝區過小"
+
+#: pg_rewind.c:1005
+#, c-format
+msgid "unexpected control file CRC"
+msgstr "非預期的控制檔 CRC"
+
+#: pg_rewind.c:1017
+#, c-format
+msgid "unexpected control file size %d, expected %d"
+msgstr "非預期的控制檔大小 %d，預期為 %d"
+
+#: pg_rewind.c:1026
+#, c-format
+msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
+msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
+msgstr[0] "WAL 片段大小必須為介於 1 MB 到 1 GB 之間的二的次方數，但是控制檔指定了 %d 位元組"
+
+#: pg_rewind.c:1065 pg_rewind.c:1135
+#, c-format
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
+msgstr "\"%s\" 需要程式 \"%s\"，但在相同目錄中找不到 \"%s\""
+
+#: pg_rewind.c:1068 pg_rewind.c:1138
+#, c-format
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
+msgstr "\"%2$s\" 找到程式 \"%1$s\"，但版本不是 %3$s"
+
+#: pg_rewind.c:1101
+#, c-format
+msgid "restore_command is not set in the target cluster"
+msgstr "目標叢集中未設定 restore_command"
+
+#: pg_rewind.c:1142
+#, c-format
+msgid "executing \"%s\" for target server to complete crash recovery"
+msgstr "執行 \"%s\" 以完成目標伺服器的崩潰還原"
+
+#: pg_rewind.c:1180
+#, c-format
+msgid "postgres single-user mode in target cluster failed"
+msgstr "目標叢集中的 PostgreSQL 單使用者模式失敗"
+
+#: pg_rewind.c:1181
+#, c-format
+msgid "Command was: %s"
+msgstr "命令是: %s"
+
+# access/transam/xlog.c:2771
+#: timeline.c:75 timeline.c:81
+#, c-format
+msgid "syntax error in history file: %s"
+msgstr "歷史檔中的語法錯誤: %s"
+
+# access/transam/xlog.c:2772
+#: timeline.c:76
+#, c-format
+msgid "Expected a numeric timeline ID."
+msgstr "預期數字時間軸 ID。"
+
+#: timeline.c:82
+#, c-format
+msgid "Expected a write-ahead log switchpoint location."
+msgstr "預期的 write-ahead 日誌切換點位置。"
+
+# access/transam/xlog.c:2777
+#: timeline.c:87
+#, c-format
+msgid "invalid data in history file: %s"
+msgstr "歷史檔中的資料無效: %s"
+
+# access/transam/xlog.c:2778
+#: timeline.c:88
+#, c-format
+msgid "Timeline IDs must be in increasing sequence."
+msgstr "時間軸 ID 必須是遞增序列。"
+
+#: timeline.c:108
+#, c-format
+msgid "invalid data in history file"
+msgstr "歷史檔中的資料無效"
+
+# access/transam/xlog.c:2792
+#: timeline.c:109
+#, c-format
+msgid "Timeline IDs must be less than child timeline's ID."
+msgstr "時間軸 ID 必須小於子時間軸的 ID。"
+
+#: xlogreader.c:626
+#, c-format
+msgid "invalid record offset at %X/%X: expected at least %u, got %u"
+msgstr "位於 %X/%X 的記錄 offset 無效: 預期至少 %u，實際為 %u"
+
+# access/transam/xlog.c:2443
+#: xlogreader.c:635
+#, c-format
+msgid "contrecord is requested by %X/%X"
+msgstr "%X/%X 要求 contrecord"
+
+#: xlogreader.c:676 xlogreader.c:1119
+#, c-format
+msgid "invalid record length at %X/%X: expected at least %u, got %u"
+msgstr "位於 %X/%X 的記錄長度無效: 預期至少 %u，實際為 %u"
+
+#: xlogreader.c:705
+#, c-format
+msgid "out of memory while trying to decode a record of length %u"
+msgstr "嘗試解碼長度為 %u 的記錄時耗盡記憶體"
+
+# access/transam/xlog.c:2503
+#: xlogreader.c:727
+#, c-format
+msgid "record length %u at %X/%X too long"
+msgstr "位於 %X/%X 的記錄長度 %u 過長"
+
+#: xlogreader.c:776
+#, c-format
+msgid "there is no contrecord flag at %X/%X"
+msgstr "位於 %X/%X 沒有 contrecord 標誌"
+
+#: xlogreader.c:789
+#, c-format
+msgid "invalid contrecord length %u (expected %lld) at %X/%X"
+msgstr "位於 %3$X/%4$X 的 contrecord 長度 %1$u 無效(預期為 %2$lld)"
+
+# access/transam/xlog.c:2465
+#: xlogreader.c:1127
+#, c-format
+msgid "invalid resource manager ID %u at %X/%X"
+msgstr "位於 %2$X/%3$X 的無效 block_id %1$u"
+
+# access/transam/xlog.c:2458
+#: xlogreader.c:1140 xlogreader.c:1156
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "位於 %3$X/%4$X 的記錄有不正確的 prev-link %1$X/%2$X"
+
+# access/transam/xlog.c:2269
+#: xlogreader.c:1192
+#, c-format
+msgid "incorrect resource manager data checksum in record at %X/%X"
+msgstr "位於 %X/%X 的記錄中資源管理員資料檢查碼不正確"
+
+#: xlogreader.c:1226
+#, c-format
+msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
+msgstr "WAL 片段 %2$s 中的魔數數字 %1$04X 無效，LSN %3$X/%4$X，位移 %5$u"
+
+#: xlogreader.c:1241 xlogreader.c:1283
+#, c-format
+msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
+msgstr "WAL 片段 %2$s 中的資訊位元 %1$04X 無效，LSN %3$X/%4$X，位移 %5$u"
+
+#: xlogreader.c:1257
+#, c-format
+msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
+msgstr "WAL 檔案來自不同的資料庫系統: WAL 檔案的資料庫系統識別碼為 %llu，而 pg_control 的資料庫系統識別碼為 %llu"
+
+#: xlogreader.c:1265
+#, c-format
+msgid "WAL file is from different database system: incorrect segment size in page header"
+msgstr "WAL 檔案來自不同的資料庫系統: 資料頁標頭中的片段大小不正確"
+
+#: xlogreader.c:1271
+#, c-format
+msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
+msgstr "WAL 檔案來自不同的資料庫系統: 資料頁標頭中的 XLOG_BLCKSZ 不正確"
+
+#: xlogreader.c:1303
+#, c-format
+msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
+msgstr "非預期的 pageaddr %X/%X 位於 WAL 片段 %s，LSN %X/%X，位移 %u"
+
+#: xlogreader.c:1329
+#, c-format
+msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
+msgstr "非依序 timeline ID %u(在 %u 之後)位於 WAL 片段 %s，LSN %X/%X，位移 %u"
+
+#: xlogreader.c:1735
+#, c-format
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "非循序 block_id %u 位於 %X/%X"
+
+#: xlogreader.c:1759
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr "設定了 BKPBLOCK_HAS_DATA，但在 %X/%X 的沒有包含任何資料"
+
+#: xlogreader.c:1766
+#, c-format
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
+msgstr "未設定 BKPBLOCK_HAS_DATA，但在 %2$X/%3$X 的資料長度為 %1$u"
+
+#: xlogreader.c:1802
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
+msgstr "設定了 BKPIMAGE_HAS_HOLE，但在 %4$X/%5$X 有 offset %1$u 長度 %2$u 影像長度 %3$u 的空洞"
+
+#: xlogreader.c:1818
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
+msgstr "未設定 BKPIMAGE_HAS_HOLE，但在 %3$X/%4$X 有 offset %1$u 長度 %2$u 的空洞"
+
+#: xlogreader.c:1832
+#, c-format
+msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
+msgstr "設定了 BKPIMAGE_COMPRESSED，但在 %2$X/%3$X 的區塊影像長度為 %1$u"
+
+#: xlogreader.c:1847
+#, c-format
+msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
+msgstr "未設定 BKPIMAGE_HAS_HOLE 和 BKPIMAGE_COMPRESSED，但在 %2$X/%3$X 的區塊影像長度為 %1$u"
+
+#: xlogreader.c:1863
+#, c-format
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
+msgstr "設定了 BKPBLOCK_SAME_REL，但在 %X/%X 沒有先前的 rel"
+
+#: xlogreader.c:1875
+#, c-format
+msgid "invalid block_id %u at %X/%X"
+msgstr "位於 %2$X/%3$X 的無效 block_id %1$u"
+
+#: xlogreader.c:1942
+#, c-format
+msgid "record with invalid length at %X/%X"
+msgstr "位於 %X/%X 的記錄長度無效"
+
+#: xlogreader.c:1968
+#, c-format
+msgid "could not locate backup block with ID %d in WAL record"
+msgstr "在 WAL 記錄中找不到具有 ID %d 的備份區塊"
+
+#: xlogreader.c:2052
+#, c-format
+msgid "could not restore image at %X/%X with invalid block %d specified"
+msgstr "無法還原指定了無效區塊 %3$d 的影像，位置 %1$X/%2$X"
+
+#: xlogreader.c:2059
+#, c-format
+msgid "could not restore image at %X/%X with invalid state, block %d"
+msgstr "無法還原處於無效狀態的影像，位置 %X/%X，區塊 %d"
+
+#: xlogreader.c:2086 xlogreader.c:2103
+#, c-format
+msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
+msgstr "無法還原用此版本不支援的壓縮方法 %3$s 壓縮的影像，位置 %1$X/%2$X，區塊 %4$d"
+
+#: xlogreader.c:2112
+#, c-format
+msgid "could not restore image at %X/%X compressed with unknown method, block %d"
+msgstr "無法還原使用未知方法壓縮的影像，位置 %X/%X，區塊 %d"
+
+#: xlogreader.c:2120
+#, c-format
+msgid "could not decompress image at %X/%X, block %d"
+msgstr "無法解壓縮影像，位置 %X/%X，區塊 %d"

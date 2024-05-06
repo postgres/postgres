@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-27 13:15-0300\n"
-"PO-Revision-Date: 2005-10-04 23:00-0300\n"
+"PO-Revision-Date: 2023-09-05 08:59+0200\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -104,7 +104,7 @@ msgstr ""
 #: pg_controldata.c:39
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
-msgstr " [-D, --pgdata=]DIRDADOS   diretório de dados\n"
+msgstr " [-D, --pgdata=]DIRDADOS diretório de dados\n"
 
 #: pg_controldata.c:40
 #, c-format
@@ -137,7 +137,7 @@ msgstr "Relate erros a <%s>.\n"
 #: pg_controldata.c:45
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "página web do %s: <%s>\n"
+msgstr "Página web do %s: <%s>\n"
 
 #: pg_controldata.c:55
 msgid "starting up"

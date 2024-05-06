@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-27 14:52+0300\n"
+"POT-Creation-Date: 2024-05-04 10:36+0300\n"
 "PO-Revision-Date: 2022-09-05 13:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -81,8 +81,8 @@ msgstr " [-D, --pgdata=]КАТ_ДАННЫХ каталог данных\n"
 #, c-format
 msgid "  -c, --check              check data checksums (default)\n"
 msgstr ""
-"  -c, --check              проверить контрольные суммы данных (по умолчанию)"
-"\n"
+"  -c, --check              проверить контрольные суммы данных (по "
+"умолчанию)\n"
 
 #: pg_checksums.c:85
 #, c-format
@@ -213,12 +213,12 @@ msgstr "контрольные суммы в файле \"%s\" включены"
 msgid "could not open directory \"%s\": %m"
 msgstr "не удалось открыть каталог \"%s\": %m"
 
-#: pg_checksums.c:342 pg_checksums.c:415
+#: pg_checksums.c:346 pg_checksums.c:415
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не удалось получить информацию о файле \"%s\": %m"
 
-#: pg_checksums.c:366
+#: pg_checksums.c:370
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "неверный номер сегмента %d в имени файла \"%s\""

@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-07-29 09:18+0000\n"
-"PO-Revision-Date: 2023-07-29 22:47+0200\n"
+"PO-Revision-Date: 2023-09-05 07:50+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -280,7 +280,7 @@ msgstr ""
 #: pg_waldump.c:781
 #, c-format
 msgid "  --save-fullpage=DIR    save full page images to DIR\n"
-msgstr "  --save-fullpage=RÉP    sauvegarde les images complètes dans RÉP\n"
+msgstr "  --save-fullpage=RÉP           sauvegarde les images complètes dans RÉP\n"
 
 #: pg_waldump.c:782
 #, c-format
@@ -299,7 +299,7 @@ msgstr ""
 #: pg_waldump.c:784
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "Page d'accueil %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: pg_waldump.c:880
 #, c-format
@@ -568,7 +568,7 @@ msgstr "enregistrement de longueur invalide à %X/%X"
 #: xlogreader.c:1968
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
-msgstr "échec de localisation du bloc de sauvegarde d'ID %d dans l'enregistrement WAL"
+msgstr "n'a pas pu localiser le bloc de sauvegarde d'ID %d dans l'enregistrement WAL"
 
 #: xlogreader.c:2052
 #, c-format
@@ -578,12 +578,12 @@ msgstr "n'a pas pu restaurer l'image à %X/%X avec le bloc invalide %d indiqué"
 #: xlogreader.c:2059
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "n'a pas pu restaurer l'image à %X/%X avec l'état invalide, bloc %d"
+msgstr "n'a pas pu restaurer l'image à %X/%X avec un état invalide, bloc %d"
 
 #: xlogreader.c:2086 xlogreader.c:2103
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "n'a pas pu restaurer l'image à %X/%X compressé avec %s, non supporté par le serveur, bloc %d"
+msgstr "n'a pas pu restaurer l'image à %X/%X compressé avec %s, qui est non supporté par le serveur, bloc %d"
 
 #: xlogreader.c:2112
 #, c-format

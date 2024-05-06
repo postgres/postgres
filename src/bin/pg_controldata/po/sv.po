@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-04-11 09:21+0000\n"
-"PO-Revision-Date: 2022-04-11 14:40+0200\n"
+"PO-Revision-Date: 2023-08-17 16:56+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -267,32 +267,32 @@ msgstr "pg_control ändrades senast:                 %s\n"
 #: pg_controldata.c:238
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
-msgstr "Läge för senaste checkpoint:                %X/%X\n"
+msgstr "Läge för senaste kontrollpunkt:             %X/%X\n"
 
 #: pg_controldata.c:240
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
-msgstr "REDO-läge för senaste checkpoint:           %X/%X\n"
+msgstr "REDO-läge för senaste kontrollpunkt:        %X/%X\n"
 
 #: pg_controldata.c:242
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
-msgstr "REDO-WAL-fil vid senaste checkpoint:        %s\n"
+msgstr "REDO-WAL-fil vid senaste kontrollpunkt:     %s\n"
 
 #: pg_controldata.c:244
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "TimeLineID vid senaste checkpoint:          %u\n"
+msgstr "TimeLineID vid senaste kontrollpunkt:       %u\n"
 
 #: pg_controldata.c:246
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
-msgstr "PrevTimeLineID vid senaste checkpoint:      %u\n"
+msgstr "PrevTimeLineID vid senaste kontrollpunkt:   %u\n"
 
 #: pg_controldata.c:248
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
-msgstr "Senaste checkpoint:ens full_page_writes:    %s\n"
+msgstr "Senaste kontrollpunktens full_page_writes:  %s\n"
 
 #: pg_controldata.c:249 pg_controldata.c:290 pg_controldata.c:302
 msgid "off"
@@ -305,62 +305,62 @@ msgstr "på"
 #: pg_controldata.c:250
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
-msgstr "NextXID vid senaste checkpoint:             %u:%u\n"
+msgstr "NextXID vid senaste kontrollpunkt:          %u:%u\n"
 
 #: pg_controldata.c:253
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "NextOID vid senaste checkpoint:             %u\n"
+msgstr "NextOID vid senaste kontrollpunkt:          %u\n"
 
 #: pg_controldata.c:255
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "NextMultiXactId vid senaste checkpoint:     %u\n"
+msgstr "NextMultiXactId vid senaste kontrollpunkt:  %u\n"
 
 #: pg_controldata.c:257
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "NextMultiOffset vid senaste checkpoint:     %u\n"
+msgstr "NextMultiOffset vid senaste kontrollpunkt:  %u\n"
 
 #: pg_controldata.c:259
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
-msgstr "oldestXID vid senaste checkpoint:           %u\n"
+msgstr "oldestXID vid senaste kontrollpunkt:        %u\n"
 
 #: pg_controldata.c:261
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "DB för oldestXID vid senaste checkpoint:    %u\n"
+msgstr "DB för oldestXID vid senaste kontrollpunkt: %u\n"
 
 #: pg_controldata.c:263
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID vid senaste checkpoint:     %u\n"
+msgstr "oldestActiveXID vid senaste kontrollpunkt:  %u\n"
 
 #: pg_controldata.c:265
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
-msgstr "oldestMultiXid vid senaste checkpoint:      %u\n"
+msgstr "oldestMultiXid vid senaste kontrollpunkt:   %u\n"
 
 #: pg_controldata.c:267
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "DB för oldestMulti vid senaste checkpoint:  %u\n"
+msgstr "DB för oldestMulti vid senaste kontrollpkt: %u\n"
 
 #: pg_controldata.c:269
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
-msgstr "oldestCommitTsXid vid senaste checkpoint:   %u\n"
+msgstr "oldestCommitTsXid vid senaste kontrollpunkt:%u\n"
 
 #: pg_controldata.c:271
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
-msgstr "newestCommitTsXid vid senaste checkpoint:   %u\n"
+msgstr "newestCommitTsXid vid senaste kontrollpunkt:%u\n"
 
 #: pg_controldata.c:273
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
-msgstr "Tidpunkt för senaste checkpoint:            %s\n"
+msgstr "Tidpunkt för senaste kontrollpunkt:         %s\n"
 
 #: pg_controldata.c:275
 #, c-format

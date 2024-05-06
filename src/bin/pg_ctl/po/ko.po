@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_ctl (PostgreSQL) 13\n"
+"Project-Id-Version: pg_ctl (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:04+0200\n"
+"POT-Creation-Date: 2023-09-07 05:49+0000\n"
+"PO-Revision-Date: 2023-05-26 13:21+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -16,16 +16,14 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../../common/exec.c:172
-#, fuzzy, c-format
-#| msgid "invalid binary \"%s\""
+#, c-format
 msgid "invalid binary \"%s\": %m"
-msgstr "잘못된 바이너리 파일 \"%s\""
+msgstr "\"%s\" 파일은 잘못된 바이너리 파일임: %m"
 
 #: ../../common/exec.c:215
-#, fuzzy, c-format
-#| msgid "could not read binary \"%s\""
+#, c-format
 msgid "could not read binary \"%s\": %m"
-msgstr "\"%s\" 바이너리 파일을 읽을 수 없음"
+msgstr "\"%s\" 바이너리 파일을 읽을 수 없음: %m"
 
 #: ../../common/exec.c:223
 #, c-format
@@ -33,16 +31,14 @@ msgid "could not find a \"%s\" to execute"
 msgstr "실행할 \"%s\" 파일을 찾을 수 없음"
 
 #: ../../common/exec.c:250
-#, fuzzy, c-format
-#| msgid "could not reopen file \"%s\" as stderr: %m"
+#, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
-msgstr "stderr 로 사용하기 위해 \"%s\" 파일 다시 열기 실패: %m"
+msgstr "\"%s\" 경로를 절대경로로 바꿀 수 없음: %m"
 
 #: ../../common/exec.c:412
-#, fuzzy, c-format
-#| msgid "%s failed: %m"
+#, c-format
 msgid "%s() failed: %m"
-msgstr "%s 실패: %m"
+msgstr "%s() 실패: %m"
 
 #: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
 msgid "out of memory"
@@ -148,7 +144,9 @@ msgstr "%s: 서버를 시작할 수 없음: 오류 코드 %lu\n"
 #: pg_ctl.c:782
 #, c-format
 msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
-msgstr "%s: 코어 파일 크기 한도를 설정할 수 없음, 하드 디스크 용량 초과로 허용되지 않음\n"
+msgstr ""
+"%s: 코어 파일 크기 한도를 설정할 수 없음, 하드 디스크 용량 초과로 허용되지 않"
+"음\n"
 
 #: pg_ctl.c:808
 #, c-format
@@ -166,28 +164,20 @@ msgid "%s: could not send stop signal (PID: %d): %s\n"
 msgstr "%s: stop 시그널을 보낼 수 없음 (PID: %d): %s\n"
 
 #: pg_ctl.c:883
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" is needed by %s but was not found in the\n"
-#| "same directory as \"%s\".\n"
-#| "Check your installation."
-msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\"\n"
+#, c-format
+msgid ""
+"program \"%s\" is needed by %s but was not found in the same directory as "
+"\"%s\"\n"
 msgstr ""
 "\"%s\" 프로그램이 %s 작업에서 필요합니다. 그런데, 이 파일이\n"
 "\"%s\" 파일이 있는 디렉터리안에 없습니다.\n"
-"설치 상태를 확인해 주십시오."
 
 #: pg_ctl.c:886
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" was found by \"%s\"\n"
-#| "but was not the same version as %s.\n"
-#| "Check your installation."
+#, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s\n"
 msgstr ""
 "\"%s\" 프로그램을 \"%s\" 작업 때문에 찾았지만 이 파일은\n"
 "%s 프로그램의 버전과 다릅니다.\n"
-"설치 상태를 확인해 주십시오."
 
 #: pg_ctl.c:918
 #, c-format
@@ -283,7 +273,8 @@ msgstr "어째든 서버를 시작해 봅니다\n"
 #: pg_ctl.c:1095
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %d)\n"
-msgstr "%s: 서버를 다시 시작 할 수 없음; 단일사용자 서버가 실행 중임 (PID: %d)\n"
+msgstr ""
+"%s: 서버를 다시 시작 할 수 없음; 단일사용자 서버가 실행 중임 (PID: %d)\n"
 
 #: pg_ctl.c:1098 pg_ctl.c:1157
 msgid "Please terminate the single-user server and try again.\n"
@@ -301,7 +292,9 @@ msgstr "어째든 서버를 시작합니다\n"
 #: pg_ctl.c:1154
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %d)\n"
-msgstr "%s: 서버 환경설정을 다시 불러올 수 없음; 단일 사용자 서버가 실행 중임 (PID: %d)\n"
+msgstr ""
+"%s: 서버 환경설정을 다시 불러올 수 없음; 단일 사용자 서버가 실행 중임 (PID: "
+"%d)\n"
 
 #: pg_ctl.c:1163
 #, c-format
@@ -362,7 +355,8 @@ msgstr "서버를 운영 모드로 전환합니다\n"
 #: pg_ctl.c:1274
 #, c-format
 msgid "%s: cannot rotate log file; single-user server is running (PID: %d)\n"
-msgstr "%s: 서버 로그 파일을 바꿀 수 없음; 단일 사용자 서버가 실행 중임 (PID: %d)\n"
+msgstr ""
+"%s: 서버 로그 파일을 바꿀 수 없음; 단일 사용자 서버가 실행 중임 (PID: %d)\n"
 
 #: pg_ctl.c:1284
 #, c-format
@@ -571,9 +565,11 @@ msgstr "  %s kill       시그널이름 PID\n"
 #, c-format
 msgid ""
 "  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
-"                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
+"                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o "
+"OPTIONS]\n"
 msgstr ""
-"  %s register   [-D 데이터디렉터리] [-N 서비스이름] [-U 사용자이름] [-P 암호]\n"
+"  %s register   [-D 데이터디렉터리] [-N 서비스이름] [-U 사용자이름] [-P 암"
+"호]\n"
 "                    [-S 시작형태] [-e SOURCE] [-w] [-t 초] [-o 옵션]\n"
 
 #: pg_ctl.c:1982
@@ -593,17 +589,21 @@ msgstr ""
 #: pg_ctl.c:1986
 #, c-format
 msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata=데이터디렉터리  데이터베이스 자료가 저장되어있는 디렉터리\n"
+msgstr ""
+"  -D, --pgdata=데이터디렉터리  데이터베이스 자료가 저장되어있는 디렉터리\n"
 
 #: pg_ctl.c:1988
 #, c-format
-msgid "  -e SOURCE              event source for logging when running as a service\n"
-msgstr "  -e SOURCE              서비스가 실행 중일때 쌓을 로그를 위한 이벤트 소스\n"
+msgid ""
+"  -e SOURCE              event source for logging when running as a service\n"
+msgstr ""
+"  -e SOURCE              서비스가 실행 중일때 쌓을 로그를 위한 이벤트 소스\n"
 
 #: pg_ctl.c:1990
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
-msgstr "  -s, --silent           일반적인 메시지는 보이지 않고, 오류만 보여줌\n"
+msgstr ""
+"  -s, --silent           일반적인 메시지는 보이지 않고, 오류만 보여줌\n"
 
 #: pg_ctl.c:1991
 #, c-format
@@ -684,8 +684,10 @@ msgstr ""
 
 #: pg_ctl.c:2009
 #, c-format
-msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m, --mode=모드        모드는 \"smart\", \"fast\", \"immediate\" 중 하나\n"
+msgid ""
+"  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
+msgstr ""
+"  -m, --mode=모드        모드는 \"smart\", \"fast\", \"immediate\" 중 하나\n"
 
 #: pg_ctl.c:2011
 #, c-format
@@ -704,12 +706,16 @@ msgstr "  smart       모든 클라이언트의 연결이 끊기게 되면 중�
 #: pg_ctl.c:2013
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
-msgstr "  fast        클라이언트의 연결을 강제로 끊고 정상적으로 중지 됨 (기본값)\n"
+msgstr ""
+"  fast        클라이언트의 연결을 강제로 끊고 정상적으로 중지 됨 (기본값)\n"
 
 #: pg_ctl.c:2014
 #, c-format
-msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
-msgstr "  immediate   그냥 무조건 중지함; 다시 시작할 때 복구 작업을 할 수도 있음\n"
+msgid ""
+"  immediate   quit without complete shutdown; will lead to recovery on "
+"restart\n"
+msgstr ""
+"  immediate   그냥 무조건 중지함; 다시 시작할 때 복구 작업을 할 수도 있음\n"
 
 #: pg_ctl.c:2016
 #, c-format
@@ -731,7 +737,8 @@ msgstr ""
 
 #: pg_ctl.c:2021
 #, c-format
-msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
+msgid ""
+"  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr "  -N SERVICENAME  서비스 목록에 등록될 PostgreSQL 서비스 이름\n"
 
 #: pg_ctl.c:2022
@@ -760,7 +767,8 @@ msgstr ""
 
 #: pg_ctl.c:2027
 #, c-format
-msgid "  auto       start service automatically during system startup (default)\n"
+msgid ""
+"  auto       start service automatically during system startup (default)\n"
 msgstr "  auto       시스템이 시작되면 자동으로 서비스가 시작됨 (초기값)\n"
 
 #: pg_ctl.c:2028
@@ -845,38 +853,6 @@ msgstr "%s: 수행할 작업을 지정하지 않았습니다\n"
 
 #: pg_ctl.c:2445
 #, c-format
-msgid "%s: no database directory specified and environment variable PGDATA unset\n"
+msgid ""
+"%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: -D 옵션도 없고, PGDATA 환경변수값도 지정되어 있지 않습니다.\n"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "\"%s\" 프로그램은 %s 에서 필요로 합니다. 그런데, 이 파일이\n"
-#~ "\"%s\" 디렉터리 안에 없습니다.\n"
-#~ "설치 상태를 확인해 주십시오.\n"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "\"%s\" 프로그램을 \"%s\" 에서 필요해서 찾았지만 이 파일은\n"
-#~ "%s 버전과 같지 않습니다.\n"
-#~ "설치 상태를 확인해 주십시오.\n"
-
-#~ msgid ""
-#~ "WARNING: online backup mode is active\n"
-#~ "Shutdown will not complete until pg_stop_backup() is called.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "경고: 온라인 백업 모드가 활성 상태입니다.\n"
-#~ "pg_stop_backup()이 호출될 때까지 종료가 완료되지 않습니다.\n"
-#~ "\n"
-
-#, c-format
-#~ msgid "pclose failed: %m"
-#~ msgstr "pclose 실패: %m"

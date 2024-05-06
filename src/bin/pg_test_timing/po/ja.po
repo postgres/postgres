@@ -1,11 +1,11 @@
 # LANGUAGE message translation file for pg_test_timing
-# Copyright (C) 2022 PostgreSQL Global Development Group
+# Copyright (C) 2022-2024 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL 16)\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-07-14 10:48+0900\n"
 "PO-Revision-Date: 2022-05-10 15:27+0900\n"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-08-02 03:21+0000\n"
-"PO-Revision-Date: 2023-08-02 07:56+0200\n"
+"PO-Revision-Date: 2023-09-05 09:02+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -138,7 +138,7 @@ msgstr "kunde inte skriva till fil \"%s\": %m"
 #: ../../fe_utils/recovery_gen.c:133
 #, c-format
 msgid "could not create file \"%s\": %m"
-msgstr "kan inte skapa fil \"%s\": %m"
+msgstr "kunde inte skapa fil \"%s\": %m"
 
 #: file_ops.c:67
 #, c-format
@@ -534,9 +534,8 @@ msgid ""
 "  -R, --write-recovery-conf      write configuration for replication\n"
 "                                 (requires --source-server)\n"
 msgstr ""
-"  -R, --write-recovery-conf\n"
-"                         skriv konfiguration för replikering\n"
-"                         (kräver --source-server)\n"
+"  -R, --write-recovery-conf      skriv konfiguration för replikering\n"
+"                                 (kräver --source-server)\n"
 
 #: pg_rewind.c:106
 #, c-format
@@ -922,37 +921,37 @@ msgstr "ej-i-sekvens block_id %u vid %X/%X"
 #: xlogreader.c:1759
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA satt, men ingen data inkluderad vid %X/%X"
+msgstr "BKPBLOCK_HAS_DATA är satt men ingen data inkluderad vid %X/%X"
 
 #: xlogreader.c:1766
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA ej satt, men datalängd är %u vid %X/%X"
+msgstr "BKPBLOCK_HAS_DATA är ej satt men datalängden är %u vid %X/%X"
 
 #: xlogreader.c:1802
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE satt, men håloffset %u längd %u block-image-längd %u vid %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE är satt men håloffset %u längd %u blockavbildlängd %u vid %X/%X"
 
 #: xlogreader.c:1818
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE ej satt, men håloffset %u längd %u vid %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE är inte satt men håloffset %u längd %u vid %X/%X"
 
 #: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_COMPRESSED satt, men blockavbildlängd %u vid %X/%X"
+msgstr "BKPIMAGE_COMPRESSED är satt men blockavbildlängd %u vid %X/%X"
 
 #: xlogreader.c:1847
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED satt, men blockavbildlängd är %u vid %X/%X"
+msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED är satt men blockavbildlängd är %u vid %X/%X"
 
 #: xlogreader.c:1863
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
-msgstr "BKPBLOCK_SAME_REL satt men ingen tidigare rel vid %X/%X"
+msgstr "BKPBLOCK_SAME_REL är satt men ingen tidigare rel vid %X/%X"
 
 #: xlogreader.c:1875
 #, c-format
@@ -977,17 +976,17 @@ msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt block %d angivet"
 #: xlogreader.c:2059
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "kunde inte återställa avbild vid  %X/%X med ogiltigt state, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt state, block %d"
 
 #: xlogreader.c:2086 xlogreader.c:2103
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "kunde inte återställa avbild vid %X/%X komprimerade med %s stöds inte av bygget, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med %s stöds inte av bygget, block %d"
 
 #: xlogreader.c:2112
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
-msgstr "kunde inte återställa avbild vid %X/%X komprimerad med okänd metod, block %d"
+msgstr "kunde inte återställa avbild vid %X/%X, komprimerad med okänd metod, block %d"
 
 #: xlogreader.c:2120
 #, c-format

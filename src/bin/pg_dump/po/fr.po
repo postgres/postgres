@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-07-29 09:20+0000\n"
-"PO-Revision-Date: 2023-07-30 08:11+0200\n"
+"POT-Creation-Date: 2023-09-05 17:21+0000\n"
+"PO-Revision-Date: 2023-09-05 22:02+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -1500,7 +1500,7 @@ msgid ""
 "                               compress as specified\n"
 msgstr ""
 "  -Z, --compress=METHODE[:DETAIL]\n"
-"                                 compresse comme indiqué\n"
+"                               compresse comme indiqué\n"
 
 #: pg_dump.c:1069 pg_dumpall.c:637
 #, c-format
@@ -1538,7 +1538,7 @@ msgstr "  -a, --data-only              sauvegarde uniquement les données, pas l
 #: pg_dump.c:1075
 #, c-format
 msgid "  -b, --large-objects          include large objects in dump\n"
-msgstr "  -b, --large-objects             inclut les « Large Objects » dans la sauvegarde\n"
+msgstr "  -b, --large-objects          inclut les « Large Objects » dans la sauvegarde\n"
 
 #: pg_dump.c:1076
 #, c-format
@@ -1553,7 +1553,7 @@ msgstr "  -B, --no-large-objects       exclut les « Large Objects » de la sauv
 #: pg_dump.c:1078
 #, c-format
 msgid "  --no-blobs                   (same as --no-large-objects, deprecated)\n"
-msgstr "  --blobs                  (comme --no-large-objects, obsolète)\n"
+msgstr "  --no-blobs                   (comme --no-large-objects, obsolète)\n"
 
 #: pg_dump.c:1079 pg_restore.c:447
 #, c-format
@@ -1689,7 +1689,7 @@ msgid ""
 "                               including child and partition tables\n"
 msgstr ""
 "  --exclude-table-data-and-children=MOTIF\n"
-"                               ne sauvegarde PAS les tables indiquées, ceci incluant les tables filles et les partitions\n"
+"                               ne sauvegarde PAS les données des tables indiquées, ceci incluant les tables filles et les partitions\n"
 
 #: pg_dump.c:1105 pg_dumpall.c:655
 #, c-format
@@ -2050,8 +2050,8 @@ msgstr "lecture des politiques de sécurité au niveau ligne"
 msgid "unexpected policy command type: %c"
 msgstr "type de commande inattendu pour la politique : %c"
 
-#: pg_dump.c:4425 pg_dump.c:4760 pg_dump.c:11984 pg_dump.c:17857
-#: pg_dump.c:17859 pg_dump.c:18480
+#: pg_dump.c:4425 pg_dump.c:4760 pg_dump.c:11984 pg_dump.c:17894
+#: pg_dump.c:17896 pg_dump.c:18517
 #, c-format
 msgid "could not parse %s array"
 msgstr "n'a pas pu analyser le tableau %s"
@@ -2071,7 +2071,7 @@ msgstr "n'a pas pu trouver l'extension parent pour %s %s"
 msgid "schema with OID %u does not exist"
 msgstr "le schéma d'OID %u n'existe pas"
 
-#: pg_dump.c:6776 pg_dump.c:17121
+#: pg_dump.c:6776 pg_dump.c:17158
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "vérification échouée, OID %u de la table parent de l'OID %u de la séquence introuvable"
@@ -2159,7 +2159,7 @@ msgstr "la colonne typtype du type de données « %s » semble être invalide"
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "valeur provolatile non reconnue pour la fonction « %s »"
 
-#: pg_dump.c:12103 pg_dump.c:13948
+#: pg_dump.c:12103 pg_dump.c:13985
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "valeur proparallel non reconnue pour la fonction « %s »"
@@ -2209,139 +2209,144 @@ msgstr "n'a pas pu trouver l'opérateur d'OID %s"
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "type « %c » invalide de la méthode d'accès « %s »"
 
-#: pg_dump.c:13443
+#: pg_dump.c:13455 pg_dump.c:13514
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "fournisseur de collationnement non reconnu : %s"
 
-#: pg_dump.c:13867
+#: pg_dump.c:13464 pg_dump.c:13473 pg_dump.c:13483 pg_dump.c:13498
+#, c-format
+msgid "invalid collation \"%s\""
+msgstr "collation « %s » invalide"
+
+#: pg_dump.c:13904
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "valeur non reconnue de aggfinalmodify pour l'agrégat « %s »"
 
-#: pg_dump.c:13923
+#: pg_dump.c:13960
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "valeur non reconnue de aggmfinalmodify pour l'agrégat « %s »"
 
-#: pg_dump.c:14640
+#: pg_dump.c:14677
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "type d'objet inconnu dans les droits par défaut : %d"
 
-#: pg_dump.c:14656
+#: pg_dump.c:14693
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "n'a pas pu analyser la liste ACL par défaut (%s)"
 
-#: pg_dump.c:14738
+#: pg_dump.c:14775
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "n'a pas pu analyser la liste ACL initiale (%s) ou par défaut (%s) pour l'objet « %s » (%s)"
 
-#: pg_dump.c:14763
+#: pg_dump.c:14800
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "n'a pas pu analyser la liste ACL (%s) ou par défaut (%s) pour l'objet « %s » (%s)"
 
-#: pg_dump.c:15304
+#: pg_dump.c:15341
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "la requête permettant d'obtenir la définition de la vue « %s » n'a renvoyé aucune donnée"
 
-#: pg_dump.c:15307
+#: pg_dump.c:15344
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "la requête permettant d'obtenir la définition de la vue « %s » a renvoyé plusieurs définitions"
 
-#: pg_dump.c:15314
+#: pg_dump.c:15351
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "la définition de la vue « %s » semble être vide (longueur nulle)"
 
-#: pg_dump.c:15398
+#: pg_dump.c:15435
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS n'est plus supporté (table « %s »)"
 
-#: pg_dump.c:16322
+#: pg_dump.c:16359
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "numéro de colonne %d invalide pour la table « %s »"
 
-#: pg_dump.c:16400
+#: pg_dump.c:16437
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "n'a pas pu analyser les colonnes statistiques de l'index"
 
-#: pg_dump.c:16402
+#: pg_dump.c:16439
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "n'a pas pu analyser les valeurs statistiques de l'index"
 
-#: pg_dump.c:16404
+#: pg_dump.c:16441
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "nombre de colonnes et de valeurs différentes pour les statistiques des index"
 
-#: pg_dump.c:16620
+#: pg_dump.c:16657
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "index manquant pour la contrainte « %s »"
 
-#: pg_dump.c:16855
+#: pg_dump.c:16892
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "type de contrainte inconnu : %c"
 
-#: pg_dump.c:16956 pg_dump.c:17185
+#: pg_dump.c:16993 pg_dump.c:17222
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "la requête permettant d'obtenir les données de la séquence « %s » a renvoyé %d ligne (une seule attendue)"
 msgstr[1] "la requête permettant d'obtenir les données de la séquence « %s » a renvoyé %d ligne (une seule attendue)"
 
-#: pg_dump.c:16988
+#: pg_dump.c:17025
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "type de séquence non reconnu : « %s »"
 
-#: pg_dump.c:17277
+#: pg_dump.c:17314
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "valeur tgtype inattendue : %d"
 
-#: pg_dump.c:17349
+#: pg_dump.c:17386
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "chaîne argument invalide (%s) pour le trigger « %s » sur la table « %s »"
 
-#: pg_dump.c:17618
+#: pg_dump.c:17655
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "la requête permettant d'obtenir la règle « %s » associée à la table « %s » a échoué : mauvais nombre de lignes renvoyées"
 
-#: pg_dump.c:17771
+#: pg_dump.c:17808
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "n'a pas pu trouver l'extension référencée %u"
 
-#: pg_dump.c:17861
+#: pg_dump.c:17898
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "nombre différent de configurations et de conditions pour l'extension"
 
-#: pg_dump.c:17993
+#: pg_dump.c:18030
 #, c-format
 msgid "reading dependency data"
 msgstr "lecture des données de dépendance"
 
-#: pg_dump.c:18079
+#: pg_dump.c:18116
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "pas d'objet référant %u %u"
 
-#: pg_dump.c:18090
+#: pg_dump.c:18127
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "pas d'objet référencé %u %u"

@@ -144,7 +144,7 @@ msgstr ""
 #: pg_checksums.c:95
 #, c-format
 msgid "Report bugs to <%s>.\n"
-msgstr "Reportar errores a <%s>.\n"
+msgstr "Reporte errores a <%s>.\n"
 
 #: pg_checksums.c:96
 #, c-format

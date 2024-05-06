@@ -279,7 +279,7 @@ msgstr "Dernier REDO (reprise) du point de contrôle :           %X/%X\n"
 #: pg_controldata.c:242
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
-msgstr "Dernier fichier WAL du rejeu du point de contrrôle :     %s\n"
+msgstr "Dernier fichier WAL du rejeu du point de contrôle :     %s\n"
 
 #: pg_controldata.c:244
 #, c-format
@@ -347,7 +347,7 @@ msgstr "Dernier oldestMultiXid du point de contrôle :           %u\n"
 #: pg_controldata.c:267
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "Dernier oldestMulti du point de contrôle de base :      %u\n"
+msgstr "Dernier oldestMulti du point de contrôle de la base :   %u\n"
 
 #: pg_controldata.c:269
 #, c-format

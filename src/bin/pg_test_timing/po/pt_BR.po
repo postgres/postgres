@@ -1,16 +1,16 @@
 # Brazilian Portuguese message translation file for pg_test_timing
 #
-# Copyright (C) 2022 PostgreSQL Global Development Group
+# Copyright (C) 2023 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Euler Taveira <euler@eulerto.com>, 2022.
+# Euler Taveira <euler@eulerto.com>, 2023-2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-27 13:15-0300\n"
-"PO-Revision-Date: 2022-09-27 18:43-0300\n"
+"POT-Creation-Date: 2024-01-02 13:02-0300\n"
+"PO-Revision-Date: 2023-09-27 18:43-0300\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"

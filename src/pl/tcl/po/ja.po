@@ -1,11 +1,11 @@
 # Japanese message translation file for pltcl
-# Copyright (C) 2022 PostgreSQL Global Development Group
+# Copyright (C) 2022-2024 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 # KOIZUMI Satoru <koizumistr@minos.ocn.ne.jp>, 2015.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL 16)\n"
+"Project-Id-Version: pltcl (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-07-14 10:48+0900\n"
 "PO-Revision-Date: 2019-06-11 17:26+0900\n"

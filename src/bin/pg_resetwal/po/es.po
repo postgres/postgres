@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 07:20+0000\n"
-"PO-Revision-Date: 2023-05-22 12:05+0200\n"
+"POT-Creation-Date: 2023-10-03 07:19+0000\n"
+"PO-Revision-Date: 2023-10-03 16:16+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -136,8 +136,8 @@ msgstr "el argumento de --wal-segsize debe ser un número"
 
 #: pg_resetwal.c:298
 #, c-format
-msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
-msgstr "el argumento de --wal-segsize debe ser una potencia de 2 entre 1 y 1024"
+msgid "argument of --wal-segsize must be a power of two between 1 and 1024"
+msgstr "el argumento de --wal-segsize debe ser una potencia de dos entre 1 y 1024"
 
 #: pg_resetwal.c:314
 #, c-format
@@ -288,7 +288,7 @@ msgstr "Número de versión de catálogo:                   %u\n"
 #: pg_resetwal.c:720
 #, c-format
 msgid "Database system identifier:           %llu\n"
-msgstr "Identificador de sistema:                   %llu\n"
+msgstr "Identificador de sistema:                        %llu\n"
 
 #: pg_resetwal.c:722
 #, c-format

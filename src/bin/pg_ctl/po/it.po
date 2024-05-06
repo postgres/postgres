@@ -18,7 +18,7 @@ msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:05+0200\n"
+"PO-Revision-Date: 2023-09-05 08:14+0200\n"
 "Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -522,9 +522,8 @@ msgid ""
 "  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-p PATH] [-c]\n"
 msgstr ""
-"  %s inizio     [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
+"  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
 "                    [-o OPZIONI] [-p PERCORSO] [-c]\n"
-"\n"
 
 #: pg_ctl.c:1971
 #, c-format
@@ -537,33 +536,33 @@ msgid ""
 "  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-c]\n"
 msgstr ""
-"   %s riavvia [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+"  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                    [-o OPZIONI] [-c]\n"
 
 #: pg_ctl.c:1974
 #, c-format
 msgid "  %s reload     [-D DATADIR] [-s]\n"
-msgstr "  %s ricarica      [-D DATADIR] [-s]\n"
+msgstr "  %s reload     [-D DATADIR] [-s]\n"
 
 #: pg_ctl.c:1975
 #, c-format
 msgid "  %s status     [-D DATADIR]\n"
-msgstr "  Stato %s      [-D DATADIR]\n"
+msgstr "  %s status     [-D DATADIR]\n"
 
 #: pg_ctl.c:1976
 #, c-format
 msgid "  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"
-msgstr "  %s promuovono    [-D DATADIR] [-W] [-t SECS] [-s]\n"
+msgstr "  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"
 
 #: pg_ctl.c:1977
 #, c-format
 msgid "  %s logrotate  [-D DATADIR] [-s]\n"
-msgstr "  %s logrotate   [-D DATADIR] [-s]\n"
+msgstr "  %s logrotate  [-D DATADIR] [-s]\n"
 
 #: pg_ctl.c:1978
 #, c-format
 msgid "  %s kill       SIGNALNAME PID\n"
-msgstr "  %s elimina     SIGNALNAME PID\n"
+msgstr "  %s kill       SIGNALNAME PID\n"
 
 #: pg_ctl.c:1980
 #, c-format
@@ -571,7 +570,7 @@ msgid ""
 "  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
 "                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
 msgstr ""
-"   %s registra [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
+"  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
 "                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
 
 #: pg_ctl.c:1982

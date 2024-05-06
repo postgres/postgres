@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-12 10:52+0000\n"
-"PO-Revision-Date: 2022-09-13 11:52\n"
+"PO-Revision-Date: 2023-09-05 10:04+0200\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -49,8 +49,12 @@ msgstr "%s має бути в діапазоні %d..%d"
 
 #: pg_checksums.c:79
 #, c-format
-msgid "%s enables, disables, or verifies data checksums in a PostgreSQL database cluster.\n\n"
-msgstr "%s активує, деактивує або перевіряє контрольні суми даних в кластері бази даних PostgreSQL.\n\n"
+msgid ""
+"%s enables, disables, or verifies data checksums in a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s активує, деактивує або перевіряє контрольні суми даних в кластері бази даних PostgreSQL.\n"
+"\n"
 
 #: pg_checksums.c:80
 #, c-format
@@ -64,15 +68,17 @@ msgstr "  %s [OPTION]... [DATADIR]\n"
 
 #: pg_checksums.c:82
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "Options:\n"
-msgstr "\n"
+msgstr ""
+"\n"
 "Параметри:\n"
 
 #: pg_checksums.c:83
 #, c-format
 msgid " [-D, --pgdata=]DATADIR    data directory\n"
-msgstr " [-D, --pgdata=]DATADIR         каталог даних\n"
+msgstr " [-D, --pgdata=]DATADIR    каталог даних\n"
 
 #: pg_checksums.c:84
 #, c-format
@@ -92,12 +98,12 @@ msgstr "  -e, --enable             активувати контрольні с�
 #: pg_checksums.c:87
 #, c-format
 msgid "  -f, --filenode=FILENODE  check only relation with specified filenode\n"
-msgstr "  -f, --filenode=FILENODE перевіряти відношення лише із вказаним файлом\n"
+msgstr "  -f, --filenode=FILENODE  перевіряти відношення лише із вказаним файлом\n"
 
 #: pg_checksums.c:88
 #, c-format
 msgid "  -N, --no-sync            do not wait for changes to be written safely to disk\n"
-msgstr "  -N, --no-sync          не чекати на безпечний запис змін на диск\n"
+msgstr "  -N, --no-sync            не чекати на безпечний запис змін на диск\n"
 
 #: pg_checksums.c:89
 #, c-format
@@ -107,7 +113,7 @@ msgstr "  -P, --progress           показати інформацію про 
 #: pg_checksums.c:90
 #, c-format
 msgid "  -v, --verbose            output verbose messages\n"
-msgstr "  -v, --verbose          виводити детальні повідомлення\n"
+msgstr "  -v, --verbose            виводити детальні повідомлення\n"
 
 #: pg_checksums.c:91
 #, c-format
@@ -121,11 +127,15 @@ msgstr "  -?, --help               показати цю довідку, пот�
 
 #: pg_checksums.c:93
 #, c-format
-msgid "\n"
+msgid ""
+"\n"
 "If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
-"is used.\n\n"
-msgstr "\n"
-"Якщо каталог даних не вказано (DATADIR), використовується змінна середовища PGDATA.\n\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Якщо каталог даних не вказано (DATADIR), використовується змінна середовища PGDATA.\n"
+"\n"
 
 #: pg_checksums.c:95
 #, c-format
@@ -316,4 +326,3 @@ msgstr "Контрольні суми активовані в кластері\n
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "Контрольні суми вимкнені у кластері\n"
-

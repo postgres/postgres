@@ -1,0 +1,115 @@
+# LANGUAGE message translation file for pg_walsummary
+# Copyright (C) 2024 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_walsummary (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_walsummary (PostgreSQL) 17\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2024-01-15 09:36+0900\n"
+"PO-Revision-Date: 2024-01-15 11:03+0900\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 1.8.13\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "エラー: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "詳細: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "ヒント: "
+
+#: pg_walsummary.c:85 pg_walsummary.c:93
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "詳細は\"%s --help\"を実行してください。"
+
+#: pg_walsummary.c:92
+#, c-format
+msgid "%s: no input files specified"
+msgstr "%s: 入力ファイルが指定されていません"
+
+#: pg_walsummary.c:107
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ファイル\"%s\"をオープンできませんでした: %m"
+
+#: pg_walsummary.c:255
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ファイル\"%s\"の読み込みに失敗しました: %m"
+
+#: pg_walsummary.c:270
+#, c-format
+msgid ""
+"%s prints the contents of a WAL summary file.\n"
+"\n"
+msgstr ""
+"%sはWAL概要ファイルの内容を表示します。\n"
+"\n"
+
+#: pg_walsummary.c:271
+#, c-format
+msgid "Usage:\n"
+msgstr "使用方法:\n"
+
+#: pg_walsummary.c:272
+#, c-format
+msgid "  %s [OPTION]... FILE...\n"
+msgstr "  %s [オプション]... ファイル...\n"
+
+#: pg_walsummary.c:273
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"オプション:\n"
+
+#: pg_walsummary.c:274
+#, c-format
+msgid "  -i, --individual          list block numbers individually, not as ranges\n"
+msgstr "  -i, --individual          ブロック番号を領域としてではなく、個別に表示する\n"
+
+#: pg_walsummary.c:275
+#, c-format
+msgid "  -q, --quiet               don't print anything, just parse the files\n"
+msgstr "  -q, --quiet               何も表示せずに、ただファイルをパースする\n"
+
+#: pg_walsummary.c:276
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                このヘルプを表示して終了\n"
+
+#: pg_walsummary.c:278
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"バグは<%s>に報告してください。\n"
+
+#: pg_walsummary.c:279
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s ホームページ: <%s>\n"

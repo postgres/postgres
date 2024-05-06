@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-05-09 18:50+0000\n"
-"PO-Revision-Date: 2022-05-09 21:45+0200\n"
+"PO-Revision-Date: 2023-09-05 08:59+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -409,7 +409,7 @@ msgstr "  -p, --port=PORT                 databasserverns port\n"
 #: pg_amcheck.c:1167
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
-msgstr "  -U, --username=ANVÄNDARE         användarnamn att ansluta som\n"
+msgstr "  -U, --username=ANVÄNDARE        användarnamn att ansluta som\n"
 
 #: pg_amcheck.c:1168
 #, c-format

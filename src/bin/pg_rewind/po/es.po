@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-05-22 07:22+0000\n"
-"PO-Revision-Date: 2023-05-22 12:06+0200\n"
+"PO-Revision-Date: 2023-10-04 11:47+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -64,7 +64,6 @@ msgstr "La cadena termina inesperadamente luego del carácter de escape: «%%»"
 
 #: ../../common/percentrepl.c:119
 #, c-format
-#| msgid "String contains unexpected escape sequence \"%c\"."
 msgid "String contains unexpected placeholder \"%%%c\"."
 msgstr "La cadena contiene la secuencia de reemplazo inesperada «%c»."
 

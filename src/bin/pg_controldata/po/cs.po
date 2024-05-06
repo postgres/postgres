@@ -257,9 +257,7 @@ msgstr "Číslo verze katalogu:                      %u\n"
 #: pg_controldata.c:232
 #, c-format
 msgid "Database system identifier:           %llu\n"
-msgstr ""
-"Identifikátor databázového systému:           %llu\n"
-"\n"
+msgstr "Identifikátor databázového systému:        %llu\n"
 
 #: pg_controldata.c:234
 #, c-format

@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-08-01 14:18+0000\n"
-"PO-Revision-Date: 2023-08-01 22:12+0200\n"
+"PO-Revision-Date: 2023-08-30 09:01+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -41,7 +41,7 @@ msgstr "kunde inte hitta en \"%s\" att köra"
 #: ../../common/exec.c:250
 #, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
-msgstr "kunde inte skriva om sökväg \"%s\" till absolut sökväg: %m"
+msgstr "kunde inte konvertera sökvägen \"%s\" till en absolut sökväg: %m"
 
 #: ../../common/exec.c:412
 #, c-format
