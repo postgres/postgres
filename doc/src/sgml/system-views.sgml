@@ -3823,7 +3823,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
    catalogs.  This view allows access only to rows of
    <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link> and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
-   that correspond to tables the user has permission to read, and therefore
+   that correspond to tables the user owns, and therefore
    it is safe to allow public read access to this view.
   </para>
 
@@ -4034,7 +4034,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
    catalogs.  This view allows access only to rows of
    <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link> and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
-   that correspond to tables the user has permission to read, and therefore
+   that correspond to tables the user owns, and therefore
    it is safe to allow public read access to this view.
   </para>
 

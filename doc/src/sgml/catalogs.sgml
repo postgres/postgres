@@ -7733,8 +7733,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    is a publicly readable view
    on <structname>pg_statistic_ext_data</structname> (after joining
    with <link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>) that only exposes
-   information about those tables and columns that are readable by the
-   current user.
+   information about tables the current user owns.
   </para>
 
   <table>

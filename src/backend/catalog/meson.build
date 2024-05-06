@@ -38,6 +38,7 @@ backend_sources += files(
 
 
 install_data(
+  'fix-CVE-2024-4317.sql',
   'information_schema.sql',
   'sql_features.txt',
   'system_functions.sql',
