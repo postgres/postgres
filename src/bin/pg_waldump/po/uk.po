@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-12-17 22:17+0000\n"
-"PO-Revision-Date: 2023-12-19 15:38\n"
+"POT-Creation-Date: 2024-02-09 18:17+0000\n"
+"PO-Revision-Date: 2024-02-11 16:35\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -388,7 +388,7 @@ msgstr "Спробуйте \"%s --help\" для додаткової інфор�
 #: xlogreader.c:621
 #, c-format
 msgid "invalid record offset at %X/%X: expected at least %u, got %u"
-msgstr ""
+msgstr "неприпустиме зміщення запису в %X/%X: очікувалось хоча б %u, отримано %u"
 
 #: xlogreader.c:630
 #, c-format
@@ -398,7 +398,7 @@ msgstr "по зсуву %X/%X запитано продовження запис
 #: xlogreader.c:671 xlogreader.c:1136
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
-msgstr ""
+msgstr "неприпустима довжина запису %X/%X: очікувалась мінімум %u, отримано %u"
 
 #: xlogreader.c:760
 #, c-format
@@ -428,12 +428,12 @@ msgstr "некоректна контрольна сума даних менед
 #: xlogreader.c:1245
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr ""
+msgstr "невірне магічне число %04X в сегменті WAL %s, LSN %X/%X, зсув %u"
 
 #: xlogreader.c:1260 xlogreader.c:1302
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr ""
+msgstr "невірні інформаційні біти %04X в сегменті WAL %s, LSN %X/%X, зсув %u"
 
 #: xlogreader.c:1276
 #, c-format
@@ -453,12 +453,12 @@ msgstr "Файл WAL належить іншій системі баз дани�
 #: xlogreader.c:1322
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr ""
+msgstr "неочікуваний pageaddr %X/%X у сегменті WAL %s, LSN %X/%X, зміщення %u"
 
 #: xlogreader.c:1348
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
-msgstr ""
+msgstr "порушення послідовності ID лінії часу %u (після %u) у сегменті WAL %s, LSN %X/%X, зсув %u"
 
 #: xlogreader.c:1754
 #, c-format

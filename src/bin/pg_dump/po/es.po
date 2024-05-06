@@ -1725,7 +1725,7 @@ msgstr "  --no-subscriptions           no volcar las suscripciones\n"
 #: pg_dump.c:1116 pg_dumpall.c:665
 #, c-format
 msgid "  --no-table-access-method     do not dump table access methods\n"
-msgstr "  --no-tablespaces             no volcar métodos de acceso de tablas\n"
+msgstr "  --no-table-access-method     no volcar métodos de acceso de tablas\n"
 
 #: pg_dump.c:1117 pg_dumpall.c:666
 #, c-format
