@@ -153,11 +153,10 @@ select name, setting from pg_settings where name like 'enable%';
  enable_partitionwise_aggregate | off
  enable_partitionwise_join      | off
  enable_presorted_aggregate     | on
- enable_self_join_removal       | on
  enable_seqscan                 | on
  enable_sort                    | on
  enable_tidscan                 | on
-(23 rows)
+(22 rows)
 
 -- There are always wait event descriptions for various types.
 select type, count(*) > 0 as ok FROM pg_wait_events

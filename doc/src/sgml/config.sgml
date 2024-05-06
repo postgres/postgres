@@ -5586,22 +5586,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable_self_join_removal" xreflabel="enable_self_join_removal">
-      <term><varname>enable_self_join_removal</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>enable_self_join_removal</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Enables or disables the query planner's optimization which analyses
-        the query tree and replaces self joins with semantically equivalent
-        single scans.  Takes into consideration only plain tables.
-        The default is <literal>on</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-enable-seqscan" xreflabel="enable_seqscan">
       <term><varname>enable_seqscan</varname> (<type>boolean</type>)
       <indexterm>

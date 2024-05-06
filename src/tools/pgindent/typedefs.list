@@ -379,7 +379,6 @@ CatalogId
 CatalogIdMapEntry
 CatalogIndexState
 ChangeVarNodes_context
-ReplaceVarnoContext
 CheckPoint
 CheckPointStmt
 CheckpointStatsData
@@ -2548,7 +2547,6 @@ SeenRelsEntry
 SelectLimit
 SelectStmt
 Selectivity
-SelfJoinCandidate
 SemTPadded
 SemiAntiJoinFactors
 SeqScan
@@ -3927,7 +3925,6 @@ unicodeStyleColumnFormat
 unicodeStyleFormat
 unicodeStyleRowFormat
 unicode_linestyle
-UniqueRelInfo
 unit_conversion
 unlogged_relation_entry
 utf_local_conversion_func
