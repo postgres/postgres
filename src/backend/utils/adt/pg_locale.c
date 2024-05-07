@@ -2519,9 +2519,6 @@ pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 /*
  * Return required encoding ID for the given locale, or -1 if any encoding is
  * valid for the locale.
- *
- * The only supported locale for the builtin provider is "C", and it's
- * available for any encoding.
  */
 int
 builtin_locale_encoding(const char *locale)
@@ -2543,9 +2540,6 @@ builtin_locale_encoding(const char *locale)
 /*
  * Validate the locale and encoding combination, and return the canonical form
  * of the locale name.
- *
- * The only supported locale for the builtin provider is "C", and it's
- * available for any encoding.
  */
 const char *
 builtin_validate_locale(int encoding, const char *locale)
