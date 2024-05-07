@@ -1222,10 +1222,13 @@ PrintTOCSummary(Archive *AHX)
 	curSection = SECTION_PRE_DATA;
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
+		/* This bit must match ProcessArchiveRestoreOptions' marking logic */
 		if (te->section != SECTION_NONE)
 			curSection = te->section;
+		te->reqs = _tocEntryRequired(te, curSection, AH);
+		/* Now, should we print it? */
 		if (ropt->verbose ||
-			(_tocEntryRequired(te, curSection, AH) & (REQ_SCHEMA | REQ_DATA)) != 0)
+			(te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0)
 		{
 			char	   *sanitized_name;
 			char	   *sanitized_schema;
