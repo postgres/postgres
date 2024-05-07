@@ -463,15 +463,6 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       </listitem>
      </varlistentry>
 
-     <varlistentry id="pgbench-option-debug">
-      <term><option>--debug</option></term>
-      <listitem>
-       <para>
-        Print debugging output.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="pgbench-option-define">
       <term><option>-D</option> <replaceable>varname</replaceable><literal>=</literal><replaceable>value</replaceable></term>
       <term><option>--define=</option><replaceable>varname</replaceable><literal>=</literal><replaceable>value</replaceable></term>
@@ -934,9 +925,17 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
 
    <para>
     <application>pgbench</application> also accepts the following common command-line
-    arguments for connection parameters:
+    arguments for connection parameters and other common settings:
 
     <variablelist>
+     <varlistentry id="pgbench-option-debug">
+      <term><option>--debug</option></term>
+      <listitem>
+       <para>
+        Print debugging output.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry id="pgbench-option-host">
       <term><option>-h</option> <replaceable>hostname</replaceable></term>
