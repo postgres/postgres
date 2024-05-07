@@ -3921,6 +3921,47 @@ SELECT * FROM current_check;
 (1 row)
 
 COMMIT;
+-- Check that RLS filters that are tidquals don't override WHERE CURRENT OF
+BEGIN;
+CREATE TABLE current_check_2 (a int, b text);
+INSERT INTO current_check_2 VALUES (1, 'Apple');
+ALTER TABLE current_check_2 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE current_check_2 FORCE ROW LEVEL SECURITY;
+-- policy must accept ctid = (InvalidBlockNumber,0) since updates check it
+-- before assigning a ctid to the new row
+CREATE POLICY p1 ON current_check_2 AS PERMISSIVE
+  USING (ctid IN ('(0,1)', '(0,2)', '(4294967295,0)'));
+SELECT ctid, * FROM current_check_2;
+ ctid  | a |   b   
+-------+---+-------
+ (0,1) | 1 | Apple
+(1 row)
+
+DECLARE current_check_cursor CURSOR FOR SELECT * FROM current_check_2;
+FETCH FROM current_check_cursor;
+ a |   b   
+---+-------
+ 1 | Apple
+(1 row)
+
+EXPLAIN (COSTS OFF)
+UPDATE current_check_2 SET b = 'Manzana' WHERE CURRENT OF current_check_cursor;
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Update on current_check_2
+   ->  Tid Scan on current_check_2
+         TID Cond: CURRENT OF current_check_cursor
+         Filter: (ctid = ANY ('{"(0,1)","(0,2)","(4294967295,0)"}'::tid[]))
+(4 rows)
+
+UPDATE current_check_2 SET b = 'Manzana' WHERE CURRENT OF current_check_cursor;
+SELECT ctid, * FROM current_check_2;
+ ctid  | a |    b    
+-------+---+---------
+ (0,2) | 1 | Manzana
+(1 row)
+
+ROLLBACK;
 --
 -- check pg_stats view filtering
 --
