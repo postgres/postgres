@@ -128,6 +128,7 @@ bool		trace_sort = false;
 bool		optimize_bounded_sort = true;
 #endif
 
+bool		enable_mk_sort = true;
 
 /*
  * During merge, we use a pre-allocated set of fixed-size slots to hold
@@ -337,6 +338,9 @@ struct Tuplesortstate
 #ifdef TRACE_SORT
 	PGRUsage	ru_start;
 #endif
+
+	/* Whether multi-key sort is used */
+	bool mksortUsed;
 };
 
 /*
@@ -690,6 +694,7 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate, int sortopt)
 	state->base.sortopt = sortopt;
 	state->base.tuples = true;
 	state->abbrevNext = 10;
+	state->mksortUsed = false;
 
 	/*
 	 * workMem is forced to be at least 64KB, the current minimum valid value
@@ -2559,6 +2564,8 @@ tuplesort_get_stats(Tuplesortstate *state,
 		case TSS_SORTEDINMEM:
 			if (state->boundUsed)
 				stats->sortMethod = SORT_TYPE_TOP_N_HEAPSORT;
+            else if (state->mksortUsed)
+                stats->sortMethod = SORT_TYPE_MKSORT;
 			else
 				stats->sortMethod = SORT_TYPE_QUICKSORT;
 			break;
@@ -2592,6 +2599,8 @@ tuplesort_method_name(TuplesortMethod m)
 			return "external sort";
 		case SORT_TYPE_EXTERNAL_MERGE:
 			return "external merge";
+        case SORT_TYPE_MKSORT:
+            return "multi-key sort";
 	}
 
 	return "unknown";
@@ -2717,6 +2726,39 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 
 	if (state->memtupcount > 1)
 	{
+		/*
+		 * Apply multi-key sort when:
+		 *   1. gp_enable_mk_sort is set
+		 *   2. There are multiple keys avaiable
+		 *   3. Heap sort or Btree Index sort
+		 *      (more sort types may be supported in future)
+		 *
+		 * A summary of tuple types supported by mksort:
+		 *
+		 *   HeapTuple: supported
+		 *   IndexTuple(btree): supported
+		 *   IndexTuple(hash): not supported because there is only one key
+		 *   DatumTuple: not supported because there is only one key
+		 *   HeapTuple(for cluster): not supported because it's not supported by
+		 *   mksort on GPDB6 (see switcheroo_tuplesort_begin_cluster()), but may be
+		 *	   supported as future work
+		 *   HeapTuple(for repack): not supported because it doesn't exist on GPDB6,
+		 *     but may be supported as future work
+		 */
+		if (enable_mk_sort &&
+			state->base.nKeys > 1 &&
+			(state->base.comparetup == comparetup_heap ||
+			 state->base.comparetup == comparetup_index_btree))
+		{
+			state->mksortUsed = true;
+			mksort_tuple(state->memtuples,
+						 state->memtupcount,
+						 0,
+						 state,
+						 false);
+			return;
+		}
+
 		/*
 		 * Do we have the leading column's value or abbreviation in datum1,
 		 * and is there a specialization for its comparator?

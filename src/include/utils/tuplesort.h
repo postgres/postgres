@@ -79,6 +79,7 @@ typedef enum
 	SORT_TYPE_QUICKSORT = 1 << 1,
 	SORT_TYPE_EXTERNAL_SORT = 1 << 2,
 	SORT_TYPE_EXTERNAL_MERGE = 1 << 3,
+	SORT_TYPE_MKSORT = 1 << 4,
 } TuplesortMethod;
 
 #define NUM_TUPLESORTMETHODS 4
@@ -468,5 +469,11 @@ extern BrinTuple *tuplesort_getbrintuple(Tuplesortstate *state, Size *len,
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward, bool copy,
 							   Datum *val, bool *isNull, Datum *abbrev);
 
+extern int
+comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state);
+
+extern int
+comparetup_index_btree(const SortTuple *a, const SortTuple *b,
+                       Tuplesortstate *state);
 
 #endif							/* TUPLESORT_H */

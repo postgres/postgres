@@ -103,6 +103,7 @@ extern char *default_tablespace;
 extern char *temp_tablespaces;
 extern bool ignore_checksum_failure;
 extern bool ignore_invalid_pages;
+extern bool enable_mk_sort;
 
 #ifdef TRACE_SYNCSCAN
 extern bool trace_syncscan;
@@ -836,6 +837,16 @@ struct config_bool ConfigureNamesBool[] =
 			GUC_EXPLAIN
 		},
 		&enable_incremental_sort,
+		true,
+		NULL, NULL, NULL
+	},
+	{
+		{"enable_mk_sort", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables multi-key"),
+			NULL,
+			GUC_EXPLAIN
+		},
+		&enable_mk_sort,
 		true,
 		NULL, NULL, NULL
 	},
