@@ -358,14 +358,21 @@ CREATE TABLE pitest1_p1 PARTITION OF pitest1 FOR VALUES FROM ('2016-07-01') TO (
 INSERT into pitest1(f1, f2) VALUES ('2016-07-2', 'from pitest1');
 INSERT into pitest1_p1 (f1, f2) VALUES ('2016-07-3', 'from pitest1_p1');
 -- attached partition
-CREATE TABLE pitest1_p2 (f1 date NOT NULL, f2 text, f3 bigint);
-INSERT INTO pitest1_p2 VALUES ('2016-08-2', 'before attaching', 100);
+CREATE TABLE pitest1_p2 (f3 bigint, f2 text, f1 date NOT NULL);
+INSERT INTO pitest1_p2 (f1, f2, f3) VALUES ('2016-08-2', 'before attaching', 100);
 ALTER TABLE pitest1 ATTACH PARTITION pitest1_p2 FOR VALUES FROM ('2016-08-01') TO ('2016-09-01'); -- requires NOT NULL constraint
 ALTER TABLE pitest1_p2 ALTER COLUMN f3 SET NOT NULL;
 ALTER TABLE pitest1 ATTACH PARTITION pitest1_p2 FOR VALUES FROM ('2016-08-01') TO ('2016-09-01');
 INSERT INTO pitest1_p2 (f1, f2) VALUES ('2016-08-3', 'from pitest1_p2');
 INSERT INTO pitest1 (f1, f2) VALUES ('2016-08-4', 'from pitest1');
+-- LIKE INCLUDING on partition
+CREATE TABLE pitest1_p1_like (LIKE pitest1_p1 INCLUDING IDENTITY);
+INSERT into pitest1_p1_like(f1, f2) VALUES ('2016-07-2', 'from pitest1_p1_like');
 SELECT tableoid::regclass, f1, f2, f3 FROM pitest1;
+SELECT tableoid::regclass, f1, f2, f3 FROM pitest1_p1_like;
+ALTER TABLE pitest1 ALTER COLUMN f3 SET DATA TYPE bigint;
+SELECT tableoid::regclass, f1, f2, f3, pg_typeof(f3) FROM pitest1;
+SELECT tableoid::regclass, f1, f2, f3, pg_typeof(f3) FROM pitest1_p2;
 
 -- add identity column
 CREATE TABLE pitest2 (f1 date NOT NULL, f2 text) PARTITION BY RANGE (f1);

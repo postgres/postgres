@@ -177,7 +177,7 @@ extern List *getAutoExtensionsOfObject(Oid classId, Oid objectId);
 
 extern bool sequenceIsOwned(Oid seqId, char deptype, Oid *tableId, int32 *colId);
 extern List *getOwnedSequences(Oid relid);
-extern Oid	getIdentitySequence(Oid relid, AttrNumber attnum, bool missing_ok);
+extern Oid	getIdentitySequence(Relation rel, AttrNumber attnum, bool missing_ok);
 
 extern Oid	get_index_constraint(Oid indexId);
 

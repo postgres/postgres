@@ -23,10 +23,12 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_extension.h"
+#include "catalog/partition.h"
 #include "commands/extension.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/rel.h"
 
 
@@ -941,10 +943,35 @@ getOwnedSequences(Oid relid)
  * Get owned identity sequence, error if not exactly one.
  */
 Oid
-getIdentitySequence(Oid relid, AttrNumber attnum, bool missing_ok)
+getIdentitySequence(Relation rel, AttrNumber attnum, bool missing_ok)
 {
-	List	   *seqlist = getOwnedSequences_internal(relid, attnum, DEPENDENCY_INTERNAL);
+	Oid			relid;
+	List	   *seqlist;
 
+	/*
+	 * The identity sequence is associated with the topmost partitioned table,
+	 * which might have column order different than the given partition.
+	 */
+	if (RelationGetForm(rel)->relispartition)
+	{
+		List	   *ancestors =
+			get_partition_ancestors(RelationGetRelid(rel));
+		HeapTuple	ctup = SearchSysCacheAttNum(RelationGetRelid(rel), attnum);
+		const char *attname = NameStr(((Form_pg_attribute) GETSTRUCT(ctup))->attname);
+		HeapTuple	ptup;
+
+		relid = llast_oid(ancestors);
+		ptup = SearchSysCacheAttName(relid, attname);
+		attnum = ((Form_pg_attribute) GETSTRUCT(ptup))->attnum;
+
+		ReleaseSysCache(ctup);
+		ReleaseSysCache(ptup);
+		list_free(ancestors);
+	}
+	else
+		relid = RelationGetRelid(rel);
+
+	seqlist = getOwnedSequences_internal(relid, attnum, DEPENDENCY_INTERNAL);
 	if (list_length(seqlist) > 1)
 		elog(ERROR, "more than one owned sequence found");
 	else if (seqlist == NIL)

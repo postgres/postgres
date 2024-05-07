@@ -1136,7 +1136,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			 * find sequence owned by old column; extract sequence parameters;
 			 * build new create sequence command
 			 */
-			seq_relid = getIdentitySequence(RelationGetRelid(relation), attribute->attnum, false);
+			seq_relid = getIdentitySequence(relation, attribute->attnum, false);
 			seq_options = sequence_options(seq_relid);
 			generateSerialExtraStmts(cxt, def,
 									 InvalidOid, seq_options,
@@ -3716,28 +3716,36 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 					/*
 					 * For identity column, create ALTER SEQUENCE command to
-					 * change the data type of the sequence.
+					 * change the data type of the sequence. Identity sequence
+					 * is associated with the top level partitioned table.
+					 * Hence ignore partitions.
 					 */
-					attnum = get_attnum(relid, cmd->name);
-					if (attnum == InvalidAttrNumber)
-						ereport(ERROR,
-								(errcode(ERRCODE_UNDEFINED_COLUMN),
-								 errmsg("column \"%s\" of relation \"%s\" does not exist",
-										cmd->name, RelationGetRelationName(rel))));
-
-					if (attnum > 0 &&
-						TupleDescAttr(tupdesc, attnum - 1)->attidentity)
+					if (!RelationGetForm(rel)->relispartition)
 					{
-						Oid			seq_relid = getIdentitySequence(relid, attnum, false);
-						Oid			typeOid = typenameTypeId(pstate, def->typeName);
-						AlterSeqStmt *altseqstmt = makeNode(AlterSeqStmt);
+						attnum = get_attnum(relid, cmd->name);
+						if (attnum == InvalidAttrNumber)
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_COLUMN),
+									 errmsg("column \"%s\" of relation \"%s\" does not exist",
+											cmd->name, RelationGetRelationName(rel))));
 
-						altseqstmt->sequence = makeRangeVar(get_namespace_name(get_rel_namespace(seq_relid)),
-															get_rel_name(seq_relid),
-															-1);
-						altseqstmt->options = list_make1(makeDefElem("as", (Node *) makeTypeNameFromOid(typeOid, -1), -1));
-						altseqstmt->for_identity = true;
-						cxt.blist = lappend(cxt.blist, altseqstmt);
+						if (attnum > 0 &&
+							TupleDescAttr(tupdesc, attnum - 1)->attidentity)
+						{
+							Oid			seq_relid = getIdentitySequence(rel, attnum, false);
+							Oid			typeOid = typenameTypeId(pstate, def->typeName);
+							AlterSeqStmt *altseqstmt = makeNode(AlterSeqStmt);
+
+							altseqstmt->sequence
+								= makeRangeVar(get_namespace_name(get_rel_namespace(seq_relid)),
+											   get_rel_name(seq_relid),
+											   -1);
+							altseqstmt->options = list_make1(makeDefElem("as",
+																		 (Node *) makeTypeNameFromOid(typeOid, -1),
+																		 -1));
+							altseqstmt->for_identity = true;
+							cxt.blist = lappend(cxt.blist, altseqstmt);
+						}
 					}
 
 					newcmds = lappend(newcmds, cmd);
@@ -3803,7 +3811,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 								 errmsg("column \"%s\" of relation \"%s\" does not exist",
 										cmd->name, RelationGetRelationName(rel))));
 
-					seq_relid = getIdentitySequence(relid, attnum, true);
+					seq_relid = getIdentitySequence(rel, attnum, true);
 
 					if (seq_relid)
 					{

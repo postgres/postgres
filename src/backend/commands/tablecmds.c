@@ -8535,7 +8535,7 @@ ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE 
 	if (!recursing)
 	{
 		/* drop the internal sequence */
-		seqid = getIdentitySequence(RelationGetRelid(rel), attnum, false);
+		seqid = getIdentitySequence(rel, attnum, false);
 		deleteDependencyRecordsForClass(RelationRelationId, seqid,
 										RelationRelationId, DEPENDENCY_INTERNAL);
 		CommandCounterIncrement();
