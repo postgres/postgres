@@ -113,7 +113,7 @@ There is another API for other modules to get control during ResourceOwner
 release, so that they can scan their own data structures to find the objects
 that need to be deleted.  See RegisterResourceReleaseCallback function.
 This used to be the only way for extensions to use the resource owner
-mechanism with new kinds of objects; nowadays it easier to define a custom
+mechanism with new kinds of objects; nowadays it is easier to define a custom
 ResourceOwnerDesc struct.
 
 
