@@ -2085,7 +2085,7 @@ mksort_handle_dup_index_btree(SortTuple      *x,
 	 */
 	qsort_tuple(x,
 				tupleCount,
-				base->comparetup,
+				tuplesort_compare_by_item_pointer,
 				state);
 }
 
