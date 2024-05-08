@@ -108,6 +108,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
 #include "utils/tuplesort.h"
+#include "common/pg_prng.h"
 
 /*
  * Initial size of memtuples array.  We're trying to select this size so that
@@ -625,6 +626,8 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 #define ST_SCOPE static
 #define ST_DEFINE
 #include "lib/sort_template.h"
+
+#include "mksort_tuple.c"
 
 /*
  *		tuplesort_begin_xxx
@@ -2747,8 +2750,7 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 		 */
 		if (enable_mk_sort &&
 			state->base.nKeys > 1 &&
-			(state->base.comparetup == comparetup_heap ||
-			 state->base.comparetup == comparetup_index_btree))
+			state->base.mksortGetDatumFunc != NULL)
 		{
 			state->mksortUsed = true;
 			mksort_tuple(state->memtuples,

@@ -29,6 +29,8 @@
 #include "utils/relcache.h"
 #include "utils/sortsupport.h"
 
+#define AssertImply(cond1, cond2) \
+        Assert(!(cond1) || (cond2))
 
 /*
  * Tuplesortstate and Sharedsort are opaque types whose details are not
@@ -156,6 +158,21 @@ typedef struct
 typedef int (*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
 									Tuplesortstate *state);
 
+typedef Datum
+(*MksortGetDatumFunc) (SortTuple      *x,
+                       const int       tupleIndex,
+                       const int       depth,
+                       Tuplesortstate *state,
+                       Datum          *datum,
+                       bool           *isNull,
+                       bool            useFullKey);
+
+typedef void
+(*MksortHandleDupFunc) (SortTuple      *x,
+                        const int       tupleCount,
+                        const bool      seenNull,
+                        Tuplesortstate *state);
+
 /*
  * The public part of a Tuple sort operation state.  This data structure
  * contains the definition of sort-variant-specific interface methods and
@@ -250,6 +267,21 @@ typedef struct
 	bool		tuples;			/* Can SortTuple.tuple ever be set? */
 
 	void	   *arg;			/* Specific information for the sort variant */
+
+    /*
+     * CDB: Function pointer, referencing a function to get specified datum from
+     * SortTuple list with multi-key.
+     * Used by mksort_tuple().
+     */
+    MksortGetDatumFunc mksortGetDatumFunc;
+
+    /*
+     * CDB: Function pointer, referencing a function to handle duplicated tuple
+     * from SortTuple list with multi-key.
+     * Used by mksort_tuple().
+     * For now, the function pointer is filled for only btree index tuple.
+     */
+    MksortHandleDupFunc mksortHandleDupFunc;
 } TuplesortPublic;
 
 /* Sort parallel code from state for sort__start probes */
@@ -468,12 +500,4 @@ extern BrinTuple *tuplesort_getbrintuple(Tuplesortstate *state, Size *len,
 										 bool forward);
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward, bool copy,
 							   Datum *val, bool *isNull, Datum *abbrev);
-
-extern int
-comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state);
-
-extern int
-comparetup_index_btree(const SortTuple *a, const SortTuple *b,
-                       Tuplesortstate *state);
-
 #endif							/* TUPLESORT_H */
