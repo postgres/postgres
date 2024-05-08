@@ -191,29 +191,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--sync-method=</option><replaceable>method</replaceable></term>
-      <listitem>
-       <para>
-        When set to <literal>fsync</literal>, which is the default,
-        <command>pg_upgrade</command> will recursively open and synchronize all
-        files in the upgraded cluster's data directory.  The search for files
-        will follow symbolic links for the WAL directory and each configured
-        tablespace.
-       </para>
-       <para>
-        On Linux, <literal>syncfs</literal> may be used instead to ask the
-        operating system to synchronize the whole file systems that contain the
-        upgraded cluster's data directory, its WAL files, and each tablespace.
-        See <xref linkend="guc-recovery-init-sync-method"/> for information
-        about the caveats to be aware of when using <literal>syncfs</literal>.
-       </para>
-       <para>
-        This option has no effect when <option>--no-sync</option> is used.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-U</option> <replaceable>username</replaceable></term>
       <term><option>--username=</option><replaceable>username</replaceable></term>
       <listitem><para>cluster's install user name; environment
@@ -272,6 +249,29 @@ PostgreSQL documentation
         <option>--clone</option>, sharing physical disk blocks, while on others
         it may still copy blocks, but do so via an optimized path.  At present,
         it is supported on Linux and FreeBSD.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--sync-method=</option><replaceable>method</replaceable></term>
+      <listitem>
+       <para>
+        When set to <literal>fsync</literal>, which is the default,
+        <command>pg_upgrade</command> will recursively open and synchronize all
+        files in the upgraded cluster's data directory.  The search for files
+        will follow symbolic links for the WAL directory and each configured
+        tablespace.
+       </para>
+       <para>
+        On Linux, <literal>syncfs</literal> may be used instead to ask the
+        operating system to synchronize the whole file systems that contain the
+        upgraded cluster's data directory, its WAL files, and each tablespace.
+        See <xref linkend="guc-recovery-init-sync-method"/> for information
+        about the caveats to be aware of when using <literal>syncfs</literal>.
+       </para>
+       <para>
+        This option has no effect when <option>--no-sync</option> is used.
        </para>
       </listitem>
      </varlistentry>
