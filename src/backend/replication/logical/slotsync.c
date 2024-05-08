@@ -456,7 +456,7 @@ drop_local_obsolete_slots(List *remote_slot_list)
 							   0, AccessShareLock);
 
 			ereport(LOG,
-					errmsg("dropped replication slot \"%s\" of dbid %d",
+					errmsg("dropped replication slot \"%s\" of dbid %u",
 						   NameStr(local_slot->data.name),
 						   local_slot->data.database));
 		}
