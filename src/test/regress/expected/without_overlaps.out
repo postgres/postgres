@@ -448,6 +448,10 @@ SELECT * FROM tp2 ORDER BY id, valid_at;
 (1 row)
 
 DROP TABLE temporal_partitioned;
+-- ALTER TABLE REPLICA IDENTITY
+-- (should fail)
+ALTER TABLE temporal_rng REPLICA IDENTITY USING INDEX temporal_rng_pk;
+ERROR:  cannot use non-unique index "temporal_rng_pk" as replica identity
 --
 -- test FK dependencies
 --
