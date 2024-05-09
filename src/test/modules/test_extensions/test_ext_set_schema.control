@@ -1,0 +1,3 @@
+comment = 'Test ALTER EXTENSION SET SCHEMA'
+default_version = '1.0'
+relocatable = true

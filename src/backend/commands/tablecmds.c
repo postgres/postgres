@@ -18017,8 +18017,11 @@ AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
 
 	/* Fix the table's row type too, if it has one */
 	if (OidIsValid(rel->rd_rel->reltype))
-		AlterTypeNamespaceInternal(rel->rd_rel->reltype,
-								   nspOid, false, false, objsMoved);
+		AlterTypeNamespaceInternal(rel->rd_rel->reltype, nspOid,
+								   false,	/* isImplicitArray */
+								   false,	/* ignoreDependent */
+								   false,	/* errorOnTableType */
+								   objsMoved);
 
 	/* Fix other dependent stuff */
 	AlterIndexNamespaces(classRel, rel, oldNspOid, nspOid, objsMoved);

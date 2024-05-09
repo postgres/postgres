@@ -4068,7 +4068,7 @@ AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype,
 	typename = makeTypeNameFromNameList(names);
 	typeOid = typenameTypeId(NULL, typename);
 
-	/* Don't allow ALTER DOMAIN on a type */
+	/* Don't allow ALTER DOMAIN on a non-domain type */
 	if (objecttype == OBJECT_DOMAIN && get_typtype(typeOid) != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -4079,7 +4079,7 @@ AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype,
 	nspOid = LookupCreationNamespace(newschema);
 
 	objsMoved = new_object_addresses();
-	oldNspOid = AlterTypeNamespace_oid(typeOid, nspOid, objsMoved);
+	oldNspOid = AlterTypeNamespace_oid(typeOid, nspOid, false, objsMoved);
 	free_object_addresses(objsMoved);
 
 	if (oldschema)
@@ -4090,8 +4090,21 @@ AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype,
 	return myself;
 }
 
+/*
+ * ALTER TYPE SET SCHEMA, where the caller has already looked up the OIDs
+ * of the type and the target schema and checked the schema's privileges.
+ *
+ * If ignoreDependent is true, we silently ignore dependent types
+ * (array types and table rowtypes) rather than raising errors.
+ *
+ * This entry point is exported for use by AlterObjectNamespace_oid,
+ * which doesn't want errors when it passes OIDs of dependent types.
+ *
+ * Returns the type's old namespace OID, or InvalidOid if we did nothing.
+ */
 Oid
-AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved)
+AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, bool ignoreDependent,
+					   ObjectAddresses *objsMoved)
 {
 	Oid			elemOid;
 
@@ -4102,15 +4115,23 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved)
 	/* don't allow direct alteration of array types */
 	elemOid = get_element_type(typeOid);
 	if (OidIsValid(elemOid) && get_array_type(elemOid) == typeOid)
+	{
+		if (ignoreDependent)
+			return InvalidOid;
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot alter array type %s",
 						format_type_be(typeOid)),
 				 errhint("You can alter type %s, which will alter the array type as well.",
 						 format_type_be(elemOid))));
+	}
 
 	/* and do the work */
-	return AlterTypeNamespaceInternal(typeOid, nspOid, false, true, objsMoved);
+	return AlterTypeNamespaceInternal(typeOid, nspOid,
+									  false,	/* isImplicitArray */
+									  ignoreDependent,	/* ignoreDependent */
+									  true, /* errorOnTableType */
+									  objsMoved);
 }
 
 /*
@@ -4122,15 +4143,21 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved)
  * if any.  isImplicitArray should be true only when doing this internal
  * recursion (outside callers must never try to move an array type directly).
  *
+ * If ignoreDependent is true, we silently don't process table types.
+ *
  * If errorOnTableType is true, the function errors out if the type is
  * a table type.  ALTER TABLE has to be used to move a table to a new
- * namespace.
+ * namespace.  (This flag is ignored if ignoreDependent is true.)
  *
- * Returns the type's old namespace OID.
+ * We also do nothing if the type is already listed in *objsMoved.
+ * After a successful move, we add the type to *objsMoved.
+ *
+ * Returns the type's old namespace OID, or InvalidOid if we did nothing.
  */
 Oid
 AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 						   bool isImplicitArray,
+						   bool ignoreDependent,
 						   bool errorOnTableType,
 						   ObjectAddresses *objsMoved)
 {
@@ -4185,15 +4212,21 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 		 get_rel_relkind(typform->typrelid) == RELKIND_COMPOSITE_TYPE);
 
 	/* Enforce not-table-type if requested */
-	if (typform->typtype == TYPTYPE_COMPOSITE && !isCompositeType &&
-		errorOnTableType)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("%s is a table's row type",
-						format_type_be(typeOid)),
-		/* translator: %s is an SQL ALTER command */
-				 errhint("Use %s instead.",
-						 "ALTER TABLE")));
+	if (typform->typtype == TYPTYPE_COMPOSITE && !isCompositeType)
+	{
+		if (ignoreDependent)
+		{
+			table_close(rel, RowExclusiveLock);
+			return InvalidOid;
+		}
+		if (errorOnTableType)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("%s is a table's row type",
+							format_type_be(typeOid)),
+			/* translator: %s is an SQL ALTER command */
+					 errhint("Use %s instead.", "ALTER TABLE")));
+	}
 
 	if (oldNspOid != nspOid)
 	{
@@ -4260,7 +4293,11 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 
 	/* Recursively alter the associated array type, if any */
 	if (OidIsValid(arrayOid))
-		AlterTypeNamespaceInternal(arrayOid, nspOid, true, true, objsMoved);
+		AlterTypeNamespaceInternal(arrayOid, nspOid,
+								   true,	/* isImplicitArray */
+								   false,	/* ignoreDependent */
+								   true,	/* errorOnTableType */
+								   objsMoved);
 
 	return oldNspOid;
 }

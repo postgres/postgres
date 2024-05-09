@@ -2940,7 +2940,7 @@ AlterExtensionNamespace(const char *extensionName, const char *newschema, Oid *o
 
 		/*
 		 * If not all the objects had the same old namespace (ignoring any
-		 * that are not in namespaces), complain.
+		 * that are not in namespaces or are dependent types), complain.
 		 */
 		if (dep_oldNspOid != InvalidOid && dep_oldNspOid != oldNspOid)
 			ereport(ERROR,

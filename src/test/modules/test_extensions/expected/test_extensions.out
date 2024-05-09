@@ -464,6 +464,44 @@ CREATE EXTENSION test_ext_extschema SCHEMA has$dollar;
 ERROR:  invalid character in extension "test_ext_extschema" schema: must not contain any of ""$'\"
 CREATE EXTENSION test_ext_extschema SCHEMA "has space";
 --
+-- Test basic SET SCHEMA handling.
+--
+CREATE SCHEMA s1;
+CREATE SCHEMA s2;
+CREATE EXTENSION test_ext_set_schema SCHEMA s1;
+ALTER EXTENSION test_ext_set_schema SET SCHEMA s2;
+\dx+ test_ext_set_schema
+      Objects in extension "test_ext_set_schema"
+                  Object description                   
+-------------------------------------------------------
+ cast from s2.ess_range_type to s2.ess_multirange_type
+ function s2.ess_func(integer)
+ function s2.ess_multirange_type()
+ function s2.ess_multirange_type(s2.ess_range_type)
+ function s2.ess_multirange_type(s2.ess_range_type[])
+ function s2.ess_range_type(text,text)
+ function s2.ess_range_type(text,text,text)
+ table s2.ess_table
+ type s2.ess_composite_type
+ type s2.ess_composite_type[]
+ type s2.ess_multirange_type
+ type s2.ess_multirange_type[]
+ type s2.ess_range_type
+ type s2.ess_range_type[]
+ type s2.ess_table
+ type s2.ess_table[]
+(16 rows)
+
+\sf s2.ess_func(int)
+CREATE OR REPLACE FUNCTION s2.ess_func(integer)
+ RETURNS text
+ LANGUAGE sql
+BEGIN ATOMIC
+ SELECT ess_table.f3
+    FROM s2.ess_table
+   WHERE (ess_table.f1 = $1);
+END
+--
 -- Test extension with objects outside the extension's schema.
 --
 CREATE SCHEMA test_func_dep1;

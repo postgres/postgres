@@ -40,6 +40,8 @@ test_install_data += files(
   'test_ext_req_schema2.control',
   'test_ext_req_schema3--1.0.sql',
   'test_ext_req_schema3.control',
+  'test_ext_set_schema--1.0.sql',
+  'test_ext_set_schema.control',
 )
 
 tests += {

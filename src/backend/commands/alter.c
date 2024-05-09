@@ -598,16 +598,16 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
 /*
  * Change an object's namespace given its classOid and object Oid.
  *
- * Objects that don't have a namespace should be ignored.
+ * Objects that don't have a namespace should be ignored, as should
+ * dependent types such as array types.
  *
  * This function is currently used only by ALTER EXTENSION SET SCHEMA,
- * so it only needs to cover object types that can be members of an
- * extension, and it doesn't have to deal with certain special cases
- * such as not wanting to process array types --- those should never
- * be direct members of an extension anyway.
+ * so it only needs to cover object kinds that can be members of an
+ * extension, and it can silently ignore dependent types --- we assume
+ * those will be moved when their parent object is moved.
  *
  * Returns the OID of the object's previous namespace, or InvalidOid if
- * object doesn't have a schema.
+ * object doesn't have a schema or was ignored due to being a dependent type.
  */
 Oid
 AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
@@ -631,7 +631,7 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 			}
 
 		case TypeRelationId:
-			oldNspOid = AlterTypeNamespace_oid(objid, nspOid, objsMoved);
+			oldNspOid = AlterTypeNamespace_oid(objid, nspOid, true, objsMoved);
 			break;
 
 		case ProcedureRelationId:

@@ -233,6 +233,16 @@ CREATE EXTENSION test_ext_extschema SCHEMA has$dollar;
 CREATE EXTENSION test_ext_extschema SCHEMA "has space";
 
 --
+-- Test basic SET SCHEMA handling.
+--
+CREATE SCHEMA s1;
+CREATE SCHEMA s2;
+CREATE EXTENSION test_ext_set_schema SCHEMA s1;
+ALTER EXTENSION test_ext_set_schema SET SCHEMA s2;
+\dx+ test_ext_set_schema
+\sf s2.ess_func(int)
+
+--
 -- Test extension with objects outside the extension's schema.
 --
 CREATE SCHEMA test_func_dep1;
