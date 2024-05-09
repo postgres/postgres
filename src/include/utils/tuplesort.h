@@ -444,7 +444,6 @@ extern void tuplesort_restorepos(Tuplesortstate *state);
 
 extern void *tuplesort_readtup_alloc(Tuplesortstate *state, Size tuplen);
 
-
 /* tuplesortvariants.c */
 
 extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,

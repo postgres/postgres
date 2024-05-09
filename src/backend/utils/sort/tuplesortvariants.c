@@ -30,6 +30,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/tuplesort.h"
+#include "miscadmin.h"
 
 
 /* sort-type codes for sort__start probes */
@@ -198,6 +199,14 @@ typedef struct BrinSortTuple
 /* Size of the BrinSortTuple, given length of the BrinTuple. */
 #define BRINSORTTUPLE_SIZE(len)		(offsetof(BrinSortTuple, tuple) + (len))
 
+#define ST_SORT qsort_tuple_by_itempointer
+#define ST_ELEMENT_TYPE SortTuple
+#define ST_COMPARE(a, b, state) mksort_compare_equal_index_btree(a, b, state)
+#define ST_COMPARE_ARG_TYPE Tuplesortstate
+#define ST_CHECK_FOR_INTERRUPTS
+#define ST_SCOPE static
+#define ST_DEFINE
+#include "lib/sort_template.h"
 
 Tuplesortstate *
 tuplesort_begin_heap(TupleDesc tupDesc,
@@ -425,6 +434,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	base->comparetup = comparetup_index_btree;
 	base->comparetup_tiebreak = comparetup_index_btree_tiebreak;
 	base->mksortGetDatumFunc = mksort_get_datum_index_btree;
+	base->mksortHandleDupFunc = mksort_handle_dup_index_btree;
 	base->writetup = writetup_index;
 	base->readtup = readtup_index;
 	base->haveDatum1 = true;
@@ -2083,9 +2093,8 @@ mksort_handle_dup_index_btree(SortTuple      *x,
 	 * attribute in order to ensure that all keys in the index are physically
 	 * unique.
 	 */
-	qsort_tuple(x,
+	qsort_tuple_by_itempointer(x,
 				tupleCount,
-				tuplesort_compare_by_item_pointer,
 				state);
 }
 
