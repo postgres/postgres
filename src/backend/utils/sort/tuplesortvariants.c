@@ -94,39 +94,39 @@ static void readtup_datum(Tuplesortstate *state, SortTuple *stup,
 static void freestate_cluster(Tuplesortstate *state);
 
 static Datum mksort_get_datum_heap(SortTuple      *x,
-                                   const int       tupleIndex,
-                                   const int       depth,
-                                   Tuplesortstate *state,
-                                   Datum          *datum,
-                                   bool           *isNull,
-                                   bool           isCheckAll);
+								   const int       tupleIndex,
+								   const int       depth,
+								   Tuplesortstate *state,
+								   Datum          *datum,
+								   bool           *isNull,
+								   bool            useFullKey);
 
 static Datum mksort_get_datum_index_btree(SortTuple      *x,
-                                          const int       tupleIndex,
-                                          const int       depth,
-                                          Tuplesortstate *state,
-                                          Datum          *datum,
-                                          bool           *isNull,
-                                          bool            isCheckAll);
+										  const int       tupleIndex,
+										  const int       depth,
+										  Tuplesortstate *state,
+										  Datum          *datum,
+										  bool           *isNull,
+										  bool            useFullKey);
 
 static void
 mksort_handle_dup_index_btree(SortTuple      *x,
-                              const int       tupleCount,
-                              const bool      seenNull,
-                              Tuplesortstate *state);
+							  const int       tupleCount,
+							  const bool      seenNull,
+							  Tuplesortstate *state);
 
 static int
 mksort_compare_equal_index_btree(const SortTuple *a,
-                                 const SortTuple *b,
-                                 Tuplesortstate  *state);
+								 const SortTuple *b,
+								  Tuplesortstate  *state);
 
 static inline int
 tuplesort_compare_by_item_pointer(const IndexTuple tuple1,
-                                  const IndexTuple tuple2);
+								  const IndexTuple tuple2);
 
 static void
 raise_error_of_dup_index(IndexTuple     x,
-                         Tuplesortstate *state);
+						 Tuplesortstate *state);
 
 /*
  * Data structure pointed by "TuplesortPublic.arg" for the CLUSTER case.  Set by
@@ -1963,8 +1963,8 @@ mksort_get_datum_heap(SortTuple		 *x,
 	HeapTupleData heapTuple;
 	AttrNumber  attno;
 	SortTuple *sortTuple = x + tupleIndex;
-    TuplesortPublic *base = TuplesortstateGetPublic(state);
-    SortSupport sortKey = base->sortKeys + depth;;
+	TuplesortPublic *base = TuplesortstateGetPublic(state);
+	SortSupport sortKey = base->sortKeys + depth;;
 
 	Assert(state);
 	Assert(depth < state->nKeys);
@@ -2024,8 +2024,8 @@ mksort_get_datum_index_btree(SortTuple      *x,
 	TupleDesc   tupDesc;
 	IndexTuple  indexTuple;
 	SortTuple  *sortTuple = x + tupleIndex;
-    TuplesortPublic *base = TuplesortstateGetPublic(state);
-    TuplesortIndexBTreeArg *arg = (TuplesortIndexBTreeArg *) base->arg;
+	TuplesortPublic *base = TuplesortstateGetPublic(state);
+	TuplesortIndexBTreeArg *arg = (TuplesortIndexBTreeArg *) base->arg;
 
 	Assert(state);
 	Assert(depth < state->nKeys);
@@ -2071,8 +2071,8 @@ mksort_handle_dup_index_btree(SortTuple      *x,
 							  const bool      seenNull,
 							  Tuplesortstate *state)
 {
-    TuplesortPublic *base = TuplesortstateGetPublic(state);
-    TuplesortIndexBTreeArg *arg = (TuplesortIndexBTreeArg *) base->arg;
+	TuplesortPublic *base = TuplesortstateGetPublic(state);
+	TuplesortIndexBTreeArg *arg = (TuplesortIndexBTreeArg *) base->arg;
 
 	/* If enforceUnique is enabled and we never saw NULL, raise error */
 	if (arg->enforceUnique && !(!arg->uniqueNullsNotDistinct && seenNull))

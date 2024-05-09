@@ -29,8 +29,7 @@
 #include "utils/relcache.h"
 #include "utils/sortsupport.h"
 
-#define AssertImply(cond1, cond2) \
-        Assert(!(cond1) || (cond2))
+#define AssertImply(cond1, cond2) Assert(!(cond1) || (cond2))
 
 /*
  * Tuplesortstate and Sharedsort are opaque types whose details are not
@@ -160,18 +159,18 @@ typedef int (*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
 
 typedef Datum
 (*MksortGetDatumFunc) (SortTuple      *x,
-                       const int       tupleIndex,
-                       const int       depth,
-                       Tuplesortstate *state,
-                       Datum          *datum,
-                       bool           *isNull,
-                       bool            useFullKey);
+					   const int       tupleIndex,
+					   const int       depth,
+					   Tuplesortstate *state,
+					   Datum          *datum,
+					   bool           *isNull,
+					   bool            useFullKey);
 
 typedef void
 (*MksortHandleDupFunc) (SortTuple      *x,
-                        const int       tupleCount,
-                        const bool      seenNull,
-                        Tuplesortstate *state);
+						const int       tupleCount,
+						const bool      seenNull,
+						Tuplesortstate *state);
 
 /*
  * The public part of a Tuple sort operation state.  This data structure
@@ -268,20 +267,20 @@ typedef struct
 
 	void	   *arg;			/* Specific information for the sort variant */
 
-    /*
-     * CDB: Function pointer, referencing a function to get specified datum from
-     * SortTuple list with multi-key.
-     * Used by mksort_tuple().
-     */
-    MksortGetDatumFunc mksortGetDatumFunc;
+	/*
+	 * CDB: Function pointer, referencing a function to get specified datum from
+	 * SortTuple list with multi-key.
+	 * Used by mksort_tuple().
+	*/
+	MksortGetDatumFunc mksortGetDatumFunc;
 
-    /*
-     * CDB: Function pointer, referencing a function to handle duplicated tuple
-     * from SortTuple list with multi-key.
-     * Used by mksort_tuple().
-     * For now, the function pointer is filled for only btree index tuple.
-     */
-    MksortHandleDupFunc mksortHandleDupFunc;
+	/*
+	 * CDB: Function pointer, referencing a function to handle duplicated tuple
+	 * from SortTuple list with multi-key.
+	 * Used by mksort_tuple().
+	 * For now, the function pointer is filled for only btree index tuple.
+	*/
+	MksortHandleDupFunc mksortHandleDupFunc;
 } TuplesortPublic;
 
 /* Sort parallel code from state for sort__start probes */
