@@ -443,6 +443,7 @@ extern void tuplesort_restorepos(Tuplesortstate *state);
 
 extern void *tuplesort_readtup_alloc(Tuplesortstate *state, Size tuplen);
 
+
 /* tuplesortvariants.c */
 
 extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,
@@ -498,4 +499,6 @@ extern BrinTuple *tuplesort_getbrintuple(Tuplesortstate *state, Size *len,
 										 bool forward);
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward, bool copy,
 							   Datum *val, bool *isNull, Datum *abbrev);
+
+
 #endif							/* TUPLESORT_H */

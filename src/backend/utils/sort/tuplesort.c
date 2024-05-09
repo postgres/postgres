@@ -2733,8 +2733,10 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 		 * Apply multi-key sort when:
 		 *   1. gp_enable_mk_sort is set
 		 *   2. There are multiple keys avaiable
-		 *   3. Heap sort or Btree Index sort
-		 *      (more sort types may be supported in future)
+		 *   3. mksortGetDatumFunc is filled, which implies that current tuple
+		 *      type is supported by mksort. (By now only Heap tuple and Btree
+		 *      Index tuple are supported, and more types may be supported in
+		 *      future.)
 		 *
 		 * A summary of tuple types supported by mksort:
 		 *
@@ -2742,11 +2744,9 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 		 *   IndexTuple(btree): supported
 		 *   IndexTuple(hash): not supported because there is only one key
 		 *   DatumTuple: not supported because there is only one key
-		 *   HeapTuple(for cluster): not supported because it's not supported by
-		 *   mksort on GPDB6 (see switcheroo_tuplesort_begin_cluster()), but may be
-		 *	   supported as future work
-		 *   HeapTuple(for repack): not supported because it doesn't exist on GPDB6,
-		 *     but may be supported as future work
+		 *   HeapTuple(for cluster): not supported yet
+		 *   IndexTuple(gist): not supported yet
+		 *   IndexTuple(brin): not supported yet
 		 */
 		if (enable_mk_sort &&
 			state->base.nKeys > 1 &&

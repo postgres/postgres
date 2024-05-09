@@ -14,10 +14,7 @@
  *
  * Some improvements which is related to additional handling for equal tuples
  * have been adapted to keep consistency with the implementations of postgres
- * qsort and mksort on GPDB6.
- *
- * To be consistent with qsort_tuple.c, this file is included by tuplesort.c,
- * rather than compiled separately.
+ * qsort.
  *
  * For now, mksort_tuple() is called in tuplesort_sort_memtuples() as a
  * replacement of qsort_tuple() when specific conditions are satisfied.
@@ -326,9 +323,6 @@ mksort_tuple(SortTuple           *x,
 		 * We have reach the max depth: Call mksortHandleDupFunc to handle duplicated
 		 * tuples if necessary, e.g. checking uniqueness or extra comparing
 		 */
-
-		/* If enforceUnique is enabled, there must be mksortHandleDupFunc */
-		// AssertImply(state->enforceUnique, state->mksortHandleDupFunc);
 
 		/*
 		 * Call mksortHandleDupFunc if:
