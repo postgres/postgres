@@ -176,7 +176,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
 	HELP0("  \\q                     quit psql\n");
 	HELP0("  \\watch [[i=]SEC] [c=N] [m=MIN]\n"
-		  "                         execute query every SEC seconds, up to N times\n"
+		  "                         execute query every SEC seconds, up to N times,\n"
 		  "                         stop if less than MIN rows are returned\n");
 	HELP0("\n");
 
