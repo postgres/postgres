@@ -127,4 +127,12 @@ test(
 	'"\\\\\\\\\\\\\\"',
 	error => qr/Token ""\\\\\\\\\\\\\\"" is invalid/);
 
+# Case with three bytes: double-quote, backslash and <f5>.
+# Both invalid-token and invalid-escape are possible errors, because for
+# smaller chunk sizes the incremental parser skips the string parsing when
+# it cannot find an ending quote.
+test("incomplete UTF-8 sequence",
+	"\"\\\x{F5}",
+	error => qr/(Token|Escape sequence) ""?\\\x{F5}" is invalid/);
+
 done_testing();
