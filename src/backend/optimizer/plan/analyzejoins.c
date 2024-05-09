@@ -390,6 +390,17 @@ remove_rel_from_query(PlannerInfo *root, int relid, SpecialJoinInfo *sjinfo)
 	{
 		SpecialJoinInfo *sjinf = (SpecialJoinInfo *) lfirst(l);
 
+		/*
+		 * initsplan.c is fairly cavalier about allowing SpecialJoinInfos'
+		 * lefthand/righthand relid sets to be shared with other data
+		 * structures.  Ensure that we don't modify the original relid sets.
+		 * (The commute_xxx sets are always per-SpecialJoinInfo though.)
+		 */
+		sjinf->min_lefthand = bms_copy(sjinf->min_lefthand);
+		sjinf->min_righthand = bms_copy(sjinf->min_righthand);
+		sjinf->syn_lefthand = bms_copy(sjinf->syn_lefthand);
+		sjinf->syn_righthand = bms_copy(sjinf->syn_righthand);
+		/* Now remove relid and ojrelid bits from the sets: */
 		sjinf->min_lefthand = bms_del_member(sjinf->min_lefthand, relid);
 		sjinf->min_righthand = bms_del_member(sjinf->min_righthand, relid);
 		sjinf->syn_lefthand = bms_del_member(sjinf->syn_lefthand, relid);
@@ -551,8 +562,11 @@ static void
 remove_rel_from_restrictinfo(RestrictInfo *rinfo, int relid, int ojrelid)
 {
 	/*
-	 * The clause_relids probably aren't shared with anything else, but let's
-	 * copy them just to be sure.
+	 * initsplan.c is fairly cavalier about allowing RestrictInfos to share
+	 * relid sets with other RestrictInfos, and SpecialJoinInfos too.  Make
+	 * sure this RestrictInfo has its own relid sets before we modify them.
+	 * (In present usage, clause_relids is probably not shared, but
+	 * required_relids could be; let's not assume anything.)
 	 */
 	rinfo->clause_relids = bms_copy(rinfo->clause_relids);
 	rinfo->clause_relids = bms_del_member(rinfo->clause_relids, relid);
