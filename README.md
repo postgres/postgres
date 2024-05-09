@@ -20,7 +20,16 @@ The latest version of this software, and related software, may be
 obtained at <https://www.postgresql.org/download/>.  For more information
 look at our web site located at <https://www.postgresql.org/>.
 
-### How to build the project
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [How to build the project](#how-to-build-the-project)
+    - [Some issues that may arise during the build process in MacOS](#some-issues-that-may-arise-during-the-build-process-in-macos)
+        - [Missing tools to build the project and the documentation](#missing-tools-to-build-the-project-and-the-documentation)
+        - [Missing icu4c](#missing-icu4c)
+
+
+# How to build the project
 
 Details of each step can be found in: https://www.postgresql.org/docs/devel/install-make.html
 
