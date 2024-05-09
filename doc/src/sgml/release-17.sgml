@@ -18,7 +18,7 @@
    </para>
 
    <itemizedlist>
-    <listitem><para></para></listitem>
+    <listitem><para>TO BE COMPLETED LATER</para></listitem>
    </itemizedlist>
 
    <para>
@@ -302,7 +302,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow the optimizer to improve CTE plans by using the statistics of columns referenced in earlier CTE clauses (Jian Guo, Tom Lane)
+Allow the optimizer to improve CTE plans by considering the statistics of columns referenced in earlier row output clauses (Jian Guo, Tom Lane)
 </para>
 </listitem>
 
@@ -313,7 +313,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow the optimizer to improve CTE plans by using the sort order of columns referenced in earlier CTE clauses (Jian Guo)
+Allow the optimizer to improve CTE plans by considering the sort order of columns referenced in earlier row output clauses (Richard Guo)
 </para>
 </listitem>
 
@@ -426,7 +426,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
 <listitem>
 <para>
-Add columns to pg_stats to report range histogram information (Egor Rogov, Soumyadeep Chakraborty)
+Add columns to pg_stats to report range-type histogram information (Egor Rogov, Soumyadeep Chakraborty)
 </para>
 </listitem>
 
@@ -481,13 +481,19 @@ Add stratnum GiST support function (Paul A. Jungwirth)
      <itemizedlist>
 
 <!--
+Author: John Naylor <john.naylor@postgresql.org>
+2024-03-07 [ee1b30f12] Add template for adaptive radix tree
+Author: Masahiko Sawada <msawada@postgresql.org>
+2024-03-21 [30e144287] Add TIDStore, to store sets of TIDs (ItemPointerData) ef
+Author: Masahiko Sawada <msawada@postgresql.org>
+2024-04-02 [667e65aac] Use TidStore for dead tuple TIDs storage during lazy vac
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2024-04-03 [6dbb49026] Combine freezing and pruning steps in VACUUM
 -->
 
 <listitem>
 <para>
-Allow vacuum to more efficiently freeze tuples (Melanie Plageman)
+Allow vacuum to more efficiently remove and freeze tuples (Masahiko Sawada, John Naylor, Melanie Plageman)
 </para>
 </listitem>
 
@@ -678,7 +684,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add system view pg_wait_events that reports wait event types (Michael Paquier)
+Add system view pg_wait_events that reports wait event types (Bertrand Drouvot)
 </para>
 
 <para>
@@ -1191,7 +1197,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add new COPY option "ON_ERROR ignore" to discard error rows (Damir Belyalov, Atsushi Torikoshi, Alex Shulgin, Jian He, Jian He, Yugo Nagata)
+Add new COPY option "ON_ERROR ignore" to discard error rows (Damir Belyalov, Atsushi Torikoshi, Alex Shulgin, Jian He, Yugo Nagata)
 </para>
 
 <para>
@@ -1352,7 +1358,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
 <listitem>
 <para>
-All specification of partitioned table access methods (Justin Pryzby, Soumyadeep Chakraborty, Michael Paquier)
+Allow specification of partitioned table access methods (Justin Pryzby, Soumyadeep Chakraborty, Michael Paquier)
 </para>
 </listitem>
 
@@ -1997,7 +2003,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
 <listitem>
 <para>
-Improve psql tab completion (Dagfinn Ilmari Mannsåker, Gilles Darold, Christoph Heiss, Steve Chavez, Vignesh C, Dagfinn Ilmari Mannsåker, Pavel Borisov)
+Improve psql tab completion (Dagfinn Ilmari Mannsåker, Gilles Darold, Christoph Heiss, Steve Chavez, Vignesh C, Pavel Borisov)
 </para>
 </listitem>
 
@@ -2155,7 +2161,7 @@ Add some long options to pg_archivecleanup (Atsushi Torikoshi)
 </para>
 
 <para>
-The long options are --debug, --dry-run, and /--strip-extension.
+The long options are --debug, --dry-run, and --strip-extension.
 </para>
 </listitem>
 
@@ -2456,21 +2462,6 @@ Improve documentation for using jsonpath for predicate checks (David Wheeler)
 </para>
 </listitem>
 
-<!--
-Author: Thomas Munro <tmunro@postgresql.org>
-2024-04-08 [13453eedd] Add pg_buffercache_evict() function for testing.
--->
-
-<listitem>
-<para>
-Add function pg_buffercache_evict() to allow shared buffer eviction (Palak Chaturvedi, Thomas Munro)
-</para>
-
-<para>
-This is useful for testing.
-</para>
-</listitem>
-
     </itemizedlist>
 
    </sect3>
@@ -2515,7 +2506,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Double the default foreign data wrapper tuple cost (David Rowley, Umair Shahid)
+Increase the default foreign data wrapper tuple cost (David Rowley, Umair Shahid)
 </para>
 
 <para>
@@ -2645,7 +2636,7 @@ Remove adminpack contrib extension (Daniel Gustafsson)
 </para>
 
 <para>
-This was used by non-end-of-life pgAdmin III.
+This was used by now end-of-life pgAdmin III.
 </para>
 </listitem>
 
@@ -2674,6 +2665,21 @@ Author: Michael Paquier <michael@paquier.xyz>
 <listitem>
 <para>
 Allow extensions to define custom wait events (Masahiro Ikeda)
+</para>
+</listitem>
+
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2024-04-08 [13453eedd] Add pg_buffercache_evict() function for testing.
+-->
+
+<listitem>
+<para>
+Add pg_buffercache function pg_buffercache_evict() to allow shared buffer eviction (Palak Chaturvedi, Thomas Munro)
+</para>
+
+<para>
+This is useful for testing.
 </para>
 </listitem>
 
@@ -2732,7 +2738,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Track DEALLOCATE in pg_stat_statements (Michael Paquier)
+Track DEALLOCATE in pg_stat_statements (Dagfinn Ilmari Mannsåker, Michael Paquier)
 </para>
 
 <para>
