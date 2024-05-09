@@ -2304,7 +2304,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 
 <listitem>
 <para>
-Require LLVM version 10 or later (Peter Eisentraut)
+Require LLVM version 10 or later (Thomas Munro)
 </para>
 </listitem>
 
