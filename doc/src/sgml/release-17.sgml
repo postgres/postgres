@@ -2337,11 +2337,11 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Remove the ability to build Postgres with Visual Studio (Michael Paquier)
+Remove the Microsoft Visual Studio Studio-specific Postgres build option (Michael Paquier)
 </para>
 
 <para>
-Meson is now the only available Windows build method.
+Meson is now the only available method for Visual Studio builds.
 </para>
 </listitem>
 
