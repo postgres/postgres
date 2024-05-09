@@ -478,7 +478,7 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
  * What we need to do here is:
  *
  * - Detect child columns that inherit NOT NULL bits from their parents, so
- *   that we needn't specify that again for the child. (Versions >= 16 no
+ *   that we needn't specify that again for the child. (Versions >= 17 no
  *   longer need this.)
  *
  * - Detect child columns that have DEFAULT NULL when their parents had some

@@ -758,7 +758,7 @@ AdjustNotNullInheritance1(Oid relid, AttrNumber attnum, int count,
 			if (!allow_noinherit_change)
 				ereport(ERROR,
 						errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" in relation \"%s\"",
+						errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" on relation \"%s\"",
 							   NameStr(conform->conname), get_rel_name(relid)));
 
 			conform->connoinherit = false;

@@ -2280,9 +2280,9 @@ drop table inh_nn_parent, inh_nn_child, inh_nn_child2;
 CREATE TABLE inh_nn_parent (a int, NOT NULL a NO INHERIT);
 CREATE TABLE inh_nn_child() INHERITS (inh_nn_parent);
 ALTER TABLE inh_nn_parent ADD CONSTRAINT nna NOT NULL a;
-ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" in relation "inh_nn_parent"
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" on relation "inh_nn_parent"
 ALTER TABLE inh_nn_parent ALTER a SET NOT NULL;
-ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" in relation "inh_nn_parent"
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" on relation "inh_nn_parent"
 DROP TABLE inh_nn_parent cascade;
 NOTICE:  drop cascades to table inh_nn_child
 -- Adding a PK at the top level of a hierarchy should cause all descendants

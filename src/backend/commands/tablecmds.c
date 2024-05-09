@@ -7905,10 +7905,9 @@ ATExecSetNotNull(List **wqueue, Relation rel, char *conName, char *colName,
 		if (conForm->connoinherit && recurse)
 			ereport(ERROR,
 					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" in relation \"%s\"",
+					errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" on relation \"%s\"",
 						   NameStr(conForm->conname),
 						   RelationGetRelationName(rel)));
-
 
 		/*
 		 * If we find an appropriate constraint, we're almost done, but just

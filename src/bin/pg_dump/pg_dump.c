@@ -8864,7 +8864,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 					  tbloids->data);
 
 	/*
-	 * In versions 16 and up, we need pg_constraint for explicit NOT NULL
+	 * In versions 17 and up, we need pg_constraint for explicit NOT NULL
 	 * entries.  Also, we need to know if the NOT NULL for each column is
 	 * backing a primary key.
 	 */
