@@ -1184,11 +1184,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       referent for its entire duration.  This column must be a range or
       multirange type.  In addition, the referenced table must have a primary
       key or unique constraint declared with <literal>WITHOUT
-      OVERLAPS</literal>.  Finally, if one side of the foreign key uses
-      <literal>PERIOD</literal>, the other side must too.  If the <replaceable
-      class="parameter">refcolumn</replaceable> list is omitted, the
-      <literal>WITHOUT OVERLAPS</literal> part of the primary key is treated
-      as if marked with <literal>PERIOD</literal>.
+      OVERLAPS</literal>. Finally, if the foreign key has a PERIOD
+      <replaceable class="parameter">column_name</replaceable> specification
+      the corresponding <replaceable class="parameter">refcolumn</replaceable>,
+      if present, must also be marked <literal>PERIOD</literal>.  If the
+      <replaceable class="parameter">refcolumn</replaceable> clause is omitted,
+      and thus the reftable's primary key constraint chosen, the primary key
+      must have its final column marked <literal>WITHOUT OVERLAPS</literal>.
      </para>
 
      <para>
