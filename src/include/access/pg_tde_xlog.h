@@ -45,6 +45,7 @@ static const RmgrData pg_tde_rmgr = {
 extern bool EncryptXLog;
 
 extern Size TDEXLogEncryptBuffSize();
+extern Size XLogEncStateSize();
 
 #define XLOG_TDE_ENC_BUFF_ALIGNED_SIZE	add_size(TDEXLogEncryptBuffSize(), PG_IO_ALIGN_SIZE)
 
