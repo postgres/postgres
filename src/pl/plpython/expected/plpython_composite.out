@@ -569,6 +569,20 @@ SELECT * FROM return_record_2('v3') AS (v1 int, v2 int, v3 int);
   1 |  2 |  3
 (1 row)
 
+-- recursion with a different inner result type didn't use to work
+CREATE FUNCTION return_record_3(t text) RETURNS record AS $$
+if t == "text":
+     plpy.execute("SELECT * FROM return_record_3('int') AS (a int)");
+     return { "a": "x" }
+elif t == "int":
+     return { "a": 1 }
+$$ LANGUAGE plpythonu;
+SELECT * FROM return_record_3('text') AS (a text);
+ a 
+---
+ x
+(1 row)
+
 -- multi-dimensional array of composite types.
 CREATE FUNCTION composite_type_as_list()  RETURNS type_record[] AS $$
   return [[('first', 1), ('second', 1)], [('first', 2), ('second', 2)], [('first', 3), ('second', 3)]];

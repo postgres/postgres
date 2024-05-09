@@ -235,7 +235,23 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		}
 		else
 		{
-			/* Normal conversion of result */
+			/*
+			 * Normal conversion of result.  However, if the result is of type
+			 * RECORD, we have to set up for that each time through, since it
+			 * might be different from last time.
+			 */
+			if (proc->result.typoid == RECORDOID)
+			{
+				TupleDesc	desc;
+
+				if (get_call_result_type(fcinfo, NULL, &desc) != TYPEFUNC_COMPOSITE)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("function returning record called in context "
+									"that cannot accept type record")));
+				PLy_output_setup_record(&proc->result, desc, proc);
+			}
+
 			rv = PLy_output_convert(&proc->result, plrv,
 									&fcinfo->isnull);
 		}
@@ -469,21 +485,6 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				PyDict_SetItemString(proc->globals, proc->argnames[i], arg) == -1)
 				PLy_elog(ERROR, "PyDict_SetItemString() failed, while setting up arguments");
 			arg = NULL;
-		}
-
-		/* Set up output conversion for functions returning RECORD */
-		if (proc->result.typoid == RECORDOID)
-		{
-			TupleDesc	desc;
-
-			if (get_call_result_type(fcinfo, NULL, &desc) != TYPEFUNC_COMPOSITE)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("function returning record called in context "
-								"that cannot accept type record")));
-
-			/* cache the output conversion functions */
-			PLy_output_setup_record(&proc->result, desc, proc);
 		}
 	}
 	PG_CATCH();
