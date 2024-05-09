@@ -268,14 +268,14 @@ typedef struct
 	void	   *arg;			/* Specific information for the sort variant */
 
 	/*
-	 * CDB: Function pointer, referencing a function to get specified datum from
+	 * Function pointer, referencing a function to get specified datum from
 	 * SortTuple list with multi-key.
 	 * Used by mksort_tuple().
 	*/
 	MksortGetDatumFunc mksortGetDatumFunc;
 
 	/*
-	 * CDB: Function pointer, referencing a function to handle duplicated tuple
+	 * Function pointer, referencing a function to handle duplicated tuple
 	 * from SortTuple list with multi-key.
 	 * Used by mksort_tuple().
 	 * For now, the function pointer is filled for only btree index tuple.
