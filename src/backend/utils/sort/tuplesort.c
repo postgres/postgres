@@ -2567,8 +2567,8 @@ tuplesort_get_stats(Tuplesortstate *state,
 		case TSS_SORTEDINMEM:
 			if (state->boundUsed)
 				stats->sortMethod = SORT_TYPE_TOP_N_HEAPSORT;
-            else if (state->mksortUsed)
-                stats->sortMethod = SORT_TYPE_MKSORT;
+			else if (state->mksortUsed)
+				stats->sortMethod = SORT_TYPE_MKSORT;
 			else
 				stats->sortMethod = SORT_TYPE_QUICKSORT;
 			break;
@@ -2602,8 +2602,8 @@ tuplesort_method_name(TuplesortMethod m)
 			return "external sort";
 		case SORT_TYPE_EXTERNAL_MERGE:
 			return "external merge";
-        case SORT_TYPE_MKSORT:
-            return "multi-key sort";
+		case SORT_TYPE_MKSORT:
+			return "multi-key sort";
 	}
 
 	return "unknown";
