@@ -688,6 +688,7 @@ static inline JsonParseErrorType
 json_lex_string(JsonLexContext *lex)
 {
 	char	   *s;
+	char	   *const end = lex->input + lex->input_length;
 	int			len;
 	int			hi_surrogate = -1;
 
@@ -699,8 +700,8 @@ json_lex_string(JsonLexContext *lex)
 	} while (0)
 #define FAIL_AT_CHAR_END(code) \
 	do { \
-		lex->token_terminator = \
-			s + pg_encoding_mblen_bounded(lex->input_encoding, s); \
+		char	   *term = s + pg_encoding_mblen(lex->input_encoding, s); \
+		lex->token_terminator = (term <= end) ? term : end; \
 		return code; \
 	} while (0)
 
