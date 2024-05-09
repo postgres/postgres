@@ -45,7 +45,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     FORCE_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     ON_ERROR <replaceable class="parameter">error_action</replaceable>
     ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
-    LOG_VERBOSITY <replaceable class="parameter">mode</replaceable>
+    LOG_VERBOSITY <replaceable class="parameter">verbosity</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
