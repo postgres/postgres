@@ -1937,17 +1937,6 @@ This is enabled with the client-side option sslnegotation=direct, requires ALPN,
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2024-04-06 [90f517821] Re-implement psql's FETCH_COUNT feature atop libpq's chu
--->
-
-<listitem>
-<para>
-Allow FETCH_COUNT to work with non-SELECT queries (Daniel Vérité)
-</para>
-</listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-11-13 [d1379ebf4] Improve default and empty privilege outputs in psql.
 -->
 
@@ -1988,6 +1977,17 @@ Allow psql's \watch to stop after a minimum number of rows returned (Greg Sabino
 
 <para>
 The parameter is "min_rows".
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2024-04-06 [90f517821] Re-implement psql's FETCH_COUNT feature atop libpq's chu
+-->
+
+<listitem>
+<para>
+Allow psql to honor FETCH_COUNT for non-SELECT queries (Daniel Vérité)
 </para>
 </listitem>
 
