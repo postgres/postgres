@@ -320,6 +320,119 @@ DROP TABLE temporal_partitioned;
 ALTER TABLE temporal_rng REPLICA IDENTITY USING INDEX temporal_rng_pk;
 
 --
+-- ON CONFLICT
+--
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT DO NOTHING;
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO NOTHING;
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+
+-- with a UNIQUE constraint:
+
+CREATE TABLE temporal3 (
+	id int4range,
+	valid_at daterange,
+	CONSTRAINT temporal3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+);
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT DO NOTHING;
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO NOTHING;
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+
+DROP TABLE temporal3;
+
+--
 -- test FK dependencies
 --
 
