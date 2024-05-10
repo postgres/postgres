@@ -1610,25 +1610,7 @@ comparetup_index_btree_tiebreak(const SortTuple *a, const SortTuple *b,
 	 * attribute in order to ensure that all keys in the index are physically
 	 * unique.
 	 */
-	{
-		BlockNumber blk1 = ItemPointerGetBlockNumber(&tuple1->t_tid);
-		BlockNumber blk2 = ItemPointerGetBlockNumber(&tuple2->t_tid);
-
-		if (blk1 != blk2)
-			return (blk1 < blk2) ? -1 : 1;
-	}
-	{
-		OffsetNumber pos1 = ItemPointerGetOffsetNumber(&tuple1->t_tid);
-		OffsetNumber pos2 = ItemPointerGetOffsetNumber(&tuple2->t_tid);
-
-		if (pos1 != pos2)
-			return (pos1 < pos2) ? -1 : 1;
-	}
-
-	/* ItemPointer values should never be equal */
-	Assert(false);
-
-	return 0;
+	return tuplesort_compare_by_item_pointer(tuple1, tuple2);
 }
 
 static int
@@ -2061,7 +2043,7 @@ mksort_get_datum_index_btree(SortTuple      *x,
 }
 
 /*
- * Handle duplicated SortTuples (IndexTuple for btree index during mksort
+ * Handle duplicated SortTuples (IndexTuple for btree index during mksort)
  *  x: the duplicated tuple list
  *  tupleCount: count of the tuples
  */
