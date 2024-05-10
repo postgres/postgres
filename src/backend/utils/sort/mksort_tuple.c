@@ -22,8 +22,8 @@
 
 /* Swap two tuples in sort tuple array */
 static inline void
-mksort_swap(int a,
-			int b,
+mksort_swap(int        a,
+			int        b,
 			SortTuple *x)
 {
 	SortTuple t;
@@ -37,9 +37,9 @@ mksort_swap(int a,
 
 /* Swap tuples by batch in sort tuple array */
 static inline void
-mksort_vec_swap(int a,
-				int b,
-				int size,
+mksort_vec_swap(int        a,
+				int        b,
+				int        size,
 				SortTuple *x)
 {
 	while (size-- > 0)
@@ -56,8 +56,8 @@ mksort_vec_swap(int a,
  * a tuple array, so tupleIndex is unnecessary
  */
 static inline bool
-check_datum_null(SortTuple *x,
-				 int depth,
+check_datum_null(SortTuple      *x,
+				 int             depth,
 				 Tuplesortstate *state)
 {
 	Datum datum;
