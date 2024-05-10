@@ -1893,8 +1893,6 @@ This is similar to PQpipelineSync() but it does not flush to the server unless t
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2024-04-06 [4643a2b26] Support retrieval of results in chunks with libpq.
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2024-04-06 [90f517821] Re-implement psql's FETCH_COUNT feature atop libpq's chu
 -->
 
 <listitem>
@@ -1936,6 +1934,17 @@ This is enabled with the client-side option sslnegotation=direct, requires ALPN,
      <title><xref linkend="app-psql"/></title>
 
      <itemizedlist>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2024-04-06 [90f517821] Re-implement psql's FETCH_COUNT feature atop libpq's chu
+-->
+
+<listitem>
+<para>
+Allow FETCH_COUNT to work with non-SELECT queries (Daniel Vérité)
+</para>
+</listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
