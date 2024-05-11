@@ -1564,7 +1564,7 @@ SELCT 1/0;<!-- this typo is intentional -->
      required to use the ALPN extension defined
      by <ulink url="https://tools.ietf.org/html/rfc7301">RFC 7301</ulink> to
      protect against protocol confusion attacks.
-     The <productname>PostgreSQL</productname> protocol is "TBD-pgsql" as
+     The <productname>PostgreSQL</productname> protocol is "postgresql" as
      registered
      at <ulink url="https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">IANA
      TLS ALPN Protocol IDs</ulink> registry.
