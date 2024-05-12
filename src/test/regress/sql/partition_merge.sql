@@ -549,6 +549,39 @@ ORDER BY c.relname;
 DROP TABLE t;
 DROP ACCESS METHOD partitions_merge_heap;
 
+-- Test permission checks.  The user needs to own the parent table and all
+-- the merging partitions to do the merge.
+CREATE ROLE regress_partition_merge_alice;
+CREATE ROLE regress_partition_merge_bob;
+
+SET SESSION AUTHORIZATION regress_partition_merge_alice;
+CREATE TABLE t (i int) PARTITION BY RANGE (i);
+CREATE TABLE tp_0_1 PARTITION OF t FOR VALUES FROM (0) TO (1);
+CREATE TABLE tp_1_2 PARTITION OF t FOR VALUES FROM (1) TO (2);
+
+SET SESSION AUTHORIZATION regress_partition_merge_bob;
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+RESET SESSION AUTHORIZATION;
+
+ALTER TABLE t OWNER TO regress_partition_merge_bob;
+SET SESSION AUTHORIZATION regress_partition_merge_bob;
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+RESET SESSION AUTHORIZATION;
+
+ALTER TABLE tp_0_1 OWNER TO regress_partition_merge_bob;
+SET SESSION AUTHORIZATION regress_partition_merge_bob;
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+RESET SESSION AUTHORIZATION;
+
+ALTER TABLE tp_1_2 OWNER TO regress_partition_merge_bob;
+SET SESSION AUTHORIZATION regress_partition_merge_bob;
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+RESET SESSION AUTHORIZATION;
+
+DROP TABLE t;
+DROP ROLE regress_partition_merge_alice;
+DROP ROLE regress_partition_merge_bob;
+
 RESET search_path;
 
 --
