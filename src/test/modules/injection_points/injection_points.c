@@ -19,6 +19,8 @@
 
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "nodes/pg_list.h"
+#include "nodes/value.h"
 #include "storage/condition_variable.h"
 #include "storage/dsm_registry.h"
 #include "storage/ipc.h"
@@ -26,6 +28,7 @@
 #include "storage/shmem.h"
 #include "utils/builtins.h"
 #include "utils/injection_point.h"
+#include "utils/memutils.h"
 #include "utils/wait_event.h"
 
 PG_MODULE_MAGIC;
@@ -33,23 +36,36 @@ PG_MODULE_MAGIC;
 /* Maximum number of waits usable in injection points at once */
 #define INJ_MAX_WAIT	8
 #define INJ_NAME_MAXLEN	64
-#define	INJ_MAX_CONDITION	4
 
 /*
  * Conditions related to injection points.  This tracks in shared memory the
- * runtime conditions under which an injection point is allowed to run.
+ * runtime conditions under which an injection point is allowed to run,
+ * stored as private_data when an injection point is attached, and passed as
+ * argument to the callback.
  *
  * If more types of runtime conditions need to be tracked, this structure
  * should be expanded.
  */
+typedef enum InjectionPointConditionType
+{
+	INJ_CONDITION_ALWAYS = 0,	/* always run */
+	INJ_CONDITION_PID,			/* PID restriction */
+} InjectionPointConditionType;
+
 typedef struct InjectionPointCondition
 {
-	/* Name of the injection point related to this condition */
-	char		name[INJ_NAME_MAXLEN];
+	/* Type of the condition */
+	InjectionPointConditionType type;
 
 	/* ID of the process where the injection point is allowed to run */
 	int			pid;
 } InjectionPointCondition;
+
+/*
+ * List of injection points stored in TopMemoryContext attached
+ * locally to this process.
+ */
+static List *inj_list_local = NIL;
 
 /* Shared state information for injection points. */
 typedef struct InjectionPointSharedState
@@ -65,9 +81,6 @@ typedef struct InjectionPointSharedState
 
 	/* Condition variable used for waits and wakeups */
 	ConditionVariable wait_point;
-
-	/* Conditions to run an injection point */
-	InjectionPointCondition conditions[INJ_MAX_CONDITION];
 } InjectionPointSharedState;
 
 /* Pointer to shared-memory state. */
@@ -94,7 +107,6 @@ injection_point_init_state(void *ptr)
 	SpinLockInit(&state->lock);
 	memset(state->wait_counts, 0, sizeof(state->wait_counts));
 	memset(state->name, 0, sizeof(state->name));
-	memset(state->conditions, 0, sizeof(state->conditions));
 	ConditionVariableInit(&state->wait_point);
 }
 
@@ -119,38 +131,22 @@ injection_init_shmem(void)
  * Check runtime conditions associated to an injection point.
  *
  * Returns true if the named injection point is allowed to run, and false
- * otherwise.  Multiple conditions can be associated to a single injection
- * point, so check them all.
+ * otherwise.
  */
 static bool
-injection_point_allowed(const char *name)
+injection_point_allowed(InjectionPointCondition *condition)
 {
 	bool		result = true;
 
-	if (inj_state == NULL)
-		injection_init_shmem();
-
-	SpinLockAcquire(&inj_state->lock);
-
-	for (int i = 0; i < INJ_MAX_CONDITION; i++)
+	switch (condition->type)
 	{
-		InjectionPointCondition *condition = &inj_state->conditions[i];
-
-		if (strcmp(condition->name, name) == 0)
-		{
-			/*
-			 * Check if this injection point is allowed to run in this
-			 * process.
-			 */
+		case INJ_CONDITION_PID:
 			if (MyProcPid != condition->pid)
-			{
 				result = false;
-				break;
-			}
-		}
+			break;
+		case INJ_CONDITION_ALWAYS:
+			break;
 	}
-
-	SpinLockRelease(&inj_state->lock);
 
 	return result;
 }
@@ -162,61 +158,28 @@ injection_point_allowed(const char *name)
 static void
 injection_points_cleanup(int code, Datum arg)
 {
-	char		names[INJ_MAX_CONDITION][INJ_NAME_MAXLEN] = {0};
-	int			count = 0;
+	ListCell   *lc;
 
 	/* Leave if nothing is tracked locally */
 	if (!injection_point_local)
 		return;
 
-	/*
-	 * This is done in three steps: detect the points to detach, detach them
-	 * and release their conditions.
-	 */
-	SpinLockAcquire(&inj_state->lock);
-	for (int i = 0; i < INJ_MAX_CONDITION; i++)
+	/* Detach all the local points */
+	foreach(lc, inj_list_local)
 	{
-		InjectionPointCondition *condition = &inj_state->conditions[i];
+		char	   *name = strVal(lfirst(lc));
 
-		if (condition->name[0] == '\0')
-			continue;
-
-		if (condition->pid != MyProcPid)
-			continue;
-
-		/* Extract the point name to detach */
-		strlcpy(names[count], condition->name, INJ_NAME_MAXLEN);
-		count++;
+		(void) InjectionPointDetach(name);
 	}
-	SpinLockRelease(&inj_state->lock);
-
-	/* Detach, without holding the spinlock */
-	for (int i = 0; i < count; i++)
-		(void) InjectionPointDetach(names[i]);
-
-	/* Clear all the conditions */
-	SpinLockAcquire(&inj_state->lock);
-	for (int i = 0; i < INJ_MAX_CONDITION; i++)
-	{
-		InjectionPointCondition *condition = &inj_state->conditions[i];
-
-		if (condition->name[0] == '\0')
-			continue;
-
-		if (condition->pid != MyProcPid)
-			continue;
-
-		condition->name[0] = '\0';
-		condition->pid = 0;
-	}
-	SpinLockRelease(&inj_state->lock);
 }
 
 /* Set of callbacks available to be attached to an injection point. */
 void
 injection_error(const char *name, const void *private_data)
 {
-	if (!injection_point_allowed(name))
+	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
+
+	if (!injection_point_allowed(condition))
 		return;
 
 	elog(ERROR, "error triggered for injection point %s", name);
@@ -225,7 +188,9 @@ injection_error(const char *name, const void *private_data)
 void
 injection_notice(const char *name, const void *private_data)
 {
-	if (!injection_point_allowed(name))
+	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
+
+	if (!injection_point_allowed(condition))
 		return;
 
 	elog(NOTICE, "notice triggered for injection point %s", name);
@@ -238,11 +203,12 @@ injection_wait(const char *name, const void *private_data)
 	uint32		old_wait_counts = 0;
 	int			index = -1;
 	uint32		injection_wait_event = 0;
+	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
 
 	if (inj_state == NULL)
 		injection_init_shmem();
 
-	if (!injection_point_allowed(name))
+	if (!injection_point_allowed(condition))
 		return;
 
 	/*
@@ -304,6 +270,7 @@ injection_points_attach(PG_FUNCTION_ARGS)
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *action = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	char	   *function;
+	InjectionPointCondition condition = {0};
 
 	if (strcmp(action, "error") == 0)
 		function = "injection_error";
@@ -314,37 +281,24 @@ injection_points_attach(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "incorrect action \"%s\" for injection point creation", action);
 
-	InjectionPointAttach(name, "injection_points", function, NULL, 0);
+	if (injection_point_local)
+	{
+		condition.type = INJ_CONDITION_PID;
+		condition.pid = MyProcPid;
+	}
+
+	InjectionPointAttach(name, "injection_points", function, &condition,
+						 sizeof(InjectionPointCondition));
 
 	if (injection_point_local)
 	{
-		int			index = -1;
+		MemoryContext oldctx;
 
-		/*
-		 * Register runtime condition to link this injection point to the
-		 * current process.
-		 */
-		SpinLockAcquire(&inj_state->lock);
-		for (int i = 0; i < INJ_MAX_CONDITION; i++)
-		{
-			InjectionPointCondition *condition = &inj_state->conditions[i];
-
-			if (condition->name[0] == '\0')
-			{
-				index = i;
-				strlcpy(condition->name, name, INJ_NAME_MAXLEN);
-				condition->pid = MyProcPid;
-				break;
-			}
-		}
-		SpinLockRelease(&inj_state->lock);
-
-		if (index < 0)
-			elog(FATAL,
-				 "could not find free slot for condition of injection point %s",
-				 name);
+		/* Local injection point, so track it for automated cleanup */
+		oldctx = MemoryContextSwitchTo(TopMemoryContext);
+		inj_list_local = lappend(inj_list_local, makeString(pstrdup(name)));
+		MemoryContextSwitchTo(oldctx);
 	}
-
 	PG_RETURN_VOID();
 }
 
@@ -436,22 +390,15 @@ injection_points_detach(PG_FUNCTION_ARGS)
 	if (!InjectionPointDetach(name))
 		elog(ERROR, "could not detach injection point \"%s\"", name);
 
-	if (inj_state == NULL)
-		injection_init_shmem();
-
-	/* Clean up any conditions associated to this injection point */
-	SpinLockAcquire(&inj_state->lock);
-	for (int i = 0; i < INJ_MAX_CONDITION; i++)
+	/* Remove point from local list, if required */
+	if (inj_list_local != NIL)
 	{
-		InjectionPointCondition *condition = &inj_state->conditions[i];
+		MemoryContext oldctx;
 
-		if (strcmp(condition->name, name) == 0)
-		{
-			condition->pid = 0;
-			condition->name[0] = '\0';
-		}
+		oldctx = MemoryContextSwitchTo(TopMemoryContext);
+		inj_list_local = list_delete(inj_list_local, makeString(name));
+		MemoryContextSwitchTo(oldctx);
 	}
-	SpinLockRelease(&inj_state->lock);
 
 	PG_RETURN_VOID();
 }
