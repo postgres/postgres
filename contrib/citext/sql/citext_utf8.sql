@@ -4,6 +4,7 @@
  */
 
 SELECT getdatabaseencoding() <> 'UTF8' OR
+       version() ~ '(Visual C\+\+|mingw32|windows)' OR
        current_setting('lc_ctype') = 'C'
        AS skip_test \gset
 \if :skip_test
