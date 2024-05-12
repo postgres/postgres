@@ -3624,12 +3624,16 @@ INJECTION_POINT(name);
 <programlisting>
 extern void InjectionPointAttach(const char *name,
                                  const char *library,
-                                 const char *function);
+                                 const char *function,
+                                 const void *private_data,
+                                 int private_data_size);
 </programlisting>
 
      <literal>name</literal> is the name of the injection point, which when
      reached during execution will execute the <literal>function</literal>
-     loaded from <literal>library</literal>.
+     loaded from <literal>library</literal>. <literal>private_data</literal>
+     is a private area of data of size <literal>private_data_size</literal>
+     given as argument to the callback when executed.
     </para>
 
     <para>
@@ -3637,7 +3641,7 @@ extern void InjectionPointAttach(const char *name,
      <literal>InjectionPointCallback</literal>:
 <programlisting>
 static void
-custom_injection_callback(const char *name)
+custom_injection_callback(const char *name, const void *private_data)
 {
     elog(NOTICE, "%s: executed custom callback", name);
 }
@@ -3650,8 +3654,10 @@ custom_injection_callback(const char *name)
     <para>
      Optionally, it is possible to detach an injection point by calling:
 <programlisting>
-extern void InjectionPointDetach(const char *name);
+extern bool InjectionPointDetach(const char *name);
 </programlisting>
+     On success, <literal>true</literal> is returned, <literal>false</literal>
+     otherwise.
     </para>
 
     <para>

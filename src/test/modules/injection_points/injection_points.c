@@ -73,9 +73,12 @@ typedef struct InjectionPointSharedState
 /* Pointer to shared-memory state. */
 static InjectionPointSharedState *inj_state = NULL;
 
-extern PGDLLEXPORT void injection_error(const char *name);
-extern PGDLLEXPORT void injection_notice(const char *name);
-extern PGDLLEXPORT void injection_wait(const char *name);
+extern PGDLLEXPORT void injection_error(const char *name,
+										const void *private_data);
+extern PGDLLEXPORT void injection_notice(const char *name,
+										 const void *private_data);
+extern PGDLLEXPORT void injection_wait(const char *name,
+									   const void *private_data);
 
 /* track if injection points attached in this process are linked to it */
 static bool injection_point_local = false;
@@ -189,7 +192,7 @@ injection_points_cleanup(int code, Datum arg)
 
 	/* Detach, without holding the spinlock */
 	for (int i = 0; i < count; i++)
-		InjectionPointDetach(names[i]);
+		(void) InjectionPointDetach(names[i]);
 
 	/* Clear all the conditions */
 	SpinLockAcquire(&inj_state->lock);
@@ -211,7 +214,7 @@ injection_points_cleanup(int code, Datum arg)
 
 /* Set of callbacks available to be attached to an injection point. */
 void
-injection_error(const char *name)
+injection_error(const char *name, const void *private_data)
 {
 	if (!injection_point_allowed(name))
 		return;
@@ -220,7 +223,7 @@ injection_error(const char *name)
 }
 
 void
-injection_notice(const char *name)
+injection_notice(const char *name, const void *private_data)
 {
 	if (!injection_point_allowed(name))
 		return;
@@ -230,7 +233,7 @@ injection_notice(const char *name)
 
 /* Wait on a condition variable, awaken by injection_points_wakeup() */
 void
-injection_wait(const char *name)
+injection_wait(const char *name, const void *private_data)
 {
 	uint32		old_wait_counts = 0;
 	int			index = -1;
@@ -311,7 +314,7 @@ injection_points_attach(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "incorrect action \"%s\" for injection point creation", action);
 
-	InjectionPointAttach(name, "injection_points", function);
+	InjectionPointAttach(name, "injection_points", function, NULL, 0);
 
 	if (injection_point_local)
 	{
@@ -430,7 +433,8 @@ injection_points_detach(PG_FUNCTION_ARGS)
 {
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-	InjectionPointDetach(name);
+	if (!InjectionPointDetach(name))
+		elog(ERROR, "could not detach injection point \"%s\"", name);
 
 	if (inj_state == NULL)
 		injection_init_shmem();

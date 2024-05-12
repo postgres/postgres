@@ -114,7 +114,7 @@ NOTICE:  notice triggered for injection point TestInjectionLog2
 (1 row)
 
 SELECT injection_points_detach('TestInjectionLog'); -- fails
-ERROR:  injection point "TestInjectionLog" not found
+ERROR:  could not detach injection point "TestInjectionLog"
 SELECT injection_points_run('TestInjectionLog2'); -- notice
 NOTICE:  notice triggered for injection point TestInjectionLog2
  injection_points_run 
