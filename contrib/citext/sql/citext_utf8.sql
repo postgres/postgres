@@ -6,9 +6,12 @@
  * Turkish dotted I is not correct for many ICU locales. citext always
  * uses the default collation, so it's not easy to restrict the test
  * to the "tr-TR-x-icu" collation where it will succeed.
+ *
+ * Also disable for Windows.  It fails similarly, at least in some locales.
  */
 
 SELECT getdatabaseencoding() <> 'UTF8' OR
+       version() ~ '(Visual C\+\+|mingw32|windows)' OR
        (SELECT (datlocprovider = 'c' AND datctype = 'C') OR datlocprovider = 'i'
         FROM pg_database
         WHERE datname=current_database())
