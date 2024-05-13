@@ -1856,11 +1856,8 @@ pg_sequence_last_value(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(0);
 	SeqTable	elm;
 	Relation	seqrel;
-	Buffer		buf;
-	HeapTupleData seqtuple;
-	Form_pg_sequence_data seq;
-	bool		is_called;
-	int64		result;
+	bool		is_called = false;
+	int64		result = 0;
 
 	/* open and lock sequence */
 	init_sequence(relid, &elm, &seqrel);
@@ -1871,12 +1868,24 @@ pg_sequence_last_value(PG_FUNCTION_ARGS)
 				 errmsg("permission denied for sequence %s",
 						RelationGetRelationName(seqrel))));
 
-	seq = read_seq_tuple(seqrel, &buf, &seqtuple);
+	/*
+	 * We return NULL for other sessions' temporary sequences.  The
+	 * pg_sequences system view already filters those out, but this offers a
+	 * defense against ERRORs in case someone invokes this function directly.
+	 */
+	if (!RELATION_IS_OTHER_TEMP(seqrel))
+	{
+		Buffer		buf;
+		HeapTupleData seqtuple;
+		Form_pg_sequence_data seq;
 
-	is_called = seq->is_called;
-	result = seq->last_value;
+		seq = read_seq_tuple(seqrel, &buf, &seqtuple);
 
-	UnlockReleaseBuffer(buf);
+		is_called = seq->is_called;
+		result = seq->last_value;
+
+		UnlockReleaseBuffer(buf);
+	}
 	relation_close(seqrel, NoLock);
 
 	if (is_called)
