@@ -2927,15 +2927,36 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <para>
        The last sequence value written to disk.  If caching is used,
        this value can be greater than the last value handed out from the
-       sequence.  Null if the sequence has not been read from yet.  Also, if
-       the current user does not have <literal>USAGE</literal>
-       or <literal>SELECT</literal> privilege on the sequence, the value is
-       null.
+       sequence.
       </para></entry>
      </row>
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   The <structfield>last_value</structfield> column will read as null if any of
+   the following are true:
+   <itemizedlist>
+    <listitem>
+     <para>
+      The sequence has not been read from yet.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      The current user does not have <literal>USAGE</literal> or
+      <literal>SELECT</literal> privilege on the sequence.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      The sequence is unlogged and the server is a standby.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
  </sect1>
 
  <sect1 id="view-pg-settings">
