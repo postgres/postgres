@@ -763,38 +763,17 @@ CREATE TABLE products (
     price numeric
 );
 </programlisting>
-    An explicit constraint name can also be specified, for example:
-<programlisting>
-CREATE TABLE products (
-    product_no integer NOT NULL,
-    name text <emphasis>CONSTRAINT products_name_not_null</emphasis> NOT NULL,
-    price numeric
-);
-</programlisting>
    </para>
 
    <para>
-    A not-null constraint is usually written as a column constraint.  The
-    syntax for writing it as a table constraint is
-<programlisting>
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric,
-    <emphasis>NOT NULL product_no</emphasis>,
-    <emphasis>NOT NULL name</emphasis>
-);
-</programlisting>
-    But this syntax is not standard and mainly intended for use by
-    <application>pg_dump</application>.
-   </para>
-
-   <para>
-    A not-null constraint is functionally equivalent to creating a check
+    A not-null constraint is always written as a column constraint.  A
+    not-null constraint is functionally equivalent to creating a check
     constraint <literal>CHECK (<replaceable>column_name</replaceable>
     IS NOT NULL)</literal>, but in
     <productname>PostgreSQL</productname> creating an explicit
-    not-null constraint is more efficient.
+    not-null constraint is more efficient.  The drawback is that you
+    cannot give explicit names to not-null constraints created this
+    way.
    </para>
 
    <para>
@@ -809,10 +788,6 @@ CREATE TABLE products (
 </programlisting>
     The order doesn't matter.  It does not necessarily determine in which
     order the constraints are checked.
-   </para>
-
-   <para>
-    However, a column can have at most one explicit not-null constraint.
    </para>
 
    <para>
@@ -1008,7 +983,7 @@ CREATE TABLE example (
 
    <para>
     A table can have at most one primary key.  (There can be any number
-    of unique constraints, which combined with not-null constraints are functionally almost the
+    of unique and not-null constraints, which are functionally almost the
     same thing, but only one can be identified as the primary key.)
     Relational database theory
     dictates that every table must have a primary key.  This rule is
@@ -1668,16 +1643,11 @@ ALTER TABLE products ADD CHECK (name &lt;&gt; '');
 ALTER TABLE products ADD CONSTRAINT some_name UNIQUE (product_no);
 ALTER TABLE products ADD FOREIGN KEY (product_group_id) REFERENCES product_groups;
 </programlisting>
-   </para>
-
-   <para>
-    To add a not-null constraint, which is normally not written as a table
-    constraint, this special syntax is available:
+    To add a not-null constraint, which cannot be written as a table
+    constraint, use this syntax:
 <programlisting>
 ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;
 </programlisting>
-    This command silently does nothing if the column already has a
-    not-null constraint.
    </para>
 
    <para>
@@ -1718,15 +1688,12 @@ ALTER TABLE products DROP CONSTRAINT some_name;
    </para>
 
    <para>
-    Simplified syntax is available to drop a not-null constraint:
+    This works the same for all constraint types except not-null
+    constraints. To drop a not-null constraint use:
 <programlisting>
 ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
 </programlisting>
-    This mirrors the <literal>SET NOT NULL</literal> syntax for adding a
-    not-null constraint.  This command will silently do nothing if the column
-    does not have a not-null constraint.  (Recall that a column can have at
-    most one not-null constraint, so it is never ambiguous which constraint
-    this command acts on.)
+    (Recall that not-null constraints do not have names.)
    </para>
   </sect2>
 

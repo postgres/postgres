@@ -193,8 +193,6 @@ Indexes:
     "testpub_tbl2_pkey" PRIMARY KEY, btree (id)
 Publications:
     "testpub_foralltables"
-Not-null constraints:
-    "testpub_tbl2_id_not_null" NOT NULL "id"
 
 \dRp+ testpub_foralltables
                               Publication testpub_foralltables
@@ -1159,8 +1157,6 @@ Publications:
     "testpib_ins_trunct"
     "testpub_default"
     "testpub_fortbl"
-Not-null constraints:
-    "testpub_tbl1_id_not_null" NOT NULL "id"
 
 \dRp+ testpub_default
                                 Publication testpub_default
@@ -1186,8 +1182,6 @@ Indexes:
 Publications:
     "testpib_ins_trunct"
     "testpub_fortbl"
-Not-null constraints:
-    "testpub_tbl1_id_not_null" NOT NULL "id"
 
 -- verify relation cache invalidation when a primary key is added using
 -- an existing index

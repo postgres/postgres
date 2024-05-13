@@ -54,8 +54,6 @@ NOTICE:  DDL test: type simple, tag CREATE SEQUENCE
 NOTICE:  DDL test: type simple, tag CREATE SEQUENCE
 NOTICE:  DDL test: type simple, tag CREATE SEQUENCE
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc <NULL>
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type simple, tag ALTER SEQUENCE
@@ -76,8 +74,6 @@ CREATE TABLE IF NOT EXISTS fkey_table (
     EXCLUDE USING btree (check_col_2 WITH =)
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc <NULL>
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
@@ -90,7 +86,7 @@ CREATE TABLE employees OF employee_type (
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc column name of table employees
+NOTICE:    subcommand: type SET NOT NULL desc column name of table employees
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 -- Inheritance
 CREATE TABLE person (
@@ -100,8 +96,6 @@ CREATE TABLE person (
 	location 	point
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc <NULL>
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 CREATE TABLE emp (
 	salary 		int4,
@@ -134,10 +128,6 @@ CREATE TABLE like_datatype_table (
   EXCLUDING ALL
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint datatype_table_id_big_not_null on table like_datatype_table
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint datatype_table_id_not_null on table like_datatype_table
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint datatype_table_is_small_not_null on table like_datatype_table
 CREATE TABLE like_fkey_table (
   LIKE fkey_table
   INCLUDING DEFAULTS
@@ -146,13 +136,7 @@ CREATE TABLE like_fkey_table (
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc column id of table like_fkey_table
 NOTICE:    subcommand: type ALTER COLUMN SET DEFAULT (precooked) desc column id of table like_fkey_table
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint fkey_table_big_id_not_null on table like_fkey_table
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint fkey_table_check_col_1_not_null on table like_fkey_table
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint fkey_table_check_col_2_not_null on table like_fkey_table
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint fkey_table_datatype_id_not_null on table like_fkey_table
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint fkey_table_id_not_null on table like_fkey_table
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 -- Volatile table types
@@ -160,29 +144,21 @@ CREATE UNLOGGED TABLE unlogged_table (
     id INT PRIMARY KEY
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc <NULL>
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 CREATE TEMP TABLE temp_table (
     id INT PRIMARY KEY
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc <NULL>
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 CREATE TEMP TABLE temp_table_commit_delete (
     id INT PRIMARY KEY
 )
 ON COMMIT DELETE ROWS;
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc <NULL>
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 CREATE TEMP TABLE temp_table_commit_drop (
     id INT PRIMARY KEY
 )
 ON COMMIT DROP;
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET ATTNOTNULL desc <NULL>
 NOTICE:  DDL test: type simple, tag CREATE INDEX

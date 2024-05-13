@@ -3058,50 +3058,6 @@ describeOneTableDetails(const char *schemaname,
 			}
 			PQclear(result);
 		}
-
-		/* If verbose, print NOT NULL constraints */
-		if (verbose)
-		{
-			printfPQExpBuffer(&buf,
-							  "SELECT co.conname, at.attname, co.connoinherit, co.conislocal,\n"
-							  "co.coninhcount <> 0\n"
-							  "FROM pg_catalog.pg_constraint co JOIN\n"
-							  "pg_catalog.pg_attribute at ON\n"
-							  "(at.attnum = co.conkey[1])\n"
-							  "WHERE co.contype = 'n' AND\n"
-							  "co.conrelid = '%s'::pg_catalog.regclass AND\n"
-							  "at.attrelid = '%s'::pg_catalog.regclass\n"
-							  "ORDER BY at.attnum",
-							  oid,
-							  oid);
-
-			result = PSQLexec(buf.data);
-			if (!result)
-				goto error_return;
-			else
-				tuples = PQntuples(result);
-
-			if (tuples > 0)
-				printTableAddFooter(&cont, _("Not-null constraints:"));
-
-			/* Might be an empty set - that's ok */
-			for (i = 0; i < tuples; i++)
-			{
-				bool		islocal = PQgetvalue(result, i, 3)[0] == 't';
-				bool		inherited = PQgetvalue(result, i, 4)[0] == 't';
-
-				printfPQExpBuffer(&buf, "    \"%s\" NOT NULL \"%s\"%s",
-								  PQgetvalue(result, i, 0),
-								  PQgetvalue(result, i, 1),
-								  PQgetvalue(result, i, 2)[0] == 't' ?
-								  " NO INHERIT" :
-								  islocal && inherited ? _(" (local, inherited)") :
-								  inherited ? _(" (inherited)") : "");
-
-				printTableAddFooter(&cont, buf.data);
-			}
-			PQclear(result);
-		}
 	}
 
 	/* Get view_def if table is a view or materialized view */

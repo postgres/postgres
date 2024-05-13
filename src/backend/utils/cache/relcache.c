@@ -4810,46 +4810,18 @@ RelationGetIndexList(Relation relation)
 		result = lappend_oid(result, index->indexrelid);
 
 		/*
-		 * Non-unique or predicate indexes aren't interesting for either oid
-		 * indexes or replication identity indexes, so don't check them.
-		 * Deferred ones are not useful for replication identity either; but
-		 * we do include them if they are PKs.
+		 * Invalid, non-unique, non-immediate or predicate indexes aren't
+		 * interesting for either oid indexes or replication identity indexes,
+		 * so don't check them.
 		 */
-		if (!index->indisunique ||
+		if (!index->indisvalid || !index->indisunique ||
+			!index->indimmediate ||
 			!heap_attisnull(htup, Anum_pg_index_indpred, NULL))
 			continue;
 
-		/*
-		 * Remember primary key index, if any.  We do this only if the index
-		 * is valid; but if the table is partitioned, then we do it even if
-		 * it's invalid.
-		 *
-		 * The reason for returning invalid primary keys for foreign tables is
-		 * because of pg_dump of NOT NULL constraints, and the fact that PKs
-		 * remain marked invalid until the partitions' PKs are attached to it.
-		 * If we make rd_pkindex invalid, then the attnotnull flag is reset
-		 * after the PK is created, which causes the ALTER INDEX ATTACH
-		 * PARTITION to fail with 'column ... is not marked NOT NULL'.  With
-		 * this, dropconstraint_internal() will believe that the columns must
-		 * not have attnotnull reset, so the PKs-on-partitions can be attached
-		 * correctly, until finally the PK-on-parent is marked valid.
-		 *
-		 * Also, this doesn't harm anything, because rd_pkindex is not a
-		 * "real" index anyway, but a RELKIND_PARTITIONED_INDEX.
-		 */
-		if (index->indisprimary &&
-			(index->indisvalid ||
-			 relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
-		{
+		/* remember primary key index if any */
+		if (index->indisprimary)
 			pkeyIndex = index->indexrelid;
-			pkdeferrable = !index->indimmediate;
-		}
-
-		if (!index->indimmediate)
-			continue;
-
-		if (!index->indisvalid)
-			continue;
 
 		/* remember explicitly chosen replica index */
 		if (index->indisreplident)

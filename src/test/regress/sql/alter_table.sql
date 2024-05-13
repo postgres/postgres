@@ -854,6 +854,7 @@ alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 alter table atacc1 alter column test drop not null;
 \d atacc1
 alter table atacc1 drop constraint "atacc1_pkey";
+alter table atacc1 alter column test drop not null;
 \d atacc1
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;
@@ -919,6 +920,14 @@ insert into parent values (NULL);
 insert into child (a, b) values (NULL, 'foo');
 alter table only parent alter a set not null;
 alter table child alter a set not null;
+delete from parent;
+alter table only parent alter a set not null;
+insert into parent values (NULL);
+alter table child alter a set not null;
+insert into child (a, b) values (NULL, 'foo');
+delete from child;
+alter table child alter a set not null;
+insert into child (a, b) values (NULL, 'foo');
 drop table child;
 drop table parent;
 
@@ -2340,9 +2349,6 @@ CREATE TABLE atnotnull1 ();
 ALTER TABLE atnotnull1
   ADD COLUMN a INT,
   ALTER a SET NOT NULL;
-ALTER TABLE atnotnull1
-  ADD COLUMN b INT,
-  ADD NOT NULL b;
 ALTER TABLE atnotnull1
   ADD COLUMN c INT,
   ADD PRIMARY KEY (c);

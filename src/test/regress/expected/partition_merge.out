@@ -801,8 +801,6 @@ Partition constraint: ((i IS NOT NULL) AND (i >= 0) AND (i < 2))
 Indexes:
     "tp_1_2_pkey" PRIMARY KEY, btree (i)
     "tp_1_2_i_idx" btree (i)
-Not-null constraints:
-    "tp_1_2_i_not_null" NOT NULL "i"
 
 DROP TABLE t;
 --

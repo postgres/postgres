@@ -105,7 +105,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 <phrase>and <replaceable class="parameter">column_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
-{ NOT NULL [ NO INHERIT ] |
+{ NOT NULL |
   NULL |
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
@@ -121,7 +121,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
-  NOT NULL <replaceable class="parameter">column_name</replaceable> [ NO INHERIT ] |
   UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
   PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
@@ -1942,17 +1941,11 @@ ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_central)
   <title>Compatibility</title>
 
   <para>
-   The forms <literal>ADD [COLUMN]</literal>,
+   The forms <literal>ADD</literal> (without <literal>USING INDEX</literal>),
    <literal>DROP [COLUMN]</literal>, <literal>DROP IDENTITY</literal>, <literal>RESTART</literal>,
    <literal>SET DEFAULT</literal>, <literal>SET DATA TYPE</literal> (without <literal>USING</literal>),
    <literal>SET GENERATED</literal>, and <literal>SET <replaceable>sequence_option</replaceable></literal>
-   conform with the SQL standard.
-   The form <literal>ADD <replaceable>table_constraint</replaceable></literal>
-   conforms with the SQL standard when the <literal>USING INDEX</literal> and
-   <literal>NOT VALID</literal> clauses are omitted and the constraint type is
-   one of <literal>CHECK</literal>, <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>,
-   or <literal>REFERENCES</literal>.
-   The other forms are
+   conform with the SQL standard.  The other forms are
    <productname>PostgreSQL</productname> extensions of the SQL standard.
    Also, the ability to specify more than one manipulation in a single
    <command>ALTER TABLE</command> command is an extension.

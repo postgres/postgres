@@ -955,8 +955,6 @@ Policies:
     POLICY "pp1r" AS RESTRICTIVE
       TO regress_rls_dave
       USING ((cid < 55))
-Not-null constraints:
-    "part_document_dlevel_not_null" NOT NULL "dlevel"
 Partitions: part_document_fiction FOR VALUES FROM (11) TO (12),
             part_document_nonfiction FOR VALUES FROM (99) TO (100),
             part_document_satire FOR VALUES FROM (55) TO (56)

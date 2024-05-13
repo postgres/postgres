@@ -1117,17 +1117,15 @@ alter table idxpart attach partition idxpart3 for values from (20, 20) to (30, 3
 select conname, contype, conrelid::regclass, conindid::regclass, conkey
   from pg_constraint where conrelid::regclass::text like 'idxpart%'
   order by conrelid::regclass::text, conname;
-       conname       | contype | conrelid  |    conindid    | conkey 
----------------------+---------+-----------+----------------+--------
- idxpart_pkey        | p       | idxpart   | idxpart_pkey   | {1,2}
- idxpart1_pkey       | p       | idxpart1  | idxpart1_pkey  | {1,2}
- idxpart2_pkey       | p       | idxpart2  | idxpart2_pkey  | {1,2}
- idxpart21_pkey      | p       | idxpart21 | idxpart21_pkey | {1,2}
- idxpart22_pkey      | p       | idxpart22 | idxpart22_pkey | {1,2}
- idxpart3_a_not_null | n       | idxpart3  | -              | {2}
- idxpart3_b_not_null | n       | idxpart3  | -              | {1}
- idxpart3_pkey       | p       | idxpart3  | idxpart3_pkey  | {2,1}
-(8 rows)
+    conname     | contype | conrelid  |    conindid    | conkey 
+----------------+---------+-----------+----------------+--------
+ idxpart_pkey   | p       | idxpart   | idxpart_pkey   | {1,2}
+ idxpart1_pkey  | p       | idxpart1  | idxpart1_pkey  | {1,2}
+ idxpart2_pkey  | p       | idxpart2  | idxpart2_pkey  | {1,2}
+ idxpart21_pkey | p       | idxpart21 | idxpart21_pkey | {1,2}
+ idxpart22_pkey | p       | idxpart22 | idxpart22_pkey | {1,2}
+ idxpart3_pkey  | p       | idxpart3  | idxpart3_pkey  | {2,1}
+(6 rows)
 
 drop table idxpart;
 -- Verify that multi-layer partitioning honors the requirement that all
@@ -1260,20 +1258,12 @@ create table idxpart (a int) partition by range (a);
 create table idxpart0 (like idxpart);
 alter table idxpart0 add unique (a);
 alter table idxpart attach partition idxpart0 default;
-alter table only idxpart add primary key (a);  -- works, but idxpart0.a is nullable
-\d idxpart0
-              Table "public.idxpart0"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
- a      | integer |           |          | 
-Partition of: idxpart DEFAULT
-Indexes:
-    "idxpart0_a_key" UNIQUE CONSTRAINT, btree (a)
-
-alter index idxpart_pkey attach partition idxpart0_a_key; -- fails, lacks NOT NULL
-ERROR:  invalid primary key definition
-DETAIL:  Column "a" of relation "idxpart0" is not marked NOT NULL.
+alter table only idxpart add primary key (a);  -- fail, no not-null constraint
+ERROR:  constraint must be added to child tables too
+DETAIL:  Column "a" of relation "idxpart0" is not already NOT NULL.
+HINT:  Do not specify the ONLY keyword.
 alter table idxpart0 alter column a set not null;
+alter table only idxpart add primary key (a);  -- now it works
 alter index idxpart_pkey attach partition idxpart0_a_key;
 alter table idxpart0 alter column a drop not null;  -- fail, pkey needs it
 ERROR:  column "a" is marked NOT NULL in parent table

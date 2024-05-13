@@ -667,10 +667,9 @@ create table idxpart (a int) partition by range (a);
 create table idxpart0 (like idxpart);
 alter table idxpart0 add unique (a);
 alter table idxpart attach partition idxpart0 default;
-alter table only idxpart add primary key (a);  -- works, but idxpart0.a is nullable
-\d idxpart0
-alter index idxpart_pkey attach partition idxpart0_a_key; -- fails, lacks NOT NULL
+alter table only idxpart add primary key (a);  -- fail, no not-null constraint
 alter table idxpart0 alter column a set not null;
+alter table only idxpart add primary key (a);  -- now it works
 alter index idxpart_pkey attach partition idxpart0_a_key;
 alter table idxpart0 alter column a drop not null;  -- fail, pkey needs it
 drop table idxpart;
