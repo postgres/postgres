@@ -756,11 +756,13 @@ ALTER TABLE pitest3_p1
             ALTER COLUMN f3 ADD GENERATED ALWAYS AS IDENTITY (START WITH 3);
 ERROR:  cannot add identity to a column of a partition
 -- fails, changing only the partitioned table not allowed
+BEGIN;
+ALTER TABLE pitest3_p1 ALTER COLUMN f3 SET NOT NULL;
 ALTER TABLE ONLY pitest3
-            ALTER COLUMN f3 SET NOT NULL,
             ALTER COLUMN f3 ADD GENERATED ALWAYS AS IDENTITY (START WITH 3);
-ERROR:  constraint must be added to child tables too
+ERROR:  cannot add identity to a column of only the partitioned table
 HINT:  Do not specify the ONLY keyword.
+ROLLBACK;
 ALTER TABLE pitest3
             ALTER COLUMN f3 SET NOT NULL,
             ALTER COLUMN f3 ADD GENERATED ALWAYS AS IDENTITY (START WITH 3);
