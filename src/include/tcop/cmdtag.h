@@ -22,7 +22,6 @@
 typedef enum CommandTag
 {
 #include "tcop/cmdtaglist.h"
-	COMMAND_TAG_NEXTTAG
 } CommandTag;
 
 #undef PG_CMDTAG
