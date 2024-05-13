@@ -553,6 +553,8 @@ DROP ACCESS METHOD partitions_merge_heap;
 -- the merging partitions to do the merge.
 CREATE ROLE regress_partition_merge_alice;
 CREATE ROLE regress_partition_merge_bob;
+GRANT ALL ON SCHEMA partitions_merge_schema TO regress_partition_merge_alice;
+GRANT ALL ON SCHEMA partitions_merge_schema TO regress_partition_merge_bob;
 
 SET SESSION AUTHORIZATION regress_partition_merge_alice;
 CREATE TABLE t (i int) PARTITION BY RANGE (i);
@@ -579,6 +581,8 @@ ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 RESET SESSION AUTHORIZATION;
 
 DROP TABLE t;
+REVOKE ALL ON SCHEMA partitions_merge_schema FROM regress_partition_merge_alice;
+REVOKE ALL ON SCHEMA partitions_merge_schema FROM regress_partition_merge_bob;
 DROP ROLE regress_partition_merge_alice;
 DROP ROLE regress_partition_merge_bob;
 

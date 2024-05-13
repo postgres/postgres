@@ -896,37 +896,42 @@ DROP ACCESS METHOD partition_split_heap;
 
 -- Test permission checks.  The user needs to own the parent table and the
 -- the partition to split to do the split.
-CREATE ROLE regress_partition_merge_alice;
-CREATE ROLE regress_partition_merge_bob;
+CREATE ROLE regress_partition_split_alice;
+CREATE ROLE regress_partition_split_bob;
+GRANT ALL ON SCHEMA partition_split_schema TO regress_partition_split_alice;
+GRANT ALL ON SCHEMA partition_split_schema TO regress_partition_split_bob;
 
-SET SESSION AUTHORIZATION regress_partition_merge_alice;
+SET SESSION AUTHORIZATION regress_partition_split_alice;
 CREATE TABLE t (i int) PARTITION BY RANGE (i);
 CREATE TABLE tp_0_2 PARTITION OF t FOR VALUES FROM (0) TO (2);
 
-SET SESSION AUTHORIZATION regress_partition_merge_bob;
+SET SESSION AUTHORIZATION regress_partition_split_bob;
 ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
   (PARTITION tp_0_1 FOR VALUES FROM (0) TO (1),
    PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
 RESET SESSION AUTHORIZATION;
 
-ALTER TABLE t OWNER TO regress_partition_merge_bob;
-SET SESSION AUTHORIZATION regress_partition_merge_bob;
+ALTER TABLE t OWNER TO regress_partition_split_bob;
+SET SESSION AUTHORIZATION regress_partition_split_bob;
 ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
   (PARTITION tp_0_1 FOR VALUES FROM (0) TO (1),
    PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
 RESET SESSION AUTHORIZATION;
 
-ALTER TABLE tp_0_2 OWNER TO regress_partition_merge_bob;
-SET SESSION AUTHORIZATION regress_partition_merge_bob;
+ALTER TABLE tp_0_2 OWNER TO regress_partition_split_bob;
+SET SESSION AUTHORIZATION regress_partition_split_bob;
 ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
   (PARTITION tp_0_1 FOR VALUES FROM (0) TO (1),
    PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
 RESET SESSION AUTHORIZATION;
 
 DROP TABLE t;
-DROP ROLE regress_partition_merge_alice;
-DROP ROLE regress_partition_merge_bob;
+REVOKE ALL ON SCHEMA partition_split_schema FROM regress_partition_split_alice;
+REVOKE ALL ON SCHEMA partition_split_schema FROM regress_partition_split_bob;
+DROP ROLE regress_partition_split_alice;
+DROP ROLE regress_partition_split_bob;
 
+RESET search_path;
 
 --
 DROP SCHEMA partition_split_schema;
