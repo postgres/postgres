@@ -14,6 +14,7 @@ GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS) \
                    syncrep_yyerror \
                    report_invalid_record:2 \
                    ereport_startup_progress \
+                   json_token_error:2 \
                    json_manifest_parse_failure:2 \
                    error_cb:2
 GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS) \
@@ -23,6 +24,7 @@ GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS) \
                    write_stderr:1:c-format \
                    report_invalid_record:2:c-format \
                    ereport_startup_progress:1:c-format \
+                   json_token_error:2:c-format \
                    error_cb:2:c-format
 
 gettext-files: generated-parser-sources generated-headers
