@@ -1,0 +1,118 @@
+/* Style for PDF created by MkDocs with mkdocs-with-pdf plugin (https://pypi.org/project/mkdocs-with-pdf/) */
+@media print {
+    html {
+        font-size: 100%;
+        font-family: "Poppins", sans-serif;
+    }
+
+    body {
+        font-family: "Poppins", sans-serif;
+        color: #00162b;
+    }
+
+    article {
+        font-family: "Poppins", sans-serif;
+        text-align: justify;
+    }
+
+    pre,
+    code,
+    var,
+    samp,
+    kbd,
+    tt {
+      font-family: monospace;
+      font-size: 110%;
+    }
+
+    pre code,
+    pre var,
+    pre samp,
+    pre kbd,
+    pre tt {
+      font-size: 110%;
+    }
+}
+
+@page {
+    size: a4 portrait;
+    margin: 25mm 20mm 25mm 20mm;
+    counter-increment: page;
+    white-space: pre;
+    color: #00162b;
+
+    @top-right {
+        content: string(chapter);
+    }
+
+    @bottom-left {
+        content: string(subtitle);
+    }
+
+    @bottom-center {
+        content: counter(page)' of 'counter(pages);
+    }
+
+    @bottom-right {
+    }
+}
+
+@page :first {
+    @top-right {
+        content: '';
+    }
+
+    @bottom-right {
+        content: '';
+    }
+
+    @bottom-left {
+        content: '';
+    }
+}
+
+article {
+    page-break-before: always;
+    min-height: 100%;
+}
+
+article {
+
+    h1,
+    h2,
+    h3 {
+        border-bottom: 0px solid #fff;
+    }
+
+    h1>.pdf-order,
+    h2>.pdf-order,
+    h3>.pdf-order {
+        padding-left: 6px;
+        padding-right: 0.8rem;
+    }
+}
+
+article h1,
+h2,
+h3 {
+    border-bottom: 0px solid #fff;
+    color: #3e4875;
+}
+
+.admonition {
+    font-size: 100%;
+}
+
+article div.tabbed-content--wrap {
+  page-break-inside: auto !important;
+}
+article div.tabbed-content--wrap * {
+  page-break-before: auto !important;
+  page-break-inside: auto !important;
+}
+
+.md-typeset .admonition.note,
+.md-typeset details.note {
+    color: #00162b;
+    border-color: #fff;
+}

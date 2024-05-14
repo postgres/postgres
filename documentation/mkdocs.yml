@@ -119,7 +119,17 @@ plugins:
   - glightbox
   - macros:
       include_yaml:
-        - 'variables.yml' # Use in markdown as '{{ VAR }}'   
+        - 'variables.yml' # Use in markdown as '{{ VAR }}'
+  - with-pdf: # https://github.com/orzih/mkdocs-with-pdf
+          output_path: '_pdf/PerconaTDE.pdf'
+          cover_title: 'Percona Transparent Data Encryption'
+          cover_subtitle: Alpha 1 (2024-03-28)
+          author: 'Percona Technical Documentation Team'
+          cover_logo: docs/_images/Percona_Logo_Color.png
+          debug_html: false
+#          two_columns_level: 3
+          custom_template_path: _resource/templates
+          enabled_if_env: ENABLE_PDF_EXPORT   
 
 extra:
   version:

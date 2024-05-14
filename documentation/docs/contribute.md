@@ -171,10 +171,25 @@ cd documentation
 mkdocs serve
 ```
 
-
-
-
 View the site at <http://0.0.0.0:8000>
+
+#### Build PDF file
+
+To build a PDF version of the documentation, do the following:
+
+1. Disable displaying the last modification of the page:
+
+    ```sh
+    export ENABLED_GIT_REVISION_DATE=false
+    ```
+
+2. Build the PDF file:
+
+    ```sh
+    ENABLE_PDF_EXPORT=1 mkdocs build -f mkdocs-pdf.yml
+    ``` 
+
+    The PDF document is in the ``site/pdf`` folder.
 
 [MkDocs]: https://www.mkdocs.org/
 [Markdown]: https://daringfireball.net/projects/markdown/
