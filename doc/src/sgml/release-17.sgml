@@ -1981,6 +1981,17 @@ The parameter is "min_rows".
 </listitem>
 
 <!--
+Author: Robert Haas <rhaas@postgresql.org>
+2024-04-02 [cafe10565] Allow SIGINT to cancel psql database reconnections.
+-->
+
+<listitem>
+<para>
+Allow psql connections to be canceled with control-C (Tristan Partin)
+</para>
+</listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2024-04-06 [90f517821] Re-implement psql's FETCH_COUNT feature atop libpq's chu
 -->
