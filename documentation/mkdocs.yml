@@ -21,28 +21,25 @@ theme:
   custom_dir: _resource/overrides
   font:
     text: Roboto
-
   palette:
-
-    #Automatic switch
     - media: "(prefers-color-scheme)"
       toggle:
         icon: material/brightness-auto
         name: Color theme set to Automatic. Click to change
-
-    # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: percona-light
+      primary: custom
+      accent: custom
       toggle:
-        icon: material/toggle-switch-off-outline
-        name: Switch to dark mode
-
-    # Dark mode
+        icon: material/brightness-7
+        name: Color theme set to Light Mode. Click to change
     - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+      scheme: percona-dark
+      primary: custom
+      accent: custom
       toggle:
-        icon: material/toggle-switch
-        name: Switch to light mode
+        icon: material/brightness-4
+        name: Color theme set to Dark Mode. Click to change
 
 # Theme features
 
