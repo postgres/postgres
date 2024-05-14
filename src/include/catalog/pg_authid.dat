@@ -84,7 +84,7 @@
   rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
   rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
   rolpassword => '_null_', rolvaliduntil => '_null_' },
-{ oid => '9256', oid_symbol => 'ROLE_PG_MAINTAIN',
+{ oid => '6337', oid_symbol => 'ROLE_PG_MAINTAIN',
   rolname => 'pg_maintain', rolsuper => 'f', rolinherit => 't',
   rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
   rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
