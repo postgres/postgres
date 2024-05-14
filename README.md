@@ -32,6 +32,11 @@ ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
 sudo systemctl restart postgresql.service
 ```
 
+* On RHEL 8 compatible OS:
+```sh
+sudo systemctl restart postgresql-16.service
+```
+
 4. Create the extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command. Using this command requires the privileges of a superuser or a database owner. Connect to `psql` as a superuser for a database and run the following command:
 
 ```sql
@@ -91,6 +96,12 @@ CREATE TABLE albums (
 sudo apt install make gcc autoconf libcurl4-openssl-dev postgresql-server-dev-16
 ```
 
+* On RHEL 8 compatible OS:
+```sh
+sudo yum install epel-release
+yum --enablerepo=powertools install git make gcc autoconf libcurl-devel postgresql16-devel perl-IPC-Run redhat-rpm-config openssl-devel
+```
+  
 * On MacOS:
 ```sh
 brew install make autoconf curl gettext postresql@16
@@ -112,6 +123,11 @@ cd pg_tde
 ./configure
 make USE_PGXS=1
 sudo make USE_PGXS=1 install
+```
+On RHEL 8 compatible OS:
+```
+PATH=$PATH:/usr/pgsql-16/bin/ make USE_PGXS=1
+sudo PATH=$PATH:/usr/pgsql-16/bin/ make USE_PGXS=1 install
 ```
 
 _See [Make Builds for Developers](https://github.com/Percona-Lab/pg_tde/wiki/Make-builds-for-developers) for more info on the build infrastructure._
