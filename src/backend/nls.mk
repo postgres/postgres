@@ -13,14 +13,17 @@ GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS) \
                    scanner_yyerror \
                    syncrep_yyerror \
                    report_invalid_record:2 \
-                   ereport_startup_progress
+                   ereport_startup_progress \
+                   json_manifest_parse_failure:2 \
+                   error_cb:2
 GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS) \
                    GUC_check_errmsg:1:c-format \
                    GUC_check_errdetail:1:c-format \
                    GUC_check_errhint:1:c-format \
                    write_stderr:1:c-format \
                    report_invalid_record:2:c-format \
-                   ereport_startup_progress:1:c-format
+                   ereport_startup_progress:1:c-format \
+                   error_cb:2:c-format
 
 gettext-files: generated-parser-sources generated-headers
 	find $(srcdir) $(srcdir)/../common $(srcdir)/../port -name '*.c' -print | LC_ALL=C sort >$@
