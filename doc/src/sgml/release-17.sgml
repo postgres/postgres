@@ -1902,6 +1902,17 @@ Add libpq function PQsetChunkedRowsMode to allow retrieval of results in chunks 
 </listitem>
 
 <!--
+Author: David Rowley <drowley@postgresql.org>
+2024-04-07 [c4ab7da60] Avoid needless large memcpys in libpq socket writing
+-->
+
+<listitem>
+<para>
+Allow libpq to more efficiently transfer large blocks of data (Melih Mutlu)
+</para>
+</listitem>
+
+<!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2024-04-08 [d39a49c1e] Support TLS handshake directly without SSLRequest negoti
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
