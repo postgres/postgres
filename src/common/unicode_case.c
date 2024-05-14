@@ -28,7 +28,7 @@ static size_t convert_case(char *dst, size_t dstsize, const char *src, ssize_t s
 pg_wchar
 unicode_lowercase_simple(pg_wchar code)
 {
-	const		pg_case_map *map = find_case_map(code);
+	const pg_case_map *map = find_case_map(code);
 
 	return map ? map->simplemap[CaseLower] : code;
 }
@@ -36,7 +36,7 @@ unicode_lowercase_simple(pg_wchar code)
 pg_wchar
 unicode_titlecase_simple(pg_wchar code)
 {
-	const		pg_case_map *map = find_case_map(code);
+	const pg_case_map *map = find_case_map(code);
 
 	return map ? map->simplemap[CaseTitle] : code;
 }
@@ -44,7 +44,7 @@ unicode_titlecase_simple(pg_wchar code)
 pg_wchar
 unicode_uppercase_simple(pg_wchar code)
 {
-	const		pg_case_map *map = find_case_map(code);
+	const pg_case_map *map = find_case_map(code);
 
 	return map ? map->simplemap[CaseUpper] : code;
 }
@@ -156,7 +156,7 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 	{
 		pg_wchar	u1 = utf8_to_unicode((unsigned char *) src + srcoff);
 		int			u1len = unicode_utf8len(u1);
-		const		pg_case_map *casemap = find_case_map(u1);
+		const pg_case_map *casemap = find_case_map(u1);
 
 		if (str_casekind == CaseTitle)
 		{
@@ -210,7 +210,7 @@ find_case_map(pg_wchar ucs)
 	Assert(lengthof(case_map) >= 0x80);
 	if (ucs < 0x80)
 	{
-		const		pg_case_map *map = &case_map[ucs];
+		const pg_case_map *map = &case_map[ucs];
 
 		Assert(map->codepoint == ucs);
 		return map;

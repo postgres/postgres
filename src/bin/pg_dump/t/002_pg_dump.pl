@@ -3855,9 +3855,7 @@ my %tests = (
 		\QCREATE INDEX measurement_city_id_logdate_idx ON ONLY dump_test.measurement USING\E
 		/xm,
 		like => {
-			%full_runs,
-			%dump_test_schema_runs,
-			section_post_data => 1,
+			%full_runs, %dump_test_schema_runs, section_post_data => 1,
 		},
 		unlike => {
 			exclude_dump_test_schema => 1,
@@ -4783,10 +4781,8 @@ $node->command_fails_like(
 ##############################################################
 # Test dumping pg_catalog (for research -- cannot be reloaded)
 
-$node->command_ok(
-	[ 'pg_dump', '-p', "$port", '-n', 'pg_catalog' ],
-	'pg_dump: option -n pg_catalog'
-);
+$node->command_ok([ 'pg_dump', '-p', "$port", '-n', 'pg_catalog' ],
+	'pg_dump: option -n pg_catalog');
 
 #########################################
 # Test valid database exclusion patterns
@@ -4953,8 +4949,8 @@ foreach my $run (sort keys %pgdump_runs)
 		}
 		# Check for useless entries in "unlike" list.  Runs that are
 		# not listed in "like" don't need to be excluded in "unlike".
-		if ($tests{$test}->{unlike}->{$test_key} &&
-			!defined($tests{$test}->{like}->{$test_key}))
+		if ($tests{$test}->{unlike}->{$test_key}
+			&& !defined($tests{$test}->{like}->{$test_key}))
 		{
 			die "useless \"unlike\" entry \"$test_key\" in test \"$test\"";
 		}

@@ -170,7 +170,8 @@ $standby1->start;
 # Capture the inactive_since of the slot from the primary. Note that the slot
 # will be inactive since the corresponding subscription was dropped.
 my $inactive_since_on_primary =
-	$primary->validate_slot_inactive_since('lsub1_slot', $slot_creation_time_on_primary);
+  $primary->validate_slot_inactive_since('lsub1_slot',
+	$slot_creation_time_on_primary);
 
 # Wait for the standby to catch up so that the standby is not lagging behind
 # the failover slots.
@@ -190,7 +191,8 @@ is( $standby1->safe_psql(
 
 # Capture the inactive_since of the synced slot on the standby
 my $inactive_since_on_standby =
-	$standby1->validate_slot_inactive_since('lsub1_slot', $slot_creation_time_on_primary);
+  $standby1->validate_slot_inactive_since('lsub1_slot',
+	$slot_creation_time_on_primary);
 
 # Synced slot on the standby must get its own inactive_since
 is( $standby1->safe_psql(
@@ -264,7 +266,8 @@ $primary->safe_psql(
 # Capture the inactive_since of the slot from the primary. Note that the slot
 # will be inactive since the corresponding subscription was dropped.
 $inactive_since_on_primary =
-	$primary->validate_slot_inactive_since('lsub1_slot', $slot_creation_time_on_primary);
+  $primary->validate_slot_inactive_since('lsub1_slot',
+	$slot_creation_time_on_primary);
 
 # Wait for the standby to catch up so that the standby is not lagging behind
 # the failover slots.
@@ -276,8 +279,8 @@ my $log_offset = -s $standby1->logfile;
 $standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
 
 # Confirm that the invalidated slot has been dropped.
-$standby1->wait_for_log(qr/dropped replication slot "lsub1_slot" of dbid [0-9]+/,
-	$log_offset);
+$standby1->wait_for_log(
+	qr/dropped replication slot "lsub1_slot" of dbid [0-9]+/, $log_offset);
 
 # Confirm that the logical slot has been re-created on the standby and is
 # flagged as 'synced'
@@ -336,7 +339,8 @@ ok( $stderr =~
 	"cannot sync slots if dbname is not specified in primary_conninfo");
 
 # Add the dbname back to the primary_conninfo for further tests
-$standby1->append_conf('postgresql.conf', "primary_conninfo = '$connstr_1 dbname=postgres'");
+$standby1->append_conf('postgresql.conf',
+	"primary_conninfo = '$connstr_1 dbname=postgres'");
 $standby1->reload;
 
 ##################################################
@@ -427,19 +431,20 @@ $primary->wait_for_replay_catchup($standby1);
 # synced slot. See the test where we promote standby (Promote the standby1 to
 # primary.)
 $primary->safe_psql('postgres',
-	"SELECT pg_logical_emit_message(false, 'test', 'test');"
-);
+	"SELECT pg_logical_emit_message(false, 'test', 'test');");
 
 # Get the confirmed_flush_lsn for the logical slot snap_test_slot on the primary
 my $confirmed_flush_lsn = $primary->safe_psql('postgres',
-	"SELECT confirmed_flush_lsn from pg_replication_slots WHERE slot_name = 'snap_test_slot';");
+	"SELECT confirmed_flush_lsn from pg_replication_slots WHERE slot_name = 'snap_test_slot';"
+);
 
 $standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
 
 # Verify that confirmed_flush_lsn of snap_test_slot slot is synced to the standby
 ok( $standby1->poll_query_until(
 		'postgres',
-		"SELECT '$confirmed_flush_lsn' = confirmed_flush_lsn from pg_replication_slots WHERE slot_name = 'snap_test_slot' AND synced AND NOT temporary;"),
+		"SELECT '$confirmed_flush_lsn' = confirmed_flush_lsn from pg_replication_slots WHERE slot_name = 'snap_test_slot' AND synced AND NOT temporary;"
+	),
 	'confirmed_flush_lsn of slot snap_test_slot synced to standby');
 
 ##################################################
@@ -479,22 +484,24 @@ GRANT USAGE on SCHEMA myschema TO repl_role;
 });
 
 # Start the standby with changed primary_conninfo.
-$standby1->append_conf('postgresql.conf', "primary_conninfo = '$connstr_1 dbname=slotsync_test_db user=repl_role'");
+$standby1->append_conf('postgresql.conf',
+	"primary_conninfo = '$connstr_1 dbname=slotsync_test_db user=repl_role'");
 $standby1->start;
 
 # Run the synchronization function. If the sync flow was not prepared
 # to handle such attacks, it would have failed during the validation
 # of the primary_slot_name itself resulting in
 # ERROR:  slot synchronization requires valid primary_slot_name
-$standby1->safe_psql('slotsync_test_db', "SELECT pg_sync_replication_slots();");
+$standby1->safe_psql('slotsync_test_db',
+	"SELECT pg_sync_replication_slots();");
 
 # Reset the dbname and user in primary_conninfo to the earlier values.
-$standby1->append_conf('postgresql.conf', "primary_conninfo = '$connstr_1 dbname=postgres'");
+$standby1->append_conf('postgresql.conf',
+	"primary_conninfo = '$connstr_1 dbname=postgres'");
 $standby1->reload;
 
 # Drop the newly created database.
-$primary->psql('postgres',
-	q{DROP DATABASE slotsync_test_db;});
+$primary->psql('postgres', q{DROP DATABASE slotsync_test_db;});
 
 ##################################################
 # Test to confirm that the slot sync worker exits on invalid GUC(s) and
@@ -508,20 +515,21 @@ $standby1->append_conf('postgresql.conf', qq(sync_replication_slots = on));
 $standby1->reload;
 
 # Confirm that the slot sync worker is able to start.
-$standby1->wait_for_log(qr/slot sync worker started/,
-	$log_offset);
+$standby1->wait_for_log(qr/slot sync worker started/, $log_offset);
 
 $log_offset = -s $standby1->logfile;
 
 # Disable another GUC required for slot sync.
-$standby1->append_conf(	'postgresql.conf', qq(hot_standby_feedback = off));
+$standby1->append_conf('postgresql.conf', qq(hot_standby_feedback = off));
 $standby1->reload;
 
 # Confirm that slot sync worker acknowledge the GUC change and logs the msg
 # about wrong configuration.
-$standby1->wait_for_log(qr/slot sync worker will restart because of a parameter change/,
+$standby1->wait_for_log(
+	qr/slot sync worker will restart because of a parameter change/,
 	$log_offset);
-$standby1->wait_for_log(qr/slot synchronization requires hot_standby_feedback to be enabled/,
+$standby1->wait_for_log(
+	qr/slot synchronization requires hot_standby_feedback to be enabled/,
 	$log_offset);
 
 $log_offset = -s $standby1->logfile;
@@ -531,8 +539,7 @@ $standby1->append_conf('postgresql.conf', "hot_standby_feedback = on");
 $standby1->reload;
 
 # Confirm that the slot sync worker is able to start now.
-$standby1->wait_for_log(qr/slot sync worker started/,
-	$log_offset);
+$standby1->wait_for_log(qr/slot sync worker started/, $log_offset);
 
 ##################################################
 # Test to confirm that confirmed_flush_lsn of the logical slot on the primary
@@ -557,7 +564,8 @@ $subscriber1->wait_for_subscription_sync;
 
 # Do not allow any further advancement of the confirmed_flush_lsn for the
 # lsub1_slot.
-$subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 DISABLE");
+$subscriber1->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_mysub1 DISABLE");
 
 # Wait for the replication slot to become inactive on the publisher
 $primary->poll_query_until(
@@ -567,12 +575,14 @@ $primary->poll_query_until(
 
 # Get the confirmed_flush_lsn for the logical slot lsub1_slot on the primary
 my $primary_flush_lsn = $primary->safe_psql('postgres',
-	"SELECT confirmed_flush_lsn from pg_replication_slots WHERE slot_name = 'lsub1_slot';");
+	"SELECT confirmed_flush_lsn from pg_replication_slots WHERE slot_name = 'lsub1_slot';"
+);
 
 # Confirm that confirmed_flush_lsn of lsub1_slot slot is synced to the standby
 ok( $standby1->poll_query_until(
 		'postgres',
-		"SELECT '$primary_flush_lsn' = confirmed_flush_lsn from pg_replication_slots WHERE slot_name = 'lsub1_slot' AND synced AND NOT temporary;"),
+		"SELECT '$primary_flush_lsn' = confirmed_flush_lsn from pg_replication_slots WHERE slot_name = 'lsub1_slot' AND synced AND NOT temporary;"
+	),
 	'confirmed_flush_lsn of slot lsub1_slot synced to standby');
 
 ##################################################
@@ -636,7 +646,8 @@ $subscriber2->safe_psql(
 
 $subscriber2->wait_for_subscription_sync;
 
-$subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 ENABLE");
+$subscriber1->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_mysub1 ENABLE");
 
 my $offset = -s $primary->logfile;
 
@@ -674,7 +685,8 @@ $primary->wait_for_log(
 # primary and keeps waiting for the standby specified in standby_slot_names
 # (sb1_slot aka standby1).
 $result =
-  $subscriber1->safe_psql('postgres', "SELECT count(*) <> $primary_row_count FROM tab_int;");
+  $subscriber1->safe_psql('postgres',
+	"SELECT count(*) <> $primary_row_count FROM tab_int;");
 is($result, 't',
 	"subscriber1 doesn't get data from primary until standby1 acknowledges changes"
 );
@@ -714,7 +726,8 @@ $standby1->stop;
 
 # Disable the regress_mysub1 to prevent the logical walsender from generating
 # more warnings.
-$subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 DISABLE");
+$subscriber1->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_mysub1 DISABLE");
 
 # Wait for the replication slot to become inactive on the publisher
 $primary->poll_query_until(
@@ -758,8 +771,7 @@ $primary->reload;
 $back_q->quit;
 
 $primary->safe_psql('postgres',
-	"SELECT pg_drop_replication_slot('test_slot');"
-);
+	"SELECT pg_drop_replication_slot('test_slot');");
 
 # Add the physical slot (sb1_slot) back to the standby_slot_names for further
 # tests.
@@ -767,7 +779,8 @@ $primary->adjust_conf('postgresql.conf', 'standby_slot_names', "'sb1_slot'");
 $primary->reload;
 
 # Enable the regress_mysub1 for further tests
-$subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 ENABLE");
+$subscriber1->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_mysub1 ENABLE");
 
 ##################################################
 # Test that logical replication will wait for the user-created inactive
@@ -835,14 +848,16 @@ $standby1->promote;
 # promotion. We do this check before the slot is enabled on the new primary
 # below, otherwise, the slot gets active setting inactive_since to NULL.
 my $inactive_since_on_new_primary =
-	$standby1->validate_slot_inactive_since('lsub1_slot', $promotion_time_on_primary);
+  $standby1->validate_slot_inactive_since('lsub1_slot',
+	$promotion_time_on_primary);
 
 is( $standby1->safe_psql(
 		'postgres',
 		"SELECT '$inactive_since_on_new_primary'::timestamptz > '$inactive_since_on_primary'::timestamptz"
 	),
 	"t",
-	'synchronized slot has got its own inactive_since on the new primary after promotion');
+	'synchronized slot has got its own inactive_since on the new primary after promotion'
+);
 
 # Update subscription with the new primary's connection info
 my $standby1_conninfo = $standby1->connstr . ' dbname=postgres';
@@ -850,8 +865,10 @@ $subscriber1->safe_psql('postgres',
 	"ALTER SUBSCRIPTION regress_mysub1 CONNECTION '$standby1_conninfo';");
 
 # Confirm the synced slot 'lsub1_slot' is retained on the new primary
-is($standby1->safe_psql('postgres',
-	q{SELECT count(*) = 2 FROM pg_replication_slots WHERE slot_name IN ('lsub1_slot', 'snap_test_slot') AND synced AND NOT temporary;}),
+is( $standby1->safe_psql(
+		'postgres',
+		q{SELECT count(*) = 2 FROM pg_replication_slots WHERE slot_name IN ('lsub1_slot', 'snap_test_slot') AND synced AND NOT temporary;}
+	),
 	't',
 	'synced slot retained on the new primary');
 
@@ -861,9 +878,8 @@ $standby1->safe_psql('postgres',
 $standby1->wait_for_catchup('regress_mysub1');
 
 # Confirm that data in tab_int replicated on the subscriber
-is( $subscriber1->safe_psql('postgres', q{SELECT count(*) FROM tab_int;}),
-	"20",
-	'data replicated from the new primary');
+is($subscriber1->safe_psql('postgres', q{SELECT count(*) FROM tab_int;}),
+	"20", 'data replicated from the new primary');
 
 # Consume the data from the snap_test_slot. The synced slot should reach a
 # consistent point by restoring the snapshot at the restart_lsn serialized

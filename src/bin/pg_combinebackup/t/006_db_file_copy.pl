@@ -36,23 +36,29 @@ EOM
 # Take an incremental backup.
 my $backup2path = $primary->backup_dir . '/backup2';
 $primary->command_ok(
-	[ 'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
-	  '--incremental', $backup1path . '/backup_manifest' ],
+	[
+		'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
+		'--incremental', $backup1path . '/backup_manifest'
+	],
 	"incremental backup");
 
 # Recover the incremental backup.
 my $restore = PostgreSQL::Test::Cluster->new('restore');
 $restore->init_from_backup($primary, 'backup2',
-						   combine_with_prior => [ 'backup1' ]);
+	combine_with_prior => ['backup1']);
 $restore->start();
 
 # Query the DB.
 my $stdout;
 my $stderr;
-$restore->psql('lakh', 'SELECT * FROM t1',
-			   stdout => \$stdout, stderr => \$stderr);
+$restore->psql(
+	'lakh', 'SELECT * FROM t1',
+	stdout => \$stdout,
+	stderr => \$stderr);
 is($stdout, '', 'SELECT * FROM t1: no stdout');
-like($stderr, qr/relation "t1" does not exist/,
-	 'SELECT * FROM t1: stderr missing table');
+like(
+	$stderr,
+	qr/relation "t1" does not exist/,
+	'SELECT * FROM t1: stderr missing table');
 
 done_testing();

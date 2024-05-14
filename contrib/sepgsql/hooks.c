@@ -50,7 +50,7 @@ typedef struct
 	 * command. Elsewhere (including the case of default) NULL.
 	 */
 	const char *createdb_dtemplate;
-}			sepgsql_context_info_t;
+} sepgsql_context_info_t;
 
 static sepgsql_context_info_t sepgsql_context_info;
 

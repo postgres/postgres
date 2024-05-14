@@ -490,7 +490,8 @@ $node_publisher->safe_psql('postgres',
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE test_replica_id_full (x int, y text)");
 $node_subscriber->safe_psql('postgres',
-	"CREATE INDEX test_replica_id_full_idx ON test_replica_id_full USING HASH (x)");
+	"CREATE INDEX test_replica_id_full_idx ON test_replica_id_full USING HASH (x)"
+);
 
 # insert some initial data
 $node_publisher->safe_psql('postgres',

@@ -67,7 +67,7 @@ typedef struct
 {
 	SubTransactionId subid;
 	char	   *label;
-}			pending_label;
+} pending_label;
 
 /*
  * sepgsql_get_client_label

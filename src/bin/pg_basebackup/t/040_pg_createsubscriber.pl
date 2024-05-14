@@ -140,11 +140,11 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_t->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'),
-		'--socket-directory', $node_t->host,
-		'--subscriber-port', $node_t->port,
-		'--database', 'pg1',
-		'--database', 'pg2'
+		$node_p->connstr('pg1'), '--socket-directory',
+		$node_t->host, '--subscriber-port',
+		$node_t->port, '--database',
+		'pg1', '--database',
+		'pg2'
 	],
 	'target server is not in recovery');
 
@@ -154,11 +154,11 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'),
-		'--socket-directory', $node_s->host,
-		'--subscriber-port', $node_s->port,
-		'--database', 'pg1',
-		'--database', 'pg2'
+		$node_p->connstr('pg1'), '--socket-directory',
+		$node_s->host, '--subscriber-port',
+		$node_s->port, '--database',
+		'pg1', '--database',
+		'pg2'
 	],
 	'standby is up and running');
 
@@ -188,11 +188,11 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_c->data_dir, '--publisher-server',
-		$node_s->connstr('pg1'),
-		'--socket-directory', $node_c->host,
-		'--subscriber-port', $node_c->port,
-		'--database', 'pg1',
-		'--database', 'pg2'
+		$node_s->connstr('pg1'), '--socket-directory',
+		$node_c->host, '--subscriber-port',
+		$node_c->port, '--database',
+		'pg1', '--database',
+		'pg2'
 	],
 	'primary server is in recovery');
 
@@ -201,7 +201,8 @@ $node_p->safe_psql('pg1', "INSERT INTO tbl1 VALUES('second row')");
 $node_p->wait_for_replay_catchup($node_s);
 
 # Check some unmet conditions on node P
-$node_p->append_conf('postgresql.conf', q{
+$node_p->append_conf(
+	'postgresql.conf', q{
 wal_level = replica
 max_replication_slots = 1
 max_wal_senders = 1
@@ -214,16 +215,17 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'),
-		'--socket-directory', $node_s->host,
-		'--subscriber-port', $node_s->port,
-		'--database', 'pg1',
-		'--database', 'pg2'
+		$node_p->connstr('pg1'), '--socket-directory',
+		$node_s->host, '--subscriber-port',
+		$node_s->port, '--database',
+		'pg1', '--database',
+		'pg2'
 	],
 	'primary contains unmet conditions on node P');
 # Restore default settings here but only apply it after testing standby. Some
 # standby settings should not be a lower setting than on the primary.
-$node_p->append_conf('postgresql.conf', q{
+$node_p->append_conf(
+	'postgresql.conf', q{
 wal_level = logical
 max_replication_slots = 10
 max_wal_senders = 10
@@ -231,7 +233,8 @@ max_worker_processes = 8
 });
 
 # Check some unmet conditions on node S
-$node_s->append_conf('postgresql.conf', q{
+$node_s->append_conf(
+	'postgresql.conf', q{
 max_replication_slots = 1
 max_logical_replication_workers = 1
 max_worker_processes = 2
@@ -241,14 +244,15 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'),
-		'--socket-directory', $node_s->host,
-		'--subscriber-port', $node_s->port,
-		'--database', 'pg1',
-		'--database', 'pg2'
+		$node_p->connstr('pg1'), '--socket-directory',
+		$node_s->host, '--subscriber-port',
+		$node_s->port, '--database',
+		'pg1', '--database',
+		'pg2'
 	],
 	'standby contains unmet conditions on node S');
-$node_s->append_conf('postgresql.conf', q{
+$node_s->append_conf(
+	'postgresql.conf', q{
 max_replication_slots = 10
 max_logical_replication_workers = 4
 max_worker_processes = 8
@@ -262,15 +266,15 @@ command_ok(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'),
-		'--socket-directory', $node_s->host,
-		'--subscriber-port', $node_s->port,
-		'--publication', 'pub1',
-		'--publication', 'pub2',
-		'--subscription', 'sub1',
-		'--subscription', 'sub2',
-		'--database', 'pg1',
-		'--database', 'pg2'
+		$node_p->connstr('pg1'), '--socket-directory',
+		$node_s->host, '--subscriber-port',
+		$node_s->port, '--publication',
+		'pub1', '--publication',
+		'pub2', '--subscription',
+		'sub1', '--subscription',
+		'sub2', '--database',
+		'pg1', '--database',
+		'pg2'
 	],
 	'run pg_createsubscriber --dry-run on node S');
 
@@ -286,10 +290,10 @@ command_ok(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'),
-		'--socket-directory', $node_s->host,
-		'--subscriber-port', $node_s->port,
-		'--replication-slot', 'replslot1'
+		$node_p->connstr('pg1'), '--socket-directory',
+		$node_s->host, '--subscriber-port',
+		$node_s->port, '--replication-slot',
+		'replslot1'
 	],
 	'run pg_createsubscriber without --databases');
 
@@ -299,15 +303,15 @@ command_ok(
 		'pg_createsubscriber', '--verbose',
 		'--verbose', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'),
-		'--socket-directory', $node_s->host,
-		'--subscriber-port', $node_s->port,
-		'--publication', 'pub1',
-		'--publication', 'Pub2',
-		'--replication-slot', 'replslot1',
-		'--replication-slot', 'replslot2',
-		'--database', 'pg1',
-		'--database', 'pg2'
+		$node_p->connstr('pg1'), '--socket-directory',
+		$node_s->host, '--subscriber-port',
+		$node_s->port, '--publication',
+		'pub1', '--publication',
+		'Pub2', '--replication-slot',
+		'replslot1', '--replication-slot',
+		'replslot2', '--database',
+		'pg1', '--database',
+		'pg2'
 	],
 	'run pg_createsubscriber on node S');
 

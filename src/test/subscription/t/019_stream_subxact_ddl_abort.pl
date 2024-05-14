@@ -32,7 +32,8 @@ $node_publisher->safe_psql('postgres',
 
 # Setup structure on subscriber
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b bytea, c INT, d INT, e INT)");
+	"CREATE TABLE test_tab (a int primary key, b bytea, c INT, d INT, e INT)"
+);
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';

@@ -16,9 +16,9 @@
   descr => 'default template for new databases',
   datname => 'template1', encoding => 'ENCODING',
   datlocprovider => 'LOCALE_PROVIDER', datistemplate => 't',
-  datallowconn => 't', dathasloginevt => 'f', datconnlimit => '-1', datfrozenxid => '0',
-  datminmxid => '1', dattablespace => 'pg_default', datcollate => 'LC_COLLATE',
-  datctype => 'LC_CTYPE', datlocale => 'DATLOCALE',
+  datallowconn => 't', dathasloginevt => 'f', datconnlimit => '-1',
+  datfrozenxid => '0', datminmxid => '1', dattablespace => 'pg_default',
+  datcollate => 'LC_COLLATE', datctype => 'LC_CTYPE', datlocale => 'DATLOCALE',
   daticurules => 'ICU_RULES', datacl => '_null_' },
 
 ]

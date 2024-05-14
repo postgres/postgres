@@ -178,13 +178,15 @@ sub check_slots_conflict_reason
 
 	$res = $node_standby->safe_psql(
 		'postgres', qq(
-			 select invalidation_reason from pg_replication_slots where slot_name = '$active_slot' and conflicting;));
+			 select invalidation_reason from pg_replication_slots where slot_name = '$active_slot' and conflicting;)
+	);
 
 	is($res, "$reason", "$active_slot reason for conflict is $reason");
 
 	$res = $node_standby->safe_psql(
 		'postgres', qq(
-			 select invalidation_reason from pg_replication_slots where slot_name = '$inactive_slot' and conflicting;));
+			 select invalidation_reason from pg_replication_slots where slot_name = '$inactive_slot' and conflicting;)
+	);
 
 	is($res, "$reason", "$inactive_slot reason for conflict is $reason");
 }
@@ -559,7 +561,8 @@ check_slots_conflict_reason('vacuum_full_', 'rows_removed');
 ##################################################
 
 # Get the restart_lsn from an invalidated slot
-my $restart_lsn = $node_standby->safe_psql('postgres',
+my $restart_lsn = $node_standby->safe_psql(
+	'postgres',
 	"SELECT restart_lsn FROM pg_replication_slots
 		WHERE slot_name = 'vacuum_full_activeslot' AND conflicting;"
 );

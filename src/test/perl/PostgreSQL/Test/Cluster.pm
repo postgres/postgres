@@ -838,20 +838,20 @@ sub init_from_backup
 	my $data_path = $self->data_dir;
 	if (defined $params{combine_with_prior})
 	{
-		my @prior_backups = @{$params{combine_with_prior}};
+		my @prior_backups = @{ $params{combine_with_prior} };
 		my @prior_backup_path;
 
 		for my $prior_backup_name (@prior_backups)
 		{
 			push @prior_backup_path,
-				$root_node->backup_dir . '/' . $prior_backup_name;
+			  $root_node->backup_dir . '/' . $prior_backup_name;
 		}
 
 		local %ENV = $self->_get_env();
 		my @combineargs = ('pg_combinebackup', '-d');
 		if (exists $params{tablespace_map})
 		{
-			while (my ($olddir, $newdir) = each %{$params{tablespace_map}})
+			while (my ($olddir, $newdir) = each %{ $params{tablespace_map} })
 			{
 				push @combineargs, "-T$olddir=$newdir";
 			}
@@ -872,24 +872,25 @@ sub init_from_backup
 
 		# We need to generate a tablespace_map file.
 		open(my $tsmap, ">", "$data_path/tablespace_map")
-			|| die "$data_path/tablespace_map: $!";
+		  || die "$data_path/tablespace_map: $!";
 
 		# Extract tarfiles and add tablespace_map entries
 		my @tstars = grep { /^\d+.tar/ }
-			PostgreSQL::Test::Utils::slurp_dir($backup_path);
+		  PostgreSQL::Test::Utils::slurp_dir($backup_path);
 		for my $tstar (@tstars)
 		{
 			my $tsoid = $tstar;
 			$tsoid =~ s/\.tar$//;
 
 			die "no tablespace mapping for $tstar"
-				if !exists $params{tablespace_map} ||
-				   !exists $params{tablespace_map}{$tsoid};
+			  if !exists $params{tablespace_map}
+			  || !exists $params{tablespace_map}{$tsoid};
 			my $newdir = $params{tablespace_map}{$tsoid};
 
 			mkdir($newdir) || die "mkdir $newdir: $!";
-			PostgreSQL::Test::Utils::system_or_bail($params{tar_program}, 'xf',
-				$backup_path . '/' . $tstar, '-C', $newdir);
+			PostgreSQL::Test::Utils::system_or_bail($params{tar_program},
+				'xf', $backup_path . '/' . $tstar,
+				'-C', $newdir);
 
 			my $escaped_newdir = $newdir;
 			$escaped_newdir =~ s/\\/\\\\/g;
@@ -906,11 +907,13 @@ sub init_from_backup
 
 		# Copy the main backup. If we see a tablespace directory for which we
 		# have a tablespace mapping, skip it, but remember that we saw it.
-		PostgreSQL::Test::RecursiveCopy::copypath($backup_path, $data_path,
+		PostgreSQL::Test::RecursiveCopy::copypath(
+			$backup_path,
+			$data_path,
 			'filterfn' => sub {
 				my ($path) = @_;
-				if ($path =~ /^pg_tblspc\/(\d+)$/ &&
-					exists $params{tablespace_map}{$1})
+				if ($path =~ /^pg_tblspc\/(\d+)$/
+					&& exists $params{tablespace_map}{$1})
 				{
 					push @tsoids, $1;
 					return 0;
@@ -922,14 +925,14 @@ sub init_from_backup
 		{
 			# We need to generate a tablespace_map file.
 			open(my $tsmap, ">", "$data_path/tablespace_map")
-				|| die "$data_path/tablespace_map: $!";
+			  || die "$data_path/tablespace_map: $!";
 
 			# Now use the list of tablespace links to copy each tablespace.
 			for my $tsoid (@tsoids)
 			{
 				die "no tablespace mapping for $tsoid"
-					if !exists $params{tablespace_map} ||
-					   !exists $params{tablespace_map}{$tsoid};
+				  if !exists $params{tablespace_map}
+				  || !exists $params{tablespace_map}{$tsoid};
 
 				my $olddir = $backup_path . '/pg_tblspc/' . $tsoid;
 				my $newdir = $params{tablespace_map}{$tsoid};
@@ -1166,9 +1169,8 @@ sub restart
 
 	# -w is now the default but having it here does no harm and helps
 	# compatibility with older versions.
-	$ret = PostgreSQL::Test::Utils::system_log(
-		'pg_ctl', '-w', '-D', $self->data_dir,
-		'-l', $self->logfile, 'restart');
+	$ret = PostgreSQL::Test::Utils::system_log('pg_ctl', '-w', '-D',
+		$self->data_dir, '-l', $self->logfile, 'restart');
 
 	if ($ret != 0)
 	{
@@ -3370,19 +3372,21 @@ sub validate_slot_inactive_since
 	my ($self, $slot_name, $reference_time) = @_;
 	my $name = $self->name;
 
-	my $inactive_since = $self->safe_psql('postgres',
+	my $inactive_since = $self->safe_psql(
+		'postgres',
 		qq(SELECT inactive_since FROM pg_replication_slots
 			WHERE slot_name = '$slot_name' AND inactive_since IS NOT NULL;)
-		);
+	);
 
 	# Check that the inactive_since is sane
-	is($self->safe_psql('postgres',
-		qq[SELECT '$inactive_since'::timestamptz > to_timestamp(0) AND
+	is( $self->safe_psql(
+			'postgres',
+			qq[SELECT '$inactive_since'::timestamptz > to_timestamp(0) AND
 				'$inactive_since'::timestamptz > '$reference_time'::timestamptz;]
 		),
 		't',
 		"last inactive time for slot $slot_name is valid on node $name")
-		or die "could not validate captured inactive_since for slot $slot_name";
+	  or die "could not validate captured inactive_since for slot $slot_name";
 
 	return $inactive_since;
 }

@@ -168,7 +168,10 @@ $node->issues_sql_like(
 	qr/^(?!.*VACUUM \(SKIP_DATABASE_STATS\) "Foo".bar).*$/s,
 	'vacuumdb --exclude-schema');
 $node->issues_sql_like(
-	[ 'vacuumdb', '--exclude-schema', '"Foo"', '--exclude-schema', '"Bar"', 'postgres' ],
+	[
+		'vacuumdb', '--exclude-schema', '"Foo"', '--exclude-schema',
+		'"Bar"', 'postgres'
+	],
 	qr/^(?!.*VACUUM\ \(SKIP_DATABASE_STATS\)\ "Foo".bar
 	| VACUUM\ \(SKIP_DATABASE_STATS\)\ "Bar".baz).*$/sx,
 	'vacuumdb multiple --exclude-schema switches');

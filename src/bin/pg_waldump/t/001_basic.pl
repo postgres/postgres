@@ -12,21 +12,47 @@ program_version_ok('pg_waldump');
 program_options_handling_ok('pg_waldump');
 
 # wrong number of arguments
-command_fails_like([ 'pg_waldump', ], qr/error: no arguments/, 'no arguments');
-command_fails_like([ 'pg_waldump', 'foo', 'bar', 'baz' ], qr/error: too many command-line arguments/, 'too many arguments');
+command_fails_like([ 'pg_waldump', ], qr/error: no arguments/,
+	'no arguments');
+command_fails_like(
+	[ 'pg_waldump', 'foo', 'bar', 'baz' ],
+	qr/error: too many command-line arguments/,
+	'too many arguments');
 
 # invalid option arguments
-command_fails_like([ 'pg_waldump', '--block', 'bad' ], qr/error: invalid block number/, 'invalid block number');
-command_fails_like([ 'pg_waldump', '--fork', 'bad' ], qr/error: invalid fork name/, 'invalid fork name');
-command_fails_like([ 'pg_waldump', '--limit', 'bad' ], qr/error: invalid value/, 'invalid limit');
-command_fails_like([ 'pg_waldump', '--relation', 'bad' ], qr/error: invalid relation/, 'invalid relation specification');
-command_fails_like([ 'pg_waldump', '--rmgr', 'bad' ], qr/error: resource manager .* does not exist/, 'invalid rmgr name');
-command_fails_like([ 'pg_waldump', '--start', 'bad' ], qr/error: invalid WAL location/, 'invalid start LSN');
-command_fails_like([ 'pg_waldump', '--end', 'bad' ], qr/error: invalid WAL location/, 'invalid end LSN');
+command_fails_like(
+	[ 'pg_waldump', '--block', 'bad' ],
+	qr/error: invalid block number/,
+	'invalid block number');
+command_fails_like(
+	[ 'pg_waldump', '--fork', 'bad' ],
+	qr/error: invalid fork name/,
+	'invalid fork name');
+command_fails_like(
+	[ 'pg_waldump', '--limit', 'bad' ],
+	qr/error: invalid value/,
+	'invalid limit');
+command_fails_like(
+	[ 'pg_waldump', '--relation', 'bad' ],
+	qr/error: invalid relation/,
+	'invalid relation specification');
+command_fails_like(
+	[ 'pg_waldump', '--rmgr', 'bad' ],
+	qr/error: resource manager .* does not exist/,
+	'invalid rmgr name');
+command_fails_like(
+	[ 'pg_waldump', '--start', 'bad' ],
+	qr/error: invalid WAL location/,
+	'invalid start LSN');
+command_fails_like(
+	[ 'pg_waldump', '--end', 'bad' ],
+	qr/error: invalid WAL location/,
+	'invalid end LSN');
 
 # rmgr list: If you add one to the list, consider also adding a test
 # case exercising the new rmgr below.
-command_like([ 'pg_waldump', '--rmgr=list'], qr/^XLOG
+command_like(
+	[ 'pg_waldump', '--rmgr=list' ], qr/^XLOG
 Transaction
 Storage
 CLOG
@@ -53,7 +79,8 @@ LogicalMessage$/,
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
-$node->append_conf('postgresql.conf', q{
+$node->append_conf(
+	'postgresql.conf', q{
 autovacuum = off
 checkpoint_timeout = 1h
 
@@ -66,9 +93,13 @@ wal_level=logical
 });
 $node->start;
 
-my ($start_lsn, $start_walfile) = split /\|/, $node->safe_psql('postgres', q{SELECT pg_current_wal_insert_lsn(), pg_walfile_name(pg_current_wal_insert_lsn())});
+my ($start_lsn, $start_walfile) = split /\|/,
+  $node->safe_psql('postgres',
+	q{SELECT pg_current_wal_insert_lsn(), pg_walfile_name(pg_current_wal_insert_lsn())}
+  );
 
-$node->safe_psql('postgres', q{
+$node->safe_psql(
+	'postgres', q{
 -- heap, btree, hash, sequence
 CREATE TABLE t1 (a int GENERATED ALWAYS AS IDENTITY, b text);
 CREATE INDEX i1a ON t1 USING btree (a);
@@ -125,32 +156,75 @@ DROP DATABASE d1;
 
 my $tblspc_path = PostgreSQL::Test::Utils::tempdir_short();
 
-$node->safe_psql('postgres', qq{
+$node->safe_psql(
+	'postgres', qq{
 CREATE TABLESPACE ts1 LOCATION '$tblspc_path';
 DROP TABLESPACE ts1;
 });
 
-my ($end_lsn, $end_walfile) = split /\|/, $node->safe_psql('postgres', q{SELECT pg_current_wal_insert_lsn(), pg_walfile_name(pg_current_wal_insert_lsn())});
+my ($end_lsn, $end_walfile) = split /\|/,
+  $node->safe_psql('postgres',
+	q{SELECT pg_current_wal_insert_lsn(), pg_walfile_name(pg_current_wal_insert_lsn())}
+  );
 
-my $default_ts_oid = $node->safe_psql('postgres', q{SELECT oid FROM pg_tablespace WHERE spcname = 'pg_default'});
-my $postgres_db_oid = $node->safe_psql('postgres', q{SELECT oid FROM pg_database WHERE datname = 'postgres'});
-my $rel_t1_oid = $node->safe_psql('postgres', q{SELECT oid FROM pg_class WHERE relname = 't1'});
-my $rel_i1a_oid = $node->safe_psql('postgres', q{SELECT oid FROM pg_class WHERE relname = 'i1a'});
+my $default_ts_oid = $node->safe_psql('postgres',
+	q{SELECT oid FROM pg_tablespace WHERE spcname = 'pg_default'});
+my $postgres_db_oid = $node->safe_psql('postgres',
+	q{SELECT oid FROM pg_database WHERE datname = 'postgres'});
+my $rel_t1_oid = $node->safe_psql('postgres',
+	q{SELECT oid FROM pg_class WHERE relname = 't1'});
+my $rel_i1a_oid = $node->safe_psql('postgres',
+	q{SELECT oid FROM pg_class WHERE relname = 'i1a'});
 
 $node->stop;
 
 
 # various ways of specifying WAL range
-command_fails_like([ 'pg_waldump', 'foo', 'bar' ], qr/error: could not locate WAL file "foo"/, 'start file not found');
-command_like([ 'pg_waldump', $node->data_dir . '/pg_wal/' . $start_walfile ], qr/./, 'runs with start segment specified');
-command_fails_like([ 'pg_waldump', $node->data_dir . '/pg_wal/' . $start_walfile, 'bar' ], qr/error: could not open file "bar"/, 'end file not found');
-command_like([ 'pg_waldump', $node->data_dir . '/pg_wal/' . $start_walfile, $node->data_dir . '/pg_wal/' . $end_walfile ], qr/./, 'runs with start and end segment specified');
-command_fails_like([ 'pg_waldump', '-p', $node->data_dir ], qr/error: no start WAL location given/, 'path option requires start location');
-command_like([ 'pg_waldump', '-p', $node->data_dir, '--start', $start_lsn, '--end', $end_lsn ], qr/./, 'runs with path option and start and end locations');
-command_fails_like([ 'pg_waldump', '-p', $node->data_dir, '--start', $start_lsn ], qr/error: error in WAL record at/, 'falling off the end of the WAL results in an error');
+command_fails_like(
+	[ 'pg_waldump', 'foo', 'bar' ],
+	qr/error: could not locate WAL file "foo"/,
+	'start file not found');
+command_like([ 'pg_waldump', $node->data_dir . '/pg_wal/' . $start_walfile ],
+	qr/./, 'runs with start segment specified');
+command_fails_like(
+	[ 'pg_waldump', $node->data_dir . '/pg_wal/' . $start_walfile, 'bar' ],
+	qr/error: could not open file "bar"/,
+	'end file not found');
+command_like(
+	[
+		'pg_waldump',
+		$node->data_dir . '/pg_wal/' . $start_walfile,
+		$node->data_dir . '/pg_wal/' . $end_walfile
+	],
+	qr/./,
+	'runs with start and end segment specified');
+command_fails_like(
+	[ 'pg_waldump', '-p', $node->data_dir ],
+	qr/error: no start WAL location given/,
+	'path option requires start location');
+command_like(
+	[
+		'pg_waldump', '-p', $node->data_dir, '--start',
+		$start_lsn, '--end', $end_lsn
+	],
+	qr/./,
+	'runs with path option and start and end locations');
+command_fails_like(
+	[ 'pg_waldump', '-p', $node->data_dir, '--start', $start_lsn ],
+	qr/error: error in WAL record at/,
+	'falling off the end of the WAL results in an error');
 
-command_like([ 'pg_waldump', '--quiet', $node->data_dir . '/pg_wal/' . $start_walfile ], qr/^$/, 'no output with --quiet option');
-command_fails_like([ 'pg_waldump', '--quiet', '-p', $node->data_dir, '--start', $start_lsn ], qr/error: error in WAL record at/, 'errors are shown with --quiet');
+command_like(
+	[
+		'pg_waldump', '--quiet',
+		$node->data_dir . '/pg_wal/' . $start_walfile
+	],
+	qr/^$/,
+	'no output with --quiet option');
+command_fails_like(
+	[ 'pg_waldump', '--quiet', '-p', $node->data_dir, '--start', $start_lsn ],
+	qr/error: error in WAL record at/,
+	'errors are shown with --quiet');
 
 
 # Test for: Display a message that we're skipping data if `from`
@@ -165,7 +239,9 @@ command_fails_like([ 'pg_waldump', '--quiet', '-p', $node->data_dir, '--start', 
 
 	my (@cmd, $stdout, $stderr, $result);
 
-	@cmd = ( 'pg_waldump', '--start', $new_start, $node->data_dir . '/pg_wal/' . $start_walfile );
+	@cmd = (
+		'pg_waldump', '--start', $new_start,
+		$node->data_dir . '/pg_wal/' . $start_walfile);
 	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "runs with start segment and start LSN specified");
 	like($stderr, qr/first record is after/, 'info message printed');
@@ -181,7 +257,9 @@ sub test_pg_waldump
 
 	my (@cmd, $stdout, $stderr, $result, @lines);
 
-	@cmd = ('pg_waldump', '-p', $node->data_dir, '--start', $start_lsn, '--end', $end_lsn);
+	@cmd = (
+		'pg_waldump', '-p', $node->data_dir, '--start', $start_lsn, '--end',
+		$end_lsn);
 	push @cmd, @opts;
 	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "pg_waldump @opts: runs ok");
@@ -216,10 +294,15 @@ is(grep(!/^rmgr: Btree/, @lines), 0, 'only Btree lines');
 @lines = test_pg_waldump('--fork', 'init');
 is(grep(!/fork init/, @lines), 0, 'only init fork lines');
 
-@lines = test_pg_waldump('--relation', "$default_ts_oid/$postgres_db_oid/$rel_t1_oid");
-is(grep(!/rel $default_ts_oid\/$postgres_db_oid\/$rel_t1_oid/, @lines), 0, 'only lines for selected relation');
+@lines = test_pg_waldump('--relation',
+	"$default_ts_oid/$postgres_db_oid/$rel_t1_oid");
+is(grep(!/rel $default_ts_oid\/$postgres_db_oid\/$rel_t1_oid/, @lines),
+	0, 'only lines for selected relation');
 
-@lines = test_pg_waldump('--relation', "$default_ts_oid/$postgres_db_oid/$rel_i1a_oid", '--block', 1);
+@lines =
+  test_pg_waldump('--relation',
+	"$default_ts_oid/$postgres_db_oid/$rel_i1a_oid",
+	'--block', 1);
 is(grep(!/\bblk 1\b/, @lines), 0, 'only lines for selected block');
 
 

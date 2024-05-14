@@ -12,7 +12,8 @@ use Test::More;
 
 my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
-test_bad_manifest('input string ended unexpectedly',
+test_bad_manifest(
+	'input string ended unexpectedly',
 	qr/could not parse backup manifest: The input string ended unexpectedly/,
 	<<EOM);
 {

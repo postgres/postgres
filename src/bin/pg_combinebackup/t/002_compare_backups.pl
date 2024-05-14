@@ -44,7 +44,7 @@ EOM
 
 # Read list of tablespace OIDs. There should be just one.
 my @tsoids = grep { /^\d+/ } slurp_dir($primary->data_dir . '/pg_tblspc');
-is(0+@tsoids, 1, "exactly one user-defined tablespace");
+is(0 + @tsoids, 1, "exactly one user-defined tablespace");
 my $tsoid = $tsoids[0];
 
 # Take a full backup.
@@ -52,8 +52,12 @@ my $backup1path = $primary->backup_dir . '/backup1';
 my $tsbackup1path = $tempdir . '/ts1backup';
 mkdir($tsbackup1path) || die "mkdir $tsbackup1path: $!";
 $primary->command_ok(
-	[ 'pg_basebackup', '-D', $backup1path, '--no-sync', '-cfast',
-      "-T${tsprimary}=${tsbackup1path}" ], "full backup");
+	[
+		'pg_basebackup', '-D',
+		$backup1path, '--no-sync',
+		'-cfast', "-T${tsprimary}=${tsbackup1path}"
+	],
+	"full backup");
 
 # Now make some database changes.
 $primary->safe_psql('postgres', <<EOM);
@@ -79,9 +83,12 @@ my $backup2path = $primary->backup_dir . '/backup2';
 my $tsbackup2path = $tempdir . '/tsbackup2';
 mkdir($tsbackup2path) || die "mkdir $tsbackup2path: $!";
 $primary->command_ok(
-	[ 'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
-      "-T${tsprimary}=${tsbackup2path}",
-	  '--incremental', $backup1path . '/backup_manifest' ],
+	[
+		'pg_basebackup', '-D',
+		$backup2path, '--no-sync',
+		'-cfast', "-T${tsprimary}=${tsbackup2path}",
+		'--incremental', $backup1path . '/backup_manifest'
+	],
 	"incremental backup");
 
 # Find an LSN to which either backup can be recovered.
@@ -105,10 +112,13 @@ $primary->poll_query_until('postgres', $archive_wait_query)
 # choose the same timeline.
 my $tspitr1path = $tempdir . '/tspitr1';
 my $pitr1 = PostgreSQL::Test::Cluster->new('pitr1');
-$pitr1->init_from_backup($primary, 'backup1',
-						 standby => 1, has_restoring => 1,
-						 tablespace_map => { $tsoid => $tspitr1path });
-$pitr1->append_conf('postgresql.conf', qq{
+$pitr1->init_from_backup(
+	$primary, 'backup1',
+	standby => 1,
+	has_restoring => 1,
+	tablespace_map => { $tsoid => $tspitr1path });
+$pitr1->append_conf(
+	'postgresql.conf', qq{
 recovery_target_lsn = '$lsn'
 recovery_target_action = 'promote'
 archive_mode = 'off'
@@ -119,11 +129,14 @@ $pitr1->start();
 # basic configuration as before.
 my $tspitr2path = $tempdir . '/tspitr2';
 my $pitr2 = PostgreSQL::Test::Cluster->new('pitr2');
-$pitr2->init_from_backup($primary, 'backup2',
-						 standby => 1, has_restoring => 1,
-						 combine_with_prior => [ 'backup1' ],
-						 tablespace_map => { $tsbackup2path => $tspitr2path });
-$pitr2->append_conf('postgresql.conf', qq{
+$pitr2->init_from_backup(
+	$primary, 'backup2',
+	standby => 1,
+	has_restoring => 1,
+	combine_with_prior => ['backup1'],
+	tablespace_map => { $tsbackup2path => $tspitr2path });
+$pitr2->append_conf(
+	'postgresql.conf', qq{
 recovery_target_lsn = '$lsn'
 recovery_target_action = 'promote'
 archive_mode = 'off'
@@ -131,11 +144,9 @@ archive_mode = 'off'
 $pitr2->start();
 
 # Wait until both servers exit recovery.
-$pitr1->poll_query_until('postgres',
-						 "SELECT NOT pg_is_in_recovery();")
+$pitr1->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery();")
   or die "Timed out while waiting apply to reach LSN $lsn";
-$pitr2->poll_query_until('postgres',
-						 "SELECT NOT pg_is_in_recovery();")
+$pitr2->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery();")
   or die "Timed out while waiting apply to reach LSN $lsn";
 
 # Perform a logical dump of each server, and check that they match.
@@ -150,14 +161,20 @@ $pitr2->poll_query_until('postgres',
 my $backupdir = $primary->backup_dir;
 my $dump1 = $backupdir . '/pitr1.dump';
 my $dump2 = $backupdir . '/pitr2.dump';
-$pitr1->command_ok([
-	'pg_dumpall', '-f', $dump1, '--no-sync', '--no-unlogged-table-data',
-		'-d', $pitr1->connstr('postgres'),
+$pitr1->command_ok(
+	[
+		'pg_dumpall', '-f',
+		$dump1, '--no-sync',
+		'--no-unlogged-table-data', '-d',
+		$pitr1->connstr('postgres'),
 	],
 	'dump from PITR 1');
-$pitr1->command_ok([
-	'pg_dumpall', '-f', $dump2, '--no-sync', '--no-unlogged-table-data',
-		'-d', $pitr1->connstr('postgres'),
+$pitr1->command_ok(
+	[
+		'pg_dumpall', '-f',
+		$dump2, '--no-sync',
+		'--no-unlogged-table-data', '-d',
+		$pitr1->connstr('postgres'),
 	],
 	'dump from PITR 2');
 
@@ -171,7 +188,7 @@ is($compare_res, 0, "dumps are identical");
 if ($compare_res != 0)
 {
 	my ($stdout, $stderr) =
-		run_command([ 'diff', '-u', $dump1, $dump2 ]);
+	  run_command([ 'diff', '-u', $dump1, $dump2 ]);
 	print "=== diff of $dump1 and $dump2\n";
 	print "=== stdout ===\n";
 	print $stdout;

@@ -92,7 +92,7 @@ pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask)
 	const char *final;
 	int			tail_idx;
 	__mmask64	bmask = ~UINT64CONST(0);
-	const		__m512i maskv = _mm512_set1_epi8(mask);
+	const __m512i maskv = _mm512_set1_epi8(mask);
 
 	/*
 	 * Align buffer down to avoid double load overhead from unaligned access.

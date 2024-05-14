@@ -166,7 +166,8 @@ BEGIN;
 INSERT INTO tbl SELECT i, sha256(i::text::bytea) FROM generate_series(1, 10000) s(i);
 COMMIT;
 ]);
-test_skip_lsn($node_publisher, $node_subscriber, "(4, sha256(4::text::bytea))",
+test_skip_lsn($node_publisher, $node_subscriber,
+	"(4, sha256(4::text::bytea))",
 	"4", "test skipping stream-commit");
 
 $result = $node_subscriber->safe_psql('postgres',

@@ -72,7 +72,8 @@ my @scenario = (
 	{
 		'name' => 'system_identifier',
 		'mutilate' => \&mutilate_system_identifier,
-		'fails_like' => qr/manifest system identifier is .*, but control file has/
+		'fails_like' =>
+		  qr/manifest system identifier is .*, but control file has/
 	},
 	{
 		'name' => 'bad_manifest',
@@ -254,8 +255,9 @@ sub mutilate_system_identifier
 	$node->init(force_initdb => 1, allows_streaming => 1);
 	$node->start;
 	$node->backup('backup2');
-	move($node->backup_dir.'/backup2/backup_manifest', $backup_path.'/backup_manifest')
-		or BAIL_OUT "could not copy manifest to $backup_path";
+	move($node->backup_dir . '/backup2/backup_manifest',
+		$backup_path . '/backup_manifest')
+	  or BAIL_OUT "could not copy manifest to $backup_path";
 	$node->teardown_node(fail_ok => 1);
 	return;
 }

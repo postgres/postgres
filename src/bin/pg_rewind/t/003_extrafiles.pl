@@ -56,8 +56,8 @@ sub run_test
 	  "in standby4";
 	# Skip testing .DS_Store files on macOS to avoid risk of side effects
 	append_to_file
-	  "$test_standby_datadir/tst_standby_dir/.DS_Store",
-	  "macOS system file" unless ($Config{osname} eq 'darwin');
+	  "$test_standby_datadir/tst_standby_dir/.DS_Store", "macOS system file"
+	  unless ($Config{osname} eq 'darwin');
 
 	mkdir "$test_primary_datadir/tst_primary_dir";
 	append_to_file "$test_primary_datadir/tst_primary_dir/primary_file1",

@@ -291,8 +291,7 @@ regress_sub5|f|f),
 
 # Subscription relations should be preserved
 $result = $new_sub->safe_psql('postgres',
-	"SELECT srrelid, srsubstate FROM pg_subscription_rel ORDER BY srrelid"
-);
+	"SELECT srrelid, srsubstate FROM pg_subscription_rel ORDER BY srrelid");
 is( $result, qq($tab_upgraded1_oid|r
 $tab_upgraded2_oid|i),
 	"there should be 2 rows in pg_subscription_rel(representing tab_upgraded1 and tab_upgraded2)"

@@ -75,7 +75,7 @@
 
 #define PG_U_CHARACTER_TAB	0x09
 
-static bool range_search(const pg_unicode_range * tbl, size_t size,
+static bool range_search(const pg_unicode_range *tbl, size_t size,
 						 pg_wchar code);
 
 /*
@@ -478,7 +478,7 @@ unicode_category_abbrev(pg_unicode_category category)
  * given table.
  */
 static bool
-range_search(const pg_unicode_range * tbl, size_t size, pg_wchar code)
+range_search(const pg_unicode_range *tbl, size_t size, pg_wchar code)
 {
 	int			min = 0;
 	int			mid;

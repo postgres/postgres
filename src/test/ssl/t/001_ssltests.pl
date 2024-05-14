@@ -86,7 +86,8 @@ switch_server_cert(
 	restart => 'no');
 
 $result = $node->restart(fail_ok => 1);
-is($result, 0, 'restart fails with password-protected key file with wrong password');
+is($result, 0,
+	'restart fails with password-protected key file with wrong password');
 
 switch_server_cert(
 	$node,

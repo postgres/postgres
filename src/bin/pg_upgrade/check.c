@@ -51,7 +51,7 @@ typedef struct
 	int			threshold_version;
 	/* A function pointer for determining if the check applies */
 	DataTypesUsageVersionCheck version_hook;
-}			DataTypesUsageChecks;
+} DataTypesUsageChecks;
 
 /*
  * Special values for threshold_version for indicating that a check applies to
@@ -109,17 +109,17 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	 */
 	{
 		.status = gettext_noop("Checking for system-defined composite types in user tables"),
-			.report_filename = "tables_using_composite.txt",
-			.base_query =
-			"SELECT t.oid FROM pg_catalog.pg_type t "
-			"LEFT JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid "
-			" WHERE typtype = 'c' AND (t.oid < 16384 OR nspname = 'information_schema')",
-			.report_text =
-			gettext_noop("Your installation contains system-defined composite types in user tables.\n"
-						 "These type OIDs are not stable across PostgreSQL versions,\n"
-						 "so this cluster cannot currently be upgraded.  You can drop the\n"
-						 "problem columns and restart the upgrade.\n"),
-			.threshold_version = ALL_VERSIONS
+		.report_filename = "tables_using_composite.txt",
+		.base_query =
+		"SELECT t.oid FROM pg_catalog.pg_type t "
+		"LEFT JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid "
+		" WHERE typtype = 'c' AND (t.oid < 16384 OR nspname = 'information_schema')",
+		.report_text =
+		gettext_noop("Your installation contains system-defined composite types in user tables.\n"
+					 "These type OIDs are not stable across PostgreSQL versions,\n"
+					 "so this cluster cannot currently be upgraded.  You can drop the\n"
+					 "problem columns and restart the upgrade.\n"),
+		.threshold_version = ALL_VERSIONS
 	},
 
 	/*
@@ -130,16 +130,16 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	 */
 	{
 		.status = gettext_noop("Checking for incompatible \"line\" data type"),
-			.report_filename = "tables_using_line.txt",
-			.base_query =
-			"SELECT 'pg_catalog.line'::pg_catalog.regtype AS oid",
-			.report_text =
-			gettext_noop("Your installation contains the \"line\" data type in user tables.\n"
-						 "This data type changed its internal and input/output format\n"
-						 "between your old and new versions so this\n"
-						 "cluster cannot currently be upgraded.  You can\n"
-						 "drop the problem columns and restart the upgrade.\n"),
-			.threshold_version = 903
+		.report_filename = "tables_using_line.txt",
+		.base_query =
+		"SELECT 'pg_catalog.line'::pg_catalog.regtype AS oid",
+		.report_text =
+		gettext_noop("Your installation contains the \"line\" data type in user tables.\n"
+					 "This data type changed its internal and input/output format\n"
+					 "between your old and new versions so this\n"
+					 "cluster cannot currently be upgraded.  You can\n"
+					 "drop the problem columns and restart the upgrade.\n"),
+		.threshold_version = 903
 	},
 
 	/*
@@ -152,37 +152,37 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	 */
 	{
 		.status = gettext_noop("Checking for reg* data types in user tables"),
-			.report_filename = "tables_using_reg.txt",
+		.report_filename = "tables_using_reg.txt",
 
 		/*
 		 * Note: older servers will not have all of these reg* types, so we
 		 * have to write the query like this rather than depending on casts to
 		 * regtype.
 		 */
-			.base_query =
-			"SELECT oid FROM pg_catalog.pg_type t "
-			"WHERE t.typnamespace = "
-			"        (SELECT oid FROM pg_catalog.pg_namespace "
-			"         WHERE nspname = 'pg_catalog') "
-			"  AND t.typname IN ( "
+		.base_query =
+		"SELECT oid FROM pg_catalog.pg_type t "
+		"WHERE t.typnamespace = "
+		"        (SELECT oid FROM pg_catalog.pg_namespace "
+		"         WHERE nspname = 'pg_catalog') "
+		"  AND t.typname IN ( "
 		/* pg_class.oid is preserved, so 'regclass' is OK */
-			"           'regcollation', "
-			"           'regconfig', "
-			"           'regdictionary', "
-			"           'regnamespace', "
-			"           'regoper', "
-			"           'regoperator', "
-			"           'regproc', "
-			"           'regprocedure' "
+		"           'regcollation', "
+		"           'regconfig', "
+		"           'regdictionary', "
+		"           'regnamespace', "
+		"           'regoper', "
+		"           'regoperator', "
+		"           'regproc', "
+		"           'regprocedure' "
 		/* pg_authid.oid is preserved, so 'regrole' is OK */
 		/* pg_type.oid is (mostly) preserved, so 'regtype' is OK */
-			"         )",
-			.report_text =
-			gettext_noop("Your installation contains one of the reg* data types in user tables.\n"
-						 "These data types reference system OIDs that are not preserved by\n"
-						 "pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
-						 "drop the problem columns and restart the upgrade.\n"),
-			.threshold_version = ALL_VERSIONS
+		"         )",
+		.report_text =
+		gettext_noop("Your installation contains one of the reg* data types in user tables.\n"
+					 "These data types reference system OIDs that are not preserved by\n"
+					 "pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
+					 "drop the problem columns and restart the upgrade.\n"),
+		.threshold_version = ALL_VERSIONS
 	},
 
 	/*
@@ -191,15 +191,15 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	 */
 	{
 		.status = gettext_noop("Checking for incompatible \"aclitem\" data type"),
-			.report_filename = "tables_using_aclitem.txt",
-			.base_query =
-			"SELECT 'pg_catalog.aclitem'::pg_catalog.regtype AS oid",
-			.report_text =
-			gettext_noop("Your installation contains the \"aclitem\" data type in user tables.\n"
-						 "The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
-						 "so this cluster cannot currently be upgraded.  You can drop the\n"
-						 "problem columns and restart the upgrade.\n"),
-			.threshold_version = 1500
+		.report_filename = "tables_using_aclitem.txt",
+		.base_query =
+		"SELECT 'pg_catalog.aclitem'::pg_catalog.regtype AS oid",
+		.report_text =
+		gettext_noop("Your installation contains the \"aclitem\" data type in user tables.\n"
+					 "The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
+					 "so this cluster cannot currently be upgraded.  You can drop the\n"
+					 "problem columns and restart the upgrade.\n"),
+		.threshold_version = 1500
 	},
 
 	/*
@@ -215,15 +215,15 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	 */
 	{
 		.status = gettext_noop("Checking for invalid \"unknown\" user columns"),
-			.report_filename = "tables_using_unknown.txt",
-			.base_query =
-			"SELECT 'pg_catalog.unknown'::pg_catalog.regtype AS oid",
-			.report_text =
-			gettext_noop("Your installation contains the \"unknown\" data type in user tables.\n"
-						 "This data type is no longer allowed in tables, so this cluster\n"
-						 "cannot currently be upgraded.  You can drop the problem columns\n"
-						 "and restart the upgrade.\n"),
-			.threshold_version = 906
+		.report_filename = "tables_using_unknown.txt",
+		.base_query =
+		"SELECT 'pg_catalog.unknown'::pg_catalog.regtype AS oid",
+		.report_text =
+		gettext_noop("Your installation contains the \"unknown\" data type in user tables.\n"
+					 "This data type is no longer allowed in tables, so this cluster\n"
+					 "cannot currently be upgraded.  You can drop the problem columns\n"
+					 "and restart the upgrade.\n"),
+		.threshold_version = 906
 	},
 
 	/*
@@ -237,15 +237,15 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	 */
 	{
 		.status = gettext_noop("Checking for invalid \"sql_identifier\" user columns"),
-			.report_filename = "tables_using_sql_identifier.txt",
-			.base_query =
-			"SELECT 'information_schema.sql_identifier'::pg_catalog.regtype AS oid",
-			.report_text =
-			gettext_noop("Your installation contains the \"sql_identifier\" data type in user tables.\n"
-						 "The on-disk format for this data type has changed, so this\n"
-						 "cluster cannot currently be upgraded.  You can drop the problem\n"
-						 "columns and restart the upgrade.\n"),
-			.threshold_version = 1100
+		.report_filename = "tables_using_sql_identifier.txt",
+		.base_query =
+		"SELECT 'information_schema.sql_identifier'::pg_catalog.regtype AS oid",
+		.report_text =
+		gettext_noop("Your installation contains the \"sql_identifier\" data type in user tables.\n"
+					 "The on-disk format for this data type has changed, so this\n"
+					 "cluster cannot currently be upgraded.  You can drop the problem\n"
+					 "columns and restart the upgrade.\n"),
+		.threshold_version = 1100
 	},
 
 	/*
@@ -253,16 +253,16 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	 */
 	{
 		.status = gettext_noop("Checking for incompatible \"jsonb\" data type in user tables"),
-			.report_filename = "tables_using_jsonb.txt",
-			.base_query =
-			"SELECT 'pg_catalog.jsonb'::pg_catalog.regtype AS oid",
-			.report_text =
-			gettext_noop("Your installation contains the \"jsonb\" data type in user tables.\n"
-						 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
-						 "cluster cannot currently be upgraded.  You can drop the problem \n"
-						 "columns and restart the upgrade.\n"),
-			.threshold_version = MANUAL_CHECK,
-			.version_hook = jsonb_9_4_check_applicable
+		.report_filename = "tables_using_jsonb.txt",
+		.base_query =
+		"SELECT 'pg_catalog.jsonb'::pg_catalog.regtype AS oid",
+		.report_text =
+		gettext_noop("Your installation contains the \"jsonb\" data type in user tables.\n"
+					 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
+					 "cluster cannot currently be upgraded.  You can drop the problem \n"
+					 "columns and restart the upgrade.\n"),
+		.threshold_version = MANUAL_CHECK,
+		.version_hook = jsonb_9_4_check_applicable
 	},
 
 	/*
@@ -270,42 +270,42 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	 */
 	{
 		.status = gettext_noop("Checking for removed \"abstime\" data type in user tables"),
-			.report_filename = "tables_using_abstime.txt",
-			.base_query =
-			"SELECT 'pg_catalog.abstime'::pg_catalog.regtype AS oid",
-			.report_text =
-			gettext_noop("Your installation contains the \"abstime\" data type in user tables.\n"
-						 "The \"abstime\" type has been removed in PostgreSQL version 12,\n"
-						 "so this cluster cannot currently be upgraded.  You can drop the\n"
-						 "problem columns, or change them to another data type, and restart\n"
-						 "the upgrade.\n"),
-			.threshold_version = 1100
+		.report_filename = "tables_using_abstime.txt",
+		.base_query =
+		"SELECT 'pg_catalog.abstime'::pg_catalog.regtype AS oid",
+		.report_text =
+		gettext_noop("Your installation contains the \"abstime\" data type in user tables.\n"
+					 "The \"abstime\" type has been removed in PostgreSQL version 12,\n"
+					 "so this cluster cannot currently be upgraded.  You can drop the\n"
+					 "problem columns, or change them to another data type, and restart\n"
+					 "the upgrade.\n"),
+		.threshold_version = 1100
 	},
 	{
 		.status = gettext_noop("Checking for removed \"reltime\" data type in user tables"),
-			.report_filename = "tables_using_reltime.txt",
-			.base_query =
-			"SELECT 'pg_catalog.reltime'::pg_catalog.regtype AS oid",
-			.report_text =
-			gettext_noop("Your installation contains the \"reltime\" data type in user tables.\n"
-						 "The \"reltime\" type has been removed in PostgreSQL version 12,\n"
-						 "so this cluster cannot currently be upgraded.  You can drop the\n"
-						 "problem columns, or change them to another data type, and restart\n"
-						 "the upgrade.\n"),
-			.threshold_version = 1100
+		.report_filename = "tables_using_reltime.txt",
+		.base_query =
+		"SELECT 'pg_catalog.reltime'::pg_catalog.regtype AS oid",
+		.report_text =
+		gettext_noop("Your installation contains the \"reltime\" data type in user tables.\n"
+					 "The \"reltime\" type has been removed in PostgreSQL version 12,\n"
+					 "so this cluster cannot currently be upgraded.  You can drop the\n"
+					 "problem columns, or change them to another data type, and restart\n"
+					 "the upgrade.\n"),
+		.threshold_version = 1100
 	},
 	{
 		.status = gettext_noop("Checking for removed \"tinterval\" data type in user tables"),
-			.report_filename = "tables_using_tinterval.txt",
-			.base_query =
-			"SELECT 'pg_catalog.tinterval'::pg_catalog.regtype AS oid",
-			.report_text =
-			gettext_noop("Your installation contains the \"tinterval\" data type in user tables.\n"
-						 "The \"tinterval\" type has been removed in PostgreSQL version 12,\n"
-						 "so this cluster cannot currently be upgraded.  You can drop the\n"
-						 "problem columns, or change them to another data type, and restart\n"
-						 "the upgrade.\n"),
-			.threshold_version = 1100
+		.report_filename = "tables_using_tinterval.txt",
+		.base_query =
+		"SELECT 'pg_catalog.tinterval'::pg_catalog.regtype AS oid",
+		.report_text =
+		gettext_noop("Your installation contains the \"tinterval\" data type in user tables.\n"
+					 "The \"tinterval\" type has been removed in PostgreSQL version 12,\n"
+					 "so this cluster cannot currently be upgraded.  You can drop the\n"
+					 "problem columns, or change them to another data type, and restart\n"
+					 "the upgrade.\n"),
+		.threshold_version = 1100
 	},
 
 	/* End of checks marker, must remain last */
@@ -334,7 +334,7 @@ static DataTypesUsageChecks data_types_usage_checks[] =
  * there's no storage involved in a view.
  */
 static void
-check_for_data_types_usage(ClusterInfo *cluster, DataTypesUsageChecks * checks)
+check_for_data_types_usage(ClusterInfo *cluster, DataTypesUsageChecks *checks)
 {
 	bool		found = false;
 	bool	   *results;

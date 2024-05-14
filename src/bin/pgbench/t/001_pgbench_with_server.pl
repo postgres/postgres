@@ -1541,18 +1541,13 @@ $node->safe_psql('postgres', 'DROP TABLE first_client_table, xy;');
 
 # Test --exit-on-abort
 $node->safe_psql('postgres',
-	'CREATE TABLE counter(i int); '.
-	'INSERT INTO counter VALUES (0);'
-);
+	'CREATE TABLE counter(i int); ' . 'INSERT INTO counter VALUES (0);');
 
 $node->pgbench(
 	'-t 10 -c 2 -j 2 --exit-on-abort',
 	2,
 	[],
-	[
-		qr{division by zero},
-		qr{Run was aborted due to an error in thread}
-	],
+	[ qr{division by zero}, qr{Run was aborted due to an error in thread} ],
 	'test --exit-on-abort',
 	{
 		'001_exit_on_abort' => q{

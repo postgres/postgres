@@ -10,10 +10,12 @@ use strict;
 use warnings FATAL => 'all';
 use PostgreSQL::Test::Utils;
 
-our ($krb5_bin_dir, $krb5_sbin_dir, $krb5_config, $kinit, $klist,
-	 $kdb5_util, $kadmin_local, $krb5kdc,
-	 $krb5_conf, $kdc_conf, $krb5_cache, $krb5_log, $kdc_log,
-	 $kdc_port, $kdc_datadir, $kdc_pidfile, $keytab);
+our (
+	$krb5_bin_dir, $krb5_sbin_dir, $krb5_config, $kinit,
+	$klist, $kdb5_util, $kadmin_local, $krb5kdc,
+	$krb5_conf, $kdc_conf, $krb5_cache, $krb5_log,
+	$kdc_log, $kdc_port, $kdc_datadir, $kdc_pidfile,
+	$keytab);
 
 INIT
 {
@@ -178,7 +180,8 @@ $realm = {
     key_stash_file = $kdc_datadir/_k5.$realm
 }!);
 
-	mkdir $kdc_datadir or BAIL_OUT("could not create directory \"$kdc_datadir\"");
+	mkdir $kdc_datadir
+	  or BAIL_OUT("could not create directory \"$kdc_datadir\"");
 
 	# Ensure that we use test's config and cache files, not global ones.
 	$ENV{'KRB5_CONFIG'} = $krb5_conf;
@@ -189,7 +192,8 @@ $realm = {
 
 	system_or_bail $kdb5_util, 'create', '-s', '-P', 'secret0';
 
-	system_or_bail $kadmin_local, '-q', "addprinc -randkey $service_principal";
+	system_or_bail $kadmin_local, '-q',
+	  "addprinc -randkey $service_principal";
 	system_or_bail $kadmin_local, '-q', "ktadd -k $keytab $service_principal";
 
 	system_or_bail $krb5kdc, '-P', $kdc_pidfile;
@@ -226,7 +230,8 @@ END
 	# take care not to change the script's exit value
 	my $exit_code = $?;
 
-	kill 'INT', `cat $kdc_pidfile` if defined($kdc_pidfile) && -f $kdc_pidfile;
+	kill 'INT', `cat $kdc_pidfile`
+	  if defined($kdc_pidfile) && -f $kdc_pidfile;
 
 	$? = $exit_code;
 }

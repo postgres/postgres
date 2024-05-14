@@ -411,7 +411,9 @@ SKIP:
 	$tblspc_tars[0] =~ m|/([0-9]*)\.tar$|;
 	my $tblspcoid = $1;
 	my $realRepTsDir = "$real_sys_tempdir/tblspc1replica";
-	$node2->init_from_backup($node, 'tarbackup2', tar_program => $tar,
+	$node2->init_from_backup(
+		$node, 'tarbackup2',
+		tar_program => $tar,
 		'tablespace_map' => { $tblspcoid => $realRepTsDir });
 
 	$node2->start;
@@ -776,10 +778,8 @@ $node->command_ok(
 		'stream', '-d', "dbname=db1", '-R',
 	],
 	'pg_basebackup with dbname and -R runs');
-like(
-	slurp_file("$tempdir/backup_dbname_R/postgresql.auto.conf"),
-	qr/dbname=db1/m,
-	'recovery conf file sets dbname');
+like(slurp_file("$tempdir/backup_dbname_R/postgresql.auto.conf"),
+	qr/dbname=db1/m, 'recovery conf file sets dbname');
 
 rmtree("$tempdir/backup_dbname_R");
 
@@ -976,8 +976,11 @@ $node2->append_conf('postgresql.conf', 'summarize_wal = on');
 $node2->start;
 
 $node2->command_fails_like(
-	[ @pg_basebackup_defs, '-D', "$tempdir" . '/diff_sysid',
-		'--incremental', "$backupdir" . '/backup_manifest' ],
+	[
+		@pg_basebackup_defs, '-D',
+		"$tempdir" . '/diff_sysid', '--incremental',
+		"$backupdir" . '/backup_manifest'
+	],
 	qr/manifest system identifier is .*, but database system identifier is/,
 	"pg_basebackup fails with different database system manifest");
 

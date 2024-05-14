@@ -31,7 +31,8 @@ $newpub->init(allows_streaming => 'logical');
 # completely till it is open. The probability of seeing this behavior is
 # higher in this test because we use wal_level as logical via
 # allows_streaming => 'logical' which in turn set shared_buffers as 1MB.
-$newpub->append_conf('postgresql.conf', q{
+$newpub->append_conf(
+	'postgresql.conf', q{
 bgwriter_lru_maxpages = 0
 checkpoint_timeout = 1h
 });
@@ -81,7 +82,7 @@ command_checks_all(
 	[qr//],
 	'run of pg_upgrade where the new cluster has insufficient max_replication_slots'
 );
-ok( -d $newpub->data_dir . "/pg_upgrade_output.d",
+ok(-d $newpub->data_dir . "/pg_upgrade_output.d",
 	"pg_upgrade_output.d/ not removed after pg_upgrade failure");
 
 # Set 'max_replication_slots' to match the number of slots (2) present on the

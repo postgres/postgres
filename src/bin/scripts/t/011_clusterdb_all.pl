@@ -25,13 +25,14 @@ $node->safe_psql(
 	UPDATE pg_database SET datconnlimit = -2 WHERE datname = 'regression_invalid';
 ));
 $node->command_ok([ 'clusterdb', '-a' ],
-  'invalid database not targeted by clusterdb -a');
+	'invalid database not targeted by clusterdb -a');
 
 # Doesn't quite belong here, but don't want to waste time by creating an
 # invalid database in 010_clusterdb.pl as well.
-$node->command_fails_like([ 'clusterdb', '-d', 'regression_invalid'],
-  qr/FATAL:  cannot connect to invalid database "regression_invalid"/,
-  'clusterdb cannot target invalid database');
+$node->command_fails_like(
+	[ 'clusterdb', '-d', 'regression_invalid' ],
+	qr/FATAL:  cannot connect to invalid database "regression_invalid"/,
+	'clusterdb cannot target invalid database');
 
 $node->safe_psql('postgres',
 	'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a); CLUSTER test1 USING test1x'

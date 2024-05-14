@@ -36,14 +36,16 @@ EOM
 # Now take an incremental backup.
 my $backup2path = $node1->backup_dir . '/backup2';
 $node1->command_ok(
-	[ 'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
-	  '--incremental', $backup1path . '/backup_manifest' ],
+	[
+		'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
+		'--incremental', $backup1path . '/backup_manifest'
+	],
 	"incremental backup from node1");
 
 # Restore the incremental backup and use it to create a new node.
 my $node2 = PostgreSQL::Test::Cluster->new('node2');
 $node2->init_from_backup($node1, 'backup2',
-						 combine_with_prior => [ 'backup1' ]);
+	combine_with_prior => ['backup1']);
 $node2->start();
 
 # Insert rows on both nodes.
@@ -57,14 +59,16 @@ EOM
 # Take another incremental backup, from node2, based on backup2 from node1.
 my $backup3path = $node1->backup_dir . '/backup3';
 $node2->command_ok(
-	[ 'pg_basebackup', '-D', $backup3path, '--no-sync', '-cfast',
-	  '--incremental', $backup2path . '/backup_manifest' ],
+	[
+		'pg_basebackup', '-D', $backup3path, '--no-sync', '-cfast',
+		'--incremental', $backup2path . '/backup_manifest'
+	],
 	"incremental backup from node2");
 
 # Restore the incremental backup and use it to create a new node.
 my $node3 = PostgreSQL::Test::Cluster->new('node3');
 $node3->init_from_backup($node1, 'backup3',
-						 combine_with_prior => [ 'backup1', 'backup2' ]);
+	combine_with_prior => [ 'backup1', 'backup2' ]);
 $node3->start();
 
 # Let's insert one more row.

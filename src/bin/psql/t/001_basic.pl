@@ -370,7 +370,8 @@ psql_fails_like(
 
 psql_like(
 	$node,
-	sprintf(q{with x as (
+	sprintf(
+		q{with x as (
 		select now()-backend_start AS howlong
 		from pg_stat_activity
 		where pid = pg_backend_pid()
@@ -416,20 +417,23 @@ psql_like($node, "SELECT 'one' \\g | $pipe_cmd", qr//, "one command \\g");
 my $c1 = slurp_file($g_file);
 like($c1, qr/one/);
 
-psql_like($node, "SELECT 'two' \\; SELECT 'three' \\g | $pipe_cmd", qr//, "two commands \\g");
+psql_like($node, "SELECT 'two' \\; SELECT 'three' \\g | $pipe_cmd",
+	qr//, "two commands \\g");
 my $c2 = slurp_file($g_file);
 like($c2, qr/two.*three/s);
 
 
-psql_like($node, "\\set SHOW_ALL_RESULTS 0\nSELECT 'four' \\; SELECT 'five' \\g | $pipe_cmd", qr//,
-  "two commands \\g with only last result");
+psql_like(
+	$node,
+	"\\set SHOW_ALL_RESULTS 0\nSELECT 'four' \\; SELECT 'five' \\g | $pipe_cmd",
+	qr//,
+	"two commands \\g with only last result");
 my $c3 = slurp_file($g_file);
 like($c3, qr/five/);
 unlike($c3, qr/four/);
 
 psql_like($node, "copy (values ('foo'),('bar')) to stdout \\g | $pipe_cmd",
-		  qr//,
-		  "copy output passed to \\g pipe");
+	qr//, "copy output passed to \\g pipe");
 my $c4 = slurp_file($g_file);
 like($c4, qr/foo.*bar/s);
 

@@ -86,7 +86,8 @@ if (!$ENV{PG_TEST_EXTRA} || $ENV{PG_TEST_EXTRA} !~ /\blibpq_encryption\b/)
 # Only run the GSSAPI tests when compiled with GSSAPI support and
 # PG_TEST_EXTRA includes 'kerberos'
 my $gss_supported = $ENV{with_gssapi} eq 'yes';
-my $kerberos_enabled = $ENV{PG_TEST_EXTRA} && $ENV{PG_TEST_EXTRA} =~ /\bkerberos\b/;
+my $kerberos_enabled =
+  $ENV{PG_TEST_EXTRA} && $ENV{PG_TEST_EXTRA} =~ /\bkerberos\b/;
 my $ssl_supported = $ENV{with_ssl} eq 'openssl';
 
 ###
@@ -127,7 +128,8 @@ if ($gss_supported != 0 && $kerberos_enabled != 0)
 
 	my $realm = 'EXAMPLE.COM';
 	$krb = PostgreSQL::Test::Kerberos->new($host, $hostaddr, $realm);
-	$node->append_conf('postgresql.conf', "krb_server_keyfile = '$krb->{keytab}'\n");
+	$node->append_conf('postgresql.conf',
+		"krb_server_keyfile = '$krb->{keytab}'\n");
 }
 
 if ($ssl_supported != 0)
@@ -159,7 +161,8 @@ chomp($unixdir);
 
 # Helper function that returns the encryption method in use in the
 # connection.
-$node->safe_psql('postgres', q{
+$node->safe_psql(
+	'postgres', q{
 CREATE FUNCTION current_enc() RETURNS text LANGUAGE plpgsql AS $$
 DECLARE
   ssl_in_use bool;
@@ -206,7 +209,8 @@ $node->reload;
 
 # Ok, all prepared. Run the tests.
 
-my @all_test_users = ('testuser', 'ssluser', 'nossluser', 'gssuser', 'nogssuser');
+my @all_test_users =
+  ('testuser', 'ssluser', 'nossluser', 'gssuser', 'nogssuser');
 my @all_gssencmodes = ('disable', 'prefer', 'require');
 my @all_sslmodes = ('disable', 'allow', 'prefer', 'require');
 my @all_sslnegotiations = ('postgres', 'direct', 'requiredirect');
@@ -220,7 +224,8 @@ my $server_config = {
 ### Run tests with GSS and SSL disabled in the server
 ###
 my $test_table;
-if ($ssl_supported) {
+if ($ssl_supported)
+{
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                      -> OUTCOME
 testuser    disable      disable      *              connect, authok             -> plain
@@ -240,7 +245,9 @@ testuser    disable      disable      *              connect, authok            
 .           .            .            direct         connect, directsslreject, reconnect, sslreject -> fail
 .           .            .            requiredirect  connect, directsslreject    -> fail
 	};
-} else {
+}
+else
+{
 	# Compiled without SSL support
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                      -> OUTCOME
@@ -268,8 +275,8 @@ testuser    require      *            *              - -> fail
 
 note("Running tests with SSL and GSS disabled in the server");
 test_matrix($node, $server_config,
-			['testuser'], \@all_gssencmodes, \@all_sslmodes, \@all_sslnegotiations,
-			parse_table($test_table));
+	['testuser'], \@all_gssencmodes, \@all_sslmodes, \@all_sslnegotiations,
+	parse_table($test_table));
 
 
 ###
@@ -317,10 +324,11 @@ nossluser   .            disable      *              connect, authok            
 	$server_config->{server_ssl} = 1;
 
 	note("Running tests with SSL enabled in server");
-	test_matrix($node, $server_config,
-				['testuser', 'ssluser', 'nossluser'],
-				['disable'], \@all_sslmodes, \@all_sslnegotiations,
-				parse_table($test_table));
+	test_matrix(
+		$node, $server_config,
+		[ 'testuser', 'ssluser', 'nossluser' ], ['disable'],
+		\@all_sslmodes, \@all_sslnegotiations,
+		parse_table($test_table));
 
 	# Disable SSL again
 	$node->adjust_conf('postgresql.conf', 'ssl', 'off');
@@ -399,17 +407,20 @@ nogssuser   disable      disable      *              connect, authok            
 	# even connecting to the server. Skip those, because we tested
 	# them earlier already.
 	my ($sslmodes, $sslnegotiations);
-	if ($ssl_supported != 0) {
-		($sslmodes, $sslnegotiations) = (\@all_sslmodes, \@all_sslnegotiations);
-	} else {
+	if ($ssl_supported != 0)
+	{
+		($sslmodes, $sslnegotiations) =
+		  (\@all_sslmodes, \@all_sslnegotiations);
+	}
+	else
+	{
 		($sslmodes, $sslnegotiations) = (['disable'], ['postgres']);
 	}
 
 	note("Running tests with GSS enabled in server");
-	test_matrix($node, $server_config,
-				['testuser', 'gssuser', 'nogssuser'],
-				\@all_gssencmodes, $sslmodes, $sslnegotiations,
-				parse_table($test_table));
+	test_matrix($node, $server_config, [ 'testuser', 'gssuser', 'nogssuser' ],
+		\@all_gssencmodes, $sslmodes, $sslnegotiations,
+		parse_table($test_table));
 }
 
 ###
@@ -422,7 +433,10 @@ SKIP:
 	skip "kerberos not enabled in PG_TEST_EXTRA" if $kerberos_enabled == 0;
 
 	# Sanity check that GSSAPI is still enabled from previous test.
-	connect_test($node, 'user=testuser gssencmode=prefer sslmode=prefer', 'connect, gssaccept, authok -> gss');
+	connect_test(
+		$node,
+		'user=testuser gssencmode=prefer sslmode=prefer',
+		'connect, gssaccept, authok -> gss');
 
 	# Enable SSL
 	$node->adjust_conf('postgresql.conf', 'ssl', 'on');
@@ -528,10 +542,14 @@ nossluser   disable      disable      *              connect, authok            
 	};
 
 	note("Running tests with both GSS and SSL enabled in server");
-	test_matrix($node, $server_config,
-				['testuser', 'gssuser', 'ssluser', 'nogssuser', 'nossluser'],
-				\@all_gssencmodes, \@all_sslmodes, \@all_sslnegotiations,
-				parse_table($test_table));
+	test_matrix(
+		$node,
+		$server_config,
+		[ 'testuser', 'gssuser', 'ssluser', 'nogssuser', 'nossluser' ],
+		\@all_gssencmodes,
+		\@all_sslmodes,
+		\@all_sslnegotiations,
+		parse_table($test_table));
 }
 
 ###
@@ -543,8 +561,13 @@ SKIP:
 
 	# libpq doesn't attempt SSL or GSSAPI over Unix domain
 	# sockets. The server would reject them too.
-	connect_test($node, "user=localuser gssencmode=prefer sslmode=prefer host=$unixdir", 'connect, authok -> plain');
-	connect_test($node, "user=localuser gssencmode=require sslmode=prefer host=$unixdir", '- -> fail');
+	connect_test(
+		$node,
+		"user=localuser gssencmode=prefer sslmode=prefer host=$unixdir",
+		'connect, authok -> plain');
+	connect_test($node,
+		"user=localuser gssencmode=require sslmode=prefer host=$unixdir",
+		'- -> fail');
 }
 
 done_testing();
@@ -558,7 +581,8 @@ sub test_matrix
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
 	my ($pg_node, $node_conf,
-		$test_users, $gssencmodes, $sslmodes, $sslnegotiations, %expected) = @_;
+		$test_users, $gssencmodes, $sslmodes, $sslnegotiations, %expected)
+	  = @_;
 
 	foreach my $test_user (@{$test_users})
 	{
@@ -572,10 +596,15 @@ sub test_matrix
 				{
 					$key = "$test_user $gssencmode $client_mode $negotiation";
 					$expected_events = $expected{$key};
-					if (!defined($expected_events)) {
-						$expected_events = "<line missing from expected output table>";
+					if (!defined($expected_events))
+					{
+						$expected_events =
+						  "<line missing from expected output table>";
 					}
-					connect_test($pg_node, "user=$test_user gssencmode=$gssencmode sslmode=$client_mode sslnegotiation=$negotiation", $expected_events);
+					connect_test(
+						$pg_node,
+						"user=$test_user gssencmode=$gssencmode sslmode=$client_mode sslnegotiation=$negotiation",
+						$expected_events);
 				}
 			}
 		}
@@ -594,7 +623,8 @@ sub connect_test
 
 	my $connstr_full = "";
 	$connstr_full .= "dbname=postgres " unless $connstr =~ m/dbname=/;
-	$connstr_full .= "host=$host hostaddr=$hostaddr " unless $connstr =~ m/host=/;
+	$connstr_full .= "host=$host hostaddr=$hostaddr "
+	  unless $connstr =~ m/host=/;
 	$connstr_full .= $connstr;
 
 	# Get the current size of the logfile before running the test.
@@ -614,7 +644,7 @@ sub connect_test
 	my ($ret, $stdout, $stderr) = $node->psql(
 		'postgres',
 		'',
-		extra_params => ['-w', '-c', 'SELECT current_enc()'],
+		extra_params => [ '-w', '-c', 'SELECT current_enc()' ],
 		connstr => "$connstr_full",
 		on_error_stop => 0);
 
@@ -628,7 +658,8 @@ sub connect_test
 	# Check that the events and outcome match the expected events and
 	# outcome
 	my $events_and_outcome = join(', ', @events) . " -> $outcome";
-	is($events_and_outcome, $expected_events_and_outcome, $test_name) or diag("$stderr");
+	is($events_and_outcome, $expected_events_and_outcome, $test_name)
+	  or diag("$stderr");
 }
 
 # Parse a test table. See comment at top of the file for the format.
@@ -640,7 +671,8 @@ sub parse_table
 	my %expected;
 
 	my ($user, $gssencmode, $sslmode, $sslnegotiation);
-	foreach my $line (@lines) {
+	foreach my $line (@lines)
+	{
 
 		# Trim comments
 		$line =~ s/#.*$//;
@@ -652,7 +684,8 @@ sub parse_table
 		# Ignore empty lines (includes comment-only lines)
 		next if $line eq '';
 
-		$line =~ m/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S.*)\s*->\s*(\S+)\s*$/ or die "could not parse line \"$line\"";
+		$line =~ m/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S.*)\s*->\s*(\S+)\s*$/
+		  or die "could not parse line \"$line\"";
 		$user = $1 unless $1 eq ".";
 		$gssencmode = $2 unless $2 eq ".";
 		$sslmode = $3 unless $3 eq ".";
@@ -662,10 +695,12 @@ sub parse_table
 		my @events = split /,\s*/, $5;
 		my $outcome = $6;
 		my $events_str = join(', ', @events);
-		$events_str =~ s/\s+$//;   # trim whitespace
+		$events_str =~ s/\s+$//;    # trim whitespace
 		my $events_and_outcome = "$events_str -> $outcome";
 
-		my %expanded = expand_expected_line($user, $gssencmode, $sslmode, $sslnegotiation, $events_and_outcome);
+		my %expanded =
+		  expand_expected_line($user, $gssencmode, $sslmode, $sslnegotiation,
+			$events_and_outcome);
 		%expected = (%expected, %expanded);
 	}
 	return %expected;
@@ -677,23 +712,48 @@ sub expand_expected_line
 	my ($user, $gssencmode, $sslmode, $sslnegotiation, $expected) = @_;
 
 	my %result;
-	if ($user eq '*') {
-		foreach my $x (@all_test_users) {
-			%result = (%result, expand_expected_line($x, $gssencmode, $sslmode, $sslnegotiation, $expected));
+	if ($user eq '*')
+	{
+		foreach my $x (@all_test_users)
+		{
+			%result = (
+				%result,
+				expand_expected_line(
+					$x, $gssencmode, $sslmode, $sslnegotiation, $expected));
 		}
-	} elsif ($gssencmode eq '*') {
-		foreach my $x (@all_gssencmodes) {
-			%result = (%result, expand_expected_line($user, $x, $sslmode, $sslnegotiation, $expected));
+	}
+	elsif ($gssencmode eq '*')
+	{
+		foreach my $x (@all_gssencmodes)
+		{
+			%result = (
+				%result,
+				expand_expected_line(
+					$user, $x, $sslmode, $sslnegotiation, $expected));
 		}
-	} elsif ($sslmode eq '*') {
-		foreach my $x (@all_sslmodes) {
-			%result = (%result, expand_expected_line($user, $gssencmode, $x, $sslnegotiation, $expected));
+	}
+	elsif ($sslmode eq '*')
+	{
+		foreach my $x (@all_sslmodes)
+		{
+			%result = (
+				%result,
+				expand_expected_line(
+					$user, $gssencmode, $x, $sslnegotiation, $expected));
 		}
-	} elsif ($sslnegotiation eq '*') {
-		foreach my $x (@all_sslnegotiations) {
-			%result = (%result, expand_expected_line($user, $gssencmode, $sslmode, $x, $expected));
+	}
+	elsif ($sslnegotiation eq '*')
+	{
+		foreach my $x (@all_sslnegotiations)
+		{
+			%result = (
+				%result,
+				expand_expected_line(
+					$user, $gssencmode, $sslmode, $x, $expected));
 		}
-	} else {
+	}
+	else
+	{
 		$result{"$user $gssencmode $sslmode $sslnegotiation"} = $expected;
 	}
 	return %result;
@@ -708,13 +768,18 @@ sub parse_log_events
 	my @events = ();
 
 	my @lines = split /\n/, $log_contents;
-	foreach my $line (@lines) {
-		push @events, "reconnect" if $line =~ /connection received/ && scalar(@events) > 0;
-		push @events, "connect" if $line =~ /connection received/ && scalar(@events) == 0;
+	foreach my $line (@lines)
+	{
+		push @events, "reconnect"
+		  if $line =~ /connection received/ && scalar(@events) > 0;
+		push @events, "connect"
+		  if $line =~ /connection received/ && scalar(@events) == 0;
 		push @events, "sslaccept" if $line =~ /SSLRequest accepted/;
 		push @events, "sslreject" if $line =~ /SSLRequest rejected/;
-		push @events, "directsslaccept" if $line =~ /direct SSL connection accepted/;
-		push @events, "directsslreject" if $line =~ /direct SSL connection rejected/;
+		push @events, "directsslaccept"
+		  if $line =~ /direct SSL connection accepted/;
+		push @events, "directsslreject"
+		  if $line =~ /direct SSL connection rejected/;
 		push @events, "gssaccept" if $line =~ /GSSENCRequest accepted/;
 		push @events, "gssreject" if $line =~ /GSSENCRequest rejected/;
 		push @events, "authfail" if $line =~ /no pg_hba.conf entry/;
@@ -722,8 +787,9 @@ sub parse_log_events
 	}
 
 	# No events at all is represented by "-"
-	if (scalar @events == 0) {
-		push @events, "-"
+	if (scalar @events == 0)
+	{
+		push @events, "-";
 	}
 
 	return @events;

@@ -44,7 +44,7 @@ typedef struct
 	/* true, if tcontext is valid */
 	char	   *ncontext;		/* temporary scontext on execution of trusted
 								 * procedure, or NULL elsewhere */
-}			avc_cache;
+} avc_cache;
 
 /*
  * Declaration of static variables
