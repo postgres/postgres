@@ -85,12 +85,16 @@ run_ssl_passphrase_command(const char *prompt, bool is_server_start, char *buf, 
 	}
 	else if (pclose_rc != 0)
 	{
+		char	   *reason;
+
 		explicit_bzero(buf, size);
+		reason = wait_result_to_str(pclose_rc);
 		ereport(loglevel,
 				(errcode_for_file_access(),
 				 errmsg("command \"%s\" failed",
 						command),
-				 errdetail_internal("%s", wait_result_to_str(pclose_rc))));
+				 errdetail_internal("%s", reason)));
+		pfree(reason);
 		goto error;
 	}
 

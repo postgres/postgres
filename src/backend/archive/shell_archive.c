@@ -125,9 +125,11 @@ shell_archive_file(ArchiveModuleState *state, const char *file,
 					 errdetail("The failed archive command was: %s",
 							   xlogarchcmd)));
 		}
+		pfree(xlogarchcmd);
 
 		return false;
 	}
+	pfree(xlogarchcmd);
 
 	elog(DEBUG1, "archived write-ahead log file \"%s\"", file);
 	return true;
