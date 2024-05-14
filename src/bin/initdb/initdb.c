@@ -102,7 +102,7 @@ static const char *const auth_methods_host[] = {
 	"sspi",
 #endif
 #ifdef USE_PAM
-	"pam", "pam ",
+	"pam",
 #endif
 #ifdef USE_BSD_AUTH
 	"bsd",
@@ -118,7 +118,7 @@ static const char *const auth_methods_host[] = {
 static const char *const auth_methods_local[] = {
 	"trust", "reject", "scram-sha-256", "md5", "password", "peer", "radius",
 #ifdef USE_PAM
-	"pam", "pam ",
+	"pam",
 #endif
 #ifdef USE_BSD_AUTH
 	"bsd",
@@ -2512,10 +2512,6 @@ check_authmethod_valid(const char *authmethod, const char *const *valid_methods,
 	{
 		if (strcmp(authmethod, *p) == 0)
 			return;
-		/* with space = param */
-		if (strchr(authmethod, ' '))
-			if (strncmp(authmethod, *p, (authmethod - strchr(authmethod, ' '))) == 0)
-				return;
 	}
 
 	pg_fatal("invalid authentication method \"%s\" for \"%s\" connections",
