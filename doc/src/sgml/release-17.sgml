@@ -1151,6 +1151,17 @@ Previously only btree indexes could be used for this purpose.
 </listitem>
 
 <!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2024-04-03 [5bec1d6bc] Improve eviction algorithm in ReorderBuffer using max-he
+-->
+
+<listitem>
+<para>
+Improve logical decoding performance in cases where there are many subtransactions (Masahiko Sawada)
+</para>
+</listitem>
+
+<!--
 Author: Amit Kapila <akapila@postgresql.org>
 2023-10-17 [79243de13] Restart the apply worker if the privileges have been rev
 -->
