@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2024-??-??, AS OF 2024-05-07</para>
+   <para>2024-??-??, AS OF 2024-05-14</para>
   </formalpara>
 
   <sect2 id="release-17-highlights">
@@ -1487,29 +1487,6 @@ Add event trigger support for REINDEX (Garrett Thornburg, Jian He)
 </listitem>
 
 <!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2023-08-25 [b0e96f311] Catalog not-null constraints
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2023-08-29 [9b581c534] Disallow changing NO INHERIT status of a not-null constr
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2023-09-07 [3af721794] Update information_schema definition for not-null constr
-Author: Peter Eisentraut <peter@eisentraut.org>
-2024-03-20 [e5da0fe3c] Catalog domain not-null constraints
-Author: Peter Eisentraut <peter@eisentraut.org>
-2024-04-15 [9895b35cb] Fix ALTER DOMAIN NOT NULL syntax
--->
-
-<listitem>
-<para>
-Allow NOT NULL columns to be specified as column constraints and domains (Alvaro Herrera, Bernd Helmle, Kyotaro Horiguchi, Peter Eisentraut)
-</para>
-
-<para>
-Previously NOT NULL could only be specified as a column attribute.
-</para>
-</listitem>
-
-<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2023-07-19 [cdaedfc96] Support parenthesized syntax for CLUSTER without a table
 -->
@@ -1947,6 +1924,8 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2024-04-29 [03a0e0d4b] libpq: Enforce ALPN in direct SSL connections
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2024-04-29 [17a834a04] Reject SSL connection if ALPN is used but there's no com
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2024-05-11 [407e0b023] Change ALPN protocol ID to IANA-approved "postgresql"
 -->
 
 <listitem>
