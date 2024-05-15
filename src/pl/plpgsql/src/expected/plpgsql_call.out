@@ -397,6 +397,40 @@ END
 $$;
 NOTICE:  a: <NULL>, b: {30,7}
 NOTICE:  _a: 37, _b: 30, _c: 7
+-- polymorphic OUT arguments
+CREATE PROCEDURE test_proc12(a anyelement, OUT b anyelement, OUT c anyarray)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE NOTICE 'a: %', a;
+  b := a;
+  c := array[a];
+END;
+$$;
+DO $$
+DECLARE _a int; _b int; _c int[];
+BEGIN
+  _a := 10;
+  CALL test_proc12(_a, _b, _c);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+END
+$$;
+NOTICE:  a: 10
+NOTICE:  _a: 10, _b: 10, _c: {10}
+DO $$
+DECLARE _a int; _b int; _c text[];
+BEGIN
+  _a := 10;
+  CALL test_proc12(_a, _b, _c);  -- error
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+END
+$$;
+ERROR:  procedure test_proc12(integer, integer, text[]) does not exist
+LINE 1: CALL test_proc12(_a, _b, _c)
+             ^
+HINT:  No procedure matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  CALL test_proc12(_a, _b, _c)
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at CALL
 -- transition variable assignment
 TRUNCATE test1;
 CREATE FUNCTION triggerfunc1() RETURNS trigger
