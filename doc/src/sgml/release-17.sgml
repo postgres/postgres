@@ -73,7 +73,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Restrict "ago" to only appear at the end of in interval values (Joseph Koshakow)
+Restrict "ago" to only appear at the end in interval values (Joseph Koshakow)
 </para>
 
 <para>
@@ -478,7 +478,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 
 <listitem>
 <para>
-Allow a BRIN indexes to be created using parallel workers (Tomas Vondra, Matthias van de Meent)
+Allow BRIN indexes to be created using parallel workers (Tomas Vondra, Matthias van de Meent)
 </para>
 </listitem>
 
@@ -963,7 +963,7 @@ Allow the creation of WAL summarization files (Robert Haas, Nathan Bossart, Hube
 </para>
 
 <para>
-These files record the block numbers that have changed within an LSN range, and is useful for incremental file system backups.  This is controlled by the server variables
+These files record the block numbers that have changed within an LSN range and are useful for incremental file system backups.  This is controlled by the server variables
 summarize_wal and wal_summarize_keep_time, and introspected with pg_available_wal_summaries(), pg_wal_summary_contents(), and pg_get_wal_summarizer_state().
 </para>
 </listitem>
@@ -1135,7 +1135,7 @@ Allow the application of logical replication changes to use hash indexes on the 
 </para>
 
 <para>
-Previously only btree indexes could be use for this purpose.
+Previously only btree indexes could be used for this purpose.
 </para>
 </listitem>
 
@@ -2229,7 +2229,7 @@ Allow pg_basebackup and pg_receivewal to use dbname in their connection specific
 </para>
 
 <para>
-This is useful for connection poolers who are sensitive to the database name.
+This is useful for connection poolers that are sensitive to the database name.
 </para>
 </listitem>
 
@@ -2390,7 +2390,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Remove the Microsoft Visual Studio Studio-specific Postgres build option (Michael Paquier)
+Remove the Microsoft Visual Studio-specific Postgres build option (Michael Paquier)
 </para>
 
 <para>
