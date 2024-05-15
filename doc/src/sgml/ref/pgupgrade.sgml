@@ -940,6 +940,104 @@ psql --username=postgres --file=script.sql postgres
  </refsect1>
 
  <refsect1>
+  <title>Environment</title>
+
+  <para>
+   Some environment variables can be used to provide defaults for command-line options:
+
+   <variablelist>
+    <varlistentry>
+     <term><envar>PGBINOLD</envar></term>
+
+     <listitem>
+      <para>
+       The old PostgreSQL executable directory; option
+       <option>-b</option>/<option>--old-bindir</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><envar>PGBINNEW</envar></term>
+
+     <listitem>
+      <para>
+       The new PostgreSQL executable directory; option
+       <option>-B</option>/<option>--new-bindir</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><envar>PGDATAOLD</envar></term>
+
+     <listitem>
+      <para>
+       The old database cluster configuration directory; option
+       <option>-d</option>/<option>--old-datadir</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><envar>PGDATANEW</envar></term>
+
+     <listitem>
+      <para>
+       The new database cluster configuration directory; option
+       <option>-D</option>/<option>--new-datadir</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><envar>PGPORTOLD</envar></term>
+
+     <listitem>
+      <para>
+       The old cluster port number; option
+       <option>-p</option>/<option>--old-port</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><envar>PGPORTNEW</envar></term>
+
+     <listitem>
+      <para>
+       The new cluster port number; option
+       <option>-P</option>/<option>--new-port</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><envar>PGSOCKETDIR</envar></term>
+
+     <listitem>
+      <para>
+       Directory to use for postmaster sockets during upgrade; option
+       <option>-s</option>/<option>--socketdir</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><envar>PGUSER</envar></term>
+
+     <listitem>
+      <para>
+       Cluster's install user name; option
+       <option>-U</option>/<option>--username</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Notes</title>
 
   <para>
