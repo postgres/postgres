@@ -1,0 +1,16 @@
+# MkDocs configuration for PDF builds
+# Usage: ENABLE_PDF_EXPORT=1 mkdocs build -f mkdocs-pdf.yml
+
+INHERIT: mkdocs.yml
+
+copyright: Percona LLC, &#169; 2024
+
+extra_css:
+  - https://unicons.iconscout.com/release/v3.0.3/css/line.css
+  - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css
+  - css/extra.css
+
+markdown_extensions:
+  pymdownx.tabbed: {}
+  admonition: {}
+
