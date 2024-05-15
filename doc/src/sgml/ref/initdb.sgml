@@ -486,12 +486,6 @@ PostgreSQL documentation
    </varlistentry>
   </variablelist>
 
-  <para>
-   This utility, like most other <productname>PostgreSQL</productname> utilities,
-   also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars"/>).
-  </para>
-
  </refsect1>
 
  <refsect1>
