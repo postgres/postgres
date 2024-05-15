@@ -385,7 +385,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow query nodes to be run in parallel in more case (Tom Lane)
+Allow query nodes to be run in parallel in more cases (Tom Lane)
 </para>
 </listitem>
 
@@ -560,6 +560,17 @@ Author: Michael Paquier <michael@paquier.xyz>
 <listitem>
 <para>
 Improve performance of heavily-contended WAL writes (Bharath Rupireddy)
+</para>
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2024-04-07 [c4ab7da60] Avoid needless large memcpys in libpq socket writing
+-->
+
+<listitem>
+<para>
+Improve performance when transferring large blocks of data to a client (Melih Mutlu)
 </para>
 </listitem>
 
@@ -1920,17 +1931,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <listitem>
 <para>
 Add libpq function PQsetChunkedRowsMode to allow retrieval of results in chunks (Daniel Vérité)
-</para>
-</listitem>
-
-<!--
-Author: David Rowley <drowley@postgresql.org>
-2024-04-07 [c4ab7da60] Avoid needless large memcpys in libpq socket writing
--->
-
-<listitem>
-<para>
-Allow libpq to more efficiently transfer large blocks of data (Melih Mutlu)
 </para>
 </listitem>
 
