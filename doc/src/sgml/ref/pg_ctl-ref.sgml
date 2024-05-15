@@ -579,13 +579,6 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <command>pg_ctl</command>, like most other <productname>PostgreSQL</productname>
-   utilities,
-   also uses the environment variables supported by <application>libpq</application>
-   (see <xref linkend="libpq-envars"/>).
-  </para>
-
-  <para>
    For additional variables that affect the server,
    see <xref linkend="app-postgres"/>.
   </para>
