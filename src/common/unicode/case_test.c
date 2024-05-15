@@ -2,7 +2,7 @@
  * case_test.c
  *		Program to test Unicode case mapping functions.
  *
- * Portions Copyright (c) 2017-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/unicode/case_test.c

@@ -2,7 +2,7 @@
  * unicode_case.c
  *		Unicode case mapping and case conversion.
  *
- * Portions Copyright (c) 2017-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/unicode_case.c
