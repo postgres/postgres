@@ -109,6 +109,24 @@ $$;
 
 CALL ptest6(1, 2);
 
+CREATE PROCEDURE ptest6a(inout a anyelement, inout b anyelement)
+LANGUAGE SQL
+AS $$
+SELECT $1, $1;
+$$;
+
+CALL ptest6a(1, null);
+CALL ptest6a(1.1, null);
+
+CREATE PROCEDURE ptest6b(a anyelement, inout b anyelement, inout c anyarray)
+LANGUAGE SQL
+AS $$
+SELECT $1, array[$1];
+$$;
+
+CALL ptest6b(1, null, null);
+CALL ptest6b(1.1, null, null);
+
 
 -- collation assignment
 

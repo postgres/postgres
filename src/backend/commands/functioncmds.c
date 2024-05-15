@@ -55,6 +55,7 @@
 #include "executor/executor.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
@@ -2326,6 +2327,78 @@ CallStmtResultDesc(CallStmt *stmt)
 		elog(ERROR, "cache lookup failed for procedure %u", fexpr->funcid);
 
 	tupdesc = build_function_result_tupdesc_t(tuple);
+
+	/*
+	 * The result of build_function_result_tupdesc_t has the right column
+	 * names, but it just has the declared output argument types, which is the
+	 * wrong thing in polymorphic cases.  Get the correct types by examining
+	 * the procedure's resolved argument expressions.  We intentionally keep
+	 * the atttypmod as -1 and the attcollation as the type's default, since
+	 * that's always the appropriate thing for function outputs; there's no
+	 * point in considering any additional info available from outargs.  Note
+	 * that tupdesc is null if there are no outargs.
+	 */
+	if (tupdesc)
+	{
+		Datum		proargmodes;
+		bool		isnull;
+		ArrayType  *arr;
+		char	   *argmodes;
+		int			nargs,
+					noutargs;
+		ListCell   *lc;
+
+		/*
+		 * Expand named arguments, defaults, etc.  We do not want to scribble
+		 * on the passed-in CallStmt parse tree, so first flat-copy fexpr,
+		 * allowing us to replace its args field.  (Note that
+		 * expand_function_arguments will not modify any of the passed-in data
+		 * structure.)
+		 */
+		{
+			FuncExpr   *nexpr = makeNode(FuncExpr);
+
+			memcpy(nexpr, fexpr, sizeof(FuncExpr));
+			fexpr = nexpr;
+		}
+
+		fexpr->args = expand_function_arguments(fexpr->args,
+												fexpr->funcresulttype,
+												tuple);
+
+		/*
+		 * If we're here, build_function_result_tupdesc_t already validated
+		 * that the procedure has non-null proargmodes that is the right kind
+		 * of array, so it seems unnecessary to check again.
+		 */
+		proargmodes = SysCacheGetAttr(PROCOID, tuple,
+									  Anum_pg_proc_proargmodes,
+									  &isnull);
+		Assert(!isnull);
+		arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
+		argmodes = (char *) ARR_DATA_PTR(arr);
+
+		nargs = noutargs = 0;
+		foreach(lc, fexpr->args)
+		{
+			Node	   *arg = (Node *) lfirst(lc);
+			Form_pg_attribute att = TupleDescAttr(tupdesc, noutargs);
+			char		argmode = argmodes[nargs++];
+
+			/* ignore non-out arguments */
+			if (argmode == PROARGMODE_IN ||
+				argmode == PROARGMODE_VARIADIC)
+				continue;
+
+			TupleDescInitEntry(tupdesc,
+							   ++noutargs,
+							   NameStr(att->attname),
+							   exprType(arg),
+							   -1,
+							   0);
+		}
+		Assert(tupdesc->natts == noutargs);
+	}
 
 	ReleaseSysCache(tuple);
 
