@@ -88,6 +88,7 @@ SELECT 1_000._5;
 SELECT 1_000.5_;
 SELECT 1_000.5e_1;
 
+PREPARE p1 AS SELECT $0_1;
 
 --
 -- Test implicit type conversions
