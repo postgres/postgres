@@ -357,6 +357,28 @@ Improve optimization of range values when using containment operators &lt;@ and 
 </listitem>
 
 <!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2024-02-15 [9f1337639] Pull up ANY-SUBLINK with the necessary lateral support.
+-->
+
+<listitem>
+<para>
+Allow correlated IN subqueries to be transformed into joins (Andy Fan, Tom Lane)
+</para>
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2023-10-05 [a8a968a82] Consider cheap startup paths in add_paths_to_append_rel
+-->
+
+<listitem>
+<para>
+Improve optimization of the LIMIT clause on partitioned tables, inheritance parents, and UNION ALL queries (Andy Fan, David Rowley)
+</para>
+</listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-07-14 [e08d74ca1] Allow plan nodes with initPlans to be considered paralle
 -->
