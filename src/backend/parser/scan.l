@@ -419,8 +419,9 @@ bininteger_junk	{bininteger}{ident_start}
 numeric_junk	{numeric}{ident_start}
 real_junk		{real}{ident_start}
 
-param			\${decinteger}
-param_junk		\${decinteger}{ident_start}
+/* Positional parameters don't accept underscores. */
+param			\${decdigit}+
+param_junk		\${decdigit}+{ident_start}
 
 other			.
 
