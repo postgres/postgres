@@ -5,7 +5,7 @@
 # to create backups.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use File::Copy qw(copy);
 use File::Path qw(rmtree);
