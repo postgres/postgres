@@ -3089,8 +3089,8 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
  * The current backend is always ignored; it is caller's responsibility to
  * check whether the current backend uses the given DB, if it's important.
  *
- * It doesn't allow to terminate the connections even if there is a one
- * backend with the prepared transaction in the target database.
+ * If the target database has a prepared transaction or permissions checks
+ * fail for a connection, this fails without terminating anything.
  */
 void
 TerminateOtherDBBackends(Oid databaseId)
@@ -3135,14 +3135,19 @@ TerminateOtherDBBackends(Oid databaseId)
 		ListCell   *lc;
 
 		/*
-		 * Check whether we have the necessary rights to terminate other
-		 * sessions.  We don't terminate any session until we ensure that we
-		 * have rights on all the sessions to be terminated.  These checks are
-		 * the same as we do in pg_terminate_backend.
+		 * Permissions checks relax the pg_terminate_backend checks in two
+		 * ways, both by omitting the !OidIsValid(proc->roleId) check:
 		 *
-		 * In this case we don't raise some warnings - like "PID %d is not a
-		 * PostgreSQL server process", because for us already finished session
-		 * is not a problem.
+		 * - Accept terminating autovacuum workers, since DROP DATABASE
+		 * without FORCE terminates them.
+		 *
+		 * - Accept terminating bgworkers.  For bgworker authors, it's
+		 * convenient to be able to recommend FORCE if a worker is blocking
+		 * DROP DATABASE unexpectedly.
+		 *
+		 * Unlike pg_terminate_backend, we don't raise some warnings - like
+		 * "PID %d is not a PostgreSQL server process", because for us already
+		 * finished session is not a problem.
 		 */
 		foreach(lc, pids)
 		{
@@ -3151,13 +3156,11 @@ TerminateOtherDBBackends(Oid databaseId)
 
 			if (proc != NULL)
 			{
-				/* Only allow superusers to signal superuser-owned backends. */
 				if (superuser_arg(proc->roleId) && !superuser())
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 							 errmsg("must be a superuser to terminate superuser process")));
 
-				/* Users can signal backends they have role membership in. */
 				if (!has_privs_of_role(GetUserId(), proc->roleId) &&
 					!has_privs_of_role(GetUserId(), DEFAULT_ROLE_SIGNAL_BACKENDID))
 					ereport(ERROR,
