@@ -213,7 +213,7 @@ my @all_test_users =
   ('testuser', 'ssluser', 'nossluser', 'gssuser', 'nogssuser');
 my @all_gssencmodes = ('disable', 'prefer', 'require');
 my @all_sslmodes = ('disable', 'allow', 'prefer', 'require');
-my @all_sslnegotiations = ('postgres', 'direct', 'requiredirect');
+my @all_sslnegotiations = ('postgres', 'direct');
 
 my $server_config = {
 	server_ssl => 0,
@@ -228,23 +228,22 @@ if ($ssl_supported)
 {
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                      -> OUTCOME
-testuser    disable      disable      *              connect, authok             -> plain
-.           .            allow        *              connect, authok             -> plain
+testuser    disable      disable      postgres       connect, authok             -> plain
+.           .            allow        postgres       connect, authok             -> plain
 .           .            prefer       postgres       connect, sslreject, authok  -> plain
-.           .            .            direct         connect, directsslreject, reconnect, sslreject, authok  -> plain
-.           .            .            requiredirect  connect, directsslreject, reconnect, authok -> plain
 .           .            require      postgres       connect, sslreject          -> fail
-.           .            .            direct         connect, directsslreject, reconnect, sslreject -> fail
-.           .            .            requiredirect  connect, directsslreject    -> fail
-.           prefer       disable      *              connect, authok             -> plain
-.           .            allow        *              connect, authok             -> plain
+.           .            .            direct         connect, directsslreject    -> fail
+.           prefer       disable      postgres       connect, authok             -> plain
+.           .            allow        postgres       connect, authok             -> plain
 .           .            prefer       postgres       connect, sslreject, authok  -> plain
-.           .            .            direct         connect, directsslreject, reconnect, sslreject, authok  -> plain
-.           .            .            requiredirect  connect, directsslreject, reconnect, authok -> plain
 .           .            require      postgres       connect, sslreject          -> fail
-.           .            .            direct         connect, directsslreject, reconnect, sslreject -> fail
-.           .            .            requiredirect  connect, directsslreject    -> fail
-	};
+.           .            .            direct         connect, directsslreject    -> fail
+
+# sslnegotiation=direct is not acccepted unless sslmode=require or stronger
+*           *            disable      direct         -     -> fail
+*           *            allow        direct         -     -> fail
+*           *            prefer       direct         -     -> fail
+};
 }
 else
 {
@@ -258,11 +257,10 @@ testuser    disable      disable      postgres       connect, authok            
 .           .            allow        postgres       connect, authok             -> plain
 .           .            prefer       postgres       connect, authok             -> plain
 
-# Without SSL support, sslmode=require and sslnegotiation=direct/requiredirect
-# are not accepted at all.
-.           *            require      *              -     -> fail
-.           *            *            direct         -     -> fail
-.           *            *            requiredirect  -     -> fail
+# Without SSL support, sslmode=require and sslnegotiation=direct are
+# not accepted at all
+*           *            require      *              -     -> fail
+*           *            *            direct         -     -> fail
 	};
 }
 
@@ -288,34 +286,26 @@ SKIP:
 
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                                          -> OUTCOME
-testuser    disable      disable      *              connect, authok                                 -> plain
-.           .            allow        *              connect, authok                                 -> plain
-.           .            prefer       postgres       connect, sslaccept, authok                      -> ssl
-.           .            .            direct         connect, directsslaccept, authok                -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok                -> ssl
-.           .            require      postgres       connect, sslaccept, authok                      -> ssl
-.           .            .            direct         connect, directsslaccept, authok                -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok                -> ssl
-ssluser     .            disable      *              connect, authfail                               -> fail
-.           .            allow        postgres       connect, authfail, reconnect, sslaccept, authok -> ssl
-.           .            .            direct         connect, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            .            requiredirect  connect, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            prefer       postgres       connect, sslaccept, authok                      -> ssl
-.           .            .            direct         connect, directsslaccept, authok                -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok                -> ssl
-.           .            require      postgres       connect, sslaccept, authok                      -> ssl
-.           .            .            direct         connect, directsslaccept, authok                -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok                -> ssl
-nossluser   .            disable      *              connect, authok                                 -> plain
+testuser    disable      disable      postgres       connect, authok                                 -> plain
 .           .            allow        postgres       connect, authok                                 -> plain
-.           .            .            direct         connect, authok                                 -> plain
-.           .            .            requiredirect  connect, authok                                 -> plain
+.           .            prefer       postgres       connect, sslaccept, authok                      -> ssl
+.           .            require      postgres       connect, sslaccept, authok                      -> ssl
+.           .            .            direct         connect, directsslaccept, authok                -> ssl
+ssluser     .            disable      postgres       connect, authfail                               -> fail
+.           .            allow        postgres       connect, authfail, reconnect, sslaccept, authok -> ssl
+.           .            prefer       postgres       connect, sslaccept, authok                      -> ssl
+.           .            require      postgres       connect, sslaccept, authok                      -> ssl
+.           .            .            direct         connect, directsslaccept, authok                -> ssl
+nossluser   .            disable      postgres       connect, authok                                 -> plain
+.           .            allow        postgres       connect, authok                                 -> plain
 .           .            prefer       postgres       connect, sslaccept, authfail, reconnect, authok -> plain
-.           .            .            direct         connect, directsslaccept, authfail, reconnect, authok -> plain
-.           .            .            requiredirect  connect, directsslaccept, authfail, reconnect, authok -> plain
 .           .            require      postgres       connect, sslaccept, authfail                    -> fail
 .           .            require      direct         connect, directsslaccept, authfail              -> fail
-.           .            require      requiredirect  connect, directsslaccept, authfail              -> fail
+
+# sslnegotiation=direct is not acccepted unless sslmode=require or stronger
+*           *            disable      direct         -     -> fail
+*           *            allow        direct         -     -> fail
+*           *            prefer       direct         -     -> fail
 };
 
 	# Enable SSL in the server
@@ -350,62 +340,54 @@ SKIP:
 
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                       -> OUTCOME
-testuser    disable      disable      *              connect, authok              -> plain
-.           .            allow        *              connect, authok              -> plain
-.           .            prefer       postgres       connect, sslreject, authok   -> plain
-.           .            .            direct         connect, directsslreject, reconnect, sslreject, authok  -> plain
-.           .            .            requiredirect  connect, directsslreject, reconnect, authok             -> plain
-.           .            require      postgres       connect, sslreject                -> fail
-.           .            .            direct         connect, directsslreject, reconnect, sslreject -> fail
-.           .            .            requiredirect  connect, directsslreject          -> fail
-.           prefer       *            *              connect, gssaccept, authok        -> gss
-.           require      *            *              connect, gssaccept, authok        -> gss
-
-gssuser     disable      disable      *              connect, authfail                  -> fail
-.           .            allow        postgres       connect, authfail, reconnect, sslreject -> fail
-.           .            .            direct         connect, authfail, reconnect, directsslreject, reconnect, sslreject -> fail
-.           .            .            requiredirect  connect, authfail, reconnect, directsslreject -> fail
-.           .            prefer       postgres       connect, sslreject, authfail       -> fail
-.           .            .            direct         connect, directsslreject, reconnect, sslreject, authfail -> fail
-.           .            .            requiredirect  connect, directsslreject, reconnect, authfail -> fail
-.           .            require      postgres       connect, sslreject                 -> fail
-.           .            .            direct         connect, directsslreject, reconnect, sslreject -> fail
-.           .            .            requiredirect  connect, directsslreject           -> fail
-.           prefer       *            *              connect, gssaccept, authok   -> gss
-.           require      *            *              connect, gssaccept, authok   -> gss
-
-nogssuser   disable      disable      *              connect, authok              -> plain
+testuser    disable      disable      postgres       connect, authok              -> plain
 .           .            allow        postgres       connect, authok              -> plain
-.           .            .            direct         connect, authok              -> plain
-.           .            .            requiredirect  connect, authok              -> plain
 .           .            prefer       postgres       connect, sslreject, authok   -> plain
-.           .            .            direct         connect, directsslreject, reconnect, sslreject, authok   -> plain
-.           .            .            requiredirect  connect, directsslreject, reconnect, authok              -> plain
+.           .            require      postgres       connect, sslreject                -> fail
+.           .            .            direct         connect, directsslreject          -> fail
+.           prefer       *            postgres       connect, gssaccept, authok        -> gss
+.           prefer       require      direct         connect, gssaccept, authok        -> gss
+.           require      *            postgres       connect, gssaccept, authok        -> gss
+.           .            require      direct         connect, gssaccept, authok        -> gss
+
+gssuser     disable      disable      postgres       connect, authfail                  -> fail
+.           .            allow        postgres       connect, authfail, reconnect, sslreject -> fail
+.           .            prefer       postgres       connect, sslreject, authfail       -> fail
 .           .            require      postgres       connect, sslreject                 -> fail
-.           .            .            direct         connect, directsslreject, reconnect, sslreject -> fail
-.           .            .            requiredirect  connect, directsslreject           -> fail
-.           prefer       disable      *              connect, gssaccept, authfail, reconnect, authok             -> plain
+.           .            .            direct         connect, directsslreject           -> fail
+.           prefer       *            postgres       connect, gssaccept, authok   -> gss
+.           prefer       require      direct         connect, gssaccept, authok   -> gss
+.           require      *            postgres       connect, gssaccept, authok   -> gss
+.           .            require      direct         connect, gssaccept, authok   -> gss
+
+nogssuser   disable      disable      postgres       connect, authok              -> plain
+.           .            allow        postgres       connect, authok              -> plain
+.           .            prefer       postgres       connect, sslreject, authok   -> plain
+.           .            require      postgres       connect, sslreject                 -> fail
+.           .            .            direct         connect, directsslreject           -> fail
+.           prefer       disable      postgres       connect, gssaccept, authfail, reconnect, authok             -> plain
 .           .            allow        postgres       connect, gssaccept, authfail, reconnect, authok             -> plain
-.           .            .            direct         connect, gssaccept, authfail, reconnect, authok             -> plain
-.           .            .            requiredirect  connect, gssaccept, authfail, reconnect, authok             -> plain
 .           .            prefer       postgres       connect, gssaccept, authfail, reconnect, sslreject, authok  -> plain
-.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslreject, reconnect, sslreject, authok  -> plain
-.           .            .            requiredirect  connect, gssaccept, authfail, reconnect, directsslreject, reconnect, authok  -> plain
 .           .            require      postgres       connect, gssaccept, authfail, reconnect, sslreject          -> fail
-.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslreject, reconnect, sslreject          -> fail
-.           .            .            requiredirect  connect, gssaccept, authfail, reconnect, directsslreject          -> fail
-.           require      disable      *              connect, gssaccept, authfail -> fail
-.           .            allow        *              connect, gssaccept, authfail -> fail
-.           .            prefer       *              connect, gssaccept, authfail -> fail
-.           .            require      *              connect, gssaccept, authfail -> fail   # If both GSSAPI and sslmode are required, and GSS is not available -> fail
+.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslreject          -> fail
+.           require      disable      postgres       connect, gssaccept, authfail -> fail
+.           .            allow        postgres       connect, gssaccept, authfail -> fail
+.           .            prefer       postgres       connect, gssaccept, authfail -> fail
+.           .            require      postgres       connect, gssaccept, authfail -> fail   # If both GSSAPI and sslmode are required, and GSS is not available -> fail
+.           .            .            direct         connect, gssaccept, authfail -> fail   # If both GSSAPI and sslmode are required, and GSS is not available -> fail
+
+# sslnegotiation=direct is not acccepted unless sslmode=require or stronger
+*           *            disable      direct         -     -> fail
+*           *            allow        direct         -     -> fail
+*           *            prefer       direct         -     -> fail
 	};
 
 	# The expected events and outcomes above assume that SSL support
 	# is enabled. When libpq is compiled without SSL support, all
 	# attempts to connect with sslmode=require or
-	# sslnegotiation=direct/requiredirect would fail immediately without
-	# even connecting to the server. Skip those, because we tested
-	# them earlier already.
+	# sslnegotiation=direct would fail immediately without even
+	# connecting to the server. Skip those, because we tested them
+	# earlier already.
 	my ($sslmodes, $sslnegotiations);
 	if ($ssl_supported != 0)
 	{
@@ -445,100 +427,84 @@ SKIP:
 
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                       -> OUTCOME
-testuser    disable      disable      *              connect, authok              -> plain
-.           .            allow        *              connect, authok              -> plain
-.           .            prefer       postgres       connect, sslaccept, authok         -> ssl
-.           .            .            direct         connect, directsslaccept, authok   -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok   -> ssl
-.           .            require      postgres       connect, sslaccept, authok         -> ssl
-.           .            .            direct         connect, directsslaccept, authok   -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok   -> ssl
-.           prefer       disable      *              connect, gssaccept, authok   -> gss
-.           .            allow        *              connect, gssaccept, authok   -> gss
-.           .            prefer       *              connect, gssaccept, authok   -> gss
-.           .            require      *              connect, gssaccept, authok   -> gss     # If both GSS and SSL is possible, GSS is chosen over SSL, even if sslmode=require
-.           require      disable      *              connect, gssaccept, authok   -> gss
-.           .            allow        *              connect, gssaccept, authok   -> gss
-.           .            prefer       *              connect, gssaccept, authok   -> gss
-.           .            require      *              connect, gssaccept, authok   -> gss     # If both GSS and SSL is possible, GSS is chosen over SSL, even if sslmode=require
-
-gssuser     disable      disable      *              connect, authfail            -> fail
-.           .            allow        postgres       connect, authfail, reconnect, sslaccept, authfail -> fail
-.           .            .            direct         connect, authfail, reconnect, directsslaccept, authfail -> fail
-.           .            .            requiredirect  connect, authfail, reconnect, directsslaccept, authfail -> fail
-.           .            prefer       postgres       connect, sslaccept, authfail, reconnect, authfail -> fail
-.           .            .            direct         connect, directsslaccept, authfail, reconnect, authfail -> fail
-.           .            .            requiredirect  connect, directsslaccept, authfail, reconnect, authfail -> fail
-.           .            require      postgres       connect, sslaccept, authfail       -> fail
-.           .            .            direct         connect, directsslaccept, authfail -> fail
-.           .            .            requiredirect  connect, directsslaccept, authfail -> fail
-.           prefer       disable      *              connect, gssaccept, authok   -> gss
-.           .            allow        *              connect, gssaccept, authok   -> gss
-.           .            prefer       *              connect, gssaccept, authok   -> gss
-.           .            require      *              connect, gssaccept, authok   -> gss   # GSS is chosen over SSL, even though sslmode=require
-.           require      disable      *              connect, gssaccept, authok   -> gss
-.           .            allow        *              connect, gssaccept, authok   -> gss
-.           .            prefer       *              connect, gssaccept, authok   -> gss
-.           .            require      *              connect, gssaccept, authok   -> gss     # If both GSS and SSL is possible, GSS is chosen over SSL, even if sslmode=require
-
-ssluser     disable      disable      *              connect, authfail            -> fail
-.           .            allow        postgres       connect, authfail, reconnect, sslaccept, authok       -> ssl
-.           .            .            direct         connect, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            .            requiredirect  connect, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            prefer       postgres       connect, sslaccept, authok         -> ssl
-.           .            .            direct         connect, directsslaccept, authok   -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok   -> ssl
-.           .            require      postgres       connect, sslaccept, authok         -> ssl
-.           .            .            direct         connect, directsslaccept, authok   -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok   -> ssl
-.           prefer       disable      *              connect, gssaccept, authfail, reconnect, authfail -> fail
-.           .            allow        postgres       connect, gssaccept, authfail, reconnect, authfail, reconnect, sslaccept, authok       -> ssl
-.           .            .            direct         connect, gssaccept, authfail, reconnect, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            .            requiredirect  connect, gssaccept, authfail, reconnect, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            prefer       postgres       connect, gssaccept, authfail, reconnect, sslaccept, authok       -> ssl
-.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            .            requiredirect  connect, gssaccept, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            require      postgres       connect, gssaccept, authfail, reconnect, sslaccept, authok       -> ssl
-.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslaccept, authok -> ssl
-.           .            .            requiredirect  connect, gssaccept, authfail, reconnect, directsslaccept, authok -> ssl
-.           require      disable      *              connect, gssaccept, authfail -> fail
-.           .            allow        *              connect, gssaccept, authfail -> fail
-.           .            prefer       *              connect, gssaccept, authfail -> fail
-.           .            require      *              connect, gssaccept, authfail -> fail         # If both GSS and SSL are required, the sslmode=require is effectively ignored and GSS is required
-
-nogssuser   disable      disable      *              connect, authok              -> plain
+testuser    disable      disable      postgres       connect, authok              -> plain
 .           .            allow        postgres       connect, authok              -> plain
-.           .            .            direct         connect, authok              -> plain
-.           .            .            requiredirect  connect, authok              -> plain
 .           .            prefer       postgres       connect, sslaccept, authok   -> ssl
-.           .            .            direct         connect, directsslaccept, authok   -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok   -> ssl
 .           .            require      postgres       connect, sslaccept, authok   -> ssl
 .           .            .            direct         connect, directsslaccept, authok   -> ssl
-.           .            .            requiredirect  connect, directsslaccept, authok   -> ssl
-.           prefer       disable      *              connect, gssaccept, authfail, reconnect, authok              -> plain
-.           .            allow        *              connect, gssaccept, authfail, reconnect, authok              -> plain
-.           .            prefer       postgres       connect, gssaccept, authfail, reconnect, sslaccept, authok         -> ssl
-.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslaccept, authok   -> ssl
-.           .            .            requiredirect  connect, gssaccept, authfail, reconnect, directsslaccept, authok   -> ssl
-.           .            require      postgres       connect, gssaccept, authfail, reconnect, sslaccept, authok         -> ssl
-.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslaccept, authok   -> ssl
-.           .            .            requiredirect  connect, gssaccept, authfail, reconnect, directsslaccept, authok   -> ssl
-.           require      disable      *              connect, gssaccept, authfail -> fail
-.           .            allow        *              connect, gssaccept, authfail -> fail
-.           .            prefer       *              connect, gssaccept, authfail -> fail
-.           .            require      *              connect, gssaccept, authfail -> fail   # If both GSS and SSL are required, the sslmode=require is effectively ignored and GSS is required
+.           prefer       disable      postgres       connect, gssaccept, authok   -> gss
+.           .            allow        postgres       connect, gssaccept, authok   -> gss
+.           .            prefer       postgres       connect, gssaccept, authok   -> gss
+.           .            require      postgres       connect, gssaccept, authok   -> gss     # If both GSS and SSL is possible, GSS is chosen over SSL, even if sslmode=require
+.           .            .            direct         connect, gssaccept, authok   -> gss
+.           require      disable      postgres       connect, gssaccept, authok   -> gss
+.           .            allow        postgres       connect, gssaccept, authok   -> gss
+.           .            prefer       postgres       connect, gssaccept, authok   -> gss
+.           .            require      postgres       connect, gssaccept, authok   -> gss     # If both GSS and SSL is possible, GSS is chosen over SSL, even if sslmode=require
+.           .            .            direct         connect, gssaccept, authok   -> gss
 
-nossluser   disable      disable      *              connect, authok              -> plain
-.           .            allow        *              connect, authok              -> plain
-.           .            prefer       postgres       connect, sslaccept, authfail, reconnect, authok       -> plain
-.           .            .            direct         connect, directsslaccept, authfail, reconnect, authok -> plain
-.           .            .            requiredirect  connect, directsslaccept, authfail, reconnect, authok -> plain
+gssuser     disable      disable      postgres       connect, authfail            -> fail
+.           .            allow        postgres       connect, authfail, reconnect, sslaccept, authfail -> fail
+.           .            prefer       postgres       connect, sslaccept, authfail, reconnect, authfail -> fail
 .           .            require      postgres       connect, sslaccept, authfail       -> fail
 .           .            .            direct         connect, directsslaccept, authfail -> fail
-.           .            .            requiredirect  connect, directsslaccept, authfail -> fail
-.           prefer       *            *              connect, gssaccept, authok   -> gss
-.           require      *            *              connect, gssaccept, authok   -> gss
+.           prefer       disable      postgres       connect, gssaccept, authok   -> gss
+.           .            allow        postgres       connect, gssaccept, authok   -> gss
+.           .            prefer       postgres       connect, gssaccept, authok   -> gss
+.           .            require      postgres       connect, gssaccept, authok   -> gss   # GSS is chosen over SSL, even though sslmode=require
+.           .            .            direct         connect, gssaccept, authok   -> gss
+.           require      disable      postgres       connect, gssaccept, authok   -> gss
+.           .            allow        postgres       connect, gssaccept, authok   -> gss
+.           .            prefer       postgres       connect, gssaccept, authok   -> gss
+.           .            require      postgres       connect, gssaccept, authok   -> gss     # If both GSS and SSL is possible, GSS is chosen over SSL, even if sslmode=require
+.           .            .            direct         connect, gssaccept, authok   -> gss
+
+ssluser     disable      disable      postgres       connect, authfail            -> fail
+.           .            allow        postgres       connect, authfail, reconnect, sslaccept, authok       -> ssl
+.           .            prefer       postgres       connect, sslaccept, authok         -> ssl
+.           .            require      postgres       connect, sslaccept, authok         -> ssl
+.           .            .            direct         connect, directsslaccept, authok   -> ssl
+.           prefer       disable      postgres       connect, gssaccept, authfail, reconnect, authfail -> fail
+.           .            allow        postgres       connect, gssaccept, authfail, reconnect, authfail, reconnect, sslaccept, authok       -> ssl
+.           .            prefer       postgres       connect, gssaccept, authfail, reconnect, sslaccept, authok       -> ssl
+.           .            require      postgres       connect, gssaccept, authfail, reconnect, sslaccept, authok       -> ssl
+.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslaccept, authok -> ssl
+.           require      disable      postgres       connect, gssaccept, authfail -> fail
+.           .            allow        postgres       connect, gssaccept, authfail -> fail
+.           .            prefer       postgres       connect, gssaccept, authfail -> fail
+.           .            require      postgres       connect, gssaccept, authfail -> fail         # If both GSS and SSL are required, the sslmode=require is effectively ignored and GSS is required
+.           .            .            direct         connect, gssaccept, authfail -> fail
+
+nogssuser   disable      disable      postgres       connect, authok              -> plain
+.           .            allow        postgres       connect, authok              -> plain
+.           .            prefer       postgres       connect, sslaccept, authok   -> ssl
+.           .            require      postgres       connect, sslaccept, authok   -> ssl
+.           .            .            direct         connect, directsslaccept, authok   -> ssl
+.           prefer       disable      postgres       connect, gssaccept, authfail, reconnect, authok              -> plain
+.           .            allow        postgres       connect, gssaccept, authfail, reconnect, authok              -> plain
+.           .            prefer       postgres       connect, gssaccept, authfail, reconnect, sslaccept, authok         -> ssl
+.           .            require      postgres       connect, gssaccept, authfail, reconnect, sslaccept, authok         -> ssl
+.           .            .            direct         connect, gssaccept, authfail, reconnect, directsslaccept, authok   -> ssl
+.           require      disable      postgres       connect, gssaccept, authfail -> fail
+.           .            allow        postgres       connect, gssaccept, authfail -> fail
+.           .            prefer       postgres       connect, gssaccept, authfail -> fail
+.           .            require      postgres       connect, gssaccept, authfail -> fail   # If both GSS and SSL are required, the sslmode=require is effectively ignored and GSS is required
+.           .            .            direct         connect, gssaccept, authfail -> fail
+
+nossluser   disable      disable      postgres       connect, authok              -> plain
+.           .            allow        postgres       connect, authok              -> plain
+.           .            prefer       postgres       connect, sslaccept, authfail, reconnect, authok       -> plain
+.           .            require      postgres       connect, sslaccept, authfail       -> fail
+.           .            .            direct         connect, directsslaccept, authfail -> fail
+.           prefer       *            postgres       connect, gssaccept, authok   -> gss
+.           .            require      direct         connect, gssaccept, authok   -> gss
+.           require      *            postgres       connect, gssaccept, authok   -> gss
+.           .            require      direct         connect, gssaccept, authok   -> gss
+
+# sslnegotiation=direct is not acccepted unless sslmode=require or stronger
+*           *            disable      direct         -     -> fail
+*           *            allow        direct         -     -> fail
+*           *            prefer       direct         -     -> fail
 	};
 
 	note("Running tests with both GSS and SSL enabled in server");

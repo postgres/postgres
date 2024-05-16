@@ -235,8 +235,7 @@ typedef enum
 #define ENC_ERROR			0
 #define ENC_PLAINTEXT		0x01
 #define ENC_GSSAPI			0x02
-#define ENC_DIRECT_SSL		0x04
-#define ENC_NEGOTIATED_SSL	0x08
+#define ENC_SSL				0x04
 
 /* Target server type (decoded value of target_session_attrs) */
 typedef enum
@@ -395,8 +394,7 @@ struct pg_conn
 	char	   *keepalives_count;	/* maximum number of TCP keepalive
 									 * retransmits */
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
-	char	   *sslnegotiation; /* SSL initiation style
-								 * (postgres,direct,requiredirect) */
+	char	   *sslnegotiation; /* SSL initiation style (postgres,direct) */
 	char	   *sslcompression; /* SSL compression (0 or 1) */
 	char	   *sslkey;			/* client key filename */
 	char	   *sslcert;		/* client certificate filename */

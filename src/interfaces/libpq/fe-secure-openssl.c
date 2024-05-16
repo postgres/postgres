@@ -1586,7 +1586,7 @@ open_client_SSL(PGconn *conn)
 	}
 
 	/* ALPN is mandatory with direct SSL connections */
-	if (conn->current_enc_method == ENC_DIRECT_SSL)
+	if (conn->current_enc_method == ENC_SSL && conn->sslnegotiation[0] == 'd')
 	{
 		const unsigned char *selected;
 		unsigned int len;
