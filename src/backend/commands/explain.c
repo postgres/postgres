@@ -62,6 +62,12 @@ typedef struct SerializeMetrics
 #define X_CLOSE_IMMEDIATE 2
 #define X_NOWHITESPACE 4
 
+/*
+ * Various places within need to convert bytes to kilobytes.  Round these up
+ * to the next whole kilobyte.
+ */
+#define BYTES_TO_KILOBYTES(b) (((b) + 1023) / 1024)
+
 static void ExplainOneQuery(Query *query, int cursorOptions,
 							IntoClause *into, ExplainState *es,
 							const char *queryString, ParamListInfo params,
@@ -1120,11 +1126,11 @@ ExplainPrintSerialize(ExplainState *es, SerializeMetrics *metrics)
 		if (es->timing)
 			appendStringInfo(es->str, "Serialization: time=%.3f ms  output=" UINT64_FORMAT "kB  format=%s\n",
 							 1000.0 * INSTR_TIME_GET_DOUBLE(metrics->timeSpent),
-							 (metrics->bytesSent + 512) / 1024,
+							 BYTES_TO_KILOBYTES(metrics->bytesSent),
 							 format);
 		else
 			appendStringInfo(es->str, "Serialization: output=" UINT64_FORMAT "kB  format=%s\n",
-							 (metrics->bytesSent + 512) / 1024,
+							 BYTES_TO_KILOBYTES(metrics->bytesSent),
 							 format);
 
 		if (es->buffers && peek_buffer_usage(es, &metrics->bufferUsage))
@@ -1141,7 +1147,7 @@ ExplainPrintSerialize(ExplainState *es, SerializeMetrics *metrics)
 								 1000.0 * INSTR_TIME_GET_DOUBLE(metrics->timeSpent),
 								 3, es);
 		ExplainPropertyUInteger("Output Volume", "kB",
-								(metrics->bytesSent + 512) / 1024, es);
+								BYTES_TO_KILOBYTES(metrics->bytesSent), es);
 		ExplainPropertyText("Format", format, es);
 		if (es->buffers)
 			show_buffer_usage(es, &metrics->bufferUsage);
@@ -3275,7 +3281,7 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 
 	if (hinstrument.nbatch > 0)
 	{
-		long		spacePeakKb = (hinstrument.space_peak + 1023) / 1024;
+		uint64		spacePeakKb = BYTES_TO_KILOBYTES(hinstrument.space_peak);
 
 		if (es->format != EXPLAIN_FORMAT_TEXT)
 		{
@@ -3287,15 +3293,15 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 								   hinstrument.nbatch, es);
 			ExplainPropertyInteger("Original Hash Batches", NULL,
 								   hinstrument.nbatch_original, es);
-			ExplainPropertyInteger("Peak Memory Usage", "kB",
-								   spacePeakKb, es);
+			ExplainPropertyUInteger("Peak Memory Usage", "kB",
+									spacePeakKb, es);
 		}
 		else if (hinstrument.nbatch_original != hinstrument.nbatch ||
 				 hinstrument.nbuckets_original != hinstrument.nbuckets)
 		{
 			ExplainIndentText(es);
 			appendStringInfo(es->str,
-							 "Buckets: %d (originally %d)  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
+							 "Buckets: %d (originally %d)  Batches: %d (originally %d)  Memory Usage: " UINT64_FORMAT "kB\n",
 							 hinstrument.nbuckets,
 							 hinstrument.nbuckets_original,
 							 hinstrument.nbatch,
@@ -3306,7 +3312,7 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 		{
 			ExplainIndentText(es);
 			appendStringInfo(es->str,
-							 "Buckets: %d  Batches: %d  Memory Usage: %ldkB\n",
+							 "Buckets: %d  Batches: %d  Memory Usage: " UINT64_FORMAT "kB\n",
 							 hinstrument.nbuckets, hinstrument.nbatch,
 							 spacePeakKb);
 		}
@@ -3376,9 +3382,9 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 		 * when mem_peak is 0.
 		 */
 		if (mstate->stats.mem_peak > 0)
-			memPeakKb = (mstate->stats.mem_peak + 1023) / 1024;
+			memPeakKb = BYTES_TO_KILOBYTES(mstate->stats.mem_peak);
 		else
-			memPeakKb = (mstate->mem_used + 1023) / 1024;
+			memPeakKb = BYTES_TO_KILOBYTES(mstate->mem_used);
 
 		if (es->format != EXPLAIN_FORMAT_TEXT)
 		{
@@ -3427,7 +3433,7 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 		 * MemoizeInstrumentation.mem_peak field for us.  No need to do the
 		 * zero checks like we did for the serial case above.
 		 */
-		memPeakKb = (si->mem_peak + 1023) / 1024;
+		memPeakKb = BYTES_TO_KILOBYTES(si->mem_peak);
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
@@ -3464,7 +3470,7 @@ static void
 show_hashagg_info(AggState *aggstate, ExplainState *es)
 {
 	Agg		   *agg = (Agg *) aggstate->ss.ps.plan;
-	int64		memPeakKb = (aggstate->hash_mem_peak + 1023) / 1024;
+	int64		memPeakKb = BYTES_TO_KILOBYTES(aggstate->hash_mem_peak);
 
 	if (agg->aggstrategy != AGG_HASHED &&
 		agg->aggstrategy != AGG_MIXED)
@@ -3545,7 +3551,7 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 				continue;
 			hash_disk_used = sinstrument->hash_disk_used;
 			hash_batches_used = sinstrument->hash_batches_used;
-			memPeakKb = (sinstrument->hash_mem_peak + 1023) / 1024;
+			memPeakKb = BYTES_TO_KILOBYTES(sinstrument->hash_mem_peak);
 
 			if (es->workers_state)
 				ExplainOpenWorker(n, es);
@@ -3942,22 +3948,22 @@ show_wal_usage(ExplainState *es, const WalUsage *usage)
 static void
 show_memory_counters(ExplainState *es, const MemoryContextCounters *mem_counters)
 {
+	int64		memUsedkB = BYTES_TO_KILOBYTES(mem_counters->totalspace -
+											   mem_counters->freespace);
+	int64		memAllocatedkB = BYTES_TO_KILOBYTES(mem_counters->totalspace);
+
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 	{
 		ExplainIndentText(es);
 		appendStringInfo(es->str,
-						 "Memory: used=%lld bytes  allocated=%lld bytes",
-						 (long long) (mem_counters->totalspace - mem_counters->freespace),
-						 (long long) mem_counters->totalspace);
+						 "Memory: used=" INT64_FORMAT "kB  allocated=" INT64_FORMAT "kB",
+						 memUsedkB, memAllocatedkB);
 		appendStringInfoChar(es->str, '\n');
 	}
 	else
 	{
-		ExplainPropertyInteger("Memory Used", "bytes",
-							   mem_counters->totalspace - mem_counters->freespace,
-							   es);
-		ExplainPropertyInteger("Memory Allocated", "bytes",
-							   mem_counters->totalspace, es);
+		ExplainPropertyInteger("Memory Used", "kB", memUsedkB, es);
+		ExplainPropertyInteger("Memory Allocated", "kB", memAllocatedkB, es);
 	}
 }
 

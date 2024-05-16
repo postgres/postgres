@@ -345,14 +345,14 @@ select explain_filter('explain (memory) select * from int8_tbl i8');
                      explain_filter                      
 ---------------------------------------------------------
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N)
-   Memory: used=N bytes  allocated=N bytes
+   Memory: used=NkB  allocated=NkB
 (2 rows)
 
 select explain_filter('explain (memory, analyze) select * from int8_tbl i8');
                                         explain_filter                                         
 -----------------------------------------------------------------------------------------------
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
-   Memory: used=N bytes  allocated=N bytes
+   Memory: used=NkB  allocated=NkB
  Planning Time: N.N ms
  Execution Time: N.N ms
 (4 rows)
@@ -413,7 +413,7 @@ select explain_filter('explain (memory) execute int8_query');
                      explain_filter                      
 ---------------------------------------------------------
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N)
-   Memory: used=N bytes  allocated=N bytes
+   Memory: used=NkB  allocated=NkB
 (2 rows)
 
 -- Test EXPLAIN (GENERIC_PLAN) with partition pruning
