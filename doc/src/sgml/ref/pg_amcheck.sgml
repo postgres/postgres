@@ -384,6 +384,17 @@ PostgreSQL documentation
 
    <variablelist>
     <varlistentry>
+     <term><option>--checkunique</option></term>
+     <listitem>
+      <para>
+       For each index with unique constraint checked, verify that no more than
+       one among duplicate entries is visible in the index using <xref linkend="amcheck"/>'s
+       <option>checkunique</option> option.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>--heapallindexed</option></term>
      <listitem>
       <para>
@@ -429,17 +440,6 @@ PostgreSQL documentation
        of no use in helping detect the kinds of corruption that occur in
        practice.  It may also cause corruption checking to take considerably
        longer and consume considerably more resources on the server.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>--checkunique</option></term>
-     <listitem>
-      <para>
-       For each index with unique constraint checked, verify that no more than
-       one among duplicate entries is visible in the index using <xref linkend="amcheck"/>'s
-       <option>checkunique</option> option.
       </para>
      </listitem>
     </varlistentry>

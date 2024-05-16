@@ -1205,10 +1205,10 @@ help(const char *progname)
 	printf(_("      --startblock=BLOCK          begin checking table(s) at the given block number\n"));
 	printf(_("      --endblock=BLOCK            check table(s) only up to the given block number\n"));
 	printf(_("\nB-tree index checking options:\n"));
+	printf(_("      --checkunique               check unique constraint if index is unique\n"));
 	printf(_("      --heapallindexed            check that all heap tuples are found within indexes\n"));
 	printf(_("      --parent-check              check index parent/child relationships\n"));
 	printf(_("      --rootdescend               search from root page to refind tuples\n"));
-	printf(_("      --checkunique               check unique constraint if index is unique\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME             database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT                 database server port\n"));
