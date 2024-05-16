@@ -15,16 +15,6 @@
 #include "storage/fd.h"
 #include "storage/relfilelocator.h"
 
-/* 
- * Neeed for glogbal data (WAL etc) keys identification in caches and storage.
- * We take IDs the oid type operators, so there is no overlap with the "real"
- * catalog object possible.
- */
-#define GLOBAL_DATA_TDE_OID	607 /* Global objects fake "db" */
-#define XLOG_TDE_OID        608
-
-#define GLOBAL_SPACE_RLOCATOR(_obj_oid) (RelFileLocator) {GLOBALTABLESPACE_OID, 0, _obj_oid}
-
 typedef struct InternalKey
 {
     uint8   key[INTERNAL_KEY_LEN];

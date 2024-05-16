@@ -37,15 +37,15 @@ static const RmgrData pg_tde_rmgr = {
 	.rm_identify = pg_tde_rmgr_identify
 };
 
+<<<<<<< HEAD
 #ifdef PERCONA_FORK
 
 /* XLog encryption staff */
+=======
+/* XLog encryption stuff */
+>>>>>>> e9805ad (Create and use global catalog key)
 
-/* GUC */
-extern bool EncryptXLog;
-
-extern Size TDEXLogEncryptBuffSize();
-extern Size XLogEncStateSize();
+extern Size TDEXLogEncryptBuffSize(void);
 
 #define XLOG_TDE_ENC_BUFF_ALIGNED_SIZE	add_size(TDEXLogEncryptBuffSize(), PG_IO_ALIGN_SIZE)
 
@@ -59,9 +59,9 @@ static const XLogSmgr tde_xlog_smgr = {
 	.seg_write = pg_tde_xlog_seg_write,
 };
 
-extern void TDEInitXLogSmgr(void);
+extern void TDEXLogSmgrInit(void);
 
-extern void xlogInitGUC(void);
+extern void XLogInitGUC(void);
 
 #endif
 

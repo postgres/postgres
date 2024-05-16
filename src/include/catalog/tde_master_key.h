@@ -17,6 +17,7 @@
 #include "nodes/pg_list.h"
 #include "storage/lwlock.h"
 
+#define DEFAULT_MASTER_KEY_VERSION      1
 #define MASTER_KEY_NAME_LEN TDE_KEY_NAME_LEN
 #define MAX_MASTER_KEY_VERSION_NUM 100000
 
@@ -76,5 +77,8 @@ extern TDEMasterKey *set_master_key_with_keyring(const char *key_name,
 												GenericKeyring *keyring,
 												Oid dbOid, Oid spcOid,
 												bool ensure_new_key);
-
+extern keyInfo *load_latest_versioned_key_name(TDEMasterKeyInfo *mastere_key_info, 
+												GenericKeyring *keyring,
+												bool ensure_new_key);
+ 
 #endif /*PG_TDE_MASTER_KEY_H*/

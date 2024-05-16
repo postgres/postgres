@@ -292,14 +292,21 @@ tde_decrypt_rel_key(TDEMasterKey *master_key, RelKeyData *enc_rel_key_data, cons
 inline void
 pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *map_path, char *keydata_path)
 {
+	char *db_path;
+
+	/* We use dbOid for the global space for key caches but for the backend
+	 * it should be 0.
+	 */
+	if (rlocator->spcOid == GLOBALTABLESPACE_OID)
+		db_path = GetDatabasePath(0, rlocator->spcOid);
+	else
+		db_path = GetDatabasePath(rlocator->dbOid, rlocator->spcOid);
+
+
 	if (map_path)
-		join_path_components(map_path, 
-								GetDatabasePath(rlocator->dbOid, rlocator->spcOid),
-								PG_TDE_MAP_FILENAME);
+		join_path_components(map_path, db_path, PG_TDE_MAP_FILENAME);
 	if (keydata_path)
-		join_path_components(keydata_path, 
-								GetDatabasePath(rlocator->dbOid, rlocator->spcOid), 
-								PG_TDE_KEYDATA_FILENAME);
+		join_path_components(keydata_path, db_path, PG_TDE_KEYDATA_FILENAME);
 }
 
 /*
