@@ -77,10 +77,10 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
-  UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] ) <replaceable class="parameter">index_parameters</replaceable> |
-  PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] ) <replaceable class="parameter">index_parameters</replaceable> |
+  UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
+  PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
-  FOREIGN KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, PERIOD <replaceable class="parameter">column_name</replaceable> ] ) REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] [, PERIOD <replaceable class="parameter">column_name</replaceable> ] ) ]
+  FOREIGN KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable
 class="parameter">referential_action</replaceable> ] [ ON UPDATE <replaceable class="parameter">referential_action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
@@ -964,7 +964,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
    <varlistentry id="sql-createtable-parms-unique">
     <term><literal>UNIQUE [ NULLS [ NOT ] DISTINCT ]</literal> (column constraint)</term>
-    <term><literal>UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] )</literal>
+    <term><literal>UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal>
     <optional> <literal>INCLUDE ( <replaceable class="parameter">column_name</replaceable> [, ...])</literal> </optional> (table constraint)</term>
 
     <listitem>
@@ -976,30 +976,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       additional capability to span multiple columns.  The constraint
       therefore enforces that any two rows must differ in at least one
       of these columns.
-     </para>
-
-     <para>
-      If the <literal>WITHOUT OVERLAPS</literal> option is specified for the
-      last column, then that column is checked for overlaps instead of
-      equality.  In that case, the other columns of the constraint will allow
-      duplicates so long as the duplicates don't overlap in the
-      <literal>WITHOUT OVERLAPS</literal> column.  (This is sometimes called a
-      temporal key, if the column is a range of dates or timestamps, but
-      PostgreSQL allows ranges over any base type.)  In effect, such a
-      constraint is enforced with an <literal>EXCLUDE</literal> constraint
-      rather than a <literal>UNIQUE</literal> constraint.  So for example
-      <literal>UNIQUE (id, valid_at WITHOUT OVERLAPS)</literal> behaves like
-      <literal>EXCLUDE USING GIST (id WITH =, valid_at WITH
-      &amp;&amp;)</literal>.  The <literal>WITHOUT OVERLAPS</literal> column
-      must have a range or multirange type.  (Technically, any type is allowed
-      whose default GiST opclass includes an overlaps operator.  See the
-      <literal>stratnum</literal> support function under <xref
-      linkend="gist-extensibility"/> for details.)  The non-<literal>WITHOUT
-      OVERLAPS</literal> columns of the constraint can be any type that can be
-      compared for equality in a GiST index.  By default, only range types are
-      supported, but you can use other types by adding the <xref
-      linkend="btree-gist"/> extension (which is the expected way to use this
-      feature).
      </para>
 
      <para>
@@ -1023,11 +999,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      Adding a unique constraint will automatically create a unique B-tree
-      index on the column or group of columns used in the constraint.  But if
-      the constraint includes a <literal>WITHOUT OVERLAPS</literal> clause, it
-      will use a GiST index.  The created index has the same name as the unique
-      constraint.
+      Adding a unique constraint will automatically create a unique btree
+      index on the column or group of columns used in the constraint.  The
+      created index has the same name as the unique constraint.
      </para>
 
      <para>
@@ -1045,7 +1019,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
    <varlistentry id="sql-createtable-parms-primary-key">
     <term><literal>PRIMARY KEY</literal> (column constraint)</term>
-    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] )</literal>
+    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal>
     <optional> <literal>INCLUDE ( <replaceable class="parameter">column_name</replaceable> [, ...])</literal> </optional> (table constraint)</term>
     <listitem>
      <para>
@@ -1078,11 +1052,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      As with a <literal>UNIQUE</literal> constraint, adding a
-      <literal>PRIMARY KEY</literal> constraint will automatically create a
-      unique B-tree index, or GiST if <literal>WITHOUT OVERLAPS</literal> was
-      specified, on the column or group of columns used in the constraint.
-      That index has the same name as the primary key constraint.
+      Adding a <literal>PRIMARY KEY</literal> constraint will automatically
+      create a unique btree index on the column or group of columns used in
+      the constraint.  That index has the same name as the primary key
+      constraint.
      </para>
 
      <para>
@@ -1151,8 +1124,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    <varlistentry id="sql-createtable-parms-references">
     <term><literal>REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> ) ] [ MATCH <replaceable class="parameter">matchtype</replaceable> ] [ ON DELETE <replaceable class="parameter">referential_action</replaceable> ] [ ON UPDATE <replaceable class="parameter">referential_action</replaceable> ]</literal> (column constraint)</term>
 
-   <term><literal>FOREIGN KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, PERIOD <replaceable class="parameter">column_name</replaceable> ] )
-    REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] [, PERIOD <replaceable class="parameter">column_name</replaceable> ] ) ]
+   <term><literal>FOREIGN KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] )
+    REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH <replaceable class="parameter">matchtype</replaceable> ]
     [ ON DELETE <replaceable class="parameter">referential_action</replaceable> ]
     [ ON UPDATE <replaceable class="parameter">referential_action</replaceable> ]</literal>
@@ -1168,32 +1141,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       primary key of the <replaceable class="parameter">reftable</replaceable>
       is used.  Otherwise, the <replaceable class="parameter">refcolumn</replaceable>
       list must refer to the columns of a non-deferrable unique or primary key
-      constraint or be the columns of a non-partial unique index.
-     </para>
-
-     <para>
-      If the last column is marked with <literal>PERIOD</literal>, it is
-      treated in a special way.  While the non-<literal>PERIOD</literal>
-      columns are compared for equality (and there must be at least one of
-      them), the <literal>PERIOD</literal> column is not.  Instead, the
-      constraint is considered satisfied if the referenced table has matching
-      records (based on the non-<literal>PERIOD</literal> parts of the key)
-      whose combined <literal>PERIOD</literal> values completely cover the
-      referencing record's.  In other words, the reference must have a
-      referent for its entire duration.  This column must be a range or
-      multirange type.  In addition, the referenced table must have a primary
-      key or unique constraint declared with <literal>WITHOUT
-      OVERLAPS</literal>. Finally, if the foreign key has a PERIOD
-      <replaceable class="parameter">column_name</replaceable> specification
-      the corresponding <replaceable class="parameter">refcolumn</replaceable>,
-      if present, must also be marked <literal>PERIOD</literal>.  If the
-      <replaceable class="parameter">refcolumn</replaceable> clause is omitted,
-      and thus the reftable's primary key constraint chosen, the primary key
-      must have its final column marked <literal>WITHOUT OVERLAPS</literal>.
-     </para>
-
-     <para>
-      The user
+      constraint or be the columns of a non-partial unique index.  The user
       must have <literal>REFERENCES</literal> permission on the referenced
       table (either the whole table, or the specific referenced columns).  The
       addition of a foreign key constraint requires a
@@ -1267,10 +1215,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
           values of the referencing column(s) to the new values of the
           referenced columns, respectively.
          </para>
-
-         <para>
-          In a temporal foreign key, this option is not supported.
-         </para>
         </listitem>
        </varlistentry>
 
@@ -1281,10 +1225,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
           Set all of the referencing columns, or a specified subset of the
           referencing columns, to null. A subset of columns can only be
           specified for <literal>ON DELETE</literal> actions.
-         </para>
-
-         <para>
-          In a temporal foreign key, this option is not supported.
          </para>
         </listitem>
        </varlistentry>
@@ -1298,10 +1238,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
           can only be specified for <literal>ON DELETE</literal> actions.
           (There must be a row in the referenced table matching the default
           values, if they are not null, or the operation will fail.)
-         </para>
-
-         <para>
-          In a temporal foreign key, this option is not supported.
          </para>
         </listitem>
        </varlistentry>

@@ -815,7 +815,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 		 */
 		if (indexOidFromConstraint == idxForm->indexrelid)
 		{
-			if (idxForm->indisexclusion && onconflict->action == ONCONFLICT_UPDATE)
+			if (!idxForm->indisunique && onconflict->action == ONCONFLICT_UPDATE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("ON CONFLICT DO UPDATE not supported with exclusion constraints")));
@@ -838,13 +838,6 @@ infer_arbiter_indexes(PlannerInfo *root)
 		 * skipped if it's not unique
 		 */
 		if (!idxForm->indisunique)
-			goto next;
-
-		/*
-		 * So-called unique constraints with WITHOUT OVERLAPS are really
-		 * exclusion constraints, so skip those too.
-		 */
-		if (idxForm->indisexclusion)
 			goto next;
 
 		/* Build BMS representation of plain (non expression) index attrs */

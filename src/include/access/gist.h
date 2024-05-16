@@ -17,7 +17,6 @@
 #define GIST_H
 
 #include "access/itup.h"
-#include "access/stratnum.h"
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
@@ -39,8 +38,7 @@
 #define GIST_FETCH_PROC					9
 #define GIST_OPTIONS_PROC				10
 #define GIST_SORTSUPPORT_PROC			11
-#define GIST_STRATNUM_PROC				12
-#define GISTNProcs					12
+#define GISTNProcs					11
 
 /*
  * Page opaque data in a GiST index page.
@@ -246,7 +244,5 @@ typedef struct
 #define gistentryinit(e, k, r, pg, o, l) \
 	do { (e).key = (k); (e).rel = (r); (e).page = (pg); \
 		 (e).offset = (o); (e).leafkey = (l); } while (0)
-
-extern StrategyNumber GistTranslateStratnum(Oid opclass, StrategyNumber strat);
 
 #endif							/* GIST_H */

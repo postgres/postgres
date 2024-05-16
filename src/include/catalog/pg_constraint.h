@@ -107,12 +107,6 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	/* Has a local definition and cannot be inherited */
 	bool		connoinherit;
 
-	/*
-	 * For primary keys, unique constraints, and foreign keys, signifies the
-	 * last column uses overlaps instead of equals.
-	 */
-	bool		conperiod;
-
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 
 	/*
@@ -127,22 +121,20 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	int16		confkey[1];
 
 	/*
-	 * If a foreign key, the OIDs of the PK = FK equality/overlap operators
-	 * for each column of the constraint
+	 * If a foreign key, the OIDs of the PK = FK equality operators for each
+	 * column of the constraint
 	 */
 	Oid			conpfeqop[1] BKI_LOOKUP(pg_operator);
 
 	/*
-	 * If a foreign key, the OIDs of the PK = PK equality/overlap operators
-	 * for each column of the constraint (i.e., equality for the referenced
-	 * columns)
+	 * If a foreign key, the OIDs of the PK = PK equality operators for each
+	 * column of the constraint (i.e., equality for the referenced columns)
 	 */
 	Oid			conppeqop[1] BKI_LOOKUP(pg_operator);
 
 	/*
-	 * If a foreign key, the OIDs of the FK = FK equality/overlap operators
-	 * for each column of the constraint (i.e., equality for the referencing
-	 * columns)
+	 * If a foreign key, the OIDs of the FK = FK equality operators for each
+	 * column of the constraint (i.e., equality for the referencing columns)
 	 */
 	Oid			conffeqop[1] BKI_LOOKUP(pg_operator);
 
@@ -154,8 +146,7 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 
 	/*
 	 * If an exclusion constraint, the OIDs of the exclusion operators for
-	 * each column of the constraint.  Also set for unique constraints/primary
-	 * keys using WITHOUT OVERLAPS.
+	 * each column of the constraint
 	 */
 	Oid			conexclop[1] BKI_LOOKUP(pg_operator);
 
@@ -247,7 +238,6 @@ extern Oid	CreateConstraintEntry(const char *constraintName,
 								  bool conIsLocal,
 								  int conInhCount,
 								  bool conNoInherit,
-								  bool conPeriod,
 								  bool is_internal);
 
 extern bool ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
@@ -279,9 +269,6 @@ extern void DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
 									   AttrNumber *conkey, AttrNumber *confkey,
 									   Oid *pf_eq_oprs, Oid *pp_eq_oprs, Oid *ff_eq_oprs,
 									   int *num_fk_del_set_cols, AttrNumber *fk_del_set_cols);
-extern void FindFKPeriodOpers(Oid opclass,
-							  Oid *containedbyoperoid,
-							  Oid *aggedcontainedbyoperoid);
 
 extern bool check_functional_grouping(Oid relid,
 									  Index varno, Index varlevelsup,

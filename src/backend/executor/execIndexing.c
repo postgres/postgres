@@ -210,7 +210,7 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative)
 		 * If the indexes are to be used for speculative insertion, add extra
 		 * information required by unique index entries.
 		 */
-		if (speculative && ii->ii_Unique && !indexDesc->rd_index->indisexclusion)
+		if (speculative && ii->ii_Unique)
 			BuildSpeculativeIndexInfo(indexDesc, ii);
 
 		relationDescs[i] = indexDesc;

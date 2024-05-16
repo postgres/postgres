@@ -16,7 +16,6 @@
 #include "postgres.h"
 
 #include "access/amapi.h"
-#include "access/gist.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/reloptions.h"
@@ -88,7 +87,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 							  Oid accessMethodId,
 							  bool amcanorder,
 							  bool isconstraint,
-							  bool iswithoutoverlaps,
 							  Oid ddl_userid,
 							  int ddl_sec_context,
 							  int *ddl_save_nestlevel);
@@ -147,7 +145,6 @@ typedef struct ReindexErrorInfo
  *		to index on.
  * 'exclusionOpNames': list of names of exclusion-constraint operators,
  *		or NIL if not an exclusion constraint.
- * 'isWithoutOverlaps': true iff this index has a WITHOUT OVERLAPS clause.
  *
  * This is tailored to the needs of ALTER TABLE ALTER TYPE, which recreates
  * any indexes that depended on a changing column from their pg_get_indexdef
@@ -177,8 +174,7 @@ bool
 CheckIndexCompatible(Oid oldId,
 					 const char *accessMethodName,
 					 const List *attributeList,
-					 const List *exclusionOpNames,
-					 bool isWithoutOverlaps)
+					 const List *exclusionOpNames)
 {
 	bool		isconstraint;
 	Oid		   *typeIds;
@@ -253,8 +249,8 @@ CheckIndexCompatible(Oid oldId,
 					  coloptions, attributeList,
 					  exclusionOpNames, relationId,
 					  accessMethodName, accessMethodId,
-					  amcanorder, isconstraint, isWithoutOverlaps, InvalidOid,
-					  0, NULL);
+					  amcanorder, isconstraint, InvalidOid, 0, NULL);
+
 
 	/* Get the soon-obsolete pg_index tuple. */
 	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(oldId));
@@ -564,7 +560,6 @@ DefineIndex(Oid tableId,
 	bool		amcanorder;
 	bool		amissummarizing;
 	amoptions_function amoptions;
-	bool		exclusion;
 	bool		partitioned;
 	bool		safe_index;
 	Datum		reloptions;
@@ -684,12 +679,6 @@ DefineIndex(Oid tableId,
 						   root_save_sec_context | SECURITY_RESTRICTED_OPERATION);
 
 	namespaceId = RelationGetNamespace(rel);
-
-	/*
-	 * It has exclusion constraint behavior if it's an EXCLUDE constraint or a
-	 * temporal PRIMARY KEY/UNIQUE constraint
-	 */
-	exclusion = stmt->excludeOpNames || stmt->iswithoutoverlaps;
 
 	/* Ensure that it makes sense to index this kind of relation */
 	switch (rel->rd_rel->relkind)
@@ -859,7 +848,7 @@ DefineIndex(Oid tableId,
 	pgstat_progress_update_param(PROGRESS_CREATEIDX_ACCESS_METHOD_OID,
 								 accessMethodId);
 
-	if (stmt->unique && !stmt->iswithoutoverlaps && !amRoutine->amcanunique)
+	if (stmt->unique && !amRoutine->amcanunique)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("access method \"%s\" does not support unique indexes",
@@ -874,7 +863,7 @@ DefineIndex(Oid tableId,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("access method \"%s\" does not support multicolumn indexes",
 						accessMethodName)));
-	if (exclusion && amRoutine->amgettuple == NULL)
+	if (stmt->excludeOpNames && amRoutine->amgettuple == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("access method \"%s\" does not support exclusion constraints",
@@ -927,9 +916,8 @@ DefineIndex(Oid tableId,
 					  coloptions, allIndexParams,
 					  stmt->excludeOpNames, tableId,
 					  accessMethodName, accessMethodId,
-					  amcanorder, stmt->isconstraint, stmt->iswithoutoverlaps,
-					  root_save_userid, root_save_sec_context,
-					  &root_save_nestlevel);
+					  amcanorder, stmt->isconstraint, root_save_userid,
+					  root_save_sec_context, &root_save_nestlevel);
 
 	/*
 	 * Extra checks when creating a PRIMARY KEY index.
@@ -947,7 +935,7 @@ DefineIndex(Oid tableId,
 	 * We could lift this limitation if we had global indexes, but those have
 	 * their own problems, so this is a useful feature combination.
 	 */
-	if (partitioned && (stmt->unique || exclusion))
+	if (partitioned && (stmt->unique || stmt->excludeOpNames))
 	{
 		PartitionKey key = RelationGetPartitionKey(rel);
 		const char *constraint_type;
@@ -1001,10 +989,10 @@ DefineIndex(Oid tableId,
 			 * associated with index columns, too.  We know what to do with
 			 * btree opclasses; if there are ever any other index types that
 			 * support unique indexes, this logic will need extension. But if
-			 * we have an exclusion constraint (or a temporal PK), it already
-			 * knows the operators, so we don't have to infer them.
+			 * we have an exclusion constraint, it already knows the
+			 * operators, so we don't have to infer them.
 			 */
-			if (stmt->unique && !stmt->iswithoutoverlaps && accessMethodId != BTREE_AM_OID)
+			if (stmt->unique && accessMethodId != BTREE_AM_OID)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot match partition key to an index using access method \"%s\"",
@@ -1043,12 +1031,12 @@ DefineIndex(Oid tableId,
 					{
 						Oid			idx_eqop = InvalidOid;
 
-						if (stmt->unique && !stmt->iswithoutoverlaps)
+						if (stmt->unique)
 							idx_eqop = get_opfamily_member(idx_opfamily,
 														   idx_opcintype,
 														   idx_opcintype,
 														   BTEqualStrategyNumber);
-						else if (exclusion)
+						else if (stmt->excludeOpNames)
 							idx_eqop = indexInfo->ii_ExclusionOps[j];
 						Assert(idx_eqop);
 
@@ -1057,7 +1045,7 @@ DefineIndex(Oid tableId,
 							found = true;
 							break;
 						}
-						else if (exclusion)
+						else if (stmt->excludeOpNames)
 						{
 							/*
 							 * We found a match, but it's not an equality
@@ -1201,8 +1189,6 @@ DefineIndex(Oid tableId,
 		constr_flags |= INDEX_CONSTR_CREATE_DEFERRABLE;
 	if (stmt->initdeferred)
 		constr_flags |= INDEX_CONSTR_CREATE_INIT_DEFERRED;
-	if (stmt->iswithoutoverlaps)
-		constr_flags |= INDEX_CONSTR_CREATE_WITHOUT_OVERLAPS;
 
 	indexRelationId =
 		index_create(rel, indexRelationName, indexRelationId, parentIndexId,
@@ -1868,7 +1854,6 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				  Oid accessMethodId,
 				  bool amcanorder,
 				  bool isconstraint,
-				  bool iswithoutoverlaps,
 				  Oid ddl_userid,
 				  int ddl_sec_context,
 				  int *ddl_save_nestlevel)
@@ -1891,14 +1876,6 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 	}
 	else
 		nextExclOp = NULL;
-
-	/* exclusionOpNames can be non-NIL if we are creating a partition */
-	if (iswithoutoverlaps && exclusionOpNames == NIL)
-	{
-		indexInfo->ii_ExclusionOps = palloc_array(Oid, nkeycols);
-		indexInfo->ii_ExclusionProcs = palloc_array(Oid, nkeycols);
-		indexInfo->ii_ExclusionStrats = palloc_array(uint16, nkeycols);
-	}
 
 	if (OidIsValid(ddl_userid))
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
@@ -2176,21 +2153,6 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			indexInfo->ii_ExclusionStrats[attn] = strat;
 			nextExclOp = lnext(exclusionOpNames, nextExclOp);
 		}
-		else if (iswithoutoverlaps)
-		{
-			StrategyNumber strat;
-			Oid			opid;
-
-			if (attn == nkeycols - 1)
-				strat = RTOverlapStrategyNumber;
-			else
-				strat = RTEqualStrategyNumber;
-			GetOperatorFromWellKnownStrategy(opclassOids[attn], InvalidOid,
-											 &opid, &strat);
-			indexInfo->ii_ExclusionOps[attn] = opid;
-			indexInfo->ii_ExclusionProcs[attn] = get_opcode(opid);
-			indexInfo->ii_ExclusionStrats[attn] = strat;
-		}
 
 		/*
 		 * Set up the per-column options (indoption field).  For now, this is
@@ -2419,88 +2381,6 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 		return result;
 
 	return InvalidOid;
-}
-
-/*
- * GetOperatorFromWellKnownStrategy
- *
- * opclass - the opclass to use
- * rhstype - the type for the right-hand side, or InvalidOid to use the type of the given opclass.
- * opid - holds the operator we found
- * strat - holds the input and output strategy number
- *
- * Finds an operator from a "well-known" strategy number.  This is used for
- * temporal index constraints (and other temporal features) to look up
- * equality and overlaps operators, since the strategy numbers for non-btree
- * indexams need not follow any fixed scheme.  We ask an opclass support
- * function to translate from the well-known number to the internal value.  If
- * the function isn't defined or it gives no result, we return
- * InvalidStrategy.
- */
-void
-GetOperatorFromWellKnownStrategy(Oid opclass, Oid rhstype,
-								 Oid *opid, StrategyNumber *strat)
-{
-	Oid			opfamily;
-	Oid			opcintype;
-	StrategyNumber instrat = *strat;
-
-	Assert(instrat == RTEqualStrategyNumber || instrat == RTOverlapStrategyNumber || instrat == RTContainedByStrategyNumber);
-
-	*opid = InvalidOid;
-
-	if (get_opclass_opfamily_and_input_type(opclass, &opfamily, &opcintype))
-	{
-		/*
-		 * Ask the opclass to translate to its internal stratnum
-		 *
-		 * For now we only need GiST support, but this could support other
-		 * indexams if we wanted.
-		 */
-		*strat = GistTranslateStratnum(opclass, instrat);
-		if (*strat == InvalidStrategy)
-		{
-			HeapTuple	tuple;
-
-			tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclass));
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "cache lookup failed for operator class %u", opclass);
-
-			ereport(ERROR,
-					errcode(ERRCODE_UNDEFINED_OBJECT),
-					instrat == RTEqualStrategyNumber ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
-					instrat == RTOverlapStrategyNumber ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
-					instrat == RTContainedByStrategyNumber ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
-					errdetail("Could not translate strategy number %d for operator class \"%s\" for access method \"%s\".",
-							  instrat, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
-		}
-
-		/*
-		 * We parameterize rhstype so foreign keys can ask for a <@ operator
-		 * whose rhs matches the aggregate function. For example range_agg
-		 * returns anymultirange.
-		 */
-		if (!OidIsValid(rhstype))
-			rhstype = opcintype;
-		*opid = get_opfamily_member(opfamily, opcintype, rhstype, *strat);
-	}
-
-	if (!OidIsValid(*opid))
-	{
-		HeapTuple	tuple;
-
-		tuple = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamily));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for operator family %u", opfamily);
-
-		ereport(ERROR,
-				errcode(ERRCODE_UNDEFINED_OBJECT),
-				instrat == RTEqualStrategyNumber ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
-				instrat == RTOverlapStrategyNumber ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
-				instrat == RTContainedByStrategyNumber ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
-				errdetail("There is no suitable operator in operator family \"%s\" for access method \"%s\".",
-						  NameStr(((Form_pg_opfamily) GETSTRUCT(tuple))->opfname), "gist"));
-	}
 }
 
 /*

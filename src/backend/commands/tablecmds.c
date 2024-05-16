@@ -16,7 +16,6 @@
 
 #include "access/attmap.h"
 #include "access/genam.h"
-#include "access/gist.h"
 #include "access/heapam.h"
 #include "access/heapam_xlog.h"
 #include "access/multixact.h"
@@ -216,7 +215,6 @@ typedef struct NewConstraint
 	ConstrType	contype;		/* CHECK or FOREIGN */
 	Oid			refrelid;		/* PK rel, if FOREIGN */
 	Oid			refindid;		/* OID of PK's index, if FOREIGN */
-	bool		conwithperiod;	/* Whether the new FOREIGN KEY uses PERIOD */
 	Oid			conid;			/* OID of pg_constraint entry, if FOREIGN */
 	Node	   *qual;			/* Check expr or CONSTR_FOREIGN Constraint */
 	ExprState  *qualstate;		/* Execution state for CHECK expr */
@@ -391,17 +389,16 @@ static int	transformColumnNameList(Oid relId, List *colList,
 static int	transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 									   List **attnamelist,
 									   int16 *attnums, Oid *atttypids,
-									   Oid *opclasses, bool *pk_has_without_overlaps);
+									   Oid *opclasses);
 static Oid	transformFkeyCheckAttrs(Relation pkrel,
 									int numattrs, int16 *attnums,
-									bool with_period, Oid *opclasses,
-									bool *pk_has_without_overlaps);
+									Oid *opclasses);
 static void checkFkeyPermissions(Relation rel, int16 *attnums, int natts);
 static CoercionPathType findFkeyCast(Oid targetTypeId, Oid sourceTypeId,
 									 Oid *funcid);
 static void validateForeignKeyConstraint(char *conname,
 										 Relation rel, Relation pkrel,
-										 Oid pkindOid, Oid constraintOid, bool hasperiod);
+										 Oid pkindOid, Oid constraintOid);
 static void ATController(AlterTableStmt *parsetree,
 						 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode,
 						 AlterTableUtilityContext *context);
@@ -512,8 +509,7 @@ static ObjectAddress addFkRecurseReferenced(List **wqueue, Constraint *fkconstra
 											Oid *pfeqoperators, Oid *ppeqoperators, Oid *ffeqoperators,
 											int numfkdelsetcols, int16 *fkdelsetcols,
 											bool old_check_ok,
-											Oid parentDelTrigger, Oid parentUpdTrigger,
-											bool with_period);
+											Oid parentDelTrigger, Oid parentUpdTrigger);
 static void validateFkOnDeleteSetColumns(int numfks, const int16 *fkattnums,
 										 int numfksetcols, const int16 *fksetcolsattnums,
 										 List *fksetcols);
@@ -523,9 +519,7 @@ static void addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint,
 									Oid *pfeqoperators, Oid *ppeqoperators, Oid *ffeqoperators,
 									int numfkdelsetcols, int16 *fkdelsetcols,
 									bool old_check_ok, LOCKMODE lockmode,
-									Oid parentInsTrigger, Oid parentUpdTrigger,
-									bool with_period);
-
+									Oid parentInsTrigger, Oid parentUpdTrigger);
 static void CloneForeignKeyConstraints(List **wqueue, Relation parentRel,
 									   Relation partitionRel);
 static void CloneFkReferenced(Relation parentRel, Relation partitionRel);
@@ -5924,8 +5918,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
 
 				validateForeignKeyConstraint(fkconstraint->conname, rel, refrel,
 											 con->refindid,
-											 con->conid,
-											 con->conwithperiod);
+											 con->conid);
 
 				/*
 				 * No need to mark the constraint row as validated, we did
@@ -9566,8 +9559,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	Oid			ppeqoperators[INDEX_MAX_KEYS] = {0};
 	Oid			ffeqoperators[INDEX_MAX_KEYS] = {0};
 	int16		fkdelsetcols[INDEX_MAX_KEYS] = {0};
-	bool		with_period;
-	bool		pk_has_without_overlaps;
 	int			i;
 	int			numfks,
 				numpks,
@@ -9662,11 +9653,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	numfks = transformColumnNameList(RelationGetRelid(rel),
 									 fkconstraint->fk_attrs,
 									 fkattnum, fktypoid);
-	with_period = fkconstraint->fk_with_period || fkconstraint->pk_with_period;
-	if (with_period && !fkconstraint->fk_with_period)
-		ereport(ERROR,
-				errcode(ERRCODE_INVALID_FOREIGN_KEY),
-				errmsg("foreign key uses PERIOD on the referenced table but not the referencing table"));
 
 	numfkdelsetcols = transformColumnNameList(RelationGetRelid(rel),
 											  fkconstraint->fk_del_set_cols,
@@ -9686,39 +9672,17 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		numpks = transformFkeyGetPrimaryKey(pkrel, &indexOid,
 											&fkconstraint->pk_attrs,
 											pkattnum, pktypoid,
-											opclasses, &pk_has_without_overlaps);
-
-		/* If the primary key uses WITHOUT OVERLAPS, the fk must use PERIOD */
-		if (pk_has_without_overlaps && !fkconstraint->fk_with_period)
-			ereport(ERROR,
-					errcode(ERRCODE_INVALID_FOREIGN_KEY),
-					errmsg("foreign key uses PERIOD on the referenced table but not the referencing table"));
+											opclasses);
 	}
 	else
 	{
 		numpks = transformColumnNameList(RelationGetRelid(pkrel),
 										 fkconstraint->pk_attrs,
 										 pkattnum, pktypoid);
-
-		/* Since we got pk_attrs, one should be a period. */
-		if (with_period && !fkconstraint->pk_with_period)
-			ereport(ERROR,
-					errcode(ERRCODE_INVALID_FOREIGN_KEY),
-					errmsg("foreign key uses PERIOD on the referencing table but not the referenced table"));
-
 		/* Look for an index matching the column list */
 		indexOid = transformFkeyCheckAttrs(pkrel, numpks, pkattnum,
-										   with_period, opclasses, &pk_has_without_overlaps);
+										   opclasses);
 	}
-
-	/*
-	 * If the referenced primary key has WITHOUT OVERLAPS, the foreign key
-	 * must use PERIOD.
-	 */
-	if (pk_has_without_overlaps && !with_period)
-		ereport(ERROR,
-				errcode(ERRCODE_INVALID_FOREIGN_KEY),
-				errmsg("foreign key must use PERIOD when referencing a primary using WITHOUT OVERLAPS"));
 
 	/*
 	 * Now we can check permissions.
@@ -9751,28 +9715,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 						 errmsg("invalid %s action for foreign key constraint containing generated column",
 								"ON DELETE")));
 		}
-	}
-
-	/*
-	 * Some actions are currently unsupported for foreign keys using PERIOD.
-	 */
-	if (fkconstraint->fk_with_period)
-	{
-		if (fkconstraint->fk_upd_action == FKCONSTR_ACTION_CASCADE ||
-			fkconstraint->fk_upd_action == FKCONSTR_ACTION_SETNULL ||
-			fkconstraint->fk_upd_action == FKCONSTR_ACTION_SETDEFAULT)
-			ereport(ERROR,
-					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("unsupported %s action for foreign key constraint using PERIOD",
-						   "ON UPDATE"));
-
-		if (fkconstraint->fk_del_action == FKCONSTR_ACTION_CASCADE ||
-			fkconstraint->fk_del_action == FKCONSTR_ACTION_SETNULL ||
-			fkconstraint->fk_del_action == FKCONSTR_ACTION_SETDEFAULT)
-			ereport(ERROR,
-					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("unsupported %s action for foreign key constraint using PERIOD",
-						   "ON DELETE"));
 	}
 
 	/*
@@ -9821,56 +9763,16 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		opcintype = cla_tup->opcintype;
 		ReleaseSysCache(cla_ht);
 
-		if (with_period)
-		{
-			StrategyNumber rtstrategy;
-			bool		for_overlaps = with_period && i == numpks - 1;
-
-			/*
-			 * GiST indexes are required to support temporal foreign keys
-			 * because they combine equals and overlaps.
-			 */
-			if (amid != GIST_AM_OID)
-				elog(ERROR, "only GiST indexes are supported for temporal foreign keys");
-
-			rtstrategy = for_overlaps ? RTOverlapStrategyNumber : RTEqualStrategyNumber;
-
-			/*
-			 * An opclass can use whatever strategy numbers it wants, so we
-			 * ask the opclass what number it actually uses instead of our RT*
-			 * constants.
-			 */
-			eqstrategy = GistTranslateStratnum(opclasses[i], rtstrategy);
-			if (eqstrategy == InvalidStrategy)
-			{
-				HeapTuple	tuple;
-
-				tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclasses[i]));
-				if (!HeapTupleIsValid(tuple))
-					elog(ERROR, "cache lookup failed for operator class %u", opclasses[i]);
-
-				ereport(ERROR,
-						errcode(ERRCODE_UNDEFINED_OBJECT),
-						for_overlaps
-						? errmsg("could not identify an overlaps operator for foreign key")
-						: errmsg("could not identify an equality operator for foreign key"),
-						errdetail("Could not translate strategy number %d for operator class \"%s\" for access method \"%s\".",
-								  rtstrategy, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
-			}
-		}
-		else
-		{
-			/*
-			 * Check it's a btree; currently this can never fail since no
-			 * other index AMs support unique indexes.  If we ever did have
-			 * other types of unique indexes, we'd need a way to determine
-			 * which operator strategy number is equality.  (We could use
-			 * something like GistTranslateStratnum.)
-			 */
-			if (amid != BTREE_AM_OID)
-				elog(ERROR, "only b-tree indexes are supported for foreign keys");
-			eqstrategy = BTEqualStrategyNumber;
-		}
+		/*
+		 * Check it's a btree; currently this can never fail since no other
+		 * index AMs support unique indexes.  If we ever did have other types
+		 * of unique indexes, we'd need a way to determine which operator
+		 * strategy number is equality.  (Is it reasonable to insist that
+		 * every such index AM use btree's number for equality?)
+		 */
+		if (amid != BTREE_AM_OID)
+			elog(ERROR, "only b-tree indexes are supported for foreign keys");
+		eqstrategy = BTEqualStrategyNumber;
 
 		/*
 		 * There had better be a primary equality operator for the index.
@@ -10021,22 +9923,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 
 	/*
-	 * For FKs with PERIOD we need additional operators to check whether the
-	 * referencing row's range is contained by the aggregated ranges of the
-	 * referenced row(s). For rangetypes and multirangetypes this is
-	 * fk.periodatt <@ range_agg(pk.periodatt). Those are the only types we
-	 * support for now. FKs will look these up at "runtime", but we should
-	 * make sure the lookup works here, even if we don't use the values.
-	 */
-	if (with_period)
-	{
-		Oid			periodoperoid;
-		Oid			aggedperiodoperoid;
-
-		FindFKPeriodOpers(opclasses[numpks - 1], &periodoperoid, &aggedperiodoperoid);
-	}
-
-	/*
 	 * Create all the constraint and trigger objects, recursing to partitions
 	 * as necessary.  First handle the referenced side.
 	 */
@@ -10052,8 +9938,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 									 numfkdelsetcols,
 									 fkdelsetcols,
 									 old_check_ok,
-									 InvalidOid, InvalidOid,
-									 with_period);
+									 InvalidOid, InvalidOid);
 
 	/* Now handle the referencing side. */
 	addFkRecurseReferencing(wqueue, fkconstraint, rel, pkrel,
@@ -10069,8 +9954,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 							fkdelsetcols,
 							old_check_ok,
 							lockmode,
-							InvalidOid, InvalidOid,
-							with_period);
+							InvalidOid, InvalidOid);
 
 	/*
 	 * Done.  Close pk table, but keep lock until we've committed.
@@ -10155,8 +10039,7 @@ addFkRecurseReferenced(List **wqueue, Constraint *fkconstraint, Relation rel,
 					   Oid *ppeqoperators, Oid *ffeqoperators,
 					   int numfkdelsetcols, int16 *fkdelsetcols,
 					   bool old_check_ok,
-					   Oid parentDelTrigger, Oid parentUpdTrigger,
-					   bool with_period)
+					   Oid parentDelTrigger, Oid parentUpdTrigger)
 {
 	ObjectAddress address;
 	Oid			constrOid;
@@ -10242,7 +10125,6 @@ addFkRecurseReferenced(List **wqueue, Constraint *fkconstraint, Relation rel,
 									  conislocal,	/* islocal */
 									  coninhcount,	/* inhcount */
 									  connoinherit, /* conNoInherit */
-									  with_period,	/* conPeriod */
 									  false);	/* is_internal */
 
 	ObjectAddressSet(address, ConstraintRelationId, constrOid);
@@ -10318,8 +10200,7 @@ addFkRecurseReferenced(List **wqueue, Constraint *fkconstraint, Relation rel,
 								   pfeqoperators, ppeqoperators, ffeqoperators,
 								   numfkdelsetcols, fkdelsetcols,
 								   old_check_ok,
-								   deleteTriggerOid, updateTriggerOid,
-								   with_period);
+								   deleteTriggerOid, updateTriggerOid);
 
 			/* Done -- clean up (but keep the lock) */
 			table_close(partRel, NoLock);
@@ -10377,8 +10258,7 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 						Oid *pfeqoperators, Oid *ppeqoperators, Oid *ffeqoperators,
 						int numfkdelsetcols, int16 *fkdelsetcols,
 						bool old_check_ok, LOCKMODE lockmode,
-						Oid parentInsTrigger, Oid parentUpdTrigger,
-						bool with_period)
+						Oid parentInsTrigger, Oid parentUpdTrigger)
 {
 	Oid			insertTriggerOid,
 				updateTriggerOid;
@@ -10426,7 +10306,6 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 			newcon->refrelid = RelationGetRelid(pkrel);
 			newcon->refindid = indexOid;
 			newcon->conid = parentConstr;
-			newcon->conwithperiod = fkconstraint->fk_with_period;
 			newcon->qual = (Node *) fkconstraint;
 
 			tab->constraints = lappend(tab->constraints, newcon);
@@ -10544,7 +10423,6 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 									  false,
 									  1,
 									  false,
-									  with_period,	/* conPeriod */
 									  false);
 
 			/*
@@ -10575,8 +10453,7 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 									old_check_ok,
 									lockmode,
 									insertTriggerOid,
-									updateTriggerOid,
-									with_period);
+									updateTriggerOid);
 
 			table_close(partition, NoLock);
 		}
@@ -10812,8 +10689,7 @@ CloneFkReferenced(Relation parentRel, Relation partitionRel)
 							   confdelsetcols,
 							   true,
 							   deleteTriggerOid,
-							   updateTriggerOid,
-							   constrForm->conperiod);
+							   updateTriggerOid);
 
 		table_close(fkRel, NoLock);
 		ReleaseSysCache(tuple);
@@ -10906,7 +10782,6 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 		ListCell   *lc;
 		Oid			insertTriggerOid,
 					updateTriggerOid;
-		bool		with_period;
 
 		tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(parentConstrOid));
 		if (!HeapTupleIsValid(tuple))
@@ -11022,7 +10897,6 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 			fkconstraint->conname = pstrdup(NameStr(constrForm->conname));
 
 		indexOid = constrForm->conindid;
-		with_period = constrForm->conperiod;
 		constrOid =
 			CreateConstraintEntry(fkconstraint->conname,
 								  constrForm->connamespace,
@@ -11054,7 +10928,6 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 								  false,	/* islocal */
 								  1,	/* inhcount */
 								  false,	/* conNoInherit */
-								  with_period,	/* conPeriod */
 								  true);
 
 		/* Set up partition dependencies for the new constraint */
@@ -11088,8 +10961,7 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 								false,	/* no old check exists */
 								AccessExclusiveLock,
 								insertTriggerOid,
-								updateTriggerOid,
-								with_period);
+								updateTriggerOid);
 		table_close(pkrel, NoLock);
 	}
 
@@ -11899,8 +11771,7 @@ transformColumnNameList(Oid relId, List *colList,
  *
  *	Look up the names, attnums, and types of the primary key attributes
  *	for the pkrel.  Also return the index OID and index opclasses of the
- *	index supporting the primary key.  Also return whether the index has
- *	WITHOUT OVERLAPS.
+ *	index supporting the primary key.
  *
  *	All parameters except pkrel are output parameters.  Also, the function
  *	return value is the number of attributes in the primary key.
@@ -11911,7 +11782,7 @@ static int
 transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 						   List **attnamelist,
 						   int16 *attnums, Oid *atttypids,
-						   Oid *opclasses, bool *pk_has_without_overlaps)
+						   Oid *opclasses)
 {
 	List	   *indexoidlist;
 	ListCell   *indexoidscan;
@@ -11989,8 +11860,6 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 							   makeString(pstrdup(NameStr(*attnumAttName(pkrel, pkattno)))));
 	}
 
-	*pk_has_without_overlaps = indexStruct->indisexclusion;
-
 	ReleaseSysCache(indexTuple);
 
 	return i;
@@ -12004,16 +11873,14 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
  *
  *	Returns the OID of the unique index supporting the constraint and
  *	populates the caller-provided 'opclasses' array with the opclasses
- *	associated with the index columns.  Also sets whether the index
- *	uses WITHOUT OVERLAPS.
+ *	associated with the index columns.
  *
  *	Raises an ERROR on validation failure.
  */
 static Oid
 transformFkeyCheckAttrs(Relation pkrel,
 						int numattrs, int16 *attnums,
-						bool with_period, Oid *opclasses,
-						bool *pk_has_without_overlaps)
+						Oid *opclasses)
 {
 	Oid			indexoid = InvalidOid;
 	bool		found = false;
@@ -12060,12 +11927,12 @@ transformFkeyCheckAttrs(Relation pkrel,
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/*
-		 * Must have the right number of columns; must be unique (or if
-		 * temporal then exclusion instead) and not a partial index; forget it
-		 * if there are any expressions, too. Invalid indexes are out as well.
+		 * Must have the right number of columns; must be unique and not a
+		 * partial index; forget it if there are any expressions, too. Invalid
+		 * indexes are out as well.
 		 */
 		if (indexStruct->indnkeyatts == numattrs &&
-			(with_period ? indexStruct->indisexclusion : indexStruct->indisunique) &&
+			indexStruct->indisunique &&
 			indexStruct->indisvalid &&
 			heap_attisnull(indexTuple, Anum_pg_index_indpred, NULL) &&
 			heap_attisnull(indexTuple, Anum_pg_index_indexprs, NULL))
@@ -12103,13 +11970,6 @@ transformFkeyCheckAttrs(Relation pkrel,
 				if (!found)
 					break;
 			}
-			/* The last attribute in the index must be the PERIOD FK part */
-			if (found && with_period)
-			{
-				int16		periodattnum = attnums[numattrs - 1];
-
-				found = (periodattnum == indexStruct->indkey.values[numattrs - 1]);
-			}
 
 			/*
 			 * Refuse to use a deferrable unique/primary key.  This is per SQL
@@ -12125,10 +11985,6 @@ transformFkeyCheckAttrs(Relation pkrel,
 				found_deferrable = true;
 				found = false;
 			}
-
-			/* We need to know whether the index has WITHOUT OVERLAPS */
-			if (found)
-				*pk_has_without_overlaps = indexStruct->indisexclusion;
 		}
 		ReleaseSysCache(indexTuple);
 		if (found)
@@ -12223,8 +12079,7 @@ validateForeignKeyConstraint(char *conname,
 							 Relation rel,
 							 Relation pkrel,
 							 Oid pkindOid,
-							 Oid constraintOid,
-							 bool hasperiod)
+							 Oid constraintOid)
 {
 	TupleTableSlot *slot;
 	TableScanDesc scan;
@@ -12252,11 +12107,9 @@ validateForeignKeyConstraint(char *conname,
 
 	/*
 	 * See if we can do it with a single LEFT JOIN query.  A false result
-	 * indicates we must proceed with the fire-the-trigger method. We can't do
-	 * a LEFT JOIN for temporal FKs yet, but we can once we support temporal
-	 * left joins.
+	 * indicates we must proceed with the fire-the-trigger method.
 	 */
-	if (!hasperiod && RI_Initial_Check(&trig, rel, pkrel))
+	if (RI_Initial_Check(&trig, rel, pkrel))
 		return;
 
 	/*
@@ -12407,7 +12260,6 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 	fk_trigger->whenClause = NULL;
 	fk_trigger->transitionRels = NIL;
 	fk_trigger->constrrel = NULL;
-
 	switch (fkconstraint->fk_del_action)
 	{
 		case FKCONSTR_ACTION_NOACTION:
@@ -12468,7 +12320,6 @@ createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstr
 	fk_trigger->whenClause = NULL;
 	fk_trigger->transitionRels = NIL;
 	fk_trigger->constrrel = NULL;
-
 	switch (fkconstraint->fk_upd_action)
 	{
 		case FKCONSTR_ACTION_NOACTION:
@@ -14245,8 +14096,7 @@ TryReuseIndex(Oid oldId, IndexStmt *stmt)
 	if (CheckIndexCompatible(oldId,
 							 stmt->accessMethod,
 							 stmt->indexParams,
-							 stmt->excludeOpNames,
-							 stmt->iswithoutoverlaps))
+							 stmt->excludeOpNames))
 	{
 		Relation	irel = index_open(oldId, NoLock);
 

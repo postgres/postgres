@@ -670,19 +670,6 @@ FROM pg_walfile_name_offset('0/0'::pg_lsn + :segment_size - 1),
               0 | t
 (1 row)
 
--- test stratnum support functions
-SELECT gist_stratnum_identity(3::smallint);
- gist_stratnum_identity 
-------------------------
-                      3
-(1 row)
-
-SELECT gist_stratnum_identity(18::smallint);
- gist_stratnum_identity 
-------------------------
-                     18
-(1 row)
-
 -- pg_current_logfile
 CREATE ROLE regress_current_logfile;
 -- not available by default

@@ -1004,42 +1004,6 @@ my %tests = (
 		},
 	},
 
-	'CONSTRAINT PRIMARY KEY / WITHOUT OVERLAPS' => {
-		create_sql => 'CREATE TABLE dump_test.test_table_tpk (
-							col1 int4range,
-							col2 tstzrange,
-							CONSTRAINT test_table_tpk_pkey PRIMARY KEY (col1, col2 WITHOUT OVERLAPS));',
-		regexp => qr/^
-			\QALTER TABLE ONLY dump_test.test_table_tpk\E \n^\s+
-			\QADD CONSTRAINT test_table_tpk_pkey PRIMARY KEY (col1, col2 WITHOUT OVERLAPS);\E
-			/xm,
-		like => {
-			%full_runs, %dump_test_schema_runs, section_post_data => 1,
-		},
-		unlike => {
-			exclude_dump_test_schema => 1,
-			only_dump_measurement => 1,
-		},
-	},
-
-	'CONSTRAINT UNIQUE / WITHOUT OVERLAPS' => {
-		create_sql => 'CREATE TABLE dump_test.test_table_tuq (
-							col1 int4range,
-							col2 tstzrange,
-							CONSTRAINT test_table_tuq_uq UNIQUE (col1, col2 WITHOUT OVERLAPS));',
-		regexp => qr/^
-			\QALTER TABLE ONLY dump_test.test_table_tuq\E \n^\s+
-			\QADD CONSTRAINT test_table_tuq_uq UNIQUE (col1, col2 WITHOUT OVERLAPS);\E
-			/xm,
-		like => {
-			%full_runs, %dump_test_schema_runs, section_post_data => 1,
-		},
-		unlike => {
-			exclude_dump_test_schema => 1,
-			only_dump_measurement => 1,
-		},
-	},
-
 	'ALTER TABLE (partitioned) ADD CONSTRAINT ... FOREIGN KEY' => {
 		create_order => 4,
 		create_sql => 'CREATE TABLE dump_test.test_table_fk (

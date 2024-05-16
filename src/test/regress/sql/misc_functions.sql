@@ -251,10 +251,6 @@ SELECT segment_number, file_offset = :segment_size - 1
 FROM pg_walfile_name_offset('0/0'::pg_lsn + :segment_size - 1),
      pg_split_walfile_name(file_name);
 
--- test stratnum support functions
-SELECT gist_stratnum_identity(3::smallint);
-SELECT gist_stratnum_identity(18::smallint);
-
 -- pg_current_logfile
 CREATE ROLE regress_current_logfile;
 -- not available by default

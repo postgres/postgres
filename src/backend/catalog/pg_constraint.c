@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/gist.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
@@ -76,7 +75,6 @@ CreateConstraintEntry(const char *constraintName,
 					  bool conIsLocal,
 					  int conInhCount,
 					  bool conNoInherit,
-					  bool conPeriod,
 					  bool is_internal)
 {
 	Relation	conDesc;
@@ -192,7 +190,6 @@ CreateConstraintEntry(const char *constraintName,
 	values[Anum_pg_constraint_conislocal - 1] = BoolGetDatum(conIsLocal);
 	values[Anum_pg_constraint_coninhcount - 1] = Int16GetDatum(conInhCount);
 	values[Anum_pg_constraint_connoinherit - 1] = BoolGetDatum(conNoInherit);
-	values[Anum_pg_constraint_conperiod - 1] = BoolGetDatum(conPeriod);
 
 	if (conkeyArray)
 		values[Anum_pg_constraint_conkey - 1] = PointerGetDatum(conkeyArray);
@@ -1348,63 +1345,6 @@ DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
 	}
 
 	*numfks = numkeys;
-}
-
-/*
- * FindFKPeriodOpers -
- *
- * Looks up the operator oids used for the PERIOD part of a temporal foreign key.
- * The opclass should be the opclass of that PERIOD element.
- * Everything else is an output: containedbyoperoid is the ContainedBy operator for
- * types matching the PERIOD element.
- * aggedcontainedbyoperoid is also a ContainedBy operator,
- * but one whose rhs is a multirange.
- * That way foreign keys can compare fkattr <@ range_agg(pkattr).
- */
-void
-FindFKPeriodOpers(Oid opclass,
-				  Oid *containedbyoperoid,
-				  Oid *aggedcontainedbyoperoid)
-{
-	Oid			opfamily = InvalidOid;
-	Oid			opcintype = InvalidOid;
-	StrategyNumber strat;
-
-	/* Make sure we have a range or multirange. */
-	if (get_opclass_opfamily_and_input_type(opclass, &opfamily, &opcintype))
-	{
-		if (opcintype != ANYRANGEOID && opcintype != ANYMULTIRANGEOID)
-			ereport(ERROR,
-					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("invalid type for PERIOD part of foreign key"),
-					errdetail("Only range and multirange are supported."));
-
-	}
-	else
-		elog(ERROR, "cache lookup failed for opclass %u", opclass);
-
-	/*
-	 * Look up the ContainedBy operator whose lhs and rhs are the opclass's
-	 * type. We use this to optimize RI checks: if the new value includes all
-	 * of the old value, then we can treat the attribute as if it didn't
-	 * change, and skip the RI check.
-	 */
-	strat = RTContainedByStrategyNumber;
-	GetOperatorFromWellKnownStrategy(opclass,
-									 InvalidOid,
-									 containedbyoperoid,
-									 &strat);
-
-	/*
-	 * Now look up the ContainedBy operator. Its left arg must be the type of
-	 * the column (or rather of the opclass). Its right arg must match the
-	 * return type of the support proc.
-	 */
-	strat = RTContainedByStrategyNumber;
-	GetOperatorFromWellKnownStrategy(opclass,
-									 ANYMULTIRANGEOID,
-									 aggedcontainedbyoperoid,
-									 &strat);
 }
 
 /*
