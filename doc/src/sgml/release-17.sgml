@@ -208,7 +208,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Rename I/O block read/write timing statistics columns of pg_stat_statement (Nazir Bilal Yavuz)
+Rename I/O block read/write timing statistics columns of pg_stat_statements (Nazir Bilal Yavuz)
 </para>
 
 <para>
@@ -2817,7 +2817,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add local I/O block read/write timing statistics columns of pg_stat_statement (Nazir Bilal Yavuz)
+Add local I/O block read/write timing statistics columns of pg_stat_statements (Nazir Bilal Yavuz)
 </para>
 
 <para>
@@ -2843,11 +2843,11 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
 <listitem>
 <para>
-Add optional fourth parameter to pg_stat_statements_reset() to allow for the resetting of only min/max statistics (Andrei Zubkov)
+Add optional fourth argument (minmax_only) to pg_stat_statements_reset() to allow for the resetting of only min/max statistics (Andrei Zubkov)
 </para>
 
 <para>
-This parameter defaults to "false".
+This argument defaults to "false".
 </para>
 </listitem>
 
