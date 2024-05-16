@@ -708,6 +708,12 @@ include_dir 'conf.d'
        </para>
 
        <para>
+        PostgreSQL sizes certain resources based directly on the value of
+        <varname>max_connections</varname>. Increasing its value leads to
+        higher allocation of those resources, including shared memory.
+       </para>
+
+       <para>
         When running a standby server, you must set this parameter to the
         same or higher value than on the primary server. Otherwise, queries
         will not be allowed in the standby server.
