@@ -13,7 +13,7 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
   AC_REQUIRE([AC_PROG_AWK])
 
   AC_ARG_VAR(LLVM_CONFIG, [path to llvm-config command])
-  PGAC_PATH_PROGS(LLVM_CONFIG, llvm-config llvm-config-17 llvm-config-16 llvm-config-15 llvm-config-14 llvm-config-13 llvm-config-12 llvm-config-11 llvm-config-10)
+  PGAC_PATH_PROGS(LLVM_CONFIG, llvm-config)
 
   # no point continuing if llvm wasn't found
   if test -z "$LLVM_CONFIG"; then
@@ -32,7 +32,7 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
 
   # need clang to create some bitcode files
   AC_ARG_VAR(CLANG, [path to clang compiler to generate bitcode])
-  PGAC_PATH_PROGS(CLANG, clang clang-17 clang-16 clang-15 clang-14 clang-13 clang-12 clang-11 clang-10)
+  PGAC_PATH_PROGS(CLANG, clang)
   if test -z "$CLANG"; then
     AC_MSG_ERROR([clang not found, but required when compiling --with-llvm, specify with CLANG=])
   fi
