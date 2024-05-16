@@ -1184,7 +1184,12 @@ heap_rescan(TableScanDesc sscan, ScanKey key, bool set_params,
 		scan->rs_vmbuffer = InvalidBuffer;
 	}
 
-	Assert(scan->rs_empty_tuples_pending == 0);
+	/*
+	 * Reset rs_empty_tuples_pending, a field only used by bitmap heap scan,
+	 * to avoid incorrectly emitting NULL-filled tuples from a previous scan
+	 * on rescan.
+	 */
+	scan->rs_empty_tuples_pending = 0;
 
 	/*
 	 * The read stream is reset on rescan. This must be done before
@@ -1215,8 +1220,6 @@ heap_endscan(TableScanDesc sscan)
 
 	if (BufferIsValid(scan->rs_vmbuffer))
 		ReleaseBuffer(scan->rs_vmbuffer);
-
-	Assert(scan->rs_empty_tuples_pending == 0);
 
 	/*
 	 * Must free the read stream before freeing the BufferAccessStrategy.

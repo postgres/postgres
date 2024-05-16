@@ -7924,3 +7924,39 @@ where exists (select 1 from j3
 (13 rows)
 
 drop table j3;
+-- Exercise the "skip fetch" Bitmap Heap Scan optimization when candidate
+-- tuples are discarded. This may occur when:
+--   1. A join doesn't require all inner tuples to be scanned for each outer
+--      tuple, and
+--   2. The inner side is scanned using a bitmap heap scan, and
+--   3. The bitmap heap scan is eligible for the "skip fetch" optimization.
+--      This optimization is usable when no data from the underlying table is
+--      needed. Use a temp table so it is only visible to this backend and
+--      vacuum may reliably mark all blocks in the table all visible in the
+--      visibility map.
+CREATE TEMP TABLE skip_fetch (a INT, b INT) WITH (fillfactor=10);
+INSERT INTO skip_fetch SELECT i % 3, i FROM generate_series(0,30) i;
+CREATE INDEX ON skip_fetch(a);
+VACUUM (ANALYZE) skip_fetch;
+SET enable_indexonlyscan = off;
+SET enable_seqscan = off;
+EXPLAIN (COSTS OFF)
+SELECT t1.a FROM skip_fetch t1 LEFT JOIN skip_fetch t2 ON t2.a = 1 WHERE t2.a IS NULL;
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Nested Loop Anti Join
+   ->  Seq Scan on skip_fetch t1
+   ->  Materialize
+         ->  Bitmap Heap Scan on skip_fetch t2
+               Recheck Cond: (a = 1)
+               ->  Bitmap Index Scan on skip_fetch_a_idx
+                     Index Cond: (a = 1)
+(7 rows)
+
+SELECT t1.a FROM skip_fetch t1 LEFT JOIN skip_fetch t2 ON t2.a = 1 WHERE t2.a IS NULL;
+ a 
+---
+(0 rows)
+
+RESET enable_indexonlyscan;
+RESET enable_seqscan;
