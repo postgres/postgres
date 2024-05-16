@@ -69,7 +69,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
    Commands <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command>,
    <command>ALTER SUBSCRIPTION ... {SET|ADD|DROP} PUBLICATION ...</command>
    with <literal>refresh</literal> option as <literal>true</literal> and
-   <command>ALTER SUBSCRIPTION ... SET (failover = on|off)</command>
+   <command>ALTER SUBSCRIPTION ... SET (failover = true|false)</command>
    cannot be executed inside a transaction block.
 
    These commands also cannot be executed when the subscription has
