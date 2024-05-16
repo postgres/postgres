@@ -334,9 +334,10 @@ UPDATE pg_settings SET setting = reset_val WHERE name = 'configuration_parameter
       <para>
        During server startup, parameter settings can be
        passed to the <command>postgres</command> command via the
-       <option>-c</option> command-line parameter.  For example,
+       <option>-c name=value</option> command-line parameter, or its equivalent
+       <option>--name=value</option> variation.  For example,
 <programlisting>
-postgres -c log_connections=yes -c log_destination='syslog'
+postgres -c log_connections=yes --log-destination='syslog'
 </programlisting>
        Settings provided in this way override those set via
        <filename>postgresql.conf</filename> or <command>ALTER SYSTEM</command>,
@@ -353,10 +354,10 @@ postgres -c log_connections=yes -c log_destination='syslog'
       of the session, but do not affect other sessions.
       For historical reasons, the format of <envar>PGOPTIONS</envar> is
       similar to that used when launching the <command>postgres</command>
-      command; specifically, the <option>-c</option> flag must be specified.
-      For example,
+      command; specifically, the <option>-c</option>, or prepended
+      <literal>--</literal>, before the name must be specified. For example,
 <programlisting>
-env PGOPTIONS="-c geqo=off -c statement_timeout=5min" psql
+env PGOPTIONS="-c geqo=off --statement-timeout=5min" psql
 </programlisting>
      </para>
 
