@@ -68,7 +68,7 @@ PostgreSQL documentation
  </para>
 
   <para>
-   pg_upgrade supports upgrades from 8.4.X and later to the current
+   pg_upgrade supports upgrades from 9.0.X and later to the current
    major release of <productname>PostgreSQL</productname>, including snapshot and beta releases.
   </para>
  </refsect1>

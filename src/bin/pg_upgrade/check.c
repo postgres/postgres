@@ -280,8 +280,13 @@ check_cluster_versions(void)
 	 * upgrades
 	 */
 
-	if (GET_MAJOR_VERSION(old_cluster.major_version) < 804)
-		pg_fatal("This utility can only upgrade from PostgreSQL version 8.4 and later.\n");
+	/*
+	 * The minimum version supported when this code shipped in a major version
+	 * was 8.4. This has since been raised to 9.0, but the support code for
+	 * dealing with 8.4 remains to avoid refactoring in a backbranch.
+	 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) < 900)
+		pg_fatal("This utility can only upgrade from PostgreSQL version 9.0 and later.\n");
 
 	/* Only current PG version is supported as a target */
 	if (GET_MAJOR_VERSION(new_cluster.major_version) != GET_MAJOR_VERSION(PG_VERSION_NUM))
