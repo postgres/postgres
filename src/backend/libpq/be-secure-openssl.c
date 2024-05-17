@@ -224,7 +224,7 @@ be_tls_init(bool isServerStart)
 		{
 			ereport(isServerStart ? FATAL : LOG,
 			/*- translator: first %s is a GUC option name, second %s is its value */
-					(errmsg("%s setting \"%s\" not supported by this build",
+					(errmsg("\"%s\" setting \"%s\" not supported by this build",
 							"ssl_max_protocol_version",
 							GetConfigOption("ssl_max_protocol_version",
 											false, false))));

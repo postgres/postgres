@@ -895,7 +895,7 @@ HandlePgArchInterrupts(void)
 			 */
 			ereport(LOG,
 					(errmsg("restarting archiver process because value of "
-							"archive_library was changed")));
+							"\"archive_library\" was changed")));
 
 			proc_exit(0);
 		}

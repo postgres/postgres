@@ -1114,7 +1114,7 @@ struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Continues processing past damaged page headers."),
 			gettext_noop("Detection of a damaged page header normally causes PostgreSQL to "
 						 "report an error, aborting the current transaction. Setting "
-						 "\"zero_damaged_page\" to true causes the system to instead report a "
+						 "\"zero_damaged_pages\" to true causes the system to instead report a "
 						 "warning, zero out the damaged page, and continue processing. This "
 						 "behavior will destroy data, namely all the rows on the damaged page."),
 			GUC_NOT_IN_SAMPLE

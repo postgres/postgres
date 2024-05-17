@@ -1047,7 +1047,7 @@ ValidateSlotSyncParams(int elevel)
 	if (wal_level < WAL_LEVEL_LOGICAL)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("slot synchronization requires wal_level >= \"logical\""));
+				errmsg("slot synchronization requires \"wal_level\" >= \"logical\""));
 
 	/*
 	 * A physical replication slot(primary_slot_name) is required on the
