@@ -3000,7 +3000,7 @@ icu_validate_locale(const char *loc_str)
 		ereport(elevel,
 				(errmsg("could not get language from ICU locale \"%s\": %s",
 						loc_str, u_errorName(status)),
-				 errhint("To disable ICU locale validation, set the parameter %s to \"%s\".",
+				 errhint("To disable ICU locale validation, set the parameter \"%s\" to \"%s\".",
 						 "icu_validation_level", "disabled")));
 		return;
 	}
@@ -3029,7 +3029,7 @@ icu_validate_locale(const char *loc_str)
 		ereport(elevel,
 				(errmsg("ICU locale \"%s\" has unknown language \"%s\"",
 						loc_str, lang),
-				 errhint("To disable ICU locale validation, set the parameter %s to \"%s\".",
+				 errhint("To disable ICU locale validation, set the parameter \"%s\" to \"%s\".",
 						 "icu_validation_level", "disabled")));
 
 	/* check that it can be opened */

@@ -1010,7 +1010,7 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 			if (syncrep_parse_error_msg)
 				GUC_check_errdetail("%s", syncrep_parse_error_msg);
 			else
-				GUC_check_errdetail("synchronous_standby_names parser failed");
+				GUC_check_errdetail("\"synchronous_standby_names\" parser failed");
 			return false;
 		}
 

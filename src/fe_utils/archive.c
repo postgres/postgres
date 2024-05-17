@@ -95,7 +95,7 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 	 * fatal too.
 	 */
 	if (wait_result_is_any_signal(rc, true))
-		pg_fatal("restore_command failed: %s",
+		pg_fatal("\"restore_command\" failed: %s",
 				 wait_result_to_str(rc));
 
 	/*

@@ -220,7 +220,7 @@ ORDER BY o.slot_name, c.slot_name;
 -- released even when raise error during creating the target slot.
 SELECT 'copy' FROM pg_copy_logical_replication_slot('orig_slot1', 'failed'); -- error
 ERROR:  all replication slots are in use
-HINT:  Free one or increase max_replication_slots.
+HINT:  Free one or increase "max_replication_slots".
 -- temporary slots were dropped automatically
 SELECT pg_drop_replication_slot('orig_slot1');
  pg_drop_replication_slot 

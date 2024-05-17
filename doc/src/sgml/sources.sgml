@@ -533,17 +533,10 @@ Hint:       The addendum, written as a complete sentence.
    <title>Use of Quotes</title>
 
    <para>
-    Always use quotes to delimit file names, user-supplied identifiers, and
-    other variables that might contain words.  Do not use them to mark up
-    variables that will not contain words (for example, operator names).
-   </para>
-
-   <para>
-    In messages containing configuration variable names, do not include quotes
-    when the names are visibly not natural English words, such as when they
-    have underscores, are all-uppercase or have mixed case. Otherwise, quotes
-    must be added. Do include quotes in a message where an arbitrary variable
-    name is to be expanded.
+    Always use quotes to delimit file names, user-supplied identifiers,
+    configuration variable names, and other variables that might contain
+    words.  Do not use them to mark up variables that will not contain words
+    (for example, operator names).
    </para>
 
    <para>

@@ -131,7 +131,7 @@ check_vacuum_buffer_usage_limit(int *newval, void **extra,
 		return true;
 
 	/* Value does not fall within any allowable range */
-	GUC_check_errdetail("vacuum_buffer_usage_limit must be 0 or between %d kB and %d kB",
+	GUC_check_errdetail("\"vacuum_buffer_usage_limit\" must be 0 or between %d kB and %d kB",
 						MIN_BAS_VAC_RING_SIZE_KB, MAX_BAS_VAC_RING_SIZE_KB);
 
 	return false;

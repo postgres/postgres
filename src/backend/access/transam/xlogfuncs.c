@@ -212,7 +212,7 @@ pg_log_standby_snapshot(PG_FUNCTION_ARGS)
 	if (!XLogStandbyInfoActive())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("pg_log_standby_snapshot() can only be used if wal_level >= replica")));
+				 errmsg("pg_log_standby_snapshot() can only be used if \"wal_level\" >= \"replica\"")));
 
 	recptr = LogStandbySnapshot();
 
@@ -245,7 +245,7 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("WAL level not sufficient for creating a restore point"),
-				 errhint("wal_level must be set to \"replica\" or \"logical\" at server start.")));
+				 errhint("\"wal_level\" must be set to \"replica\" or \"logical\" at server start.")));
 
 	restore_name_str = text_to_cstring(restore_name);
 

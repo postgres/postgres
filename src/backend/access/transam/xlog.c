@@ -4501,11 +4501,11 @@ ReadControlFile(void)
 	/* check and update variables dependent on wal_segment_size */
 	if (ConvertToXSegs(min_wal_size_mb, wal_segment_size) < 2)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("min_wal_size must be at least twice wal_segment_size")));
+						errmsg("\"min_wal_size\" must be at least twice \"wal_segment_size\"")));
 
 	if (ConvertToXSegs(max_wal_size_mb, wal_segment_size) < 2)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("max_wal_size must be at least twice wal_segment_size")));
+						errmsg("\"max_wal_size\" must be at least twice \"wal_segment_size\"")));
 
 	UsableBytesInSegment =
 		(wal_segment_size / XLOG_BLCKSZ * UsableBytesInPage) -
@@ -5351,9 +5351,9 @@ CheckRequiredParameterValues(void)
 	{
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("WAL was generated with wal_level=minimal, cannot continue recovering"),
-				 errdetail("This happens if you temporarily set wal_level=minimal on the server."),
-				 errhint("Use a backup taken after setting wal_level to higher than minimal.")));
+				 errmsg("WAL was generated with \"wal_level=minimal\", cannot continue recovering"),
+				 errdetail("This happens if you temporarily set \"wal_level=minimal\" on the server."),
+				 errhint("Use a backup taken after setting \"wal_level\" to higher than \"minimal\".")));
 	}
 
 	/*
@@ -8549,7 +8549,7 @@ get_sync_bit(int method)
 #endif
 		default:
 			/* can't happen (unless we are out of sync with option array) */
-			elog(ERROR, "unrecognized wal_sync_method: %d", method);
+			elog(ERROR, "unrecognized \"wal_sync_method\": %d", method);
 			return 0;			/* silence warning */
 	}
 }
@@ -8647,7 +8647,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 		default:
 			ereport(PANIC,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg_internal("unrecognized wal_sync_method: %d", wal_sync_method));
+					errmsg_internal("unrecognized \"wal_sync_method\": %d", wal_sync_method));
 			break;
 	}
 
@@ -8725,7 +8725,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("WAL level not sufficient for making an online backup"),
-				 errhint("wal_level must be set to \"replica\" or \"logical\" at server start.")));
+				 errhint("\"wal_level\" must be set to \"replica\" or \"logical\" at server start.")));
 
 	if (strlen(backupidstr) > MAXPGPATH)
 		ereport(ERROR,
@@ -8851,11 +8851,11 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 				if (!checkpointfpw || state->startpoint <= recptr)
 					ereport(ERROR,
 							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("WAL generated with full_page_writes=off was replayed "
+							 errmsg("WAL generated with \"full_page_writes=off\" was replayed "
 									"since last restartpoint"),
 							 errhint("This means that the backup being taken on the standby "
 									 "is corrupt and should not be used. "
-									 "Enable full_page_writes and run CHECKPOINT on the primary, "
+									 "Enable \"full_page_writes\" and run CHECKPOINT on the primary, "
 									 "and then try an online backup again.")));
 
 				/*
@@ -9147,11 +9147,11 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
 		if (state->startpoint <= recptr)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("WAL generated with full_page_writes=off was replayed "
+					 errmsg("WAL generated with \"full_page_writes=off\" was replayed "
 							"during online backup"),
 					 errhint("This means that the backup being taken on the standby "
 							 "is corrupt and should not be used. "
-							 "Enable full_page_writes and run CHECKPOINT on the primary, "
+							 "Enable \"full_page_writes\" and run CHECKPOINT on the primary, "
 							 "and then try an online backup again.")));
 
 
@@ -9279,7 +9279,7 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
 				ereport(WARNING,
 						(errmsg("still waiting for all required WAL segments to be archived (%d seconds elapsed)",
 								waits),
-						 errhint("Check that your archive_command is executing properly.  "
+						 errhint("Check that your \"archive_command\" is executing properly.  "
 								 "You can safely cancel this backup, "
 								 "but the database backup will not be usable without all the WAL segments.")));
 			}

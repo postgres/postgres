@@ -1769,13 +1769,13 @@ check_new_cluster_logical_replication_slots(void)
 	wal_level = PQgetvalue(res, 0, 0);
 
 	if (strcmp(wal_level, "logical") != 0)
-		pg_fatal("wal_level must be \"logical\", but is set to \"%s\"",
+		pg_fatal("\"wal_level\" must be \"logical\", but is set to \"%s\"",
 				 wal_level);
 
 	max_replication_slots = atoi(PQgetvalue(res, 1, 0));
 
 	if (nslots_on_old > max_replication_slots)
-		pg_fatal("max_replication_slots (%d) must be greater than or equal to the number of "
+		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
 				 "logical replication slots (%d) on the old cluster",
 				 max_replication_slots, nslots_on_old);
 
@@ -1822,7 +1822,7 @@ check_new_cluster_subscription_configuration(void)
 
 	max_replication_slots = atoi(PQgetvalue(res, 0, 0));
 	if (nsubs_on_old > max_replication_slots)
-		pg_fatal("max_replication_slots (%d) must be greater than or equal to the number of "
+		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
 				 "subscriptions (%d) on the old cluster",
 				 max_replication_slots, nsubs_on_old);
 

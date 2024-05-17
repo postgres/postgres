@@ -581,7 +581,7 @@ check_huge_page_size(int *newval, void **extra, GucSource source)
 	/* Recent enough Linux only, for now.  See GetHugePageSize(). */
 	if (*newval != 0)
 	{
-		GUC_check_errdetail("huge_page_size must be 0 on this platform.");
+		GUC_check_errdetail("\"huge_page_size\" must be 0 on this platform.");
 		return false;
 	}
 #endif
@@ -658,8 +658,8 @@ CreateAnonymousSegment(Size *size)
 						 "for a shared memory segment exceeded available memory, "
 						 "swap space, or huge pages. To reduce the request size "
 						 "(currently %zu bytes), reduce PostgreSQL's shared "
-						 "memory usage, perhaps by reducing shared_buffers or "
-						 "max_connections.",
+						 "memory usage, perhaps by reducing \"shared_buffers\" or "
+						 "\"max_connections\".",
 						 allocsize) : 0));
 	}
 
@@ -729,7 +729,7 @@ PGSharedMemoryCreate(Size size,
 	if (huge_pages == HUGE_PAGES_ON && shared_memory_type != SHMEM_TYPE_MMAP)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("huge pages not supported with the current shared_memory_type setting")));
+				 errmsg("huge pages not supported with the current \"shared_memory_type\" setting")));
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));

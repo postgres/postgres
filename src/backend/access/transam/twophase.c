@@ -373,7 +373,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("prepared transactions are disabled"),
-				 errhint("Set max_prepared_transactions to a nonzero value.")));
+				 errhint("Set \"max_prepared_transactions\" to a nonzero value.")));
 
 	/* on first call, register the exit hook */
 	if (!twophaseExitRegistered)
@@ -402,7 +402,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("maximum number of prepared transactions reached"),
-				 errhint("Increase max_prepared_transactions (currently %d).",
+				 errhint("Increase \"max_prepared_transactions\" (currently %d).",
 						 max_prepared_xacts)));
 	gxact = TwoPhaseState->freeGXacts;
 	TwoPhaseState->freeGXacts = gxact->next;
@@ -2539,7 +2539,7 @@ PrepareRedoAdd(char *buf, XLogRecPtr start_lsn,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("maximum number of prepared transactions reached"),
-				 errhint("Increase max_prepared_transactions (currently %d).",
+				 errhint("Increase \"max_prepared_transactions\" (currently %d).",
 						 max_prepared_xacts)));
 	gxact = TwoPhaseState->freeGXacts;
 	TwoPhaseState->freeGXacts = gxact->next;

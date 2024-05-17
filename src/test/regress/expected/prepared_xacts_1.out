@@ -19,7 +19,7 @@ SELECT * FROM pxtest1;
 
 PREPARE TRANSACTION 'regress_foo1';
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -58,7 +58,7 @@ SELECT * FROM pxtest1;
 
 PREPARE TRANSACTION 'regress_foo2';
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -84,7 +84,7 @@ SELECT * FROM pxtest1;
 
 PREPARE TRANSACTION 'regress_foo3';
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
@@ -95,7 +95,7 @@ INSERT INTO pxtest1 VALUES ('fff');
 -- This should fail, because the gid foo3 is already in use
 PREPARE TRANSACTION 'regress_foo3';
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -121,7 +121,7 @@ SELECT * FROM pxtest1;
 
 PREPARE TRANSACTION 'regress_foo4';
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
@@ -138,7 +138,7 @@ SELECT * FROM pxtest1;
 INSERT INTO pxtest1 VALUES ('fff');
 PREPARE TRANSACTION 'regress_foo5';
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 SELECT gid FROM pg_prepared_xacts WHERE gid ~ '^regress_' ORDER BY gid;
  gid 
 -----
@@ -169,7 +169,7 @@ SELECT pg_advisory_xact_lock_shared(1);
 
 PREPARE TRANSACTION 'regress_foo6';  -- fails
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 -- Test subtransactions
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
   CREATE TABLE pxtest2 (a int);
@@ -181,7 +181,7 @@ BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
   INSERT INTO pxtest2 VALUES (3);
 PREPARE TRANSACTION 'regress_sub1';
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 CREATE TABLE pxtest3(fff int);
 -- Test shared invalidation
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -199,7 +199,7 @@ BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 
 PREPARE TRANSACTION 'regress_sub2';
 ERROR:  prepared transactions are disabled
-HINT:  Set max_prepared_transactions to a nonzero value.
+HINT:  Set "max_prepared_transactions" to a nonzero value.
 -- No such cursor
 FETCH 1 FROM foo;
 ERROR:  cursor "foo" does not exist

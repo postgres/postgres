@@ -128,7 +128,7 @@ init_libpq_conn(PGconn *conn)
 	/* secure search_path */
 	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-		pg_fatal("could not clear search_path: %s",
+		pg_fatal("could not clear \"search_path\": %s",
 				 PQresultErrorMessage(res));
 	PQclear(res);
 
@@ -139,7 +139,7 @@ init_libpq_conn(PGconn *conn)
 	 */
 	str = run_simple_query(conn, "SHOW full_page_writes");
 	if (strcmp(str, "on") != 0)
-		pg_fatal("full_page_writes must be enabled in the source server");
+		pg_fatal("\"full_page_writes\" must be enabled in the source server");
 	pg_free(str);
 
 	/* Prepare a statement we'll use to fetch files */

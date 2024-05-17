@@ -5376,7 +5376,7 @@ GetTableInfo(PGconn *con, bool scale_given)
 		 * This case is unlikely as pgbench already found "pgbench_branches"
 		 * above to compute the scale.
 		 */
-		pg_log_error("no pgbench_accounts table found in search_path");
+		pg_log_error("no pgbench_accounts table found in \"search_path\"");
 		pg_log_error_hint("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".", PQdb(con));
 		exit(1);
 	}

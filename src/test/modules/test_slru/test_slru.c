@@ -251,7 +251,7 @@ _PG_init(void)
 	if (!process_shared_preload_libraries_in_progress)
 		ereport(ERROR,
 				(errmsg("cannot load \"%s\" after startup", "test_slru"),
-				 errdetail("\"%s\" must be loaded with shared_preload_libraries.",
+				 errdetail("\"%s\" must be loaded with \"shared_preload_libraries\".",
 						   "test_slru")));
 
 	prev_shmem_request_hook = shmem_request_hook;

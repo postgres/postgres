@@ -425,7 +425,7 @@ pgarch_ArchiverCopyLoop(void)
 				!ArchiveCallbacks->check_configured_cb(archive_module_state))
 			{
 				ereport(WARNING,
-						(errmsg("archive_mode enabled, yet archiving is not configured"),
+						(errmsg("\"archive_mode\" enabled, yet archiving is not configured"),
 						 arch_module_check_errdetail_string ?
 						 errdetail_internal("%s", arch_module_check_errdetail_string) : 0));
 				return;
@@ -876,8 +876,8 @@ HandlePgArchInterrupts(void)
 		if (XLogArchiveLibrary[0] != '\0' && XLogArchiveCommand[0] != '\0')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("both archive_command and archive_library set"),
-					 errdetail("Only one of archive_command, archive_library may be set.")));
+					 errmsg("both \"archive_command\" and \"archive_library\" set"),
+					 errdetail("Only one of \"archive_command\", \"archive_library\" may be set.")));
 
 		archiveLibChanged = strcmp(XLogArchiveLibrary, archiveLib) != 0;
 		pfree(archiveLib);
@@ -915,8 +915,8 @@ LoadArchiveLibrary(void)
 	if (XLogArchiveLibrary[0] != '\0' && XLogArchiveCommand[0] != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("both archive_command and archive_library set"),
-				 errdetail("Only one of archive_command, archive_library may be set.")));
+				 errmsg("both \"archive_command\" and \"archive_library\" set"),
+				 errdetail("Only one of \"archive_command\", \"archive_library\" may be set.")));
 
 	/*
 	 * If shell archiving is enabled, use our special initialization function.

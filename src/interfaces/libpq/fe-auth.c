@@ -1313,7 +1313,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 		if (strlen(val) > MAX_ALGORITHM_NAME_LEN)
 		{
 			PQclear(res);
-			libpq_append_conn_error(conn, "password_encryption value too long");
+			libpq_append_conn_error(conn, "\"password_encryption\" value too long");
 			return NULL;
 		}
 		strcpy(algobuf, val);

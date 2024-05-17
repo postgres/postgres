@@ -1066,7 +1066,7 @@ struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"ssl_passphrase_command_supports_reload", PGC_SIGHUP, CONN_AUTH_SSL,
-			gettext_noop("Controls whether ssl_passphrase_command is called during server reload."),
+			gettext_noop("Controls whether \"ssl_passphrase_command\" is called during server reload."),
 			NULL
 		},
 		&ssl_passphrase_command_supports_reload,
@@ -1114,7 +1114,7 @@ struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Continues processing past damaged page headers."),
 			gettext_noop("Detection of a damaged page header normally causes PostgreSQL to "
 						 "report an error, aborting the current transaction. Setting "
-						 "zero_damaged_pages to true causes the system to instead report a "
+						 "\"zero_damaged_page\" to true causes the system to instead report a "
 						 "warning, zero out the damaged page, and continue processing. This "
 						 "behavior will destroy data, namely all the rows on the damaged page."),
 			GUC_NOT_IN_SAMPLE
@@ -1129,7 +1129,7 @@ struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Detection of WAL records having references to "
 						 "invalid pages during recovery causes PostgreSQL to "
 						 "raise a PANIC-level error, aborting the recovery. "
-						 "Setting ignore_invalid_pages to true causes "
+						 "Setting \"ignore_invalid_pages\" to true causes "
 						 "the system to ignore invalid page references "
 						 "in WAL records (but still report a warning), "
 						 "and continue recovery. This behavior may cause "
@@ -2713,7 +2713,7 @@ struct config_int ConfigureNamesInt[] =
 		{"max_locks_per_transaction", PGC_POSTMASTER, LOCK_MANAGEMENT,
 			gettext_noop("Sets the maximum number of locks per transaction."),
 			gettext_noop("The shared lock table is sized on the assumption that at most "
-						 "max_locks_per_transaction objects per server process or prepared "
+						 "\"max_locks_per_transaction\" objects per server process or prepared "
 						 "transaction will need to be locked at any one time.")
 		},
 		&max_locks_per_xact,
@@ -2725,7 +2725,7 @@ struct config_int ConfigureNamesInt[] =
 		{"max_pred_locks_per_transaction", PGC_POSTMASTER, LOCK_MANAGEMENT,
 			gettext_noop("Sets the maximum number of predicate locks per transaction."),
 			gettext_noop("The shared predicate lock table is sized on the assumption that "
-						 "at most max_pred_locks_per_transaction objects per server process "
+						 "at most \"max_pred_locks_per_transaction\" objects per server process "
 						 "or prepared transaction will need to be locked at any one time.")
 		},
 		&max_predicate_locks_per_xact,
@@ -2976,7 +2976,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"commit_siblings", PGC_USERSET, WAL_SETTINGS,
 			gettext_noop("Sets the minimum number of concurrent open transactions "
-						 "required before performing commit_delay."),
+						 "required before performing \"commit_delay\"."),
 			NULL
 		},
 		&CommitSiblings,
@@ -3108,7 +3108,7 @@ struct config_int ConfigureNamesInt[] =
 		{"maintenance_io_concurrency",
 			PGC_USERSET,
 			RESOURCES_ASYNCHRONOUS,
-			gettext_noop("A variant of effective_io_concurrency that is used for maintenance work."),
+			gettext_noop("A variant of \"effective_io_concurrency\" that is used for maintenance work."),
 			NULL,
 			GUC_EXPLAIN
 		},
@@ -3815,7 +3815,7 @@ struct config_real ConfigureNamesReal[] =
 
 	{
 		{"hash_mem_multiplier", PGC_USERSET, RESOURCES_MEM,
-			gettext_noop("Multiple of work_mem to use for hash tables."),
+			gettext_noop("Multiple of \"work_mem\" to use for hash tables."),
 			NULL,
 			GUC_EXPLAIN
 		},
@@ -3909,7 +3909,7 @@ struct config_real ConfigureNamesReal[] =
 
 	{
 		{"log_statement_sample_rate", PGC_SUSET, LOGGING_WHEN,
-			gettext_noop("Fraction of statements exceeding log_min_duration_sample to be logged."),
+			gettext_noop("Fraction of statements exceeding \"log_min_duration_sample\" to be logged."),
 			gettext_noop("Use a value between 0.0 (never log) and 1.0 (always log).")
 		},
 		&log_statement_sample_rate,
@@ -3940,7 +3940,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"archive_command", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the shell command that will be called to archive a WAL file."),
-			gettext_noop("This is used only if archive_library is not set.")
+			gettext_noop("This is used only if \"archive_library\" is not set.")
 		},
 		&XLogArchiveCommand,
 		"",
@@ -3950,7 +3950,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"archive_library", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the library that will be called to archive a WAL file."),
-			gettext_noop("An empty string indicates that archive_command should be used.")
+			gettext_noop("An empty string indicates that \"archive_command\" should be used.")
 		},
 		&XLogArchiveLibrary,
 		"",
@@ -4895,7 +4895,7 @@ struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"archive_mode", PGC_POSTMASTER, WAL_ARCHIVING,
-			gettext_noop("Allows archiving of WAL files using archive_command."),
+			gettext_noop("Allows archiving of WAL files using \"archive_command\"."),
 			NULL
 		},
 		&XLogArchiveMode,

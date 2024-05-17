@@ -885,7 +885,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 			return;
 		ereport(LOG,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("background worker \"%s\": must be registered in shared_preload_libraries",
+				 errmsg("background worker \"%s\": must be registered in \"shared_preload_libraries\"",
 						worker->bgw_name)));
 		return;
 	}

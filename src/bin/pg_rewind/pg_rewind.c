@@ -94,7 +94,7 @@ usage(const char *progname)
 	printf(_("%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
 	printf(_("Options:\n"));
-	printf(_("  -c, --restore-target-wal       use restore_command in target configuration to\n"
+	printf(_("  -c, --restore-target-wal       use \"restore_command\" in target configuration to\n"
 			 "                                 retrieve WAL files from archives\n"));
 	printf(_("  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"));
 	printf(_("      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"));
@@ -1111,9 +1111,9 @@ getRestoreCommand(const char *argv0)
 	(void) pg_strip_crlf(restore_command);
 
 	if (strcmp(restore_command, "") == 0)
-		pg_fatal("restore_command is not set in the target cluster");
+		pg_fatal("\"restore_command\" is not set in the target cluster");
 
-	pg_log_debug("using for rewind restore_command = \'%s\'",
+	pg_log_debug("using for rewind \"restore_command = \'%s\'\"",
 				 restore_command);
 
 	destroyPQExpBuffer(postgres_cmd);

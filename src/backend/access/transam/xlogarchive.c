@@ -233,7 +233,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 			ereport(elevel,
 					(errcode_for_file_access(),
 					 errmsg("could not stat file \"%s\": %m", xlogpath),
-					 errdetail("restore_command returned a zero exit status, but stat() failed.")));
+					 errdetail("\"restore_command\" returned a zero exit status, but stat() failed.")));
 		}
 	}
 

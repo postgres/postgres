@@ -1378,7 +1378,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				ereport(elevel,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("hostssl record cannot match because SSL is disabled"),
-						 errhint("Set ssl = on in postgresql.conf."),
+						 errhint("Set \"ssl = on\" in postgresql.conf."),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, file_name)));
 				*err_msg = "hostssl record cannot match because SSL is disabled";

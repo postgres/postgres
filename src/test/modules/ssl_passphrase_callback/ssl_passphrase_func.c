@@ -58,7 +58,7 @@ set_rot13(SSL_CTX *context, bool isServerStart)
 	/* warn if the user has set ssl_passphrase_command */
 	if (ssl_passphrase_command[0])
 		ereport(WARNING,
-				(errmsg("ssl_passphrase_command setting ignored by ssl_passphrase_func module")));
+				(errmsg("\"ssl_passphrase_command\" setting ignored by ssl_passphrase_func module")));
 
 	SSL_CTX_set_default_passwd_cb(context, rot13_passphrase);
 }

@@ -56,7 +56,7 @@ my $log_contents = slurp_file($log);
 
 like(
 	$log_contents,
-	qr/WARNING.*ssl_passphrase_command setting ignored by ssl_passphrase_func module/,
+	qr/WARNING.*"ssl_passphrase_command" setting ignored by ssl_passphrase_func module/,
 	"ssl_passphrase_command set warning");
 
 # set the wrong passphrase

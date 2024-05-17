@@ -822,7 +822,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (SuperuserReservedConnections + ReservedConnections >= MaxConnections)
 	{
-		write_stderr("%s: superuser_reserved_connections (%d) plus reserved_connections (%d) must be less than max_connections (%d)\n",
+		write_stderr("%s: \"superuser_reserved_connections\" (%d) plus \"reserved_connections\" (%d) must be less than \"max_connections\" (%d)\n",
 					 progname,
 					 SuperuserReservedConnections, ReservedConnections,
 					 MaxConnections);
@@ -830,13 +830,13 @@ PostmasterMain(int argc, char *argv[])
 	}
 	if (XLogArchiveMode > ARCHIVE_MODE_OFF && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-				(errmsg("WAL archival cannot be enabled when wal_level is \"minimal\"")));
+				(errmsg("WAL archival cannot be enabled when \"wal_level\" is \"minimal\"")));
 	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"replica\" or \"logical\"")));
+				(errmsg("WAL streaming (\"max_wal_senders\" > 0) requires \"wal_level\" to be \"replica\" or \"logical\"")));
 	if (summarize_wal && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-				(errmsg("WAL cannot be summarized when wal_level is \"minimal\"")));
+				(errmsg("WAL cannot be summarized when \"wal_level\" is \"minimal\"")));
 
 	/*
 	 * Other one-time internal sanity checks can go here, if they are fast.
@@ -3359,7 +3359,7 @@ PostmasterStateMachine(void)
 		if (!restart_after_crash)
 		{
 			ereport(LOG,
-					(errmsg("shutting down because restart_after_crash is off")));
+					(errmsg("shutting down because \"restart_after_crash\" is off")));
 			ExitPostmaster(1);
 		}
 	}

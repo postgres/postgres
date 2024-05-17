@@ -81,7 +81,7 @@ wal_level_str(WalLevel wal_level)
 		case WAL_LEVEL_LOGICAL:
 			return "logical";
 	}
-	return _("unrecognized wal_level");
+	return _("unrecognized \"wal_level\"");
 }
 
 

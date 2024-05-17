@@ -643,7 +643,7 @@ check_huge_page_size(int *newval, void **extra, GucSource source)
 {
 	if (*newval != 0)
 	{
-		GUC_check_errdetail("huge_page_size must be 0 on this platform.");
+		GUC_check_errdetail("\"huge_page_size\" must be 0 on this platform.");
 		return false;
 	}
 	return true;

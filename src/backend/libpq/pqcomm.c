@@ -731,7 +731,7 @@ Setup_AF_UNIX(const char *sock_path)
 	if (Unix_socket_group[0] != '\0')
 	{
 #ifdef WIN32
-		elog(WARNING, "configuration item unix_socket_group is not supported on this platform");
+		elog(WARNING, "configuration item \"unix_socket_group\" is not supported on this platform");
 #else
 		char	   *endptr;
 		unsigned long val;

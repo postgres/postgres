@@ -456,7 +456,7 @@ byteaout(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "unrecognized bytea_output setting: %d",
+		elog(ERROR, "unrecognized \"bytea_output\" setting: %d",
 			 bytea_output);
 		rp = result = NULL;		/* keep compiler quiet */
 	}

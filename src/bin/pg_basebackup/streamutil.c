@@ -227,7 +227,7 @@ GetConnection(void)
 		res = PQexec(tmpconn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			pg_log_error("could not clear search_path: %s",
+			pg_log_error("could not clear \"search_path\": %s",
 						 PQerrorMessage(tmpconn));
 			PQclear(res);
 			PQfinish(tmpconn);
@@ -243,14 +243,14 @@ GetConnection(void)
 	tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
 	if (!tmpparam)
 	{
-		pg_log_error("could not determine server setting for integer_datetimes");
+		pg_log_error("could not determine server setting for \"integer_datetimes\"");
 		PQfinish(tmpconn);
 		exit(1);
 	}
 
 	if (strcmp(tmpparam, "on") != 0)
 	{
-		pg_log_error("integer_datetimes compile flag does not match server");
+		pg_log_error("\"integer_datetimes\" compile flag does not match server");
 		PQfinish(tmpconn);
 		exit(1);
 	}

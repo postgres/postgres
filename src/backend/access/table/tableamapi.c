@@ -106,14 +106,14 @@ check_default_table_access_method(char **newval, void **extra, GucSource source)
 {
 	if (**newval == '\0')
 	{
-		GUC_check_errdetail("%s cannot be empty.",
+		GUC_check_errdetail("\"%s\" cannot be empty.",
 							"default_table_access_method");
 		return false;
 	}
 
 	if (strlen(*newval) >= NAMEDATALEN)
 	{
-		GUC_check_errdetail("%s is too long (maximum %d characters).",
+		GUC_check_errdetail("\"%s\" is too long (maximum %d characters).",
 							"default_table_access_method", NAMEDATALEN - 1);
 		return false;
 	}

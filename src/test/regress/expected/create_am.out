@@ -113,7 +113,7 @@ COMMIT;
 -- prevent empty values
 SET default_table_access_method = '';
 ERROR:  invalid value for parameter "default_table_access_method": ""
-DETAIL:  default_table_access_method cannot be empty.
+DETAIL:  "default_table_access_method" cannot be empty.
 -- prevent nonexistent values
 SET default_table_access_method = 'I do not exist AM';
 ERROR:  invalid value for parameter "default_table_access_method": "I do not exist AM"

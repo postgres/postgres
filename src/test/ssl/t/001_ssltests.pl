@@ -554,11 +554,11 @@ $node->connect_fails(
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_min_protocol_version=incorrect_tls",
 	"connection failure with an incorrect SSL protocol minimum bound",
-	expected_stderr => qr/invalid ssl_min_protocol_version value/);
+	expected_stderr => qr/invalid "ssl_min_protocol_version" value/);
 $node->connect_fails(
 	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_max_protocol_version=incorrect_tls",
 	"connection failure with an incorrect SSL protocol maximum bound",
-	expected_stderr => qr/invalid ssl_max_protocol_version value/);
+	expected_stderr => qr/invalid "ssl_max_protocol_version" value/);
 
 ### Server-side tests.
 ###

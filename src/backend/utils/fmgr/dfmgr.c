@@ -538,7 +538,7 @@ find_in_dynamic_libpath(const char *basename)
 		if (piece == p)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-					 errmsg("zero-length component in parameter dynamic_library_path")));
+					 errmsg("zero-length component in parameter \"dynamic_library_path\"")));
 
 		if (piece == NULL)
 			len = strlen(p);
@@ -557,7 +557,7 @@ find_in_dynamic_libpath(const char *basename)
 		if (!is_absolute_path(mangled))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-					 errmsg("component in parameter dynamic_library_path is not an absolute path")));
+					 errmsg("component in parameter \"dynamic_library_path\" is not an absolute path")));
 
 		full = palloc(strlen(mangled) + 1 + baselen + 1);
 		sprintf(full, "%s/%s", mangled, basename);

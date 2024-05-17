@@ -1151,7 +1151,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 								  MultiXactState->offsetStopLimit - nextOffset - 1,
 								  nmembers,
 								  MultiXactState->offsetStopLimit - nextOffset - 1),
-				 errhint("Execute a database-wide VACUUM in database with OID %u with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.",
+				 errhint("Execute a database-wide VACUUM in database with OID %u with reduced \"vacuum_multixact_freeze_min_age\" and \"vacuum_multixact_freeze_table_age\" settings.",
 						 MultiXactState->oldestMultiXactDB)));
 	}
 
@@ -1187,7 +1187,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 							   MultiXactState->offsetStopLimit - nextOffset + nmembers,
 							   MultiXactState->oldestMultiXactDB,
 							   MultiXactState->offsetStopLimit - nextOffset + nmembers),
-				 errhint("Execute a database-wide VACUUM in that database with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.")));
+				 errhint("Execute a database-wide VACUUM in that database with reduced \"vacuum_multixact_freeze_min_age\" and \"vacuum_multixact_freeze_table_age\" settings.")));
 
 	ExtendMultiXactMember(nextOffset, nmembers);
 

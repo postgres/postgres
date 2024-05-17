@@ -2327,7 +2327,7 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 						vacrel->dbname, vacrel->relnamespace, vacrel->relname,
 						vacrel->num_index_scans),
 				 errdetail("The table's relfrozenxid or relminmxid is too far in the past."),
-				 errhint("Consider increasing configuration parameter maintenance_work_mem or autovacuum_work_mem.\n"
+				 errhint("Consider increasing configuration parameter \"maintenance_work_mem\" or \"autovacuum_work_mem\".\n"
 						 "You might also need to consider other ways for VACUUM to keep up with the allocation of transaction IDs.")));
 
 		/* Stop applying cost limits from this point on */

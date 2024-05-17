@@ -91,7 +91,7 @@ void
 RmgrNotFound(RmgrId rmid)
 {
 	ereport(ERROR, (errmsg("resource manager with ID %d not registered", rmid),
-					errhint("Include the extension module that implements this resource manager in shared_preload_libraries.")));
+					errhint("Include the extension module that implements this resource manager in \"shared_preload_libraries\".")));
 }
 
 /*
@@ -118,7 +118,7 @@ RegisterCustomRmgr(RmgrId rmid, const RmgrData *rmgr)
 	if (!process_shared_preload_libraries_in_progress)
 		ereport(ERROR,
 				(errmsg("failed to register custom resource manager \"%s\" with ID %d", rmgr->rm_name, rmid),
-				 errdetail("Custom resource manager must be registered while initializing modules in shared_preload_libraries.")));
+				 errdetail("Custom resource manager must be registered while initializing modules in \"shared_preload_libraries\".")));
 
 	if (RmgrTable[rmid].rm_name != NULL)
 		ereport(ERROR,

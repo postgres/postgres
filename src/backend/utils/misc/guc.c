@@ -1879,7 +1879,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	else
 	{
 		write_stderr("%s does not know where to find the database system data.\n"
-					 "This can be specified as data_directory in \"%s\", "
+					 "This can be specified as \"data_directory\" in \"%s\", "
 					 "or by the -D invocation option, or by the "
 					 "PGDATA environment variable.\n",
 					 progname, ConfigFileName);

@@ -1660,7 +1660,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("pg_stat_statements must be loaded via shared_preload_libraries")));
+				 errmsg("pg_stat_statements must be loaded via \"shared_preload_libraries\"")));
 
 	InitMaterializedSRF(fcinfo, 0);
 
@@ -1989,7 +1989,7 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("pg_stat_statements must be loaded via shared_preload_libraries")));
+				 errmsg("pg_stat_statements must be loaded via \"shared_preload_libraries\"")));
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -2671,7 +2671,7 @@ entry_reset(Oid userid, Oid dbid, uint64 queryid, bool minmax_only)
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("pg_stat_statements must be loaded via shared_preload_libraries")));
+				 errmsg("pg_stat_statements must be loaded via \"shared_preload_libraries\"")));
 
 	LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
 	num_entries = hash_get_num_entries(pgss_hash);

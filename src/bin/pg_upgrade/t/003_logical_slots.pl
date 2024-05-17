@@ -77,10 +77,10 @@ command_checks_all(
 	[@pg_upgrade_cmd],
 	1,
 	[
-		qr/max_replication_slots \(1\) must be greater than or equal to the number of logical replication slots \(2\) on the old cluster/
+		qr/"max_replication_slots" \(1\) must be greater than or equal to the number of logical replication slots \(2\) on the old cluster/
 	],
 	[qr//],
-	'run of pg_upgrade where the new cluster has insufficient max_replication_slots'
+	'run of pg_upgrade where the new cluster has insufficient "max_replication_slots"'
 );
 ok(-d $newpub->data_dir . "/pg_upgrade_output.d",
 	"pg_upgrade_output.d/ not removed after pg_upgrade failure");

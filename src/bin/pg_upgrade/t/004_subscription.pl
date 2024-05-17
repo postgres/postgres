@@ -66,7 +66,7 @@ command_checks_all(
 	],
 	1,
 	[
-		qr/max_replication_slots \(0\) must be greater than or equal to the number of subscriptions \(1\) on the old cluster/
+		qr/"max_replication_slots" \(0\) must be greater than or equal to the number of subscriptions \(1\) on the old cluster/
 	],
 	[qr//],
 	'run of pg_upgrade where the new cluster has insufficient max_replication_slots'

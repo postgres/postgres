@@ -213,10 +213,10 @@ CONTEXT:  JSON data, line 1: {"abc":1,3...
 SET max_stack_depth = '100kB';
 SELECT repeat('[', 10000)::jsonb;
 ERROR:  stack depth limit exceeded
-HINT:  Increase the configuration parameter max_stack_depth (currently 100kB), after ensuring the platform's stack depth limit is adequate.
+HINT:  Increase the configuration parameter "max_stack_depth" (currently 100kB), after ensuring the platform's stack depth limit is adequate.
 SELECT repeat('{"a":', 10000)::jsonb;
 ERROR:  stack depth limit exceeded
-HINT:  Increase the configuration parameter max_stack_depth (currently 100kB), after ensuring the platform's stack depth limit is adequate.
+HINT:  Increase the configuration parameter "max_stack_depth" (currently 100kB), after ensuring the platform's stack depth limit is adequate.
 RESET max_stack_depth;
 -- Miscellaneous stuff.
 SELECT 'true'::jsonb;			-- OK

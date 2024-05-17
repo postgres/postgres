@@ -378,7 +378,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
 				 errmsg("all replication slots are in use"),
-				 errhint("Free one or increase max_replication_slots.")));
+				 errhint("Free one or increase \"max_replication_slots\".")));
 
 	/*
 	 * Since this slot is not in use, nobody should be looking at any part of
@@ -1369,12 +1369,12 @@ CheckSlotRequirements(void)
 	if (max_replication_slots == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("replication slots can only be used if max_replication_slots > 0")));
+				 errmsg("replication slots can only be used if \"max_replication_slots\" > 0")));
 
 	if (wal_level < WAL_LEVEL_REPLICA)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("replication slots can only be used if wal_level >= replica")));
+				 errmsg("replication slots can only be used if \"wal_level\" >= \"replica\"")));
 }
 
 /*
@@ -1508,7 +1508,7 @@ ReportSlotInvalidation(ReplicationSlotInvalidationCause cause,
 			break;
 
 		case RS_INVAL_WAL_LEVEL:
-			appendStringInfoString(&err_detail, _("Logical decoding on standby requires wal_level >= logical on the primary server."));
+			appendStringInfoString(&err_detail, _("Logical decoding on standby requires \"wal_level\" >= \"logical\" on the primary server."));
 			break;
 		case RS_INVAL_NONE:
 			pg_unreachable();
@@ -1521,7 +1521,7 @@ ReportSlotInvalidation(ReplicationSlotInvalidationCause cause,
 			errmsg("invalidating obsolete replication slot \"%s\"",
 				   NameStr(slotname)),
 			errdetail_internal("%s", err_detail.data),
-			hint ? errhint("You might need to increase %s.", "max_slot_wal_keep_size") : 0);
+			hint ? errhint("You might need to increase \"%s\".", "max_slot_wal_keep_size") : 0);
 
 	pfree(err_detail.data);
 }
@@ -2332,15 +2332,15 @@ RestoreSlotFromDisk(const char *name)
 	if (cp.slotdata.database != InvalidOid && wal_level < WAL_LEVEL_LOGICAL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("logical replication slot \"%s\" exists, but wal_level < logical",
+				 errmsg("logical replication slot \"%s\" exists, but \"wal_level\" < \"logical\"",
 						NameStr(cp.slotdata.name)),
-				 errhint("Change wal_level to be logical or higher.")));
+				 errhint("Change \"wal_level\" to be \"logical\" or higher.")));
 	else if (wal_level < WAL_LEVEL_REPLICA)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("physical replication slot \"%s\" exists, but wal_level < replica",
+				 errmsg("physical replication slot \"%s\" exists, but \"wal_level\" < \"replica\"",
 						NameStr(cp.slotdata.name)),
-				 errhint("Change wal_level to be replica or higher.")));
+				 errhint("Change \"wal_level\" to be \"replica\" or higher.")));
 
 	/* nothing can be active yet, don't lock anything */
 	for (i = 0; i < max_replication_slots; i++)
@@ -2383,7 +2383,7 @@ RestoreSlotFromDisk(const char *name)
 	if (!restored)
 		ereport(FATAL,
 				(errmsg("too many replication slots active before shutdown"),
-				 errhint("Increase max_replication_slots and try again.")));
+				 errhint("Increase \"max_replication_slots\" and try again.")));
 }
 
 /*

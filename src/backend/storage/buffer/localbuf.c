@@ -709,7 +709,7 @@ check_temp_buffers(int *newval, void **extra, GucSource source)
 	 */
 	if (source != PGC_S_TEST && NLocBuffer && NLocBuffer != *newval)
 	{
-		GUC_check_errdetail("temp_buffers cannot be changed after any temporary tables have been accessed in the session.");
+		GUC_check_errdetail("\"temp_buffers\" cannot be changed after any temporary tables have been accessed in the session.");
 		return false;
 	}
 	return true;

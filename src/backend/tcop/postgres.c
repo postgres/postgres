@@ -3535,7 +3535,7 @@ check_stack_depth(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 				 errmsg("stack depth limit exceeded"),
-				 errhint("Increase the configuration parameter max_stack_depth (currently %dkB), "
+				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
 						 "after ensuring the platform's stack depth limit is adequate.",
 						 max_stack_depth)));
 	}
@@ -3582,7 +3582,7 @@ check_max_stack_depth(int *newval, void **extra, GucSource source)
 
 	if (stack_rlimit > 0 && newval_bytes > stack_rlimit - STACK_DEPTH_SLOP)
 	{
-		GUC_check_errdetail("max_stack_depth must not exceed %ldkB.",
+		GUC_check_errdetail("\"max_stack_depth\" must not exceed %ldkB.",
 							(stack_rlimit - STACK_DEPTH_SLOP) / 1024L);
 		GUC_check_errhint("Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent.");
 		return false;
@@ -3607,7 +3607,7 @@ check_client_connection_check_interval(int *newval, void **extra, GucSource sour
 {
 	if (!WaitEventSetCanReportClosed() && *newval != 0)
 	{
-		GUC_check_errdetail("client_connection_check_interval must be set to 0 on this platform.");
+		GUC_check_errdetail("\"client_connection_check_interval\" must be set to 0 on this platform.");
 		return false;
 	}
 	return true;
@@ -3643,9 +3643,9 @@ check_log_stats(bool *newval, void **extra, GucSource source)
 	if (*newval &&
 		(log_parser_stats || log_planner_stats || log_executor_stats))
 	{
-		GUC_check_errdetail("Cannot enable log_statement_stats when "
-							"log_parser_stats, log_planner_stats, "
-							"or log_executor_stats is true.");
+		GUC_check_errdetail("Cannot enable \"log_statement_stats\" when "
+							"\"log_parser_stats\", \"log_planner_stats\", "
+							"or \"log_executor_stats\" is true.");
 		return false;
 	}
 	return true;

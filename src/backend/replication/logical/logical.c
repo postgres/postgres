@@ -118,7 +118,7 @@ CheckLogicalDecodingRequirements(void)
 	if (wal_level < WAL_LEVEL_LOGICAL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("logical decoding requires wal_level >= logical")));
+				 errmsg("logical decoding requires \"wal_level\" >= \"logical\"")));
 
 	if (MyDatabaseId == InvalidOid)
 		ereport(ERROR,
@@ -138,7 +138,7 @@ CheckLogicalDecodingRequirements(void)
 		if (GetActiveWalLevelOnStandby() < WAL_LEVEL_LOGICAL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("logical decoding on standby requires wal_level >= logical on the primary")));
+					 errmsg("logical decoding on standby requires \"wal_level\" >= \"logical\" on the primary")));
 	}
 }
 
