@@ -107,7 +107,7 @@ StaticAssertDecl(RESOWNER_HASH_MAX_ITEMS(RESOWNER_HASH_INIT_SIZE) >= RESOWNER_AR
 /*
  * ResourceOwner objects look like this
  */
-typedef struct ResourceOwnerData
+struct ResourceOwnerData
 {
 	ResourceOwner parent;		/* NULL if no parent (toplevel owner) */
 	ResourceOwner firstchild;	/* head of linked list of children */
@@ -155,7 +155,7 @@ typedef struct ResourceOwnerData
 
 	/* The local locks cache. */
 	LOCALLOCK  *locks[MAX_RESOWNER_LOCKS];	/* list of owned locks */
-} ResourceOwnerData;
+};
 
 
 /*****************************************************************************
@@ -415,7 +415,7 @@ ResourceOwnerCreate(ResourceOwner parent, const char *name)
 	ResourceOwner owner;
 
 	owner = (ResourceOwner) MemoryContextAllocZero(TopMemoryContext,
-												   sizeof(ResourceOwnerData));
+												   sizeof(struct ResourceOwnerData));
 	owner->name = name;
 
 	if (parent)

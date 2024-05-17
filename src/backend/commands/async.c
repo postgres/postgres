@@ -396,10 +396,10 @@ typedef struct NotificationList
 
 #define MIN_HASHABLE_NOTIFIES 16	/* threshold to build hashtab */
 
-typedef struct NotificationHash
+struct NotificationHash
 {
 	Notification *event;		/* => the actual Notification struct */
-} NotificationHash;
+};
 
 static NotificationList *pendingNotifies = NULL;
 
@@ -2299,7 +2299,7 @@ AddEventToPendingNotifies(Notification *n)
 
 		/* Create the hash table */
 		hash_ctl.keysize = sizeof(Notification *);
-		hash_ctl.entrysize = sizeof(NotificationHash);
+		hash_ctl.entrysize = sizeof(struct NotificationHash);
 		hash_ctl.hash = notification_hash;
 		hash_ctl.match = notification_match;
 		hash_ctl.hcxt = CurTransactionContext;

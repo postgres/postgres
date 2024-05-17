@@ -1692,7 +1692,6 @@ Node
 NodeTag
 NonEmptyRange
 Notification
-NotificationHash
 NotificationList
 NotifyStmt
 Nsrt
@@ -2326,7 +2325,6 @@ ReInitializeDSMForeignScan_function
 ReScanForeignScan_function
 ReadBufPtrType
 ReadBufferMode
-ReadBuffersFlags
 ReadBuffersOperation
 ReadBytePtrType
 ReadExtraTocPtrType
@@ -2443,7 +2441,6 @@ ReservoirState
 ReservoirStateData
 ResourceElem
 ResourceOwner
-ResourceOwnerData
 ResourceOwnerDesc
 ResourceReleaseCallback
 ResourceReleaseCallbackItem
@@ -3127,7 +3124,6 @@ WalSndState
 WalSummarizerData
 WalSummaryFile
 WalSummaryIO
-WalSyncMethod
 WalTimeSample
 WalUsage
 WalWriteMethod

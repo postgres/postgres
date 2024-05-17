@@ -107,14 +107,10 @@ typedef struct BufferManagerRelation
 #define BMR_REL(p_rel) ((BufferManagerRelation){.rel = p_rel})
 #define BMR_SMGR(p_smgr, p_relpersistence) ((BufferManagerRelation){.smgr = p_smgr, .relpersistence = p_relpersistence})
 
-typedef enum ReadBuffersFlags
-{
-	/* Zero out page if reading fails. */
-	READ_BUFFERS_ZERO_ON_ERROR = (1 << 0),
-
-	/* Call smgrprefetch() if I/O necessary. */
-	READ_BUFFERS_ISSUE_ADVICE = (1 << 1),
-} ReadBuffersFlags;
+/* Zero out page if reading fails. */
+#define READ_BUFFERS_ZERO_ON_ERROR (1 << 0)
+/* Call smgrprefetch() if I/O necessary. */
+#define READ_BUFFERS_ISSUE_ADVICE (1 << 1)
 
 struct ReadBuffersOperation
 {
