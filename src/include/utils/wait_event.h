@@ -53,12 +53,6 @@ extern PGDLLIMPORT uint32 *my_wait_event_info;
  *
  * The ID retrieved can be used with pgstat_report_wait_start() or equivalent.
  */
-typedef enum
-{
-	WAIT_EVENT_EXTENSION = PG_WAIT_EXTENSION,
-	WAIT_EVENT_EXTENSION_FIRST_USER_DEFINED,
-} WaitEventExtension;
-
 extern void WaitEventExtensionShmemInit(void);
 extern Size WaitEventExtensionShmemSize(void);
 

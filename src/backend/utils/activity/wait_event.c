@@ -89,8 +89,7 @@ typedef struct WaitEventExtensionCounterData
 static WaitEventExtensionCounterData *WaitEventExtensionCounter;
 
 /* first event ID of custom wait events for extensions */
-#define NUM_BUILTIN_WAIT_EVENT_EXTENSION	\
-	(WAIT_EVENT_EXTENSION_FIRST_USER_DEFINED - WAIT_EVENT_EXTENSION)
+#define WAIT_EVENT_EXTENSION_INITIAL_ID	1
 
 /* wait event info for extensions */
 #define WAIT_EVENT_EXTENSION_INFO(eventId)	(PG_WAIT_EXTENSION | eventId)
@@ -129,7 +128,7 @@ WaitEventExtensionShmemInit(void)
 	if (!found)
 	{
 		/* initialize the allocation counter and its spinlock. */
-		WaitEventExtensionCounter->nextId = NUM_BUILTIN_WAIT_EVENT_EXTENSION;
+		WaitEventExtensionCounter->nextId = WAIT_EVENT_EXTENSION_INITIAL_ID;
 		SpinLockInit(&WaitEventExtensionCounter->mutex);
 	}
 
@@ -244,7 +243,7 @@ GetWaitEventExtensionIdentifier(uint16 eventId)
 	WaitEventExtensionEntryById *entry;
 
 	/* Built-in event? */
-	if (eventId < NUM_BUILTIN_WAIT_EVENT_EXTENSION)
+	if (eventId < WAIT_EVENT_EXTENSION_INITIAL_ID)
 		return "Extension";
 
 	/* It is a user-defined wait event, so lookup hash table. */

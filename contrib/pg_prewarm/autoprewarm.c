@@ -226,7 +226,7 @@ autoprewarm_main(Datum main_arg)
 			(void) WaitLatch(MyLatch,
 							 WL_LATCH_SET | WL_EXIT_ON_PM_DEATH,
 							 -1L,
-							 WAIT_EVENT_EXTENSION);
+							 PG_WAIT_EXTENSION);
 		}
 		else
 		{
@@ -253,7 +253,7 @@ autoprewarm_main(Datum main_arg)
 			(void) WaitLatch(MyLatch,
 							 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 							 delay_in_ms,
-							 WAIT_EVENT_EXTENSION);
+							 PG_WAIT_EXTENSION);
 		}
 
 		/* Reset the latch, loop. */
