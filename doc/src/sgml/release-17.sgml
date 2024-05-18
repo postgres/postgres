@@ -886,11 +886,11 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Create a "builtin" collation provider similar to libc's C locale (Jeff Davis)
+Create "builtin" collation provider similar to libc's C locale (Jeff Davis)
 </para>
 
 <para>
-It uses a "C" locale which is identical but independent of libc, but it allows the use of non-"C" collations like "en_US" and "C.UTF-8" with the "C" locale, which libc does not.  MORE?
+While its C locale is similar but independent of libc, its C.UTF-8 locale sorts by Unicode code points and has Unicode-based case folding.
 </para>
 </listitem>
 
