@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2024-??-??, AS OF 2024-05-14</para>
+   <para>2024-??-??, AS OF 2024-05-18</para>
   </formalpara>
 
   <sect2 id="release-17-highlights">
@@ -479,17 +479,6 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 <listitem>
 <para>
 Allow BRIN indexes to be created using parallel workers (Tomas Vondra, Matthias van de Meent)
-</para>
-</listitem>
-
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2024-01-19 [6db4598fc] Add stratnum GiST support function
--->
-
-<listitem>
-<para>
-Add stratnum GiST support function (Paul A. Jungwirth)
 </para>
 </listitem>
 
@@ -1468,34 +1457,6 @@ Add DEFAULT setting for ALTER TABLE .. SET ACCESS METHOD (Michael Paquier)
 </listitem>
 
 <!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2024-03-24 [34768ee36] Add temporal FOREIGN KEY contraints
--->
-
-<listitem>
-<para>
-Allow foreign keys to reference WITHOUT OVERLAPS primary keys (Paul A. Jungwirth)
-</para>
-
-<para>
-The keyword PERIOD is used for this purpose.
-</para>
-</listitem>
-
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2024-01-24 [46a0cd4ce] Add temporal PRIMARY KEY and UNIQUE constraints
-Author: Peter Eisentraut <peter@eisentraut.org>
-2024-03-05 [030e10ff1] Rename pg_constraint.conwithoutoverlaps to conperiod
--->
-
-<listitem>
-<para>
-Allow PRIMARY KEY and UNIQUE constraints to use WITHOUT OVERLAPS for non-overlapping exclusion constraints (Paul A. Jungwirth)
-</para>
-</listitem>
-
-<!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
 2023-10-16 [e83d1b0c4] Add support event triggers on authenticated login
 -->
@@ -1957,6 +1918,8 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2024-04-29 [17a834a04] Reject SSL connection if ALPN is used but there's no com
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2024-05-11 [407e0b023] Change ALPN protocol ID to IANA-approved "postgresql"
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2024-05-16 [fb5718f35] Remove option to fall back from direct to postgres SSL n
 -->
 
 <listitem>
