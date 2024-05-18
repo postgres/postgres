@@ -1678,7 +1678,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Add jsonpath methods to convert JSON values to different data types (Jeevan Chalke)
+Add jsonpath methods to convert JSON values to other JSON data types (Jeevan Chalke)
 </para>
 
 <para>
