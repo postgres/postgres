@@ -530,11 +530,12 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 
 <listitem>
 <para>
-Allow vacuum to more efficiently store tuple references and remove its memory limit (Masahiko Sawada, John Naylor)
+Allow vacuum to more efficiently store tuple references (Masahiko Sawada, John Naylor)
 </para>
 
 <para>
-Specifically, maintenance_work_mem and autovacuum_work_mem can now be configured to use more than one gigabyte of memory.  WAL traffic caused by vacuum is also more compact.
+Additionally, vacuum is no longer silently limited to one gigabyte of memory when maintenance_work_mem and autovacuum_work_mem are higher. WAL traffic caused by
+vacuum is also more compact.
 </para>
 </listitem>
 
