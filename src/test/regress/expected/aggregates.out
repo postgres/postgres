@@ -1249,6 +1249,37 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table minmaxtest1
 drop cascades to table minmaxtest2
 drop cascades to table minmaxtest3
+-- DISTINCT can also trigger wrong answers with hash aggregation (bug #18465)
+begin;
+set local enable_sort = off;
+explain (costs off)
+  select f1, (select distinct min(t1.f1) from int4_tbl t1 where t1.f1 = t0.f1)
+  from int4_tbl t0;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Seq Scan on int4_tbl t0
+   SubPlan 2
+     ->  HashAggregate
+           Group Key: $1
+           InitPlan 1 (returns $1)
+             ->  Limit
+                   ->  Seq Scan on int4_tbl t1
+                         Filter: ((f1 IS NOT NULL) AND (f1 = t0.f1))
+           ->  Result
+(9 rows)
+
+select f1, (select distinct min(t1.f1) from int4_tbl t1 where t1.f1 = t0.f1)
+from int4_tbl t0;
+     f1      |     min     
+-------------+-------------
+           0 |           0
+      123456 |      123456
+     -123456 |     -123456
+  2147483647 |  2147483647
+ -2147483647 | -2147483647
+(5 rows)
+
+rollback;
 -- check for correct detection of nested-aggregate errors
 select max(min(unique1)) from tenk1;
 ERROR:  aggregate function calls cannot be nested

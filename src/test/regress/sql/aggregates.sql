@@ -431,6 +431,16 @@ select distinct min(f1), max(f1) from minmaxtest;
 
 drop table minmaxtest cascade;
 
+-- DISTINCT can also trigger wrong answers with hash aggregation (bug #18465)
+begin;
+set local enable_sort = off;
+explain (costs off)
+  select f1, (select distinct min(t1.f1) from int4_tbl t1 where t1.f1 = t0.f1)
+  from int4_tbl t0;
+select f1, (select distinct min(t1.f1) from int4_tbl t1 where t1.f1 = t0.f1)
+from int4_tbl t0;
+rollback;
+
 -- check for correct detection of nested-aggregate errors
 select max(min(unique1)) from tenk1;
 select (select max(min(unique1)) from int8_tbl) from tenk1;
