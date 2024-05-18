@@ -2452,6 +2452,17 @@ User-defined data type receive functions will no longer receive their data null-
 </listitem>
 
 <!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+2024-04-04 [3311ea86e] Introduce a non-recursive JSON parser
+-->
+
+<listitem>
+<para>
+Add incremental JSON parser for use with huge JSON documents (Andrew Dunstan)
+</para>
+</listitem>
+
+<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2024-02-28 [363eb0599] Convert README to Markdown.
 -->
