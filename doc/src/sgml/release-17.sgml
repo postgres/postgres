@@ -523,7 +523,7 @@ Allow vacuum to more efficiently store tuple references (Masahiko Sawada, John N
 </para>
 
 <para>
-Additionally, vacuum is no longer silently limited to one gigabyte of memory when maintenance_work_mem and autovacuum_work_mem are higher. WAL traffic caused by
+Additionally, vacuum is no longer silently limited to one gigabyte of memory when maintenance_work_mem or autovacuum_work_mem are higher. WAL traffic caused by
 vacuum is also more compact.
 </para>
 </listitem>
