@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-03-26 07:54+0000\n"
-"PO-Revision-Date: 2024-03-26 10:40+0100\n"
+"POT-Creation-Date: 2024-05-17 10:24+0000\n"
+"PO-Revision-Date: 2024-05-17 13:06+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -169,8 +169,8 @@ msgid "unrecognized status code"
 msgstr "nicht erkannter Statuscode"
 
 #: pg_controldata.c:84
-msgid "unrecognized wal_level"
-msgstr "unbekanntes wal_level"
+msgid "unrecognized \"wal_level\""
+msgstr "unbekanntes »wal_level«"
 
 #: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:163
 #, c-format

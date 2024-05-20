@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-11 18:22+0000\n"
-"PO-Revision-Date: 2024-02-11 20:17+0100\n"
+"POT-Creation-Date: 2024-05-18 22:23+0000\n"
+"PO-Revision-Date: 2024-05-19 07:14+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -111,32 +111,32 @@ msgstr "ფაილი \"%s\" არ არსებობს: %m"
 
 #: ../../fe_utils/archive.c:98
 #, c-format
-msgid "restore_command failed: %s"
-msgstr "აღდგენის_ბრძანების შეცდომა: %s"
+msgid "\"restore_command\" failed: %s"
+msgstr "\"restore_command\" ჩავარდა: %s"
 
 #: ../../fe_utils/archive.c:105
 #, c-format
 msgid "could not restore file \"%s\" from archive"
 msgstr "\"%s\"-ის არქივიდან აღდგენის შეცდომა"
 
-#: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
-#: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
-#: ../../fe_utils/recovery_gen.c:149
+#: ../../fe_utils/recovery_gen.c:39 ../../fe_utils/recovery_gen.c:50
+#: ../../fe_utils/recovery_gen.c:89 ../../fe_utils/recovery_gen.c:109
+#: ../../fe_utils/recovery_gen.c:168
 #, c-format
 msgid "out of memory"
 msgstr "არასაკმარისი მეხსიერება"
 
-#: ../../fe_utils/recovery_gen.c:121 parsexlog.c:312
+#: ../../fe_utils/recovery_gen.c:140 parsexlog.c:312
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
-#: ../../fe_utils/recovery_gen.c:124
+#: ../../fe_utils/recovery_gen.c:143
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 
-#: ../../fe_utils/recovery_gen.c:133
+#: ../../fe_utils/recovery_gen.c:152
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "ფაილის (%s) შექმნის შეცდომა: %m"
@@ -246,152 +246,152 @@ msgstr "საქაღალდის (%s) წაკითხვის შე�
 msgid "could not close directory \"%s\": %m"
 msgstr "საქაღალდის %s-ზე დახურვის შეცდომა: %m"
 
-#: filemap.c:236
+#: filemap.c:235
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "წყაროში არსებული მონაცემების ფალი \"%s\" ჩვეულებრივი ფაილი არაა"
 
-#: filemap.c:241 filemap.c:274
+#: filemap.c:240 filemap.c:273
 #, c-format
 msgid "duplicate source file \"%s\""
 msgstr "დუბლირებული საწყისი ფაილი : \"%s\""
 
-#: filemap.c:329
+#: filemap.c:328
 #, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
 msgstr "არაჩვეულებრივი ფაილის (%s) გვერდების მოულოდნელი ცვლილება"
 
-#: filemap.c:679 filemap.c:773
+#: filemap.c:682 filemap.c:776
 #, c-format
 msgid "unknown file type for \"%s\""
 msgstr "ფაილის უცნობი ტიპი \"%s\"."
 
-#: filemap.c:706
+#: filemap.c:709
 #, c-format
 msgid "file \"%s\" is of different type in source and target"
 msgstr "ფაილი %s წყაროში და სამიზნეში სხვადასხვა ტიპისაა"
 
-#: filemap.c:778
+#: filemap.c:781
 #, c-format
 msgid "could not decide what to do with file \"%s\""
 msgstr "ვერ გადავწყვიტე, ფაილს რა ვუყო: %s"
 
-#: libpq_source.c:130
+#: libpq_source.c:131
 #, c-format
-msgid "could not clear search_path: %s"
-msgstr "search_path-ის გასუფთავების პრობლემა: %s"
+msgid "could not clear \"search_path\": %s"
+msgstr "\"search_path\"-ის გასუფთავების პრობლემა: %s"
 
-#: libpq_source.c:141
+#: libpq_source.c:142
 #, c-format
-msgid "full_page_writes must be enabled in the source server"
-msgstr "საწყის სერვერზე full_page_writes-ის ჩართვა აუცილებელია"
+msgid "\"full_page_writes\" must be enabled in the source server"
+msgstr "საწყის სერვერზე \"full_page_writes\"-ის ჩართვა აუცილებელია"
 
-#: libpq_source.c:152
+#: libpq_source.c:153
 #, c-format
 msgid "could not prepare statement to fetch file contents: %s"
 msgstr "შეცდომა ფაილის შემცველობის გამოსათხოველი ოპერაციების მომზადებისას: %s"
 
-#: libpq_source.c:171
+#: libpq_source.c:172
 #, c-format
 msgid "error running query (%s) on source server: %s"
 msgstr "შეცდომა სერვერზე (%2$s) მოთხოვნის (%1$s) შესრულებისას"
 
-#: libpq_source.c:176
+#: libpq_source.c:177
 #, c-format
 msgid "unexpected result set from query"
 msgstr "მოთხოვნის მოულოდნელი სედეგი"
 
-#: libpq_source.c:198
+#: libpq_source.c:199
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "შეცდომა სერვერში (%2$s) მოთხოვნის (%1$s) შესრულებისას"
 
-#: libpq_source.c:219
+#: libpq_source.c:220
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
 msgstr "უცნობი პასუხი მიმდინარე WAL ჩასმის მდებარეობისთვის: %s"
 
-#: libpq_source.c:270
+#: libpq_source.c:271
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "ფაილების სიის მიღების პრობლემა: %s"
 
-#: libpq_source.c:275
+#: libpq_source.c:276
 #, c-format
 msgid "unexpected result set while fetching file list"
 msgstr "მოულოდნელი პასუხი ფაილების სიის მიღებისას"
 
-#: libpq_source.c:476
+#: libpq_source.c:477
 #, c-format
 msgid "could not send query: %s"
 msgstr "მოთხოვნის გაგზავნის პრობლემა: %s"
 
-#: libpq_source.c:479
+#: libpq_source.c:480
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "ერთმწკრივიან რეჟიმში libpq შეერთების დაყენება შეუძლებელია"
 
-#: libpq_source.c:509
+#: libpq_source.c:510
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "დაშორებული ფაილების მიღების მოულოდნელი შედეგი: %s"
 
-#: libpq_source.c:514
+#: libpq_source.c:515
 #, c-format
 msgid "received more data chunks than requested"
 msgstr "მიღებულია მეტი ნაგლეჯი, ვიდრე მოვითხოვე"
 
-#: libpq_source.c:518
+#: libpq_source.c:519
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "ფაილების გამოთხოვისას მიღებული შედეგების სეტის მოულოდნელი ზომა"
 
-#: libpq_source.c:524
+#: libpq_source.c:525
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "მონაცემების მოულოდნელი ტიპები დაშორებული ფაილების გამოთხოვისას შედეგების სეტში: %u %u %u"
 
-#: libpq_source.c:532
+#: libpq_source.c:533
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "დაშორებული ფაილების მიღებისას მიღებული ფორმატი მოულოდნელია"
 
-#: libpq_source.c:538
+#: libpq_source.c:539
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "დაშორებული ფაილების მიღების შედეგი მოულოდნელ ნულოვან მნიშვნელობებს შეიცავს"
 
-#: libpq_source.c:542
+#: libpq_source.c:543
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "დაშორებული ფაილის მიღებისას მიღებული შედეგის სიგრძე არასწორია"
 
-#: libpq_source.c:575
+#: libpq_source.c:576
 #, c-format
 msgid "received data for file \"%s\", when requested for \"%s\""
 msgstr "მიღებულია მონაცემები ფაილისთვის \"%s\", მაშინ, როცა მოვითხოვე \"%s\""
 
-#: libpq_source.c:579
+#: libpq_source.c:580
 #, c-format
 msgid "received data at offset %lld of file \"%s\", when requested for offset %lld"
 msgstr "მონაცემები მიღებულია წანაცვლებისთვის %lld ფაილში %s მაშინ, როცა მოთხოვნილი იყო წანაცვლებისთვის %lld"
 
-#: libpq_source.c:591
+#: libpq_source.c:592
 #, c-format
 msgid "received more than requested for file \"%s\""
 msgstr "მიღებულია მეტი, ვიდრე მოთხოვნილია ფაილისთვის: %s"
 
-#: libpq_source.c:604
+#: libpq_source.c:605
 #, c-format
 msgid "unexpected number of data chunks received"
 msgstr "მონაცემების მიღებული ნაწილების რიცხვი არასწორია"
 
-#: libpq_source.c:647
+#: libpq_source.c:648
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "დაშორებული ფაილის (%s) მიღების შეცდომა: %s"
 
-#: libpq_source.c:652
+#: libpq_source.c:653
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "მოულოდნელი პასუხი დაშორებული ფაილის (%s) მიღებისას"
@@ -489,11 +489,11 @@ msgstr "პარამეტრები:\n"
 #: pg_rewind.c:97
 #, c-format
 msgid ""
-"  -c, --restore-target-wal       use restore_command in target configuration to\n"
+"  -c, --restore-target-wal       use \"restore_command\" in target configuration to\n"
 "                                 retrieve WAL files from archives\n"
 msgstr ""
 "  -c, --restore-target-wal       არქივიდან WAL ფაილების მისაღებად სამიზნე კონფიგურაციაში \n"
-"                                 restore_command -ის გამოყენება\n"
+"                                 \"restore_command\" -ის გამოყენება\n"
 
 #: pg_rewind.c:99
 #, c-format
@@ -792,8 +792,8 @@ msgstr "სამიზნე კლასტერიდან restore_command-
 
 #: pg_rewind.c:1114
 #, c-format
-msgid "restore_command is not set in the target cluster"
-msgstr "სამიზნე კლასერში restore_command დაყენებული არაა"
+msgid "\"restore_command\" is not set in the target cluster"
+msgstr "სამიზნე კლასტერში \"restore_command\" დაყენებული არაა"
 
 #: pg_rewind.c:1152
 #, c-format
@@ -845,157 +845,157 @@ msgstr "არასწორი მონაცემები ისტორ�
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "დროის ხაზის ID-ები შვილეული დროის ხაზის ID-ზე ნაკლები უნდა იყოს."
 
-#: xlogreader.c:621
+#: xlogreader.c:619
 #, c-format
 msgid "invalid record offset at %X/%X: expected at least %u, got %u"
 msgstr "ჩანაწერის არასწორი წანაცვლება მისამართზე %X/%X: მინდოდა %u, მივიღე %u"
 
-#: xlogreader.c:630
+#: xlogreader.c:628
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord მოთხოვნილია %X/%X-ის მიერ"
 
-#: xlogreader.c:671 xlogreader.c:1136
+#: xlogreader.c:669 xlogreader.c:1134
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "ჩანაწერის არასწორი სიგრძე მისამართზე %X/%X: მოველოდი მინიმუმ %u, მივიღე %u"
 
-#: xlogreader.c:760
+#: xlogreader.c:758
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "contrecord ალამი მისამართზე %X/%X არ არსებობს"
 
-#: xlogreader.c:773
+#: xlogreader.c:771
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "contrecord -ის არასწორი სიგრძე %u (მოველოდი %lld) მისამართზე %X/%X"
 
-#: xlogreader.c:1144
+#: xlogreader.c:1142
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "რესურსის მმართველის არასწორი ID %u მისამართზე %X/%X"
 
-#: xlogreader.c:1157 xlogreader.c:1173
+#: xlogreader.c:1155 xlogreader.c:1171
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "ჩანაწერი არასწორი წინა ბმულით %X/%X მისამართზე %X/%X"
 
-#: xlogreader.c:1211
+#: xlogreader.c:1209
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "რესურსის მმართველის მონაცემების არასწორი საკონტროლო რიცხვი ჩანაწერში მისამართზე %X/%X"
 
-#: xlogreader.c:1245
+#: xlogreader.c:1243
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "არასწორი მაგიური რიცხვი %04X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
 
-#: xlogreader.c:1260 xlogreader.c:1302
+#: xlogreader.c:1258 xlogreader.c:1300
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "არასწორი საინფორმაციო ბიტები %04X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
 
-#: xlogreader.c:1276
+#: xlogreader.c:1274
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WAL ფაილი სხვა ბაზიდანაა: WAL ფაილის ბაზის იდენტიფიკატორია %llu, pg_control-ის ბაზის სისტემის იდენტიფიკატორი კი %llu"
 
-#: xlogreader.c:1284
+#: xlogreader.c:1282
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL ფაილი სხვა ბაზის სიტემიდანაა: სეგმანტის არასწორი ზომა გვერდის თავსართში"
 
-#: xlogreader.c:1290
+#: xlogreader.c:1288
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL ფაილი სხვა მონაცემთა ბაზის სისტემიდანაა: გვერდის თავსართში მითითებული XLOG_BLKSZ არასწორია"
 
-#: xlogreader.c:1322
+#: xlogreader.c:1320
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "მოულოდნელი pageaddr %X/%X ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
 
-#: xlogreader.c:1348
+#: xlogreader.c:1346
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "მიმდევრობის-გარე დროის ხაზის ID %u (%u-ის შემდეგ) ჟურნალის სეგმენტში %s, LSN %X/%X, წანაცვლება %u"
 
-#: xlogreader.c:1754
+#: xlogreader.c:1749
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "ურიგო block_id %u მისამართზე %X/%X"
 
-#: xlogreader.c:1778
+#: xlogreader.c:1773
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA დაყენებულია, მაგრამ მონაცემები მისამართზე %X/%X არ არსებობს"
 
-#: xlogreader.c:1785
+#: xlogreader.c:1780
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA დაყენებულია, მაგრამ არსებობს მონაცემები სიგრძით %u მისამართზე %X/%X"
 
-#: xlogreader.c:1821
+#: xlogreader.c:1816
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE დაყენებულია, მაგრამ ნახვრეტის წანაცვლება %u სიგრძე %u ბლოკის ასლის სიგრძე %u მისამართზე %X/%X"
 
-#: xlogreader.c:1837
+#: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE დაყენებული არაა, მაგრამ ნახვრეტის წანაცვლება %u სიგრძე %u მისანართზე %X/%X"
 
-#: xlogreader.c:1851
+#: xlogreader.c:1846
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED დაყენებულია, მაგრამ ბლოკის ასლის სიგრძეა %u მისამართზე %X/%X"
 
-#: xlogreader.c:1866
+#: xlogreader.c:1861
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "არც BKPIMAGE_HAS_HOLE და არც BKPIMAGE_COMPRESSED დაყენებული არაა, მაგრამ ბლოკის ასლის სიგრძე %u-ა, მისამართზე %X/%X"
 
-#: xlogreader.c:1882
+#: xlogreader.c:1877
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL დაყენებულია, მაგრამ წინა მნიშვნელობა მითითებული არაა მისამართზე %X/%X"
 
-#: xlogreader.c:1894
+#: xlogreader.c:1889
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "არასწორი block_id %u %X/%X"
 
-#: xlogreader.c:1961
+#: xlogreader.c:1956
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "ჩანაწერი არასწორი სიგრძით მისამართზე %X/%X"
 
-#: xlogreader.c:1987
+#: xlogreader.c:1982
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "შეცდომა WAL ჩანაწერში მარქაფი ბლოკის, ID-ით %d, მოძებნისას"
 
-#: xlogreader.c:2071
+#: xlogreader.c:2066
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X, როცა მითითებულია არასწორი ბლოკი %d"
 
-#: xlogreader.c:2078
+#: xlogreader.c:2073
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X არასწორი მდგომარეობით, ბლოკი %d"
 
-#: xlogreader.c:2105 xlogreader.c:2122
+#: xlogreader.c:2100 xlogreader.c:2117
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "%3$s მეთოდით შეკუმშული ასლის აღდგენა მისამართზე %1$X/%2$X, ბლოკი %4$d შეუძლებელია. მხარდაუჭერელია ამ აგების მიერ"
 
-#: xlogreader.c:2131
+#: xlogreader.c:2126
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "შეუძლებელია ასლის აღდგენა მისამართზე %X/%X, შეკუმშულია უცნობი მეთოდით, ბლოკი %d"
 
-#: xlogreader.c:2139
+#: xlogreader.c:2134
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "შეუძლებელია ასლის გაშლა მისამართზე %X/%X, ბლოკი %d"

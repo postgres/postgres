@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-04-10 00:51+0000\n"
-"PO-Revision-Date: 2024-04-10 05:28+0200\n"
+"POT-Creation-Date: 2024-05-18 22:20+0000\n"
+"PO-Revision-Date: 2024-05-19 07:16+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -581,13 +581,13 @@ msgstr "ახალ კლასტერზე პარამეტრის 
 
 #: check.c:1772
 #, c-format
-msgid "wal_level must be \"logical\", but is set to \"%s\""
-msgstr "wal_level უნდა იყოს \"logical\", მაგრამ მნიშვნელობაა \"%s\""
+msgid "\"wal_level\" must be \"logical\", but is set to \"%s\""
+msgstr "\"wal_level\" უნდა იყოს \"logical\", მაგრამ მნიშვნელობაა \"%s\""
 
 #: check.c:1778
 #, c-format
-msgid "max_replication_slots (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
-msgstr "max_replication_slots (%d) ძველ კლასტერის ლოგიკური რეპლიკაციების სლოტების რაოდენობაზე (%d) მეტი ან ტოლი უნდა იყოს"
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
+msgstr "\"max_replication_slots\" (%d) ძველი კლასტერის ლოგიკური რეპლიკაციების სლოტების რაოდენობაზე (%d) მეტი ან ტოლი უნდა იყოს"
 
 #: check.c:1813
 #, c-format
@@ -596,8 +596,8 @@ msgstr "ახალი კლასტერის კონფიგურა�
 
 #: check.c:1825
 #, c-format
-msgid "max_replication_slots (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
-msgstr "max_replication_slots (%d) ძველ კლასტერის გმოწერების რაოდენობაზე (%d) მეტი ან ტოლი უნდა იყოს"
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
+msgstr "\"max_replication_slots\" (%d) ძველი კლასტერის გამოწერების რაოდენობაზე (%d) მეტი ან ტოლი უნდა იყოს"
 
 #: check.c:1847
 #, c-format

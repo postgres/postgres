@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-11 18:22+0000\n"
-"PO-Revision-Date: 2024-02-11 20:19+0100\n"
+"POT-Creation-Date: 2024-05-18 22:23+0000\n"
+"PO-Revision-Date: 2024-05-19 07:11+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -18,31 +18,31 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.3.2\n"
 
-#: ../../common/controldata_utils.c:83
+#: ../../common/controldata_utils.c:97
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
-#: ../../common/controldata_utils.c:96
+#: ../../common/controldata_utils.c:110
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
 
-#: ../../common/controldata_utils.c:105
+#: ../../common/controldata_utils.c:119
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
 
-#: ../../common/controldata_utils.c:118 ../../common/controldata_utils.c:266
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
 
-#: ../../common/controldata_utils.c:154
+#: ../../common/controldata_utils.c:168
 msgid "byte ordering mismatch"
 msgstr "ბაიტების მიმდევრობა არ ემთხვევა"
 
-#: ../../common/controldata_utils.c:156
+#: ../../common/controldata_utils.c:170
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
@@ -54,17 +54,17 @@ msgstr ""
 "ბაიტების მიმდევრობა შესაძლოა არ ემთხვეოდეს ამ პროგრამის მიერ გამოყენებულს. ამ შემთხვევაში  ქვემოთ \n"
 "მოცემული შედეგები არასწორი იქნება და PostgreSQL ეს აგება ამ მონაცემთა საქაღალდესთან შეუთავსებელი იქნება."
 
-#: ../../common/controldata_utils.c:216
+#: ../../common/controldata_utils.c:230
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
-#: ../../common/controldata_utils.c:235
+#: ../../common/controldata_utils.c:249
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 
-#: ../../common/controldata_utils.c:254
+#: ../../common/controldata_utils.c:268
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
@@ -167,8 +167,8 @@ msgid "unrecognized status code"
 msgstr "სტატუსის უცნობი კოდი"
 
 #: pg_controldata.c:84
-msgid "unrecognized wal_level"
-msgstr "უცნობი wal_level"
+msgid "unrecognized \"wal_level\""
+msgstr "უცნობი \"wal_level\""
 
 #: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:163
 #, c-format

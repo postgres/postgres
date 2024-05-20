@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_walsummary (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-04-09 09:55+0000\n"
+"POT-Creation-Date: 2024-05-10 05:54+0000\n"
 "PO-Revision-Date: 2024-04-09 14:39+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -60,7 +60,9 @@ msgstr "konnte Datei »%s« nicht lesen: %m"
 msgid ""
 "%s prints the contents of a WAL summary file.\n"
 "\n"
-msgstr "%s gibt den Inhalt einer WAL-Summary-Datei aus.\n\n"
+msgstr ""
+"%s gibt den Inhalt einer WAL-Summary-Datei aus.\n"
+"\n"
 
 #: pg_walsummary.c:268
 #, c-format
@@ -93,10 +95,15 @@ msgstr "  -q, --quiet               nichts ausgeben, nur die Dateien parsen\n"
 
 #: pg_walsummary.c:273
 #, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             Versionsinformationen anzeigen, dann beenden\n"
+
+#: pg_walsummary.c:274
+#, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                diese Hilfe anzeigen, dann beenden\n"
 
-#: pg_walsummary.c:275
+#: pg_walsummary.c:276
 #, c-format
 msgid ""
 "\n"
@@ -105,7 +112,7 @@ msgstr ""
 "\n"
 "Berichten Sie Fehler an <%s>.\n"
 
-#: pg_walsummary.c:276
+#: pg_walsummary.c:277
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s Homepage: <%s>\n"
