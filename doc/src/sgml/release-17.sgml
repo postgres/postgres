@@ -492,23 +492,23 @@ Allow BRIN indexes to be created using parallel workers (Tomas Vondra, Matthias 
      <itemizedlist>
 
 <!--
-Author: John Naylor <john.naylor@postgresql.org>
-2024-03-07 [ee1b30f12] Add template for adaptive radix tree
-Author: Masahiko Sawada <msawada@postgresql.org>
-2024-03-21 [30e144287] Add TIDStore, to store sets of TIDs (ItemPointerData) ef
-Author: Masahiko Sawada <msawada@postgresql.org>
-2024-04-02 [667e65aac] Use TidStore for dead tuple TIDs storage during lazy vac
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2024-04-03 [6dbb49026] Combine freezing and pruning steps in VACUUM
 -->
 
 <listitem>
 <para>
-Allow vacuum to more efficiently remove and freeze tuples (Masahiko Sawada, John Naylor, Melanie Plageman)
+Allow vacuum to more efficiently remove and freeze tuples (Melanie Plageman)
+</para>
+
+<para>
+WAL traffic caused by vacuum is also more compact.
 </para>
 </listitem>
 
 <!--
+Author: John Naylor <john.naylor@postgresql.org>
+2024-03-07 [ee1b30f12] Add template for adaptive radix tree
 Author: Masahiko Sawada <msawada@postgresql.org>
 2024-03-21 [30e144287] Add TIDStore, to store sets of TIDs (ItemPointerData) ef
 Author: Masahiko Sawada <msawada@postgresql.org>
@@ -523,8 +523,7 @@ Allow vacuum to more efficiently store tuple references (Masahiko Sawada, John N
 </para>
 
 <para>
-Additionally, vacuum is no longer silently limited to one gigabyte of memory when maintenance_work_mem or autovacuum_work_mem are higher. WAL traffic caused by
-vacuum is also more compact.
+Additionally, vacuum is no longer silently limited to one gigabyte of memory when maintenance_work_mem or autovacuum_work_mem are higher.
 </para>
 </listitem>
 
