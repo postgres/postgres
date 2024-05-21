@@ -498,7 +498,7 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
  * interesting_pathkeys: if not NIL, also include paths that suit these
  * pathkeys, sorting any unsorted paths as required.
  * *pNumGroups: if not NULL, we estimate the number of distinct groups
- *		in the result, and store it there
+ * in the result, and store it there.
  */
 static void
 build_setop_child_paths(PlannerInfo *root, RelOptInfo *rel,
@@ -714,7 +714,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	List	   *groupList = NIL;
 	Path	   *apath;
 	Path	   *gpath = NULL;
-	bool		try_sorted;
+	bool		try_sorted = false;
 	List	   *union_pathkeys = NIL;
 
 	/*
@@ -740,18 +740,21 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 								  tlist_list, refnames_tlist);
 	*pTargetList = tlist;
 
-	/* For for UNIONs (not UNION ALL), try sorting, if sorting is possible */
-	try_sorted = !op->all && grouping_is_sortable(op->groupClauses);
-
-	if (try_sorted)
+	/* For UNIONs (not UNION ALL), try sorting, if sorting is possible */
+	if (!op->all)
 	{
 		/* Identify the grouping semantics */
 		groupList = generate_setop_grouplist(op, tlist);
 
-		/* Determine the pathkeys for sorting by the whole target list */
-		union_pathkeys = make_pathkeys_for_sortclauses(root, groupList, tlist);
+		if (grouping_is_sortable(op->groupClauses))
+		{
+			try_sorted = true;
+			/* Determine the pathkeys for sorting by the whole target list */
+			union_pathkeys = make_pathkeys_for_sortclauses(root, groupList,
+														   tlist);
 
-		root->query_pathkeys = union_pathkeys;
+			root->query_pathkeys = union_pathkeys;
+		}
 	}
 
 	/*
