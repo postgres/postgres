@@ -400,6 +400,8 @@ struct PlannerInfo
 	List	   *distinct_pathkeys;
 	/* sortClause pathkeys, if any */
 	List	   *sort_pathkeys;
+	/* set operator pathkeys, if any */
+	List	   *setop_pathkeys;
 
 	/* Canonicalised partition schemes used in the query. */
 	List	   *part_schemes pg_node_attr(read_write_ignore);

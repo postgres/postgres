@@ -173,6 +173,10 @@ extern void add_child_join_rel_equivalences(PlannerInfo *root,
 											AppendRelInfo **appinfos,
 											RelOptInfo *parent_joinrel,
 											RelOptInfo *child_joinrel);
+extern void add_setop_child_rel_equivalences(PlannerInfo *root,
+											 RelOptInfo *child_rel,
+											 List *child_tlist,
+											 List *setop_pathkeys);
 extern List *generate_implied_equalities_for_column(PlannerInfo *root,
 													RelOptInfo *rel,
 													ec_matches_callback_type callback,

@@ -2192,6 +2192,22 @@ pathkeys_useful_for_grouping(PlannerInfo *root, List *pathkeys)
 }
 
 /*
+ * pathkeys_useful_for_setop
+ *		Count the number of leading common pathkeys root's 'setop_pathkeys' in
+ *		'pathkeys'.
+ */
+static int
+pathkeys_useful_for_setop(PlannerInfo *root, List *pathkeys)
+{
+	int			n_common_pathkeys;
+
+	(void) pathkeys_count_contained_in(root->setop_pathkeys, pathkeys,
+									   &n_common_pathkeys);
+
+	return n_common_pathkeys;
+}
+
+/*
  * truncate_useless_pathkeys
  *		Shorten the given pathkey list to just the useful pathkeys.
  */
@@ -2208,6 +2224,9 @@ truncate_useless_pathkeys(PlannerInfo *root,
 	if (nuseful2 > nuseful)
 		nuseful = nuseful2;
 	nuseful2 = pathkeys_useful_for_grouping(root, pathkeys);
+	if (nuseful2 > nuseful)
+		nuseful = nuseful2;
+	nuseful2 = pathkeys_useful_for_setop(root, pathkeys);
 	if (nuseful2 > nuseful)
 		nuseful = nuseful2;
 

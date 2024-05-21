@@ -3885,6 +3885,11 @@ DROP INDEX base_tbl2_idx;
 DROP INDEX async_p3_idx;
 
 -- UNION queries
+SET enable_sort TO off;
+SET enable_incremental_sort TO off;
+-- Adjust fdw_startup_cost so that we get an unordered path in the Append.
+ALTER SERVER loopback2 OPTIONS (ADD fdw_startup_cost '0.00');
+
 EXPLAIN (VERBOSE, COSTS OFF)
 INSERT INTO result_tbl
 (SELECT a, b, 'AAA' || c FROM async_p1 ORDER BY a LIMIT 10)
@@ -3910,6 +3915,10 @@ UNION ALL
 
 SELECT * FROM result_tbl ORDER BY a;
 DELETE FROM result_tbl;
+
+RESET enable_incremental_sort;
+RESET enable_sort;
+ALTER SERVER loopback2 OPTIONS (DROP fdw_startup_cost);
 
 -- Disable async execution if we use gating Result nodes for pseudoconstant
 -- quals

@@ -2882,6 +2882,67 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 	MemoryContextSwitchTo(oldcontext);
 }
 
+/*
+ * add_setop_child_rel_equivalences
+ *		Add equivalence members for each non-resjunk target in 'child_tlist'
+ *		to the EquivalenceClass in the corresponding setop_pathkey's pk_eclass.
+ *
+ * 'root' is the PlannerInfo belonging to the top-level set operation.
+ * 'child_rel' is the RelOptInfo of the child relation we're adding
+ * EquivalenceMembers for.
+ * 'child_tlist' is the target list for the setop child relation.  The target
+ * list expressions are what we add as EquivalenceMembers.
+ * 'setop_pathkeys' is a list of PathKeys which must contain an entry for each
+ * non-resjunk target in 'child_tlist'.
+ */
+void
+add_setop_child_rel_equivalences(PlannerInfo *root, RelOptInfo *child_rel,
+								 List *child_tlist, List *setop_pathkeys)
+{
+	ListCell   *lc;
+	ListCell   *lc2 = list_head(setop_pathkeys);
+
+	foreach(lc, child_tlist)
+	{
+		TargetEntry *tle = lfirst_node(TargetEntry, lc);
+		EquivalenceMember *parent_em;
+		PathKey    *pk;
+
+		if (tle->resjunk)
+			continue;
+
+		if (lc2 == NULL)
+			elog(ERROR, "too few pathkeys for set operation");
+
+		pk = lfirst_node(PathKey, lc2);
+		parent_em = linitial(pk->pk_eclass->ec_members);
+
+		/*
+		 * We can safely pass the parent member as the first member in the
+		 * ec_members list as this is added first in generate_union_paths,
+		 * likewise, the JoinDomain can be that of the initial member of the
+		 * Pathkey's EquivalenceClass.
+		 */
+		add_eq_member(pk->pk_eclass,
+					  tle->expr,
+					  child_rel->relids,
+					  parent_em->em_jdomain,
+					  parent_em,
+					  exprType((Node *) tle->expr));
+
+		lc2 = lnext(setop_pathkeys, lc2);
+	}
+
+	/*
+	 * transformSetOperationStmt() ensures that the targetlist never contains
+	 * any resjunk columns, so all eclasses that exist in 'root' must have
+	 * received a new member in the loop above.  Add them to the child_rel's
+	 * eclass_indexes.
+	 */
+	child_rel->eclass_indexes = bms_add_range(child_rel->eclass_indexes, 0,
+											  list_length(root->eq_classes) - 1);
+}
+
 
 /*
  * generate_implied_equalities_for_column
