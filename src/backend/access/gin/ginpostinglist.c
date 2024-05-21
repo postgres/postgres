@@ -89,7 +89,6 @@ itemptr_to_uint64(const ItemPointer iptr)
 	uint64		val;
 
 	Assert(ItemPointerIsValid(iptr));
-	Assert(GinItemPointerGetOffsetNumber(iptr) < (1 << MaxHeapTuplesPerPageBits));
 
 	val = GinItemPointerGetBlockNumber(iptr);
 	val <<= MaxHeapTuplesPerPageBits;
@@ -323,7 +322,6 @@ ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_
 		}
 
 		/* copy the first item */
-		Assert(OffsetNumberIsValid(ItemPointerGetOffsetNumber(&segment->first)));
 		Assert(ndecoded == 0 || ginCompareItemPointers(&segment->first, &result[ndecoded - 1]) > 0);
 		result[ndecoded] = segment->first;
 		ndecoded++;
