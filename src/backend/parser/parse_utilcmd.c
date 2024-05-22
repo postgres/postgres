@@ -84,7 +84,6 @@ typedef struct
 	List	   *fkconstraints;	/* FOREIGN KEY constraints */
 	List	   *ixconstraints;	/* index-creating constraints */
 	List	   *likeclauses;	/* LIKE clauses that need post-processing */
-	List	   *extstats;		/* cloned extended statistics */
 	List	   *blist;			/* "before list" of things to do before
 								 * creating the table */
 	List	   *alist;			/* "after list" of things to do after creating
@@ -117,13 +116,14 @@ static void transformTableLikeClause(CreateStmtContext *cxt,
 static void transformOfType(CreateStmtContext *cxt,
 							TypeName *ofTypename);
 static CreateStatsStmt *generateClonedExtStatsStmt(RangeVar *heapRel,
-												   Oid heapRelid, Oid source_statsid);
+												   Oid heapRelid,
+												   Oid source_statsid,
+												   const AttrMap *attmap);
 static List *get_collation(Oid collation, Oid actual_datatype);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
 static void transformIndexConstraints(CreateStmtContext *cxt);
 static IndexStmt *transformIndexConstraint(Constraint *constraint,
 										   CreateStmtContext *cxt);
-static void transformExtendedStatistics(CreateStmtContext *cxt);
 static void transformFKConstraints(CreateStmtContext *cxt,
 								   bool skipValidation,
 								   bool isAddConstraint);
@@ -243,7 +243,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
 	cxt.likeclauses = NIL;
-	cxt.extstats = NIL;
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
@@ -335,11 +334,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * because the table is new therefore empty. Not so for foreign tables.
 	 */
 	transformCheckConstraints(&cxt, !cxt.isforeign);
-
-	/*
-	 * Postprocess extended statistics.
-	 */
-	transformExtendedStatistics(&cxt);
 
 	/*
 	 * Output results.
@@ -1123,59 +1117,23 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	}
 
 	/*
-	 * We cannot yet deal with defaults, CHECK constraints, or indexes, since
-	 * we don't yet know what column numbers the copied columns will have in
-	 * the finished table.  If any of those options are specified, add the
-	 * LIKE clause to cxt->likeclauses so that expandTableLikeClause will be
-	 * called after we do know that.  Also, remember the relation OID so that
-	 * expandTableLikeClause is certain to open the same table.
+	 * We cannot yet deal with defaults, CHECK constraints, indexes, or
+	 * statistics, since we don't yet know what column numbers the copied
+	 * columns will have in the finished table.  If any of those options are
+	 * specified, add the LIKE clause to cxt->likeclauses so that
+	 * expandTableLikeClause will be called after we do know that.  Also,
+	 * remember the relation OID so that expandTableLikeClause is certain to
+	 * open the same table.
 	 */
 	if (table_like_clause->options &
 		(CREATE_TABLE_LIKE_DEFAULTS |
 		 CREATE_TABLE_LIKE_GENERATED |
 		 CREATE_TABLE_LIKE_CONSTRAINTS |
-		 CREATE_TABLE_LIKE_INDEXES))
+		 CREATE_TABLE_LIKE_INDEXES |
+		 CREATE_TABLE_LIKE_STATISTICS))
 	{
 		table_like_clause->relationOid = RelationGetRelid(relation);
 		cxt->likeclauses = lappend(cxt->likeclauses, table_like_clause);
-	}
-
-	/*
-	 * We may copy extended statistics if requested, since the representation
-	 * of CreateStatsStmt doesn't depend on column numbers.
-	 */
-	if (table_like_clause->options & CREATE_TABLE_LIKE_STATISTICS)
-	{
-		List	   *parent_extstats;
-		ListCell   *l;
-
-		parent_extstats = RelationGetStatExtList(relation);
-
-		foreach(l, parent_extstats)
-		{
-			Oid			parent_stat_oid = lfirst_oid(l);
-			CreateStatsStmt *stats_stmt;
-
-			stats_stmt = generateClonedExtStatsStmt(cxt->relation,
-													RelationGetRelid(relation),
-													parent_stat_oid);
-
-			/* Copy comment on statistics object, if requested */
-			if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
-			{
-				comment = GetComment(parent_stat_oid, StatisticExtRelationId, 0);
-
-				/*
-				 * We make use of CreateStatsStmt's stxcomment option, so as
-				 * not to need to know now what name the statistics will have.
-				 */
-				stats_stmt->stxcomment = comment;
-			}
-
-			cxt->extstats = lappend(cxt->extstats, stats_stmt);
-		}
-
-		list_free(parent_extstats);
 	}
 
 	/*
@@ -1441,6 +1399,44 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 
 			index_close(parent_index, AccessShareLock);
 		}
+	}
+
+	/*
+	 * Process extended statistics if required.
+	 */
+	if (table_like_clause->options & CREATE_TABLE_LIKE_STATISTICS)
+	{
+		List	   *parent_extstats;
+		ListCell   *l;
+
+		parent_extstats = RelationGetStatExtList(relation);
+
+		foreach(l, parent_extstats)
+		{
+			Oid			parent_stat_oid = lfirst_oid(l);
+			CreateStatsStmt *stats_stmt;
+
+			stats_stmt = generateClonedExtStatsStmt(heapRel,
+													RelationGetRelid(childrel),
+													parent_stat_oid,
+													attmap);
+
+			/* Copy comment on statistics object, if requested */
+			if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
+			{
+				comment = GetComment(parent_stat_oid, StatisticExtRelationId, 0);
+
+				/*
+				 * We make use of CreateStatsStmt's stxcomment option, so as
+				 * not to need to know now what name the statistics will have.
+				 */
+				stats_stmt->stxcomment = comment;
+			}
+
+			result = lappend(result, stats_stmt);
+		}
+
+		list_free(parent_extstats);
 	}
 
 	/* Done with child rel */
@@ -1876,10 +1872,12 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
  * Generate a CreateStatsStmt node using information from an already existing
  * extended statistic "source_statsid", for the rel identified by heapRel and
  * heapRelid.
+ *
+ * Attribute numbers in expression Vars are adjusted according to attmap.
  */
 static CreateStatsStmt *
 generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
-						   Oid source_statsid)
+						   Oid source_statsid, const AttrMap *attmap)
 {
 	HeapTuple	ht_stats;
 	Form_pg_statistic_ext statsrec;
@@ -1963,10 +1961,19 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 
 		foreach(lc, exprs)
 		{
+			Node	   *expr = (Node *) lfirst(lc);
 			StatsElem  *selem = makeNode(StatsElem);
+			bool		found_whole_row;
+
+			/* Adjust Vars to match new table's column numbering */
+			expr = map_variable_attnos(expr,
+									   1, 0,
+									   attmap,
+									   InvalidOid,
+									   &found_whole_row);
 
 			selem->name = NULL;
-			selem->expr = (Node *) lfirst(lc);
+			selem->expr = expr;
 
 			def_names = lappend(def_names, selem);
 		}
@@ -2692,19 +2699,6 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 }
 
 /*
- * transformExtendedStatistics
- *     Handle extended statistic objects
- *
- * Right now, there's nothing to do here, so we just append the list to
- * the existing "after" list.
- */
-static void
-transformExtendedStatistics(CreateStmtContext *cxt)
-{
-	cxt->alist = list_concat(cxt->alist, cxt->extstats);
-}
-
-/*
  * transformCheckConstraints
  *		handle CHECK constraints
  *
@@ -3346,7 +3340,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.fkconstraints = NIL;
 	cxt.ixconstraints = NIL;
 	cxt.likeclauses = NIL;
-	cxt.extstats = NIL;
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
@@ -3627,9 +3620,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 		newcmd->def = (Node *) lfirst(l);
 		newcmds = lappend(newcmds, newcmd);
 	}
-
-	/* Append extended statistics objects */
-	transformExtendedStatistics(&cxt);
 
 	/* Close rel */
 	relation_close(rel, NoLock);
