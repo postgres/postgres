@@ -1892,20 +1892,24 @@ bt_target_page_check(BtreeCheckState *state)
 				/* The first key on the next page is the same */
 				if (_bt_compare(state->rel, rightkey, state->target, max) == 0 && !rightkey->anynullkeys)
 				{
+					Page		rightpage;
+
 					elog(DEBUG2, "cross page equal keys");
-					state->target = palloc_btree_page(state,
-													  rightblock_number);
-					topaque = BTPageGetOpaque(state->target);
+					rightpage = palloc_btree_page(state,
+												  rightblock_number);
+					topaque = BTPageGetOpaque(rightpage);
 
 					if (P_IGNORE(topaque) || !P_ISLEAF(topaque))
 						break;
 
 					itemid = PageGetItemIdCareful(state, rightblock_number,
-												  state->target,
+												  rightpage,
 												  rightfirstoffset);
-					itup = (IndexTuple) PageGetItem(state->target, itemid);
+					itup = (IndexTuple) PageGetItem(rightpage, itemid);
 
 					bt_entry_unique_check(state, itup, rightblock_number, rightfirstoffset, &lVis);
+
+					pfree(rightpage);
 				}
 			}
 		}
