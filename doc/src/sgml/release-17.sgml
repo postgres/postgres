@@ -2722,7 +2722,7 @@ This is useful for testing.
      </itemizedlist>
 
     <sect4 id="release-17-pgstatstatements">
-     <title><link linkend="pgstatstatements"><application>pg_statstatements</application></link></title>
+     <title><link linkend="pgstatstatements"><application>pg_stat_statements</application></link></title>
 
      <itemizedlist>
 
