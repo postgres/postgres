@@ -885,11 +885,11 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Create "builtin" collation provider similar to libc's C locale (Jeff Davis)
+Add a builtin platform-independent collation provider (Jeff Davis)
 </para>
 
 <para>
-While its C locale is similar but independent of libc, its C.UTF-8 locale sorts by Unicode code points and has Unicode-based case folding.
+This supports "C" and "C.UTF-8" collations.
 </para>
 </listitem>
 
