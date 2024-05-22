@@ -931,6 +931,15 @@ REVOKE ALL ON SCHEMA partition_split_schema FROM regress_partition_split_bob;
 DROP ROLE regress_partition_split_alice;
 DROP ROLE regress_partition_split_bob;
 
+-- Split partition of a temporary table when one of the partitions after
+-- split has the same name as the partition being split
+CREATE TEMP TABLE t (a int) PARTITION BY RANGE (a);
+CREATE TEMP TABLE tp_0 PARTITION OF t FOR VALUES FROM (0) TO (2);
+ALTER TABLE t SPLIT PARTITION tp_0 INTO
+  (PARTITION tp_0 FOR VALUES FROM (0) TO (1),
+   PARTITION tp_1 FOR VALUES FROM (1) TO (2));
+DROP TABLE t;
+
 RESET search_path;
 
 --

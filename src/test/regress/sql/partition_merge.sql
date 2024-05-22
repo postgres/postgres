@@ -140,7 +140,8 @@ INSERT INTO sales_range VALUES (14, 'Smith',    510,  '2022-05-04');
 
 -- Merge partitions (include DEFAULT partition) into partition with the same
 -- name
-ALTER TABLE sales_range MERGE PARTITIONS (sales_jan2022, sales_mar2022, sales_others) INTO sales_others;
+ALTER TABLE sales_range MERGE PARTITIONS
+  (sales_jan2022, sales_mar2022, partitions_merge_schema.sales_others) INTO sales_others;
 
 select * from sales_others;
 
