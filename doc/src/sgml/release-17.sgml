@@ -498,7 +498,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 
 <listitem>
 <para>
-Allow vacuum to more efficiently remove and freeze tuples (Melanie Plageman)
+Allow vacuum to more efficiently remove and freeze tuples (Melanie Plageman, Heikki Linnakangas)
 </para>
 
 <para>
