@@ -20269,7 +20269,7 @@ moveSplitTableRows(Relation rel, Relation splitRel, List *partlist, List *newPar
  * (newPartName) like table (modelRel)
  *
  * Emulates command: CREATE [TEMP] TABLE <newPartName> (LIKE <modelRel's name>
- * INCLUDING ALL EXCLUDING INDEXES EXCLUDING IDENTITY)
+ * INCLUDING ALL EXCLUDING INDEXES EXCLUDING IDENTITY EXCLUDING STATISTICS)
  *
  * Also, this function sets the new partition access method same as parent
  * table access methods (similarly to CREATE TABLE ... PARTITION OF).  It
@@ -20313,9 +20313,11 @@ createPartitionTable(RangeVar *newPartName, Relation modelRel,
 
 	/*
 	 * Indexes will be inherited on "attach new partitions" stage, after data
-	 * moving.
+	 * moving.  We also don't copy the extended statistics for consistency
+	 * with CREATE TABLE PARTITION OF.
 	 */
-	tlc->options = CREATE_TABLE_LIKE_ALL & ~(CREATE_TABLE_LIKE_INDEXES | CREATE_TABLE_LIKE_IDENTITY);
+	tlc->options = CREATE_TABLE_LIKE_ALL &
+		~(CREATE_TABLE_LIKE_INDEXES | CREATE_TABLE_LIKE_IDENTITY | CREATE_TABLE_LIKE_STATISTICS);
 	tlc->relationOid = InvalidOid;
 	createStmt->tableElts = lappend(createStmt->tableElts, tlc);
 
