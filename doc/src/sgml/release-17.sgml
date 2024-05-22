@@ -1607,7 +1607,7 @@ Author: Amit Langote <amitlan@postgresql.org>
 
 <listitem>
 <para>
-Add SQL/JSON constructor functions JSON(), JSON_SCALAR(), and JSON_SERIALIZE() (Amit Langote)
+Add SQL/JSON constructor functions JSON(), JSON_SCALAR(), and JSON_SERIALIZE() (Nikita Glukhov, Teodor Sigaev, Oleg Bartunov, Alexander Korotkov, Andrew Dunstan, Amit Langote)
 </para>
 </listitem>
 
