@@ -322,6 +322,7 @@ BrinStatsData
 BrinTuple
 BrinValues
 BtreeCheckState
+BtreeLastVisibleEntry
 BtreeLevel
 Bucket
 BufFile
