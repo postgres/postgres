@@ -59,6 +59,35 @@ SELECT time with time zone 'T040506.789 -08';
 SELECT time with time zone 'T040506.789 America/Los_Angeles';
 SELECT time with time zone '2001-12-27 T040506.789 America/Los_Angeles';
 SELECT time with time zone 'J2452271 T040506.789 America/Los_Angeles';
+-- Check time formats required by ISO 8601
+SELECT time without time zone '040506.07';
+SELECT time without time zone '04:05:06.07';
+SELECT time without time zone '040506';
+SELECT time without time zone '04:05:06';
+SELECT time without time zone '0405';
+SELECT time without time zone '04:05';
+SELECT time without time zone 'T040506.07';
+SELECT time without time zone 'T04:05:06.07';
+SELECT time without time zone 'T040506';
+SELECT time without time zone 'T04:05:06';
+SELECT time without time zone 'T0405';
+SELECT time without time zone 'T04:05';
+-- 8601 says "Thh" is allowed, but we intentionally reject it as too vague
+SELECT time without time zone 'T04';
+SELECT time with time zone '040506.07+08';
+SELECT time with time zone '04:05:06.07+08';
+SELECT time with time zone '040506+08';
+SELECT time with time zone '04:05:06+08';
+SELECT time with time zone '0405+08';
+SELECT time with time zone '04:05+08';
+SELECT time with time zone 'T040506.07+08';
+SELECT time with time zone 'T04:05:06.07+08';
+SELECT time with time zone 'T040506+08';
+SELECT time with time zone 'T04:05:06+08';
+SELECT time with time zone 'T0405+08';
+SELECT time with time zone 'T04:05+08';
+-- 8601 says "Thh" is allowed, but we intentionally reject it as too vague
+SELECT time with time zone 'T04+08';
 SET DateStyle = 'Postgres, MDY';
 -- Check Julian dates BC
 SELECT date 'J1520447' AS "Confucius' Birthday";
