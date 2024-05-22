@@ -647,7 +647,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Allow pg_stat_reset_shared("slru") to clear SLRU statistics (Atsushi Torikoshi)
+Allow pg_stat_reset_shared('slru') to clear SLRU statistics (Atsushi Torikoshi)
 </para>
 
 <para>
