@@ -1831,7 +1831,6 @@ bt_target_page_check(BtreeCheckState *state)
 		if (offset == max)
 		{
 			BTScanInsert rightkey;
-			BlockNumber rightblock_number;
 
 			/* first offset on a right index page (log only) */
 			OffsetNumber rightfirstoffset = InvalidOffsetNumber;
@@ -1876,10 +1875,11 @@ bt_target_page_check(BtreeCheckState *state)
 			 * If index has unique constraint make sure that no more than one
 			 * found equal items is visible.
 			 */
-			rightblock_number = topaque->btpo_next;
 			if (state->checkunique && state->indexinfo->ii_Unique &&
-				rightkey && P_ISLEAF(topaque) && rightblock_number != P_NONE)
+				rightkey && P_ISLEAF(topaque) && !P_RIGHTMOST(topaque))
 			{
+				BlockNumber rightblock_number = topaque->btpo_next;
+
 				elog(DEBUG2, "check cross page unique condition");
 
 				/*
@@ -1899,9 +1899,19 @@ bt_target_page_check(BtreeCheckState *state)
 												  rightblock_number);
 					topaque = BTPageGetOpaque(rightpage);
 
-					if (P_IGNORE(topaque) || !P_ISLEAF(topaque))
-						break;
-
+					if (P_IGNORE(topaque))
+					{
+						if (unlikely(!P_ISLEAF(topaque)))
+							ereport(ERROR,
+									(errcode(ERRCODE_INDEX_CORRUPTED),
+									 errmsg("right block of leaf block is non-leaf for index \"%s\"",
+											RelationGetRelationName(state->rel)),
+									 errdetail_internal("Block=%u page lsn=%X/%X.",
+														state->targetblock,
+														LSN_FORMAT_ARGS(state->targetlsn))));
+						else
+							break;
+					}
 					itemid = PageGetItemIdCareful(state, rightblock_number,
 												  rightpage,
 												  rightfirstoffset);
