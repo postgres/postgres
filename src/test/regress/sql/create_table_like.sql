@@ -95,8 +95,16 @@ CREATE TABLE test_like_5c (LIKE test_like_4 INCLUDING ALL)
   INHERITS (test_like_5, test_like_5x);
 \d test_like_5c
 
+-- Test updating of column numbers in statistics expressions (bug #18468)
+CREATE TABLE test_like_6 (a int, c text, b text);
+CREATE STATISTICS ext_stat ON (a || b) FROM test_like_6;
+ALTER TABLE test_like_6 DROP COLUMN c;
+CREATE TABLE test_like_6c (LIKE test_like_6 INCLUDING ALL);
+\d+ test_like_6c
+
 DROP TABLE test_like_4, test_like_4a, test_like_4b, test_like_4c, test_like_4d;
 DROP TABLE test_like_5, test_like_5x, test_like_5c;
+DROP TABLE test_like_6, test_like_6c;
 
 CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, y text); /* copies indexes */
 INSERT INTO inhg VALUES (5, 10);
