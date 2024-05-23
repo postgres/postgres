@@ -91,7 +91,7 @@ static struct sqlca_t sqlca =
 static pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t debug_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
-static int	simple_debug = 0;
+static volatile int simple_debug = 0;
 static FILE *debugstream = NULL;
 
 void
@@ -242,7 +242,11 @@ void
 ECPGdebug(int n, FILE *dbgs)
 {
 #ifdef ENABLE_THREAD_SAFETY
+	/* Interlock against concurrent executions of ECPGdebug() */
 	pthread_mutex_lock(&debug_init_mutex);
+
+	/* Prevent ecpg_log() from printing while we change settings */
+	pthread_mutex_lock(&debug_mutex);
 #endif
 
 	if (n > 100)
@@ -255,6 +259,12 @@ ECPGdebug(int n, FILE *dbgs)
 
 	debugstream = dbgs;
 
+	/* We must release debug_mutex before invoking ecpg_log() ... */
+#ifdef ENABLE_THREAD_SAFETY
+	pthread_mutex_unlock(&debug_mutex);
+#endif
+
+	/* ... but keep holding debug_init_mutex to avoid racy printout */
 	ecpg_log("ECPGdebug: set to %d\n", simple_debug);
 
 #ifdef ENABLE_THREAD_SAFETY
@@ -271,6 +281,11 @@ ecpg_log(const char *format,...)
 	int			bufsize;
 	char	   *fmt;
 
+	/*
+	 * For performance reasons, inspect simple_debug without taking the mutex.
+	 * This could be problematic if fetching an int isn't atomic, but we
+	 * assume that it is in many other places too.
+	 */
 	if (!simple_debug)
 		return;
 
@@ -295,18 +310,22 @@ ecpg_log(const char *format,...)
 	pthread_mutex_lock(&debug_mutex);
 #endif
 
-	va_start(ap, format);
-	vfprintf(debugstream, fmt, ap);
-	va_end(ap);
-
-	/* dump out internal sqlca variables */
-	if (ecpg_internal_regression_mode && sqlca != NULL)
+	/* Now that we hold the mutex, recheck simple_debug */
+	if (simple_debug)
 	{
-		fprintf(debugstream, "[NO_PID]: sqlca: code: %ld, state: %s\n",
-				sqlca->sqlcode, sqlca->sqlstate);
-	}
+		va_start(ap, format);
+		vfprintf(debugstream, fmt, ap);
+		va_end(ap);
 
-	fflush(debugstream);
+		/* dump out internal sqlca variables */
+		if (ecpg_internal_regression_mode && sqlca != NULL)
+		{
+			fprintf(debugstream, "[NO_PID]: sqlca: code: %ld, state: %s\n",
+					sqlca->sqlcode, sqlca->sqlstate);
+		}
+
+		fflush(debugstream);
+	}
 
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_unlock(&debug_mutex);
