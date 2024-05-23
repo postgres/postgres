@@ -53,9 +53,9 @@ typedef struct PlannedStmt
 
 	uint64		queryId;		/* query identifier (copied from Query) */
 
-	bool		hasReturning;	/* is it insert|update|delete RETURNING? */
+	bool		hasReturning;	/* is it insert|update|delete|merge RETURNING? */
 
-	bool		hasModifyingCTE;	/* has insert|update|delete in WITH? */
+	bool		hasModifyingCTE;	/* has insert|update|delete|merge in WITH? */
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
