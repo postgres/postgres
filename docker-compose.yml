@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  server:
+    build: .
+    container_name: distributed-postgres-client-1
+    command: ["bash", "-c", "cd /app/sharding/src && cargo run --bin server"]
+    volumes:
+      - .:/app
+    working_dir: /app
+    network_mode: host
+
+  client:
+    build: .
+    container_name: distributed-postgres-client-2
+    command: ["bash", "-c", "cd /app/sharding/src && cargo run --bin client"]
+    volumes:
+      - .:/app
+    depends_on:
+      - server
+    working_dir: /app
+    network_mode: host

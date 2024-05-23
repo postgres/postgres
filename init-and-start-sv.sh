@@ -7,7 +7,7 @@ INITDB_DIR="$ROOT_DIR/src/bin/initdb"
 PG_CTL_DIR="$ROOT_DIR/src/bin/pg_ctl"
 POSTGRES_EXECUTABLE="$ROOT_DIR/src/backend/postgres"
 DB_DIR="$ROOT_DIR/mydb"
-LOG_FILE="$DB_DIR/logfile"
+LOG_FILE="$ROOT_DIR/logfile"
 
 echo "Compiling sharding library..."
 cd $SHARDING_DIR
