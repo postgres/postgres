@@ -100,7 +100,7 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
      <term><replaceable class="parameter">column_name</replaceable></term>
      <listitem>
       <para>
-       Name of a new or existing column.
+       Name of an existing column.
       </para>
      </listitem>
     </varlistentry>
