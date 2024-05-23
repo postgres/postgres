@@ -2118,11 +2118,11 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 			break;
 		case JSON_INVALID_LEXER_TYPE:
 			if (lex->incremental)
-				return _("Recursive descent parser cannot use incremental lexer");
+				return _("Recursive descent parser cannot use incremental lexer.");
 			else
-				return _("Incremental parser requires incremental lexer");
+				return _("Incremental parser requires incremental lexer.");
 		case JSON_NESTING_TOO_DEEP:
-			return (_("JSON nested too deep, maximum permitted depth is 6400"));
+			return (_("JSON nested too deep, maximum permitted depth is 6400."));
 		case JSON_ESCAPING_INVALID:
 			json_token_error(lex, "Escape sequence \"\\%.*s\" is invalid.");
 			break;
@@ -2198,7 +2198,7 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 	 */
 	if (lex->errormsg->len == 0)
 		appendStringInfo(lex->errormsg,
-						 _("unexpected json parse error type: %d"),
+						 "unexpected json parse error type: %d",
 						 (int) error);
 
 	return lex->errormsg->data;
