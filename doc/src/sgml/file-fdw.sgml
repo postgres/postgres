@@ -280,7 +280,7 @@ OPTIONS ( filename 'log/pglog.csv', format 'csv' );
  </example>
 
  <example>
-  <title>Create a Foreign Table with an option on a column</title>
+  <title>Create a Foreign Table with an Option on a Column</title>
   <para>
    To set the <literal>force_null</literal> option for a column, use the
    <literal>OPTIONS</literal> keyword.
