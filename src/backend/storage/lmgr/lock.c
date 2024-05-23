@@ -1060,7 +1060,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 
 		/*
 		 * Check the proclock entry status. If dontWait = true, this is an
-		 * expected case; otherwise, it will open happen if something in the
+		 * expected case; otherwise, it will only happen if something in the
 		 * ipc communication doesn't work correctly.
 		 */
 		if (!(proclock->holdMask & LOCKBIT_ON(lockmode)))
