@@ -63,7 +63,7 @@ $node_subscriber->safe_psql('postgres',
 # Wait for initial table sync to finish
 $node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
-# Check the initial data of tab_drop_refresh was copied to subscriber
+# Check the initial data of tab_2 was copied to subscriber
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_2");
 is($result, qq(10|1|10), 'check initial data is copied to subscriber');
