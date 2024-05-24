@@ -26,10 +26,11 @@ sub test_skip_lsn
 		"SELECT subenabled = FALSE FROM pg_subscription WHERE subname = 'sub'"
 	);
 
-	# Get the finish LSN of the error transaction.
+	# Get the finish LSN of the error transaction, mapping the expected
+	# ERROR with its CONTEXT when retrieving this information.
 	my $contents = slurp_file($node_subscriber->logfile, $offset);
 	$contents =~
-	  qr/processing remote data for replication origin \"pg_\d+\" during message type "INSERT" for replication target relation "public.tbl" in transaction \d+, finished at ([[:xdigit:]]+\/[[:xdigit:]]+)/
+	  qr/duplicate key value violates unique constraint "tbl_pkey".*\n.*DETAIL:.*\n.*CONTEXT:.* for replication target relation "public.tbl" in transaction \d+, finished at ([[:xdigit:]]+\/[[:xdigit:]]+)/m
 	  or die "could not get error-LSN";
 	my $lsn = $1;
 
