@@ -270,7 +270,7 @@ Rename SLRU columns in system view pg_stat_slru (Alvaro Herrera)
 </para>
 
 <para>
-The column names accepted by pg_stat_slru_rest() are also changed.
+The column names accepted by pg_stat_slru_reset() are also changed.
 </para>
 </listitem>
 
