@@ -1901,17 +1901,19 @@ bt_target_page_check(BtreeCheckState *state)
 
 					if (P_IGNORE(topaque))
 					{
-						if (unlikely(!P_ISLEAF(topaque)))
-							ereport(ERROR,
-									(errcode(ERRCODE_INDEX_CORRUPTED),
-									 errmsg("right block of leaf block is non-leaf for index \"%s\"",
-											RelationGetRelationName(state->rel)),
-									 errdetail_internal("Block=%u page lsn=%X/%X.",
-														state->targetblock,
-														LSN_FORMAT_ARGS(state->targetlsn))));
-						else
-							break;
+						pfree(rightpage);
+						break;
 					}
+
+					if (unlikely(!P_ISLEAF(topaque)))
+						ereport(ERROR,
+								(errcode(ERRCODE_INDEX_CORRUPTED),
+								 errmsg("right block of leaf block is non-leaf for index \"%s\"",
+										RelationGetRelationName(state->rel)),
+								 errdetail_internal("Block=%u page lsn=%X/%X.",
+													state->targetblock,
+													LSN_FORMAT_ARGS(state->targetlsn))));
+
 					itemid = PageGetItemIdCareful(state, rightblock_number,
 												  rightpage,
 												  rightfirstoffset);
