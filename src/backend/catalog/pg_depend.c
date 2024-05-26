@@ -945,7 +945,7 @@ getOwnedSequences(Oid relid)
 Oid
 getIdentitySequence(Relation rel, AttrNumber attnum, bool missing_ok)
 {
-	Oid			relid;
+	Oid			relid = RelationGetRelid(rel);
 	List	   *seqlist;
 
 	/*
@@ -954,22 +954,16 @@ getIdentitySequence(Relation rel, AttrNumber attnum, bool missing_ok)
 	 */
 	if (RelationGetForm(rel)->relispartition)
 	{
-		List	   *ancestors =
-			get_partition_ancestors(RelationGetRelid(rel));
-		HeapTuple	ctup = SearchSysCacheAttNum(RelationGetRelid(rel), attnum);
-		const char *attname = NameStr(((Form_pg_attribute) GETSTRUCT(ctup))->attname);
-		HeapTuple	ptup;
+		List	   *ancestors = get_partition_ancestors(relid);
+		const char *attname = get_attname(relid, attnum, false);
 
 		relid = llast_oid(ancestors);
-		ptup = SearchSysCacheAttName(relid, attname);
-		attnum = ((Form_pg_attribute) GETSTRUCT(ptup))->attnum;
-
-		ReleaseSysCache(ctup);
-		ReleaseSysCache(ptup);
+		attnum = get_attnum(relid, attname);
+		if (attnum == InvalidAttrNumber)
+			elog(ERROR, "cache lookup failed for attribute \"%s\" of relation %u",
+				 attname, relid);
 		list_free(ancestors);
 	}
-	else
-		relid = RelationGetRelid(rel);
 
 	seqlist = getOwnedSequences_internal(relid, attnum, DEPENDENCY_INTERNAL);
 	if (list_length(seqlist) > 1)
