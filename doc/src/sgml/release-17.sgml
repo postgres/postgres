@@ -467,7 +467,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
 <listitem>
 <para>
-Allow btree indexes to more efficiently find array matches (Peter Geoghegan, Matthias van de Meent)
+Allow btree indexes to more efficiently find a set of values, such as those supplied by IN subqueries (Peter Geoghegan, Matthias van de Meent)
 </para>
 </listitem>
 
