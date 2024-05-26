@@ -906,12 +906,12 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
 <listitem>
 <para>
-Allow the SLRU cache sizes to be configured (Andrey Borodin, Dilip Kumar)
+Allow the SLRU cache sizes to be configured (Andrey Borodin, Dilip Kumar, Alvaro Herrera)
 </para>
 
 <para>
 The new server variables are commit_timestamp_buffers, multixact_member_buffers, multixact_offset_buffers, notify_buffers, serializable_buffers, subtransaction_buffers, and
-transaction_buffers.
+transaction_buffers. commit_timestamp_buffers, transaction_buffers and subtransaction_buffers scale up automatically with shared_buffers.
 </para>
 </listitem>
 
