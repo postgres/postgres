@@ -255,7 +255,7 @@ INSERT INTO sales_range VALUES (13, 'Gandi',    377,  '2022-01-09');
 INSERT INTO sales_range VALUES (14, 'Smith',    510,  '2022-05-04');
 
 SELECT * FROM sales_others;
-SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'partition_split_schema';
+SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'partition_split_schema' ORDER BY indexname;
 
 ALTER TABLE sales_range SPLIT PARTITION sales_others INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
@@ -275,10 +275,10 @@ SELECT * FROM sales_others where sales_date > '2022-01-01';
 SET enable_indexscan = ON;
 SET enable_seqscan = ON;
 
-SELECT * FROM pg_indexes WHERE tablename = 'sales_feb2022' and schemaname = 'partition_split_schema';
-SELECT * FROM pg_indexes WHERE tablename = 'sales_mar2022' and schemaname = 'partition_split_schema';
-SELECT * FROM pg_indexes WHERE tablename = 'sales_apr2022' and schemaname = 'partition_split_schema';
-SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'partition_split_schema';
+SELECT * FROM pg_indexes WHERE tablename = 'sales_feb2022' and schemaname = 'partition_split_schema' ORDER BY indexname;
+SELECT * FROM pg_indexes WHERE tablename = 'sales_mar2022' and schemaname = 'partition_split_schema' ORDER BY indexname;
+SELECT * FROM pg_indexes WHERE tablename = 'sales_apr2022' and schemaname = 'partition_split_schema' ORDER BY indexname;
+SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'partition_split_schema' ORDER BY indexname;
 
 DROP TABLE sales_range CASCADE;
 
@@ -362,7 +362,7 @@ CREATE TABLE sales_jan2022 PARTITION OF sales_range FOR VALUES FROM ('2022-01-01
 CREATE TABLE sales_feb_mar_apr2022 PARTITION OF sales_range FOR VALUES FROM ('2022-02-01') TO ('2022-05-01');
 CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
 
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_feb_mar_apr2022'::regclass::oid;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_feb_mar_apr2022'::regclass::oid ORDER BY conname;
 
 ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
   (PARTITION sales_feb2022 FOR VALUES FROM ('2022-02-01') TO ('2022-03-01'),
@@ -370,9 +370,9 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
 
 -- We should see the same CONSTRAINTs as on sales_feb_mar_apr2022 partition
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_feb2022'::regclass::oid;
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_mar2022'::regclass::oid;
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_apr2022'::regclass::oid;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_feb2022'::regclass::oid ORDER BY conname;;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_mar2022'::regclass::oid ORDER BY conname;;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_apr2022'::regclass::oid ORDER BY conname;;
 
 -- ERROR:  new row for relation "sales_mar2022" violates check constraint "sales_range_sales_amount_check"
 INSERT INTO sales_range VALUES (1, 0, '2022-03-11');
@@ -495,10 +495,10 @@ ALTER TABLE salespeople ATTACH PARTITION salespeople2_5 FOR VALUES FROM (2) TO (
 INSERT INTO salespeople (salesperson_name) VALUES ('Poirot');
 INSERT INTO salespeople (salesperson_name) VALUES ('Ivanov');
 
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople'::regclass::oid;
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople1_2'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople'::regclass::oid ORDER BY attnum;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople1_2'::regclass::oid ORDER BY attnum;
 -- Split partition has identity column:
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople2_5'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople2_5'::regclass::oid ORDER BY attnum;
 
 ALTER TABLE salespeople SPLIT PARTITION salespeople2_5 INTO
   (PARTITION salespeople2_3 FOR VALUES FROM (2) TO (3),
@@ -513,12 +513,12 @@ SELECT * FROM salespeople2_3;
 SELECT * FROM salespeople3_4;
 SELECT * FROM salespeople4_5;
 
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople'::regclass::oid;
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople1_2'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople'::regclass::oid ORDER BY attnum;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople1_2'::regclass::oid ORDER BY attnum;
 -- New partitions have identity-columns:
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople2_3'::regclass::oid;
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople3_4'::regclass::oid;
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople4_5'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople2_3'::regclass::oid ORDER BY attnum;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople3_4'::regclass::oid ORDER BY attnum;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople4_5'::regclass::oid ORDER BY attnum;
 
 DROP TABLE salespeople CASCADE;
 

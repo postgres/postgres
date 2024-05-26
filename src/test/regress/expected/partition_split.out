@@ -469,7 +469,7 @@ SELECT * FROM sales_others;
              14 | Smith            |          510 | 05-04-2022
 (11 rows)
 
-SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'partition_split_schema';
+SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'partition_split_schema' ORDER BY indexname;
        schemaname       |  tablename   |          indexname          | tablespace |                                                 indexdef                                                 
 ------------------------+--------------+-----------------------------+------------+----------------------------------------------------------------------------------------------------------
  partition_split_schema | sales_others | sales_others_sales_date_idx |            | CREATE INDEX sales_others_sales_date_idx ON partition_split_schema.sales_others USING btree (sales_date)
@@ -516,25 +516,25 @@ SELECT * FROM sales_others where sales_date > '2022-01-01';
 
 SET enable_indexscan = ON;
 SET enable_seqscan = ON;
-SELECT * FROM pg_indexes WHERE tablename = 'sales_feb2022' and schemaname = 'partition_split_schema';
+SELECT * FROM pg_indexes WHERE tablename = 'sales_feb2022' and schemaname = 'partition_split_schema' ORDER BY indexname;
        schemaname       |   tablename   |          indexname           | tablespace |                                                  indexdef                                                  
 ------------------------+---------------+------------------------------+------------+------------------------------------------------------------------------------------------------------------
  partition_split_schema | sales_feb2022 | sales_feb2022_sales_date_idx |            | CREATE INDEX sales_feb2022_sales_date_idx ON partition_split_schema.sales_feb2022 USING btree (sales_date)
 (1 row)
 
-SELECT * FROM pg_indexes WHERE tablename = 'sales_mar2022' and schemaname = 'partition_split_schema';
+SELECT * FROM pg_indexes WHERE tablename = 'sales_mar2022' and schemaname = 'partition_split_schema' ORDER BY indexname;
        schemaname       |   tablename   |          indexname           | tablespace |                                                  indexdef                                                  
 ------------------------+---------------+------------------------------+------------+------------------------------------------------------------------------------------------------------------
  partition_split_schema | sales_mar2022 | sales_mar2022_sales_date_idx |            | CREATE INDEX sales_mar2022_sales_date_idx ON partition_split_schema.sales_mar2022 USING btree (sales_date)
 (1 row)
 
-SELECT * FROM pg_indexes WHERE tablename = 'sales_apr2022' and schemaname = 'partition_split_schema';
+SELECT * FROM pg_indexes WHERE tablename = 'sales_apr2022' and schemaname = 'partition_split_schema' ORDER BY indexname;
        schemaname       |   tablename   |          indexname           | tablespace |                                                  indexdef                                                  
 ------------------------+---------------+------------------------------+------------+------------------------------------------------------------------------------------------------------------
  partition_split_schema | sales_apr2022 | sales_apr2022_sales_date_idx |            | CREATE INDEX sales_apr2022_sales_date_idx ON partition_split_schema.sales_apr2022 USING btree (sales_date)
 (1 row)
 
-SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'partition_split_schema';
+SELECT * FROM pg_indexes WHERE tablename = 'sales_others' and schemaname = 'partition_split_schema' ORDER BY indexname;
        schemaname       |  tablename   |          indexname           | tablespace |                                                 indexdef                                                  
 ------------------------+--------------+------------------------------+------------+-----------------------------------------------------------------------------------------------------------
  partition_split_schema | sales_others | sales_others_sales_date_idx1 |            | CREATE INDEX sales_others_sales_date_idx1 ON partition_split_schema.sales_others USING btree (sales_date)
@@ -622,7 +622,7 @@ sales_date DATE) PARTITION BY RANGE (sales_date);
 CREATE TABLE sales_jan2022 PARTITION OF sales_range FOR VALUES FROM ('2022-01-01') TO ('2022-02-01');
 CREATE TABLE sales_feb_mar_apr2022 PARTITION OF sales_range FOR VALUES FROM ('2022-02-01') TO ('2022-05-01');
 CREATE TABLE sales_others PARTITION OF sales_range DEFAULT;
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_feb_mar_apr2022'::regclass::oid;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_feb_mar_apr2022'::regclass::oid ORDER BY conname;
                         pg_get_constraintdef                         |             conname             | conkey 
 ---------------------------------------------------------------------+---------------------------------+--------
  CHECK ((sales_amount > 1))                                          | sales_range_sales_amount_check  | {2}
@@ -634,21 +634,21 @@ ALTER TABLE sales_range SPLIT PARTITION sales_feb_mar_apr2022 INTO
    PARTITION sales_mar2022 FOR VALUES FROM ('2022-03-01') TO ('2022-04-01'),
    PARTITION sales_apr2022 FOR VALUES FROM ('2022-04-01') TO ('2022-05-01'));
 -- We should see the same CONSTRAINTs as on sales_feb_mar_apr2022 partition
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_feb2022'::regclass::oid;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_feb2022'::regclass::oid ORDER BY conname;;
                         pg_get_constraintdef                         |             conname             | conkey 
 ---------------------------------------------------------------------+---------------------------------+--------
  CHECK ((sales_amount > 1))                                          | sales_range_sales_amount_check  | {2}
  FOREIGN KEY (salesperson_id) REFERENCES salespeople(salesperson_id) | sales_range_salesperson_id_fkey | {1}
 (2 rows)
 
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_mar2022'::regclass::oid;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_mar2022'::regclass::oid ORDER BY conname;;
                         pg_get_constraintdef                         |             conname             | conkey 
 ---------------------------------------------------------------------+---------------------------------+--------
  CHECK ((sales_amount > 1))                                          | sales_range_sales_amount_check  | {2}
  FOREIGN KEY (salesperson_id) REFERENCES salespeople(salesperson_id) | sales_range_salesperson_id_fkey | {1}
 (2 rows)
 
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_apr2022'::regclass::oid;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'sales_apr2022'::regclass::oid ORDER BY conname;;
                         pg_get_constraintdef                         |             conname             | conkey 
 ---------------------------------------------------------------------+---------------------------------+--------
  CHECK ((sales_amount > 1))                                          | sales_range_sales_amount_check  | {2}
@@ -818,14 +818,14 @@ CREATE TABLE salespeople2_5(salesperson_id INT NOT NULL, salesperson_name VARCHA
 ALTER TABLE salespeople ATTACH PARTITION salespeople2_5 FOR VALUES FROM (2) TO (5);
 INSERT INTO salespeople (salesperson_name) VALUES ('Poirot');
 INSERT INTO salespeople (salesperson_name) VALUES ('Ivanov');
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople'::regclass::oid ORDER BY attnum;
      attname      | attidentity | attgenerated 
 ------------------+-------------+--------------
  salesperson_id   | a           | 
  salesperson_name |             | 
 (2 rows)
 
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople1_2'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople1_2'::regclass::oid ORDER BY attnum;
      attname      | attidentity | attgenerated 
 ------------------+-------------+--------------
  salesperson_id   | a           | 
@@ -833,7 +833,7 @@ SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND
 (2 rows)
 
 -- Split partition has identity column:
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople2_5'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople2_5'::regclass::oid ORDER BY attnum;
      attname      | attidentity | attgenerated 
 ------------------+-------------+--------------
  salesperson_id   | a           | 
@@ -870,14 +870,14 @@ SELECT * FROM salespeople4_5;
               4 | Ford
 (1 row)
 
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople'::regclass::oid ORDER BY attnum;
      attname      | attidentity | attgenerated 
 ------------------+-------------+--------------
  salesperson_id   | a           | 
  salesperson_name |             | 
 (2 rows)
 
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople1_2'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople1_2'::regclass::oid ORDER BY attnum;
      attname      | attidentity | attgenerated 
 ------------------+-------------+--------------
  salesperson_id   | a           | 
@@ -885,21 +885,21 @@ SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND
 (2 rows)
 
 -- New partitions have identity-columns:
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople2_3'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople2_3'::regclass::oid ORDER BY attnum;
      attname      | attidentity | attgenerated 
 ------------------+-------------+--------------
  salesperson_id   | a           | 
  salesperson_name |             | 
 (2 rows)
 
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople3_4'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople3_4'::regclass::oid ORDER BY attnum;
      attname      | attidentity | attgenerated 
 ------------------+-------------+--------------
  salesperson_id   | a           | 
  salesperson_name |             | 
 (2 rows)
 
-SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople4_5'::regclass::oid;
+SELECT attname, attidentity, attgenerated FROM pg_attribute WHERE attnum > 0 AND attrelid = 'salespeople4_5'::regclass::oid ORDER BY attnum;
      attname      | attidentity | attgenerated 
 ------------------+-------------+--------------
  salesperson_id   | a           | 
