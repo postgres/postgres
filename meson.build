@@ -1353,7 +1353,10 @@ if uuidopt != 'none'
     error('unknown uuid build option value: @0@'.format(uuidopt))
   endif
 
-  if not cc.has_header_symbol(uuidheader, uuidfunc, args: test_c_args, dependencies: uuid)
+  if not cc.has_header_symbol(uuidheader, uuidfunc,
+                              args: test_c_args,
+                              include_directories: postgres_inc,
+                              dependencies: uuid)
     error('uuid library @0@ missing required function @1@'.format(uuidopt, uuidfunc))
   endif
   cdata.set('HAVE_@0@'.format(uuidheader.underscorify().to_upper()), 1)
