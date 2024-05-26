@@ -628,45 +628,20 @@ Relevant columns have been removed from pg_stat_bgwriter and added to this new s
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-11-12 [23c8c0c8f] Add ability to reset all shared stats types in pg_stat_r
--->
-
-<listitem>
-<para>
-Allow pg_stat_reset_shared() to reset all shared statistics (Atsushi Torikoshi)
-</para>
-
-<para>
-This is done by passing NULL.
-</para>
-</listitem>
-
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-11-16 [2e8a0edc2] Add target "slru" to pg_stat_reset_shared()
--->
-
-<listitem>
-<para>
-Allow pg_stat_reset_shared('slru') to clear SLRU statistics (Atsushi Torikoshi)
-</para>
-
-<para>
-Now pg_stat_reset_shared(NULL) also resets SLRU statistics.
-</para>
-</listitem>
-
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2023-11-14 [e5cca6288] Add support for pg_stat_reset_slru without argument
 -->
 
 <listitem>
 <para>
-Allow pg_stat_reset_slru() to reset all SLRU statistics (Bharath Rupireddy)
+Improve control over resetting statistics (Atsushi Torikoshi, Bharath Rupireddy)
 </para>
 
 <para>
-The command pg_stat_reset_slru(NULL) already did this.
+Allow pg_stat_reset_shared() (with no arguments) and pg_stat_reset_shared(NULL) to reset all shared statistics.
+Allow pg_stat_reset_shared('slru') and pg_stat_reset_slru() (with no arguments) to reset SLRU statistics, which was already possible with pg_stat_reset_slru(NULL).
 </para>
 </listitem>
 
@@ -784,21 +759,22 @@ Add server variable trace_connection_negotiation to allow debugging of connectio
 <!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2024-03-13 [ecb0fd337] Reintroduce MAINTAIN privilege and pg_maintain predefine
+Author: Nathan Bossart <nathan@postgresql.org>
+2024-03-13 [ecb0fd337] Reintroduce MAINTAIN privilege and pg_maintain predefine
 -->
 
 <listitem>
 <para>
-Add per-table GRANT permission MAINTAIN to control maintenance operations (Nathan Bossart)
+Allow granting the right to perform maintenance operations (Nathan Bossart)
 </para>
 
 <para>
-The operations are VACUUM, ANALYZE, REINDEX, REFRESH MATERIALIZED VIEW, CLUSTER, and LOCK TABLE.
+The permission can be granted on a per-table basis using the MAINTAIN privilege and on a per-role basis via the pg_maintain predefined role.  Permitted operations are VACUUM, ANALYZE,
+REINDEX, REFRESH MATERIALIZED VIEW, CLUSTER, and LOCK TABLE.
 </para>
 </listitem>
 
 <!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2024-03-13 [ecb0fd337] Reintroduce MAINTAIN privilege and pg_maintain predefine
 -->
 
 <listitem>
@@ -2234,45 +2210,19 @@ Allow reindexdb --index to process indexes from different tables in parallel (Ma
 <!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2024-03-11 [24c928ad9] reindexdb: Allow specifying objects to process in all da
--->
-
-<listitem>
-<para>
-Allow reindexdb to process objects in all databases matching a pattern (Nathan Bossart)
-</para>
-
-<para>
-Specifically, --all can now be used with --table, --schema, --index, and --system.
-</para>
-</listitem>
-
-<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2024-03-11 [648928c79] vacuumdb: Allow specifying objects to process in all dat
--->
-
-<listitem>
-<para>
-Allow vacuumdb to process objects in all databases matching a pattern (Nathan Bossart)
-</para>
-
-<para>
-Specifically, --all can now be used with --table, --schema, and --exclude-schema.
-</para>
-</listitem>
-
-<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2024-03-11 [1b49d56d3] clusterdb: Allow specifying tables to process in all dat
 -->
 
 <listitem>
 <para>
-Allow clusterdb to process objects in all databases matching a pattern (Nathan Bossart)
+Allow reindexdb, vacuumdb, and clusterdb to process objects in all databases matching a pattern (Nathan Bossart)
 </para>
 
 <para>
-Specifically, --all can now be used with --table.
+The new option --all controls this behavior.
 </para>
 </listitem>
 
@@ -2551,28 +2501,6 @@ This value is used by the optimizer.
 </listitem>
 
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-10-05 [d61f2538a] postgres_fdw: Replace WAIT_EVENT_EXTENSION with custom w
--->
-
-<listitem>
-<para>
-Create custom wait events for postgres_fdw (Masahiro Ikeda)
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-10-05 [c789f0f6c] dblink: Replace WAIT_EVENT_EXTENSION with custom wait ev
--->
-
-<listitem>
-<para>
-Create custom wait events for dblink (Masahiro Ikeda)
-</para>
-</listitem>
-
-<!--
 Author: Noah Misch <noah@leadboat.com>
 2024-01-08 [d3c5f37dd] Make dblink interruptible, via new libpqsrv APIs.
 -->
@@ -2696,11 +2624,19 @@ Author: Michael Paquier <michael@paquier.xyz>
 2023-07-31 [c9af05465] Support custom wait events for wait event type "Extensio
 Author: Michael Paquier <michael@paquier.xyz>
 2023-10-04 [c8e318b1b] worker_spi: Rename custom wait event to "WorkerSpiMain"
+Author: Michael Paquier <michael@paquier.xyz>
+2023-10-05 [d61f2538a] postgres_fdw: Replace WAIT_EVENT_EXTENSION with custom w
+Author: Michael Paquier <michael@paquier.xyz>
+2023-10-05 [c789f0f6c] dblink: Replace WAIT_EVENT_EXTENSION with custom wait ev
 -->
 
 <listitem>
 <para>
 Allow extensions to define custom wait events (Masahiro Ikeda)
+</para>
+
+<para>
+Custom wait events have been added to postgres_fdw and dblink.
 </para>
 </listitem>
 
