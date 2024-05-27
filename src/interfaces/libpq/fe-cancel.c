@@ -145,7 +145,7 @@ PQcancelCreate(PGconn *conn)
 	}
 
 	cancelConn->addr = calloc(cancelConn->naddr, sizeof(AddrInfo));
-	if (!cancelConn->connhost)
+	if (!cancelConn->addr)
 		goto oom_error;
 
 	cancelConn->addr[0].addr = conn->raddr;
