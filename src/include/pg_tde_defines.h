@@ -22,6 +22,7 @@
 //#define ENCRYPTION_DEBUG 1
 //#define KEYRING_DEBUG 1
 //#define TDE_FORK_DEBUG 1
+// #define TDE_XLOG_DEBUG 1
 
 #define pg_tde_fill_tuple heap_fill_tuple
 #define pg_tde_form_tuple heap_form_tuple
