@@ -3,12 +3,23 @@ name = "sharding"
 version = "0.1.0"
 edition = "2021"
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [dependencies]
 libc = "0.2"
-
-[build-dependencies]
-bindgen = "0.69.4"
 
 [lib]
 name = "sharding"
 crate-type = ["staticlib"]
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
+
+[[bin]]
+name = "client"
+path = "src/client.rs"
+
+[build-dependencies]
+bindgen = "0.69.4"
+
