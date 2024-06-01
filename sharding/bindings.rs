@@ -4871,12 +4871,7 @@ extern "C" {
 extern "C" {
     pub static mut signgam: libc::c_int;
 }
-pub const FP_NAN: _bindgen_ty_11 = 0;
-pub const FP_INFINITE: _bindgen_ty_11 = 1;
-pub const FP_ZERO: _bindgen_ty_11 = 2;
-pub const FP_SUBNORMAL: _bindgen_ty_11 = 3;
-pub const FP_NORMAL: _bindgen_ty_11 = 4;
-pub type _bindgen_ty_11 = libc::c_uint;
+
 extern "C" {
     pub fn strlcat(dst: *mut libc::c_char, src: *const libc::c_char, siz: usize) -> usize;
 }

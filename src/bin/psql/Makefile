@@ -41,7 +41,8 @@ OBJS = \
 	startup.o \
 	stringutils.o \
 	tab-complete.o \
-	variables.o
+	variables.o \
+	libsharding.a
 
 
 all: psql
