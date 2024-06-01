@@ -1,0 +1,5 @@
+cargo:rustc-cfg=no_literal_byte_character
+cargo:rustc-cfg=no_literal_c_string
+cargo:rerun-if-changed=build/probe.rs
+cargo:rustc-cfg=wrap_proc_macro
+cargo:rustc-cfg=proc_macro_span

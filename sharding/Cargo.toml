@@ -19,3 +19,7 @@ path = "src/server.rs"
 [[bin]]
 name = "client"
 path = "src/client.rs"
+
+[build-dependencies]
+bindgen = "0.69.4"
+
