@@ -1,0 +1,6 @@
+cargo:rerun-if-env-changed=LLVM_CONFIG_PATH
+cargo:rerun-if-env-changed=LIBCLANG_PATH
+cargo:rerun-if-env-changed=LIBCLANG_STATIC_PATH
+cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS
+cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS_aarch64-apple-darwin
+cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_darwin

@@ -8,3 +8,7 @@ libc = "0.2"
 
 [build-dependencies]
 bindgen = "0.69.4"
+
+[lib]
+name = "sharding"
+crate-type = ["staticlib"]

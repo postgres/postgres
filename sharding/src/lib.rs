@@ -5,3 +5,7 @@
 
 mod bindings;include!("bindings.rs");
 
+#[no_mangle]
+pub extern "C" fn SendQueryToShard(query_data: *const i8) {
+    println!("Query: {:?}", query_data);
+}
