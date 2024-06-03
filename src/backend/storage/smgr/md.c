@@ -930,7 +930,7 @@ mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 {
 	/* This assert is too expensive to have on normally ... */
 #ifdef CHECK_WRITE_VS_EXTEND
-	Assert(blocknum < mdnblocks(reln, forknum));
+	Assert((uint64) blocknum + (uint64) nblocks <= (uint64) mdnblocks(reln, forknum));
 #endif
 
 	while (nblocks > 0)
