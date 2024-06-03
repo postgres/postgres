@@ -781,13 +781,13 @@ psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such
        <row>
         <entry><varname>SEMMNI</varname></entry>
         <entry>Maximum number of semaphore identifiers (i.e., sets)</entry>
-        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + max_wal_senders + max_worker_processes + 5) / 16)</literal> plus room for other applications</entry>
+        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + max_wal_senders + max_worker_processes + 6) / 16)</literal> plus room for other applications</entry>
        </row>
 
        <row>
         <entry><varname>SEMMNS</varname></entry>
         <entry>Maximum number of semaphores system-wide</entry>
-        <entry><literal>ceil((max_connections + autovacuum_max_workers + max_wal_senders + max_worker_processes + 5) / 16) * 17</literal> plus room for other applications</entry>
+        <entry><literal>ceil((max_connections + autovacuum_max_workers + max_wal_senders + max_worker_processes + 6) / 16) * 17</literal> plus room for other applications</entry>
        </row>
 
        <row>
@@ -838,7 +838,8 @@ psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such
     When using System V semaphores,
     <productname>PostgreSQL</productname> uses one semaphore per allowed connection
     (<xref linkend="guc-max-connections"/>), allowed autovacuum worker process
-    (<xref linkend="guc-autovacuum-max-workers"/>) and allowed background
+    (<xref linkend="guc-autovacuum-max-workers"/>), allowed WAL sender process
+    (<xref linkend="guc-max-wal-senders"/>), and allowed background
     process (<xref linkend="guc-max-worker-processes"/>), in sets of 16.
     Each such set will
     also contain a 17th semaphore which contains a <quote>magic
@@ -852,7 +853,7 @@ psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such
     linkend="sysvipc-parameters"/>).  The parameter <varname>SEMMNI</varname>
     determines the limit on the number of semaphore sets that can
     exist on the system at one time.  Hence this parameter must be at
-    least <literal>ceil((max_connections + autovacuum_max_workers + max_wal_senders + max_worker_processes + 5) / 16)</literal>.
+    least <literal>ceil((max_connections + autovacuum_max_workers + max_wal_senders + max_worker_processes + 6) / 16)</literal>.
     Lowering the number
     of allowed connections is a temporary workaround for failures,
     which are usually confusingly worded <quote>No space
