@@ -64,9 +64,9 @@
  * supports holdable cursors (the Executor results can be dumped into a
  * tuplestore for access after transaction completion).
  *
- * PORTAL_ONE_RETURNING: the portal contains a single INSERT/UPDATE/DELETE
- * query with a RETURNING clause (plus possibly auxiliary queries added by
- * rule rewriting).  On first execution, we run the portal to completion
+ * PORTAL_ONE_RETURNING: the portal contains a single INSERT/UPDATE/DELETE/
+ * MERGE query with a RETURNING clause (plus possibly auxiliary queries added
+ * by rule rewriting).  On first execution, we run the portal to completion
  * and dump the primary query's results into the portal tuplestore; the
  * results are then returned to the client as demanded.  (We can't support
  * suspension of the query partway through, because the AFTER TRIGGER code

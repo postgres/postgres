@@ -154,7 +154,7 @@ typedef struct Query
 	bool		hasDistinctOn pg_node_attr(query_jumble_ignore);
 	/* WITH RECURSIVE was specified */
 	bool		hasRecursive pg_node_attr(query_jumble_ignore);
-	/* has INSERT/UPDATE/DELETE in WITH */
+	/* has INSERT/UPDATE/DELETE/MERGE in WITH */
 	bool		hasModifyingCTE pg_node_attr(query_jumble_ignore);
 	/* FOR [KEY] UPDATE/SHARE was specified */
 	bool		hasForUpdate pg_node_attr(query_jumble_ignore);

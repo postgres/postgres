@@ -6016,7 +6016,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 /* ----------
  * get_target_list			- Parse back a SELECT target list
  *
- * This is also used for RETURNING lists in INSERT/UPDATE/DELETE.
+ * This is also used for RETURNING lists in INSERT/UPDATE/DELETE/MERGE.
  *
  * resultDesc and colNamesVisible are as for get_query_def()
  * ----------
