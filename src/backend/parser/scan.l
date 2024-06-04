@@ -407,7 +407,7 @@ octfail			0[oO]_?
 binfail			0[bB]_?
 
 numeric			(({decinteger}\.{decinteger}?)|(\.{decinteger}))
-numericfail		{decdigit}+\.\.
+numericfail		{decinteger}\.\.
 
 real			({decinteger}|{numeric})[Ee][-+]?{decinteger}
 realfail		({decinteger}|{numeric})[Ee][-+]
