@@ -66,6 +66,14 @@ END
 $$;
 NOTICE:  a: 10
 NOTICE:  _a: 10, _b: 20
+-- syntax error in result tuple
+CREATE PROCEDURE test_proc10(INOUT a text)
+LANGUAGE pltcl
+AS $$
+return [list a {$a + $a}])
+$$;
+CALL test_proc10('abc');
+ERROR:  could not parse function return value: list element in braces followed by ")" instead of space
 DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc2;
 DROP PROCEDURE test_proc3;
