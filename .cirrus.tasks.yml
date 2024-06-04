@@ -516,6 +516,7 @@ WINDOWS_ENVIRONMENT_BASE: &WINDOWS_ENVIRONMENT_BASE
     PG_TEST_USE_UNIX_SOCKETS: 1
     PG_REGRESS_SOCK_DIR: "c:/cirrus/"
     DISK_SIZE: 50
+    IMAGE_FAMILY: pg-ci-windows-ci
 
   sysinfo_script: |
     chcp
@@ -539,7 +540,6 @@ task:
     # given that it explicitly prevents crash dumps from working...
     # 0x8001 is SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX
     CIRRUS_WINDOWS_ERROR_MODE: 0x8001
-    IMAGE_FAMILY: pg-ci-windows-ci-vs-2019
 
   <<: *windows_task_template
 
@@ -600,7 +600,6 @@ task:
     # Start bash in current working directory
     CHERE_INVOKING: 1
     BASH: C:\msys64\usr\bin\bash.exe -l
-    IMAGE_FAMILY: pg-ci-windows-ci-mingw64
 
   <<: *windows_task_template
 
