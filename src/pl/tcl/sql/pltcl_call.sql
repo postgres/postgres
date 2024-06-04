@@ -71,6 +71,17 @@ END
 $$;
 
 
+-- syntax error in result tuple
+
+CREATE PROCEDURE test_proc10(INOUT a text)
+LANGUAGE pltcl
+AS $$
+return [list a {$a + $a}])
+$$;
+
+CALL test_proc10('abc');
+
+
 DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc2;
 DROP PROCEDURE test_proc3;
