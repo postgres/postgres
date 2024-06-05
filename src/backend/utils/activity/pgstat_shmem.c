@@ -850,6 +850,17 @@ pgstat_drop_database_and_contents(Oid dboid)
 		pgstat_request_entry_refs_gc();
 }
 
+/*
+ * Drop a single stats entry.
+ *
+ * This routine returns false if the stats entry of the dropped object could
+ * not be freed, true otherwise.
+ *
+ * The callers of this function should call pgstat_request_entry_refs_gc()
+ * if the stats entry could not be freed, to ensure that this entry's memory
+ * can be reclaimed later by a different backend calling
+ * pgstat_gc_entry_refs().
+ */
 bool
 pgstat_drop_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
 {
