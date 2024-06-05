@@ -810,12 +810,11 @@ host    all             all             ::1/128                 trust
 host    all             all             localhost               trust
 
 # The same using a regular expression for DATABASE, that allows connection
-# to the database db1, db2 and any databases with a name beginning with "db"
-# and finishing with a number using two to four digits (like "db1234" or
-# "db12").
+# to any databases with a name beginning with "db" and finishing with a
+# number using two to four digits (like "db1234" or "db12").
 #
-# TYPE  DATABASE                   USER            ADDRESS          METHOD
-local   db1,"/^db\d{2,4}$",db2     all             localhost        trust
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    "/^db\d{2,4}$"  all             localhost               trust
 
 # Allow any user from any host with IP address 192.168.93.x to connect
 # to database "postgres" as the same user name that ident reports for
