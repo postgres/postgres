@@ -882,7 +882,8 @@ psql: could not connect to server: No such file or directory
     When using POSIX semaphores, the number of semaphores needed is the
     same as for System V, that is one semaphore per allowed connection
     (<xref linkend="guc-max-connections"/>), allowed autovacuum worker process
-    (<xref linkend="guc-autovacuum-max-workers"/>) and allowed background
+    (<xref linkend="guc-autovacuum-max-workers"/>), allowed WAL sender process
+    (<xref linkend="guc-max-wal-senders"/>), and allowed background
     process (<xref linkend="guc-max-worker-processes"/>).
     On the platforms where this option is preferred, there is no specific
     kernel limit on the number of POSIX semaphores.
