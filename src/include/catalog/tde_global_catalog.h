@@ -23,7 +23,11 @@
 #define GLOBAL_DATA_TDE_OID	607 /* Global objects fake "db" */
 #define XLOG_TDE_OID        608
 
-#define GLOBAL_SPACE_RLOCATOR(_obj_oid) (RelFileLocator) {GLOBALTABLESPACE_OID, 0, _obj_oid}
+#define GLOBAL_SPACE_RLOCATOR(_obj_oid) (RelFileLocator) { \
+	GLOBALTABLESPACE_OID, \
+	GLOBAL_DATA_TDE_OID, \
+	_obj_oid \
+}
 
 extern void TDEGlCatInitGUC(void);
 extern Size TDEGlCatEncStateSize(void);

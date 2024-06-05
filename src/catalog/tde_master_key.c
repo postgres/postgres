@@ -232,7 +232,11 @@ GetMasterKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring)
 	recursion++;
 
     LWLockAcquire(lock_cache, LW_SHARED);
-    masterKey = get_master_key_from_cache(dbOid);
+        /* Global catalog has its own cache */
+    if (spcOid == GLOBALTABLESPACE_OID)
+        masterKey = TDEGetGlCatKeyFromCache();
+    else 
+        masterKey = get_master_key_from_cache(dbOid);
     LWLockRelease(lock_cache);
 
     if (masterKey)
@@ -273,7 +277,8 @@ GetMasterKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring)
         return NULL;
     }
 
-    if (keyring == NULL) {
+    if (keyring == NULL)
+    {
         keyring = GetKeyProviderByID(masterKeyInfo->keyringId);
         if (keyring == NULL)
         {
@@ -300,7 +305,7 @@ GetMasterKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring)
     memcpy(masterKey->keyData, keyInfo->data.data, keyInfo->data.len);
     masterKey->keyLength = keyInfo->data.len;
 
-    Assert(MyDatabaseId == masterKey->keyInfo.databaseId);
+    Assert(dbOid == masterKey->keyInfo.databaseId);
     if (spcOid == GLOBALTABLESPACE_OID)
         TDEPutGlCatKeyInCache(masterKey);
     else 

@@ -40,22 +40,6 @@ static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count,
 static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char* iv_prefix);
 static int XLOGChooseNumBuffers(void);
 
-typedef enum
-{
-	TDE_GCAT_KEY_XLOG,
-
-	/* must be last */
-	TDE_GCAT_KEYS_COUNT
-} GlobalCatalogKeyTypes;
-
-/* TODO: move TDEXLogEncryptBuf here*/
-typedef struct EncryptionStateData
-{
-	GenericKeyring *keyring;
-	/* TODO: locking */
-	TDEMasterKey master_keys[TDE_GCAT_KEYS_COUNT];
-
-} EncryptionStateData;
 
 /*
  * TDE fork XLog

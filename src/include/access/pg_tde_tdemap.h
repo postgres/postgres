@@ -53,7 +53,7 @@ extern void pg_tde_delete_key_map_entry(const RelFileLocator *rlocator);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset);
 
 extern RelKeyData *GetRelationKey(RelFileLocator rel);
-extern RelKeyData *GetInternalKey(RelFileLocator rel, GenericKeyring *keyring);
+extern RelKeyData *GetRelationKeyWithKeyring(RelFileLocator rel, GenericKeyring *keyring);
 
 extern void pg_tde_delete_tde_files(Oid dbOid, Oid spcOid);
 
