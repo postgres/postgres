@@ -50,15 +50,6 @@
 #external_pid_file = ''			# write an extra PID file
 					# (change requires restart)
 
-# - SLRU Buffers (change requires restart) -
-
-#commit_timestamp_buffers = 0		# memory for pg_commit_ts (0 = auto)
-#multixact_offset_buffers = 16		# memory for pg_multixact/offsets
-#multixact_member_buffers = 32		# memory for pg_multixact/members
-#notify_buffers = 16			# memory for pg_notify
-#serializable_buffers = 32		# memory for pg_serial
-#subtransaction_buffers = 0 		# memory for pg_subtrans (0 = auto)
-#transaction_buffers = 0		# memory for pg_xact (0 = auto)
 
 #------------------------------------------------------------------------------
 # CONNECTIONS AND AUTHENTICATION
@@ -169,6 +160,15 @@
 #vacuum_buffer_usage_limit = 2MB	# size of vacuum and analyze buffer access strategy ring;
 					# 0 to disable vacuum buffer access strategy;
 					# range 128kB to 16GB
+
+# SLRU buffers (change requires restart)
+#commit_timestamp_buffers = 0		# memory for pg_commit_ts (0 = auto)
+#multixact_offset_buffers = 16		# memory for pg_multixact/offsets
+#multixact_member_buffers = 32		# memory for pg_multixact/members
+#notify_buffers = 16			# memory for pg_notify
+#serializable_buffers = 32		# memory for pg_serial
+#subtransaction_buffers = 0		# memory for pg_subtrans (0 = auto)
+#transaction_buffers = 0		# memory for pg_xact (0 = auto)
 
 # - Disk -
 
