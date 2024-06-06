@@ -154,7 +154,7 @@ static Node *sql_fn_resolve_param_name(SQLFunctionParseInfoPtr pinfo,
 static List *init_execution_state(List *queryTree_list,
 								  SQLFunctionCachePtr fcache,
 								  bool lazyEvalOK);
-static void init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK);
+static void init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static bool postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
 static void postquel_end(execution_state *es);
@@ -166,6 +166,12 @@ static Datum postquel_get_single_result(TupleTableSlot *slot,
 										MemoryContext resultcontext);
 static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
+static bool check_sql_fn_retval_ext2(Oid func_id,
+									 FunctionCallInfo fcinfo,
+									 Oid rettype, char prokind,
+									 List *queryTreeList,
+									 bool *modifyTargetList,
+									 JunkFilter **junkFilter);
 static void sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
 static bool sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self);
 static void sqlfunction_shutdown(DestReceiver *self);
@@ -591,8 +597,9 @@ init_execution_state(List *queryTree_list,
  * Initialize the SQLFunctionCache for a SQL function
  */
 static void
-init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
+init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 {
+	FmgrInfo   *finfo = fcinfo->flinfo;
 	Oid			foid = finfo->fn_oid;
 	MemoryContext fcontext;
 	MemoryContext oldcontext;
@@ -744,12 +751,13 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	 * coerce the returned rowtype to the desired form (unless the result type
 	 * is VOID, in which case there's nothing to coerce to).
 	 */
-	fcache->returnsTuple = check_sql_fn_retval_ext(foid,
-												   rettype,
-												   procedureStruct->prokind,
-												   flat_query_list,
-												   NULL,
-												   &fcache->junkFilter);
+	fcache->returnsTuple = check_sql_fn_retval_ext2(foid,
+													fcinfo,
+													rettype,
+													procedureStruct->prokind,
+													flat_query_list,
+													NULL,
+													&fcache->junkFilter);
 
 	if (fcache->returnsTuple)
 	{
@@ -1066,7 +1074,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 
 	if (fcache == NULL)
 	{
-		init_sql_fcache(fcinfo->flinfo, PG_GET_COLLATION(), lazyEvalOK);
+		init_sql_fcache(fcinfo, PG_GET_COLLATION(), lazyEvalOK);
 		fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
 	}
 
@@ -1593,11 +1601,11 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					JunkFilter **junkFilter)
 {
 	/* Wrapper function to preserve ABI compatibility in released branches */
-	return check_sql_fn_retval_ext(func_id, rettype,
-								   PROKIND_FUNCTION,
-								   queryTreeList,
-								   modifyTargetList,
-								   junkFilter);
+	return check_sql_fn_retval_ext2(func_id, NULL, rettype,
+									PROKIND_FUNCTION,
+									queryTreeList,
+									modifyTargetList,
+									junkFilter);
 }
 
 bool
@@ -1605,6 +1613,22 @@ check_sql_fn_retval_ext(Oid func_id, Oid rettype, char prokind,
 						List *queryTreeList,
 						bool *modifyTargetList,
 						JunkFilter **junkFilter)
+{
+	/* Wrapper function to preserve ABI compatibility in released branches */
+	return check_sql_fn_retval_ext2(func_id, NULL, rettype,
+									prokind,
+									queryTreeList,
+									modifyTargetList,
+									junkFilter);
+}
+
+static bool
+check_sql_fn_retval_ext2(Oid func_id,
+						 FunctionCallInfo fcinfo,
+						 Oid rettype, char prokind,
+						 List *queryTreeList,
+						 bool *modifyTargetList,
+						 JunkFilter **junkFilter)
 {
 	Query	   *parse;
 	List	  **tlist_ptr;
@@ -1750,6 +1774,7 @@ check_sql_fn_retval_ext(Oid func_id, Oid rettype, char prokind,
 		 * result type, so there is no way to produce a domain-over-composite
 		 * result except by computing it as an explicit single-column result.
 		 */
+		TypeFuncClass tfclass;
 		TupleDesc	tupdesc;
 		int			tupnatts;	/* physical number of columns in tuple */
 		int			tuplogcols; /* # of nondeleted columns in tuple */
@@ -1806,10 +1831,19 @@ check_sql_fn_retval_ext(Oid func_id, Oid rettype, char prokind,
 		}
 
 		/*
-		 * Is the rowtype fixed, or determined only at runtime?  (Note we
+		 * Identify the output rowtype, resolving polymorphism if possible
+		 * (that is, if we were passed an fcinfo).
+		 */
+		if (fcinfo)
+			tfclass = get_call_result_type(fcinfo, NULL, &tupdesc);
+		else
+			tfclass = get_func_result_type(func_id, NULL, &tupdesc);
+
+		/*
+		 * Is the rowtype known, or determined only at runtime?  (Note we
 		 * cannot see TYPEFUNC_COMPOSITE_DOMAIN here.)
 		 */
-		if (get_func_result_type(func_id, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		if (tfclass != TYPEFUNC_COMPOSITE)
 		{
 			/*
 			 * Assume we are returning the whole tuple. Crosschecking against
