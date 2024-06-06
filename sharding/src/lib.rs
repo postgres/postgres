@@ -24,6 +24,18 @@ pub extern "C" fn SendQueryToShard(query_data: *const i8) {
             }
         };
 
-        //println!("Query: {}", query.trim());
+        println!("Query: {}", query.trim());
+    }
+}
+#[no_mangle]
+pub extern "C" fn SendPGResultToShard(pg_result: *const pg_result) {
+    unsafe {
+        if pg_result.is_null() {
+            eprintln!("Received a null pointer");
+            return;
+        }
+        else {
+            println!("Received PGResult!!!!")
+        };
     }
 }

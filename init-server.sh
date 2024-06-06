@@ -7,6 +7,7 @@ read -p "Enter the name of the database cluster to start: " DB_CLUSTER_NAME
 ROOT_DIR=$(pwd)
 SHARDING_DIR="$ROOT_DIR/sharding"
 PG_CTL_DIR="$ROOT_DIR/src/bin/pg_ctl"
+PSQL_DIR="$ROOT_DIR/src/bin/psql"
 POSTGRES_EXECUTABLE="$ROOT_DIR/src/backend/postgres"
 DB_DIR="$ROOT_DIR/$DB_CLUSTER_NAME"
 LOG_FILE="$ROOT_DIR/logfile"
@@ -14,7 +15,8 @@ LOG_FILE="$ROOT_DIR/logfile"
 echo "Compiling sharding library..."
 cd $SHARDING_DIR
 cargo build --release --lib
-
+echo "Moving compiled library to psql directory..."
+mv ./target/release/libsharding.a $PSQL_DIR
 echo "Building the project..."
 cd $ROOT_DIR
 make
