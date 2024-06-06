@@ -35,7 +35,9 @@ pub extern "C" fn SendPGResultToShard(pg_result: *const pg_result) {
             return;
         }
         else {
-            println!("Received PGResult!!!!")
+            println!("Received PGResult!!!!");
+            let n_tup = (*pg_result).ntups;
+            println!("{:?}", n_tup);
         };
     }
 }
