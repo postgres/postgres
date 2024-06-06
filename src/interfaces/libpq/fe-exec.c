@@ -1413,6 +1413,8 @@ pqRecycleCmdQueueEntry(PGconn *conn, PGcmdQueueEntry *entry)
  * except that it doesn't reset conn->errorMessage.
  */
 int
+
+
 PQsendQuery(PGconn *conn, const char *query)
 {
 	return PQsendQueryInternal(conn, query, true);

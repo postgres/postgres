@@ -24,6 +24,6 @@ pub extern "C" fn SendQueryToShard(query_data: *const i8) {
             }
         };
 
-        println!("Query: {}", query.trim());
+        //println!("Query: {}", query.trim());
     }
 }

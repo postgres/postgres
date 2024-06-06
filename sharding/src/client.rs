@@ -7,10 +7,12 @@ fn main() -> std::io::Result<()> {
         Ok(mut stream) => {
             println!("Connected to server on port 7878");
 
-            let msg = b"Hello from client!!";
-            stream.write(msg)?;
-            println!("Sent: {}", String::from_utf8_lossy(msg));
+            let db_name = b"my_db";
+            stream.write(db_name)?;
+            println!("Sent: {}", String::from_utf8_lossy(db_name));
 
+            let table = b"SELECT * FROM employees;";
+            stream.write(table)?;
             let mut buffer = [0; 512];
             stream.set_read_timeout(Some(Duration::from_secs(5)))?;
             match stream.read(&mut buffer) {
