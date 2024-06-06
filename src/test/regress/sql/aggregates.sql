@@ -1263,6 +1263,20 @@ SELECT avg(c1.f ORDER BY c1.x, c1.y)
 FROM group_agg_pk c1 JOIN group_agg_pk c2 ON c1.x = c2.x
 GROUP BY c1.w, c1.z;
 
+-- Pathkeys, built in a subtree, can be used to optimize GROUP-BY clause
+-- ordering.  Also, here we check that it doesn't depend on the initial clause
+-- order in the GROUP-BY list.
+EXPLAIN (COSTS OFF)
+SELECT c1.y,c1.x FROM group_agg_pk c1
+  JOIN group_agg_pk c2
+  ON c1.x = c2.x
+GROUP BY c1.y,c1.x,c2.x;
+EXPLAIN (COSTS OFF)
+SELECT c1.y,c1.x FROM group_agg_pk c1
+  JOIN group_agg_pk c2
+  ON c1.x = c2.x
+GROUP BY c1.y,c2.x,c1.x;
+
 RESET enable_nestloop;
 RESET enable_hashjoin;
 DROP TABLE group_agg_pk;

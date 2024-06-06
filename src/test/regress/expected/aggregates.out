@@ -2917,6 +2917,53 @@ GROUP BY c1.w, c1.z;
  5.0000000000000000
 (2 rows)
 
+-- Pathkeys, built in a subtree, can be used to optimize GROUP-BY clause
+-- ordering.  Also, here we check that it doesn't depend on the initial clause
+-- order in the GROUP-BY list.
+EXPLAIN (COSTS OFF)
+SELECT c1.y,c1.x FROM group_agg_pk c1
+  JOIN group_agg_pk c2
+  ON c1.x = c2.x
+GROUP BY c1.y,c1.x,c2.x;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Group
+   Group Key: c1.x, c1.y
+   ->  Incremental Sort
+         Sort Key: c1.x, c1.y
+         Presorted Key: c1.x
+         ->  Merge Join
+               Merge Cond: (c1.x = c2.x)
+               ->  Sort
+                     Sort Key: c1.x
+                     ->  Seq Scan on group_agg_pk c1
+               ->  Sort
+                     Sort Key: c2.x
+                     ->  Seq Scan on group_agg_pk c2
+(13 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT c1.y,c1.x FROM group_agg_pk c1
+  JOIN group_agg_pk c2
+  ON c1.x = c2.x
+GROUP BY c1.y,c2.x,c1.x;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Group
+   Group Key: c2.x, c1.y
+   ->  Incremental Sort
+         Sort Key: c2.x, c1.y
+         Presorted Key: c2.x
+         ->  Merge Join
+               Merge Cond: (c1.x = c2.x)
+               ->  Sort
+                     Sort Key: c1.x
+                     ->  Seq Scan on group_agg_pk c1
+               ->  Sort
+                     Sort Key: c2.x
+                     ->  Seq Scan on group_agg_pk c2
+(13 rows)
+
 RESET enable_nestloop;
 RESET enable_hashjoin;
 DROP TABLE group_agg_pk;
