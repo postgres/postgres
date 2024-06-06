@@ -1320,7 +1320,9 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
         </row>
         <row>
          <entry>level4</entry>
-         <entry>Punctuation</entry>
+         <entry>Punctuation<footnote><para>only with
+         <literal>ka-shifted</literal>; see <xref
+         linkend="icu-collation-settings-table"/></para></footnote></entry>
          <entry><literal>true</literal></entry>
          <entry><literal>true</literal></entry>
          <entry><literal>false</literal></entry>
