@@ -5279,20 +5279,7 @@ AbortSubTransaction(void)
 
 		AtEOSubXact_RelationCache(false, s->subTransactionId,
 								  s->parent->subTransactionId);
-
-
-		/*
-		 * AtEOSubXact_Inval sometimes needs to temporarily bump the refcount
-		 * on the relcache entries that it processes.  We cannot use the
-		 * subtransaction's resource owner anymore, because we've already
-		 * started releasing it.  But we can use the parent resource owner.
-		 */
-		CurrentResourceOwner = s->parent->curTransactionOwner;
-
 		AtEOSubXact_Inval(false);
-
-		CurrentResourceOwner = s->curTransactionOwner;
-
 		ResourceOwnerRelease(s->curTransactionOwner,
 							 RESOURCE_RELEASE_LOCKS,
 							 false, false);
