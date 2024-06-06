@@ -63,6 +63,7 @@ bitcode_cflags = ['-fno-strict-aliasing', '-fwrapv']
 if llvm.version().version_compare('=15.0')
   bitcode_cflags += ['-Xclang', '-no-opaque-pointers']
 endif
+bitcode_cflags += get_option('c_args')
 bitcode_cflags += cppflags
 
 # XXX: Worth improving on the logic to find directories here
