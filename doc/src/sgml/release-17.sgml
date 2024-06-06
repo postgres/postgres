@@ -1685,7 +1685,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add functions to convert integers to hex and binary strings (Eric Radman, Nathan Bossart)
+Add functions to convert integers to binary and octal strings (Eric Radman, Nathan Bossart)
 </para>
 
 <para>
@@ -2000,11 +2000,13 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 2024-04-08 [304b6b1a6] Add more tab completion support for ALTER DEFAULT PRIVIL
 Author: Alexander Korotkov <akorotkov@postgresql.org>
 2024-04-30 [60ae37a8b] Add tab completion for partition MERGE/SPLIT operations
+Author: Michael Paquier <michael@paquier.xyz>
+2024-05-01 [2800fbb2b] Add tab completion for EXPLAIN (MEMORY|SERIALIZE)
 -->
 
 <listitem>
 <para>
-Improve psql tab completion (Dagfinn Ilmari Mannsåker, Gilles Darold, Christoph Heiss, Steve Chavez, Vignesh C, Pavel Borisov)
+Improve psql tab completion (Dagfinn Ilmari Mannsåker, Gilles Darold, Christoph Heiss, Steve Chavez, Vignesh C, Pavel Borisov, Jian He)
 </para>
 </listitem>
 
