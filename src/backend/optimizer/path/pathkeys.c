@@ -561,6 +561,34 @@ get_useful_group_keys_orderings(PlannerInfo *root, Path *path)
 		}
 	}
 
+#ifdef USE_ASSERT_CHECKING
+	{
+		PathKeyInfo *pinfo = linitial_node(PathKeyInfo, infos);
+		ListCell   *lc;
+
+		/* Test consistency of info structures */
+		for_each_from(lc, infos, 1)
+		{
+			ListCell   *lc1,
+					   *lc2;
+
+			info = lfirst_node(PathKeyInfo, lc);
+
+			Assert(list_length(info->clauses) == list_length(pinfo->clauses));
+			Assert(list_length(info->pathkeys) == list_length(pinfo->pathkeys));
+			Assert(list_difference(info->clauses, pinfo->clauses) == NIL);
+			Assert(list_difference_ptr(info->pathkeys, pinfo->pathkeys) == NIL);
+
+			forboth(lc1, info->clauses, lc2, info->pathkeys)
+			{
+				SortGroupClause *sgc = lfirst_node(SortGroupClause, lc1);
+				PathKey    *pk = lfirst_node(PathKey, lc2);
+
+				Assert(pk->pk_eclass->ec_sortref == sgc->tleSortGroupRef);
+			}
+		}
+	}
+#endif
 	return infos;
 }
 
