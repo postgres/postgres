@@ -1468,14 +1468,21 @@ typedef struct PathKey
 } PathKey;
 
 /*
- * Combines the information about pathkeys and the associated clauses.
+ * Contains an order of group-by clauses and the corresponding list of
+ * pathkeys.
+ *
+ * The elements of 'clauses' list should have the same order as the head of
+ * 'pathkeys' list.  The tleSortGroupRef of the clause should be equal to
+ * ec_sortref of the pathkey equivalence class.  If there are redundant
+ * clauses with the same tleSortGroupRef, they must be grouped together.
  */
-typedef struct PathKeyInfo
+typedef struct GroupByOrdering
 {
 	NodeTag		type;
+
 	List	   *pathkeys;
 	List	   *clauses;
-} PathKeyInfo;
+} GroupByOrdering;
 
 /*
  * VolatileFunctionStatus -- allows nodes to cache their
