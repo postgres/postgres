@@ -185,6 +185,23 @@ CALL ptest6b(1.1, null, null);
  1.1 | {1.1}
 (1 row)
 
+CREATE PROCEDURE ptest6c(inout a anyelement, inout b anyelement)
+LANGUAGE SQL
+AS $$
+SELECT $1, 1;
+$$;
+CALL ptest6c(1, null);
+ a | b 
+---+---
+ 1 | 1
+(1 row)
+
+CALL ptest6c(1.1, null);  -- fails before v13
+  a  | b 
+-----+---
+ 1.1 | 1
+(1 row)
+
 -- collation assignment
 CREATE PROCEDURE ptest7(a text, b text)
 LANGUAGE SQL
