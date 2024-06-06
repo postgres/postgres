@@ -448,26 +448,6 @@ group_keys_reorder_by_pathkeys(List *pathkeys, List **group_pathkeys,
 }
 
 /*
- * pathkeys_are_duplicate
- *		Check if give pathkeys are already contained the list of
- *		GroupByOrdering's.
- */
-static bool
-pathkeys_are_duplicate(List *infos, List *pathkeys)
-{
-	ListCell   *lc;
-
-	foreach(lc, infos)
-	{
-		GroupByOrdering *info = lfirst_node(GroupByOrdering, lc);
-
-		if (compare_pathkeys(pathkeys, info->pathkeys) == PATHKEYS_EQUAL)
-			return true;
-	}
-	return false;
-}
-
-/*
  * get_useful_group_keys_orderings
  *		Determine which orderings of GROUP BY keys are potentially interesting.
  *
@@ -475,11 +455,11 @@ pathkeys_are_duplicate(List *infos, List *pathkeys)
  * ordering of GROUP BY keys.  Each item stores pathkeys and clauses in the
  * matching order.
  *
- * The function considers (and keeps) multiple GROUP BY orderings:
+ * The function considers (and keeps) following GROUP BY orderings:
  *
- * - the original ordering, as specified by the GROUP BY clause,
- * - GROUP BY keys reordered to match 'path' ordering (as much as possible),
- * - GROUP BY keys to match target ORDER BY clause (as much as possible).
+ * - GROUP BY keys as ordered by preprocess_groupclause() to match target
+ *   ORDER BY clause (as much as possible),
+ * - GROUP BY keys reordered to match 'path' ordering (as much as possible).
  */
 List *
 get_useful_group_keys_orderings(PlannerInfo *root, Path *path)
@@ -526,32 +506,7 @@ get_useful_group_keys_orderings(PlannerInfo *root, Path *path)
 
 		if (n > 0 &&
 			(enable_incremental_sort || n == root->num_groupby_pathkeys) &&
-			!pathkeys_are_duplicate(infos, pathkeys))
-		{
-			info = makeNode(GroupByOrdering);
-			info->pathkeys = pathkeys;
-			info->clauses = clauses;
-
-			infos = lappend(infos, info);
-		}
-	}
-
-	/*
-	 * Try reordering pathkeys to minimize the sort cost (this time consider
-	 * the ORDER BY clause).
-	 */
-	if (root->sort_pathkeys &&
-		!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys))
-	{
-		int			n;
-
-		n = group_keys_reorder_by_pathkeys(root->sort_pathkeys, &pathkeys,
-										   &clauses,
-										   root->num_groupby_pathkeys);
-
-		if (n > 0 &&
-			(enable_incremental_sort || n == list_length(root->sort_pathkeys)) &&
-			!pathkeys_are_duplicate(infos, pathkeys))
+			compare_pathkeys(pathkeys, root->group_pathkeys) != PATHKEYS_EQUAL)
 		{
 			info = makeNode(GroupByOrdering);
 			info->pathkeys = pathkeys;

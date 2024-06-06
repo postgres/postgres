@@ -901,15 +901,15 @@ SELECT a, c, sum(b), avg(c), count(*) FROM pagg_tab_m GROUP BY (a+b)/2, 2, 1 HAV
    Sort Key: pagg_tab_m.a, pagg_tab_m.c, (sum(pagg_tab_m.b))
    ->  Append
          ->  HashAggregate
-               Group Key: ((pagg_tab_m.a + pagg_tab_m.b) / 2), pagg_tab_m.c, pagg_tab_m.a
+               Group Key: pagg_tab_m.a, pagg_tab_m.c, ((pagg_tab_m.a + pagg_tab_m.b) / 2)
                Filter: ((sum(pagg_tab_m.b) = 50) AND (avg(pagg_tab_m.c) > '25'::numeric))
                ->  Seq Scan on pagg_tab_m_p1 pagg_tab_m
          ->  HashAggregate
-               Group Key: ((pagg_tab_m_1.a + pagg_tab_m_1.b) / 2), pagg_tab_m_1.c, pagg_tab_m_1.a
+               Group Key: pagg_tab_m_1.a, pagg_tab_m_1.c, ((pagg_tab_m_1.a + pagg_tab_m_1.b) / 2)
                Filter: ((sum(pagg_tab_m_1.b) = 50) AND (avg(pagg_tab_m_1.c) > '25'::numeric))
                ->  Seq Scan on pagg_tab_m_p2 pagg_tab_m_1
          ->  HashAggregate
-               Group Key: ((pagg_tab_m_2.a + pagg_tab_m_2.b) / 2), pagg_tab_m_2.c, pagg_tab_m_2.a
+               Group Key: pagg_tab_m_2.a, pagg_tab_m_2.c, ((pagg_tab_m_2.a + pagg_tab_m_2.b) / 2)
                Filter: ((sum(pagg_tab_m_2.b) = 50) AND (avg(pagg_tab_m_2.c) > '25'::numeric))
                ->  Seq Scan on pagg_tab_m_p3 pagg_tab_m_2
 (15 rows)

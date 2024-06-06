@@ -137,7 +137,7 @@ static double preprocess_limit(PlannerInfo *root,
 							   double tuple_fraction,
 							   int64 *offset_est, int64 *count_est);
 static void remove_useless_groupby_columns(PlannerInfo *root);
-static List *groupclause_apply_groupingset(PlannerInfo *root, List *force);
+static List *preprocess_groupclause(PlannerInfo *root, List *force);
 static List *extract_rollup_sets(List *groupingSets);
 static List *reorder_grouping_sets(List *groupingSets, List *sortclause);
 static void standard_qp_callback(PlannerInfo *root, void *extra);
@@ -1422,7 +1422,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction,
 		else if (parse->groupClause)
 		{
 			/* Preprocess regular GROUP BY clause, if any */
-			root->processed_groupClause = list_copy(parse->groupClause);
+			root->processed_groupClause = preprocess_groupclause(root, NIL);
 			/* Remove any redundant GROUP BY columns */
 			remove_useless_groupby_columns(root);
 		}
@@ -2169,7 +2169,7 @@ preprocess_grouping_sets(PlannerInfo *root)
 		 * The groupClauses for hashed grouping sets are built later on.)
 		 */
 		if (gs->set)
-			rollup->groupClause = groupclause_apply_groupingset(root, gs->set);
+			rollup->groupClause = preprocess_groupclause(root, gs->set);
 		else
 			rollup->groupClause = NIL;
 
@@ -2821,24 +2821,106 @@ remove_useless_groupby_columns(PlannerInfo *root)
 }
 
 /*
- * groupclause_apply_groupingset
- *		Apply the order of GROUP BY clauses defined by grouping sets.  Items
- *		not in the grouping set are skipped.
+ * preprocess_groupclause - do preparatory work on GROUP BY clause
+ *
+ * The idea here is to adjust the ordering of the GROUP BY elements
+ * (which in itself is semantically insignificant) to match ORDER BY,
+ * thereby allowing a single sort operation to both implement the ORDER BY
+ * requirement and set up for a Unique step that implements GROUP BY.
+ * We also consider partial match between GROUP BY and ORDER BY elements,
+ * which could allow to implement ORDER BY using the incremental sort.
+ *
+ * We also consider other orderings of the GROUP BY elements, which could
+ * match the sort ordering of other possible plans (eg an indexscan) and
+ * thereby reduce cost.  This is implemented during the generation of grouping
+ * paths.  See get_useful_group_keys_orderings() for details.
+ *
+ * Note: we need no comparable processing of the distinctClause because
+ * the parser already enforced that that matches ORDER BY.
+ *
+ * Note: we return a fresh List, but its elements are the same
+ * SortGroupClauses appearing in parse->groupClause.  This is important
+ * because later processing may modify the processed_groupClause list.
+ *
+ * For grouping sets, the order of items is instead forced to agree with that
+ * of the grouping set (and items not in the grouping set are skipped). The
+ * work of sorting the order of grouping set elements to match the ORDER BY if
+ * possible is done elsewhere.
  */
 static List *
-groupclause_apply_groupingset(PlannerInfo *root, List *gset)
+preprocess_groupclause(PlannerInfo *root, List *force)
 {
 	Query	   *parse = root->parse;
 	List	   *new_groupclause = NIL;
 	ListCell   *sl;
+	ListCell   *gl;
 
-	foreach(sl, gset)
+	/* For grouping sets, we need to force the ordering */
+	if (force)
 	{
-		Index		ref = lfirst_int(sl);
-		SortGroupClause *cl = get_sortgroupref_clause(ref, parse->groupClause);
+		foreach(sl, force)
+		{
+			Index		ref = lfirst_int(sl);
+			SortGroupClause *cl = get_sortgroupref_clause(ref, parse->groupClause);
 
-		new_groupclause = lappend(new_groupclause, cl);
+			new_groupclause = lappend(new_groupclause, cl);
+		}
+
+		return new_groupclause;
 	}
+
+	/* If no ORDER BY, nothing useful to do here */
+	if (parse->sortClause == NIL)
+		return list_copy(parse->groupClause);
+
+	/*
+	 * Scan the ORDER BY clause and construct a list of matching GROUP BY
+	 * items, but only as far as we can make a matching prefix.
+	 *
+	 * This code assumes that the sortClause contains no duplicate items.
+	 */
+	foreach(sl, parse->sortClause)
+	{
+		SortGroupClause *sc = lfirst_node(SortGroupClause, sl);
+
+		foreach(gl, parse->groupClause)
+		{
+			SortGroupClause *gc = lfirst_node(SortGroupClause, gl);
+
+			if (equal(gc, sc))
+			{
+				new_groupclause = lappend(new_groupclause, gc);
+				break;
+			}
+		}
+		if (gl == NULL)
+			break;				/* no match, so stop scanning */
+	}
+
+
+	/* If no match at all, no point in reordering GROUP BY */
+	if (new_groupclause == NIL)
+		return list_copy(parse->groupClause);
+
+	/*
+	 * Add any remaining GROUP BY items to the new list.  We don't require a
+	 * complete match, because even partial match allows ORDER BY to be
+	 * implemented using incremental sort.  Also, give up if there are any
+	 * non-sortable GROUP BY items, since then there's no hope anyway.
+	 */
+	foreach(gl, parse->groupClause)
+	{
+		SortGroupClause *gc = lfirst_node(SortGroupClause, gl);
+
+		if (list_member_ptr(new_groupclause, gc))
+			continue;			/* it matched an ORDER BY item */
+		if (!OidIsValid(gc->sortop))	/* give up, GROUP BY can't be sorted */
+			return list_copy(parse->groupClause);
+		new_groupclause = lappend(new_groupclause, gc);
+	}
+
+	/* Success --- install the rearranged GROUP BY list */
+	Assert(list_length(parse->groupClause) == list_length(new_groupclause));
 	return new_groupclause;
 }
 
@@ -4170,7 +4252,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 			{
 				rollup = makeNode(RollupData);
 
-				rollup->groupClause = groupclause_apply_groupingset(root, gset);
+				rollup->groupClause = preprocess_groupclause(root, gset);
 				rollup->gsets_data = list_make1(gs);
 				rollup->gsets = remap_to_groupclause_idx(rollup->groupClause,
 														 rollup->gsets_data,
@@ -4359,7 +4441,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 
 			Assert(gs->set != NIL);
 
-			rollup->groupClause = groupclause_apply_groupingset(root, gs->set);
+			rollup->groupClause = preprocess_groupclause(root, gs->set);
 			rollup->gsets_data = list_make1(gs);
 			rollup->gsets = remap_to_groupclause_idx(rollup->groupClause,
 													 rollup->gsets_data,
