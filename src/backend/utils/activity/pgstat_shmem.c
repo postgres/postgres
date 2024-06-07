@@ -780,7 +780,11 @@ pgstat_drop_entry_internal(PgStatShared_HashEntry *shent,
 	 * backends to release their references.
 	 */
 	if (shent->dropped)
-		elog(ERROR, "can only drop stats once");
+		elog(ERROR,
+			 "trying to drop stats entry already dropped: kind=%s dboid=%u objoid=%u refcount=%u",
+			 pgstat_get_kind_info(shent->key.kind)->name,
+			 shent->key.dboid, shent->key.objoid,
+			 pg_atomic_read_u32(&shent->refcount));
 	shent->dropped = true;
 
 	/* release refcount marking entry as not dropped */
