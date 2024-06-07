@@ -1041,6 +1041,27 @@ SELECT * FROM ft1 t1 WHERE t1.c1 === t1.c2 order by t1.c2 limit 1;
   1 |  1 | 00001 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
 (1 row)
 
+-- Ensure we don't ship FETCH FIRST .. WITH TIES
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c2 FROM ft1 t1 WHERE t1.c1 > 960 ORDER BY t1.c2 FETCH FIRST 2 ROWS WITH TIES;
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Limit
+   Output: c2
+   ->  Foreign Scan on public.ft1 t1
+         Output: c2
+         Remote SQL: SELECT c2 FROM "S 1"."T 1" WHERE (("C 1" > 960)) ORDER BY c2 ASC NULLS LAST
+(5 rows)
+
+SELECT t1.c2 FROM ft1 t1 WHERE t1.c1 > 960 ORDER BY t1.c2 FETCH FIRST 2 ROWS WITH TIES;
+ c2 
+----
+  0
+  0
+  0
+  0
+(4 rows)
+
 -- check schema-qualification of regconfig constant
 CREATE TEXT SEARCH CONFIGURATION public.custom_search
   (COPY = pg_catalog.english);
