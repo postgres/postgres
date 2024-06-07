@@ -1946,6 +1946,38 @@ if cc.get_id() == 'msvc'
 endif
 
 
+# Compute flags that are built into Meson.  We need these to
+# substitute into Makefile.global and for pg_config.  We only compute
+# the flags for Unix-style compilers, since that's the only style that
+# would use Makefile.global or pg_config.
+
+# We don't use get_option('warning_level') here, because the other
+# warning levels are not useful with PostgreSQL source code.
+common_builtin_flags = ['-Wall']
+
+if get_option('debug')
+  common_builtin_flags += ['-g']
+endif
+
+optimization = get_option('optimization')
+if optimization == '0'
+  common_builtin_flags += ['-O0']
+elif optimization == '1'
+  common_builtin_flags += ['-O1']
+elif optimization == '2'
+  common_builtin_flags += ['-O2']
+elif optimization == '3'
+  common_builtin_flags += ['-O3']
+elif optimization == 's'
+  common_builtin_flags += ['-Os']
+endif
+
+cflags_builtin = cc.get_supported_arguments(common_builtin_flags)
+if llvm.found()
+  cxxflags_builtin = cpp.get_supported_arguments(common_builtin_flags)
+endif
+
+
 
 ###############################################################
 # Atomics
