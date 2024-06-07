@@ -742,7 +742,9 @@ int SPI_execute_extended(const char *<parameter>command</parameter>,
     <listitem>
      <para>
       <literal>true</literal> allows non-atomic execution of CALL and DO
-      statements
+      statements (but this field is ignored unless
+      the <symbol>SPI_OPT_NONATOMIC</symbol> flag was passed
+      to <function>SPI_connect_ext</function>)
      </para>
     </listitem>
    </varlistentry>
@@ -1883,7 +1885,9 @@ int SPI_execute_plan_extended(SPIPlanPtr <parameter>plan</parameter>,
     <listitem>
      <para>
       <literal>true</literal> allows non-atomic execution of CALL and DO
-      statements
+      statements (but this field is ignored unless
+      the <symbol>SPI_OPT_NONATOMIC</symbol> flag was passed
+      to <function>SPI_connect_ext</function>)
      </para>
     </listitem>
    </varlistentry>
