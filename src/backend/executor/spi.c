@@ -2204,11 +2204,17 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	uint64		my_processed = 0;
 	SPITupleTable *my_tuptable = NULL;
 	int			res = 0;
-	bool		allow_nonatomic = plan->no_snapshots;	/* legacy API name */
+	bool		allow_nonatomic;
 	bool		pushed_active_snap = false;
 	ErrorContextCallback spierrcontext;
 	CachedPlan *cplan = NULL;
 	ListCell   *lc1;
+
+	/*
+	 * We allow nonatomic behavior only if plan->no_snapshots is set
+	 * *and* the SPI_OPT_NONATOMIC flag was given when connecting.
+	 */
+	allow_nonatomic = plan->no_snapshots && !_SPI_current->atomic;
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -2227,12 +2233,17 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	 * snapshot != InvalidSnapshot, read_only = false: use the given snapshot,
 	 * modified by advancing its command ID before each querytree.
 	 *
-	 * snapshot == InvalidSnapshot, read_only = true: use the entry-time
-	 * ActiveSnapshot, if any (if there isn't one, we run with no snapshot).
+	 * snapshot == InvalidSnapshot, read_only = true: do nothing for queries
+	 * that require no snapshot.  For those that do, ensure that a Portal
+	 * snapshot exists; then use that, or use the entry-time ActiveSnapshot if
+	 * that exists and is different.
 	 *
-	 * snapshot == InvalidSnapshot, read_only = false: take a full new
-	 * snapshot for each user command, and advance its command ID before each
-	 * querytree within the command.
+	 * snapshot == InvalidSnapshot, read_only = false: do nothing for queries
+	 * that require no snapshot.  For those that do, ensure that a Portal
+	 * snapshot exists; then, in atomic execution (!allow_nonatomic) take a
+	 * full new snapshot for each user command, and advance its command ID
+	 * before each querytree within the command.  In allow_nonatomic mode we
+	 * just use the Portal snapshot unmodified.
 	 *
 	 * In the first two cases, we can just push the snap onto the stack once
 	 * for the whole plan list.
@@ -2242,7 +2253,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 	 */
 	if (snapshot != InvalidSnapshot)
 	{
-		Assert(!allow_nonatomic);
+		/* this intentionally tests the plan field not the derived value */
+		Assert(!plan->no_snapshots);
 		if (read_only)
 		{
 			PushActiveSnapshot(snapshot);
@@ -2427,14 +2439,13 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				QueryCompletion qc;
 
 				/*
-				 * If the SPI context is atomic, or we were not told to allow
-				 * nonatomic operations, tell ProcessUtility this is an atomic
-				 * execution context.
+				 * If we're not allowing nonatomic operations, tell
+				 * ProcessUtility this is an atomic execution context.
 				 */
-				if (_SPI_current->atomic || !allow_nonatomic)
-					context = PROCESS_UTILITY_QUERY;
-				else
+				if (allow_nonatomic)
 					context = PROCESS_UTILITY_QUERY_NONATOMIC;
+				else
+					context = PROCESS_UTILITY_QUERY;
 
 				InitializeQueryCompletion(&qc);
 				ProcessUtility(stmt,
