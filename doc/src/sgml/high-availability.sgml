@@ -1488,6 +1488,15 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    <para>
+    If you have opted for logical replication slot synchronization (see
+    <xref linkend="logicaldecoding-replication-slots-synchronization"/>),
+    then before switching to the standby server, it is recommended to check
+    if the logical slots synchronized on the standby server are ready
+    for failover. This can be done by following the steps described in
+    <xref linkend="logical-replication-failover"/>.
+   </para>
+
+   <para>
     To trigger failover of a log-shipping standby server, run
     <command>pg_ctl promote</command> or call <function>pg_promote()</function>.
     If you're setting up reporting servers that are only used to offload

@@ -687,6 +687,100 @@ ALTER SUBSCRIPTION
 
  </sect1>
 
+ <sect1 id="logical-replication-failover">
+  <title>Logical Replication Failover</title>
+
+  <para>
+   To allow subscriber nodes to continue replicating data from the publisher
+   node even when the publisher node goes down, there must be a physical standby
+   corresponding to the publisher node. The logical slots on the primary server
+   corresponding to the subscriptions can be synchronized to the standby server by
+   specifying <literal>failover = true</literal> when creating subscriptions. See
+   <xref linkend="logicaldecoding-replication-slots-synchronization"/> for details.
+   Enabling the
+   <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
+   parameter ensures a seamless transition of those subscriptions after the
+   standby is promoted. They can continue subscribing to publications on the
+   new primary server without losing data. Note that in the case of
+   asynchronous replication, there remains a risk of data loss for transactions
+   committed on the former primary server but have yet to be replicated to the new
+   primary server.
+  </para>
+
+  <para>
+   Because the slot synchronization logic copies asynchronously, it is
+   necessary to confirm that replication slots have been synced to the standby
+   server before the failover happens. To ensure a successful failover, the
+   standby server must be ahead of the subscriber. This can be achieved by
+   configuring
+   <link linkend="guc-standby-slot-names"><varname>standby_slot_names</varname></link>.
+  </para>
+
+  <para>
+   To confirm that the standby server is indeed ready for failover, follow these
+   steps to verify that all necessary logical replication slots have been
+   synchronized to the standby server:
+  </para>
+
+  <procedure>
+   <step performance="required">
+    <para>
+     On the subscriber node, use the following SQL to identify which slots
+     should be synced to the standby that we plan to promote. This query will
+     return the relevant replication slots, including the main slots and table
+     synchronization slots associated with the failover-enabled subscriptions.
+     Note that the table sync slot should be synced to the standby server only
+     if the table copy is finished (See <xref linkend="catalog-pg-subscription-rel"/>).
+     We don't need to ensure that the table sync slots are synced in other scenarios
+     as they will either be dropped or re-created on the new primary server in those
+     cases.
+<programlisting>
+test_sub=# SELECT
+               array_agg(slot_name) AS slots
+           FROM
+           ((
+               SELECT r.srsubid AS subid, CONCAT('pg_', srsubid, '_sync_', srrelid, '_', ctl.system_identifier) AS slot_name
+               FROM pg_control_system() ctl, pg_subscription_rel r, pg_subscription s
+               WHERE r.srsubstate = 'f' AND s.oid = r.srsubid AND s.subfailover
+           ) UNION (
+               SELECT s.oid AS subid, s.subslotname as slot_name
+               FROM pg_subscription s
+               WHERE s.subfailover
+           ))
+           WHERE slot_name IS NOT NULL;
+ slots
+-------
+ {sub1,sub2,sub3}
+(1 row)
+</programlisting></para>
+   </step>
+   <step performance="required">
+    <para>
+     Check that the logical replication slots identified above exist on
+     the standby server and are ready for failover.
+<programlisting>
+test_standby=# SELECT slot_name, (synced AND NOT temporary AND NOT conflicting) AS failover_ready
+               FROM pg_replication_slots
+               WHERE slot_name IN ('sub1','sub2','sub3');
+  slot_name  | failover_ready
+-------------+----------------
+  sub1       | t
+  sub2       | t
+  sub3       | t
+(3 rows)
+</programlisting></para>
+    </step>
+  </procedure>
+
+  <para>
+   If all the slots are present on the standby server and the result
+   (<literal>failover_ready</literal>) of the above SQL query is true, then
+   existing subscriptions can continue subscribing to publications now on the
+   new primary server without losing data.
+  </para>
+
+ </sect1>
+
  <sect1 id="logical-replication-row-filter">
   <title>Row Filters</title>
 
