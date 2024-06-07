@@ -560,8 +560,8 @@
       <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       An identifier of the data type descriptor of the column, unique
-       among the data type descriptors pertaining to the table.  This
+       An identifier of the data type descriptor of the attribute, unique
+       among the data type descriptors pertaining to the composite type.  This
        is mainly useful for joining with other instances of such
        identifiers.  (The specific format of the identifier is not
        defined and not guaranteed to remain the same in future
