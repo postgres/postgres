@@ -352,8 +352,11 @@ cash_out(PG_FUNCTION_ARGS)
 
 	if (value < 0)
 	{
-		/* make the amount positive for digit-reconstruction loop */
-		value = -value;
+		/*
+		 * make the amount positive for digit-reconstruction loop, we can
+		 * leave INT64_MIN unchanged
+		 */
+		pg_neg_s64_overflow(value, &value);
 		/* set up formatting data */
 		signsymbol = (*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-";
 		sign_posn = lconvert->n_sign_posn;
