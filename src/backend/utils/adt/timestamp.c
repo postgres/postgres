@@ -618,19 +618,8 @@ make_timestamp_internal(int year, int month, int day,
 	time = (((hour * MINS_PER_HOUR + min) * SECS_PER_MINUTE)
 			* USECS_PER_SEC) + (int64) rint(sec * USECS_PER_SEC);
 
-	result = date * USECS_PER_DAY + time;
-	/* check for major overflow */
-	if ((result - time) / USECS_PER_DAY != date)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range: %d-%02d-%02d %d:%02d:%02g",
-						year, month, day,
-						hour, min, sec)));
-
-	/* check for just-barely overflow (okay except time-of-day wraps) */
-	/* caution: we want to allow 1999-12-31 24:00:00 */
-	if ((result < 0 && date > 0) ||
-		(result > 0 && date < -1))
+	if (pg_mul_s64_overflow(date, USECS_PER_DAY, &result) ||
+		pg_add_s64_overflow(result, time, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range: %d-%02d-%02d %d:%02d:%02g",
@@ -2010,17 +1999,8 @@ tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *result)
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 
-	*result = date * USECS_PER_DAY + time;
-	/* check for major overflow */
-	if ((*result - time) / USECS_PER_DAY != date)
-	{
-		*result = 0;			/* keep compiler quiet */
-		return -1;
-	}
-	/* check for just-barely overflow (okay except time-of-day wraps) */
-	/* caution: we want to allow 1999-12-31 24:00:00 */
-	if ((*result < 0 && date > 0) ||
-		(*result > 0 && date < -1))
+	if (pg_mul_s64_overflow(date, USECS_PER_DAY, result) ||
+		pg_add_s64_overflow(*result, time, result))
 	{
 		*result = 0;			/* keep compiler quiet */
 		return -1;

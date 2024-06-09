@@ -424,3 +424,7 @@ select age(timestamp 'infinity', timestamp 'infinity');
 select age(timestamp 'infinity', timestamp '-infinity');
 select age(timestamp '-infinity', timestamp 'infinity');
 select age(timestamp '-infinity', timestamp '-infinity');
+
+-- test timestamp near POSTGRES_EPOCH_JDATE
+select timestamp '1999-12-31 24:00:00';
+select make_timestamp(1999, 12, 31, 24, 0, 0);

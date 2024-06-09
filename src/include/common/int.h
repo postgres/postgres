@@ -32,6 +32,9 @@
  * - If a * b overflows, return true, otherwise store the result of a * b
  * into *result. The content of *result is implementation defined in case of
  * overflow.
+ * - If -a overflows, return true and leave *result unchanged, otherwise
+ * store the result of -a into *result.
+ * - Return the absolute value of a as an unsigned integer of the same width.
  *---------
  */
 
@@ -154,6 +157,12 @@ pg_mul_s32_overflow(int32 a, int32 b, int32 *result)
 #endif
 }
 
+static inline uint32
+pg_abs_s32(int32 a)
+{
+	return a < 0 ? 0 - (uint32) a : (uint32) a;
+}
+
 /*
  * INT64
  */
@@ -258,6 +267,26 @@ pg_mul_s64_overflow(int64 a, int64 b, int64 *result)
 #endif
 }
 
+static inline bool
+pg_neg_s64_overflow(int64 a, int64 *result)
+{
+	if (unlikely(a == PG_INT64_MIN))
+	{
+		return true;
+	}
+	else
+	{
+		*result = -a;
+		return false;
+	}
+}
+
+static inline uint64
+pg_abs_s64(int64 a)
+{
+	return a < 0 ? 0 - (uint64) a : (uint64) a;
+}
+
 /*------------------------------------------------------------------------
  * Overflow routines for unsigned integers
  *------------------------------------------------------------------------
@@ -318,6 +347,25 @@ pg_mul_u16_overflow(uint16 a, uint16 b, uint16 *result)
 #endif
 }
 
+static inline bool
+pg_neg_u16_overflow(uint16 a, int16 *result)
+{
+	if (unlikely(a > ((uint16) PG_INT16_MAX) + 1))
+	{
+		return true;
+	}
+	else if (unlikely(a == ((uint16) PG_INT16_MAX) + 1))
+	{
+		*result = PG_INT16_MIN;
+		return false;
+	}
+	else
+	{
+		*result = -((int16) a);
+		return false;
+	}
+}
+
 /*
  * INT32
  */
@@ -371,6 +419,25 @@ pg_mul_u32_overflow(uint32 a, uint32 b, uint32 *result)
 	*result = (uint32) res;
 	return false;
 #endif
+}
+
+static inline bool
+pg_neg_u32_overflow(uint32 a, int32 *result)
+{
+	if (unlikely(a > ((uint32) PG_INT32_MAX) + 1))
+	{
+		return true;
+	}
+	else if (unlikely(a == ((uint32) PG_INT32_MAX) + 1))
+	{
+		*result = PG_INT32_MIN;
+		return false;
+	}
+	else
+	{
+		*result = -((int32) a);
+		return false;
+	}
 }
 
 /*
@@ -436,6 +503,25 @@ pg_mul_u64_overflow(uint64 a, uint64 b, uint64 *result)
 	*result = res;
 	return false;
 #endif
+}
+
+static inline bool
+pg_neg_u64_overflow(uint64 a, int64 *result)
+{
+	if (unlikely(a > ((uint64) PG_INT64_MAX) + 1))
+	{
+		return true;
+	}
+	else if (unlikely(a == ((uint64) PG_INT64_MAX) + 1))
+	{
+		*result = PG_INT64_MIN;
+		return false;
+	}
+	else
+	{
+		*result = -((int64) a);
+		return false;
+	}
 }
 
 /*------------------------------------------------------------------------

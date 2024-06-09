@@ -11,6 +11,7 @@
 #error -ffast-math is known to break this code
 #endif
 
+#include "common/int.h"
 #include "dt.h"
 #include "pgtypes_date.h"
 #include "pgtypes_timestamp.h"
@@ -48,14 +49,8 @@ tm2timestamp(struct tm *tm, fsec_t fsec, int *tzp, timestamp * result)
 
 	dDate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
-	*result = (dDate * USECS_PER_DAY) + time;
-	/* check for major overflow */
-	if ((*result - time) / USECS_PER_DAY != dDate)
-		return -1;
-	/* check for just-barely overflow (okay except time-of-day wraps) */
-	/* caution: we want to allow 1999-12-31 24:00:00 */
-	if ((*result < 0 && dDate > 0) ||
-		(*result > 0 && dDate < -1))
+	if (pg_mul_s64_overflow(dDate, USECS_PER_DAY, result) ||
+		pg_add_s64_overflow(*result, time, result))
 		return -1;
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
