@@ -8114,15 +8114,14 @@ int64_to_numericvar(int64 val, NumericVar *var)
 
 	/* int64 can require at most 19 decimal digits; add one for safety */
 	alloc_var(var, 20 / DEC_DIGITS);
+	uval = pg_abs_s64(val);
 	if (val < 0)
 	{
 		var->sign = NUMERIC_NEG;
-		uval = -val;
 	}
 	else
 	{
 		var->sign = NUMERIC_POS;
-		uval = val;
 	}
 	var->dscale = 0;
 	if (val == 0)
@@ -11443,7 +11442,7 @@ power_var_int(const NumericVar *base, int exp, int exp_dscale,
 	 * Now we can proceed with the multiplications.
 	 */
 	neg = (exp < 0);
-	mask = abs(exp);
+	mask = pg_abs_s32(exp);
 
 	init_var(&base_prod);
 	set_var_from_var(base, &base_prod);

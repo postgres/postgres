@@ -3286,3 +3286,16 @@ SELECT age(timestamptz '-infinity', timestamptz 'infinity');
 
 SELECT age(timestamptz '-infinity', timestamptz '-infinity');
 ERROR:  interval out of range
+-- test timestamp near POSTGRES_EPOCH_JDATE
+select timestamptz '1999-12-31 24:00:00';
+         timestamptz          
+------------------------------
+ Sat Jan 01 00:00:00 2000 PST
+(1 row)
+
+select make_timestamptz(1999, 12, 31, 24, 0, 0);
+       make_timestamptz       
+------------------------------
+ Sat Jan 01 00:00:00 2000 PST
+(1 row)
+
