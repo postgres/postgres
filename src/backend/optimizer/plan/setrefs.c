@@ -2775,11 +2775,11 @@ build_tlist_index_other_vars(List *tlist, int ignore_rel)
  * Also ensure that varnosyn is incremented by rtoffset.
  * If no match, return NULL.
  *
- * In debugging builds, we cross-check the varnullingrels of the subplan
- * output Var based on nrm_match.  Most call sites should pass NRM_EQUAL
- * indicating we expect an exact match.  However, there are places where
- * we haven't cleaned things up completely, and we have to settle for
- * allowing subset or superset matches.
+ * We cross-check the varnullingrels of the subplan output Var based on
+ * nrm_match.  Most call sites should pass NRM_EQUAL indicating we expect
+ * an exact match.  However, there are places where we haven't cleaned
+ * things up completely, and we have to settle for allowing subset or
+ * superset matches.
  */
 static Var *
 search_indexed_tlist_for_var(Var *var, indexed_tlist *itlist,
