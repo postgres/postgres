@@ -866,13 +866,14 @@ PostgreSQL documentation
         same rules as the corresponding options:
         <option>-t</option>/<option>--table</option>,
         <option>--table-and-children</option>,
-        <option>--exclude-table-and-children</option> or
-        <option>-T</option> for tables,
-        <option>-n</option>/<option>--schema</option> for schemas,
+        <option>-T</option>/<option>--exclude-table</option>, and
+        <option>--exclude-table-and-children</option> for tables,
+        <option>-n</option>/<option>--schema</option> and
+        <option>-N</option>/<option>--exclude-schema</option> for schemas,
         <option>--include-foreign-data</option> for data on foreign servers,
-        <option>--exclude-table-data</option>,
+        <option>--exclude-table-data</option> and
         <option>--exclude-table-data-and-children</option> for table data, and
-        <option>-e</option>/<option>--extension</option> or
+        <option>-e</option>/<option>--extension</option> and
         <option>--exclude-extension</option> for extensions.
         To read from <literal>STDIN</literal>, use <filename>-</filename> as the
         filename.  The <option>--filter</option> option can be specified in
@@ -895,34 +896,37 @@ PostgreSQL documentation
         <itemizedlist>
          <listitem>
           <para>
-           <literal>extension</literal>: extensions, works like the
-           <option>-e</option>/<option>--extension</option> option.
+           <literal>extension</literal>: extensions. This works like the
+           <option>-e</option>/<option>--extension</option> or
+           <option>--exclude-extension</option> option.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>foreign_data</literal>: data on foreign servers, works like
+           <literal>foreign_data</literal>: data on foreign servers. This works like
            the <option>--include-foreign-data</option> option. This keyword can
            only be used with the <literal>include</literal> keyword.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>table</literal>: tables, works like the
-           <option>-t</option>/<option>--table</option> option.
+           <literal>table</literal>: tables. This works like the
+           <option>-t</option>/<option>--table</option> or
+           <option>-T</option>/<option>--exclude-table</option> option.
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>table_and_children</literal>: tables including any partitions
-           or inheritance child tables, works like the
-           <option>--table-and-children</option> option.
+           or inheritance child tables. This works like the
+           <option>--table-and-children</option> or
+           <option>--exclude-table-and-children</option> option.
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>table_data</literal>: table data of any tables matching
-           <replaceable>pattern</replaceable>, works like the
+           <replaceable>pattern</replaceable>. This works like the
            <option>--exclude-table-data</option> option. This keyword can only
            be used with the <literal>exclude</literal> keyword.
           </para>
@@ -931,15 +935,16 @@ PostgreSQL documentation
           <para>
            <literal>table_data_and_children</literal>: table data of any tables
            matching <replaceable>pattern</replaceable> as well as any partitions
-           or inheritance children of the table(s), works like the
+           or inheritance children of the table(s). This works like the
            <option>--exclude-table-data-and-children</option> option. This
            keyword can only be used with the <literal>exclude</literal> keyword.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>schema</literal>: schemas, works like the
-           <option>-n</option>/<option>--schema</option> option.
+           <literal>schema</literal>: schemas. This works like the
+           <option>-n</option>/<option>--schema</option> or
+           <option>-N</option>/<option>--exclude-schema</option> option.
           </para>
          </listitem>
         </itemizedlist>
