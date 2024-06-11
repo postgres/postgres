@@ -46,6 +46,7 @@ pg_tde_sources = files(
         'src/common/pg_tde_utils.c',
         'src/pg_tde_defs.c',
         'src/pg_tde.c',
+        'src/pg_tde_event_capture.c',
 )
 
 incdir = include_directories('src/include', '.')

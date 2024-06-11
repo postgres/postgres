@@ -131,3 +131,21 @@ COMMENT ON ACCESS METHOD pg_tde IS 'pg_tde table access method';
 
 -- Per database extension initialization
 SELECT pg_tde_extension_initialize();
+
+CREATE OR REPLACE FUNCTION pg_tde_ddl_command_start_capture()
+RETURNS event_trigger
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION pg_tde_ddl_command_end_capture()
+RETURNS event_trigger
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE EVENT TRIGGER pg_tde_trigger_create_index
+ON ddl_command_start
+EXECUTE FUNCTION pg_tde_ddl_command_start_capture();
+
+CREATE EVENT TRIGGER pg_tde_trigger_create_index_2
+ON ddl_command_end
+EXECUTE FUNCTION pg_tde_ddl_command_end_capture();
