@@ -38,8 +38,6 @@
 #define pgstat_count_pg_tde_insert pgstat_count_heap_insert
 #define pg_tde_getattr heap_getattr
 
-#define GetPGTdeamTableAmRoutine GetHeapamTableAmRoutine
-
 #define TDE_PageAddItem(rel, oid, blkno, page, item, size, offsetNumber, overwrite, is_heap) \
 	PGTdePageAddItemExtended(rel, oid, blkno, page, item, size, offsetNumber, \
 						((overwrite) ? PAI_OVERWRITE : 0) | \

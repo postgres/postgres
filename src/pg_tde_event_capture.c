@@ -105,7 +105,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		tdeCurrentCreateEvent.relation = stmt->relation;
 
 		elog(DEBUG1, "CREATING TABLE %s Using Access Method %s", stmt->relation->relname, stmt->accessMethod);
-		if (stmt->accessMethod && !strcmp(stmt->accessMethod, "pg_tde"))
+		if (stmt->accessMethod && !strcmp(stmt->accessMethod, "pg_tde2"))
 		{
 			tdeCurrentCreateEvent.encryptMode = true;
 		}

@@ -5,13 +5,71 @@
 #include "storage/md.h"
 #include "catalog/catalog.h"
 #include "encryption/enc_aes.h"
+#include "access/pg_tde_tdemap.h"
+#include "pg_tde_event_capture.h"
 
 #if PG_VERSION_NUM >= 170000
 
-// TODO: implement proper key/IV
-static char key[16] = {0,};
-// iv should be based on blocknum, available in the API
+// TODO: implement proper IV
+// iv should be based on blocknum + relfile, available in the API
 static char iv[16] = {0,};
+
+static RelKeyData*
+tde_smgr_get_key(SMgrRelation reln)
+{
+	// TODO: This recursion counter is a dirty hack until the metadata is in the catalog
+	// As otherwise we would call GetMasterKey recursively and deadlock
+	static int recursion = 0;
+
+    ereport(NOTICE,
+          (errmsg("Trying to decide if table is encrypted: %u", reln->smgr_rlocator.locator.relNumber)));
+
+
+	if(IsCatalogRelationOid(reln->smgr_rlocator.locator.relNumber))
+	{
+		// do not try to encrypt/decrypt catalog tables
+		return NULL;
+	}
+
+	if(recursion != 0) 
+	{
+		return NULL;
+	}
+
+	recursion++;
+
+
+	if(GetMasterKey(reln->smgr_rlocator.locator.relNumber)==NULL)
+	{
+		recursion--;
+		return NULL;
+	}
+
+	TdeCreateEvent* event = GetCurrentTdeCreateEvent();
+
+	// if this is a CREATE TABLE, we have to generate the key
+	if(event->encryptMode == true && event->eventType == TDE_TABLE_CREATE_EVENT)
+	{
+		recursion--;
+		return pg_tde_create_key_map_entry(&reln->smgr_rlocator.locator);
+	}
+	
+	// if this is a CREATE INDEX, we have to load the key based on the table
+	if(event->encryptMode == true && event->eventType == TDE_INDEX_CREATE_EVENT)
+	{
+		// For now keep it simple and create separate key for indexes
+		// Later we might modify the map infrastructure to support the same keys
+		recursion--;
+		return pg_tde_create_key_map_entry(&reln->smgr_rlocator.locator);
+	}
+
+	// otherwise, see if we have a key for the relation, and return if yes
+	RelKeyData* rkd = GetRelationKey(reln->smgr_rlocator.locator);
+
+	recursion--;
+
+	return rkd;
+}
 
 void
 tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
@@ -23,13 +81,10 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	char* local_blocks_aligned = (char*)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 	const void** local_buffers = malloc ( sizeof(void*) * nblocks );
 
-	// TODO: add check to only encrypt/decrypt tables with specific AM/DB?
+	RelKeyData* rkd = tde_smgr_get_key(reln);
 
-	if(IsCatalogRelationOid(reln->smgr_rlocator.locator.spcOid))
+	if(rkd == NULL)
 	{
-		// Don't try to encrypt catalog tables:
-		// Issues with bootstrap and encryption metadata
-
 		mdwritev(reln, forknum, blocknum, buffers, nblocks, skipFsync);
 
 		return;
@@ -39,7 +94,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	{
 		local_buffers[i] = &local_blocks_aligned[i*BLCKSZ];	
 		int out_len = BLCKSZ;
-		AesEncrypt(key, iv, ((char**)buffers)[i], BLCKSZ, local_buffers[i], &out_len);
+		AesEncrypt(rkd->internal_key.key, iv, ((char**)buffers)[i], BLCKSZ, local_buffers[i], &out_len);
 	}
 
 	mdwritev(reln, forknum, blocknum,
@@ -58,19 +113,17 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	char* local_blocks = malloc( BLCKSZ * (1+1) );
 	char* local_blocks_aligned = (char*)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 
-	// TODO: add check to only encrypt/decrypt tables with specific AM/DB?
+	RelKeyData* rkd = tde_smgr_get_key(reln);
 
-	if(IsCatalogRelationOid(reln->smgr_rlocator.locator.spcOid))
+	if(rkd == NULL)
 	{
-		// Don't try to encrypt catalog tables:
-		// Issues with bootstrap and encryption metadata
 		mdextend(reln, forknum, blocknum, buffer, skipFsync);
 
 		return;
 	}
 
 	int out_len = BLCKSZ;
-	AesEncrypt(key, iv, ((char*)buffer), BLCKSZ, local_blocks_aligned, &out_len);
+	AesEncrypt(rkd->internal_key.key, iv, ((char*)buffer), BLCKSZ, local_blocks_aligned, &out_len);
 
 	mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
 
@@ -86,10 +139,9 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
 
-	// TODO: add check to only encrypt/decrypt tables with specific AM/DB?
+	RelKeyData* rkd = tde_smgr_get_key(reln);
 
-	// Don't try to decrypt catalog tables, those are not encrypted
-	if(IsCatalogRelationOid(reln->smgr_rlocator.locator.spcOid))
+	if(rkd == NULL)
 	{
 		return;
 	}
@@ -113,12 +165,22 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		if(allZero) continue;
 
 		int out_len = BLCKSZ;
-		AesDecrypt(key, iv, ((char**)buffers)[i], BLCKSZ, ((char**)buffers)[i], &out_len);
+		AesDecrypt(rkd->internal_key.key, iv, ((char**)buffers)[i], BLCKSZ, ((char**)buffers)[i], &out_len);
 	}
-
-	// And now decrypt buffers in place
-	// We check the first few bytes of the page: if all zero, we assume it is zero and keep it as is
 }
+
+void
+tde_mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
+{
+	// This is the only function that gets called during actual CREATE TABLE/INDEX (EVENT TRIGGER)
+	// so we create the key here by loading it
+	// Later calls then decide to encrypt or not based on the existence of the key
+	 tde_smgr_get_key(reln);
+
+	return mdcreate(reln, forknum, isRedo);
+}
+
+
 static SMgrId tde_smgr_id;
 static const struct f_smgr tde_smgr = {
 	.name = "tde",
@@ -126,7 +188,7 @@ static const struct f_smgr tde_smgr = {
 	.smgr_shutdown = NULL,
 	.smgr_open = mdopen,
 	.smgr_close = mdclose,
-	.smgr_create = mdcreate,
+	.smgr_create = tde_mdcreate,
 	.smgr_exists = mdexists,
 	.smgr_unlink = mdunlink,
 	.smgr_extend = tde_mdextend,

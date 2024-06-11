@@ -214,14 +214,13 @@ save_master_key_info(TDEMasterKeyInfo *master_key_info)
  * throws an error.
  */
 TDEMasterKey *
-GetMasterKey(void)
+GetMasterKey(Oid dbOid)
 {
     TDEMasterKey *masterKey = NULL;
     TDEMasterKeyInfo *masterKeyInfo = NULL;
     GenericKeyring *keyring = NULL;
     const keyInfo *keyInfo = NULL;
     KeyringReturnCodes keyring_ret;
-    Oid dbOid = MyDatabaseId;
     LWLock *lock_files = tde_lwlock_mk_files();
     LWLock *lock_cache = tde_lwlock_mk_cache();
 
@@ -255,9 +254,6 @@ GetMasterKey(void)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
-        ereport(ERROR,
-                (errmsg("Master key does not exists for the database"),
-                 errhint("Use set_master_key interface to set the master key")));
         return NULL;
     }
 
@@ -268,8 +264,6 @@ GetMasterKey(void)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
-        ereport(ERROR,
-                (errmsg("Key provider with ID:\"%d\" does not exists", masterKeyInfo->keyringId)));
         return NULL;
     }
 
@@ -279,8 +273,6 @@ GetMasterKey(void)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
-        ereport(ERROR,
-                (errmsg("failed to retrieve master key \"%s\" from keyring.", masterKeyInfo->keyId.versioned_name)));
         return NULL;
     }
 
@@ -404,7 +396,7 @@ SetMasterKey(const char *key_name, const char *provider_name, bool ensure_new_ke
 bool
 RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool ensure_new_key)
 {
-    TDEMasterKey *master_key = GetMasterKey();
+    TDEMasterKey *master_key = GetMasterKey(MyDatabaseId);
     TDEMasterKey new_master_key;
     const keyInfo *keyInfo = NULL;
     GenericKeyring *keyring;
@@ -737,7 +729,7 @@ Datum pg_tde_master_key_info(PG_FUNCTION_ARGS)
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                     errmsg("function returning record called in context that cannot accept type record")));
 
-    master_key = GetMasterKey();
+    master_key = GetMasterKey(MyDatabaseId);
     if (master_key == NULL)
         PG_RETURN_NULL();
 

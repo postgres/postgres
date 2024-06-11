@@ -87,6 +87,12 @@ RETURNS table_am_handler
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
+-- Table access method
+CREATE FUNCTION pg_tde2am_handler(internal)
+RETURNS table_am_handler
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
 CREATE FUNCTION pgtde_is_encrypted(table_name VARCHAR)
 RETURNS boolean
 AS $$
@@ -128,6 +134,9 @@ CREATE FUNCTION pg_tde_version() RETURNS TEXT AS 'MODULE_PATHNAME' LANGUAGE C;
 -- Access method
 CREATE ACCESS METHOD pg_tde TYPE TABLE HANDLER pg_tdeam_handler;
 COMMENT ON ACCESS METHOD pg_tde IS 'pg_tde table access method';
+
+CREATE ACCESS METHOD pg_tde2 TYPE TABLE HANDLER pg_tde2am_handler;
+COMMENT ON ACCESS METHOD pg_tde2 IS 'pg_tde2 table access method';
 
 -- Per database extension initialization
 SELECT pg_tde_extension_initialize();

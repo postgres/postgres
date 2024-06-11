@@ -46,12 +46,11 @@ typedef struct XLogRelKey
 	RelKeyData      relKey;
 } XLogRelKey;
 
-extern void pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel);
+extern RelKeyData* pg_tde_create_key_map_entry(const RelFileLocator *newrlocator);
 extern void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_key_data, TDEMasterKeyInfo *master_key_info);
 extern void pg_tde_delete_key_map_entry(const RelFileLocator *rlocator);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset);
 
-extern RelKeyData *pg_tde_get_key_from_fork(const RelFileLocator *rlocator);
 extern RelKeyData *GetRelationKey(RelFileLocator rel);
 
 extern void pg_tde_cleanup_path_vars(void);

@@ -108,8 +108,8 @@ static void finalize_key_rotation(char *m_path_old, char *k_path_old, char *m_pa
 /*
  * Generate an encrypted key for the relation and store it in the keymap file.
  */
-void
-pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
+RelKeyData*
+pg_tde_create_key_map_entry(const RelFileLocator *newrlocator)
 {
 	InternalKey int_key;
 	RelKeyData *rel_key_data;
@@ -117,11 +117,14 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
 	TDEMasterKey *master_key;
 	XLogRelKey xlrec;
 
-	master_key = GetMasterKey();
+	pg_tde_set_db_file_paths(newrlocator->dbOid);
+	master_key = GetMasterKey(newrlocator->dbOid);
 	if (master_key == NULL)
 	{
 		ereport(ERROR,
 				(errmsg("failed to retrieve master key")));
+
+		return NULL;
 	}
 
 	memset(&int_key, 0, sizeof(InternalKey));
@@ -131,7 +134,9 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
 		ereport(FATAL,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("could not generate internal key for relation \"%s\": %s",
-                		RelationGetRelationName(rel), ERR_error_string(ERR_get_error(), NULL))));
+                		"TODO", ERR_error_string(ERR_get_error(), NULL))));
+
+		return NULL;
 	}
 
 	/* Encrypt the key */
@@ -152,6 +157,8 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, Relation rel)
 	 * Add the encyrpted key to the key map data file structure.
 	 */
 	pg_tde_write_key_map_entry(newrlocator, enc_rel_key_data, &master_key->keyInfo);
+
+	return rel_key_data;
 }
 
 /* Head of the key cache (linked list) */
@@ -179,7 +186,10 @@ GetRelationKey(RelFileLocator rel)
 
 	key = pg_tde_get_key_from_file(&rel);
 
-	put_key_into_map(rel.relNumber, key);
+	if (key != NULL)
+	{
+		put_key_into_map(rel.relNumber, key);
+	}
 
 	return key;
 }
@@ -269,8 +279,9 @@ static void
 pg_tde_set_db_file_paths(Oid dbOid)
 {
 	/* Return if the values are already set */
-	if (*db_path && *db_map_path && *db_keydata_path)
-		return;
+	// TODO: remove this entire global state thing
+	//if (*db_path && *db_map_path && *db_keydata_path)
+	//	return;
 
 	/* Fill in the values */
 	snprintf(db_path, MAXPGPATH, "%s", GetDatabasePath(dbOid, DEFAULTTABLESPACE_OID));
@@ -953,7 +964,8 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 	LWLockAcquire(lock_files, LW_SHARED);
 
 	/* Get/generate a master, create the key for relation and get the encrypted key with bytes to write */
-	master_key = GetMasterKey();
+	pg_tde_set_db_file_paths(rlocator->dbOid);
+	master_key = GetMasterKey(rlocator->dbOid);
 	if (master_key == NULL)
 	{
 		LWLockRelease(lock_files);
@@ -961,13 +973,15 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 				(errmsg("failed to retrieve master key")));
 	}
 
-	/* Get the file paths */
-	pg_tde_set_db_file_paths(rlocator->dbOid);
-
 	/* Read the map entry and get the index of the relation key */
 	key_index = pg_tde_process_map_entry(rlocator, db_map_path, &offset, false);
 
-	/* Add the encrypted key to the data file. */
+	if (key_index == -1)
+	{
+		LWLockRelease(lock_files);
+		return NULL;
+	}
+
 	enc_rel_key_data = pg_tde_read_keydata(db_keydata_path, key_index, master_key);
 	LWLockRelease(lock_files);
 
