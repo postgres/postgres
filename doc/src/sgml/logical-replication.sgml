@@ -1382,9 +1382,9 @@ test_sub=# SELECT * FROM child ORDER BY a;
   </para>
 
   <para>
-   If no column list is specified, any columns added later are automatically
-   replicated. This means that having a column list which names all columns
-   is not the same as having no column list at all.
+   If no column list is specified, any columns added to the table later are
+   automatically replicated. This means that having a column list which names
+   all columns is not the same as having no column list at all.
   </para>
 
   <para>
