@@ -3,6 +3,9 @@
 --
 create table insertconflicttest(key int4, fruit text);
 
+-- These things should work through a view, as well
+create view insertconflictview as select * from insertconflicttest;
+
 --
 -- Test unique index inference with operator class specifications and
 -- named collations
@@ -20,6 +23,7 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (key, fruit) do nothing;
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (fruit, key, fruit, key) do nothing;
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (lower(fruit), key, lower(fruit), key) do nothing;
+explain (costs off) insert into insertconflictview values(0, 'Crowberry') on conflict (lower(fruit), key, lower(fruit), key) do nothing;
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (key, fruit) do update set fruit = excluded.fruit
   where exists (select 1 from insertconflicttest ii where ii.key = excluded.key);
 -- Neither collation nor operator class specifications are required --
@@ -215,6 +219,7 @@ create unique index partial_key_index on insertconflicttest(key) where fruit lik
 -- Succeeds
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) where fruit like '%berry' do update set fruit = excluded.fruit;
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) where fruit like '%berry' and fruit = 'inconsequential' do nothing;
+insert into insertconflictview values (23, 'Blackberry') on conflict (key) where fruit like '%berry' and fruit = 'inconsequential' do nothing;
 
 -- fails
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) do update set fruit = excluded.fruit;
@@ -247,6 +252,7 @@ explain (costs off) insert into insertconflicttest as i values (23, 'Avocado') o
 drop index plain;
 
 -- Cleanup
+drop view insertconflictview;
 drop table insertconflicttest;
 
 
