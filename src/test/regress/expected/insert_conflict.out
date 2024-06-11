@@ -2,6 +2,8 @@
 -- insert...on conflict do unique index inference
 --
 create table insertconflicttest(key int4, fruit text);
+-- These things should work through a view, as well
+create view insertconflictview as select * from insertconflicttest;
 --
 -- Test unique index inference with operator class specifications and
 -- named collations
@@ -35,6 +37,15 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
 (4 rows)
 
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (lower(fruit), key, lower(fruit), key) do nothing;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Insert on insertconflicttest
+   Conflict Resolution: NOTHING
+   Conflict Arbiter Indexes: both_index_expr_key
+   ->  Result
+(4 rows)
+
+explain (costs off) insert into insertconflictview values(0, 'Crowberry') on conflict (lower(fruit), key, lower(fruit), key) do nothing;
                    QUERY PLAN                    
 -------------------------------------------------
  Insert on insertconflicttest
@@ -374,6 +385,7 @@ create unique index partial_key_index on insertconflicttest(key) where fruit lik
 -- Succeeds
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) where fruit like '%berry' do update set fruit = excluded.fruit;
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) where fruit like '%berry' and fruit = 'inconsequential' do nothing;
+insert into insertconflictview values (23, 'Blackberry') on conflict (key) where fruit like '%berry' and fruit = 'inconsequential' do nothing;
 -- fails
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) do update set fruit = excluded.fruit;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
@@ -439,6 +451,7 @@ explain (costs off) insert into insertconflicttest as i values (23, 'Avocado') o
 
 drop index plain;
 -- Cleanup
+drop view insertconflictview;
 drop table insertconflicttest;
 --
 -- Verify that EXCLUDED does not allow system column references. These
