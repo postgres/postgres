@@ -1874,10 +1874,8 @@ CheckPointReplicationSlots(bool is_shutdown)
 		{
 			SpinLockAcquire(&s->mutex);
 
-			Assert(s->data.confirmed_flush >= s->last_saved_confirmed_flush);
-
 			if (s->data.invalidated == RS_INVAL_NONE &&
-				s->data.confirmed_flush != s->last_saved_confirmed_flush)
+				s->data.confirmed_flush > s->last_saved_confirmed_flush)
 			{
 				s->just_dirtied = true;
 				s->dirty = true;
