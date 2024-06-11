@@ -146,16 +146,19 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	ListCell   *cell;
 	int			i,
 				nparts;
+	bool		retried = false;
 	PartitionKey key = RelationGetPartitionKey(rel);
 	MemoryContext new_pdcxt;
 	MemoryContext oldcxt;
 	int		   *mapping;
 
+retry:
+
 	/*
 	 * Get partition oids from pg_inherits.  This uses a single snapshot to
 	 * fetch the list of children, so while more children may be getting added
-	 * concurrently, whatever this function returns will be accurate as of
-	 * some well-defined point in time.
+	 * or removed concurrently, whatever this function returns will be
+	 * accurate as of some well-defined point in time.
 	 */
 	detached_exist = false;
 	detached_xmin = InvalidTransactionId;
@@ -198,18 +201,23 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 		}
 
 		/*
-		 * The system cache may be out of date; if so, we may find no pg_class
-		 * tuple or an old one where relpartbound is NULL.  In that case, try
-		 * the table directly.  We can't just AcceptInvalidationMessages() and
-		 * retry the system cache lookup because it's possible that a
-		 * concurrent ATTACH PARTITION operation has removed itself from the
-		 * ProcArray but not yet added invalidation messages to the shared
-		 * queue; InvalidateSystemCaches() would work, but seems excessive.
+		 * Two problems are possible here.  First, a concurrent ATTACH
+		 * PARTITION might be in the process of adding a new partition, but
+		 * the syscache doesn't have it, or its copy of it does not yet have
+		 * its relpartbound set.  We cannot just AcceptInvalidationMessages(),
+		 * because the other process might have already removed itself from
+		 * the ProcArray but not yet added its invalidation messages to the
+		 * shared queue.  We solve this problem by reading pg_class directly
+		 * for the desired tuple.
 		 *
-		 * Note that this algorithm assumes that PartitionBoundSpec we manage
-		 * to fetch is the right one -- so this is only good enough for
-		 * concurrent ATTACH PARTITION, not concurrent DETACH PARTITION or
-		 * some hypothetical operation that changes the partition bounds.
+		 * The other problem is that DETACH CONCURRENTLY is in the process of
+		 * removing a partition, which happens in two steps: first it marks it
+		 * as "detach pending", commits, then unsets relpartbound.  If
+		 * find_inheritance_children_extended included that partition but we
+		 * below we see that DETACH CONCURRENTLY has reset relpartbound for
+		 * it, we'd see an inconsistent view.  (The inconsistency is seen
+		 * because table_open below reads invalidation messages.)  We protect
+		 * against this by retrying find_inheritance_children_extended().
 		 */
 		if (boundspec == NULL)
 		{
@@ -233,6 +241,25 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 				boundspec = stringToNode(TextDatumGetCString(datum));
 			systable_endscan(scan);
 			table_close(pg_class, AccessShareLock);
+
+			/*
+			 * If we still don't get a relpartbound value, then it must be
+			 * because of DETACH CONCURRENTLY.  Restart from the top, as
+			 * explained above.  We only do this once, for two reasons: first,
+			 * only one DETACH CONCURRENTLY session could affect us at a time,
+			 * since each of them would have to wait for the snapshot under
+			 * which this is running; and second, to avoid possible infinite
+			 * loops in case of catalog corruption.
+			 *
+			 * Note that the current memory context is short-lived enough, so
+			 * we needn't worry about memory leaks here.
+			 */
+			if (!boundspec && !retried)
+			{
+				AcceptInvalidationMessages();
+				retried = true;
+				goto retry;
+			}
 		}
 
 		/* Sanity checks. */
