@@ -54,7 +54,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include "indent.h"
 
 static void bakcopy(void);
-static void indent_declaration(int, int);
+static void indent_declaration(int cur_dec_ind, int tabs_to_var);
 
 const char *in_name = "Standard Input";	/* will always point to name of input
 					 * file */

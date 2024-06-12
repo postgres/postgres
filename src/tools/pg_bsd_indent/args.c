@@ -68,7 +68,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #define	STDIN		3	/* use stdin */
 #define	KEY		4	/* type (keyword) */
 
-static void scan_profile(FILE *);
+static void scan_profile(FILE *f);
 
 #define	KEY_FILE		5	/* only used for args */
 #define VERSION			6	/* only used for args */
