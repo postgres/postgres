@@ -147,6 +147,13 @@ sanity_check_array(ArrayType *ta)
 }
 
 static void
+check_tidstore_available(void)
+{
+	if (tidstore == NULL)
+		elog(ERROR, "tidstore is not created");
+}
+
+static void
 purge_from_verification_array(BlockNumber blkno)
 {
 	int			dst = 0;
@@ -167,6 +174,7 @@ do_set_block_offsets(PG_FUNCTION_ARGS)
 	OffsetNumber *offs;
 	int			noffs;
 
+	check_tidstore_available();
 	sanity_check_array(ta);
 
 	noffs = ArrayGetNItems(ARR_NDIM(ta), ARR_DIMS(ta));
@@ -216,6 +224,8 @@ check_set_block_offsets(PG_FUNCTION_ARGS)
 	int			num_iter_tids = 0;
 	int			num_lookup_tids = 0;
 	BlockNumber prevblkno = 0;
+
+	check_tidstore_available();
 
 	/* lookup each member in the verification array */
 	for (int i = 0; i < items.num_tids; i++)
@@ -305,6 +315,8 @@ test_is_full(PG_FUNCTION_ARGS)
 {
 	bool		is_full;
 
+	check_tidstore_available();
+
 	is_full = (TidStoreMemoryUsage(tidstore) > tidstore_empty_size);
 
 	PG_RETURN_BOOL(is_full);
@@ -314,6 +326,8 @@ test_is_full(PG_FUNCTION_ARGS)
 Datum
 test_destroy(PG_FUNCTION_ARGS)
 {
+	check_tidstore_available();
+
 	TidStoreDestroy(tidstore);
 	tidstore = NULL;
 	items.num_tids = 0;
