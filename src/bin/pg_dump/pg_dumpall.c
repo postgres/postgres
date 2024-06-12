@@ -80,7 +80,7 @@ static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
 static void expand_dbname_patterns(PGconn *conn, SimpleStringList *patterns,
 								   SimpleStringList *names);
-static void read_dumpall_filters(const char *filename, SimpleStringList *patterns);
+static void read_dumpall_filters(const char *filename, SimpleStringList *pattern);
 
 static char pg_dump_bin[MAXPGPATH];
 static const char *progname;

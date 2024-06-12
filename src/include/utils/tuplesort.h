@@ -455,7 +455,7 @@ extern void tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup);
 extern void tuplesort_putindextuplevalues(Tuplesortstate *state,
 										  Relation rel, ItemPointer self,
 										  const Datum *values, const bool *isnull);
-extern void tuplesort_putbrintuple(Tuplesortstate *state, BrinTuple *tup, Size len);
+extern void tuplesort_putbrintuple(Tuplesortstate *state, BrinTuple *tuple, Size size);
 extern void tuplesort_putdatum(Tuplesortstate *state, Datum val,
 							   bool isNull);
 

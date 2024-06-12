@@ -88,11 +88,11 @@ static Node *transformJsonArrayQueryConstructor(ParseState *pstate,
 static Node *transformJsonObjectAgg(ParseState *pstate, JsonObjectAgg *agg);
 static Node *transformJsonArrayAgg(ParseState *pstate, JsonArrayAgg *agg);
 static Node *transformJsonIsPredicate(ParseState *pstate, JsonIsPredicate *pred);
-static Node *transformJsonParseExpr(ParseState *pstate, JsonParseExpr *expr);
-static Node *transformJsonScalarExpr(ParseState *pstate, JsonScalarExpr *expr);
+static Node *transformJsonParseExpr(ParseState *pstate, JsonParseExpr *jsexpr);
+static Node *transformJsonScalarExpr(ParseState *pstate, JsonScalarExpr *jsexpr);
 static Node *transformJsonSerializeExpr(ParseState *pstate,
 										JsonSerializeExpr *expr);
-static Node *transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *p);
+static Node *transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func);
 static void transformJsonPassingArgs(ParseState *pstate, const char *constructName,
 									 JsonFormatType format, List *args,
 									 List **passing_values, List **passing_names);

@@ -229,11 +229,11 @@ static void _brin_begin_parallel(BrinBuildState *buildstate, Relation heap, Rela
 								 bool isconcurrent, int request);
 static void _brin_end_parallel(BrinLeader *brinleader, BrinBuildState *state);
 static Size _brin_parallel_estimate_shared(Relation heap, Snapshot snapshot);
-static double _brin_parallel_heapscan(BrinBuildState *buildstate);
-static double _brin_parallel_merge(BrinBuildState *buildstate);
+static double _brin_parallel_heapscan(BrinBuildState *state);
+static double _brin_parallel_merge(BrinBuildState *state);
 static void _brin_leader_participate_as_worker(BrinBuildState *buildstate,
 											   Relation heap, Relation index);
-static void _brin_parallel_scan_and_build(BrinBuildState *buildstate,
+static void _brin_parallel_scan_and_build(BrinBuildState *state,
 										  BrinShared *brinshared,
 										  Sharedsort *sharedsort,
 										  Relation heap, Relation index,

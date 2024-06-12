@@ -146,8 +146,8 @@ extern void ResourceOwnerNewParent(ResourceOwner owner,
 								   ResourceOwner newparent);
 
 extern void ResourceOwnerEnlarge(ResourceOwner owner);
-extern void ResourceOwnerRemember(ResourceOwner owner, Datum res, const ResourceOwnerDesc *kind);
-extern void ResourceOwnerForget(ResourceOwner owner, Datum res, const ResourceOwnerDesc *kind);
+extern void ResourceOwnerRemember(ResourceOwner owner, Datum value, const ResourceOwnerDesc *kind);
+extern void ResourceOwnerForget(ResourceOwner owner, Datum value, const ResourceOwnerDesc *kind);
 
 extern void ResourceOwnerReleaseAllOfKind(ResourceOwner owner, const ResourceOwnerDesc *kind);
 

@@ -25,10 +25,10 @@
 static void copy_file_blocks(const char *src, const char *dst,
 							 pg_checksum_context *checksum_ctx);
 
-static void copy_file_clone(const char *src, const char *dst,
+static void copy_file_clone(const char *src, const char *dest,
 							pg_checksum_context *checksum_ctx);
 
-static void copy_file_by_range(const char *src, const char *dst,
+static void copy_file_by_range(const char *src, const char *dest,
 							   pg_checksum_context *checksum_ctx);
 
 #ifdef WIN32

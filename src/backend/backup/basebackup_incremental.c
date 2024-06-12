@@ -141,7 +141,7 @@ static void manifest_process_wal_range(JsonManifestParseContext *context,
 									   TimeLineID tli,
 									   XLogRecPtr start_lsn,
 									   XLogRecPtr end_lsn);
-static void manifest_report_error(JsonManifestParseContext *ib,
+static void manifest_report_error(JsonManifestParseContext *context,
 								  const char *fmt,...)
 			pg_attribute_printf(2, 3) pg_attribute_noreturn();
 static int	compare_block_numbers(const void *a, const void *b);

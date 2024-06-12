@@ -220,7 +220,7 @@ extern bool StartReadBuffer(ReadBuffersOperation *operation,
 							int flags);
 extern bool StartReadBuffers(ReadBuffersOperation *operation,
 							 Buffer *buffers,
-							 BlockNumber blocknum,
+							 BlockNumber blockNum,
 							 int *nblocks,
 							 int flags);
 extern void WaitReadBuffers(ReadBuffersOperation *operation);

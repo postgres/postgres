@@ -382,7 +382,7 @@ extern void heap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
 extern void heap_get_root_tuples(Page page, OffsetNumber *root_offsets);
 extern void log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 									  TransactionId conflict_xid,
-									  bool lp_truncate_only,
+									  bool cleanup_lock,
 									  PruneReason reason,
 									  HeapTupleFreeze *frozen, int nfrozen,
 									  OffsetNumber *redirected, int nredirected,

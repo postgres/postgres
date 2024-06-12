@@ -34,7 +34,7 @@ typedef struct bbsink_zstd
 
 static void bbsink_zstd_begin_backup(bbsink *sink);
 static void bbsink_zstd_begin_archive(bbsink *sink, const char *archive_name);
-static void bbsink_zstd_archive_contents(bbsink *sink, size_t avail_in);
+static void bbsink_zstd_archive_contents(bbsink *sink, size_t len);
 static void bbsink_zstd_manifest_contents(bbsink *sink, size_t len);
 static void bbsink_zstd_end_archive(bbsink *sink);
 static void bbsink_zstd_cleanup(bbsink *sink);

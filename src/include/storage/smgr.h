@@ -94,10 +94,10 @@ extern bool smgrprefetch(SMgrRelation reln, ForkNumber forknum,
 						 BlockNumber blocknum, int nblocks);
 extern void smgrreadv(SMgrRelation reln, ForkNumber forknum,
 					  BlockNumber blocknum,
-					  void **buffer, BlockNumber nblocks);
+					  void **buffers, BlockNumber nblocks);
 extern void smgrwritev(SMgrRelation reln, ForkNumber forknum,
 					   BlockNumber blocknum,
-					   const void **buffer, BlockNumber nblocks,
+					   const void **buffers, BlockNumber nblocks,
 					   bool skipFsync);
 extern void smgrwriteback(SMgrRelation reln, ForkNumber forknum,
 						  BlockNumber blocknum, BlockNumber nblocks);

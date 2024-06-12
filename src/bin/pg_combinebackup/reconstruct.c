@@ -62,7 +62,7 @@ static void write_reconstructed_file(char *input_filename,
 									 bool debug,
 									 bool dry_run);
 static void read_bytes(rfile *rf, void *buffer, unsigned length);
-static void write_block(int wfd, char *output_filename,
+static void write_block(int fd, char *output_filename,
 						uint8 *buffer,
 						pg_checksum_context *checksum_ctx);
 static void read_block(rfile *s, off_t off, uint8 *buffer);

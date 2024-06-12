@@ -589,7 +589,7 @@ static ObjectAddress ATExecClusterOn(Relation rel, const char *indexName,
 									 LOCKMODE lockmode);
 static void ATExecDropCluster(Relation rel, LOCKMODE lockmode);
 static void ATPrepSetAccessMethod(AlteredTableInfo *tab, Relation rel, const char *amname);
-static void ATExecSetAccessMethodNoStorage(Relation rel, Oid newAccessMethod);
+static void ATExecSetAccessMethodNoStorage(Relation rel, Oid newAccessMethodId);
 static bool ATPrepChangePersistence(Relation rel, bool toLogged);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 								const char *tablespacename, LOCKMODE lockmode);

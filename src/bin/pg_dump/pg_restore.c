@@ -53,7 +53,7 @@
 #include "pg_backup_utils.h"
 
 static void usage(const char *progname);
-static void read_restore_filters(const char *filename, RestoreOptions *dopt);
+static void read_restore_filters(const char *filename, RestoreOptions *opts);
 
 int
 main(int argc, char **argv)

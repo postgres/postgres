@@ -45,7 +45,7 @@ static void try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1,
 static SpecialJoinInfo *build_child_join_sjinfo(PlannerInfo *root,
 												SpecialJoinInfo *parent_sjinfo,
 												Relids left_relids, Relids right_relids);
-static void free_child_join_sjinfo(SpecialJoinInfo *child_sjinfo);
+static void free_child_join_sjinfo(SpecialJoinInfo *sjinfo);
 static void compute_partition_bounds(PlannerInfo *root, RelOptInfo *rel1,
 									 RelOptInfo *rel2, RelOptInfo *joinrel,
 									 SpecialJoinInfo *parent_sjinfo,
