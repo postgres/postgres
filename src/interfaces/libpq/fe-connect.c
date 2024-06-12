@@ -4312,7 +4312,7 @@ init_allowed_encryption_methods(PGconn *conn)
 		if (conn->gssencmode[0] == 'r')
 		{
 			libpq_append_conn_error(conn,
-									"GSSAPI encryption required but it is not supported over a local socket)");
+									"GSSAPI encryption required but it is not supported over a local socket");
 			conn->allowed_enc_methods = 0;
 			conn->current_enc_method = ENC_ERROR;
 			return false;
