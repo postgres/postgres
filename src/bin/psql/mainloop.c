@@ -78,7 +78,6 @@ MainLoop(FILE *source)
 		PQExpBufferBroken(previous_buf) ||
 		PQExpBufferBroken(history_buf))
 		pg_fatal("out of memory");
-
 	/* main loop to get queries and execute them */
 	while (successResult == EXIT_SUCCESS)
 	{
@@ -163,6 +162,7 @@ MainLoop(FILE *source)
 				need_redisplay = false;
 			}
 			/* Now we can fetch a line */
+            // ACÁ HACE GETLINE
 			line = gets_interactive(get_prompt(prompt_status, cond_stack),
 									query_buf);
 		}
