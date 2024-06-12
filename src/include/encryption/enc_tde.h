@@ -30,12 +30,6 @@ PGTdePageAddItemExtended(RelFileLocator rel, Oid oid, BlockNumber bn, Page page,
 					OffsetNumber offsetNumber,
 					int flags);
 
-/* Wrapper functions for reading decrypted tuple into a given slot */
-extern TupleTableSlot *
-PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
-extern TupleTableSlot *
-PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer);
-
 /* Function Macros over crypt */
 
 #define PG_TDE_ENCRYPT_DATA(_iv_prefix, _iv_prefix_len, _data, _data_len, _out, _key) \

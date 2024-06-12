@@ -22,6 +22,8 @@
 
 #include "postgres.h"
 
+#include "access/pg_tde_slot.h"
+
 #include "access/pg_tdeam.h"
 #include "access/pg_tdetoast.h"
 #include "access/pg_tde_rewrite.h"
@@ -76,7 +78,7 @@ static const TableAmRoutine pg_tdeam_methods;
 static const TupleTableSlotOps *
 pg_tdeam_slot_callbacks(Relation relation)
 {
-	return &TTSOpsBufferHeapTuple;
+	return &TTSOpsTDEBufferHeapTuple;
 }
 
 
@@ -129,7 +131,7 @@ pg_tdeam_index_fetch_tuple(struct IndexFetchTableData *scan,
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 	bool		got_pg_tde_tuple;
 
-	Assert(TTS_IS_BUFFERTUPLE(slot));
+	Assert(TTS_IS_TDE_BUFFERTUPLE(slot));
 
 	/* We can skip the buffer-switching logic if we're in mid-HOT chain. */
 	if (!*call_again)
@@ -195,7 +197,7 @@ pg_tdeam_fetch_row_version(Relation relation,
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 	Buffer		buffer;
 
-	Assert(TTS_IS_BUFFERTUPLE(slot));
+	Assert(TTS_IS_TDE_BUFFERTUPLE(slot));
 
 	bslot->base.tupdata.t_self = *tid;
 	if (pg_tde_fetch(relation, snapshot, &bslot->base.tupdata, &buffer, false))
@@ -226,7 +228,7 @@ pg_tdeam_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 	bool		res;
 
-	Assert(TTS_IS_BUFFERTUPLE(slot));
+	Assert(TTS_IS_TDE_BUFFERTUPLE(slot));
 	Assert(BufferIsValid(bslot->buffer));
 
 	/*
@@ -380,7 +382,7 @@ pg_tdeam_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 	follow_updates = (flags & TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS) != 0;
 	tmfd->traversed = false;
 
-	Assert(TTS_IS_BUFFERTUPLE(slot));
+	Assert(TTS_IS_TDE_BUFFERTUPLE(slot));
 
 tuple_lock_retry:
 	tuple->t_self = *tid;
@@ -1054,7 +1056,7 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 	OffsetNumber maxoffset;
 	BufferHeapTupleTableSlot *hslot;
 
-	Assert(TTS_IS_BUFFERTUPLE(slot));
+	Assert(TTS_IS_TDE_BUFFERTUPLE(slot));
 
 	hslot = (BufferHeapTupleTableSlot *) slot;
 	targpage = BufferGetPage(hscan->rs_cbuf);
@@ -1180,7 +1182,7 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 	/* Now release the lock and pin on the page */
 	UnlockReleaseBuffer(hscan->rs_cbuf);
 	hscan->rs_cbuf = InvalidBuffer;
-
+	TdeSlotForgetDecryptedTuple(slot);
 	/* also prevent old slot contents from having pin on page */
 	ExecClearTuple(slot);
 
@@ -2452,7 +2454,16 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 			 */
 			if (!pagemode)
 				LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-
+			/*
+			 * Hack:
+			 * The issue is that, The previous call that would have used the same
+			 * TupleTableSlot would have just deleted the memory context for the slot
+			 * and refrained from calling the clear slot function. So, the slot would
+			 * have the non NULL pointer to the decrypted tuple which is now invalid.
+			 * So, we need to explicitly clear the decrypted tuple pointer before
+			 * calling the clear slot function.
+			 */
+			TdeSlotForgetDecryptedTuple(slot);
 			ExecClearTuple(slot);
 			return false;
 		}

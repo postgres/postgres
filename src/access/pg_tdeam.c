@@ -39,6 +39,7 @@
 #include "access/pg_tdetoast.h"
 #include "access/pg_tde_io.h"
 #include "access/pg_tde_visibilitymap.h"
+#include "access/pg_tde_slot.h"
 #include "encryption/enc_tde.h"
 
 #include "access/bufmask.h"
@@ -1157,6 +1158,7 @@ pg_tde_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot 
 
 	if (scan->rs_ctup.t_data == NULL)
 	{
+		TdeSlotForgetDecryptedTuple(slot);
 		ExecClearTuple(slot);
 		return false;
 	}
@@ -1264,6 +1266,7 @@ pg_tde_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 
 		if (scan->rs_ctup.t_data == NULL)
 		{
+			TdeSlotForgetDecryptedTuple(slot);
 			ExecClearTuple(slot);
 			return false;
 		}

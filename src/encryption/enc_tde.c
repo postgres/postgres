@@ -3,6 +3,7 @@
 #include "postgres.h"
 #include "utils/memutils.h"
 
+#include "access/pg_tde_slot.h"
 #include "access/pg_tde_tdemap.h"
 #include "encryption/enc_tde.h"
 #include "encryption/enc_aes.h"
@@ -221,47 +222,6 @@ PGTdePageAddItemExtended(RelFileLocator rel,
 
 	PG_TDE_ENCRYPT_PAGE_ITEM(iv_prefix, 0, data, data_len, toAddr, key);
 	return off;
-}
-
-TupleTableSlot *
-PGTdeExecStoreBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
-{
-
-    if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
-    {
-		MemoryContext oldContext;
-		HeapTuple	decrypted_tuple;
-        RelKeyData *key = GetRelationKey(rel->rd_locator);
-
-		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-		decrypted_tuple = heap_copytuple(tuple);
-		MemoryContextSwitchTo(oldContext);
-		PG_TDE_DECRYPT_TUPLE_EX(tuple, decrypted_tuple, key, "ExecStoreBuffer");
-		/* TODO: revisit this */
-		tuple->t_data = decrypted_tuple->t_data;
-    }
-	return  ExecStoreBufferHeapTuple(tuple, slot, buffer);
-}
-
-TupleTableSlot *
-PGTdeExecStorePinnedBufferHeapTuple(Relation rel, HeapTuple tuple, TupleTableSlot *slot, Buffer buffer)
-{
-
-    if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
-    {
-		MemoryContext oldContext;
-		HeapTuple	decrypted_tuple;
-        RelKeyData *key = GetRelationKey(rel->rd_locator);
-
-		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-		decrypted_tuple = heap_copytuple(tuple);
-		MemoryContextSwitchTo(oldContext);
-
-		PG_TDE_DECRYPT_TUPLE_EX(tuple, decrypted_tuple, key, "ExecStoreBuffer");
-		/* TODO: revisit this */
-		tuple->t_data = decrypted_tuple->t_data;
-    }
-	return  ExecStorePinnedBufferHeapTuple(tuple, slot, buffer);
 }
 
 /*
