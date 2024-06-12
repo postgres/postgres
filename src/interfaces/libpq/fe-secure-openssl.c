@@ -1753,7 +1753,7 @@ SSLerrmessage(unsigned long ecode)
 	if (ERR_GET_LIB(ecode) == ERR_LIB_SSL &&
 		ERR_GET_REASON(ecode) == SSL_AD_REASON_OFFSET + SSL_AD_NO_APPLICATION_PROTOCOL)
 	{
-		snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("no application protocol"));
+		snprintf(errbuf, SSL_ERR_LEN, "no application protocol");
 		return errbuf;
 	}
 #endif
