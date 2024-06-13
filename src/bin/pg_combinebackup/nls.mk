@@ -7,9 +7,14 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    pg_combinebackup.c \
                    reconstruct.c \
                    write_manifest.c \
+                   ../../common/controldata_utils.c \
+                   ../../common/cryptohash.c \
+                   ../../common/cryptohash_openssl.c \
                    ../../common/fe_memutils.c \
+                   ../../common/file_utils.c \
                    ../../common/jsonapi.c \
-                   ../../common/parse_manifest.c
+                   ../../common/parse_manifest.c \
+                   ../../fe_utils/option_utils.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
                    json_token_error:2 \
                    json_manifest_parse_failure:2 \

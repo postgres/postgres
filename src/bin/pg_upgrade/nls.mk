@@ -14,7 +14,13 @@ GETTEXT_FILES    = check.c \
                    server.c \
                    tablespace.c \
                    util.c \
-                   version.c
+                   version.c \
+                   ../../common/fe_memutils.c \
+                   ../../common/file_utils.c \
+                   ../../common/restricted_token.c \
+                   ../../common/username.c \
+                   ../../fe_utils/option_utils.c \
+                   ../../fe_utils/string_utils.c
 GETTEXT_TRIGGERS = pg_fatal \
                    pg_log:2 \
                    prep_status \

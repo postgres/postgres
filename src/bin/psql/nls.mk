@@ -19,6 +19,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    ../../fe_utils/cancel.c \
                    ../../fe_utils/print.c \
                    ../../fe_utils/psqlscan.c \
+                   ../../fe_utils/string_utils.c \
                    ../../common/exec.c \
                    ../../common/fe_memutils.c \
                    ../../common/username.c \

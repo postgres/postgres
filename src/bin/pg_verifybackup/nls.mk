@@ -2,6 +2,9 @@
 CATALOG_NAME     = pg_verifybackup
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    pg_verifybackup.c \
+                   ../../common/controldata_utils.c \
+                   ../../common/cryptohash.c \
+                   ../../common/cryptohash_openssl.c \
                    ../../common/fe_memutils.c \
                    ../../common/jsonapi.c \
                    ../../common/parse_manifest.c
