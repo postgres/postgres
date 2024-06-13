@@ -3764,7 +3764,7 @@ wait_until_connected(PGconn *conn)
 	{
 		int			rc;
 		int			sock;
-		time_t		end_time;
+		pg_usec_time_t end_time;
 
 		/*
 		 * On every iteration of the connection sequence, let's check if the
@@ -3795,7 +3795,7 @@ wait_until_connected(PGconn *conn)
 		 * solution happens to just be adding a timeout, so let's wait for 1
 		 * second and check cancel_pressed again.
 		 */
-		end_time = time(NULL) + 1;
+		end_time = PQgetCurrentTimeUSec() + 1000000;
 		rc = PQsocketPoll(sock, forRead, !forRead, end_time);
 		if (rc == -1)
 			return;

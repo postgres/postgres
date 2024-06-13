@@ -2470,7 +2470,7 @@ int
 pqConnectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
-	time_t		finish_time = ((time_t) -1);
+	pg_usec_time_t end_time = -1;
 	int			timeout = 0;
 	int			last_whichhost = -2;	/* certainly different from whichhost */
 	int			last_whichaddr = -2;	/* certainly different from whichaddr */
@@ -2479,7 +2479,7 @@ pqConnectDBComplete(PGconn *conn)
 		return 0;
 
 	/*
-	 * Set up a time limit, if connect_timeout isn't zero.
+	 * Set up a time limit, if connect_timeout is greater than zero.
 	 */
 	if (conn->connect_timeout != NULL)
 	{
@@ -2490,19 +2490,6 @@ pqConnectDBComplete(PGconn *conn)
 			conn->status = CONNECTION_BAD;
 			return 0;
 		}
-
-		if (timeout > 0)
-		{
-			/*
-			 * Rounding could cause connection to fail unexpectedly quickly;
-			 * to prevent possibly waiting hardly-at-all, insist on at least
-			 * two seconds.
-			 */
-			if (timeout < 2)
-				timeout = 2;
-		}
-		else					/* negative means 0 */
-			timeout = 0;
 	}
 
 	for (;;)
@@ -2519,7 +2506,7 @@ pqConnectDBComplete(PGconn *conn)
 			(conn->whichhost != last_whichhost ||
 			 conn->whichaddr != last_whichaddr))
 		{
-			finish_time = time(NULL) + timeout;
+			end_time = PQgetCurrentTimeUSec() + (pg_usec_time_t) timeout * 1000000;
 			last_whichhost = conn->whichhost;
 			last_whichaddr = conn->whichaddr;
 		}
@@ -2534,7 +2521,7 @@ pqConnectDBComplete(PGconn *conn)
 				return 1;		/* success! */
 
 			case PGRES_POLLING_READING:
-				ret = pqWaitTimed(1, 0, conn, finish_time);
+				ret = pqWaitTimed(1, 0, conn, end_time);
 				if (ret == -1)
 				{
 					/* hard failure, eg select() problem, aborts everything */
@@ -2544,7 +2531,7 @@ pqConnectDBComplete(PGconn *conn)
 				break;
 
 			case PGRES_POLLING_WRITING:
-				ret = pqWaitTimed(0, 1, conn, finish_time);
+				ret = pqWaitTimed(0, 1, conn, end_time);
 				if (ret == -1)
 				{
 					/* hard failure, eg select() problem, aborts everything */

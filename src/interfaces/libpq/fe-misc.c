@@ -54,7 +54,7 @@
 static int	pqPutMsgBytes(const void *buf, size_t len, PGconn *conn);
 static int	pqSendSome(PGconn *conn, int len);
 static int	pqSocketCheck(PGconn *conn, int forRead, int forWrite,
-						  time_t end_time);
+						  pg_usec_time_t end_time);
 
 /*
  * PQlibVersion: return the libpq version number
@@ -977,22 +977,25 @@ pqFlush(PGconn *conn)
 int
 pqWait(int forRead, int forWrite, PGconn *conn)
 {
-	return pqWaitTimed(forRead, forWrite, conn, (time_t) -1);
+	return pqWaitTimed(forRead, forWrite, conn, -1);
 }
 
 /*
- * pqWaitTimed: wait, but not past finish_time.
- *
- * finish_time = ((time_t) -1) disables the wait limit.
+ * pqWaitTimed: wait, but not past end_time.
  *
  * Returns -1 on failure, 0 if the socket is readable/writable, 1 if it timed out.
+ *
+ * The timeout is specified by end_time, which is the int64 number of
+ * microseconds since the Unix epoch (that is, time_t times 1 million).
+ * Timeout is infinite if end_time is -1.  Timeout is immediate (no blocking)
+ * if end_time is 0 (or indeed, any time before now).
  */
 int
-pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
+pqWaitTimed(int forRead, int forWrite, PGconn *conn, pg_usec_time_t end_time)
 {
 	int			result;
 
-	result = pqSocketCheck(conn, forRead, forWrite, finish_time);
+	result = pqSocketCheck(conn, forRead, forWrite, end_time);
 
 	if (result < 0)
 		return -1;				/* errorMessage is already set */
@@ -1013,7 +1016,7 @@ pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 int
 pqReadReady(PGconn *conn)
 {
-	return pqSocketCheck(conn, 1, 0, (time_t) 0);
+	return pqSocketCheck(conn, 1, 0, 0);
 }
 
 /*
@@ -1023,7 +1026,7 @@ pqReadReady(PGconn *conn)
 int
 pqWriteReady(PGconn *conn)
 {
-	return pqSocketCheck(conn, 0, 1, (time_t) 0);
+	return pqSocketCheck(conn, 0, 1, 0);
 }
 
 /*
@@ -1035,7 +1038,7 @@ pqWriteReady(PGconn *conn)
  * for read data directly.
  */
 static int
-pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
+pqSocketCheck(PGconn *conn, int forRead, int forWrite, pg_usec_time_t end_time)
 {
 	int			result;
 
@@ -1079,11 +1082,13 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
  * condition (without waiting).  Return >0 if condition is met, 0
  * if a timeout occurred, -1 if an error or interrupt occurred.
  *
+ * The timeout is specified by end_time, which is the int64 number of
+ * microseconds since the Unix epoch (that is, time_t times 1 million).
  * Timeout is infinite if end_time is -1.  Timeout is immediate (no blocking)
  * if end_time is 0 (or indeed, any time before now).
  */
 int
-PQsocketPoll(int sock, int forRead, int forWrite, time_t end_time)
+PQsocketPoll(int sock, int forRead, int forWrite, pg_usec_time_t end_time)
 {
 	/* We use poll(2) if available, otherwise select(2) */
 #ifdef HAVE_POLL
@@ -1103,14 +1108,16 @@ PQsocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 		input_fd.events |= POLLOUT;
 
 	/* Compute appropriate timeout interval */
-	if (end_time == ((time_t) -1))
+	if (end_time == -1)
 		timeout_ms = -1;
+	else if (end_time == 0)
+		timeout_ms = 0;
 	else
 	{
-		time_t		now = time(NULL);
+		pg_usec_time_t now = PQgetCurrentTimeUSec();
 
 		if (end_time > now)
-			timeout_ms = (end_time - now) * 1000;
+			timeout_ms = (end_time - now) / 1000;
 		else
 			timeout_ms = 0;
 	}
@@ -1138,23 +1145,49 @@ PQsocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 	FD_SET(sock, &except_mask);
 
 	/* Compute appropriate timeout interval */
-	if (end_time == ((time_t) -1))
+	if (end_time == -1)
 		ptr_timeout = NULL;
+	else if (end_time == 0)
+	{
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 0;
+		ptr_timeout = &timeout;
+	}
 	else
 	{
-		time_t		now = time(NULL);
+		pg_usec_time_t now = PQgetCurrentTimeUSec();
 
 		if (end_time > now)
-			timeout.tv_sec = end_time - now;
+		{
+			timeout.tv_sec = (end_time - now) / 1000000;
+			timeout.tv_usec = (end_time - now) % 1000000;
+		}
 		else
+		{
 			timeout.tv_sec = 0;
-		timeout.tv_usec = 0;
+			timeout.tv_usec = 0;
+		}
 		ptr_timeout = &timeout;
 	}
 
 	return select(sock + 1, &input_mask, &output_mask,
 				  &except_mask, ptr_timeout);
 #endif							/* HAVE_POLL */
+}
+
+/*
+ * PQgetCurrentTimeUSec: get current time with microsecond precision
+ *
+ * This provides a platform-independent way of producing a reference
+ * value for PQsocketPoll's timeout parameter.
+ */
+pg_usec_time_t
+PQgetCurrentTimeUSec(void)
+{
+	struct timeval tval;
+
+	gettimeofday(&tval, NULL);
+	return (pg_usec_time_t) tval.tv_sec * 1000000 + tval.tv_usec;
 }
 
 

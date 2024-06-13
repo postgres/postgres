@@ -21,7 +21,6 @@ extern "C"
 #endif
 
 #include <stdio.h>
-#include <time.h>
 
 /*
  * postgres_ext.h defines the backend's externally visible types,
@@ -201,6 +200,9 @@ typedef struct pgNotify
 	/* Fields below here are private to libpq; apps should not use 'em */
 	struct pgNotify *next;		/* list link */
 } PGnotify;
+
+/* pg_usec_time_t is like time_t, but with microsecond resolution */
+typedef pg_int64 pg_usec_time_t;
 
 /* Function types for notice-handling callbacks */
 typedef void (*PQnoticeReceiver) (void *arg, const PGresult *res);
@@ -673,7 +675,11 @@ extern int	lo_export(PGconn *conn, Oid lobjId, const char *filename);
 extern int	PQlibVersion(void);
 
 /* Poll a socket for reading and/or writing with an optional timeout */
-extern int	PQsocketPoll(int sock, int forRead, int forWrite, time_t end_time);
+extern int	PQsocketPoll(int sock, int forRead, int forWrite,
+						 pg_usec_time_t end_time);
+
+/* Get current time in the form PQsocketPoll wants */
+extern pg_usec_time_t PQgetCurrentTimeUSec(void);
 
 /* Determine length of multibyte encoded char at *s */
 extern int	PQmblen(const char *s, int encoding);

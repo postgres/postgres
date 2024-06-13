@@ -755,7 +755,7 @@ extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
 extern int	pqWaitTimed(int forRead, int forWrite, PGconn *conn,
-						time_t finish_time);
+						pg_usec_time_t end_time);
 extern int	pqReadReady(PGconn *conn);
 extern int	pqWriteReady(PGconn *conn);
 

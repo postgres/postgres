@@ -3717,6 +3717,7 @@ pg_unicode_normprops
 pg_unicode_properties
 pg_unicode_range
 pg_unicode_recompinfo
+pg_usec_time_t
 pg_utf_to_local_combined
 pg_uuid_t
 pg_wc_probefunc

@@ -262,41 +262,6 @@ PGconn *PQsetdb(char *pghost,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-PQsocketPoll">
-     <term><function>PQsocketPoll</function><indexterm><primary>PQsocketPoll</primary></indexterm></term>
-     <listitem>
-      <para>
-       <indexterm><primary>nonblocking connection</primary></indexterm>
-       Poll a connection&apos;s underlying socket descriptor retrieved with <xref linkend="libpq-PQsocket"/>.
-<synopsis>
-int PQsocketPoll(int sock, int forRead, int forWrite, time_t end_time);
-</synopsis>
-      </para>
-
-      <para>
-       This function sets up polling of a file descriptor. The underlying function is either
-       <function>poll(2)</function> or <function>select(2)</function>, depending on platform
-       support. The primary use of this function is iterating through the connection sequence
-       described in the documentation of <xref linkend="libpq-PQconnectStartParams"/>. If
-       <parameter>forRead</parameter> is specified, the function waits for the socket to be ready
-       for reading. If <parameter>forWrite</parameter> is specified, the function waits for the
-       socket to be ready for write. See <literal>POLLIN</literal> and <literal>POLLOUT</literal>
-       from <function>poll(2)</function>, or <parameter>readfds</parameter> and
-       <parameter>writefds</parameter> from <function>select(2)</function> for more information. If
-       <parameter>end_time</parameter> is not <literal>-1</literal>, it specifies the time at which
-       this function should stop waiting for the condition to be met.
-      </para>
-
-      <para>
-       The function returns a value greater than <literal>0</literal> if the specified condition
-       is met, <literal>0</literal> if a timeout occurred, or <literal>-1</literal> if an error
-       occurred. The error can be retrieved by checking the <literal>errno(3)</literal> value. In
-       the event <literal>forRead</literal> and <literal>forWrite</literal> are not set, the
-       function immediately returns a timeout condition.
-      </para>
-     </listitem>
-    </varlistentry>
-
     <varlistentry id="libpq-PQconnectStartParams">
      <term><function>PQconnectStartParams</function><indexterm><primary>PQconnectStartParams</primary></indexterm></term>
      <term><function>PQconnectStart</function><indexterm><primary>PQconnectStart</primary></indexterm></term>
@@ -542,6 +507,70 @@ switch(PQstatus(conn))
        finished with it, in order to dispose of the structure and any
        associated memory blocks.  This must be done even if the connection
        attempt fails or is abandoned.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQsocketPoll">
+     <term><function>PQsocketPoll</function><indexterm><primary>PQsocketPoll</primary></indexterm></term>
+     <listitem>
+      <para>
+       <indexterm><primary>nonblocking connection</primary></indexterm>
+       Poll a connection's underlying socket descriptor retrieved with
+       <xref linkend="libpq-PQsocket"/>.
+       The primary use of this function is iterating through the connection
+       sequence described in the documentation of
+       <xref linkend="libpq-PQconnectStartParams"/>.
+<synopsis>
+typedef pg_int64 pg_usec_time_t;
+
+int PQsocketPoll(int sock, int forRead, int forWrite,
+                 pg_usec_time_t end_time);
+</synopsis>
+      </para>
+
+      <para>
+       This function performs polling of a file descriptor, optionally with
+       a timeout.
+       If <parameter>forRead</parameter> is nonzero, the
+       function will terminate when the socket is ready for
+       reading. If <parameter>forWrite</parameter> is nonzero,
+       the function will terminate when the
+       socket is ready for writing.
+      </para>
+
+      <para>
+       The timeout is specified by <parameter>end_time</parameter>, which
+       is the time to stop waiting expressed as a number of microseconds since
+       the Unix epoch (that is, <type>time_t</type> times 1 million).
+       Timeout is infinite if <parameter>end_time</parameter>
+       is <literal>-1</literal>.  Timeout is immediate (no blocking) if
+       end_time is <literal>0</literal> (or indeed, any time before now).
+       Timeout values can be calculated conveniently by adding the desired
+       number of microseconds to the result of
+       <xref linkend="libpq-PQgetCurrentTimeUSec"/>.
+       Note that the underlying system calls may have less than microsecond
+       precision, so that the actual delay may be imprecise.
+      </para>
+
+      <para>
+       The function returns a value greater than <literal>0</literal> if the
+       specified condition is met, <literal>0</literal> if a timeout occurred,
+       or <literal>-1</literal> if an error occurred. The error can be
+       retrieved by checking the <literal>errno(3)</literal> value. In the
+       event both <parameter>forRead</parameter>
+       and <parameter>forWrite</parameter> are zero, the function immediately
+       returns a timeout indication.
+      </para>
+
+      <para>
+       <function>PQsocketPoll</function> is implemented using either
+       <function>poll(2)</function> or <function>select(2)</function>,
+       depending on platform.  See <literal>POLLIN</literal>
+       and <literal>POLLOUT</literal> from <function>poll(2)</function>,
+       or <parameter>readfds</parameter> and
+       <parameter>writefds</parameter> from <function>select(2)</function>,
+       for more information.
       </para>
      </listitem>
     </varlistentry>
@@ -1390,8 +1419,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <para>
        Maximum time to wait while connecting, in seconds (write as a decimal integer,
        e.g., <literal>10</literal>).  Zero, negative, or not specified means
-       wait indefinitely.  The minimum allowed timeout is 2 seconds, therefore
-       a value of <literal>1</literal> is interpreted as <literal>2</literal>.
+       wait indefinitely.
        This timeout applies separately to each host name or IP address.
        For example, if you specify two hosts and <literal>connect_timeout</literal>
        is 5, each host will time out if no connection is made within 5
@@ -8036,6 +8064,25 @@ int PQlibVersion(void);
        on version 9.1 or later.
       </para>
      </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="libpq-PQgetCurrentTimeUSec">
+    <term><function>PQgetCurrentTimeUSec</function><indexterm><primary>PQgetCurrentTimeUSec</primary></indexterm></term>
+
+    <listitem>
+     <para>
+      Retrieves the current time, expressed as the number of microseconds
+      since the Unix epoch (that is, <type>time_t</type> times 1 million).
+<synopsis>
+pg_usec_time_t PQgetCurrentTimeUSec(void);
+</synopsis>
+     </para>
+
+     <para>
+      This is primarily useful for calculating timeout values to use with
+      <xref linkend="libpq-PQsocketPoll"/>.
+     </para>
     </listitem>
    </varlistentry>
 
