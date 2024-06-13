@@ -1602,8 +1602,8 @@ pqConnectOptions2(PGconn *conn)
 		if (conn->sslnegotiation[0] != 'p')
 		{
 			conn->status = CONNECTION_BAD;
-			libpq_append_conn_error(conn, "sslnegotiation value \"%s\" invalid when SSL support is not compiled in",
-									conn->sslnegotiation);
+			libpq_append_conn_error(conn, "%s value \"%s\" invalid when SSL support is not compiled in",
+									"sslnegotiation", conn->sslnegotiation);
 			return false;
 		}
 #endif

@@ -73,13 +73,13 @@ PQcancelCreate(PGconn *conn)
 	/* Check we have an open connection */
 	if (!conn)
 	{
-		libpq_append_conn_error(cancelConn, "passed connection was NULL");
+		libpq_append_conn_error(cancelConn, "connection pointer is NULL");
 		return (PGcancelConn *) cancelConn;
 	}
 
 	if (conn->sock == PGINVALID_SOCKET)
 	{
-		libpq_append_conn_error(cancelConn, "passed connection is not open");
+		libpq_append_conn_error(cancelConn, "connection not open");
 		return (PGcancelConn *) cancelConn;
 	}
 
@@ -260,7 +260,7 @@ PQcancelPoll(PGcancelConn *cancelConn)
 	 */
 	if (n > 0)
 	{
-		libpq_append_conn_error(conn, "received unexpected response from server");
+		libpq_append_conn_error(conn, "unexpected response from server");
 		conn->status = CONNECTION_BAD;
 		return PGRES_POLLING_FAILED;
 	}
