@@ -2932,6 +2932,7 @@ MultiXactMemberFreezeThreshold(void)
 	uint32		multixacts;
 	uint32		victim_multixacts;
 	double		fraction;
+	int			result;
 
 	/* If we can't determine member space utilization, assume the worst. */
 	if (!ReadMultiXactCounts(&multixacts, &members))
@@ -2953,7 +2954,13 @@ MultiXactMemberFreezeThreshold(void)
 	/* fraction could be > 1.0, but lowest possible freeze age is zero */
 	if (victim_multixacts > multixacts)
 		return 0;
-	return multixacts - victim_multixacts;
+	result = multixacts - victim_multixacts;
+
+	/*
+	 * Clamp to autovacuum_multixact_freeze_max_age, so that we never make
+	 * autovacuum less aggressive than it would otherwise be.
+	 */
+	return Min(result, autovacuum_multixact_freeze_max_age);
 }
 
 typedef struct mxtruncinfo
