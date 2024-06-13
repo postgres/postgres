@@ -339,6 +339,7 @@ static void exec_prepare_plan(PLpgSQL_execstate *estate,
 							  PLpgSQL_expr *expr, int cursorOptions,
 							  bool keepplan);
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
+static bool exec_is_simple_query(PLpgSQL_expr *expr);
 static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
 static void exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno);
 static bool contains_target_param(Node *node, int *target_dno);
@@ -6216,6 +6217,19 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 */
 	Assert(cplan != NULL);
 
+	/*
+	 * However, the plan might now be non-simple, in edge-case scenarios such
+	 * as a non-SRF having been replaced with a SRF.
+	 */
+	if (!exec_is_simple_query(expr))
+	{
+		/* Release SPI_plan_get_cached_plan's refcount */
+		ReleaseCachedPlan(cplan, true);
+		/* Mark expression as non-simple, and fail */
+		expr->expr_simple_expr = NULL;
+		return false;
+	}
+
 	/* If it got replanned, update our copy of the simple expression */
 	if (cplan->generation != expr->expr_simple_generation)
 	{
@@ -8023,9 +8037,6 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 static void
 exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 {
-	List	   *plansources;
-	CachedPlanSource *plansource;
-	Query	   *query;
 	CachedPlan *cplan;
 	MemoryContext oldcontext;
 
@@ -8040,31 +8051,66 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	 * called immediately after creating the CachedPlanSource, we need not
 	 * worry about the query being stale.
 	 */
+	if (!exec_is_simple_query(expr))
+		return;
 
 	/*
-	 * We can only test queries that resulted in exactly one CachedPlanSource
+	 * Get the generic plan for the query.  If replanning is needed, do that
+	 * work in the eval_mcontext.  (Note that replanning could throw an error,
+	 * in which case the expr is left marked "not simple", which is fine.)
+	 */
+	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
+	cplan = SPI_plan_get_cached_plan(expr->plan);
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Can't fail, because we checked for a single CachedPlanSource above */
+	Assert(cplan != NULL);
+
+	/* Share the remaining work with replan code path */
+	exec_save_simple_expr(expr, cplan);
+
+	/* Release our plan refcount */
+	ReleaseCachedPlan(cplan, true);
+}
+
+/*
+ * exec_is_simple_query - precheck a query tree to see if it might be simple
+ *
+ * Check the analyzed-and-rewritten form of a query to see if we will be
+ * able to treat it as a simple expression.  It is caller's responsibility
+ * that the CachedPlanSource be up-to-date.
+ */
+static bool
+exec_is_simple_query(PLpgSQL_expr *expr)
+{
+	List	   *plansources;
+	CachedPlanSource *plansource;
+	Query	   *query;
+
+	/*
+	 * We can only test queries that resulted in exactly one CachedPlanSource.
 	 */
 	plansources = SPI_plan_get_plan_sources(expr->plan);
 	if (list_length(plansources) != 1)
-		return;
+		return false;
 	plansource = (CachedPlanSource *) linitial(plansources);
 
 	/*
 	 * 1. There must be one single querytree.
 	 */
 	if (list_length(plansource->query_list) != 1)
-		return;
+		return false;
 	query = (Query *) linitial(plansource->query_list);
 
 	/*
-	 * 2. It must be a plain SELECT query without any input tables
+	 * 2. It must be a plain SELECT query without any input tables.
 	 */
 	if (!IsA(query, Query))
-		return;
+		return false;
 	if (query->commandType != CMD_SELECT)
-		return;
+		return false;
 	if (query->rtable != NIL)
-		return;
+		return false;
 
 	/*
 	 * 3. Can't have any subplans, aggregates, qual clauses either.  (These
@@ -8088,33 +8134,18 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		query->limitOffset ||
 		query->limitCount ||
 		query->setOperations)
-		return;
+		return false;
 
 	/*
-	 * 4. The query must have a single attribute as result
+	 * 4. The query must have a single attribute as result.
 	 */
 	if (list_length(query->targetList) != 1)
-		return;
+		return false;
 
 	/*
 	 * OK, we can treat it as a simple plan.
-	 *
-	 * Get the generic plan for the query.  If replanning is needed, do that
-	 * work in the eval_mcontext.  (Note that replanning could throw an error,
-	 * in which case the expr is left marked "not simple", which is fine.)
 	 */
-	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-	cplan = SPI_plan_get_cached_plan(expr->plan);
-	MemoryContextSwitchTo(oldcontext);
-
-	/* Can't fail, because we checked for a single CachedPlanSource above */
-	Assert(cplan != NULL);
-
-	/* Share the remaining work with replan code path */
-	exec_save_simple_expr(expr, cplan);
-
-	/* Release our plan refcount */
-	ReleaseCachedPlan(cplan, true);
+	return true;
 }
 
 /*

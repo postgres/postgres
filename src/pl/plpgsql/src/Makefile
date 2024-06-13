@@ -27,7 +27,7 @@ DATA = plpgsql.control plpgsql--1.0.sql plpgsql--unpackaged--1.0.sql
 REGRESS_OPTS = --dbname=$(PL_TESTDB)
 
 REGRESS = plpgsql_call plpgsql_control plpgsql_domain plpgsql_record \
-	plpgsql_cache plpgsql_transaction plpgsql_trap \
+	plpgsql_cache plpgsql_simple plpgsql_transaction plpgsql_trap \
 	plpgsql_trigger plpgsql_varprops
 
 # where to find gen_keywordlist.pl and subsidiary files
