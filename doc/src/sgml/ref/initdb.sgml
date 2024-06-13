@@ -525,6 +525,18 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry id="app-initdb-option-show">
+      <term><option>-s</option></term>
+      <term><option>--show</option></term>
+      <listitem>
+       <para>
+        Show internal settings and exit, without doing anything else.  This
+        can be used to debug the <application>initdb</application>
+        installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="app-initdb-option-sync-method">
       <term><option>--sync-method=<replaceable>method</replaceable></option></term>
       <listitem>
