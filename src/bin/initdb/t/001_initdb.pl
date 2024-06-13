@@ -98,7 +98,7 @@ else
 SKIP:
 {
 	skip "unix-style permissions not supported on Windows", 2
-	  if ($windows_os);
+	  if ($windows_os || $Config::Config{osname} eq 'cygwin');
 
 	# Init a new db with group access
 	my $datadir_group = "$tempdir/data_group";
