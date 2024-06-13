@@ -221,7 +221,8 @@ SKIP:
 # skip on Windows.
 SKIP:
 {
-	skip "symlinks not supported on Windows", 18 if ($windows_os);
+	skip "symlinks not supported on Windows", 18
+	  if ($windows_os);
 
 	# Move pg_replslot out of $pgdata and create a symlink to it.
 	$node->stop;
@@ -307,9 +308,15 @@ SKIP:
 		"tablespace symlink was updated");
 	closedir $dh;
 
-	# Group access should be enabled on all backup files
-	ok(check_mode_recursive("$tempdir/backup1", 0750, 0640),
-		"check backup dir permissions");
+	SKIP:
+	{
+		skip "unix-style permissions not supported on Windows", 1
+		  if ($Config::Config{osname} eq 'cygwin');
+
+		# Group access should be enabled on all backup files
+		ok(check_mode_recursive("$tempdir/backup1", 0750, 0640),
+		   "check backup dir permissions");
+	}
 
 	# Unlogged relation forks other than init should not be copied
 	my ($tblspc1UnloggedBackupPath) =
