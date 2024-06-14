@@ -69,4 +69,6 @@ extern void pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *map_p
 
 const char * tde_sprint_key(InternalKey *k);
 
+extern void pg_tde_put_key_into_map(Oid rel_id, RelKeyData *key);
+
 #endif /*PG_TDE_MAP_H*/

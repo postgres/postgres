@@ -198,6 +198,7 @@ init_gl_catalog_keys(void)
 	enc_rel_key_data = tde_encrypt_rel_key(mkey, rel_key_data, rlocator);
 	pg_tde_write_key_map_entry(rlocator, enc_rel_key_data, &mkey->keyInfo);
 
+	pg_tde_put_key_into_map(rlocator->relNumber, rel_key_data);
 	TDEPutGlCatKeyInCache(mkey);
 }
 

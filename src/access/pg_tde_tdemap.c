@@ -79,8 +79,6 @@ typedef struct TDEMapFilePath
 	char keydata_path[MAXPGPATH];
 } TDEMapFilePath;
 
-static void put_key_into_map(Oid rel_id, RelKeyData *key);
-
 static int pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing);
 static int pg_tde_file_header_write(char *tde_filename, int fd, TDEMasterKeyInfo *master_key_info, off_t *bytes_written);
 static int pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool *is_new_file, off_t *bytes_read);
@@ -113,8 +111,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator)
 	TDEMasterKey *master_key;
 	XLogRelKey xlrec;
 
-	pg_tde_set_db_file_paths(newrlocator->dbOid);
-	master_key = GetMasterKey(newrlocator->dbOid);
+	master_key = GetMasterKey(newrlocator->dbOid, newrlocator->spcOid, NULL);
 	if (master_key == NULL)
 	{
 		ereport(ERROR,
@@ -168,23 +165,7 @@ RelKey *tde_rel_key_map = NULL;
 RelKeyData *
 GetRelationKey(RelFileLocator rel)
 {
-	RelKey		*curr;
-	RelKeyData *key;
-
-	Oid rel_id = rel.relNumber;
-	for (curr = tde_rel_key_map; curr != NULL; curr = curr->next)
-	{
-		if (curr->rel_id == rel_id)
-		{
-			return curr->key;
-		}
-	}
-
-	key = pg_tde_get_key_from_file(&rel, NULL);
-
-	put_key_into_map(rel.relNumber, key);
-
-	return key;
+	return GetRelationKeyWithKeyring(rel, NULL);
 }
 
 RelKeyData *
@@ -206,14 +187,14 @@ GetRelationKeyWithKeyring(RelFileLocator rel, GenericKeyring *keyring)
 
 	if (key != NULL)
 	{
-		put_key_into_map(rel.relNumber, key);
+		pg_tde_put_key_into_map(rel.relNumber, key);
 	}
 
 	return key;
 }
 
-static void
-put_key_into_map(Oid rel_id, RelKeyData *key) {
+void
+pg_tde_put_key_into_map(Oid rel_id, RelKeyData *key) {
 	RelKey		*new;
 	RelKey		*prev = NULL;
 
@@ -256,7 +237,7 @@ tde_create_rel_key(Oid rel_id, InternalKey *key, TDEMasterKeyInfo *master_key_in
 	rel_key_data->internal_key.ctx = NULL;
 
 	/* Add to the decrypted key to cache */
-	put_key_into_map(rel_id, rel_key_data);
+	pg_tde_put_key_into_map(rel_id, rel_key_data);
 
 	return rel_key_data;
 }
@@ -294,11 +275,11 @@ pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *map_path, char *k
 {
 	char *db_path;
 
-	/* We use dbOid for the global space for key caches but for the backend
-	 * it should be 0.
+	/* If this is a global space, than the call might be in a critial section
+	 * (during XLog write) so we can't do GetDatabasePath as it calls palloc()
 	 */
 	if (rlocator->spcOid == GLOBALTABLESPACE_OID)
-		db_path = GetDatabasePath(0, rlocator->spcOid);
+		db_path = "global";
 	else
 		db_path = GetDatabasePath(rlocator->dbOid, rlocator->spcOid);
 
@@ -384,14 +365,13 @@ pg_tde_get_master_key(Oid dbOid, Oid spcOid)
 	bool is_new_file = false;
 	off_t bytes_read = 0;
 	char		db_map_path[MAXPGPATH] = {0};
-	char		db_keydata_path[MAXPGPATH] = {0};
 
 	/* Set the file paths */
 	pg_tde_set_db_file_paths(&(RelFileLocator) { 
 									spcOid,
 									dbOid,
 									0},
-								db_map_path, db_keydata_path);
+								db_map_path, NULL);
 
 	/*
 	 * Ensuring that we always open the file in binary mode. The caller must
