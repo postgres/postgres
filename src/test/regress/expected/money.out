@@ -528,3 +528,93 @@ SELECT '-92233720368547758.08'::money::numeric;
  -92233720368547758.08
 (1 row)
 
+-- Test overflow checks
+SELECT '92233720368547758.07'::money + '0.01'::money;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money - '0.01'::money;
+ERROR:  money out of range
+SELECT '92233720368547758.07'::money * 2::int8;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money * 2::int8;
+ERROR:  money out of range
+SELECT 2::int8 * '92233720368547758.07'::money ;
+ERROR:  money out of range
+SELECT 2::int8 * '-92233720368547758.08'::money;
+ERROR:  money out of range
+SELECT '92233720368547758.07'::money * 2::int4;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money * 2::int4;
+ERROR:  money out of range
+SELECT 2::int4 * '92233720368547758.07'::money ;
+ERROR:  money out of range
+SELECT 2::int4 * '-92233720368547758.08'::money;
+ERROR:  money out of range
+SELECT '92233720368547758.07'::money * 2::int2;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money * 2::int2;
+ERROR:  money out of range
+SELECT 2::int2 * '92233720368547758.07'::money ;
+ERROR:  money out of range
+SELECT 2::int2 * '-92233720368547758.08'::money;
+ERROR:  money out of range
+SELECT '92233720368547758.07'::money * 2::float8;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money * 2::float8;
+ERROR:  money out of range
+SELECT 2::float8 * '92233720368547758.07'::money ;
+ERROR:  money out of range
+SELECT 2::float8 * '-92233720368547758.08'::money;
+ERROR:  money out of range
+SELECT '92233720368547758.07'::money * 2::float4;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money * 2::float4;
+ERROR:  money out of range
+SELECT 2::float4 * '92233720368547758.07'::money ;
+ERROR:  money out of range
+SELECT 2::float4 * '-92233720368547758.08'::money;
+ERROR:  money out of range
+SELECT '1'::money / 1.175494e-38::float8;
+ERROR:  money out of range
+SELECT '-1'::money / 1.175494e-38::float8;
+ERROR:  money out of range
+SELECT '1'::money / 1.175494e-38::float4;
+ERROR:  money out of range
+SELECT '-1'::money / 1.175494e-38::float4;
+ERROR:  money out of range
+-- Test invalid multipliers/divisors
+SELECT '42'::money * 'inf'::float8;
+ERROR:  invalid float value
+SELECT '42'::money * '-inf'::float8;
+ERROR:  invalid float value
+SELECT '42'::money * 'nan'::float8;
+ERROR:  invalid float value
+SELECT 'inf'::float8 * '42'::money;
+ERROR:  invalid float value
+SELECT '-inf'::float8 * '42'::money;
+ERROR:  invalid float value
+SELECT 'nan'::float8 * '42'::money;
+ERROR:  invalid float value
+SELECT '42'::money / 'inf'::float8;
+ERROR:  invalid float value
+SELECT '42'::money / '-inf'::float8;
+ERROR:  invalid float value
+SELECT '42'::money / 'nan'::float8;
+ERROR:  invalid float value
+SELECT '42'::money * 'inf'::float4;
+ERROR:  invalid float value
+SELECT '42'::money * '-inf'::float4;
+ERROR:  invalid float value
+SELECT '42'::money * 'nan'::float4;
+ERROR:  invalid float value
+SELECT 'inf'::float4 * '42'::money;
+ERROR:  invalid float value
+SELECT '-inf'::float4 * '42'::money;
+ERROR:  invalid float value
+SELECT 'nan'::float4 * '42'::money;
+ERROR:  invalid float value
+SELECT '42'::money / 'inf'::float4;
+ERROR:  invalid float value
+SELECT '42'::money / '-inf'::float4;
+ERROR:  invalid float value
+SELECT '42'::money / 'nan'::float4;
+ERROR:  invalid float value
