@@ -2161,7 +2161,8 @@
    <glossterm>WAL writer (process)</glossterm>
    <glossdef>
     <para>
-     A process that writes <glossterm linkend="glossary-wal-record">WAL records</glossterm>
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     that writes <glossterm linkend="glossary-wal-record">WAL records</glossterm>
      from <glossterm linkend="glossary-shared-memory">shared memory</glossterm> to
      <glossterm linkend="glossary-wal-file">WAL files</glossterm>.
     </para>
