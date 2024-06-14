@@ -164,6 +164,7 @@
      the <glossterm linkend="glossary-wal-archiver">WAL archiver</glossterm>,
      the <glossterm linkend="glossary-wal-receiver">WAL receiver</glossterm>
      (but not the <glossterm linkend="glossary-wal-sender">WAL senders</glossterm>),
+     the <glossterm linkend="glossary-wal-summarizer">WAL summarizer</glossterm>,
      and the <glossterm linkend="glossary-wal-writer">WAL writer</glossterm>.
     </para>
    </glossdef>
@@ -2199,7 +2200,7 @@
    <glossterm>WAL summarizer (process)</glossterm>
    <glossdef>
     <para>
-     A special <glossterm linkend="glossary-backend">backend process</glossterm>
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
      that summarizes WAL data for
      <glossterm linkend="glossary-incremental-backup">incremental backups</glossterm>.
     </para>
