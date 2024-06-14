@@ -433,7 +433,7 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 				}
 				else if (ISOPERATOR(state->buf))
 				{
-					/* or else gettoken_tsvector() will raise an error */
+					/* ignore, else gettoken_tsvector() will raise an error */
 					state->buf++;
 					state->state = WAITOPERAND;
 					continue;
@@ -491,6 +491,12 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 					state->state = WAITOPERAND;
 					*operator = OP_OR;
 					return PT_OPR;
+				}
+				else if (ISOPERATOR(state->buf))
+				{
+					/* ignore other operators in this state too */
+					state->buf++;
+					continue;
 				}
 				else if (*state->buf == '\0')
 				{
