@@ -276,3 +276,10 @@ SELECT pg_describe_object(classid,objid,objsubid) COLLATE "C" AS obj,
 (0 rows)
 
 DROP ROLE regress_dump_test_role;
+DROP EXTENSION test_pg_dump;
+-- shouldn't be anything left in pg_init_privs
+SELECT * FROM pg_init_privs WHERE privtype = 'e';
+ objoid | classoid | objsubid | privtype | initprivs 
+--------+----------+----------+----------+-----------
+(0 rows)
+
