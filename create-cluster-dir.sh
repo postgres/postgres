@@ -20,6 +20,7 @@ mv ./target/release/libsharding.a $INITDB_DIR
 
 echo "Building the project..."
 cd $ROOT_DIR
+./configure --without-icu
 make
 
 echo "Creating database directory..."
