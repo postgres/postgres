@@ -6270,6 +6270,15 @@ FROM pg_stat_get_backend_idset() AS backendid;
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+      <structfield>num_dead_item_ids</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of dead item identifiers collected since the last index vacuum cycle.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>indexes_total</structfield> <type>bigint</type>
       </para>
       <para>

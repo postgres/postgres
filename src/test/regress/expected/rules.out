@@ -2052,8 +2052,9 @@ pg_stat_progress_vacuum| SELECT s.pid,
     s.param5 AS index_vacuum_count,
     s.param6 AS max_dead_tuple_bytes,
     s.param7 AS dead_tuple_bytes,
-    s.param8 AS indexes_total,
-    s.param9 AS indexes_processed
+    s.param8 AS num_dead_item_ids,
+    s.param9 AS indexes_total,
+    s.param10 AS indexes_processed
    FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
 pg_stat_recovery_prefetch| SELECT stats_reset,

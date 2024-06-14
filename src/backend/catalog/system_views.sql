@@ -1221,7 +1221,8 @@ CREATE VIEW pg_stat_progress_vacuum AS
         S.param2 AS heap_blks_total, S.param3 AS heap_blks_scanned,
         S.param4 AS heap_blks_vacuumed, S.param5 AS index_vacuum_count,
         S.param6 AS max_dead_tuple_bytes, S.param7 AS dead_tuple_bytes,
-        S.param8 AS indexes_total, S.param9 AS indexes_processed
+        S.param8 AS num_dead_item_ids, S.param9 AS indexes_total,
+        S.param10 AS indexes_processed
     FROM pg_stat_get_progress_info('VACUUM') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 
