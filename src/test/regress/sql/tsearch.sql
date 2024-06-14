@@ -741,7 +741,10 @@ select websearch_to_tsquery('simple', ':');
 select websearch_to_tsquery('simple', 'abc & def');
 select websearch_to_tsquery('simple', 'abc | def');
 select websearch_to_tsquery('simple', 'abc <-> def');
+
+-- parens are ignored, too
 select websearch_to_tsquery('simple', 'abc (pg or class)');
+select websearch_to_tsquery('simple', '(foo bar) or (ding dong)');
 
 -- NOT is ignored in quotes
 select websearch_to_tsquery('english', 'My brand new smartphone');

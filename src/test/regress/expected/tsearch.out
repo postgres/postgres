@@ -2549,10 +2549,17 @@ select websearch_to_tsquery('simple', 'abc <-> def');
  'abc' & 'def'
 (1 row)
 
+-- parens are ignored, too
 select websearch_to_tsquery('simple', 'abc (pg or class)');
   websearch_to_tsquery  
 ------------------------
  'abc' & 'pg' | 'class'
+(1 row)
+
+select websearch_to_tsquery('simple', '(foo bar) or (ding dong)');
+      websearch_to_tsquery       
+---------------------------------
+ 'foo' & 'bar' | 'ding' & 'dong'
 (1 row)
 
 -- NOT is ignored in quotes
