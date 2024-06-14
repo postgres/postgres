@@ -1374,7 +1374,9 @@ deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 	/*
 	 * Delete any comments, security labels, or initial privileges associated
 	 * with this object.  (This is a convenient place to do these things,
-	 * rather than having every object type know to do it.)
+	 * rather than having every object type know to do it.)  As above, all
+	 * these functions must remove records for sub-objects too if the subid is
+	 * zero.
 	 */
 	DeleteComments(object->objectId, object->classId, object->objectSubId);
 	DeleteSecurityLabel(object);
@@ -2985,6 +2987,7 @@ DeleteInitPrivs(const ObjectAddress *object)
 {
 	Relation	relation;
 	ScanKeyData key[3];
+	int			nkeys;
 	SysScanDesc scan;
 	HeapTuple	oldtuple;
 
@@ -2998,13 +3001,19 @@ DeleteInitPrivs(const ObjectAddress *object)
 				Anum_pg_init_privs_classoid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(object->classId));
-	ScanKeyInit(&key[2],
-				Anum_pg_init_privs_objsubid,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(object->objectSubId));
+	if (object->objectSubId != 0)
+	{
+		ScanKeyInit(&key[2],
+					Anum_pg_init_privs_objsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(object->objectSubId));
+		nkeys = 3;
+	}
+	else
+		nkeys = 2;
 
 	scan = systable_beginscan(relation, InitPrivsObjIndexId, true,
-							  NULL, 3, key);
+							  NULL, nkeys, key);
 
 	while (HeapTupleIsValid(oldtuple = systable_getnext(scan)))
 		CatalogTupleDelete(relation, &oldtuple->t_self);

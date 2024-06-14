@@ -106,3 +106,8 @@ ALTER EXTENSION test_pg_dump DROP SERVER s0;
 ALTER EXTENSION test_pg_dump DROP TABLE test_pg_dump_t1;
 ALTER EXTENSION test_pg_dump DROP TYPE test_pg_dump_e1;
 ALTER EXTENSION test_pg_dump DROP VIEW test_pg_dump_v1;
+
+DROP EXTENSION test_pg_dump;
+
+-- shouldn't be anything left in pg_init_privs
+SELECT * FROM pg_init_privs WHERE privtype = 'e';
