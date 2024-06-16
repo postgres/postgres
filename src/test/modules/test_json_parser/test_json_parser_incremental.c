@@ -96,7 +96,7 @@ main(int argc, char **argv)
 		switch (c)
 		{
 			case 'c':			/* chunksize */
-				sscanf(optarg, "%zu", &chunk_size);
+				chunk_size = strtou64(optarg, NULL, 10);
 				if (chunk_size > BUFSIZE)
 					pg_fatal("chunk size cannot exceed %d", BUFSIZE);
 				break;
