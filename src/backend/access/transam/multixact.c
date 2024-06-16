@@ -108,11 +108,23 @@
 /* We need four bytes per offset */
 #define MULTIXACT_OFFSETS_PER_PAGE (BLCKSZ / sizeof(MultiXactOffset))
 
-#define MultiXactIdToOffsetPage(xid) \
-	((xid) / (MultiXactOffset) MULTIXACT_OFFSETS_PER_PAGE)
-#define MultiXactIdToOffsetEntry(xid) \
-	((xid) % (MultiXactOffset) MULTIXACT_OFFSETS_PER_PAGE)
-#define MultiXactIdToOffsetSegment(xid) (MultiXactIdToOffsetPage(xid) / SLRU_PAGES_PER_SEGMENT)
+static inline int64
+MultiXactIdToOffsetPage(MultiXactId multi)
+{
+	return multi / MULTIXACT_OFFSETS_PER_PAGE;
+}
+
+static inline int
+MultiXactIdToOffsetEntry(MultiXactId multi)
+{
+	return multi % MULTIXACT_OFFSETS_PER_PAGE;
+}
+
+static inline int
+MultiXactIdToOffsetSegment(MultiXactId multi)
+{
+	return MultiXactIdToOffsetPage(multi) / SLRU_PAGES_PER_SEGMENT;
+}
 
 /*
  * The situation for members is a bit more complex: we store one byte of
@@ -156,30 +168,59 @@
 		((uint32) ((0xFFFFFFFF % MULTIXACT_MEMBERS_PER_PAGE) + 1))
 
 /* page in which a member is to be found */
-#define MXOffsetToMemberPage(xid) ((xid) / (TransactionId) MULTIXACT_MEMBERS_PER_PAGE)
-#define MXOffsetToMemberSegment(xid) (MXOffsetToMemberPage(xid) / SLRU_PAGES_PER_SEGMENT)
+static inline int64
+MXOffsetToMemberPage(MultiXactOffset offset)
+{
+	return offset / MULTIXACT_MEMBERS_PER_PAGE;
+}
+
+static inline int
+MXOffsetToMemberSegment(MultiXactOffset offset)
+{
+	return MXOffsetToMemberPage(offset) / SLRU_PAGES_PER_SEGMENT;
+}
 
 /* Location (byte offset within page) of flag word for a given member */
-#define MXOffsetToFlagsOffset(xid) \
-	((((xid) / (TransactionId) MULTIXACT_MEMBERS_PER_MEMBERGROUP) % \
-	  (TransactionId) MULTIXACT_MEMBERGROUPS_PER_PAGE) * \
-	 (TransactionId) MULTIXACT_MEMBERGROUP_SIZE)
-#define MXOffsetToFlagsBitShift(xid) \
-	(((xid) % (TransactionId) MULTIXACT_MEMBERS_PER_MEMBERGROUP) * \
-	 MXACT_MEMBER_BITS_PER_XACT)
+static inline int
+MXOffsetToFlagsOffset(MultiXactOffset offset)
+{
+	MultiXactOffset group = offset / MULTIXACT_MEMBERS_PER_MEMBERGROUP;
+	int			grouponpg = group % MULTIXACT_MEMBERGROUPS_PER_PAGE;
+	int			byteoff = grouponpg * MULTIXACT_MEMBERGROUP_SIZE;
+
+	return byteoff;
+}
+
+static inline int
+MXOffsetToFlagsBitShift(MultiXactOffset offset)
+{
+	int			member_in_group = offset % MULTIXACT_MEMBERS_PER_MEMBERGROUP;
+	int			bshift = member_in_group * MXACT_MEMBER_BITS_PER_XACT;
+
+	return bshift;
+}
 
 /* Location (byte offset within page) of TransactionId of given member */
-#define MXOffsetToMemberOffset(xid) \
-	(MXOffsetToFlagsOffset(xid) + MULTIXACT_FLAGBYTES_PER_GROUP + \
-	 ((xid) % MULTIXACT_MEMBERS_PER_MEMBERGROUP) * sizeof(TransactionId))
+static inline int
+MXOffsetToMemberOffset(MultiXactOffset offset)
+{
+	int			member_in_group = offset % MULTIXACT_MEMBERS_PER_MEMBERGROUP;
+
+	return MXOffsetToFlagsOffset(offset) +
+		MULTIXACT_FLAGBYTES_PER_GROUP +
+		member_in_group * sizeof(TransactionId);
+}
 
 /* Multixact members wraparound thresholds. */
 #define MULTIXACT_MEMBER_SAFE_THRESHOLD		(MaxMultiXactOffset / 2)
 #define MULTIXACT_MEMBER_DANGER_THRESHOLD	\
 	(MaxMultiXactOffset - MaxMultiXactOffset / 4)
 
-#define PreviousMultiXactId(xid) \
-	((xid) == FirstMultiXactId ? MaxMultiXactId : (xid) - 1)
+static inline MultiXactId
+PreviousMultiXactId(MultiXactId multi)
+{
+	return multi == FirstMultiXactId ? MaxMultiXactId : multi - 1;
+}
 
 /*
  * Links to shared-memory data structures for MultiXact control
