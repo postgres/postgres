@@ -71,7 +71,7 @@ in sync when changing the above synopsis!
    During role creation it is possible to immediately assign the newly created
    role to be a member of an existing role, and also assign existing roles
    to be members of the newly created role.  The rules for which initial
-   role membership options are enabled described below in the
+   role membership options are enabled are described below in the
    <literal>IN ROLE</literal>, <literal>ROLE</literal>, and
    <literal>ADMIN</literal> clauses.  The <xref linkend="sql-grant"/>
    command has fine-grained option control during membership creation,
