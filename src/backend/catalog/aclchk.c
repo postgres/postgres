@@ -4771,19 +4771,16 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
 		/* Update pg_shdepend for roles mentioned in the old/new ACLs. */
 		oldAclDatum = heap_getattr(oldtuple, Anum_pg_init_privs_initprivs,
 								   RelationGetDescr(relation), &isNull);
-		if (!isNull)
-			old_acl = DatumGetAclP(oldAclDatum);
-		else
-			old_acl = NULL;		/* this case shouldn't happen, probably */
+		Assert(!isNull);
+		old_acl = DatumGetAclP(oldAclDatum);
 		noldmembers = aclmembers(old_acl, &oldmembers);
 
 		updateInitAclDependencies(classoid, objoid, objsubid,
-								  ownerId,
 								  noldmembers, oldmembers,
 								  nnewmembers, newmembers);
 
 		/* If we have a new ACL to set, then update the row with it. */
-		if (new_acl)
+		if (new_acl && ACL_NUM(new_acl) != 0)
 		{
 			values[Anum_pg_init_privs_initprivs - 1] = PointerGetDatum(new_acl);
 			replace[Anum_pg_init_privs_initprivs - 1] = true;
@@ -4795,7 +4792,7 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
 		}
 		else
 		{
-			/* new_acl is NULL, so delete the entry we found. */
+			/* new_acl is NULL/empty, so delete the entry we found. */
 			CatalogTupleDelete(relation, &oldtuple->t_self);
 		}
 	}
@@ -4810,7 +4807,7 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
 		 * If we are passed in a NULL ACL and no entry exists, we can just
 		 * fall through and do nothing.
 		 */
-		if (new_acl)
+		if (new_acl && ACL_NUM(new_acl) != 0)
 		{
 			/* No entry found, so add it. */
 			values[Anum_pg_init_privs_objoid - 1] = ObjectIdGetDatum(objoid);
@@ -4832,7 +4829,6 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
 			oldmembers = NULL;
 
 			updateInitAclDependencies(classoid, objoid, objsubid,
-									  ownerId,
 									  noldmembers, oldmembers,
 									  nnewmembers, newmembers);
 		}
@@ -4844,6 +4840,115 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
 	CommandCounterIncrement();
 
 	table_close(relation, RowExclusiveLock);
+}
+
+/*
+ * ReplaceRoleInInitPriv
+ *
+ * Used by shdepReassignOwned to replace mentions of a role in pg_init_privs.
+ */
+void
+ReplaceRoleInInitPriv(Oid oldroleid, Oid newroleid,
+					  Oid classid, Oid objid, int32 objsubid)
+{
+	Relation	rel;
+	ScanKeyData key[3];
+	SysScanDesc scan;
+	HeapTuple	oldtuple;
+	Datum		oldAclDatum;
+	bool		isNull;
+	Acl		   *old_acl;
+	Acl		   *new_acl;
+	HeapTuple	newtuple;
+	int			noldmembers;
+	int			nnewmembers;
+	Oid		   *oldmembers;
+	Oid		   *newmembers;
+
+	/* Search for existing pg_init_privs entry for the target object. */
+	rel = table_open(InitPrivsRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_init_privs_objoid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objid));
+	ScanKeyInit(&key[1],
+				Anum_pg_init_privs_classoid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classid));
+	ScanKeyInit(&key[2],
+				Anum_pg_init_privs_objsubid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(objsubid));
+
+	scan = systable_beginscan(rel, InitPrivsObjIndexId, true,
+							  NULL, 3, key);
+
+	/* There should exist only one entry or none. */
+	oldtuple = systable_getnext(scan);
+
+	if (!HeapTupleIsValid(oldtuple))
+	{
+		/*
+		 * Hmm, why are we here if there's no entry?  But pack up and go away
+		 * quietly.
+		 */
+		systable_endscan(scan);
+		table_close(rel, RowExclusiveLock);
+		return;
+	}
+
+	/* Get a writable copy of the existing ACL. */
+	oldAclDatum = heap_getattr(oldtuple, Anum_pg_init_privs_initprivs,
+							   RelationGetDescr(rel), &isNull);
+	Assert(!isNull);
+	old_acl = DatumGetAclPCopy(oldAclDatum);
+
+	/*
+	 * Generate new ACL.  This usage of aclnewowner is a bit off-label when
+	 * oldroleid isn't the owner; but it does the job fine.
+	 */
+	new_acl = aclnewowner(old_acl, oldroleid, newroleid);
+
+	/*
+	 * If we end with an empty ACL, delete the pg_init_privs entry.  (That
+	 * probably can't happen here, but we may as well cover the case.)
+	 */
+	if (new_acl == NULL || ACL_NUM(new_acl) == 0)
+	{
+		CatalogTupleDelete(rel, &oldtuple->t_self);
+	}
+	else
+	{
+		Datum		values[Natts_pg_init_privs] = {0};
+		bool		nulls[Natts_pg_init_privs] = {0};
+		bool		replaces[Natts_pg_init_privs] = {0};
+
+		/* Update existing entry. */
+		values[Anum_pg_init_privs_initprivs - 1] = PointerGetDatum(new_acl);
+		replaces[Anum_pg_init_privs_initprivs - 1] = true;
+
+		newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(rel),
+									 values, nulls, replaces);
+		CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
+	}
+
+	/*
+	 * Update the shared dependency ACL info.
+	 */
+	noldmembers = aclmembers(old_acl, &oldmembers);
+	nnewmembers = aclmembers(new_acl, &newmembers);
+
+	updateInitAclDependencies(classid, objid, objsubid,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
+
+	systable_endscan(scan);
+
+	/* prevent error when processing objects multiple times */
+	CommandCounterIncrement();
+
+	table_close(rel, RowExclusiveLock);
 }
 
 /*
@@ -4907,10 +5012,8 @@ RemoveRoleFromInitPriv(Oid roleid, Oid classid, Oid objid, int32 objsubid)
 	/* Get a writable copy of the existing ACL. */
 	oldAclDatum = heap_getattr(oldtuple, Anum_pg_init_privs_initprivs,
 							   RelationGetDescr(rel), &isNull);
-	if (!isNull)
-		old_acl = DatumGetAclPCopy(oldAclDatum);
-	else
-		old_acl = NULL;			/* this case shouldn't happen, probably */
+	Assert(!isNull);
+	old_acl = DatumGetAclPCopy(oldAclDatum);
 
 	/*
 	 * We need the members of both old and new ACLs so we can correct the
@@ -4972,7 +5075,6 @@ RemoveRoleFromInitPriv(Oid roleid, Oid classid, Oid objid, int32 objsubid)
 	nnewmembers = aclmembers(new_acl, &newmembers);
 
 	updateInitAclDependencies(classid, objid, objsubid,
-							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 

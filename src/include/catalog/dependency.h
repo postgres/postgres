@@ -57,10 +57,10 @@ typedef enum DependencyType
  * one or the other, but not both, of these dependency types.)
  *
  * (c) a SHARED_DEPENDENCY_INITACL entry means that the referenced object is
- * a role mentioned in a pg_init_privs entry for the dependent object.  The
- * referenced object must be a pg_authid entry.  (SHARED_DEPENDENCY_INITACL
- * entries are not created for the owner of an object; hence two objects may
- * be linked by one or the other, but not both, of these dependency types.)
+ * a role mentioned in a pg_init_privs entry for the dependent object.
+ * The referenced object must be a pg_authid entry.  (Unlike the case for
+ * SHARED_DEPENDENCY_ACL, we make an entry for such a role whether or not
+ * it is the object's owner.)
  *
  * (d) a SHARED_DEPENDENCY_POLICY entry means that the referenced object is
  * a role mentioned in a policy object.  The referenced object must be a
@@ -209,7 +209,6 @@ extern void updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 								  int nnewmembers, Oid *newmembers);
 
 extern void updateInitAclDependencies(Oid classId, Oid objectId, int32 objsubId,
-									  Oid ownerId,
 									  int noldmembers, Oid *oldmembers,
 									  int nnewmembers, Oid *newmembers);
 

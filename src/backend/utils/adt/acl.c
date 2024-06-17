@@ -1091,6 +1091,12 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
  * The result is a modified copy; the input object is not changed.
  *
  * NB: caller is responsible for having detoasted the input ACL, if needed.
+ *
+ * Note: the name of this function is a bit of a misnomer, since it will
+ * happily make the specified role substitution whether the old role is
+ * really the owner of the parent object or merely mentioned in its ACL.
+ * But the vast majority of callers use it in connection with ALTER OWNER
+ * operations, so we'll keep the name.
  */
 Acl *
 aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)

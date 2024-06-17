@@ -103,6 +103,9 @@ static void storeObjectDescription(StringInfo descs,
 								   ObjectAddress *object,
 								   SharedDependencyType deptype,
 								   int count);
+static void shdepReassignOwned_Owner(Form_pg_shdepend sdepForm, Oid newrole);
+static void shdepReassignOwned_InitAcl(Form_pg_shdepend sdepForm,
+									   Oid oldrole, Oid newrole);
 
 
 /*
@@ -345,10 +348,11 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
 						AuthIdRelationId, newOwnerId,
 						SHARED_DEPENDENCY_ACL);
 
-	/* The same applies to SHARED_DEPENDENCY_INITACL */
-	shdepDropDependency(sdepRel, classId, objectId, 0, true,
-						AuthIdRelationId, newOwnerId,
-						SHARED_DEPENDENCY_INITACL);
+	/*
+	 * However, nothing need be done about SHARED_DEPENDENCY_INITACL entries,
+	 * since those exist whether or not the role is the object's owner, and
+	 * ALTER OWNER does not modify the underlying pg_init_privs entry.
+	 */
 
 	table_close(sdepRel, RowExclusiveLock);
 }
@@ -500,16 +504,18 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
  *		Update the pg_shdepend info for a pg_init_privs entry.
  *
  * Exactly like updateAclDependencies, except we are considering a
- * pg_init_privs ACL for the specified object.
+ * pg_init_privs ACL for the specified object.  Since recording of
+ * pg_init_privs role dependencies is the same for owners and non-owners,
+ * we do not need an ownerId argument.
  */
 void
 updateInitAclDependencies(Oid classId, Oid objectId, int32 objsubId,
-						  Oid ownerId,
 						  int noldmembers, Oid *oldmembers,
 						  int nnewmembers, Oid *newmembers)
 {
 	updateAclDependenciesWorker(classId, objectId, objsubId,
-								ownerId, SHARED_DEPENDENCY_INITACL,
+								InvalidOid, /* ownerId will not be consulted */
+								SHARED_DEPENDENCY_INITACL,
 								noldmembers, oldmembers,
 								nnewmembers, newmembers);
 }
@@ -542,11 +548,13 @@ updateAclDependenciesWorker(Oid classId, Oid objectId, int32 objsubId,
 			Oid			roleid = newmembers[i];
 
 			/*
-			 * Skip the owner: he has an OWNER shdep entry instead. (This is
-			 * not just a space optimization; it makes ALTER OWNER easier. See
-			 * notes in changeDependencyOnOwner.)
+			 * For SHARED_DEPENDENCY_ACL entries, skip the owner: she has an
+			 * OWNER shdep entry instead.  (This is not just a space
+			 * optimization; it makes ALTER OWNER easier.  See notes in
+			 * changeDependencyOnOwner.)  But for INITACL entries, we record
+			 * the owner too.
 			 */
-			if (roleid == ownerId)
+			if (deptype == SHARED_DEPENDENCY_ACL && roleid == ownerId)
 				continue;
 
 			/* Skip pinned roles; they don't need dependency entries */
@@ -563,8 +571,8 @@ updateAclDependenciesWorker(Oid classId, Oid objectId, int32 objsubId,
 		{
 			Oid			roleid = oldmembers[i];
 
-			/* Skip the owner, same as above */
-			if (roleid == ownerId)
+			/* Skip the owner for ACL entries, same as above */
+			if (deptype == SHARED_DEPENDENCY_ACL && roleid == ownerId)
 				continue;
 
 			/* Skip pinned roles */
@@ -1476,6 +1484,13 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					}
 					break;
 				case SHARED_DEPENDENCY_INITACL:
+
+					/*
+					 * Any mentions of the role that remain in pg_init_privs
+					 * entries are just dropped.  This is the same policy as
+					 * we apply to regular ACLs.
+					 */
+
 					/* Shouldn't see a role grant here */
 					Assert(sdepForm->classid != AuthMemRelationId);
 					RemoveRoleFromInitPriv(roleid,
@@ -1577,12 +1592,8 @@ shdepReassignOwned(List *roleids, Oid newrole)
 				sdepForm->dbid != InvalidOid)
 				continue;
 
-			/* We leave non-owner dependencies alone */
-			if (sdepForm->deptype != SHARED_DEPENDENCY_OWNER)
-				continue;
-
 			/*
-			 * The various ALTER OWNER routines tend to leak memory in
+			 * The various DDL routines called here tend to leak memory in
 			 * CurrentMemoryContext.  That's not a problem when they're only
 			 * called once per command; but in this usage where we might be
 			 * touching many objects, it can amount to a serious memory leak.
@@ -1593,81 +1604,23 @@ shdepReassignOwned(List *roleids, Oid newrole)
 										ALLOCSET_DEFAULT_SIZES);
 			oldcxt = MemoryContextSwitchTo(cxt);
 
-			/* Issue the appropriate ALTER OWNER call */
-			switch (sdepForm->classid)
+			/* Perform the appropriate processing */
+			switch (sdepForm->deptype)
 			{
-				case TypeRelationId:
-					AlterTypeOwner_oid(sdepForm->objid, newrole, true);
+				case SHARED_DEPENDENCY_OWNER:
+					shdepReassignOwned_Owner(sdepForm, newrole);
 					break;
-
-				case NamespaceRelationId:
-					AlterSchemaOwner_oid(sdepForm->objid, newrole);
+				case SHARED_DEPENDENCY_INITACL:
+					shdepReassignOwned_InitAcl(sdepForm, roleid, newrole);
 					break;
-
-				case RelationRelationId:
-
-					/*
-					 * Pass recursing = true so that we don't fail on indexes,
-					 * owned sequences, etc when we happen to visit them
-					 * before their parent table.
-					 */
-					ATExecChangeOwner(sdepForm->objid, newrole, true, AccessExclusiveLock);
+				case SHARED_DEPENDENCY_ACL:
+				case SHARED_DEPENDENCY_POLICY:
+				case SHARED_DEPENDENCY_TABLESPACE:
+					/* Nothing to do for these entry types */
 					break;
-
-				case DefaultAclRelationId:
-
-					/*
-					 * Ignore default ACLs; they should be handled by DROP
-					 * OWNED, not REASSIGN OWNED.
-					 */
-					break;
-
-				case UserMappingRelationId:
-					/* ditto */
-					break;
-
-				case ForeignServerRelationId:
-					AlterForeignServerOwner_oid(sdepForm->objid, newrole);
-					break;
-
-				case ForeignDataWrapperRelationId:
-					AlterForeignDataWrapperOwner_oid(sdepForm->objid, newrole);
-					break;
-
-				case EventTriggerRelationId:
-					AlterEventTriggerOwner_oid(sdepForm->objid, newrole);
-					break;
-
-				case PublicationRelationId:
-					AlterPublicationOwner_oid(sdepForm->objid, newrole);
-					break;
-
-				case SubscriptionRelationId:
-					AlterSubscriptionOwner_oid(sdepForm->objid, newrole);
-					break;
-
-					/* Generic alter owner cases */
-				case CollationRelationId:
-				case ConversionRelationId:
-				case OperatorRelationId:
-				case ProcedureRelationId:
-				case LanguageRelationId:
-				case LargeObjectRelationId:
-				case OperatorFamilyRelationId:
-				case OperatorClassRelationId:
-				case ExtensionRelationId:
-				case StatisticExtRelationId:
-				case TableSpaceRelationId:
-				case DatabaseRelationId:
-				case TSConfigRelationId:
-				case TSDictionaryRelationId:
-					AlterObjectOwner_internal(sdepForm->classid,
-											  sdepForm->objid,
-											  newrole);
-					break;
-
 				default:
-					elog(ERROR, "unexpected classid %u", sdepForm->classid);
+					elog(ERROR, "unrecognized dependency type: %d",
+						 (int) sdepForm->deptype);
 					break;
 			}
 
@@ -1683,4 +1636,124 @@ shdepReassignOwned(List *roleids, Oid newrole)
 	}
 
 	table_close(sdepRel, RowExclusiveLock);
+}
+
+/*
+ * shdepReassignOwned_Owner
+ *
+ * shdepReassignOwned's processing of SHARED_DEPENDENCY_OWNER entries
+ */
+static void
+shdepReassignOwned_Owner(Form_pg_shdepend sdepForm, Oid newrole)
+{
+	/* Issue the appropriate ALTER OWNER call */
+	switch (sdepForm->classid)
+	{
+		case TypeRelationId:
+			AlterTypeOwner_oid(sdepForm->objid, newrole, true);
+			break;
+
+		case NamespaceRelationId:
+			AlterSchemaOwner_oid(sdepForm->objid, newrole);
+			break;
+
+		case RelationRelationId:
+
+			/*
+			 * Pass recursing = true so that we don't fail on indexes, owned
+			 * sequences, etc when we happen to visit them before their parent
+			 * table.
+			 */
+			ATExecChangeOwner(sdepForm->objid, newrole, true, AccessExclusiveLock);
+			break;
+
+		case DefaultAclRelationId:
+
+			/*
+			 * Ignore default ACLs; they should be handled by DROP OWNED, not
+			 * REASSIGN OWNED.
+			 */
+			break;
+
+		case UserMappingRelationId:
+			/* ditto */
+			break;
+
+		case ForeignServerRelationId:
+			AlterForeignServerOwner_oid(sdepForm->objid, newrole);
+			break;
+
+		case ForeignDataWrapperRelationId:
+			AlterForeignDataWrapperOwner_oid(sdepForm->objid, newrole);
+			break;
+
+		case EventTriggerRelationId:
+			AlterEventTriggerOwner_oid(sdepForm->objid, newrole);
+			break;
+
+		case PublicationRelationId:
+			AlterPublicationOwner_oid(sdepForm->objid, newrole);
+			break;
+
+		case SubscriptionRelationId:
+			AlterSubscriptionOwner_oid(sdepForm->objid, newrole);
+			break;
+
+			/* Generic alter owner cases */
+		case CollationRelationId:
+		case ConversionRelationId:
+		case OperatorRelationId:
+		case ProcedureRelationId:
+		case LanguageRelationId:
+		case LargeObjectRelationId:
+		case OperatorFamilyRelationId:
+		case OperatorClassRelationId:
+		case ExtensionRelationId:
+		case StatisticExtRelationId:
+		case TableSpaceRelationId:
+		case DatabaseRelationId:
+		case TSConfigRelationId:
+		case TSDictionaryRelationId:
+			AlterObjectOwner_internal(sdepForm->classid,
+									  sdepForm->objid,
+									  newrole);
+			break;
+
+		default:
+			elog(ERROR, "unexpected classid %u", sdepForm->classid);
+			break;
+	}
+}
+
+/*
+ * shdepReassignOwned_InitAcl
+ *
+ * shdepReassignOwned's processing of SHARED_DEPENDENCY_INITACL entries
+ */
+static void
+shdepReassignOwned_InitAcl(Form_pg_shdepend sdepForm, Oid oldrole, Oid newrole)
+{
+	/*
+	 * Currently, REASSIGN OWNED replaces mentions of oldrole with newrole in
+	 * pg_init_privs entries, just as it does in the object's regular ACL.
+	 * This is less than ideal, since pg_init_privs ought to retain a
+	 * historical record of the situation at the end of CREATE EXTENSION.
+	 * However, there are two big stumbling blocks to doing something
+	 * different:
+	 *
+	 * 1. If we don't replace the references, what is to happen if the old
+	 * role gets dropped?  (DROP OWNED's current answer is to just delete the
+	 * pg_init_privs entry, which is surely ahistorical.)
+	 *
+	 * 2. It's unlikely that pg_dump will cope nicely with pg_init_privs
+	 * entries that are based on a different owner than the object now has ---
+	 * the more so given that pg_init_privs doesn't record the original owner
+	 * explicitly.  (This problem actually exists anyway given that a bare
+	 * ALTER OWNER won't update pg_init_privs, but we don't need REASSIGN
+	 * OWNED making it worse.)
+	 */
+	ReplaceRoleInInitPriv(oldrole, newrole,
+						  sdepForm->classid,
+						  sdepForm->objid,
+						  sdepForm->objsubid);
 }

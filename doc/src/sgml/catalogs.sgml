@@ -7182,9 +7182,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        The referenced object (which must be a role) is mentioned in a
        <link linkend="catalog-pg-init-privs"><structname>pg_init_privs</structname></link>
        entry for the dependent object.
-       (A <symbol>SHARED_DEPENDENCY_INITACL</symbol> entry is not made for
-       the owner of the object, since the owner will have
-       a <symbol>SHARED_DEPENDENCY_OWNER</symbol> entry anyway.)
       </para>
      </listitem>
     </varlistentry>
