@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2024-??-??, AS OF 2024-05-18</para>
+   <para>2024-??-??, AS OF 2024-06-17</para>
   </formalpara>
 
   <sect2 id="release-17-highlights">
@@ -247,15 +247,13 @@ Change pg_attribute.attstattarget and pg_attribute.stxstattarget to represent th
 <!--
 Author: Masahiko Sawada <msawada@postgresql.org>
 2024-04-02 [667e65aac] Use TidStore for dead tuple TIDs storage during lazy vac
+Author: Masahiko Sawada <msawada@postgresql.org>
+2024-06-14 [f1affb670] Reintroduce dead tuple counter in pg_stat_progress_vacuu
 -->
 
 <listitem>
 <para>
-Change pg_stat_progress_vacuum columns max_dead_tuples to max_dead_tuple_bytes and num_dead_tuples to dead_tuple_bytes (Masahiko Sawada)
-</para>
-
-<para>
-These columns now report bytes instead of tuples.
+Change pg_stat_progress_vacuum columns max_dead_tuples to max_dead_tuple_bytes, rename num_dead_tuples to num_dead_item_ids, and add dead_tuple_bytes (Masahiko Sawada)
 </para>
 </listitem>
 
@@ -1844,11 +1842,13 @@ Previously only blocking, unencrypted cancel requests were supported.
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2024-04-02 [f5e4dedfa] Expose PQsocketPoll via libpq
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2024-06-13 [105024a47] Improve the granularity of PQsocketPoll's timeout parame
 -->
 
 <listitem>
 <para>
-Add libpq function PQsocketPoll to allow polling of network sockets (Tristan Partin)
+Add libpq function PQsocketPoll to allow polling of network sockets (Tristan Partin, Tom Lane)
 </para>
 </listitem>
 
