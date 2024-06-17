@@ -37,13 +37,9 @@ static const RmgrData pg_tde_rmgr = {
 	.rm_identify = pg_tde_rmgr_identify
 };
 
-<<<<<<< HEAD
 #ifdef PERCONA_FORK
 
 /* XLog encryption staff */
-=======
-/* XLog encryption stuff */
->>>>>>> e9805ad (Create and use global catalog key)
 
 extern Size TDEXLogEncryptBuffSize(void);
 

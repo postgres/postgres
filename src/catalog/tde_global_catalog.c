@@ -152,7 +152,12 @@ GetGlCatInternalKey(Oid obj_id)
 	return GetRelationKeyWithKeyring(GLOBAL_SPACE_RLOCATOR(obj_id), EncryptionState->keyring);
 }
 
-/* TODO: add Vault */
+/* 
+ * TODO: should be aligned with the rest of the keyring_provider code after its
+ * 		 refactoring
+ *
+ * TODO: add Vault 
+ */
 static void
 init_keyring(void)
 {
