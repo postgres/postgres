@@ -157,7 +157,7 @@ typedef struct SpGistState
 
 	char	   *deadTupleStorage;	/* workspace for spgFormDeadTuple */
 
-	TransactionId myXid;		/* XID to use when creating a redirect tuple */
+	TransactionId redirectXid;	/* XID to use when creating a redirect tuple */
 	bool		isBuild;		/* true if doing index build */
 } SpGistState;
 
@@ -421,7 +421,8 @@ typedef struct SpGistLeafTupleData
  * field, to satisfy some Asserts that we make when replacing a leaf tuple
  * with a dead tuple.
  * We don't use t_info, but it's needed to align the pointer field.
- * pointer and xid are only valid when tupstate = REDIRECT.
+ * pointer and xid are only valid when tupstate = REDIRECT, and in some
+ * cases xid can be InvalidTransactionId even then; see initSpGistState.
  */
 typedef struct SpGistDeadTupleData
 {
@@ -464,7 +465,7 @@ typedef SpGistDeadTupleData *SpGistDeadTuple;
 
 #define STORE_STATE(s, d)  \
 	do { \
-		(d).myXid = (s)->myXid; \
+		(d).redirectXid = (s)->redirectXid; \
 		(d).isBuild = (s)->isBuild; \
 	} while(0)
 
