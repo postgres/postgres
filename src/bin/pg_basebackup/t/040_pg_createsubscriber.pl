@@ -88,6 +88,7 @@ command_fails(
 
 # Set up node P as primary
 my $node_p = PostgreSQL::Test::Cluster->new('node_p');
+my $pconnstr = $node_p->connstr;
 $node_p->init(allows_streaming => 'logical');
 $node_p->start;
 
@@ -122,6 +123,8 @@ $node_s->init_from_backup($node_p, 'backup_1', has_streaming => 1);
 $node_s->append_conf(
 	'postgresql.conf', qq[
 primary_slot_name = '$slotname'
+primary_conninfo = '$pconnstr dbname=postgres'
+hot_standby_feedback = on
 ]);
 $node_s->set_standby_mode();
 $node_s->start;
@@ -260,6 +263,16 @@ max_worker_processes = 8
 # Restore default settings on both servers
 $node_p->restart;
 
+# Create failover slot to test its removal
+my $fslotname = 'failover_slot';
+$node_p->safe_psql('pg1',
+	"SELECT pg_create_logical_replication_slot('$fslotname', 'pgoutput', false, false, true)");
+$node_s->start;
+$node_s->safe_psql('postgres', "SELECT pg_sync_replication_slots()");
+my $result = $node_s->safe_psql('postgres', "SELECT slot_name FROM pg_replication_slots WHERE slot_name = '$fslotname' AND synced AND NOT temporary");
+is($result, 'failover_slot', 'failover slot is synced');
+$node_s->stop;
+
 # dry run mode on node S
 command_ok(
 	[
@@ -318,7 +331,7 @@ command_ok(
 	'run pg_createsubscriber on node S');
 
 # Confirm the physical replication slot has been removed
-my $result = $node_p->safe_psql('pg1',
+$result = $node_p->safe_psql('pg1',
 	"SELECT count(*) FROM pg_replication_slots WHERE slot_name = '$slotname'"
 );
 is($result, qq(0),
@@ -342,6 +355,11 @@ my @subnames = split("\n", $result);
 # Wait subscriber to catch up
 $node_s->wait_for_subscription_sync($node_p, $subnames[0]);
 $node_s->wait_for_subscription_sync($node_p, $subnames[1]);
+
+# Confirm the failover slot has been removed
+$result = $node_s->safe_psql('pg1',
+	"SELECT count(*) FROM pg_replication_slots WHERE slot_name = '$fslotname'");
+is($result, qq(0), 'failover slot was removed');
 
 # Check result on database pg1
 $result = $node_s->safe_psql('pg1', 'SELECT * FROM tbl1');

@@ -484,6 +484,15 @@ PostgreSQL documentation
 
     <step>
      <para>
+      If the standby server contains <link
+      linkend="logicaldecoding-replication-slots-synchronization">failover
+      replication slots</link>, they cannot be synchronized anymore, so drop
+      them.
+     </para>
+    </step>
+
+    <step>
+     <para>
       Update the system identifier on the target server. The
       <xref linkend="app-pgresetwal"/> is run to modify the system identifier.
       The target server is stopped as a <command>pg_resetwal</command> requirement.
