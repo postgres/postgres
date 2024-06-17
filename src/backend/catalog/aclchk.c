@@ -165,9 +165,9 @@ static AclMode pg_type_aclmask_ext(Oid type_oid, Oid roleid,
 								   AclMode mask, AclMaskHow how,
 								   bool *is_missing);
 static void recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
-									Oid ownerId, Acl *new_acl);
+									Acl *new_acl);
 static void recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
-										  Oid ownerId, Acl *new_acl);
+										  Acl *new_acl);
 
 
 /*
@@ -1802,7 +1802,7 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 		CatalogTupleUpdate(attRelation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
-		recordExtensionInitPriv(relOid, RelationRelationId, attnum, ownerId,
+		recordExtensionInitPriv(relOid, RelationRelationId, attnum,
 								ACL_NUM(new_acl) > 0 ? new_acl : NULL);
 
 		/* Update the shared dependency ACL info */
@@ -2062,8 +2062,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 			CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 			/* Update initial privileges for extensions */
-			recordExtensionInitPriv(relOid, RelationRelationId, 0,
-									ownerId, new_acl);
+			recordExtensionInitPriv(relOid, RelationRelationId, 0, new_acl);
 
 			/* Update the shared dependency ACL info */
 			updateAclDependencies(RelationRelationId, relOid, 0,
@@ -2264,7 +2263,7 @@ ExecGrant_common(InternalGrant *istmt, Oid classid, AclMode default_privs,
 		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
-		recordExtensionInitPriv(objectid, classid, 0, ownerId, new_acl);
+		recordExtensionInitPriv(objectid, classid, 0, new_acl);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(classid,
@@ -2416,8 +2415,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update initial privileges for extensions */
-		recordExtensionInitPriv(loid, LargeObjectRelationId, 0,
-								ownerId, new_acl);
+		recordExtensionInitPriv(loid, LargeObjectRelationId, 0, new_acl);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(LargeObjectRelationId,
@@ -2589,7 +2587,7 @@ ExecGrant_Parameter(InternalGrant *istmt)
 
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(parameterId, ParameterAclRelationId, 0,
-								ownerId, new_acl);
+								new_acl);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ParameterAclRelationId, parameterId, 0,
@@ -4477,7 +4475,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 				}
 
 				recordExtensionInitPrivWorker(objoid, classoid, curr_att,
-											  pg_class_tuple->relowner,
 											  DatumGetAclP(attaclDatum));
 
 				ReleaseSysCache(attTuple);
@@ -4490,7 +4487,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 		/* Add the record, if any, for the top-level object */
 		if (!isNull)
 			recordExtensionInitPrivWorker(objoid, classoid, 0,
-										  pg_class_tuple->relowner,
 										  DatumGetAclP(aclDatum));
 
 		ReleaseSysCache(tuple);
@@ -4501,7 +4497,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	tuple;
-		Form_pg_largeobject_metadata form_lo_meta;
 		ScanKeyData entry[1];
 		SysScanDesc scan;
 		Relation	relation;
@@ -4526,7 +4521,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 		tuple = systable_getnext(scan);
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "could not find tuple for large object %u", objoid);
-		form_lo_meta = (Form_pg_largeobject_metadata) GETSTRUCT(tuple);
 
 		aclDatum = heap_getattr(tuple,
 								Anum_pg_largeobject_metadata_lomacl,
@@ -4535,7 +4529,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 		/* Add the record, if any, for the top-level object */
 		if (!isNull)
 			recordExtensionInitPrivWorker(objoid, classoid, 0,
-										  form_lo_meta->lomowner,
 										  DatumGetAclP(aclDatum));
 
 		systable_endscan(scan);
@@ -4544,7 +4537,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 	else if (get_object_attnum_acl(classoid) != InvalidAttrNumber)
 	{
 		int			cacheid;
-		Oid			ownerId;
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	tuple;
@@ -4555,9 +4547,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 			elog(ERROR, "cache lookup failed for %s %u",
 				 get_object_class_descr(classoid), objoid);
 
-		ownerId = DatumGetObjectId(SysCacheGetAttrNotNull(cacheid,
-														  tuple,
-														  get_object_attnum_owner(classoid)));
 		aclDatum = SysCacheGetAttr(cacheid, tuple,
 								   get_object_attnum_acl(classoid),
 								   &isNull);
@@ -4565,7 +4554,7 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 		/* Add the record, if any, for the top-level object */
 		if (!isNull)
 			recordExtensionInitPrivWorker(objoid, classoid, 0,
-										  ownerId, DatumGetAclP(aclDatum));
+										  DatumGetAclP(aclDatum));
 
 		ReleaseSysCache(tuple);
 	}
@@ -4578,8 +4567,6 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 void
 removeExtObjInitPriv(Oid objoid, Oid classoid)
 {
-	Oid			ownerId;
-
 	/*
 	 * If this is a relation then we need to see if there are any sub-objects
 	 * (eg: columns) for it and, if so, be sure to call
@@ -4594,7 +4581,6 @@ removeExtObjInitPriv(Oid objoid, Oid classoid)
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for relation %u", objoid);
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
-		ownerId = pg_class_tuple->relowner;
 
 		/*
 		 * Indexes don't have permissions, neither do the pg_class rows for
@@ -4631,8 +4617,7 @@ removeExtObjInitPriv(Oid objoid, Oid classoid)
 
 				/* when removing, remove all entries, even dropped columns */
 
-				recordExtensionInitPrivWorker(objoid, classoid, curr_att,
-											  ownerId, NULL);
+				recordExtensionInitPrivWorker(objoid, classoid, curr_att, NULL);
 
 				ReleaseSysCache(attTuple);
 			}
@@ -4640,35 +4625,9 @@ removeExtObjInitPriv(Oid objoid, Oid classoid)
 
 		ReleaseSysCache(tuple);
 	}
-	else
-	{
-		/* Must find out the owner's OID the hard way */
-		AttrNumber	ownerattnum;
-		int			cacheid;
-		HeapTuple	tuple;
-
-		/*
-		 * If the object is of a kind that has no owner, it should not have
-		 * any pg_init_privs entry either.
-		 */
-		ownerattnum = get_object_attnum_owner(classoid);
-		if (ownerattnum == InvalidAttrNumber)
-			return;
-		cacheid = get_object_catcache_oid(classoid);
-		tuple = SearchSysCache1(cacheid, ObjectIdGetDatum(objoid));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for %s %u",
-				 get_object_class_descr(classoid), objoid);
-
-		ownerId = DatumGetObjectId(SysCacheGetAttrNotNull(cacheid,
-														  tuple,
-														  ownerattnum));
-
-		ReleaseSysCache(tuple);
-	}
 
 	/* Remove the record, if any, for the top-level object */
-	recordExtensionInitPrivWorker(objoid, classoid, 0, ownerId, NULL);
+	recordExtensionInitPrivWorker(objoid, classoid, 0, NULL);
 }
 
 /*
@@ -4680,8 +4639,7 @@ removeExtObjInitPriv(Oid objoid, Oid classoid)
  * Pass in the object OID, the OID of the class (the OID of the table which
  * the object is defined in) and the 'sub' id of the object (objsubid), if
  * any.  If there is no 'sub' id (they are currently only used for columns of
- * tables) then pass in '0'.  Also pass the OID of the object's owner.
- * Finally, pass in the complete ACL to store.
+ * tables) then pass in '0'.  Finally, pass in the complete ACL to store.
  *
  * If an ACL already exists for this object/sub-object then we will replace
  * it with what is passed in.
@@ -4690,8 +4648,7 @@ removeExtObjInitPriv(Oid objoid, Oid classoid)
  * removed, if one is found.
  */
 static void
-recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
-						Oid ownerId, Acl *new_acl)
+recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid, Acl *new_acl)
 {
 	/*
 	 * Generally, we only record the initial privileges when an extension is
@@ -4704,7 +4661,7 @@ recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
 	if (!creating_extension && !binary_upgrade_record_init_privs)
 		return;
 
-	recordExtensionInitPrivWorker(objoid, classoid, objsubid, ownerId, new_acl);
+	recordExtensionInitPrivWorker(objoid, classoid, objsubid, new_acl);
 }
 
 /*
@@ -4721,7 +4678,7 @@ recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
  */
 static void
 recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
-							  Oid ownerId, Acl *new_acl)
+							  Acl *new_acl)
 {
 	Relation	relation;
 	ScanKeyData key[3];
