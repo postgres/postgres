@@ -2525,7 +2525,10 @@ select jsonb_path_query('null', '$.string()', silent => true);
 (0 rows)
 
 select jsonb_path_query('[]', '$.string()');
-ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
+ jsonb_path_query 
+------------------
+(0 rows)
+
 select jsonb_path_query('[]', 'strict $.string()');
 ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
 select jsonb_path_query('{}', '$.string()');
@@ -2575,6 +2578,13 @@ select jsonb_path_query('1234', '$.string().type()');
 ------------------
  "string"
 (1 row)
+
+select jsonb_path_query('[2, true]', '$.string()');
+ jsonb_path_query 
+------------------
+ "2"
+ "true"
+(2 rows)
 
 select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()');
 ERROR:  cannot convert value from timestamptz to timestamp without time zone usage

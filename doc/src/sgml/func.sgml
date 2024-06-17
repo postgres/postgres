@@ -17792,7 +17792,10 @@ ERROR:  jsonpath member accessor can only be applied to an object
     methods available in <type>jsonpath</type>.  Note that while the unary
     operators and methods can be applied to multiple values resulting from a
     preceding path step, the binary operators (addition etc.) can only be
-    applied to single values.
+    applied to single values.  In lax mode, methods applied to an array will be
+    executed for each value in the array.  The exceptions are
+    <literal>.type()</literal> and <literal>.size()</literal>, which apply to
+    the array itself.
    </para>
 
    <table id="functions-sqljson-op-table">
