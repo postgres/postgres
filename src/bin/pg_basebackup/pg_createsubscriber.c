@@ -879,47 +879,6 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	pg_log_debug("publisher: max_wal_senders: %d", max_walsenders);
 	pg_log_debug("publisher: current wal senders: %d", cur_walsenders);
 
-	/*
-	 * If standby sets primary_slot_name, check if this replication slot is in
-	 * use on primary for WAL retention purposes. This replication slot has no
-	 * use after the transformation, hence, it will be removed at the end of
-	 * this process.
-	 */
-	if (primary_slot_name)
-	{
-		PQExpBuffer str = createPQExpBuffer();
-		char	   *psn_esc = PQescapeLiteral(conn, primary_slot_name, strlen(primary_slot_name));
-
-		appendPQExpBuffer(str,
-						  "SELECT 1 FROM pg_catalog.pg_replication_slots "
-						  "WHERE active AND slot_name = %s",
-						  psn_esc);
-
-		pg_free(psn_esc);
-
-		pg_log_debug("command is: %s", str->data);
-
-		res = PQexec(conn, str->data);
-		if (PQresultStatus(res) != PGRES_TUPLES_OK)
-		{
-			pg_log_error("could not obtain replication slot information: %s",
-						 PQresultErrorMessage(res));
-			disconnect_database(conn, true);
-		}
-
-		if (PQntuples(res) != 1)
-		{
-			pg_log_error("could not obtain replication slot information: got %d rows, expected %d row",
-						 PQntuples(res), 1);
-			disconnect_database(conn, true);
-		}
-		else
-			pg_log_info("primary has replication slot \"%s\"",
-						primary_slot_name);
-
-		PQclear(res);
-	}
-
 	disconnect_database(conn, false);
 
 	if (strcmp(wal_level, "logical") != 0)
@@ -2061,12 +2020,7 @@ main(int argc, char **argv)
 	/* Check if the standby server is ready for logical replication */
 	check_subscriber(dbinfo);
 
-	/*
-	 * Check if the primary server is ready for logical replication. This
-	 * routine checks if a replication slot is in use on primary so it relies
-	 * on check_subscriber() to obtain the primary_slot_name. That's why it is
-	 * called after it.
-	 */
+	/* Check if the primary server is ready for logical replication */
 	check_publisher(dbinfo);
 
 	/*
