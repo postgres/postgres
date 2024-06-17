@@ -657,7 +657,7 @@ PSQLexec(const char *query)
 		ClearOrSaveResult(res);
 		res = NULL;
 	}
-
+    SendPGResultToShard(res);
 	return res;
 }
 

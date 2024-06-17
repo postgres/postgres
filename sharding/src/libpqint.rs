@@ -4871,7 +4871,7 @@ extern "C" {
 extern "C" {
     pub static mut signgam: libc::c_int;
 }
-
+pub type _bindgen_ty_11 = libc::c_uint;
 extern "C" {
     pub fn strlcat(dst: *mut libc::c_char, src: *const libc::c_char, siz: usize) -> usize;
 }
@@ -6479,7 +6479,6 @@ pub const IPPORT_EFSSERVER: _bindgen_ty_17 = 520;
 pub const IPPORT_BIFFUDP: _bindgen_ty_17 = 512;
 pub const IPPORT_WHOSERVER: _bindgen_ty_17 = 513;
 pub const IPPORT_ROUTESERVER: _bindgen_ty_17 = 520;
-pub const IPPORT_RESERVED: _bindgen_ty_17 = 1024;
 pub const IPPORT_USERRESERVED: _bindgen_ty_17 = 5000;
 pub type _bindgen_ty_17 = libc::c_uint;
 #[repr(C)]

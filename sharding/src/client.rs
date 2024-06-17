@@ -1,22 +1,25 @@
-use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
+extern crate pgwire;
+use pgwire::error::{PgWireError};
 use tokio::net::TcpStream;
+use pgwire::messages::data::{DataRow};
+use pgwire::messages::simplequery::Query;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 #[tokio::main]
-async fn main() -> io::Result<()> {
-    let mut stream = TcpStream::connect("127.0.0.1:7878").await?;
-    println!("Connected to the server");
+async fn main() -> Result<(), PgWireError> {
+    let mut connection : TcpStream = TcpStream::connect("localhost:5433")?;
 
-    // Send a message to the server
-    let message = b"Hello, server!";
-    stream.write_all(message).await?;
-    println!("Sent: {}", String::from_utf8_lossy(message));
+    // Send a simple message
+    let mut message = Query {
+        query: "SELECT * from employees;".to_string(),
+    };
+    connection.write_all(message.as_bytes()).await?;
+    let mut empty_array: [u8; 512] = [0; 512];
+    // Receive and decode the response
+    let mut response = connection.read(&mut *empty_array)?;
+    println!("{}", response.to_string());
 
-    // Buffer to hold the response from the server
-    let mut buffer = vec![0; 512];
-
-    // Read the server's response
-    let n = stream.read(&mut buffer).await?;
-    println!("Received: {}", String::from_utf8_lossy(&buffer[..n]));
+    connection.close()?;
 
     Ok(())
 }

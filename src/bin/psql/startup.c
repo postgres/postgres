@@ -459,8 +459,8 @@ error:
 		if (!pset.quiet)
 			printf(_("Type \"help\" for help.\n\n"));
 		initializeInput(options.no_readline ? 0 : 1);
-        //FILE *f = fopen("testing.txt", "r+");
-		successResult = MainLoop(stdin);
+        FILE *f = fopen("testing.txt", "r+");
+		successResult = MainLoop(f);
 	}
 
 	/* clean up */
