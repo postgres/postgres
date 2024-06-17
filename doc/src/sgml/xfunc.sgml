@@ -3669,6 +3669,12 @@ extern bool InjectionPointDetach(const char *name);
     </para>
 
     <para>
+     An example can be found in
+     <filename>src/test/modules/injection_points</filename> in the PostgreSQL
+     source tree.
+    </para>
+
+    <para>
      Enabling injections points requires
      <option>--enable-injection-points</option> with
      <command>configure</command> or <option>-Dinjection_points=true</option>
