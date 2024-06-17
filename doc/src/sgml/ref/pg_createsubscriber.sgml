@@ -326,13 +326,6 @@ PostgreSQL documentation
    </para>
 
    <para>
-    During the recovery process, if the target server disconnects from the
-    source server, <application>pg_createsubscriber</application> will check a
-    few times if the connection has been reestablished to stream the required
-    WAL.  After a few attempts, it terminates with an error.
-   </para>
-
-   <para>
     Since DDL commands are not replicated by logical replication, avoid
     executing DDL commands that change the database schema while running
     <application>pg_createsubscriber</application>.  If the target server has

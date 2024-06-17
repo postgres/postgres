@@ -264,6 +264,7 @@ $node_p->restart;
 command_ok(
 	[
 		'pg_createsubscriber', '--verbose',
+		'--recovery-timeout', "$PostgreSQL::Test::Utils::timeout_default",
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
 		$node_p->connstr('pg1'), '--socket-directory',
@@ -301,6 +302,7 @@ command_ok(
 command_ok(
 	[
 		'pg_createsubscriber', '--verbose',
+		'--recovery-timeout', "$PostgreSQL::Test::Utils::timeout_default",
 		'--verbose', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
 		$node_p->connstr('pg1'), '--socket-directory',
