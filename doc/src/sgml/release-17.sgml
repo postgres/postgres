@@ -1903,7 +1903,7 @@ Allow TLS connections without requiring a network round-trip negotiation (Greg S
 </para>
 
 <para>
-This is enabled with the client-side option sslnegotation=direct, requires ALPN, and only works on PostgreSQL 17 and later servers.
+This is enabled with the client-side option sslnegotiation=direct, requires ALPN, and only works on PostgreSQL 17 and later servers.
 </para>
 </listitem>
 
