@@ -1111,10 +1111,10 @@ pg_tde_getnext(TableScanDesc sscan, ScanDirection direction)
 	 * rather than the AM oid, is that this allows to write regression tests
 	 * that create another AM reusing the heap handler.
 	 */
-	if (unlikely(sscan->rs_rd->rd_tableam != GetHeapamTableAmRoutine()))
+	if (unlikely(sscan->rs_rd->rd_tableam != GetPGTdeamTableAmRoutine()))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg_internal("only heap AM is supported")));
+				 errmsg_internal("only pg_tde AM is supported")));
 
 	/*
 	 * We don't expect direct calls to pg_tde_getnext with valid CheckXidAlive

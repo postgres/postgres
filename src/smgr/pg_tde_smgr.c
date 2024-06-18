@@ -8,7 +8,7 @@
 #include "access/pg_tde_tdemap.h"
 #include "pg_tde_event_capture.h"
 
-#if PG_VERSION_NUM >= 170000
+#ifdef PERCONA_FORK
 
 // TODO: implement proper IV
 // iv should be based on blocknum + relfile, available in the API
@@ -20,10 +20,6 @@ tde_smgr_get_key(SMgrRelation reln)
 	// TODO: This recursion counter is a dirty hack until the metadata is in the catalog
 	// As otherwise we would call GetMasterKey recursively and deadlock
 	static int recursion = 0;
-
-    ereport(NOTICE,
-          (errmsg("Trying to decide if table is encrypted: %u", reln->smgr_rlocator.locator.relNumber)));
-
 
 	if(IsCatalogRelationOid(reln->smgr_rlocator.locator.relNumber))
 	{
@@ -214,4 +210,4 @@ void RegisterStorageMgr()
 void RegisterStorageMgr()
 {
 }
-#endif
+#endif /* PERCONA_FORK */

@@ -224,12 +224,26 @@ GetMasterKey(Oid dbOid)
     LWLock *lock_files = tde_lwlock_mk_files();
     LWLock *lock_cache = tde_lwlock_mk_cache();
 
+	// TODO: This recursion counter is a dirty hack until the metadata is in the catalog
+	// As otherwise we would call GetMasterKey recursively and deadlock
+	static int recursion = 0;
+
+	if(recursion > 0)
+	{
+		return NULL;
+	}
+
+	recursion++;
+
     LWLockAcquire(lock_cache, LW_SHARED);
     masterKey = get_master_key_from_cache(dbOid);
     LWLockRelease(lock_cache);
 
     if (masterKey)
+	{
+		recursion--;
         return masterKey;
+	}
 
     /*
      * We should hold an exclusive lock here to ensure that a valid master key, if found, is added
@@ -244,6 +258,7 @@ GetMasterKey(Oid dbOid)
     {
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
+		recursion--;
         return masterKey;
     }
 
@@ -254,6 +269,7 @@ GetMasterKey(Oid dbOid)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
+		recursion--;
         return NULL;
     }
 
@@ -264,6 +280,7 @@ GetMasterKey(Oid dbOid)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
+		recursion--;
         return NULL;
     }
 
@@ -273,6 +290,7 @@ GetMasterKey(Oid dbOid)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
+		recursion--;
         return NULL;
     }
 
@@ -292,6 +310,7 @@ GetMasterKey(Oid dbOid)
     if (masterKeyInfo)
         pfree(masterKeyInfo);
 
+    recursion--;
     return masterKey;
 }
 
@@ -731,7 +750,12 @@ Datum pg_tde_master_key_info(PG_FUNCTION_ARGS)
 
     master_key = GetMasterKey(MyDatabaseId);
     if (master_key == NULL)
-        PG_RETURN_NULL();
+	{
+		ereport(ERROR,
+                (errmsg("Master key does not exists for the database"),
+                 errhint("Use set_master_key interface to set the master key")));
+		PG_RETURN_NULL();
+	}
 
     keyring = GetKeyProviderByID(master_key->keyInfo.keyringId);
 

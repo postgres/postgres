@@ -2623,6 +2623,12 @@ static const TableAmRoutine pg_tdeam_methods = {
 	.scan_sample_next_tuple = pg_tdeam_scan_sample_next_tuple
 };
 
+const TableAmRoutine *
+GetPGTdeamTableAmRoutine(void)
+{
+	return &pg_tdeam_methods;
+}
+
 Datum
 pg_tdeam_handler(PG_FUNCTION_ARGS)
 {

@@ -12,7 +12,9 @@
 #include "postgres.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
+#ifdef PERCONA_FORK
 #include "access/xlog_smgr.h"
+#endif
 
 /* TDE XLOG resource manager */
 #define XLOG_TDE_ADD_RELATION_KEY	0x00
@@ -34,6 +36,8 @@ static const RmgrData pg_tde_rmgr = {
 	.rm_desc = pg_tde_rmgr_desc,
 	.rm_identify = pg_tde_rmgr_identify
 };
+
+#ifdef PERCONA_FORK
 
 /* XLog encryption staff */
 
@@ -57,5 +61,7 @@ static const XLogSmgr tde_xlog_smgr = {
 extern void TDEInitXLogSmgr(void);
 
 extern void xlogInitGUC(void);
+
+#endif
 
 #endif							/* PG_TDE_XLOG_H */

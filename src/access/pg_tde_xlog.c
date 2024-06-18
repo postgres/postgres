@@ -120,6 +120,8 @@ pg_tde_rmgr_identify(uint8 info)
 	return NULL;
 }
 
+#ifdef PERCONA_FORK
+
 /* 
  * XLog Storage Manager
  * TODO:
@@ -399,3 +401,5 @@ SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char* iv_prefix)
 	iv_prefix[10] = ((lsn >> 8) & 0xFF);
 	iv_prefix[11] = (lsn & 0xFF);
 }
+
+#endif

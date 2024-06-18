@@ -52,6 +52,8 @@ GetCurrentTdeCreateEvent(void)
 Datum
 pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 {
+	/* TODO: verify update_compare_indexes failure related to this */
+#ifdef PERCONA_FORK
 	EventTriggerData *trigdata;
 	Node	   *parsetree;
 
@@ -83,14 +85,10 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			if (rel->rd_rel->relam == get_tde_table_am_oid())
 			{
 				/* We are creating the index on encrypted table */
-				ereport(NOTICE,
-						(errmsg("Creating index on **ENCRYPTED** relation:%s with Oid:%d", stmt->relation->relname, relationId)));
 				/* set the global state */
 				tdeCurrentCreateEvent.encryptMode = true;
 			}
 			else
-				ereport(DEBUG1,
-						(errmsg("Creating index on relation:%s with Oid:%d", stmt->relation->relname, relationId)));
 			table_close(rel, lockmode);
 		}
 		else
@@ -104,12 +102,12 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 		tdeCurrentCreateEvent.relation = stmt->relation;
 
-		elog(DEBUG1, "CREATING TABLE %s Using Access Method %s", stmt->relation->relname, stmt->accessMethod);
 		if (stmt->accessMethod && !strcmp(stmt->accessMethod, "pg_tde2"))
 		{
 			tdeCurrentCreateEvent.encryptMode = true;
 		}
 	}
+#endif
 	PG_RETURN_NULL();
 }
 
@@ -120,6 +118,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 Datum
 pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 {
+#ifdef PERCONA_FORK
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
 		ereport(ERROR,
@@ -134,6 +133,7 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 
 	/* All we need to do is to clear the event state */
 	reset_current_tde_create_event();
+#endif
 	PG_RETURN_NULL();
 }
 
