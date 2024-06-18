@@ -29,7 +29,9 @@
 #include <sys/time.h>
 
 #include "access/pg_tde_tdemap.h"
+#ifdef PERCONA_FORK
 #include "catalog/tde_global_catalog.h"
+#endif
 
 typedef struct TdeMasterKeySharedState
 {
@@ -232,10 +234,12 @@ GetMasterKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring)
 	recursion++;
 
     LWLockAcquire(lock_cache, LW_SHARED);
-        /* Global catalog has its own cache */
+#ifdef PERCONA_FORK
+    /* Global catalog has its own cache */
     if (spcOid == GLOBALTABLESPACE_OID)
         masterKey = TDEGetGlCatKeyFromCache();
-    else 
+    else
+#endif
         masterKey = get_master_key_from_cache(dbOid);
     LWLockRelease(lock_cache);
 
@@ -252,10 +256,12 @@ GetMasterKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring)
     LWLockAcquire(lock_files, LW_SHARED);
     LWLockAcquire(lock_cache, LW_EXCLUSIVE);
 
+#ifdef PERCONA_FORK
     /* Global catalog has its own cache */
     if (spcOid == GLOBALTABLESPACE_OID)
         masterKey = TDEGetGlCatKeyFromCache();
-    else 
+    else
+#endif
         masterKey = get_master_key_from_cache(dbOid);
 
     if (masterKey)
@@ -285,8 +291,9 @@ GetMasterKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring)
             LWLockRelease(lock_cache);
             LWLockRelease(lock_files);
 
-		recursion--;
-        return NULL;
+	    	recursion--;
+            return NULL;
+        }
     }
 
     keyInfo = KeyringGetKey(keyring, masterKeyInfo->keyId.versioned_name, false, &keyring_ret);
@@ -306,9 +313,11 @@ GetMasterKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring)
     masterKey->keyLength = keyInfo->data.len;
 
     Assert(dbOid == masterKey->keyInfo.databaseId);
+#ifdef PERCONA_FORK
     if (spcOid == GLOBALTABLESPACE_OID)
         TDEPutGlCatKeyInCache(masterKey);
-    else 
+    else
+#endif
         push_master_key_to_cache(masterKey);
 
     /* Release the exclusive locks here */

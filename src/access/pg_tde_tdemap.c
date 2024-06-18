@@ -417,7 +417,7 @@ pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing)
 	fd = BasicOpenFile(tde_filename, fileFlags | PG_BINARY);
 	if (fd < 0 && !(errno == ENOENT && ignore_missing == true))
 	{
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open tde file \"%s\": %m",
 						tde_filename)));

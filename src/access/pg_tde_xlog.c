@@ -24,9 +24,9 @@
 
 #include "access/pg_tde_tdemap.h"
 #include "access/pg_tde_xlog.h"
-#include "catalog/tde_global_catalog.h"
 #include "encryption/enc_tde.h"
-
+#ifdef PERCONA_FORK
+#include "catalog/tde_global_catalog.h"
 
 static char *TDEXLogEncryptBuf = NULL;
 
@@ -39,7 +39,7 @@ static XLogPageHeaderData DecryptCurrentPageHrd;
 static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset);
 static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char* iv_prefix);
 static int XLOGChooseNumBuffers(void);
-
+#endif
 
 /*
  * TDE fork XLog

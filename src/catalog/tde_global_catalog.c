@@ -12,6 +12,8 @@
 
 #include "postgres.h"
 
+#ifdef PERCONA_FORK
+
 #include "storage/shmem.h"
 #include "utils/guc.h"
 
@@ -238,3 +240,4 @@ create_master_key(const char *key_name, GenericKeyring * keyring,
 
 	return masterKey;
 }
+#endif /* PERCONA_FORK */
