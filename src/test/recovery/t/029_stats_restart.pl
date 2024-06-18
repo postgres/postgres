@@ -1,7 +1,7 @@
 # Copyright (c) 2021-2024, PostgreSQL Global Development Group
 
 # Tests statistics handling around restarts, including handling of crashes and
-# invalid stats files, as well as restorting stats after "normal" restarts.
+# invalid stats files, as well as restoring stats after "normal" restarts.
 
 use strict;
 use warnings FATAL => 'all';
