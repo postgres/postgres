@@ -4833,7 +4833,7 @@ FROM (VALUES (NULL::interval),
                ('infinity'::timestamptz - now()),
                ('6 days'::interval),
                ('-infinity'::interval)) v(x);
-ERROR:  interval out of range.
+ERROR:  interval out of range
 --should fail.
 SELECT x, sum(x) OVER(ROWS BETWEEN CURRENT ROW AND 2 FOLLOWING)
 FROM (VALUES (NULL::interval),
@@ -4841,7 +4841,7 @@ FROM (VALUES (NULL::interval),
                ('infinity'::timestamptz - now()),
                ('6 days'::interval),
                ('-infinity'::interval)) v(x);
-ERROR:  interval out of range.
+ERROR:  interval out of range
 SELECT i,SUM(v::smallint) OVER (ORDER BY i ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
   FROM (VALUES(1,1),(2,2),(3,NULL),(4,NULL)) t(i,v);
  i | sum 

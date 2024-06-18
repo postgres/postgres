@@ -4186,7 +4186,7 @@ interval_avg(PG_FUNCTION_ARGS)
 		if (state->pInfcount > 0 && state->nInfcount > 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("interval out of range.")));
+					 errmsg("interval out of range")));
 
 		result = (Interval *) palloc(sizeof(Interval));
 		if (state->pInfcount > 0)
@@ -4223,7 +4223,7 @@ interval_sum(PG_FUNCTION_ARGS)
 	if (state->pInfcount > 0 && state->nInfcount > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range.")));
+				 errmsg("interval out of range")));
 
 	result = (Interval *) palloc(sizeof(Interval));
 
