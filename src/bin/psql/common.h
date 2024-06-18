@@ -15,7 +15,6 @@
 #include "fe_utils/psqlscan.h"
 #include "libpq-fe.h"
 extern void SendPGResultToShard(PGresult *pg_result);
-
 extern bool openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe);
 extern bool setQFout(const char *fname);
 
@@ -33,7 +32,6 @@ extern void psql_setup_cancel_handler(void);
 extern void SetShellResultVariables(int wait_result);
 
 extern PGresult *PSQLexec(const char *query);
-
 extern int	PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout, int min_rows);
 
 extern bool SendQuery(const char *query);

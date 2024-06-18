@@ -6,7 +6,6 @@
  * src/bin/psql/startup.c
  */
 #include "postgres_fe.h"
-extern char* handle_client();
 #ifndef WIN32
 #include <unistd.h>
 #else							/* WIN32 */
@@ -134,7 +133,7 @@ main(int argc, char *argv[])
 	pg_logging_set_pre_callback(log_pre_callback);
 	pg_logging_set_locus_callback(log_locus_callback);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("psql"));
-    handle_client();
+
 	if (argc > 1)
 	{
 		if ((strcmp(argv[1], "-?") == 0) || (argc == 2 && (strcmp(argv[1], "--help") == 0)))
@@ -459,8 +458,8 @@ error:
 		if (!pset.quiet)
 			printf(_("Type \"help\" for help.\n\n"));
 		initializeInput(options.no_readline ? 0 : 1);
-        FILE *f = fopen("testing.txt", "r+");
-		successResult = MainLoop(f);
+        
+		successResult = MainLoop(stdin);
 	}
 
 	/* clean up */

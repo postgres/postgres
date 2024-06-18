@@ -649,7 +649,7 @@ PSQLexec(const char *query)
 	SetCancelConn(pset.db);
 
 	res = PQexec(pset.db, query);
-    SendPGResultToShard(res);
+    // SendPGResultToShard(res);
 	ResetCancelConn();
 
 	if (!AcceptResult(res, true))
@@ -657,7 +657,7 @@ PSQLexec(const char *query)
 		ClearOrSaveResult(res);
 		res = NULL;
 	}
-    SendPGResultToShard(res);
+    // SendPGResultToShard(res);
 	return res;
 }
 
@@ -1137,7 +1137,7 @@ SendQuery(const char *query)
 		PGresult   *result;
 
 		result = PQexec(pset.db, "BEGIN");
-        SendPGResultToShard(result);
+        // SendPGResultToShard(result);
 		if (PQresultStatus(result) != PGRES_COMMAND_OK)
 		{
 			pg_log_info("%s", PQerrorMessage(pset.db));
@@ -1224,7 +1224,7 @@ SendQuery(const char *query)
 			PGresult   *svptres;
 
 			svptres = PQexec(pset.db, svptcmd);
-            SendPGResultToShard(svptres);
+            // SendPGResultToShard(svptres);
 			if (PQresultStatus(svptres) != PGRES_COMMAND_OK)
 			{
 				pg_log_info("%s", PQerrorMessage(pset.db));
@@ -1402,7 +1402,7 @@ DescribeQuery(const char *query, double *elapsed_msec)
 			PQclear(result);
 
 			result = PQexec(pset.db, buf.data);
-            SendPGResultToShard(result);
+            // SendPGResultToShard(result);
 			OK = AcceptResult(result, true);
 
 			if (timing)
@@ -1527,7 +1527,7 @@ ExecQueryAndProcessResults(const char *query,
 
 	/* first result */
 	result = PQgetResult(pset.db);
-    SendPGResultToShard(result);
+    // SendPGResultToShard(result);
 	if (min_rows > 0 && PQntuples(result) < min_rows)
 	{
 		return_early = true;
