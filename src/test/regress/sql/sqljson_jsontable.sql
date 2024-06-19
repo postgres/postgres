@@ -118,19 +118,19 @@ FROM json_table_test vals
 
 -- Test using casts in DEFAULT .. ON ERROR expression
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
-    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT '"foo1"'::jsonb::text ON ERROR));
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT '"foo1"'::jsonb::text ON EMPTY));
 
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
-    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo'::jsonb_test_domain ON ERROR));
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo'::jsonb_test_domain ON EMPTY));
 
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
-    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo1'::jsonb_test_domain ON ERROR));
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo1'::jsonb_test_domain ON EMPTY));
 
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "foo"}', '$'
     COLUMNS (js1 jsonb_test_domain PATH '$.d1' DEFAULT 'foo2'::jsonb_test_domain ON ERROR));
 
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "foo"}', '$'
-    COLUMNS (js1 oid[] PATH '$.d2' DEFAULT '{1}'::int[]::oid[] ON ERROR));
+    COLUMNS (js1 oid[] PATH '$.d2' DEFAULT '{1}'::int[]::oid[] ON EMPTY));
 
 -- JSON_TABLE: Test backward parsing
 

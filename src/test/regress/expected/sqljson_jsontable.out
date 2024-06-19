@@ -219,17 +219,17 @@ FROM json_table_test vals
 
 -- Test using casts in DEFAULT .. ON ERROR expression
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
-    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT '"foo1"'::jsonb::text ON ERROR));
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT '"foo1"'::jsonb::text ON EMPTY));
   js1   
 --------
  "foo1"
 (1 row)
 
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
-    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo'::jsonb_test_domain ON ERROR));
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo'::jsonb_test_domain ON EMPTY));
 ERROR:  value for domain jsonb_test_domain violates check constraint "jsonb_test_domain_check"
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
-    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo1'::jsonb_test_domain ON ERROR));
+    COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo1'::jsonb_test_domain ON EMPTY));
  js1  
 ------
  foo1
@@ -243,7 +243,7 @@ SELECT * FROM JSON_TABLE(jsonb '{"d1": "foo"}', '$'
 (1 row)
 
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "foo"}', '$'
-    COLUMNS (js1 oid[] PATH '$.d2' DEFAULT '{1}'::int[]::oid[] ON ERROR));
+    COLUMNS (js1 oid[] PATH '$.d2' DEFAULT '{1}'::int[]::oid[] ON EMPTY));
  js1 
 -----
  {1}
@@ -885,7 +885,16 @@ SELECT sub.* FROM s,
 		xx int path '$.c',
 		NESTED PATH '$.a.za[1]' columns (NESTED PATH '$.z21[*]' COLUMNS (z21 int path '$?(@ >= $"x")' ERROR ON ERROR))
 	)) sub;
-ERROR:  no SQL/JSON item found for specified path of column "z21"
+ xx | z21  
+----+------
+  3 |     
+  3 |  234
+  3 | 2345
+ 10 |   32
+ 10 |  134
+ 10 | 1345
+(6 rows)
+
 -- Parent columns xx1, xx appear before NESTED ones
 SELECT sub.* FROM s,
 	(VALUES (23)) x(x), generate_series(13, 13) y,
