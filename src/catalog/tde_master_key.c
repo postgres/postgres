@@ -68,7 +68,7 @@ static Size required_shared_mem_size(void);
 static int  required_locks_count(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void master_key_startup_cleanup(int tde_tbl_count, void *arg);
-static void clear_master_key_cache(Oid databaseId, Oid tablespaceId) ;
+static void clear_master_key_cache(Oid databaseId) ;
 static inline dshash_table *get_master_key_Hash(void);
 static TDEMasterKey *get_master_key_from_cache(Oid dbOid);
 static void push_master_key_to_cache(TDEMasterKey *masterKey);
@@ -439,6 +439,7 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool en
     TDEMasterKey new_master_key;
     const keyInfo *keyInfo = NULL;
     GenericKeyring *keyring;
+    bool    is_rotated;
 
     /*
      * Let's set everything the same as the older master key and
@@ -477,8 +478,13 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool en
 
     new_master_key.keyLength = keyInfo->data.len;
     memcpy(new_master_key.keyData, keyInfo->data.data, keyInfo->data.len);
-    clear_master_key_cache(MyDatabaseId, MyDatabaseTableSpace);
-    return pg_tde_perform_rotate_key(master_key, &new_master_key);
+    is_rotated = pg_tde_perform_rotate_key(master_key, &new_master_key);
+    if (is_rotated) {
+        clear_master_key_cache(master_key->keyInfo.databaseId);
+        push_master_key_to_cache(&new_master_key);
+    }
+
+    return is_rotated;
 }
 
 /*
@@ -490,7 +496,7 @@ xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
     bool ret;
 
     ret = pg_tde_write_map_keydata_files(xlrec->map_size, xlrec->buff, xlrec->keydata_size, &xlrec->buff[xlrec->map_size]);
-    clear_master_key_cache(MyDatabaseId, MyDatabaseTableSpace);
+    clear_master_key_cache(MyDatabaseId);
 
 	return ret;
 }
@@ -640,7 +646,7 @@ static void
 push_master_key_to_cache(TDEMasterKey *masterKey)
 {
     TDEMasterKey *cacheEntry = NULL;
-    Oid databaseId = MyDatabaseId;
+    Oid databaseId = masterKey->keyInfo.databaseId;
     bool found = false;
     cacheEntry = dshash_find_or_insert(get_master_key_Hash(),
                                        &databaseId, &found);
@@ -684,7 +690,7 @@ master_key_startup_cleanup(int tde_tbl_count, void* arg)
 void
 cleanup_master_key_info(Oid databaseId, Oid tablespaceId)
 {
-    clear_master_key_cache(databaseId, tablespaceId);
+    clear_master_key_cache(databaseId);
     /*
         * TODO: Although should never happen. Still verify if any table in the
         * database is using tde
@@ -695,7 +701,7 @@ cleanup_master_key_info(Oid databaseId, Oid tablespaceId)
 }
 
 static void
-clear_master_key_cache(Oid databaseId, Oid tablespaceId)
+clear_master_key_cache(Oid databaseId)
 {
     TDEMasterKey *cache_entry;
 

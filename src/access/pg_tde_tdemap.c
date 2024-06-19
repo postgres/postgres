@@ -1209,7 +1209,6 @@ pg_tde_perform_rotate_key(TDEMasterKey *master_key, TDEMasterKey *new_master_key
 	/* Free up the palloc'ed data */
 	pfree(xlrec);
 
-	/* TODO: Remove the existing ones from cache etc. */
 	return true;
 
 #undef OLD_MASTER_KEY
