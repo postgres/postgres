@@ -454,3 +454,8 @@ SELECT JSON_QUERY(NULL FORMAT JSON, '$');
 -- Test non-const jsonpath
 CREATE TEMP TABLE jsonpaths (path) AS SELECT '$';
 SELECT json_value('"aaa"', path RETURNING json) FROM jsonpaths;
+
+-- Test PASSING argument parsing
+SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xy);
+SELECT JSON_QUERY(jsonb 'null', '$xy' PASSING 1 AS xyz);
+SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xyz);

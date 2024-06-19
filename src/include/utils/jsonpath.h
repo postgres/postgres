@@ -287,6 +287,7 @@ extern bool jspConvertRegexFlags(uint32 xflags, int *result,
 typedef struct JsonPathVariable
 {
 	char	   *name;
+	int			namelen;		/* strlen(name) as cache for GetJsonPathVar() */
 	Oid			typid;
 	int32		typmod;
 	Datum		value;

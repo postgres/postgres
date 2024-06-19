@@ -1334,3 +1334,14 @@ SELECT json_value('"aaa"', path RETURNING json) FROM jsonpaths;
  "aaa"
 (1 row)
 
+-- Test PASSING argument parsing
+SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xy);
+ERROR:  could not find jsonpath variable "xyz"
+SELECT JSON_QUERY(jsonb 'null', '$xy' PASSING 1 AS xyz);
+ERROR:  could not find jsonpath variable "xy"
+SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xyz);
+ json_query 
+------------
+ 1
+(1 row)
+
