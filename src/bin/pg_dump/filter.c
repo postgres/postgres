@@ -161,10 +161,12 @@ pg_log_filter_error(FilterStateData *fstate, const char *fmt,...)
 	vsnprintf(buf, sizeof(buf), fmt, argp);
 	va_end(argp);
 
-	pg_log_error("invalid format in filter read from \"%s\" on line %d: %s",
-				 (fstate->fp == stdin ? "stdin" : fstate->filename),
-				 fstate->lineno,
-				 buf);
+	if (fstate->fp == stdin)
+		pg_log_error("invalid format in filter read from standard input on line %d: %s",
+					 fstate->lineno, buf);
+	else
+		pg_log_error("invalid format in filter read from file \"%s\" on line %d: %s",
+					 fstate->filename, fstate->lineno, buf);
 }
 
 /*
