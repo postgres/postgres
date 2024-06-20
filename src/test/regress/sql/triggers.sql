@@ -2479,6 +2479,20 @@ select * from trig_table;
 drop table refd_table, trig_table;
 
 --
+-- Test that we can drop a not-yet-fired deferred trigger
+--
+
+create table refd_table (id int primary key);
+create table trig_table (fk int references refd_table initially deferred);
+
+begin;
+insert into trig_table values (1);
+drop table refd_table cascade;
+commit;
+
+drop table trig_table;
+
+--
 -- self-referential FKs are even more fun
 --
 
