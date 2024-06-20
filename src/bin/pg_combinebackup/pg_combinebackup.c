@@ -751,7 +751,7 @@ help(const char *progname)
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -n, --dry-run             do not actually do anything\n"));
 	printf(_("  -N, --no-sync             do not wait for changes to be written safely to disk\n"));
-	printf(_("  -o, --output              output directory\n"));
+	printf(_("  -o, --output=DIRECTORY    output directory\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
 			 "                            relocate tablespace in OLDDIR to NEWDIR\n"));
 	printf(_("      --clone               clone (reflink) instead of copying files\n"));
