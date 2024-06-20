@@ -201,7 +201,7 @@ if host_system == 'cygwin'
   cppflags += '-D_GNU_SOURCE'
   dlsuffix = '.dll'
   mod_link_args_fmt = ['@0@']
-  mod_link_with_name = 'lib@0@.exe.a'
+  mod_link_with_name = 'lib@0@.a'
   mod_link_with_dir = 'libdir'
 
 elif host_system == 'darwin'
@@ -273,10 +273,10 @@ elif host_system == 'windows'
   export_file_suffix = 'def'
   if cc.get_id() == 'msvc'
     export_fmt = '/DEF:@0@'
-    mod_link_with_name = '@0@.exe.lib'
+    mod_link_with_name = '@0@.lib'
   else
     export_fmt = '@0@'
-    mod_link_with_name = 'lib@0@.exe.a'
+    mod_link_with_name = 'lib@0@.a'
   endif
   mod_link_args_fmt = ['@0@']
   mod_link_with_dir = 'libdir'
