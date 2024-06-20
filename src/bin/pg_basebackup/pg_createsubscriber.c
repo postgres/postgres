@@ -216,22 +216,22 @@ usage(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_(" -d, --database=DBNAME               database to create a subscription\n"));
-	printf(_(" -D, --pgdata=DATADIR                location for the subscriber data directory\n"));
-	printf(_(" -n, --dry-run                       dry run, just show what would be done\n"));
-	printf(_(" -p, --subscriber-port=PORT          subscriber port number (default %s)\n"), DEFAULT_SUB_PORT);
-	printf(_(" -P, --publisher-server=CONNSTR      publisher connection string\n"));
-	printf(_(" -s, --socket-directory=DIR          socket directory to use (default current directory)\n"));
-	printf(_(" -t, --recovery-timeout=SECS         seconds to wait for recovery to end\n"));
-	printf(_(" -U, --subscriber-username=NAME      subscriber username\n"));
-	printf(_(" -v, --verbose                       output verbose messages\n"));
-	printf(_("     --config-file=FILENAME          use specified main server configuration\n"
-			 "                                     file when running target cluster\n"));
-	printf(_("     --publication=NAME              publication name\n"));
-	printf(_("     --replication-slot=NAME         replication slot name\n"));
-	printf(_("     --subscription=NAME             subscription name\n"));
-	printf(_(" -V, --version                       output version information, then exit\n"));
-	printf(_(" -?, --help                          show this help, then exit\n"));
+	printf(_("  -d, --database=DBNAME           database to create a subscription\n"));
+	printf(_("  -D, --pgdata=DATADIR            location for the subscriber data directory\n"));
+	printf(_("  -n, --dry-run                   dry run, just show what would be done\n"));
+	printf(_("  -p, --subscriber-port=PORT      subscriber port number (default %s)\n"), DEFAULT_SUB_PORT);
+	printf(_("  -P, --publisher-server=CONNSTR  publisher connection string\n"));
+	printf(_("  -s, --socket-directory=DIR      socket directory to use (default current directory)\n"));
+	printf(_("  -t, --recovery-timeout=SECS     seconds to wait for recovery to end\n"));
+	printf(_("  -U, --subscriber-username=NAME  subscriber username\n"));
+	printf(_("  -v, --verbose                   output verbose messages\n"));
+	printf(_("      --config-file=FILENAME      use specified main server configuration\n"
+			 "                                  file when running target cluster\n"));
+	printf(_("      --publication=NAME          publication name\n"));
+	printf(_("      --replication-slot=NAME     replication slot name\n"));
+	printf(_("      --subscription=NAME         subscription name\n"));
+	printf(_("  -V, --version                   output version information, then exit\n"));
+	printf(_("  -?, --help                      show this help, then exit\n"));
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
 }
