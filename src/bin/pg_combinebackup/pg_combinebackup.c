@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 
 	if (optind >= argc)
 	{
-		pg_log_error("%s: no input directories specified", progname);
+		pg_log_error("no input directories specified");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
