@@ -828,21 +828,6 @@ Author: Masahiko Sawada <msawada@postgresql.org>
        </para>
       </listitem>
 
-<!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-2024-04-08 [705843d29] Enhance libpq encryption negotiation tests with new GUC
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-2024-04-08 [3dbd2ff78] Adjust wording of trace_connection_negotiation GUC's des
--->
-
-      <listitem>
-       <para>
-       Add undocumented server variable
-       <literal>trace_connection_negotiation</literal> to allow debugging
-       of connection encryption (Heikki Linnakangas, Kyotaro Horiguchi)
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     </sect4>
