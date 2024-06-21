@@ -284,9 +284,9 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
     <listitem>
      <para>
-     Change <link
+     Rename <link
      linkend="vacuum-progress-reporting"><structname>pg_stat_progress_vacuum</structname></link>
-     columns <structfield>max_dead_tuples</structfield>
+     column <structfield>max_dead_tuples</structfield>
      to <structfield>max_dead_tuple_bytes</structfield>,
      rename <structfield>num_dead_tuples</structfield> to
      <structfield>num_dead_item_ids</structfield>, and add
@@ -337,17 +337,6 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2023-11-17 [f7816aec2] Extract column statistics from CTE references, if possib
--->
-
-      <listitem>
-       <para>
-       Allow the optimizer to improve <acronym>CTE</acronym> plans by
-       considering the statistics of columns referenced in earlier row
-       output clauses (Jian Guo, Tom Lane)
-       </para>
-      </listitem>
-
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2024-03-26 [a65724dfa] Propagate pathkeys from CTEs up to the outer query.
 -->
@@ -355,8 +344,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <listitem>
        <para>
        Allow the optimizer to improve <acronym>CTE</acronym> plans by
-       considering the sort order of columns referenced in earlier row
-       output clauses (Richard Guo)
+       considering the statistics and sort order of columns referenced in earlier row
+       output clauses (Jian Guo, Richard Guo, Tom Lane)
        </para>
       </listitem>
 
@@ -375,7 +364,7 @@ Author: David Rowley <drowley@postgresql.org>
        </para>
 
        <para>
-       Remove <literal>IS NOT NULL</literal> query restrictions on
+       Remove <literal>IS NOT NULL</literal> restrictions from queries on
        <literal>NOT NULL</literal> columns and eliminate scans on
        <literal>NOT NULL</literal> columns if <literal>IS NULL</literal>
        is specified.
@@ -745,7 +734,7 @@ Author: Michael Paquier <michael@paquier.xyz>
       <listitem>
        <para>
        Add log messages related to <acronym>WAL</acronym> recovery from
-       backup (Andres Freund)
+       backups (Andres Freund)
        </para>
       </listitem>
 
@@ -1010,10 +999,12 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
        <xref linkend="guc-multixact-offset-buffers"/>,
        <xref linkend="guc-notify-buffers"/>, <xref
        linkend="guc-serializable-buffers"/>, <xref
-       linkend="guc-subtransaction-buffers"/>, and <xref
-       linkend="guc-transaction-buffers"/>. commit_timestamp_buffers,
-       transaction_buffers and subtransaction_buffers scale up
-       automatically with <xref linkend="guc-shared-buffers"/>.
+       linkend="guc-subtransaction-buffers"/>, and
+       <xref linkend="guc-transaction-buffers"/>. <xref
+       linkend="guc-commit-timestamp-buffers"/>, <xref
+       linkend="guc-transaction-buffers"/>, and <xref
+       linkend="guc-subtransaction-buffers"/> scale up automatically with
+       <xref linkend="guc-shared-buffers"/>.
        </para>
       </listitem>
 
@@ -1212,9 +1203,10 @@ Author: Amit Kapila <akapila@postgresql.org>
        </para>
 
        <para>
-       This allows logical replication to continue quickly
-       after the upgrade.  This only works for old clusters of
-       <productname>PostgreSQL</productname> version 17 or later.
+       This allows logical replication to continue
+       quickly after the upgrade.  This only works for old
+       <productname>PostgreSQL</productname> clusters that are version
+       17 or later.
        </para>
       </listitem>
 
@@ -1343,7 +1335,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        </para>
 
        <para>
-       The server variable is <xref linkend="guc-standby-slot-names"/>.
+       The new server variable is <xref linkend="guc-standby-slot-names"/>.
        </para>
       </listitem>
 
@@ -1474,7 +1466,8 @@ Author: Michael Paquier <michael@paquier.xyz>
      <listitem>
       <para>
       Add local I/O block read/write timing statistics to
-      <command>EXPLAIN</command> (Nazir Bilal Yavuz)
+      <command>EXPLAIN</command>'s <literal>BUFFERS</literal> output
+      (Nazir Bilal Yavuz)
       </para>
      </listitem>
 
@@ -2221,7 +2214,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
       Command <literal>\dp</literal> now displays <literal>(none)</literal>
-      for empty privileges;  default still display as empty.
+      for empty privileges;  default still displays as empty.
       </para>
      </listitem>
 
@@ -2370,7 +2363,8 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
      <listitem>
       <para>
-      Allow <application>pg_dump</application>, <link
+      Allow <link
+      linkend="app-pgdump"><application>pg_dump</application></link>, <link
       linkend="app-pg-dumpall"><application>pg_dumpall</application></link>,
       and <link
       linkend="app-pgrestore"><application>pg_restore</application></link>
@@ -2400,8 +2394,8 @@ Author: Nathan Bossart <nathan@postgresql.org>
       linkend="app-pgbasebackup"><application>pg_basebackup</application></link>,
       <link
       linkend="app-pgchecksums"><application>pg_checksums</application></link>,
-      <application>pg_dump</application>, <link
-      linkend="app-pgrewind"><application>pg_rewind</application></link>,
+      <link linkend="app-pgdump"><application>pg_dump</application></link>,
+      <link linkend="app-pgrewind"><application>pg_rewind</application></link>,
       and <link
       linkend="pgupgrade"><application>pg_upgrade</application></link>.
       </para>
@@ -2416,7 +2410,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <para>
       Add <link
       linkend="app-pgrestore"><application>pg_restore</application></link>
-      option <option>--transaction-size</option> to allow object restore
+      option <option>--transaction-size</option> to allow object restores
       in transaction batches (Tom Lane)
       </para>
 
@@ -2464,8 +2458,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 
      <listitem>
       <para>
-      Add pgbench command \syncpipeline to allow sending of sync messages
-      (Anthonin Bonnefoy)
+      Add pgbench command <literal>\syncpipeline</literal> to allow
+      sending of sync messages (Anthonin Bonnefoy)
       </para>
      </listitem>
 
@@ -2866,7 +2860,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
      <listitem>
       <para>
       Allow pushdown of <literal>EXISTS</literal> and <literal>IN</literal>
-      subqueries to the <xref linkend="postgres-fdw"/> foreign server
+      subqueries to <xref linkend="postgres-fdw"/> foreign servers
       (Alexander Pyhalov)
       </para>
      </listitem>
@@ -2942,14 +2936,10 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
      <listitem>
       <para>
-      Allow <application><xref linkend="amcheck"/></application> to
-      check for unique constraint violations (Anastasia Lubennikova,
-      Pavel Borisov, Maxim Orlov)
-      </para>
-
-      <para>
-      The <application>pg_amcheck</application> option
-      <option>--checkunique</option> will check all unique indexes.
+      Allow <application><xref linkend="amcheck"/></application>
+      to check for unique constraint violations using new option
+      <option>--checkunique</option> (Anastasia Lubennikova, Pavel Borisov,
+      Maxim Orlov)
       </para>
      </listitem>
 
