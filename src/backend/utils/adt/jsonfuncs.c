@@ -86,7 +86,7 @@ typedef struct GetState
 {
 	JsonLexContext *lex;
 	text	   *tresult;
-	char	   *result_start;
+	const char *result_start;
 	bool		normalize_results;
 	bool		next_scalar;
 	int			npath;			/* length of each path-related array */
@@ -111,7 +111,7 @@ typedef struct EachState
 	Tuplestorestate *tuple_store;
 	TupleDesc	ret_tdesc;
 	MemoryContext tmp_cxt;
-	char	   *result_start;
+	const char *result_start;
 	bool		normalize_results;
 	bool		next_scalar;
 	char	   *normalized_scalar;
@@ -125,7 +125,7 @@ typedef struct ElementsState
 	Tuplestorestate *tuple_store;
 	TupleDesc	ret_tdesc;
 	MemoryContext tmp_cxt;
-	char	   *result_start;
+	const char *result_start;
 	bool		normalize_results;
 	bool		next_scalar;
 	char	   *normalized_scalar;
@@ -138,7 +138,7 @@ typedef struct JHashState
 	const char *function_name;
 	HTAB	   *hash;
 	char	   *saved_scalar;
-	char	   *save_json_start;
+	const char *save_json_start;
 	JsonTokenType saved_token_type;
 } JHashState;
 
@@ -247,7 +247,7 @@ typedef struct PopulateRecordsetState
 	const char *function_name;
 	HTAB	   *json_hash;
 	char	   *saved_scalar;
-	char	   *save_json_start;
+	const char *save_json_start;
 	JsonTokenType saved_token_type;
 	Tuplestorestate *tuple_store;
 	HeapTupleHeader rec;
@@ -273,7 +273,7 @@ typedef struct PopulateArrayState
 {
 	JsonLexContext *lex;		/* json lexer */
 	PopulateArrayContext *ctx;	/* context */
-	char	   *element_start;	/* start of the current array element */
+	const char *element_start;	/* start of the current array element */
 	char	   *element_scalar; /* current array element token if it is a
 								 * scalar */
 	JsonTokenType element_type; /* current array element type */
@@ -295,7 +295,7 @@ typedef struct JsValue
 	{
 		struct
 		{
-			char	   *str;	/* json string */
+			const char *str;	/* json string */
 			int			len;	/* json string length or -1 if null-terminated */
 			JsonTokenType type; /* json type */
 		}			json;		/* json value */
@@ -390,7 +390,7 @@ static JsonParseErrorType elements_array_element_end(void *state, bool isnull);
 static JsonParseErrorType elements_scalar(void *state, char *token, JsonTokenType tokentype);
 
 /* turn a json object into a hash table */
-static HTAB *get_json_object_as_hash(char *json, int len, const char *funcname,
+static HTAB *get_json_object_as_hash(const char *json, int len, const char *funcname,
 									 Node *escontext);
 
 /* semantic actions for populate_array_json */
@@ -456,7 +456,7 @@ static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
 static RecordIOData *allocate_record_info(MemoryContext mcxt, int ncolumns);
 static bool JsObjectGetField(JsObject *obj, char *field, JsValue *jsv);
 static void populate_recordset_record(PopulateRecordsetState *state, JsObject *obj);
-static bool populate_array_json(PopulateArrayContext *ctx, char *json, int len);
+static bool populate_array_json(PopulateArrayContext *ctx, const char *json, int len);
 static bool populate_array_dim_jsonb(PopulateArrayContext *ctx, JsonbValue *jbv,
 									 int ndim);
 static void populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim);
@@ -1181,7 +1181,7 @@ get_object_end(void *state)
 	if (lex_level == 0 && _state->npath == 0)
 	{
 		/* Special case: return the entire object */
-		char	   *start = _state->result_start;
+		const char *start = _state->result_start;
 		int			len = _state->lex->prev_token_terminator - start;
 
 		_state->tresult = cstring_to_text_with_len(start, len);
@@ -1275,7 +1275,7 @@ get_object_field_end(void *state, char *fname, bool isnull)
 			_state->tresult = (text *) NULL;
 		else
 		{
-			char	   *start = _state->result_start;
+			const char *start = _state->result_start;
 			int			len = _state->lex->prev_token_terminator - start;
 
 			_state->tresult = cstring_to_text_with_len(start, len);
@@ -1337,7 +1337,7 @@ get_array_end(void *state)
 	if (lex_level == 0 && _state->npath == 0)
 	{
 		/* Special case: return the entire array */
-		char	   *start = _state->result_start;
+		const char *start = _state->result_start;
 		int			len = _state->lex->prev_token_terminator - start;
 
 		_state->tresult = cstring_to_text_with_len(start, len);
@@ -1426,7 +1426,7 @@ get_array_element_end(void *state, bool isnull)
 			_state->tresult = (text *) NULL;
 		else
 		{
-			char	   *start = _state->result_start;
+			const char *start = _state->result_start;
 			int			len = _state->lex->prev_token_terminator - start;
 
 			_state->tresult = cstring_to_text_with_len(start, len);
@@ -1463,7 +1463,7 @@ get_scalar(void *state, char *token, JsonTokenType tokentype)
 			 * scalar token, but not whitespace before it.  Probably not worth
 			 * doing our own space-skipping to avoid that.
 			 */
-			char	   *start = _state->lex->input;
+			const char *start = _state->lex->input;
 			int			len = _state->lex->prev_token_terminator - start;
 
 			_state->tresult = cstring_to_text_with_len(start, len);
@@ -2782,7 +2782,7 @@ populate_array_scalar(void *_state, char *token, JsonTokenType tokentype)
  * Returns false if an error occurs when parsing.
  */
 static bool
-populate_array_json(PopulateArrayContext *ctx, char *json, int len)
+populate_array_json(PopulateArrayContext *ctx, const char *json, int len)
 {
 	PopulateArrayState state;
 	JsonSemAction sem;
@@ -3123,7 +3123,7 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv,
 {
 	Datum		res;
 	char	   *str = NULL;
-	char	   *json = NULL;
+	const char *json = NULL;
 
 	if (jsv->is_json)
 	{
@@ -3139,7 +3139,10 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv,
 			str[len] = '\0';
 		}
 		else
-			str = json;			/* string is already null-terminated */
+		{
+			/* string is already null-terminated */
+			str = unconstify(char *, json);
+		}
 
 		/* If converting to json/jsonb, make string into valid JSON literal */
 		if ((typid == JSONOID || typid == JSONBOID) &&
@@ -3784,7 +3787,7 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
  * Returns the hash table if the json is parsed successfully, NULL otherwise.
  */
 static HTAB *
-get_json_object_as_hash(char *json, int len, const char *funcname,
+get_json_object_as_hash(const char *json, int len, const char *funcname,
 						Node *escontext)
 {
 	HASHCTL		ctl;

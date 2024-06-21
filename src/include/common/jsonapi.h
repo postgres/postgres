@@ -88,18 +88,18 @@ typedef struct JsonIncrementalState JsonIncrementalState;
 #define JSONLEX_FREE_STRVAL			(1 << 1)
 typedef struct JsonLexContext
 {
-	char	   *input;
+	const char *input;
 	size_t		input_length;
 	int			input_encoding;
-	char	   *token_start;
-	char	   *token_terminator;
-	char	   *prev_token_terminator;
+	const char *token_start;
+	const char *token_terminator;
+	const char *prev_token_terminator;
 	bool		incremental;
 	JsonTokenType token_type;
 	int			lex_level;
 	bits32		flags;
 	int			line_number;	/* line number, starting from 1 */
-	char	   *line_start;		/* where that line starts within input */
+	const char *line_start;		/* where that line starts within input */
 	JsonParserStack *pstack;
 	JsonIncrementalState *inc_state;
 	StringInfo	strval;
@@ -157,7 +157,7 @@ extern JsonParseErrorType pg_parse_json(JsonLexContext *lex,
 
 extern JsonParseErrorType pg_parse_json_incremental(JsonLexContext *lex,
 													JsonSemAction *sem,
-													char *json,
+													const char *json,
 													size_t len,
 													bool is_last);
 
@@ -192,7 +192,7 @@ extern JsonParseErrorType json_count_array_elements(JsonLexContext *lex,
  * cleanup.
  */
 extern JsonLexContext *makeJsonLexContextCstringLen(JsonLexContext *lex,
-													char *json,
+													const char *json,
 													size_t len,
 													int encoding,
 													bool need_escapes);
