@@ -3060,7 +3060,10 @@ RelationCacheInvalidate(bool debug_discard)
 			 * map doesn't involve any access to relcache entries.
 			 */
 			if (RelationIsMapped(relation))
+			{
+				RelationCloseSmgr(relation);
 				RelationInitPhysicalAddr(relation);
+			}
 
 			/*
 			 * Add this entry to list of stuff to rebuild in second pass.
