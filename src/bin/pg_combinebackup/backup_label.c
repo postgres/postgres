@@ -159,7 +159,7 @@ write_backup_label(char *output_directory, StringInfo buf,
 				if (wb < 0)
 					pg_fatal("could not write file \"%s\": %m", output_filename);
 				else
-					pg_fatal("could not write file \"%s\": wrote only %d of %d bytes",
+					pg_fatal("could not write file \"%s\": wrote %d of %d",
 							 output_filename, (int) wb, (int) (e - s));
 			}
 			if (pg_checksum_update(&checksum_ctx, (uint8 *) s, e - s) < 0)
@@ -171,7 +171,7 @@ write_backup_label(char *output_directory, StringInfo buf,
 	}
 
 	if (close(output_fd) != 0)
-		pg_fatal("could not close \"%s\": %m", output_filename);
+		pg_fatal("could not close file \"%s\": %m", output_filename);
 
 	checksum_length = pg_checksum_final(&checksum_ctx, checksum_payload);
 

@@ -523,7 +523,7 @@ check_backup_label_files(int n_backups, char **backup_dirs)
 
 		/* Close the file. */
 		if (close(fd) != 0)
-			pg_fatal("could not close \"%s\": %m", pathbuf);
+			pg_fatal("could not close file \"%s\": %m", pathbuf);
 
 		/* Parse the file contents. */
 		parse_backup_label(pathbuf, buf, &start_tli, &start_lsn,
@@ -661,7 +661,7 @@ check_input_dir_permissions(char *dir)
 	struct stat st;
 
 	if (stat(dir, &st) != 0)
-		pg_fatal("could not stat \"%s\": %m", dir);
+		pg_fatal("could not stat file \"%s\": %m", dir);
 
 	SetDataDirectoryCreatePerm(st.st_mode);
 }
@@ -1159,7 +1159,7 @@ read_pg_version_file(char *directory)
 
 	/* Close the file. */
 	if (close(fd) != 0)
-		pg_fatal("could not close \"%s\": %m", filename);
+		pg_fatal("could not close file \"%s\": %m", filename);
 
 	/* Convert to integer. */
 	errno = 0;
@@ -1178,7 +1178,7 @@ read_pg_version_file(char *directory)
 	}
 
 	/* Debugging output. */
-	pg_log_debug("read server version %d from \"%s\"", version, filename);
+	pg_log_debug("read server version %d from file \"%s\"", version, filename);
 
 	/* Release memory and return result. */
 	pfree(buf.data);
@@ -1296,10 +1296,10 @@ scan_for_existing_tablespaces(char *pathname, cb_options *opt)
 				pg_fatal("could not read symbolic link \"%s\": %m",
 						 tblspcdir);
 			if (link_length >= sizeof(link_target))
-				pg_fatal("symbolic link \"%s\" is too long", tblspcdir);
+				pg_fatal("target of symbolic link \"%s\" is too long", tblspcdir);
 			link_target[link_length] = '\0';
 			if (!is_absolute_path(link_target))
-				pg_fatal("symbolic link \"%s\" is relative", tblspcdir);
+				pg_fatal("target of symbolic link \"%s\" is relative", tblspcdir);
 
 			/* Canonicalize the link target. */
 			canonicalize_path(link_target);
@@ -1339,7 +1339,7 @@ scan_for_existing_tablespaces(char *pathname, cb_options *opt)
 		/* Tablespaces should not share a directory. */
 		for (otherts = tslist; otherts != NULL; otherts = otherts->next)
 			if (strcmp(ts->new_dir, otherts->new_dir) == 0)
-				pg_fatal("tablespaces with OIDs %u and %u both point at \"%s\"",
+				pg_fatal("tablespaces with OIDs %u and %u both point at directory \"%s\"",
 						 otherts->oid, oid, ts->new_dir);
 
 		/* Add this tablespace to the list. */
@@ -1367,7 +1367,7 @@ slurp_file(int fd, char *filename, StringInfo buf, int maxlen)
 
 	/* Check file size, and complain if it's too large. */
 	if (fstat(fd, &st) != 0)
-		pg_fatal("could not stat \"%s\": %m", filename);
+		pg_fatal("could not stat file \"%s\": %m", filename);
 	if (st.st_size > maxlen)
 		pg_fatal("file \"%s\" is too large", filename);
 
@@ -1386,7 +1386,7 @@ slurp_file(int fd, char *filename, StringInfo buf, int maxlen)
 		if (rb < 0)
 			pg_fatal("could not read file \"%s\": %m", filename);
 		else
-			pg_fatal("could not read file \"%s\": read only %zd of %lld bytes",
+			pg_fatal("could not read file \"%s\": read %zd of %lld",
 					 filename, rb, (long long int) st.st_size);
 	}
 

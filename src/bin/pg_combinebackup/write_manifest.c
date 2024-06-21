@@ -184,7 +184,7 @@ finalize_manifest(manifest_writer *mwriter,
 
 	/* Close the file. */
 	if (close(mwriter->fd) != 0)
-		pg_fatal("could not close \"%s\": %m", mwriter->pathname);
+		pg_fatal("could not close file \"%s\": %m", mwriter->pathname);
 	mwriter->fd = -1;
 }
 
@@ -257,9 +257,9 @@ flush_manifest(manifest_writer *mwriter)
 		if (wb != mwriter->buf.len)
 		{
 			if (wb < 0)
-				pg_fatal("could not write \"%s\": %m", mwriter->pathname);
+				pg_fatal("could not write file \"%s\": %m", mwriter->pathname);
 			else
-				pg_fatal("could not write file \"%s\": wrote only %d of %d bytes",
+				pg_fatal("could not write file \"%s\": wrote %d of %d",
 						 mwriter->pathname, (int) wb, mwriter->buf.len);
 		}
 

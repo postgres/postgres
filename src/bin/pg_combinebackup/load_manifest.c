@@ -122,7 +122,7 @@ load_backup_manifest(char *backup_directory)
 	{
 		if (errno == ENOENT)
 		{
-			pg_log_warning("\"%s\" does not exist", pathname);
+			pg_log_warning("file \"%s\" does not exist", pathname);
 			return NULL;
 		}
 		pg_fatal("could not open file \"%s\": %m", pathname);
