@@ -1173,8 +1173,8 @@ read_pg_version_file(char *directory)
 		 * out.
 		 */
 		if (version < 10 && *ep == '.')
-			pg_fatal("%s: server version too old\n", filename);
-		pg_fatal("%s: could not parse version number\n", filename);
+			pg_fatal("%s: server version too old", filename);
+		pg_fatal("%s: could not parse version number", filename);
 	}
 
 	/* Debugging output. */
