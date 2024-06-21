@@ -7094,6 +7094,13 @@ CreateCheckPoint(int flags)
 	{
 		do
 		{
+			/*
+			 * Keep absorbing fsync requests while we wait. There could even
+			 * be a deadlock if we don't, if the process that prevents the
+			 * checkpoint is trying to add a request to the queue.
+			 */
+			AbsorbSyncRequests();
+
 			pgstat_report_wait_start(WAIT_EVENT_CHECKPOINT_DELAY_START);
 			pg_usleep(10000L);	/* wait for 10 msec */
 			pgstat_report_wait_end();
@@ -7109,6 +7116,8 @@ CreateCheckPoint(int flags)
 	{
 		do
 		{
+			AbsorbSyncRequests();
+
 			pgstat_report_wait_start(WAIT_EVENT_CHECKPOINT_DELAY_COMPLETE);
 			pg_usleep(10000L);	/* wait for 10 msec */
 			pgstat_report_wait_end();
