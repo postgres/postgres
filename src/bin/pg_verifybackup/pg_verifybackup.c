@@ -52,7 +52,7 @@
 typedef struct manifest_file
 {
 	uint32		status;			/* hash status */
-	char	   *pathname;
+	const char *pathname;
 	size_t		size;
 	pg_checksum_type checksum_type;
 	int			checksum_length;
@@ -70,7 +70,7 @@ typedef struct manifest_file
  */
 #define SH_PREFIX		manifest_files
 #define SH_ELEMENT_TYPE	manifest_file
-#define SH_KEY_TYPE		char *
+#define SH_KEY_TYPE		const char *
 #define	SH_KEY			pathname
 #define SH_HASH_KEY(tb, key)	hash_string(key)
 #define SH_EQUAL(tb, a, b)		(strcmp(a, b) == 0)
@@ -123,7 +123,7 @@ static void verifybackup_version_cb(JsonManifestParseContext *context,
 static void verifybackup_system_identifier(JsonManifestParseContext *context,
 										   uint64 manifest_system_identifier);
 static void verifybackup_per_file_cb(JsonManifestParseContext *context,
-									 char *pathname, size_t size,
+									 const char *pathname, size_t size,
 									 pg_checksum_type checksum_type,
 									 int checksum_length,
 									 uint8 *checksum_payload);
@@ -155,7 +155,7 @@ static void report_backup_error(verifier_context *context,
 			pg_attribute_printf(2, 3);
 static void report_fatal_error(const char *pg_restrict fmt,...)
 			pg_attribute_printf(1, 2) pg_attribute_noreturn();
-static bool should_ignore_relpath(verifier_context *context, char *relpath);
+static bool should_ignore_relpath(verifier_context *context, const char *relpath);
 
 static void progress_report(bool finished);
 static void usage(void);
@@ -546,7 +546,7 @@ verifybackup_system_identifier(JsonManifestParseContext *context,
  */
 static void
 verifybackup_per_file_cb(JsonManifestParseContext *context,
-						 char *pathname, size_t size,
+						 const char *pathname, size_t size,
 						 pg_checksum_type checksum_type,
 						 int checksum_length, uint8 *checksum_payload)
 {
@@ -852,7 +852,7 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 					 char *fullpath, uint8 *buffer)
 {
 	pg_checksum_context checksum_ctx;
-	char	   *relpath = m->pathname;
+	const char *relpath = m->pathname;
 	int			fd;
 	int			rc;
 	size_t		bytes_read = 0;
@@ -1016,13 +1016,13 @@ report_fatal_error(const char *pg_restrict fmt,...)
  * "aa/bb" is not a prefix of "aa/bbb", but it is a prefix of "aa/bb/cc".
  */
 static bool
-should_ignore_relpath(verifier_context *context, char *relpath)
+should_ignore_relpath(verifier_context *context, const char *relpath)
 {
 	SimpleStringListCell *cell;
 
 	for (cell = context->ignore_list.head; cell != NULL; cell = cell->next)
 	{
-		char	   *r = relpath;
+		const char *r = relpath;
 		char	   *v = cell->val;
 
 		while (*v != '\0' && *r == *v)

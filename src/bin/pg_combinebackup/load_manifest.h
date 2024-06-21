@@ -22,7 +22,7 @@
 typedef struct manifest_file
 {
 	uint32		status;			/* hash status */
-	char	   *pathname;
+	const char *pathname;
 	size_t		size;
 	pg_checksum_type checksum_type;
 	int			checksum_length;
@@ -31,7 +31,7 @@ typedef struct manifest_file
 
 #define SH_PREFIX		manifest_files
 #define SH_ELEMENT_TYPE	manifest_file
-#define SH_KEY_TYPE		char *
+#define SH_KEY_TYPE		const char *
 #define	SH_SCOPE		extern
 #define SH_RAW_ALLOCATOR	pg_malloc0
 #define SH_DECLARE

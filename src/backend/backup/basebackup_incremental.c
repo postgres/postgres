@@ -132,7 +132,7 @@ static void manifest_process_version(JsonManifestParseContext *context,
 static void manifest_process_system_identifier(JsonManifestParseContext *context,
 											   uint64 manifest_system_identifier);
 static void manifest_process_file(JsonManifestParseContext *context,
-								  char *pathname,
+								  const char *pathname,
 								  size_t size,
 								  pg_checksum_type checksum_type,
 								  int checksum_length,
@@ -1043,7 +1043,7 @@ manifest_process_system_identifier(JsonManifestParseContext *context,
  */
 static void
 manifest_process_file(JsonManifestParseContext *context,
-					  char *pathname, size_t size,
+					  const char *pathname, size_t size,
 					  pg_checksum_type checksum_type,
 					  int checksum_length,
 					  uint8 *checksum_payload)
