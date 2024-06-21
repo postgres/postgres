@@ -205,6 +205,11 @@ init_gl_catalog_keys(void)
 	enc_rel_key_data = tde_encrypt_rel_key(mkey, rel_key_data, rlocator);
 	pg_tde_write_key_map_entry(rlocator, enc_rel_key_data, &mkey->keyInfo);
 
+	/* 
+	 * TODO: move global catalog internal keys into own cache. This cache should
+	 * be in the TopMemmoryContext because of SSL contexts
+	 * (see https://github.com/Percona-Lab/pg_tde/pull/214#discussion_r1648998317)
+	*/
 	pg_tde_put_key_into_map(rlocator->relNumber, rel_key_data);
 	TDEPutGlCatKeyInCache(mkey);
 }
