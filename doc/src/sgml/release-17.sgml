@@ -456,7 +456,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
        <para>
        This can be disabled using server variable
-       enable_group_by_reordering.  MISSING DOCS
+       <xref linkend="guc-enable-groupby-reordering"/>.
        </para>
       </listitem>
 
