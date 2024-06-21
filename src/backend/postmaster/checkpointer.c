@@ -1172,6 +1172,10 @@ CompactCheckpointerRequestQueue(void)
 	/* must hold CheckpointerCommLock in exclusive mode */
 	Assert(LWLockHeldByMe(CheckpointerCommLock));
 
+	/* Avoid memory allocations in a critical section. */
+	if (CritSectionCount > 0)
+		return false;
+
 	/* Initialize skip_slot array */
 	skip_slot = palloc0(sizeof(bool) * CheckpointerShmem->num_requests);
 

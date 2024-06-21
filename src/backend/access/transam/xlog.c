@@ -6545,6 +6545,12 @@ CreateCheckPoint(int flags)
 	{
 		do
 		{
+			/*
+			 * Keep absorbing fsync requests while we wait. There could even
+			 * be a deadlock if we don't, if the process that prevents the
+			 * checkpoint is trying to add a request to the queue.
+			 */
+			AbsorbSyncRequests();
 			pg_usleep(10000L);	/* wait for 10 msec */
 		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids,
 											  DELAY_CHKPT_START));
@@ -6558,6 +6564,7 @@ CreateCheckPoint(int flags)
 	{
 		do
 		{
+			AbsorbSyncRequests();
 			pg_usleep(10000L);	/* wait for 10 msec */
 		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids,
 											  DELAY_CHKPT_COMPLETE));
