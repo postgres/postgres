@@ -133,18 +133,24 @@ submake-utils-headers:
 # Make symlinks for these headers in the include directory. That way
 # we can cut down on the -I options. Also, a symlink is automatically
 # up to date when we update the base file.
+#
+# The point of the prereqdir incantation in some of the rules below is to
+# force the symlink to use an absolute path rather than a relative path.
+# This is needed to support platforms without ln -s.
 
 .PHONY: generated-headers
 
 generated-headers: $(top_builddir)/src/include/storage/lwlocknames.h $(top_builddir)/src/include/utils/wait_event_types.h submake-catalog-headers submake-nodes-headers submake-utils-headers parser/gram.h
 
 $(top_builddir)/src/include/storage/lwlocknames.h: storage/lmgr/lwlocknames.h
-	rm -f '$@'
-	$(LN_S) ../../backend/$< '$@'
+	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
+	  cd '$(dir $@)' && rm -f $(notdir $@) && \
+	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 $(top_builddir)/src/include/utils/wait_event_types.h: utils/activity/wait_event_types.h
-	rm -f '$@'
-	$(LN_S) ../../backend/$< '$@'
+	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
+	  cd '$(dir $@)' && rm -f $(notdir $@) && \
+	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 utils/probes.o: utils/probes.d $(SUBDIROBJS)
 	$(DTRACE) $(DTRACEFLAGS) -C -G -s $(call expand_subsys,$^) -o $@
