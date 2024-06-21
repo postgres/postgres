@@ -51,7 +51,7 @@ extern void json_parse_manifest(JsonManifestParseContext *context,
 								char *buffer, size_t size);
 extern JsonManifestParseIncrementalState *json_parse_manifest_incremental_init(JsonManifestParseContext *context);
 extern void json_parse_manifest_incremental_chunk(
-												  JsonManifestParseIncrementalState *incstate, char *chunk, int size,
+												  JsonManifestParseIncrementalState *incstate, char *chunk, size_t size,
 												  bool is_last);
 extern void json_parse_manifest_incremental_shutdown(JsonManifestParseIncrementalState *incstate);
 
