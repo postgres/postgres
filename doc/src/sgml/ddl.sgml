@@ -373,6 +373,12 @@ CREATE TABLE people (
       generated columns in <literal>BEFORE</literal> triggers.
      </para>
     </listitem>
+    <listitem>
+     <para>
+      Generated columns are skipped for logical replication and cannot be
+      specified in a <command>CREATE PUBLICATION</command> column list.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
  </sect1>
