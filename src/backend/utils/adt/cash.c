@@ -614,6 +614,7 @@ cash_pl(PG_FUNCTION_ARGS)
 	Cash		c2 = PG_GETARG_CASH(1);
 	Cash		result;
 
+    elog("howdy %d", 1);
 	result = c1 + c2;
 
 	PG_RETURN_CASH(result);
