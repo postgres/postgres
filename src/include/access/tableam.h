@@ -656,16 +656,6 @@ typedef struct TableAmRoutine
 									BufferAccessStrategy bstrategy);
 
 	/*
-	 * Prepare to analyze the next block in the read stream.  Returns false if
-	 * the stream is exhausted and true otherwise. The scan must have been
-	 * started with SO_TYPE_ANALYZE option.
-	 *
-	 * This routine holds a buffer pin and lock on the heap page.  They are
-	 * held until heapam_scan_analyze_next_tuple() returns false.  That is
-	 * until all the items of the heap page are analyzed.
-	 */
-
-	/*
 	 * Prepare to analyze block `blockno` of `scan`. The scan has been started
 	 * with table_beginscan_analyze().  See also
 	 * table_scan_analyze_next_block().
