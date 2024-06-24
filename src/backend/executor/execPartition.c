@@ -1608,37 +1608,31 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 			/*
 			 * Initialize the subplan_map and subpart_map.
 			 *
-			 * Because we request detached partitions to be included, and
-			 * detaching waits for old transactions, it is safe to assume that
-			 * no partitions have disappeared since this query was planned.
+			 * The set of partitions that exist now might not be the same that
+			 * existed when the plan was made.  The normal case is that it is;
+			 * optimize for that case with a quick comparison, and just copy
+			 * the subplan_map and make subpart_map point to the one in
+			 * PruneInfo.
 			 *
-			 * However, new partitions may have been added.
+			 * For the case where they aren't identical, we could have more
+			 * partitions on either side; or even exactly the same number of
+			 * them on both but the set of OIDs doesn't match fully.  Handle
+			 * this by creating new subplan_map and subpart_map arrays that
+			 * corresponds to the ones in the PruneInfo where the new
+			 * partition descriptor's OIDs match.  Any that don't match can be
+			 * set to -1, as if they were pruned.  Both arrays must be in
+			 * numerical OID order.
 			 */
-			Assert(partdesc->nparts >= pinfo->nparts);
 			pprune->nparts = partdesc->nparts;
 			pprune->subplan_map = palloc(sizeof(int) * partdesc->nparts);
-			if (partdesc->nparts == pinfo->nparts)
+
+			if (partdesc->nparts == pinfo->nparts &&
+				memcmp(partdesc->oids, pinfo->relid_map,
+					   sizeof(int) * partdesc->nparts) == 0)
 			{
-				/*
-				 * There are no new partitions, so this is simple.  We can
-				 * simply point to the subpart_map from the plan, but we must
-				 * copy the subplan_map since we may change it later.
-				 */
 				pprune->subpart_map = pinfo->subpart_map;
 				memcpy(pprune->subplan_map, pinfo->subplan_map,
 					   sizeof(int) * pinfo->nparts);
-
-				/*
-				 * Double-check that the list of unpruned relations has not
-				 * changed.  (Pruned partitions are not in relid_map[].)
-				 */
-#ifdef USE_ASSERT_CHECKING
-				for (int k = 0; k < pinfo->nparts; k++)
-				{
-					Assert(partdesc->oids[k] == pinfo->relid_map[k] ||
-						   pinfo->subplan_map[k] == -1);
-				}
-#endif
 			}
 			else
 			{
@@ -1646,22 +1640,18 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 				int			pp_idx;
 
 				/*
-				 * Some new partitions have appeared since plan time, and
-				 * those are reflected in our PartitionDesc but were not
-				 * present in the one used to construct subplan_map and
-				 * subpart_map.  So we must construct new and longer arrays
-				 * where the partitions that were originally present map to
-				 * the same sub-structures, and any added partitions map to
-				 * -1, as if the new partitions had been pruned.
+				 * When the partition arrays are not identical, there could be
+				 * some new ones but it's also possible that one was removed;
+				 * we cope with both situations by walking the arrays and
+				 * discarding those that don't match.
 				 *
-				 * Note: pinfo->relid_map[] may contain InvalidOid entries for
-				 * partitions pruned by the planner.  We cannot tell exactly
-				 * which of the partdesc entries these correspond to, but we
-				 * don't have to; just skip over them.  The non-pruned
-				 * relid_map entries, however, had better be a subset of the
-				 * partdesc entries and in the same order.
+				 * If the number of partitions on both sides match, it's still
+				 * possible that one partition has been detached and another
+				 * attached.  Cope with that by creating a map that skips any
+				 * mismatches.
 				 */
 				pprune->subpart_map = palloc(sizeof(int) * partdesc->nparts);
+
 				for (pp_idx = 0; pp_idx < partdesc->nparts; pp_idx++)
 				{
 					/* Skip any InvalidOid relid_map entries */
@@ -1669,6 +1659,7 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 						   !OidIsValid(pinfo->relid_map[pd_idx]))
 						pd_idx++;
 
+			recheck:
 					if (pd_idx < pinfo->nparts &&
 						pinfo->relid_map[pd_idx] == partdesc->oids[pp_idx])
 					{
@@ -1678,24 +1669,43 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 						pprune->subpart_map[pp_idx] =
 							pinfo->subpart_map[pd_idx];
 						pd_idx++;
+						continue;
 					}
-					else
-					{
-						/* this partdesc entry is not in the plan */
-						pprune->subplan_map[pp_idx] = -1;
-						pprune->subpart_map[pp_idx] = -1;
-					}
-				}
 
-				/*
-				 * It might seem that we need to skip any trailing InvalidOid
-				 * entries in pinfo->relid_map before checking that we scanned
-				 * all of the relid_map.  But we will have skipped them above,
-				 * because they must correspond to some partdesc->oids
-				 * entries; we just couldn't tell which.
-				 */
-				if (pd_idx != pinfo->nparts)
-					elog(ERROR, "could not match partition child tables to plan elements");
+					/*
+					 * There isn't an exact match in the corresponding
+					 * positions of both arrays.  Peek ahead in
+					 * pinfo->relid_map to see if we have a match for the
+					 * current partition in partdesc.  Normally if a match
+					 * exists it's just one element ahead, and it means the
+					 * planner saw one extra partition that we no longer see
+					 * now (its concurrent detach finished just in between);
+					 * so we skip that one by updating pd_idx to the new
+					 * location and jumping above.  We can then continue to
+					 * match the rest of the elements after skipping the OID
+					 * with no match; no future matches are tried for the
+					 * element that was skipped, because we know the arrays to
+					 * be in the same order.
+					 *
+					 * If we don't see a match anywhere in the rest of the
+					 * pinfo->relid_map array, that means we see an element
+					 * now that the planner didn't see, so mark that one as
+					 * pruned and move on.
+					 */
+					for (int pd_idx2 = pd_idx + 1; pd_idx2 < pinfo->nparts; pd_idx2++)
+					{
+						if (pd_idx2 >= pinfo->nparts)
+							break;
+						if (pinfo->relid_map[pd_idx2] == partdesc->oids[pp_idx])
+						{
+							pd_idx = pd_idx2;
+							goto recheck;
+						}
+					}
+
+					pprune->subpart_map[pp_idx] = -1;
+					pprune->subplan_map[pp_idx] = -1;
+				}
 			}
 
 			/* present_parts is also subject to later modification */
