@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-03-27 12:06+0900\n"
-"PO-Revision-Date: 2024-03-27 14:56+0900\n"
+"POT-Creation-Date: 2024-06-21 09:57+0900\n"
+"PO-Revision-Date: 2024-06-21 10:16+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -94,6 +94,64 @@ msgstr "圧縮アルゴリズム\"%s\"はワーカー数を受け付けません
 msgid "compression algorithm \"%s\" does not support long-distance mode"
 msgstr "圧縮アルゴリズム\"%s\"は長距離モードをサポートしません"
 
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "ファイル\"%s\"を読み込み用にオープンできませんでした: %m"
+
+#: ../../common/controldata_utils.c:110 pg_basebackup.c:1873
+#: pg_receivewal.c:402
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトのうち%2$dバイトを読み込みました"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: bbstreamer_file.c:138 pg_recvlogical.c:650
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "ファイル\"%s\"をクローズできませんでした: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "バイトオーダが合っていません"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"バイトオーダが異なる可能性があります。\n"
+"pg_controlファイルを格納するために使用するバイトオーダが本プログラムで使用\n"
+"されるものと一致しないようです。この場合以下の結果は不正確になります。また、\n"
+"PostgreSQLインストレーションはこのデータディレクトリと互換性がなくなります。"
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 ../../fe_utils/recovery_gen.c:140
+#: pg_basebackup.c:1846 pg_receivewal.c:386
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ファイル\"%s\"をオープンできませんでした: %m"
+
+#: ../../common/controldata_utils.c:249
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "ファイル\"%s\"を書き出せませんでした: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488 pg_recvlogical.c:204
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
@@ -104,13 +162,6 @@ msgstr "メモリ不足です\n"
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません (内部エラー)\n"
-
-#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
-#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
-#: ../../fe_utils/recovery_gen.c:140 pg_basebackup.c:1846 pg_receivewal.c:386
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
 #: ../../common/file_utils.c:76
 #, c-format
@@ -141,16 +192,40 @@ msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
-#: pg_recvlogical.c:204
-#, c-format
-msgid "could not fsync file \"%s\": %m"
-msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
-
 #: ../../common/file_utils.c:498 pg_basebackup.c:2344 walmethods.c:462
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
+
+#: ../../common/restricted_token.c:60
+#, c-format
+msgid "could not open process token: error code %lu"
+msgstr "プロセストークンをオープンできませんでした: エラーコード %lu"
+
+#: ../../common/restricted_token.c:74
+#, c-format
+msgid "could not allocate SIDs: error code %lu"
+msgstr "SIDを割り当てられませんでした: エラーコード %lu"
+
+#: ../../common/restricted_token.c:94
+#, c-format
+msgid "could not create restricted token: error code %lu"
+msgstr "制限付きトークンを生成できませんでした: エラーコード %lu"
+
+#: ../../common/restricted_token.c:115
+#, c-format
+msgid "could not start process for command \"%s\": error code %lu"
+msgstr "コマンド\"%s\"のためのプロセスを起動できませんでした: エラーコード %lu"
+
+#: ../../common/restricted_token.c:153
+#, c-format
+msgid "could not re-execute with restricted token: error code %lu"
+msgstr "制限付きトークンで再実行できませんでした: %lu"
+
+#: ../../common/restricted_token.c:168
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "サブプロセスの終了コードを取得できませんでした: エラーコード %lu"
 
 #: ../../fe_utils/option_utils.c:69
 #, c-format
@@ -186,10 +261,15 @@ msgstr "ファイル\"%s\"を書き込めませんでした: %m"
 msgid "could not create file \"%s\": %m"
 msgstr "ファイル\"%s\"を作成できませんでした: %m"
 
-#: bbstreamer_file.c:138 pg_recvlogical.c:650
+#: ../../fe_utils/string_utils.c:434
 #, c-format
-msgid "could not close file \"%s\": %m"
-msgstr "ファイル\"%s\"をクローズできませんでした: %m"
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
 
 #: bbstreamer_file.c:275
 #, c-format
@@ -421,13 +501,13 @@ msgstr ""
 "%sは実行中のPostgreSQLサーバーのベースバックアップを取得します。\n"
 "\n"
 
-#: pg_basebackup.c:394 pg_createsubscriber.c:215 pg_receivewal.c:79
+#: pg_basebackup.c:394 pg_createsubscriber.c:216 pg_receivewal.c:79
 #: pg_recvlogical.c:86
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_basebackup.c:395 pg_createsubscriber.c:216 pg_receivewal.c:80
+#: pg_basebackup.c:395 pg_createsubscriber.c:217 pg_receivewal.c:80
 #: pg_recvlogical.c:87
 #, c-format
 msgid "  %s [OPTION]...\n"
@@ -693,7 +773,7 @@ msgstr "  -w, --no-password      パスワードの入力を要求しない\n"
 msgid "  -W, --password         force password prompt (should happen automatically)\n"
 msgstr "  -W, --password         パスワード入力要求を強制(自動的に行われるはず)\n"
 
-#: pg_basebackup.c:448 pg_createsubscriber.c:234 pg_receivewal.c:106
+#: pg_basebackup.c:448 pg_createsubscriber.c:235 pg_receivewal.c:106
 #: pg_recvlogical.c:118
 #, c-format
 msgid ""
@@ -703,7 +783,7 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_basebackup.c:449 pg_createsubscriber.c:235 pg_receivewal.c:107
+#: pg_basebackup.c:449 pg_createsubscriber.c:236 pg_receivewal.c:107
 #: pg_recvlogical.c:119
 #, c-format
 msgid "%s home page: <%s>\n"
@@ -755,7 +835,7 @@ msgstr "バックグラウンドスレッドを生成できませんでした: %
 msgid "directory \"%s\" exists but is not empty"
 msgstr "ディレクトリ\"%s\"は存在しますが空ではありません"
 
-#: pg_basebackup.c:782 pg_createsubscriber.c:375
+#: pg_basebackup.c:782 pg_createsubscriber.c:378
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"にアクセスできませんでした: %m"
@@ -920,11 +1000,6 @@ msgstr "バックアップ目録をアップロードできませんでした: �
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "COPYデータを創出することができませんでした: %s"
-
-#: pg_basebackup.c:1873 pg_receivewal.c:402
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
 #: pg_basebackup.c:1877
 #, c-format
@@ -1102,9 +1177,9 @@ msgstr "不正な wal-method オプション\"%s\"、\"fetch\"、\"stream\" ま�
 #: pg_basebackup.c:2712 pg_basebackup.c:2724 pg_basebackup.c:2736
 #: pg_basebackup.c:2744 pg_basebackup.c:2757 pg_basebackup.c:2763
 #: pg_basebackup.c:2772 pg_basebackup.c:2784 pg_basebackup.c:2795
-#: pg_basebackup.c:2803 pg_createsubscriber.c:1918 pg_createsubscriber.c:1928
-#: pg_createsubscriber.c:1936 pg_createsubscriber.c:1964
-#: pg_createsubscriber.c:1996 pg_receivewal.c:748 pg_receivewal.c:760
+#: pg_basebackup.c:2803 pg_createsubscriber.c:1907 pg_createsubscriber.c:1917
+#: pg_createsubscriber.c:1925 pg_createsubscriber.c:1953
+#: pg_createsubscriber.c:1985 pg_receivewal.c:748 pg_receivewal.c:760
 #: pg_receivewal.c:767 pg_receivewal.c:776 pg_receivewal.c:783
 #: pg_receivewal.c:793 pg_recvlogical.c:853 pg_recvlogical.c:865
 #: pg_recvlogical.c:875 pg_recvlogical.c:882 pg_recvlogical.c:889
@@ -1114,7 +1189,7 @@ msgstr "不正な wal-method オプション\"%s\"、\"fetch\"、\"stream\" ま�
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_basebackup.c:2584 pg_createsubscriber.c:1926 pg_receivewal.c:758
+#: pg_basebackup.c:2584 pg_createsubscriber.c:1915 pg_receivewal.c:758
 #: pg_recvlogical.c:863
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -1207,37 +1282,37 @@ msgstr "WALディレクトリの位置は、絶対パスでなければなりま
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "シンボリックリンク\"%s\"を作成できませんでした: %m"
 
-#: pg_createsubscriber.c:163
+#: pg_createsubscriber.c:164
 #, c-format
 msgid "failed after the end of recovery"
 msgstr "リカバリ完了後に失敗しました"
 
-#: pg_createsubscriber.c:164
+#: pg_createsubscriber.c:165
 #, c-format
 msgid "The target server cannot be used as a physical replica anymore.  You must recreate the physical replica before continuing."
 msgstr "以降この対象サーバーは物理複製としては使用できません。作業を継続する前に物理複製を再作成する必要があります。"
 
-#: pg_createsubscriber.c:192
+#: pg_createsubscriber.c:193
 #, c-format
 msgid "publication \"%s\" in database \"%s\" on primary might be left behind"
 msgstr "プライマリ上のデータベース\"%2$s\"にパブリケーション\"%1$s\"が残される可能性があります"
 
-#: pg_createsubscriber.c:194
+#: pg_createsubscriber.c:195
 #, c-format
 msgid "Consider dropping this publication before trying again."
 msgstr "再試行の前にこのパブリケーションを削除することを検討してください。"
 
-#: pg_createsubscriber.c:198
+#: pg_createsubscriber.c:199
 #, c-format
 msgid "replication slot \"%s\" in database \"%s\" on primary might be left behind"
 msgstr "プライマリ上のデータベース\"%2$s\"にレプリケーションスロット\"%1$s\"が残される可能性があります"
 
-#: pg_createsubscriber.c:200 pg_createsubscriber.c:1170
+#: pg_createsubscriber.c:201 pg_createsubscriber.c:1137
 #, c-format
 msgid "Drop this replication slot soon to avoid retention of WAL files."
-msgstr "このスロットを早めに削除することでWALファイルの保持を避けることができます。"
+msgstr "WALファイルの増加を避けるためにこのレプリケーションスロットを直ちに削除してください。"
 
-#: pg_createsubscriber.c:213
+#: pg_createsubscriber.c:214
 #, c-format
 msgid ""
 "%s creates a new logical replica from a standby server.\n"
@@ -1246,7 +1321,7 @@ msgstr ""
 "%s スタンバイサーバーから新たな論理複製を作成します。\n"
 "\n"
 
-#: pg_createsubscriber.c:217 pg_receivewal.c:81 pg_recvlogical.c:92
+#: pg_createsubscriber.c:218 pg_receivewal.c:81 pg_recvlogical.c:92
 #, c-format
 msgid ""
 "\n"
@@ -1255,598 +1330,593 @@ msgstr ""
 "\n"
 "オプション:\n"
 
-#: pg_createsubscriber.c:218
-#, c-format
-msgid " -d, --database=DBNAME               database to create a subscription\n"
-msgstr " -d, --database=DBNAME               サブスクリプションを作成するデータベース名\n"
-
 #: pg_createsubscriber.c:219
 #, c-format
-msgid " -D, --pgdata=DATADIR                location for the subscriber data directory\n"
-msgstr " -D, --pgdata=DATADIR                サブスクライバのデータディレクトリの場所\n"
+msgid "  -d, --database=DBNAME           database to create a subscription\n"
+msgstr "  -d, --database=DBNAME           サブスクリプションを作成するデータベース名\n"
 
 #: pg_createsubscriber.c:220
 #, c-format
-msgid " -n, --dry-run                       dry run, just show what would be done\n"
-msgstr " -n, --dry-run                       更新をせず、単に何が行なわれるかを表示\n"
+msgid "  -D, --pgdata=DATADIR            location for the subscriber data directory\n"
+msgstr "  -D, --pgdata=DATADIR            サブスクライバのデータディレクトリの場所\n"
 
 #: pg_createsubscriber.c:221
 #, c-format
-msgid " -p, --subscriber-port=PORT          subscriber port number (default %s)\n"
-msgstr " -p, --subscriber-port=PORT          サブスクライバのポート番号 (デフォルト %s)\n"
+msgid "  -n, --dry-run                   dry run, just show what would be done\n"
+msgstr "  -n, --dry-run                   更新をせず、単に何が行なわれるかを表示\n"
 
 #: pg_createsubscriber.c:222
 #, c-format
-msgid " -P, --publisher-server=CONNSTR      publisher connection string\n"
-msgstr " -P, --publisher-server=CONNSTR      パブリッシャの接続文字列\n"
+msgid "  -p, --subscriber-port=PORT      subscriber port number (default %s)\n"
+msgstr "  -p, --subscriber-port=PORT      サブスクライバのポート番号 (デフォルト %s)\n"
 
 #: pg_createsubscriber.c:223
 #, c-format
-msgid " -s, --socket-directory=DIR          socket directory to use (default current directory)\n"
-msgstr ""
-" -s, --socket-directory=DIR          使用するソケットディレクトリ(デフォルトは\n"
-"                                     カレントディレクトリ)\n"
+msgid "  -P, --publisher-server=CONNSTR  publisher connection string\n"
+msgstr "  -P, --publisher-server=CONNSTR  パブリッシャの接続文字列\n"
 
 #: pg_createsubscriber.c:224
 #, c-format
-msgid " -t, --recovery-timeout=SECS         seconds to wait for recovery to end\n"
-msgstr " -t, --recovery-timeout=SECS         リカバリ完了を待機する秒数\n"
+msgid "  -s, --socket-directory=DIR      socket directory to use (default current directory)\n"
+msgstr ""
+"  -s, --socket-directory=DIR      使用するソケットディレクトリ(デフォルトは\n"
+"                                  カレントディレクトリ)\n"
 
 #: pg_createsubscriber.c:225
 #, c-format
-msgid " -U, --subscriber-username=NAME      subscriber username\n"
-msgstr " -U, --subscriber-username=NAME      サブスクライバのユーザー名\n"
+msgid "  -t, --recovery-timeout=SECS     seconds to wait for recovery to end\n"
+msgstr "  -t, --recovery-timeout=SECS     リカバリ完了を待機する秒数\n"
 
 #: pg_createsubscriber.c:226
 #, c-format
-msgid " -v, --verbose                       output verbose messages\n"
-msgstr " -v, --verbose                       冗長メッセージを出力\n"
+msgid "  -U, --subscriber-username=NAME  subscriber username\n"
+msgstr "  -U, --subscriber-username=NAME  サブスクライバのユーザー名\n"
 
 #: pg_createsubscriber.c:227
 #, c-format
-msgid ""
-"     --config-file=FILENAME          use specified main server configuration\n"
-"                                     file when running target cluster\n"
-msgstr ""
-"     --config-file=FILENAME          ターゲットのクラスタの実行時に指定した\n"
-"                                     主サーバー設定ファイルを使用する\n"
+msgid "  -v, --verbose                   output verbose messages\n"
+msgstr "  -v, --verbose                   冗長メッセージを出力\n"
 
-#: pg_createsubscriber.c:229
+#: pg_createsubscriber.c:228
 #, c-format
-msgid "     --publication=NAME              publication name\n"
-msgstr "     --publication=NAME              パブリケーション名\n"
+msgid ""
+"      --config-file=FILENAME      use specified main server configuration\n"
+"                                  file when running target cluster\n"
+msgstr ""
+"      --config-file=FILENAME      ターゲットのクラスタの実行時に指定した\n"
+"                                  主サーバー設定ファイルを使用する\n"
 
 #: pg_createsubscriber.c:230
 #, c-format
-msgid "     --replication-slot=NAME         replication slot name\n"
-msgstr "     --replication-slot=NAME         レプリケーションスロット名\n"
+msgid "      --publication=NAME          publication name\n"
+msgstr "      --publication=NAME          パブリケーション名\n"
 
 #: pg_createsubscriber.c:231
 #, c-format
-msgid "     --subscription=NAME             subscription name\n"
-msgstr "     --subscription=NAME             サブスクリプション名\n"
+msgid "      --replication-slot=NAME     replication slot name\n"
+msgstr "      --replication-slot=NAME     レプリケーションスロット名\n"
 
 #: pg_createsubscriber.c:232
 #, c-format
-msgid " -V, --version                       output version information, then exit\n"
-msgstr " -V, --version                       バージョン情報を表示して終了\n"
+msgid "      --subscription=NAME         subscription name\n"
+msgstr "      --subscription=NAME         サブスクリプション名\n"
 
 #: pg_createsubscriber.c:233
 #, c-format
-msgid " -?, --help                          show this help, then exit\n"
-msgstr " -?, --help                          このヘルプを表示して終了\n"
+msgid "  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version                   バージョン情報を表示して終了\n"
 
-#: pg_createsubscriber.c:264
+#: pg_createsubscriber.c:234
+#, c-format
+msgid "  -?, --help                      show this help, then exit\n"
+msgstr "  -?, --help                      このヘルプを表示して終了\n"
+
+#: pg_createsubscriber.c:265
 #, c-format
 msgid "could not parse connection string: %s"
 msgstr "接続文字列をパースできませんでした: %s"
 
-#: pg_createsubscriber.c:344
+#: pg_createsubscriber.c:347
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "%2$sにはプログラム\"%1$s\"が必要ですが、\"%3$s\"と同じディレクトリにはありませんでした。"
 
-#: pg_createsubscriber.c:347
+#: pg_createsubscriber.c:350
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "\"%2$s\"がプログラム\"%1$s\"を見つけましたが、これは%3$sと同じバージョンではありませんでした。"
 
-#: pg_createsubscriber.c:367
+#: pg_createsubscriber.c:370
 #, c-format
 msgid "checking if directory \"%s\" is a cluster data directory"
 msgstr "ディレクトリ\"%s\"がクラスタデータディレクトリであることを確認中"
 
-#: pg_createsubscriber.c:373
+#: pg_createsubscriber.c:376
 #, c-format
 msgid "data directory \"%s\" does not exist"
 msgstr "データディレクトリ\"%s\"は存在しません"
 
-#: pg_createsubscriber.c:381
+#: pg_createsubscriber.c:384
 #, c-format
 msgid "directory \"%s\" is not a database cluster directory"
 msgstr "ディレクトリ\"%s\"はデータベースクラスタディレクトリではありません"
 
-#: pg_createsubscriber.c:498
+#: pg_createsubscriber.c:501
 #, c-format
 msgid "connection to database failed: %s"
 msgstr "データベース接続に失敗しました: %s"
 
-#: pg_createsubscriber.c:510 streamutil.c:230
+#: pg_createsubscriber.c:514
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "search_pathを消去できませんでした: %s"
 
-#: pg_createsubscriber.c:548
+#: pg_createsubscriber.c:554
 #, c-format
 msgid "getting system identifier from publisher"
 msgstr "パブリッシャからシステム識別子を取得しています"
 
-#: pg_createsubscriber.c:555
+#: pg_createsubscriber.c:561
 #, c-format
 msgid "could not get system identifier: %s"
 msgstr "システム識別子を取得できませんでした: %s"
 
-#: pg_createsubscriber.c:561
+#: pg_createsubscriber.c:567
 #, c-format
 msgid "could not get system identifier: got %d rows, expected %d row"
 msgstr "システム識別子を取得できませんでした: 受信したのは%d行、想定は%d行"
 
-#: pg_createsubscriber.c:568
+#: pg_createsubscriber.c:574
 #, c-format
 msgid "system identifier is %llu on publisher"
 msgstr "パブリッシャのシステム識別子は%lluです"
 
-#: pg_createsubscriber.c:589
+#: pg_createsubscriber.c:595
 #, c-format
 msgid "getting system identifier from subscriber"
 msgstr "サブスクライバからシステム識別子を取得しています"
 
-#: pg_createsubscriber.c:593 pg_createsubscriber.c:623
+#: pg_createsubscriber.c:599 pg_createsubscriber.c:629
 #, c-format
 msgid "control file appears to be corrupt"
 msgstr "制御ファイルが破損しているようです"
 
-#: pg_createsubscriber.c:597 pg_createsubscriber.c:638
+#: pg_createsubscriber.c:603 pg_createsubscriber.c:644
 #, c-format
 msgid "system identifier is %llu on subscriber"
 msgstr "サブスクライバのシステム識別子は%lluです"
 
-#: pg_createsubscriber.c:619
+#: pg_createsubscriber.c:625
 #, c-format
 msgid "modifying system identifier of subscriber"
 msgstr "サブスクライバのシステム識別子を変更しています"
 
-#: pg_createsubscriber.c:641
+#: pg_createsubscriber.c:647
 #, c-format
 msgid "running pg_resetwal on the subscriber"
 msgstr "サブスクライバ上でpg_resetwalを実行します"
 
-#: pg_createsubscriber.c:653
+#: pg_createsubscriber.c:659
 #, c-format
 msgid "subscriber successfully changed the system identifier"
 msgstr "サブスクライバはシステム識別子の変更に成功しました"
 
-#: pg_createsubscriber.c:655
+#: pg_createsubscriber.c:661
 #, c-format
 msgid "subscriber failed to change system identifier: exit code: %d"
 msgstr "サブスクライバはシステム識別子の変更に失敗しました: 終了コード: %d"
 
-#: pg_createsubscriber.c:679
+#: pg_createsubscriber.c:685
 #, c-format
 msgid "could not obtain database OID: %s"
 msgstr "データベースOIDを取得できませんでした: %s"
 
-#: pg_createsubscriber.c:686
+#: pg_createsubscriber.c:692
 #, c-format
 msgid "could not obtain database OID: got %d rows, expected %d row"
 msgstr "データベースOIDを取得できませんでした: 受信したのは%d行、想定は%d行"
 
-#: pg_createsubscriber.c:758
+#: pg_createsubscriber.c:764
 #, c-format
 msgid "create replication slot \"%s\" on publisher"
 msgstr "パブリッシャでレプリケーションスロット\"%s\"を作成します"
 
-#: pg_createsubscriber.c:782
+#: pg_createsubscriber.c:788
 #, c-format
 msgid "could not obtain recovery progress: %s"
 msgstr "リカバリ進捗を取得できませんでした: %s"
 
-#: pg_createsubscriber.c:813
+#: pg_createsubscriber.c:819
 #, c-format
 msgid "checking settings on publisher"
 msgstr "パブリッシャ上の設定を確認しています"
 
-#: pg_createsubscriber.c:823
+#: pg_createsubscriber.c:829
 #, c-format
 msgid "primary server cannot be in recovery"
 msgstr "プライマリサーバーがリカバリ中であってはなりません"
 
-#: pg_createsubscriber.c:858
+#: pg_createsubscriber.c:864
 #, c-format
 msgid "could not obtain publisher settings: %s"
 msgstr "パブリッシャの設定が取得できませんでした: %s"
 
-#: pg_createsubscriber.c:900
-#, c-format
-msgid "could not obtain replication slot information: %s"
-msgstr "レプリケーションスロットの情報を取得できませんでした: %s"
-
-#: pg_createsubscriber.c:907
-#, c-format
-msgid "could not obtain replication slot information: got %d rows, expected %d row"
-msgstr "レプリケーションスロットの情報を取得できませんでした:: 受信したのは%d行、想定は%d行"
-
-#: pg_createsubscriber.c:912
-#, c-format
-msgid "primary has replication slot \"%s\""
-msgstr "プライマリにレプリケーションスロット\"%s\"が存在します"
-
-#: pg_createsubscriber.c:922
+#: pg_createsubscriber.c:887
 #, c-format
 msgid "publisher requires wal_level >= \"logical\""
 msgstr "パブリッシャは wal_level >= \"logical\" である必要があります"
 
-#: pg_createsubscriber.c:928
+#: pg_createsubscriber.c:893
 #, c-format
 msgid "publisher requires %d replication slots, but only %d remain"
 msgstr "パブリッシャは%d個のレプリケーションスロットを必要としますが、%d個しか残っていません"
 
-#: pg_createsubscriber.c:930 pg_createsubscriber.c:1027
+#: pg_createsubscriber.c:895 pg_createsubscriber.c:994
 #, c-format
 msgid "Consider increasing max_replication_slots to at least %d."
 msgstr "max_replication_slots を最低でも%dまで増やすことを検討してください。"
 
-#: pg_createsubscriber.c:937
+#: pg_createsubscriber.c:902
 #, c-format
 msgid "publisher requires %d wal sender processes, but only %d remain"
 msgstr "パブリッシャは%d個のwal senderプロセスを必要としますが、%d個しか残っていません"
 
-#: pg_createsubscriber.c:939
+#: pg_createsubscriber.c:904
 #, c-format
 msgid "Consider increasing max_wal_senders to at least %d."
 msgstr "max_wal_sendersを最低でも%dに上げることを検討してください。"
 
-#: pg_createsubscriber.c:970
+#: pg_createsubscriber.c:937
 #, c-format
 msgid "checking settings on subscriber"
 msgstr "サブスクライバ上で設定を確認します"
 
-#: pg_createsubscriber.c:977
+#: pg_createsubscriber.c:944
 #, c-format
 msgid "target server must be a standby"
 msgstr "ターゲットサーバーはスタンバイである必要があります"
 
-#: pg_createsubscriber.c:1001
+#: pg_createsubscriber.c:968
 #, c-format
 msgid "could not obtain subscriber settings: %s"
 msgstr "サブスクライバの設定を取得できませんでした: %s"
 
-#: pg_createsubscriber.c:1025
+#: pg_createsubscriber.c:992
 #, c-format
 msgid "subscriber requires %d replication slots, but only %d remain"
 msgstr "サブスクライバは%d個のレプリケーションスロットを必要としますが、%d個しか残ってません"
 
-#: pg_createsubscriber.c:1034
+#: pg_createsubscriber.c:1001
 #, c-format
 msgid "subscriber requires %d logical replication workers, but only %d remain"
 msgstr "サブスクライバは%d個の論理レプリケーションワーカーを必要としますが、%d個しか残っていません"
 
-#: pg_createsubscriber.c:1036
+#: pg_createsubscriber.c:1003
 #, c-format
 msgid "Consider increasing max_logical_replication_workers to at least %d."
 msgstr "max_logical_replication_workersを最低でも%dに増やすことを検討してください。"
 
-#: pg_createsubscriber.c:1043
+#: pg_createsubscriber.c:1010
 #, c-format
 msgid "subscriber requires %d worker processes, but only %d remain"
 msgstr "サブスクライバは%d個のワーカープロセスを必要としますが、%d個しか残っていません"
 
-#: pg_createsubscriber.c:1045
+#: pg_createsubscriber.c:1012
 #, c-format
 msgid "Consider increasing max_worker_processes to at least %d."
 msgstr "max_worker_processesを最低でも%dに増やすことを検討してください。"
 
-#: pg_createsubscriber.c:1168
+#: pg_createsubscriber.c:1135
 #, c-format
 msgid "could not drop replication slot \"%s\" on primary"
 msgstr "プライマリ上のレプリケーションスロット\"%s\"を削除できませんでした"
 
-#: pg_createsubscriber.c:1191
+#: pg_createsubscriber.c:1169
+#, c-format
+msgid "could not obtain failover replication slot information: %s"
+msgstr "フェイルオーバーレプリケーションスロットの情報を取得できませんでした: %s"
+
+#: pg_createsubscriber.c:1171 pg_createsubscriber.c:1180
+#, c-format
+msgid "Drop the failover replication slots on subscriber soon to avoid retention of WAL files."
+msgstr "WALファイルの増加を避けるためにこのフェイルオーバーレプリケーションスロットを直ちに削除してください。"
+
+#: pg_createsubscriber.c:1179
+#, c-format
+msgid "could not drop failover replication slot"
+msgstr "フェイルオーバーレプリケーションスロットを削除できませんでした"
+
+#: pg_createsubscriber.c:1201
 #, c-format
 msgid "creating the replication slot \"%s\" on database \"%s\""
 msgstr "データベース\"%2$s\"上でレプリケーションスロット\"%1$s:を作成します"
 
-#: pg_createsubscriber.c:1209
+#: pg_createsubscriber.c:1219
 #, c-format
 msgid "could not create replication slot \"%s\" on database \"%s\": %s"
 msgstr "データベース\"%2$s\"上でレプリケーションスロット\"%1$s\"を作成できませんでした: %3$s"
 
-#: pg_createsubscriber.c:1237
+#: pg_createsubscriber.c:1249
 #, c-format
 msgid "dropping the replication slot \"%s\" on database \"%s\""
 msgstr "データベース\"%2$s\"上でレプリケーションスロット\"%1$s:を削除します"
 
-#: pg_createsubscriber.c:1253
+#: pg_createsubscriber.c:1265
 #, c-format
 msgid "could not drop replication slot \"%s\" on database \"%s\": %s"
 msgstr "データベース\"%2$s\"上でレプリケーションスロット\"%1$s\"を削除できませんでした: %3$s"
 
-#: pg_createsubscriber.c:1274
+#: pg_createsubscriber.c:1286
 #, c-format
 msgid "pg_ctl failed with exit code %d"
 msgstr "pg_ctlが終了コード%dで失敗しました"
 
-#: pg_createsubscriber.c:1279
+#: pg_createsubscriber.c:1291
 #, c-format
 msgid "pg_ctl was terminated by exception 0x%X"
 msgstr "pg_ctlが例外0x%Xによって終了させられました"
 
-#: pg_createsubscriber.c:1281
+#: pg_createsubscriber.c:1293
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "16進値の説明についてはC インクルードファイル\"ntstatus.h\"を参照してください。"
 
-#: pg_createsubscriber.c:1283
+#: pg_createsubscriber.c:1295
 #, c-format
 msgid "pg_ctl was terminated by signal %d: %s"
 msgstr "pg_ctlがシグナル%dによって終了させられました %s"
 
-#: pg_createsubscriber.c:1289
+#: pg_createsubscriber.c:1301
 #, c-format
 msgid "pg_ctl exited with unrecognized status %d"
 msgstr "pg_ctlが認識できない状態%dで終了しました"
 
-#: pg_createsubscriber.c:1292
+#: pg_createsubscriber.c:1304
 #, c-format
 msgid "The failed command was: %s"
 msgstr "失敗したコマンドは以下のとおりです: %s"
 
-#: pg_createsubscriber.c:1331
+#: pg_createsubscriber.c:1343
 #, c-format
 msgid "server was started"
 msgstr "サーバー起動完了"
 
-#: pg_createsubscriber.c:1346
+#: pg_createsubscriber.c:1358
 #, c-format
 msgid "server was stopped"
 msgstr "サーバーは停止しました"
 
-#: pg_createsubscriber.c:1365
+#: pg_createsubscriber.c:1377
 #, c-format
 msgid "waiting for the target server to reach the consistent state"
 msgstr "対象サーバーが一貫性のある状態に到達するのを待っています"
 
-#: pg_createsubscriber.c:1398
-#, c-format
-msgid "standby server disconnected from the primary"
-msgstr "スタンバイサーバーはプライマリから切断されました"
-
-#: pg_createsubscriber.c:1411
+#: pg_createsubscriber.c:1400
 #, c-format
 msgid "recovery timed out"
 msgstr "リカバリーがタイムアウトしました"
 
-#: pg_createsubscriber.c:1424
+#: pg_createsubscriber.c:1413
 #, c-format
 msgid "server did not end recovery"
 msgstr "サーバーはリカバリを完了しませんでした"
 
-#: pg_createsubscriber.c:1426
+#: pg_createsubscriber.c:1415
 #, c-format
 msgid "target server reached the consistent state"
 msgstr "対象サーバーが一貫性のある状態に到達しました"
 
-#: pg_createsubscriber.c:1427
+#: pg_createsubscriber.c:1416
 #, c-format
 msgid "If pg_createsubscriber fails after this point, you must recreate the physical replica before continuing."
 msgstr "もしpg_createsubscriberが今時点より後で失敗した場合は、作業を継続する前に物理レプリカを再作成する必要があります。"
 
-#: pg_createsubscriber.c:1454
+#: pg_createsubscriber.c:1443
 #, c-format
 msgid "could not obtain publication information: %s"
 msgstr "パブリケーション情報を取得できませんでした: %s"
 
-#: pg_createsubscriber.c:1468
+#: pg_createsubscriber.c:1457
 #, c-format
 msgid "publication \"%s\" already exists"
 msgstr "パブリケーション\"%s\"はすでに存在します"
 
-#: pg_createsubscriber.c:1469
+#: pg_createsubscriber.c:1458
 #, c-format
 msgid "Consider renaming this publication before continuing."
 msgstr "作業を継続する前にこのパブリケーションの名前を変更することを検討してください。"
 
-#: pg_createsubscriber.c:1476
+#: pg_createsubscriber.c:1465
 #, c-format
 msgid "creating publication \"%s\" on database \"%s\""
 msgstr "データベース\"%2$s\"上でパブリケーション\"%1$s\"を作成します"
 
-#: pg_createsubscriber.c:1489
+#: pg_createsubscriber.c:1478
 #, c-format
 msgid "could not create publication \"%s\" on database \"%s\": %s"
 msgstr "データベース\"%2$s\"上でパブリケーション\"%1$s\"を作成できませんでした: %3$s"
 
-#: pg_createsubscriber.c:1518
+#: pg_createsubscriber.c:1507
 #, c-format
 msgid "dropping publication \"%s\" on database \"%s\""
 msgstr "データベース\"%2$s\"上でパブリケーション\"%1$s\"を削除します"
 
-#: pg_createsubscriber.c:1532
+#: pg_createsubscriber.c:1521
 #, c-format
 msgid "could not drop publication \"%s\" on database \"%s\": %s"
 msgstr "データベース\"%2$s\"上でパブリケーション\"%1$s\"が削除できませんでした: %3$s"
 
-#: pg_createsubscriber.c:1578
+#: pg_createsubscriber.c:1567
 #, c-format
 msgid "creating subscription \"%s\" on database \"%s\""
 msgstr "データベース\"%2$s\"上でサブスクリプション\"%1$s\"を作成します"
 
-#: pg_createsubscriber.c:1599
+#: pg_createsubscriber.c:1588
 #, c-format
 msgid "could not create subscription \"%s\" on database \"%s\": %s"
 msgstr "データベース\"%2$s\"上でサブスクリプション\"%1$s\"を作成できませんでした: %3$s"
 
-#: pg_createsubscriber.c:1644
+#: pg_createsubscriber.c:1633
 #, c-format
 msgid "could not obtain subscription OID: %s"
 msgstr "サブスクリプションOIDが取得できませんでした: %s"
 
-#: pg_createsubscriber.c:1651
+#: pg_createsubscriber.c:1640
 #, c-format
 msgid "could not obtain subscription OID: got %d rows, expected %d row"
 msgstr "サブスクリプションOIDが取得できませんでした: 受信したのは%d行、想定は%d行"
 
-#: pg_createsubscriber.c:1675
+#: pg_createsubscriber.c:1664
 #, c-format
 msgid "setting the replication progress (node name \"%s\" ; LSN %s) on database \"%s\""
 msgstr "データベース\"%3$s\"上でレプリケーションの進捗を設定しています(ノード名\"%1$s\", LSN %2$s)"
 
-#: pg_createsubscriber.c:1690
+#: pg_createsubscriber.c:1679
 #, c-format
 msgid "could not set replication progress for the subscription \"%s\": %s"
 msgstr "サブスクリプション\"%s\"にレプリケーション進捗を設定できませんでした: %s"
 
-#: pg_createsubscriber.c:1721
+#: pg_createsubscriber.c:1710
 #, c-format
 msgid "enabling subscription \"%s\" on database \"%s\""
 msgstr "データベース\"%2$s\"上でサブスクリプション\"%1$s\"を有効にします"
 
-#: pg_createsubscriber.c:1733
+#: pg_createsubscriber.c:1722
 #, c-format
 msgid "could not enable subscription \"%s\": %s"
 msgstr "サブスクリプション\"%s\"を有効化できませんでした: %s"
 
-#: pg_createsubscriber.c:1825
+#: pg_createsubscriber.c:1814
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "\"root\"では実行できません"
 
-#: pg_createsubscriber.c:1826
+#: pg_createsubscriber.c:1815
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "PostgreSQLのスーパーユーザーで%sを実行しなければなりません"
 
-#: pg_createsubscriber.c:1847
+#: pg_createsubscriber.c:1836
 #, c-format
 msgid "duplicate database \"%s\""
 msgstr "データベース\"%s\"が重複しています"
 
-#: pg_createsubscriber.c:1888
+#: pg_createsubscriber.c:1877
 #, c-format
 msgid "duplicate publication \"%s\""
 msgstr "パブリケーション\"%s\"が重複しています"
 
-#: pg_createsubscriber.c:1900
+#: pg_createsubscriber.c:1889
 #, c-format
 msgid "duplicate replication slot \"%s\""
 msgstr "レプリケーションスロット\"%s\"が重複しています"
 
-#: pg_createsubscriber.c:1912
+#: pg_createsubscriber.c:1901
 #, c-format
 msgid "duplicate subscription \"%s\""
 msgstr "サブスクリプション\"%s\"が重複しています"
 
-#: pg_createsubscriber.c:1935
+#: pg_createsubscriber.c:1924
 #, c-format
 msgid "no subscriber data directory specified"
 msgstr "サブスクライバのデータディレクトリが指定されていません"
 
-#: pg_createsubscriber.c:1946
+#: pg_createsubscriber.c:1935
 #, c-format
 msgid "could not determine current directory"
 msgstr "カレントディレクトリを特定できませんでした"
 
-#: pg_createsubscriber.c:1963
+#: pg_createsubscriber.c:1952
 #, c-format
 msgid "no publisher connection string specified"
 msgstr "パブリッシャの接続文字列が指定されていません"
 
-#: pg_createsubscriber.c:1967
+#: pg_createsubscriber.c:1956
 #, c-format
 msgid "validating connection string on publisher"
 msgstr "パブリッシャ上の接続文字列を検証しています"
 
-#: pg_createsubscriber.c:1973
+#: pg_createsubscriber.c:1962
 #, c-format
 msgid "validating connection string on subscriber"
 msgstr "サブスクライバ上の接続文字列を検証しています"
 
-#: pg_createsubscriber.c:1978
+#: pg_createsubscriber.c:1967
 #, c-format
 msgid "no database was specified"
 msgstr "データベースが指定されていません"
 
-#: pg_createsubscriber.c:1990
+#: pg_createsubscriber.c:1979
 #, c-format
 msgid "database \"%s\" was extracted from the publisher connection string"
 msgstr "データベース\"%s\"がパブリッシャの接続文字列から抽出されました"
 
-#: pg_createsubscriber.c:1995
+#: pg_createsubscriber.c:1984
 #, c-format
 msgid "no database name specified"
 msgstr "データベース名が指定されていません"
 
-#: pg_createsubscriber.c:2005
+#: pg_createsubscriber.c:1994
 #, c-format
 msgid "wrong number of publication names"
 msgstr "パブリケーション名の数が間違っています"
 
-#: pg_createsubscriber.c:2006
+#: pg_createsubscriber.c:1995
 #, c-format
 msgid "Number of publication names (%d) must match number of database names (%d)."
 msgstr "パブリケーション名の数(%d)はデータベース名の数(%d)と一致している必要があります。"
 
-#: pg_createsubscriber.c:2012
+#: pg_createsubscriber.c:2001
 #, c-format
 msgid "wrong number of subscription names"
 msgstr "サブスクリプション名の数が間違っています"
 
-#: pg_createsubscriber.c:2013
+#: pg_createsubscriber.c:2002
 #, c-format
 msgid "Number of subscription names (%d) must match number of database names (%d)."
 msgstr "サブスクリプション名の数(%d)はデータベース名の数(%d)と一致している必要があります。"
 
-#: pg_createsubscriber.c:2019
+#: pg_createsubscriber.c:2008
 #, c-format
 msgid "wrong number of replication slot names"
 msgstr "レプリケーションスロット名の数が間違っています"
 
-#: pg_createsubscriber.c:2020
+#: pg_createsubscriber.c:2009
 #, c-format
 msgid "Number of replication slot names (%d) must match number of database names (%d)."
 msgstr "レプリケーションスロット名の数(%d)はデータベース名の数(%d)と一致している必要があります。"
 
-#: pg_createsubscriber.c:2049
+#: pg_createsubscriber.c:2038
 #, c-format
 msgid "subscriber data directory is not a copy of the source database cluster"
 msgstr "サブスクライバのデータディレクトリは元データベースクラスタのコピーではありません"
 
-#: pg_createsubscriber.c:2062
+#: pg_createsubscriber.c:2051
 #, c-format
 msgid "standby is up and running"
 msgstr "スタンバイは起動して実行中です"
 
-#: pg_createsubscriber.c:2063
+#: pg_createsubscriber.c:2052
 #, c-format
 msgid "Stop the standby and try again."
 msgstr "このスタンバイを停止して再試行してください。"
 
-#: pg_createsubscriber.c:2072
+#: pg_createsubscriber.c:2061
 #, c-format
 msgid "starting the standby with command-line options"
 msgstr "コマンドラインオプションを指定してスタンバイを起動しています"
 
-#: pg_createsubscriber.c:2093 pg_createsubscriber.c:2129
+#: pg_createsubscriber.c:2077 pg_createsubscriber.c:2116
 #, c-format
 msgid "stopping the subscriber"
 msgstr "サブスクライバを起動しています"
 
-#: pg_createsubscriber.c:2111
+#: pg_createsubscriber.c:2095
 #, c-format
 msgid "starting the subscriber"
 msgstr "サブスクライバを起動しています"
 
-#: pg_createsubscriber.c:2137
+#: pg_createsubscriber.c:2124
 #, c-format
 msgid "Done!"
 msgstr "完了!"
@@ -2409,15 +2479,20 @@ msgstr "パスワード: "
 msgid "could not connect to server"
 msgstr "サーバーに接続できませんでした"
 
+#: streamutil.c:230
+#, c-format
+msgid "could not clear \"search_path\": %s"
+msgstr "\"search_path\"を消去できませんでした: %s"
+
 #: streamutil.c:246
 #, c-format
-msgid "could not determine server setting for integer_datetimes"
-msgstr "integer_datetimesのサーバー設定を取得できませんでした"
+msgid "could not determine server setting for \"integer_datetimes\""
+msgstr "\"integer_datetimes\"のサーバー設定を取得できませんでした"
 
 #: streamutil.c:253
 #, c-format
-msgid "integer_datetimes compile flag does not match server"
-msgstr "integer_datetimesコンパイル時フラグがサーバーと一致しません"
+msgid "\"integer_datetimes\" compile flag does not match server"
+msgstr "コンパイル時フラグ\"integer_datetimes\"がサーバーと異なっています"
 
 #: streamutil.c:372
 #, c-format
@@ -2512,6 +2587,3 @@ msgstr "圧縮時のunlinkはサポートされていません"
 #: walmethods.c:1293
 msgid "could not close compression stream"
 msgstr "圧縮ストリームをクローズできませんでした"
-
-#~ msgid "could not access directory \"%s\": %s"
-#~ msgstr "ディレクトリ\"%s\"にアクセスできませんでした: %s"

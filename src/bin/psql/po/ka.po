@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-18 22:18+0000\n"
-"PO-Revision-Date: 2024-05-19 07:18+0200\n"
+"POT-Creation-Date: 2024-06-14 02:18+0000\n"
+"PO-Revision-Date: 2024-06-14 06:17+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -184,6 +184,16 @@ msgstr "გამოტანის არასწორი ფორმატ�
 #, c-format
 msgid "skipping recursive expansion of variable \"%s\""
 msgstr "რეკურსიული გაფართოების გამოტოვება ცვლადისთვის \"%s\""
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "გარსის ბრძანების არგუმენტი ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "მონაცემთა ბაზის სახელი ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\"\n"
 
 #: ../../port/user.c:43 ../../port/user.c:79
 #, c-format

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-03-26 07:51+0000\n"
+"POT-Creation-Date: 2024-06-16 07:51+0000\n"
 "PO-Revision-Date: 2024-03-26 11:01+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -36,6 +36,107 @@ msgstr "Detail: "
 #, c-format
 msgid "hint: "
 msgstr "Tipp: "
+
+#: ../../common/controldata_utils.c:97 pg_resetwal.c:370 pg_resetwal.c:525
+#: pg_resetwal.c:573
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
+
+#: ../../common/controldata_utils.c:110 pg_resetwal.c:534 pg_resetwal.c:588
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht lesen: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schließen: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "falsche Byte-Reihenfolge"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"möglicherweise falsche Byte-Reihenfolge\n"
+"Die Byte-Reihenfolge, die zur Speicherung der Datei pg_control verwendet wurde,\n"
+"stimmt möglicherweise nicht mit der von diesem Programm verwendeten überein. In\n"
+"diesem Fall wären die Ergebnisse unten falsch und die PostgreSQL-Installation\n"
+"wäre inkompatibel mit diesem Datenverzeichnis."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 pg_resetwal.c:1134
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht öffnen: %m"
+
+#: ../../common/controldata_utils.c:249 pg_resetwal.c:1142 pg_resetwal.c:1154
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schreiben: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht fsyncen: %m"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "Speicher aufgebraucht\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "konnte Dateisystem für Datei »%s« nicht synchronisieren: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_resetwal.c:928 pg_resetwal.c:981 pg_resetwal.c:1016 pg_resetwal.c:1054
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033 pg_resetwal.c:1068
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "konnte Datei »%s« nicht in »%s« umbenennen: %m"
 
 #: ../../common/restricted_token.c:60
 #, c-format
@@ -76,11 +177,6 @@ msgstr "ungültiger Wert »%s« für Option %s"
 #, c-format
 msgid "%s must be in range %d..%d"
 msgstr "%s muss im Bereich %d..%d sein"
-
-#: ../../fe_utils/option_utils.c:99
-#, c-format
-msgid "this build does not support sync method \"%s\""
-msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
 
 #: ../../fe_utils/option_utils.c:106
 #, c-format
@@ -178,11 +274,6 @@ msgstr "konnte Zugriffsrechte von Verzeichnis »%s« nicht lesen: %m"
 msgid "could not change directory to \"%s\": %m"
 msgstr "konnte nicht in Verzeichnis »%s« wechseln: %m"
 
-#: pg_resetwal.c:370 pg_resetwal.c:525 pg_resetwal.c:573
-#, c-format
-msgid "could not open file \"%s\" for reading: %m"
-msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
-
 #: pg_resetwal.c:375
 #, c-format
 msgid "lock file \"%s\" exists"
@@ -227,11 +318,6 @@ msgstr "Write-Ahead-Log wurde zurückgesetzt\n"
 #, c-format
 msgid "unexpected empty file \"%s\""
 msgstr "unerwartete leere Datei »%s«"
-
-#: pg_resetwal.c:534 pg_resetwal.c:588
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht lesen: %m"
 
 #: pg_resetwal.c:542
 #, c-format
@@ -522,16 +608,6 @@ msgstr "oldestCommitTsXid:                           %u\n"
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                           %u\n"
 
-#: pg_resetwal.c:928 pg_resetwal.c:981 pg_resetwal.c:1016 pg_resetwal.c:1054
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
-
-#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033 pg_resetwal.c:1068
-#, c-format
-msgid "could not read directory \"%s\": %m"
-msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
-
 #: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036 pg_resetwal.c:1071
 #, c-format
 msgid "could not close directory \"%s\": %m"
@@ -541,16 +617,6 @@ msgstr "konnte Verzeichnis »%s« nicht schließen: %m"
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht löschen: %m"
-
-#: pg_resetwal.c:1134
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht öffnen: %m"
-
-#: pg_resetwal.c:1142 pg_resetwal.c:1154
-#, c-format
-msgid "could not write file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht schreiben: %m"
 
 #: pg_resetwal.c:1159
 #, c-format
@@ -619,7 +685,9 @@ msgstr "  -?, --help             diese Hilfe anzeigen, dann beenden\n"
 msgid ""
 "\n"
 "Options to override control file values:\n"
-msgstr "\nOptionen um Kontrolldateiwerte setzen:\n"
+msgstr ""
+"\n"
+"Optionen um Kontrolldateiwerte setzen:\n"
 
 #: pg_resetwal.c:1181
 #, c-format

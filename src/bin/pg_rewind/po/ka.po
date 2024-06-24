@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-18 22:23+0000\n"
-"PO-Revision-Date: 2024-05-19 07:14+0200\n"
+"POT-Creation-Date: 2024-06-14 02:23+0000\n"
+"PO-Revision-Date: 2024-06-14 06:15+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -38,6 +38,63 @@ msgstr "დეტალები: "
 msgid "hint: "
 msgstr "მინიშნება: "
 
+#: ../../common/controldata_utils.c:97 file_ops.c:326 file_ops.c:330
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:110 file_ops.c:341 local_source.c:104
+#: local_source.c:163 parsexlog.c:350
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:119 file_ops.c:344 parsexlog.c:352
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: local_source.c:121 local_source.c:172
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "ბაიტების მიმდევრობა არ ემთხვევა"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"ბაიტების მიმდევრობის შესაძლო შეუსაბამობა pg_control ფაილის შესანახად გამოყენებული \n"
+"ბაიტების მიმდევრობა შესაძლოა არ ემთხვეოდეს ამ პროგრამის მიერ გამოყენებულს. ამ შემთხვევაში  ქვემოთ \n"
+"მოცემული შედეგები არასწორი იქნება და PostgreSQL ეს აგება ამ მონაცემთა საქაღალდესთან შეუთავსებელი იქნება."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 ../../fe_utils/recovery_gen.c:140
+#: parsexlog.c:312
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:249 file_ops.c:117
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
@@ -48,6 +105,38 @@ msgstr "არასაკმარისი მეხსიერება\n"
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "შეუძლებელია ფაილური სისტემის სინქრონიზაცია ფაილისთვის \"%s\": %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../fe_utils/archive.c:86 file_ops.c:417
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ფაილი \"%s\" არ არსებობს: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "ამ აგებას სინქრონიზაციის მეთოდის \"%s\" მხარდაჭერა არ გააჩნია"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281 file_ops.c:388
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315 file_ops.c:462
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "გადარქმევის შეცდომა %s - %s: %m"
 
 #: ../../common/percentrepl.c:79 ../../common/percentrepl.c:118
 #, c-format
@@ -104,11 +193,6 @@ msgstr "\"%s\"-ის მოულოდნელი ზომა: %lld %lld-ი
 msgid "could not open file \"%s\" restored from archive: %m"
 msgstr "არქივიდან აღდგენილი ფაილის (\"%s\") გახსნის შეცდომა: %m"
 
-#: ../../fe_utils/archive.c:86 file_ops.c:417
-#, c-format
-msgid "could not stat file \"%s\": %m"
-msgstr "ფაილი \"%s\" არ არსებობს: %m"
-
 #: ../../fe_utils/archive.c:98
 #, c-format
 msgid "\"restore_command\" failed: %s"
@@ -119,17 +203,27 @@ msgstr "\"restore_command\" ჩავარდა: %s"
 msgid "could not restore file \"%s\" from archive"
 msgstr "\"%s\"-ის არქივიდან აღდგენის შეცდომა"
 
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "არასწორი მნიშვნელობა \"%s\" პარამეტრისთვის %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s არაა საზღვრებში %d-დან %d-მდე"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "უცნობი სინქრონიზაციის მეთოდი: \"%s\""
+
 #: ../../fe_utils/recovery_gen.c:39 ../../fe_utils/recovery_gen.c:50
 #: ../../fe_utils/recovery_gen.c:89 ../../fe_utils/recovery_gen.c:109
 #: ../../fe_utils/recovery_gen.c:168
 #, c-format
 msgid "out of memory"
 msgstr "არასაკმარისი მეხსიერება"
-
-#: ../../fe_utils/recovery_gen.c:140 parsexlog.c:312
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
 #: ../../fe_utils/recovery_gen.c:143
 #, c-format
@@ -140,6 +234,16 @@ msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "ფაილის (%s) შექმნის შეცდომა: %m"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "გარსის ბრძანების არგუმენტი ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "მონაცემთა ბაზის სახელი ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\"\n"
 
 #: file_ops.c:67
 #, c-format
@@ -155,11 +259,6 @@ msgstr "სამიზნე ფაილის (%s) დახურვის �
 #, c-format
 msgid "could not seek in target file \"%s\": %m"
 msgstr "სამიზნე ფაილში (%s) გადახვევის შეცდომა: %m"
-
-#: file_ops.c:117
-#, c-format
-msgid "could not write file \"%s\": %m"
-msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 
 #: file_ops.c:150 file_ops.c:177
 #, c-format
@@ -206,26 +305,6 @@ msgstr "სიმბმულის შექმნის შეცდომა 
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "სიმბმულის წაშლის შეცდომა %s: %m"
 
-#: file_ops.c:326 file_ops.c:330
-#, c-format
-msgid "could not open file \"%s\" for reading: %m"
-msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
-
-#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:350
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
-
-#: file_ops.c:344 parsexlog.c:352
-#, c-format
-msgid "could not read file \"%s\": read %d of %zu"
-msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
-
-#: file_ops.c:388
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
-
 #: file_ops.c:441
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
@@ -235,11 +314,6 @@ msgstr "სიმბოლური ბმის \"%s\" წაკითხვი
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "%s: სიმბმული ძალიან გრძელია"
-
-#: file_ops.c:462
-#, c-format
-msgid "could not read directory \"%s\": %m"
-msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
 
 #: file_ops.c:466
 #, c-format
@@ -405,11 +479,6 @@ msgstr "წყაროს ფაილის \"%s\" გახსნის შ�
 #, c-format
 msgid "size of source file \"%s\" changed concurrently: %d bytes expected, %d copied"
 msgstr "ფაილის (%s) ზომა პარალელურად შეიცვალა: მოველოდი %d ბაიტს. დაკოპირდა %d"
-
-#: local_source.c:121 local_source.c:172
-#, c-format
-msgid "could not close file \"%s\": %m"
-msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
 
 #: local_source.c:146
 #, c-format

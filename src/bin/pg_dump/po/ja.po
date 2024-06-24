@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-04-23 10:01+0900\n"
-"PO-Revision-Date: 2024-04-23 11:44+0900\n"
+"POT-Creation-Date: 2024-06-21 09:58+0900\n"
+"PO-Revision-Date: 2024-06-21 10:18+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -149,6 +149,49 @@ msgstr "メモリ不足です\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません（内部エラー）。\n"
 
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ファイル\"%s\"をオープンできませんでした: %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "ファイル\"%s\"に対してファイルシステムを同期できませんでした: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ファイル\"%s\"のstatに失敗しました: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: pg_backup_directory.c:182
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
+
 #: ../../common/wait_error.c:55
 #, c-format
 msgid "command not executable"
@@ -189,242 +232,247 @@ msgstr "オプション\"%2$s\"に対する不正な値\"%1$s\""
 msgid "%s must be in range %d..%d"
 msgstr "%sは%d..%dの範囲でなければなりません"
 
-#: ../../fe_utils/option_utils.c:99
-#, c-format
-msgid "this build does not support sync method \"%s\""
-msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
-
 #: ../../fe_utils/option_utils.c:106
 #, c-format
 msgid "unrecognized sync method: %s"
 msgstr "認識できない同期方式: %s"
 
-#: common.c:136
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+
+#: common.c:135
 #, c-format
 msgid "reading extensions"
 msgstr "機能拡張を読み込んでいます"
 
-#: common.c:139
+#: common.c:138
 #, c-format
 msgid "identifying extension members"
 msgstr "機能拡張の構成要素を特定しています"
 
-#: common.c:142
+#: common.c:141
 #, c-format
 msgid "reading schemas"
 msgstr "スキーマを読み込んでいます"
 
-#: common.c:151
+#: common.c:150
 #, c-format
 msgid "reading user-defined tables"
 msgstr "ユーザー定義テーブルを読み込んでいます"
 
-#: common.c:156
+#: common.c:155
 #, c-format
 msgid "reading user-defined functions"
 msgstr "ユーザー定義関数を読み込んでいます"
 
-#: common.c:160
+#: common.c:159
 #, c-format
 msgid "reading user-defined types"
 msgstr "ユーザー定義型を読み込んでいます"
 
-#: common.c:164
+#: common.c:163
 #, c-format
 msgid "reading procedural languages"
 msgstr "手続き言語を読み込んでいます"
 
-#: common.c:167
+#: common.c:166
 #, c-format
 msgid "reading user-defined aggregate functions"
 msgstr "ユーザー定義集約関数を読み込んでいます"
 
-#: common.c:170
+#: common.c:169
 #, c-format
 msgid "reading user-defined operators"
 msgstr "ユーザー定義演算子を読み込んでいます"
 
-#: common.c:173
+#: common.c:172
 #, c-format
 msgid "reading user-defined access methods"
 msgstr "ユーザー定義アクセスメソッドを読み込んでいます"
 
-#: common.c:176
+#: common.c:175
 #, c-format
 msgid "reading user-defined operator classes"
 msgstr "ユーザー定義演算子クラスを読み込んでいます"
 
-#: common.c:179
+#: common.c:178
 #, c-format
 msgid "reading user-defined operator families"
 msgstr "ユーザー定義演算子族を読み込んでいます"
 
-#: common.c:182
+#: common.c:181
 #, c-format
 msgid "reading user-defined text search parsers"
 msgstr "ユーザー定義のテキスト検索パーサを読み込んでいます"
 
-#: common.c:185
+#: common.c:184
 #, c-format
 msgid "reading user-defined text search templates"
 msgstr "ユーザー定義のテキスト検索テンプレートを読み込んでいます"
 
-#: common.c:188
+#: common.c:187
 #, c-format
 msgid "reading user-defined text search dictionaries"
 msgstr "ユーザー定義のテキスト検索辞書を読み込んでいます"
 
-#: common.c:191
+#: common.c:190
 #, c-format
 msgid "reading user-defined text search configurations"
 msgstr "ユーザー定義のテキスト検索設定を読み込んでいます"
 
-#: common.c:194
+#: common.c:193
 #, c-format
 msgid "reading user-defined foreign-data wrappers"
 msgstr "ユーザー定義の外部データラッパーを読み込んでいます"
 
-#: common.c:197
+#: common.c:196
 #, c-format
 msgid "reading user-defined foreign servers"
 msgstr "ユーザー定義の外部サーバーを読み込んでいます"
 
-#: common.c:200
+#: common.c:199
 #, c-format
 msgid "reading default privileges"
 msgstr "デフォルト権限設定を読み込んでいます"
 
-#: common.c:203
+#: common.c:202
 #, c-format
 msgid "reading user-defined collations"
 msgstr "ユーザー定義の照合順序を読み込んでいます"
 
-#: common.c:206
+#: common.c:205
 #, c-format
 msgid "reading user-defined conversions"
 msgstr "ユーザー定義の変換を読み込んでいます"
 
-#: common.c:209
+#: common.c:208
 #, c-format
 msgid "reading type casts"
 msgstr "型キャストを読み込んでいます"
 
-#: common.c:212
+#: common.c:211
 #, c-format
 msgid "reading transforms"
 msgstr "変換を読み込んでいます"
 
-#: common.c:215
+#: common.c:214
 #, c-format
 msgid "reading table inheritance information"
 msgstr "テーブル継承情報を読み込んでいます"
 
-#: common.c:218
+#: common.c:217
 #, c-format
 msgid "reading event triggers"
 msgstr "イベントトリガを読み込んでいます"
 
-#: common.c:222
+#: common.c:221
 #, c-format
 msgid "finding extension tables"
 msgstr "機能拡張構成テーブルを探しています"
 
-#: common.c:226
+#: common.c:225
 #, c-format
 msgid "finding inheritance relationships"
 msgstr "継承関係を検索しています"
 
-#: common.c:229
+#: common.c:228
 #, c-format
 msgid "reading column info for interesting tables"
 msgstr "対象テーブルの列情報を読み込んでいます"
 
-#: common.c:232
+#: common.c:231
 #, c-format
 msgid "flagging inherited columns in subtables"
 msgstr "子テーブルの継承列にフラグを設定しています"
 
-#: common.c:235
+#: common.c:234
 #, c-format
 msgid "reading partitioning data"
 msgstr "パーティション情報を読み込んでいます"
 
-#: common.c:238
+#: common.c:237
 #, c-format
 msgid "reading indexes"
 msgstr "インデックスを読み込んでいます"
 
-#: common.c:241
+#: common.c:240
 #, c-format
 msgid "flagging indexes in partitioned tables"
 msgstr "パーティション親テーブルのインデックスにフラグを設定しています"
 
-#: common.c:244
+#: common.c:243
 #, c-format
 msgid "reading extended statistics"
 msgstr "拡張統計情報を読み込んでいます"
 
-#: common.c:247
+#: common.c:246
 #, c-format
 msgid "reading constraints"
 msgstr "制約を読み込んでいます"
 
-#: common.c:250
+#: common.c:249
 #, c-format
 msgid "reading triggers"
 msgstr "トリガを読み込んでいます"
 
-#: common.c:253
+#: common.c:252
 #, c-format
 msgid "reading rewrite rules"
 msgstr "書き換えルールを読み込んでいます"
 
-#: common.c:256
+#: common.c:255
 #, c-format
 msgid "reading policies"
 msgstr "ポリシを読み込んでいます"
 
-#: common.c:259
+#: common.c:258
 #, c-format
 msgid "reading publications"
 msgstr "パブリケーションを読み込んでいます"
 
-#: common.c:262
+#: common.c:261
 #, c-format
 msgid "reading publication membership of tables"
 msgstr "テーブルのパブリケーションへの所属を読み取っています"
 
-#: common.c:265
+#: common.c:264
 #, c-format
 msgid "reading publication membership of schemas"
 msgstr "スキーマのパブリケーションへの所属を読み取っています"
 
-#: common.c:268
+#: common.c:267
 #, c-format
 msgid "reading subscriptions"
 msgstr "サブスクリプションを読み込んでいます"
 
-#: common.c:271
+#: common.c:270
 #, c-format
 msgid "reading subscription membership of tables"
 msgstr "テーブルのサブスクリプションへの所属を読み取っています"
 
-#: common.c:334
+#: common.c:333
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found"
 msgstr "健全性検査に失敗しました、テーブル\"%2$s\"(OID %3$u)の親のOID %1$uがありません"
 
-#: common.c:376
+#: common.c:375
 #, c-format
 msgid "invalid number of parents %d for table \"%s\""
 msgstr "テーブル\"%2$s\"用の親テーブルの数%1$dが不正です"
 
-#: common.c:1101
+#: common.c:1098
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers"
 msgstr "数値配列\"%s\"のパースに失敗しました: 要素が多すぎます"
 
-#: common.c:1113
+#: common.c:1110
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "数値配列\"%s\"のパースに失敗しました: 数値に不正な文字が含まれています"
@@ -533,37 +581,42 @@ msgstr "フィルターファイル\"%s\"をオープンできませんでした
 msgid "could not close filter file \"%s\": %m"
 msgstr "フィルターファイル\"%s\"をクローズできませんでした: %m"
 
-#: filter.c:164
+#: filter.c:165
 #, c-format
-msgid "invalid format in filter read from \"%s\" on line %d: %s"
-msgstr "\"%s\"の%d行目でのフィルターの読み取り中に無効なフォーマットが検出されました: %s"
+msgid "invalid format in filter read from standard input on line %d: %s"
+msgstr "標準入力からのフィルターの読み取り中%d行目に無効なフォーマット: %s"
 
-#: filter.c:239 filter.c:466
+#: filter.c:168
+#, c-format
+msgid "invalid format in filter read from file \"%s\" on line %d: %s"
+msgstr "ファイル\"%s\"からのフィルターの読み取り中%d行目に無効なフォーマット: %s"
+
+#: filter.c:241 filter.c:468
 #, c-format
 msgid "could not read from filter file \"%s\": %m"
 msgstr "フィルターファイル\"%s\"から読み取れませんでした: %m"
 
-#: filter.c:242
+#: filter.c:244
 msgid "unexpected end of file"
 msgstr "想定外のファイル終端です"
 
-#: filter.c:309
+#: filter.c:311
 msgid "missing object name pattern"
 msgstr "オブジェクト名のパターンが指定されていません"
 
-#: filter.c:420
+#: filter.c:422
 msgid "no filter command found (expected \"include\" or \"exclude\")"
 msgstr "フィルタコマンドが見つかりません (\"include\" または\"exclude\"が指定可能です)"
 
-#: filter.c:431
+#: filter.c:433
 msgid "invalid filter command (expected \"include\" or \"exclude\")"
 msgstr "不正なフィルターコマンド  (\"include\"または\"exclude\"が指定可能です)"
 
-#: filter.c:438
+#: filter.c:440
 msgid "missing filter object type"
 msgstr "フィルターオブジェクトのタイプが指定されてません"
 
-#: filter.c:445
+#: filter.c:447
 #, c-format
 msgid "unsupported filter object type: \"%.*s\""
 msgstr "サポートされないフィルターオブジェクトタイプ: \"%.*s\""
@@ -647,7 +700,7 @@ msgstr "pgpipe: ソケットを接続できませんでした: エラーコー�
 msgid "pgpipe: could not accept connection: error code %d"
 msgstr "pgpipe: 接続を受け付けられませんでした: エラーコード %d"
 
-#: pg_backup_archiver.c:261 pg_backup_archiver.c:1703
+#: pg_backup_archiver.c:261 pg_backup_archiver.c:1706
 #, c-format
 msgid "could not close output file: %m"
 msgstr "出力ファイルをクローズできませんでした: %m"
@@ -752,333 +805,333 @@ msgstr "%sのトリガを有効にしています"
 msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine"
 msgstr "内部エラー -- WriteDataはDataDumperルーチンのコンテクスト外では呼び出せません"
 
-#: pg_backup_archiver.c:1376
+#: pg_backup_archiver.c:1379
 #, c-format
 msgid "large-object output not supported in chosen format"
 msgstr "選択した形式ではラージオブジェクト出力をサポートしていません"
 
-#: pg_backup_archiver.c:1439
+#: pg_backup_archiver.c:1442
 #, c-format
 msgid "restored %d large object"
 msgid_plural "restored %d large objects"
 msgstr[0] "%d個のラージオブジェクトをリストアしました"
 
-#: pg_backup_archiver.c:1466 pg_backup_tar.c:683
+#: pg_backup_archiver.c:1469 pg_backup_tar.c:683
 #, c-format
 msgid "restoring large object with OID %u"
 msgstr "OID %uのラージオブジェクトをリストアしています"
 
-#: pg_backup_archiver.c:1478
+#: pg_backup_archiver.c:1481
 #, c-format
 msgid "could not create large object %u: %s"
 msgstr "ラージオブジェクト %u を作成できませんでした: %s"
 
-#: pg_backup_archiver.c:1483 pg_dump.c:3863
+#: pg_backup_archiver.c:1486 pg_dump.c:3863
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "ラージオブジェクト %u をオープンできませんでした: %s"
 
-#: pg_backup_archiver.c:1539
+#: pg_backup_archiver.c:1542
 #, c-format
 msgid "could not open TOC file \"%s\": %m"
 msgstr "TOCファイル\"%s\"をオープンできませんでした： %m"
 
-#: pg_backup_archiver.c:1567
+#: pg_backup_archiver.c:1570
 #, c-format
 msgid "line ignored: %s"
 msgstr "行を無視しました: %s"
 
-#: pg_backup_archiver.c:1574 pg_backup_db.c:609
+#: pg_backup_archiver.c:1577 pg_backup_db.c:609
 #, c-format
 msgid "could not find entry for ID %d"
 msgstr "ID %dのエントリがありませんでした"
 
-#: pg_backup_archiver.c:1597 pg_backup_directory.c:219
+#: pg_backup_archiver.c:1600 pg_backup_directory.c:219
 #: pg_backup_directory.c:613
 #, c-format
 msgid "could not close TOC file: %m"
 msgstr "TOCファイルをクローズできませんでした: %m"
 
-#: pg_backup_archiver.c:1684 pg_backup_custom.c:152 pg_backup_directory.c:333
+#: pg_backup_archiver.c:1687 pg_backup_custom.c:152 pg_backup_directory.c:333
 #: pg_backup_directory.c:600 pg_backup_directory.c:666
 #: pg_backup_directory.c:684 pg_dumpall.c:506
 #, c-format
 msgid "could not open output file \"%s\": %m"
 msgstr "出力ファイル\"%s\"をオープンできませんでした: %m"
 
-#: pg_backup_archiver.c:1686 pg_backup_custom.c:158
+#: pg_backup_archiver.c:1689 pg_backup_custom.c:158
 #, c-format
 msgid "could not open output file: %m"
 msgstr "出力ファイルをオープンできませんでした: %m"
 
-#: pg_backup_archiver.c:1769
+#: pg_backup_archiver.c:1772
 #, c-format
 msgid "wrote %zu byte of large object data (result = %d)"
 msgid_plural "wrote %zu bytes of large object data (result = %d)"
 msgstr[0] "ラージオブジェクトデータを%zuバイト書き出しました(結果は%d)"
 
-#: pg_backup_archiver.c:1775
+#: pg_backup_archiver.c:1778
 #, c-format
 msgid "could not write to large object: %s"
 msgstr "ラージオブジェクトに書き込めませんでした: %s"
 
-#: pg_backup_archiver.c:1865
+#: pg_backup_archiver.c:1868
 #, c-format
 msgid "while INITIALIZING:"
 msgstr "初期化中:"
 
-#: pg_backup_archiver.c:1870
+#: pg_backup_archiver.c:1873
 #, c-format
 msgid "while PROCESSING TOC:"
 msgstr "TOC処理中:"
 
-#: pg_backup_archiver.c:1875
+#: pg_backup_archiver.c:1878
 #, c-format
 msgid "while FINALIZING:"
 msgstr "終了処理中:"
 
-#: pg_backup_archiver.c:1880
+#: pg_backup_archiver.c:1883
 #, c-format
 msgid "from TOC entry %d; %u %u %s %s %s"
 msgstr "TOCエントリ%d; %u %u %s %s %s から"
 
-#: pg_backup_archiver.c:1956
+#: pg_backup_archiver.c:1959
 #, c-format
 msgid "bad dumpId"
 msgstr "不正なdumpId"
 
-#: pg_backup_archiver.c:1977
+#: pg_backup_archiver.c:1980
 #, c-format
 msgid "bad table dumpId for TABLE DATA item"
 msgstr "TABLE DATA項目に対する不正なテーブルdumpId"
 
-#: pg_backup_archiver.c:2069
+#: pg_backup_archiver.c:2072
 #, c-format
 msgid "unexpected data offset flag %d"
 msgstr "想定外のデータオフセットフラグ %d"
 
-#: pg_backup_archiver.c:2082
+#: pg_backup_archiver.c:2085
 #, c-format
 msgid "file offset in dump file is too large"
 msgstr "ダンプファイルのファイルオフセットが大きすぎます"
 
-#: pg_backup_archiver.c:2193
+#: pg_backup_archiver.c:2196
 #, c-format
 msgid "directory name too long: \"%s\""
 msgstr "ディレクトリ名が長すぎます: \"%s\""
 
-#: pg_backup_archiver.c:2243
+#: pg_backup_archiver.c:2246
 #, c-format
 msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)"
 msgstr "ディレクトリ\"%s\"は有効なアーカイブではないようです（\"toc.dat\"がありません）"
 
-#: pg_backup_archiver.c:2251 pg_backup_custom.c:169 pg_backup_custom.c:812
+#: pg_backup_archiver.c:2254 pg_backup_custom.c:169 pg_backup_custom.c:812
 #: pg_backup_directory.c:204 pg_backup_directory.c:396
 #, c-format
 msgid "could not open input file \"%s\": %m"
 msgstr "入力ファイル\"%s\"をオープンできませんでした: %m"
 
-#: pg_backup_archiver.c:2258 pg_backup_custom.c:175
+#: pg_backup_archiver.c:2261 pg_backup_custom.c:175
 #, c-format
 msgid "could not open input file: %m"
 msgstr "入力ファイルをオープンできませんでした: %m"
 
-#: pg_backup_archiver.c:2264
+#: pg_backup_archiver.c:2267
 #, c-format
 msgid "could not read input file: %m"
 msgstr "入力ファイルを読み込めませんでした: %m"
 
-#: pg_backup_archiver.c:2266
+#: pg_backup_archiver.c:2269
 #, c-format
 msgid "input file is too short (read %lu, expected 5)"
 msgstr "入力ファイルが小さすぎます(読み取り%lu、想定は 5)"
 
-#: pg_backup_archiver.c:2298
+#: pg_backup_archiver.c:2301
 #, c-format
 msgid "input file appears to be a text format dump. Please use psql."
 msgstr "入力ファイルがテキスト形式のダンプのようです。psqlを使用してください。"
 
-#: pg_backup_archiver.c:2304
+#: pg_backup_archiver.c:2307
 #, c-format
 msgid "input file does not appear to be a valid archive (too short?)"
 msgstr "入力ファイルが有効なアーカイブではないようです(小さすぎる?)"
 
-#: pg_backup_archiver.c:2310
+#: pg_backup_archiver.c:2313
 #, c-format
 msgid "input file does not appear to be a valid archive"
 msgstr "入力ファイルが有効なアーカイブではないようです"
 
-#: pg_backup_archiver.c:2319
+#: pg_backup_archiver.c:2322
 #, c-format
 msgid "could not close input file: %m"
 msgstr "入力ファイルをクローズできませんでした: %m"
 
-#: pg_backup_archiver.c:2398
+#: pg_backup_archiver.c:2401
 #, c-format
 msgid "could not open stdout for appending: %m"
 msgstr "標準出力を追記用にオープンできませんでした: %m"
 
-#: pg_backup_archiver.c:2443
+#: pg_backup_archiver.c:2446
 #, c-format
 msgid "unrecognized file format \"%d\""
 msgstr "認識不能のファイル形式\"%d\""
 
-#: pg_backup_archiver.c:2524 pg_backup_archiver.c:4622
+#: pg_backup_archiver.c:2527 pg_backup_archiver.c:4625
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "項目 %d %s %s の処理が完了"
 
-#: pg_backup_archiver.c:2528 pg_backup_archiver.c:4635
+#: pg_backup_archiver.c:2531 pg_backup_archiver.c:4638
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "ワーカープロセスの処理失敗: 終了コード %d"
 
-#: pg_backup_archiver.c:2650
+#: pg_backup_archiver.c:2653
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC"
 msgstr "エントリID%dは範囲外です -- おそらくTOCの破損です"
 
-#: pg_backup_archiver.c:2733
+#: pg_backup_archiver.c:2736
 #, c-format
 msgid "restoring tables WITH OIDS is not supported anymore"
 msgstr "WITH OIDSと定義されたテーブルのリストアは今後サポートされません"
 
-#: pg_backup_archiver.c:2815
+#: pg_backup_archiver.c:2818
 #, c-format
 msgid "unrecognized encoding \"%s\""
 msgstr "認識不能のエンコーディング\"%s\""
 
-#: pg_backup_archiver.c:2820
+#: pg_backup_archiver.c:2823
 #, c-format
 msgid "invalid ENCODING item: %s"
 msgstr "不正なENCODING項目： %s"
 
-#: pg_backup_archiver.c:2838
+#: pg_backup_archiver.c:2841
 #, c-format
 msgid "invalid STDSTRINGS item: %s"
 msgstr "不正なSTDSTRINGS項目： %s"
 
-#: pg_backup_archiver.c:2863
+#: pg_backup_archiver.c:2866
 #, c-format
 msgid "schema \"%s\" not found"
 msgstr "スキーマ \"%s\"が見つかりません"
 
-#: pg_backup_archiver.c:2870
+#: pg_backup_archiver.c:2873
 #, c-format
 msgid "table \"%s\" not found"
 msgstr "テーブル\"%s\"が見つかりません"
 
-#: pg_backup_archiver.c:2877
+#: pg_backup_archiver.c:2880
 #, c-format
 msgid "index \"%s\" not found"
 msgstr "インデックス\"%s\"が見つかりません"
 
-#: pg_backup_archiver.c:2884
+#: pg_backup_archiver.c:2887
 #, c-format
 msgid "function \"%s\" not found"
 msgstr "関数\"%s\"が見つかりません"
 
-#: pg_backup_archiver.c:2891
+#: pg_backup_archiver.c:2894
 #, c-format
 msgid "trigger \"%s\" not found"
 msgstr "トリガ\"%s\"が見つかりません"
 
-#: pg_backup_archiver.c:3322
+#: pg_backup_archiver.c:3325
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "セッションユーザーを\"%s\"に設定できませんでした: %s"
 
-#: pg_backup_archiver.c:3454
+#: pg_backup_archiver.c:3457
 #, c-format
-msgid "could not set search_path to \"%s\": %s"
-msgstr "search_pathを\"%s\"に設定できませんでした: %s"
+msgid "could not set \"search_path\" to \"%s\": %s"
+msgstr "\"search_path\"を\"%s\"に設定できませんでした: %s"
 
-#: pg_backup_archiver.c:3515
+#: pg_backup_archiver.c:3518
 #, c-format
-msgid "could not set default_tablespace to %s: %s"
-msgstr "default_tablespaceを\"%s\"に設定できませんでした: %s"
+msgid "could not set \"default_tablespace\" to %s: %s"
+msgstr "\"default_tablespace\"を\"%s\"に設定できませんでした: %s"
 
-#: pg_backup_archiver.c:3564
+#: pg_backup_archiver.c:3567
 #, c-format
-msgid "could not set default_table_access_method: %s"
-msgstr "default_table_access_methodを設定できませんでした: %s"
+msgid "could not set \"default_table_access_method\": %s"
+msgstr "\"default_table_access_method\"を設定できませんでした: %s"
 
-#: pg_backup_archiver.c:3613
+#: pg_backup_archiver.c:3616
 #, c-format
 msgid "could not alter table access method: %s"
 msgstr "テーブルアクセスメソッドを変更できませんでした: %s"
 
-#: pg_backup_archiver.c:3714
+#: pg_backup_archiver.c:3717
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
 msgstr "オブジェクトタイプ%sに対する所有者の設定方法がわかりません"
 
-#: pg_backup_archiver.c:3979
+#: pg_backup_archiver.c:3982
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "ファイルヘッダにマジック文字列がありませんでした"
 
-#: pg_backup_archiver.c:3993
+#: pg_backup_archiver.c:3996
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "ファイルヘッダ内のバージョン(%d.%d)はサポートされていません"
 
-#: pg_backup_archiver.c:3998
+#: pg_backup_archiver.c:4001
 #, c-format
 msgid "sanity check on integer size (%lu) failed"
 msgstr "整数のサイズ(%lu)に関する健全性検査が失敗しました"
 
-#: pg_backup_archiver.c:4002
+#: pg_backup_archiver.c:4005
 #, c-format
 msgid "archive was made on a machine with larger integers, some operations might fail"
 msgstr "アーカイブはより大きなサイズの整数を持つマシンで作成されました、一部の操作が失敗する可能性があります"
 
-#: pg_backup_archiver.c:4012
+#: pg_backup_archiver.c:4015
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "想定した形式(%d)はファイル内にある形式(%d)と異なります"
 
-#: pg_backup_archiver.c:4034
+#: pg_backup_archiver.c:4037
 #, c-format
 msgid "archive is compressed, but this installation does not support compression (%s) -- no data will be available"
 msgstr "アーカイブは圧縮されていますが、このインストールでは圧縮をサポートしていません (%s)-- データは利用できません"
 
-#: pg_backup_archiver.c:4070
+#: pg_backup_archiver.c:4073
 #, c-format
 msgid "invalid creation date in header"
 msgstr "ヘッダ内の作成日付が不正です"
 
-#: pg_backup_archiver.c:4204
+#: pg_backup_archiver.c:4207
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "項目 %d %s %s を処理しています"
 
-#: pg_backup_archiver.c:4289
+#: pg_backup_archiver.c:4292
 #, c-format
 msgid "entering main parallel loop"
 msgstr "メインの並列ループに入ります"
 
-#: pg_backup_archiver.c:4300
+#: pg_backup_archiver.c:4303
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "項目 %d %s %s をスキップしています"
 
-#: pg_backup_archiver.c:4309
+#: pg_backup_archiver.c:4312
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "項目 %d %s %s に着手します"
 
-#: pg_backup_archiver.c:4363
+#: pg_backup_archiver.c:4366
 #, c-format
 msgid "finished main parallel loop"
 msgstr "メインの並列ループが終了しました"
 
-#: pg_backup_archiver.c:4399
+#: pg_backup_archiver.c:4402
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "やり残し項目 %d %s %s を処理しています"
 
-#: pg_backup_archiver.c:4941
+#: pg_backup_archiver.c:4944
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
 msgstr "テーブル\"%s\"を作成できませんでした、このテーブルのデータは復元されません"
@@ -1257,11 +1310,6 @@ msgstr "データベーストランザクションをコミットできません
 #, c-format
 msgid "no output directory specified"
 msgstr "出力ディレクトリが指定されていません"
-
-#: pg_backup_directory.c:182
-#, c-format
-msgid "could not read directory \"%s\": %m"
-msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
 #: pg_backup_directory.c:186
 #, c-format
@@ -1645,27 +1693,22 @@ msgstr "  -C, --create                 ダンプにデータベース生成用�
 msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
 msgstr "  -e, --extension=PATTERN      指定した機能拡張のみをダンプ\n"
 
-#: pg_dump.c:1118
-#, c-format
-msgid "  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"
-msgstr "  --exclude-extension=PATTERN  指定した機能拡張をダンプしない\n"
-
-#: pg_dump.c:1119 pg_dumpall.c:647
+#: pg_dump.c:1118 pg_dumpall.c:647
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
 msgstr "  -E, --encoding=ENCODING      指定した符号化方式でデータをダンプ\n"
 
-#: pg_dump.c:1120
+#: pg_dump.c:1119
 #, c-format
 msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
 msgstr "  -n, --schema=SCHEMA          指定したスキーマのみをダンプ\n"
 
-#: pg_dump.c:1121
+#: pg_dump.c:1120
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
 msgstr "  -N, --exclude-schema=SCHEMA  指定したスキーマをダンプしない\n"
 
-#: pg_dump.c:1122
+#: pg_dump.c:1121
 #, c-format
 msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
@@ -1674,56 +1717,56 @@ msgstr ""
 "  -O, --no-owner               プレインテキスト形式で、オブジェクト所有権の\n"
 "                               復元を行わない\n"
 
-#: pg_dump.c:1124 pg_dumpall.c:651
+#: pg_dump.c:1123 pg_dumpall.c:651
 #, c-format
 msgid "  -s, --schema-only            dump only the schema, no data\n"
 msgstr "  -s, --schema-only            スキーマのみをダンプし、データはダンプしない\n"
 
-#: pg_dump.c:1125
+#: pg_dump.c:1124
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
 msgstr ""
 "  -S, --superuser=NAME         プレインテキスト形式で使用するスーパーユーザーの\n"
 "                               名前\n"
 
-#: pg_dump.c:1126
+#: pg_dump.c:1125
 #, c-format
 msgid "  -t, --table=PATTERN          dump only the specified table(s)\n"
 msgstr "  -t, --table=PATTERN          指定したテーブル(群)のみをダンプ\n"
 
-#: pg_dump.c:1127
+#: pg_dump.c:1126
 #, c-format
 msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
 msgstr "  -T, --exclude-table=PATTERN  指定したテーブルをダンプしない\n"
 
-#: pg_dump.c:1128 pg_dumpall.c:654
+#: pg_dump.c:1127 pg_dumpall.c:654
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges          権限(grant/revoke)をダンプしない\n"
 
-#: pg_dump.c:1129 pg_dumpall.c:655
+#: pg_dump.c:1128 pg_dumpall.c:655
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
 msgstr "  --binary-upgrade             アップグレードユーティリティ専用\n"
 
-#: pg_dump.c:1130 pg_dumpall.c:656
+#: pg_dump.c:1129 pg_dumpall.c:656
 #, c-format
 msgid "  --column-inserts             dump data as INSERT commands with column names\n"
 msgstr "  --column-inserts             列名指定のINSERTコマンドでデータをダンプ\n"
 
-#: pg_dump.c:1131 pg_dumpall.c:657
+#: pg_dump.c:1130 pg_dumpall.c:657
 #, c-format
 msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
 msgstr ""
 "  --disable-dollar-quoting     ドル記号による引用符付けを禁止、SQL標準の引用符\n"
 "                               付けを使用\n"
 
-#: pg_dump.c:1132 pg_dumpall.c:658 pg_restore.c:483
+#: pg_dump.c:1131 pg_dumpall.c:658 pg_restore.c:483
 #, c-format
 msgid "  --disable-triggers           disable triggers during data-only restore\n"
 msgstr "  --disable-triggers           データのみのリストアの際にトリガを無効化\n"
 
-#: pg_dump.c:1133
+#: pg_dump.c:1132
 #, c-format
 msgid ""
 "  --enable-row-security        enable row security (dump only content user has\n"
@@ -1731,6 +1774,11 @@ msgid ""
 msgstr ""
 "  --enable-row-security        行セキュリティを有効化(ユーザーがアクセス可能な\n"
 "                               内容のみをダンプ)\n"
+
+#: pg_dump.c:1134
+#, c-format
+msgid "  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"
+msgstr "  --exclude-extension=PATTERN  指定した機能拡張をダンプしない\n"
 
 #: pg_dump.c:1135
 #, c-format
@@ -2074,8 +2122,8 @@ msgstr "encoding = %s を保存しています"
 
 #: pg_dump.c:3537
 #, c-format
-msgid "saving standard_conforming_strings = %s"
-msgstr "standard_conforming_strings = %s を保存しています"
+msgid "saving \"standard_conforming_strings = %s\""
+msgstr "\"standard_conforming_strings = %s\" を保存しています"
 
 #: pg_dump.c:3576
 #, c-format
@@ -2084,8 +2132,8 @@ msgstr "current_schemas()の結果をパースできませんでした"
 
 #: pg_dump.c:3595
 #, c-format
-msgid "saving search_path = %s"
-msgstr "search_path = %s を保存しています"
+msgid "saving \"search_path = %s\""
+msgstr "\"search_path = %s\" を保存しています"
 
 #: pg_dump.c:3631
 #, c-format
@@ -2112,8 +2160,8 @@ msgstr "行レベルセキュリティポリシーを読み取ります"
 msgid "unexpected policy command type: %c"
 msgstr "想定外のポリシコマンドタイプ: \"%c\""
 
-#: pg_dump.c:4567 pg_dump.c:5098 pg_dump.c:12525 pg_dump.c:18402
-#: pg_dump.c:18404 pg_dump.c:19026
+#: pg_dump.c:4567 pg_dump.c:5103 pg_dump.c:12315 pg_dump.c:18137
+#: pg_dump.c:18139 pg_dump.c:18761
 #, c-format
 msgid "could not parse %s array"
 msgstr "%s配列をパースできませんでした"
@@ -2123,296 +2171,296 @@ msgstr "%s配列をパースできませんでした"
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr "現在のユーザーがスーパーユーザーではないため、サブスクリプションはダンプされません"
 
-#: pg_dump.c:4960
+#: pg_dump.c:4965
 #, c-format
 msgid "subscription with OID %u does not exist"
 msgstr "OID %uのサブスクリプションは存在しません"
 
-#: pg_dump.c:4967
+#: pg_dump.c:4972
 #, c-format
 msgid "failed sanity check, table with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %uのテーブルがありません"
 
-#: pg_dump.c:5538
+#: pg_dump.c:5535
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "%s %sの親となる機能拡張がありませんでした"
 
-#: pg_dump.c:5683
+#: pg_dump.c:5680
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "OID %uのスキーマは存在しません"
 
-#: pg_dump.c:7165 pg_dump.c:17773
+#: pg_dump.c:7162 pg_dump.c:17508
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %2$u であるシーケンスの OID %1$u である親テーブルがありません"
 
-#: pg_dump.c:7308
+#: pg_dump.c:7305
 #, c-format
 msgid "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "健全性検査に失敗しました、pg_partitioned_tableにあるテーブルOID %u が見つかりません"
 
-#: pg_dump.c:7548 pg_dump.c:7823 pg_dump.c:8270 pg_dump.c:8950 pg_dump.c:9203
-#: pg_dump.c:9351
+#: pg_dump.c:7536 pg_dump.c:7810 pg_dump.c:8257 pg_dump.c:8871 pg_dump.c:8993
+#: pg_dump.c:9141
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "認識できないテーブルOID %u"
 
-#: pg_dump.c:7552
+#: pg_dump.c:7540
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "テーブル\"%s\"に対する想定外のインデックスデータ"
 
-#: pg_dump.c:8055
+#: pg_dump.c:8042
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %2$u であるpg_rewriteエントリのOID %1$u である親テーブルが見つかりません"
 
-#: pg_dump.c:8954
+#: pg_dump.c:8875
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "テーブル\"%s\"に対する想定外の列データ"
 
-#: pg_dump.c:8991
+#: pg_dump.c:8904
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "テーブル\"%s\"の列番号が不正です"
 
-#: pg_dump.c:9165
+#: pg_dump.c:8955
 #, c-format
 msgid "finding table default expressions"
 msgstr "テーブルのデフォルト式を探しています"
 
-#: pg_dump.c:9207
+#: pg_dump.c:8997
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "テーブル\"%2$s\"用のadnumの値%1$dが不正です"
 
-#: pg_dump.c:9301
+#: pg_dump.c:9091
 #, c-format
 msgid "finding table check constraints"
 msgstr "テーブルのチェック制約を探しています"
 
-#: pg_dump.c:9355
+#: pg_dump.c:9145
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "テーブル\"%2$s\"で想定する検査制約は%1$d個でしたが、%3$dありました"
 
-#: pg_dump.c:9359
+#: pg_dump.c:9149
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "システムカタログが破損している可能性があります。"
 
-#: pg_dump.c:10049
+#: pg_dump.c:9839
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "OID が %u であるロールは存在しません"
 
-#: pg_dump.c:10161 pg_dump.c:10190
+#: pg_dump.c:9951 pg_dump.c:9980
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "非サポートのpg_init_privsエントリ: %u %u %d"
 
-#: pg_dump.c:10737
+#: pg_dump.c:10527
 #, c-format
 msgid "missing metadata for large objects \"%s\""
 msgstr "ラージオブジェクト\"%s\"のメタデータがありません"
 
-#: pg_dump.c:11020
+#: pg_dump.c:10810
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "データ型\"%s\"のtyptypeが不正なようです"
 
-#: pg_dump.c:12594
+#: pg_dump.c:12384
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "関数\"%s\"のprovolatileの値が認識できません"
 
-#: pg_dump.c:12644 pg_dump.c:14540
+#: pg_dump.c:12434 pg_dump.c:14330
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "関数\"%s\"のproparallel値が認識できません"
 
-#: pg_dump.c:12774 pg_dump.c:12880 pg_dump.c:12887
+#: pg_dump.c:12564 pg_dump.c:12670 pg_dump.c:12677
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "OID %uの関数の関数定義が見つかりませんでした"
 
-#: pg_dump.c:12813
+#: pg_dump.c:12603
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "pg_cast.castfuncまたはpg_cast.castmethodフィールドの値がおかしいです"
 
-#: pg_dump.c:12816
+#: pg_dump.c:12606
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:12906
+#: pg_dump.c:12696
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "おかしな変換定義、trffromsql か trftosql の少なくとも一方は非ゼロであるはずです"
 
-#: pg_dump.c:12923
+#: pg_dump.c:12713
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:12944
+#: pg_dump.c:12734
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:13089
+#: pg_dump.c:12879
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "後置演算子は今後サポートされません(演算子\"%s\")"
 
-#: pg_dump.c:13259
+#: pg_dump.c:13049
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "OID %sの演算子がありませんでした"
 
-#: pg_dump.c:13327
+#: pg_dump.c:13117
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "アクセスメソッド\"%2$s\"の不正なタイプ\"%1$c\""
 
-#: pg_dump.c:14001 pg_dump.c:14069
+#: pg_dump.c:13791 pg_dump.c:13859
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "認識できないの照合順序プロバイダ: %s"
 
-#: pg_dump.c:14010 pg_dump.c:14017 pg_dump.c:14028 pg_dump.c:14038
-#: pg_dump.c:14053
+#: pg_dump.c:13800 pg_dump.c:13807 pg_dump.c:13818 pg_dump.c:13828
+#: pg_dump.c:13843
 #, c-format
 msgid "invalid collation \"%s\""
 msgstr "不正な照合順序\"%s\""
 
-#: pg_dump.c:14459
+#: pg_dump.c:14249
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "集約\"%s\"のaggfinalmodifyの値が識別できません"
 
-#: pg_dump.c:14515
+#: pg_dump.c:14305
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "集約\"%s\"のaggmfinalmodifyの値が識別できません"
 
-#: pg_dump.c:15232
+#: pg_dump.c:15022
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "デフォルト権限設定中の認識できないオブジェクト型: %d"
 
-#: pg_dump.c:15248
+#: pg_dump.c:15038
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "デフォルトの ACL リスト(%s)をパースできませんでした"
 
-#: pg_dump.c:15332
+#: pg_dump.c:15122
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "オブジェクト\"%3$s\"(%4$s)の初期ACLリスト(%1$s)またはデフォルト値(%2$s)をパースできませんでした"
 
-#: pg_dump.c:15357
+#: pg_dump.c:15147
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "オブジェクト\"%3$s\"(%4$s)のACLリスト(%1$s)またはデフォルト値(%2$s)をパースできませんでした"
 
-#: pg_dump.c:15900
+#: pg_dump.c:15690
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "ビュー\"%s\"の定義を取り出すための問い合わせがデータを返却しませんでした"
 
-#: pg_dump.c:15903
+#: pg_dump.c:15693
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "ビュー\"%s\"の定義を取り出すための問い合わせが2つ以上の定義を返却しました"
 
-#: pg_dump.c:15910
+#: pg_dump.c:15700
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "ビュー\"%s\"の定義が空のようです(長さが0)"
 
-#: pg_dump.c:15994
+#: pg_dump.c:15784
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDSは今後サポートされません(テーブル\"%s\")"
 
-#: pg_dump.c:16960
+#: pg_dump.c:16710
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "テーブル\"%2$s\"の列番号%1$dは不正です"
 
-#: pg_dump.c:17038
+#: pg_dump.c:16788
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "インデックス統計列をパースできませんでした"
 
-#: pg_dump.c:17040
+#: pg_dump.c:16790
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "インデックス統計値をパースできませんでした"
 
-#: pg_dump.c:17042
+#: pg_dump.c:16792
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "インデックス統計に対して列と値の数が合致しません"
 
-#: pg_dump.c:17257
+#: pg_dump.c:17007
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "制約\"%s\"のインデックスが見つかりません"
 
-#: pg_dump.c:17507
+#: pg_dump.c:17242
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "制約のタイプが識別できません: %c"
 
-#: pg_dump.c:17608 pg_dump.c:17837
+#: pg_dump.c:17343 pg_dump.c:17572
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "シーケンス\"%s\"のデータを得るための問い合わせが%d行返却しました(想定は1)"
 
-#: pg_dump.c:17640
+#: pg_dump.c:17375
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "認識されないシーケンスの型\"%s\""
 
-#: pg_dump.c:18154
+#: pg_dump.c:17889
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "テーブル\"%2$s\"のルール\"%1$s\"を得るための問い合わせが失敗しました: 間違った行数が返却されました"
 
-#: pg_dump.c:18307
+#: pg_dump.c:18042
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "親の機能拡張%uが見つかりません"
 
-#: pg_dump.c:18406
+#: pg_dump.c:18141
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "機能拡張に対して設定と条件の数が一致しません"
 
-#: pg_dump.c:18538
+#: pg_dump.c:18273
 #, c-format
 msgid "reading dependency data"
 msgstr "データの依存データを読み込んでいます"
 
-#: pg_dump.c:18624
+#: pg_dump.c:18359
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "参照元オブジェクト%u %uがありません"
 
-#: pg_dump.c:18635
+#: pg_dump.c:18370
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "参照先オブジェクト%u %uがありません"
 
-#: pg_dump.c:19060 pg_dump.c:19098 pg_dumpall.c:1962 pg_restore.c:551
+#: pg_dump.c:18795 pg_dump.c:18833 pg_dumpall.c:1962 pg_restore.c:551
 #: pg_restore.c:597
 #, c-format
 msgid "%s filter for \"%s\" is not allowed"

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-14 11:48+0000\n"
-"PO-Revision-Date: 2024-05-14 19:50+0200\n"
+"POT-Creation-Date: 2024-06-16 07:48+0000\n"
+"PO-Revision-Date: 2024-05-24 15:40+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -35,6 +35,81 @@ msgstr "Detail: "
 msgid "hint: "
 msgstr "Tipp: "
 
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
+
+#: ../../common/controldata_utils.c:110 pg_verifybackup.c:438
+#: pg_verifybackup.c:476 pg_verifybackup.c:896
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht lesen: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: pg_verifybackup.c:902
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schließen: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "falsche Byte-Reihenfolge"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"möglicherweise falsche Byte-Reihenfolge\n"
+"Die Byte-Reihenfolge, die zur Speicherung der Datei pg_control verwendet wurde,\n"
+"stimmt möglicherweise nicht mit der von diesem Programm verwendeten überein. In\n"
+"diesem Fall wären die Ergebnisse unten falsch und die PostgreSQL-Installation\n"
+"wäre inkompatibel mit diesem Datenverzeichnis."
+
+#: ../../common/controldata_utils.c:230 pg_verifybackup.c:406
+#: pg_verifybackup.c:865
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht öffnen: %m"
+
+#: ../../common/controldata_utils.c:249
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schreiben: %m"
+
+#: ../../common/controldata_utils.c:268
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht fsyncen: %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#, c-format
+msgid "out of memory"
+msgstr "Speicher aufgebraucht"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "Erfolg"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "Zielpuffer ist zu klein"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "OpenSSL-Fehler"
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
@@ -47,16 +122,16 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
 
 #: ../../common/jsonapi.c:2121
-msgid "Recursive descent parser cannot use incremental lexer"
-msgstr "Parser mit rekursivem Abstieg kann inkrementellen Lexer nicht benutzen"
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "Parser mit rekursivem Abstieg kann inkrementellen Lexer nicht benutzen."
 
 #: ../../common/jsonapi.c:2123
-msgid "Incremental parser requires incremental lexer"
-msgstr "Inkrementeller Parser benötigt inkrementellen Lexer"
+msgid "Incremental parser requires incremental lexer."
+msgstr "Inkrementeller Parser benötigt inkrementellen Lexer."
 
 #: ../../common/jsonapi.c:2125
-msgid "JSON nested too deep, maximum permitted depth is 6400"
-msgstr "JSON zu tief geschachtelt, maximale erlaubte Tiefe ist 6400"
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON zu tief geschachtelt, maximale erlaubte Tiefe ist 6400."
 
 #: ../../common/jsonapi.c:2127
 #, c-format
@@ -141,11 +216,6 @@ msgstr "Unicode-High-Surrogate darf nicht auf ein High-Surrogate folgen."
 #: ../../common/jsonapi.c:2187
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicode-Low-Surrogate muss auf ein High-Surrogate folgen."
-
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
-#, c-format
-msgid "out of memory"
-msgstr "Speicher aufgebraucht"
 
 #: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
 #, c-format
@@ -339,20 +409,10 @@ msgstr "Programm »%s« wurde von »%s« gefunden, aber es hatte nicht die gleic
 msgid "backup successfully verified\n"
 msgstr "Backup erfolgreich überprüft\n"
 
-#: pg_verifybackup.c:406 pg_verifybackup.c:865
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht öffnen: %m"
-
 #: pg_verifybackup.c:410
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
-
-#: pg_verifybackup.c:438 pg_verifybackup.c:476 pg_verifybackup.c:896
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht lesen: %m"
 
 #: pg_verifybackup.c:440
 #, c-format
@@ -428,11 +488,6 @@ msgstr "konnte Prüfsumme der Datei »%s« nicht initialisieren"
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "konnte Prüfsumme der Datei »%s« nicht aktualisieren"
-
-#: pg_verifybackup.c:902
-#, c-format
-msgid "could not close file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht schließen: %m"
 
 #: pg_verifybackup.c:921
 #, c-format

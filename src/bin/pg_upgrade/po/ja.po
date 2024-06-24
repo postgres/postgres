@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-04-05 11:22+0900\n"
-"PO-Revision-Date: 2024-04-05 13:39+0900\n"
+"POT-Creation-Date: 2024-06-14 11:24+0900\n"
+"PO-Revision-Date: 2024-06-14 11:30+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -19,6 +19,46 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.13\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "メモリ不足です\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "nullポインタは複製できません(内部エラー)\n"
+
+#: ../../common/restricted_token.c:168
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "サブプロセスの終了コードを取得できませんでした: エラーコード %lu"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "実効ユーザーID %ld が見つかりませんでした: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "ユーザーが存在しません"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "ユーザー名の参照に失敗: エラーコード %lu"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
 
 #: check.c:111
 msgid "Checking for system-defined composite types in user tables"
@@ -585,13 +625,13 @@ msgstr "新クラスタ上のパラメータ設定を決定できませんでし
 
 #: check.c:1772
 #, c-format
-msgid "wal_level must be \"logical\", but is set to \"%s\""
-msgstr "wal_levelは\"logical\"でなければなりませんが、\"%s\"に設定されています"
+msgid "\"wal_level\" must be \"logical\", but is set to \"%s\""
+msgstr "\"wal_level\"は\"logical\"でなければなりませんが、\"%s\"に設定されています"
 
 #: check.c:1778
 #, c-format
-msgid "max_replication_slots (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
-msgstr "max_replication_slots (%d) は旧クラスタにおける論理レプリケーションスロットの数(%d)以上でなければなりません"
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
+msgstr "\"max_replication_slots\" (%d) は旧クラスタにおける論理レプリケーションスロットの数(%d)以上でなければなりません"
 
 #: check.c:1813
 #, c-format
@@ -600,8 +640,8 @@ msgstr "新しいクラスタの構成のサブスクリプションを確認し
 
 #: check.c:1825
 #, c-format
-msgid "max_replication_slots (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
-msgstr "max_replication_slots (%d) は旧クラスタにおけるサブスクリプションの数(%d)以上でなければなりません"
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
+msgstr "\"max_replication_slots\" (%d) は旧クラスタにおけるサブスクリプションの数(%d)以上でなければなりません"
 
 #: check.c:1847
 #, c-format
@@ -1980,27 +2020,3 @@ msgstr ""
 "あります。以下のファイルをpsqlを使ってデータベースのスーパーユーザーとして実行することで\n"
 "これらの機能拡張をアップデートできます。\n"
 "   %s"
-
-#~ msgid "%s() failed: %s"
-#~ msgstr "%s() が失敗しました: %s"
-
-#~ msgid "Checking for incompatible \"jsonb\" data type"
-#~ msgstr "互換性のない\"jsonb\"データ型をチェックしています"
-
-#~ msgid "check for \"%s\" failed: %s"
-#~ msgstr "\"%s\"のチェックに失敗しました: %s"
-
-#~ msgid "could not create file \"%s\": %s"
-#~ msgstr "ファイル\"%s\"を作成できませんでした: %s"
-
-#~ msgid "could not create worker process: %s"
-#~ msgstr "ワーカープロセスを作成できませんでした: %s"
-
-#~ msgid "could not open file \"%s\" for reading: %s"
-#~ msgstr "ファイル\"%s\"を読み取り用としてオープンできませんでした:%s"
-
-#~ msgid "could not open file \"%s\": %s"
-#~ msgstr "ファイル\"%s\"をオープンできませんでした: %s"
-
-#~ msgid "could not read permissions of directory \"%s\": %s"
-#~ msgstr "ディレクトリ\"%s\"の権限を読み取れませんでした: %s"

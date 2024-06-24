@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-04-23 10:01+0900\n"
-"PO-Revision-Date: 2024-04-23 11:09+0900\n"
+"POT-Creation-Date: 2024-06-14 11:24+0900\n"
+"PO-Revision-Date: 2024-06-14 11:30+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -182,6 +182,21 @@ msgstr "テーブルの内容にセルを追加できません: セルの総数%
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "出力フォーマットが無効(内部エラー)：%d"
+
+#: ../../fe_utils/psqlscan.l:718
+#, c-format
+msgid "skipping recursive expansion of variable \"%s\""
+msgstr "変数\"%s\"の再帰展開をスキップしています"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
 
 #: ../../port/user.c:43 ../../port/user.c:79
 #, c-format
@@ -878,7 +893,7 @@ msgstr "時間: %.3f ミリ秒 (%02d:%02d:%06.3f)\n"
 msgid "Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
 msgstr "時間: %.3f ミリ秒 (%.0f 日 %02d:%02d:%06.3f)\n"
 
-#: common.c:626 common.c:683 common.c:1094 describe.c:6244
+#: common.c:626 common.c:683 common.c:1094 describe.c:6192
 #, c-format
 msgid "You are currently not connected to a database."
 msgstr "現在データベースに接続していません。"
@@ -940,8 +955,8 @@ msgstr "列"
 
 #: common.c:1370 describe.c:169 describe.c:355 describe.c:373 describe.c:1043
 #: describe.c:1201 describe.c:1731 describe.c:1755 describe.c:2026
-#: describe.c:4008 describe.c:4219 describe.c:4456 describe.c:4616
-#: describe.c:5881
+#: describe.c:3956 describe.c:4167 describe.c:4404 describe.c:4564
+#: describe.c:5829
 msgid "Type"
 msgstr "タイプ"
 
@@ -1061,20 +1076,20 @@ msgid "\\crosstabview: column name not found: \"%s\""
 msgstr "\\crosstabview: 列名が見つかりませんでした: \"%s\""
 
 #: describe.c:87 describe.c:335 describe.c:626 describe.c:802 describe.c:1035
-#: describe.c:1190 describe.c:1264 describe.c:3997 describe.c:4206
-#: describe.c:4454 describe.c:4535 describe.c:4767 describe.c:4973
-#: describe.c:5217 describe.c:5458 describe.c:5527 describe.c:5538
-#: describe.c:5594 describe.c:5993 describe.c:6070
+#: describe.c:1190 describe.c:1264 describe.c:3945 describe.c:4154
+#: describe.c:4402 describe.c:4483 describe.c:4715 describe.c:4921
+#: describe.c:5165 describe.c:5406 describe.c:5475 describe.c:5486
+#: describe.c:5542 describe.c:5941 describe.c:6018
 msgid "Schema"
 msgstr "スキーマ"
 
 #: describe.c:88 describe.c:166 describe.c:227 describe.c:336 describe.c:627
 #: describe.c:803 describe.c:924 describe.c:1036 describe.c:1265
-#: describe.c:3998 describe.c:4207 describe.c:4371 describe.c:4455
-#: describe.c:4536 describe.c:4697 describe.c:4768 describe.c:4974
-#: describe.c:5090 describe.c:5218 describe.c:5459 describe.c:5528
-#: describe.c:5539 describe.c:5595 describe.c:5792 describe.c:5862
-#: describe.c:6068 describe.c:6295 describe.c:6603
+#: describe.c:3946 describe.c:4155 describe.c:4319 describe.c:4403
+#: describe.c:4484 describe.c:4645 describe.c:4716 describe.c:4922
+#: describe.c:5038 describe.c:5166 describe.c:5407 describe.c:5476
+#: describe.c:5487 describe.c:5543 describe.c:5740 describe.c:5810
+#: describe.c:6016 describe.c:6243 describe.c:6551
 msgid "Name"
 msgstr "名前"
 
@@ -1088,12 +1103,12 @@ msgstr "引数のデータ型"
 
 #: describe.c:98 describe.c:105 describe.c:177 describe.c:241 describe.c:415
 #: describe.c:658 describe.c:818 describe.c:972 describe.c:1267 describe.c:2046
-#: describe.c:3728 describe.c:4052 describe.c:4253 describe.c:4395
-#: describe.c:4468 describe.c:4545 describe.c:4710 describe.c:4886
-#: describe.c:5027 describe.c:5099 describe.c:5219 describe.c:5369
-#: describe.c:5410 describe.c:5475 describe.c:5531 describe.c:5540
-#: describe.c:5596 describe.c:5810 describe.c:5884 describe.c:6007
-#: describe.c:6071 describe.c:7130
+#: describe.c:3676 describe.c:4000 describe.c:4201 describe.c:4343
+#: describe.c:4416 describe.c:4493 describe.c:4658 describe.c:4834
+#: describe.c:4975 describe.c:5047 describe.c:5167 describe.c:5317
+#: describe.c:5358 describe.c:5423 describe.c:5479 describe.c:5488
+#: describe.c:5544 describe.c:5758 describe.c:5832 describe.c:5955
+#: describe.c:6019 describe.c:7078
 msgid "Description"
 msgstr "説明"
 
@@ -1110,11 +1125,11 @@ msgstr "このサーバー(バージョン%s)はアクセスメソッドをサ�
 msgid "Index"
 msgstr "インデックス"
 
-#: describe.c:168 describe.c:4016 describe.c:4232 describe.c:5994
+#: describe.c:168 describe.c:3964 describe.c:4180 describe.c:5942
 msgid "Table"
 msgstr "テーブル"
 
-#: describe.c:176 describe.c:5794
+#: describe.c:176 describe.c:5742
 msgid "Handler"
 msgstr "ハンドラ"
 
@@ -1123,10 +1138,10 @@ msgid "List of access methods"
 msgstr "アクセスメソッド一覧"
 
 #: describe.c:228 describe.c:401 describe.c:651 describe.c:925 describe.c:1189
-#: describe.c:4009 describe.c:4208 describe.c:4372 describe.c:4699
-#: describe.c:5091 describe.c:5793 describe.c:5863 describe.c:6296
-#: describe.c:6483 describe.c:6604 describe.c:6774 describe.c:6859
-#: describe.c:7118
+#: describe.c:3957 describe.c:4156 describe.c:4320 describe.c:4647
+#: describe.c:5039 describe.c:5741 describe.c:5811 describe.c:6244
+#: describe.c:6431 describe.c:6552 describe.c:6722 describe.c:6807
+#: describe.c:7066
 msgid "Owner"
 msgstr "所有者"
 
@@ -1134,11 +1149,11 @@ msgstr "所有者"
 msgid "Location"
 msgstr "場所"
 
-#: describe.c:239 describe.c:3569 describe.c:3909
+#: describe.c:239 describe.c:3517 describe.c:3857
 msgid "Options"
 msgstr "オプション"
 
-#: describe.c:240 describe.c:649 describe.c:970 describe.c:4051
+#: describe.c:240 describe.c:649 describe.c:970 describe.c:3999
 msgid "Size"
 msgstr "サイズ"
 
@@ -1253,8 +1268,8 @@ msgstr "右辺の型"
 msgid "Result type"
 msgstr "結果の型"
 
-#: describe.c:811 describe.c:4705 describe.c:4869 describe.c:5368
-#: describe.c:7048 describe.c:7052
+#: describe.c:811 describe.c:4653 describe.c:4817 describe.c:5316
+#: describe.c:6996 describe.c:7000
 msgid "Function"
 msgstr "関数"
 
@@ -1270,20 +1285,20 @@ msgstr "エンコーディング"
 msgid "Locale Provider"
 msgstr "ロケールプロバイダー"
 
-#: describe.c:938 describe.c:4988
+#: describe.c:938 describe.c:4936
 msgid "Collate"
 msgstr "照合順序"
 
-#: describe.c:939 describe.c:4989
+#: describe.c:939 describe.c:4937
 msgid "Ctype"
 msgstr "Ctype(変換演算子)"
 
-#: describe.c:943 describe.c:947 describe.c:951 describe.c:4994 describe.c:4998
-#: describe.c:5002
+#: describe.c:943 describe.c:947 describe.c:951 describe.c:4942 describe.c:4946
+#: describe.c:4950
 msgid "Locale"
 msgstr "ロケール"
 
-#: describe.c:955 describe.c:959 describe.c:5007 describe.c:5011
+#: describe.c:955 describe.c:959 describe.c:4955 describe.c:4959
 msgid "ICU Rules"
 msgstr "ICUルール:"
 
@@ -1295,27 +1310,27 @@ msgstr "テーブル空間"
 msgid "List of databases"
 msgstr "データベース一覧"
 
-#: describe.c:1037 describe.c:1192 describe.c:3999
+#: describe.c:1037 describe.c:1192 describe.c:3947
 msgid "table"
 msgstr "テーブル"
 
-#: describe.c:1038 describe.c:4000
+#: describe.c:1038 describe.c:3948
 msgid "view"
 msgstr "ビュー"
 
-#: describe.c:1039 describe.c:4001
+#: describe.c:1039 describe.c:3949
 msgid "materialized view"
 msgstr "実体化ビュー"
 
-#: describe.c:1040 describe.c:1194 describe.c:4003
+#: describe.c:1040 describe.c:1194 describe.c:3951
 msgid "sequence"
 msgstr "シーケンス"
 
-#: describe.c:1041 describe.c:4005
+#: describe.c:1041 describe.c:3953
 msgid "foreign table"
 msgstr "外部テーブル"
 
-#: describe.c:1042 describe.c:4006 describe.c:4217
+#: describe.c:1042 describe.c:3954 describe.c:4165
 msgid "partitioned table"
 msgstr "パーティションテーブル"
 
@@ -1327,7 +1342,7 @@ msgstr "列の権限"
 msgid "Policies"
 msgstr "ポリシー"
 
-#: describe.c:1151 describe.c:4622 describe.c:6719
+#: describe.c:1151 describe.c:4570 describe.c:6667
 msgid "Access privileges"
 msgstr "アクセス権限"
 
@@ -1375,12 +1390,12 @@ msgstr "ルール"
 msgid "Object descriptions"
 msgstr "オブジェクトの説明"
 
-#: describe.c:1485 describe.c:4124
+#: describe.c:1485 describe.c:4072
 #, c-format
 msgid "Did not find any relation named \"%s\"."
 msgstr "\"%s\"という名前のリレーションは見つかりませんでした。"
 
-#: describe.c:1488 describe.c:4127
+#: describe.c:1488 describe.c:4075
 #, c-format
 msgid "Did not find any relations."
 msgstr "リレーションが見つかりませんでした。"
@@ -1406,13 +1421,13 @@ msgstr "最大"
 msgid "Increment"
 msgstr "増分"
 
-#: describe.c:1736 describe.c:1760 describe.c:1889 describe.c:4539
-#: describe.c:4880 describe.c:5016 describe.c:5021 describe.c:6762
+#: describe.c:1736 describe.c:1760 describe.c:1889 describe.c:4487
+#: describe.c:4828 describe.c:4964 describe.c:4969 describe.c:6710
 msgid "yes"
 msgstr "はい"
 
-#: describe.c:1737 describe.c:1761 describe.c:1890 describe.c:4539
-#: describe.c:4877 describe.c:5016 describe.c:6763
+#: describe.c:1737 describe.c:1761 describe.c:1890 describe.c:4487
+#: describe.c:4825 describe.c:4964 describe.c:6711
 msgid "no"
 msgstr "いいえ"
 
@@ -1514,15 +1529,15 @@ msgstr "ログ出力なしのパーティション親テーブル\"%s.%s\""
 msgid "Partitioned table \"%s.%s\""
 msgstr "パーティションテーブル\"%s.%s\""
 
-#: describe.c:2029 describe.c:4457
+#: describe.c:2029 describe.c:4405
 msgid "Collation"
 msgstr "照合順序"
 
-#: describe.c:2030 describe.c:4458
+#: describe.c:2030 describe.c:4406
 msgid "Nullable"
 msgstr "Null 値を許容"
 
-#: describe.c:2031 describe.c:4459
+#: describe.c:2031 describe.c:4407
 msgid "Default"
 msgstr "デフォルト"
 
@@ -1530,12 +1545,12 @@ msgstr "デフォルト"
 msgid "Key?"
 msgstr "キー?"
 
-#: describe.c:2036 describe.c:4775 describe.c:4786
+#: describe.c:2036 describe.c:4723 describe.c:4734
 msgid "Definition"
 msgstr "定義"
 
-#: describe.c:2038 describe.c:5809 describe.c:5883 describe.c:5948
-#: describe.c:6006
+#: describe.c:2038 describe.c:5757 describe.c:5831 describe.c:5896
+#: describe.c:5954
 msgid "FDW options"
 msgstr "FDW オプション"
 
@@ -1621,612 +1636,600 @@ msgstr "、最初から遅延中"
 msgid ", replica identity"
 msgstr "、レプリカの id"
 
-#: describe.c:2404
+#: describe.c:2400
 msgid "Indexes:"
 msgstr "インデックス:"
 
-#: describe.c:2491
+#: describe.c:2483
 msgid "Check constraints:"
 msgstr "Check 制約:"
 
-#: describe.c:2559
+#: describe.c:2551
 msgid "Foreign-key constraints:"
 msgstr "外部キー制約:"
 
-#: describe.c:2622
+#: describe.c:2614
 msgid "Referenced by:"
 msgstr "参照元:"
 
-#: describe.c:2672
+#: describe.c:2664
 msgid "Policies:"
 msgstr "ポリシー:"
 
-#: describe.c:2675
+#: describe.c:2667
 msgid "Policies (forced row security enabled):"
 msgstr "ポリシー(行セキュリティを強制的に有効化):"
 
-#: describe.c:2678
+#: describe.c:2670
 msgid "Policies (row security enabled): (none)"
 msgstr "ポリシー(行セキュリティ有効化): (なし)"
 
-#: describe.c:2681
+#: describe.c:2673
 msgid "Policies (forced row security enabled): (none)"
 msgstr "ポリシー(行セキュリティを強制的に有効化): (なし)"
 
-#: describe.c:2684
+#: describe.c:2676
 msgid "Policies (row security disabled):"
 msgstr "ポリシー(行セキュリティを無効化):"
 
-#: describe.c:2744 describe.c:2849
+#: describe.c:2736 describe.c:2841
 msgid "Statistics objects:"
 msgstr "統計オブジェクト:"
 
-#: describe.c:2951 describe.c:3148
+#: describe.c:2943 describe.c:3096
 msgid "Rules:"
 msgstr "ルール:"
 
-#: describe.c:2954
+#: describe.c:2946
 msgid "Disabled rules:"
 msgstr "無効化されたルール:"
 
-#: describe.c:2957
+#: describe.c:2949
 msgid "Rules firing always:"
 msgstr "常に適用するルール:"
 
-#: describe.c:2960
+#: describe.c:2952
 msgid "Rules firing on replica only:"
 msgstr "レプリカ上でのみ適用するルール:"
 
-#: describe.c:3039 describe.c:5152
+#: describe.c:3031 describe.c:5100
 msgid "Publications:"
 msgstr "パブリケーション:"
 
-#: describe.c:3085
-msgid "Not-null constraints:"
-msgstr "非NULL制約:"
-
-#: describe.c:3098
-msgid " (local, inherited)"
-msgstr "(ローカル、継承)"
-
-#: describe.c:3099
-msgid " (inherited)"
-msgstr "(継承)"
-
-#: describe.c:3131
+#: describe.c:3079
 msgid "View definition:"
 msgstr "ビューの定義:"
 
-#: describe.c:3294
+#: describe.c:3242
 msgid "Triggers:"
 msgstr "トリガー:"
 
-#: describe.c:3297
+#: describe.c:3245
 msgid "Disabled user triggers:"
 msgstr "無効化されたユーザートリガ:"
 
-#: describe.c:3300
+#: describe.c:3248
 msgid "Disabled internal triggers:"
 msgstr "無効化された内部トリガー:"
 
-#: describe.c:3303
+#: describe.c:3251
 msgid "Triggers firing always:"
 msgstr "常に適用するするトリガー:"
 
-#: describe.c:3306
+#: describe.c:3254
 msgid "Triggers firing on replica only:"
 msgstr "レプリカ上でのみ適用するトリガー:"
 
-#: describe.c:3377
+#: describe.c:3325
 #, c-format
 msgid "Server: %s"
 msgstr "サーバー: %s"
 
-#: describe.c:3385
+#: describe.c:3333
 #, c-format
 msgid "FDW options: (%s)"
 msgstr "FDW オプション: (%s)"
 
-#: describe.c:3406
+#: describe.c:3354
 msgid "Inherits"
 msgstr "継承元"
 
-#: describe.c:3471
+#: describe.c:3419
 #, c-format
 msgid "Number of partitions: %d"
 msgstr "パーティション数: %d"
 
-#: describe.c:3480
+#: describe.c:3428
 #, c-format
 msgid "Number of partitions: %d (Use \\d+ to list them.)"
 msgstr "パーティション数: %d (\\d+ で一覧を表示)。"
 
-#: describe.c:3482
+#: describe.c:3430
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
 msgstr "子テーブル数: %d (\\d+ で一覧を表示)"
 
-#: describe.c:3489
+#: describe.c:3437
 msgid "Child tables"
 msgstr "子テーブル"
 
-#: describe.c:3489
+#: describe.c:3437
 msgid "Partitions"
 msgstr "パーティション"
 
-#: describe.c:3522
+#: describe.c:3470
 #, c-format
 msgid "Typed table of type: %s"
 msgstr "%s 型の型付きテーブル"
 
-#: describe.c:3538
+#: describe.c:3486
 msgid "Replica Identity"
 msgstr "レプリカ識別"
 
-#: describe.c:3551
+#: describe.c:3499
 msgid "Has OIDs: yes"
 msgstr "OID あり: はい"
 
-#: describe.c:3560
+#: describe.c:3508
 #, c-format
 msgid "Access method: %s"
 msgstr "アクセスメソッド: %s"
 
-#: describe.c:3637
+#: describe.c:3585
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "テーブル空間: \"%s\""
 
 #. translator: before this string there's an index description like
 #. '"foo_pkey" PRIMARY KEY, btree (a)'
-#: describe.c:3649
+#: describe.c:3597
 #, c-format
 msgid ", tablespace \"%s\""
 msgstr "、テーブル空間\"%s\""
 
-#: describe.c:3722
+#: describe.c:3670
 msgid "List of roles"
 msgstr "ロール一覧"
 
-#: describe.c:3724 describe.c:3892
+#: describe.c:3672 describe.c:3840
 msgid "Role name"
 msgstr "ロール名"
 
-#: describe.c:3725
+#: describe.c:3673
 msgid "Attributes"
 msgstr "属性"
 
-#: describe.c:3736
+#: describe.c:3684
 msgid "Superuser"
 msgstr "スーパーユーザー"
 
-#: describe.c:3739
+#: describe.c:3687
 msgid "No inheritance"
 msgstr "継承なし"
 
-#: describe.c:3742
+#: describe.c:3690
 msgid "Create role"
 msgstr "ロール作成可"
 
-#: describe.c:3745
+#: describe.c:3693
 msgid "Create DB"
 msgstr "DB作成可"
 
-#: describe.c:3748
+#: describe.c:3696
 msgid "Cannot login"
 msgstr "ログインできません"
 
-#: describe.c:3751
+#: describe.c:3699
 msgid "Replication"
 msgstr "レプリケーション可"
 
-#: describe.c:3755
+#: describe.c:3703
 msgid "Bypass RLS"
 msgstr "RLS のバイパス"
 
-#: describe.c:3764
+#: describe.c:3712
 msgid "No connections"
 msgstr "接続なし"
 
-#: describe.c:3766
+#: describe.c:3714
 #, c-format
 msgid "%d connection"
 msgid_plural "%d connections"
 msgstr[0] "%d 個の接続"
 
-#: describe.c:3776
+#: describe.c:3724
 msgid "Password valid until "
 msgstr "パスワードの有効期限 "
 
-#: describe.c:3827
+#: describe.c:3775
 msgid "Role"
 msgstr "ロール"
 
-#: describe.c:3828
+#: describe.c:3776
 msgid "Database"
 msgstr "データベース"
 
-#: describe.c:3829
+#: describe.c:3777
 msgid "Settings"
 msgstr "設定"
 
-#: describe.c:3853
+#: describe.c:3801
 #, c-format
 msgid "Did not find any settings for role \"%s\" and database \"%s\"."
 msgstr "ロール\"%s\"とデータベース\"%s\"の設定が見つかりませんでした。"
 
-#: describe.c:3856
+#: describe.c:3804
 #, c-format
 msgid "Did not find any settings for role \"%s\"."
 msgstr "ロール\"%s\"の設定が見つかりませんでした。"
 
-#: describe.c:3859
+#: describe.c:3807
 #, c-format
 msgid "Did not find any settings."
 msgstr "設定が見つかりませんでした。"
 
-#: describe.c:3863
+#: describe.c:3811
 msgid "List of settings"
 msgstr "設定一覧"
 
-#: describe.c:3893
+#: describe.c:3841
 msgid "Member of"
 msgstr "所属グループ"
 
-#: describe.c:3910
+#: describe.c:3858
 msgid "Grantor"
 msgstr "付与者"
 
-#: describe.c:3936
+#: describe.c:3884
 msgid "List of role grants"
 msgstr "ロール権限付与一覧"
 
-#: describe.c:4002
+#: describe.c:3950
 msgid "index"
 msgstr "インデックス"
 
-#: describe.c:4004
+#: describe.c:3952
 msgid "TOAST table"
 msgstr "TOAST テーブル"
 
-#: describe.c:4007 describe.c:4218
+#: describe.c:3955 describe.c:4166
 msgid "partitioned index"
 msgstr "パーティションインデックス"
 
-#: describe.c:4027
+#: describe.c:3975
 msgid "permanent"
 msgstr "永続"
 
-#: describe.c:4028
+#: describe.c:3976
 msgid "temporary"
 msgstr "一時"
 
-#: describe.c:4029
+#: describe.c:3977
 msgid "unlogged"
 msgstr "ログなし"
 
-#: describe.c:4030
+#: describe.c:3978
 msgid "Persistence"
 msgstr "永続性"
 
-#: describe.c:4046
+#: describe.c:3994
 msgid "Access method"
 msgstr "アクセスメソッド"
 
-#: describe.c:4131
+#: describe.c:4079
 msgid "List of relations"
 msgstr "リレーション一覧"
 
-#: describe.c:4179
+#: describe.c:4127
 #, c-format
 msgid "The server (version %s) does not support declarative table partitioning."
 msgstr "このサーバー(バージョン%s)は宣言的テーブルパーティショニングをサポートしていません。"
 
-#: describe.c:4190
+#: describe.c:4138
 msgid "List of partitioned indexes"
 msgstr "パーティションインデックスの一覧"
 
-#: describe.c:4192
+#: describe.c:4140
 msgid "List of partitioned tables"
 msgstr "パーティションテーブルの一覧"
 
-#: describe.c:4196
+#: describe.c:4144
 msgid "List of partitioned relations"
 msgstr "パーティションリレーションの一覧"
 
-#: describe.c:4227
+#: describe.c:4175
 msgid "Parent name"
 msgstr "親の名前"
 
-#: describe.c:4240
+#: describe.c:4188
 msgid "Leaf partition size"
 msgstr "末端パーティションのサイズ"
 
-#: describe.c:4243 describe.c:4249
+#: describe.c:4191 describe.c:4197
 msgid "Total size"
 msgstr "トータルサイズ"
 
-#: describe.c:4373
+#: describe.c:4321
 msgid "Trusted"
 msgstr "信頼済み"
 
-#: describe.c:4382
+#: describe.c:4330
 msgid "Internal language"
 msgstr "内部言語"
 
-#: describe.c:4383
+#: describe.c:4331
 msgid "Call handler"
 msgstr "呼び出しハンドラー"
 
-#: describe.c:4384 describe.c:5795
+#: describe.c:4332 describe.c:5743
 msgid "Validator"
 msgstr "バリデーター"
 
-#: describe.c:4385
+#: describe.c:4333
 msgid "Inline handler"
 msgstr "インラインハンドラー"
 
-#: describe.c:4419
+#: describe.c:4367
 msgid "List of languages"
 msgstr "手続き言語一覧"
 
-#: describe.c:4460
+#: describe.c:4408
 msgid "Check"
 msgstr "CHECK制約"
 
-#: describe.c:4503
+#: describe.c:4451
 msgid "List of domains"
 msgstr "ドメイン一覧"
 
-#: describe.c:4537
+#: describe.c:4485
 msgid "Source"
 msgstr "変換元"
 
-#: describe.c:4538
+#: describe.c:4486
 msgid "Destination"
 msgstr "変換先"
 
-#: describe.c:4540 describe.c:6764
+#: describe.c:4488 describe.c:6712
 msgid "Default?"
 msgstr "デフォルト?"
 
-#: describe.c:4581
+#: describe.c:4529
 msgid "List of conversions"
 msgstr "符号化方式一覧"
 
-#: describe.c:4609
+#: describe.c:4557
 msgid "Parameter"
 msgstr "パラメータ"
 
-#: describe.c:4610
+#: describe.c:4558
 msgid "Value"
 msgstr "値"
 
-#: describe.c:4617
+#: describe.c:4565
 msgid "Context"
 msgstr "コンテクスト"
 
-#: describe.c:4649
+#: describe.c:4597
 msgid "List of configuration parameters"
 msgstr "設定パラメータの一覧"
 
-#: describe.c:4651
+#: describe.c:4599
 msgid "List of non-default configuration parameters"
 msgstr "非デフォルトの設定パラメータの一覧"
 
-#: describe.c:4678
+#: describe.c:4626
 #, c-format
 msgid "The server (version %s) does not support event triggers."
 msgstr "このサーバー(バージョン%s)はイベントトリガーをサポートしていません。"
 
-#: describe.c:4698
+#: describe.c:4646
 msgid "Event"
 msgstr "イベント"
 
-#: describe.c:4700
+#: describe.c:4648
 msgid "enabled"
 msgstr "有効"
 
-#: describe.c:4701
+#: describe.c:4649
 msgid "replica"
 msgstr "レプリカ"
 
-#: describe.c:4702
+#: describe.c:4650
 msgid "always"
 msgstr "常時"
 
-#: describe.c:4703
+#: describe.c:4651
 msgid "disabled"
 msgstr "無効"
 
-#: describe.c:4704 describe.c:6605
+#: describe.c:4652 describe.c:6553
 msgid "Enabled"
 msgstr "有効状態"
 
-#: describe.c:4706
+#: describe.c:4654
 msgid "Tags"
 msgstr "タグ"
 
-#: describe.c:4729
+#: describe.c:4677
 msgid "List of event triggers"
 msgstr "イベントトリガー一覧"
 
-#: describe.c:4756
+#: describe.c:4704
 #, c-format
 msgid "The server (version %s) does not support extended statistics."
 msgstr "このサーバー(バージョン%s)は拡張統計情報をサポートしていません。"
 
-#: describe.c:4793
+#: describe.c:4741
 msgid "Ndistinct"
 msgstr "Ndistinct"
 
-#: describe.c:4794
+#: describe.c:4742
 msgid "Dependencies"
 msgstr "Dependencies"
 
-#: describe.c:4804
+#: describe.c:4752
 msgid "MCV"
 msgstr "MCV"
 
-#: describe.c:4827
+#: describe.c:4775
 msgid "List of extended statistics"
 msgstr "拡張統計情報の一覧"
 
-#: describe.c:4854
+#: describe.c:4802
 msgid "Source type"
 msgstr "変換元の型"
 
-#: describe.c:4855
+#: describe.c:4803
 msgid "Target type"
 msgstr "変換先の型"
 
-#: describe.c:4879
+#: describe.c:4827
 msgid "in assignment"
 msgstr "代入時のみ"
 
-#: describe.c:4881
+#: describe.c:4829
 msgid "Implicit?"
 msgstr "暗黙的に適用 ?"
 
-#: describe.c:4939
+#: describe.c:4887
 msgid "List of casts"
 msgstr "キャスト一覧"
 
-#: describe.c:4979 describe.c:4983
+#: describe.c:4927 describe.c:4931
 msgid "Provider"
 msgstr "プロバイダー"
 
-#: describe.c:5017 describe.c:5022
+#: describe.c:4965 describe.c:4970
 msgid "Deterministic?"
 msgstr "確定的?"
 
-#: describe.c:5061
+#: describe.c:5009
 msgid "List of collations"
 msgstr "照合順序一覧"
 
-#: describe.c:5122
+#: describe.c:5070
 msgid "List of schemas"
 msgstr "スキーマ一覧"
 
-#: describe.c:5238
+#: describe.c:5186
 msgid "List of text search parsers"
 msgstr "テキスト検索用パーサ一覧"
 
-#: describe.c:5288
+#: describe.c:5236
 #, c-format
 msgid "Did not find any text search parser named \"%s\"."
 msgstr "テキスト検索用パーサ\"%s\"が見つかりませんでした。"
 
-#: describe.c:5291
+#: describe.c:5239
 #, c-format
 msgid "Did not find any text search parsers."
 msgstr "テキスト検索パーサが見つかりませんでした。"
 
-#: describe.c:5366
+#: describe.c:5314
 msgid "Start parse"
 msgstr "パース開始"
 
-#: describe.c:5367
+#: describe.c:5315
 msgid "Method"
 msgstr "メソッド"
 
-#: describe.c:5371
+#: describe.c:5319
 msgid "Get next token"
 msgstr "次のトークンを取得"
 
-#: describe.c:5373
+#: describe.c:5321
 msgid "End parse"
 msgstr "パース終了"
 
-#: describe.c:5375
+#: describe.c:5323
 msgid "Get headline"
 msgstr "見出しを取得"
 
-#: describe.c:5377
+#: describe.c:5325
 msgid "Get token types"
 msgstr "トークンタイプを取得"
 
-#: describe.c:5387
+#: describe.c:5335
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "テキスト検索パーサ\"%s.%s\""
 
-#: describe.c:5390
+#: describe.c:5338
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "テキスト検索パーサ\"%s\""
 
-#: describe.c:5409
+#: describe.c:5357
 msgid "Token name"
 msgstr "トークン名"
 
-#: describe.c:5422
+#: describe.c:5370
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "パーサ\"%s.%s\"のトークンタイプ"
 
-#: describe.c:5425
+#: describe.c:5373
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "パーサ\"%s\"のトークンタイプ"
 
-#: describe.c:5469
+#: describe.c:5417
 msgid "Template"
 msgstr "テンプレート"
 
-#: describe.c:5470
+#: describe.c:5418
 msgid "Init options"
 msgstr "初期化オプション"
 
-#: describe.c:5496
+#: describe.c:5444
 msgid "List of text search dictionaries"
 msgstr "テキスト検索用辞書一覧"
 
-#: describe.c:5529
+#: describe.c:5477
 msgid "Init"
 msgstr "初期化"
 
-#: describe.c:5530
+#: describe.c:5478
 msgid "Lexize"
 msgstr "Lex 処理"
 
-#: describe.c:5561
+#: describe.c:5509
 msgid "List of text search templates"
 msgstr "テキスト検索テンプレート一覧"
 
-#: describe.c:5615
+#: describe.c:5563
 msgid "List of text search configurations"
 msgstr "テキスト検索設定一覧"
 
-#: describe.c:5666
+#: describe.c:5614
 #, c-format
 msgid "Did not find any text search configuration named \"%s\"."
 msgstr "テキスト検索用設定\"%s\"が見つかりませんでした。"
 
-#: describe.c:5669
+#: describe.c:5617
 #, c-format
 msgid "Did not find any text search configurations."
 msgstr "テキスト検索設定が見つかりませんでした。"
 
-#: describe.c:5735
+#: describe.c:5683
 msgid "Token"
 msgstr "トークン"
 
-#: describe.c:5736
+#: describe.c:5684
 msgid "Dictionaries"
 msgstr "辞書"
 
-#: describe.c:5747
+#: describe.c:5695
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "テキスト検索設定\"%s.%s\""
 
-#: describe.c:5750
+#: describe.c:5698
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "テキスト検索設定\"%s\""
 
-#: describe.c:5754
+#: describe.c:5702
 #, c-format
 msgid ""
 "\n"
@@ -2235,7 +2238,7 @@ msgstr ""
 "\n"
 "パーサ: \"%s.%s\""
 
-#: describe.c:5757
+#: describe.c:5705
 #, c-format
 msgid ""
 "\n"
@@ -2244,269 +2247,269 @@ msgstr ""
 "\n"
 "パーサ: \"%s\""
 
-#: describe.c:5836
+#: describe.c:5784
 msgid "List of foreign-data wrappers"
 msgstr "外部データラッパ一覧"
 
-#: describe.c:5864
+#: describe.c:5812
 msgid "Foreign-data wrapper"
 msgstr "外部データラッパ"
 
-#: describe.c:5882 describe.c:6069
+#: describe.c:5830 describe.c:6017
 msgid "Version"
 msgstr "バージョン"
 
-#: describe.c:5912
+#: describe.c:5860
 msgid "List of foreign servers"
 msgstr "外部サーバー一覧"
 
-#: describe.c:5937 describe.c:5995
+#: describe.c:5885 describe.c:5943
 msgid "Server"
 msgstr "サーバー"
 
-#: describe.c:5938
+#: describe.c:5886
 msgid "User name"
 msgstr "ユーザー名"
 
-#: describe.c:5967
+#: describe.c:5915
 msgid "List of user mappings"
 msgstr "ユーザーマッピング一覧"
 
-#: describe.c:6039
+#: describe.c:5987
 msgid "List of foreign tables"
 msgstr "外部テーブル一覧"
 
-#: describe.c:6090
+#: describe.c:6038
 msgid "List of installed extensions"
 msgstr "インストール済みの拡張一覧"
 
-#: describe.c:6138
+#: describe.c:6086
 #, c-format
 msgid "Did not find any extension named \"%s\"."
 msgstr "\"%s\"という名前の機能拡張が見つかりませんでした。"
 
-#: describe.c:6141
+#: describe.c:6089
 #, c-format
 msgid "Did not find any extensions."
 msgstr "機能拡張が見つかりませんでした。"
 
-#: describe.c:6185
+#: describe.c:6133
 msgid "Object description"
 msgstr "オブジェクトの説明"
 
-#: describe.c:6194
+#: describe.c:6142
 #, c-format
 msgid "Objects in extension \"%s\""
 msgstr "機能拡張\"%s\"内のオブジェクト"
 
-#: describe.c:6235
+#: describe.c:6183
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "修飾名が不適切です(ドット区切りの名前が多すぎます): %s"
 
-#: describe.c:6249
+#: describe.c:6197
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "データベース間の参照は実装されていません: %s"
 
-#: describe.c:6280 describe.c:6406
+#: describe.c:6228 describe.c:6354
 #, c-format
 msgid "The server (version %s) does not support publications."
 msgstr "このサーバー(バージョン%s)はパブリケーションをサポートしていません。"
 
-#: describe.c:6297 describe.c:6484
+#: describe.c:6245 describe.c:6432
 msgid "All tables"
 msgstr "全テーブル"
 
-#: describe.c:6298 describe.c:6485
+#: describe.c:6246 describe.c:6433
 msgid "Inserts"
 msgstr "Insert文"
 
-#: describe.c:6299 describe.c:6486
+#: describe.c:6247 describe.c:6434
 msgid "Updates"
 msgstr "Update文"
 
-#: describe.c:6300 describe.c:6487
+#: describe.c:6248 describe.c:6435
 msgid "Deletes"
 msgstr "Delete文"
 
-#: describe.c:6304 describe.c:6489
+#: describe.c:6252 describe.c:6437
 msgid "Truncates"
 msgstr "Truncate文"
 
-#: describe.c:6308 describe.c:6491
+#: describe.c:6256 describe.c:6439
 msgid "Via root"
 msgstr "最上位パーティションテーブル経由"
 
-#: describe.c:6329
+#: describe.c:6277
 msgid "List of publications"
 msgstr "パブリケーション一覧"
 
-#: describe.c:6453
+#: describe.c:6401
 #, c-format
 msgid "Did not find any publication named \"%s\"."
 msgstr "\"%s\"という名前のパブリケーションが見つかりませんでした。"
 
-#: describe.c:6456
+#: describe.c:6404
 #, c-format
 msgid "Did not find any publications."
 msgstr "パブリケーションが見つかりませんでした。"
 
-#: describe.c:6480
+#: describe.c:6428
 #, c-format
 msgid "Publication %s"
 msgstr "パブリケーション %s"
 
-#: describe.c:6533
+#: describe.c:6481
 msgid "Tables:"
 msgstr "テーブル:"
 
-#: describe.c:6545
+#: describe.c:6493
 msgid "Tables from schemas:"
 msgstr "以下のスキーマ内のテーブル:"
 
-#: describe.c:6590
+#: describe.c:6538
 #, c-format
 msgid "The server (version %s) does not support subscriptions."
 msgstr "このサーバー(バージョン%s)はサブスクリプションをサポートしていません。"
 
-#: describe.c:6606
+#: describe.c:6554
 msgid "Publication"
 msgstr "パブリケーション"
 
-#: describe.c:6615
+#: describe.c:6563
 msgid "Binary"
 msgstr "バイナリ"
 
-#: describe.c:6624 describe.c:6628
+#: describe.c:6572 describe.c:6576
 msgid "Streaming"
 msgstr "ストリーミング"
 
-#: describe.c:6636
+#: describe.c:6584
 msgid "Two-phase commit"
 msgstr "2相コミット"
 
-#: describe.c:6637
+#: describe.c:6585
 msgid "Disable on error"
 msgstr "エラー時無効化"
 
-#: describe.c:6644
+#: describe.c:6592
 msgid "Origin"
 msgstr "起点"
 
-#: describe.c:6645
+#: describe.c:6593
 msgid "Password required"
 msgstr "パスワード必須"
 
-#: describe.c:6646
+#: describe.c:6594
 msgid "Run as owner?"
 msgstr "所有者として実行?"
 
-#: describe.c:6651
+#: describe.c:6599
 msgid "Failover"
 msgstr "フェイルオーバー"
 
-#: describe.c:6656
+#: describe.c:6604
 msgid "Synchronous commit"
 msgstr "同期コミット"
 
-#: describe.c:6657
+#: describe.c:6605
 msgid "Conninfo"
 msgstr "接続情報"
 
-#: describe.c:6663
+#: describe.c:6611
 msgid "Skip LSN"
 msgstr "スキップLSN"
 
-#: describe.c:6689
+#: describe.c:6637
 msgid "List of subscriptions"
 msgstr "サブスクリプション一覧"
 
-#: describe.c:6718
+#: describe.c:6666
 msgid "(none)"
 msgstr "(権限なし)"
 
-#: describe.c:6758 describe.c:6853 describe.c:6945 describe.c:7039
+#: describe.c:6706 describe.c:6801 describe.c:6893 describe.c:6987
 msgid "AM"
 msgstr "AM"
 
-#: describe.c:6759
+#: describe.c:6707
 msgid "Input type"
 msgstr "入力の型"
 
-#: describe.c:6760
+#: describe.c:6708
 msgid "Storage type"
 msgstr "ストレージタイプ"
 
-#: describe.c:6761
+#: describe.c:6709
 msgid "Operator class"
 msgstr "演算子クラス"
 
-#: describe.c:6773 describe.c:6854 describe.c:6946 describe.c:7040
+#: describe.c:6721 describe.c:6802 describe.c:6894 describe.c:6988
 msgid "Operator family"
 msgstr "演算子族"
 
-#: describe.c:6808
+#: describe.c:6756
 msgid "List of operator classes"
 msgstr "演算子クラス一覧"
 
-#: describe.c:6855
+#: describe.c:6803
 msgid "Applicable types"
 msgstr "適用可能型"
 
-#: describe.c:6896
+#: describe.c:6844
 msgid "List of operator families"
 msgstr "演算子族一覧"
 
-#: describe.c:6947
+#: describe.c:6895
 msgid "Operator"
 msgstr "演算子"
 
-#: describe.c:6948
+#: describe.c:6896
 msgid "Strategy"
 msgstr "ストラテジ"
 
-#: describe.c:6949
+#: describe.c:6897
 msgid "ordering"
 msgstr "順序付け"
 
-#: describe.c:6950
+#: describe.c:6898
 msgid "search"
 msgstr "検索"
 
-#: describe.c:6951
+#: describe.c:6899
 msgid "Purpose"
 msgstr "目的"
 
-#: describe.c:6956
+#: describe.c:6904
 msgid "Sort opfamily"
 msgstr "ソート演算子族"
 
-#: describe.c:6994
+#: describe.c:6942
 msgid "List of operators of operator families"
 msgstr "演算子族の演算子一覧"
 
-#: describe.c:7041
+#: describe.c:6989
 msgid "Registered left type"
 msgstr "登録左辺型"
 
-#: describe.c:7042
+#: describe.c:6990
 msgid "Registered right type"
 msgstr "登録右辺型"
 
-#: describe.c:7043
+#: describe.c:6991
 msgid "Number"
 msgstr "番号"
 
-#: describe.c:7086
+#: describe.c:7034
 msgid "List of support functions of operator families"
 msgstr "演算子族のサポート関数一覧"
 
-#: describe.c:7117
+#: describe.c:7065
 msgid "ID"
 msgstr "ID"
 
-#: describe.c:7137
+#: describe.c:7085
 msgid "Large objects"
 msgstr "ラージ オブジェクト"
 
@@ -2813,7 +2816,7 @@ msgstr "  \\q                     psql を終了する\n"
 #: help.c:178
 msgid ""
 "  \\watch [[i=]SEC] [c=N] [m=MIN]\n"
-"                         execute query every SEC seconds, up to N times\n"
+"                         execute query every SEC seconds, up to N times,\n"
 "                         stop if less than MIN rows are returned\n"
 msgstr ""
 "  \\watch [[i=]SEC] [c=N] [m=MIN]\n"
@@ -4103,11 +4106,6 @@ msgstr "問い合わせは無視されました; \\endifかCtrl-Cで現在の\\i
 msgid "reached EOF without finding closing \\endif(s)"
 msgstr "ブロックを閉じる\\endifを検出中に、ファイルの終端(EOF)に達しました"
 
-#: psqlscan.l:717
-#, c-format
-msgid "skipping recursive expansion of variable \"%s\""
-msgstr "変数\"%s\"の再帰展開をスキップしています"
-
 #: psqlscanslash.l:642
 #, c-format
 msgid "unterminated quoted string"
@@ -4121,31 +4119,31 @@ msgstr "%s: メモリ不足です"
 #: sql_help.c:35 sql_help.c:38 sql_help.c:41 sql_help.c:65 sql_help.c:66
 #: sql_help.c:68 sql_help.c:70 sql_help.c:81 sql_help.c:83 sql_help.c:85
 #: sql_help.c:113 sql_help.c:119 sql_help.c:121 sql_help.c:123 sql_help.c:125
-#: sql_help.c:126 sql_help.c:129 sql_help.c:131 sql_help.c:133 sql_help.c:238
-#: sql_help.c:240 sql_help.c:241 sql_help.c:243 sql_help.c:245 sql_help.c:248
-#: sql_help.c:250 sql_help.c:252 sql_help.c:254 sql_help.c:266 sql_help.c:267
-#: sql_help.c:268 sql_help.c:270 sql_help.c:319 sql_help.c:321 sql_help.c:323
-#: sql_help.c:325 sql_help.c:394 sql_help.c:399 sql_help.c:401 sql_help.c:443
-#: sql_help.c:445 sql_help.c:448 sql_help.c:450 sql_help.c:519 sql_help.c:524
-#: sql_help.c:529 sql_help.c:534 sql_help.c:539 sql_help.c:593 sql_help.c:595
-#: sql_help.c:597 sql_help.c:599 sql_help.c:601 sql_help.c:604 sql_help.c:606
-#: sql_help.c:609 sql_help.c:620 sql_help.c:622 sql_help.c:666 sql_help.c:668
-#: sql_help.c:670 sql_help.c:673 sql_help.c:675 sql_help.c:677 sql_help.c:718
-#: sql_help.c:722 sql_help.c:726 sql_help.c:747 sql_help.c:750 sql_help.c:753
-#: sql_help.c:782 sql_help.c:794 sql_help.c:802 sql_help.c:805 sql_help.c:808
-#: sql_help.c:823 sql_help.c:826 sql_help.c:855 sql_help.c:860 sql_help.c:865
-#: sql_help.c:870 sql_help.c:875 sql_help.c:902 sql_help.c:904 sql_help.c:906
-#: sql_help.c:908 sql_help.c:911 sql_help.c:913 sql_help.c:960 sql_help.c:1005
-#: sql_help.c:1010 sql_help.c:1015 sql_help.c:1020 sql_help.c:1025
-#: sql_help.c:1044 sql_help.c:1055 sql_help.c:1057 sql_help.c:1077
-#: sql_help.c:1087 sql_help.c:1088 sql_help.c:1090 sql_help.c:1092
-#: sql_help.c:1104 sql_help.c:1108 sql_help.c:1110 sql_help.c:1122
-#: sql_help.c:1124 sql_help.c:1126 sql_help.c:1128 sql_help.c:1147
-#: sql_help.c:1149 sql_help.c:1153 sql_help.c:1157 sql_help.c:1161
-#: sql_help.c:1164 sql_help.c:1165 sql_help.c:1166 sql_help.c:1169
-#: sql_help.c:1172 sql_help.c:1174 sql_help.c:1322 sql_help.c:1324
-#: sql_help.c:1327 sql_help.c:1330 sql_help.c:1332 sql_help.c:1334
-#: sql_help.c:1337 sql_help.c:1340 sql_help.c:1342 sql_help.c:1348
+#: sql_help.c:126 sql_help.c:129 sql_help.c:131 sql_help.c:133 sql_help.c:240
+#: sql_help.c:242 sql_help.c:243 sql_help.c:245 sql_help.c:247 sql_help.c:250
+#: sql_help.c:252 sql_help.c:254 sql_help.c:256 sql_help.c:268 sql_help.c:269
+#: sql_help.c:270 sql_help.c:272 sql_help.c:321 sql_help.c:323 sql_help.c:325
+#: sql_help.c:327 sql_help.c:396 sql_help.c:401 sql_help.c:403 sql_help.c:445
+#: sql_help.c:447 sql_help.c:450 sql_help.c:452 sql_help.c:521 sql_help.c:526
+#: sql_help.c:531 sql_help.c:536 sql_help.c:541 sql_help.c:595 sql_help.c:597
+#: sql_help.c:599 sql_help.c:601 sql_help.c:603 sql_help.c:606 sql_help.c:608
+#: sql_help.c:611 sql_help.c:622 sql_help.c:624 sql_help.c:668 sql_help.c:670
+#: sql_help.c:672 sql_help.c:675 sql_help.c:677 sql_help.c:679 sql_help.c:720
+#: sql_help.c:724 sql_help.c:728 sql_help.c:749 sql_help.c:752 sql_help.c:755
+#: sql_help.c:784 sql_help.c:796 sql_help.c:804 sql_help.c:807 sql_help.c:810
+#: sql_help.c:825 sql_help.c:828 sql_help.c:857 sql_help.c:862 sql_help.c:867
+#: sql_help.c:872 sql_help.c:877 sql_help.c:904 sql_help.c:906 sql_help.c:908
+#: sql_help.c:910 sql_help.c:913 sql_help.c:915 sql_help.c:962 sql_help.c:1007
+#: sql_help.c:1012 sql_help.c:1017 sql_help.c:1022 sql_help.c:1027
+#: sql_help.c:1046 sql_help.c:1057 sql_help.c:1059 sql_help.c:1079
+#: sql_help.c:1089 sql_help.c:1090 sql_help.c:1092 sql_help.c:1094
+#: sql_help.c:1106 sql_help.c:1110 sql_help.c:1112 sql_help.c:1124
+#: sql_help.c:1126 sql_help.c:1128 sql_help.c:1130 sql_help.c:1149
+#: sql_help.c:1151 sql_help.c:1155 sql_help.c:1159 sql_help.c:1163
+#: sql_help.c:1166 sql_help.c:1167 sql_help.c:1168 sql_help.c:1171
+#: sql_help.c:1174 sql_help.c:1176 sql_help.c:1323 sql_help.c:1325
+#: sql_help.c:1328 sql_help.c:1331 sql_help.c:1333 sql_help.c:1335
+#: sql_help.c:1338 sql_help.c:1341 sql_help.c:1343 sql_help.c:1349
 #: sql_help.c:1473 sql_help.c:1475 sql_help.c:1477 sql_help.c:1480
 #: sql_help.c:1501 sql_help.c:1504 sql_help.c:1507 sql_help.c:1510
 #: sql_help.c:1514 sql_help.c:1516 sql_help.c:1518 sql_help.c:1520
@@ -4162,118 +4160,118 @@ msgstr "%s: メモリ不足です"
 #: sql_help.c:2423 sql_help.c:2469 sql_help.c:2494 sql_help.c:2517
 #: sql_help.c:2521 sql_help.c:2555 sql_help.c:2575 sql_help.c:2597
 #: sql_help.c:2611 sql_help.c:2632 sql_help.c:2661 sql_help.c:2694
-#: sql_help.c:2717 sql_help.c:2764 sql_help.c:3068 sql_help.c:3081
-#: sql_help.c:3098 sql_help.c:3114 sql_help.c:3154 sql_help.c:3208
-#: sql_help.c:3212 sql_help.c:3214 sql_help.c:3221 sql_help.c:3240
-#: sql_help.c:3267 sql_help.c:3302 sql_help.c:3314 sql_help.c:3323
-#: sql_help.c:3367 sql_help.c:3381 sql_help.c:3409 sql_help.c:3417
-#: sql_help.c:3429 sql_help.c:3439 sql_help.c:3447 sql_help.c:3455
-#: sql_help.c:3463 sql_help.c:3471 sql_help.c:3480 sql_help.c:3491
-#: sql_help.c:3499 sql_help.c:3507 sql_help.c:3515 sql_help.c:3523
-#: sql_help.c:3533 sql_help.c:3542 sql_help.c:3551 sql_help.c:3559
-#: sql_help.c:3569 sql_help.c:3580 sql_help.c:3588 sql_help.c:3597
-#: sql_help.c:3608 sql_help.c:3617 sql_help.c:3625 sql_help.c:3633
-#: sql_help.c:3641 sql_help.c:3649 sql_help.c:3657 sql_help.c:3665
-#: sql_help.c:3673 sql_help.c:3681 sql_help.c:3689 sql_help.c:3697
-#: sql_help.c:3714 sql_help.c:3723 sql_help.c:3731 sql_help.c:3748
-#: sql_help.c:3763 sql_help.c:4076 sql_help.c:4197 sql_help.c:4226
-#: sql_help.c:4242 sql_help.c:4244 sql_help.c:4748 sql_help.c:4796
-#: sql_help.c:4955
+#: sql_help.c:2717 sql_help.c:2764 sql_help.c:3062 sql_help.c:3075
+#: sql_help.c:3092 sql_help.c:3108 sql_help.c:3148 sql_help.c:3202
+#: sql_help.c:3206 sql_help.c:3208 sql_help.c:3215 sql_help.c:3234
+#: sql_help.c:3261 sql_help.c:3296 sql_help.c:3308 sql_help.c:3317
+#: sql_help.c:3361 sql_help.c:3375 sql_help.c:3403 sql_help.c:3411
+#: sql_help.c:3423 sql_help.c:3433 sql_help.c:3441 sql_help.c:3449
+#: sql_help.c:3457 sql_help.c:3465 sql_help.c:3474 sql_help.c:3485
+#: sql_help.c:3493 sql_help.c:3501 sql_help.c:3509 sql_help.c:3517
+#: sql_help.c:3527 sql_help.c:3536 sql_help.c:3545 sql_help.c:3553
+#: sql_help.c:3563 sql_help.c:3574 sql_help.c:3582 sql_help.c:3591
+#: sql_help.c:3602 sql_help.c:3611 sql_help.c:3619 sql_help.c:3627
+#: sql_help.c:3635 sql_help.c:3643 sql_help.c:3651 sql_help.c:3659
+#: sql_help.c:3667 sql_help.c:3675 sql_help.c:3683 sql_help.c:3691
+#: sql_help.c:3708 sql_help.c:3717 sql_help.c:3725 sql_help.c:3742
+#: sql_help.c:3757 sql_help.c:4070 sql_help.c:4191 sql_help.c:4220
+#: sql_help.c:4236 sql_help.c:4238 sql_help.c:4742 sql_help.c:4790
+#: sql_help.c:4949
 msgid "name"
 msgstr "名前"
 
-#: sql_help.c:36 sql_help.c:39 sql_help.c:42 sql_help.c:330 sql_help.c:1872
-#: sql_help.c:3382 sql_help.c:4515
+#: sql_help.c:36 sql_help.c:39 sql_help.c:42 sql_help.c:332 sql_help.c:1872
+#: sql_help.c:3376 sql_help.c:4509
 msgid "aggregate_signature"
 msgstr "集約関数のシグニチャー"
 
-#: sql_help.c:37 sql_help.c:67 sql_help.c:82 sql_help.c:120 sql_help.c:253
-#: sql_help.c:271 sql_help.c:402 sql_help.c:449 sql_help.c:528 sql_help.c:576
-#: sql_help.c:594 sql_help.c:621 sql_help.c:674 sql_help.c:749 sql_help.c:804
-#: sql_help.c:825 sql_help.c:864 sql_help.c:914 sql_help.c:961 sql_help.c:1014
-#: sql_help.c:1046 sql_help.c:1056 sql_help.c:1091 sql_help.c:1111
-#: sql_help.c:1125 sql_help.c:1175 sql_help.c:1331 sql_help.c:1474
+#: sql_help.c:37 sql_help.c:67 sql_help.c:82 sql_help.c:120 sql_help.c:255
+#: sql_help.c:273 sql_help.c:404 sql_help.c:451 sql_help.c:530 sql_help.c:578
+#: sql_help.c:596 sql_help.c:623 sql_help.c:676 sql_help.c:751 sql_help.c:806
+#: sql_help.c:827 sql_help.c:866 sql_help.c:916 sql_help.c:963 sql_help.c:1016
+#: sql_help.c:1048 sql_help.c:1058 sql_help.c:1093 sql_help.c:1113
+#: sql_help.c:1127 sql_help.c:1177 sql_help.c:1332 sql_help.c:1474
 #: sql_help.c:1517 sql_help.c:1538 sql_help.c:1552 sql_help.c:1564
 #: sql_help.c:1577 sql_help.c:1604 sql_help.c:1670 sql_help.c:1723
 msgid "new_name"
 msgstr "新しい名前"
 
-#: sql_help.c:40 sql_help.c:69 sql_help.c:84 sql_help.c:122 sql_help.c:251
-#: sql_help.c:269 sql_help.c:400 sql_help.c:485 sql_help.c:533 sql_help.c:623
-#: sql_help.c:632 sql_help.c:697 sql_help.c:721 sql_help.c:752 sql_help.c:807
-#: sql_help.c:869 sql_help.c:912 sql_help.c:1019 sql_help.c:1058
-#: sql_help.c:1089 sql_help.c:1109 sql_help.c:1123 sql_help.c:1173
-#: sql_help.c:1407 sql_help.c:1476 sql_help.c:1519 sql_help.c:1540
-#: sql_help.c:1602 sql_help.c:1718 sql_help.c:3054
+#: sql_help.c:40 sql_help.c:69 sql_help.c:84 sql_help.c:122 sql_help.c:253
+#: sql_help.c:271 sql_help.c:402 sql_help.c:487 sql_help.c:535 sql_help.c:625
+#: sql_help.c:634 sql_help.c:699 sql_help.c:723 sql_help.c:754 sql_help.c:809
+#: sql_help.c:871 sql_help.c:914 sql_help.c:1021 sql_help.c:1060
+#: sql_help.c:1091 sql_help.c:1111 sql_help.c:1125 sql_help.c:1175
+#: sql_help.c:1408 sql_help.c:1476 sql_help.c:1519 sql_help.c:1540
+#: sql_help.c:1602 sql_help.c:1718 sql_help.c:3048
 msgid "new_owner"
 msgstr "新しい所有者"
 
-#: sql_help.c:43 sql_help.c:71 sql_help.c:86 sql_help.c:255 sql_help.c:322
-#: sql_help.c:451 sql_help.c:538 sql_help.c:676 sql_help.c:725 sql_help.c:755
-#: sql_help.c:810 sql_help.c:874 sql_help.c:1024 sql_help.c:1093
-#: sql_help.c:1127 sql_help.c:1333 sql_help.c:1521 sql_help.c:1542
+#: sql_help.c:43 sql_help.c:71 sql_help.c:86 sql_help.c:257 sql_help.c:324
+#: sql_help.c:453 sql_help.c:540 sql_help.c:678 sql_help.c:727 sql_help.c:757
+#: sql_help.c:812 sql_help.c:876 sql_help.c:1026 sql_help.c:1095
+#: sql_help.c:1129 sql_help.c:1334 sql_help.c:1521 sql_help.c:1542
 #: sql_help.c:1554 sql_help.c:1566 sql_help.c:1606 sql_help.c:1725
 msgid "new_schema"
 msgstr "新しいスキーマ"
 
-#: sql_help.c:44 sql_help.c:1936 sql_help.c:3383 sql_help.c:4544
+#: sql_help.c:44 sql_help.c:1936 sql_help.c:3377 sql_help.c:4538
 msgid "where aggregate_signature is:"
 msgstr "集約関数のシグニチャーには以下のものがあります:"
 
-#: sql_help.c:45 sql_help.c:48 sql_help.c:51 sql_help.c:340 sql_help.c:353
-#: sql_help.c:357 sql_help.c:373 sql_help.c:376 sql_help.c:379 sql_help.c:520
-#: sql_help.c:525 sql_help.c:530 sql_help.c:535 sql_help.c:540 sql_help.c:856
-#: sql_help.c:861 sql_help.c:866 sql_help.c:871 sql_help.c:876 sql_help.c:1006
-#: sql_help.c:1011 sql_help.c:1016 sql_help.c:1021 sql_help.c:1026
-#: sql_help.c:1890 sql_help.c:1907 sql_help.c:1913 sql_help.c:1937
-#: sql_help.c:1940 sql_help.c:1943 sql_help.c:2098 sql_help.c:2117
-#: sql_help.c:2120 sql_help.c:2424 sql_help.c:2633 sql_help.c:3384
-#: sql_help.c:3387 sql_help.c:3390 sql_help.c:3481 sql_help.c:3570
-#: sql_help.c:3598 sql_help.c:3951 sql_help.c:4414 sql_help.c:4521
-#: sql_help.c:4528 sql_help.c:4534 sql_help.c:4545 sql_help.c:4548
-#: sql_help.c:4551
-msgid "argmode"
-msgstr "引数のモード"
-
-#: sql_help.c:46 sql_help.c:49 sql_help.c:52 sql_help.c:341 sql_help.c:354
-#: sql_help.c:358 sql_help.c:374 sql_help.c:377 sql_help.c:380 sql_help.c:521
-#: sql_help.c:526 sql_help.c:531 sql_help.c:536 sql_help.c:541 sql_help.c:857
-#: sql_help.c:862 sql_help.c:867 sql_help.c:872 sql_help.c:877 sql_help.c:1007
-#: sql_help.c:1012 sql_help.c:1017 sql_help.c:1022 sql_help.c:1027
-#: sql_help.c:1891 sql_help.c:1908 sql_help.c:1914 sql_help.c:1938
-#: sql_help.c:1941 sql_help.c:1944 sql_help.c:2099 sql_help.c:2118
-#: sql_help.c:2121 sql_help.c:2425 sql_help.c:2634 sql_help.c:3385
-#: sql_help.c:3388 sql_help.c:3391 sql_help.c:3482 sql_help.c:3571
-#: sql_help.c:3599 sql_help.c:4522 sql_help.c:4529 sql_help.c:4535
-#: sql_help.c:4546 sql_help.c:4549 sql_help.c:4552
-msgid "argname"
-msgstr "引数の名前"
-
-#: sql_help.c:47 sql_help.c:50 sql_help.c:53 sql_help.c:342 sql_help.c:355
+#: sql_help.c:45 sql_help.c:48 sql_help.c:51 sql_help.c:342 sql_help.c:355
 #: sql_help.c:359 sql_help.c:375 sql_help.c:378 sql_help.c:381 sql_help.c:522
 #: sql_help.c:527 sql_help.c:532 sql_help.c:537 sql_help.c:542 sql_help.c:858
 #: sql_help.c:863 sql_help.c:868 sql_help.c:873 sql_help.c:878 sql_help.c:1008
 #: sql_help.c:1013 sql_help.c:1018 sql_help.c:1023 sql_help.c:1028
+#: sql_help.c:1890 sql_help.c:1907 sql_help.c:1913 sql_help.c:1937
+#: sql_help.c:1940 sql_help.c:1943 sql_help.c:2098 sql_help.c:2117
+#: sql_help.c:2120 sql_help.c:2424 sql_help.c:2633 sql_help.c:3378
+#: sql_help.c:3381 sql_help.c:3384 sql_help.c:3475 sql_help.c:3564
+#: sql_help.c:3592 sql_help.c:3945 sql_help.c:4408 sql_help.c:4515
+#: sql_help.c:4522 sql_help.c:4528 sql_help.c:4539 sql_help.c:4542
+#: sql_help.c:4545
+msgid "argmode"
+msgstr "引数のモード"
+
+#: sql_help.c:46 sql_help.c:49 sql_help.c:52 sql_help.c:343 sql_help.c:356
+#: sql_help.c:360 sql_help.c:376 sql_help.c:379 sql_help.c:382 sql_help.c:523
+#: sql_help.c:528 sql_help.c:533 sql_help.c:538 sql_help.c:543 sql_help.c:859
+#: sql_help.c:864 sql_help.c:869 sql_help.c:874 sql_help.c:879 sql_help.c:1009
+#: sql_help.c:1014 sql_help.c:1019 sql_help.c:1024 sql_help.c:1029
+#: sql_help.c:1891 sql_help.c:1908 sql_help.c:1914 sql_help.c:1938
+#: sql_help.c:1941 sql_help.c:1944 sql_help.c:2099 sql_help.c:2118
+#: sql_help.c:2121 sql_help.c:2425 sql_help.c:2634 sql_help.c:3379
+#: sql_help.c:3382 sql_help.c:3385 sql_help.c:3476 sql_help.c:3565
+#: sql_help.c:3593 sql_help.c:4516 sql_help.c:4523 sql_help.c:4529
+#: sql_help.c:4540 sql_help.c:4543 sql_help.c:4546
+msgid "argname"
+msgstr "引数の名前"
+
+#: sql_help.c:47 sql_help.c:50 sql_help.c:53 sql_help.c:344 sql_help.c:357
+#: sql_help.c:361 sql_help.c:377 sql_help.c:380 sql_help.c:383 sql_help.c:524
+#: sql_help.c:529 sql_help.c:534 sql_help.c:539 sql_help.c:544 sql_help.c:860
+#: sql_help.c:865 sql_help.c:870 sql_help.c:875 sql_help.c:880 sql_help.c:1010
+#: sql_help.c:1015 sql_help.c:1020 sql_help.c:1025 sql_help.c:1030
 #: sql_help.c:1892 sql_help.c:1909 sql_help.c:1915 sql_help.c:1939
 #: sql_help.c:1942 sql_help.c:1945 sql_help.c:2426 sql_help.c:2635
-#: sql_help.c:3386 sql_help.c:3389 sql_help.c:3392 sql_help.c:3483
-#: sql_help.c:3572 sql_help.c:3600 sql_help.c:4523 sql_help.c:4530
-#: sql_help.c:4536 sql_help.c:4547 sql_help.c:4550 sql_help.c:4553
+#: sql_help.c:3380 sql_help.c:3383 sql_help.c:3386 sql_help.c:3477
+#: sql_help.c:3566 sql_help.c:3594 sql_help.c:4517 sql_help.c:4524
+#: sql_help.c:4530 sql_help.c:4541 sql_help.c:4544 sql_help.c:4547
 msgid "argtype"
 msgstr "引数の型"
 
-#: sql_help.c:114 sql_help.c:397 sql_help.c:474 sql_help.c:486 sql_help.c:955
-#: sql_help.c:1106 sql_help.c:1535 sql_help.c:1664 sql_help.c:1696
+#: sql_help.c:114 sql_help.c:399 sql_help.c:476 sql_help.c:488 sql_help.c:957
+#: sql_help.c:1108 sql_help.c:1535 sql_help.c:1664 sql_help.c:1696
 #: sql_help.c:1748 sql_help.c:1807 sql_help.c:1996 sql_help.c:2003
 #: sql_help.c:2315 sql_help.c:2365 sql_help.c:2372 sql_help.c:2381
-#: sql_help.c:2470 sql_help.c:2695 sql_help.c:2786 sql_help.c:3083
-#: sql_help.c:3268 sql_help.c:3290 sql_help.c:3430 sql_help.c:3787
-#: sql_help.c:3995 sql_help.c:4241 sql_help.c:4243 sql_help.c:5021
+#: sql_help.c:2470 sql_help.c:2695 sql_help.c:2786 sql_help.c:3077
+#: sql_help.c:3262 sql_help.c:3284 sql_help.c:3424 sql_help.c:3781
+#: sql_help.c:3989 sql_help.c:4235 sql_help.c:4237 sql_help.c:5015
 msgid "option"
 msgstr "オプション"
 
-#: sql_help.c:115 sql_help.c:956 sql_help.c:1665 sql_help.c:2471
-#: sql_help.c:2696 sql_help.c:3269 sql_help.c:3431
+#: sql_help.c:115 sql_help.c:958 sql_help.c:1665 sql_help.c:2471
+#: sql_help.c:2696 sql_help.c:3263 sql_help.c:3425
 msgid "where option can be:"
 msgstr "オプションには以下のものがあります:"
 
@@ -4281,8 +4279,8 @@ msgstr "オプションには以下のものがあります:"
 msgid "allowconn"
 msgstr "接続の可否(真偽値)"
 
-#: sql_help.c:117 sql_help.c:957 sql_help.c:1666 sql_help.c:2248
-#: sql_help.c:2472 sql_help.c:2697 sql_help.c:3270
+#: sql_help.c:117 sql_help.c:959 sql_help.c:1666 sql_help.c:2248
+#: sql_help.c:2472 sql_help.c:2697 sql_help.c:3264
 msgid "connlimit"
 msgstr "最大同時接続数"
 
@@ -4290,624 +4288,623 @@ msgstr "最大同時接続数"
 msgid "istemplate"
 msgstr "テンプレートかどうか(真偽値)"
 
-#: sql_help.c:124 sql_help.c:611 sql_help.c:679 sql_help.c:693 sql_help.c:1336
-#: sql_help.c:1400 sql_help.c:4247
+#: sql_help.c:124 sql_help.c:613 sql_help.c:681 sql_help.c:695 sql_help.c:1337
+#: sql_help.c:1401 sql_help.c:4241
 msgid "new_tablespace"
 msgstr "新しいテーブル空間名"
 
-#: sql_help.c:127 sql_help.c:130 sql_help.c:132 sql_help.c:548 sql_help.c:550
-#: sql_help.c:551 sql_help.c:881 sql_help.c:883 sql_help.c:884 sql_help.c:964
-#: sql_help.c:968 sql_help.c:971 sql_help.c:1033 sql_help.c:1035
-#: sql_help.c:1036 sql_help.c:1186 sql_help.c:1188 sql_help.c:1673
+#: sql_help.c:127 sql_help.c:130 sql_help.c:132 sql_help.c:550 sql_help.c:552
+#: sql_help.c:553 sql_help.c:883 sql_help.c:885 sql_help.c:886 sql_help.c:966
+#: sql_help.c:970 sql_help.c:973 sql_help.c:1035 sql_help.c:1037
+#: sql_help.c:1038 sql_help.c:1188 sql_help.c:1190 sql_help.c:1673
 #: sql_help.c:1677 sql_help.c:1680 sql_help.c:2436 sql_help.c:2639
-#: sql_help.c:3963 sql_help.c:4265 sql_help.c:4426 sql_help.c:4736
+#: sql_help.c:3957 sql_help.c:4259 sql_help.c:4420 sql_help.c:4730
 msgid "configuration_parameter"
 msgstr "設定パラメータ"
 
-#: sql_help.c:128 sql_help.c:398 sql_help.c:469 sql_help.c:475 sql_help.c:487
-#: sql_help.c:549 sql_help.c:603 sql_help.c:685 sql_help.c:695 sql_help.c:882
-#: sql_help.c:910 sql_help.c:965 sql_help.c:1034 sql_help.c:1107
-#: sql_help.c:1152 sql_help.c:1156 sql_help.c:1160 sql_help.c:1163
-#: sql_help.c:1168 sql_help.c:1171 sql_help.c:1187 sql_help.c:1379
-#: sql_help.c:1402 sql_help.c:1451 sql_help.c:1459 sql_help.c:1479
+#: sql_help.c:128 sql_help.c:400 sql_help.c:471 sql_help.c:477 sql_help.c:489
+#: sql_help.c:551 sql_help.c:605 sql_help.c:687 sql_help.c:697 sql_help.c:884
+#: sql_help.c:912 sql_help.c:967 sql_help.c:1036 sql_help.c:1109
+#: sql_help.c:1154 sql_help.c:1158 sql_help.c:1162 sql_help.c:1165
+#: sql_help.c:1170 sql_help.c:1173 sql_help.c:1189 sql_help.c:1380
+#: sql_help.c:1403 sql_help.c:1451 sql_help.c:1459 sql_help.c:1479
 #: sql_help.c:1536 sql_help.c:1620 sql_help.c:1674 sql_help.c:1697
 #: sql_help.c:2316 sql_help.c:2366 sql_help.c:2373 sql_help.c:2382
 #: sql_help.c:2437 sql_help.c:2438 sql_help.c:2502 sql_help.c:2505
 #: sql_help.c:2539 sql_help.c:2640 sql_help.c:2641 sql_help.c:2664
-#: sql_help.c:2787 sql_help.c:2826 sql_help.c:2937 sql_help.c:2950
-#: sql_help.c:2964 sql_help.c:3010 sql_help.c:3018 sql_help.c:3040
-#: sql_help.c:3057 sql_help.c:3084 sql_help.c:3291 sql_help.c:3996
-#: sql_help.c:4737 sql_help.c:4738 sql_help.c:4739 sql_help.c:4740
+#: sql_help.c:2787 sql_help.c:2826 sql_help.c:2936 sql_help.c:2949
+#: sql_help.c:2963 sql_help.c:3004 sql_help.c:3012 sql_help.c:3034
+#: sql_help.c:3051 sql_help.c:3078 sql_help.c:3285 sql_help.c:3990
+#: sql_help.c:4731 sql_help.c:4732 sql_help.c:4733 sql_help.c:4734
 msgid "value"
 msgstr "値"
 
-#: sql_help.c:200
+#: sql_help.c:202
 msgid "target_role"
 msgstr "対象のロール"
 
-#: sql_help.c:201 sql_help.c:919 sql_help.c:2300 sql_help.c:2669
-#: sql_help.c:2742 sql_help.c:2747 sql_help.c:3926 sql_help.c:3935
-#: sql_help.c:3954 sql_help.c:3966 sql_help.c:4389 sql_help.c:4398
-#: sql_help.c:4417 sql_help.c:4429
+#: sql_help.c:203 sql_help.c:921 sql_help.c:2300 sql_help.c:2669
+#: sql_help.c:2742 sql_help.c:2747 sql_help.c:3920 sql_help.c:3929
+#: sql_help.c:3948 sql_help.c:3960 sql_help.c:4383 sql_help.c:4392
+#: sql_help.c:4411 sql_help.c:4423
 msgid "schema_name"
 msgstr "スキーマ名"
 
-#: sql_help.c:202
+#: sql_help.c:204
 msgid "abbreviated_grant_or_revoke"
 msgstr "GRANT/REVOKEの省略形"
 
-#: sql_help.c:203
+#: sql_help.c:205
 msgid "where abbreviated_grant_or_revoke is one of:"
 msgstr "GRANT/REVOKEの省略形は以下のいずれかです:"
 
-#: sql_help.c:204 sql_help.c:205 sql_help.c:206 sql_help.c:207 sql_help.c:208
-#: sql_help.c:209 sql_help.c:210 sql_help.c:211 sql_help.c:212 sql_help.c:213
-#: sql_help.c:574 sql_help.c:610 sql_help.c:678 sql_help.c:828 sql_help.c:975
-#: sql_help.c:1335 sql_help.c:1684 sql_help.c:2475 sql_help.c:2476
+#: sql_help.c:206 sql_help.c:207 sql_help.c:208 sql_help.c:209 sql_help.c:210
+#: sql_help.c:211 sql_help.c:212 sql_help.c:213 sql_help.c:214 sql_help.c:215
+#: sql_help.c:576 sql_help.c:612 sql_help.c:680 sql_help.c:830 sql_help.c:977
+#: sql_help.c:1336 sql_help.c:1684 sql_help.c:2475 sql_help.c:2476
 #: sql_help.c:2477 sql_help.c:2478 sql_help.c:2479 sql_help.c:2613
-#: sql_help.c:2700 sql_help.c:2701 sql_help.c:2702 sql_help.c:3273
-#: sql_help.c:3274 sql_help.c:3275 sql_help.c:3276 sql_help.c:3277
-#: sql_help.c:3975 sql_help.c:3979 sql_help.c:4438 sql_help.c:4442
-#: sql_help.c:4758
+#: sql_help.c:2700 sql_help.c:2701 sql_help.c:2702 sql_help.c:3267
+#: sql_help.c:3268 sql_help.c:3269 sql_help.c:3270 sql_help.c:3271
+#: sql_help.c:3969 sql_help.c:3973 sql_help.c:4432 sql_help.c:4436
+#: sql_help.c:4752
 msgid "role_name"
 msgstr "ロール名"
 
-#: sql_help.c:239 sql_help.c:462 sql_help.c:918 sql_help.c:1361 sql_help.c:1363
-#: sql_help.c:1367 sql_help.c:1417 sql_help.c:1429 sql_help.c:1455
+#: sql_help.c:241 sql_help.c:464 sql_help.c:920 sql_help.c:1362 sql_help.c:1364
+#: sql_help.c:1368 sql_help.c:1418 sql_help.c:1430 sql_help.c:1455
 #: sql_help.c:1714 sql_help.c:2269 sql_help.c:2273 sql_help.c:2385
 #: sql_help.c:2390 sql_help.c:2498 sql_help.c:2668 sql_help.c:2803
-#: sql_help.c:2808 sql_help.c:2810 sql_help.c:2932 sql_help.c:2945
-#: sql_help.c:2959 sql_help.c:2968 sql_help.c:2980 sql_help.c:3014
-#: sql_help.c:4027 sql_help.c:4042 sql_help.c:4044 sql_help.c:4140
-#: sql_help.c:4143 sql_help.c:4145 sql_help.c:4608 sql_help.c:4609
-#: sql_help.c:4618 sql_help.c:4665 sql_help.c:4666 sql_help.c:4667
-#: sql_help.c:4668 sql_help.c:4669 sql_help.c:4670 sql_help.c:4711
-#: sql_help.c:4712 sql_help.c:4717 sql_help.c:4722 sql_help.c:4866
-#: sql_help.c:4867 sql_help.c:4876 sql_help.c:4923 sql_help.c:4924
-#: sql_help.c:4925 sql_help.c:4926 sql_help.c:4927 sql_help.c:4928
-#: sql_help.c:4983 sql_help.c:4985 sql_help.c:5051 sql_help.c:5111
-#: sql_help.c:5112 sql_help.c:5121 sql_help.c:5168 sql_help.c:5169
-#: sql_help.c:5170 sql_help.c:5171 sql_help.c:5172 sql_help.c:5173
+#: sql_help.c:2808 sql_help.c:2810 sql_help.c:2931 sql_help.c:2944
+#: sql_help.c:2958 sql_help.c:2967 sql_help.c:2979 sql_help.c:3008
+#: sql_help.c:4021 sql_help.c:4036 sql_help.c:4038 sql_help.c:4134
+#: sql_help.c:4137 sql_help.c:4139 sql_help.c:4602 sql_help.c:4603
+#: sql_help.c:4612 sql_help.c:4659 sql_help.c:4660 sql_help.c:4661
+#: sql_help.c:4662 sql_help.c:4663 sql_help.c:4664 sql_help.c:4705
+#: sql_help.c:4706 sql_help.c:4711 sql_help.c:4716 sql_help.c:4860
+#: sql_help.c:4861 sql_help.c:4870 sql_help.c:4917 sql_help.c:4918
+#: sql_help.c:4919 sql_help.c:4920 sql_help.c:4921 sql_help.c:4922
+#: sql_help.c:4977 sql_help.c:4979 sql_help.c:5045 sql_help.c:5105
+#: sql_help.c:5106 sql_help.c:5115 sql_help.c:5162 sql_help.c:5163
+#: sql_help.c:5164 sql_help.c:5165 sql_help.c:5166 sql_help.c:5167
 msgid "expression"
 msgstr "評価式"
 
-#: sql_help.c:242 sql_help.c:2270
+#: sql_help.c:244 sql_help.c:2270
 msgid "domain_constraint"
 msgstr "ドメイン制約"
 
-#: sql_help.c:244 sql_help.c:246 sql_help.c:249 sql_help.c:477 sql_help.c:478
-#: sql_help.c:1328 sql_help.c:1387 sql_help.c:1388 sql_help.c:1389
-#: sql_help.c:1416 sql_help.c:1428 sql_help.c:1446 sql_help.c:1878
+#: sql_help.c:246 sql_help.c:248 sql_help.c:251 sql_help.c:479 sql_help.c:480
+#: sql_help.c:1329 sql_help.c:1388 sql_help.c:1389 sql_help.c:1390
+#: sql_help.c:1417 sql_help.c:1429 sql_help.c:1446 sql_help.c:1878
 #: sql_help.c:1880 sql_help.c:2272 sql_help.c:2384 sql_help.c:2389
-#: sql_help.c:2967 sql_help.c:2979 sql_help.c:4039
+#: sql_help.c:2966 sql_help.c:2978 sql_help.c:4033
 msgid "constraint_name"
 msgstr "制約名"
 
-#: sql_help.c:247 sql_help.c:1329
+#: sql_help.c:249 sql_help.c:1330
 msgid "new_constraint_name"
 msgstr "新しい制約名"
 
-#: sql_help.c:320 sql_help.c:1105
+#: sql_help.c:322 sql_help.c:1107
 msgid "new_version"
 msgstr "新しいバージョン"
 
-#: sql_help.c:324 sql_help.c:326
+#: sql_help.c:326 sql_help.c:328
 msgid "member_object"
 msgstr "メンバーオブジェクト"
 
-#: sql_help.c:327
+#: sql_help.c:329
 msgid "where member_object is:"
 msgstr "メンバーオブジェクトは以下の通りです:"
 
-#: sql_help.c:328 sql_help.c:333 sql_help.c:334 sql_help.c:335 sql_help.c:336
-#: sql_help.c:337 sql_help.c:338 sql_help.c:343 sql_help.c:347 sql_help.c:349
-#: sql_help.c:351 sql_help.c:360 sql_help.c:361 sql_help.c:362 sql_help.c:363
-#: sql_help.c:364 sql_help.c:365 sql_help.c:366 sql_help.c:367 sql_help.c:370
-#: sql_help.c:371 sql_help.c:1870 sql_help.c:1875 sql_help.c:1882
+#: sql_help.c:330 sql_help.c:335 sql_help.c:336 sql_help.c:337 sql_help.c:338
+#: sql_help.c:339 sql_help.c:340 sql_help.c:345 sql_help.c:349 sql_help.c:351
+#: sql_help.c:353 sql_help.c:362 sql_help.c:363 sql_help.c:364 sql_help.c:365
+#: sql_help.c:366 sql_help.c:367 sql_help.c:368 sql_help.c:369 sql_help.c:372
+#: sql_help.c:373 sql_help.c:1870 sql_help.c:1875 sql_help.c:1882
 #: sql_help.c:1883 sql_help.c:1884 sql_help.c:1885 sql_help.c:1886
 #: sql_help.c:1887 sql_help.c:1888 sql_help.c:1893 sql_help.c:1895
 #: sql_help.c:1899 sql_help.c:1901 sql_help.c:1905 sql_help.c:1910
 #: sql_help.c:1911 sql_help.c:1918 sql_help.c:1919 sql_help.c:1920
 #: sql_help.c:1921 sql_help.c:1922 sql_help.c:1923 sql_help.c:1924
 #: sql_help.c:1925 sql_help.c:1926 sql_help.c:1927 sql_help.c:1928
-#: sql_help.c:1933 sql_help.c:1934 sql_help.c:4511 sql_help.c:4516
-#: sql_help.c:4517 sql_help.c:4518 sql_help.c:4519 sql_help.c:4525
-#: sql_help.c:4526 sql_help.c:4531 sql_help.c:4532 sql_help.c:4537
-#: sql_help.c:4538 sql_help.c:4539 sql_help.c:4540 sql_help.c:4541
-#: sql_help.c:4542
+#: sql_help.c:1933 sql_help.c:1934 sql_help.c:4505 sql_help.c:4510
+#: sql_help.c:4511 sql_help.c:4512 sql_help.c:4513 sql_help.c:4519
+#: sql_help.c:4520 sql_help.c:4525 sql_help.c:4526 sql_help.c:4531
+#: sql_help.c:4532 sql_help.c:4533 sql_help.c:4534 sql_help.c:4535
+#: sql_help.c:4536
 msgid "object_name"
 msgstr "オブジェクト名"
 
-#: sql_help.c:329 sql_help.c:1871 sql_help.c:4514
+#: sql_help.c:331 sql_help.c:1871 sql_help.c:4508
 msgid "aggregate_name"
 msgstr "集約関数名"
 
-#: sql_help.c:331 sql_help.c:1873 sql_help.c:2163 sql_help.c:2167
-#: sql_help.c:2169 sql_help.c:3400
+#: sql_help.c:333 sql_help.c:1873 sql_help.c:2163 sql_help.c:2167
+#: sql_help.c:2169 sql_help.c:3394
 msgid "source_type"
 msgstr "変換前の型"
 
-#: sql_help.c:332 sql_help.c:1874 sql_help.c:2164 sql_help.c:2168
-#: sql_help.c:2170 sql_help.c:3401
+#: sql_help.c:334 sql_help.c:1874 sql_help.c:2164 sql_help.c:2168
+#: sql_help.c:2170 sql_help.c:3395
 msgid "target_type"
 msgstr "変換後の型"
 
-#: sql_help.c:339 sql_help.c:792 sql_help.c:1889 sql_help.c:2165
+#: sql_help.c:341 sql_help.c:794 sql_help.c:1889 sql_help.c:2165
 #: sql_help.c:2208 sql_help.c:2288 sql_help.c:2556 sql_help.c:2587
-#: sql_help.c:3160 sql_help.c:4413 sql_help.c:4520 sql_help.c:4637
-#: sql_help.c:4641 sql_help.c:4645 sql_help.c:4648 sql_help.c:4895
-#: sql_help.c:4899 sql_help.c:4903 sql_help.c:4906 sql_help.c:5140
-#: sql_help.c:5144 sql_help.c:5148 sql_help.c:5151
+#: sql_help.c:3154 sql_help.c:4407 sql_help.c:4514 sql_help.c:4631
+#: sql_help.c:4635 sql_help.c:4639 sql_help.c:4642 sql_help.c:4889
+#: sql_help.c:4893 sql_help.c:4897 sql_help.c:4900 sql_help.c:5134
+#: sql_help.c:5138 sql_help.c:5142 sql_help.c:5145
 msgid "function_name"
 msgstr "関数名"
 
-#: sql_help.c:344 sql_help.c:785 sql_help.c:1896 sql_help.c:2580
+#: sql_help.c:346 sql_help.c:787 sql_help.c:1896 sql_help.c:2580
 msgid "operator_name"
 msgstr "演算子名"
 
-#: sql_help.c:345 sql_help.c:719 sql_help.c:723 sql_help.c:727 sql_help.c:1897
-#: sql_help.c:2557 sql_help.c:3524
+#: sql_help.c:347 sql_help.c:721 sql_help.c:725 sql_help.c:729 sql_help.c:1897
+#: sql_help.c:2557 sql_help.c:3518
 msgid "left_type"
 msgstr "左辺の型"
 
-#: sql_help.c:346 sql_help.c:720 sql_help.c:724 sql_help.c:728 sql_help.c:1898
-#: sql_help.c:2558 sql_help.c:3525
+#: sql_help.c:348 sql_help.c:722 sql_help.c:726 sql_help.c:730 sql_help.c:1898
+#: sql_help.c:2558 sql_help.c:3519
 msgid "right_type"
 msgstr "右辺の型"
 
-#: sql_help.c:348 sql_help.c:350 sql_help.c:748 sql_help.c:751 sql_help.c:754
-#: sql_help.c:783 sql_help.c:795 sql_help.c:803 sql_help.c:806 sql_help.c:809
+#: sql_help.c:350 sql_help.c:352 sql_help.c:750 sql_help.c:753 sql_help.c:756
+#: sql_help.c:785 sql_help.c:797 sql_help.c:805 sql_help.c:808 sql_help.c:811
 #: sql_help.c:1435 sql_help.c:1900 sql_help.c:1902 sql_help.c:2577
-#: sql_help.c:2598 sql_help.c:2988 sql_help.c:3534 sql_help.c:3543
+#: sql_help.c:2598 sql_help.c:2984 sql_help.c:3528 sql_help.c:3537
 msgid "index_method"
 msgstr "インデックスメソッド"
 
-#: sql_help.c:352 sql_help.c:1906 sql_help.c:4527
+#: sql_help.c:354 sql_help.c:1906 sql_help.c:4521
 msgid "procedure_name"
 msgstr "プロシージャ名"
 
-#: sql_help.c:356 sql_help.c:1912 sql_help.c:3950 sql_help.c:4533
+#: sql_help.c:358 sql_help.c:1912 sql_help.c:3944 sql_help.c:4527
 msgid "routine_name"
 msgstr "ルーチン名"
 
-#: sql_help.c:368 sql_help.c:1406 sql_help.c:1929 sql_help.c:2432
-#: sql_help.c:2638 sql_help.c:2940 sql_help.c:3127 sql_help.c:3705
-#: sql_help.c:3972 sql_help.c:4435
+#: sql_help.c:370 sql_help.c:1407 sql_help.c:1929 sql_help.c:2432
+#: sql_help.c:2638 sql_help.c:2939 sql_help.c:3121 sql_help.c:3699
+#: sql_help.c:3966 sql_help.c:4429
 msgid "type_name"
 msgstr "型名"
 
-#: sql_help.c:369 sql_help.c:1930 sql_help.c:2431 sql_help.c:2637
-#: sql_help.c:3128 sql_help.c:3358 sql_help.c:3706 sql_help.c:3957
-#: sql_help.c:4420
+#: sql_help.c:371 sql_help.c:1930 sql_help.c:2431 sql_help.c:2637
+#: sql_help.c:3122 sql_help.c:3352 sql_help.c:3700 sql_help.c:3951
+#: sql_help.c:4414
 msgid "lang_name"
 msgstr "言語名"
 
-#: sql_help.c:372
+#: sql_help.c:374
 msgid "and aggregate_signature is:"
 msgstr "集約関数のシグニチャーは以下の通りです:"
 
-#: sql_help.c:395 sql_help.c:2030 sql_help.c:2313
+#: sql_help.c:397 sql_help.c:2030 sql_help.c:2313
 msgid "handler_function"
 msgstr "ハンドラー関数"
 
-#: sql_help.c:396 sql_help.c:2314
+#: sql_help.c:398 sql_help.c:2314
 msgid "validator_function"
 msgstr "バリデーター関数"
 
-#: sql_help.c:444 sql_help.c:523 sql_help.c:667 sql_help.c:859 sql_help.c:1009
-#: sql_help.c:1323 sql_help.c:1611
+#: sql_help.c:446 sql_help.c:525 sql_help.c:669 sql_help.c:861 sql_help.c:1011
+#: sql_help.c:1324 sql_help.c:1611
 msgid "action"
 msgstr "アクション"
 
-#: sql_help.c:446 sql_help.c:453 sql_help.c:457 sql_help.c:458 sql_help.c:461
-#: sql_help.c:463 sql_help.c:464 sql_help.c:465 sql_help.c:467 sql_help.c:470
-#: sql_help.c:472 sql_help.c:473 sql_help.c:671 sql_help.c:681 sql_help.c:683
-#: sql_help.c:686 sql_help.c:688 sql_help.c:689 sql_help.c:917 sql_help.c:1086
-#: sql_help.c:1325 sql_help.c:1353 sql_help.c:1357 sql_help.c:1358
-#: sql_help.c:1362 sql_help.c:1364 sql_help.c:1365 sql_help.c:1366
-#: sql_help.c:1368 sql_help.c:1369 sql_help.c:1371 sql_help.c:1374
-#: sql_help.c:1375 sql_help.c:1377 sql_help.c:1380 sql_help.c:1382
-#: sql_help.c:1383 sql_help.c:1430 sql_help.c:1431 sql_help.c:1433
-#: sql_help.c:1440 sql_help.c:1449 sql_help.c:1454 sql_help.c:1461
-#: sql_help.c:1462 sql_help.c:1713 sql_help.c:1716 sql_help.c:1720
-#: sql_help.c:1756 sql_help.c:1877 sql_help.c:1993 sql_help.c:1999
-#: sql_help.c:2013 sql_help.c:2014 sql_help.c:2015 sql_help.c:2363
-#: sql_help.c:2376 sql_help.c:2429 sql_help.c:2497 sql_help.c:2503
-#: sql_help.c:2536 sql_help.c:2667 sql_help.c:2772 sql_help.c:2807
-#: sql_help.c:2809 sql_help.c:2922 sql_help.c:2931 sql_help.c:2941
-#: sql_help.c:2944 sql_help.c:2954 sql_help.c:2958 sql_help.c:2981
-#: sql_help.c:2982 sql_help.c:2983 sql_help.c:2985 sql_help.c:2986
-#: sql_help.c:2993 sql_help.c:2994 sql_help.c:2997 sql_help.c:3008
-#: sql_help.c:3013 sql_help.c:3020 sql_help.c:3021 sql_help.c:3037
-#: sql_help.c:3163 sql_help.c:3303 sql_help.c:3929 sql_help.c:3930
-#: sql_help.c:4026 sql_help.c:4041 sql_help.c:4043 sql_help.c:4045
-#: sql_help.c:4139 sql_help.c:4142 sql_help.c:4144 sql_help.c:4146
-#: sql_help.c:4392 sql_help.c:4393 sql_help.c:4513 sql_help.c:4674
-#: sql_help.c:4681 sql_help.c:4683 sql_help.c:4932 sql_help.c:4939
-#: sql_help.c:4941 sql_help.c:4982 sql_help.c:4984 sql_help.c:4986
-#: sql_help.c:5039 sql_help.c:5177 sql_help.c:5184 sql_help.c:5186
+#: sql_help.c:448 sql_help.c:455 sql_help.c:459 sql_help.c:460 sql_help.c:463
+#: sql_help.c:465 sql_help.c:466 sql_help.c:467 sql_help.c:469 sql_help.c:472
+#: sql_help.c:474 sql_help.c:475 sql_help.c:673 sql_help.c:683 sql_help.c:685
+#: sql_help.c:688 sql_help.c:690 sql_help.c:691 sql_help.c:919 sql_help.c:1088
+#: sql_help.c:1326 sql_help.c:1354 sql_help.c:1358 sql_help.c:1359
+#: sql_help.c:1363 sql_help.c:1365 sql_help.c:1366 sql_help.c:1367
+#: sql_help.c:1369 sql_help.c:1370 sql_help.c:1372 sql_help.c:1375
+#: sql_help.c:1376 sql_help.c:1378 sql_help.c:1381 sql_help.c:1383
+#: sql_help.c:1384 sql_help.c:1431 sql_help.c:1433 sql_help.c:1440
+#: sql_help.c:1449 sql_help.c:1454 sql_help.c:1461 sql_help.c:1462
+#: sql_help.c:1713 sql_help.c:1716 sql_help.c:1720 sql_help.c:1756
+#: sql_help.c:1877 sql_help.c:1993 sql_help.c:1999 sql_help.c:2013
+#: sql_help.c:2014 sql_help.c:2015 sql_help.c:2363 sql_help.c:2376
+#: sql_help.c:2429 sql_help.c:2497 sql_help.c:2503 sql_help.c:2536
+#: sql_help.c:2667 sql_help.c:2772 sql_help.c:2807 sql_help.c:2809
+#: sql_help.c:2921 sql_help.c:2930 sql_help.c:2940 sql_help.c:2943
+#: sql_help.c:2953 sql_help.c:2957 sql_help.c:2980 sql_help.c:2982
+#: sql_help.c:2989 sql_help.c:3002 sql_help.c:3007 sql_help.c:3014
+#: sql_help.c:3015 sql_help.c:3031 sql_help.c:3157 sql_help.c:3297
+#: sql_help.c:3923 sql_help.c:3924 sql_help.c:4020 sql_help.c:4035
+#: sql_help.c:4037 sql_help.c:4039 sql_help.c:4133 sql_help.c:4136
+#: sql_help.c:4138 sql_help.c:4140 sql_help.c:4386 sql_help.c:4387
+#: sql_help.c:4507 sql_help.c:4668 sql_help.c:4675 sql_help.c:4677
+#: sql_help.c:4926 sql_help.c:4933 sql_help.c:4935 sql_help.c:4976
+#: sql_help.c:4978 sql_help.c:4980 sql_help.c:5033 sql_help.c:5171
+#: sql_help.c:5178 sql_help.c:5180
 msgid "column_name"
 msgstr "列名"
 
-#: sql_help.c:447 sql_help.c:672 sql_help.c:1326 sql_help.c:1721
+#: sql_help.c:449 sql_help.c:674 sql_help.c:1327 sql_help.c:1721
 msgid "new_column_name"
 msgstr "新しい列名"
 
-#: sql_help.c:452 sql_help.c:544 sql_help.c:680 sql_help.c:880 sql_help.c:1030
-#: sql_help.c:1352 sql_help.c:1621
+#: sql_help.c:454 sql_help.c:546 sql_help.c:682 sql_help.c:882 sql_help.c:1032
+#: sql_help.c:1353 sql_help.c:1621
 msgid "where action is one of:"
 msgstr "アクションは以下のいずれかです:"
 
-#: sql_help.c:454 sql_help.c:459 sql_help.c:1078 sql_help.c:1354
-#: sql_help.c:1359 sql_help.c:1623 sql_help.c:1627 sql_help.c:2267
-#: sql_help.c:2364 sql_help.c:2576 sql_help.c:2765 sql_help.c:2923
-#: sql_help.c:3210 sql_help.c:4198
+#: sql_help.c:456 sql_help.c:461 sql_help.c:1080 sql_help.c:1355
+#: sql_help.c:1360 sql_help.c:1623 sql_help.c:1627 sql_help.c:2267
+#: sql_help.c:2364 sql_help.c:2576 sql_help.c:2765 sql_help.c:2922
+#: sql_help.c:3204 sql_help.c:4192
 msgid "data_type"
 msgstr "データ型"
 
-#: sql_help.c:455 sql_help.c:460 sql_help.c:1355 sql_help.c:1360
+#: sql_help.c:457 sql_help.c:462 sql_help.c:1356 sql_help.c:1361
 #: sql_help.c:1456 sql_help.c:1624 sql_help.c:1628 sql_help.c:2268
-#: sql_help.c:2367 sql_help.c:2499 sql_help.c:2925 sql_help.c:2933
-#: sql_help.c:2946 sql_help.c:2960 sql_help.c:3015 sql_help.c:3211
-#: sql_help.c:3217 sql_help.c:4036
+#: sql_help.c:2367 sql_help.c:2499 sql_help.c:2924 sql_help.c:2932
+#: sql_help.c:2945 sql_help.c:2959 sql_help.c:3009 sql_help.c:3205
+#: sql_help.c:3211 sql_help.c:4030
 msgid "collation"
 msgstr "照合順序"
 
-#: sql_help.c:456 sql_help.c:1356 sql_help.c:2368 sql_help.c:2377
-#: sql_help.c:2926 sql_help.c:2942 sql_help.c:2955
+#: sql_help.c:458 sql_help.c:1357 sql_help.c:2368 sql_help.c:2377
+#: sql_help.c:2925 sql_help.c:2941 sql_help.c:2954
 msgid "column_constraint"
 msgstr "カラム制約"
 
-#: sql_help.c:466 sql_help.c:608 sql_help.c:682 sql_help.c:1376 sql_help.c:5033
+#: sql_help.c:468 sql_help.c:610 sql_help.c:684 sql_help.c:1377 sql_help.c:5027
 msgid "integer"
 msgstr "整数"
 
-#: sql_help.c:468 sql_help.c:471 sql_help.c:684 sql_help.c:687 sql_help.c:1378
-#: sql_help.c:1381
+#: sql_help.c:470 sql_help.c:473 sql_help.c:686 sql_help.c:689 sql_help.c:1379
+#: sql_help.c:1382
 msgid "attribute_option"
 msgstr "属性オプション"
 
-#: sql_help.c:476 sql_help.c:1385 sql_help.c:2369 sql_help.c:2378
-#: sql_help.c:2927 sql_help.c:2943 sql_help.c:2956
+#: sql_help.c:478 sql_help.c:1386 sql_help.c:2369 sql_help.c:2378
+#: sql_help.c:2926 sql_help.c:2942 sql_help.c:2955
 msgid "table_constraint"
 msgstr "テーブル制約"
 
-#: sql_help.c:479 sql_help.c:480 sql_help.c:481 sql_help.c:482 sql_help.c:1390
-#: sql_help.c:1391 sql_help.c:1392 sql_help.c:1393 sql_help.c:1931
+#: sql_help.c:481 sql_help.c:482 sql_help.c:483 sql_help.c:484 sql_help.c:1391
+#: sql_help.c:1392 sql_help.c:1393 sql_help.c:1394 sql_help.c:1931
 msgid "trigger_name"
 msgstr "トリガー名"
 
-#: sql_help.c:483 sql_help.c:484 sql_help.c:1404 sql_help.c:1405
-#: sql_help.c:2370 sql_help.c:2375 sql_help.c:2930 sql_help.c:2953
+#: sql_help.c:485 sql_help.c:486 sql_help.c:1405 sql_help.c:1406
+#: sql_help.c:2370 sql_help.c:2375 sql_help.c:2929 sql_help.c:2952
 msgid "parent_table"
 msgstr "親テーブル"
 
-#: sql_help.c:543 sql_help.c:600 sql_help.c:669 sql_help.c:879 sql_help.c:1029
+#: sql_help.c:545 sql_help.c:602 sql_help.c:671 sql_help.c:881 sql_help.c:1031
 #: sql_help.c:1580 sql_help.c:2299
 msgid "extension_name"
 msgstr "拡張名"
 
-#: sql_help.c:545 sql_help.c:1031 sql_help.c:2433
+#: sql_help.c:547 sql_help.c:1033 sql_help.c:2433
 msgid "execution_cost"
 msgstr "実行コスト"
 
-#: sql_help.c:546 sql_help.c:1032 sql_help.c:2434
+#: sql_help.c:548 sql_help.c:1034 sql_help.c:2434
 msgid "result_rows"
 msgstr "結果の行数"
 
-#: sql_help.c:547 sql_help.c:2435
+#: sql_help.c:549 sql_help.c:2435
 msgid "support_function"
 msgstr "サポート関数"
 
-#: sql_help.c:569 sql_help.c:571 sql_help.c:954 sql_help.c:962 sql_help.c:966
-#: sql_help.c:969 sql_help.c:972 sql_help.c:1663 sql_help.c:1671
+#: sql_help.c:571 sql_help.c:573 sql_help.c:956 sql_help.c:964 sql_help.c:968
+#: sql_help.c:971 sql_help.c:974 sql_help.c:1663 sql_help.c:1671
 #: sql_help.c:1675 sql_help.c:1678 sql_help.c:1681 sql_help.c:2743
-#: sql_help.c:2745 sql_help.c:2748 sql_help.c:2749 sql_help.c:3927
-#: sql_help.c:3928 sql_help.c:3932 sql_help.c:3933 sql_help.c:3936
+#: sql_help.c:2745 sql_help.c:2748 sql_help.c:2749 sql_help.c:3921
+#: sql_help.c:3922 sql_help.c:3926 sql_help.c:3927 sql_help.c:3930
+#: sql_help.c:3931 sql_help.c:3933 sql_help.c:3934 sql_help.c:3936
 #: sql_help.c:3937 sql_help.c:3939 sql_help.c:3940 sql_help.c:3942
-#: sql_help.c:3943 sql_help.c:3945 sql_help.c:3946 sql_help.c:3948
-#: sql_help.c:3949 sql_help.c:3955 sql_help.c:3956 sql_help.c:3958
+#: sql_help.c:3943 sql_help.c:3949 sql_help.c:3950 sql_help.c:3952
+#: sql_help.c:3953 sql_help.c:3955 sql_help.c:3956 sql_help.c:3958
 #: sql_help.c:3959 sql_help.c:3961 sql_help.c:3962 sql_help.c:3964
 #: sql_help.c:3965 sql_help.c:3967 sql_help.c:3968 sql_help.c:3970
-#: sql_help.c:3971 sql_help.c:3973 sql_help.c:3974 sql_help.c:3976
-#: sql_help.c:3977 sql_help.c:4390 sql_help.c:4391 sql_help.c:4395
-#: sql_help.c:4396 sql_help.c:4399 sql_help.c:4400 sql_help.c:4402
-#: sql_help.c:4403 sql_help.c:4405 sql_help.c:4406 sql_help.c:4408
-#: sql_help.c:4409 sql_help.c:4411 sql_help.c:4412 sql_help.c:4418
+#: sql_help.c:3971 sql_help.c:4384 sql_help.c:4385 sql_help.c:4389
+#: sql_help.c:4390 sql_help.c:4393 sql_help.c:4394 sql_help.c:4396
+#: sql_help.c:4397 sql_help.c:4399 sql_help.c:4400 sql_help.c:4402
+#: sql_help.c:4403 sql_help.c:4405 sql_help.c:4406 sql_help.c:4412
+#: sql_help.c:4413 sql_help.c:4415 sql_help.c:4416 sql_help.c:4418
 #: sql_help.c:4419 sql_help.c:4421 sql_help.c:4422 sql_help.c:4424
 #: sql_help.c:4425 sql_help.c:4427 sql_help.c:4428 sql_help.c:4430
-#: sql_help.c:4431 sql_help.c:4433 sql_help.c:4434 sql_help.c:4436
-#: sql_help.c:4437 sql_help.c:4439 sql_help.c:4440
+#: sql_help.c:4431 sql_help.c:4433 sql_help.c:4434
 msgid "role_specification"
 msgstr "ロールの指定"
 
-#: sql_help.c:570 sql_help.c:572 sql_help.c:1694 sql_help.c:2234
-#: sql_help.c:2751 sql_help.c:3288 sql_help.c:3739 sql_help.c:4768
+#: sql_help.c:572 sql_help.c:574 sql_help.c:1694 sql_help.c:2234
+#: sql_help.c:2751 sql_help.c:3282 sql_help.c:3733 sql_help.c:4762
 msgid "user_name"
 msgstr "ユーザー名"
 
-#: sql_help.c:573 sql_help.c:974 sql_help.c:1683 sql_help.c:2750
-#: sql_help.c:3978 sql_help.c:4441
+#: sql_help.c:575 sql_help.c:976 sql_help.c:1683 sql_help.c:2750
+#: sql_help.c:3972 sql_help.c:4435
 msgid "where role_specification can be:"
 msgstr "ロール指定は以下の通りです:"
 
-#: sql_help.c:575
+#: sql_help.c:577
 msgid "group_name"
 msgstr "グループ名"
 
-#: sql_help.c:596 sql_help.c:1452 sql_help.c:2246 sql_help.c:2506
-#: sql_help.c:2540 sql_help.c:2938 sql_help.c:2951 sql_help.c:2965
-#: sql_help.c:3011 sql_help.c:3041 sql_help.c:3053 sql_help.c:3969
-#: sql_help.c:4432
+#: sql_help.c:598 sql_help.c:1452 sql_help.c:2246 sql_help.c:2506
+#: sql_help.c:2540 sql_help.c:2937 sql_help.c:2950 sql_help.c:2964
+#: sql_help.c:3005 sql_help.c:3035 sql_help.c:3047 sql_help.c:3963
+#: sql_help.c:4426
 msgid "tablespace_name"
 msgstr "テーブル空間名"
 
-#: sql_help.c:598 sql_help.c:691 sql_help.c:1398 sql_help.c:1408
+#: sql_help.c:600 sql_help.c:693 sql_help.c:1399 sql_help.c:1409
 #: sql_help.c:1447 sql_help.c:1809
 msgid "index_name"
 msgstr "インデックス名"
 
-#: sql_help.c:602 sql_help.c:605 sql_help.c:694 sql_help.c:696 sql_help.c:1401
-#: sql_help.c:1403 sql_help.c:1450 sql_help.c:2504 sql_help.c:2538
-#: sql_help.c:2936 sql_help.c:2949 sql_help.c:2963 sql_help.c:3009
-#: sql_help.c:3039
+#: sql_help.c:604 sql_help.c:607 sql_help.c:696 sql_help.c:698 sql_help.c:1402
+#: sql_help.c:1404 sql_help.c:1450 sql_help.c:2504 sql_help.c:2538
+#: sql_help.c:2935 sql_help.c:2948 sql_help.c:2962 sql_help.c:3003
+#: sql_help.c:3033
 msgid "storage_parameter"
 msgstr "ストレージパラメータ"
 
-#: sql_help.c:607
+#: sql_help.c:609
 msgid "column_number"
 msgstr "列番号"
 
-#: sql_help.c:631 sql_help.c:1894 sql_help.c:4524
+#: sql_help.c:633 sql_help.c:1894 sql_help.c:4518
 msgid "large_object_oid"
 msgstr "ラージオブジェクトのOID"
 
-#: sql_help.c:690 sql_help.c:1384 sql_help.c:2924
+#: sql_help.c:692 sql_help.c:1385 sql_help.c:2923
 msgid "compression_method"
 msgstr "圧縮方式"
 
-#: sql_help.c:692 sql_help.c:1399
+#: sql_help.c:694 sql_help.c:1400
 msgid "new_access_method"
 msgstr "新しいアクセスメソッド"
 
-#: sql_help.c:729 sql_help.c:2561
+#: sql_help.c:731 sql_help.c:2561
 msgid "res_proc"
 msgstr "制約選択評価関数"
 
-#: sql_help.c:730 sql_help.c:2562
+#: sql_help.c:732 sql_help.c:2562
 msgid "join_proc"
 msgstr "結合選択評価関数"
 
-#: sql_help.c:731 sql_help.c:2559
+#: sql_help.c:733 sql_help.c:2559
 msgid "com_op"
 msgstr "交代演算子"
 
-#: sql_help.c:732 sql_help.c:2560
+#: sql_help.c:734 sql_help.c:2560
 msgid "neg_op"
 msgstr "否定演算子"
 
-#: sql_help.c:784 sql_help.c:796 sql_help.c:2579
+#: sql_help.c:786 sql_help.c:798 sql_help.c:2579
 msgid "strategy_number"
 msgstr "戦略番号"
 
-#: sql_help.c:786 sql_help.c:787 sql_help.c:790 sql_help.c:791 sql_help.c:797
-#: sql_help.c:798 sql_help.c:800 sql_help.c:801 sql_help.c:2581 sql_help.c:2582
+#: sql_help.c:788 sql_help.c:789 sql_help.c:792 sql_help.c:793 sql_help.c:799
+#: sql_help.c:800 sql_help.c:802 sql_help.c:803 sql_help.c:2581 sql_help.c:2582
 #: sql_help.c:2585 sql_help.c:2586
 msgid "op_type"
 msgstr "演算子の型"
 
-#: sql_help.c:788 sql_help.c:2583
+#: sql_help.c:790 sql_help.c:2583
 msgid "sort_family_name"
 msgstr "ソートファミリー名"
 
-#: sql_help.c:789 sql_help.c:799 sql_help.c:2584
+#: sql_help.c:791 sql_help.c:801 sql_help.c:2584
 msgid "support_number"
 msgstr "サポート番号"
 
-#: sql_help.c:793 sql_help.c:2166 sql_help.c:2588 sql_help.c:3130
-#: sql_help.c:3132
+#: sql_help.c:795 sql_help.c:2166 sql_help.c:2588 sql_help.c:3124
+#: sql_help.c:3126
 msgid "argument_type"
 msgstr "引数の型"
 
-#: sql_help.c:824 sql_help.c:827 sql_help.c:916 sql_help.c:1045 sql_help.c:1085
+#: sql_help.c:826 sql_help.c:829 sql_help.c:918 sql_help.c:1047 sql_help.c:1087
 #: sql_help.c:1576 sql_help.c:1579 sql_help.c:1755 sql_help.c:1808
 #: sql_help.c:1879 sql_help.c:1904 sql_help.c:1917 sql_help.c:1932
 #: sql_help.c:1992 sql_help.c:1998 sql_help.c:2362 sql_help.c:2374
 #: sql_help.c:2495 sql_help.c:2535 sql_help.c:2612 sql_help.c:2666
 #: sql_help.c:2719 sql_help.c:2771 sql_help.c:2804 sql_help.c:2811
-#: sql_help.c:2921 sql_help.c:2939 sql_help.c:2952 sql_help.c:3036
-#: sql_help.c:3156 sql_help.c:3337 sql_help.c:3560 sql_help.c:3609
-#: sql_help.c:3715 sql_help.c:3925 sql_help.c:3931 sql_help.c:3992
-#: sql_help.c:4024 sql_help.c:4388 sql_help.c:4394 sql_help.c:4512
-#: sql_help.c:4625 sql_help.c:4688 sql_help.c:4727 sql_help.c:4883
-#: sql_help.c:4946 sql_help.c:4980 sql_help.c:5038 sql_help.c:5128
-#: sql_help.c:5191
+#: sql_help.c:2920 sql_help.c:2938 sql_help.c:2951 sql_help.c:3030
+#: sql_help.c:3150 sql_help.c:3331 sql_help.c:3554 sql_help.c:3603
+#: sql_help.c:3709 sql_help.c:3919 sql_help.c:3925 sql_help.c:3986
+#: sql_help.c:4018 sql_help.c:4382 sql_help.c:4388 sql_help.c:4506
+#: sql_help.c:4619 sql_help.c:4682 sql_help.c:4721 sql_help.c:4877
+#: sql_help.c:4940 sql_help.c:4974 sql_help.c:5032 sql_help.c:5122
+#: sql_help.c:5185
 msgid "table_name"
 msgstr "テーブル名"
 
-#: sql_help.c:829 sql_help.c:2614
+#: sql_help.c:831 sql_help.c:2614
 msgid "using_expression"
 msgstr "USING式"
 
-#: sql_help.c:830 sql_help.c:2615
+#: sql_help.c:832 sql_help.c:2615
 msgid "check_expression"
 msgstr "CHECK式"
 
-#: sql_help.c:903 sql_help.c:905 sql_help.c:907 sql_help.c:2662
+#: sql_help.c:905 sql_help.c:907 sql_help.c:909 sql_help.c:2662
 msgid "publication_object"
 msgstr "発行オブジェクト"
 
-#: sql_help.c:909 sql_help.c:2663
+#: sql_help.c:911 sql_help.c:2663
 msgid "publication_parameter"
 msgstr "パブリケーションパラメータ"
 
-#: sql_help.c:915 sql_help.c:2665
+#: sql_help.c:917 sql_help.c:2665
 msgid "where publication_object is one of:"
 msgstr "発行オブジェクトは以下のいずれかです:"
 
-#: sql_help.c:958 sql_help.c:1667 sql_help.c:2473 sql_help.c:2698
-#: sql_help.c:3271
+#: sql_help.c:960 sql_help.c:1667 sql_help.c:2473 sql_help.c:2698
+#: sql_help.c:3265
 msgid "password"
 msgstr "パスワード"
 
-#: sql_help.c:959 sql_help.c:1668 sql_help.c:2474 sql_help.c:2699
-#: sql_help.c:3272
+#: sql_help.c:961 sql_help.c:1668 sql_help.c:2474 sql_help.c:2699
+#: sql_help.c:3266
 msgid "timestamp"
 msgstr "タイムスタンプ"
 
-#: sql_help.c:963 sql_help.c:967 sql_help.c:970 sql_help.c:973 sql_help.c:1672
-#: sql_help.c:1676 sql_help.c:1679 sql_help.c:1682 sql_help.c:3938
-#: sql_help.c:4401
+#: sql_help.c:965 sql_help.c:969 sql_help.c:972 sql_help.c:975 sql_help.c:1672
+#: sql_help.c:1676 sql_help.c:1679 sql_help.c:1682 sql_help.c:3932
+#: sql_help.c:4395
 msgid "database_name"
 msgstr "データベース名"
 
-#: sql_help.c:1079 sql_help.c:2766
+#: sql_help.c:1081 sql_help.c:2766
 msgid "increment"
 msgstr "増分値"
 
-#: sql_help.c:1080 sql_help.c:2767
+#: sql_help.c:1082 sql_help.c:2767
 msgid "minvalue"
 msgstr "最小値"
 
-#: sql_help.c:1081 sql_help.c:2768
+#: sql_help.c:1083 sql_help.c:2768
 msgid "maxvalue"
 msgstr "最大値"
 
-#: sql_help.c:1082 sql_help.c:2769 sql_help.c:4621 sql_help.c:4725
-#: sql_help.c:4879 sql_help.c:5055 sql_help.c:5124
+#: sql_help.c:1084 sql_help.c:2769 sql_help.c:4615 sql_help.c:4719
+#: sql_help.c:4873 sql_help.c:5049 sql_help.c:5118
 msgid "start"
 msgstr "開始番号"
 
-#: sql_help.c:1083 sql_help.c:1373
+#: sql_help.c:1085 sql_help.c:1374
 msgid "restart"
 msgstr "再開始番号"
 
-#: sql_help.c:1084 sql_help.c:2770
+#: sql_help.c:1086 sql_help.c:2770
 msgid "cache"
 msgstr "キャッシュ割り当て数"
 
-#: sql_help.c:1129
+#: sql_help.c:1131
 msgid "new_target"
 msgstr "新しいターゲット"
 
-#: sql_help.c:1148 sql_help.c:2823
+#: sql_help.c:1150 sql_help.c:2823
 msgid "conninfo"
 msgstr "接続文字列"
 
-#: sql_help.c:1150 sql_help.c:1154 sql_help.c:1158 sql_help.c:2824
+#: sql_help.c:1152 sql_help.c:1156 sql_help.c:1160 sql_help.c:2824
 msgid "publication_name"
 msgstr "パブリケーション名"
 
-#: sql_help.c:1151 sql_help.c:1155 sql_help.c:1159
+#: sql_help.c:1153 sql_help.c:1157 sql_help.c:1161
 msgid "publication_option"
 msgstr "パブリケーション・オプション"
 
-#: sql_help.c:1162
+#: sql_help.c:1164
 msgid "refresh_option"
 msgstr "{REFRESH PUBLICATION の追加オプション}"
 
-#: sql_help.c:1167 sql_help.c:2825
+#: sql_help.c:1169 sql_help.c:2825
 msgid "subscription_parameter"
 msgstr "{SUBSCRIPTION パラメータ名}"
 
-#: sql_help.c:1170
+#: sql_help.c:1172
 msgid "skip_option"
 msgstr "スキップオプション"
 
-#: sql_help.c:1338 sql_help.c:1341 sql_help.c:1343 sql_help.c:1351
+#: sql_help.c:1339 sql_help.c:1342 sql_help.c:1344 sql_help.c:1352
 msgid "partition_name"
 msgstr "パーティション名"
 
-#: sql_help.c:1339 sql_help.c:1345 sql_help.c:1347 sql_help.c:2379
-#: sql_help.c:2957
+#: sql_help.c:1340 sql_help.c:1346 sql_help.c:1348 sql_help.c:2379
+#: sql_help.c:2956
 msgid "partition_bound_spec"
 msgstr "パーティション境界の仕様"
 
-#: sql_help.c:1344 sql_help.c:1349
+#: sql_help.c:1345 sql_help.c:1350
 msgid "partition_name1"
 msgstr "パーティション名1"
 
-#: sql_help.c:1346 sql_help.c:1350
+#: sql_help.c:1347 sql_help.c:1351
 msgid "partition_name2"
 msgstr "パーティション名2"
 
-#: sql_help.c:1370 sql_help.c:1420 sql_help.c:2971
+#: sql_help.c:1371 sql_help.c:1421 sql_help.c:2970
 msgid "sequence_options"
 msgstr "シーケンスオプション"
 
-#: sql_help.c:1372
+#: sql_help.c:1373
 msgid "sequence_option"
 msgstr "シーケンスオプション"
 
-#: sql_help.c:1386
+#: sql_help.c:1387
 msgid "table_constraint_using_index"
 msgstr "インデックスを使うテーブルの制約"
 
-#: sql_help.c:1394 sql_help.c:1395 sql_help.c:1396 sql_help.c:1397
+#: sql_help.c:1395 sql_help.c:1396 sql_help.c:1397 sql_help.c:1398
 msgid "rewrite_rule_name"
 msgstr "書き換えルール名"
 
-#: sql_help.c:1409 sql_help.c:2391 sql_help.c:3001
+#: sql_help.c:1410 sql_help.c:2391 sql_help.c:2995
 msgid "and partition_bound_spec is:"
 msgstr "パーティション境界の仕様は以下の通りです:"
 
-#: sql_help.c:1410 sql_help.c:1411 sql_help.c:1412 sql_help.c:2392
-#: sql_help.c:2393 sql_help.c:2394 sql_help.c:3002 sql_help.c:3003
-#: sql_help.c:3004
+#: sql_help.c:1411 sql_help.c:1412 sql_help.c:1413 sql_help.c:2392
+#: sql_help.c:2393 sql_help.c:2394 sql_help.c:2996 sql_help.c:2997
+#: sql_help.c:2998
 msgid "partition_bound_expr"
 msgstr "パーティション境界式"
 
-#: sql_help.c:1413 sql_help.c:1414 sql_help.c:2395 sql_help.c:2396
-#: sql_help.c:3005 sql_help.c:3006
+#: sql_help.c:1414 sql_help.c:1415 sql_help.c:2395 sql_help.c:2396
+#: sql_help.c:2999 sql_help.c:3000
 msgid "numeric_literal"
 msgstr "numericリテラル"
 
-#: sql_help.c:1415
+#: sql_help.c:1416
 msgid "and column_constraint is:"
 msgstr "そしてカラム制約は以下の通りです:"
 
-#: sql_help.c:1418 sql_help.c:2386 sql_help.c:2427 sql_help.c:2636
-#: sql_help.c:2969
+#: sql_help.c:1419 sql_help.c:2386 sql_help.c:2427 sql_help.c:2636
+#: sql_help.c:2968
 msgid "default_expr"
 msgstr "デフォルト表現"
 
-#: sql_help.c:1419 sql_help.c:2387 sql_help.c:2970
+#: sql_help.c:1420 sql_help.c:2387 sql_help.c:2969
 msgid "generation_expr"
 msgstr "生成式"
 
-#: sql_help.c:1421 sql_help.c:1422 sql_help.c:1432 sql_help.c:1434
-#: sql_help.c:1438 sql_help.c:2972 sql_help.c:2973 sql_help.c:2984
-#: sql_help.c:2987 sql_help.c:2991
+#: sql_help.c:1422 sql_help.c:1423 sql_help.c:1432 sql_help.c:1434
+#: sql_help.c:1438 sql_help.c:2971 sql_help.c:2972 sql_help.c:2981
+#: sql_help.c:2983 sql_help.c:2987
 msgid "index_parameters"
 msgstr "インデックスパラメータ"
 
-#: sql_help.c:1423 sql_help.c:1441 sql_help.c:2974 sql_help.c:2995
+#: sql_help.c:1424 sql_help.c:1441 sql_help.c:2973 sql_help.c:2990
 msgid "reftable"
 msgstr "参照テーブル"
 
-#: sql_help.c:1424 sql_help.c:1442 sql_help.c:2975 sql_help.c:2996
+#: sql_help.c:1425 sql_help.c:1442 sql_help.c:2974 sql_help.c:2991
 msgid "refcolumn"
 msgstr "参照列"
 
-#: sql_help.c:1425 sql_help.c:1426 sql_help.c:1443 sql_help.c:1444
-#: sql_help.c:2976 sql_help.c:2977 sql_help.c:2998 sql_help.c:2999
+#: sql_help.c:1426 sql_help.c:1427 sql_help.c:1443 sql_help.c:1444
+#: sql_help.c:2975 sql_help.c:2976 sql_help.c:2992 sql_help.c:2993
 msgid "referential_action"
 msgstr "参照動作"
 
-#: sql_help.c:1427 sql_help.c:2388 sql_help.c:2978
+#: sql_help.c:1428 sql_help.c:2388 sql_help.c:2977
 msgid "and table_constraint is:"
 msgstr "テーブル制約は以下の通りです:"
 
-#: sql_help.c:1436 sql_help.c:2989
+#: sql_help.c:1436 sql_help.c:2985
 msgid "exclude_element"
 msgstr "除外対象要素"
 
-#: sql_help.c:1437 sql_help.c:2990 sql_help.c:4619 sql_help.c:4723
-#: sql_help.c:4877 sql_help.c:5053 sql_help.c:5122
+#: sql_help.c:1437 sql_help.c:2986 sql_help.c:4613 sql_help.c:4717
+#: sql_help.c:4871 sql_help.c:5047 sql_help.c:5116
 msgid "operator"
 msgstr "演算子"
 
-#: sql_help.c:1439 sql_help.c:2507 sql_help.c:2992
+#: sql_help.c:1439 sql_help.c:2507 sql_help.c:2988
 msgid "predicate"
 msgstr "インデックスの述語"
 
@@ -4915,28 +4912,28 @@ msgstr "インデックスの述語"
 msgid "and table_constraint_using_index is:"
 msgstr "テーブル制約は以下の通りです:"
 
-#: sql_help.c:1448 sql_help.c:3007
+#: sql_help.c:1448 sql_help.c:3001
 msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
 msgstr "UNIQUE, PRIMARY KEY, EXCLUDE 制約のインデックスパラメータは以下の通りです:"
 
-#: sql_help.c:1453 sql_help.c:3012
+#: sql_help.c:1453 sql_help.c:3006
 msgid "exclude_element in an EXCLUDE constraint is:"
 msgstr "EXCLUDE 制約の除外対象要素は以下の通りです:"
 
-#: sql_help.c:1457 sql_help.c:2500 sql_help.c:2934 sql_help.c:2947
-#: sql_help.c:2961 sql_help.c:3016 sql_help.c:4037
+#: sql_help.c:1457 sql_help.c:2500 sql_help.c:2933 sql_help.c:2946
+#: sql_help.c:2960 sql_help.c:3010 sql_help.c:4031
 msgid "opclass"
 msgstr "演算子クラス"
 
-#: sql_help.c:1458 sql_help.c:2501 sql_help.c:3017
+#: sql_help.c:1458 sql_help.c:2501 sql_help.c:3011
 msgid "opclass_parameter"
 msgstr "演算子クラスパラメータ"
 
-#: sql_help.c:1460 sql_help.c:3019
+#: sql_help.c:1460 sql_help.c:3013
 msgid "referential_action in a FOREIGN KEY/REFERENCES constraint is:"
 msgstr "FOREIGN KEY/REFERENCES制約の参照動作は以下の通り:"
 
-#: sql_help.c:1478 sql_help.c:1481 sql_help.c:3056
+#: sql_help.c:1478 sql_help.c:1481 sql_help.c:3050
 msgid "tablespace_option"
 msgstr "テーブル空間のオプション"
 
@@ -4957,7 +4954,7 @@ msgid "new_dictionary"
 msgstr "新しい辞書"
 
 #: sql_help.c:1608 sql_help.c:1622 sql_help.c:1625 sql_help.c:1626
-#: sql_help.c:3209
+#: sql_help.c:3203
 msgid "attribute_name"
 msgstr "属性名"
 
@@ -4982,59 +4979,59 @@ msgid "property"
 msgstr "プロパティ"
 
 #: sql_help.c:1695 sql_help.c:2371 sql_help.c:2380 sql_help.c:2782
-#: sql_help.c:3289 sql_help.c:3740 sql_help.c:3947 sql_help.c:3993
-#: sql_help.c:4410
+#: sql_help.c:3283 sql_help.c:3734 sql_help.c:3941 sql_help.c:3987
+#: sql_help.c:4404
 msgid "server_name"
 msgstr "サーバー名"
 
-#: sql_help.c:1727 sql_help.c:1730 sql_help.c:3304
+#: sql_help.c:1727 sql_help.c:1730 sql_help.c:3298
 msgid "view_option_name"
 msgstr "ビューのオプション名"
 
-#: sql_help.c:1728 sql_help.c:3305
+#: sql_help.c:1728 sql_help.c:3299
 msgid "view_option_value"
 msgstr "ビューオプションの値"
 
-#: sql_help.c:1749 sql_help.c:5022
+#: sql_help.c:1749 sql_help.c:5016
 msgid "table_and_columns"
 msgstr "テーブルおよび列"
 
-#: sql_help.c:1750 sql_help.c:1810 sql_help.c:2004 sql_help.c:3789
-#: sql_help.c:4245 sql_help.c:5023
+#: sql_help.c:1750 sql_help.c:1810 sql_help.c:2004 sql_help.c:3783
+#: sql_help.c:4239 sql_help.c:5017
 msgid "where option can be one of:"
 msgstr "オプションには以下のうちのいずれかを指定します:"
 
 #: sql_help.c:1751 sql_help.c:1752 sql_help.c:1811 sql_help.c:2006
-#: sql_help.c:2010 sql_help.c:2192 sql_help.c:3790 sql_help.c:3791
-#: sql_help.c:3792 sql_help.c:3793 sql_help.c:3794 sql_help.c:3795
-#: sql_help.c:3796 sql_help.c:3797 sql_help.c:3798 sql_help.c:3799
-#: sql_help.c:4246 sql_help.c:4248 sql_help.c:5024 sql_help.c:5025
-#: sql_help.c:5026 sql_help.c:5027 sql_help.c:5028 sql_help.c:5029
-#: sql_help.c:5030 sql_help.c:5031 sql_help.c:5032 sql_help.c:5034
-#: sql_help.c:5035
+#: sql_help.c:2010 sql_help.c:2192 sql_help.c:3784 sql_help.c:3785
+#: sql_help.c:3786 sql_help.c:3787 sql_help.c:3788 sql_help.c:3789
+#: sql_help.c:3790 sql_help.c:3791 sql_help.c:3792 sql_help.c:3793
+#: sql_help.c:4240 sql_help.c:4242 sql_help.c:5018 sql_help.c:5019
+#: sql_help.c:5020 sql_help.c:5021 sql_help.c:5022 sql_help.c:5023
+#: sql_help.c:5024 sql_help.c:5025 sql_help.c:5026 sql_help.c:5028
+#: sql_help.c:5029
 msgid "boolean"
 msgstr "真偽値"
 
-#: sql_help.c:1753 sql_help.c:5036
+#: sql_help.c:1753 sql_help.c:5030
 msgid "size"
 msgstr "サイズ"
 
-#: sql_help.c:1754 sql_help.c:5037
+#: sql_help.c:1754 sql_help.c:5031
 msgid "and table_and_columns is:"
 msgstr "そしてテーブルと列の指定は以下の通りです:"
 
-#: sql_help.c:1770 sql_help.c:4784 sql_help.c:4786 sql_help.c:4810
+#: sql_help.c:1770 sql_help.c:4778 sql_help.c:4780 sql_help.c:4804
 msgid "transaction_mode"
 msgstr "トランザクションのモード"
 
-#: sql_help.c:1771 sql_help.c:4787 sql_help.c:4811
+#: sql_help.c:1771 sql_help.c:4781 sql_help.c:4805
 msgid "where transaction_mode is one of:"
 msgstr "トランザクションのモードは以下の通りです:"
 
-#: sql_help.c:1780 sql_help.c:4629 sql_help.c:4638 sql_help.c:4642
-#: sql_help.c:4646 sql_help.c:4649 sql_help.c:4887 sql_help.c:4896
-#: sql_help.c:4900 sql_help.c:4904 sql_help.c:4907 sql_help.c:5132
-#: sql_help.c:5141 sql_help.c:5145 sql_help.c:5149 sql_help.c:5152
+#: sql_help.c:1780 sql_help.c:4623 sql_help.c:4632 sql_help.c:4636
+#: sql_help.c:4640 sql_help.c:4643 sql_help.c:4881 sql_help.c:4890
+#: sql_help.c:4894 sql_help.c:4898 sql_help.c:4901 sql_help.c:5126
+#: sql_help.c:5135 sql_help.c:5139 sql_help.c:5143 sql_help.c:5146
 msgid "argument"
 msgstr "引数"
 
@@ -5042,7 +5039,7 @@ msgstr "引数"
 msgid "relation_name"
 msgstr "リレーション名"
 
-#: sql_help.c:1881 sql_help.c:3941 sql_help.c:4404
+#: sql_help.c:1881 sql_help.c:3935 sql_help.c:4398
 msgid "domain_name"
 msgstr "ドメイン名"
 
@@ -5054,15 +5051,15 @@ msgstr "ポリシー名"
 msgid "rule_name"
 msgstr "ルール名"
 
-#: sql_help.c:1935 sql_help.c:4543
+#: sql_help.c:1935 sql_help.c:4537
 msgid "string_literal"
 msgstr "文字列リテラル"
 
-#: sql_help.c:1960 sql_help.c:4207 sql_help.c:4457
+#: sql_help.c:1960 sql_help.c:4201 sql_help.c:4451
 msgid "transaction_id"
 msgstr "トランザクションID"
 
-#: sql_help.c:1994 sql_help.c:2001 sql_help.c:4063
+#: sql_help.c:1994 sql_help.c:2001 sql_help.c:4057
 msgid "filename"
 msgstr "ファイル名"
 
@@ -5071,16 +5068,16 @@ msgstr "ファイル名"
 msgid "command"
 msgstr "コマンド"
 
-#: sql_help.c:1997 sql_help.c:2720 sql_help.c:3159 sql_help.c:3340
-#: sql_help.c:4047 sql_help.c:4130 sql_help.c:4133 sql_help.c:4136
-#: sql_help.c:4612 sql_help.c:4614 sql_help.c:4716 sql_help.c:4718
-#: sql_help.c:4870 sql_help.c:4872 sql_help.c:4989 sql_help.c:5115
-#: sql_help.c:5117
+#: sql_help.c:1997 sql_help.c:2720 sql_help.c:3153 sql_help.c:3334
+#: sql_help.c:4041 sql_help.c:4124 sql_help.c:4127 sql_help.c:4130
+#: sql_help.c:4606 sql_help.c:4608 sql_help.c:4710 sql_help.c:4712
+#: sql_help.c:4864 sql_help.c:4866 sql_help.c:4983 sql_help.c:5109
+#: sql_help.c:5111
 msgid "condition"
 msgstr "条件"
 
-#: sql_help.c:2000 sql_help.c:2541 sql_help.c:3042 sql_help.c:3306
-#: sql_help.c:3324 sql_help.c:4028
+#: sql_help.c:2000 sql_help.c:2541 sql_help.c:3036 sql_help.c:3300
+#: sql_help.c:3318 sql_help.c:4022
 msgid "query"
 msgstr "問い合わせ"
 
@@ -5117,8 +5114,8 @@ msgid "encoding_name"
 msgstr "エンコーディング名"
 
 #: sql_help.c:2018
-msgid "mode"
-msgstr "モード"
+msgid "verbosity"
+msgstr "詳細度"
 
 #: sql_help.c:2029
 msgid "access_method_type"
@@ -5208,7 +5205,7 @@ msgstr "照合順序"
 msgid "lc_ctype"
 msgstr "Ctype(変換演算子)"
 
-#: sql_help.c:2191 sql_help.c:4510
+#: sql_help.c:2191 sql_help.c:4504
 msgid "provider"
 msgstr "プロバイダ"
 
@@ -5232,7 +5229,7 @@ msgstr "変換元のエンコーディング"
 msgid "dest_encoding"
 msgstr "変換先のエンコーディング"
 
-#: sql_help.c:2235 sql_help.c:3082
+#: sql_help.c:2235 sql_help.c:3076
 msgid "template"
 msgstr "テンプレート"
 
@@ -5272,7 +5269,7 @@ msgstr "オブジェクトID"
 msgid "where domain_constraint is:"
 msgstr "ドメイン制約は以下の通りです:"
 
-#: sql_help.c:2285 sql_help.c:2718 sql_help.c:3155
+#: sql_help.c:2285 sql_help.c:2718 sql_help.c:3149
 msgid "event"
 msgstr "イベント"
 
@@ -5284,7 +5281,7 @@ msgstr "フィルター変数"
 msgid "filter_value"
 msgstr "フィルター値"
 
-#: sql_help.c:2383 sql_help.c:2966
+#: sql_help.c:2383 sql_help.c:2965
 msgid "where column_constraint is:"
 msgstr "カラム制約は以下の通りです:"
 
@@ -5312,12 +5309,12 @@ msgstr "リンクシンボル"
 msgid "sql_body"
 msgstr "SQL本体"
 
-#: sql_help.c:2480 sql_help.c:2703 sql_help.c:3278
+#: sql_help.c:2480 sql_help.c:2703 sql_help.c:3272
 msgid "uid"
 msgstr "UID"
 
-#: sql_help.c:2496 sql_help.c:2537 sql_help.c:2935 sql_help.c:2948
-#: sql_help.c:2962 sql_help.c:3038
+#: sql_help.c:2496 sql_help.c:2537 sql_help.c:2934 sql_help.c:2947
+#: sql_help.c:2961 sql_help.c:3032
 msgid "method"
 msgstr "インデックスメソッド"
 
@@ -5341,7 +5338,7 @@ msgstr "演算子族の名前"
 msgid "storage_type"
 msgstr "ストレージタイプ"
 
-#: sql_help.c:2724 sql_help.c:3162
+#: sql_help.c:2724 sql_help.c:3156
 msgid "where event can be one of:"
 msgstr "イベントは以下のいずれかです:"
 
@@ -5357,7 +5354,7 @@ msgstr "サーバーのタイプ"
 msgid "server_version"
 msgstr "サーバーのバージョン"
 
-#: sql_help.c:2785 sql_help.c:3944 sql_help.c:4407
+#: sql_help.c:2785 sql_help.c:3938 sql_help.c:4401
 msgid "fdw_name"
 msgstr "外部データラッパ名"
 
@@ -5373,1205 +5370,1205 @@ msgstr "統計種別"
 msgid "subscription_name"
 msgstr "サブスクリプション名"
 
-#: sql_help.c:2928
+#: sql_help.c:2927
 msgid "source_table"
 msgstr "コピー元のテーブル"
 
-#: sql_help.c:2929
+#: sql_help.c:2928
 msgid "like_option"
 msgstr "LIKEオプション"
 
-#: sql_help.c:3000
+#: sql_help.c:2994
 msgid "and like_option is:"
 msgstr "LIKE オプションは以下の通りです:"
 
-#: sql_help.c:3055
+#: sql_help.c:3049
 msgid "directory"
 msgstr "ディレクトリ"
 
-#: sql_help.c:3069
+#: sql_help.c:3063
 msgid "parser_name"
 msgstr "パーサ名"
 
-#: sql_help.c:3070
+#: sql_help.c:3064
 msgid "source_config"
 msgstr "複製元の設定"
 
-#: sql_help.c:3099
+#: sql_help.c:3093
 msgid "start_function"
 msgstr "開始関数"
 
-#: sql_help.c:3100
+#: sql_help.c:3094
 msgid "gettoken_function"
 msgstr "トークン取得関数"
 
-#: sql_help.c:3101
+#: sql_help.c:3095
 msgid "end_function"
 msgstr "終了関数"
 
-#: sql_help.c:3102
+#: sql_help.c:3096
 msgid "lextypes_function"
 msgstr "LEXTYPE関数"
 
-#: sql_help.c:3103
+#: sql_help.c:3097
 msgid "headline_function"
 msgstr "見出し関数"
 
-#: sql_help.c:3115
+#: sql_help.c:3109
 msgid "init_function"
 msgstr "初期処理関数"
 
-#: sql_help.c:3116
+#: sql_help.c:3110
 msgid "lexize_function"
 msgstr "LEXIZE関数"
 
-#: sql_help.c:3129
+#: sql_help.c:3123
 msgid "from_sql_function_name"
 msgstr "{FROM SQL 関数名}"
 
-#: sql_help.c:3131
+#: sql_help.c:3125
 msgid "to_sql_function_name"
 msgstr "{TO SQL 関数名}"
 
-#: sql_help.c:3157
+#: sql_help.c:3151
 msgid "referenced_table_name"
 msgstr "被参照テーブル名"
 
-#: sql_help.c:3158
+#: sql_help.c:3152
 msgid "transition_relation_name"
 msgstr "移行用リレーション名"
 
-#: sql_help.c:3161
+#: sql_help.c:3155
 msgid "arguments"
 msgstr "引数"
 
-#: sql_help.c:3213
+#: sql_help.c:3207
 msgid "label"
 msgstr "ラベル"
 
-#: sql_help.c:3215
+#: sql_help.c:3209
 msgid "subtype"
 msgstr "当該範囲のデータ型"
 
-#: sql_help.c:3216
+#: sql_help.c:3210
 msgid "subtype_operator_class"
 msgstr "当該範囲のデータ型の演算子クラス"
 
-#: sql_help.c:3218
+#: sql_help.c:3212
 msgid "canonical_function"
 msgstr "正規化関数"
 
-#: sql_help.c:3219
+#: sql_help.c:3213
 msgid "subtype_diff_function"
 msgstr "当該範囲のデータ型の差分抽出関数"
 
-#: sql_help.c:3220
+#: sql_help.c:3214
 msgid "multirange_type_name"
 msgstr "複範囲型名"
 
-#: sql_help.c:3222
+#: sql_help.c:3216
 msgid "input_function"
 msgstr "入力関数"
 
-#: sql_help.c:3223
+#: sql_help.c:3217
 msgid "output_function"
 msgstr "出力関数"
 
-#: sql_help.c:3224
+#: sql_help.c:3218
 msgid "receive_function"
 msgstr "受信関数"
 
-#: sql_help.c:3225
+#: sql_help.c:3219
 msgid "send_function"
 msgstr "送信関数"
 
-#: sql_help.c:3226
+#: sql_help.c:3220
 msgid "type_modifier_input_function"
 msgstr "型修飾子の入力関数"
 
-#: sql_help.c:3227
+#: sql_help.c:3221
 msgid "type_modifier_output_function"
 msgstr "型修飾子の出力関数"
 
-#: sql_help.c:3228
+#: sql_help.c:3222
 msgid "analyze_function"
 msgstr "分析関数"
 
-#: sql_help.c:3229
+#: sql_help.c:3223
 msgid "subscript_function"
 msgstr "添字関数"
 
-#: sql_help.c:3230
+#: sql_help.c:3224
 msgid "internallength"
 msgstr "内部長"
 
-#: sql_help.c:3231
+#: sql_help.c:3225
 msgid "alignment"
 msgstr "バイト境界"
 
-#: sql_help.c:3232
+#: sql_help.c:3226
 msgid "storage"
 msgstr "ストレージ"
 
-#: sql_help.c:3233
+#: sql_help.c:3227
 msgid "like_type"
 msgstr "LIKEの型"
 
-#: sql_help.c:3234
+#: sql_help.c:3228
 msgid "category"
 msgstr "カテゴリー"
 
-#: sql_help.c:3235
+#: sql_help.c:3229
 msgid "preferred"
 msgstr "優先データ型かどうか(真偽値)"
 
-#: sql_help.c:3236
+#: sql_help.c:3230
 msgid "default"
 msgstr "デフォルト"
 
-#: sql_help.c:3237
+#: sql_help.c:3231
 msgid "element"
 msgstr "要素のデータ型"
 
-#: sql_help.c:3238
+#: sql_help.c:3232
 msgid "delimiter"
 msgstr "区切り記号"
 
-#: sql_help.c:3239
+#: sql_help.c:3233
 msgid "collatable"
 msgstr "照合可能"
 
-#: sql_help.c:3336 sql_help.c:4023 sql_help.c:4117 sql_help.c:4607
-#: sql_help.c:4710 sql_help.c:4865 sql_help.c:4979 sql_help.c:5110
+#: sql_help.c:3330 sql_help.c:4017 sql_help.c:4111 sql_help.c:4601
+#: sql_help.c:4704 sql_help.c:4859 sql_help.c:4973 sql_help.c:5104
 msgid "with_query"
 msgstr "WITH問い合わせ"
 
-#: sql_help.c:3338 sql_help.c:4025 sql_help.c:4626 sql_help.c:4632
-#: sql_help.c:4635 sql_help.c:4639 sql_help.c:4643 sql_help.c:4651
-#: sql_help.c:4884 sql_help.c:4890 sql_help.c:4893 sql_help.c:4897
-#: sql_help.c:4901 sql_help.c:4909 sql_help.c:4981 sql_help.c:5129
-#: sql_help.c:5135 sql_help.c:5138 sql_help.c:5142 sql_help.c:5146
-#: sql_help.c:5154
+#: sql_help.c:3332 sql_help.c:4019 sql_help.c:4620 sql_help.c:4626
+#: sql_help.c:4629 sql_help.c:4633 sql_help.c:4637 sql_help.c:4645
+#: sql_help.c:4878 sql_help.c:4884 sql_help.c:4887 sql_help.c:4891
+#: sql_help.c:4895 sql_help.c:4903 sql_help.c:4975 sql_help.c:5123
+#: sql_help.c:5129 sql_help.c:5132 sql_help.c:5136 sql_help.c:5140
+#: sql_help.c:5148
 msgid "alias"
 msgstr "別名"
 
-#: sql_help.c:3339 sql_help.c:4611 sql_help.c:4653 sql_help.c:4655
-#: sql_help.c:4659 sql_help.c:4661 sql_help.c:4662 sql_help.c:4663
-#: sql_help.c:4715 sql_help.c:4869 sql_help.c:4911 sql_help.c:4913
-#: sql_help.c:4917 sql_help.c:4919 sql_help.c:4920 sql_help.c:4921
-#: sql_help.c:4988 sql_help.c:5114 sql_help.c:5156 sql_help.c:5158
-#: sql_help.c:5162 sql_help.c:5164 sql_help.c:5165 sql_help.c:5166
+#: sql_help.c:3333 sql_help.c:4605 sql_help.c:4647 sql_help.c:4649
+#: sql_help.c:4653 sql_help.c:4655 sql_help.c:4656 sql_help.c:4657
+#: sql_help.c:4709 sql_help.c:4863 sql_help.c:4905 sql_help.c:4907
+#: sql_help.c:4911 sql_help.c:4913 sql_help.c:4914 sql_help.c:4915
+#: sql_help.c:4982 sql_help.c:5108 sql_help.c:5150 sql_help.c:5152
+#: sql_help.c:5156 sql_help.c:5158 sql_help.c:5159 sql_help.c:5160
 msgid "from_item"
 msgstr "FROM項目"
 
-#: sql_help.c:3341 sql_help.c:3825 sql_help.c:4174 sql_help.c:4990
+#: sql_help.c:3335 sql_help.c:3819 sql_help.c:4168 sql_help.c:4984
 msgid "cursor_name"
 msgstr "カーソル名"
 
-#: sql_help.c:3342 sql_help.c:4031 sql_help.c:4123 sql_help.c:4991
+#: sql_help.c:3336 sql_help.c:4025 sql_help.c:4117 sql_help.c:4985
 msgid "output_expression"
 msgstr "出力表現"
 
-#: sql_help.c:3343 sql_help.c:4032 sql_help.c:4124 sql_help.c:4610
-#: sql_help.c:4713 sql_help.c:4868 sql_help.c:4992 sql_help.c:5113
+#: sql_help.c:3337 sql_help.c:4026 sql_help.c:4118 sql_help.c:4604
+#: sql_help.c:4707 sql_help.c:4862 sql_help.c:4986 sql_help.c:5107
 msgid "output_name"
 msgstr "出力名"
 
-#: sql_help.c:3359
+#: sql_help.c:3353
 msgid "code"
 msgstr "コードブロック"
 
-#: sql_help.c:3764
+#: sql_help.c:3758
 msgid "parameter"
 msgstr "パラメータ"
 
-#: sql_help.c:3788 sql_help.c:4199
+#: sql_help.c:3782 sql_help.c:4193
 msgid "statement"
 msgstr "文"
 
-#: sql_help.c:3824 sql_help.c:4173
+#: sql_help.c:3818 sql_help.c:4167
 msgid "direction"
 msgstr "方向"
 
-#: sql_help.c:3826 sql_help.c:4175
+#: sql_help.c:3820 sql_help.c:4169
 msgid "where direction can be one of:"
 msgstr "方向 は以下のうちのいずれか:"
 
-#: sql_help.c:3827 sql_help.c:3828 sql_help.c:3829 sql_help.c:3830
-#: sql_help.c:3831 sql_help.c:4176 sql_help.c:4177 sql_help.c:4178
-#: sql_help.c:4179 sql_help.c:4180 sql_help.c:4620 sql_help.c:4622
-#: sql_help.c:4724 sql_help.c:4726 sql_help.c:4878 sql_help.c:4880
-#: sql_help.c:5054 sql_help.c:5056 sql_help.c:5123 sql_help.c:5125
+#: sql_help.c:3821 sql_help.c:3822 sql_help.c:3823 sql_help.c:3824
+#: sql_help.c:3825 sql_help.c:4170 sql_help.c:4171 sql_help.c:4172
+#: sql_help.c:4173 sql_help.c:4174 sql_help.c:4614 sql_help.c:4616
+#: sql_help.c:4718 sql_help.c:4720 sql_help.c:4872 sql_help.c:4874
+#: sql_help.c:5048 sql_help.c:5050 sql_help.c:5117 sql_help.c:5119
 msgid "count"
 msgstr "取り出す位置や行数"
 
-#: sql_help.c:3934 sql_help.c:4397
+#: sql_help.c:3928 sql_help.c:4391
 msgid "sequence_name"
 msgstr "シーケンス名"
 
-#: sql_help.c:3952 sql_help.c:4415
+#: sql_help.c:3946 sql_help.c:4409
 msgid "arg_name"
 msgstr "引数名"
 
-#: sql_help.c:3953 sql_help.c:4416
+#: sql_help.c:3947 sql_help.c:4410
 msgid "arg_type"
 msgstr "引数の型"
 
-#: sql_help.c:3960 sql_help.c:4423
+#: sql_help.c:3954 sql_help.c:4417
 msgid "loid"
 msgstr "ラージオブジェクトid"
 
-#: sql_help.c:3991
+#: sql_help.c:3985
 msgid "remote_schema"
 msgstr "リモートスキーマ"
 
-#: sql_help.c:3994
+#: sql_help.c:3988
 msgid "local_schema"
 msgstr "ローカルスキーマ"
 
-#: sql_help.c:4029
+#: sql_help.c:4023
 msgid "conflict_target"
 msgstr "競合ターゲット"
 
-#: sql_help.c:4030
+#: sql_help.c:4024
 msgid "conflict_action"
 msgstr "競合時アクション"
 
-#: sql_help.c:4033
+#: sql_help.c:4027
 msgid "where conflict_target can be one of:"
 msgstr "競合ターゲットは以下のいずれかです:"
 
-#: sql_help.c:4034
+#: sql_help.c:4028
 msgid "index_column_name"
 msgstr "インデックスのカラム名"
 
-#: sql_help.c:4035
+#: sql_help.c:4029
 msgid "index_expression"
 msgstr "インデックス表現"
 
-#: sql_help.c:4038
+#: sql_help.c:4032
 msgid "index_predicate"
 msgstr "インデックスの述語"
 
-#: sql_help.c:4040
+#: sql_help.c:4034
 msgid "and conflict_action is one of:"
 msgstr "競合時アクションは以下のいずれかです:"
 
-#: sql_help.c:4046 sql_help.c:4147 sql_help.c:4987
+#: sql_help.c:4040 sql_help.c:4141 sql_help.c:4981
 msgid "sub-SELECT"
 msgstr "副問い合わせ句"
 
-#: sql_help.c:4055 sql_help.c:4188 sql_help.c:4963
+#: sql_help.c:4049 sql_help.c:4182 sql_help.c:4957
 msgid "channel"
 msgstr "チャネル"
 
-#: sql_help.c:4077
+#: sql_help.c:4071
 msgid "lockmode"
 msgstr "ロックモード"
 
-#: sql_help.c:4078
+#: sql_help.c:4072
 msgid "where lockmode is one of:"
 msgstr "ロックモードは以下のいずれかです:"
 
-#: sql_help.c:4118
+#: sql_help.c:4112
 msgid "target_table_name"
 msgstr "ターゲットテーブル名"
 
-#: sql_help.c:4119
+#: sql_help.c:4113
 msgid "target_alias"
 msgstr "ターゲット別名"
 
-#: sql_help.c:4120
+#: sql_help.c:4114
 msgid "data_source"
 msgstr "データ源"
 
-#: sql_help.c:4121 sql_help.c:4656 sql_help.c:4914 sql_help.c:5159
+#: sql_help.c:4115 sql_help.c:4650 sql_help.c:4908 sql_help.c:5153
 msgid "join_condition"
 msgstr "JOIN条件"
 
-#: sql_help.c:4122
+#: sql_help.c:4116
 msgid "when_clause"
 msgstr "WHEN句"
 
-#: sql_help.c:4125
+#: sql_help.c:4119
 msgid "where data_source is:"
 msgstr "ここで\"データ源\"は以下の通り:"
 
-#: sql_help.c:4126
+#: sql_help.c:4120
 msgid "source_table_name"
 msgstr "データ源テーブル名"
 
-#: sql_help.c:4127
+#: sql_help.c:4121
 msgid "source_query"
 msgstr "データ源問い合わせ"
 
-#: sql_help.c:4128
+#: sql_help.c:4122
 msgid "source_alias"
 msgstr "データ源別名"
 
-#: sql_help.c:4129
+#: sql_help.c:4123
 msgid "and when_clause is:"
 msgstr "WHEN句は以下の通り:"
 
-#: sql_help.c:4131 sql_help.c:4134
+#: sql_help.c:4125 sql_help.c:4128
 msgid "merge_update"
 msgstr "マージ更新"
 
-#: sql_help.c:4132 sql_help.c:4135
+#: sql_help.c:4126 sql_help.c:4129
 msgid "merge_delete"
 msgstr "マージ削除"
 
-#: sql_help.c:4137
+#: sql_help.c:4131
 msgid "merge_insert"
 msgstr "マージ挿入"
 
-#: sql_help.c:4138
+#: sql_help.c:4132
 msgid "and merge_insert is:"
 msgstr "そして\"マージ挿入\"は以下の通り:"
 
-#: sql_help.c:4141
+#: sql_help.c:4135
 msgid "and merge_update is:"
 msgstr "そして\"マージ更新\"は以下の通り:"
 
-#: sql_help.c:4148
+#: sql_help.c:4142
 msgid "and merge_delete is:"
 msgstr "そして\"マージ削除\"は以下の通り:"
 
-#: sql_help.c:4189
+#: sql_help.c:4183
 msgid "payload"
 msgstr "ペイロード"
 
-#: sql_help.c:4216
+#: sql_help.c:4210
 msgid "old_role"
 msgstr "元のロール"
 
-#: sql_help.c:4217
+#: sql_help.c:4211
 msgid "new_role"
 msgstr "新しいロール"
 
-#: sql_help.c:4256 sql_help.c:4465 sql_help.c:4473
+#: sql_help.c:4250 sql_help.c:4459 sql_help.c:4467
 msgid "savepoint_name"
 msgstr "セーブポイント名"
 
-#: sql_help.c:4613 sql_help.c:4671 sql_help.c:4871 sql_help.c:4929
-#: sql_help.c:5116 sql_help.c:5174
+#: sql_help.c:4607 sql_help.c:4665 sql_help.c:4865 sql_help.c:4923
+#: sql_help.c:5110 sql_help.c:5168
 msgid "grouping_element"
 msgstr "グルーピング要素"
 
-#: sql_help.c:4615 sql_help.c:4719 sql_help.c:4873 sql_help.c:5118
+#: sql_help.c:4609 sql_help.c:4713 sql_help.c:4867 sql_help.c:5112
 msgid "window_name"
 msgstr "ウィンドウ名"
 
-#: sql_help.c:4616 sql_help.c:4720 sql_help.c:4874 sql_help.c:5119
+#: sql_help.c:4610 sql_help.c:4714 sql_help.c:4868 sql_help.c:5113
 msgid "window_definition"
 msgstr "ウィンドウ定義"
 
-#: sql_help.c:4617 sql_help.c:4631 sql_help.c:4675 sql_help.c:4721
-#: sql_help.c:4875 sql_help.c:4889 sql_help.c:4933 sql_help.c:5120
-#: sql_help.c:5134 sql_help.c:5178
+#: sql_help.c:4611 sql_help.c:4625 sql_help.c:4669 sql_help.c:4715
+#: sql_help.c:4869 sql_help.c:4883 sql_help.c:4927 sql_help.c:5114
+#: sql_help.c:5128 sql_help.c:5172
 msgid "select"
 msgstr "SELECT句"
 
-#: sql_help.c:4623 sql_help.c:4881 sql_help.c:5126
+#: sql_help.c:4617 sql_help.c:4875 sql_help.c:5120
 msgid "from_reference"
 msgstr "FROM参照"
 
-#: sql_help.c:4624 sql_help.c:4882 sql_help.c:5127
+#: sql_help.c:4618 sql_help.c:4876 sql_help.c:5121
 msgid "where from_item can be one of:"
 msgstr "FROM項目は以下のいずれかです:"
 
-#: sql_help.c:4627 sql_help.c:4633 sql_help.c:4636 sql_help.c:4640
-#: sql_help.c:4652 sql_help.c:4885 sql_help.c:4891 sql_help.c:4894
-#: sql_help.c:4898 sql_help.c:4910 sql_help.c:5130 sql_help.c:5136
-#: sql_help.c:5139 sql_help.c:5143 sql_help.c:5155
+#: sql_help.c:4621 sql_help.c:4627 sql_help.c:4630 sql_help.c:4634
+#: sql_help.c:4646 sql_help.c:4879 sql_help.c:4885 sql_help.c:4888
+#: sql_help.c:4892 sql_help.c:4904 sql_help.c:5124 sql_help.c:5130
+#: sql_help.c:5133 sql_help.c:5137 sql_help.c:5149
 msgid "column_alias"
 msgstr "列別名"
 
-#: sql_help.c:4628 sql_help.c:4886 sql_help.c:5131
+#: sql_help.c:4622 sql_help.c:4880 sql_help.c:5125
 msgid "sampling_method"
 msgstr "サンプリングメソッド"
 
-#: sql_help.c:4630 sql_help.c:4888 sql_help.c:5133
+#: sql_help.c:4624 sql_help.c:4882 sql_help.c:5127
 msgid "seed"
 msgstr "乱数シード"
 
-#: sql_help.c:4634 sql_help.c:4673 sql_help.c:4892 sql_help.c:4931
-#: sql_help.c:5137 sql_help.c:5176
+#: sql_help.c:4628 sql_help.c:4667 sql_help.c:4886 sql_help.c:4925
+#: sql_help.c:5131 sql_help.c:5170
 msgid "with_query_name"
 msgstr "WITH問い合わせ名"
 
-#: sql_help.c:4644 sql_help.c:4647 sql_help.c:4650 sql_help.c:4902
-#: sql_help.c:4905 sql_help.c:4908 sql_help.c:5147 sql_help.c:5150
-#: sql_help.c:5153
+#: sql_help.c:4638 sql_help.c:4641 sql_help.c:4644 sql_help.c:4896
+#: sql_help.c:4899 sql_help.c:4902 sql_help.c:5141 sql_help.c:5144
+#: sql_help.c:5147
 msgid "column_definition"
 msgstr "カラム定義"
 
-#: sql_help.c:4654 sql_help.c:4660 sql_help.c:4912 sql_help.c:4918
-#: sql_help.c:5157 sql_help.c:5163
+#: sql_help.c:4648 sql_help.c:4654 sql_help.c:4906 sql_help.c:4912
+#: sql_help.c:5151 sql_help.c:5157
 msgid "join_type"
 msgstr "JOINタイプ"
 
-#: sql_help.c:4657 sql_help.c:4915 sql_help.c:5160
+#: sql_help.c:4651 sql_help.c:4909 sql_help.c:5154
 msgid "join_column"
 msgstr "JOINカラム"
 
-#: sql_help.c:4658 sql_help.c:4916 sql_help.c:5161
+#: sql_help.c:4652 sql_help.c:4910 sql_help.c:5155
 msgid "join_using_alias"
 msgstr "JOIN用別名"
 
-#: sql_help.c:4664 sql_help.c:4922 sql_help.c:5167
+#: sql_help.c:4658 sql_help.c:4916 sql_help.c:5161
 msgid "and grouping_element can be one of:"
 msgstr "グルーピング要素は以下のいずれかです:"
 
-#: sql_help.c:4672 sql_help.c:4930 sql_help.c:5175
+#: sql_help.c:4666 sql_help.c:4924 sql_help.c:5169
 msgid "and with_query is:"
 msgstr "WITH問い合わせは以下のいずれかです:"
 
-#: sql_help.c:4676 sql_help.c:4934 sql_help.c:5179
+#: sql_help.c:4670 sql_help.c:4928 sql_help.c:5173
 msgid "values"
 msgstr "VALUES句"
 
-#: sql_help.c:4677 sql_help.c:4935 sql_help.c:5180
+#: sql_help.c:4671 sql_help.c:4929 sql_help.c:5174
 msgid "insert"
 msgstr "INSERT句"
 
-#: sql_help.c:4678 sql_help.c:4936 sql_help.c:5181
+#: sql_help.c:4672 sql_help.c:4930 sql_help.c:5175
 msgid "update"
 msgstr "UPDATE句"
 
-#: sql_help.c:4679 sql_help.c:4937 sql_help.c:5182
+#: sql_help.c:4673 sql_help.c:4931 sql_help.c:5176
 msgid "delete"
 msgstr "DELETE句"
 
-#: sql_help.c:4680 sql_help.c:4938 sql_help.c:5183
+#: sql_help.c:4674 sql_help.c:4932 sql_help.c:5177
 msgid "merge"
 msgstr "MERGE句"
 
-#: sql_help.c:4682 sql_help.c:4940 sql_help.c:5185
+#: sql_help.c:4676 sql_help.c:4934 sql_help.c:5179
 msgid "search_seq_col_name"
 msgstr "SEARCH順序列名"
 
-#: sql_help.c:4684 sql_help.c:4942 sql_help.c:5187
+#: sql_help.c:4678 sql_help.c:4936 sql_help.c:5181
 msgid "cycle_mark_col_name"
 msgstr "循環識別列名"
 
-#: sql_help.c:4685 sql_help.c:4943 sql_help.c:5188
+#: sql_help.c:4679 sql_help.c:4937 sql_help.c:5182
 msgid "cycle_mark_value"
 msgstr "循環識別値"
 
-#: sql_help.c:4686 sql_help.c:4944 sql_help.c:5189
+#: sql_help.c:4680 sql_help.c:4938 sql_help.c:5183
 msgid "cycle_mark_default"
 msgstr "循環識別デフォルト"
 
-#: sql_help.c:4687 sql_help.c:4945 sql_help.c:5190
+#: sql_help.c:4681 sql_help.c:4939 sql_help.c:5184
 msgid "cycle_path_col_name"
 msgstr "循環パス列名"
 
-#: sql_help.c:4714
+#: sql_help.c:4708
 msgid "new_table"
 msgstr "新しいテーブル"
 
-#: sql_help.c:4785
+#: sql_help.c:4779
 msgid "snapshot_id"
 msgstr "スナップショットID"
 
-#: sql_help.c:5052
+#: sql_help.c:5046
 msgid "sort_expression"
 msgstr "ソート表現"
 
-#: sql_help.c:5197 sql_help.c:6181
+#: sql_help.c:5191 sql_help.c:6175
 msgid "abort the current transaction"
 msgstr "現在のトランザクションを中止します"
 
-#: sql_help.c:5203
+#: sql_help.c:5197
 msgid "change the definition of an aggregate function"
 msgstr "集約関数の定義を変更します"
 
-#: sql_help.c:5209
+#: sql_help.c:5203
 msgid "change the definition of a collation"
 msgstr "照合順序の定義を変更します"
 
-#: sql_help.c:5215
+#: sql_help.c:5209
 msgid "change the definition of a conversion"
 msgstr "エンコーディング変換ルールの定義を変更します"
 
-#: sql_help.c:5221
+#: sql_help.c:5215
 msgid "change a database"
 msgstr "データベースを変更します"
 
-#: sql_help.c:5227
+#: sql_help.c:5221
 msgid "define default access privileges"
 msgstr "デフォルトのアクセス権限を定義します"
 
-#: sql_help.c:5233
+#: sql_help.c:5227
 msgid "change the definition of a domain"
 msgstr "ドメインの定義を変更します"
 
-#: sql_help.c:5239
+#: sql_help.c:5233
 msgid "change the definition of an event trigger"
 msgstr "イベントトリガーの定義を変更します"
 
-#: sql_help.c:5245
+#: sql_help.c:5239
 msgid "change the definition of an extension"
 msgstr "機能拡張の定義を変更します"
 
-#: sql_help.c:5251
+#: sql_help.c:5245
 msgid "change the definition of a foreign-data wrapper"
 msgstr "外部データラッパの定義を変更します"
 
-#: sql_help.c:5257
+#: sql_help.c:5251
 msgid "change the definition of a foreign table"
 msgstr "外部テーブルの定義を変更します"
 
-#: sql_help.c:5263
+#: sql_help.c:5257
 msgid "change the definition of a function"
 msgstr "関数の定義を変更します"
 
-#: sql_help.c:5269
+#: sql_help.c:5263
 msgid "change role name or membership"
 msgstr "ロール名またはメンバーシップを変更します"
 
-#: sql_help.c:5275
+#: sql_help.c:5269
 msgid "change the definition of an index"
 msgstr "インデックスの定義を変更します"
 
-#: sql_help.c:5281
+#: sql_help.c:5275
 msgid "change the definition of a procedural language"
 msgstr "手続き言語の定義を変更します"
 
-#: sql_help.c:5287
+#: sql_help.c:5281
 msgid "change the definition of a large object"
 msgstr "ラージオブジェクトの定義を変更します"
 
-#: sql_help.c:5293
+#: sql_help.c:5287
 msgid "change the definition of a materialized view"
 msgstr "実体化ビューの定義を変更します"
 
-#: sql_help.c:5299
+#: sql_help.c:5293
 msgid "change the definition of an operator"
 msgstr "演算子の定義を変更します"
 
-#: sql_help.c:5305
+#: sql_help.c:5299
 msgid "change the definition of an operator class"
 msgstr "演算子クラスの定義を変更します"
 
-#: sql_help.c:5311
+#: sql_help.c:5305
 msgid "change the definition of an operator family"
 msgstr "演算子族の定義を変更します"
 
-#: sql_help.c:5317
+#: sql_help.c:5311
 msgid "change the definition of a row-level security policy"
 msgstr "行レベルのセキュリティ ポリシーの定義を変更します"
 
-#: sql_help.c:5323
+#: sql_help.c:5317
 msgid "change the definition of a procedure"
 msgstr "プロシージャの定義を変更します"
 
-#: sql_help.c:5329
+#: sql_help.c:5323
 msgid "change the definition of a publication"
 msgstr "パブリケーションの定義を変更します"
 
-#: sql_help.c:5335 sql_help.c:5437
+#: sql_help.c:5329 sql_help.c:5431
 msgid "change a database role"
 msgstr "データベースロールを変更します"
 
-#: sql_help.c:5341
+#: sql_help.c:5335
 msgid "change the definition of a routine"
 msgstr "ルーチンの定義を変更します"
 
-#: sql_help.c:5347
+#: sql_help.c:5341
 msgid "change the definition of a rule"
 msgstr "ルールの定義を変更します"
 
-#: sql_help.c:5353
+#: sql_help.c:5347
 msgid "change the definition of a schema"
 msgstr "スキーマの定義を変更します"
 
-#: sql_help.c:5359
+#: sql_help.c:5353
 msgid "change the definition of a sequence generator"
 msgstr "シーケンス生成器の定義を変更します"
 
-#: sql_help.c:5365
+#: sql_help.c:5359
 msgid "change the definition of a foreign server"
 msgstr "外部サーバーの定義を変更します"
 
-#: sql_help.c:5371
+#: sql_help.c:5365
 msgid "change the definition of an extended statistics object"
 msgstr "拡張統計情報オブジェクトの定義を変更します"
 
-#: sql_help.c:5377
+#: sql_help.c:5371
 msgid "change the definition of a subscription"
 msgstr "サブスクリプションの定義を変更します"
 
-#: sql_help.c:5383
+#: sql_help.c:5377
 msgid "change a server configuration parameter"
 msgstr "サーバーの設定パラメータを変更します"
 
-#: sql_help.c:5389
+#: sql_help.c:5383
 msgid "change the definition of a table"
 msgstr "テーブルの定義を変更します。"
 
-#: sql_help.c:5395
+#: sql_help.c:5389
 msgid "change the definition of a tablespace"
 msgstr "テーブル空間の定義を変更します"
 
-#: sql_help.c:5401
+#: sql_help.c:5395
 msgid "change the definition of a text search configuration"
 msgstr "テキスト検索設定の定義を変更します"
 
-#: sql_help.c:5407
+#: sql_help.c:5401
 msgid "change the definition of a text search dictionary"
 msgstr "テキスト検索辞書の定義を変更します"
 
-#: sql_help.c:5413
+#: sql_help.c:5407
 msgid "change the definition of a text search parser"
 msgstr "テキスト検索パーサーの定義を変更します"
 
-#: sql_help.c:5419
+#: sql_help.c:5413
 msgid "change the definition of a text search template"
 msgstr "テキスト検索テンプレートの定義を変更します"
 
-#: sql_help.c:5425
+#: sql_help.c:5419
 msgid "change the definition of a trigger"
 msgstr "トリガーの定義を変更します"
 
-#: sql_help.c:5431
+#: sql_help.c:5425
 msgid "change the definition of a type"
 msgstr "型の定義を変更します"
 
-#: sql_help.c:5443
+#: sql_help.c:5437
 msgid "change the definition of a user mapping"
 msgstr "ユーザーマッピングの定義を変更します"
 
-#: sql_help.c:5449
+#: sql_help.c:5443
 msgid "change the definition of a view"
 msgstr "ビューの定義を変更します"
 
-#: sql_help.c:5455
+#: sql_help.c:5449
 msgid "collect statistics about a database"
 msgstr "データベースの統計情報を収集します"
 
-#: sql_help.c:5461 sql_help.c:6259
+#: sql_help.c:5455 sql_help.c:6253
 msgid "start a transaction block"
 msgstr "トランザクション区間を開始します"
 
-#: sql_help.c:5467
+#: sql_help.c:5461
 msgid "invoke a procedure"
 msgstr "プロシージャを実行します"
 
-#: sql_help.c:5473
+#: sql_help.c:5467
 msgid "force a write-ahead log checkpoint"
 msgstr "先行書き込みログのチェックポイントを強制的に実行します"
 
-#: sql_help.c:5479
+#: sql_help.c:5473
 msgid "close a cursor"
 msgstr "カーソルを閉じます"
 
-#: sql_help.c:5485
+#: sql_help.c:5479
 msgid "cluster a table according to an index"
 msgstr "インデックスに従ってテーブルをクラスタ化します"
 
-#: sql_help.c:5491
+#: sql_help.c:5485
 msgid "define or change the comment of an object"
 msgstr "オブジェクトのコメントを定義または変更します"
 
-#: sql_help.c:5497 sql_help.c:6055
+#: sql_help.c:5491 sql_help.c:6049
 msgid "commit the current transaction"
 msgstr "現在のトランザクションをコミットします"
 
-#: sql_help.c:5503
+#: sql_help.c:5497
 msgid "commit a transaction that was earlier prepared for two-phase commit"
 msgstr "二相コミットのために事前に準備されたトランザクションをコミットします"
 
-#: sql_help.c:5509
+#: sql_help.c:5503
 msgid "copy data between a file and a table"
 msgstr "ファイルとテーブルとの間でデータをコピーします"
 
-#: sql_help.c:5515
+#: sql_help.c:5509
 msgid "define a new access method"
 msgstr "新しいアクセスメソッドを定義します"
 
-#: sql_help.c:5521
+#: sql_help.c:5515
 msgid "define a new aggregate function"
 msgstr "新しい集約関数を定義します"
 
-#: sql_help.c:5527
+#: sql_help.c:5521
 msgid "define a new cast"
 msgstr "新しい型変換を定義します"
 
-#: sql_help.c:5533
+#: sql_help.c:5527
 msgid "define a new collation"
 msgstr "新しい照合順序を定義します"
 
-#: sql_help.c:5539
+#: sql_help.c:5533
 msgid "define a new encoding conversion"
 msgstr "新しいエンコーディング変換を定義します"
 
-#: sql_help.c:5545
+#: sql_help.c:5539
 msgid "create a new database"
 msgstr "新しいデータベースを作成します"
 
-#: sql_help.c:5551
+#: sql_help.c:5545
 msgid "define a new domain"
 msgstr "新しいドメインを定義します"
 
-#: sql_help.c:5557
+#: sql_help.c:5551
 msgid "define a new event trigger"
 msgstr "新しいイベントトリガーを定義します"
 
-#: sql_help.c:5563
+#: sql_help.c:5557
 msgid "install an extension"
 msgstr "機能拡張をインストールします"
 
-#: sql_help.c:5569
+#: sql_help.c:5563
 msgid "define a new foreign-data wrapper"
 msgstr "新しい外部データラッパを定義します"
 
-#: sql_help.c:5575
+#: sql_help.c:5569
 msgid "define a new foreign table"
 msgstr "新しい外部テーブルを定義します"
 
-#: sql_help.c:5581
+#: sql_help.c:5575
 msgid "define a new function"
 msgstr "新しい関数を定義します"
 
-#: sql_help.c:5587 sql_help.c:5647 sql_help.c:5749
+#: sql_help.c:5581 sql_help.c:5641 sql_help.c:5743
 msgid "define a new database role"
 msgstr "新しいデータベースロールを定義します"
 
-#: sql_help.c:5593
+#: sql_help.c:5587
 msgid "define a new index"
 msgstr "新しいインデックスを定義します"
 
-#: sql_help.c:5599
+#: sql_help.c:5593
 msgid "define a new procedural language"
 msgstr "新しい手続き言語を定義します"
 
-#: sql_help.c:5605
+#: sql_help.c:5599
 msgid "define a new materialized view"
 msgstr "新しい実体化ビューを定義します"
 
-#: sql_help.c:5611
+#: sql_help.c:5605
 msgid "define a new operator"
 msgstr "新しい演算子を定義します"
 
-#: sql_help.c:5617
+#: sql_help.c:5611
 msgid "define a new operator class"
 msgstr "新しい演算子クラスを定義します"
 
-#: sql_help.c:5623
+#: sql_help.c:5617
 msgid "define a new operator family"
 msgstr "新しい演算子族を定義します"
 
-#: sql_help.c:5629
+#: sql_help.c:5623
 msgid "define a new row-level security policy for a table"
 msgstr "テーブルに対して新しい行レベルセキュリティポリシーを定義します"
 
-#: sql_help.c:5635
+#: sql_help.c:5629
 msgid "define a new procedure"
 msgstr "新しいプロシージャを定義します"
 
-#: sql_help.c:5641
+#: sql_help.c:5635
 msgid "define a new publication"
 msgstr "新しいパブリケーションを定義します"
 
-#: sql_help.c:5653
+#: sql_help.c:5647
 msgid "define a new rewrite rule"
 msgstr "新しい書き換えルールを定義します"
 
-#: sql_help.c:5659
+#: sql_help.c:5653
 msgid "define a new schema"
 msgstr "新しいスキーマを定義します"
 
-#: sql_help.c:5665
+#: sql_help.c:5659
 msgid "define a new sequence generator"
 msgstr "新しいシーケンス生成器を定義します。"
 
-#: sql_help.c:5671
+#: sql_help.c:5665
 msgid "define a new foreign server"
 msgstr "新しい外部サーバーを定義します"
 
-#: sql_help.c:5677
+#: sql_help.c:5671
 msgid "define extended statistics"
 msgstr "拡張統計情報を定義します"
 
-#: sql_help.c:5683
+#: sql_help.c:5677
 msgid "define a new subscription"
 msgstr "新しいサブスクリプションを定義します"
 
-#: sql_help.c:5689
+#: sql_help.c:5683
 msgid "define a new table"
 msgstr "新しいテーブルを定義します"
 
-#: sql_help.c:5695 sql_help.c:6217
+#: sql_help.c:5689 sql_help.c:6211
 msgid "define a new table from the results of a query"
 msgstr "問い合わせの結果から新しいテーブルを定義します"
 
-#: sql_help.c:5701
+#: sql_help.c:5695
 msgid "define a new tablespace"
 msgstr "新しいテーブル空間を定義します"
 
-#: sql_help.c:5707
+#: sql_help.c:5701
 msgid "define a new text search configuration"
 msgstr "新しいテキスト検索設定を定義します"
 
-#: sql_help.c:5713
+#: sql_help.c:5707
 msgid "define a new text search dictionary"
 msgstr "新しいテキスト検索辞書を定義します"
 
-#: sql_help.c:5719
+#: sql_help.c:5713
 msgid "define a new text search parser"
 msgstr "新しいテキスト検索パーサーを定義します"
 
-#: sql_help.c:5725
+#: sql_help.c:5719
 msgid "define a new text search template"
 msgstr "新しいテキスト検索テンプレートを定義します"
 
-#: sql_help.c:5731
+#: sql_help.c:5725
 msgid "define a new transform"
 msgstr "新しいデータ変換を定義します"
 
-#: sql_help.c:5737
+#: sql_help.c:5731
 msgid "define a new trigger"
 msgstr "新しいトリガーを定義します"
 
-#: sql_help.c:5743
+#: sql_help.c:5737
 msgid "define a new data type"
 msgstr "新しいデータ型を定義します"
 
-#: sql_help.c:5755
+#: sql_help.c:5749
 msgid "define a new mapping of a user to a foreign server"
 msgstr "外部サーバーに対するユーザーの新しいマッピングを定義します。"
 
-#: sql_help.c:5761
+#: sql_help.c:5755
 msgid "define a new view"
 msgstr "新しいビューを定義します"
 
-#: sql_help.c:5767
+#: sql_help.c:5761
 msgid "deallocate a prepared statement"
 msgstr "準備した文を解放します"
 
-#: sql_help.c:5773
+#: sql_help.c:5767
 msgid "define a cursor"
 msgstr "カーソルを定義します"
 
-#: sql_help.c:5779
+#: sql_help.c:5773
 msgid "delete rows of a table"
 msgstr "テーブルの行を削除します"
 
-#: sql_help.c:5785
+#: sql_help.c:5779
 msgid "discard session state"
 msgstr "セッション状態を破棄します"
 
-#: sql_help.c:5791
+#: sql_help.c:5785
 msgid "execute an anonymous code block"
 msgstr "無名コードブロックを実行します"
 
-#: sql_help.c:5797
+#: sql_help.c:5791
 msgid "remove an access method"
 msgstr "アクセスメソッドを削除します"
 
-#: sql_help.c:5803
+#: sql_help.c:5797
 msgid "remove an aggregate function"
 msgstr "集約関数を削除します"
 
-#: sql_help.c:5809
+#: sql_help.c:5803
 msgid "remove a cast"
 msgstr "型変換を削除します"
 
-#: sql_help.c:5815
+#: sql_help.c:5809
 msgid "remove a collation"
 msgstr "照合順序を削除します"
 
-#: sql_help.c:5821
+#: sql_help.c:5815
 msgid "remove a conversion"
 msgstr "符号化方式変換を削除します"
 
-#: sql_help.c:5827
+#: sql_help.c:5821
 msgid "remove a database"
 msgstr "データベースを削除します"
 
-#: sql_help.c:5833
+#: sql_help.c:5827
 msgid "remove a domain"
 msgstr "ドメインを削除します"
 
-#: sql_help.c:5839
+#: sql_help.c:5833
 msgid "remove an event trigger"
 msgstr "イベントトリガーを削除します"
 
-#: sql_help.c:5845
+#: sql_help.c:5839
 msgid "remove an extension"
 msgstr "機能拡張を削除します"
 
-#: sql_help.c:5851
+#: sql_help.c:5845
 msgid "remove a foreign-data wrapper"
 msgstr "外部データラッパを削除します"
 
-#: sql_help.c:5857
+#: sql_help.c:5851
 msgid "remove a foreign table"
 msgstr "外部テーブルを削除します"
 
-#: sql_help.c:5863
+#: sql_help.c:5857
 msgid "remove a function"
 msgstr "関数を削除します"
 
-#: sql_help.c:5869 sql_help.c:5935 sql_help.c:6037
+#: sql_help.c:5863 sql_help.c:5929 sql_help.c:6031
 msgid "remove a database role"
 msgstr "データベースロールを削除します"
 
-#: sql_help.c:5875
+#: sql_help.c:5869
 msgid "remove an index"
 msgstr "インデックスを削除します"
 
-#: sql_help.c:5881
+#: sql_help.c:5875
 msgid "remove a procedural language"
 msgstr "手続き言語を削除します"
 
-#: sql_help.c:5887
+#: sql_help.c:5881
 msgid "remove a materialized view"
 msgstr "実体化ビューを削除します"
 
-#: sql_help.c:5893
+#: sql_help.c:5887
 msgid "remove an operator"
 msgstr "演算子を削除します"
 
-#: sql_help.c:5899
+#: sql_help.c:5893
 msgid "remove an operator class"
 msgstr "演算子クラスを削除します"
 
-#: sql_help.c:5905
+#: sql_help.c:5899
 msgid "remove an operator family"
 msgstr "演算子族を削除します"
 
-#: sql_help.c:5911
+#: sql_help.c:5905
 msgid "remove database objects owned by a database role"
 msgstr "データベースロールが所有するデータベースオブジェクトを削除します"
 
-#: sql_help.c:5917
+#: sql_help.c:5911
 msgid "remove a row-level security policy from a table"
 msgstr "テーブルから行レベルのセキュリティポリシーを削除します"
 
-#: sql_help.c:5923
+#: sql_help.c:5917
 msgid "remove a procedure"
 msgstr "プロシージャを削除します"
 
-#: sql_help.c:5929
+#: sql_help.c:5923
 msgid "remove a publication"
 msgstr "パブリケーションを削除します"
 
-#: sql_help.c:5941
+#: sql_help.c:5935
 msgid "remove a routine"
 msgstr "ルーチンを削除します"
 
-#: sql_help.c:5947
+#: sql_help.c:5941
 msgid "remove a rewrite rule"
 msgstr "書き換えルールを削除します"
 
-#: sql_help.c:5953
+#: sql_help.c:5947
 msgid "remove a schema"
 msgstr "スキーマを削除します"
 
-#: sql_help.c:5959
+#: sql_help.c:5953
 msgid "remove a sequence"
 msgstr "シーケンスを削除します"
 
-#: sql_help.c:5965
+#: sql_help.c:5959
 msgid "remove a foreign server descriptor"
 msgstr "外部サーバー記述子を削除します"
 
-#: sql_help.c:5971
+#: sql_help.c:5965
 msgid "remove extended statistics"
 msgstr "拡張統計情報を削除します"
 
-#: sql_help.c:5977
+#: sql_help.c:5971
 msgid "remove a subscription"
 msgstr "サブスクリプションを削除します"
 
-#: sql_help.c:5983
+#: sql_help.c:5977
 msgid "remove a table"
 msgstr "テーブルを削除します"
 
-#: sql_help.c:5989
+#: sql_help.c:5983
 msgid "remove a tablespace"
 msgstr "テーブル空間を削除します"
 
-#: sql_help.c:5995
+#: sql_help.c:5989
 msgid "remove a text search configuration"
 msgstr "テキスト検索設定を削除します"
 
-#: sql_help.c:6001
+#: sql_help.c:5995
 msgid "remove a text search dictionary"
 msgstr "テキスト検索辞書を削除します"
 
-#: sql_help.c:6007
+#: sql_help.c:6001
 msgid "remove a text search parser"
 msgstr "テキスト検索パーサーを削除します"
 
-#: sql_help.c:6013
+#: sql_help.c:6007
 msgid "remove a text search template"
 msgstr "テキスト検索テンプレートを削除します"
 
-#: sql_help.c:6019
+#: sql_help.c:6013
 msgid "remove a transform"
 msgstr "データ変換を削除します"
 
-#: sql_help.c:6025
+#: sql_help.c:6019
 msgid "remove a trigger"
 msgstr "トリガーを削除します"
 
-#: sql_help.c:6031
+#: sql_help.c:6025
 msgid "remove a data type"
 msgstr "データ型を削除します"
 
-#: sql_help.c:6043
+#: sql_help.c:6037
 msgid "remove a user mapping for a foreign server"
 msgstr "外部サーバーのユーザーマッピングを削除します"
 
-#: sql_help.c:6049
+#: sql_help.c:6043
 msgid "remove a view"
 msgstr "ビューを削除します"
 
-#: sql_help.c:6061
+#: sql_help.c:6055
 msgid "execute a prepared statement"
 msgstr "準備した文を実行します"
 
-#: sql_help.c:6067
+#: sql_help.c:6061
 msgid "show the execution plan of a statement"
 msgstr "文の実行計画を表示します"
 
-#: sql_help.c:6073
+#: sql_help.c:6067
 msgid "retrieve rows from a query using a cursor"
 msgstr "カーソルを使って問い合わせから行を取り出します"
 
-#: sql_help.c:6079
+#: sql_help.c:6073
 msgid "define access privileges"
 msgstr "アクセス権限を定義します"
 
-#: sql_help.c:6085
+#: sql_help.c:6079
 msgid "import table definitions from a foreign server"
 msgstr "外部サーバーからテーブル定義をインポートします"
 
-#: sql_help.c:6091
+#: sql_help.c:6085
 msgid "create new rows in a table"
 msgstr "テーブルに新しい行を作成します"
 
-#: sql_help.c:6097
+#: sql_help.c:6091
 msgid "listen for a notification"
 msgstr "通知メッセージを監視します"
 
-#: sql_help.c:6103
+#: sql_help.c:6097
 msgid "load a shared library file"
 msgstr "共有ライブラリファイルをロードします"
 
-#: sql_help.c:6109
+#: sql_help.c:6103
 msgid "lock a table"
 msgstr "テーブルをロックします"
 
-#: sql_help.c:6115
+#: sql_help.c:6109
 msgid "conditionally insert, update, or delete rows of a table"
 msgstr "条件によってテーブルの行を挿入、更新または削除する"
 
-#: sql_help.c:6121
+#: sql_help.c:6115
 msgid "position a cursor"
 msgstr "カーソルを位置づけます"
 
-#: sql_help.c:6127
+#: sql_help.c:6121
 msgid "generate a notification"
 msgstr "通知を生成します"
 
-#: sql_help.c:6133
+#: sql_help.c:6127
 msgid "prepare a statement for execution"
 msgstr "実行に備えて文を準備します"
 
-#: sql_help.c:6139
+#: sql_help.c:6133
 msgid "prepare the current transaction for two-phase commit"
 msgstr "二相コミットに備えて現在のトランザクションを準備します"
 
-#: sql_help.c:6145
+#: sql_help.c:6139
 msgid "change the ownership of database objects owned by a database role"
 msgstr "データベースロールが所有するデータベースオブジェクトの所有権を変更します"
 
-#: sql_help.c:6151
+#: sql_help.c:6145
 msgid "replace the contents of a materialized view"
 msgstr "実体化ビューの内容を置き換えます"
 
-#: sql_help.c:6157
+#: sql_help.c:6151
 msgid "rebuild indexes"
 msgstr "インデックスを再構築します"
 
-#: sql_help.c:6163
+#: sql_help.c:6157
 msgid "release a previously defined savepoint"
 msgstr "以前に定義されたセーブポイントを解放します"
 
-#: sql_help.c:6169
+#: sql_help.c:6163
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "実行時パラメータの値をデフォルト値に戻します"
 
-#: sql_help.c:6175
+#: sql_help.c:6169
 msgid "remove access privileges"
 msgstr "アクセス権限を削除します"
 
-#: sql_help.c:6187
+#: sql_help.c:6181
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
 msgstr "二相コミットのために事前に準備されたトランザクションをキャンセルします"
 
-#: sql_help.c:6193
+#: sql_help.c:6187
 msgid "roll back to a savepoint"
 msgstr "セーブポイントまでロールバックします"
 
-#: sql_help.c:6199
+#: sql_help.c:6193
 msgid "define a new savepoint within the current transaction"
 msgstr "現在のトランザクション内で新しいセーブポイントを定義します"
 
-#: sql_help.c:6205
+#: sql_help.c:6199
 msgid "define or change a security label applied to an object"
 msgstr "オブジェクトに適用されるセキュリティラベルを定義または変更します"
 
-#: sql_help.c:6211 sql_help.c:6265 sql_help.c:6301
+#: sql_help.c:6205 sql_help.c:6259 sql_help.c:6295
 msgid "retrieve rows from a table or view"
 msgstr "テーブルまたはビューから行を取得します"
 
-#: sql_help.c:6223
+#: sql_help.c:6217
 msgid "change a run-time parameter"
 msgstr "実行時パラメータを変更します"
 
-#: sql_help.c:6229
+#: sql_help.c:6223
 msgid "set constraint check timing for the current transaction"
 msgstr "現在のトランザクションについて、制約チェックのタイミングを設定します"
 
-#: sql_help.c:6235
+#: sql_help.c:6229
 msgid "set the current user identifier of the current session"
 msgstr "現在のセッションの現在のユーザー識別子を設定します"
 
-#: sql_help.c:6241
+#: sql_help.c:6235
 msgid "set the session user identifier and the current user identifier of the current session"
 msgstr "セッションのユーザー識別子および現在のセッションの現在のユーザー識別子を設定します"
 
-#: sql_help.c:6247
+#: sql_help.c:6241
 msgid "set the characteristics of the current transaction"
 msgstr "現在のトランザクションの特性を設定します"
 
-#: sql_help.c:6253
+#: sql_help.c:6247
 msgid "show the value of a run-time parameter"
 msgstr "実行時パラメータの値を表示します"
 
-#: sql_help.c:6271
+#: sql_help.c:6265
 msgid "empty a table or set of tables"
 msgstr "一つの、または複数のテーブルを空にします"
 
-#: sql_help.c:6277
+#: sql_help.c:6271
 msgid "stop listening for a notification"
 msgstr "通知メッセージの監視を中止します"
 
-#: sql_help.c:6283
+#: sql_help.c:6277
 msgid "update rows of a table"
 msgstr "テーブルの行を更新します"
 
-#: sql_help.c:6289
+#: sql_help.c:6283
 msgid "garbage-collect and optionally analyze a database"
 msgstr "ガーベッジコレクションを行い、また必要に応じてデータベースを分析します"
 
-#: sql_help.c:6295
+#: sql_help.c:6289
 msgid "compute a set of rows"
 msgstr "行セットを計算します"
 
@@ -6614,7 +6611,7 @@ msgstr "余分なコマンドライン引数\"%s\"は無視されました"
 msgid "could not find own program executable"
 msgstr "実行可能ファイルが見つかりませんでした"
 
-#: tab-complete.c:6213
+#: tab-complete.c:6230
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
@@ -6648,12 +6645,3 @@ msgid ""
 msgstr ""
 "\"%2$s\"の値\"%1$s\"が認識できません。\n"
 "有効な値は %3$s。"
-
-#~ msgid "ICU Locale"
-#~ msgstr "ICUロケール"
-
-#~ msgid "constraint"
-#~ msgstr "制約条件"
-
-#~ msgid "where constraint is:"
-#~ msgstr "制約条件は以下の通りです:"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-06 17:05+0900\n"
-"PO-Revision-Date: 2023-09-07 09:45+0900\n"
+"POT-Creation-Date: 2024-05-20 14:21+0900\n"
+"PO-Revision-Date: 2024-05-20 16:33+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -18,31 +18,31 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../common/controldata_utils.c:73
+#: ../../common/controldata_utils.c:97
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "ファイル\"%s\"を読み取り用にオープンできませんでした: %m"
 
-#: ../../common/controldata_utils.c:86
+#: ../../common/controldata_utils.c:110
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
-#: ../../common/controldata_utils.c:95
+#: ../../common/controldata_utils.c:119
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトのうち%2$dバイトを読み込みました"
 
-#: ../../common/controldata_utils.c:108 ../../common/controldata_utils.c:236
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ファイル\"%s\"をクローズできませんでした: %m"
 
-#: ../../common/controldata_utils.c:124
+#: ../../common/controldata_utils.c:168
 msgid "byte ordering mismatch"
 msgstr "バイトオーダの不整合"
 
-#: ../../common/controldata_utils.c:126
+#: ../../common/controldata_utils.c:170
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
@@ -55,17 +55,17 @@ msgstr ""
 "されるものと一致しないようです。この場合以下の結果は不正確になります。また、\n"
 "PostgreSQLインストレーションはこのデータディレクトリと互換性がなくなります。"
 
-#: ../../common/controldata_utils.c:186
+#: ../../common/controldata_utils.c:230
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/controldata_utils.c:205
+#: ../../common/controldata_utils.c:249
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: ../../common/controldata_utils.c:224
+#: ../../common/controldata_utils.c:268
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
@@ -168,8 +168,8 @@ msgid "unrecognized status code"
 msgstr "未知のステータスコード"
 
 #: pg_controldata.c:84
-msgid "unrecognized wal_level"
-msgstr "wal_level を認識できません"
+msgid "unrecognized \"wal_level\""
+msgstr "\"wal_level\"を認識できません"
 
 #: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:163
 #, c-format

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-03-12 17:24+0000\n"
+"POT-Creation-Date: 2024-06-16 07:54+0000\n"
 "PO-Revision-Date: 2024-03-19 21:17+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -36,6 +36,106 @@ msgstr "Detail: "
 msgid "hint: "
 msgstr "Tipp: "
 
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
+
+#: ../../common/controldata_utils.c:110
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht lesen: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schließen: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "falsche Byte-Reihenfolge"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"möglicherweise falsche Byte-Reihenfolge\n"
+"Die Byte-Reihenfolge, die zur Speicherung der Datei pg_control verwendet wurde,\n"
+"stimmt möglicherweise nicht mit der von diesem Programm verwendeten überein. In\n"
+"diesem Fall wären die Ergebnisse unten falsch und die PostgreSQL-Installation\n"
+"wäre inkompatibel mit diesem Datenverzeichnis."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 pg_checksums.c:192
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht öffnen: %m"
+
+#: ../../common/controldata_utils.c:249
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schreiben: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht fsyncen: %m"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "Speicher aufgebraucht\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "konnte Dateisystem für Datei »%s« nicht synchronisieren: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: pg_checksums.c:338 pg_checksums.c:407
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_checksums.c:310
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "konnte Datei »%s« nicht in »%s« umbenennen: %m"
+
 #: ../../fe_utils/option_utils.c:69
 #, c-format
 msgid "invalid value \"%s\" for option %s"
@@ -45,11 +145,6 @@ msgstr "ungültiger Wert »%s« für Option %s"
 #, c-format
 msgid "%s must be in range %d..%d"
 msgstr "%s muss im Bereich %d..%d sein"
-
-#: ../../fe_utils/option_utils.c:99
-#, c-format
-msgid "this build does not support sync method \"%s\""
-msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
 
 #: ../../fe_utils/option_utils.c:106
 #, c-format
@@ -172,11 +267,6 @@ msgstr "%s Homepage: <%s>\n"
 msgid "%lld/%lld MB (%d%%) computed"
 msgstr "%lld/%lld MB (%d%%) berechnet"
 
-#: pg_checksums.c:192
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht öffnen: %m"
-
 #: pg_checksums.c:206
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
@@ -216,16 +306,6 @@ msgstr "Prüfsummen wurden überprüft in Datei »%s«"
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "Prüfsummen wurden eingeschaltet in Datei »%s«"
-
-#: pg_checksums.c:310
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
-
-#: pg_checksums.c:338 pg_checksums.c:407
-#, c-format
-msgid "could not stat file \"%s\": %m"
-msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
 
 #: pg_checksums.c:362
 #, c-format

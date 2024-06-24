@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-18 22:22+0000\n"
-"PO-Revision-Date: 2024-05-19 07:11+0200\n"
+"POT-Creation-Date: 2024-06-04 22:22+0000\n"
+"PO-Revision-Date: 2024-06-05 01:39+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: \n"
 "Language: ka\n"
@@ -49,16 +49,16 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
 
 #: ../../common/jsonapi.c:2121
-msgid "Recursive descent parser cannot use incremental lexer"
-msgstr "რეკურსიულ დაღმავალ დამმუშავებელს ინკრემენტული lexer-ის გამოყენება არ შეუძლია"
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "რეკურსიულ დაღმავალ დამმუშავებელს ინკრემენტული lexer-ის გამოყენება არ შეუძლია."
 
 #: ../../common/jsonapi.c:2123
-msgid "Incremental parser requires incremental lexer"
-msgstr "ინკრემენტულ დამმუშავებელს ინკრემენტული lexer სჭირდება"
+msgid "Incremental parser requires incremental lexer."
+msgstr "ინკრემენტულ დამმუშავებელს ინკრემენტული lexer სჭირდება."
 
 #: ../../common/jsonapi.c:2125
-msgid "JSON nested too deep, maximum permitted depth is 6400"
-msgstr "JSON მეტისმეტად ღრმადაა ერთმანეთში ჩალაგებული. მაქსიმალური დასაშვები სიღრმეა 6400"
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON მეტისმეტად ღრმადაა ერთმანეთში ჩალაგებული. მაქსიმალური დასაშვები სიღრმეა 6400."
 
 #: ../../common/jsonapi.c:2127
 #, c-format
@@ -116,7 +116,6 @@ msgstr "მოველოდი სტრიქონს, მაგრამ �
 
 #: ../../common/jsonapi.c:2161
 #, c-format
-#| msgid "Token \"%s\" is invalid."
 msgid "Token \"%.*s\" is invalid."
 msgstr "კოდი \"%.*s\" არასწორია."
 
@@ -144,11 +143,6 @@ msgstr "უნიკოდის მაღალ სუროგატს მა
 #: ../../common/jsonapi.c:2187
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "უნიკოდის დაბალი სუროგატი მაღალ სუროგატს უნდა მისდევდეს."
-
-#: ../../common/jsonapi.c:2201
-#, c-format
-msgid "unexpected json parse error type: %d"
-msgstr "მოულოდნელი json-ის დამუშავების შეცდომის ტიპი: %d"
 
 #: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
 #, c-format
@@ -805,3 +799,7 @@ msgstr "ვერ წავიკითხე ფაილი \"%s\": წავ�
 #, c-format
 msgid "could not write \"%s\": %m"
 msgstr "\"%s\"-ში ჩაწერის შეცდომა: %m"
+
+#, c-format
+#~ msgid "unexpected json parse error type: %d"
+#~ msgstr "მოულოდნელი json-ის დამუშავების შეცდომის ტიპი: %d"

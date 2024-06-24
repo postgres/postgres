@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-03-19 16:53+0000\n"
-"PO-Revision-Date: 2024-03-19 21:15+0100\n"
+"POT-Creation-Date: 2024-06-16 10:23+0000\n"
+"PO-Revision-Date: 2024-06-16 19:04+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -36,6 +36,65 @@ msgstr "Detail: "
 msgid "hint: "
 msgstr "Tipp: "
 
+#: ../../common/controldata_utils.c:97 file_ops.c:326 file_ops.c:330
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
+
+#: ../../common/controldata_utils.c:110 file_ops.c:341 local_source.c:104
+#: local_source.c:163 parsexlog.c:350
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht lesen: %m"
+
+#: ../../common/controldata_utils.c:119 file_ops.c:344 parsexlog.c:352
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: local_source.c:121 local_source.c:172
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schließen: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "falsche Byte-Reihenfolge"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"möglicherweise falsche Byte-Reihenfolge\n"
+"Die Byte-Reihenfolge, die zur Speicherung der Datei pg_control verwendet wurde,\n"
+"stimmt möglicherweise nicht mit der von diesem Programm verwendeten überein. In\n"
+"diesem Fall wären die Ergebnisse unten falsch und die PostgreSQL-Installation\n"
+"wäre inkompatibel mit diesem Datenverzeichnis."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 ../../fe_utils/recovery_gen.c:140
+#: parsexlog.c:312
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht öffnen: %m"
+
+#: ../../common/controldata_utils.c:249 file_ops.c:117
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schreiben: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht fsyncen: %m"
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
@@ -46,6 +105,38 @@ msgstr "Speicher aufgebraucht\n"
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "konnte Dateisystem für Datei »%s« nicht synchronisieren: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../fe_utils/archive.c:86 file_ops.c:417
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281 file_ops.c:388
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315 file_ops.c:462
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "konnte Datei »%s« nicht in »%s« umbenennen: %m"
 
 #: ../../common/percentrepl.c:79 ../../common/percentrepl.c:118
 #, c-format
@@ -102,42 +193,57 @@ msgstr "unerwartete Dateigröße für »%s«: %lld statt %lld"
 msgid "could not open file \"%s\" restored from archive: %m"
 msgstr "konnte aus dem Archiv wiederhergestellte Datei »%s« nicht öffnen: %m"
 
-#: ../../fe_utils/archive.c:86 file_ops.c:417
-#, c-format
-msgid "could not stat file \"%s\": %m"
-msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
-
 #: ../../fe_utils/archive.c:98
 #, c-format
-msgid "restore_command failed: %s"
-msgstr "restore_command fehlgeschlagen: %s"
+msgid "\"restore_command\" failed: %s"
+msgstr "»restore_command« fehlgeschlagen: %s"
 
 #: ../../fe_utils/archive.c:105
 #, c-format
 msgid "could not restore file \"%s\" from archive"
 msgstr "konnte Datei »%s« nicht aus Archiv wiederherstellen"
 
-#: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
-#: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
-#: ../../fe_utils/recovery_gen.c:149
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "ungültiger Wert »%s« für Option %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s muss im Bereich %d..%d sein"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "unbekannte Sync-Methode: %s"
+
+#: ../../fe_utils/recovery_gen.c:39 ../../fe_utils/recovery_gen.c:50
+#: ../../fe_utils/recovery_gen.c:89 ../../fe_utils/recovery_gen.c:109
+#: ../../fe_utils/recovery_gen.c:168
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: ../../fe_utils/recovery_gen.c:121 parsexlog.c:312
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht öffnen: %m"
-
-#: ../../fe_utils/recovery_gen.c:124
+#: ../../fe_utils/recovery_gen.c:143
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "konnte nicht in Datei »%s« schreiben: %m"
 
-#: ../../fe_utils/recovery_gen.c:133
+#: ../../fe_utils/recovery_gen.c:152
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht erstellen: %m"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "Argument des Shell-Befehls enthält Newline oder Carriage Return: »%s«\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "Datenbankname enthält Newline oder Carriage Return: »%s«\n"
 
 #: file_ops.c:67
 #, c-format
@@ -153,11 +259,6 @@ msgstr "konnte Zieldatei »%s« nicht schließen: %m"
 #, c-format
 msgid "could not seek in target file \"%s\": %m"
 msgstr "konnte Positionszeiger in Zieldatei »%s« nicht setzen: %m"
-
-#: file_ops.c:117
-#, c-format
-msgid "could not write file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht schreiben: %m"
 
 #: file_ops.c:150 file_ops.c:177
 #, c-format
@@ -204,26 +305,6 @@ msgstr "konnte symbolische Verknüpfung »%s« nicht erstellen: %m"
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung »%s« nicht löschen: %m"
 
-#: file_ops.c:326 file_ops.c:330
-#, c-format
-msgid "could not open file \"%s\" for reading: %m"
-msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
-
-#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:350
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht lesen: %m"
-
-#: file_ops.c:344 parsexlog.c:352
-#, c-format
-msgid "could not read file \"%s\": read %d of %zu"
-msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
-
-#: file_ops.c:388
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
-
 #: file_ops.c:441
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
@@ -234,55 +315,50 @@ msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %m"
 msgid "symbolic link \"%s\" target is too long"
 msgstr "Ziel für symbolische Verknüpfung »%s« ist zu lang"
 
-#: file_ops.c:462
-#, c-format
-msgid "could not read directory \"%s\": %m"
-msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
-
 #: file_ops.c:466
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht schließen: %m"
 
-#: filemap.c:236
+#: filemap.c:235
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "Datendatei »%s« in der Quelle ist keine normale Datei"
 
-#: filemap.c:241 filemap.c:274
+#: filemap.c:240 filemap.c:273
 #, c-format
 msgid "duplicate source file \"%s\""
 msgstr "doppelte Quelldatei »%s«"
 
-#: filemap.c:329
+#: filemap.c:328
 #, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
 msgstr "unerwartete Seitenänderung für nicht normale Datei »%s«"
 
-#: filemap.c:683 filemap.c:777
+#: filemap.c:682 filemap.c:776
 #, c-format
 msgid "unknown file type for \"%s\""
 msgstr "unbekannter Dateityp für »%s«"
 
-#: filemap.c:710
+#: filemap.c:709
 #, c-format
 msgid "file \"%s\" is of different type in source and target"
 msgstr "Datei »%s« hat unterschiedlichen Typ in Quelle und Ziel"
 
-#: filemap.c:782
+#: filemap.c:781
 #, c-format
 msgid "could not decide what to do with file \"%s\""
 msgstr "konnte nicht entscheiden, was mit Datei »%s« zu tun ist"
 
 #: libpq_source.c:131
 #, c-format
-msgid "could not clear search_path: %s"
-msgstr "konnte search_path nicht auf leer setzen: %s"
+msgid "could not clear \"search_path\": %s"
+msgstr "konnte »search_path« nicht auf leer setzen: %s"
 
 #: libpq_source.c:142
 #, c-format
-msgid "full_page_writes must be enabled in the source server"
-msgstr "full_page_writes muss im Quell-Server eingeschaltet sein"
+msgid "\"full_page_writes\" must be enabled in the source server"
+msgstr "»full_page_writes« muss im Quell-Server eingeschaltet sein"
 
 #: libpq_source.c:153
 #, c-format
@@ -404,11 +480,6 @@ msgstr "konnte Quelldatei »%s« nicht öffnen: %m"
 msgid "size of source file \"%s\" changed concurrently: %d bytes expected, %d copied"
 msgstr "Größe der Quelldatei »%s« nebenläufig verändert: %d Bytes erwartet, %d kopiert"
 
-#: local_source.c:121 local_source.c:172
-#, c-format
-msgid "could not close file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht schließen: %m"
-
 #: local_source.c:146
 #, c-format
 msgid "could not seek in source file: %m"
@@ -487,10 +558,10 @@ msgstr "Optionen:\n"
 #: pg_rewind.c:97
 #, c-format
 msgid ""
-"  -c, --restore-target-wal       use restore_command in target configuration to\n"
+"  -c, --restore-target-wal       use \"restore_command\" in target configuration to\n"
 "                                 retrieve WAL files from archives\n"
 msgstr ""
-"  -c, --restore-target-wal       restore_command in der Zielkonfiguration zum\n"
+"  -c, --restore-target-wal       »restore_command« in der Zielkonfiguration zum\n"
 "                                 Laden von WAL-Dateien aus Archiv verwenden\n"
 
 #: pg_rewind.c:99
@@ -793,8 +864,8 @@ msgstr "konnte restore_command des Ziel-Clusters nicht lesen"
 
 #: pg_rewind.c:1114
 #, c-format
-msgid "restore_command is not set in the target cluster"
-msgstr "restore_command ist im Ziel-Cluster nicht gesetzt"
+msgid "\"restore_command\" is not set in the target cluster"
+msgstr "»restore_command« ist im Ziel-Cluster nicht gesetzt"
 
 #: pg_rewind.c:1152
 #, c-format

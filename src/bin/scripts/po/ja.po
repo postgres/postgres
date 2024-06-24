@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: scripts (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-03-15 11:35+0900\n"
-"PO-Revision-Date: 2024-03-15 13:09+0900\n"
+"POT-Creation-Date: 2024-06-14 11:24+0900\n"
+"PO-Revision-Date: 2024-06-14 11:31+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -50,6 +50,48 @@ msgstr "メモリ不足です\n"
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "nullポインタを複製できません(内部エラー)。\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ファイル\"%s\"をオープンできませんでした: %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "ファイル\"%s\"に対してファイルシステムを同期できませんでした: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ファイル\"%s\"のstatに失敗しました: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
 
 #: ../../common/username.c:43
 #, c-format
@@ -96,11 +138,6 @@ msgstr "オプション %2$s に対する不正な値\"%1$s\""
 #, c-format
 msgid "%s must be in range %d..%d"
 msgstr "%sは%d..%dの範囲でなければなりません"
-
-#: ../../fe_utils/option_utils.c:99
-#, c-format
-msgid "this build does not support sync method \"%s\""
-msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
 
 #: ../../fe_utils/option_utils.c:106
 #, c-format
@@ -168,6 +205,16 @@ msgstr "問い合わせが失敗しました: %s"
 msgid "Query was: %s"
 msgstr "問い合わせ: %s"
 
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+
 #: clusterdb.c:114 clusterdb.c:133 createdb.c:149 createdb.c:168
 #: createuser.c:195 createuser.c:210 dropdb.c:104 dropdb.c:113 dropdb.c:121
 #: dropuser.c:95 dropuser.c:110 dropuser.c:123 pg_isready.c:97 pg_isready.c:111
@@ -210,18 +257,18 @@ msgid ""
 msgstr "%sはデータベース内で事前にクラスタ化されているすべてのテーブルをクラスタ化します。\n"
 
 #: clusterdb.c:275 createdb.c:298 createuser.c:415 dropdb.c:172 dropuser.c:170
-#: pg_isready.c:226 reindexdb.c:758 vacuumdb.c:1147
+#: pg_isready.c:226 reindexdb.c:868 vacuumdb.c:1147
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: clusterdb.c:276 reindexdb.c:759 vacuumdb.c:1148
+#: clusterdb.c:276 reindexdb.c:869 vacuumdb.c:1148
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [オプション]... [データベース名]\n"
 
 #: clusterdb.c:277 createdb.c:300 createuser.c:417 dropdb.c:174 dropuser.c:172
-#: pg_isready.c:229 reindexdb.c:760 vacuumdb.c:1149
+#: pg_isready.c:229 reindexdb.c:870 vacuumdb.c:1149
 #, c-format
 msgid ""
 "\n"
@@ -271,7 +318,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                このヘルプを表示して終了\n"
 
 #: clusterdb.c:286 createdb.c:317 createuser.c:448 dropdb.c:181 dropuser.c:179
-#: pg_isready.c:235 reindexdb.c:775 vacuumdb.c:1178
+#: pg_isready.c:235 reindexdb.c:885 vacuumdb.c:1178
 #, c-format
 msgid ""
 "\n"
@@ -322,7 +369,7 @@ msgstr ""
 "詳細は SQL コマンドの CLUSTER の説明を参照してください。\n"
 
 #: clusterdb.c:294 createdb.c:325 createuser.c:454 dropdb.c:188 dropuser.c:185
-#: pg_isready.c:240 reindexdb.c:783 vacuumdb.c:1186
+#: pg_isready.c:240 reindexdb.c:893 vacuumdb.c:1186
 #, c-format
 msgid ""
 "\n"
@@ -332,7 +379,7 @@ msgstr ""
 "バグは<%s>に報告してください。\n"
 
 #: clusterdb.c:295 createdb.c:326 createuser.c:455 dropdb.c:189 dropuser.c:186
-#: pg_isready.c:241 reindexdb.c:784 vacuumdb.c:1187
+#: pg_isready.c:241 reindexdb.c:894 vacuumdb.c:1187
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
@@ -399,7 +446,7 @@ msgstr "  %s [オプション]... [データベース名] [説明]\n"
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABLESPACE  データベースのデフォルトテーブルスペース名\n"
 
-#: createdb.c:302 reindexdb.c:764
+#: createdb.c:302 reindexdb.c:874
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                   サーバーへ送信されるコマンドを表示\n"
@@ -464,44 +511,44 @@ msgstr "  -S, --strategy=STRATEGY      データベース生成方法 wal_log �
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      コピーするテンプレートデータベース\n"
 
-#: createdb.c:315 reindexdb.c:773
+#: createdb.c:315 reindexdb.c:883
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                バージョン情報を表示して終了\n"
 
-#: createdb.c:316 reindexdb.c:774
+#: createdb.c:316 reindexdb.c:884
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   このヘルプを表示して終了\n"
 
-#: createdb.c:318 reindexdb.c:776
+#: createdb.c:318 reindexdb.c:886
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME          データベースサーバーホストまたはソケット\n"
 "                               ディレクトリ\n"
 
-#: createdb.c:319 reindexdb.c:777
+#: createdb.c:319 reindexdb.c:887
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              データベースサーバーのポート番号\n"
 
-#: createdb.c:320 reindexdb.c:778
+#: createdb.c:320 reindexdb.c:888
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=USERNAME      接続する際のユーザー名\n"
 
-#: createdb.c:321 reindexdb.c:779
+#: createdb.c:321 reindexdb.c:889
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            パスワード入力を要求しない\n"
 
-#: createdb.c:322 reindexdb.c:780
+#: createdb.c:322 reindexdb.c:890
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               パスワードプロンプトを強制\n"
 
-#: createdb.c:323 reindexdb.c:781
+#: createdb.c:323 reindexdb.c:891
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME      別の保守用データベースを指定\n"
@@ -882,59 +929,54 @@ msgstr "  -t, --timeout=SECS       接続試行時の待機秒数、ゼロで無
 msgid "  -U, --username=USERNAME  user name to connect as\n"
 msgstr "  -U, --username=USERNAME  このユーザー名で接続する\n"
 
-#: reindexdb.c:217
-#, c-format
-msgid "cannot use multiple jobs to reindex indexes"
-msgstr "インデックス再構築には複数ジョブを使用できません"
-
-#: reindexdb.c:220
+#: reindexdb.c:210
 #, c-format
 msgid "cannot use multiple jobs to reindex system catalogs"
 msgstr "システムカタログのインデックス再構築では複数ジョブを使用できません"
 
-#: reindexdb.c:226
+#: reindexdb.c:215
 #, c-format
 msgid "cannot reindex all databases and a specific one at the same time"
 msgstr "全データベースと特定のデータベースは同時に再インデックス化はできません"
 
-#: reindexdb.c:303 reindexdb.c:310 vacuumdb.c:515 vacuumdb.c:522 vacuumdb.c:529
+#: reindexdb.c:296 reindexdb.c:303 vacuumdb.c:515 vacuumdb.c:522 vacuumdb.c:529
 #: vacuumdb.c:536 vacuumdb.c:543 vacuumdb.c:550 vacuumdb.c:557 vacuumdb.c:562
 #: vacuumdb.c:566 vacuumdb.c:570 vacuumdb.c:574
 #, c-format
 msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
 msgstr "PostgreSQL %2$sよりも古いサーバーバージョンでは\"%1$s\"オプションは使えません"
 
-#: reindexdb.c:541
+#: reindexdb.c:584
 #, c-format
 msgid "reindexing of database \"%s\" failed: %s"
 msgstr "データベース\"%s\"のインデックス再構築に失敗しました: %s"
 
-#: reindexdb.c:545
+#: reindexdb.c:588
 #, c-format
 msgid "reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr "データベース\"%2$s\"中にあるインデックス\"%1$s\"の再作成に失敗しました: %3$s"
 
-#: reindexdb.c:549
+#: reindexdb.c:592
 #, c-format
 msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
 msgstr "データベース\"%2$s\"中にあるスキーマ\"%1$s\"のインデックス再構築に失敗しました: %3$s"
 
-#: reindexdb.c:553
+#: reindexdb.c:596
 #, c-format
 msgid "reindexing of system catalogs in database \"%s\" failed: %s"
 msgstr "データベース\"%s\"中のシステムカタログのインデックス再構築に失敗しました: %s"
 
-#: reindexdb.c:557
+#: reindexdb.c:600
 #, c-format
 msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "データベース\"%2$s\"中にあるテーブル\"%1$s\"のインでックス再構築に失敗しました: %3$s"
 
-#: reindexdb.c:714
+#: reindexdb.c:824
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: データベース\"%s\"を再インデックス化しています\n"
 
-#: reindexdb.c:757
+#: reindexdb.c:867
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -943,62 +985,62 @@ msgstr ""
 "%sはPostgreSQLデータベースを再インデックス化します。\n"
 "\n"
 
-#: reindexdb.c:761
+#: reindexdb.c:871
 #, c-format
 msgid "  -a, --all                    reindex all databases\n"
 msgstr "  -a, --all                    全データベースでインデックス再構築を行う\n"
 
-#: reindexdb.c:762
+#: reindexdb.c:872
 #, c-format
 msgid "      --concurrently           reindex concurrently\n"
 msgstr "      --concurrently           並行インデックス再構築\n"
 
-#: reindexdb.c:763
+#: reindexdb.c:873
 #, c-format
 msgid "  -d, --dbname=DBNAME          database to reindex\n"
 msgstr "  -d, --dbname=DBNAME          インデックス再構築対象のデータベース\n"
 
-#: reindexdb.c:765
+#: reindexdb.c:875
 #, c-format
 msgid "  -i, --index=INDEX            recreate specific index(es) only\n"
 msgstr "  -i, --index=INDEX            指定したインデックス(群)のみを再構築\n"
 
-#: reindexdb.c:766
+#: reindexdb.c:876
 #, c-format
 msgid "  -j, --jobs=NUM               use this many concurrent connections to reindex\n"
 msgstr "  -j, --jobs=NUM               インデックス再構築にこの数の並列接続を使用\n"
 
-#: reindexdb.c:767
+#: reindexdb.c:877
 #, c-format
 msgid "  -q, --quiet                  don't write any messages\n"
 msgstr "  -q, --quiet                  メッセージを一切出力しない\n"
 
-#: reindexdb.c:768
+#: reindexdb.c:878
 #, c-format
 msgid "  -s, --system                 reindex system catalogs only\n"
 msgstr "  -s, --system                 システムカタログのインデックスのみを再構築\n"
 
-#: reindexdb.c:769
+#: reindexdb.c:879
 #, c-format
 msgid "  -S, --schema=SCHEMA          reindex specific schema(s) only\n"
 msgstr "  -S, --schema=SCHEMA          指定したスキーマ(群)のインデックスのみを再構築\n"
 
-#: reindexdb.c:770
+#: reindexdb.c:880
 #, c-format
 msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
 msgstr "  -t, --table=TABLE            指定したテーブル(群)のインデックスを再構築\n"
 
-#: reindexdb.c:771
+#: reindexdb.c:881
 #, c-format
 msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
 msgstr "  -D, --tablespace=TABLESPACE  インデックス再構築先のテーブル空間\n"
 
-#: reindexdb.c:772
+#: reindexdb.c:882
 #, c-format
 msgid "  -v, --verbose                write a lot of output\n"
 msgstr "  -v, --verbose                多量のメッセージを出力\n"
 
-#: reindexdb.c:782
+#: reindexdb.c:892
 #, c-format
 msgid ""
 "\n"
@@ -1246,36 +1288,3 @@ msgid ""
 msgstr ""
 "\n"
 "詳細はSQLコマンドのVACUUMの説明を参照してください。\n"
-
-#~ msgid "cannot cluster specific table(s) in all databases"
-#~ msgstr "すべてのデータベースの特定のテーブル(群)はクラスタ化できません"
-
-#~ msgid "cannot exclude specific schema(s) in all databases"
-#~ msgstr "全データベースの特定のスキーマ(群)を除外することはできません"
-
-#~ msgid "cannot reindex all databases and system catalogs at the same time"
-#~ msgstr "全データベースとシステムカタログの両方は同時に再インデックス化はできません"
-
-#~ msgid "cannot reindex specific index(es) and system catalogs at the same time"
-#~ msgstr "特定のインデックスとシステムカタログは同時に再インデックス化はできません"
-
-#~ msgid "cannot reindex specific index(es) in all databases"
-#~ msgstr "全データベースにおける特定のインデックス(群)の再作成はできません"
-
-#~ msgid "cannot reindex specific schema(s) and system catalogs at the same time"
-#~ msgstr "特定のスキーマ(群)とシステムカタログは同時に再インデックス化はできません"
-
-#~ msgid "cannot reindex specific schema(s) in all databases"
-#~ msgstr "全データベースにおける特定のスキーマ(群)の再インデックス化はできません"
-
-#~ msgid "cannot reindex specific table(s) and system catalogs at the same time"
-#~ msgstr "特定のテーブル(群)とシステムカタログは同時に再インデックス化はできません"
-
-#~ msgid "cannot reindex specific table(s) in all databases"
-#~ msgstr "全データベースにおける特定のテーブル(群)の再インデックス化はできません"
-
-#~ msgid "cannot vacuum specific schema(s) in all databases"
-#~ msgstr "全データベースの特定のスキーマ(群)をVACUUMすることはできません"
-
-#~ msgid "cannot vacuum specific table(s) in all databases"
-#~ msgstr "全データベースの特定のテーブル(群)をVACUUMすることはできません"

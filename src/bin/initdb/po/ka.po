@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-18 22:21+0000\n"
-"PO-Revision-Date: 2024-05-19 07:07+0200\n"
+"POT-Creation-Date: 2024-06-14 02:21+0000\n"
+"PO-Revision-Date: 2024-06-14 06:11+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -242,6 +242,16 @@ msgstr "%s არაა საზღვრებში %d-დან %d-მდე
 #, c-format
 msgid "unrecognized sync method: %s"
 msgstr "უცნობი სინქრონიზაციის მეთოდი: \"%s\""
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "გარსის ბრძანების არგუმენტი ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "მონაცემთა ბაზის სახელი ხაზის გადატანას ან კარეტის დაბრუნებას შეიცავს: \"%s\"\n"
 
 #: ../../port/dirmod.c:287
 #, c-format
@@ -714,8 +724,8 @@ msgstr "      --no-instructions     შემდეგი ნაბიჯის 
 
 #: initdb.c:2484
 #, c-format
-msgid "  -s, --show                show internal settings\n"
-msgstr "  -s, --show                შიდა პარამეტრების ჩვენება\n"
+msgid "  -s, --show                show internal settings, then exit\n"
+msgstr "  -s, --show                შიდა პარამეტრების ჩვენება და გასვლა\n"
 
 #: initdb.c:2485
 #, c-format

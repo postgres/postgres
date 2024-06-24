@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-07-14 10:48+0900\n"
-"PO-Revision-Date: 2022-05-10 15:25+0900\n"
-"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
+"POT-Creation-Date: 2024-05-20 14:21+0900\n"
+"PO-Revision-Date: 2024-05-20 16:41+0900\n"
+"Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: \n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -39,86 +39,86 @@ msgid "hint: "
 msgstr "ヒント: "
 
 #. translator: maintain alignment with NA_FORMAT
-#: pg_test_fsync.c:32
+#: pg_test_fsync.c:38
 #, c-format
 msgid "%13.3f ops/sec  %6.0f usecs/op\n"
 msgstr "%13.3f 操作/秒  %6.0f マイクロ秒/操作\n"
 
-#: pg_test_fsync.c:50
+#: pg_test_fsync.c:56
 #, c-format
 msgid "could not create thread for alarm"
 msgstr "アラーム用のスレッドを生成できませんでした"
 
-#: pg_test_fsync.c:95
+#: pg_test_fsync.c:101
 #, c-format
 msgid "%s: %m"
 msgstr "%s: %m"
 
-#: pg_test_fsync.c:159
+#: pg_test_fsync.c:165
 #, c-format
 msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
 msgstr "使用法: %s [-f ファイル名] [-s テストあたりの秒数]\n"
 
-#: pg_test_fsync.c:185
+#: pg_test_fsync.c:191
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "オプション%sの引数が不正です"
 
-#: pg_test_fsync.c:186 pg_test_fsync.c:198 pg_test_fsync.c:207
+#: pg_test_fsync.c:192 pg_test_fsync.c:204 pg_test_fsync.c:213
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_test_fsync.c:192
+#: pg_test_fsync.c:198
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%sは%u..%uの範囲でなければなりません"
 
-#: pg_test_fsync.c:205
+#: pg_test_fsync.c:211
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "コマンドライン引数が多すぎます。(先頭は\"%s\")"
 
-#: pg_test_fsync.c:211
+#: pg_test_fsync.c:217
 #, c-format
 msgid "%u second per test\n"
 msgid_plural "%u seconds per test\n"
 msgstr[0] "テスト１件あたり %u秒\n"
 
-#: pg_test_fsync.c:216
+#: pg_test_fsync.c:222
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
 msgstr "このプラットフォームでは open_datasync と open_sync について O_DIRECT がサポートされています。\n"
 
-#: pg_test_fsync.c:218
+#: pg_test_fsync.c:224
 #, c-format
 msgid "F_NOCACHE supported on this platform for open_datasync and open_sync.\n"
 msgstr "このプラットフォームでは open_datasync と open_sync について F_NOCACHE がサポートされています。\n"
 
-#: pg_test_fsync.c:220
+#: pg_test_fsync.c:226
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
 msgstr "このプラットフォームではダイレクト I/O がサポートされていません。\n"
 
-#: pg_test_fsync.c:245 pg_test_fsync.c:336 pg_test_fsync.c:361
-#: pg_test_fsync.c:385 pg_test_fsync.c:529 pg_test_fsync.c:541
-#: pg_test_fsync.c:557 pg_test_fsync.c:563 pg_test_fsync.c:585
+#: pg_test_fsync.c:251 pg_test_fsync.c:341 pg_test_fsync.c:363
+#: pg_test_fsync.c:387 pg_test_fsync.c:531 pg_test_fsync.c:543
+#: pg_test_fsync.c:559 pg_test_fsync.c:565 pg_test_fsync.c:587
 msgid "could not open output file"
 msgstr "出力ファイルをオープンできませんでした"
 
-#: pg_test_fsync.c:249 pg_test_fsync.c:319 pg_test_fsync.c:345
-#: pg_test_fsync.c:370 pg_test_fsync.c:394 pg_test_fsync.c:433
-#: pg_test_fsync.c:492 pg_test_fsync.c:531 pg_test_fsync.c:559
-#: pg_test_fsync.c:590
+#: pg_test_fsync.c:255 pg_test_fsync.c:325 pg_test_fsync.c:350
+#: pg_test_fsync.c:372 pg_test_fsync.c:396 pg_test_fsync.c:435
+#: pg_test_fsync.c:494 pg_test_fsync.c:533 pg_test_fsync.c:561
+#: pg_test_fsync.c:592
 msgid "write failed"
 msgstr "書き込みに失敗"
 
-#: pg_test_fsync.c:253 pg_test_fsync.c:372 pg_test_fsync.c:396
-#: pg_test_fsync.c:533 pg_test_fsync.c:565
+#: pg_test_fsync.c:259 pg_test_fsync.c:374 pg_test_fsync.c:398
+#: pg_test_fsync.c:535 pg_test_fsync.c:567
 msgid "fsync failed"
 msgstr "fsync に失敗"
 
-#: pg_test_fsync.c:292
+#: pg_test_fsync.c:298
 #, c-format
 msgid ""
 "\n"
@@ -127,7 +127,7 @@ msgstr ""
 "\n"
 "１個の %dkB write を使ってファイル同期メソッドを比較します:\n"
 
-#: pg_test_fsync.c:294
+#: pg_test_fsync.c:300
 #, c-format
 msgid ""
 "\n"
@@ -136,21 +136,21 @@ msgstr ""
 "\n"
 "２個の %dkB write を使ってファイル同期メソッドを比較します:\n"
 
-#: pg_test_fsync.c:295
+#: pg_test_fsync.c:301
 #, c-format
-msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
-msgstr "（wal_sync_method の指定順の中で、Linux のデフォルトである fdatasync は除きます）\n"
+msgid "(in \"wal_sync_method\" preference order, except fdatasync is Linux's default)\n"
+msgstr "（\"wal_sync_method\"の指定順で、Linux のデフォルトである fdatasync は除きます）\n"
 
-#: pg_test_fsync.c:306 pg_test_fsync.c:413 pg_test_fsync.c:480
+#: pg_test_fsync.c:312 pg_test_fsync.c:415 pg_test_fsync.c:482
 msgid "n/a*"
 msgstr "利用不可*"
 
-#: pg_test_fsync.c:325 pg_test_fsync.c:351 pg_test_fsync.c:401
-#: pg_test_fsync.c:439 pg_test_fsync.c:498
+#: pg_test_fsync.c:331 pg_test_fsync.c:403 pg_test_fsync.c:441
+#: pg_test_fsync.c:500
 msgid "n/a"
 msgstr "利用不可"
 
-#: pg_test_fsync.c:444
+#: pg_test_fsync.c:446
 #, c-format
 msgid ""
 "* This file system and its mount options do not support direct\n"
@@ -159,7 +159,7 @@ msgstr ""
 "* このファイルシステムとそのマウントオプションではダイレクト I/O をサポート\n"
 "  していません。例）ジャーナルモードの ext4。\n"
 
-#: pg_test_fsync.c:452
+#: pg_test_fsync.c:454
 #, c-format
 msgid ""
 "\n"
@@ -168,7 +168,7 @@ msgstr ""
 "\n"
 "open_sync を異なった write サイズで比較します:\n"
 
-#: pg_test_fsync.c:453
+#: pg_test_fsync.c:455
 #, c-format
 msgid ""
 "(This is designed to compare the cost of writing 16kB in different write\n"
@@ -177,27 +177,27 @@ msgstr ""
 "(これは open_sync の write サイズを変えながら、16kB write のコストを\n"
 "比較するよう指定されています。)\n"
 
-#: pg_test_fsync.c:456
+#: pg_test_fsync.c:458
 msgid " 1 * 16kB open_sync write"
 msgstr " 1 * 16kB open_sync write"
 
-#: pg_test_fsync.c:457
+#: pg_test_fsync.c:459
 msgid " 2 *  8kB open_sync writes"
 msgstr " 2 *  8kB open_sync writes"
 
-#: pg_test_fsync.c:458
+#: pg_test_fsync.c:460
 msgid " 4 *  4kB open_sync writes"
 msgstr " 4 *  4kB open_sync writes"
 
-#: pg_test_fsync.c:459
+#: pg_test_fsync.c:461
 msgid " 8 *  2kB open_sync writes"
 msgstr " 8 *  2kB open_sync writes"
 
-#: pg_test_fsync.c:460
+#: pg_test_fsync.c:462
 msgid "16 *  1kB open_sync writes"
 msgstr "16 *  1kB open_sync writes"
 
-#: pg_test_fsync.c:514
+#: pg_test_fsync.c:516
 #, c-format
 msgid ""
 "\n"
@@ -206,7 +206,7 @@ msgstr ""
 "\n"
 "書き込みなしのファイルディスクリプタ上の fsync の方が優れているかをテストします:\n"
 
-#: pg_test_fsync.c:515
+#: pg_test_fsync.c:517
 #, c-format
 msgid ""
 "(If the times are similar, fsync() can sync data written on a different\n"
@@ -215,7 +215,7 @@ msgstr ""
 "（もし実行時間が同等であれば、fsync() は異なったファイルディスクリプタ上で\n"
 "データを sync できることになります。）\n"
 
-#: pg_test_fsync.c:580
+#: pg_test_fsync.c:582
 #, c-format
 msgid ""
 "\n"
@@ -224,14 +224,14 @@ msgstr ""
 "\n"
 "%dkB の sync なし write:\n"
 
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "\"%s --help\" で詳細を確認してください。\n"
+#~ msgid "%s: %s\n"
+#~ msgstr "%s: %s\n"
 
 #~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
 #~ msgstr "%s: コマンドライン引数が多すぎます（先頭は \"%s\"）\n"
 
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "\"%s --help\" で詳細を確認してください。\n"
+
 #~ msgid "seek failed"
 #~ msgstr "seek 失敗"
-
-#~ msgid "%s: %s\n"
-#~ msgstr "%s: %s\n"

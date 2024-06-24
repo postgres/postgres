@@ -6,14 +6,54 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-04-04 09:20+0000\n"
-"PO-Revision-Date: 2024-04-04 12:48+0200\n"
+"POT-Creation-Date: 2024-06-18 04:50+0000\n"
+"PO-Revision-Date: 2024-06-19 10:24+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "Speicher aufgebraucht\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/restricted_token.c:168
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "konnte Statuscode des Subprozesses nicht ermitteln: Fehlercode %lu"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "konnte effektive Benutzer-ID %ld nicht nachschlagen: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "Benutzer existiert nicht"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "Fehler beim Nachschlagen des Benutzernamens: Fehlercode %lu"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "Argument des Shell-Befehls enthält Newline oder Carriage Return: »%s«\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "Datenbankname enthält Newline oder Carriage Return: »%s«\n"
 
 #: check.c:111
 msgid "Checking for system-defined composite types in user tables"
@@ -39,7 +79,7 @@ msgstr "Prüfe auf inkompatiblen Datentyp »line«"
 #: check.c:137
 msgid ""
 "Your installation contains the \"line\" data type in user tables.\n"
-"this data type changed its internal and input/output format\n"
+"This data type changed its internal and input/output format\n"
 "between your old and new versions so this\n"
 "cluster cannot currently be upgraded.  You can\n"
 "drop the problem columns and restart the upgrade.\n"
@@ -190,16 +230,14 @@ msgstr ""
 "starten.\n"
 
 #: check.c:345
-#, fuzzy, c-format
-#| msgid "Checking for reg* data types in user tables"
+#, c-format
 msgid "Checking for data type usage"
-msgstr "Prüfe auf reg*-Datentypen in Benutzertabellen"
+msgstr "Prüfe Verwendung von Datentypen"
 
 #: check.c:480
-#, fuzzy, c-format
-#| msgid "%s failed: %s"
+#, c-format
 msgid "    failed check: %s"
-msgstr "%s fehlgeschlagen: %s"
+msgstr "    fehlgeschlagene Prüfung: %s"
 
 #: check.c:483
 msgid "A list of the problem columns is in the file:"
@@ -214,10 +252,9 @@ msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
 #: check.c:522
-#, fuzzy, c-format
-#| msgid "Data page checksums are disabled.\n"
+#, c-format
 msgid "Data type checks failed: %s"
-msgstr "Datenseitenprüfsummen sind ausgeschaltet.\n"
+msgstr "Datentypprüfungen fehlgeschlagen: %s"
 
 #: check.c:563
 #, c-format
@@ -576,66 +613,52 @@ msgstr ""
 "    %s"
 
 #: check.c:1744
-#, fuzzy, c-format
-#| msgid "Checking for new cluster tablespace directories"
+#, c-format
 msgid "Checking for new cluster logical replication slots"
-msgstr "Prüfe Tablespace-Verzeichnisse des neuen Clusters"
+msgstr "Prüfe logische Replikations-Slots des neuen Clusters"
 
 #: check.c:1752
-#, fuzzy, c-format
-#| msgid "cannot use %s with a logical replication slot"
+#, c-format
 msgid "could not count the number of logical replication slots"
-msgstr "%s kann nicht mit einem logischem Replikations-Slot verwendet werden"
+msgstr "konnte Anzahl der logischen Replikations-Slots nicht zählen"
 
 #: check.c:1757
-#, fuzzy, c-format
-#| msgid "expected a physical replication slot, got type \"%s\" instead"
+#, c-format
 msgid "Expected 0 logical replication slots but found %d."
-msgstr "physischer Replikations-Slot wurde erwartet, stattdessen wurde Typ »%s« erhalten"
+msgstr "0 logische Replikations-Slots erwartet aber %d gefunden."
 
 #: check.c:1767 check.c:1821
-#, fuzzy, c-format
-#| msgid "could not determine server setting for integer_datetimes"
+#, c-format
 msgid "could not determine parameter settings on new cluster"
-msgstr "konnte Servereinstellung für integer_datetimes nicht ermitteln"
+msgstr "konnte Parametereinstellung im neuen Cluster nicht ermitteln"
 
 #: check.c:1772
-#, fuzzy, c-format
-#| msgid "wal_level must be set to \"replica\" or \"logical\" at server start."
-msgid "wal_level must be \"logical\", but is set to \"%s\""
-msgstr "wal_level muss beim Serverstart auf »replica« oder »logical« gesetzt werden."
+#, c-format
+msgid "\"wal_level\" must be \"logical\", but is set to \"%s\""
+msgstr "»wal_level« muss »logical« sein, aber es ist auf »%s« gesetzt"
 
 #: check.c:1778
 #, c-format
-msgid "max_replication_slots (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
-msgstr ""
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
+msgstr "»max_replication_slots« (%d) muss größer als oder gleich der Anzahl der logischen Replikations-Slots (%d) im alten Cluster sein"
 
 #: check.c:1813
-#, fuzzy, c-format
-#| msgid "Checking for new cluster tablespace directories"
+#, c-format
 msgid "Checking for new cluster configuration for subscriptions"
-msgstr "Prüfe Tablespace-Verzeichnisse des neuen Clusters"
+msgstr "Prüfe Konfiguration für Subskriptionen im neuen Cluster"
 
 #: check.c:1825
 #, c-format
-msgid "max_replication_slots (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
-msgstr ""
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
+msgstr "»max_replication_slots« (%d) muss größer als oder gleich der Anzahl der Subskriptionen (%d) im alten Cluster sein"
 
 #: check.c:1847
-#, fuzzy, c-format
-#| msgid "cannot copy unfinished logical replication slot \"%s\""
+#, c-format
 msgid "Checking for valid logical replication slots"
-msgstr "kann unfertigen Replikations-Slot »%s« nicht kopieren"
+msgstr "Prüfe auf gültige logische Replikations-Slots"
 
 #: check.c:1899
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains the \"unknown\" data type in user tables.\n"
-#| "This data type is no longer allowed in tables, so this\n"
-#| "cluster cannot currently be upgraded.  You can\n"
-#| "drop the problem columns and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s"
+#, c-format
 msgid ""
 "Your installation contains logical replication slots that can't be upgraded.\n"
 "You can remove invalid slots and/or consume the pending WAL for other slots,\n"
@@ -643,39 +666,31 @@ msgid ""
 "A list of the problematic slots is in the file:\n"
 "    %s"
 msgstr ""
-"Ihre Installation enthält den Datentyp »unknown« in\n"
-"Benutzertabellen. Dieser Datentyp ist nicht mehr in Tabellen erlaubt\n"
-"und daher kann dieser Cluster gegenwärtig nicht aktualisiert\n"
-"werden. Sie können die Problemspalten löschen und das Upgrade neu\n"
-"starten. Eine Liste der Problemspalten ist in der Datei:\n"
+"Ihre Installation enthält logische Replikations-Slots, die nicht\n"
+"aktualisiert werden können. Sie können ungültige Slots entfernen\n"
+"und/oder den noch nicht erledigten WAL der anderen Slots konsumieren\n"
+"und dann das Upgrade neu starten.\n"
+"Eine Liste der problematischen Slots ist in der Datei:\n"
 "    %s"
 
 #: check.c:1923
-#, fuzzy, c-format
-#| msgid "reading subscriptions"
+#, c-format
 msgid "Checking for subscription state"
-msgstr "lese Subskriptionen"
+msgstr "Prüfe Subskriptionszustand"
 
 #: check.c:2024
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains the \"unknown\" data type in user tables.\n"
-#| "This data type is no longer allowed in tables, so this\n"
-#| "cluster cannot currently be upgraded.  You can\n"
-#| "drop the problem columns and restart the upgrade.\n"
-#| "A list of the problem columns is in the file:\n"
-#| "    %s"
+#, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
 "You can allow the initial sync to finish for all relations and then restart the upgrade.\n"
 "A list of the problematic subscriptions is in the file:\n"
 "    %s"
 msgstr ""
-"Ihre Installation enthält den Datentyp »unknown« in\n"
-"Benutzertabellen. Dieser Datentyp ist nicht mehr in Tabellen erlaubt\n"
-"und daher kann dieser Cluster gegenwärtig nicht aktualisiert\n"
-"werden. Sie können die Problemspalten löschen und das Upgrade neu\n"
-"starten. Eine Liste der Problemspalten ist in der Datei:\n"
+"Ihre Installation enthält Subskriptionen ohne Origin oder mit\n"
+"Relationen, die nicht im Zustand i (initialize) oder r (ready) sind.\n"
+"Sie können die initiale Synchronisierung abschließen lassen und dann\n"
+"das Upgrade neu starten. Eine Liste der problematischen\n"
+"Subskriptionen ist in der Datei:\n"
 "    %s"
 
 #: controldata.c:129 controldata.c:199
@@ -699,16 +714,14 @@ msgid "The target cluster was shut down while in recovery mode.  To upgrade, use
 msgstr "Der neue Cluster wurde im Wiederherstellungsmodus heruntergefahren. Um ihn zu aktualisieren, verwenden Sie »rsync« wie in der Dokumentation beschrieben oder fahren Sie ihn im Primärmodus herunter."
 
 #: controldata.c:165
-#, fuzzy, c-format
-#| msgid "The source cluster was not shut down cleanly."
+#, c-format
 msgid "The source cluster was not shut down cleanly, state reported as: \"%s\""
-msgstr "Der alte Cluster wurde nicht sauber heruntergefahren."
+msgstr "Der alte Cluster wurde nicht sauber heruntergefahren, gemeldeter Status: »%s«"
 
 #: controldata.c:167
-#, fuzzy, c-format
-#| msgid "The target cluster was not shut down cleanly."
+#, c-format
 msgid "The target cluster was not shut down cleanly, state reported as: \"%s\""
-msgstr "Der neue Cluster wurde nicht sauber heruntergefahren."
+msgstr "Der neue Cluster wurde nicht sauber heruntergefahren, gemeldeter Status: »%s«"
 
 #: controldata.c:175 controldata.c:507
 #, c-format
@@ -1099,10 +1112,9 @@ msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
 msgstr "Fehler beim Kopieren von Relation »%s.%s« (»%s« nach »%s«): %m"
 
 #: file.c:172
-#, fuzzy, c-format
-#| msgid "error while copying relation \"%s.%s\": could not open file \"%s\": %s"
+#, c-format
 msgid "error while copying relation \"%s.%s\": could not copy file range from \"%s\" to \"%s\": %m"
-msgstr "Fehler beim Kopieren von Relation »%s.%s«: konnte Datei »%s« nicht öffnen: %s"
+msgstr "Fehler beim Kopieren von Relation »%s.%s«: konnte Dateibereich nicht von »%s« nach »%s« kopieren: %m"
 
 #: file.c:194
 #, c-format
@@ -1135,16 +1147,14 @@ msgid "file cloning not supported on this platform"
 msgstr "Klonen von Dateien wird auf dieser Plattform nicht unterstützt"
 
 #: file.c:424
-#, fuzzy, c-format
-#| msgid "could not clone file between old and new data directories: %s"
+#, c-format
 msgid "could not copy file range between old and new data directories: %m"
-msgstr "konnte Datei nicht vom alten in das neue Datenverzeichnis klonen: %s"
+msgstr "konnte Dateibereich nicht vom alten in das neue Datenverzeichnis kopieren: %m"
 
 #: file.c:430
-#, fuzzy, c-format
-#| msgid "file cloning not supported on this platform"
+#, c-format
 msgid "copy_file_range not supported on this platform"
-msgstr "Klonen von Dateien wird auf dieser Plattform nicht unterstützt"
+msgstr "copy_file_range wird auf dieser Plattform nicht unterstützt"
 
 #: file.c:447
 #, c-format
@@ -1250,10 +1260,9 @@ msgid "template0 not found"
 msgstr "template0 nicht gefunden"
 
 #: info.c:842
-#, fuzzy, c-format
-#| msgid "Database: %s"
+#, c-format
 msgid "Database: \"%s\""
-msgstr "Datenbank: %s"
+msgstr "Datenbank: »%s«"
 
 #: info.c:855
 #, c-format
@@ -1261,16 +1270,14 @@ msgid "relname: \"%s.%s\", reloid: %u, reltblspace: \"%s\""
 msgstr "relname: »%s.%s«, reloid: %u, reltblspace: »%s«"
 
 #: info.c:869
-#, fuzzy, c-format
-#| msgid "replication slot \"%s\" was not created in this database"
+#, c-format
 msgid "Logical replication slots within the database:"
-msgstr "Replikations-Slot »%s« wurde nicht in dieser Datenbank erzeugt"
+msgstr "Logische Replikations-Slots in der Datenbank:"
 
 #: info.c:875
-#, fuzzy, c-format
-#| msgid "slot \"%s\", output plugin \"%s\", in the %s callback"
+#, c-format
 msgid "slot_name: \"%s\", plugin: \"%s\", two_phase: %s"
-msgstr "Slot »%s«, Ausgabe-Plugin »%s«, im Callback %s"
+msgstr "Slot-Name: »%s«, Plugin: »%s«, two_phase: %s"
 
 #: option.c:105
 #, c-format
@@ -1462,16 +1469,15 @@ msgid "  --copy                        copy files to new cluster (default)\n"
 msgstr "  --copy                        Dateien in den neuen Cluster kopieren (Voreinstellung)\n"
 
 #: option.c:308
-#, fuzzy, c-format
-#| msgid "  --copy                        copy files to new cluster (default)\n"
+#, c-format
 msgid "  --copy-file-range             copy files to new cluster with copy_file_range\n"
-msgstr "  --copy                        Dateien in den neuen Cluster kopieren (Voreinstellung)\n"
+msgstr "  --copy-file-range             Dateien mit copy_file_range in den neuen Cluster kopieren\n"
 
 #: option.c:309
 #, c-format
 msgid "  --sync-method=METHOD          set method for syncing files to disk\n"
 msgstr ""
-"      --sync-method=METHODE     Methode zum Synchronisieren von Dateien auf\n"
+"  --sync-method=METHODE         Methode zum Synchronisieren von Dateien auf\n"
 "                                Festplatte setzen\n"
 
 #: option.c:310
@@ -1779,10 +1785,9 @@ msgid "Setting minmxid counter in new cluster"
 msgstr "Setze minmxid im neuen Cluster"
 
 #: pg_upgrade.c:929
-#, fuzzy, c-format
-#| msgid "Restoring global objects in the new cluster"
+#, c-format
 msgid "Restoring logical replication slots in the new cluster"
-msgstr "Stelle globale Objekte im neuen Cluster wieder her"
+msgstr "Stelle logische Replikations-Slots im neuen Cluster wieder her"
 
 #: relfilenumber.c:35
 #, c-format
@@ -1795,10 +1800,9 @@ msgid "Copying user relation files"
 msgstr "Kopiere Benutzertabellendateien"
 
 #: relfilenumber.c:41
-#, fuzzy, c-format
-#| msgid "Copying user relation files"
+#, c-format
 msgid "Copying user relation files with copy_file_range"
-msgstr "Kopiere Benutzertabellendateien"
+msgstr "Kopiere Benutzertabellendateien mit copy_file_range"
 
 #: relfilenumber.c:44
 #, c-format
@@ -1831,10 +1835,9 @@ msgid "copying \"%s\" to \"%s\""
 msgstr "kopiere »%s« nach »%s«"
 
 #: relfilenumber.c:256
-#, fuzzy, c-format
-#| msgid "copying \"%s\" to \"%s\""
+#, c-format
 msgid "copying \"%s\" to \"%s\" with copy_file_range"
-msgstr "kopiere »%s« nach »%s«"
+msgstr "kopiere »%s« nach »%s« mit copy_file_range"
 
 #: relfilenumber.c:261
 #, c-format

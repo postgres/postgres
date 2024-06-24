@@ -63,7 +63,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-05-22 07:10+0000\n"
-"PO-Revision-Date: 2023-08-09 14:56+0200\n"
+"PO-Revision-Date: 2024-05-21 13:39+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -950,7 +950,7 @@ msgstr "espacio de nombre de parámetro «%s» no reconocido"
 #: access/common/reloptions.c:1302 commands/variable.c:1167
 #, c-format
 msgid "tables declared WITH OIDS are not supported"
-msgstr "las tablas declaradas WITH OIDS no está soportado"
+msgstr "las tablas declaradas WITH OIDS no están soportadas"
 
 #: access/common/reloptions.c:1470
 #, c-format
@@ -27027,7 +27027,7 @@ msgstr "Recree la base de datos con otra configuración regional, o instale la c
 #: utils/init/postinit.c:418
 #, c-format
 msgid "The database was initialized with LC_CTYPE \"%s\",  which is not recognized by setlocale()."
-msgstr "La base de datos fueron inicializada con LC_CTYPE «%s», el cual no es reconocido por setlocale()."
+msgstr "La base de datos fue inicializada con LC_CTYPE «%s», el cual no es reconocido por setlocale()."
 
 #: utils/init/postinit.c:475
 #, fuzzy, c-format
@@ -29731,7 +29731,7 @@ msgstr "el número de columna debe estar en el rango de 1 a %d"
 #: gram.y:3042
 #, c-format
 msgid "sequence option \"%s\" not supported here"
-msgstr "la opción de secuencia «%s» no está soportado aquí"
+msgstr "la opción de secuencia «%s» no está soportada aquí"
 
 #: gram.y:3071
 #, c-format

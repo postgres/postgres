@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-18 22:13+0000\n"
-"PO-Revision-Date: 2024-05-19 08:06+0200\n"
+"POT-Creation-Date: 2024-06-14 02:13+0000\n"
+"PO-Revision-Date: 2024-06-14 06:17+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -82,18 +82,18 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
 #: ../common/controldata_utils.c:108 ../common/controldata_utils.c:110 access/transam/timeline.c:143 access/transam/timeline.c:362 access/transam/twophase.c:1369 access/transam/xlog.c:3471 access/transam/xlog.c:4335 access/transam/xlogrecovery.c:1238 access/transam/xlogrecovery.c:1336 access/transam/xlogrecovery.c:1373 access/transam/xlogrecovery.c:1440 backup/basebackup.c:2123 backup/walsummary.c:283 commands/extension.c:3548 libpq/hba.c:764
-#: replication/logical/origin.c:745 replication/logical/origin.c:781 replication/logical/reorderbuffer.c:5084 replication/logical/snapbuild.c:2035 replication/slot.c:2238 replication/slot.c:2279 replication/walsender.c:655 storage/file/buffile.c:470 storage/file/copydir.c:185 utils/adt/genfile.c:197 utils/adt/misc.c:1028 utils/cache/relmapper.c:829
+#: replication/logical/origin.c:745 replication/logical/origin.c:781 replication/logical/reorderbuffer.c:5084 replication/logical/snapbuild.c:2035 replication/slot.c:2236 replication/slot.c:2277 replication/walsender.c:655 storage/file/buffile.c:470 storage/file/copydir.c:185 utils/adt/genfile.c:197 utils/adt/misc.c:1028 utils/cache/relmapper.c:829
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
 
-#: ../common/controldata_utils.c:116 ../common/controldata_utils.c:119 access/transam/xlog.c:3476 access/transam/xlog.c:4340 replication/logical/origin.c:750 replication/logical/origin.c:789 replication/logical/snapbuild.c:2040 replication/slot.c:2242 replication/slot.c:2283 replication/walsender.c:660 utils/cache/relmapper.c:833
+#: ../common/controldata_utils.c:116 ../common/controldata_utils.c:119 access/transam/xlog.c:3476 access/transam/xlog.c:4340 replication/logical/origin.c:750 replication/logical/origin.c:789 replication/logical/snapbuild.c:2040 replication/slot.c:2240 replication/slot.c:2281 replication/walsender.c:660 utils/cache/relmapper.c:833
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
 
 #: ../common/controldata_utils.c:128 ../common/controldata_utils.c:132 ../common/controldata_utils.c:277 ../common/controldata_utils.c:280 access/heap/rewriteheap.c:1141 access/heap/rewriteheap.c:1246 access/transam/timeline.c:392 access/transam/timeline.c:438 access/transam/timeline.c:512 access/transam/twophase.c:1381 access/transam/twophase.c:1793 access/transam/xlog.c:3317 access/transam/xlog.c:3511 access/transam/xlog.c:3516 access/transam/xlog.c:3652
-#: access/transam/xlog.c:4305 access/transam/xlog.c:5239 commands/copyfrom.c:1797 commands/copyto.c:325 libpq/be-fsstubs.c:470 libpq/be-fsstubs.c:540 replication/logical/origin.c:683 replication/logical/origin.c:822 replication/logical/reorderbuffer.c:5136 replication/logical/snapbuild.c:1802 replication/logical/snapbuild.c:1926 replication/slot.c:2128 replication/slot.c:2290 replication/walsender.c:670 storage/file/copydir.c:208 storage/file/copydir.c:213
+#: access/transam/xlog.c:4305 access/transam/xlog.c:5239 commands/copyfrom.c:1797 commands/copyto.c:325 libpq/be-fsstubs.c:470 libpq/be-fsstubs.c:540 replication/logical/origin.c:683 replication/logical/origin.c:822 replication/logical/reorderbuffer.c:5136 replication/logical/snapbuild.c:1802 replication/logical/snapbuild.c:1926 replication/slot.c:2126 replication/slot.c:2288 replication/walsender.c:670 storage/file/copydir.c:208 storage/file/copydir.c:213
 #: storage/file/fd.c:828 storage/file/fd.c:3753 storage/file/fd.c:3859 utils/cache/relmapper.c:841 utils/cache/relmapper.c:956
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -117,7 +117,7 @@ msgstr ""
 
 #: ../common/controldata_utils.c:225 ../common/controldata_utils.c:230 ../common/file_utils.c:70 ../common/file_utils.c:347 ../common/file_utils.c:406 ../common/file_utils.c:480 access/heap/rewriteheap.c:1229 access/transam/timeline.c:111 access/transam/timeline.c:251 access/transam/timeline.c:348 access/transam/twophase.c:1325 access/transam/xlog.c:3224 access/transam/xlog.c:3387 access/transam/xlog.c:3426 access/transam/xlog.c:3619 access/transam/xlog.c:4325
 #: access/transam/xlogrecovery.c:4263 access/transam/xlogrecovery.c:4366 access/transam/xlogutils.c:836 backup/basebackup.c:547 backup/basebackup.c:1598 backup/walsummary.c:220 libpq/hba.c:624 postmaster/syslogger.c:1511 replication/logical/origin.c:735 replication/logical/reorderbuffer.c:3737 replication/logical/reorderbuffer.c:4291 replication/logical/reorderbuffer.c:5064 replication/logical/snapbuild.c:1757 replication/logical/snapbuild.c:1867
-#: replication/slot.c:2210 replication/walsender.c:628 replication/walsender.c:3051 storage/file/copydir.c:151 storage/file/fd.c:803 storage/file/fd.c:3510 storage/file/fd.c:3740 storage/file/fd.c:3830 storage/smgr/md.c:661 utils/cache/relmapper.c:818 utils/cache/relmapper.c:935 utils/error/elog.c:2091 utils/init/miscinit.c:1526 utils/init/miscinit.c:1660 utils/init/miscinit.c:1737 utils/misc/guc.c:4727 utils/misc/guc.c:4777
+#: replication/slot.c:2208 replication/walsender.c:628 replication/walsender.c:3051 storage/file/copydir.c:151 storage/file/fd.c:803 storage/file/fd.c:3510 storage/file/fd.c:3740 storage/file/fd.c:3830 storage/smgr/md.c:661 utils/cache/relmapper.c:818 utils/cache/relmapper.c:935 utils/error/elog.c:2091 utils/init/miscinit.c:1526 utils/init/miscinit.c:1660 utils/init/miscinit.c:1737 utils/misc/guc.c:4727 utils/misc/guc.c:4777
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
@@ -128,7 +128,7 @@ msgid "could not write file \"%s\": %m"
 msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 
 #: ../common/controldata_utils.c:263 ../common/controldata_utils.c:268 ../common/file_utils.c:418 ../common/file_utils.c:488 access/heap/rewriteheap.c:925 access/heap/rewriteheap.c:1135 access/heap/rewriteheap.c:1240 access/transam/timeline.c:432 access/transam/timeline.c:506 access/transam/twophase.c:1787 access/transam/xlog.c:3310 access/transam/xlog.c:3505 access/transam/xlog.c:4298 access/transam/xlog.c:8585 access/transam/xlog.c:8630
-#: backup/basebackup_server.c:207 commands/dbcommands.c:514 replication/logical/snapbuild.c:1795 replication/slot.c:2114 replication/slot.c:2220 storage/file/fd.c:820 storage/file/fd.c:3851 storage/smgr/md.c:1329 storage/smgr/md.c:1374 storage/sync/sync.c:446 utils/misc/guc.c:4480
+#: backup/basebackup_server.c:207 commands/dbcommands.c:514 replication/logical/snapbuild.c:1795 replication/slot.c:2112 replication/slot.c:2218 storage/file/fd.c:820 storage/file/fd.c:3851 storage/smgr/md.c:1329 storage/smgr/md.c:1374 storage/sync/sync.c:446 utils/misc/guc.c:4480
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
@@ -229,7 +229,7 @@ msgstr "საქაღალდის (%s) გახსნის შეცდ�
 msgid "could not read directory \"%s\": %m"
 msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
 
-#: ../common/file_utils.c:498 access/transam/xlogarchive.c:389 postmaster/pgarch.c:834 postmaster/syslogger.c:1559 replication/logical/snapbuild.c:1814 replication/slot.c:936 replication/slot.c:2000 replication/slot.c:2142 storage/file/fd.c:838 utils/time/snapmgr.c:1255
+#: ../common/file_utils.c:498 access/transam/xlogarchive.c:389 postmaster/pgarch.c:834 postmaster/syslogger.c:1559 replication/logical/snapbuild.c:1814 replication/slot.c:936 replication/slot.c:1998 replication/slot.c:2140 storage/file/fd.c:838 utils/time/snapmgr.c:1255
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "გადარქმევის შეცდომა %s - %s: %m"
@@ -239,16 +239,16 @@ msgid "internal error"
 msgstr "შიდა შეცდომა"
 
 #: ../common/jsonapi.c:2121
-msgid "Recursive descent parser cannot use incremental lexer"
-msgstr "რეკურსიულ დაღმავალ დამმუშავებელს ინკრემენტული lexer-ის გამოყენება არ შეუძლია"
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "რეკურსიულ დაღმავალ დამმუშავებელს ინკრემენტული lexer-ის გამოყენება არ შეუძლია."
 
 #: ../common/jsonapi.c:2123
-msgid "Incremental parser requires incremental lexer"
-msgstr "ინკრემენტულ დამმუშავებელს ინკრემენტული lexer სჭირდება"
+msgid "Incremental parser requires incremental lexer."
+msgstr "ინკრემენტულ დამმუშავებელს ინკრემენტული lexer სჭირდება."
 
 #: ../common/jsonapi.c:2125
-msgid "JSON nested too deep, maximum permitted depth is 6400"
-msgstr "JSON მეტისმეტად ღრმადაა ერთმანეთში ჩალაგებული. მაქსიმალური დასაშვები სიღრმეა 6400"
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON მეტისმეტად ღრმადაა ერთმანეთში ჩალაგებული. მაქსიმალური დასაშვები სიღრმეა 6400."
 
 #: ../common/jsonapi.c:2127
 #, c-format
@@ -336,11 +336,6 @@ msgstr "უნიკოდის მაღალ სუროგატს მა
 #, c-format
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "უნიკოდის დაბალი სუროგატი მაღალ სუროგატს უნდა მისდევდეს."
-
-#: ../common/jsonapi.c:2201
-#, c-format
-msgid "unexpected json parse error type: %d"
-msgstr "მოულოდნელი json-ის დამუშავების შეცდომის ტიპი: %d"
 
 #: ../common/logging.c:276
 #, c-format
@@ -579,7 +574,7 @@ msgstr "შეზღუდულ კოდის ხელახლა შეს
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "ქვეპროცესიდან გასასვლელი კოდი ვერ მივიღე: შეცდომის კოდი %lu"
 
-#: ../common/rmtree.c:97 access/heap/rewriteheap.c:1214 access/transam/twophase.c:1726 access/transam/xlogarchive.c:119 access/transam/xlogarchive.c:399 postmaster/postmaster.c:1048 postmaster/syslogger.c:1488 replication/logical/origin.c:591 replication/logical/reorderbuffer.c:4560 replication/logical/snapbuild.c:1695 replication/logical/snapbuild.c:2129 replication/slot.c:2194 storage/file/fd.c:878 storage/file/fd.c:3378 storage/file/fd.c:3440
+#: ../common/rmtree.c:97 access/heap/rewriteheap.c:1214 access/transam/twophase.c:1726 access/transam/xlogarchive.c:119 access/transam/xlogarchive.c:399 postmaster/postmaster.c:1048 postmaster/syslogger.c:1488 replication/logical/origin.c:591 replication/logical/reorderbuffer.c:4560 replication/logical/snapbuild.c:1695 replication/logical/snapbuild.c:2129 replication/slot.c:2192 storage/file/fd.c:878 storage/file/fd.c:3378 storage/file/fd.c:3440
 #: storage/file/reinit.c:261 storage/ipc/dsm.c:343 storage/smgr/md.c:381 storage/smgr/md.c:440 storage/sync/sync.c:243 utils/time/snapmgr.c:1591
 #, c-format
 msgid "could not remove file \"%s\": %m"
@@ -780,7 +775,7 @@ msgstr "\"%s\" BRIN ინდექსი არაა"
 msgid "could not open parent table of index \"%s\""
 msgstr "ინდექსის \"%s\" მშობელი ცხრილის გახსნის შეცდომა"
 
-#: access/brin/brin.c:1461 access/brin/brin.c:1557 access/gin/ginfast.c:1085 parser/parse_utilcmd.c:2245
+#: access/brin/brin.c:1461 access/brin/brin.c:1557 access/gin/ginfast.c:1085 parser/parse_utilcmd.c:2252
 #, c-format
 msgid "index \"%s\" is not valid"
 msgstr "ინდექსი არასწორია: \"%s\""
@@ -1103,7 +1098,7 @@ msgstr "ოპერატორის ოჯახი \"%s\" (წვდომ�
 msgid "could not determine which collation to use for string hashing"
 msgstr "სტრიქონების ჰეშირებისთვის საჭირო კოლაციის გარკვევა შეუძლებელია"
 
-#: access/hash/hashfunc.c:278 access/hash/hashfunc.c:332 catalog/heap.c:672 catalog/heap.c:678 commands/createas.c:201 commands/createas.c:510 commands/indexcmds.c:2045 commands/tablecmds.c:18037 commands/view.c:81 regex/regc_pg_locale.c:245 utils/adt/formatting.c:1653 utils/adt/formatting.c:1801 utils/adt/formatting.c:1991 utils/adt/like.c:189 utils/adt/like_support.c:1024 utils/adt/varchar.c:738 utils/adt/varchar.c:1009 utils/adt/varchar.c:1064
+#: access/hash/hashfunc.c:278 access/hash/hashfunc.c:332 catalog/heap.c:672 catalog/heap.c:678 commands/createas.c:201 commands/createas.c:510 commands/indexcmds.c:2045 commands/tablecmds.c:18071 commands/view.c:81 regex/regc_pg_locale.c:245 utils/adt/formatting.c:1653 utils/adt/formatting.c:1801 utils/adt/formatting.c:1991 utils/adt/like.c:189 utils/adt/like_support.c:1024 utils/adt/varchar.c:738 utils/adt/varchar.c:1009 utils/adt/varchar.c:1064
 #: utils/adt/varlena.c:1521
 #, c-format
 msgid "Use the COLLATE clause to set the collation explicitly."
@@ -1200,7 +1195,7 @@ msgid "could not write to file \"%s\", wrote %d of %d: %m"
 msgstr "ფაილში \"%s\" ჩაწერა შეუძლებელია. ჩაწერილია %d %d-დან: %m"
 
 #: access/heap/rewriteheap.c:977 access/heap/rewriteheap.c:1094 access/transam/timeline.c:329 access/transam/timeline.c:481 access/transam/xlog.c:3249 access/transam/xlog.c:3440 access/transam/xlog.c:4277 access/transam/xlog.c:9199 access/transam/xlogfuncs.c:692 backup/basebackup_server.c:149 backup/basebackup_server.c:242 commands/dbcommands.c:494 postmaster/launch_backend.c:328 postmaster/postmaster.c:4112 postmaster/walsummarizer.c:1067
-#: replication/logical/origin.c:603 replication/slot.c:2061 storage/file/copydir.c:157 storage/smgr/md.c:230 utils/time/snapmgr.c:1234
+#: replication/logical/origin.c:603 replication/slot.c:2059 storage/file/copydir.c:157 storage/smgr/md.c:230 utils/time/snapmgr.c:1234
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "ფაილის (%s) შექმნის შეცდომა: %m"
@@ -1210,7 +1205,7 @@ msgstr "ფაილის (%s) შექმნის შეცდომა: %m"
 msgid "could not truncate file \"%s\" to %u: %m"
 msgstr "ფაილის (%s) %u-მდე მოკვეთის შეცდომა: %m"
 
-#: access/heap/rewriteheap.c:1122 access/transam/timeline.c:384 access/transam/timeline.c:424 access/transam/timeline.c:498 access/transam/xlog.c:3299 access/transam/xlog.c:3496 access/transam/xlog.c:4289 commands/dbcommands.c:506 postmaster/launch_backend.c:339 postmaster/launch_backend.c:351 replication/logical/origin.c:615 replication/logical/origin.c:657 replication/logical/origin.c:676 replication/logical/snapbuild.c:1771 replication/slot.c:2096
+#: access/heap/rewriteheap.c:1122 access/transam/timeline.c:384 access/transam/timeline.c:424 access/transam/timeline.c:498 access/transam/xlog.c:3299 access/transam/xlog.c:3496 access/transam/xlog.c:4289 commands/dbcommands.c:506 postmaster/launch_backend.c:339 postmaster/launch_backend.c:351 replication/logical/origin.c:615 replication/logical/origin.c:657 replication/logical/origin.c:676 replication/logical/snapbuild.c:1771 replication/slot.c:2094
 #: storage/file/buffile.c:545 storage/file/copydir.c:197 utils/init/miscinit.c:1601 utils/init/miscinit.c:1612 utils/init/miscinit.c:1620 utils/misc/guc.c:4441 utils/misc/guc.c:4472 utils/misc/guc.c:5625 utils/misc/guc.c:5643 utils/time/snapmgr.c:1239 utils/time/snapmgr.c:1246
 #, c-format
 msgid "could not write to file \"%s\": %m"
@@ -1386,47 +1381,47 @@ msgstr "ცხრილი %s: წაკვეთის შეჩერება
 msgid "disabling parallel option of vacuum on \"%s\" --- cannot vacuum temporary tables in parallel"
 msgstr "%s-ზე პარალელური მომტვერსასრუტების გამორთვა --- დროებითი ცხრილების პარალელური მომტვერსასრუტება შეუძლებელია"
 
-#: access/heap/vacuumlazy.c:3107
+#: access/heap/vacuumlazy.c:3113
 #, c-format
 msgid "while scanning block %u offset %u of relation \"%s.%s\""
 msgstr "ურთიერთობის(%3$s.%4$s) წანაცვლების(%2$u) ბლოკის(%1$u) სკანირებისას"
 
-#: access/heap/vacuumlazy.c:3110
+#: access/heap/vacuumlazy.c:3116
 #, c-format
 msgid "while scanning block %u of relation \"%s.%s\""
 msgstr "%u ბლოკის (ურთიერთობის %s.%s) სკანირებისას"
 
-#: access/heap/vacuumlazy.c:3114
+#: access/heap/vacuumlazy.c:3120
 #, c-format
 msgid "while scanning relation \"%s.%s\""
 msgstr "ურთიერთობის სკანირებისას \"%s.%s\""
 
-#: access/heap/vacuumlazy.c:3122
+#: access/heap/vacuumlazy.c:3128
 #, c-format
 msgid "while vacuuming block %u offset %u of relation \"%s.%s\""
 msgstr "ბლოკის %u, წანაცვლება %u (ურთიერთობის \"%s.%s\") მომტვერსასრუტებისას"
 
-#: access/heap/vacuumlazy.c:3125
+#: access/heap/vacuumlazy.c:3131
 #, c-format
 msgid "while vacuuming block %u of relation \"%s.%s\""
 msgstr "ბლოკის (%u) მომტვერსასრუტებისას (ურთიერთობიდან \"%s.%s\")"
 
-#: access/heap/vacuumlazy.c:3129
+#: access/heap/vacuumlazy.c:3135
 #, c-format
 msgid "while vacuuming relation \"%s.%s\""
 msgstr "ურთერთობის დამტვერსასრუტებისას \"%s.%s\""
 
-#: access/heap/vacuumlazy.c:3134 commands/vacuumparallel.c:1113
+#: access/heap/vacuumlazy.c:3140 commands/vacuumparallel.c:1113
 #, c-format
 msgid "while vacuuming index \"%s\" of relation \"%s.%s\""
 msgstr "ინდექსის (%s) მომტვერსასრუტებისას (ურთიერთობიდან \"%s.%s\")"
 
-#: access/heap/vacuumlazy.c:3139 commands/vacuumparallel.c:1119
+#: access/heap/vacuumlazy.c:3145 commands/vacuumparallel.c:1119
 #, c-format
 msgid "while cleaning up index \"%s\" of relation \"%s.%s\""
 msgstr "ინდექსის \"%s\" მოსუფთავებისას, რომელიც ეკუთვნის ურთიერთობას \"%s.%s\""
 
-#: access/heap/vacuumlazy.c:3145
+#: access/heap/vacuumlazy.c:3151
 #, c-format
 msgid "while truncating relation \"%s.%s\" to %u blocks"
 msgstr "ურთიერთობის \"%s.%s\" %u ბლოკამდე მოკვეთისას"
@@ -1451,7 +1446,7 @@ msgstr "ტრანზაქცია გაუქმდა სისტემ�
 msgid "cannot access index \"%s\" while it is being reindexed"
 msgstr "ინდექსთან \"%s\" წვდომა მაშინ, როცა მისი რეინდექსი მიმდინარეობს, შეუძლებელია"
 
-#: access/index/indexam.c:203 catalog/objectaddress.c:1356 commands/indexcmds.c:2873 commands/tablecmds.c:281 commands/tablecmds.c:305 commands/tablecmds.c:17732 commands/tablecmds.c:19550
+#: access/index/indexam.c:203 catalog/objectaddress.c:1356 commands/indexcmds.c:2873 commands/tablecmds.c:281 commands/tablecmds.c:305 commands/tablecmds.c:17766 commands/tablecmds.c:19584
 #, c-format
 msgid "\"%s\" is not an index"
 msgstr "\"%s\" ინდექსი არაა"
@@ -1476,7 +1471,7 @@ msgstr "გასაღები უკვე არსებობს: %s."
 msgid "This may be because of a non-immutable index expression."
 msgstr "შეიძლებa ინდექსის გამოსახულების შეცვლადობის ბრალი იყოს."
 
-#: access/nbtree/nbtpage.c:157 access/nbtree/nbtpage.c:611 parser/parse_utilcmd.c:2291
+#: access/nbtree/nbtpage.c:157 access/nbtree/nbtpage.c:611 parser/parse_utilcmd.c:2298
 #, c-format
 msgid "index \"%s\" is not a btree"
 msgstr "ინდექსი \"%s\" ორობითი ხე არაა"
@@ -1686,17 +1681,17 @@ msgstr "მულტიტრანზაქციული წევრის �
 msgid "MultiXact member wraparound protections are now enabled"
 msgstr "მულტიტრანზაქციების ჩაციკვლისგან დაცვის მექანიზმები ახლა ჩართულია"
 
-#: access/transam/multixact.c:3131
+#: access/transam/multixact.c:3138
 #, c-format
 msgid "oldest MultiXact %u not found, earliest MultiXact %u, skipping truncation"
 msgstr "უძველესი მულტიტრანზაქცია %u ვერ ვიპოვე. უახლესი მულტიტრანზაქციაა %u. წაკვეთა გამოტოვებული იქნება"
 
-#: access/transam/multixact.c:3149
+#: access/transam/multixact.c:3156
 #, c-format
 msgid "cannot truncate up to MultiXact %u because it does not exist on disk, skipping truncation"
 msgstr "მულტიტრანზაქციამდე %u მოკვეთა შეუძლებელია, რადგან ის დისკზე არ არსებობს. მოკვეთა გამოტოვებული იქნება"
 
-#: access/transam/multixact.c:3468
+#: access/transam/multixact.c:3475
 #, c-format
 msgid "invalid MultiXactId: %u"
 msgstr "არასწორი MultiXactId: %u"
@@ -2208,7 +2203,7 @@ msgstr "შესანახი წერტილების მიმდი�
 msgid "cannot rollback to savepoints during a parallel operation"
 msgstr "პარალელური ოპერაციის დროს შენახულ წერტილზე დაბრუნება შეუძლებელია"
 
-#: access/transam/xact.c:5389
+#: access/transam/xact.c:5376
 #, c-format
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "ტრანზაქციაში 2^32-1 ქვეტრანზაქციაზე მეტი ვერ იქნება"
@@ -2380,7 +2375,7 @@ msgstr "\"min_wal_size\"-ი \"wal_segment_size\"-ზე მინიმუმ �
 msgid "\"max_wal_size\" must be at least twice \"wal_segment_size\""
 msgstr "\"max_wal_size\"-ი \"wal_segment_size\"-ზე, მინიმუმ, ორჯერ მეტი უნდა იყოს"
 
-#: access/transam/xlog.c:4656 catalog/namespace.c:4681 commands/tablespace.c:1210 commands/user.c:2529 commands/variable.c:72 replication/slot.c:2431 utils/error/elog.c:2214
+#: access/transam/xlog.c:4656 catalog/namespace.c:4681 commands/tablespace.c:1210 commands/user.c:2529 commands/variable.c:72 replication/slot.c:2429 utils/error/elog.c:2214
 #, c-format
 msgid "List syntax is invalid."
 msgstr "სია სინტაქსი არასწორია."
@@ -3720,7 +3715,7 @@ msgstr "სერვერზე შენახული მარქაფი�
 msgid "relative path not allowed for backup stored on server"
 msgstr "სერვერზე დამახსოვრებული მარქაფისთვის ფარდობითი ბილიკი დაშვებული არაა"
 
-#: backup/basebackup_server.c:102 commands/dbcommands.c:477 commands/tablespace.c:157 commands/tablespace.c:173 commands/tablespace.c:593 commands/tablespace.c:638 replication/slot.c:1988 storage/file/copydir.c:47
+#: backup/basebackup_server.c:102 commands/dbcommands.c:477 commands/tablespace.c:157 commands/tablespace.c:173 commands/tablespace.c:593 commands/tablespace.c:638 replication/slot.c:1986 storage/file/copydir.c:47
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "საქაღალდის (%s) შექმნის შეცდომა: %m"
@@ -3945,8 +3940,8 @@ msgstr "ნაგულისხმევი პრივილეგიებ�
 msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr "'IN SCHEMA' პირობის გამოყენება GRANT/REVOKE ON SCHEMAS-ის გამოყენებისას შეუძლებელია"
 
-#: catalog/aclchk.c:1616 catalog/catalog.c:629 catalog/objectaddress.c:1523 catalog/pg_publication.c:528 commands/analyze.c:380 commands/copy.c:913 commands/sequence.c:1645 commands/tablecmds.c:7515 commands/tablecmds.c:7669 commands/tablecmds.c:7719 commands/tablecmds.c:7793 commands/tablecmds.c:7863 commands/tablecmds.c:7993 commands/tablecmds.c:8122 commands/tablecmds.c:8216 commands/tablecmds.c:8317 commands/tablecmds.c:8444 commands/tablecmds.c:8474
-#: commands/tablecmds.c:8616 commands/tablecmds.c:8709 commands/tablecmds.c:8843 commands/tablecmds.c:8955 commands/tablecmds.c:12675 commands/tablecmds.c:12856 commands/tablecmds.c:13017 commands/tablecmds.c:14206 commands/tablecmds.c:16832 commands/trigger.c:942 parser/analyze.c:2530 parser/parse_relation.c:737 parser/parse_target.c:1067 parser/parse_type.c:144 parser/parse_utilcmd.c:3545 parser/parse_utilcmd.c:3585 parser/parse_utilcmd.c:3627 utils/adt/acl.c:2917
+#: catalog/aclchk.c:1616 catalog/catalog.c:629 catalog/objectaddress.c:1523 catalog/pg_publication.c:528 commands/analyze.c:380 commands/copy.c:913 commands/sequence.c:1645 commands/tablecmds.c:7549 commands/tablecmds.c:7703 commands/tablecmds.c:7753 commands/tablecmds.c:7827 commands/tablecmds.c:7897 commands/tablecmds.c:8027 commands/tablecmds.c:8156 commands/tablecmds.c:8250 commands/tablecmds.c:8351 commands/tablecmds.c:8478 commands/tablecmds.c:8508
+#: commands/tablecmds.c:8650 commands/tablecmds.c:8743 commands/tablecmds.c:8877 commands/tablecmds.c:8989 commands/tablecmds.c:12709 commands/tablecmds.c:12890 commands/tablecmds.c:13051 commands/tablecmds.c:14240 commands/tablecmds.c:16866 commands/trigger.c:942 parser/analyze.c:2530 parser/parse_relation.c:737 parser/parse_target.c:1067 parser/parse_type.c:144 parser/parse_utilcmd.c:3538 parser/parse_utilcmd.c:3578 parser/parse_utilcmd.c:3620 utils/adt/acl.c:2917
 #: utils/adt/ruleutils.c:2811
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
@@ -3957,12 +3952,12 @@ msgstr "სვეტი \"%s\" ურთიერთობაში %s არ �
 msgid "\"%s\" is an index"
 msgstr "\"%s\" ინდექსია"
 
-#: catalog/aclchk.c:1868 commands/tablecmds.c:14363 commands/tablecmds.c:17741
+#: catalog/aclchk.c:1868 commands/tablecmds.c:14397 commands/tablecmds.c:17775
 #, c-format
 msgid "\"%s\" is a composite type"
 msgstr "\"%s\" კომპოზიტური ტიპია"
 
-#: catalog/aclchk.c:1876 catalog/objectaddress.c:1363 commands/tablecmds.c:263 commands/tablecmds.c:17705 utils/adt/acl.c:2101 utils/adt/acl.c:2131 utils/adt/acl.c:2164 utils/adt/acl.c:2200 utils/adt/acl.c:2231 utils/adt/acl.c:2262
+#: catalog/aclchk.c:1876 catalog/objectaddress.c:1363 commands/tablecmds.c:263 commands/tablecmds.c:17739 utils/adt/acl.c:2101 utils/adt/acl.c:2131 utils/adt/acl.c:2164 utils/adt/acl.c:2200 utils/adt/acl.c:2231 utils/adt/acl.c:2262
 #, c-format
 msgid "\"%s\" is not a sequence"
 msgstr "\"%s\" მიმდევრობა არაა"
@@ -4421,7 +4416,7 @@ msgstr "%s()-ის გამოსაძახებლად ზემომ�
 msgid "pg_nextoid() can only be used on system catalogs"
 msgstr "pg_nextoid() მხოლოდ სისტემურ კატალოგებზე შეიძლება იყოს გამოყენებული"
 
-#: catalog/catalog.c:621 parser/parse_utilcmd.c:2238
+#: catalog/catalog.c:621 parser/parse_utilcmd.c:2245
 #, c-format
 msgid "index \"%s\" does not belong to table \"%s\""
 msgstr "ინდექსი %s ცხრილს \"%s\" არ მიეკუთვნება"
@@ -4481,7 +4476,7 @@ msgstr[1] ""
 msgid "cannot drop %s because other objects depend on it"
 msgstr "%s-ის წაშლა შეუძლებელია, რადგან არის ობიექტები, რომლებიც მას ეყრდნობა"
 
-#: catalog/dependency.c:1153 catalog/dependency.c:1160 catalog/dependency.c:1171 commands/tablecmds.c:1446 commands/tablecmds.c:14955 commands/tablespace.c:460 commands/user.c:1302 commands/vacuum.c:211 commands/view.c:441 libpq/auth.c:324 replication/logical/applyparallelworker.c:1041 replication/syncrep.c:1011 storage/lmgr/deadlock.c:1134 storage/lmgr/proc.c:1427 utils/misc/guc.c:3169 utils/misc/guc.c:3210 utils/misc/guc.c:3285 utils/misc/guc.c:6781
+#: catalog/dependency.c:1153 catalog/dependency.c:1160 catalog/dependency.c:1171 commands/tablecmds.c:1447 commands/tablecmds.c:14989 commands/tablespace.c:460 commands/user.c:1302 commands/vacuum.c:211 commands/view.c:441 libpq/auth.c:324 replication/logical/applyparallelworker.c:1041 replication/syncrep.c:1011 storage/lmgr/deadlock.c:1134 storage/lmgr/proc.c:1427 utils/misc/guc.c:3169 utils/misc/guc.c:3210 utils/misc/guc.c:3285 utils/misc/guc.c:6781
 #: utils/misc/guc.c:6815 utils/misc/guc.c:6849 utils/misc/guc.c:6892 utils/misc/guc.c:6934
 #, c-format
 msgid "%s"
@@ -4524,12 +4519,12 @@ msgstr "\"%s.%s\"-ის შექმნის წვდომა აკრძ�
 msgid "System catalog modifications are currently disallowed."
 msgstr "სისტემური კატალოგების შეცვლა ამჟამად აკრძალულია."
 
-#: catalog/heap.c:467 commands/tablecmds.c:2482 commands/tablecmds.c:2904 commands/tablecmds.c:7137
+#: catalog/heap.c:467 commands/tablecmds.c:2483 commands/tablecmds.c:2905 commands/tablecmds.c:7171
 #, c-format
 msgid "tables can have at most %d columns"
 msgstr "ცხრილებს მაქსიმუმ %d სვეტი შეიძლება ჰქონდეს"
 
-#: catalog/heap.c:485 commands/tablecmds.c:7406
+#: catalog/heap.c:485 commands/tablecmds.c:7440
 #, c-format
 msgid "column name \"%s\" conflicts with a system column name"
 msgstr "სვეტის სახელი კონფლიქტშია სისტემური სვეტის სახელთან: \"%s\""
@@ -4566,7 +4561,7 @@ msgstr ""
 msgid "no collation was derived for column \"%s\" with collatable type %s"
 msgstr ""
 
-#: catalog/heap.c:1161 catalog/index.c:899 commands/createas.c:403 commands/tablecmds.c:4141 commands/tablecmds.c:20426
+#: catalog/heap.c:1161 catalog/index.c:899 commands/createas.c:403 commands/tablecmds.c:4142 commands/tablecmds.c:20463 commands/tablecmds.c:20725
 #, c-format
 msgid "relation \"%s\" already exists"
 msgstr "ურთიერთობა \"%s\" უკვე არსებობს"
@@ -4606,7 +4601,7 @@ msgstr "დაყოფილი ცხრილს (\"%s\") NO INHERIT შე�
 msgid "check constraint \"%s\" already exists"
 msgstr "შეზღუდვის შემმოწმებელი \"%s\" უკვე არსებობს"
 
-#: catalog/heap.c:2565 catalog/index.c:913 catalog/pg_constraint.c:724 commands/tablecmds.c:9330
+#: catalog/heap.c:2565 catalog/index.c:913 catalog/pg_constraint.c:724 commands/tablecmds.c:9364
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "შეზღუდვა \"%s\" ურთიერთობისთვის \"%s\" უკვე არსებობს"
@@ -4631,7 +4626,7 @@ msgstr "შეზღუდვა \"%s\" კონფლიქტშია შე
 msgid "merging constraint \"%s\" with inherited definition"
 msgstr "შეზღუდვის (\"%s\") შერწყმა მემკვიდრეობითი აღწერით"
 
-#: catalog/heap.c:2624 catalog/pg_constraint.c:853 commands/tablecmds.c:3061 commands/tablecmds.c:3364 commands/tablecmds.c:7063 commands/tablecmds.c:15773 commands/tablecmds.c:15904
+#: catalog/heap.c:2624 catalog/pg_constraint.c:853 commands/tablecmds.c:3062 commands/tablecmds.c:3365 commands/tablecmds.c:7097 commands/tablecmds.c:15807 commands/tablecmds.c:15938
 #, c-format
 msgid "too many inheritance parents"
 msgstr "მეტისმეტად ბევრი მემკვიდრეობის მშობლები"
@@ -4701,7 +4696,7 @@ msgstr "ცხრილი \"%s\" მიუთითებს \"%s\"."
 msgid "Truncate table \"%s\" at the same time, or use TRUNCATE ... CASCADE."
 msgstr "წაშალეთ შემცველობა ცხრილისთვის \"%s\" პარალელურად, ან გამოიყენეთ TRUNCATE ... CASCADE."
 
-#: catalog/index.c:219 parser/parse_utilcmd.c:2144
+#: catalog/index.c:219 parser/parse_utilcmd.c:2151
 #, c-format
 msgid "multiple primary keys for table \"%s\" are not allowed"
 msgstr "ცხრილისთვის \"%s\" ერთზე მეტი ძირითადი გასაღები დაუშვებელია"
@@ -4756,7 +4751,7 @@ msgstr "შეერთება \"%s\" უკვე არსებობს, �
 msgid "pg_class index OID value not set when in binary upgrade mode"
 msgstr "ბინარული განახლების რეჟიმში pg_class-ის ინდექსის OID-ის მნიშვნელობა დაყენებული არაა"
 
-#: catalog/index.c:951 utils/cache/relcache.c:3747
+#: catalog/index.c:951 utils/cache/relcache.c:3787
 #, c-format
 msgid "index relfilenumber value not set when in binary upgrade mode"
 msgstr "index relfilenumber-ის მნიშვნელობა ბინარული განახლების დროს დაყენებული არაა"
@@ -4776,7 +4771,7 @@ msgstr "სხვა სესიების დროებითი ცხრ
 msgid "cannot reindex invalid index on TOAST table"
 msgstr "\"TOAST\" ცხრილზე არასწორი ინდექსის რეინდექსი შეუძლებელია"
 
-#: catalog/index.c:3696 commands/indexcmds.c:3526 commands/indexcmds.c:3672 commands/tablecmds.c:3556
+#: catalog/index.c:3696 commands/indexcmds.c:3526 commands/indexcmds.c:3672 commands/tablecmds.c:3557
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "სისტემური ურთიერთობის გაადაადგილება არ შეიძლება: \"%s\""
@@ -4886,7 +4881,7 @@ msgstr "ობიექტის დროებითი სქემიდა�
 msgid "cannot move objects into or out of TOAST schema"
 msgstr "\"TOAST\" სქემიდან ობიექტს ვერც გამოიტანთ, ვერც შეიტანთ"
 
-#: catalog/namespace.c:3529 commands/schemacmds.c:264 commands/schemacmds.c:344 commands/tablecmds.c:1391 utils/adt/regproc.c:1688
+#: catalog/namespace.c:3529 commands/schemacmds.c:264 commands/schemacmds.c:344 commands/tablecmds.c:1392 utils/adt/regproc.c:1688
 #, c-format
 msgid "schema \"%s\" does not exist"
 msgstr "სქემა \"%s\" არ არსებობს"
@@ -4921,22 +4916,22 @@ msgstr "აღდგენისას დროებითი ცხრილ�
 msgid "cannot create temporary tables during a parallel operation"
 msgstr "პარალელური ოპერაციის მიმდინარეობისას დროებითი ცხრილების შექმნა შეუძლებელია"
 
-#: catalog/objectaddress.c:1371 commands/policy.c:93 commands/policy.c:373 commands/tablecmds.c:257 commands/tablecmds.c:299 commands/tablecmds.c:2314 commands/tablecmds.c:12792 parser/parse_utilcmd.c:3255
+#: catalog/objectaddress.c:1371 commands/policy.c:93 commands/policy.c:373 commands/tablecmds.c:257 commands/tablecmds.c:299 commands/tablecmds.c:2315 commands/tablecmds.c:12826 parser/parse_utilcmd.c:3249
 #, c-format
 msgid "\"%s\" is not a table"
 msgstr "\"%s\" ცხრილი არაა"
 
-#: catalog/objectaddress.c:1378 commands/tablecmds.c:269 commands/tablecmds.c:17710 commands/view.c:114
+#: catalog/objectaddress.c:1378 commands/tablecmds.c:269 commands/tablecmds.c:17744 commands/view.c:114
 #, c-format
 msgid "\"%s\" is not a view"
 msgstr "\"%s\" ხედი არაა"
 
-#: catalog/objectaddress.c:1385 commands/matview.c:183 commands/tablecmds.c:275 commands/tablecmds.c:17715
+#: catalog/objectaddress.c:1385 commands/matview.c:183 commands/tablecmds.c:275 commands/tablecmds.c:17749
 #, c-format
 msgid "\"%s\" is not a materialized view"
 msgstr "\"%s\" არ არის მატერიალიზებული ხედი"
 
-#: catalog/objectaddress.c:1392 commands/tablecmds.c:293 commands/tablecmds.c:17720
+#: catalog/objectaddress.c:1392 commands/tablecmds.c:293 commands/tablecmds.c:17754
 #, c-format
 msgid "\"%s\" is not a foreign table"
 msgstr "\"%s\" გარე ცხრილი არაა"
@@ -5699,7 +5694,7 @@ msgstr "დანაყოფის \"%s\" მოხსნის შეცდო
 msgid "The partition is being detached concurrently or has an unfinished detach."
 msgstr "ხდება დანაყოფის პარალელური მოხსნა ან მოხსნა დაუმთავრებელია."
 
-#: catalog/pg_inherits.c:595 commands/tablecmds.c:4746 commands/tablecmds.c:16019
+#: catalog/pg_inherits.c:595 commands/tablecmds.c:4778 commands/tablecmds.c:16053
 #, c-format
 msgid "Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation."
 msgstr "მოხსნის ოპერაციის დასასრულებლად გამოიყენეთ ALTER TABLE ... DETACH PARTITION ... FINALIZE ."
@@ -6086,7 +6081,7 @@ msgstr "შეცდომა მრავალდიაპაზონია�
 msgid "You can manually specify a multirange type name using the \"multirange_type_name\" attribute."
 msgstr "მრავალდიაპაზონიანი ტიპის სახელი ხელით, \"multirange_type_name\" ატრიბუტით უნდა მიუთითოთ."
 
-#: catalog/storage.c:508 storage/buffer/bufmgr.c:1494
+#: catalog/storage.c:508 storage/buffer/bufmgr.c:1540
 #, c-format
 msgid "invalid page in block %u of relation %s"
 msgstr "ურთიერთობის (%2$s) ბლოკის (%1$u) არასწორ გვერდი"
@@ -6391,7 +6386,7 @@ msgstr "სხვა სესიების დროებით ცხრი
 msgid "there is no previously clustered index for table \"%s\""
 msgstr "ცხრილისთვის \"%s\" წინასწარ დაკლასტერებული ინდექსი არ არსებობს"
 
-#: commands/cluster.c:191 commands/tablecmds.c:14664 commands/tablecmds.c:16595
+#: commands/cluster.c:191 commands/tablecmds.c:14698 commands/tablecmds.c:16629
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "ინდექსი %s ცხრილისთვის %s არ არსებობს"
@@ -6406,7 +6401,7 @@ msgstr "გაზიარებული კატალოგის დაკ�
 msgid "cannot vacuum temporary tables of other sessions"
 msgstr "სხვა სესიების დროებითი ცხრილების მომტვერსასრუტება შეუძლებელია"
 
-#: commands/cluster.c:513 commands/tablecmds.c:16605
+#: commands/cluster.c:513 commands/tablecmds.c:16639
 #, c-format
 msgid "\"%s\" is not an index for table \"%s\""
 msgstr "\"%s\" არ წარმოადგენს ინდექსს ცხრილისთვის \"%s\""
@@ -6470,7 +6465,7 @@ msgstr "კლასტერისთვის \"%s\" წვდომა აკ
 msgid "collation attribute \"%s\" not recognized"
 msgstr "კოლაციის უცნობი ატრიბუტი: \"%s\""
 
-#: commands/collationcmds.c:123 commands/collationcmds.c:129 commands/define.c:388 commands/tablecmds.c:8103 replication/pgoutput/pgoutput.c:307 replication/pgoutput/pgoutput.c:330 replication/pgoutput/pgoutput.c:344 replication/pgoutput/pgoutput.c:354 replication/pgoutput/pgoutput.c:364 replication/pgoutput/pgoutput.c:374 replication/pgoutput/pgoutput.c:386 replication/walsender.c:1146 replication/walsender.c:1168 replication/walsender.c:1178
+#: commands/collationcmds.c:123 commands/collationcmds.c:129 commands/define.c:388 commands/tablecmds.c:8137 replication/pgoutput/pgoutput.c:307 replication/pgoutput/pgoutput.c:330 replication/pgoutput/pgoutput.c:344 replication/pgoutput/pgoutput.c:354 replication/pgoutput/pgoutput.c:364 replication/pgoutput/pgoutput.c:374 replication/pgoutput/pgoutput.c:386 replication/walsender.c:1146 replication/walsender.c:1168 replication/walsender.c:1178
 #: replication/walsender.c:1187 replication/walsender.c:1426
 #, c-format
 msgid "conflicting or redundant options"
@@ -6538,7 +6533,7 @@ msgstr "ნაგულისხმევი კოლაციის ვერ�
 
 #. translator: %s is an SQL command
 #. translator: %s is an SQL ALTER command
-#: commands/collationcmds.c:447 commands/subscriptioncmds.c:1376 commands/tablecmds.c:7879 commands/tablecmds.c:7889 commands/tablecmds.c:7891 commands/tablecmds.c:14366 commands/tablecmds.c:17743 commands/tablecmds.c:17764 commands/typecmds.c:3787 commands/typecmds.c:3872 commands/typecmds.c:4226
+#: commands/collationcmds.c:447 commands/subscriptioncmds.c:1376 commands/tablecmds.c:7913 commands/tablecmds.c:7923 commands/tablecmds.c:7925 commands/tablecmds.c:14400 commands/tablecmds.c:17777 commands/tablecmds.c:17798 commands/typecmds.c:3787 commands/typecmds.c:3872 commands/typecmds.c:4226
 #, c-format
 msgid "Use %s instead."
 msgstr "ამის ნაცვლად %s გამოიყენეთ."
@@ -6863,12 +6858,12 @@ msgstr "სვეტი \"%s\" გენერირებული სვეტ
 msgid "Generated columns cannot be used in COPY."
 msgstr "გენერირებული სვეტები COPY-ში არ გამოიყენება."
 
-#: commands/copy.c:918 commands/indexcmds.c:1915 commands/statscmds.c:239 commands/tablecmds.c:2513 commands/tablecmds.c:2984 commands/tablecmds.c:3780 parser/parse_relation.c:3692 parser/parse_relation.c:3702 parser/parse_relation.c:3720 parser/parse_relation.c:3727 parser/parse_relation.c:3741 utils/adt/tsvector_op.c:2853
+#: commands/copy.c:918 commands/indexcmds.c:1915 commands/statscmds.c:239 commands/tablecmds.c:2514 commands/tablecmds.c:2985 commands/tablecmds.c:3781 parser/parse_relation.c:3692 parser/parse_relation.c:3702 parser/parse_relation.c:3720 parser/parse_relation.c:3727 parser/parse_relation.c:3741 utils/adt/tsvector_op.c:2853
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "სვეტი არ არსებობს: \"%s\""
 
-#: commands/copy.c:925 commands/tablecmds.c:2539 commands/trigger.c:951 parser/parse_target.c:1083 parser/parse_target.c:1094
+#: commands/copy.c:925 commands/tablecmds.c:2540 commands/trigger.c:951 parser/parse_target.c:1083 parser/parse_target.c:1094
 #, c-format
 msgid "column \"%s\" specified more than once"
 msgstr "სვეტი ერთზე მეტჯერაა მითითებული: \"%s\""
@@ -7688,12 +7683,12 @@ msgstr "\"%s\" აგრეგატული ფუნქციაა"
 msgid "Use DROP AGGREGATE to drop aggregate functions."
 msgstr "აგრეგირებული ფუნქციების წასაშლელად გამოიყენეთ DROP AGGREGATE."
 
-#: commands/dropcmds.c:153 commands/sequence.c:462 commands/tablecmds.c:3864 commands/tablecmds.c:4022 commands/tablecmds.c:4074 commands/tablecmds.c:17027 tcop/utility.c:1325
+#: commands/dropcmds.c:153 commands/sequence.c:462 commands/tablecmds.c:3865 commands/tablecmds.c:4023 commands/tablecmds.c:4075 commands/tablecmds.c:17061 tcop/utility.c:1325
 #, c-format
 msgid "relation \"%s\" does not exist, skipping"
 msgstr "ურთიერთობა \"%s\" არ არსებობს, გამოტოვებს"
 
-#: commands/dropcmds.c:183 commands/dropcmds.c:282 commands/tablecmds.c:1396
+#: commands/dropcmds.c:183 commands/dropcmds.c:282 commands/tablecmds.c:1397
 #, c-format
 msgid "schema \"%s\" does not exist, skipping"
 msgstr "სქემა \"%s\" არ არსებობს, გამოტოვება"
@@ -8716,12 +8711,12 @@ msgstr "ინდექსს დაყოფილ ცხრილზე %s პ
 msgid "cannot create indexes on temporary tables of other sessions"
 msgstr "სხვა სესიების დროებითი ცხრილებზე ინდექსების შექმნა შეუძლებელია"
 
-#: commands/indexcmds.c:768 commands/tablecmds.c:805 commands/tablespace.c:1178
+#: commands/indexcmds.c:768 commands/tablecmds.c:806 commands/tablespace.c:1178
 #, c-format
 msgid "cannot specify default tablespace for partitioned relations"
 msgstr "დაყოფილი ურთიერთობებისთვის ნაგულისხმევი ცხრილის სივრცეების მითითება შეუძლებელია"
 
-#: commands/indexcmds.c:800 commands/tablecmds.c:836 commands/tablecmds.c:3563
+#: commands/indexcmds.c:800 commands/tablecmds.c:837 commands/tablecmds.c:3564
 #, c-format
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr "pg_global ცხრილის სივრცეში მხოლოდ გაზიარებული ურთიერთობების მოთავსება შეგიძლიათ"
@@ -8801,12 +8796,12 @@ msgstr "ცხრილი (%s) შეიცავს დანაყოფე�
 msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr "ფუნქციები ინდექსის პრედიკატში მონიშნეთ, როგორც IMMUTABLE"
 
-#: commands/indexcmds.c:1910 parser/parse_utilcmd.c:2487 parser/parse_utilcmd.c:2622
+#: commands/indexcmds.c:1910 parser/parse_utilcmd.c:2494 parser/parse_utilcmd.c:2629
 #, c-format
 msgid "column \"%s\" named in key does not exist"
 msgstr "გასაღებში დასახელებული სვეტი არ არსებობს: %s"
 
-#: commands/indexcmds.c:1934 parser/parse_utilcmd.c:1786
+#: commands/indexcmds.c:1934 parser/parse_utilcmd.c:1782
 #, c-format
 msgid "expressions are not supported in included columns"
 msgstr "ჩასმულ სვეტებში გამოსახულებები მხარდაჭერილი არაა"
@@ -8841,7 +8836,7 @@ msgstr "ჩასმულ სვეტს NULLS FIRST/LAST მხარდა�
 msgid "could not determine which collation to use for index expression"
 msgstr "ინდექსის გამოსახულებისთვის გამოსაყენებელი კოლაციის გამოცნობა შეუძლებელია"
 
-#: commands/indexcmds.c:2052 commands/tablecmds.c:18044 commands/typecmds.c:811 parser/parse_expr.c:2785 parser/parse_type.c:568 parser/parse_utilcmd.c:3928 utils/adt/misc.c:630
+#: commands/indexcmds.c:2052 commands/tablecmds.c:18078 commands/typecmds.c:811 parser/parse_expr.c:2785 parser/parse_type.c:568 parser/parse_utilcmd.c:3918 utils/adt/misc.c:630
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "ტიპს \"%s\" კოლაციების მხარდაჭერა არ გააჩნია"
@@ -8876,7 +8871,7 @@ msgstr "წვდომის მეთოდს \"%s\" ASC/DESC პარამ
 msgid "access method \"%s\" does not support NULLS FIRST/LAST options"
 msgstr "წვდომის მეთოდს \"%s\" 'NULLS FIRST/LAST' პარამეტრების მხარდაჭერა არ გააჩნია"
 
-#: commands/indexcmds.c:2232 commands/tablecmds.c:18069 commands/tablecmds.c:18075 commands/typecmds.c:2311
+#: commands/indexcmds.c:2232 commands/tablecmds.c:18103 commands/tablecmds.c:18109 commands/typecmds.c:2311
 #, c-format
 msgid "data type %s has no default operator class for access method \"%s\""
 msgstr "მონაცემის ტიპს %s წვდომის მეთოდისთვის \"%s\" ნაგულისხმევი ოპერატორის კლასი არ გააჩნია"
@@ -9306,7 +9301,7 @@ msgstr "ოპერატორის ატრიბუტის შეცვ�
 msgid "operator attribute \"%s\" cannot be changed if it has already been set"
 msgstr "ოპერატორის ატრიბუტს \"%s\", თუ ის უკვე დაყენებულია, ვერ შეცვლით"
 
-#: commands/policy.c:86 commands/policy.c:379 commands/statscmds.c:146 commands/tablecmds.c:1727 commands/tablecmds.c:2327 commands/tablecmds.c:3674 commands/tablecmds.c:6579 commands/tablecmds.c:9611 commands/tablecmds.c:17631 commands/tablecmds.c:17666 commands/trigger.c:316 commands/trigger.c:1332 commands/trigger.c:1442 rewrite/rewriteDefine.c:268 rewrite/rewriteDefine.c:779 rewrite/rewriteRemove.c:74
+#: commands/policy.c:86 commands/policy.c:379 commands/statscmds.c:146 commands/tablecmds.c:1728 commands/tablecmds.c:2328 commands/tablecmds.c:3675 commands/tablecmds.c:6613 commands/tablecmds.c:9645 commands/tablecmds.c:17665 commands/tablecmds.c:17700 commands/trigger.c:316 commands/trigger.c:1332 commands/trigger.c:1442 rewrite/rewriteDefine.c:268 rewrite/rewriteDefine.c:779 rewrite/rewriteRemove.c:74
 #, c-format
 msgid "permission denied: \"%s\" is a system catalog"
 msgstr "წვდომა აკრძალულია: '%s\" სისტემური კატალოგია"
@@ -9750,7 +9745,7 @@ msgstr "მიმდევრობას იგივე სქემა უნ
 msgid "cannot change ownership of identity sequence"
 msgstr "იდენტიფიკაციის მიმდევრობის მფლობელის შეცვლა შეუძლებელია"
 
-#: commands/sequence.c:1661 commands/tablecmds.c:14353 commands/tablecmds.c:17047
+#: commands/sequence.c:1661 commands/tablecmds.c:14387 commands/tablecmds.c:17081
 #, c-format
 msgid "Sequence \"%s\" is linked to table \"%s\"."
 msgstr "მიმდევრობა %s მიბმულია ცხრილზე \"%s\"."
@@ -9820,12 +9815,12 @@ msgstr "სვეტის დუბლირებული სახელი 
 msgid "duplicate expression in statistics definition"
 msgstr "დუბლირებული გამოსახულება სტატისტიკის აღწერაში"
 
-#: commands/statscmds.c:628 commands/tablecmds.c:8594
+#: commands/statscmds.c:628 commands/tablecmds.c:8628
 #, c-format
 msgid "statistics target %d is too low"
 msgstr "სტატისტიკის სამიზნე %d ძალიან დაბალია"
 
-#: commands/statscmds.c:636 commands/tablecmds.c:8602
+#: commands/statscmds.c:636 commands/tablecmds.c:8636
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr "სტატისტიკის სამიზნის ჩამოწევა %d-მდე"
@@ -10109,7 +10104,7 @@ msgstr "მატერიალიზებული ხედი \"%s\" არ
 msgid "Use DROP MATERIALIZED VIEW to remove a materialized view."
 msgstr "მატერიალიზებული ხედის წასაშლელად გამოიყენეთ DROP MATERIALIZED VIEW."
 
-#: commands/tablecmds.c:279 commands/tablecmds.c:303 commands/tablecmds.c:19593 parser/parse_utilcmd.c:2219
+#: commands/tablecmds.c:279 commands/tablecmds.c:303 commands/tablecmds.c:19627 parser/parse_utilcmd.c:2226
 #, c-format
 msgid "index \"%s\" does not exist"
 msgstr "ინდექსი \"%s\" არ არსებობს"
@@ -10132,7 +10127,7 @@ msgstr "\"%s\" ტიპი არაა"
 msgid "Use DROP TYPE to remove a type."
 msgstr "ტიპის წასაშლელად გამოიყენეთ DROP TYPE."
 
-#: commands/tablecmds.c:291 commands/tablecmds.c:14192 commands/tablecmds.c:16752
+#: commands/tablecmds.c:291 commands/tablecmds.c:14226 commands/tablecmds.c:16786
 #, c-format
 msgid "foreign table \"%s\" does not exist"
 msgstr "გარე ცხრილი \"%s\" არ არსებობს"
@@ -10146,1381 +10141,1386 @@ msgstr "გარე ცხრილი \"%s\" არ არსებობს. 
 msgid "Use DROP FOREIGN TABLE to remove a foreign table."
 msgstr "გარე ცხრილის წასაშლელად DROP FOREIGN TABLE გამოიყენეთ."
 
-#: commands/tablecmds.c:721
+#: commands/tablecmds.c:722
 #, c-format
 msgid "ON COMMIT can only be used on temporary tables"
 msgstr "ON COMMIT მხოლოდ დროებით ცხრილებზე გამოიყენება"
 
-#: commands/tablecmds.c:752
+#: commands/tablecmds.c:753
 #, c-format
 msgid "cannot create temporary table within security-restricted operation"
 msgstr "უსაფრთხოებაზე-შეზღუდული ოპერაციის შიგნით დროებითი ცხრილის შექმნა შეუძლებელია"
 
-#: commands/tablecmds.c:788 commands/tablecmds.c:15611
+#: commands/tablecmds.c:789 commands/tablecmds.c:15645
 #, c-format
 msgid "relation \"%s\" would be inherited from more than once"
 msgstr "ურთიერთობა \"%s\" მემკვირდრეობით ერზე მეტჯერ იქნებოდა მიღებული"
 
-#: commands/tablecmds.c:1054
+#: commands/tablecmds.c:1055
 #, c-format
 msgid "\"%s\" is not partitioned"
 msgstr "\"%s\" დაყოფილი არაა"
 
-#: commands/tablecmds.c:1148
+#: commands/tablecmds.c:1149
 #, c-format
 msgid "cannot partition using more than %d columns"
 msgstr "%d-ზე მეტი სვეტის გამოყენებით დაყოფა შეუძლებელია"
 
-#: commands/tablecmds.c:1204
+#: commands/tablecmds.c:1205
 #, c-format
 msgid "cannot create foreign partition of partitioned table \"%s\""
 msgstr "დაყოფილი ცხრილის (%s) გარე დანაყოფს ვერ შექმნით"
 
-#: commands/tablecmds.c:1206
+#: commands/tablecmds.c:1207
 #, c-format
 msgid "Table \"%s\" contains indexes that are unique."
 msgstr "ცხრილი %s შეიცავს სვეტებს, რომლებიც უნიკალურია."
 
-#: commands/tablecmds.c:1325 commands/tablecmds.c:13208
+#: commands/tablecmds.c:1326 commands/tablecmds.c:13242
 #, c-format
 msgid "too many array dimensions"
 msgstr "მასივის მეტისმეტად ბევრი განზომილება"
 
-#: commands/tablecmds.c:1330 parser/parse_clause.c:774 parser/parse_relation.c:1912
+#: commands/tablecmds.c:1331 parser/parse_clause.c:774 parser/parse_relation.c:1912
 #, c-format
 msgid "column \"%s\" cannot be declared SETOF"
 msgstr "სვეტი \"%s\" არ შეიძლება გამოცხადდეს SETOF"
 
-#: commands/tablecmds.c:1476
+#: commands/tablecmds.c:1477
 #, c-format
 msgid "DROP INDEX CONCURRENTLY does not support dropping multiple objects"
 msgstr "DROP INDEX CONCURRENTLY-ს ერთზე მეტი ობიექტის წაშლის მხარდაჭერა არ გააჩნია"
 
-#: commands/tablecmds.c:1480
+#: commands/tablecmds.c:1481
 #, c-format
 msgid "DROP INDEX CONCURRENTLY does not support CASCADE"
 msgstr "DROP INDEX CONCURRENTLY-ს CASCADE-ის მხარდაჭერა არ გააჩნია"
 
-#: commands/tablecmds.c:1584
+#: commands/tablecmds.c:1585
 #, c-format
 msgid "cannot drop partitioned index \"%s\" concurrently"
 msgstr "დაყოფილ ინდექსს \"%s\" პარალელურად ვერ წაშლით"
 
-#: commands/tablecmds.c:1872
+#: commands/tablecmds.c:1873
 #, c-format
 msgid "cannot truncate only a partitioned table"
 msgstr "თვითონ დაყოფილი ცხრილის დაცარიელება შეუძლებელია"
 
-#: commands/tablecmds.c:1873
+#: commands/tablecmds.c:1874
 #, c-format
 msgid "Do not specify the ONLY keyword, or use TRUNCATE ONLY on the partitions directly."
 msgstr "არ მიუთითოთ საკვანძო სიტყვა ONLY, ან პირდაპირ დანაყოფებზე გამოიყენეთ TRUNCATE ONLY."
 
-#: commands/tablecmds.c:1946
+#: commands/tablecmds.c:1947
 #, c-format
 msgid "truncate cascades to table \"%s\""
 msgstr "მოკვეთა გადაეცემა ცხრილამდე %s"
 
-#: commands/tablecmds.c:2307
+#: commands/tablecmds.c:2308
 #, c-format
 msgid "cannot truncate foreign table \"%s\""
 msgstr "გარე ცხრილის (\"%s\") მოკვეთის შეცდომა"
 
-#: commands/tablecmds.c:2364
+#: commands/tablecmds.c:2365
 #, c-format
 msgid "cannot truncate temporary tables of other sessions"
 msgstr "სხვა სესიების დროებითი ცხრილების მოკვეთის შეცდომა"
 
-#: commands/tablecmds.c:2593 commands/tablecmds.c:15508
+#: commands/tablecmds.c:2594 commands/tablecmds.c:15542
 #, c-format
 msgid "cannot inherit from partitioned table \"%s\""
 msgstr "დაყოფილი ცხრილიდან \"%s\" მემკვიდრეობის მიღება შეუძლებელია"
 
-#: commands/tablecmds.c:2598
+#: commands/tablecmds.c:2599
 #, c-format
 msgid "cannot inherit from partition \"%s\""
 msgstr "დანაყოფიდან \"%s\" მემკვიდრეობის მიღება შეუძლებელია"
 
-#: commands/tablecmds.c:2606 parser/parse_utilcmd.c:2449 parser/parse_utilcmd.c:2591
+#: commands/tablecmds.c:2607 parser/parse_utilcmd.c:2456 parser/parse_utilcmd.c:2598
 #, c-format
 msgid "inherited relation \"%s\" is not a table or foreign table"
 msgstr "მემკვიდრეობით მიღებული ურთიერთობა \"%s\" ცხრილს ან გარე ცხრილს არ წარმოადგენს"
 
-#: commands/tablecmds.c:2618 commands/tablecmds.c:20355
+#: commands/tablecmds.c:2619 commands/tablecmds.c:20391
 #, c-format
 msgid "cannot create a temporary relation as partition of permanent relation \"%s\""
 msgstr "შეუძლებელია შექმნათ დროებით ურთიერთობა, რომელიც მუდმივი ურთიერთობის \"%s\" დანაყოფი იქნება"
 
-#: commands/tablecmds.c:2627 commands/tablecmds.c:15487
+#: commands/tablecmds.c:2628 commands/tablecmds.c:15521
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
 msgstr "დროებითი ურთიერთობიდან (%s) მემკვიდრეობითობა შეუძლებელია"
 
-#: commands/tablecmds.c:2637 commands/tablecmds.c:15495
+#: commands/tablecmds.c:2638 commands/tablecmds.c:15529
 #, c-format
 msgid "cannot inherit from temporary relation of another session"
 msgstr "სხვა სესიის დროებითი ურთიერთობიდან მემკვიდრეობითობა შეუძლებელია"
 
-#: commands/tablecmds.c:2778 commands/tablecmds.c:2832 commands/tablecmds.c:12891 parser/parse_utilcmd.c:1282 parser/parse_utilcmd.c:1325 parser/parse_utilcmd.c:1714 parser/parse_utilcmd.c:1822
+#: commands/tablecmds.c:2779 commands/tablecmds.c:2833 commands/tablecmds.c:12925 parser/parse_utilcmd.c:1240 parser/parse_utilcmd.c:1283 parser/parse_utilcmd.c:1710 parser/parse_utilcmd.c:1818
 #, c-format
 msgid "cannot convert whole-row table reference"
 msgstr ""
 
-#: commands/tablecmds.c:2779 parser/parse_utilcmd.c:1283
+#: commands/tablecmds.c:2780 parser/parse_utilcmd.c:1241
 #, c-format
 msgid "Generation expression for column \"%s\" contains a whole-row reference to table \"%s\"."
 msgstr ""
 
-#: commands/tablecmds.c:2833 parser/parse_utilcmd.c:1326
+#: commands/tablecmds.c:2834 parser/parse_utilcmd.c:1284
 #, c-format
 msgid "Constraint \"%s\" contains a whole-row reference to table \"%s\"."
 msgstr ""
 
-#: commands/tablecmds.c:2943 commands/tablecmds.c:3214
+#: commands/tablecmds.c:2944 commands/tablecmds.c:3215
 #, c-format
 msgid "column \"%s\" inherits from generated column but specifies default"
 msgstr "ცხრილი \"%s\" მემკვიდრეობით იღებს გენერირებული ცხრილიდან, მაგრამ ნაგულისხმევიც მითითებულია"
 
-#: commands/tablecmds.c:2948 commands/tablecmds.c:3219
+#: commands/tablecmds.c:2949 commands/tablecmds.c:3220
 #, c-format
 msgid "column \"%s\" inherits from generated column but specifies identity"
 msgstr "ცხრილი \"%s\" მემკვიდრეობით იღებს გენერირებული ცხრილიდან, მაგრამ იდენტიფიკაციაც მითითებულია"
 
-#: commands/tablecmds.c:2956 commands/tablecmds.c:3227
+#: commands/tablecmds.c:2957 commands/tablecmds.c:3228
 #, c-format
 msgid "child column \"%s\" specifies generation expression"
 msgstr "შვილი სვეტისთვის \"%s\" მითითებულია გენერაციის გამოსახულება"
 
-#: commands/tablecmds.c:2958 commands/tablecmds.c:3229
+#: commands/tablecmds.c:2959 commands/tablecmds.c:3230
 #, c-format
 msgid "A child table column cannot be generated unless its parent column is."
 msgstr "შვილი ცხრილის სვეტი არ შეიძლება, გენერირებული იყოს, თუ მისი მშობელიც არაა."
 
-#: commands/tablecmds.c:3004
+#: commands/tablecmds.c:3005
 #, c-format
 msgid "column \"%s\" inherits conflicting generation expressions"
 msgstr "სვეტი \"%s\" მემკვიდრეობით კონფლიქტის მქონე გენერაციის გამოსახულებას იღებს"
 
-#: commands/tablecmds.c:3006
+#: commands/tablecmds.c:3007
 #, c-format
 msgid "To resolve the conflict, specify a generation expression explicitly."
 msgstr "კონფლიქტის გადასაჭრელად გენერაციის გამოსახულება აშკარად მიუთითეთ."
 
-#: commands/tablecmds.c:3010
+#: commands/tablecmds.c:3011
 #, c-format
 msgid "column \"%s\" inherits conflicting default values"
 msgstr "სვეტი \"%s\" მემკვიდრეობით ურთიერთგამომრიცხავ ნაგულისხმევ მნიშვნელობებს იღებს"
 
-#: commands/tablecmds.c:3012
+#: commands/tablecmds.c:3013
 #, c-format
 msgid "To resolve the conflict, specify a default explicitly."
 msgstr "კონფლიქტის გადასაჭრელად ნაგულისხმევი აშკარად მიუთითეთ."
 
-#: commands/tablecmds.c:3067
+#: commands/tablecmds.c:3068
 #, c-format
 msgid "check constraint name \"%s\" appears multiple times but with different expressions"
 msgstr "შემოწმების შეზღუდვის სახელი \"%s\" ბევრჯერ გამოჩნდა, მაგრამ სხვადასხვა გამოსახულებებთან ერთად"
 
-#: commands/tablecmds.c:3118
+#: commands/tablecmds.c:3119
 #, c-format
 msgid "merging column \"%s\" with inherited definition"
 msgstr "სვეტის (\"%s\") შერწყმა მემკვიდრეობითი აღწერით"
 
-#: commands/tablecmds.c:3122
+#: commands/tablecmds.c:3123
 #, c-format
 msgid "moving and merging column \"%s\" with inherited definition"
 msgstr ""
 
-#: commands/tablecmds.c:3123
+#: commands/tablecmds.c:3124
 #, c-format
 msgid "User-specified column moved to the position of the inherited column."
 msgstr ""
 
-#: commands/tablecmds.c:3135
+#: commands/tablecmds.c:3136
 #, c-format
 msgid "column \"%s\" has a type conflict"
 msgstr "ტიპის კონფლიქტი სვეტში \"%s\""
 
-#: commands/tablecmds.c:3137 commands/tablecmds.c:3171 commands/tablecmds.c:3187 commands/tablecmds.c:3294 commands/tablecmds.c:3327 commands/tablecmds.c:3343 parser/parse_coerce.c:2155 parser/parse_coerce.c:2175 parser/parse_coerce.c:2195 parser/parse_coerce.c:2216 parser/parse_coerce.c:2271 parser/parse_coerce.c:2305 parser/parse_coerce.c:2381 parser/parse_coerce.c:2412 parser/parse_coerce.c:2451 parser/parse_coerce.c:2518 parser/parse_param.c:223
+#: commands/tablecmds.c:3138 commands/tablecmds.c:3172 commands/tablecmds.c:3188 commands/tablecmds.c:3295 commands/tablecmds.c:3328 commands/tablecmds.c:3344 parser/parse_coerce.c:2155 parser/parse_coerce.c:2175 parser/parse_coerce.c:2195 parser/parse_coerce.c:2216 parser/parse_coerce.c:2271 parser/parse_coerce.c:2305 parser/parse_coerce.c:2381 parser/parse_coerce.c:2412 parser/parse_coerce.c:2451 parser/parse_coerce.c:2518 parser/parse_param.c:223
 #, c-format
 msgid "%s versus %s"
 msgstr "%s-ი %s-ის წინააღმდეგ"
 
-#: commands/tablecmds.c:3149
+#: commands/tablecmds.c:3150
 #, c-format
 msgid "column \"%s\" has a collation conflict"
 msgstr "კოლაციის კონფლიქტი სვეტში \"%s\""
 
-#: commands/tablecmds.c:3151 commands/tablecmds.c:3313 commands/tablecmds.c:7054
+#: commands/tablecmds.c:3152 commands/tablecmds.c:3314 commands/tablecmds.c:7088
 #, c-format
 msgid "\"%s\" versus \"%s\""
 msgstr "'%s\" -ი \"%s\"-ის წინააღმდეგ"
 
-#: commands/tablecmds.c:3169
+#: commands/tablecmds.c:3170
 #, c-format
 msgid "column \"%s\" has a storage parameter conflict"
 msgstr "საცავის პარამეტრის კონფლიქტი სვეტში \"%s\""
 
-#: commands/tablecmds.c:3185 commands/tablecmds.c:3341
+#: commands/tablecmds.c:3186 commands/tablecmds.c:3342
 #, c-format
 msgid "column \"%s\" has a compression method conflict"
 msgstr "სვეტის (%s) შეკუმშვის მეთოდის კონფლიქტი"
 
-#: commands/tablecmds.c:3280
+#: commands/tablecmds.c:3281
 #, c-format
 msgid "merging multiple inherited definitions of column \"%s\""
 msgstr "მიმდინარეობს სვეტის (\"%s\") მიერ მემკვიდრეობით მიღებული აღწერების შერწყმა"
 
-#: commands/tablecmds.c:3292
+#: commands/tablecmds.c:3293
 #, c-format
 msgid "inherited column \"%s\" has a type conflict"
 msgstr "მემკივდრეობითი სვეტის \"%s\" ტიპის კონფლიქტი"
 
-#: commands/tablecmds.c:3311
+#: commands/tablecmds.c:3312
 #, c-format
 msgid "inherited column \"%s\" has a collation conflict"
 msgstr "მემკივდრეობითი სვეტის \"%s\" კოლაციის კონფლიქტი"
 
-#: commands/tablecmds.c:3325
+#: commands/tablecmds.c:3326
 #, c-format
 msgid "inherited column \"%s\" has a storage parameter conflict"
 msgstr "მემკივდრეობითი სვეტის \"%s\" საცავის პარამეტრის კონფლიქტი"
 
-#: commands/tablecmds.c:3353
+#: commands/tablecmds.c:3354
 #, c-format
 msgid "inherited column \"%s\" has a generation conflict"
 msgstr "მემკივდრეობითი სვეტის \"%s\" თაობის კონფლიქტი"
 
-#: commands/tablecmds.c:3572
+#: commands/tablecmds.c:3573
 #, c-format
 msgid "cannot move temporary tables of other sessions"
 msgstr "სხვა სესიების დროებითი ცხრილების გადაადგილება შეუძლებელია"
 
-#: commands/tablecmds.c:3642
+#: commands/tablecmds.c:3643
 #, c-format
 msgid "cannot rename column of typed table"
 msgstr "ტიპიზირებული ცხრილის სვეტის გარდაქმნა შეუძლებელია"
 
-#: commands/tablecmds.c:3661
+#: commands/tablecmds.c:3662
 #, c-format
 msgid "cannot rename columns of relation \"%s\""
 msgstr "ურთიერთობის (\"%s\") სვეტების სახელის გადარქმევა შეუძლებელია"
 
-#: commands/tablecmds.c:3756
+#: commands/tablecmds.c:3757
 #, c-format
 msgid "inherited column \"%s\" must be renamed in child tables too"
 msgstr "მემკვიდრეობით მიღებული სვეტს (\"%s\") სახელი შვილ ცხრილებშიც უნდა გადაერქვას"
 
-#: commands/tablecmds.c:3788
+#: commands/tablecmds.c:3789
 #, c-format
 msgid "cannot rename system column \"%s\""
 msgstr "სისტემური სვეტის \"%s\" გადარქმევა შეუძლებელია"
 
-#: commands/tablecmds.c:3803
+#: commands/tablecmds.c:3804
 #, c-format
 msgid "cannot rename inherited column \"%s\""
 msgstr "მემკვიდრეობითი სვეტის (\"%s\") სახელის გადარქმევა შეუძლებელია"
 
-#: commands/tablecmds.c:3955
+#: commands/tablecmds.c:3956
 #, c-format
 msgid "inherited constraint \"%s\" must be renamed in child tables too"
 msgstr "მემკვიდრეობით მიღებული შეზღუდვას (\"%s\") სახელი შვილ ცხრილებშიც უნდა გადაერქვას"
 
-#: commands/tablecmds.c:3962
+#: commands/tablecmds.c:3963
 #, c-format
 msgid "cannot rename inherited constraint \"%s\""
 msgstr "მემკვიდრეობითი შეზღუდვის (\"%s\") სახელის გადარქმევა შეუძლებელია"
 
 #. translator: first %s is a SQL command, eg ALTER TABLE
-#: commands/tablecmds.c:4259
+#: commands/tablecmds.c:4260
 #, c-format
 msgid "cannot %s \"%s\" because it is being used by active queries in this session"
 msgstr "%s-ის \"%s\" შეუძლებელია, რადგან ის ამ სესიაში აქტიური მოთხოვნების მიერ გამოიყენება"
 
 #. translator: first %s is a SQL command, eg ALTER TABLE
-#: commands/tablecmds.c:4268
+#: commands/tablecmds.c:4269
 #, c-format
 msgid "cannot %s \"%s\" because it has pending trigger events"
 msgstr "%s-ის \"%s\" შეუძლებელია, რადგან მას დარჩენილი ტრიგერის მოვლენები გააჩნია"
 
-#: commands/tablecmds.c:4744
+#: commands/tablecmds.c:4295
+#, c-format
+msgid "cannot alter temporary tables of other sessions"
+msgstr "სხვა სესიების დროებითი ცხრილების შეცვლა შეუძლებელია"
+
+#: commands/tablecmds.c:4776
 #, c-format
 msgid "cannot alter partition \"%s\" with an incomplete detach"
 msgstr "არასრული მოხსნის მქონე დანაყოფის \"%s\" შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:4948 commands/tablecmds.c:4963
+#: commands/tablecmds.c:4980 commands/tablecmds.c:4995
 #, c-format
 msgid "cannot change persistence setting twice"
 msgstr "შენახვის პარამეტრების ორჯერ შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:4984
+#: commands/tablecmds.c:5016
 #, c-format
 msgid "cannot have multiple SET ACCESS METHOD subcommands"
 msgstr "ერთზე მეტი SET ACCESS METHOD ქვებრძანება ვერ გექნებათ"
 
-#: commands/tablecmds.c:5740
+#: commands/tablecmds.c:5772
 #, c-format
 msgid "cannot rewrite system relation \"%s\""
 msgstr "სისტემური შეერთების \"%s\" გადაწერა შეუძლებელია"
 
-#: commands/tablecmds.c:5746
+#: commands/tablecmds.c:5778
 #, c-format
 msgid "cannot rewrite table \"%s\" used as a catalog table"
 msgstr "კატალოგის ცხრილად გამოყენებული ცხრილის \"%s\" თავიდან ჩაწერა შეუძლებელია"
 
-#: commands/tablecmds.c:5756
+#: commands/tablecmds.c:5790
 #, c-format
 msgid "cannot rewrite temporary tables of other sessions"
 msgstr "სხვა სესიების დროებით ცხრილებს ვერ გადააწერთ"
 
-#: commands/tablecmds.c:6251
+#: commands/tablecmds.c:6285
 #, c-format
 msgid "column \"%s\" of relation \"%s\" contains null values"
 msgstr "ურთიერთობის %2$s სვეტი %1$s ნულოვან მნიშვნელობებს შეიცავს"
 
-#: commands/tablecmds.c:6268
+#: commands/tablecmds.c:6302
 #, c-format
 msgid "check constraint \"%s\" of relation \"%s\" is violated by some row"
 msgstr "ურთიერთობის (\"%2$s\") შემოწმების შეზღუდვა \"%1$s\" რომელიღაც მწკრივის მიერ ირღვევა"
 
-#: commands/tablecmds.c:6287 partitioning/partbounds.c:3388
+#: commands/tablecmds.c:6321 partitioning/partbounds.c:3388
 #, c-format
 msgid "updated partition constraint for default partition \"%s\" would be violated by some row"
 msgstr "განახებული დანაყოფის შეზღუდვა ნაგულისხმევი დანაყოფისთვის \"%s\" რომელიღაც მწკრივის მიერ დაირღვეოდა"
 
-#: commands/tablecmds.c:6293
+#: commands/tablecmds.c:6327
 #, c-format
 msgid "partition constraint of relation \"%s\" is violated by some row"
 msgstr "ურთიერთობის (\"%s\") დანაყოფის შეზღუდვა რომელიღაც მწკრივის მიერ ირღვევა"
 
 #. translator: %s is a group of some SQL keywords
-#: commands/tablecmds.c:6562
+#: commands/tablecmds.c:6596
 #, c-format
 msgid "ALTER action %s cannot be performed on relation \"%s\""
 msgstr "ALTER-ის ქმედებას %s ურთიერთობაზე \"%s\" ვერ შეასრულებთ"
 
-#: commands/tablecmds.c:6817 commands/tablecmds.c:6824
+#: commands/tablecmds.c:6851 commands/tablecmds.c:6858
 #, c-format
 msgid "cannot alter type \"%s\" because column \"%s.%s\" uses it"
 msgstr "ტიპის \"%s\" შეცვლა შეუძლებელია, რადგან მას სვეტი \"%s.%s\" იყენებს"
 
-#: commands/tablecmds.c:6831
+#: commands/tablecmds.c:6865
 #, c-format
 msgid "cannot alter foreign table \"%s\" because column \"%s.%s\" uses its row type"
 msgstr "გარე ცხრილის \"%s\" შეცვლა შეუძლებელია, რადგან სვეტი \"%s.%s\" თავისი მწკრივის ტიპს იყენებს"
 
-#: commands/tablecmds.c:6838
+#: commands/tablecmds.c:6872
 #, c-format
 msgid "cannot alter table \"%s\" because column \"%s.%s\" uses its row type"
 msgstr "ცხრილის \"%s\" შეცვლა შეუძლებელია, რადგან სვეტი \"%s.%s\" თავისი მწკრივის ტიპს იყენებს"
 
-#: commands/tablecmds.c:6894
+#: commands/tablecmds.c:6928
 #, c-format
 msgid "cannot alter type \"%s\" because it is the type of a typed table"
 msgstr "ტიპის \"%s\" შეცვლა შეუძლებელია, რადგან ის ტიპიზირებული ცხრილის ტიპისაა"
 
-#: commands/tablecmds.c:6896
+#: commands/tablecmds.c:6930
 #, c-format
 msgid "Use ALTER ... CASCADE to alter the typed tables too."
 msgstr "ტიპიზირებული ცხრილების ჩასასწორებლად გამოიყენეთ ALTER ... CASCADE."
 
-#: commands/tablecmds.c:6942
+#: commands/tablecmds.c:6976
 #, c-format
 msgid "type %s is not a composite type"
 msgstr "ტიპი %s კომპოზიტური არაა"
 
-#: commands/tablecmds.c:6969
+#: commands/tablecmds.c:7003
 #, c-format
 msgid "cannot add column to typed table"
 msgstr "ტიპიზირებულ ცხრილში სვეტების ჩამატება შეუძლებელია"
 
-#: commands/tablecmds.c:7017
+#: commands/tablecmds.c:7051
 #, c-format
 msgid "cannot add column to a partition"
 msgstr "დანაყოფს სვეტს ვერ დაუმატებთ"
 
-#: commands/tablecmds.c:7046 commands/tablecmds.c:15726
+#: commands/tablecmds.c:7080 commands/tablecmds.c:15760
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr "შვილ ცხრილს \"%s\" სვეტისთვის \"%s\" სხვა ტიპი გააჩნია"
 
-#: commands/tablecmds.c:7052 commands/tablecmds.c:15732
+#: commands/tablecmds.c:7086 commands/tablecmds.c:15766
 #, c-format
 msgid "child table \"%s\" has different collation for column \"%s\""
 msgstr "შვილ ცხრილს \"%s\" სვეტისთვის \"%s\" სხვა კოლაცია გააჩნია"
 
-#: commands/tablecmds.c:7070
+#: commands/tablecmds.c:7104
 #, c-format
 msgid "merging definition of column \"%s\" for child \"%s\""
 msgstr "მიმდინარეობს აღწერის შერწყმა სვეტისთვის \"%s\" შვილისთვის \"%s\""
 
-#: commands/tablecmds.c:7123
+#: commands/tablecmds.c:7157
 #, c-format
 msgid "cannot recursively add identity column to table that has child tables"
 msgstr "ცხრილისთვის, რომელსაც შვილი ცხრილები გააჩნია, იდენტიფიკაციის სვეტის რეკურსიული დამატება შეუძლებელია"
 
-#: commands/tablecmds.c:7336
+#: commands/tablecmds.c:7370
 #, c-format
 msgid "column must be added to child tables too"
 msgstr "სვეტი შვილ ცხრილებსაც უნდა დაემატოთ"
 
-#: commands/tablecmds.c:7414
+#: commands/tablecmds.c:7448
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists, skipping"
 msgstr "ურთიერთობის (%2$s) სვეტი %1$s უკვე რსებობს. გამოტოვება"
 
-#: commands/tablecmds.c:7421
+#: commands/tablecmds.c:7455
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists"
 msgstr "ურთიერთობის (%2$s) სვეტი %1$s უკვე რსებობს"
 
-#: commands/tablecmds.c:7487 commands/tablecmds.c:12530
+#: commands/tablecmds.c:7521 commands/tablecmds.c:12564
 #, c-format
 msgid "cannot remove constraint from only the partitioned table when partitions exist"
 msgstr "შეზღუდვის წაშლა მხოლოდ დაყოფილი ცხრილიდან მაშინ, როცა დანაყოფები არსებობს, შეუძლებელია"
 
-#: commands/tablecmds.c:7488 commands/tablecmds.c:7802 commands/tablecmds.c:7980 commands/tablecmds.c:8087 commands/tablecmds.c:8204 commands/tablecmds.c:9023 commands/tablecmds.c:12531
+#: commands/tablecmds.c:7522 commands/tablecmds.c:7836 commands/tablecmds.c:8014 commands/tablecmds.c:8121 commands/tablecmds.c:8238 commands/tablecmds.c:9057 commands/tablecmds.c:12565
 #, c-format
 msgid "Do not specify the ONLY keyword."
 msgstr "ONLY არ მიუთითოთ."
 
-#: commands/tablecmds.c:7524 commands/tablecmds.c:7728 commands/tablecmds.c:7870 commands/tablecmds.c:8002 commands/tablecmds.c:8131 commands/tablecmds.c:8225 commands/tablecmds.c:8326 commands/tablecmds.c:8483 commands/tablecmds.c:8636 commands/tablecmds.c:8717 commands/tablecmds.c:8851 commands/tablecmds.c:12684 commands/tablecmds.c:14215 commands/tablecmds.c:16841
+#: commands/tablecmds.c:7558 commands/tablecmds.c:7762 commands/tablecmds.c:7904 commands/tablecmds.c:8036 commands/tablecmds.c:8165 commands/tablecmds.c:8259 commands/tablecmds.c:8360 commands/tablecmds.c:8517 commands/tablecmds.c:8670 commands/tablecmds.c:8751 commands/tablecmds.c:8885 commands/tablecmds.c:12718 commands/tablecmds.c:14249 commands/tablecmds.c:16875
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "სისტემური სვეტის \"%s\" შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:7530 commands/tablecmds.c:7876
+#: commands/tablecmds.c:7564 commands/tablecmds.c:7910
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is an identity column"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" იდენტიფიკატორი სვეტია"
 
-#: commands/tablecmds.c:7571
+#: commands/tablecmds.c:7605
 #, c-format
 msgid "column \"%s\" is in a primary key"
 msgstr "სვეტი \"%s\" პირველადი გასაღებია"
 
-#: commands/tablecmds.c:7576
+#: commands/tablecmds.c:7610
 #, c-format
 msgid "column \"%s\" is in index used as replica identity"
 msgstr "სვეტი \"%s\" რეპლიკის იდენტიფიკატორად გამოყენებული ინდექსია"
 
-#: commands/tablecmds.c:7599
+#: commands/tablecmds.c:7633
 #, c-format
 msgid "column \"%s\" is marked NOT NULL in parent table"
 msgstr "სვეტი \"%s\" მშობელ ცხრილში NOT NULL-ით დანიშნული არაა"
 
-#: commands/tablecmds.c:7799 commands/tablecmds.c:9507
+#: commands/tablecmds.c:7833 commands/tablecmds.c:9541
 #, c-format
 msgid "constraint must be added to child tables too"
 msgstr "შეზღუდვა შვილ ცხრილებსაც უნდა დაემატოთ"
 
-#: commands/tablecmds.c:7800
+#: commands/tablecmds.c:7834
 #, c-format
 msgid "Column \"%s\" of relation \"%s\" is not already NOT NULL."
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" უკვე NOT NULL არაა."
 
-#: commands/tablecmds.c:7885
+#: commands/tablecmds.c:7919
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is a generated column"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" გენერირებული სვეტია"
 
-#: commands/tablecmds.c:7979
+#: commands/tablecmds.c:8013
 #, c-format
 msgid "cannot add identity to a column of only the partitioned table"
 msgstr "მხოლოდ, დაყოფილი ცხრილში იდენტიფიკაციას სვეტს ვერ დაამატებთ"
 
-#: commands/tablecmds.c:7985
+#: commands/tablecmds.c:8019
 #, c-format
 msgid "cannot add identity to a column of a partition"
 msgstr "დანაყოფს სვეტს იდენტიფიკატორს ვერ დაუმატებთ"
 
-#: commands/tablecmds.c:8013
+#: commands/tablecmds.c:8047
 #, c-format
 msgid "column \"%s\" of relation \"%s\" must be declared NOT NULL before identity can be added"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" უნდა აღწეროთ როგორც NOT NULL მანამდე, სანამ იდენტიფიკაციას დაამატებთ"
 
-#: commands/tablecmds.c:8019
+#: commands/tablecmds.c:8053
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is already an identity column"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" უკვე იდენტიფიკატორი სვეტია"
 
-#: commands/tablecmds.c:8025
+#: commands/tablecmds.c:8059
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already has a default value"
 msgstr "ურთიერთობის \"%2$s\" სვეტს \"%1$s\" ნაგულისხმევი მნიშვნელობა უკვე გააჩნია"
 
-#: commands/tablecmds.c:8086
+#: commands/tablecmds.c:8120
 #, c-format
 msgid "cannot change identity column of only the partitioned table"
 msgstr "მხოლოდ, დაყოფილი ცხრილის იდენტიფიკაციის სვეტს ვერ შეცვლით"
 
-#: commands/tablecmds.c:8092
+#: commands/tablecmds.c:8126
 #, c-format
 msgid "cannot change identity column of a partition"
 msgstr "დანაყოფის იდენტიფიკაციის სვეტს ვერ შეცვლით"
 
-#: commands/tablecmds.c:8137 commands/tablecmds.c:8233
+#: commands/tablecmds.c:8171 commands/tablecmds.c:8267
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not an identity column"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" იდენტიფიკატორი სვეტი არაა"
 
-#: commands/tablecmds.c:8203
+#: commands/tablecmds.c:8237
 #, c-format
 msgid "cannot drop identity from a column of only the partitioned table"
 msgstr "მხოლოდ, დაყოფილი ცხრილში სვეტიდან იდენტიფიკაციას ვერ წაშლით"
 
-#: commands/tablecmds.c:8209
+#: commands/tablecmds.c:8243
 #, c-format
 msgid "cannot drop identity from a column of a partition"
 msgstr "დანაყოფს სვეტიდან იდენტიფიკატორს ვერ წაშლით"
 
-#: commands/tablecmds.c:8238
+#: commands/tablecmds.c:8272
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not an identity column, skipping"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" იდენტიფიკატორი სვეტი არაა. გამოტოვება"
 
-#: commands/tablecmds.c:8332
+#: commands/tablecmds.c:8366
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not a generated column"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" გენერირებული სვეტი არაა"
 
-#: commands/tablecmds.c:8430
+#: commands/tablecmds.c:8464
 #, c-format
 msgid "ALTER TABLE / DROP EXPRESSION must be applied to child tables too"
 msgstr "ALTER TABLE / DROP EXPRESSION შვილ ცხრილებზეც უნდა გადატარდეს"
 
-#: commands/tablecmds.c:8452
+#: commands/tablecmds.c:8486
 #, c-format
 msgid "cannot drop generation expression from inherited column"
 msgstr "მემკვიდრეობითი სვეტიდან გენერაციის გამოსახულების წაშლა შეუძლებელია"
 
-#: commands/tablecmds.c:8491
+#: commands/tablecmds.c:8525
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not a stored generated column"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" დამახსოვრებული გენერირებული სვეტი არაა"
 
-#: commands/tablecmds.c:8496
+#: commands/tablecmds.c:8530
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not a stored generated column, skipping"
 msgstr "ურთიერთობის \"%2$s\" სვეტი \"%1$s\" დამახსოვრებული გენერირებული სვეტი არაა. გამოტოვება"
 
-#: commands/tablecmds.c:8574
+#: commands/tablecmds.c:8608
 #, c-format
 msgid "cannot refer to non-index column by number"
 msgstr "არა-ინდექსი სვეტის ნომრით მიმართვა შეუძლებელია"
 
-#: commands/tablecmds.c:8626
+#: commands/tablecmds.c:8660
 #, c-format
 msgid "column number %d of relation \"%s\" does not exist"
 msgstr "ურთიერთობის (%2$s) სვეტი (%1$d) არ არსებობს"
 
-#: commands/tablecmds.c:8645
+#: commands/tablecmds.c:8679
 #, c-format
 msgid "cannot alter statistics on included column \"%s\" of index \"%s\""
 msgstr "ინდექსის \"%2$s\" ჩასმული სვეტის \"%1$s\" სტატისტიკის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:8650
+#: commands/tablecmds.c:8684
 #, c-format
 msgid "cannot alter statistics on non-expression column \"%s\" of index \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:8652
+#: commands/tablecmds.c:8686
 #, c-format
 msgid "Alter statistics on table column instead."
 msgstr "ამის ნაცვლად ცხრილის სვეტის სტატისტიკა შეცვალეთ."
 
-#: commands/tablecmds.c:8898
+#: commands/tablecmds.c:8932
 #, c-format
 msgid "cannot drop column from typed table"
 msgstr "ტიპიზირებული ცხრილის სვეტის წაშლა შეუძლებელია"
 
-#: commands/tablecmds.c:8961
+#: commands/tablecmds.c:8995
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist, skipping"
 msgstr "სვეტი \"%s\" ურთიერთობაში \"%s\" არ არსებობს. გამოტოვება"
 
-#: commands/tablecmds.c:8974
+#: commands/tablecmds.c:9008
 #, c-format
 msgid "cannot drop system column \"%s\""
 msgstr "სისტემური სვეტის \"%s\" წაშლა შეუძლებელია"
 
-#: commands/tablecmds.c:8984
+#: commands/tablecmds.c:9018
 #, c-format
 msgid "cannot drop inherited column \"%s\""
 msgstr "მემკვიდრეობით მიღებული სვეტის \"%s\" წაშლა შეუძლებელია"
 
-#: commands/tablecmds.c:8997
+#: commands/tablecmds.c:9031
 #, c-format
 msgid "cannot drop column \"%s\" because it is part of the partition key of relation \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:9022
+#: commands/tablecmds.c:9056
 #, c-format
 msgid "cannot drop column from only the partitioned table when partitions exist"
 msgstr ""
 
-#: commands/tablecmds.c:9227
+#: commands/tablecmds.c:9261
 #, c-format
 msgid "ALTER TABLE / ADD CONSTRAINT USING INDEX is not supported on partitioned tables"
 msgstr "ALTER TABLE / ADD CONSTRAINT USING INDEX დაყოფილ ცხრილებზე მხარდაუჭერელია"
 
-#: commands/tablecmds.c:9252
+#: commands/tablecmds.c:9286
 #, c-format
 msgid "ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index \"%s\" to \"%s\""
 msgstr "ALTER TABLE / ADD CONSTRAINT USING INDEX ინდექსის სახელს \"%s\"-დან \"%s\"-ზე გადაარქმევს"
 
-#: commands/tablecmds.c:9589
+#: commands/tablecmds.c:9623
 #, c-format
 msgid "cannot use ONLY for foreign key on partitioned table \"%s\" referencing relation \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:9595
+#: commands/tablecmds.c:9629
 #, c-format
 msgid "cannot add NOT VALID foreign key on partitioned table \"%s\" referencing relation \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:9598
+#: commands/tablecmds.c:9632
 #, c-format
 msgid "This feature is not yet supported on partitioned tables."
 msgstr "ეს ოპერაცია დაყოფილი ცხრილებისთვის ჯერჯერობით მხარდაჭერილი არაა."
 
-#: commands/tablecmds.c:9605 commands/tablecmds.c:10061
+#: commands/tablecmds.c:9639 commands/tablecmds.c:10095
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr "მითითებული ურთიერთობა \"%s\" ცხრილი არაა"
 
-#: commands/tablecmds.c:9628
+#: commands/tablecmds.c:9662
 #, c-format
 msgid "constraints on permanent tables may reference only permanent tables"
 msgstr "მუდმივ ცხრილებზე არსებული შეზღუდვები მხოლოდ მუდმივ ცხრილებზე შეიძლება, მიუთითებდეს"
 
-#: commands/tablecmds.c:9635
+#: commands/tablecmds.c:9669
 #, c-format
 msgid "constraints on unlogged tables may reference only permanent or unlogged tables"
 msgstr "ჟურნალის გარეშე მყოფი ცხრილების შეზღუდვები მხოლოდ მუდმივ ან ჟურნალის გარეშე მყოფ ცხრილებზე შეიძლება, მიუთითებდეს"
 
-#: commands/tablecmds.c:9641
+#: commands/tablecmds.c:9675
 #, c-format
 msgid "constraints on temporary tables may reference only temporary tables"
 msgstr "დროებით ცხრილებზე არსებული შეზღუდვები მხოლოდ დროებით ცხრილებზე შეიძლება, მიუთითებდეს"
 
-#: commands/tablecmds.c:9645
+#: commands/tablecmds.c:9679
 #, c-format
 msgid "constraints on temporary tables must involve temporary tables of this session"
 msgstr "დროებითი ცხრილის შეზღუდვები მიმდინარე სესიის დროებით ცხრილებს უნდა მიმართავდეს"
 
-#: commands/tablecmds.c:9709 commands/tablecmds.c:9715
+#: commands/tablecmds.c:9743 commands/tablecmds.c:9749
 #, c-format
 msgid "invalid %s action for foreign key constraint containing generated column"
 msgstr "არასწორი ქმედება %s გარე გასაღების შეზღუდვის შემცველი გენერირებული სვეტისთვის"
 
-#: commands/tablecmds.c:9731
+#: commands/tablecmds.c:9765
 #, c-format
 msgid "number of referencing and referenced columns for foreign key disagree"
 msgstr ""
 
-#: commands/tablecmds.c:9838
+#: commands/tablecmds.c:9872
 #, c-format
 msgid "foreign key constraint \"%s\" cannot be implemented"
 msgstr "გარე გასაღების შეზღუდვის \"%s\" განხორციელება შეუძლებელია"
 
-#: commands/tablecmds.c:9840
+#: commands/tablecmds.c:9874
 #, c-format
 msgid "Key columns \"%s\" and \"%s\" are of incompatible types: %s and %s."
 msgstr "გასაღების სვეტები \"%s\" და \"%s\" შეუთავსებელი ტიპებისაა: %s და %s."
 
-#: commands/tablecmds.c:9997
+#: commands/tablecmds.c:10031
 #, c-format
 msgid "column \"%s\" referenced in ON DELETE SET action must be part of foreign key"
 msgstr ""
 
-#: commands/tablecmds.c:10271 commands/tablecmds.c:10741 parser/parse_utilcmd.c:803 parser/parse_utilcmd.c:926
+#: commands/tablecmds.c:10305 commands/tablecmds.c:10775 parser/parse_utilcmd.c:797 parser/parse_utilcmd.c:920
 #, c-format
 msgid "foreign key constraints are not supported on foreign tables"
 msgstr "გარე გასაღების შეზღუდვები გარე ცხრილებზე მხარდაჭერილი არაა"
 
-#: commands/tablecmds.c:11294 commands/tablecmds.c:11575 commands/tablecmds.c:12487 commands/tablecmds.c:12561
+#: commands/tablecmds.c:11328 commands/tablecmds.c:11609 commands/tablecmds.c:12521 commands/tablecmds.c:12595
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist"
 msgstr "ურთიერთობის \"%2$s\" შეზღუდვა \"%1$s\" არ არსებობს"
 
-#: commands/tablecmds.c:11301
+#: commands/tablecmds.c:11335
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key constraint"
 msgstr "ურთიერთობის (\"%2$s\") შეზღუდვა \"%1$s\" გარე გასაღების შეზღუდვა არაა"
 
-#: commands/tablecmds.c:11339
+#: commands/tablecmds.c:11373
 #, c-format
 msgid "cannot alter constraint \"%s\" on relation \"%s\""
 msgstr "ურთიერთობაზე \"%2$s\" შეზღუდვის \"%1$s\" შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:11342
+#: commands/tablecmds.c:11376
 #, c-format
 msgid "Constraint \"%s\" is derived from constraint \"%s\" of relation \"%s\"."
 msgstr "შეზღუდვა \"%1$s\" ურთიერთობის \"%3$s\" შეზღუდვიდანა \"%2$s\"-ია ნაწარმოები."
 
-#: commands/tablecmds.c:11344
+#: commands/tablecmds.c:11378
 #, c-format
 msgid "You may alter the constraint it derives from instead."
 msgstr ""
 
-#: commands/tablecmds.c:11583
+#: commands/tablecmds.c:11617
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key or check constraint"
 msgstr "ურთიერთობის (\"%2$s\") შეზღუდვა \"%1$s\" გარე გასაღები ან შემოწმების შეზღუდვა არაა"
 
-#: commands/tablecmds.c:11660
+#: commands/tablecmds.c:11694
 #, c-format
 msgid "constraint must be validated on child tables too"
 msgstr "შეზღუდვა შვილ ცხრილებზეც უნდა გადამოწმდეს"
 
-#: commands/tablecmds.c:11747
+#: commands/tablecmds.c:11781
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr "გარე გასაღების შეზღუდვაში მითითებული სვეტი \"%s\" არ არსებობს"
 
-#: commands/tablecmds.c:11753
+#: commands/tablecmds.c:11787
 #, c-format
 msgid "system columns cannot be used in foreign keys"
 msgstr "უცხო გასაღებებში სისტემურ სვეტებს ვერ გამოიყენებთ"
 
-#: commands/tablecmds.c:11757
+#: commands/tablecmds.c:11791
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr "გარე გასაღებში %d გასაღებზე მეტი ვერ გექნებათ"
 
-#: commands/tablecmds.c:11822
+#: commands/tablecmds.c:11856
 #, c-format
 msgid "cannot use a deferrable primary key for referenced table \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:11839
+#: commands/tablecmds.c:11873
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr "მითითებული ცხრილისთვის \"%s\" ძირითადი გასაღები არ არსებობს"
 
-#: commands/tablecmds.c:11907
+#: commands/tablecmds.c:11941
 #, c-format
 msgid "foreign key referenced-columns list must not contain duplicates"
 msgstr ""
 
-#: commands/tablecmds.c:11999
+#: commands/tablecmds.c:12033
 #, c-format
 msgid "cannot use a deferrable unique constraint for referenced table \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:12004
+#: commands/tablecmds.c:12038
 #, c-format
 msgid "there is no unique constraint matching given keys for referenced table \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:12443
+#: commands/tablecmds.c:12477
 #, c-format
 msgid "cannot drop inherited constraint \"%s\" of relation \"%s\""
 msgstr "მემკვიდრეობით მიღებული ურთიერთობის \"%2$s\" შეზღუდვის \"%1$s\" წაშლა შეუძლებელია"
 
-#: commands/tablecmds.c:12493
+#: commands/tablecmds.c:12527
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist, skipping"
 msgstr "ურთიერთობის (\"%2$s\") შეზღუდვა (\"%1$s\") არ არსებობს. გამოტოვება"
 
-#: commands/tablecmds.c:12668
+#: commands/tablecmds.c:12702
 #, c-format
 msgid "cannot alter column type of typed table"
 msgstr "ტიპიზირებული ცხრილის სვეტის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:12695
+#: commands/tablecmds.c:12729
 #, c-format
 msgid "cannot alter inherited column \"%s\""
 msgstr "მემკვიდრეობით მიღებული სვეტის \"%s\" შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:12704
+#: commands/tablecmds.c:12738
 #, c-format
 msgid "cannot alter column \"%s\" because it is part of the partition key of relation \"%s\""
 msgstr "სვეტის \"%s\" შეცვლა შეუძლებელია, რადგან ის ურთიერთობის \"%s\" დანაყოფის გასაღების ნაწილია"
 
-#: commands/tablecmds.c:12754
+#: commands/tablecmds.c:12788
 #, c-format
 msgid "result of USING clause for column \"%s\" cannot be cast automatically to type %s"
 msgstr ""
 
-#: commands/tablecmds.c:12757
+#: commands/tablecmds.c:12791
 #, c-format
 msgid "You might need to add an explicit cast."
 msgstr "შეიძლება აშკარა დაკასტვა უნდა დაამატოთ."
 
-#: commands/tablecmds.c:12761
+#: commands/tablecmds.c:12795
 #, c-format
 msgid "column \"%s\" cannot be cast automatically to type %s"
 msgstr "სვეტის \"%s\" ავტომატური დაკასტვა ტიპამდე %s შეუძლებელია"
 
 #. translator: USING is SQL, don't translate it
-#: commands/tablecmds.c:12764
+#: commands/tablecmds.c:12798
 #, c-format
 msgid "You might need to specify \"USING %s::%s\"."
 msgstr "შეიძლება, გჭირდებათ, მიუთითოთ \"USING %s::%s\"."
 
-#: commands/tablecmds.c:12863
+#: commands/tablecmds.c:12897
 #, c-format
 msgid "cannot alter inherited column \"%s\" of relation \"%s\""
 msgstr "ურთიერთობის \"%2$s\" სვეტის \"%1$s\" შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:12892
+#: commands/tablecmds.c:12926
 #, c-format
 msgid "USING expression contains a whole-row table reference."
 msgstr ""
 
-#: commands/tablecmds.c:12903
+#: commands/tablecmds.c:12937
 #, c-format
 msgid "type of inherited column \"%s\" must be changed in child tables too"
 msgstr ""
 
-#: commands/tablecmds.c:13028
+#: commands/tablecmds.c:13062
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
 msgstr "სვეტის (\"%s\") ტიპის ორჯერ შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:13066
+#: commands/tablecmds.c:13100
 #, c-format
 msgid "generation expression for column \"%s\" cannot be cast automatically to type %s"
 msgstr ""
 
-#: commands/tablecmds.c:13071
+#: commands/tablecmds.c:13105
 #, c-format
 msgid "default for column \"%s\" cannot be cast automatically to type %s"
 msgstr ""
 
-#: commands/tablecmds.c:13375
+#: commands/tablecmds.c:13409
 #, c-format
 msgid "cannot alter type of a column used by a function or procedure"
 msgstr "ფუნქციის ან პროცედურის მიერ გამოყენებული სვეტის ტიპის შექმნა შეუძლებელია"
 
-#: commands/tablecmds.c:13376 commands/tablecmds.c:13391 commands/tablecmds.c:13411 commands/tablecmds.c:13430 commands/tablecmds.c:13489
+#: commands/tablecmds.c:13410 commands/tablecmds.c:13425 commands/tablecmds.c:13445 commands/tablecmds.c:13464 commands/tablecmds.c:13523
 #, c-format
 msgid "%s depends on column \"%s\""
 msgstr "%s ეყრდნობა სვეტს \"%s\""
 
-#: commands/tablecmds.c:13390
+#: commands/tablecmds.c:13424
 #, c-format
 msgid "cannot alter type of a column used by a view or rule"
 msgstr "ხედის ან წესის მიერ გამოყენებული სვეტის ტიპის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:13410
+#: commands/tablecmds.c:13444
 #, c-format
 msgid "cannot alter type of a column used in a trigger definition"
 msgstr "ტრიგერის აღწერაში გამოყენებული სვეტის ტიპის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:13429
+#: commands/tablecmds.c:13463
 #, c-format
 msgid "cannot alter type of a column used in a policy definition"
 msgstr "პოლიტიკის აღწერაში გამოყენებული სვეტის ტიპის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:13460
+#: commands/tablecmds.c:13494
 #, c-format
 msgid "cannot alter type of a column used by a generated column"
 msgstr "გენერირებული სვეტის მიერ გამოყენებული სვეტის ტიპის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:13461
+#: commands/tablecmds.c:13495
 #, c-format
 msgid "Column \"%s\" is used by generated column \"%s\"."
 msgstr "სვეტი (%s\") გენერირებული სვეტის (%s) მიერ გამოიყენება."
 
-#: commands/tablecmds.c:13488
+#: commands/tablecmds.c:13522
 #, c-format
 msgid "cannot alter type of a column used by a publication WHERE clause"
 msgstr "გამოცემის WHERE პირობის მიერ გამოყენებული სვეტის ტიპის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:14323 commands/tablecmds.c:14335
+#: commands/tablecmds.c:14357 commands/tablecmds.c:14369
 #, c-format
 msgid "cannot change owner of index \"%s\""
 msgstr "ინდექსის \"%s\" მფლობელის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:14325 commands/tablecmds.c:14337
+#: commands/tablecmds.c:14359 commands/tablecmds.c:14371
 #, c-format
 msgid "Change the ownership of the index's table instead."
 msgstr "ამის მაგიერ ინდექსის ცხრილის მფლობელი შეცვალეთ."
 
-#: commands/tablecmds.c:14351
+#: commands/tablecmds.c:14385
 #, c-format
 msgid "cannot change owner of sequence \"%s\""
 msgstr "მიმდევრობის \"%s\" მფლობელის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:14376
+#: commands/tablecmds.c:14410
 #, c-format
 msgid "cannot change owner of relation \"%s\""
 msgstr "ურთიერთობის \"%s\" მფლობელის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:14843
+#: commands/tablecmds.c:14877
 #, c-format
 msgid "cannot have multiple SET TABLESPACE subcommands"
 msgstr "ერთზე მეტი SET TABLESPACE ქვებრძანება ვერ გექნებათ"
 
-#: commands/tablecmds.c:14920
+#: commands/tablecmds.c:14954
 #, c-format
 msgid "cannot set options for relation \"%s\""
 msgstr "ურთიერთობის (%s) პარამეტრების დაყენება შეუძლებელია"
 
-#: commands/tablecmds.c:14954 commands/view.c:440
+#: commands/tablecmds.c:14988 commands/view.c:440
 #, c-format
 msgid "WITH CHECK OPTION is supported only on automatically updatable views"
 msgstr "WITH CHECK OPTION მხოლოდ ავტომატურად განახლებად ხედებზეა მხარდაჭერილი"
 
-#: commands/tablecmds.c:15204
+#: commands/tablecmds.c:15238
 #, c-format
 msgid "only tables, indexes, and materialized views exist in tablespaces"
 msgstr "ცხრილის სივრცეში მხოლოდ ცხრილები, ინდექსები და მატერიალიზებული ხედები შეიძლება არსებობდეს"
 
-#: commands/tablecmds.c:15216
+#: commands/tablecmds.c:15250
 #, c-format
 msgid "cannot move relations in to or out of pg_global tablespace"
 msgstr "ცხრილების სივრცეში pg_globl ურთიერთობების შეტანა/გამოტანა შეუძლებელია"
 
-#: commands/tablecmds.c:15308
+#: commands/tablecmds.c:15342
 #, c-format
 msgid "aborting because lock on relation \"%s.%s\" is not available"
 msgstr "შეწყვეტა, რადგან ბლოკი ურთიერთობაზე \"%s.%s\" ხელმისაწვდომი არაა"
 
-#: commands/tablecmds.c:15324
+#: commands/tablecmds.c:15358
 #, c-format
 msgid "no matching relations in tablespace \"%s\" found"
 msgstr "ცხრილების სივრცეში \"%s\" ურთიერთობა, რომელიც ემთხვევა, ვერ ვიპოვე"
 
-#: commands/tablecmds.c:15446
+#: commands/tablecmds.c:15480
 #, c-format
 msgid "cannot change inheritance of typed table"
 msgstr "ტიპიზირებული ცხრილის მემკვიდრეობითობის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:15451 commands/tablecmds.c:15951
+#: commands/tablecmds.c:15485 commands/tablecmds.c:15985
 #, c-format
 msgid "cannot change inheritance of a partition"
 msgstr "დანაყოფის მემკვიდრეობითობის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:15456
+#: commands/tablecmds.c:15490
 #, c-format
 msgid "cannot change inheritance of partitioned table"
 msgstr "დაყოფილი ცხრილის მემკვიდრეობითობის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:15502
+#: commands/tablecmds.c:15536
 #, c-format
 msgid "cannot inherit to temporary relation of another session"
 msgstr "სხვა სესიის დროებითი ურთიერთობის მემკვიდრეობით მიღება შეუძლებელია"
 
-#: commands/tablecmds.c:15515
+#: commands/tablecmds.c:15549
 #, c-format
 msgid "cannot inherit from a partition"
 msgstr "დანაყოფიდან მემკვიდრეობითობა შეუძლებელია"
 
-#: commands/tablecmds.c:15537 commands/tablecmds.c:18419
+#: commands/tablecmds.c:15571 commands/tablecmds.c:18453
 #, c-format
 msgid "circular inheritance not allowed"
 msgstr "წრიული მემკვიდრეობითობა დაუშვებელია"
 
-#: commands/tablecmds.c:15538 commands/tablecmds.c:18420
+#: commands/tablecmds.c:15572 commands/tablecmds.c:18454
 #, c-format
 msgid "\"%s\" is already a child of \"%s\"."
 msgstr "\"%s\" უკვე \"%s\"-ის შვილია."
 
-#: commands/tablecmds.c:15551
+#: commands/tablecmds.c:15585
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming an inheritance child"
 msgstr "ტრიგერი \"%s\" ხელს უშლის ცხრილს \"%s\" მემკვიდრეობის შვილად გადაიქცეს"
 
-#: commands/tablecmds.c:15553
+#: commands/tablecmds.c:15587
 #, c-format
 msgid "ROW triggers with transition tables are not supported in inheritance hierarchies."
 msgstr "ROW ტრიგერები, რომლებსაც გარდამავალი ცხრილები გააჩნიათ, მემკვიდრეობითობის იერარქიებში მხარდაჭერილი არაა."
 
-#: commands/tablecmds.c:15742
+#: commands/tablecmds.c:15776
 #, c-format
 msgid "column \"%s\" in child table must be marked NOT NULL"
 msgstr "სვეტი \"%s\" შვილ ცხრილში NOT NULL-ით უნდა იყოს დანიშნული"
 
-#: commands/tablecmds.c:15751
+#: commands/tablecmds.c:15785
 #, c-format
 msgid "column \"%s\" in child table must be a generated column"
 msgstr "შვილ ცხრილში სვეტი \"%s\" გენერირებული სვეტი არ უნდა იყოს"
 
-#: commands/tablecmds.c:15755
+#: commands/tablecmds.c:15789
 #, c-format
 msgid "column \"%s\" in child table must not be a generated column"
 msgstr "შვილ ცხრილში სვეტი \"%s\" გენერირებული სვეტი არ უნდა იყოს"
 
-#: commands/tablecmds.c:15793
+#: commands/tablecmds.c:15827
 #, c-format
 msgid "child table is missing column \"%s\""
 msgstr "შვილ ცხრილს აკლია სვეტი \"%s\""
 
-#: commands/tablecmds.c:15874
+#: commands/tablecmds.c:15908
 #, c-format
 msgid "child table \"%s\" has different definition for check constraint \"%s\""
 msgstr "შვილ ცხრილს \"%s\" შემოწმების შეზღუდვისთვის \"%s\" სხვა განსაზღვრება გააჩნია"
 
-#: commands/tablecmds.c:15881
+#: commands/tablecmds.c:15915
 #, c-format
 msgid "constraint \"%s\" conflicts with non-inherited constraint on child table \"%s\""
 msgstr "შეზღუდვა \"%s\" კონფლიქტშია არა-მემკვიდრეობით მიღებულ შეზღუდვასთან შვილ ცხრილზე \"%s\""
 
-#: commands/tablecmds.c:15891
+#: commands/tablecmds.c:15925
 #, c-format
 msgid "constraint \"%s\" conflicts with NOT VALID constraint on child table \"%s\""
 msgstr "შეზღუდვა \"%s\" კონფლიქტშია შეზღუდვასთან NOT VALID შვილ ცხრილზე \"%s\""
 
-#: commands/tablecmds.c:15929
+#: commands/tablecmds.c:15963
 #, c-format
 msgid "child table is missing constraint \"%s\""
 msgstr "შვილ ცხრილს აკლია შეზღუდვა \"%s\""
 
-#: commands/tablecmds.c:16015
+#: commands/tablecmds.c:16049
 #, c-format
 msgid "partition \"%s\" already pending detach in partitioned table \"%s.%s\""
 msgstr "დანაყოფი \"%s\" უკვე დაყოფილი ცხრილიდან \"%s.%s\" მოხსნის რიგშია"
 
-#: commands/tablecmds.c:16044 commands/tablecmds.c:16090 parser/parse_utilcmd.c:3267
+#: commands/tablecmds.c:16078 commands/tablecmds.c:16124 parser/parse_utilcmd.c:3261
 #, c-format
 msgid "relation \"%s\" is not a partition of relation \"%s\""
 msgstr "ურთიერთობა \"%s\" ურთიერთობის \"%s\" დანაყოფს არ წარმოადგენს"
 
-#: commands/tablecmds.c:16096
+#: commands/tablecmds.c:16130
 #, c-format
 msgid "relation \"%s\" is not a parent of relation \"%s\""
 msgstr "ურთიერთობა \"%s\" ურთიერთობის \"%s\" მშობელს არ წარმოადგენს"
 
-#: commands/tablecmds.c:16323
+#: commands/tablecmds.c:16357
 #, c-format
 msgid "typed tables cannot inherit"
 msgstr "ტიპიზირებულ ცხრილებს მემკვიდრეობითობა არ შეუძლიათ"
 
-#: commands/tablecmds.c:16353
+#: commands/tablecmds.c:16387
 #, c-format
 msgid "table is missing column \"%s\""
 msgstr "ცხრილს აკლია სვეტი \"%s\""
 
-#: commands/tablecmds.c:16364
+#: commands/tablecmds.c:16398
 #, c-format
 msgid "table has column \"%s\" where type requires \"%s\""
 msgstr "ცხრილს აქვს სვეტი \"%s\" მაშინ, როცა ტიპი \"%s\"-ს მოითხოვს"
 
-#: commands/tablecmds.c:16373
+#: commands/tablecmds.c:16407
 #, c-format
 msgid "table \"%s\" has different type for column \"%s\""
 msgstr "ცხრილს \"%s\" სვეტისთვის \"%s\" სხვა ტიპი აქვს"
 
-#: commands/tablecmds.c:16387
+#: commands/tablecmds.c:16421
 #, c-format
 msgid "table has extra column \"%s\""
 msgstr "ცხრილს აქვს დამატებითი სვეტი \"%s\""
 
-#: commands/tablecmds.c:16439
+#: commands/tablecmds.c:16473
 #, c-format
 msgid "\"%s\" is not a typed table"
 msgstr "\"%s\" ტიპიზირებული ცხრილი არაა"
 
-#: commands/tablecmds.c:16613
+#: commands/tablecmds.c:16647
 #, c-format
 msgid "cannot use non-unique index \"%s\" as replica identity"
 msgstr "არაუნიკალურ ინდექსს \"%s\" რეპლიკის იდენტიფიკაციისთვის ვერ გამოიყენებთ"
 
-#: commands/tablecmds.c:16619
+#: commands/tablecmds.c:16653
 #, c-format
 msgid "cannot use non-immediate index \"%s\" as replica identity"
 msgstr "არასაუყოვნებლივ ინდექსს \"%s\" რეპლიკის იდენფიტიკაციისთვის ვერ გამოიყენებთ"
 
-#: commands/tablecmds.c:16625
+#: commands/tablecmds.c:16659
 #, c-format
 msgid "cannot use expression index \"%s\" as replica identity"
 msgstr "გამოსახულების ინდექსს \"%s\" რეპლიკის იდენტიფიკაციისთვის ვერ გამოიყენებთ"
 
-#: commands/tablecmds.c:16631
+#: commands/tablecmds.c:16665
 #, c-format
 msgid "cannot use partial index \"%s\" as replica identity"
 msgstr "ნაწილობრივი ინდექსის (\"%s\") რეპლიკის იდენტიფიკატორად გამოყენება შეუძლებელია"
 
-#: commands/tablecmds.c:16648
+#: commands/tablecmds.c:16682
 #, c-format
 msgid "index \"%s\" cannot be used as replica identity because column %d is a system column"
 msgstr "ინდექსს \"%s\" რეპლიკის იდენტიფიკაციისთვის ვერ გამოიყენებთ, რადგან სვეტი %d სისტემური სვეტია"
 
-#: commands/tablecmds.c:16655
+#: commands/tablecmds.c:16689
 #, c-format
 msgid "index \"%s\" cannot be used as replica identity because column \"%s\" is nullable"
 msgstr "ინდექსს \"%s\" რეპლიკის იდენტიფიკაციისთვის ვერ გამოიყენებთ, რადგან სვეტი %s განულებადია"
 
-#: commands/tablecmds.c:16907
+#: commands/tablecmds.c:16941
 #, c-format
 msgid "cannot change logged status of table \"%s\" because it is temporary"
 msgstr "ცხრილის \"%s\" ჟურნალში ჩაწერის სტატუსის შეცვლა შეუძლებელია, რადგან ის დროებითია"
 
-#: commands/tablecmds.c:16931
+#: commands/tablecmds.c:16965
 #, c-format
 msgid "cannot change table \"%s\" to unlogged because it is part of a publication"
 msgstr ""
 
-#: commands/tablecmds.c:16933
+#: commands/tablecmds.c:16967
 #, c-format
 msgid "Unlogged relations cannot be replicated."
 msgstr "უჟურნალო ურთიერთობების რეპლიკაცია შეუძლებელია."
 
-#: commands/tablecmds.c:16978
+#: commands/tablecmds.c:17012
 #, c-format
 msgid "could not change table \"%s\" to logged because it references unlogged table \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:16988
+#: commands/tablecmds.c:17022
 #, c-format
 msgid "could not change table \"%s\" to unlogged because it references logged table \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:17046
+#: commands/tablecmds.c:17080
 #, c-format
 msgid "cannot move an owned sequence into another schema"
 msgstr ""
 
-#: commands/tablecmds.c:17151
+#: commands/tablecmds.c:17185
 #, c-format
 msgid "relation \"%s\" already exists in schema \"%s\""
 msgstr "სქემაში (%2$s) ურთიერთობა (%1$s) უკვე არსებობს"
 
-#: commands/tablecmds.c:17572
+#: commands/tablecmds.c:17606
 #, c-format
 msgid "\"%s\" is not a table or materialized view"
 msgstr "\"%s\" ცხრილი ან მატერიალიზებული ხედი არაა"
 
-#: commands/tablecmds.c:17725
+#: commands/tablecmds.c:17759
 #, c-format
 msgid "\"%s\" is not a composite type"
 msgstr "ტიპი %s კომპოზიტური არაა"
 
-#: commands/tablecmds.c:17755
+#: commands/tablecmds.c:17789
 #, c-format
 msgid "cannot change schema of index \"%s\""
 msgstr "ინდექსის (%s) სქემის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:17757 commands/tablecmds.c:17771
+#: commands/tablecmds.c:17791 commands/tablecmds.c:17805
 #, c-format
 msgid "Change the schema of the table instead."
 msgstr "ამის მაგიერ ცხრილის სქემა შეცვლათ."
 
-#: commands/tablecmds.c:17761
+#: commands/tablecmds.c:17795
 #, c-format
 msgid "cannot change schema of composite type \"%s\""
 msgstr "კომპოზიტური ტიპის (%s) სქემის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:17769
+#: commands/tablecmds.c:17803
 #, c-format
 msgid "cannot change schema of TOAST table \"%s\""
 msgstr "\"TOAST\" ცხრილის (%s) სქემის შეცვლა შეუძლებელია"
 
-#: commands/tablecmds.c:17801
+#: commands/tablecmds.c:17835
 #, c-format
 msgid "cannot use \"list\" partition strategy with more than one column"
 msgstr "ერთზე მეტ სვეტთან ერთად დაყოფის სტრატეგიას \"list\" ვერ გამოიყენებთ"
 
-#: commands/tablecmds.c:17867
+#: commands/tablecmds.c:17901
 #, c-format
 msgid "column \"%s\" named in partition key does not exist"
 msgstr "დანაყოფის გასაღებში დასახელებული სვეტი \"%s\" არ არსებობს"
 
-#: commands/tablecmds.c:17875
+#: commands/tablecmds.c:17909
 #, c-format
 msgid "cannot use system column \"%s\" in partition key"
 msgstr "დანაყოფის გასაღებში სისტემური სვეტის (%s) გამოყენება შეუძლებელია"
 
-#: commands/tablecmds.c:17886 commands/tablecmds.c:17976
+#: commands/tablecmds.c:17920 commands/tablecmds.c:18010
 #, c-format
 msgid "cannot use generated column in partition key"
 msgstr "გენერირებულ სვეტს დანაყოფის გასაღებში ვერ გამოიყენებთ"
 
-#: commands/tablecmds.c:17887 commands/tablecmds.c:17977 commands/trigger.c:656 rewrite/rewriteHandler.c:934 rewrite/rewriteHandler.c:969
+#: commands/tablecmds.c:17921 commands/tablecmds.c:18011 commands/trigger.c:656 rewrite/rewriteHandler.c:934 rewrite/rewriteHandler.c:969
 #, c-format
 msgid "Column \"%s\" is a generated column."
 msgstr "სვეტი \"%s\" გენერირებული სვეტია."
 
-#: commands/tablecmds.c:17959
+#: commands/tablecmds.c:17993
 #, c-format
 msgid "partition key expressions cannot contain system column references"
 msgstr "დანაყოფის გასაღების გამოსახულებები, არ შეიძლება, სისტემურ სვეტზე მითითებებს შეიცავდნენ"
 
-#: commands/tablecmds.c:18006
+#: commands/tablecmds.c:18040
 #, c-format
 msgid "functions in partition key expression must be marked IMMUTABLE"
 msgstr "ფუნქცია დანაყოფის გასაღების გამოსახულებაში აუცილებლად უნდა იყოს მონიშნული, როგორც IMMUTABLE"
 
-#: commands/tablecmds.c:18015
+#: commands/tablecmds.c:18049
 #, c-format
 msgid "cannot use constant expression as partition key"
 msgstr "დაყოფის გასაღების გამოსახულებაში მუდმივ გამოსახულებას ვერ გამოიყენებთ"
 
-#: commands/tablecmds.c:18036
+#: commands/tablecmds.c:18070
 #, c-format
 msgid "could not determine which collation to use for partition expression"
 msgstr "დანაყოფის გამოსახულებისათვის კოლაციის დადგენა შეუძლებელია"
 
-#: commands/tablecmds.c:18071
+#: commands/tablecmds.c:18105
 #, c-format
 msgid "You must specify a hash operator class or define a default hash operator class for the data type."
 msgstr ""
 
-#: commands/tablecmds.c:18077
+#: commands/tablecmds.c:18111
 #, c-format
 msgid "You must specify a btree operator class or define a default btree operator class for the data type."
 msgstr ""
 
-#: commands/tablecmds.c:18359
+#: commands/tablecmds.c:18393
 #, c-format
 msgid "\"%s\" is already a partition"
 msgstr "\"%s\" უკვე დანაყოფია"
 
-#: commands/tablecmds.c:18365
+#: commands/tablecmds.c:18399
 #, c-format
 msgid "cannot attach a typed table as partition"
 msgstr "ტიპიზირებული ცხრილის, როგორც დანაყოფის მიბმა შეუძლებელია"
 
-#: commands/tablecmds.c:18381
+#: commands/tablecmds.c:18415
 #, c-format
 msgid "cannot attach inheritance child as partition"
 msgstr "მემკვიდრეობის შვილის დანაყოფად მიმაგრება შეუძლებელია"
 
-#: commands/tablecmds.c:18395
+#: commands/tablecmds.c:18429
 #, c-format
 msgid "cannot attach inheritance parent as partition"
 msgstr "მემკვიდრეობის მშობლის დანაყოფად მიმაგრება შეუძლებელია"
 
-#: commands/tablecmds.c:18429
+#: commands/tablecmds.c:18463
 #, c-format
 msgid "cannot attach a temporary relation as partition of permanent relation \"%s\""
 msgstr "დროებითი ურითერთობის, როგორც მუდმივი ურთიერთობის (\"%s\") დანაყოფის მიმაგრება შეუძლებელია"
 
-#: commands/tablecmds.c:18437
+#: commands/tablecmds.c:18471
 #, c-format
 msgid "cannot attach a permanent relation as partition of temporary relation \"%s\""
 msgstr "მუდმივი ურთიერთობის, როგორც დროებითი ურთიერთობის (%s) დანაყოფის მიმაგრება შეუძლებელია"
 
-#: commands/tablecmds.c:18445
+#: commands/tablecmds.c:18479
 #, c-format
 msgid "cannot attach as partition of temporary relation of another session"
 msgstr "სხვა სესიის დროებითი ურთიერთობის დანაყოფის მიმაგრება შეუძლებელია"
 
-#: commands/tablecmds.c:18452
+#: commands/tablecmds.c:18486
 #, c-format
 msgid "cannot attach temporary relation of another session as partition"
 msgstr "სხვა სესიის დროებითი ურთიერთობის დანაყოფად მიმაგრება შეუძლებელია"
 
-#: commands/tablecmds.c:18472
+#: commands/tablecmds.c:18506
 #, c-format
 msgid "table \"%s\" being attached contains an identity column \"%s\""
 msgstr "ცხრილი \"%s\", რომლის მიმაგრებაც მიმდინარეობს, შეიცავს იდენტიფიკაციის სვეტს \"%s\""
 
-#: commands/tablecmds.c:18474
+#: commands/tablecmds.c:18508
 #, c-format
 msgid "The new partition may not contain an identity column."
 msgstr "ახალი დანაყოფი არ შეიძლება, იდენტიფიკატორის სვეტს შეიცავდეს."
 
-#: commands/tablecmds.c:18482
+#: commands/tablecmds.c:18516
 #, c-format
 msgid "table \"%s\" contains column \"%s\" not found in parent \"%s\""
 msgstr "ცხრილი \"%s\" შეიცავს სვეტს \"%s\", რომელიც მშობელში \"%s\" აღმოჩენილი არაა"
 
-#: commands/tablecmds.c:18485
+#: commands/tablecmds.c:18519
 #, c-format
 msgid "The new partition may contain only the columns present in parent."
 msgstr "ახალი დანაყოფი მხოლოდ მშობელში არსებულ სვეტებს შეიძლება, შეიცავდეს."
 
-#: commands/tablecmds.c:18497
+#: commands/tablecmds.c:18531
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming a partition"
 msgstr "ტრიგერი \"%s\" ხელს უშლის ცხრილს \"%s\" დანაყოფად გადაიქცეს"
 
-#: commands/tablecmds.c:18499
+#: commands/tablecmds.c:18533
 #, c-format
 msgid "ROW triggers with transition tables are not supported on partitions."
 msgstr "დანაყოფებზე იდენტიფიკაციის სვეტები მხარდაჭერილი არაა."
 
-#: commands/tablecmds.c:18660
+#: commands/tablecmds.c:18694
 #, c-format
 msgid "cannot attach foreign table \"%s\" as partition of partitioned table \"%s\""
 msgstr "გარე ცხრილის \"%s\" დაყოფილი ცხრილის (\"%s\") დანაყოფის სახით მიმაგრება შეუძლებელია"
 
-#: commands/tablecmds.c:18663
+#: commands/tablecmds.c:18697
 #, c-format
 msgid "Partitioned table \"%s\" contains unique indexes."
 msgstr "დაყოფილი ცხრილი \"%s\" უნიკალურ ცხრილებს შეიცავს."
 
-#: commands/tablecmds.c:18985
+#: commands/tablecmds.c:19019
 #, c-format
 msgid "cannot detach partitions concurrently when a default partition exists"
 msgstr "ნაგულისხმევი დანაყოფის არსებობის შემთხვევაში დანაყოფების ერთდროული მოხსნა შეუძლებელია"
 
-#: commands/tablecmds.c:19094
+#: commands/tablecmds.c:19128
 #, c-format
 msgid "partitioned table \"%s\" was removed concurrently"
 msgstr "დაყოფილი ცხრილი \"%s\" ერთდროულად წაიშალა"
 
-#: commands/tablecmds.c:19100
+#: commands/tablecmds.c:19134
 #, c-format
 msgid "partition \"%s\" was removed concurrently"
 msgstr "დანაყოფი \"%s\" ერთდროულად წაიშალა"
 
-#: commands/tablecmds.c:19627 commands/tablecmds.c:19647 commands/tablecmds.c:19668 commands/tablecmds.c:19687 commands/tablecmds.c:19729
+#: commands/tablecmds.c:19661 commands/tablecmds.c:19681 commands/tablecmds.c:19702 commands/tablecmds.c:19721 commands/tablecmds.c:19763
 #, c-format
 msgid "cannot attach index \"%s\" as a partition of index \"%s\""
 msgstr "ერთი ინდექსის ინდექსის (%s) მეორე ინდექსის (\"%s) დანაყოფად მიმაგრება შეუძლებელია"
 
-#: commands/tablecmds.c:19630
+#: commands/tablecmds.c:19664
 #, c-format
 msgid "Index \"%s\" is already attached to another index."
 msgstr "ინდექსი %s სხვა ინდექსზეა უკვე მიმაგრებული."
 
-#: commands/tablecmds.c:19650
+#: commands/tablecmds.c:19684
 #, c-format
 msgid "Index \"%s\" is not an index on any partition of table \"%s\"."
 msgstr "ინდექსი %s ცხრილის (%s) არცერთი დანაყოფის ინდექსი არაა."
 
-#: commands/tablecmds.c:19671
+#: commands/tablecmds.c:19705
 #, c-format
 msgid "The index definitions do not match."
 msgstr "ინდექსის აღწერები არ ემთხვევა."
 
-#: commands/tablecmds.c:19690
+#: commands/tablecmds.c:19724
 #, c-format
 msgid "The index \"%s\" belongs to a constraint in table \"%s\" but no constraint exists for index \"%s\"."
 msgstr ""
 
-#: commands/tablecmds.c:19732
+#: commands/tablecmds.c:19766
 #, c-format
 msgid "Another index is already attached for partition \"%s\"."
 msgstr "ცხრილისთვის %s სხვა ინდექსი უკვე მიმაგრებულია."
 
-#: commands/tablecmds.c:19968
+#: commands/tablecmds.c:20002
 #, c-format
 msgid "column data type %s does not support compression"
 msgstr "სვეტის მონაცემის ტიპს (%s) შეკუმშვის მხარდაჭერა არ გააჩნია"
 
-#: commands/tablecmds.c:19975
+#: commands/tablecmds.c:20009
 #, c-format
 msgid "invalid compression method \"%s\""
 msgstr "შეკუმშვის არასწორი მეთოდი \"%s\""
 
-#: commands/tablecmds.c:20001
+#: commands/tablecmds.c:20035
 #, c-format
 msgid "invalid storage type \"%s\""
 msgstr "საცავის არასწორი ტიპი \"%s\""
 
-#: commands/tablecmds.c:20011
+#: commands/tablecmds.c:20045
 #, c-format
 msgid "column data type %s can only have storage PLAIN"
 msgstr "სვეტის მონაცემების ტიპს %s საცავის ტიპად მხოლოდ PLAIN შეიძლება, ჰქონდეს"
 
-#: commands/tablecmds.c:20208
+#: commands/tablecmds.c:20242
 #, c-format
 msgid "can not find partition for split partition row"
 msgstr "დაყოფილი დანაყოფის მწკრივისთვის დანაყოფი ვერ ვიპოვე"
 
-#: commands/tablecmds.c:20294
+#: commands/tablecmds.c:20328
 #, c-format
 msgid "cannot create as partition of temporary relation of another session"
 msgstr "სხვა სესის დროებითი ურთიერთობის დანაყოფის სახით ვერ შექმნით"
 
-#: commands/tablecmds.c:20363
+#: commands/tablecmds.c:20399
 #, c-format
 msgid "cannot create a permanent relation as partition of temporary relation \"%s\""
 msgstr "მუდმივ ურთიერთობას დროებითი ურთიერთობის \"%s\" დანაყოფის სახით ვერ შექმნით"
@@ -13532,7 +13532,7 @@ msgid "%s is not allowed in an SQL function"
 msgstr "%s SQL ფუნქციაში დაშვებული არაა"
 
 #. translator: %s is a SQL statement name
-#: executor/functions.c:526 executor/spi.c:1741 executor/spi.c:2636
+#: executor/functions.c:526 executor/spi.c:1741 executor/spi.c:2649
 #, c-format
 msgid "%s is not allowed in a non-volatile function"
 msgstr "%s-ის გამოყენება არააქროლად ფუნქციაში დაუშვებელია"
@@ -13819,28 +13819,28 @@ msgstr "DECLARE SCROLL CURSOR ... FOR UPDATE/SHARE მხარდაჭერ�
 msgid "Scrollable cursors must be READ ONLY."
 msgstr "გადახვევადი კურსორები READ ONLY უნდა იყოს."
 
-#: executor/spi.c:2475
+#: executor/spi.c:2488
 #, c-format
 msgid "empty query does not return tuples"
 msgstr "ცარიელი მოთხოვნა კორტეჟებს არ აბრუნებს"
 
 #. translator: %s is name of a SQL command, eg INSERT
-#: executor/spi.c:2549
+#: executor/spi.c:2562
 #, c-format
 msgid "%s query does not return tuples"
 msgstr "მოთხოვნა %s კორტეჟებს არ აბრუნებს"
 
-#: executor/spi.c:2967
+#: executor/spi.c:2979
 #, c-format
 msgid "SQL expression \"%s\""
 msgstr "SQL გამოსახულება \"%s\""
 
-#: executor/spi.c:2972
+#: executor/spi.c:2984
 #, c-format
 msgid "PL/pgSQL assignment \"%s\""
 msgstr "PL/pgSQL მინიჭება \"%s\""
 
-#: executor/spi.c:2975
+#: executor/spi.c:2987
 #, c-format
 msgid "SQL statement \"%s\""
 msgstr "SQL ოპერატორი \"%s\""
@@ -13984,7 +13984,7 @@ msgstr "CREATE OR REPLACE CONSTRAINT TRIGGER მხარდაუჭერე�
 msgid "duplicate trigger events specified"
 msgstr "მითითებულია ტრიგერი მეორდება"
 
-#: gram.y:6159 parser/parse_utilcmd.c:3849 parser/parse_utilcmd.c:3875
+#: gram.y:6159 parser/parse_utilcmd.c:3839 parser/parse_utilcmd.c:3865
 #, c-format
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr ""
@@ -16313,37 +16313,37 @@ msgstr ""
 msgid "%s is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "%s აკრძალულია UNION/INTERSECT/EXCEPT-სთან ერთად"
 
-#: optimizer/plan/planner.c:2121 optimizer/plan/planner.c:4018
+#: optimizer/plan/planner.c:2121 optimizer/plan/planner.c:4107
 #, c-format
 msgid "could not implement GROUP BY"
 msgstr "\"GROUP BY\"-ის განხორციელება შეუძლებელია"
 
-#: optimizer/plan/planner.c:2122 optimizer/plan/planner.c:4019 optimizer/plan/planner.c:4700 optimizer/prep/prepunion.c:1317
+#: optimizer/plan/planner.c:2122 optimizer/plan/planner.c:4108 optimizer/plan/planner.c:4789 optimizer/prep/prepunion.c:1320
 #, c-format
 msgid "Some of the datatypes only support hashing, while others only support sorting."
 msgstr "ზოგიერთ მონაცემის ტიპს მხოლოდ ჰეშირების მხარდაჭერა გააჩნია, მაშინ, როცა სხვებს მხოლოდ დალაგება შეუძლიათ."
 
-#: optimizer/plan/planner.c:4699
+#: optimizer/plan/planner.c:4788
 #, c-format
 msgid "could not implement DISTINCT"
 msgstr "\"DISTINCT\"-ის განხორციელება შეუძლებელია"
 
-#: optimizer/plan/planner.c:6044
+#: optimizer/plan/planner.c:6133
 #, c-format
 msgid "could not implement window PARTITION BY"
 msgstr "ფანჯრის, \"PARTITION BY\" განხორციელება შეუძლებელია"
 
-#: optimizer/plan/planner.c:6045
+#: optimizer/plan/planner.c:6134
 #, c-format
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "ფანჯრის დამყოფი სვეტები დალაგებადი მონაცემის ტიპის უნდა იყოს."
 
-#: optimizer/plan/planner.c:6049
+#: optimizer/plan/planner.c:6138
 #, c-format
 msgid "could not implement window ORDER BY"
 msgstr "ფანჯრის, \"ORDER BY\" განხორციელება შეუძლებელია"
 
-#: optimizer/plan/planner.c:6050
+#: optimizer/plan/planner.c:6139
 #, c-format
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "ფანჯრის დამლაგებელი სვეტები დალაგებადი მონაცემის ტიპის უნდა იყოს."
@@ -16359,7 +16359,7 @@ msgid "All column datatypes must be hashable."
 msgstr "ყველა სვეტის მონაცემის ტიპი ჰეშირებადი უნდა იყოს."
 
 #. translator: %s is UNION, INTERSECT, or EXCEPT
-#: optimizer/prep/prepunion.c:1316
+#: optimizer/prep/prepunion.c:1319
 #, c-format
 msgid "could not implement %s"
 msgstr "ვერ განხორციელდა %s"
@@ -16374,22 +16374,22 @@ msgstr "SQL ფუნქცია \"%s\" ხაზში ჩასმისა�
 msgid "cannot access temporary or unlogged relations during recovery"
 msgstr "აღდგენისას დროებით ან უჟურნალო ურთიერთობებთან წვდომა შეუძლებელია"
 
-#: optimizer/util/plancat.c:754
+#: optimizer/util/plancat.c:756
 #, c-format
 msgid "whole row unique index inference specifications are not supported"
 msgstr ""
 
-#: optimizer/util/plancat.c:771
+#: optimizer/util/plancat.c:773
 #, c-format
 msgid "constraint in ON CONFLICT clause has no associated index"
 msgstr "შეზღუდვას ON CONFLICT პირობაში ასოცირებული ინდექსი არ გააჩნია"
 
-#: optimizer/util/plancat.c:821
+#: optimizer/util/plancat.c:823
 #, c-format
 msgid "ON CONFLICT DO UPDATE not supported with exclusion constraints"
 msgstr "ON CONFLICT DO UPDATE გამორიცხვის შეზღუდვებთან ერთად მხარდაჭერილი არაა"
 
-#: optimizer/util/plancat.c:926
+#: optimizer/util/plancat.c:933
 #, c-format
 msgid "there is no unique or exclusion constraint matching the ON CONFLICT specification"
 msgstr "უნიკალური ან გამორიცხვის შეზღუდვა, რომელიც ON CONFLICT-ის აღწერას ემთხვევა, არ არსებობს"
@@ -18569,337 +18569,337 @@ msgstr "ტიპის მოდიფიკატორების მარ�
 msgid "invalid type name \"%s\""
 msgstr "ტიპის არასწორი სახელი: \"%s\""
 
-#: parser/parse_utilcmd.c:267
+#: parser/parse_utilcmd.c:266
 #, c-format
 msgid "cannot create partitioned table as inheritance child"
 msgstr ""
 
-#: parser/parse_utilcmd.c:592
+#: parser/parse_utilcmd.c:586
 #, c-format
 msgid "array of serial is not implemented"
 msgstr "სერიალების მასივი განხორციელებული არაა"
 
-#: parser/parse_utilcmd.c:671 parser/parse_utilcmd.c:683 parser/parse_utilcmd.c:742
+#: parser/parse_utilcmd.c:665 parser/parse_utilcmd.c:677 parser/parse_utilcmd.c:736
 #, c-format
 msgid "conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\""
 msgstr ""
 
-#: parser/parse_utilcmd.c:695
+#: parser/parse_utilcmd.c:689
 #, c-format
 msgid "multiple default values specified for column \"%s\" of table \"%s\""
 msgstr ""
 
-#: parser/parse_utilcmd.c:712
+#: parser/parse_utilcmd.c:706
 #, c-format
 msgid "identity columns are not supported on typed tables"
 msgstr "ტიპიზირებულ ცხრილებზე იდენტიფიკაციის სვეტები მხარდაჭერილი არაა"
 
-#: parser/parse_utilcmd.c:716
+#: parser/parse_utilcmd.c:710
 #, c-format
 msgid "identity columns are not supported on partitions"
 msgstr "დანაყოფებზე იდენტიფიკაციის სვეტები მხარდაჭერილი არაა"
 
-#: parser/parse_utilcmd.c:725
+#: parser/parse_utilcmd.c:719
 #, c-format
 msgid "multiple identity specifications for column \"%s\" of table \"%s\""
 msgstr ""
 
-#: parser/parse_utilcmd.c:755
+#: parser/parse_utilcmd.c:749
 #, c-format
 msgid "generated columns are not supported on typed tables"
 msgstr "ტიპიზირებულ ცხრილებზე გენერირებული სვეტები მხარდაჭერილი არაა"
 
-#: parser/parse_utilcmd.c:759
+#: parser/parse_utilcmd.c:753
 #, c-format
 msgid "multiple generation clauses specified for column \"%s\" of table \"%s\""
 msgstr ""
 
-#: parser/parse_utilcmd.c:777 parser/parse_utilcmd.c:892
+#: parser/parse_utilcmd.c:771 parser/parse_utilcmd.c:886
 #, c-format
 msgid "primary key constraints are not supported on foreign tables"
 msgstr "ძირითადი გასაღების შეზღუდვები გარე ცხრილებზე მხარდაჭერილი არაა"
 
-#: parser/parse_utilcmd.c:786 parser/parse_utilcmd.c:902
+#: parser/parse_utilcmd.c:780 parser/parse_utilcmd.c:896
 #, c-format
 msgid "unique constraints are not supported on foreign tables"
 msgstr "გარე ცხრილებზე უნიკალური შეზღუდვები მხარდაჭერილი არაა"
 
-#: parser/parse_utilcmd.c:831
+#: parser/parse_utilcmd.c:825
 #, c-format
 msgid "both default and identity specified for column \"%s\" of table \"%s\""
 msgstr ""
 
-#: parser/parse_utilcmd.c:839
+#: parser/parse_utilcmd.c:833
 #, c-format
 msgid "both default and generation expression specified for column \"%s\" of table \"%s\""
 msgstr ""
 
-#: parser/parse_utilcmd.c:847
+#: parser/parse_utilcmd.c:841
 #, c-format
 msgid "both identity and generation expression specified for column \"%s\" of table \"%s\""
 msgstr ""
 
-#: parser/parse_utilcmd.c:912
+#: parser/parse_utilcmd.c:906
 #, c-format
 msgid "exclusion constraints are not supported on foreign tables"
 msgstr ""
 
-#: parser/parse_utilcmd.c:977
+#: parser/parse_utilcmd.c:971
 #, c-format
 msgid "LIKE is not supported for creating foreign tables"
 msgstr "გარე ცხრილების შექმნისთვის LIKE მხარდაჭერილი არაა"
 
-#: parser/parse_utilcmd.c:990
+#: parser/parse_utilcmd.c:984
 #, c-format
 msgid "relation \"%s\" is invalid in LIKE clause"
 msgstr "პირობაში LIKE ურთიერთობა \"%s\" არასწორია"
 
-#: parser/parse_utilcmd.c:1715 parser/parse_utilcmd.c:1823
+#: parser/parse_utilcmd.c:1711 parser/parse_utilcmd.c:1819
 #, c-format
 msgid "Index \"%s\" contains a whole-row table reference."
 msgstr ""
 
-#: parser/parse_utilcmd.c:2210
+#: parser/parse_utilcmd.c:2217
 #, c-format
 msgid "cannot use an existing index in CREATE TABLE"
 msgstr "'CREATE TABLE'-ში არსებულ ინდექსს ვერ გამოიყენებთ"
 
-#: parser/parse_utilcmd.c:2230
+#: parser/parse_utilcmd.c:2237
 #, c-format
 msgid "index \"%s\" is already associated with a constraint"
 msgstr "ინდექსი \"%s\" შეზღუდვასთან უკვე ასოცირებულია"
 
-#: parser/parse_utilcmd.c:2251
+#: parser/parse_utilcmd.c:2258
 #, c-format
 msgid "\"%s\" is not a unique index"
 msgstr "\"%s\" უნიკალური ინდექსი არაა"
 
-#: parser/parse_utilcmd.c:2252 parser/parse_utilcmd.c:2259 parser/parse_utilcmd.c:2266 parser/parse_utilcmd.c:2343
+#: parser/parse_utilcmd.c:2259 parser/parse_utilcmd.c:2266 parser/parse_utilcmd.c:2273 parser/parse_utilcmd.c:2350
 #, c-format
 msgid "Cannot create a primary key or unique constraint using such an index."
 msgstr ""
 
-#: parser/parse_utilcmd.c:2258
+#: parser/parse_utilcmd.c:2265
 #, c-format
 msgid "index \"%s\" contains expressions"
 msgstr "ინდექსი \"%s\" გამოსახულებებს შეიცავს"
 
-#: parser/parse_utilcmd.c:2265
+#: parser/parse_utilcmd.c:2272
 #, c-format
 msgid "\"%s\" is a partial index"
 msgstr "\"%s\" ნაწილობრივი ინდექსია"
 
-#: parser/parse_utilcmd.c:2277
+#: parser/parse_utilcmd.c:2284
 #, c-format
 msgid "\"%s\" is a deferrable index"
 msgstr "\"%s\" გადადებადი ინდექსია"
 
-#: parser/parse_utilcmd.c:2278
+#: parser/parse_utilcmd.c:2285
 #, c-format
 msgid "Cannot create a non-deferrable constraint using a deferrable index."
 msgstr ""
 
-#: parser/parse_utilcmd.c:2342
+#: parser/parse_utilcmd.c:2349
 #, c-format
 msgid "index \"%s\" column number %d does not have default sorting behavior"
 msgstr ""
 
-#: parser/parse_utilcmd.c:2499
+#: parser/parse_utilcmd.c:2506
 #, c-format
 msgid "column \"%s\" appears twice in primary key constraint"
 msgstr ""
 
-#: parser/parse_utilcmd.c:2505
+#: parser/parse_utilcmd.c:2512
 #, c-format
 msgid "column \"%s\" appears twice in unique constraint"
 msgstr ""
 
-#: parser/parse_utilcmd.c:2852
+#: parser/parse_utilcmd.c:2846
 #, c-format
 msgid "index expressions and predicates can refer only to the table being indexed"
 msgstr ""
 
-#: parser/parse_utilcmd.c:2924
+#: parser/parse_utilcmd.c:2918
 #, c-format
 msgid "statistics expressions can refer only to the table being referenced"
 msgstr ""
 
-#: parser/parse_utilcmd.c:2967
+#: parser/parse_utilcmd.c:2961
 #, c-format
 msgid "rules on materialized views are not supported"
 msgstr "მატერიალიზებულ ხედებზე წესები მხარდაჭერილი არაა"
 
-#: parser/parse_utilcmd.c:3027
+#: parser/parse_utilcmd.c:3021
 #, c-format
 msgid "rule WHERE condition cannot contain references to other relations"
 msgstr ""
 
-#: parser/parse_utilcmd.c:3099
+#: parser/parse_utilcmd.c:3093
 #, c-format
 msgid "rules with WHERE conditions can only have SELECT, INSERT, UPDATE, or DELETE actions"
 msgstr ""
 
-#: parser/parse_utilcmd.c:3117 parser/parse_utilcmd.c:3218 rewrite/rewriteHandler.c:537 rewrite/rewriteManip.c:1095
+#: parser/parse_utilcmd.c:3111 parser/parse_utilcmd.c:3212 rewrite/rewriteHandler.c:537 rewrite/rewriteManip.c:1095
 #, c-format
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
 msgstr "პირობითი UNION/INTERSECT/EXCEPT ოპერატორები განხორციელებული არაა"
 
-#: parser/parse_utilcmd.c:3135
+#: parser/parse_utilcmd.c:3129
 #, c-format
 msgid "ON SELECT rule cannot use OLD"
 msgstr "ON SELECT წესში OLD-ს ვერ გამოიყენებთ"
 
-#: parser/parse_utilcmd.c:3139
+#: parser/parse_utilcmd.c:3133
 #, c-format
 msgid "ON SELECT rule cannot use NEW"
 msgstr "ON SELECT წესში NEW-ს ვერ გამოიყენებთ"
 
-#: parser/parse_utilcmd.c:3148
+#: parser/parse_utilcmd.c:3142
 #, c-format
 msgid "ON INSERT rule cannot use OLD"
 msgstr "ON INSERT წესში OLD-ს ვერ გამოიყენებთ"
 
-#: parser/parse_utilcmd.c:3154
+#: parser/parse_utilcmd.c:3148
 #, c-format
 msgid "ON DELETE rule cannot use NEW"
 msgstr "ON DELETE წესში NEW-ს ვერ გამოიყენებთ"
 
-#: parser/parse_utilcmd.c:3182
+#: parser/parse_utilcmd.c:3176
 #, c-format
 msgid "cannot refer to OLD within WITH query"
 msgstr "'WITH' მოთხოვნაში OLD-ზე მიმართვა შეუძლებელია"
 
-#: parser/parse_utilcmd.c:3189
+#: parser/parse_utilcmd.c:3183
 #, c-format
 msgid "cannot refer to NEW within WITH query"
 msgstr "'WITH' მოთხოვნაში NEW-ზე მიმართვა შეუძლებელია"
 
-#: parser/parse_utilcmd.c:3261
+#: parser/parse_utilcmd.c:3255
 #, c-format
 msgid "\"%s\" is not a partition"
 msgstr "\"%s\" დანაყოფი არაა"
 
-#: parser/parse_utilcmd.c:3296 parser/parse_utilcmd.c:3341 parser/parse_utilcmd.c:4111
+#: parser/parse_utilcmd.c:3290 parser/parse_utilcmd.c:3335 parser/parse_utilcmd.c:4101
 #, c-format
 msgid "\"%s\" is not a partitioned table"
 msgstr "\"%s\" დაყოფილი ცხრილი არაა"
 
-#: parser/parse_utilcmd.c:3349
+#: parser/parse_utilcmd.c:3343
 #, c-format
 msgid "partition of hash-partitioned table cannot be merged"
 msgstr "ჰეშით დაყოფილი ცხრილის დანაყოფების შერწყმა შეუძლებელია"
 
-#: parser/parse_utilcmd.c:3367
+#: parser/parse_utilcmd.c:3361
 #, c-format
 msgid "partition with name \"%s\" is already used"
 msgstr "დანაყოფი სახელით \"%s\" უკვე გამოყენებულია"
 
-#: parser/parse_utilcmd.c:3680
+#: parser/parse_utilcmd.c:3673
 #, c-format
 msgid "list of new partitions should contain at least two items"
 msgstr ""
 
-#: parser/parse_utilcmd.c:3821
+#: parser/parse_utilcmd.c:3811
 #, c-format
 msgid "misplaced DEFERRABLE clause"
 msgstr "არასწორ ადგილას დასმული DEFERRABLE პირობა"
 
-#: parser/parse_utilcmd.c:3826 parser/parse_utilcmd.c:3841
+#: parser/parse_utilcmd.c:3816 parser/parse_utilcmd.c:3831
 #, c-format
 msgid "multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed"
 msgstr "ერთზე მეტი DEFERRABLE/NOT DEFERRABLE პირობა დაშვებული არაა"
 
-#: parser/parse_utilcmd.c:3836
+#: parser/parse_utilcmd.c:3826
 #, c-format
 msgid "misplaced NOT DEFERRABLE clause"
 msgstr "არასწორ ადგილას დასმული NOT DEFERRABLE პირობა"
 
-#: parser/parse_utilcmd.c:3857
+#: parser/parse_utilcmd.c:3847
 #, c-format
 msgid "misplaced INITIALLY DEFERRED clause"
 msgstr "არასწორ ადგილას დასმული INITIALLY DEFERRABLE პირობა"
 
-#: parser/parse_utilcmd.c:3862 parser/parse_utilcmd.c:3888
+#: parser/parse_utilcmd.c:3852 parser/parse_utilcmd.c:3878
 #, c-format
 msgid "multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"
 msgstr "ერთზე მეტი INITIALLY IMMEDIATE/DEFERRED დაშვებული არაა"
 
-#: parser/parse_utilcmd.c:3883
+#: parser/parse_utilcmd.c:3873
 #, c-format
 msgid "misplaced INITIALLY IMMEDIATE clause"
 msgstr "არასწორ ადგილას დასმული INITIALLY IMMEDIATE პირობა"
 
-#: parser/parse_utilcmd.c:4076
+#: parser/parse_utilcmd.c:4066
 #, c-format
 msgid "CREATE specifies a schema (%s) different from the one being created (%s)"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4118
+#: parser/parse_utilcmd.c:4108
 #, c-format
 msgid "table \"%s\" is not partitioned"
 msgstr "ცხრილი \"%s\" დაყოფილი არაა"
 
-#: parser/parse_utilcmd.c:4125
+#: parser/parse_utilcmd.c:4115
 #, c-format
 msgid "index \"%s\" is not partitioned"
 msgstr "ინდექსი \"%s\" დაყოფილი არაა"
 
-#: parser/parse_utilcmd.c:4165
+#: parser/parse_utilcmd.c:4155
 #, c-format
 msgid "a hash-partitioned table may not have a default partition"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4182
+#: parser/parse_utilcmd.c:4172
 #, c-format
 msgid "invalid bound specification for a hash partition"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4188 partitioning/partbounds.c:4803
+#: parser/parse_utilcmd.c:4178 partitioning/partbounds.c:4803
 #, c-format
 msgid "modulus for hash partition must be an integer value greater than zero"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4195 partitioning/partbounds.c:4811
+#: parser/parse_utilcmd.c:4185 partitioning/partbounds.c:4811
 #, c-format
 msgid "remainder for hash partition must be less than modulus"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4208
+#: parser/parse_utilcmd.c:4198
 #, c-format
 msgid "invalid bound specification for a list partition"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4261
+#: parser/parse_utilcmd.c:4251
 #, c-format
 msgid "invalid bound specification for a range partition"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4267
+#: parser/parse_utilcmd.c:4257
 #, c-format
 msgid "FROM must specify exactly one value per partitioning column"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4271
+#: parser/parse_utilcmd.c:4261
 #, c-format
 msgid "TO must specify exactly one value per partitioning column"
 msgstr ""
 
-#: parser/parse_utilcmd.c:4385
+#: parser/parse_utilcmd.c:4375
 #, c-format
 msgid "cannot specify NULL in range bound"
 msgstr "დიაპაზონის საზღვრებში NULL-ის მითითება შეუძლებელია"
 
-#: parser/parse_utilcmd.c:4434
+#: parser/parse_utilcmd.c:4424
 #, c-format
 msgid "every bound following MAXVALUE must also be MAXVALUE"
 msgstr "ყოველი MAXVALUE საზღვის შემდეგ ყველა MAXVALUE უნდა იყოს"
 
-#: parser/parse_utilcmd.c:4441
+#: parser/parse_utilcmd.c:4431
 #, c-format
 msgid "every bound following MINVALUE must also be MINVALUE"
 msgstr "ყოველი MINVALUE საზღვის შემდეგ ყველა MINVALUE უნდა იყოს"
 
-#: parser/parse_utilcmd.c:4484
+#: parser/parse_utilcmd.c:4474
 #, c-format
 msgid "specified value cannot be cast to type %s for column \"%s\""
 msgstr ""
@@ -20394,7 +20394,7 @@ msgstr "რეპლიკაციის წყარო ID-ით %d უკვ
 msgid "could not find free replication state slot for replication origin with ID %d"
 msgstr ""
 
-#: replication/logical/origin.c:957 replication/logical/origin.c:1158 replication/slot.c:2386
+#: replication/logical/origin.c:957 replication/logical/origin.c:1158 replication/slot.c:2384
 #, c-format
 msgid "Increase \"max_replication_slots\" and try again."
 msgstr "გაზარდეთ \"max_replication_slots\"-ის მნიშვნელობა და თავიდან სცადეთ."
@@ -20980,7 +20980,7 @@ msgstr "ყველა რეპლიკაციის სლოტი გა
 msgid "Free one or increase \"max_replication_slots\"."
 msgstr "გაათავისუფლეთ ერთი მაინც ან გაზარდეთ \"max_replication_slots\"."
 
-#: replication/slot.c:560 replication/slot.c:2455 replication/slotfuncs.c:661 utils/activity/pgstat_replslot.c:56 utils/adt/genfile.c:728
+#: replication/slot.c:560 replication/slot.c:2453 replication/slotfuncs.c:661 utils/activity/pgstat_replslot.c:56 utils/adt/genfile.c:728
 #, c-format
 msgid "replication slot \"%s\" does not exist"
 msgstr "რეპლიკაციის სლოტი არ არსებობს: %s"
@@ -21035,7 +21035,7 @@ msgstr "რეპლიკაციის სლოტის \"%s\" შეცვ
 msgid "cannot enable failover for a replication slot on the standby"
 msgstr ""
 
-#: replication/slot.c:969 replication/slot.c:1929 replication/slot.c:2313
+#: replication/slot.c:969 replication/slot.c:1927 replication/slot.c:2311
 #, c-format
 msgid "could not remove directory \"%s\""
 msgstr "საქაღალდის (\"%s\") წაშლის შეცდომა"
@@ -21086,102 +21086,102 @@ msgstr "რეპლიკაციის სლოტის (%2$s) გასა
 msgid "invalidating obsolete replication slot \"%s\""
 msgstr "მოძველებული რეპლიკაციის სლოტის (\"%s\") არასწორად გამოცხადება"
 
-#: replication/slot.c:2251
+#: replication/slot.c:2249
 #, c-format
 msgid "replication slot file \"%s\" has wrong magic number: %u instead of %u"
 msgstr "რეპლიკაციის სლოტის (%s) ფაილის არასწორი მაგიური რიცხვი: %u (უნდა იყოს %u)"
 
-#: replication/slot.c:2258
+#: replication/slot.c:2256
 #, c-format
 msgid "replication slot file \"%s\" has unsupported version %u"
 msgstr "რეპლიკაციის სლოტის ფაილის (%s) მხარდაუჭერელი ვერსია %u"
 
-#: replication/slot.c:2265
+#: replication/slot.c:2263
 #, c-format
 msgid "replication slot file \"%s\" has corrupted length %u"
 msgstr "რეპლიკაციის სლოტის ფაილის (%s) დაზიანებული სიგრძე: %u"
 
-#: replication/slot.c:2301
+#: replication/slot.c:2299
 #, c-format
 msgid "checksum mismatch for replication slot file \"%s\": is %u, should be %u"
 msgstr ""
 
-#: replication/slot.c:2335
+#: replication/slot.c:2333
 #, c-format
 msgid "logical replication slot \"%s\" exists, but \"wal_level\" < \"logical\""
 msgstr "ლოგიკური რეპლიკაციის სლოტი\"%s\" არსებობს, მაგრამ \"wal_level\" < \"logical\""
 
-#: replication/slot.c:2337
+#: replication/slot.c:2335
 #, c-format
 msgid "Change \"wal_level\" to be \"logical\" or higher."
 msgstr "შეცვალეთ \"wal_level\" \"logical\"-ზე ან უფრო მაღალზე."
 
-#: replication/slot.c:2341
+#: replication/slot.c:2339
 #, c-format
 msgid "physical replication slot \"%s\" exists, but \"wal_level\" < \"replica\""
 msgstr "ფიზიკური რეპლიკაციის სლოტი\"%s\" არსებობს, მაგრამ \"wal_level\" < \"replica\""
 
-#: replication/slot.c:2343
+#: replication/slot.c:2341
 #, c-format
 msgid "Change \"wal_level\" to be \"replica\" or higher."
 msgstr "შეცვალეთ \"wal_level\" \"replica\"-ზე ან ზემოთ."
 
-#: replication/slot.c:2385
+#: replication/slot.c:2383
 #, c-format
 msgid "too many replication slots active before shutdown"
 msgstr "გამორთვამდე მეტისმეტად ბევრი რეპლიკაციის სლოტი იყო აქტიური"
 
-#: replication/slot.c:2463
+#: replication/slot.c:2461
 #, c-format
 msgid "\"%s\" is not a physical replication slot"
 msgstr "\"%s\" ფიზიკური რეპლიკაციის სლოტი არაა"
 
-#: replication/slot.c:2639
+#: replication/slot.c:2637
 #, c-format
 msgid "replication slot \"%s\" specified in parameter %s does not exist"
 msgstr "რეპლიკაციის სლოტმა \"%s\" მიუთითა პარამეტრი %s, რომელიც არ არსებობს"
 
-#: replication/slot.c:2641 replication/slot.c:2682 replication/slot.c:2697
+#: replication/slot.c:2639 replication/slot.c:2680 replication/slot.c:2695
 #, c-format
 msgid "Logical replication is waiting on the standby associated with \"%s\"."
 msgstr "ლოგიკური რეპლიკაცია \"%s\"-სთან ასოცირებულ უქმეს ელოდება."
 
-#: replication/slot.c:2643
+#: replication/slot.c:2641
 #, c-format
 msgid "Consider creating the slot \"%s\" or amend parameter %s."
 msgstr "განიხილეთ, შექმნათ სლოტი \"%s\", ან მიაწერეთ პარამეტრი %s."
 
-#: replication/slot.c:2660
+#: replication/slot.c:2658
 #, c-format
 msgid "cannot have logical replication slot \"%s\" in parameter %s"
 msgstr "ვერ გექნებათ ლოგიკური რეპლიკაციის სლოტი \"%s\" პარამეტრში %s"
 
-#: replication/slot.c:2662
+#: replication/slot.c:2660
 #, c-format
 msgid "Logical replication is waiting for correction on \"%s\"."
 msgstr "ლოგიკური რეპლიკაციის სლოტი ელოდება გასწორებას \"%s\"-ზე."
 
-#: replication/slot.c:2664
+#: replication/slot.c:2662
 #, c-format
 msgid "Consider removing logical slot \"%s\" from parameter %s."
 msgstr ""
 
-#: replication/slot.c:2680
+#: replication/slot.c:2678
 #, c-format
 msgid "physical slot \"%s\" specified in parameter %s has been invalidated"
 msgstr ""
 
-#: replication/slot.c:2684
+#: replication/slot.c:2682
 #, c-format
 msgid "Consider dropping and recreating the slot \"%s\" or amend parameter %s."
 msgstr "განიხილეთ მოცილება ან თავიდან შექმნა სლოტისთვის \"%s\" ან მიაწერეთ პარამეტრი %s."
 
-#: replication/slot.c:2695
+#: replication/slot.c:2693
 #, c-format
 msgid "replication slot \"%s\" specified in parameter %s does not have active_pid"
 msgstr "რეპლიკაციის სლოტს \"%s\", რომელიც მითითებულია პარამეტრში %s, active_pid არ გააჩნია"
 
-#: replication/slot.c:2699
+#: replication/slot.c:2697
 #, c-format
 msgid "Consider starting standby associated with \"%s\" or amend parameter %s."
 msgstr ""
@@ -22085,37 +22085,37 @@ msgstr "ფუნქცია, რომელიც ჩანაწერს �
 msgid "cannot access temporary tables of other sessions"
 msgstr "სხვა სესიების დროებით ცხრილებთან წვდომა შეუძლებელია"
 
-#: storage/buffer/bufmgr.c:1486
+#: storage/buffer/bufmgr.c:1532
 #, c-format
 msgid "invalid page in block %u of relation %s; zeroing out page"
 msgstr ""
 
-#: storage/buffer/bufmgr.c:2231 storage/buffer/localbuf.c:361
+#: storage/buffer/bufmgr.c:2277 storage/buffer/localbuf.c:361
 #, c-format
 msgid "cannot extend relation %s beyond %u blocks"
 msgstr ""
 
-#: storage/buffer/bufmgr.c:2302
+#: storage/buffer/bufmgr.c:2348
 #, c-format
 msgid "unexpected data beyond EOF in block %u of relation %s"
 msgstr ""
 
-#: storage/buffer/bufmgr.c:2304
+#: storage/buffer/bufmgr.c:2350
 #, c-format
 msgid "This has been seen to occur with buggy kernels; consider updating your system."
 msgstr ""
 
-#: storage/buffer/bufmgr.c:5607
+#: storage/buffer/bufmgr.c:5653
 #, c-format
 msgid "could not write block %u of %s"
 msgstr "%2$s-ის %1$u ბლოკის ჩაწერა შეუძლებელია"
 
-#: storage/buffer/bufmgr.c:5609
+#: storage/buffer/bufmgr.c:5655
 #, c-format
 msgid "Multiple failures --- write error might be permanent."
 msgstr "ბევრი შეცდომა --- ჩაწერის შეცდომა შეიძლება მუდმივი იყოს."
 
-#: storage/buffer/bufmgr.c:5631 storage/buffer/bufmgr.c:5651
+#: storage/buffer/bufmgr.c:5677 storage/buffer/bufmgr.c:5697
 #, c-format
 msgid "writing block %u of relation %s"
 msgstr ""
@@ -24180,7 +24180,7 @@ msgid "encoding conversion from %s to ASCII not supported"
 msgstr ""
 
 #. translator: first %s is inet or cidr
-#: utils/adt/bool.c:149 utils/adt/cash.c:277 utils/adt/datetime.c:4131 utils/adt/float.c:200 utils/adt/float.c:287 utils/adt/float.c:301 utils/adt/float.c:406 utils/adt/float.c:489 utils/adt/float.c:503 utils/adt/geo_ops.c:250 utils/adt/geo_ops.c:335 utils/adt/geo_ops.c:974 utils/adt/geo_ops.c:1417 utils/adt/geo_ops.c:1454 utils/adt/geo_ops.c:1462 utils/adt/geo_ops.c:3428 utils/adt/geo_ops.c:4650 utils/adt/geo_ops.c:4665 utils/adt/geo_ops.c:4672 utils/adt/int.c:174
+#: utils/adt/bool.c:149 utils/adt/cash.c:277 utils/adt/datetime.c:4142 utils/adt/float.c:200 utils/adt/float.c:287 utils/adt/float.c:301 utils/adt/float.c:406 utils/adt/float.c:489 utils/adt/float.c:503 utils/adt/geo_ops.c:250 utils/adt/geo_ops.c:335 utils/adt/geo_ops.c:974 utils/adt/geo_ops.c:1417 utils/adt/geo_ops.c:1454 utils/adt/geo_ops.c:1462 utils/adt/geo_ops.c:3428 utils/adt/geo_ops.c:4650 utils/adt/geo_ops.c:4665 utils/adt/geo_ops.c:4672 utils/adt/int.c:174
 #: utils/adt/int.c:186 utils/adt/jsonpath.c:185 utils/adt/mac.c:94 utils/adt/mac8.c:226 utils/adt/network.c:99 utils/adt/numeric.c:796 utils/adt/numeric.c:7206 utils/adt/numeric.c:7409 utils/adt/numeric.c:8356 utils/adt/numutils.c:356 utils/adt/numutils.c:618 utils/adt/numutils.c:880 utils/adt/numutils.c:919 utils/adt/numutils.c:941 utils/adt/numutils.c:1005 utils/adt/numutils.c:1027 utils/adt/pg_lsn.c:73 utils/adt/tid.c:72 utils/adt/tid.c:80 utils/adt/tid.c:94
 #: utils/adt/tid.c:103 utils/adt/timestamp.c:510 utils/adt/uuid.c:140 utils/adt/xid8funcs.c:360
 #, c-format
@@ -24316,32 +24316,32 @@ msgstr "ინტერვალის დროის სარტყელი 
 msgid "interval time zone \"%s\" must not include months or days"
 msgstr "ინტერვალის დროის სარტყელი \"%s\" თვეებს ან დღეებს არ უნდა შეიცავდეს"
 
-#: utils/adt/datetime.c:3221 utils/adt/datetime.c:4116 utils/adt/datetime.c:4122 utils/adt/timestamp.c:528
+#: utils/adt/datetime.c:3232 utils/adt/datetime.c:4127 utils/adt/datetime.c:4133 utils/adt/timestamp.c:528
 #, c-format
 msgid "time zone \"%s\" not recognized"
 msgstr "უცნობი დროის სარტყელი: %s"
 
-#: utils/adt/datetime.c:4090 utils/adt/datetime.c:4097
+#: utils/adt/datetime.c:4101 utils/adt/datetime.c:4108
 #, c-format
 msgid "date/time field value out of range: \"%s\""
 msgstr "დროის/თარიღის ველის მნიშვნელობა დიაპაზონს გარეთაა: \"%s\""
 
-#: utils/adt/datetime.c:4099
+#: utils/adt/datetime.c:4110
 #, c-format
 msgid "Perhaps you need a different \"datestyle\" setting."
 msgstr ""
 
-#: utils/adt/datetime.c:4104
+#: utils/adt/datetime.c:4115
 #, c-format
 msgid "interval field value out of range: \"%s\""
 msgstr "ინტერვალის ველის მნიშვნელობა დიაპაზონს გარეთაა: \"%s\""
 
-#: utils/adt/datetime.c:4110
+#: utils/adt/datetime.c:4121
 #, c-format
 msgid "time zone displacement out of range: \"%s\""
 msgstr ""
 
-#: utils/adt/datetime.c:4124
+#: utils/adt/datetime.c:4135
 #, c-format
 msgid "This time zone name appears in the configuration file for time zone abbreviation \"%s\"."
 msgstr ""
@@ -25240,212 +25240,212 @@ msgstr ""
 msgid "LAST is allowed only in array subscripts"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:491
+#: utils/adt/jsonpath_exec.c:490
 #, c-format
 msgid "single boolean result is expected"
 msgstr "მოველოდი ერთ ლოგიკურ შედეგს"
 
-#: utils/adt/jsonpath_exec.c:851
+#: utils/adt/jsonpath_exec.c:850
 #, c-format
 msgid "jsonpath wildcard array accessor can only be applied to an array"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:874
+#: utils/adt/jsonpath_exec.c:873
 #, c-format
 msgid "jsonpath wildcard member accessor can only be applied to an object"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:923
+#: utils/adt/jsonpath_exec.c:922
 #, c-format
 msgid "jsonpath array subscript is out of bounds"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:980
+#: utils/adt/jsonpath_exec.c:979
 #, c-format
 msgid "jsonpath array accessor can only be applied to an array"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1044
+#: utils/adt/jsonpath_exec.c:1043
 #, c-format
 msgid "JSON object does not contain key \"%s\""
 msgstr "JSON ობიექტი არ შეიცავს გასაღებს \"%s\""
 
-#: utils/adt/jsonpath_exec.c:1056
+#: utils/adt/jsonpath_exec.c:1055
 #, c-format
 msgid "jsonpath member accessor can only be applied to an object"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1114
+#: utils/adt/jsonpath_exec.c:1113
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to an array"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1167 utils/adt/jsonpath_exec.c:1193
+#: utils/adt/jsonpath_exec.c:1166 utils/adt/jsonpath_exec.c:1192
 #, c-format
 msgid "argument \"%s\" of jsonpath item method .%s() is invalid for type double precision"
 msgstr "არგუმენტი \"%s\" jsonpath-ის ელემენტის მეთოდისთვის .%s() არასწორია ტიპისთვის double precision"
 
-#: utils/adt/jsonpath_exec.c:1172 utils/adt/jsonpath_exec.c:1198 utils/adt/jsonpath_exec.c:1414 utils/adt/jsonpath_exec.c:1446
+#: utils/adt/jsonpath_exec.c:1171 utils/adt/jsonpath_exec.c:1197 utils/adt/jsonpath_exec.c:1413 utils/adt/jsonpath_exec.c:1445
 #, c-format
 msgid "NaN or Infinity is not allowed for jsonpath item method .%s()"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1211 utils/adt/jsonpath_exec.c:1313 utils/adt/jsonpath_exec.c:1455 utils/adt/jsonpath_exec.c:1593
+#: utils/adt/jsonpath_exec.c:1210 utils/adt/jsonpath_exec.c:1312 utils/adt/jsonpath_exec.c:1454 utils/adt/jsonpath_exec.c:1592
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to a string or numeric value"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1281 utils/adt/jsonpath_exec.c:1305
+#: utils/adt/jsonpath_exec.c:1280 utils/adt/jsonpath_exec.c:1304
 #, c-format
 msgid "argument \"%s\" of jsonpath item method .%s() is invalid for type bigint"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1357 utils/adt/jsonpath_exec.c:1377
+#: utils/adt/jsonpath_exec.c:1356 utils/adt/jsonpath_exec.c:1376
 #, c-format
 msgid "argument \"%s\" of jsonpath item method .%s() is invalid for type boolean"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1386
+#: utils/adt/jsonpath_exec.c:1385
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to a bool, string, or numeric value"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1439 utils/adt/jsonpath_exec.c:1528
+#: utils/adt/jsonpath_exec.c:1438 utils/adt/jsonpath_exec.c:1527
 #, c-format
 msgid "argument \"%s\" of jsonpath item method .%s() is invalid for type numeric"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1487
+#: utils/adt/jsonpath_exec.c:1486
 #, c-format
 msgid "precision of jsonpath item method .%s() is out of range for type integer"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1501
+#: utils/adt/jsonpath_exec.c:1500
 #, c-format
 msgid "scale of jsonpath item method .%s() is out of range for type integer"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1561 utils/adt/jsonpath_exec.c:1585
+#: utils/adt/jsonpath_exec.c:1560 utils/adt/jsonpath_exec.c:1584
 #, c-format
 msgid "argument \"%s\" of jsonpath item method .%s() is invalid for type integer"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:1664
+#: utils/adt/jsonpath_exec.c:1663
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to a bool, string, numeric, or datetime value"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2153
+#: utils/adt/jsonpath_exec.c:2152
 #, c-format
 msgid "left operand of jsonpath operator %s is not a single numeric value"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2160
+#: utils/adt/jsonpath_exec.c:2159
 #, c-format
 msgid "right operand of jsonpath operator %s is not a single numeric value"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2228
+#: utils/adt/jsonpath_exec.c:2227
 #, c-format
 msgid "operand of unary jsonpath operator %s is not a numeric value"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2327
+#: utils/adt/jsonpath_exec.c:2326
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to a numeric value"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2373
+#: utils/adt/jsonpath_exec.c:2372
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to a string"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2466
+#: utils/adt/jsonpath_exec.c:2465
 #, c-format
 msgid "time precision of jsonpath item method .%s() is out of range for type integer"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2500 utils/adt/jsonpath_exec.c:2506 utils/adt/jsonpath_exec.c:2533 utils/adt/jsonpath_exec.c:2561 utils/adt/jsonpath_exec.c:2614 utils/adt/jsonpath_exec.c:2665 utils/adt/jsonpath_exec.c:2721
+#: utils/adt/jsonpath_exec.c:2499 utils/adt/jsonpath_exec.c:2505 utils/adt/jsonpath_exec.c:2532 utils/adt/jsonpath_exec.c:2560 utils/adt/jsonpath_exec.c:2613 utils/adt/jsonpath_exec.c:2664 utils/adt/jsonpath_exec.c:2720
 #, c-format
 msgid "%s format is not recognized: \"%s\""
 msgstr "%s-ის ფორმატი უცნობია: \"%s\""
 
-#: utils/adt/jsonpath_exec.c:2502
+#: utils/adt/jsonpath_exec.c:2501
 #, c-format
 msgid "Use a datetime template argument to specify the input data format."
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2695 utils/adt/jsonpath_exec.c:2751
+#: utils/adt/jsonpath_exec.c:2694 utils/adt/jsonpath_exec.c:2750
 #, c-format
 msgid "time precision of jsonpath item method .%s() is invalid"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:2831
+#: utils/adt/jsonpath_exec.c:2830
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to an object"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3114
+#: utils/adt/jsonpath_exec.c:3113
 #, c-format
 msgid "could not convert value of type %s to jsonpath"
 msgstr "%s ტიპის მნიშვნელობის jsonpath-ში გადაყვანა ვერ შევძელი"
 
-#: utils/adt/jsonpath_exec.c:3148
+#: utils/adt/jsonpath_exec.c:3147
 #, c-format
 msgid "could not find jsonpath variable \"%s\""
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3201
+#: utils/adt/jsonpath_exec.c:3200
 #, c-format
 msgid "\"vars\" argument is not an object"
 msgstr "არგუმენტი \"vars\" ობიექტი არაა"
 
-#: utils/adt/jsonpath_exec.c:3202
+#: utils/adt/jsonpath_exec.c:3201
 #, c-format
 msgid "Jsonpath parameters should be encoded as key-value pairs of \"vars\" object."
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3465
+#: utils/adt/jsonpath_exec.c:3464
 #, c-format
 msgid "jsonpath array subscript is not a single numeric value"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3477
+#: utils/adt/jsonpath_exec.c:3476
 #, c-format
 msgid "jsonpath array subscript is out of integer range"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3661
+#: utils/adt/jsonpath_exec.c:3660
 #, c-format
 msgid "cannot convert value from %s to %s without time zone usage"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3663
+#: utils/adt/jsonpath_exec.c:3662
 #, c-format
 msgid "Use *_tz() function for time zone support."
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3957
+#: utils/adt/jsonpath_exec.c:3956
 #, c-format
 msgid "JSON path expression for column \"%s\" should return single item without wrapper"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3959 utils/adt/jsonpath_exec.c:3964
+#: utils/adt/jsonpath_exec.c:3958 utils/adt/jsonpath_exec.c:3963
 #, c-format
 msgid "Use WITH WRAPPER clause to wrap SQL/JSON items into array."
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:3963
+#: utils/adt/jsonpath_exec.c:3962
 #, c-format
 msgid "JSON path expression in JSON_QUERY should return single item without wrapper"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:4021 utils/adt/jsonpath_exec.c:4045
+#: utils/adt/jsonpath_exec.c:4020 utils/adt/jsonpath_exec.c:4044
 #, c-format
 msgid "JSON path expression for column \"%s\" should return single scalar item"
 msgstr ""
 
-#: utils/adt/jsonpath_exec.c:4026 utils/adt/jsonpath_exec.c:4050
+#: utils/adt/jsonpath_exec.c:4025 utils/adt/jsonpath_exec.c:4049
 #, c-format
 msgid "JSON path expression in JSON_VALUE should return single scalar item"
 msgstr ""
@@ -26464,32 +26464,32 @@ msgstr ""
 msgid "no operand in tsquery: \"%s\""
 msgstr "tsquery-ში ოპერანდი არ არსებობს: \"%s\""
 
-#: utils/adt/tsquery.c:558
+#: utils/adt/tsquery.c:554
 #, c-format
 msgid "value is too big in tsquery: \"%s\""
 msgstr "tsquery-ის მნიშვნელობა ძალიან დიდია: %s"
 
-#: utils/adt/tsquery.c:563
+#: utils/adt/tsquery.c:559
 #, c-format
 msgid "operand is too long in tsquery: \"%s\""
 msgstr "tsquery-ში ოპერანდი ძალიან გრძელია: %s"
 
-#: utils/adt/tsquery.c:591
+#: utils/adt/tsquery.c:587
 #, c-format
 msgid "word is too long in tsquery: \"%s\""
 msgstr "tsquery-ში სიტყვა ძალიან გრძელია: %s"
 
-#: utils/adt/tsquery.c:717 utils/adt/tsvector_parser.c:147
+#: utils/adt/tsquery.c:713 utils/adt/tsvector_parser.c:147
 #, c-format
 msgid "syntax error in tsquery: \"%s\""
 msgstr "სინტაქსის შეცდომა tsquery-ში: \"%s\""
 
-#: utils/adt/tsquery.c:883
+#: utils/adt/tsquery.c:879
 #, c-format
 msgid "text-search query doesn't contain lexemes: \"%s\""
 msgstr ""
 
-#: utils/adt/tsquery.c:894 utils/adt/tsquery_util.c:376
+#: utils/adt/tsquery.c:890 utils/adt/tsquery_util.c:376
 #, c-format
 msgid "tsquery is too large"
 msgstr "tsquery ძალიან დიდია"
@@ -26993,27 +26993,27 @@ msgstr ""
 msgid "cached plan must not change result type"
 msgstr "დაკეშილი გეგმა შედეგის ტიპს არ უნდა ცვლიდეს"
 
-#: utils/cache/relcache.c:3757
+#: utils/cache/relcache.c:3797
 #, c-format
 msgid "heap relfilenumber value not set when in binary upgrade mode"
 msgstr "heap relfilenumber-ის მნიშვნელობა ბინარული განახლების დროს დაყენებული არაა"
 
-#: utils/cache/relcache.c:3765
+#: utils/cache/relcache.c:3805
 #, c-format
 msgid "unexpected request for new relfilenumber in binary upgrade mode"
 msgstr "ახალი relfilenumber-ის მოულოდნელი მოთხოვნა ბინარული განახლების რეჟიმში"
 
-#: utils/cache/relcache.c:6493
+#: utils/cache/relcache.c:6533
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr ""
 
-#: utils/cache/relcache.c:6495
+#: utils/cache/relcache.c:6535
 #, c-format
 msgid "Continuing anyway, but there's something wrong."
 msgstr "მაინც ვაგრძელებ, მაგრამ რაღაც ცუდი ხდება."
 
-#: utils/cache/relcache.c:6825
+#: utils/cache/relcache.c:6865
 #, c-format
 msgid "could not remove cache file \"%s\": %m"
 msgstr "კეშის ფაილის \"%s\" წაშლის შეცდომა: %m"
@@ -30306,9 +30306,15 @@ msgstr "სხვა ბაზიდან სწრაფი ასლის �
 #~ msgid "Foreign tables cannot have TRUNCATE triggers."
 #~ msgstr "გარე ცხრილებს TRUNCATE ტრიგერები ვერ ექნებათ."
 
+#~ msgid "Incremental parser requires incremental lexer"
+#~ msgstr "ინკრემენტულ დამმუშავებელს ინკრემენტული lexer სჭირდება"
+
 #, c-format
 #~ msgid "Invalid list syntax in parameter %s"
 #~ msgstr "არასწორი სიის სინტაქსი პარამეტრში %s"
+
+#~ msgid "JSON nested too deep, maximum permitted depth is 6400"
+#~ msgstr "JSON მეტისმეტად ღრმადაა ერთმანეთში ჩალაგებული. მაქსიმალური დასაშვები სიღრმეა 6400"
 
 #, c-format
 #~ msgid "JSON_TABLE column names must be distinct from one another"
@@ -30336,6 +30342,9 @@ msgstr "სხვა ბაზიდან სწრაფი ასლის �
 #, c-format
 #~ msgid "Only range and multirange are supported."
 #~ msgstr "მხარდაჭერილია, მხოლოდ, შუალედი და მრავალი შუალედი."
+
+#~ msgid "Recursive descent parser cannot use incremental lexer"
+#~ msgstr "რეკურსიულ დაღმავალ დამმუშავებელს ინკრემენტული lexer-ის გამოყენება არ შეუძლია"
 
 #, c-format
 #~ msgid "SQL/JSON item cannot be cast to target type"
@@ -30817,6 +30826,10 @@ msgstr "სხვა ბაზიდან სწრაფი ასლის �
 
 #~ msgid "unexpected end of quoted string"
 #~ msgstr "ციტირებული სტრიქონის მოულოდნელი დასასრული"
+
+#, c-format
+#~ msgid "unexpected json parse error type: %d"
+#~ msgstr "მოულოდნელი json-ის დამუშავების შეცდომის ტიპი: %d"
 
 #, c-format
 #~ msgid "unknown compression option \"%s\""

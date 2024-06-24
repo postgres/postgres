@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-10-30 15:02+0900\n"
-"PO-Revision-Date: 2023-10-30 17:35+0900\n"
+"POT-Creation-Date: 2024-06-14 11:23+0900\n"
+"PO-Revision-Date: 2024-06-14 11:27+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: \n"
 "Language: ja\n"
@@ -38,11 +38,78 @@ msgstr "詳細: "
 msgid "hint: "
 msgstr "ヒント: "
 
-#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "メモリ不足です\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "nullポインタは複製できません(内部エラー)\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ファイル\"%s\"をオープンできませんでした: %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "ファイル\"%s\"に対してファイルシステムを同期できませんでした: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ファイル\"%s\"のstatに失敗しました: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "実効ユーザーID %ld が見つかりませんでした: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "ユーザーが存在しません"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "ユーザー名の参照に失敗: エラーコード %lu"
+
+#: ../../fe_utils/cancel.c:186 ../../fe_utils/cancel.c:235
 msgid "Cancel request sent\n"
 msgstr "キャンセル要求を送信しました\n"
 
-#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+#: ../../fe_utils/cancel.c:187 ../../fe_utils/cancel.c:236
 msgid "Could not send cancel request: "
 msgstr "キャンセル要求を送信できませんでした: "
 
@@ -66,27 +133,52 @@ msgstr "オプション%2$sに対する不正な値\"%1$s\""
 msgid "%s must be in range %d..%d"
 msgstr "%sは%d..%dの範囲になければなりません"
 
-#: ../../fe_utils/option_utils.c:99
-#, c-format
-msgid "this build does not support sync method \"%s\""
-msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
-
 #: ../../fe_utils/option_utils.c:106
 #, c-format
 msgid "unrecognized sync method: %s"
 msgstr "認識できない同期方式: %s"
 
+#: ../../fe_utils/parallel_slot.c:317
+#, c-format
+msgid "too many jobs for this platform: %d"
+msgstr "このプラットフォームに対してジョブ数が多すぎます: %d"
+
+#: ../../fe_utils/parallel_slot.c:326
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "socket() のソケットファイル記述子が範囲外です: %d"
+
+#: ../../fe_utils/parallel_slot.c:328
+#, c-format
+msgid "Try fewer jobs."
+msgstr "ジョブ数を減らしてみてください。"
+
+#: ../../fe_utils/parallel_slot.c:553
+#, c-format
+msgid "processing of database \"%s\" failed: %s"
+msgstr "データベース\"%s\"の処理に失敗しました: %s"
+
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1691 pg_amcheck.c:2136
+#: pg_amcheck.c:1693 pg_amcheck.c:2138
 #, c-format
 msgid "query failed: %s"
 msgstr "問い合わせが失敗しました: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:578 pg_amcheck.c:1145 pg_amcheck.c:1692 pg_amcheck.c:2137
+#: pg_amcheck.c:578 pg_amcheck.c:1147 pg_amcheck.c:1694 pg_amcheck.c:2139
 #, c-format
 msgid "Query was: %s"
 msgstr "問い合わせ: %s"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
 
 #: pg_amcheck.c:403
 #, c-format
@@ -158,97 +250,97 @@ msgstr "データベース\"%s\"をスキップします: amcheckがインスト
 msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
 msgstr "データベース\"%1$s\"内: スキーマ\"%3$s\"内でamcheck バージョン\"%2$s\"を使用中"
 
-#: pg_amcheck.c:623
+#: pg_amcheck.c:624
 #, c-format
 msgid "--checkunique option is not supported by amcheck version \"%s\""
 msgstr "--checkuniqueオプションはamcheckバージョン\"%s\"ではサポートされていません"
 
-#: pg_amcheck.c:649
+#: pg_amcheck.c:650
 #, c-format
 msgid "no heap tables to check matching \"%s\""
 msgstr "\"%s\"に合致する検査対象のヒープテーブルがありません"
 
-#: pg_amcheck.c:652
+#: pg_amcheck.c:653
 #, c-format
 msgid "no btree indexes to check matching \"%s\""
 msgstr "%s\"に合致する検査対象のbtreeインデックスがありません"
 
-#: pg_amcheck.c:655
+#: pg_amcheck.c:656
 #, c-format
 msgid "no relations to check in schemas matching \"%s\""
 msgstr "\"%s\"に合致するスキーマ内に検査対象のリレーションがありません"
 
-#: pg_amcheck.c:658
+#: pg_amcheck.c:659
 #, c-format
 msgid "no relations to check matching \"%s\""
 msgstr "\"%s\"に合致する検査対象のリレーションがありません"
 
-#: pg_amcheck.c:686
+#: pg_amcheck.c:687
 #, c-format
 msgid "no relations to check"
 msgstr "検査対象のリレーションがありません"
 
-#: pg_amcheck.c:769
+#: pg_amcheck.c:770
 #, c-format
 msgid "checking heap table \"%s.%s.%s\""
 msgstr "ヒープテーブル\"%s.%s.%s\"を検査"
 
-#: pg_amcheck.c:785
+#: pg_amcheck.c:786
 #, c-format
 msgid "checking btree index \"%s.%s.%s\""
 msgstr "btreeインデックス\"%s.%s.%s\"を検査"
 
-#: pg_amcheck.c:936
+#: pg_amcheck.c:937
 #, c-format
 msgid "error sending command to database \"%s\": %s"
 msgstr "データベース\"%s\"へのコマンド送出中のエラー: %s"
 
-#: pg_amcheck.c:939
+#: pg_amcheck.c:940
 #, c-format
 msgid "Command was: %s"
 msgstr "コマンド: %s"
 
-#: pg_amcheck.c:1058
+#: pg_amcheck.c:1060
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
 msgstr "ヒープテーブル\"%s.%s.%s\"、ブロック%s、オフセット%s、属性%s:\n"
 
-#: pg_amcheck.c:1065
+#: pg_amcheck.c:1067
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
 msgstr "ヒープテーブル\"%s.%s.%s\"、ブロック%s、オフセット%s:\n"
 
-#: pg_amcheck.c:1071
+#: pg_amcheck.c:1073
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s:\n"
 msgstr "ヒープテーブル\"%s.%s.%s\"、ブロック%s:\n"
 
-#: pg_amcheck.c:1076 pg_amcheck.c:1087
+#: pg_amcheck.c:1078 pg_amcheck.c:1089
 #, c-format
 msgid "heap table \"%s.%s.%s\":\n"
 msgstr "ヒープテーブル\"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1091 pg_amcheck.c:1160
+#: pg_amcheck.c:1093 pg_amcheck.c:1162
 #, c-format
 msgid "query was: %s\n"
 msgstr "問い合わせ: %s\n"
 
-#: pg_amcheck.c:1142
+#: pg_amcheck.c:1144
 #, c-format
 msgid "btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d"
 msgstr "btreeインデックス\"%s.%s.%s\": btree検索関数が予期しない数の行を返却しました: %d"
 
-#: pg_amcheck.c:1146
+#: pg_amcheck.c:1148
 #, c-format
 msgid "Are %s's and amcheck's versions compatible?"
 msgstr "%sとamcheckのバージョンは合っていますか?"
 
-#: pg_amcheck.c:1156
+#: pg_amcheck.c:1158
 #, c-format
 msgid "btree index \"%s.%s.%s\":\n"
 msgstr "btreeインデックス\"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1181
+#: pg_amcheck.c:1183
 #, c-format
 msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
@@ -257,17 +349,17 @@ msgstr ""
 "%sはPostgreSQLデータベース内のオブジェクトの破損を検査します。\n"
 "\n"
 
-#: pg_amcheck.c:1182
+#: pg_amcheck.c:1184
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_amcheck.c:1183
+#: pg_amcheck.c:1185
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [オプション]... [データベース名]\n"
 
-#: pg_amcheck.c:1184
+#: pg_amcheck.c:1186
 #, c-format
 msgid ""
 "\n"
@@ -276,83 +368,83 @@ msgstr ""
 "\n"
 "対象指定オプション:\n"
 
-#: pg_amcheck.c:1185
+#: pg_amcheck.c:1187
 #, c-format
 msgid "  -a, --all                       check all databases\n"
 msgstr "  -a, --all                       すべてのデータベースを検査\n"
 
-#: pg_amcheck.c:1186
+#: pg_amcheck.c:1188
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
 msgstr "  -d, --database=PATTERN          合致するデータベースを検査\n"
 
-#: pg_amcheck.c:1187
+#: pg_amcheck.c:1189
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
 msgstr "  -D, --exclude-database=PATTERN  合致するデータベースを検査「しない」\n"
 
-#: pg_amcheck.c:1188
+#: pg_amcheck.c:1190
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
 msgstr "  -i, --index=PATTERN             合致するインデックスを検査\n"
 
-#: pg_amcheck.c:1189
+#: pg_amcheck.c:1191
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
 msgstr "  -I, --exclude-index=PATTERN     合致するインデックスを検査「しない」\n"
 
-#: pg_amcheck.c:1190
+#: pg_amcheck.c:1192
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
 msgstr "  -r, --relation=PATTERN          合致するリレーションを検査\n"
 
-#: pg_amcheck.c:1191
+#: pg_amcheck.c:1193
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
 msgstr "  -R, --exclude-relation=PATTERN  合致するリレーションを検査「しない」\n"
 
-#: pg_amcheck.c:1192
+#: pg_amcheck.c:1194
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
 msgstr "  -s, --schema=PATTERN            合致するスキーマを検査\n"
 
-#: pg_amcheck.c:1193
+#: pg_amcheck.c:1195
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
 msgstr "  -S, --exclude-schema=PATTERN    合致するスキーマを検査「しない」\n"
 
-#: pg_amcheck.c:1194
+#: pg_amcheck.c:1196
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
 msgstr "  -t, --table=PATTERN             合致するテーブルを検査\n"
 
-#: pg_amcheck.c:1195
+#: pg_amcheck.c:1197
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
 msgstr "  -T, --exclude-table=PATTERN     合致するテーブルを検査「しない」\n"
 
-#: pg_amcheck.c:1196
+#: pg_amcheck.c:1198
 #, c-format
 msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
 msgstr ""
 "      --no-dependent-indexes      リレーションのリストをインデックスを含むように\n"
 "                                  拡張「しない」\n"
 
-#: pg_amcheck.c:1197
+#: pg_amcheck.c:1199
 #, c-format
 msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
 msgstr ""
 "      --no-dependent-toast        リレーションのリストをTOASTテーブルを含む\n"
 "                                  ように拡張「しない」\n"
 
-#: pg_amcheck.c:1198
+#: pg_amcheck.c:1200
 #, c-format
 msgid "      --no-strict-names           do NOT require patterns to match objects\n"
 msgstr ""
 "      --no-strict-names           パターンがオブジェクトに合致することを必須と\n"
 "                                  しない\n"
 
-#: pg_amcheck.c:1199
+#: pg_amcheck.c:1201
 #, c-format
 msgid ""
 "\n"
@@ -361,36 +453,36 @@ msgstr ""
 "\n"
 "テーブル検査オプション:\n"
 
-#: pg_amcheck.c:1200
+#: pg_amcheck.c:1202
 #, c-format
 msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
 msgstr "      --exclude-toast-pointers    リレーションのTOASTポインタを追跡「しない」\n"
 
-#: pg_amcheck.c:1201
+#: pg_amcheck.c:1203
 #, c-format
 msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
 msgstr "      --on-error-stop             最初の破損ページの終わりで検査を中断する\n"
 
-#: pg_amcheck.c:1202
+#: pg_amcheck.c:1204
 #, c-format
 msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
 msgstr ""
 "      --skip=OPTION               \"all-frozen\"および\"all-visible\"である\n"
 "                                  ブロックを検査「しない」\n"
 
-#: pg_amcheck.c:1203
+#: pg_amcheck.c:1205
 #, c-format
 msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
 msgstr ""
 "      --startblock=BLOCK          指定したブロック番号からテーブルの検査を\n"
 "                                  開始する\n"
 
-#: pg_amcheck.c:1204
+#: pg_amcheck.c:1206
 #, c-format
 msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
 msgstr "      --endblock=BLOCK            指定したブロック番号までデーブルの検査を行う\n"
 
-#: pg_amcheck.c:1205
+#: pg_amcheck.c:1207
 #, c-format
 msgid ""
 "\n"
@@ -399,29 +491,29 @@ msgstr ""
 "\n"
 "B-treeインデックス検査オプション:\n"
 
-#: pg_amcheck.c:1206
+#: pg_amcheck.c:1208
+#, c-format
+msgid "      --checkunique               check unique constraint if index is unique\n"
+msgstr "      --checkunique               インデックスがユニークであればユニーク制約をチェックする\n"
+
+#: pg_amcheck.c:1209
 #, c-format
 msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
 msgstr ""
 "      --heapallindexed            すべてのヒープタプルがインデックス内に\n"
 "                                  見つかることを検査\n"
 
-#: pg_amcheck.c:1207
+#: pg_amcheck.c:1210
 #, c-format
 msgid "      --parent-check              check index parent/child relationships\n"
 msgstr "      --parent-check              インデックスの親子関係を検査\n"
 
-#: pg_amcheck.c:1208
+#: pg_amcheck.c:1211
 #, c-format
 msgid "      --rootdescend               search from root page to refind tuples\n"
 msgstr "      --rootdescend               タプル再探索をルートページから実行する\n"
 
-#: pg_amcheck.c:1209
-#, c-format
-msgid "      --checkunique               check unique constraint if index is unique\n"
-msgstr "      --checkunique               インデックスがユニークであればユニーク制約をチェックする\n"
-
-#: pg_amcheck.c:1210
+#: pg_amcheck.c:1212
 #, c-format
 msgid ""
 "\n"
@@ -430,39 +522,39 @@ msgstr ""
 "\n"
 "接続オプション:\n"
 
-#: pg_amcheck.c:1211
+#: pg_amcheck.c:1213
 #, c-format
 msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME             データベースサーバーのホストまたは\n"
 "                                  ソケットディレクトリ\n"
 
-#: pg_amcheck.c:1212
+#: pg_amcheck.c:1214
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
 msgstr "  -p, --port=PORT                 データベースサーバーのポート\n"
 
-#: pg_amcheck.c:1213
+#: pg_amcheck.c:1215
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
 msgstr "  -U, --username=USERNAME         接続に用いるユーザー名\n"
 
-#: pg_amcheck.c:1214
+#: pg_amcheck.c:1216
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
 msgstr "  -w, --no-password               パスワード入力を要求しない\n"
 
-#: pg_amcheck.c:1215
+#: pg_amcheck.c:1217
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
 msgstr "  -W, --password                  パスワード入力要求を強制する\n"
 
-#: pg_amcheck.c:1216
+#: pg_amcheck.c:1218
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
 msgstr "      --maintenance-db=DBNAME     代替の保守データベース\n"
 
-#: pg_amcheck.c:1217
+#: pg_amcheck.c:1219
 #, c-format
 msgid ""
 "\n"
@@ -471,42 +563,42 @@ msgstr ""
 "\n"
 "その他のオプション:\n"
 
-#: pg_amcheck.c:1218
+#: pg_amcheck.c:1220
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      サーバーに送られるコマンドを表示\n"
 
-#: pg_amcheck.c:1219
+#: pg_amcheck.c:1221
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
 msgstr "  -j, --jobs=NUM                  サーバーに対して指定した数の接続を使用する\n"
 
-#: pg_amcheck.c:1220
+#: pg_amcheck.c:1222
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
 msgstr "  -P, --progress                  進行状況を表示\n"
 
-#: pg_amcheck.c:1221
+#: pg_amcheck.c:1223
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   多くのメッセージを出力します\n"
 
-#: pg_amcheck.c:1222
+#: pg_amcheck.c:1224
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   バージョン情報を表示して終了\n"
 
-#: pg_amcheck.c:1223
+#: pg_amcheck.c:1225
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
 msgstr "      --install-missing           機能拡張がない場合にインストールする\n"
 
-#: pg_amcheck.c:1224
+#: pg_amcheck.c:1226
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      このヘルプを表示して終了\n"
 
-#: pg_amcheck.c:1226
+#: pg_amcheck.c:1228
 #, c-format
 msgid ""
 "\n"
@@ -515,52 +607,52 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_amcheck.c:1227
+#: pg_amcheck.c:1229
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
 
-#: pg_amcheck.c:1280
+#: pg_amcheck.c:1282
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
 msgstr "%*s/%s個のリレーション(%d%%), %*s/%sページ(%d%%) %*s"
 
-#: pg_amcheck.c:1291
+#: pg_amcheck.c:1293
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
 msgstr "%*s/%s個のリレーション(%d%%), %*s/%sページ(%d%%) (%s%-*.*s)"
 
-#: pg_amcheck.c:1306
+#: pg_amcheck.c:1308
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
 msgstr "%*s/%s個のリレーション(%d%%), %*s/%sページ(%d%%)"
 
-#: pg_amcheck.c:1365 pg_amcheck.c:1398
+#: pg_amcheck.c:1367 pg_amcheck.c:1400
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "修飾名が不適切です(ドット区切りの名前が多すぎます): %s"
 
-#: pg_amcheck.c:1443
+#: pg_amcheck.c:1445
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
 msgstr "リレーション名が不適切です(ドット区切りの名前が多すぎます): %s"
 
-#: pg_amcheck.c:1596 pg_amcheck.c:1735
+#: pg_amcheck.c:1598 pg_amcheck.c:1737
 #, c-format
 msgid "including database \"%s\""
 msgstr "データベース\"%s\"を含めます"
 
-#: pg_amcheck.c:1717
+#: pg_amcheck.c:1719
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
 msgstr "内部エラー: 予期しないデータベースパターンID %dを受信"
 
-#: pg_amcheck.c:1719
+#: pg_amcheck.c:1721
 #, c-format
 msgid "no connectable databases to check matching \"%s\""
 msgstr "\"%s\"に合致する検査対象の接続可能なデータベースがありません"
 
-#: pg_amcheck.c:2177
+#: pg_amcheck.c:2179
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr "内部エラー: 予期しないリレーションパターンID %dを受信"

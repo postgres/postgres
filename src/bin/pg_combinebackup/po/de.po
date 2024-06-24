@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-14 18:23+0000\n"
-"PO-Revision-Date: 2024-05-14 21:18+0200\n"
+"POT-Creation-Date: 2024-06-21 16:52+0000\n"
+"PO-Revision-Date: 2024-06-22 09:58+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -35,6 +35,90 @@ msgstr "Detail: "
 msgid "hint: "
 msgstr "Tipp: "
 
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
+
+#: ../../common/controldata_utils.c:110 copy_file.c:146 load_manifest.c:161
+#: load_manifest.c:199 pg_combinebackup.c:1387 reconstruct.c:527
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht lesen: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: backup_label.c:174 copy_file.c:64 pg_combinebackup.c:526
+#: pg_combinebackup.c:1162 reconstruct.c:356 reconstruct.c:727
+#: write_manifest.c:187
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schließen: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "falsche Byte-Reihenfolge"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"möglicherweise falsche Byte-Reihenfolge\n"
+"Die Byte-Reihenfolge, die zur Speicherung der Datei pg_control verwendet wurde,\n"
+"stimmt möglicherweise nicht mit der von diesem Programm verwendeten überein. In\n"
+"diesem Fall wären die Ergebnisse unten falsch und die PostgreSQL-Installation\n"
+"wäre inkompatibel mit diesem Datenverzeichnis."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:62
+#: copy_file.c:135 copy_file.c:167 copy_file.c:171 copy_file.c:218
+#: copy_file.c:258 load_manifest.c:128 pg_combinebackup.c:511
+#: pg_combinebackup.c:1154 reconstruct.c:510 reconstruct.c:625
+#: write_manifest.c:250
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht öffnen: %m"
+
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:746
+#: write_manifest.c:260
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schreiben: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht fsyncen: %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#, c-format
+msgid "out of memory"
+msgstr "Speicher aufgebraucht"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "Erfolg"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "Zielpuffer ist zu klein"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "OpenSSL-Fehler"
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
@@ -46,17 +130,52 @@ msgstr "Speicher aufgebraucht\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
 
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "konnte Dateisystem für Datei »%s« nicht synchronisieren: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:664
+#: pg_combinebackup.c:1118 pg_combinebackup.c:1370 reconstruct.c:199
+#: reconstruct.c:408
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_combinebackup.c:920 pg_combinebackup.c:1243
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "konnte Datei »%s« nicht in »%s« umbenennen: %m"
+
 #: ../../common/jsonapi.c:2121
-msgid "Recursive descent parser cannot use incremental lexer"
-msgstr "Parser mit rekursivem Abstieg kann inkrementellen Lexer nicht benutzen"
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "Parser mit rekursivem Abstieg kann inkrementellen Lexer nicht benutzen."
 
 #: ../../common/jsonapi.c:2123
-msgid "Incremental parser requires incremental lexer"
-msgstr "Inkrementeller Parser benötigt inkrementellen Lexer"
+msgid "Incremental parser requires incremental lexer."
+msgstr "Inkrementeller Parser benötigt inkrementellen Lexer."
 
 #: ../../common/jsonapi.c:2125
-msgid "JSON nested too deep, maximum permitted depth is 6400"
-msgstr "JSON zu tief geschachtelt, maximale erlaubte Tiefe ist 6400"
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON zu tief geschachtelt, maximale erlaubte Tiefe ist 6400."
 
 #: ../../common/jsonapi.c:2127
 #, c-format
@@ -141,11 +260,6 @@ msgstr "Unicode-High-Surrogate darf nicht auf ein High-Surrogate folgen."
 #: ../../common/jsonapi.c:2187
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicode-Low-Surrogate muss auf ein High-Surrogate folgen."
-
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
-#, c-format
-msgid "out of memory"
-msgstr "Speicher aufgebraucht"
 
 #: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
 #, c-format
@@ -304,6 +418,21 @@ msgstr "Manifestprüfsumme stimmt nicht überein"
 msgid "could not parse backup manifest: %s"
 msgstr "konnte Backup-Manifest nicht parsen: %s"
 
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "ungültiger Wert »%s« für Option %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s muss im Bereich %d..%d sein"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "unbekannte Sync-Methode: %s"
+
 #: backup_label.c:66 backup_label.c:85 backup_label.c:95
 #, c-format
 msgid "%s: could not parse %s"
@@ -334,62 +463,36 @@ msgstr "%s: konnte %s nicht finden"
 msgid "%s: %s requires %s"
 msgstr "%s: %s benötigt %s"
 
-#: backup_label.c:143 copy_file.c:135 copy_file.c:167 copy_file.c:171
-#: copy_file.c:218 copy_file.c:258 load_manifest.c:128 pg_combinebackup.c:511
-#: pg_combinebackup.c:1154 reconstruct.c:511 reconstruct.c:626
-#: write_manifest.c:250
+#: backup_label.c:162 reconstruct.c:748 write_manifest.c:262
 #, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht öffnen: %m"
+msgid "could not write file \"%s\": wrote %d of %d"
+msgstr "konnte Datei »%s« nicht schreiben: %d von %d geschrieben"
 
-#: backup_label.c:160 copy_file.c:182 reconstruct.c:747
-#, c-format
-msgid "could not write file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht schreiben: %m"
-
-#: backup_label.c:162 reconstruct.c:749 write_manifest.c:262
-#, c-format
-msgid "could not write file \"%s\": wrote only %d of %d bytes"
-msgstr "konnte Datei »%s« nicht schreiben: nur %d von %d Bytes geschrieben"
-
-#: backup_label.c:166 copy_file.c:142 copy_file.c:189 reconstruct.c:709
-#: reconstruct.c:755 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:142 copy_file.c:189 reconstruct.c:708
+#: reconstruct.c:754 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "konnte Prüfsumme der Datei »%s« nicht aktualisieren"
 
-#: backup_label.c:174 copy_file.c:64 pg_combinebackup.c:526
-#: pg_combinebackup.c:1162 reconstruct.c:357 reconstruct.c:728
-#: write_manifest.c:187
+#: copy_file.c:182
 #, c-format
-msgid "could not close \"%s\": %m"
-msgstr "konnte »%s« nicht schließen: %m"
-
-#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:1118
-#, c-format
-msgid "could not stat file \"%s\": %m"
-msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
-
-#: copy_file.c:62
-#, c-format
-msgid "could not open \"%s\": %m"
-msgstr "konnte »%s« nicht öffnen: %m"
-
-#: copy_file.c:146 copy_file.c:195 load_manifest.c:161 load_manifest.c:199
-#: pg_combinebackup.c:1387 reconstruct.c:528 reconstruct.c:772
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht lesen: %m"
+msgid "could not write to file \"%s\": %m"
+msgstr "konnte nicht in Datei »%s« schreiben: %m"
 
 #: copy_file.c:184
 #, c-format
-msgid "could not write file \"%s\": wrote only %d of %d bytes at offset %u"
-msgstr "konnte Datei »%s« nicht schreiben: es wurden nur %d von %d Bytes bei Offset %u geschrieben"
+msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
+msgstr "konnte nicht in Datei »%s«, Position %u schreiben: %d von %d geschrieben"
+
+#: copy_file.c:195 reconstruct.c:771
+#, c-format
+msgid "could not read from file \"%s\": %m"
+msgstr "konnte nicht aus Datei »%s« lesen: %m"
 
 #: copy_file.c:214
 #, c-format
 msgid "error while cloning file \"%s\" to \"%s\": %m"
-msgstr ""
+msgstr "Fehler beim Klonen von Datei »%s« nach »%s«: %m"
 
 #: copy_file.c:222 copy_file.c:262
 #, c-format
@@ -399,33 +502,32 @@ msgstr "konnte Datei »%s« nicht erstellen: %m"
 #: copy_file.c:230
 #, c-format
 msgid "error while cloning file \"%s\" to \"%s\": %s"
-msgstr ""
+msgstr "Fehler beim Klonen von Datei »%s« nach »%s«: %s"
 
 #: copy_file.c:235 pg_combinebackup.c:239
 #, c-format
 msgid "file cloning not supported on this platform"
 msgstr "Klonen von Dateien wird auf dieser Plattform nicht unterstützt"
 
-#: copy_file.c:268 reconstruct.c:692
+#: copy_file.c:268 reconstruct.c:691
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
-msgstr ""
+msgstr "Fehler beim Kopieren von Dateibereich von »%s« nach »%s«: %m"
 
-#: copy_file.c:275 pg_combinebackup.c:252 reconstruct.c:712
-#, fuzzy, c-format
-#| msgid "file cloning not supported on this platform"
+#: copy_file.c:275 pg_combinebackup.c:252 reconstruct.c:711
+#, c-format
 msgid "copy_file_range not supported on this platform"
-msgstr "Klonen von Dateien wird auf dieser Plattform nicht unterstützt"
+msgstr "copy_file_range wird auf dieser Plattform nicht unterstützt"
 
 #: copy_file.c:290
 #, c-format
-msgid "could not copy \"%s\" to \"%s\": %m"
-msgstr "konnte »%s« nicht nach »%s« kopieren: %m"
+msgid "could not copy file \"%s\" to \"%s\": %m"
+msgstr "konnte Datei »%s« nicht nach »%s« kopieren: %m"
 
 #: load_manifest.c:125
 #, c-format
-msgid "\"%s\" does not exist"
-msgstr "»%s« existiert nicht"
+msgid "file \"%s\" does not exist"
+msgstr "Datei »%s« existiert nicht"
 
 #: load_manifest.c:163
 #, c-format
@@ -454,8 +556,8 @@ msgstr "Versuchen Sie »%s --help« für weitere Informationen."
 
 #: pg_combinebackup.c:215
 #, c-format
-msgid "%s: no input directories specified"
-msgstr "%s: keine Eingabeverzeichnisse angegeben"
+msgid "no input directories specified"
+msgstr "keine Eingabeverzeichnisse angegeben"
 
 #: pg_combinebackup.c:221
 #, c-format
@@ -545,13 +647,7 @@ msgstr "nur einige Sicherungen haben Prüfsummen aktiviert"
 #: pg_combinebackup.c:646
 #, c-format
 msgid "disable, and optionally reenable, checksums on the output directory to avoid failures"
-msgstr ""
-
-#: pg_combinebackup.c:664 pg_combinebackup.c:1370 reconstruct.c:199
-#: reconstruct.c:409
-#, c-format
-msgid "could not stat \"%s\": %m"
-msgstr "konnte »stat« für »%s« nicht ausführen: %m"
+msgstr "schalten Sie für das Ausgabeverzeichnis Prüfsummen aus, und optional wieder an, um Fehler zu vermeiden"
 
 #: pg_combinebackup.c:681
 #, c-format
@@ -617,10 +713,9 @@ msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               erzeuge eine Menge Debug-Ausgaben\n"
 
 #: pg_combinebackup.c:752
-#, fuzzy, c-format
-#| msgid "  -n, --dry-run                  stop before modifying anything\n"
+#, c-format
 msgid "  -n, --dry-run             do not actually do anything\n"
-msgstr "  -n, --dry-run                  anhalten, bevor etwas geändert wird\n"
+msgstr "  -n, --dry-run             nichts wirklich ausführen\n"
 
 #: pg_combinebackup.c:753
 #, c-format
@@ -631,8 +726,8 @@ msgstr ""
 
 #: pg_combinebackup.c:754
 #, c-format
-msgid "  -o, --output              output directory\n"
-msgstr "  -o, --output              Ausgabeverzeichnis\n"
+msgid "  -o, --output=DIRECTORY    output directory\n"
+msgstr "  -o, --output=VERZEICHNIS  Ausgabeverzeichnis\n"
 
 #: pg_combinebackup.c:755
 #, c-format
@@ -646,12 +741,12 @@ msgstr ""
 #: pg_combinebackup.c:757
 #, c-format
 msgid "      --clone               clone (reflink) instead of copying files\n"
-msgstr ""
+msgstr "      --clone               Dateien klonen (reflink) statt kopieren\n"
 
 #: pg_combinebackup.c:758
 #, c-format
 msgid "      --copy-file-range     copy using copy_file_range() syscall\n"
-msgstr ""
+msgstr "      --copy-file-range     mit Systemaufruf copy_file_range() kopieren\n"
 
 #: pg_combinebackup.c:759
 #, c-format
@@ -698,11 +793,6 @@ msgstr ""
 msgid "%s home page: <%s>\n"
 msgstr "%s Homepage: <%s>\n"
 
-#: pg_combinebackup.c:920 pg_combinebackup.c:1243
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
-
 #: pg_combinebackup.c:982
 #, c-format
 msgid "skipping symbolic link \"%s\""
@@ -713,21 +803,20 @@ msgstr "überspringe symbolische Verknüpfung »%s«"
 msgid "skipping special file \"%s\""
 msgstr "überspringe besondere Datei »%s«"
 
-#. translator: the first %s is a backup manifest file, the second is a file absent therein
-#: pg_combinebackup.c:1060 reconstruct.c:301
+#: pg_combinebackup.c:1060
 #, c-format
 msgid "\"%s\" contains no entry for \"%s\""
 msgstr "»%s« enthält keinen Eintrag für »%s«"
 
 #: pg_combinebackup.c:1176
 #, c-format
-msgid "%s: server version too old\n"
-msgstr "%s: Serverversion zu alt\n"
+msgid "%s: server version too old"
+msgstr "%s: Serverversion zu alt"
 
 #: pg_combinebackup.c:1177
 #, c-format
-msgid "%s: could not parse version number\n"
-msgstr "%s: konnte Versionsnummer nicht parsen\n"
+msgid "%s: could not parse version number"
+msgstr "%s: konnte Versionsnummer nicht parsen"
 
 #: pg_combinebackup.c:1296
 #, c-format
@@ -736,13 +825,13 @@ msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %m"
 
 #: pg_combinebackup.c:1299
 #, c-format
-msgid "symbolic link \"%s\" is too long"
-msgstr "symbolische Verknüpfung »%s« ist zu lang"
+msgid "target of symbolic link \"%s\" is too long"
+msgstr "Ziel der symbolischen Verknüpfung »%s« ist zu lang"
 
 #: pg_combinebackup.c:1302
 #, c-format
-msgid "symbolic link \"%s\" is relative"
-msgstr "symbolische Verknüpfung »%s« ist relativ"
+msgid "target of symbolic link \"%s\" is relative"
+msgstr "Ziel der symbolischen Verknüpfung »%s« ist relativ"
 
 #: pg_combinebackup.c:1324
 #, c-format
@@ -751,8 +840,8 @@ msgstr "Tablespace in »%s« hat kein Tablespace-Mapping"
 
 #: pg_combinebackup.c:1342
 #, c-format
-msgid "tablespaces with OIDs %u and %u both point at \"%s\""
-msgstr "die Tablespaces mit OIDs %u und %u zeigen beide auf »%s«"
+msgid "tablespaces with OIDs %u and %u both point at directory \"%s\""
+msgstr "die Tablespaces mit OIDs %u und %u zeigen beide auf Verzeichnis »%s«"
 
 #: pg_combinebackup.c:1351
 #, c-format
@@ -766,40 +855,40 @@ msgstr "Datei »%s« ist zu groß"
 
 #: pg_combinebackup.c:1389
 #, c-format
-msgid "could not read file \"%s\": read only %zd of %lld bytes"
-msgstr "konnte Datei »%s« nicht lesen: nur %zd von %lld Bytes gelesen"
+msgid "could not read file \"%s\": read %zd of %lld"
+msgstr "konnte Datei »%s« nicht lesen: %zd von %lld gelesen"
 
-#: reconstruct.c:411
+#: reconstruct.c:300
+#, c-format
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "Manifestdatei »%s« enthält keinen Eintrag für Datei »%s«"
+
+#: reconstruct.c:410
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "Datei »%s« ist zu kurz: %llu erwartet, %llu gefunden"
 
-#: reconstruct.c:453
+#: reconstruct.c:452
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x not 0x%x)"
-msgstr ""
+msgstr "Datei »%s« hat falsche magische Zahl für inkrementelles Backup (0x%x, nicht 0x%x)"
 
-#: reconstruct.c:459
+#: reconstruct.c:458
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
-msgstr ""
+msgstr "Datei »%s« hat Blockzahl %u, was die Segmentgröße %u überschreitet"
 
-#: reconstruct.c:466
+#: reconstruct.c:465
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
-msgstr ""
+msgstr "Datei »%s« hat Truncation-Blocklänge %u, was die Segmentgröße %u überschreitet"
 
-#: reconstruct.c:530
+#: reconstruct.c:529
 #, c-format
-msgid "could not read file \"%s\": read only %d of %u bytes"
-msgstr "konnte Datei »%s« nicht lesen: nur %d von %u Bytes gelesen"
+msgid "could not read file \"%s\": read %d of %u"
+msgstr "konnte Datei »%s« nicht lesen: %d von %u gelesen"
 
-#: reconstruct.c:774
+#: reconstruct.c:773
 #, c-format
-msgid "could not read file \"%s\": read only %d of %d bytes at offset %llu"
-msgstr "konnte Datei »%s« nicht lesen: nur %d von %d Bytes bei Position %llu gelesen"
-
-#: write_manifest.c:260
-#, c-format
-msgid "could not write \"%s\": %m"
-msgstr "konnte »%s« nicht schreiben: %m"
+msgid "could not read from file \"%s\", offset %llu: read %d of %d"
+msgstr "konnte nicht aus Datei »%s«, Position %llu lesen: %d von %d gelesen"
