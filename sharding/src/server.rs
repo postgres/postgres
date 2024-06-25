@@ -1,20 +1,22 @@
-extern crate pgwire;
 mod psql;
 
-use std::fs::{File, OpenOptions};
-use std::io::Read;
-use std::net::TcpStream;
-use pgwire::error::{PgWireError};
-use pgwire::api::{PgWireConnectionState, ClientInfo};
-use std::net::TcpListener;
-use tokio::io::AsyncWriteExt;
-use psql::common_h_bindings::{PGresult, PSQLexec};
+use psql::common_h_bindings::{PGresult};
+use std::ffi::CString;
 
-fn main() -> Result<(), PgWireError> {
-    unsafe{
-        let result: *mut PGresult = PSQLexec("SELECT * FROM employees".as_ptr() as *const i8);
+extern "C" {
+    pub fn PSQLexec(query: *const libc::c_char) -> *mut PGresult;
+}
+
+extern "C" fn print_pgresult() {
+    unsafe {
+        let result: *mut PGresult =
+            PSQLexec(CString::new("SELECT * FROM employees;").unwrap().as_ptr());
         println!("{:?}", (*result).ntups);
     }
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    print_pgresult();
 
     
     // // Start the pgwire server on port 5432

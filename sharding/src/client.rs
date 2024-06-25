@@ -1,13 +1,13 @@
 extern crate pgwire;
-use pgwire::error::{PgWireError};
-use tokio::net::TcpStream;
-use pgwire::messages::data::{DataRow};
+use pgwire::error::PgWireError;
+use pgwire::messages::data::DataRow;
 use pgwire::messages::simplequery::Query;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
 
 #[tokio::main]
 async fn main() -> Result<(), PgWireError> {
-    let mut connection : TcpStream = TcpStream::connect("localhost:5433")?;
+    let mut connection: TcpStream = TcpStream::connect("localhost:5433")?;
 
     // Send a simple message
     let mut message = Query {

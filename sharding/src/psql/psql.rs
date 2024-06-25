@@ -1,4 +1,3 @@
-
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -13,7 +12,7 @@ use tokio::sync::oneshot;
 
 use tokio::spawn;
 
-use crate::psql::libpqint::pg_result;
+use crate::psql::common_h_bindings::pg_result;
 
 #[no_mangle]
 pub extern "C" fn SendQueryToShard(query_data: *const i8) {
@@ -41,8 +40,7 @@ pub extern "C" fn SendPGResultToShard(pg_result: *const pg_result) {
         if pg_result.is_null() {
             eprintln!("Received a null pointer");
             return;
-        }
-        else {
+        } else {
             let n_tup = (*pg_result).ntups;
             println!("{:?}", n_tup);
         };
