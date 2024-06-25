@@ -55,6 +55,7 @@
 #include "utils/rel.h"
 
 PG_FUNCTION_INFO_V1(pg_tdeam_handler);
+PG_FUNCTION_INFO_V1(pg_tde2am_handler);
 
 
 static void reform_and_rewrite_tuple(HeapTuple tuple,
@@ -645,7 +646,7 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 		ereport(DEBUG1,
 			(errmsg("creating key file for relation %s", RelationGetRelationName(rel))));
 
-		pg_tde_create_key_map_entry(newrlocator, rel);
+		pg_tde_create_key_map_entry(newrlocator);
 	}
 }
 
@@ -2633,7 +2634,6 @@ static const TableAmRoutine pg_tdeam_methods = {
 	.scan_sample_next_tuple = pg_tdeam_scan_sample_next_tuple
 };
 
-
 const TableAmRoutine *
 GetPGTdeamTableAmRoutine(void)
 {
@@ -2644,6 +2644,12 @@ Datum
 pg_tdeam_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&pg_tdeam_methods);
+}
+
+Datum
+pg_tde2am_handler(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_POINTER(GetHeapamTableAmRoutine());
 }
 
 bool

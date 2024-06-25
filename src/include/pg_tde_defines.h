@@ -22,6 +22,7 @@
 //#define ENCRYPTION_DEBUG 1
 //#define KEYRING_DEBUG 1
 //#define TDE_FORK_DEBUG 1
+// #define TDE_XLOG_DEBUG 1
 
 #define pg_tde_fill_tuple heap_fill_tuple
 #define pg_tde_form_tuple heap_form_tuple
@@ -36,8 +37,6 @@
 #define pgstat_count_pg_tde_delete pgstat_count_heap_delete
 #define pgstat_count_pg_tde_insert pgstat_count_heap_insert
 #define pg_tde_getattr heap_getattr
-
-#define GetPGTdeamTableAmRoutine GetHeapamTableAmRoutine
 
 #define TDE_PageAddItem(rel, oid, blkno, page, item, size, offsetNumber, overwrite, is_heap) \
 	PGTdePageAddItemExtended(rel, oid, blkno, page, item, size, offsetNumber, \

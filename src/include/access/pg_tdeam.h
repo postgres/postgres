@@ -333,4 +333,7 @@ extern void HeapCheckForSerializableConflictOut(bool visible, Relation relation,
 /* Defined in pg_tdeam_handler.c */
 extern bool is_pg_tde_rel(Relation rel);
 
+const TableAmRoutine *
+GetPGTdeamTableAmRoutine(void);
+
 #endif							/* PG_TDEAM_H */
