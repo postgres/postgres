@@ -7916,7 +7916,7 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 	 * If WAL summarization is in use, don't remove WAL that has yet to be
 	 * summarized.
 	 */
-	keep = GetOldestUnsummarizedLSN(NULL, NULL, false);
+	keep = GetOldestUnsummarizedLSN(NULL, NULL);
 	if (keep != InvalidXLogRecPtr)
 	{
 		XLogSegNo	unsummarized_segno;

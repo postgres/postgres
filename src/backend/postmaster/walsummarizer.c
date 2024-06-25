@@ -337,7 +337,7 @@ WalSummarizerMain(char *startup_data, size_t startup_data_len)
 	 *
 	 * If we discover that WAL summarization is not enabled, just exit.
 	 */
-	current_lsn = GetOldestUnsummarizedLSN(&current_tli, &exact, true);
+	current_lsn = GetOldestUnsummarizedLSN(&current_tli, &exact);
 	if (XLogRecPtrIsInvalid(current_lsn))
 		proc_exit(0);
 
@@ -479,23 +479,18 @@ GetWalSummarizerState(TimeLineID *summarized_tli, XLogRecPtr *summarized_lsn,
 
 /*
  * Get the oldest LSN in this server's timeline history that has not yet been
- * summarized.
+ * summarized, and update shared memory state as appropriate.
  *
  * If *tli != NULL, it will be set to the TLI for the LSN that is returned.
  *
  * If *lsn_is_exact != NULL, it will be set to true if the returned LSN is
  * necessarily the start of a WAL record and false if it's just the beginning
  * of a WAL segment.
- *
- * If reset_pending_lsn is true, resets the pending_lsn in shared memory to
- * be equal to the summarized_lsn.
  */
 XLogRecPtr
-GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact,
-						 bool reset_pending_lsn)
+GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact)
 {
 	TimeLineID	latest_tli;
-	LWLockMode	mode = reset_pending_lsn ? LW_EXCLUSIVE : LW_SHARED;
 	int			n;
 	List	   *tles;
 	XLogRecPtr	unsummarized_lsn = InvalidXLogRecPtr;
@@ -503,22 +498,21 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact,
 	bool		should_make_exact = false;
 	List	   *existing_summaries;
 	ListCell   *lc;
+	bool		am_wal_summarizer = AmWalSummarizerProcess();
 
 	/* If not summarizing WAL, do nothing. */
 	if (!summarize_wal)
 		return InvalidXLogRecPtr;
 
 	/*
-	 * Unless we need to reset the pending_lsn, we initially acquire the lock
-	 * in shared mode and try to fetch the required information. If we acquire
-	 * in shared mode and find that the data structure hasn't been
-	 * initialized, we reacquire the lock in exclusive mode so that we can
-	 * initialize it. However, if someone else does that first before we get
-	 * the lock, then we can just return the requested information after all.
+	 * If we are not the WAL summarizer process, then we normally just want
+	 * to read the values from shared memory. However, as an exception, if
+	 * shared memory hasn't been initialized yet, then we need to do that so
+	 * that we can read legal values and not remove any WAL too early.
 	 */
-	while (1)
+	if (!am_wal_summarizer)
 	{
-		LWLockAcquire(WALSummarizerLock, mode);
+		LWLockAcquire(WALSummarizerLock, LW_SHARED);
 
 		if (WalSummarizerCtl->initialized)
 		{
@@ -527,27 +521,22 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact,
 				*tli = WalSummarizerCtl->summarized_tli;
 			if (lsn_is_exact != NULL)
 				*lsn_is_exact = WalSummarizerCtl->lsn_is_exact;
-			if (reset_pending_lsn)
-				WalSummarizerCtl->pending_lsn =
-					WalSummarizerCtl->summarized_lsn;
 			LWLockRelease(WALSummarizerLock);
 			return unsummarized_lsn;
 		}
 
-		if (mode == LW_EXCLUSIVE)
-			break;
-
 		LWLockRelease(WALSummarizerLock);
-		mode = LW_EXCLUSIVE;
 	}
 
 	/*
-	 * The data structure needs to be initialized, and we are the first to
-	 * obtain the lock in exclusive mode, so it's our job to do that
-	 * initialization.
+	 * Find the oldest timeline on which WAL still exists, and the earliest
+	 * segment for which it exists.
 	 *
-	 * So, find the oldest timeline on which WAL still exists, and the
-	 * earliest segment for which it exists.
+	 * Note that we do this every time the WAL summarizer process restarts
+	 * or recovers from an error, in case the contents of pg_wal have changed
+	 * under us e.g. if some files were removed, either manually - which
+	 * shouldn't really happen, but might - or by postgres itself, if
+	 * summarize_wal was turned off and then back on again.
 	 */
 	(void) GetLatestLSN(&latest_tli);
 	tles = readTimeLineHistory(latest_tli);
@@ -568,12 +557,6 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact,
 		}
 	}
 
-	/* It really should not be possible for us to find no WAL. */
-	if (unsummarized_tli == 0)
-		ereport(ERROR,
-				errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg_internal("no WAL found on timeline %u", latest_tli));
-
 	/*
 	 * Don't try to summarize anything older than the end LSN of the newest
 	 * summary file that exists for this timeline.
@@ -592,12 +575,32 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact,
 		}
 	}
 
-	/* Update shared memory with the discovered values. */
-	WalSummarizerCtl->initialized = true;
-	WalSummarizerCtl->summarized_lsn = unsummarized_lsn;
-	WalSummarizerCtl->summarized_tli = unsummarized_tli;
-	WalSummarizerCtl->lsn_is_exact = should_make_exact;
-	WalSummarizerCtl->pending_lsn = unsummarized_lsn;
+	/* It really should not be possible for us to find no WAL. */
+	if (unsummarized_tli == 0)
+		ereport(ERROR,
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg_internal("no WAL found on timeline %u", latest_tli));
+
+	/*
+	 * If we're the WAL summarizer, we always want to store the values we
+	 * just computed into shared memory, because those are the values we're
+	 * going to use to drive our operation, and so they are the authoritative
+	 * values. Otherwise, we only store values into shared memory if shared
+	 * memory is uninitialized. Our values are not canonical in such a case,
+	 * but it's better to have something than nothing, to guide WAL
+	 * retention.
+	 */
+	LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
+	if (am_wal_summarizer|| !WalSummarizerCtl->initialized)
+	{
+		WalSummarizerCtl->initialized = true;
+		WalSummarizerCtl->summarized_lsn = unsummarized_lsn;
+		WalSummarizerCtl->summarized_tli = unsummarized_tli;
+		WalSummarizerCtl->lsn_is_exact = should_make_exact;
+		WalSummarizerCtl->pending_lsn = unsummarized_lsn;
+	}
+	else
+		unsummarized_lsn = WalSummarizerCtl->summarized_lsn;
 
 	/* Also return the to the caller as required. */
 	if (tli != NULL)
