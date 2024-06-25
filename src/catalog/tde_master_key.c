@@ -29,8 +29,9 @@
 #include <sys/time.h>
 
 #include "access/pg_tde_tdemap.h"
-
-#define DEFAULT_MASTER_KEY_VERSION      1
+#ifdef PERCONA_FORK
+#include "catalog/tde_global_catalog.h"
+#endif
 
 typedef struct TdeMasterKeySharedState
 {
@@ -67,12 +68,10 @@ static Size required_shared_mem_size(void);
 static int  required_locks_count(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void master_key_startup_cleanup(int tde_tbl_count, void *arg);
-static keyInfo *load_latest_versioned_key_name(TDEMasterKeyInfo *mastere_key_info, GenericKeyring *keyring, bool ensure_new_key);
-static void clear_master_key_cache(Oid databaseId, Oid tablespaceId) ;
+static void clear_master_key_cache(Oid databaseId) ;
 static inline dshash_table *get_master_key_Hash(void);
 static TDEMasterKey *get_master_key_from_cache(Oid dbOid);
 static void push_master_key_to_cache(TDEMasterKey *masterKey);
-static TDEMasterKey *set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key);
 
 static const TDEShmemSetupRoutine master_key_info_shmem_routine = {
     .init_shared_state = initialize_shared_state,
@@ -214,11 +213,10 @@ save_master_key_info(TDEMasterKeyInfo *master_key_info)
  * throws an error.
  */
 TDEMasterKey *
-GetMasterKey(Oid dbOid)
+GetMasterKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring)
 {
     TDEMasterKey *masterKey = NULL;
     TDEMasterKeyInfo *masterKeyInfo = NULL;
-    GenericKeyring *keyring = NULL;
     const keyInfo *keyInfo = NULL;
     KeyringReturnCodes keyring_ret;
     LWLock *lock_files = tde_lwlock_mk_files();
@@ -236,7 +234,13 @@ GetMasterKey(Oid dbOid)
 	recursion++;
 
     LWLockAcquire(lock_cache, LW_SHARED);
-    masterKey = get_master_key_from_cache(dbOid);
+#ifdef PERCONA_FORK
+    /* Global catalog has its own cache */
+    if (spcOid == GLOBALTABLESPACE_OID)
+        masterKey = TDEGetGlCatKeyFromCache();
+    else
+#endif
+        masterKey = get_master_key_from_cache(dbOid);
     LWLockRelease(lock_cache);
 
     if (masterKey)
@@ -252,7 +256,13 @@ GetMasterKey(Oid dbOid)
     LWLockAcquire(lock_files, LW_SHARED);
     LWLockAcquire(lock_cache, LW_EXCLUSIVE);
 
-    masterKey = get_master_key_from_cache(dbOid);
+#ifdef PERCONA_FORK
+    /* Global catalog has its own cache */
+    if (spcOid == GLOBALTABLESPACE_OID)
+        masterKey = TDEGetGlCatKeyFromCache();
+    else
+#endif
+        masterKey = get_master_key_from_cache(dbOid);
 
     if (masterKey)
     {
@@ -263,7 +273,7 @@ GetMasterKey(Oid dbOid)
     }
 
     /* Master key not present in cache. Load from the keyring */
-    masterKeyInfo = pg_tde_get_master_key(dbOid);
+    masterKeyInfo = pg_tde_get_master_key(dbOid, spcOid);
     if (masterKeyInfo == NULL)
     {
         LWLockRelease(lock_cache);
@@ -273,15 +283,17 @@ GetMasterKey(Oid dbOid)
         return NULL;
     }
 
-    /* Load the master key from keyring and store it in cache */
-    keyring = GetKeyProviderByID(masterKeyInfo->keyringId);
     if (keyring == NULL)
     {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
+        keyring = GetKeyProviderByID(masterKeyInfo->keyringId);
+        if (keyring == NULL)
+        {
+            LWLockRelease(lock_cache);
+            LWLockRelease(lock_files);
 
-		recursion--;
-        return NULL;
+	    	recursion--;
+            return NULL;
+        }
     }
 
     keyInfo = KeyringGetKey(keyring, masterKeyInfo->keyId.versioned_name, false, &keyring_ret);
@@ -300,8 +312,13 @@ GetMasterKey(Oid dbOid)
     memcpy(masterKey->keyData, keyInfo->data.data, keyInfo->data.len);
     masterKey->keyLength = keyInfo->data.len;
 
-    Assert(MyDatabaseId == masterKey->keyInfo.databaseId);
-    push_master_key_to_cache(masterKey);
+    Assert(dbOid == masterKey->keyInfo.databaseId);
+#ifdef PERCONA_FORK
+    if (spcOid == GLOBALTABLESPACE_OID)
+        TDEPutGlCatKeyInCache(masterKey);
+    else
+#endif
+        push_master_key_to_cache(masterKey);
 
     /* Release the exclusive locks here */
     LWLockRelease(lock_cache);
@@ -324,12 +341,11 @@ GetMasterKey(Oid dbOid)
  * to make sure if some other caller has not added a master key for
  * same database while we were waiting for the lock.
  */
-
-static TDEMasterKey *
-set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool ensure_new_key)
+TDEMasterKey *
+set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring,
+                            Oid dbOid, Oid spcOid, bool ensure_new_key)
 {
     TDEMasterKey *masterKey = NULL;
-    Oid dbOid = MyDatabaseId;
     LWLock *lock_files = tde_lwlock_mk_files();
     LWLock *lock_cache = tde_lwlock_mk_cache();
     bool is_dup_key = false;
@@ -345,14 +361,15 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool 
 
     /*  TODO: Add the key in the cache? */
     if (is_dup_key == false)
-        is_dup_key = (pg_tde_get_master_key(dbOid) != NULL);
+        is_dup_key = (pg_tde_get_master_key(dbOid, spcOid) != NULL);
 
     if (is_dup_key == false)
     {
         const keyInfo *keyInfo = NULL;
 
         masterKey = palloc(sizeof(TDEMasterKey));
-        masterKey->keyInfo.databaseId = MyDatabaseId;
+        masterKey->keyInfo.databaseId = dbOid;
+        masterKey->keyInfo.tablespaceId = spcOid;
         masterKey->keyInfo.keyId.version = DEFAULT_MASTER_KEY_VERSION;
         masterKey->keyInfo.keyringId = keyring->key_id;
         strncpy(masterKey->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
@@ -381,7 +398,7 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool 
         XLogBeginInsert();
 	    XLogRegisterData((char *) &masterKey->keyInfo, sizeof(TDEMasterKeyInfo));
 	    XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_MASTER_KEY);
-        
+
         push_master_key_to_cache(masterKey);
     }
 
@@ -407,7 +424,10 @@ set_master_key_with_keyring(const char *key_name, GenericKeyring *keyring, bool 
 bool
 SetMasterKey(const char *key_name, const char *provider_name, bool ensure_new_key)
 {
-    TDEMasterKey *master_key = set_master_key_with_keyring(key_name, GetKeyProviderByName(provider_name), ensure_new_key);
+    TDEMasterKey *master_key = set_master_key_with_keyring(key_name, 
+                                        GetKeyProviderByName(provider_name), 
+                                        MyDatabaseId, MyDatabaseTableSpace, 
+                                        ensure_new_key);
 
     return (master_key != NULL);
 }
@@ -415,10 +435,11 @@ SetMasterKey(const char *key_name, const char *provider_name, bool ensure_new_ke
 bool
 RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool ensure_new_key)
 {
-    TDEMasterKey *master_key = GetMasterKey(MyDatabaseId);
+    TDEMasterKey *master_key = GetMasterKey(MyDatabaseId, MyDatabaseTableSpace, NULL);
     TDEMasterKey new_master_key;
     const keyInfo *keyInfo = NULL;
     GenericKeyring *keyring;
+    bool    is_rotated;
 
     /*
      * Let's set everything the same as the older master key and
@@ -457,8 +478,13 @@ RotateMasterKey(const char *new_key_name, const char *new_provider_name, bool en
 
     new_master_key.keyLength = keyInfo->data.len;
     memcpy(new_master_key.keyData, keyInfo->data.data, keyInfo->data.len);
-    clear_master_key_cache(MyDatabaseId, MyDatabaseTableSpace);
-    return pg_tde_perform_rotate_key(master_key, &new_master_key);
+    is_rotated = pg_tde_perform_rotate_key(master_key, &new_master_key);
+    if (is_rotated) {
+        clear_master_key_cache(master_key->keyInfo.databaseId);
+        push_master_key_to_cache(&new_master_key);
+    }
+
+    return is_rotated;
 }
 
 /*
@@ -470,7 +496,7 @@ xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
     bool ret;
 
     ret = pg_tde_write_map_keydata_files(xlrec->map_size, xlrec->buff, xlrec->keydata_size, &xlrec->buff[xlrec->map_size]);
-    clear_master_key_cache(MyDatabaseId, MyDatabaseTableSpace);
+    clear_master_key_cache(MyDatabaseId);
 
 	return ret;
 }
@@ -480,7 +506,7 @@ xl_tde_perform_rotate_key(XLogMasterKeyRotate *xlrec)
 * If ensure_new_key is true, then we will keep on incrementing the version number
 * till we get a key name that is not present in the keyring
 */
-static keyInfo *
+keyInfo *
 load_latest_versioned_key_name(TDEMasterKeyInfo *mastere_key_info, GenericKeyring *keyring, bool ensure_new_key)
 {
     KeyringReturnCodes kr_ret;
@@ -564,7 +590,7 @@ GetMasterKeyProviderId(void)
     }
     {
         /* Master key not present in cache. Try Loading it from the info file */
-        masterKeyInfo = pg_tde_get_master_key(dbOid);
+        masterKeyInfo = pg_tde_get_master_key(dbOid, MyDatabaseTableSpace);
         if (masterKeyInfo)
         {
             keyringId = masterKeyInfo->keyringId;
@@ -620,7 +646,7 @@ static void
 push_master_key_to_cache(TDEMasterKey *masterKey)
 {
     TDEMasterKey *cacheEntry = NULL;
-    Oid databaseId = MyDatabaseId;
+    Oid databaseId = masterKey->keyInfo.databaseId;
     bool found = false;
     cacheEntry = dshash_find_or_insert(get_master_key_Hash(),
                                        &databaseId, &found);
@@ -664,18 +690,18 @@ master_key_startup_cleanup(int tde_tbl_count, void* arg)
 void
 cleanup_master_key_info(Oid databaseId, Oid tablespaceId)
 {
-    clear_master_key_cache(databaseId, tablespaceId);
+    clear_master_key_cache(databaseId);
     /*
         * TODO: Although should never happen. Still verify if any table in the
         * database is using tde
         */
 
     /* Remove the tde files */
-    pg_tde_delete_tde_files(databaseId);
+    pg_tde_delete_tde_files(databaseId, tablespaceId);
 }
 
 static void
-clear_master_key_cache(Oid databaseId, Oid tablespaceId)
+clear_master_key_cache(Oid databaseId)
 {
     TDEMasterKey *cache_entry;
 
@@ -748,7 +774,7 @@ Datum pg_tde_master_key_info(PG_FUNCTION_ARGS)
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                     errmsg("function returning record called in context that cannot accept type record")));
 
-    master_key = GetMasterKey(MyDatabaseId);
+    master_key = GetMasterKey(MyDatabaseId, MyDatabaseTableSpace, NULL);
     if (master_key == NULL)
 	{
 		ereport(ERROR,

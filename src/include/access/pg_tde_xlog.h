@@ -41,10 +41,7 @@ static const RmgrData pg_tde_rmgr = {
 
 /* XLog encryption staff */
 
-/* GUC */
-extern bool EncryptXLog;
-
-extern Size TDEXLogEncryptBuffSize();
+extern Size TDEXLogEncryptBuffSize(void);
 
 #define XLOG_TDE_ENC_BUFF_ALIGNED_SIZE	add_size(TDEXLogEncryptBuffSize(), PG_IO_ALIGN_SIZE)
 
@@ -58,9 +55,9 @@ static const XLogSmgr tde_xlog_smgr = {
 	.seg_write = pg_tde_xlog_seg_write,
 };
 
-extern void TDEInitXLogSmgr(void);
+extern void TDEXLogSmgrInit(void);
 
-extern void xlogInitGUC(void);
+extern void XLogInitGUC(void);
 
 #endif
 

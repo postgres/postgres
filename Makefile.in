@@ -40,6 +40,7 @@ src/keyring/keyring_curl.o \
 src/keyring/keyring_file.o \
 src/keyring/keyring_vault.o \
 src/keyring/keyring_api.o \
+src/catalog/tde_global_catalog.o \
 src/catalog/tde_keyring.o \
 src/catalog/tde_master_key.o \
 src/common/pg_tde_shmem.o \

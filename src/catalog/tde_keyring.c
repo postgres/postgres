@@ -50,13 +50,12 @@ PG_FUNCTION_INFO_V1(keyring_delete_dependency_check_trigger);
 #define FILE_KEYRING_TYPE_KEY "type"
 
 static FileKeyring *load_file_keyring_provider_options(Datum keyring_options);
-static ProviderType get_keyring_provider_from_typename(char *provider_type);
 static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, Datum keyring_options);
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(Datum keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
 static GenericKeyring *load_keyring_provider_from_tuple(HeapTuple tuple, TupleDesc tupDesc);
 
-static ProviderType
+ProviderType
 get_keyring_provider_from_typename(char *provider_type)
 {
 	if (provider_type == NULL)

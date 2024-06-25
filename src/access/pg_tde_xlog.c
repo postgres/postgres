@@ -16,6 +16,7 @@
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xloginsert.h"
+#include "catalog/pg_tablespace_d.h"
 #include "storage/bufmgr.h"
 #include "storage/shmem.h"
 #include "utils/guc.h"
@@ -23,12 +24,14 @@
 
 #include "access/pg_tde_tdemap.h"
 #include "access/pg_tde_xlog.h"
-#include "catalog/tde_master_key.h"
 #include "encryption/enc_tde.h"
-
+#ifdef PERCONA_FORK
+#include "catalog/tde_global_catalog.h"
 
 static char *TDEXLogEncryptBuf = NULL;
-bool EncryptXLog = false;
+
+/* GUC */
+static bool EncryptXLog = false;
 
 static XLogPageHeaderData EncryptCurrentPageHrd;
 static XLogPageHeaderData DecryptCurrentPageHrd;
@@ -36,6 +39,8 @@ static XLogPageHeaderData DecryptCurrentPageHrd;
 static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset);
 static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char* iv_prefix);
 static int XLOGChooseNumBuffers(void);
+#endif
+
 /*
  * TDE fork XLog
  */
@@ -123,18 +128,12 @@ pg_tde_rmgr_identify(uint8 info)
 #ifdef PERCONA_FORK
 
 /* 
+ * -------------------------
  * XLog Storage Manager
- * TODO:
- * 	- Should be a config option "on/off"?
- *  - Currently it encrypts WAL XLog Pages, should we encrypt whole Segments? `initdb` for
- *    example generates a write of 312 pages - so 312 "gen IV" and "encrypt" runs instead of one.
- * 	  Would require though an extra read() during recovery/was_send etc to check `XLogPageHeader`
- *    if segment is encrypted.
- *    We could also encrypt Records while adding them to the XLog Buf but it'll be the slowest (?).
  */
 
 void
-xlogInitGUC(void)
+XLogInitGUC(void)
 {
 	DefineCustomBoolVariable("pg_tde.wal_encrypt",	/* name */
 							 "Enable/Disable encryption of WAL.",	/* short_desc */
@@ -166,7 +165,7 @@ XLOGChooseNumBuffers(void)
  * Defines the size of the XLog encryption buffer
  */
 Size
-TDEXLogEncryptBuffSize()
+TDEXLogEncryptBuffSize(void)
 {
 	int		xbuffers;
 
@@ -187,10 +186,10 @@ TDEXLogEncryptBuffSize()
 void
 TDEXLogShmemInit(void)
 {
+	bool	foundBuf;
+
 	if (EncryptXLog)
 	{
-		bool	foundBuf;
-
 		TDEXLogEncryptBuf = (char *)
 			TYPEALIGN(PG_IO_ALIGN_SIZE,
 					ShmemInitStruct("TDE XLog Encryption Buffer",
@@ -202,16 +201,10 @@ TDEXLogShmemInit(void)
 }
 
 void
-TDEInitXLogSmgr(void)
+TDEXLogSmgrInit(void)
 {
 	SetXLogSmgr(&tde_xlog_smgr);
 }
-
-/* 
- * TODO: proper key management
- *		 where to store refs to the master and internal keys?
- */
-static InternalKey XLogInternalKey = {.key = {0xD,}};
 
 ssize_t
 pg_tde_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset)
@@ -232,11 +225,10 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
 	size_t	data_size = 0;
 	XLogPageHeader	curr_page_hdr = &EncryptCurrentPageHrd;
 	XLogPageHeader	enc_buf_page;
-	RelKeyData		key = {.internal_key = XLogInternalKey};
+	RelKeyData		*key = GetGlCatInternalKey(XLOG_TDE_OID);
 	off_t	enc_off;
 	size_t	page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
 	uint32	iv_ctr = 0;
-
 
 #ifdef TDE_XLOG_DEBUG
 	elog(DEBUG1, "write encrypted WAL, pages amount: %d, size: %lu offset: %ld", count / (Size) XLOG_BLCKSZ, count, offset);
@@ -300,7 +292,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
 		{
 			SetXLogPageIVPrefix(curr_page_hdr->xlp_tli, curr_page_hdr->xlp_pageaddr, iv_prefix);
 			PG_TDE_ENCRYPT_DATA(iv_prefix, iv_ctr, (char *) buf + enc_off, data_size, 
-						TDEXLogEncryptBuf + enc_off, &key);
+						TDEXLogEncryptBuf + enc_off, key);
 		}
 
 		page_size = XLOG_BLCKSZ;
@@ -320,7 +312,7 @@ pg_tde_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
 	char	iv_prefix[16] = {0,};
 	size_t	data_size = 0;
 	XLogPageHeader	curr_page_hdr = &DecryptCurrentPageHrd;
-	RelKeyData		key = {.internal_key = XLogInternalKey};
+	RelKeyData		*key = GetGlCatInternalKey(XLOG_TDE_OID);
 	size_t	page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
 	off_t	dec_off;
 	uint32	iv_ctr = 0;
@@ -373,7 +365,7 @@ pg_tde_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
 			SetXLogPageIVPrefix(curr_page_hdr->xlp_tli, curr_page_hdr->xlp_pageaddr, iv_prefix);
 			PG_TDE_DECRYPT_DATA(
 				iv_prefix, iv_ctr, 
-				(char *) buf + dec_off, data_size, (char *) buf + dec_off, &key);
+				(char *) buf + dec_off, data_size, (char *) buf + dec_off, key);
 		}
 		
 		page_size = XLOG_BLCKSZ;
