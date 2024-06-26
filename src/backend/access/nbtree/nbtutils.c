@@ -2368,30 +2368,20 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 						  &continuescanflip, &opsktrig);
 
 		/*
-		 * If we ended up here due to the all_required_satisfied criteria,
-		 * test opsktrig in a way that ensures that finaltup contains the same
-		 * prefix of key columns as caller's tuple (a prefix that satisfies
-		 * earlier required-in-current-direction scan keys).
-		 *
-		 * If we ended up here due to the oppodir_inequality_sktrig criteria,
-		 * test opsktrig in a way that ensures that the same scan key that our
-		 * caller found to be unsatisfied (by the scan's tuple) was also the
-		 * one unsatisfied just now (by finaltup).  That way we'll only start
-		 * a new primitive scan when we're sure that both tuples _don't_ share
-		 * the same prefix of satisfied equality-constrained attribute values,
-		 * and that finaltup has a non-NULL attribute value indicated by the
-		 * unsatisfied scan key at offset opsktrig/sktrig.  (This depends on
-		 * _bt_check_compare not caring about the direction that inequalities
-		 * are required in whenever NULL attribute values are unsatisfied.  It
-		 * only cares about the scan direction, and its relationship to
-		 * whether NULLs are stored first or last relative to non-NULLs.)
+		 * Only start a new primitive index scan when finaltup has a required
+		 * unsatisfied inequality (unsatisfied in the opposite direction)
 		 */
 		Assert(all_required_satisfied != oppodir_inequality_sktrig);
 		if (unlikely(!continuescanflip &&
-					 ((all_required_satisfied && opsktrig > sktrig) ||
-					  (oppodir_inequality_sktrig && opsktrig >= sktrig))))
+					 so->keyData[opsktrig].sk_strategy != BTEqualStrategyNumber))
 		{
-			Assert(so->keyData[opsktrig].sk_strategy != BTEqualStrategyNumber);
+			/*
+			 * It's possible for the same inequality to be unsatisfied by both
+			 * caller's tuple (in scan's direction) and finaltup (in the
+			 * opposite direction) due to _bt_check_compare's behavior with
+			 * NULLs
+			 */
+			Assert(opsktrig >= sktrig); /* not opsktrig > sktrig due to NULLs */
 
 			/*
 			 * Make sure that any non-required arrays are set to the first
