@@ -285,7 +285,7 @@ Author: Jeff Davis <jdavis@postgresql.org>
      Rename <link
      linkend="catalog-pg-collation"><structname>pg_collation</structname>.<structfield>colliculocale</structfield></link>
      to <structfield>colllocale</structfield> and
-     <structname>pg_collation</structname>.<structfield>daticulocale</structfield>
+     <link linkend="catalog-pg-database"><structname>pg_database</structname>.<structfield>daticulocale</structfield></link>
      to <structfield>datlocale</structfield> (Jeff Davis)
      </para>
     </listitem>
