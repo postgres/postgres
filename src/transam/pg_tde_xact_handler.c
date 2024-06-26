@@ -52,8 +52,6 @@ pg_tde_xact_callback(XactEvent event, void *arg)
     {
         pending_delete_cleanup();
     }
-
-    pg_tde_cleanup_path_vars();
 }
 
 void

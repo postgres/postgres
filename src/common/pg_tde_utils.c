@@ -33,6 +33,12 @@ get_tde_table_am_oid(void)
     return get_table_am_oid("pg_tde", false);
 }
 
+Oid
+get_tde2_table_am_oid(void)
+{
+    return get_table_am_oid("pg_tde2", false);
+}
+
 /*
  * Returns the list of OIDs for all TDE tables in a database
  */

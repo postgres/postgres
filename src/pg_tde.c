@@ -31,6 +31,10 @@
 #include "keyring/keyring_vault.h"
 #include "utils/builtins.h"
 #include "pg_tde_defs.h"
+#include "smgr/pg_tde_smgr.h"
+#ifdef PERCONA_FORK
+#include "catalog/tde_global_catalog.h"
+#endif
 
 #define MAX_ON_INSTALLS 5
 
@@ -59,6 +63,11 @@ tde_shmem_request(void)
 {
 	Size sz = TdeRequiredSharedMemorySize();
 	int required_locks = TdeRequiredLocksCount();
+
+#ifdef PERCONA_FORK
+	sz = add_size(sz, XLOG_TDE_ENC_BUFF_ALIGNED_SIZE);
+#endif
+
 	if (prev_shmem_request_hook)
 		prev_shmem_request_hook();
 	RequestAddinShmemSpace(sz);
@@ -74,6 +83,14 @@ tde_shmem_startup(void)
 
 	TdeShmemInit();
 	AesInit();
+
+#ifdef PERCONA_FORK
+	TDEGlCatShmemInit();
+	TDEGlCatKeyInit();
+
+	TDEXLogShmemInit();
+	TDEXLogSmgrInit();
+#endif
 }
 
 void
@@ -86,7 +103,10 @@ _PG_init(void)
 
 	keyringRegisterVariables();
 	InitializeMasterKeyInfo();
-
+#ifdef PERCONA_FORK
+	XLogInitGUC();
+	TDEGlCatInitGUC();
+#endif
 	prev_shmem_request_hook = shmem_request_hook;
 	shmem_request_hook = tde_shmem_request;
 	prev_shmem_startup_hook = shmem_startup_hook;
@@ -98,6 +118,8 @@ _PG_init(void)
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
 	RegisterCustomRmgr(RM_TDERMGR_ID, &pg_tde_rmgr);
+
+	RegisterStorageMgr();
 }
 
 Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS)
