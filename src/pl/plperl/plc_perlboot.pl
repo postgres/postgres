@@ -1,6 +1,5 @@
 #  src/pl/plperl/plc_perlboot.pl
 
-use 5.008001;
 use vars qw(%_SHARED $_TD);
 
 PostgreSQL::InServer::Util::bootstrap();
