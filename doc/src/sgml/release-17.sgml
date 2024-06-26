@@ -276,6 +276,21 @@ Author: Peter Eisentraut <peter@eisentraut.org>
     </listitem>
 
 <!--
+Author: Jeff Davis <jdavis@postgresql.org>
+2024-03-09 [f696c0cd5] Catalog changes preparing for builtin collation provider
+-->
+
+    <listitem>
+     <para>
+     Rename <link
+     linkend="catalog-pg-collation"><structname>pg_collation</structname>.<structfield>colliculocale</structfield></link>
+     to <structfield>colllocale</structfield> and
+     <structname>pg_collation</structname>.<structfield>daticulocale</structfield>
+     to <structfield>datlocale</structfield> (Jeff Davis)
+     </para>
+    </listitem>
+
+<!--
 Author: Masahiko Sawada <msawada@postgresql.org>
 2024-04-02 [667e65aac] Use TidStore for dead tuple TIDs storage during lazy vac
 Author: Masahiko Sawada <msawada@postgresql.org>
