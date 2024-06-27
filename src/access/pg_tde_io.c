@@ -572,7 +572,7 @@ pg_tde_RelationGetBufferForTuple(Relation relation, Size len,
 	 * on, as cached in the BulkInsertState or relcache entry.  If that
 	 * doesn't work, we ask the Free Space Map to locate a suitable page.
 	 * Since the FSM's info might be out of date, we have to be prepared to
-	 * loop around and retry multiple times. (To insure this isn't an infinite
+	 * loop around and retry multiple times. (To ensure this isn't an infinite
 	 * loop, we must update the FSM with the correct amount of free space on
 	 * each page that proves not to be suitable.)  If the FSM has no record of
 	 * a page with enough free space, we give up and extend the relation.

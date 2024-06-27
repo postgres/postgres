@@ -1816,6 +1816,17 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
 	if (bistate->current_buf != InvalidBuffer)
 		ReleaseBuffer(bistate->current_buf);
 	bistate->current_buf = InvalidBuffer;
+
+	/*
+	 * Despite the name, we also reset bulk relation extension state.
+	 * Otherwise we can end up erroring out due to looking for free space in
+	 * ->next_free of one partition, even though ->next_free was set when
+	 * extending another partition. It could obviously also be bad for
+	 * efficiency to look at existing blocks at offsets from another
+	 * partition, even if we don't error out.
+	 */
+	bistate->next_free = InvalidBlockNumber;
+	bistate->last_free = InvalidBlockNumber;
 }
 
 
@@ -2739,13 +2750,7 @@ l1:
 			result = TM_Deleted;
 	}
 
-	if (crosscheck != InvalidSnapshot && result == TM_Ok)
-	{
-		/* Perform additional check for transaction-snapshot mode RI updates */
-		if (!HeapTupleSatisfiesVisibility(&tp, crosscheck, buffer))
-			result = TM_Updated;
-	}
-
+	/* sanity check the result HeapTupleSatisfiesUpdate() and the logic above */
 	if (result != TM_Ok)
 	{
 		Assert(result == TM_SelfModified ||
@@ -2755,6 +2760,17 @@ l1:
 		Assert(!(tp.t_data->t_infomask & HEAP_XMAX_INVALID));
 		Assert(result != TM_Updated ||
 			   !ItemPointerEquals(&tp.t_self, &tp.t_data->t_ctid));
+	}
+
+	if (crosscheck != InvalidSnapshot && result == TM_Ok)
+	{
+		/* Perform additional check for transaction-snapshot mode RI updates */
+		if (!HeapTupleSatisfiesVisibility(&tp, crosscheck, buffer))
+			result = TM_Updated;
+	}
+
+	if (result != TM_Ok)
+	{
 		tmfd->ctid = tp.t_data->t_ctid;
 		tmfd->xmax = HeapTupleHeaderGetUpdateXid(tp.t_data);
 		if (result == TM_SelfModified)
@@ -3401,16 +3417,7 @@ l2:
 			result = TM_Deleted;
 	}
 
-	if (crosscheck != InvalidSnapshot && result == TM_Ok)
-	{
-		/* Perform additional check for transaction-snapshot mode RI updates */
-		if (!HeapTupleSatisfiesVisibility(&oldtup, crosscheck, buffer))
-		{
-			result = TM_Updated;
-			Assert(!ItemPointerEquals(&oldtup.t_self, &oldtup.t_data->t_ctid));
-		}
-	}
-
+	/* Sanity check the result HeapTupleSatisfiesUpdate() and the logic above */
 	if (result != TM_Ok)
 	{
 		Assert(result == TM_SelfModified ||
@@ -3420,6 +3427,17 @@ l2:
 		Assert(!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID));
 		Assert(result != TM_Updated ||
 			   !ItemPointerEquals(&oldtup.t_self, &oldtup.t_data->t_ctid));
+	}
+
+	if (crosscheck != InvalidSnapshot && result == TM_Ok)
+	{
+		/* Perform additional check for transaction-snapshot mode RI updates */
+		if (!HeapTupleSatisfiesVisibility(&oldtup, crosscheck, buffer))
+			result = TM_Updated;
+	}
+
+	if (result != TM_Ok)
+	{
 		tmfd->ctid = oldtup.t_data->t_ctid;
 		tmfd->xmax = HeapTupleHeaderGetUpdateXid(oldtup.t_data);
 		if (result == TM_SelfModified)
