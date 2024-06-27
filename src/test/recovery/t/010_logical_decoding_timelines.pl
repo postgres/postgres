@@ -25,7 +25,6 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 13;
 use File::Copy;
-use IPC::Run ();
 use Scalar::Util qw(blessed);
 
 my ($stdout, $stderr, $ret);
