@@ -246,6 +246,14 @@ pgstat_detach_shmem(void)
 	pgStatLocal.shared_hash = NULL;
 
 	dsa_detach(pgStatLocal.dsa);
+
+	/*
+	 * dsa_detach() does not decrement the DSA reference count as no segment
+	 * was provided to dsa_attach_in_place(), causing no cleanup callbacks to
+	 * be registered.  Hence, release it manually now.
+	 */
+	dsa_release_in_place(pgStatLocal.shmem->raw_dsa_area);
+
 	pgStatLocal.dsa = NULL;
 }
 
