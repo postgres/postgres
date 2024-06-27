@@ -18,8 +18,8 @@
 
 /* TDE XLOG resource manager */
 #define XLOG_TDE_ADD_RELATION_KEY	0x00
-#define XLOG_TDE_ADD_MASTER_KEY		0x10
-#define XLOG_TDE_CLEAN_MASTER_KEY	0x20
+#define XLOG_TDE_ADD_PRINCIPAL_KEY		0x10
+#define XLOG_TDE_CLEAN_PRINCIPAL_KEY	0x20
 #define XLOG_TDE_ROTATE_KEY			0x30
 
 /* TODO: ID has to be registedred and changed: https://wiki.postgresql.org/wiki/CustomWALResourceManagers */

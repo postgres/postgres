@@ -13,7 +13,7 @@
 
 #include "postgres.h"
 
-#include "catalog/tde_master_key.h"
+#include "catalog/tde_principal_key.h"
 
 /* 
  * Needed for glogbal data (WAL etc) keys identification in caches and storage.
@@ -34,8 +34,8 @@ extern Size TDEGlCatEncStateSize(void);
 extern void TDEGlCatShmemInit(void);
 extern void TDEGlCatKeyInit(void);
 
-extern TDEMasterKey *TDEGetGlCatKeyFromCache(void);
-extern void TDEPutGlCatKeyInCache(TDEMasterKey *mkey);
+extern TDEPrincipalKey *TDEGetGlCatKeyFromCache(void);
+extern void TDEPutGlCatKeyInCache(TDEPrincipalKey *mkey);
 extern RelKeyData *GetGlCatInternalKey(Oid obj_id);
 
 #endif /*TDE_GLOBAL_CATALOG_H*/

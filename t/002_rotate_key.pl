@@ -44,7 +44,7 @@ ok($rt_value == 1, "Restart Server");
 
 $rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');", extra_params => ['-a']);
 $rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_file('file-2','/tmp/pg_tde_test_keyring_2.per');", extra_params => ['-a']);
-$rt_value = $node->psql('postgres', "SELECT pg_tde_set_master_key('test-db-master-key','file-vault');", extra_params => ['-a']);
+$rt_value = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');", extra_params => ['-a']);
 
 $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING pg_tde;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -56,8 +56,8 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 #rotate key
-PGTDE::append_to_file("-- ROTATE KEY pg_tde_rotate_key('rotated-master-key','file-2');");
-$rt_value = $node->psql('postgres', "SELECT pg_tde_rotate_key('rotated-master-key','file-2');", extra_params => ['-a']);
+PGTDE::append_to_file("-- ROTATE KEY pg_tde_rotate_key('rotated-principal-key','file-2');");
+$rt_value = $node->psql('postgres', "SELECT pg_tde_rotate_key('rotated-principal-key','file-2');", extra_params => ['-a']);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 

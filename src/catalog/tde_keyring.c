@@ -11,7 +11,7 @@
  */
 
 #include "catalog/tde_keyring.h"
-#include "catalog/tde_master_key.h"
+#include "catalog/tde_principal_key.h"
 #include "access/skey.h"
 #include "access/relscan.h"
 #include "access/relation.h"
@@ -289,13 +289,13 @@ debug_print_kerying(GenericKeyring *keyring)
 
 /*
  * Trigger function on keyring catalog to ensure the keyring
- * used by the master key should not get deleted.
+ * used by the principal key should not get deleted.
  */
 Datum
 keyring_delete_dependency_check_trigger(PG_FUNCTION_ARGS)
 {
 	TriggerData *trig_data = (TriggerData *)fcinfo->context;
-	Oid master_key_keyring_id;
+	Oid principal_key_keyring_id;
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
 	{
@@ -310,10 +310,10 @@ keyring_delete_dependency_check_trigger(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 				 errmsg("keyring dependency check trigger: trigger should be fired before delete")));
 	}
-	master_key_keyring_id = GetMasterKeyProviderId();
-	if (master_key_keyring_id == InvalidOid)
+	principal_key_keyring_id = GetPrincipalKeyProviderId();
+	if (principal_key_keyring_id == InvalidOid)
 	{
-		/* No master key set. We are good to delete anything */
+		/* No principal key set. We are good to delete anything */
 		return PointerGetDatum(trig_data->tg_trigtuple);
 	}
 
@@ -328,7 +328,7 @@ keyring_delete_dependency_check_trigger(PG_FUNCTION_ARGS)
 			Oid provider_id;
 			datum = heap_getattr(oldtuple, PG_TDE_KEY_PROVIDER_ID_ATTRNUM, trig_data->tg_relation->rd_att, &isnull);
 			provider_id = DatumGetInt32(datum);
-			if (provider_id == master_key_keyring_id)
+			if (provider_id == principal_key_keyring_id)
 			{
 				char *keyring_name;
 				datum = heap_getattr(oldtuple, PG_TDE_KEY_PROVIDER_NAME_ATTRNUM, trig_data->tg_relation->rd_att, &isnull);
@@ -337,7 +337,7 @@ keyring_delete_dependency_check_trigger(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 						 errmsg("Key provider \"%s\" cannot be deleted", keyring_name),
-						 errdetail("The master key for the database depends on this key provider.")));
+						 errdetail("The principal key for the database depends on this key provider.")));
 				SPI_finish();
 				trig_data->tg_trigtuple = NULL;
 				return PointerGetDatum(NULL);

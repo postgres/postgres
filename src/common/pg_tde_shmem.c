@@ -17,10 +17,10 @@
 
 typedef struct TdeSharedState
 {
-	LWLock *masterKeyLock;
-	int masterKeyHashTrancheId;
+	LWLock *principalKeyLock;
+	int principalKeyHashTrancheId;
 	void *rawDsaArea; /* DSA area pointer to store cache hashes */
-	dshash_table_handle masterKeyHashHandle;
+	dshash_table_handle principalKeyHashHandle;
 } TdeSharedState;
 
 typedef struct TDELocalState
@@ -29,7 +29,7 @@ typedef struct TDELocalState
 	dsa_area **dsa; /* local dsa area for backend attached to the
 					 * dsa area created by postmaster at startup.
 					 */
-	dshash_table *masterKeySharedHash;
+	dshash_table *principalKeySharedHash;
 } TDELocalState;
 
 static void tde_shmem_shutdown(int code, Datum arg);

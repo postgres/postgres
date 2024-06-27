@@ -24,12 +24,12 @@ To check if the data is encrypted, do the following:
 
     The function returns `t` if the table is encrypted and `f` - if not.
 
-3. Rotate the master key when needed:
+3. Rotate the principal key when needed:
 
     ```sql
     SELECT pg_tde_rotate_key(); -- uses automatic key versionin
     -- or
-    SELECT pg_tde_rotate_key('new-master-key', NULL); -- specify new key name
+    SELECT pg_tde_rotate_key('new-principal-key', NULL); -- specify new key name
     -- or
-    SELECT pg_tde_rotate_key('new-master-key', 'new-provider'); -- change provider
+    SELECT pg_tde_rotate_key('new-principal-key', 'new-provider'); -- change provider
     ```

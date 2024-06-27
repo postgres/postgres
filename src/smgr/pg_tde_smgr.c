@@ -18,7 +18,7 @@ static RelKeyData*
 tde_smgr_get_key(SMgrRelation reln)
 {
 	// TODO: This recursion counter is a dirty hack until the metadata is in the catalog
-	// As otherwise we would call GetMasterKey recursively and deadlock
+	// As otherwise we would call GetPrincipalKey recursively and deadlock
 	static int recursion = 0;
 
 	if(IsCatalogRelationOid(reln->smgr_rlocator.locator.relNumber))
@@ -35,7 +35,7 @@ tde_smgr_get_key(SMgrRelation reln)
 	recursion++;
 
 
-	if(GetMasterKey(reln->smgr_rlocator.locator.relNumber, reln->smgr_rlocator.locator.spcOid, NULL)==NULL)
+	if(GetPrincipalKey(reln->smgr_rlocator.locator.relNumber, reln->smgr_rlocator.locator.spcOid, NULL)==NULL)
 	{
 		recursion--;
 		return NULL;

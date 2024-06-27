@@ -91,7 +91,7 @@ jobs:
           bin/createuser sbtest -s
           bin/psql sbtest2 <<< "CREATE EXTENSION pg_tde;"
           bin/psql sbtest2 <<< "SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');"
-          bin/psql sbtest2 <<< "SELECT pg_tde_set_master_key('test-db-master-key','file-vault');"
+          bin/psql sbtest2 <<< "SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');"
           cp -r ../src/contrib/pg_tde/sysbench .
         working-directory: inst
 

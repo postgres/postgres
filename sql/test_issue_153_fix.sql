@@ -1,10 +1,10 @@
 CREATE EXTENSION pg_tde;
 SET datestyle TO 'iso, dmy';
 
-SELECT  * FROM pg_tde_master_key_info();
+SELECT  * FROM pg_tde_principal_key_info();
 
 SELECT pg_tde_add_key_provider_file('file-ring','/tmp/pg_tde_test_keyring.per');
-SELECT pg_tde_set_master_key('test-db-master-key','file-ring');
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-ring');
 
 --
 --  Script that creates the 'sample' tde encrypted tables, views

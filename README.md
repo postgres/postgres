@@ -65,15 +65,15 @@ FUNCTION pg_tde_add_key_provider_file(
 SELECT pg_tde_add_key_provider_file('file','/tmp/pgkeyring');
 ```
 **Note: The `File` provided is intended for development and stores the keys unencrypted in the specified data file.**
-6. Set the master key for the database using the `pg_tde_set_master_key` function.
+6. Set the principal key for the database using the `pg_tde_set_principal_key` function.
 ```sql
-FUNCTION pg_tde_set_master_key (
-                master_key_name VARCHAR(255), 
+FUNCTION pg_tde_set_principal_key (
+                principal_key_name VARCHAR(255), 
                 provider_name VARCHAR(255));
 ```
-**Example**: Set the master key named `my-master-key` using the `file` as a key provider.
+**Example**: Set the principal key named `my-principal-key` using the `file` as a key provider.
 ```sql
-SELECT pg_tde_set_master_key('my-master-key','file');
+SELECT pg_tde_set_principal_key('my-principal-key','file');
 ```
 
 7. You are all set to create encrypted tables. For that, specify `USING pg_tde` in the `CREATE TABLE` statement.

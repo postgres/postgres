@@ -35,7 +35,7 @@ ok($cmdret == 0, "CREATE PGTDE EXTENSION");
 PGTDE::append_to_file($stdout);
 
 $rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_file('file-provider', json_object( 'type' VALUE 'file', 'path' VALUE '/tmp/datafile-location' ));", extra_params => ['-a']);
-$rt_value = $node->psql('postgres', "SELECT pg_tde_set_master_key('test-db-master-key','file-provider');", extra_params => ['-a']);
+$rt_value = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','file-provider');", extra_params => ['-a']);
 
 my $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc1(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING pg_tde;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);

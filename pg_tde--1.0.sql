@@ -17,7 +17,7 @@ CREATE TABLE percona_tde.pg_tde_key_provider(provider_id SERIAL,
 
 SELECT pg_catalog.pg_extension_config_dump('percona_tde.pg_tde_key_provider', '');
 
--- Trigger function to check master key dependency on key provider row
+-- Trigger function to check principal key dependency on key provider row
 CREATE FUNCTION keyring_delete_dependency_check_trigger()
 RETURNS TRIGGER
 AS 'MODULE_PATHNAME'
@@ -104,12 +104,12 @@ SELECT EXISTS (
     )$$
 LANGUAGE SQL;
 
-CREATE FUNCTION pg_tde_rotate_key(new_master_key_name VARCHAR(255) DEFAULT NULL, new_provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT TRUE)
+CREATE FUNCTION pg_tde_rotate_key(new_principal_key_name VARCHAR(255) DEFAULT NULL, new_provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT TRUE)
 RETURNS boolean
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION pg_tde_set_master_key(master_key_name VARCHAR(255), provider_name VARCHAR(255), ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255), ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
@@ -119,12 +119,12 @@ RETURNS VOID
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION pg_tde_master_key_info()
-RETURNS TABLE ( master_key_name text,
+CREATE FUNCTION pg_tde_principal_key_info()
+RETURNS TABLE ( principal_key_name text,
                 key_provider_name text,
                 key_provider_id integer,
-                master_key_internal_name text,
-                master_key_version integer,
+                principal_key_internal_name text,
+                principal_key_version integer,
                 key_createion_time timestamp with time zone)
 AS 'MODULE_PATHNAME'
 LANGUAGE C;

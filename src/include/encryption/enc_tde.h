@@ -52,7 +52,7 @@ PGTdePageAddItemExtended(RelFileLocator rel, Oid oid, BlockNumber bn, Page page,
 		pg_tde_crypt(_iv_prefix, _iv_prefix_len, _data, _data_len, _out, _key, "ENCRYPT-PAGE-ITEM"); \
 	} while(0)
 
-extern void AesEncryptKey(const TDEMasterKey *master_key, const RelFileLocator *rlocator, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes);
-extern void AesDecryptKey(const TDEMasterKey *master_key, const RelFileLocator *rlocator, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes);
+extern void AesEncryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes);
+extern void AesDecryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes);
 
 #endif /*ENC_TDE_H*/

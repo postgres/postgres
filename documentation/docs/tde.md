@@ -7,9 +7,9 @@ Transparent Data Encryption offers encryption at the file level and solves the p
 To encrypt the data, two types of keys are used:
 
 * Database keys to encrypt user data. These are stored internally, near the data that they encrypt.
-* The master key to encrypt database keys. It is kept separately from the database keys and is managed externally. 
+* The principal key to encrypt database keys. It is kept separately from the database keys and is managed externally. 
 
-`pg_tde` is integrated with HashiCorp Vault server to store and manage master keys. Only the back end KV Secrets Engine - Version 2 (API) is supported.
+`pg_tde` is integrated with HashiCorp Vault server to store and manage principal keys. Only the back end KV Secrets Engine - Version 2 (API) is supported.
 
 The encryption process is the following:
 
@@ -17,9 +17,9 @@ The encryption process is the following:
 
 When a user creates an encrypted table using `pg_tde`, a new random key is generated for that table. This key is used to encrypt all data the user inserts in that table. Eventually the encrypted data gets stored in the underlying storage. 
 
-The table itself is encrypted using the master key. The master key is stored externally in the Vault key management store. 
+The table itself is encrypted using the principal key. The principal key is stored externally in the Vault key management store. 
 
-Similarly when the user queries the encrypted table, the master key is retrieved from the key store to decrypt the table. Then the same unique internal key for that table is used to decrypt the data, and unencrypted data gets returned to the user. So, effectively, every TDE table has a unique key, and each table key is encrypted using the master key.
+Similarly when the user queries the encrypted table, the principal key is retrieved from the key store to decrypt the table. Then the same unique internal key for that table is used to decrypt the data, and unencrypted data gets returned to the user. So, effectively, every TDE table has a unique key, and each table key is encrypted using the principal key.
 
 ## Why do you need TDE?
 

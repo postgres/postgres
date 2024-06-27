@@ -26,7 +26,7 @@
 #include "keyring/keyring_api.h"
 #include "common/pg_tde_shmem.h"
 #include "common/pg_tde_utils.h"
-#include "catalog/tde_master_key.h"
+#include "catalog/tde_principal_key.h"
 #include "keyring/keyring_file.h"
 #include "keyring/keyring_vault.h"
 #include "utils/builtins.h"
@@ -102,7 +102,7 @@ _PG_init(void)
 	}
 
 	keyringRegisterVariables();
-	InitializeMasterKeyInfo();
+	InitializePrincipalKeyInfo();
 #ifdef PERCONA_FORK
 	XLogInitGUC();
 	TDEGlCatInitGUC();

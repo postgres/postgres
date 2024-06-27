@@ -63,10 +63,10 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
         ```
        
        
-5. Add a master key
+5. Add a principal key
 
     ```sql
-    SELECT pg_tde_set_master_key('name-of-the-master-key', 'provider-name');
+    SELECT pg_tde_set_principal_key('name-of-the-principal-key', 'provider-name');
     ```
 
    <i info>:material-information: Info:</i> The key provider configuration is stored in the database catalog in an unencrypted table. See [how to use external reference to parameters](external-parameters.md) to add an extra security layer to your setup.

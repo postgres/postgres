@@ -55,21 +55,21 @@ pg_tde_rmgr_redo(XLogReaderState *record)
 
 		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, NULL);
 	}
-	else if (info == XLOG_TDE_ADD_MASTER_KEY)
+	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
-		TDEMasterKeyInfo *mkey = (TDEMasterKeyInfo *) XLogRecGetData(record);
+		TDEPrincipalKeyInfo *mkey = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
 
-		save_master_key_info(mkey);
+		save_principal_key_info(mkey);
 	}
-	else if (info == XLOG_TDE_CLEAN_MASTER_KEY)
+	else if (info == XLOG_TDE_CLEAN_PRINCIPAL_KEY)
 	{
-		XLogMasterKeyCleanup *xlrec = (XLogMasterKeyCleanup *) XLogRecGetData(record);
+		XLogPrincipalKeyCleanup *xlrec = (XLogPrincipalKeyCleanup *) XLogRecGetData(record);
 
-		cleanup_master_key_info(xlrec->databaseId, xlrec->tablespaceId);
+		cleanup_principal_key_info(xlrec->databaseId, xlrec->tablespaceId);
 	}
 	else if (info == XLOG_TDE_ROTATE_KEY)
 	{
-		XLogMasterKeyRotate *xlrec = (XLogMasterKeyRotate *) XLogRecGetData(record);
+		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
 
 		xl_tde_perform_rotate_key(xlrec);
 	}
@@ -90,23 +90,23 @@ pg_tde_rmgr_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "add tde internal key for relation %u/%u", xlrec->rlocator.dbOid, xlrec->rlocator.relNumber);
 	}
-	if (info == XLOG_TDE_ADD_MASTER_KEY)
+	if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
-		TDEMasterKeyInfo *xlrec = (TDEMasterKeyInfo *) XLogRecGetData(record);
+		TDEPrincipalKeyInfo *xlrec = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "add tde master key for db %u/%u", xlrec->databaseId, xlrec->tablespaceId);
+		appendStringInfo(buf, "add tde principal key for db %u/%u", xlrec->databaseId, xlrec->tablespaceId);
 	}
-	if (info == XLOG_TDE_CLEAN_MASTER_KEY)
+	if (info == XLOG_TDE_CLEAN_PRINCIPAL_KEY)
 	{
-		XLogMasterKeyCleanup *xlrec = (XLogMasterKeyCleanup *) XLogRecGetData(record);
+		XLogPrincipalKeyCleanup *xlrec = (XLogPrincipalKeyCleanup *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "cleanup tde master key info for db %u/%u", xlrec->databaseId, xlrec->tablespaceId);
+		appendStringInfo(buf, "cleanup tde principal key info for db %u/%u", xlrec->databaseId, xlrec->tablespaceId);
 	}
 	if (info == XLOG_TDE_ROTATE_KEY)
 	{
-		XLogMasterKeyRotate *xlrec = (XLogMasterKeyRotate *) XLogRecGetData(record);
+		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "rotate master key for %u", xlrec->databaseId);
+		appendStringInfo(buf, "rotate principal key for %u", xlrec->databaseId);
 	}
 }
 
@@ -116,11 +116,11 @@ pg_tde_rmgr_identify(uint8 info)
 	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_ADD_RELATION_KEY)
 		return "XLOG_TDE_ADD_RELATION_KEY";
 
-	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_ADD_MASTER_KEY)
-		return "XLOG_TDE_ADD_MASTER_KEY";
+	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_ADD_PRINCIPAL_KEY)
+		return "XLOG_TDE_ADD_PRINCIPAL_KEY";
 
-	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_CLEAN_MASTER_KEY)
-		return "XLOG_TDE_CLEAN_MASTER_KEY";
+	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_CLEAN_PRINCIPAL_KEY)
+		return "XLOG_TDE_CLEAN_PRINCIPAL_KEY";
 
 	return NULL;
 }

@@ -1,16 +1,16 @@
 CREATE EXTENSION pg_tde;
-SELECT  * FROM pg_tde_master_key_info();
-ERROR:  Master key does not exists for the database
-HINT:  Use set_master_key interface to set the master key
+SELECT  * FROM pg_tde_principal_key_info();
+ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_key_provider_file 
 ------------------------------
                             1
 (1 row)
 
-SELECT pg_tde_set_master_key('test-db-master-key','file-vault');
- pg_tde_set_master_key 
------------------------
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
  t
 (1 row)
 
@@ -48,11 +48,11 @@ SELECT pgtde_is_encrypted('test_norm');
  f
 (1 row)
 
-SELECT  key_provider_id, key_provider_name, master_key_name
-		FROM pg_tde_master_key_info();
- key_provider_id | key_provider_name |  master_key_name   
------------------+-------------------+--------------------
-               1 | file-vault        | test-db-master-key
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ key_provider_id | key_provider_name |  principal_key_name   
+-----------------+-------------------+-----------------------
+               1 | file-vault        | test-db-principal-key
 (1 row)
 
 DROP TABLE test_enc;
