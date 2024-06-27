@@ -37,63 +37,46 @@ $node->safe_psql('postgres', q(CREATE TABLE tbl(i int)));
 # statements.
 #
 
-my $main_in    = '';
-my $main_out   = '';
-my $main_timer = IPC::Run::timeout($TestLib::timeout_default);
+my $main_h = $node->background_psql('postgres');
 
-my $main_h =
-  $node->background_psql('postgres', \$main_in, \$main_out,
-	$main_timer, on_error_stop => 1);
-$main_in .= q(
+$main_h->query_safe(q(
 BEGIN;
 INSERT INTO tbl VALUES(0);
-\echo syncpoint1
-);
-pump $main_h until $main_out =~ /syncpoint1/ || $main_timer->is_expired;
+));
 
-my $cic_in    = '';
-my $cic_out   = '';
-my $cic_timer = IPC::Run::timeout($TestLib::timeout_default);
-my $cic_h =
-  $node->background_psql('postgres', \$cic_in, \$cic_out,
-	$cic_timer, on_error_stop => 1);
-$cic_in .= q(
+my $cic_h = $node->background_psql('postgres');
+
+$cic_h->query_until(qr/start/, q(
 \echo start
 CREATE INDEX CONCURRENTLY idx ON tbl(i);
-);
-pump $cic_h until $cic_out =~ /start/ || $cic_timer->is_expired;
+));
 
-$main_in .= q(
+$main_h->query_safe(q(
 PREPARE TRANSACTION 'a';
-);
+));
 
-$main_in .= q(
+$main_h->query_safe(q(
 BEGIN;
 INSERT INTO tbl VALUES(0);
-\echo syncpoint2
-);
-pump $main_h until $main_out =~ /syncpoint2/ || $main_timer->is_expired;
+));
 
 $node->safe_psql('postgres', q(COMMIT PREPARED 'a';));
 
-$main_in .= q(
+$main_h->query_safe(q(
 PREPARE TRANSACTION 'b';
 BEGIN;
 INSERT INTO tbl VALUES(0);
-\echo syncpoint3
-);
-pump $main_h until $main_out =~ /syncpoint3/ || $main_timer->is_expired;
+));
 
 $node->safe_psql('postgres', q(COMMIT PREPARED 'b';));
 
-$main_in .= q(
+$main_h->query_safe(q(
 PREPARE TRANSACTION 'c';
 COMMIT PREPARED 'c';
-);
-$main_h->pump_nb;
+));
 
-$main_h->finish;
-$cic_h->finish;
+$main_h->quit;
+$cic_h->quit;
 
 $result = $node->psql('postgres', q(SELECT bt_index_check('idx',true)));
 is($result, '0', 'bt_index_check after overlapping 2PC');
@@ -114,22 +97,15 @@ PREPARE TRANSACTION 'persists_forever';
 ));
 $node->restart;
 
-my $reindex_in  = '';
-my $reindex_out = '';
-my $reindex_timer =
-  IPC::Run::timeout($TestLib::timeout_default);
-my $reindex_h =
-  $node->background_psql('postgres', \$reindex_in, \$reindex_out,
-	$reindex_timer, on_error_stop => 1);
-$reindex_in .= q(
+my $reindex_h = $node->background_psql('postgres');
+$reindex_h->query_until(qr/start/, q(
 \echo start
 DROP INDEX CONCURRENTLY idx;
 CREATE INDEX CONCURRENTLY idx ON tbl(i);
-);
-pump $reindex_h until $reindex_out =~ /start/ || $reindex_timer->is_expired;
+));
 
 $node->safe_psql('postgres', "COMMIT PREPARED 'spans_restart'");
-$reindex_h->finish;
+$reindex_h->quit;
 $result = $node->psql('postgres', q(SELECT bt_index_check('idx',true)));
 is($result, '0', 'bt_index_check after 2PC and restart');
 

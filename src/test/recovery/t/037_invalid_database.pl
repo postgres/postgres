@@ -85,39 +85,20 @@ is($node->psql('postgres', 'DROP DATABASE regression_invalid'),
 # interruption happens at the appropriate moment, we lock pg_tablespace. DROP
 # DATABASE scans pg_tablespace once it has reached the "irreversible" part of
 # dropping the database, making it a suitable point to wait.
-my $bgpsql_in    = '';
-my $bgpsql_out   = '';
-my $bgpsql_err   = '';
-my $bgpsql_timer = IPC::Run::timer($PostgreSQL::Test::Utils::timeout_default);
-my $bgpsql = $node->background_psql('postgres', \$bgpsql_in, \$bgpsql_out,
-	$bgpsql_timer, on_error_stop => 0);
-$bgpsql_out = '';
-$bgpsql_in .= "SELECT pg_backend_pid();\n";
-
-pump_until($bgpsql, $bgpsql_timer, \$bgpsql_out, qr/\d/);
-
-my $pid = $bgpsql_out;
-$bgpsql_out = '';
+my $bgpsql = $node->background_psql('postgres', on_error_stop => 0);
+my $pid = $bgpsql->query('SELECT pg_backend_pid()');
 
 # create the database, prevent drop database via lock held by a 2PC transaction
-$bgpsql_in .= qq(
+ok( $bgpsql->query_safe(
+		qq(
   CREATE DATABASE regression_invalid_interrupt;
   BEGIN;
   LOCK pg_tablespace;
-  PREPARE TRANSACTION 'lock_tblspc';
-  \\echo done
-);
-
-ok(pump_until($bgpsql, $bgpsql_timer, \$bgpsql_out, qr/done/),
+  PREPARE TRANSACTION 'lock_tblspc';)),
 	"blocked DROP DATABASE completion");
-$bgpsql_out = '';
 
 # Try to drop. This will wait due to the still held lock.
-$bgpsql_in .= qq(
-  DROP DATABASE regression_invalid_interrupt;
-  \\echo DROP DATABASE completed
-);
-$bgpsql->pump_nb;
+$bgpsql->query_until(qr//, "DROP DATABASE regression_invalid_interrupt;\n");
 
 # Ensure we're waiting for the lock
 $node->poll_query_until('postgres',
@@ -130,9 +111,10 @@ ok($node->safe_psql('postgres', "SELECT pg_cancel_backend($pid)"),
 
 # wait for cancellation to be processed
 ok( pump_until(
-		$bgpsql, $bgpsql_timer, \$bgpsql_out, qr/DROP DATABASE completed/),
+		$bgpsql->{run}, $bgpsql->{timeout},
+		\$bgpsql->{stderr}, qr/canceling statement due to user request/),
 	"cancel processed");
-$bgpsql_out = '';
+$bgpsql->{stderr} = '';
 
 # verify that connection to the database aren't allowed
 is($node->psql('regression_invalid_interrupt', ''),
@@ -140,18 +122,12 @@ is($node->psql('regression_invalid_interrupt', ''),
 
 # To properly drop the database, we need to release the lock previously preventing
 # doing so.
-$bgpsql_in .= qq(
-  ROLLBACK PREPARED 'lock_tblspc';
-  \\echo ROLLBACK PREPARED
-);
-ok(pump_until($bgpsql, $bgpsql_timer, \$bgpsql_out, qr/ROLLBACK PREPARED/),
+ok($bgpsql->query_safe(qq(ROLLBACK PREPARED 'lock_tblspc')),
 	"unblock DROP DATABASE");
-$bgpsql_out = '';
 
-is($node->psql('postgres', "DROP DATABASE regression_invalid_interrupt"),
-	0, "DROP DATABASE invalid_interrupt");
+ok($bgpsql->query(qq(DROP DATABASE regression_invalid_interrupt)),
+	"DROP DATABASE invalid_interrupt");
 
-$bgpsql_in .= "\\q\n";
-$bgpsql->finish();
+$bgpsql->quit();
 
 done_testing();
