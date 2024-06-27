@@ -1715,7 +1715,7 @@ CreatePartitionPruneState(PlanState *planstate, PartitionPruneInfo *pruneinfo)
 	int			i;
 	ExprContext *econtext = planstate->ps_ExprContext;
 
-	/* For data reading, executor always omits detached partitions */
+	/* For data reading, executor always includes detached partitions */
 	if (estate->es_partition_directory == NULL)
 		estate->es_partition_directory =
 			CreatePartitionDirectory(estate->es_query_cxt, false);
@@ -1798,8 +1798,8 @@ CreatePartitionPruneState(PlanState *planstate, PartitionPruneInfo *pruneinfo)
 			 * this by creating new subplan_map and subpart_map arrays that
 			 * corresponds to the ones in the PruneInfo where the new
 			 * partition descriptor's OIDs match.  Any that don't match can be
-			 * set to -1, as if they were pruned.  Both arrays must be in
-			 * numerical OID order.
+			 * set to -1, as if they were pruned.  By construction, both
+			 * arrays are in partition bounds order.
 			 */
 			pprune->nparts = partdesc->nparts;
 			pprune->subplan_map = palloc(sizeof(int) * partdesc->nparts);
