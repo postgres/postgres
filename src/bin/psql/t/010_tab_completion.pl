@@ -4,7 +4,6 @@ use warnings;
 use PostgresNode;
 use TestLib;
 use Test::More;
-use IPC::Run qw(pump finish timer);
 use Data::Dumper;
 
 # Do nothing unless Makefile has told us that the build is --with-readline.
@@ -86,14 +85,7 @@ print $FH "other stuff\n";
 close $FH;
 
 # fire up an interactive psql session
-my $in  = '';
-my $out = '';
-
-my $timer = timer($TestLib::timeout_default);
-
-my $h = $node->interactive_psql('postgres', \$in, \$out, $timer);
-
-like($out, qr/psql/, "print startup banner");
+my $h = $node->interactive_psql('postgres');
 
 # Simple test case: type something and see if psql responds as expected
 sub check_completion
@@ -103,15 +95,12 @@ sub check_completion
 	# report test failures from caller location
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-	# reset output collector
-	$out = "";
 	# restart per-command timer
-	$timer->start($TestLib::timeout_default);
-	# send the data to be sent
-	$in .= $send;
-	# wait ...
-	pump $h until ($out =~ $pattern || $timer->is_expired);
-	my $okay = ($out =~ $pattern && !$timer->is_expired);
+	$h->{timeout}->start($PostgreSQL::Test::Utils::timeout_default);
+
+	# send the data to be sent and wait for its result
+	my $out = $h->query_until($pattern, $send);
+	my $okay = ($out =~ $pattern && !$h->{timeout}->is_expired);
 	ok($okay, $annotation);
 	# for debugging, log actual output if it didn't match
 	local $Data::Dumper::Terse = 1;
@@ -232,10 +221,7 @@ check_completion(
 clear_line();
 
 # send psql an explicit \q to shut it down, else pty won't close properly
-$timer->start($TestLib::timeout_default);
-$in .= "\\q\n";
-finish $h or die "psql returned $?";
-$timer->reset;
+$h->quit or die "psql returned $?";
 
 # done
 $node->stop;

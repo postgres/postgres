@@ -101,6 +101,7 @@ use RecursiveCopy;
 use Socket;
 use Test::More;
 use TestLib ();
+use PostgreSQL::Test::BackgroundPsql ();
 use Time::HiRes qw(usleep);
 use Scalar::Util qw(blessed);
 
@@ -1668,18 +1669,9 @@ sub psql
 
 =pod
 
-=item $node->background_psql($dbname, \$stdin, \$stdout, $timer, %params) => harness
+=item $node->background_psql($dbname, %params) => PostgreSQL::Test::BackgroundPsql instance
 
-Invoke B<psql> on B<$dbname> and return an IPC::Run harness object, which the
-caller may use to send input to B<psql>.  The process's stdin is sourced from
-the $stdin scalar reference, and its stdout and stderr go to the $stdout
-scalar reference.  This allows the caller to act on other parts of the system
-while idling this backend.
-
-The specified timer object is attached to the harness, as well.  It's caller's
-responsibility to set the timeout length (usually
-$TestLib::timeout_default), and to restart the timer after
-each command if the timeout is per-command.
+Invoke B<psql> on B<$dbname> and return a BackgroundPsql object.
 
 psql is invoked in tuples-only unaligned mode with reading of B<.psqlrc>
 disabled.  That may be overridden by passing extra psql parameters.
@@ -1688,7 +1680,7 @@ Dies on failure to invoke psql, or if psql fails to connect.  Errors occurring
 later are the caller's problem.  psql runs with on_error_stop by default so
 that it will stop running sql and return 3 if passed SQL results in an error.
 
-Be sure to "finish" the harness when done with it.
+Be sure to "quit" the returned object when done with it.
 
 =over
 
@@ -1697,6 +1689,11 @@ Be sure to "finish" the harness when done with it.
 By default, the B<psql> method invokes the B<psql> program with ON_ERROR_STOP=1
 set, so SQL execution is stopped at the first error and exit code 3 is
 returned.  Set B<on_error_stop> to 0 to ignore errors instead.
+
+=item timeout => 'interval'
+
+Set a timeout for a background psql session. By default, timeout of
+$PostgreSQL::Test::Utils::timeout_default is set up.
 
 =item replication => B<value>
 
@@ -1714,12 +1711,13 @@ If given, it must be an array reference containing additional parameters to B<ps
 
 sub background_psql
 {
-	my ($self, $dbname, $stdin, $stdout, $timer, %params) = @_;
+	my ($self, $dbname, %params) = @_;
 
 	local $ENV{PGHOST} = $self->host;
 	local $ENV{PGPORT} = $self->port;
 
 	my $replication = $params{replication};
+	my $timeout = undef;
 
 	my @psql_params = (
 		'psql',
@@ -1731,46 +1729,23 @@ sub background_psql
 		'-');
 
 	$params{on_error_stop} = 1 unless defined $params{on_error_stop};
+	$timeout = $params{timeout} if defined $params{timeout};
 
 	push @psql_params, '-v', 'ON_ERROR_STOP=1' if $params{on_error_stop};
 	push @psql_params, @{ $params{extra_params} }
 	  if defined $params{extra_params};
 
-	# Ensure there is no data waiting to be sent:
-	$$stdin = "" if ref($stdin);
-	# IPC::Run would otherwise append to existing contents:
-	$$stdout = "" if ref($stdout);
-
-	my $harness = IPC::Run::start \@psql_params,
-	  '<', $stdin, '>', $stdout, $timer;
-
-	# Request some output, and pump until we see it.  This means that psql
-	# connection failures are caught here, relieving callers of the need to
-	# handle those.  (Right now, we have no particularly good handling for
-	# errors anyway, but that might be added later.)
-	my $banner = "background_psql: ready";
-	$$stdin = "\\echo $banner\n";
-	pump $harness until $$stdout =~ /$banner/ || $timer->is_expired;
-
-	die "psql startup timed out" if $timer->is_expired;
-
-	return $harness;
+	return PostgreSQL::Test::BackgroundPsql->new(0, \@psql_params, $timeout);
 }
 
 =pod
 
-=item $node->interactive_psql($dbname, \$stdin, \$stdout, $timer, %params) => harness
+=item $node->interactive_psql($dbname, %params) => BackgroundPsql instance
 
-Invoke B<psql> on B<$dbname> and return an IPC::Run harness object,
-which the caller may use to send interactive input to B<psql>.
-The process's stdin is sourced from the $stdin scalar reference,
-and its stdout and stderr go to the $stdout scalar reference.
-ptys are used so that psql thinks it's being called interactively.
+Invoke B<psql> on B<$dbname> and return a BackgroundPsql object, which the
+caller may use to send interactive input to B<psql>.
 
-The specified timer object is attached to the harness, as well.  It's caller's
-responsibility to set the timeout length (usually
-$TestLib::timeout_default), and to restart the timer after
-each command if the timeout is per-command.
+A timeout of $PostgreSQL::Test::Utils::timeout_default is set up.
 
 psql is invoked in tuples-only unaligned mode with reading of B<.psqlrc>
 disabled.  That may be overridden by passing extra psql parameters.
@@ -1778,9 +1753,7 @@ disabled.  That may be overridden by passing extra psql parameters.
 Dies on failure to invoke psql, or if psql fails to connect.
 Errors occurring later are the caller's problem.
 
-Be sure to "finish" the harness when done with it.
-
-The only extra parameter currently accepted is
+Be sure to "quit" the returned object when done with it.
 
 =over
 
@@ -1796,33 +1769,14 @@ This requires IO::Pty in addition to IPC::Run.
 
 sub interactive_psql
 {
-	my ($self, $dbname, $stdin, $stdout, $timer, %params) = @_;
+	my ($self, $dbname, %params) = @_;
 
 	my @psql_params = ('psql', '-XAt', '-d', $self->connstr($dbname));
 
 	push @psql_params, @{ $params{extra_params} }
 	  if defined $params{extra_params};
 
-	# Ensure there is no data waiting to be sent:
-	$$stdin = "" if ref($stdin);
-	# IPC::Run would otherwise append to existing contents:
-	$$stdout = "" if ref($stdout);
-
-	my $harness = IPC::Run::start \@psql_params,
-	  '<pty<', $stdin, '>pty>', $stdout, $timer;
-
-	# Pump until we see psql's help banner.  This ensures that callers
-	# won't write anything to the pty before it's ready, avoiding an
-	# implementation issue in IPC::Run.  Also, it means that psql
-	# connection failures are caught here, relieving callers of
-	# the need to handle those.  (Right now, we have no particularly
-	# good handling for errors anyway, but that might be added later.)
-	pump $harness
-	  until $$stdout =~ /Type "help" for help/ || $timer->is_expired;
-
-	die "psql startup timed out" if $timer->is_expired;
-
-	return $harness;
+	return PostgreSQL::Test::BackgroundPsql->new(1, \@psql_params);
 }
 
 # Common sub of pgbench-invoking interfaces.  Makes any requested script files
