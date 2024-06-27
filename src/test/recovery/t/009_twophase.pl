@@ -4,7 +4,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 24;
+use Test::More tests => 27;
 
 my $psql_out = '';
 my $psql_rc  = '';
@@ -304,6 +304,52 @@ $cur_standby->enable_streaming($cur_master);
 $cur_standby->start;
 
 $cur_master->psql('postgres', "COMMIT PREPARED 'xact_009_12'");
+
+###############################################################################
+# Check visibility of prepared transactions in standby after a restart while
+# primary is down.
+###############################################################################
+
+$cur_master->psql(
+	'postgres', "
+	CREATE TABLE t_009_tbl_standby_mvcc (id int, msg text);
+	BEGIN;
+	INSERT INTO t_009_tbl_standby_mvcc VALUES (1, 'issued to ${cur_master_name}');
+	SAVEPOINT s1;
+	INSERT INTO t_009_tbl_standby_mvcc VALUES (2, 'issued to ${cur_master_name}');
+	PREPARE TRANSACTION 'xact_009_standby_mvcc';
+	");
+$cur_master->stop;
+$cur_standby->restart;
+
+# Acquire a snapshot in standby, before we commit the prepared transaction
+my $standby_session = $cur_standby->background_psql('postgres', on_error_die => 1);
+$standby_session->query_safe("BEGIN ISOLATION LEVEL REPEATABLE READ");
+$psql_out = $standby_session->query_safe(
+	"SELECT count(*) FROM t_009_tbl_standby_mvcc");
+is($psql_out, '0',
+	"Prepared transaction not visible in standby before commit");
+
+# Commit the transaction in primary
+$cur_master->start;
+$cur_master->psql('postgres', "
+SET synchronous_commit='remote_apply'; -- To ensure the standby is caught up
+COMMIT PREPARED 'xact_009_standby_mvcc';
+");
+
+# Still not visible to the old snapshot
+$psql_out = $standby_session->query_safe(
+	"SELECT count(*) FROM t_009_tbl_standby_mvcc");
+is($psql_out, '0',
+	"Committed prepared transaction not visible to old snapshot in standby");
+
+# Is visible to a new snapshot
+$standby_session->query_safe("COMMIT");
+$psql_out = $standby_session->query_safe(
+	"SELECT count(*) FROM t_009_tbl_standby_mvcc");
+is($psql_out, '2',
+   "Committed prepared transaction is visible to new snapshot in standby");
+$standby_session->quit;
 
 ###############################################################################
 # Check for a lock conflict between prepared transaction with DDL inside and
