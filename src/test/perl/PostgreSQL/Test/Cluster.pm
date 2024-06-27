@@ -1972,8 +1972,6 @@ sub psql
 
 Invoke B<psql> on B<$dbname> and return a BackgroundPsql object.
 
-A timeout of $PostgreSQL::Test::Utils::timeout_default is set up.
-
 psql is invoked in tuples-only unaligned mode with reading of B<.psqlrc>
 disabled.  That may be overridden by passing extra psql parameters.
 
@@ -1990,6 +1988,11 @@ Be sure to "quit" the returned object when done with it.
 By default, the B<psql> method invokes the B<psql> program with ON_ERROR_STOP=1
 set, so SQL execution is stopped at the first error and exit code 3 is
 returned.  Set B<on_error_stop> to 0 to ignore errors instead.
+
+=item timeout => 'interval'
+
+Set a timeout for a background psql session. By default, timeout of
+$PostgreSQL::Test::Utils::timeout_default is set up.
 
 =item replication => B<value>
 
@@ -2012,6 +2015,7 @@ sub background_psql
 	local %ENV = $self->_get_env();
 
 	my $replication = $params{replication};
+	my $timeout = undef;
 
 	my @psql_params = (
 		$self->installed_command('psql'),
@@ -2023,12 +2027,13 @@ sub background_psql
 		'-');
 
 	$params{on_error_stop} = 1 unless defined $params{on_error_stop};
+	$timeout = $params{timeout} if defined $params{timeout};
 
 	push @psql_params, '-v', 'ON_ERROR_STOP=1' if $params{on_error_stop};
 	push @psql_params, @{ $params{extra_params} }
 	  if defined $params{extra_params};
 
-	return PostgreSQL::Test::BackgroundPsql->new(0, \@psql_params);
+	return PostgreSQL::Test::BackgroundPsql->new(0, \@psql_params, $timeout);
 }
 
 =pod
