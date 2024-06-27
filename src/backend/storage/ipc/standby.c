@@ -1184,7 +1184,7 @@ standby_redo(XLogReaderState *record)
 
 		running.xcnt = xlrec->xcnt;
 		running.subxcnt = xlrec->subxcnt;
-		running.subxid_overflow = xlrec->subxid_overflow;
+		running.subxid_status = xlrec->subxid_overflow ? SUBXIDS_MISSING : SUBXIDS_IN_ARRAY;
 		running.nextXid = xlrec->nextXid;
 		running.latestCompletedXid = xlrec->latestCompletedXid;
 		running.oldestRunningXid = xlrec->oldestRunningXid;
@@ -1349,7 +1349,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 
 	xlrec.xcnt = CurrRunningXacts->xcnt;
 	xlrec.subxcnt = CurrRunningXacts->subxcnt;
-	xlrec.subxid_overflow = CurrRunningXacts->subxid_overflow;
+	xlrec.subxid_overflow = (CurrRunningXacts->subxid_status != SUBXIDS_IN_ARRAY);
 	xlrec.nextXid = CurrRunningXacts->nextXid;
 	xlrec.oldestRunningXid = CurrRunningXacts->oldestRunningXid;
 	xlrec.latestCompletedXid = CurrRunningXacts->latestCompletedXid;
@@ -1366,7 +1366,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 
 	recptr = XLogInsert(RM_STANDBY_ID, XLOG_RUNNING_XACTS);
 
-	if (CurrRunningXacts->subxid_overflow)
+	if (xlrec.subxid_overflow)
 		elog(DEBUG2,
 			 "snapshot of %d running transactions overflowed (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
 			 CurrRunningXacts->xcnt,

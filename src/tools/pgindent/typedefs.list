@@ -3931,6 +3931,7 @@ string
 substitute_actual_parameters_context
 substitute_actual_srf_parameters_context
 substitute_phv_relids_context
+subxids_array_status
 symbol
 tablespaceinfo
 td_entry
