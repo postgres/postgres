@@ -223,7 +223,7 @@ sub query
 	$output = $self->{stdout};
 
 	# remove banner again, our caller doesn't care
-	$output =~ s/\n$banner$//s;
+	$output =~ s/\n$banner\n$//s;
 
 	# clear out output for the next query
 	$self->{stdout} = '';
