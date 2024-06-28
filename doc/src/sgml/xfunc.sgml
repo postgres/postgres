@@ -3643,7 +3643,11 @@ extern void InjectionPointAttach(const char *name,
 static void
 custom_injection_callback(const char *name, const void *private_data)
 {
+    uint32 wait_event_info = WaitEventInjectionPointNew(name);
+
+    pgstat_report_wait_start(wait_event_info);
     elog(NOTICE, "%s: executed custom callback", name);
+    pgstat_report_wait_end();
 }
 </programlisting>
      This callback prints a message to server error log with severity

@@ -47,68 +47,69 @@ uint32	   *my_wait_event_info = &local_my_wait_event_info;
  * Hash tables for storing custom wait event ids and their names in
  * shared memory.
  *
- * WaitEventExtensionHashById is used to find the name from an event id.
- * Any backend can search it to find custom wait events.
+ * WaitEventCustomHashByInfo is used to find the name from wait event
+ * information.  Any backend can search it to find custom wait events.
  *
- * WaitEventExtensionHashByName is used to find the event ID from a name.
- * It is used to ensure that no duplicated entries are registered.
+ * WaitEventCustomHashByName is used to find the wait event information from a
+ * name.  It is used to ensure that no duplicated entries are registered.
+ *
+ * For simplicity, we use the same ID counter across types of custom events.
+ * We could end that anytime the need arises.
  *
  * The size of the hash table is based on the assumption that
- * WAIT_EVENT_EXTENSION_HASH_INIT_SIZE is enough for most cases, and it seems
+ * WAIT_EVENT_CUSTOM_HASH_INIT_SIZE is enough for most cases, and it seems
  * unlikely that the number of entries will reach
- * WAIT_EVENT_EXTENSION_HASH_MAX_SIZE.
+ * WAIT_EVENT_CUSTOM_HASH_MAX_SIZE.
  */
-static HTAB *WaitEventExtensionHashById;	/* find names from IDs */
-static HTAB *WaitEventExtensionHashByName;	/* find IDs from names */
+static HTAB *WaitEventCustomHashByInfo; /* find names from infos */
+static HTAB *WaitEventCustomHashByName; /* find infos from names */
 
-#define WAIT_EVENT_EXTENSION_HASH_INIT_SIZE	16
-#define WAIT_EVENT_EXTENSION_HASH_MAX_SIZE	128
+#define WAIT_EVENT_CUSTOM_HASH_INIT_SIZE	16
+#define WAIT_EVENT_CUSTOM_HASH_MAX_SIZE	128
 
 /* hash table entries */
-typedef struct WaitEventExtensionEntryById
+typedef struct WaitEventCustomEntryByInfo
 {
-	uint16		event_id;		/* hash key */
+	uint32		wait_event_info;	/* hash key */
 	char		wait_event_name[NAMEDATALEN];	/* custom wait event name */
-} WaitEventExtensionEntryById;
+} WaitEventCustomEntryByInfo;
 
-typedef struct WaitEventExtensionEntryByName
+typedef struct WaitEventCustomEntryByName
 {
 	char		wait_event_name[NAMEDATALEN];	/* hash key */
-	uint16		event_id;		/* wait event ID */
-} WaitEventExtensionEntryByName;
+	uint32		wait_event_info;
+} WaitEventCustomEntryByName;
 
 
-/* dynamic allocation counter for custom wait events in extensions */
-typedef struct WaitEventExtensionCounterData
+/* dynamic allocation counter for custom wait events */
+typedef struct WaitEventCustomCounterData
 {
 	int			nextId;			/* next ID to assign */
 	slock_t		mutex;			/* protects the counter */
-} WaitEventExtensionCounterData;
+} WaitEventCustomCounterData;
 
 /* pointer to the shared memory */
-static WaitEventExtensionCounterData *WaitEventExtensionCounter;
+static WaitEventCustomCounterData *WaitEventCustomCounter;
 
-/* first event ID of custom wait events for extensions */
-#define WAIT_EVENT_EXTENSION_INITIAL_ID	1
+/* first event ID of custom wait events */
+#define WAIT_EVENT_CUSTOM_INITIAL_ID	1
 
-/* wait event info for extensions */
-#define WAIT_EVENT_EXTENSION_INFO(eventId)	(PG_WAIT_EXTENSION | eventId)
-
-static const char *GetWaitEventExtensionIdentifier(uint16 eventId);
+static uint32 WaitEventCustomNew(uint32 classId, const char *wait_event_name);
+static const char *GetWaitEventCustomIdentifier(uint32 wait_event_info);
 
 /*
  *  Return the space for dynamic shared hash tables and dynamic allocation counter.
  */
 Size
-WaitEventExtensionShmemSize(void)
+WaitEventCustomShmemSize(void)
 {
 	Size		sz;
 
-	sz = MAXALIGN(sizeof(WaitEventExtensionCounterData));
-	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_EXTENSION_HASH_MAX_SIZE,
-										 sizeof(WaitEventExtensionEntryById)));
-	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_EXTENSION_HASH_MAX_SIZE,
-										 sizeof(WaitEventExtensionEntryByName)));
+	sz = MAXALIGN(sizeof(WaitEventCustomCounterData));
+	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_CUSTOM_HASH_MAX_SIZE,
+										 sizeof(WaitEventCustomEntryByInfo)));
+	sz = add_size(sz, hash_estimate_size(WAIT_EVENT_CUSTOM_HASH_MAX_SIZE,
+										 sizeof(WaitEventCustomEntryByName)));
 	return sz;
 }
 
@@ -116,39 +117,41 @@ WaitEventExtensionShmemSize(void)
  * Allocate shmem space for dynamic shared hash and dynamic allocation counter.
  */
 void
-WaitEventExtensionShmemInit(void)
+WaitEventCustomShmemInit(void)
 {
 	bool		found;
 	HASHCTL		info;
 
-	WaitEventExtensionCounter = (WaitEventExtensionCounterData *)
-		ShmemInitStruct("WaitEventExtensionCounterData",
-						sizeof(WaitEventExtensionCounterData), &found);
+	WaitEventCustomCounter = (WaitEventCustomCounterData *)
+		ShmemInitStruct("WaitEventCustomCounterData",
+						sizeof(WaitEventCustomCounterData), &found);
 
 	if (!found)
 	{
 		/* initialize the allocation counter and its spinlock. */
-		WaitEventExtensionCounter->nextId = WAIT_EVENT_EXTENSION_INITIAL_ID;
-		SpinLockInit(&WaitEventExtensionCounter->mutex);
+		WaitEventCustomCounter->nextId = WAIT_EVENT_CUSTOM_INITIAL_ID;
+		SpinLockInit(&WaitEventCustomCounter->mutex);
 	}
 
 	/* initialize or attach the hash tables to store custom wait events */
-	info.keysize = sizeof(uint16);
-	info.entrysize = sizeof(WaitEventExtensionEntryById);
-	WaitEventExtensionHashById = ShmemInitHash("WaitEventExtension hash by id",
-											   WAIT_EVENT_EXTENSION_HASH_INIT_SIZE,
-											   WAIT_EVENT_EXTENSION_HASH_MAX_SIZE,
-											   &info,
-											   HASH_ELEM | HASH_BLOBS);
+	info.keysize = sizeof(uint32);
+	info.entrysize = sizeof(WaitEventCustomEntryByInfo);
+	WaitEventCustomHashByInfo =
+		ShmemInitHash("WaitEventCustom hash by wait event information",
+					  WAIT_EVENT_CUSTOM_HASH_INIT_SIZE,
+					  WAIT_EVENT_CUSTOM_HASH_MAX_SIZE,
+					  &info,
+					  HASH_ELEM | HASH_BLOBS);
 
 	/* key is a NULL-terminated string */
 	info.keysize = sizeof(char[NAMEDATALEN]);
-	info.entrysize = sizeof(WaitEventExtensionEntryByName);
-	WaitEventExtensionHashByName = ShmemInitHash("WaitEventExtension hash by name",
-												 WAIT_EVENT_EXTENSION_HASH_INIT_SIZE,
-												 WAIT_EVENT_EXTENSION_HASH_MAX_SIZE,
-												 &info,
-												 HASH_ELEM | HASH_STRINGS);
+	info.entrysize = sizeof(WaitEventCustomEntryByName);
+	WaitEventCustomHashByName =
+		ShmemInitHash("WaitEventCustom hash by name",
+					  WAIT_EVENT_CUSTOM_HASH_INIT_SIZE,
+					  WAIT_EVENT_CUSTOM_HASH_MAX_SIZE,
+					  &info,
+					  HASH_ELEM | HASH_STRINGS);
 }
 
 /*
@@ -160,10 +163,23 @@ WaitEventExtensionShmemInit(void)
 uint32
 WaitEventExtensionNew(const char *wait_event_name)
 {
+	return WaitEventCustomNew(PG_WAIT_EXTENSION, wait_event_name);
+}
+
+uint32
+WaitEventInjectionPointNew(const char *wait_event_name)
+{
+	return WaitEventCustomNew(PG_WAIT_INJECTIONPOINT, wait_event_name);
+}
+
+static uint32
+WaitEventCustomNew(uint32 classId, const char *wait_event_name)
+{
 	uint16		eventId;
 	bool		found;
-	WaitEventExtensionEntryByName *entry_by_name;
-	WaitEventExtensionEntryById *entry_by_id;
+	WaitEventCustomEntryByName *entry_by_name;
+	WaitEventCustomEntryByInfo *entry_by_info;
+	uint32		wait_event_info;
 
 	/* Check the limit of the length of the event name */
 	if (strlen(wait_event_name) >= NAMEDATALEN)
@@ -175,13 +191,24 @@ WaitEventExtensionNew(const char *wait_event_name)
 	 * Check if the wait event info associated to the name is already defined,
 	 * and return it if so.
 	 */
-	LWLockAcquire(WaitEventExtensionLock, LW_SHARED);
-	entry_by_name = (WaitEventExtensionEntryByName *)
-		hash_search(WaitEventExtensionHashByName, wait_event_name,
+	LWLockAcquire(WaitEventCustomLock, LW_SHARED);
+	entry_by_name = (WaitEventCustomEntryByName *)
+		hash_search(WaitEventCustomHashByName, wait_event_name,
 					HASH_FIND, &found);
-	LWLockRelease(WaitEventExtensionLock);
+	LWLockRelease(WaitEventCustomLock);
 	if (found)
-		return WAIT_EVENT_EXTENSION_INFO(entry_by_name->event_id);
+	{
+		uint32		oldClassId;
+
+		oldClassId = entry_by_name->wait_event_info & WAIT_EVENT_CLASS_MASK;
+		if (oldClassId != classId)
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("wait event \"%s\" already exists in type \"%s\"",
+							wait_event_name,
+							pgstat_get_wait_event_type(entry_by_name->wait_event_info))));
+		return entry_by_name->wait_event_info;
+	}
 
 	/*
 	 * Allocate and register a new wait event.  Recheck if the event name
@@ -189,113 +216,123 @@ WaitEventExtensionNew(const char *wait_event_name)
 	 * one with the same name since the LWLock acquired again here was
 	 * previously released.
 	 */
-	LWLockAcquire(WaitEventExtensionLock, LW_EXCLUSIVE);
-	entry_by_name = (WaitEventExtensionEntryByName *)
-		hash_search(WaitEventExtensionHashByName, wait_event_name,
+	LWLockAcquire(WaitEventCustomLock, LW_EXCLUSIVE);
+	entry_by_name = (WaitEventCustomEntryByName *)
+		hash_search(WaitEventCustomHashByName, wait_event_name,
 					HASH_FIND, &found);
 	if (found)
 	{
-		LWLockRelease(WaitEventExtensionLock);
-		return WAIT_EVENT_EXTENSION_INFO(entry_by_name->event_id);
+		uint32		oldClassId;
+
+		LWLockRelease(WaitEventCustomLock);
+		oldClassId = entry_by_name->wait_event_info & WAIT_EVENT_CLASS_MASK;
+		if (oldClassId != classId)
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("wait event \"%s\" already exists in type \"%s\"",
+							wait_event_name,
+							pgstat_get_wait_event_type(entry_by_name->wait_event_info))));
+		return entry_by_name->wait_event_info;
 	}
 
 	/* Allocate a new event Id */
-	SpinLockAcquire(&WaitEventExtensionCounter->mutex);
+	SpinLockAcquire(&WaitEventCustomCounter->mutex);
 
-	if (WaitEventExtensionCounter->nextId >= WAIT_EVENT_EXTENSION_HASH_MAX_SIZE)
+	if (WaitEventCustomCounter->nextId >= WAIT_EVENT_CUSTOM_HASH_MAX_SIZE)
 	{
-		SpinLockRelease(&WaitEventExtensionCounter->mutex);
+		SpinLockRelease(&WaitEventCustomCounter->mutex);
 		ereport(ERROR,
 				errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				errmsg("too many wait events for extensions"));
+				errmsg("too many custom wait events"));
 	}
 
-	eventId = WaitEventExtensionCounter->nextId++;
+	eventId = WaitEventCustomCounter->nextId++;
 
-	SpinLockRelease(&WaitEventExtensionCounter->mutex);
+	SpinLockRelease(&WaitEventCustomCounter->mutex);
 
 	/* Register the new wait event */
-	entry_by_id = (WaitEventExtensionEntryById *)
-		hash_search(WaitEventExtensionHashById, &eventId,
+	wait_event_info = classId | eventId;
+	entry_by_info = (WaitEventCustomEntryByInfo *)
+		hash_search(WaitEventCustomHashByInfo, &wait_event_info,
 					HASH_ENTER, &found);
 	Assert(!found);
-	strlcpy(entry_by_id->wait_event_name, wait_event_name,
-			sizeof(entry_by_id->wait_event_name));
+	strlcpy(entry_by_info->wait_event_name, wait_event_name,
+			sizeof(entry_by_info->wait_event_name));
 
-	entry_by_name = (WaitEventExtensionEntryByName *)
-		hash_search(WaitEventExtensionHashByName, wait_event_name,
+	entry_by_name = (WaitEventCustomEntryByName *)
+		hash_search(WaitEventCustomHashByName, wait_event_name,
 					HASH_ENTER, &found);
 	Assert(!found);
-	entry_by_name->event_id = eventId;
+	entry_by_name->wait_event_info = wait_event_info;
 
-	LWLockRelease(WaitEventExtensionLock);
+	LWLockRelease(WaitEventCustomLock);
 
-	return WAIT_EVENT_EXTENSION_INFO(eventId);
+	return wait_event_info;
 }
 
 /*
- * Return the name of an wait event ID for extension.
+ * Return the name of a custom wait event information.
  */
 static const char *
-GetWaitEventExtensionIdentifier(uint16 eventId)
+GetWaitEventCustomIdentifier(uint32 wait_event_info)
 {
 	bool		found;
-	WaitEventExtensionEntryById *entry;
+	WaitEventCustomEntryByInfo *entry;
 
 	/* Built-in event? */
-	if (eventId < WAIT_EVENT_EXTENSION_INITIAL_ID)
+	if (wait_event_info == PG_WAIT_EXTENSION)
 		return "Extension";
 
 	/* It is a user-defined wait event, so lookup hash table. */
-	LWLockAcquire(WaitEventExtensionLock, LW_SHARED);
-	entry = (WaitEventExtensionEntryById *)
-		hash_search(WaitEventExtensionHashById, &eventId,
+	LWLockAcquire(WaitEventCustomLock, LW_SHARED);
+	entry = (WaitEventCustomEntryByInfo *)
+		hash_search(WaitEventCustomHashByInfo, &wait_event_info,
 					HASH_FIND, &found);
-	LWLockRelease(WaitEventExtensionLock);
+	LWLockRelease(WaitEventCustomLock);
 
 	if (!entry)
-		elog(ERROR, "could not find custom wait event name for ID %u",
-			 eventId);
+		elog(ERROR,
+			 "could not find custom name for wait event information %u",
+			 wait_event_info);
 
 	return entry->wait_event_name;
 }
 
 
 /*
- * Returns a list of currently defined custom wait event names for extensions.
- * The result is a palloc'd array, with the number of elements saved in
- * *nwaitevents.
+ * Returns a list of currently defined custom wait event names.  The result is
+ * a palloc'd array, with the number of elements saved in *nwaitevents.
  */
 char	  **
-GetWaitEventExtensionNames(int *nwaitevents)
+GetWaitEventCustomNames(uint32 classId, int *nwaitevents)
 {
 	char	  **waiteventnames;
-	WaitEventExtensionEntryByName *hentry;
+	WaitEventCustomEntryByName *hentry;
 	HASH_SEQ_STATUS hash_seq;
 	int			index;
 	int			els;
 
-	LWLockAcquire(WaitEventExtensionLock, LW_SHARED);
+	LWLockAcquire(WaitEventCustomLock, LW_SHARED);
 
 	/* Now we can safely count the number of entries */
-	els = hash_get_num_entries(WaitEventExtensionHashByName);
+	els = hash_get_num_entries(WaitEventCustomHashByName);
 
 	/* Allocate enough space for all entries */
 	waiteventnames = palloc(els * sizeof(char *));
 
 	/* Now scan the hash table to copy the data */
-	hash_seq_init(&hash_seq, WaitEventExtensionHashByName);
+	hash_seq_init(&hash_seq, WaitEventCustomHashByName);
 
 	index = 0;
-	while ((hentry = (WaitEventExtensionEntryByName *) hash_seq_search(&hash_seq)) != NULL)
+	while ((hentry = (WaitEventCustomEntryByName *) hash_seq_search(&hash_seq)) != NULL)
 	{
+		if ((hentry->wait_event_info & WAIT_EVENT_CLASS_MASK) != classId)
+			continue;
 		waiteventnames[index] = pstrdup(hentry->wait_event_name);
 		index++;
 	}
 
-	LWLockRelease(WaitEventExtensionLock);
-
-	Assert(index == els);
+	LWLockRelease(WaitEventCustomLock);
 
 	*nwaitevents = index;
 	return waiteventnames;
@@ -374,6 +411,9 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 		case PG_WAIT_IO:
 			event_type = "IO";
 			break;
+		case PG_WAIT_INJECTIONPOINT:
+			event_type = "InjectionPoint";
+			break;
 		default:
 			event_type = "???";
 			break;
@@ -411,7 +451,8 @@ pgstat_get_wait_event(uint32 wait_event_info)
 			event_name = GetLockNameFromTagType(eventId);
 			break;
 		case PG_WAIT_EXTENSION:
-			event_name = GetWaitEventExtensionIdentifier(eventId);
+		case PG_WAIT_INJECTIONPOINT:
+			event_name = GetWaitEventCustomIdentifier(wait_event_info);
 			break;
 		case PG_WAIT_BUFFERPIN:
 			{

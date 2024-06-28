@@ -158,9 +158,10 @@ select name, setting from pg_settings where name like 'enable%';
  enable_tidscan                 | on
 (22 rows)
 
--- There are always wait event descriptions for various types.
+-- There are always wait event descriptions for various types.  InjectionPoint
+-- may be present or absent, depending on history since last postmaster start.
 select type, count(*) > 0 as ok FROM pg_wait_events
-  group by type order by type COLLATE "C";
+  where type <> 'InjectionPoint' group by type order by type COLLATE "C";
    type    | ok 
 -----------+----
  Activity  | t

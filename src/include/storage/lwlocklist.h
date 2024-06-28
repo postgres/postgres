@@ -78,7 +78,7 @@ PG_LWLOCK(44, XactTruncation)
 /* 45 was XactTruncationLock until removal of BackendRandomLock */
 PG_LWLOCK(46, WrapLimitsVacuum)
 PG_LWLOCK(47, NotifyQueueTail)
-PG_LWLOCK(48, WaitEventExtension)
+PG_LWLOCK(48, WaitEventCustom)
 PG_LWLOCK(49, WALSummarizer)
 PG_LWLOCK(50, DSMRegistry)
 PG_LWLOCK(51, InjectionPoint)

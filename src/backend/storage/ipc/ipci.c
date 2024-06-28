@@ -149,7 +149,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, SyncScanShmemSize());
 	size = add_size(size, AsyncShmemSize());
 	size = add_size(size, StatsShmemSize());
-	size = add_size(size, WaitEventExtensionShmemSize());
+	size = add_size(size, WaitEventCustomShmemSize());
 	size = add_size(size, InjectionPointShmemSize());
 	size = add_size(size, SlotSyncShmemSize());
 #ifdef EXEC_BACKEND
@@ -355,7 +355,7 @@ CreateOrAttachShmemStructs(void)
 	SyncScanShmemInit();
 	AsyncShmemInit();
 	StatsShmemInit();
-	WaitEventExtensionShmemInit();
+	WaitEventCustomShmemInit();
 	InjectionPointShmemInit();
 }
 

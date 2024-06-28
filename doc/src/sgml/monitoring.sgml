@@ -1064,6 +1064,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </entry>
      </row>
      <row>
+      <entry><literal>InjectionPoint</literal></entry>
+      <entry>The server process is waiting for an injection point to reach an
+       outcome defined in a test.  See
+       <xref linkend="xfunc-addin-injection-points"/> for more details.  This
+       type has no predefined wait points.
+      </entry>
+     </row>
+     <row>
       <entry><literal>IO</literal></entry>
       <entry>The server process is waiting for an I/O operation to complete.
        <literal>wait_event</literal> will identify the specific wait point;
@@ -1139,8 +1147,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
    <note>
     <para>
-     Extensions can add <literal>Extension</literal> and
-     <literal>LWLock</literal> events
+     Extensions can add <literal>Extension</literal>,
+     <literal>InjectionPoint</literal>. and <literal>LWLock</literal> events
      to the lists shown in <xref linkend="wait-event-extension-table"/> and
      <xref linkend="wait-event-lwlock-table"/>. In some cases, the name
      of an <literal>LWLock</literal> assigned by an extension will not be

@@ -340,7 +340,7 @@ LogicalRepWorker	"Waiting to read or update the state of logical replication wor
 XactTruncation	"Waiting to execute <function>pg_xact_status</function> or update the oldest transaction ID available to it."
 WrapLimitsVacuum	"Waiting to update limits on transaction id and multixact consumption."
 NotifyQueueTail	"Waiting to update limit on <command>NOTIFY</command> message storage."
-WaitEventExtension	"Waiting to read or update custom wait events information for extensions."
+WaitEventCustom	"Waiting to read or update custom wait events information."
 WALSummarizer	"Waiting to read or update WAL summarization state."
 DSMRegistry	"Waiting to read or update the dynamic shared memory registry."
 InjectionPoint	"Waiting to read or update information related to injection points."
