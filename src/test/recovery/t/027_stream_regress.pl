@@ -120,6 +120,40 @@ command_ok(
 	[ 'diff', $outputdir . '/primary.dump', $outputdir . '/standby.dump' ],
 	'compare primary and standby dumps');
 
+# Likewise for the catalogs of the regression database, after disabling
+# autovacuum to make fields like relpages stop changing.
+$node_primary->append_conf('postgresql.conf', 'autovacuum = off');
+$node_primary->restart;
+$node_primary->wait_for_replay_catchup($node_standby_1);
+command_ok(
+	[
+		'pg_dump',
+		('--schema', 'pg_catalog'),
+		('-f', $outputdir . '/catalogs_primary.dump'),
+		'--no-sync',
+		('-p', $node_primary->port),
+		'--no-unlogged-table-data',
+		'regression'
+	],
+	'dump catalogs of primary server');
+command_ok(
+	[
+		'pg_dump',
+		('--schema', 'pg_catalog'),
+		('-f', $outputdir . '/catalogs_standby.dump'),
+		'--no-sync',
+		('-p', $node_standby_1->port),
+		'regression'
+	],
+	'dump catalogs of standby server');
+command_ok(
+	[
+		'diff',
+		$outputdir . '/catalogs_primary.dump',
+		$outputdir . '/catalogs_standby.dump'
+	],
+	'compare primary and standby catalog dumps');
+
 # Check some data from pg_stat_statements.
 $node_primary->safe_psql('postgres', 'CREATE EXTENSION pg_stat_statements');
 # This gathers data based on the first characters for some common query types,
