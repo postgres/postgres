@@ -3727,7 +3727,10 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 
 	/* set relhassubclass if an index partition has been added to the parent */
 	if (OidIsValid(parentOid))
+	{
+		LockRelationOid(parentOid, ShareUpdateExclusiveLock);
 		SetRelationHasSubclass(parentOid, true);
+	}
 
 	/* set relispartition correctly on the partition */
 	update_relispartition(partRelid, OidIsValid(parentOid));
