@@ -18939,7 +18939,7 @@ DETAIL:  Missing "]" after array dimensions.
 JSON_TABLE (
     <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional> </optional>
     COLUMNS ( <replaceable class="parameter">json_table_column</replaceable> <optional>, ...</optional> )
-    <optional> { <literal>ERROR</literal> | <literal>EMPTY</literal> } <literal>ON ERROR</literal> </optional>
+    <optional> { <literal>ERROR</literal> | <literal>EMPTY</literal> <optional>ARRAY</optional>} <literal>ON ERROR</literal> </optional>
 )
 
 <phrase>
@@ -18951,8 +18951,8 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
         <optional> PATH <replaceable>path_expression</replaceable> </optional>
         <optional> { WITHOUT | WITH { CONDITIONAL | <optional>UNCONDITIONAL</optional> } } <optional> ARRAY </optional> WRAPPER </optional>
         <optional> { KEEP | OMIT } QUOTES <optional> ON SCALAR STRING </optional> </optional>
-        <optional> { ERROR | NULL | EMPTY { ARRAY | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON EMPTY </optional>
-        <optional> { ERROR | NULL | EMPTY { ARRAY | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON ERROR </optional>
+        <optional> { ERROR | NULL | EMPTY { <optional>ARRAY</optional> | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON EMPTY </optional>
+        <optional> { ERROR | NULL | EMPTY { <optional>ARRAY</optional> | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON ERROR </optional>
   | <replaceable>name</replaceable> <replaceable>type</replaceable> EXISTS <optional> PATH <replaceable>path_expression</replaceable> </optional>
         <optional> { ERROR | TRUE | FALSE | UNKNOWN } ON ERROR </optional>
   | NESTED <optional> PATH </optional> <replaceable>path_expression</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> COLUMNS ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )

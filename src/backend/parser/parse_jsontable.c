@@ -92,7 +92,7 @@ transformJsonTable(ParseState *pstate, JsonTable *jt)
 		ereport(ERROR,
 				errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("invalid ON ERROR behavior"),
-				errdetail("Only EMPTY or ERROR is allowed in the top-level ON ERROR clause."),
+				errdetail("Only EMPTY [ ARRAY ] or ERROR is allowed in the top-level ON ERROR clause."),
 				parser_errposition(pstate, jt->on_error->location));
 
 	cxt.pathNameId = 0;

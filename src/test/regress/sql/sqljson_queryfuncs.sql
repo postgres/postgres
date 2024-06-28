@@ -459,3 +459,8 @@ SELECT json_value('"aaa"', path RETURNING json) FROM jsonpaths;
 SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xy);
 SELECT JSON_QUERY(jsonb 'null', '$xy' PASSING 1 AS xyz);
 SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xyz);
+
+-- Test ON ERROR / EMPTY value validity for the function; all fail.
+SELECT JSON_EXISTS(jsonb '1', '$' DEFAULT 1 ON ERROR);
+SELECT JSON_VALUE(jsonb '1', '$' EMPTY ON ERROR);
+SELECT JSON_QUERY(jsonb '1', '$' TRUE ON ERROR);

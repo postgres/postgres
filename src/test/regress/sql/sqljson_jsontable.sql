@@ -521,3 +521,10 @@ DROP TABLE s;
 
 -- Prevent ON EMPTY specification on EXISTS columns
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on empty));
+
+-- Test ON ERROR / EMPTY value validity for the function and column types;
+-- all fail
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int) NULL ON ERROR);
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int true on empty));
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int omit quotes true on error));
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on error));

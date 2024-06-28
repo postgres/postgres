@@ -9,12 +9,12 @@ SELECT * FROM JSON_TABLE('[]', 'strict $.a' COLUMNS (js2 int PATH '$') DEFAULT 1
 ERROR:  invalid ON ERROR behavior
 LINE 1: ...BLE('[]', 'strict $.a' COLUMNS (js2 int PATH '$') DEFAULT 1 ...
                                                              ^
-DETAIL:  Only EMPTY or ERROR is allowed in the top-level ON ERROR clause.
+DETAIL:  Only EMPTY [ ARRAY ] or ERROR is allowed in the top-level ON ERROR clause.
 SELECT * FROM JSON_TABLE('[]', 'strict $.a' COLUMNS (js2 int PATH '$') NULL ON ERROR);
 ERROR:  invalid ON ERROR behavior
 LINE 1: ...BLE('[]', 'strict $.a' COLUMNS (js2 int PATH '$') NULL ON ER...
                                                              ^
-DETAIL:  Only EMPTY or ERROR is allowed in the top-level ON ERROR clause.
+DETAIL:  Only EMPTY [ ARRAY ] or ERROR is allowed in the top-level ON ERROR clause.
 SELECT * FROM JSON_TABLE('[]', 'strict $.a' COLUMNS (js2 int PATH '$') EMPTY ON ERROR);
  js2 
 -----
@@ -1072,3 +1072,25 @@ SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on em
 ERROR:  syntax error at or near "empty"
 LINE 1: ...sonb '1', '$' COLUMNS (a int exists empty object on empty));
                                                                ^
+-- Test ON ERROR / EMPTY value validity for the function and column types;
+-- all fail
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int) NULL ON ERROR);
+ERROR:  invalid ON ERROR behavior
+LINE 1: ... * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int) NULL ON ER...
+                                                             ^
+DETAIL:  Only EMPTY [ ARRAY ] or ERROR is allowed in the top-level ON ERROR clause.
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int true on empty));
+ERROR:  invalid ON EMPTY behavior for column "a"
+LINE 1: ...T * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int true on em...
+                                                             ^
+DETAIL:  Only ERROR, NULL, or DEFAULT expression is allowed in ON EMPTY for scalar columns.
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int omit quotes true on error));
+ERROR:  invalid ON ERROR behavior for column "a"
+LINE 1: ...N_TABLE(jsonb '1', '$' COLUMNS (a int omit quotes true on er...
+                                                             ^
+DETAIL:  Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for formatted columns.
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on error));
+ERROR:  invalid ON ERROR behavior for column "a"
+LINE 1: ...M JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty obje...
+                                                             ^
+DETAIL:  Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in ON ERROR for EXISTS columns.

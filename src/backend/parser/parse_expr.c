@@ -4300,14 +4300,124 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 	}
 
 	/* OMIT QUOTES is meaningless when strings are wrapped. */
-	if (func->op == JSON_QUERY_OP &&
-		func->quotes == JS_QUOTES_OMIT &&
-		(func->wrapper == JSW_CONDITIONAL ||
-		 func->wrapper == JSW_UNCONDITIONAL))
-		ereport(ERROR,
-				errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used"),
-				parser_errposition(pstate, func->location));
+	if (func->op == JSON_QUERY_OP)
+	{
+		if (func->quotes == JS_QUOTES_OMIT &&
+			(func->wrapper == JSW_CONDITIONAL ||
+			 func->wrapper == JSW_UNCONDITIONAL))
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used"),
+					parser_errposition(pstate, func->location));
+		if (func->on_empty != NULL &&
+			func->on_empty->btype != JSON_BEHAVIOR_ERROR &&
+			func->on_empty->btype != JSON_BEHAVIOR_NULL &&
+			func->on_empty->btype != JSON_BEHAVIOR_EMPTY &&
+			func->on_empty->btype != JSON_BEHAVIOR_EMPTY_ARRAY &&
+			func->on_empty->btype != JSON_BEHAVIOR_EMPTY_OBJECT &&
+			func->on_empty->btype != JSON_BEHAVIOR_DEFAULT)
+		{
+			if (func->column_name == NULL)
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid ON EMPTY behavior"),
+						errdetail("Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON EMPTY for JSON_QUERY()."),
+						parser_errposition(pstate, func->on_empty->location));
+			else
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid ON EMPTY behavior for column \"%s\"",
+							   func->column_name),
+						errdetail("Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON EMPTY for formatted columns."),
+						parser_errposition(pstate, func->on_empty->location));
+		}
+		if (func->on_error != NULL &&
+			func->on_error->btype != JSON_BEHAVIOR_ERROR &&
+			func->on_error->btype != JSON_BEHAVIOR_NULL &&
+			func->on_error->btype != JSON_BEHAVIOR_EMPTY &&
+			func->on_error->btype != JSON_BEHAVIOR_EMPTY_ARRAY &&
+			func->on_error->btype != JSON_BEHAVIOR_EMPTY_OBJECT &&
+			func->on_error->btype != JSON_BEHAVIOR_DEFAULT)
+		{
+			if (func->column_name == NULL)
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid ON ERROR behavior"),
+						errdetail("Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for JSON_QUERY()."),
+						parser_errposition(pstate, func->on_error->location));
+			else
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid ON ERROR behavior for column \"%s\"",
+							   func->column_name),
+						errdetail("Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for formatted columns."),
+						parser_errposition(pstate, func->on_error->location));
+		}
+	}
+
+	/* Check that ON ERROR/EMPTY behavior values are valid for the function. */
+	if (func->op == JSON_EXISTS_OP &&
+		func->on_error != NULL &&
+		func->on_error->btype != JSON_BEHAVIOR_ERROR &&
+		func->on_error->btype != JSON_BEHAVIOR_TRUE &&
+		func->on_error->btype != JSON_BEHAVIOR_FALSE &&
+		func->on_error->btype != JSON_BEHAVIOR_UNKNOWN)
+	{
+		if (func->column_name == NULL)
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("invalid ON ERROR behavior"),
+					errdetail("Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in ON ERROR for JSON_EXISTS()."),
+					parser_errposition(pstate, func->on_error->location));
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("invalid ON ERROR behavior for column \"%s\"",
+						   func->column_name),
+					errdetail("Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in ON ERROR for EXISTS columns."),
+					parser_errposition(pstate, func->on_error->location));
+	}
+	if (func->op == JSON_VALUE_OP)
+	{
+		if (func->on_empty != NULL &&
+			func->on_empty->btype != JSON_BEHAVIOR_ERROR &&
+			func->on_empty->btype != JSON_BEHAVIOR_NULL &&
+			func->on_empty->btype != JSON_BEHAVIOR_DEFAULT)
+		{
+			if (func->column_name == NULL)
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid ON EMPTY behavior"),
+						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in ON EMPTY for JSON_VALUE()."),
+						parser_errposition(pstate, func->on_empty->location));
+			else
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid ON EMPTY behavior for column \"%s\"",
+							   func->column_name),
+						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in ON EMPTY for scalar columns."),
+						parser_errposition(pstate, func->on_empty->location));
+		}
+		if (func->on_error != NULL &&
+			func->on_error->btype != JSON_BEHAVIOR_ERROR &&
+			func->on_error->btype != JSON_BEHAVIOR_NULL &&
+			func->on_error->btype != JSON_BEHAVIOR_DEFAULT)
+		{
+			if (func->column_name == NULL)
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid ON ERROR behavior"),
+						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in ON ERROR for JSON_VALUE()."),
+						parser_errposition(pstate, func->on_error->location));
+			else
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid ON ERROR behavior for column \"%s\"",
+							   func->column_name),
+						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in ON ERROR for scalar columns."),
+						parser_errposition(pstate, func->on_error->location));
+		}
+	}
 
 	jsexpr = makeNode(JsonExpr);
 	jsexpr->location = func->location;
