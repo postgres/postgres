@@ -24,6 +24,14 @@
  *		values plus row-locating info for UPDATE cases, or just the
  *		row-locating info for DELETE cases.
  *
+ *		The relation to modify can be an ordinary table, a view having an
+ *		INSTEAD OF trigger, or a foreign table.  Earlier processing already
+ *		pointed ModifyTable to the underlying relations of any automatically
+ *		updatable view not using an INSTEAD OF trigger, so code here can
+ *		assume it won't have one as a modification target.  This node does
+ *		process ri_WithCheckOptions, which may have expressions from those
+ *		automatically updatable views.
+ *
  *		If the query specifies RETURNING, then the ModifyTable returns a
  *		RETURNING tuple after completing each row insert, update, or delete.
  *		It must be called again to continue the operation.  Without RETURNING,
@@ -1158,8 +1166,8 @@ ExecBatchInsert(ModifyTableState *mtstate,
  *		index modifications are needed.
  *
  *		When deleting from a table, tupleid identifies the tuple to
- *		delete and oldtuple is NULL.  When deleting from a view,
- *		oldtuple is passed to the INSTEAD OF triggers and identifies
+ *		delete and oldtuple is NULL.  When deleting through a view
+ *		INSTEAD OF trigger, oldtuple is passed to the triggers and identifies
  *		what to delete, and tupleid is invalid.  When deleting from a
  *		foreign table, tupleid is invalid; the FDW has to figure out
  *		which row to delete using data from the planSlot.  oldtuple is
@@ -1710,8 +1718,8 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
  *		which corrupts your database..
  *
  *		When updating a table, tupleid identifies the tuple to
- *		update and oldtuple is NULL.  When updating a view, oldtuple
- *		is passed to the INSTEAD OF triggers and identifies what to
+ *		update and oldtuple is NULL.  When updating through a view INSTEAD OF
+ *		trigger, oldtuple is passed to the triggers and identifies what to
  *		update, and tupleid is invalid.  When updating a foreign table,
  *		tupleid is invalid; the FDW has to figure out which row to
  *		update using data from the planSlot.  oldtuple is passed to
@@ -1723,7 +1731,9 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
  *		to access values from other input tables (for RETURNING),
  *		row-ID junk columns, etc.
  *
- *		Returns RETURNING result if any, otherwise NULL.
+ *		Returns RETURNING result if any, otherwise NULL.  On exit, if tupleid
+ *		had identified the tuple to update, it will identify the tuple
+ *		actually updated after EvalPlanQual.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
@@ -2650,8 +2660,8 @@ ExecModifyTable(PlanState *pstate)
 			 * know enough here to set t_tableOid.  Quite separately from
 			 * this, the FDW may fetch its own junk attrs to identify the row.
 			 *
-			 * Other relevant relkinds, currently limited to views, always
-			 * have a wholerow attribute.
+			 * Other relevant relkinds, currently limited to views having
+			 * INSTEAD OF triggers, always have a wholerow attribute.
 			 */
 			else if (AttributeNumberIsValid(resultRelInfo->ri_RowIdAttNo))
 			{
