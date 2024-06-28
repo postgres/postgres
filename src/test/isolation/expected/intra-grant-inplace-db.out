@@ -1,0 +1,28 @@
+Parsed test spec with 3 sessions
+
+starting permutation: snap3 b1 grant1 vac2 snap3 c1 cmp3
+step snap3: 
+	INSERT INTO frozen_witness
+	SELECT datfrozenxid FROM pg_database WHERE datname = current_catalog;
+
+step b1: BEGIN;
+step grant1: 
+	GRANT TEMP ON DATABASE isolation_regression TO regress_temp_grantee;
+
+step vac2: VACUUM (FREEZE);
+step snap3: 
+	INSERT INTO frozen_witness
+	SELECT datfrozenxid FROM pg_database WHERE datname = current_catalog;
+
+step c1: COMMIT;
+step cmp3: 
+	SELECT 'datfrozenxid retreated'
+	FROM pg_database
+	WHERE datname = current_catalog
+		AND age(datfrozenxid) > (SELECT min(age(x)) FROM frozen_witness);
+
+?column?              
+----------------------
+datfrozenxid retreated
+(1 row)
+
