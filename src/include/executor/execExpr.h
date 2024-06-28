@@ -707,6 +707,7 @@ typedef struct ExprEvalStep
 		{
 			Oid			targettype;
 			int32		targettypmod;
+			bool		omit_quotes;
 			void	   *json_populate_type_cache;
 			ErrorSaveContext *escontext;
 		}			jsonexpr_coercion;

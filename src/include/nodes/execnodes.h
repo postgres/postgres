@@ -1052,9 +1052,8 @@ typedef struct JsonExprState
 
 	/*
 	 * Address of the step to coerce the result value of jsonpath evaluation
-	 * to the RETURNING type using JsonExpr.coercion_expr.  -1 if no coercion
-	 * is necessary or if either JsonExpr.use_io_coercion or
-	 * JsonExpr.use_json_coercion is true.
+	 * to the RETURNING type.  -1 if no coercion if JsonExpr.use_io_coercion
+	 * is true.
 	 */
 	int			jump_eval_coercion;
 

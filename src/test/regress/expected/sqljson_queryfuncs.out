@@ -234,10 +234,18 @@ SELECT JSON_VALUE(jsonb '"aaa"', '$' RETURNING char(5));
  aaa  
 (1 row)
 
+SELECT JSON_VALUE(jsonb '"aaa"', '$' RETURNING char(2) ERROR ON ERROR);
+ERROR:  value too long for type character(2)
 SELECT JSON_VALUE(jsonb '"aaa"', '$' RETURNING char(2));
  json_value 
 ------------
- aa
+ 
+(1 row)
+
+SELECT JSON_VALUE(jsonb '"aaa"', '$' RETURNING char(3) ERROR ON ERROR);
+ json_value 
+------------
+ aaa
 (1 row)
 
 SELECT JSON_VALUE(jsonb '"aaa"', '$' RETURNING json);
@@ -636,30 +644,28 @@ SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING bytea FORMAT JSON OMIT QUOTES ERR
 (1 row)
 
 -- Behavior when a RETURNING type has typmod != -1
-SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING char(2));
+SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING char(3) ERROR ON ERROR);
+ERROR:  value too long for type character(3)
+SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING char(3));
  json_query 
 ------------
- "a
+ 
 (1 row)
 
-SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING char(2) OMIT QUOTES);
+SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING char(3) OMIT QUOTES ERROR ON ERROR);
  json_query 
 ------------
- aa
+ aaa
 (1 row)
 
-SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT 'bbb' ON EMPTY);
+SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT 'bb' ON EMPTY);
  json_query 
 ------------
  bb
 (1 row)
 
-SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT '"bbb"'::jsonb ON EMPTY);
- json_query 
-------------
- "b
-(1 row)
-
+SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT '"bb"'::jsonb ON EMPTY);
+ERROR:  value too long for type character(2)
 -- OMIT QUOTES behavior should not be specified when WITH WRAPPER used:
 -- Should fail
 SELECT JSON_QUERY(jsonb '[1]', '$' WITH WRAPPER OMIT QUOTES);
@@ -826,12 +832,6 @@ SELECT JSON_QUERY(jsonb '[1,2]', '$' RETURNING char(10));
  json_query 
 ------------
  [1, 2]    
-(1 row)
-
-SELECT JSON_QUERY(jsonb '[1,2]', '$' RETURNING char(3));
- json_query 
-------------
- [1,
 (1 row)
 
 SELECT JSON_QUERY(jsonb '[1,2]', '$' RETURNING text FORMAT JSON);
@@ -1369,3 +1369,39 @@ ERROR:  invalid ON ERROR behavior
 LINE 1: SELECT JSON_QUERY(jsonb '1', '$' TRUE ON ERROR);
                                          ^
 DETAIL:  Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for JSON_QUERY().
+-- Test implicit coercion domain over fixed-legth type specified in RETURNING
+CREATE DOMAIN queryfuncs_char2 AS char(2);
+CREATE DOMAIN queryfuncs_char2_chk AS char(2) CHECK (VALUE NOT IN ('12'));
+SELECT JSON_QUERY(jsonb '123', '$' RETURNING queryfuncs_char2 ERROR ON ERROR);
+ERROR:  value too long for type character(2)
+SELECT JSON_QUERY(jsonb '123', '$' RETURNING queryfuncs_char2 DEFAULT '1' ON ERROR);
+ json_query 
+------------
+ 1 
+(1 row)
+
+SELECT JSON_QUERY(jsonb '123', '$' RETURNING queryfuncs_char2_chk ERROR ON ERROR);
+ERROR:  value too long for type character(2)
+SELECT JSON_QUERY(jsonb '123', '$' RETURNING queryfuncs_char2_chk DEFAULT '1' ON ERROR);
+ json_query 
+------------
+ 1 
+(1 row)
+
+SELECT JSON_VALUE(jsonb '123', '$' RETURNING queryfuncs_char2 ERROR ON ERROR);
+ERROR:  value too long for type character(2)
+SELECT JSON_VALUE(jsonb '123', '$' RETURNING queryfuncs_char2 DEFAULT 1 ON ERROR);
+ json_value 
+------------
+ 1 
+(1 row)
+
+SELECT JSON_VALUE(jsonb '123', '$' RETURNING queryfuncs_char2_chk ERROR ON ERROR);
+ERROR:  value too long for type character(2)
+SELECT JSON_VALUE(jsonb '123', '$' RETURNING queryfuncs_char2_chk DEFAULT 1 ON ERROR);
+ json_value 
+------------
+ 1 
+(1 row)
+
+DROP DOMAIN queryfuncs_char2, queryfuncs_char2_chk;

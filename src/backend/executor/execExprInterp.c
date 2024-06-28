@@ -4303,8 +4303,14 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 
 				if (!error)
 				{
-					*op->resvalue = BoolGetDatum(exists);
 					*op->resnull = false;
+					if (jsexpr->use_json_coercion)
+						*op->resvalue = DirectFunctionCall1(jsonb_in,
+															BoolGetDatum(exists) ?
+															CStringGetDatum("true") :
+															CStringGetDatum("false"));
+					else
+						*op->resvalue = BoolGetDatum(exists);
 				}
 			}
 			break;
@@ -4316,22 +4322,6 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 										  jsexpr->column_name);
 
 			*op->resnull = (DatumGetPointer(*op->resvalue) == NULL);
-
-			/* Handle OMIT QUOTES. */
-			if (!*op->resnull && jsexpr->omit_quotes)
-			{
-				val_string = JsonbUnquote(DatumGetJsonbP(*op->resvalue));
-
-				/*
-				 * Pass the string as a text value to the cast expression if
-				 * one present.  If not, use the input function call below to
-				 * do the coercion.
-				 */
-				if (jump_eval_coercion >= 0)
-					*op->resvalue =
-						DirectFunctionCall1(textin,
-											PointerGetDatum(val_string));
-			}
 			break;
 
 		case JSON_VALUE_OP:
@@ -4343,7 +4333,7 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 
 				if (jbv == NULL)
 				{
-					/* Will be coerced with coercion_expr, if any. */
+					/* Will be coerced with json_populate_type(), if needed. */
 					*op->resvalue = (Datum) 0;
 					*op->resnull = true;
 				}
@@ -4355,18 +4345,22 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 						val_string = DatumGetCString(DirectFunctionCall1(jsonb_out,
 																		 JsonbPGetDatum(JsonbValueToJsonb(jbv))));
 					}
+					else if (jsexpr->use_json_coercion)
+					{
+						*op->resvalue = JsonbPGetDatum(JsonbValueToJsonb(jbv));
+						*op->resnull = false;
+					}
 					else
 					{
 						val_string = ExecGetJsonValueItemString(jbv, op->resnull);
 
 						/*
-						 * Pass the string as a text value to the cast
-						 * expression if one present.  If not, use the input
-						 * function call below to do the coercion.
+						 * Simply convert to the default RETURNING type (text)
+						 * if no coercion needed.
 						 */
-						*op->resvalue = PointerGetDatum(val_string);
-						if (jump_eval_coercion >= 0)
-							*op->resvalue = DirectFunctionCall1(textin, *op->resvalue);
+						if (!jsexpr->use_io_coercion)
+							*op->resvalue = DirectFunctionCall1(textin,
+																CStringGetDatum(val_string));
 					}
 				}
 				break;
@@ -4545,13 +4539,14 @@ ExecEvalJsonCoercion(ExprState *state, ExprEvalStep *op,
 									   op->d.jsonexpr_coercion.targettypmod,
 									   &op->d.jsonexpr_coercion.json_populate_type_cache,
 									   econtext->ecxt_per_query_memory,
-									   op->resnull, (Node *) escontext);
+									   op->resnull,
+									   op->d.jsonexpr_coercion.omit_quotes,
+									   (Node *) escontext);
 }
 
 /*
- * Checks if an error occurred either when evaluating JsonExpr.coercion_expr or
- * in ExecEvalJsonCoercion().  If so, this sets JsonExprState.error to trigger
- * the ON ERROR handling steps.
+ * Checks if an error occurred in ExecEvalJsonCoercion().  If so, this sets
+ * JsonExprState.error to trigger the ON ERROR handling steps.
  */
 void
 ExecEvalJsonCoercionFinish(ExprState *state, ExprEvalStep *op)

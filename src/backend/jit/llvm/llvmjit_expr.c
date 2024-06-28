@@ -2010,7 +2010,7 @@ llvm_compile_expr(ExprState *state)
 							v_jump_coercion = l_int32_const(lc, jsestate->jump_eval_coercion);
 							LLVMAddCase(v_switch, v_jump_coercion, b_coercion);
 						}
-						/* coercion_expr code */
+						/* jump_eval_coercion code */
 						LLVMPositionBuilderAtEnd(b, b_coercion);
 						if (jsestate->jump_eval_coercion >= 0)
 							LLVMBuildBr(b, opblocks[jsestate->jump_eval_coercion]);

@@ -1838,13 +1838,7 @@ typedef struct JsonExpr
 	/*
 	 * Information about converting the result of jsonpath functions
 	 * JsonPathQuery() and JsonPathValue() to the RETURNING type.
-	 *
-	 * coercion_expr is a cast expression if the parser can find it for the
-	 * source and the target type.  If not, either use_io_coercion or
-	 * use_json_coercion is set to determine the coercion method to use at
-	 * runtime; see coerceJsonExprOutput() and ExecInitJsonExpr().
 	 */
-	Node	   *coercion_expr;
 	bool		use_io_coercion;
 	bool		use_json_coercion;
 
@@ -1854,7 +1848,7 @@ typedef struct JsonExpr
 	/* KEEP or OMIT QUOTES for singleton scalars returned by JSON_QUERY() */
 	bool		omit_quotes;
 
-	/* JsonExpr's collation, if coercion_expr is NULL. */
+	/* JsonExpr's collation. */
 	Oid			collation;
 
 	/* Original JsonFuncExpr's location */

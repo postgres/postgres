@@ -103,14 +103,14 @@ FROM json_table_test vals
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  1 |   1 | 1       | 1       | t    |       1 | 1       | 1            | 1
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  2 |     | 1.23    | 1.23    |      |    1.23 | 1.23    | 1.23         | 1.23
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  3 |   2 | 2       | 2       |      |       2 | 2       | "2"          | "2"
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  4 |     | aaaaaaa | aaaa    |      |         | aaaaaaa | "aaaaaaa"    | "aaaaaaa"
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  4 |     | aaaaaaa |         |      |         | aaaaaaa | "aaaaaaa"    | "aaaaaaa"
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  5 |     | foo     | foo     |      |         |         | "foo"        | "foo"
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  6 |     |         |         |      |         |         | null         | null
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  7 |     | f       | f       | f    |         | f       | false        | false
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  8 |     | t       | t       | t    |         | t       | true         | true
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  7 |     | f       | f       | f    |         | false   | false        | false
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  8 |     | t       | t       | t    |         | true    | true         | true
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  9 |     |         |         |      |         |         | {"aaa": 123} | {"aaa": 123}
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 10 |     | [1,2]   | [1,2    |      |         | [1,2]   | "[1,2]"      | "[1,2]"
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 11 |     | "str"   | "str    |      |         | "str"   | "\"str\""    | "\"str\""
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 10 |     | [1,2]   |         |      |         | [1,2]   | "[1,2]"      | "[1,2]"
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 11 |     | "str"   |         |      |         | "str"   | "\"str\""    | "\"str\""
 (14 rows)
 
 -- "formatted" columns
@@ -137,14 +137,14 @@ FROM json_table_test vals
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  1 | 1            | 1    | 1    | 1            | 1
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  2 | 1.23         | 1.23 | 1.23 | 1.23         | 1.23
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  3 | "2"          | "2"  | "2"  | "2"          | 2
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  4 | "aaaaaaa"    | "aaa | "aaa | "aaaaaaa"    | 
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  5 | "foo"        | "foo | "foo | "foo"        | 
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  4 | "aaaaaaa"    |      |      | "aaaaaaa"    | 
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  5 | "foo"        |      |      | "foo"        | 
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  6 | null         | null | null | null         | null
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  7 | false        | fals | fals | false        | false
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  7 | false        |      |      | false        | false
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  8 | true         | true | true | true         | true
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  9 | {"aaa": 123} | {"aa | {"aa | {"aaa": 123} | {"aaa": 123}
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 10 | "[1,2]"      | "[1, | "[1, | "[1,2]"      | [1, 2]
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 11 | "\"str\""    | "\"s | "\"s | "\"str\""    | "str"
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  9 | {"aaa": 123} |      |      | {"aaa": 123} | {"aaa": 123}
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 10 | "[1,2]"      |      |      | "[1,2]"      | [1, 2]
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 11 | "\"str\""    |      |      | "\"str\""    | "str"
 (14 rows)
 
 -- EXISTS columns
@@ -175,7 +175,7 @@ FROM json_table_test vals
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  6 | f       |       0 |         | false
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  7 | f       |       0 |         | false
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  8 | f       |       0 |         | false
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  9 | t       |       1 |       1 | true
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  9 | t       |       0 |         | true
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 10 | f       |       0 |         | false
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 11 | f       |       0 |         | false
 (14 rows)
@@ -555,31 +555,21 @@ SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$.a'));
 (1 row)
 
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int2 EXISTS PATH '$.a'));
-ERROR:  cannot cast type boolean to smallint
-LINE 1: ...ELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int2 EXI...
-                                                             ^
+ERROR:  cannot cast behavior expression of type boolean to smallint
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int8 EXISTS PATH '$.a'));
-ERROR:  cannot cast type boolean to bigint
-LINE 1: ...ELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int8 EXI...
-                                                             ^
+ERROR:  cannot cast behavior expression of type boolean to bigint
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a float4 EXISTS PATH '$.a'));
-ERROR:  cannot cast type boolean to real
-LINE 1: ...ELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a float4 E...
-                                                             ^
-SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(3) EXISTS PATH '$.a'));
-  a  
------
- fal
+ERROR:  cannot cast behavior expression of type boolean to real
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(5) EXISTS PATH '$.a'));
+   a   
+-------
+ false
 (1 row)
 
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a json EXISTS PATH '$.a'));
-ERROR:  cannot cast type boolean to json
-LINE 1: ...ELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a json EXI...
-                                                             ^
+ERROR:  cannot cast behavior expression of type boolean to json
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a jsonb EXISTS PATH '$.a'));
-ERROR:  cannot cast type boolean to jsonb
-LINE 1: ...ELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a jsonb EX...
-                                                             ^
+ERROR:  cannot cast behavior expression of type boolean to jsonb
 -- JSON_TABLE: WRAPPER/QUOTES clauses on scalar columns
 SELECT * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text PATH '$' KEEP QUOTES ON SCALAR STRING));
   item   
