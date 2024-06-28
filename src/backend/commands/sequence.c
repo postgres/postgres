@@ -558,6 +558,13 @@ SequenceChangePersistence(Oid relid, char newrelpersistence)
 	Buffer		buf;
 	HeapTupleData seqdatatuple;
 
+	/*
+	 * ALTER SEQUENCE acquires this lock earlier.  If we're processing an
+	 * owned sequence for ALTER TABLE, lock now.  Without the lock, we'd
+	 * discard increments from nextval() calls (in other sessions) between
+	 * this function's buffer unlock and this transaction's commit.
+	 */
+	LockRelationOid(relid, AccessExclusiveLock);
 	init_sequence(relid, &elm, &seqrel);
 
 	/* check the comment above nextval_internal()'s equivalent call. */
