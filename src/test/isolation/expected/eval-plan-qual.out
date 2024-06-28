@@ -1307,3 +1307,15 @@ a|b|c|d
 2|2|2|4
 (2 rows)
 
+
+starting permutation: sys1 sysupd2 c1 c2
+step sys1: 
+	UPDATE pg_class SET reltuples = 123 WHERE oid = 'accounts'::regclass;
+
+step sysupd2: 
+	UPDATE pg_class SET reltuples = reltuples * 2
+	WHERE oid = 'accounts'::regclass;
+ <waiting ...>
+step c1: COMMIT;
+step sysupd2: <... completed>
+step c2: COMMIT;
