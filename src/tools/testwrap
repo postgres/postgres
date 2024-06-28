@@ -41,12 +41,22 @@ env_dict = {**os.environ,
             'TESTDATADIR': os.path.join(testdir, 'data'),
             'TESTLOGDIR': os.path.join(testdir, 'log')}
 
-sp = subprocess.run(args.test_command, env=env_dict)
+sp = subprocess.Popen(args.test_command, env=env_dict, stdout=subprocess.PIPE)
+# Meson categorizes a passing TODO test point as bad
+# (https://github.com/mesonbuild/meson/issues/13183).  Remove the TODO
+# directive, so Meson computes the file result like Perl does.  This could
+# have the side effect of delaying stdout lines relative to stderr.  That
+# doesn't affect the log file, and the TAP protocol uses stdout only.
+for line in sp.stdout:
+    if line.startswith(b'ok '):
+        line = line.replace(b' # TODO ', b' # testwrap-overridden-TODO ', 1)
+    sys.stdout.buffer.write(line)
+returncode = sp.wait()
 
-if sp.returncode == 0:
+if returncode == 0:
     print('# test succeeded')
     open(os.path.join(testdir, 'test.success'), 'x')
 else:
     print('# test failed')
     open(os.path.join(testdir, 'test.fail'), 'x')
-sys.exit(sp.returncode)
+sys.exit(returncode)
