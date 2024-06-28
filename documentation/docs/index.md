@@ -4,7 +4,7 @@
 
 !!! important 
 
-    This is the Alpha1 version of the extension and is not meant for production use yet.
+    This is the {{release}} version of the extension and is not meant for production use yet. [Release notes](release-notes/release-notes.md)
 
 ## What's encrypted
 

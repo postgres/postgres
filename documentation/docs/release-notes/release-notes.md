@@ -1,14 +1,26 @@
 # pg_tde release notes
 
-## Alpha 1 (2024-03-28)
-
 `pg_tde` extension brings in [Transparent Data Encryption (TDE)](tde.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
 
 [Get started](../install.md){.md-button}
 
-## Release Highlights
+## Beta (2024-06-30)
 
-The technical preview of the extension introduces the following key features:
+The Beta version introduces the following bug fixes and improvements:
+
+* Fixed the issue with `pg_tde` running out of memory used for decrypted tuples. The fix introduces the new component `TDEBufferHeapTupleTableSlot` that keeps track of the allocated memory for decrypted tuples and frees this memory when the tuple slot is no longer needed.
+
+* Fixed the issue with adjusting a current position in a file by using raw file descriptor for the lseek function. (Thanks to user _rainhard_ for providing the fix)
+
+* Enhanced the init script to consider a custom superuser for the POSTGRES_USER parameter when `pg_tde` is running via Docker (Thanks to _Alejandro Paredero_ for reporting the issue)
+
+
+
+## Alpha 1 (2024-03-28)
+
+### Release Highlights
+
+The Alpha1 version of the extension introduces the following key features:
 
 * You can now rotate principal keys used for data encryption. This reduces the risk of long-term exposure to potential attacks and helps you comply with security standards such as GDPR, HIPAA, and PCI DSS.
 
@@ -21,12 +33,12 @@ The technical preview of the extension introduces the following key features:
     * The keyring configuration is now stored in a catalog separately for each database, instead of a configuration file
     * Avoid storing secrets in the unencrypted catalog by configuring keyring parameters to be read from external sources (file, http(s) request)
 
-## Improvements 
+### Improvements 
 
 * Renamed the repository and Docker image from `postgres-tde-ext` to `pg_tde`. The extension name remains unchanged
 * Changed the Initialization Vector (IV) calculation of both the data and internal keys
 
-## Bugs fixed
+### Bugs fixed
 
 * Fixed toast related crashes
 * Fixed a crash with the DELETE statement 

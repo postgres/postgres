@@ -51,4 +51,4 @@ jobs:
           cd documentation
           mike deploy main -p
           mike set-default main -p
-          mike retitle main "Alpha1" -p
+          mike retitle main "Beta" -p
