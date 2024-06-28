@@ -518,3 +518,6 @@ SELECT sub.* FROM s,
 \sv jsonb_table_view7
 DROP VIEW jsonb_table_view7;
 DROP TABLE s;
+
+-- Prevent ON EMPTY specification on EXISTS columns
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on empty));

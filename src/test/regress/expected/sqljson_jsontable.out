@@ -1067,3 +1067,8 @@ CREATE OR REPLACE VIEW public.jsonb_table_view7 AS
         ) sub
 DROP VIEW jsonb_table_view7;
 DROP TABLE s;
+-- Prevent ON EMPTY specification on EXISTS columns
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on empty));
+ERROR:  syntax error at or near "empty"
+LINE 1: ...sonb '1', '$' COLUMNS (a int exists empty object on empty));
+                                                               ^
