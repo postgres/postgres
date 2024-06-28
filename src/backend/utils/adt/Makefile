@@ -116,6 +116,7 @@ OBJS = \
 	varchar.o \
 	varlena.o \
 	version.o \
+	waitfuncs.o \
 	windowfuncs.o \
 	xid.o \
 	xid8funcs.o \

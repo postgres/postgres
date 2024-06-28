@@ -103,6 +103,7 @@ backend_sources += files(
   'varchar.c',
   'varlena.c',
   'version.c',
+  'waitfuncs.c',
   'windowfuncs.c',
   'xid.c',
   'xid8funcs.c',
