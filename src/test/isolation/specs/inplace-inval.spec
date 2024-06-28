@@ -27,12 +27,14 @@ step cachefill3	{ TABLE newly_indexed; }
 step ddl3		{ ALTER TABLE newly_indexed ADD extra int; }
 
 
+# XXX shows an extant bug.  Adding step read1 at the end would usually print
+# relhasindex=f (not wanted).  This does not reach the unwanted behavior under
+# -DCATCACHE_FORCE_RELEASE and friends.
 permutation
 	cachefill3	# populates the pg_class row in the catcache
 	cir1	# sets relhasindex=true; rollback discards cache inval
 	cic2	# sees relhasindex=true, skips changing it (so no inval)
 	ddl3	# cached row as the oldtup of an update, losing relhasindex
-	read1	# observe damage XXX is an extant bug
 
 # without cachefill3, no bug
 permutation cir1 cic2 ddl3 read1
