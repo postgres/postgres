@@ -18861,6 +18861,16 @@ DETAIL:  Missing "]" after array dimensions.
     </tbody>
    </tgroup>
   </table>
+  <note>
+   <para>
+    The <replaceable>context_item</replaceable> expression is converted to
+    <type>jsonb</type> by an implicit cast if the expression is not already of
+    type <type>jsonb</type>. Note, however, that any parsing errors that occur
+    during that conversion are thrown unconditionally, that is, are not
+    handled according to the (specified or implicit) <literal>ON ERROR</literal>
+    clause.
+   </para>
+  </note>
   </sect2>
 
  <sect2 id="functions-sqljson-table">
