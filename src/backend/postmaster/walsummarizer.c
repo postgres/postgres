@@ -505,10 +505,10 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact)
 		return InvalidXLogRecPtr;
 
 	/*
-	 * If we are not the WAL summarizer process, then we normally just want
-	 * to read the values from shared memory. However, as an exception, if
-	 * shared memory hasn't been initialized yet, then we need to do that so
-	 * that we can read legal values and not remove any WAL too early.
+	 * If we are not the WAL summarizer process, then we normally just want to
+	 * read the values from shared memory. However, as an exception, if shared
+	 * memory hasn't been initialized yet, then we need to do that so that we
+	 * can read legal values and not remove any WAL too early.
 	 */
 	if (!am_wal_summarizer)
 	{
@@ -532,8 +532,8 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact)
 	 * Find the oldest timeline on which WAL still exists, and the earliest
 	 * segment for which it exists.
 	 *
-	 * Note that we do this every time the WAL summarizer process restarts
-	 * or recovers from an error, in case the contents of pg_wal have changed
+	 * Note that we do this every time the WAL summarizer process restarts or
+	 * recovers from an error, in case the contents of pg_wal have changed
 	 * under us e.g. if some files were removed, either manually - which
 	 * shouldn't really happen, but might - or by postgres itself, if
 	 * summarize_wal was turned off and then back on again.
@@ -582,16 +582,15 @@ GetOldestUnsummarizedLSN(TimeLineID *tli, bool *lsn_is_exact)
 				errmsg_internal("no WAL found on timeline %u", latest_tli));
 
 	/*
-	 * If we're the WAL summarizer, we always want to store the values we
-	 * just computed into shared memory, because those are the values we're
-	 * going to use to drive our operation, and so they are the authoritative
+	 * If we're the WAL summarizer, we always want to store the values we just
+	 * computed into shared memory, because those are the values we're going
+	 * to use to drive our operation, and so they are the authoritative
 	 * values. Otherwise, we only store values into shared memory if shared
 	 * memory is uninitialized. Our values are not canonical in such a case,
-	 * but it's better to have something than nothing, to guide WAL
-	 * retention.
+	 * but it's better to have something than nothing, to guide WAL retention.
 	 */
 	LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
-	if (am_wal_summarizer|| !WalSummarizerCtl->initialized)
+	if (am_wal_summarizer || !WalSummarizerCtl->initialized)
 	{
 		WalSummarizerCtl->initialized = true;
 		WalSummarizerCtl->summarized_lsn = unsummarized_lsn;
