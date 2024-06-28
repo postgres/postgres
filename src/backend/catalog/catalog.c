@@ -136,6 +136,27 @@ IsCatalogRelationOid(Oid relid)
 }
 
 /*
+ * IsInplaceUpdateRelation
+ *		True iff core code performs inplace updates on the relation.
+ */
+bool
+IsInplaceUpdateRelation(Relation relation)
+{
+	return IsInplaceUpdateOid(RelationGetRelid(relation));
+}
+
+/*
+ * IsInplaceUpdateOid
+ *		Like the above, but takes an OID as argument.
+ */
+bool
+IsInplaceUpdateOid(Oid relid)
+{
+	return (relid == RelationRelationId ||
+			relid == DatabaseRelationId);
+}
+
+/*
  * IsToastRelation
  *		True iff relation is a TOAST support relation (or index).
  *
