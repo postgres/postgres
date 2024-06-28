@@ -1,0 +1,43 @@
+Parsed test spec with 3 sessions
+
+starting permutation: vac1 grant2 vac3 mkrels3 read1
+mkrels
+------
+      
+(1 row)
+
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step vac1: VACUUM vactest.orig50;  -- wait during inplace update <waiting ...>
+step grant2: GRANT SELECT ON TABLE vactest.orig50 TO PUBLIC;
+step vac3: VACUUM pg_class;
+step mkrels3: 
+	SELECT vactest.mkrels('intruder', 1, 100);  -- repopulate LP_UNUSED
+	SELECT injection_points_detach('inplace-before-pin');
+	SELECT injection_points_wakeup('inplace-before-pin');
+
+mkrels
+------
+      
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step vac1: <... completed>
+step read1: 
+	REINDEX TABLE pg_class;  -- look for duplicates
+	SELECT reltuples = -1 AS reltuples_unknown
+	FROM pg_class WHERE oid = 'vactest.orig50'::regclass;
+
+ERROR:  could not create unique index "pg_class_oid_index"

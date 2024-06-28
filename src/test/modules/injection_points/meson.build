@@ -37,4 +37,9 @@ tests += {
     # The injection points are cluster-wide, so disable installcheck
     'runningcheck': false,
   },
+  'isolation': {
+    'specs': [
+      'inplace',
+    ],
+  },
 }

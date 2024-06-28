@@ -63,6 +63,7 @@
 #include "storage/procarray.h"
 #include "storage/standby.h"
 #include "utils/datum.h"
+#include "utils/injection_point.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
@@ -6080,6 +6081,7 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 				 errmsg("cannot update tuples during a parallel operation")));
 
+	INJECTION_POINT("inplace-before-pin");
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&(tuple->t_self)));
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
