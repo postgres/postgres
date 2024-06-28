@@ -107,6 +107,41 @@ command_ok(
 	[ 'diff', $outputdir . '/primary.dump', $outputdir . '/standby.dump' ],
 	'compare primary and standby dumps');
 
+# Likewise for the catalogs of the regression database, after disabling
+# autovacuum to make fields like relpages stop changing.
+$node_primary->append_conf('postgresql.conf', 'autovacuum = off');
+$node_primary->restart;
+$node_primary->wait_for_catchup($node_standby_1, 'replay',
+	$node_primary->lsn('insert'));
+command_ok(
+	[
+		'pg_dump',
+		('--schema', 'pg_catalog'),
+		('-f', $outputdir . '/catalogs_primary.dump'),
+		'--no-sync',
+		('-p', $node_primary->port),
+		'--no-unlogged-table-data',
+		'regression'
+	],
+	'dump catalogs of primary server');
+command_ok(
+	[
+		'pg_dump',
+		('--schema', 'pg_catalog'),
+		('-f', $outputdir . '/catalogs_standby.dump'),
+		'--no-sync',
+		('-p', $node_standby_1->port),
+		'regression'
+	],
+	'dump catalogs of standby server');
+command_ok(
+	[
+		'diff',
+		$outputdir . '/catalogs_primary.dump',
+		$outputdir . '/catalogs_standby.dump'
+	],
+	'compare primary and standby catalog dumps');
+
 $node_standby_1->stop;
 $node_primary->stop;
 

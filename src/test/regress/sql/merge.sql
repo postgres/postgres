@@ -1493,6 +1493,20 @@ DROP FUNCTION measurement_insert_trigger();
 -- prepare
 
 RESET SESSION AUTHORIZATION;
+
+-- try a system catalog
+MERGE INTO pg_class c
+USING (SELECT 'pg_depend'::regclass AS oid) AS j
+ON j.oid = c.oid
+WHEN MATCHED THEN
+	UPDATE SET reltuples = reltuples + 1;
+
+MERGE INTO pg_class c
+USING pg_namespace n
+ON n.oid = c.relnamespace
+WHEN MATCHED AND c.oid = 'pg_depend'::regclass THEN
+	UPDATE SET reltuples = reltuples - 1;
+
 DROP TABLE target, target2;
 DROP TABLE source, source2;
 DROP FUNCTION merge_trigfunc();

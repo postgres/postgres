@@ -33,7 +33,7 @@ test: strings numerology point lseg line box path polygon circle date time timet
 # geometry depends on point, lseg, line, box, path, polygon, circle
 # horology depends on date, time, timetz, timestamp, timestamptz, interval
 # ----------
-test: geometry horology tstypes regex type_sanity opr_sanity misc_sanity comments expressions unicode xid mvcc
+test: geometry horology tstypes regex type_sanity opr_sanity misc_sanity comments expressions unicode xid mvcc database
 
 # ----------
 # Load huge amounts of data
