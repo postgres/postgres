@@ -21,6 +21,7 @@
 #include "access/table.h"
 #include "access/valid.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -1850,6 +1851,23 @@ ReleaseCatCacheList(CatCList *list)
 
 
 /*
+ * equalTuple
+ *		Are these tuples memcmp()-equal?
+ */
+static bool
+equalTuple(HeapTuple a, HeapTuple b)
+{
+	uint32		alen;
+	uint32		blen;
+
+	alen = a->t_len;
+	blen = b->t_len;
+	return (alen == blen &&
+			memcmp((char *) a->t_data,
+				   (char *) b->t_data, blen) == 0);
+}
+
+/*
  * CatalogCacheCreateEntry
  *		Create a new CatCTup entry, copying the given HeapTuple and other
  *		supplied data into it.  The new entry initially has refcount 0.
@@ -1899,14 +1917,34 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp, SysScanDesc scandesc,
 		 */
 		if (HeapTupleHasExternal(ntp))
 		{
+			bool		need_cmp = IsInplaceUpdateOid(cache->cc_reloid);
+			HeapTuple	before = NULL;
+			bool		matches = true;
+
+			if (need_cmp)
+				before = heap_copytuple(ntp);
 			dtp = toast_flatten_tuple(ntp, cache->cc_tupdesc);
 
 			/*
 			 * The tuple could become stale while we are doing toast table
-			 * access (since AcceptInvalidationMessages can run then), so we
-			 * must recheck its visibility afterwards.
+			 * access (since AcceptInvalidationMessages can run then).
+			 * equalTuple() detects staleness from inplace updates, while
+			 * systable_recheck_tuple() detects staleness from normal updates.
+			 *
+			 * While this equalTuple() follows the usual rule of reading with
+			 * a pin and no buffer lock, it warrants suspicion since an
+			 * inplace update could appear at any moment.  It's safe because
+			 * the inplace update sends an invalidation that can't reorder
+			 * before the inplace heap change.  If the heap change reaches
+			 * this process just after equalTuple() looks, we've not missed
+			 * its inval.
 			 */
-			if (!systable_recheck_tuple(scandesc, ntp))
+			if (need_cmp)
+			{
+				matches = equalTuple(before, ntp);
+				heap_freetuple(before);
+			}
+			if (!matches || !systable_recheck_tuple(scandesc, ntp))
 			{
 				heap_freetuple(dtp);
 				return NULL;
