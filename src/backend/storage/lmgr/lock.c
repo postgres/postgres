@@ -578,11 +578,17 @@ DoLockModesConflict(LOCKMODE mode1, LOCKMODE mode2)
 }
 
 /*
- * LockHeldByMe -- test whether lock 'locktag' is held with mode 'lockmode'
- *		by the current transaction
+ * LockHeldByMe -- test whether lock 'locktag' is held by the current
+ *		transaction
+ *
+ * Returns true if current transaction holds a lock on 'tag' of mode
+ * 'lockmode'.  If 'orstronger' is true, a stronger lockmode is also OK.
+ * ("Stronger" is defined as "numerically higher", which is a bit
+ * semantically dubious but is OK for the purposes we use this for.)
  */
 bool
-LockHeldByMe(const LOCKTAG *locktag, LOCKMODE lockmode)
+LockHeldByMe(const LOCKTAG *locktag,
+			 LOCKMODE lockmode, bool orstronger)
 {
 	LOCALLOCKTAG localtag;
 	LOCALLOCK  *locallock;
@@ -598,7 +604,23 @@ LockHeldByMe(const LOCKTAG *locktag, LOCKMODE lockmode)
 										  &localtag,
 										  HASH_FIND, NULL);
 
-	return (locallock && locallock->nLocks > 0);
+	if (locallock && locallock->nLocks > 0)
+		return true;
+
+	if (orstronger)
+	{
+		LOCKMODE	slockmode;
+
+		for (slockmode = lockmode + 1;
+			 slockmode <= MaxLockMode;
+			 slockmode++)
+		{
+			if (LockHeldByMe(locktag, slockmode, false))
+				return true;
+		}
+	}
+
+	return false;
 }
 
 #ifdef USE_ASSERT_CHECKING
