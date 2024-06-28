@@ -234,10 +234,7 @@ InjectionPointAttach(const char *name,
 		hash_search(InjectionPointHash, name,
 					HASH_ENTER, &found);
 	if (found)
-	{
-		LWLockRelease(InjectionPointLock);
 		elog(ERROR, "injection point \"%s\" already defined", name);
-	}
 
 	/* Save the entry */
 	strlcpy(entry_by_name->name, name, sizeof(entry_by_name->name));
@@ -300,7 +297,6 @@ InjectionPointRun(const char *name)
 	entry_by_name = (InjectionPointEntry *)
 		hash_search(InjectionPointHash, name,
 					HASH_FIND, &found);
-	LWLockRelease(InjectionPointLock);
 
 	/*
 	 * If not found, do nothing and remove it from the local cache if it
@@ -309,6 +305,7 @@ InjectionPointRun(const char *name)
 	if (!found)
 	{
 		injection_point_cache_remove(name);
+		LWLockRelease(InjectionPointLock);
 		return;
 	}
 
@@ -343,6 +340,9 @@ InjectionPointRun(const char *name)
 
 	/* Now loaded, so get it. */
 	injection_callback = injection_point_cache_get(name, &private_data);
+
+	LWLockRelease(InjectionPointLock);
+
 	injection_callback(name, private_data);
 #else
 	elog(ERROR, "Injection points are not supported by this build");
