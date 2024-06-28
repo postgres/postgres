@@ -190,6 +190,12 @@ step simplepartupdate_noroute {
 	update parttbl set b = 2 where c = 1 returning *;
 }
 
+# test system class updates
+
+step sys1	{
+	UPDATE pg_class SET reltuples = 123 WHERE oid = 'accounts'::regclass;
+}
+
 
 session s2
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; SET client_min_messages = 'WARNING'; }
@@ -276,6 +282,11 @@ step wnested2 {
             AND noisy_oper('lock_bal', ae.balance, '>', 200.0)
         FOR UPDATE
     );
+}
+
+step sysupd2	{
+	UPDATE pg_class SET reltuples = reltuples * 2
+	WHERE oid = 'accounts'::regclass;
 }
 
 step c2	{ COMMIT; }
@@ -374,3 +385,5 @@ permutation simplepartupdate complexpartupdate c1 c2 read_part
 permutation simplepartupdate_route1to2 complexpartupdate_route_err1 c1 c2 read_part
 permutation simplepartupdate_noroute complexpartupdate_route c1 c2 read_part
 permutation simplepartupdate_noroute complexpartupdate_doesnt_route c1 c2 read_part
+
+permutation sys1 sysupd2 c1 c2

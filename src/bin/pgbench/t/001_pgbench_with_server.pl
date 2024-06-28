@@ -72,6 +72,34 @@ pgbench(
 		  "CREATE TYPE pg_temp.e AS ENUM ($labels); DROP TYPE pg_temp.e;"
 	});
 
+# Test inplace updates from VACUUM concurrent with heap_update from GRANT.
+# The PROC_IN_VACUUM environment can't finish MVCC table scans consistently,
+# so this fails rarely.  To reproduce consistently, add a sleep after
+# GetCatalogSnapshot(non-catalog-rel).
+Test::More->builder->todo_start('PROC_IN_VACUUM scan breakage');
+$node->safe_psql('postgres', 'CREATE TABLE ddl_target ()');
+$node->pgbench(
+	'--no-vacuum --client=5 --protocol=prepared --transactions=50',
+	0,
+	[qr{processed: 250/250}],
+	[qr{^$}],
+	'concurrent GRANT/VACUUM',
+	{
+		'001_pgbench_grant@9' => q(
+			DO $$
+			BEGIN
+				PERFORM pg_advisory_xact_lock(42);
+				FOR i IN 1 .. 10 LOOP
+					GRANT SELECT ON ddl_target TO PUBLIC;
+					REVOKE SELECT ON ddl_target FROM PUBLIC;
+				END LOOP;
+			END
+			$$;
+),
+		'001_pgbench_vacuum_ddl_target@1' => "VACUUM ddl_target;",
+	});
+Test::More->builder->todo_end;
+
 # Trigger various connection errors
 pgbench(
 	'no-such-database',
