@@ -300,7 +300,6 @@ typedef struct xl_heap_confirm
 typedef struct xl_heap_inplace
 {
 	OffsetNumber offnum;		/* updated tuple's offset on page */
-	/* TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_inplace;
 
 #define SizeOfHeapInplace	(offsetof(xl_heap_inplace, offnum) + sizeof(OffsetNumber))
