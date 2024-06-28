@@ -1,0 +1,225 @@
+Parsed test spec with 5 sessions
+
+starting permutation: b1 grant1 read2 addk2 c1 read2
+step b1: BEGIN;
+step grant1: 
+	GRANT SELECT ON intra_grant_inplace TO PUBLIC;
+
+step read2: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c);
+step c1: COMMIT;
+step read2: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+
+starting permutation: keyshr5 addk2
+step keyshr5: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR KEY SHARE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c);
+
+starting permutation: keyshr5 b3 sfnku3 addk2 r3
+step keyshr5: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR KEY SHARE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step b3: BEGIN ISOLATION LEVEL READ COMMITTED;
+step sfnku3: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR NO KEY UPDATE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c);
+step r3: ROLLBACK;
+
+starting permutation: b2 sfnku2 addk2 c2
+step b2: BEGIN;
+step sfnku2: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR NO KEY UPDATE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c);
+step c2: COMMIT;
+
+starting permutation: keyshr5 b2 sfnku2 addk2 c2
+step keyshr5: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR KEY SHARE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step b2: BEGIN;
+step sfnku2: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR NO KEY UPDATE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c);
+step c2: COMMIT;
+
+starting permutation: b3 sfu3 b1 grant1 read2 addk2 r3 c1 read2
+step b3: BEGIN ISOLATION LEVEL READ COMMITTED;
+step sfu3: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR UPDATE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step b1: BEGIN;
+step grant1: 
+	GRANT SELECT ON intra_grant_inplace TO PUBLIC;
+ <waiting ...>
+step read2: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c);
+step r3: ROLLBACK;
+step grant1: <... completed>
+step c1: COMMIT;
+step read2: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+
+starting permutation: b2 sfnku2 b1 grant1 addk2 c2 c1 read2
+step b2: BEGIN;
+step sfnku2: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR NO KEY UPDATE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step b1: BEGIN;
+step grant1: 
+	GRANT SELECT ON intra_grant_inplace TO PUBLIC;
+ <waiting ...>
+step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c);
+step c2: COMMIT;
+step grant1: <... completed>
+step c1: COMMIT;
+step read2: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+
+starting permutation: b1 grant1 b3 sfu3 revoke4 c1 r3
+step b1: BEGIN;
+step grant1: 
+	GRANT SELECT ON intra_grant_inplace TO PUBLIC;
+
+step b3: BEGIN ISOLATION LEVEL READ COMMITTED;
+step sfu3: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR UPDATE;
+ <waiting ...>
+step revoke4: 
+	DO $$
+	BEGIN
+		REVOKE SELECT ON intra_grant_inplace FROM PUBLIC;
+	EXCEPTION WHEN others THEN
+		RAISE WARNING 'got: %', regexp_replace(sqlerrm, '[0-9]+', 'REDACTED');
+	END
+	$$;
+ <waiting ...>
+step c1: COMMIT;
+step sfu3: <... completed>
+relhasindex
+-----------
+f          
+(1 row)
+
+s4: WARNING:  got: tuple concurrently updated
+step revoke4: <... completed>
+step r3: ROLLBACK;
+
+starting permutation: b1 drop1 b3 sfu3 revoke4 c1 r3
+step b1: BEGIN;
+step drop1: 
+	DROP TABLE intra_grant_inplace;
+
+step b3: BEGIN ISOLATION LEVEL READ COMMITTED;
+step sfu3: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR UPDATE;
+ <waiting ...>
+step revoke4: 
+	DO $$
+	BEGIN
+		REVOKE SELECT ON intra_grant_inplace FROM PUBLIC;
+	EXCEPTION WHEN others THEN
+		RAISE WARNING 'got: %', regexp_replace(sqlerrm, '[0-9]+', 'REDACTED');
+	END
+	$$;
+ <waiting ...>
+step c1: COMMIT;
+step sfu3: <... completed>
+relhasindex
+-----------
+(0 rows)
+
+s4: WARNING:  got: tuple concurrently deleted
+step revoke4: <... completed>
+step r3: ROLLBACK;
