@@ -1046,6 +1046,7 @@ index_create(Relation heapRelation,
 	if (OidIsValid(parentIndexRelid))
 	{
 		StoreSingleInheritance(indexRelationId, parentIndexRelid, 1);
+		LockRelationOid(parentIndexRelid, ShareUpdateExclusiveLock);
 		SetRelationHasSubclass(parentIndexRelid, true);
 	}
 
