@@ -7,6 +7,11 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Can be changed to test the other modes.
+my $mode = $ENV{PG_TEST_PG_COMBINEBACKUP_MODE} || '--copy';
+
+note "testing using mode $mode";
+
 # Set up a new database instance.
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(has_archiving => 1, allows_streaming => 1);
@@ -45,7 +50,8 @@ $primary->command_ok(
 # Recover the incremental backup.
 my $restore = PostgreSQL::Test::Cluster->new('restore');
 $restore->init_from_backup($primary, 'backup2',
-	combine_with_prior => ['backup1']);
+	combine_with_prior => ['backup1'],
+	combine_mode => $mode);
 $restore->start();
 
 # Query the DB.

@@ -13,6 +13,11 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Can be changed to test the other modes.
+my $mode = $ENV{PG_TEST_PG_COMBINEBACKUP_MODE} || '--copy';
+
+note "testing using mode $mode";
+
 # Set up a new database instance.
 my $node1 = PostgreSQL::Test::Cluster->new('node1');
 $node1->init(has_archiving => 1, allows_streaming => 1);
@@ -79,13 +84,13 @@ my $resultpath = $node1->backup_dir . '/result';
 
 # Can't combine 2 full backups.
 $node1->command_fails_like(
-	[ 'pg_combinebackup', $backup1path, $backup1path, '-o', $resultpath ],
+	[ 'pg_combinebackup', $backup1path, $backup1path, '-o', $resultpath, $mode ],
 	qr/is a full backup, but only the first backup should be a full backup/,
 	"can't combine full backups");
 
 # Can't combine 2 incremental backups.
 $node1->command_fails_like(
-	[ 'pg_combinebackup', $backup2path, $backup2path, '-o', $resultpath ],
+	[ 'pg_combinebackup', $backup2path, $backup2path, '-o', $resultpath, $mode ],
 	qr/is an incremental backup, but the first backup should be a full backup/,
 	"can't combine full backups");
 
@@ -93,7 +98,7 @@ $node1->command_fails_like(
 $node1->command_fails_like(
 	[
 		'pg_combinebackup', $backup1path, $backupother2path, '-o',
-		$resultpath
+		$resultpath, $mode
 	],
 	qr/expected system identifier.*but found/,
 	"can't combine backups from different nodes");
@@ -106,7 +111,7 @@ copy("$backupother2path/backup_manifest", "$backup2path/backup_manifest")
 $node1->command_fails_like(
 	[
 		'pg_combinebackup', $backup1path, $backup2path, $backup3path,
-		'-o', $resultpath
+		'-o', $resultpath, $mode
 	],
 	qr/ manifest system identifier is .*, but control file has /,
 	"can't combine backups with different manifest system identifier ");
@@ -116,7 +121,7 @@ move("$backup2path/backup_manifest.orig", "$backup2path/backup_manifest")
 
 # Can't omit a required backup.
 $node1->command_fails_like(
-	[ 'pg_combinebackup', $backup1path, $backup3path, '-o', $resultpath ],
+	[ 'pg_combinebackup', $backup1path, $backup3path, '-o', $resultpath, $mode ],
 	qr/starts at LSN.*but expected/,
 	"can't omit a required backup");
 
@@ -124,7 +129,7 @@ $node1->command_fails_like(
 $node1->command_fails_like(
 	[
 		'pg_combinebackup', $backup1path, $backup3path, $backup2path,
-		'-o', $resultpath
+		'-o', $resultpath, $mode
 	],
 	qr/starts at LSN.*but expected/,
 	"can't combine backups in the wrong order");
@@ -133,7 +138,7 @@ $node1->command_fails_like(
 $node1->command_ok(
 	[
 		'pg_combinebackup', $backup1path, $backup2path, $backup3path,
-		'-o', $resultpath
+		'-o', $resultpath, $mode
 	],
 	"can combine 3 matching backups");
 rmtree($resultpath);
@@ -143,19 +148,19 @@ my $synthetic12path = $node1->backup_dir . '/synthetic12';
 $node1->command_ok(
 	[
 		'pg_combinebackup', $backup1path, $backup2path, '-o',
-		$synthetic12path
+		$synthetic12path, $mode
 	],
 	"can combine 2 matching backups");
 
 # Can combine result of previous step with second incremental.
 $node1->command_ok(
-	[ 'pg_combinebackup', $synthetic12path, $backup3path, '-o', $resultpath ],
+	[ 'pg_combinebackup', $synthetic12path, $backup3path, '-o', $resultpath, $mode ],
 	"can combine synthetic backup with later incremental");
 rmtree($resultpath);
 
 # Can't combine result of 1+2 with 2.
 $node1->command_fails_like(
-	[ 'pg_combinebackup', $synthetic12path, $backup2path, '-o', $resultpath ],
+	[ 'pg_combinebackup', $synthetic12path, $backup2path, '-o', $resultpath, $mode ],
 	qr/starts at LSN.*but expected/,
 	"can't combine synthetic backup with included incremental");
 

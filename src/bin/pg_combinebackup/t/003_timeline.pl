@@ -10,6 +10,11 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Can be changed to test the other modes.
+my $mode = $ENV{PG_TEST_PG_COMBINEBACKUP_MODE} || '--copy';
+
+note "testing using mode $mode";
+
 # Set up a new database instance.
 my $node1 = PostgreSQL::Test::Cluster->new('node1');
 $node1->init(has_archiving => 1, allows_streaming => 1);
@@ -68,7 +73,8 @@ $node2->command_ok(
 # Restore the incremental backup and use it to create a new node.
 my $node3 = PostgreSQL::Test::Cluster->new('node3');
 $node3->init_from_backup($node1, 'backup3',
-	combine_with_prior => [ 'backup1', 'backup2' ]);
+	combine_with_prior => [ 'backup1', 'backup2' ],
+	combine_mode => $mode);
 $node3->start();
 
 # Let's insert one more row.

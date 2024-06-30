@@ -856,6 +856,11 @@ sub init_from_backup
 				push @combineargs, "-T$olddir=$newdir";
 			}
 		}
+		# use the combine mode (clone/copy-file-range) if specified
+		if (defined $params{combine_mode})
+		{
+			push @combineargs, $params{combine_mode};
+		}
 		push @combineargs, @prior_backup_path, $backup_path, '-o', $data_path;
 		PostgreSQL::Test::Utils::system_or_bail(@combineargs);
 	}

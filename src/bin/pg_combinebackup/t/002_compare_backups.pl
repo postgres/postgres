@@ -9,6 +9,11 @@ use Test::More;
 
 my $tempdir = PostgreSQL::Test::Utils::tempdir_short();
 
+# Can be changed to test the other modes.
+my $mode = $ENV{PG_TEST_PG_COMBINEBACKUP_MODE} || '--copy';
+
+note "testing using mode $mode";
+
 # Set up a new database instance.
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(has_archiving => 1, allows_streaming => 1);
@@ -134,7 +139,8 @@ $pitr2->init_from_backup(
 	standby => 1,
 	has_restoring => 1,
 	combine_with_prior => ['backup1'],
-	tablespace_map => { $tsbackup2path => $tspitr2path });
+	tablespace_map => { $tsbackup2path => $tspitr2path },
+	combine_mode => $mode);
 $pitr2->append_conf(
 	'postgresql.conf', qq{
 recovery_target_lsn = '$lsn'

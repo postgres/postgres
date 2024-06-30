@@ -12,6 +12,11 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Can be changed to test the other modes.
+my $mode = $ENV{PG_TEST_PG_COMBINEBACKUP_MODE} || '--copy';
+
+note "testing using mode $mode";
+
 # Set up a new database instance.
 my $node = PostgreSQL::Test::Cluster->new('node');
 $node->init(has_archiving => 1, allows_streaming => 1);
@@ -53,9 +58,9 @@ sub combine_and_test_one_backup
 combine_and_test_one_backup('nomanifest',
 	qr/could not open file.*backup_manifest/,
 	'--no-manifest');
-combine_and_test_one_backup('csum_none', undef, '--manifest-checksums=NONE');
+combine_and_test_one_backup('csum_none', undef, '--manifest-checksums=NONE', $mode);
 combine_and_test_one_backup('csum_sha224',
-	undef, '--manifest-checksums=SHA224');
+	undef, '--manifest-checksums=SHA224', $mode);
 
 # Verify that SHA224 is mentioned in the SHA224 manifest lots of times.
 my $sha224_manifest =
