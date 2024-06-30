@@ -13,6 +13,10 @@
 #ifdef HAVE_COPYFILE_H
 #include <copyfile.h>
 #endif
+#ifdef __linux__
+#include <sys/ioctl.h>
+#include <linux/fs.h>
+#endif
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/stat.h>
@@ -214,6 +218,9 @@ copy_file_clone(const char *src, const char *dest,
 		pg_fatal("error while cloning file \"%s\" to \"%s\": %m", src, dest);
 #elif defined(__linux__) && defined(FICLONE)
 	{
+		int			src_fd;
+		int			dest_fd;
+
 		if ((src_fd = open(src, O_RDONLY | PG_BINARY, 0)) < 0)
 			pg_fatal("could not open file \"%s\": %m", src);
 
@@ -228,8 +235,11 @@ copy_file_clone(const char *src, const char *dest,
 			unlink(dest);
 
 			pg_fatal("error while cloning file \"%s\" to \"%s\": %s",
-					 src, dest);
+					 src, dest, strerror(save_errno));
 		}
+
+		close(src_fd);
+		close(dest_fd);
 	}
 #else
 	pg_fatal("file cloning not supported on this platform");

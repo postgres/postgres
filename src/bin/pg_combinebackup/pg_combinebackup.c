@@ -16,6 +16,14 @@
 #include <fcntl.h>
 #include <limits.h>
 
+#ifdef HAVE_COPYFILE_H
+#include <copyfile.h>
+#endif
+#ifdef __linux__
+#include <sys/ioctl.h>
+#include <linux/fs.h>
+#endif
+
 #include "backup_label.h"
 #include "common/blkreftable.h"
 #include "common/checksum_helper.h"
