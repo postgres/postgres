@@ -139,7 +139,8 @@ main(int argc, char *argv[])
 		{"no-manifest", no_argument, NULL, 2},
 		{"sync-method", required_argument, NULL, 3},
 		{"clone", no_argument, NULL, 4},
-		{"copy-file-range", no_argument, NULL, 5},
+		{"copy", no_argument, NULL, 5},
+		{"copy-file-range", no_argument, NULL, 6},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -209,6 +210,9 @@ main(int argc, char *argv[])
 				opt.copy_method = COPY_METHOD_CLONE;
 				break;
 			case 5:
+				opt.copy_method = COPY_METHOD_COPY;
+				break;
+			case 6:
 				opt.copy_method = COPY_METHOD_COPY_FILE_RANGE;
 				break;
 			default:
@@ -763,6 +767,7 @@ help(const char *progname)
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
 			 "                            relocate tablespace in OLDDIR to NEWDIR\n"));
 	printf(_("      --clone               clone (reflink) instead of copying files\n"));
+	printf(_("      --copy                copy files (default)\n"));
 	printf(_("      --copy-file-range     copy using copy_file_range() syscall\n"));
 	printf(_("      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 			 "                            use algorithm for manifest checksums\n"));

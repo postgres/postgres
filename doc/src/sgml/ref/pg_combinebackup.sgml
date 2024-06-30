@@ -163,6 +163,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--copy</option></term>
+      <listitem>
+       <para>
+        Perform regular file copy.  This is the default.  (See also
+        <option>--copy-file-range</option> and <option>--clone</option>.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--copy-file-range</option></term>
       <listitem>
        <para>
