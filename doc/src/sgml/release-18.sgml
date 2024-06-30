@@ -1,0 +1,16 @@
+<!-- doc/src/sgml/release-18.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-18">
+ <title>Release 18</title>
+
+ <formalpara>
+  <title>Release date:</title>
+  <para>2025-??-??</para>
+ </formalpara>
+
+ <para>
+  This is just a placeholder for now.
+ </para>
+
+</sect1>
