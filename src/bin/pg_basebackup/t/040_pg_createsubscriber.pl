@@ -29,6 +29,10 @@ sub generate_db
 	}
 
 	$dbname .= $suffix;
+
+	# Old IPC::Run mis-quotes command line arguments containing '"' on Windows
+	$dbname =~ tr/\"//d if ($windows_os);
+
 	$node->command_ok(
 		[ 'createdb', $dbname ],
 		"created database with ASCII characters from $from_char to $to_char");
