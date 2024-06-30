@@ -354,6 +354,17 @@ PostgreSQL documentation
    </para>
 
    <para>
+    <application>pg_createsubscriber</application> sets up logical
+    replication with two-phase commit disabled.  This means that any
+    prepared transactions will be replicated at the time
+    of <command>COMMIT PREPARED</command>, without advance preparation.
+    Once setup is complete, you can manually drop and re-create the
+    subscription(s) with
+    the <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
+    option enabled.
+   </para>
+
+   <para>
     <application>pg_createsubscriber</application> changes the system
     identifier using <application>pg_resetwal</application>.  It would avoid
     situations in which the target server might use WAL files from the source

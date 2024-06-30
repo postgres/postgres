@@ -823,6 +823,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	int			cur_repslots;
 	int			max_walsenders;
 	int			cur_walsenders;
+	int			max_prepared_transactions;
 
 	pg_log_info("checking settings on publisher");
 
@@ -849,23 +850,12 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	 * -----------------------------------------------------------------------
 	 */
 	res = PQexec(conn,
-				 "WITH wl AS "
-				 "(SELECT setting AS wallevel FROM pg_catalog.pg_settings "
-				 "WHERE name = 'wal_level'), "
-				 "total_mrs AS "
-				 "(SELECT setting AS tmrs FROM pg_catalog.pg_settings "
-				 "WHERE name = 'max_replication_slots'), "
-				 "cur_mrs AS "
-				 "(SELECT count(*) AS cmrs "
-				 "FROM pg_catalog.pg_replication_slots), "
-				 "total_mws AS "
-				 "(SELECT setting AS tmws FROM pg_catalog.pg_settings "
-				 "WHERE name = 'max_wal_senders'), "
-				 "cur_mws AS "
-				 "(SELECT count(*) AS cmws FROM pg_catalog.pg_stat_activity "
-				 "WHERE backend_type = 'walsender') "
-				 "SELECT wallevel, tmrs, cmrs, tmws, cmws "
-				 "FROM wl, total_mrs, cur_mrs, total_mws, cur_mws");
+				 "SELECT pg_catalog.current_setting('wal_level'),"
+				 " pg_catalog.current_setting('max_replication_slots'),"
+				 " (SELECT count(*) FROM pg_catalog.pg_replication_slots),"
+				 " pg_catalog.current_setting('max_wal_senders'),"
+				 " (SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE backend_type = 'walsender'),"
+				 " pg_catalog.current_setting('max_prepared_transactions')");
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -879,6 +869,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	cur_repslots = atoi(PQgetvalue(res, 0, 2));
 	max_walsenders = atoi(PQgetvalue(res, 0, 3));
 	cur_walsenders = atoi(PQgetvalue(res, 0, 4));
+	max_prepared_transactions = atoi(PQgetvalue(res, 0, 5));
 
 	PQclear(res);
 
@@ -887,6 +878,8 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	pg_log_debug("publisher: current replication slots: %d", cur_repslots);
 	pg_log_debug("publisher: max_wal_senders: %d", max_walsenders);
 	pg_log_debug("publisher: current wal senders: %d", cur_walsenders);
+	pg_log_debug("publisher: max_prepared_transactions: %d",
+				 max_prepared_transactions);
 
 	disconnect_database(conn, false);
 
@@ -912,6 +905,13 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 		pg_log_error_hint("Consider increasing max_wal_senders to at least %d.",
 						  cur_walsenders + num_dbs);
 		failed = true;
+	}
+
+	if (max_prepared_transactions != 0)
+	{
+		pg_log_warning("two_phase option will not be enabled for slots");
+		pg_log_warning_detail("Subscriptions will be created with the two_phase option disabled.  "
+							  "Prepared transactions will be replicated at COMMIT PREPARED.");
 	}
 
 	pg_free(wal_level);
