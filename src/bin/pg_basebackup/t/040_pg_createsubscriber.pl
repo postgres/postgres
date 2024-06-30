@@ -15,6 +15,27 @@ program_options_handling_ok('pg_createsubscriber');
 
 my $datadir = PostgreSQL::Test::Utils::tempdir;
 
+# Generate a database with a name made of a range of ASCII characters.
+# Extracted from 002_pg_upgrade.pl.
+sub generate_db
+{
+	my ($node, $prefix, $from_char, $to_char, $suffix) = @_;
+
+	my $dbname = $prefix;
+	for my $i ($from_char .. $to_char)
+	{
+		next if $i == 7 || $i == 10 || $i == 13;    # skip BEL, LF, and CR
+		$dbname = $dbname . sprintf('%c', $i);
+	}
+
+	$dbname .= $suffix;
+	$node->command_ok(
+		[ 'createdb', $dbname ],
+		"created database with ASCII characters from $from_char to $to_char");
+
+	return $dbname;
+}
+
 #
 # Test mandatory options
 command_fails(['pg_createsubscriber'],
@@ -104,16 +125,14 @@ $node_f->init(force_initdb => 1, allows_streaming => 'logical');
 # - create test tables
 # - insert a row
 # - create a physical replication slot
-$node_p->safe_psql(
-	'postgres', q(
-	CREATE DATABASE pg1;
-	CREATE DATABASE pg2;
-));
-$node_p->safe_psql('pg1', 'CREATE TABLE tbl1 (a text)');
-$node_p->safe_psql('pg1', "INSERT INTO tbl1 VALUES('first row')");
-$node_p->safe_psql('pg2', 'CREATE TABLE tbl2 (a text)');
+my $db1 = generate_db($node_p, 'regression\\"\\', 1, 45, '\\\\"\\\\\\');
+my $db2 = generate_db($node_p, 'regression', 46, 90, '');
+
+$node_p->safe_psql($db1, 'CREATE TABLE tbl1 (a text)');
+$node_p->safe_psql($db1, "INSERT INTO tbl1 VALUES('first row')");
+$node_p->safe_psql($db2, 'CREATE TABLE tbl2 (a text)');
 my $slotname = 'physical_slot';
-$node_p->safe_psql('pg2',
+$node_p->safe_psql($db2,
 	"SELECT pg_create_physical_replication_slot('$slotname')");
 
 # Set up node S as standby linking to node P
@@ -143,11 +162,11 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_t->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'), '--socket-directory',
+		$node_p->connstr($db1), '--socket-directory',
 		$node_t->host, '--subscriber-port',
 		$node_t->port, '--database',
-		'pg1', '--database',
-		'pg2'
+		$db1, '--database',
+		$db2
 	],
 	'target server is not in recovery');
 
@@ -157,11 +176,11 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'), '--socket-directory',
+		$node_p->connstr($db1), '--socket-directory',
 		$node_s->host, '--subscriber-port',
 		$node_s->port, '--database',
-		'pg1', '--database',
-		'pg2'
+		$db1, '--database',
+		$db2
 	],
 	'standby is up and running');
 
@@ -170,11 +189,11 @@ command_fails(
 	[
 		'pg_createsubscriber', '--verbose',
 		'--pgdata', $node_f->data_dir,
-		'--publisher-server', $node_p->connstr('pg1'),
+		'--publisher-server', $node_p->connstr($db1),
 		'--socket-directory', $node_f->host,
 		'--subscriber-port', $node_f->port,
-		'--database', 'pg1',
-		'--database', 'pg2'
+		'--database', $db1,
+		'--database', $db2
 	],
 	'subscriber data directory is not a copy of the source database cluster');
 
@@ -191,16 +210,16 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_c->data_dir, '--publisher-server',
-		$node_s->connstr('pg1'), '--socket-directory',
+		$node_s->connstr($db1), '--socket-directory',
 		$node_c->host, '--subscriber-port',
 		$node_c->port, '--database',
-		'pg1', '--database',
-		'pg2'
+		$db1, '--database',
+		$db2
 	],
 	'primary server is in recovery');
 
 # Insert another row on node P and wait node S to catch up
-$node_p->safe_psql('pg1', "INSERT INTO tbl1 VALUES('second row')");
+$node_p->safe_psql($db1, "INSERT INTO tbl1 VALUES('second row')");
 $node_p->wait_for_replay_catchup($node_s);
 
 # Check some unmet conditions on node P
@@ -218,11 +237,11 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'), '--socket-directory',
+		$node_p->connstr($db1), '--socket-directory',
 		$node_s->host, '--subscriber-port',
 		$node_s->port, '--database',
-		'pg1', '--database',
-		'pg2'
+		$db1, '--database',
+		$db2
 	],
 	'primary contains unmet conditions on node P');
 # Restore default settings here but only apply it after testing standby. Some
@@ -247,11 +266,11 @@ command_fails(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'), '--socket-directory',
+		$node_p->connstr($db1), '--socket-directory',
 		$node_s->host, '--subscriber-port',
 		$node_s->port, '--database',
-		'pg1', '--database',
-		'pg2'
+		$db1, '--database',
+		$db2
 	],
 	'standby contains unmet conditions on node S');
 $node_s->append_conf(
@@ -265,7 +284,7 @@ $node_p->restart;
 
 # Create failover slot to test its removal
 my $fslotname = 'failover_slot';
-$node_p->safe_psql('pg1',
+$node_p->safe_psql($db1,
 	"SELECT pg_create_logical_replication_slot('$fslotname', 'pgoutput', false, false, true)");
 $node_s->start;
 $node_s->safe_psql('postgres', "SELECT pg_sync_replication_slots()");
@@ -280,15 +299,15 @@ command_ok(
 		'--recovery-timeout', "$PostgreSQL::Test::Utils::timeout_default",
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'), '--socket-directory',
+		$node_p->connstr($db1), '--socket-directory',
 		$node_s->host, '--subscriber-port',
 		$node_s->port, '--publication',
 		'pub1', '--publication',
 		'pub2', '--subscription',
 		'sub1', '--subscription',
 		'sub2', '--database',
-		'pg1', '--database',
-		'pg2'
+		$db1, '--database',
+		$db2
 	],
 	'run pg_createsubscriber --dry-run on node S');
 
@@ -304,7 +323,7 @@ command_ok(
 		'pg_createsubscriber', '--verbose',
 		'--dry-run', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'), '--socket-directory',
+		$node_p->connstr($db1), '--socket-directory',
 		$node_s->host, '--subscriber-port',
 		$node_s->port, '--replication-slot',
 		'replslot1'
@@ -318,20 +337,20 @@ command_ok(
 		'--recovery-timeout', "$PostgreSQL::Test::Utils::timeout_default",
 		'--verbose', '--pgdata',
 		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr('pg1'), '--socket-directory',
+		$node_p->connstr($db1), '--socket-directory',
 		$node_s->host, '--subscriber-port',
 		$node_s->port, '--publication',
 		'pub1', '--publication',
 		'Pub2', '--replication-slot',
 		'replslot1', '--replication-slot',
 		'replslot2', '--database',
-		'pg1', '--database',
-		'pg2'
+		$db1, '--database',
+		$db2
 	],
 	'run pg_createsubscriber on node S');
 
 # Confirm the physical replication slot has been removed
-$result = $node_p->safe_psql('pg1',
+$result = $node_p->safe_psql($db1,
 	"SELECT count(*) FROM pg_replication_slots WHERE slot_name = '$slotname'"
 );
 is($result, qq(0),
@@ -339,8 +358,8 @@ is($result, qq(0),
 );
 
 # Insert rows on P
-$node_p->safe_psql('pg1', "INSERT INTO tbl1 VALUES('third row')");
-$node_p->safe_psql('pg2', "INSERT INTO tbl2 VALUES('row 1')");
+$node_p->safe_psql($db1, "INSERT INTO tbl1 VALUES('third row')");
+$node_p->safe_psql($db2, "INSERT INTO tbl2 VALUES('row 1')");
 
 # Start subscriber
 $node_s->start;
@@ -357,20 +376,20 @@ $node_s->wait_for_subscription_sync($node_p, $subnames[0]);
 $node_s->wait_for_subscription_sync($node_p, $subnames[1]);
 
 # Confirm the failover slot has been removed
-$result = $node_s->safe_psql('pg1',
+$result = $node_s->safe_psql($db1,
 	"SELECT count(*) FROM pg_replication_slots WHERE slot_name = '$fslotname'");
 is($result, qq(0), 'failover slot was removed');
 
-# Check result on database pg1
-$result = $node_s->safe_psql('pg1', 'SELECT * FROM tbl1');
+# Check result on database $db1
+$result = $node_s->safe_psql($db1, 'SELECT * FROM tbl1');
 is( $result, qq(first row
 second row
 third row),
-	'logical replication works on database pg1');
+	"logical replication works on database $db1");
 
-# Check result on database pg2
-$result = $node_s->safe_psql('pg2', 'SELECT * FROM tbl2');
-is($result, qq(row 1), 'logical replication works on database pg2');
+# Check result on database $db2
+$result = $node_s->safe_psql($db2, 'SELECT * FROM tbl2');
+is($result, qq(row 1), "logical replication works on database $db2");
 
 # Different system identifier?
 my $sysid_p = $node_p->safe_psql('postgres',

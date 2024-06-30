@@ -26,6 +26,7 @@
 #include "common/restricted_token.h"
 #include "fe_utils/recovery_gen.h"
 #include "fe_utils/simple_list.h"
+#include "fe_utils/string_utils.h"
 #include "getopt_long.h"
 
 #define	DEFAULT_SUB_PORT	"50432"
@@ -237,14 +238,27 @@ usage(void)
 }
 
 /*
+ * Subroutine to append "keyword=value" to a connection string,
+ * with proper quoting of the value.  (We assume keywords don't need that.)
+ */
+static void
+appendConnStrItem(PQExpBuffer buf, const char *keyword, const char *val)
+{
+	if (buf->len > 0)
+		appendPQExpBufferChar(buf, ' ');
+	appendPQExpBufferStr(buf, keyword);
+	appendPQExpBufferChar(buf, '=');
+	appendConnStrVal(buf, val);
+}
+
+/*
  * Validate a connection string. Returns a base connection string that is a
  * connection string without a database name.
  *
  * Since we might process multiple databases, each database name will be
  * appended to this base connection string to provide a final connection
  * string. If the second argument (dbname) is not null, returns dbname if the
- * provided connection string contains it. If option --database is not
- * provided, uses dbname as the only database to setup the logical replica.
+ * provided connection string contains it.
  *
  * It is the caller's responsibility to free the returned connection string and
  * dbname.
@@ -257,7 +271,6 @@ get_base_conninfo(const char *conninfo, char **dbname)
 	PQconninfoOption *conn_opt;
 	char	   *errmsg = NULL;
 	char	   *ret;
-	int			i;
 
 	conn_opts = PQconninfoParse(conninfo, &errmsg);
 	if (conn_opts == NULL)
@@ -268,22 +281,17 @@ get_base_conninfo(const char *conninfo, char **dbname)
 	}
 
 	buf = createPQExpBuffer();
-	i = 0;
 	for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 	{
-		if (strcmp(conn_opt->keyword, "dbname") == 0 && conn_opt->val != NULL)
-		{
-			if (dbname)
-				*dbname = pg_strdup(conn_opt->val);
-			continue;
-		}
-
 		if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
 		{
-			if (i > 0)
-				appendPQExpBufferChar(buf, ' ');
-			appendPQExpBuffer(buf, "%s=%s", conn_opt->keyword, conn_opt->val);
-			i++;
+			if (strcmp(conn_opt->keyword, "dbname") == 0)
+			{
+				if (dbname)
+					*dbname = pg_strdup(conn_opt->val);
+				continue;
+			}
+			appendConnStrItem(buf, conn_opt->keyword, conn_opt->val);
 		}
 	}
 
@@ -305,13 +313,13 @@ get_sub_conninfo(const struct CreateSubscriberOptions *opt)
 	PQExpBuffer buf = createPQExpBuffer();
 	char	   *ret;
 
-	appendPQExpBuffer(buf, "port=%s", opt->sub_port);
+	appendConnStrItem(buf, "port", opt->sub_port);
 #if !defined(WIN32)
-	appendPQExpBuffer(buf, " host=%s", opt->socket_dir);
+	appendConnStrItem(buf, "host", opt->socket_dir);
 #endif
 	if (opt->sub_username != NULL)
-		appendPQExpBuffer(buf, " user=%s", opt->sub_username);
-	appendPQExpBuffer(buf, " fallback_application_name=%s", progname);
+		appendConnStrItem(buf, "user", opt->sub_username);
+	appendConnStrItem(buf, "fallback_application_name", progname);
 
 	ret = pg_strdup(buf->data);
 
@@ -402,7 +410,7 @@ concat_conninfo_dbname(const char *conninfo, const char *dbname)
 	Assert(conninfo != NULL);
 
 	appendPQExpBufferStr(buf, conninfo);
-	appendPQExpBuffer(buf, " dbname=%s", dbname);
+	appendConnStrItem(buf, "dbname", dbname);
 
 	ret = pg_strdup(buf->data);
 	destroyPQExpBuffer(buf);
@@ -1312,8 +1320,9 @@ start_standby_server(const struct CreateSubscriberOptions *opt, bool restricted_
 	PQExpBuffer pg_ctl_cmd = createPQExpBuffer();
 	int			rc;
 
-	appendPQExpBuffer(pg_ctl_cmd, "\"%s\" start -D \"%s\" -s -o \"-c sync_replication_slots=off\"",
-					  pg_ctl_path, subscriber_dir);
+	appendPQExpBuffer(pg_ctl_cmd, "\"%s\" start -D ", pg_ctl_path);
+	appendShellString(pg_ctl_cmd, subscriber_dir);
+	appendPQExpBuffer(pg_ctl_cmd, " -s -o \"-c sync_replication_slots=off\"");
 	if (restricted_access)
 	{
 		appendPQExpBuffer(pg_ctl_cmd, " -o \"-p %s\"", opt->sub_port);
