@@ -84,13 +84,19 @@ my $resultpath = $node1->backup_dir . '/result';
 
 # Can't combine 2 full backups.
 $node1->command_fails_like(
-	[ 'pg_combinebackup', $backup1path, $backup1path, '-o', $resultpath, $mode ],
+	[
+		'pg_combinebackup', $backup1path, $backup1path, '-o',
+		$resultpath, $mode
+	],
 	qr/is a full backup, but only the first backup should be a full backup/,
 	"can't combine full backups");
 
 # Can't combine 2 incremental backups.
 $node1->command_fails_like(
-	[ 'pg_combinebackup', $backup2path, $backup2path, '-o', $resultpath, $mode ],
+	[
+		'pg_combinebackup', $backup2path, $backup2path, '-o',
+		$resultpath, $mode
+	],
 	qr/is an incremental backup, but the first backup should be a full backup/,
 	"can't combine full backups");
 
@@ -121,7 +127,10 @@ move("$backup2path/backup_manifest.orig", "$backup2path/backup_manifest")
 
 # Can't omit a required backup.
 $node1->command_fails_like(
-	[ 'pg_combinebackup', $backup1path, $backup3path, '-o', $resultpath, $mode ],
+	[
+		'pg_combinebackup', $backup1path, $backup3path, '-o',
+		$resultpath, $mode
+	],
 	qr/starts at LSN.*but expected/,
 	"can't omit a required backup");
 
@@ -154,13 +163,21 @@ $node1->command_ok(
 
 # Can combine result of previous step with second incremental.
 $node1->command_ok(
-	[ 'pg_combinebackup', $synthetic12path, $backup3path, '-o', $resultpath, $mode ],
+	[
+		'pg_combinebackup', $synthetic12path,
+		$backup3path, '-o',
+		$resultpath, $mode
+	],
 	"can combine synthetic backup with later incremental");
 rmtree($resultpath);
 
 # Can't combine result of 1+2 with 2.
 $node1->command_fails_like(
-	[ 'pg_combinebackup', $synthetic12path, $backup2path, '-o', $resultpath, $mode ],
+	[
+		'pg_combinebackup', $synthetic12path,
+		$backup2path, '-o',
+		$resultpath, $mode
+	],
 	qr/starts at LSN.*but expected/,
 	"can't combine synthetic backup with included incremental");
 

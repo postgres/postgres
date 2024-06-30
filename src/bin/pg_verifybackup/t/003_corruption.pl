@@ -108,8 +108,8 @@ for my $scenario (@scenario)
   SKIP:
 	{
 		skip "unix-style permissions not supported on Windows", 4
-		  if ($scenario->{'skip_on_windows'} &&
-			  ($windows_os || $Config::Config{osname} eq 'cygwin'));
+		  if ($scenario->{'skip_on_windows'}
+			&& ($windows_os || $Config::Config{osname} eq 'cygwin'));
 
 		# Take a backup and check that it verifies OK.
 		my $backup_path = $primary->backup_dir . '/' . $name;

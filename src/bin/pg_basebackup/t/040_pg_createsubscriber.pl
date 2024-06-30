@@ -289,10 +289,13 @@ $node_p->restart;
 # Create failover slot to test its removal
 my $fslotname = 'failover_slot';
 $node_p->safe_psql($db1,
-	"SELECT pg_create_logical_replication_slot('$fslotname', 'pgoutput', false, false, true)");
+	"SELECT pg_create_logical_replication_slot('$fslotname', 'pgoutput', false, false, true)"
+);
 $node_s->start;
 $node_s->safe_psql('postgres', "SELECT pg_sync_replication_slots()");
-my $result = $node_s->safe_psql('postgres', "SELECT slot_name FROM pg_replication_slots WHERE slot_name = '$fslotname' AND synced AND NOT temporary");
+my $result = $node_s->safe_psql('postgres',
+	"SELECT slot_name FROM pg_replication_slots WHERE slot_name = '$fslotname' AND synced AND NOT temporary"
+);
 is($result, 'failover_slot', 'failover slot is synced');
 $node_s->stop;
 
@@ -381,7 +384,8 @@ $node_s->wait_for_subscription_sync($node_p, $subnames[1]);
 
 # Confirm the failover slot has been removed
 $result = $node_s->safe_psql($db1,
-	"SELECT count(*) FROM pg_replication_slots WHERE slot_name = '$fslotname'");
+	"SELECT count(*) FROM pg_replication_slots WHERE slot_name = '$fslotname'"
+);
 is($result, qq(0), 'failover slot was removed');
 
 # Check result on database $db1

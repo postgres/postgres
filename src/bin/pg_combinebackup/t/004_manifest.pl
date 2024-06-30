@@ -58,7 +58,8 @@ sub combine_and_test_one_backup
 combine_and_test_one_backup('nomanifest',
 	qr/could not open file.*backup_manifest/,
 	'--no-manifest');
-combine_and_test_one_backup('csum_none', undef, '--manifest-checksums=NONE', $mode);
+combine_and_test_one_backup('csum_none', undef, '--manifest-checksums=NONE',
+	$mode);
 combine_and_test_one_backup('csum_sha224',
 	undef, '--manifest-checksums=SHA224', $mode);
 

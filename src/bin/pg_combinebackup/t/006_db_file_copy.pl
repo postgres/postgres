@@ -49,7 +49,8 @@ $primary->command_ok(
 
 # Recover the incremental backup.
 my $restore = PostgreSQL::Test::Cluster->new('restore');
-$restore->init_from_backup($primary, 'backup2',
+$restore->init_from_backup(
+	$primary, 'backup2',
 	combine_with_prior => ['backup1'],
 	combine_mode => $mode);
 $restore->start();

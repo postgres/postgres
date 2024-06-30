@@ -72,7 +72,8 @@ $node2->command_ok(
 
 # Restore the incremental backup and use it to create a new node.
 my $node3 = PostgreSQL::Test::Cluster->new('node3');
-$node3->init_from_backup($node1, 'backup3',
+$node3->init_from_backup(
+	$node1, 'backup3',
 	combine_with_prior => [ 'backup1', 'backup2' ],
 	combine_mode => $mode);
 $node3->start();
