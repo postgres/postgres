@@ -1727,7 +1727,7 @@ WalSndUpdateProgress(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId 
 
 /*
  * Wake up the logical walsender processes with logical failover slots if the
- * currently acquired physical slot is specified in standby_slot_names GUC.
+ * currently acquired physical slot is specified in synchronized_standby_slots GUC.
  */
 void
 PhysicalWakeupLogicalWalSnd(void)
@@ -1742,7 +1742,7 @@ PhysicalWakeupLogicalWalSnd(void)
 	if (RecoveryInProgress())
 		return;
 
-	if (SlotExistsInStandbySlotNames(NameStr(MyReplicationSlot->data.name)))
+	if (SlotExistsInSyncStandbySlots(NameStr(MyReplicationSlot->data.name)))
 		ConditionVariableBroadcast(&WalSndCtl->wal_confirm_rcv_cv);
 }
 

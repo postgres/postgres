@@ -4692,7 +4692,7 @@ struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"standby_slot_names", PGC_SIGHUP, REPLICATION_PRIMARY,
+		{"synchronized_standby_slots", PGC_SIGHUP, REPLICATION_PRIMARY,
 			gettext_noop("Lists streaming replication standby server slot "
 						 "names that logical WAL sender processes will wait for."),
 			gettext_noop("Logical WAL sender processes will send decoded "
@@ -4700,9 +4700,9 @@ struct config_string ConfigureNamesString[] =
 						 "replication slots confirm receiving WAL."),
 			GUC_LIST_INPUT
 		},
-		&standby_slot_names,
+		&synchronized_standby_slots,
 		"",
-		check_standby_slot_names, assign_standby_slot_names, NULL
+		check_synchronized_standby_slots, assign_synchronized_standby_slots, NULL
 	},
 
 	/* End-of-list marker */

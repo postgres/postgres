@@ -713,7 +713,7 @@ ALTER SUBSCRIPTION
    server before the failover happens. To ensure a successful failover, the
    standby server must be ahead of the subscriber. This can be achieved by
    configuring
-   <link linkend="guc-standby-slot-names"><varname>standby_slot_names</varname></link>.
+   <link linkend="guc-synchronized-standby-slots"><varname>synchronized_standby_slots</varname></link>.
   </para>
 
   <para>
