@@ -1,8 +1,8 @@
 extern crate cc;
+extern crate pkg_config;
 
 fn main() {
     cc::Build::new()
-        // .compiler("clang")
         .file("../src/bin/psql/common.c")
         .include("../src/include")
         .include("../src/interfaces/libpq")

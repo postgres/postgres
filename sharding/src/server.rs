@@ -2,21 +2,34 @@ mod psql;
 
 use psql::common_h_bindings::{PGresult};
 use std::ffi::CString;
+use libpq::Connection;
 
-extern "C" {
-    pub fn PSQLexec(query: *const libc::c_char) -> *mut PGresult;
-}
+// extern "C" {
+//     pub fn PSQLexec(query: *const libc::c_char) -> *mut PGresult;
+// }
 
-extern "C" fn print_pgresult() {
-    unsafe {
-        let result: *mut PGresult =
-            PSQLexec(CString::new("SELECT * FROM employees;").unwrap().as_ptr());
-        println!("{:?}", (*result).ntups);
+// extern "C" fn print_pgresult() {
+//     unsafe {
+//         let result: *mut PGresult =
+//             PSQLexec(CString::new("SELECT * FROM employees;").unwrap().as_ptr());
+//         println!("{:?}", (*result).ntups);
+//     }
+// }
+
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    // Create a new connection to the PostgreSQL server
+    let mut conn = Connection::connect("postgresql://user:password@localhost:5432/database", None)?;
+
+    // Execute a SQL query
+    let result = conn.exec("SELECT * FROM users", &[]).await?;
+
+    // Iterate over the rows in the result
+    for row in result.rows() {
+        let id: i32 = row.get(0);
+        let name: &str = row.get(1);
+        println!("ID: {}, Name: {}", id, name);
     }
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    print_pgresult();
 
     
     // // Start the pgwire server on port 5432
