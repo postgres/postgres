@@ -25286,9 +25286,9 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
         Constructs an <type>aclitem</type> array holding the default access
         privileges for an object of type <parameter>type</parameter> belonging
         to the role with OID <parameter>ownerId</parameter>.  This represents
-        the access privileges that will be assumed when an object's ACL entry
-        is null.  (The default access privileges are described in
-        <xref linkend="ddl-priv"/>.)
+        the access privileges that will be assumed when an object's
+        <acronym>ACL</acronym> entry is null. (The default access privileges
+        are described in <xref linkend="ddl-priv"/>.)
         The <parameter>type</parameter> parameter must be one of
         'c' for <literal>COLUMN</literal>,
         'r' for <literal>TABLE</literal> and table-like objects,

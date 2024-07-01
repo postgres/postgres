@@ -1819,7 +1819,7 @@ ALTER TABLE products RENAME TO items;
   </indexterm>
 
   <indexterm zone="ddl-priv">
-   <primary>ACL</primary>
+   <primary><acronym>ACL</acronym></primary>
   </indexterm>
 
   <indexterm zone="ddl-priv-default">
@@ -2183,13 +2183,14 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <para>
    <xref linkend="privilege-abbrevs-table"/> shows the one-letter
    abbreviations that are used for these privilege types in
-   <firstterm>ACL</firstterm> (Access Control List) values.
+   <firstterm><acronym>ACL</acronym></firstterm> values.
    You will see these letters in the output of the <xref linkend="app-psql"/>
-   commands listed below, or when looking at ACL columns of system catalogs.
+   commands listed below, or when looking at <acronym>ACL</acronym> columns
+   of system catalogs.
   </para>
 
   <table id="privilege-abbrevs-table">
-   <title>ACL Privilege Abbreviations</title>
+   <title><acronym>ACL</acronym> Privilege Abbreviations</title>
    <tgroup cols="3">
     <colspec colname="col1" colwidth="1*"/>
     <colspec colname="col2" colwidth="1*"/>

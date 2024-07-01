@@ -3349,8 +3349,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
-   Note that when an ACL entry in another catalog is null, it is taken
-   to represent the hard-wired default privileges for its object,
+   Note that when an <acronym>ACL</acronym> entry in another catalog is null,
+   it is taken to represent the hard-wired default privileges for its object,
    <emphasis>not</emphasis> whatever might be in <structname>pg_default_acl</structname>
    at the moment.  <structname>pg_default_acl</structname> is only consulted during
    object creation.
@@ -7167,7 +7167,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      <listitem>
       <para>
        The referenced object (which must be a role) is mentioned in the
-       ACL (access control list, i.e., privileges list) of the
+       <acronym>ACL</acronym> of the
        dependent object.  (A <symbol>SHARED_DEPENDENCY_ACL</symbol> entry is
        not made for the owner of the object, since the owner will have
        a <symbol>SHARED_DEPENDENCY_OWNER</symbol> entry anyway.)

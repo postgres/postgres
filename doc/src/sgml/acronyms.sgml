@@ -10,6 +10,15 @@
   <variablelist>
 
    <varlistentry>
+    <term><acronym>ACL</acronym></term>
+    <listitem>
+     <para>
+      <ulink url="https://en.wikipedia.org/wiki/Access-control_list">Access Control List</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>AM</acronym></term>
     <listitem>
      <para>
