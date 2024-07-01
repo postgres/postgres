@@ -301,12 +301,13 @@ xact_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 					ReorderBufferXidSetCatalogChanges(ctx->reorder, xid,
 													  buf->origptr);
 				}
-				else if ((!ctx->fast_forward))
+				else if (!ctx->fast_forward)
 					ReorderBufferImmediateInvalidation(ctx->reorder,
 													   invals->nmsgs,
 													   invals->msgs);
+
+				break;
 			}
-			break;
 		case XLOG_XACT_PREPARE:
 			{
 				xl_xact_parsed_prepare parsed;
