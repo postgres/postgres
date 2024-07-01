@@ -61,7 +61,7 @@ const bbstreamer_ops bbstreamer_recovery_injector_ops = {
  * zero-length standby.signal file, dropping any file with that name from
  * the archive.
  */
-extern bbstreamer *
+bbstreamer *
 bbstreamer_recovery_injector_new(bbstreamer *next,
 								 bool is_recovery_guc_supported,
 								 PQExpBuffer recoveryconfcontents)

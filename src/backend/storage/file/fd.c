@@ -4020,7 +4020,7 @@ check_debug_io_direct(char **newval, void **extra, GucSource source)
 	return result;
 }
 
-extern void
+void
 assign_debug_io_direct(const char *newval, void *extra)
 {
 	int		   *flags = (int *) extra;

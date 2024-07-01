@@ -944,7 +944,7 @@ GetFileBackupMethod(IncrementalBackupInfo *ib, const char *path,
  * number of blocks. The header is rounded to a multiple of BLCKSZ, but
  * only if the file will store some block data.
  */
-extern size_t
+size_t
 GetIncrementalHeaderSize(unsigned num_blocks_required)
 {
 	size_t		result;
@@ -972,7 +972,7 @@ GetIncrementalHeaderSize(unsigned num_blocks_required)
 /*
  * Compute the size for an incremental file containing a given number of blocks.
  */
-extern size_t
+size_t
 GetIncrementalFileSize(unsigned num_blocks_required)
 {
 	size_t		result;

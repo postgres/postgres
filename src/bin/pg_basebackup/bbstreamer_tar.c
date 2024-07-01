@@ -89,7 +89,7 @@ const bbstreamer_ops bbstreamer_tar_terminator_ops = {
  * specified by 'next' will receive a series of typed chunks, as per the
  * conventions described in bbstreamer.h.
  */
-extern bbstreamer *
+bbstreamer *
 bbstreamer_tar_parser_new(bbstreamer *next)
 {
 	bbstreamer_tar_parser *streamer;
@@ -352,7 +352,7 @@ bbstreamer_tar_parser_free(bbstreamer *streamer)
  * chunks (i.e. not BBSTREAMER_UNKNOWN). See also the comments for
  * bbstreamer_tar_parser_content.
  */
-extern bbstreamer *
+bbstreamer *
 bbstreamer_tar_archiver_new(bbstreamer *next)
 {
 	bbstreamer_tar_archiver *streamer;
