@@ -29057,7 +29057,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         adding the rows produced when decoding each new transaction commit.
         If the specified slot is a logical failover slot then the function will
         not return until all physical slots specified in
-        <link linkend="guc-standby-slot-names"><varname>standby_slot_names</varname></link>
+        <link linkend="guc-synchronized-standby-slots"><varname>synchronized_standby_slots</varname></link>
         have confirmed WAL receipt.
        </para></entry>
       </row>
@@ -29137,7 +29137,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         slot may return to an earlier position. If the specified slot is a
         logical failover slot then the function will not return until all
         physical slots specified in
-        <link linkend="guc-standby-slot-names"><varname>standby_slot_names</varname></link>
+        <link linkend="guc-synchronized-standby-slots"><varname>synchronized_standby_slots</varname></link>
         have confirmed WAL receipt.
        </para></entry>
       </row>

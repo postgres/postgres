@@ -1350,7 +1350,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        </para>
 
        <para>
-       The new server variable is <xref linkend="guc-standby-slot-names"/>.
+       The new server variable is <xref linkend="guc-synchronized-standby-slots"/>.
        </para>
       </listitem>
 

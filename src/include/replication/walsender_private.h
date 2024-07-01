@@ -115,8 +115,8 @@ typedef struct
 
 	/*
 	 * Used by physical walsenders holding slots specified in
-	 * standby_slot_names to wake up logical walsenders holding logical
-	 * failover slots when a walreceiver confirms the receipt of LSN.
+	 * synchronized_standby_slots to wake up logical walsenders holding
+	 * logical failover slots when a walreceiver confirms the receipt of LSN.
 	 */
 	ConditionVariable wal_confirm_rcv_cv;
 
