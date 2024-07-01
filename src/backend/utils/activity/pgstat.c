@@ -307,7 +307,6 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.fixed_amount = false,
 
 		.accessed_across_databases = true,
-		.named_on_disk = true,
 
 		.shared_size = sizeof(PgStatShared_ReplSlot),
 		.shared_data_off = offsetof(PgStatShared_ReplSlot, stats),

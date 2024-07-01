@@ -194,12 +194,6 @@ typedef struct PgStat_KindInfo
 	bool		accessed_across_databases:1;
 
 	/*
-	 * For variable-numbered stats: Identified on-disk using a name, rather
-	 * than PgStat_HashKey. Probably only needed for replication slot stats.
-	 */
-	bool		named_on_disk:1;
-
-	/*
 	 * The size of an entry in the shared stats hash table (pointed to by
 	 * PgStatShared_HashEntry->body).
 	 */
@@ -239,7 +233,7 @@ typedef struct PgStat_KindInfo
 	void		(*reset_timestamp_cb) (PgStatShared_Common *header, TimestampTz ts);
 
 	/*
-	 * For variable-numbered stats with named_on_disk. Optional.
+	 * For variable-numbered stats. Optional.
 	 */
 	void		(*to_serialized_name) (const PgStat_HashKey *key,
 									   const PgStatShared_Common *header, NameData *name);
