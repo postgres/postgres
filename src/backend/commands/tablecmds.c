@@ -1273,7 +1273,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
  *
  * Given a list of ColumnDef nodes, build a TupleDesc.
  *
- * Note: tdtypeid will need to be filled in later on.
+ * Note: This is only for the limited purpose of table and view creation.  Not
+ * everything is filled in.  A real tuple descriptor should be obtained from
+ * the relcache.
  */
 TupleDesc
 BuildDescForRelation(const List *columns)
@@ -1282,7 +1284,6 @@ BuildDescForRelation(const List *columns)
 	AttrNumber	attnum;
 	ListCell   *l;
 	TupleDesc	desc;
-	bool		has_not_null;
 	char	   *attname;
 	Oid			atttypid;
 	int32		atttypmod;
@@ -1294,7 +1295,6 @@ BuildDescForRelation(const List *columns)
 	 */
 	natts = list_length(columns);
 	desc = CreateTemplateTupleDesc(natts);
-	has_not_null = false;
 
 	attnum = 0;
 
@@ -1340,7 +1340,6 @@ BuildDescForRelation(const List *columns)
 
 		/* Fill in additional stuff not handled by TupleDescInitEntry */
 		att->attnotnull = entry->is_not_null;
-		has_not_null |= entry->is_not_null;
 		att->attislocal = entry->is_local;
 		att->attinhcount = entry->inhcount;
 		att->attidentity = entry->identity;
@@ -1350,24 +1349,6 @@ BuildDescForRelation(const List *columns)
 			att->attstorage = entry->storage;
 		else if (entry->storage_name)
 			att->attstorage = GetAttributeStorage(att->atttypid, entry->storage_name);
-	}
-
-	if (has_not_null)
-	{
-		TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
-
-		constr->has_not_null = true;
-		constr->has_generated_stored = false;
-		constr->defval = NULL;
-		constr->missing = NULL;
-		constr->num_defval = 0;
-		constr->check = NULL;
-		constr->num_check = 0;
-		desc->constr = constr;
-	}
-	else
-	{
-		desc->constr = NULL;
 	}
 
 	return desc;
