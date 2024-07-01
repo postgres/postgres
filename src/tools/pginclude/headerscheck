@@ -107,12 +107,10 @@ do
 	# Likewise, these files are platform-specific, and the one
 	# relevant to our platform will be included by atomics.h.
 	test "$f" = src/include/port/atomics/arch-arm.h && continue
-	test "$f" = src/include/port/atomics/arch-hppa.h && continue
 	test "$f" = src/include/port/atomics/arch-ppc.h && continue
 	test "$f" = src/include/port/atomics/arch-x86.h && continue
 	test "$f" = src/include/port/atomics/fallback.h && continue
 	test "$f" = src/include/port/atomics/generic.h && continue
-	test "$f" = src/include/port/atomics/generic-acc.h && continue
 	test "$f" = src/include/port/atomics/generic-gcc.h && continue
 	test "$f" = src/include/port/atomics/generic-msvc.h && continue
 	test "$f" = src/include/port/atomics/generic-sunpro.h && continue

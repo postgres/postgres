@@ -41,7 +41,7 @@
 #ifdef __i386__
 #define BF_ASM				0	/* 1 */
 #define BF_SCALE			1
-#elif defined(__x86_64__) || defined(__hppa__)
+#elif defined(__x86_64__)
 #define BF_ASM				0
 #define BF_SCALE			1
 #else

@@ -69,8 +69,6 @@
 #include "port/atomics/arch-x86.h"
 #elif defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__) || defined(__powerpc64__)
 #include "port/atomics/arch-ppc.h"
-#elif defined(__hppa) || defined(__hppa__)
-#include "port/atomics/arch-hppa.h"
 #endif
 
 /*

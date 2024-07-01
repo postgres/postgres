@@ -3390,8 +3390,8 @@ export MANPATH
 
   <para>
    In general, <productname>PostgreSQL</productname> can be expected to work on
-   these CPU architectures: x86, PowerPC, S/390, SPARC, ARM, MIPS, RISC-V,
-   and PA-RISC, including
+   these CPU architectures: x86, PowerPC, S/390, SPARC, ARM, MIPS,
+   and RISC-V, including
    big-endian, little-endian, 32-bit, and 64-bit variants where applicable.
    It is often
    possible to build on an unsupported CPU type by configuring with
@@ -3422,7 +3422,8 @@ export MANPATH
   <para>
    Historical versions of <productname>PostgreSQL</productname> or POSTGRES
    also ran on CPU architectures including Alpha, Itanium, M32R, M68K,
-   M88K, NS32K, SuperH, and VAX, and operating systems including 4.3BSD, AIX, BEOS,
+   M88K, NS32K, PA-RISC, SuperH, and VAX,
+   and operating systems including 4.3BSD, AIX, BEOS,
    BSD/OS, DG/UX, Dynix, HP-UX, IRIX, NeXTSTEP, QNX, SCO, SINIX, Sprite, SunOS,
    Tru64 UNIX, and ULTRIX.
   </para>

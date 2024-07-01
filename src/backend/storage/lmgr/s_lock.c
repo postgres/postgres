@@ -116,12 +116,7 @@ s_lock(volatile slock_t *lock, const char *file, int line, const char *func)
 void
 s_unlock(volatile slock_t *lock)
 {
-#ifdef TAS_ACTIVE_WORD
-	/* HP's PA-RISC */
-	*TAS_ACTIVE_WORD(lock) = -1;
-#else
 	*lock = 0;
-#endif
 }
 #endif
 
