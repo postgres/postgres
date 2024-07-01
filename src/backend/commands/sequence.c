@@ -1790,21 +1790,17 @@ pg_sequence_last_value(PG_FUNCTION_ARGS)
 	/* open and lock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
-	if (pg_class_aclcheck(relid, GetUserId(), ACL_SELECT | ACL_USAGE) != ACLCHECK_OK)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied for sequence %s",
-						RelationGetRelationName(seqrel))));
-
 	/*
 	 * We return NULL for other sessions' temporary sequences.  The
 	 * pg_sequences system view already filters those out, but this offers a
 	 * defense against ERRORs in case someone invokes this function directly.
 	 *
 	 * Also, for the benefit of the pg_sequences view, we return NULL for
-	 * unlogged sequences on standbys instead of throwing an error.
+	 * unlogged sequences on standbys and for sequences for which the current
+	 * user lacks privileges instead of throwing an error.
 	 */
-	if (!RELATION_IS_OTHER_TEMP(seqrel) &&
+	if (pg_class_aclcheck(relid, GetUserId(), ACL_SELECT | ACL_USAGE) == ACLCHECK_OK &&
+		!RELATION_IS_OTHER_TEMP(seqrel) &&
 		(RelationIsPermanent(seqrel) || !RecoveryInProgress()))
 	{
 		Buffer		buf;
