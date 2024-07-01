@@ -741,6 +741,7 @@ endif
 #
 ifdef COPT
    CFLAGS += $(COPT)
+   CXXFLAGS += $(COPT)
    LDFLAGS += $(COPT)
 endif
 

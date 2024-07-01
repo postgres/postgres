@@ -1937,7 +1937,7 @@ build-postgresql:
      it will break many of <filename>configure</filename>'s built-in tests.  To add
      such flags, include them in the <envar>COPT</envar> environment variable
      while running <filename>make</filename>.  The contents of <envar>COPT</envar>
-     are added to both the <envar>CFLAGS</envar> and <envar>LDFLAGS</envar>
+     are added to the <envar>CFLAGS</envar>, <envar>CXXFLAGS</envar>, and <envar>LDFLAGS</envar>
      options set up by <filename>configure</filename>.  For example, you could do
 <screen>
 <userinput>make COPT='-Werror'</userinput>
