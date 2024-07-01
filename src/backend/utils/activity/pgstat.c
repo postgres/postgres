@@ -341,6 +341,10 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.shared_ctl_off = offsetof(PgStat_ShmemControl, archiver),
+		.shared_data_off = offsetof(PgStatShared_Archiver, stats),
+		.shared_data_len = sizeof(((PgStatShared_Archiver *) 0)->stats),
+
 		.reset_all_cb = pgstat_archiver_reset_all_cb,
 		.snapshot_cb = pgstat_archiver_snapshot_cb,
 	},
@@ -349,6 +353,10 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.name = "bgwriter",
 
 		.fixed_amount = true,
+
+		.shared_ctl_off = offsetof(PgStat_ShmemControl, bgwriter),
+		.shared_data_off = offsetof(PgStatShared_BgWriter, stats),
+		.shared_data_len = sizeof(((PgStatShared_BgWriter *) 0)->stats),
 
 		.reset_all_cb = pgstat_bgwriter_reset_all_cb,
 		.snapshot_cb = pgstat_bgwriter_snapshot_cb,
@@ -359,6 +367,10 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.shared_ctl_off = offsetof(PgStat_ShmemControl, checkpointer),
+		.shared_data_off = offsetof(PgStatShared_Checkpointer, stats),
+		.shared_data_len = sizeof(((PgStatShared_Checkpointer *) 0)->stats),
+
 		.reset_all_cb = pgstat_checkpointer_reset_all_cb,
 		.snapshot_cb = pgstat_checkpointer_snapshot_cb,
 	},
@@ -367,6 +379,10 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.name = "io",
 
 		.fixed_amount = true,
+
+		.shared_ctl_off = offsetof(PgStat_ShmemControl, io),
+		.shared_data_off = offsetof(PgStatShared_IO, stats),
+		.shared_data_len = sizeof(((PgStatShared_IO *) 0)->stats),
 
 		.reset_all_cb = pgstat_io_reset_all_cb,
 		.snapshot_cb = pgstat_io_snapshot_cb,
@@ -377,6 +393,10 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.shared_ctl_off = offsetof(PgStat_ShmemControl, slru),
+		.shared_data_off = offsetof(PgStatShared_SLRU, stats),
+		.shared_data_len = sizeof(((PgStatShared_SLRU *) 0)->stats),
+
 		.reset_all_cb = pgstat_slru_reset_all_cb,
 		.snapshot_cb = pgstat_slru_snapshot_cb,
 	},
@@ -385,6 +405,10 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.name = "wal",
 
 		.fixed_amount = true,
+
+		.shared_ctl_off = offsetof(PgStat_ShmemControl, wal),
+		.shared_data_off = offsetof(PgStatShared_Wal, stats),
+		.shared_data_len = sizeof(((PgStatShared_Wal *) 0)->stats),
 
 		.reset_all_cb = pgstat_wal_reset_all_cb,
 		.snapshot_cb = pgstat_wal_snapshot_cb,
@@ -1519,47 +1543,21 @@ pgstat_read_statsfile(void)
 		format_id != PGSTAT_FILE_FORMAT_ID)
 		goto error;
 
-	/*
-	 * XXX: The following could now be generalized to just iterate over
-	 * pgstat_kind_infos instead of knowing about the different kinds of
-	 * stats.
-	 */
+	/* Read various stats structs with fixed number of objects */
+	for (int kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+	{
+		char	   *ptr;
+		const PgStat_KindInfo *info = pgstat_get_kind_info(kind);
 
-	/*
-	 * Read archiver stats struct
-	 */
-	if (!read_chunk_s(fpin, &shmem->archiver.stats))
-		goto error;
+		if (!info->fixed_amount)
+			continue;
 
-	/*
-	 * Read bgwriter stats struct
-	 */
-	if (!read_chunk_s(fpin, &shmem->bgwriter.stats))
-		goto error;
+		Assert(info->shared_ctl_off != 0);
 
-	/*
-	 * Read checkpointer stats struct
-	 */
-	if (!read_chunk_s(fpin, &shmem->checkpointer.stats))
-		goto error;
-
-	/*
-	 * Read IO stats struct
-	 */
-	if (!read_chunk_s(fpin, &shmem->io.stats))
-		goto error;
-
-	/*
-	 * Read SLRU stats struct
-	 */
-	if (!read_chunk_s(fpin, &shmem->slru.stats))
-		goto error;
-
-	/*
-	 * Read WAL stats struct
-	 */
-	if (!read_chunk_s(fpin, &shmem->wal.stats))
-		goto error;
+		ptr = ((char *) shmem) + info->shared_ctl_off + info->shared_data_off;
+		if (!read_chunk(fpin, ptr, info->shared_data_len))
+			goto error;
+	}
 
 	/*
 	 * We found an existing statistics file. Read it and put all the hash

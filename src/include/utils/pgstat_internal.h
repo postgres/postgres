@@ -200,6 +200,12 @@ typedef struct PgStat_KindInfo
 	uint32		shared_size;
 
 	/*
+	 * The offset of the statistics struct in the containing shared memory
+	 * control structure PgStat_ShmemControl, for fixed-numbered statistics.
+	 */
+	uint32		shared_ctl_off;
+
+	/*
 	 * The offset/size of statistics inside the shared stats entry. Used when
 	 * [de-]serializing statistics to / from disk respectively. Separate from
 	 * shared_size because [de-]serialization may not include in-memory state
