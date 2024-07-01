@@ -8279,9 +8279,9 @@
   proname => 'pg_get_backend_memory_contexts', prorows => '100',
   proretset => 't', provolatile => 'v', proparallel => 'r',
   prorettype => 'record', proargtypes => '',
-  proallargtypes => '{text,text,text,int4,int8,int8,int8,int8,int8}',
-  proargmodes => '{o,o,o,o,o,o,o,o,o}',
-  proargnames => '{name, ident, parent, level, total_bytes, total_nblocks, free_bytes, free_chunks, used_bytes}',
+  proallargtypes => '{text,text,text,text,int4,int8,int8,int8,int8,int8}',
+  proargmodes => '{o,o,o,o,o,o,o,o,o,o}',
+  proargnames => '{name, ident, parent, type, level, total_bytes, total_nblocks, free_bytes, free_chunks, used_bytes}',
   prosrc => 'pg_get_backend_memory_contexts' },
 
 # logging memory contexts of the specified backend

@@ -36,7 +36,7 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 								 TupleDesc tupdesc, MemoryContext context,
 								 const char *parent, int level)
 {
-#define PG_GET_BACKEND_MEMORY_CONTEXTS_COLS	9
+#define PG_GET_BACKEND_MEMORY_CONTEXTS_COLS	10
 
 	Datum		values[PG_GET_BACKEND_MEMORY_CONTEXTS_COLS];
 	bool		nulls[PG_GET_BACKEND_MEMORY_CONTEXTS_COLS];
@@ -44,6 +44,7 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	MemoryContext child;
 	const char *name;
 	const char *ident;
+	const char *type;
 
 	Assert(MemoryContextIsValid(context));
 
@@ -96,12 +97,32 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	else
 		nulls[2] = true;
 
-	values[3] = Int32GetDatum(level);
-	values[4] = Int64GetDatum(stat.totalspace);
-	values[5] = Int64GetDatum(stat.nblocks);
-	values[6] = Int64GetDatum(stat.freespace);
-	values[7] = Int64GetDatum(stat.freechunks);
-	values[8] = Int64GetDatum(stat.totalspace - stat.freespace);
+	switch (context->type)
+	{
+		case T_AllocSetContext:
+			type = "AllocSet";
+			break;
+		case T_GenerationContext:
+			type = "Generation";
+			break;
+		case T_SlabContext:
+			type = "Slab";
+			break;
+		case T_BumpContext:
+			type = "Bump";
+			break;
+		default:
+			type = "???";
+			break;
+	}
+
+	values[3] = CStringGetTextDatum(type);
+	values[4] = Int32GetDatum(level);
+	values[5] = Int64GetDatum(stat.totalspace);
+	values[6] = Int64GetDatum(stat.nblocks);
+	values[7] = Int64GetDatum(stat.freespace);
+	values[8] = Int64GetDatum(stat.freechunks);
+	values[9] = Int64GetDatum(stat.totalspace - stat.freespace);
 	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
