@@ -1032,10 +1032,11 @@
 
   <para>
    The catalog <structname>pg_attrdef</structname> stores column default
-   values.  The main information about columns is stored in
-   <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.
-   Only columns for which a default value has been explicitly set will have
-   an entry here.
+   expressions and generation expressions.  The main information about columns
+   is stored in <link
+   linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.
+   Only columns for which a default expression or generation expression has
+   been explicitly set will have an entry here.
   </para>
 
   <table>
@@ -1087,7 +1088,7 @@
        <structfield>adbin</structfield> <type>pg_node_tree</type>
       </para>
       <para>
-       The column default value, in <function>nodeToString()</function>
+       The column default or generation expression, in <function>nodeToString()</function>
        representation.  Use <literal>pg_get_expr(adbin, adrelid)</literal> to
        convert it to an SQL expression.
       </para></entry>
