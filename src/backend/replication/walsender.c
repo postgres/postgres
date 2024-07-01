@@ -440,12 +440,10 @@ IdentifySystem(void)
 
 		/* syscache access needs a transaction env. */
 		StartTransactionCommand();
-		/* make dbname live outside TX context */
-		MemoryContextSwitchTo(cur);
 		dbname = get_database_name(MyDatabaseId);
+		/* copy dbname out of TX context */
+		dbname = MemoryContextStrdup(cur, dbname);
 		CommitTransactionCommand();
-		/* CommitTransactionCommand switches to TopMemoryContext */
-		MemoryContextSwitchTo(cur);
 	}
 
 	dest = CreateDestReceiver(DestRemoteSimple);

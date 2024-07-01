@@ -196,9 +196,8 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 	 * Save remote_host and remote_port in port structure (after this, they
 	 * will appear in log_line_prefix data for log messages).
 	 */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-	port->remote_host = pstrdup(remote_host);
-	port->remote_port = pstrdup(remote_port);
+	port->remote_host = MemoryContextStrdup(TopMemoryContext, remote_host);
+	port->remote_port = MemoryContextStrdup(TopMemoryContext, remote_port);
 
 	/* And now we can issue the Log_connections message, if wanted */
 	if (Log_connections)
@@ -230,9 +229,8 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 		strspn(remote_host, "0123456789.") < strlen(remote_host) &&
 		strspn(remote_host, "0123456789ABCDEFabcdef:") < strlen(remote_host))
 	{
-		port->remote_hostname = pstrdup(remote_host);
+		port->remote_hostname = MemoryContextStrdup(TopMemoryContext, remote_host);
 	}
-	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * Ready to begin client interaction.  We will give up and _exit(1) after
