@@ -176,7 +176,7 @@ typedef struct
 	bool		shmem_attach;
 } child_process_kind;
 
-child_process_kind child_process_kinds[] = {
+static child_process_kind child_process_kinds[] = {
 	[B_INVALID] = {"invalid", NULL, false},
 
 	[B_BACKEND] = {"backend", BackendMain, true},

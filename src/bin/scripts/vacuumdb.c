@@ -60,7 +60,7 @@ typedef enum
 	OBJFILTER_SCHEMA_EXCLUDE = (1 << 4),	/* -N | --exclude-schema */
 } VacObjFilter;
 
-VacObjFilter objfilter = OBJFILTER_NONE;
+static VacObjFilter objfilter = OBJFILTER_NONE;
 
 static void vacuum_one_database(ConnParams *cparams,
 								vacuumingOptions *vacopts,

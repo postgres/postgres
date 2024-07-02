@@ -84,8 +84,8 @@ typedef struct
 /* GUC parameters */
 int			Password_encryption = PASSWORD_TYPE_SCRAM_SHA_256;
 char	   *createrole_self_grant = "";
-bool		createrole_self_grant_enabled = false;
-GrantRoleOptions createrole_self_grant_options;
+static bool createrole_self_grant_enabled = false;
+static GrantRoleOptions createrole_self_grant_options;
 
 /* Hook to check passwords in CreateRole() and AlterRole() */
 check_password_hook_type check_password_hook = NULL;

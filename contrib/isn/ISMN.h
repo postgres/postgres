@@ -30,7 +30,7 @@
  */
 
 /* where the digit set begins, and how many of them are in the table */
-const unsigned ISMN_index[10][2] = {
+static const unsigned ISMN_index[10][2] = {
 	{0, 5},
 	{5, 0},
 	{5, 0},
@@ -42,7 +42,7 @@ const unsigned ISMN_index[10][2] = {
 	{5, 0},
 	{5, 0},
 };
-const char *ISMN_range[][2] = {
+static const char *ISMN_range[][2] = {
 	{"0-000", "0-099"},
 	{"0-1000", "0-3999"},
 	{"0-40000", "0-69999"},

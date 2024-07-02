@@ -11,7 +11,7 @@
  */
 
 /* where the digit set begins, and how many of them are in the table */
-const unsigned EAN13_index[10][2] = {
+static const unsigned EAN13_index[10][2] = {
 	{0, 6},
 	{6, 1},
 	{7, 1},
@@ -23,7 +23,7 @@ const unsigned EAN13_index[10][2] = {
 	{90, 17},
 	{107, 12},
 };
-const char *EAN13_range[][2] = {
+static const char *EAN13_range[][2] = {
 	{"000", "019"},				/* GS1 US */
 	{"020", "029"},				/* Restricted distribution (MO defined) */
 	{"030", "039"},				/* GS1 US */

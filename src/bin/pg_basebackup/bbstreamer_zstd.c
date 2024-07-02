@@ -38,7 +38,7 @@ static void bbstreamer_zstd_compressor_content(bbstreamer *streamer,
 static void bbstreamer_zstd_compressor_finalize(bbstreamer *streamer);
 static void bbstreamer_zstd_compressor_free(bbstreamer *streamer);
 
-const bbstreamer_ops bbstreamer_zstd_compressor_ops = {
+static const bbstreamer_ops bbstreamer_zstd_compressor_ops = {
 	.content = bbstreamer_zstd_compressor_content,
 	.finalize = bbstreamer_zstd_compressor_finalize,
 	.free = bbstreamer_zstd_compressor_free
@@ -51,7 +51,7 @@ static void bbstreamer_zstd_decompressor_content(bbstreamer *streamer,
 static void bbstreamer_zstd_decompressor_finalize(bbstreamer *streamer);
 static void bbstreamer_zstd_decompressor_free(bbstreamer *streamer);
 
-const bbstreamer_ops bbstreamer_zstd_decompressor_ops = {
+static const bbstreamer_ops bbstreamer_zstd_decompressor_ops = {
 	.content = bbstreamer_zstd_decompressor_content,
 	.finalize = bbstreamer_zstd_decompressor_finalize,
 	.free = bbstreamer_zstd_decompressor_free

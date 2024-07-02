@@ -47,8 +47,8 @@ bool		plpgsql_print_strict_params = false;
 
 bool		plpgsql_check_asserts = true;
 
-char	   *plpgsql_extra_warnings_string = NULL;
-char	   *plpgsql_extra_errors_string = NULL;
+static char *plpgsql_extra_warnings_string = NULL;
+static char *plpgsql_extra_errors_string = NULL;
 int			plpgsql_extra_warnings;
 int			plpgsql_extra_errors;
 

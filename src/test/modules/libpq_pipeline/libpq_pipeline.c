@@ -31,10 +31,10 @@ static void pg_attribute_noreturn() pg_fatal_impl(int line, const char *fmt,...)
 static bool process_result(PGconn *conn, PGresult *res, int results,
 						   int numsent);
 
-const char *const progname = "libpq_pipeline";
+static const char *const progname = "libpq_pipeline";
 
 /* Options and defaults */
-char	   *tracefile = NULL;	/* path to PQtrace() file */
+static char *tracefile = NULL;	/* path to PQtrace() file */
 
 
 #ifdef DEBUG_OUTPUT

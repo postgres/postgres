@@ -60,8 +60,8 @@ static const char *progname;
 /*
  * Progress status information.
  */
-int64		total_size = 0;
-int64		current_size = 0;
+static int64 total_size = 0;
+static int64 current_size = 0;
 static pg_time_t last_progress_report = 0;
 
 static void

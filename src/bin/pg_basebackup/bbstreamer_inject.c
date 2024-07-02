@@ -33,7 +33,7 @@ static void bbstreamer_recovery_injector_content(bbstreamer *streamer,
 static void bbstreamer_recovery_injector_finalize(bbstreamer *streamer);
 static void bbstreamer_recovery_injector_free(bbstreamer *streamer);
 
-const bbstreamer_ops bbstreamer_recovery_injector_ops = {
+static const bbstreamer_ops bbstreamer_recovery_injector_ops = {
 	.content = bbstreamer_recovery_injector_content,
 	.finalize = bbstreamer_recovery_injector_finalize,
 	.free = bbstreamer_recovery_injector_free

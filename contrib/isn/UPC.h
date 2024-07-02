@@ -11,7 +11,7 @@
  */
 
 /* where the digit set begins, and how many of them are in the table */
-const unsigned UPC_index[10][2] = {
+static const unsigned UPC_index[10][2] = {
 	{0, 0},
 	{0, 0},
 	{0, 0},
@@ -23,6 +23,6 @@ const unsigned UPC_index[10][2] = {
 	{0, 0},
 	{0, 0},
 };
-const char *UPC_range[][2] = {
+static const char *UPC_range[][2] = {
 	{NULL, NULL}
 };

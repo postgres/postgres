@@ -55,7 +55,7 @@ static int	dir_sync(Walfile *f);
 static bool dir_finish(WalWriteMethod *wwmethod);
 static void dir_free(WalWriteMethod *wwmethod);
 
-const WalWriteMethodOps WalDirectoryMethodOps = {
+static const WalWriteMethodOps WalDirectoryMethodOps = {
 	.open_for_write = dir_open_for_write,
 	.close = dir_close,
 	.existsfile = dir_existsfile,
@@ -676,7 +676,7 @@ static int	tar_sync(Walfile *f);
 static bool tar_finish(WalWriteMethod *wwmethod);
 static void tar_free(WalWriteMethod *wwmethod);
 
-const WalWriteMethodOps WalTarMethodOps = {
+static const WalWriteMethodOps WalTarMethodOps = {
 	.open_for_write = tar_open_for_write,
 	.close = tar_close,
 	.existsfile = tar_existsfile,

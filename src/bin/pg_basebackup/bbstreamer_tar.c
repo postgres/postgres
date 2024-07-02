@@ -50,7 +50,7 @@ static void bbstreamer_tar_parser_finalize(bbstreamer *streamer);
 static void bbstreamer_tar_parser_free(bbstreamer *streamer);
 static bool bbstreamer_tar_header(bbstreamer_tar_parser *mystreamer);
 
-const bbstreamer_ops bbstreamer_tar_parser_ops = {
+static const bbstreamer_ops bbstreamer_tar_parser_ops = {
 	.content = bbstreamer_tar_parser_content,
 	.finalize = bbstreamer_tar_parser_finalize,
 	.free = bbstreamer_tar_parser_free
@@ -63,7 +63,7 @@ static void bbstreamer_tar_archiver_content(bbstreamer *streamer,
 static void bbstreamer_tar_archiver_finalize(bbstreamer *streamer);
 static void bbstreamer_tar_archiver_free(bbstreamer *streamer);
 
-const bbstreamer_ops bbstreamer_tar_archiver_ops = {
+static const bbstreamer_ops bbstreamer_tar_archiver_ops = {
 	.content = bbstreamer_tar_archiver_content,
 	.finalize = bbstreamer_tar_archiver_finalize,
 	.free = bbstreamer_tar_archiver_free
@@ -76,7 +76,7 @@ static void bbstreamer_tar_terminator_content(bbstreamer *streamer,
 static void bbstreamer_tar_terminator_finalize(bbstreamer *streamer);
 static void bbstreamer_tar_terminator_free(bbstreamer *streamer);
 
-const bbstreamer_ops bbstreamer_tar_terminator_ops = {
+static const bbstreamer_ops bbstreamer_tar_terminator_ops = {
 	.content = bbstreamer_tar_terminator_content,
 	.finalize = bbstreamer_tar_terminator_finalize,
 	.free = bbstreamer_tar_terminator_free

@@ -19,17 +19,18 @@
 #include "common/logging.h"
 #include "getopt_long.h"
 
-const char *progname;
+static const char *progname;
 
 /* Options and defaults */
-bool		dryrun = false;		/* are we performing a dry-run operation? */
-bool		cleanBackupHistory = false; /* remove files including backup
+static bool dryrun = false;		/* are we performing a dry-run operation? */
+static bool cleanBackupHistory = false; /* remove files including backup
 										 * history files */
-char	   *additional_ext = NULL;	/* Extension to remove from filenames */
+static char *additional_ext = NULL; /* Extension to remove from filenames */
 
-char	   *archiveLocation;	/* where to find the archive? */
-char	   *restartWALFileName; /* the file from which we can restart restore */
-char		exclusiveCleanupFileName[MAXFNAMELEN];	/* the oldest file we want
+static char *archiveLocation;	/* where to find the archive? */
+static char *restartWALFileName;	/* the file from which we can restart
+									 * restore */
+static char exclusiveCleanupFileName[MAXFNAMELEN];	/* the oldest file we want
 													 * to remain in archive */
 
 

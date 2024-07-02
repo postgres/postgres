@@ -31,7 +31,7 @@
  */
 
 /* where the digit set begins, and how many of them are in the table */
-const unsigned ISSN_index[10][2] = {
+static const unsigned ISSN_index[10][2] = {
 	{0, 1},
 	{0, 1},
 	{0, 1},
@@ -43,7 +43,7 @@ const unsigned ISSN_index[10][2] = {
 	{0, 1},
 	{0, 1},
 };
-const char *ISSN_range[][2] = {
+static const char *ISSN_range[][2] = {
 	{"0000-000", "9999-999"},
 	{NULL, NULL}
 };

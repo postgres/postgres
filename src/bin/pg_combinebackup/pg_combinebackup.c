@@ -97,7 +97,7 @@ typedef struct cb_tablespace
 } cb_tablespace;
 
 /* Directories to be removed if we exit uncleanly. */
-cb_cleanup_dir *cleanup_dir_list = NULL;
+static cb_cleanup_dir *cleanup_dir_list = NULL;
 
 static void add_tablespace_mapping(cb_options *opt, char *arg);
 static StringInfo check_backup_label_files(int n_backups, char **backup_dirs);

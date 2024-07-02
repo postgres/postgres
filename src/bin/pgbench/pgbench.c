@@ -170,37 +170,37 @@ typedef struct socket_set
 #define MIN_ZIPFIAN_PARAM		1.001	/* minimum parameter for zipfian */
 #define MAX_ZIPFIAN_PARAM		1000.0	/* maximum parameter for zipfian */
 
-int			nxacts = 0;			/* number of transactions per client */
-int			duration = 0;		/* duration in seconds */
-int64		end_time = 0;		/* when to stop in micro seconds, under -T */
+static int	nxacts = 0;			/* number of transactions per client */
+static int	duration = 0;		/* duration in seconds */
+static int64 end_time = 0;		/* when to stop in micro seconds, under -T */
 
 /*
  * scaling factor. for example, scale = 10 will make 1000000 tuples in
  * pgbench_accounts table.
  */
-int			scale = 1;
+static int	scale = 1;
 
 /*
  * fillfactor. for example, fillfactor = 90 will use only 90 percent
  * space during inserts and leave 10 percent free.
  */
-int			fillfactor = 100;
+static int	fillfactor = 100;
 
 /*
  * use unlogged tables?
  */
-bool		unlogged_tables = false;
+static bool unlogged_tables = false;
 
 /*
  * log sampling rate (1.0 = log everything, 0.0 = option not given)
  */
-double		sample_rate = 0.0;
+static double sample_rate = 0.0;
 
 /*
  * When threads are throttled to a given rate limit, this is the target delay
  * to reach that rate in usec.  0 is the default and means no throttling.
  */
-double		throttle_delay = 0;
+static double throttle_delay = 0;
 
 /*
  * Transactions which take longer than this limit (in usec) are counted as
@@ -208,13 +208,13 @@ double		throttle_delay = 0;
  * throttling is enabled, execution time slots that are more than this late
  * are skipped altogether, and counted separately.
  */
-int64		latency_limit = 0;
+static int64 latency_limit = 0;
 
 /*
  * tablespace selection
  */
-char	   *tablespace = NULL;
-char	   *index_tablespace = NULL;
+static char *tablespace = NULL;
+static char *index_tablespace = NULL;
 
 /*
  * Number of "pgbench_accounts" partitions.  0 is the default and means no
@@ -234,7 +234,7 @@ static partition_method_t partition_method = PART_NONE;
 static const char *const PARTITION_METHOD[] = {"none", "range", "hash"};
 
 /* random seed used to initialize base_random_sequence */
-int64		random_seed = -1;
+static int64 random_seed = -1;
 
 /*
  * end of configurable parameters
@@ -254,20 +254,20 @@ int64		random_seed = -1;
  */
 #define SCALE_32BIT_THRESHOLD 20000
 
-bool		use_log;			/* log transaction latencies to a file */
-bool		use_quiet;			/* quiet logging onto stderr */
-int			agg_interval;		/* log aggregates instead of individual
+static bool use_log;			/* log transaction latencies to a file */
+static bool use_quiet;			/* quiet logging onto stderr */
+static int	agg_interval;		/* log aggregates instead of individual
 								 * transactions */
-bool		per_script_stats = false;	/* whether to collect stats per script */
-int			progress = 0;		/* thread progress report every this seconds */
-bool		progress_timestamp = false; /* progress report with Unix time */
-int			nclients = 1;		/* number of clients */
-int			nthreads = 1;		/* number of threads */
-bool		is_connect;			/* establish connection for each transaction */
-bool		report_per_command = false; /* report per-command latencies,
+static bool per_script_stats = false;	/* whether to collect stats per script */
+static int	progress = 0;		/* thread progress report every this seconds */
+static bool progress_timestamp = false; /* progress report with Unix time */
+static int	nclients = 1;		/* number of clients */
+static int	nthreads = 1;		/* number of threads */
+static bool is_connect;			/* establish connection for each transaction */
+static bool report_per_command = false; /* report per-command latencies,
 										 * retries after errors and failures
 										 * (errors without retrying) */
-int			main_pid;			/* main process id used in log filename */
+static int	main_pid;			/* main process id used in log filename */
 
 /*
  * There are different types of restrictions for deciding that the current
@@ -287,21 +287,22 @@ int			main_pid;			/* main process id used in log filename */
  * We cannot retry a transaction after the serialization/deadlock error if its
  * number of tries reaches this maximum; if its value is zero, it is not used.
  */
-uint32		max_tries = 1;
+static uint32 max_tries = 1;
 
-bool		failures_detailed = false;	/* whether to group failures in
+static bool failures_detailed = false;	/* whether to group failures in
 										 * reports or logs by basic types */
 
-const char *pghost = NULL;
-const char *pgport = NULL;
-const char *username = NULL;
-const char *dbName = NULL;
-char	   *logfile_prefix = NULL;
-const char *progname;
+static const char *pghost = NULL;
+static const char *pgport = NULL;
+static const char *username = NULL;
+static const char *dbName = NULL;
+static char *logfile_prefix = NULL;
+static const char *progname;
 
 #define WSEP '@'				/* weight separator */
 
-volatile sig_atomic_t timer_exceeded = false;	/* flag from signal handler */
+volatile static sig_atomic_t timer_exceeded = false;	/* flag from signal
+														 * handler */
 
 /*
  * We don't want to allocate variables one by one; for efficiency, add a
@@ -446,7 +447,7 @@ typedef struct StatsData
  * For displaying Unix epoch timestamps, as some time functions may have
  * another reference.
  */
-pg_time_usec_t epoch_shift;
+static pg_time_usec_t epoch_shift;
 
 /*
  * Error status for errors during script execution.

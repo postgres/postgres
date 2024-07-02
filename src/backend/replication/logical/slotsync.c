@@ -103,7 +103,7 @@ typedef struct SlotSyncCtxStruct
 	slock_t		mutex;
 } SlotSyncCtxStruct;
 
-SlotSyncCtxStruct *SlotSyncCtx = NULL;
+static SlotSyncCtxStruct *SlotSyncCtx = NULL;
 
 /* GUC variable */
 bool		sync_replication_slots = false;

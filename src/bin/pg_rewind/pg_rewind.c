@@ -60,21 +60,21 @@ static ControlFileData ControlFile_target;
 static ControlFileData ControlFile_source;
 static ControlFileData ControlFile_source_after;
 
-const char *progname;
+static const char *progname;
 int			WalSegSz;
 
 /* Configuration options */
 char	   *datadir_target = NULL;
-char	   *datadir_source = NULL;
-char	   *connstr_source = NULL;
-char	   *restore_command = NULL;
-char	   *config_file = NULL;
+static char *datadir_source = NULL;
+static char *connstr_source = NULL;
+static char *restore_command = NULL;
+static char *config_file = NULL;
 
 static bool debug = false;
 bool		showprogress = false;
 bool		dry_run = false;
 bool		do_sync = true;
-bool		restore_wal = false;
+static bool restore_wal = false;
 DataDirSyncMethod sync_method = DATA_DIR_SYNC_METHOD_FSYNC;
 
 /* Target history */

@@ -24,10 +24,10 @@
 PG_MODULE_MAGIC;
 
 /* parse table for fillRelOptions */
-relopt_parse_elt di_relopt_tab[6];
+static relopt_parse_elt di_relopt_tab[6];
 
 /* Kind of relation options for dummy index */
-relopt_kind di_relopt_kind;
+static relopt_kind di_relopt_kind;
 
 typedef enum DummyAmEnum
 {
@@ -47,7 +47,7 @@ typedef struct DummyIndexOptions
 	int			option_string_null_offset;
 }			DummyIndexOptions;
 
-relopt_enum_elt_def dummyAmEnumValues[] =
+static relopt_enum_elt_def dummyAmEnumValues[] =
 {
 	{"one", DUMMY_AM_ENUM_ONE},
 	{"two", DUMMY_AM_ENUM_TWO},

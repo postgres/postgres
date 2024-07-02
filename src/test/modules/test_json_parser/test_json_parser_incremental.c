@@ -60,7 +60,7 @@ static JsonParseErrorType do_array_element_start(void *state, bool isnull);
 static JsonParseErrorType do_array_element_end(void *state, bool isnull);
 static JsonParseErrorType do_scalar(void *state, char *token, JsonTokenType tokentype);
 
-JsonSemAction sem = {
+static JsonSemAction sem = {
 	.object_start = do_object_start,
 	.object_end = do_object_end,
 	.object_field_start = do_object_field_start,

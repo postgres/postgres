@@ -34,7 +34,7 @@
  */
 
 /* where the digit set begins, and how many of them are in the table */
-const unsigned ISBN_index[10][2] = {
+static const unsigned ISBN_index[10][2] = {
 	{0, 6},
 	{6, 6},
 	{12, 8},
@@ -47,7 +47,7 @@ const unsigned ISBN_index[10][2] = {
 	{192, 718},
 };
 
-const char *ISBN_range[][2] = {
+static const char *ISBN_range[][2] = {
 	{"0-00", "0-19"},
 	{"0-200", "0-699"},
 	{"0-7000", "0-8499"},
@@ -967,7 +967,7 @@ const char *ISBN_range[][2] = {
  */
 
 /* where the digit set begins, and how many of them are in the table */
-const unsigned ISBN_index_new[10][2] = {
+static const unsigned ISBN_index_new[10][2] = {
 	{0, 0},
 	{0, 5},
 	{5, 0},
@@ -980,7 +980,7 @@ const unsigned ISBN_index_new[10][2] = {
 	{5, 0},
 };
 
-const char *ISBN_range_new[][2] = {
+static const char *ISBN_range_new[][2] = {
 	{"10-00", "10-19"},
 	{"10-200", "10-699"},
 	{"10-7000", "10-8999"},

@@ -43,7 +43,7 @@ static void bbstreamer_plain_writer_content(bbstreamer *streamer,
 static void bbstreamer_plain_writer_finalize(bbstreamer *streamer);
 static void bbstreamer_plain_writer_free(bbstreamer *streamer);
 
-const bbstreamer_ops bbstreamer_plain_writer_ops = {
+static const bbstreamer_ops bbstreamer_plain_writer_ops = {
 	.content = bbstreamer_plain_writer_content,
 	.finalize = bbstreamer_plain_writer_finalize,
 	.free = bbstreamer_plain_writer_free
@@ -59,7 +59,7 @@ static void extract_directory(const char *filename, mode_t mode);
 static void extract_link(const char *filename, const char *linktarget);
 static FILE *create_file_for_extract(const char *filename, mode_t mode);
 
-const bbstreamer_ops bbstreamer_extractor_ops = {
+static const bbstreamer_ops bbstreamer_extractor_ops = {
 	.content = bbstreamer_extractor_content,
 	.finalize = bbstreamer_extractor_finalize,
 	.free = bbstreamer_extractor_free
