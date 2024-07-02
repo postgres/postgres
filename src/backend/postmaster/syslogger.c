@@ -75,8 +75,6 @@ char	   *Log_filename = NULL;
 bool		Log_truncate_on_rotation = false;
 int			Log_file_mode = S_IRUSR | S_IWUSR;
 
-extern bool redirection_done;
-
 /*
  * Private state
  */

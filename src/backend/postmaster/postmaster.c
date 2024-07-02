@@ -179,7 +179,7 @@ typedef struct bkend
 static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
 
 #ifdef EXEC_BACKEND
-Backend    *ShmemBackendArray;
+NON_EXEC_STATIC Backend *ShmemBackendArray;
 #endif
 
 BackgroundWorker *MyBgworkerEntry = NULL;

@@ -52,6 +52,7 @@ extern PGDLLIMPORT int postmaster_alive_fds[2];
 
 extern PGDLLIMPORT const char *progname;
 
+extern PGDLLIMPORT bool redirection_done;
 extern PGDLLIMPORT bool LoadedSSL;
 
 extern void PostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();

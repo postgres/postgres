@@ -91,9 +91,6 @@
 #endif
 
 
-/* We use the ShmemLock spinlock to protect LWLockCounter */
-extern slock_t *ShmemLock;
-
 #define LW_FLAG_HAS_WAITERS			((uint32) 1 << 30)
 #define LW_FLAG_RELEASE_OK			((uint32) 1 << 29)
 #define LW_FLAG_LOCKED				((uint32) 1 << 28)
@@ -609,6 +606,7 @@ LWLockNewTrancheId(void)
 	int		   *LWLockCounter;
 
 	LWLockCounter = (int *) ((char *) MainLWLockArray - sizeof(int));
+	/* We use the ShmemLock spinlock to protect LWLockCounter */
 	SpinLockAcquire(ShmemLock);
 	result = (*LWLockCounter)++;
 	SpinLockRelease(ShmemLock);

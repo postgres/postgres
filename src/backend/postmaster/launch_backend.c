@@ -672,13 +672,11 @@ SubPostmasterMain(int argc, char *argv[])
  * The following need to be available to the save/restore_backend_variables
  * functions.  They are marked NON_EXEC_STATIC in their home modules.
  */
-extern slock_t *ShmemLock;
 extern slock_t *ProcStructLock;
 extern PGPROC *AuxiliaryProcs;
 extern PMSignalData *PMSignalState;
 extern pg_time_t first_syslogger_file_time;
 extern struct bkend *ShmemBackendArray;
-extern bool redirection_done;
 
 #ifndef WIN32
 #define write_inheritable_socket(dest, src, childpid) ((*(dest) = (src)), true)
