@@ -31,6 +31,7 @@
 #include "parser/parse_param.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 
 
 typedef struct FixedParamState
@@ -136,7 +137,7 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 	Param	   *param;
 
 	/* Check parameter number is in range */
-	if (paramno <= 0 || paramno > INT_MAX / sizeof(Oid))
+	if (paramno <= 0 || paramno > MaxAllocSize / sizeof(Oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
 				 errmsg("there is no parameter $%d", paramno),
