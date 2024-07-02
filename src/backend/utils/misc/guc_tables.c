@@ -87,6 +87,7 @@
 #include "utils/pg_locale.h"
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
+#include "utils/rls.h"
 #include "utils/xml.h"
 
 /* This value is normally passed in from the Makefile */

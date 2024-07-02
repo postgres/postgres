@@ -22,6 +22,7 @@
 #include "libpq/libpq-be.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
+#include "postmaster/postmaster.h"
 #include "storage/procnumber.h"
 
 
