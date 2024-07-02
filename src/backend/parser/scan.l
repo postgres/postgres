@@ -992,8 +992,14 @@ other			.
 				}
 
 {param}			{
+					ErrorSaveContext escontext = {T_ErrorSaveContext};
+					int32		val;
+
 					SET_YYLLOC();
-					yylval->ival = atol(yytext + 1);
+					val = pg_strtoint32_safe(yytext + 1, (Node *) &escontext);
+					if (escontext.error_occurred)
+						yyerror("parameter number too large");
+					yylval->ival = val;
 					return PARAM;
 				}
 {param_junk}	{

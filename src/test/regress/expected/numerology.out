@@ -206,6 +206,10 @@ PREPARE p1 AS SELECT $1a;
 ERROR:  trailing junk after parameter at or near "$1a"
 LINE 1: PREPARE p1 AS SELECT $1a;
                              ^
+PREPARE p1 AS SELECT $2147483648;
+ERROR:  parameter number too large at or near "$2147483648"
+LINE 1: PREPARE p1 AS SELECT $2147483648;
+                             ^
 SELECT 0b;
 ERROR:  invalid binary integer at or near "0b"
 LINE 1: SELECT 0b;

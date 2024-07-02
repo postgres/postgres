@@ -938,7 +938,13 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 
 {param}			{
-					base_yylval.ival = atol(yytext+1);
+					int			val;
+
+					errno = 0;
+					val = strtoint(yytext + 1, NULL, 10);
+					if (errno == ERANGE)
+						mmfatal(PARSE_ERROR, "parameter number too large");
+					base_yylval.ival = val;
 					return PARAM;
 				}
 {param_junk}	{
