@@ -101,31 +101,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
 	int			numTables;
-	int			numTypes;
-	int			numFuncs;
-	int			numOperators;
-	int			numCollations;
-	int			numNamespaces;
 	int			numExtensions;
-	int			numPublications;
-	int			numAggregates;
 	int			numInherits;
-	int			numRules;
-	int			numProcLangs;
-	int			numCasts;
-	int			numTransforms;
-	int			numAccessMethods;
-	int			numOpclasses;
-	int			numOpfamilies;
-	int			numConversions;
-	int			numTSParsers;
-	int			numTSTemplates;
-	int			numTSDicts;
-	int			numTSConfigs;
-	int			numForeignDataWrappers;
-	int			numForeignServers;
-	int			numDefaultACLs;
-	int			numEventTriggers;
 
 	/*
 	 * We must read extensions and extension membership info first, because
@@ -139,7 +116,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getExtensionMembership(fout, extinfo, numExtensions);
 
 	pg_log_info("reading schemas");
-	(void) getNamespaces(fout, &numNamespaces);
+	getNamespaces(fout);
 
 	/*
 	 * getTables should be done as soon as possible, so as to minimize the
@@ -153,69 +130,69 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getOwnedSeqs(fout, tblinfo, numTables);
 
 	pg_log_info("reading user-defined functions");
-	(void) getFuncs(fout, &numFuncs);
+	getFuncs(fout);
 
 	/* this must be after getTables and getFuncs */
 	pg_log_info("reading user-defined types");
-	(void) getTypes(fout, &numTypes);
+	getTypes(fout);
 
 	/* this must be after getFuncs, too */
 	pg_log_info("reading procedural languages");
-	getProcLangs(fout, &numProcLangs);
+	getProcLangs(fout);
 
 	pg_log_info("reading user-defined aggregate functions");
-	getAggregates(fout, &numAggregates);
+	getAggregates(fout);
 
 	pg_log_info("reading user-defined operators");
-	(void) getOperators(fout, &numOperators);
+	getOperators(fout);
 
 	pg_log_info("reading user-defined access methods");
-	getAccessMethods(fout, &numAccessMethods);
+	getAccessMethods(fout);
 
 	pg_log_info("reading user-defined operator classes");
-	getOpclasses(fout, &numOpclasses);
+	getOpclasses(fout);
 
 	pg_log_info("reading user-defined operator families");
-	getOpfamilies(fout, &numOpfamilies);
+	getOpfamilies(fout);
 
 	pg_log_info("reading user-defined text search parsers");
-	getTSParsers(fout, &numTSParsers);
+	getTSParsers(fout);
 
 	pg_log_info("reading user-defined text search templates");
-	getTSTemplates(fout, &numTSTemplates);
+	getTSTemplates(fout);
 
 	pg_log_info("reading user-defined text search dictionaries");
-	getTSDictionaries(fout, &numTSDicts);
+	getTSDictionaries(fout);
 
 	pg_log_info("reading user-defined text search configurations");
-	getTSConfigurations(fout, &numTSConfigs);
+	getTSConfigurations(fout);
 
 	pg_log_info("reading user-defined foreign-data wrappers");
-	getForeignDataWrappers(fout, &numForeignDataWrappers);
+	getForeignDataWrappers(fout);
 
 	pg_log_info("reading user-defined foreign servers");
-	getForeignServers(fout, &numForeignServers);
+	getForeignServers(fout);
 
 	pg_log_info("reading default privileges");
-	getDefaultACLs(fout, &numDefaultACLs);
+	getDefaultACLs(fout);
 
 	pg_log_info("reading user-defined collations");
-	(void) getCollations(fout, &numCollations);
+	getCollations(fout);
 
 	pg_log_info("reading user-defined conversions");
-	getConversions(fout, &numConversions);
+	getConversions(fout);
 
 	pg_log_info("reading type casts");
-	getCasts(fout, &numCasts);
+	getCasts(fout);
 
 	pg_log_info("reading transforms");
-	getTransforms(fout, &numTransforms);
+	getTransforms(fout);
 
 	pg_log_info("reading table inheritance information");
 	inhinfo = getInherits(fout, &numInherits);
 
 	pg_log_info("reading event triggers");
-	getEventTriggers(fout, &numEventTriggers);
+	getEventTriggers(fout);
 
 	/* Identify extension configuration tables that should be dumped */
 	pg_log_info("finding extension tables");
@@ -250,13 +227,13 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getTriggers(fout, tblinfo, numTables);
 
 	pg_log_info("reading rewrite rules");
-	getRules(fout, &numRules);
+	getRules(fout);
 
 	pg_log_info("reading policies");
 	getPolicies(fout, tblinfo, numTables);
 
 	pg_log_info("reading publications");
-	(void) getPublications(fout, &numPublications);
+	getPublications(fout);
 
 	pg_log_info("reading publication membership of tables");
 	getPublicationTables(fout, tblinfo, numTables);

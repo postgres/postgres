@@ -731,17 +731,17 @@ extern void sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs);
 /*
  * version specific routines
  */
-extern NamespaceInfo *getNamespaces(Archive *fout, int *numNamespaces);
+extern void getNamespaces(Archive *fout);
 extern ExtensionInfo *getExtensions(Archive *fout, int *numExtensions);
-extern TypeInfo *getTypes(Archive *fout, int *numTypes);
-extern FuncInfo *getFuncs(Archive *fout, int *numFuncs);
-extern AggInfo *getAggregates(Archive *fout, int *numAggs);
-extern OprInfo *getOperators(Archive *fout, int *numOprs);
-extern AccessMethodInfo *getAccessMethods(Archive *fout, int *numAccessMethods);
-extern OpclassInfo *getOpclasses(Archive *fout, int *numOpclasses);
-extern OpfamilyInfo *getOpfamilies(Archive *fout, int *numOpfamilies);
-extern CollInfo *getCollations(Archive *fout, int *numCollations);
-extern ConvInfo *getConversions(Archive *fout, int *numConversions);
+extern void getTypes(Archive *fout);
+extern void getFuncs(Archive *fout);
+extern void getAggregates(Archive *fout);
+extern void getOperators(Archive *fout);
+extern void getAccessMethods(Archive *fout);
+extern void getOpclasses(Archive *fout);
+extern void getOpfamilies(Archive *fout);
+extern void getCollations(Archive *fout);
+extern void getConversions(Archive *fout);
 extern TableInfo *getTables(Archive *fout, int *numTables);
 extern void getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables);
 extern InhInfo *getInherits(Archive *fout, int *numInherits);
@@ -749,30 +749,27 @@ extern void getPartitioningInfo(Archive *fout);
 extern void getIndexes(Archive *fout, TableInfo tblinfo[], int numTables);
 extern void getExtendedStatistics(Archive *fout);
 extern void getConstraints(Archive *fout, TableInfo tblinfo[], int numTables);
-extern RuleInfo *getRules(Archive *fout, int *numRules);
+extern void getRules(Archive *fout);
 extern void getTriggers(Archive *fout, TableInfo tblinfo[], int numTables);
-extern ProcLangInfo *getProcLangs(Archive *fout, int *numProcLangs);
-extern CastInfo *getCasts(Archive *fout, int *numCasts);
-extern TransformInfo *getTransforms(Archive *fout, int *numTransforms);
+extern void getProcLangs(Archive *fout);
+extern void getCasts(Archive *fout);
+extern void getTransforms(Archive *fout);
 extern void getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables);
 extern bool shouldPrintColumn(const DumpOptions *dopt, const TableInfo *tbinfo, int colno);
-extern TSParserInfo *getTSParsers(Archive *fout, int *numTSParsers);
-extern TSDictInfo *getTSDictionaries(Archive *fout, int *numTSDicts);
-extern TSTemplateInfo *getTSTemplates(Archive *fout, int *numTSTemplates);
-extern TSConfigInfo *getTSConfigurations(Archive *fout, int *numTSConfigs);
-extern FdwInfo *getForeignDataWrappers(Archive *fout,
-									   int *numForeignDataWrappers);
-extern ForeignServerInfo *getForeignServers(Archive *fout,
-											int *numForeignServers);
-extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
+extern void getTSParsers(Archive *fout);
+extern void getTSDictionaries(Archive *fout);
+extern void getTSTemplates(Archive *fout);
+extern void getTSConfigurations(Archive *fout);
+extern void getForeignDataWrappers(Archive *fout);
+extern void getForeignServers(Archive *fout);
+extern void getDefaultACLs(Archive *fout);
 extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 								   int numExtensions);
 extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 								   int numExtensions);
-extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
+extern void getEventTriggers(Archive *fout);
 extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
-extern PublicationInfo *getPublications(Archive *fout,
-										int *numPublications);
+extern void getPublications(Archive *fout);
 extern void getPublicationNamespaces(Archive *fout);
 extern void getPublicationTables(Archive *fout, TableInfo tblinfo[],
 								 int numTables);
