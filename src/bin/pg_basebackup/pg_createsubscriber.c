@@ -48,7 +48,6 @@ struct CreateSubscriberOptions
 
 struct LogicalRepInfo
 {
-	Oid			oid;			/* database OID */
 	char	   *dbname;			/* database name */
 	char	   *pubconninfo;	/* publisher connection string */
 	char	   *subconninfo;	/* subscriber connection string */
