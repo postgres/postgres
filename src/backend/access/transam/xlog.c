@@ -8744,7 +8744,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 				 errmsg("backup label too long (max %d bytes)",
 						MAXPGPATH)));
 
-	memcpy(state->name, backupidstr, strlen(backupidstr));
+	strlcpy(state->name, backupidstr, sizeof(state->name));
 
 	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
