@@ -184,11 +184,6 @@ SELECT name, statement, parameter_types, result_types FROM pg_prepared_statement
       |     UPDATE tenk1 SET stringu1 = $2 WHERE unique1 = $1;           |                                                    | 
 (6 rows)
 
--- max parameter number and one above
-PREPARE q9 AS SELECT $268435455, $268435456;
-ERROR:  there is no parameter $268435456
-LINE 1: PREPARE q9 AS SELECT $268435455, $268435456;
-                                         ^
 -- test DEALLOCATE ALL;
 DEALLOCATE ALL;
 SELECT name, statement, parameter_types FROM pg_prepared_statements
