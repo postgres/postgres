@@ -298,6 +298,13 @@ my $result = $node_s->safe_psql('postgres',
 	"SELECT slot_name FROM pg_replication_slots WHERE slot_name = '$fslotname' AND synced AND NOT temporary"
 );
 is($result, 'failover_slot', 'failover slot is synced');
+
+# Create subscription to test its removal
+my $dummy_sub = 'regress_sub_dummy';
+$node_p->safe_psql($db1,
+	"CREATE SUBSCRIPTION $dummy_sub CONNECTION 'dbname=dummy' PUBLICATION pub_dummy WITH (connect=false)"
+);
+$node_p->wait_for_replay_catchup($node_s);
 $node_s->stop;
 
 # dry run mode on node S
@@ -371,6 +378,13 @@ $node_p->safe_psql($db2, "INSERT INTO tbl2 VALUES('row 1')");
 
 # Start subscriber
 $node_s->start;
+
+# Confirm the pre-existing subscription has been removed
+$result = $node_s->safe_psql(
+	'postgres', qq(
+	SELECT count(*) FROM pg_subscription WHERE subname = '$dummy_sub'
+));
+is($result, qq(0), 'pre-existing subscription was dropped');
 
 # Get subscription names
 $result = $node_s->safe_psql(
