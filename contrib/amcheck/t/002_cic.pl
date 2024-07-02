@@ -10,7 +10,7 @@ use PostgreSQL::Test::Utils;
 
 use Test::More;
 
-my ($node, $result);
+my $node;
 
 #
 # Test set-up

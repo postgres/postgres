@@ -12,10 +12,6 @@ use Test::More;
 use lib "$FindBin::RealBin/../../../ldap";
 use LdapServer;
 
-my ($slapd, $ldap_bin_dir, $ldap_schema_dir);
-
-$ldap_bin_dir = undef;    # usually in PATH
-
 if ($ENV{with_ldap} ne 'yes')
 {
 	plan skip_all => 'LDAP not supported by this build';

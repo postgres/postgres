@@ -81,7 +81,6 @@ $node->safe_psql('sourcedb',
 #
 # Test interaction of correctly specified filter file
 #
-my ($cmd, $stdout, $stderr, $result);
 
 # Empty filterfile
 open $inputfile, '>', "$tempdir/inputfile.txt"

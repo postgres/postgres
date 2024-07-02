@@ -42,8 +42,6 @@ my @abi_compatibility_lines;
 my @lines;
 my $abi_compatibility = 0;
 my $section_name;
-my $note;
-my $note_name;
 
 # Remove comments and empty lines and add waitclassname based on the section
 while (<$wait_event_names>)

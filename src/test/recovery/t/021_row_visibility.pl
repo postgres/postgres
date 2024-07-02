@@ -168,7 +168,6 @@ $node_standby->stop;
 sub send_query_and_wait
 {
 	my ($psql, $query, $untl) = @_;
-	my $ret;
 
 	# send query
 	$$psql{stdin} .= $query;

@@ -10,10 +10,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my ($stdin, $stdout, $stderr,
-	$cascading_stdout, $cascading_stderr, $subscriber_stdin,
-	$subscriber_stdout, $subscriber_stderr, $ret,
-	$handle, $slot);
+my ($stdout, $stderr, $cascading_stdout, $cascading_stderr, $handle);
 
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 my $node_standby = PostgreSQL::Test::Cluster->new('standby');

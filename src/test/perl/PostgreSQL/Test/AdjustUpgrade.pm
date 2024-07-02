@@ -534,7 +534,6 @@ sub _mash_view_qualifiers
 		{
 			my @thischunks = split /;/, $chunk, 2;
 			my $stmt = shift(@thischunks);
-			my $ostmt = $stmt;
 
 			# now $stmt is just the body of the CREATE [MATERIALIZED] VIEW
 			$stmt =~ s/$qualifier\.//g;
