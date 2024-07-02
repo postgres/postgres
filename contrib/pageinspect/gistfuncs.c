@@ -309,7 +309,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 					bool		typisvarlena;
 					Oid			typoid;
 
-					typoid = tupdesc->attrs[i].atttypid;
+					typoid = TupleDescAttr(tupdesc, i)->atttypid;
 					getTypeOutputInfo(typoid, &foutoid, &typisvarlena);
 					value = OidOutputFunctionCall(foutoid, itup_values[i]);
 				}

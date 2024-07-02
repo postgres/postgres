@@ -717,7 +717,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 
 				result_types = palloc_array(Oid, result_desc->natts);
 				for (int i = 0; i < result_desc->natts; i++)
-					result_types[i] = result_desc->attrs[i].atttypid;
+					result_types[i] = TupleDescAttr(result_desc, i)->atttypid;
 				values[4] = build_regtype_array(result_types, result_desc->natts);
 			}
 			else

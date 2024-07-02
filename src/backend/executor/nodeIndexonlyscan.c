@@ -658,7 +658,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	/* First, count the number of such index keys */
 	for (int attnum = 0; attnum < indnkeyatts; attnum++)
 	{
-		if (indexRelation->rd_att->attrs[attnum].atttypid == CSTRINGOID &&
+		if (TupleDescAttr(indexRelation->rd_att, attnum)->atttypid == CSTRINGOID &&
 			indexRelation->rd_opcintype[attnum] == NAMEOID)
 			namecount++;
 	}
@@ -676,7 +676,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 
 		for (int attnum = 0; attnum < indnkeyatts; attnum++)
 		{
-			if (indexRelation->rd_att->attrs[attnum].atttypid == CSTRINGOID &&
+			if (TupleDescAttr(indexRelation->rd_att, attnum)->atttypid == CSTRINGOID &&
 				indexRelation->rd_opcintype[attnum] == NAMEOID)
 				indexstate->ioss_NameCStringAttNums[idx++] = (AttrNumber) attnum;
 		}

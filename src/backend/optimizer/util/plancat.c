@@ -174,7 +174,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	{
 		for (int i = 0; i < relation->rd_att->natts; i++)
 		{
-			FormData_pg_attribute *attr = &relation->rd_att->attrs[i];
+			Form_pg_attribute attr = TupleDescAttr(relation->rd_att, i);
 
 			if (attr->attnotnull)
 			{

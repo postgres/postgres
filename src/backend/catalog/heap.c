@@ -839,18 +839,19 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	/* add dependencies on their datatypes and collations */
 	for (int i = 0; i < natts; i++)
 	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
 		/* Add dependency info */
 		ObjectAddressSubSet(myself, RelationRelationId, new_rel_oid, i + 1);
-		ObjectAddressSet(referenced, TypeRelationId,
-						 tupdesc->attrs[i].atttypid);
+		ObjectAddressSet(referenced, TypeRelationId, attr->atttypid);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		/* The default collation is pinned, so don't bother recording it */
-		if (OidIsValid(tupdesc->attrs[i].attcollation) &&
-			tupdesc->attrs[i].attcollation != DEFAULT_COLLATION_OID)
+		if (OidIsValid(attr->attcollation) &&
+			attr->attcollation != DEFAULT_COLLATION_OID)
 		{
 			ObjectAddressSet(referenced, CollationRelationId,
-							 tupdesc->attrs[i].attcollation);
+							 attr->attcollation);
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		}
 	}
