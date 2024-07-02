@@ -746,7 +746,7 @@ BackgroundWorkerMain(char *startup_data, size_t startup_data_len)
 	MyBackendType = B_BG_WORKER;
 	init_ps_display(worker->bgw_name);
 
-	SetProcessingMode(InitProcessing);
+	Assert(GetProcessingMode() == InitProcessing);
 
 	/* Apply PostAuthDelay */
 	if (PostAuthDelay > 0)

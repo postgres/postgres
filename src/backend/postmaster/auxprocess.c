@@ -54,7 +54,8 @@ AuxiliaryProcessMainCommon(void)
 
 	init_ps_display(NULL);
 
-	SetProcessingMode(BootstrapProcessing);
+	Assert(GetProcessingMode() == InitProcessing);
+
 	IgnoreSystemIndexes = true;
 
 	/*

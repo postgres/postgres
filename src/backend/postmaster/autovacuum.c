@@ -380,7 +380,7 @@ AutoVacLauncherMain(char *startup_data, size_t startup_data_len)
 	if (PostAuthDelay)
 		pg_usleep(PostAuthDelay * 1000000L);
 
-	SetProcessingMode(InitProcessing);
+	Assert(GetProcessingMode() == InitProcessing);
 
 	/*
 	 * Set up signal handlers.  We operate on databases much like a regular
@@ -1373,7 +1373,7 @@ AutoVacWorkerMain(char *startup_data, size_t startup_data_len)
 	MyBackendType = B_AUTOVAC_WORKER;
 	init_ps_display(NULL);
 
-	SetProcessingMode(InitProcessing);
+	Assert(GetProcessingMode() == InitProcessing);
 
 	/*
 	 * Set up signal handlers.  We operate on databases much like a regular

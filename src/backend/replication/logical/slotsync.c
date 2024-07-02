@@ -1342,7 +1342,7 @@ ReplSlotSyncWorkerMain(char *startup_data, size_t startup_data_len)
 
 	init_ps_display(NULL);
 
-	SetProcessingMode(InitProcessing);
+	Assert(GetProcessingMode() == InitProcessing);
 
 	/*
 	 * Create a per-backend PGPROC struct in shared memory.  We must do this
