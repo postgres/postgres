@@ -764,7 +764,8 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
 	strlcpy(param->pkglib_path, pkglib_path, MAXPGPATH);
 
 	param->startup_data_len = startup_data_len;
-	memcpy(param->startup_data, startup_data, startup_data_len);
+	if (startup_data_len > 0)
+		memcpy(param->startup_data, startup_data, startup_data_len);
 
 	return true;
 }
