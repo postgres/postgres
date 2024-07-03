@@ -21,8 +21,7 @@ my $indent_opts =
 
 my $devnull = File::Spec->devnull;
 
-my ($typedefs_file, $typedef_str, @excludes,
-	$indent, $build, $diff,
+my ($typedefs_file, $typedef_str, @excludes, $indent, $diff,
 	$check, $help, @commits,);
 
 $help = 0;

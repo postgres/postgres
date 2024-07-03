@@ -215,11 +215,6 @@ my @all_gssencmodes = ('disable', 'prefer', 'require');
 my @all_sslmodes = ('disable', 'allow', 'prefer', 'require');
 my @all_sslnegotiations = ('postgres', 'direct');
 
-my $server_config = {
-	server_ssl => 0,
-	server_gss => 0,
-};
-
 ###
 ### Run tests with GSS and SSL disabled in the server
 ###
@@ -272,7 +267,7 @@ testuser    require      *            *              - -> fail
 };
 
 note("Running tests with SSL and GSS disabled in the server");
-test_matrix($node, $server_config,
+test_matrix($node,
 	['testuser'], \@all_gssencmodes, \@all_sslmodes, \@all_sslnegotiations,
 	parse_table($test_table));
 
@@ -311,19 +306,15 @@ nossluser   .            disable      postgres       connect, authok            
 	# Enable SSL in the server
 	$node->adjust_conf('postgresql.conf', 'ssl', 'on');
 	$node->reload;
-	$server_config->{server_ssl} = 1;
 
 	note("Running tests with SSL enabled in server");
-	test_matrix(
-		$node, $server_config,
-		[ 'testuser', 'ssluser', 'nossluser' ], ['disable'],
-		\@all_sslmodes, \@all_sslnegotiations,
+	test_matrix($node, [ 'testuser', 'ssluser', 'nossluser' ],
+		['disable'], \@all_sslmodes, \@all_sslnegotiations,
 		parse_table($test_table));
 
 	# Disable SSL again
 	$node->adjust_conf('postgresql.conf', 'ssl', 'off');
 	$node->reload;
-	$server_config->{server_ssl} = 0;
 }
 
 ###
@@ -336,7 +327,6 @@ SKIP:
 
 	$krb->create_principal('gssuser', $gssuser_password);
 	$krb->create_ticket('gssuser', $gssuser_password);
-	$server_config->{server_gss} = 1;
 
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                       -> OUTCOME
@@ -400,7 +390,7 @@ nogssuser   disable      disable      postgres       connect, authok            
 	}
 
 	note("Running tests with GSS enabled in server");
-	test_matrix($node, $server_config, [ 'testuser', 'gssuser', 'nogssuser' ],
+	test_matrix($node, [ 'testuser', 'gssuser', 'nogssuser' ],
 		\@all_gssencmodes, $sslmodes, $sslnegotiations,
 		parse_table($test_table));
 }
@@ -423,7 +413,6 @@ SKIP:
 	# Enable SSL
 	$node->adjust_conf('postgresql.conf', 'ssl', 'on');
 	$node->reload;
-	$server_config->{server_ssl} = 1;
 
 	$test_table = q{
 # USER      GSSENCMODE   SSLMODE      SSLNEGOTIATION EVENTS                       -> OUTCOME
@@ -510,7 +499,6 @@ nossluser   disable      disable      postgres       connect, authok            
 	note("Running tests with both GSS and SSL enabled in server");
 	test_matrix(
 		$node,
-		$server_config,
 		[ 'testuser', 'gssuser', 'ssluser', 'nogssuser', 'nossluser' ],
 		\@all_gssencmodes,
 		\@all_sslmodes,
@@ -546,8 +534,8 @@ sub test_matrix
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-	my ($pg_node, $node_conf,
-		$test_users, $gssencmodes, $sslmodes, $sslnegotiations, %expected)
+	my ($pg_node, $test_users, $gssencmodes, $sslmodes, $sslnegotiations,
+		%expected)
 	  = @_;
 
 	foreach my $test_user (@{$test_users})

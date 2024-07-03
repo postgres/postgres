@@ -6,8 +6,6 @@ use warnings FATAL => 'all';
 use List::Util qw(min);
 use Getopt::Long;
 
-my @def;
-
 #
 # Script that generates a .DEF file for all objects in a directory
 #
