@@ -127,6 +127,14 @@
 
 #define PGSTAT_SNAPSHOT_HASH_SIZE	512
 
+/* ---------
+ * Identifiers in stats file.
+ * ---------
+ */
+#define PGSTAT_FILE_ENTRY_END	'E' /* end of file */
+#define PGSTAT_FILE_ENTRY_NAME	'N' /* stats entry identified by name */
+#define PGSTAT_FILE_ENTRY_HASH	'S' /* stats entry identified by
+									 * PgStat_HashKey */
 
 /* hash table for statistics snapshots entry */
 typedef struct PgStat_SnapshotEntry
@@ -1431,7 +1439,7 @@ pgstat_write_statsfile(void)
 		if (!kind_info->to_serialized_name)
 		{
 			/* normal stats entry, identified by PgStat_HashKey */
-			fputc('S', fpout);
+			fputc(PGSTAT_FILE_ENTRY_HASH, fpout);
 			write_chunk_s(fpout, &ps->key);
 		}
 		else
@@ -1441,7 +1449,7 @@ pgstat_write_statsfile(void)
 
 			kind_info->to_serialized_name(&ps->key, shstats, &name);
 
-			fputc('N', fpout);
+			fputc(PGSTAT_FILE_ENTRY_NAME, fpout);
 			write_chunk_s(fpout, &ps->key.kind);
 			write_chunk_s(fpout, &name);
 		}
@@ -1458,7 +1466,7 @@ pgstat_write_statsfile(void)
 	 * pgstat.stat with it.  The ferror() check replaces testing for error
 	 * after each individual fputc or fwrite (in write_chunk()) above.
 	 */
-	fputc('E', fpout);
+	fputc(PGSTAT_FILE_ENTRY_END, fpout);
 
 	if (ferror(fpout))
 	{
@@ -1569,8 +1577,8 @@ pgstat_read_statsfile(void)
 
 		switch (t)
 		{
-			case 'S':
-			case 'N':
+			case PGSTAT_FILE_ENTRY_HASH:
+			case PGSTAT_FILE_ENTRY_NAME:
 				{
 					PgStat_HashKey key;
 					PgStatShared_HashEntry *p;
@@ -1578,7 +1586,7 @@ pgstat_read_statsfile(void)
 
 					CHECK_FOR_INTERRUPTS();
 
-					if (t == 'S')
+					if (t == PGSTAT_FILE_ENTRY_HASH)
 					{
 						/* normal stats entry, identified by PgStat_HashKey */
 						if (!read_chunk_s(fpin, &key))
@@ -1644,8 +1652,12 @@ pgstat_read_statsfile(void)
 
 					break;
 				}
-			case 'E':
-				/* check that 'E' actually signals end of file */
+			case PGSTAT_FILE_ENTRY_END:
+
+				/*
+				 * check that PGSTAT_FILE_ENTRY_END actually signals end of
+				 * file
+				 */
 				if (fgetc(fpin) != EOF)
 					goto error;
 
