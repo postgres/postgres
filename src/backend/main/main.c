@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 	else if (argc > 1 && strcmp(argv[1], "--boot") == 0)
 		BootstrapModeMain(argc, argv, false);
 #ifdef EXEC_BACKEND
-	else if (argc > 1 && strncmp(argv[1], "--fork", 6) == 0)
+	else if (argc > 1 && strncmp(argv[1], "--forkchild", 11) == 0)
 		SubPostmasterMain(argc, argv);
 #endif
 	else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
