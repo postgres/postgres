@@ -55,6 +55,7 @@
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
+#include "common/int.h"
 #include "common/relpath.h"
 #include "compress_io.h"
 #include "dumputils.h"
@@ -91,6 +92,17 @@ typedef struct
 	Oid			objoid;			/* object OID */
 	int			objsubid;		/* subobject (table column #) */
 } SecLabelItem;
+
+typedef struct
+{
+	Oid			oid;			/* object OID */
+	char		relkind;		/* object kind */
+	RelFileNumber relfilenumber;	/* object filenode */
+	Oid			toast_oid;		/* toast table OID */
+	RelFileNumber toast_relfilenumber;	/* toast table filenode */
+	Oid			toast_index_oid;	/* toast table index OID */
+	RelFileNumber toast_index_relfilenumber;	/* toast table index filenode */
+} BinaryUpgradeClassOidItem;
 
 typedef enum OidOptions
 {
@@ -156,6 +168,10 @@ static int	ncomments = 0;
 /* sorted table of security labels */
 static SecLabelItem *seclabels = NULL;
 static int	nseclabels = 0;
+
+/* sorted table of pg_class information for binary upgrade */
+static BinaryUpgradeClassOidItem *binaryUpgradeClassOids = NULL;
+static int	nbinaryUpgradeClassOids = 0;
 
 /*
  * The default number of rows per INSERT when
@@ -322,6 +338,7 @@ static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 static void binary_upgrade_set_type_oids_by_rel(Archive *fout,
 												PQExpBuffer upgrade_buffer,
 												const TableInfo *tbinfo);
+static void collectBinaryUpgradeClassOids(Archive *fout);
 static void binary_upgrade_set_pg_class_oids(Archive *fout,
 											 PQExpBuffer upgrade_buffer,
 											 Oid pg_class_oid);
@@ -970,6 +987,10 @@ main(int argc, char **argv)
 		collectComments(fout);
 	if (!dopt.no_security_labels)
 		collectSecLabels(fout);
+
+	/* For binary upgrade mode, collect required pg_class information. */
+	if (dopt.binary_upgrade)
+		collectBinaryUpgradeClassOids(fout);
 
 	/* Lastly, create dummy objects to represent the section boundaries */
 	boundaryObjs = createBoundaryObjects();
@@ -5383,18 +5404,67 @@ binary_upgrade_set_type_oids_by_rel(Archive *fout,
 												 pg_type_oid, false, false);
 }
 
+/*
+ * bsearch() comparator for BinaryUpgradeClassOidItem
+ */
+static int
+BinaryUpgradeClassOidItemCmp(const void *p1, const void *p2)
+{
+	BinaryUpgradeClassOidItem v1 = *((const BinaryUpgradeClassOidItem *) p1);
+	BinaryUpgradeClassOidItem v2 = *((const BinaryUpgradeClassOidItem *) p2);
+
+	return pg_cmp_u32(v1.oid, v2.oid);
+}
+
+/*
+ * collectBinaryUpgradeClassOids
+ *
+ * Construct a table of pg_class information required for
+ * binary_upgrade_set_pg_class_oids().  The table is sorted by OID for speed in
+ * lookup.
+ */
+static void
+collectBinaryUpgradeClassOids(Archive *fout)
+{
+	PGresult   *res;
+	const char *query;
+
+	query = "SELECT c.oid, c.relkind, c.relfilenode, c.reltoastrelid, "
+		"ct.relfilenode, i.indexrelid, cti.relfilenode "
+		"FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_index i "
+		"ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
+		"LEFT JOIN pg_catalog.pg_class ct ON (c.reltoastrelid = ct.oid) "
+		"LEFT JOIN pg_catalog.pg_class AS cti ON (i.indexrelid = cti.oid) "
+		"ORDER BY c.oid;";
+
+	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
+
+	nbinaryUpgradeClassOids = PQntuples(res);
+	binaryUpgradeClassOids = (BinaryUpgradeClassOidItem *)
+		pg_malloc(nbinaryUpgradeClassOids * sizeof(BinaryUpgradeClassOidItem));
+
+	for (int i = 0; i < nbinaryUpgradeClassOids; i++)
+	{
+		binaryUpgradeClassOids[i].oid = atooid(PQgetvalue(res, i, 0));
+		binaryUpgradeClassOids[i].relkind = *PQgetvalue(res, i, 1);
+		binaryUpgradeClassOids[i].relfilenumber = atooid(PQgetvalue(res, i, 2));
+		binaryUpgradeClassOids[i].toast_oid = atooid(PQgetvalue(res, i, 3));
+		binaryUpgradeClassOids[i].toast_relfilenumber = atooid(PQgetvalue(res, i, 4));
+		binaryUpgradeClassOids[i].toast_index_oid = atooid(PQgetvalue(res, i, 5));
+		binaryUpgradeClassOids[i].toast_index_relfilenumber = atooid(PQgetvalue(res, i, 6));
+	}
+
+	PQclear(res);
+}
+
 static void
 binary_upgrade_set_pg_class_oids(Archive *fout,
 								 PQExpBuffer upgrade_buffer, Oid pg_class_oid)
 {
-	PQExpBuffer upgrade_query = createPQExpBuffer();
-	PGresult   *upgrade_res;
-	RelFileNumber relfilenumber;
-	Oid			toast_oid;
-	RelFileNumber toast_relfilenumber;
-	char		relkind;
-	Oid			toast_index_oid;
-	RelFileNumber toast_index_relfilenumber;
+	BinaryUpgradeClassOidItem key = {0};
+	BinaryUpgradeClassOidItem *entry;
+
+	Assert(binaryUpgradeClassOids);
 
 	/*
 	 * Preserve the OID and relfilenumber of the table, table's index, table's
@@ -5407,35 +5477,16 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 	 * by the new backend, so we can copy the files during binary upgrade
 	 * without worrying about this case.
 	 */
-	appendPQExpBuffer(upgrade_query,
-					  "SELECT c.relkind, c.relfilenode, c.reltoastrelid, ct.relfilenode AS toast_relfilenode, i.indexrelid, cti.relfilenode AS toast_index_relfilenode "
-					  "FROM pg_catalog.pg_class c LEFT JOIN "
-					  "pg_catalog.pg_index i ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
-					  "LEFT JOIN pg_catalog.pg_class ct ON (c.reltoastrelid = ct.oid) "
-					  "LEFT JOIN pg_catalog.pg_class AS cti ON (i.indexrelid = cti.oid) "
-					  "WHERE c.oid = '%u'::pg_catalog.oid;",
-					  pg_class_oid);
-
-	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
-
-	relkind = *PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "relkind"));
-
-	relfilenumber = atooid(PQgetvalue(upgrade_res, 0,
-									  PQfnumber(upgrade_res, "relfilenode")));
-	toast_oid = atooid(PQgetvalue(upgrade_res, 0,
-								  PQfnumber(upgrade_res, "reltoastrelid")));
-	toast_relfilenumber = atooid(PQgetvalue(upgrade_res, 0,
-											PQfnumber(upgrade_res, "toast_relfilenode")));
-	toast_index_oid = atooid(PQgetvalue(upgrade_res, 0,
-										PQfnumber(upgrade_res, "indexrelid")));
-	toast_index_relfilenumber = atooid(PQgetvalue(upgrade_res, 0,
-												  PQfnumber(upgrade_res, "toast_index_relfilenode")));
+	key.oid = pg_class_oid;
+	entry = bsearch(&key, binaryUpgradeClassOids, nbinaryUpgradeClassOids,
+					sizeof(BinaryUpgradeClassOidItem),
+					BinaryUpgradeClassOidItemCmp);
 
 	appendPQExpBufferStr(upgrade_buffer,
 						 "\n-- For binary upgrade, must preserve pg_class oids and relfilenodes\n");
 
-	if (relkind != RELKIND_INDEX &&
-		relkind != RELKIND_PARTITIONED_INDEX)
+	if (entry->relkind != RELKIND_INDEX &&
+		entry->relkind != RELKIND_PARTITIONED_INDEX)
 	{
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT pg_catalog.binary_upgrade_set_next_heap_pg_class_oid('%u'::pg_catalog.oid);\n",
@@ -5446,32 +5497,33 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 		 * partitioned tables have a relfilenumber, which should not be
 		 * preserved when upgrading.
 		 */
-		if (RelFileNumberIsValid(relfilenumber) && relkind != RELKIND_PARTITIONED_TABLE)
+		if (RelFileNumberIsValid(entry->relfilenumber) &&
+			entry->relkind != RELKIND_PARTITIONED_TABLE)
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT pg_catalog.binary_upgrade_set_next_heap_relfilenode('%u'::pg_catalog.oid);\n",
-							  relfilenumber);
+							  entry->relfilenumber);
 
 		/*
 		 * In a pre-v12 database, partitioned tables might be marked as having
 		 * toast tables, but we should ignore them if so.
 		 */
-		if (OidIsValid(toast_oid) &&
-			relkind != RELKIND_PARTITIONED_TABLE)
+		if (OidIsValid(entry->toast_oid) &&
+			entry->relkind != RELKIND_PARTITIONED_TABLE)
 		{
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT pg_catalog.binary_upgrade_set_next_toast_pg_class_oid('%u'::pg_catalog.oid);\n",
-							  toast_oid);
+							  entry->toast_oid);
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT pg_catalog.binary_upgrade_set_next_toast_relfilenode('%u'::pg_catalog.oid);\n",
-							  toast_relfilenumber);
+							  entry->toast_relfilenumber);
 
 			/* every toast table has an index */
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT pg_catalog.binary_upgrade_set_next_index_pg_class_oid('%u'::pg_catalog.oid);\n",
-							  toast_index_oid);
+							  entry->toast_index_oid);
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT pg_catalog.binary_upgrade_set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
-							  toast_index_relfilenumber);
+							  entry->toast_index_relfilenumber);
 		}
 	}
 	else
@@ -5482,14 +5534,10 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 						  pg_class_oid);
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT pg_catalog.binary_upgrade_set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
-						  relfilenumber);
+						  entry->relfilenumber);
 	}
 
-	PQclear(upgrade_res);
-
 	appendPQExpBufferChar(upgrade_buffer, '\n');
-
-	destroyPQExpBuffer(upgrade_query);
 }
 
 /*
