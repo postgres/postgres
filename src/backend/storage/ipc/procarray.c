@@ -2779,7 +2779,7 @@ GetRunningTransactionData(void)
 		 * Also, update the oldest running xid within the current database.
 		 */
 		if (proc->databaseId == MyDatabaseId &&
-			TransactionIdPrecedes(xid, oldestRunningXid))
+			TransactionIdPrecedes(xid, oldestDatabaseRunningXid))
 			oldestDatabaseRunningXid = xid;
 
 		if (ProcGlobal->subxidStates[index].overflowed)
