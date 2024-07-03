@@ -116,6 +116,10 @@ command_fails(
 my $node_p = PostgreSQL::Test::Cluster->new('node_p');
 my $pconnstr = $node_p->connstr;
 $node_p->init(allows_streaming => 'logical');
+# Disable autovacuum to avoid generating xid during stats update as otherwise
+# the new XID could then be replicated to standby at some random point making
+# slots at primary lag behind standby during slot sync.
+$node_p->append_conf('postgresql.conf', 'autovacuum = off');
 $node_p->start;
 
 # Set up node F as about-to-fail node
@@ -293,6 +297,9 @@ $node_p->safe_psql($db1,
 	"SELECT pg_create_logical_replication_slot('$fslotname', 'pgoutput', false, false, true)"
 );
 $node_s->start;
+# Wait for the standby to catch up so that the standby is not lagging behind
+# the failover slot.
+$node_p->wait_for_replay_catchup($node_s);
 $node_s->safe_psql('postgres', "SELECT pg_sync_replication_slots()");
 my $result = $node_s->safe_psql('postgres',
 	"SELECT slot_name FROM pg_replication_slots WHERE slot_name = '$fslotname' AND synced AND NOT temporary"
