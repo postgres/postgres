@@ -12,7 +12,7 @@ tokio = { version = "1.38.0", features = ["rt", "rt-multi-thread", "full"] }
 pgwire = "0.23.0"
 postgres = "0.19"
 core-foundation = "0.9.4"
-
+rust_decimal = {version = "1.35.0", features = ["db-postgres"]}
 [lib]
 name = "sharding"
 crate-type = ["staticlib"]
