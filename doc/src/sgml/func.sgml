@@ -26590,6 +26590,21 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_get_acl</primary>
+        </indexterm>
+        <function>pg_get_acl</function> ( <parameter>classid</parameter> <type>oid</type>, <parameter>objid</parameter> <type>oid</type> )
+        <returnvalue>aclitem[]</returnvalue>
+       </para>
+       <para>
+        Returns the <acronym>ACL</acronym> for a database object, specified
+        by catalog OID and object OID. This function returns
+        <literal>NULL</literal> values for undefined objects.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_describe_object</primary>
         </indexterm>
         <function>pg_describe_object</function> ( <parameter>classid</parameter> <type>oid</type>, <parameter>objid</parameter> <type>oid</type>, <parameter>objsubid</parameter> <type>integer</type> )
@@ -26699,6 +26714,32 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
      </tbody>
     </tgroup>
    </table>
+
+   <para>
+    <function>pg_get_acl</function> is useful for retrieving and inspecting
+    the privileges associated with database objects without looking at
+    specific catalogs. For example, to retrieve all the granted privileges
+    on objects in the current database:
+<programlisting>
+postgres=# SELECT
+    (pg_identify_object(s.classid,s.objid,s.objsubid)).*,
+    pg_catalog.pg_get_acl(s.classid,s.objid) AS acl
+FROM pg_catalog.pg_shdepend AS s
+JOIN pg_catalog.pg_database AS d
+    ON d.datname = current_database() AND
+       d.oid = s.dbid
+JOIN pg_catalog.pg_authid AS a
+    ON a.oid = s.refobjid AND
+       s.refclassid = 'pg_authid'::regclass
+WHERE s.deptype = 'a';
+-[ RECORD 1 ]-----------------------------------------
+type     | table
+schema   | public
+name     | testtab
+identity | public.testtab
+acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
+</programlisting>
+   </para>
 
   </sect2>
 

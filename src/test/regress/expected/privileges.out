@@ -213,10 +213,39 @@ SELECT * FROM atest1;
 (0 rows)
 
 CREATE TABLE atest2 (col1 varchar(10), col2 boolean);
+SELECT pg_get_acl('pg_class'::regclass, 'atest2'::regclass::oid);
+ pg_get_acl 
+------------
+ 
+(1 row)
+
 GRANT SELECT ON atest2 TO regress_priv_user2;
 GRANT UPDATE ON atest2 TO regress_priv_user3;
 GRANT INSERT ON atest2 TO regress_priv_user4 GRANTED BY CURRENT_USER;
 GRANT TRUNCATE ON atest2 TO regress_priv_user5 GRANTED BY CURRENT_ROLE;
+SELECT unnest(pg_get_acl('pg_class'::regclass, 'atest2'::regclass::oid));
+                     unnest                     
+------------------------------------------------
+ regress_priv_user1=arwdDxtm/regress_priv_user1
+ regress_priv_user2=r/regress_priv_user1
+ regress_priv_user3=w/regress_priv_user1
+ regress_priv_user4=a/regress_priv_user1
+ regress_priv_user5=D/regress_priv_user1
+(5 rows)
+
+-- Invalid inputs
+SELECT pg_get_acl('pg_class'::regclass, 0); -- null
+ pg_get_acl 
+------------
+ 
+(1 row)
+
+SELECT pg_get_acl(0, 0); -- null
+ pg_get_acl 
+------------
+ 
+(1 row)
+
 GRANT TRUNCATE ON atest2 TO regress_priv_user4 GRANTED BY regress_priv_user5;  -- error
 ERROR:  grantor must be current user
 SET SESSION AUTHORIZATION regress_priv_user2;
