@@ -1898,7 +1898,8 @@ PerformWalRecovery(void)
 		recoveryTarget != RECOVERY_TARGET_UNSET &&
 		!reachedRecoveryTarget)
 		ereport(FATAL,
-				(errmsg("recovery ended before configured recovery target was reached")));
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("recovery ended before configured recovery target was reached")));
 }
 
 /*

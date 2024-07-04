@@ -160,11 +160,15 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 
 		/* Found it, check type and collation match */
 		if (atttypid != att->atttypid || atttypmod != att->atttypmod)
-			elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
-				 attname, RelationGetRelationName(newrelation));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+					 errmsg("attribute \"%s\" of relation \"%s\" does not match parent's type",
+							attname, RelationGetRelationName(newrelation))));
 		if (attcollation != att->attcollation)
-			elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's collation",
-				 attname, RelationGetRelationName(newrelation));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+					 errmsg("attribute \"%s\" of relation \"%s\" does not match parent's collation",
+							attname, RelationGetRelationName(newrelation))));
 
 		vars = lappend(vars, makeVar(newvarno,
 									 (AttrNumber) (new_attno + 1),

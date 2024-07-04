@@ -2045,12 +2045,14 @@ _tarWriteHeader(bbsink *sink, const char *filename, const char *linktarget,
 				break;
 			case TAR_NAME_TOO_LONG:
 				ereport(ERROR,
-						(errmsg("file name too long for tar format: \"%s\"",
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("file name too long for tar format: \"%s\"",
 								filename)));
 				break;
 			case TAR_SYMLINK_TOO_LONG:
 				ereport(ERROR,
-						(errmsg("symbolic link target too long for tar format: "
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("symbolic link target too long for tar format: "
 								"file name \"%s\", target \"%s\"",
 								filename, linktarget)));
 				break;

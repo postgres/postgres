@@ -101,7 +101,8 @@ InitXLogReaderState(XLogRecPtr lsn)
 	 */
 	if (lsn < XLOG_BLCKSZ)
 		ereport(ERROR,
-				(errmsg("could not read WAL at LSN %X/%X",
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not read WAL at LSN %X/%X",
 						LSN_FORMAT_ARGS(lsn))));
 
 	private_data = (ReadLocalXLogPageNoWaitPrivate *)

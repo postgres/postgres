@@ -250,7 +250,8 @@ be_tls_init(bool isServerStart)
 		if (ssl_ver_min > ssl_ver_max)
 		{
 			ereport(isServerStart ? FATAL : LOG,
-					(errmsg("could not set SSL protocol version range"),
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("could not set SSL protocol version range"),
 					 errdetail("\"%s\" cannot be higher than \"%s\"",
 							   "ssl_min_protocol_version",
 							   "ssl_max_protocol_version")));

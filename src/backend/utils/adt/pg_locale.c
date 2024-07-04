@@ -1481,7 +1481,8 @@ make_icu_collator(const char *iculocstr,
 								  UCOL_DEFAULT, UCOL_DEFAULT_STRENGTH, NULL, &status);
 		if (U_FAILURE(status))
 			ereport(ERROR,
-					(errmsg("could not open collator for locale \"%s\" with rules \"%s\": %s",
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not open collator for locale \"%s\" with rules \"%s\": %s",
 							iculocstr, icurules, u_errorName(status))));
 	}
 
@@ -2609,7 +2610,8 @@ pg_ucol_open(const char *loc_str)
 		if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 		{
 			ereport(ERROR,
-					(errmsg("could not get language from locale \"%s\": %s",
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not get language from locale \"%s\": %s",
 							loc_str, u_errorName(status))));
 		}
 
@@ -2630,7 +2632,8 @@ pg_ucol_open(const char *loc_str)
 	if (U_FAILURE(status))
 		ereport(ERROR,
 		/* use original string for error report */
-				(errmsg("could not open collator for locale \"%s\": %s",
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not open collator for locale \"%s\": %s",
 						orig_str, u_errorName(status))));
 
 	if (U_ICU_VERSION_MAJOR_NUM < 54)
@@ -2646,7 +2649,8 @@ pg_ucol_open(const char *loc_str)
 		{
 			ucol_close(collator);
 			ereport(ERROR,
-					(errmsg("could not open collator for locale \"%s\": %s",
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not open collator for locale \"%s\": %s",
 							orig_str, u_errorName(status))));
 		}
 	}
@@ -2957,7 +2961,8 @@ icu_language_tag(const char *loc_str, int elevel)
 
 		if (elevel > 0)
 			ereport(elevel,
-					(errmsg("could not convert locale name \"%s\" to language tag: %s",
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not convert locale name \"%s\" to language tag: %s",
 							loc_str, u_errorName(status))));
 		return NULL;
 	}
@@ -2998,7 +3003,8 @@ icu_validate_locale(const char *loc_str)
 	if (U_FAILURE(status) || status == U_STRING_NOT_TERMINATED_WARNING)
 	{
 		ereport(elevel,
-				(errmsg("could not get language from ICU locale \"%s\": %s",
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not get language from ICU locale \"%s\": %s",
 						loc_str, u_errorName(status)),
 				 errhint("To disable ICU locale validation, set the parameter \"%s\" to \"%s\".",
 						 "icu_validation_level", "disabled")));
@@ -3027,7 +3033,8 @@ icu_validate_locale(const char *loc_str)
 
 	if (!found)
 		ereport(elevel,
-				(errmsg("ICU locale \"%s\" has unknown language \"%s\"",
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("ICU locale \"%s\" has unknown language \"%s\"",
 						loc_str, lang),
 				 errhint("To disable ICU locale validation, set the parameter \"%s\" to \"%s\".",
 						 "icu_validation_level", "disabled")));

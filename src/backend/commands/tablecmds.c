@@ -11363,7 +11363,8 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd, bool recurse,
 		}
 
 		ereport(ERROR,
-				(errmsg("cannot alter constraint \"%s\" on relation \"%s\"",
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot alter constraint \"%s\" on relation \"%s\"",
 						cmdcon->conname, RelationGetRelationName(rel)),
 				 ancestorname && ancestortable ?
 				 errdetail("Constraint \"%s\" is derived from constraint \"%s\" of relation \"%s\".",
