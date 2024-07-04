@@ -509,7 +509,6 @@ pg_atomic_compare_exchange_u64(volatile pg_atomic_uint64 *ptr,
 {
 #ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
-	AssertPointerAlignment(expected, 8);
 #endif
 	return pg_atomic_compare_exchange_u64_impl(ptr, expected, newval);
 }
@@ -578,7 +577,7 @@ pg_atomic_sub_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
  * Full barrier semantics (even when value is unchanged).
  */
 static inline uint64
-pg_atomic_monotonic_advance_u64(volatile pg_atomic_uint64 *ptr, uint64 target_)
+pg_atomic_monotonic_advance_u64(volatile pg_atomic_uint64 *ptr, uint64 target)
 {
 	uint64		currval;
 
@@ -587,23 +586,19 @@ pg_atomic_monotonic_advance_u64(volatile pg_atomic_uint64 *ptr, uint64 target_)
 #endif
 
 	currval = pg_atomic_read_u64_impl(ptr);
-	if (currval >= target_)
+	if (currval >= target)
 	{
 		pg_memory_barrier();
 		return currval;
 	}
 
-#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
-	AssertPointerAlignment(&currval, 8);
-#endif
-
-	while (currval < target_)
+	while (currval < target)
 	{
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &currval, target_))
-			break;
+		if (pg_atomic_compare_exchange_u64(ptr, &currval, target))
+			return target;
 	}
 
-	return Max(target_, currval);
+	return currval;
 }
 
 #undef INSIDE_ATOMICS_H

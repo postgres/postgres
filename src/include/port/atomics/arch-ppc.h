@@ -173,6 +173,8 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 	uint32 condition_register;
 	bool ret;
 
+	AssertPointerAlignment(expected, 8);
+
 	/* Like u32, but s/lwarx/ldarx/; s/stwcx/stdcx/; s/cmpw/cmpd/ */
 #ifdef HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P
 	if (__builtin_constant_p(*expected) &&
