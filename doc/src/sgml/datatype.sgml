@@ -3369,7 +3369,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
        </row>
        <row>
         <entry><type>line</type></entry>
-        <entry>32 bytes</entry>
+        <entry>24 bytes</entry>
         <entry>Infinite line</entry>
         <entry>{A,B,C}</entry>
        </row>
@@ -3412,6 +3412,11 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
       </tbody>
      </tgroup>
     </table>
+
+   <para>
+    In all these types, the individual coordinates are stored as
+    <type>double precision</type> (<type>float8</type>) numbers.
+   </para>
 
    <para>
     A rich set of functions and operators is available to perform various geometric
@@ -3603,8 +3608,16 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     <para>
      Polygons are represented by lists of points (the vertices of the
      polygon). Polygons are very similar to closed paths; the essential
-     difference is that a polygon is considered to include the area
-     within it, while a path is not.
+     semantic difference is that a polygon is considered to include the
+     area within it, while a path is not.
+    </para>
+
+    <para>
+     An important implementation difference between polygons and
+     paths is that the stored representation of a polygon includes its
+     smallest bounding box.  This speeds up certain search operations,
+     although computing the bounding box adds overhead while constructing
+     new polygons.
     </para>
 
     <para>
