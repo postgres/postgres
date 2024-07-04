@@ -102,6 +102,7 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 	bool	ret;
 	uint64	current;
 
+	AssertPointerAlignment(expected, 8);
 	current = atomic_cas_64(&ptr->value, *expected, newval);
 	ret = current == *expected;
 	*expected = current;
