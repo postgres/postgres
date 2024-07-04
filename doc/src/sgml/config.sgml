@@ -1418,11 +1418,11 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        Older PostgreSQL versions do not have this setting and always use the
-        client's preferences.  This setting is mainly for backward
-        compatibility with those versions.  Using the server's preferences is
-        usually better because it is more likely that the server is appropriately
-        configured.
+        <productname>PostgreSQL</productname> versions before 9.4 do not have
+        this setting and always use the client's preferences.  This setting is
+        mainly for backward compatibility with those versions.  Using the
+        server's preferences is usually better because it is more likely that
+        the server is appropriately configured.
        </para>
       </listitem>
      </varlistentry>
