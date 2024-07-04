@@ -1,0 +1,51 @@
+2024-07-01 20:14:21.793 -03 [81118] FATAL:  data directory "/Users/ncontinanza/Projects/distributed-postgres/mydb" has invalid permissions
+2024-07-01 20:14:21.793 -03 [81118] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2024-07-01 20:16:36.136 -03 [82221] LOG:  starting PostgreSQL 17devel on aarch64-apple-darwin23.5.0, compiled by Apple clang version 15.0.0 (clang-1500.3.9.4), 64-bit
+2024-07-01 20:16:36.137 -03 [82221] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-07-01 20:16:36.137 -03 [82221] LOG:  listening on IPv6 address "::1", port 5432
+2024-07-01 20:16:36.138 -03 [82221] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-07-01 20:16:36.139 -03 [82224] LOG:  database system was shut down at 2024-07-01 20:15:35 -03
+2024-07-01 20:16:36.141 -03 [82221] LOG:  database system is ready to accept connections
+2024-07-01 20:19:03.005 -03 [82305] ERROR:  syntax error at or near "//" at character 1
+2024-07-01 20:19:03.005 -03 [82305] STATEMENT:  // Para persistencia
+	BEGIN;
+2024-07-01 20:19:03.007 -03 [82305] ERROR:  relation "employees" already exists
+2024-07-01 20:19:03.007 -03 [82305] STATEMENT:  CREATE TABLE employees (
+	    employee_id SERIAL PRIMARY KEY,
+	    first_name VARCHAR(50),
+	    last_name VARCHAR(50),
+	    job_title VARCHAR(50),
+	    department VARCHAR(50),
+	    salary DECIMAL(10, 2),
+	    hire_date DATE
+	);
+2024-07-01 20:21:36.120 -03 [82222] LOG:  checkpoint starting: time
+2024-07-01 20:21:45.723 -03 [82222] LOG:  checkpoint complete: wrote 98 buffers (0.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=9.597 s, sync=0.003 s, total=9.603 s; sync files=51, longest=0.001 s, average=0.001 s; distance=466 kB, estimate=466 kB; lsn=0/157B120, redo lsn=0/157B090
+2024-07-01 20:22:47.229 -03 [92395] FATAL:  database "ncontinanza" does not exist
+2024-07-01 20:22:47.232 -03 [92396] FATAL:  database "ncontinanza" does not exist
+2024-07-01 20:25:59.723 -03 [92478] FATAL:  role "my_db" does not exist
+2024-07-01 20:25:59.725 -03 [92479] FATAL:  role "my_db" does not exist
+2024-07-01 20:26:28.452 -03 [92536] FATAL:  role "postgres" does not exist
+2024-07-01 20:26:28.454 -03 [92537] FATAL:  role "postgres" does not exist
+2024-07-01 20:26:58.724 -03 [92606] FATAL:  database "template" does not exist
+2024-07-01 20:27:51.338 -03 [92740] FATAL:  role "postgres" does not exist
+2024-07-01 20:27:51.340 -03 [92741] FATAL:  role "postgres" does not exist
+2024-07-01 20:28:08.069 -03 [92774] FATAL:  database "ncontinanza" does not exist
+2024-07-01 20:28:08.071 -03 [92775] FATAL:  database "ncontinanza" does not exist
+2024-07-01 20:40:25.168 -03 [93083] FATAL:  database "ncontinanza" does not exist
+2024-07-01 20:40:25.171 -03 [93084] FATAL:  database "ncontinanza" does not exist
+2024-07-01 21:18:45.415 -03 [82221] LOG:  received fast shutdown request
+2024-07-01 21:18:45.415 -03 [82221] LOG:  aborting any active transactions
+2024-07-01 21:18:45.416 -03 [82221] LOG:  background worker "logical replication launcher" (PID 82227) exited with exit code 1
+2024-07-01 21:18:45.417 -03 [82222] LOG:  shutting down
+2024-07-01 21:18:45.417 -03 [82222] LOG:  checkpoint starting: shutdown immediate
+2024-07-01 21:18:45.420 -03 [82222] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.004 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=419 kB; lsn=0/157B1D0, redo lsn=0/157B1D0
+2024-07-01 21:18:45.423 -03 [82221] LOG:  database system is shut down
+2024-07-01 21:23:10.104 -03 [94216] LOG:  starting PostgreSQL 17devel on aarch64-apple-darwin23.5.0, compiled by Apple clang version 15.0.0 (clang-1500.3.9.4), 64-bit
+2024-07-01 21:23:10.106 -03 [94216] LOG:  listening on IPv6 address "::1", port 5432
+2024-07-01 21:23:10.106 -03 [94216] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-07-01 21:23:10.106 -03 [94216] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-07-01 21:23:10.108 -03 [94219] LOG:  database system was shut down at 2024-07-01 21:18:45 -03
+2024-07-01 21:23:10.112 -03 [94216] LOG:  database system is ready to accept connections
+2024-07-01 21:28:10.125 -03 [94217] LOG:  checkpoint starting: time
+2024-07-01 21:28:10.129 -03 [94217] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.005 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/157B2D8, redo lsn=0/157B280

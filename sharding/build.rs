@@ -1,5 +1,4 @@
 extern crate cc;
-extern crate pkg_config;
 
 fn main() {
     cc::Build::new()
