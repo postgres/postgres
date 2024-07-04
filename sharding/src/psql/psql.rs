@@ -3,19 +3,13 @@
 #![allow(non_snake_case)]
 
 use std::ffi::CStr;
-use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
-use std::sync::{Arc, Mutex};
-use std::thread;
-use tokio::runtime::{Builder, Runtime};
-use tokio::sync::oneshot;
-
-use tokio::spawn;
+use postgres::{Client, NoTls};
 
 use crate::psql::common_h_bindings::pg_result;
 
 #[no_mangle]
 pub extern "C" fn SendQueryToShard(query_data: *const i8) {
+    println!("SendQueryToShard called");
     unsafe {
         if query_data.is_null() {
             eprintln!("Received a null pointer");
@@ -31,9 +25,24 @@ pub extern "C" fn SendQueryToShard(query_data: *const i8) {
             }
         };
 
-        println!("Query: {}", query.trim());
+        println!("Received Query: {:?}", query);
+        let _ = handle_query(query.trim());
     }
 }
+
+
+fn handle_query(query: &str) -> Result<(), Box<dyn std::error::Error>> {
+    println!("handle_query from server.rs called");
+
+    let mut client = Client::connect("host=127.0.0.1 user=aldanarastrelli dbname=template1", NoTls).unwrap();
+    
+    // let rows = client.query(query, &[])?;
+
+    // println!("{:?}", rows);
+
+    Ok(())
+}
+
 #[no_mangle]
 pub extern "C" fn SendPGResultToShard(pg_result: *const pg_result) {
     unsafe {
