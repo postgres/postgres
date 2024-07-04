@@ -12,6 +12,11 @@ POSTGRES_EXECUTABLE="$ROOT_DIR/src/backend/postgres"
 DB_DIR="$ROOT_DIR/$DB_CLUSTER_NAME"
 LOG_FILE="$ROOT_DIR/logfile"
 
+# If we're on OS X, make sure that globals aren't stripped out.
+if [ "$(uname)" == "Darwin" ]; then
+    export LDFLAGS="-Wl,-no_pie"
+fi
+
 echo "Compiling sharding library..."
 cd $SHARDING_DIR
 cargo build --release --lib
