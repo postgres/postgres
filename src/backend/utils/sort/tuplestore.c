@@ -109,6 +109,7 @@ struct Tuplestorestate
 	bool		truncated;		/* tuplestore_trim has removed tuples? */
 	int64		availMem;		/* remaining memory available, in bytes */
 	int64		allowedMem;		/* total memory allowed, in bytes */
+	int64		maxSpace;		/* maximum space used in memory */
 	int64		tuples;			/* number of tuples added */
 	BufFile    *myfile;			/* underlying file, or NULL if none */
 	MemoryContext context;		/* memory context for holding tuples */
@@ -238,6 +239,7 @@ static Tuplestorestate *tuplestore_begin_common(int eflags,
 												int maxKBytes);
 static void tuplestore_puttuple_common(Tuplestorestate *state, void *tuple);
 static void dumptuples(Tuplestorestate *state);
+static void tuplestore_updatemax(Tuplestorestate *state);
 static unsigned int getlen(Tuplestorestate *state, bool eofOK);
 static void *copytup_heap(Tuplestorestate *state, void *tup);
 static void writetup_heap(Tuplestorestate *state, void *tup);
@@ -262,6 +264,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->truncated = false;
 	state->allowedMem = maxKBytes * 1024L;
 	state->availMem = state->allowedMem;
+	state->maxSpace = 0;
 	state->myfile = NULL;
 	state->context = CurrentMemoryContext;
 	state->resowner = CurrentResourceOwner;
@@ -419,6 +422,9 @@ tuplestore_clear(Tuplestorestate *state)
 {
 	int			i;
 	TSReadPointer *readptr;
+
+	/* update the maxSpace before doing any USEMEM/FREEMEM adjustments */
+	tuplestore_updatemax(state);
 
 	if (state->myfile)
 		BufFileClose(state->myfile);
@@ -1402,6 +1408,9 @@ tuplestore_trim(Tuplestorestate *state)
 	Assert(nremove >= state->memtupdeleted);
 	Assert(nremove <= state->memtupcount);
 
+	/* before freeing any memory, update maxSpace */
+	tuplestore_updatemax(state);
+
 	/* Release no-longer-needed tuples */
 	for (i = state->memtupdeleted; i < nremove; i++)
 	{
@@ -1442,6 +1451,49 @@ tuplestore_trim(Tuplestorestate *state)
 		if (!state->readptrs[i].eof_reached)
 			state->readptrs[i].current -= nremove;
 	}
+}
+
+/*
+ * tuplestore_updatemax
+ *		Update maxSpace field
+ */
+static void
+tuplestore_updatemax(Tuplestorestate *state)
+{
+	if (state->status == TSS_INMEM)
+		state->maxSpace = Max(state->maxSpace,
+							  state->allowedMem - state->availMem);
+}
+
+/*
+ * tuplestore_storage_type_name
+ *		Return a string description of the storage method used to store the
+ *		tuples.
+ */
+const char *
+tuplestore_storage_type_name(Tuplestorestate *state)
+{
+	if (state->status == TSS_INMEM)
+		return "Memory";
+	else
+		return "Disk";
+}
+
+/*
+ * tuplestore_space_used
+ *		Return the maximum space used in memory unless the tuplestore has spilled
+ *		to disk, in which case, return the disk space used.
+ */
+int64
+tuplestore_space_used(Tuplestorestate *state)
+{
+	/* First, update the maxSpace field */
+	tuplestore_updatemax(state);
+
+	if (state->status == TSS_INMEM)
+		return state->maxSpace;
+	else
+		return BufFileSize(state->myfile);
 }
 
 /*
@@ -1513,6 +1565,7 @@ writetup_heap(Tuplestorestate *state, void *tup)
 	if (state->backward)		/* need trailing length word? */
 		BufFileWrite(state->myfile, &tuplen, sizeof(tuplen));
 
+	/* no need to call tuplestore_updatemax() when not in TSS_INMEM */
 	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	heap_free_minimal_tuple(tuple);
 }

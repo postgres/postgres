@@ -65,6 +65,10 @@ extern void tuplestore_copy_read_pointer(Tuplestorestate *state,
 
 extern void tuplestore_trim(Tuplestorestate *state);
 
+extern const char *tuplestore_storage_type_name(Tuplestorestate *state);
+
+extern int64 tuplestore_space_used(Tuplestorestate *state);
+
 extern bool tuplestore_in_memory(Tuplestorestate *state);
 
 extern bool tuplestore_gettupleslot(Tuplestorestate *state, bool forward,

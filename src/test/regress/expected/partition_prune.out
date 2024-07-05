@@ -1,6 +1,24 @@
 --
 -- Test partitioning planner code
 --
+-- Helper function which can be used for masking out portions of EXPLAIN
+-- ANALYZE which could contain information that's not consistent on all
+-- platforms.
+create function explain_analyze(query text) returns setof text
+language plpgsql as
+$$
+declare
+    ln text;
+begin
+    for ln in
+        execute format('explain (analyze, costs off, summary off, timing off) %s',
+            query)
+    loop
+        ln := regexp_replace(ln, 'Maximum Storage: \d+', 'Maximum Storage: N');
+        return next ln;
+    end loop;
+end;
+$$;
 -- Force generic plans to be used for all prepared statements in this file.
 set plan_cache_mode = force_generic_plan;
 create table lp (a char) partition by list (a);
@@ -2826,9 +2844,9 @@ deallocate ab_q5;
 deallocate ab_q6;
 -- UPDATE on a partition subtree has been seen to have problems.
 insert into ab values (1,2);
-explain (analyze, costs off, summary off, timing off)
-update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
-                                        QUERY PLAN                                         
+select explain_analyze('
+update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;');
+                                      explain_analyze                                      
 -------------------------------------------------------------------------------------------
  Update on ab_a1 (actual rows=0 loops=1)
    Update on ab_a1_b1 ab_a1_1
@@ -2851,6 +2869,7 @@ update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
                      ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
                            Index Cond: (a = 1)
          ->  Materialize (actual rows=1 loops=1)
+               Storage: Memory  Maximum Storage: NkB
                ->  Append (actual rows=1 loops=1)
                      ->  Bitmap Heap Scan on ab_a1_b1 ab_1 (actual rows=0 loops=1)
                            Recheck Cond: (a = 1)
@@ -2866,7 +2885,7 @@ update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
                            Heap Blocks: exact=1
                            ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
                                  Index Cond: (a = 1)
-(36 rows)
+(37 rows)
 
 table ab;
  a | b 
@@ -2877,9 +2896,9 @@ table ab;
 -- Test UPDATE where source relation has run-time pruning enabled
 truncate ab;
 insert into ab values (1, 1), (1, 2), (1, 3), (2, 1);
-explain (analyze, costs off, summary off, timing off)
-update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
-                                  QUERY PLAN                                  
+select explain_analyze('
+update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);');
+                               explain_analyze                                
 ------------------------------------------------------------------------------
  Update on ab_a1 (actual rows=0 loops=1)
    Update on ab_a1_b1 ab_a1_1
@@ -2893,6 +2912,7 @@ update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
                ->  Seq Scan on ab_a1_b2 ab_a1_2 (actual rows=1 loops=1)
                ->  Seq Scan on ab_a1_b3 ab_a1_3 (actual rows=1 loops=1)
          ->  Materialize (actual rows=1 loops=3)
+               Storage: Memory  Maximum Storage: NkB
                ->  Append (actual rows=1 loops=1)
                      ->  Seq Scan on ab_a2_b1 ab_a2_1 (actual rows=1 loops=1)
                            Filter: (b = (InitPlan 1).col1)
@@ -2900,7 +2920,7 @@ update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
                            Filter: (b = (InitPlan 1).col1)
                      ->  Seq Scan on ab_a2_b3 ab_a2_3 (never executed)
                            Filter: (b = (InitPlan 1).col1)
-(19 rows)
+(20 rows)
 
 select tableoid::regclass, * from ab;
  tableoid | a | b 
@@ -4419,3 +4439,4 @@ explain (costs off) select * from hp_contradict_test where a === 1 and b === 1 a
 drop table hp_contradict_test;
 drop operator class part_test_int4_ops2 using hash;
 drop operator ===(int4, int4);
+drop function explain_analyze(text);
