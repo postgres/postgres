@@ -1120,15 +1120,24 @@ CALL transaction_test1();
 
     <para>
      In <productname>PostgreSQL</productname>, the same function name can be used for
-     different function definitions as long as the number of arguments or their types
+     different function definitions if the functions are placed in different
+     schemas, or if the number of arguments or their types
      differ. Tcl, however, requires all procedure names to be distinct.
-     PL/Tcl deals with this by making the internal Tcl procedure names contain
-     the object
-     ID of the function from the system table <structname>pg_proc</structname> as part of their name. Thus,
+     PL/Tcl deals with this by including the argument type names in the
+     internal Tcl procedure name, and then appending the function's object
+     ID (OID) to the internal Tcl procedure name if necessary to make it
+     different from the names of all previously-loaded functions in the
+     same Tcl interpreter.  Thus,
      <productname>PostgreSQL</productname> functions with the same name
      and different argument types will be different Tcl procedures, too.  This
      is not normally a concern for a PL/Tcl programmer, but it might be visible
      when debugging.
+    </para>
+
+    <para>
+     For this reason among others, a PL/Tcl function cannot call another one
+     directly (that is, within Tcl).  If you need to do that, you must go
+     through SQL, using <function>spi_exec</function> or a related command.
     </para>
 
    </sect1>

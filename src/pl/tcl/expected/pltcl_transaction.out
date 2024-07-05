@@ -1,5 +1,3 @@
--- suppress CONTEXT so that function OIDs aren't in output
-\set VERBOSITY terse
 CREATE TABLE test1 (a int, b text);
 CREATE PROCEDURE transaction_test1()
 LANGUAGE pltcl
@@ -41,6 +39,12 @@ return 1
 $$;
 SELECT transaction_test2();
 ERROR:  invalid transaction termination
+CONTEXT:  while executing
+"commit"
+    (procedure "__PLTcl_proc_transaction_test2" line 6)
+    invoked from within
+"__PLTcl_proc_transaction_test2"
+in PL/Tcl function transaction_test2()
 SELECT * FROM test1;
  a | b 
 ---+---
@@ -55,6 +59,17 @@ return 1
 $$;
 SELECT transaction_test3();
 ERROR:  invalid transaction termination
+CONTEXT:  while executing
+"commit"
+    (procedure "__PLTcl_proc_transaction_test1" line 6)
+    invoked from within
+"__PLTcl_proc_transaction_test1"
+    invoked from within
+"spi_exec "CALL transaction_test1()""
+    (procedure "__PLTcl_proc_transaction_test3" line 3)
+    invoked from within
+"__PLTcl_proc_transaction_test3"
+in PL/Tcl function transaction_test3()
 SELECT * FROM test1;
  a | b 
 ---+---
@@ -74,6 +89,17 @@ spi_exec -array row "SELECT * FROM test2 ORDER BY x" {
 $$;
 CALL transaction_test4a();
 ERROR:  cannot commit while a subtransaction is active
+CONTEXT:  while executing
+"commit"
+    invoked from within
+"spi_exec -array row "SELECT * FROM test2 ORDER BY x" {
+    spi_exec "INSERT INTO test1 (a) VALUES ($row(x))"
+    commit
+}"
+    (procedure "__PLTcl_proc_transaction_test4a" line 3)
+    invoked from within
+"__PLTcl_proc_transaction_test4a"
+in PL/Tcl function transaction_test4a()
 SELECT * FROM test1;
  a | b 
 ---+---
@@ -91,6 +117,17 @@ spi_exec -array row "SELECT * FROM test2 ORDER BY x" {
 $$;
 CALL transaction_test4b();
 ERROR:  cannot roll back while a subtransaction is active
+CONTEXT:  while executing
+"rollback"
+    invoked from within
+"spi_exec -array row "SELECT * FROM test2 ORDER BY x" {
+    spi_exec "INSERT INTO test1 (a) VALUES ($row(x))"
+    rollback
+}"
+    (procedure "__PLTcl_proc_transaction_test4b" line 3)
+    invoked from within
+"__PLTcl_proc_transaction_test4b"
+in PL/Tcl function transaction_test4b()
 SELECT * FROM test1;
  a | b 
 ---+---
@@ -109,6 +146,12 @@ elog WARNING "should not get here"
 $$;
 CALL transaction_testfk();
 ERROR:  insert or update on table "testfk" violates foreign key constraint "testfk_f1_fkey"
+CONTEXT:  while executing
+"commit"
+    (procedure "__PLTcl_proc_transaction_testfk" line 5)
+    invoked from within
+"__PLTcl_proc_transaction_testfk"
+in PL/Tcl function transaction_testfk()
 SELECT * FROM testpk;
  id 
 ----

@@ -1,4 +1,4 @@
--- suppress CONTEXT so that function OIDs aren't in output
+-- suppress CONTEXT so that table OIDs aren't in output
 \set VERBOSITY terse
 --
 -- Create the tables used in the test queries

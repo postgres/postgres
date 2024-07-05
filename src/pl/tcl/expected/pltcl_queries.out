@@ -1,5 +1,3 @@
--- suppress CONTEXT so that function OIDs aren't in output
-\set VERBOSITY terse
 -- Test composite-type arguments
 select tcl_composite_arg_ref1(row('tkey', 42, 'ref2'));
  tcl_composite_arg_ref1 
@@ -73,9 +71,15 @@ select tcl_argisnull(null);
 (1 row)
 
 -- test some error cases
-create function tcl_error(out a int, out b int) as $$return {$$ language pltcl;
+create function tcl_error(out a int, out b int) as $$returm 1$$ language pltcl;
 select tcl_error();
-ERROR:  missing close-brace
+ERROR:  invalid command name "returm"
+CONTEXT:  while executing
+"returm 1"
+    (procedure "__PLTcl_proc_tcl_error" line 2)
+    invoked from within
+"__PLTcl_proc_tcl_error"
+in PL/Tcl function tcl_error()
 create function bad_record(out a text, out b text) as $$return [list a]$$ language pltcl;
 select bad_record();
 ERROR:  column name/value list must have even number of elements
@@ -123,16 +127,34 @@ select 1, tcl_test_sequence(0,5);
 create function non_srf() returns int as $$return_next 1$$ language pltcl;
 select non_srf();
 ERROR:  return_next cannot be used in non-set-returning functions
+CONTEXT:  while executing
+"return_next 1"
+    (procedure "__PLTcl_proc_non_srf" line 2)
+    invoked from within
+"__PLTcl_proc_non_srf"
+in PL/Tcl function non_srf()
 create function bad_record_srf(out a text, out b text) returns setof record as $$
 return_next [list a]
 $$ language pltcl;
 select bad_record_srf();
 ERROR:  column name/value list must have even number of elements
+CONTEXT:  while executing
+"return_next [list a]"
+    (procedure "__PLTcl_proc_bad_record_srf" line 3)
+    invoked from within
+"__PLTcl_proc_bad_record_srf"
+in PL/Tcl function bad_record_srf()
 create function bad_field_srf(out a text, out b text) returns setof record as $$
 return_next [list a 1 b 2 cow 3]
 $$ language pltcl;
 select bad_field_srf();
 ERROR:  column name/value list contains nonexistent column name "cow"
+CONTEXT:  while executing
+"return_next [list a 1 b 2 cow 3]"
+    (procedure "__PLTcl_proc_bad_field_srf" line 3)
+    invoked from within
+"__PLTcl_proc_bad_field_srf"
+in PL/Tcl function bad_field_srf()
 -- test composite and domain-over-composite results
 create function tcl_composite_result(int) returns T_comp1 as $$
 return [list tkey tkey1 ref1 $1 ref2 ref22]
@@ -172,7 +194,9 @@ $$ language pltcl;
 select tcl_record_result(42);  -- fail
 ERROR:  function returning record called in context that cannot accept type record
 select * from tcl_record_result(42);  -- fail
-ERROR:  a column definition list is required for functions returning "record" at character 15
+ERROR:  a column definition list is required for functions returning "record"
+LINE 1: select * from tcl_record_result(42);
+                      ^
 select * from tcl_record_result(42) as (q1 text, q2 int, q3 text);
     q1    | q2 |    q3    
 ----------+----+----------
@@ -190,6 +214,15 @@ ERROR:  column name/value list contains nonexistent column name "q3"
 -- test quote
 select tcl_eval('quote foo bar');
 ERROR:  wrong # args: should be "quote string"
+CONTEXT:  while executing
+"quote foo bar"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {quote foo bar}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('quote [format %c 39]');
  tcl_eval 
 ----------
@@ -205,46 +238,217 @@ select tcl_eval('quote [format %c 92]');
 -- Test argisnull
 select tcl_eval('argisnull');
 ERROR:  wrong # args: should be "argisnull argno"
+CONTEXT:  while executing
+"argisnull"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text argisnull"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('argisnull 14');
 ERROR:  argno out of range
+CONTEXT:  while executing
+"argisnull 14"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {argisnull 14}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('argisnull abc');
 ERROR:  expected integer but got "abc"
+CONTEXT:  while executing
+"argisnull abc"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {argisnull abc}"
+in PL/Tcl function tcl_eval(text)
 -- Test return_null
 select tcl_eval('return_null 14');
 ERROR:  wrong # args: should be "return_null "
+CONTEXT:  while executing
+"return_null 14"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {return_null 14}"
+in PL/Tcl function tcl_eval(text)
 -- Test spi_exec
 select tcl_eval('spi_exec');
 ERROR:  wrong # args: should be "spi_exec ?-count n? ?-array name? query ?loop body?"
+CONTEXT:  while executing
+"spi_exec"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text spi_exec"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_exec -count');
 ERROR:  missing argument to -count or -array
+CONTEXT:  while executing
+"spi_exec -count"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_exec -count}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_exec -array');
 ERROR:  missing argument to -count or -array
+CONTEXT:  while executing
+"spi_exec -array"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_exec -array}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_exec -count abc');
 ERROR:  expected integer but got "abc"
+CONTEXT:  while executing
+"spi_exec -count abc"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_exec -count abc}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_exec query loop body toomuch');
 ERROR:  wrong # args: should be "query ?loop body?"
+CONTEXT:  while executing
+"spi_exec query loop body toomuch"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_exec query loop body toomuch}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_exec "begin; rollback;"');
 ERROR:  pltcl: SPI_execute failed: SPI_ERROR_TRANSACTION
+CONTEXT:  while executing
+"spi_exec "begin; rollback;""
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_exec "begin; rollback;"}"
+in PL/Tcl function tcl_eval(text)
 -- Test spi_execp
 select tcl_eval('spi_execp');
 ERROR:  missing argument to -count or -array
+CONTEXT:  while executing
+"spi_execp"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text spi_execp"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_execp -count');
 ERROR:  missing argument to -array, -count or -nulls
+CONTEXT:  while executing
+"spi_execp -count"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_execp -count}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_execp -array');
 ERROR:  missing argument to -array, -count or -nulls
+CONTEXT:  while executing
+"spi_execp -array"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_execp -array}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_execp -count abc');
 ERROR:  expected integer but got "abc"
+CONTEXT:  while executing
+"spi_execp -count abc"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_execp -count abc}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_execp -nulls');
 ERROR:  missing argument to -array, -count or -nulls
+CONTEXT:  while executing
+"spi_execp -nulls"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_execp -nulls}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_execp ""');
 ERROR:  invalid queryid ''
+CONTEXT:  while executing
+"spi_execp """
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_execp ""}"
+in PL/Tcl function tcl_eval(text)
 -- test spi_prepare
 select tcl_eval('spi_prepare');
 ERROR:  wrong # args: should be "spi_prepare query argtypes"
+CONTEXT:  while executing
+"spi_prepare"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text spi_prepare"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_prepare a b');
 ERROR:  type "b" does not exist
+CONTEXT:  while executing
+"spi_prepare a b"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {spi_prepare a b}"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('spi_prepare a "b {"');
 ERROR:  unmatched open brace in list
+CONTEXT:  while executing
+"spi_prepare a "b {""
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text spi_prepare\ a\ \"b\ \{\""
+in PL/Tcl function tcl_eval(text)
 select tcl_error_handling_test($tcl$spi_prepare "select moo" []$tcl$);
        tcl_error_handling_test        
 --------------------------------------
@@ -307,11 +511,38 @@ select tcl_error_handling_test('moo');
 -- test elog
 select tcl_eval('elog');
 ERROR:  wrong # args: should be "elog level msg"
+CONTEXT:  while executing
+"elog"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text elog"
+in PL/Tcl function tcl_eval(text)
 select tcl_eval('elog foo bar');
 ERROR:  bad priority "foo": must be DEBUG, LOG, INFO, NOTICE, WARNING, ERROR, or FATAL
+CONTEXT:  while executing
+"elog foo bar"
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {elog foo bar}"
+in PL/Tcl function tcl_eval(text)
 -- test forced error
 select tcl_eval('error "forced error"');
 ERROR:  forced error
+CONTEXT:  while executing
+"error "forced error""
+    ("eval" body line 1)
+    invoked from within
+"eval $1"
+    (procedure "__PLTcl_proc_tcl_eval_text" line 3)
+    invoked from within
+"__PLTcl_proc_tcl_eval_text {error "forced error"}"
+in PL/Tcl function tcl_eval(text)
 -- test loop control in spi_exec[p]
 select tcl_spi_exec(true, 'break');
 NOTICE:  col1 1, col2 foo
@@ -339,6 +570,19 @@ NOTICE:  col1 1, col2 foo
 NOTICE:  col1 2, col2 bar
 NOTICE:  action: error
 ERROR:  error message
+CONTEXT:  while executing
+"error "error message""
+    invoked from within
+"spi_execp -array A $prep {
+        elog NOTICE "col1 $A(col1), col2 $A(col2)"
+
+        switch $A(col1) {
+            2 {
+                elog NOTICE "..."
+    (procedure "__PLTcl_proc_tcl_spi_exec_boolean_text" line 6)
+    invoked from within
+"__PLTcl_proc_tcl_spi_exec_boolean_text t error"
+in PL/Tcl function tcl_spi_exec(boolean,text)
 select tcl_spi_exec(true, 'return');
 NOTICE:  col1 1, col2 foo
 NOTICE:  col1 2, col2 bar
@@ -374,6 +618,19 @@ NOTICE:  col1 1, col2 foo
 NOTICE:  col1 2, col2 bar
 NOTICE:  action: error
 ERROR:  error message
+CONTEXT:  while executing
+"error "error message""
+    invoked from within
+"spi_exec -array A $query {
+        elog NOTICE "col1 $A(col1), col2 $A(col2)"
+
+        switch $A(col1) {
+            2 {
+                elog NOTICE "..."
+    (procedure "__PLTcl_proc_tcl_spi_exec_boolean_text" line 31)
+    invoked from within
+"__PLTcl_proc_tcl_spi_exec_boolean_text f error"
+in PL/Tcl function tcl_spi_exec(boolean,text)
 select tcl_spi_exec(false, 'return');
 NOTICE:  col1 1, col2 foo
 NOTICE:  col1 2, col2 bar
@@ -381,6 +638,59 @@ NOTICE:  action: return
  tcl_spi_exec 
 --------------
  
+(1 row)
+
+-- test that we don't get confused by multiple funcs with same SQL name
+create schema tcls1;
+create function tcls1.somefunc(int) returns int as $$
+return [expr $1 * 2]
+$$ language pltcl;
+create schema tcls2;
+create function tcls2.somefunc(int) returns int as $$
+return [expr $1 * 3]
+$$ language pltcl;
+set search_path = tcls1;
+select tcls1.somefunc(11);
+ somefunc 
+----------
+       22
+(1 row)
+
+set search_path = tcls2;
+select tcls2.somefunc(12);
+ somefunc 
+----------
+       36
+(1 row)
+
+set search_path = tcls1;
+select tcls1.somefunc(13);
+ somefunc 
+----------
+       26
+(1 row)
+
+reset search_path;
+-- test that it works to replace a function that's being executed
+create function replaceme(text) returns text as $p$
+spi_exec {
+create or replace function replaceme(text) returns text as $$
+return "$1 fum"
+$$ language pltcl;
+}
+spi_exec {select replaceme('foe') as inner}
+return "fee $1 $inner"
+$p$ language pltcl;
+select replaceme('fie');
+    replaceme    
+-----------------
+ fee fie foe fum
+(1 row)
+
+select replaceme('fie');
+ replaceme 
+-----------
+ fie fum
 (1 row)
 
 -- forcibly run the Tcl event loop for awhile, to check that we have not

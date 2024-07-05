@@ -124,19 +124,21 @@ typedef struct pltcl_interp_desc
  * The pltcl_proc_desc struct itself, as well as all subsidiary data,
  * is stored in the memory context identified by the fn_cxt field.
  * We can reclaim all the data by deleting that context, and should do so
- * when the fn_refcount goes to zero.  (But note that we do not bother
- * trying to clean up Tcl's copy of the procedure definition: it's Tcl's
- * problem to manage its memory when we replace a proc definition.  We do
- * not clean up pltcl_proc_descs when a pg_proc row is deleted, only when
- * it is updated, and the same policy applies to Tcl's copy as well.)
+ * when the fn_refcount goes to zero.  That will happen if we build a new
+ * pltcl_proc_desc following an update of the pg_proc row.  If that happens
+ * while the old proc is being executed, we mustn't remove the struct until
+ * execution finishes.  When building a new pltcl_proc_desc, we unlink
+ * Tcl's copy of the old procedure definition, similarly relying on Tcl's
+ * internal reference counting to prevent that structure from disappearing
+ * while it's in use.
  *
  * Note that the data in this struct is shared across all active calls;
  * nothing except the fn_refcount should be changed by a call instance.
  **********************************************************************/
 typedef struct pltcl_proc_desc
 {
-	char	   *user_proname;	/* user's name (from pg_proc.proname) */
-	char	   *internal_proname;	/* Tcl name (based on function OID) */
+	char	   *user_proname;	/* user's name (from format_procedure) */
+	char	   *internal_proname;	/* Tcl proc name (NULL if deleted) */
 	MemoryContext fn_cxt;		/* memory context for this procedure */
 	unsigned long fn_refcount;	/* number of active references */
 	TransactionId fn_xmin;		/* xmin of pg_proc row */
@@ -1375,13 +1377,29 @@ throw_tcl_error(Tcl_Interp *interp, const char *proname)
 	 */
 	char	   *emsg;
 	char	   *econtext;
+	int			emsglen;
 
 	emsg = pstrdup(utf_u2e(Tcl_GetStringResult(interp)));
 	econtext = utf_u2e(Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
+
+	/*
+	 * Typically, the first line of errorInfo matches the primary error
+	 * message (the interpreter result); don't print that twice if so.
+	 */
+	emsglen = strlen(emsg);
+	if (strncmp(emsg, econtext, emsglen) == 0 &&
+		econtext[emsglen] == '\n')
+		econtext += emsglen + 1;
+
+	/* Tcl likes to prefix the next line with some spaces, too */
+	while (*econtext == ' ')
+		econtext++;
+
+	/* Note: proname will already contain quoting if any is needed */
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 			 errmsg("%s", emsg),
-			 errcontext("%s\nin PL/Tcl function \"%s\"",
+			 errcontext("%s\nin PL/Tcl function %s",
 						econtext, proname)));
 }
 
@@ -1405,6 +1423,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 	pltcl_proc_desc *old_prodesc;
 	volatile MemoryContext proc_cxt = NULL;
 	Tcl_DString proc_internal_def;
+	Tcl_DString proc_internal_name;
 	Tcl_DString proc_internal_body;
 
 	/* We'll need the pg_proc tuple in any case... */
@@ -1435,6 +1454,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 	 * function's pg_proc entry without changing its OID.
 	 ************************************************************/
 	if (prodesc != NULL &&
+		prodesc->internal_proname != NULL &&
 		prodesc->fn_xmin == HeapTupleHeaderGetRawXmin(procTup->t_data) &&
 		ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self))
 	{
@@ -1452,36 +1472,104 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 	 * Then we load the procedure into the Tcl interpreter.
 	 ************************************************************/
 	Tcl_DStringInit(&proc_internal_def);
+	Tcl_DStringInit(&proc_internal_name);
 	Tcl_DStringInit(&proc_internal_body);
 	PG_TRY();
 	{
 		bool		is_trigger = OidIsValid(tgreloid);
-		char		internal_proname[128];
+		Tcl_CmdInfo cmdinfo;
+		const char *user_proname;
+		const char *internal_proname;
+		bool		need_underscore;
 		HeapTuple	typeTup;
 		Form_pg_type typeStruct;
 		char		proc_internal_args[33 * FUNC_MAX_ARGS];
 		Datum		prosrcdatum;
 		char	   *proc_source;
 		char		buf[48];
+		pltcl_interp_desc *interp_desc;
 		Tcl_Interp *interp;
 		int			i;
 		int			tcl_rc;
 		MemoryContext oldcontext;
 
 		/************************************************************
-		 * Build our internal proc name from the function's Oid.  Append
-		 * "_trigger" when appropriate to ensure the normal and trigger
-		 * cases are kept separate.  Note name must be all-ASCII.
+		 * Identify the interpreter to use for the function
 		 ************************************************************/
+		interp_desc = pltcl_fetch_interp(procStruct->prolang, pltrusted);
+		interp = interp_desc->interp;
+
+		/************************************************************
+		 * If redefining the function, try to remove the old internal
+		 * procedure from Tcl's namespace.  The point of this is partly to
+		 * allow re-use of the same internal proc name, and partly to avoid
+		 * leaking the Tcl procedure object if we end up not choosing the same
+		 * name.  We assume that Tcl is smart enough to not physically delete
+		 * the procedure object if it's currently being executed.
+		 ************************************************************/
+		if (prodesc != NULL &&
+			prodesc->internal_proname != NULL)
+		{
+			/* We simply ignore any error */
+			(void) Tcl_DeleteCommand(interp, prodesc->internal_proname);
+			/* Don't do this more than once */
+			prodesc->internal_proname = NULL;
+		}
+
+		/************************************************************
+		 * Build the proc name we'll use in error messages.
+		 ************************************************************/
+		user_proname = format_procedure(fn_oid);
+
+		/************************************************************
+		 * Build the internal proc name from the user_proname and/or OID.
+		 * The internal name must be all-ASCII since we don't want to deal
+		 * with encoding conversions.  We don't want to worry about Tcl
+		 * quoting rules either, so use only the characters of the function
+		 * name that are ASCII alphanumerics, plus underscores to separate
+		 * function name and arguments.  If what we end up with isn't
+		 * unique (that is, it matches some existing Tcl command name),
+		 * append the function OID (perhaps repeatedly) so that it is unique.
+		 ************************************************************/
+
+		/* For historical reasons, use a function-type-specific prefix */
 		if (is_event_trigger)
-			snprintf(internal_proname, sizeof(internal_proname),
-					 "__PLTcl_proc_%u_evttrigger", fn_oid);
+			Tcl_DStringAppend(&proc_internal_name,
+							  "__PLTcl_evttrigger_", -1);
 		else if (is_trigger)
-			snprintf(internal_proname, sizeof(internal_proname),
-					 "__PLTcl_proc_%u_trigger", fn_oid);
+			Tcl_DStringAppend(&proc_internal_name,
+							  "__PLTcl_trigger_", -1);
 		else
-			snprintf(internal_proname, sizeof(internal_proname),
-					 "__PLTcl_proc_%u", fn_oid);
+			Tcl_DStringAppend(&proc_internal_name,
+							  "__PLTcl_proc_", -1);
+		/* Now add what we can from the user_proname */
+		need_underscore = false;
+		for (const char *ptr = user_proname; *ptr; ptr++)
+		{
+			if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+					   "abcdefghijklmnopqrstuvwxyz"
+					   "0123456789_", *ptr) != NULL)
+			{
+				/* Done this way to avoid adding a trailing underscore */
+				if (need_underscore)
+				{
+					Tcl_DStringAppend(&proc_internal_name, "_", 1);
+					need_underscore = false;
+				}
+				Tcl_DStringAppend(&proc_internal_name, ptr, 1);
+			}
+			else if (strchr("(, ", *ptr) != NULL)
+				need_underscore = true;
+		}
+		/* If this name already exists, append fn_oid; repeat as needed */
+		while (Tcl_GetCommandInfo(interp,
+								  Tcl_DStringValue(&proc_internal_name),
+								  &cmdinfo))
+		{
+			snprintf(buf, sizeof(buf), "_%u", fn_oid);
+			Tcl_DStringAppend(&proc_internal_name, buf, -1);
+		}
+		internal_proname = Tcl_DStringValue(&proc_internal_name);
 
 		/************************************************************
 		 * Allocate a context that will hold all PG data for the procedure.
@@ -1496,7 +1584,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		 ************************************************************/
 		oldcontext = MemoryContextSwitchTo(proc_cxt);
 		prodesc = (pltcl_proc_desc *) palloc0(sizeof(pltcl_proc_desc));
-		prodesc->user_proname = pstrdup(NameStr(procStruct->proname));
+		prodesc->user_proname = pstrdup(user_proname);
 		MemoryContextSetIdentifier(proc_cxt, prodesc->user_proname);
 		prodesc->internal_proname = pstrdup(internal_proname);
 		prodesc->fn_cxt = proc_cxt;
@@ -1513,13 +1601,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 			(procStruct->provolatile != PROVOLATILE_VOLATILE);
 		/* And whether it is trusted */
 		prodesc->lanpltrusted = pltrusted;
-
-		/************************************************************
-		 * Identify the interpreter to use for the function
-		 ************************************************************/
-		prodesc->interp_desc = pltcl_fetch_interp(procStruct->prolang,
-												  prodesc->lanpltrusted);
-		interp = prodesc->interp_desc->interp;
+		/* Save the associated interpreter, too */
+		prodesc->interp_desc = interp_desc;
 
 		/************************************************************
 		 * Get the required information for input conversion of the
@@ -1712,6 +1795,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		if (proc_cxt)
 			MemoryContextDelete(proc_cxt);
 		Tcl_DStringFree(&proc_internal_def);
+		Tcl_DStringFree(&proc_internal_name);
 		Tcl_DStringFree(&proc_internal_body);
 		PG_RE_THROW();
 	}
@@ -1740,6 +1824,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 	}
 
 	Tcl_DStringFree(&proc_internal_def);
+	Tcl_DStringFree(&proc_internal_name);
 	Tcl_DStringFree(&proc_internal_body);
 
 	ReleaseSysCache(procTup);

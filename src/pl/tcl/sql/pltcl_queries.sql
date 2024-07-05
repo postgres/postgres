@@ -1,6 +1,3 @@
--- suppress CONTEXT so that function OIDs aren't in output
-\set VERBOSITY terse
-
 -- Test composite-type arguments
 select tcl_composite_arg_ref1(row('tkey', 42, 'ref2'));
 select tcl_composite_arg_ref2(row('tkey', 42, 'ref2'));
@@ -31,7 +28,7 @@ select tcl_argisnull('');
 select tcl_argisnull(null);
 
 -- test some error cases
-create function tcl_error(out a int, out b int) as $$return {$$ language pltcl;
+create function tcl_error(out a int, out b int) as $$returm 1$$ language pltcl;
 select tcl_error();
 
 create function bad_record(out a text, out b text) as $$return [list a]$$ language pltcl;
@@ -156,6 +153,39 @@ select tcl_spi_exec(false, 'break');
 select tcl_spi_exec(false, 'continue');
 select tcl_spi_exec(false, 'error');
 select tcl_spi_exec(false, 'return');
+
+-- test that we don't get confused by multiple funcs with same SQL name
+create schema tcls1;
+create function tcls1.somefunc(int) returns int as $$
+return [expr $1 * 2]
+$$ language pltcl;
+
+create schema tcls2;
+create function tcls2.somefunc(int) returns int as $$
+return [expr $1 * 3]
+$$ language pltcl;
+
+set search_path = tcls1;
+select tcls1.somefunc(11);
+set search_path = tcls2;
+select tcls2.somefunc(12);
+set search_path = tcls1;
+select tcls1.somefunc(13);
+reset search_path;
+
+-- test that it works to replace a function that's being executed
+create function replaceme(text) returns text as $p$
+spi_exec {
+create or replace function replaceme(text) returns text as $$
+return "$1 fum"
+$$ language pltcl;
+}
+spi_exec {select replaceme('foe') as inner}
+return "fee $1 $inner"
+$p$ language pltcl;
+
+select replaceme('fie');
+select replaceme('fie');
 
 -- forcibly run the Tcl event loop for awhile, to check that we have not
 -- messed things up too badly by disabling the Tcl notifier subsystem
