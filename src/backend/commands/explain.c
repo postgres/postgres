@@ -3333,14 +3333,17 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 static void
 show_material_info(MaterialState *mstate, ExplainState *es)
 {
-	Tuplestorestate *tupstore;
+	Tuplestorestate *tupstore = mstate->tuplestorestate;
 	const char *storageType;
 	int64		spaceUsedKB;
 
-	if (!es->analyze)
+	/*
+	 * Nothing to show if ANALYZE option wasn't used or if execution didn't
+	 * get as far as creating the tuplestore.
+	 */
+	if (!es->analyze || tupstore == NULL)
 		return;
 
-	tupstore = mstate->tuplestorestate;
 	storageType = tuplestore_storage_type_name(tupstore);
 	spaceUsedKB = BYTES_TO_KILOBYTES(tuplestore_space_used(tupstore));
 
