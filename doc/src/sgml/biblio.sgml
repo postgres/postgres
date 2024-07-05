@@ -230,27 +230,6 @@ ssimkovi@ag.or.at
   <bibliodiv>
    <title>Proceedings and Articles</title>
 
-   <biblioentry id="ports12">
-    <biblioset relation="article">
-     <title><ulink url="https://arxiv.org/pdf/1208.4179">Serializable Snapshot Isolation in PostgreSQL</ulink></title>
-     <authorgroup>
-      <author>
-       <firstname>D.</firstname>
-       <surname>Ports</surname>
-      </author>
-      <author>
-       <firstname>K.</firstname>
-       <surname>Grittner</surname>
-      </author>
-     </authorgroup>
-    </biblioset>
-    <confgroup>
-     <conftitle>VLDB Conference</conftitle>
-     <confdates>August 2012</confdates>
-     <address>Istanbul, Turkey</address>
-    </confgroup>
-   </biblioentry>
-
    <biblioentry id="berenson95">
     <biblioset relation="article">
      <title><ulink url="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-95-51.pdf">A Critique of ANSI SQL Isolation Levels</ulink></title>
@@ -286,6 +265,24 @@ ssimkovi@ag.or.at
      <confdates>June 1995</confdates>
      <address>San Jose, California</address>
     </confgroup>
+   </biblioentry>
+
+   <biblioentry id="hell18">
+    <biblioset relation="article">
+     <title><ulink url="https://arxiv.org/pdf/1901.01973">Looking Back at Postgres</ulink></title>
+     <author>
+      <firstname>J.</firstname>
+      <surname>Hellerstein</surname>
+     </author>
+    </biblioset>
+    <biblioset relation="book">
+     <title>Making Databases Work</title>
+     <isbn>978-1-947487-19-2</isbn>
+     <publisher>
+      <publishername>Association for Computing Machinery and Morgan &amp; Claypool</publishername>
+     </publisher>
+     <pubdate>2018</pubdate>
+    </biblioset>
    </biblioentry>
 
    <biblioentry id="olson93">
@@ -326,6 +323,27 @@ ssimkovi@ag.or.at
     </publisher>
     <pubdate>April, 1990</pubdate>
    </biblioset>
+   </biblioentry>
+
+   <biblioentry id="ports12">
+    <biblioset relation="article">
+     <title><ulink url="https://arxiv.org/pdf/1208.4179">Serializable Snapshot Isolation in PostgreSQL</ulink></title>
+     <authorgroup>
+      <author>
+       <firstname>D.</firstname>
+       <surname>Ports</surname>
+      </author>
+      <author>
+       <firstname>K.</firstname>
+       <surname>Grittner</surname>
+      </author>
+     </authorgroup>
+    </biblioset>
+    <confgroup>
+     <conftitle>VLDB Conference</conftitle>
+     <confdates>August 2012</confdates>
+     <address>Istanbul, Turkey</address>
+    </confgroup>
    </biblioentry>
 
    <biblioentry id="rowe87">
