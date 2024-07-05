@@ -3619,6 +3619,20 @@ INJECTION_POINT(name);
     </para>
 
     <para>
+     An injection point with a given <literal>name</literal> can be loaded
+     using macro:
+<programlisting>
+INJECTION_POINT_LOAD(name);
+</programlisting>
+
+     This will load the injection point callback into the process cache,
+     doing all memory allocations at this stage without running the callback.
+     This is useful when an injection point is attached in a critical section
+     where no memory can be allocated: load the injection point outside the
+     critical section, then run it in the critical section.
+    </para>
+
+    <para>
      Add-ins can attach callbacks to an already-declared injection point by
      calling:
 <programlisting>

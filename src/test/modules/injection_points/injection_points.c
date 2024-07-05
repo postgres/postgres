@@ -303,6 +303,23 @@ injection_points_attach(PG_FUNCTION_ARGS)
 }
 
 /*
+ * SQL function for loading an injection point.
+ */
+PG_FUNCTION_INFO_V1(injection_points_load);
+Datum
+injection_points_load(PG_FUNCTION_ARGS)
+{
+	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	if (inj_state == NULL)
+		injection_init_shmem();
+
+	INJECTION_POINT_LOAD(name);
+
+	PG_RETURN_VOID();
+}
+
+/*
  * SQL function for triggering an injection point.
  */
 PG_FUNCTION_INFO_V1(injection_points_run);
