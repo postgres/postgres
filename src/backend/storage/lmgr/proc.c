@@ -330,7 +330,7 @@ InitProcess(void)
 
 	if (!dlist_is_empty(procgloballist))
 	{
-		MyProc = (PGPROC *) dlist_pop_head_node(procgloballist);
+		MyProc = dlist_container(PGPROC, links, dlist_pop_head_node(procgloballist));
 		SpinLockRelease(ProcStructLock);
 	}
 	else
