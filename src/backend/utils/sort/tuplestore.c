@@ -266,7 +266,14 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->availMem = state->allowedMem;
 	state->maxSpace = 0;
 	state->myfile = NULL;
-	state->context = CurrentMemoryContext;
+
+	/*
+	 * The palloc/pfree pattern for tuple memory is in a FIFO pattern.  A
+	 * generation context is perfectly suited for this.
+	 */
+	state->context = GenerationContextCreate(CurrentMemoryContext,
+											 "tuplestore tuples",
+											 ALLOCSET_DEFAULT_SIZES);
 	state->resowner = CurrentResourceOwner;
 
 	state->memtupdeleted = 0;
@@ -429,14 +436,38 @@ tuplestore_clear(Tuplestorestate *state)
 	if (state->myfile)
 		BufFileClose(state->myfile);
 	state->myfile = NULL;
-	if (state->memtuples)
+
+#ifdef USE_ASSERT_CHECKING
 	{
+		int64		availMem = state->availMem;
+
+		/*
+		 * Below, we reset the memory context for storing tuples.  To save
+		 * from having to always call GetMemoryChunkSpace() on all stored
+		 * tuples, we adjust the availMem to forget all the tuples and just
+		 * recall USEMEM for the space used by the memtuples array.  Here we
+		 * just Assert that's correct and the memory tracking hasn't gone
+		 * wrong anywhere.
+		 */
 		for (i = state->memtupdeleted; i < state->memtupcount; i++)
-		{
-			FREEMEM(state, GetMemoryChunkSpace(state->memtuples[i]));
-			pfree(state->memtuples[i]);
-		}
+			availMem += GetMemoryChunkSpace(state->memtuples[i]);
+
+		availMem += GetMemoryChunkSpace(state->memtuples);
+
+		Assert(availMem == state->allowedMem);
 	}
+#endif
+
+	/* clear the memory consumed by the memory tuples */
+	MemoryContextReset(state->context);
+
+	/*
+	 * Zero the used memory and re-consume the space for the memtuples array.
+	 * This saves having to FREEMEM for each stored tuple.
+	 */
+	state->availMem = state->allowedMem;
+	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
+
 	state->status = TSS_INMEM;
 	state->truncated = false;
 	state->memtupdeleted = 0;
@@ -458,16 +489,11 @@ tuplestore_clear(Tuplestorestate *state)
 void
 tuplestore_end(Tuplestorestate *state)
 {
-	int			i;
-
 	if (state->myfile)
 		BufFileClose(state->myfile);
-	if (state->memtuples)
-	{
-		for (i = state->memtupdeleted; i < state->memtupcount; i++)
-			pfree(state->memtuples[i]);
-		pfree(state->memtuples);
-	}
+
+	MemoryContextDelete(state->context);
+	pfree(state->memtuples);
 	pfree(state->readptrs);
 	pfree(state);
 }
@@ -1578,7 +1604,6 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
 	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
 
-	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* read in the tuple proper */
 	tuple->t_len = tuplen;
 	BufFileReadExact(state->myfile, tupbody, tupbodylen);
