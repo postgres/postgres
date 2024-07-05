@@ -3172,6 +3172,9 @@ pg_locale_t
 pg_mb_radix_tree
 pg_on_exit_callback
 pg_re_flags
+pg_regex_t
+pg_regmatch_t
+pg_regoff_t
 pg_saslprep_rc
 pg_sha224_ctx
 pg_sha256_ctx
