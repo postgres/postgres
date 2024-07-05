@@ -12,7 +12,6 @@
 
 #include "postgres.h"
 #include "access/pg_tde_tdemap.h"
-#include "catalog/pg_tablespace_d.h"
 #include "transam/pg_tde_xact_handler.h"
 #include "storage/fd.h"
 #include "utils/wait_event.h"
@@ -29,6 +28,7 @@
 #include "encryption/enc_aes.h"
 #include "encryption/enc_tde.h"
 #include "keyring/keyring_api.h"
+#include "common/pg_tde_utils.h"
 
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -273,21 +273,13 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data
 inline void
 pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *map_path, char *keydata_path)
 {
-	char *db_path;
-
-	/* If this is a global space, than the call might be in a critial section
-	 * (during XLog write) so we can't do GetDatabasePath as it calls palloc()
-	 */
-	if (rlocator->spcOid == GLOBALTABLESPACE_OID)
-		db_path = "global";
-	else
-		db_path = GetDatabasePath(rlocator->dbOid, rlocator->spcOid);
-
+	char *db_path = pg_tde_get_tde_file_dir(rlocator->dbOid, rlocator->spcOid);
 
 	if (map_path)
 		join_path_components(map_path, db_path, PG_TDE_MAP_FILENAME);
 	if (keydata_path)
 		join_path_components(keydata_path, db_path, PG_TDE_KEYDATA_FILENAME);
+	pfree(db_path);
 }
 
 /*

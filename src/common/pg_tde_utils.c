@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_tablespace_d.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
@@ -214,4 +215,16 @@ extract_json_option_value(Datum top_json, const char* field_name)
 		elog(ERROR, "Unknown type for object %s: %s", field_name, type_cstr);
 		return NULL;
 	}
+}
+
+/* returns the palloc'd string */
+char *
+pg_tde_get_tde_file_dir(Oid dbOid, Oid spcOid)
+{
+	/* `dbOid` is set to a value for the XLog keys caching but GetDatabasePath() 
+	 * expects it (`dbOid`) to be `0` if this is a global space.
+	 */
+	if (spcOid == GLOBALTABLESPACE_OID)
+		return pstrdup("global");
+	return GetDatabasePath(dbOid, spcOid);
 }

@@ -3,37 +3,16 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_tde" to load this file. \quit
 
--- pg_tde catalog tables
-CREATE SCHEMA percona_tde;
--- Note: The table is created using heap storage becasue we do not want this table
--- to be encrypted by pg_tde. This table is used to store key provider information
--- and we do not want to encrypt this table using pg_tde.
-CREATE TABLE percona_tde.pg_tde_key_provider(provider_id SERIAL,
-        keyring_type VARCHAR(10) CHECK (keyring_type IN ('file', 'vault-v2')),
-        provider_name VARCHAR(255) UNIQUE NOT NULL, options JSON, PRIMARY KEY(provider_id)) using heap;
-
--- If you want to add new provider types, you need to make appropriate changes
--- in include/catalog/tde_keyring.h and src/catalog/tde_keyring.c files.
-
-SELECT pg_catalog.pg_extension_config_dump('percona_tde.pg_tde_key_provider', '');
-
--- Trigger function to check principal key dependency on key provider row
-CREATE FUNCTION keyring_delete_dependency_check_trigger()
-RETURNS TRIGGER
+-- Key Provider Management
+CREATE FUNCTION pg_tde_add_key_provider_internal(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+RETURNS INT
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
-
-CREATE TRIGGER pg_tde_key_provider_delete_dependency_check_trigger
-BEFORE DELETE ON percona_tde.pg_tde_key_provider
-FOR EACH ROW
-EXECUTE FUNCTION keyring_delete_dependency_check_trigger();
-
--- Key Provider Management
 
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
 AS $$
-    INSERT INTO percona_tde.pg_tde_key_provider (keyring_type, provider_name, options) VALUES (provider_type, provider_name, options) RETURNING provider_id;
+    SELECT pg_tde_add_key_provider_internal(provider_type, provider_name, options);
 $$
 LANGUAGE SQL;
 
@@ -77,10 +56,6 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE FUNCTION pg_tde_get_keyprovider(provider_name text)
-RETURNS VOID
-AS 'MODULE_PATHNAME'
-LANGUAGE C;
 -- Table access method
 CREATE FUNCTION pg_tdeam_handler(internal)
 RETURNS table_am_handler

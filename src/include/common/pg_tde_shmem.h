@@ -20,6 +20,7 @@ typedef enum
 {
     TDE_LWLOCK_MK_CACHE,
     TDE_LWLOCK_MK_FILES,
+    TDE_LWLOCK_PI_FILES,
 
     /* Must be the last entry in the enum */
     TDE_LWLOCK_COUNT
@@ -44,10 +45,6 @@ typedef struct TDEShmemSetupRoutine
      */
     Size (*required_shared_mem_size)(void);
     /*
-     * Optional callback to return the number of LW locks required.
-     */
-    int (*required_locks_count)(void);
-    /*
      * Gets called after all shared memory structures are initialized and
      * here you can create shared memory hash tables or any other shared
      * objects that needs to live in DSA area.
@@ -60,6 +57,6 @@ extern void RegisterShmemRequest(const TDEShmemSetupRoutine *routine);
 extern void TdeShmemInit(void);
 extern Size TdeRequiredSharedMemorySize(void);
 extern int TdeRequiredLocksCount(void);
-extern LWLock * GetNewLWLock(void);
+extern LWLock *GetLWLocks(void);
 
 #endif /*PG_TDE_SHMEM_H*/

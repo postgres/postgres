@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * tde_keyring.c
- *      Deals with the tde keyring configuration catalog
+ *      Deals with the tde keyring configuration
  *      routines.
  *
  * IDENTIFICATION
@@ -21,18 +21,18 @@
 #include "utils/snapmgr.h"
 #include "utils/fmgroids.h"
 #include "common/pg_tde_utils.h"
+#include "common/pg_tde_shmem.h"
 #include "executor/spi.h"
+#include "miscadmin.h"
 #include "unistd.h"
 #include "utils/builtins.h"
+#include "pg_tde.h"
 
-PG_FUNCTION_INFO_V1(keyring_delete_dependency_check_trigger);
+PG_FUNCTION_INFO_V1(pg_tde_add_key_provider_internal);
+Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
 
-/* Must match the catalog table definition */
-#define PG_TDE_KEY_PROVIDER_ID_ATTRNUM 1
-#define PG_TDE_KEY_PROVIDER_TYPE_ATTRNUM 2
-#define PG_TDE_KEY_PROVIDER_NAME_ATTRNUM 3
-#define PG_TDE_KEY_PROVIDER_OPTIONS_ATTRNUM 4
 
+#define PG_TDE_KEYRING_FILENAME "pg_tde_keyrings"
 /*
  * These token must be exactly same as defined in
  * pg_tde_add_key_provider_vault_v2 SQL interface
@@ -49,11 +49,88 @@ PG_FUNCTION_INFO_V1(keyring_delete_dependency_check_trigger);
 #define FILE_KEYRING_PATH_KEY "path"
 #define FILE_KEYRING_TYPE_KEY "type"
 
+typedef enum ProviderScanType
+{
+	PROVIDER_SCAN_BY_NAME,
+	PROVIDER_SCAN_BY_ID,
+	PROVIDER_SCAN_BY_TYPE,
+	PROVIDER_SCAN_ALL
+} ProviderScanType;
+
+static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey);
+
 static FileKeyring *load_file_keyring_provider_options(Datum keyring_options);
 static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, Datum keyring_options);
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(Datum keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
-static GenericKeyring *load_keyring_provider_from_tuple(HeapTuple tuple, TupleDesc tupDesc);
+static char *get_keyring_infofile_path(char *resPath, Oid dbOid, Oid spcOid);
+static uint32 save_key_provider(KeyringProvideRecord *provider);
+static void key_provider_startup_cleanup(int tde_tbl_count, void *arg);
+
+static Size initialize_shared_state(void *start_address);
+static Size required_shared_mem_size(void);
+
+typedef struct TdeKeyProviderInfoSharedState
+{
+	LWLock *Locks;
+} TdeKeyProviderInfoSharedState;
+
+TdeKeyProviderInfoSharedState*	sharedPrincipalKeyState = NULL; /* Lives in shared state */
+
+static const TDEShmemSetupRoutine key_provider_info_shmem_routine = {
+	.init_shared_state = initialize_shared_state,
+	.init_dsa_area_objects = NULL,
+	.required_shared_mem_size = required_shared_mem_size,
+	.shmem_kill = NULL
+	};
+
+static Size
+required_shared_mem_size(void)
+{
+	return MAXALIGN(sizeof(TdeKeyProviderInfoSharedState));
+}
+
+static Size
+initialize_shared_state(void *start_address)
+{
+	sharedPrincipalKeyState = (TdeKeyProviderInfoSharedState *)start_address;
+	sharedPrincipalKeyState->Locks = GetLWLocks();
+	return sizeof(TdeKeyProviderInfoSharedState);
+}
+
+static inline LWLock *
+tde_provider_info_lock(void)
+{
+	Assert(sharedPrincipalKeyState);
+	return &sharedPrincipalKeyState->Locks[TDE_LWLOCK_PI_FILES];
+}
+
+void InitializeKeyProviderInfo(void)
+{
+	ereport(LOG, (errmsg("initializing TDE key provider info")));
+	RegisterShmemRequest(&key_provider_info_shmem_routine);
+	on_ext_install(key_provider_startup_cleanup, NULL);
+}
+static void
+key_provider_startup_cleanup(int tde_tbl_count, void *arg)
+{
+
+	if (tde_tbl_count > 0)
+	{
+		ereport(WARNING,
+				(errmsg("failed to perform initialization. database already has %d TDE tables", tde_tbl_count)));
+		return;
+	}
+	cleanup_key_provider_info(MyDatabaseId, MyDatabaseTableSpace);
+
+	/* TODO: XLog the key cleanup */
+	// XLogPrincipalKeyCleanup xlrec;
+	// xlrec.databaseId = MyDatabaseId;
+	// xlrec.tablespaceId = MyDatabaseTableSpace;
+	// XLogBeginInsert();
+	// XLogRegisterData((char *)&xlrec, sizeof(TDEPrincipalKeyInfo));
+	// XLogInsert(RM_TDERMGR_ID, XLOG_TDE_CLEAN_PRINCIPAL_KEY);
+}
 
 ProviderType
 get_keyring_provider_from_typename(char *provider_type)
@@ -69,36 +146,19 @@ get_keyring_provider_from_typename(char *provider_type)
 }
 
 static GenericKeyring *
-load_keyring_provider_from_tuple(HeapTuple tuple, TupleDesc tupDesc)
+load_keyring_provider_from_record(KeyringProvideRecord* provider)
 {
-	Datum datum;
 	Datum option_datum;
-	bool isnull;
-	char *keyring_name;
-	char *keyring_type;
-	int provider_id;
-	ProviderType provider_type = UNKNOWN_KEY_PROVIDER;
 	GenericKeyring *keyring = NULL;
 
-	datum = heap_getattr(tuple, PG_TDE_KEY_PROVIDER_ID_ATTRNUM, tupDesc, &isnull);
-	provider_id = DatumGetInt32(datum);
+	option_datum = CStringGetTextDatum(provider->options);
 
-	datum = heap_getattr(tuple, PG_TDE_KEY_PROVIDER_TYPE_ATTRNUM, tupDesc, &isnull);
-	keyring_type = TextDatumGetCString(datum);
-
-	datum = heap_getattr(tuple, PG_TDE_KEY_PROVIDER_NAME_ATTRNUM, tupDesc, &isnull);
-	keyring_name = TextDatumGetCString(datum);
-
-	option_datum = heap_getattr(tuple, PG_TDE_KEY_PROVIDER_OPTIONS_ATTRNUM, tupDesc, &isnull);
-
-	provider_type = get_keyring_provider_from_typename(keyring_type);
-
-	keyring = load_keyring_provider_options(provider_type, option_datum);
+	keyring = load_keyring_provider_options(provider->provider_type, option_datum);
 	if (keyring)
 	{
-		strncpy(keyring->provider_name, keyring_name, sizeof(keyring->provider_name));
-		keyring->key_id = provider_id;
-		keyring->type = provider_type;
+		keyring->key_id = provider->provider_id;
+		strncpy(keyring->provider_name, provider->provider_name, sizeof(keyring->provider_name));
+		keyring->type = provider->provider_type;
 		debug_print_kerying(keyring);
 	}
 	return keyring;
@@ -107,103 +167,39 @@ load_keyring_provider_from_tuple(HeapTuple tuple, TupleDesc tupDesc)
 List *
 GetAllKeyringProviders(void)
 {
-	HeapTuple tuple;
-	TupleDesc tupDesc;
-	List *keyring_list = NIL;
-
-	Oid pg_tde_schema_oid = LookupNamespaceNoError(PG_TDE_NAMESPACE_NAME);
-	Oid kp_table_oid = get_relname_relid(PG_TDE_KEY_PROVIDER_CAT_NAME, pg_tde_schema_oid);
-	Relation kp_table_relation = relation_open(kp_table_oid, AccessShareLock);
-	TableScanDesc scan;
-
-	tupDesc = kp_table_relation->rd_att;
-
-	scan = heap_beginscan(kp_table_relation, GetLatestSnapshot(), 0, NULL, NULL, 0);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		GenericKeyring *keyring = load_keyring_provider_from_tuple(tuple, tupDesc);
-		if (keyring)
-		{
-			keyring_list = lappend(keyring_list, keyring);
-		}
-	}
-	heap_endscan(scan);
-	relation_close(kp_table_relation, AccessShareLock);
-
-	return keyring_list;
+	return scan_key_provider_file(PROVIDER_SCAN_ALL, NULL);
 }
 
 GenericKeyring *
 GetKeyProviderByName(const char *provider_name)
 {
-	HeapTuple tuple;
-	TupleDesc tupDesc;
-	TableScanDesc scan;
-	ScanKeyData scanKey[1];
 	GenericKeyring *keyring = NULL;
-	Oid pg_tde_schema_oid = LookupNamespaceNoError(PG_TDE_NAMESPACE_NAME);
-	Oid kp_table_oid = get_relname_relid(PG_TDE_KEY_PROVIDER_CAT_NAME, pg_tde_schema_oid);
-	Relation kp_table_relation = relation_open(kp_table_oid, AccessShareLock);
-
-	/* Set up a scan key to fetch only required record. */
-	ScanKeyInit(scanKey,
-				(AttrNumber)PG_TDE_KEY_PROVIDER_NAME_ATTRNUM,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(provider_name));
-
-	tupDesc = kp_table_relation->rd_att;
-	/* Begin the scan with the filter condition */
-	scan = heap_beginscan(kp_table_relation, GetLatestSnapshot(), 1, scanKey, NULL, 0);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void*)provider_name);
+	if (providers != NIL)
 	{
-		keyring = load_keyring_provider_from_tuple(tuple, tupDesc);
-		break; /* We expect only one record */
+		keyring = (GenericKeyring *)linitial(providers);
+		list_free(providers);
 	}
-	heap_endscan(scan);
-	relation_close(kp_table_relation, AccessShareLock);
-
-    if (keyring == NULL)
-    {
-        ereport(ERROR,
-                (errmsg("Key provider \"%s\" does not exists", provider_name),
-                 errhint("Use create_key_provider interface to create the key provider")));
-    }
-
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("key provider \"%s\" does not exists", provider_name),
+				 errhint("Use pg_tde_add_key_provider interface to create the key provider")));
+	}
 	return keyring;
 }
 
 GenericKeyring *
 GetKeyProviderByID(int provider_id)
 {
-	HeapTuple tuple;
-	TupleDesc tupDesc;
-	TableScanDesc scan;
-	ScanKeyData scanKey[1];
 	GenericKeyring *keyring = NULL;
-	Oid pg_tde_schema_oid = LookupNamespaceNoError(PG_TDE_NAMESPACE_NAME);
-	Oid kp_table_oid = get_relname_relid(PG_TDE_KEY_PROVIDER_CAT_NAME, pg_tde_schema_oid);
-	Relation kp_table_relation = relation_open(kp_table_oid, AccessShareLock);
-
-	/* Set up a scan key to fetch only required record. */
-	ScanKeyInit(scanKey,
-				(AttrNumber)PG_TDE_KEY_PROVIDER_ID_ATTRNUM,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(provider_id));
-
-	tupDesc = kp_table_relation->rd_att;
-	/* Begin the scan with the filter condition */
-	scan = heap_beginscan(kp_table_relation, GetLatestSnapshot(), 1, scanKey, NULL, 0);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id);
+	if (providers != NIL)
 	{
-		keyring = load_keyring_provider_from_tuple(tuple, tupDesc);
-		break; /* We only expect 1 record */
+		keyring = (GenericKeyring *)linitial(providers);
+		list_free(providers);
 	}
-	heap_endscan(scan);
-	relation_close(kp_table_relation, AccessShareLock);
-
 	return keyring;
 }
 
@@ -232,7 +228,9 @@ load_file_keyring_provider_options(Datum keyring_options)
 	
 	if(file_path == NULL)
 	{
-		/* TODO: report error */
+		ereport(DEBUG2,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("file path is missing in the keyring options")));
 		return NULL;
 	}
 
@@ -267,99 +265,224 @@ load_vaultV2_keyring_provider_options(Datum keyring_options)
 static void
 debug_print_kerying(GenericKeyring *keyring)
 {
-	elog(DEBUG2, "Keyring type: %d", keyring->type);
-	elog(DEBUG2, "Keyring name: %s", keyring->provider_name);
-	elog(DEBUG2, "Keyring id: %d", keyring->key_id);
+	int debug_level = DEBUG2;
+	elog(debug_level, "Keyring type: %d", keyring->type);
+	elog(debug_level, "Keyring name: %s", keyring->provider_name);
+	elog(debug_level, "Keyring id: %d", keyring->key_id);
 	switch (keyring->type)
 	{
 	case FILE_KEY_PROVIDER:
-		elog(DEBUG2, "File Keyring Path: %s", ((FileKeyring *)keyring)->file_name);
+		elog(debug_level, "File Keyring Path: %s", ((FileKeyring *)keyring)->file_name);
 		break;
 	case VAULT_V2_KEY_PROVIDER:
-		elog(DEBUG2, "Vault Keyring Token: %s", ((VaultV2Keyring *)keyring)->vault_token);
-		elog(DEBUG2, "Vault Keyring URL: %s", ((VaultV2Keyring *)keyring)->vault_url);
-		elog(DEBUG2, "Vault Keyring Mount Path: %s", ((VaultV2Keyring *)keyring)->vault_mount_path);
-		elog(DEBUG2, "Vault Keyring CA Path: %s", ((VaultV2Keyring *)keyring)->vault_ca_path);
+		elog(debug_level, "Vault Keyring Token: %s", ((VaultV2Keyring *)keyring)->vault_token);
+		elog(debug_level, "Vault Keyring URL: %s", ((VaultV2Keyring *)keyring)->vault_url);
+		elog(debug_level, "Vault Keyring Mount Path: %s", ((VaultV2Keyring *)keyring)->vault_mount_path);
+		elog(debug_level, "Vault Keyring CA Path: %s", ((VaultV2Keyring *)keyring)->vault_ca_path);
 		break;
 	case UNKNOWN_KEY_PROVIDER:
-		elog(DEBUG2, "Unknown Keyring ");
+		elog(debug_level, "Unknown Keyring ");
 		break;
 	}
 }
 
 /*
- * Trigger function on keyring catalog to ensure the keyring
- * used by the principal key should not get deleted.
- */
-Datum
-keyring_delete_dependency_check_trigger(PG_FUNCTION_ARGS)
+ * Fetch the next key provider from the file and update the curr_pos
+*/
+static bool
+fetch_next_key_provider(int fd, off_t* curr_pos, KeyringProvideRecord *provider)
 {
-	TriggerData *trig_data = (TriggerData *)fcinfo->context;
-	Oid principal_key_keyring_id;
+	off_t bytes_read = 0;
 
-	if (!CALLED_AS_TRIGGER(fcinfo))
+	Assert(provider != NULL);
+	Assert(fd >= 0);
+
+	bytes_read = pg_pread(fd, provider, sizeof(KeyringProvideRecord), *curr_pos);
+	*curr_pos += bytes_read;
+
+	if (bytes_read == 0)
+		return false;
+	if (bytes_read != sizeof(KeyringProvideRecord))
 	{
+		close(fd);
+		/* Corrupt file */
 		ereport(ERROR,
-				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("keyring dependency check trigger: not fired by trigger manager")));
+				(errcode_for_file_access(),
+					errmsg("key provider info file is corrupted: %m"),
+					errdetail("invalid key provider record size %lld expected %lu", bytes_read, sizeof(KeyringProvideRecord) )));
 	}
-
-	if (!TRIGGER_FIRED_BEFORE(trig_data->tg_event))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("keyring dependency check trigger: trigger should be fired before delete")));
-	}
-	principal_key_keyring_id = GetPrincipalKeyProviderId();
-	if (principal_key_keyring_id == InvalidOid)
-	{
-		/* No principal key set. We are good to delete anything */
-		return PointerGetDatum(trig_data->tg_trigtuple);
-	}
-
-	if (TRIGGER_FIRED_BY_DELETE(trig_data->tg_event))
-	{
-		HeapTuple oldtuple = trig_data->tg_trigtuple;
-
-		if (oldtuple != NULL && SPI_connect() == SPI_OK_CONNECT)
-		{
-			Datum datum;
-			bool isnull;
-			Oid provider_id;
-			datum = heap_getattr(oldtuple, PG_TDE_KEY_PROVIDER_ID_ATTRNUM, trig_data->tg_relation->rd_att, &isnull);
-			provider_id = DatumGetInt32(datum);
-			if (provider_id == principal_key_keyring_id)
-			{
-				char *keyring_name;
-				datum = heap_getattr(oldtuple, PG_TDE_KEY_PROVIDER_NAME_ATTRNUM, trig_data->tg_relation->rd_att, &isnull);
-				keyring_name = TextDatumGetCString(datum);
-
-				ereport(ERROR,
-						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-						 errmsg("Key provider \"%s\" cannot be deleted", keyring_name),
-						 errdetail("The principal key for the database depends on this key provider.")));
-				SPI_finish();
-				trig_data->tg_trigtuple = NULL;
-				return PointerGetDatum(NULL);
-			}
-			SPI_finish();
-		}
-	}
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("keyring_delete_dependency_check_trigger: unsupported event type")));
-
-	/* Indicate that the operation should proceed */
-	return PointerGetDatum(trig_data->tg_trigtuple);
+	return true;
 }
 
-/* Testing function */
-PG_FUNCTION_INFO_V1(pg_tde_get_keyprovider);
-Datum pg_tde_get_keyprovider(PG_FUNCTION_ARGS);
-
-Datum pg_tde_get_keyprovider(PG_FUNCTION_ARGS)
+/*
+* Save the key provider info to the file
+*/
+static uint32
+save_key_provider(KeyringProvideRecord *provider)
 {
-	GetAllKeyringProviders();
-	PG_RETURN_NULL();
+	off_t bytes_written = 0;
+	off_t curr_pos = 0;
+	int fd;
+	int max_provider_id = 0;
+	char kp_info_path[MAXPGPATH] = {0};
+	KeyringProvideRecord existing_provider;
+
+	Assert(provider != NULL);
+
+	get_keyring_infofile_path(kp_info_path, MyDatabaseId, MyDatabaseTableSpace);
+
+	LWLockAcquire(tde_provider_info_lock(), LW_EXCLUSIVE);
+
+	fd = BasicOpenFile(kp_info_path, O_CREAT | O_RDWR | PG_BINARY);
+	if (fd < 0)
+	{
+		LWLockRelease(tde_provider_info_lock());
+		ereport(ERROR,
+			(errcode_for_file_access(),
+				errmsg("could not open tde file \"%s\": %m", kp_info_path)));
+	}
+
+	/* we also need to verify the name conflict and generate the next provider ID */
+	while (fetch_next_key_provider(fd, &curr_pos, &existing_provider))
+	{
+		if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
+		{
+			close(fd);
+			LWLockRelease(tde_provider_info_lock());
+			ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+					errmsg("key provider \"%s\" already exists", provider->provider_name)));
+		}
+		if (max_provider_id < existing_provider.provider_id)
+			max_provider_id = existing_provider.provider_id;
+	}
+	provider->provider_id = max_provider_id + 1;
+	/*
+	 * All good, Just add a new provider
+	 * Write key to the end of file
+	 */
+	curr_pos = lseek(fd, 0, SEEK_END);
+	bytes_written = pg_pwrite(fd, provider, sizeof(KeyringProvideRecord), curr_pos);
+	if (bytes_written != sizeof(KeyringProvideRecord))
+	{
+		close(fd);
+		LWLockRelease(tde_provider_info_lock());
+		ereport(ERROR,
+			(errcode_for_file_access(),
+				errmsg("key provider info file \"%s\" can't be written: %m",
+						kp_info_path)));
+	}
+	if (pg_fsync(fd) != 0)
+	{
+		close(fd);
+		LWLockRelease(tde_provider_info_lock());
+		ereport(ERROR,
+			(errcode_for_file_access(),
+				errmsg("could not fsync file \"%s\": %m",
+						kp_info_path)));
+	}
+	close(fd);
+	LWLockRelease(tde_provider_info_lock());
+	return provider->provider_id;
+}
+
+/*
+ * Scan the key provider info file and can also apply filter based on scanType
+ */
+static List *
+scan_key_provider_file(ProviderScanType scanType, void* scanKey)
+{
+	off_t curr_pos = 0;
+	int fd;
+	char kp_info_path[MAXPGPATH] = {0};
+	KeyringProvideRecord provider;
+	List *providers_list = NIL;
+
+	if (scanType != PROVIDER_SCAN_ALL)
+		Assert(scanKey != NULL);
+
+	get_keyring_infofile_path(kp_info_path, MyDatabaseId, MyDatabaseTableSpace);
+
+	LWLockAcquire(tde_provider_info_lock(), LW_SHARED);
+
+	fd = BasicOpenFile(kp_info_path, PG_BINARY);
+	if (fd < 0)
+	{
+		LWLockRelease(tde_provider_info_lock());
+		ereport(DEBUG2,
+			(errcode_for_file_access(),
+				errmsg("could not open tde file \"%s\": %m", kp_info_path)));
+		return NIL;
+	}
+	while (fetch_next_key_provider(fd, &curr_pos, &provider))
+	{
+		bool match = false;
+		ereport(DEBUG2,
+			(errmsg("read key provider ID=%d %s", provider.provider_id, provider.provider_name)));
+
+		if (scanType == PROVIDER_SCAN_BY_NAME)
+		{
+			if (strcasecmp(provider.provider_name, (char*)scanKey) == 0)
+				match = true;
+		}
+		else if (scanType == PROVIDER_SCAN_BY_ID)
+		{
+			if (provider.provider_id == *(int *)scanKey)
+				match = true;
+		}
+		else if (scanType == PROVIDER_SCAN_BY_TYPE)
+		{
+			if (provider.provider_type == *(ProviderType*)scanKey)
+				match = true;
+		}
+		else if (scanType == PROVIDER_SCAN_ALL)
+			match = true;
+
+		if (match)
+		{
+			GenericKeyring *keyring = load_keyring_provider_from_record(&provider);
+			if (keyring)
+			{
+				providers_list = lappend(providers_list, keyring);
+			}
+		}
+	}
+	close(fd);
+	LWLockRelease(tde_provider_info_lock());
+	return providers_list;
+}
+
+void
+cleanup_key_provider_info(Oid databaseId, Oid tablespaceId)
+{
+	/* Remove the key provider info fileß */
+	char kp_info_path[MAXPGPATH] = {0};
+
+	get_keyring_infofile_path(kp_info_path, MyDatabaseId, MyDatabaseTableSpace);
+	PathNameDeleteTemporaryFile(kp_info_path, false);
+}
+
+static char*
+get_keyring_infofile_path(char* resPath, Oid dbOid, Oid spcOid)
+{
+	char *db_path = pg_tde_get_tde_file_dir(dbOid, spcOid);
+	Assert(db_path != NULL);
+	join_path_components(resPath, db_path, PG_TDE_KEYRING_FILENAME);
+	pfree(db_path);
+	return resPath;
+}
+
+Datum
+pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
+{
+	char *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	KeyringProvideRecord provider;
+
+	strncpy(provider.options, options, sizeof(provider.options));
+	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
+	provider.provider_type = get_keyring_provider_from_typename(provider_type);
+	save_key_provider(&provider);
+	PG_RETURN_INT32(provider.provider_id);
 }

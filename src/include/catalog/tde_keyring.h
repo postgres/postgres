@@ -24,6 +24,7 @@
 
 #define MAX_PROVIDER_NAME_LEN 128 /* pg_tde_key_provider's provider_name size*/
 #define MAX_VAULT_V2_KEY_LEN 128 /* From hashi corp docs */
+#define MAX_KEYRING_OPTION_LEN	1024
 typedef enum ProviderType
 {
 	UNKNOWN_KEY_PROVIDER,
@@ -60,9 +61,19 @@ typedef union KeyringProviders
 	VaultV2Keyring vault;
 } KeyringProviders;
 
+/* This record goes into key provider info file */
+typedef struct KeyringProvideRecord
+{
+	int provider_id;
+	char provider_name[MAX_PROVIDER_NAME_LEN];
+	char options[MAX_KEYRING_OPTION_LEN];
+	ProviderType provider_type;
+} KeyringProvideRecord;
+
 extern List *GetAllKeyringProviders(void);
 extern GenericKeyring *GetKeyProviderByName(const char *provider_name);
 extern GenericKeyring *GetKeyProviderByID(int provider_id);
 extern ProviderType get_keyring_provider_from_typename(char *provider_type);
-
+extern void cleanup_key_provider_info(Oid databaseId, Oid tablespaceId);
+extern void InitializeKeyProviderInfo(void);
 #endif /*TDE_KEYRING_H*/

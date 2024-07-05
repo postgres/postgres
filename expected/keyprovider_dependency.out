@@ -23,11 +23,4 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','mk-file');
  t
 (1 row)
 
--- Try dropping the in-use key provider
-DELETE FROM percona_tde.pg_tde_key_provider WHERE provider_name = 'mk-file'; -- Should fail
-ERROR:  Key provider "mk-file" cannot be deleted
-DETAIL:  The principal key for the database depends on this key provider.
--- Now delete the un-used  key provider
-DELETE FROM percona_tde.pg_tde_key_provider WHERE provider_name = 'free-file'; -- Should pass
-DELETE FROM percona_tde.pg_tde_key_provider WHERE provider_name = 'V2-vault'; -- Should pass
 DROP EXTENSION pg_tde;

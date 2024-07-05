@@ -103,6 +103,7 @@ _PG_init(void)
 
 	keyringRegisterVariables();
 	InitializePrincipalKeyInfo();
+	InitializeKeyProviderInfo();
 #ifdef PERCONA_FORK
 	XLogInitGUC();
 	TDEGlCatInitGUC();

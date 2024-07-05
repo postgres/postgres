@@ -59,15 +59,7 @@ Size TdeRequiredSharedMemorySize(void)
 
 int TdeRequiredLocksCount(void)
 {
-	int count = 0;
-	ListCell *lc;
-	foreach (lc, registeredShmemRequests)
-	{
-		TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *)lfirst(lc);
-		if (routine->required_locks_count)
-			count += routine->required_locks_count();
-	}
-	return count;
+	return TDE_LWLOCK_COUNT;
 }
 
 void TdeShmemInit(void)
@@ -147,13 +139,10 @@ tde_shmem_shutdown(int code, Datum arg)
 }
 
 /*
- * Returns a lock from registered named tranch.
- * You must already have indicated number of required locks
- * through required_locks_count callback before requesting
- * the lock from this function.
+ * Returns a locks array from registered named tranch.
  */
-LWLock*
-GetNewLWLock(void)
+LWLock *
+GetLWLocks(void)
 {
 	return &(GetNamedLWLockTranche(TDE_TRANCHE_NAME))->lock;
 }

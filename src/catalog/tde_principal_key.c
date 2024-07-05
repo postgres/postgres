@@ -65,7 +65,6 @@ static Size initialize_shared_state(void *start_address);
 static void initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area);
 static Size cache_area_size(void);
 static Size required_shared_mem_size(void);
-static int  required_locks_count(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void principal_key_startup_cleanup(int tde_tbl_count, void *arg);
 static void clear_principal_key_cache(Oid databaseId) ;
@@ -77,7 +76,6 @@ static const TDEShmemSetupRoutine principal_key_info_shmem_routine = {
     .init_shared_state = initialize_shared_state,
     .init_dsa_area_objects = initialize_objects_in_dsa_area,
     .required_shared_mem_size = required_shared_mem_size,
-    .required_locks_count = required_locks_count,
     .shmem_kill = shared_memory_shutdown
     };
 
@@ -102,12 +100,6 @@ tde_lwlock_mk_cache(void)
     Assert(principalKeyLocalState.sharedPrincipalKeyState);
 
     return &principalKeyLocalState.sharedPrincipalKeyState->Locks[TDE_LWLOCK_MK_CACHE];
-}
-
-static int
-required_locks_count(void)
-{
-    return TDE_LWLOCK_COUNT;
 }
 
 static Size
@@ -137,7 +129,7 @@ initialize_shared_state(void *start_address)
     principalKeyLocalState.dsa = NULL;
     principalKeyLocalState.sharedHash = NULL;
 
-    sharedState->Locks = GetNewLWLock();
+    sharedState->Locks = GetLWLocks();
     principalKeyLocalState.sharedPrincipalKeyState = sharedState;
     return sizeof(TdePrincipalKeySharedState);
 }

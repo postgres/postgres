@@ -6,10 +6,4 @@ SELECT pg_tde_add_key_provider_vault_v2('V2-vault','vault-token','percona.com/va
 
 SELECT pg_tde_set_principal_key('test-db-principal-key','mk-file');
 
--- Try dropping the in-use key provider
-DELETE FROM percona_tde.pg_tde_key_provider WHERE provider_name = 'mk-file'; -- Should fail
--- Now delete the un-used  key provider
-DELETE FROM percona_tde.pg_tde_key_provider WHERE provider_name = 'free-file'; -- Should pass
-DELETE FROM percona_tde.pg_tde_key_provider WHERE provider_name = 'V2-vault'; -- Should pass
-
 DROP EXTENSION pg_tde;
