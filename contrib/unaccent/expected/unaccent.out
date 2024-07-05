@@ -176,6 +176,6 @@ SELECT ts_lexize('unaccent', '〝');
 SELECT unaccent('ℌ');
  unaccent 
 ----------
- x
+ H
 (1 row)
 
