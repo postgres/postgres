@@ -455,8 +455,8 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		 * point of the available_rels machinations is to ensure that we only
 		 * pull up quals for which that's okay.
 		 *
-		 * We don't expect to see any pre-existing JOIN_SEMI, JOIN_ANTI, or
-		 * JOIN_RIGHT_ANTI jointypes here.
+		 * We don't expect to see any pre-existing JOIN_SEMI, JOIN_ANTI,
+		 * JOIN_RIGHT_SEMI, or JOIN_RIGHT_ANTI jointypes here.
 		 */
 		switch (j->jointype)
 		{
@@ -2950,7 +2950,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 				 * These could only have been introduced by pull_up_sublinks,
 				 * so there's no way that upper quals could refer to their
 				 * righthand sides, and no point in checking.  We don't expect
-				 * to see JOIN_RIGHT_ANTI yet.
+				 * to see JOIN_RIGHT_SEMI or JOIN_RIGHT_ANTI yet.
 				 */
 				break;
 			default:

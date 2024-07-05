@@ -991,6 +991,9 @@ populate_joinrel_with_paths(PlannerInfo *root, RelOptInfo *rel1,
 				add_paths_to_joinrel(root, joinrel, rel1, rel2,
 									 JOIN_SEMI, sjinfo,
 									 restrictlist);
+				add_paths_to_joinrel(root, joinrel, rel2, rel1,
+									 JOIN_RIGHT_SEMI, sjinfo,
+									 restrictlist);
 			}
 
 			/*

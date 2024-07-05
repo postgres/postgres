@@ -3287,10 +3287,10 @@ NOTICE:  snooped value: 8
 SELECT * FROM v1 WHERE b=8;
  a | b |  c   |  d   
 ---+---+------+------
- 9 | 8 | t1   | t11d
- 9 | 8 | t11  | t11d
- 9 | 8 | t12  | t11d
  9 | 8 | t111 | t11d
+ 9 | 8 | t12  | t11d
+ 9 | 8 | t11  | t11d
+ 9 | 8 | t1   | t11d
 (4 rows)
 
 DELETE FROM v1 WHERE snoop(a) AND leakproof(a); -- should not delete everything, just where a>5

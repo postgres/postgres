@@ -306,6 +306,7 @@ typedef enum JoinType
 	 */
 	JOIN_SEMI,					/* 1 copy of each LHS row that has match(es) */
 	JOIN_ANTI,					/* 1 copy of each LHS row that has no match */
+	JOIN_RIGHT_SEMI,			/* 1 copy of each RHS row that has match(es) */
 	JOIN_RIGHT_ANTI,			/* 1 copy of each RHS row that has no match */
 
 	/*
@@ -322,10 +323,10 @@ typedef enum JoinType
 
 /*
  * OUTER joins are those for which pushed-down quals must behave differently
- * from the join's own quals.  This is in fact everything except INNER and
- * SEMI joins.  However, this macro must also exclude the JOIN_UNIQUE symbols
- * since those are temporary proxies for what will eventually be an INNER
- * join.
+ * from the join's own quals.  This is in fact everything except INNER, SEMI
+ * and RIGHT_SEMI joins.  However, this macro must also exclude the
+ * JOIN_UNIQUE symbols since those are temporary proxies for what will
+ * eventually be an INNER join.
  *
  * Note: semijoins are a hybrid case, but we choose to treat them as not
  * being outer joins.  This is okay principally because the SQL syntax makes

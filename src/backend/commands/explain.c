@@ -1749,6 +1749,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					case JOIN_ANTI:
 						jointype = "Anti";
 						break;
+					case JOIN_RIGHT_SEMI:
+						jointype = "Right Semi";
+						break;
 					case JOIN_RIGHT_ANTI:
 						jointype = "Right Anti";
 						break;

@@ -2543,24 +2543,24 @@ SELECT t1.* FROM prt1_adv t1 WHERE EXISTS (SELECT 1 FROM prt2_adv t2 WHERE t1.a 
  Sort
    Sort Key: t1.a
    ->  Append
-         ->  Hash Semi Join
-               Hash Cond: (t1_1.a = t2_1.b)
-               ->  Seq Scan on prt1_adv_p1 t1_1
-                     Filter: (b = 0)
+         ->  Hash Right Semi Join
+               Hash Cond: (t2_1.b = t1_1.a)
+               ->  Seq Scan on prt2_adv_p1 t2_1
                ->  Hash
-                     ->  Seq Scan on prt2_adv_p1 t2_1
-         ->  Hash Semi Join
-               Hash Cond: (t1_2.a = t2_2.b)
-               ->  Seq Scan on prt1_adv_p2 t1_2
-                     Filter: (b = 0)
+                     ->  Seq Scan on prt1_adv_p1 t1_1
+                           Filter: (b = 0)
+         ->  Hash Right Semi Join
+               Hash Cond: (t2_2.b = t1_2.a)
+               ->  Seq Scan on prt2_adv_p2 t2_2
                ->  Hash
-                     ->  Seq Scan on prt2_adv_p2 t2_2
-         ->  Hash Semi Join
-               Hash Cond: (t1_3.a = t2_3.b)
-               ->  Seq Scan on prt1_adv_p3 t1_3
-                     Filter: (b = 0)
+                     ->  Seq Scan on prt1_adv_p2 t1_2
+                           Filter: (b = 0)
+         ->  Hash Right Semi Join
+               Hash Cond: (t2_3.b = t1_3.a)
+               ->  Seq Scan on prt2_adv_p3 t2_3
                ->  Hash
-                     ->  Seq Scan on prt2_adv_p3 t2_3
+                     ->  Seq Scan on prt1_adv_p3 t1_3
+                           Filter: (b = 0)
 (21 rows)
 
 SELECT t1.* FROM prt1_adv t1 WHERE EXISTS (SELECT 1 FROM prt2_adv t2 WHERE t1.a = t2.b) AND t1.b = 0 ORDER BY t1.a;
@@ -2752,24 +2752,24 @@ SELECT t1.* FROM prt1_adv t1 WHERE EXISTS (SELECT 1 FROM prt2_adv t2 WHERE t1.a 
  Sort
    Sort Key: t1.a
    ->  Append
-         ->  Hash Semi Join
-               Hash Cond: (t1_1.a = t2_1.b)
-               ->  Seq Scan on prt1_adv_p1 t1_1
-                     Filter: (b = 0)
+         ->  Hash Right Semi Join
+               Hash Cond: (t2_1.b = t1_1.a)
+               ->  Seq Scan on prt2_adv_p1 t2_1
                ->  Hash
-                     ->  Seq Scan on prt2_adv_p1 t2_1
-         ->  Hash Semi Join
-               Hash Cond: (t1_2.a = t2_2.b)
-               ->  Seq Scan on prt1_adv_p2 t1_2
-                     Filter: (b = 0)
+                     ->  Seq Scan on prt1_adv_p1 t1_1
+                           Filter: (b = 0)
+         ->  Hash Right Semi Join
+               Hash Cond: (t2_2.b = t1_2.a)
+               ->  Seq Scan on prt2_adv_p2 t2_2
                ->  Hash
-                     ->  Seq Scan on prt2_adv_p2 t2_2
-         ->  Hash Semi Join
-               Hash Cond: (t1_3.a = t2_3.b)
-               ->  Seq Scan on prt1_adv_p3 t1_3
-                     Filter: (b = 0)
+                     ->  Seq Scan on prt1_adv_p2 t1_2
+                           Filter: (b = 0)
+         ->  Hash Right Semi Join
+               Hash Cond: (t2_3.b = t1_3.a)
+               ->  Seq Scan on prt2_adv_p3 t2_3
                ->  Hash
-                     ->  Seq Scan on prt2_adv_p3 t2_3
+                     ->  Seq Scan on prt1_adv_p3 t1_3
+                           Filter: (b = 0)
 (21 rows)
 
 SELECT t1.* FROM prt1_adv t1 WHERE EXISTS (SELECT 1 FROM prt2_adv t2 WHERE t1.a = t2.b) AND t1.b = 0 ORDER BY t1.a;
@@ -3036,25 +3036,25 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1_adv t1 INNER JOIN prt2_adv t2 ON (t1.a =
 -- semi join
 EXPLAIN (COSTS OFF)
 SELECT t1.* FROM prt1_adv t1 WHERE EXISTS (SELECT 1 FROM prt2_adv t2 WHERE t1.a = t2.b) AND t1.b = 0 ORDER BY t1.a;
-                       QUERY PLAN                       
---------------------------------------------------------
+                      QUERY PLAN                      
+------------------------------------------------------
  Sort
    Sort Key: t1.a
-   ->  Hash Semi Join
-         Hash Cond: (t1.a = t2.b)
+   ->  Hash Right Semi Join
+         Hash Cond: (t2.b = t1.a)
          ->  Append
-               ->  Seq Scan on prt1_adv_p1 t1_1
-                     Filter: (b = 0)
-               ->  Seq Scan on prt1_adv_p2 t1_2
-                     Filter: (b = 0)
-               ->  Seq Scan on prt1_adv_p3 t1_3
-                     Filter: (b = 0)
+               ->  Seq Scan on prt2_adv_p1 t2_1
+               ->  Seq Scan on prt2_adv_p2 t2_2
+               ->  Seq Scan on prt2_adv_p3_1 t2_3
+               ->  Seq Scan on prt2_adv_p3_2 t2_4
          ->  Hash
                ->  Append
-                     ->  Seq Scan on prt2_adv_p1 t2_1
-                     ->  Seq Scan on prt2_adv_p2 t2_2
-                     ->  Seq Scan on prt2_adv_p3_1 t2_3
-                     ->  Seq Scan on prt2_adv_p3_2 t2_4
+                     ->  Seq Scan on prt1_adv_p1 t1_1
+                           Filter: (b = 0)
+                     ->  Seq Scan on prt1_adv_p2 t1_2
+                           Filter: (b = 0)
+                     ->  Seq Scan on prt1_adv_p3 t1_3
+                           Filter: (b = 0)
 (17 rows)
 
 -- left join
@@ -3433,27 +3433,30 @@ SELECT t1.a, t1.c, t2.a, t2.c FROM plt1_adv t1 INNER JOIN plt2_adv t2 ON (t1.a =
 -- semi join
 EXPLAIN (COSTS OFF)
 SELECT t1.* FROM plt1_adv t1 WHERE EXISTS (SELECT 1 FROM plt2_adv t2 WHERE t1.a = t2.a AND t1.c = t2.c) AND t1.b < 10 ORDER BY t1.a;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Sort
    Sort Key: t1.a
    ->  Append
-         ->  Nested Loop Semi Join
-               Join Filter: ((t1_1.a = t2_1.a) AND (t1_1.c = t2_1.c))
-               ->  Seq Scan on plt1_adv_p1 t1_1
-                     Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_1.a = t1_1.a) AND (t2_1.c = t1_1.c))
                ->  Seq Scan on plt2_adv_p1 t2_1
-         ->  Nested Loop Semi Join
-               Join Filter: ((t1_2.a = t2_2.a) AND (t1_2.c = t2_2.c))
-               ->  Seq Scan on plt1_adv_p2 t1_2
-                     Filter: (b < 10)
+               ->  Hash
+                     ->  Seq Scan on plt1_adv_p1 t1_1
+                           Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_2.a = t1_2.a) AND (t2_2.c = t1_2.c))
                ->  Seq Scan on plt2_adv_p2 t2_2
-         ->  Nested Loop Semi Join
-               Join Filter: ((t1_3.a = t2_3.a) AND (t1_3.c = t2_3.c))
-               ->  Seq Scan on plt1_adv_p3 t1_3
-                     Filter: (b < 10)
+               ->  Hash
+                     ->  Seq Scan on plt1_adv_p2 t1_2
+                           Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_3.a = t1_3.a) AND (t2_3.c = t1_3.c))
                ->  Seq Scan on plt2_adv_p3 t2_3
-(18 rows)
+               ->  Hash
+                     ->  Seq Scan on plt1_adv_p3 t1_3
+                           Filter: (b < 10)
+(21 rows)
 
 SELECT t1.* FROM plt1_adv t1 WHERE EXISTS (SELECT 1 FROM plt2_adv t2 WHERE t1.a = t2.a AND t1.c = t2.c) AND t1.b < 10 ORDER BY t1.a;
  a | b |  c   
@@ -3623,27 +3626,30 @@ SELECT t1.a, t1.c, t2.a, t2.c FROM plt1_adv t1 INNER JOIN plt2_adv t2 ON (t1.a =
 -- semi join
 EXPLAIN (COSTS OFF)
 SELECT t1.* FROM plt1_adv t1 WHERE EXISTS (SELECT 1 FROM plt2_adv t2 WHERE t1.a = t2.a AND t1.c = t2.c) AND t1.b < 10 ORDER BY t1.a;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Sort
    Sort Key: t1.a
    ->  Append
-         ->  Nested Loop Semi Join
-               Join Filter: ((t1_1.a = t2_1.a) AND (t1_1.c = t2_1.c))
-               ->  Seq Scan on plt1_adv_p1 t1_1
-                     Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_1.a = t1_1.a) AND (t2_1.c = t1_1.c))
                ->  Seq Scan on plt2_adv_p1 t2_1
-         ->  Nested Loop Semi Join
-               Join Filter: ((t1_2.a = t2_2.a) AND (t1_2.c = t2_2.c))
-               ->  Seq Scan on plt1_adv_p2 t1_2
-                     Filter: (b < 10)
+               ->  Hash
+                     ->  Seq Scan on plt1_adv_p1 t1_1
+                           Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_2.a = t1_2.a) AND (t2_2.c = t1_2.c))
                ->  Seq Scan on plt2_adv_p2 t2_2
-         ->  Nested Loop Semi Join
-               Join Filter: ((t1_3.a = t2_3.a) AND (t1_3.c = t2_3.c))
-               ->  Seq Scan on plt1_adv_p3 t1_3
-                     Filter: (b < 10)
+               ->  Hash
+                     ->  Seq Scan on plt1_adv_p2 t1_2
+                           Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_3.a = t1_3.a) AND (t2_3.c = t1_3.c))
                ->  Seq Scan on plt2_adv_p3 t2_3
-(18 rows)
+               ->  Hash
+                     ->  Seq Scan on plt1_adv_p3 t1_3
+                           Filter: (b < 10)
+(21 rows)
 
 SELECT t1.* FROM plt1_adv t1 WHERE EXISTS (SELECT 1 FROM plt2_adv t2 WHERE t1.a = t2.a AND t1.c = t2.c) AND t1.b < 10 ORDER BY t1.a;
  a | b |  c   
@@ -3839,25 +3845,25 @@ SELECT t1.a, t1.c, t2.a, t2.c FROM plt1_adv t1 INNER JOIN plt2_adv t2 ON (t1.a =
 -- semi join
 EXPLAIN (COSTS OFF)
 SELECT t1.* FROM plt1_adv t1 WHERE EXISTS (SELECT 1 FROM plt2_adv t2 WHERE t1.a = t2.a AND t1.c = t2.c) AND t1.b < 10 ORDER BY t1.a;
-                       QUERY PLAN                       
---------------------------------------------------------
+                      QUERY PLAN                      
+------------------------------------------------------
  Sort
    Sort Key: t1.a
-   ->  Hash Semi Join
-         Hash Cond: ((t1.a = t2.a) AND (t1.c = t2.c))
+   ->  Hash Right Semi Join
+         Hash Cond: ((t2.a = t1.a) AND (t2.c = t1.c))
          ->  Append
-               ->  Seq Scan on plt1_adv_p1 t1_1
-                     Filter: (b < 10)
-               ->  Seq Scan on plt1_adv_p2 t1_2
-                     Filter: (b < 10)
-               ->  Seq Scan on plt1_adv_p3 t1_3
-                     Filter: (b < 10)
+               ->  Seq Scan on plt2_adv_p1 t2_1
+               ->  Seq Scan on plt2_adv_p2_1 t2_2
+               ->  Seq Scan on plt2_adv_p2_2 t2_3
+               ->  Seq Scan on plt2_adv_p3 t2_4
          ->  Hash
                ->  Append
-                     ->  Seq Scan on plt2_adv_p1 t2_1
-                     ->  Seq Scan on plt2_adv_p2_1 t2_2
-                     ->  Seq Scan on plt2_adv_p2_2 t2_3
-                     ->  Seq Scan on plt2_adv_p3 t2_4
+                     ->  Seq Scan on plt1_adv_p1 t1_1
+                           Filter: (b < 10)
+                     ->  Seq Scan on plt1_adv_p2 t1_2
+                           Filter: (b < 10)
+                     ->  Seq Scan on plt1_adv_p3 t1_3
+                           Filter: (b < 10)
 (17 rows)
 
 -- left join
@@ -3987,28 +3993,30 @@ SELECT t1.a, t1.c, t2.a, t2.c FROM plt1_adv t1 INNER JOIN plt2_adv t2 ON (t1.a =
 -- semi join
 EXPLAIN (COSTS OFF)
 SELECT t1.* FROM plt1_adv t1 WHERE EXISTS (SELECT 1 FROM plt2_adv t2 WHERE t1.a = t2.a AND t1.c = t2.c) AND t1.b < 10 ORDER BY t1.a;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Sort
    Sort Key: t1.a
    ->  Append
-         ->  Hash Semi Join
-               Hash Cond: ((t1_1.a = t2_1.a) AND (t1_1.c = t2_1.c))
-               ->  Seq Scan on plt1_adv_p1_null t1_1
-                     Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_1.a = t1_1.a) AND (t2_1.c = t1_1.c))
+               ->  Seq Scan on plt2_adv_p1 t2_1
                ->  Hash
-                     ->  Seq Scan on plt2_adv_p1 t2_1
-         ->  Nested Loop Semi Join
-               Join Filter: ((t1_2.a = t2_2.a) AND (t1_2.c = t2_2.c))
-               ->  Seq Scan on plt1_adv_p2 t1_2
-                     Filter: (b < 10)
+                     ->  Seq Scan on plt1_adv_p1_null t1_1
+                           Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_2.a = t1_2.a) AND (t2_2.c = t1_2.c))
                ->  Seq Scan on plt2_adv_p2 t2_2
-         ->  Nested Loop Semi Join
-               Join Filter: ((t1_3.a = t2_3.a) AND (t1_3.c = t2_3.c))
-               ->  Seq Scan on plt1_adv_p3 t1_3
-                     Filter: (b < 10)
+               ->  Hash
+                     ->  Seq Scan on plt1_adv_p2 t1_2
+                           Filter: (b < 10)
+         ->  Hash Right Semi Join
+               Hash Cond: ((t2_3.a = t1_3.a) AND (t2_3.c = t1_3.c))
                ->  Seq Scan on plt2_adv_p3_null t2_3
-(19 rows)
+               ->  Hash
+                     ->  Seq Scan on plt1_adv_p3 t1_3
+                           Filter: (b < 10)
+(21 rows)
 
 SELECT t1.* FROM plt1_adv t1 WHERE EXISTS (SELECT 1 FROM plt2_adv t2 WHERE t1.a = t2.a AND t1.c = t2.c) AND t1.b < 10 ORDER BY t1.a;
  a | b |  c   

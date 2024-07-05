@@ -214,10 +214,10 @@ SELECT *
 -- semijoin selectivity for <>
 --
 explain (costs off)
-select * from int4_tbl i4, tenk1 a
-where exists(select * from tenk1 b
-             where a.twothousand = b.twothousand and a.fivethous <> b.fivethous)
-      and i4.f1 = a.tenthous;
+select * from tenk1 a, tenk1 b
+where exists(select * from tenk1 c
+             where b.twothousand = c.twothousand and b.fivethous <> c.fivethous)
+      and a.tenthous = b.tenthous and a.tenthous < 5000;
 
 
 --

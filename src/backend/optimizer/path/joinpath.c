@@ -288,8 +288,8 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * sorted. This includes both nestloops and mergejoins where the outer
 	 * path is already ordered.  Again, skip this if we can't mergejoin.
 	 * (That's okay because we know that nestloop can't handle
-	 * right/right-anti/full joins at all, so it wouldn't work in the
-	 * prohibited cases either.)
+	 * right/right-anti/right-semi/full joins at all, so it wouldn't work in
+	 * the prohibited cases either.)
 	 */
 	if (mergejoin_allowed)
 		match_unsorted_outer(root, joinrel, outerrel, innerrel,
@@ -1729,6 +1729,13 @@ match_unsorted_outer(PlannerInfo *root,
 	ListCell   *lc1;
 
 	/*
+	 * For now we do not support RIGHT_SEMI join in mergejoin or nestloop
+	 * join.
+	 */
+	if (jointype == JOIN_RIGHT_SEMI)
+		return;
+
+	/*
 	 * Nestloop only supports inner, left, semi, and anti joins.  Also, if we
 	 * are doing a right, right-anti or full mergejoin, we must use *all* the
 	 * mergeclauses as join clauses, else we will not have a valid plan.
@@ -2297,12 +2304,13 @@ hash_inner_and_outer(PlannerInfo *root,
 			 * total inner path will also be parallel-safe, but if not, we'll
 			 * have to search for the cheapest safe, unparameterized inner
 			 * path.  If doing JOIN_UNIQUE_INNER, we can't use any alternative
-			 * inner path.  If full, right, or right-anti join, we can't use
-			 * parallelism (building the hash table in each backend) because
-			 * no one process has all the match bits.
+			 * inner path.  If full, right, right-semi or right-anti join, we
+			 * can't use parallelism (building the hash table in each backend)
+			 * because no one process has all the match bits.
 			 */
 			if (save_jointype == JOIN_FULL ||
 				save_jointype == JOIN_RIGHT ||
+				save_jointype == JOIN_RIGHT_SEMI ||
 				save_jointype == JOIN_RIGHT_ANTI)
 				cheapest_safe_inner = NULL;
 			else if (cheapest_total_inner->parallel_safe)
@@ -2327,13 +2335,13 @@ hash_inner_and_outer(PlannerInfo *root,
  *	  Returns a list of RestrictInfo nodes for those clauses.
  *
  * *mergejoin_allowed is normally set to true, but it is set to false if
- * this is a right/right-anti/full join and there are nonmergejoinable join
- * clauses.  The executor's mergejoin machinery cannot handle such cases, so
- * we have to avoid generating a mergejoin plan.  (Note that this flag does
- * NOT consider whether there are actually any mergejoinable clauses.  This is
- * correct because in some cases we need to build a clauseless mergejoin.
- * Simply returning NIL is therefore not enough to distinguish safe from
- * unsafe cases.)
+ * this is a right-semi join, or this is a right/right-anti/full join and
+ * there are nonmergejoinable join clauses.  The executor's mergejoin
+ * machinery cannot handle such cases, so we have to avoid generating a
+ * mergejoin plan.  (Note that this flag does NOT consider whether there are
+ * actually any mergejoinable clauses.  This is correct because in some
+ * cases we need to build a clauseless mergejoin.  Simply returning NIL is
+ * therefore not enough to distinguish safe from unsafe cases.)
  *
  * We also mark each selected RestrictInfo to show which side is currently
  * being considered as outer.  These are transient markings that are only
@@ -2356,6 +2364,16 @@ select_mergejoin_clauses(PlannerInfo *root,
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
 	bool		have_nonmergeable_joinclause = false;
 	ListCell   *l;
+
+	/*
+	 * For now we do not support RIGHT_SEMI join in mergejoin: the benefit of
+	 * swapping inputs tends to be small here.
+	 */
+	if (jointype == JOIN_RIGHT_SEMI)
+	{
+		*mergejoin_allowed = false;
+		return NIL;
+	}
 
 	foreach(l, restrictlist)
 	{

@@ -2823,9 +2823,9 @@ typedef struct PlaceHolderVar
  * min_lefthand and min_righthand for higher joins.)
  *
  * jointype is never JOIN_RIGHT; a RIGHT JOIN is handled by switching
- * the inputs to make it a LEFT JOIN.  It's never JOIN_RIGHT_ANTI either.
- * So the allowed values of jointype in a join_info_list member are only
- * LEFT, FULL, SEMI, or ANTI.
+ * the inputs to make it a LEFT JOIN.  It's never JOIN_RIGHT_SEMI or
+ * JOIN_RIGHT_ANTI either.  So the allowed values of jointype in a
+ * join_info_list member are only LEFT, FULL, SEMI, or ANTI.
  *
  * ojrelid is the RT index of the join RTE representing this outer join,
  * if there is one.  It is zero when jointype is INNER or SEMI, and can be

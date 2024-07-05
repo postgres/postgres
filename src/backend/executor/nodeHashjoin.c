@@ -534,6 +534,14 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				}
 
 				/*
+				 * In a right-semijoin, we only need the first match for each
+				 * inner tuple.
+				 */
+				if (node->js.jointype == JOIN_RIGHT_SEMI &&
+					HeapTupleHeaderHasMatch(HJTUPLE_MINTUPLE(node->hj_CurTuple)))
+					continue;
+
+				/*
 				 * We've got a match, but still need to test non-hashed quals.
 				 * ExecScanHashBucket already set up all the state needed to
 				 * call ExecQual.
@@ -549,10 +557,10 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				{
 					node->hj_MatchedOuter = true;
 
-
 					/*
-					 * This is really only needed if HJ_FILL_INNER(node), but
-					 * we'll avoid the branch and just set it always.
+					 * This is really only needed if HJ_FILL_INNER(node) or if
+					 * we are in a right-semijoin, but we'll avoid the branch
+					 * and just set it always.
 					 */
 					if (!HeapTupleHeaderHasMatch(HJTUPLE_MINTUPLE(node->hj_CurTuple)))
 						HeapTupleHeaderSetMatch(HJTUPLE_MINTUPLE(node->hj_CurTuple));
@@ -779,6 +787,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	{
 		case JOIN_INNER:
 		case JOIN_SEMI:
+		case JOIN_RIGHT_SEMI:
 			break;
 		case JOIN_LEFT:
 		case JOIN_ANTI:
