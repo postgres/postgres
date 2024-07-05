@@ -29,8 +29,6 @@ extern bool check_application_name(char **newval, void **extra,
 								   GucSource source);
 extern void assign_application_name(const char *newval, void *extra);
 extern const char *show_archive_command(void);
-extern bool check_autovacuum_max_workers(int *newval, void **extra,
-										 GucSource source);
 extern bool check_autovacuum_work_mem(int *newval, void **extra,
 									  GucSource source);
 extern bool check_vacuum_buffer_usage_limit(int *newval, void **extra,
@@ -84,13 +82,9 @@ extern const char *show_log_timezone(void);
 extern bool check_maintenance_io_concurrency(int *newval, void **extra,
 											 GucSource source);
 extern void assign_maintenance_io_concurrency(int newval, void *extra);
-extern bool check_max_connections(int *newval, void **extra, GucSource source);
-extern bool check_max_wal_senders(int *newval, void **extra, GucSource source);
 extern bool check_max_slot_wal_keep_size(int *newval, void **extra,
 										 GucSource source);
 extern void assign_max_wal_size(int newval, void *extra);
-extern bool check_max_worker_processes(int *newval, void **extra,
-									   GucSource source);
 extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
 extern void assign_max_stack_depth(int newval, void *extra);
 extern bool check_multixact_member_buffers(int *newval, void **extra,

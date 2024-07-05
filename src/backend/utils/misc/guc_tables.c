@@ -2209,7 +2209,7 @@ struct config_int ConfigureNamesInt[] =
 		},
 		&MaxConnections,
 		100, 1, MAX_BACKENDS,
-		check_max_connections, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
@@ -2925,7 +2925,7 @@ struct config_int ConfigureNamesInt[] =
 		},
 		&max_wal_senders,
 		10, 0, MAX_BACKENDS,
-		check_max_wal_senders, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
@@ -3155,7 +3155,7 @@ struct config_int ConfigureNamesInt[] =
 		},
 		&max_worker_processes,
 		8, 0, MAX_BACKENDS,
-		check_max_worker_processes, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
@@ -3389,7 +3389,7 @@ struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_max_workers,
 		3, 1, MAX_BACKENDS,
-		check_autovacuum_max_workers, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
