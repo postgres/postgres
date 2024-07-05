@@ -2274,8 +2274,8 @@ Author: Robert Haas <rhaas@postgresql.org>
 
      <listitem>
       <para>
-      Allow <application>psql</application> connections to be canceled
-      with control-C (Tristan Partin)
+      Allow <application>psql</application> connection attempts to be
+      canceled with control-C (Tristan Partin)
       </para>
      </listitem>
 
