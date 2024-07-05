@@ -301,7 +301,7 @@ static const char *progname;
 
 #define WSEP '@'				/* weight separator */
 
-volatile static sig_atomic_t timer_exceeded = false;	/* flag from signal
+static volatile sig_atomic_t timer_exceeded = false;	/* flag from signal
 														 * handler */
 
 /*
