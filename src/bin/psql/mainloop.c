@@ -162,7 +162,6 @@ MainLoop(FILE *source)
 				need_redisplay = false;
 			}
 			/* Now we can fetch a line */
-            // ACÁ HACE GETLINE
 			line = gets_interactive(get_prompt(prompt_status, cond_stack),
 									query_buf);
 		}
