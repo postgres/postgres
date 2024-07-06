@@ -19,6 +19,7 @@ fi
 
 echo "Compiling sharding library..."
 cd $SHARDING_DIR
+cargo clean
 cargo build --release --lib
 
 echo "Copying compiled library to initdb directory..."

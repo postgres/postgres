@@ -19,6 +19,7 @@ fi
 
 echo "Compiling sharding library..."
 cd $SHARDING_DIR
+cargo clean
 cargo build --release --lib
 echo "Moving compiled library to psql directory..."
 mv ./target/release/libsharding.a $PSQL_DIR
