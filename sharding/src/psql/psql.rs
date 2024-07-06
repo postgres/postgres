@@ -32,9 +32,7 @@ pub extern "C" fn SendQueryToShard(query_data: *const i8) {
 }
 
 fn handle_query(query: &str) -> Result<(), Box<dyn std::error::Error>> {
-    println!("handle_query from server.rs called");
-
-    // get dynamic username
+    // get username dynamically
     let username = match get_current_username() {
         Some(username) => username.to_string_lossy().to_string(),
         None => panic!("Failed to get current username"),
@@ -44,16 +42,6 @@ fn handle_query(query: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut client = Client::connect(format!("host=127.0.0.1 user={} dbname=template1", username).as_str(), NoTls).unwrap();
 
     let rows = client.query(query, &[])?;
-    // for row in rows {
-    //     let id: i32 = row.get(0);
-    //     let name: &str = row.get(1);
-    //     let position: &str = row.get(2);
-    //     let salary: Decimal = row.get(3);
-    //     println!(
-    //         "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-    //         id, name, position, salary
-    //     );
-    // }
     println!("{:?}", rows);
     Ok(())
 }
