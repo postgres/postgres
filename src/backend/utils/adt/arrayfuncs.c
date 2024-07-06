@@ -2887,7 +2887,13 @@ array_set_slice(Datum arraydatum,
 						 errdetail("When assigning to a slice of an empty array value,"
 								   " slice boundaries must be fully specified.")));
 
-			dim[i] = 1 + upperIndx[i] - lowerIndx[i];
+			/* dim[i] = 1 + upperIndx[i] - lowerIndx[i]; */
+			if (pg_add_s32_overflow(1, upperIndx[i], &dim[i]) ||
+				pg_sub_s32_overflow(dim[i], lowerIndx[i], &dim[i]))
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("array size exceeds the maximum allowed (%d)",
+								(int) MaxArraySize)));
 			lb[i] = lowerIndx[i];
 		}
 

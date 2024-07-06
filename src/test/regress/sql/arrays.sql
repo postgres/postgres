@@ -825,3 +825,9 @@ SELECT array_dims(array_sample('[-1:2][2:3]={{1,2},{3,NULL},{5,6},{7,8}}'::int[]
 SELECT array_dims(array_sample('{{{1,2},{3,NULL}},{{5,6},{7,8}},{{9,10},{11,12}}}'::int[], 2));
 SELECT array_sample('{1,2,3,4,5,6}'::int[], -1); -- fail
 SELECT array_sample('{1,2,3,4,5,6}'::int[], 7); --fail
+
+-- Test for overflow in array slicing
+CREATE temp table arroverflowtest (i int[]);
+INSERT INTO arroverflowtest(i[-2147483648:2147483647]) VALUES ('{}');
+INSERT INTO arroverflowtest(i[1:2147483647]) VALUES ('{}');
+INSERT INTO arroverflowtest(i[2147483647:2147483647]) VALUES ('{}');

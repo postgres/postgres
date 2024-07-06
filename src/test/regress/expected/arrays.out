@@ -2699,3 +2699,11 @@ SELECT array_sample('{1,2,3,4,5,6}'::int[], -1); -- fail
 ERROR:  sample size must be between 0 and 6
 SELECT array_sample('{1,2,3,4,5,6}'::int[], 7); --fail
 ERROR:  sample size must be between 0 and 6
+-- Test for overflow in array slicing
+CREATE temp table arroverflowtest (i int[]);
+INSERT INTO arroverflowtest(i[-2147483648:2147483647]) VALUES ('{}');
+ERROR:  array size exceeds the maximum allowed (134217727)
+INSERT INTO arroverflowtest(i[1:2147483647]) VALUES ('{}');
+ERROR:  array size exceeds the maximum allowed (134217727)
+INSERT INTO arroverflowtest(i[2147483647:2147483647]) VALUES ('{}');
+ERROR:  array size exceeds the maximum allowed (134217727)
