@@ -757,7 +757,7 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 
 			/* This attaches root to doc, so we need not free it separately. */
 			xmlDocSetRootElement(doc, root);
-			xmlAddChild(root, content_nodes);
+			xmlAddChildList(root, content_nodes);
 
 			/*
 			 * We use this node to insert newlines in the dump.  Note: in at
