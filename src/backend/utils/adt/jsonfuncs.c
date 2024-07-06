@@ -946,7 +946,7 @@ jsonb_array_element(PG_FUNCTION_ARGS)
 	{
 		uint32		nelements = JB_ROOT_COUNT(jb);
 
-		if (-element > nelements)
+		if (element == PG_INT32_MIN || -element > nelements)
 			PG_RETURN_NULL();
 		else
 			element += nelements;
@@ -5425,7 +5425,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 
 	if (idx < 0)
 	{
-		if (-idx > nelems)
+		if (idx == INT_MIN || -idx > nelems)
 		{
 			/*
 			 * If asked to keep elements position consistent, it's not allowed

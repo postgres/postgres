@@ -204,6 +204,8 @@ select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 'z';
 select '{"a": "c", "b": null}'::jsonb -> 'b';
 select '"foo"'::jsonb -> 1;
 select '"foo"'::jsonb -> 'z';
+select '[]'::jsonb -> -2147483648;
+select jsonb_delete_path('{"a":[]}', '{"a",-2147483648}');
 
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::text;
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::int;

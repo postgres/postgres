@@ -680,6 +680,18 @@ select '"foo"'::jsonb -> 'z';
  
 (1 row)
 
+select '[]'::jsonb -> -2147483648;
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb_delete_path('{"a":[]}', '{"a",-2147483648}');
+ jsonb_delete_path 
+-------------------
+ {"a": []}
+(1 row)
+
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::text;
  ?column? 
 ----------
