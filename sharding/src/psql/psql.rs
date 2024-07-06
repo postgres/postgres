@@ -5,6 +5,8 @@ use crate::psql::common_h_bindings::pg_result;
 use postgres::{Client, NoTls};
 use rust_decimal::prelude::Decimal;
 use std::ffi::CStr;
+extern crate users;
+use users::get_current_username;
 
 #[no_mangle]
 pub extern "C" fn SendQueryToShard(query_data: *const i8) {
@@ -30,7 +32,16 @@ pub extern "C" fn SendQueryToShard(query_data: *const i8) {
 }
 
 fn handle_query(query: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut client = Client::connect("host=127.0.0.1 user=ncontinanza dbname=template1", NoTls).unwrap();
+    println!("handle_query from server.rs called");
+
+    // get dynamic username
+    let username = match get_current_username() {
+        Some(username) => username.to_string_lossy().to_string(),
+        None => panic!("Failed to get current username"),
+    };
+    println!("Username found: {:?}", username);
+    
+    let mut client = Client::connect(format!("host=127.0.0.1 user={} dbname=template1", username).as_str(), NoTls).unwrap();
 
     let rows = client.query(query, &[])?;
     // for row in rows {
