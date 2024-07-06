@@ -49,3 +49,14 @@
 2024-07-01 21:23:10.112 -03 [94216] LOG:  database system is ready to accept connections
 2024-07-01 21:28:10.125 -03 [94217] LOG:  checkpoint starting: time
 2024-07-01 21:28:10.129 -03 [94217] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.005 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/157B2D8, redo lsn=0/157B280
+2024-07-06 16:37:05.163 -03 [70853] LOG:  starting PostgreSQL 17devel on aarch64-apple-darwin23.5.0, compiled by Apple clang version 15.0.0 (clang-1500.3.9.4), 64-bit
+2024-07-06 16:37:05.165 -03 [70853] LOG:  listening on IPv6 address "::1", port 5432
+2024-07-06 16:37:05.165 -03 [70853] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-07-06 16:37:05.165 -03 [70853] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-07-06 16:37:05.167 -03 [70856] LOG:  database system was shut down at 2024-07-06 16:36:57 -03
+2024-07-06 16:37:05.168 -03 [70853] LOG:  database system is ready to accept connections
+2024-07-06 16:38:05.167 -03 [70853] LOG:  could not open file "postmaster.pid": No such file or directory
+2024-07-06 16:38:05.167 -03 [70853] LOG:  performing immediate shutdown because data directory lock file is invalid
+2024-07-06 16:38:05.168 -03 [70853] LOG:  received immediate shutdown request
+2024-07-06 16:38:05.168 -03 [70853] LOG:  could not open file "postmaster.pid": No such file or directory
+2024-07-06 16:38:05.169 -03 [70853] LOG:  database system is shut down
