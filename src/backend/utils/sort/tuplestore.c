@@ -799,6 +799,7 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 	TSReadPointer *readptr;
 	int			i;
 	ResourceOwner oldowner;
+	MemoryContext oldcxt;
 
 	state->tuples++;
 
@@ -850,7 +851,16 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			oldowner = CurrentResourceOwner;
 			CurrentResourceOwner = state->resowner;
 
+			/*
+			 * We switch out of the state->context as this is a generation
+			 * context, which isn't ideal for allocations relating to the
+			 * BufFile.
+			 */
+			oldcxt = MemoryContextSwitchTo(state->context->parent);
+
 			state->myfile = BufFileCreateTemp(state->interXact);
+
+			MemoryContextSwitchTo(oldcxt);
 
 			CurrentResourceOwner = oldowner;
 
