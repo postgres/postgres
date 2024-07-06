@@ -9,9 +9,13 @@ SHARDING_DIR="$ROOT_DIR/sharding"
 PG_CTL_DIR="$ROOT_DIR/src/bin/pg_ctl"
 PSQL_DIR="$ROOT_DIR/src/bin/psql"
 POSTGRES_EXECUTABLE="$ROOT_DIR/src/backend/postgres"
-DB_DIR="$ROOT_DIR/$DB_CLUSTER_NAME"
-LOG_FILE="$ROOT_DIR/logfile"
+CLUSTERS_DIR="$ROOT_DIR/clusters"
+DB_DIR="$CLUSTERS_DIR/$DB_CLUSTER_NAME"
+LOG_FILE="$CLUSTERS_DIR/logfile"
 PORT_FILE="$ROOT_DIR/ports.txt" # Path to ports.txt
+
+# Create clusters directory if it doesn't exist
+mkdir -p $CLUSTERS_DIR
 
 # If we're on OS X, make sure that globals aren't stripped out.
 if [ "$(uname)" == "Darwin" ]; then
@@ -20,7 +24,6 @@ fi
 
 echo "Compiling sharding library..."
 cd $SHARDING_DIR
-cargo clean
 cargo build --release --lib
 echo "Moving compiled library to psql directory..."
 mv ./target/release/libsharding.a $PSQL_DIR
@@ -61,7 +64,7 @@ if [ -z "$selected_port" ]; then
     exit 1
 fi
 
-echo "Starting PostgreSQL server on port $selected_port..."
+echo "Starting PostgreSQL server on port $selected_port for cluster $DB_CLUSTER_NAME..."
 cd $PG_CTL_DIR
 ./pg_ctl -D $DB_DIR -l $LOG_FILE -o "-p $selected_port" start
 
