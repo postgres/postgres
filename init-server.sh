@@ -14,6 +14,10 @@ DB_DIR="$CLUSTERS_DIR/$DB_CLUSTER_NAME"
 LOG_FILE="$CLUSTERS_DIR/logfile"
 PORT_FILE="$ROOT_DIR/ports.txt" # Path to ports.txt
 
+# Check for additional argument
+START_PSQL=$1
+NODE_TYPE=$2
+
 # Create clusters directory if it doesn't exist
 mkdir -p $CLUSTERS_DIR
 
@@ -64,8 +68,14 @@ if [ -z "$selected_port" ]; then
     exit 1
 fi
 
-echo "Starting PostgreSQL server on port $selected_port for cluster $DB_CLUSTER_NAME..."
+echo "Starting PostgreSQL server on port $selected_port for cluster $DB_CLUSTER_NAME with node type "$NODE_TYPE"..."
 cd $PG_CTL_DIR
 ./pg_ctl -D $DB_DIR -l $LOG_FILE -o "-p $selected_port" start
 
-echo "[DISTRIBUTED POSTGRESQL] Database started successfully."
+# If "start" argument is provided, run start-psql.sh
+if [ "$START_PSQL" == "start" ]; then
+    echo "Running start-psql.sh with nodeType "$NODE_TYPE"..."
+    # Pass the necessary argument to start-psql.sh
+    cd $ROOT_DIR
+    ./start-psql.sh $NODE_TYPE
+fi
