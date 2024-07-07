@@ -39,7 +39,14 @@ fn handle_query(query: &str) -> Result<(), Box<dyn std::error::Error>> {
     };
     println!("Username found: {:?}", username);
     
-    let mut client = Client::connect(format!("host=127.0.0.1 user={} dbname=template1", username).as_str(), NoTls).unwrap();
+    // TODO-SHARD: port needs to be dynamic
+    let mut client: Client = match Client::connect(format!("host=127.0.0.1 port=5433 user={} dbname=template1", username).as_str(), NoTls) {
+        Ok(client) => client,
+        Err(e) => {
+            eprintln!("Failed to connect to the database: {:?}", e);
+            panic!("Failed to connect to the database");
+        }
+    };
 
     let rows = client.query(query, &[])?;
     println!("{:?}", rows);
