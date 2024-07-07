@@ -43,3 +43,11 @@ lib*.pc
 /Release/
 /tmp_install/
 /portlock/
+
+/logfile
+/sharding/target/.rustc_info.json
+/sharding/target/release/libsharding.d
+/src/bin/initdb/postgres
+/src/bin/pg_ctl/logfile
+/src/bin/pg_ctl/postgres
+/clusters

@@ -1,0 +1,110 @@
+2024-05-18 11:03:40.436 -03 [28497] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-18 11:03:40.437 -03 [28497] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-05-18 11:03:40.448 -03 [28497] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-05-18 11:03:40.461 -03 [28500] LOG:  database system was shut down at 2024-05-18 10:45:58 -03
+2024-05-18 11:03:40.475 -03 [28497] LOG:  database system is ready to accept connections
+2024-05-18 11:07:40.756 -03 [28497] LOG:  could not open file "postmaster.pid": No existe el archivo o el directorio
+2024-05-18 11:07:40.756 -03 [28497] LOG:  performing immediate shutdown because data directory lock file is invalid
+2024-05-18 11:07:40.756 -03 [28497] LOG:  received immediate shutdown request
+2024-05-18 11:07:40.756 -03 [28497] LOG:  could not open file "postmaster.pid": No existe el archivo o el directorio
+2024-05-18 11:07:40.843 -03 [28497] LOG:  database system is shut down
+2024-05-18 11:23:31.070 -03 [37496] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-18 11:23:31.070 -03 [37496] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-05-18 11:23:31.081 -03 [37496] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-05-18 11:23:31.092 -03 [37499] LOG:  database system was shut down at 2024-05-18 11:23:20 -03
+2024-05-18 11:23:31.098 -03 [37496] LOG:  database system is ready to accept connections
+2024-05-18 11:28:31.190 -03 [37497] LOG:  checkpoint starting: time
+2024-05-18 11:28:35.545 -03 [37497] LOG:  checkpoint complete: wrote 46 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=4.334 s, sync=0.009 s, total=4.356 s; sync files=11, longest=0.006 s, average=0.001 s; distance=281 kB, estimate=281 kB; lsn=0/152EDA8, redo lsn=0/152ED50
+2024-05-18 11:37:11.672 -03 [38344] FATAL:  lock file "postmaster.pid" already exists
+2024-05-18 11:37:11.672 -03 [38344] HINT:  Is another postmaster (PID 37496) running in data directory "/home/franco/distributed-postgres/my_db"?
+2024-05-18 11:39:01.911 -03 [37496] LOG:  received fast shutdown request
+2024-05-18 11:39:01.952 -03 [37496] LOG:  aborting any active transactions
+2024-05-18 11:39:01.953 -03 [37496] LOG:  background worker "logical replication launcher" (PID 37502) exited with exit code 1
+2024-05-18 11:39:01.954 -03 [37497] LOG:  shutting down
+2024-05-18 11:39:01.959 -03 [37497] LOG:  checkpoint starting: shutdown immediate
+2024-05-18 11:39:01.977 -03 [37497] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.024 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=253 kB; lsn=0/152EE58, redo lsn=0/152EE58
+2024-05-18 11:39:01.981 -03 [37496] LOG:  database system is shut down
+2024-05-18 11:48:53.143 -03 [39037] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-18 11:48:53.144 -03 [39037] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-05-18 11:48:53.151 -03 [39037] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-05-18 11:48:53.160 -03 [39040] LOG:  database system was shut down at 2024-05-18 11:39:01 -03
+2024-05-18 11:48:53.167 -03 [39037] LOG:  database system is ready to accept connections
+2024-05-18 11:48:55.891 -03 [39037] LOG:  received fast shutdown request
+2024-05-18 11:48:55.951 -03 [39037] LOG:  aborting any active transactions
+2024-05-18 11:48:55.953 -03 [39037] LOG:  background worker "logical replication launcher" (PID 39043) exited with exit code 1
+2024-05-18 11:48:55.953 -03 [39038] LOG:  shutting down
+2024-05-18 11:48:55.959 -03 [39038] LOG:  checkpoint starting: shutdown immediate
+2024-05-18 11:48:55.993 -03 [39038] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.009 s, sync=0.004 s, total=0.039 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/152EED0, redo lsn=0/152EED0
+2024-05-18 11:48:55.997 -03 [39037] LOG:  database system is shut down
+2024-05-19 10:30:02.757 -03 [7710] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-19 10:30:02.762 -03 [7710] LOG:  could not bind IPv4 address "127.0.0.1": La dirección ya se está usando
+2024-05-19 10:30:02.762 -03 [7710] HINT:  Is another postmaster already running on port 5432? If not, wait a few seconds and retry.
+2024-05-19 10:30:02.762 -03 [7710] WARNING:  could not create listen socket for "localhost"
+2024-05-19 10:30:02.763 -03 [7710] FATAL:  could not create any TCP/IP sockets
+2024-05-19 10:30:02.765 -03 [7710] LOG:  database system is shut down
+2024-05-19 10:31:47.543 -03 [7832] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-19 10:31:47.543 -03 [7832] LOG:  could not bind IPv4 address "127.0.0.1": La dirección ya se está usando
+2024-05-19 10:31:47.543 -03 [7832] HINT:  Is another postmaster already running on port 5432? If not, wait a few seconds and retry.
+2024-05-19 10:31:47.543 -03 [7832] WARNING:  could not create listen socket for "localhost"
+2024-05-19 10:31:47.543 -03 [7832] FATAL:  could not create any TCP/IP sockets
+2024-05-19 10:31:47.544 -03 [7832] LOG:  database system is shut down
+2024-05-19 10:37:02.714 -03 [8219] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-19 10:37:02.715 -03 [8219] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-05-19 10:37:02.720 -03 [8219] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-05-19 10:37:02.728 -03 [8222] LOG:  database system was shut down at 2024-05-19 10:26:16 -03
+2024-05-19 10:37:02.734 -03 [8219] LOG:  database system is ready to accept connections
+2024-05-19 10:42:02.826 -03 [8220] LOG:  checkpoint starting: time
+2024-05-19 10:42:07.309 -03 [8220] LOG:  checkpoint complete: wrote 46 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=4.324 s, sync=0.015 s, total=4.483 s; sync files=11, longest=0.009 s, average=0.002 s; distance=281 kB, estimate=281 kB; lsn=0/152ED70, redo lsn=0/152ED18
+2024-05-19 11:20:12.094 -03 [8219] LOG:  received smart shutdown request
+2024-05-19 11:20:12.100 -03 [8219] LOG:  background worker "logical replication launcher" (PID 8225) exited with exit code 1
+2024-05-19 11:20:12.100 -03 [8220] LOG:  shutting down
+2024-05-19 11:20:12.104 -03 [8220] LOG:  checkpoint starting: shutdown immediate
+2024-05-19 11:20:12.118 -03 [8220] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.019 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=253 kB; lsn=0/152EE20, redo lsn=0/152EE20
+2024-05-19 11:20:12.122 -03 [8219] LOG:  database system is shut down
+2024-05-19 11:20:38.619 -03 [11554] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-19 11:20:38.619 -03 [11554] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-05-19 11:20:38.625 -03 [11554] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-05-19 11:20:38.632 -03 [11557] LOG:  database system was shut down at 2024-05-19 11:19:35 -03
+2024-05-19 11:20:38.637 -03 [11554] LOG:  database system is ready to accept connections
+2024-05-19 11:25:38.730 -03 [11555] LOG:  checkpoint starting: time
+2024-05-19 11:25:43.066 -03 [11555] LOG:  checkpoint complete: wrote 46 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=4.317 s, sync=0.008 s, total=4.336 s; sync files=11, longest=0.006 s, average=0.001 s; distance=281 kB, estimate=281 kB; lsn=0/152ED70, redo lsn=0/152ED18
+2024-05-21 16:09:28.662 -03 [22347] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-21 16:09:28.663 -03 [22347] LOG:  could not bind IPv4 address "127.0.0.1": La dirección ya se está usando
+2024-05-21 16:09:28.663 -03 [22347] HINT:  Is another postmaster already running on port 5432? If not, wait a few seconds and retry.
+2024-05-21 16:09:28.663 -03 [22347] WARNING:  could not create listen socket for "localhost"
+2024-05-21 16:09:28.664 -03 [22347] FATAL:  could not create any TCP/IP sockets
+2024-05-21 16:09:28.665 -03 [22347] LOG:  database system is shut down
+2024-05-21 16:12:13.394 -03 [22682] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-21 16:12:13.394 -03 [22682] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-05-21 16:12:13.400 -03 [22682] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-05-21 16:12:13.409 -03 [22685] LOG:  database system was shut down at 2024-05-19 11:20:12 -03
+2024-05-21 16:12:13.417 -03 [22682] LOG:  database system is ready to accept connections
+2024-05-21 16:17:13.505 -03 [22683] LOG:  checkpoint starting: time
+2024-05-21 16:17:13.566 -03 [22683] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.008 s, sync=0.003 s, total=0.061 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/152EF28, redo lsn=0/152EED0
+2024-05-21 16:29:00.840 -03 [24035] FATAL:  role "postgres" does not exist
+2024-05-21 16:37:13.965 -03 [22683] LOG:  checkpoint starting: time
+2024-05-21 16:37:19.752 -03 [22683] LOG:  checkpoint complete: wrote 58 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=5.758 s, sync=0.010 s, total=5.787 s; sync files=44, longest=0.006 s, average=0.001 s; distance=202 kB, estimate=202 kB; lsn=0/1563A58, redo lsn=0/1561A30
+2024-05-21 16:37:54.063 -03 [24156] ERROR:  syntax error at or near "SELECT" at character 9
+2024-05-21 16:37:54.063 -03 [24156] STATEMENT:  SELECT 
+	SELECT * FROM employees
+	SELECT * FROM employees;
+2024-05-21 16:39:44.718 -03 [26035] FATAL:  could not open file "global/pg_filenode.map": No existe el archivo o el directorio
+2024-05-21 16:40:14.715 -03 [22682] LOG:  could not open file "postmaster.pid": No existe el archivo o el directorio
+2024-05-21 16:40:14.715 -03 [22682] LOG:  performing immediate shutdown because data directory lock file is invalid
+2024-05-21 16:40:14.715 -03 [22682] LOG:  received immediate shutdown request
+2024-05-21 16:40:14.715 -03 [22682] LOG:  could not open file "postmaster.pid": No existe el archivo o el directorio
+2024-05-21 16:40:14.725 -03 [22682] LOG:  database system is shut down
+2024-05-21 16:54:49.602 -03 [32957] LOG:  starting PostgreSQL 17devel on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit
+2024-05-21 16:54:49.602 -03 [32957] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-05-21 16:54:49.611 -03 [32957] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-05-21 16:54:49.619 -03 [32960] LOG:  database system was shut down at 2024-05-21 16:53:38 -03
+2024-05-21 16:54:49.625 -03 [32957] LOG:  database system is ready to accept connections
+2024-05-21 16:59:49.717 -03 [32958] LOG:  checkpoint starting: time
+2024-05-21 16:59:54.164 -03 [32958] LOG:  checkpoint complete: wrote 46 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=4.366 s, sync=0.012 s, total=4.448 s; sync files=11, longest=0.005 s, average=0.002 s; distance=281 kB, estimate=281 kB; lsn=0/152EE18, redo lsn=0/152ED88
+2024-05-21 17:10:14.761 -03 [32957] LOG:  received fast shutdown request
+2024-05-21 17:10:14.768 -03 [32957] LOG:  aborting any active transactions
+2024-05-21 17:10:14.769 -03 [32957] LOG:  background worker "logical replication launcher" (PID 32963) exited with exit code 1
+2024-05-21 17:10:14.769 -03 [32958] LOG:  shutting down
+2024-05-21 17:10:14.775 -03 [32958] LOG:  checkpoint starting: shutdown immediate
+2024-05-21 17:10:14.800 -03 [32958] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.031 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=253 kB; lsn=0/152EEC8, redo lsn=0/152EEC8
+2024-05-21 17:10:14.806 -03 [32957] LOG:  database system is shut down

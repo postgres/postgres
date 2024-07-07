@@ -1,0 +1,32 @@
+[package]
+name = "sharding"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libc = "0.2"
+tokio = { version = "1.38.0", features = ["rt", "rt-multi-thread", "full"] }
+pgwire = "0.23.0"
+postgres = "0.19"
+core-foundation = "0.9.4"
+rust_decimal = {version = "1.35.0", features = ["db-postgres"]}
+users = "0.11.0"
+[lib]
+name = "sharding"
+crate-type = ["staticlib"]
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
+
+[[bin]]
+name = "client"
+path = "src/client.rs"
+
+[build-dependencies]
+bindgen = "0.69.4"
+cc = "1.0"
+

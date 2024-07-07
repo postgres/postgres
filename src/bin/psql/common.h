@@ -14,7 +14,6 @@
 #include "fe_utils/print.h"
 #include "fe_utils/psqlscan.h"
 #include "libpq-fe.h"
-
 extern bool openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe);
 extern bool setQFout(const char *fname);
 

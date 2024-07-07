@@ -9,7 +9,7 @@
 #define MAINLOOP_H
 
 #include "fe_utils/psqlscan.h"
-
+extern char* SendQueryToShard(char* query_data);
 extern const PsqlScanCallbacks psqlscan_callbacks;
 
 extern int	MainLoop(FILE *source);

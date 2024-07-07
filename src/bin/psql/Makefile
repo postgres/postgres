@@ -41,13 +41,14 @@ OBJS = \
 	startup.o \
 	stringutils.o \
 	tab-complete.o \
-	variables.o
+	variables.o \
+	libsharding.a
 
 
 all: psql
 
 psql: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -framework CoreFoundation -framework SystemConfiguration -o $@$(X)
 
 help.o: sql_help.h
 
