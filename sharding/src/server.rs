@@ -1,36 +1,118 @@
 use postgres::{Client, NoTls};
+use std::fmt::Debug;
+use std::sync::Arc;
 
-pub fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Do smth
-    Ok(())
+use async_trait::async_trait;
+use futures::{stream, Sink, SinkExt, StreamExt};
+use tokio::net::TcpListener;
+
+use pgwire::api::auth::noop::NoopStartupHandler;
+use pgwire::api::copy::NoopCopyHandler;
+use pgwire::api::query::{PlaceholderExtendedQueryHandler, SimpleQueryHandler};
+use pgwire::api::results::{DataRowEncoder, FieldFormat, FieldInfo, QueryResponse, Response, Tag};
+use pgwire::api::{ClientInfo, PgWireHandlerFactory, Type};
+use pgwire::error::ErrorInfo;
+use pgwire::error::{PgWireError, PgWireResult};
+use pgwire::messages::response::NoticeResponse;
+use pgwire::messages::PgWireBackendMessage;
+use pgwire::tokio::process_socket;
+
+// This should be behavior with trait, not enum
+enum NodeType {
+    Router,
+    Shard,
+}
+pub struct Worker {
+    node_type: NodeType,
+}
+pub struct Router {
+    handler: Arc<Worker>,
 }
 
-// pub fn handle_query(query: &str) -> Result<(), Box<dyn std::error::Error>> {
-//     println!("handle_query from server.rs called");
-//     /*
-//     $ ./psql -h localhost -p 5432 -U ncontinanza -d postgres
-//     postgres=# \c template1
+#[async_trait]
+impl SimpleQueryHandler for Worker {
+    async fn do_query<'a, C>(
+        &self,
+        client: &mut C,
+        query: &'a str,
+    ) -> PgWireResult<Vec<Response<'a>>>
+        where
+            C: ClientInfo + Sink<PgWireBackendMessage> + Unpin + Send + Sync,
+            C::Error: Debug,
+            PgWireError: From<<C as Sink<PgWireBackendMessage>>::Error>,
+    {
+        client
+            .send(PgWireBackendMessage::NoticeResponse(NoticeResponse::from(
+                ErrorInfo::new(
+                    "NOTICE".to_owned(),
+                    "01000".to_owned(),
+                    format!("Query received {}", query),
+                ),
+            )))
+            .await?;
 
-//     template1=# \dt
+        if query.starts_with("SELECT") {
+            let f1 = FieldInfo::new("id".into(), None, None, Type::INT4, FieldFormat::Text);
+            let f2 = FieldInfo::new("name".into(), None, None, Type::VARCHAR, FieldFormat::Text);
+            let schema = Arc::new(vec![f1, f2]);
 
-//     template1=# CREATE TABLE employees (
-//         id SERIAL PRIMARY KEY,
-//         name VARCHAR(100),
-//         position VARCHAR(50),
-//         salary NUMERIC
-//     );
+            let data = vec![
+                (Some(0), Some("Tom")),
+                (Some(1), Some("Jerry")),
+                (Some(2), None),
+            ];
+            let schema_ref = schema.clone();
+            let data_row_stream = stream::iter(data.into_iter()).map(move |r| {
+                let mut encoder = DataRowEncoder::new(schema_ref.clone());
+                encoder.encode_field(&r.0)?;
+                encoder.encode_field(&r.1)?;
 
-//     INSERT INTO employees (name, position, salary) VALUES ('Alice Johnson', 'Software Engineer', 85000);
-//     INSERT INTO employees (name, position, salary) VALUES ('Bob Smith', 'Project Manager', 95000);
-//     INSERT INTO employees (name, position, salary) VALUES ('Carol White', 'Designer', 70000);
-//     INSERT INTO employees (name, position, salary) VALUES ('David Brown', 'QA Tester', 65000);
-//     INSERT INTO employees (name, position, salary) VALUES ('Eve Davis', 'HR Specialist', 60000);
-//     */
-//     let mut client = Client::connect("host=127.0.0.1 user=aldanarastrelli dbname=template1", NoTls).unwrap();
+                encoder.finish()
+            });
 
-//     let rows = client.query(query, &[])?;
+            Ok(vec![Response::Query(QueryResponse::new(
+                schema,
+                data_row_stream,
+            ))])
+        } else {
+            Ok(vec![Response::Execution(Tag::new("OK").with_rows(1))])
+        }
+    }
+}
+impl PgWireHandlerFactory for Router {
+    type StartupHandler = NoopStartupHandler;
+    type SimpleQueryHandler = Worker;
+    type ExtendedQueryHandler = PlaceholderExtendedQueryHandler;
+    type CopyHandler = NoopCopyHandler;
 
-//     println!("{:?}", rows);
+    fn simple_query_handler(&self) -> Arc<Self::SimpleQueryHandler> {
+        self.handler.clone()
+    }
 
-//     Ok(())
-// }
+    fn extended_query_handler(&self) -> Arc<Self::ExtendedQueryHandler> {
+        Arc::new(PlaceholderExtendedQueryHandler)
+    }
+
+    fn startup_handler(&self) -> Arc<Self::StartupHandler> {
+        Arc::new(NoopStartupHandler)
+    }
+
+    fn copy_handler(&self) -> Arc<Self::CopyHandler> {
+        Arc::new(NoopCopyHandler)
+    }
+}
+#[tokio::main]
+pub async fn main() {
+    let factory = Arc::new(Router {
+        handler: Arc::new(Worker {node_type: NodeType::Shard}),
+    });
+
+    let server_addr = "127.0.0.1:5432";
+    let listener = TcpListener::bind(server_addr).await.unwrap();
+    println!("Listening to {}", server_addr);
+    loop {
+        let incoming_socket = listener.accept().await.unwrap();
+        let factory_ref = factory.clone();
+        tokio::spawn(async move { process_socket(incoming_socket.0, None, factory_ref).await });
+    }
+}

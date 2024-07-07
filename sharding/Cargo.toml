@@ -14,6 +14,8 @@ postgres = "0.19"
 core-foundation = "0.9.4"
 rust_decimal = {version = "1.35.0", features = ["db-postgres"]}
 users = "0.11.0"
+async-trait = "0.1.80"
+futures = "0.3.30"
 [lib]
 name = "sharding"
 crate-type = ["staticlib"]
