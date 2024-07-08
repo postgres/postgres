@@ -3635,10 +3635,10 @@ show_tidbitmap_info(BitmapHeapScanState *planstate, ExplainState *es)
 {
 	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
-		ExplainPropertyInteger("Exact Heap Blocks", NULL,
-							   planstate->exact_pages, es);
-		ExplainPropertyInteger("Lossy Heap Blocks", NULL,
-							   planstate->lossy_pages, es);
+		ExplainPropertyUInteger("Exact Heap Blocks", NULL,
+								planstate->exact_pages, es);
+		ExplainPropertyUInteger("Lossy Heap Blocks", NULL,
+								planstate->lossy_pages, es);
 	}
 	else
 	{
@@ -3647,9 +3647,9 @@ show_tidbitmap_info(BitmapHeapScanState *planstate, ExplainState *es)
 			ExplainIndentText(es);
 			appendStringInfoString(es->str, "Heap Blocks:");
 			if (planstate->exact_pages > 0)
-				appendStringInfo(es->str, " exact=%ld", planstate->exact_pages);
+				appendStringInfo(es->str, " exact=" UINT64_FORMAT, planstate->exact_pages);
 			if (planstate->lossy_pages > 0)
-				appendStringInfo(es->str, " lossy=%ld", planstate->lossy_pages);
+				appendStringInfo(es->str, " lossy=" UINT64_FORMAT, planstate->lossy_pages);
 			appendStringInfoChar(es->str, '\n');
 		}
 	}
