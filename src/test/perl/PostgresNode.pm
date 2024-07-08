@@ -119,6 +119,14 @@ our ($use_tcp, $test_localhost, $test_pghost, $last_host_assigned,
 # list of file reservations made by get_free_port
 my @port_reservation_files;
 
+# We want to choose a server port above the range that servers typically use
+# on Unix systems and below the range those systems typically use for ephemeral
+# client ports.
+# That way we minimize the risk of getting a port collision. These two values
+# are chosen to reflect that. We will always choose a port in this range.
+my $port_lower_bound = 10200;
+my $port_upper_bound = 32767;
+
 INIT
 {
 
@@ -132,7 +140,8 @@ INIT
 	$ENV{PGDATABASE}    = 'postgres';
 
 	# Tracking of last port value assigned to accelerate free port lookup.
-	$last_port_assigned = int(rand() * 16384) + 49152;
+	my $num_ports = $port_upper_bound - $port_lower_bound;
+	$last_port_assigned = int(rand() * $num_ports) + $port_lower_bound;
 
 	# Set the port lock directory
 
@@ -1441,7 +1450,7 @@ sub get_free_port
 	{
 
 		# advance $port, wrapping correctly around range end
-		$port = 49152 if ++$port >= 65536;
+		$port = $port_lower_bound if ++$port > $port_upper_bound;
 		print "# Checking port $port\n";
 
 		# Check first that candidate port number is not included in
