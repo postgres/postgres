@@ -70,6 +70,12 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 use SSL::Backend::OpenSSL;
 
+# Force SSL tests nodes to begin in TCP mode. They won't work in Unix Socket
+# mode and this way they will find a port to run on in a more robust way.
+# Use an INIT block so it runs after the BEGIN block in Utils.pm.
+
+INIT { $PostgreSQL::Test::Utils::use_unix_sockets = 0; }
+
 =pod
 
 =head1 METHODS
