@@ -6362,7 +6362,7 @@
   proname => 'pg_describe_object', provolatile => 's', prorettype => 'text',
   proargtypes => 'oid oid int4', prosrc => 'pg_describe_object' },
 
-{ oid => '6347', descr => 'get ACL for SQL object',
+{ oid => '8730', descr => 'get ACL for SQL object',
   proname => 'pg_get_acl', provolatile => 's', prorettype => '_aclitem',
   proargtypes => 'oid oid', proargnames => '{classid,objid}',
   prosrc => 'pg_get_acl' },
