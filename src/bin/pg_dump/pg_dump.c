@@ -3144,10 +3144,16 @@ dumpDatabase(Archive *fout)
 	 * since those can't be altered later.  Other DB properties are left to
 	 * the DATABASE PROPERTIES entry, so that they can be applied after
 	 * reconnecting to the target DB.
+	 *
+	 * For binary upgrade, we use the FILE_COPY strategy because testing has
+	 * shown it to be faster.  When the server is in binary upgrade mode, it
+	 * will also skip the checkpoints this strategy ordinarily performs.
 	 */
 	if (dopt->binary_upgrade)
 	{
-		appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0 OID = %u",
+		appendPQExpBuffer(creaQry,
+						  "CREATE DATABASE %s WITH TEMPLATE = template0 "
+						  "OID = %u STRATEGY = FILE_COPY",
 						  qdatname, dbCatId.oid);
 	}
 	else

@@ -534,8 +534,20 @@ static void
 create_new_objects(void)
 {
 	int			dbnum;
+	PGconn	   *conn_new_template1;
 
 	prep_status_progress("Restoring database schemas in the new cluster");
+
+	/*
+	 * Ensure that any changes to template0 are fully written out to disk
+	 * prior to restoring the databases.  This is necessary because we use the
+	 * FILE_COPY strategy to create the databases (which testing has shown to
+	 * be faster), and when the server is in binary upgrade mode, it skips the
+	 * checkpoints this strategy ordinarily performs.
+	 */
+	conn_new_template1 = connectToServer(&new_cluster, "template1");
+	PQclear(executeQueryOrDie(conn_new_template1, "CHECKPOINT"));
+	PQfinish(conn_new_template1);
 
 	/*
 	 * We cannot process the template1 database concurrently with others,

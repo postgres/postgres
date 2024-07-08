@@ -563,9 +563,14 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 	 * happened while we're copying files, a file might be deleted just when
 	 * we're about to copy it, causing the lstat() call in copydir() to fail
 	 * with ENOENT.
+	 *
+	 * In binary upgrade mode, we can skip this checkpoint because pg_upgrade
+	 * is careful to ensure that template0 is fully written to disk prior to
+	 * any CREATE DATABASE commands.
 	 */
-	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE |
-					  CHECKPOINT_WAIT | CHECKPOINT_FLUSH_ALL);
+	if (!IsBinaryUpgrade)
+		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE |
+						  CHECKPOINT_WAIT | CHECKPOINT_FLUSH_ALL);
 
 	/*
 	 * Iterate through all tablespaces of the template database, and copy each
@@ -657,10 +662,17 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 	 * seem to be much we can do about that except document it as a
 	 * limitation.
 	 *
+	 * In binary upgrade mode, we can skip this checkpoint because neither of
+	 * these problems applies: we don't ever replay the WAL generated during
+	 * pg_upgrade, and we don't support taking base backups during pg_upgrade
+	 * (not to mention that we don't concurrently modify template0, either).
+	 *
 	 * See CreateDatabaseUsingWalLog() for a less cheesy CREATE DATABASE
 	 * strategy that avoids these problems.
 	 */
-	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+	if (!IsBinaryUpgrade)
+		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE |
+						  CHECKPOINT_WAIT);
 }
 
 /*
