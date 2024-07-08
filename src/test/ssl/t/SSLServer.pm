@@ -42,6 +42,12 @@ our @EXPORT = qw(
   switch_server_cert
 );
 
+# Force SSL tests nodes to begin in TCP mode. They won't work in Unix Socket
+# mode and this way they will find a port to run on in a more robust way.
+# Use an INIT block so it runs after the BEGIN block in TestLib.pm.
+
+INIT { $TestLib::use_unix_sockets = 0; }
+
 # Copy a set of files, taking into account wildcards
 sub copy_files
 {
