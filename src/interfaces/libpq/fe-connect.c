@@ -3564,8 +3564,8 @@ keep_going:						/* We will come back to here until there is
 				if (pollres == PGRES_POLLING_FAILED)
 				{
 					/*
-					 * Failed direct ssl connection, possibly try a new
-					 * connection with postgres negotiation
+					 * SSL handshake failed.  We will retry with a plaintext
+					 * connection, if permitted by sslmode.
 					 */
 					CONNECTION_FAILED();
 				}
