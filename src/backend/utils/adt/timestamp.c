@@ -27,6 +27,7 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "optimizer/optimizer.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/supportnodes.h"
 #include "parser/scansup.h"
@@ -6679,6 +6680,93 @@ generate_series_timestamptz_at_zone(PG_FUNCTION_ARGS)
 {
 	return generate_series_timestamptz_internal(fcinfo);
 }
+
+/*
+ * Planner support function for generate_series(timestamp, timestamp, interval)
+ */
+Datum
+generate_series_timestamp_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestRows))
+	{
+		/* Try to estimate the number of rows returned */
+		SupportRequestRows *req = (SupportRequestRows *) rawreq;
+
+		if (is_funcclause(req->node))	/* be paranoid */
+		{
+			List	   *args = ((FuncExpr *) req->node)->args;
+			Node	   *arg1,
+					   *arg2,
+					   *arg3;
+
+			/* We can use estimated argument values here */
+			arg1 = estimate_expression_value(req->root, linitial(args));
+			arg2 = estimate_expression_value(req->root, lsecond(args));
+			arg3 = estimate_expression_value(req->root, lthird(args));
+
+			/*
+			 * If any argument is constant NULL, we can safely assume that
+			 * zero rows are returned.  Otherwise, if they're all non-NULL
+			 * constants, we can calculate the number of rows that will be
+			 * returned.
+			 */
+			if ((IsA(arg1, Const) && ((Const *) arg1)->constisnull) ||
+				(IsA(arg2, Const) && ((Const *) arg2)->constisnull) ||
+				(IsA(arg3, Const) && ((Const *) arg3)->constisnull))
+			{
+				req->rows = 0;
+				ret = (Node *) req;
+			}
+			else if (IsA(arg1, Const) && IsA(arg2, Const) && IsA(arg3, Const))
+			{
+				Timestamp	start,
+							finish;
+				Interval   *step;
+				Datum		diff;
+				double		dstep;
+				int64		dummy;
+
+				start = DatumGetTimestamp(((Const *) arg1)->constvalue);
+				finish = DatumGetTimestamp(((Const *) arg2)->constvalue);
+				step = DatumGetIntervalP(((Const *) arg3)->constvalue);
+
+				/*
+				 * Perform some prechecks which could cause timestamp_mi to
+				 * raise an ERROR.  It's much better to just return some
+				 * default estimate than error out in a support function.
+				 */
+				if (!TIMESTAMP_NOT_FINITE(start) && !TIMESTAMP_NOT_FINITE(finish) &&
+					!pg_sub_s64_overflow(finish, start, &dummy))
+				{
+					diff = DirectFunctionCall2(timestamp_mi,
+											   TimestampGetDatum(finish),
+											   TimestampGetDatum(start));
+
+#define INTERVAL_TO_MICROSECONDS(i) ((((double) (i)->month * DAYS_PER_MONTH + (i)->day)) * USECS_PER_DAY + (i)->time)
+
+					dstep = INTERVAL_TO_MICROSECONDS(step);
+
+					/* This equation works for either sign of step */
+					if (dstep != 0.0)
+					{
+						Interval   *idiff = DatumGetIntervalP(diff);
+						double		ddiff = INTERVAL_TO_MICROSECONDS(idiff);
+
+						req->rows = floor(ddiff / dstep + 1.0);
+						ret = (Node *) req;
+					}
+#undef INTERVAL_TO_MICROSECONDS
+				}
+			}
+		}
+	}
+
+	PG_RETURN_POINTER(ret);
+}
+
 
 /* timestamp_at_local()
  * timestamptz_at_local()

@@ -4,6 +4,44 @@
 
 \set regresslib :libdir '/regress' :dlsuffix
 
+-- Function to assist with verifying EXPLAIN which includes costs.  A series
+-- of bool flags allows control over which portions are masked out
+CREATE FUNCTION explain_mask_costs(query text, do_analyze bool,
+    hide_costs bool, hide_row_est bool, hide_width bool) RETURNS setof text
+LANGUAGE plpgsql AS
+$$
+DECLARE
+    ln text;
+    analyze_str text;
+BEGIN
+    IF do_analyze = true THEN
+        analyze_str := 'on';
+    ELSE
+        analyze_str := 'off';
+    END IF;
+
+    FOR ln IN
+        EXECUTE format('explain (analyze %s, costs on, summary off, timing off) %s',
+            analyze_str, query)
+    LOOP
+        IF hide_costs = true THEN
+            ln := regexp_replace(ln, 'cost=\d+\.\d\d\.\.\d+\.\d\d', 'cost=N..N');
+        END IF;
+
+        IF hide_row_est = true THEN
+            -- don't use 'g' so that we leave the actual rows intact
+            ln := regexp_replace(ln, 'rows=\d+', 'rows=N');
+        END IF;
+
+        IF hide_width = true THEN
+            ln := regexp_replace(ln, 'width=\d+', 'width=N');
+        END IF;
+
+        RETURN NEXT ln;
+    END LOOP;
+END;
+$$;
+
 --
 -- num_nulls()
 --
@@ -224,6 +262,51 @@ SELECT * FROM tenk1 a JOIN my_gen_series(1,1000) g ON a.unique1 = g;
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1 a JOIN my_gen_series(1,10) g ON a.unique1 = g;
 
+--
+-- Test the SupportRequestRows support function for generate_series_timestamp()
+--
+
+-- Ensure the row estimate matches the actual rows
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(TIMESTAMPTZ '2024-02-01', TIMESTAMPTZ '2024-03-01', INTERVAL '1 day') g(s);$$,
+true, true, false, true);
+
+-- As above but with generate_series_timestamp
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(TIMESTAMP '2024-02-01', TIMESTAMP '2024-03-01', INTERVAL '1 day') g(s);$$,
+true, true, false, true);
+
+-- As above but with generate_series_timestamptz_at_zone()
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(TIMESTAMPTZ '2024-02-01', TIMESTAMPTZ '2024-03-01', INTERVAL '1 day', 'UTC') g(s);$$,
+true, true, false, true);
+
+-- Ensure the estimated and actual row counts match when the range isn't
+-- evenly divisible by the step
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(TIMESTAMPTZ '2024-02-01', TIMESTAMPTZ '2024-03-01', INTERVAL '7 day') g(s);$$,
+true, true, false, true);
+
+-- Ensure the estimates match when step is decreasing
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(TIMESTAMPTZ '2024-03-01', TIMESTAMPTZ '2024-02-01', INTERVAL '-1 day') g(s);$$,
+true, true, false, true);
+
+-- Ensure an empty range estimates 1 row
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(TIMESTAMPTZ '2024-03-01', TIMESTAMPTZ '2024-02-01', INTERVAL '1 day') g(s);$$,
+true, true, false, true);
+
+-- Ensure we get the default row estimate for infinity values
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(TIMESTAMPTZ '-infinity', TIMESTAMPTZ 'infinity', INTERVAL '1 day') g(s);$$,
+false, true, false, true);
+
+-- Ensure the row estimate behaves correctly when step size is zero.
+-- We expect generate_series_timestamp() to throw the error rather than in
+-- the support function.
+SELECT * FROM generate_series(TIMESTAMPTZ '2024-02-01', TIMESTAMPTZ '2024-03-01', INTERVAL '0 day') g(s);
+
 -- Test functions for control data
 SELECT count(*) > 0 AS ok FROM pg_control_checkpoint();
 SELECT count(*) > 0 AS ok FROM pg_control_init();
@@ -273,3 +356,4 @@ SELECT pg_column_toast_chunk_id(a) IS NULL,
   pg_column_toast_chunk_id(b) IN (SELECT chunk_id FROM pg_toast.:toastrel)
   FROM test_chunk_id;
 DROP TABLE test_chunk_id;
+DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);
