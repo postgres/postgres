@@ -514,7 +514,7 @@ freeJsonLexContext(JsonLexContext *lex)
  *
  * If FORCE_JSON_PSTACK is defined then the routine will call the non-recursive
  * JSON parser. This is a useful way to validate that it's doing the right
- * think at least for non-incremental cases. If this is on we expect to see
+ * thing at least for non-incremental cases. If this is on we expect to see
  * regression diffs relating to error messages about stack depth, but no
  * other differences.
  */
