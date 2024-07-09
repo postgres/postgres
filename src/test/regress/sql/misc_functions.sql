@@ -20,6 +20,9 @@ BEGIN
         analyze_str := 'off';
     END IF;
 
+    -- avoid jit related output by disabling it
+    SET LOCAL jit = 0;
+
     FOR ln IN
         EXECUTE format('explain (analyze %s, costs on, summary off, timing off) %s',
             analyze_str, query)
