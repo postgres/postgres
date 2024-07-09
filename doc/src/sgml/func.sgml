@@ -18665,10 +18665,15 @@ $.* ? (@ like_regex "^\\d+$")
    <literal>JSON_QUERY()</literal>, and <literal>JSON_VALUE()</literal>
    described in <xref linkend="functions-sqljson-querying"/> can be used
    to query JSON documents.  Each of these functions apply a
-   <replaceable>path_expression</replaceable> (the query) to a
-   <replaceable>context_item</replaceable> (the document); see
+   <replaceable>path_expression</replaceable> (an SQL/JSON path query) to a
+   <replaceable>context_item</replaceable> (the document).  See
    <xref linkend="functions-sqljson-path"/> for more details on what
-   <replaceable>path_expression</replaceable> can contain.
+   the <replaceable>path_expression</replaceable> can contain. The
+   <replaceable>path_expression</replaceable> can also reference variables,
+   whose values are specified with their respective names in the
+   <literal>PASSING</literal> clause that is supported by each function.
+   <replaceable>context_item</replaceable> can be a <type>jsonb</type> value
+   or a character string that can be successfully cast to <type>jsonb</type>.
   </para>
 
   <table id="functions-sqljson-querying">
@@ -18691,37 +18696,48 @@ $.* ? (@ like_regex "^\\d+$")
      <row>
       <entry role="func_table_entry"><para role="func_signature">
         <indexterm><primary>json_exists</primary></indexterm>
-        <function>json_exists</function> (
-        <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
-        <optional> { <literal>TRUE</literal> | <literal>FALSE</literal> |<literal> UNKNOWN</literal> | <literal>ERROR</literal> } <literal>ON ERROR</literal> </optional>)
+<synopsis>
+<function>JSON_EXISTS</function> (
+<replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable>
+<optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
+<optional>{ <literal>TRUE</literal> | <literal>FALSE</literal> |<literal> UNKNOWN</literal> | <literal>ERROR</literal> } <literal>ON ERROR</literal> </optional>) <returnvalue>boolean</returnvalue>
+</synopsis>
        </para>
+     <itemizedlist>
+      <listitem>
        <para>
         Returns true if the SQL/JSON <replaceable>path_expression</replaceable>
-        applied to the <replaceable>context_item</replaceable> using the
-        <literal>PASSING</literal> <replaceable>value</replaceable>s yields any
-        items.
+        applied to the <replaceable>context_item</replaceable> yields any
+        items, false otherwise.
        </para>
+      </listitem>
+      <listitem>
        <para>
         The <literal>ON ERROR</literal> clause specifies the behavior if
-        an error occurs; the default is to return the <type>boolean</type>
-        <literal>FALSE</literal> value. Note that if the
-        <replaceable>path_expression</replaceable> is <literal>strict</literal>
-        and <literal>ON ERROR</literal> behavior is <literal>ERROR</literal>,
-        an error is generated if it yields no items.
+        an error occurs during <replaceable>path_expression</replaceable>
+        evaluation.  Specifying <literal>ERROR</literal> will cause an error to
+        be thrown with the appropriate message.  Other options include
+        returning <type>boolean</type> values <literal>FALSE</literal> or
+        <literal>TRUE</literal> or the value <literal>UNKNOWN</literal> which
+        is actually an SQL NULL. The default when no <literal>ON ERROR</literal>
+        clause is specified is to return the <type>boolean</type> value
+        <literal>FALSE</literal>.
        </para>
+      </listitem>
+      </itemizedlist>
        <para>
         Examples:
        </para>
        <para>
-        <literal>select json_exists(jsonb '{"key1": [1,2,3]}', 'strict $.key1[*] ? (@ > 2)')</literal>
+        <literal>JSON_EXISTS(jsonb '{"key1": [1,2,3]}', 'strict $.key1[*] ? (@ > $x)' PASSING 2 AS x)</literal>
         <returnvalue>t</returnvalue>
        </para>
        <para>
-        <literal>select json_exists(jsonb '{"a": [1,2,3]}', 'lax $.a[5]' ERROR ON ERROR)</literal>
+        <literal>JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'lax $.a[5]' ERROR ON ERROR)</literal>
         <returnvalue>f</returnvalue>
        </para>
        <para>
-        <literal>select json_exists(jsonb '{"a": [1,2,3]}', 'strict $.a[5]' ERROR ON ERROR)</literal>
+        <literal>JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'strict $.a[5]' ERROR ON ERROR)</literal>
         <returnvalue></returnvalue>
 <programlisting>
 ERROR:  jsonpath array subscript is out of bounds
@@ -18731,72 +18747,96 @@ ERROR:  jsonpath array subscript is out of bounds
      <row>
       <entry role="func_table_entry"><para role="func_signature">
         <indexterm><primary>json_query</primary></indexterm>
-        <function>json_query</function> (
-        <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
-        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>
-        <optional> { <literal>WITHOUT</literal> | <literal>WITH</literal> { <literal>CONDITIONAL</literal> | <optional><literal>UNCONDITIONAL</literal></optional> } } <optional> <literal>ARRAY</literal> </optional> <literal>WRAPPER</literal> </optional>
-        <optional> { <literal>KEEP</literal> | <literal>OMIT</literal> } <literal>QUOTES</literal> <optional> <literal>ON SCALAR STRING</literal> </optional> </optional>
-        <optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>EMPTY</literal> { <optional> <literal>ARRAY</literal> </optional> | <literal>OBJECT</literal> } | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON EMPTY</literal> </optional>
-        <optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>EMPTY</literal> { <optional> <literal>ARRAY</literal> </optional> | <literal>OBJECT</literal> } | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON ERROR</literal> </optional>)
+<synopsis>
+<function>JSON_QUERY</function> (
+<replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable>
+<optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
+<optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>
+<optional> { <literal>WITHOUT</literal> | <literal>WITH</literal> { <literal>CONDITIONAL</literal> | <optional><literal>UNCONDITIONAL</literal></optional> } } <optional> <literal>ARRAY</literal> </optional> <literal>WRAPPER</literal> </optional>
+<optional> { <literal>KEEP</literal> | <literal>OMIT</literal> } <literal>QUOTES</literal> <optional> <literal>ON SCALAR STRING</literal> </optional> </optional>
+<optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>EMPTY</literal> { <optional> <literal>ARRAY</literal> </optional> | <literal>OBJECT</literal> } | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON EMPTY</literal> </optional>
+<optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>EMPTY</literal> { <optional> <literal>ARRAY</literal> </optional> | <literal>OBJECT</literal> } | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON ERROR</literal> </optional>) <returnvalue>jsonb</returnvalue>
+</synopsis>
       </para>
+     <itemizedlist>
+      <listitem>
        <para>
         Returns the result of applying the SQL/JSON
         <replaceable>path_expression</replaceable> to the
-        <replaceable>context_item</replaceable> using the
-        <literal>PASSING</literal> <replaceable>value</replaceable>s.
+        <replaceable>context_item</replaceable>.
        </para>
+      </listitem>
+      <listitem>
        <para>
-        If the path expression returns multiple SQL/JSON items, it might be
-        necessary to wrap the result using the <literal>WITH WRAPPER</literal>
-        clause to make it a valid JSON string.  If the wrapper is
-        <literal>UNCONDITIONAL</literal>, an array wrapper will always be
-        applied, even if the returned value is already a single JSON object
-        or an array.  If it is <literal>CONDITIONAL</literal>, it will not be
-        applied to a single JSON object or an array.
-        <literal>UNCONDITIONAL</literal> is the default.
+         By default, the result is returned as a value of type <type>jsonb</type>,
+         though the <literal>RETURNING</literal> clause can be used to return
+         as some other type to which it can be successfully coerced.
        </para>
+      </listitem>
+      <listitem>
+       <para>
+        If the path expression may return multiple values, it might be necessary
+        to wrap those values using the <literal>WITH WRAPPER</literal> clause to
+        make it a valid JSON string, because the default behavior is to not wrap
+        them, as if <literal>WITHOUT WRAPPER</literal> were specified. The
+        <literal>WITH WRAPPER</literal> clause is by default taken to mean
+        <literal>WITH UNCONDITIONAL WRAPPER</literal>, which means that even a
+        single result value will be wrapped. To apply the wrapper only when
+        multiple values are present, specify <literal>WITH CONDITIONAL WRAPPER</literal>.
+        Getting multiple values in result will be treated as an error if
+        <literal>WITHOUT WRAPPER</literal> is specified.
+       </para>
+      </listitem>
+      <listitem>
        <para>
         If the result is a scalar string, by default, the returned value will
         be surrounded by quotes, making it a valid JSON value.  It can be made
         explicit by specifying <literal>KEEP QUOTES</literal>.  Conversely,
         quotes can be omitted by specifying <literal>OMIT QUOTES</literal>.
-        Note that <literal>OMIT QUOTES</literal> cannot be specified when
-        <literal>WITH WRAPPER</literal> is also specified.
+        To ensure that the result is a valid JSON value, <literal>OMIT QUOTES</literal>
+        cannot be specified when <literal>WITH WRAPPER</literal> is also
+        specified.
        </para>
-       <para>
-        The <literal>RETURNING</literal> clause can be used to specify the
-        <replaceable>data_type</replaceable> of the result value.  By default,
-        the returned value will be of type <type>jsonb</type>.
-       </para>
+      </listitem>
+      <listitem>
        <para>
         The <literal>ON EMPTY</literal> clause specifies the behavior if
-        evaluating <replaceable>path_expression</replaceable> yields no value
-        at all. The default when <literal>ON EMPTY</literal> is not specified
-        is to return a null value.
+        evaluating <replaceable>path_expression</replaceable> yields an empty
+        set. The <literal>ON ERROR</literal> clause specifies the behavior
+        if an error occurs when evaluating <replaceable>path_expression</replaceable>,
+        when coercing the result value to the <literal>RETURNING</literal> type,
+        or when evaluating the <literal>ON EMPTY</literal> expression if the
+        <replaceable>path_expression</replaceable> evaluation returns an empty
+        set.
        </para>
+      </listitem>
+      <listitem>
        <para>
-        The <literal>ON ERROR</literal> clause specifies the
-        behavior if an error occurs when evaluating
-        <replaceable>path_expression</replaceable>, including the operation to
-        coerce the result value to the output type, or during the execution of
-        <literal>ON EMPTY</literal> behavior (that is caused by empty result
-        of <replaceable>path_expression</replaceable> evaluation).  The default
-        when <literal>ON ERROR</literal> is not specified is to return a null
-        value.
+        For both <literal>ON EMPTY</literal> and <literal>ON ERROR</literal>,
+        specifying <literal>ERROR</literal> will cause an error to be thrown with
+        the appropriate message. Other options include returning an SQL NULL, an
+        empty array (<literal>EMPTY <optional>ARRAY</optional></literal>),
+        an empty object (<literal>EMPTY OBJECT</literal>), or a user-specified
+        expression (<literal>DEFAULT</literal> <replaceable>expression</replaceable>)
+        that can be coerced to jsonb or the type specified in <literal>RETURNING</literal>.
+        The default when <literal>ON EMPTY</literal> or <literal>ON ERROR</literal>
+        is not specified is to return an SQL NULL value.
        </para>
+      </listitem>
+     </itemizedlist>
        <para>
         Examples:
        </para>
        <para>
-        <literal>select json_query(jsonb '[1,[2,3],null]', 'lax $[*][1]' WITH CONDITIONAL WRAPPER)</literal>
+        <literal>JSON_QUERY(jsonb '[1,[2,3],null]', 'lax $[*][$off]' PASSING 1 AS off WITH CONDITIONAL WRAPPER)</literal>
         <returnvalue>[3]</returnvalue>
        </para>
        <para>
-        <literal>select json_query(jsonb '{"a": "[1, 2]"}', 'lax $.a' OMIT QUOTES);</literal>
+        <literal>JSON_QUERY(jsonb '{"a": "[1, 2]"}', 'lax $.a' OMIT QUOTES)</literal>
         <returnvalue>[1, 2]</returnvalue>
        </para>
        <para>
-        <literal>select json_query(jsonb '{"a": "[1, 2]"}', 'lax $.a' RETURNING int[] OMIT QUOTES ERROR ON ERROR);</literal>
+        <literal>JSON_QUERY(jsonb '{"a": "[1, 2]"}', 'lax $.a' RETURNING int[] OMIT QUOTES ERROR ON ERROR)</literal>
         <returnvalue></returnvalue>
 <programlisting>
 ERROR:  malformed array literal: "[1, 2]"
@@ -18808,55 +18848,76 @@ DETAIL:  Missing "]" after array dimensions.
      <row>
       <entry role="func_table_entry"><para role="func_signature">
         <indexterm><primary>json_value</primary></indexterm>
-        <function>json_value</function> (
-        <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable>
-        <optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
-        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> </optional>
-        <optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON EMPTY</literal> </optional>
-        <optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON ERROR</literal> </optional>)
+<synopsis>
+<function>JSON_VALUE</function> (
+<replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable>
+<optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
+<optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> </optional>
+<optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON EMPTY</literal> </optional>
+<optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON ERROR</literal> </optional>) <returnvalue>text</returnvalue>
+</synopsis>
        </para>
+     <itemizedlist>
+      <listitem>
        <para>
         Returns the result of applying the SQL/JSON
         <replaceable>path_expression</replaceable> to the
-        <replaceable>context_item</replaceable> using the
-        <literal>PASSING</literal> <replaceable>value</replaceable>s.
+        <replaceable>context_item</replaceable>.
        </para>
+      </listitem>
+      <listitem>
        <para>
-        The extracted value must be a single <acronym>SQL/JSON</acronym>
-        scalar item; an error is thrown if that's not the case.  If you expect
-        that extracted value might be an object or an array, use the
-        <function>json_query</function> function instead.
+        Only use <function>JSON_VALUE()</function> if the extracted value is
+        expected to be a single <acronym>SQL/JSON</acronym> scalar item;
+        getting multiple values will be treated as an error. If you expect that
+        extracted value might be an object or an array, use the
+        <function>JSON_QUERY</function> function instead.
        </para>
+      </listitem>
+      <listitem>
        <para>
-        The <literal>RETURNING</literal> clause can be used to specify the
-        <replaceable>data_type</replaceable> of the result value. By default,
-        the returned value will be of type <type>text</type>.
+        By default, the result, which must be a single scalar value, is
+        returned as a value of type <type>text</type>, though the
+        <literal>RETURNING</literal> clause can be used to return as some
+        other type to which it can be successfully coerced.
        </para>
+      </listitem>
+      <listitem>
        <para>
         The <literal>ON ERROR</literal> and <literal>ON EMPTY</literal>
         clauses have similar semantics as mentioned in the description of
-        <function>json_query</function>.
+        <function>JSON_QUERY</function>, except the set of values returned in
+        lieu of throwing an error is different.
        </para>
+      </listitem>
+      <listitem>
        <para>
-        Note that scalar strings returned by <function>json_value</function>
+        Note that scalar strings returned by <function>JSON_VALUE</function>
         always have their quotes removed, equivalent to specifying
-        <literal>OMIT QUOTES</literal> in <function>json_query</function>.
+        <literal>OMIT QUOTES</literal> in <function>JSON_QUERY</function>.
        </para>
+      </listitem>
+     </itemizedlist>
        <para>
         Examples:
        </para>
        <para>
-        <literal>select json_value(jsonb '"123.45"', '$' RETURNING float)</literal>
+        <literal>JSON_VALUE(jsonb '"123.45"', '$' RETURNING float)</literal>
         <returnvalue>123.45</returnvalue>
        </para>
        <para>
-        <literal>select json_value(jsonb '"03:04 2015-02-01"', '$.datetime("HH24:MI&nbsp;YYYY-MM-DD")' RETURNING date)</literal>
+        <literal>JSON_VALUE(jsonb '"03:04 2015-02-01"', '$.datetime("HH24:MI&nbsp;YYYY-MM-DD")' RETURNING date)</literal>
         <returnvalue>2015-02-01</returnvalue>
        </para>
        <para>
-        <literal>select json_value(jsonb '[1,2]', 'strict $[*]' DEFAULT 9 ON ERROR)</literal>
+        <literal>JSON_VALUE(jsonb '[1,2]', 'strict $[$off]' PASSING 1 as off)</literal>
+        <returnvalue>2</returnvalue>
+       </para>
+       <para>
+        <literal>JSON_VALUE(jsonb '[1,2]', 'strict $[*]' DEFAULT 9 ON ERROR)</literal>
         <returnvalue>9</returnvalue>
-      </para></entry>
+       </para>
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -18869,6 +18930,14 @@ DETAIL:  Missing "]" after array dimensions.
     during that conversion are thrown unconditionally, that is, are not
     handled according to the (specified or implicit) <literal>ON ERROR</literal>
     clause.
+   </para>
+  </note>
+  <note>
+   <para>
+    <function>JSON_VALUE()</function> returns an SQL NULL if
+    <replaceable>path_expression</replaceable> returns a JSON
+    <literal>null</literal>, whereas <function>JSON_QUERY()</function> returns
+    the JSON <literal>null</literal> as is.
    </para>
   </note>
   </sect2>
