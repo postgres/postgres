@@ -54,8 +54,10 @@
 #include "utils/builtins.h"
 #include "utils/rel.h"
 
+PG_FUNCTION_INFO_V1(pg_tdeam_basic_handler);
+#ifdef PERCONA_FORK
 PG_FUNCTION_INFO_V1(pg_tdeam_handler);
-PG_FUNCTION_INFO_V1(pg_tde2am_handler);
+#endif
 
 
 static void reform_and_rewrite_tuple(HeapTuple tuple,
@@ -2641,16 +2643,18 @@ GetPGTdeamTableAmRoutine(void)
 }
 
 Datum
-pg_tdeam_handler(PG_FUNCTION_ARGS)
+pg_tdeam_basic_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&pg_tdeam_methods);
 }
 
+#ifdef PERCONA_FORK
 Datum
-pg_tde2am_handler(PG_FUNCTION_ARGS)
+pg_tdeam_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(GetHeapamTableAmRoutine());
 }
+#endif
 
 bool
 is_pg_tde_rel(Relation rel)

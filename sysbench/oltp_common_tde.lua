@@ -191,7 +191,7 @@ CREATE TABLE sbtest%d(
   c CHAR(120) DEFAULT '' NOT NULL,
   pad CHAR(60) DEFAULT '' NOT NULL,
   %s (id)
-) USING pg_tde %s %s]],
+) USING pg_tde_basic %s %s]],
       table_num, id_def, id_index_def, engine_def, extra_table_options)
 
    con:query(query)

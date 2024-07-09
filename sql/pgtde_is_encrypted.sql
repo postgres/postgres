@@ -9,7 +9,7 @@ CREATE TABLE test_enc(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
-	) USING pg_tde;
+	) USING pg_tde_basic;
 
 CREATE TABLE test_norm(
 	  id SERIAL,

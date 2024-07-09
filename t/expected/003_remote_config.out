@@ -1,5 +1,5 @@
 CREATE EXTENSION pg_tde;
-CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING pg_tde;
+CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING pg_tde_basic;
 INSERT INTO test_enc2 (k) VALUES (5),(6);
 SELECT * FROM test_enc2 ORDER BY id ASC;
 1|5

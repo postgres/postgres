@@ -18,7 +18,7 @@ CREATE TABLE albums (
     artist_id INTEGER,
     title TEXT NOT NULL,
     released DATE NOT NULL
-) USING pg_tde;
+) USING pg_tde_basic;
 COPY albums FROM stdin CSV HEADER;
 SELECT * FROM albums;
  album_id | artist_id |       title        |  released  
@@ -69,7 +69,7 @@ CREATE TABLE Towns (
    name TEXT NOT NULL,
    department VARCHAR(4) NOT NULL,
    UNIQUE (code, department)
-)  USING pg_tde;
+)  USING pg_tde_basic;
 COPY towns (id, code, article, name, department) FROM stdin;
 SELECT count(*) FROM towns;
  count 

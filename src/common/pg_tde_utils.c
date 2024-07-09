@@ -29,15 +29,15 @@
 #include "unistd.h"
 
 Oid
-get_tde_table_am_oid(void)
+get_tde_basic_table_am_oid(void)
 {
-    return get_table_am_oid("pg_tde", false);
+    return get_table_am_oid("pg_tde_basic", false);
 }
 
 Oid
-get_tde2_table_am_oid(void)
+get_tde_table_am_oid(void)
 {
-    return get_table_am_oid("pg_tde2", false);
+    return get_table_am_oid("pg_tde", false);
 }
 
 /*
@@ -50,7 +50,7 @@ get_all_tde_tables(void)
     SysScanDesc scan;
     HeapTuple tuple;
     List* tde_tables = NIL;
-    Oid am_oid = get_tde_table_am_oid();
+    Oid am_oid = get_tde_basic_table_am_oid();
 
     /* Open the pg_class table */
     pg_class = table_open(RelationRelationId, AccessShareLock);

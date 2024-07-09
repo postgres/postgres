@@ -8,7 +8,7 @@ CREATE TABLE sbtest2(
 	  id SERIAL,
 	  k TEXT STORAGE PLAIN,
 	  PRIMARY KEY (id)
-	) USING pg_tde;
+	) USING pg_tde_basic;
 
 INSERT INTO sbtest2(k) VALUES(repeat('a', 2500));
 INSERT INTO sbtest2(k) VALUES(repeat('b', 2500));
