@@ -6,6 +6,8 @@
  * src/bin/psql/startup.c
  */
 #include "postgres_fe.h"
+#include <stdio.h>
+
 #ifndef WIN32
 #include <unistd.h>
 #else							/* WIN32 */
@@ -116,6 +118,11 @@ empty_signal_handler(SIGNAL_ARGS)
 }
 #endif
 
+enum NodeType {
+	ROUTER,
+	SHARD
+};
+
 /*
  *
  * main
@@ -128,6 +135,7 @@ main(int argc, char *argv[])
 	int			successResult;
 	char	   *password = NULL;
 	bool		new_pass;
+	enum NodeType	nodeType;
 
 	pg_logging_init(argv[0]);
 	pg_logging_set_pre_callback(log_pre_callback);
@@ -146,7 +154,35 @@ main(int argc, char *argv[])
 			showVersion();
 			exit(EXIT_SUCCESS);
 		}
+
+		// Check if '-nodeType' is passed as an argument somewhere in the argv, if yes, then print the node type
+		for(int i=0;i<argc;i++)
+		{
+			if(strcmp(argv[i],"-nodeType")==0)
+			{
+				// If equals r or R (router)
+				if (strcmp(argv[i+1],"r")==0 || strcmp(argv[i+1],"R")==0)
+				{
+					nodeType = ROUTER;
+					printf("Node Type: router\n");
+				}
+				// If equals s or S (shard)
+				else if (strcmp(argv[i+1],"s")==0 || strcmp(argv[i+1],"S")==0)
+				{
+					nodeType = SHARD;
+					printf("Node Type: shard\n");
+				}
+				else
+				{
+					printf("Invalid Node Type\n");
+					exit(EXIT_FAILURE);
+				}
+			}
+		}
 	}
+
+	// Initialize
+	// TODO-SHARD: initialize DistributionHandler here with NodeType
 
 	pset.progname = get_progname(argv[0]);
 
@@ -731,10 +767,15 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts *options)
 			options->dbname = argv[optind];
 		else if (!options->username)
 			options->username = argv[optind];
-		else if (!pset.quiet)
+		else if (!pset.quiet) {
+			if (strcmp(argv[optind],"r") == 0 || strcmp(argv[optind],"R") == 0 || strcmp(argv[optind],"s") == 0 || strcmp(argv[optind],"S") == 0)
+			{
+				optind++;
+				continue;
+			}
 			pg_log_warning("extra command-line argument \"%s\" ignored",
 						   argv[optind]);
-
+		}
 		optind++;
 	}
 }
