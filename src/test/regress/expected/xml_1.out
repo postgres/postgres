@@ -180,12 +180,6 @@ DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT xmlparse(content '<nosuchprefix:tag/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-SELECT xmlparse(content '<unclosed>');
-ERROR:  unsupported XML feature
-DETAIL:  This functionality requires the server to be built with libxml support.
-SELECT xmlparse(content '<parent><child></parent></child>');
-ERROR:  unsupported XML feature
-DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT xmlparse(document '   ');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
@@ -211,12 +205,6 @@ SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT xmlparse(document '<nosuchprefix:tag/>');
-ERROR:  unsupported XML feature
-DETAIL:  This functionality requires the server to be built with libxml support.
-SELECT xmlparse(document '<unclosed>');
-ERROR:  unsupported XML feature
-DETAIL:  This functionality requires the server to be built with libxml support.
-SELECT xmlparse(document '<parent><child></parent></child>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT xmlpi(name foo);

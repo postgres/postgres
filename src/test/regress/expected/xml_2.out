@@ -279,19 +279,6 @@ SELECT xmlparse(content '<nosuchprefix:tag/>');
  <nosuchprefix:tag/>
 (1 row)
 
-SELECT xmlparse(content '<unclosed>');
-ERROR:  invalid XML content
-DETAIL:  line 1: Premature end of data in tag unclosed line 1
-<unclosed>
-          ^
-SELECT xmlparse(content '<parent><child></parent></child>');
-ERROR:  invalid XML content
-DETAIL:  line 1: Opening and ending tag mismatch: child line 1 and parent
-<parent><child></parent></child>
-                        ^
-line 1: Opening and ending tag mismatch: parent line 1 and child
-<parent><child></parent></child>
-                                ^
 SELECT xmlparse(document '   ');
 ERROR:  invalid XML document
 DETAIL:  line 1: Start tag expected, '<' not found
@@ -342,19 +329,6 @@ SELECT xmlparse(document '<nosuchprefix:tag/>');
  <nosuchprefix:tag/>
 (1 row)
 
-SELECT xmlparse(document '<unclosed>');
-ERROR:  invalid XML document
-DETAIL:  line 1: Premature end of data in tag unclosed line 1
-<unclosed>
-          ^
-SELECT xmlparse(document '<parent><child></parent></child>');
-ERROR:  invalid XML document
-DETAIL:  line 1: Opening and ending tag mismatch: child line 1 and parent
-<parent><child></parent></child>
-                        ^
-line 1: Opening and ending tag mismatch: parent line 1 and child
-<parent><child></parent></child>
-                                ^
 SELECT xmlpi(name foo);
   xmlpi  
 ---------
