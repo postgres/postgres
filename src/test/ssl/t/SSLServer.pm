@@ -42,6 +42,13 @@ our @EXPORT = qw(
   test_connect_ok
 );
 
+# Force SSL tests nodes to begin in TCP mode. They won't work in Unix Socket
+# mode and this way they will find a port to run on in a more robust way.
+# Use an INIT block, it will run after the INIT block in PostgresNode.pm,
+# as they run in order of definition (see perlmod).
+
+INIT { $PostgresNode::use_tcp = 1; $PostgresNode::test_pghost = '127.0.0.1'; }
+
 # Define a couple of helper functions to test connecting to the server.
 
 # The first argument is a base connection string to use for connection.
