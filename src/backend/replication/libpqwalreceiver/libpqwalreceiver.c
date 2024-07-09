@@ -305,12 +305,12 @@ bad_connection:
 }
 
 /*
- * Validate connection info string, and determine whether it might cause
- * local filesystem access to be attempted.
+ * Validate connection info string.
  *
  * If the connection string can't be parsed, this function will raise
- * an error and will not return. If it can, it will return true if this
- * connection string specifies a password and false otherwise.
+ * an error. If must_use_password is true, the function raises an error
+ * if no password is provided in the connection string. In any other case
+ * it successfully completes.
  */
 static void
 libpqrcv_check_conninfo(const char *conninfo, bool must_use_password)
