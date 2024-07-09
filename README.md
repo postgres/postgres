@@ -113,7 +113,7 @@ brew install make autoconf curl gettext postresql@16
 4. Clone the repository, build and install it with the following commands:  
 
 ```
-git clone git://github.com/Percona-Lab/pg_tde
+git clone https://github.com/Percona-Lab/pg_tde
 ```
 
 Compile and install the extension
