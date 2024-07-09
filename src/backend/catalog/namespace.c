@@ -230,7 +230,7 @@ static void AccessTempTableNamespace(bool force);
 static void InitTempTableNamespace(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
-static void NamespaceCallback(Datum arg, int cacheid, uint32 hashvalue);
+static void InvalidationCallback(Datum arg, int cacheid, uint32 hashvalue);
 static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 						   bool include_out_arguments, int pronargs,
 						   int **argnumbers);
@@ -4749,15 +4749,29 @@ InitializeSearchPath(void)
 
 		/*
 		 * In normal mode, arrange for a callback on any syscache invalidation
-		 * of pg_namespace or pg_authid rows. (Changing a role name may affect
-		 * the meaning of the special string $user.)
+		 * that will affect the search_path cache.
 		 */
+
+		/* namespace name or ACLs may have changed */
 		CacheRegisterSyscacheCallback(NAMESPACEOID,
-									  NamespaceCallback,
+									  InvalidationCallback,
 									  (Datum) 0);
+
+		/* role name may affect the meaning of "$user" */
 		CacheRegisterSyscacheCallback(AUTHOID,
-									  NamespaceCallback,
+									  InvalidationCallback,
 									  (Datum) 0);
+
+		/* role membership may affect ACLs */
+		CacheRegisterSyscacheCallback(AUTHMEMROLEMEM,
+									  InvalidationCallback,
+									  (Datum) 0);
+
+		/* database owner may affect ACLs */
+		CacheRegisterSyscacheCallback(DATABASEOID,
+									  InvalidationCallback,
+									  (Datum) 0);
+
 		/* Force search path to be recomputed on next use */
 		baseSearchPathValid = false;
 		searchPathCacheValid = false;
@@ -4765,11 +4779,11 @@ InitializeSearchPath(void)
 }
 
 /*
- * NamespaceCallback
+ * InvalidationCallback
  *		Syscache inval callback function
  */
 static void
-NamespaceCallback(Datum arg, int cacheid, uint32 hashvalue)
+InvalidationCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
 	/*
 	 * Force search path to be recomputed on next use, also invalidating the
