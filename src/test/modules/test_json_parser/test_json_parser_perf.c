@@ -55,7 +55,7 @@ main(int argc, char **argv)
 
 	sscanf(argv[1], "%d", &iter);
 
-	if ((json_file = fopen(argv[2], "r")) == NULL)
+	if ((json_file = fopen(argv[2], PG_BINARY_R)) == NULL)
 		pg_fatal("Could not open input file '%s': %m", argv[2]);
 
 	while ((n_read = fread(buff, 1, 6000, json_file)) > 0)
