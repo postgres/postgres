@@ -118,6 +118,23 @@ pg_wal_summary_contents(PG_FUNCTION_ARGS)
 		values[2] = ObjectIdGetDatum(rlocator.dbOid);
 		values[3] = Int16GetDatum((int16) forknum);
 
+		/*
+		 * If the limit block is not InvalidBlockNumber, emit an extra row
+		 * with that block number and limit_block = true.
+		 *
+		 * There is no point in doing this when the limit_block is
+		 * InvalidBlockNumber, because no block with that number or any higher
+		 * number can ever exist.
+		 */
+		if (BlockNumberIsValid(limit_block))
+		{
+			values[4] = Int64GetDatum((int64) limit_block);
+			values[5] = BoolGetDatum(true);
+
+			tuple = heap_form_tuple(rsi->setDesc, values, nulls);
+			tuplestore_puttuple(rsi->setResult, tuple);
+		}
+
 		/* Loop over blocks within the current relation fork. */
 		while (1)
 		{
@@ -139,23 +156,6 @@ pg_wal_summary_contents(PG_FUNCTION_ARGS)
 			for (i = 0; i < nblocks; ++i)
 			{
 				values[4] = Int64GetDatum((int64) blocks[i]);
-
-				tuple = heap_form_tuple(rsi->setDesc, values, nulls);
-				tuplestore_puttuple(rsi->setResult, tuple);
-			}
-
-			/*
-			 * If the limit block is not InvalidBlockNumber, emit an extra row
-			 * with that block number and limit_block = true.
-			 *
-			 * There is no point in doing this when the limit_block is
-			 * InvalidBlockNumber, because no block with that number or any
-			 * higher number can ever exist.
-			 */
-			if (BlockNumberIsValid(limit_block))
-			{
-				values[4] = Int64GetDatum((int64) limit_block);
-				values[5] = BoolGetDatum(true);
 
 				tuple = heap_form_tuple(rsi->setDesc, values, nulls);
 				tuplestore_puttuple(rsi->setResult, tuple);
