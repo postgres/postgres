@@ -77,6 +77,8 @@ SELECT xmlparse(content '<invalidns xmlns=''&lt;''/>');
 SELECT xmlparse(content '<relativens xmlns=''relative''/>');
 SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>');
 SELECT xmlparse(content '<nosuchprefix:tag/>');
+SELECT xmlparse(content '<unclosed>');
+SELECT xmlparse(content '<parent><child></parent></child>');
 
 SELECT xmlparse(document '   ');
 SELECT xmlparse(document 'abc');
@@ -87,6 +89,8 @@ SELECT xmlparse(document '<invalidns xmlns=''&lt;''/>');
 SELECT xmlparse(document '<relativens xmlns=''relative''/>');
 SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>');
 SELECT xmlparse(document '<nosuchprefix:tag/>');
+SELECT xmlparse(document '<unclosed>');
+SELECT xmlparse(document '<parent><child></parent></child>');
 
 
 SELECT xmlpi(name foo);

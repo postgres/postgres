@@ -2114,6 +2114,19 @@ xml_errorHandler(void *data, PgXmlErrorPtr error)
 	switch (domain)
 	{
 		case XML_FROM_PARSER:
+
+			/*
+			 * XML_ERR_NOT_WELL_BALANCED is typically reported after some
+			 * other, more on-point error.  Furthermore, libxml2 2.13 reports
+			 * it under a completely different set of rules than prior
+			 * versions.  To avoid cross-version behavioral differences,
+			 * suppress it so long as we already logged some error.
+			 */
+			if (error->code == XML_ERR_NOT_WELL_BALANCED &&
+				xmlerrcxt->err_occurred)
+				return;
+			/* fall through */
+
 		case XML_FROM_NONE:
 		case XML_FROM_MEMORY:
 		case XML_FROM_IO:
