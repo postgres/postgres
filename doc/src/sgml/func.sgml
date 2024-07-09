@@ -28163,6 +28163,10 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         calling role is a member of the role whose backend is being canceled or
         the calling role has privileges of <literal>pg_signal_backend</literal>,
         however only superusers can cancel superuser backends.
+        As an exception, roles with privileges of
+        <literal>pg_signal_autovacuum_worker</literal> are permitted to
+        cancel autovacuum worker processes, which are otherwise considered
+        superuser backends.
        </para></entry>
       </row>
 
@@ -28237,6 +28241,10 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         is a member of the role whose backend is being terminated or the
         calling role has privileges of <literal>pg_signal_backend</literal>,
         however only superusers can terminate superuser backends.
+        As an exception, roles with privileges of
+        <literal>pg_signal_autovacuum_worker</literal> are permitted to
+        terminate autovacuum worker processes, which are otherwise considered
+        superuser backends.
        </para>
        <para>
         If <parameter>timeout</parameter> is not specified or zero, this

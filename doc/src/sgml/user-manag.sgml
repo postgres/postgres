@@ -662,6 +662,11 @@ DROP ROLE doomed_role;
        <entry>Signal another backend to cancel a query or terminate its session.</entry>
       </row>
       <row>
+       <entry>pg_signal_autovacuum_worker</entry>
+       <entry>Signal an autovacuum worker to cancel the current table's vacuum
+       or terminate its session.</entry>
+      </row>
+      <row>
        <entry>pg_read_server_files</entry>
        <entry>Allow reading files from any location the database can access on the server with COPY and
        other file-access functions.</entry>
