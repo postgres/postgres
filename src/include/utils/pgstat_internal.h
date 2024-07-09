@@ -200,6 +200,12 @@ typedef struct PgStat_KindInfo
 	uint32		shared_size;
 
 	/*
+	 * The offset of the statistics struct in the cached statistics snapshot
+	 * PgStat_Snapshot, for fixed-numbered statistics.
+	 */
+	uint32		snapshot_ctl_off;
+
+	/*
 	 * The offset of the statistics struct in the containing shared memory
 	 * control structure PgStat_ShmemControl, for fixed-numbered statistics.
 	 */

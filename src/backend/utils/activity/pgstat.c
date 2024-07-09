@@ -349,6 +349,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.snapshot_ctl_off = offsetof(PgStat_Snapshot, archiver),
 		.shared_ctl_off = offsetof(PgStat_ShmemControl, archiver),
 		.shared_data_off = offsetof(PgStatShared_Archiver, stats),
 		.shared_data_len = sizeof(((PgStatShared_Archiver *) 0)->stats),
@@ -362,6 +363,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.snapshot_ctl_off = offsetof(PgStat_Snapshot, bgwriter),
 		.shared_ctl_off = offsetof(PgStat_ShmemControl, bgwriter),
 		.shared_data_off = offsetof(PgStatShared_BgWriter, stats),
 		.shared_data_len = sizeof(((PgStatShared_BgWriter *) 0)->stats),
@@ -375,6 +377,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.snapshot_ctl_off = offsetof(PgStat_Snapshot, checkpointer),
 		.shared_ctl_off = offsetof(PgStat_ShmemControl, checkpointer),
 		.shared_data_off = offsetof(PgStatShared_Checkpointer, stats),
 		.shared_data_len = sizeof(((PgStatShared_Checkpointer *) 0)->stats),
@@ -388,6 +391,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.snapshot_ctl_off = offsetof(PgStat_Snapshot, io),
 		.shared_ctl_off = offsetof(PgStat_ShmemControl, io),
 		.shared_data_off = offsetof(PgStatShared_IO, stats),
 		.shared_data_len = sizeof(((PgStatShared_IO *) 0)->stats),
@@ -401,6 +405,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.snapshot_ctl_off = offsetof(PgStat_Snapshot, slru),
 		.shared_ctl_off = offsetof(PgStat_ShmemControl, slru),
 		.shared_data_off = offsetof(PgStatShared_SLRU, stats),
 		.shared_data_len = sizeof(((PgStatShared_SLRU *) 0)->stats),
@@ -414,6 +419,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 
 		.fixed_amount = true,
 
+		.snapshot_ctl_off = offsetof(PgStat_Snapshot, wal),
 		.shared_ctl_off = offsetof(PgStat_ShmemControl, wal),
 		.shared_data_off = offsetof(PgStatShared_Wal, stats),
 		.shared_data_len = sizeof(((PgStatShared_Wal *) 0)->stats),
@@ -1371,47 +1377,21 @@ pgstat_write_statsfile(void)
 	format_id = PGSTAT_FILE_FORMAT_ID;
 	write_chunk_s(fpout, &format_id);
 
-	/*
-	 * XXX: The following could now be generalized to just iterate over
-	 * pgstat_kind_infos instead of knowing about the different kinds of
-	 * stats.
-	 */
+	/* Write various stats structs for fixed number of objects */
+	for (int kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+	{
+		char	   *ptr;
+		const PgStat_KindInfo *info = pgstat_get_kind_info(kind);
 
-	/*
-	 * Write archiver stats struct
-	 */
-	pgstat_build_snapshot_fixed(PGSTAT_KIND_ARCHIVER);
-	write_chunk_s(fpout, &pgStatLocal.snapshot.archiver);
+		if (!info->fixed_amount)
+			continue;
 
-	/*
-	 * Write bgwriter stats struct
-	 */
-	pgstat_build_snapshot_fixed(PGSTAT_KIND_BGWRITER);
-	write_chunk_s(fpout, &pgStatLocal.snapshot.bgwriter);
+		Assert(info->snapshot_ctl_off != 0);
 
-	/*
-	 * Write checkpointer stats struct
-	 */
-	pgstat_build_snapshot_fixed(PGSTAT_KIND_CHECKPOINTER);
-	write_chunk_s(fpout, &pgStatLocal.snapshot.checkpointer);
-
-	/*
-	 * Write IO stats struct
-	 */
-	pgstat_build_snapshot_fixed(PGSTAT_KIND_IO);
-	write_chunk_s(fpout, &pgStatLocal.snapshot.io);
-
-	/*
-	 * Write SLRU stats struct
-	 */
-	pgstat_build_snapshot_fixed(PGSTAT_KIND_SLRU);
-	write_chunk_s(fpout, &pgStatLocal.snapshot.slru);
-
-	/*
-	 * Write WAL stats struct
-	 */
-	pgstat_build_snapshot_fixed(PGSTAT_KIND_WAL);
-	write_chunk_s(fpout, &pgStatLocal.snapshot.wal);
+		pgstat_build_snapshot_fixed(kind);
+		ptr = ((char *) &pgStatLocal.snapshot) + info->snapshot_ctl_off;
+		write_chunk(fpout, ptr, info->shared_data_len);
+	}
 
 	/*
 	 * Walk through the stats entries
