@@ -1076,6 +1076,9 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 		case T_MemoizeState:
 			ExecMemoizeRetrieveInstrumentation((MemoizeState *) planstate);
 			break;
+		case T_BitmapHeapScanState:
+			ExecBitmapHeapRetrieveInstrumentation((BitmapHeapScanState *) planstate);
+			break;
 		default:
 			break;
 	}

@@ -262,6 +262,7 @@ BitmapAndPath
 BitmapAndState
 BitmapHeapPath
 BitmapHeapScan
+BitmapHeapScanInstrumentation
 BitmapHeapScanState
 BitmapIndexScan
 BitmapIndexScanState
@@ -2603,6 +2604,7 @@ SetToDefault
 SetupWorkerPtrType
 ShDependObjectInfo
 SharedAggInfo
+SharedBitmapHeapInstrumentation
 SharedBitmapState
 SharedDependencyObjectType
 SharedDependencyType

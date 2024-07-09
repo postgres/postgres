@@ -236,9 +236,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			valid_block = table_scan_bitmap_next_block(scan, tbmres);
 
 			if (tbmres->ntuples >= 0)
-				node->exact_pages++;
+				node->stats.exact_pages++;
 			else
-				node->lossy_pages++;
+				node->stats.lossy_pages++;
 
 			if (!valid_block)
 			{
@@ -628,6 +628,29 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	TableScanDesc scanDesc;
 
 	/*
+	 * When ending a parallel worker, copy the statistics gathered by the
+	 * worker back into shared memory so that it can be picked up by the main
+	 * process to report in EXPLAIN ANALYZE.
+	 */
+	if (node->sinstrument != NULL && IsParallelWorker())
+	{
+		BitmapHeapScanInstrumentation *si;
+
+		Assert(ParallelWorkerNumber <= node->sinstrument->num_workers);
+		si = &node->sinstrument->sinstrument[ParallelWorkerNumber];
+
+		/*
+		 * Here we accumulate the stats rather than performing memcpy on
+		 * node->stats into si.  When a Gather/GatherMerge node finishes it
+		 * will perform planner shutdown on the workers.  On rescan it will
+		 * spin up new workers which will have a new BitmapHeapScanState and
+		 * zeroed stats.
+		 */
+		si->exact_pages += node->stats.exact_pages;
+		si->lossy_pages += node->stats.lossy_pages;
+	}
+
+	/*
 	 * extract information from the node
 	 */
 	scanDesc = node->ss.ss_currentScanDesc;
@@ -694,8 +717,10 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	scanstate->tbmiterator = NULL;
 	scanstate->tbmres = NULL;
 	scanstate->pvmbuffer = InvalidBuffer;
-	scanstate->exact_pages = 0;
-	scanstate->lossy_pages = 0;
+
+	/* Zero the statistics counters */
+	memset(&scanstate->stats, 0, sizeof(BitmapHeapScanInstrumentation));
+
 	scanstate->prefetch_iterator = NULL;
 	scanstate->prefetch_pages = 0;
 	scanstate->prefetch_target = 0;
@@ -803,7 +828,18 @@ void
 ExecBitmapHeapEstimate(BitmapHeapScanState *node,
 					   ParallelContext *pcxt)
 {
-	shm_toc_estimate_chunk(&pcxt->estimator, sizeof(ParallelBitmapHeapState));
+	Size		size;
+
+	size = MAXALIGN(sizeof(ParallelBitmapHeapState));
+
+	/* account for instrumentation, if required */
+	if (node->ss.ps.instrument && pcxt->nworkers > 0)
+	{
+		size = add_size(size, offsetof(SharedBitmapHeapInstrumentation, sinstrument));
+		size = add_size(size, mul_size(pcxt->nworkers, sizeof(BitmapHeapScanInstrumentation)));
+	}
+
+	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 }
 
@@ -818,13 +854,27 @@ ExecBitmapHeapInitializeDSM(BitmapHeapScanState *node,
 							ParallelContext *pcxt)
 {
 	ParallelBitmapHeapState *pstate;
+	SharedBitmapHeapInstrumentation *sinstrument = NULL;
 	dsa_area   *dsa = node->ss.ps.state->es_query_dsa;
+	char	   *ptr;
+	Size		size;
 
 	/* If there's no DSA, there are no workers; initialize nothing. */
 	if (dsa == NULL)
 		return;
 
-	pstate = shm_toc_allocate(pcxt->toc, sizeof(ParallelBitmapHeapState));
+	size = MAXALIGN(sizeof(ParallelBitmapHeapState));
+	if (node->ss.ps.instrument && pcxt->nworkers > 0)
+	{
+		size = add_size(size, offsetof(SharedBitmapHeapInstrumentation, sinstrument));
+		size = add_size(size, mul_size(pcxt->nworkers, sizeof(BitmapHeapScanInstrumentation)));
+	}
+
+	ptr = shm_toc_allocate(pcxt->toc, size);
+	pstate = (ParallelBitmapHeapState *) ptr;
+	ptr += MAXALIGN(sizeof(ParallelBitmapHeapState));
+	if (node->ss.ps.instrument && pcxt->nworkers > 0)
+		sinstrument = (SharedBitmapHeapInstrumentation *) ptr;
 
 	pstate->tbmiterator = 0;
 	pstate->prefetch_iterator = 0;
@@ -837,8 +887,18 @@ ExecBitmapHeapInitializeDSM(BitmapHeapScanState *node,
 
 	ConditionVariableInit(&pstate->cv);
 
+	if (sinstrument)
+	{
+		sinstrument->num_workers = pcxt->nworkers;
+
+		/* ensure any unfilled slots will contain zeroes */
+		memset(sinstrument->sinstrument, 0,
+			   pcxt->nworkers * sizeof(BitmapHeapScanInstrumentation));
+	}
+
 	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id, pstate);
 	node->pstate = pstate;
+	node->sinstrument = sinstrument;
 }
 
 /* ----------------------------------------------------------------
@@ -880,10 +940,37 @@ void
 ExecBitmapHeapInitializeWorker(BitmapHeapScanState *node,
 							   ParallelWorkerContext *pwcxt)
 {
-	ParallelBitmapHeapState *pstate;
+	char	   *ptr;
 
 	Assert(node->ss.ps.state->es_query_dsa != NULL);
 
-	pstate = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
-	node->pstate = pstate;
+	ptr = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
+
+	node->pstate = (ParallelBitmapHeapState *) ptr;
+	ptr += MAXALIGN(sizeof(ParallelBitmapHeapState));
+
+	if (node->ss.ps.instrument)
+		node->sinstrument = (SharedBitmapHeapInstrumentation *) ptr;
+}
+
+/* ----------------------------------------------------------------
+ *		ExecBitmapHeapRetrieveInstrumentation
+ *
+ *		Transfer bitmap heap scan statistics from DSM to private memory.
+ * ----------------------------------------------------------------
+ */
+void
+ExecBitmapHeapRetrieveInstrumentation(BitmapHeapScanState *node)
+{
+	SharedBitmapHeapInstrumentation *sinstrument = node->sinstrument;
+	Size		size;
+
+	if (sinstrument == NULL)
+		return;
+
+	size = offsetof(SharedBitmapHeapInstrumentation, sinstrument)
+		+ sinstrument->num_workers * sizeof(BitmapHeapScanInstrumentation);
+
+	node->sinstrument = palloc(size);
+	memcpy(node->sinstrument, sinstrument, size);
 }
