@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	makeJsonLexContextIncremental(&lex, PG_UTF8, need_strings);
 	initStringInfo(&json);
 
-	if ((json_file = fopen(testfile, "r")) == NULL)
+	if ((json_file = fopen(testfile, PG_BINARY_R)) == NULL)
 		pg_fatal("error opening input: %m");
 
 	if (fstat(fileno(json_file), &statbuf) != 0)
