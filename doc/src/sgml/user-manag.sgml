@@ -590,106 +590,73 @@ DROP ROLE doomed_role;
    and information.  Administrators (including roles that have the
    <literal>CREATEROLE</literal> privilege) can <command>GRANT</command> these
    roles to users and/or other roles in their environment, providing those
-   users with access to the specified capabilities and information.
+   users with access to the specified capabilities and information.  For
+   example:
+
+<programlisting>
+GRANT pg_signal_backend TO admin_user;
+</programlisting>
   </para>
 
+  <warning>
+   <para>
+    Care should be taken when granting these roles to ensure they are only used
+    where needed and with the understanding that these roles grant access to
+    privileged information.
+   </para>
+  </warning>
+
   <para>
-   The predefined roles are described in <xref linkend="predefined-roles-table"/>.
+   The predefined roles are described below.
    Note that the specific permissions for each of the roles may change in
    the future as additional capabilities are added.  Administrators
    should monitor the release notes for changes.
-  </para>
 
-   <table tocentry="1" id="predefined-roles-table">
-    <title>Predefined Roles</title>
-    <tgroup cols="2">
-     <colspec colname="col1" colwidth="1*"/>
-     <colspec colname="col2" colwidth="2*"/>
-     <thead>
-      <row>
-       <entry>Role</entry>
-       <entry>Allowed Access</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>pg_read_all_data</entry>
-       <entry>Read all data (tables, views, sequences), as if having
-       <command>SELECT</command> rights on those objects, and USAGE rights on
-       all schemas, even without having it explicitly.  This role does not have
-       the role attribute <literal>BYPASSRLS</literal> set.  If RLS is being
-       used, an administrator may wish to set <literal>BYPASSRLS</literal> on
-       roles which this role is GRANTed to.</entry>
-      </row>
-      <row>
-       <entry>pg_write_all_data</entry>
-       <entry>Write all data (tables, views, sequences), as if having
-       <command>INSERT</command>, <command>UPDATE</command>, and
-       <command>DELETE</command> rights on those objects, and USAGE rights on
-       all schemas, even without having it explicitly.  This role does not have
-       the role attribute <literal>BYPASSRLS</literal> set.  If RLS is being
-       used, an administrator may wish to set <literal>BYPASSRLS</literal> on
-       roles which this role is GRANTed to.</entry>
-      </row>
-      <row>
-       <entry>pg_read_all_settings</entry>
-       <entry>Read all configuration variables, even those normally visible only to
-       superusers.</entry>
-      </row>
-      <row>
-       <entry>pg_read_all_stats</entry>
-       <entry>Read all pg_stat_* views and use various statistics related extensions,
-       even those normally visible only to superusers.</entry>
-      </row>
-      <row>
-       <entry>pg_stat_scan_tables</entry>
-       <entry>Execute monitoring functions that may take <literal>ACCESS SHARE</literal> locks on tables,
-       potentially for a long time.</entry>
-      </row>
-      <row>
-       <entry>pg_monitor</entry>
-       <entry>Read/execute various monitoring views and functions.
-       This role is a member of <literal>pg_read_all_settings</literal>,
-       <literal>pg_read_all_stats</literal> and
-       <literal>pg_stat_scan_tables</literal>.</entry>
-      </row>
-      <row>
-       <entry>pg_database_owner</entry>
-       <entry>None.  Membership consists, implicitly, of the current database owner.</entry>
-      </row>
-      <row>
-       <entry>pg_signal_backend</entry>
-       <entry>Signal another backend to cancel a query or terminate its session.</entry>
-      </row>
-      <row>
-       <entry>pg_signal_autovacuum_worker</entry>
-       <entry>Signal an autovacuum worker to cancel the current table's vacuum
-       or terminate its session.</entry>
-      </row>
-      <row>
-       <entry>pg_read_server_files</entry>
-       <entry>Allow reading files from any location the database can access on the server with COPY and
-       other file-access functions.</entry>
-      </row>
-      <row>
-       <entry>pg_write_server_files</entry>
-       <entry>Allow writing to files in any location the database can access on the server with COPY and
-       other file-access functions.</entry>
-      </row>
-      <row>
-       <entry>pg_execute_server_program</entry>
-       <entry>Allow executing programs on the database server as the user the database runs as with
-       COPY and other functions which allow executing a server-side program.</entry>
-      </row>
-      <row>
-       <entry>pg_checkpoint</entry>
-       <entry>Allow executing
-       the <link linkend="sql-checkpoint"><command>CHECKPOINT</command></link>
-       command.</entry>
-      </row>
-      <row>
-       <entry>pg_maintain</entry>
-       <entry>Allow executing
+   <variablelist>
+    <varlistentry id="predefined-role-pg-checkpoint" xreflabel="pg_checkpoint">
+     <term><varname>pg_checkpoint</varname></term>
+     <listitem>
+      <para>
+       <literal>pg_checkpoint</literal> allows executing the
+       <link linkend="sql-checkpoint"><command>CHECKPOINT</command></link> command.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="predefined-role-pg-create-subscription" xreflabel="pg_create_subscription">
+     <term><varname>pg_create_subscription</varname></term>
+     <listitem>
+      <para>
+       <literal>pg_create_subscription</literal> allows users with
+       <literal>CREATE</literal> permission on the database to issue
+       <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="predefined-role-pg-database-owner" xreflabel="pg_database_owner">
+     <term><varname>pg_database_owner</varname></term>
+     <listitem>
+      <para>
+       <literal>pg_database_owner</literal> always has exactly one implicit
+       member: the current database owner.  It cannot be granted membership in
+       any role, and no role can be granted membership in
+       <literal>pg_database_owner</literal>.  However, like any other role, it
+       can own objects and receive grants of access privileges.  Consequently,
+       once <literal>pg_database_owner</literal> has rights within a template
+       database, each owner of a database instantiated from that template will
+       possess those rights.  Initially, this role owns the
+       <literal>public</literal> schema, so each database owner governs local
+       use of that schema.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="predefined-role-pg-maintain" xreflabel="pg_maintain">
+     <term><varname>pg_maintain</varname></term>
+     <listitem>
+      <para>
+       <literal>pg_maintain</literal> allows executing
        <link linkend="sql-vacuum"><command>VACUUM</command></link>,
        <link linkend="sql-analyze"><command>ANALYZE</command></link>,
        <link linkend="sql-cluster"><command>CLUSTER</command></link>,
@@ -697,76 +664,138 @@ DROP ROLE doomed_role;
        <link linkend="sql-reindex"><command>REINDEX</command></link>,
        and <link linkend="sql-lock"><command>LOCK TABLE</command></link> on all
        relations, as if having <literal>MAINTAIN</literal> rights on those
-       objects, even without having it explicitly.</entry>
-      </row>
-      <row>
-       <entry>pg_use_reserved_connections</entry>
-       <entry>Allow use of connection slots reserved via
-       <xref linkend="guc-reserved-connections"/>.</entry>
-      </row>
-      <row>
-       <entry>pg_create_subscription</entry>
-       <entry>Allow users with <literal>CREATE</literal> permission on the
-       database to issue
-       <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>.</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
+       objects.
+      </para>
+     </listitem>
+    </varlistentry>
 
-  <para>
-  The <literal>pg_monitor</literal>, <literal>pg_read_all_settings</literal>,
-  <literal>pg_read_all_stats</literal> and <literal>pg_stat_scan_tables</literal>
-  roles are intended to allow administrators to easily configure a role for the
-  purpose of monitoring the database server. They grant a set of common privileges
-  allowing the role to read various useful configuration settings, statistics and
-  other system information normally restricted to superusers.
-  </para>
+    <varlistentry id="predefined-role-pg-monitor" xreflabel="pg_monitor">
+     <term><varname>pg_monitor</varname></term>
+     <term><varname>pg_read_all_settings</varname></term>
+     <term><varname>pg_read_all_stats</varname></term>
+     <term><varname>pg_stat_scan_tables</varname></term>
+     <listitem>
+      <para>
+       These roles are intended to allow administrators to easily configure a
+       role for the purpose of monitoring the database server.  They grant a
+       set of common privileges allowing the role to read various useful
+       configuration settings, statistics, and other system information
+       normally restricted to superusers.
+      </para>
+      <para>
+       <literal>pg_monitor</literal> allows reading/executing various
+       monitoring views and functions.  This role is a member of
+       <literal>pg_read_all_settings</literal>,
+       <literal>pg_read_all_stats</literal> and
+       <literal>pg_stat_scan_tables</literal>.
+      </para>
+      <para>
+       <literal>pg_read_all_settings</literal> allows reading all configuration
+       variables, even those normally visible only to superusers.
+      </para>
+      <para>
+       <literal>pg_read_all_stats</literal> allows reading all pg_stat_* views
+       and use various statistics related extensions, even those normally
+       visible only to superusers.
+      </para>
+      <para>
+       <literal>pg_stat_scan_tables</literal> allows executing monitoring
+       functions that may take <literal>ACCESS SHARE</literal> locks on tables,
+       potentially for a long time (e.g., <function>pgrowlocks(text)</function>
+       in the <xref linkend="pgrowlocks"/> extension).
+      </para>
+     </listitem>
+    </varlistentry>
 
-  <para>
-  The <literal>pg_database_owner</literal> role has one implicit,
-  situation-dependent member, namely the owner of the current database.  Like
-  any role, it can own objects or receive grants of access privileges.
-  Consequently, once <literal>pg_database_owner</literal> has rights within a
-  template database, each owner of a database instantiated from that template
-  will exercise those rights.  <literal>pg_database_owner</literal> cannot be
-  a member of any role, and it cannot have non-implicit members.  Initially,
-  this role owns the <literal>public</literal> schema, so each database owner
-  governs local use of the schema.
-  </para>
+    <varlistentry id="predefined-role-pg-read-all-data" xreflabel="pg_read_all_data">
+     <term><varname>pg_read_all_data</varname></term>
+     <term><varname>pg_write_all_data</varname></term>
+     <listitem>
+      <para>
+       <literal>pg_read_all_data</literal> allows reading all data (tables,
+       views, sequences), as if having <command>SELECT</command> rights on
+       those objects and <literal>USAGE</literal> rights on all schemas.  This
+       role does not bypass row-level security (RLS) policies.  If RLS is being
+       used, an administrator may wish to set <literal>BYPASSRLS</literal> on
+       roles which this role is granted to.
+      </para>
+      <para>
+       <literal>pg_write_all_data</literal> allows writing all data (tables,
+       views, sequences), as if having <command>INSERT</command>,
+       <command>UPDATE</command>, and <command>DELETE</command> rights on those
+       objects and <literal>USAGE</literal> rights on all schemas.  This role
+       does not bypass row-level security (RLS) policies.  If RLS is being
+       used, an administrator may wish to set <literal>BYPASSRLS</literal> on
+       roles which this role is granted to.
+      </para>
+     </listitem>
+    </varlistentry>
 
-  <para>
-  The <literal>pg_signal_backend</literal> role is intended to allow
-  administrators to enable trusted, but non-superuser, roles to send signals
-  to other backends. Currently this role enables sending of signals for
-  canceling a query on another backend or terminating its session. A user
-  granted this role cannot however send signals to a backend owned by a
-  superuser.  See <xref linkend="functions-admin-signal"/>.
-  </para>
+    <varlistentry id="predefined-role-pg-read-server-files" xreflabel="pg_read_server_files">
+     <term><varname>pg_read_server_files</varname></term>
+     <term><varname>pg_write_server_files</varname></term>
+     <term><varname>pg_execute_server_program</varname></term>
+     <listitem>
+      <para>
+       These roles are intended to allow administrators to have trusted, but
+       non-superuser, roles which are able to access files and run programs on
+       the database server as the user the database runs as.  They bypass all
+       database-level permission checks when accessing files directly and they
+       could be used to gain superuser-level access.  Therefore, great care
+       should be taken when granting these roles to users.
+      </para>
+      <para>
+       <literal>pg_read_server_files</literal> allows reading files from any
+       location the database can access on the server using
+       <command>COPY</command> and other file-access functions.
+      </para>
+      <para>
+       <literal>pg_write_server_files</literal> allows writing to files in any
+       location the database can access on the server using
+       <command>COPY</command> and other file-access functions.
+      </para>
+      <para>
+       <literal>pg_execute_server_program</literal> allows executing programs
+       on the database server as the user the database runs as using
+       <command>COPY</command> and other functions which allow executing a
+       server-side program.
+      </para>
+     </listitem>
+    </varlistentry>
 
-  <para>
-  The <literal>pg_read_server_files</literal>, <literal>pg_write_server_files</literal> and
-  <literal>pg_execute_server_program</literal> roles are intended to allow administrators to have
-  trusted, but non-superuser, roles which are able to access files and run programs on the
-  database server as the user the database runs as.  As these roles are able to access any file on
-  the server file system, they bypass all database-level permission checks when accessing files
-  directly and they could be used to gain superuser-level access, therefore
-  great care should be taken when granting these roles to users.
-  </para>
+    <varlistentry id="predefined-role-pg-signal-autovacuum-worker" xreflabel="pg_signal_autovacuum_worker">
+     <term><varname>pg_signal_autovacuum_worker</varname></term>
+     <listitem>
+      <para>
+       <literal>pg_signal_autovacuum_worker</literal> allows signaling
+       autovacuum workers to cancel the current table's vacuum or terminate its
+       session.  See <xref linkend="functions-admin-signal"/>.
+      </para>
+     </listitem>
+    </varlistentry>
 
-  <para>
-  Care should be taken when granting these roles to ensure they are only used where
-  needed and with the understanding that these roles grant access to privileged
-  information.
-  </para>
+    <varlistentry id="predefined-role-pg-signal-backend" xreflabel="pg_signal_backend">
+     <term><varname>pg_signal_backend</varname></term>
+     <listitem>
+      <para>
+       <literal>pg_signal_backend</literal> allows signaling another backend to
+       cancel a query or terminate its session.  Note that this role does not
+       permit signaling backends owned by a superuser.  See
+       <xref linkend="functions-admin-signal"/>.
+      </para>
+     </listitem>
+    </varlistentry>
 
-  <para>
-   Administrators can grant access to these roles to users using the
-   <link linkend="sql-grant"><command>GRANT</command></link> command, for example:
-
-<programlisting>
-GRANT pg_signal_backend TO admin_user;
-</programlisting>
+    <varlistentry id="predefined-role-pg-use-reserved-connections" xreflabel="pg_use_reserved_connections">
+     <term><varname>pg_use_reserved_connections</varname></term>
+     <listitem>
+      <para>
+       <literal>pg_use_reserved_connections</literal> allows use of connection
+       slots reserved via <xref linkend="guc-reserved-connections"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
 
  </sect1>

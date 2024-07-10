@@ -731,7 +731,7 @@ include_dir 'conf.d'
        <para>
         Determines the number of connection <quote>slots</quote> that are
         reserved for connections by roles with privileges of the
-        <link linkend="predefined-roles-table"><literal>pg_use_reserved_connections</literal></link>
+        <xref linkend="predefined-role-pg-use-reserved-connections"/>
         role.  Whenever the number of free connection slots is greater than
         <xref linkend="guc-superuser-reserved-connections"/> but less than or
         equal to the sum of <varname>superuser_reserved_connections</varname>
