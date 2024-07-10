@@ -180,12 +180,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <para>
    The parameter <xref linkend="guc-track-io-timing"/> enables monitoring
-   of block read and write times.
+   of block read, write, extend, and fsync times.
   </para>
 
   <para>
    The parameter <xref linkend="guc-track-wal-io-timing"/> enables monitoring
-   of WAL write times.
+   of WAL write and fsync times.
   </para>
 
   <para>
