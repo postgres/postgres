@@ -29,7 +29,9 @@ print $fh $stdout, "\n";
 
 close($fh);
 
-($stdout, $stderr) = run_command([ "diff", "-u", $fname, $test_out ]);
+my @diffopts = ("-u");
+push(@diffopts, "--strip-trailing-cr") if $windows_os;
+($stdout, $stderr) = run_command([ "diff", @diffopts, $fname, $test_out ]);
 
 is($stdout, "", "no output diff");
 is($stderr, "", "no diff error");
