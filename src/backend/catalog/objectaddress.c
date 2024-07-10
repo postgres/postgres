@@ -4364,19 +4364,19 @@ pg_identify_object_as_address(PG_FUNCTION_ARGS)
 
 /*
  * SQL-level callable function to obtain the ACL of a specified object, given
- * its catalog OID and object OID.
+ * its catalog OID, object OID and sub-object ID.
  */
 Datum
 pg_get_acl(PG_FUNCTION_ARGS)
 {
 	Oid			classId = PG_GETARG_OID(0);
 	Oid			objectId = PG_GETARG_OID(1);
+	int32		objsubid = PG_GETARG_INT32(2);
 	Oid			catalogId;
 	AttrNumber	Anum_acl;
-	Relation	rel;
-	HeapTuple	tup;
 	Datum		datum;
 	bool		isnull;
+	HeapTuple	tup;
 
 	/* for "pinned" items in pg_depend, return null */
 	if (!OidIsValid(classId) && !OidIsValid(objectId))
@@ -4391,18 +4391,39 @@ pg_get_acl(PG_FUNCTION_ARGS)
 	if (Anum_acl == InvalidAttrNumber)
 		PG_RETURN_NULL();
 
-	rel = table_open(catalogId, AccessShareLock);
-
-	tup = get_catalog_object_by_oid(rel, get_object_attnum_oid(catalogId),
-									objectId);
-	if (!HeapTupleIsValid(tup))
+	/*
+	 * If dealing with a relation's attribute (objsubid is set), the ACL is
+	 * retrieved from pg_attribute.
+	 */
+	if (classId == RelationRelationId && objsubid != 0)
 	{
-		table_close(rel, AccessShareLock);
-		PG_RETURN_NULL();
-	}
+		AttrNumber	attnum = (AttrNumber) objsubid;
 
-	datum = heap_getattr(tup, Anum_acl, RelationGetDescr(rel), &isnull);
-	table_close(rel, AccessShareLock);
+		tup = SearchSysCacheCopyAttNum(objectId, attnum);
+
+		if (!HeapTupleIsValid(tup))
+			PG_RETURN_NULL();
+
+		datum = SysCacheGetAttr(ATTNUM, tup, Anum_pg_attribute_attacl,
+								&isnull);
+	}
+	else
+	{
+		Relation	rel;
+
+		rel = table_open(catalogId, AccessShareLock);
+
+		tup = get_catalog_object_by_oid(rel, get_object_attnum_oid(catalogId),
+										objectId);
+		if (!HeapTupleIsValid(tup))
+		{
+			table_close(rel, AccessShareLock);
+			PG_RETURN_NULL();
+		}
+
+		datum = heap_getattr(tup, Anum_acl, RelationGetDescr(rel), &isnull);
+		table_close(rel, AccessShareLock);
+	}
 
 	if (isnull)
 		PG_RETURN_NULL();

@@ -6364,7 +6364,7 @@
 
 { oid => '8730', descr => 'get ACL for SQL object',
   proname => 'pg_get_acl', provolatile => 's', prorettype => '_aclitem',
-  proargtypes => 'oid oid', proargnames => '{classid,objid}',
+  proargtypes => 'oid oid int4', proargnames => '{classid,objid,objsubid}',
   prosrc => 'pg_get_acl' },
 
 { oid => '3839',

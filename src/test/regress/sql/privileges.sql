@@ -183,16 +183,16 @@ GRANT SELECT ON atest1 TO regress_priv_user3, regress_priv_user4;
 SELECT * FROM atest1;
 
 CREATE TABLE atest2 (col1 varchar(10), col2 boolean);
-SELECT pg_get_acl('pg_class'::regclass, 'atest2'::regclass::oid);
+SELECT pg_get_acl('pg_class'::regclass, 'atest2'::regclass::oid, 0);
 GRANT SELECT ON atest2 TO regress_priv_user2;
 GRANT UPDATE ON atest2 TO regress_priv_user3;
 GRANT INSERT ON atest2 TO regress_priv_user4 GRANTED BY CURRENT_USER;
 GRANT TRUNCATE ON atest2 TO regress_priv_user5 GRANTED BY CURRENT_ROLE;
-SELECT unnest(pg_get_acl('pg_class'::regclass, 'atest2'::regclass::oid));
+SELECT unnest(pg_get_acl('pg_class'::regclass, 'atest2'::regclass::oid, 0));
 
 -- Invalid inputs
-SELECT pg_get_acl('pg_class'::regclass, 0); -- null
-SELECT pg_get_acl(0, 0); -- null
+SELECT pg_get_acl('pg_class'::regclass, 0, 0); -- null
+SELECT pg_get_acl(0, 0, 0); -- null
 
 GRANT TRUNCATE ON atest2 TO regress_priv_user4 GRANTED BY regress_priv_user5;  -- error
 
@@ -439,6 +439,10 @@ CREATE TABLE atest5 (one int, two int unique, three int, four int unique);
 CREATE TABLE atest6 (one int, two int, blue int);
 GRANT SELECT (one), INSERT (two), UPDATE (three) ON atest5 TO regress_priv_user4;
 GRANT ALL (one) ON atest5 TO regress_priv_user3;
+SELECT unnest(pg_get_acl('pg_class'::regclass, 'atest5'::regclass::oid, 1));
+SELECT unnest(pg_get_acl('pg_class'::regclass, 'atest5'::regclass::oid, 2));
+SELECT unnest(pg_get_acl('pg_class'::regclass, 'atest5'::regclass::oid, 3));
+SELECT unnest(pg_get_acl('pg_class'::regclass, 'atest5'::regclass::oid, 4));
 
 INSERT INTO atest5 VALUES (1,2,3);
 

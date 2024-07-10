@@ -26661,12 +26661,12 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         <indexterm>
          <primary>pg_get_acl</primary>
         </indexterm>
-        <function>pg_get_acl</function> ( <parameter>classid</parameter> <type>oid</type>, <parameter>objid</parameter> <type>oid</type> )
+        <function>pg_get_acl</function> ( <parameter>classid</parameter> <type>oid</type>, <parameter>objid</parameter> <type>oid</type>, <parameter>objsubid</parameter> <type>integer</type> )
         <returnvalue>aclitem[]</returnvalue>
        </para>
        <para>
         Returns the <acronym>ACL</acronym> for a database object, specified
-        by catalog OID and object OID. This function returns
+        by catalog OID, object OID and sub-object ID. This function returns
         <literal>NULL</literal> values for undefined objects.
        </para></entry>
       </row>
@@ -26792,7 +26792,7 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
 <programlisting>
 postgres=# SELECT
     (pg_identify_object(s.classid,s.objid,s.objsubid)).*,
-    pg_catalog.pg_get_acl(s.classid,s.objid) AS acl
+    pg_catalog.pg_get_acl(s.classid,s.objid,s.objsubid) AS acl
 FROM pg_catalog.pg_shdepend AS s
 JOIN pg_catalog.pg_database AS d
     ON d.datname = current_database() AND
