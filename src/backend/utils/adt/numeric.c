@@ -608,7 +608,7 @@ static void round_var(NumericVar *var, int rscale);
 static void trunc_var(NumericVar *var, int rscale);
 static void strip_var(NumericVar *var);
 static void compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
-						   const NumericVar *count_var, bool reversed_bounds,
+						   const NumericVar *count_var,
 						   NumericVar *result_var);
 
 static void accum_sum_add(NumericSumAccum *accum, const NumericVar *val);
@@ -1896,7 +1896,7 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 			else if (cmp_numerics(operand, bound2) >= 0)
 				add_var(&count_var, &const_one, &result_var);
 			else
-				compute_bucket(operand, bound1, bound2, &count_var, false,
+				compute_bucket(operand, bound1, bound2, &count_var,
 							   &result_var);
 			break;
 
@@ -1907,7 +1907,7 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 			else if (cmp_numerics(operand, bound2) <= 0)
 				add_var(&count_var, &const_one, &result_var);
 			else
-				compute_bucket(operand, bound1, bound2, &count_var, true,
+				compute_bucket(operand, bound1, bound2, &count_var,
 							   &result_var);
 			break;
 	}
@@ -1926,14 +1926,13 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 
 /*
  * 'operand' is inside the bucket range, so determine the correct
- * bucket for it to go. The calculations performed by this function
+ * bucket for it to go in. The calculations performed by this function
  * are derived directly from the SQL2003 spec. Note however that we
  * multiply by count before dividing, to avoid unnecessary roundoff error.
  */
 static void
 compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
-			   const NumericVar *count_var, bool reversed_bounds,
-			   NumericVar *result_var)
+			   const NumericVar *count_var, NumericVar *result_var)
 {
 	NumericVar	bound1_var;
 	NumericVar	bound2_var;
@@ -1943,34 +1942,22 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 	init_var_from_num(bound2, &bound2_var);
 	init_var_from_num(operand, &operand_var);
 
-	if (!reversed_bounds)
-	{
-		sub_var(&operand_var, &bound1_var, &operand_var);
-		sub_var(&bound2_var, &bound1_var, &bound2_var);
-	}
-	else
-	{
-		sub_var(&bound1_var, &operand_var, &operand_var);
-		sub_var(&bound1_var, &bound2_var, &bound2_var);
-	}
+	/*
+	 * Per spec, bound1 is inclusive and bound2 is exclusive, and so we have
+	 * bound1 <= operand < bound2 or bound1 >= operand > bound2.  Either way,
+	 * the result is ((operand - bound1) * count) / (bound2 - bound1) + 1,
+	 * where the quotient is computed using floor division (i.e., division to
+	 * zero decimal places with truncation), which guarantees that the result
+	 * is in the range [1, count].  Reversing the bounds doesn't affect the
+	 * computation, because the signs cancel out when dividing.
+	 */
+	sub_var(&operand_var, &bound1_var, &operand_var);
+	sub_var(&bound2_var, &bound1_var, &bound2_var);
 
 	mul_var(&operand_var, count_var, &operand_var,
 			operand_var.dscale + count_var->dscale);
-	div_var(&operand_var, &bound2_var, result_var,
-			select_div_scale(&operand_var, &bound2_var), true);
-
-	/*
-	 * Roundoff in the division could give us a quotient exactly equal to
-	 * "count", which is too large.  Clamp so that we do not emit a result
-	 * larger than "count".
-	 */
-	if (cmp_var(result_var, count_var) >= 0)
-		set_var_from_var(count_var, result_var);
-	else
-	{
-		add_var(result_var, &const_one, result_var);
-		floor_var(result_var, result_var);
-	}
+	div_var(&operand_var, &bound2_var, result_var, 0, false);
+	add_var(result_var, &const_one, result_var);
 
 	free_var(&bound1_var);
 	free_var(&bound2_var);
