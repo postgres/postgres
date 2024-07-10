@@ -65,8 +65,8 @@ static char *shellprog = SHELLPROG;
 const char *basic_diff_opts = "";
 const char *pretty_diff_opts = "-U3";
 #else
-const char *basic_diff_opts = "-w";
-const char *pretty_diff_opts = "-w -U3";
+const char *basic_diff_opts = "--strip-trailing-cr";
+const char *pretty_diff_opts = "--strip-trailing-cr -U3";
 #endif
 
 /*
