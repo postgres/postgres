@@ -1544,17 +1544,13 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	PG_TRY();
 	{
 		bool		parse_as_document = false;
+		int			options;
 		int			res_code;
 		size_t		count = 0;
 		xmlChar    *version = NULL;
 		int			standalone = 0;
 
 		xmlInitParser();
-
-		ctxt = xmlNewParserCtxt();
-		if (ctxt == NULL || xmlerrcxt->err_occurred)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
-						"could not allocate parser context");
 
 		/* Decide whether to parse as document or content */
 		if (xmloption_arg == XMLOPTION_DOCUMENT)
@@ -1574,20 +1570,30 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 				parse_as_document = true;
 		}
 
+		/*
+		 * Select parse options.
+		 *
+		 * Note that here we try to apply DTD defaults (XML_PARSE_DTDATTR)
+		 * according to SQL/XML:2008 GR 10.16.7.d: 'Default values defined by
+		 * internal DTD are applied'.  As for external DTDs, we try to support
+		 * them too (see SQL/XML:2008 GR 10.16.7.e), but that doesn't really
+		 * happen because xmlPgEntityLoader prevents it.
+		 */
+		options = XML_PARSE_NOENT | XML_PARSE_DTDATTR
+			| (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS);
+
 		if (parse_as_document)
 		{
-			/*
-			 * Note, that here we try to apply DTD defaults
-			 * (XML_PARSE_DTDATTR) according to SQL/XML:2008 GR 10.16.7.d:
-			 * 'Default values defined by internal DTD are applied'. As for
-			 * external DTDs, we try to support them too, (see SQL/XML:2008 GR
-			 * 10.16.7.e)
-			 */
+			ctxt = xmlNewParserCtxt();
+			if (ctxt == NULL || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+							"could not allocate parser context");
+
 			doc = xmlCtxtReadDoc(ctxt, utf8string,
-								 NULL,
+								 NULL,	/* no URL */
 								 "UTF-8",
-								 XML_PARSE_NOENT | XML_PARSE_DTDATTR
-								 | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
+								 options);
+
 			if (doc == NULL || xmlerrcxt->err_occurred)
 			{
 				/* Use original option to decide which error code to throw */
@@ -1601,17 +1607,36 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		}
 		else
 		{
+			xmlNodePtr	root;
+
+			/* set up document with empty root node to be the context node */
 			doc = xmlNewDoc(version);
 			Assert(doc->encoding == NULL);
 			doc->encoding = xmlStrdup((const xmlChar *) "UTF-8");
 			doc->standalone = standalone;
 
+			root = xmlNewNode(NULL, (const xmlChar *) "content-root");
+			if (root == NULL || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+							"could not allocate xml node");
+			/* This attaches root to doc, so we need not free it separately. */
+			xmlDocSetRootElement(doc, root);
+
 			/* allow empty content */
 			if (*(utf8string + count))
 			{
-				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
-													   utf8string + count, NULL);
-				if (res_code != 0 || xmlerrcxt->err_occurred)
+				xmlNodePtr	node_list = NULL;
+				xmlParserErrors res;
+
+				res = xmlParseInNodeContext(root,
+											(char *) utf8string + count,
+											strlen((char *) utf8string + count),
+											options,
+											&node_list);
+
+				xmlFreeNodeList(node_list);
+
+				if (res != XML_ERR_OK || xmlerrcxt->err_occurred)
 					xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_CONTENT,
 								"invalid XML content");
 			}
@@ -1630,7 +1655,8 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	}
 	PG_END_TRY();
 
-	xmlFreeParserCtxt(ctxt);
+	if (ctxt != NULL)
+		xmlFreeParserCtxt(ctxt);
 
 	pg_xml_done(xmlerrcxt, false);
 
@@ -1811,6 +1837,19 @@ xml_errorHandler(void *data, PgXmlErrorPtr error)
 	switch (domain)
 	{
 		case XML_FROM_PARSER:
+
+			/*
+			 * XML_ERR_NOT_WELL_BALANCED is typically reported after some
+			 * other, more on-point error.  Furthermore, libxml2 2.13 reports
+			 * it under a completely different set of rules than prior
+			 * versions.  To avoid cross-version behavioral differences,
+			 * suppress it so long as we already logged some error.
+			 */
+			if (error->code == XML_ERR_NOT_WELL_BALANCED &&
+				xmlerrcxt->err_occurred)
+				return;
+			/* fall through */
+
 		case XML_FROM_NONE:
 		case XML_FROM_MEMORY:
 		case XML_FROM_IO:
