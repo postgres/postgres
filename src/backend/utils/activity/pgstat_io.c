@@ -252,6 +252,15 @@ pgstat_get_io_object_name(IOObject io_object)
 }
 
 void
+pgstat_io_init_shmem_cb(void *stats)
+{
+	PgStatShared_IO *stat_shmem = (PgStatShared_IO *) stats;
+
+	for (int i = 0; i < BACKEND_NUM_TYPES; i++)
+		LWLockInitialize(&stat_shmem->locks[i], LWTRANCHE_PGSTATS_DATA);
+}
+
+void
 pgstat_io_reset_all_cb(TimestampTz ts)
 {
 	for (int i = 0; i < BACKEND_NUM_TYPES; i++)

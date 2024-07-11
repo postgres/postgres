@@ -164,6 +164,14 @@ pgstat_have_pending_wal(void)
 }
 
 void
+pgstat_wal_init_shmem_cb(void *stats)
+{
+	PgStatShared_Wal *stats_shmem = (PgStatShared_Wal *) stats;
+
+	LWLockInitialize(&stats_shmem->lock, LWTRANCHE_PGSTATS_DATA);
+}
+
+void
 pgstat_wal_reset_all_cb(TimestampTz ts)
 {
 	PgStatShared_Wal *stats_shmem = &pgStatLocal.shmem->wal;

@@ -85,6 +85,14 @@ pgstat_fetch_stat_checkpointer(void)
 }
 
 void
+pgstat_checkpointer_init_shmem_cb(void *stats)
+{
+	PgStatShared_Checkpointer *stats_shmem = (PgStatShared_Checkpointer *) stats;
+
+	LWLockInitialize(&stats_shmem->lock, LWTRANCHE_PGSTATS_DATA);
+}
+
+void
 pgstat_checkpointer_reset_all_cb(TimestampTz ts)
 {
 	PgStatShared_Checkpointer *stats_shmem = &pgStatLocal.shmem->checkpointer;

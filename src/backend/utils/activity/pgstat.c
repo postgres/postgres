@@ -354,6 +354,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.shared_data_off = offsetof(PgStatShared_Archiver, stats),
 		.shared_data_len = sizeof(((PgStatShared_Archiver *) 0)->stats),
 
+		.init_shmem_cb = pgstat_archiver_init_shmem_cb,
 		.reset_all_cb = pgstat_archiver_reset_all_cb,
 		.snapshot_cb = pgstat_archiver_snapshot_cb,
 	},
@@ -368,6 +369,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.shared_data_off = offsetof(PgStatShared_BgWriter, stats),
 		.shared_data_len = sizeof(((PgStatShared_BgWriter *) 0)->stats),
 
+		.init_shmem_cb = pgstat_bgwriter_init_shmem_cb,
 		.reset_all_cb = pgstat_bgwriter_reset_all_cb,
 		.snapshot_cb = pgstat_bgwriter_snapshot_cb,
 	},
@@ -382,6 +384,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.shared_data_off = offsetof(PgStatShared_Checkpointer, stats),
 		.shared_data_len = sizeof(((PgStatShared_Checkpointer *) 0)->stats),
 
+		.init_shmem_cb = pgstat_checkpointer_init_shmem_cb,
 		.reset_all_cb = pgstat_checkpointer_reset_all_cb,
 		.snapshot_cb = pgstat_checkpointer_snapshot_cb,
 	},
@@ -396,6 +399,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.shared_data_off = offsetof(PgStatShared_IO, stats),
 		.shared_data_len = sizeof(((PgStatShared_IO *) 0)->stats),
 
+		.init_shmem_cb = pgstat_io_init_shmem_cb,
 		.reset_all_cb = pgstat_io_reset_all_cb,
 		.snapshot_cb = pgstat_io_snapshot_cb,
 	},
@@ -410,6 +414,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.shared_data_off = offsetof(PgStatShared_SLRU, stats),
 		.shared_data_len = sizeof(((PgStatShared_SLRU *) 0)->stats),
 
+		.init_shmem_cb = pgstat_slru_init_shmem_cb,
 		.reset_all_cb = pgstat_slru_reset_all_cb,
 		.snapshot_cb = pgstat_slru_snapshot_cb,
 	},
@@ -424,6 +429,7 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 		.shared_data_off = offsetof(PgStatShared_Wal, stats),
 		.shared_data_len = sizeof(((PgStatShared_Wal *) 0)->stats),
 
+		.init_shmem_cb = pgstat_wal_init_shmem_cb,
 		.reset_all_cb = pgstat_wal_reset_all_cb,
 		.snapshot_cb = pgstat_wal_snapshot_cb,
 	},

@@ -63,6 +63,14 @@ pgstat_fetch_stat_archiver(void)
 }
 
 void
+pgstat_archiver_init_shmem_cb(void *stats)
+{
+	PgStatShared_Archiver *stats_shmem = (PgStatShared_Archiver *) stats;
+
+	LWLockInitialize(&stats_shmem->lock, LWTRANCHE_PGSTATS_DATA);
+}
+
+void
 pgstat_archiver_reset_all_cb(TimestampTz ts)
 {
 	PgStatShared_Archiver *stats_shmem = &pgStatLocal.shmem->archiver;

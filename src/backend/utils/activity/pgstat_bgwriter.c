@@ -76,6 +76,14 @@ pgstat_fetch_stat_bgwriter(void)
 }
 
 void
+pgstat_bgwriter_init_shmem_cb(void *stats)
+{
+	PgStatShared_BgWriter *stats_shmem = (PgStatShared_BgWriter *) stats;
+
+	LWLockInitialize(&stats_shmem->lock, LWTRANCHE_PGSTATS_DATA);
+}
+
+void
 pgstat_bgwriter_reset_all_cb(TimestampTz ts)
 {
 	PgStatShared_BgWriter *stats_shmem = &pgStatLocal.shmem->bgwriter;

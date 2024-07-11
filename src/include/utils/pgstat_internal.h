@@ -252,6 +252,13 @@ typedef struct PgStat_KindInfo
 	bool		(*from_serialized_name) (const NameData *name, PgStat_HashKey *key);
 
 	/*
+	 * For fixed-numbered statistics: Initialize shared memory state.
+	 *
+	 * "stats" is the pointer to the allocated shared memory area.
+	 */
+	void		(*init_shmem_cb) (void *stats);
+
+	/*
 	 * For fixed-numbered statistics: Reset All.
 	 */
 	void		(*reset_all_cb) (TimestampTz ts);
@@ -528,6 +535,7 @@ extern void pgstat_snapshot_fixed(PgStat_Kind kind);
  * Functions in pgstat_archiver.c
  */
 
+extern void pgstat_archiver_init_shmem_cb(void *stats);
 extern void pgstat_archiver_reset_all_cb(TimestampTz ts);
 extern void pgstat_archiver_snapshot_cb(void);
 
@@ -536,6 +544,7 @@ extern void pgstat_archiver_snapshot_cb(void);
  * Functions in pgstat_bgwriter.c
  */
 
+extern void pgstat_bgwriter_init_shmem_cb(void *stats);
 extern void pgstat_bgwriter_reset_all_cb(TimestampTz ts);
 extern void pgstat_bgwriter_snapshot_cb(void);
 
@@ -544,6 +553,7 @@ extern void pgstat_bgwriter_snapshot_cb(void);
  * Functions in pgstat_checkpointer.c
  */
 
+extern void pgstat_checkpointer_init_shmem_cb(void *stats);
 extern void pgstat_checkpointer_reset_all_cb(TimestampTz ts);
 extern void pgstat_checkpointer_snapshot_cb(void);
 
@@ -574,6 +584,7 @@ extern bool pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
  */
 
 extern bool pgstat_flush_io(bool nowait);
+extern void pgstat_io_init_shmem_cb(void *stats);
 extern void pgstat_io_reset_all_cb(TimestampTz ts);
 extern void pgstat_io_snapshot_cb(void);
 
@@ -632,6 +643,7 @@ extern PgStatShared_Common *pgstat_init_entry(PgStat_Kind kind,
  */
 
 extern bool pgstat_slru_flush(bool nowait);
+extern void pgstat_slru_init_shmem_cb(void *stats);
 extern void pgstat_slru_reset_all_cb(TimestampTz ts);
 extern void pgstat_slru_snapshot_cb(void);
 
@@ -644,6 +656,7 @@ extern bool pgstat_flush_wal(bool nowait);
 extern void pgstat_init_wal(void);
 extern bool pgstat_have_pending_wal(void);
 
+extern void pgstat_wal_init_shmem_cb(void *stats);
 extern void pgstat_wal_reset_all_cb(TimestampTz ts);
 extern void pgstat_wal_snapshot_cb(void);
 

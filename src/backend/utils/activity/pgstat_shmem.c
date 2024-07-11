@@ -196,17 +196,18 @@ StatsShmemInit(void)
 
 		pg_atomic_init_u64(&ctl->gc_request_count, 1);
 
-
 		/* initialize fixed-numbered stats */
-		LWLockInitialize(&ctl->archiver.lock, LWTRANCHE_PGSTATS_DATA);
-		LWLockInitialize(&ctl->bgwriter.lock, LWTRANCHE_PGSTATS_DATA);
-		LWLockInitialize(&ctl->checkpointer.lock, LWTRANCHE_PGSTATS_DATA);
-		LWLockInitialize(&ctl->slru.lock, LWTRANCHE_PGSTATS_DATA);
-		LWLockInitialize(&ctl->wal.lock, LWTRANCHE_PGSTATS_DATA);
+		for (int kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+		{
+			const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+			char	   *ptr;
 
-		for (int i = 0; i < BACKEND_NUM_TYPES; i++)
-			LWLockInitialize(&ctl->io.locks[i],
-							 LWTRANCHE_PGSTATS_DATA);
+			if (!kind_info->fixed_amount)
+				continue;
+
+			ptr = ((char *) ctl) + kind_info->shared_ctl_off;
+			kind_info->init_shmem_cb(ptr);
+		}
 	}
 	else
 	{

@@ -193,6 +193,14 @@ pgstat_slru_flush(bool nowait)
 }
 
 void
+pgstat_slru_init_shmem_cb(void *stats)
+{
+	PgStatShared_SLRU *stats_shmem = (PgStatShared_SLRU *) stats;
+
+	LWLockInitialize(&stats_shmem->lock, LWTRANCHE_PGSTATS_DATA);
+}
+
+void
 pgstat_slru_reset_all_cb(TimestampTz ts)
 {
 	for (int i = 0; i < SLRU_NUM_ELEMENTS; i++)
