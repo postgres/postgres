@@ -1,4 +1,3 @@
-use postgres::{Client, NoTls};
 use std::fmt::Debug;
 use std::sync::Arc;
 
@@ -17,20 +16,15 @@ use pgwire::messages::response::NoticeResponse;
 use pgwire::messages::PgWireBackendMessage;
 use pgwire::tokio::process_socket;
 
-// This should be behavior with trait, not enum
-enum NodeType {
-    Router,
-    Shard,
-}
-pub struct Worker {
-    node_type: NodeType,
-}
+// Struct representing the connection with the Client
+// Pgwire
+pub struct Client;
 pub struct Router {
-    handler: Arc<Worker>,
+    handler: Arc<Client>,
 }
 
 #[async_trait]
-impl SimpleQueryHandler for Worker {
+impl SimpleQueryHandler for Client {
     async fn do_query<'a, C>(
         &self,
         client: &mut C,
@@ -81,7 +75,7 @@ impl SimpleQueryHandler for Worker {
 }
 impl PgWireHandlerFactory for Router {
     type StartupHandler = NoopStartupHandler;
-    type SimpleQueryHandler = Worker;
+    type SimpleQueryHandler = Client;
     type ExtendedQueryHandler = PlaceholderExtendedQueryHandler;
     type CopyHandler = NoopCopyHandler;
 
@@ -103,16 +97,21 @@ impl PgWireHandlerFactory for Router {
 }
 #[tokio::main]
 pub async fn main() {
-    let factory = Arc::new(Router {
-        handler: Arc::new(Worker {node_type: NodeType::Shard}),
+    let leader = Arc::new(Router {
+        handler: Arc::new(Client),
     });
-
+    // The idea is: Client connect to leader
     let server_addr = "127.0.0.1:5432";
     let listener = TcpListener::bind(server_addr).await.unwrap();
-    println!("Listening to {}", server_addr);
+    println!("Listening to clients {}", server_addr);
     loop {
         let incoming_socket = listener.accept().await.unwrap();
-        let factory_ref = factory.clone();
-        tokio::spawn(async move { process_socket(incoming_socket.0, None, factory_ref).await });
+        let leader_ref = leader.clone();
+        // A task per connection
+        let _ = tokio::spawn(async move {
+            process_socket(incoming_socket.0, None, leader_ref).await.expect("Error accepting client");
+            // Client - PGwire -> Leader - pgwire -> shard (executes rust-postgres inside)
+            println!("Client {:?} connected successfully", incoming_socket.1);
+        }).await;
     }
 }
