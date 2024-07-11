@@ -132,6 +132,7 @@
  * ---------
  */
 #define PGSTAT_FILE_ENTRY_END	'E' /* end of file */
+#define PGSTAT_FILE_ENTRY_FIXED	'F' /* fixed-numbered stats entry */
 #define PGSTAT_FILE_ENTRY_NAME	'N' /* stats entry identified by name */
 #define PGSTAT_FILE_ENTRY_HASH	'S' /* stats entry identified by
 									 * PgStat_HashKey */
@@ -1396,6 +1397,9 @@ pgstat_write_statsfile(void)
 
 		pgstat_build_snapshot_fixed(kind);
 		ptr = ((char *) &pgStatLocal.snapshot) + info->snapshot_ctl_off;
+
+		fputc(PGSTAT_FILE_ENTRY_FIXED, fpout);
+		write_chunk_s(fpout, &kind);
 		write_chunk(fpout, ptr, info->shared_data_len);
 	}
 
@@ -1537,25 +1541,9 @@ pgstat_read_statsfile(void)
 		format_id != PGSTAT_FILE_FORMAT_ID)
 		goto error;
 
-	/* Read various stats structs with fixed number of objects */
-	for (int kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
-	{
-		char	   *ptr;
-		const PgStat_KindInfo *info = pgstat_get_kind_info(kind);
-
-		if (!info->fixed_amount)
-			continue;
-
-		Assert(info->shared_ctl_off != 0);
-
-		ptr = ((char *) shmem) + info->shared_ctl_off + info->shared_data_off;
-		if (!read_chunk(fpin, ptr, info->shared_data_len))
-			goto error;
-	}
-
 	/*
-	 * We found an existing statistics file. Read it and put all the hash
-	 * table entries into place.
+	 * We found an existing statistics file. Read it and put all the stats
+	 * data into place.
 	 */
 	for (;;)
 	{
@@ -1563,6 +1551,33 @@ pgstat_read_statsfile(void)
 
 		switch (t)
 		{
+			case PGSTAT_FILE_ENTRY_FIXED:
+				{
+					PgStat_Kind kind;
+					const PgStat_KindInfo *info;
+					char	   *ptr;
+
+					/* entry for fixed-numbered stats */
+					if (!read_chunk_s(fpin, &kind))
+						goto error;
+
+					if (!pgstat_is_kind_valid(kind))
+						goto error;
+
+					info = pgstat_get_kind_info(kind);
+
+					if (!info->fixed_amount)
+						goto error;
+
+					/* Load back stats into shared memory */
+					ptr = ((char *) shmem) + info->shared_ctl_off +
+						info->shared_data_off;
+
+					if (!read_chunk(fpin, ptr, info->shared_data_len))
+						goto error;
+
+					break;
+				}
 			case PGSTAT_FILE_ENTRY_HASH:
 			case PGSTAT_FILE_ENTRY_NAME:
 				{
