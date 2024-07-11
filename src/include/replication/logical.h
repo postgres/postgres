@@ -109,6 +109,12 @@ typedef struct LogicalDecodingContext
 	TransactionId write_xid;
 	/* Are we processing the end LSN of a transaction? */
 	bool		end_xact;
+
+	/*
+	 * True if the logical decoding context being used for the creation
+	 * of a logical replication slot.
+	 */
+	bool		in_create;
 } LogicalDecodingContext;
 
 
