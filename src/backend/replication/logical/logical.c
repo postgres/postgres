@@ -123,6 +123,7 @@ StartupDecodingContext(List *output_plugin_options,
 					   TransactionId xmin_horizon,
 					   bool need_full_snapshot,
 					   bool fast_forward,
+					   bool in_create,
 					   XLogPageReadCB read_page,
 					   LogicalOutputPluginWriterPrepareWrite prepare_write,
 					   LogicalOutputPluginWriterWrite do_write,
@@ -200,6 +201,8 @@ StartupDecodingContext(List *output_plugin_options,
 	ctx->output_plugin_options = output_plugin_options;
 
 	ctx->fast_forward = fast_forward;
+
+	ctx->in_create = in_create;
 
 	MemoryContextSwitchTo(old_context);
 
@@ -329,7 +332,7 @@ CreateInitDecodingContext(char *plugin,
 	ReplicationSlotSave();
 
 	ctx = StartupDecodingContext(NIL, restart_lsn, xmin_horizon,
-								 need_full_snapshot, false,
+								 need_full_snapshot, false, true,
 								 read_page, prepare_write, do_write,
 								 update_progress);
 
@@ -428,7 +431,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 
 	ctx = StartupDecodingContext(output_plugin_options,
 								 start_lsn, InvalidTransactionId, false,
-								 fast_forward, read_page, prepare_write,
+								 fast_forward, false, read_page, prepare_write,
 								 do_write, update_progress);
 
 	/* call output plugin initialization callback */

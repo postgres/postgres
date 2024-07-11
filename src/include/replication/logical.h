@@ -90,6 +90,12 @@ typedef struct LogicalDecodingContext
 	bool		prepared_write;
 	XLogRecPtr	write_location;
 	TransactionId write_xid;
+
+	/*
+	 * True if the logical decoding context being used for the creation
+	 * of a logical replication slot.
+	 */
+	bool		in_create;
 } LogicalDecodingContext;
 
 
