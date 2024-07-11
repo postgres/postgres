@@ -1,0 +1,45 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s0_init s0_begin s0_insert1 s1_init s2_checkpoint s2_get_changes_slot0 s0_insert2 s0_commit s1_get_changes_slot0 s1_get_changes_slot1
+step s0_init: SELECT 'init' FROM pg_create_logical_replication_slot('slot0', 'test_decoding');
+?column?
+--------
+init    
+(1 row)
+
+step s0_begin: BEGIN;
+step s0_insert1: INSERT INTO tbl VALUES (1);
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('slot1', 'test_decoding'); <waiting ...>
+step s2_checkpoint: CHECKPOINT;
+step s2_get_changes_slot0: SELECT data FROM pg_logical_slot_get_changes('slot0', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
+data
+----
+(0 rows)
+
+step s0_insert2: INSERT INTO tbl VALUES (2);
+step s0_commit: COMMIT;
+step s1_init: <... completed>
+?column?
+--------
+init    
+(1 row)
+
+step s1_get_changes_slot0: SELECT data FROM pg_logical_slot_get_changes('slot0', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
+data                                     
+-----------------------------------------
+BEGIN                                    
+table public.tbl: INSERT: val1[integer]:1
+table public.tbl: INSERT: val1[integer]:2
+COMMIT                                   
+(4 rows)
+
+step s1_get_changes_slot1: SELECT data FROM pg_logical_slot_get_changes('slot1', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
+data
+----
+(0 rows)
+
+?column?
+--------
+stop    
+(1 row)
+
