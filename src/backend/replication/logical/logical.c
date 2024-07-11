@@ -152,6 +152,7 @@ StartupDecodingContext(List *output_plugin_options,
 					   TransactionId xmin_horizon,
 					   bool need_full_snapshot,
 					   bool fast_forward,
+					   bool in_create,
 					   XLogReaderRoutine *xl_routine,
 					   LogicalOutputPluginWriterPrepareWrite prepare_write,
 					   LogicalOutputPluginWriterWrite do_write,
@@ -212,7 +213,7 @@ StartupDecodingContext(List *output_plugin_options,
 	ctx->reorder = ReorderBufferAllocate();
 	ctx->snapshot_builder =
 		AllocateSnapshotBuilder(ctx->reorder, xmin_horizon, start_lsn,
-								need_full_snapshot, slot->data.two_phase_at);
+								need_full_snapshot, in_create, slot->data.two_phase_at);
 
 	ctx->reorder->private_data = ctx;
 
@@ -438,7 +439,7 @@ CreateInitDecodingContext(const char *plugin,
 	ReplicationSlotSave();
 
 	ctx = StartupDecodingContext(NIL, restart_lsn, xmin_horizon,
-								 need_full_snapshot, false,
+								 need_full_snapshot, false, true,
 								 xl_routine, prepare_write, do_write,
 								 update_progress);
 
@@ -592,7 +593,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 
 	ctx = StartupDecodingContext(output_plugin_options,
 								 start_lsn, InvalidTransactionId, false,
-								 fast_forward, xl_routine, prepare_write,
+								 fast_forward, false, xl_routine, prepare_write,
 								 do_write, update_progress);
 
 	/* call output plugin initialization callback */
