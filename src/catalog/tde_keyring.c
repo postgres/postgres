@@ -9,7 +9,10 @@
  *
  *-------------------------------------------------------------------------
  */
-
+#include "postgres.h"
+#include "access/xlog.h"
+#include "access/xloginsert.h"
+#include "access/pg_tde_xlog.h"
 #include "catalog/tde_keyring.h"
 #include "catalog/tde_principal_key.h"
 #include "access/skey.h"
@@ -64,8 +67,9 @@ static GenericKeyring *load_keyring_provider_options(ProviderType provider_type,
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(Datum keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
 static char *get_keyring_infofile_path(char *resPath, Oid dbOid, Oid spcOid);
-static uint32 save_key_provider(KeyringProvideRecord *provider);
-static void key_provider_startup_cleanup(int tde_tbl_count, void *arg);
+static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
+static uint32 write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, Oid tablespace_id, off_t position, bool redo);
+static uint32 save_new_key_provider_info(KeyringProvideRecord *provider);
 
 static Size initialize_shared_state(void *start_address);
 static Size required_shared_mem_size(void);
@@ -112,7 +116,7 @@ void InitializeKeyProviderInfo(void)
 	on_ext_install(key_provider_startup_cleanup, NULL);
 }
 static void
-key_provider_startup_cleanup(int tde_tbl_count, void *arg)
+key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg)
 {
 
 	if (tde_tbl_count > 0)
@@ -121,15 +125,7 @@ key_provider_startup_cleanup(int tde_tbl_count, void *arg)
 				(errmsg("failed to perform initialization. database already has %d TDE tables", tde_tbl_count)));
 		return;
 	}
-	cleanup_key_provider_info(MyDatabaseId, MyDatabaseTableSpace);
-
-	/* TODO: XLog the key cleanup */
-	// XLogPrincipalKeyCleanup xlrec;
-	// xlrec.databaseId = MyDatabaseId;
-	// xlrec.tablespaceId = MyDatabaseTableSpace;
-	// XLogBeginInsert();
-	// XLogRegisterData((char *)&xlrec, sizeof(TDEPrincipalKeyInfo));
-	// XLogInsert(RM_TDERMGR_ID, XLOG_TDE_CLEAN_PRINCIPAL_KEY);
+	cleanup_key_provider_info(ext_info->database_id, ext_info->tablespace_id);
 }
 
 ProviderType
@@ -314,11 +310,8 @@ fetch_next_key_provider(int fd, off_t* curr_pos, KeyringProvideRecord *provider)
 	return true;
 }
 
-/*
-* Save the key provider info to the file
-*/
 static uint32
-save_key_provider(KeyringProvideRecord *provider)
+write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, Oid tablespace_id, off_t position, bool redo)
 {
 	off_t bytes_written = 0;
 	off_t curr_pos = 0;
@@ -329,7 +322,7 @@ save_key_provider(KeyringProvideRecord *provider)
 
 	Assert(provider != NULL);
 
-	get_keyring_infofile_path(kp_info_path, MyDatabaseId, MyDatabaseTableSpace);
+	get_keyring_infofile_path(kp_info_path, database_id, tablespace_id);
 
 	LWLockAcquire(tde_provider_info_lock(), LW_EXCLUSIVE);
 
@@ -341,35 +334,54 @@ save_key_provider(KeyringProvideRecord *provider)
 			(errcode_for_file_access(),
 				errmsg("could not open tde file \"%s\": %m", kp_info_path)));
 	}
-
-	/* we also need to verify the name conflict and generate the next provider ID */
-	while (fetch_next_key_provider(fd, &curr_pos, &existing_provider))
+	if (!redo)
 	{
-		if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
+		KeyringProviderXLRecord xlrec;
+		/* we also need to verify the name conflict and generate the next provider ID */
+		while (fetch_next_key_provider(fd, &curr_pos, &existing_provider))
 		{
-			close(fd);
-			LWLockRelease(tde_provider_info_lock());
-			ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-					errmsg("key provider \"%s\" already exists", provider->provider_name)));
+			if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
+			{
+				close(fd);
+				LWLockRelease(tde_provider_info_lock());
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						errmsg("key provider \"%s\" already exists", provider->provider_name)));
+			}
+			if (max_provider_id < existing_provider.provider_id)
+				max_provider_id = existing_provider.provider_id;
 		}
-		if (max_provider_id < existing_provider.provider_id)
-			max_provider_id = existing_provider.provider_id;
+		provider->provider_id = max_provider_id + 1;
+		curr_pos = lseek(fd, 0, SEEK_END);
+		/* emit the xlog here. So that we can handle partial file write errors */
+		xlrec.database_id = database_id;
+		xlrec.tablespace_id = tablespace_id;
+		xlrec.offset_in_file = curr_pos;
+		memcpy(&xlrec.provider, provider, sizeof(KeyringProvideRecord));
+
+		XLogBeginInsert();
+		XLogRegisterData((char *)&xlrec, sizeof(KeyringProviderXLRecord));
+		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_KEY_PROVIDER_KEY);
 	}
-	provider->provider_id = max_provider_id + 1;
+	else
+	{
+		/* we are performing redo, just go to the position received from the
+		 * xlog and write the record there.
+		 * No need to verify the name conflict and generate the provider ID
+		 */
+		curr_pos = lseek(fd, position, SEEK_SET);
+	}
 	/*
 	 * All good, Just add a new provider
-	 * Write key to the end of file
 	 */
-	curr_pos = lseek(fd, 0, SEEK_END);
 	bytes_written = pg_pwrite(fd, provider, sizeof(KeyringProvideRecord), curr_pos);
 	if (bytes_written != sizeof(KeyringProvideRecord))
 	{
 		close(fd);
 		LWLockRelease(tde_provider_info_lock());
 		ereport(ERROR,
-			(errcode_for_file_access(),
-				errmsg("key provider info file \"%s\" can't be written: %m",
+				(errcode_for_file_access(),
+				 errmsg("key provider info file \"%s\" can't be written: %m",
 						kp_info_path)));
 	}
 	if (pg_fsync(fd) != 0)
@@ -377,8 +389,8 @@ save_key_provider(KeyringProvideRecord *provider)
 		close(fd);
 		LWLockRelease(tde_provider_info_lock());
 		ereport(ERROR,
-			(errcode_for_file_access(),
-				errmsg("could not fsync file \"%s\": %m",
+				(errcode_for_file_access(),
+				 errmsg("could not fsync file \"%s\": %m",
 						kp_info_path)));
 	}
 	close(fd);
@@ -387,10 +399,24 @@ save_key_provider(KeyringProvideRecord *provider)
 }
 
 /*
- * Scan the key provider info file and can also apply filter based on scanType
+ * Save the key provider info to the file
  */
-static List *
-scan_key_provider_file(ProviderScanType scanType, void* scanKey)
+static uint32
+save_new_key_provider_info(KeyringProvideRecord* provider)
+{
+	return write_key_provider_info(provider, MyDatabaseId, MyDatabaseTableSpace, 0, false);
+}
+
+uint32
+redo_key_provider_info(KeyringProviderXLRecord* xlrec)
+{
+	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->tablespace_id, xlrec->offset_in_file, true);
+}
+
+/*
+	* Scan the key provider info file and can also apply filter based on scanType
+	*/
+static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey)
 {
 	off_t curr_pos = 0;
 	int fd;
@@ -483,6 +509,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 	strncpy(provider.options, options, sizeof(provider.options));
 	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
-	save_key_provider(&provider);
+	save_new_key_provider_info(&provider);
+
 	PG_RETURN_INT32(provider.provider_id);
 }

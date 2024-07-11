@@ -69,6 +69,13 @@ typedef struct KeyringProvideRecord
 	char options[MAX_KEYRING_OPTION_LEN];
 	ProviderType provider_type;
 } KeyringProvideRecord;
+typedef struct KeyringProviderXLRecord
+{
+	Oid database_id;
+	Oid tablespace_id;
+	off_t offset_in_file;
+	KeyringProvideRecord provider;
+} KeyringProviderXLRecord;
 
 extern List *GetAllKeyringProviders(void);
 extern GenericKeyring *GetKeyProviderByName(const char *provider_name);
@@ -76,4 +83,5 @@ extern GenericKeyring *GetKeyProviderByID(int provider_id);
 extern ProviderType get_keyring_provider_from_typename(char *provider_type);
 extern void cleanup_key_provider_info(Oid databaseId, Oid tablespaceId);
 extern void InitializeKeyProviderInfo(void);
+extern uint32 redo_key_provider_info(KeyringProviderXLRecord *xlrec);
 #endif /*TDE_KEYRING_H*/

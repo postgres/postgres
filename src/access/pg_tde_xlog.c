@@ -12,11 +12,13 @@
 
 #include "postgres.h"
 
+#include "pg_tde.h"
 #include "pg_tde_defines.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xloginsert.h"
 #include "catalog/pg_tablespace_d.h"
+#include "catalog/tde_keyring.h"
 #include "storage/bufmgr.h"
 #include "storage/shmem.h"
 #include "utils/guc.h"
@@ -61,12 +63,19 @@ pg_tde_rmgr_redo(XLogReaderState *record)
 
 		save_principal_key_info(mkey);
 	}
-	else if (info == XLOG_TDE_CLEAN_PRINCIPAL_KEY)
+	else if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
 	{
-		XLogPrincipalKeyCleanup *xlrec = (XLogPrincipalKeyCleanup *) XLogRecGetData(record);
+		XLogExtensionInstall *xlrec = (XLogExtensionInstall *)XLogRecGetData(record);
 
-		cleanup_principal_key_info(xlrec->databaseId, xlrec->tablespaceId);
+		extension_install_redo(xlrec);
 	}
+
+	else if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
+	{
+		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *)XLogRecGetData(record);
+		redo_key_provider_info(xlrec);
+	}
+
 	else if (info == XLOG_TDE_ROTATE_KEY)
 	{
 		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
@@ -96,17 +105,23 @@ pg_tde_rmgr_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "add tde principal key for db %u/%u", xlrec->databaseId, xlrec->tablespaceId);
 	}
-	if (info == XLOG_TDE_CLEAN_PRINCIPAL_KEY)
+	if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
 	{
-		XLogPrincipalKeyCleanup *xlrec = (XLogPrincipalKeyCleanup *) XLogRecGetData(record);
+		XLogExtensionInstall *xlrec = (XLogExtensionInstall *)XLogRecGetData(record);
 
-		appendStringInfo(buf, "cleanup tde principal key info for db %u/%u", xlrec->databaseId, xlrec->tablespaceId);
+		appendStringInfo(buf, "tde extension install for db %u/%u", xlrec->database_id, xlrec->tablespace_id);
 	}
 	if (info == XLOG_TDE_ROTATE_KEY)
 	{
 		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "rotate principal key for %u", xlrec->databaseId);
+	}
+	if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
+	{
+		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *)XLogRecGetData(record);
+
+		appendStringInfo(buf, "add key provider %s for %u", xlrec->provider.provider_name, xlrec->database_id);
 	}
 }
 
@@ -119,8 +134,8 @@ pg_tde_rmgr_identify(uint8 info)
 	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_ADD_PRINCIPAL_KEY)
 		return "XLOG_TDE_ADD_PRINCIPAL_KEY";
 
-	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_CLEAN_PRINCIPAL_KEY)
-		return "XLOG_TDE_CLEAN_PRINCIPAL_KEY";
+	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_EXTENSION_INSTALL_KEY)
+		return "XLOG_TDE_EXTENSION_INSTALL_KEY";
 
 	return NULL;
 }

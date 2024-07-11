@@ -22,6 +22,8 @@
 #include "access/pg_tde_xlog.h"
 #include "encryption/enc_aes.h"
 #include "access/pg_tde_tdemap.h"
+#include "access/xlog.h"
+#include "access/xloginsert.h"
 #include "keyring/keyring_config.h"
 #include "keyring/keyring_api.h"
 #include "common/pg_tde_shmem.h"
@@ -48,7 +50,7 @@ struct OnExtInstall
 
 static struct OnExtInstall on_ext_install_list[MAX_ON_INSTALLS];
 static int on_ext_install_index = 0;
-static void run_extension_install_callbacks(void);
+static void run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo);
 void _PG_init(void);
 Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS);
 Datum pg_tde_version(PG_FUNCTION_ARGS);
@@ -126,8 +128,21 @@ _PG_init(void)
 Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS)
 {
 	/* Initialize the TDE map */
-	run_extension_install_callbacks();
+	XLogExtensionInstall xlrec;
+	xlrec.database_id = MyDatabaseId;
+	xlrec.tablespace_id = MyDatabaseTableSpace;
+	run_extension_install_callbacks(&xlrec, false);
+	/* Also put this info in xlog, so we can replicate the same on the other side */
+	XLogBeginInsert();
+	XLogRegisterData((char *)&xlrec, sizeof(XLogExtensionInstall));
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_EXTENSION_INSTALL_KEY);
+
 	PG_RETURN_NULL();
+}
+void
+extension_install_redo(XLogExtensionInstall *xlrec)
+{
+	run_extension_install_callbacks(xlrec, true);
 }
 
 /* ----------------------------------------------------------------
@@ -137,13 +152,12 @@ Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS)
  *		run at the time of pg_tde extension installs.
  * ----------------------------------------------------------------
  */
-void
-on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
+void on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
 {
 	if (on_ext_install_index >= MAX_ON_INSTALLS)
 		ereport(FATAL,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg_internal("out of on extension install slots")));
+			(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				errmsg_internal("out of on extension install slots")));
 
 	on_ext_install_list[on_ext_install_index].function = function;
 	on_ext_install_list[on_ext_install_index].arg = arg;
@@ -156,19 +170,21 @@ on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
  * ------------------
  */
 static void
-run_extension_install_callbacks(void)
+run_extension_install_callbacks(XLogExtensionInstall* xlrec , bool redo)
 {
 	int i;
+	int tde_table_count =0;
 	/*
 	 * Get the number of tde tables in this database
 	 * should always be zero. But still, it prevents
 	 * the cleanup if someone explicitly calls this
 	 * function.
 	 */
-	int tde_table_count = get_tde_tables_count();
+	if (!redo)
+		tde_table_count = get_tde_tables_count();
 	for (i = 0; i < on_ext_install_index; i++)
 		on_ext_install_list[i]
-			.function(tde_table_count, on_ext_install_list[i].arg);
+			.function(tde_table_count, xlrec, redo, on_ext_install_list[i].arg);
 }
 
 /* Returns package version */
