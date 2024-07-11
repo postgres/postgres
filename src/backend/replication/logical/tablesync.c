@@ -1342,7 +1342,8 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	if (LogRepWorkerWalRcvConn == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONNECTION_FAILURE),
-				 errmsg("could not connect to the publisher: %s", err)));
+				 errmsg("table synchronization worker for subscription \"%s\" could not connect to the publisher: %s",
+						MySubscription->name, err)));
 
 	Assert(MyLogicalRepWorker->relstate == SUBREL_STATE_INIT ||
 		   MyLogicalRepWorker->relstate == SUBREL_STATE_DATASYNC ||

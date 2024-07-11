@@ -898,7 +898,8 @@ pg_sync_replication_slots(PG_FUNCTION_ARGS)
 	if (!wrconn)
 		ereport(ERROR,
 				errcode(ERRCODE_CONNECTION_FAILURE),
-				errmsg("could not connect to the primary server: %s", err));
+				errmsg("synchronization worker \"%s\" could not connect to the primary server: %s",
+					   app_name.data, err));
 
 	SyncReplicationSlots(wrconn);
 

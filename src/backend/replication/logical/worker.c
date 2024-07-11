@@ -4500,7 +4500,8 @@ run_apply_worker()
 	if (LogRepWorkerWalRcvConn == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONNECTION_FAILURE),
-				 errmsg("could not connect to the publisher: %s", err)));
+				 errmsg("apply worker for subscription \"%s\" could not connect to the publisher: %s",
+						MySubscription->name, err)));
 
 	/*
 	 * We don't really use the output identify_system for anything but it does

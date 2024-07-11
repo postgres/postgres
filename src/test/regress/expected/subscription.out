@@ -139,7 +139,7 @@ ERROR:  invalid connection string syntax: invalid connection option "i_dont_exis
 -- fail, connection string parses, but doesn't work (and does so without
 -- connecting, so this is reliable and safe)
 CREATE SUBSCRIPTION regress_testsub5 CONNECTION 'port=-1' PUBLICATION testpub;
-ERROR:  could not connect to the publisher: invalid port number: "-1"
+ERROR:  subscription "regress_testsub5" could not connect to the publisher: invalid port number: "-1"
 -- fail - invalid connection string during ALTER
 ALTER SUBSCRIPTION regress_testsub CONNECTION 'foobar';
 ERROR:  invalid connection string syntax: missing "=" after "foobar" in connection info string

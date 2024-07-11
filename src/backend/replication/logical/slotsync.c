@@ -1463,7 +1463,8 @@ ReplSlotSyncWorkerMain(char *startup_data, size_t startup_data_len)
 	if (!wrconn)
 		ereport(ERROR,
 				errcode(ERRCODE_CONNECTION_FAILURE),
-				errmsg("could not connect to the primary server: %s", err));
+				errmsg("synchronization worker \"%s\" could not connect to the primary server: %s",
+					   app_name.data, err));
 
 	/*
 	 * Register the disconnection callback.
