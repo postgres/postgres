@@ -62,6 +62,7 @@ extern void CheckPointSnapBuild(void);
 extern SnapBuild *AllocateSnapshotBuilder(struct ReorderBuffer *reorder,
 										  TransactionId xmin_horizon, XLogRecPtr start_lsn,
 										  bool need_full_snapshot,
+										  bool in_slot_creation,
 										  XLogRecPtr two_phase_at);
 extern void FreeSnapshotBuilder(SnapBuild *builder);
 
