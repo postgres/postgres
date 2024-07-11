@@ -78,6 +78,12 @@ SELECT stddev_pop('inf'::numeric), stddev_samp('inf'::numeric);
 SELECT var_pop('nan'::numeric), var_samp('nan'::numeric);
 SELECT stddev_pop('nan'::numeric), stddev_samp('nan'::numeric);
 
+-- verify correct results for min(record) and max(record) aggregates
+SELECT max(row(a,b)) FROM aggtest;
+SELECT max(row(b,a)) FROM aggtest;
+SELECT min(row(a,b)) FROM aggtest;
+SELECT min(row(b,a)) FROM aggtest;
+
 -- verify correct results for null and NaN inputs
 select sum(null::int4) from generate_series(1,3);
 select sum(null::int8) from generate_series(1,3);

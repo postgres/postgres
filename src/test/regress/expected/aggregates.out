@@ -269,6 +269,31 @@ SELECT stddev_pop('nan'::numeric), stddev_samp('nan'::numeric);
         NaN |            
 (1 row)
 
+-- verify correct results for min(record) and max(record) aggregates
+SELECT max(row(a,b)) FROM aggtest;
+     max      
+--------------
+ (100,99.097)
+(1 row)
+
+SELECT max(row(b,a)) FROM aggtest;
+     max     
+-------------
+ (324.78,42)
+(1 row)
+
+SELECT min(row(a,b)) FROM aggtest;
+     min     
+-------------
+ (0,0.09561)
+(1 row)
+
+SELECT min(row(b,a)) FROM aggtest;
+     min     
+-------------
+ (0.09561,0)
+(1 row)
+
 -- verify correct results for null and NaN inputs
 select sum(null::int4) from generate_series(1,3);
  sum 

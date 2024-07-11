@@ -22048,7 +22048,7 @@ SELECT NULLIF(value, '(none)') ...
         as well as <type>inet</type>, <type>interval</type>,
         <type>money</type>, <type>oid</type>, <type>pg_lsn</type>,
         <type>tid</type>, <type>xid8</type>,
-        and arrays of any of these types.
+        and also arrays and composite types containing sortable data types.
        </para></entry>
        <entry>Yes</entry>
       </row>
@@ -22067,7 +22067,7 @@ SELECT NULLIF(value, '(none)') ...
         as well as <type>inet</type>, <type>interval</type>,
         <type>money</type>, <type>oid</type>, <type>pg_lsn</type>,
         <type>tid</type>, <type>xid8</type>,
-        and arrays of any of these types.
+        and also arrays and composite types containing sortable data types.
        </para></entry>
        <entry>Yes</entry>
       </row>
