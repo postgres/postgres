@@ -1135,7 +1135,6 @@ SendQuery(const char *query)
 		!command_no_begin(query))
 	{
 		PGresult   *result;
-
 		result = PQexec(pset.db, "BEGIN");
 		if (PQresultStatus(result) != PGRES_COMMAND_OK)
 		{
@@ -1153,7 +1152,6 @@ SendQuery(const char *query)
 		 pset.on_error_rollback == PSQL_ERROR_ROLLBACK_ON))
 	{
 		PGresult   *result;
-
 		result = PQexec(pset.db, "SAVEPOINT pg_psql_temporary_savepoint");
 		if (PQresultStatus(result) != PGRES_COMMAND_OK)
 		{
@@ -1168,11 +1166,13 @@ SendQuery(const char *query)
 	if (pset.gdesc_flag)
 	{
 		/* Describe query's result columns, without executing it */
+		SendQueryToShard(query);
 		OK = DescribeQuery(query, &elapsed_msec);
 	}
 	else
 	{
 		/* Default fetch-and-print mode */
+		SendQueryToShard(query);
 		OK = (ExecQueryAndProcessResults(query, &elapsed_msec, &svpt_gone, false, 0, NULL, NULL) > 0);
 	}
 
