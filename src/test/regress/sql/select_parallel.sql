@@ -266,6 +266,16 @@ select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
 reset enable_hashjoin;
 reset enable_nestloop;
 
+-- test parallel nestloop join path with materialization of the inner path
+alter table tenk2 set (parallel_workers = 0);
+explain (costs off)
+	select * from tenk1 t1, tenk2 t2 where t1.two > t2.two;
+
+-- the joinrel is not parallel-safe due to the OFFSET clause in the subquery
+explain (costs off)
+	select * from tenk1 t1, (select * from tenk2 t2 offset 0) t2 where t1.two > t2.two;
+alter table tenk2 reset (parallel_workers);
+
 -- test gather merge
 set enable_hashagg = false;
 

@@ -2021,10 +2021,30 @@ consider_parallel_nestloop(PlannerInfo *root,
 						   JoinPathExtraData *extra)
 {
 	JoinType	save_jointype = jointype;
+	Path	   *inner_cheapest_total = innerrel->cheapest_total_path;
+	Path	   *matpath = NULL;
 	ListCell   *lc1;
 
 	if (jointype == JOIN_UNIQUE_INNER)
 		jointype = JOIN_INNER;
+
+	/*
+	 * Consider materializing the cheapest inner path, unless: 1) we're doing
+	 * JOIN_UNIQUE_INNER, because in this case we have to unique-ify the
+	 * cheapest inner path, 2) enable_material is off, 3) the cheapest inner
+	 * path is not parallel-safe, 4) the cheapest inner path is parameterized
+	 * by the outer rel, or 5) the cheapest inner path materializes its output
+	 * anyway.
+	 */
+	if (save_jointype != JOIN_UNIQUE_INNER &&
+		enable_material && inner_cheapest_total->parallel_safe &&
+		!PATH_PARAM_BY_REL(inner_cheapest_total, outerrel) &&
+		!ExecMaterializesOutput(inner_cheapest_total->pathtype))
+	{
+		matpath = (Path *)
+			create_material_path(innerrel, inner_cheapest_total);
+		Assert(matpath->parallel_safe);
+	}
 
 	foreach(lc1, outerrel->partial_pathlist)
 	{
@@ -2082,6 +2102,11 @@ consider_parallel_nestloop(PlannerInfo *root,
 				try_partial_nestloop_path(root, joinrel, outerpath, mpath,
 										  pathkeys, jointype, extra);
 		}
+
+		/* Also consider materialized form of the cheapest inner path */
+		if (matpath != NULL)
+			try_partial_nestloop_path(root, joinrel, outerpath, matpath,
+									  pathkeys, jointype, extra);
 	}
 }
 
