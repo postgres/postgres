@@ -227,10 +227,6 @@ command_fails(
 	],
 	'primary server is in recovery');
 
-# Insert another row on node P and wait node S to catch up
-$node_p->safe_psql($db1, "INSERT INTO tbl1 VALUES('second row')");
-$node_p->wait_for_replay_catchup($node_s);
-
 # Check some unmet conditions on node P
 $node_p->append_conf(
 	'postgresql.conf', q{
@@ -305,6 +301,14 @@ my $result = $node_s->safe_psql('postgres',
 	"SELECT slot_name FROM pg_replication_slots WHERE slot_name = '$fslotname' AND synced AND NOT temporary"
 );
 is($result, 'failover_slot', 'failover slot is synced');
+
+# Insert another row on node P and wait node S to catch up. We
+# intentionally performed this insert after syncing logical slot
+# as otherwise the local slot's (created during synchronization of
+# slot) xmin on standby could be ahead of the remote slot leading
+# to failure in synchronization.
+$node_p->safe_psql($db1, "INSERT INTO tbl1 VALUES('second row')");
+$node_p->wait_for_replay_catchup($node_s);
 
 # Create subscription to test its removal
 my $dummy_sub = 'regress_sub_dummy';
