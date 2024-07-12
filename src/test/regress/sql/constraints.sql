@@ -462,7 +462,8 @@ CREATE UNIQUE INDEX t_b_idx ON t (b, a);
 ALTER INDEX t_a_idx ATTACH PARTITION tp_pkey;
 ALTER INDEX t_b_idx ATTACH PARTITION tp_b_a_key;
 SELECT conname, conparentid, conislocal, coninhcount
-  FROM pg_constraint WHERE conname IN ('tp_pkey', 'tp_b_a_key');
+  FROM pg_constraint WHERE conname IN ('tp_pkey', 'tp_b_a_key')
+  ORDER BY conname DESC;
 ALTER TABLE t DETACH PARTITION tp;
 DROP TABLE t, tp;
 
