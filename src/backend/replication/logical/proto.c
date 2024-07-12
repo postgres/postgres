@@ -739,7 +739,7 @@ logicalrep_write_typ(StringInfo out, TransactionId xid, Oid typoid)
 		elog(ERROR, "cache lookup failed for type %u", basetypoid);
 	typtup = (Form_pg_type) GETSTRUCT(tup);
 
-	/* use Oid as relation identifier */
+	/* use Oid as type identifier */
 	pq_sendint32(out, typoid);
 
 	/* send qualified type name */
