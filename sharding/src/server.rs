@@ -1,15 +1,14 @@
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::io::Read;
-use tokio::io::AsyncReadExt;
 use std::net::{TcpListener, TcpStream};
 
-// Struct representing the connection with the Client
+/// Struct representing the connection with the Client
 pub struct Client {
     stream: TcpStream,
     n_queries: u16,
 }
-
+/// Struct representing Router node
 pub struct Router {
     clients_connected: Mutex<Vec<Client>>,
 }
@@ -58,7 +57,7 @@ pub async fn main() {
     // The idea is: Client connect to leader
     let server_addr = "127.0.0.1:10000";
     let listener = TcpListener::bind(server_addr).unwrap();
-    println!("Listening to clients {}", server_addr);
+    println!("PostgreSQL server is listening to clients {}", server_addr);
 
     loop {
         let (incoming_socket, addr) = listener.accept().unwrap();
@@ -68,8 +67,8 @@ pub async fn main() {
 
         // A task per connection
         tokio::spawn(async move {
-            leader_ref.handle_client(incoming_socket, addr).await;
             println!("Client {} connected successfully", addr);
+            leader_ref.handle_client(incoming_socket, addr).await;
         });
     }
 }
