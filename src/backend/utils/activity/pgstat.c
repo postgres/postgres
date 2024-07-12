@@ -1495,7 +1495,7 @@ read_chunk(FILE *fpin, void *ptr, size_t len)
 #define read_chunk_s(fpin, ptr) read_chunk(fpin, ptr, sizeof(*ptr))
 
 /*
- * Reads in existing statistics file into the shared stats hash.
+ * Reads in existing statistics file into memory.
  *
  * This function is called in the only process that is accessing the shared
  * stats so locking is not required.
