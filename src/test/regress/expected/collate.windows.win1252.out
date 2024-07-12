@@ -21,10 +21,10 @@ CREATE TABLE collate_test1 (
 );
 \d collate_test1
         Table "collate_tests.collate_test1"
- Column |  Type   | Collation | Nullable | Default
+ Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- a      | integer |           |          |
- b      | text    | en_US     | not null |
+ a      | integer |           |          | 
+ b      | text    | en_US     | not null | 
 
 CREATE TABLE collate_test_fail (
     a int,
@@ -52,10 +52,10 @@ CREATE TABLE collate_test_like (
 );
 \d collate_test_like
       Table "collate_tests.collate_test_like"
- Column |  Type   | Collation | Nullable | Default
+ Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- a      | integer |           |          |
- b      | text    | en_US     | not null |
+ a      | integer |           |          | 
+ b      | text    | en_US     | not null | 
 
 CREATE TABLE collate_test2 (
     a int,
@@ -69,27 +69,27 @@ INSERT INTO collate_test1 VALUES (1, 'abc'), (2, 'äbc'), (3, 'bbc'), (4, 'ABC');
 INSERT INTO collate_test2 SELECT * FROM collate_test1;
 INSERT INTO collate_test3 SELECT * FROM collate_test1;
 SELECT * FROM collate_test1 WHERE b >= 'bbc';
- a |  b
+ a |  b  
 ---+-----
  3 | bbc
 (1 row)
 
 SELECT * FROM collate_test2 WHERE b >= 'bbc';
- a |  b
+ a |  b  
 ---+-----
  2 | äbc
  3 | bbc
 (2 rows)
 
 SELECT * FROM collate_test3 WHERE b >= 'bbc';
- a |  b
+ a |  b  
 ---+-----
  2 | äbc
  3 | bbc
 (2 rows)
 
 SELECT * FROM collate_test3 WHERE b >= 'BBC';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  2 | äbc
@@ -97,21 +97,21 @@ SELECT * FROM collate_test3 WHERE b >= 'BBC';
 (3 rows)
 
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc';
- a |  b
+ a |  b  
 ---+-----
  2 | äbc
  3 | bbc
 (2 rows)
 
 SELECT * FROM collate_test1 WHERE b >= 'bbc' COLLATE "C";
- a |  b
+ a |  b  
 ---+-----
  2 | äbc
  3 | bbc
 (2 rows)
 
 SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "C";
- a |  b
+ a |  b  
 ---+-----
  2 | äbc
  3 | bbc
@@ -130,7 +130,7 @@ CREATE TABLE collate_test4 (
 );
 INSERT INTO collate_test4 SELECT * FROM collate_test1;
 SELECT a, b FROM collate_test4 ORDER BY b;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -144,7 +144,7 @@ CREATE TABLE collate_test5 (
 );
 INSERT INTO collate_test5 SELECT * FROM collate_test1;
 SELECT a, b FROM collate_test5 ORDER BY b;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -153,7 +153,7 @@ SELECT a, b FROM collate_test5 ORDER BY b;
 (4 rows)
 
 SELECT a, b FROM collate_test1 ORDER BY b;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -162,7 +162,7 @@ SELECT a, b FROM collate_test1 ORDER BY b;
 (4 rows)
 
 SELECT a, b FROM collate_test2 ORDER BY b;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -171,7 +171,7 @@ SELECT a, b FROM collate_test2 ORDER BY b;
 (4 rows)
 
 SELECT a, b FROM collate_test3 ORDER BY b;
- a |  b
+ a |  b  
 ---+-----
  4 | ABC
  1 | abc
@@ -180,7 +180,7 @@ SELECT a, b FROM collate_test3 ORDER BY b;
 (4 rows)
 
 SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";
- a |  b
+ a |  b  
 ---+-----
  4 | ABC
  1 | abc
@@ -190,7 +190,7 @@ SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";
 
 -- star expansion
 SELECT * FROM collate_test1 ORDER BY b;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -199,7 +199,7 @@ SELECT * FROM collate_test1 ORDER BY b;
 (4 rows)
 
 SELECT * FROM collate_test2 ORDER BY b;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -208,7 +208,7 @@ SELECT * FROM collate_test2 ORDER BY b;
 (4 rows)
 
 SELECT * FROM collate_test3 ORDER BY b;
- a |  b
+ a |  b  
 ---+-----
  4 | ABC
  1 | abc
@@ -218,32 +218,32 @@ SELECT * FROM collate_test3 ORDER BY b;
 
 -- constant expression folding
 SELECT 'bbc' COLLATE "en_US" > 'äbc' COLLATE "en_US" AS "true";
- true
+ true 
 ------
  t
 (1 row)
 
 SELECT 'bbc' COLLATE "sv_SE" > 'äbc' COLLATE "sv_SE" AS "false";
- false
+ false 
 -------
  f
 (1 row)
 
 -- LIKE/ILIKE
 SELECT * FROM collate_test1 WHERE b LIKE 'abc';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
 (1 row)
 
 SELECT * FROM collate_test1 WHERE b LIKE 'abc%';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
 (1 row)
 
 SELECT * FROM collate_test1 WHERE b LIKE '%bc%';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  2 | äbc
@@ -251,21 +251,21 @@ SELECT * FROM collate_test1 WHERE b LIKE '%bc%';
 (3 rows)
 
 SELECT * FROM collate_test1 WHERE b ILIKE 'abc';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
 (2 rows)
 
 SELECT * FROM collate_test1 WHERE b ILIKE 'abc%';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
 (2 rows)
 
 SELECT * FROM collate_test1 WHERE b ILIKE '%bc%';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  2 | äbc
@@ -275,25 +275,25 @@ SELECT * FROM collate_test1 WHERE b ILIKE '%bc%';
 
 -- The following actually exercises the selectivity estimation for ILIKE.
 SELECT relname FROM pg_class WHERE relname ILIKE 'abc%';
- relname
+ relname 
 ---------
 (0 rows)
 
 -- regular expressions
 SELECT * FROM collate_test1 WHERE b ~ '^abc$';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
 (1 row)
 
 SELECT * FROM collate_test1 WHERE b ~ '^abc';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
 (1 row)
 
 SELECT * FROM collate_test1 WHERE b ~ 'bc';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  2 | äbc
@@ -301,21 +301,21 @@ SELECT * FROM collate_test1 WHERE b ~ 'bc';
 (3 rows)
 
 SELECT * FROM collate_test1 WHERE b ~* '^abc$';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
 (2 rows)
 
 SELECT * FROM collate_test1 WHERE b ~* '^abc';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
 (2 rows)
 
 SELECT * FROM collate_test1 WHERE b ~* 'bc';
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  2 | äbc
@@ -341,7 +341,7 @@ SELECT b,
        b ~ '^[[:punct:]]+$' AS is_punct,
        b ~ '^[[:space:]]+$' AS is_space
 FROM collate_test6;
-  b  | is_alpha | is_upper | is_lower | is_digit | is_alnum | is_graph | is_print | is_punct | is_space
+  b  | is_alpha | is_upper | is_lower | is_digit | is_alnum | is_graph | is_print | is_punct | is_space 
 -----+----------+----------+----------+----------+----------+----------+----------+----------+----------
  abc | t        | f        | t        | f        | t        | t        | t        | f        | f
  ABC | t        | t        | f        | f        | t        | t        | t        | f        | f
@@ -357,7 +357,7 @@ FROM collate_test6;
 
 -- The following actually exercises the selectivity estimation for ~*.
 SELECT relname FROM pg_class WHERE relname ~* '^abc';
- relname
+ relname 
 ---------
 (0 rows)
 
@@ -366,7 +366,7 @@ CREATE VIEW collview1 AS SELECT * FROM collate_test1 WHERE b COLLATE "C" >= 'bbc
 CREATE VIEW collview2 AS SELECT a, b FROM collate_test1 ORDER BY b COLLATE "C";
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'collview%' ORDER BY 1;
- table_name |              view_definition
+ table_name |              view_definition              
 ------------+-------------------------------------------
  collview1  |  SELECT a,                               +
             |     b                                    +
@@ -380,7 +380,7 @@ SELECT table_name, view_definition FROM information_schema.views
 
 -- collation propagation in various expression types
 SELECT a, coalesce(b, 'foo') FROM collate_test1 ORDER BY 2;
- a | coalesce
+ a | coalesce 
 ---+----------
  1 | abc
  4 | ABC
@@ -389,7 +389,7 @@ SELECT a, coalesce(b, 'foo') FROM collate_test1 ORDER BY 2;
 (4 rows)
 
 SELECT a, coalesce(b, 'foo') FROM collate_test2 ORDER BY 2;
- a | coalesce
+ a | coalesce 
 ---+----------
  1 | abc
  4 | ABC
@@ -398,7 +398,7 @@ SELECT a, coalesce(b, 'foo') FROM collate_test2 ORDER BY 2;
 (4 rows)
 
 SELECT a, coalesce(b, 'foo') FROM collate_test3 ORDER BY 2;
- a | coalesce
+ a | coalesce 
 ---+----------
  4 | ABC
  1 | abc
@@ -407,7 +407,7 @@ SELECT a, coalesce(b, 'foo') FROM collate_test3 ORDER BY 2;
 (4 rows)
 
 SELECT a, b, greatest(b, 'CCC') FROM collate_test1 ORDER BY 3;
- a |  b  | greatest
+ a |  b  | greatest 
 ---+-----+----------
  1 | abc | CCC
  2 | äbc | CCC
@@ -416,7 +416,7 @@ SELECT a, b, greatest(b, 'CCC') FROM collate_test1 ORDER BY 3;
 (4 rows)
 
 SELECT a, b, greatest(b, 'CCC') FROM collate_test2 ORDER BY 3;
- a |  b  | greatest
+ a |  b  | greatest 
 ---+-----+----------
  1 | abc | CCC
  3 | bbc | CCC
@@ -425,7 +425,7 @@ SELECT a, b, greatest(b, 'CCC') FROM collate_test2 ORDER BY 3;
 (4 rows)
 
 SELECT a, b, greatest(b, 'CCC') FROM collate_test3 ORDER BY 3;
- a |  b  | greatest
+ a |  b  | greatest 
 ---+-----+----------
  4 | ABC | CCC
  1 | abc | abc
@@ -434,34 +434,34 @@ SELECT a, b, greatest(b, 'CCC') FROM collate_test3 ORDER BY 3;
 (4 rows)
 
 SELECT a, nullif(b, 'abc') FROM collate_test1 ORDER BY 2;
- a | nullif
+ a | nullif 
 ---+--------
  4 | ABC
  2 | äbc
  3 | bbc
- 1 |
+ 1 | 
 (4 rows)
 
 SELECT a, nullif(b, 'abc') FROM collate_test2 ORDER BY 2;
- a | nullif
+ a | nullif 
 ---+--------
  4 | ABC
  3 | bbc
  2 | äbc
- 1 |
+ 1 | 
 (4 rows)
 
 SELECT a, nullif(b, 'abc') FROM collate_test3 ORDER BY 2;
- a | nullif
+ a | nullif 
 ---+--------
  4 | ABC
  3 | bbc
  2 | äbc
- 1 |
+ 1 | 
 (4 rows)
 
 SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test1 ORDER BY 2;
- a |  b
+ a |  b   
 ---+------
  4 | ABC
  2 | äbc
@@ -470,7 +470,7 @@ SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test1 ORDER BY 2
 (4 rows)
 
 SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test2 ORDER BY 2;
- a |  b
+ a |  b   
 ---+------
  4 | ABC
  1 | abcd
@@ -479,7 +479,7 @@ SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test2 ORDER BY 2
 (4 rows)
 
 SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test3 ORDER BY 2;
- a |  b
+ a |  b   
 ---+------
  4 | ABC
  1 | abcd
@@ -489,7 +489,7 @@ SELECT a, CASE b WHEN 'abc' THEN 'abcd' ELSE b END FROM collate_test3 ORDER BY 2
 
 CREATE DOMAIN testdomain AS text;
 SELECT a, b::testdomain FROM collate_test1 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -498,7 +498,7 @@ SELECT a, b::testdomain FROM collate_test1 ORDER BY 2;
 (4 rows)
 
 SELECT a, b::testdomain FROM collate_test2 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -507,7 +507,7 @@ SELECT a, b::testdomain FROM collate_test2 ORDER BY 2;
 (4 rows)
 
 SELECT a, b::testdomain FROM collate_test3 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  4 | ABC
  1 | abc
@@ -516,7 +516,7 @@ SELECT a, b::testdomain FROM collate_test3 ORDER BY 2;
 (4 rows)
 
 SELECT a, b::testdomain_sv FROM collate_test3 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -525,43 +525,43 @@ SELECT a, b::testdomain_sv FROM collate_test3 ORDER BY 2;
 (4 rows)
 
 SELECT min(b), max(b) FROM collate_test1;
- min | max
+ min | max 
 -----+-----
  abc | bbc
 (1 row)
 
 SELECT min(b), max(b) FROM collate_test2;
- min | max
+ min | max 
 -----+-----
  abc | äbc
 (1 row)
 
 SELECT min(b), max(b) FROM collate_test3;
- min | max
+ min | max 
 -----+-----
  ABC | äbc
 (1 row)
 
 SELECT array_agg(b ORDER BY b) FROM collate_test1;
-     array_agg
+     array_agg     
 -------------------
  {abc,ABC,äbc,bbc}
 (1 row)
 
 SELECT array_agg(b ORDER BY b) FROM collate_test2;
-     array_agg
+     array_agg     
 -------------------
  {abc,ABC,bbc,äbc}
 (1 row)
 
 SELECT array_agg(b ORDER BY b) FROM collate_test3;
-     array_agg
+     array_agg     
 -------------------
  {ABC,abc,bbc,äbc}
 (1 row)
 
 SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test1 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  1 | abc
@@ -574,7 +574,7 @@ SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test1 ORDER BY
 (8 rows)
 
 SELECT a, b FROM collate_test2 UNION SELECT a, b FROM collate_test2 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -583,14 +583,14 @@ SELECT a, b FROM collate_test2 UNION SELECT a, b FROM collate_test2 ORDER BY 2;
 (4 rows)
 
 SELECT a, b FROM collate_test3 WHERE a < 4 INTERSECT SELECT a, b FROM collate_test3 WHERE a > 1 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  3 | bbc
  2 | äbc
 (2 rows)
 
 SELECT a, b FROM collate_test3 EXCEPT SELECT a, b FROM collate_test3 WHERE a < 2 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  4 | ABC
  3 | bbc
@@ -601,7 +601,7 @@ SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3 ORDER BY
 ERROR:  could not determine which collation to use for string comparison
 HINT:  Use the COLLATE clause to set the collation explicitly.
 SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test3; -- ok
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  2 | äbc
@@ -619,7 +619,7 @@ LINE 1: SELECT a, b FROM collate_test1 UNION SELECT a, b FROM collat...
                                                        ^
 HINT:  You can choose the collation by applying the COLLATE clause to one or both expressions.
 SELECT a, b COLLATE "C" FROM collate_test1 UNION SELECT a, b FROM collate_test3 ORDER BY 2; -- ok
- a |  b
+ a |  b  
 ---+-----
  4 | ABC
  1 | abc
@@ -656,7 +656,7 @@ ERROR:  syntax error at or near "COLLATE"
 LINE 1: SELECT CAST('42' AS text COLLATE "C");
                                  ^
 SELECT a, CAST(b AS varchar) FROM collate_test1 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -665,7 +665,7 @@ SELECT a, CAST(b AS varchar) FROM collate_test1 ORDER BY 2;
 (4 rows)
 
 SELECT a, CAST(b AS varchar) FROM collate_test2 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  1 | abc
  4 | ABC
@@ -674,7 +674,7 @@ SELECT a, CAST(b AS varchar) FROM collate_test2 ORDER BY 2;
 (4 rows)
 
 SELECT a, CAST(b AS varchar) FROM collate_test3 ORDER BY 2;
- a |  b
+ a |  b  
 ---+-----
  4 | ABC
  1 | abc
@@ -694,7 +694,7 @@ SELECT a.b AS a, b.b AS b, a.b < b.b AS lt,
        mylt(a.b, b.b), mylt_noninline(a.b, b.b), mylt_plpgsql(a.b, b.b)
 FROM collate_test1 a, collate_test1 b
 ORDER BY a.b, b.b;
-  a  |  b  | lt | mylt | mylt_noninline | mylt_plpgsql
+  a  |  b  | lt | mylt | mylt_noninline | mylt_plpgsql 
 -----+-----+----+------+----------------+--------------
  abc | abc | f  | f    | f              | f
  abc | ABC | t  | t    | t              | t
@@ -719,7 +719,7 @@ SELECT a.b AS a, b.b AS b, a.b < b.b COLLATE "C" AS lt,
        mylt_plpgsql(a.b, b.b COLLATE "C")
 FROM collate_test1 a, collate_test1 b
 ORDER BY a.b, b.b;
-  a  |  b  | lt | mylt | mylt_noninline | mylt_plpgsql
+  a  |  b  | lt | mylt | mylt_noninline | mylt_plpgsql 
 -----+-----+----+------+----------------+--------------
  abc | abc | f  | f    | f              | f
  abc | ABC | f  | f    | f              | f
@@ -749,7 +749,7 @@ begin
 end
 $$;
 SELECT mylt2('a', 'B' collate "en_US") as t, mylt2('a', 'B' collate "C") as f;
- t | f
+ t | f 
 ---+---
  t | f
 (1 row)
@@ -764,7 +764,7 @@ begin
 end
 $$;
 SELECT mylt2('a', 'B') as f;
- f
+ f 
 ---
  f
 (1 row)
@@ -774,14 +774,14 @@ ERROR:  could not determine which collation to use for string comparison
 HINT:  Use the COLLATE clause to set the collation explicitly.
 CONTEXT:  PL/pgSQL function mylt2(text,text) line 6 at RETURN
 SELECT mylt2('a', 'B' collate "POSIX") as f;
- f
+ f 
 ---
  f
 (1 row)
 
 -- polymorphism
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test1)) ORDER BY 1;
- unnest
+ unnest 
 --------
  abc
  ABC
@@ -790,7 +790,7 @@ SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test1)) ORDER 
 (4 rows)
 
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test2)) ORDER BY 1;
- unnest
+ unnest 
 --------
  abc
  ABC
@@ -799,7 +799,7 @@ SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test2)) ORDER 
 (4 rows)
 
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test3)) ORDER BY 1;
- unnest
+ unnest 
 --------
  ABC
  abc
@@ -810,7 +810,7 @@ SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test3)) ORDER 
 CREATE FUNCTION dup (anyelement) RETURNS anyelement
     AS 'select $1' LANGUAGE sql;
 SELECT a, dup(b) FROM collate_test1 ORDER BY 2;
- a | dup
+ a | dup 
 ---+-----
  1 | abc
  4 | ABC
@@ -819,7 +819,7 @@ SELECT a, dup(b) FROM collate_test1 ORDER BY 2;
 (4 rows)
 
 SELECT a, dup(b) FROM collate_test2 ORDER BY 2;
- a | dup
+ a | dup 
 ---+-----
  1 | abc
  4 | ABC
@@ -828,7 +828,7 @@ SELECT a, dup(b) FROM collate_test2 ORDER BY 2;
 (4 rows)
 
 SELECT a, dup(b) FROM collate_test3 ORDER BY 2;
- a | dup
+ a | dup 
 ---+-----
  4 | ABC
  1 | abc
@@ -848,7 +848,7 @@ ERROR:  collations are not supported by type integer
 LINE 1: ...ATE INDEX collate_test1_idx6 ON collate_test1 ((a COLLATE "C...
                                                              ^
 SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%' ORDER BY 1;
-      relname       |                                                  pg_get_indexdef
+      relname       |                                                  pg_get_indexdef                                                  
 --------------------+-------------------------------------------------------------------------------------------------------------------
  collate_test1_idx1 | CREATE INDEX collate_test1_idx1 ON collate_tests.collate_test1 USING btree (b)
  collate_test1_idx2 | CREATE INDEX collate_test1_idx2 ON collate_tests.collate_test1 USING btree (b COLLATE "C")
@@ -889,7 +889,7 @@ CREATE COLLATION test4 FROM nonsense;
 ERROR:  collation "nonsense" for encoding "WIN1252" does not exist
 CREATE COLLATION test5 FROM test0;
 SELECT collname FROM pg_collation WHERE collname LIKE 'test%' ORDER BY 1;
- collname
+ collname 
 ----------
  test0
  test1
@@ -910,11 +910,11 @@ SELECT collname, nspname, obj_description(pg_collation.oid, 'pg_collation')
     FROM pg_collation JOIN pg_namespace ON (collnamespace = pg_namespace.oid)
     WHERE collname LIKE 'test%'
     ORDER BY 1;
- collname |    nspname    | obj_description
+ collname |    nspname    | obj_description 
 ----------+---------------+-----------------
  test0    | collate_tests | US English
- test11   | test_schema   |
- test5    | collate_tests |
+ test11   | test_schema   | 
+ test5    | collate_tests | 
 (3 rows)
 
 DROP COLLATION test0, test_schema.test11, test5;
@@ -923,7 +923,7 @@ ERROR:  collation "test0" for encoding "WIN1252" does not exist
 DROP COLLATION IF EXISTS test0;
 NOTICE:  collation "test0" does not exist, skipping
 SELECT collname FROM pg_collation WHERE collname LIKE 'test%';
- collname
+ collname 
 ----------
 (0 rows)
 
@@ -961,15 +961,15 @@ drop cascades to view collate_dep_test3
 drop cascades to index collate_dep_test4i
 \d collate_dep_test1
       Table "collate_tests.collate_dep_test1"
- Column |  Type   | Collation | Nullable | Default
+ Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- a      | integer |           |          |
+ a      | integer |           |          | 
 
 \d collate_dep_test2
  Composite type "collate_tests.collate_dep_test2"
- Column |  Type   | Collation | Nullable | Default
+ Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- x      | integer |           |          |
+ x      | integer |           |          | 
 
 DROP TABLE collate_dep_test1, collate_dep_test4t;
 DROP TYPE collate_dep_test2;
@@ -977,13 +977,13 @@ DROP TYPE collate_dep_test2;
 create type textrange_c as range(subtype=text, collation="C");
 create type textrange_en_us as range(subtype=text, collation="en_US");
 select textrange_c('A','Z') @> 'b'::text;
- ?column?
+ ?column? 
 ----------
  f
 (1 row)
 
 select textrange_en_us('A','Z') @> 'b'::text;
- ?column?
+ ?column? 
 ----------
  t
 (1 row)
