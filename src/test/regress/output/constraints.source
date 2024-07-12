@@ -612,7 +612,8 @@ ALTER INDEX t_a_idx ATTACH PARTITION tp_pkey;
 ALTER INDEX t_b_idx ATTACH PARTITION tp_b_a_key;
 ALTER TABLE t DETACH PARTITION tp;
 SELECT conname, conparentid, conislocal, coninhcount
-  FROM pg_constraint WHERE conname IN ('tp_pkey', 'tp_b_a_key');
+  FROM pg_constraint WHERE conname IN ('tp_pkey', 'tp_b_a_key')
+  ORDER BY conname DESC;
   conname   | conparentid | conislocal | coninhcount 
 ------------+-------------+------------+-------------
  tp_pkey    |           0 | t          |           0
