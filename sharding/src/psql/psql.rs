@@ -4,10 +4,11 @@ use std::ffi::CStr;
 extern crate users;
 use users::get_current_username;
 use super::super::node::node::*;
+use inline_colorization::*;
 
 #[no_mangle]
 pub extern "C" fn SendQueryToShard(query_data: *const i8) -> bool {
-    println!("SendQueryToShard called");
+    println!("{color_blue}{style_bold}SendQueryToShard called{style_reset}");
     unsafe {
         if query_data.is_null() {
             eprintln!("Received a null pointer");
