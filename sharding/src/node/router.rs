@@ -1,5 +1,6 @@
 use postgres::{Client, NoTls};
 extern crate users;
+use rust_decimal::Decimal;
 use users::get_current_username;
 use std::fs;
 use super::node::*;
@@ -27,7 +28,7 @@ impl<'a> Router<'a> {
             }
             match Router::connect(client_port) {
                 Ok(client) => clients.push(client),
-                Err(e) => eprintln!("Failed to connect to the node in port: {:?}", e),
+                Err(e) => {}, // Do something here
             }
         }
         if clients.is_empty() {
@@ -77,7 +78,16 @@ impl<'a> NodeRole for Router<'a> {
             }
         };
 
-        println!("{:?}", rows);
+        for row in rows {
+            let id: i32 = row.get(0);
+            let name: &str = row.get(1);
+            let position: &str = row.get(2);
+            let salary: Decimal = row.get(3);
+            println!(
+                "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
+                id, name, position, salary
+            );
+        }
         true
     }
 }

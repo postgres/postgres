@@ -1,5 +1,6 @@
 use postgres::{Client, NoTls};
 extern crate users;
+use rust_decimal::Decimal;
 use users::get_current_username;
 use super::node::*;
 
@@ -52,7 +53,17 @@ impl<'a> NodeRole for Shard<'a> {
             }
         };
 
-        println!("{:?}", rows);
+        for row in rows {
+            let id: i32 = row.get(0);
+            let name: &str = row.get(1);
+            let position: &str = row.get(2);
+            let salary: Decimal = row.get(3);
+            println!(
+                "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
+                id, name, position, salary
+            );
+        }
+        
         true
     }
 }
