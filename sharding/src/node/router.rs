@@ -16,7 +16,7 @@ impl Router {
     /// Creates a new Router node with the given port
     pub fn new(port: String) -> Self {
         // read from 'ports.txt' to get the ports
-        let contents = fs::read_to_string("ports.txt")
+        let contents = fs::read_to_string("/Users/aldanarastrelli/Documents/Aldana/distributed-postgres/sharding/src/node/ports.txt")
         .expect("Should have been able to read the file");
         let ports: Vec<&str> = contents.split("\n").collect();
         let mut clients = Vec::new();
@@ -29,6 +29,10 @@ impl Router {
                 Err(e) => eprintln!("Failed to connect to the node in port: {:?}", e),
             }
         }
+        if clients.is_empty() {
+            eprint!("Failed to connect to any of the nodes");
+        };
+
         Router {
             clients: clients,
             port
@@ -56,6 +60,7 @@ impl Router {
 impl NodeRole for Router {
     #[no_mangle]
     extern "C" fn send_query(&mut self, query: &str) -> bool {
+        println!("Router send_query called with query: {:?}", query);
         // TODO-SHARD: implement the routing logic
         
         // here

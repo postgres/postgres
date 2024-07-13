@@ -12,7 +12,7 @@ POSTGRES_EXECUTABLE="$ROOT_DIR/src/backend/postgres"
 CLUSTERS_DIR="$ROOT_DIR/clusters"
 DB_DIR="$CLUSTERS_DIR/$DB_CLUSTER_NAME"
 LOG_FILE="$CLUSTERS_DIR/logfile"
-PORT_FILE="$ROOT_DIR/ports.txt" # Path to ports.txt
+PORT_FILE="$SHARDING_DIR/src/node/ports.txt" # Path to ports.txt
 
 # Check for additional argument
 START_PSQL=$1
