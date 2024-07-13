@@ -42,7 +42,5 @@ extern const char *session_username(void);
 extern void expand_tilde(char **filename);
 
 extern bool recognized_connection_string(const char *connstr);
-extern char* SendQueryToShard(char* query_data);
-
 
 #endif							/* COMMON_H */

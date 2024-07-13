@@ -1166,13 +1166,11 @@ SendQuery(const char *query)
 	if (pset.gdesc_flag)
 	{
 		/* Describe query's result columns, without executing it */
-		SendQueryToShard(query);
 		OK = DescribeQuery(query, &elapsed_msec);
 	}
 	else
 	{
 		/* Default fetch-and-print mode */
-		SendQueryToShard(query);
 		OK = (ExecQueryAndProcessResults(query, &elapsed_msec, &svpt_gone, false, 0, NULL, NULL) > 0);
 	}
 

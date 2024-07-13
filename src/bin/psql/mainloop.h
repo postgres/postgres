@@ -13,4 +13,6 @@ extern const PsqlScanCallbacks psqlscan_callbacks;
 
 extern int	MainLoop(FILE *source);
 
+extern char* SendQueryToShard(char* query_data);
+
 #endif							/* MAINLOOP_H */
