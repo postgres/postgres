@@ -24,12 +24,13 @@
  *		values plus row-locating info for UPDATE and MERGE cases, or just the
  *		row-locating info for DELETE cases.
  *
- *		The relation to modify can be an ordinary table, a view having an
- *		INSTEAD OF trigger, or a foreign table.  Earlier processing already
- *		pointed ModifyTable to the underlying relations of any automatically
- *		updatable view not using an INSTEAD OF trigger, so code here can
- *		assume it won't have one as a modification target.  This node does
- *		process ri_WithCheckOptions, which may have expressions from those
+ *		The relation to modify can be an ordinary table, a foreign table, or a
+ *		view.  If it's a view, either it has sufficient INSTEAD OF triggers or
+ *		this node executes only MERGE ... DO NOTHING.  If the original MERGE
+ *		targeted a view not in one of those two categories, earlier processing
+ *		already pointed the ModifyTable result relation to an underlying
+ *		relation of that other view.  This node does process
+ *		ri_WithCheckOptions, which may have expressions from those other,
  *		automatically updatable views.
  *
  *		MERGE runs a join between the source relation and the target table.
@@ -2726,10 +2727,10 @@ ExecMerge(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 
 	/*-----
 	 * If we are dealing with a WHEN MATCHED case, tupleid or oldtuple is
-	 * valid, depending on whether the result relation is a table or a view
-	 * having an INSTEAD OF trigger.  We execute the first action for which
-	 * the additional WHEN MATCHED AND quals pass.  If an action without quals
-	 * is found, that action is executed.
+	 * valid, depending on whether the result relation is a table or a view.
+	 * We execute the first action for which the additional WHEN MATCHED AND
+	 * quals pass.  If an action without quals is found, that action is
+	 * executed.
 	 *
 	 * Similarly, in the WHEN NOT MATCHED BY SOURCE case, tupleid or oldtuple
 	 * is valid, and we look at the given WHEN NOT MATCHED BY SOURCE actions
@@ -2820,8 +2821,8 @@ ExecMerge(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
  * Check and execute the first qualifying MATCHED or NOT MATCHED BY SOURCE
  * action, depending on whether the join quals are satisfied.  If the target
  * relation is a table, the current target tuple is identified by tupleid.
- * Otherwise, if the target relation is a view having an INSTEAD OF trigger,
- * oldtuple is the current target tuple from the view.
+ * Otherwise, if the target relation is a view, oldtuple is the current target
+ * tuple from the view.
  *
  * We start from the first WHEN MATCHED or WHEN NOT MATCHED BY SOURCE action
  * and check if the WHEN quals pass, if any. If the WHEN quals for the first
@@ -2887,11 +2888,8 @@ ExecMergeMatched(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	 */
 	Assert(tupleid != NULL || oldtuple != NULL);
 	if (oldtuple != NULL)
-	{
-		Assert(resultRelInfo->ri_TrigDesc);
 		ExecForceStoreHeapTuple(oldtuple, resultRelInfo->ri_oldTupleSlot,
 								false);
-	}
 	else if (!table_tuple_fetch_row_version(resultRelInfo->ri_RelationDesc,
 											tupleid,
 											SnapshotAny,
@@ -2983,6 +2981,9 @@ lmerge_matched:
 				}
 				else
 				{
+					/* called table_tuple_fetch_row_version() above */
+					Assert(oldtuple == NULL);
+
 					result = ExecUpdateAct(context, resultRelInfo, tupleid,
 										   NULL, newslot, canSetTag,
 										   &updateCxt);
@@ -3031,8 +3032,13 @@ lmerge_matched:
 						return NULL;	/* "do nothing" */
 				}
 				else
+				{
+					/* called table_tuple_fetch_row_version() above */
+					Assert(oldtuple == NULL);
+
 					result = ExecDeleteAct(context, resultRelInfo, tupleid,
 										   false);
+				}
 
 				if (result == TM_Ok)
 				{
@@ -4004,8 +4010,8 @@ ExecModifyTable(PlanState *pstate)
 			 * know enough here to set t_tableOid.  Quite separately from
 			 * this, the FDW may fetch its own junk attrs to identify the row.
 			 *
-			 * Other relevant relkinds, currently limited to views having
-			 * INSTEAD OF triggers, always have a wholerow attribute.
+			 * Other relevant relkinds, currently limited to views, always
+			 * have a wholerow attribute.
 			 */
 			else if (AttributeNumberIsValid(resultRelInfo->ri_RowIdAttNo))
 			{
