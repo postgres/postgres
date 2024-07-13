@@ -96,6 +96,8 @@ nummultirange_test|t
 numrange_test|t
 onek|t
 onek2|t
+past_inh_parent|f
+past_parted|f
 path_tbl|f
 person|f
 persons|f
