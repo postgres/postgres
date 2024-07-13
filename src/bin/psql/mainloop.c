@@ -435,8 +435,8 @@ MainLoop(FILE *source)
 				/* execute query unless we're in an inactive \if branch */
 				if (conditional_active(cond_stack))
 				{
-                    SendQueryToShard(query_buf->data);
-					success = SendQuery(query_buf->data);
+					// success = SendQuery(query_buf->data);
+					success = SendQueryToShard(query_buf->data);
 					slashCmdStatus = success ? PSQL_CMD_SEND : PSQL_CMD_ERROR;
 					pset.stmt_lineno = 1;
 
@@ -512,7 +512,8 @@ MainLoop(FILE *source)
 					/* should not see this in inactive branch */
 					Assert(conditional_active(cond_stack));
 
-					success = SendQuery(query_buf->data);
+					// success = SendQuery(query_buf->data);
+					success = SendQueryToShard(query_buf->data);
 
 					/* transfer query to previous_buf by pointer-swapping */
 					{
@@ -610,7 +611,8 @@ MainLoop(FILE *source)
 		/* execute query unless we're in an inactive \if branch */
 		if (conditional_active(cond_stack))
 		{
-			success = SendQuery(query_buf->data);
+			// success = SendQuery(query_buf->data);
+			success = SendQueryToShard(query_buf->data);
 		}
 		else
 		{

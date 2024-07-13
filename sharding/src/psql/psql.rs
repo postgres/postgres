@@ -9,12 +9,12 @@ extern crate users;
 use users::get_current_username;
 
 #[no_mangle]
-pub extern "C" fn SendQueryToShard(query_data: *const i8) {
+pub extern "C" fn SendQueryToShard(query_data: *const i8) -> bool {
     println!("SendQueryToShard called");
     unsafe {
         if query_data.is_null() {
             eprintln!("Received a null pointer");
-            return;
+            return false;
         }
 
         let c_str = CStr::from_ptr(query_data);
@@ -22,12 +22,23 @@ pub extern "C" fn SendQueryToShard(query_data: *const i8) {
             Ok(str) => str,
             Err(_) => {
                 eprintln!("Received an invalid UTF-8 string");
-                return;
+                return false;
             }
         };
 
         println!("Received Query: {:?}", query);
-        let _ = handle_query(query.trim());
+        let query_result = handle_query(query.trim());
+        match query_result {
+            Ok(_) => {
+                println!("Query executed successfully");
+                true
+            }
+            Err(e) => {
+                eprintln!("Failed to execute query: {:?}", e);
+                false
+            }
+        }
+
     }
 }
 
