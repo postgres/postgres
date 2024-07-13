@@ -1928,6 +1928,38 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 		}
 
 		/*
+		 * We associate the socket with a new event handle for each
+		 * WaitEventSet.  FD_CLOSE is only generated once if the other end
+		 * closes gracefully.  Therefore we might miss the FD_CLOSE
+		 * notification, if it was delivered to another event after we stopped
+		 * waiting for it.  Close that race by peeking for EOF after setting
+		 * up this handle to receive notifications, and before entering the
+		 * sleep.
+		 *
+		 * XXX If we had one event handle for the lifetime of a socket, we
+		 * wouldn't need this.
+		 */
+		if (cur_event->events & WL_SOCKET_READABLE)
+		{
+			char		c;
+			WSABUF		buf;
+			DWORD		received;
+			DWORD		flags;
+
+			buf.buf = &c;
+			buf.len = 1;
+			flags = MSG_PEEK;
+			if (WSARecv(cur_event->fd, &buf, 1, &received, &flags, NULL, NULL) == 0)
+			{
+				occurred_events->pos = cur_event->pos;
+				occurred_events->user_data = cur_event->user_data;
+				occurred_events->events = WL_SOCKET_READABLE;
+				occurred_events->fd = cur_event->fd;
+				return 1;
+			}
+		}
+
+		/*
 		 * Windows does not guarantee to log an FD_WRITE network event
 		 * indicating that more data can be sent unless the previous send()
 		 * failed with WSAEWOULDBLOCK.  While our caller might well have made
