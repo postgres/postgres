@@ -68,6 +68,9 @@ MERGE INTO ro_view13 AS t USING (VALUES (2, 'Row 2')) AS v(a,b) ON t.a = v.a
   WHEN MATCHED THEN UPDATE SET b = v.b;
 MERGE INTO ro_view13 AS t USING (VALUES (3, 'Row 3')) AS v(a,b) ON t.a = v.a
   WHEN NOT MATCHED THEN INSERT VALUES (v.a, v.b);
+MERGE INTO ro_view13 AS t USING (VALUES (2, 'Row 2')) AS v(a,b) ON t.a = v.a
+  WHEN MATCHED THEN DO NOTHING
+  WHEN NOT MATCHED THEN DO NOTHING; -- should be OK to do nothing
 MERGE INTO ro_view13 AS t USING (VALUES (3, 'Row 3')) AS v(a,b) ON t.a = v.a
   WHEN MATCHED THEN DO NOTHING
   WHEN NOT MATCHED THEN DO NOTHING; -- should be OK to do nothing
@@ -121,6 +124,8 @@ DELETE FROM rw_view16 WHERE a=-3; -- should be OK
 -- Read-only views
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 DELETE FROM ro_view18;
+MERGE INTO ro_view18 AS t USING (VALUES (1, 'Row 1')) AS v(a,b) ON t.a = v.a
+  WHEN MATCHED THEN DO NOTHING; -- should be OK to do nothing
 UPDATE ro_view19 SET last_value=1000;
 UPDATE ro_view20 SET b=upper(b);
 
