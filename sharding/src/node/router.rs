@@ -134,10 +134,10 @@ impl NodeRole for Router {
         // here
 
         // send the query to the first shard for now. When routing logic is added, the change needed is:
-        // get the client from the routing logic, delete the first line down here, leave the rest to execute for the found client.
+        // get the shard from the routing logic, delete the first line down here, leave the rest to execute for the found shard.
         // If the query needs to be sent to multiple shards, then the logic should be changed to send the query to all the shards (found in the routing logic or all the shards in general).
-        let client = &mut self.shards.lock().unwrap()[0];
-        let rows = match client.query(query, &[]) {
+        let shard = &mut self.shards.lock().unwrap()[0];
+        let rows = match shard.query(query, &[]) {
             Ok(rows) => rows,
             Err(e) => {
                 eprintln!("Failed to send the query to the shard: {:?}", e);
