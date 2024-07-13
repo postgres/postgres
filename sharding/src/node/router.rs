@@ -6,15 +6,16 @@ use super::node::*;
 
 /// This struct represents the Router node in the distributed system. It has the responsibility of routing the queries to the appropriate shard or shards.
 #[repr(C)]
-pub struct Router {
+pub struct Router<'a> {
     clients: Vec<Client>,
-    port: String,
+    port:&'a str,
     // TODO-SHARD: add hash table for routing
 }
 
-impl Router {
+impl<'a> Router<'a> {
     /// Creates a new Router node with the given port
-    pub fn new(port: String) -> Self {
+    pub fn new(port: &'a str) -> Self {
+
         // read from 'ports.txt' to get the ports
         let contents = fs::read_to_string("/Users/aldanarastrelli/Documents/Aldana/distributed-postgres/sharding/src/node/ports.txt")
         .expect("Should have been able to read the file");
@@ -57,9 +58,8 @@ impl Router {
     }
 }
 
-impl NodeRole for Router {
-    #[no_mangle]
-    extern "C" fn send_query(&mut self, query: &str) -> bool {
+impl<'a> NodeRole for Router<'a> {
+    fn send_query(&mut self, query: &str) -> bool {
         println!("Router send_query called with query: {:?}", query);
         // TODO-SHARD: implement the routing logic
         

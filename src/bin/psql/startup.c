@@ -303,19 +303,8 @@ main(int argc, char *argv[])
 		keywords[7] = NULL;
 		values[7] = NULL;
 
-		// Creating the node
-		if(nodeType == Router)
-		{
-			// Create a router node
-			printf("Creating a router node\n");
-			init_node_instance(nodeType, options.port);
-		}
-		else if(nodeType == Shard)
-		{
-			// Create a shard node
-			printf("Creating a shard node\n");
-			/// TODO-SHARD: create a shard
-		}
+		// Creating the node instance
+		init_node_instance(nodeType, options.port);
 
 		new_pass = false;
 		pset.db = PQconnectdbParams(keywords, values, true);
