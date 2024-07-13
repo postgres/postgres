@@ -24,6 +24,7 @@ impl Router {
     pub fn new(port: &str) -> Self {
 
         // read from 'ports.txt' to get the ports
+        // TODO-SHARD this path needs to be fixed
         let contents = fs::read_to_string("/Users/aldanarastrelli/Documents/Aldana/distributed-postgres/sharding/src/node/ports.txt")
         .expect("Should have been able to read the file");
         let ports: Vec<&str> = contents.split("\n").collect();
