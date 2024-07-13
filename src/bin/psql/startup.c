@@ -118,10 +118,10 @@ empty_signal_handler(SIGNAL_ARGS)
 }
 #endif
 
-enum NodeType {
-	ROUTER,
-	SHARD
-};
+/*********** Sharding definitions ************/
+
+
+/********************************************/
 
 /*
  *
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 	int			successResult;
 	char	   *password = NULL;
 	bool		new_pass;
-	enum NodeType	nodeType;
+	NodeType	nodeType;
 
 	pg_logging_init(argv[0]);
 	pg_logging_set_pre_callback(log_pre_callback);
@@ -163,13 +163,13 @@ main(int argc, char *argv[])
 				// If equals r or R (router)
 				if (strcmp(argv[i+1],"r")==0 || strcmp(argv[i+1],"R")==0)
 				{
-					nodeType = ROUTER;
+					nodeType = Router;
 					printf("Node Type: router\n");
 				}
 				// If equals s or S (shard)
 				else if (strcmp(argv[i+1],"s")==0 || strcmp(argv[i+1],"S")==0)
 				{
-					nodeType = SHARD;
+					nodeType = Shard;
 					printf("Node Type: shard\n");
 				}
 				else
@@ -302,6 +302,20 @@ main(int argc, char *argv[])
 		values[6] = (pset.notty || getenv("PGCLIENTENCODING")) ? NULL : "auto";
 		keywords[7] = NULL;
 		values[7] = NULL;
+
+		// Creating the node
+		if(nodeType == Router)
+		{
+			// Create a router node
+			printf("Creating a router node\n");
+			init_node_instance(nodeType, options.port);
+		}
+		else if(nodeType == Shard)
+		{
+			// Create a shard node
+			printf("Creating a shard node\n");
+			/// TODO-SHARD: create a shard
+		}
 
 		new_pass = false;
 		pset.db = PQconnectdbParams(keywords, values, true);

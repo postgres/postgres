@@ -9,6 +9,15 @@
 #define MAINLOOP_H
 
 #include "fe_utils/psqlscan.h"
+
+typedef enum {
+    Router,
+    Shard,
+} NodeType;
+
+extern char* SendQueryToShard(char* query_data);
+extern void init_node_instance(NodeType nodeType, char* port);
+
 extern const PsqlScanCallbacks psqlscan_callbacks;
 
 extern int	MainLoop(FILE *source);
