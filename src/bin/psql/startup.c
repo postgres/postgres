@@ -181,9 +181,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-	// Initialize
-	// TODO-SHARD: initialize DistributionHandler here with NodeType
-
 	pset.progname = get_progname(argv[0]);
 
 	pset.db = NULL;

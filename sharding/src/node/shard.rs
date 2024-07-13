@@ -25,7 +25,7 @@ impl<'a> Shard<'a> {
 
 impl<'a> NodeRole for Shard<'a> {
     fn send_query(&mut self, query: &str) -> bool {
-        /// get username dynamically
+        // get username dynamically
         let username = match get_current_username() {
             Some(username) => username.to_string_lossy().to_string(),
             None => panic!("Failed to get current username"),
@@ -33,7 +33,6 @@ impl<'a> NodeRole for Shard<'a> {
         println!("Username found: {:?}", username);
         println!("Connecting to the database with port: {}", self.port);
 
-        // TODO-SHARD: port needs to be dynamic
         let mut client: Client = match Client::connect(
             format!("host=127.0.0.1 port={} user={} dbname=template1", self.port, username).as_str(),
             NoTls,
