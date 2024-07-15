@@ -23,6 +23,7 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
 #include "utils/typcache.h"
 
@@ -425,7 +426,7 @@ have_unsafe_outer_join_ref(PlannerInfo *root,
 
 /*
  * paraminfo_get_equal_hashops
- *		Determine if the clauses in param_info and innerrel's lateral_vars
+ *		Determine if the clauses in param_info and innerrel's lateral vars
  *		can be hashed.
  *		Returns true if hashing is possible, otherwise false.
  *
@@ -438,10 +439,11 @@ have_unsafe_outer_join_ref(PlannerInfo *root,
 static bool
 paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 							RelOptInfo *outerrel, RelOptInfo *innerrel,
-							List **param_exprs, List **operators,
-							bool *binary_mode)
+							List *ph_lateral_vars, List **param_exprs,
+							List **operators, bool *binary_mode)
 
 {
+	List	   *lateral_vars;
 	ListCell   *lc;
 
 	*param_exprs = NIL;
@@ -521,7 +523,8 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 	}
 
 	/* Now add any lateral vars to the cache key too */
-	foreach(lc, innerrel->lateral_vars)
+	lateral_vars = list_concat(ph_lateral_vars, innerrel->lateral_vars);
+	foreach(lc, lateral_vars)
 	{
 		Node	   *expr = (Node *) lfirst(lc);
 		TypeCacheEntry *typentry;
@@ -573,9 +576,100 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 }
 
 /*
+ * extract_lateral_vars_from_PHVs
+ *	  Extract lateral references within PlaceHolderVars that are due to be
+ *	  evaluated at 'innerrelids'.
+ */
+static List *
+extract_lateral_vars_from_PHVs(PlannerInfo *root, Relids innerrelids)
+{
+	List	   *ph_lateral_vars = NIL;
+	ListCell   *lc;
+
+	/* Nothing would be found if the query contains no LATERAL RTEs */
+	if (!root->hasLateralRTEs)
+		return NIL;
+
+	/*
+	 * No need to consider PHVs that are due to be evaluated at joinrels,
+	 * since we do not add Memoize nodes on top of joinrel paths.
+	 */
+	if (bms_membership(innerrelids) == BMS_MULTIPLE)
+		return NIL;
+
+	foreach(lc, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
+		List	   *vars;
+		ListCell   *cell;
+
+		/* PHV is uninteresting if no lateral refs */
+		if (phinfo->ph_lateral == NULL)
+			continue;
+
+		/* PHV is uninteresting if not due to be evaluated at innerrelids */
+		if (!bms_equal(phinfo->ph_eval_at, innerrelids))
+			continue;
+
+		/*
+		 * If the PHV does not reference any rels in innerrelids, use its
+		 * contained expression as a cache key rather than extracting the
+		 * Vars/PHVs from it and using those.  This can be beneficial in cases
+		 * where the expression results in fewer distinct values to cache
+		 * tuples for.
+		 */
+		if (!bms_overlap(pull_varnos(root, (Node *) phinfo->ph_var->phexpr),
+						 innerrelids))
+		{
+			ph_lateral_vars = lappend(ph_lateral_vars, phinfo->ph_var->phexpr);
+			continue;
+		}
+
+		/* Fetch Vars and PHVs of lateral references within PlaceHolderVars */
+		vars = pull_vars_of_level((Node *) phinfo->ph_var->phexpr, 0);
+		foreach(cell, vars)
+		{
+			Node	   *node = (Node *) lfirst(cell);
+
+			if (IsA(node, Var))
+			{
+				Var		   *var = (Var *) node;
+
+				Assert(var->varlevelsup == 0);
+
+				if (bms_is_member(var->varno, phinfo->ph_lateral))
+					ph_lateral_vars = lappend(ph_lateral_vars, node);
+			}
+			else if (IsA(node, PlaceHolderVar))
+			{
+				PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+				Assert(phv->phlevelsup == 0);
+
+				if (bms_is_subset(find_placeholder_info(root, phv)->ph_eval_at,
+								  phinfo->ph_lateral))
+					ph_lateral_vars = lappend(ph_lateral_vars, node);
+			}
+			else
+				Assert(false);
+		}
+
+		list_free(vars);
+	}
+
+	return ph_lateral_vars;
+}
+
+/*
  * get_memoize_path
  *		If possible, make and return a Memoize path atop of 'inner_path'.
  *		Otherwise return NULL.
+ *
+ * Note that currently we do not add Memoize nodes on top of join relation
+ * paths.  This is because the ParamPathInfos for join relation paths do not
+ * maintain ppi_clauses, as the set of relevant clauses varies depending on how
+ * the join is formed.  In addition, joinrels do not maintain lateral_vars.  So
+ * we do not have a way to extract cache keys from joinrels.
  */
 static Path *
 get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
@@ -587,6 +681,7 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 	List	   *hash_operators;
 	ListCell   *lc;
 	bool		binary_mode;
+	List	   *ph_lateral_vars;
 
 	/* Obviously not if it's disabled */
 	if (!enable_memoize)
@@ -602,13 +697,21 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 		return NULL;
 
 	/*
+	 * Extract lateral Vars/PHVs within PlaceHolderVars that are due to be
+	 * evaluated at innerrel.  These lateral Vars/PHVs could be used as
+	 * memoize cache keys.
+	 */
+	ph_lateral_vars = extract_lateral_vars_from_PHVs(root, innerrel->relids);
+
+	/*
 	 * We can only have a memoize node when there's some kind of cache key,
 	 * either parameterized path clauses or lateral Vars.  No cache key sounds
 	 * more like something a Materialize node might be more useful for.
 	 */
 	if ((inner_path->param_info == NULL ||
 		 inner_path->param_info->ppi_clauses == NIL) &&
-		innerrel->lateral_vars == NIL)
+		innerrel->lateral_vars == NIL &&
+		ph_lateral_vars == NIL)
 		return NULL;
 
 	/*
@@ -695,6 +798,7 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 									outerrel->top_parent ?
 									outerrel->top_parent : outerrel,
 									innerrel,
+									ph_lateral_vars,
 									&param_exprs,
 									&hash_operators,
 									&binary_mode))
