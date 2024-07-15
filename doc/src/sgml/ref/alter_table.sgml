@@ -1163,7 +1163,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       New partitions will have the same table access method as the parent.
       If the parent table is persistent then new partitions are created
       persistent.  If the parent table is temporary then new partitions
-      are also created temporary.
+      are also created temporary.  New partitions will also be created in
+      the same tablespace as the parent.
      </para>
      <note>
       <para>
@@ -1235,7 +1236,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The new partition will have the same table access method as the parent.
       If the parent table is persistent then the new partition is created
       persistent.  If the parent table is temporary then the new partition
-      is also created temporary.
+      is also created temporary.  The new partition will also be created in
+      the same tablespace as the parent.
      </para>
      <note>
       <para>
