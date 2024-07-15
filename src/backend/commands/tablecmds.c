@@ -20358,7 +20358,7 @@ createPartitionTable(RangeVar *newPartName, Relation modelRel,
 	createStmt->constraints = NIL;
 	createStmt->options = NIL;
 	createStmt->oncommit = ONCOMMIT_NOOP;
-	createStmt->tablespacename = NULL;
+	createStmt->tablespacename = get_tablespace_name(modelRel->rd_rel->reltablespace);
 	createStmt->if_not_exists = false;
 	createStmt->accessMethod = get_am_name(modelRel->rd_rel->relam);
 

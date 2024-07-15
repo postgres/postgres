@@ -536,6 +536,18 @@ SET search_path = partitions_merge_schema, pg_temp, public;
 ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
 ROLLBACK;
 
+-- Check the new partition inherits parent's tablespace
+CREATE TABLE t (i int PRIMARY KEY USING INDEX TABLESPACE regress_tblspace)
+  PARTITION BY RANGE (i) TABLESPACE regress_tblspace;
+CREATE TABLE tp_0_1 PARTITION OF t FOR VALUES FROM (0) TO (1);
+CREATE TABLE tp_1_2 PARTITION OF t FOR VALUES FROM (1) TO (2);
+ALTER TABLE t MERGE PARTITIONS (tp_0_1, tp_1_2) INTO tp_0_2;
+SELECT tablename, tablespace FROM pg_tables
+  WHERE tablename IN ('t', 'tp_0_2') ORDER BY tablename, tablespace;
+SELECT tablename, indexname, tablespace FROM pg_indexes
+  WHERE tablename IN ('t', 'tp_0_2') ORDER BY tablename, indexname, tablespace;
+DROP TABLE t;
+
 -- Check the new partition inherits parent's table access method
 SET search_path = partitions_merge_schema, public;
 CREATE ACCESS METHOD partitions_merge_heap TYPE TABLE HANDLER heap_tableam_handler;
