@@ -888,9 +888,11 @@ ALTER TABLE t SPLIT PARTITION tp_0_2 INTO
   (PARTITION tp_0_1 FOR VALUES FROM (0) TO (1),
    PARTITION tp_1_2 FOR VALUES FROM (1) TO (2));
 SELECT tablename, tablespace FROM pg_tables
-  WHERE tablename IN ('t', 'tp_0_1', 'tp_1_2') ORDER BY tablename, tablespace;
+  WHERE tablename IN ('t', 'tp_0_1', 'tp_1_2') AND schemaname = 'partition_split_schema'
+  ORDER BY tablename, tablespace;
 SELECT tablename, indexname, tablespace FROM pg_indexes
-  WHERE tablename IN ('t', 'tp_0_1', 'tp_1_2') ORDER BY tablename, indexname, tablespace;
+  WHERE tablename IN ('t', 'tp_0_1', 'tp_1_2') AND schemaname = 'partition_split_schema'
+  ORDER BY tablename, indexname, tablespace;
 DROP TABLE t;
 
 -- Check new partitions inherits parent's table access method
