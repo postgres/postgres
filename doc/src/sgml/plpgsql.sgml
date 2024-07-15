@@ -3746,6 +3746,17 @@ CALL transaction_test1();
    </para>
 
    <para>
+    <application>PL/pgSQL</application> does not support savepoints
+    (<command>SAVEPOINT</command>/<command>ROLLBACK TO
+    SAVEPOINT</command>/<command>RELEASE SAVEPOINT</command> commands).
+    Typical usage patterns for savepoints can be replaced by blocks with
+    exception handlers (see <xref linkend="plpgsql-error-trapping"/>).
+    Under the hood, a block with exception handlers forms a
+    subtransaction, which means that transactions cannot be ended inside
+    such a block.
+   </para>
+
+   <para>
     Special considerations apply to cursor loops.  Consider this example:
 <programlisting>
 CREATE PROCEDURE transaction_test2()
@@ -3770,17 +3781,16 @@ CALL transaction_test2();
     evaluated at the first <command>COMMIT</command> or
     <command>ROLLBACK</command> rather than row by row.  The cursor is still
     removed automatically after the loop, so this is mostly invisible to the
-    user.
+    user.  But one must keep in mind that any table or row locks taken by
+    the cursor's query will no longer be held after the
+    first <command>COMMIT</command> or
+    <command>ROLLBACK</command>.
    </para>
 
    <para>
     Transaction commands are not allowed in cursor loops driven by commands
     that are not read-only (for example <command>UPDATE
     ... RETURNING</command>).
-   </para>
-
-   <para>
-    A transaction cannot be ended inside a block with exception handlers.
    </para>
   </sect1>
 
