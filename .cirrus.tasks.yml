@@ -138,13 +138,13 @@ LINUX_CONFIGURE_FEATURES: &LINUX_CONFIGURE_FEATURES >-
 
 
 task:
-  name: Linux - Debian Bullseye
+  name: Linux - Debian Bookworm
 
   env:
     CPUS: 4
     BUILD_JOBS: 4
     TEST_JOBS: 8 # experimentally derived to be a decent choice
-    IMAGE_FAMILY: pg-ci-bullseye
+    IMAGE_FAMILY: pg-ci-bookworm
 
     CCACHE_DIR: /tmp/ccache_dir
     DEBUGINFOD_URLS: "https://debuginfod.debian.net"
@@ -451,12 +451,12 @@ task:
 
   # To limit unnecessary work only run this once the normal linux test succeeds
   depends_on:
-    - Linux - Debian Bullseye
+    - Linux - Debian Bookworm
 
   env:
     CPUS: 4
     BUILD_JOBS: 4
-    IMAGE_FAMILY: pg-ci-bullseye
+    IMAGE_FAMILY: pg-ci-bookworm
 
     # Use larger ccache cache, as this task compiles with multiple compilers /
     # flag combinations
