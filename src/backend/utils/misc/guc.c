@@ -5291,8 +5291,8 @@ find_option(const char *name, bool create_placeholders, int elevel)
 static int
 guc_var_compare(const void *a, const void *b)
 {
-	const char *namea = **(const char ** const *) a;
-	const char *nameb = **(const char ** const *) b;
+	const char *namea = **(const char **const *) a;
+	const char *nameb = **(const char **const *) b;
 
 	return guc_name_compare(namea, nameb);
 }
