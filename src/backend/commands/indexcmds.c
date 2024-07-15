@@ -1230,6 +1230,7 @@ DefineIndex(Oid tableId,
 	 */
 	AtEOXact_GUC(false, root_save_nestlevel);
 	root_save_nestlevel = NewGUCNestLevel();
+	RestrictSearchPath();
 
 	/* Add any requested comment */
 	if (stmt->idxcomment != NULL)
@@ -2027,6 +2028,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			{
 				SetUserIdAndSecContext(save_userid, save_sec_context);
 				*ddl_save_nestlevel = NewGUCNestLevel();
+				RestrictSearchPath();
 			}
 		}
 
@@ -2074,6 +2076,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		{
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 			*ddl_save_nestlevel = NewGUCNestLevel();
+			RestrictSearchPath();
 		}
 
 		/*
@@ -2104,6 +2107,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			{
 				SetUserIdAndSecContext(save_userid, save_sec_context);
 				*ddl_save_nestlevel = NewGUCNestLevel();
+				RestrictSearchPath();
 			}
 
 			/*
