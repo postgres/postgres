@@ -272,6 +272,8 @@ task:
     LDFLAGS: $SANITIZER_FLAGS
     CC: ccache gcc
     CXX: ccache g++
+    # GCC emits a warning for llvm-14, so switch to a newer one.
+    LLVM_CONFIG: llvm-config-16
 
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
     LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
@@ -334,7 +336,7 @@ task:
             \
             ${LINUX_CONFIGURE_FEATURES} \
             \
-            CLANG="ccache clang"
+            CLANG="ccache clang-16"
         EOF
       build_script: su postgres -c "make -s -j${BUILD_JOBS} world-bin"
       upload_caches: ccache
@@ -661,6 +663,9 @@ task:
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
     LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
 
+    # GCC emits a warning for llvm-14, so switch to a newer one.
+    LLVM_CONFIG: llvm-config-16
+
   <<: *linux_task_template
 
   sysinfo_script: |
@@ -696,7 +701,7 @@ task:
         --cache gcc.cache \
         --enable-dtrace \
         ${LINUX_CONFIGURE_FEATURES} \
-        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang"
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang-16"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -707,7 +712,7 @@ task:
         --cache gcc.cache \
         --enable-cassert \
         ${LINUX_CONFIGURE_FEATURES} \
-        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang"
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang-16"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -717,7 +722,7 @@ task:
       time ./configure \
         --cache clang.cache \
         ${LINUX_CONFIGURE_FEATURES} \
-        CC="ccache clang" CXX="ccache clang++" CLANG="ccache clang"
+        CC="ccache clang" CXX="ccache clang++-16" CLANG="ccache clang-16"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -729,7 +734,7 @@ task:
         --enable-cassert \
         --enable-dtrace \
         ${LINUX_CONFIGURE_FEATURES} \
-        CC="ccache clang" CXX="ccache clang++" CLANG="ccache clang"
+        CC="ccache clang" CXX="ccache clang++-16" CLANG="ccache clang-16"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -753,9 +758,7 @@ task:
     docs_build_script: |
       time ./configure \
         --cache gcc.cache \
-        CC="ccache gcc" \
-        CXX="ccache g++" \
-        CLANG="ccache clang"
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang-16"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} -C doc
 
@@ -774,7 +777,7 @@ task:
         ${LINUX_CONFIGURE_FEATURES} \
         --without-icu \
         --quiet \
-        CC="gcc" CXX"=g++" CLANG="clang"
+        CC="gcc" CXX"=g++" CLANG="clang-16"
       make -s -j${BUILD_JOBS} clean
       time make -s headerscheck EXTRAFLAGS='-fmax-errors=10'
     headers_cpluspluscheck_script: |
