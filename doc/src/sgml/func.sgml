@@ -19038,14 +19038,15 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
     </term>
     <listitem>
     <para>
-     The input data to query (<replaceable>context_item</replaceable>),
-     the JSON path expression defining the query (<replaceable>path_expression</replaceable>)
-     with an optional name (<replaceable>json_path_name</replaceable>), and an
-     optional <literal>PASSING</literal> clause, which can provide data values
-     to the <replaceable>path_expression</replaceable>.  The result of the input
-     data evaluation using the aforementioned elements is called the
-     <firstterm>row pattern</firstterm>, which is used as the source for row
-     values in the constructed view.
+     The <replaceable>context_item</replaceable> specifies the input document
+     to query, the <replaceable>path_expression</replaceable> is an SQL/JSON
+     path expression defining the query, and <replaceable>json_path_name</replaceable>
+     is an optional name for the <replaceable>path_expression</replaceable>.
+     The optional <literal>PASSING</literal> clause provides data values for
+     the variables mentioned in the <replaceable>path_expression</replaceable>.
+     The result of the input data evaluation using the aforementioned elements
+     is called the <firstterm>row pattern</firstterm>, which is used as the
+     source for row values in the constructed view.
     </para>
     </listitem>
    </varlistentry>
