@@ -84,7 +84,7 @@ $node->poll_query_until('postgres',
 # Check that the primary server logs a FATAL indicating that autovacuum
 # is terminated.
 ok( $node->log_contains(
-		qr/FATAL:  terminating autovacuum process due to administrator command/,
+		qr/FATAL: .*terminating autovacuum process due to administrator command/,
 		$offset),
 	"autovacuum worker signaled with pg_signal_autovacuum_worker granted");
 
