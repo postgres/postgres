@@ -100,6 +100,7 @@
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
 #include "utils/guc_hooks.h"
+#include "utils/injection_point.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -1901,6 +1902,12 @@ do_autovacuum(void)
 
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
+
+	/*
+	 * This injection point is put in a transaction block to work with a wait
+	 * that uses a condition variable.
+	 */
+	INJECTION_POINT("autovacuum-worker-start");
 
 	/*
 	 * Compute the multixact age for which freezing is urgent.  This is
