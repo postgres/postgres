@@ -225,10 +225,8 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 	Query	   *query = castNode(Query, stmt->query);
 	IntoClause *into = stmt->into;
 	bool		is_matview = (into->viewQuery != NULL);
+	bool		do_refresh = false;
 	DestReceiver *dest;
-	Oid			save_userid = InvalidOid;
-	int			save_sec_context = 0;
-	int			save_nestlevel = 0;
 	ObjectAddress address;
 	List	   *rewritten;
 	PlannedStmt *plan;
@@ -263,18 +261,13 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 	Assert(query->commandType == CMD_SELECT);
 
 	/*
-	 * For materialized views, lock down security-restricted operations and
-	 * arrange to make GUC variable changes local to this command.  This is
-	 * not necessary for security, but this keeps the behavior similar to
-	 * REFRESH MATERIALIZED VIEW.  Otherwise, one could create a materialized
-	 * view not possible to refresh.
+	 * For materialized views, always skip data during table creation, and use
+	 * REFRESH instead (see below).
 	 */
 	if (is_matview)
 	{
-		GetUserIdAndSecContext(&save_userid, &save_sec_context);
-		SetUserIdAndSecContext(save_userid,
-							   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-		save_nestlevel = NewGUCNestLevel();
+		do_refresh = !into->skipData;
+		into->skipData = true;
 	}
 
 	if (into->skipData)
@@ -346,13 +339,18 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 		PopActiveSnapshot();
 	}
 
-	if (is_matview)
+	/*
+	 * For materialized views, reuse the REFRESH logic, which locks down
+	 * security-restricted operations and restricts the search_path.  This
+	 * reduces the chance that a subsequent refresh will fail.
+	 */
+	if (do_refresh)
 	{
-		/* Roll back any GUC changes */
-		AtEOXact_GUC(false, save_nestlevel);
+		RefreshMatViewByOid(address.objectId, false, false,
+							pstate->p_sourcetext, NULL, qc);
 
-		/* Restore userid and security context */
-		SetUserIdAndSecContext(save_userid, save_sec_context);
+		if (qc)
+			qc->commandTag = CMDTAG_SELECT;
 	}
 
 	return address;

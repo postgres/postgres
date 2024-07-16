@@ -129,8 +129,8 @@ $$;
 CREATE TABLE test_maint(i INT);
 INSERT INTO test_maint VALUES (1), (2);
 CREATE MATERIALIZED VIEW test_maint_mv AS SELECT fn(i) FROM test_maint;
-NOTICE:  current search_path: test_maint_search_path
-NOTICE:  current search_path: test_maint_search_path
+NOTICE:  current search_path: pg_catalog, pg_temp
+NOTICE:  current search_path: pg_catalog, pg_temp
 -- the following commands should see search_path as pg_catalog, pg_temp
 CREATE INDEX test_maint_idx ON test_maint_search_path.test_maint (fn(i));
 NOTICE:  current search_path: pg_catalog, pg_temp
