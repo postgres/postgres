@@ -70,7 +70,7 @@ $node_standby->promote;
 # creating a RECOVERYHISTORY.
 my $primary_archive = $node_primary->archive_dir;
 $caughtup_query =
-  "SELECT size IS NOT NULL FROM pg_stat_file('$primary_archive/00000002.history')";
+  "SELECT size IS NOT NULL FROM pg_stat_file('$primary_archive/00000002.history', true)";
 $node_primary->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for archiving of 00000002.history";
 
