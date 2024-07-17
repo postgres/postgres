@@ -21,6 +21,7 @@
 #include "foreign/fdwapi.h"
 #include "jit/jit.h"
 #include "libpq/pqformat.h"
+#include "libpq/protocol.h"
 #include "nodes/extensible.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -5416,7 +5417,7 @@ serializeAnalyzeReceive(TupleTableSlot *slot, DestReceiver *self)
 	 * Note that we fill a StringInfo buffer the same as printtup() does, so
 	 * as to capture the costs of manipulating the strings accurately.
 	 */
-	pq_beginmessage_reuse(buf, 'D');
+	pq_beginmessage_reuse(buf, PqMsg_DataRow);
 
 	pq_sendint16(buf, natts);
 

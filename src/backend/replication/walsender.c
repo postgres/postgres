@@ -697,7 +697,7 @@ UploadManifest(void)
 	ib = CreateIncrementalBackupInfo(mcxt);
 
 	/* Send a CopyInResponse message */
-	pq_beginmessage(&buf, 'G');
+	pq_beginmessage(&buf, PqMsg_CopyInResponse);
 	pq_sendbyte(&buf, 0);
 	pq_sendint16(&buf, 0);
 	pq_endmessage_reuse(&buf);
