@@ -682,6 +682,8 @@ WaitForWalSummarization(XLogRecPtr lsn, long timeout, XLogRecPtr *pending_lsn)
 									WAIT_EVENT_WAL_SUMMARY_READY);
 	}
 
+	ConditionVariableCancelSleep();
+
 	return summarized_lsn;
 }
 
