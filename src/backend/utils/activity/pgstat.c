@@ -1478,12 +1478,9 @@ pgstat_write_statsfile(void)
 						tmpfile)));
 		unlink(tmpfile);
 	}
-	else if (rename(tmpfile, statfile) < 0)
+	else if (durable_rename(tmpfile, statfile, LOG) < 0)
 	{
-		ereport(LOG,
-				(errcode_for_file_access(),
-				 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
-						tmpfile, statfile)));
+		/* durable_rename already emitted log message */
 		unlink(tmpfile);
 	}
 }
