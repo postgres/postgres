@@ -129,6 +129,12 @@ SELECT injection_points_detach('TestInjectionLog2');
 (1 row)
 
 -- Loading
+SELECT injection_points_cached('TestInjectionLogLoad'); -- nothing in cache
+ injection_points_cached 
+-------------------------
+ 
+(1 row)
+
 SELECT injection_points_load('TestInjectionLogLoad'); -- nothing
  injection_points_load 
 -----------------------
@@ -144,6 +150,13 @@ SELECT injection_points_attach('TestInjectionLogLoad', 'notice');
 SELECT injection_points_load('TestInjectionLogLoad'); -- nothing happens
  injection_points_load 
 -----------------------
+ 
+(1 row)
+
+SELECT injection_points_cached('TestInjectionLogLoad'); -- runs from cache
+NOTICE:  notice triggered for injection point TestInjectionLogLoad
+ injection_points_cached 
+-------------------------
  
 (1 row)
 

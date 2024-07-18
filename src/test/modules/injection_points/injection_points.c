@@ -334,6 +334,20 @@ injection_points_run(PG_FUNCTION_ARGS)
 }
 
 /*
+ * SQL function for triggering an injection point from cache.
+ */
+PG_FUNCTION_INFO_V1(injection_points_cached);
+Datum
+injection_points_cached(PG_FUNCTION_ARGS)
+{
+	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	INJECTION_POINT_CACHED(name);
+
+	PG_RETURN_VOID();
+}
+
+/*
  * SQL function for waking up an injection point waiting in injection_wait().
  */
 PG_FUNCTION_INFO_V1(injection_points_wakeup);

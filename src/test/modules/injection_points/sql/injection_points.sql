@@ -42,9 +42,11 @@ SELECT injection_points_run('TestInjectionLog2'); -- notice
 SELECT injection_points_detach('TestInjectionLog2');
 
 -- Loading
+SELECT injection_points_cached('TestInjectionLogLoad'); -- nothing in cache
 SELECT injection_points_load('TestInjectionLogLoad'); -- nothing
 SELECT injection_points_attach('TestInjectionLogLoad', 'notice');
 SELECT injection_points_load('TestInjectionLogLoad'); -- nothing happens
+SELECT injection_points_cached('TestInjectionLogLoad'); -- runs from cache
 SELECT injection_points_run('TestInjectionLogLoad'); -- runs from cache
 SELECT injection_points_detach('TestInjectionLogLoad');
 

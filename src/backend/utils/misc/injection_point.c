@@ -553,3 +553,20 @@ InjectionPointRun(const char *name)
 	elog(ERROR, "Injection points are not supported by this build");
 #endif
 }
+
+/*
+ * Execute an injection point directly from the cache, if defined.
+ */
+void
+InjectionPointCached(const char *name)
+{
+#ifdef USE_INJECTION_POINTS
+	InjectionPointCacheEntry *cache_entry;
+
+	cache_entry = injection_point_cache_get(name);
+	if (cache_entry)
+		cache_entry->callback(name, cache_entry->private_data);
+#else
+	elog(ERROR, "Injection points are not supported by this build");
+#endif
+}

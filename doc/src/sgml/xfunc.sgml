@@ -3619,17 +3619,20 @@ INJECTION_POINT(name);
     </para>
 
     <para>
-     An injection point with a given <literal>name</literal> can be loaded
-     using macro:
+     Executing an injection point can require allocating a small amount of
+     memory, which can fail. If you need to have an injection point in a
+     critical section where dynamic allocations are not allowed, you can use
+     a two-step approach with the following macros:
 <programlisting>
 INJECTION_POINT_LOAD(name);
+INJECTION_POINT_CACHED(name);
 </programlisting>
 
-     This will load the injection point callback into the process cache,
-     doing all memory allocations at this stage without running the callback.
-     This is useful when an injection point is attached in a critical section
-     where no memory can be allocated: load the injection point outside the
-     critical section, then run it in the critical section.
+     Before entering the critical section,
+     call <function>INJECTION_POINT_LOAD</function>. It checks the shared
+     memory state, and loads the callback into backend-private memory if it is
+     active. Inside the critical section, use
+     <function>INJECTION_POINT_CACHED</function> to execute the callback.
     </para>
 
     <para>

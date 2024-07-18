@@ -35,6 +35,16 @@ AS 'MODULE_PATHNAME', 'injection_points_run'
 LANGUAGE C STRICT PARALLEL UNSAFE;
 
 --
+-- injection_points_cached()
+--
+-- Executes the action attached to the injection point, from local cache.
+--
+CREATE FUNCTION injection_points_cached(IN point_name TEXT)
+RETURNS void
+AS 'MODULE_PATHNAME', 'injection_points_cached'
+LANGUAGE C STRICT PARALLEL UNSAFE;
+
+--
 -- injection_points_wakeup()
 --
 -- Wakes up a waiting injection point.
