@@ -154,7 +154,8 @@ static void SummarizeSmgrRecord(XLogReaderState *xlogreader,
 								BlockRefTable *brtab);
 static void SummarizeXactRecord(XLogReaderState *xlogreader,
 								BlockRefTable *brtab);
-static bool SummarizeXlogRecord(XLogReaderState *xlogreader);
+static bool SummarizeXlogRecord(XLogReaderState *xlogreader,
+								bool *new_fast_forward);
 static int	summarizer_read_local_xlog_page(XLogReaderState *state,
 											XLogRecPtr targetPagePtr,
 											int reqLen,
@@ -802,6 +803,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	char		final_path[MAXPGPATH];
 	WalSummaryIO io;
 	BlockRefTable *brtab = CreateEmptyBlockRefTable();
+	bool		fast_forward = true;
 
 	/* Initialize private data for xlogreader. */
 	private_data = (SummarizerReadLocalXLogPrivate *)
@@ -900,7 +902,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 		int			block_id;
 		char	   *errormsg;
 		XLogRecord *record;
-		bool		stop_requested = false;
+		uint8		rmid;
 
 		HandleWalSummarizerInterrupts();
 
@@ -969,56 +971,86 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 			break;
 		}
 
-		/* Special handling for particular types of WAL records. */
-		switch (XLogRecGetRmid(xlogreader))
+		/*
+		 * Certain types of records require special handling. Redo points and
+		 * shutdown checkpoints trigger creation of new summary files and can
+		 * also cause us to enter or exit "fast forward" mode. Other types of
+		 * records can require special updates to the block reference table.
+		 */
+		rmid = XLogRecGetRmid(xlogreader);
+		if (rmid == RM_XLOG_ID)
 		{
-			case RM_DBASE_ID:
-				SummarizeDbaseRecord(xlogreader, brtab);
-				break;
-			case RM_SMGR_ID:
-				SummarizeSmgrRecord(xlogreader, brtab);
-				break;
-			case RM_XACT_ID:
-				SummarizeXactRecord(xlogreader, brtab);
-				break;
-			case RM_XLOG_ID:
-				stop_requested = SummarizeXlogRecord(xlogreader);
-				break;
-			default:
-				break;
+			bool		new_fast_forward;
+
+			/*
+			 * If we've already processed some WAL records when we hit a redo
+			 * point or shutdown checkpoint, then we stop summarization before
+			 * including this record in the current file, so that it will be
+			 * the first record in the next file.
+			 *
+			 * When we hit one of those record types as the first record in a
+			 * file, we adjust our notion of whether we're fast-forwarding.
+			 * Any WAL generated with wal_level=minimal must be skipped
+			 * without actually generating any summary file, because an
+			 * incremental backup that crosses such WAL would be unsafe.
+			 */
+			if (SummarizeXlogRecord(xlogreader, &new_fast_forward))
+			{
+				if (xlogreader->ReadRecPtr > summary_start_lsn)
+				{
+					summary_end_lsn = xlogreader->ReadRecPtr;
+					break;
+				}
+				else
+					fast_forward = new_fast_forward;
+			}
+		}
+		else if (!fast_forward)
+		{
+			/*
+			 * This switch handles record types that require extra updates to
+			 * the contents of the block reference table.
+			 */
+			switch (rmid)
+			{
+				case RM_DBASE_ID:
+					SummarizeDbaseRecord(xlogreader, brtab);
+					break;
+				case RM_SMGR_ID:
+					SummarizeSmgrRecord(xlogreader, brtab);
+					break;
+				case RM_XACT_ID:
+					SummarizeXactRecord(xlogreader, brtab);
+					break;
+			}
 		}
 
 		/*
-		 * If we've been told that it's time to end this WAL summary file, do
-		 * so. As an exception, if there's nothing included in this WAL
-		 * summary file yet, then stopping doesn't make any sense, and we
-		 * should wait until the next stop point instead.
+		 * If we're in fast-forward mode, we don't really need to do anything.
+		 * Otherwise, feed block references from xlog record to block
+		 * reference table.
 		 */
-		if (stop_requested && xlogreader->ReadRecPtr > summary_start_lsn)
+		if (!fast_forward)
 		{
-			summary_end_lsn = xlogreader->ReadRecPtr;
-			break;
-		}
+			for (block_id = 0; block_id <= XLogRecMaxBlockId(xlogreader);
+				 block_id++)
+			{
+				RelFileLocator rlocator;
+				ForkNumber	forknum;
+				BlockNumber blocknum;
 
-		/* Feed block references from xlog record to block reference table. */
-		for (block_id = 0; block_id <= XLogRecMaxBlockId(xlogreader);
-			 block_id++)
-		{
-			RelFileLocator rlocator;
-			ForkNumber	forknum;
-			BlockNumber blocknum;
+				if (!XLogRecGetBlockTagExtended(xlogreader, block_id, &rlocator,
+												&forknum, &blocknum, NULL))
+					continue;
 
-			if (!XLogRecGetBlockTagExtended(xlogreader, block_id, &rlocator,
-											&forknum, &blocknum, NULL))
-				continue;
-
-			/*
-			 * As we do elsewhere, ignore the FSM fork, because it's not fully
-			 * WAL-logged.
-			 */
-			if (forknum != FSM_FORKNUM)
-				BlockRefTableMarkBlockModified(brtab, &rlocator, forknum,
-											   blocknum);
+				/*
+				 * As we do elsewhere, ignore the FSM fork, because it's not
+				 * fully WAL-logged.
+				 */
+				if (forknum != FSM_FORKNUM)
+					BlockRefTableMarkBlockModified(brtab, &rlocator, forknum,
+												   blocknum);
+			}
 		}
 
 		/* Update our notion of where this summary file ends. */
@@ -1047,9 +1079,10 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	/*
 	 * If a timeline switch occurs, we may fail to make any progress at all
 	 * before exiting the loop above. If that happens, we don't write a WAL
-	 * summary file at all.
+	 * summary file at all. We can also skip writing a file if we're in
+	 * fast-forward mode.
 	 */
-	if (summary_end_lsn > summary_start_lsn)
+	if (summary_end_lsn > summary_start_lsn && !fast_forward)
 	{
 		/* Generate temporary and final path name. */
 		snprintf(temp_path, MAXPGPATH,
@@ -1084,6 +1117,14 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 		/* Durably rename the new summary into place. */
 		durable_rename(temp_path, final_path, ERROR);
 	}
+
+	/* If we skipped a non-zero amount of WAL, log a debug message. */
+	if (summary_end_lsn > summary_start_lsn && fast_forward)
+		ereport(DEBUG1,
+				errmsg("skipped summarizing WAL on TLI %u from %X/%X to %X/%X",
+					   tli,
+					   LSN_FORMAT_ARGS(summary_start_lsn),
+					   LSN_FORMAT_ARGS(summary_end_lsn)));
 
 	return summary_end_lsn;
 }
@@ -1263,22 +1304,70 @@ SummarizeXactRecord(XLogReaderState *xlogreader, BlockRefTable *brtab)
 
 /*
  * Special handling for WAL records with RM_XLOG_ID.
+ *
+ * The return value is true if WAL summarization should stop before this
+ * record and false otherwise. When the return value is true,
+ * *new_fast_forward indicates whether future processing should be done
+ * in fast forward mode (i.e. read WAL without emitting summaries) or not.
  */
 static bool
-SummarizeXlogRecord(XLogReaderState *xlogreader)
+SummarizeXlogRecord(XLogReaderState *xlogreader, bool *new_fast_forward)
 {
 	uint8		info = XLogRecGetInfo(xlogreader) & ~XLR_INFO_MASK;
+	int			record_wal_level;
 
-	if (info == XLOG_CHECKPOINT_REDO || info == XLOG_CHECKPOINT_SHUTDOWN)
+	if (info == XLOG_CHECKPOINT_REDO)
 	{
-		/*
-		 * This is an LSN at which redo might begin, so we'd like
-		 * summarization to stop just before this WAL record.
-		 */
-		return true;
+		/* Payload is wal_level at the time record was written. */
+		memcpy(&record_wal_level, XLogRecGetData(xlogreader), sizeof(int));
+	}
+	else if (info == XLOG_CHECKPOINT_SHUTDOWN)
+	{
+		CheckPoint	rec_ckpt;
+
+		/* Extract wal_level at time record was written from payload. */
+		memcpy(&rec_ckpt, XLogRecGetData(xlogreader), sizeof(CheckPoint));
+		record_wal_level = rec_ckpt.wal_level;
+	}
+	else if (info == XLOG_PARAMETER_CHANGE)
+	{
+		xl_parameter_change xlrec;
+
+		/* Extract wal_level at time record was written from payload. */
+		memcpy(&xlrec, XLogRecGetData(xlogreader),
+			   sizeof(xl_parameter_change));
+		record_wal_level = xlrec.wal_level;
+	}
+	else if (info == XLOG_END_OF_RECOVERY)
+	{
+		xl_end_of_recovery xlrec;
+
+		/* Extract wal_level at time record was written from payload. */
+		memcpy(&xlrec, XLogRecGetData(xlogreader), sizeof(xl_end_of_recovery));
+		record_wal_level = xlrec.wal_level;
+	}
+	else
+	{
+		/* No special handling required. Return false. */
+		return false;
 	}
 
-	return false;
+	/*
+	 * Redo can only begin at an XLOG_CHECKPOINT_REDO or
+	 * XLOG_CHECKPOINT_SHUTDOWN record, so we want WAL summarization to begin
+	 * at those points. Hence, when those records are encountered, return
+	 * true, so that we stop just before summarizing either of those records.
+	 *
+	 * We also reach here if we just saw XLOG_END_OF_RECOVERY or
+	 * XLOG_PARAMETER_CHANGE. These are not places where recovery can start,
+	 * but they're still relevant here. A new timeline can begin with
+	 * XLOG_END_OF_RECOVERY, so we need to confirm the WAL level at that
+	 * point; and a restart can provoke XLOG_PARAMETER_CHANGE after an
+	 * intervening change to postgresql.conf, which might force us to stop
+	 * summarizing.
+	 */
+	*new_fast_forward = (record_wal_level == WAL_LEVEL_MINIMAL);
+	return true;
 }
 
 /*
