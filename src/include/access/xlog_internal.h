@@ -31,7 +31,7 @@
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD115	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD116	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -302,6 +302,7 @@ typedef struct xl_end_of_recovery
 	TimestampTz end_time;
 	TimeLineID	ThisTimeLineID; /* new TLI */
 	TimeLineID	PrevTimeLineID; /* previous TLI we forked off from */
+	int			wal_level;
 } xl_end_of_recovery;
 
 /*

@@ -27960,6 +27960,17 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         not running, it will be equal to <literal>summarized_lsn</literal>.
         <literal>summarizer_pid</literal> is the PID of the WAL summarizer
         process, if it is running, and otherwise NULL.
+       </para>
+       <para>
+        As a special exception, the WAL summarizer will refuse to generate
+        WAL summary files if run on WAL generated under
+        <literal>wal_level=minimal</literal>, since such summaries would be
+        unsafe to use as the basis for an incremental backup. In this case,
+        the fields above will continue to advance as if summaries were being
+        generated, but nothing will be written to disk. Once the summarizer
+        reaches WAL generated while <literal>wal_level</literal> was set
+        to <literal>replica</literal> or higher, it will resume writing
+        summaries to disk.
        </para></entry>
       </row>
      </tbody>

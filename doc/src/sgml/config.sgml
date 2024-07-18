@@ -4318,11 +4318,17 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <listitem>
       <para>
        Enables the WAL summarizer process. Note that WAL summarization can
-       be enabled either on a primary or on a standby. WAL summarization
-       cannot be enabled when <varname>wal_level</varname> is set to
-       <literal>minimal</literal>.  This parameter can only be set in the
-       <filename>postgresql.conf</filename> file or on the server command line.
-       The default is <literal>off</literal>.
+       be enabled either on a primary or on a standby.  This parameter can only
+       be set in the <filename>postgresql.conf</filename> file or on the server
+       command line.  The default is <literal>off</literal>.
+      </para>
+      <para>
+       The server cannot be started with <literal>summarize_wal=on</literal>
+       if <literal>wal_level</literal> is set to <literal>minimal</literal>. If
+       <literal>summarize_wal=on</literal> is configured after server startup
+       while <literal>wal_level=minimal</literal>, the summarizer will run
+       but refuse to generate summary files for any WAL generated with
+       <literal>wal_level=minimal</literal>.
       </para>
       </listitem>
      </varlistentry>

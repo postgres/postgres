@@ -6934,6 +6934,7 @@ CreateCheckPoint(int flags)
 	WALInsertLockAcquireExclusive();
 
 	checkPoint.fullPageWrites = Insert->fullPageWrites;
+	checkPoint.wal_level = wal_level;
 
 	if (shutdown)
 	{
@@ -6987,11 +6988,9 @@ CreateCheckPoint(int flags)
 	 */
 	if (!shutdown)
 	{
-		int			dummy = 0;
-
-		/* Record must have payload to avoid assertion failure. */
+		/* Include WAL level in record for WAL summarizer's benefit. */
 		XLogBeginInsert();
-		XLogRegisterData((char *) &dummy, sizeof(dummy));
+		XLogRegisterData((char *) &wal_level, sizeof(wal_level));
 		(void) XLogInsert(RM_XLOG_ID, XLOG_CHECKPOINT_REDO);
 
 		/*
@@ -7314,6 +7313,7 @@ CreateEndOfRecoveryRecord(void)
 		elog(ERROR, "can only be used to end recovery");
 
 	xlrec.end_time = GetCurrentTimestamp();
+	xlrec.wal_level = wal_level;
 
 	WALInsertLockAcquireExclusive();
 	xlrec.ThisTimeLineID = XLogCtl->InsertTimeLineID;
