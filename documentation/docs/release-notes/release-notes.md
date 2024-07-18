@@ -6,11 +6,13 @@
 
 ## Beta (2024-06-30)
 
+With this version, the access method for `pg_tde` extension is renamed `pg_tde_basic`. Use this access method name to create tables. Find guidelines in [Test TDE](../test.md) tutorial.
+
 The Beta version introduces the following bug fixes and improvements:
 
 * Fixed the issue with `pg_tde` running out of memory used for decrypted tuples. The fix introduces the new component `TDEBufferHeapTupleTableSlot` that keeps track of the allocated memory for decrypted tuples and frees this memory when the tuple slot is no longer needed.
 
-* Fixed the issue with adjusting a current position in a file by using raw file descriptor for the lseek function. (Thanks to user _rainhard_ for providing the fix)
+* Fixed the issue with adjusting a current position in a file by using raw file descriptor for the `lseek` function. (Thanks to user _rainhard_ for providing the fix)
 
 * Enhanced the init script to consider a custom superuser for the POSTGRES_USER parameter when `pg_tde` is running via Docker (Thanks to _Alejandro Paredero_ for reporting the issue)
 
