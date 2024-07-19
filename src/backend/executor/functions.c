@@ -492,6 +492,7 @@ init_execution_state(List *queryTree_list,
 				stmt->utilityStmt = queryTree->utilityStmt;
 				stmt->stmt_location = queryTree->stmt_location;
 				stmt->stmt_len = queryTree->stmt_len;
+				stmt->queryId = queryTree->queryId;
 			}
 			else
 				stmt = pg_plan_query(queryTree,
