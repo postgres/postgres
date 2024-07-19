@@ -503,3 +503,22 @@ SELECT '-92233720368547758.08'::money::numeric;
  -92233720368547758.08
 (1 row)
 
+-- overflow checks
+SELECT '92233720368547758.07'::money + '0.01'::money;
+ERROR:  money out of range
+SELECT '-92233720368547758.08'::money - '0.01'::money;
+ERROR:  money out of range
+SELECT '92233720368547758.07'::money * 2::float8;
+ERROR:  money out of range
+SELECT '-1'::money / 1.175494e-38::float4;
+ERROR:  money out of range
+SELECT '92233720368547758.07'::money * 2::int4;
+ERROR:  money out of range
+SELECT '1'::money / 0::int2;
+ERROR:  division by zero
+SELECT '42'::money * 'inf'::float8;
+ERROR:  money out of range
+SELECT '42'::money * '-inf'::float8;
+ERROR:  money out of range
+SELECT '42'::money * 'nan'::float4;
+ERROR:  money out of range
