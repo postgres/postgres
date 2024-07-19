@@ -24,6 +24,14 @@ REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
+# Detect the operating system
+UNAME_S := $(shell uname -s)
+
+# Set macOS-specific flags
+ifeq ($(UNAME_S), Darwin)
+    LDFLAGS_MACOS = -framework CoreFoundation -framework SystemConfiguration
+endif
+
 OBJS = \
 	$(WIN32RES) \
 	command.o \
@@ -44,11 +52,10 @@ OBJS = \
 	variables.o \
 	libsharding.a
 
-
 all: psql
 
 psql: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -framework CoreFoundation -framework SystemConfiguration -o $@$(X)
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) $(LDFLAGS_MACOS) -o $@$(X)
 
 help.o: sql_help.h
 
