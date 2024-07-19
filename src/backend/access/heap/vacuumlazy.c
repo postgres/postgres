@@ -438,13 +438,13 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * as an upper bound on the XIDs stored in the pages we'll actually scan
 	 * (NewRelfrozenXid tracking must never be allowed to miss unfrozen XIDs).
 	 *
-	 * Next acquire vistest, a related cutoff that's used in pruning.  We
-	 * expect vistest will always make heap_page_prune_and_freeze() remove any
-	 * deleted tuple whose xmax is < OldestXmin.  lazy_scan_prune must never
-	 * become confused about whether a tuple should be frozen or removed.  (In
-	 * the future we might want to teach lazy_scan_prune to recompute vistest
-	 * from time to time, to increase the number of dead tuples it can prune
-	 * away.)
+	 * Next acquire vistest, a related cutoff that's used in pruning.  We use
+	 * vistest in combination with OldestXmin to ensure that
+	 * heap_page_prune_and_freeze() always removes any deleted tuple whose
+	 * xmax is < OldestXmin.  lazy_scan_prune must never become confused about
+	 * whether a tuple should be frozen or removed.  (In the future we might
+	 * want to teach lazy_scan_prune to recompute vistest from time to time,
+	 * to increase the number of dead tuples it can prune away.)
 	 */
 	vacrel->aggressive = vacuum_get_cutoffs(rel, params, &vacrel->cutoffs);
 	vacrel->rel_pages = orig_rel_pages = RelationGetNumberOfBlocks(rel);
