@@ -1473,6 +1473,31 @@ SELECT * FROM ft1 ORDER BY c6 DESC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
 EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
 SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
 
+-- Test ReScan code path that recreates the cursor even when no parameters
+-- change (bug #17889)
+CREATE TABLE loct1 (c1 int);
+CREATE TABLE loct2 (c1 int, c2 text);
+INSERT INTO loct1 VALUES (1001);
+INSERT INTO loct1 VALUES (1002);
+INSERT INTO loct2 SELECT id, to_char(id, 'FM0000') FROM generate_series(1, 1000) id;
+INSERT INTO loct2 VALUES (1001, 'foo');
+INSERT INTO loct2 VALUES (1002, 'bar');
+CREATE FOREIGN TABLE remt2 (c1 int, c2 text) SERVER loopback OPTIONS (table_name 'loct2');
+ANALYZE loct1;
+ANALYZE remt2;
+SET enable_mergejoin TO false;
+SET enable_hashjoin TO false;
+SET enable_material TO false;
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE remt2 SET c2 = remt2.c2 || remt2.c2 FROM loct1 WHERE loct1.c1 = remt2.c1 RETURNING remt2.*;
+UPDATE remt2 SET c2 = remt2.c2 || remt2.c2 FROM loct1 WHERE loct1.c1 = remt2.c1 RETURNING remt2.*;
+RESET enable_mergejoin;
+RESET enable_hashjoin;
+RESET enable_material;
+DROP FOREIGN TABLE remt2;
+DROP TABLE loct1;
+DROP TABLE loct2;
+
 -- ===================================================================
 -- test check constraints
 -- ===================================================================
