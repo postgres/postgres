@@ -67,6 +67,51 @@ SELECT toplevel, calls, query FROM pg_stat_statements
  t        |     1 | SET pg_stat_statements.track = 'all'
 (7 rows)
 
+-- Procedure with multiple utility statements.
+CREATE OR REPLACE PROCEDURE proc_with_utility_stmt()
+LANGUAGE SQL
+AS $$
+  SHOW pg_stat_statements.track;
+  show pg_stat_statements.track;
+  SHOW pg_stat_statements.track_utility;
+$$;
+SET pg_stat_statements.track_utility = TRUE;
+-- all-level tracking.
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+CALL proc_with_utility_stmt();
+SELECT toplevel, calls, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C", toplevel;
+ toplevel | calls |                       query                        
+----------+-------+----------------------------------------------------
+ t        |     1 | CALL proc_with_utility_stmt()
+ t        |     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+ f        |     2 | SHOW pg_stat_statements.track
+ f        |     1 | SHOW pg_stat_statements.track_utility
+(4 rows)
+
+-- top-level tracking.
+SET pg_stat_statements.track = 'top';
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+CALL proc_with_utility_stmt();
+SELECT toplevel, calls, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C", toplevel;
+ toplevel | calls |                       query                        
+----------+-------+----------------------------------------------------
+ t        |     1 | CALL proc_with_utility_stmt()
+ t        |     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+(2 rows)
+
 -- DO block - top-level tracking without utility.
 SET pg_stat_statements.track = 'top';
 SET pg_stat_statements.track_utility = FALSE;
