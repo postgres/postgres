@@ -39,6 +39,9 @@ typedef struct LLVMJitContext
 {
 	JitContext	base;
 
+	/* used to ensure cleanup of context */
+	ResourceOwner resowner;
+
 	/* number of modules created */
 	size_t		module_generation;
 
