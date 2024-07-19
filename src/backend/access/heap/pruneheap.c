@@ -32,7 +32,8 @@ typedef struct
 {
 	Relation	rel;
 
-	/* tuple visibility test, initialized for the relation */
+	/* State used to test tuple visibility; Initialized for the relation */
+	TransactionId oldest_xmin;
 	GlobalVisState *vistest;
 
 	/*
@@ -202,7 +203,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
 			/* OK to prune */
-			(void) heap_page_prune(relation, buffer, vistest,
+			(void) heap_page_prune(relation, buffer, InvalidTransactionId,
+								   vistest,
 								   limited_xmin, limited_ts,
 								   true, NULL);
 		}
@@ -218,11 +220,14 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  *
  * Caller must have pin and buffer cleanup lock on the page.
  *
- * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
- * (see heap_prune_satisfies_vacuum and
- * HeapTupleSatisfiesVacuum). old_snap_xmin / old_snap_ts need to
- * either have been set by TransactionIdLimitedForOldSnapshots, or
- * InvalidTransactionId/0 respectively.
+ * vistest and oldest_xmin are used to distinguish whether tuples are DEAD or
+ * RECENTLY_DEAD (see heap_prune_satisfies_vacuum and
+ * HeapTupleSatisfiesVacuum). If oldest_xmin is provided by the caller, it is
+ * used before consulting GlobalVisState.
+ *
+ * old_snap_xmin / old_snap_ts need to either have been set by
+ * TransactionIdLimitedForOldSnapshots, or InvalidTransactionId/0
+ * respectively.
  *
  * If report_stats is true then we send the number of reclaimed heap-only
  * tuples to pgstats.  (This must be false during vacuum, since vacuum will
@@ -236,6 +241,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  */
 int
 heap_page_prune(Relation relation, Buffer buffer,
+				TransactionId oldest_xmin,
 				GlobalVisState *vistest,
 				TransactionId old_snap_xmin,
 				TimestampTz old_snap_ts,
@@ -262,6 +268,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 	 */
 	prstate.new_prune_xid = InvalidTransactionId;
 	prstate.rel = relation;
+	prstate.oldest_xmin = oldest_xmin;
 	prstate.vistest = vistest;
 	prstate.old_snap_xmin = old_snap_xmin;
 	prstate.old_snap_ts = old_snap_ts;
@@ -512,13 +519,31 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 	}
 
 	/*
-	 * First check if GlobalVisTestIsRemovableXid() is sufficient to find the
-	 * row dead. If not, and old_snapshot_threshold is enabled, try to use the
-	 * lowered horizon.
+	 * For VACUUM, we must be sure to prune tuples with xmax older than
+	 * oldest_xmin -- a visibility cutoff determined at the beginning of
+	 * vacuuming the relation. oldest_xmin is used for freezing determination
+	 * and we cannot freeze dead tuples' xmaxes.
+	 */
+	if (TransactionIdIsValid(prstate->oldest_xmin) &&
+		NormalTransactionIdPrecedes(dead_after, prstate->oldest_xmin))
+		return HEAPTUPLE_DEAD;
+
+	/*
+	 * Determine whether or not the tuple is considered dead when compared
+	 * with the provided GlobalVisState. On-access pruning does not provide
+	 * oldest_xmin. And for vacuum, even if the tuple's xmax is not older than
+	 * oldest_xmin, GlobalVisTestIsRemovableXid() could find the row dead if
+	 * the GlobalVisState has been updated since the beginning of vacuuming
+	 * the relation.
 	 */
 	if (GlobalVisTestIsRemovableXid(prstate->vistest, dead_after))
-		res = HEAPTUPLE_DEAD;
-	else if (OldSnapshotThresholdActive())
+		return HEAPTUPLE_DEAD;
+
+	/*
+	 * If GlobalVisTestIsRemovableXid() is not sufficient to find the row dead
+	 * and old_snapshot_threshold is enabled, try to use the lowered horizon.
+	 */
+	if (OldSnapshotThresholdActive())
 	{
 		/* haven't determined limited horizon yet, requests */
 		if (!TransactionIdIsValid(prstate->old_snap_xmin))
