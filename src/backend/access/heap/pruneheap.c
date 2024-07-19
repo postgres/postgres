@@ -325,6 +325,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  *
  * cutoffs contains the freeze cutoffs, established by VACUUM at the beginning
  * of vacuuming the relation.  Required if HEAP_PRUNE_FREEZE option is set.
+ * cutoffs->OldestXmin is also used to determine if dead tuples are
+ * HEAPTUPLE_RECENTLY_DEAD or HEAPTUPLE_DEAD.
  *
  * presult contains output parameters needed by callers, such as the number of
  * tuples removed and the offsets of dead items on the page after pruning.
@@ -922,8 +924,27 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 	if (res != HEAPTUPLE_RECENTLY_DEAD)
 		return res;
 
+	/*
+	 * For VACUUM, we must be sure to prune tuples with xmax older than
+	 * OldestXmin -- a visibility cutoff determined at the beginning of
+	 * vacuuming the relation. OldestXmin is used for freezing determination
+	 * and we cannot freeze dead tuples' xmaxes.
+	 */
+	if (prstate->cutoffs &&
+		TransactionIdIsValid(prstate->cutoffs->OldestXmin) &&
+		NormalTransactionIdPrecedes(dead_after, prstate->cutoffs->OldestXmin))
+		return HEAPTUPLE_DEAD;
+
+	/*
+	 * Determine whether or not the tuple is considered dead when compared
+	 * with the provided GlobalVisState. On-access pruning does not provide
+	 * VacuumCutoffs. And for vacuum, even if the tuple's xmax is not older
+	 * than OldestXmin, GlobalVisTestIsRemovableXid() could find the row dead
+	 * if the GlobalVisState has been updated since the beginning of vacuuming
+	 * the relation.
+	 */
 	if (GlobalVisTestIsRemovableXid(prstate->vistest, dead_after))
-		res = HEAPTUPLE_DEAD;
+		return HEAPTUPLE_DEAD;
 
 	return res;
 }
