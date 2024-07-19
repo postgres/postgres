@@ -241,6 +241,17 @@ select jsonb_path_query('{"a": [2, 3, 4]}', 'lax -$.a');
 select jsonb_path_query('{"a": [1, 2]}', 'lax $.a * 3');
 select jsonb_path_query('{"a": [1, 2]}', 'lax $.a * 3', silent => true);
 
+-- any key on arrays with and without unwrapping.
+select jsonb_path_query('{"a": [1,2,3], "b": [3,4,5]}', '$.*');
+select jsonb_path_query('[1,2,3]', '$.*');
+select jsonb_path_query('[1,2,3,{"b": [3,4,5]}]', 'lax $.*');
+select jsonb_path_query('[1,2,3,{"b": [3,4,5]}]', 'strict $.*');
+select jsonb_path_query('[1,2,3,{"b": [3,4,5]}]', 'strict $.*', NULL, true);
+select jsonb '{"a": [1,2,3], "b": [3,4,5]}' @? '$.*';
+select jsonb '[1,2,3]' @? '$.*';
+select jsonb '[1,2,3,{"b": [3,4,5]}]' @? 'lax $.*';
+select jsonb '[1,2,3,{"b": [3,4,5]}]' @? 'strict $.*';
+
 -- extension: boolean expressions
 select jsonb_path_query('2', '$ > 1');
 select jsonb_path_query('2', '$ <= 1');

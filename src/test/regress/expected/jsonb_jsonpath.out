@@ -1135,6 +1135,56 @@ select jsonb_path_query('{"a": [1, 2]}', 'lax $.a * 3', silent => true);
 ------------------
 (0 rows)
 
+-- any key on arrays with and without unwrapping.
+select jsonb_path_query('{"a": [1,2,3], "b": [3,4,5]}', '$.*');
+ jsonb_path_query 
+------------------
+ [1, 2, 3]
+ [3, 4, 5]
+(2 rows)
+
+select jsonb_path_query('[1,2,3]', '$.*');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[1,2,3,{"b": [3,4,5]}]', 'lax $.*');
+ jsonb_path_query 
+------------------
+ [3, 4, 5]
+(1 row)
+
+select jsonb_path_query('[1,2,3,{"b": [3,4,5]}]', 'strict $.*');
+ERROR:  jsonpath wildcard member accessor can only be applied to an object
+select jsonb_path_query('[1,2,3,{"b": [3,4,5]}]', 'strict $.*', NULL, true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb '{"a": [1,2,3], "b": [3,4,5]}' @? '$.*';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1,2,3]' @? '$.*';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '[1,2,3,{"b": [3,4,5]}]' @? 'lax $.*';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1,2,3,{"b": [3,4,5]}]' @? 'strict $.*';
+ ?column? 
+----------
+ 
+(1 row)
+
 -- extension: boolean expressions
 select jsonb_path_query('2', '$ > 1');
  jsonb_path_query 
