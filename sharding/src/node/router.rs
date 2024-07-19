@@ -24,9 +24,8 @@ impl Router {
     pub fn new(port: &str) -> Self {
 
         // read from 'ports.txt' to get the ports
-        // TODO-SHARD this path needs to be fixed
-        let contents = fs::read_to_string("/Users/aldanarastrelli/Documents/Aldana/distributed-postgres/sharding/src/node/ports.txt")
-        .expect("Should have been able to read the file");
+        let contents = fs::read_to_string("../../../sharding/src/node/ports.txt")
+            .expect("Should have been able to read the file");
         let ports: Vec<&str> = contents.split("\n").collect();
         let mut shards = Vec::new();
         for client_port in ports {
@@ -66,8 +65,7 @@ impl Router {
             Some(username) => username.to_string_lossy().to_string(),
             None => panic!("Failed to get current username"),
         };
-        println!("Username found: {:?}", username);
-        
+
         // TODO-SHARD host should be dynamic or from configuration file
         match Client::connect(format!("host=127.0.0.1 port={} user={} dbname=template1", port, username).as_str(), NoTls) {
             Ok(client) => Ok(client),
