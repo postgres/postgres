@@ -1662,9 +1662,12 @@ postgresReScanForeignScan(ForeignScanState *node)
 
 	/*
 	 * If any internal parameters affecting this node have changed, we'd
-	 * better destroy and recreate the cursor.  Otherwise, rewinding it should
-	 * be good enough.  If we've only fetched zero or one batch, we needn't
-	 * even rewind the cursor, just rescan what we have.
+	 * better destroy and recreate the cursor.  Otherwise, if the remote
+	 * server is v14 or older, rewinding it should be good enough; if not,
+	 * rewind is only allowed for scrollable cursors, but we don't have a way
+	 * to check the scrollability of it, so destroy and recreate it in any
+	 * case.  If we've only fetched zero or one batch, we needn't even rewind
+	 * the cursor, just rescan what we have.
 	 */
 	if (node->ss.ps.chgParam != NULL)
 	{
@@ -1674,8 +1677,15 @@ postgresReScanForeignScan(ForeignScanState *node)
 	}
 	else if (fsstate->fetch_ct_2 > 1)
 	{
-		snprintf(sql, sizeof(sql), "MOVE BACKWARD ALL IN c%u",
-				 fsstate->cursor_number);
+		if (PQserverVersion(fsstate->conn) < 150000)
+			snprintf(sql, sizeof(sql), "MOVE BACKWARD ALL IN c%u",
+					 fsstate->cursor_number);
+		else
+		{
+			fsstate->cursor_exists = false;
+			snprintf(sql, sizeof(sql), "CLOSE c%u",
+					 fsstate->cursor_number);
+		}
 	}
 	else
 	{
