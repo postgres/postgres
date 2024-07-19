@@ -20,15 +20,3 @@ inline_colorization = "0.1.6"
 name = "sharding"
 crate-type = ["staticlib"]
 
-[[bin]]
-name = "server"
-path = "src/server.rs"
-
-[[bin]]
-name = "client"
-path = "src/client.rs"
-
-[build-dependencies]
-bindgen = "0.69.4"
-cc = "1.0"
-
