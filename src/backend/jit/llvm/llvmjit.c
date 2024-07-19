@@ -249,7 +249,7 @@ llvm_create_context(int jitFlags)
 	context->base.flags = jitFlags;
 
 	/* ensure cleanup */
-	context->base.resowner = CurrentResourceOwner;
+	context->resowner = CurrentResourceOwner;
 	ResourceOwnerRememberJIT(CurrentResourceOwner, context);
 
 	llvm_jit_context_in_use_count++;
@@ -323,8 +323,8 @@ llvm_release_context(JitContext *context)
 
 	llvm_leave_fatal_on_oom();
 
-	if (context->resowner)
-		ResourceOwnerForgetJIT(context->resowner, llvm_jit_context);
+	if (llvm_jit_context->resowner)
+		ResourceOwnerForgetJIT(llvm_jit_context->resowner, llvm_jit_context);
 }
 
 /*
@@ -1372,8 +1372,8 @@ llvm_error_message(LLVMErrorRef error)
 static void
 ResOwnerReleaseJitContext(Datum res)
 {
-	JitContext *context = (JitContext *) DatumGetPointer(res);
+	LLVMJitContext *context = (LLVMJitContext *) DatumGetPointer(res);
 
 	context->resowner = NULL;
-	jit_release_context(context);
+	jit_release_context(&context->base);
 }

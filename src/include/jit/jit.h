@@ -59,8 +59,6 @@ typedef struct JitContext
 	/* see PGJIT_* above */
 	int			flags;
 
-	ResourceOwner resowner;
-
 	JitInstrumentation instr;
 } JitContext;
 
