@@ -30,7 +30,7 @@ echo "[init-server] Compiling sharding library..."
 cd $SHARDING_DIR
 cargo build --release --lib
 echo "[init-server] Moving compiled library to psql directory..."
-mv ./target/release/libsharding.a $PSQL_DIR
+cp ./target/release/libsharding.a $PSQL_DIR
 echo "[init-server] Building the project..."
 cd $ROOT_DIR
 make
