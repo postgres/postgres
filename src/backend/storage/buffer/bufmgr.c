@@ -54,6 +54,7 @@
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
+#include "storage/read_stream.h"
 #include "storage/smgr.h"
 #include "storage/standby.h"
 #include "utils/memdebug.h"
@@ -134,6 +135,33 @@ typedef struct SMgrSortArray
 	RelFileLocator rlocator;	/* This must be the first member */
 	SMgrRelation srel;
 } SMgrSortArray;
+
+/*
+ * Helper struct for read stream object used in
+ * RelationCopyStorageUsingBuffer() function.
+ */
+struct copy_storage_using_buffer_read_stream_private
+{
+	BlockNumber blocknum;
+	BlockNumber last_block;
+};
+
+/*
+ * Callback function to get next block for read stream object used in
+ * RelationCopyStorageUsingBuffer() function.
+ */
+static BlockNumber
+copy_storage_using_buffer_read_stream_next_block(ReadStream *stream,
+												 void *callback_private_data,
+												 void *per_buffer_data)
+{
+	struct copy_storage_using_buffer_read_stream_private *p = callback_private_data;
+
+	if (p->blocknum < p->last_block)
+		return p->blocknum++;
+
+	return InvalidBlockNumber;
+}
 
 /* GUC variables */
 bool		zero_damaged_pages = false;
@@ -4685,6 +4713,9 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 	PGIOAlignedBlock buf;
 	BufferAccessStrategy bstrategy_src;
 	BufferAccessStrategy bstrategy_dst;
+	struct copy_storage_using_buffer_read_stream_private p;
+	ReadStream *src_stream;
+	SMgrRelation src_smgr;
 
 	/*
 	 * In general, we want to write WAL whenever wal_level > 'minimal', but we
@@ -4713,19 +4744,31 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 	bstrategy_src = GetAccessStrategy(BAS_BULKREAD);
 	bstrategy_dst = GetAccessStrategy(BAS_BULKWRITE);
 
+	/* Initalize streaming read */
+	p.blocknum = 0;
+	p.last_block = nblocks;
+	src_smgr = smgropen(srclocator, INVALID_PROC_NUMBER);
+	src_stream = read_stream_begin_smgr_relation(READ_STREAM_FULL,
+												 bstrategy_src,
+												 src_smgr,
+												 permanent ? RELPERSISTENCE_PERMANENT : RELPERSISTENCE_UNLOGGED,
+												 forkNum,
+												 copy_storage_using_buffer_read_stream_next_block,
+												 &p,
+												 0);
+
 	/* Iterate over each block of the source relation file. */
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
 		CHECK_FOR_INTERRUPTS();
 
 		/* Read block from source relation. */
-		srcBuf = ReadBufferWithoutRelcache(srclocator, forkNum, blkno,
-										   RBM_NORMAL, bstrategy_src,
-										   permanent);
+		srcBuf = read_stream_next_buffer(src_stream, NULL);
 		LockBuffer(srcBuf, BUFFER_LOCK_SHARE);
 		srcPage = BufferGetPage(srcBuf);
 
-		dstBuf = ReadBufferWithoutRelcache(dstlocator, forkNum, blkno,
+		dstBuf = ReadBufferWithoutRelcache(dstlocator, forkNum,
+										   BufferGetBlockNumber(srcBuf),
 										   RBM_ZERO_AND_LOCK, bstrategy_dst,
 										   permanent);
 		dstPage = BufferGetPage(dstBuf);
@@ -4745,6 +4788,8 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 		UnlockReleaseBuffer(dstBuf);
 		UnlockReleaseBuffer(srcBuf);
 	}
+	Assert(read_stream_next_buffer(src_stream, NULL) == InvalidBuffer);
+	read_stream_end(src_stream);
 
 	FreeAccessStrategy(bstrategy_src);
 	FreeAccessStrategy(bstrategy_dst);
