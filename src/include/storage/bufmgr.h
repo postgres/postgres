@@ -117,7 +117,7 @@ struct ReadBuffersOperation
 	/* The following members should be set by the caller. */
 	Relation	rel;			/* optional */
 	struct SMgrRelationData *smgr;
-	char		smgr_persistence;	/* optional if rel != NULL */
+	char		persistence;
 	ForkNumber	forknum;
 	BufferAccessStrategy strategy;
 

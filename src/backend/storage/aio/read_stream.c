@@ -551,7 +551,7 @@ read_stream_begin_relation(int flags,
 	{
 		stream->ios[i].op.rel = rel;
 		stream->ios[i].op.smgr = RelationGetSmgr(rel);
-		stream->ios[i].op.smgr_persistence = 0;
+		stream->ios[i].op.persistence = rel->rd_rel->relpersistence;
 		stream->ios[i].op.forknum = forknum;
 		stream->ios[i].op.strategy = strategy;
 	}
