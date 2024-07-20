@@ -2983,7 +2983,7 @@ relation_is_updatable(Oid reloid,
  *
  * This is used with simply-updatable views to map column-permissions sets for
  * the view columns onto the matching columns in the underlying base relation.
- * The targetlist is expected to be a list of plain Vars of the underlying
+ * Relevant entries in the targetlist must be plain Vars of the underlying
  * relation (as per the checks above in view_query_is_auto_updatable).
  */
 static Bitmapset *
@@ -3080,6 +3080,9 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 */
 	viewquery = copyObject(get_view_query(view));
 
+	/* Locate RTE describing the view in the outer query */
+	view_rte = rt_fetch(parsetree->resultRelation, parsetree->rtable);
+
 	/* The view must be updatable, else fail */
 	auto_update_detail =
 		view_query_is_auto_updatable(viewquery,
@@ -3122,16 +3125,25 @@ rewriteTargetView(Query *parsetree, Relation view)
 	}
 
 	/*
-	 * For INSERT/UPDATE the modified columns must all be updatable. Note that
-	 * we get the modified columns from the query's targetlist, not from the
-	 * result RTE's insertedCols and/or updatedCols set, since
-	 * rewriteTargetListIU may have added additional targetlist entries for
-	 * view defaults, and these must also be updatable.
+	 * For INSERT/UPDATE the modified columns must all be updatable.
 	 */
 	if (parsetree->commandType != CMD_DELETE)
 	{
-		Bitmapset  *modified_cols = NULL;
+		Bitmapset  *modified_cols;
 		char	   *non_updatable_col;
+
+		/*
+		 * Compute the set of modified columns as those listed in the result
+		 * RTE's insertedCols and/or updatedCols sets plus those that are
+		 * targets of the query's targetlist(s).  We must consider the query's
+		 * targetlist because rewriteTargetListIU may have added additional
+		 * targetlist entries for view defaults, and these must also be
+		 * updatable.  But rewriteTargetListIU can also remove entries if they
+		 * are DEFAULT markers and the column's default is NULL, so
+		 * considering only the targetlist would also be wrong.
+		 */
+		modified_cols = bms_union(view_rte->insertedCols,
+								  view_rte->updatedCols);
 
 		foreach(lc, parsetree->targetList)
 		{
@@ -3189,9 +3201,6 @@ rewriteTargetView(Query *parsetree, Relation view)
 			}
 		}
 	}
-
-	/* Locate RTE describing the view in the outer query */
-	view_rte = rt_fetch(parsetree->resultRelation, parsetree->rtable);
 
 	/*
 	 * If we get here, view_query_is_auto_updatable() has verified that the
