@@ -406,14 +406,16 @@ read_stream_look_ahead(ReadStream *stream, bool suppress_advice)
  * write extra data for each block into the space provided to it.  It will
  * also receive callback_private_data for its own purposes.
  */
-ReadStream *
-read_stream_begin_relation(int flags,
-						   BufferAccessStrategy strategy,
-						   Relation rel,
-						   ForkNumber forknum,
-						   ReadStreamBlockNumberCB callback,
-						   void *callback_private_data,
-						   size_t per_buffer_data_size)
+static ReadStream *
+read_stream_begin_impl(int flags,
+					   BufferAccessStrategy strategy,
+					   Relation rel,
+					   SMgrRelation smgr,
+					   char persistence,
+					   ForkNumber forknum,
+					   ReadStreamBlockNumberCB callback,
+					   void *callback_private_data,
+					   size_t per_buffer_data_size)
 {
 	ReadStream *stream;
 	size_t		size;
@@ -422,9 +424,6 @@ read_stream_begin_relation(int flags,
 	int			strategy_pin_limit;
 	uint32		max_pinned_buffers;
 	Oid			tablespace_id;
-	SMgrRelation smgr;
-
-	smgr = RelationGetSmgr(rel);
 
 	/*
 	 * Decide how many I/Os we will allow to run at the same time.  That
@@ -434,7 +433,7 @@ read_stream_begin_relation(int flags,
 	 */
 	tablespace_id = smgr->smgr_rlocator.locator.spcOid;
 	if (!OidIsValid(MyDatabaseId) ||
-		IsCatalogRelation(rel) ||
+		(rel && IsCatalogRelation(rel)) ||
 		IsCatalogRelationOid(smgr->smgr_rlocator.locator.relNumber))
 	{
 		/*
@@ -550,13 +549,62 @@ read_stream_begin_relation(int flags,
 	for (int i = 0; i < max_ios; ++i)
 	{
 		stream->ios[i].op.rel = rel;
-		stream->ios[i].op.smgr = RelationGetSmgr(rel);
-		stream->ios[i].op.persistence = rel->rd_rel->relpersistence;
+		stream->ios[i].op.smgr = smgr;
+		stream->ios[i].op.persistence = persistence;
 		stream->ios[i].op.forknum = forknum;
 		stream->ios[i].op.strategy = strategy;
 	}
 
 	return stream;
+}
+
+/*
+ * Create a new read stream for reading a relation.
+ * See read_stream_begin_impl() for the detailed explanation.
+ */
+ReadStream *
+read_stream_begin_relation(int flags,
+						   BufferAccessStrategy strategy,
+						   Relation rel,
+						   ForkNumber forknum,
+						   ReadStreamBlockNumberCB callback,
+						   void *callback_private_data,
+						   size_t per_buffer_data_size)
+{
+	return read_stream_begin_impl(flags,
+								  strategy,
+								  rel,
+								  RelationGetSmgr(rel),
+								  rel->rd_rel->relpersistence,
+								  forknum,
+								  callback,
+								  callback_private_data,
+								  per_buffer_data_size);
+}
+
+/*
+ * Create a new read stream for reading a SMgr relation.
+ * See read_stream_begin_impl() for the detailed explanation.
+ */
+ReadStream *
+read_stream_begin_smgr_relation(int flags,
+								BufferAccessStrategy strategy,
+								SMgrRelation smgr,
+								char smgr_persistence,
+								ForkNumber forknum,
+								ReadStreamBlockNumberCB callback,
+								void *callback_private_data,
+								size_t per_buffer_data_size)
+{
+	return read_stream_begin_impl(flags,
+								  strategy,
+								  NULL,
+								  smgr,
+								  smgr_persistence,
+								  forknum,
+								  callback,
+								  callback_private_data,
+								  per_buffer_data_size);
 }
 
 /*
