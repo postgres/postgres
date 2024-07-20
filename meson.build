@@ -614,14 +614,47 @@ gssapiopt = get_option('gssapi')
 krb_srvtab = ''
 have_gssapi = false
 if not gssapiopt.disabled()
-  gssapi = dependency('krb5-gssapi', required: gssapiopt)
+  gssapi = dependency('krb5-gssapi', required: false)
   have_gssapi = gssapi.found()
 
+  if have_gssapi
+      gssapi_deps = [gssapi]
+  elif not have_gssapi
+    # Hardcoded lookup for gssapi. This is necessary as gssapi on windows does
+    # not install neither pkg-config nor cmake dependency information.
+    if host_system == 'windows'
+      is_64  = cc.sizeof('void *', args: test_c_args) == 8
+      if is_64
+        gssapi_search_libs = ['gssapi64', 'krb5_64', 'comerr64']
+      else
+        gssapi_search_libs = ['gssapi32', 'krb5_32', 'comerr32']
+      endif
+    else
+      gssapi_search_libs = ['gssapi_krb5']
+    endif
+
+    gssapi_deps = []
+    foreach libname : gssapi_search_libs
+      lib = cc.find_library(libname, dirs: test_lib_d, required: false)
+      if lib.found()
+        have_gssapi = true
+        gssapi_deps += lib
+      endif
+    endforeach
+
+    if have_gssapi
+      # Meson before 0.57.0 did not support using check_header() etc with
+      # declare_dependency(). Thus the tests below use the library looked up
+      # above.  Once we require a newer meson version, we can simplify.
+      gssapi = declare_dependency(dependencies: gssapi_deps)
+    endif
+  endif
+
   if not have_gssapi
-  elif cc.check_header('gssapi/gssapi.h', dependencies: gssapi, required: false,
+  elif cc.check_header('gssapi/gssapi.h', dependencies: gssapi_deps, required: false,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_GSSAPI_H', 1)
-  elif cc.check_header('gssapi.h', dependencies: gssapi, required: gssapiopt,
+  elif cc.check_header('gssapi.h', dependencies: gssapi_deps, required: gssapiopt,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_H', 1)
   else
@@ -629,10 +662,10 @@ if not gssapiopt.disabled()
   endif
 
   if not have_gssapi
-  elif cc.check_header('gssapi/gssapi_ext.h', dependencies: gssapi, required: false,
+  elif cc.check_header('gssapi/gssapi_ext.h', dependencies: gssapi_deps, required: false,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_GSSAPI_EXT_H', 1)
-  elif cc.check_header('gssapi_ext.h', dependencies: gssapi, required: gssapiopt,
+  elif cc.check_header('gssapi_ext.h', dependencies: gssapi_deps, required: gssapiopt,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_EXT_H', 1)
   else
@@ -640,7 +673,7 @@ if not gssapiopt.disabled()
   endif
 
   if not have_gssapi
-  elif cc.has_function('gss_store_cred_into', dependencies: gssapi,
+  elif cc.has_function('gss_store_cred_into', dependencies: gssapi_deps,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('ENABLE_GSS', 1)
 
@@ -651,6 +684,11 @@ if not gssapiopt.disabled()
   else
     have_gssapi = false
   endif
+
+  if not have_gssapi and gssapiopt.enabled()
+    error('dependency lookup for gssapi failed')
+  endif
+
 endif
 if not have_gssapi
   gssapi = not_found_dep
