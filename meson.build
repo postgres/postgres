@@ -627,7 +627,8 @@ if not gssapiopt.disabled()
   elif cc.check_header('gssapi/gssapi.h', dependencies: gssapi, required: false,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_GSSAPI_H', 1)
-  elif cc.check_header('gssapi.h', args: test_c_args, dependencies: gssapi, required: gssapiopt)
+  elif cc.check_header('gssapi.h', dependencies: gssapi, required: gssapiopt,
+      args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_H', 1)
   else
     have_gssapi = false
@@ -637,7 +638,8 @@ if not gssapiopt.disabled()
   elif cc.check_header('gssapi/gssapi_ext.h', dependencies: gssapi, required: false,
       args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_GSSAPI_EXT_H', 1)
-  elif cc.check_header('gssapi_ext.h', args: test_c_args, dependencies: gssapi, required: gssapiopt)
+  elif cc.check_header('gssapi_ext.h', dependencies: gssapi, required: gssapiopt,
+      args: test_c_args, include_directories: postgres_inc)
     cdata.set('HAVE_GSSAPI_EXT_H', 1)
   else
     have_gssapi = false
