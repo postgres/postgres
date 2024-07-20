@@ -813,11 +813,25 @@ endif
 
 icuopt = get_option('icu')
 if not icuopt.disabled()
-  icu = dependency('icu-uc', required: icuopt)
-  icu_i18n = dependency('icu-i18n', required: icuopt)
+  icu = dependency('icu-uc', required: false)
+  if icu.found()
+    icu_i18n = dependency('icu-i18n', required: true)
+  endif
+
+  # Unfortunately the dependency is named differently with cmake
+  if not icu.found() # combine with above once meson 0.60.0 is required
+    icu = dependency('ICU', required: icuopt,
+                     components: ['uc'], modules: ['ICU::uc'], method: 'cmake')
+    if icu.found()
+      icu_i18n = dependency('ICU', required: true,
+                            components: ['i18n'], modules: ['ICU::i18n'])
+    endif
+  endif
 
   if icu.found()
     cdata.set('USE_ICU', 1)
+  else
+    icu_i18n = not_found_dep
   endif
 
 else
@@ -833,7 +847,12 @@ endif
 
 libxmlopt = get_option('libxml')
 if not libxmlopt.disabled()
-  libxml = dependency('libxml-2.0', required: libxmlopt, version: '>= 2.6.23')
+  libxml = dependency('libxml-2.0', required: false, version: '>= 2.6.23')
+  # Unfortunately the dependency is named differently with cmake
+  if not libxml.found() # combine with above once meson 0.60.0 is required
+    libxml = dependency('LibXml2', required: libxmlopt, version: '>= 2.6.23',
+      method: 'cmake')
+  endif
 
   if libxml.found()
     cdata.set('USE_LIBXML', 1)
@@ -850,7 +869,11 @@ endif
 
 libxsltopt = get_option('libxslt')
 if not libxsltopt.disabled()
-  libxslt = dependency('libxslt', required: libxsltopt)
+  libxslt = dependency('libxslt', required: false)
+  # Unfortunately the dependency is named differently with cmake
+  if not libxslt.found() # combine with above once meson 0.60.0 is required
+    libxslt = dependency('LibXslt', required: libxsltopt, method: 'cmake')
+  endif
 
   if libxslt.found()
     cdata.set('USE_LIBXSLT', 1)
@@ -867,7 +890,13 @@ endif
 
 lz4opt = get_option('lz4')
 if not lz4opt.disabled()
-  lz4 = dependency('liblz4', required: lz4opt)
+  lz4 = dependency('liblz4', required: false)
+  # Unfortunately the dependency is named differently with cmake
+  if not lz4.found() # combine with above once meson 0.60.0 is required
+    lz4 = dependency('lz4', required: lz4opt,
+                     method: 'cmake', modules: ['LZ4::lz4_shared'],
+                    )
+  endif
 
   if lz4.found()
     cdata.set('USE_LZ4', 1)
@@ -1486,7 +1515,12 @@ endif
 
 zstdopt = get_option('zstd')
 if not zstdopt.disabled()
-  zstd = dependency('libzstd', required: zstdopt, version: '>=1.4.0')
+  zstd = dependency('libzstd', required: false, version: '>=1.4.0')
+  # Unfortunately the dependency is named differently with cmake
+  if not zstd.found() # combine with above once meson 0.60.0 is required
+    zstd = dependency('zstd', required: zstdopt, version: '>=1.4.0',
+                      method: 'cmake', modules: ['zstd::libzstd_shared'])
+  endif
 
   if zstd.found()
     cdata.set('USE_ZSTD', 1)
