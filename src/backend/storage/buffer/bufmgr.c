@@ -1002,7 +1002,7 @@ ExtendBufferedRelTo(BufferManagerRelation bmr,
 	if (buffer == InvalidBuffer)
 	{
 		Assert(extended_by == 0);
-		buffer = ReadBuffer_common(bmr.rel, bmr.smgr, 0,
+		buffer = ReadBuffer_common(bmr.rel, bmr.smgr, bmr.relpersistence,
 								   fork, extend_to - 1, mode, strategy);
 	}
 
@@ -1117,16 +1117,8 @@ PinBufferForBlock(Relation rel,
 
 	Assert(blockNum != P_NEW);
 
-	/*
-	 * If there is no Relation it usually implies recovery and thus permanent,
-	 * but we take an argument because CreateAndCopyRelationData can reach us
-	 * with only an SMgrRelation for an unlogged relation that we don't want
-	 * to flag with BM_PERMANENT.
-	 */
 	if (rel)
 		persistence = rel->rd_rel->relpersistence;
-	else if (smgr_persistence == 0)
-		persistence = RELPERSISTENCE_PERMANENT;
 	else
 		persistence = smgr_persistence;
 

@@ -114,14 +114,10 @@ typedef struct BufferManagerRelation
 
 struct ReadBuffersOperation
 {
-	/*
-	 * The following members should be set by the caller.  If only smgr is
-	 * provided without rel, then smgr_persistence can be set to override the
-	 * default assumption of RELPERSISTENCE_PERMANENT.
-	 */
-	Relation	rel;
+	/* The following members should be set by the caller. */
+	Relation	rel;			/* optional */
 	struct SMgrRelationData *smgr;
-	char		smgr_persistence;
+	char		smgr_persistence;	/* optional if rel != NULL */
 	ForkNumber	forknum;
 	BufferAccessStrategy strategy;
 
