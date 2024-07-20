@@ -845,6 +845,7 @@ CREATE VIEW rw_view1 AS
 
 INSERT INTO rw_view1 VALUES (null, null, 1.1, null); -- should fail
 INSERT INTO rw_view1 (s, c, a) VALUES (null, null, 1.1); -- should fail
+INSERT INTO rw_view1 (s, c, a) VALUES (default, default, 1.1); -- should fail
 INSERT INTO rw_view1 (a) VALUES (1.1) RETURNING a, s, c; -- OK
 UPDATE rw_view1 SET s = s WHERE a = 1.1; -- should fail
 UPDATE rw_view1 SET a = 1.05 WHERE a = 1.1 RETURNING s; -- OK
