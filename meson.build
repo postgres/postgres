@@ -1386,9 +1386,26 @@ if uuidopt != 'none'
     uuidfunc = 'uuid_to_string'
     uuidheader = 'uuid.h'
   elif uuidopt == 'ossp'
-    uuid = dependency('ossp-uuid', required: true)
+    uuid = dependency('ossp-uuid', required: false)
     uuidfunc = 'uuid_export'
     uuidheader = 'uuid.h'
+
+    # Hardcoded lookup for ossp-uuid. This is necessary as ossp-uuid on
+    # windows installs neither a pkg-config nor a cmake dependency
+    # information. Nor is there another supported uuid implementation
+    # available on windows.
+    #
+    # Sometimes the ossp-uuid library is named 'uuid' sometimes 'ossp-uuid'
+    if not uuid.found()
+      uuid = cc.find_library('ossp-uuid',
+        required: false, dirs: test_lib_d,
+        has_headers: uuidheader, header_include_directories: postgres_inc)
+    endif
+    if not uuid.found()
+      uuid = cc.find_library('uuid',
+        required: true, dirs: test_lib_d,
+        has_headers: uuidheader, header_include_directories: postgres_inc)
+    endif
   else
     error('unknown uuid build option value: @0@'.format(uuidopt))
   endif
