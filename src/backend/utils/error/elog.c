@@ -929,6 +929,10 @@ errcode_for_file_access(void)
 			edata->sqlerrcode = ERRCODE_IO_ERROR;
 			break;
 
+		case ENAMETOOLONG:		/* File name too long */
+			edata->sqlerrcode = ERRCODE_FILE_NAME_TOO_LONG;
+			break;
+
 			/* All else is classified as internal errors */
 		default:
 			edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;

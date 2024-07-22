@@ -439,6 +439,7 @@ Section: Class 58 - System Error (errors external to PostgreSQL itself)
 58030    E    ERRCODE_IO_ERROR                                               io_error
 58P01    E    ERRCODE_UNDEFINED_FILE                                         undefined_file
 58P02    E    ERRCODE_DUPLICATE_FILE                                         duplicate_file
+58P03    E    ERRCODE_FILE_NAME_TOO_LONG                                     file_name_too_long
 
 Section: Class F0 - Configuration File Error
 
