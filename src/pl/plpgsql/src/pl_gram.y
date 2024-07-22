@@ -3194,11 +3194,11 @@ read_fetch_direction(void)
 	{
 		/*
 		 * Assume it's a count expression with no preceding keyword.
-		 * Note: we allow this syntax because core SQL does, but we don't
-		 * document it because of the ambiguity with the omitted-direction
-		 * case.  For instance, "MOVE n IN c" will fail if n is a variable.
-		 * Perhaps this can be improved someday, but it's hardly worth a
-		 * lot of work.
+		 * Note: we allow this syntax because core SQL does, but it's
+		 * ambiguous with the case of an omitted direction clause; for
+		 * instance, "MOVE n IN c" will fail if n is a variable, because the
+		 * preceding else-arm will trigger.  Perhaps this can be improved
+		 * someday, but it hardly seems worth a lot of work.
 		 */
 		plpgsql_push_back_token(tok);
 		fetch->expr = read_sql_expression2(K_FROM, K_IN,

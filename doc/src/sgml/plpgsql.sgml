@@ -3384,13 +3384,16 @@ FETCH <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> 
 </synopsis>
 
     <para>
-     <command>FETCH</command> retrieves the next row from the
+     <command>FETCH</command> retrieves the next row (in the indicated
+     direction) from the
      cursor into a target, which might be a row variable, a record
      variable, or a comma-separated list of simple variables, just like
-     <command>SELECT INTO</command>.  If there is no next row, the
+     <command>SELECT INTO</command>.  If there is no suitable row, the
      target is set to NULL(s).  As with <command>SELECT
      INTO</command>, the special variable <literal>FOUND</literal> can
-     be checked to see whether a row was obtained or not.
+     be checked to see whether a row was obtained or not.  If no row is
+     obtained, the cursor is positioned after the last row or before the
+     first row, depending on the movement direction.
     </para>
 
     <para>
@@ -3442,11 +3445,25 @@ MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <
 
     <para>
      <command>MOVE</command> repositions a cursor without retrieving
-     any data. <command>MOVE</command> works exactly like the
+     any data. <command>MOVE</command> works like the
      <command>FETCH</command> command, except it only repositions the
-     cursor and does not return the row moved to. As with <command>SELECT
+     cursor and does not return the row moved to.
+     The <replaceable>direction</replaceable> clause can be any of the
+     variants allowed in the SQL <xref linkend="sql-fetch"/>
+     command, including those that can fetch more than one row;
+     the cursor is positioned to the last such row.
+     (However, the case in which the <replaceable>direction</replaceable>
+     clause is simply a <replaceable>count</replaceable> expression with
+     no key word is deprecated in <application>PL/pgSQL</application>.
+     That syntax is ambiguous with the case where
+     the <replaceable>direction</replaceable> clause is omitted
+     altogether, and hence it may fail if
+     the <replaceable>count</replaceable> is not a constant.)
+     As with <command>SELECT
      INTO</command>, the special variable <literal>FOUND</literal> can
-     be checked to see whether there was a next row to move to.
+     be checked to see whether there was a row to move to.  If there is no
+     such row, the cursor is positioned after the last row or before the
+     first row, depending on the movement direction.
     </para>
 
     <para>
