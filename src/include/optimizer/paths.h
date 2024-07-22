@@ -83,7 +83,7 @@ extern void check_index_predicates(PlannerInfo *root, RelOptInfo *rel);
  * tidpath.c
  *	  routines to generate tid paths
  */
-extern void create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel);
+extern bool create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel);
 
 /*
  * joinpath.c

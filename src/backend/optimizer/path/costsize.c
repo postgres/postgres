@@ -1251,7 +1251,6 @@ cost_tidscan(Path *path, PlannerInfo *root,
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
-	bool		isCurrentOf = false;
 	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 	QualCost	tid_qual_cost;
@@ -1287,7 +1286,6 @@ cost_tidscan(Path *path, PlannerInfo *root,
 		else if (IsA(qual, CurrentOfExpr))
 		{
 			/* CURRENT OF yields 1 tuple */
-			isCurrentOf = true;
 			ntuples++;
 		}
 		else
@@ -1296,22 +1294,6 @@ cost_tidscan(Path *path, PlannerInfo *root,
 			ntuples++;
 		}
 	}
-
-	/*
-	 * We must force TID scan for WHERE CURRENT OF, because only nodeTidscan.c
-	 * understands how to do it correctly.  Therefore, honor enable_tidscan
-	 * only when CURRENT OF isn't present.  Also note that cost_qual_eval
-	 * counts a CurrentOfExpr as having startup cost disable_cost, which we
-	 * subtract off here; that's to prevent other plan types such as seqscan
-	 * from winning.
-	 */
-	if (isCurrentOf)
-	{
-		Assert(baserel->baserestrictcost.startup >= disable_cost);
-		startup_cost -= disable_cost;
-	}
-	else if (!enable_tidscan)
-		startup_cost += disable_cost;
 
 	/*
 	 * The TID qual expressions will be computed once, any other baserestrict
@@ -1398,9 +1380,6 @@ cost_tidrangescan(Path *path, PlannerInfo *root,
 	 */
 	ntuples = selectivity * baserel->tuples;
 	nseqpages = pages - 1.0;
-
-	if (!enable_tidscan)
-		startup_cost += disable_cost;
 
 	/*
 	 * The TID qual expressions will be computed once, any other baserestrict
@@ -4883,11 +4862,6 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	{
 		/* Treat all these as having cost 1 */
 		context->total.per_tuple += cpu_operator_cost;
-	}
-	else if (IsA(node, CurrentOfExpr))
-	{
-		/* Report high cost to prevent selection of anything but TID scan */
-		context->total.startup += disable_cost;
 	}
 	else if (IsA(node, SubLink))
 	{

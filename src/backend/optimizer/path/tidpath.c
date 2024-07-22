@@ -42,6 +42,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -277,11 +278,14 @@ RestrictInfoIsTidQual(PlannerInfo *root, RestrictInfo *rinfo, RelOptInfo *rel)
  * that there's more than one choice.
  */
 static List *
-TidQualFromRestrictInfoList(PlannerInfo *root, List *rlist, RelOptInfo *rel)
+TidQualFromRestrictInfoList(PlannerInfo *root, List *rlist, RelOptInfo *rel,
+							bool *isCurrentOf)
 {
 	RestrictInfo *tidclause = NULL; /* best simple CTID qual so far */
 	List	   *orlist = NIL;	/* best OR'ed CTID qual so far */
 	ListCell   *l;
+
+	*isCurrentOf = false;
 
 	foreach(l, rlist)
 	{
@@ -305,9 +309,13 @@ TidQualFromRestrictInfoList(PlannerInfo *root, List *rlist, RelOptInfo *rel)
 				if (is_andclause(orarg))
 				{
 					List	   *andargs = ((BoolExpr *) orarg)->args;
+					bool		sublistIsCurrentOf;
 
 					/* Recurse in case there are sub-ORs */
-					sublist = TidQualFromRestrictInfoList(root, andargs, rel);
+					sublist = TidQualFromRestrictInfoList(root, andargs, rel,
+														  &sublistIsCurrentOf);
+					if (sublistIsCurrentOf)
+						elog(ERROR, "IS CURRENT OF within OR clause");
 				}
 				else
 				{
@@ -353,7 +361,10 @@ TidQualFromRestrictInfoList(PlannerInfo *root, List *rlist, RelOptInfo *rel)
 			{
 				/* We can stop immediately if it's a CurrentOfExpr */
 				if (IsCurrentOfClause(rinfo, rel))
+				{
+					*isCurrentOf = true;
 					return list_make1(rinfo);
+				}
 
 				/*
 				 * Otherwise, remember the first non-OR CTID qual.  We could
@@ -483,19 +494,24 @@ ec_member_matches_ctid(PlannerInfo *root, RelOptInfo *rel,
  *
  *	  Candidate paths are added to the rel's pathlist (using add_path).
  */
-void
+bool
 create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *tidquals;
 	List	   *tidrangequals;
+	bool		isCurrentOf;
 
 	/*
 	 * If any suitable quals exist in the rel's baserestrict list, generate a
 	 * plain (unparameterized) TidPath with them.
+	 *
+	 * We skip this when enable_tidscan = false, except when the qual is
+	 * CurrentOfExpr. In that case, a TID scan is the only correct path.
 	 */
-	tidquals = TidQualFromRestrictInfoList(root, rel->baserestrictinfo, rel);
+	tidquals = TidQualFromRestrictInfoList(root, rel->baserestrictinfo, rel,
+										   &isCurrentOf);
 
-	if (tidquals != NIL)
+	if (tidquals != NIL && (enable_tidscan || isCurrentOf))
 	{
 		/*
 		 * This path uses no join clauses, but it could still have required
@@ -505,7 +521,20 @@ create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 
 		add_path(rel, (Path *) create_tidscan_path(root, rel, tidquals,
 												   required_outer));
+
+		/*
+		 * When the qual is CurrentOfExpr, the path that we just added is the
+		 * only one the executor can handle, so we should return before adding
+		 * any others. Returning true lets the caller know not to add any
+		 * others, either.
+		 */
+		if (isCurrentOf)
+			return true;
 	}
+
+	/* Skip the rest if TID scans are disabled. */
+	if (!enable_tidscan)
+		return false;
 
 	/*
 	 * If there are range quals in the baserestrict list, generate a
@@ -553,4 +582,6 @@ create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * join quals, for example.
 	 */
 	BuildParameterizedTidPaths(root, rel, rel->joininfo);
+
+	return false;
 }
