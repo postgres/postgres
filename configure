@@ -15778,6 +15778,16 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRNLEN $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "strsep" "ac_cv_have_decl_strsep" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strsep" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRSEP $ac_have_decl
+_ACEOF
 
 
 # We can't use AC_CHECK_FUNCS to detect these functions, because it
@@ -15920,6 +15930,19 @@ else
   case " $LIBOBJS " in
   *" strnlen.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS strnlen.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "strsep" "ac_cv_func_strsep"
+if test "x$ac_cv_func_strsep" = xyes; then :
+  $as_echo "#define HAVE_STRSEP 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" strsep.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS strsep.$ac_objext"
  ;;
 esac
 

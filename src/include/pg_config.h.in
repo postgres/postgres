@@ -127,6 +127,10 @@
    don't. */
 #undef HAVE_DECL_STRNLEN
 
+/* Define to 1 if you have the declaration of `strsep', and to 0 if you don't.
+   */
+#undef HAVE_DECL_STRSEP
+
 /* Define to 1 if you have the <editline/history.h> header file. */
 #undef HAVE_EDITLINE_HISTORY_H
 
@@ -413,6 +417,9 @@
 
 /* Define to 1 if you have the `strnlen' function. */
 #undef HAVE_STRNLEN
+
+/* Define to 1 if you have the `strsep' function. */
+#undef HAVE_STRSEP
 
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL

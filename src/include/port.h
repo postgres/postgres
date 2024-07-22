@@ -432,6 +432,10 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 extern size_t strnlen(const char *str, size_t maxlen);
 #endif
 
+#if !HAVE_DECL_STRSEP
+extern char *strsep(char **stringp, const char *delim);
+#endif
+
 /* port/user.c */
 #ifndef WIN32
 extern bool pg_get_user_name(uid_t user_id, char *buffer, size_t buflen);
