@@ -608,16 +608,15 @@ parse_scram_secret(const char *secret, int *iterations,
 	 * SCRAM-SHA-256$<iterations>:<salt>$<storedkey>:<serverkey>
 	 */
 	v = pstrdup(secret);
-	if ((scheme_str = strtok(v, "$")) == NULL)
+	if ((scheme_str = strsep(&v, "$")) == NULL)
 		goto invalid_secret;
-	if ((iterations_str = strtok(NULL, ":")) == NULL)
+	if ((iterations_str = strsep(&v, ":")) == NULL)
 		goto invalid_secret;
-	if ((salt_str = strtok(NULL, "$")) == NULL)
+	if ((salt_str = strsep(&v, "$")) == NULL)
 		goto invalid_secret;
-	if ((storedkey_str = strtok(NULL, ":")) == NULL)
+	if ((storedkey_str = strsep(&v, ":")) == NULL)
 		goto invalid_secret;
-	if ((serverkey_str = strtok(NULL, "")) == NULL)
-		goto invalid_secret;
+	serverkey_str = v;
 
 	/* Parse the fields */
 	if (strcmp(scheme_str, "SCRAM-SHA-256") != 0)

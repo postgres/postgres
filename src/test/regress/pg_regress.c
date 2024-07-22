@@ -234,12 +234,11 @@ static void
 split_to_stringlist(const char *s, const char *delim, _stringlist **listhead)
 {
 	char	   *sc = pg_strdup(s);
-	char	   *token = strtok(sc, delim);
+	char	   *token;
 
-	while (token)
+	while ((token = strsep(&sc, delim)))
 	{
 		add_stringlist_item(listhead, token);
-		token = strtok(NULL, delim);
 	}
 	free(sc);
 }
