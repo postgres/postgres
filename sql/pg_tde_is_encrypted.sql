@@ -20,8 +20,8 @@ CREATE TABLE test_norm(
 SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_enc';
 SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_norm';
 
-SELECT pgtde_is_encrypted('test_enc');
-SELECT pgtde_is_encrypted('test_norm');
+SELECT pg_tde_is_encrypted('test_enc');
+SELECT pg_tde_is_encrypted('test_norm');
 
 SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();

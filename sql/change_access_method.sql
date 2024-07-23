@@ -16,7 +16,7 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
 
 SELECT * FROM country_table;
 
-SELECT pgtde_is_encrypted('country_table');
+SELECT pg_tde_is_encrypted('country_table');
 
 -- Try changing the encrypted table to an unencrypted table
 ALTER TABLE country_table SET access method  heap;
@@ -27,7 +27,7 @@ INSERT INTO country_table (country_name, continent)
             ('Canada', 'North America');
 
 SELECT * FROM country_table;
-SELECT pgtde_is_encrypted('country_table');
+SELECT pg_tde_is_encrypted('country_table');
 
 -- Change it back to encrypted
 ALTER TABLE country_table SET access method  pg_tde_basic;
@@ -37,7 +37,7 @@ INSERT INTO country_table (country_name, continent)
             ('Brazil', 'South America'),
             ('Australia', 'Oceania');
 SELECT * FROM country_table;
-SELECT pgtde_is_encrypted('country_table');
+SELECT pg_tde_is_encrypted('country_table');
 
 DROP TABLE country_table;
 DROP EXTENSION pg_tde;

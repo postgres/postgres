@@ -164,7 +164,7 @@ docker build . -f ./docker/Dockerfile -t your-image-name
 
 The extension provides the following helper functions:
 
-### pgtde_is_encrypted(tablename)
+### pg_tde_is_encrypted(tablename)
 
 Returns `t` if the table is encrypted (uses the pg_tde access method), or `f` otherwise.
 

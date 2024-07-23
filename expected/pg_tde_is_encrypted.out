@@ -36,15 +36,15 @@ SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE
  heap
 (1 row)
 
-SELECT pgtde_is_encrypted('test_enc');
- pgtde_is_encrypted 
---------------------
+SELECT pg_tde_is_encrypted('test_enc');
+ pg_tde_is_encrypted 
+---------------------
  t
 (1 row)
 
-SELECT pgtde_is_encrypted('test_norm');
- pgtde_is_encrypted 
---------------------
+SELECT pg_tde_is_encrypted('test_norm');
+ pg_tde_is_encrypted 
+---------------------
  f
 (1 row)
 

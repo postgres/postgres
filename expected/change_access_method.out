@@ -29,9 +29,9 @@ SELECT * FROM country_table;
           3 | USA          | North America
 (3 rows)
 
-SELECT pgtde_is_encrypted('country_table');
- pgtde_is_encrypted 
---------------------
+SELECT pg_tde_is_encrypted('country_table');
+ pg_tde_is_encrypted 
+---------------------
  t
 (1 row)
 
@@ -53,9 +53,9 @@ SELECT * FROM country_table;
           6 | Canada       | North America
 (6 rows)
 
-SELECT pgtde_is_encrypted('country_table');
- pgtde_is_encrypted 
---------------------
+SELECT pg_tde_is_encrypted('country_table');
+ pg_tde_is_encrypted 
+---------------------
  f
 (1 row)
 
@@ -79,9 +79,9 @@ SELECT * FROM country_table;
           9 | Australia    | Oceania
 (9 rows)
 
-SELECT pgtde_is_encrypted('country_table');
- pgtde_is_encrypted 
---------------------
+SELECT pg_tde_is_encrypted('country_table');
+ pg_tde_is_encrypted 
+---------------------
  t
 (1 row)
 

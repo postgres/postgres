@@ -62,7 +62,7 @@ RETURNS table_am_handler
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION pgtde_is_encrypted(table_name VARCHAR)
+CREATE FUNCTION pg_tde_is_encrypted(table_name VARCHAR)
 RETURNS boolean
 AS $$
 SELECT EXISTS (
