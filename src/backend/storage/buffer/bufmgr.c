@@ -143,7 +143,7 @@ typedef struct SMgrSortArray
 struct copy_storage_using_buffer_read_stream_private
 {
 	BlockNumber blocknum;
-	BlockNumber last_block;
+	BlockNumber nblocks;
 };
 
 /*
@@ -157,7 +157,7 @@ copy_storage_using_buffer_read_stream_next_block(ReadStream *stream,
 {
 	struct copy_storage_using_buffer_read_stream_private *p = callback_private_data;
 
-	if (p->blocknum < p->last_block)
+	if (p->blocknum < p->nblocks)
 		return p->blocknum++;
 
 	return InvalidBlockNumber;
@@ -4746,7 +4746,7 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 
 	/* Initalize streaming read */
 	p.blocknum = 0;
-	p.last_block = nblocks;
+	p.nblocks = nblocks;
 	src_smgr = smgropen(srclocator, INVALID_PROC_NUMBER);
 	src_stream = read_stream_begin_smgr_relation(READ_STREAM_FULL,
 												 bstrategy_src,
