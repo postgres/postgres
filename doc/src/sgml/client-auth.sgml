@@ -1910,13 +1910,19 @@ omicron         bryanh                  guest1
         </para>
        </listitem>
       </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
+     The following option may be used as an alternative way to write some of the
+     above LDAP options in a more compact and standard form:
+     <variablelist>
       <varlistentry>
        <term><literal>ldapurl</literal></term>
        <listitem>
         <para>
          An <ulink url="https://datatracker.ietf.org/doc/html/rfc4516">RFC 4516</ulink>
-         LDAP URL.  This is an alternative way to write some of the
-         other LDAP options in a more compact and standard form.  The format is
+         LDAP URL.  The format is
 <synopsis>
 ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>][?[<replaceable>filter</replaceable>]]]]
 </synopsis>
@@ -1958,7 +1964,8 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
 
    <para>
     It is an error to mix configuration options for simple bind with options
-    for search+bind.
+    for search+bind.  To use <literal>ldapurl</literal> in simple bind mode, the
+    URL must not contain a <literal>basedn</literal> or query elements.
    </para>
 
    <para>
@@ -1992,6 +1999,16 @@ host ... ldap ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=exam
     bind to the LDAP server using the DN <literal>cn=someuser, dc=example,
     dc=net</literal> and the password provided by the client.  If that connection
     succeeds, the database access is granted.
+   </para>
+
+   <para>
+    Here is a different simple-bind configuration, which uses the LDAPS scheme
+    and a custom port number, written as a URL:
+<programlisting>
+host ... ldap ldapurl="ldaps://ldap.example.net:49151" ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
+</programlisting>
+    This is slightly more compact than specifying <literal>ldapserver</literal>,
+    <literal>ldapscheme</literal>, and <literal>ldapport</literal> separately.
    </para>
 
    <para>

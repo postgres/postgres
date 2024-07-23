@@ -1907,10 +1907,10 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, ldapsearchfilter, or ldapurl together with ldapprefix"),
+						 errmsg("cannot mix options for simple bind and search+bind modes"),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, file_name)));
-				*err_msg = "cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, ldapsearchfilter, or ldapurl together with ldapprefix";
+				*err_msg = "cannot mix options for simple bind and search+bind modes";
 				return NULL;
 			}
 		}

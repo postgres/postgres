@@ -147,6 +147,22 @@ note "LDAP URLs";
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
+	qq{local all all ldap ldapurl="$ldap_url" ldapprefix="uid=" ldapsuffix=",dc=example,dc=net"}
+);
+$node->restart;
+
+$ENV{"PGPASSWORD"} = 'wrong';
+test_access($node, 'test0', 2,
+	'simple bind with LDAP URL authentication fails if user not found in LDAP'
+);
+test_access($node, 'test1', 2,
+	'simple bind with LDAP URL authentication fails with wrong password');
+$ENV{"PGPASSWORD"} = 'secret1';
+test_access($node, 'test1', 0,
+	'simple bind with LDAP URL authentication succeeds');
+
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf',
 	qq{local all all ldap ldapurl="$ldap_url/$ldap_basedn?uid?sub"});
 $node->restart;
 
