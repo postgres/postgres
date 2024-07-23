@@ -283,7 +283,7 @@ typedef struct AsyncQueueControl
 	QueuePosition head;			/* head points to the next free location */
 	QueuePosition tail;			/* tail must be <= the queue position of every
 								 * listening backend */
-	int			stopPage;		/* oldest unrecycled page; must be <=
+	int64		stopPage;		/* oldest unrecycled page; must be <=
 								 * tail.page */
 	ProcNumber	firstListener;	/* id of first listener, or
 								 * INVALID_PROC_NUMBER */
@@ -1271,9 +1271,9 @@ asyncQueueUnregister(void)
 static bool
 asyncQueueIsFull(void)
 {
-	int			headPage = QUEUE_POS_PAGE(QUEUE_HEAD);
-	int			tailPage = QUEUE_POS_PAGE(QUEUE_TAIL);
-	int			occupied = headPage - tailPage;
+	int64		headPage = QUEUE_POS_PAGE(QUEUE_HEAD);
+	int64		tailPage = QUEUE_POS_PAGE(QUEUE_TAIL);
+	int64		occupied = headPage - tailPage;
 
 	return occupied >= max_notify_queue_pages;
 }
@@ -1505,9 +1505,9 @@ pg_notification_queue_usage(PG_FUNCTION_ARGS)
 static double
 asyncQueueUsage(void)
 {
-	int			headPage = QUEUE_POS_PAGE(QUEUE_HEAD);
-	int			tailPage = QUEUE_POS_PAGE(QUEUE_TAIL);
-	int			occupied = headPage - tailPage;
+	int64		headPage = QUEUE_POS_PAGE(QUEUE_HEAD);
+	int64		tailPage = QUEUE_POS_PAGE(QUEUE_TAIL);
+	int64		occupied = headPage - tailPage;
 
 	if (occupied == 0)
 		return (double) 0;		/* fast exit for common case */
@@ -1932,7 +1932,7 @@ asyncQueueReadAllNotifications(void)
 
 		do
 		{
-			int			curpage = QUEUE_POS_PAGE(pos);
+			int64		curpage = QUEUE_POS_PAGE(pos);
 			int			curoffset = QUEUE_POS_OFFSET(pos);
 			int			slotno;
 			int			copysize;
@@ -2108,9 +2108,9 @@ static void
 asyncQueueAdvanceTail(void)
 {
 	QueuePosition min;
-	int			oldtailpage;
-	int			newtailpage;
-	int			boundary;
+	int64		oldtailpage;
+	int64		newtailpage;
+	int64		boundary;
 
 	/* Restrict task to one backend per cluster; see SimpleLruTruncate(). */
 	LWLockAcquire(NotifyQueueTailLock, LW_EXCLUSIVE);
