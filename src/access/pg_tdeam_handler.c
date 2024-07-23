@@ -132,7 +132,7 @@ pg_tdeam_index_fetch_tuple(struct IndexFetchTableData *scan,
 {
 	IndexFetchHeapData *hscan = (IndexFetchHeapData *) scan;
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
-	bool		got_pg_tde_tuple;
+	bool		got_tdeheap_tuple;
 
 	Assert(TTS_IS_TDE_BUFFERTUPLE(slot));
 
@@ -150,12 +150,12 @@ pg_tdeam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		 * Prune page, but only if we weren't already on this page
 		 */
 		if (prev_buf != hscan->xs_cbuf)
-			pg_tde_page_prune_opt(hscan->xs_base.rel, hscan->xs_cbuf);
+			tdeheap_page_prune_opt(hscan->xs_base.rel, hscan->xs_cbuf);
 	}
 
 	/* Obtain share-lock on the buffer so we can examine visibility */
 	LockBuffer(hscan->xs_cbuf, BUFFER_LOCK_SHARE);
-	got_pg_tde_tuple = pg_tde_hot_search_buffer(tid,
+	got_tdeheap_tuple = tdeheap_hot_search_buffer(tid,
 											hscan->xs_base.rel,
 											hscan->xs_cbuf,
 											snapshot,
@@ -165,7 +165,7 @@ pg_tdeam_index_fetch_tuple(struct IndexFetchTableData *scan,
 	bslot->base.tupdata.t_self = *tid;
 	LockBuffer(hscan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 
-	if (got_pg_tde_tuple)
+	if (got_tdeheap_tuple)
 	{
 		/*
 		 * Only in a non-MVCC snapshot can more than one member of the HOT
@@ -182,7 +182,7 @@ pg_tdeam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		*call_again = false;
 	}
 
-	return got_pg_tde_tuple;
+	return got_tdeheap_tuple;
 }
 
 
@@ -203,7 +203,7 @@ pg_tdeam_fetch_row_version(Relation relation,
 	Assert(TTS_IS_TDE_BUFFERTUPLE(slot));
 
 	bslot->base.tupdata.t_self = *tid;
-	if (pg_tde_fetch(relation, snapshot, &bslot->base.tupdata, &buffer, false))
+	if  (tdeheap_fetch(relation, snapshot, &bslot->base.tupdata, &buffer, false))
 	{
 		/* store in slot, transferring existing pin */
 		PGTdeExecStorePinnedBufferHeapTuple(relation, &bslot->base.tupdata, slot, buffer);
@@ -264,7 +264,7 @@ pg_tdeam_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 	tuple->t_tableOid = slot->tts_tableOid;
 
 	/* Perform the insertion, and copy the resulting ItemPointer */
-	pg_tde_insert(relation, tuple, cid, options, bistate);
+	tdeheap_insert(relation, tuple, cid, options, bistate);
 	ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 	if (shouldFree)
@@ -287,7 +287,7 @@ pg_tdeam_tuple_insert_speculative(Relation relation, TupleTableSlot *slot,
 	options |= HEAP_INSERT_SPECULATIVE;
 
 	/* Perform the insertion, and copy the resulting ItemPointer */
-	pg_tde_insert(relation, tuple, cid, options, bistate);
+	tdeheap_insert(relation, tuple, cid, options, bistate);
 	ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 	if (shouldFree)
@@ -303,9 +303,9 @@ pg_tdeam_tuple_complete_speculative(Relation relation, TupleTableSlot *slot,
 
 	/* adjust the tuple's state accordingly */
 	if (succeeded)
-		pg_tde_finish_speculative(relation, &slot->tts_tid);
+		tdeheap_finish_speculative(relation, &slot->tts_tid);
 	else
-		pg_tde_abort_speculative(relation, &slot->tts_tid);
+		tdeheap_abort_speculative(relation, &slot->tts_tid);
 
 	if (shouldFree)
 		pfree(tuple);
@@ -321,7 +321,7 @@ pg_tdeam_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 	 * the storage itself is cleaning the dead tuples by itself, it is the
 	 * time to call the index tuple deletion also.
 	 */
-	return pg_tde_delete(relation, tid, cid, crosscheck, wait, tmfd, changingPart);
+	return tdeheap_delete(relation, tid, cid, crosscheck, wait, tmfd, changingPart);
 }
 
 
@@ -339,14 +339,14 @@ pg_tdeam_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slot,
 	slot->tts_tableOid = RelationGetRelid(relation);
 	tuple->t_tableOid = slot->tts_tableOid;
 
-	result = pg_tde_update(relation, otid, tuple, cid, crosscheck, wait,
+	result = tdeheap_update(relation, otid, tuple, cid, crosscheck, wait,
 						 tmfd, lockmode, update_indexes);
 	ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 	/*
 	 * Decide whether new index entries are needed for the tuple
 	 *
-	 * Note: pg_tde_update returns the tid (location) of the new tuple in the
+	 * Note: tdeheap_update returns the tid (location) of the new tuple in the
 	 * t_self field.
 	 *
 	 * If the update is not HOT, we must update all indexes. If the update is
@@ -389,7 +389,7 @@ pg_tdeam_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 
 tuple_lock_retry:
 	tuple->t_self = *tid;
-	result = pg_tde_lock_tuple(relation, tuple, cid, mode, wait_policy,
+	result = tdeheap_lock_tuple(relation, tuple, cid, mode, wait_policy,
 							 follow_updates, &buffer, tmfd);
 
 	if (result == TM_Updated &&
@@ -427,7 +427,7 @@ tuple_lock_retry:
 							 errmsg("tuple to be locked was already moved to another partition due to concurrent update")));
 
 				tuple->t_self = *tid;
-				if (pg_tde_fetch(relation, &SnapshotDirty, tuple, &buffer, true))
+				if  (tdeheap_fetch(relation, &SnapshotDirty, tuple, &buffer, true))
 				{
 					/*
 					 * If xmin isn't what we're expecting, the slot must have
@@ -483,14 +483,14 @@ tuple_lock_retry:
 													RelationGetRelationName(relation))));
 								break;
 						}
-						continue;	/* loop back to repeat pg_tde_fetch */
+						continue;	/* loop back to repeat tdeheap_fetch */
 					}
 
 					/*
 					 * If tuple was inserted by our own transaction, we have
 					 * to check cmin against cid: cmin >= current CID means
 					 * our command cannot see the tuple, so we should ignore
-					 * it. Otherwise pg_tde_lock_tuple() will throw an error,
+					 * it. Otherwise tdeheap_lock_tuple() will throw an error,
 					 * and so would any later attempt to update or delete the
 					 * tuple.  (We need not check cmax because
 					 * HeapTupleSatisfiesDirty will consider a tuple deleted
@@ -753,7 +753,7 @@ pg_tdeam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	isnull = (bool *) palloc(natts * sizeof(bool));
 
 	/* Initialize the rewrite operation */
-	rwstate = begin_pg_tde_rewrite(OldHeap, NewHeap, OldestXmin, *xid_cutoff,
+	rwstate = begin_tdeheap_rewrite(OldHeap, NewHeap, OldestXmin, *xid_cutoff,
 								 *multi_cutoff);
 
 
@@ -835,9 +835,9 @@ pg_tdeam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 			{
 				/*
 				 * If the last pages of the scan were empty, we would go to
-				 * the next phase while pg_tde_blks_scanned != pg_tde_blks_total.
-				 * Instead, to ensure that pg_tde_blks_scanned is equivalent to
-				 * pg_tde_blks_total after the table scan phase, this parameter
+				 * the next phase while tdeheap_blks_scanned != tdeheap_blks_total.
+				 * Instead, to ensure that tdeheap_blks_scanned is equivalent to
+				 * tdeheap_blks_total after the table scan phase, this parameter
 				 * is manually updated to the correct value when the table
 				 * scan finishes.
 				 */
@@ -926,7 +926,7 @@ pg_tdeam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 		{
 			*tups_vacuumed += 1;
 			/* heap rewrite module still needs to see it... */
-			if (rewrite_pg_tde_dead_tuple(rwstate, tuple))
+			if (rewrite_tdeheap_dead_tuple(rwstate, tuple))
 			{
 				/* A previous recently-dead tuple is now known dead */
 				*tups_vacuumed += 1;
@@ -1017,7 +1017,7 @@ pg_tdeam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	}
 
 	/* Write out any remaining tuples, and fsync if needed */
-	end_pg_tde_rewrite(rwstate);
+	end_tdeheap_rewrite(rwstate);
 
 	/* Clean up */
 	pfree(values);
@@ -1078,7 +1078,7 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 		 * We ignore unused and redirect line pointers.  DEAD line pointers
 		 * should be counted as dead, because we need vacuum to run to get rid
 		 * of them.  Note that this rule agrees with the way that
-		 * pg_tde_page_prune() counts things.
+		 * tdeheap_page_prune() counts things.
 		 */
 		if (!ItemIdIsNormal(itemid))
 		{
@@ -1339,7 +1339,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 
 	/* set our scan endpoints */
 	if (!allow_sync)
-		pg_tde_setscanlimits(scan, start_blockno, numblocks);
+		tdeheap_setscanlimits(scan, start_blockno, numblocks);
 	else
 	{
 		/* syncscan can only be requested on whole relation */
@@ -1352,7 +1352,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 	/*
 	 * Scan all tuples in the base relation.
 	 */
-	while ((heapTuple = pg_tde_getnext(scan, ForwardScanDirection)) != NULL)
+	while ((heapTuple = tdeheap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		bool		tupleIsAlive;
 
@@ -1378,7 +1378,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 		 * the HOT-chain structure in the heap. So we need to be able to find
 		 * the root item offset for every tuple that's in a HOT-chain.  When
 		 * first reaching a new page of the relation, call
-		 * pg_tde_get_root_tuples() to build a map of root item offsets on the
+		 * tdeheap_get_root_tuples() to build a map of root item offsets on the
 		 * page.
 		 *
 		 * It might look unsafe to use this information across buffer
@@ -1407,7 +1407,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 			Page		page = BufferGetPage(hscan->rs_cbuf);
 
 			LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
-			pg_tde_get_root_tuples(page, root_offsets);
+			tdeheap_get_root_tuples(page, root_offsets);
 			LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 			root_blkno = hscan->rs_cblock;
@@ -1646,7 +1646,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 		}
 		else
 		{
-			/* pg_tde_getnext did the time qual check */
+			/* tdeheap_getnext did the time qual check */
 			tupleIsAlive = true;
 			reltuples += 1;
 		}
@@ -1704,7 +1704,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 				Page		page = BufferGetPage(hscan->rs_cbuf);
 
 				LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
-				pg_tde_get_root_tuples(page, root_offsets);
+				tdeheap_get_root_tuples(page, root_offsets);
 				LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 			}
 
@@ -1833,7 +1833,7 @@ pg_tdeam_index_validate_scan(Relation heapRelation,
 	/*
 	 * Scan all tuples matching the snapshot.
 	 */
-	while ((heapTuple = pg_tde_getnext(scan, ForwardScanDirection)) != NULL)
+	while ((heapTuple = tdeheap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		ItemPointer heapcursor = &heapTuple->t_self;
 		ItemPointerData rootTuple;
@@ -1870,7 +1870,7 @@ pg_tdeam_index_validate_scan(Relation heapRelation,
 			Page		page = BufferGetPage(hscan->rs_cbuf);
 
 			LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
-			pg_tde_get_root_tuples(page, root_offsets);
+			tdeheap_get_root_tuples(page, root_offsets);
 			LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 			memset(in_index, 0, sizeof(in_index));
@@ -2180,7 +2180,7 @@ pg_tdeam_scan_bitmap_next_block(TableScanDesc scan,
 	/*
 	 * Prune and repair fragmentation for the whole page, if possible.
 	 */
-	pg_tde_page_prune_opt(scan->rs_rd, buffer);
+	tdeheap_page_prune_opt(scan->rs_rd, buffer);
 
 	/*
 	 * We must hold share lock on the buffer content while examining tuple
@@ -2208,7 +2208,7 @@ pg_tdeam_scan_bitmap_next_block(TableScanDesc scan,
 			HeapTupleData heapTuple;
 
 			ItemPointerSet(&tid, block, offnum);
-			if (pg_tde_hot_search_buffer(&tid, scan->rs_rd, buffer, snapshot,
+			if  (tdeheap_hot_search_buffer(&tid, scan->rs_rd, buffer, snapshot,
 									   &heapTuple, NULL, true))
 				hscan->rs_vistuples[ntup++] = ItemPointerGetOffsetNumber(&tid);
 		}
@@ -2282,7 +2282,7 @@ pg_tdeam_scan_bitmap_next_tuple(TableScanDesc scan,
 	hscan->rs_ctup.t_tableOid = scan->rs_rd->rd_id;
 	ItemPointerSet(&hscan->rs_ctup.t_self, hscan->rs_cblock, targoffset);
 
-	pgstat_count_pg_tde_fetch(scan->rs_rd);
+	pgstat_count_tdeheap_fetch(scan->rs_rd);
 
 	/*
 	 * Set up the result slot to point to this tuple.  Note that the slot
@@ -2365,7 +2365,7 @@ pg_tdeam_scan_sample_next_block(TableScanDesc scan, SampleScanState *scanstate)
 		return false;
 	}
 
-	pg_tde_getpage(scan, blockno);
+	tdeheapgetpage(scan, blockno);
 	hscan->rs_inited = true;
 
 	return true;
@@ -2429,7 +2429,7 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 				visible = SampleHeapTupleVisible(scan, hscan->rs_cbuf,
 												 tuple, tupoffset);
 
-			/* in pagemode, heapgetpage did this for us */
+			/* in pagemode, tdeheapgetpage did this for us */
 			if (!pagemode)
 				HeapCheckForSerializableConflictOut(visible, scan->rs_rd, tuple,
 													hscan->rs_cbuf, scan->rs_snapshot);
@@ -2445,7 +2445,7 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 			PGTdeExecStoreBufferHeapTuple(scan->rs_rd, tuple, slot, hscan->rs_cbuf);
 
 			/* Count successfully-fetched tuples as heap fetches */
-			pgstat_count_pg_tde_getnext(scan->rs_rd);
+			pgstat_count_tdeheap_getnext(scan->rs_rd);
 
 			return true;
 		}
@@ -2507,7 +2507,7 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 	HeapTuple	copiedTuple;
 	int			i;
 
-	pg_tde_deform_tuple(tuple, oldTupDesc, values, isnull);
+	tdeheap_deform_tuple(tuple, oldTupDesc, values, isnull);
 
 	/* Be sure to null out any dropped columns */
 	for (i = 0; i < newTupDesc->natts; i++)
@@ -2516,12 +2516,12 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 			isnull[i] = true;
 	}
 
-	copiedTuple = pg_tde_form_tuple(newTupDesc, values, isnull);
+	copiedTuple = tdeheap_form_tuple(newTupDesc, values, isnull);
 
 	/* The heap rewrite module does the rest */
-	rewrite_pg_tde_tuple(rwstate, tuple, copiedTuple);
+	rewrite_tdeheap_tuple(rwstate, tuple, copiedTuple);
 
-	pg_tde_freetuple(copiedTuple);
+	tdeheap_freetuple(copiedTuple);
 }
 
 /*
@@ -2537,7 +2537,7 @@ SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
 	if (scan->rs_flags & SO_ALLOW_PAGEMODE)
 	{
 		/*
-		 * In pageatatime mode, heapgetpage() already did visibility checks,
+		 * In pageatatime mode, tdeheapgetpage() already did visibility checks,
 		 * so just look at the info it left in rs_vistuples[].
 		 *
 		 * We use a binary search over the known-sorted array.  Note: we could
@@ -2582,13 +2582,13 @@ static const TableAmRoutine pg_tdeam_methods = {
 
 	.slot_callbacks = pg_tdeam_slot_callbacks,
 
-	.scan_begin = pg_tde_beginscan,
-	.scan_end = pg_tde_endscan,
-	.scan_rescan = pg_tde_rescan,
-	.scan_getnextslot = pg_tde_getnextslot,
+	.scan_begin = tdeheap_beginscan,
+	.scan_end = tdeheap_endscan,
+	.scan_rescan = tdeheap_rescan,
+	.scan_getnextslot = tdeheap_getnextslot,
 
-	.scan_set_tidrange = pg_tde_set_tidrange,
-	.scan_getnextslot_tidrange = pg_tde_getnextslot_tidrange,
+	.scan_set_tidrange = tdeheap_set_tidrange,
+	.scan_getnextslot_tidrange = tdeheap_getnextslot_tidrange,
 
 	.parallelscan_estimate = table_block_parallelscan_estimate,
 	.parallelscan_initialize = table_block_parallelscan_initialize,
@@ -2602,22 +2602,22 @@ static const TableAmRoutine pg_tdeam_methods = {
 	.tuple_insert = pg_tdeam_tuple_insert,
 	.tuple_insert_speculative = pg_tdeam_tuple_insert_speculative,
 	.tuple_complete_speculative = pg_tdeam_tuple_complete_speculative,
-	.multi_insert = pg_tde_multi_insert,
+	.multi_insert = tdeheap_multi_insert,
 	.tuple_delete = pg_tdeam_tuple_delete,
 	.tuple_update = pg_tdeam_tuple_update,
 	.tuple_lock = pg_tdeam_tuple_lock,
 
 	.tuple_fetch_row_version = pg_tdeam_fetch_row_version,
-	.tuple_get_latest_tid = pg_tde_get_latest_tid,
+	.tuple_get_latest_tid = tdeheap_get_latest_tid,
 	.tuple_tid_valid = pg_tdeam_tuple_tid_valid,
 	.tuple_satisfies_snapshot = pg_tdeam_tuple_satisfies_snapshot,
-	.index_delete_tuples = pg_tde_index_delete_tuples,
+	.index_delete_tuples = tdeheap_index_delete_tuples,
 
 	.relation_set_new_filelocator = pg_tdeam_relation_set_new_filelocator,
 	.relation_nontransactional_truncate = pg_tdeam_relation_nontransactional_truncate,
 	.relation_copy_data = pg_tdeam_relation_copy_data,
 	.relation_copy_for_cluster = pg_tdeam_relation_copy_for_cluster,
-	.relation_vacuum = pg_tde_vacuum_rel,
+	.relation_vacuum = tdeheap_vacuum_rel,
 	.scan_analyze_next_block = pg_tdeam_scan_analyze_next_block,
 	.scan_analyze_next_tuple = pg_tdeam_scan_analyze_next_tuple,
 	.index_build_range_scan = pg_tdeam_index_build_range_scan,
@@ -2626,7 +2626,7 @@ static const TableAmRoutine pg_tdeam_methods = {
 	.relation_size = table_block_relation_size,
 	.relation_needs_toast_table = pg_tdeam_relation_needs_toast_table,
 	.relation_toast_am = pg_tdeam_relation_toast_am,
-	.relation_fetch_toast_slice = pg_tde_fetch_toast_slice,
+	.relation_fetch_toast_slice = tdeheap_fetch_toast_slice,
 
 	.relation_estimate_size = pg_tdeam_estimate_rel_size,
 
@@ -2657,7 +2657,7 @@ pg_tdeam_handler(PG_FUNCTION_ARGS)
 #endif
 
 bool
-is_pg_tde_rel(Relation rel)
+is_tdeheap_rel(Relation rel)
 {
 	return (rel->rd_tableam == (TableAmRoutine *) &pg_tdeam_methods);
 }

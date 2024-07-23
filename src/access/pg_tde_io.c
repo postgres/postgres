@@ -30,14 +30,14 @@
 
 
 /*
- * pg_tde_RelationPutHeapTuple - place tuple at specified page
+ * tdeheap_RelationPutHeapTuple - place tuple at specified page
  *
  * !!! EREPORT(ERROR) IS DISALLOWED HERE !!!  Must PANIC on failure!!!
  *
  * Note - caller must hold BUFFER_LOCK_EXCLUSIVE on the buffer.
  */
 void
-pg_tde_RelationPutHeapTuple(Relation relation,
+tdeheap_RelationPutHeapTuple(Relation relation,
 					 Buffer buffer,
 					 HeapTuple tuple,
 					 bool encrypt,
@@ -182,10 +182,10 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 	{
 		/* Figure out which pins we need but don't have. */
 		need_to_pin_buffer1 = PageIsAllVisible(BufferGetPage(buffer1))
-			&& !pg_tde_visibilitymap_pin_ok(block1, *vmbuffer1);
+			&& !tdeheap_visibilitymap_pin_ok(block1, *vmbuffer1);
 		need_to_pin_buffer2 = buffer2 != InvalidBuffer
 			&& PageIsAllVisible(BufferGetPage(buffer2))
-			&& !pg_tde_visibilitymap_pin_ok(block2, *vmbuffer2);
+			&& !tdeheap_visibilitymap_pin_ok(block2, *vmbuffer2);
 		if (!need_to_pin_buffer1 && !need_to_pin_buffer2)
 			break;
 
@@ -197,9 +197,9 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 
 		/* Get pins. */
 		if (need_to_pin_buffer1)
-			pg_tde_visibilitymap_pin(relation, block1, vmbuffer1);
+			tdeheap_visibilitymap_pin(relation, block1, vmbuffer1);
 		if (need_to_pin_buffer2)
-			pg_tde_visibilitymap_pin(relation, block2, vmbuffer2);
+			tdeheap_visibilitymap_pin(relation, block2, vmbuffer2);
 
 		/* Relock buffers. */
 		LockBuffer(buffer1, BUFFER_LOCK_EXCLUSIVE);
@@ -444,7 +444,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
 }
 
 /*
- * pg_tde_RelationGetBufferForTuple
+ * tdeheap_RelationGetBufferForTuple
  *
  *	Returns pinned and exclusive-locked buffer of a page in given relation
  *	with free space >= given len.
@@ -452,24 +452,24 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
  *	If num_pages is > 1, we will try to extend the relation by at least that
  *	many pages when we decide to extend the relation. This is more efficient
  *	for callers that know they will need multiple pages
- *	(e.g. heap_multi_insert()).
+ *	(e.g. tdeheap_multi_insert()).
  *
  *	If otherBuffer is not InvalidBuffer, then it references a previously
  *	pinned buffer of another page in the same relation; on return, this
- *	buffer will also be exclusive-locked.  (This case is used by heap_update;
+ *	buffer will also be exclusive-locked.  (This case is used by tdeheap_update;
  *	the otherBuffer contains the tuple being updated.)
  *
  *	The reason for passing otherBuffer is that if two backends are doing
- *	concurrent heap_update operations, a deadlock could occur if they try
+ *	concurrent tdeheap_update operations, a deadlock could occur if they try
  *	to lock the same two buffers in opposite orders.  To ensure that this
  *	can't happen, we impose the rule that buffers of a relation must be
  *	locked in increasing page number order.  This is most conveniently done
- *	by having pg_tde_RelationGetBufferForTuple lock them both, with suitable care
+ *	by having tdeheap_RelationGetBufferForTuple lock them both, with suitable care
  *	for ordering.
  *
  *	NOTE: it is unlikely, but not quite impossible, for otherBuffer to be the
  *	same buffer we select for insertion of the new tuple (this could only
- *	happen if space is freed in that page after heap_update finds there's not
+ *	happen if space is freed in that page after tdeheap_update finds there's not
  *	enough there).  In that case, the page will be pinned and locked only once.
  *
  *	We also handle the possibility that the all-visible flag will need to be
@@ -491,7 +491,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
  *	relation's smgr_targblock before the first insertion --- that ensures that
  *	all insertions will occur into newly added pages and not be intermixed
  *	with tuples from other transactions.  That way, a crash can't risk losing
- *	any committed data of other transactions.  (See heap_insert's comments
+ *	any committed data of other transactions.  (See tdeheap_insert's comments
  *	for additional constraints needed for safe usage of this behavior.)
  *
  *	The caller can also provide a BulkInsertState object to optimize many
@@ -509,7 +509,7 @@ RelationAddBlocks(Relation relation, BulkInsertState bistate,
  *	before any (unlogged) changes are made in buffer pool.
  */
 Buffer
-pg_tde_RelationGetBufferForTuple(Relation relation, Size len,
+tdeheap_RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer, int options,
 						  BulkInsertState bistate,
 						  Buffer *vmbuffer, Buffer *vmbuffer_other,
@@ -628,14 +628,14 @@ loop:
 			/* easy case */
 			buffer = ReadBufferBI(relation, targetBlock, RBM_NORMAL, bistate);
 			if (PageIsAllVisible(BufferGetPage(buffer)))
-				pg_tde_visibilitymap_pin(relation, targetBlock, vmbuffer);
+				tdeheap_visibilitymap_pin(relation, targetBlock, vmbuffer);
 
 			/*
 			 * If the page is empty, pin vmbuffer to set all_frozen bit later.
 			 */
 			if ((options & HEAP_INSERT_FROZEN) &&
 				(PageGetMaxOffsetNumber(BufferGetPage(buffer)) == 0))
-				pg_tde_visibilitymap_pin(relation, targetBlock, vmbuffer);
+				tdeheap_visibilitymap_pin(relation, targetBlock, vmbuffer);
 
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		}
@@ -644,7 +644,7 @@ loop:
 			/* also easy case */
 			buffer = otherBuffer;
 			if (PageIsAllVisible(BufferGetPage(buffer)))
-				pg_tde_visibilitymap_pin(relation, targetBlock, vmbuffer);
+				tdeheap_visibilitymap_pin(relation, targetBlock, vmbuffer);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		}
 		else if (otherBlock < targetBlock)
@@ -652,7 +652,7 @@ loop:
 			/* lock other buffer first */
 			buffer = ReadBuffer(relation, targetBlock);
 			if (PageIsAllVisible(BufferGetPage(buffer)))
-				pg_tde_visibilitymap_pin(relation, targetBlock, vmbuffer);
+				tdeheap_visibilitymap_pin(relation, targetBlock, vmbuffer);
 			LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		}
@@ -661,7 +661,7 @@ loop:
 			/* lock target buffer first */
 			buffer = ReadBuffer(relation, targetBlock);
 			if (PageIsAllVisible(BufferGetPage(buffer)))
-				pg_tde_visibilitymap_pin(relation, targetBlock, vmbuffer);
+				tdeheap_visibilitymap_pin(relation, targetBlock, vmbuffer);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 			LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
 		}
@@ -789,12 +789,12 @@ loop:
 	{
 		Assert(PageGetMaxOffsetNumber(page) == 0);
 
-		if (!pg_tde_visibilitymap_pin_ok(targetBlock, *vmbuffer))
+		if (!tdeheap_visibilitymap_pin_ok(targetBlock, *vmbuffer))
 		{
 			if (!unlockedTargetBuffer)
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			unlockedTargetBuffer = true;
-			pg_tde_visibilitymap_pin(relation, targetBlock, vmbuffer);
+			tdeheap_visibilitymap_pin(relation, targetBlock, vmbuffer);
 		}
 	}
 

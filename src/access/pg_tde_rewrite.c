@@ -15,21 +15,21 @@
  *
  * To use the facility:
  *
- * begin_pg_tde_rewrite
+ * begin_tdeheap_rewrite
  * while (fetch next tuple)
  * {
  *	   if (tuple is dead)
- *		   rewrite_pg_tde_dead_tuple
+ *		   rewrite_tdeheap_dead_tuple
  *	   else
  *	   {
  *		   // do any transformations here if required
- *		   rewrite_pg_tde_tuple
+ *		   rewrite_tdeheap_tuple
  *	   }
  * }
- * end_pg_tde_rewrite
+ * end_tdeheap_rewrite
  *
  * The contents of the new relation shouldn't be relied on until after
- * end_pg_tde_rewrite is called.
+ * end_tdeheap_rewrite is called.
  *
  *
  * IMPLEMENTATION
@@ -81,11 +81,11 @@
  * in the whole table.  Note that if we do fail halfway through a CLUSTER,
  * the old table is still valid, so failure is not catastrophic.
  *
- * We can't use the normal heap_insert function to insert into the new
- * heap, because heap_insert overwrites the visibility information.
- * We use a special-purpose raw_pg_tde_insert function instead, which
+ * We can't use the normal tdeheap_insert function to insert into the new
+ * heap, because tdeheap_insert overwrites the visibility information.
+ * We use a special-purpose raw_tdeheap_insert function instead, which
  * is optimized for bulk inserting a lot of tuples, knowing that we have
- * exclusive access to the heap.  raw_pg_tde_insert builds new pages in
+ * exclusive access to the heap.  raw_tdeheap_insert builds new pages in
  * local storage.  When a page is full, or at the end of the process,
  * we insert it to WAL as a single record and then write it to disk
  * directly through smgr.  Note, however, that any data sent to the new
@@ -216,12 +216,12 @@ typedef struct RewriteMappingDataEntry
 
 
 /* prototypes for internal functions */
-static void raw_pg_tde_insert(RewriteState state, HeapTuple tup);
+static void raw_tdeheap_insert(RewriteState state, HeapTuple tup);
 
 /* internal logical remapping prototypes */
-static void logical_begin_pg_tde_rewrite(RewriteState state);
-static void logical_rewrite_pg_tde_tuple(RewriteState state, ItemPointerData old_tid, HeapTuple new_tuple);
-static void logical_end_pg_tde_rewrite(RewriteState state);
+static void logical_begin_tdeheap_rewrite(RewriteState state);
+static void logical_rewrite_tdeheap_tuple(RewriteState state, ItemPointerData old_tid, HeapTuple new_tuple);
+static void logical_end_tdeheap_rewrite(RewriteState state);
 
 
 /*
@@ -237,7 +237,7 @@ static void logical_end_pg_tde_rewrite(RewriteState state);
  * to be used in subsequent calls to the other functions.
  */
 RewriteState
-begin_pg_tde_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xmin,
+begin_tdeheap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xmin,
 				   TransactionId freeze_xid, MultiXactId cutoff_multi)
 {
 	RewriteState state;
@@ -289,7 +289,7 @@ begin_pg_tde_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_
 
 	MemoryContextSwitchTo(old_cxt);
 
-	logical_begin_pg_tde_rewrite(state);
+	logical_begin_tdeheap_rewrite(state);
 
 	return state;
 }
@@ -300,7 +300,7 @@ begin_pg_tde_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_
  * state and any other resources are freed.
  */
 void
-end_pg_tde_rewrite(RewriteState state)
+end_tdeheap_rewrite(RewriteState state)
 {
 	HASH_SEQ_STATUS seq_status;
 	UnresolvedTup unresolved;
@@ -314,7 +314,7 @@ end_pg_tde_rewrite(RewriteState state)
 	while ((unresolved = hash_seq_search(&seq_status)) != NULL)
 	{
 		ItemPointerSetInvalid(&unresolved->tuple->t_data->t_ctid);
-		raw_pg_tde_insert(state, unresolved->tuple);
+		raw_tdeheap_insert(state, unresolved->tuple);
 	}
 
 	/* Write the last page, if any */
@@ -343,7 +343,7 @@ end_pg_tde_rewrite(RewriteState state)
 	if (RelationNeedsWAL(state->rs_new_rel))
 		smgrimmedsync(RelationGetSmgr(state->rs_new_rel), MAIN_FORKNUM);
 
-	logical_end_pg_tde_rewrite(state);
+	logical_end_tdeheap_rewrite(state);
 
 	/* Deleting the context frees everything */
 	MemoryContextDelete(state->rs_cxt);
@@ -356,12 +356,12 @@ end_pg_tde_rewrite(RewriteState state)
  * we "freeze" very-old tuples.  Note that since we scribble on new_tuple,
  * it had better be temp storage not a pointer to the original tuple.
  *
- * state		opaque state as returned by begin_pg_tde_rewrite
+ * state		opaque state as returned by begin_tdeheap_rewrite
  * old_tuple	original tuple in the old heap
  * new_tuple	new, rewritten tuple to be inserted to new heap
  */
 void
-rewrite_pg_tde_tuple(RewriteState state,
+rewrite_tdeheap_tuple(RewriteState state,
 				   HeapTuple old_tuple, HeapTuple new_tuple)
 {
 	MemoryContext old_cxt;
@@ -391,7 +391,7 @@ rewrite_pg_tde_tuple(RewriteState state,
 	 * While we have our hands on the tuple, we may as well freeze any
 	 * eligible xmin or xmax, so that future VACUUM effort can be saved.
 	 */
-	pg_tde_freeze_tuple(new_tuple->t_data,
+	tdeheap_freeze_tuple(new_tuple->t_data,
 					  state->rs_old_rel->rd_rel->relfrozenxid,
 					  state->rs_old_rel->rd_rel->relminmxid,
 					  state->rs_freeze_xid,
@@ -449,7 +449,7 @@ rewrite_pg_tde_tuple(RewriteState state,
 			Assert(!found);
 
 			unresolved->old_tid = old_tuple->t_self;
-			unresolved->tuple = heap_copytuple(new_tuple);
+			unresolved->tuple = tdeheap_copytuple(new_tuple);
 
 			/*
 			 * We can't do anything more now, since we don't know where the
@@ -474,10 +474,10 @@ rewrite_pg_tde_tuple(RewriteState state,
 		ItemPointerData new_tid;
 
 		/* Insert the tuple and find out where it's put in new_heap */
-		raw_pg_tde_insert(state, new_tuple);
+		raw_tdeheap_insert(state, new_tuple);
 		new_tid = new_tuple->t_self;
 
-		logical_rewrite_pg_tde_tuple(state, old_tid, new_tuple);
+		logical_rewrite_tdeheap_tuple(state, old_tid, new_tuple);
 
 		/*
 		 * If the tuple is the updated version of a row, and the prior version
@@ -511,7 +511,7 @@ rewrite_pg_tde_tuple(RewriteState state,
 				 * to, fix its t_ctid and insert it to the new heap.
 				 */
 				if (free_new)
-					heap_freetuple(new_tuple);
+					tdeheap_freetuple(new_tuple);
 				new_tuple = unresolved->tuple;
 				free_new = true;
 				old_tid = unresolved->old_tid;
@@ -546,7 +546,7 @@ rewrite_pg_tde_tuple(RewriteState state,
 
 		/* Done with this (chain of) tuples, for now */
 		if (free_new)
-			heap_freetuple(new_tuple);
+			tdeheap_freetuple(new_tuple);
 		break;
 	}
 
@@ -563,7 +563,7 @@ rewrite_pg_tde_tuple(RewriteState state,
  * is now known really dead and won't be written to the output.
  */
 bool
-rewrite_pg_tde_dead_tuple(RewriteState state, HeapTuple old_tuple)
+rewrite_tdeheap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 {
 	/*
 	 * If we have already seen an earlier tuple in the update chain that
@@ -594,7 +594,7 @@ rewrite_pg_tde_dead_tuple(RewriteState state, HeapTuple old_tuple)
 	if (unresolved != NULL)
 	{
 		/* Need to free the contained tuple as well as the hashtable entry */
-		heap_freetuple(unresolved->tuple);
+		tdeheap_freetuple(unresolved->tuple);
 		hash_search(state->rs_unresolved_tups, &hashkey,
 					HASH_REMOVE, &found);
 		Assert(found);
@@ -605,7 +605,7 @@ rewrite_pg_tde_dead_tuple(RewriteState state, HeapTuple old_tuple)
 }
 
 /*
- * Insert a tuple to the new relation.  This has to track heap_insert
+ * Insert a tuple to the new relation.  This has to track tdeheap_insert
  * and its subsidiary functions!
  *
  * t_self of the tuple is set to the new TID of the tuple. If t_ctid of the
@@ -613,7 +613,7 @@ rewrite_pg_tde_dead_tuple(RewriteState state, HeapTuple old_tuple)
  * the inserted data only, not in the caller's copy).
  */
 static void
-raw_pg_tde_insert(RewriteState state, HeapTuple tup)
+raw_tdeheap_insert(RewriteState state, HeapTuple tup)
 {
 	Page		page = state->rs_buffer;
 	Size		pageFreeSpace,
@@ -646,7 +646,7 @@ raw_pg_tde_insert(RewriteState state, HeapTuple tup)
 		 */
 		options |= HEAP_INSERT_NO_LOGICAL;
 
-		heaptup = pg_tde_toast_insert_or_update(state->rs_new_rel, tup, NULL,
+		heaptup = tdeheap_toast_insert_or_update(state->rs_new_rel, tup, NULL,
 											  options);
 	}
 	else
@@ -691,7 +691,7 @@ raw_pg_tde_insert(RewriteState state, HeapTuple tup)
 			/*
 			 * Now write the page. We say skipFsync = true because there's no
 			 * need for smgr to schedule an fsync for this write; we'll do it
-			 * ourselves in end_pg_tde_rewrite.
+			 * ourselves in end_tdeheap_rewrite.
 			 */
 			PageSetChecksumInplace(page, state->rs_blockno);
 
@@ -738,14 +738,14 @@ raw_pg_tde_insert(RewriteState state, HeapTuple tup)
 
 	/* If heaptup is a private copy, release it. */
 	if (heaptup != tup)
-		heap_freetuple(heaptup);
+		tdeheap_freetuple(heaptup);
 }
 
 /* ------------------------------------------------------------------------
  * Logical rewrite support
  *
  * When doing logical decoding - which relies on using cmin/cmax of catalog
- * tuples, via xl_pg_tde_new_cid records - heap rewrites have to log enough
+ * tuples, via xl_tdeheap_new_cid records - heap rewrites have to log enough
  * information to allow the decoding backend to update its internal mapping
  * of (relfilelocator,ctid) => (cmin, cmax) to be correct for the rewritten heap.
  *
@@ -759,7 +759,7 @@ raw_pg_tde_insert(RewriteState state, HeapTuple tup)
  *
  * For efficiency we don't immediately spill every single map mapping for a
  * row to disk but only do so in batches when we've collected several of them
- * in memory or when end_pg_tde_rewrite() has been called.
+ * in memory or when end_tdeheap_rewrite() has been called.
  *
  * Crash-Safety: This module diverts from the usual patterns of doing WAL
  * since it cannot rely on checkpoint flushing out all buffers and thus
@@ -775,7 +775,7 @@ raw_pg_tde_insert(RewriteState state, HeapTuple tup)
  * CheckPointLogicalRewriteHeap()) has flushed the (partial) mapping file to
  * disk. That leaves the tail end that has not yet been flushed open to
  * corruption, which is solved by including the current offset in the
- * xl_pg_tde_rewrite_mapping records and truncating the mapping file to it
+ * xl_tdeheap_rewrite_mapping records and truncating the mapping file to it
  * during replay. Every time a rewrite is finished all generated mapping files
  * are synced to disk.
  *
@@ -796,7 +796,7 @@ raw_pg_tde_insert(RewriteState state, HeapTuple tup)
  * any further action by the various logical rewrite functions.
  */
 static void
-logical_begin_pg_tde_rewrite(RewriteState state)
+logical_begin_tdeheap_rewrite(RewriteState state)
 {
 	HASHCTL		hash_ctl;
 	TransactionId logical_xmin;
@@ -844,7 +844,7 @@ logical_begin_pg_tde_rewrite(RewriteState state)
  * Flush all logical in-memory mappings to disk, but don't fsync them yet.
  */
 static void
-logical_pg_tde_rewrite_flush_mappings(RewriteState state)
+logical_tdeheap_rewrite_flush_mappings(RewriteState state)
 {
 	HASH_SEQ_STATUS seq_status;
 	RewriteMappingFile *src;
@@ -864,7 +864,7 @@ logical_pg_tde_rewrite_flush_mappings(RewriteState state)
 	{
 		char	   *waldata;
 		char	   *waldata_start;
-		xl_pg_tde_rewrite_mapping xlrec;
+		xl_tdeheap_rewrite_mapping xlrec;
 		Oid			dboid;
 		uint32		len;
 		int			written;
@@ -939,10 +939,10 @@ logical_pg_tde_rewrite_flush_mappings(RewriteState state)
 }
 
 /*
- * Logical remapping part of end_pg_tde_rewrite().
+ * Logical remapping part of end_tdeheap_rewrite().
  */
 static void
-logical_end_pg_tde_rewrite(RewriteState state)
+logical_end_tdeheap_rewrite(RewriteState state)
 {
 	HASH_SEQ_STATUS seq_status;
 	RewriteMappingFile *src;
@@ -953,7 +953,7 @@ logical_end_pg_tde_rewrite(RewriteState state)
 
 	/* writeout remaining in-memory entries */
 	if (state->rs_num_rewrite_mappings > 0)
-		logical_pg_tde_rewrite_flush_mappings(state);
+		logical_tdeheap_rewrite_flush_mappings(state);
 
 	/* Iterate over all mappings we have written and fsync the files. */
 	hash_seq_init(&seq_status, state->rs_logical_mappings);
@@ -1028,15 +1028,15 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 	 * mapping files.
 	 */
 	if (state->rs_num_rewrite_mappings >= 1000 /* arbitrary number */ )
-		logical_pg_tde_rewrite_flush_mappings(state);
+		logical_tdeheap_rewrite_flush_mappings(state);
 }
 
 /*
  * Perform logical remapping for a tuple that's mapped from old_tid to
- * new_tuple->t_self by rewrite_pg_tde_tuple() if necessary for the tuple.
+ * new_tuple->t_self by rewrite_tdeheap_tuple() if necessary for the tuple.
  */
 static void
-logical_rewrite_pg_tde_tuple(RewriteState state, ItemPointerData old_tid,
+logical_rewrite_tdeheap_tuple(RewriteState state, ItemPointerData old_tid,
 						   HeapTuple new_tuple)
 {
 	ItemPointerData new_tid = new_tuple->t_self;
@@ -1110,15 +1110,15 @@ logical_rewrite_pg_tde_tuple(RewriteState state, ItemPointerData old_tid,
  * Replay XLOG_HEAP2_REWRITE records
  */
 void
-pg_tde_xlog_logical_rewrite(XLogReaderState *r)
+tdeheap_xlog_logical_rewrite(XLogReaderState *r)
 {
 	char		path[MAXPGPATH];
 	int			fd;
-	xl_pg_tde_rewrite_mapping *xlrec;
+	xl_tdeheap_rewrite_mapping *xlrec;
 	uint32		len;
 	char	   *data;
 
-	xlrec = (xl_pg_tde_rewrite_mapping *) XLogRecGetData(r);
+	xlrec = (xl_tdeheap_rewrite_mapping *) XLogRecGetData(r);
 
 	snprintf(path, MAXPGPATH,
 			 "pg_logical/mappings/" LOGICAL_REWRITE_FORMAT,

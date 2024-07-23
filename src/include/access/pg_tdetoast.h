@@ -90,21 +90,21 @@
 	 VARHDRSZ)
 
 /* ----------
- * pg_tde_toast_insert_or_update -
+ * tdeheap_toast_insert_or_update -
  *
- *	Called by pg_tde_insert() and pg_tde_update().
+ *	Called by tdeheap_insert() and tdeheap_update().
  * ----------
  */
-extern HeapTuple pg_tde_toast_insert_or_update(Relation rel, HeapTuple newtup,
+extern HeapTuple tdeheap_toast_insert_or_update(Relation rel, HeapTuple newtup,
 											 HeapTuple oldtup, int options);
 
 /* ----------
- * pg_tde_toast_delete -
+ * tdeheap_toast_delete -
  *
- *	Called by pg_tde_delete().
+ *	Called by tdeheap_delete().
  * ----------
  */
-extern void pg_tde_toast_delete(Relation rel, HeapTuple oldtup,
+extern void tdeheap_toast_delete(Relation rel, HeapTuple oldtup,
 							  bool is_speculative);
 
 /* ----------
@@ -138,12 +138,12 @@ extern HeapTuple toast_build_flattened_tuple(TupleDesc tupleDesc,
 											 bool *isnull);
 
 /* ----------
- * pg_tde_fetch_toast_slice
+ * tdeheap_fetch_toast_slice
  *
  *	Fetch a slice from a toast value stored in a heap table.
  * ----------
  */
-extern void pg_tde_fetch_toast_slice(Relation toastrel, Oid valueid,
+extern void tdeheap_fetch_toast_slice(Relation toastrel, Oid valueid,
 								   int32 attrsize, int32 sliceoffset,
 								   int32 slicelength, struct varlena *result);
 

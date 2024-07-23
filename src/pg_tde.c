@@ -120,7 +120,7 @@ _PG_init(void)
 	SetupTdeDDLHooks();
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
-	RegisterCustomRmgr(RM_TDERMGR_ID, &pg_tde_rmgr);
+	RegisterCustomRmgr(RM_TDERMGR_ID, &tdeheap_rmgr);
 
 	RegisterStorageMgr();
 }

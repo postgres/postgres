@@ -14,6 +14,7 @@
  *
  */
 #include "postgres.h"
+#include "pg_tde_defines.h"
 #include "access/pg_tde_slot.h"
 #include "access/heaptoast.h"
 #include "access/htup_details.h"
@@ -36,31 +37,31 @@
 
 const TupleTableSlotOps TTSOpsTDEBufferHeapTuple;
 
-static pg_attribute_always_inline void pg_tde_slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp, int natts);
-static inline void pg_tde_tts_buffer_heap_store_tuple(TupleTableSlot *slot,
+static pg_attribute_always_inline void tdeheap_slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp, int natts);
+static inline void tdeheap_tts_buffer_heap_store_tuple(TupleTableSlot *slot,
 											   HeapTuple tuple,
 											   Buffer buffer,
 											   bool transfer_pin);
 
 static void
-pg_tde_tts_buffer_heap_init(TupleTableSlot *slot)
+tdeheap_tts_buffer_heap_init(TupleTableSlot *slot)
 {
     TDEBufferHeapTupleTableSlot *bslot = (TDEBufferHeapTupleTableSlot *) slot;
     bslot->decrypted_tuple = NULL;
 }
 
 static void
-pg_tde_tts_buffer_heap_release(TupleTableSlot *slot)
+tdeheap_tts_buffer_heap_release(TupleTableSlot *slot)
 {
 }
 
 static void
-pg_tde_tts_buffer_heap_clear(TupleTableSlot *slot)
+tdeheap_tts_buffer_heap_clear(TupleTableSlot *slot)
 {
 	TDEBufferHeapTupleTableSlot *bslot = (TDEBufferHeapTupleTableSlot *) slot;
 
 	if (bslot->decrypted_tuple)
-		heap_freetuple(bslot->decrypted_tuple);
+		tdeheap_freetuple(bslot->decrypted_tuple);
 	bslot->decrypted_tuple = NULL;
 
 	/*
@@ -73,7 +74,7 @@ pg_tde_tts_buffer_heap_clear(TupleTableSlot *slot)
 		/* We should have unpinned the buffer while materializing the tuple. */
 		Assert(!BufferIsValid(bslot->buffer));
 
-		heap_freetuple(bslot->base.tuple);
+		tdeheap_freetuple(bslot->base.tuple);
 		slot->tts_flags &= ~TTS_FLAG_SHOULDFREE;
 	}
 
@@ -89,17 +90,17 @@ pg_tde_tts_buffer_heap_clear(TupleTableSlot *slot)
 }
 
 static void
-pg_tde_tts_buffer_heap_getsomeattrs(TupleTableSlot *slot, int natts)
+tdeheap_tts_buffer_heap_getsomeattrs(TupleTableSlot *slot, int natts)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 
 	Assert(!TTS_EMPTY(slot));
 
-	pg_tde_slot_deform_heap_tuple(slot, bslot->base.tuple, &bslot->base.off, natts);
+	tdeheap_slot_deform_heap_tuple(slot, bslot->base.tuple, &bslot->base.off, natts);
 }
 
 static Datum
-pg_tde_tts_buffer_heap_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
+tdeheap_tts_buffer_heap_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 
@@ -114,12 +115,12 @@ pg_tde_tts_buffer_heap_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("cannot retrieve a system column in this context")));
 
-	return heap_getsysattr(bslot->base.tuple, attnum,
+	return tdeheap_getsysattr(bslot->base.tuple, attnum,
 						slot->tts_tupleDescriptor, isnull);
 }
 
 static void
-pg_tde_tts_buffer_heap_materialize(TupleTableSlot *slot)
+tdeheap_tts_buffer_heap_materialize(TupleTableSlot *slot)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 	MemoryContext oldContext;
@@ -148,13 +149,13 @@ pg_tde_tts_buffer_heap_materialize(TupleTableSlot *slot)
 		 * tuples in a buffer slot, which then also needs to be
 		 * materializable.
 		 */
-		bslot->base.tuple = heap_form_tuple(slot->tts_tupleDescriptor,
+		bslot->base.tuple = tdeheap_form_tuple(slot->tts_tupleDescriptor,
 											slot->tts_values,
 											slot->tts_isnull);
 	}
 	else
 	{
-		bslot->base.tuple = heap_copytuple(bslot->base.tuple);
+		bslot->base.tuple = tdeheap_copytuple(bslot->base.tuple);
 
 		/*
 		 * A heap tuple stored in a BufferHeapTupleTableSlot should have a
@@ -178,7 +179,7 @@ pg_tde_tts_buffer_heap_materialize(TupleTableSlot *slot)
 }
 
 static void
-pg_tde_tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
+tdeheap_tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 {
 	BufferHeapTupleTableSlot *bsrcslot = (BufferHeapTupleTableSlot *) srcslot;
 	BufferHeapTupleTableSlot *bdstslot = (BufferHeapTupleTableSlot *) dstslot;
@@ -205,7 +206,7 @@ pg_tde_tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot
 	{
 		Assert(BufferIsValid(bsrcslot->buffer));
 
-		pg_tde_tts_buffer_heap_store_tuple(dstslot, bsrcslot->base.tuple,
+		tdeheap_tts_buffer_heap_store_tuple(dstslot, bsrcslot->base.tuple,
 										   bsrcslot->buffer, false);
 
 		/*
@@ -220,46 +221,46 @@ pg_tde_tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot
 }
 
 static HeapTuple
-pg_tde_tts_buffer_heap_get_heap_tuple(TupleTableSlot *slot)
+tdeheap_tts_buffer_heap_get_heap_tuple(TupleTableSlot *slot)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 
 	Assert(!TTS_EMPTY(slot));
 
 	if (!bslot->base.tuple)
-		pg_tde_tts_buffer_heap_materialize(slot);
+		tdeheap_tts_buffer_heap_materialize(slot);
 
 	return bslot->base.tuple;
 }
 
 static HeapTuple
-pg_tde_tts_buffer_heap_copy_heap_tuple(TupleTableSlot *slot)
+tdeheap_tts_buffer_heap_copy_heap_tuple(TupleTableSlot *slot)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 
 	Assert(!TTS_EMPTY(slot));
 
 	if (!bslot->base.tuple)
-		pg_tde_tts_buffer_heap_materialize(slot);
+		tdeheap_tts_buffer_heap_materialize(slot);
 
-	return heap_copytuple(bslot->base.tuple);
+	return tdeheap_copytuple(bslot->base.tuple);
 }
 
 static MinimalTuple
-pg_tde_tts_buffer_heap_copy_minimal_tuple(TupleTableSlot *slot)
+tdeheap_tts_buffer_heap_copy_minimal_tuple(TupleTableSlot *slot)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 
 	Assert(!TTS_EMPTY(slot));
 
 	if (!bslot->base.tuple)
-		pg_tde_tts_buffer_heap_materialize(slot);
+		tdeheap_tts_buffer_heap_materialize(slot);
 
 	return minimal_tuple_from_heap_tuple(bslot->base.tuple);
 }
 
 static inline void
-pg_tde_tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple,
+tdeheap_tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple,
 								   Buffer buffer, bool transfer_pin)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
@@ -269,7 +270,7 @@ pg_tde_tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple,
 		/* materialized slot shouldn't have a buffer to release */
 		Assert(!BufferIsValid(bslot->buffer));
 
-		heap_freetuple(bslot->base.tuple);
+		tdeheap_freetuple(bslot->base.tuple);
 		slot->tts_flags &= ~TTS_FLAG_SHOULDFREE;
 	}
 
@@ -316,7 +317,7 @@ pg_tde_tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple,
  *		into its Datum/isnull arrays.  Data is extracted up through the
  *		natts'th column (caller must ensure this is a legal column number).
  *
- *		This is essentially an incremental version of heap_deform_tuple:
+ *		This is essentially an incremental version of tdeheap_deform_tuple:
  *		on each call we extract attributes up to the one needed, without
  *		re-computing information about previously extracted attributes.
  *		slot->tts_nvalid is the number of attributes already extracted.
@@ -325,7 +326,7 @@ pg_tde_tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple,
  * of slots gets optimized away.
  */
 static pg_attribute_always_inline void
-pg_tde_slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
+tdeheap_slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 							  int natts)
 {
 	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
@@ -425,19 +426,19 @@ pg_tde_slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *off
 
 const TupleTableSlotOps TTSOpsTDEBufferHeapTuple = {
 	.base_slot_size = sizeof(TDEBufferHeapTupleTableSlot),
-	.init = pg_tde_tts_buffer_heap_init,
-	.release = pg_tde_tts_buffer_heap_release,
-	.clear = pg_tde_tts_buffer_heap_clear,
-	.getsomeattrs = pg_tde_tts_buffer_heap_getsomeattrs,
-	.getsysattr = pg_tde_tts_buffer_heap_getsysattr,
-	.materialize = pg_tde_tts_buffer_heap_materialize,
-	.copyslot = pg_tde_tts_buffer_heap_copyslot,
-	.get_heap_tuple = pg_tde_tts_buffer_heap_get_heap_tuple,
+	.init = tdeheap_tts_buffer_heap_init,
+	.release = tdeheap_tts_buffer_heap_release,
+	.clear = tdeheap_tts_buffer_heap_clear,
+	.getsomeattrs = tdeheap_tts_buffer_heap_getsomeattrs,
+	.getsysattr = tdeheap_tts_buffer_heap_getsysattr,
+	.materialize = tdeheap_tts_buffer_heap_materialize,
+	.copyslot = tdeheap_tts_buffer_heap_copyslot,
+	.get_heap_tuple = tdeheap_tts_buffer_heap_get_heap_tuple,
 
 	/* A buffer heap tuple table slot can not "own" a minimal tuple. */
 	.get_minimal_tuple = NULL,
-	.copy_heap_tuple = pg_tde_tts_buffer_heap_copy_heap_tuple,
-	.copy_minimal_tuple = pg_tde_tts_buffer_heap_copy_minimal_tuple};
+	.copy_heap_tuple = tdeheap_tts_buffer_heap_copy_heap_tuple,
+	.copy_minimal_tuple = tdeheap_tts_buffer_heap_copy_minimal_tuple};
 
 /* --------------------------------
  *		ExecStoreBufferHeapTuple
@@ -481,7 +482,7 @@ PGTdeExecStoreBufferHeapTuple(Relation rel,
 	if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
 	{
 		RelKeyData *key = GetRelationKey(rel->rd_locator);
-		bslot->decrypted_tuple = heap_copytuple(tuple);
+		bslot->decrypted_tuple = tdeheap_copytuple(tuple);
 		PG_TDE_DECRYPT_TUPLE_EX(tuple, bslot->decrypted_tuple, key, "ExecStoreBuffer");
 		/* TODO: revisit this */
 		tuple->t_data = bslot->decrypted_tuple->t_data;
@@ -489,7 +490,7 @@ PGTdeExecStoreBufferHeapTuple(Relation rel,
 	else
 		bslot->decrypted_tuple = NULL;
 
-	pg_tde_tts_buffer_heap_store_tuple(slot, tuple, buffer, false);
+	tdeheap_tts_buffer_heap_store_tuple(slot, tuple, buffer, false);
 
 	slot->tts_tableOid = tuple->t_tableOid;
 
@@ -523,7 +524,7 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel,
 	{
 		RelKeyData *key = GetRelationKey(rel->rd_locator);
 
-		bslot->decrypted_tuple = heap_copytuple(tuple);
+		bslot->decrypted_tuple = tdeheap_copytuple(tuple);
 		PG_TDE_DECRYPT_TUPLE_EX(tuple, bslot->decrypted_tuple, key, "ExecStorePinnedBuffer");
 		/* TODO: revisit this */
 		tuple->t_data = bslot->decrypted_tuple->t_data;
@@ -531,7 +532,7 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel,
 	else
 		bslot->decrypted_tuple = NULL;
 
-	pg_tde_tts_buffer_heap_store_tuple(slot, tuple, buffer, true);
+	tdeheap_tts_buffer_heap_store_tuple(slot, tuple, buffer, true);
 
 	slot->tts_tableOid = tuple->t_tableOid;
 

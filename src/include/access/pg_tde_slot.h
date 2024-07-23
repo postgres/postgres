@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_tde_slot.h
+ * tdeheap_slot.h
  *	  TupleSlot implementation for TDE
  *
  * src/include/access/pg_tde_slot.h

@@ -33,7 +33,7 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
-/* Working data for pg_tde_page_prune and subroutines */
+/* Working data for tdeheap_page_prune and subroutines */
 typedef struct
 {
 	Relation	rel;
@@ -47,7 +47,7 @@ typedef struct
 	 * OldSnapshotThresholdActive()). The first time a tuple is about to be
 	 * removed based on the limited horizon, old_snap_used is set to true, and
 	 * SetOldSnapshotThresholdTimestamp() is called. See
-	 * heap_prune_satisfies_vacuum().
+	 * tdeheap_prune_satisfies_vacuum().
 	 */
 	TimestampTz old_snap_ts;
 	TransactionId old_snap_xmin;
@@ -73,7 +73,7 @@ typedef struct
 
 	/*
 	 * Tuple visibility is only computed once for each tuple, for correctness
-	 * and efficiency reasons; see comment in pg_tde_page_prune() for details.
+	 * and efficiency reasons; see comment in tdeheap_page_prune() for details.
 	 * This is of type int8[], instead of HTSV_Result[], so we can use -1 to
 	 * indicate no visibility has been computed, e.g. for LP_DEAD items.
 	 *
@@ -83,17 +83,17 @@ typedef struct
 } PruneState;
 
 /* Local functions */
-static HTSV_Result heap_prune_satisfies_vacuum(PruneState *prstate,
+static HTSV_Result tdeheap_prune_satisfies_vacuum(PruneState *prstate,
 											   HeapTuple tup,
 											   Buffer buffer);
-static int	heap_prune_chain(Buffer buffer,
+static int	tdeheap_prune_chain(Buffer buffer,
 							 OffsetNumber rootoffnum,
 							 PruneState *prstate);
-static void heap_prune_record_prunable(PruneState *prstate, TransactionId xid);
-static void heap_prune_record_redirect(PruneState *prstate,
+static void tdeheap_prune_record_prunable(PruneState *prstate, TransactionId xid);
+static void tdeheap_prune_record_redirect(PruneState *prstate,
 									   OffsetNumber offnum, OffsetNumber rdoffnum);
-static void heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum);
-static void heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum);
+static void tdeheap_prune_record_dead(PruneState *prstate, OffsetNumber offnum);
+static void tdeheap_prune_record_unused(PruneState *prstate, OffsetNumber offnum);
 static void page_verify_redirects(Page page);
 
 
@@ -110,7 +110,7 @@ static void page_verify_redirects(Page page);
  * Caller must have pin on the buffer, and must *not* have a lock on it.
  */
 void
-pg_tde_page_prune_opt(Relation relation, Buffer buffer)
+tdeheap_page_prune_opt(Relation relation, Buffer buffer)
 {
 	Page		page = BufferGetPage(buffer);
 	TransactionId prune_xid;
@@ -211,7 +211,7 @@ pg_tde_page_prune_opt(Relation relation, Buffer buffer)
 			int			ndeleted,
 						nnewlpdead;
 
-			ndeleted = pg_tde_page_prune(relation, buffer, vistest, limited_xmin,
+			ndeleted = tdeheap_page_prune(relation, buffer, vistest, limited_xmin,
 									   limited_ts, &nnewlpdead, NULL);
 
 			/*
@@ -254,7 +254,7 @@ pg_tde_page_prune_opt(Relation relation, Buffer buffer)
  * array following array truncation by us.
  *
  * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
- * (see heap_prune_satisfies_vacuum and
+ * (see tdeheap_prune_satisfies_vacuum and
  * HeapTupleSatisfiesVacuum). old_snap_xmin / old_snap_ts need to
  * either have been set by TransactionIdLimitedForOldSnapshots, or
  * InvalidTransactionId/0 respectively.
@@ -268,7 +268,7 @@ pg_tde_page_prune_opt(Relation relation, Buffer buffer)
  * Returns the number of tuples deleted from the page during this call.
  */
 int
-pg_tde_page_prune(Relation relation, Buffer buffer,
+tdeheap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
 				TransactionId old_snap_xmin,
 				TimestampTz old_snap_ts,
@@ -315,8 +315,8 @@ pg_tde_page_prune(Relation relation, Buffer buffer,
 	 * DEAD if another checked item causes GlobalVisTestIsRemovableFullXid()
 	 * to update the horizon, INSERT_IN_PROGRESS can change to DEAD if the
 	 * inserting transaction aborts, ...). That in turn could cause
-	 * heap_prune_chain() to behave incorrectly if a tuple is reached twice,
-	 * once directly via a heap_prune_chain() and once following a HOT chain.
+	 * tdeheap_prune_chain() to behave incorrectly if a tuple is reached twice,
+	 * once directly via a tdeheap_prune_chain() and once following a HOT chain.
 	 *
 	 * It's also good for performance. Most commonly tuples within a page are
 	 * stored at decreasing offsets (while the items are stored at increasing
@@ -353,7 +353,7 @@ pg_tde_page_prune(Relation relation, Buffer buffer,
 		if (off_loc)
 			*off_loc = offnum;
 
-		prstate.htsv[offnum] = heap_prune_satisfies_vacuum(&prstate, &tup,
+		prstate.htsv[offnum] = tdeheap_prune_satisfies_vacuum(&prstate, &tup,
 														   buffer);
 	}
 
@@ -378,7 +378,7 @@ pg_tde_page_prune(Relation relation, Buffer buffer,
 			continue;
 
 		/* Process this item or chain of items */
-		ndeleted += heap_prune_chain(buffer, offnum, &prstate);
+		ndeleted += tdeheap_prune_chain(buffer, offnum, &prstate);
 	}
 
 	/* Clear the offset information once we have processed the given page. */
@@ -403,7 +403,7 @@ pg_tde_page_prune(Relation relation, Buffer buffer,
 		 * Apply the planned item changes, then repair page fragmentation, and
 		 * update the page's hint bit about whether it has free line pointers.
 		 */
-		pg_tde_page_prune_execute(prstate.rel, buffer,
+		tdeheap_page_prune_execute(prstate.rel, buffer,
 								prstate.redirected, prstate.nredirected,
 								prstate.nowdead, prstate.ndead,
 								prstate.nowunused, prstate.nunused);
@@ -428,7 +428,7 @@ pg_tde_page_prune(Relation relation, Buffer buffer,
 		 */
 		if (RelationNeedsWAL(relation))
 		{
-			xl_pg_tde_prune xlrec;
+			xl_tdeheap_prune xlrec;
 			XLogRecPtr	recptr;
 
 			xlrec.isCatalogRel = RelationIsAccessibleInLogicalDecoding(relation);
@@ -503,14 +503,14 @@ pg_tde_page_prune(Relation relation, Buffer buffer,
  *
  * Due to its cost we also only want to call
  * TransactionIdLimitedForOldSnapshots() if necessary, i.e. we might not have
- * done so in pg_tde_page_prune_opt() if pd_prune_xid was old enough. But we
+ * done so in tdeheap_page_prune_opt() if pd_prune_xid was old enough. But we
  * still want to be able to remove rows that are too new to be removed
  * according to prstate->vistest, but that can be removed based on
  * old_snapshot_threshold. So we call TransactionIdLimitedForOldSnapshots() on
  * demand in here, if appropriate.
  */
 static HTSV_Result
-heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
+tdeheap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 {
 	HTSV_Result res;
 	TransactionId dead_after;
@@ -603,7 +603,7 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
  * Returns the number of tuples (to be) deleted from the page.
  */
 static int
-heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
+tdeheap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 {
 	int			ndeleted = 0;
 	Page		dp = (Page) BufferGetPage(buffer);
@@ -650,7 +650,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 			if (prstate->htsv[rootoffnum] == HEAPTUPLE_DEAD &&
 				!HeapTupleHeaderIsHotUpdated(htup))
 			{
-				heap_prune_record_unused(prstate, rootoffnum);
+				tdeheap_prune_record_unused(prstate, rootoffnum);
 				HeapTupleHeaderAdvanceConflictHorizon(htup,
 													  &prstate->snapshotConflictHorizon);
 				ndeleted++;
@@ -748,7 +748,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 				 * This tuple may soon become DEAD.  Update the hint field so
 				 * that the page is reconsidered for pruning in future.
 				 */
-				heap_prune_record_prunable(prstate,
+				tdeheap_prune_record_prunable(prstate,
 										   HeapTupleHeaderGetUpdateXid(htup));
 				break;
 
@@ -758,7 +758,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 				 * This tuple may soon become DEAD.  Update the hint field so
 				 * that the page is reconsidered for pruning in future.
 				 */
-				heap_prune_record_prunable(prstate,
+				tdeheap_prune_record_prunable(prstate,
 										   HeapTupleHeaderGetUpdateXid(htup));
 				break;
 
@@ -829,7 +829,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 		 */
 		for (i = 1; (i < nchain) && (chainitems[i - 1] != latestdead); i++)
 		{
-			heap_prune_record_unused(prstate, chainitems[i]);
+			tdeheap_prune_record_unused(prstate, chainitems[i]);
 			ndeleted++;
 		}
 
@@ -847,20 +847,20 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 		 * redirect the root to the correct chain member.
 		 */
 		if (i >= nchain)
-			heap_prune_record_dead(prstate, rootoffnum);
+			tdeheap_prune_record_dead(prstate, rootoffnum);
 		else
-			heap_prune_record_redirect(prstate, rootoffnum, chainitems[i]);
+			tdeheap_prune_record_redirect(prstate, rootoffnum, chainitems[i]);
 	}
 	else if (nchain < 2 && ItemIdIsRedirected(rootlp))
 	{
 		/*
 		 * We found a redirect item that doesn't point to a valid follow-on
-		 * item.  This can happen if the loop in pg_tde_page_prune caused us to
+		 * item.  This can happen if the loop in tdeheap_page_prune caused us to
 		 * visit the dead successor of a redirect item before visiting the
 		 * redirect item.  We can clean up by setting the redirect item to
 		 * DEAD state.
 		 */
-		heap_prune_record_dead(prstate, rootoffnum);
+		tdeheap_prune_record_dead(prstate, rootoffnum);
 	}
 
 	return ndeleted;
@@ -868,7 +868,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 
 /* Record lowest soon-prunable XID */
 static void
-heap_prune_record_prunable(PruneState *prstate, TransactionId xid)
+tdeheap_prune_record_prunable(PruneState *prstate, TransactionId xid)
 {
 	/*
 	 * This should exactly match the PageSetPrunable macro.  We can't store
@@ -882,7 +882,7 @@ heap_prune_record_prunable(PruneState *prstate, TransactionId xid)
 
 /* Record line pointer to be redirected */
 static void
-heap_prune_record_redirect(PruneState *prstate,
+tdeheap_prune_record_redirect(PruneState *prstate,
 						   OffsetNumber offnum, OffsetNumber rdoffnum)
 {
 	Assert(prstate->nredirected < MaxHeapTuplesPerPage);
@@ -897,7 +897,7 @@ heap_prune_record_redirect(PruneState *prstate,
 
 /* Record line pointer to be marked dead */
 static void
-heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum)
+tdeheap_prune_record_dead(PruneState *prstate, OffsetNumber offnum)
 {
 	Assert(prstate->ndead < MaxHeapTuplesPerPage);
 	prstate->nowdead[prstate->ndead] = offnum;
@@ -908,7 +908,7 @@ heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum)
 
 /* Record line pointer to be marked unused */
 static void
-heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
+tdeheap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
 {
 	Assert(prstate->nunused < MaxHeapTuplesPerPage);
 	prstate->nowunused[prstate->nunused] = offnum;
@@ -920,12 +920,12 @@ heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
 void TdePageRepairFragmentation(Relation rel, Buffer buffer, Page page);
 
 /*
- * Perform the actual page changes needed by pg_tde_page_prune.
+ * Perform the actual page changes needed by tdeheap_page_prune.
  * It is expected that the caller has a full cleanup lock on the
  * buffer.
  */
 void
-pg_tde_page_prune_execute(Relation rel, Buffer buffer,
+tdeheap_page_prune_execute(Relation rel, Buffer buffer,
 						OffsetNumber *redirected, int nredirected,
 						OffsetNumber *nowdead, int ndead,
 						OffsetNumber *nowunused, int nunused)
@@ -1068,12 +1068,12 @@ pg_tde_page_prune_execute(Relation rel, Buffer buffer,
  *
  * One way that bugs related to HOT pruning show is redirect items pointing to
  * removed tuples. It's not trivial to reliably check that marking an item
- * unused will not orphan a redirect item during heap_prune_chain() /
- * pg_tde_page_prune_execute(), so we additionally check the whole page after
+ * unused will not orphan a redirect item during tdeheap_prune_chain() /
+ * tdeheap_page_prune_execute(), so we additionally check the whole page after
  * pruning. Without this check such bugs would typically only cause asserts
  * later, potentially well after the corruption has been introduced.
  *
- * Also check comments in pg_tde_page_prune_execute()'s redirection loop.
+ * Also check comments in tdeheap_page_prune_execute()'s redirection loop.
  */
 static void
 page_verify_redirects(Page page)
@@ -1124,7 +1124,7 @@ page_verify_redirects(Page page)
  * and reused by a completely unrelated tuple.
  */
 void
-pg_tde_get_root_tuples(Page page, OffsetNumber *root_offsets)
+tdeheap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 {
 	OffsetNumber offnum,
 				maxoff;

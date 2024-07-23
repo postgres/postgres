@@ -24,19 +24,21 @@
 //#define TDE_FORK_DEBUG 1
 // #define TDE_XLOG_DEBUG 1
 
-#define pg_tde_fill_tuple heap_fill_tuple
-#define pg_tde_form_tuple heap_form_tuple
-#define pg_tde_deform_tuple heap_deform_tuple
-#define pg_tde_freetuple heap_freetuple
-#define pg_tde_compute_data_size heap_compute_data_size
+#define tdeheap_fill_tuple heap_fill_tuple
+#define tdeheap_form_tuple heap_form_tuple
+#define tdeheap_deform_tuple heap_deform_tuple
+#define tdeheap_freetuple heap_freetuple
+#define tdeheap_compute_data_size heap_compute_data_size
+#define tdeheap_getattr heap_getattr
+#define tdeheap_copytuple heap_copytuple
+#define tdeheap_getsysattr heap_getsysattr
 
-#define pgstat_count_pg_tde_scan pgstat_count_heap_scan
-#define pgstat_count_pg_tde_fetch pgstat_count_heap_fetch
-#define pgstat_count_pg_tde_getnext pgstat_count_heap_getnext
-#define pgstat_count_pg_tde_update pgstat_count_heap_update
-#define pgstat_count_pg_tde_delete pgstat_count_heap_delete
-#define pgstat_count_pg_tde_insert pgstat_count_heap_insert
-#define pg_tde_getattr heap_getattr
+#define pgstat_count_tdeheap_scan pgstat_count_heap_scan
+#define pgstat_count_tdeheap_fetch pgstat_count_heap_fetch
+#define pgstat_count_tdeheap_getnext pgstat_count_heap_getnext
+#define pgstat_count_tdeheap_update pgstat_count_heap_update
+#define pgstat_count_tdeheap_delete pgstat_count_heap_delete
+#define pgstat_count_tdeheap_insert pgstat_count_heap_insert
 
 #define TDE_PageAddItem(rel, oid, blkno, page, item, size, offsetNumber, overwrite, is_heap) \
 	PGTdePageAddItemExtended(rel, oid, blkno, page, item, size, offsetNumber, \

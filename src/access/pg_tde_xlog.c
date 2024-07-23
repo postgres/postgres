@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_tde_xlog.c
+ * tdeheap_xlog.c
  *	  TDE XLog resource manager
  *
  *
@@ -47,7 +47,7 @@ static int XLOGChooseNumBuffers(void);
  * TDE fork XLog
  */
 void
-pg_tde_rmgr_redo(XLogReaderState *record)
+tdeheap_rmgr_redo(XLogReaderState *record)
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
@@ -89,7 +89,7 @@ pg_tde_rmgr_redo(XLogReaderState *record)
 }
 
 void
-pg_tde_rmgr_desc(StringInfo buf, XLogReaderState *record)
+tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
@@ -126,7 +126,7 @@ pg_tde_rmgr_desc(StringInfo buf, XLogReaderState *record)
 }
 
 const char *
-pg_tde_rmgr_identify(uint8 info)
+tdeheap_rmgr_identify(uint8 info)
 {
 	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_ADD_RELATION_KEY)
 		return "XLOG_TDE_ADD_RELATION_KEY";
@@ -192,7 +192,7 @@ TDEXLogEncryptBuffSize(void)
  * Alloc memory for the encryption buffer.
  * 
  * It should fit XLog buffers (XLOG_BLCKSZ * wal_buffers). We can't
- * (re)alloc this buf in pg_tde_xlog_seg_write() based on the write size as
+ * (re)alloc this buf in tdeheap_xlog_seg_write() based on the write size as
  * it's called in the CRIT section, hence no allocations are allowed.
  * 
  * Access to this buffer happens during XLogWrite() call which should
@@ -222,7 +222,7 @@ TDEXLogSmgrInit(void)
 }
 
 ssize_t
-pg_tde_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset)
+tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset)
 {
 	if (EncryptXLog)
 		return TDEXLogWriteEncryptedPages(fd, buf, count, offset);
@@ -321,7 +321,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
  * Read the XLog pages from the segment file and dectypt if need.
  */
 ssize_t
-pg_tde_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
+tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
 {
 	ssize_t readsz;
 	char	iv_prefix[16] = {0,};
