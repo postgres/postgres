@@ -416,6 +416,11 @@ extern int	_pglstat64(const char *name, struct stat *buf);
 #define ETIMEDOUT WSAETIMEDOUT
 
 /*
+ * Supplement to <string.h>.
+ */
+#define strtok_r strtok_s
+
+/*
  * Locale stuff.
  *
  * Extended locale functions with gratuitous underscore prefixes.
