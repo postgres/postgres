@@ -5370,8 +5370,7 @@ create_ordered_paths(PlannerInfo *root,
 																	root->sort_pathkeys,
 																	presorted_keys,
 																	limit_tuples);
-			total_groups = input_path->rows *
-				input_path->parallel_workers;
+			total_groups = compute_gather_rows(sorted_path);
 			sorted_path = (Path *)
 				create_gather_merge_path(root, ordered_rel,
 										 sorted_path,
@@ -7543,8 +7542,6 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 			(presorted_keys == 0 || !enable_incremental_sort))
 			continue;
 
-		total_groups = path->rows * path->parallel_workers;
-
 		/*
 		 * We've no need to consider both a sort and incremental sort. We'll
 		 * just do a sort if there are no presorted keys and an incremental
@@ -7561,7 +7558,7 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 														 groupby_pathkeys,
 														 presorted_keys,
 														 -1.0);
-
+		total_groups = compute_gather_rows(path);
 		path = (Path *)
 			create_gather_merge_path(root,
 									 rel,

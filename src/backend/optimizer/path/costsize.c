@@ -6473,3 +6473,21 @@ compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
 
 	return pages_fetched;
 }
+
+/*
+ * compute_gather_rows
+ *	  Estimate number of rows for gather (merge) nodes.
+ *
+ * In a parallel plan, each worker's row estimate is determined by dividing the
+ * total number of rows by parallel_divisor, which accounts for the leader's
+ * contribution in addition to the number of workers.  Accordingly, when
+ * estimating the number of rows for gather (merge) nodes, we multiply the rows
+ * per worker by the same parallel_divisor to undo the division.
+ */
+double
+compute_gather_rows(Path *path)
+{
+	Assert(path->parallel_workers > 0);
+
+	return clamp_row_est(path->rows * get_parallel_divisor(path));
+}
