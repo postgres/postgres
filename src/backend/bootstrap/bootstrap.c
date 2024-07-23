@@ -41,8 +41,6 @@
 #include "utils/rel.h"
 #include "utils/relmapper.h"
 
-uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
-
 
 static void CheckerModeMain(void);
 static void bootstrap_signals(void);
@@ -202,6 +200,7 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	char	   *progname = argv[0];
 	int			flag;
 	char	   *userDoption = NULL;
+	uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
 
 	Assert(!IsUnderPostmaster);
 
@@ -332,7 +331,7 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	BaseInit();
 
 	bootstrap_signals();
-	BootStrapXLOG();
+	BootStrapXLOG(bootstrap_data_checksum_version);
 
 	/*
 	 * To ensure that src/common/link-canary.c is linked into the backend, we

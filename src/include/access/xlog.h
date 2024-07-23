@@ -231,7 +231,7 @@ extern bool DataChecksumsEnabled(void);
 extern XLogRecPtr GetFakeLSNForUnloggedRel(void);
 extern Size XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
-extern void BootStrapXLOG(void);
+extern void BootStrapXLOG(uint32 data_checksum_version);
 extern void InitializeWalConsistencyChecking(void);
 extern void LocalProcessControlFile(bool reset);
 extern WalLevel GetActiveWalLevelOnStandby(void);
