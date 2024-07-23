@@ -1987,16 +1987,11 @@ create_gather_merge_plan(PlannerInfo *root, GatherMergePath *best_path)
 										 &gm_plan->collations,
 										 &gm_plan->nullsFirst);
 
-
 	/*
 	 * All gather merge paths should have already guaranteed the necessary
-	 * sort order either by adding an explicit sort node or by using presorted
-	 * input. We can't simply add a sort here on additional pathkeys, because
-	 * we can't guarantee the sort would be safe. For example, expressions may
-	 * be volatile or otherwise parallel unsafe.
+	 * sort order.  See create_gather_merge_path.
 	 */
-	if (!pathkeys_contained_in(pathkeys, best_path->subpath->pathkeys))
-		elog(ERROR, "gather merge input not sufficiently sorted");
+	Assert(pathkeys_contained_in(pathkeys, best_path->subpath->pathkeys));
 
 	/* Now insert the subplan under GatherMerge. */
 	gm_plan->plan.lefttree = subplan;
