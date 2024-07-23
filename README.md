@@ -76,7 +76,7 @@ FUNCTION pg_tde_set_principal_key (
 SELECT pg_tde_set_principal_key('my-principal-key','file');
 ```
 
-7. You are all set to create encrypted tables. For that, specify `USING pg_tde` in the `CREATE TABLE` statement.
+7. You are all set to create encrypted tables. For that, specify `USING pg_tde_basic` access method in the `CREATE TABLE` statement.
 **For example**:
 ```sql
 CREATE TABLE albums (
@@ -84,7 +84,7 @@ CREATE TABLE albums (
     artist_id INTEGER,
     title TEXT NOT NULL,
     released DATE NOT NULL
-) USING pg_tde;
+) USING pg_tde_basic;
 ```
 
 ## Build from source
