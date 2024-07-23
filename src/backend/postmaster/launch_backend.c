@@ -114,7 +114,7 @@ typedef struct
 	PROC_HDR   *ProcGlobal;
 	PGPROC	   *AuxiliaryProcs;
 	PGPROC	   *PreparedXactProcs;
-	PMSignalData *PMSignalState;
+	volatile PMSignalData *PMSignalState;
 	pid_t		PostmasterPid;
 	TimestampTz PgStartTime;
 	TimestampTz PgReloadTime;
@@ -667,16 +667,6 @@ SubPostmasterMain(int argc, char *argv[])
 	child_process_kinds[child_type].main_fn(startup_data, startup_data_len);
 	pg_unreachable();			/* main_fn never returns */
 }
-
-/*
- * The following need to be available to the save/restore_backend_variables
- * functions.  They are marked NON_EXEC_STATIC in their home modules.
- */
-extern slock_t *ProcStructLock;
-extern PGPROC *AuxiliaryProcs;
-extern PMSignalData *PMSignalState;
-extern pg_time_t first_syslogger_file_time;
-extern struct bkend *ShmemBackendArray;
 
 #ifndef WIN32
 #define write_inheritable_socket(dest, src, childpid) ((*(dest) = (src)), true)
