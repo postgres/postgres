@@ -72,6 +72,21 @@
 #include "storage/shmem.h"
 #include "utils/guc_hooks.h"
 
+/*
+ * Converts segment number to the filename of the segment.
+ *
+ * "path" should point to a buffer at least MAXPGPATH characters long.
+ *
+ * If ctl->long_segment_names is true, segno can be in the range [0, 2^60-1].
+ * The resulting file name is made of 15 characters, e.g. dir/123456789ABCDEF.
+ *
+ * If ctl->long_segment_names is false, segno can be in the range [0, 2^24-1].
+ * The resulting file name is made of 4 to 6 characters, as of:
+ *
+ *  dir/1234   for [0, 2^16-1]
+ *  dir/12345  for [2^16, 2^20-1]
+ *  dir/123456 for [2^20, 2^24-1]
+ */
 static inline int
 SlruFileName(SlruCtl ctl, char *path, int64 segno)
 {

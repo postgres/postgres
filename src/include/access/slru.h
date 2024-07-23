@@ -134,10 +134,9 @@ typedef struct SlruCtlData
 	bits16		bank_mask;
 
 	/*
-	 * If true, use long segment filenames formed from lower 48 bits of the
-	 * segment number, e.g. pg_xact/000000001234. Otherwise, use short
-	 * filenames formed from lower 16 bits of the segment number e.g.
-	 * pg_xact/1234.
+	 * If true, use long segment file names.  Otherwise, use short file names.
+	 *
+	 * For details about the file name format, see SlruFileName().
 	 */
 	bool		long_segment_names;
 
