@@ -1,0 +1,10 @@
+servers:
+  - ip: 127.0.0.1
+    port: 5433
+    name: server1
+  - ip: 127.0.0.1
+    port: 5434
+    name: server2
+  - ip: 127.0.0.1
+    port: 5435
+    name: server3

@@ -18,6 +18,10 @@ futures = "0.3.30"
 inline_colorization = "0.1.6"
 rust-crypto = "^0.2"
 regex = "1.10.5"
+serde_yaml = "0.9.34"
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0.204"
+
 [lib]
 name = "sharding"
 crate-type = ["staticlib"]

@@ -12,7 +12,7 @@ POSTGRES_EXECUTABLE="$ROOT_DIR/src/backend/postgres"
 CLUSTERS_DIR="$ROOT_DIR/clusters"
 DB_DIR="$CLUSTERS_DIR/$DB_CLUSTER_NAME"
 LOG_FILE="$CLUSTERS_DIR/logfile"
-PORT_FILE="$SHARDING_DIR/src/node/ports.txt" # Path to ports.txt
+CONFIG_FILE="$SHARDING_DIR/src/node/config.yaml" # Path to config.yaml
 
 # Check for additional argument
 START_PSQL=$1
@@ -26,18 +26,14 @@ if [ "$(uname)" == "Darwin" ]; then
     export LDFLAGS="-Wl,-no_pie"
 fi
 
-echo "[init-server] Compiling sharding library..."
-cd $SHARDING_DIR
-cargo build --release --lib
-echo "[init-server] Moving compiled library to psql directory..."
-cp ./target/release/libsharding.a $PSQL_DIR
+./build-release.sh
 echo "[init-server] Building the project..."
-cd $ROOT_DIR
 make
 
 echo "[init-server] Copying postgres executable to pg_ctl directory..."
 cp $POSTGRES_EXECUTABLE $PG_CTL_DIR
 cp ./target/release/libsharding.a $PG_CTL_DIR
+
 # Function to check if a port is available
 port_available() {
     local port=$1
@@ -51,8 +47,8 @@ port_available() {
     fi
 }
 
-# Read ports from ports.txt into an array
-ports=($(cat $PORT_FILE))
+# Read ports from config.yaml using the Python script
+ports=($(python3 parse_yaml.py $CONFIG_FILE))
 
 # Find an available port
 selected_port=""
@@ -64,7 +60,7 @@ for port in "${ports[@]}"; do
 done
 
 if [ -z "$selected_port" ]; then
-    echo "[init-server] Error: No available ports found in ports.txt"
+    echo "[init-server] Error: No available ports found in config.yaml"
     exit 1
 fi
 
