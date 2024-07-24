@@ -609,8 +609,10 @@ check_and_dump_old_cluster(bool live_check)
 
 		/*
 		 * Subscriptions and their dependencies can be migrated since PG17.
-		 * See comments atop get_db_subscription_count().
+		 * Before that the logical slots are not upgraded, so we will not be
+		 * able to upgrade the logical replication clusters completely.
 		 */
+		get_subscription_count(&old_cluster);
 		check_old_cluster_subscription_state();
 	}
 
@@ -1797,17 +1799,14 @@ check_new_cluster_subscription_configuration(void)
 {
 	PGresult   *res;
 	PGconn	   *conn;
-	int			nsubs_on_old;
 	int			max_replication_slots;
 
 	/* Subscriptions and their dependencies can be migrated since PG17. */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 1700)
 		return;
 
-	nsubs_on_old = count_old_cluster_subscriptions();
-
 	/* Quick return if there are no subscriptions to be migrated. */
-	if (nsubs_on_old == 0)
+	if (old_cluster.nsubs == 0)
 		return;
 
 	prep_status("Checking for new cluster configuration for subscriptions");
@@ -1821,10 +1820,10 @@ check_new_cluster_subscription_configuration(void)
 		pg_fatal("could not determine parameter settings on new cluster");
 
 	max_replication_slots = atoi(PQgetvalue(res, 0, 0));
-	if (nsubs_on_old > max_replication_slots)
+	if (old_cluster.nsubs > max_replication_slots)
 		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
 				 "subscriptions (%d) on the old cluster",
-				 max_replication_slots, nsubs_on_old);
+				 max_replication_slots, old_cluster.nsubs);
 
 	PQclear(res);
 	PQfinish(conn);
