@@ -7,9 +7,10 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use super::node::*;
 use std::sync::Arc;
-use ::crypto::sha3::Sha3;
-use crypto::digest::Digest;
 use regex::Regex;
+use serde_yaml;
+use super::super::utils::hash::*;
+use super::super::utils::server_config::*;
 
 pub struct Channel {
     stream: TcpStream,
@@ -20,51 +21,70 @@ pub struct Channel {
 pub struct Router {
     ///  HashMap:
     ///     key: shardId
-    ///     value: Client
+    ///     value: Shard's Client
     shards: Mutex<HashMap<String, Client>>,
     ///  HashMap:
     ///     key: Hash
     ///     value: shardId
     hash_id: Mutex<HashMap<String, String>>,
     comm_channels: Mutex<Vec<Channel>>,
+    ip: Arc<str>,
     port: Arc<str>,
     // TODO-SHARD: add hash table for routing
 }
 
 impl Router {
     /// Creates a new Router node with the given port
-    pub fn new(port: &str) -> Self {
+    pub fn new(ip: &str, port: &str) -> Self {
 
-        // read from 'ports.txt' to get the ports
-        let contents = fs::read_to_string("../../../sharding/src/node/ports.txt")
-            .expect("Should have been able to read the file");
-        let ports: Vec<&str> = contents.split("\n").collect();
+        // read from 'config.yaml' to get the ports
+        let config_content = fs::read_to_string("../../../sharding/src/node/config.yaml")
+        .expect("Should have been able to read the file");
+
+        let config: ServerConfig = serde_yaml::from_str(&config_content)
+        .expect("Should have been able to parse the YAML");
+
         let mut shards : HashMap<String,Client> = HashMap::new();
         let mut hash_id : HashMap<String, String> = HashMap::new();
-        for client_port in ports {
-            if client_port == port {
+
+        for server in config.servers {
+            let server_ip = server.ip;
+            let server_port = server.port;
+
+            if (server_ip == ip) && (server_port == port) {
                 continue
             }
-            match Router::connect(client_port) {
-                Ok(client) => {
-                    println!("Connected to port: {}", client_port);
-                    let hash = hash_client_port(client_port);
-                    shards.insert(client_port.to_string(), client);
-                    hash_id.insert(hash.clone(), client_port.clone().to_string());
+
+            // get username dynamically
+            let username = match get_current_username() {
+                Some(username) => username.to_string_lossy().to_string(),
+                None => panic!("Failed to get current username"),
+            };
+
+            match Router::connect(&server_ip, &server_port, username) {
+                Ok(shard_client) => {
+                    println!("Connected to ip {} and port: {}", server_ip, server_port);
+                    let hash = hash_shard(&server_ip, &server_port);
+                    shards.insert(server_port.to_string(), shard_client);
+                    hash_id.insert(hash.clone(), server_port.clone().to_string());
                 },
                 Err(e) => {
-                    println!("Failed to connect to port: {}", client_port);
+                    println!("Failed to connect to port: {}", server_port);
                 }, // Do something here
             }
+
         }
+
         if shards.is_empty() {
             eprint!("Failed to connect to any of the nodes");
         };
+
         println!("SHARDS: {}", shards.len());
         let router = Router {
             shards: Mutex::new(shards),
             hash_id: Mutex::new(hash_id),
             comm_channels: Mutex::new(Vec::new()),
+            ip: Arc::from(ip),
             port: Arc::from(port),
         };
         
@@ -75,23 +95,16 @@ impl Router {
         router
     }
 
-    fn connect(port: &str) -> Result<Client, postgres::Error> {
-        // get username dynamically
-        let username = match get_current_username() {
-            Some(username) => username.to_string_lossy().to_string(),
-            None => panic!("Failed to get current username"),
-        };
-
-        // TODO-SHARD host should be dynamic or from configuration file
-        match Client::connect(format!("host=127.0.0.1 port={} user={} dbname=template1", port, username).as_str(), NoTls) {
-            Ok(client) => Ok(client),
+    fn connect(ip: &str, port: &str, username: String) -> Result<Client, postgres::Error> {
+        match Client::connect(format!("host={} port={} user={} dbname=template1", ip, port, username).as_str(), NoTls) {
+            Ok(shard_client) => Ok(shard_client),
             Err(e) => {
                 Err(e)
             }
         }
     }
 
-    /// This function is the cluster management protocol for the Router node. It listens to incoming connections from clients and handles them. This might be used in the future for sending routing tables, reassigning shards, rebalancing, etc.
+    /// This function is the cluster management protocol for the Router node. It listens to incoming connections from Shards and handles them. This might be used in the future for sending routing tables, reassigning shards, rebalancing, etc.
     fn cluster_management_protocol(router: &Router) {
 
         let server_addr = "localhost:".to_string() + router.port.as_ref();
@@ -163,6 +176,7 @@ impl Router {
             shards.values().cloned().collect()
         }
     }
+    
     fn extract_data_from_insert_query(query: &str) -> Vec<String> {
         let re = Regex::new(r"(?i)INSERT INTO [^(]+ \([^)]*\) VALUES \(([^)]+)\)").unwrap();
         if let Some(captures) = re.captures(query) {
@@ -174,21 +188,6 @@ impl Router {
             }
         }
         Vec::new()
-    }
-    fn hash_client_port(client_port: &str) -> String {
-        let mut hasher = Sha3::keccak256();
-        hasher.input_str(client_port);
-        hasher.result_str()
-    }
-    fn hash_data(&self, data: Vec<String>) -> Vec<String> {
-        let mut hasher = Sha3::sha3_256();
-        let mut hashed_values = Vec::new();
-        for value in data {
-            hasher.input_str(&*value);
-            hashed_values.push(hasher.result_str());
-            hasher.reset();
-        }
-        hashed_values
     }
 }
 
@@ -215,19 +214,14 @@ impl NodeRole for Router {
                     id, name, position, salary
                 );
             }
-            true
         } else {
             eprintln!("Shard not found");
             false
         }
     }
+}
+
+impl Router {
 
 
 }
-/// Returns hash of the port in which the Client is connected
-fn hash_client_port(client_port: &str) -> String {
-    let mut hasher = Sha3::keccak256();
-    hasher.input_str(client_port);
-    hasher.result_str()
-}
-

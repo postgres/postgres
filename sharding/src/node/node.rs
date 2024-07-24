@@ -58,15 +58,16 @@ pub extern "C" fn init_node_instance(node_type: NodeType, port: *const i8) {
             }
         };
 
+        let ip = "127.0.0.1";
         match node_type {
             NodeType::Router => {
                 println!("Router node initializing");
-                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(node_port))));
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(ip, node_port))));
                 println!("Router node initializes");
             },
             NodeType::Shard => {
                 println!("Sharding node initializing");
-                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Shard::new(node_port))));
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Shard::new(ip, node_port))));
                 println!("Sharding node initializes");
             },
         }
