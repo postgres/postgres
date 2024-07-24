@@ -28,7 +28,6 @@ static void print_db_infos(DbInfoArr *db_arr);
 static void print_rel_infos(RelInfoArr *rel_arr);
 static void print_slot_infos(LogicalSlotInfoArr *slot_arr);
 static void get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check);
-static void get_db_subscription_count(DbInfo *dbinfo);
 
 
 /*
@@ -293,15 +292,8 @@ get_db_rel_and_slot_infos(ClusterInfo *cluster, bool live_check)
 
 		get_rel_infos(cluster, pDbInfo);
 
-		/*
-		 * Retrieve the logical replication slots infos and the subscriptions
-		 * count for the old cluster.
-		 */
 		if (cluster == &old_cluster)
-		{
 			get_old_cluster_logical_slot_infos(pDbInfo, live_check);
-			get_db_subscription_count(pDbInfo);
-		}
 	}
 
 	if (cluster == &old_cluster)
@@ -748,52 +740,23 @@ count_old_cluster_logical_slots(void)
 }
 
 /*
- * get_db_subscription_count()
+ * get_subscription_count()
  *
- * Gets the number of subscriptions in the database referred to by "dbinfo".
- *
- * Note: This function will not do anything if the old cluster is pre-PG17.
- * This is because before that the logical slots are not upgraded, so we will
- * not be able to upgrade the logical replication clusters completely.
+ * Gets the number of subscriptions in the cluster.
  */
-static void
-get_db_subscription_count(DbInfo *dbinfo)
+void
+get_subscription_count(ClusterInfo *cluster)
 {
 	PGconn	   *conn;
 	PGresult   *res;
 
-	/* Subscriptions can be migrated since PG17. */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) < 1700)
-		return;
-
-	conn = connectToServer(&old_cluster, dbinfo->db_name);
+	conn = connectToServer(cluster, "template1");
 	res = executeQueryOrDie(conn, "SELECT count(*) "
-							"FROM pg_catalog.pg_subscription WHERE subdbid = %u",
-							dbinfo->db_oid);
-	dbinfo->nsubs = atoi(PQgetvalue(res, 0, 0));
+							"FROM pg_catalog.pg_subscription");
+	cluster->nsubs = atoi(PQgetvalue(res, 0, 0));
 
 	PQclear(res);
 	PQfinish(conn);
-}
-
-/*
- * count_old_cluster_subscriptions()
- *
- * Returns the number of subscriptions for all databases.
- *
- * Note: this function always returns 0 if the old_cluster is PG16 and prior
- * because we gather subscriptions only for cluster versions greater than or
- * equal to PG17. See get_db_subscription_count().
- */
-int
-count_old_cluster_subscriptions(void)
-{
-	int			nsubs = 0;
-
-	for (int dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
-		nsubs += old_cluster.dbarr.dbs[dbnum].nsubs;
-
-	return nsubs;
 }
 
 static void

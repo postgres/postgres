@@ -197,7 +197,6 @@ typedef struct
 											 * path */
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
 	LogicalSlotInfoArr slot_arr;	/* array of all LogicalSlotInfo */
-	int			nsubs;			/* number of subscriptions */
 } DbInfo;
 
 /*
@@ -296,6 +295,7 @@ typedef struct
 	char		major_version_str[64];	/* string PG_VERSION of cluster */
 	uint32		bin_version;	/* version returned from pg_ctl */
 	const char *tablespace_suffix;	/* directory specification */
+	int			nsubs;			/* number of subscriptions */
 } ClusterInfo;
 
 
@@ -430,7 +430,7 @@ FileNameMap *gen_db_file_maps(DbInfo *old_db,
 							  const char *new_pgdata);
 void		get_db_rel_and_slot_infos(ClusterInfo *cluster, bool live_check);
 int			count_old_cluster_logical_slots(void);
-int			count_old_cluster_subscriptions(void);
+void		get_subscription_count(ClusterInfo *cluster);
 
 /* option.c */
 
