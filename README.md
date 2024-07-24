@@ -166,7 +166,7 @@ The extension provides the following helper functions:
 
 ### pg_tde_is_encrypted(tablename)
 
-Returns `t` if the table is encrypted (uses the pg_tde access method), or `f` otherwise.
+Returns `t` if the table is encrypted (uses the pg_tde_basic access method), or `f` otherwise.
 
 ## Base commit
 
