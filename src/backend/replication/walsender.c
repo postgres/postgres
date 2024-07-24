@@ -1407,12 +1407,15 @@ DropReplicationSlot(DropReplicationSlotCmd *cmd)
 }
 
 /*
- * Process extra options given to ALTER_REPLICATION_SLOT.
+ * Change the definition of a replication slot.
  */
 static void
-ParseAlterReplSlotOptions(AlterReplicationSlotCmd *cmd, bool *failover)
+AlterReplicationSlot(AlterReplicationSlotCmd *cmd)
 {
 	bool		failover_given = false;
+	bool		two_phase_given = false;
+	bool		failover;
+	bool		two_phase;
 
 	/* Parse options */
 	foreach_ptr(DefElem, defel, cmd->options)
@@ -1424,23 +1427,24 @@ ParseAlterReplSlotOptions(AlterReplicationSlotCmd *cmd, bool *failover)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			failover_given = true;
-			*failover = defGetBoolean(defel);
+			failover = defGetBoolean(defel);
+		}
+		else if (strcmp(defel->defname, "two_phase") == 0)
+		{
+			if (two_phase_given)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			two_phase_given = true;
+			two_phase = defGetBoolean(defel);
 		}
 		else
 			elog(ERROR, "unrecognized option: %s", defel->defname);
 	}
-}
 
-/*
- * Change the definition of a replication slot.
- */
-static void
-AlterReplicationSlot(AlterReplicationSlotCmd *cmd)
-{
-	bool		failover = false;
-
-	ParseAlterReplSlotOptions(cmd, &failover);
-	ReplicationSlotAlter(cmd->slotname, failover);
+	ReplicationSlotAlter(cmd->slotname,
+						 failover_given ? &failover : NULL,
+						 two_phase_given ? &two_phase : NULL);
 }
 
 /*

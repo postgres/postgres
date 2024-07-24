@@ -68,8 +68,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
   <para>
    Commands <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command>,
    <command>ALTER SUBSCRIPTION ... {SET|ADD|DROP} PUBLICATION ...</command>
-   with <literal>refresh</literal> option as <literal>true</literal> and
-   <command>ALTER SUBSCRIPTION ... SET (failover = true|false)</command>
+   with <literal>refresh</literal> option as <literal>true</literal>,
+   <command>ALTER SUBSCRIPTION ... SET (failover = true|false)</command> and
+   <command>ALTER SUBSCRIPTION ... SET (two_phase = false)</command>
    cannot be executed inside a transaction block.
 
    These commands also cannot be executed when the subscription has
@@ -228,8 +229,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       <link linkend="sql-createsubscription-params-with-disable-on-error"><literal>disable_on_error</literal></link>,
       <link linkend="sql-createsubscription-params-with-password-required"><literal>password_required</literal></link>,
       <link linkend="sql-createsubscription-params-with-run-as-owner"><literal>run_as_owner</literal></link>,
-      <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>, and
-      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>.
+      <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>,
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>, and
+      <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>.
       Only a superuser can set <literal>password_required = false</literal>.
      </para>
 
@@ -251,6 +253,32 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       even when the subscription's
       <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
       option is enabled.
+     </para>
+
+     <para>
+      The <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
+      and <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
+      parameters can only be altered when the subscription is disabled.
+     </para>
+
+     <para>
+      When altering <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
+      from <literal>true</literal> to <literal>false</literal>, the backend
+      process reports an error if any prepared transactions done by the
+      logical replication worker (from when <literal>two_phase</literal>
+      parameter was still <literal>true</literal>) are found. You can resolve
+      prepared transactions on the publisher node, or manually roll back them
+      on the subscriber, and then try again. The transactions prepared by
+      logical replication worker corresponding to a particular subscription have
+      the following pattern: <quote><literal>pg_gid_%u_%u</literal></quote>
+      (parameters: subscription <parameter>oid</parameter>, remote transaction id <parameter>xid</parameter>).
+      To resolve such transactions manually, you need to roll back all
+      the prepared transactions with corresponding subscription IDs in their
+      names. Applications can check
+      <link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link>
+      to find the required prepared transactions. After the <literal>two_phase</literal>
+      option is changed from <literal>true</literal> to <literal>false</literal>,
+      the publisher will replicate the transactions again when they are committed.
      </para>
     </listitem>
    </varlistentry>

@@ -804,9 +804,13 @@ ReplicationSlotDrop(const char *name, bool nowait)
  * Change the definition of the slot identified by the specified name.
  */
 void
-ReplicationSlotAlter(const char *name, bool failover)
+ReplicationSlotAlter(const char *name, const bool *failover,
+					 const bool *two_phase)
 {
+	bool		update_slot = false;
+
 	Assert(MyReplicationSlot == NULL);
+	Assert(failover || two_phase);
 
 	ReplicationSlotAcquire(name, false);
 
@@ -832,28 +836,45 @@ ReplicationSlotAlter(const char *name, bool failover)
 		 * Do not allow users to enable failover on the standby as we do not
 		 * support sync to the cascading standby.
 		 */
-		if (failover)
+		if (failover && *failover)
 			ereport(ERROR,
 					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("cannot enable failover for a replication slot"
 						   " on the standby"));
 	}
 
-	/*
-	 * Do not allow users to enable failover for temporary slots as we do not
-	 * support syncing temporary slots to the standby.
-	 */
-	if (failover && MyReplicationSlot->data.persistency == RS_TEMPORARY)
-		ereport(ERROR,
-				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot enable failover for a temporary replication slot"));
+	if (failover)
+	{
+		/*
+		 * Do not allow users to enable failover for temporary slots as we do
+		 * not support syncing temporary slots to the standby.
+		 */
+		if (*failover && MyReplicationSlot->data.persistency == RS_TEMPORARY)
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot enable failover for a temporary replication slot"));
 
-	if (MyReplicationSlot->data.failover != failover)
+		if (MyReplicationSlot->data.failover != *failover)
+		{
+			SpinLockAcquire(&MyReplicationSlot->mutex);
+			MyReplicationSlot->data.failover = *failover;
+			SpinLockRelease(&MyReplicationSlot->mutex);
+
+			update_slot = true;
+		}
+	}
+
+	if (two_phase && MyReplicationSlot->data.two_phase != *two_phase)
 	{
 		SpinLockAcquire(&MyReplicationSlot->mutex);
-		MyReplicationSlot->data.failover = failover;
+		MyReplicationSlot->data.two_phase = *two_phase;
 		SpinLockRelease(&MyReplicationSlot->mutex);
 
+		update_slot = true;
+	}
+
+	if (update_slot)
+	{
 		ReplicationSlotMarkDirty();
 		ReplicationSlotSave();
 	}
