@@ -82,9 +82,6 @@ char	   *GUC_check_errmsg_string;
 char	   *GUC_check_errdetail_string;
 char	   *GUC_check_errhint_string;
 
-/* Kluge: for speed, we examine this GUC variable's value directly */
-extern bool in_hot_standby_guc;
-
 
 /*
  * Unit conversion tables.

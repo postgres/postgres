@@ -14,6 +14,9 @@
 #include "access/xlogreader.h"
 #include "storage/bufmgr.h"
 
+/* GUC variable */
+extern PGDLLIMPORT bool ignore_invalid_pages;
+
 /*
  * Prior to 8.4, all activity during recovery was carried out by the startup
  * process. This local variable continues to be used in many parts of the

@@ -19,6 +19,8 @@
 #include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 
+extern PGDLLIMPORT char *default_tablespace;
+extern PGDLLIMPORT char *temp_tablespaces;
 extern PGDLLIMPORT bool allow_in_place_tablespaces;
 
 /* XLOG stuff */

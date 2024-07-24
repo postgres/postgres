@@ -19,6 +19,9 @@
 #include "storage/item.h"
 #include "storage/off.h"
 
+/* GUC variable */
+extern PGDLLIMPORT bool ignore_checksum_failure;
+
 /*
  * A postgres disk page is an abstraction layered on top of a postgres
  * disk block (which is simply a unit of i/o, see block.h).

@@ -17,6 +17,11 @@
 #include "storage/block.h"
 #include "utils/relcache.h"
 
+/* GUC variables */
+#ifdef TRACE_SYNCSCAN
+extern PGDLLIMPORT bool trace_syncscan;
+#endif
+
 extern void ss_report_location(Relation rel, BlockNumber location);
 extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
 extern void SyncScanShmemInit(void);

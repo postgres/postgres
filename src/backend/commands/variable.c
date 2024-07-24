@@ -901,7 +901,6 @@ assign_session_authorization(const char *newval, void *extra)
  * a translation of "none" to InvalidOid.  Otherwise this is much like
  * SET SESSION AUTHORIZATION.
  */
-extern char *role_string;		/* in guc_tables.c */
 
 bool
 check_role(char **newval, void **extra, GucSource source)

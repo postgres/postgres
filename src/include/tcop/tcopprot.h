@@ -40,6 +40,7 @@ typedef enum
 	LOGSTMT_ALL,				/* log all statements */
 } LogStmtLevel;
 
+extern PGDLLIMPORT bool Log_disconnections;
 extern PGDLLIMPORT int log_statement;
 
 extern List *pg_parse_query(const char *query_string);
