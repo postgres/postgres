@@ -409,7 +409,7 @@ task:
 
 
 task:
-  name: macOS - Ventura - Meson
+  name: macOS - Sonoma - Meson
 
   env:
     CPUS: 4 # always get that much for cirrusci macOS instances
@@ -418,7 +418,7 @@ task:
     # work OK. See
     # https://postgr.es/m/20220927040208.l3shfcidovpzqxfh%40awork3.anarazel.de
     TEST_JOBS: 8
-    IMAGE: ghcr.io/cirruslabs/macos-ventura-base:latest
+    IMAGE: ghcr.io/cirruslabs/macos-runner:sonoma
 
     CIRRUS_WORKING_DIR: ${HOME}/pgsql/
     CCACHE_DIR: ${HOME}/ccache
@@ -456,6 +456,11 @@ task:
   # updates macports every time.
   macports_cache:
     folder: ${MACPORTS_CACHE}
+    fingerprint_script: |
+      # Include the OS major version in the cache key.  If the OS image changes
+      # to a different major version, we need to reinstall.
+      sw_vers -productVersion | sed 's/\..*//'
+    reupload_on_changes: true
   setup_additional_packages_script: |
     sh src/tools/ci/ci_macports_packages.sh \
       ccache \
