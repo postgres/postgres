@@ -55,7 +55,15 @@ static float8 cot_45 = 0;
  * be referenced by other files, much less changed; but we don't want the
  * compiler to know that, else it might try to precompute expressions
  * involving them.  See comments for init_degree_constants().
+ *
+ * The additional extern declarations are to silence
+ * -Wmissing-variable-declarations.
  */
+extern float8 degree_c_thirty;
+extern float8 degree_c_forty_five;
+extern float8 degree_c_sixty;
+extern float8 degree_c_one_half;
+extern float8 degree_c_one;
 float8		degree_c_thirty = 30.0;
 float8		degree_c_forty_five = 45.0;
 float8		degree_c_sixty = 60.0;
