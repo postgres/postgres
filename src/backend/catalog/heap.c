@@ -3520,6 +3520,14 @@ StorePartitionBound(Relation rel, Relation parent, PartitionBoundSpec *bound)
 								 new_val, new_null, new_repl);
 	/* Also set the flag */
 	((Form_pg_class) GETSTRUCT(newtuple))->relispartition = true;
+
+	/*
+	 * We already checked for no inheritance children, but reset
+	 * relhassubclass in case it was left over.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_RELATION && rel->rd_rel->relhassubclass)
+		((Form_pg_class) GETSTRUCT(newtuple))->relhassubclass = false;
+
 	CatalogTupleUpdate(classRel, &newtuple->t_self, newtuple);
 	heap_freetuple(newtuple);
 	table_close(classRel, RowExclusiveLock);
