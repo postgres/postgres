@@ -373,3 +373,4 @@ select make_date(2013, 13, 1);
 select make_date(2013, 11, -1);
 select make_time(10, 55, 100.1);
 select make_time(24, 0, 2.1);
+SELECT make_date(-2147483648, 1, 1);

@@ -252,12 +252,12 @@ make_date(PG_FUNCTION_ARGS)
 	tm.tm_year = PG_GETARG_INT32(0);
 	tm.tm_mon = PG_GETARG_INT32(1);
 	tm.tm_mday = PG_GETARG_INT32(2);
-
 	/* Handle negative years as BC */
 	if (tm.tm_year < 0)
 	{
 		bc = true;
-		tm.tm_year = -tm.tm_year;
+        /* take the absolute value */
+        pg_mul_s32_overflow(tm.tm_year, -1, &tm.tm_year);
 	}
 
 	dterr = ValidateDate(DTK_DATE_M, false, false, bc, &tm);
