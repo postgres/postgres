@@ -2126,11 +2126,16 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 		Buffer		buf;
 		Page		page;
 		Size		freespace;
+		OffsetNumber offsets[MaxOffsetNumber];
+		int			num_offsets;
 
 		vacuum_delay_point();
 
 		blkno = iter_result->blkno;
 		vacrel->blkno = blkno;
+
+		num_offsets = TidStoreGetBlockOffsets(iter_result, offsets, lengthof(offsets));
+		Assert(num_offsets <= lengthof(offsets));
 
 		/*
 		 * Pin the visibility map page in case we need to mark the page
@@ -2143,8 +2148,8 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 		buf = ReadBufferExtended(vacrel->rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 								 vacrel->bstrategy);
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-		lazy_vacuum_heap_page(vacrel, blkno, buf, iter_result->offsets,
-							  iter_result->num_offsets, vmbuffer);
+		lazy_vacuum_heap_page(vacrel, blkno, buf, offsets,
+							  num_offsets, vmbuffer);
 
 		/* Now that we've vacuumed the page, record its available space */
 		page = BufferGetPage(buf);

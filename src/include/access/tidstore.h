@@ -20,13 +20,14 @@
 typedef struct TidStore TidStore;
 typedef struct TidStoreIter TidStoreIter;
 
-/* Result struct for TidStoreIterateNext */
+/*
+ * Result struct for TidStoreIterateNext.  This is copyable, but should be
+ * treated as opaque.  Call TidStoreGetOffsets() to obtain the offsets.
+ */
 typedef struct TidStoreIterResult
 {
 	BlockNumber blkno;
-	int			max_offset;
-	int			num_offsets;
-	OffsetNumber *offsets;
+	void	   *internal_page;
 } TidStoreIterResult;
 
 extern TidStore *TidStoreCreateLocal(size_t max_bytes, bool insert_only);
@@ -42,6 +43,9 @@ extern void TidStoreSetBlockOffsets(TidStore *ts, BlockNumber blkno, OffsetNumbe
 extern bool TidStoreIsMember(TidStore *ts, ItemPointer tid);
 extern TidStoreIter *TidStoreBeginIterate(TidStore *ts);
 extern TidStoreIterResult *TidStoreIterateNext(TidStoreIter *iter);
+extern int	TidStoreGetBlockOffsets(TidStoreIterResult *result,
+									OffsetNumber *offsets,
+									int max_offsets);
 extern void TidStoreEndIterate(TidStoreIter *iter);
 extern size_t TidStoreMemoryUsage(TidStore *ts);
 extern dsa_pointer TidStoreGetHandle(TidStore *ts);

@@ -267,9 +267,14 @@ check_set_block_offsets(PG_FUNCTION_ARGS)
 	iter = TidStoreBeginIterate(tidstore);
 	while ((iter_result = TidStoreIterateNext(iter)) != NULL)
 	{
-		for (int i = 0; i < iter_result->num_offsets; i++)
+		OffsetNumber offsets[MaxOffsetNumber];
+		int			num_offsets;
+
+		num_offsets = TidStoreGetBlockOffsets(iter_result, offsets, lengthof(offsets));
+		Assert(num_offsets <= lengthof(offsets));
+		for (int i = 0; i < num_offsets; i++)
 			ItemPointerSet(&(items.iter_tids[num_iter_tids++]), iter_result->blkno,
-						   iter_result->offsets[i]);
+						   offsets[i]);
 	}
 	TidStoreEndIterate(iter);
 	TidStoreUnlock(tidstore);
