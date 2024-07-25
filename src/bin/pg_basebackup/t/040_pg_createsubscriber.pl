@@ -414,16 +414,16 @@ $result = $node_s->safe_psql($db1,
 );
 is($result, qq(0), 'failover slot was removed');
 
-# Check result on database $db1
+# Check result in database $db1
 $result = $node_s->safe_psql($db1, 'SELECT * FROM tbl1');
 is( $result, qq(first row
 second row
 third row),
-	"logical replication works on database $db1");
+	"logical replication works in database $db1");
 
-# Check result on database $db2
+# Check result in database $db2
 $result = $node_s->safe_psql($db2, 'SELECT * FROM tbl2');
-is($result, qq(row 1), "logical replication works on database $db2");
+is($result, qq(row 1), "logical replication works in database $db2");
 
 # Different system identifier?
 my $sysid_p = $node_p->safe_psql('postgres',
