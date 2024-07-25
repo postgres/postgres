@@ -908,10 +908,11 @@ INSERT INTO tbl1 VALUES ($1, $2) \bind 'first value' 'second value' \g
          linkend="protocol-query-concepts"/>) to be used, unlike normal
          <application>psql</application> operation, which uses the simple
          query protocol.  So this command can be useful to test the extended
-         query protocol from psql.  (The extended query protocol is used even
-         if the query has no parameters and this command specifies zero
-         parameters.)  This command affects only the next query executed; all
-         subsequent queries will use the simple query protocol by default.
+         query protocol from <application>psql</application>.  (The extended
+         query protocol is used even if the query has no parameters and this
+         command specifies zero parameters.)  This command affects only the
+         next query executed; all subsequent queries will use the simple query
+         protocol by default.
         </para>
        </listitem>
       </varlistentry>
@@ -4334,7 +4335,8 @@ bar
         When this variable is set to <literal>off</literal>, only the last
         result of a combined query (<literal>\;</literal>) is shown instead of
         all of them.  The default is <literal>on</literal>.  The off behavior
-        is for compatibility with older versions of psql.
+        is for compatibility with older versions of
+        <application>psql</application>.
         </para>
         </listitem>
       </varlistentry>
