@@ -19,7 +19,9 @@
 #include "mb/pg_wchar.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/hsearch.h"
 
 /* ----------
  * The max bytes for showing identifiers of MemoryContext.
@@ -28,45 +30,105 @@
 #define MEMORY_CONTEXT_IDENT_DISPLAY_SIZE	1024
 
 /*
+ * MemoryContextId
+ *		Used for storage of transient identifiers for
+ *		pg_get_backend_memory_contexts.
+ */
+typedef struct MemoryContextId
+{
+	MemoryContext context;
+	int			context_id;
+}			MemoryContextId;
+
+/*
+ * get_memory_context_name_and_ident
+ *		Populate *name and *ident from the name and ident from 'context'.
+ */
+static void
+get_memory_context_name_and_ident(MemoryContext context, const char **const name,
+								  const char **const ident)
+{
+	*name = context->name;
+	*ident = context->ident;
+
+	/*
+	 * To be consistent with logging output, we label dynahash contexts with
+	 * just the hash table name as with MemoryContextStatsPrint().
+	 */
+	if (ident && strcmp(*name, "dynahash") == 0)
+	{
+		*name = *ident;
+		*ident = NULL;
+	}
+}
+
+/*
+ * int_list_to_array
+ *		Convert an IntList to an array of INT4OIDs.
+ */
+static Datum
+int_list_to_array(const List *list)
+{
+	Datum	   *datum_array;
+	int			length;
+	ArrayType  *result_array;
+
+	length = list_length(list);
+	datum_array = (Datum *) palloc(length * sizeof(Datum));
+
+	foreach_int(i, list)
+		datum_array[foreach_current_index(i)] = Int32GetDatum(i);
+
+	result_array = construct_array_builtin(datum_array, length, INT4OID);
+
+	return PointerGetDatum(result_array);
+}
+
+/*
  * PutMemoryContextsStatsTupleStore
- *		One recursion level for pg_get_backend_memory_contexts.
+ *		Add details for the given MemoryContext to 'tupstore'.
  */
 static void
 PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 								 TupleDesc tupdesc, MemoryContext context,
-								 const char *parent, int level)
+								 HTAB *context_id_lookup)
 {
-#define PG_GET_BACKEND_MEMORY_CONTEXTS_COLS	10
+#define PG_GET_BACKEND_MEMORY_CONTEXTS_COLS	11
 
 	Datum		values[PG_GET_BACKEND_MEMORY_CONTEXTS_COLS];
 	bool		nulls[PG_GET_BACKEND_MEMORY_CONTEXTS_COLS];
 	MemoryContextCounters stat;
-	MemoryContext child;
+	List	   *path = NIL;
 	const char *name;
 	const char *ident;
 	const char *type;
 
 	Assert(MemoryContextIsValid(context));
 
-	name = context->name;
-	ident = context->ident;
-
 	/*
-	 * To be consistent with logging output, we label dynahash contexts with
-	 * just the hash table name as with MemoryContextStatsPrint().
+	 * Figure out the transient context_id of this context and each of its
+	 * ancestors.
 	 */
-	if (ident && strcmp(name, "dynahash") == 0)
+	for (MemoryContext cur = context; cur != NULL; cur = cur->parent)
 	{
-		name = ident;
-		ident = NULL;
+		MemoryContextId *entry;
+		bool		found;
+
+		entry = hash_search(context_id_lookup, &cur, HASH_FIND, &found);
+
+		if (!found)
+			elog(ERROR, "hash table corrupted");
+		path = lcons_int(entry->context_id, path);
 	}
 
 	/* Examine the context itself */
 	memset(&stat, 0, sizeof(stat));
-	(*context->methods->stats) (context, NULL, (void *) &level, &stat, true);
+	(*context->methods->stats) (context, NULL, NULL, &stat, true);
 
 	memset(values, 0, sizeof(values));
 	memset(nulls, 0, sizeof(nulls));
+
+	get_memory_context_name_and_ident(context, &name, &ident);
 
 	if (name)
 		values[0] = CStringGetTextDatum(name);
@@ -92,8 +154,15 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	else
 		nulls[1] = true;
 
-	if (parent)
-		values[2] = CStringGetTextDatum(parent);
+	if (context->parent)
+	{
+		const char *parent_name,
+				   *parent_ident;
+
+		get_memory_context_name_and_ident(context->parent, &parent_name,
+										  &parent_ident);
+		values[2] = CStringGetTextDatum(parent_name);
+	}
 	else
 		nulls[2] = true;
 
@@ -117,19 +186,16 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	}
 
 	values[3] = CStringGetTextDatum(type);
-	values[4] = Int32GetDatum(level);
-	values[5] = Int64GetDatum(stat.totalspace);
-	values[6] = Int64GetDatum(stat.nblocks);
-	values[7] = Int64GetDatum(stat.freespace);
-	values[8] = Int64GetDatum(stat.freechunks);
-	values[9] = Int64GetDatum(stat.totalspace - stat.freespace);
-	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	values[4] = Int32GetDatum(list_length(path));	/* level */
+	values[5] = int_list_to_array(path);
+	values[6] = Int64GetDatum(stat.totalspace);
+	values[7] = Int64GetDatum(stat.nblocks);
+	values[8] = Int64GetDatum(stat.freespace);
+	values[9] = Int64GetDatum(stat.freechunks);
+	values[10] = Int64GetDatum(stat.totalspace - stat.freespace);
 
-	for (child = context->firstchild; child != NULL; child = child->nextchild)
-	{
-		PutMemoryContextsStatsTupleStore(tupstore, tupdesc,
-										 child, name, level + 1);
-	}
+	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	list_free(path);
 }
 
 /*
@@ -140,10 +206,66 @@ Datum
 pg_get_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	int			context_id;
+	List	   *contexts;
+	HASHCTL		ctl;
+	HTAB	   *context_id_lookup;
+
+	ctl.keysize = sizeof(MemoryContext);
+	ctl.entrysize = sizeof(MemoryContextId);
+	ctl.hcxt = CurrentMemoryContext;
+
+	context_id_lookup = hash_create("pg_get_backend_memory_contexts",
+									256,
+									&ctl,
+									HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	InitMaterializedSRF(fcinfo, 0);
-	PutMemoryContextsStatsTupleStore(rsinfo->setResult, rsinfo->setDesc,
-									 TopMemoryContext, NULL, 0);
+
+	/*
+	 * Here we use a non-recursive algorithm to visit all MemoryContexts
+	 * starting with TopMemoryContext.  The reason we avoid using a recursive
+	 * algorithm is because we want to assign the context_id breadth-first.
+	 * I.e. all contexts at level 1 are assigned IDs before contexts at level
+	 * 2.  Because contexts closer to TopMemoryContext are less likely to
+	 * change, this makes the assigned context_id more stable.  Otherwise, if
+	 * the first child of TopMemoryContext obtained an additional grandchild,
+	 * the context_id for the second child of TopMemoryContext would change.
+	 */
+	contexts = list_make1(TopMemoryContext);
+
+	/* TopMemoryContext will always have a context_id of 1 */
+	context_id = 1;
+
+	foreach_ptr(MemoryContextData, cur, contexts)
+	{
+		MemoryContextId *entry;
+		bool		found;
+
+		/*
+		 * Record the context_id that we've assigned to each MemoryContext.
+		 * PutMemoryContextsStatsTupleStore needs this to populate the "path"
+		 * column with the parent context_ids.
+		 */
+		entry = (MemoryContextId *) hash_search(context_id_lookup, &cur,
+												HASH_ENTER, &found);
+		entry->context_id = context_id++;
+		Assert(!found);
+
+		PutMemoryContextsStatsTupleStore(rsinfo->setResult,
+										 rsinfo->setDesc,
+										 cur,
+										 context_id_lookup);
+
+		/*
+		 * Append all children onto the contexts list so they're processed by
+		 * subsequent iterations.
+		 */
+		for (MemoryContext c = cur->firstchild; c != NULL; c = c->nextchild)
+			contexts = lappend(contexts, c);
+	}
+
+	hash_destroy(context_id_lookup);
 
 	return (Datum) 0;
 }

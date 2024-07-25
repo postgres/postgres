@@ -504,7 +504,22 @@
        <structfield>level</structfield> <type>int4</type>
       </para>
       <para>
-       Distance from TopMemoryContext in context tree
+       The 1-based level of the context in the memory context hierarchy. The
+       level of a context also shows the position of that context in the
+       <structfield>path</structfield> column.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>path</structfield> <type>int4[]</type>
+      </para>
+      <para>
+       Array of transient numerical identifiers to describe the memory
+       context hierarchy. The first element is for
+       <literal>TopMemoryContext</literal>, subsequent elements contain
+       intermediate parents and the final element contains the identifier for
+       the current context.
       </para></entry>
      </row>
 
@@ -560,6 +575,29 @@
    By default, the <structname>pg_backend_memory_contexts</structname> view can be
    read only by superusers or roles with the privileges of the
    <literal>pg_read_all_stats</literal> role.
+  </para>
+
+  <para>
+   Since memory contexts are created and destroyed during the running of a
+   query, the identifiers stored in the <structfield>path</structfield> column
+   can be unstable between multiple invocations of the view in the same query.
+   The example below demonstrates an effective usage of this column and
+   calculates the total number of bytes used by
+   <literal>CacheMemoryContext</literal> and all of its children:
+
+<programlisting>
+WITH memory_contexts AS (
+    SELECT * FROM pg_backend_memory_contexts
+)
+SELECT sum(c1.total_bytes)
+FROM memory_contexts c1, memory_contexts c2
+WHERE c2.name = 'CacheMemoryContext'
+AND c1.path[c2.level] = c2.path[c2.level];
+</programlisting>
+
+   The <link linkend="queries-with">Common Table Expression</link> is used
+   to ensure the context IDs in the <structfield>path</structfield> column
+   match between both evaluations of the view.
   </para>
  </sect1>
 

@@ -15,7 +15,7 @@ select count(*) >= 0 as ok from pg_available_extensions;
 -- The entire output of pg_backend_memory_contexts is not stable,
 -- we test only the existence and basic condition of TopMemoryContext.
 select type, name, ident, parent, level, total_bytes >= free_bytes
-  from pg_backend_memory_contexts where level = 0;
+  from pg_backend_memory_contexts where level = 1;
 
 -- We can exercise some MemoryContext type stats functions.  Most of the
 -- column values are too platform-dependant to display.
@@ -31,6 +31,16 @@ fetch 1 from cur;
 select type, name, parent, total_bytes > 0, total_nblocks, free_bytes > 0, free_chunks
 from pg_backend_memory_contexts where name = 'Caller tuples';
 rollback;
+
+-- Further sanity checks on pg_backend_memory_contexts.  We expect
+-- CacheMemoryContext to have multiple children.  Ensure that's the case.
+with contexts as (
+  select * from pg_backend_memory_contexts
+)
+select count(*) > 1
+from contexts c1, contexts c2
+where c2.name = 'CacheMemoryContext'
+and c1.path[c2.level] = c2.path[c2.level];
 
 -- At introduction, pg_config had 23 entries; it may grow
 select count(*) > 20 as ok from pg_config;

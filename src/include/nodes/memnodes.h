@@ -128,8 +128,8 @@ typedef struct MemoryContextData
 	MemoryContext firstchild;	/* head of linked list of children */
 	MemoryContext prevchild;	/* previous child of same parent */
 	MemoryContext nextchild;	/* next child of same parent */
-	const char *name;			/* context name (just for debugging) */
-	const char *ident;			/* context ID if any (just for debugging) */
+	const char *name;			/* context name */
+	const char *ident;			/* context ID if any */
 	MemoryContextCallback *reset_cbs;	/* list of reset/delete callbacks */
 } MemoryContextData;
 
