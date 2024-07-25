@@ -1,9 +1,9 @@
-psql -d postgres -c 'create database sysbench';
-psql -d sysbench -c 'select pg_reload_conf()';
-psql -d sysbench -c 'set default_transaction_isolation="read committed"';
+#psql -d postgres -c 'create database sysbench';
+#psql -d sysbench -c 'select pg_reload_conf()';
+#psql -d sysbench -c 'set default_transaction_isolation="read committed"';
 #psql -d sysbench -c 'set default_cc_strategy="s2pl"';
-#psql -d sysbench -c 'set default_transaction_isolation="serializable"';
-psql -d sysbench -c 'set default_cc_strategy="ssi"';
+##psql -d sysbench -c 'set default_transaction_isolation="serializable"';
+##psql -d sysbench -c 'set default_cc_strategy="ssi"';
 
 #
 #pgbench pgbench;

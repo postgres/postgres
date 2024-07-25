@@ -22,7 +22,17 @@ static bool starts_with(const char *str, const char *pre) {
 void init_global_feature_collector()
 {
     printf("2PL lock graph initialized (new)\n");
-    SpinLockInit(&LockFeatureVec->mutex);
+    LockFeatureVec = ShmemAllocUnlocked(sizeof (LockFeature) * LOCK_FEATURE_LEN);
+    for (int i=0;i<LOCK_FEATURE_LEN;i++)
+    {
+        SpinLockInit(&LockFeatureVec[i].mutex);
+        LockFeatureVec[i].read_cnt = 0;
+        LockFeatureVec[i].avg_free_time = 0;
+        LockFeatureVec[i].read_intention_cnt = 0;
+        LockFeatureVec[i].write_cnt = 0;
+        LockFeatureVec[i].write_intention_cnt = 0;
+    }
+
 }
 
 static uint64_t get_cur_time_ns()

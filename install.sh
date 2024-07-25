@@ -1,6 +1,6 @@
 ./configure --enable-depend --enable-cassert --enable-debug CFLAGS="-ggdb -Og"
 
-make
+make -j10
 sudo make install
 cd contrib
 make
@@ -22,6 +22,7 @@ export DATE=`date +"%Y-%m-%d %H:%M:%S"`
 export LD_LIBRARY_PATH=$PGHOME/lib:$LD_LIBRARY_PATH
 alias pg_start='pg_ctl start -D $PGDATA'
 alias pg_stop='pg_ctl stop -D $PGDATA -m fast'
+initdb -D $PGDATA
 
 echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
 
