@@ -925,6 +925,17 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
     to manage. For a large database all of which is heavily modified,
     incremental backups won't be much smaller than full backups.
    </para>
+
+   <para>
+    An incremental backup is only possible if replay would begin from a later
+    checkpoint than for the previous backup upon which it depends.  If you
+    take the incremental backup on the primary, this condition is always
+    satisfied, because each backup triggers a new checkpoint.  On a standby,
+    replay begins from the most recent restartpoint.  Therefore, an
+    incremental backup of a standby server can fail if there has been very
+    little activity since the previous backup, since no new restartpoint might
+    have been created.
+   </para>
   </sect2>
 
   <sect2 id="backup-lowlevel-base-backup">
