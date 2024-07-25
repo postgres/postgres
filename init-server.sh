@@ -37,7 +37,7 @@ make
 
 echo "[init-server] Copying postgres executable to pg_ctl directory..."
 cp $POSTGRES_EXECUTABLE $PG_CTL_DIR
-
+cp ./target/release/libsharding.a $PG_CTL_DIR
 # Function to check if a port is available
 port_available() {
     local port=$1

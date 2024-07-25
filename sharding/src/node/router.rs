@@ -3,8 +3,13 @@ extern crate users;
 use rust_decimal::Decimal;
 use users::get_current_username;
 use std::{fs, io::Read, net::{SocketAddr, TcpListener, TcpStream}, sync::Mutex};
+use std::collections::HashMap;
+use std::hash::Hash;
 use super::node::*;
 use std::sync::Arc;
+use ::crypto::sha3::Sha3;
+use crypto::digest::Digest;
+use regex::Regex;
 
 pub struct Channel {
     stream: TcpStream,
@@ -13,7 +18,14 @@ pub struct Channel {
 /// This struct represents the Router node in the distributed system. It has the responsibility of routing the queries to the appropriate shard or shards.
 #[repr(C)]
 pub struct Router {
-    shards: Mutex<Vec<Client>>,
+    ///  HashMap:
+    ///     key: shardId
+    ///     value: Client
+    shards: Mutex<HashMap<String, Client>>,
+    ///  HashMap:
+    ///     key: Hash
+    ///     value: shardId
+    hash_id: Mutex<HashMap<String, String>>,
     comm_channels: Mutex<Vec<Channel>>,
     port: Arc<str>,
     // TODO-SHARD: add hash table for routing
@@ -27,7 +39,8 @@ impl Router {
         let contents = fs::read_to_string("../../../sharding/src/node/ports.txt")
             .expect("Should have been able to read the file");
         let ports: Vec<&str> = contents.split("\n").collect();
-        let mut shards = Vec::new();
+        let mut shards : HashMap<String,Client> = HashMap::new();
+        let mut hash_id : HashMap<String, String> = HashMap::new();
         for client_port in ports {
             if client_port == port {
                 continue
@@ -35,7 +48,9 @@ impl Router {
             match Router::connect(client_port) {
                 Ok(client) => {
                     println!("Connected to port: {}", client_port);
-                    shards.push(client)
+                    let hash = hash_client_port(client_port);
+                    shards.insert(client_port.to_string(), client);
+                    hash_id.insert(hash.clone(), client_port.clone().to_string());
                 },
                 Err(e) => {
                     println!("Failed to connect to port: {}", client_port);
@@ -45,9 +60,10 @@ impl Router {
         if shards.is_empty() {
             eprint!("Failed to connect to any of the nodes");
         };
-
+        println!("SHARDS: {}", shards.len());
         let router = Router {
             shards: Mutex::new(shards),
+            hash_id: Mutex::new(hash_id),
             comm_channels: Mutex::new(Vec::new()),
             port: Arc::from(port),
         };
@@ -122,37 +138,96 @@ impl Router {
             }
         }
     }
+
+    /// Function that receives a query and checks for client
+    /// with corresponding data
+    pub fn get_clients_for_query(&self, query: &str) -> Vec<String> {
+        // If it's an INSERT query return specific Clients
+        if query.to_uppercase().starts_with("INSERT") {
+            //  Extract fields in Query
+            let data_to_hash = Self::extract_data_from_insert_query(query);
+            //  Hash every field
+            let hashes = self.hash_data(data_to_hash);
+            let shards = self.shards.lock().unwrap();
+            let mut clients = Vec::new();
+            //  For every hash, check if a client has that info
+            for hash in hashes {
+                if let Some(_client) = shards.get(&hash) {
+                    clients.push(self.hash_id.lock().unwrap().get(&hash).unwrap().to_string());
+                }
+            }
+            clients
+        } else {
+            // Return all clients
+            let shards = self.hash_id.lock().unwrap();
+            shards.values().cloned().collect()
+        }
+    }
+    fn extract_data_from_insert_query(query: &str) -> Vec<String> {
+        let re = Regex::new(r"(?i)INSERT INTO [^(]+ \([^)]*\) VALUES \(([^)]+)\)").unwrap();
+        if let Some(captures) = re.captures(query) {
+            if let Some(values_str) = captures.get(1) {
+                return values_str.as_str()
+                    .split(',')
+                    .map(|s| s.trim().trim_matches('\'').to_string())
+                    .collect();
+            }
+        }
+        Vec::new()
+    }
+    fn hash_client_port(client_port: &str) -> String {
+        let mut hasher = Sha3::keccak256();
+        hasher.input_str(client_port);
+        hasher.result_str()
+    }
+    fn hash_data(&self, data: Vec<String>) -> Vec<String> {
+        let mut hasher = Sha3::sha3_256();
+        let mut hashed_values = Vec::new();
+        for value in data {
+            hasher.input_str(&*value);
+            hashed_values.push(hasher.result_str());
+            hasher.reset();
+        }
+        hashed_values
+    }
 }
 
 impl NodeRole for Router {
     fn send_query(&mut self, query: &str) -> bool {
         println!("Router send_query called with query: {:?}", query);
-        // TODO-SHARD: implement the routing logic
-        
-        // here
+        //  TODO: THIS GET MUT IS DUMMY, IT MIGHT FAIL IF DATA IS IN ANOTHER CLIENT
+        if let Some(mut client) = self.shards.lock().unwrap().get_mut("5434") {
+            let rows = match client.query(query, &[]) {
+                Ok(rows) => rows,
+                Err(e) => {
+                    eprintln!("Failed to send the query to the shard: {:?}", e);
+                    return false;
+                }
+            };
 
-        // send the query to the first shard for now. When routing logic is added, the change needed is:
-        // get the shard from the routing logic, delete the first line down here, leave the rest to execute for the found shard.
-        // If the query needs to be sent to multiple shards, then the logic should be changed to send the query to all the shards (found in the routing logic or all the shards in general).
-        let shard = &mut self.shards.lock().unwrap()[0];
-        let rows = match shard.query(query, &[]) {
-            Ok(rows) => rows,
-            Err(e) => {
-                eprintln!("Failed to send the query to the shard: {:?}", e);
-                return false;
+            for row in rows {
+                let id: i32 = row.get(0);
+                let name: &str = row.get(1);
+                let position: &str = row.get(2);
+                let salary: Decimal = row.get(3);
+                println!(
+                    "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
+                    id, name, position, salary
+                );
             }
-        };
-
-        for row in rows {
-            let id: i32 = row.get(0);
-            let name: &str = row.get(1);
-            let position: &str = row.get(2);
-            let salary: Decimal = row.get(3);
-            println!(
-                "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-                id, name, position, salary
-            );
+            true
+        } else {
+            eprintln!("Shard not found");
+            false
         }
-        true
     }
+
+
 }
+/// Returns hash of the port in which the Client is connected
+fn hash_client_port(client_port: &str) -> String {
+    let mut hasher = Sha3::keccak256();
+    hasher.input_str(client_port);
+    hasher.result_str()
+}
+

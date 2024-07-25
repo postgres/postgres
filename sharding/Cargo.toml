@@ -16,6 +16,8 @@ users = "0.11.0"
 async-trait = "0.1.80"
 futures = "0.3.30"
 inline_colorization = "0.1.6"
+rust-crypto = "^0.2"
+regex = "1.10.5"
 [lib]
 name = "sharding"
 crate-type = ["staticlib"]
