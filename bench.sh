@@ -34,15 +34,15 @@ COMMON_OPTIONS="/usr/local/share/sysbench/oltp_read_write.lua
 sysbench $COMMON_OPTIONS prepare
 
 sysbench $COMMON_OPTIONS \
-  --threads=4 \
-  --time=$TIME \
+  --threads=1 \
+  --time=10 \
   --warmup-time=2 \
   --validate=off \
   --range_selects=off \
   --index_updates=0 \
-  --non_index_updates=4 \
+  --non_index_updates=5 \
   --delete_inserts=0 \
-  --point_selects=16 \
+  --point_selects=5 \
   --rand-type=zipfian \
   --rand-zipfian-exp=0.5 \
   run

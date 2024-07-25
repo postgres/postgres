@@ -1004,6 +1004,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		 * blocking, remove useless table entries and return NOT_AVAIL without
 		 * waiting.
 		 */
+        if (MyProc->rank > 0.9) dontWait = true;
 		if (dontWait)
 		{
 			AbortStrongLockAcquire();

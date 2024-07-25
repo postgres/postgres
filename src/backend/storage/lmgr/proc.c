@@ -55,6 +55,7 @@
 #include "storage/spin.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
+#define LEARN_WAITING true
 
 
 /* GUC variables */
@@ -1107,6 +1108,75 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		}
 	}
 
+#if LEARN_WAITING
+    LOCKMASK	aheadRequests = 0;
+    SHM_QUEUE  *proc_node;
+
+    proc_node = waitQueue->links.next;
+    for (i = 0; i < waitQueue->size; i++)
+    {
+        PGPROC	   *proc = (PGPROC *) proc_node;
+
+        /*
+         * If we're part of the same locking group as this waiter, its
+         * locks neither conflict with ours nor contribute to
+         * aheadRequests.
+         */
+        if (leader != NULL && leader == proc->lockGroupLeader)
+        {
+            proc_node = proc->links.next;
+            continue;
+        }
+
+        bool needWaitBefore = proc->rank > MyProc->rank;
+
+        /* Must he wait for me? */
+        if (lockMethodTable->conflictTab[proc->waitLockMode] & myHeldLocks)
+        {
+            needWaitBefore = true;
+            /* Must I wait for him ? */
+            if (lockMethodTable->conflictTab[lockmode] & proc->heldLocks)
+            {
+                /*
+                 * Yes, so we have a deadlock.  Easiest way to clean up
+                 * correctly is to call RemoveFromWaitQueue(), but we
+                 * can't do that until we are *on* the wait queue. So, set
+                 * a flag to check below, and break out of loop.  Also,
+                 * record deadlock info for later message.
+                 */
+                RememberSimpleDeadLock(MyProc, lockmode, lock, proc);
+                early_deadlock = true;
+                break;
+            }
+        }
+
+        if (needWaitBefore)
+        {
+            /* I must go before this waiter.  Check special case. */
+            if ((lockMethodTable->conflictTab[lockmode] & aheadRequests) == 0 &&
+                LockCheckConflicts(lockMethodTable,
+                                   lockmode,
+                                   lock,
+                                   proclock) == STATUS_OK)
+            {
+                /* Skip the wait and just grant myself the lock. */
+                GrantLock(lock, proclock, lockmode);
+                GrantAwaitedLock();
+                return STATUS_OK;
+            }
+            /* Break out of loop to put myself before him */
+            break;
+        }
+        /* Nope, so advance to next waiter */
+        aheadRequests |= LOCKBIT_ON(proc->waitLockMode);
+        proc_node = proc->links.next;
+    }
+    /*
+     * If we iterated through the whole queue, cur points to the waitQueue
+     * head, so we will insert at tail of queue as desired.
+     */
+    waitQueuePos = proc_node;
+#else
 	/*
 	 * Determine where to add myself in the wait queue.
 	 *
@@ -1192,6 +1262,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		/* I hold no locks, so I can't push in front of anyone. */
 		waitQueuePos = &waitQueue->links;
 	}
+#endif
 
 	/*
 	 * Insert self into queue, at the position determined above.
@@ -1642,6 +1713,7 @@ ProcWakeup(PGPROC *proc, int waitStatus)
 void
 ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 {
+    // PHX TODO: learn a priority for each lock.
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
 	PGPROC	   *proc;
