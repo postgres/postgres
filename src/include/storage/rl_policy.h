@@ -16,12 +16,17 @@
 #define LOCK_FEATURE_LEN (1<<LOG_LOCK_FEATURE)
 #define LOCK_FEATURE_MASK (LOCK_FEATURE_LEN-1)
 #define REL_ID_MULTI 13
+#define STATE_SPACE 1024
 #define MOVING_AVERAGE_RATE 0.8
 #define LOCK_KEY(rid, pgid, offset) ((pgid) * 4096 + (offset) + (rid) * REL_ID_MULTI)
 
+typedef struct CachedPolicyData {
+    uint8_t     rank[STATE_SPACE];
+    uint32_t    timeout[STATE_SPACE];
+} CachedPolicy;
+
 // LockFeatureData regard the feature for a tuples grouped by hash.
 typedef struct GlobalLockFeatureData {
-    double avg_free_time;
     uint16 read_cnt;
     uint16 write_cnt;
     uint16 read_intention_cnt;
@@ -46,7 +51,7 @@ typedef struct XactState {
     uint16 k;
 } TrainingState;
 
-extern void init_global_feature_collector();
+extern void init_policy_maker();
 extern void report_intention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release);
 extern void report_conflict(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release);
 extern void init_rl_state(uint32 xact_id);

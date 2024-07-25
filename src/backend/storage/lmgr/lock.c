@@ -454,7 +454,7 @@ InitLocks(void)
 									  16,
 									  &info,
 									  HASH_ELEM | HASH_BLOBS);
-    if (IsolationLearnCC()) init_global_feature_collector();
+    if (IsolationLearnCC()) init_policy_maker();
 }
 
 
@@ -1004,7 +1004,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		 * blocking, remove useless table entries and return NOT_AVAIL without
 		 * waiting.
 		 */
-        if (MyProc->rank > 0.9) dontWait = true;
+        if (MyProc->rank == 9) dontWait = true;
 		if (dontWait)
 		{
 			AbortStrongLockAcquire();

@@ -2,8 +2,6 @@
 #psql -d sysbench -c 'select pg_reload_conf()';
 #psql -d sysbench -c 'set default_transaction_isolation="read committed"';
 #psql -d sysbench -c 'set default_cc_strategy="s2pl"';
-##psql -d sysbench -c 'set default_transaction_isolation="serializable"';
-##psql -d sysbench -c 'set default_cc_strategy="ssi"';
 
 #
 #pgbench pgbench;
@@ -34,8 +32,8 @@ COMMON_OPTIONS="/usr/local/share/sysbench/oltp_read_write.lua
 sysbench $COMMON_OPTIONS prepare
 
 sysbench $COMMON_OPTIONS \
-  --threads=1 \
-  --time=10 \
+  --threads=4 \
+  --time=5 \
   --warmup-time=2 \
   --validate=off \
   --range_selects=off \

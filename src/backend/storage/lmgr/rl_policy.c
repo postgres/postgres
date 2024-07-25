@@ -14,25 +14,69 @@ static uint64_t get_cur_time_ns();
 
 LockFeature* LockFeatureVec = NULL;
 TrainingState* RLState = NULL;
+CachedPolicy* Policy = NULL;
+const uint32_t timeout_choices[10] = {1, 4, 8, 16, 64, 128, 256, 512, 1024, 0};
 
 static bool starts_with(const char *str, const char *pre) {
     return strncmp(pre, str, strlen(pre)) == 0;
 }
 
-void init_global_feature_collector()
+bool load_policy()
+{
+    FILE* pol_file;
+    int length;
+    char wait_policy_str[STATE_SPACE + 2];
+    char timeout_policy_str[STATE_SPACE + 2];
+
+    printf("starting load policy\n");
+    pol_file = fopen("/home/hexiang/Projects/CProj/pg-v12/postgres/policies.txt", "r");
+    if (!pol_file) {
+        perror("Failed to open file");
+        return false;
+    }
+
+    printf("starting load wait rank\n");
+    if (fgets(wait_policy_str, sizeof(wait_policy_str), pol_file) == NULL) {
+        perror("Failed to read wait_policy_str");
+        fclose(pol_file);
+        return false;
+    }
+
+    printf("starting load wait timeout\n");
+    if (fgets(timeout_policy_str, sizeof(timeout_policy_str), pol_file) == NULL) {
+        perror("Failed to read timeout_policy_str");
+        fclose(pol_file);
+        return false;
+    }
+    printf("strings are \n%s\n%s\n, %d - %d\n", wait_policy_str, timeout_policy_str, strlen(wait_policy_str), strlen(timeout_policy_str));
+    Assert(strlen(wait_policy_str) == strlen(timeout_policy_str));
+    length = (int) strlen(wait_policy_str) - 1;
+//    Assert(length == STATE_SPACE);
+    for (int i = 0; i < length; ++i) {
+        Assert(wait_policy_str[i] >= '0' && wait_policy_str[i] <= '9');
+        Policy->rank[i] = (uint32_t) (wait_policy_str[i] - '0');
+        Assert(timeout_policy_str[i] >= '0' && timeout_policy_str[i] <= '9');
+        Policy->timeout[i] = timeout_choices[timeout_policy_str[i] - '0'];
+    }
+    fclose(pol_file);
+    printf("finished load policies\n");
+    return true;
+}
+
+void init_policy_maker()
 {
     printf("2PL lock graph initialized (new)\n");
     LockFeatureVec = ShmemAllocUnlocked(sizeof (LockFeature) * LOCK_FEATURE_LEN);
+    Policy = ShmemAllocUnlocked(sizeof (CachedPolicy));
     for (int i=0;i<LOCK_FEATURE_LEN;i++)
     {
         SpinLockInit(&LockFeatureVec[i].mutex);
         LockFeatureVec[i].read_cnt = 0;
-        LockFeatureVec[i].avg_free_time = 0;
         LockFeatureVec[i].read_intention_cnt = 0;
         LockFeatureVec[i].write_cnt = 0;
         LockFeatureVec[i].write_intention_cnt = 0;
     }
-
+    Assert(load_policy());
 }
 
 static uint64_t get_cur_time_ns()
@@ -44,7 +88,7 @@ static uint64_t get_cur_time_ns()
 
 void refresh_lock_strategy()
 {
-    uint32 tid = MyProc->lxid;
+    uint32 tid = MyProc->lxid, state;
     Assert(RLState != NULL);
     Assert(RLState->cur_xact_id == tid);
 
@@ -56,11 +100,11 @@ void refresh_lock_strategy()
         return;
 
     RLState->step ++;
-    MyProc->rank = get_policy(tid);
-
+    state = RLState->step;
+    MyProc->rank = Policy->rank[state];
+    LockTimeout = (int) Policy->timeout[state];
     XactLockStrategy = LOCK_2PL;
     XactIsoLevel = XACT_READ_COMMITTED;
-
 
     Assert((!IsolationIsSerializable() && !IsolationNeedLock()) || IsolationLearnCC()
            || XactLockStrategy == DefaultXactLockStrategy || IsolationIsSerializable());
