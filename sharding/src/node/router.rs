@@ -1,16 +1,21 @@
 use postgres::{Client, NoTls};
 extern crate users;
-use rust_decimal::Decimal;
-use users::get_current_username;
-use std::{fs, io::Read, net::{SocketAddr, TcpListener, TcpStream}, sync::Mutex};
-use std::collections::HashMap;
-use std::hash::Hash;
-use super::node::*;
-use std::sync::Arc;
-use regex::Regex;
-use serde_yaml;
 use super::super::utils::hash::*;
 use super::super::utils::node_config::*;
+use super::node::*;
+use regex::Regex;
+use rust_decimal::Decimal;
+use serde_yaml;
+use std::collections::HashMap;
+use std::hash::Hash;
+use std::sync::Arc;
+use std::{
+    fs,
+    io::Read,
+    net::{SocketAddr, TcpListener, TcpStream},
+    sync::Mutex,
+};
+use users::get_current_username;
 
 pub struct Channel {
     stream: TcpStream,
@@ -36,16 +41,15 @@ pub struct Router {
 impl Router {
     /// Creates a new Router node with the given port
     pub fn new(ip: &str, port: &str) -> Self {
-
         // read from 'config.yaml' to get the ports
         let config_content = fs::read_to_string("../../../sharding/src/node/config.yaml")
-        .expect("Should have been able to read the file");
+            .expect("Should have been able to read the file");
 
         let config: NodeConfig = serde_yaml::from_str(&config_content)
         .expect("Should have been able to parse the YAML");
 
-        let mut shards : HashMap<String,Client> = HashMap::new();
-        let mut hash_id : HashMap<String, String> = HashMap::new();
+        let mut shards: HashMap<String, Client> = HashMap::new();
+        let mut hash_id: HashMap<String, String> = HashMap::new();
 
         for node in config.nodes {
             let node_ip = node.ip;
@@ -72,7 +76,6 @@ impl Router {
                     println!("Failed to connect to port: {}", node_port);
                 }, // Do something here
             }
-
         }
 
         if shards.is_empty() {
@@ -87,20 +90,25 @@ impl Router {
             ip: Arc::from(ip),
             port: Arc::from(port),
         };
-        
+
         // tokio::spawn(async move {
         //     Router::cluster_management_protocol(&router);
-            
+
         // });
         router
     }
 
     fn connect(ip: &str, port: &str, username: String) -> Result<Client, postgres::Error> {
-        match Client::connect(format!("host={} port={} user={} dbname=template1", ip, port, username).as_str(), NoTls) {
+        match Client::connect(
+            format!(
+                "host={} port={} user={} dbname=template1",
+                ip, port, username
+            )
+            .as_str(),
+            NoTls,
+        ) {
             Ok(shard_client) => Ok(shard_client),
-            Err(e) => {
-                Err(e)
-            }
+            Err(e) => Err(e),
         }
     }
 
@@ -152,36 +160,41 @@ impl Router {
         }
     }
 
-    /// Function that receives a query and checks for client
+    /// Function that receives a query and checks for shards
     /// with corresponding data
-    pub fn get_clients_for_query(&self, query: &str) -> Vec<String> {
-        // If it's an INSERT query return specific Clients
+    pub fn get_shards_for_query(&self, query: &str) -> Vec<String> {
+        // If it's an INSERT query return specific Shards
         if query.to_uppercase().starts_with("INSERT") {
-            //  Extract fields in Query
+            println!("Query is INSERT");
+            // Extract fields in Query
             let data_to_hash = Self::extract_data_from_insert_query(query);
             //  Hash every field
             let hashes = hash_data(data_to_hash);
             let shards = self.shards.lock().unwrap();
-            let mut clients = Vec::new();
-            //  For every hash, check if a client has that info
+            let mut shard_ids = Vec::new();
+            // For every hash, check if a shard has that info
             for hash in hashes {
-                if let Some(_client) = shards.get(&hash) {
-                    clients.push(self.hash_id.lock().unwrap().get(&hash).unwrap().to_string());
+                if let Some(_shard) = shards.get(&hash) {
+                    if let Some(shard_id) = self.hash_id.lock().unwrap().get(&hash) {
+                        shard_ids.push(shard_id.clone());
+                    }
                 }
             }
-            clients
+            shard_ids
         } else {
-            // Return all clients
+            // Return all shards
+            println!("Returning all shards");
             let shards = self.hash_id.lock().unwrap();
             shards.values().cloned().collect()
         }
     }
-    
+
     fn extract_data_from_insert_query(query: &str) -> Vec<String> {
         let re = Regex::new(r"(?i)INSERT INTO [^(]+ \([^)]*\) VALUES \(([^)]+)\)").unwrap();
         if let Some(captures) = re.captures(query) {
             if let Some(values_str) = captures.get(1) {
-                return values_str.as_str()
+                return values_str
+                    .as_str()
                     .split(',')
                     .map(|s| s.trim().trim_matches('\'').to_string())
                     .collect();
@@ -194,36 +207,39 @@ impl Router {
 impl NodeRole for Router {
     fn send_query(&mut self, query: &str) -> bool {
         println!("Router send_query called with query: {:?}", query);
-        //  TODO: THIS GET MUT IS DUMMY, IT MIGHT FAIL IF DATA IS IN ANOTHER CLIENT
-        if let Some(mut client) = self.shards.lock().unwrap().get_mut("5434") {
-            let rows = match client.query(query, &[]) {
-                Ok(rows) => rows,
-                Err(e) => {
-                    eprintln!("Failed to send the query to the shard: {:?}", e);
-                    return false;
-                }
-            };
 
-            for row in rows {
-                let id: i32 = row.get(0);
-                let name: &str = row.get(1);
-                let position: &str = row.get(2);
-                let salary: Decimal = row.get(3);
-                println!(
-                    "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-                    id, name, position, salary
-                );
-            }
-        } else {
-            eprintln!("Shard not found");
+        let shards = self.get_shards_for_query(query);
+
+        if shards.len() == 0 {
+            eprintln!("No shards found for the query");
             return false;
         }
 
-        return true
+        for shard in shards {
+            if let Some(mut shard) = self.shards.lock().unwrap().get_mut(&shard) {
+                let rows = match shard.query(query, &[]) {
+                    Ok(rows) => rows,
+                    Err(e) => {
+                        eprintln!("Failed to send the query to the shard: {:?}", e);
+                        return false;
+                    }
+                };
+
+                for row in rows {
+                    let id: i32 = row.get(0);
+                    let name: &str = row.get(1);
+                    let position: &str = row.get(2);
+                    let salary: Decimal = row.get(3);
+                    println!(
+                        "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
+                        id, name, position, salary
+                    );
+                }
+            } else {
+                eprintln!("Shard not found");
+                return false;
+            }
+        }
+        true
     }
-}
-
-impl Router {
-
-
 }
