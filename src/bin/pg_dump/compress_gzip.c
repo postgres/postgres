@@ -154,7 +154,7 @@ WriteDataToArchiveGzip(ArchiveHandle *AH, CompressorState *cs,
 {
 	GzipCompressorState *gzipcs = (GzipCompressorState *) cs->private_data;
 
-	gzipcs->zp->next_in = (void *) unconstify(void *, data);
+	gzipcs->zp->next_in = data;
 	gzipcs->zp->avail_in = dLen;
 	DeflateCompressorCommon(AH, cs, false);
 }
