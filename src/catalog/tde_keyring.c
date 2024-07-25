@@ -10,6 +10,7 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "funcapi.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "access/pg_tde_xlog.h"
@@ -34,6 +35,8 @@
 PG_FUNCTION_INFO_V1(pg_tde_add_key_provider_internal);
 Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
 
+PG_FUNCTION_INFO_V1(pg_tde_list_all_key_providers);
+Datum pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
 
 #define PG_TDE_KEYRING_FILENAME "pg_tde_keyrings"
 /*
@@ -51,6 +54,7 @@ Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
  */
 #define FILE_KEYRING_PATH_KEY "path"
 #define FILE_KEYRING_TYPE_KEY "type"
+#define PG_TDE_LIST_PROVIDERS_COLS 4
 
 typedef enum ProviderScanType
 {
@@ -70,7 +74,7 @@ static char *get_keyring_infofile_path(char *resPath, Oid dbOid, Oid spcOid);
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static uint32 write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, Oid tablespace_id, off_t position, bool redo);
 static uint32 save_new_key_provider_info(KeyringProvideRecord *provider);
-
+static const char *get_keyring_provider_typename(ProviderType p_type);
 static Size initialize_shared_state(void *start_address);
 static Size required_shared_mem_size(void);
 
@@ -141,8 +145,22 @@ get_keyring_provider_from_typename(char *provider_type)
 	return UNKNOWN_KEY_PROVIDER;
 }
 
-static GenericKeyring *
-load_keyring_provider_from_record(KeyringProvideRecord* provider)
+static const char *
+get_keyring_provider_typename(ProviderType p_type)
+{
+	switch (p_type)
+	{
+	case FILE_KEY_PROVIDER:
+		return FILE_KEYRING_TYPE;
+	case VAULT_V2_KEY_PROVIDER:
+		return VAULTV2_KEYRING_TYPE;
+	default:
+		break;
+	}
+	return NULL;
+}
+
+static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *provider)
 {
 	Datum option_datum;
 	GenericKeyring *keyring = NULL;
@@ -155,6 +173,7 @@ load_keyring_provider_from_record(KeyringProvideRecord* provider)
 		keyring->key_id = provider->provider_id;
 		strncpy(keyring->provider_name, provider->provider_name, sizeof(keyring->provider_name));
 		keyring->type = provider->provider_type;
+		strncpy(keyring->options, provider->options, sizeof(keyring->options));
 		debug_print_kerying(keyring);
 	}
 	return keyring;
@@ -512,4 +531,59 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 	save_new_key_provider_info(&provider);
 
 	PG_RETURN_INT32(provider.provider_id);
+}
+
+Datum
+pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
+{
+	List* all_providers = GetAllKeyringProviders();
+	ListCell *lc;
+	Tuplestorestate *tupstore;
+	TupleDesc tupdesc;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo;
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("pg_tde_list_all_key_providers: set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("pg_tde_list_all_key_providers: materialize mode required, but it is not allowed in this context")));
+
+	/* Switch into long-lived context to construct returned data structures */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "pg_tde_list_all_key_providers: return type must be a row type");
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	foreach (lc, all_providers)
+	{
+		Datum values[PG_TDE_LIST_PROVIDERS_COLS] = {0};
+		bool nulls[PG_TDE_LIST_PROVIDERS_COLS] = {0};
+		GenericKeyring *keyring = (GenericKeyring *)lfirst(lc);
+		int i = 0;
+
+		values[i++] = Int32GetDatum(keyring->key_id);
+		values[i++] = CStringGetTextDatum(keyring->provider_name);
+		values[i++] = CStringGetTextDatum(get_keyring_provider_typename(keyring->type));
+		values[i++] = CStringGetTextDatum(keyring->options);
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+		debug_print_kerying(keyring);
+	}
+	tuplestore_donestoring(tupstore);
+	list_free_deep(all_providers);
+	return (Datum)0;
 }

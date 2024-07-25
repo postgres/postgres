@@ -56,6 +56,15 @@ AS $$
 $$
 LANGUAGE SQL;
 
+CREATE FUNCTION pg_tde_list_all_key_providers
+    (OUT id INT,
+    OUT provider_name VARCHAR(128),
+    OUT provider_type VARCHAR(10),
+    OUT options JSON)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT VOLATILE;
+
 -- Table access method
 CREATE FUNCTION pg_tdeam_basic_handler(internal)
 RETURNS table_am_handler

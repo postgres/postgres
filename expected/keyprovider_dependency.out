@@ -17,6 +17,14 @@ SELECT pg_tde_add_key_provider_vault_v2('V2-vault','vault-token','percona.com/va
                                 3
 (1 row)
 
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                                                                    options                                                                    
+----+---------------+---------------+-----------------------------------------------------------------------------------------------------------------------------------------------
+  1 | mk-file       | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+  2 | free-file     | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_2.per"}
+  3 | V2-vault      | vault-v2      | {"type" : "vault-v2", "url" : "percona.com/vault-v2/percona", "token" : "vault-token", "mountPath" : "/mount/dev", "caPath" : "ca-cert-auth"}
+(3 rows)
+
 SELECT pg_tde_set_principal_key('test-db-principal-key','mk-file');
  pg_tde_set_principal_key 
 --------------------------

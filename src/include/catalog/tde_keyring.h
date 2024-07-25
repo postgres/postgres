@@ -38,6 +38,7 @@ typedef struct GenericKeyring
 	ProviderType type; /* Must be the first field */
 	Oid key_id;
 	char provider_name[MAX_PROVIDER_NAME_LEN];
+	char options[MAX_KEYRING_OPTION_LEN]; /* User provided options string*/
 } GenericKeyring;
 
 typedef struct FileKeyring
