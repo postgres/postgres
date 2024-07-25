@@ -3426,7 +3426,6 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>regexp_replace</primary>
         </indexterm>
         <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type>
-         [, <parameter>start</parameter> <type>integer</type> ]
          [, <parameter>flags</parameter> <type>text</type> ] )
         <returnvalue>text</returnvalue>
        </para>
@@ -3445,20 +3444,27 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type>,
-         <parameter>start</parameter> <type>integer</type>,
-         <parameter>N</parameter> <type>integer</type>
-         [, <parameter>flags</parameter> <type>text</type> ] )
+         <parameter>start</parameter> <type>integer</type>
+         [, <parameter>N</parameter> <type>integer</type>
+         [, <parameter>flags</parameter> <type>text</type> ] ] )
         <returnvalue>text</returnvalue>
        </para>
        <para>
         Replaces the substring that is the <parameter>N</parameter>'th
         match to the POSIX regular expression <parameter>pattern</parameter>,
-        or all such matches if <parameter>N</parameter> is zero; see
+        or all such matches if <parameter>N</parameter> is zero, with the
+        search beginning at the <parameter>start</parameter>'th character
+        of <parameter>string</parameter>.  If <parameter>N</parameter> is
+        omitted, it defaults to 1.  See
         <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
         <literal>regexp_replace('Thomas', '.', 'X', 3, 2)</literal>
         <returnvalue>ThoXas</returnvalue>
+       </para>
+       <para>
+        <literal>regexp_replace(string=>'hello world', pattern=>'l', replacement=>'XX', start=>1, "N"=>2)</literal>
+        <returnvalue>helXXo world</returnvalue>
        </para></entry>
       </row>
 
@@ -5963,7 +5969,7 @@ regexp_count('ABCABCAXYaxy', 'A.', 1, 'i')  <lineannotation>4</lineannotation>
 <programlisting>
 regexp_instr('number of your street, town zip, FR', '[^,]+', 1, 2)
                                    <lineannotation>23</lineannotation>
-regexp_instr('ABCDEFGHI', '(c..)(...)', 1, 1, 0, 'i', 2)
+regexp_instr(string=>'ABCDEFGHI', pattern=>'(c..)(...)', start=>1, "N"=>1, endoption=>0, flags=>'i', subexpr=>2)
                                    <lineannotation>6</lineannotation>
 </programlisting>
     </para>
@@ -6109,7 +6115,7 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
      The <function>regexp_replace</function> function provides substitution of
      new text for substrings that match POSIX regular expression patterns.
      It has the syntax
-     <function>regexp_replace</function>(<replaceable>source</replaceable>,
+     <function>regexp_replace</function>(<replaceable>string</replaceable>,
      <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>
      <optional>, <replaceable>start</replaceable>
      <optional>, <replaceable>N</replaceable>
@@ -6118,9 +6124,9 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
      (Notice that <replaceable>N</replaceable> cannot be specified
      unless <replaceable>start</replaceable> is,
      but <replaceable>flags</replaceable> can be given in any case.)
-     The <replaceable>source</replaceable> string is returned unchanged if
+     The source <replaceable>string</replaceable> is returned unchanged if
      there is no match to the <replaceable>pattern</replaceable>.  If there is a
-     match, the <replaceable>source</replaceable> string is returned with the
+     match, the <replaceable>string</replaceable> is returned with the
      <replaceable>replacement</replaceable> string substituted for the matching
      substring.  The <replaceable>replacement</replaceable> string can contain
      <literal>\</literal><replaceable>n</replaceable>, where <replaceable>n</replaceable> is 1
@@ -6161,7 +6167,7 @@ regexp_replace('foobarbaz', 'b(..)', 'X\1Y', 'g')
                                    <lineannotation>fooXarYXazY</lineannotation>
 regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 0, 'i')
                                    <lineannotation>X PXstgrXSQL fXnctXXn</lineannotation>
-regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 3, 'i')
+regexp_replace(string=>'A PostgreSQL function', pattern=>'a|e|i|o|u', replacement=>'X', start=>1, "N"=>3, flags=>'i')
                                    <lineannotation>A PostgrXSQL function</lineannotation>
 </programlisting>
    </para>

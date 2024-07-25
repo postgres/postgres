@@ -4,6 +4,7 @@ MODULES = citext
 
 EXTENSION = citext
 DATA = citext--1.4.sql \
+	citext--1.6--1.7.sql \
 	citext--1.5--1.6.sql \
 	citext--1.4--1.5.sql \
 	citext--1.3--1.4.sql \
