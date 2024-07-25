@@ -33,6 +33,11 @@
 #include "utils/memutils.h"
 
 
+/* silence -Wmissing-variable-declarations */
+extern int boot_yychar;
+extern int boot_yynerrs;
+
+
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents

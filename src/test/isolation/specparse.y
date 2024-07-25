@@ -14,6 +14,9 @@
 
 #include "isolationtester.h"
 
+/* silence -Wmissing-variable-declarations */
+extern int spec_yychar;
+extern int spec_yynerrs;
 
 TestSpec		parseresult;			/* result of parsing is left here */
 

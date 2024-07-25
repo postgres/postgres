@@ -27,6 +27,10 @@
 #include "plpgsql.h"
 
 
+/* silence -Wmissing-variable-declarations */
+extern int plpgsql_yychar;
+extern int plpgsql_yynerrs;
+
 /* Location tracking support --- simpler than bison's default */
 #define YYLLOC_DEFAULT(Current, Rhs, N) \
 	do { \

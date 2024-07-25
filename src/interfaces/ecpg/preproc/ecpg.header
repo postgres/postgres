@@ -8,6 +8,10 @@
 #include "ecpg_config.h"
 #include <unistd.h>
 
+/* silence -Wmissing-variable-declarations */
+extern int base_yychar;
+extern int base_yynerrs;
+
 /* Location tracking support --- simpler than bison's default */
 #define YYLLOC_DEFAULT(Current, Rhs, N) \
 	do { \
