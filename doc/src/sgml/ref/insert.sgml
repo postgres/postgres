@@ -26,7 +26,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
     [ OVERRIDING { SYSTEM | USER } VALUE ]
     { DEFAULT VALUES | VALUES ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) [, ...] | <replaceable class="parameter">query</replaceable> }
     [ ON CONFLICT [ <replaceable class="parameter">conflict_target</replaceable> ] <replaceable class="parameter">conflict_action</replaceable> ]
-    [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
+    [ RETURNING { * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] } [, ...] ]
 
 <phrase>where <replaceable class="parameter">conflict_target</replaceable> can be one of:</phrase>
 
