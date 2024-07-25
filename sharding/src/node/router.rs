@@ -16,6 +16,7 @@ use std::{
     sync::Mutex,
 };
 use users::get_current_username;
+// use super::super::utils::sysinfo::print_available_memory;
 
 pub struct Channel {
     stream: TcpStream,
@@ -166,41 +167,15 @@ impl Router {
         // If it's an INSERT query return specific Shards
         if query.to_uppercase().starts_with("INSERT") {
             println!("Query is INSERT");
-            // Extract fields in Query
-            let data_to_hash = Self::extract_data_from_insert_query(query);
-            //  Hash every field
-            let hashes = hash_data(data_to_hash);
-            let shards = self.shards.lock().unwrap();
-            let mut shard_ids = Vec::new();
-            // For every hash, check if a shard has that info
-            for hash in hashes {
-                if let Some(_shard) = shards.get(&hash) {
-                    if let Some(shard_id) = self.hash_id.lock().unwrap().get(&hash) {
-                        shard_ids.push(shard_id.clone());
-                    }
-                }
-            }
-            shard_ids
+
+            // TODO-SHARD: Elegir un shard, el que tenga menor cargo o algo, etc
+            return vec!["5433".to_string()]
         } else {
             // Return all shards
             println!("Returning all shards");
             let shards = self.hash_id.lock().unwrap();
             shards.values().cloned().collect()
         }
-    }
-
-    fn extract_data_from_insert_query(query: &str) -> Vec<String> {
-        let re = Regex::new(r"(?i)INSERT INTO [^(]+ \([^)]*\) VALUES \(([^)]+)\)").unwrap();
-        if let Some(captures) = re.captures(query) {
-            if let Some(values_str) = captures.get(1) {
-                return values_str
-                    .as_str()
-                    .split(',')
-                    .map(|s| s.trim().trim_matches('\'').to_string())
-                    .collect();
-            }
-        }
-        Vec::new()
     }
 }
 
