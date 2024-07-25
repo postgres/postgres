@@ -9,13 +9,14 @@ use super::node::*;
 pub struct Shard<'a> {
     // router: Client,
     backend: Client,
+    ip: &'a str,
     port: &'a str,
     // TODO-SHARD: add an attribute for the shard's network
 }
 
 impl<'a> Shard<'a> {
     /// Creates a new Shard node with the given port
-    pub fn new(port: &'a str) -> Self {
+    pub fn new(ip: &'a str, port: &'a str) -> Self {
         println!("Creating a new Shard node with port: {}", port);
 
         // get username dynamically
@@ -41,6 +42,7 @@ impl<'a> Shard<'a> {
         Shard {
             // router: clients,
             backend,
+            ip,
             port
         }
     }
