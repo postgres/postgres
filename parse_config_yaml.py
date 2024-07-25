@@ -4,7 +4,7 @@ import sys
 def get_ports(config_file):
     with open(config_file, 'r') as file:
         config = yaml.safe_load(file)
-        ports = [server['port'] for server in config['servers']]
+        ports = [node['port'] for node in config['nodes']]
         for port in ports:
             print(port)
 

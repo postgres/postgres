@@ -70,7 +70,7 @@ cd $PG_CTL_DIR
 
 # If "start" argument is provided, run start-psql.sh
 if [ "$START_PSQL" == "start" ]; then
-    echo "[init-server] Calling start-psql.sh with nodeType "$NODE_TYPE"..."
+    echo "[init-server] Calling start-psql.sh with nodeType "$NODE_TYPE" and port "$selected_port"..."
     # Pass the necessary argument to start-psql.sh
     cd $ROOT_DIR
     ./start-psql.sh $selected_port $NODE_TYPE
