@@ -1,2 +1,2 @@
 pub mod hash;
-pub mod server_config;
+pub mod node_config;

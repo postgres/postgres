@@ -10,7 +10,7 @@ use std::sync::Arc;
 use regex::Regex;
 use serde_yaml;
 use super::super::utils::hash::*;
-use super::super::utils::server_config::*;
+use super::super::utils::node_config::*;
 
 pub struct Channel {
     stream: TcpStream,
@@ -41,17 +41,17 @@ impl Router {
         let config_content = fs::read_to_string("../../../sharding/src/node/config.yaml")
         .expect("Should have been able to read the file");
 
-        let config: ServerConfig = serde_yaml::from_str(&config_content)
+        let config: NodeConfig = serde_yaml::from_str(&config_content)
         .expect("Should have been able to parse the YAML");
 
         let mut shards : HashMap<String,Client> = HashMap::new();
         let mut hash_id : HashMap<String, String> = HashMap::new();
 
-        for server in config.servers {
-            let server_ip = server.ip;
-            let server_port = server.port;
+        for node in config.nodes {
+            let node_ip = node.ip;
+            let node_port = node.port;
 
-            if (server_ip == ip) && (server_port == port) {
+            if (node_ip == ip) && (node_port == port) {
                 continue
             }
 
@@ -61,15 +61,15 @@ impl Router {
                 None => panic!("Failed to get current username"),
             };
 
-            match Router::connect(&server_ip, &server_port, username) {
+            match Router::connect(&node_ip, &node_port, username) {
                 Ok(shard_client) => {
-                    println!("Connected to ip {} and port: {}", server_ip, server_port);
-                    let hash = hash_shard(&server_ip, &server_port);
-                    shards.insert(server_port.to_string(), shard_client);
-                    hash_id.insert(hash.clone(), server_port.clone().to_string());
+                    println!("Connected to ip {} and port: {}", node_ip, node_port);
+                    let hash = hash_shard(&node_ip, &node_port);
+                    shards.insert(node_port.to_string(), shard_client);
+                    hash_id.insert(hash.clone(), node_port.clone().to_string());
                 },
                 Err(e) => {
-                    println!("Failed to connect to port: {}", server_port);
+                    println!("Failed to connect to port: {}", node_port);
                 }, // Do something here
             }
 
@@ -107,9 +107,9 @@ impl Router {
     /// This function is the cluster management protocol for the Router node. It listens to incoming connections from Shards and handles them. This might be used in the future for sending routing tables, reassigning shards, rebalancing, etc.
     fn cluster_management_protocol(router: &Router) {
 
-        let server_addr = "localhost:".to_string() + router.port.as_ref();
-        let listener = TcpListener::bind(&server_addr).unwrap();
-        println!("Router is listening for connections {}", server_addr);
+        let node_addr = "localhost:".to_string() + router.port.as_ref();
+        let listener = TcpListener::bind(&node_addr).unwrap();
+        println!("Router is listening for connections {}", node_addr);
 
         loop {
             let (incoming_socket, addr) = listener.accept().unwrap();
@@ -160,7 +160,7 @@ impl Router {
             //  Extract fields in Query
             let data_to_hash = Self::extract_data_from_insert_query(query);
             //  Hash every field
-            let hashes = self.hash_data(data_to_hash);
+            let hashes = hash_data(data_to_hash);
             let shards = self.shards.lock().unwrap();
             let mut clients = Vec::new();
             //  For every hash, check if a client has that info
@@ -216,8 +216,10 @@ impl NodeRole for Router {
             }
         } else {
             eprintln!("Shard not found");
-            false
+            return false;
         }
+
+        return true
     }
 }
 

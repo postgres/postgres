@@ -48,7 +48,7 @@ port_available() {
 }
 
 # Read ports from config.yaml using the Python script
-ports=($(python3 parse_yaml.py $CONFIG_FILE))
+ports=($(python3 parse_config_yaml.py $CONFIG_FILE))
 
 # Find an available port
 selected_port=""
