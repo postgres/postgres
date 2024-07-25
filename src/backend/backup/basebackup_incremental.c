@@ -441,7 +441,8 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 						 errmsg("manifest requires WAL from final timeline %u ending at %X/%X, but this backup starts at %X/%X",
 								range->tli,
 								LSN_FORMAT_ARGS(range->end_lsn),
-								LSN_FORMAT_ARGS(backup_state->startpoint))));
+								LSN_FORMAT_ARGS(backup_state->startpoint)),
+						 errhint("This can happen for incremental backups on a standby if there was little activity since the previous backup.")));
 		}
 		else
 		{
