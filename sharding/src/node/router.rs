@@ -1,13 +1,11 @@
 use postgres::{Client, NoTls};
 extern crate users;
-use super::super::utils::hash::*;
 use super::super::utils::node_config::*;
 use super::node::*;
 use regex::Regex;
 use rust_decimal::Decimal;
 use serde_yaml;
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::sync::Arc;
 use std::{
     fs,
@@ -36,7 +34,6 @@ pub struct Router {
     comm_channels: Mutex<Vec<Channel>>,
     ip: Arc<str>,
     port: Arc<str>,
-    // TODO-SHARD: add hash table for routing
 }
 
 impl Router {
@@ -69,7 +66,7 @@ impl Router {
             match Router::connect(&node_ip, &node_port, username) {
                 Ok(shard_client) => {
                     println!("Connected to ip {} and port: {}", node_ip, node_port);
-                    let hash = hash_shard(&node_ip, &node_port);
+                    let hash = "TODO-SHARD change this".to_string();
                     shards.insert(node_port.to_string(), shard_client);
                     hash_id.insert(hash.clone(), node_port.clone().to_string());
                 },
