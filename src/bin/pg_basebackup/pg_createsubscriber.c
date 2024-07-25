@@ -1054,7 +1054,7 @@ drop_existing_subscriptions(PGconn *conn, const char *subname, const char *dbnam
 					  subname);
 	appendPQExpBuffer(query, " DROP SUBSCRIPTION %s;", subname);
 
-	pg_log_info("dropping subscription \"%s\" on database \"%s\"",
+	pg_log_info("dropping subscription \"%s\" in database \"%s\"",
 				subname, dbname);
 
 	if (!dry_run)
@@ -1299,7 +1299,7 @@ create_logical_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo)
 
 	Assert(conn != NULL);
 
-	pg_log_info("creating the replication slot \"%s\" on database \"%s\"",
+	pg_log_info("creating the replication slot \"%s\" in database \"%s\"",
 				slot_name, dbinfo->dbname);
 
 	slot_name_esc = PQescapeLiteral(conn, slot_name, strlen(slot_name));
@@ -1317,7 +1317,7 @@ create_logical_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo)
 		res = PQexec(conn, str->data);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			pg_log_error("could not create replication slot \"%s\" on database \"%s\": %s",
+			pg_log_error("could not create replication slot \"%s\" in database \"%s\": %s",
 						 slot_name, dbinfo->dbname,
 						 PQresultErrorMessage(res));
 			PQclear(res);
@@ -1347,7 +1347,7 @@ drop_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo,
 
 	Assert(conn != NULL);
 
-	pg_log_info("dropping the replication slot \"%s\" on database \"%s\"",
+	pg_log_info("dropping the replication slot \"%s\" in database \"%s\"",
 				slot_name, dbinfo->dbname);
 
 	slot_name_esc = PQescapeLiteral(conn, slot_name, strlen(slot_name));
@@ -1363,7 +1363,7 @@ drop_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo,
 		res = PQexec(conn, str->data);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			pg_log_error("could not drop replication slot \"%s\" on database \"%s\": %s",
+			pg_log_error("could not drop replication slot \"%s\" in database \"%s\": %s",
 						 slot_name, dbinfo->dbname, PQresultErrorMessage(res));
 			dbinfo->made_replslot = false;	/* don't try again. */
 		}
@@ -1570,7 +1570,7 @@ create_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
 	PQclear(res);
 	resetPQExpBuffer(str);
 
-	pg_log_info("creating publication \"%s\" on database \"%s\"",
+	pg_log_info("creating publication \"%s\" in database \"%s\"",
 				dbinfo->pubname, dbinfo->dbname);
 
 	appendPQExpBuffer(str, "CREATE PUBLICATION %s FOR ALL TABLES",
@@ -1583,7 +1583,7 @@ create_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
 		res = PQexec(conn, str->data);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			pg_log_error("could not create publication \"%s\" on database \"%s\": %s",
+			pg_log_error("could not create publication \"%s\" in database \"%s\": %s",
 						 dbinfo->pubname, dbinfo->dbname, PQresultErrorMessage(res));
 			disconnect_database(conn, true);
 		}
@@ -1612,7 +1612,7 @@ drop_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
 
 	pubname_esc = PQescapeIdentifier(conn, dbinfo->pubname, strlen(dbinfo->pubname));
 
-	pg_log_info("dropping publication \"%s\" on database \"%s\"",
+	pg_log_info("dropping publication \"%s\" in database \"%s\"",
 				dbinfo->pubname, dbinfo->dbname);
 
 	appendPQExpBuffer(str, "DROP PUBLICATION %s", pubname_esc);
@@ -1626,7 +1626,7 @@ drop_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
 		res = PQexec(conn, str->data);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			pg_log_error("could not drop publication \"%s\" on database \"%s\": %s",
+			pg_log_error("could not drop publication \"%s\" in database \"%s\": %s",
 						 dbinfo->pubname, dbinfo->dbname, PQresultErrorMessage(res));
 			dbinfo->made_publication = false;	/* don't try again. */
 
@@ -1672,7 +1672,7 @@ create_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 	pubconninfo_esc = PQescapeLiteral(conn, dbinfo->pubconninfo, strlen(dbinfo->pubconninfo));
 	replslotname_esc = PQescapeLiteral(conn, dbinfo->replslotname, strlen(dbinfo->replslotname));
 
-	pg_log_info("creating subscription \"%s\" on database \"%s\"",
+	pg_log_info("creating subscription \"%s\" in database \"%s\"",
 				dbinfo->subname, dbinfo->dbname);
 
 	appendPQExpBuffer(str,
@@ -1693,7 +1693,7 @@ create_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 		res = PQexec(conn, str->data);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			pg_log_error("could not create subscription \"%s\" on database \"%s\": %s",
+			pg_log_error("could not create subscription \"%s\" in database \"%s\": %s",
 						 dbinfo->subname, dbinfo->dbname, PQresultErrorMessage(res));
 			disconnect_database(conn, true);
 		}
@@ -1769,7 +1769,7 @@ set_replication_progress(PGconn *conn, const struct LogicalRepInfo *dbinfo, cons
 	 */
 	originname = psprintf("pg_%u", suboid);
 
-	pg_log_info("setting the replication progress (node name \"%s\" ; LSN %s) on database \"%s\"",
+	pg_log_info("setting the replication progress (node name \"%s\" ; LSN %s) in database \"%s\"",
 				originname, lsnstr, dbinfo->dbname);
 
 	resetPQExpBuffer(str);
@@ -1815,7 +1815,7 @@ enable_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 
 	subname = PQescapeIdentifier(conn, dbinfo->subname, strlen(dbinfo->subname));
 
-	pg_log_info("enabling subscription \"%s\" on database \"%s\"",
+	pg_log_info("enabling subscription \"%s\" in database \"%s\"",
 				dbinfo->subname, dbinfo->dbname);
 
 	appendPQExpBuffer(str, "ALTER SUBSCRIPTION %s ENABLE", subname);
