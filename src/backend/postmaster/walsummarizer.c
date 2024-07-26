@@ -388,13 +388,27 @@ WalSummarizerMain(char *startup_data, size_t startup_data_len)
 
 		/*
 		 * If we've reached the switch LSN, we can't summarize anything else
-		 * on this timeline. Switch to the next timeline and go around again.
+		 * on this timeline. Switch to the next timeline and go around again,
+		 * backing up to the exact switch point if we passed it.
 		 */
 		if (!XLogRecPtrIsInvalid(switch_lsn) && current_lsn >= switch_lsn)
 		{
+			/* Restart summarization from switch point. */
 			current_tli = switch_tli;
+			current_lsn = switch_lsn;
+
+			/* Next timeline and switch point, if any, not yet known. */
 			switch_lsn = InvalidXLogRecPtr;
 			switch_tli = 0;
+
+			/* Update (really, rewind, if needed) state in shared memory. */
+			LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
+			WalSummarizerCtl->summarized_lsn = current_lsn;
+			WalSummarizerCtl->summarized_tli = current_tli;
+			WalSummarizerCtl->lsn_is_exact = true;
+			WalSummarizerCtl->pending_lsn = current_lsn;
+			LWLockRelease(WALSummarizerLock);
+
 			continue;
 		}
 
@@ -415,7 +429,6 @@ WalSummarizerMain(char *startup_data, size_t startup_data_len)
 
 		/* Update state in shared memory. */
 		LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
-		Assert(WalSummarizerCtl->pending_lsn <= end_of_summary_lsn);
 		WalSummarizerCtl->summarized_lsn = end_of_summary_lsn;
 		WalSummarizerCtl->summarized_tli = current_tli;
 		WalSummarizerCtl->lsn_is_exact = true;
@@ -1060,7 +1073,6 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 
 		/* Also update shared memory. */
 		LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
-		Assert(summary_end_lsn >= WalSummarizerCtl->pending_lsn);
 		Assert(summary_end_lsn >= WalSummarizerCtl->summarized_lsn);
 		WalSummarizerCtl->pending_lsn = summary_end_lsn;
 		LWLockRelease(WALSummarizerLock);
@@ -1460,17 +1472,11 @@ summarizer_read_local_xlog_page(XLogReaderState *state,
 					 * Allow reads up to exactly the switch point.
 					 *
 					 * It's possible that this will cause read_upto to move
-					 * backwards, because walreceiver might have read a
-					 * partial record and flushed it to disk, and we'd view
-					 * that data as safe to read. However, the
-					 * XLOG_END_OF_RECOVERY record will be written at the end
-					 * of the last complete WAL record, not at the end of the
-					 * WAL that we've flushed to disk.
-					 *
-					 * So switchpoint < private->read_upto is possible here,
-					 * but switchpoint < state->EndRecPtr should not be.
+					 * backwards, because we might have been promoted before
+					 * reaching the end of the previous timeline. In that case,
+					 * the next loop iteration will likely conclude that we've
+					 * reached end of WAL.
 					 */
-					Assert(switchpoint >= state->EndRecPtr);
 					private_data->read_upto = switchpoint;
 
 					/* Debugging output. */
