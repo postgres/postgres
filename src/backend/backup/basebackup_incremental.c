@@ -277,12 +277,6 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 	TimeLineID	earliest_wal_range_tli = 0;
 	XLogRecPtr	earliest_wal_range_start_lsn = InvalidXLogRecPtr;
 	TimeLineID	latest_wal_range_tli = 0;
-	XLogRecPtr	summarized_lsn;
-	XLogRecPtr	pending_lsn;
-	XLogRecPtr	prior_pending_lsn = InvalidXLogRecPtr;
-	int			deadcycles = 0;
-	TimestampTz initial_time,
-				current_time;
 
 	Assert(ib->buf.data == NULL);
 
@@ -458,85 +452,13 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 	}
 
 	/*
-	 * Wait for WAL summarization to catch up to the backup start LSN (but
-	 * time out if it doesn't do so quickly enough).
+	 * Wait for WAL summarization to catch up to the backup start LSN. This
+	 * will throw an error if the WAL summarizer appears to be stuck. If WAL
+	 * summarization gets disabled while we're waiting, this will return
+	 * immediately, and we'll error out further down if the WAL summaries are
+	 * incomplete.
 	 */
-	initial_time = current_time = GetCurrentTimestamp();
-	while (1)
-	{
-		long		timeout_in_ms = 10000;
-		long		elapsed_seconds;
-
-		/*
-		 * Align the wait time to prevent drift. This doesn't really matter,
-		 * but we'd like the warnings about how long we've been waiting to say
-		 * 10 seconds, 20 seconds, 30 seconds, 40 seconds ... without ever
-		 * drifting to something that is not a multiple of ten.
-		 */
-		timeout_in_ms -=
-			TimestampDifferenceMilliseconds(initial_time, current_time) %
-			timeout_in_ms;
-
-		/* Wait for up to 10 seconds. */
-		summarized_lsn = WaitForWalSummarization(backup_state->startpoint,
-												 timeout_in_ms, &pending_lsn);
-
-		/* If WAL summarization has progressed sufficiently, stop waiting. */
-		if (summarized_lsn >= backup_state->startpoint)
-			break;
-
-		/*
-		 * Keep track of the number of cycles during which there has been no
-		 * progression of pending_lsn. If pending_lsn is not advancing, that
-		 * means that not only are no new files appearing on disk, but we're
-		 * not even incorporating new records into the in-memory state.
-		 */
-		if (pending_lsn > prior_pending_lsn)
-		{
-			prior_pending_lsn = pending_lsn;
-			deadcycles = 0;
-		}
-		else
-			++deadcycles;
-
-		/*
-		 * If we've managed to wait for an entire minute without the WAL
-		 * summarizer absorbing a single WAL record, error out; probably
-		 * something is wrong.
-		 *
-		 * We could consider also erroring out if the summarizer is taking too
-		 * long to catch up, but it's not clear what rate of progress would be
-		 * acceptable and what would be too slow. So instead, we just try to
-		 * error out in the case where there's no progress at all. That seems
-		 * likely to catch a reasonable number of the things that can go wrong
-		 * in practice (e.g. the summarizer process is completely hung, say
-		 * because somebody hooked up a debugger to it or something) without
-		 * giving up too quickly when the system is just slow.
-		 */
-		if (deadcycles >= 6)
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("WAL summarization is not progressing"),
-					 errdetail("Summarization is needed through %X/%X, but is stuck at %X/%X on disk and %X/%X in memory.",
-							   LSN_FORMAT_ARGS(backup_state->startpoint),
-							   LSN_FORMAT_ARGS(summarized_lsn),
-							   LSN_FORMAT_ARGS(pending_lsn))));
-
-		/*
-		 * Otherwise, just let the user know what's happening.
-		 */
-		current_time = GetCurrentTimestamp();
-		elapsed_seconds =
-			TimestampDifferenceMilliseconds(initial_time, current_time) / 1000;
-		ereport(WARNING,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("still waiting for WAL summarization through %X/%X after %ld seconds",
-						LSN_FORMAT_ARGS(backup_state->startpoint),
-						elapsed_seconds),
-				 errdetail("Summarization has reached %X/%X on disk and %X/%X in memory.",
-						   LSN_FORMAT_ARGS(summarized_lsn),
-						   LSN_FORMAT_ARGS(pending_lsn))));
-	}
+	WaitForWalSummarization(backup_state->startpoint);
 
 	/*
 	 * Retrieve a list of all WAL summaries on any timeline that overlap with
