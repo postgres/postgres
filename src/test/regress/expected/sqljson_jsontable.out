@@ -227,11 +227,8 @@ SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
 
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
     COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo'::jsonb_test_domain ON EMPTY));
- js1 
------
- 
-(1 row)
-
+ERROR:  could not coerce ON EMPTY expression (DEFAULT) to the RETURNING type
+DETAIL:  value for domain jsonb_test_domain violates check constraint "jsonb_test_domain_check"
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
     COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo1'::jsonb_test_domain ON EMPTY));
  js1  
