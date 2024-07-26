@@ -33,6 +33,7 @@
 #include "tcop/backend_startup.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/injection_point.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
@@ -212,6 +213,21 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 					(errmsg("connection received: host=%s",
 							remote_host)));
 	}
+
+	/* For testing client error handling */
+#ifdef USE_INJECTION_POINTS
+	INJECTION_POINT("backend-initialize");
+	if (IS_INJECTION_POINT_ATTACHED("backend-initialize-v2-error"))
+	{
+		/*
+		 * This simulates an early error from a pre-v14 server, which used the
+		 * version 2 protocol for any errors that occurred before processing
+		 * the startup packet.
+		 */
+		FrontendProtocol = PG_PROTOCOL(2, 0);
+		elog(FATAL, "protocol version 2 error triggered");
+	}
+#endif
 
 	/*
 	 * If we did a reverse lookup to name, we might as well save the results

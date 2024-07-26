@@ -3673,6 +3673,31 @@ custom_injection_callback(const char *name, const void *private_data)
     </para>
 
     <para>
+     An alternative way to define the action to take when an injection point
+     is reached is to add the testing code alongside the normal source
+     code. This can be useful if the action e.g. depends on local variables
+     that are not accessible to loaded modules. The
+     <function>IS_INJECTION_POINT_ATTACHED</function> macro can then be used
+     to check if an injection point is attached, for example:
+<programlisting>
+#ifdef USE_INJECTION_POINTS
+if (IS_INJECTION_POINT_ATTACHED("before-foobar"))
+{
+    /* change a local variable if injection point is attached */
+    local_var = 123;
+
+    /* also execute the callback */
+    INJECTION_POINT_CACHED("before-foobar");
+}
+#endif
+</programlisting>
+     Note that the callback attached to the injection point will not be
+     executed by the <function>IS_INJECTION_POINT_ATTACHED</function>
+     macro. If you want to execute the callback, you must also call
+     <function>INJECTION_POINT_CACHED</function> like in the above example.
+    </para>
+
+    <para>
      Optionally, it is possible to detach an injection point by calling:
 <programlisting>
 extern bool InjectionPointDetach(const char *name);

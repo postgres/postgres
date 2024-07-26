@@ -570,3 +570,17 @@ InjectionPointCached(const char *name)
 	elog(ERROR, "Injection points are not supported by this build");
 #endif
 }
+
+/*
+ * Test if an injection point is defined.
+ */
+bool
+IsInjectionPointAttached(const char *name)
+{
+#ifdef USE_INJECTION_POINTS
+	return InjectionPointCacheRefresh(name) != NULL;
+#else
+	elog(ERROR, "Injection points are not supported by this build");
+	return false;				/* silence compiler */
+#endif
+}

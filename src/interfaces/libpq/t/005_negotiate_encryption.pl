@@ -90,6 +90,8 @@ my $kerberos_enabled =
   $ENV{PG_TEST_EXTRA} && $ENV{PG_TEST_EXTRA} =~ /\bkerberos\b/;
 my $ssl_supported = $ENV{with_ssl} eq 'openssl';
 
+my $injection_points_supported = $ENV{enable_injection_points} eq 'yes';
+
 ###
 ### Prepare test server for GSSAPI and SSL authentication, with a few
 ### different test users and helper functions. We don't actually
@@ -155,6 +157,10 @@ $node->safe_psql('postgres', 'CREATE USER ssluser;');
 $node->safe_psql('postgres', 'CREATE USER nossluser;');
 $node->safe_psql('postgres', 'CREATE USER gssuser;');
 $node->safe_psql('postgres', 'CREATE USER nogssuser;');
+if ($injection_points_supported != 0)
+{
+	$node->safe_psql('postgres', 'CREATE EXTENSION injection_points;');
+}
 
 my $unixdir = $node->safe_psql('postgres', 'SHOW unix_socket_directories;');
 chomp($unixdir);
@@ -312,6 +318,29 @@ nossluser   .            disable      postgres       connect, authok            
 		['disable'], \@all_sslmodes, \@all_sslnegotiations,
 		parse_table($test_table));
 
+	if ($injection_points_supported != 0)
+	{
+		$node->safe_psql(
+			'postgres',
+			"SELECT injection_points_attach('backend-initialize', 'error');",
+			connstr => "user=localuser host=$unixdir");
+		connect_test(
+			$node,
+			"user=testuser sslmode=prefer",
+			'connect, backenderror -> fail');
+		$node->restart;
+
+		$node->safe_psql(
+			'postgres',
+			"SELECT injection_points_attach('backend-initialize-v2-error', 'error');",
+			connstr => "user=localuser host=$unixdir");
+		connect_test(
+			$node,
+			"user=testuser sslmode=prefer",
+			'connect, v2error -> fail');
+		$node->restart;
+	}
+
 	# Disable SSL again
 	$node->adjust_conf('postgresql.conf', 'ssl', 'off');
 	$node->reload;
@@ -393,6 +422,29 @@ nogssuser   disable      disable      postgres       connect, authok            
 	test_matrix($node, [ 'testuser', 'gssuser', 'nogssuser' ],
 		\@all_gssencmodes, $sslmodes, $sslnegotiations,
 		parse_table($test_table));
+
+	if ($injection_points_supported != 0)
+	{
+		$node->safe_psql(
+			'postgres',
+			"SELECT injection_points_attach('backend-initialize', 'error');",
+			connstr => "user=localuser host=$unixdir");
+		connect_test(
+			$node,
+			"user=testuser gssencmode=prefer sslmode=disable",
+			'connect, backenderror, reconnect, backenderror -> fail');
+		$node->restart;
+
+		$node->safe_psql(
+			'postgres',
+			"SELECT injection_points_attach('backend-initialize-v2-error', 'error');",
+			connstr => "user=localuser host=$unixdir");
+		connect_test(
+			$node,
+			"user=testuser gssencmode=prefer sslmode=disable",
+			'connect, v2error -> fail');
+		$node->restart;
+	}
 }
 
 ###
@@ -738,6 +790,10 @@ sub parse_log_events
 		push @events, "gssreject" if $line =~ /GSSENCRequest rejected/;
 		push @events, "authfail" if $line =~ /no pg_hba.conf entry/;
 		push @events, "authok" if $line =~ /connection authenticated/;
+		push @events, "backenderror"
+		  if $line =~ /error triggered for injection point backend-/;
+		push @events, "v2error"
+		  if $line =~ /protocol version 2 error triggered/;
 	}
 
 	# No events at all is represented by "-"

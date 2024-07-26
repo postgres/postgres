@@ -18,10 +18,12 @@
 #define INJECTION_POINT_LOAD(name) InjectionPointLoad(name)
 #define INJECTION_POINT(name) InjectionPointRun(name)
 #define INJECTION_POINT_CACHED(name) InjectionPointCached(name)
+#define IS_INJECTION_POINT_ATTACHED(name) IsInjectionPointAttached(name)
 #else
 #define INJECTION_POINT_LOAD(name) ((void) name)
 #define INJECTION_POINT(name) ((void) name)
 #define INJECTION_POINT_CACHED(name) ((void) name)
+#define IS_INJECTION_POINT_ATTACHED(name) (false)
 #endif
 
 /*
@@ -41,6 +43,7 @@ extern void InjectionPointAttach(const char *name,
 extern void InjectionPointLoad(const char *name);
 extern void InjectionPointRun(const char *name);
 extern void InjectionPointCached(const char *name);
+extern bool IsInjectionPointAttached(const char *name);
 extern bool InjectionPointDetach(const char *name);
 
 #ifdef EXEC_BACKEND
