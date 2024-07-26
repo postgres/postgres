@@ -4284,13 +4284,12 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 	memset(&jsestate->error, 0, sizeof(NullableDatum));
 	memset(&jsestate->empty, 0, sizeof(NullableDatum));
 
-	/*
-	 * Also reset ErrorSaveContext contents for the next row.  Since we don't
-	 * set details_wanted, we don't need to also reset error_data, which would
-	 * be NULL anyway.
-	 */
-	Assert(!jsestate->escontext.details_wanted &&
-		   jsestate->escontext.error_data == NULL);
+	/* Also reset ErrorSaveContext contents for the next row. */
+	if (jsestate->escontext.details_wanted)
+	{
+		jsestate->escontext.error_data = NULL;
+		jsestate->escontext.details_wanted = false;
+	}
 	jsestate->escontext.error_occurred = false;
 
 	switch (jsexpr->op)
@@ -4400,6 +4399,14 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 			error = true;
 	}
 
+	/*
+	 * When setting up the ErrorSaveContext (if needed) for capturing the
+	 * errors that occur when coercing the JsonBehavior expression, set
+	 * details_wanted to be able to show the actual error message as the
+	 * DETAIL of the error message that tells that it is the JsonBehavior
+	 * expression that caused the error; see ExecEvalJsonCoercionFinish().
+	 */
+
 	/* Handle ON EMPTY. */
 	if (empty)
 	{
@@ -4410,6 +4417,9 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 			if (jsexpr->on_empty->btype != JSON_BEHAVIOR_ERROR)
 			{
 				jsestate->empty.value = BoolGetDatum(true);
+				/* Set up to catch coercion errors of the ON EMPTY value. */
+				jsestate->escontext.error_occurred = false;
+				jsestate->escontext.details_wanted = true;
 				Assert(jsestate->jump_empty >= 0);
 				return jsestate->jump_empty;
 			}
@@ -4417,6 +4427,9 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 		else if (jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR)
 		{
 			jsestate->error.value = BoolGetDatum(true);
+			/* Set up to catch coercion errors of the ON ERROR value. */
+			jsestate->escontext.error_occurred = false;
+			jsestate->escontext.details_wanted = true;
 			Assert(!throw_error && jsestate->jump_error >= 0);
 			return jsestate->jump_error;
 		}
@@ -4442,6 +4455,9 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 		*op->resvalue = (Datum) 0;
 		*op->resnull = true;
 		jsestate->error.value = BoolGetDatum(true);
+		/* Set up to catch coercion errors of the ON ERROR value. */
+		jsestate->escontext.error_occurred = false;
+		jsestate->escontext.details_wanted = true;
 		return jsestate->jump_error;
 	}
 
@@ -4544,9 +4560,33 @@ ExecEvalJsonCoercion(ExprState *state, ExprEvalStep *op,
 									   (Node *) escontext);
 }
 
+static char *
+GetJsonBehaviorValueString(JsonBehavior *behavior)
+{
+	/*
+	 * The order of array elements must correspond to the order of
+	 * JsonBehaviorType members.
+	 */
+	const char *behavior_names[] =
+	{
+		"NULL",
+		"ERROR",
+		"EMPTY",
+		"TRUE",
+		"FALSE",
+		"UNKNOWN",
+		"EMPTY ARRAY",
+		"EMPTY OBJECT",
+		"DEFAULT"
+	};
+
+	return pstrdup(behavior_names[behavior->btype]);
+}
+
 /*
  * Checks if an error occurred in ExecEvalJsonCoercion().  If so, this sets
- * JsonExprState.error to trigger the ON ERROR handling steps.
+ * JsonExprState.error to trigger the ON ERROR handling steps, unless the
+ * error is thrown when coercing a JsonBehavior value.
  */
 void
 ExecEvalJsonCoercionFinish(ExprState *state, ExprEvalStep *op)
@@ -4555,8 +4595,28 @@ ExecEvalJsonCoercionFinish(ExprState *state, ExprEvalStep *op)
 
 	if (SOFT_ERROR_OCCURRED(&jsestate->escontext))
 	{
+		/*
+		 * jsestate->error or jsetate->empty being set means that the error
+		 * occurred when coercing the JsonBehavior value.  Throw the error in
+		 * that case with the actual coercion error message shown in the
+		 * DETAIL part.
+		 */
+		if (DatumGetBool(jsestate->error.value))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("could not coerce ON ERROR expression (%s) to the RETURNING type",
+							GetJsonBehaviorValueString(jsestate->jsexpr->on_error)),
+					 errdetail("%s", jsestate->escontext.error_data->message)));
+		else if (DatumGetBool(jsestate->empty.value))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("could not coerce ON EMPTY expression (%s) to the RETURNING type",
+							GetJsonBehaviorValueString(jsestate->jsexpr->on_empty)),
+					 errdetail("%s", jsestate->escontext.error_data->message)));
+
 		*op->resvalue = (Datum) 0;
 		*op->resnull = true;
+
 		jsestate->error.value = BoolGetDatum(true);
 
 		/*
@@ -4564,6 +4624,8 @@ ExecEvalJsonCoercionFinish(ExprState *state, ExprEvalStep *op)
 		 * JsonBehavior expression.
 		 */
 		jsestate->escontext.error_occurred = false;
+		jsestate->escontext.error_occurred = false;
+		jsestate->escontext.details_wanted = true;
 	}
 }
 
