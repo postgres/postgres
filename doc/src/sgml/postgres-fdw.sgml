@@ -780,17 +780,9 @@ OPTIONS (ADD password_required 'false');
     <term><function>postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) returns setof record</function></term>
     <listitem>
      <para>
-      This function returns the foreign server names of all the open
-      connections that <filename>postgres_fdw</filename> established from
-      the local session to the foreign servers. It also returns whether
-      each connection is valid or not. <literal>false</literal> is returned
-      if the foreign server connection is used in the current local
-      transaction but its foreign server or user mapping is changed or
-      dropped (Note that server name of an invalid connection will be
-      <literal>NULL</literal> if the server is dropped),
-      and then such invalid connection will be closed at
-      the end of that transaction. <literal>true</literal> is returned
-      otherwise. If there are no open connections, no record is returned.
+      This function returns information about all open connections postgres_fdw
+      has established from the local session to foreign servers. If there are
+      no open connections, no records are returned.
       Example usage of the function:
 <screen>
 postgres=# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
@@ -799,7 +791,46 @@ postgres=# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
  loopback1   | t
  loopback2   | f
 </screen>
+      The output columns are described in
+      <xref linkend="postgres-fdw-get-connections-columns"/>.
      </para>
+
+    <table id="postgres-fdw-get-connections-columns">
+     <title><function>postgres_fdw_get_connections</function> Output Columns</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Column</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><structfield>server_name</structfield></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         The foreign server name of this connection. If the server is
+         dropped but the connection remains open (i.e., marked as
+         invalid), this will be <literal>NULL</literal>.
+        </entry>
+       </row>
+       <row>
+        <entry><structfield>valid</structfield></entry>
+        <entry><type>boolean</type></entry>
+        <entry>
+         False if this connection is invalid, meaning it is used in
+         the current transaction, but its foreign server or
+         user mapping has been changed or dropped.
+         The invalid connection will be closed at the end of
+         the transaction. True is returned otherwise.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
     </listitem>
    </varlistentry>
 
