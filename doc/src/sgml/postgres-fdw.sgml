@@ -777,7 +777,9 @@ OPTIONS (ADD password_required 'false');
 
   <variablelist>
    <varlistentry>
-    <term><function>postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) returns setof record</function></term>
+    <term><function>postgres_fdw_get_connections(OUT server_name text,
+      OUT valid boolean, OUT used_in_xact boolean)
+      returns setof record</function></term>
     <listitem>
      <para>
       This function returns information about all open connections postgres_fdw
@@ -785,11 +787,11 @@ OPTIONS (ADD password_required 'false');
       no open connections, no records are returned.
       Example usage of the function:
 <screen>
-postgres=# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
- server_name | valid
--------------+-------
- loopback1   | t
- loopback2   | f
+postgres=*# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
+ server_name | valid | used_in_xact
+-------------+-------+--------------
+ loopback1   | t     | t
+ loopback2   | f     | t
 </screen>
       The output columns are described in
       <xref linkend="postgres-fdw-get-connections-columns"/>.
@@ -825,6 +827,13 @@ postgres=# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
          user mapping has been changed or dropped.
          The invalid connection will be closed at the end of
          the transaction. True is returned otherwise.
+        </entry>
+       </row>
+       <row>
+        <entry><structfield>used_in_xact</structfield></entry>
+        <entry><type>boolean</type></entry>
+        <entry>
+         True if this connection is used in the current transaction.
         </entry>
        </row>
       </tbody>

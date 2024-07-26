@@ -26,6 +26,7 @@ install_data(
   'postgres_fdw.control',
   'postgres_fdw--1.0.sql',
   'postgres_fdw--1.0--1.1.sql',
+  'postgres_fdw--1.1--1.2.sql',
   kwargs: contrib_data_args,
 )
 

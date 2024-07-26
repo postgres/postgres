@@ -10464,10 +10464,10 @@ drop cascades to foreign table ft7
 -- should be output as invalid connections. Also the server name for
 -- loopback3 should be NULL because the server was dropped.
 SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
- server_name | valid 
--------------+-------
- loopback    | f
-             | f
+ server_name | valid | used_in_xact 
+-------------+-------+--------------
+ loopback    | f     | t
+             | f     | t
 (2 rows)
 
 -- The invalid connections get closed in pgfdw_xact_callback during commit.

@@ -108,9 +108,19 @@ static uint32 pgfdw_we_get_result = 0;
 	} while(0)
 
 /*
+ * Extension version number, for supporting older extension versions' objects
+ */
+enum pgfdwVersion
+{
+	PGFDW_V1_1 = 0,
+	PGFDW_V1_2,
+};
+
+/*
  * SQL functions
  */
 PG_FUNCTION_INFO_V1(postgres_fdw_get_connections);
+PG_FUNCTION_INFO_V1(postgres_fdw_get_connections_1_2);
 PG_FUNCTION_INFO_V1(postgres_fdw_disconnect);
 PG_FUNCTION_INFO_V1(postgres_fdw_disconnect_all);
 
@@ -159,6 +169,8 @@ static void pgfdw_security_check(const char **keywords, const char **values,
 								 UserMapping *user, PGconn *conn);
 static bool UserMappingPasswordRequired(UserMapping *user);
 static bool disconnect_cached_connections(Oid serverid);
+static void postgres_fdw_get_connections_internal(FunctionCallInfo fcinfo,
+												  enum pgfdwVersion api_version);
 
 /*
  * Get a PGconn which can be used to execute queries on the remote PostgreSQL
@@ -1977,23 +1989,34 @@ pgfdw_finish_abort_cleanup(List *pending_entries, List *cancel_requested,
 	}
 }
 
+/* Number of output arguments (columns) for various API versions */
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_1	2
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_2	3
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS	3	/* maximum of above */
+
 /*
- * List active foreign server connections.
+ * Internal function used by postgres_fdw_get_connections variants.
  *
- * This function takes no input parameter and returns setof record made of
- * following values:
+ * For API version 1.1, this function returns a set of records with
+ * the following values:
+ *
  * - server_name - server name of active connection. In case the foreign server
  *   is dropped but still the connection is active, then the server name will
  *   be NULL in output.
  * - valid - true/false representing whether the connection is valid or not.
- * 	 Note that the connections can get invalidated in pgfdw_inval_callback.
+ *   Note that connections can become invalid in pgfdw_inval_callback.
+ *
+ * For API version 1.2 and later, this function returns the following
+ * additional value along with the two values from version 1.1:
+ *
+ * - used_in_xact - true if the connection is used in the current transaction.
  *
  * No records are returned when there are no cached connections at all.
  */
-Datum
-postgres_fdw_get_connections(PG_FUNCTION_ARGS)
+static void
+postgres_fdw_get_connections_internal(FunctionCallInfo fcinfo,
+									  enum pgfdwVersion api_version)
 {
-#define POSTGRES_FDW_GET_CONNECTIONS_COLS	2
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
@@ -2002,7 +2025,22 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 
 	/* If cache doesn't exist, we return no records */
 	if (!ConnectionHash)
-		PG_RETURN_VOID();
+		return;
+
+	/* Check we have the expected number of output arguments */
+	switch (rsinfo->setDesc->natts)
+	{
+		case POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_1:
+			if (api_version != PGFDW_V1_1)
+				elog(ERROR, "incorrect number of output arguments");
+			break;
+		case POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_2:
+			if (api_version != PGFDW_V1_2)
+				elog(ERROR, "incorrect number of output arguments");
+			break;
+		default:
+			elog(ERROR, "incorrect number of output arguments");
+	}
 
 	hash_seq_init(&scan, ConnectionHash);
 	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan)))
@@ -2061,8 +2099,36 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 
 		values[1] = BoolGetDatum(!entry->invalidated);
 
+		if (api_version >= PGFDW_V1_2)
+		{
+			/* Is this connection used in the current transaction? */
+			values[2] = BoolGetDatum(entry->xact_depth > 0);
+		}
+
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
+}
+
+/*
+ * List active foreign server connections.
+ *
+ * The SQL API of this function has changed multiple times, and will likely
+ * do so again in future.  To support the case where a newer version of this
+ * loadable module is being used with an old SQL declaration of the function,
+ * we continue to support the older API versions.
+ */
+Datum
+postgres_fdw_get_connections_1_2(PG_FUNCTION_ARGS)
+{
+	postgres_fdw_get_connections_internal(fcinfo, PGFDW_V1_2);
+
+	PG_RETURN_VOID();
+}
+
+Datum
+postgres_fdw_get_connections(PG_FUNCTION_ARGS)
+{
+	postgres_fdw_get_connections_internal(fcinfo, PGFDW_V1_1);
 
 	PG_RETURN_VOID();
 }
