@@ -63,6 +63,7 @@
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/guc.h"
+#include "utils/injection_point.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
 
@@ -104,6 +105,9 @@ typedef struct
 	void	   *UsedShmemSegAddr;
 	slock_t    *ShmemLock;
 	struct bkend *ShmemBackendArray;
+#ifdef USE_INJECTION_POINTS
+	struct InjectionPointsCtl *ActiveInjectionPoints;
+#endif
 #ifndef HAVE_SPINLOCKS
 	PGSemaphore *SpinlockSemaArray;
 #endif
@@ -710,6 +714,10 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
 	param->ShmemLock = ShmemLock;
 	param->ShmemBackendArray = ShmemBackendArray;
 
+#ifdef USE_INJECTION_POINTS
+	param->ActiveInjectionPoints = ActiveInjectionPoints;
+#endif
+
 #ifndef HAVE_SPINLOCKS
 	param->SpinlockSemaArray = SpinlockSemaArray;
 #endif
@@ -968,6 +976,10 @@ restore_backend_variables(BackendParameters *param)
 
 	ShmemLock = param->ShmemLock;
 	ShmemBackendArray = param->ShmemBackendArray;
+
+#ifdef USE_INJECTION_POINTS
+	ActiveInjectionPoints = param->ActiveInjectionPoints;
+#endif
 
 #ifndef HAVE_SPINLOCKS
 	SpinlockSemaArray = param->SpinlockSemaArray;
