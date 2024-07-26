@@ -13142,12 +13142,13 @@ fi
 done
 
   # Function introduced in OpenSSL 1.1.1.
-  for ac_func in X509_get_signature_info
+  for ac_func in X509_get_signature_info SSL_CTX_set_num_tickets
 do :
-  ac_fn_c_check_func "$LINENO" "X509_get_signature_info" "ac_cv_func_X509_get_signature_info"
-if test "x$ac_cv_func_X509_get_signature_info" = xyes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_X509_GET_SIGNATURE_INFO 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
