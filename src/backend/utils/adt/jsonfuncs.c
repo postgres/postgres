@@ -453,7 +453,7 @@ static void prepare_column_cache(ColumnIOData *column, Oid typid, int32 typmod,
 static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
 								   const char *colname, MemoryContext mcxt, Datum defaultval,
 								   JsValue *jsv, bool *isnull, Node *escontext,
-								   bool omit_quotes);
+								   bool omit_scalar_quotes);
 static RecordIOData *allocate_record_info(MemoryContext mcxt, int ncolumns);
 static bool JsObjectGetField(JsObject *obj, char *field, JsValue *jsv);
 static void populate_recordset_record(PopulateRecordsetState *state, JsObject *obj);
@@ -470,7 +470,7 @@ static Datum populate_array(ArrayIOData *aio, const char *colname,
 							Node *escontext);
 static Datum populate_domain(DomainIOData *io, Oid typid, const char *colname,
 							 MemoryContext mcxt, JsValue *jsv, bool *isnull,
-							 Node *escontext);
+							 Node *escontext, bool omit_quotes);
 
 /* functions supporting jsonb_delete, jsonb_set and jsonb_concat */
 static JsonbValue *IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
@@ -3218,7 +3218,8 @@ populate_domain(DomainIOData *io,
 				MemoryContext mcxt,
 				JsValue *jsv,
 				bool *isnull,
-				Node *escontext)
+				Node *escontext,
+				bool omit_quotes)
 {
 	Datum		res;
 
@@ -3229,7 +3230,7 @@ populate_domain(DomainIOData *io,
 		res = populate_record_field(io->base_io,
 									io->base_typid, io->base_typmod,
 									colname, mcxt, PointerGetDatum(NULL),
-									jsv, isnull, escontext, false);
+									jsv, isnull, escontext, omit_quotes);
 		Assert(!*isnull || SOFT_ERROR_OCCURRED(escontext));
 	}
 
@@ -3461,7 +3462,7 @@ populate_record_field(ColumnIOData *col,
 
 		case TYPECAT_DOMAIN:
 			return populate_domain(&col->io.domain, typid, colname, mcxt,
-								   jsv, isnull, escontext);
+								   jsv, isnull, escontext, omit_scalar_quotes);
 
 		default:
 			elog(ERROR, "unrecognized type category '%c'", typcat);

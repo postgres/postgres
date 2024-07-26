@@ -214,6 +214,11 @@ SELECT JSON_QUERY(jsonb'{"rec": "{1,2,3}"}', '$.rec' returning int[] keep quotes
 SELECT JSON_QUERY(jsonb'{"rec": "[1,2]"}', '$.rec' returning int4range omit quotes);
 SELECT JSON_QUERY(jsonb'{"rec": "[1,2]"}', '$.rec' returning int4range keep quotes);
 SELECT JSON_QUERY(jsonb'{"rec": "[1,2]"}', '$.rec' 	returning int4range keep quotes error on error);
+CREATE DOMAIN qf_char_domain AS char(1);
+CREATE DOMAIN qf_jsonb_domain AS jsonb;
+SELECT JSON_QUERY(jsonb '"1"', '$' RETURNING qf_char_domain OMIT QUOTES ERROR ON ERROR);
+SELECT JSON_QUERY(jsonb '"1"', '$' RETURNING qf_jsonb_domain OMIT QUOTES ERROR ON ERROR);
+DROP DOMAIN qf_char_domain, qf_jsonb_domain;
 
 SELECT JSON_QUERY(jsonb '[]', '$[*]');
 SELECT JSON_QUERY(jsonb '[]', '$[*]' NULL ON EMPTY);
