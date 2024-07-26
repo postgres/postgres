@@ -1296,7 +1296,7 @@ if test "$with_openssl" = yes ; then
   # function was removed.
   AC_CHECK_FUNCS([CRYPTO_lock])
   # Function introduced in OpenSSL 1.1.1.
-  AC_CHECK_FUNCS([X509_get_signature_info])
+  AC_CHECK_FUNCS([X509_get_signature_info SSL_CTX_set_num_tickets])
   # SSL_clear_options is a macro in OpenSSL from 0.9.8 to 1.0.2, and
   # a function from 1.1.0 onwards so we cannot use AC_CHECK_FUNCS.
   AC_CACHE_CHECK([for SSL_clear_options], ac_cv_func_ssl_clear_options,
