@@ -29,7 +29,7 @@ static void check_for_new_tablespace_dir(void);
 static void check_for_user_defined_encoding_conversions(ClusterInfo *cluster);
 static void check_new_cluster_logical_replication_slots(void);
 static void check_new_cluster_subscription_configuration(void);
-static void check_old_cluster_for_valid_slots(bool live_check);
+static void check_old_cluster_for_valid_slots(void);
 static void check_old_cluster_subscription_state(void);
 
 /*
@@ -555,9 +555,9 @@ fix_path_separator(char *path)
 }
 
 void
-output_check_banner(bool live_check)
+output_check_banner(void)
 {
-	if (user_opts.check && live_check)
+	if (user_opts.live_check)
 	{
 		pg_log(PG_REPORT,
 			   "Performing Consistency Checks on Old Live Server\n"
@@ -573,18 +573,18 @@ output_check_banner(bool live_check)
 
 
 void
-check_and_dump_old_cluster(bool live_check)
+check_and_dump_old_cluster(void)
 {
 	/* -- OLD -- */
 
-	if (!live_check)
+	if (!user_opts.live_check)
 		start_postmaster(&old_cluster, true);
 
 	/*
 	 * Extract a list of databases, tables, and logical replication slots from
 	 * the old cluster.
 	 */
-	get_db_rel_and_slot_infos(&old_cluster, live_check);
+	get_db_rel_and_slot_infos(&old_cluster);
 
 	init_tablespaces();
 
@@ -605,7 +605,7 @@ check_and_dump_old_cluster(bool live_check)
 		 * Logical replication slots can be migrated since PG17. See comments
 		 * atop get_old_cluster_logical_slot_infos().
 		 */
-		check_old_cluster_for_valid_slots(live_check);
+		check_old_cluster_for_valid_slots();
 
 		/*
 		 * Subscriptions and their dependencies can be migrated since PG17.
@@ -669,7 +669,7 @@ check_and_dump_old_cluster(bool live_check)
 	if (!user_opts.check)
 		generate_old_dump();
 
-	if (!live_check)
+	if (!user_opts.live_check)
 		stop_postmaster(false);
 }
 
@@ -677,7 +677,7 @@ check_and_dump_old_cluster(bool live_check)
 void
 check_new_cluster(void)
 {
-	get_db_rel_and_slot_infos(&new_cluster, false);
+	get_db_rel_and_slot_infos(&new_cluster);
 
 	check_new_cluster_is_empty();
 
@@ -828,14 +828,14 @@ check_cluster_versions(void)
 
 
 void
-check_cluster_compatibility(bool live_check)
+check_cluster_compatibility(void)
 {
 	/* get/check pg_control data of servers */
-	get_control_data(&old_cluster, live_check);
-	get_control_data(&new_cluster, false);
+	get_control_data(&old_cluster);
+	get_control_data(&new_cluster);
 	check_control_data(&old_cluster.controldata, &new_cluster.controldata);
 
-	if (live_check && old_cluster.port == new_cluster.port)
+	if (user_opts.live_check && old_cluster.port == new_cluster.port)
 		pg_fatal("When checking a live server, "
 				 "the old and new port numbers must be different.");
 }
@@ -1838,7 +1838,7 @@ check_new_cluster_subscription_configuration(void)
  * before shutdown.
  */
 static void
-check_old_cluster_for_valid_slots(bool live_check)
+check_old_cluster_for_valid_slots(void)
 {
 	char		output_path[MAXPGPATH];
 	FILE	   *script = NULL;
@@ -1877,7 +1877,7 @@ check_old_cluster_for_valid_slots(bool live_check)
 			 * Note: This can be satisfied only when the old cluster has been
 			 * shut down, so we skip this for live checks.
 			 */
-			if (!live_check && !slot->caught_up)
+			if (!user_opts.live_check && !slot->caught_up)
 			{
 				if (script == NULL &&
 					(script = fopen_priv(output_path, "w")) == NULL)

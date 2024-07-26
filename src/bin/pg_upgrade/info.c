@@ -27,7 +27,7 @@ static void free_rel_infos(RelInfoArr *rel_arr);
 static void print_db_infos(DbInfoArr *db_arr);
 static void print_rel_infos(RelInfoArr *rel_arr);
 static void print_slot_infos(LogicalSlotInfoArr *slot_arr);
-static void get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check);
+static void get_old_cluster_logical_slot_infos(DbInfo *dbinfo);
 
 
 /*
@@ -272,11 +272,9 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
  *
  * higher level routine to generate dbinfos for the database running
  * on the given "port". Assumes that server is already running.
- *
- * live_check would be used only when the target is the old cluster.
  */
 void
-get_db_rel_and_slot_infos(ClusterInfo *cluster, bool live_check)
+get_db_rel_and_slot_infos(ClusterInfo *cluster)
 {
 	int			dbnum;
 
@@ -293,7 +291,7 @@ get_db_rel_and_slot_infos(ClusterInfo *cluster, bool live_check)
 		get_rel_infos(cluster, pDbInfo);
 
 		if (cluster == &old_cluster)
-			get_old_cluster_logical_slot_infos(pDbInfo, live_check);
+			get_old_cluster_logical_slot_infos(pDbInfo);
 	}
 
 	if (cluster == &old_cluster)
@@ -637,7 +635,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
  * are included.
  */
 static void
-get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check)
+get_old_cluster_logical_slot_infos(DbInfo *dbinfo)
 {
 	PGconn	   *conn;
 	PGresult   *res;
@@ -673,7 +671,7 @@ get_old_cluster_logical_slot_infos(DbInfo *dbinfo, bool live_check)
 							"WHERE slot_type = 'logical' AND "
 							"database = current_database() AND "
 							"temporary IS FALSE;",
-							live_check ? "FALSE" :
+							user_opts.live_check ? "FALSE" :
 							"(CASE WHEN invalidation_reason IS NOT NULL THEN FALSE "
 							"ELSE (SELECT pg_catalog.binary_upgrade_logical_slot_has_caught_up(slot_name)) "
 							"END)");

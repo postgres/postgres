@@ -321,6 +321,7 @@ typedef struct
 typedef struct
 {
 	bool		check;			/* check clusters only, don't change any data */
+	bool		live_check;		/* check clusters only, old server is running */
 	bool		do_sync;		/* flush changes to disk */
 	transferMode transfer_mode; /* copy files or link them? */
 	int			jobs;			/* number of processes/threads to use */
@@ -365,20 +366,20 @@ extern OSInfo os_info;
 
 /* check.c */
 
-void		output_check_banner(bool live_check);
-void		check_and_dump_old_cluster(bool live_check);
+void		output_check_banner(void);
+void		check_and_dump_old_cluster(void);
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
 void		issue_warnings_and_set_wal_level(void);
 void		output_completion_banner(char *deletion_script_file_name);
 void		check_cluster_versions(void);
-void		check_cluster_compatibility(bool live_check);
+void		check_cluster_compatibility(void);
 void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);
 
 
 /* controldata.c */
 
-void		get_control_data(ClusterInfo *cluster, bool live_check);
+void		get_control_data(ClusterInfo *cluster);
 void		check_control_data(ControlData *oldctrl, ControlData *newctrl);
 void		disable_old_cluster(void);
 
@@ -427,7 +428,7 @@ void		check_loadable_libraries(void);
 FileNameMap *gen_db_file_maps(DbInfo *old_db,
 							  DbInfo *new_db, int *nmaps, const char *old_pgdata,
 							  const char *new_pgdata);
-void		get_db_rel_and_slot_infos(ClusterInfo *cluster, bool live_check);
+void		get_db_rel_and_slot_infos(ClusterInfo *cluster);
 int			count_old_cluster_logical_slots(void);
 void		get_subscription_count(ClusterInfo *cluster);
 
@@ -435,7 +436,7 @@ void		get_subscription_count(ClusterInfo *cluster);
 
 void		parseCommandLine(int argc, char *argv[]);
 void		adjust_data_dir(ClusterInfo *cluster);
-void		get_sock_dir(ClusterInfo *cluster, bool live_check);
+void		get_sock_dir(ClusterInfo *cluster);
 
 /* relfilenumber.c */
 

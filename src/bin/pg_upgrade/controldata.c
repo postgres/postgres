@@ -33,7 +33,7 @@
  * return valid xid data for a running server.
  */
 void
-get_control_data(ClusterInfo *cluster, bool live_check)
+get_control_data(ClusterInfo *cluster)
 {
 	char		cmd[MAXPGPATH];
 	char		bufin[MAX_STRING];
@@ -76,6 +76,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	uint32		segno = 0;
 	char	   *resetwal_bin;
 	int			rc;
+	bool		live_check = (cluster == &old_cluster && user_opts.live_check);
 
 	/*
 	 * Because we test the pg_resetwal output as strings, it has to be in
