@@ -650,54 +650,132 @@ SetWalSummarizerLatch(void)
 }
 
 /*
- * Wait until WAL summarization reaches the given LSN, but not longer than
- * the given timeout.
+ * Wait until WAL summarization reaches the given LSN, but time out with an
+ * error if the summarizer seems to be stick.
  *
- * The return value is the first still-unsummarized LSN. If it's greater than
- * or equal to the passed LSN, then that LSN was reached. If not, we timed out.
- *
- * Either way, *pending_lsn is set to the value taken from WalSummarizerCtl.
+ * Returns immediately if summarize_wal is turned off while we wait. Caller
+ * is expected to handle this case, if necessary.
  */
-XLogRecPtr
-WaitForWalSummarization(XLogRecPtr lsn, long timeout, XLogRecPtr *pending_lsn)
+void
+WaitForWalSummarization(XLogRecPtr lsn)
 {
-	TimestampTz start_time = GetCurrentTimestamp();
-	TimestampTz deadline = TimestampTzPlusMilliseconds(start_time, timeout);
-	XLogRecPtr	summarized_lsn;
+	TimestampTz initial_time,
+				cycle_time,
+				current_time;
+	XLogRecPtr	prior_pending_lsn = InvalidXLogRecPtr;
+	int			deadcycles = 0;
 
-	Assert(!XLogRecPtrIsInvalid(lsn));
-	Assert(timeout > 0);
+	initial_time = cycle_time = GetCurrentTimestamp();
 
 	while (1)
 	{
-		TimestampTz now;
-		long		remaining_timeout;
+		long		timeout_in_ms = 10000;
+		XLogRecPtr	summarized_lsn;
+		XLogRecPtr	pending_lsn;
+
+		CHECK_FOR_INTERRUPTS();
+
+		/* If WAL summarization is disabled while we're waiting, give up. */
+		if (!summarize_wal)
+			return;
 
 		/*
 		 * If the LSN summarized on disk has reached the target value, stop.
 		 */
 		LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
 		summarized_lsn = WalSummarizerCtl->summarized_lsn;
-		*pending_lsn = WalSummarizerCtl->pending_lsn;
+		pending_lsn = WalSummarizerCtl->pending_lsn;
 		LWLockRelease(WALSummarizerLock);
+
+		/* If WAL summarization has progressed sufficiently, stop waiting. */
 		if (summarized_lsn >= lsn)
 			break;
 
-		/* Timeout reached? If yes, stop. */
-		now = GetCurrentTimestamp();
-		remaining_timeout = TimestampDifferenceMilliseconds(now, deadline);
-		if (remaining_timeout <= 0)
-			break;
+		/* Recheck current time. */
+		current_time = GetCurrentTimestamp();
+
+		/* Have we finished the current cycle of waiting? */
+		if (TimestampDifferenceMilliseconds(cycle_time,
+											current_time) >= timeout_in_ms)
+		{
+			long		elapsed_seconds;
+
+			/* Begin new wait cycle. */
+			cycle_time = TimestampTzPlusMilliseconds(cycle_time,
+													 timeout_in_ms);
+
+			/*
+			 * Keep track of the number of cycles during which there has been
+			 * no progression of pending_lsn. If pending_lsn is not advancing,
+			 * that means that not only are no new files appearing on disk,
+			 * but we're not even incorporating new records into the in-memory
+			 * state.
+			 */
+			if (pending_lsn > prior_pending_lsn)
+			{
+				prior_pending_lsn = pending_lsn;
+				deadcycles = 0;
+			}
+			else
+				++deadcycles;
+
+			/*
+			 * If we've managed to wait for an entire minute without the WAL
+			 * summarizer absorbing a single WAL record, error out; probably
+			 * something is wrong.
+			 *
+			 * We could consider also erroring out if the summarizer is taking
+			 * too long to catch up, but it's not clear what rate of progress
+			 * would be acceptable and what would be too slow. So instead, we
+			 * just try to error out in the case where there's no progress at
+			 * all. That seems likely to catch a reasonable number of the
+			 * things that can go wrong in practice (e.g. the summarizer
+			 * process is completely hung, say because somebody hooked up a
+			 * debugger to it or something) without giving up too quickly when
+			 * the system is just slow.
+			 */
+			if (deadcycles >= 6)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("WAL summarization is not progressing"),
+						 errdetail("Summarization is needed through %X/%X, but is stuck at %X/%X on disk and %X/%X in memory.",
+								   LSN_FORMAT_ARGS(lsn),
+								   LSN_FORMAT_ARGS(summarized_lsn),
+								   LSN_FORMAT_ARGS(pending_lsn))));
+
+
+			/*
+			 * Otherwise, just let the user know what's happening.
+			 */
+			elapsed_seconds =
+				TimestampDifferenceMilliseconds(initial_time,
+												current_time) / 1000;
+			ereport(WARNING,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("still waiting for WAL summarization through %X/%X after %ld seconds",
+							LSN_FORMAT_ARGS(lsn),
+							elapsed_seconds),
+					 errdetail("Summarization has reached %X/%X on disk and %X/%X in memory.",
+							   LSN_FORMAT_ARGS(summarized_lsn),
+							   LSN_FORMAT_ARGS(pending_lsn))));
+		}
+
+		/*
+		 * Align the wait time to prevent drift. This doesn't really matter,
+		 * but we'd like the warnings about how long we've been waiting to say
+		 * 10 seconds, 20 seconds, 30 seconds, 40 seconds ... without ever
+		 * drifting to something that is not a multiple of ten.
+		 */
+		timeout_in_ms -=
+			TimestampDifferenceMilliseconds(cycle_time, current_time);
 
 		/* Wait and see. */
 		ConditionVariableTimedSleep(&WalSummarizerCtl->summary_file_cv,
-									remaining_timeout,
+									timeout_in_ms,
 									WAIT_EVENT_WAL_SUMMARY_READY);
 	}
 
 	ConditionVariableCancelSleep();
-
-	return summarized_lsn;
 }
 
 /*
@@ -730,6 +808,22 @@ GetLatestLSN(TimeLineID *tli)
 		TimeLineID	flush_tli;
 		XLogRecPtr	replay_lsn;
 		TimeLineID	replay_tli;
+		TimeLineID	insert_tli;
+
+		/*
+		 * After the insert TLI has been set and before the control file has
+		 * been updated to show the DB in production, RecoveryInProgress()
+		 * will return true, because it's not yet safe for all backends to
+		 * begin writing WAL. However, replay has already ceased, so from our
+		 * point of view, recovery is already over. We should summarize up to
+		 * where replay stopped and then prepare to resume at the start of the
+		 * insert timeline.
+		 */
+		if ((insert_tli = GetWALInsertionTimeLineIfSet()) != 0)
+		{
+			*tli = insert_tli;
+			return GetXLogReplayRecPtr(NULL);
+		}
 
 		/*
 		 * What we really want to know is how much WAL has been flushed to

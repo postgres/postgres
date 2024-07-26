@@ -30,7 +30,6 @@ extern void GetWalSummarizerState(TimeLineID *summarized_tli,
 extern XLogRecPtr GetOldestUnsummarizedLSN(TimeLineID *tli,
 										   bool *lsn_is_exact);
 extern void SetWalSummarizerLatch(void);
-extern XLogRecPtr WaitForWalSummarization(XLogRecPtr lsn, long timeout,
-										  XLogRecPtr *pending_lsn);
+extern void WaitForWalSummarization(XLogRecPtr lsn);
 
 #endif
