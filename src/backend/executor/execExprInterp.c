@@ -4558,6 +4558,12 @@ ExecEvalJsonCoercionFinish(ExprState *state, ExprEvalStep *op)
 		*op->resvalue = (Datum) 0;
 		*op->resnull = true;
 		jsestate->error.value = BoolGetDatum(true);
+
+		/*
+		 * Reset for next use such as for catching errors when coercing a
+		 * JsonBehavior expression.
+		 */
+		jsestate->escontext.error_occurred = false;
 	}
 }
 
