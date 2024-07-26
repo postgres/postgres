@@ -170,8 +170,8 @@ impl Router {
         } else {
             // Return all shards
             println!("{color_cyan}{style_bold}Returning all shards");
-            let shards = self.shards.lock().unwrap().keys().cloned().collect();
-            shards
+            self.shards.lock().unwrap().keys().cloned().collect()
+
         }
     }
 }
