@@ -30,6 +30,7 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"
+#include "utils/injection_point.h"
 #include "utils/wait_event.h"
 
 char	   *ssl_library;
@@ -128,6 +129,8 @@ secure_open_server(Port *port)
 		port->raw_buf_consumed = 0;
 	}
 	Assert(pq_buffer_remaining_data() == 0);
+
+	INJECTION_POINT("backend-ssl-startup");
 
 	r = be_tls_open_server(port);
 

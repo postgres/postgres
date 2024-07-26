@@ -21,6 +21,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "utils/injection_point.h"
 #include "utils/memutils.h"
 
 
@@ -498,6 +499,8 @@ secure_open_gssapi(Port *port)
 	OM_uint32	major,
 				minor;
 	gss_cred_id_t delegated_creds;
+
+	INJECTION_POINT("backend-gssapi-startup");
 
 	/*
 	 * Allocate subsidiary Port data for GSSAPI operations.
