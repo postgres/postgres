@@ -4313,21 +4313,6 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	ExprEvalPushStep(state, scratch);
 
 	/*
-	 * Jump to coerce the NULL using json_populate_type() if needed.  Coercing
-	 * NULL is only interesting when the RETURNING type is a domain whose
-	 * constraints must be checked.  jsexpr->use_json_coercion must have been
-	 * set in that case.
-	 */
-	if (get_typtype(jsexpr->returning->typid) == TYPTYPE_DOMAIN &&
-		DomainHasConstraints(jsexpr->returning->typid))
-	{
-		Assert(jsexpr->use_json_coercion);
-		scratch->opcode = EEOP_JUMP;
-		scratch->d.jump.jumpdone = state->steps_len + 1;
-		ExprEvalPushStep(state, scratch);
-	}
-
-	/*
 	 * To handle coercion errors softly, use the following ErrorSaveContext to
 	 * pass to ExecInitExprRec() when initializing the coercion expressions
 	 * and in the EEOP_JSONEXPR_COERCION step.
