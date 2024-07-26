@@ -591,6 +591,7 @@ static int	segment_size;
 static int	shared_memory_size_mb;
 static int	shared_memory_size_in_huge_pages;
 static int	wal_block_size;
+static int	num_os_semaphores;
 static bool data_checksums;
 static bool integer_datetimes;
 
@@ -2280,6 +2281,17 @@ struct config_int ConfigureNamesInt[] =
 		},
 		&shared_memory_size_in_huge_pages,
 		-1, -1, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"num_os_semaphores", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Shows the number of semaphores required for the server."),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_RUNTIME_COMPUTED
+		},
+		&num_os_semaphores,
+		0, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
