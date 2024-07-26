@@ -1473,9 +1473,9 @@ summarizer_read_local_xlog_page(XLogReaderState *state,
 					 *
 					 * It's possible that this will cause read_upto to move
 					 * backwards, because we might have been promoted before
-					 * reaching the end of the previous timeline. In that case,
-					 * the next loop iteration will likely conclude that we've
-					 * reached end of WAL.
+					 * reaching the end of the previous timeline. In that
+					 * case, the next loop iteration will likely conclude that
+					 * we've reached end of WAL.
 					 */
 					private_data->read_upto = switchpoint;
 
