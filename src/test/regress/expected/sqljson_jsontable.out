@@ -227,7 +227,11 @@ SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
 
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
     COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo'::jsonb_test_domain ON EMPTY));
-ERROR:  value for domain jsonb_test_domain violates check constraint "jsonb_test_domain_check"
+ js1 
+-----
+ 
+(1 row)
+
 SELECT * FROM JSON_TABLE(jsonb '{"d1": "H"}', '$'
     COLUMNS (js1 jsonb_test_domain PATH '$.a2' DEFAULT 'foo1'::jsonb_test_domain ON EMPTY));
  js1  
