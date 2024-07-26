@@ -389,6 +389,9 @@
 /* Define to 1 if you have the `SSL_clear_options' function. */
 #define HAVE_SSL_CLEAR_OPTIONS 1
 
+/* Define to 1 if you have the `SSL_CTX_set_num_tickets' function. */
+/* #undef HAVE_SSL_CTX_SET_NUM_TICKETS */
+
 /* Define to 1 if you have the `SSL_get_current_compression' function. */
 #define HAVE_SSL_GET_CURRENT_COMPRESSION 1
 
