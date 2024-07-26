@@ -12,6 +12,10 @@
  */
 #include "postgres.h"
 
+#if HAVE_POLL_H
+#include <poll.h>
+#endif
+
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_user_mapping.h"
@@ -171,6 +175,8 @@ static bool UserMappingPasswordRequired(UserMapping *user);
 static bool disconnect_cached_connections(Oid serverid);
 static void postgres_fdw_get_connections_internal(FunctionCallInfo fcinfo,
 												  enum pgfdwVersion api_version);
+static int	pgfdw_conn_check(PGconn *conn);
+static bool pgfdw_conn_checkable(void);
 
 /*
  * Get a PGconn which can be used to execute queries on the remote PostgreSQL
@@ -1991,14 +1997,14 @@ pgfdw_finish_abort_cleanup(List *pending_entries, List *cancel_requested,
 
 /* Number of output arguments (columns) for various API versions */
 #define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_1	2
-#define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_2	3
-#define POSTGRES_FDW_GET_CONNECTIONS_COLS	3	/* maximum of above */
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_2	4
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS	4	/* maximum of above */
 
 /*
  * Internal function used by postgres_fdw_get_connections variants.
  *
- * For API version 1.1, this function returns a set of records with
- * the following values:
+ * For API version 1.1, this function takes no input parameter and
+ * returns a set of records with the following values:
  *
  * - server_name - server name of active connection. In case the foreign server
  *   is dropped but still the connection is active, then the server name will
@@ -2006,10 +2012,12 @@ pgfdw_finish_abort_cleanup(List *pending_entries, List *cancel_requested,
  * - valid - true/false representing whether the connection is valid or not.
  *   Note that connections can become invalid in pgfdw_inval_callback.
  *
- * For API version 1.2 and later, this function returns the following
- * additional value along with the two values from version 1.1:
+ * For API version 1.2 and later, this function takes an input parameter
+ * to check a connection status and returns the following
+ * additional values along with the two values from version 1.1:
  *
  * - used_in_xact - true if the connection is used in the current transaction.
+ * - closed: true if the connection is closed.
  *
  * No records are returned when there are no cached connections at all.
  */
@@ -2101,8 +2109,19 @@ postgres_fdw_get_connections_internal(FunctionCallInfo fcinfo,
 
 		if (api_version >= PGFDW_V1_2)
 		{
+			bool		check_conn = PG_GETARG_BOOL(0);
+
 			/* Is this connection used in the current transaction? */
 			values[2] = BoolGetDatum(entry->xact_depth > 0);
+
+			/*
+			 * If a connection status check is requested and supported, return
+			 * whether the connection is closed. Otherwise, return NULL.
+			 */
+			if (check_conn && pgfdw_conn_checkable())
+				values[3] = BoolGetDatum(pgfdw_conn_check(entry->conn) != 0);
+			else
+				nulls[3] = true;
 		}
 
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
@@ -2257,4 +2276,57 @@ disconnect_cached_connections(Oid serverid)
 	}
 
 	return result;
+}
+
+/*
+ * Check if the remote server closed the connection.
+ *
+ * Returns 1 if the connection is closed, -1 if an error occurred,
+ * and 0 if it's not closed or if the connection check is unavailable
+ * on this platform.
+ */
+static int
+pgfdw_conn_check(PGconn *conn)
+{
+	int			sock = PQsocket(conn);
+
+	if (PQstatus(conn) != CONNECTION_OK || sock == -1)
+		return -1;
+
+#if (defined(HAVE_POLL) && defined(POLLRDHUP))
+	{
+		struct pollfd input_fd;
+		int			result;
+
+		input_fd.fd = sock;
+		input_fd.events = POLLRDHUP;
+		input_fd.revents = 0;
+
+		do
+			result = poll(&input_fd, 1, 0);
+		while (result < 0 && errno == EINTR);
+
+		if (result < 0)
+			return -1;
+
+		return (input_fd.revents & POLLRDHUP) ? 1 : 0;
+	}
+#else
+	return 0;
+#endif
+}
+
+/*
+ * Check if connection status checking is available on this platform.
+ *
+ * Returns true if available, false otherwise.
+ */
+static bool
+pgfdw_conn_checkable(void)
+{
+#if (defined(HAVE_POLL) && defined(POLLRDHUP))
+	return true;
+#else
+	return false;
+#endif
 }

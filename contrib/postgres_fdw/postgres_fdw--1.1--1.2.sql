@@ -9,8 +9,9 @@ ALTER EXTENSION postgres_fdw DROP FUNCTION postgres_fdw_get_connections ();
 /* Then we can drop it */
 DROP FUNCTION postgres_fdw_get_connections ();
 
-CREATE FUNCTION postgres_fdw_get_connections (OUT server_name text,
-       OUT valid boolean, OUT used_in_xact boolean)
+CREATE FUNCTION postgres_fdw_get_connections (
+    IN check_conn boolean DEFAULT false, OUT server_name text,
+    OUT valid boolean, OUT used_in_xact boolean, OUT closed boolean)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'postgres_fdw_get_connections_1_2'
 LANGUAGE C STRICT PARALLEL RESTRICTED;
