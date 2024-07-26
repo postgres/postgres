@@ -2309,7 +2309,8 @@ pgfdw_conn_check(PGconn *conn)
 		if (result < 0)
 			return -1;
 
-		return (input_fd.revents & POLLRDHUP) ? 1 : 0;
+		return (input_fd.revents &
+				(POLLRDHUP | POLLHUP | POLLERR | POLLNVAL)) ? 1 : 0;
 	}
 #else
 	return 0;
