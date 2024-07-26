@@ -249,18 +249,18 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       Creates a <firstterm>typed table</firstterm>, which takes its
-      structure from the specified composite type (name optionally
-      schema-qualified).  A typed table is tied to its type; for
-      example the table will be dropped if the type is dropped
-      (with <literal>DROP TYPE ... CASCADE</literal>).
+      structure from the specified stand-alone composite type (that is,
+      one created using <xref linkend="sql-createtype"/>) though it still
+      produces a new composite type as well.  The table will have a
+      dependency on the referenced type, meaning that cascaded alter and
+      drop actions on that type will propagate to the table.
      </para>
 
      <para>
-      When a typed table is created, then the data types of the
-      columns are determined by the underlying composite type and are
-      not specified by the <literal>CREATE TABLE</literal> command.
+      A typed table always has the same column names and data types as the
+      type it is derived from, so you cannot specify additional columns.
       But the <literal>CREATE TABLE</literal> command can add defaults
-      and constraints to the table and can specify storage parameters.
+      and constraints to the table, as well as specify storage parameters.
      </para>
     </listitem>
    </varlistentry>

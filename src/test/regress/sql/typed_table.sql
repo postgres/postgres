@@ -48,6 +48,10 @@ DROP TYPE person_type CASCADE;
 
 CREATE TABLE persons5 OF stuff; -- only CREATE TYPE AS types may be used
 
+CREATE TYPE tt_enum_type AS ENUM ('a');
+CREATE TABLE of_tt_enum_type OF tt_enum_type; -- not a composite type at all
+DROP TYPE tt_enum_type;
+
 DROP TABLE stuff;
 
 
