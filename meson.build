@@ -1416,7 +1416,9 @@ if uuidopt != 'none'
     uuidfunc = 'uuid_to_string'
     uuidheader = 'uuid.h'
   elif uuidopt == 'ossp'
-    uuid = dependency('ossp-uuid', required: false)
+    # In upstream, the package and library is called just 'uuid', but many
+    # distros change it to 'ossp-uuid'.
+    uuid = dependency('ossp-uuid', 'uuid', required: false)
     uuidfunc = 'uuid_export'
     uuidheader = 'uuid.h'
 
@@ -1424,8 +1426,6 @@ if uuidopt != 'none'
     # windows installs neither a pkg-config nor a cmake dependency
     # information. Nor is there another supported uuid implementation
     # available on windows.
-    #
-    # Sometimes the ossp-uuid library is named 'uuid' sometimes 'ossp-uuid'
     if not uuid.found()
       uuid = cc.find_library('ossp-uuid',
         required: false, dirs: test_lib_d,
