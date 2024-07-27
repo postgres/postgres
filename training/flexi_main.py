@@ -29,7 +29,7 @@ if __name__ == '__main__':
     # Experiment setting arguments
     parser.add_argument('--nworkers', type=int, default=16,
                         help='number of database workers')
-    parser.add_argument('--skewness', type=float, default=0.8,
+    parser.add_argument('--skewness', type=float, default=0.6,
                         help='the workload skewness (YCSB)')
 
     main(parser.parse_args())

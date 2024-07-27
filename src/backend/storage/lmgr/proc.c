@@ -1718,7 +1718,6 @@ ProcWakeup(PGPROC *proc, int waitStatus)
 void
 ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 {
-    // PHX TODO: learn a priority for each lock.
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
 	PGPROC	   *proc;

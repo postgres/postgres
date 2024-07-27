@@ -97,7 +97,7 @@ def shuffle(li):
 
 wait_die = [0.0 for _ in range(MAX_STATE)] + [1.0 for _ in range(MAX_STATE)]
 iter_ = 0
-db_runtime = 5
+db_runtime = 1
 n_run = 1
 best_seen = 0
 log_rate = 1
@@ -175,7 +175,7 @@ def learn_priority(command, fin_log_dir):
     acquisition_function = UtilityFunction(kind="ucb")  # balanced exploration
     start_time = time.time()
     optimizer.maximize(
-        n_iter=200,
+        n_iter=100,
         acquisition_function=acquisition_function
     )
     training_time = time.time() - start_time
