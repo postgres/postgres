@@ -3426,7 +3426,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>regexp_replace</primary>
         </indexterm>
         <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type>
-         [, <parameter>flags</parameter> <type>text</type> ] )
+         <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -3445,8 +3445,8 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
        <entry role="func_table_entry"><para role="func_signature">
         <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type>,
          <parameter>start</parameter> <type>integer</type>
-         [, <parameter>N</parameter> <type>integer</type>
-         [, <parameter>flags</parameter> <type>text</type> ] ] )
+         <optional>, <parameter>N</parameter> <type>integer</type>
+         <optional>, <parameter>flags</parameter> <type>text</type> </optional> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -6117,13 +6117,13 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
      It has the syntax
      <function>regexp_replace</function>(<replaceable>string</replaceable>,
      <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>
-     <optional>, <replaceable>start</replaceable>
+     <optional>, <replaceable>flags</replaceable> </optional>)
+     or
+     <function>regexp_replace</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>,
+     <replaceable>start</replaceable>
      <optional>, <replaceable>N</replaceable>
-     </optional></optional>
-     <optional>, <replaceable>flags</replaceable> </optional>).
-     (Notice that <replaceable>N</replaceable> cannot be specified
-     unless <replaceable>start</replaceable> is,
-     but <replaceable>flags</replaceable> can be given in any case.)
+     <optional>, <replaceable>flags</replaceable> </optional></optional>).
      The source <replaceable>string</replaceable> is returned unchanged if
      there is no match to the <replaceable>pattern</replaceable>.  If there is a
      match, the <replaceable>string</replaceable> is returned with the
