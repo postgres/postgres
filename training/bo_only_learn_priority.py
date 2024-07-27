@@ -96,8 +96,9 @@ def shuffle(li):
 
 
 wait_die = [0.0 for _ in range(MAX_STATE)] + [1.0 for _ in range(MAX_STATE)]
+no_wait = [1.0 for _ in range(MAX_STATE)] + [1.0 for _ in range(MAX_STATE)]
 iter_ = 0
-db_runtime = 1
+db_runtime = 30
 n_run = 1
 best_seen = 0
 log_rate = 1
@@ -168,6 +169,7 @@ def learn_priority(command, fin_log_dir):
     )
 
     optimizer.probe(params=wait_die, lazy=True)
+    optimizer.probe(params=no_wait, lazy=True)
     optimizer.set_gp_params(alpha=1e-3)
     # as suggested in http://bayesian-optimization.github.io/BayesianOptimization/advanced-tour.html
     # change alpha to accommodate noise introduced by descrete value.

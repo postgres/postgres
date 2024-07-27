@@ -62,6 +62,16 @@ cd ./oltp_clients || exit
   -iso=none \
   -skew=$SKEWNESS
 
+# for ssi.
+#./bin/fc-server $COMMON_OPTIONS \
+#  -c=$N_THREAD \
+#  -runtime=$RUN_TIME \
+#  -warmup=2 \
+#  -lock=none \
+#  -rw=$N_READ \
+#  -iso=sso \
+#  -skew=$SKEWNESS
+
 if [ -n "$LAUNCH" ]; then
   pg_ctl stop -D $PGDATA -m fast
 fi
