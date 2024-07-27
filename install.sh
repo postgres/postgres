@@ -1,3 +1,4 @@
+#!/usr/bin
 ./configure --enable-depend --enable-cassert --enable-debug CFLAGS="-ggdb -Og"
 
 make -j10

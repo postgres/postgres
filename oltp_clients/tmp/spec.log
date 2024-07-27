@@ -1,0 +1,14 @@
+node:127.0.0.1:6001;txn_cnt:136;dis_txn_cnt:12;success_txn:136;success_dis_txn:12;cc_abort:0;p99_latency:5.232536ms;p90_latency:141.742µs;p50_latency:43.511µs;ave_latency:14.802538ms;local_tx_blk_window:47.439µs;cross_tx_blk_window:157.742567ms{ex:29.874µs,pr:329ns,bl:157.702976ms,de:9.387µs};
+Time range [2023-10-07 12:27:29.859522735 +0800 +08 m=+5.006181794  ----  2023-10-07 12:27:33.334256248 +0800 +08 m=+8.480915239]
+node:127.0.0.1:6002;txn_cnt:14;dis_txn_cnt:12;success_txn:14;success_dis_txn:12;cc_abort:0;p99_latency:36.058556ms;p90_latency:5.178543ms;p50_latency:801.1µs;ave_latency:1.789806ms;local_tx_blk_window:2.180489ms;cross_tx_blk_window:1.724692ms{ex:1.53706ms,pr:60.268µs,bl:8.58µs,de:118.783µs};
+Time range [2023-10-07 12:27:29.860796527 +0800 +08 m=+5.007455580  ----  2023-10-07 12:27:33.312723279 +0800 +08 m=+8.459382304]
+try_cnt:137;txn_cnt:128;dis_txn_cnt:11;client:16;success_txn:127;success_dis_txn:10;crash_abort:0;level_abort:0;cc_abort:9;p99_latency:5.02057155s;p90_latency:807.093µs;p50_latency:144.411µs;ave_latency:56.04581ms;avg_level:-1.000000;avg_phase1:1.766652ms;avg_phase2:205.079µs;avg_phase3:0s;
+Time range [2023-10-07 12:27:30.469748696 +0800 +08 m=+5.616407684  ----  2023-10-07 12:27:30.786931435 +0800 +08 m=+5.933590419]
+
+
+try_cnt:337;txn_cnt:330;dis_txn_cnt:33;client:16;success_txn:329;success_dis_txn:32;crash_abort:1;level_abort:0;cc_abort:7;p99_latency:6.83167ms;p90_latency:700.61µs;p50_latency:140.841µs;ave_latency:27.84623ms;avg_level:-1.000000;avg_phase1:953.214µs;avg_phase2:108.04µs;avg_phase3:81.772µs;
+Time range [2023-10-07 12:26:55.519726525 +0800 +08 m=+5.648177078  ----  2023-10-07 12:26:56.333066436 +0800 +08 m=+6.461516923]
+node:127.0.0.1:6002;txn_cnt:37;dis_txn_cnt:31;success_txn:37;success_dis_txn:31;cc_abort:0;p99_latency:9.016684ms;p90_latency:1.221997ms;p50_latency:833.996µs;ave_latency:1.215346ms;local_tx_blk_window:1.592876ms;cross_tx_blk_window:1.153611ms{ex:841.636µs,pr:51.617µs,bl:139.12µs,de:121.236µs};
+Time range [2023-10-07 12:26:54.880785817 +0800 +08 m=+5.009236374  ----  2023-10-07 12:26:56.33256333 +0800 +08 m=+6.461013825]
+node:127.0.0.1:6001;txn_cnt:403;dis_txn_cnt:38;success_txn:403;success_dis_txn:38;cc_abort:0;p99_latency:112.069µs;p90_latency:70.08µs;p50_latency:45.383µs;ave_latency:2.533213ms;local_tx_blk_window:47.929µs;cross_tx_blk_window:26.033956ms{ex:20.665µs,pr:409ns,bl:26.005103ms,de:7.777µs};
+Time range [2023-10-07 12:27:06.568078612 +0800 +08 m=+5.005187815  ----  2023-10-07 12:27:07.484652463 +0800 +08 m=+5.921761599]

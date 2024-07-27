@@ -1,0 +1,20 @@
+syntax = "proto2";
+option go_package = ".rlaction";
+
+message Info{
+  required string cid = 1;
+  required int32 level = 2;
+  required float reward = 3;
+}
+
+message Act{
+  required int32 action = 1;
+}
+
+service Action{
+  rpc action (Info) returns (Act);
+}
+
+service Reset{
+  rpc reset (Info) returns (Act);
+}

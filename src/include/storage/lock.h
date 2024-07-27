@@ -309,7 +309,7 @@ typedef struct LOCK
 	LOCKMASK	grantMask;		/* bitmask for lock types already granted */
 	LOCKMASK	waitMask;		/* bitmask for lock types awaited */
 	SHM_QUEUE	procLocks;		/* list of PROCLOCK objects assoc. with lock */
-	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on lock */    // TODO: order by the priority.
+	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on lock */
 	int			requested[MAX_LOCKMODES];	/* counts of requested locks */
 	int			nRequested;		/* total of requested[] array */
 	int			granted[MAX_LOCKMODES]; /* counts of granted locks */

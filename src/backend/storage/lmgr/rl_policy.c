@@ -16,6 +16,27 @@ LockFeature* LockFeatureVec = NULL;
 TrainingState* RLState = NULL;
 CachedPolicy* Policy = NULL;
 const uint32_t timeout_choices[10] = {1, 4, 8, 16, 64, 128, 256, 512, 1024, 0};
+const uint32_t feature_bits[] = {1, 4, 2};
+const uint32_t feature_caps[] = {1, 15, 3};
+
+inline uint32_t minUInt32(uint32_t x, uint32_t y) {
+    if (x < y) return x;
+    return y;
+}
+
+inline uint32_t encode_tx_state() {
+    uint32_t res = 0, i = 0;
+    Assert(RLState->op >= 0 && RLState->op <= 1);
+    Assert(RLState->n_r >= 0);
+    Assert(RLState->n_w >= 0);
+    res |= minUInt32(RLState->op, feature_caps[i]);
+    res <<= feature_bits[i++];
+    res |= minUInt32(RLState->n_r+RLState->n_w, feature_caps[i]);
+//    res <<= feature_bits[i++];
+//    Assert(RLState->k >= 0);
+//    res |= minUInt32(RLState->k, feature_caps[i]);
+    return res;
+}
 
 static bool starts_with(const char *str, const char *pre) {
     return strncmp(pre, str, strlen(pre)) == 0;
@@ -25,6 +46,7 @@ bool load_policy()
 {
     FILE* pol_file;
     int length;
+    char *token;
     char wait_policy_str[STATE_SPACE + 2];
     char timeout_policy_str[STATE_SPACE + 2];
 
@@ -48,13 +70,15 @@ bool load_policy()
         fclose(pol_file);
         return false;
     }
-    printf("strings are \n%s\n%s\n, %d - %d\n", wait_policy_str, timeout_policy_str, strlen(wait_policy_str), strlen(timeout_policy_str));
+    printf("Policy strings:\n%s\n%s\n", wait_policy_str, timeout_policy_str);
     Assert(strlen(wait_policy_str) == strlen(timeout_policy_str));
     length = (int) strlen(wait_policy_str) - 1;
-//    Assert(length == STATE_SPACE);
+    while (!isdigit(wait_policy_str[length-1])) length --;
+    Assert(length == STATE_SPACE);
+    token = strtok(wait_policy_str, " ");
     for (int i = 0; i < length; ++i) {
-        Assert(wait_policy_str[i] >= '0' && wait_policy_str[i] <= '9');
-        Policy->rank[i] = (uint32_t) (wait_policy_str[i] - '0');
+        Policy->rank[i] = strtod(token, NULL);
+        token = strtok(NULL, " ");
         Assert(timeout_policy_str[i] >= '0' && timeout_policy_str[i] <= '9');
         Policy->timeout[i] = timeout_choices[timeout_policy_str[i] - '0'];
     }
@@ -99,8 +123,8 @@ void refresh_lock_strategy()
     if (!IsolationLearnCC())
         return;
 
-    RLState->step ++;
-    state = RLState->step;
+    state = encode_tx_state();
+    Assert(state >= 0 && state < STATE_SPACE);
     MyProc->rank = Policy->rank[state];
     LockTimeout = (int) Policy->timeout[state];
     XactLockStrategy = LOCK_2PL;
@@ -125,8 +149,11 @@ void init_rl_state(uint32 xact_id)
     RLState->cur_xact_id = xact_id;
 #if MODEL_REMOTE == 1
 #endif
-    RLState->step = 0;
+    RLState->n_r = 0;
+    RLState->n_w = 0;
     RLState->k = 0;
+    RLState->op = 0;
+    RLState->max_state = 0;
     refresh_lock_strategy();
 }
 
@@ -169,7 +196,7 @@ void print_current_state(uint32 xact_id)
     Assert(RLState->cur_xact_id == xact_id);
     fprintf(filePtr, "[xact:%d, step:%d, k:%d]\n",
             RLState->cur_xact_id,
-            RLState->step,
+            RLState->n_r + RLState->n_w,
             RLState->k);
     fclose(filePtr);
 #endif
@@ -178,32 +205,33 @@ void print_current_state(uint32 xact_id)
 void before_lock(int i, bool is_read)
 {
     if (!IsolationLearnCC()) return;
-//    SpinLockAcquire(&LockFeatureVec[i].mutex);
-//    SpinLockRelease(&LockFeatureVec[i].mutex);
+    RLState->op = is_read? 0:1;
     refresh_lock_strategy();
 }
 
 void after_lock(int i, bool is_read)
 {
     if (!IsolationLearnCC()) return;
+    if (is_read) RLState->n_r ++;
+    else RLState->n_w ++;
 }
 
 
 void report_intention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
 {
-    int i, cmd;
-    if (!IsolationLearnCC()) return;
-    i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
-    cmd = is_release? -1:1;
-    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
-    if (!is_release) before_lock(i, is_read);
-    SpinLockAcquire(&LockFeatureVec[i].mutex);
-    if (is_read)
-        LockFeatureVec[i].read_intention_cnt += cmd;
-    else
-        LockFeatureVec[i].write_intention_cnt += cmd;
-    SpinLockRelease(&LockFeatureVec[i].mutex);
-    if (is_release) after_lock(i, is_read);
+//    int i, cmd;
+//    if (!IsolationLearnCC()) return;
+//    i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
+//    cmd = is_release? -1:1;
+//    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
+    if (!is_release) before_lock(0, is_read);
+//    SpinLockAcquire(&LockFeatureVec[i].mutex);
+//    if (is_read)
+//        LockFeatureVec[i].read_intention_cnt += cmd;
+//    else
+//        LockFeatureVec[i].write_intention_cnt += cmd;
+//    SpinLockRelease(&LockFeatureVec[i].mutex);
+    if (is_release) after_lock(0, is_read);
 }
 
 void report_conflict(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
