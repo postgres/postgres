@@ -3270,15 +3270,17 @@ test_install_destdir = meson.build_root() / 'tmp_install/'
 if build_system != 'windows'
   # On unixoid systems this is trivial, we just prepend the destdir
   assert(dir_prefix.startswith('/')) # enforced by meson
-  test_install_location = '@0@@1@'.format(test_install_destdir, dir_prefix)
+  temp_install_bindir = '@0@@1@'.format(test_install_destdir, dir_prefix / dir_bin)
+  temp_install_libdir = '@0@@1@'.format(test_install_destdir, dir_prefix / dir_lib)
 else
   # drives, drive-relative paths, etc make this complicated on windows, call
   # into a copy of meson's logic for it
   command = [
     python, '-c',
     'import sys; from pathlib import PurePath; d1=sys.argv[1]; d2=sys.argv[2]; print(str(PurePath(d1, *PurePath(d2).parts[1:])))',
-    test_install_destdir, dir_prefix]
-  test_install_location = run_command(command, check: true).stdout().strip()
+    test_install_destdir]
+  temp_install_bindir = run_command(command, dir_prefix / dir_bin, check: true).stdout().strip()
+  temp_install_libdir = run_command(command, dir_prefix / dir_lib, check: true).stdout().strip()
 endif
 
 meson_install_args = meson_args + ['install'] + {
@@ -3315,7 +3317,6 @@ testport = 40000
 
 test_env = environment()
 
-temp_install_bindir = test_install_location / get_option('bindir')
 test_initdb_template = meson.build_root() / 'tmp_install' / 'initdb-template'
 test_env.set('PG_REGRESS', pg_regress.full_path())
 test_env.set('REGRESS_SHLIB', regress_module.full_path())
@@ -3330,7 +3331,7 @@ test_env.set('PG_TEST_EXTRA', get_option('PG_TEST_EXTRA'))
 # that works (everything but windows, basically). On windows everything
 # library-like gets installed into bindir, solving that issue.
 if library_path_var != ''
-  test_env.prepend(library_path_var, test_install_location / get_option('libdir'))
+  test_env.prepend(library_path_var, temp_install_libdir)
 endif
 
 
