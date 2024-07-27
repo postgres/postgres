@@ -354,7 +354,7 @@ jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal)
 			appendBinaryStringInfo(out, "null", 4);
 			break;
 		case jbvString:
-			escape_json(out, pnstrdup(scalarVal->val.string.val, scalarVal->val.string.len));
+			escape_json_with_len(out, scalarVal->val.string.val, scalarVal->val.string.len);
 			break;
 		case jbvNumeric:
 			appendStringInfoString(out,

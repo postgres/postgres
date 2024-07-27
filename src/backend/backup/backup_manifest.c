@@ -148,7 +148,7 @@ AddFileToBackupManifest(backup_manifest_info *manifest, Oid spcoid,
 		pg_verify_mbstr(PG_UTF8, pathname, pathlen, true))
 	{
 		appendStringInfoString(&buf, "{ \"Path\": ");
-		escape_json(&buf, pathname);
+		escape_json_with_len(&buf, pathname, pathlen);
 		appendStringInfoString(&buf, ", ");
 	}
 	else

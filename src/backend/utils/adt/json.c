@@ -23,6 +23,7 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/fmgroids.h"
 #include "utils/json.h"
 #include "utils/jsonfuncs.h"
 #include "utils/lsyscache.h"
@@ -285,9 +286,16 @@ datum_to_json_internal(Datum val, bool is_null, StringInfo result,
 			pfree(jsontext);
 			break;
 		default:
-			outputstr = OidOutputFunctionCall(outfuncoid, val);
-			escape_json(result, outputstr);
-			pfree(outputstr);
+			/* special-case text types to save useless palloc/memcpy cycles */
+			if (outfuncoid == F_TEXTOUT || outfuncoid == F_VARCHAROUT ||
+				outfuncoid == F_BPCHAROUT)
+				escape_json_text(result, (text *) DatumGetPointer(val));
+			else
+			{
+				outputstr = OidOutputFunctionCall(outfuncoid, val);
+				escape_json(result, outputstr);
+				pfree(outputstr);
+			}
 			break;
 	}
 }
@@ -1391,7 +1399,6 @@ json_object(PG_FUNCTION_ARGS)
 				count,
 				i;
 	text	   *rval;
-	char	   *v;
 
 	switch (ndims)
 	{
@@ -1434,19 +1441,16 @@ json_object(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("null value not allowed for object key")));
 
-		v = TextDatumGetCString(in_datums[i * 2]);
 		if (i > 0)
 			appendStringInfoString(&result, ", ");
-		escape_json(&result, v);
+		escape_json_text(&result, (text *) DatumGetPointer(in_datums[i * 2]));
 		appendStringInfoString(&result, " : ");
-		pfree(v);
 		if (in_nulls[i * 2 + 1])
 			appendStringInfoString(&result, "null");
 		else
 		{
-			v = TextDatumGetCString(in_datums[i * 2 + 1]);
-			escape_json(&result, v);
-			pfree(v);
+			escape_json_text(&result,
+							 (text *) DatumGetPointer(in_datums[i * 2 + 1]));
 		}
 	}
 
@@ -1483,7 +1487,6 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 				val_count,
 				i;
 	text	   *rval;
-	char	   *v;
 
 	if (nkdims > 1 || nkdims != nvdims)
 		ereport(ERROR,
@@ -1512,20 +1515,15 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("null value not allowed for object key")));
 
-		v = TextDatumGetCString(key_datums[i]);
 		if (i > 0)
 			appendStringInfoString(&result, ", ");
-		escape_json(&result, v);
+		escape_json_text(&result, (text *) DatumGetPointer(key_datums[i]));
 		appendStringInfoString(&result, " : ");
-		pfree(v);
 		if (val_nulls[i])
 			appendStringInfoString(&result, "null");
 		else
-		{
-			v = TextDatumGetCString(val_datums[i]);
-			escape_json(&result, v);
-			pfree(v);
-		}
+			escape_json_text(&result,
+							 (text *) DatumGetPointer(val_datums[i]));
 	}
 
 	appendStringInfoChar(&result, '}');
@@ -1541,50 +1539,100 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(rval);
 }
 
+/*
+ * escape_json_char
+ *		Inline helper function for escape_json* functions
+ */
+static pg_attribute_always_inline void
+escape_json_char(StringInfo buf, char c)
+{
+	switch (c)
+	{
+		case '\b':
+			appendStringInfoString(buf, "\\b");
+			break;
+		case '\f':
+			appendStringInfoString(buf, "\\f");
+			break;
+		case '\n':
+			appendStringInfoString(buf, "\\n");
+			break;
+		case '\r':
+			appendStringInfoString(buf, "\\r");
+			break;
+		case '\t':
+			appendStringInfoString(buf, "\\t");
+			break;
+		case '"':
+			appendStringInfoString(buf, "\\\"");
+			break;
+		case '\\':
+			appendStringInfoString(buf, "\\\\");
+			break;
+		default:
+			if ((unsigned char) c < ' ')
+				appendStringInfo(buf, "\\u%04x", (int) c);
+			else
+				appendStringInfoCharMacro(buf, c);
+			break;
+	}
+}
 
 /*
- * Produce a JSON string literal, properly escaping characters in the text.
+ * escape_json
+ *		Produce a JSON string literal, properly escaping the NUL-terminated
+ *		cstring.
  */
 void
 escape_json(StringInfo buf, const char *str)
 {
-	const char *p;
+	appendStringInfoCharMacro(buf, '"');
+
+	for (; *str != '\0'; str++)
+		escape_json_char(buf, *str);
 
 	appendStringInfoCharMacro(buf, '"');
-	for (p = str; *p; p++)
-	{
-		switch (*p)
-		{
-			case '\b':
-				appendStringInfoString(buf, "\\b");
-				break;
-			case '\f':
-				appendStringInfoString(buf, "\\f");
-				break;
-			case '\n':
-				appendStringInfoString(buf, "\\n");
-				break;
-			case '\r':
-				appendStringInfoString(buf, "\\r");
-				break;
-			case '\t':
-				appendStringInfoString(buf, "\\t");
-				break;
-			case '"':
-				appendStringInfoString(buf, "\\\"");
-				break;
-			case '\\':
-				appendStringInfoString(buf, "\\\\");
-				break;
-			default:
-				if ((unsigned char) *p < ' ')
-					appendStringInfo(buf, "\\u%04x", (int) *p);
-				else
-					appendStringInfoCharMacro(buf, *p);
-				break;
-		}
-	}
+}
+
+/*
+ * escape_json_with_len
+ *		Produce a JSON string literal, properly escaping the possibly not
+ *		NUL-terminated characters in 'str'.  'len' defines the number of bytes
+ *		from 'str' to process.
+ */
+void
+escape_json_with_len(StringInfo buf, const char *str, int len)
+{
 	appendStringInfoCharMacro(buf, '"');
+
+	for (int i = 0; i < len; i++)
+		escape_json_char(buf, str[i]);
+
+	appendStringInfoCharMacro(buf, '"');
+}
+
+/*
+ * escape_json_text
+ *		Append 'txt' onto 'buf' and escape using escape_json_with_len.
+ *
+ * This is more efficient than calling text_to_cstring and appending the
+ * result as that could require an additional palloc and memcpy.
+ */
+void
+escape_json_text(StringInfo buf, const text *txt)
+{
+	/* must cast away the const, unfortunately */
+	text	   *tunpacked = pg_detoast_datum_packed(unconstify(text *, txt));
+	int			len = VARSIZE_ANY_EXHDR(tunpacked);
+	char	   *str;
+
+	str = VARDATA_ANY(tunpacked);
+
+	escape_json_with_len(buf, str, len);
+
+	/* pfree any detoasted values */
+	if (tunpacked != txt)
+		pfree(tunpacked);
 }
 
 /* Semantic actions for key uniqueness check */

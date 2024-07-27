@@ -523,6 +523,8 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 {
 	JsonPathItem elem;
 	int			i;
+	int32		len;
+	char	   *str;
 
 	check_stack_depth();
 	CHECK_FOR_INTERRUPTS();
@@ -533,7 +535,8 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			appendStringInfoString(buf, "null");
 			break;
 		case jpiString:
-			escape_json(buf, jspGetString(v, NULL));
+			str = jspGetString(v, &len);
+			escape_json_with_len(buf, str, len);
 			break;
 		case jpiNumeric:
 			if (jspHasNext(v))
@@ -662,7 +665,8 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 		case jpiKey:
 			if (inKey)
 				appendStringInfoChar(buf, '.');
-			escape_json(buf, jspGetString(v, NULL));
+			str = jspGetString(v, &len);
+			escape_json_with_len(buf, str, len);
 			break;
 		case jpiCurrent:
 			Assert(!inKey);
@@ -674,7 +678,8 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			break;
 		case jpiVariable:
 			appendStringInfoChar(buf, '$');
-			escape_json(buf, jspGetString(v, NULL));
+			str = jspGetString(v, &len);
+			escape_json_with_len(buf, str, len);
 			break;
 		case jpiFilter:
 			appendStringInfoString(buf, "?(");
@@ -732,7 +737,9 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 
 			appendStringInfoString(buf, " like_regex ");
 
-			escape_json(buf, v->content.like_regex.pattern);
+			escape_json_with_len(buf,
+								 v->content.like_regex.pattern,
+								 v->content.like_regex.patternlen);
 
 			if (v->content.like_regex.flags)
 			{
