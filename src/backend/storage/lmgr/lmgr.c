@@ -547,25 +547,8 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  relation->rd_lockInfo.lockRelId.relId,
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
-    if (IsolationNeedLock())
-    {
-        report_intention(tag.locktag_field2,
-                                       tag.locktag_field3,
-                                       tag.locktag_field4,
-                                       lockmode == ExclusiveLock? false:true,
-                                       false);
-    }
 
 	(void) LockAcquire(&tag, lockmode, false, false);
-
-    if (IsolationNeedLock())
-    {
-        report_intention(tag.locktag_field2,
-                                       tag.locktag_field3,
-                                       tag.locktag_field4,
-                                       lockmode == ExclusiveLock? false:true,
-                                       true);
-    }
 }
 
 /*
@@ -586,24 +569,7 @@ ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-    if (IsolationLearnCC())
-    {
-        report_intention(tag.locktag_field2,
-                       tag.locktag_field3,
-                       tag.locktag_field4,
-                       lockmode == ExclusiveLock? false:true,
-                       false);
-    }
-
 	res =  (LockAcquire(&tag, lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
-    if (!res && IsolationLearnCC())
-    {
-        report_intention(tag.locktag_field2,
-                        tag.locktag_field3,
-                        tag.locktag_field4,
-                        lockmode == ExclusiveLock? false:true,
-                        true);
-    }
     return res;
 }
 

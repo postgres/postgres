@@ -10,7 +10,7 @@ def main(args):
 
     cfg = utils.setup(args)
 
-    command = ['bash bench.sh -a -s {} -t {}'.format(args.skewness, args.nworkers)]
+    command = ['bash ./scripts/bench.sh -a -s {} -t {}'.format(args.skewness, args.nworkers)]
     learn_priority(command, cfg.get('log_directory'))    # , args.gx, args.tx
 
 
@@ -27,9 +27,9 @@ if __name__ == '__main__':
     parser.add_argument('--seed', help='RNG seed', type=int, default=42)
 
     # Experiment setting arguments
-    parser.add_argument('--nworkers', type=int, default=8,
+    parser.add_argument('--nworkers', type=int, default=16,
                         help='number of database workers')
-    parser.add_argument('--skewness', type=float, default=0.5,
+    parser.add_argument('--skewness', type=float, default=0.8,
                         help='the workload skewness (YCSB)')
 
     main(parser.parse_args())

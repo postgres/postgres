@@ -1,7 +1,0 @@
-CREATE OR REPLACE FUNCTION cleanup_unfinished_transactions() RETURNS void AS $$
-BEGIN
-    PERFORM pg_terminate_backend(pid)
-    FROM pg_stat_activity
-    WHERE state = 'active';
-END;
-$$ LANGUAGE plpgsql;

@@ -16,9 +16,8 @@ from collections import defaultdict
 from bayes_opt import BayesianOptimization, UtilityFunction
 
 eps = 1e-5
-REGEX_THPT = re.compile('events/s \(eps\):\s+([0-9.]+)')
-REGEX_ABRT = re.compile('95th percentile:\s+([0-9.]+)')
-MAX_STATE = 1 << 5
+REGEX_THPT = re.compile('success_txn:(\d+)')
+MAX_STATE = 1 << 8
 best_seen_list = []
 
 
@@ -30,14 +29,12 @@ def load_model_config(g_vec, x_vec):
 
 
 def parse(return_string):
-    if return_string is None: return (0.0, 0.0)
+    if return_string is None: return 0.0
     parse_thpt = re.search(REGEX_THPT, return_string)
-    parse_abrt = re.search(REGEX_ABRT, return_string)
-    if parse_thpt is None or parse_abrt is None:
-        return (float(.0), float(.0))
+    if parse_thpt is None:
+        return float(.0)
     thpt = parse_thpt.groups()[0]
-    abrt = parse_abrt.groups()[0]
-    return (float(thpt), float(abrt))
+    return float(thpt)
 
 
 def run(command, die_after=0):
@@ -84,8 +81,8 @@ class State(object):
     def write_to_file(self, f):
         f.writelines(["%.3f " % value for value in self._policy[:MAX_STATE]])
         f.write("\n")
-        f.writelines(["9" for _ in range(MAX_STATE)])
-        # f.writelines(["%.3f " % value for value in self._policy[MAX_STATE:]])
+        # f.writelines(["9" for _ in range(MAX_STATE)])
+        f.writelines(["%d" % int(10*value - eps) for value in self._policy[MAX_STATE:]])
         f.write("\n")
 
     @property
@@ -98,7 +95,7 @@ def shuffle(li):
     return li
 
 
-wait_die = [0.0 for _ in range(MAX_STATE)] # + [1.0 for _ in range(MAX_STATE)]
+wait_die = [0.0 for _ in range(MAX_STATE)] + [1.0 for _ in range(MAX_STATE)]
 iter_ = 0
 db_runtime = 5
 n_run = 1
@@ -136,12 +133,12 @@ def learn_priority(command, fin_log_dir):
         while i < n_run:
             run_results = parse(run(' '.join(command), die_after = 20 + db_runtime))
             print(run_results)
-            if run_results[0] == 0:
+            if run_results == 0:
                 print("panic: the running has been blocked for more than 10s (starting another round)")
             else:
                 i += 1
-                distrb.append(run_results[0])
-                reward += run_results[0]
+                distrb.append(run_results)
+                reward += run_results
                 time.sleep(1)   # cooldown
         reward /= n_run
         print("AVG throughput = ", reward, "dist. = ", distrb)
@@ -161,7 +158,7 @@ def learn_priority(command, fin_log_dir):
             writer.flush()
         return reward
 
-    bounds = {'x{}'.format(i): (0, 1) for i in range(MAX_STATE)}
+    bounds = {'x{}'.format(i): (0, 1) for i in range(2 * MAX_STATE)}
 
     optimizer = BayesianOptimization(
         f=black_box_function,

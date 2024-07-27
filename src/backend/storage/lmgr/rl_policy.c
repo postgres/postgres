@@ -8,16 +8,15 @@
 #include "storage/rl_policy.h"
 #include "utils/memutils.h"
 
-void after_lock(int i, bool is_read);
-void before_lock(int i, bool is_read);
+void after_lock(bool is_read);
+void before_lock(bool is_read, int n_requester, int n_granted, int k);
 static uint64_t get_cur_time_ns();
 
-LockFeature* LockFeatureVec = NULL;
 TrainingState* RLState = NULL;
 CachedPolicy* Policy = NULL;
 const uint32_t timeout_choices[10] = {1, 4, 8, 16, 64, 128, 256, 512, 1024, 0};
-const uint32_t feature_bits[] = {1, 4, 2};
-const uint32_t feature_caps[] = {1, 15, 3};
+// OP, STEP, DEP, REQ, GRANTED
+const uint32_t feature_bits[] = {1, 3, 2, 2, 2};
 
 inline uint32_t minUInt32(uint32_t x, uint32_t y) {
     if (x < y) return x;
@@ -29,12 +28,14 @@ inline uint32_t encode_tx_state() {
     Assert(RLState->op >= 0 && RLState->op <= 1);
     Assert(RLState->n_r >= 0);
     Assert(RLState->n_w >= 0);
-    res |= minUInt32(RLState->op, feature_caps[i]);
+    Assert(RLState->k >= 0);
+    res |= minUInt32(RLState->op, (1<<feature_bits[i]) - 1);
     res <<= feature_bits[i++];
-    res |= minUInt32(RLState->n_r+RLState->n_w, feature_caps[i]);
-//    res <<= feature_bits[i++];
-//    Assert(RLState->k >= 0);
-//    res |= minUInt32(RLState->k, feature_caps[i]);
+    res |= minUInt32(RLState->n_r+RLState->n_w, (1<<feature_bits[i]) - 1);
+    res <<= feature_bits[i++];
+    res |= minUInt32(RLState->k, (1<<feature_bits[i]) - 1);
+    res <<= feature_bits[i++];
+    res |= minUInt32(RLState->n_req, (1<<feature_bits[i]) - 1);
     return res;
 }
 
@@ -90,16 +91,7 @@ bool load_policy()
 void init_policy_maker()
 {
     printf("2PL lock graph initialized (new)\n");
-    LockFeatureVec = ShmemAllocUnlocked(sizeof (LockFeature) * LOCK_FEATURE_LEN);
     Policy = ShmemAllocUnlocked(sizeof (CachedPolicy));
-    for (int i=0;i<LOCK_FEATURE_LEN;i++)
-    {
-        SpinLockInit(&LockFeatureVec[i].mutex);
-        LockFeatureVec[i].read_cnt = 0;
-        LockFeatureVec[i].read_intention_cnt = 0;
-        LockFeatureVec[i].write_cnt = 0;
-        LockFeatureVec[i].write_intention_cnt = 0;
-    }
     Assert(load_policy());
 }
 
@@ -202,48 +194,13 @@ void print_current_state(uint32 xact_id)
 #endif
 }
 
-void before_lock(int i, bool is_read)
+void before_lock(bool is_read, int n_requester, int n_granted, int k)
 {
     if (!IsolationLearnCC()) return;
     RLState->op = is_read? 0:1;
     refresh_lock_strategy();
-}
-
-void after_lock(int i, bool is_read)
-{
-    if (!IsolationLearnCC()) return;
+    RLState->n_granted = n_granted;
+    RLState->n_req = n_requester;
     if (is_read) RLState->n_r ++;
     else RLState->n_w ++;
-}
-
-
-void report_intention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
-{
-//    int i, cmd;
-//    if (!IsolationLearnCC()) return;
-//    i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
-//    cmd = is_release? -1:1;
-//    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
-    if (!is_release) before_lock(0, is_read);
-//    SpinLockAcquire(&LockFeatureVec[i].mutex);
-//    if (is_read)
-//        LockFeatureVec[i].read_intention_cnt += cmd;
-//    else
-//        LockFeatureVec[i].write_intention_cnt += cmd;
-//    SpinLockRelease(&LockFeatureVec[i].mutex);
-    if (is_release) after_lock(0, is_read);
-}
-
-void report_conflict(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release)
-{
-    int i, off;
-    if (!IsolationLearnCC()) return;
-    i = (int)(LOCK_KEY(rid, pgid, offset) & LOCK_FEATURE_MASK);
-    off = is_release? -1:1;
-
-    Assert(i >= 0 && i < LOCK_FEATURE_LEN);
-    SpinLockAcquire(&LockFeatureVec[i].mutex);
-    if (is_read) LockFeatureVec[i].read_cnt += off;
-    else LockFeatureVec[i].write_cnt += off;
-    SpinLockRelease(&LockFeatureVec[i].mutex);
 }

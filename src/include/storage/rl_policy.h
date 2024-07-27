@@ -16,7 +16,7 @@
 #define LOCK_FEATURE_LEN (1<<LOG_LOCK_FEATURE)
 #define LOCK_FEATURE_MASK (LOCK_FEATURE_LEN-1)
 #define REL_ID_MULTI 13
-#define STATE_SPACE 32
+#define STATE_SPACE (1<<8)
 #define N_KEY_FEATURES 2
 #define MOVING_AVERAGE_RATE 0.8
 #define LOCK_KEY(rid, pgid, offset) ((pgid) * 4096 + (offset) + (rid) * REL_ID_MULTI)
@@ -48,15 +48,21 @@ typedef struct GlobalLockFeatureData {
 // for feature.
 typedef struct XactState {
     uint32 cur_xact_id; // for validation propose.
+    // transactional information.
     uint16 n_r;
     uint16 n_w;
-    uint16 k;
     uint8 op;
+
+    // graphical information.
+    uint16 k;
+    uint16_t n_req;
+    uint16_t n_granted;
     uint32 max_state;
 } TrainingState;
 
 extern void init_policy_maker();
-extern void report_intention(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release);
+extern void before_lock(bool is_read, int n_requester, int n_granted, int k);
+extern void after_lock(bool is_read);
 extern void report_conflict(uint32 rid, uint32 pgid, uint16 offset, bool is_read, bool is_release);
 extern void init_rl_state(uint32 xact_id);
 extern double get_policy(uint32 xact_id);

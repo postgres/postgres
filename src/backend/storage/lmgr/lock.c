@@ -1004,7 +1004,14 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		 * blocking, remove useless table entries and return NOT_AVAIL without
 		 * waiting.
 		 */
-        if (MyProc->rank > 9.8) dontWait = true;
+        if (IsolationLearnCC())
+        {
+            before_lock(lockmode == ExclusiveLock? false:true,
+                        lock->nRequested,
+                        lock->nGranted,
+                        MyProc->nDep);
+            if (MyProc->rank > 9.8) dontWait = true;
+        }
 		if (dontWait)
 		{
 			AbortStrongLockAcquire();
@@ -1478,12 +1485,6 @@ GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode)
 	if (lock->granted[lockmode] == lock->requested[lockmode])
 		lock->waitMask &= LOCKBIT_OFF(lockmode);
 	proclock->holdMask |= LOCKBIT_ON(lockmode);
-    if (IsolationLearnCC() && lock->tag.locktag_type == LOCKTAG_TUPLE)
-        report_conflict(lock->tag.locktag_field2,
-                                       lock->tag.locktag_field3,
-                                       lock->tag.locktag_field4,
-                                       lockmode == ExclusiveLock? false:true,
-                                       false);
     LOCK_PRINT("GrantLock", lock, lockmode);
 	Assert((lock->nGranted > 0) && (lock->granted[lockmode] > 0));
 	Assert(lock->nGranted <= lock->nRequested);
@@ -1509,13 +1510,6 @@ UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 	Assert(lock->nGranted <= lock->nRequested);
 
 
-    if (IsolationLearnCC() && lock->tag.locktag_type == LOCKTAG_TUPLE) {
-        report_conflict(lock->tag.locktag_field2,
-                        lock->tag.locktag_field3,
-                        lock->tag.locktag_field4,
-                        lockmode == ExclusiveLock ? false : true,
-                        true);
-    }
 
 	/*
 	 * fix the general lock stats

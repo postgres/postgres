@@ -1120,6 +1120,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
         {
             PGPROC *proc = (PGPROC *) proc_node;
             bool needWaitBefore = proc->rank > MyProc->rank;
+            if (lockMethodTable->conflictTab[proc->waitLockMode] & lockmode)
+                proc->nDep ++;
             if (myHeldLocks)
             {
                 /*

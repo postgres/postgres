@@ -2174,7 +2174,6 @@ StartTransaction(void)
 
         if (!(IsolationNeedLock() || IsolationIsSerializable()))
             printf("xact%d is not serializable (iso:%d, lock:%d).\n", MyProc->lxid , XactIsoLevel, XactLockStrategy);
-        return;
     }
     else init_rl_state(vxid.localTransactionId);
 
