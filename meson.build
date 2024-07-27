@@ -1155,15 +1155,26 @@ endif
 
 if not get_option('readline').disabled()
   libedit_preferred = get_option('libedit_preferred')
-  # Set the order of readline dependencies
-  check_readline_deps = libedit_preferred ? \
-    ['libedit', 'readline'] : ['readline', 'libedit']
+  # Set the order of readline dependencies.
+  # cc.find_library breaks and throws on the first dependency which
+  # is marked as required=true and can't be found. Thus, we only mark
+  # the last dependency to look up as required, to not throw too early.
+  check_readline_deps = [
+    {
+      'name': libedit_preferred ? 'libedit' : 'readline',
+      'required': false
+    },
+    {
+      'name': libedit_preferred ? 'readline' : 'libedit',
+      'required': get_option('readline')
+    }
+  ]
 
   foreach readline_dep : check_readline_deps
-    readline = dependency(readline_dep, required: false)
+    readline = dependency(readline_dep['name'], required: false)
     if not readline.found()
-      readline = cc.find_library(readline_dep,
-        required: get_option('readline'),
+      readline = cc.find_library(readline_dep['name'],
+        required: readline_dep['required'],
         dirs: test_lib_d)
     endif
     if readline.found()
