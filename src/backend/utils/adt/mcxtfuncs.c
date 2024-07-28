@@ -55,7 +55,7 @@ get_memory_context_name_and_ident(MemoryContext context, const char **const name
 	 * To be consistent with logging output, we label dynahash contexts with
 	 * just the hash table name as with MemoryContextStatsPrint().
 	 */
-	if (ident && strcmp(*name, "dynahash") == 0)
+	if (*ident == NULL && strcmp(*name, "dynahash") == 0)
 	{
 		*name = *ident;
 		*ident = NULL;
