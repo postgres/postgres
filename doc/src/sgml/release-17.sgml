@@ -2137,7 +2137,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
      <listitem>
       <para>
       Add libpq function <link
-      linkend="libpq-PQsocketPoll"><function>PQsocketPoll</function></link>
+      linkend="libpq-PQsocketPoll"><function>PQsocketPoll()</function></link>
       to allow polling of network sockets (Tristan Partin, Tom Lane)
       </para>
      </listitem>
