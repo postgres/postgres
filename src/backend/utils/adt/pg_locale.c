@@ -56,12 +56,12 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_collation.h"
+#include "common/hashfn.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
 #include "utils/guc_hooks.h"
-#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
@@ -129,10 +129,27 @@ typedef struct
 	bool		ctype_is_c;		/* is collation's LC_CTYPE C? */
 	bool		flags_valid;	/* true if above flags are valid */
 	pg_locale_t locale;			/* locale_t struct, or 0 if not valid */
+
+	/* needed for simplehash */
+	uint32		hash;
+	char		status;
 } collation_cache_entry;
 
-static HTAB *collation_cache = NULL;
+#define SH_PREFIX		collation_cache
+#define SH_ELEMENT_TYPE	collation_cache_entry
+#define SH_KEY_TYPE		Oid
+#define SH_KEY			collid
+#define SH_HASH_KEY(tb, key)   	murmurhash32((uint32) key)
+#define SH_EQUAL(tb, a, b)		(a == b)
+#define SH_GET_HASH(tb, a)		a->hash
+#define SH_SCOPE		static inline
+#define SH_STORE_HASH
+#define SH_DECLARE
+#define SH_DEFINE
+#include "lib/simplehash.h"
 
+static MemoryContext CollationCacheContext = NULL;
+static collation_cache_hash *CollationCache = NULL;
 
 #if defined(WIN32) && defined(LC_MESSAGES)
 static char *IsoLocaleName(const char *);
@@ -1235,18 +1252,16 @@ lookup_collation_cache(Oid collation, bool set_flags)
 	Assert(OidIsValid(collation));
 	Assert(collation != DEFAULT_COLLATION_OID);
 
-	if (collation_cache == NULL)
+	if (CollationCache == NULL)
 	{
-		/* First time through, initialize the hash table */
-		HASHCTL		ctl;
-
-		ctl.keysize = sizeof(Oid);
-		ctl.entrysize = sizeof(collation_cache_entry);
-		collation_cache = hash_create("Collation cache", 100, &ctl,
-									  HASH_ELEM | HASH_BLOBS);
+		CollationCacheContext = AllocSetContextCreate(TopMemoryContext,
+													  "collation cache",
+													  ALLOCSET_DEFAULT_SIZES);
+		CollationCache = collation_cache_create(
+			CollationCacheContext, 16, NULL);
 	}
 
-	cache_entry = hash_search(collation_cache, &collation, HASH_ENTER, &found);
+	cache_entry = collation_cache_insert(CollationCache, collation, &found);
 	if (!found)
 	{
 		/*
