@@ -7,7 +7,6 @@ read -p "Enter the name of the database cluster to start: " DB_CLUSTER_NAME
 ROOT_DIR=$(pwd)
 SHARDING_DIR="$ROOT_DIR/sharding"
 PG_CTL_DIR="$ROOT_DIR/src/bin/pg_ctl"
-PSQL_DIR="$ROOT_DIR/src/bin/psql"
 POSTGRES_EXECUTABLE="$ROOT_DIR/src/backend/postgres"
 CLUSTERS_DIR="$ROOT_DIR/clusters"
 DB_DIR="$CLUSTERS_DIR/$DB_CLUSTER_NAME"
@@ -17,9 +16,6 @@ CONFIG_FILE="$SHARDING_DIR/src/node/config.yaml" # Path to config.yaml
 # Check for additional argument
 START_PSQL=$1
 NODE_TYPE=$2
-
-# Create clusters directory if it doesn't exist
-mkdir -p $CLUSTERS_DIR
 
 # If we're on OS X, make sure that globals aren't stripped out.
 if [ "$(uname)" == "Darwin" ]; then
@@ -31,8 +27,10 @@ echo "[init-server] Building the project..."
 make
 
 echo "[init-server] Copying postgres executable to pg_ctl directory..."
+cd $PG_CTL_DIR
+rm postgres
+cd $ROOT_DIR
 cp $POSTGRES_EXECUTABLE $PG_CTL_DIR
-cp ./target/release/libsharding.a $PG_CTL_DIR
 
 # Function to check if a port is available
 port_available() {
