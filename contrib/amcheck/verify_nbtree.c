@@ -1433,6 +1433,13 @@ bt_target_page_check(BtreeCheckState *state)
 		bool		lowersizelimit;
 		ItemPointer scantid;
 
+		/*
+		 * True if we already called bt_entry_unique_check() for the current
+		 * item.  This helps to avoid visiting the heap for keys, which are
+		 * anyway presented only once and can't comprise a unique violation.
+		 */
+		bool		unique_checked = false;
+
 		CHECK_FOR_INTERRUPTS();
 
 		itemid = PageGetItemIdCareful(state, state->targetblock,
@@ -1775,12 +1782,18 @@ bt_target_page_check(BtreeCheckState *state)
 
 		/*
 		 * If the index is unique verify entries uniqueness by checking the
-		 * heap tuples visibility.
+		 * heap tuples visibility.  Immediately check posting tuples and
+		 * tuples with repeated keys.  Postpone check for keys, which have the
+		 * first appearance.
 		 */
 		if (state->checkunique && state->indexinfo->ii_Unique &&
-			P_ISLEAF(topaque) && !skey->anynullkeys)
+			P_ISLEAF(topaque) && !skey->anynullkeys &&
+			(BTreeTupleIsPosting(itup) || ItemPointerIsValid(lVis.tid)))
+		{
 			bt_entry_unique_check(state, itup, state->targetblock, offset,
 								  &lVis);
+			unique_checked = true;
+		}
 
 		if (state->checkunique && state->indexinfo->ii_Unique &&
 			P_ISLEAF(topaque) && OffsetNumberNext(offset) <= max)
@@ -1799,6 +1812,9 @@ bt_target_page_check(BtreeCheckState *state)
 			 * data (whole index tuple or last posting in index tuple). Key
 			 * containing null value does not violate unique constraint and
 			 * treated as different to any other key.
+			 *
+			 * If the next key is the same as the previous one, do the
+			 * bt_entry_unique_check() call if it was postponed.
 			 */
 			if (_bt_compare(state->rel, skey, state->target,
 							OffsetNumberNext(offset)) != 0 || skey->anynullkeys)
@@ -1807,6 +1823,11 @@ bt_target_page_check(BtreeCheckState *state)
 				lVis.offset = InvalidOffsetNumber;
 				lVis.postingIndex = -1;
 				lVis.tid = NULL;
+			}
+			else if (!unique_checked)
+			{
+				bt_entry_unique_check(state, itup, state->targetblock, offset,
+									  &lVis);
 			}
 			skey->scantid = scantid;	/* Restore saved scan key state */
 		}
@@ -1890,9 +1911,18 @@ bt_target_page_check(BtreeCheckState *state)
 				rightkey->scantid = NULL;
 
 				/* The first key on the next page is the same */
-				if (_bt_compare(state->rel, rightkey, state->target, max) == 0 && !rightkey->anynullkeys)
+				if (_bt_compare(state->rel, rightkey, state->target, max) == 0 &&
+					!rightkey->anynullkeys)
 				{
 					Page		rightpage;
+
+					/*
+					 * Do the bt_entry_unique_check() call if it was
+					 * postponed.
+					 */
+					if (!unique_checked)
+						bt_entry_unique_check(state, itup, state->targetblock,
+											  offset, &lVis);
 
 					elog(DEBUG2, "cross page equal keys");
 					rightpage = palloc_btree_page(state,
