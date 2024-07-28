@@ -1125,10 +1125,11 @@ SSLerrmessage(unsigned long ecode)
 		return errreason;
 
 	/*
-	 * In OpenSSL 3.0.0 and later, ERR_reason_error_string randomly refuses to
-	 * map system errno values.  We can cover that shortcoming with this bit
-	 * of code.  Older OpenSSL versions don't have the ERR_SYSTEM_ERROR macro,
-	 * but that's okay because they don't have the shortcoming either.
+	 * In OpenSSL 3.0.0 and later, ERR_reason_error_string does not map system
+	 * errno values anymore.  (See OpenSSL source code for the explanation.)
+	 * We can cover that shortcoming with this bit of code.  Older OpenSSL
+	 * versions don't have the ERR_SYSTEM_ERROR macro, but that's okay because
+	 * they don't have the shortcoming either.
 	 */
 #ifdef ERR_SYSTEM_ERROR
 	if (ERR_SYSTEM_ERROR(ecode))
