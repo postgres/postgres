@@ -261,29 +261,33 @@ pg_set_regex_collation(Oid collation)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("nondeterministic collations are not supported for regular expressions")));
 
-#ifdef USE_ICU
-		if (pg_regex_locale && pg_regex_locale->provider == COLLPROVIDER_ICU)
-			pg_regex_strategy = PG_REGEX_LOCALE_ICU;
-		else
-#endif
-		if (GetDatabaseEncoding() == PG_UTF8)
+		if (pg_regex_locale && pg_regex_locale->provider == COLLPROVIDER_BUILTIN)
 		{
-			if (pg_regex_locale)
+			Assert(GetDatabaseEncoding() == PG_UTF8);
+			pg_regex_strategy = PG_REGEX_BUILTIN;
+		}
+#ifdef USE_ICU
+		else if (pg_regex_locale && pg_regex_locale->provider == COLLPROVIDER_ICU)
+		{
+			pg_regex_strategy = PG_REGEX_LOCALE_ICU;
+		}
+#endif
+		else
+		{
+			if (GetDatabaseEncoding() == PG_UTF8)
 			{
-				if (pg_regex_locale->provider == COLLPROVIDER_BUILTIN)
-					pg_regex_strategy = PG_REGEX_BUILTIN;
-				else
+				if (pg_regex_locale)
 					pg_regex_strategy = PG_REGEX_LOCALE_WIDE_L;
+				else
+					pg_regex_strategy = PG_REGEX_LOCALE_WIDE;
 			}
 			else
-				pg_regex_strategy = PG_REGEX_LOCALE_WIDE;
-		}
-		else
-		{
-			if (pg_regex_locale)
-				pg_regex_strategy = PG_REGEX_LOCALE_1BYTE_L;
-			else
-				pg_regex_strategy = PG_REGEX_LOCALE_1BYTE;
+			{
+				if (pg_regex_locale)
+					pg_regex_strategy = PG_REGEX_LOCALE_1BYTE_L;
+				else
+					pg_regex_strategy = PG_REGEX_LOCALE_1BYTE;
+			}
 		}
 
 		pg_regex_collation = collation;
