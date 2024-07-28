@@ -14,6 +14,8 @@ use std::{
     sync::Mutex,
 };
 use users::get_current_username;
+use inline_colorization::*;
+
 // use super::super::utils::sysinfo::print_available_memory;
 
 pub struct Channel {
@@ -30,7 +32,6 @@ pub struct Router {
     ///  HashMap:
     ///     key: Hash
     ///     value: shardId
-    hash_id: Mutex<HashMap<String, String>>,
     comm_channels: Mutex<Vec<Channel>>,
     ip: Arc<str>,
     port: Arc<str>,
@@ -83,7 +84,6 @@ impl Router {
         println!("SHARDS: {}", shards.len());
         let router = Router {
             shards: Mutex::new(shards),
-            hash_id: Mutex::new(hash_id),
             comm_channels: Mutex::new(Vec::new()),
             ip: Arc::from(ip),
             port: Arc::from(port),
@@ -169,9 +169,9 @@ impl Router {
             return vec!["5433".to_string()]
         } else {
             // Return all shards
-            println!("Returning all shards");
-            let shards = self.hash_id.lock().unwrap();
-            shards.values().cloned().collect()
+            println!("{color_cyan}{style_bold}Returning all shards");
+            self.shards.lock().unwrap().keys().cloned().collect()
+
         }
     }
 }
