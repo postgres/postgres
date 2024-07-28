@@ -26,6 +26,8 @@ impl<'a> Shard<'a> {
     pub fn new(ip: &'a str, port: &'a str) -> Self {
         println!("Creating a new Shard node with port: {}", port);
 
+        print_sysinfo();
+
         // get username dynamically
         let username = match get_current_username() {
             Some(username) => username.to_string_lossy().to_string(),

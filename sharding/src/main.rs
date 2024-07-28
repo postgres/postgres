@@ -1,3 +1,5 @@
+use sharding::utils::memory_space::print_sysinfo;
+
 fn main() {
-    println!("Hello, world!");
+    print_sysinfo();
 }
