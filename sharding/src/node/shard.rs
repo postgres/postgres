@@ -1,8 +1,8 @@
 use postgres::{Client, NoTls};
 extern crate users;
+use super::node::*;
 use rust_decimal::Decimal;
 use users::get_current_username;
-use super::node::*;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
 #[repr(C)]
@@ -28,7 +28,11 @@ impl<'a> Shard<'a> {
         println!("Connecting to the database with port: {}", port);
 
         let mut backend: Client = match Client::connect(
-            format!("host=127.0.0.1 port={} user={} dbname=template1", port, username).as_str(),
+            format!(
+                "host=127.0.0.1 port={} user={} dbname=template1",
+                port, username
+            )
+            .as_str(),
             NoTls,
         ) {
             Ok(backend) => backend,
@@ -38,19 +42,17 @@ impl<'a> Shard<'a> {
             }
         };
 
-
         Shard {
             // router: clients,
             backend,
             ip,
-            port
+            port,
         }
     }
 }
 
 impl<'a> NodeRole for Shard<'a> {
     fn send_query(&mut self, query: &str) -> bool {
-        
         let rows = match self.backend.query(query, &[]) {
             Ok(rows) => rows,
             Err(e) => {
@@ -69,7 +71,7 @@ impl<'a> NodeRole for Shard<'a> {
                 id, name, position, salary
             );
         }
-        
+
         true
     }
 }

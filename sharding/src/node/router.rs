@@ -2,7 +2,6 @@ use postgres::{Client, NoTls};
 extern crate users;
 use super::super::utils::node_config::*;
 use super::node::*;
-use regex::Regex;
 use rust_decimal::Decimal;
 use serde_yaml;
 use std::collections::HashMap;
@@ -43,8 +42,8 @@ impl Router {
         let config_content = fs::read_to_string("../../../sharding/src/node/config.yaml")
             .expect("Should have been able to read the file");
 
-        let config: NodeConfig = serde_yaml::from_str(&config_content)
-        .expect("Should have been able to parse the YAML");
+        let config: NodeConfig =
+            serde_yaml::from_str(&config_content).expect("Should have been able to parse the YAML");
 
         let mut shards: HashMap<String, Client> = HashMap::new();
         let mut hash_id: HashMap<String, String> = HashMap::new();
@@ -54,7 +53,7 @@ impl Router {
             let node_port = node.port;
 
             if (node_ip == ip) && (node_port == port) {
-                continue
+                continue;
             }
 
             // get username dynamically
@@ -69,10 +68,10 @@ impl Router {
                     let hash = "TODO-SHARD change this".to_string();
                     shards.insert(node_port.to_string(), shard_client);
                     hash_id.insert(hash.clone(), node_port.clone().to_string());
-                },
+                }
                 Err(e) => {
                     println!("Failed to connect to port: {}", node_port);
-                }, // Do something here
+                } // Do something here
             }
         }
 
@@ -112,7 +111,6 @@ impl Router {
 
     /// This function is the cluster management protocol for the Router node. It listens to incoming connections from Shards and handles them. This might be used in the future for sending routing tables, reassigning shards, rebalancing, etc.
     fn cluster_management_protocol(router: &Router) {
-
         let node_addr = "localhost:".to_string() + router.port.as_ref();
         let listener = TcpListener::bind(&node_addr).unwrap();
         println!("Router is listening for connections {}", node_addr);
@@ -166,7 +164,7 @@ impl Router {
             println!("Query is INSERT");
 
             // TODO-SHARD: Elegir un shard, el que tenga menor cargo o algo, etc
-            return vec!["5433".to_string()]
+            return vec!["5433".to_string()];
         } else {
             // Return all shards
             println!("Returning all shards");
