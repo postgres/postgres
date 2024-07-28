@@ -1260,8 +1260,8 @@ lookup_collation_cache(Oid collation, bool set_flags)
 		CollationCacheContext = AllocSetContextCreate(TopMemoryContext,
 													  "collation cache",
 													  ALLOCSET_DEFAULT_SIZES);
-		CollationCache = collation_cache_create(
-			CollationCacheContext, 16, NULL);
+		CollationCache = collation_cache_create(CollationCacheContext,
+												16, NULL);
 	}
 
 	cache_entry = collation_cache_insert(CollationCache, collation, &found);
