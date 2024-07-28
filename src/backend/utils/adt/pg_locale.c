@@ -56,6 +56,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_database.h"
 #include "common/hashfn.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -115,6 +116,8 @@ char	   *localized_full_months[12 + 1];
 
 /* is the databases's LC_CTYPE the C locale? */
 bool		database_ctype_is_c = false;
+
+static struct pg_locale_struct default_locale;
 
 /* indicates whether locale information cache is valid */
 static bool CurrentLocaleConvValid = false;
@@ -1458,8 +1461,6 @@ lc_ctype_is_c(Oid collation)
 	return (lookup_collation_cache(collation, true))->ctype_is_c;
 }
 
-struct pg_locale_struct default_locale;
-
 void
 make_icu_collator(const char *iculocstr,
 				  const char *icurules,
@@ -1554,7 +1555,69 @@ pg_locale_deterministic(pg_locale_t locale)
 }
 
 /*
- * Create a locale_t from a collation OID.  Results are cached for the
+ * Initialize default_locale with database locale settings.
+ */
+void
+init_database_collation(void)
+{
+	HeapTuple	tup;
+	Form_pg_database dbform;
+	Datum		datum;
+	bool		isnull;
+
+	/* Fetch our pg_database row normally, via syscache */
+	tup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+	dbform = (Form_pg_database) GETSTRUCT(tup);
+
+	if (dbform->datlocprovider == COLLPROVIDER_BUILTIN)
+	{
+		char	   *datlocale;
+
+		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datlocale);
+		datlocale = TextDatumGetCString(datum);
+
+		builtin_validate_locale(dbform->encoding, datlocale);
+
+		default_locale.info.builtin.locale = MemoryContextStrdup(
+																 TopMemoryContext, datlocale);
+	}
+	else if (dbform->datlocprovider == COLLPROVIDER_ICU)
+	{
+		char	   *datlocale;
+		char	   *icurules;
+
+		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datlocale);
+		datlocale = TextDatumGetCString(datum);
+
+		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_daticurules, &isnull);
+		if (!isnull)
+			icurules = TextDatumGetCString(datum);
+		else
+			icurules = NULL;
+
+		make_icu_collator(datlocale, icurules, &default_locale);
+	}
+	else
+	{
+		Assert(dbform->datlocprovider == COLLPROVIDER_LIBC);
+	}
+
+	default_locale.provider = dbform->datlocprovider;
+
+	/*
+	 * Default locale is currently always deterministic.  Nondeterministic
+	 * locales currently don't support pattern matching, which would break a
+	 * lot of things if applied globally.
+	 */
+	default_locale.deterministic = true;
+
+	ReleaseSysCache(tup);
+}
+
+/*
+ * Create a pg_locale_t from a collation OID.  Results are cached for the
  * lifetime of the backend.  Thus, do not free the result with freelocale().
  *
  * As a special optimization, the default/database collation returns 0.
