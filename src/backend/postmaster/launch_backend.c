@@ -53,6 +53,7 @@
 #include "postmaster/walwriter.h"
 #include "replication/slotsync.h"
 #include "replication/walreceiver.h"
+#include "storage/dsm.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -219,9 +220,9 @@ PostmasterChildName(BackendType child_type)
  * Start a new postmaster child process.
  *
  * The child process will be restored to roughly the same state whether
- * EXEC_BACKEND is used or not: it will be attached to shared memory, and fds
- * and other resources that we've inherited from postmaster that are not
- * needed in a child process have been closed.
+ * EXEC_BACKEND is used or not: it will be attached to shared memory if
+ * appropriate, and fds and other resources that we've inherited from
+ * postmaster that are not needed in a child process have been closed.
  *
  * 'startup_data' is an optional contiguous chunk of data that is passed to
  * the child process.
@@ -248,6 +249,13 @@ postmaster_child_launch(BackendType child_type,
 
 		/* Detangle from postmaster */
 		InitPostmasterChild();
+
+		/* Detach shared memory if not needed. */
+		if (!child_process_kinds[child_type].shmem_attach)
+		{
+			dsm_detach_all();
+			PGSharedMemoryDetach();
+		}
 
 		/*
 		 * Enter the Main function with TopMemoryContext.  The startup data is
