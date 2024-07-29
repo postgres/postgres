@@ -47,9 +47,9 @@
  * know the ProcNumber of the process you're signaling.  (We do support
  * signaling without ProcNumber, but it's a bit less efficient.)
  *
- * The flags are actually declared as "volatile sig_atomic_t" for maximum
- * portability.  This should ensure that loads and stores of the flag
- * values are atomic, allowing us to dispense with any explicit locking.
+ * The fields in each slot are protected by a spinlock, pss_mutex. pss_pid can
+ * also be read without holding the spinlock, as a quick preliminary check
+ * when searching for a particular PID in the array.
  *
  * pss_signalFlags are intended to be set in cases where we don't need to
  * keep track of whether or not the target process has handled the signal,
@@ -62,8 +62,13 @@
  */
 typedef struct
 {
-	volatile pid_t pss_pid;
+	pg_atomic_uint32 pss_pid;
+	bool		pss_cancel_key_valid;
+	int32		pss_cancel_key;
 	volatile sig_atomic_t pss_signalFlags[NUM_PROCSIGNALS];
+	slock_t		pss_mutex;		/* protects the above fields */
+
+	/* Barrier-related fields (not protected by pss_mutex) */
 	pg_atomic_uint64 pss_barrierGeneration;
 	pg_atomic_uint32 pss_barrierCheckMask;
 	ConditionVariable pss_barrierCV;
@@ -75,7 +80,7 @@ typedef struct
  *
  * psh_barrierGeneration is the highest barrier generation in existence.
  */
-typedef struct
+typedef struct ProcSignalHeader
 {
 	pg_atomic_uint64 psh_barrierGeneration;
 	ProcSignalSlot psh_slot[FLEXIBLE_ARRAY_MEMBER];
@@ -96,7 +101,7 @@ typedef struct
 #define BARRIER_CLEAR_BIT(flags, type) \
 	((flags) &= ~(((uint32) 1) << (uint32) (type)))
 
-static ProcSignalHeader *ProcSignal = NULL;
+NON_EXEC_STATIC ProcSignalHeader *ProcSignal = NULL;
 static ProcSignalSlot *MyProcSignalSlot = NULL;
 
 static bool CheckProcSignal(ProcSignalReason reason);
@@ -141,7 +146,10 @@ ProcSignalShmemInit(void)
 		{
 			ProcSignalSlot *slot = &ProcSignal->psh_slot[i];
 
-			slot->pss_pid = 0;
+			SpinLockInit(&slot->pss_mutex);
+			pg_atomic_init_u32(&slot->pss_pid, 0);
+			slot->pss_cancel_key_valid = false;
+			slot->pss_cancel_key = 0;
 			MemSet(slot->pss_signalFlags, 0, sizeof(slot->pss_signalFlags));
 			pg_atomic_init_u64(&slot->pss_barrierGeneration, PG_UINT64_MAX);
 			pg_atomic_init_u32(&slot->pss_barrierCheckMask, 0);
@@ -155,7 +163,7 @@ ProcSignalShmemInit(void)
  *		Register the current process in the ProcSignal array
  */
 void
-ProcSignalInit(void)
+ProcSignalInit(bool cancel_key_valid, int32 cancel_key)
 {
 	ProcSignalSlot *slot;
 	uint64		barrier_generation;
@@ -167,9 +175,13 @@ ProcSignalInit(void)
 	slot = &ProcSignal->psh_slot[MyProcNumber];
 
 	/* sanity check */
-	if (slot->pss_pid != 0)
+	SpinLockAcquire(&slot->pss_mutex);
+	if (pg_atomic_read_u32(&slot->pss_pid) != 0)
+	{
+		SpinLockRelease(&slot->pss_mutex);
 		elog(LOG, "process %d taking over ProcSignal slot %d, but it's not empty",
 			 MyProcPid, MyProcNumber);
+	}
 
 	/* Clear out any leftover signal reasons */
 	MemSet(slot->pss_signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
@@ -189,10 +201,12 @@ ProcSignalInit(void)
 	barrier_generation =
 		pg_atomic_read_u64(&ProcSignal->psh_barrierGeneration);
 	pg_atomic_write_u64(&slot->pss_barrierGeneration, barrier_generation);
-	pg_memory_barrier();
 
-	/* Mark slot with my PID */
-	slot->pss_pid = MyProcPid;
+	slot->pss_cancel_key_valid = cancel_key_valid;
+	slot->pss_cancel_key = cancel_key;
+	pg_atomic_write_u32(&slot->pss_pid, MyProcPid);
+
+	SpinLockRelease(&slot->pss_mutex);
 
 	/* Remember slot location for CheckProcSignal */
 	MyProcSignalSlot = slot;
@@ -210,6 +224,7 @@ ProcSignalInit(void)
 static void
 CleanupProcSignalState(int status, Datum arg)
 {
+	pid_t		old_pid;
 	ProcSignalSlot *slot = MyProcSignalSlot;
 
 	/*
@@ -221,25 +236,34 @@ CleanupProcSignalState(int status, Datum arg)
 	MyProcSignalSlot = NULL;
 
 	/* sanity check */
-	if (slot->pss_pid != MyProcPid)
+	SpinLockAcquire(&slot->pss_mutex);
+	old_pid = pg_atomic_read_u32(&slot->pss_pid);
+	if (old_pid != MyProcPid)
 	{
 		/*
 		 * don't ERROR here. We're exiting anyway, and don't want to get into
 		 * infinite loop trying to exit
 		 */
+		SpinLockRelease(&slot->pss_mutex);
 		elog(LOG, "process %d releasing ProcSignal slot %d, but it contains %d",
-			 MyProcPid, (int) (slot - ProcSignal->psh_slot), (int) slot->pss_pid);
+			 MyProcPid, (int) (slot - ProcSignal->psh_slot), (int) old_pid);
 		return;					/* XXX better to zero the slot anyway? */
 	}
+
+	/* Mark the slot as unused */
+	pg_atomic_write_u32(&slot->pss_pid, 0);
+	slot->pss_cancel_key_valid = false;
+	slot->pss_cancel_key = 0;
 
 	/*
 	 * Make this slot look like it's absorbed all possible barriers, so that
 	 * no barrier waits block on it.
 	 */
 	pg_atomic_write_u64(&slot->pss_barrierGeneration, PG_UINT64_MAX);
-	ConditionVariableBroadcast(&slot->pss_barrierCV);
 
-	slot->pss_pid = 0;
+	SpinLockRelease(&slot->pss_mutex);
+
+	ConditionVariableBroadcast(&slot->pss_barrierCV);
 }
 
 /*
@@ -262,21 +286,16 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, ProcNumber procNumber)
 	{
 		slot = &ProcSignal->psh_slot[procNumber];
 
-		/*
-		 * Note: Since there's no locking, it's possible that the target
-		 * process detaches from shared memory and exits right after this
-		 * test, before we set the flag and send signal. And the signal slot
-		 * might even be recycled by a new process, so it's remotely possible
-		 * that we set a flag for a wrong process. That's OK, all the signals
-		 * are such that no harm is done if they're mistakenly fired.
-		 */
-		if (slot->pss_pid == pid)
+		SpinLockAcquire(&slot->pss_mutex);
+		if (pg_atomic_read_u32(&slot->pss_pid) == pid)
 		{
 			/* Atomically set the proper flag */
 			slot->pss_signalFlags[reason] = true;
+			SpinLockRelease(&slot->pss_mutex);
 			/* Send signal */
 			return kill(pid, SIGUSR1);
 		}
+		SpinLockRelease(&slot->pss_mutex);
 	}
 	else
 	{
@@ -293,14 +312,18 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, ProcNumber procNumber)
 		{
 			slot = &ProcSignal->psh_slot[i];
 
-			if (slot->pss_pid == pid)
+			if (pg_atomic_read_u32(&slot->pss_pid) == pid)
 			{
-				/* the above note about race conditions applies here too */
-
-				/* Atomically set the proper flag */
-				slot->pss_signalFlags[reason] = true;
-				/* Send signal */
-				return kill(pid, SIGUSR1);
+				SpinLockAcquire(&slot->pss_mutex);
+				if (pg_atomic_read_u32(&slot->pss_pid) == pid)
+				{
+					/* Atomically set the proper flag */
+					slot->pss_signalFlags[reason] = true;
+					SpinLockRelease(&slot->pss_mutex);
+					/* Send signal */
+					return kill(pid, SIGUSR1);
+				}
+				SpinLockRelease(&slot->pss_mutex);
 			}
 		}
 	}
@@ -368,13 +391,20 @@ EmitProcSignalBarrier(ProcSignalBarrierType type)
 	for (int i = NumProcSignalSlots - 1; i >= 0; i--)
 	{
 		volatile ProcSignalSlot *slot = &ProcSignal->psh_slot[i];
-		pid_t		pid = slot->pss_pid;
+		pid_t		pid = pg_atomic_read_u32(&slot->pss_pid);
 
 		if (pid != 0)
 		{
-			/* see SendProcSignal for details */
-			slot->pss_signalFlags[PROCSIG_BARRIER] = true;
-			kill(pid, SIGUSR1);
+			SpinLockAcquire(&slot->pss_mutex);
+			pid = pg_atomic_read_u32(&slot->pss_pid);
+			if (pid != 0)
+			{
+				/* see SendProcSignal for details */
+				slot->pss_signalFlags[PROCSIG_BARRIER] = true;
+				SpinLockRelease(&slot->pss_mutex);
+				kill(pid, SIGUSR1);
+			}
+			SpinLockRelease(&slot->pss_mutex);
 		}
 	}
 
@@ -414,7 +444,7 @@ WaitForProcSignalBarrier(uint64 generation)
 											WAIT_EVENT_PROC_SIGNAL_BARRIER))
 				ereport(LOG,
 						(errmsg("still waiting for backend with PID %d to accept ProcSignalBarrier",
-								(int) slot->pss_pid)));
+								(int) pg_atomic_read_u32(&slot->pss_pid))));
 			oldval = pg_atomic_read_u64(&slot->pss_barrierGeneration);
 		}
 		ConditionVariableCancelSleep();
@@ -617,7 +647,11 @@ CheckProcSignal(ProcSignalReason reason)
 
 	if (slot != NULL)
 	{
-		/* Careful here --- don't clear flag if we haven't seen it set */
+		/*
+		 * Careful here --- don't clear flag if we haven't seen it set.
+		 * pss_signalFlags is of type "volatile sig_atomic_t" to allow us to
+		 * read it here safely, without holding the spinlock.
+		 */
 		if (slot->pss_signalFlags[reason])
 		{
 			slot->pss_signalFlags[reason] = false;
@@ -677,4 +711,79 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 		HandleRecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
 
 	SetLatch(MyLatch);
+}
+
+/*
+ * Send a query cancellation signal to backend.
+ *
+ * Note: This is called from a backend process before authentication.  We
+ * cannot take LWLocks yet, but that's OK; we rely on atomic reads of the
+ * fields in the ProcSignal slots.
+ */
+void
+SendCancelRequest(int backendPID, int32 cancelAuthCode)
+{
+	Assert(backendPID != 0);
+
+	/*
+	 * See if we have a matching backend. Reading the pss_pid and
+	 * pss_cancel_key fields is racy, a backend might die and remove itself
+	 * from the array at any time.  The probability of the cancellation key
+	 * matching wrong process is miniscule, however, so we can live with that.
+	 * PIDs are reused too, so sending the signal based on PID is inherently
+	 * racy anyway, although OS's avoid reusing PIDs too soon.
+	 */
+	for (int i = 0; i < NumProcSignalSlots; i++)
+	{
+		ProcSignalSlot *slot = &ProcSignal->psh_slot[i];
+		bool		match;
+
+		if (pg_atomic_read_u32(&slot->pss_pid) != backendPID)
+			continue;
+
+		/* Acquire the spinlock and re-check */
+		SpinLockAcquire(&slot->pss_mutex);
+		if (pg_atomic_read_u32(&slot->pss_pid) != backendPID)
+		{
+			SpinLockRelease(&slot->pss_mutex);
+			continue;
+		}
+		else
+		{
+			match = slot->pss_cancel_key_valid && slot->pss_cancel_key == cancelAuthCode;
+
+			SpinLockRelease(&slot->pss_mutex);
+
+			if (match)
+			{
+				/* Found a match; signal that backend to cancel current op */
+				ereport(DEBUG2,
+						(errmsg_internal("processing cancel request: sending SIGINT to process %d",
+										 backendPID)));
+
+				/*
+				 * If we have setsid(), signal the backend's whole process
+				 * group
+				 */
+#ifdef HAVE_SETSID
+				kill(-backendPID, SIGINT);
+#else
+				kill(backendPID, SIGINT);
+#endif
+			}
+			else
+			{
+				/* Right PID, wrong key: no way, Jose */
+				ereport(LOG,
+						(errmsg("wrong key in cancel request for process %d",
+								backendPID)));
+			}
+			return;
+		}
+	}
+
+	/* No matching backend */
+	ereport(LOG,
+			(errmsg("PID %d in cancel request did not match any process",
+					backendPID)));
 }

@@ -48,7 +48,8 @@ pg_time_t	MyStartTime;
 TimestampTz MyStartTimestamp;
 struct ClientSocket *MyClientSocket;
 struct Port *MyProcPort;
-int32		MyCancelKey;
+bool		MyCancelKeyValid = false;
+int32		MyCancelKey = 0;
 int			MyPMChildSlot;
 
 /*

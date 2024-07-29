@@ -71,7 +71,7 @@ AuxiliaryProcessMainCommon(void)
 
 	BaseInit();
 
-	ProcSignalInit();
+	ProcSignalInit(false, 0);
 
 	/*
 	 * Auxiliary processes don't run transactions, but they may need a

@@ -152,9 +152,6 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, WaitEventCustomShmemSize());
 	size = add_size(size, InjectionPointShmemSize());
 	size = add_size(size, SlotSyncShmemSize());
-#ifdef EXEC_BACKEND
-	size = add_size(size, ShmemBackendArraySize());
-#endif
 
 	/* include additional requested shmem from preload libraries */
 	size = add_size(size, total_addin_request);
@@ -243,14 +240,6 @@ CreateSharedMemoryAndSemaphores(void)
 
 	/* Initialize subsystems */
 	CreateOrAttachShmemStructs();
-
-#ifdef EXEC_BACKEND
-
-	/*
-	 * Alloc the win32 shared backend array
-	 */
-	ShmemBackendArrayAllocation();
-#endif
 
 	/* Initialize dynamic shared memory facilities. */
 	dsm_postmaster_startup(shim);

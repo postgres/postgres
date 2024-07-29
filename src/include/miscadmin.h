@@ -191,6 +191,7 @@ extern PGDLLIMPORT pg_time_t MyStartTime;
 extern PGDLLIMPORT TimestampTz MyStartTimestamp;
 extern PGDLLIMPORT struct Port *MyProcPort;
 extern PGDLLIMPORT struct Latch *MyLatch;
+extern PGDLLIMPORT bool MyCancelKeyValid;
 extern PGDLLIMPORT int32 MyCancelKey;
 extern PGDLLIMPORT int MyPMChildSlot;
 

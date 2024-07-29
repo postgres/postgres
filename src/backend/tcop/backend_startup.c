@@ -29,6 +29,7 @@
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/procsignal.h"
 #include "storage/proc.h"
 #include "tcop/backend_startup.h"
 #include "tcop/tcopprot.h"
@@ -541,6 +542,11 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 
 	if (proto == CANCEL_REQUEST_CODE)
 	{
+		/*
+		 * The client has sent a cancel request packet, not a normal
+		 * start-a-new-connection packet.  Perform the necessary processing.
+		 * Nothing is sent back to the client.
+		 */
 		CancelRequestPacket *canc;
 		int			backendPID;
 		int32		cancelAuthCode;
@@ -556,7 +562,8 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 		backendPID = (int) pg_ntoh32(canc->backendPID);
 		cancelAuthCode = (int32) pg_ntoh32(canc->cancelAuthCode);
 
-		processCancelRequest(backendPID, cancelAuthCode);
+		if (backendPID != 0)
+			SendCancelRequest(backendPID, cancelAuthCode);
 		/* Not really an error, but we don't want to proceed further */
 		return STATUS_ERROR;
 	}

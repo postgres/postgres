@@ -58,6 +58,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
+#include "storage/procsignal.h"
 #include "tcop/backend_startup.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
@@ -94,7 +95,6 @@ typedef int InheritableSocket;
 typedef struct
 {
 	char		DataDir[MAXPGPATH];
-	int32		MyCancelKey;
 	int			MyPMChildSlot;
 #ifndef WIN32
 	unsigned long UsedShmemSegID;
@@ -104,7 +104,6 @@ typedef struct
 #endif
 	void	   *UsedShmemSegAddr;
 	slock_t    *ShmemLock;
-	struct bkend *ShmemBackendArray;
 #ifdef USE_INJECTION_POINTS
 	struct InjectionPointsCtl *ActiveInjectionPoints;
 #endif
@@ -119,6 +118,7 @@ typedef struct
 	PGPROC	   *AuxiliaryProcs;
 	PGPROC	   *PreparedXactProcs;
 	volatile PMSignalData *PMSignalState;
+	ProcSignalHeader *ProcSignal;
 	pid_t		PostmasterPid;
 	TimestampTz PgStartTime;
 	TimestampTz PgReloadTime;
@@ -702,7 +702,6 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
 
 	strlcpy(param->DataDir, DataDir, MAXPGPATH);
 
-	param->MyCancelKey = MyCancelKey;
 	param->MyPMChildSlot = MyPMChildSlot;
 
 #ifdef WIN32
@@ -712,7 +711,6 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
 	param->UsedShmemSegAddr = UsedShmemSegAddr;
 
 	param->ShmemLock = ShmemLock;
-	param->ShmemBackendArray = ShmemBackendArray;
 
 #ifdef USE_INJECTION_POINTS
 	param->ActiveInjectionPoints = ActiveInjectionPoints;
@@ -729,6 +727,7 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
 	param->AuxiliaryProcs = AuxiliaryProcs;
 	param->PreparedXactProcs = PreparedXactProcs;
 	param->PMSignalState = PMSignalState;
+	param->ProcSignal = ProcSignal;
 
 	param->PostmasterPid = PostmasterPid;
 	param->PgStartTime = PgStartTime;
@@ -965,7 +964,6 @@ restore_backend_variables(BackendParameters *param)
 
 	SetDataDir(param->DataDir);
 
-	MyCancelKey = param->MyCancelKey;
 	MyPMChildSlot = param->MyPMChildSlot;
 
 #ifdef WIN32
@@ -975,7 +973,6 @@ restore_backend_variables(BackendParameters *param)
 	UsedShmemSegAddr = param->UsedShmemSegAddr;
 
 	ShmemLock = param->ShmemLock;
-	ShmemBackendArray = param->ShmemBackendArray;
 
 #ifdef USE_INJECTION_POINTS
 	ActiveInjectionPoints = param->ActiveInjectionPoints;
@@ -992,6 +989,7 @@ restore_backend_variables(BackendParameters *param)
 	AuxiliaryProcs = param->AuxiliaryProcs;
 	PreparedXactProcs = param->PreparedXactProcs;
 	PMSignalState = param->PMSignalState;
+	ProcSignal = param->ProcSignal;
 
 	PostmasterPid = param->PostmasterPid;
 	PgStartTime = param->PgStartTime;

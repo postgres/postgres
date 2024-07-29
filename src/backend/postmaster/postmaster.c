@@ -168,7 +168,6 @@
 typedef struct bkend
 {
 	pid_t		pid;			/* process id of backend */
-	int32		cancel_key;		/* cancel key for cancels for this backend */
 	int			child_slot;		/* PMChildSlot for this backend, if any */
 	int			bkend_type;		/* child process flavor, see above */
 	bool		dead_end;		/* is it going to send an error and quit? */
@@ -177,10 +176,6 @@ typedef struct bkend
 } Backend;
 
 static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
-
-#ifdef EXEC_BACKEND
-NON_EXEC_STATIC Backend *ShmemBackendArray;
-#endif
 
 BackgroundWorker *MyBgworkerEntry = NULL;
 
@@ -413,7 +408,6 @@ static int	ServerLoop(void);
 static int	BackendStartup(ClientSocket *client_sock);
 static void report_fork_failure_to_client(ClientSocket *client_sock, int errnum);
 static CAC_state canAcceptConnections(int backend_type);
-static bool RandomCancelKey(int32 *cancel_key);
 static void signal_child(pid_t pid, int signal);
 static void sigquit_child(pid_t pid);
 static bool SignalSomeChildren(int signal, int target);
@@ -444,8 +438,6 @@ static void MaybeStartSlotSyncWorker(void);
 	   (pmState == PM_RECOVERY || pmState == PM_HOT_STANDBY))) && \
 	 PgArchCanRestart())
 
-#ifdef EXEC_BACKEND
-
 #ifdef WIN32
 #define WNOHANG 0				/* ignored, so any integer value will do */
 
@@ -461,10 +453,6 @@ typedef struct
 	DWORD		procId;
 } win32_deadchild_waitinfo;
 #endif							/* WIN32 */
-
-static void ShmemBackendArrayAdd(Backend *bn);
-static void ShmemBackendArrayRemove(Backend *bn);
-#endif							/* EXEC_BACKEND */
 
 /* Macros to check exit status of a child process */
 #define EXIT_STATUS_0(st)  ((st) == 0)
@@ -1827,65 +1815,6 @@ ServerLoop(void)
 }
 
 /*
- * The client has sent a cancel request packet, not a normal
- * start-a-new-connection packet.  Perform the necessary processing.
- * Nothing is sent back to the client.
- */
-void
-processCancelRequest(int backendPID, int32 cancelAuthCode)
-{
-	Backend    *bp;
-
-#ifndef EXEC_BACKEND
-	dlist_iter	iter;
-#else
-	int			i;
-#endif
-
-	/*
-	 * See if we have a matching backend.  In the EXEC_BACKEND case, we can no
-	 * longer access the postmaster's own backend list, and must rely on the
-	 * duplicate array in shared memory.
-	 */
-#ifndef EXEC_BACKEND
-	dlist_foreach(iter, &BackendList)
-	{
-		bp = dlist_container(Backend, elem, iter.cur);
-#else
-	for (i = MaxLivePostmasterChildren() - 1; i >= 0; i--)
-	{
-		bp = (Backend *) &ShmemBackendArray[i];
-#endif
-		if (bp->pid == backendPID)
-		{
-			if (bp->cancel_key == cancelAuthCode)
-			{
-				/* Found a match; signal that backend to cancel current op */
-				ereport(DEBUG2,
-						(errmsg_internal("processing cancel request: sending SIGINT to process %d",
-										 backendPID)));
-				signal_child(bp->pid, SIGINT);
-			}
-			else
-				/* Right PID, wrong key: no way, Jose */
-				ereport(LOG,
-						(errmsg("wrong key in cancel request for process %d",
-								backendPID)));
-			return;
-		}
-#ifndef EXEC_BACKEND			/* make GNU Emacs 26.1 see brace balance */
-	}
-#else
-	}
-#endif
-
-	/* No matching backend */
-	ereport(LOG,
-			(errmsg("PID %d in cancel request did not match any process",
-					backendPID)));
-}
-
-/*
  * canAcceptConnections --- check to see if database state allows connections
  * of the specified type.  backend_type can be BACKEND_TYPE_NORMAL,
  * BACKEND_TYPE_AUTOVAC, or BACKEND_TYPE_BGWORKER.  (Note that we don't yet
@@ -2752,9 +2681,6 @@ CleanupBackgroundWorker(int pid,
 
 		/* Get it out of the BackendList and clear out remaining data */
 		dlist_delete(&rw->rw_backend->elem);
-#ifdef EXEC_BACKEND
-		ShmemBackendArrayRemove(rw->rw_backend);
-#endif
 
 		/*
 		 * It's possible that this background worker started some OTHER
@@ -2840,9 +2766,6 @@ CleanupBackend(int pid,
 					HandleChildCrash(pid, exitstatus, _("server process"));
 					return;
 				}
-#ifdef EXEC_BACKEND
-				ShmemBackendArrayRemove(bp);
-#endif
 			}
 			if (bp->bgworker_notify)
 			{
@@ -2910,9 +2833,6 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 			 */
 			(void) ReleasePostmasterChildSlot(rw->rw_child_slot);
 			dlist_delete(&rw->rw_backend->elem);
-#ifdef EXEC_BACKEND
-			ShmemBackendArrayRemove(rw->rw_backend);
-#endif
 			pfree(rw->rw_backend);
 			rw->rw_backend = NULL;
 			rw->rw_pid = 0;
@@ -2945,9 +2865,6 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 			if (!bp->dead_end)
 			{
 				(void) ReleasePostmasterChildSlot(bp->child_slot);
-#ifdef EXEC_BACKEND
-				ShmemBackendArrayRemove(bp);
-#endif
 			}
 			dlist_delete(iter.cur);
 			pfree(bp);
@@ -3560,24 +3477,9 @@ BackendStartup(ClientSocket *client_sock)
 		return STATUS_ERROR;
 	}
 
-	/*
-	 * Compute the cancel key that will be assigned to this backend. The
-	 * backend will have its own copy in the forked-off process' value of
-	 * MyCancelKey, so that it can transmit the key to the frontend.
-	 */
-	if (!RandomCancelKey(&MyCancelKey))
-	{
-		pfree(bn);
-		ereport(LOG,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate random cancel key")));
-		return STATUS_ERROR;
-	}
-
 	/* Pass down canAcceptConnections state */
 	startup_data.canAcceptConnections = canAcceptConnections(BACKEND_TYPE_NORMAL);
 	bn->dead_end = (startup_data.canAcceptConnections != CAC_OK);
-	bn->cancel_key = MyCancelKey;
 
 	/*
 	 * Unless it's a dead_end child, assign it a child slot number
@@ -3620,11 +3522,6 @@ BackendStartup(ClientSocket *client_sock)
 	bn->pid = pid;
 	bn->bkend_type = BACKEND_TYPE_NORMAL;	/* Can change later to WALSND */
 	dlist_push_head(&BackendList, &bn->elem);
-
-#ifdef EXEC_BACKEND
-	if (!bn->dead_end)
-		ShmemBackendArrayAdd(bn);
-#endif
 
 	return STATUS_OK;
 }
@@ -3862,15 +3759,6 @@ dummy_handler(SIGNAL_ARGS)
 }
 
 /*
- * Generate a random cancel key.
- */
-static bool
-RandomCancelKey(int32 *cancel_key)
-{
-	return pg_strong_random(cancel_key, sizeof(int32));
-}
-
-/*
  * Count up number of child processes of specified types (dead_end children
  * are always excluded).
  */
@@ -3970,25 +3858,9 @@ StartAutovacuumWorker(void)
 	 */
 	if (canAcceptConnections(BACKEND_TYPE_AUTOVAC) == CAC_OK)
 	{
-		/*
-		 * Compute the cancel key that will be assigned to this session. We
-		 * probably don't need cancel keys for autovac workers, but we'd
-		 * better have something random in the field to prevent unfriendly
-		 * people from sending cancels to them.
-		 */
-		if (!RandomCancelKey(&MyCancelKey))
-		{
-			ereport(LOG,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("could not generate random cancel key")));
-			return;
-		}
-
 		bn = (Backend *) palloc_extended(sizeof(Backend), MCXT_ALLOC_NO_OOM);
 		if (bn)
 		{
-			bn->cancel_key = MyCancelKey;
-
 			/* Autovac workers are not dead_end and need a child slot */
 			bn->dead_end = false;
 			bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
@@ -3999,9 +3871,6 @@ StartAutovacuumWorker(void)
 			{
 				bn->bkend_type = BACKEND_TYPE_AUTOVAC;
 				dlist_push_head(&BackendList, &bn->elem);
-#ifdef EXEC_BACKEND
-				ShmemBackendArrayAdd(bn);
-#endif
 				/* all OK */
 				return;
 			}
@@ -4133,11 +4002,10 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
 /*
  * MaxLivePostmasterChildren
  *
- * This reports the number of entries needed in per-child-process arrays
- * (the PMChildFlags array, and if EXEC_BACKEND the ShmemBackendArray).
- * These arrays include regular backends, autovac workers, walsenders
+ * This reports the number of entries needed in the per-child-process array
+ * (PMChildFlags).  It includes regular backends, autovac workers, walsenders
  * and background workers, but not special children nor dead_end children.
- * This allows the arrays to have a fixed maximum size, to wit the same
+ * This allows the array to have a fixed maximum size, to wit the same
  * too-many-children limit enforced by canAcceptConnections().  The exact value
  * isn't too critical as long as it's more than MaxBackends.
  */
@@ -4206,9 +4074,6 @@ do_start_bgworker(RegisteredBgWorker *rw)
 	ReportBackgroundWorkerPID(rw);
 	/* add new worker to lists of backends */
 	dlist_push_head(&BackendList, &rw->rw_backend->elem);
-#ifdef EXEC_BACKEND
-	ShmemBackendArrayAdd(rw->rw_backend);
-#endif
 	return true;
 }
 
@@ -4276,20 +4141,6 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 		return false;
 	}
 
-	/*
-	 * Compute the cancel key that will be assigned to this session. We
-	 * probably don't need cancel keys for background workers, but we'd better
-	 * have something random in the field to prevent unfriendly people from
-	 * sending cancels to them.
-	 */
-	if (!RandomCancelKey(&MyCancelKey))
-	{
-		ereport(LOG,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate random cancel key")));
-		return false;
-	}
-
 	bn = palloc_extended(sizeof(Backend), MCXT_ALLOC_NO_OOM);
 	if (bn == NULL)
 	{
@@ -4299,7 +4150,6 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 		return false;
 	}
 
-	bn->cancel_key = MyCancelKey;
 	bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
 	bn->bkend_type = BACKEND_TYPE_BGWORKER;
 	bn->dead_end = false;
@@ -4458,46 +4308,6 @@ PostmasterMarkPIDForWorkerNotify(int pid)
 	}
 	return false;
 }
-
-#ifdef EXEC_BACKEND
-
-Size
-ShmemBackendArraySize(void)
-{
-	return mul_size(MaxLivePostmasterChildren(), sizeof(Backend));
-}
-
-void
-ShmemBackendArrayAllocation(void)
-{
-	Size		size = ShmemBackendArraySize();
-
-	ShmemBackendArray = (Backend *) ShmemAlloc(size);
-	/* Mark all slots as empty */
-	memset(ShmemBackendArray, 0, size);
-}
-
-static void
-ShmemBackendArrayAdd(Backend *bn)
-{
-	/* The array slot corresponding to my PMChildSlot should be free */
-	int			i = bn->child_slot - 1;
-
-	Assert(ShmemBackendArray[i].pid == 0);
-	ShmemBackendArray[i] = *bn;
-}
-
-static void
-ShmemBackendArrayRemove(Backend *bn)
-{
-	int			i = bn->child_slot - 1;
-
-	Assert(ShmemBackendArray[i].pid == bn->pid);
-	/* Mark the slot as empty */
-	ShmemBackendArray[i].pid = 0;
-}
-#endif							/* EXEC_BACKEND */
-
 
 #ifdef WIN32
 

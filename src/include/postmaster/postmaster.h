@@ -36,10 +36,6 @@ extern PGDLLIMPORT bool remove_temp_files_after_crash;
 extern PGDLLIMPORT bool send_abort_for_crash;
 extern PGDLLIMPORT bool send_abort_for_kill;
 
-#ifdef EXEC_BACKEND
-extern struct bkend *ShmemBackendArray;
-#endif
-
 #ifdef WIN32
 extern PGDLLIMPORT HANDLE PostmasterHandle;
 #else
@@ -69,13 +65,8 @@ extern bool PostmasterMarkPIDForWorkerNotify(int);
 
 extern void processCancelRequest(int backendPID, int32 cancelAuthCode);
 
-#ifdef EXEC_BACKEND
-extern Size ShmemBackendArraySize(void);
-extern void ShmemBackendArrayAllocation(void);
-
 #ifdef WIN32
 extern void pgwin32_register_deadchild_callback(HANDLE procHandle, DWORD procId);
-#endif
 #endif
 
 /* defined in globals.c */
