@@ -1423,11 +1423,16 @@ create_merge_append_path(PlannerInfo *root,
 	Cost		input_total_cost;
 	ListCell   *l;
 
+	/*
+	 * We don't currently support parameterized MergeAppend paths, as
+	 * explained in the comments for generate_orderedappend_paths.
+	 */
+	Assert(bms_is_empty(rel->lateral_relids) && bms_is_empty(required_outer));
+
 	pathnode->path.pathtype = T_MergeAppend;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = rel->reltarget;
-	pathnode->path.param_info = get_appendrel_parampathinfo(rel,
-															required_outer);
+	pathnode->path.param_info = NULL;
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = 0;
@@ -1452,6 +1457,9 @@ create_merge_append_path(PlannerInfo *root,
 	foreach(l, subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
+
+		/* All child paths should be unparameterized */
+		Assert(bms_is_empty(PATH_REQ_OUTER(subpath)));
 
 		pathnode->path.rows += subpath->rows;
 		pathnode->path.parallel_safe = pathnode->path.parallel_safe &&
@@ -1480,9 +1488,6 @@ create_merge_append_path(PlannerInfo *root,
 			input_startup_cost += sort_path.startup_cost;
 			input_total_cost += sort_path.total_cost;
 		}
-
-		/* All child paths must have same parameterization */
-		Assert(bms_equal(PATH_REQ_OUTER(subpath), required_outer));
 	}
 
 	/*
