@@ -1461,6 +1461,103 @@ lc_ctype_is_c(Oid collation)
 	return (lookup_collation_cache(collation, true))->ctype_is_c;
 }
 
+/* simple subroutine for reporting errors from newlocale() */
+static void
+report_newlocale_failure(const char *localename)
+{
+	int			save_errno;
+
+	/*
+	 * Windows doesn't provide any useful error indication from
+	 * _create_locale(), and BSD-derived platforms don't seem to feel they
+	 * need to set errno either (even though POSIX is pretty clear that
+	 * newlocale should do so).  So, if errno hasn't been set, assume ENOENT
+	 * is what to report.
+	 */
+	if (errno == 0)
+		errno = ENOENT;
+
+	/*
+	 * ENOENT means "no such locale", not "no such file", so clarify that
+	 * errno with an errdetail message.
+	 */
+	save_errno = errno;			/* auxiliary funcs might change errno */
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("could not create locale \"%s\": %m",
+					localename),
+			 (save_errno == ENOENT ?
+			  errdetail("The operating system could not find any locale data for the locale name \"%s\".",
+						localename) : 0)));
+}
+
+/*
+ * Initialize the locale_t field.
+ *
+ * The "C" and "POSIX" locales are not actually handled by libc, so set the
+ * locale_t to zero in that case.
+ */
+static void
+make_libc_collator(const char *collate, const char *ctype,
+				   pg_locale_t result)
+{
+	locale_t	loc = 0;
+
+	if (strcmp(collate, ctype) == 0)
+	{
+		if (strcmp(ctype, "C") != 0 && strcmp(ctype, "POSIX") != 0)
+		{
+			/* Normal case where they're the same */
+			errno = 0;
+#ifndef WIN32
+			loc = newlocale(LC_COLLATE_MASK | LC_CTYPE_MASK, collate,
+							NULL);
+#else
+			loc = _create_locale(LC_ALL, collate);
+#endif
+			if (!loc)
+				report_newlocale_failure(collate);
+		}
+	}
+	else
+	{
+#ifndef WIN32
+		/* We need two newlocale() steps */
+		locale_t	loc1 = 0;
+
+		if (strcmp(collate, "C") != 0 && strcmp(collate, "POSIX") != 0)
+		{
+			errno = 0;
+			loc1 = newlocale(LC_COLLATE_MASK, collate, NULL);
+			if (!loc1)
+				report_newlocale_failure(collate);
+		}
+
+		if (strcmp(ctype, "C") != 0 && strcmp(ctype, "POSIX") != 0)
+		{
+			errno = 0;
+			loc = newlocale(LC_CTYPE_MASK, ctype, loc1);
+			if (!loc)
+				report_newlocale_failure(ctype);
+		}
+		else
+			loc = loc1;
+#else
+
+		/*
+		 * XXX The _create_locale() API doesn't appear to support this. Could
+		 * perhaps be worked around by changing pg_locale_t to contain two
+		 * separate fields.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("collations with different collate and ctype values are not supported on this platform")));
+#endif
+	}
+
+	result->info.lt = loc;
+}
+
 void
 make_icu_collator(const char *iculocstr,
 				  const char *icurules,
@@ -1513,36 +1610,6 @@ make_icu_collator(const char *iculocstr,
 #endif							/* not USE_ICU */
 }
 
-
-/* simple subroutine for reporting errors from newlocale() */
-static void
-report_newlocale_failure(const char *localename)
-{
-	int			save_errno;
-
-	/*
-	 * Windows doesn't provide any useful error indication from
-	 * _create_locale(), and BSD-derived platforms don't seem to feel they
-	 * need to set errno either (even though POSIX is pretty clear that
-	 * newlocale should do so).  So, if errno hasn't been set, assume ENOENT
-	 * is what to report.
-	 */
-	if (errno == 0)
-		errno = ENOENT;
-
-	/*
-	 * ENOENT means "no such locale", not "no such file", so clarify that
-	 * errno with an errdetail message.
-	 */
-	save_errno = errno;			/* auxiliary funcs might change errno */
-	ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("could not create locale \"%s\": %m",
-					localename),
-			 (save_errno == ENOENT ?
-			  errdetail("The operating system could not find any locale data for the locale name \"%s\".",
-						localename) : 0)));
-}
 
 bool
 pg_locale_deterministic(pg_locale_t locale)
@@ -1601,7 +1668,17 @@ init_database_collation(void)
 	}
 	else
 	{
+		const char *datcollate;
+		const char *datctype;
+
 		Assert(dbform->datlocprovider == COLLPROVIDER_LIBC);
+
+		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datcollate);
+		datcollate = TextDatumGetCString(datum);
+		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datctype);
+		datctype = TextDatumGetCString(datum);
+
+		make_libc_collator(datcollate, datctype, &default_locale);
 	}
 
 	default_locale.provider = dbform->datlocprovider;
@@ -1620,8 +1697,6 @@ init_database_collation(void)
  * Create a pg_locale_t from a collation OID.  Results are cached for the
  * lifetime of the backend.  Thus, do not free the result with freelocale().
  *
- * As a special optimization, the default/database collation returns 0.
- *
  * For simplicity, we always generate COLLATE + CTYPE even though we
  * might only need one of them.  Since this is called only once per session,
  * it shouldn't cost much.
@@ -1635,12 +1710,7 @@ pg_newlocale_from_collation(Oid collid)
 	Assert(OidIsValid(collid));
 
 	if (collid == DEFAULT_COLLATION_OID)
-	{
-		if (default_locale.provider == COLLPROVIDER_LIBC)
-			return (pg_locale_t) 0;
-		else
-			return &default_locale;
-	}
+		return &default_locale;
 
 	cache_entry = lookup_collation_cache(collid, false);
 
@@ -1679,55 +1749,14 @@ pg_newlocale_from_collation(Oid collid)
 		else if (collform->collprovider == COLLPROVIDER_LIBC)
 		{
 			const char *collcollate;
-			const char *collctype pg_attribute_unused();
-			locale_t	loc;
+			const char *collctype;
 
 			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collcollate);
 			collcollate = TextDatumGetCString(datum);
 			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collctype);
 			collctype = TextDatumGetCString(datum);
 
-			if (strcmp(collcollate, collctype) == 0)
-			{
-				/* Normal case where they're the same */
-				errno = 0;
-#ifndef WIN32
-				loc = newlocale(LC_COLLATE_MASK | LC_CTYPE_MASK, collcollate,
-								NULL);
-#else
-				loc = _create_locale(LC_ALL, collcollate);
-#endif
-				if (!loc)
-					report_newlocale_failure(collcollate);
-			}
-			else
-			{
-#ifndef WIN32
-				/* We need two newlocale() steps */
-				locale_t	loc1;
-
-				errno = 0;
-				loc1 = newlocale(LC_COLLATE_MASK, collcollate, NULL);
-				if (!loc1)
-					report_newlocale_failure(collcollate);
-				errno = 0;
-				loc = newlocale(LC_CTYPE_MASK, collctype, loc1);
-				if (!loc)
-					report_newlocale_failure(collctype);
-#else
-
-				/*
-				 * XXX The _create_locale() API doesn't appear to support
-				 * this. Could perhaps be worked around by changing
-				 * pg_locale_t to contain two separate fields.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("collations with different collate and ctype values are not supported on this platform")));
-#endif
-			}
-
-			result.info.lt = loc;
+			make_libc_collator(collcollate, collctype, &result);
 		}
 		else if (collform->collprovider == COLLPROVIDER_ICU)
 		{
