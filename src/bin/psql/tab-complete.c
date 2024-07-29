@@ -3267,15 +3267,9 @@ psql_completion(const char *text, int start, int end)
 	/* Complete "CREATE TEMP/TEMPORARY" with the possible temp objects */
 	else if (TailMatches("CREATE", "TEMP|TEMPORARY"))
 		COMPLETE_WITH("SEQUENCE", "TABLE", "VIEW");
-	/* Complete "CREATE UNLOGGED" with TABLE, SEQUENCE or MATVIEW */
+	/* Complete "CREATE UNLOGGED" with TABLE or SEQUENCE */
 	else if (TailMatches("CREATE", "UNLOGGED"))
-	{
-		/* but not MATVIEW in CREATE SCHEMA */
-		if (HeadMatches("CREATE", "SCHEMA"))
-			COMPLETE_WITH("TABLE", "SEQUENCE");
-		else
-			COMPLETE_WITH("TABLE", "SEQUENCE", "MATERIALIZED VIEW");
-	}
+		COMPLETE_WITH("TABLE", "SEQUENCE");
 	/* Complete PARTITION BY with RANGE ( or LIST ( or ... */
 	else if (TailMatches("PARTITION", "BY"))
 		COMPLETE_WITH("RANGE (", "LIST (", "HASH (");
