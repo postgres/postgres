@@ -80,11 +80,11 @@ typedef struct
  *
  * psh_barrierGeneration is the highest barrier generation in existence.
  */
-typedef struct ProcSignalHeader
+struct ProcSignalHeader
 {
 	pg_atomic_uint64 psh_barrierGeneration;
 	ProcSignalSlot psh_slot[FLEXIBLE_ARRAY_MEMBER];
-} ProcSignalHeader;
+};
 
 /*
  * We reserve a slot for each possible ProcNumber, plus one for each
