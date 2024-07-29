@@ -75,7 +75,7 @@ $node_primary->safe_psql($test_db, qq[
 	CREATE TABLE ${table1}(col1 int) with (autovacuum_enabled=false);
 	INSERT INTO $table1 SELECT generate_series(1, 200000);
 	CREATE INDEX on ${table1}(col1);
-	UPDATE $table1 SET col1 = 0 WHERE col1 > 1;
+	DELETE FROM $table1 WHERE col1 > 1;
 	INSERT INTO $table1 VALUES(1);
 ]);
 
