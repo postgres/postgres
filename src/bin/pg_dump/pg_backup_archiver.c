@@ -3827,10 +3827,32 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	{
 		IssueACLPerBlob(AH, te);
 	}
-	else
+	else if (te->defn && strlen(te->defn) > 0)
 	{
-		if (te->defn && strlen(te->defn) > 0)
-			ahprintf(AH, "%s\n\n", te->defn);
+		ahprintf(AH, "%s\n\n", te->defn);
+
+		/*
+		 * If the defn string contains multiple SQL commands, txn_size mode
+		 * should count it as N actions not one.  But rather than build a full
+		 * SQL parser, approximate this by counting semicolons.  One case
+		 * where that tends to be badly fooled is function definitions, so
+		 * ignore them.  (restore_toc_entry will count one action anyway.)
+		 */
+		if (ropt->txn_size > 0 &&
+			strcmp(te->desc, "FUNCTION") != 0 &&
+			strcmp(te->desc, "PROCEDURE") != 0)
+		{
+			const char *p = te->defn;
+			int			nsemis = 0;
+
+			while ((p = strchr(p, ';')) != NULL)
+			{
+				nsemis++;
+				p++;
+			}
+			if (nsemis > 1)
+				AH->txnCount += nsemis - 1;
+		}
 	}
 
 	/*
