@@ -1547,6 +1547,7 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		RelOptInfo *child_joinrel;
 		AppendRelInfo **appinfos;
 		int			nappinfos;
+		Relids		child_relids;
 
 		if (joinrel->partbounds_merged)
 		{
@@ -1642,9 +1643,8 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 											   child_rel2->relids);
 
 		/* Find the AppendRelInfo structures */
-		appinfos = find_appinfos_by_relids(root,
-										   bms_union(child_rel1->relids,
-													 child_rel2->relids),
+		child_relids = bms_union(child_rel1->relids, child_rel2->relids);
+		appinfos = find_appinfos_by_relids(root, child_relids,
 										   &nappinfos);
 
 		/*
@@ -1662,7 +1662,7 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		{
 			child_joinrel = build_child_join_rel(root, child_rel1, child_rel2,
 												 joinrel, child_restrictlist,
-												 child_sjinfo);
+												 child_sjinfo, nappinfos, appinfos);
 			joinrel->part_rels[cnt_parts] = child_joinrel;
 			joinrel->live_parts = bms_add_member(joinrel->live_parts, cnt_parts);
 			joinrel->all_partrels = bms_add_members(joinrel->all_partrels,
@@ -1679,7 +1679,14 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 									child_joinrel, child_sjinfo,
 									child_restrictlist);
 
+		/*
+		 * When there are thousands of partitions involved, this loop will
+		 * accumulate a significant amount of memory usage from objects that
+		 * are only needed within the loop.  Free these local objects eagerly
+		 * at the end of each iteration.
+		 */
 		pfree(appinfos);
+		bms_free(child_relids);
 		free_child_join_sjinfo(child_sjinfo);
 	}
 }

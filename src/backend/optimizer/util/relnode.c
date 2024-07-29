@@ -876,31 +876,21 @@ build_join_rel(PlannerInfo *root,
  * 'restrictlist': list of RestrictInfo nodes that apply to this particular
  *		pair of joinable relations
  * 'sjinfo': child join's join-type details
+ * 'nappinfos' and 'appinfos': AppendRelInfo array for child relids
  */
 RelOptInfo *
 build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 					 RelOptInfo *inner_rel, RelOptInfo *parent_joinrel,
-					 List *restrictlist, SpecialJoinInfo *sjinfo)
+					 List *restrictlist, SpecialJoinInfo *sjinfo,
+					 int nappinfos, AppendRelInfo **appinfos)
 {
 	RelOptInfo *joinrel = makeNode(RelOptInfo);
-	AppendRelInfo **appinfos;
-	int			nappinfos;
 
 	/* Only joins between "other" relations land here. */
 	Assert(IS_OTHER_REL(outer_rel) && IS_OTHER_REL(inner_rel));
 
 	/* The parent joinrel should have consider_partitionwise_join set. */
 	Assert(parent_joinrel->consider_partitionwise_join);
-
-	/*
-	 * Find the AppendRelInfo structures for the child baserels.  We'll need
-	 * these for computing the child join's relid set, and later for mapping
-	 * Vars to the child rel.
-	 */
-	appinfos = find_appinfos_by_relids(root,
-									   bms_union(outer_rel->relids,
-												 inner_rel->relids),
-									   &nappinfos);
 
 	joinrel->reloptkind = RELOPT_OTHER_JOINREL;
 	joinrel->relids = adjust_child_relids(parent_joinrel->relids,
@@ -1016,8 +1006,6 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 		add_child_join_rel_equivalences(root,
 										nappinfos, appinfos,
 										parent_joinrel, joinrel);
-
-	pfree(appinfos);
 
 	return joinrel;
 }

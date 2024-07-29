@@ -346,6 +346,7 @@ extern Bitmapset *get_param_path_clause_serials(Path *path);
 extern RelOptInfo *build_child_join_rel(PlannerInfo *root,
 										RelOptInfo *outer_rel, RelOptInfo *inner_rel,
 										RelOptInfo *parent_joinrel, List *restrictlist,
-										SpecialJoinInfo *sjinfo);
+										SpecialJoinInfo *sjinfo,
+										int nappinfos, AppendRelInfo **appinfos);
 
 #endif							/* PATHNODE_H */
