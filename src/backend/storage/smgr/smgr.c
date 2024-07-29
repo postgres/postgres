@@ -733,9 +733,9 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
 		/*
 		 * We might as well update the local smgr_cached_nblocks values. The
 		 * smgr cache inval message that this function sent will cause other
-		 * backends to invalidate their copies of smgr_fsm_nblocks and
-		 * smgr_vm_nblocks, and these ones too at the next command boundary.
-		 * But these ensure they aren't outright wrong until then.
+		 * backends to invalidate their copies of smgr_cached_nblocks, and
+		 * these ones too at the next command boundary. But ensure they aren't
+		 * outright wrong until then.
 		 */
 		reln->smgr_cached_nblocks[forknum[i]] = nblocks[i];
 	}
