@@ -284,6 +284,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, ProcNumber procNumber)
 
 	if (procNumber != INVALID_PROC_NUMBER)
 	{
+		Assert(procNumber < NumProcSignalSlots);
 		slot = &ProcSignal->psh_slot[procNumber];
 
 		SpinLockAcquire(&slot->pss_mutex);
@@ -300,7 +301,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, ProcNumber procNumber)
 	else
 	{
 		/*
-		 * Pronumber not provided, so search the array using pid.  We search
+		 * procNumber not provided, so search the array using pid.  We search
 		 * the array back to front so as to reduce search overhead.  Passing
 		 * INVALID_PROC_NUMBER means that the target is most likely an
 		 * auxiliary process, which will have a slot near the end of the
@@ -404,7 +405,8 @@ EmitProcSignalBarrier(ProcSignalBarrierType type)
 				SpinLockRelease(&slot->pss_mutex);
 				kill(pid, SIGUSR1);
 			}
-			SpinLockRelease(&slot->pss_mutex);
+			else
+				SpinLockRelease(&slot->pss_mutex);
 		}
 	}
 
