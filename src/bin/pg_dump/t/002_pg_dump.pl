@@ -1154,7 +1154,7 @@ my %tests = (
 
 	'ALTER FOREIGN TABLE foreign_table ALTER COLUMN c1 OPTIONS' => {
 		regexp => qr/^
-			\QALTER FOREIGN TABLE dump_test.foreign_table ALTER COLUMN c1 OPTIONS (\E\n
+			\QALTER FOREIGN TABLE ONLY dump_test.foreign_table ALTER COLUMN c1 OPTIONS (\E\n
 			\s+\Qcolumn_name 'col1'\E\n
 			\Q);\E\n
 			/xm,
