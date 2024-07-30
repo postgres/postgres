@@ -68,7 +68,10 @@
  */
 #define MAX_BUFFERED_BYTES		65535
 
-/* Trim the list of buffers back down to this number after flushing */
+/*
+ * Trim the list of buffers back down to this number after flushing.  This
+ * must be >= 2.
+ */
 #define MAX_PARTITION_BUFFERS	32
 
 /* Stores multi-insert data related to a single relation in CopyFrom. */
@@ -550,6 +553,13 @@ CopyMultiInsertInfoFlush(CopyMultiInsertInfo *miinfo, ResultRelInfo *curr_rri,
 		 */
 		if (buffer->resultRelInfo == curr_rri)
 		{
+			/*
+			 * The code below would misbehave if we were trying to reduce the
+			 * list to less than two items.
+			 */
+			StaticAssertDecl(MAX_PARTITION_BUFFERS >= 2,
+							 "MAX_PARTITION_BUFFERS must be >= 2");
+
 			miinfo->multiInsertBuffers = list_delete_first(miinfo->multiInsertBuffers);
 			miinfo->multiInsertBuffers = lappend(miinfo->multiInsertBuffers, buffer);
 			buffer = (CopyMultiInsertBuffer *) linitial(miinfo->multiInsertBuffers);
