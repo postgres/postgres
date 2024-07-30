@@ -35,10 +35,9 @@
  * Private routines
  ************************************************************************/
 
-static const char *
-num_word(Cash value)
+static void
+append_num_word(StringInfo buf, Cash value)
 {
-	static char buf[128];
 	static const char *const small[] = {
 		"zero", "one", "two", "three", "four", "five", "six", "seven",
 		"eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
@@ -50,13 +49,16 @@ num_word(Cash value)
 
 	/* deal with the simple cases first */
 	if (value <= 20)
-		return small[value];
+	{
+		appendStringInfoString(buf, small[value]);
+		return;
+	}
 
 	/* is it an even multiple of 100? */
 	if (!tu)
 	{
-		sprintf(buf, "%s hundred", small[value / 100]);
-		return buf;
+		appendStringInfo(buf, "%s hundred", small[value / 100]);
+		return;
 	}
 
 	/* more than 99? */
@@ -64,27 +66,25 @@ num_word(Cash value)
 	{
 		/* is it an even multiple of 10 other than 10? */
 		if (value % 10 == 0 && tu > 10)
-			sprintf(buf, "%s hundred %s",
-					small[value / 100], big[tu / 10]);
+			appendStringInfo(buf, "%s hundred %s",
+							 small[value / 100], big[tu / 10]);
 		else if (tu < 20)
-			sprintf(buf, "%s hundred and %s",
-					small[value / 100], small[tu]);
+			appendStringInfo(buf, "%s hundred and %s",
+							 small[value / 100], small[tu]);
 		else
-			sprintf(buf, "%s hundred %s %s",
-					small[value / 100], big[tu / 10], small[tu % 10]);
+			appendStringInfo(buf, "%s hundred %s %s",
+							 small[value / 100], big[tu / 10], small[tu % 10]);
 	}
 	else
 	{
 		/* is it an even multiple of 10 other than 10? */
 		if (value % 10 == 0 && tu > 10)
-			sprintf(buf, "%s", big[tu / 10]);
+			appendStringInfoString(buf, big[tu / 10]);
 		else if (tu < 20)
-			sprintf(buf, "%s", small[tu]);
+			appendStringInfoString(buf, small[tu]);
 		else
-			sprintf(buf, "%s %s", big[tu / 10], small[tu % 10]);
+			appendStringInfo(buf, "%s %s", big[tu / 10], small[tu % 10]);
 	}
-
-	return buf;
 }								/* num_word() */
 
 static inline Cash
@@ -960,8 +960,9 @@ cash_words(PG_FUNCTION_ARGS)
 {
 	Cash		value = PG_GETARG_CASH(0);
 	uint64		val;
-	char		buf[256];
-	char	   *p = buf;
+	StringInfoData buf;
+	text	   *res;
+	Cash		dollars;
 	Cash		m0;
 	Cash		m1;
 	Cash		m2;
@@ -970,19 +971,19 @@ cash_words(PG_FUNCTION_ARGS)
 	Cash		m5;
 	Cash		m6;
 
+	initStringInfo(&buf);
+
 	/* work with positive numbers */
 	if (value < 0)
 	{
 		value = -value;
-		strcpy(buf, "minus ");
-		p += 6;
+		appendStringInfoString(&buf, "minus ");
 	}
-	else
-		buf[0] = '\0';
 
 	/* Now treat as unsigned, to avoid trouble at INT_MIN */
 	val = (uint64) value;
 
+	dollars = val / INT64CONST(100);
 	m0 = val % INT64CONST(100); /* cents */
 	m1 = (val / INT64CONST(100)) % 1000;	/* hundreds */
 	m2 = (val / INT64CONST(100000)) % 1000; /* thousands */
@@ -993,49 +994,51 @@ cash_words(PG_FUNCTION_ARGS)
 
 	if (m6)
 	{
-		strcat(buf, num_word(m6));
-		strcat(buf, " quadrillion ");
+		append_num_word(&buf, m6);
+		appendStringInfoString(&buf, " quadrillion ");
 	}
 
 	if (m5)
 	{
-		strcat(buf, num_word(m5));
-		strcat(buf, " trillion ");
+		append_num_word(&buf, m5);
+		appendStringInfoString(&buf, " trillion ");
 	}
 
 	if (m4)
 	{
-		strcat(buf, num_word(m4));
-		strcat(buf, " billion ");
+		append_num_word(&buf, m4);
+		appendStringInfoString(&buf, " billion ");
 	}
 
 	if (m3)
 	{
-		strcat(buf, num_word(m3));
-		strcat(buf, " million ");
+		append_num_word(&buf, m3);
+		appendStringInfoString(&buf, " million ");
 	}
 
 	if (m2)
 	{
-		strcat(buf, num_word(m2));
-		strcat(buf, " thousand ");
+		append_num_word(&buf, m2);
+		appendStringInfoString(&buf, " thousand ");
 	}
 
 	if (m1)
-		strcat(buf, num_word(m1));
+		append_num_word(&buf, m1);
 
-	if (!*p)
-		strcat(buf, "zero");
+	if (dollars == 0)
+		appendStringInfoString(&buf, "zero");
 
-	strcat(buf, (val / 100) == 1 ? " dollar and " : " dollars and ");
-	strcat(buf, num_word(m0));
-	strcat(buf, m0 == 1 ? " cent" : " cents");
+	appendStringInfoString(&buf, dollars == 1 ? " dollar and " : " dollars and ");
+	append_num_word(&buf, m0);
+	appendStringInfoString(&buf, m0 == 1 ? " cent" : " cents");
 
 	/* capitalize output */
-	buf[0] = pg_toupper((unsigned char) buf[0]);
+	buf.data[0] = pg_toupper((unsigned char) buf.data[0]);
 
 	/* return as text datum */
-	PG_RETURN_TEXT_P(cstring_to_text(buf));
+	res = cstring_to_text_with_len(buf.data, buf.len);
+	pfree(buf.data);
+	PG_RETURN_TEXT_P(res);
 }
 
 
