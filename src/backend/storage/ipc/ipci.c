@@ -94,7 +94,6 @@ CalculateShmemSize(int *num_semaphores)
 
 	/* Compute number of semaphores we'll need */
 	numSemas = ProcGlobalSemas();
-	numSemas += SpinlockSemas();
 
 	/* Return the number of semaphores if requested by the caller */
 	if (num_semaphores)
@@ -111,7 +110,6 @@ CalculateShmemSize(int *num_semaphores)
 	 */
 	size = 100000;
 	size = add_size(size, PGSemaphoreShmemSize(numSemas));
-	size = add_size(size, SpinlockSemaSize());
 	size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
 											 sizeof(ShmemIndexEnt)));
 	size = add_size(size, dsm_estimate_size());
@@ -224,14 +222,6 @@ CreateSharedMemoryAndSemaphores(void)
 	 * Create semaphores
 	 */
 	PGReserveSemaphores(numSemas);
-
-	/*
-	 * If spinlocks are disabled, initialize emulation layer (which depends on
-	 * semaphores, so the order is important here).
-	 */
-#ifndef HAVE_SPINLOCKS
-	SpinlockSemaInit();
-#endif
 
 	/*
 	 * Set up shared memory allocation mechanism

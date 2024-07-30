@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
  * spin.h
- *	   Hardware-independent implementation of spinlocks.
+ *	   API for spinlocks.
  *
  *
- *	The hardware-independent interface to spinlocks is defined by the
- *	typedef "slock_t" and these macros:
+ *	The interface to spinlocks is defined by the typedef "slock_t" and
+ *	these macros:
  *
  *	void SpinLockInit(volatile slock_t *lock)
  *		Initialize a spinlock (to the unlocked state).
@@ -52,9 +52,6 @@
 #define SPIN_H
 
 #include "storage/s_lock.h"
-#ifndef HAVE_SPINLOCKS
-#include "storage/pg_sema.h"
-#endif
 
 
 #define SpinLockInit(lock)	S_INIT_LOCK(lock)
@@ -64,14 +61,5 @@
 #define SpinLockRelease(lock) S_UNLOCK(lock)
 
 #define SpinLockFree(lock)	S_LOCK_FREE(lock)
-
-
-extern int	SpinlockSemas(void);
-extern Size SpinlockSemaSize(void);
-
-#ifndef HAVE_SPINLOCKS
-extern void SpinlockSemaInit(void);
-extern PGDLLIMPORT PGSemaphore *SpinlockSemaArray;
-#endif
 
 #endif							/* SPIN_H */

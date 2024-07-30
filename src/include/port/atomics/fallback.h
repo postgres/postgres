@@ -20,9 +20,7 @@
 #ifndef pg_memory_barrier_impl
 /*
  * If we have no memory barrier implementation for this architecture, we
- * fall back to acquiring and releasing a spinlock.  This might, in turn,
- * fall back to the semaphore-based spinlock implementation, which will be
- * amazingly slow.
+ * fall back to acquiring and releasing a spinlock.
  *
  * It's not self-evident that every possible legal implementation of a
  * spinlock acquire-and-release would be equivalent to a full memory barrier.

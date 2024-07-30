@@ -325,8 +325,7 @@ PGReserveSemaphores(int maxSemas)
 
 	/*
 	 * We must use ShmemAllocUnlocked(), since the spinlock protecting
-	 * ShmemAlloc() won't be ready yet.  (This ordering is necessary when we
-	 * are emulating spinlocks with semaphores.)
+	 * ShmemAlloc() won't be ready yet.
 	 */
 	sharedSemas = (PGSemaphore)
 		ShmemAllocUnlocked(PGSemaphoreShmemSize(maxSemas));

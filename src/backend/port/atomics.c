@@ -57,17 +57,7 @@ pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 	StaticAssertDecl(sizeof(ptr->sema) >= sizeof(slock_t),
 					 "size mismatch of atomic_flag vs slock_t");
 
-#ifndef HAVE_SPINLOCKS
-
-	/*
-	 * NB: If we're using semaphore based TAS emulation, be careful to use a
-	 * separate set of semaphores. Otherwise we'd get in trouble if an atomic
-	 * var would be manipulated while spinlock is held.
-	 */
-	s_init_lock_sema((slock_t *) &ptr->sema, true);
-#else
 	SpinLockInit((slock_t *) &ptr->sema);
-#endif
 
 	ptr->value = false;
 }
@@ -108,15 +98,7 @@ pg_atomic_init_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val_)
 	StaticAssertDecl(sizeof(ptr->sema) >= sizeof(slock_t),
 					 "size mismatch of atomic_uint32 vs slock_t");
 
-	/*
-	 * If we're using semaphore based atomic flags, be careful about nested
-	 * usage of atomics while a spinlock is held.
-	 */
-#ifndef HAVE_SPINLOCKS
-	s_init_lock_sema((slock_t *) &ptr->sema, true);
-#else
 	SpinLockInit((slock_t *) &ptr->sema);
-#endif
 	ptr->value = val_;
 }
 
@@ -184,15 +166,7 @@ pg_atomic_init_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val_)
 	StaticAssertDecl(sizeof(ptr->sema) >= sizeof(slock_t),
 					 "size mismatch of atomic_uint64 vs slock_t");
 
-	/*
-	 * If we're using semaphore based atomic flags, be careful about nested
-	 * usage of atomics while a spinlock is held.
-	 */
-#ifndef HAVE_SPINLOCKS
-	s_init_lock_sema((slock_t *) &ptr->sema, true);
-#else
 	SpinLockInit((slock_t *) &ptr->sema);
-#endif
 	ptr->value = val_;
 }
 

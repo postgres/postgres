@@ -1,10 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * s_lock.h
- *	   Hardware-dependent implementation of spinlocks.
+ *	   Implementation of spinlocks.
  *
  *	NOTE: none of the macros in this file are intended to be called directly.
- *	Call them through the hardware-independent macros in spin.h.
+ *	Call them through the macros in spin.h.
  *
  *	The following hardware-dependent macros must be provided for each
  *	supported platform:
@@ -78,13 +78,6 @@
  *	in assembly language to execute a hardware atomic-test-and-set
  *	instruction.  Equivalent OS-supplied mutex routines could be used too.
  *
- *	If no system-specific TAS() is available (ie, HAVE_SPINLOCKS is not
- *	defined), then we fall back on an emulation that uses SysV semaphores
- *	(see spin.c).  This emulation will be MUCH MUCH slower than a proper TAS()
- *	implementation, because of the cost of a kernel call per lock or unlock.
- *	An old report is that Postgres spends around 40% of its time in semop(2)
- *	when using the SysV semaphore code.
- *
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -99,8 +92,6 @@
 #ifdef FRONTEND
 #error "s_lock.h may not be included from frontend code"
 #endif
-
-#ifdef HAVE_SPINLOCKS	/* skip spinlocks if requested */
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
 /*************************************************************************
@@ -655,32 +646,8 @@ spin_delay(void)
 
 /* Blow up if we didn't have any way to do spinlocks */
 #ifndef HAS_TEST_AND_SET
-#error PostgreSQL does not have native spinlock support on this platform.  To continue the compilation, rerun configure using --disable-spinlocks.  However, performance will be poor.  Please report this to pgsql-bugs@lists.postgresql.org.
+#error PostgreSQL does not have spinlock support on this platform.  Please report this to pgsql-bugs@lists.postgresql.org.
 #endif
-
-
-#else	/* !HAVE_SPINLOCKS */
-
-
-/*
- * Fake spinlock implementation using semaphores --- slow and prone
- * to fall foul of kernel limits on number of semaphores, so don't use this
- * unless you must!  The subroutines appear in spin.c.
- */
-typedef int slock_t;
-
-extern bool s_lock_free_sema(volatile slock_t *lock);
-extern void s_unlock_sema(volatile slock_t *lock);
-extern void s_init_lock_sema(volatile slock_t *lock, bool nested);
-extern int	tas_sema(volatile slock_t *lock);
-
-#define S_LOCK_FREE(lock)	s_lock_free_sema(lock)
-#define S_UNLOCK(lock)	 s_unlock_sema(lock)
-#define S_INIT_LOCK(lock)	s_init_lock_sema(lock, false)
-#define TAS(lock)	tas_sema(lock)
-
-
-#endif	/* HAVE_SPINLOCKS */
 
 
 /*

@@ -1258,22 +1258,6 @@ build-postgresql:
        </listitem>
       </varlistentry>
 
-      <varlistentry id="configure-option-disable-spinlocks">
-       <term><option>--disable-spinlocks</option></term>
-       <listitem>
-        <para>
-         Allow the build to succeed even if <productname>PostgreSQL</productname>
-         has no CPU spinlock support for the platform.  The lack of
-         spinlock support will result in very poor performance; therefore,
-         this option should only be used if the build aborts and
-         informs you that the platform lacks spinlock support. If this
-         option is required to build <productname>PostgreSQL</productname> on
-         your platform, please report the problem to the
-         <productname>PostgreSQL</productname> developers.
-        </para>
-       </listitem>
-      </varlistentry>
-
       <varlistentry id="configure-option-disable-atomics">
        <term><option>--disable-atomics</option></term>
        <listitem>
@@ -2690,23 +2674,6 @@ ninja install
       </listitem>
      </varlistentry>
 
-     <varlistentry id="configure-spinlocks-meson">
-      <term><option>-Dspinlocks={ true | false }</option></term>
-      <listitem>
-       <para>
-        This option is set to true by default; setting it to false will
-        allow the build to succeed even if <productname>PostgreSQL</productname>
-        has no CPU spinlock support for the platform.  The lack of
-        spinlock support will result in very poor performance; therefore,
-        this option should only be changed if the build aborts and
-        informs you that the platform lacks spinlock support. If setting this
-        option to false is required to build <productname>PostgreSQL</productname> on
-        your platform, please report the problem to the
-        <productname>PostgreSQL</productname> developers.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="configure-atomics-meson">
       <term><option>-Datomics={ true | false }</option></term>
       <listitem>
@@ -2719,6 +2686,7 @@ ninja install
        </para>
       </listitem>
      </varlistentry>
+
     </variablelist>
    </sect3>
 
@@ -3393,9 +3361,6 @@ export MANPATH
    these CPU architectures: x86, PowerPC, S/390, SPARC, ARM, MIPS,
    and RISC-V, including
    big-endian, little-endian, 32-bit, and 64-bit variants where applicable.
-   It is often
-   possible to build on an unsupported CPU type by configuring with
-   <option>--disable-spinlocks</option>, but performance will be poor.
   </para>
 
   <para>

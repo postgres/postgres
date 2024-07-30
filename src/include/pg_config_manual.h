@@ -86,21 +86,6 @@
 #define USE_FLOAT8_BYVAL 1
 #endif
 
-/*
- * When we don't have native spinlocks, we use semaphores to simulate them.
- * Decreasing this value reduces consumption of OS resources; increasing it
- * may improve performance, but supplying a real spinlock implementation is
- * probably far better.
- */
-#define NUM_SPINLOCK_SEMAPHORES		128
-
-/*
- * When we have neither spinlocks nor atomic operations support we're
- * implementing atomic operations on top of spinlock on top of semaphores. To
- * be safe against atomic operations while holding a spinlock separate
- * semaphores have to be used.
- */
-#define NUM_ATOMICS_SEMAPHORES		64
 
 /*
  * MAXPGPATH: standard size of a pathname buffer in PostgreSQL (hence,

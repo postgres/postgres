@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * s_lock.c
- *	   Hardware-dependent implementation of spinlocks.
+ *	   Implementation of spinlocks.
  *
  * When waiting for a contended spinlock we loop tightly for awhile, then
  * delay using pg_usleep() and try again.  Preferably, "awhile" should be a

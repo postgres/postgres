@@ -2089,12 +2089,6 @@ endif
 # Atomics
 ###############################################################
 
-if not get_option('spinlocks')
-  warning('Not using spinlocks will cause poor performance')
-else
-  cdata.set('HAVE_SPINLOCKS', 1)
-endif
-
 if not get_option('atomics')
   warning('Not using atomics will cause poor performance')
 else

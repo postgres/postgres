@@ -21,7 +21,6 @@ OBJS = \
 	predicate.o \
 	proc.o \
 	s_lock.o \
-	spin.o
 
 include $(top_srcdir)/src/backend/common.mk
 

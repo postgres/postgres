@@ -836,7 +836,6 @@ enable_integer_datetimes
 enable_nls
 with_pgport
 enable_rpath
-enable_spinlocks
 enable_atomics
 enable_debug
 enable_profiling
@@ -1529,7 +1528,6 @@ Optional Features:
                           enable Native Language Support
   --disable-rpath         do not embed shared library search path in
                           executables
-  --disable-spinlocks     do not use spinlocks
   --disable-atomics       do not use atomic operations
   --enable-debug          build with debugging symbols (-g)
   --enable-profiling      build with profiling enabled
@@ -3263,33 +3261,6 @@ else
 
 fi
 
-
-
-
-#
-# Spinlocks
-#
-
-
-# Check whether --enable-spinlocks was given.
-if test "${enable_spinlocks+set}" = set; then :
-  enableval=$enable_spinlocks;
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --enable-spinlocks option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  enable_spinlocks=yes
-
-fi
 
 
 
@@ -12183,17 +12154,6 @@ failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." "$LINENO" 5
 fi
 
-fi
-
-if test "$enable_spinlocks" = yes; then
-
-$as_echo "#define HAVE_SPINLOCKS 1" >>confdefs.h
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
-*** Not using spinlocks will cause poor performance." >&5
-$as_echo "$as_me: WARNING:
-*** Not using spinlocks will cause poor performance." >&2;}
 fi
 
 if test "$enable_atomics" = yes; then

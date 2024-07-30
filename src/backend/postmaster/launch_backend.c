@@ -108,9 +108,7 @@ typedef struct
 #ifdef USE_INJECTION_POINTS
 	struct InjectionPointsCtl *ActiveInjectionPoints;
 #endif
-#ifndef HAVE_SPINLOCKS
 	PGSemaphore *SpinlockSemaArray;
-#endif
 	int			NamedLWLockTrancheRequests;
 	NamedLWLockTranche *NamedLWLockTrancheArray;
 	LWLockPadded *MainLWLockArray;
@@ -724,9 +722,6 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
 	param->ActiveInjectionPoints = ActiveInjectionPoints;
 #endif
 
-#ifndef HAVE_SPINLOCKS
-	param->SpinlockSemaArray = SpinlockSemaArray;
-#endif
 	param->NamedLWLockTrancheRequests = NamedLWLockTrancheRequests;
 	param->NamedLWLockTrancheArray = NamedLWLockTrancheArray;
 	param->MainLWLockArray = MainLWLockArray;
@@ -986,9 +981,6 @@ restore_backend_variables(BackendParameters *param)
 	ActiveInjectionPoints = param->ActiveInjectionPoints;
 #endif
 
-#ifndef HAVE_SPINLOCKS
-	SpinlockSemaArray = param->SpinlockSemaArray;
-#endif
 	NamedLWLockTrancheRequests = param->NamedLWLockTrancheRequests;
 	NamedLWLockTrancheArray = param->NamedLWLockTrancheArray;
 	MainLWLockArray = param->MainLWLockArray;
