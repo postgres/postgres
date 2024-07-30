@@ -2443,15 +2443,17 @@ find_join_domain(PlannerInfo *root, Relids relids)
  *	  Detect whether two expressions are known equal due to equivalence
  *	  relationships.
  *
- * Actually, this only shows that the expressions are equal according
- * to some opfamily's notion of equality --- but we only use it for
- * selectivity estimation, so a fuzzy idea of equality is OK.
+ * If opfamily is given, the expressions must be known equal per the semantics
+ * of that opfamily (note it has to be a btree opfamily, since those are the
+ * only opfamilies equivclass.c deals with).  If opfamily is InvalidOid, we'll
+ * return true if they're equal according to any opfamily, which is fuzzy but
+ * OK for estimation purposes.
  *
  * Note: does not bother to check for "equal(item1, item2)"; caller must
  * check that case if it's possible to pass identical items.
  */
 bool
-exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2)
+exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2, Oid opfamily)
 {
 	ListCell   *lc1;
 
@@ -2464,6 +2466,17 @@ exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2)
 
 		/* Never match to a volatile EC */
 		if (ec->ec_has_volatile)
+			continue;
+
+		/*
+		 * It's okay to consider ec_broken ECs here.  Brokenness just means we
+		 * couldn't derive all the implied clauses we'd have liked to; it does
+		 * not invalidate our knowledge that the members are equal.
+		 */
+
+		/* Ignore if this EC doesn't use specified opfamily */
+		if (OidIsValid(opfamily) &&
+			!list_member_oid(ec->ec_opfamilies, opfamily))
 			continue;
 
 		foreach(lc2, ec->ec_members)
@@ -2494,8 +2507,7 @@ exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2)
  * (In principle there might be more than one matching eclass if multiple
  * collations are involved, but since collation doesn't matter for equality,
  * we ignore that fine point here.)  This is much like exprs_known_equal,
- * except that we insist on the comparison operator matching the eclass, so
- * that the result is definite not approximate.
+ * except for the format of the input.
  *
  * On success, we also set fkinfo->eclass[colno] to the matching eclass,
  * and set fkinfo->fk_eclass_member[colno] to the eclass member for the
@@ -2536,7 +2548,7 @@ match_eclasses_to_foreign_key_col(PlannerInfo *root,
 		/* Never match to a volatile EC */
 		if (ec->ec_has_volatile)
 			continue;
-		/* Note: it seems okay to match to "broken" eclasses here */
+		/* It's okay to consider "broken" ECs here, see exprs_known_equal */
 
 		foreach(lc2, ec->ec_members)
 		{

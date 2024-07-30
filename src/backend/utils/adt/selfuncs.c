@@ -3313,10 +3313,11 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
 
 		/*
 		 * Drop known-equal vars, but only if they belong to different
-		 * relations (see comments for estimate_num_groups)
+		 * relations (see comments for estimate_num_groups).  We aren't too
+		 * fussy about the semantics of "equal" here.
 		 */
 		if (vardata->rel != varinfo->rel &&
-			exprs_known_equal(root, var, varinfo->var))
+			exprs_known_equal(root, var, varinfo->var, InvalidOid))
 		{
 			if (varinfo->ndistinct <= ndistinct)
 			{
