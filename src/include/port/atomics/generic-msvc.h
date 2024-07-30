@@ -30,8 +30,6 @@
 #define pg_memory_barrier_impl()	MemoryBarrier()
 #endif
 
-#if defined(HAVE_ATOMICS)
-
 #define PG_HAVE_ATOMIC_U32_SUPPORT
 typedef struct pg_atomic_uint32
 {
@@ -115,5 +113,3 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 }
 
 #endif /* _WIN64 */
-
-#endif /* HAVE_ATOMICS */

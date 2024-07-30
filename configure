@@ -836,7 +836,6 @@ enable_integer_datetimes
 enable_nls
 with_pgport
 enable_rpath
-enable_atomics
 enable_debug
 enable_profiling
 enable_coverage
@@ -1528,7 +1527,6 @@ Optional Features:
                           enable Native Language Support
   --disable-rpath         do not embed shared library search path in
                           executables
-  --disable-atomics       do not use atomic operations
   --enable-debug          build with debugging symbols (-g)
   --enable-profiling      build with profiling enabled
   --enable-coverage       build with coverage testing instrumentation
@@ -3261,33 +3259,6 @@ else
 
 fi
 
-
-
-
-#
-# Atomic operations
-#
-
-
-# Check whether --enable-atomics was given.
-if test "${enable_atomics+set}" = set; then :
-  enableval=$enable_atomics;
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --enable-atomics option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  enable_atomics=yes
-
-fi
 
 
 
@@ -12154,17 +12125,6 @@ failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." "$LINENO" 5
 fi
 
-fi
-
-if test "$enable_atomics" = yes; then
-
-$as_echo "#define HAVE_ATOMICS 1" >>confdefs.h
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
-*** Not using atomic operations will cause poor performance." >&5
-$as_echo "$as_me: WARNING:
-*** Not using atomic operations will cause poor performance." >&2;}
 fi
 
 if test "$with_gssapi" = yes ; then

@@ -2089,70 +2089,61 @@ endif
 # Atomics
 ###############################################################
 
-if not get_option('atomics')
-  warning('Not using atomics will cause poor performance')
-else
-  # XXX: perhaps we should require some atomics support in this case these
-  # days?
-  cdata.set('HAVE_ATOMICS', 1)
-
-  atomic_checks = [
-    {'name': 'HAVE_GCC__SYNC_CHAR_TAS',
-     'desc': '__sync_lock_test_and_set(char)',
-     'test': '''
+atomic_checks = [
+  {'name': 'HAVE_GCC__SYNC_CHAR_TAS',
+   'desc': '__sync_lock_test_and_set(char)',
+   'test': '''
 char lock = 0;
 __sync_lock_test_and_set(&lock, 1);
 __sync_lock_release(&lock);'''},
 
-    {'name': 'HAVE_GCC__SYNC_INT32_TAS',
-     'desc': '__sync_lock_test_and_set(int32)',
-     'test': '''
+  {'name': 'HAVE_GCC__SYNC_INT32_TAS',
+   'desc': '__sync_lock_test_and_set(int32)',
+   'test': '''
 int lock = 0;
 __sync_lock_test_and_set(&lock, 1);
 __sync_lock_release(&lock);'''},
 
-    {'name': 'HAVE_GCC__SYNC_INT32_CAS',
-     'desc': '__sync_val_compare_and_swap(int32)',
-     'test': '''
+  {'name': 'HAVE_GCC__SYNC_INT32_CAS',
+   'desc': '__sync_val_compare_and_swap(int32)',
+   'test': '''
 int val = 0;
 __sync_val_compare_and_swap(&val, 0, 37);'''},
 
-    {'name': 'HAVE_GCC__SYNC_INT64_CAS',
-     'desc': '__sync_val_compare_and_swap(int64)',
-     'test': '''
+  {'name': 'HAVE_GCC__SYNC_INT64_CAS',
+   'desc': '__sync_val_compare_and_swap(int64)',
+   'test': '''
 INT64 val = 0;
 __sync_val_compare_and_swap(&val, 0, 37);'''},
 
-    {'name': 'HAVE_GCC__ATOMIC_INT32_CAS',
-     'desc': ' __atomic_compare_exchange_n(int32)',
-     'test': '''
+  {'name': 'HAVE_GCC__ATOMIC_INT32_CAS',
+   'desc': ' __atomic_compare_exchange_n(int32)',
+   'test': '''
 int val = 0;
 int expect = 0;
 __atomic_compare_exchange_n(&val, &expect, 37, 0, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);'''},
 
-    {'name': 'HAVE_GCC__ATOMIC_INT64_CAS',
-     'desc': ' __atomic_compare_exchange_n(int64)',
-     'test': '''
+  {'name': 'HAVE_GCC__ATOMIC_INT64_CAS',
+   'desc': ' __atomic_compare_exchange_n(int64)',
+   'test': '''
 INT64 val = 0;
 INT64 expect = 0;
 __atomic_compare_exchange_n(&val, &expect, 37, 0, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);'''},
-  ]
+]
 
-  foreach check : atomic_checks
-    test = '''
+foreach check : atomic_checks
+  test = '''
 int main(void)
 {
 @0@
 }'''.format(check['test'])
 
-    cdata.set(check['name'],
-      cc.links(test,
-        name: check['desc'],
-        args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))]) ? 1 : false
-    )
-  endforeach
-
-endif
+  cdata.set(check['name'],
+    cc.links(test,
+      name: check['desc'],
+      args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))]) ? 1 : false
+  )
+endforeach
 
 
 ###############################################################

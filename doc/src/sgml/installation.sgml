@@ -1258,18 +1258,6 @@ build-postgresql:
        </listitem>
       </varlistentry>
 
-      <varlistentry id="configure-option-disable-atomics">
-       <term><option>--disable-atomics</option></term>
-       <listitem>
-        <para>
-         Disable use of CPU atomic operations.  This option does nothing on
-         platforms that lack such operations.  On platforms that do have
-         them, this will result in poor performance.  This option is only
-         useful for debugging or making performance comparisons.
-        </para>
-       </listitem>
-      </varlistentry>
-
      </variablelist>
 
    </sect3>
@@ -2670,19 +2658,6 @@ ninja install
         It defaults to auto and enables
         support for compressed archives in <application>pg_dump</application>,
         <application>pg_restore</application> and <application>pg_basebackup</application> and is recommended.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="configure-atomics-meson">
-      <term><option>-Datomics={ true | false }</option></term>
-      <listitem>
-       <para>
-        This option is set to true by default; setting it to false will
-        disable use of CPU atomic operations.  The option does nothing on
-        platforms that lack such operations.  On platforms that do have
-        them, disabling atomics will result in poor performance.  Changing
-        this option is only useful for debugging or making performance comparisons.
        </para>
       </listitem>
      </varlistentry>

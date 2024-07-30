@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * fallback.h
- *    Fallback for platforms without spinlock and/or atomics support. Slower
+ *    Fallback for platforms without 64 bit atomics support. Slower
  *    than native atomics support, but not unusably slow.
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
@@ -49,50 +49,6 @@ extern void pg_extern_compiler_barrier(void);
 #endif
 
 
-/*
- * If we have atomics implementation for this platform, fall back to providing
- * the atomics API using a spinlock to protect the internal state. Possibly
- * the spinlock implementation uses semaphores internally...
- *
- * We have to be a bit careful here, as it's not guaranteed that atomic
- * variables are mapped to the same address in every process (e.g. dynamic
- * shared memory segments). We can't just hash the address and use that to map
- * to a spinlock. Instead assign a spinlock on initialization of the atomic
- * variable.
- */
-#if !defined(PG_HAVE_ATOMIC_FLAG_SUPPORT) && !defined(PG_HAVE_ATOMIC_U32_SUPPORT)
-
-#define PG_HAVE_ATOMIC_FLAG_SIMULATION
-#define PG_HAVE_ATOMIC_FLAG_SUPPORT
-
-typedef struct pg_atomic_flag
-{
-	/*
-	 * To avoid circular includes we can't use s_lock as a type here. Instead
-	 * just reserve enough space for all spinlock types. Some platforms would
-	 * be content with just one byte instead of 4, but that's not too much
-	 * waste.
-	 */
-	int			sema;
-	volatile bool value;
-} pg_atomic_flag;
-
-#endif /* PG_HAVE_ATOMIC_FLAG_SUPPORT */
-
-#if !defined(PG_HAVE_ATOMIC_U32_SUPPORT)
-
-#define PG_HAVE_ATOMIC_U32_SIMULATION
-
-#define PG_HAVE_ATOMIC_U32_SUPPORT
-typedef struct pg_atomic_uint32
-{
-	/* Check pg_atomic_flag's definition above for an explanation */
-	int			sema;
-	volatile uint32 value;
-} pg_atomic_uint32;
-
-#endif /* PG_HAVE_ATOMIC_U32_SUPPORT */
-
 #if !defined(PG_HAVE_ATOMIC_U64_SUPPORT)
 
 #define PG_HAVE_ATOMIC_U64_SIMULATION
@@ -100,48 +56,9 @@ typedef struct pg_atomic_uint32
 #define PG_HAVE_ATOMIC_U64_SUPPORT
 typedef struct pg_atomic_uint64
 {
-	/* Check pg_atomic_flag's definition above for an explanation */
 	int			sema;
 	volatile uint64 value;
 } pg_atomic_uint64;
-
-#endif /* PG_HAVE_ATOMIC_U64_SUPPORT */
-
-#ifdef PG_HAVE_ATOMIC_FLAG_SIMULATION
-
-#define PG_HAVE_ATOMIC_INIT_FLAG
-extern void pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr);
-
-#define PG_HAVE_ATOMIC_TEST_SET_FLAG
-extern bool pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr);
-
-#define PG_HAVE_ATOMIC_CLEAR_FLAG
-extern void pg_atomic_clear_flag_impl(volatile pg_atomic_flag *ptr);
-
-#define PG_HAVE_ATOMIC_UNLOCKED_TEST_FLAG
-extern bool pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr);
-
-#endif /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
-
-#ifdef PG_HAVE_ATOMIC_U32_SIMULATION
-
-#define PG_HAVE_ATOMIC_INIT_U32
-extern void pg_atomic_init_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val_);
-
-#define PG_HAVE_ATOMIC_WRITE_U32
-extern void pg_atomic_write_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val);
-
-#define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32
-extern bool pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
-												uint32 *expected, uint32 newval);
-
-#define PG_HAVE_ATOMIC_FETCH_ADD_U32
-extern uint32 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_);
-
-#endif /* PG_HAVE_ATOMIC_U32_SIMULATION */
-
-
-#ifdef PG_HAVE_ATOMIC_U64_SIMULATION
 
 #define PG_HAVE_ATOMIC_INIT_U64
 extern void pg_atomic_init_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val_);
@@ -153,4 +70,4 @@ extern bool pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 #define PG_HAVE_ATOMIC_FETCH_ADD_U64
 extern uint64 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_);
 
-#endif /* PG_HAVE_ATOMIC_U64_SIMULATION */
+#endif /* PG_HAVE_ATOMIC_U64_SUPPORT */

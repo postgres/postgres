@@ -53,8 +53,6 @@
 #endif
 
 
-#ifdef HAVE_ATOMICS
-
 /* generic gcc based atomic flag implementation */
 #if !defined(PG_HAVE_ATOMIC_FLAG_SUPPORT) \
 	&& (defined(HAVE_GCC__SYNC_INT32_TAS) || defined(HAVE_GCC__SYNC_CHAR_TAS))
@@ -319,5 +317,3 @@ pg_atomic_fetch_or_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 or_)
 #endif
 
 #endif /* !defined(PG_DISABLE_64_BIT_ATOMICS) */
-
-#endif /* defined(HAVE_ATOMICS) */

@@ -57,9 +57,6 @@
 /* Define to 1 if you have the `ASN1_STRING_get0_data' function. */
 #undef HAVE_ASN1_STRING_GET0_DATA
 
-/* Define to 1 if you want to use atomics if available. */
-#undef HAVE_ATOMICS
-
 /* Define to 1 if you have the <atomic.h> header file. */
 #undef HAVE_ATOMIC_H
 

@@ -17,7 +17,7 @@
  * There exist generic, hardware independent, implementations for several
  * compilers which might be sufficient, although possibly not optimal, for a
  * new platform. If no such generic implementation is available spinlocks will
- * be used to implement the API.
+ * be used to implement the 64-bit parts of the API.
  *
  * Implement _u64 atomics if and only if your platform can use them
  * efficiently (and obviously correctly).
@@ -91,17 +91,17 @@
 #elif defined(__SUNPRO_C) && !defined(__GNUC__)
 #include "port/atomics/generic-sunpro.h"
 #else
-/*
- * Unsupported compiler, we'll likely use slower fallbacks... At least
- * compiler barriers should really be provided.
- */
+/* Unknown compiler. */
+#endif
+
+/* Fail if we couldn't find implementations of required facilities. */
+#if !defined(PG_HAVE_ATOMIC_U32_SUPPORT)
+#error "could not find an implementation of pg_atomic_uint32"
 #endif
 
 /*
- * Provide a full fallback of the pg_*_barrier(), pg_atomic**_flag and
- * pg_atomic_* APIs for platforms without sufficient spinlock and/or atomics
- * support. In the case of spinlock backed atomics the emulation is expected
- * to be efficient, although less so than native atomics support.
+ * Provide a spinlock-based implementation of the 64 bit variants, if
+ * necessary.
  */
 #include "port/atomics/fallback.h"
 

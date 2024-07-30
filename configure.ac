@@ -187,12 +187,6 @@ PGAC_ARG_BOOL(enable, rpath, yes,
 AC_SUBST(enable_rpath)
 
 #
-# Atomic operations
-#
-PGAC_ARG_BOOL(enable, atomics, yes,
-              [do not use atomic operations])
-
-#
 # --enable-debug adds -g to compiler flags
 #
 PGAC_ARG_BOOL(enable, debug, no,
@@ -1288,13 +1282,6 @@ if test "$with_zlib" = yes; then
 If you have zlib already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support.])])
-fi
-
-if test "$enable_atomics" = yes; then
-  AC_DEFINE(HAVE_ATOMICS, 1, [Define to 1 if you want to use atomics if available.])
-else
-  AC_MSG_WARN([
-*** Not using atomic operations will cause poor performance.])
 fi
 
 if test "$with_gssapi" = yes ; then
