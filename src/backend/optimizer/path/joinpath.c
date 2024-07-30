@@ -961,6 +961,7 @@ try_partial_nestloop_path(PlannerInfo *root,
 	 * rels are required here.
 	 */
 	Assert(bms_is_empty(joinrel->lateral_relids));
+	Assert(bms_is_empty(PATH_REQ_OUTER(outer_path)));
 	if (inner_path->param_info != NULL)
 	{
 		Relids		inner_paramrels = inner_path->param_info->ppi_req_outer;
@@ -1144,13 +1145,9 @@ try_partial_mergejoin_path(PlannerInfo *root,
 	 * See comments in try_partial_hashjoin_path().
 	 */
 	Assert(bms_is_empty(joinrel->lateral_relids));
-	if (inner_path->param_info != NULL)
-	{
-		Relids		inner_paramrels = inner_path->param_info->ppi_req_outer;
-
-		if (!bms_is_empty(inner_paramrels))
-			return;
-	}
+	Assert(bms_is_empty(PATH_REQ_OUTER(outer_path)));
+	if (!bms_is_empty(PATH_REQ_OUTER(inner_path)))
+		return;
 
 	/*
 	 * If the given paths are already well enough ordered, we can skip doing
@@ -1286,19 +1283,14 @@ try_partial_hashjoin_path(PlannerInfo *root,
 	JoinCostWorkspace workspace;
 
 	/*
-	 * If the inner path is parameterized, the parameterization must be fully
-	 * satisfied by the proposed outer path.  Parameterized partial paths are
-	 * not supported.  The caller should already have verified that no lateral
-	 * rels are required here.
+	 * If the inner path is parameterized, we can't use a partial hashjoin.
+	 * Parameterized partial paths are not supported.  The caller should
+	 * already have verified that no lateral rels are required here.
 	 */
 	Assert(bms_is_empty(joinrel->lateral_relids));
-	if (inner_path->param_info != NULL)
-	{
-		Relids		inner_paramrels = inner_path->param_info->ppi_req_outer;
-
-		if (!bms_is_empty(inner_paramrels))
-			return;
-	}
+	Assert(bms_is_empty(PATH_REQ_OUTER(outer_path)));
+	if (!bms_is_empty(PATH_REQ_OUTER(inner_path)))
+		return;
 
 	/*
 	 * Before creating a path, get a quick lower bound on what it is likely to
