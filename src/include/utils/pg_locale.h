@@ -69,11 +69,25 @@ extern void cache_locale_time(void);
 /*
  * We use a discriminated union to hold either a locale_t or an ICU collator.
  * pg_locale_t is occasionally checked for truth, so make it a pointer.
+ *
+ * Also, hold two flags: whether the collation's LC_COLLATE or LC_CTYPE is C
+ * (or POSIX), so we can optimize a few code paths in various places.  For the
+ * built-in C and POSIX collations, we can know that without even doing a
+ * cache lookup, but we want to support aliases for C/POSIX too.  For the
+ * "default" collation, there are separate static cache variables, since
+ * consulting the pg_collation catalog doesn't tell us what we need.
+ *
+ * Note that some code relies on the flags not reporting false negatives
+ * (that is, saying it's not C when it is).  For example, char2wchar()
+ * could fail if the locale is C, so str_tolower() shouldn't call it
+ * in that case.
  */
 struct pg_locale_struct
 {
 	char		provider;
 	bool		deterministic;
+	bool		collate_is_c;
+	bool		ctype_is_c;
 	union
 	{
 		struct

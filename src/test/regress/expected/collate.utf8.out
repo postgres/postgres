@@ -9,6 +9,32 @@ SELECT getdatabaseencoding() <> 'UTF8' AS skip_test \gset
 \endif
 SET client_encoding TO UTF8;
 --
+-- Test builtin "C"
+--
+CREATE COLLATION regress_builtin_c (
+  provider = builtin, locale = 'C');
+-- non-ASCII characters are unchanged
+SELECT LOWER(U&'\00C1' COLLATE regress_builtin_c) = U&'\00C1';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT UPPER(U&'\00E1' COLLATE regress_builtin_c) = U&'\00E1';
+ ?column? 
+----------
+ t
+(1 row)
+
+-- non-ASCII characters are not alphabetic
+SELECT U&'\00C1\00E1' !~ '[[:alpha:]]' COLLATE regress_builtin_c;
+ ?column? 
+----------
+ t
+(1 row)
+
+DROP COLLATION regress_builtin_c;
+--
 -- Test PG_C_UTF8
 --
 CREATE COLLATION regress_pg_c_utf8 (
