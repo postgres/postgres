@@ -2207,12 +2207,7 @@ main(int argc, char **argv)
 	pg_log_info("stopping the subscriber");
 	stop_standby_server(subscriber_dir);
 
-	/*
-	 * Create the required objects for each database on publisher. This step
-	 * is here mainly because if we stop the standby we cannot verify if the
-	 * primary slot is in use. We could use an extra connection for it but it
-	 * doesn't seem worth.
-	 */
+	/* Create the required objects for each database on publisher */
 	consistent_lsn = setup_publisher(dbinfo);
 
 	/* Write the required recovery parameters */
