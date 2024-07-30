@@ -49,12 +49,6 @@ option('injection_points', type: 'boolean', value: false,
 option('PG_TEST_EXTRA', type: 'string', value: '',
   description: 'Enable selected extra tests')
 
-option('atomics', type: 'boolean', value: true,
-  description: 'Use atomic operations')
-
-option('spinlocks', type: 'boolean', value: true,
-  description: 'Use spinlocks')
-
 option('PG_GIT_REVISION', type: 'string', value: 'HEAD',
   description: 'git revision to be packaged by pgdist target')
 
