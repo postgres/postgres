@@ -33,21 +33,6 @@ extern void pg_spinlock_barrier(void);
 #define pg_memory_barrier_impl pg_spinlock_barrier
 #endif
 
-#ifndef pg_compiler_barrier_impl
-/*
- * If the compiler/arch combination does not provide compiler barriers,
- * provide a fallback.  The fallback simply consists of a function call into
- * an externally defined function.  That should guarantee compiler barrier
- * semantics except for compilers that do inter translation unit/global
- * optimization - those better provide an actual compiler barrier.
- *
- * A native compiler barrier for sure is a lot faster than this...
- */
-#define PG_HAVE_COMPILER_BARRIER_EMULATION
-extern void pg_extern_compiler_barrier(void);
-#define pg_compiler_barrier_impl pg_extern_compiler_barrier
-#endif
-
 
 #if !defined(PG_HAVE_ATOMIC_U64_SUPPORT)
 

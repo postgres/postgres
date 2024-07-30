@@ -98,6 +98,9 @@
 #if !defined(PG_HAVE_ATOMIC_U32_SUPPORT)
 #error "could not find an implementation of pg_atomic_uint32"
 #endif
+#if !defined(pg_compiler_barrier_impl)
+#error "could not find an implementation of pg_compiler_barrier"
+#endif
 
 /*
  * Provide a spinlock-based implementation of the 64 bit variants, if
