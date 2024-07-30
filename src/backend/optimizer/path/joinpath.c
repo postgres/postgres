@@ -1382,6 +1382,10 @@ sort_inner_and_outer(PlannerInfo *root,
 	List	   *all_pathkeys;
 	ListCell   *l;
 
+	/* Nothing to do if there are no available mergejoin clauses */
+	if (extra->mergeclause_list == NIL)
+		return;
+
 	/*
 	 * We only consider the cheapest-total-cost input paths, since we are
 	 * assuming here that a sort is required.  We will consider
