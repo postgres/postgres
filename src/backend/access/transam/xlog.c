@@ -5168,9 +5168,9 @@ BootStrapXLOG(uint32 data_checksum_version)
 static char *
 str_time(pg_time_t tnow)
 {
-	static char buf[128];
+	char	   *buf = palloc(128);
 
-	pg_strftime(buf, sizeof(buf),
+	pg_strftime(buf, 128,
 				"%Y-%m-%d %H:%M:%S %Z",
 				pg_localtime(&tnow, log_timezone));
 
