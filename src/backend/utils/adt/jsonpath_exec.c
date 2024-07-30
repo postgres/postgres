@@ -2707,12 +2707,27 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 			break;
 		case jpiTimestampTz:
 			{
+				struct pg_tm tm;
+				fsec_t		fsec;
+
 				/* Convert result type to timestamp with time zone */
 				switch (typid)
 				{
 					case DATEOID:
 						checkTimezoneIsUsedForCast(cxt->useTz,
 												   "date", "timestamptz");
+
+						/*
+						 * Get the timezone value explicitly since JsonbValue
+						 * keeps that separate.
+						 */
+						j2date(DatumGetDateADT(value) + POSTGRES_EPOCH_JDATE,
+							   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+						tm.tm_hour = 0;
+						tm.tm_min = 0;
+						tm.tm_sec = 0;
+						tz = DetermineTimeZoneOffset(&tm, session_timezone);
+
 						value = DirectFunctionCall1(date_timestamptz,
 													value);
 						break;
@@ -2726,6 +2741,16 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					case TIMESTAMPOID:
 						checkTimezoneIsUsedForCast(cxt->useTz,
 												   "timestamp", "timestamptz");
+
+						/*
+						 * Get the timezone value explicitly since JsonbValue
+						 * keeps that separate.
+						 */
+						if (timestamp2tm(DatumGetTimestamp(value), NULL, &tm,
+										 &fsec, NULL, NULL) == 0)
+							tz = DetermineTimeZoneOffset(&tm,
+														 session_timezone);
+
 						value = DirectFunctionCall1(timestamp_timestamptz,
 													value);
 						break;
