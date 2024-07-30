@@ -175,7 +175,7 @@ FROM json_table_test vals
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  6 | f       |       0 |         | false
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  7 | f       |       0 |         | false
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  8 | f       |       0 |         | false
- [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  9 | t       |       0 |         | true
+ [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] |  9 | t       |       1 |       1 | true
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 10 | f       |       0 |         | false
  [1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""] | 11 | f       |       0 |         | false
 (14 rows)
@@ -549,10 +549,16 @@ SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH 'lax $.a' DEFAULT 
 (1 row)
 
 -- JSON_TABLE: EXISTS PATH types
-SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$.a' ERROR ON ERROR));	-- ok; can cast to int4
  a 
 ---
  0
+(1 row)
+
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$' ERROR ON ERROR));	-- ok; can cast to int4
+ a 
+---
+ 1
 (1 row)
 
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int2 EXISTS PATH '$.a'));
@@ -588,6 +594,30 @@ SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a jsonb EXISTS PATH '$.a'));
  false
 (1 row)
 
+-- EXISTS PATH domain over int
+CREATE DOMAIN dint4 AS int;
+CREATE DOMAIN dint4_0 AS int CHECK (VALUE <> 0 );
+SELECT a, a::bool FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a dint4 EXISTS PATH '$.a' ));
+ a | a 
+---+---
+ 0 | f
+(1 row)
+
+SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b'));
+ERROR:  could not coerce ON ERROR expression (FALSE) to the RETURNING type
+DETAIL:  value for domain dint4_0 violates check constraint "dint4_0_check"
+SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' ERROR ON ERROR));
+ERROR:  value for domain dint4_0 violates check constraint "dint4_0_check"
+SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' FALSE ON ERROR));
+ERROR:  could not coerce ON ERROR expression (FALSE) to the RETURNING type
+DETAIL:  value for domain dint4_0 violates check constraint "dint4_0_check"
+SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' TRUE ON ERROR));
+ a | a 
+---+---
+ 1 | t
+(1 row)
+
+DROP DOMAIN dint4, dint4_0;
 -- JSON_TABLE: WRAPPER/QUOTES clauses on scalar columns
 SELECT * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text PATH '$' KEEP QUOTES ON SCALAR STRING));
   item   

@@ -262,7 +262,8 @@ SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH 'strict $.a' DEFAU
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH 'lax $.a' DEFAULT 1 ON EMPTY DEFAULT 2 ON ERROR)) jt;
 
 -- JSON_TABLE: EXISTS PATH types
-SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$.a' ERROR ON ERROR));	-- ok; can cast to int4
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$' ERROR ON ERROR));	-- ok; can cast to int4
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int2 EXISTS PATH '$.a'));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int8 EXISTS PATH '$.a'));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a float4 EXISTS PATH '$.a'));
@@ -272,6 +273,16 @@ SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(3) EXISTS PATH '$.a' E
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(5) EXISTS PATH '$.a' ERROR ON ERROR));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a json EXISTS PATH '$.a'));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a jsonb EXISTS PATH '$.a'));
+
+-- EXISTS PATH domain over int
+CREATE DOMAIN dint4 AS int;
+CREATE DOMAIN dint4_0 AS int CHECK (VALUE <> 0 );
+SELECT a, a::bool FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a dint4 EXISTS PATH '$.a' ));
+SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b'));
+SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' ERROR ON ERROR));
+SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' FALSE ON ERROR));
+SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' TRUE ON ERROR));
+DROP DOMAIN dint4, dint4_0;
 
 -- JSON_TABLE: WRAPPER/QUOTES clauses on scalar columns
 SELECT * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text PATH '$' KEEP QUOTES ON SCALAR STRING));

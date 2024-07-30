@@ -708,7 +708,11 @@ typedef struct ExprEvalStep
 			Oid			targettype;
 			int32		targettypmod;
 			bool		omit_quotes;
-			void	   *json_populate_type_cache;
+			/* exists_* fields only relevant for JSON_EXISTS_OP. */
+			bool		exists_coerce;
+			bool		exists_cast_to_int;
+			bool		exists_check_domain;
+			void	   *json_coercion_cache;
 			ErrorSaveContext *escontext;
 		}			jsonexpr_coercion;
 	}			d;
