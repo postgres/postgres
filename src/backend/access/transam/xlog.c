@@ -4314,7 +4314,7 @@ ReadControlFile(void)
 {
 	pg_crc32c	crc;
 	int			fd;
-	static char wal_segsz_str[20];
+	char		wal_segsz_str[20];
 	int			r;
 
 	/*
