@@ -778,6 +778,28 @@ setup_publisher(struct LogicalRepInfo *dbinfo)
 		else
 			exit(1);
 
+		/*
+		 * Since we are using the LSN returned by the last replication slot as
+		 * recovery_target_lsn, this LSN is ahead of the current WAL position
+		 * and the recovery waits until the publisher writes a WAL record to
+		 * reach the target and ends the recovery. On idle systems, this wait
+		 * time is unpredictable and could lead to failure in promoting the
+		 * subscriber. To avoid that, insert a harmless WAL record.
+		 */
+		if (i == num_dbs - 1 && !dry_run)
+		{
+			PGresult   *res;
+
+			res = PQexec(conn, "SELECT pg_log_standby_snapshot()");
+			if (PQresultStatus(res) != PGRES_TUPLES_OK)
+			{
+				pg_log_error("could not write an additional WAL record: %s",
+							 PQresultErrorMessage(res));
+				disconnect_database(conn, true);
+			}
+			PQclear(res);
+		}
+
 		disconnect_database(conn, false);
 	}
 
