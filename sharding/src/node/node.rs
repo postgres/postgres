@@ -1,8 +1,8 @@
-use std::ffi::CStr;
-use std::sync::{Arc, Mutex};
-use std::cell::UnsafeCell;
 use super::router::Router;
 use super::shard::Shard;
+use std::cell::UnsafeCell;
+use std::ffi::CStr;
+use std::sync::{Arc, Mutex};
 
 // TODO-SHARD this file should be a more organized configuration file
 pub const FILE_PATH: &str = "ports.txt";
@@ -36,20 +36,25 @@ impl NodeInstance {
 pub static mut NODE_INSTANCE: Option<NodeInstance> = None;
 
 // This needs to return NodeRole
-pub fn get_node_instance()  -> &'static mut dyn NodeRole {
+pub fn get_node_instance() -> &'static mut dyn NodeRole {
     unsafe {
-        NODE_INSTANCE.as_mut().unwrap().instance.as_mut().unwrap().as_mut()
+        NODE_INSTANCE
+            .as_mut()
+            .unwrap()
+            .instance
+            .as_mut()
+            .unwrap()
+            .as_mut()
     }
 }
 
 #[no_mangle]
 pub extern "C" fn init_node_instance(node_type: NodeType, port: *const i8) {
     unsafe {
-
         if port.is_null() {
             panic!("Received a null pointer for port");
         }
-    
+
         let c_str = CStr::from_ptr(port);
         let node_port = match c_str.to_str() {
             Ok(str) => str,
@@ -64,12 +69,12 @@ pub extern "C" fn init_node_instance(node_type: NodeType, port: *const i8) {
                 println!("Router node initializing");
                 NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(ip, node_port))));
                 println!("Router node initializes");
-            },
+            }
             NodeType::Shard => {
                 println!("Sharding node initializing");
                 NODE_INSTANCE = Some(NodeInstance::new(Box::new(Shard::new(ip, node_port))));
                 println!("Sharding node initializes");
-            },
+            }
         }
     }
 }

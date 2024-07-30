@@ -2,19 +2,20 @@ use postgres::{Client, NoTls};
 extern crate users;
 use super::super::utils::node_config::*;
 use super::node::*;
+use inline_colorization::*;
 use regex::Regex;
 use rust_decimal::Decimal;
 use serde_yaml;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::{
-    fs,
+    fs, io,
     io::Read,
     net::{SocketAddr, TcpListener, TcpStream},
     sync::Mutex,
+    thread,
 };
 use users::get_current_username;
-use inline_colorization::*;
 
 // use super::super::utils::sysinfo::print_available_memory;
 
@@ -32,7 +33,7 @@ pub struct Router {
     ///  HashMap:
     ///     key: Hash
     ///     value: shardId
-    comm_channels: Mutex<Vec<Channel>>,
+    comm_channels: Arc<RwLock<Vec<Channel>>>,
     ip: Arc<str>,
     port: Arc<str>,
 }
@@ -44,18 +45,17 @@ impl Router {
         let config_content = fs::read_to_string("../../../sharding/src/node/config.yaml")
             .expect("Should have been able to read the file");
 
-        let config: NodeConfig = serde_yaml::from_str(&config_content)
-        .expect("Should have been able to parse the YAML");
+        let config: NodeConfig =
+            serde_yaml::from_str(&config_content).expect("Should have been able to parse the YAML");
 
         let mut shards: HashMap<String, Client> = HashMap::new();
-        let mut hash_id: HashMap<String, String> = HashMap::new();
-
+        let mut comm_channels = Vec::new();
         for node in config.nodes {
             let node_ip = node.ip;
             let node_port = node.port;
 
             if (node_ip == ip) && (node_port == port) {
-                continue
+                continue;
             }
 
             // get username dynamically
@@ -67,16 +67,22 @@ impl Router {
             match Router::connect(&node_ip, &node_port, username) {
                 Ok(shard_client) => {
                     println!("Connected to ip {} and port: {}", node_ip, node_port);
-                    let hash = "TODO-SHARD change this".to_string();
                     shards.insert(node_port.to_string(), shard_client);
-                    hash_id.insert(hash.clone(), node_port.clone().to_string());
-                },
+                    match Router::health_connect(&node_ip, &node_port) {
+                        Ok(health_connection) => {
+                            comm_channels.push(health_connection);
+                        }
+                        Err(e) => {
+                            println!("Failed to connect to port: {}", node_port);
+                        } // Do something here
+                    }
+                }
                 Err(e) => {
                     println!("Failed to connect to port: {}", node_port);
-                }, // Do something here
+                } // Do something here
             }
-        }
 
+        }
         if shards.is_empty() {
             eprint!("Failed to connect to any of the nodes");
         };
@@ -84,15 +90,11 @@ impl Router {
         println!("SHARDS: {}", shards.len());
         let router = Router {
             shards: Mutex::new(shards),
-            comm_channels: Mutex::new(Vec::new()),
+            comm_channels: Arc::new(RwLock::new(comm_channels)),
             ip: Arc::from(ip),
             port: Arc::from(port),
         };
-
-        // tokio::spawn(async move {
-        //     Router::cluster_management_protocol(&router);
-
-        // });
+        println!("conns: {}", router.comm_channels.read().unwrap().len());
         router
     }
 
@@ -110,52 +112,30 @@ impl Router {
         }
     }
 
-    /// This function is the cluster management protocol for the Router node. It listens to incoming connections from Shards and handles them. This might be used in the future for sending routing tables, reassigning shards, rebalancing, etc.
-    fn cluster_management_protocol(router: &Router) {
-
-        let node_addr = "localhost:".to_string() + router.port.as_ref();
-        let listener = TcpListener::bind(&node_addr).unwrap();
-        println!("Router is listening for connections {}", node_addr);
-
-        loop {
-            let (incoming_socket, addr) = listener.accept().unwrap();
-            // Store every connection in leader
-            router.add_channel(incoming_socket.try_clone().expect("Error cloning socket"));
-
-            // A task per connection
-            // tokio::spawn( async move {
-            //     router.handle_connection(incoming_socket, addr);
-            // });
+    fn health_connect(node_ip: &str, node_port: &str) -> Result<Channel, io::Error> {
+        let port = node_port.parse::<u64>().unwrap() + 1000;
+        match TcpStream::connect(format!("{}:{}", node_ip, port)) {
+            Ok(mut stream) => {
+                println!(
+                    "{color_bright_green}Health connection established with {}:{}{style_reset}",
+                    node_ip, port
+                );
+                Ok(Channel { stream })
+            }
+            Err(e) => {
+                println!(
+                    "{color_red}Error establishing health connection with {}:{}{style_reset}",
+                    node_ip, port
+                );
+                Err(e)
+            }
         }
     }
-
     fn add_channel(&self, channel_socket: TcpStream) {
         let channel = Channel {
             stream: channel_socket,
         };
-        self.comm_channels.lock().unwrap().push(channel);
-    }
-
-    fn handle_connection(&self, mut channel: TcpStream, addr: SocketAddr) {
-        println!("Handling connection from {}", addr);
-        println!("Connections: {}", self.comm_channels.lock().unwrap().len());
-        let mut buf = [0; 1024];
-        match channel.read(&mut buf) {
-            Ok(n) if n == 0 => {
-                // Connection was closed
-                println!("Connection from {} disconnected", addr);
-            }
-            Ok(n) => {
-                if let Ok(data) = String::from_utf8(buf[..n].to_vec()) {
-                    println!("Received data from {}: {}", addr, data);
-                } else {
-                    println!("Received invalid UTF-8 data from {}", addr);
-                }
-            }
-            Err(e) => {
-                println!("Error reading from {}: {:?}", addr, e);
-            }
-        }
+        self.comm_channels.write().unwrap().push(channel);
     }
 
     /// Function that receives a query and checks for shards
@@ -166,12 +146,11 @@ impl Router {
             println!("Query is INSERT");
 
             // TODO-SHARD: Elegir un shard, el que tenga menor cargo o algo, etc
-            return vec!["5433".to_string()]
+            return vec!["5433".to_string()];
         } else {
             // Return all shards
-            println!("{color_cyan}{style_bold}Returning all shards");
+            println!("{color_bright_white}{style_bold}Returning all shards{style_reset}");
             self.shards.lock().unwrap().keys().cloned().collect()
-
         }
     }
 }

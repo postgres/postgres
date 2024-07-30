@@ -27,7 +27,7 @@ impl DistributionHandler {
             nodeType: nodeType,
         }
     }
-    
+
     fn connect(port: &str) -> Client {
         // Connect to the database
         // get username dynamically
@@ -36,8 +36,15 @@ impl DistributionHandler {
             None => panic!("Failed to get current username"),
         };
         println!("Username found: {:?}", username);
-        
-        match Client::connect(format!("host=127.0.0.1 port={} user={} dbname=template1", port, username).as_str(), NoTls) {
+
+        match Client::connect(
+            format!(
+                "host=127.0.0.1 port={} user={} dbname=template1",
+                port, username
+            )
+            .as_str(),
+            NoTls,
+        ) {
             Ok(client) => client,
             Err(e) => {
                 eprintln!("Failed to connect to the database: {:?}", e);

@@ -1,8 +1,14 @@
+use postgres::config::Host::Tcp;
 use postgres::{Client, NoTls};
+use std::net::{TcpListener, TcpStream};
+use std::sync::{Arc, RwLock};
+use std::thread;
+
 extern crate users;
+use super::node::*;
+use crate::node::router::Channel;
 use rust_decimal::Decimal;
 use users::get_current_username;
-use super::node::*;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
 #[repr(C)]
@@ -11,7 +17,8 @@ pub struct Shard<'a> {
     backend: Client,
     ip: &'a str,
     port: &'a str,
-    // TODO-SHARD: add an attribute for the shard's network
+    listener: Arc<RwLock<TcpListener>>,
+    router_stream: Arc<RwLock<Option<TcpStream>>>,
 }
 
 impl<'a> Shard<'a> {
@@ -28,7 +35,11 @@ impl<'a> Shard<'a> {
         println!("Connecting to the database with port: {}", port);
 
         let mut backend: Client = match Client::connect(
-            format!("host=127.0.0.1 port={} user={} dbname=template1", port, username).as_str(),
+            format!(
+                "host=127.0.0.1 port={} user={} dbname=template1",
+                port, username
+            )
+            .as_str(),
             NoTls,
         ) {
             Ok(backend) => backend,
@@ -37,20 +48,46 @@ impl<'a> Shard<'a> {
                 panic!("Failed to connect to the database");
             }
         };
+        let mut listener = Arc::new(RwLock::new(
+            TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap(),
+        ));
+        let mut stream = Arc::new(RwLock::new(None));
+        let mut listener_clone = listener.clone();
+        let mut stream_clone = stream.clone();
 
+        let handle = thread::spawn(move || {
+            Self::accept_connections(listener_clone, stream_clone);
+        });
 
         Shard {
             // router: clients,
             backend,
             ip,
-            port
+            port,
+            listener,
+            router_stream: stream.clone(),
+        }
+    }
+    fn accept_connections(
+        listener: Arc<RwLock<TcpListener>>,
+        rw_stream: Arc<RwLock<Option<TcpStream>>>,
+    ) {
+        let listener_guard = listener.read().unwrap();
+        match listener_guard.accept() {
+            Ok((stream, addr)) => {
+                println!("New connection accepted from {}.", addr);
+                let mut stream_guard = rw_stream.write().unwrap();
+                *stream_guard = Some(stream);
+            }
+            Err(e) => {
+                eprintln!("Failed to accept a connection: {}", e);
+            }
         }
     }
 }
 
 impl<'a> NodeRole for Shard<'a> {
     fn send_query(&mut self, query: &str) -> bool {
-        
         let rows = match self.backend.query(query, &[]) {
             Ok(rows) => rows,
             Err(e) => {
@@ -69,7 +106,7 @@ impl<'a> NodeRole for Shard<'a> {
                 id, name, position, salary
             );
         }
-        
+
         true
     }
 }
