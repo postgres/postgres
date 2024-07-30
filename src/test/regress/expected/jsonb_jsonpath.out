@@ -2964,7 +2964,7 @@ HINT:  Use *_tz() function for time zone support.
 select jsonb_path_query_tz('"2023-08-15"', '$.timestamp_tz()'); -- should work
      jsonb_path_query_tz     
 -----------------------------
- "2023-08-15T07:00:00+00:00"
+ "2023-08-15T00:00:00-07:00"
 (1 row)
 
 select jsonb_path_query('"12:34:56"', '$.timestamp_tz()');
@@ -3151,7 +3151,7 @@ HINT:  Use *_tz() function for time zone support.
 select jsonb_path_query_tz('"2023-08-15 12:34:56"', '$.timestamp_tz()'); -- should work
      jsonb_path_query_tz     
 -----------------------------
- "2023-08-15T02:34:56+00:00"
+ "2023-08-15T12:34:56+10:00"
 (1 row)
 
 select jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp_tz()');
