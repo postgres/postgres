@@ -4685,51 +4685,91 @@ transformJsonBehavior(ParseState *pstate, JsonBehavior *behavior,
 	if (expr == NULL && btype != JSON_BEHAVIOR_ERROR)
 		expr = GetJsonBehaviorConst(btype, location);
 
-	if (expr)
+	/*
+	 * Try to coerce the expression if needed.
+	 *
+	 * Use runtime coercion using json_populate_type() if the expression is
+	 * NULL, jsonb-valued, or boolean-valued (unless the target type is
+	 * integer or domain over integer, in which case use the
+	 * boolean-to-integer cast function).
+	 *
+	 * For other non-NULL expressions, try to find a cast and error out if one
+	 * is not found.
+	 */
+	if (expr && exprType(expr) != returning->typid)
 	{
-		Node	   *coerced_expr = expr;
 		bool		isnull = (IsA(expr, Const) && ((Const *) expr)->constisnull);
 
-		/*
-		 * Coerce NULLs and "internal" (that is, not specified by the user)
-		 * jsonb-valued expressions at runtime using json_populate_type().
-		 *
-		 * For other (user-specified) non-NULL values, try to find a cast and
-		 * error out if one is not found.
-		 */
 		if (isnull ||
-			(exprType(expr) == JSONBOID &&
-			 btype == default_behavior))
+			exprType(expr) == JSONBOID ||
+			(exprType(expr) == BOOLOID &&
+			 getBaseType(returning->typid) != INT4OID))
+		{
 			coerce_at_runtime = true;
+
+			/*
+			 * json_populate_type() expects to be passed a jsonb value, so gin
+			 * up a Const containing the appropriate boolean value represented
+			 * as jsonb, discarding the original Const containing a plain
+			 * boolean.
+			 */
+			if (exprType(expr) == BOOLOID)
+			{
+				char	   *val = btype == JSON_BEHAVIOR_TRUE ? "true" : "false";
+
+				expr = (Node *) makeConst(JSONBOID, -1, InvalidOid, -1,
+										  DirectFunctionCall1(jsonb_in,
+															  CStringGetDatum(val)),
+										  false, false);
+			}
+		}
 		else
 		{
-			int32		baseTypmod = returning->typmod;
+			Node	   *coerced_expr;
+			char		typcategory = TypeCategory(returning->typid);
 
-			if (get_typtype(returning->typid) == TYPTYPE_DOMAIN)
-				(void) getBaseTypeAndTypmod(returning->typid, &baseTypmod);
-
-			if (baseTypmod > 0)
-				expr = coerce_to_specific_type(pstate, expr, TEXTOID,
-											   "JSON_FUNCTION()");
+			/*
+			 * Use an assignment cast if coercing to a string type so that
+			 * build_coercion_expression() assumes implicit coercion when
+			 * coercing the typmod, so that inputs exceeding length cause an
+			 * error instead of silent truncation.
+			 */
 			coerced_expr =
 				coerce_to_target_type(pstate, expr, exprType(expr),
-									  returning->typid, baseTypmod,
-									  baseTypmod > 0 ? COERCION_IMPLICIT :
+									  returning->typid, returning->typmod,
+									  (typcategory == TYPCATEGORY_STRING ||
+									   typcategory == TYPCATEGORY_BITSTRING) ?
+									  COERCION_ASSIGNMENT :
 									  COERCION_EXPLICIT,
-									  baseTypmod > 0 ? COERCE_IMPLICIT_CAST :
 									  COERCE_EXPLICIT_CAST,
 									  exprLocation((Node *) behavior));
-		}
 
-		if (coerced_expr == NULL)
-			ereport(ERROR,
-					errcode(ERRCODE_CANNOT_COERCE),
-					errmsg("cannot cast behavior expression of type %s to %s",
-						   format_type_be(exprType(expr)),
-						   format_type_be(returning->typid)),
-					parser_errposition(pstate, exprLocation(expr)));
-		else
+			if (coerced_expr == NULL)
+			{
+				/*
+				 * Provide a HINT if the expression comes from a DEFAULT
+				 * clause.
+				 */
+				if (btype == JSON_BEHAVIOR_DEFAULT)
+					ereport(ERROR,
+							errcode(ERRCODE_CANNOT_COERCE),
+							errmsg("cannot cast behavior expression of type %s to %s",
+								   format_type_be(exprType(expr)),
+								   format_type_be(returning->typid)),
+							errhint("You will need to explicitly cast the expression to type %s.",
+									format_type_be(returning->typid)),
+							parser_errposition(pstate, exprLocation(expr)));
+				else
+					ereport(ERROR,
+							errcode(ERRCODE_CANNOT_COERCE),
+							errmsg("cannot cast behavior expression of type %s to %s",
+								   format_type_be(exprType(expr)),
+								   format_type_be(returning->typid)),
+							parser_errposition(pstate, exprLocation(expr)));
+			}
+
 			expr = coerced_expr;
+		}
 	}
 
 	if (behavior)

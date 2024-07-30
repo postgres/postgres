@@ -266,7 +266,10 @@ SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$.a'));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int2 EXISTS PATH '$.a'));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int8 EXISTS PATH '$.a'));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a float4 EXISTS PATH '$.a'));
-SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(5) EXISTS PATH '$.a'));
+-- Default FALSE (ON ERROR) doesn't fit char(3)
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(3) EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(3) EXISTS PATH '$.a' ERROR ON ERROR));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(5) EXISTS PATH '$.a' ERROR ON ERROR));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a json EXISTS PATH '$.a'));
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a jsonb EXISTS PATH '$.a'));
 

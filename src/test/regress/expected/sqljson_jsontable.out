@@ -556,21 +556,38 @@ SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$.a'));
 (1 row)
 
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int2 EXISTS PATH '$.a'));
-ERROR:  cannot cast behavior expression of type boolean to smallint
+ERROR:  could not coerce ON ERROR expression (FALSE) to the RETURNING type
+DETAIL:  invalid input syntax for type smallint: "false"
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int8 EXISTS PATH '$.a'));
-ERROR:  cannot cast behavior expression of type boolean to bigint
+ERROR:  could not coerce ON ERROR expression (FALSE) to the RETURNING type
+DETAIL:  invalid input syntax for type bigint: "false"
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a float4 EXISTS PATH '$.a'));
-ERROR:  cannot cast behavior expression of type boolean to real
-SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(5) EXISTS PATH '$.a'));
+ERROR:  could not coerce ON ERROR expression (FALSE) to the RETURNING type
+DETAIL:  invalid input syntax for type real: "false"
+-- Default FALSE (ON ERROR) doesn't fit char(3)
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(3) EXISTS PATH '$.a'));
+ERROR:  could not coerce ON ERROR expression (FALSE) to the RETURNING type
+DETAIL:  value too long for type character(3)
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(3) EXISTS PATH '$.a' ERROR ON ERROR));
+ERROR:  value too long for type character(3)
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(5) EXISTS PATH '$.a' ERROR ON ERROR));
    a   
 -------
  false
 (1 row)
 
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a json EXISTS PATH '$.a'));
-ERROR:  cannot cast behavior expression of type boolean to json
+   a   
+-------
+ false
+(1 row)
+
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a jsonb EXISTS PATH '$.a'));
-ERROR:  cannot cast behavior expression of type boolean to jsonb
+   a   
+-------
+ false
+(1 row)
+
 -- JSON_TABLE: WRAPPER/QUOTES clauses on scalar columns
 SELECT * FROM JSON_TABLE(jsonb '"world"', '$' COLUMNS (item text PATH '$' KEEP QUOTES ON SCALAR STRING));
   item   

@@ -662,7 +662,11 @@ SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT 'bb
 (1 row)
 
 SELECT JSON_QUERY(jsonb '"aaa"', '$.a' RETURNING char(2) OMIT QUOTES DEFAULT '"bb"'::jsonb ON EMPTY);
-ERROR:  value too long for type character(2)
+ json_query 
+------------
+ bb
+(1 row)
+
 -- OMIT QUOTES behavior should not be specified when WITH WRAPPER used:
 -- Should fail
 SELECT JSON_QUERY(jsonb '[1]', '$' WITH WRAPPER OMIT QUOTES);
@@ -865,13 +869,17 @@ SELECT JSON_QUERY(jsonb '[1,2]', '$' RETURNING bytea FORMAT JSON);
 (1 row)
 
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' RETURNING bytea EMPTY OBJECT ON ERROR);
-ERROR:  cannot cast behavior expression of type jsonb to bytea
-LINE 1: ... JSON_QUERY(jsonb '[1,2]', '$[*]' RETURNING bytea EMPTY OBJE...
-                                                             ^
+ json_query 
+------------
+ \x7b7d
+(1 row)
+
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' RETURNING bytea FORMAT JSON EMPTY OBJECT ON ERROR);
-ERROR:  cannot cast behavior expression of type jsonb to bytea
-LINE 1: ...jsonb '[1,2]', '$[*]' RETURNING bytea FORMAT JSON EMPTY OBJE...
-                                                             ^
+ json_query 
+------------
+ \x7b7d
+(1 row)
+
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' RETURNING json EMPTY OBJECT ON ERROR);
  json_query 
 ------------
@@ -885,13 +893,11 @@ SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' RETURNING jsonb EMPTY OBJECT ON ERROR);
 (1 row)
 
 SELECT JSON_QUERY(jsonb '[3,4]', '$[*]' RETURNING bigint[] EMPTY OBJECT ON ERROR);
-ERROR:  cannot cast behavior expression of type jsonb to bigint[]
-LINE 1: ...ON_QUERY(jsonb '[3,4]', '$[*]' RETURNING bigint[] EMPTY OBJE...
-                                                             ^
+ERROR:  could not coerce ON ERROR expression (EMPTY OBJECT) to the RETURNING type
+DETAIL:  expected JSON array
 SELECT JSON_QUERY(jsonb '"[3,4]"', '$[*]' RETURNING bigint[] EMPTY OBJECT ON ERROR);
-ERROR:  cannot cast behavior expression of type jsonb to bigint[]
-LINE 1: ..._QUERY(jsonb '"[3,4]"', '$[*]' RETURNING bigint[] EMPTY OBJE...
-                                                             ^
+ERROR:  could not coerce ON ERROR expression (EMPTY OBJECT) to the RETURNING type
+DETAIL:  expected JSON array
 -- Coercion fails with quotes on
 SELECT JSON_QUERY(jsonb '"123.1"', '$' RETURNING int2 error on error);
 ERROR:  invalid input syntax for type smallint: ""123.1""
@@ -1379,7 +1385,8 @@ ERROR:  invalid ON ERROR behavior
 LINE 1: SELECT JSON_QUERY(jsonb '1', '$' TRUE ON ERROR);
                                          ^
 DETAIL:  Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for JSON_QUERY().
--- Test implicit coercion domain over fixed-legth type specified in RETURNING
+-- Test implicit coercion to a domain over fixed-length type specified in
+-- RETURNING
 CREATE DOMAIN queryfuncs_char2 AS char(2);
 CREATE DOMAIN queryfuncs_char2_chk AS char(2) CHECK (VALUE NOT IN ('12'));
 SELECT JSON_QUERY(jsonb '123', '$' RETURNING queryfuncs_char2 ERROR ON ERROR);
@@ -1415,3 +1422,34 @@ SELECT JSON_VALUE(jsonb '123', '$' RETURNING queryfuncs_char2_chk DEFAULT 1 ON E
 (1 row)
 
 DROP DOMAIN queryfuncs_char2, queryfuncs_char2_chk;
+-- Test coercion to domain over another fixed-length type of the ON ERROR /
+-- EMPTY expressions.  Ask user to cast the DEFAULT expression explicitly if
+-- automatic casting cannot be done, for example, from int to bit(2).
+CREATE DOMAIN queryfuncs_d_varbit3 AS varbit(3) CHECK (VALUE <> '01');
+SELECT JSON_VALUE(jsonb '1234', '$' RETURNING queryfuncs_d_varbit3  DEFAULT '111111' ON ERROR);
+ERROR:  bit string too long for type bit varying(3)
+SELECT JSON_VALUE(jsonb '1234', '$' RETURNING queryfuncs_d_varbit3  DEFAULT '010' ON ERROR);
+ json_value 
+------------
+ 010
+(1 row)
+
+SELECT JSON_VALUE(jsonb '1234', '$' RETURNING queryfuncs_d_varbit3  DEFAULT '01' ON ERROR);
+ERROR:  could not coerce ON ERROR expression (DEFAULT) to the RETURNING type
+DETAIL:  value for domain queryfuncs_d_varbit3 violates check constraint "queryfuncs_d_varbit3_check"
+SELECT JSON_VALUE(jsonb '"111"', '$'  RETURNING bit(2) ERROR ON ERROR);
+ERROR:  bit string length 3 does not match type bit(2)
+SELECT JSON_VALUE(jsonb '1234', '$' RETURNING bit(3)  DEFAULT 1 ON ERROR);
+ERROR:  cannot cast behavior expression of type integer to bit
+LINE 1: ...VALUE(jsonb '1234', '$' RETURNING bit(3)  DEFAULT 1 ON ERROR...
+                                                             ^
+HINT:  You will need to explicitly cast the expression to type bit.
+SELECT JSON_VALUE(jsonb '1234', '$' RETURNING bit(3)  DEFAULT 1::bit(3) ON ERROR);
+ json_value 
+------------
+ 001
+(1 row)
+
+SELECT JSON_VALUE(jsonb '"111"', '$.a'  RETURNING bit(3) DEFAULT '1111' ON EMPTY);
+ERROR:  bit string length 4 does not match type bit(3)
+DROP DOMAIN queryfuncs_d_varbit3;
