@@ -17,22 +17,6 @@
 #	error "should be included via atomics.h"
 #endif
 
-#ifndef pg_memory_barrier_impl
-/*
- * If we have no memory barrier implementation for this architecture, we
- * fall back to acquiring and releasing a spinlock.
- *
- * It's not self-evident that every possible legal implementation of a
- * spinlock acquire-and-release would be equivalent to a full memory barrier.
- * For example, I'm not sure that Itanium's acq and rel add up to a full
- * fence.  But all of our actual implementations seem OK in this regard.
- */
-#define PG_HAVE_MEMORY_BARRIER_EMULATION
-
-extern void pg_spinlock_barrier(void);
-#define pg_memory_barrier_impl pg_spinlock_barrier
-#endif
-
 
 #if !defined(PG_HAVE_ATOMIC_U64_SUPPORT)
 

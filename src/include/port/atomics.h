@@ -101,6 +101,10 @@
 #if !defined(pg_compiler_barrier_impl)
 #error "could not find an implementation of pg_compiler_barrier"
 #endif
+#if !defined(pg_memory_barrier_impl)
+#error "could not find an implementation of pg_memory_barrier_impl"
+#endif
+
 
 /*
  * Provide a spinlock-based implementation of the 64 bit variants, if

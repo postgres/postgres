@@ -17,29 +17,6 @@
 #include "port/atomics.h"
 #include "storage/spin.h"
 
-#ifdef PG_HAVE_MEMORY_BARRIER_EMULATION
-#ifdef WIN32
-#error "barriers are required (and provided) on WIN32 platforms"
-#endif
-#include <signal.h>
-#endif
-
-#ifdef PG_HAVE_MEMORY_BARRIER_EMULATION
-void
-pg_spinlock_barrier(void)
-{
-	/*
-	 * NB: we have to be reentrant here, some barriers are placed in signal
-	 * handlers.
-	 *
-	 * We use kill(0) for the fallback barrier as we assume that kernels on
-	 * systems old enough to require fallback barrier support will include an
-	 * appropriate barrier while checking the existence of the postmaster pid.
-	 */
-	(void) kill(PostmasterPid, 0);
-}
-#endif
-
 
 #ifdef PG_HAVE_ATOMIC_U64_SIMULATION
 
