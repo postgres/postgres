@@ -4303,13 +4303,7 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 				if (!error)
 				{
 					*op->resnull = false;
-					if (jsexpr->use_json_coercion)
-						*op->resvalue = DirectFunctionCall1(jsonb_in,
-															BoolGetDatum(exists) ?
-															CStringGetDatum("true") :
-															CStringGetDatum("false"));
-					else
-						*op->resvalue = BoolGetDatum(exists);
+					*op->resvalue = BoolGetDatum(exists);
 				}
 			}
 			break;
@@ -4550,10 +4544,46 @@ ExecEvalJsonCoercion(ExprState *state, ExprEvalStep *op,
 {
 	ErrorSaveContext *escontext = op->d.jsonexpr_coercion.escontext;
 
+	/*
+	 * Prepare to call json_populate_type() to coerce the boolean result of
+	 * JSON_EXISTS_OP to the target type.  If the the target type is integer
+	 * or a domain over integer, call the boolean-to-integer cast function
+	 * instead, because the integer's input function (which is what
+	 * json_populate_type() calls to coerce to scalar target types) doesn't
+	 * accept boolean literals as valid input.  We only have a special case
+	 * for integer and domains thereof as it seems common to use those types
+	 * for EXISTS columns in JSON_TABLE().
+	 */
+	if (op->d.jsonexpr_coercion.exists_coerce)
+	{
+		if (op->d.jsonexpr_coercion.exists_cast_to_int)
+		{
+			/* Check domain constraints if any. */
+			if (op->d.jsonexpr_coercion.exists_check_domain &&
+				!domain_check_safe(*op->resvalue, *op->resnull,
+								   op->d.jsonexpr_coercion.targettype,
+								   &op->d.jsonexpr_coercion.json_coercion_cache,
+								   econtext->ecxt_per_query_memory,
+								   (Node *) escontext))
+			{
+				*op->resnull = true;
+				*op->resvalue = (Datum) 0;
+			}
+			else
+				*op->resvalue = DirectFunctionCall1(bool_int4, *op->resvalue);
+			return;
+		}
+
+		*op->resvalue = DirectFunctionCall1(jsonb_in,
+											DatumGetBool(*op->resvalue) ?
+											CStringGetDatum("true") :
+											CStringGetDatum("false"));
+	}
+
 	*op->resvalue = json_populate_type(*op->resvalue, JSONBOID,
 									   op->d.jsonexpr_coercion.targettype,
 									   op->d.jsonexpr_coercion.targettypmod,
-									   &op->d.jsonexpr_coercion.json_populate_type_cache,
+									   &op->d.jsonexpr_coercion.json_coercion_cache,
 									   econtext->ecxt_per_query_memory,
 									   op->resnull,
 									   op->d.jsonexpr_coercion.omit_quotes,
