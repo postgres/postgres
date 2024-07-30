@@ -2353,9 +2353,9 @@ pg_strxfrm_enabled(pg_locale_t locale)
  * The provided 'src' must be nul-terminated. If 'destsize' is zero, 'dest'
  * may be NULL.
  *
- * Returns the number of bytes needed to store the transformed string,
- * excluding the terminating nul byte. If the value returned is 'destsize' or
- * greater, the resulting contents of 'dest' are undefined.
+ * Returns the number of bytes needed (or more) to store the transformed
+ * string, excluding the terminating nul byte. If the value returned is
+ * 'destsize' or greater, the resulting contents of 'dest' are undefined.
  */
 size_t
 pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
@@ -2385,9 +2385,9 @@ pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
  * 'src' does not need to be nul-terminated. If 'destsize' is zero, 'dest' may
  * be NULL.
  *
- * Returns the number of bytes needed to store the transformed string,
- * excluding the terminating nul byte. If the value returned is 'destsize' or
- * greater, the resulting contents of 'dest' are undefined.
+ * Returns the number of bytes needed (or more) to store the transformed
+ * string, excluding the terminating nul byte. If the value returned is
+ * 'destsize' or greater, the resulting contents of 'dest' are undefined.
  *
  * This function may need to nul-terminate the argument for libc functions;
  * so if the caller already has a nul-terminated string, it should call
