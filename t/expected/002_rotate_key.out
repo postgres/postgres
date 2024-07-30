@@ -5,7 +5,7 @@ INSERT INTO test_enc (k) VALUES (5),(6);
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
--- ROTATE KEY pg_tde_rotate_key('rotated-principal-key','file-2');
+-- ROTATE KEY pg_tde_rotate_principal_key('rotated-principal-key','file-2');
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -13,7 +13,7 @@ SELECT * FROM test_enc ORDER BY id ASC;
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
--- ROTATE KEY pg_tde_rotate_key();
+-- ROTATE KEY pg_tde_rotate_principal_key();
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6

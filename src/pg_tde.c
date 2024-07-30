@@ -35,7 +35,7 @@
 #include "pg_tde_defs.h"
 #include "smgr/pg_tde_smgr.h"
 #ifdef PERCONA_FORK
-#include "catalog/tde_global_catalog.h"
+#include "catalog/tde_global_space.h"
 #endif
 
 #define MAX_ON_INSTALLS 5
@@ -87,8 +87,7 @@ tde_shmem_startup(void)
 	AesInit();
 
 #ifdef PERCONA_FORK
-	TDEGlCatShmemInit();
-	TDEGlCatKeyInit();
+	TDEInitGlobalKeys();
 
 	TDEXLogShmemInit();
 	TDEXLogSmgrInit();
@@ -108,7 +107,6 @@ _PG_init(void)
 	InitializeKeyProviderInfo();
 #ifdef PERCONA_FORK
 	XLogInitGUC();
-	TDEGlCatInitGUC();
 #endif
 	prev_shmem_request_hook = shmem_request_hook;
 	shmem_request_hook = tde_shmem_request;

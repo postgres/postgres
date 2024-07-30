@@ -56,12 +56,6 @@ typedef struct VaultV2Keyring
 	char vault_mount_path[MAXPGPATH];
 } VaultV2Keyring;
 
-typedef union KeyringProviders
-{
-	FileKeyring file;
-	VaultV2Keyring vault;
-} KeyringProviders;
-
 /* This record goes into key provider info file */
 typedef struct KeyringProvideRecord
 {
@@ -78,11 +72,12 @@ typedef struct KeyringProviderXLRecord
 	KeyringProvideRecord provider;
 } KeyringProviderXLRecord;
 
-extern List *GetAllKeyringProviders(void);
-extern GenericKeyring *GetKeyProviderByName(const char *provider_name);
-extern GenericKeyring *GetKeyProviderByID(int provider_id);
+extern List *GetAllKeyringProviders(Oid dbOid, Oid spcOid);
+extern GenericKeyring *GetKeyProviderByName(const char *provider_name, Oid dbOid, Oid spcOid);
+extern GenericKeyring *GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid);
 extern ProviderType get_keyring_provider_from_typename(char *provider_type);
 extern void cleanup_key_provider_info(Oid databaseId, Oid tablespaceId);
 extern void InitializeKeyProviderInfo(void);
+extern uint32 save_new_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, Oid tablespaceId, bool recovery);
 extern uint32 redo_key_provider_info(KeyringProviderXLRecord *xlrec);
 #endif /*TDE_KEYRING_H*/

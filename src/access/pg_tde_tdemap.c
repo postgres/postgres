@@ -92,7 +92,6 @@ static bool pg_tde_read_one_map_entry(int fd, const RelFileLocator *rlocator, in
 
 static void pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *principal_key_info, int32 key_index, RelKeyData *enc_rel_key_data);
 static void pg_tde_write_one_keydata(int keydata_fd, int32 key_index, RelKeyData *enc_rel_key_data);
-static RelKeyData* pg_tde_get_key_from_file(const RelFileLocator *rlocator, GenericKeyring *keyring);
 static RelKeyData* pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
 static RelKeyData* pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
 
@@ -111,7 +110,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator)
 	TDEPrincipalKey *principal_key;
 	XLogRelKey xlrec;
 
-	principal_key = GetPrincipalKey(newrlocator->dbOid, newrlocator->spcOid, NULL);
+	principal_key = GetPrincipalKey(newrlocator->dbOid, newrlocator->spcOid);
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
@@ -165,12 +164,6 @@ RelKey *tde_rel_key_map = NULL;
 RelKeyData *
 GetRelationKey(RelFileLocator rel)
 {
-	return GetRelationKeyWithKeyring(rel, NULL);
-}
-
-RelKeyData *
-GetRelationKeyWithKeyring(RelFileLocator rel, GenericKeyring *keyring)
-{
 	RelKey		*curr;
 	RelKeyData *key;
 
@@ -183,7 +176,7 @@ GetRelationKeyWithKeyring(RelFileLocator rel, GenericKeyring *keyring)
 		}
 	}
 
-	key = pg_tde_get_key_from_file(&rel, keyring);
+	key = pg_tde_get_key_from_file(&rel);
 
 	if (key != NULL)
 	{
@@ -996,8 +989,8 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset)
  * Reads the key of the required relation. It identifies its map entry and then simply
  * reads the key data from the keydata file.
  */
-static RelKeyData *
-pg_tde_get_key_from_file(const RelFileLocator *rlocator, GenericKeyring *keyring)
+RelKeyData *
+pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 {
 	int32		key_index = 0;
 	TDEPrincipalKey	*principal_key;
@@ -1013,7 +1006,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, GenericKeyring *keyring
 	LWLockAcquire(lock_files, LW_SHARED);
 
 	/* Get/generate a principal key, create the key for relation and get the encrypted key with bytes to write */
-	principal_key = GetPrincipalKey(rlocator->dbOid, rlocator->spcOid, keyring);
+	principal_key = GetPrincipalKey(rlocator->dbOid, rlocator->spcOid);
 	if (principal_key == NULL)
 	{
 		LWLockRelease(lock_files);
@@ -1179,6 +1172,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	xlrec->keydata_size = keydata_size;
 
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
+	/* TODO: error handling */
 	pg_pread(m_fd[NEW_PRINCIPAL_KEY], xlrec->buff, xlrec->map_size, 0);
 	pg_pread(k_fd[NEW_PRINCIPAL_KEY], &xlrec->buff[xlrec->map_size], xlrec->keydata_size, 0);
 

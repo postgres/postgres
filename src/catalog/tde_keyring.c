@@ -14,6 +14,7 @@
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "access/pg_tde_xlog.h"
+#include "catalog/tde_global_space.h"
 #include "catalog/tde_keyring.h"
 #include "catalog/tde_principal_key.h"
 #include "access/skey.h"
@@ -64,7 +65,7 @@ typedef enum ProviderScanType
 	PROVIDER_SCAN_ALL
 } ProviderScanType;
 
-static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey);
+static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid);
 
 static FileKeyring *load_file_keyring_provider_options(Datum keyring_options);
 static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, Datum keyring_options);
@@ -72,9 +73,11 @@ static VaultV2Keyring *load_vaultV2_keyring_provider_options(Datum keyring_optio
 static void debug_print_kerying(GenericKeyring *keyring);
 static char *get_keyring_infofile_path(char *resPath, Oid dbOid, Oid spcOid);
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
-static uint32 write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, Oid tablespace_id, off_t position, bool redo);
-static uint32 save_new_key_provider_info(KeyringProvideRecord *provider);
 static const char *get_keyring_provider_typename(ProviderType p_type);
+static uint32 write_key_provider_info(KeyringProvideRecord *provider, 
+									Oid database_id, Oid tablespace_id,
+									off_t position, bool redo, bool recovery);
+
 static Size initialize_shared_state(void *start_address);
 static Size required_shared_mem_size(void);
 
@@ -180,16 +183,16 @@ static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *p
 }
 
 List *
-GetAllKeyringProviders(void)
+GetAllKeyringProviders(Oid dbOid, Oid spcOid)
 {
-	return scan_key_provider_file(PROVIDER_SCAN_ALL, NULL);
+	return scan_key_provider_file(PROVIDER_SCAN_ALL, NULL, dbOid, spcOid);
 }
 
 GenericKeyring *
-GetKeyProviderByName(const char *provider_name)
+GetKeyProviderByName(const char *provider_name, Oid dbOid, Oid spcOid)
 {
 	GenericKeyring *keyring = NULL;
-	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void*)provider_name);
+	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void*)provider_name, dbOid, spcOid);
 	if (providers != NIL)
 	{
 		keyring = (GenericKeyring *)linitial(providers);
@@ -206,10 +209,10 @@ GetKeyProviderByName(const char *provider_name)
 }
 
 GenericKeyring *
-GetKeyProviderByID(int provider_id)
+GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid)
 {
 	GenericKeyring *keyring = NULL;
-	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id);
+	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid, spcOid);
 	if (providers != NIL)
 	{
 		keyring = (GenericKeyring *)linitial(providers);
@@ -330,7 +333,8 @@ fetch_next_key_provider(int fd, off_t* curr_pos, KeyringProvideRecord *provider)
 }
 
 static uint32
-write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, Oid tablespace_id, off_t position, bool redo)
+write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, 
+					Oid tablespace_id, off_t position, bool redo, bool recovery)
 {
 	off_t bytes_written = 0;
 	off_t curr_pos = 0;
@@ -355,7 +359,6 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, Oid tab
 	}
 	if (!redo)
 	{
-		KeyringProviderXLRecord xlrec;
 		/* we also need to verify the name conflict and generate the next provider ID */
 		while (fetch_next_key_provider(fd, &curr_pos, &existing_provider))
 		{
@@ -372,15 +375,23 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, Oid tab
 		}
 		provider->provider_id = max_provider_id + 1;
 		curr_pos = lseek(fd, 0, SEEK_END);
-		/* emit the xlog here. So that we can handle partial file write errors */
-		xlrec.database_id = database_id;
-		xlrec.tablespace_id = tablespace_id;
-		xlrec.offset_in_file = curr_pos;
-		memcpy(&xlrec.provider, provider, sizeof(KeyringProvideRecord));
 
-		XLogBeginInsert();
-		XLogRegisterData((char *)&xlrec, sizeof(KeyringProviderXLRecord));
-		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_KEY_PROVIDER_KEY);
+		/* emit the xlog here. So that we can handle partial file write errors
+		 * but cannot make new WAL entries during recovery.
+		 */
+		if (!recovery)
+		{
+			KeyringProviderXLRecord xlrec;
+
+			xlrec.database_id = database_id;
+			xlrec.tablespace_id = tablespace_id;
+			xlrec.offset_in_file = curr_pos;
+			memcpy(&xlrec.provider, provider, sizeof(KeyringProvideRecord));
+
+			XLogBeginInsert();
+			XLogRegisterData((char *)&xlrec, sizeof(KeyringProviderXLRecord));
+			XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_KEY_PROVIDER_KEY);
+		}
 	}
 	else
 	{
@@ -420,22 +431,22 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, Oid tab
 /*
  * Save the key provider info to the file
  */
-static uint32
-save_new_key_provider_info(KeyringProvideRecord* provider)
+uint32
+save_new_key_provider_info(KeyringProvideRecord* provider, Oid databaseId, Oid tablespaceId, bool recovery)
 {
-	return write_key_provider_info(provider, MyDatabaseId, MyDatabaseTableSpace, 0, false);
+	return write_key_provider_info(provider, databaseId, tablespaceId, 0, false, recovery);
 }
 
 uint32
 redo_key_provider_info(KeyringProviderXLRecord* xlrec)
 {
-	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->tablespace_id, xlrec->offset_in_file, true);
+	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->tablespace_id, xlrec->offset_in_file, true, false);
 }
 
 /*
 	* Scan the key provider info file and can also apply filter based on scanType
 	*/
-static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey)
+static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid)
 {
 	off_t curr_pos = 0;
 	int fd;
@@ -446,7 +457,7 @@ static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey)
 	if (scanType != PROVIDER_SCAN_ALL)
 		Assert(scanKey != NULL);
 
-	get_keyring_infofile_path(kp_info_path, MyDatabaseId, MyDatabaseTableSpace);
+	get_keyring_infofile_path(kp_info_path, dbOid, spcOid);
 
 	LWLockAcquire(tde_provider_info_lock(), LW_SHARED);
 
@@ -500,10 +511,10 @@ static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey)
 void
 cleanup_key_provider_info(Oid databaseId, Oid tablespaceId)
 {
-	/* Remove the key provider info fileß */
+	/* Remove the key provider info file */
 	char kp_info_path[MAXPGPATH] = {0};
 
-	get_keyring_infofile_path(kp_info_path, MyDatabaseId, MyDatabaseTableSpace);
+	get_keyring_infofile_path(kp_info_path, databaseId, tablespaceId);
 	PathNameDeleteTemporaryFile(kp_info_path, false);
 }
 
@@ -523,12 +534,21 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 	char *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	char *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	bool is_global = PG_GETARG_BOOL(3);
 	KeyringProvideRecord provider;
+	Oid dbOid = MyDatabaseId;
+	Oid spcOid = MyDatabaseTableSpace;
+
+	if (is_global)
+	{
+		dbOid = GLOBAL_DATA_TDE_OID;
+		spcOid = GLOBALTABLESPACE_OID;
+	}
 
 	strncpy(provider.options, options, sizeof(provider.options));
 	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
-	save_new_key_provider_info(&provider);
+	save_new_key_provider_info(&provider, dbOid, spcOid, false);
 
 	PG_RETURN_INT32(provider.provider_id);
 }
@@ -536,7 +556,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 Datum
 pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 {
-	List* all_providers = GetAllKeyringProviders();
+	List* all_providers = GetAllKeyringProviders(MyDatabaseId, MyDatabaseTableSpace);
 	ListCell *lc;
 	Tuplestorestate *tupstore;
 	TupleDesc tupdesc;
@@ -583,7 +603,6 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 
 		debug_print_kerying(keyring);
 	}
-	tuplestore_donestoring(tupstore);
 	list_free_deep(all_providers);
 	return (Datum)0;
 }

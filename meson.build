@@ -41,7 +41,7 @@ pg_tde_sources = files(
 
         'src/smgr/pg_tde_smgr.c',
 
-        'src/catalog/tde_global_catalog.c',
+        'src/catalog/tde_global_space.c',
         'src/catalog/tde_keyring.c',
         'src/catalog/tde_principal_key.c',
         'src/common/pg_tde_shmem.c',

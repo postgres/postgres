@@ -63,16 +63,9 @@ extern LWLock *tde_lwlock_mk_cache(void);
 extern bool save_principal_key_info(TDEPrincipalKeyInfo *principalKeyInfo);
 
 extern Oid GetPrincipalKeyProviderId(void);
-extern TDEPrincipalKey* GetPrincipalKey(Oid dbOid, Oid spcOid, GenericKeyring *keyring);
+extern TDEPrincipalKey* GetPrincipalKey(Oid dbOid, Oid spcOid);
 extern bool SetPrincipalKey(const char *key_name, const char *provider_name, bool ensure_new_key);
-extern bool RotatePrincipalKey(const char *new_key_name, const char *new_provider_name, bool ensure_new_key);
+extern bool RotatePrincipalKey(TDEPrincipalKey *current_key, const char *new_key_name, const char *new_provider_name, bool ensure_new_key);
 extern bool xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);
-extern TDEPrincipalKey *set_principal_key_with_keyring(const char *key_name, 
-												GenericKeyring *keyring,
-												Oid dbOid, Oid spcOid,
-												bool ensure_new_key);
-extern keyInfo *load_latest_versioned_key_name(TDEPrincipalKeyInfo *principal_key_info, 
-												GenericKeyring *keyring,
-												bool ensure_new_key);
  
 #endif /*PG_TDE_PRINCIPAL_KEY_H*/

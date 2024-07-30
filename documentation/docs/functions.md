@@ -39,13 +39,13 @@ Sets the principal key for the database using the specified key provider.
 
 The principal key name is also used for constructing the name in the provider, for example on the remote Vault server.
 
-You can use this function only to a principal key. For changes in the principal key, use the [`pg_tde_rotate_key`](#pg_tde_rotate_key) function.
+You can use this function only to a principal key. For changes in the principal key, use the [`pg_tde_rotate_principal_key`](#pg_tde_rotate_principal_key) function.
 
 ```sql
 SELECT pg_tde_set_principal_key('name-of-the-principal-key', 'provider-name');
 ```
 
-## pg_tde_rotate_key
+## pg_tde_rotate_principal_key
 
 Creates a new version of the specified principal key and updates the database so that it uses the new principal key version.
 
@@ -53,23 +53,23 @@ When used without any parameters, the function will just create a new version of
 principal key, using the same provider:
 
 ```sql
-SELECT pg_tde_rotate_key();
+SELECT pg_tde_rotate_principal_key();
 ```
 
 Alternatively, you can pass two parameters to the function, specifying both a new key name and a new provider name:
 
 ```sql
-SELECT pg_tde_rotate_key('name-of-the-new-principal-key', 'name-of-the-new-provider');
+SELECT pg_tde_rotate_principal_key('name-of-the-new-principal-key', 'name-of-the-new-provider');
 ```
 
 Both parameters support the `NULL` value, which means that the parameter won't be changed:
 
 ```sql
 -- creates  new principal key on the same provider as before
-SELECT pg_tde_rotate_key('name-of-the-new-principal-key', NULL);
+SELECT pg_tde_rotate_principal_key('name-of-the-new-principal-key', NULL);
 
 -- copies the current principal key to a new provider
-SELECT pg_tde_rotate_key(NULL, 'name-of-the-new-provider');
+SELECT pg_tde_rotate_principal_key(NULL, 'name-of-the-new-provider');
 ```
 
 ## pg_tde_is_encrypted

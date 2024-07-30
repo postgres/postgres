@@ -35,7 +35,7 @@ tde_smgr_get_key(SMgrRelation reln)
 	recursion++;
 
 
-	if(GetPrincipalKey(reln->smgr_rlocator.locator.relNumber, reln->smgr_rlocator.locator.spcOid, NULL)==NULL)
+	if(GetPrincipalKey(reln->smgr_rlocator.locator.relNumber, reln->smgr_rlocator.locator.spcOid)==NULL)
 	{
 		recursion--;
 		return NULL;

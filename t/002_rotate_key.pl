@@ -56,8 +56,8 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 #rotate key
-PGTDE::append_to_file("-- ROTATE KEY pg_tde_rotate_key('rotated-principal-key','file-2');");
-$rt_value = $node->psql('postgres', "SELECT pg_tde_rotate_key('rotated-principal-key','file-2');", extra_params => ['-a']);
+PGTDE::append_to_file("-- ROTATE KEY pg_tde_rotate_principal_key('rotated-principal-key','file-2');");
+$rt_value = $node->psql('postgres', "SELECT pg_tde_rotate_principal_key('rotated-principal-key','file-2');", extra_params => ['-a']);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
@@ -70,8 +70,8 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 #Again rotate key
-PGTDE::append_to_file("-- ROTATE KEY pg_tde_rotate_key();");
-$rt_value = $node->psql('postgres', "SELECT pg_tde_rotate_key();", extra_params => ['-a']);
+PGTDE::append_to_file("-- ROTATE KEY pg_tde_rotate_principal_key();");
+$rt_value = $node->psql('postgres', "SELECT pg_tde_rotate_principal_key();", extra_params => ['-a']);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 

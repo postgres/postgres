@@ -28,7 +28,7 @@
 #include "access/pg_tde_xlog.h"
 #include "encryption/enc_tde.h"
 #ifdef PERCONA_FORK
-#include "catalog/tde_global_catalog.h"
+#include "catalog/tde_global_space.h"
 
 static char *TDEXLogEncryptBuf = NULL;
 
@@ -240,7 +240,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
 	size_t	data_size = 0;
 	XLogPageHeader	curr_page_hdr = &EncryptCurrentPageHrd;
 	XLogPageHeader	enc_buf_page;
-	RelKeyData		*key = GetGlCatInternalKey(XLOG_TDE_OID);
+	RelKeyData		*key = TDEGetGlobalInternalKey(XLOG_TDE_OID);
 	off_t	enc_off;
 	size_t	page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
 	uint32	iv_ctr = 0;
@@ -327,7 +327,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
 	char	iv_prefix[16] = {0,};
 	size_t	data_size = 0;
 	XLogPageHeader	curr_page_hdr = &DecryptCurrentPageHrd;
-	RelKeyData		*key = GetGlCatInternalKey(XLOG_TDE_OID);
+	RelKeyData		*key = TDEGetGlobalInternalKey(XLOG_TDE_OID);
 	size_t	page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
 	off_t	dec_off;
 	uint32	iv_ctr = 0;
