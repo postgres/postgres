@@ -1,12 +1,15 @@
+use inline_colorization::*;
 use postgres::config::Host::Tcp;
 use postgres::{Client, NoTls};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, RwLock};
-use std::thread;
+use std::{io, thread};
 
 extern crate users;
+use super::memory_manager::MemoryManager;
 use super::node::*;
 use crate::node::router::Channel;
+use crate::utils::node_config::get_self_config;
 use rust_decimal::Decimal;
 use users::get_current_username;
 
@@ -19,14 +22,13 @@ pub struct Shard<'a> {
     port: &'a str,
     listener: Arc<RwLock<TcpListener>>,
     router_stream: Arc<RwLock<Option<TcpStream>>>,
+    memory_manager: MemoryManager
 }
 
 impl<'a> Shard<'a> {
     /// Creates a new Shard node with the given port
     pub fn new(ip: &'a str, port: &'a str) -> Self {
         println!("Creating a new Shard node with port: {}", port);
-
-        print_sysinfo();
 
         // get username dynamically
         let username = match get_current_username() {
@@ -61,6 +63,14 @@ impl<'a> Shard<'a> {
             Self::accept_connections(listener_clone, stream_clone);
         });
 
+        // Initialize memory manager
+        let config = get_self_config();
+        let memory_threshold = config.memory_threshold;
+        let memory_manager = MemoryManager::new(memory_threshold);
+
+        println!("{color_blue}[Shard] Available Memory: {:?} %{style_reset}", memory_manager.available_memory_perc);
+        println!("{color_blue}[Shard] Accepts Insertions: {:?}{style_reset}", memory_manager.accepts_insertions());
+
         Shard {
             // router: clients,
             backend,
@@ -68,8 +78,10 @@ impl<'a> Shard<'a> {
             port,
             listener,
             router_stream: stream.clone(),
+            memory_manager
         }
     }
+
     fn accept_connections(
         listener: Arc<RwLock<TcpListener>>,
         rw_stream: Arc<RwLock<Option<TcpStream>>>,
@@ -85,6 +97,10 @@ impl<'a> Shard<'a> {
                 eprintln!("Failed to accept a connection: {}", e);
             }
         }
+    }
+
+    pub fn update(&mut self) -> Result<(), io::Error> {
+        self.memory_manager.update()
     }
 }
 
@@ -110,5 +126,9 @@ impl<'a> NodeRole for Shard<'a> {
         }
 
         true
+    }
+
+    fn accepts_insertions(&self) -> bool {
+        self.memory_manager.accepts_insertions()
     }
 }

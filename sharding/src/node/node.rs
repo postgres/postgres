@@ -1,3 +1,5 @@
+use crate::utils::node_config::NodesConfig;
+
 use super::router::Router;
 use super::shard::Shard;
 use std::cell::UnsafeCell;
@@ -11,6 +13,7 @@ pub const FILE_PATH: &str = "ports.txt";
 pub trait NodeRole {
     /// Sends a query to the shard group
     fn send_query(&mut self, query: &str) -> bool;
+    fn accepts_insertions(&self) -> bool;
 }
 
 #[repr(C)]
