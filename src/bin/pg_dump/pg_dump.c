@@ -132,6 +132,8 @@ typedef struct
 	int64		startv;			/* start value */
 	int64		incby;			/* increment value */
 	int64		cache;			/* cache size */
+	int64		last_value;		/* last value of sequence */
+	bool		is_called;		/* whether nextval advances before returning */
 } SequenceItem;
 
 typedef enum OidOptions
@@ -17330,16 +17332,30 @@ collectSequences(Archive *fout)
 	 * Before Postgres 10, sequence metadata is in the sequence itself.  With
 	 * some extra effort, we might be able to use the sorted table for those
 	 * versions, but for now it seems unlikely to be worth it.
+	 *
+	 * Since version 18, we can gather the sequence data in this query with
+	 * pg_sequence_read_tuple(), but we only do so for non-schema-only dumps.
 	 */
 	if (fout->remoteVersion < 100000)
 		return;
+	else if (fout->remoteVersion < 180000 ||
+			 (fout->dopt->schemaOnly && !fout->dopt->sequence_data))
+		query = "SELECT seqrelid, format_type(seqtypid, NULL), "
+			"seqstart, seqincrement, "
+			"seqmax, seqmin, "
+			"seqcache, seqcycle, "
+			"NULL, 'f' "
+			"FROM pg_catalog.pg_sequence "
+			"ORDER BY seqrelid";
 	else
 		query = "SELECT seqrelid, format_type(seqtypid, NULL), "
 			"seqstart, seqincrement, "
 			"seqmax, seqmin, "
-			"seqcache, seqcycle "
-			"FROM pg_catalog.pg_sequence "
-			"ORDER BY seqrelid";
+			"seqcache, seqcycle, "
+			"last_value, is_called "
+			"FROM pg_catalog.pg_sequence, "
+			"pg_sequence_read_tuple(seqrelid) "
+			"ORDER BY seqrelid;";
 
 	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
 
@@ -17356,6 +17372,8 @@ collectSequences(Archive *fout)
 		sequences[i].minv = strtoi64(PQgetvalue(res, i, 5), NULL, 10);
 		sequences[i].cache = strtoi64(PQgetvalue(res, i, 6), NULL, 10);
 		sequences[i].cycled = (strcmp(PQgetvalue(res, i, 7), "t") == 0);
+		sequences[i].last_value = strtoi64(PQgetvalue(res, i, 8), NULL, 10);
+		sequences[i].is_called = (strcmp(PQgetvalue(res, i, 9), "t") == 0);
 	}
 
 	PQclear(res);
@@ -17622,30 +17640,59 @@ static void
 dumpSequenceData(Archive *fout, const TableDataInfo *tdinfo)
 {
 	TableInfo  *tbinfo = tdinfo->tdtable;
-	PGresult   *res;
-	char	   *last;
+	int64		last;
 	bool		called;
 	PQExpBuffer query = createPQExpBuffer();
 
-	appendPQExpBuffer(query,
-					  "SELECT last_value, is_called FROM %s",
-					  fmtQualifiedDumpable(tbinfo));
+	/*
+	 * For versions >= 18, the sequence information is gathered in the sorted
+	 * array before any calls to dumpSequenceData().  See collectSequences()
+	 * for more information.
+	 *
+	 * For older versions, we have to query the sequence relations
+	 * individually.
+	 */
+	if (fout->remoteVersion < 180000)
+	{
+		PGresult   *res;
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		appendPQExpBuffer(query,
+						  "SELECT last_value, is_called FROM %s",
+						  fmtQualifiedDumpable(tbinfo));
 
-	if (PQntuples(res) != 1)
-		pg_fatal(ngettext("query to get data of sequence \"%s\" returned %d row (expected 1)",
-						  "query to get data of sequence \"%s\" returned %d rows (expected 1)",
-						  PQntuples(res)),
-				 tbinfo->dobj.name, PQntuples(res));
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
-	last = PQgetvalue(res, 0, 0);
-	called = (strcmp(PQgetvalue(res, 0, 1), "t") == 0);
+		if (PQntuples(res) != 1)
+			pg_fatal(ngettext("query to get data of sequence \"%s\" returned %d row (expected 1)",
+							  "query to get data of sequence \"%s\" returned %d rows (expected 1)",
+							  PQntuples(res)),
+					 tbinfo->dobj.name, PQntuples(res));
+
+		last = strtoi64(PQgetvalue(res, 0, 0), NULL, 10);
+		called = (strcmp(PQgetvalue(res, 0, 1), "t") == 0);
+
+		PQclear(res);
+	}
+	else
+	{
+		SequenceItem key = {0};
+		SequenceItem *entry;
+
+		Assert(sequences);
+		Assert(tbinfo->dobj.catId.oid);
+
+		key.oid = tbinfo->dobj.catId.oid;
+		entry = bsearch(&key, sequences, nsequences,
+						sizeof(SequenceItem), SequenceItemCmp);
+
+		last = entry->last_value;
+		called = entry->is_called;
+	}
 
 	resetPQExpBuffer(query);
 	appendPQExpBufferStr(query, "SELECT pg_catalog.setval(");
 	appendStringLiteralAH(query, fmtQualifiedDumpable(tbinfo), fout);
-	appendPQExpBuffer(query, ", %s, %s);\n",
+	appendPQExpBuffer(query, ", " INT64_FORMAT ", %s);\n",
 					  last, (called ? "true" : "false"));
 
 	if (tdinfo->dobj.dump & DUMP_COMPONENT_DATA)
@@ -17658,8 +17705,6 @@ dumpSequenceData(Archive *fout, const TableDataInfo *tdinfo)
 								  .createStmt = query->data,
 								  .deps = &(tbinfo->dobj.dumpId),
 								  .nDeps = 1));
-
-	PQclear(res);
 
 	destroyPQExpBuffer(query);
 }
