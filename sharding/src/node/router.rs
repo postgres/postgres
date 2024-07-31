@@ -1,5 +1,7 @@
 use postgres::{Client, NoTls};
 extern crate users;
+use crate::utils::queries::query_is_insert;
+
 use super::super::utils::node_config::*;
 use super::node::*;
 use inline_colorization::*;
@@ -10,12 +12,12 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::{
     fs, io,
-    io::Read,
     net::{SocketAddr, TcpListener, TcpStream},
     sync::Mutex,
     thread,
 };
 use users::get_current_username;
+use crate::utils::node_config::get_config;
 
 // use super::super::utils::sysinfo::print_available_memory;
 
@@ -41,12 +43,8 @@ pub struct Router {
 impl Router {
     /// Creates a new Router node with the given port
     pub fn new(ip: &str, port: &str) -> Self {
-        // read from 'config.yaml' to get the ports
-        let config_content = fs::read_to_string("../../../sharding/src/node/config.yaml")
-            .expect("Should have been able to read the file");
-
-        let config: NodeConfig =
-            serde_yaml::from_str(&config_content).expect("Should have been able to parse the YAML");
+        
+        let config = get_config();
 
         let mut shards: HashMap<String, Client> = HashMap::new();
         let mut comm_channels = Vec::new();
@@ -142,7 +140,7 @@ impl Router {
     /// with corresponding data
     pub fn get_shards_for_query(&self, query: &str) -> Vec<String> {
         // If it's an INSERT query return specific Shards
-        if query.to_uppercase().starts_with("INSERT") {
+        if query_is_insert(query) {
             println!("Query is INSERT");
 
             // TODO-SHARD: Elegir un shard, el que tenga menor cargo o algo, etc
@@ -176,6 +174,9 @@ impl NodeRole for Router {
                     }
                 };
 
+                // TODO-SHARD: maybe this can be encapsulated inside another trait, with `.query` included
+                // TODO-SHARD: Send Update Message to Shard somehow
+
                 for row in rows {
                     let id: i32 = row.get(0);
                     let name: &str = row.get(1);
@@ -192,5 +193,9 @@ impl NodeRole for Router {
             }
         }
         true
+    }
+
+    fn accepts_insertions(&self) -> bool {
+        false
     }
 }
