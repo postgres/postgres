@@ -1414,10 +1414,6 @@ ParallelWorkerMain(Datum main_arg)
 	libraryspace = shm_toc_lookup(toc, PARALLEL_KEY_LIBRARY, false);
 	StartTransactionCommand();
 	RestoreLibraryState(libraryspace);
-
-	/* Restore GUC values from launching backend. */
-	gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC, false);
-	RestoreGUCState(gucspace);
 	CommitTransactionCommand();
 
 	/* Crank up a transaction state appropriate to a parallel worker. */
@@ -1458,6 +1454,14 @@ ParallelWorkerMain(Datum main_arg)
 	 * system caches.
 	 */
 	InvalidateSystemCaches();
+
+	/*
+	 * Restore GUC values from launching backend.  We can't do this earlier,
+	 * because GUC check hooks that do catalog lookups need to see the same
+	 * database state as the leader.
+	 */
+	gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC, false);
+	RestoreGUCState(gucspace);
 
 	/*
 	 * Restore current role id.  Skip verifying whether session user is
