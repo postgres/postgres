@@ -2573,6 +2573,7 @@ SeqScanState
 SeqTable
 SeqTableData
 SeqType
+SequenceItem
 SerCommitSeqNo
 SerialControl
 SerialIOData
