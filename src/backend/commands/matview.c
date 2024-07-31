@@ -119,7 +119,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
  */
 ObjectAddress
 ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
-				   ParamListInfo params, QueryCompletion *qc)
+				   QueryCompletion *qc)
 {
 	Oid			matviewOid;
 	LOCKMODE	lockmode;
@@ -136,7 +136,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 										  NULL);
 
 	return RefreshMatViewByOid(matviewOid, stmt->skipData, stmt->concurrent,
-							   queryString, params, qc);
+							   queryString, qc);
 }
 
 /*
@@ -160,8 +160,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
  */
 ObjectAddress
 RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
-					const char *queryString, ParamListInfo params,
-					QueryCompletion *qc)
+					const char *queryString, QueryCompletion *qc)
 {
 	Relation	matviewRel;
 	RewriteRule *rule;

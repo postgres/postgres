@@ -24,10 +24,9 @@
 extern void SetMatViewPopulatedState(Relation relation, bool newstate);
 
 extern ObjectAddress ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
-										ParamListInfo params, QueryCompletion *qc);
+										QueryCompletion *qc);
 extern ObjectAddress RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
-										 const char *queryString, ParamListInfo params,
-										 QueryCompletion *qc);
+										 const char *queryString, QueryCompletion *qc);
 
 extern DestReceiver *CreateTransientRelDestReceiver(Oid transientoid);
 
