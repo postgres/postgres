@@ -781,7 +781,7 @@ PostgreSQL documentation
         Require that each schema
         (<option>-n</option>/<option>--schema</option>) and table
         (<option>-t</option>/<option>--table</option>) qualifier match at
-        least one schema/table in the backup file.
+        least one schema/table in the file to be restored.
        </para>
       </listitem>
      </varlistentry>

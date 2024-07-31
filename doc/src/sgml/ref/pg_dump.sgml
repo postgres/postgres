@@ -36,16 +36,20 @@ PostgreSQL documentation
   <title>Description</title>
 
   <para>
-   <application>pg_dump</application> is a utility for backing up a
+   <application>pg_dump</application> is a utility for exporting a
    <productname>PostgreSQL</productname> database. It makes consistent
-   backups even if the database is being used concurrently.
+   exports even if the database is being used concurrently.
    <application>pg_dump</application> does not block other users
    accessing the database (readers or writers).
+   Note, however, that except in simple cases,
+   <application>pg_dump</application> is generally not the right choice for
+   taking regular backups of production databases.  See <xref
+   linkend="backup"/> for further discussion.
   </para>
 
   <para>
    <application>pg_dump</application> only dumps a single database.
-   To back up an entire cluster, or to back up global objects that are
+   To export an entire cluster, or to export global objects that are
    common to all databases in a cluster (such as roles and tablespaces),
    use <xref linkend="app-pg-dumpall"/>.
   </para>
@@ -76,7 +80,7 @@ PostgreSQL documentation
    <application>pg_restore</application>,
    <application>pg_dump</application> provides a flexible archival and
    transfer mechanism. <application>pg_dump</application> can be used to
-   backup an entire database, then <application>pg_restore</application>
+   export an entire database, then <application>pg_restore</application>
    can be used to examine the archive and/or select which parts of the
    database are to be restored. The most flexible output file formats are
    the <quote>custom</quote> format (<option>-Fc</option>) and the
