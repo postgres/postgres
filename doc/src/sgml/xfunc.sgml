@@ -2704,6 +2704,142 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
 
 &dfunc;
 
+   <sect2 id="xfunc-api-abi-stability-guidance">
+    <title>Server API and ABI Stability Guidance</title>
+
+    <para>
+     This section contains guidance to authors of extensions and other server
+     plugins about API and ABI stability in the
+     <productname>PostgreSQL</productname> server.
+    </para>
+
+    <sect3 id="xfunc-guidance-general">
+     <title>General</title>
+
+     <para>
+      The <productname>PostgreSQL</productname> server contains several
+      well-demarcated APIs for server plugins, such as the function manager
+      (<acronym>fmgr</acronym>, described in this chapter),
+      <acronym>SPI</acronym> (<xref linkend="spi"/>), and various hooks
+      specifically designed for extensions. These interfaces are carefully
+      managed for long-term stability and compatibility. However, the entire
+      set of global functions and variables in the server effectively
+      constitutes the publicly usable API, and most of it was not designed
+      with extensibility and long-term stability in mind.
+     </para>
+
+     <para>
+      Therefore, while taking advantage of these interfaces is valid, the
+      further one strays from the well-trodden path, the likelier it will be
+      that one might encounter API or ABI compatibility issues at some point.
+      Extension authors are encouraged to provide feedback about their
+      requirements, so that over time, as new use patterns arise, certain
+      interfaces can be considered more stabilized or new, better-designed
+      interfaces can be added.
+     </para>
+    </sect3>
+
+    <sect3 id="xfunc-guidance-api-compatibility">
+     <title>API Compatibility</title>
+     <para>
+      The <acronym>API</acronym>, or application programming interface, is the
+      interface used at compile time.
+     </para>
+
+     <sect4 id="xfunc-guidance-api-major-versions">
+      <title>Major Versions</title>
+      <para>
+       There is <emphasis>no</emphasis> promise of API compatibility between
+       <productname>PostgreSQL</productname> major versions. Extension code
+       therefore might require source code changes to work with multiple major
+       versions. These can usually be managed with preprocessor conditions
+       such as <literal>#if PG_VERSION_NUM &gt;= 160000</literal>.
+       Sophisticated extensions that use interfaces beyond the well-demarcated
+       ones usually require a few such changes for each major server version.
+      </para>
+     </sect4>
+
+     <sect4 id="xfunc-guidance-api-mninor-versions">
+      <title>Minor Versions</title>
+      <para>
+       <productname>PostgreSQL</productname> makes an effort to avoid server
+       API breaks in minor releases. In general, extension code that compiles
+       and works with a minor release should also compile and work with any
+       other minor release of the same major version, past or future.
+      </para>
+
+      <para>
+       When a change <emphasis>is</emphasis> required, it will be carefully
+       managed, taking the requirements of extensions into account. Such
+       changes will be communicated in the release notes (<xref
+       linkend="release"/>).
+      </para>
+     </sect4>
+    </sect3>
+
+    <sect3 id="xfunc-guidance-abi-compatibility">
+     <title>ABI Compatibility</title>
+      <para>
+       The <acronym>ABI</acronym>, or application binary interface, is the
+       interface used at run time.
+      </para>
+
+     <sect4 id="xfunc-guidance-abi-major-versions">
+      <title>Major Versions</title>
+      <para>
+       Servers of different major versions have intentionally incompatible
+       ABIs. Extensions that use server APIs must therefore be re-compiled for
+       each major release. The inclusion of <literal>PG_MODULE_MAGIC</literal>
+       (see <xref linkend="xfunc-c-dynload"/>) ensures that code compiled for
+       one major version will be rejected by other major versions.
+      </para>
+     </sect4>
+
+     <sect4 id="xfunc-guidance-abi-mninor-versions">
+      <title>Minor Versions</title>
+      <para>
+       <productname>PostgreSQL</productname> makes an effort to avoid server
+       ABI breaks in minor releases. In general, an extension compiled against
+       any minor release should work with any other minor release of the same
+       major version, past or future.
+      </para>
+
+      <para>
+       When a change <emphasis>is</emphasis> required,
+       <productname>PostgreSQL</productname> will choose the least invasive
+       change possible, for example by squeezing a new field into padding
+       space or appending it to the end of a struct. These sorts of changes
+       should not impact extensions unless they use very unusual code
+       patterns.
+      </para>
+
+      <para>
+       In rare cases, however, even such non-invasive changes may be
+       impractical or impossible. In such an event, the change will be
+       carefully managed, taking the requirements of extensions into account.
+       Such changes will also be documented in the release notes (<xref
+       linkend="release"/>).
+      </para>
+
+      <para>
+       Note, however, that many parts of the server are not designed or
+       maintained as publicly-consumable APIs (and that, in most cases, the
+       actual boundary is also not well-defined). If urgent needs arise,
+       changes in those parts will naturally be made with less consideration
+       for extension code than changes in well-defined and widely used
+       interfaces.
+      </para>
+
+      <para>
+       Also, in the absence of automated detection of such changes, this is
+       not a guarantee, but historically such breaking changes have been
+       extremely rare.
+      </para>
+
+     </sect4>
+    </sect3>
+  </sect2>
+
    <sect2 id="xfunc-c-composite-type-args">
     <title>Composite-Type Arguments</title>
 
