@@ -9,7 +9,7 @@ extern crate users;
 use super::memory_manager::MemoryManager;
 use super::node::*;
 use crate::node::router::Channel;
-use crate::utils::node_config::get_self_config;
+use crate::utils::node_config::get_shard_config;
 use rust_decimal::Decimal;
 use users::get_current_username;
 
@@ -64,7 +64,7 @@ impl<'a> Shard<'a> {
         });
 
         // Initialize memory manager
-        let config = get_self_config();
+        let config = get_shard_config();
         let memory_threshold = config.memory_threshold;
         let memory_manager = MemoryManager::new(memory_threshold);
 

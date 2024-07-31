@@ -17,7 +17,7 @@ use std::{
     thread,
 };
 use users::get_current_username;
-use crate::utils::node_config::get_config;
+use crate::utils::node_config::get_router_config;
 
 // use super::super::utils::sysinfo::print_available_memory;
 
@@ -44,7 +44,7 @@ impl Router {
     /// Creates a new Router node with the given port
     pub fn new(ip: &str, port: &str) -> Self {
         
-        let config = get_config();
+        let config = get_router_config();
 
         let mut shards: HashMap<String, Client> = HashMap::new();
         let mut comm_channels = Vec::new();
