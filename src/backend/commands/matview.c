@@ -60,7 +60,7 @@ static bool transientrel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void transientrel_shutdown(DestReceiver *self);
 static void transientrel_destroy(DestReceiver *self);
 static uint64 refresh_matview_datafill(DestReceiver *dest, Query *query,
-									   const char *queryString);
+									   const char *queryString, bool is_create);
 static char *make_temptable_name_n(char *tempname, int n);
 static void refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 								   int save_sec_context);
@@ -135,8 +135,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 										  RangeVarCallbackMaintainsTable,
 										  NULL);
 
-	return RefreshMatViewByOid(matviewOid, stmt->skipData, stmt->concurrent,
-							   queryString, qc);
+	return RefreshMatViewByOid(matviewOid, false, stmt->skipData,
+							   stmt->concurrent, queryString, qc);
 }
 
 /*
@@ -157,10 +157,14 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
  *
  * The matview's "populated" state is changed based on whether the contents
  * reflect the result set of the materialized view's query.
+ *
+ * This is also used to populate the materialized view created by CREATE
+ * MATERIALIZED VIEW command.
  */
 ObjectAddress
-RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
-					const char *queryString, QueryCompletion *qc)
+RefreshMatViewByOid(Oid matviewOid, bool is_create, bool skipData,
+					bool concurrent, const char *queryString,
+					QueryCompletion *qc)
 {
 	Relation	matviewRel;
 	RewriteRule *rule;
@@ -169,7 +173,6 @@ RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
 	Oid			tableSpace;
 	Oid			relowner;
 	Oid			OIDNewHeap;
-	DestReceiver *dest;
 	uint64		processed = 0;
 	char		relpersistence;
 	Oid			save_userid;
@@ -248,6 +251,8 @@ RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
 		ListCell   *indexoidscan;
 		bool		hasUniqueIndex = false;
 
+		Assert(!is_create);
+
 		foreach(indexoidscan, indexoidlist)
 		{
 			Oid			indexoid = lfirst_oid(indexoidscan);
@@ -284,7 +289,9 @@ RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
 	 * NB: We count on this to protect us against problems with refreshing the
 	 * data using TABLE_INSERT_FROZEN.
 	 */
-	CheckTableNotInUse(matviewRel, "REFRESH MATERIALIZED VIEW");
+	CheckTableNotInUse(matviewRel,
+					   is_create ? "CREATE MATERIALIZED VIEW" :
+					   "REFRESH MATERIALIZED VIEW");
 
 	/*
 	 * Tentatively mark the matview as populated or not (this will roll back
@@ -313,11 +320,16 @@ RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
 							   matviewRel->rd_rel->relam,
 							   relpersistence, ExclusiveLock);
 	LockRelationOid(OIDNewHeap, AccessExclusiveLock);
-	dest = CreateTransientRelDestReceiver(OIDNewHeap);
 
 	/* Generate the data, if wanted. */
 	if (!skipData)
-		processed = refresh_matview_datafill(dest, dataQuery, queryString);
+	{
+		DestReceiver *dest;
+
+		dest = CreateTransientRelDestReceiver(OIDNewHeap);
+		processed = refresh_matview_datafill(dest, dataQuery, queryString,
+											 is_create);
+	}
 
 	/* Make the matview match the newly generated data. */
 	if (concurrent)
@@ -369,9 +381,14 @@ RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
 	 * i.e., the display_rowcount flag of CMDTAG_REFRESH_MATERIALIZED_VIEW
 	 * command tag is left false in cmdtaglist.h. Otherwise, the change of
 	 * completion tag output might break applications using it.
+	 *
+	 * When called from CREATE MATERIALIZED VIEW comand, the rowcount is
+	 * displayed with the command tag CMDTAG_SELECT.
 	 */
 	if (qc)
-		SetQueryCompletion(qc, CMDTAG_REFRESH_MATERIALIZED_VIEW, processed);
+		SetQueryCompletion(qc,
+						   is_create ? CMDTAG_SELECT : CMDTAG_REFRESH_MATERIALIZED_VIEW,
+						   processed);
 
 	return address;
 }
@@ -386,7 +403,7 @@ RefreshMatViewByOid(Oid matviewOid, bool skipData, bool concurrent,
  */
 static uint64
 refresh_matview_datafill(DestReceiver *dest, Query *query,
-						 const char *queryString)
+						 const char *queryString, bool is_create)
 {
 	List	   *rewritten;
 	PlannedStmt *plan;
@@ -401,7 +418,8 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 
 	/* SELECT should never rewrite to more or less than one SELECT query */
 	if (list_length(rewritten) != 1)
-		elog(ERROR, "unexpected rewrite result for REFRESH MATERIALIZED VIEW");
+		elog(ERROR, "unexpected rewrite result for %s",
+			 is_create ? "CREATE MATERIALIZED VIEW " : "REFRESH MATERIALIZED VIEW");
 	query = (Query *) linitial(rewritten);
 
 	/* Check for user-requested abort. */
