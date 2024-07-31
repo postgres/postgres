@@ -19079,6 +19079,9 @@ fi
 # For linkers that understand --export-dynamic, add that to the LDFLAGS_EX_BE
 # (backend specific ldflags). One some platforms this will always fail (e.g.,
 # windows), but on others it depends on the choice of linker (e.g., solaris).
+# macOS uses -export_dynamic instead.  (On macOS, the option is only
+# needed when also using -flto, but we add it anyway since it's
+# harmless.)
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,--export-dynamic, for LDFLAGS_EX_BE" >&5
 $as_echo_n "checking whether $CC supports -Wl,--export-dynamic, for LDFLAGS_EX_BE... " >&6; }
 if ${pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl___export_dynamic+:} false; then :
@@ -19117,6 +19120,46 @@ if test x"$pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl___export_dynamic" = x"yes"; then
   LDFLAGS_EX_BE="${LDFLAGS_EX_BE} -Wl,--export-dynamic"
 fi
 
+if test x"$LDFLAGS_EX_BE" = x""; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,-export_dynamic, for LDFLAGS_EX_BE" >&5
+$as_echo_n "checking whether $CC supports -Wl,-export_dynamic, for LDFLAGS_EX_BE... " >&6; }
+if ${pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl__export_dynamic+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_LDFLAGS=$LDFLAGS
+LDFLAGS="$pgac_save_LDFLAGS -Wl,-export_dynamic"
+if test "$cross_compiling" = yes; then :
+  pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl__export_dynamic="assuming no"
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+extern void $link_test_func (); void (*fptr) () = $link_test_func;
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl__export_dynamic=yes
+else
+  pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl__export_dynamic=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+LDFLAGS="$pgac_save_LDFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl__export_dynamic" >&5
+$as_echo "$pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl__export_dynamic" >&6; }
+if test x"$pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl__export_dynamic" = x"yes"; then
+  LDFLAGS_EX_BE="${LDFLAGS_EX_BE} -Wl,-export_dynamic"
+fi
+
+fi
 
 
 # Create compiler version string

@@ -2398,7 +2398,13 @@ fi
 # For linkers that understand --export-dynamic, add that to the LDFLAGS_EX_BE
 # (backend specific ldflags). One some platforms this will always fail (e.g.,
 # windows), but on others it depends on the choice of linker (e.g., solaris).
+# macOS uses -export_dynamic instead.  (On macOS, the option is only
+# needed when also using -flto, but we add it anyway since it's
+# harmless.)
 PGAC_PROG_CC_LD_VARFLAGS_OPT(LDFLAGS_EX_BE, [-Wl,--export-dynamic], $link_test_func)
+if test x"$LDFLAGS_EX_BE" = x""; then
+  PGAC_PROG_CC_LD_VARFLAGS_OPT(LDFLAGS_EX_BE, [-Wl,-export_dynamic], $link_test_func)
+fi
 AC_SUBST(LDFLAGS_EX_BE)
 
 # Create compiler version string
