@@ -385,7 +385,7 @@ is($result, qq(t), 'two-phase is enabled');
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub_copy DISABLE;");
 $node_subscriber->poll_query_until('postgres',
-	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication worker'"
+	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication apply worker'"
 );
 $node_subscriber->safe_psql(
 	'postgres', "
@@ -434,7 +434,7 @@ is($result, qq(0), 'should be no prepared transactions on subscriber');
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub_copy DISABLE;");
 $node_subscriber->poll_query_until('postgres',
-	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication worker'"
+	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication apply worker'"
 );
 $node_subscriber->safe_psql(
 	'postgres', "
