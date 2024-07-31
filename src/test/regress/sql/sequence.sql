@@ -413,4 +413,7 @@ SELECT nextval('test_seq1');
 SELECT nextval('test_seq1');
 SELECT nextval('test_seq1');
 
+-- pg_sequence_read_tuple
+SELECT * FROM pg_sequence_read_tuple('test_seq1');
+
 DROP SEQUENCE test_seq1;

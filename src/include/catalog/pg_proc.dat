@@ -3329,6 +3329,12 @@
   proname => 'pg_sequence_last_value', provolatile => 'v', proparallel => 'u',
   prorettype => 'int8', proargtypes => 'regclass',
   prosrc => 'pg_sequence_last_value' },
+{ oid => '9876', descr => 'return sequence tuple, for use by pg_dump',
+  proname => 'pg_sequence_read_tuple', provolatile => 'v', proparallel => 'u',
+  prorettype => 'record', proargtypes => 'regclass',
+  proallargtypes => '{regclass,int8,int8,bool}', proargmodes => '{i,o,o,o}',
+  proargnames => '{sequence_oid,last_value,log_cnt,is_called}',
+  prosrc => 'pg_sequence_read_tuple' },
 
 { oid => '275', descr => 'return the next oid for a system table',
   proname => 'pg_nextoid', provolatile => 'v', proparallel => 'u',
