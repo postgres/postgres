@@ -519,16 +519,14 @@ check_transaction_read_only(bool *newval, void **extra, GucSource source)
  * We allow idempotent changes at any time, but otherwise this can only be
  * changed in a toplevel transaction that has not yet taken a snapshot.
  *
- * As in check_transaction_read_only, allow it if not inside a transaction,
- * or if restoring state in a parallel worker.
+ * As in check_transaction_read_only, allow it if not inside a transaction.
  */
 bool
 check_XactIsoLevel(int *newval, void **extra, GucSource source)
 {
 	int			newXactIsoLevel = *newval;
 
-	if (newXactIsoLevel != XactIsoLevel &&
-		IsTransactionState() && !InitializingParallelWorker)
+	if (newXactIsoLevel != XactIsoLevel && IsTransactionState())
 	{
 		if (FirstSnapshotSet)
 		{
@@ -563,10 +561,6 @@ check_XactIsoLevel(int *newval, void **extra, GucSource source)
 bool
 check_transaction_deferrable(bool *newval, void **extra, GucSource source)
 {
-	/* Just accept the value when restoring state in a parallel worker */
-	if (InitializingParallelWorker)
-		return true;
-
 	if (IsSubTransaction())
 	{
 		GUC_check_errcode(ERRCODE_ACTIVE_SQL_TRANSACTION);
