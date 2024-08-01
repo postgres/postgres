@@ -112,7 +112,7 @@ typedef enum SeqType
 	SEQTYPE_BIGINT,
 } SeqType;
 
-const char *const SeqTypeNames[] =
+static const char *const SeqTypeNames[] =
 {
 	[SEQTYPE_SMALLINT] = "smallint",
 	[SEQTYPE_INTEGER] = "integer",
