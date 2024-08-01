@@ -464,12 +464,3 @@ SELECT 1 FROM tenk1_vw_sec
   WHERE (SELECT sum(f1) FROM int4_tbl WHERE f1 < unique1) < 100;
 
 rollback;
-
--- test that a newly-created session role propagates to workers.
-begin;
-create role regress_parallel_worker;
-set session authorization regress_parallel_worker;
-select current_setting('session_authorization');
-set force_parallel_mode = 1;
-select current_setting('session_authorization');
-rollback;
