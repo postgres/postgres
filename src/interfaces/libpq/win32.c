@@ -231,7 +231,7 @@ LookupWSErrorMessage(DWORD err, char *dest)
 }
 
 
-struct MessageDLL
+static struct MessageDLL
 {
 	const char *dll_name;
 	void	   *handle;

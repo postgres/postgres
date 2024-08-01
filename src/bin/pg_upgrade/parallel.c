@@ -24,7 +24,7 @@ static int	parallel_jobs;
  *	it can be passed to WaitForMultipleObjects().  We use two arrays
  *	so the thread_handles array can be passed to WaitForMultipleObjects().
  */
-HANDLE	   *thread_handles;
+static HANDLE *thread_handles;
 
 typedef struct
 {
@@ -42,11 +42,11 @@ typedef struct
 	char	   *old_tablespace;
 } transfer_thread_arg;
 
-exec_thread_arg **exec_thread_args;
-transfer_thread_arg **transfer_thread_args;
+static exec_thread_arg **exec_thread_args;
+static transfer_thread_arg **transfer_thread_args;
 
 /* track current thread_args struct so reap_child() can be used for all cases */
-void	  **cur_thread_args;
+static void **cur_thread_args;
 
 DWORD		win32_exec_prog(exec_thread_arg *args);
 DWORD		win32_transfer_all_new_dbs(transfer_thread_arg *args);

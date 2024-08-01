@@ -26,7 +26,7 @@
 #ifdef WIN32
 
 /* internal vars */
-char	   *restrict_env;
+static char *restrict_env;
 
 /* Windows API define missing from some versions of MingW headers */
 #ifndef  DISABLE_MAX_PRIVILEGE
