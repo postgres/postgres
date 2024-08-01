@@ -94,6 +94,7 @@
 #include <unistd.h>
 
 #include "access/xact.h"
+#include "access/xlog.h"
 #include "lib/dshash.h"
 #include "pgstat.h"
 #include "port/atomics.h"
@@ -171,8 +172,8 @@ typedef struct PgStat_SnapshotEntry
  * ----------
  */
 
-static void pgstat_write_statsfile(void);
-static void pgstat_read_statsfile(void);
+static void pgstat_write_statsfile(XLogRecPtr redo);
+static void pgstat_read_statsfile(XLogRecPtr redo);
 
 static void pgstat_reset_after_failure(void);
 
@@ -448,9 +449,9 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
  * Should only be called by the startup process or in single user mode.
  */
 void
-pgstat_restore_stats(void)
+pgstat_restore_stats(XLogRecPtr redo)
 {
-	pgstat_read_statsfile();
+	pgstat_read_statsfile(redo);
 }
 
 /*
@@ -526,7 +527,7 @@ pgstat_before_server_shutdown(int code, Datum arg)
 	if (code == 0)
 	{
 		pgStatLocal.shmem->is_shutdown = true;
-		pgstat_write_statsfile();
+		pgstat_write_statsfile(GetRedoRecPtr());
 	}
 }
 
@@ -1349,7 +1350,7 @@ write_chunk(FILE *fpout, void *ptr, size_t len)
  * stats so locking is not required.
  */
 static void
-pgstat_write_statsfile(void)
+pgstat_write_statsfile(XLogRecPtr redo)
 {
 	FILE	   *fpout;
 	int32		format_id;
@@ -1366,7 +1367,8 @@ pgstat_write_statsfile(void)
 	/* we're shutting down, so it's ok to just override this */
 	pgstat_fetch_consistency = PGSTAT_FETCH_CONSISTENCY_NONE;
 
-	elog(DEBUG2, "writing stats file \"%s\"", statfile);
+	elog(DEBUG2, "writing stats file \"%s\" with redo %X/%X", statfile,
+		 LSN_FORMAT_ARGS(redo));
 
 	/*
 	 * Open the statistics temp file to write out the current values.
@@ -1386,6 +1388,9 @@ pgstat_write_statsfile(void)
 	 */
 	format_id = PGSTAT_FILE_FORMAT_ID;
 	write_chunk_s(fpout, &format_id);
+
+	/* Write the redo LSN, used to cross check the file read */
+	write_chunk_s(fpout, &redo);
 
 	/* Write various stats structs for fixed number of objects */
 	for (int kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
@@ -1501,18 +1506,20 @@ read_chunk(FILE *fpin, void *ptr, size_t len)
  * stats so locking is not required.
  */
 static void
-pgstat_read_statsfile(void)
+pgstat_read_statsfile(XLogRecPtr redo)
 {
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
 	const char *statfile = PGSTAT_STAT_PERMANENT_FILENAME;
 	PgStat_ShmemControl *shmem = pgStatLocal.shmem;
+	XLogRecPtr	file_redo;
 
 	/* shouldn't be called from postmaster */
 	Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
 
-	elog(DEBUG2, "reading stats file \"%s\"", statfile);
+	elog(DEBUG2, "reading stats file \"%s\" with redo %X/%X", statfile,
+		 LSN_FORMAT_ARGS(redo));
 
 	/*
 	 * Try to open the stats file. If it doesn't exist, the backends simply
@@ -1547,6 +1554,22 @@ pgstat_read_statsfile(void)
 	{
 		elog(WARNING, "found incorrect format ID %d (expected %d)",
 			 format_id, PGSTAT_FILE_FORMAT_ID);
+		goto error;
+	}
+
+	/*
+	 * Read the redo LSN stored in the file.
+	 */
+	if (!read_chunk_s(fpin, &file_redo))
+	{
+		elog(WARNING, "could not read redo LSN");
+		goto error;
+	}
+
+	if (file_redo != redo)
+	{
+		elog(WARNING, "found incorrect redo LSN %X/%X (expected %X/%X)",
+			 LSN_FORMAT_ARGS(file_redo), LSN_FORMAT_ARGS(redo));
 		goto error;
 	}
 
