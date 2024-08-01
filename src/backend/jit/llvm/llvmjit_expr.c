@@ -1145,6 +1145,12 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
+			case EEOP_PARAM_SET:
+				build_EvalXFunc(b, mod, "ExecEvalParamSet",
+								v_state, op, v_econtext);
+				LLVMBuildBr(b, opblocks[opno + 1]);
+				break;
+
 			case EEOP_SBSREF_SUBSCRIPTS:
 				{
 					int			jumpdone = op->d.sbsref_subscript.jumpdone;

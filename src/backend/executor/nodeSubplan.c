@@ -107,7 +107,7 @@ ExecHashSubPlan(SubPlanState *node,
 	TupleTableSlot *slot;
 
 	/* Shouldn't have any direct correlation Vars */
-	if (subplan->parParam != NIL || node->args != NIL)
+	if (subplan->parParam != NIL || subplan->args != NIL)
 		elog(ERROR, "hashed subplan with direct correlation not supported");
 
 	/*
@@ -231,7 +231,6 @@ ExecScanSubPlan(SubPlanState *node,
 	TupleTableSlot *slot;
 	Datum		result;
 	bool		found = false;	/* true if got at least one subplan tuple */
-	ListCell   *pvar;
 	ListCell   *l;
 	ArrayBuildStateAny *astate = NULL;
 
@@ -248,26 +247,19 @@ ExecScanSubPlan(SubPlanState *node,
 	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
 	/*
-	 * Set Params of this plan from parent plan correlation values. (Any
-	 * calculation we have to do is done in the parent econtext, since the
-	 * Param values don't need to have per-query lifetime.)
+	 * We rely on the caller to evaluate plan correlation values, if
+	 * necessary. However we still need to record the fact that the values
+	 * (might have) changed, otherwise the ExecReScan() below won't know that
+	 * nodes need to be rescanned.
 	 */
-	Assert(list_length(subplan->parParam) == list_length(node->args));
-
-	forboth(l, subplan->parParam, pvar, node->args)
+	foreach(l, subplan->parParam)
 	{
 		int			paramid = lfirst_int(l);
-		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
-		prm->value = ExecEvalExprSwitchContext((ExprState *) lfirst(pvar),
-											   econtext,
-											   &(prm->isnull));
 		planstate->chgParam = bms_add_member(planstate->chgParam, paramid);
 	}
 
-	/*
-	 * Now that we've set up its parameters, we can reset the subplan.
-	 */
+	/* with that done, we can reset the subplan */
 	ExecReScan(planstate);
 
 	/*
@@ -817,6 +809,10 @@ slotNoNulls(TupleTableSlot *slot)
  * as well as regular SubPlans.  Note that we don't link the SubPlan into
  * the parent's subPlan list, because that shouldn't happen for InitPlans.
  * Instead, ExecInitExpr() does that one part.
+ *
+ * We also rely on ExecInitExpr(), more precisely ExecInitSubPlanExpr(), to
+ * evaluate input parameters, as that allows them to be evaluated as part of
+ * the expression referencing the SubPlan.
  * ----------------------------------------------------------------
  */
 SubPlanState *
@@ -844,7 +840,6 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 
 	/* Initialize subexpressions */
 	sstate->testexpr = ExecInitExpr((Expr *) subplan->testexpr, parent);
-	sstate->args = ExecInitExprList(subplan->args, parent);
 
 	/*
 	 * initialize my state
@@ -1107,7 +1102,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		elog(ERROR, "ANY/ALL subselect unsupported as initplan");
 	if (subLinkType == CTE_SUBLINK)
 		elog(ERROR, "CTE subplans should not be executed via ExecSetParamPlan");
-	if (subplan->parParam || node->args)
+	if (subplan->parParam || subplan->args)
 		elog(ERROR, "correlated subplans should not be executed via ExecSetParamPlan");
 
 	/*

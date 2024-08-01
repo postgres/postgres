@@ -393,6 +393,10 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	/*
 	 * Initialize any initPlans present in this node.  The planner put them in
 	 * a separate list for us.
+	 *
+	 * The defining characteristic of initplans is that they don't have
+	 * arguments, so we don't need to evaluate them (in contrast to
+	 * ExecInitSubPlanExpr()).
 	 */
 	subps = NIL;
 	foreach(l, node->initPlan)
@@ -401,6 +405,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		SubPlanState *sstate;
 
 		Assert(IsA(subplan, SubPlan));
+		Assert(subplan->args == NIL);
 		sstate = ExecInitSubPlan(subplan, result);
 		subps = lappend(subps, sstate);
 	}
