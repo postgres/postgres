@@ -29,7 +29,7 @@ UNAME_S := $(shell uname -s)
 
 # Set macOS-specific flags
 ifeq ($(UNAME_S), Darwin)
-    LDFLAGS_MACOS = -framework CoreFoundation -framework SystemConfiguration
+    LDFLAGS_MACOS = -framework IOKit -framework CoreFoundation -framework SystemConfiguration
 endif
 
 OBJS = \
