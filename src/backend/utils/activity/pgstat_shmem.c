@@ -197,7 +197,7 @@ StatsShmemInit(void)
 		pg_atomic_init_u64(&ctl->gc_request_count, 1);
 
 		/* initialize fixed-numbered stats */
-		for (int kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+		for (PgStat_Kind kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
 		{
 			const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
 			char	   *ptr;
