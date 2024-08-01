@@ -133,9 +133,10 @@ task:
     DISK_SIZE: 50
 
     CCACHE_DIR: /tmp/ccache_dir
-    CPPFLAGS: -DRELCACHE_FORCE_RELEASE -DCOPY_PARSE_PLAN_TREES -DWRITE_READ_PARSE_PLAN_TREES -DRAW_EXPRESSION_COVERAGE_TEST -DENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+    CPPFLAGS: -DRELCACHE_FORCE_RELEASE -DENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
     CFLAGS: -Og -ggdb
 
+    PG_TEST_INITDB_EXTRA_OPTS: -c debug_copy_parse_plan_trees=on -c debug_write_read_parse_plan_trees=on -c debug_raw_expression_coverage_test=on
     PG_TEST_PG_UPGRADE_MODE: --link
 
   <<: *freebsd_task_template

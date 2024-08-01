@@ -98,10 +98,11 @@ Suppose you want to define a node Foo:
    node types to find all the places to touch.
    (Except for frequently-created nodes, don't bother writing a creator
    function in makefuncs.c.)
-4. Consider testing your new code with COPY_PARSE_PLAN_TREES,
-   WRITE_READ_PARSE_PLAN_TREES, and RAW_EXPRESSION_COVERAGE_TEST to ensure
-   support has been added everywhere that it's necessary; see
-   pg_config_manual.h about these.
+4. Consider testing your new code with debug_copy_parse_plan_trees,
+   debug_write_read_parse_plan_trees, and
+   debug_raw_expression_coverage_test to ensure support has been added
+   everywhere that it's necessary (e.g., run the tests with
+   PG_TEST_INITDB_EXTRA_OPTS='-c debug_...=on').
 
 Adding a new node type moves the numbers associated with existing
 tags, so you'll need to recompile the whole tree after doing this.

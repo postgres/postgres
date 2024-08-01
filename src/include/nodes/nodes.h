@@ -202,7 +202,7 @@ extern char *bmsToString(const struct Bitmapset *bms);
  * nodes/{readfuncs.c,read.c}
  */
 extern void *stringToNode(const char *str);
-#ifdef WRITE_READ_PARSE_PLAN_TREES
+#ifdef DEBUG_NODE_TESTS_ENABLED
 extern void *stringToNodeWithLocations(const char *str);
 #endif
 extern struct Bitmapset *readBitmapset(void);

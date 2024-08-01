@@ -19,7 +19,7 @@
 /*
  * variable in read.c that needs to be accessible to readfuncs.c
  */
-#ifdef WRITE_READ_PARSE_PLAN_TREES
+#ifdef DEBUG_NODE_TESTS_ENABLED
 extern PGDLLIMPORT bool restore_location_fields;
 #endif
 

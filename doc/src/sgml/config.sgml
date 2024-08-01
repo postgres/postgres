@@ -11425,6 +11425,29 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-debug-copy-parse-plan-trees" xreflabel="debug_copy_parse_plan_trees">
+      <term><varname>debug_copy_parse_plan_trees</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>debug_copy_parse_plan_trees</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enabling this forces all parse and plan trees to be passed through
+        <function>copyObject()</function>, to facilitate catching errors and
+        omissions in <function>copyObject()</function>.  The default is off.
+       </para>
+
+       <para>
+        This parameter is only available when
+        <symbol>DEBUG_NODE_TESTS_ENABLED</symbol> was defined at compile time
+        (which happens automatically when using the
+        <application>configure</application> option
+        <option>--enable-cassert</option>).
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-debug-discard-caches" xreflabel="debug_discard_caches">
       <term><varname>debug_discard_caches</varname> (<type>integer</type>)
       <indexterm>
@@ -11536,6 +11559,54 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         the <literal>Gather</literal> nodes added to plans by this setting are hidden
         in <literal>EXPLAIN</literal> output so that the output matches what
         would be obtained if this setting were turned <literal>off</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-debug-raw-expression-coverage-test" xreflabel="debug_raw_expression_coverage_test">
+      <term><varname>debug_raw_expression_coverage_test</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>debug_raw_expression_coverage_test</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enabling this forces all raw parse trees for DML statements to be
+        scanned by <function>raw_expression_tree_walker()</function>, to
+        facilitate catching errors and omissions in that function.  The
+        default is off.
+       </para>
+
+       <para>
+        This parameter is only available when
+        <symbol>DEBUG_NODE_TESTS_ENABLED</symbol> was defined at compile time
+        (which happens automatically when using the
+        <application>configure</application> option
+        <option>--enable-cassert</option>).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-debug-write-read-parse-plan-trees" xreflabel="debug_write_read_parse_plan_trees">
+      <term><varname>debug_write_read_parse_plan_trees</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>debug_write_read_parse_plan_trees</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enabling this forces all parse and plan trees to be passed through
+        <filename>outfuncs.c</filename>/<filename>readfuncs.c</filename>, to
+        facilitate catching errors and omissions in those modules.  The
+        default is off.
+       </para>
+
+       <para>
+        This parameter is only available when
+        <symbol>DEBUG_NODE_TESTS_ENABLED</symbol> was defined at compile time
+        (which happens automatically when using the
+        <application>configure</application> option
+        <option>--enable-cassert</option>).
        </para>
       </listitem>
      </varlistentry>

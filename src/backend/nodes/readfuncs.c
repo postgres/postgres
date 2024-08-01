@@ -19,7 +19,7 @@
  *
  *	  However, if restore_location_fields is true, we do restore location
  *	  fields from the string.  This is currently intended only for use by the
- *	  WRITE_READ_PARSE_PLAN_TREES test code, which doesn't want to cause
+ *	  debug_write_read_parse_plan_trees test code, which doesn't want to cause
  *	  any change in the node contents.
  *
  *-------------------------------------------------------------------------
@@ -118,7 +118,7 @@
 	local_node->fldname = nullable_string(token, length)
 
 /* Read a parse location field (and possibly throw away the value) */
-#ifdef WRITE_READ_PARSE_PLAN_TREES
+#ifdef DEBUG_NODE_TESTS_ENABLED
 #define READ_LOCATION_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	token = pg_strtok(&length);		/* get field value */ \

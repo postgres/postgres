@@ -493,6 +493,12 @@ bool		Debug_print_parse = false;
 bool		Debug_print_rewritten = false;
 bool		Debug_pretty_print = true;
 
+#ifdef DEBUG_NODE_TESTS_ENABLED
+bool		Debug_copy_parse_plan_trees;
+bool		Debug_write_read_parse_plan_trees;
+bool		Debug_raw_expression_coverage_test;
+#endif
+
 bool		log_parser_stats = false;
 bool		log_planner_stats = false;
 bool		log_executor_stats = false;
@@ -1294,6 +1300,59 @@ struct config_bool ConfigureNamesBool[] =
 		false,
 		NULL, NULL, NULL
 	},
+#ifdef DEBUG_NODE_TESTS_ENABLED
+	{
+		{"debug_copy_parse_plan_trees", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("Set this to force all parse and plan trees to be passed through "
+						 "copyObject(), to facilitate catching errors and omissions in "
+						 "copyObject()."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Debug_copy_parse_plan_trees,
+/* support for legacy compile-time setting */
+#ifdef COPY_PARSE_PLAN_TREES
+		true,
+#else
+		false,
+#endif
+		NULL, NULL, NULL
+	},
+	{
+		{"debug_write_read_parse_plan_trees", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("Set this to force all parse and plan trees to be passed through "
+						 "outfuncs.c/readfuncs.c, to facilitate catching errors and omissions in "
+						 "those modules."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Debug_write_read_parse_plan_trees,
+/* support for legacy compile-time setting */
+#ifdef WRITE_READ_PARSE_PLAN_TREES
+		true,
+#else
+		false,
+#endif
+		NULL, NULL, NULL
+	},
+	{
+		{"debug_raw_expression_coverage_test", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("Set this to force all raw parse trees for DML statements to be scanned "
+						 "by raw_expression_tree_walker(), to facilitate catching errors and "
+						 "omissions in that function."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Debug_raw_expression_coverage_test,
+/* support for legacy compile-time setting */
+#ifdef RAW_EXPRESSION_COVERAGE_TEST
+		true,
+#else
+		false,
+#endif
+		NULL, NULL, NULL
+	},
+#endif							/* DEBUG_NODE_TESTS_ENABLED */
 	{
 		{"debug_print_parse", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Logs each query's parse tree."),

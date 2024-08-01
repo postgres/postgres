@@ -321,31 +321,31 @@
  /* #define RECOVER_RELATION_BUILD_MEMORY 1 */	/* Force enable */
 
 /*
- * Define this to force all parse and plan trees to be passed through
- * copyObject(), to facilitate catching errors and omissions in
- * copyObject().
+ * Define DEBUG_NODE_TESTS_ENABLED to enable use of the GUCs
+ * debug_copy_parse_plan_trees, debug_write_read_parse_plan_trees, and
+ * debug_raw_expression_coverage_test, to test coverage of node support
+ * functions in src/backend/nodes/.
+ *
+ * USE_ASSERT_CHECKING builds default to enabling this.
  */
-/* #define COPY_PARSE_PLAN_TREES */
+/* #define DEBUG_NODE_TESTS_ENABLED */
+
+#if defined(USE_ASSERT_CHECKING) && !defined(DEBUG_NODE_TESTS_ENABLED)
+#define DEBUG_NODE_TESTS_ENABLED
+#endif
+
+/*
+ * Backwards compatibility for the older compile-time-only node-tests macros.
+ */
+#if !defined(DEBUG_NODE_TESTS_ENABLED) && (defined(COPY_PARSE_PLAN_TREES) || defined(WRITE_READ_PARSE_PLAN_TREES) || defined(RAW_EXPRESSION_COVERAGE_TEST))
+#define DEBUG_NODE_TESTS_ENABLED
+#endif
 
 /*
  * Define this to force Bitmapset reallocation on each modification.  Helps
  * to find dangling pointers to Bitmapset's.
  */
 /* #define REALLOCATE_BITMAPSETS */
-
-/*
- * Define this to force all parse and plan trees to be passed through
- * outfuncs.c/readfuncs.c, to facilitate catching errors and omissions in
- * those modules.
- */
-/* #define WRITE_READ_PARSE_PLAN_TREES */
-
-/*
- * Define this to force all raw parse trees for DML statements to be scanned
- * by raw_expression_tree_walker(), to facilitate catching errors and
- * omissions in that function.
- */
-/* #define RAW_EXPRESSION_COVERAGE_TEST */
 
 /*
  * Enable debugging print statements for lock-related operations.
