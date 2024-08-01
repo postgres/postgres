@@ -159,9 +159,9 @@ typedef struct PortalData
 	int16	   *formats;		/* a format code for each column */
 
 	/*
-	 * Where we store tuples for a held cursor or a PORTAL_ONE_RETURNING or
-	 * PORTAL_UTIL_SELECT query.  (A cursor held past the end of its
-	 * transaction no longer has any active executor state.)
+	 * Where we store tuples for a held cursor or a PORTAL_ONE_RETURNING,
+	 * PORTAL_ONE_MOD_WITH, or PORTAL_UTIL_SELECT query.  (A cursor held past
+	 * the end of its transaction no longer has any active executor state.)
 	 */
 	Tuplestorestate *holdStore; /* store for holdable cursors */
 	MemoryContext holdContext;	/* memory containing holdStore */
