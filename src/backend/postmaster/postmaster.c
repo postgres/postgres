@@ -416,7 +416,7 @@ static void TerminateChildren(int signal);
 #define SignalChildren(sig)			   SignalSomeChildren(sig, BACKEND_TYPE_ALL)
 
 static int	CountChildren(int target);
-static bool assign_backendlist_entry(RegisteredBgWorker *rw);
+static Backend *assign_backendlist_entry(void);
 static void maybe_start_bgworkers(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(BackendType type);
@@ -4028,6 +4028,7 @@ MaxLivePostmasterChildren(void)
 static bool
 do_start_bgworker(RegisteredBgWorker *rw)
 {
+	Backend    *bn;
 	pid_t		worker_pid;
 
 	Assert(rw->rw_pid == 0);
@@ -4042,11 +4043,14 @@ do_start_bgworker(RegisteredBgWorker *rw)
 	 * tried again right away, most likely we'd find ourselves hitting the
 	 * same resource-exhaustion condition.
 	 */
-	if (!assign_backendlist_entry(rw))
+	bn = assign_backendlist_entry();
+	if (bn == NULL)
 	{
 		rw->rw_crashed_at = GetCurrentTimestamp();
 		return false;
 	}
+	rw->rw_backend = bn;
+	rw->rw_child_slot = bn->child_slot;
 
 	ereport(DEBUG1,
 			(errmsg_internal("starting background worker process \"%s\"",
@@ -4119,12 +4123,10 @@ bgworker_should_start_now(BgWorkerStartTime start_time)
  * Allocate the Backend struct for a connected background worker, but don't
  * add it to the list of backends just yet.
  *
- * On failure, return false without changing any worker state.
- *
- * Some info from the Backend is copied into the passed rw.
+ * On failure, return NULL.
  */
-static bool
-assign_backendlist_entry(RegisteredBgWorker *rw)
+static Backend *
+assign_backendlist_entry(void)
 {
 	Backend    *bn;
 
@@ -4138,7 +4140,7 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
 				 errmsg("no slot available for new background worker process")));
-		return false;
+		return NULL;
 	}
 
 	bn = palloc_extended(sizeof(Backend), MCXT_ALLOC_NO_OOM);
@@ -4147,7 +4149,7 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
-		return false;
+		return NULL;
 	}
 
 	bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
@@ -4155,10 +4157,7 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 	bn->dead_end = false;
 	bn->bgworker_notify = false;
 
-	rw->rw_backend = bn;
-	rw->rw_child_slot = bn->child_slot;
-
-	return true;
+	return bn;
 }
 
 /*
