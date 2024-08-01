@@ -139,7 +139,7 @@ PostgreSQL documentation
 
     <varlistentry>
      <term><option>-s <replaceable class="parameter">dir</replaceable></option></term>
-     <term><option>--socket-directory=<replaceable class="parameter">dir</replaceable></option></term>
+     <term><option>--socketdir=<replaceable class="parameter">dir</replaceable></option></term>
      <listitem>
       <para>
        The directory to use for postmaster sockets on target server.  The
