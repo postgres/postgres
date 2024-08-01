@@ -26,14 +26,14 @@
 /*
  * List of background workers, private to postmaster.
  *
- * A worker that requests a database connection during registration will have
- * rw_backend set, and will be present in BackendList.  Note: do not rely on
- * rw_backend being non-NULL for shmem-connected workers!
+ * All workers that are currently running will have rw_backend set, and will
+ * be present in BackendList.
  */
 typedef struct RegisteredBgWorker
 {
 	BackgroundWorker rw_worker; /* its registry entry */
-	struct bkend *rw_backend;	/* its BackendList entry, or NULL */
+	struct bkend *rw_backend;	/* its BackendList entry, or NULL if not
+								 * running */
 	pid_t		rw_pid;			/* 0 if not running */
 	int			rw_child_slot;
 	TimestampTz rw_crashed_at;	/* if not 0, time it last crashed */
