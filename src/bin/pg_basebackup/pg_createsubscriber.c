@@ -1085,7 +1085,7 @@ drop_existing_subscriptions(PGconn *conn, const char *subname, const char *dbnam
 
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			pg_log_error("could not drop a subscription \"%s\" settings: %s",
+			pg_log_error("could not drop subscription \"%s\": %s",
 						 subname, PQresultErrorMessage(res));
 			disconnect_database(conn, true);
 		}
@@ -2083,13 +2083,13 @@ main(int argc, char **argv)
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
-	pg_log_info("validating connection string on publisher");
+	pg_log_info("validating publisher connection string");
 	pub_base_conninfo = get_base_conninfo(opt.pub_conninfo_str,
 										  &dbname_conninfo);
 	if (pub_base_conninfo == NULL)
 		exit(1);
 
-	pg_log_info("validating connection string on subscriber");
+	pg_log_info("validating subscriber connection string");
 	sub_base_conninfo = get_sub_conninfo(&opt);
 
 	if (opt.database_names.head == NULL)
