@@ -5,6 +5,7 @@
 #include "postgres_fe.h"
 
 #include "preproc_extern.h"
+#include "preproc.h"
 #include "ecpg_config.h"
 #include <unistd.h>
 

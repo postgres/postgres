@@ -12,6 +12,7 @@
 #include "utils/float.h"
 
 #include "segdata.h"
+#include "segparse.h"
 
 /* silence -Wmissing-variable-declarations */
 extern int seg_yychar;

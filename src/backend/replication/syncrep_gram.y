@@ -17,6 +17,8 @@
 #include "nodes/pg_list.h"
 #include "replication/syncrep.h"
 
+#include "syncrep_gram.h"
+
 /* Result of parsing is returned in one of these two variables */
 SyncRepConfigData *syncrep_parse_result;
 char	   *syncrep_parse_error_msg;

@@ -32,6 +32,7 @@
 #include "nodes/makefuncs.h"
 #include "utils/memutils.h"
 
+#include "bootparse.h"
 
 /* silence -Wmissing-variable-declarations */
 extern int boot_yychar;

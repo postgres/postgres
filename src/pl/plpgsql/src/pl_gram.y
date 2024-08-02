@@ -26,6 +26,7 @@
 
 #include "plpgsql.h"
 
+#include "pl_gram.h"
 
 /* silence -Wmissing-variable-declarations */
 extern int plpgsql_yychar;
