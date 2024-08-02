@@ -3722,11 +3722,11 @@ make: *** [postgres] Error 1
    </sect3>
   </sect2>
 
-  <sect2 id="installation-notes-visual">
-   <title>Visual</title>
+  <sect2 id="installation-notes-visual-studio">
+   <title>Visual Studio</title>
 
-   <indexterm zone="installation-notes-visual">
-    <primary>Visual</primary>
+   <indexterm zone="installation-notes-visual-studio">
+    <primary>Visual Studio</primary>
     <secondary>installation on</secondary>
    </indexterm>
 
