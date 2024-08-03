@@ -27,7 +27,7 @@ pub struct Router {
     ///  HashMap:
     ///     key: Hash
     ///     value: shardId
-    comm_channels: Arc<RwLock<Vec<Channel>>>,
+    comm_channels: Arc<RwLock<HashMap<String, Channel>>>,
     ip: Arc<str>,
     port: Arc<str>,
 }
@@ -38,7 +38,7 @@ impl Router {
         let config = get_router_config(config_path);
 
         let mut shards: HashMap<String, Client> = HashMap::new();
-        let mut comm_channels = Vec::new();
+        let mut comm_channels : HashMap<String, Channel> = HashMap::new();
         for node in config.nodes {
             let node_ip = node.ip;
             let node_port = node.port;
@@ -59,7 +59,7 @@ impl Router {
                     shards.insert(node_port.to_string(), shard_client);
                     match Router::health_connect(&node_ip, &node_port) {
                         Ok(health_connection) => {
-                            comm_channels.push(health_connection);
+                            comm_channels.insert(node_port.to_string(), health_connection);
                         }
                         Err(e) => {
                             println!("Failed to connect to port: {}. Error: {:?}", node_port, e);
@@ -128,7 +128,7 @@ impl Router {
 
     /// Function that receives a query and checks for shards
     /// with corresponding data
-    pub fn get_shards_for_query(&self, query: &str) -> Vec<String> {
+    fn get_shards_for_query(&self, query: &str) -> Vec<String> {
         // If it's an INSERT query return specific Shards
         if query_is_insert(query) {
             println!("Query is INSERT");
@@ -140,6 +140,51 @@ impl Router {
             println!("{color_bright_white}{style_bold}Returning all shards{style_reset}");
             self.shards.lock().unwrap().keys().cloned().collect()
         }
+    }
+
+    /// Function that iterates randomly through shards, sends a AskInsertion message and waits for a response
+    fn get_welcoming_shard(&self) -> Option<String> {
+        let shards = self.shards.lock().unwrap();
+        // TODO-SHARD: Randomize the order of the shards or implement a better way to choose the first shard to ask
+        // TODO-SHARD: Implement a timeout for the response
+        // TODO-SHARD: Should this be done in parallel?
+        for (shard_id, shard) in shards.iter() {
+            let mut stream = self.comm_channels.get(shard_id).unwrap().stream.try_clone().unwrap();
+
+            // Send AskInsertion message
+            let message = Message::new(MessageType::AskInsertion);
+            let message_string = message.to_string();
+            stream.write_all(message_string.as_bytes()).unwrap();
+
+            // Wait for response with timeout 2 seconds
+            let mut response = String::new();
+            stream.set_read_timeout(Some(std::time::Duration::new(2, 0))).unwrap();
+            match stream.read_to_string(&mut response) {
+                Ok(_) => {
+                    // Parse response
+                    let response_message = Message::from_string(&response).unwrap();
+                    if response_message == Message::new(MessageType::Agreed) {
+                        println!(
+                            "{color_bright_green}Shard {} accepted the insertion{style_reset}",
+                            shard_id
+                        );
+                        return Some(shard_id.clone());
+                    } else {
+                        println!(
+                            "{color_red}Shard {} denied the insertion{style_reset}",
+                            shard_id
+                        );
+                    }
+                }
+                Err(_) => {
+                    println!(
+                        "{color_red}Shard {} did not respond{style_reset}",
+                        shard_id
+                    );
+                }
+            }
+        }
+        None
     }
 }
 
@@ -186,9 +231,5 @@ impl NodeRole for Router {
             }
         }
         true
-    }
-
-    fn accepts_insertions(&self) -> bool {
-        false
     }
 }

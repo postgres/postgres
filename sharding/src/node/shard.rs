@@ -103,8 +103,62 @@ impl<'a> Shard<'a> {
         }
     }
 
+    // Listen for incoming messages
+    // TODO-SHARD: Call this function
+    pub fn listen(&mut self) {
+        let mut stream = self.router_stream.read().unwrap();
+        loop {
+            // TODO-SHARD fix this multiple match statements so they're not nested
+            let message = match stream.as_ref() {
+                Some(stream) => {
+                    let mut buffer = [0; 1024];
+                    match stream.read(&mut buffer) {
+                        Ok(_) => {
+                            // Check if it's a AskInsertion message. If it is, send Agreed if self.accepts_insertions() is true, else send Denied, or Denied if self.accepts_insertions() is false
+                            match Message::from_string(&String::from_utf8_lossy(&buffer)) {
+                                Ok(message) => {
+                                    match message.message_type {
+                                        MessageType::AskInsertion => {
+                                            let response = self.get_insertion_response();
+                                            stream.write_all(response.to_string().as_bytes()).unwrap();
+                                        }
+                                        _ => {
+                                            eprintln!("Invalid message type");
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to parse message: {}", e);
+                                }
+                            }
+
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to read from stream: {}", e);
+                        }
+                    }
+                }
+                None => {
+                    eprintln!("Stream is not available");
+                }
+            }
+        }
+    }
+
     pub fn update(&mut self) -> Result<(), io::Error> {
         self.memory_manager.update()
+    }
+
+    fn accepts_insertions(&self) -> bool {
+        self.memory_manager.accepts_insertions()
+    }
+
+    fn get_insertion_response(&self) -> MessageType {
+        if self.accepts_insertions() {
+            MessageType::Agreed
+        } else {
+            MessageType::Denied
+        }
     }
 }
 
@@ -133,9 +187,5 @@ impl<'a> NodeRole for Shard<'a> {
         // }
 
         true
-    }
-
-    fn accepts_insertions(&self) -> bool {
-        self.memory_manager.accepts_insertions()
     }
 }
