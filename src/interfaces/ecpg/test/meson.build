@@ -27,6 +27,7 @@ testprep_targets += pg_regress_ecpg
 
 # create .c files and executables from .pgc files
 ecpg_test_exec_kw = {
+  'c_args': cflags_no_missing_var_decls,
   'dependencies': [frontend_code, libpq],
   'include_directories': [ecpg_inc],
   'link_with': [ecpglib_so, ecpg_compat_so, ecpg_pgtypes_so],

@@ -98,6 +98,8 @@ pgxs_kv = {
   'CXXFLAGS_SL_MODULE': ' '.join(cxxflags_mod),
   'PERMIT_DECLARATION_AFTER_STATEMENT':
     ' '.join(cflags_no_decl_after_statement),
+  'PERMIT_MISSING_VARIABLE_DECLARATIONS':
+    ' '.join(cflags_no_missing_var_decls),
 
   'CFLAGS_CRC': ' '.join(cflags_crc),
   'CFLAGS_POPCNT': ' '.join(cflags_popcnt),

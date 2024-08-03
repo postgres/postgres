@@ -1986,6 +1986,16 @@ if cc.has_argument('-Wdeclaration-after-statement')
   cflags_no_decl_after_statement += '-Wno-declaration-after-statement'
 endif
 
+# Some code is not clean for -Wmissing-variable-declarations, so we
+# make the "no" option available.  Also, while clang supports this
+# option for C++, gcc does not, so for consistency, leave it off for
+# C++.
+cflags_no_missing_var_decls = []
+if cc.has_argument('-Wmissing-variable-declarations')
+  cflags_warn += '-Wmissing-variable-declarations'
+  cflags_no_missing_var_decls += '-Wno-missing-variable-declarations'
+endif
+
 
 # The following tests want to suppress various unhelpful warnings by adding
 # -Wno-foo switches.  But gcc won't complain about unrecognized -Wno-foo

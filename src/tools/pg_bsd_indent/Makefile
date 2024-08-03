@@ -25,6 +25,8 @@ OBJS = \
 	parse.o \
 	pr_comment.o
 
+$(OBJS): CFLAGS += $(PERMIT_MISSING_VARIABLE_DECLARATIONS)
+
 all: pg_bsd_indent
 
 pg_bsd_indent: $(OBJS) | submake-libpgport

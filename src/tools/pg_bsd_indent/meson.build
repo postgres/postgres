@@ -18,6 +18,7 @@ endif
 
 pg_bsd_indent = executable('pg_bsd_indent',
   pg_bsd_indent_sources,
+  c_args: cflags_no_missing_var_decls,
   dependencies: [frontend_code],
   include_directories: include_directories('.'),
   kwargs: default_bin_args + {

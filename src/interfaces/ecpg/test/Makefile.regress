@@ -3,7 +3,7 @@
 
 override CPPFLAGS := -I../../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) $(CPPFLAGS)
-override CFLAGS += $(PTHREAD_CFLAGS)
+override CFLAGS += $(PTHREAD_CFLAGS) $(PERMIT_MISSING_VARIABLE_DECLARATIONS)
 
 LDFLAGS_INTERNAL += -L../../ecpglib -lecpg -L../../pgtypeslib -lpgtypes $(libpq)
 
