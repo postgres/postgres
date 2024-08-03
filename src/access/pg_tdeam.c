@@ -122,6 +122,7 @@ static XLogRecPtr log_tdeheap_new_cid(Relation relation, HeapTuple tup);
 static HeapTuple ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_required,
 										bool *copy);
 
+
 /*
  * Each tuple lock mode has a corresponding heavyweight lock, and one or two
  * corresponding MultiXactStatuses (one to merely lock tuples, another one to
@@ -431,9 +432,7 @@ tdeheapgetpage(TableScanDesc sscan, BlockNumber block)
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 	page = BufferGetPage(buffer);
-#if PG_VERSION_NUM < 170000
 	TestForOldSnapshot(snapshot, scan->rs_base.rs_rd, page);
-#endif
 	lines = PageGetMaxOffsetNumber(page);
 	ntup = 0;
 
@@ -572,9 +571,9 @@ tdeheapgettup_start_page(HeapScanDesc scan, ScanDirection dir, int *linesleft,
 
 	/* Caller is responsible for ensuring buffer is locked if needed */
 	page = BufferGetPage(scan->rs_cbuf);
-#if PG_VERSION_NUM < 170000
+
 	TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-#endif
+
 	*linesleft = PageGetMaxOffsetNumber(page) - FirstOffsetNumber + 1;
 
 	if (ScanDirectionIsForward(dir))
@@ -605,9 +604,9 @@ tdeheapgettup_continue_page(HeapScanDesc scan, ScanDirection dir, int *linesleft
 
 	/* Caller is responsible for ensuring buffer is locked if needed */
 	page = BufferGetPage(scan->rs_cbuf);
-#if PG_VERSION_NUM < 170000
+
 	TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-#endif
+
 	if (ScanDirectionIsForward(dir))
 	{
 		*lineoff = OffsetNumberNext(scan->rs_coffset);
@@ -655,17 +654,6 @@ tdeheapgettup_advance_block(HeapScanDesc scan, BlockNumber block, ScanDirection 
 			if (block >= scan->rs_nblocks)
 				block = 0;
 
-			/* we're done if we're back at where we started */
-			if (block == scan->rs_startblock)
-				return InvalidBlockNumber;
-
-			/* check if the limit imposed by tdeheap_setscanlimits() is met */
-			if (scan->rs_numblocks != InvalidBlockNumber)
-			{
-				if (--scan->rs_numblocks == 0)
-					return InvalidBlockNumber;
-			}
-
 			/*
 			 * Report our new scan position for synchronization purposes. We
 			 * don't do that when moving backwards, however. That would just
@@ -680,6 +668,17 @@ tdeheapgettup_advance_block(HeapScanDesc scan, BlockNumber block, ScanDirection 
 			 */
 			if (scan->rs_base.rs_flags & SO_ALLOW_SYNC)
 				ss_report_location(scan->rs_base.rs_rd, block);
+
+			/* we're done if we're back at where we started */
+			if (block == scan->rs_startblock)
+				return InvalidBlockNumber;
+
+			/* check if the limit imposed by tdeheap_setscanlimits() is met */
+			if (scan->rs_numblocks != InvalidBlockNumber)
+			{
+				if (--scan->rs_numblocks == 0)
+					return InvalidBlockNumber;
+			}
 
 			return block;
 		}
@@ -872,9 +871,8 @@ tdeheapgettup_pagemode(HeapScanDesc scan,
 		/* continue from previously returned page/tuple */
 		block = scan->rs_cblock;	/* current page */
 		page = BufferGetPage(scan->rs_cbuf);
-#if PG_VERSION_NUM < 170000
 		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-#endif
+
 		lineindex = scan->rs_cindex + dir;
 		if (ScanDirectionIsForward(dir))
 			linesleft = scan->rs_ntuples - lineindex;
@@ -893,9 +891,7 @@ tdeheapgettup_pagemode(HeapScanDesc scan,
 	{
 		tdeheapgetpage((TableScanDesc) scan, block);
 		page = BufferGetPage(scan->rs_cbuf);
-#if PG_VERSION_NUM < 170000
 		TestForOldSnapshot(scan->rs_base.rs_snapshot, scan->rs_base.rs_rd, page);
-#endif
 		linesleft = scan->rs_ntuples;
 		lineindex = ScanDirectionIsForward(dir) ? 0 : linesleft - 1;
 
@@ -1385,9 +1381,8 @@ tdeheap_fetch(Relation relation,
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 	page = BufferGetPage(buffer);
-#if PG_VERSION_NUM < 170000
 	TestForOldSnapshot(snapshot, relation, page);
-#endif
+
 	/*
 	 * We'd better check for out-of-range offnum in case of VACUUM since the
 	 * TID was obtained.
@@ -1677,9 +1672,8 @@ tdeheap_get_latest_tid(TableScanDesc sscan,
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&ctid));
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		page = BufferGetPage(buffer);
-#if PG_VERSION_NUM < 170000
 		TestForOldSnapshot(snapshot, relation, page);
-#endif
+
 		/*
 		 * Check for bogus item number.  This is not treated as an error
 		 * condition because it can happen while following a t_ctid link. We
@@ -1905,7 +1899,7 @@ tdeheap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
-	tdeheap_RelationPutHeapTuple(relation, buffer, heaptup, 
+	tdeheap_RelationPutHeapTuple(relation, buffer, heaptup,
 						(options & HEAP_INSERT_TDE_NO_ENCRYPT) == 0,
 						(options & HEAP_INSERT_SPECULATIVE) != 0);
 
@@ -2425,7 +2419,7 @@ tdeheap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		if (all_frozen_set)
 		{
 			Assert(PageIsAllVisible(page));
-			Assert (tdeheap_visibilitymap_pin_ok(BufferGetBlockNumber(buffer), vmbuffer));
+			Assert(tdeheap_visibilitymap_pin_ok(BufferGetBlockNumber(buffer), vmbuffer));
 
 			/*
 			 * It's fine to use InvalidTransactionId here - this is only used
@@ -5998,7 +5992,6 @@ tdeheap_inplace_update(Relation relation, HeapTuple tuple)
 		elog(ERROR, "invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
-	// encryption / decryption here: HOW?
 
 	oldlen = ItemIdGetLength(lp) - htup->t_hoff;
 	newlen = tuple->t_len - tuple->t_data->t_hoff;
@@ -6781,7 +6774,6 @@ tdeheap_freeze_execute_prepared(Relation rel, Buffer buffer,
 		/* Deliberately avoid relying on tuple hint bits here */
 		if (frz->checkflags & HEAP_FREEZE_CHECK_XMIN_COMMITTED)
 		{
-			// TODO: how to keep compiling both?
 			TransactionId xmin = HeapTupleHeaderGetRawXmin(htup);
 
 			Assert(!HeapTupleHeaderXminFrozen(htup));
@@ -6819,7 +6811,6 @@ tdeheap_freeze_execute_prepared(Relation rel, Buffer buffer,
 		HeapTupleHeader htup;
 
 		htup = (HeapTupleHeader) PageGetItem(page, itemid);
-		// TODO: Decryption/encryption here
 		tdeheap_execute_freeze_tuple(htup, frz);
 	}
 
@@ -7696,7 +7687,6 @@ index_delete_check_htid(TM_IndexDeleteOp *delstate,
 
 		Assert(ItemIdIsNormal(iid));
 		htup = (HeapTupleHeader) PageGetItem(page, iid);
-		// TODO: Decryption/encryption here
 
 		if (unlikely(HeapTupleHeaderIsHeapOnly(htup)))
 			ereport(ERROR,
@@ -7984,7 +7974,6 @@ tdeheap_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
 				break;
 
 			htup = (HeapTupleHeader) PageGetItem(page, lp);
-			// TODO: Decryption/encryption here
 
 			/*
 			 * Check the tuple XMIN against prior XMAX, if any
@@ -9194,7 +9183,6 @@ tdeheap_xlog_freeze_page(XLogReaderState *record)
 
 				lp = PageGetItemId(page, offset);
 				tuple = (HeapTupleHeader) PageGetItem(page, lp);
-				// TODO: Decryption/encryption here
 				tdeheap_execute_freeze_tuple(tuple, &frz);
 			}
 		}
@@ -9276,7 +9264,6 @@ tdeheap_xlog_delete(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
-		// TODO: Decryption/encryption here
 
 		htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
 		htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
@@ -9658,7 +9645,6 @@ tdeheap_xlog_update(XLogReaderState *record, bool hot_update)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
-		// TODO: Decryption/encryption here
 
 		oldtup.t_data = htup;
 		oldtup.t_len = ItemIdGetLength(lp);
@@ -9870,7 +9856,6 @@ tdeheap_xlog_confirm(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
-		// TODO: Decryption/encryption here
 
 		/*
 		 * Confirm tuple as actually inserted
@@ -9928,7 +9913,6 @@ tdeheap_xlog_lock(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
-		// TODO: Decryption/encryption here
 
 		htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
 		htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
@@ -10002,7 +9986,6 @@ tdeheap_xlog_lock_updated(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
-		// TODO: Decryption/encryption here
 
 		htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
 		htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
@@ -10044,7 +10027,6 @@ tdeheap_xlog_inplace(XLogReaderState *record)
 			elog(PANIC, "invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
-		// TODO: Decryption/encryption here
 
 		oldlen = ItemIdGetLength(lp) - htup->t_hoff;
 		if (oldlen != newlen)
@@ -10106,7 +10088,7 @@ tdeheap_redo(XLogReaderState *record)
 }
 
 void
-pg_tde2_redo(XLogReaderState *record)
+heapam2_redo(XLogReaderState *record)
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 

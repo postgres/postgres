@@ -302,7 +302,7 @@ struct VacuumParams;
 extern void tdeheap_vacuum_rel(Relation rel,
 							struct VacuumParams *params, BufferAccessStrategy bstrategy);
 
-/* in heap/heapam_visibility.c */
+/* in heap/pg_tdeam_visibility.c */
 extern bool HeapTupleSatisfiesVisibility(HeapTuple htup, Snapshot snapshot,
 										 Buffer buffer);
 extern TM_Result HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
@@ -319,7 +319,7 @@ extern bool HeapTupleIsSurelyDead(HeapTuple htup,
 
 /*
  * To avoid leaking too much knowledge about reorderbuffer implementation
- * details this is implemented in reorderbuffer.c not heapam_visibility.c
+ * details this is implemented in reorderbuffer.c not pg_tdeam_visibility.c
  */
 struct HTAB;
 extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,

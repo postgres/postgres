@@ -676,7 +676,7 @@ raw_tdeheap_insert(RewriteState state, HeapTuple tup)
 		{
 			/*
 			 * Doesn't fit, so write out the existing page.  It always
-			 * contains a tuple.  Hence, unlike RelationGetBufferForTuple(),
+			 * contains a tuple.  Hence, unlike tdeheap_RelationGetBufferForTuple(),
 			 * enforce saveFreeSpace unconditionally.
 			 */
 
@@ -730,8 +730,6 @@ raw_tdeheap_insert(RewriteState state, HeapTuple tup)
 
 		newitemid = PageGetItemId(page, newoff);
 		onpage_tup = (HeapTupleHeader) PageGetItem(page, newitemid);
-
-		// TODO: decrypt/encrypt
 
 		onpage_tup->t_ctid = tup->t_self;
 	}

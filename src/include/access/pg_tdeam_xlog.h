@@ -254,7 +254,7 @@ typedef struct xl_tdeheap_prune
 
 /*
  * The vacuum page record is similar to the prune record, but can only mark
- * already LP_DEAD items LP_UNUSED (during VACUUM's second pg_tde pass)
+ * already LP_DEAD items LP_UNUSED (during VACUUM's second heap pass)
  *
  * Acquires an ordinary exclusive lock only.
  */
@@ -317,7 +317,7 @@ typedef struct xl_tdeheap_inplace
 
 /*
  * This struct represents a 'freeze plan', which describes how to freeze a
- * group of one or more pg_tde tuples (appears in xl_tdeheap_freeze_page record)
+ * group of one or more heap tuples (appears in xl_tdeheap_freeze_page record)
  */
 /* 0x01 was XLH_FREEZE_XMIN */
 #define		XLH_FREEZE_XVAC		0x02
@@ -340,7 +340,7 @@ typedef struct xl_tdeheap_freeze_plan
  * Backup block 0's data contains an array of xl_tdeheap_freeze_plan structs
  * (with nplans elements), followed by one or more page offset number arrays.
  * Each such page offset number array corresponds to a single freeze plan
- * (REDO routine freezes corresponding pg_tde tuples using freeze plan).
+ * (REDO routine freezes corresponding heap tuples using freeze plan).
  */
 typedef struct xl_tdeheap_freeze_page
 {
@@ -360,7 +360,7 @@ typedef struct xl_tdeheap_freeze_page
  * This is what we need to know about setting a visibility map bit
  *
  * Backup blk 0: visibility map buffer
- * Backup blk 1: pg_tde buffer
+ * Backup blk 1: heap buffer
  */
 typedef struct xl_tdeheap_visible
 {
@@ -408,9 +408,9 @@ extern void tdeheap_redo(XLogReaderState *record);
 extern void tdeheap_desc(StringInfo buf, XLogReaderState *record);
 extern const char *tdeheap_identify(uint8 info);
 extern void tdeheap_mask(char *pagedata, BlockNumber blkno);
-extern void pg_tde2_redo(XLogReaderState *record);
-extern void pg_tde2_desc(StringInfo buf, XLogReaderState *record);
-extern const char *heap2_identify(uint8 info);
+extern void tdeheap2_redo(XLogReaderState *record);
+extern void tdeheap2_desc(StringInfo buf, XLogReaderState *record);
+extern const char *tdeheap2_identify(uint8 info);
 extern void tdeheap_xlog_logical_rewrite(XLogReaderState *r);
 
 extern XLogRecPtr log_tdeheap_visible(Relation rel, Buffer tdeheap_buffer,

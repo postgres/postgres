@@ -20,11 +20,11 @@
 #include "storage/buf.h"
 #include "utils/relcache.h"
 
-/* Macros for tdeheap_visibilitymap test */
+/* Macros for visibilitymap test */
 #define VM_ALL_VISIBLE(r, b, v) \
-	( (tdeheap_visibilitymap_get_status((r), (b), (v)) & VISIBILITYMAP_ALL_VISIBLE) != 0)
+	((tdeheap_visibilitymap_get_status((r), (b), (v)) & VISIBILITYMAP_ALL_VISIBLE) != 0)
 #define VM_ALL_FROZEN(r, b, v) \
-	( (tdeheap_visibilitymap_get_status((r), (b), (v)) & VISIBILITYMAP_ALL_FROZEN) != 0)
+	((tdeheap_visibilitymap_get_status((r), (b), (v)) & VISIBILITYMAP_ALL_FROZEN) != 0)
 
 extern bool tdeheap_visibilitymap_clear(Relation rel, BlockNumber heapBlk,
 								Buffer vmbuf, uint8 flags);
