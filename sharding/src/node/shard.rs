@@ -1,6 +1,15 @@
+use inline_colorization::*;
+use postgres::config::Host::Tcp;
 use postgres::{Client, NoTls};
+use std::net::{TcpListener, TcpStream};
+use std::sync::{Arc, RwLock};
+use std::{io, thread};
+
 extern crate users;
+use super::memory_manager::MemoryManager;
 use super::node::*;
+use crate::node::router::Channel;
+use crate::utils::node_config::get_shard_config;
 use rust_decimal::Decimal;
 use users::get_current_username;
 
@@ -11,7 +20,9 @@ pub struct Shard<'a> {
     backend: Client,
     ip: &'a str,
     port: &'a str,
-    // TODO-SHARD: add an attribute for the shard's network
+    listener: Arc<RwLock<TcpListener>>,
+    router_stream: Arc<RwLock<Option<TcpStream>>>,
+    memory_manager: MemoryManager
 }
 
 impl<'a> Shard<'a> {
@@ -41,13 +52,55 @@ impl<'a> Shard<'a> {
                 panic!("Failed to connect to the database");
             }
         };
+        let mut listener = Arc::new(RwLock::new(
+            TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap(),
+        ));
+        let mut stream = Arc::new(RwLock::new(None));
+        let mut listener_clone = listener.clone();
+        let mut stream_clone = stream.clone();
+
+        let handle = thread::spawn(move || {
+            Self::accept_connections(listener_clone, stream_clone);
+        });
+
+        // Initialize memory manager
+        let config = get_shard_config();
+        let memory_threshold = config.memory_threshold;
+        let memory_manager = MemoryManager::new(memory_threshold);
+
+        println!("{color_blue}[Shard] Available Memory: {:?} %{style_reset}", memory_manager.available_memory_perc);
+        println!("{color_blue}[Shard] Accepts Insertions: {:?}{style_reset}", memory_manager.accepts_insertions());
 
         Shard {
             // router: clients,
             backend,
             ip,
             port,
+            listener,
+            router_stream: stream.clone(),
+            memory_manager
         }
+    }
+
+    fn accept_connections(
+        listener: Arc<RwLock<TcpListener>>,
+        rw_stream: Arc<RwLock<Option<TcpStream>>>,
+    ) {
+        let listener_guard = listener.read().unwrap();
+        match listener_guard.accept() {
+            Ok((stream, addr)) => {
+                println!("New connection accepted from {}.", addr);
+                let mut stream_guard = rw_stream.write().unwrap();
+                *stream_guard = Some(stream);
+            }
+            Err(e) => {
+                eprintln!("Failed to accept a connection: {}", e);
+            }
+        }
+    }
+
+    pub fn update(&mut self) -> Result<(), io::Error> {
+        self.memory_manager.update()
     }
 }
 
@@ -73,5 +126,9 @@ impl<'a> NodeRole for Shard<'a> {
         }
 
         true
+    }
+
+    fn accepts_insertions(&self) -> bool {
+        self.memory_manager.accepts_insertions()
     }
 }

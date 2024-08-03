@@ -1,11 +1,19 @@
+use crate::utils::node_config::NodesConfig;
+
 use super::router::Router;
 use super::shard::Shard;
+use std::cell::UnsafeCell;
 use std::ffi::CStr;
+use std::sync::{Arc, Mutex};
+
+// TODO-SHARD this file should be a more organized configuration file
+pub const FILE_PATH: &str = "ports.txt";
 
 /// The role of a node in the sharding system
 pub trait NodeRole {
     /// Sends a query to the shard group
     fn send_query(&mut self, query: &str) -> bool;
+    fn accepts_insertions(&self) -> bool;
 }
 
 #[repr(C)]
