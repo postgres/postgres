@@ -24,5 +24,5 @@ serde_derive = "1.0.204"
 
 [lib]
 name = "sharding"
-crate-type = ["staticlib"]
+crate-type = ["lib","staticlib"]
 

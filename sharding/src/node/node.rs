@@ -44,25 +44,34 @@ pub fn get_node_instance() -> &'static mut dyn NodeRole {
 }
 
 #[no_mangle]
-pub extern "C" fn init_node_instance(node_type: NodeType, port: *const i8) {
+pub extern "C" fn init_node_instance(
+    node_type: NodeType,
+    port: *const i8,
+    config_file_path: *const i8,
+) {
     unsafe {
         if port.is_null() {
             panic!("Received a null pointer for port");
         }
 
-        let c_str = CStr::from_ptr(port);
-        let node_port = match c_str.to_str() {
+        let port_str = CStr::from_ptr(port);
+        let node_port = match port_str.to_str() {
             Ok(str) => str,
             Err(_) => {
                 panic!("Received an invalid UTF-8 string");
             }
         };
 
+        let config_path = parse_config_file(config_file_path);
+
         let ip = "127.0.0.1";
         match node_type {
             NodeType::Router => {
-                println!("Router node initializing");
-                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(ip, node_port))));
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(
+                    ip,
+                    node_port,
+                    config_path,
+                ))));
                 println!("Router node initializes");
             }
             NodeType::Shard => {
@@ -72,4 +81,38 @@ pub extern "C" fn init_node_instance(node_type: NodeType, port: *const i8) {
             }
         }
     }
+}
+
+fn parse_config_file(config_file_path: *const i8) -> Option<&'static str> {
+    match config_file_path.is_null() {
+        true => None,
+        false => unsafe {
+            let config_path_str = CStr::from_ptr(config_file_path);
+            println!("Config path file c_str is: {:?}", config_path_str);
+            let config_path = match config_path_str.to_str() {
+                Ok(str) => str,
+                Err(_) => {
+                    panic!("Received an invalid UTF-8 string for config path");
+                }
+            };
+            Some(config_path)
+        },
+    }
+
+    // let config_path_str = CStr::from_ptr(config_file_path);
+    //     println!("Config path file c_str is: {:?}", config_path_str);
+    //     let config_path = match config_path_str.to_str() {
+    //         Ok(str) => str,
+    //         Err(_) => {
+    //             panic!("Received an invalid UTF-8 string for config path");
+    //         }
+    //     };
+
+    // if config_file_path.is_empty() {
+    //     println!("Empty config file path");
+    //     None
+    // } else {
+    //     println!("Config file path is: {}", config_file_path);
+    //     Some(config_file_path)
+    // }
 }

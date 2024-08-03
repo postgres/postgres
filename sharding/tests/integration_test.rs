@@ -2,16 +2,14 @@
 
 use core::panic;
 use postgres::{Client, NoTls};
+use sharding::node::node::{get_node_instance, init_node_instance, NodeType};
 use std::{
     io::Write,
     process::{Command, Stdio},
 };
 use users::get_current_username;
 
-fn setup_db() -> Client {
-    let host = "localhost";
-    let port = "5433";
-    let db_name = "template1";
+fn setup_connection(host: &str, port: &str, db_name: &str) -> Client {
     let username = match get_current_username() {
         Some(username) => username.to_string_lossy().to_string(),
         None => panic!("Failed to get current username"),
@@ -25,7 +23,9 @@ fn setup_db() -> Client {
         .as_str(),
         NoTls,
     ) {
-        Ok(client) => client,
+        Ok(client) => {
+            println!("Connected to host: {}, port: {}", host, port);
+            client},
         Err(e) => {
             panic!("Failed to connect to the database: {:?}", e);
         }
@@ -33,25 +33,84 @@ fn setup_db() -> Client {
 }
 
 #[test]
-fn test_inserts_and_selects() {
-    // Run your scripts to set up and start the cluster
-    create_cluster_dir(b"test-router\n");
-    create_cluster_dir(b"test-shard\n");
-    init_cluster(b"test-router\n", "r");
-    init_cluster(b"test-shard\n", "s");
+fn test_nodes_initialize_empty() {
+    create_and_init_cluster(b"test-shard\n", "s");
+    create_and_init_cluster(b"test-router\n", "r");
 
-    let mut client: Client = setup_db();
+    let mut router_connection: Client = setup_connection("localhost", "5433", "template1");
+    let mut shard_connection: Client = setup_connection("localhost", "5434", "template1");
 
     // Count user tables, excluding system tables
-    let row = client.query_one(
-        "SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public'",
-        &[],
-    ).unwrap();
+    let row = router_connection
+        .query_one(
+            "SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public'",
+            &[],
+        )
+        .unwrap();
+    let count: i64 = row.get(0);
+    assert_eq!(count, 0);
+
+    let row = shard_connection
+        .query_one(
+            "SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public'",
+            &[],
+        )
+        .unwrap();
     let count: i64 = row.get(0);
     assert_eq!(count, 0);
 
     stop_cluster(b"test-router\n");
     stop_cluster(b"test-shard\n");
+}
+
+#[test]
+fn test_create_table() {
+    create_and_init_cluster(b"test-shard1\n", "s");
+
+    let mut shard_connection: Client = setup_connection("localhost", "5433", "template1");
+
+    // Initialize and get the router
+    init_node_instance(
+        NodeType::Router,
+        "5434".as_ptr() as *const i8,
+        "src/node/config.yaml\0".as_ptr() as *const i8,
+    );
+    let router = get_node_instance();
+
+    // Create a table on the router
+    router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);");
+
+    let mut router_connection: Client = setup_connection("localhost", "5434", "template1");
+
+    // Count user tables in the router, excluding system tables. Should be zero.
+    let row = router_connection
+        .query_one(
+            "SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public'",
+            &[],
+        )
+        .unwrap();
+    let count: i64 = row.get(0);
+    assert_eq!(count, 0);
+
+    // Count user tables in the shard, excluding system tables. Should be one.
+    let row = shard_connection
+        .query_one(
+            "SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public'",
+            &[],
+        )
+        .unwrap();
+    let count: i64 = row.get(0);
+    assert_eq!(count, 1);
+
+    stop_cluster(b"test-shard\n");
+    stop_cluster(b"test-router\n");
+}
+
+// Utility functions
+
+fn create_and_init_cluster(node_name: &[u8], node_type: &str) {
+    create_cluster_dir(node_name);
+    init_cluster(node_name, node_type);
 }
 
 fn create_cluster_dir(node_name: &[u8]) {

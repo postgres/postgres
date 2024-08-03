@@ -37,10 +37,15 @@ pub struct Router {
 
 impl Router {
     /// Creates a new Router node with the given port
-    pub fn new(ip: &str, port: &str) -> Self {
+    pub fn new(ip: &str, port: &str, config_file_path: Option<&str>) -> Self {
         // read from 'config.yaml' to get the ports
-        let config_content = fs::read_to_string("../../../sharding/src/node/config.yaml")
-            .expect("Should have been able to read the file");
+        let config_file_path = match config_file_path {
+            Some(path) => path,
+            None => "../../../sharding/src/node/config.yaml",
+        };
+        println!("Config file path: {}\n", config_file_path);
+        let config_content =
+            fs::read_to_string(config_file_path).expect("Should have been able to read the file");
 
         let config: NodeConfig =
             serde_yaml::from_str(&config_content).expect("Should have been able to parse the YAML");
@@ -49,6 +54,7 @@ impl Router {
         let mut hash_id: HashMap<String, String> = HashMap::new();
 
         for node in config.nodes {
+            println!("Trying to connect to ip {} and port: {}", node.ip, node.port);
             let node_ip = node.ip;
             let node_port = node.port;
 
@@ -109,7 +115,9 @@ impl Router {
         }
     }
 
-    /// This function is the cluster management protocol for the Router node. It listens to incoming connections from Shards and handles them. This might be used in the future for sending routing tables, reassigning shards, rebalancing, etc.
+    /// This function is the cluster management protocol for the Router node.
+    /// It listens to incoming connections from Shards and handles them.
+    /// This might be used in the future for sending routing tables, reassigning shards, rebalancing, etc.
     fn cluster_management_protocol(router: &Router) {
         let node_addr = "localhost:".to_string() + router.port.as_ref();
         let listener = TcpListener::bind(&node_addr).unwrap();
@@ -186,7 +194,7 @@ impl NodeRole for Router {
         }
 
         for shard in shards {
-            if let Some(mut shard) = self.shards.lock().unwrap().get_mut(&shard) {
+            if let Some(shard) = self.shards.lock().unwrap().get_mut(&shard) {
                 let rows = match shard.query(query, &[]) {
                     Ok(rows) => rows,
                     Err(e) => {
