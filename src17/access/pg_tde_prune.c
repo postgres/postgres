@@ -794,20 +794,8 @@ tdeheap_page_prune_and_freeze(Relation relation, Buffer buffer,
 	{
 		/* Apply the planned item changes and repair page fragmentation. */
 		if (do_prune)
-<<<<<<<
 		{
-			tdeheap_page_prune_execute(buffer, false,
-|||||||
-		 * Apply the planned item changes, then repair page fragmentation, and
-		 * update the page's hint bit about whether it has free line pointers.
-		 */
-		tdeheap_page_prune_execute(buffer,
-=======
-		 * Apply the planned item changes, then repair page fragmentation, and
-		 * update the page's hint bit about whether it has free line pointers.
-		 */
-		tdeheap_page_prune_execute(prstate.rel, buffer,
->>>>>>>
+			tdeheap_page_prune_execute(prstate.rel, buffer, false,
 									prstate.redirected, prstate.nredirected,
 									prstate.nowdead, prstate.ndead,
 									prstate.nowunused, prstate.nunused);
@@ -1584,13 +1572,7 @@ tdeheap_prune_record_unchanged_lp_redirect(PruneState *prstate, OffsetNumber off
  * the buffer.  If it is set, an ordinary exclusive lock suffices.
  */
 void
-<<<<<<<
-tdeheap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
-|||||||
-tdeheap_page_prune_execute(Buffer buffer,
-=======
-tdeheap_page_prune_execute(Relation rel, Buffer buffer,
->>>>>>>
+tdeheap_page_prune_execute(Relation rel, Buffer buffer, bool lp_truncate_only,
 						OffsetNumber *redirected, int nredirected,
 						OffsetNumber *nowdead, int ndead,
 						OffsetNumber *nowunused, int nunused)

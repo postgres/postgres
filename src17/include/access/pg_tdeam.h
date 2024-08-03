@@ -374,21 +374,9 @@ extern void tdeheap_page_prune_and_freeze(Relation relation, Buffer buffer,
 									   PruneFreezeResult *presult,
 									   PruneReason reason,
 									   OffsetNumber *off_loc,
-<<<<<<<
 									   TransactionId *new_relfrozen_xid,
 									   MultiXactId *new_relmin_mxid);
-extern void tdeheap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
-|||||||
-							TimestampTz old_snap_ts,
-							int *nnewlpdead,
-							OffsetNumber *off_loc);
-extern void tdeheap_page_prune_execute(Buffer buffer,
-=======
-							TimestampTz old_snap_ts,
-							int *nnewlpdead,
-							OffsetNumber *off_loc);
-extern void tdeheap_page_prune_execute(Relation rel, Buffer buffer,
->>>>>>>
+extern void tdeheap_page_prune_execute(Relation rel, Buffer buffer, bool lp_truncate_only,
 									OffsetNumber *redirected, int nredirected,
 									OffsetNumber *nowdead, int ndead,
 									OffsetNumber *nowunused, int nunused);

@@ -35,32 +35,15 @@
 
 #include <math.h>
 
-<<<<<<<
-|||||||
-#include "access/amapi.h"
-=======
 #include "access/pg_tdeam.h"
 #include "access/pg_tdeam_xlog.h"
 #include "access/pg_tde_visibilitymap.h"
 #include "encryption/enc_tde.h"
-
-#include "access/amapi.h"
->>>>>>>
 #include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/tidstore.h"
 #include "access/transam.h"
-<<<<<<<
-#include "access/visibilitymap.h"
-|||||||
-#include "access/visibilitymap.h"
-#include "access/xact.h"
-#include "access/xlog.h"
-=======
-#include "access/xact.h"
-#include "access/xlog.h"
->>>>>>>
 #include "access/xloginsert.h"
 #include "catalog/storage.h"
 #include "commands/dbcommands.h"

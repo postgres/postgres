@@ -43,20 +43,7 @@
 #include "encryption/enc_tde.h"
 
 #include "access/bufmask.h"
-<<<<<<<
-#include "access/heapam.h"
-#include "access/pg_tdeam_xlog.h"
-#include "access/heaptoast.h"
-#include "access/hio.h"
-|||||||
 #include "access/genam.h"
-#include "access/heapam.h"
-#include "access/pg_tdeam_xlog.h"
-#include "access/heaptoast.h"
-#include "access/hio.h"
-=======
-#include "access/genam.h"
->>>>>>>
 #include "access/multixact.h"
 #include "access/parallel.h"
 #include "access/relscan.h"
@@ -8885,17 +8872,7 @@ tdeheap_xlog_prune_freeze(XLogReaderState *record)
 		int			nunused;
 		int			nplans;
 		Size		datalen;
-<<<<<<<
-|||||||
-
-		redirected = (OffsetNumber *) XLogRecGetBlockData(record, 0, &datalen);
-
-=======
 		Relation	reln;
-
-		redirected = (OffsetNumber *) XLogRecGetBlockData(record, 0, &datalen);
-
->>>>>>>
 		xlhp_freeze_plan *plans;
 		OffsetNumber *frz_offsets;
 		char	   *dataptr = XLogRecGetBlockData(record, 0, &datalen);
@@ -8909,23 +8886,11 @@ tdeheap_xlog_prune_freeze(XLogReaderState *record)
 		/*
 		 * Update all line pointers per the record, and repair fragmentation
 		 * if needed.
-<<<<<<<
 		 */
-		if (nredirected > 0 || ndead > 0 || nunused > 0)
-			tdeheap_page_prune_execute(buffer,
-									(xlrec.flags & XLHP_CLEANUP_LOCK) == 0,
-|||||||
-		Assert(nunused >= 0);
-
-		/* Update all line pointers per the record, and repair fragmentation */
-		tdeheap_page_prune_execute(buffer,
-=======
-		Assert(nunused >= 0);
-
-		/* Update all line pointers per the record, and repair fragmentation */
 		reln = CreateFakeRelcacheEntry(rlocator);
-		tdeheap_page_prune_execute(reln, buffer,
->>>>>>>
+		if (nredirected > 0 || ndead > 0 || nunused > 0)
+			tdeheap_page_prune_execute(reln,buffer,
+									(xlrec.flags & XLHP_CLEANUP_LOCK) == 0,
 									redirected, nredirected,
 									nowdead, ndead,
 									nowunused, nunused);
