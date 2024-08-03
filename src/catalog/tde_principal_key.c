@@ -152,6 +152,9 @@ void initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area)
     sharedState->rawDsaArea = raw_dsa_area;
     sharedState->hashTrancheId = LWLockNewTrancheId();
     principal_key_dsh_params.tranche_id = sharedState->hashTrancheId;
+#if PG_VERSION_NUM >= 170000
+    principal_key_dsh_params.copy_function = dshash_memcpy;
+#endif
     dsh = dshash_create(dsa, &principal_key_dsh_params, 0);
     sharedState->hashHandle = dshash_get_hash_table_handle(dsh);
     dshash_detach(dsh);

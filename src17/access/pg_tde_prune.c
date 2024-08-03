@@ -795,7 +795,7 @@ tdeheap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		/* Apply the planned item changes and repair page fragmentation. */
 		if (do_prune)
 		{
-			tdeheap_page_prune_execute(prstate.rel, buffer, false,
+			tdeheap_page_prune_execute(relation, buffer, false,
 									prstate.redirected, prstate.nredirected,
 									prstate.nowdead, prstate.ndead,
 									prstate.nowunused, prstate.nunused);

@@ -19,6 +19,7 @@
 #include "access/heaptoast.h"
 #include "access/htup_details.h"
 #include "access/tupdesc_details.h"
+#include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
@@ -117,6 +118,29 @@ tdeheap_tts_buffer_heap_getsysattr(TupleTableSlot *slot, int attnum, bool *isnul
 
 	return tdeheap_getsysattr(bslot->base.tuple, attnum,
 						slot->tts_tupleDescriptor, isnull);
+}
+
+static bool
+tdeheap_buffer_is_current_xact_tuple(TupleTableSlot *slot)
+{
+        BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
+        TransactionId xmin;
+
+        Assert(!TTS_EMPTY(slot));
+
+        /*
+         * In some code paths it's possible to get here with a non-materialized
+         * slot, in which case we can't check if tuple is created by the current
+         * transaction.
+         */
+        if (!bslot->base.tuple)
+                ereport(ERROR,
+                                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                                 errmsg("don't have a storage tuple in this context")));
+
+        xmin = HeapTupleHeaderGetRawXmin(bslot->base.tuple->t_data);
+
+        return TransactionIdIsCurrentTransactionId(xmin);
 }
 
 static void
@@ -432,6 +456,9 @@ const TupleTableSlotOps TTSOpsTDEBufferHeapTuple = {
 	.getsomeattrs = tdeheap_tts_buffer_heap_getsomeattrs,
 	.getsysattr = tdeheap_tts_buffer_heap_getsysattr,
 	.materialize = tdeheap_tts_buffer_heap_materialize,
+#if PG_VERSION_NUM >= 170000
+	.is_current_xact_tuple = tdeheap_buffer_is_current_xact_tuple,
+#endif
 	.copyslot = tdeheap_tts_buffer_heap_copyslot,
 	.get_heap_tuple = tdeheap_tts_buffer_heap_get_heap_tuple,
 
