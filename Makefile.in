@@ -24,16 +24,16 @@ TAP_TESTS = 1
 OBJS = src/encryption/enc_tde.o \
 src/encryption/enc_aes.o \
 src/access/pg_tde_slot.o \
-src/access/pg_tde_io.o \
-src/access/pg_tdeam_visibility.o \
 src/access/pg_tde_tdemap.o \
-src/access/pg_tdeam.o \
-src/access/pg_tdetoast.o \
-src/access/pg_tde_prune.o \
-src/access/pg_tde_vacuumlazy.o \
-src/access/pg_tde_visibilitymap.o \
-src/access/pg_tde_rewrite.o \
-src/access/pg_tdeam_handler.o \
+src$(MAJORVERSION)/access/pg_tde_io.o \
+src$(MAJORVERSION)/access/pg_tdeam_visibility.o \
+src$(MAJORVERSION)/access/pg_tdeam.o \
+src$(MAJORVERSION)/access/pg_tdetoast.o \
+src$(MAJORVERSION)/access/pg_tde_prune.o \
+src$(MAJORVERSION)/access/pg_tde_vacuumlazy.o \
+src$(MAJORVERSION)/access/pg_tde_visibilitymap.o \
+src$(MAJORVERSION)/access/pg_tde_rewrite.o \
+src$(MAJORVERSION)/access/pg_tdeam_handler.o \
 src/access/pg_tde_ddl.o \
 src/access/pg_tde_xlog.o \
 src/transam/pg_tde_xact_handler.o \
