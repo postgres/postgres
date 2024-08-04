@@ -49,8 +49,16 @@
  * pgStatPending list. Pending statistics updates are flushed out by
  * pgstat_report_stat().
  *
+ * It is possible for external modules to define custom statistics kinds,
+ * that can use the same properties as any built-in stats kinds.  Each custom
+ * stats kind needs to assign a unique ID to ensure that it does not overlap
+ * with other extensions.  In order to reserve a unique stats kind ID, refer
+ * to https://wiki.postgresql.org/wiki/CustomCumulativeStats.
+ *
  * The behavior of different kinds of statistics is determined by the kind's
- * entry in pgstat_kind_infos, see PgStat_KindInfo for details.
+ * entry in pgstat_kind_builtin_infos for all the built-in statistics kinds
+ * defined, and pgstat_kind_custom_infos for custom kinds registered at
+ * startup by pgstat_register_kind().  See PgStat_KindInfo for details.
  *
  * The consistency of read accesses to statistics can be configured using the
  * stats_fetch_consistency GUC (see config.sgml and monitoring.sgml for the
@@ -175,6 +183,8 @@ typedef struct PgStat_SnapshotEntry
 static void pgstat_write_statsfile(XLogRecPtr redo);
 static void pgstat_read_statsfile(XLogRecPtr redo);
 
+static void pgstat_init_snapshot_fixed(void);
+
 static void pgstat_reset_after_failure(void);
 
 static bool pgstat_flush_pending_entries(bool nowait);
@@ -252,7 +262,7 @@ static bool pgstat_is_shutdown = false;
 
 
 /*
- * The different kinds of statistics.
+ * The different kinds of built-in statistics.
  *
  * If reasonably possible, handling specific to one kind of stats should go
  * through this abstraction, rather than making more of pgstat.c aware.
@@ -264,7 +274,7 @@ static bool pgstat_is_shutdown = false;
  * seem to be a great way of doing that, given the split across multiple
  * files.
  */
-static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
+static const PgStat_KindInfo pgstat_kind_builtin_infos[PGSTAT_KIND_BUILTIN_SIZE] = {
 
 	/* stats kinds for variable-numbered objects */
 
@@ -437,6 +447,15 @@ static const PgStat_KindInfo pgstat_kind_infos[PGSTAT_NUM_KINDS] = {
 	},
 };
 
+/*
+ * Information about custom statistics kinds.
+ *
+ * These are saved in a different array than the built-in kinds to save
+ * in clarity with the initializations.
+ *
+ * Indexed by PGSTAT_KIND_CUSTOM_MIN, of size PGSTAT_KIND_CUSTOM_SIZE.
+ */
+static const PgStat_KindInfo **pgstat_kind_custom_infos = NULL;
 
 /* ------------------------------------------------------------
  * Functions managing the state of the stats system for all backends.
@@ -586,6 +605,8 @@ pgstat_initialize(void)
 	pgstat_attach_shmem();
 
 	pgstat_init_wal();
+
+	pgstat_init_snapshot_fixed();
 
 	/* Set up a process-exit hook to clean up */
 	before_shmem_exit(pgstat_shutdown_hook, 0);
@@ -830,6 +851,8 @@ pgstat_clear_snapshot(void)
 
 	memset(&pgStatLocal.snapshot.fixed_valid, 0,
 		   sizeof(pgStatLocal.snapshot.fixed_valid));
+	memset(&pgStatLocal.snapshot.custom_valid, 0,
+		   sizeof(pgStatLocal.snapshot.custom_valid));
 	pgStatLocal.snapshot.stats = NULL;
 	pgStatLocal.snapshot.mode = PGSTAT_FETCH_CONSISTENCY_NONE;
 
@@ -993,7 +1016,29 @@ pgstat_snapshot_fixed(PgStat_Kind kind)
 	else
 		pgstat_build_snapshot_fixed(kind);
 
-	Assert(pgStatLocal.snapshot.fixed_valid[kind]);
+	if (pgstat_is_kind_builtin(kind))
+		Assert(pgStatLocal.snapshot.fixed_valid[kind]);
+	else if (pgstat_is_kind_custom(kind))
+		Assert(pgStatLocal.snapshot.custom_valid[kind - PGSTAT_KIND_CUSTOM_MIN]);
+}
+
+static void
+pgstat_init_snapshot_fixed(void)
+{
+	/*
+	 * Initialize fixed-numbered statistics data in snapshots, only for custom
+	 * stats kinds.
+	 */
+	for (PgStat_Kind kind = PGSTAT_KIND_CUSTOM_MIN; kind <= PGSTAT_KIND_CUSTOM_MAX; kind++)
+	{
+		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+
+		if (!kind_info || !kind_info->fixed_amount)
+			continue;
+
+		pgStatLocal.snapshot.custom_data[kind - PGSTAT_KIND_CUSTOM_MIN] =
+			MemoryContextAlloc(TopMemoryContext, kind_info->shared_data_len);
+	}
 }
 
 static void
@@ -1089,10 +1134,12 @@ pgstat_build_snapshot(void)
 	/*
 	 * Build snapshot of all fixed-numbered stats.
 	 */
-	for (PgStat_Kind kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+	for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
 	{
 		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
 
+		if (!kind_info)
+			continue;
 		if (!kind_info->fixed_amount)
 		{
 			Assert(kind_info->snapshot_cb == NULL);
@@ -1109,6 +1156,20 @@ static void
 pgstat_build_snapshot_fixed(PgStat_Kind kind)
 {
 	const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+	int			idx;
+	bool	   *valid;
+
+	/* Position in fixed_valid or custom_valid */
+	if (pgstat_is_kind_builtin(kind))
+	{
+		idx = kind;
+		valid = pgStatLocal.snapshot.fixed_valid;
+	}
+	else
+	{
+		idx = kind - PGSTAT_KIND_CUSTOM_MIN;
+		valid = pgStatLocal.snapshot.custom_valid;
+	}
 
 	Assert(kind_info->fixed_amount);
 	Assert(kind_info->snapshot_cb != NULL);
@@ -1116,21 +1177,21 @@ pgstat_build_snapshot_fixed(PgStat_Kind kind)
 	if (pgstat_fetch_consistency == PGSTAT_FETCH_CONSISTENCY_NONE)
 	{
 		/* rebuild every time */
-		pgStatLocal.snapshot.fixed_valid[kind] = false;
+		valid[idx] = false;
 	}
-	else if (pgStatLocal.snapshot.fixed_valid[kind])
+	else if (valid[idx])
 	{
 		/* in snapshot mode we shouldn't get called again */
 		Assert(pgstat_fetch_consistency == PGSTAT_FETCH_CONSISTENCY_CACHE);
 		return;
 	}
 
-	Assert(!pgStatLocal.snapshot.fixed_valid[kind]);
+	Assert(!valid[idx]);
 
 	kind_info->snapshot_cb();
 
-	Assert(!pgStatLocal.snapshot.fixed_valid[kind]);
-	pgStatLocal.snapshot.fixed_valid[kind] = true;
+	Assert(!valid[idx]);
+	valid[idx] = true;
 }
 
 
@@ -1286,30 +1347,131 @@ pgstat_flush_pending_entries(bool nowait)
 PgStat_Kind
 pgstat_get_kind_from_str(char *kind_str)
 {
-	for (PgStat_Kind kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+	for (PgStat_Kind kind = PGSTAT_KIND_BUILTIN_MIN; kind <= PGSTAT_KIND_BUILTIN_MAX; kind++)
 	{
-		if (pg_strcasecmp(kind_str, pgstat_kind_infos[kind].name) == 0)
+		if (pg_strcasecmp(kind_str, pgstat_kind_builtin_infos[kind].name) == 0)
 			return kind;
+	}
+
+	/* Check the custom set of cumulative stats */
+	if (pgstat_kind_custom_infos)
+	{
+		for (PgStat_Kind kind = PGSTAT_KIND_CUSTOM_MIN; kind <= PGSTAT_KIND_CUSTOM_MAX; kind++)
+		{
+			uint32		idx = kind - PGSTAT_KIND_CUSTOM_MIN;
+
+			if (pgstat_kind_custom_infos[idx] &&
+				pg_strcasecmp(kind_str, pgstat_kind_custom_infos[idx]->name) == 0)
+				return kind;
+		}
 	}
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("invalid statistics kind: \"%s\"", kind_str)));
-	return PGSTAT_KIND_DATABASE;	/* avoid compiler warnings */
+	return PGSTAT_KIND_INVALID; /* avoid compiler warnings */
 }
 
 static inline bool
 pgstat_is_kind_valid(PgStat_Kind kind)
 {
-	return kind >= PGSTAT_KIND_FIRST_VALID && kind <= PGSTAT_KIND_LAST;
+	return pgstat_is_kind_builtin(kind) || pgstat_is_kind_custom(kind);
 }
 
 const PgStat_KindInfo *
 pgstat_get_kind_info(PgStat_Kind kind)
 {
-	Assert(pgstat_is_kind_valid(kind));
+	if (pgstat_is_kind_builtin(kind))
+		return &pgstat_kind_builtin_infos[kind];
 
-	return &pgstat_kind_infos[kind];
+	if (pgstat_is_kind_custom(kind))
+	{
+		uint32		idx = kind - PGSTAT_KIND_CUSTOM_MIN;
+
+		if (pgstat_kind_custom_infos == NULL ||
+			pgstat_kind_custom_infos[idx] == NULL)
+			return NULL;
+		return pgstat_kind_custom_infos[idx];
+	}
+
+	return NULL;
+}
+
+/*
+ * Register a new stats kind.
+ *
+ * PgStat_Kinds must be globally unique across all extensions. Refer
+ * to https://wiki.postgresql.org/wiki/CustomCumulativeStats to reserve a
+ * unique ID for your extension, to avoid conflicts with other extension
+ * developers. During development, use PGSTAT_KIND_EXPERIMENTAL to avoid
+ * needlessly reserving a new ID.
+ */
+void
+pgstat_register_kind(PgStat_Kind kind, const PgStat_KindInfo *kind_info)
+{
+	uint32		idx = kind - PGSTAT_KIND_CUSTOM_MIN;
+
+	if (kind_info->name == NULL || strlen(kind_info->name) == 0)
+		ereport(ERROR,
+				(errmsg("custom cumulative statistics name is invalid"),
+				 errhint("Provide a non-empty name for the custom cumulative statistics.")));
+
+	if (!pgstat_is_kind_custom(kind))
+		ereport(ERROR, (errmsg("custom cumulative statistics ID %u is out of range", kind),
+						errhint("Provide a custom cumulative statistics ID between %u and %u.",
+								PGSTAT_KIND_CUSTOM_MIN, PGSTAT_KIND_CUSTOM_MAX)));
+
+	if (!process_shared_preload_libraries_in_progress)
+		ereport(ERROR,
+				(errmsg("failed to register custom cumulative statistics \"%s\" with ID %u", kind_info->name, kind),
+				 errdetail("Custom cumulative statistics must be registered while initializing modules in \"shared_preload_libraries\".")));
+
+	/*
+	 * Check some data for fixed-numbered stats.
+	 */
+	if (kind_info->fixed_amount)
+	{
+		if (kind_info->shared_size == 0)
+			ereport(ERROR,
+					(errmsg("custom cumulative statistics property is invalid"),
+					 errhint("Custom cumulative statistics require a shared memory size for fixed-numbered objects.")));
+	}
+
+	/*
+	 * If pgstat_kind_custom_infos is not available yet, allocate it.
+	 */
+	if (pgstat_kind_custom_infos == NULL)
+	{
+		pgstat_kind_custom_infos = (const PgStat_KindInfo **)
+			MemoryContextAllocZero(TopMemoryContext,
+								   sizeof(PgStat_KindInfo *) * PGSTAT_KIND_CUSTOM_SIZE);
+	}
+
+	if (pgstat_kind_custom_infos[idx] != NULL &&
+		pgstat_kind_custom_infos[idx]->name != NULL)
+		ereport(ERROR,
+				(errmsg("failed to register custom cumulative statistics \"%s\" with ID %u", kind_info->name, kind),
+				 errdetail("Custom cumulative statistics \"%s\" already registered with the same ID.",
+						   pgstat_kind_custom_infos[idx]->name)));
+
+	/* check for existing custom stats with the same name */
+	for (PgStat_Kind existing_kind = PGSTAT_KIND_CUSTOM_MIN; existing_kind <= PGSTAT_KIND_CUSTOM_MAX; existing_kind++)
+	{
+		uint32		existing_idx = existing_kind - PGSTAT_KIND_CUSTOM_MIN;
+
+		if (pgstat_kind_custom_infos[existing_idx] == NULL)
+			continue;
+		if (!pg_strcasecmp(pgstat_kind_custom_infos[existing_idx]->name, kind_info->name))
+			ereport(ERROR,
+					(errmsg("failed to register custom cumulative statistics \"%s\" with ID %u", kind_info->name, kind),
+					 errdetail("Existing cumulative statistics with ID %u has the same name.", existing_kind)));
+	}
+
+	/* Register it */
+	pgstat_kind_custom_infos[idx] = kind_info;
+	ereport(LOG,
+			(errmsg("registered custom cumulative statistics \"%s\" with ID %u",
+					kind_info->name, kind)));
 }
 
 /*
@@ -1393,18 +1555,22 @@ pgstat_write_statsfile(XLogRecPtr redo)
 	write_chunk_s(fpout, &redo);
 
 	/* Write various stats structs for fixed number of objects */
-	for (PgStat_Kind kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+	for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
 	{
 		char	   *ptr;
 		const PgStat_KindInfo *info = pgstat_get_kind_info(kind);
 
-		if (!info->fixed_amount)
+		if (!info || !info->fixed_amount)
 			continue;
 
-		Assert(info->snapshot_ctl_off != 0);
+		if (pgstat_is_kind_builtin(kind))
+			Assert(info->snapshot_ctl_off != 0);
 
 		pgstat_build_snapshot_fixed(kind);
-		ptr = ((char *) &pgStatLocal.snapshot) + info->snapshot_ctl_off;
+		if (pgstat_is_kind_builtin(kind))
+			ptr = ((char *) &pgStatLocal.snapshot) + info->snapshot_ctl_off;
+		else
+			ptr = pgStatLocal.snapshot.custom_data[kind - PGSTAT_KIND_CUSTOM_MIN];
 
 		fputc(PGSTAT_FILE_ENTRY_FIXED, fpout);
 		write_chunk_s(fpout, &kind);
@@ -1426,6 +1592,17 @@ pgstat_write_statsfile(XLogRecPtr redo)
 		Assert(!ps->dropped);
 		if (ps->dropped)
 			continue;
+
+		/*
+		 * This discards data related to custom stats kinds that are unknown
+		 * to this process.
+		 */
+		if (!pgstat_is_kind_valid(ps->key.kind))
+		{
+			elog(WARNING, "found unknown stats entry %u/%u/%u",
+				 ps->key.kind, ps->key.dboid, ps->key.objoid);
+			continue;
+		}
 
 		shstats = (PgStatShared_Common *) dsa_get_address(pgStatLocal.dsa, ps->body);
 
@@ -1613,8 +1790,16 @@ pgstat_read_statsfile(XLogRecPtr redo)
 					}
 
 					/* Load back stats into shared memory */
-					ptr = ((char *) shmem) + info->shared_ctl_off +
-						info->shared_data_off;
+					if (pgstat_is_kind_builtin(kind))
+						ptr = ((char *) shmem) + info->shared_ctl_off +
+							info->shared_data_off;
+					else
+					{
+						int			idx = kind - PGSTAT_KIND_CUSTOM_MIN;
+
+						ptr = ((char *) shmem->custom_data[idx]) +
+							info->shared_data_off;
+					}
 
 					if (!read_chunk(fpin, ptr, info->shared_data_len))
 					{
@@ -1777,11 +1962,11 @@ pgstat_reset_after_failure(void)
 	TimestampTz ts = GetCurrentTimestamp();
 
 	/* reset fixed-numbered stats */
-	for (PgStat_Kind kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+	for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
 	{
 		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
 
-		if (!kind_info->fixed_amount)
+		if (!kind_info || !kind_info->fixed_amount)
 			continue;
 
 		kind_info->reset_all_cb(ts);

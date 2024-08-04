@@ -131,6 +131,21 @@ StatsShmemSize(void)
 	sz = MAXALIGN(sizeof(PgStat_ShmemControl));
 	sz = add_size(sz, pgstat_dsa_init_size());
 
+	/* Add shared memory for all the custom fixed-numbered statistics */
+	for (PgStat_Kind kind = PGSTAT_KIND_CUSTOM_MIN; kind <= PGSTAT_KIND_CUSTOM_MAX; kind++)
+	{
+		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+
+		if (!kind_info)
+			continue;
+		if (!kind_info->fixed_amount)
+			continue;
+
+		Assert(kind_info->shared_size != 0);
+
+		sz += MAXALIGN(kind_info->shared_size);
+	}
+
 	return sz;
 }
 
@@ -197,15 +212,25 @@ StatsShmemInit(void)
 		pg_atomic_init_u64(&ctl->gc_request_count, 1);
 
 		/* initialize fixed-numbered stats */
-		for (PgStat_Kind kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
+		for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
 		{
 			const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
 			char	   *ptr;
 
-			if (!kind_info->fixed_amount)
+			if (!kind_info || !kind_info->fixed_amount)
 				continue;
 
-			ptr = ((char *) ctl) + kind_info->shared_ctl_off;
+			if (pgstat_is_kind_builtin(kind))
+				ptr = ((char *) ctl) + kind_info->shared_ctl_off;
+			else
+			{
+				int			idx = kind - PGSTAT_KIND_CUSTOM_MIN;
+
+				Assert(kind_info->shared_size != 0);
+				ctl->custom_data[idx] = ShmemAlloc(kind_info->shared_size);
+				ptr = ctl->custom_data[idx];
+			}
+
 			kind_info->init_shmem_cb(ptr);
 		}
 	}

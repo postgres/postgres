@@ -1696,7 +1696,7 @@ pg_stat_reset(PG_FUNCTION_ARGS)
  * Reset some shared cluster-wide counters
  *
  * When adding a new reset target, ideally the name should match that in
- * pgstat_kind_infos, if relevant.
+ * pgstat_kind_builtin_infos, if relevant.
  */
 Datum
 pg_stat_reset_shared(PG_FUNCTION_ARGS)

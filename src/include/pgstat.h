@@ -35,6 +35,10 @@
 /* The types of statistics entries */
 #define PgStat_Kind uint32
 
+/* Range of IDs allowed, for built-in and custom kinds */
+#define PGSTAT_KIND_MIN	1		/* Minimum ID allowed */
+#define PGSTAT_KIND_MAX	256		/* Maximum ID allowed */
+
 /* use 0 for INVALID, to catch zero-initialized data */
 #define PGSTAT_KIND_INVALID 0
 
@@ -53,9 +57,35 @@
 #define PGSTAT_KIND_SLRU	10
 #define PGSTAT_KIND_WAL	11
 
-#define PGSTAT_KIND_FIRST_VALID PGSTAT_KIND_DATABASE
-#define PGSTAT_KIND_LAST PGSTAT_KIND_WAL
-#define PGSTAT_NUM_KINDS (PGSTAT_KIND_LAST + 1)
+#define PGSTAT_KIND_BUILTIN_MIN PGSTAT_KIND_DATABASE
+#define PGSTAT_KIND_BUILTIN_MAX PGSTAT_KIND_WAL
+#define PGSTAT_KIND_BUILTIN_SIZE (PGSTAT_KIND_BUILTIN_MAX + 1)
+
+/* Custom stats kinds */
+
+/* Range of IDs allowed for custom stats kinds */
+#define PGSTAT_KIND_CUSTOM_MIN	128
+#define PGSTAT_KIND_CUSTOM_MAX	PGSTAT_KIND_MAX
+#define PGSTAT_KIND_CUSTOM_SIZE	(PGSTAT_KIND_CUSTOM_MAX - PGSTAT_KIND_CUSTOM_MIN + 1)
+
+/*
+ * PgStat_Kind to use for extensions that require an ID, but are still in
+ * development and have not reserved their own unique kind ID yet. See:
+ * https://wiki.postgresql.org/wiki/CustomCumulativeStats
+ */
+#define PGSTAT_KIND_EXPERIMENTAL	128
+
+static inline bool
+pgstat_is_kind_builtin(PgStat_Kind kind)
+{
+	return kind >= PGSTAT_KIND_BUILTIN_MIN && kind <= PGSTAT_KIND_BUILTIN_MAX;
+}
+
+static inline bool
+pgstat_is_kind_custom(PgStat_Kind kind)
+{
+	return kind >= PGSTAT_KIND_CUSTOM_MIN && kind <= PGSTAT_KIND_CUSTOM_MAX;
+}
 
 /* Values for track_functions GUC variable --- order is significant! */
 typedef enum TrackFunctionsLevel
