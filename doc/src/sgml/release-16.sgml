@@ -975,27 +975,6 @@ Branch: REL_16_STABLE [b4e909082] 2024-06-04 11:51:25 +0100
 
     <listitem>
 <!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-Branch: REL_15_STABLE [f853e23bf] 2024-06-26 07:01:47 -0400
-Branch: REL_14_STABLE [20f22e6a6] 2024-06-26 07:24:35 -0400
-Branch: REL_13_STABLE [b7374f15b] 2024-06-26 07:25:00 -0400
-Branch: REL_12_STABLE [ab46e132f] 2024-06-26 07:25:10 -0400
-Branch: REL_11_STABLE [e1541d518] 2024-06-26 07:25:26 -0400
-Branch: REL_10_STABLE [320534f8f] 2024-06-26 07:25:35 -0400
-Branch: REL9_6_STABLE [12c8faaa7] 2024-06-26 07:29:31 -0400
-Branch: REL9_5_STABLE [0536f8e2c] 2024-06-26 07:30:01 -0400
-Branch: REL9_4_STABLE [8851d5c3a] 2024-06-26 07:30:06 -0400
-Branch: REL9_3_STABLE [8f3be9661] 2024-06-26 07:30:11 -0400
-Branch: REL9_2_STABLE [1c4173116] 2024-06-26 07:32:15 -0400
--->
-     <para>
-      Fix incompatibility between <application>PL/Perl</application> and
-      Perl 5.40 (Andrew Dunstan)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master Release: REL_17_BR [d727c5431] 2024-05-09 13:16:34 -0400
 Branch: REL_16_STABLE [52ea653aa] 2024-05-09 13:16:21 -0400
