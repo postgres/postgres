@@ -28990,7 +28990,7 @@ pg_current_wal_insert_lsn
 
    Then an application could run <function>pg_wal_replay_wait</function>
    with the <acronym>lsn</acronym> obtained from primary.  After that the
-   changes made of primary should be guaranteed to be visible on replica.
+   changes made on primary should be guaranteed to be visible on replica.
 
    <programlisting>
 postgres=# CALL pg_wal_replay_wait('0/306EE20');
