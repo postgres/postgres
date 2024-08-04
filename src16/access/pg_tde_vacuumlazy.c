@@ -17,7 +17,7 @@
  * This frees up the memory space dedicated to storing dead TIDs.
  *
  * In practice VACUUM will often complete its initial pass over the target
- * heap relation without ever running out of space to store TIDs.  This means
+ * pg_tde relation without ever running out of space to store TIDs.  This means
  * that there only needs to be one call to lazy_vacuum, after the initial pass
  * completes.
  *
@@ -26,22 +26,26 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/access/heap/vacuumlazy.c
+ *	  src/backend/access/pg_tde/vacuumlazy.c
  *
  *-------------------------------------------------------------------------
  */
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include <math.h>
 
+#include "access/pg_tdeam.h"
+#include "access/pg_tdeam_xlog.h"
+#include "access/pg_tde_visibilitymap.h"
+#include "encryption/enc_tde.h"
+
 #include "access/amapi.h"
 #include "access/genam.h"
-#include "access/heapam.h"
-#include "access/pg_tdeam_xlog.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/transam.h"
-#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"

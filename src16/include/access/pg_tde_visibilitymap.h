@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
- * visibilitymap.h
+ * tdeheap_visibilitymap.h
  *		visibility map interface
  *
  *
  * Portions Copyright (c) 2007-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/access/visibilitymap.h
+ * src/include/access/pg_tde_visibilitymap.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef VISIBILITYMAP_H
-#define VISIBILITYMAP_H
+#ifndef PG_TDE_VISIBILITYMAP_H
+#define PG_TDE_VISIBILITYMAP_H
 
 #include "access/visibilitymapdefs.h"
 #include "access/xlogdefs.h"
@@ -39,4 +39,4 @@ extern void tdeheap_visibilitymap_count(Relation rel, BlockNumber *all_visible, 
 extern BlockNumber tdeheap_visibilitymap_prepare_truncate(Relation rel,
 												  BlockNumber nheapblocks);
 
-#endif							/* VISIBILITYMAP_H */
+#endif							/* PG_TDE_VISIBILITYMAP_H */

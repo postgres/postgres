@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
- * heapam.c
- *	  heap access method code
+ * pg_tdeam.c
+ *	  pg_tde access method code
  *
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  src/backend/access/heap/heapam.c
+ *	  contrib/pg_tde/pg_tdeam.c
  *
  *
  * INTERFACE ROUTINES
@@ -24,19 +24,26 @@
  *
  * NOTES
  *	  This file contains the tdeheap_ routines which implement
- *	  the POSTGRES heap access method used for all POSTGRES
+ *	  the POSTGRES pg_tde access method used for all POSTGRES
  *	  relations.
  *
  *-------------------------------------------------------------------------
  */
+
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
+
+#include "access/pg_tdeam.h"
+#include "access/pg_tdeam_xlog.h"
+#include "access/pg_tdetoast.h"
+#include "access/pg_tde_io.h"
+#include "access/pg_tde_visibilitymap.h"
+#include "access/pg_tde_slot.h"
+#include "encryption/enc_tde.h"
 
 #include "access/bufmask.h"
 #include "access/genam.h"
-#include "access/heapam.h"
-#include "access/pg_tdeam_xlog.h"
-#include "access/heaptoast.h"
-#include "access/hio.h"
 #include "access/multixact.h"
 #include "access/parallel.h"
 #include "access/relscan.h"
@@ -46,7 +53,6 @@
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "access/valid.h"
-#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
@@ -71,6 +77,7 @@
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/spccache.h"
+#include "utils/memutils.h"
 
 
 static HeapTuple tdeheap_prepare_insert(Relation relation, HeapTuple tup,
@@ -1101,10 +1108,10 @@ tdeheap_getnext(TableScanDesc sscan, ScanDirection direction)
 	 * rather than the AM oid, is that this allows to write regression tests
 	 * that create another AM reusing the heap handler.
 	 */
-	if (unlikely(sscan->rs_rd->rd_tableam != GetHeapamTableAmRoutine()))
+	if (unlikely(sscan->rs_rd->rd_tableam != GetPGTdeamTableAmRoutine()))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg_internal("only heap AM is supported")));
+				 errmsg_internal("only pg_tde AM is supported")));
 
 	/*
 	 * We don't expect direct calls to tdeheap_getnext with valid CheckXidAlive
@@ -1152,6 +1159,7 @@ tdeheap_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot
 
 	if (scan->rs_ctup.t_data == NULL)
 	{
+		TdeSlotForgetDecryptedTuple(slot);
 		ExecClearTuple(slot);
 		return false;
 	}
@@ -1163,7 +1171,7 @@ tdeheap_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot
 
 	pgstat_count_tdeheap_getnext(scan->rs_base.rs_rd);
 
-	ExecStoreBufferHeapTuple(&scan->rs_ctup, slot,
+	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd, &scan->rs_ctup, slot,
 							 scan->rs_cbuf);
 	return true;
 }
@@ -1259,6 +1267,7 @@ tdeheap_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 
 		if (scan->rs_ctup.t_data == NULL)
 		{
+			TdeSlotForgetDecryptedTuple(slot);
 			ExecClearTuple(slot);
 			return false;
 		}
@@ -1311,7 +1320,7 @@ tdeheap_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 	 */
 	pgstat_count_tdeheap_getnext(scan->rs_base.rs_rd);
 
-	ExecStoreBufferHeapTuple(&scan->rs_ctup, slot, scan->rs_cbuf);
+	PGTdeExecStoreBufferHeapTuple(sscan->rs_rd, &scan->rs_ctup, slot, scan->rs_cbuf);
 	return true;
 }
 
@@ -1881,11 +1890,18 @@ tdeheap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 */
 	CheckForSerializableConflictIn(relation, NULL, InvalidBlockNumber);
 
+	/* 
+	 * Make sure relation keys in the cahce to avoid pallocs in
+	 * the critical section. 
+	*/
+	GetRelationKey(relation->rd_locator);
+
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
 	tdeheap_RelationPutHeapTuple(relation, buffer, heaptup,
-						 (options & HEAP_INSERT_SPECULATIVE) != 0);
+						(options & HEAP_INSERT_TDE_NO_ENCRYPT) == 0,
+						(options & HEAP_INSERT_SPECULATIVE) != 0);
 
 	if (PageIsAllVisible(BufferGetPage(buffer)))
 	{
@@ -1975,9 +1991,11 @@ tdeheap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		 */
 		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD | bufflags);
 		XLogRegisterBufData(0, (char *) &xlhdr, SizeOfHeapHeader);
+		/* register encrypted tuple data from the buffer */
+		PageHeader	phdr = (PageHeader) BufferGetPage(buffer);
 		/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
 		XLogRegisterBufData(0,
-							(char *) heaptup->t_data + SizeofHeapTupleHeader,
+							((char *) phdr) + phdr->pd_upper + SizeofHeapTupleHeader,
 							heaptup->t_len - SizeofHeapTupleHeader);
 
 		/* filtering by origin on a row level is much more efficient */
@@ -2213,6 +2231,12 @@ tdeheap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		if (starting_with_empty_page && (options & HEAP_INSERT_FROZEN))
 			all_frozen_set = true;
 
+		/* 
+		 * Make sure relation keys in the cahce to avoid pallocs in
+		 * the critical section. 
+		*/
+		GetRelationKey(relation->rd_locator);
+
 		/* NO EREPORT(ERROR) from here till changes are logged */
 		START_CRIT_SECTION();
 
@@ -2220,7 +2244,7 @@ tdeheap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		 * tdeheap_RelationGetBufferForTuple has ensured that the first tuple fits.
 		 * Put that on the page, and then as many other tuples as fit.
 		 */
-		tdeheap_RelationPutHeapTuple(relation, buffer, heaptuples[ndone], false);
+		tdeheap_RelationPutHeapTuple(relation, buffer, heaptuples[ndone], true, false);
 
 		/*
 		 * For logical decoding we need combo CIDs to properly decode the
@@ -2236,7 +2260,7 @@ tdeheap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 			if (PageGetHeapFreeSpace(page) < MAXALIGN(heaptup->t_len) + saveFreeSpace)
 				break;
 
-			tdeheap_RelationPutHeapTuple(relation, buffer, heaptup, false);
+			tdeheap_RelationPutHeapTuple(relation, buffer, heaptup, true, false);
 
 			/*
 			 * For logical decoding we need combo CIDs to properly decode the
@@ -2335,10 +2359,12 @@ tdeheap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 				tuphdr->t_infomask = heaptup->t_data->t_infomask;
 				tuphdr->t_hoff = heaptup->t_data->t_hoff;
 
+				/* Point to an encrypted tuple data in the Buffer */
+				char *tup_data_on_page = (char *) page + ItemIdGetOffset(PageGetItemId(page, heaptup->t_self.ip_posid));
 				/* write bitmap [+ padding] [+ oid] + data */
 				datalen = heaptup->t_len - SizeofHeapTupleHeader;
 				memcpy(scratchptr,
-					   (char *) heaptup->t_data + SizeofHeapTupleHeader,
+					   tup_data_on_page + SizeofHeapTupleHeader,
 					   datalen);
 				tuphdr->datalen = datalen;
 				scratchptr += datalen;
@@ -2543,6 +2569,7 @@ tdeheap_delete(Relation relation, ItemPointer tid,
 	bool		all_visible_cleared = false;
 	HeapTuple	old_key_tuple = NULL;	/* replica identity of the tuple */
 	bool		old_key_copied = false;
+	HeapTuple	decrypted_tuple;
 
 	Assert(ItemPointerIsValid(tid));
 
@@ -2769,8 +2796,16 @@ l1:
 	/*
 	 * Compute replica identity tuple before entering the critical section so
 	 * we don't PANIC upon a memory allocation failure.
+	 * 
+	 * ExtractReplicaIdentity has to get a decrypted tuple, otherwise it 
+	 * won't be able to extract varlen attributes.
 	 */
-	old_key_tuple = ExtractReplicaIdentity(relation, &tp, true, &old_key_copied);
+	decrypted_tuple = tdeheap_copytuple(&tp);
+	PG_TDE_DECRYPT_TUPLE(&tp, decrypted_tuple, GetRelationKey(relation->rd_locator));
+
+	old_key_tuple = ExtractReplicaIdentity(relation, decrypted_tuple, true, &old_key_copied);
+
+	tdeheap_freetuple(decrypted_tuple);
 
 	/*
 	 * If this is the first possibly-multixact-able operation in the current
@@ -3005,6 +3040,8 @@ tdeheap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Bitmapset  *modified_attrs;
 	ItemId		lp;
 	HeapTupleData oldtup;
+	HeapTupleData oldtup_decrypted;
+	void*		oldtup_data;
 	HeapTuple	heaptup;
 	HeapTuple	old_key_tuple = NULL;
 	bool		old_key_copied = false;
@@ -3104,8 +3141,24 @@ tdeheap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 */
 	oldtup.t_tableOid = RelationGetRelid(relation);
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
+	oldtup_data = oldtup.t_data;
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
+	/* decrypt the old tuple */
+	{
+		char* new_ptr = NULL;
+		new_ptr = MemoryContextAlloc(CurTransactionContext, oldtup.t_len);
+		memcpy(new_ptr, oldtup.t_data, oldtup.t_data->t_hoff);
+		// only neccessary field
+		oldtup_decrypted.t_data = (HeapTupleHeader)new_ptr;
+	}
+	PG_TDE_DECRYPT_TUPLE(&oldtup, &oldtup_decrypted,
+							GetRelationKey(relation->rd_locator));
+
+	// change field in oldtup now.
+	// We can't do it before, as PG_TDE_DECRYPT_TUPLE uses t_data address in 
+	// calculations
+	oldtup.t_data = oldtup_decrypted.t_data;
 
 	/* the new tuple is ready, except for this: */
 	newtup->t_tableOid = RelationGetRelid(relation);
@@ -3163,6 +3216,8 @@ tdeheap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 * with the new tuple's location, so there's great risk of confusion if we
 	 * use otid anymore.
 	 */
+
+	oldtup.t_data = oldtup_data;
 
 l2:
 	checked_lockers = false;
@@ -3610,7 +3665,7 @@ l2:
 		if (need_toast)
 		{
 			/* Note we always use WAL and FSM during updates */
-			heaptup = tdeheap_toast_insert_or_update(relation, newtup, &oldtup, 0);
+			heaptup = tdeheap_toast_insert_or_update(relation, newtup, &oldtup_decrypted, 0);
 			newtupsize = MAXALIGN(heaptup->t_len);
 		}
 		else
@@ -3746,6 +3801,12 @@ l2:
 										   id_has_external,
 										   &old_key_copied);
 
+	/* 
+	 * Make sure relation keys in the cahce to avoid pallocs in
+	 * the critical section. 
+	*/
+	GetRelationKey(relation->rd_locator);
+
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
@@ -3780,7 +3841,7 @@ l2:
 		HeapTupleClearHeapOnly(newtup);
 	}
 
-	tdeheap_RelationPutHeapTuple(relation, newbuf, heaptup, false); /* insert new tuple */
+	tdeheap_RelationPutHeapTuple(relation, newbuf, heaptup, true, false); /* insert new tuple */
 
 
 	/* Clear obsolete visibility flags, possibly set by ourselves above... */
@@ -4024,7 +4085,6 @@ HeapDetermineColumnsInfo(Relation relation,
 		 */
 		value1 = tdeheap_getattr(oldtup, attrnum, tupdesc, &isnull1);
 		value2 = tdeheap_getattr(newtup, attrnum, tupdesc, &isnull2);
-
 		if (!tdeheap_attr_equals(tupdesc, attrnum, value1,
 							  value2, isnull1, isnull2))
 		{
@@ -5189,7 +5249,7 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
 
 	/*
 	 * Note: we *must* check TransactionIdIsInProgress before
-	 * TransactionIdDidAbort/Commit; see comment at top of pg_tdeam_visibility.c
+	 * TransactionIdDidAbort/Commit; see comment at top of heapam_visibility.c
 	 * for an explanation.
 	 */
 	if (TransactionIdIsCurrentTransactionId(xid))
@@ -6262,7 +6322,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 		/*
 		 * As with all tuple visibility routines, it's critical to test
 		 * TransactionIdIsInProgress before TransactionIdDidCommit, because of
-		 * race conditions explained in detail in pg_tdeam_visibility.c.
+		 * race conditions explained in detail in heapam_visibility.c.
 		 */
 		if (TransactionIdIsCurrentTransactionId(xid) ||
 			TransactionIdIsInProgress(xid))
@@ -8388,6 +8448,7 @@ log_tdeheap_update(Relation reln, Buffer oldbuf,
 				suffixlen = 0;
 	XLogRecPtr	recptr;
 	Page		page = BufferGetPage(newbuf);
+	PageHeader	phdr = (PageHeader) page;
 	bool		need_tuple_data = RelationIsLogicallyLogged(reln);
 	bool		init;
 	int			bufflags;
@@ -8539,11 +8600,12 @@ log_tdeheap_update(Relation reln, Buffer oldbuf,
 	 *
 	 * The 'data' doesn't include the common prefix or suffix.
 	 */
+	/* We write an encrypted newtuple data from the buffer */
 	XLogRegisterBufData(0, (char *) &xlhdr, SizeOfHeapHeader);
 	if (prefixlen == 0)
 	{
 		XLogRegisterBufData(0,
-							((char *) newtup->t_data) + SizeofHeapTupleHeader,
+							((char *) phdr) + phdr->pd_upper + SizeofHeapTupleHeader,
 							newtup->t_len - SizeofHeapTupleHeader - suffixlen);
 	}
 	else
@@ -8556,13 +8618,13 @@ log_tdeheap_update(Relation reln, Buffer oldbuf,
 		if (newtup->t_data->t_hoff - SizeofHeapTupleHeader > 0)
 		{
 			XLogRegisterBufData(0,
-								((char *) newtup->t_data) + SizeofHeapTupleHeader,
+								((char *) phdr) + phdr->pd_upper + SizeofHeapTupleHeader,
 								newtup->t_data->t_hoff - SizeofHeapTupleHeader);
 		}
 
 		/* data after common prefix */
 		XLogRegisterBufData(0,
-							((char *) newtup->t_data) + newtup->t_data->t_hoff + prefixlen,
+							((char *) phdr) + phdr->pd_upper + newtup->t_data->t_hoff + prefixlen,
 							newtup->t_len - newtup->t_data->t_hoff - prefixlen - suffixlen);
 	}
 
@@ -8808,6 +8870,7 @@ tdeheap_xlog_prune(XLogReaderState *record)
 		int			ndead;
 		int			nunused;
 		Size		datalen;
+		Relation	reln;
 
 		redirected = (OffsetNumber *) XLogRecGetBlockData(record, 0, &datalen);
 
@@ -8820,7 +8883,8 @@ tdeheap_xlog_prune(XLogReaderState *record)
 		Assert(nunused >= 0);
 
 		/* Update all line pointers per the record, and repair fragmentation */
-		tdeheap_page_prune_execute(buffer,
+		reln = CreateFakeRelcacheEntry(rlocator);
+		tdeheap_page_prune_execute(reln, buffer,
 								redirected, nredirected,
 								nowdead, ndead,
 								nowunused, nunused);
@@ -9314,7 +9378,7 @@ tdeheap_xlog_insert(XLogReaderState *record)
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		htup->t_ctid = target_tid;
 
-		if (PageAddItem(page, (Item) htup, newlen, xlrec->offnum,
+		if (TDE_PageAddItem(target_locator, target_locator.spcOid, blkno, page, (Item) htup, newlen, xlrec->offnum,
 						true, true) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 
@@ -9458,7 +9522,7 @@ tdeheap_xlog_multi_insert(XLogReaderState *record)
 			ItemPointerSetBlockNumber(&htup->t_ctid, blkno);
 			ItemPointerSetOffsetNumber(&htup->t_ctid, offnum);
 
-			offnum = PageAddItem(page, (Item) htup, newlen, offnum, true, true);
+			offnum = TDE_PageAddItem(rlocator, rlocator.spcOid, blkno, page, (Item) htup, newlen, offnum, true, true);
 			if (offnum == InvalidOffsetNumber)
 				elog(PANIC, "failed to add tuple");
 		}
@@ -9732,7 +9796,7 @@ tdeheap_xlog_update(XLogReaderState *record, bool hot_update)
 		/* Make sure there is no forward chain link in t_ctid */
 		htup->t_ctid = newtid;
 
-		offnum = PageAddItem(page, (Item) htup, newlen, offnum, true, true);
+		offnum = TDE_PageAddItem(rlocator, rlocator.spcOid, newblk, page, (Item) htup, newlen, offnum, true, true);
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 
@@ -10019,12 +10083,12 @@ tdeheap_redo(XLogReaderState *record)
 			tdeheap_xlog_inplace(record);
 			break;
 		default:
-			elog(PANIC, "heap_redo: unknown op code %u", info);
+			elog(PANIC, "pg_tde_redo: unknown op code %u", info);
 	}
 }
 
 void
-tdeheap2_redo(XLogReaderState *record)
+heapam2_redo(XLogReaderState *record)
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
@@ -10059,7 +10123,7 @@ tdeheap2_redo(XLogReaderState *record)
 			tdeheap_xlog_logical_rewrite(record);
 			break;
 		default:
-			elog(PANIC, "tdeheap2_redo: unknown op code %u", info);
+			elog(PANIC, "heap2_redo: unknown op code %u", info);
 	}
 }
 

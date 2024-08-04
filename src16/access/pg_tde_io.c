@@ -13,12 +13,16 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "access/hio.h"
+#include "access/pg_tdeam.h"
+#include "access/pg_tde_io.h"
+#include "access/pg_tde_visibilitymap.h"
+#include "encryption/enc_tde.h"
+
 #include "access/htup_details.h"
-#include "access/visibilitymap.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
@@ -36,6 +40,7 @@ void
 tdeheap_RelationPutHeapTuple(Relation relation,
 					 Buffer buffer,
 					 HeapTuple tuple,
+					 bool encrypt,
 					 bool token)
 {
 	Page		pageHeader;
@@ -59,8 +64,12 @@ tdeheap_RelationPutHeapTuple(Relation relation,
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 
-	offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
-						 tuple->t_len, InvalidOffsetNumber, false, true);
+	if (encrypt)
+		offnum = TDE_PageAddItem(relation->rd_locator, tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, (Item) tuple->t_data,
+							tuple->t_len, InvalidOffsetNumber, false, true);
+	else
+		offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
+							tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
 		elog(PANIC, "failed to add tuple to page");
