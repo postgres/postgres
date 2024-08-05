@@ -73,7 +73,7 @@ extern PGDLLIMPORT bool ignore_checksum_failure;
  *
  * AM-specific per-page data (if any) is kept in the area marked "special
  * space"; each AM has an "opaque" structure defined somewhere that is
- * stored as the page trailer.  an access method should always
+ * stored as the page trailer.  An access method should always
  * initialize its pages with PageInit and then set its own opaque
  * fields.
  */
