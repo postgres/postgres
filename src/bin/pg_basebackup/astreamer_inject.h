@@ -12,7 +12,7 @@
 #ifndef ASTREAMER_INJECT_H
 #define ASTREAMER_INJECT_H
 
-#include "astreamer.h"
+#include "fe_utils/astreamer.h"
 #include "pqexpbuffer.h"
 
 extern astreamer *astreamer_recovery_injector_new(astreamer *next,

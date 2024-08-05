@@ -13,10 +13,10 @@
 
 #include <unistd.h>
 
-#include "astreamer.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 #include "common/string.h"
+#include "fe_utils/astreamer.h"
 
 typedef struct astreamer_plain_writer
 {

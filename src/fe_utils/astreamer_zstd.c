@@ -17,8 +17,8 @@
 #include <zstd.h>
 #endif
 
-#include "astreamer.h"
 #include "common/logging.h"
+#include "fe_utils/astreamer.h"
 
 #ifdef USE_ZSTD
 

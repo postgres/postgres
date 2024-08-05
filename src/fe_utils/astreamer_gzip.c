@@ -17,10 +17,10 @@
 #include <zlib.h>
 #endif
 
-#include "astreamer.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 #include "common/string.h"
+#include "fe_utils/astreamer.h"
 
 #ifdef HAVE_LIBZ
 typedef struct astreamer_gzip_writer

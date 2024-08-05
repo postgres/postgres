@@ -37,12 +37,7 @@ OBJS = \
 
 BBOBJS = \
 	pg_basebackup.o \
-	astreamer_file.o \
-	astreamer_gzip.o \
-	astreamer_inject.o \
-	astreamer_lz4.o \
-	astreamer_tar.o \
-	astreamer_zstd.o
+	astreamer_inject.o
 
 all: pg_basebackup pg_createsubscriber pg_receivewal pg_recvlogical
 
