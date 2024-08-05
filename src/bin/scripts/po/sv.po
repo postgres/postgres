@@ -1,5 +1,5 @@
 # Swedish message translation file for postgresql
-# Dennis Björklund <db@zigo.dhs.org>, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
+# Dennis Björklund <db@zigo.dhs.org>, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 # Peter Eisentraut <peter_e@gmx.net>, 2013.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 06:47+0000\n"
-"PO-Revision-Date: 2021-11-09 06:34+0100\n"
+"POT-Creation-Date: 2024-07-14 19:09+0000\n"
+"PO-Revision-Date: 2024-07-12 22:17+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -57,11 +57,11 @@ msgstr "användaren finns inte"
 msgid "user name lookup failure: error code %lu"
 msgstr "misslyckad sökning efter användarnamn: felkod %lu"
 
-#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
 msgid "Cancel request sent\n"
 msgstr "Förfrågan om avbrytning skickad\n"
 
-#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
 msgid "Could not send cancel request: "
 msgstr "Kunde inte skicka förfrågan om avbrytning: "
 
@@ -79,12 +79,17 @@ msgstr "kunde inte ansluta till databas %s: slut på minne"
 msgid "%s"
 msgstr "%s"
 
-#: ../../fe_utils/parallel_slot.c:302
+#: ../../fe_utils/parallel_slot.c:319
 #, c-format
-msgid "too many jobs for this platform"
-msgstr "för många jobb för denna plattform"
+msgid "too many jobs for this platform: %d"
+msgstr "för många jobb för denna plattform: %d"
 
-#: ../../fe_utils/parallel_slot.c:522
+#: ../../fe_utils/parallel_slot.c:328
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "deskriptor-index utanför sitt intervall för select(): %d"
+
+#: ../../fe_utils/parallel_slot.c:551
 #, c-format
 msgid "processing of database \"%s\" failed: %s"
 msgstr "processande av databas \"%s\" misslyckades: %s"
@@ -96,22 +101,22 @@ msgid_plural "(%lu rows)"
 msgstr[0] "(%lu rad)"
 msgstr[1] "(%lu rader)"
 
-#: ../../fe_utils/print.c:3039
+#: ../../fe_utils/print.c:3040
 #, c-format
 msgid "Interrupted\n"
 msgstr "Avbruten\n"
 
-#: ../../fe_utils/print.c:3103
+#: ../../fe_utils/print.c:3104
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "Kan inte lägga till rubrik till tabellinnehåll: antal kolumner (%d) överskridet.\n"
 
-#: ../../fe_utils/print.c:3143
+#: ../../fe_utils/print.c:3144
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "Kan inte lägga till cell till tabellinnehåll: totala cellantalet (%d) överskridet.\n"
 
-#: ../../fe_utils/print.c:3401
+#: ../../fe_utils/print.c:3402
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "ogiltigt utdataformat (internt fel): %d"
@@ -160,12 +165,12 @@ msgstr "klustring av tabell \"%s\" i databas \"%s\" misslyckades: %s"
 msgid "clustering of database \"%s\" failed: %s"
 msgstr "klustring av databas \"%s\" misslyckades: %s"
 
-#: clusterdb.c:251
+#: clusterdb.c:253
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: klustring av databas \"%s\"\n"
 
-#: clusterdb.c:267
+#: clusterdb.c:269
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -174,19 +179,19 @@ msgstr ""
 "%s klustrar alla tidigare klustrade tabeller i en databas.\n"
 "\n"
 
-#: clusterdb.c:268 createdb.c:267 createuser.c:351 dropdb.c:171 dropuser.c:169
-#: pg_isready.c:225 reindexdb.c:792 vacuumdb.c:1025
+#: clusterdb.c:270 createdb.c:267 createuser.c:351 dropdb.c:171 dropuser.c:169
+#: pg_isready.c:225 reindexdb.c:794 vacuumdb.c:1025
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: clusterdb.c:269 reindexdb.c:793 vacuumdb.c:1026
+#: clusterdb.c:271 reindexdb.c:795 vacuumdb.c:1026
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [FLAGGA]... [DBNAMN]\n"
 
-#: clusterdb.c:270 createdb.c:269 createuser.c:353 dropdb.c:173 dropuser.c:171
-#: pg_isready.c:228 reindexdb.c:794 vacuumdb.c:1027
+#: clusterdb.c:272 createdb.c:269 createuser.c:353 dropdb.c:173 dropuser.c:171
+#: pg_isready.c:228 reindexdb.c:796 vacuumdb.c:1027
 #, c-format
 msgid ""
 "\n"
@@ -195,48 +200,48 @@ msgstr ""
 "\n"
 "Flaggor:\n"
 
-#: clusterdb.c:271
+#: clusterdb.c:273
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 klustra alla databaser\n"
 
-#: clusterdb.c:272
+#: clusterdb.c:274
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       databas att klustra\n"
 
-#: clusterdb.c:273 createuser.c:357 dropdb.c:174 dropuser.c:172
+#: clusterdb.c:275 createuser.c:357 dropdb.c:174 dropuser.c:172
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                visa kommandon som skickas till servern\n"
 
-#: clusterdb.c:274
+#: clusterdb.c:276
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               skriv inte ut några meddelanden\n"
 
-#: clusterdb.c:275
+#: clusterdb.c:277
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
 msgstr "  -t, --table=TABELL        klustra enbart ingivna tabeller\n"
 
-#: clusterdb.c:276
+#: clusterdb.c:278
 #, c-format
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             skriv massor med utdata\n"
 
-#: clusterdb.c:277 createuser.c:369 dropdb.c:177 dropuser.c:175
+#: clusterdb.c:279 createuser.c:369 dropdb.c:177 dropuser.c:175
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             visa versionsinformation, avsluta sedan\n"
 
-#: clusterdb.c:278 createuser.c:374 dropdb.c:179 dropuser.c:177
+#: clusterdb.c:280 createuser.c:374 dropdb.c:179 dropuser.c:177
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                visa denna hjälp, avsluta sedan\n"
 
-#: clusterdb.c:279 createdb.c:280 createuser.c:375 dropdb.c:180 dropuser.c:178
-#: pg_isready.c:234 reindexdb.c:809 vacuumdb.c:1052
+#: clusterdb.c:281 createdb.c:280 createuser.c:375 dropdb.c:180 dropuser.c:178
+#: pg_isready.c:234 reindexdb.c:811 vacuumdb.c:1052
 #, c-format
 msgid ""
 "\n"
@@ -245,37 +250,37 @@ msgstr ""
 "\n"
 "Flaggor för anslutning:\n"
 
-#: clusterdb.c:280 createuser.c:376 dropdb.c:181 dropuser.c:179 vacuumdb.c:1053
+#: clusterdb.c:282 createuser.c:376 dropdb.c:181 dropuser.c:179 vacuumdb.c:1053
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=VÄRDNAMN       databasens värdnamn eller socketkatalog\n"
 
-#: clusterdb.c:281 createuser.c:377 dropdb.c:182 dropuser.c:180 vacuumdb.c:1054
+#: clusterdb.c:283 createuser.c:377 dropdb.c:182 dropuser.c:180 vacuumdb.c:1054
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           databasserverns port\n"
 
-#: clusterdb.c:282 dropdb.c:183 vacuumdb.c:1055
+#: clusterdb.c:284 dropdb.c:183 vacuumdb.c:1055
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=ANVÄNDARE  användarnamn att ansluta som\n"
 
-#: clusterdb.c:283 createuser.c:379 dropdb.c:184 dropuser.c:182 vacuumdb.c:1056
+#: clusterdb.c:285 createuser.c:379 dropdb.c:184 dropuser.c:182 vacuumdb.c:1056
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         fråga ej efter lösenord\n"
 
-#: clusterdb.c:284 createuser.c:380 dropdb.c:185 dropuser.c:183 vacuumdb.c:1057
+#: clusterdb.c:286 createuser.c:380 dropdb.c:185 dropuser.c:183 vacuumdb.c:1057
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            framtvinga fråga om lösenord\n"
 
-#: clusterdb.c:285 dropdb.c:186 vacuumdb.c:1058
+#: clusterdb.c:287 dropdb.c:186 vacuumdb.c:1058
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAMN   annat val av underhållsdatabas\n"
 
-#: clusterdb.c:286
+#: clusterdb.c:288
 #, c-format
 msgid ""
 "\n"
@@ -284,8 +289,8 @@ msgstr ""
 "\n"
 "Läs beskrivningen av SQL-kommandot CLUSTER för detaljer.\n"
 
-#: clusterdb.c:287 createdb.c:288 createuser.c:381 dropdb.c:187 dropuser.c:184
-#: pg_isready.c:239 reindexdb.c:817 vacuumdb.c:1060
+#: clusterdb.c:289 createdb.c:288 createuser.c:381 dropdb.c:187 dropuser.c:184
+#: pg_isready.c:239 reindexdb.c:819 vacuumdb.c:1060
 #, c-format
 msgid ""
 "\n"
@@ -294,8 +299,8 @@ msgstr ""
 "\n"
 "Rapportera fel till <%s>.\n"
 
-#: clusterdb.c:288 createdb.c:289 createuser.c:382 dropdb.c:188 dropuser.c:185
-#: pg_isready.c:240 reindexdb.c:818 vacuumdb.c:1061
+#: clusterdb.c:290 createdb.c:289 createuser.c:382 dropdb.c:188 dropuser.c:185
+#: pg_isready.c:240 reindexdb.c:820 vacuumdb.c:1061
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "hemsida för %s: <%s>\n"
@@ -373,7 +378,7 @@ msgstr "  %s [FLAGGA]... [DBNAMN] [BESKRIVNING]\n"
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABELLRYMD  förvalt tabellutrymme för databasen\n"
 
-#: createdb.c:271 reindexdb.c:798
+#: createdb.c:271 reindexdb.c:800
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                   visa kommandon som skickas till servern\n"
@@ -408,42 +413,42 @@ msgstr "  -O, --owner=ÄGARE            databasanvändare som äger nya database
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=MALL          databasmall att kopiera\n"
 
-#: createdb.c:278 reindexdb.c:807
+#: createdb.c:278 reindexdb.c:809
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                visa versionsinformation, avsluta sedan\n"
 
-#: createdb.c:279 reindexdb.c:808
+#: createdb.c:279 reindexdb.c:810
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   visa denna hjälp, avsluta sedan\n"
 
-#: createdb.c:281 reindexdb.c:810
+#: createdb.c:281 reindexdb.c:812
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr "  -h, --host=VÄRDNAMN          databasens värdnamn eller socketkatalog\n"
 
-#: createdb.c:282 reindexdb.c:811
+#: createdb.c:282 reindexdb.c:813
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              databasserverns port\n"
 
-#: createdb.c:283 reindexdb.c:812
+#: createdb.c:283 reindexdb.c:814
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=ANVÄNDARE     användarnamn att ansluta som\n"
 
-#: createdb.c:284 reindexdb.c:813
+#: createdb.c:284 reindexdb.c:815
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            fråga ej efter lösenord\n"
 
-#: createdb.c:285 reindexdb.c:814
+#: createdb.c:285 reindexdb.c:816
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               framtvinga fråga om lösenord\n"
 
-#: createdb.c:286 reindexdb.c:815
+#: createdb.c:286 reindexdb.c:817
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAMN      annat val av underhållsdatabas\n"
@@ -877,12 +882,12 @@ msgstr "omindexering av systemkataloger i databasen \"%s\" misslyckades: %s"
 msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "omindexering av tabell \"%s\" i databasen \"%s\" misslyckades: %s"
 
-#: reindexdb.c:774
+#: reindexdb.c:776
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: omindexering av databasen \"%s\"\n"
 
-#: reindexdb.c:791
+#: reindexdb.c:793
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -891,64 +896,64 @@ msgstr ""
 "%s indexerar om en PostgreSQL-databas.\n"
 "\n"
 
-#: reindexdb.c:795
+#: reindexdb.c:797
 #, c-format
 msgid "  -a, --all                    reindex all databases\n"
 msgstr "  -a, --all                    indexera om alla databaser\n"
 
-#: reindexdb.c:796
+#: reindexdb.c:798
 #, c-format
 msgid "      --concurrently           reindex concurrently\n"
 msgstr "      --concurrently           indexera om utan att låsa\n"
 
-#: reindexdb.c:797
+#: reindexdb.c:799
 #, c-format
 msgid "  -d, --dbname=DBNAME          database to reindex\n"
 msgstr "  -d, --dbname=DBNAME          databas att indexera om\n"
 
-#: reindexdb.c:799
+#: reindexdb.c:801
 #, c-format
 msgid "  -i, --index=INDEX            recreate specific index(es) only\n"
 msgstr "  -i, --index=INDEX            återskapa enbart angivna index\n"
 
-#: reindexdb.c:800
+#: reindexdb.c:802
 #, c-format
 msgid "  -j, --jobs=NUM               use this many concurrent connections to reindex\n"
 msgstr ""
 "  -j, --jobs=NUM               använd så här många samtida anslutningar\n"
 "                               för omindexering\n"
 
-#: reindexdb.c:801
+#: reindexdb.c:803
 #, c-format
 msgid "  -q, --quiet                  don't write any messages\n"
 msgstr "  -q, --quiet                  skriv inte ut några meddelanden\n"
 
-#: reindexdb.c:802
+#: reindexdb.c:804
 #, c-format
 msgid "  -s, --system                 reindex system catalogs only\n"
 msgstr "  -s, --system                 indexera enbart om systemkataloger\n"
 
-#: reindexdb.c:803
+#: reindexdb.c:805
 #, c-format
 msgid "  -S, --schema=SCHEMA          reindex specific schema(s) only\n"
 msgstr "  -S, --schema=SCHEMA          indexera enbart om angivna scheman\n"
 
-#: reindexdb.c:804
+#: reindexdb.c:806
 #, c-format
 msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
 msgstr "  -t, --table=TABELL           indexera enbart om angivna tabeller\n"
 
-#: reindexdb.c:805
+#: reindexdb.c:807
 #, c-format
 msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
 msgstr "      --tablespace=TABELLRYMD  tabellutrymme där index byggs om\n"
 
-#: reindexdb.c:806
+#: reindexdb.c:808
 #, c-format
 msgid "  -v, --verbose                write a lot of output\n"
 msgstr "  -v, --verbose                skriv massor med utdata\n"
 
-#: reindexdb.c:816
+#: reindexdb.c:818
 #, c-format
 msgid ""
 "\n"

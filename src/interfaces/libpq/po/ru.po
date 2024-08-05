@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-04 10:37+0300\n"
+"POT-Creation-Date: 2024-08-01 12:51+0300\n"
 "PO-Revision-Date: 2023-08-30 15:09+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -1280,12 +1280,12 @@ msgstr "не удалось получить сертификат: %s\n"
 msgid "no SSL error reported"
 msgstr "нет сообщения об ошибке SSL"
 
-#: fe-secure-openssl.c:1574
+#: fe-secure-openssl.c:1575
 #, c-format
 msgid "SSL error code %lu"
 msgstr "код ошибки SSL: %lu"
 
-#: fe-secure-openssl.c:1846
+#: fe-secure-openssl.c:1847
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: значение sslpassword усечено\n"
