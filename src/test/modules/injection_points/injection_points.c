@@ -18,6 +18,7 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "injection_stats.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "nodes/value.h"
@@ -170,6 +171,9 @@ injection_points_cleanup(int code, Datum arg)
 		char	   *name = strVal(lfirst(lc));
 
 		(void) InjectionPointDetach(name);
+
+		/* Remove stats entry */
+		pgstat_drop_inj(name);
 	}
 }
 
@@ -182,6 +186,8 @@ injection_error(const char *name, const void *private_data)
 	if (!injection_point_allowed(condition))
 		return;
 
+	pgstat_report_inj(name);
+
 	elog(ERROR, "error triggered for injection point %s", name);
 }
 
@@ -192,6 +198,8 @@ injection_notice(const char *name, const void *private_data)
 
 	if (!injection_point_allowed(condition))
 		return;
+
+	pgstat_report_inj(name);
 
 	elog(NOTICE, "notice triggered for injection point %s", name);
 }
@@ -210,6 +218,8 @@ injection_wait(const char *name, const void *private_data)
 
 	if (!injection_point_allowed(condition))
 		return;
+
+	pgstat_report_inj(name);
 
 	/*
 	 * Use the injection point name for this custom wait event.  Note that
@@ -299,6 +309,10 @@ injection_points_attach(PG_FUNCTION_ARGS)
 		inj_list_local = lappend(inj_list_local, makeString(pstrdup(name)));
 		MemoryContextSwitchTo(oldctx);
 	}
+
+	/* Add entry for stats */
+	pgstat_create_inj(name);
+
 	PG_RETURN_VOID();
 }
 
@@ -431,5 +445,18 @@ injection_points_detach(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldctx);
 	}
 
+	/* Remove stats entry */
+	pgstat_drop_inj(name);
+
 	PG_RETURN_VOID();
+}
+
+
+void
+_PG_init(void)
+{
+	if (!process_shared_preload_libraries_in_progress)
+		return;
+
+	pgstat_register_inj();
 }

@@ -3919,6 +3919,11 @@ extern PgStat_Kind pgstat_add_kind(PgStat_Kind kind,
      type in <xref linkend="guc-shared-preload-libraries"/> so that it will
      be loaded early during <productname>PostgreSQL</productname> startup.
     </para>
+
+    <para>
+     An example describing how to register and use custom statistics can be
+     found in <filename>src/test/modules/injection_points</filename>.
+    </para>
    </sect2>
 
    <sect2 id="extend-cpp">
