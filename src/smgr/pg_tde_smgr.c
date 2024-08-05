@@ -34,14 +34,22 @@ tde_smgr_get_key(SMgrRelation reln)
 
 	recursion++;
 
-
-	if(GetPrincipalKey(reln->smgr_rlocator.locator.relNumber, reln->smgr_rlocator.locator.spcOid)==NULL)
+	if(GetPrincipalKey(reln->smgr_rlocator.locator.dbOid, reln->smgr_rlocator.locator.spcOid)==NULL)
 	{
 		recursion--;
 		return NULL;
 	}
 
 	TdeCreateEvent* event = GetCurrentTdeCreateEvent();
+
+	// see if we have a key for the relation, and return if yes
+	RelKeyData* rkd = GetRelationKey(reln->smgr_rlocator.locator);
+
+	if(rkd != NULL)
+	{
+		recursion--;
+		return rkd;
+	}
 
 	// if this is a CREATE TABLE, we have to generate the key
 	if(event->encryptMode == true && event->eventType == TDE_TABLE_CREATE_EVENT)
@@ -59,12 +67,9 @@ tde_smgr_get_key(SMgrRelation reln)
 		return pg_tde_create_key_map_entry(&reln->smgr_rlocator.locator);
 	}
 
-	// otherwise, see if we have a key for the relation, and return if yes
-	RelKeyData* rkd = GetRelationKey(reln->smgr_rlocator.locator);
-
 	recursion--;
 
-	return rkd;
+	return NULL;
 }
 
 void
