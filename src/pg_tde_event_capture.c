@@ -88,7 +88,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 				/* set the global state */
 				tdeCurrentCreateEvent.encryptMode = true;
 			}
-			else
 			table_close(rel, lockmode);
 		}
 		else
