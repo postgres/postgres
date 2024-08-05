@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * bbstreamer_gzip.c
+ * astreamer_gzip.c
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  src/bin/pg_basebackup/bbstreamer_gzip.c
+ *		  src/bin/pg_basebackup/astreamer_gzip.c
  *-------------------------------------------------------------------------
  */
 
@@ -17,74 +17,74 @@
 #include <zlib.h>
 #endif
 
-#include "bbstreamer.h"
+#include "astreamer.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 #include "common/string.h"
 
 #ifdef HAVE_LIBZ
-typedef struct bbstreamer_gzip_writer
+typedef struct astreamer_gzip_writer
 {
-	bbstreamer	base;
+	astreamer	base;
 	char	   *pathname;
 	gzFile		gzfile;
-} bbstreamer_gzip_writer;
+} astreamer_gzip_writer;
 
-typedef struct bbstreamer_gzip_decompressor
+typedef struct astreamer_gzip_decompressor
 {
-	bbstreamer	base;
+	astreamer	base;
 	z_stream	zstream;
 	size_t		bytes_written;
-} bbstreamer_gzip_decompressor;
+} astreamer_gzip_decompressor;
 
-static void bbstreamer_gzip_writer_content(bbstreamer *streamer,
-										   bbstreamer_member *member,
-										   const char *data, int len,
-										   bbstreamer_archive_context context);
-static void bbstreamer_gzip_writer_finalize(bbstreamer *streamer);
-static void bbstreamer_gzip_writer_free(bbstreamer *streamer);
+static void astreamer_gzip_writer_content(astreamer *streamer,
+										  astreamer_member *member,
+										  const char *data, int len,
+										  astreamer_archive_context context);
+static void astreamer_gzip_writer_finalize(astreamer *streamer);
+static void astreamer_gzip_writer_free(astreamer *streamer);
 static const char *get_gz_error(gzFile gzf);
 
-static const bbstreamer_ops bbstreamer_gzip_writer_ops = {
-	.content = bbstreamer_gzip_writer_content,
-	.finalize = bbstreamer_gzip_writer_finalize,
-	.free = bbstreamer_gzip_writer_free
+static const astreamer_ops astreamer_gzip_writer_ops = {
+	.content = astreamer_gzip_writer_content,
+	.finalize = astreamer_gzip_writer_finalize,
+	.free = astreamer_gzip_writer_free
 };
 
-static void bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
-												 bbstreamer_member *member,
-												 const char *data, int len,
-												 bbstreamer_archive_context context);
-static void bbstreamer_gzip_decompressor_finalize(bbstreamer *streamer);
-static void bbstreamer_gzip_decompressor_free(bbstreamer *streamer);
+static void astreamer_gzip_decompressor_content(astreamer *streamer,
+												astreamer_member *member,
+												const char *data, int len,
+												astreamer_archive_context context);
+static void astreamer_gzip_decompressor_finalize(astreamer *streamer);
+static void astreamer_gzip_decompressor_free(astreamer *streamer);
 static void *gzip_palloc(void *opaque, unsigned items, unsigned size);
 static void gzip_pfree(void *opaque, void *address);
 
-static const bbstreamer_ops bbstreamer_gzip_decompressor_ops = {
-	.content = bbstreamer_gzip_decompressor_content,
-	.finalize = bbstreamer_gzip_decompressor_finalize,
-	.free = bbstreamer_gzip_decompressor_free
+static const astreamer_ops astreamer_gzip_decompressor_ops = {
+	.content = astreamer_gzip_decompressor_content,
+	.finalize = astreamer_gzip_decompressor_finalize,
+	.free = astreamer_gzip_decompressor_free
 };
 #endif
 
 /*
- * Create a bbstreamer that just compresses data using gzip, and then writes
+ * Create a astreamer that just compresses data using gzip, and then writes
  * it to a file.
  *
- * As in the case of bbstreamer_plain_writer_new, pathname is always used
+ * As in the case of astreamer_plain_writer_new, pathname is always used
  * for error reporting purposes; if file is NULL, it is also the opened and
  * closed so that the data may be written there.
  */
-bbstreamer *
-bbstreamer_gzip_writer_new(char *pathname, FILE *file,
-						   pg_compress_specification *compress)
+astreamer *
+astreamer_gzip_writer_new(char *pathname, FILE *file,
+						  pg_compress_specification *compress)
 {
 #ifdef HAVE_LIBZ
-	bbstreamer_gzip_writer *streamer;
+	astreamer_gzip_writer *streamer;
 
-	streamer = palloc0(sizeof(bbstreamer_gzip_writer));
-	*((const bbstreamer_ops **) &streamer->base.bbs_ops) =
-		&bbstreamer_gzip_writer_ops;
+	streamer = palloc0(sizeof(astreamer_gzip_writer));
+	*((const astreamer_ops **) &streamer->base.bbs_ops) =
+		&astreamer_gzip_writer_ops;
 
 	streamer->pathname = pstrdup(pathname);
 
@@ -123,13 +123,13 @@ bbstreamer_gzip_writer_new(char *pathname, FILE *file,
  * Write archive content to gzip file.
  */
 static void
-bbstreamer_gzip_writer_content(bbstreamer *streamer,
-							   bbstreamer_member *member, const char *data,
-							   int len, bbstreamer_archive_context context)
+astreamer_gzip_writer_content(astreamer *streamer,
+							  astreamer_member *member, const char *data,
+							  int len, astreamer_archive_context context)
 {
-	bbstreamer_gzip_writer *mystreamer;
+	astreamer_gzip_writer *mystreamer;
 
-	mystreamer = (bbstreamer_gzip_writer *) streamer;
+	mystreamer = (astreamer_gzip_writer *) streamer;
 
 	if (len == 0)
 		return;
@@ -151,16 +151,16 @@ bbstreamer_gzip_writer_content(bbstreamer *streamer,
  *
  * It makes no difference whether we opened the file or the caller did it,
  * because libz provides no way of avoiding a close on the underlying file
- * handle. Notice, however, that bbstreamer_gzip_writer_new() uses dup() to
+ * handle. Notice, however, that astreamer_gzip_writer_new() uses dup() to
  * work around this issue, so that the behavior from the caller's viewpoint
- * is the same as for bbstreamer_plain_writer.
+ * is the same as for astreamer_plain_writer.
  */
 static void
-bbstreamer_gzip_writer_finalize(bbstreamer *streamer)
+astreamer_gzip_writer_finalize(astreamer *streamer)
 {
-	bbstreamer_gzip_writer *mystreamer;
+	astreamer_gzip_writer *mystreamer;
 
-	mystreamer = (bbstreamer_gzip_writer *) streamer;
+	mystreamer = (astreamer_gzip_writer *) streamer;
 
 	errno = 0;					/* in case gzclose() doesn't set it */
 	if (gzclose(mystreamer->gzfile) != 0)
@@ -171,14 +171,14 @@ bbstreamer_gzip_writer_finalize(bbstreamer *streamer)
 }
 
 /*
- * Free memory associated with this bbstreamer.
+ * Free memory associated with this astreamer.
  */
 static void
-bbstreamer_gzip_writer_free(bbstreamer *streamer)
+astreamer_gzip_writer_free(astreamer *streamer)
 {
-	bbstreamer_gzip_writer *mystreamer;
+	astreamer_gzip_writer *mystreamer;
 
-	mystreamer = (bbstreamer_gzip_writer *) streamer;
+	mystreamer = (astreamer_gzip_writer *) streamer;
 
 	Assert(mystreamer->base.bbs_next == NULL);
 	Assert(mystreamer->gzfile == NULL);
@@ -208,18 +208,18 @@ get_gz_error(gzFile gzf)
  * Create a new base backup streamer that performs decompression of gzip
  * compressed blocks.
  */
-bbstreamer *
-bbstreamer_gzip_decompressor_new(bbstreamer *next)
+astreamer *
+astreamer_gzip_decompressor_new(astreamer *next)
 {
 #ifdef HAVE_LIBZ
-	bbstreamer_gzip_decompressor *streamer;
+	astreamer_gzip_decompressor *streamer;
 	z_stream   *zs;
 
 	Assert(next != NULL);
 
-	streamer = palloc0(sizeof(bbstreamer_gzip_decompressor));
-	*((const bbstreamer_ops **) &streamer->base.bbs_ops) =
-		&bbstreamer_gzip_decompressor_ops;
+	streamer = palloc0(sizeof(astreamer_gzip_decompressor));
+	*((const astreamer_ops **) &streamer->base.bbs_ops) =
+		&astreamer_gzip_decompressor_ops;
 
 	streamer->base.bbs_next = next;
 	initStringInfo(&streamer->base.bbs_buffer);
@@ -258,15 +258,15 @@ bbstreamer_gzip_decompressor_new(bbstreamer *next)
  * to the next streamer.
  */
 static void
-bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
-									 bbstreamer_member *member,
-									 const char *data, int len,
-									 bbstreamer_archive_context context)
+astreamer_gzip_decompressor_content(astreamer *streamer,
+									astreamer_member *member,
+									const char *data, int len,
+									astreamer_archive_context context)
 {
-	bbstreamer_gzip_decompressor *mystreamer;
+	astreamer_gzip_decompressor *mystreamer;
 	z_stream   *zs;
 
-	mystreamer = (bbstreamer_gzip_decompressor *) streamer;
+	mystreamer = (astreamer_gzip_decompressor *) streamer;
 
 	zs = &mystreamer->zstream;
 	zs->next_in = (const uint8 *) data;
@@ -301,9 +301,9 @@ bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
 		/* If output buffer is full then pass data to next streamer */
 		if (mystreamer->bytes_written >= mystreamer->base.bbs_buffer.maxlen)
 		{
-			bbstreamer_content(mystreamer->base.bbs_next, member,
-							   mystreamer->base.bbs_buffer.data,
-							   mystreamer->base.bbs_buffer.maxlen, context);
+			astreamer_content(mystreamer->base.bbs_next, member,
+							  mystreamer->base.bbs_buffer.data,
+							  mystreamer->base.bbs_buffer.maxlen, context);
 			mystreamer->bytes_written = 0;
 		}
 	}
@@ -313,31 +313,31 @@ bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
  * End-of-stream processing.
  */
 static void
-bbstreamer_gzip_decompressor_finalize(bbstreamer *streamer)
+astreamer_gzip_decompressor_finalize(astreamer *streamer)
 {
-	bbstreamer_gzip_decompressor *mystreamer;
+	astreamer_gzip_decompressor *mystreamer;
 
-	mystreamer = (bbstreamer_gzip_decompressor *) streamer;
+	mystreamer = (astreamer_gzip_decompressor *) streamer;
 
 	/*
 	 * End of the stream, if there is some pending data in output buffers then
 	 * we must forward it to next streamer.
 	 */
-	bbstreamer_content(mystreamer->base.bbs_next, NULL,
-					   mystreamer->base.bbs_buffer.data,
-					   mystreamer->base.bbs_buffer.maxlen,
-					   BBSTREAMER_UNKNOWN);
+	astreamer_content(mystreamer->base.bbs_next, NULL,
+					  mystreamer->base.bbs_buffer.data,
+					  mystreamer->base.bbs_buffer.maxlen,
+					  ASTREAMER_UNKNOWN);
 
-	bbstreamer_finalize(mystreamer->base.bbs_next);
+	astreamer_finalize(mystreamer->base.bbs_next);
 }
 
 /*
  * Free memory.
  */
 static void
-bbstreamer_gzip_decompressor_free(bbstreamer *streamer)
+astreamer_gzip_decompressor_free(astreamer *streamer)
 {
-	bbstreamer_free(streamer->bbs_next);
+	astreamer_free(streamer->bbs_next);
 	pfree(streamer->bbs_buffer.data);
 	pfree(streamer);
 }

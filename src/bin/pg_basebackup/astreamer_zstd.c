@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * bbstreamer_zstd.c
+ * astreamer_zstd.c
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  src/bin/pg_basebackup/bbstreamer_zstd.c
+ *		  src/bin/pg_basebackup/astreamer_zstd.c
  *-------------------------------------------------------------------------
  */
 
@@ -17,44 +17,44 @@
 #include <zstd.h>
 #endif
 
-#include "bbstreamer.h"
+#include "astreamer.h"
 #include "common/logging.h"
 
 #ifdef USE_ZSTD
 
-typedef struct bbstreamer_zstd_frame
+typedef struct astreamer_zstd_frame
 {
-	bbstreamer	base;
+	astreamer	base;
 
 	ZSTD_CCtx  *cctx;
 	ZSTD_DCtx  *dctx;
 	ZSTD_outBuffer zstd_outBuf;
-} bbstreamer_zstd_frame;
+} astreamer_zstd_frame;
 
-static void bbstreamer_zstd_compressor_content(bbstreamer *streamer,
-											   bbstreamer_member *member,
-											   const char *data, int len,
-											   bbstreamer_archive_context context);
-static void bbstreamer_zstd_compressor_finalize(bbstreamer *streamer);
-static void bbstreamer_zstd_compressor_free(bbstreamer *streamer);
+static void astreamer_zstd_compressor_content(astreamer *streamer,
+											  astreamer_member *member,
+											  const char *data, int len,
+											  astreamer_archive_context context);
+static void astreamer_zstd_compressor_finalize(astreamer *streamer);
+static void astreamer_zstd_compressor_free(astreamer *streamer);
 
-static const bbstreamer_ops bbstreamer_zstd_compressor_ops = {
-	.content = bbstreamer_zstd_compressor_content,
-	.finalize = bbstreamer_zstd_compressor_finalize,
-	.free = bbstreamer_zstd_compressor_free
+static const astreamer_ops astreamer_zstd_compressor_ops = {
+	.content = astreamer_zstd_compressor_content,
+	.finalize = astreamer_zstd_compressor_finalize,
+	.free = astreamer_zstd_compressor_free
 };
 
-static void bbstreamer_zstd_decompressor_content(bbstreamer *streamer,
-												 bbstreamer_member *member,
-												 const char *data, int len,
-												 bbstreamer_archive_context context);
-static void bbstreamer_zstd_decompressor_finalize(bbstreamer *streamer);
-static void bbstreamer_zstd_decompressor_free(bbstreamer *streamer);
+static void astreamer_zstd_decompressor_content(astreamer *streamer,
+												astreamer_member *member,
+												const char *data, int len,
+												astreamer_archive_context context);
+static void astreamer_zstd_decompressor_finalize(astreamer *streamer);
+static void astreamer_zstd_decompressor_free(astreamer *streamer);
 
-static const bbstreamer_ops bbstreamer_zstd_decompressor_ops = {
-	.content = bbstreamer_zstd_decompressor_content,
-	.finalize = bbstreamer_zstd_decompressor_finalize,
-	.free = bbstreamer_zstd_decompressor_free
+static const astreamer_ops astreamer_zstd_decompressor_ops = {
+	.content = astreamer_zstd_decompressor_content,
+	.finalize = astreamer_zstd_decompressor_finalize,
+	.free = astreamer_zstd_decompressor_free
 };
 #endif
 
@@ -62,19 +62,19 @@ static const bbstreamer_ops bbstreamer_zstd_decompressor_ops = {
  * Create a new base backup streamer that performs zstd compression of tar
  * blocks.
  */
-bbstreamer *
-bbstreamer_zstd_compressor_new(bbstreamer *next, pg_compress_specification *compress)
+astreamer *
+astreamer_zstd_compressor_new(astreamer *next, pg_compress_specification *compress)
 {
 #ifdef USE_ZSTD
-	bbstreamer_zstd_frame *streamer;
+	astreamer_zstd_frame *streamer;
 	size_t		ret;
 
 	Assert(next != NULL);
 
-	streamer = palloc0(sizeof(bbstreamer_zstd_frame));
+	streamer = palloc0(sizeof(astreamer_zstd_frame));
 
-	*((const bbstreamer_ops **) &streamer->base.bbs_ops) =
-		&bbstreamer_zstd_compressor_ops;
+	*((const astreamer_ops **) &streamer->base.bbs_ops) =
+		&astreamer_zstd_compressor_ops;
 
 	streamer->base.bbs_next = next;
 	initStringInfo(&streamer->base.bbs_buffer);
@@ -142,12 +142,12 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, pg_compress_specification *comp
  * of output buffer to next streamer and empty the buffer.
  */
 static void
-bbstreamer_zstd_compressor_content(bbstreamer *streamer,
-								   bbstreamer_member *member,
-								   const char *data, int len,
-								   bbstreamer_archive_context context)
+astreamer_zstd_compressor_content(astreamer *streamer,
+								  astreamer_member *member,
+								  const char *data, int len,
+								  astreamer_archive_context context)
 {
-	bbstreamer_zstd_frame *mystreamer = (bbstreamer_zstd_frame *) streamer;
+	astreamer_zstd_frame *mystreamer = (astreamer_zstd_frame *) streamer;
 	ZSTD_inBuffer inBuf = {data, len, 0};
 
 	while (inBuf.pos < inBuf.size)
@@ -162,10 +162,10 @@ bbstreamer_zstd_compressor_content(bbstreamer *streamer,
 		if (mystreamer->zstd_outBuf.size - mystreamer->zstd_outBuf.pos <
 			max_needed)
 		{
-			bbstreamer_content(mystreamer->base.bbs_next, member,
-							   mystreamer->zstd_outBuf.dst,
-							   mystreamer->zstd_outBuf.pos,
-							   context);
+			astreamer_content(mystreamer->base.bbs_next, member,
+							  mystreamer->zstd_outBuf.dst,
+							  mystreamer->zstd_outBuf.pos,
+							  context);
 
 			/* Reset the ZSTD output buffer. */
 			mystreamer->zstd_outBuf.dst = mystreamer->base.bbs_buffer.data;
@@ -187,9 +187,9 @@ bbstreamer_zstd_compressor_content(bbstreamer *streamer,
  * End-of-stream processing.
  */
 static void
-bbstreamer_zstd_compressor_finalize(bbstreamer *streamer)
+astreamer_zstd_compressor_finalize(astreamer *streamer)
 {
-	bbstreamer_zstd_frame *mystreamer = (bbstreamer_zstd_frame *) streamer;
+	astreamer_zstd_frame *mystreamer = (astreamer_zstd_frame *) streamer;
 	size_t		yet_to_flush;
 
 	do
@@ -204,10 +204,10 @@ bbstreamer_zstd_compressor_finalize(bbstreamer *streamer)
 		if (mystreamer->zstd_outBuf.size - mystreamer->zstd_outBuf.pos <
 			max_needed)
 		{
-			bbstreamer_content(mystreamer->base.bbs_next, NULL,
-							   mystreamer->zstd_outBuf.dst,
-							   mystreamer->zstd_outBuf.pos,
-							   BBSTREAMER_UNKNOWN);
+			astreamer_content(mystreamer->base.bbs_next, NULL,
+							  mystreamer->zstd_outBuf.dst,
+							  mystreamer->zstd_outBuf.pos,
+							  ASTREAMER_UNKNOWN);
 
 			/* Reset the ZSTD output buffer. */
 			mystreamer->zstd_outBuf.dst = mystreamer->base.bbs_buffer.data;
@@ -227,23 +227,23 @@ bbstreamer_zstd_compressor_finalize(bbstreamer *streamer)
 
 	/* Make sure to pass any remaining bytes to the next streamer. */
 	if (mystreamer->zstd_outBuf.pos > 0)
-		bbstreamer_content(mystreamer->base.bbs_next, NULL,
-						   mystreamer->zstd_outBuf.dst,
-						   mystreamer->zstd_outBuf.pos,
-						   BBSTREAMER_UNKNOWN);
+		astreamer_content(mystreamer->base.bbs_next, NULL,
+						  mystreamer->zstd_outBuf.dst,
+						  mystreamer->zstd_outBuf.pos,
+						  ASTREAMER_UNKNOWN);
 
-	bbstreamer_finalize(mystreamer->base.bbs_next);
+	astreamer_finalize(mystreamer->base.bbs_next);
 }
 
 /*
  * Free memory.
  */
 static void
-bbstreamer_zstd_compressor_free(bbstreamer *streamer)
+astreamer_zstd_compressor_free(astreamer *streamer)
 {
-	bbstreamer_zstd_frame *mystreamer = (bbstreamer_zstd_frame *) streamer;
+	astreamer_zstd_frame *mystreamer = (astreamer_zstd_frame *) streamer;
 
-	bbstreamer_free(streamer->bbs_next);
+	astreamer_free(streamer->bbs_next);
 	ZSTD_freeCCtx(mystreamer->cctx);
 	pfree(streamer->bbs_buffer.data);
 	pfree(streamer);
@@ -254,17 +254,17 @@ bbstreamer_zstd_compressor_free(bbstreamer *streamer)
  * Create a new base backup streamer that performs decompression of zstd
  * compressed blocks.
  */
-bbstreamer *
-bbstreamer_zstd_decompressor_new(bbstreamer *next)
+astreamer *
+astreamer_zstd_decompressor_new(astreamer *next)
 {
 #ifdef USE_ZSTD
-	bbstreamer_zstd_frame *streamer;
+	astreamer_zstd_frame *streamer;
 
 	Assert(next != NULL);
 
-	streamer = palloc0(sizeof(bbstreamer_zstd_frame));
-	*((const bbstreamer_ops **) &streamer->base.bbs_ops) =
-		&bbstreamer_zstd_decompressor_ops;
+	streamer = palloc0(sizeof(astreamer_zstd_frame));
+	*((const astreamer_ops **) &streamer->base.bbs_ops) =
+		&astreamer_zstd_decompressor_ops;
 
 	streamer->base.bbs_next = next;
 	initStringInfo(&streamer->base.bbs_buffer);
@@ -293,12 +293,12 @@ bbstreamer_zstd_decompressor_new(bbstreamer *next)
  * to the next streamer.
  */
 static void
-bbstreamer_zstd_decompressor_content(bbstreamer *streamer,
-									 bbstreamer_member *member,
-									 const char *data, int len,
-									 bbstreamer_archive_context context)
+astreamer_zstd_decompressor_content(astreamer *streamer,
+									astreamer_member *member,
+									const char *data, int len,
+									astreamer_archive_context context)
 {
-	bbstreamer_zstd_frame *mystreamer = (bbstreamer_zstd_frame *) streamer;
+	astreamer_zstd_frame *mystreamer = (astreamer_zstd_frame *) streamer;
 	ZSTD_inBuffer inBuf = {data, len, 0};
 
 	while (inBuf.pos < inBuf.size)
@@ -311,10 +311,10 @@ bbstreamer_zstd_decompressor_content(bbstreamer *streamer,
 		 */
 		if (mystreamer->zstd_outBuf.pos >= mystreamer->zstd_outBuf.size)
 		{
-			bbstreamer_content(mystreamer->base.bbs_next, member,
-							   mystreamer->zstd_outBuf.dst,
-							   mystreamer->zstd_outBuf.pos,
-							   context);
+			astreamer_content(mystreamer->base.bbs_next, member,
+							  mystreamer->zstd_outBuf.dst,
+							  mystreamer->zstd_outBuf.pos,
+							  context);
 
 			/* Reset the ZSTD output buffer. */
 			mystreamer->zstd_outBuf.dst = mystreamer->base.bbs_buffer.data;
@@ -335,32 +335,32 @@ bbstreamer_zstd_decompressor_content(bbstreamer *streamer,
  * End-of-stream processing.
  */
 static void
-bbstreamer_zstd_decompressor_finalize(bbstreamer *streamer)
+astreamer_zstd_decompressor_finalize(astreamer *streamer)
 {
-	bbstreamer_zstd_frame *mystreamer = (bbstreamer_zstd_frame *) streamer;
+	astreamer_zstd_frame *mystreamer = (astreamer_zstd_frame *) streamer;
 
 	/*
 	 * End of the stream, if there is some pending data in output buffers then
 	 * we must forward it to next streamer.
 	 */
 	if (mystreamer->zstd_outBuf.pos > 0)
-		bbstreamer_content(mystreamer->base.bbs_next, NULL,
-						   mystreamer->base.bbs_buffer.data,
-						   mystreamer->base.bbs_buffer.maxlen,
-						   BBSTREAMER_UNKNOWN);
+		astreamer_content(mystreamer->base.bbs_next, NULL,
+						  mystreamer->base.bbs_buffer.data,
+						  mystreamer->base.bbs_buffer.maxlen,
+						  ASTREAMER_UNKNOWN);
 
-	bbstreamer_finalize(mystreamer->base.bbs_next);
+	astreamer_finalize(mystreamer->base.bbs_next);
 }
 
 /*
  * Free memory.
  */
 static void
-bbstreamer_zstd_decompressor_free(bbstreamer *streamer)
+astreamer_zstd_decompressor_free(astreamer *streamer)
 {
-	bbstreamer_zstd_frame *mystreamer = (bbstreamer_zstd_frame *) streamer;
+	astreamer_zstd_frame *mystreamer = (astreamer_zstd_frame *) streamer;
 
-	bbstreamer_free(streamer->bbs_next);
+	astreamer_free(streamer->bbs_next);
 	ZSTD_freeDCtx(mystreamer->dctx);
 	pfree(streamer->bbs_buffer.data);
 	pfree(streamer);

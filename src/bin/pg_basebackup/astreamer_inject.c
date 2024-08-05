@@ -1,51 +1,51 @@
 /*-------------------------------------------------------------------------
  *
- * bbstreamer_inject.c
+ * astreamer_inject.c
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  src/bin/pg_basebackup/bbstreamer_inject.c
+ *		  src/bin/pg_basebackup/astreamer_inject.c
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
 
-#include "bbstreamer.h"
+#include "astreamer.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 
-typedef struct bbstreamer_recovery_injector
+typedef struct astreamer_recovery_injector
 {
-	bbstreamer	base;
+	astreamer	base;
 	bool		skip_file;
 	bool		is_recovery_guc_supported;
 	bool		is_postgresql_auto_conf;
 	bool		found_postgresql_auto_conf;
 	PQExpBuffer recoveryconfcontents;
-	bbstreamer_member member;
-} bbstreamer_recovery_injector;
+	astreamer_member member;
+} astreamer_recovery_injector;
 
-static void bbstreamer_recovery_injector_content(bbstreamer *streamer,
-												 bbstreamer_member *member,
-												 const char *data, int len,
-												 bbstreamer_archive_context context);
-static void bbstreamer_recovery_injector_finalize(bbstreamer *streamer);
-static void bbstreamer_recovery_injector_free(bbstreamer *streamer);
+static void astreamer_recovery_injector_content(astreamer *streamer,
+												astreamer_member *member,
+												const char *data, int len,
+												astreamer_archive_context context);
+static void astreamer_recovery_injector_finalize(astreamer *streamer);
+static void astreamer_recovery_injector_free(astreamer *streamer);
 
-static const bbstreamer_ops bbstreamer_recovery_injector_ops = {
-	.content = bbstreamer_recovery_injector_content,
-	.finalize = bbstreamer_recovery_injector_finalize,
-	.free = bbstreamer_recovery_injector_free
+static const astreamer_ops astreamer_recovery_injector_ops = {
+	.content = astreamer_recovery_injector_content,
+	.finalize = astreamer_recovery_injector_finalize,
+	.free = astreamer_recovery_injector_free
 };
 
 /*
- * Create a bbstreamer that can edit recoverydata into an archive stream.
+ * Create a astreamer that can edit recoverydata into an archive stream.
  *
- * The input should be a series of typed chunks (not BBSTREAMER_UNKNOWN) as
- * per the conventions described in bbstreamer.h; the chunks forwarded to
- * the next bbstreamer will be similarly typed, but the
- * BBSTREAMER_MEMBER_HEADER chunks may be zero-length in cases where we've
+ * The input should be a series of typed chunks (not ASTREAMER_UNKNOWN) as
+ * per the conventions described in astreamer.h; the chunks forwarded to
+ * the next astreamer will be similarly typed, but the
+ * ASTREAMER_MEMBER_HEADER chunks may be zero-length in cases where we've
  * edited the archive stream.
  *
  * Our goal is to do one of the following three things with the content passed
@@ -61,16 +61,16 @@ static const bbstreamer_ops bbstreamer_recovery_injector_ops = {
  * zero-length standby.signal file, dropping any file with that name from
  * the archive.
  */
-bbstreamer *
-bbstreamer_recovery_injector_new(bbstreamer *next,
-								 bool is_recovery_guc_supported,
-								 PQExpBuffer recoveryconfcontents)
+astreamer *
+astreamer_recovery_injector_new(astreamer *next,
+								bool is_recovery_guc_supported,
+								PQExpBuffer recoveryconfcontents)
 {
-	bbstreamer_recovery_injector *streamer;
+	astreamer_recovery_injector *streamer;
 
-	streamer = palloc0(sizeof(bbstreamer_recovery_injector));
-	*((const bbstreamer_ops **) &streamer->base.bbs_ops) =
-		&bbstreamer_recovery_injector_ops;
+	streamer = palloc0(sizeof(astreamer_recovery_injector));
+	*((const astreamer_ops **) &streamer->base.bbs_ops) =
+		&astreamer_recovery_injector_ops;
 	streamer->base.bbs_next = next;
 	streamer->is_recovery_guc_supported = is_recovery_guc_supported;
 	streamer->recoveryconfcontents = recoveryconfcontents;
@@ -82,21 +82,21 @@ bbstreamer_recovery_injector_new(bbstreamer *next,
  * Handle each chunk of tar content while injecting recovery configuration.
  */
 static void
-bbstreamer_recovery_injector_content(bbstreamer *streamer,
-									 bbstreamer_member *member,
-									 const char *data, int len,
-									 bbstreamer_archive_context context)
+astreamer_recovery_injector_content(astreamer *streamer,
+									astreamer_member *member,
+									const char *data, int len,
+									astreamer_archive_context context)
 {
-	bbstreamer_recovery_injector *mystreamer;
+	astreamer_recovery_injector *mystreamer;
 
-	mystreamer = (bbstreamer_recovery_injector *) streamer;
-	Assert(member != NULL || context == BBSTREAMER_ARCHIVE_TRAILER);
+	mystreamer = (astreamer_recovery_injector *) streamer;
+	Assert(member != NULL || context == ASTREAMER_ARCHIVE_TRAILER);
 
 	switch (context)
 	{
-		case BBSTREAMER_MEMBER_HEADER:
+		case ASTREAMER_MEMBER_HEADER:
 			/* Must copy provided data so we have the option to modify it. */
-			memcpy(&mystreamer->member, member, sizeof(bbstreamer_member));
+			memcpy(&mystreamer->member, member, sizeof(astreamer_member));
 
 			/*
 			 * On v12+, skip standby.signal and edit postgresql.auto.conf; on
@@ -119,8 +119,8 @@ bbstreamer_recovery_injector_content(bbstreamer *streamer,
 
 					/*
 					 * Zap data and len because the archive header is no
-					 * longer valid; some subsequent bbstreamer must
-					 * regenerate it if it's necessary.
+					 * longer valid; some subsequent astreamer must regenerate
+					 * it if it's necessary.
 					 */
 					data = NULL;
 					len = 0;
@@ -135,26 +135,26 @@ bbstreamer_recovery_injector_content(bbstreamer *streamer,
 				return;
 			break;
 
-		case BBSTREAMER_MEMBER_CONTENTS:
+		case ASTREAMER_MEMBER_CONTENTS:
 			/* Do not forward if the file is to be skipped. */
 			if (mystreamer->skip_file)
 				return;
 			break;
 
-		case BBSTREAMER_MEMBER_TRAILER:
+		case ASTREAMER_MEMBER_TRAILER:
 			/* Do not forward it the file is to be skipped. */
 			if (mystreamer->skip_file)
 				return;
 
 			/* Append provided content to whatever we already sent. */
 			if (mystreamer->is_postgresql_auto_conf)
-				bbstreamer_content(mystreamer->base.bbs_next, member,
-								   mystreamer->recoveryconfcontents->data,
-								   mystreamer->recoveryconfcontents->len,
-								   BBSTREAMER_MEMBER_CONTENTS);
+				astreamer_content(mystreamer->base.bbs_next, member,
+								  mystreamer->recoveryconfcontents->data,
+								  mystreamer->recoveryconfcontents->len,
+								  ASTREAMER_MEMBER_CONTENTS);
 			break;
 
-		case BBSTREAMER_ARCHIVE_TRAILER:
+		case ASTREAMER_ARCHIVE_TRAILER:
 			if (mystreamer->is_recovery_guc_supported)
 			{
 				/*
@@ -163,22 +163,22 @@ bbstreamer_recovery_injector_content(bbstreamer *streamer,
 				 * member now.
 				 */
 				if (!mystreamer->found_postgresql_auto_conf)
-					bbstreamer_inject_file(mystreamer->base.bbs_next,
-										   "postgresql.auto.conf",
-										   mystreamer->recoveryconfcontents->data,
-										   mystreamer->recoveryconfcontents->len);
+					astreamer_inject_file(mystreamer->base.bbs_next,
+										  "postgresql.auto.conf",
+										  mystreamer->recoveryconfcontents->data,
+										  mystreamer->recoveryconfcontents->len);
 
 				/* Inject empty standby.signal file. */
-				bbstreamer_inject_file(mystreamer->base.bbs_next,
-									   "standby.signal", "", 0);
+				astreamer_inject_file(mystreamer->base.bbs_next,
+									  "standby.signal", "", 0);
 			}
 			else
 			{
 				/* Inject recovery.conf file with specified contents. */
-				bbstreamer_inject_file(mystreamer->base.bbs_next,
-									   "recovery.conf",
-									   mystreamer->recoveryconfcontents->data,
-									   mystreamer->recoveryconfcontents->len);
+				astreamer_inject_file(mystreamer->base.bbs_next,
+									  "recovery.conf",
+									  mystreamer->recoveryconfcontents->data,
+									  mystreamer->recoveryconfcontents->len);
 			}
 
 			/* Nothing to do here. */
@@ -189,26 +189,26 @@ bbstreamer_recovery_injector_content(bbstreamer *streamer,
 			pg_fatal("unexpected state while injecting recovery settings");
 	}
 
-	bbstreamer_content(mystreamer->base.bbs_next, &mystreamer->member,
-					   data, len, context);
+	astreamer_content(mystreamer->base.bbs_next, &mystreamer->member,
+					  data, len, context);
 }
 
 /*
- * End-of-stream processing for this bbstreamer.
+ * End-of-stream processing for this astreamer.
  */
 static void
-bbstreamer_recovery_injector_finalize(bbstreamer *streamer)
+astreamer_recovery_injector_finalize(astreamer *streamer)
 {
-	bbstreamer_finalize(streamer->bbs_next);
+	astreamer_finalize(streamer->bbs_next);
 }
 
 /*
- * Free memory associated with this bbstreamer.
+ * Free memory associated with this astreamer.
  */
 static void
-bbstreamer_recovery_injector_free(bbstreamer *streamer)
+astreamer_recovery_injector_free(astreamer *streamer)
 {
-	bbstreamer_free(streamer->bbs_next);
+	astreamer_free(streamer->bbs_next);
 	pfree(streamer);
 }
 
@@ -216,10 +216,10 @@ bbstreamer_recovery_injector_free(bbstreamer *streamer)
  * Inject a member into the archive with specified contents.
  */
 void
-bbstreamer_inject_file(bbstreamer *streamer, char *pathname, char *data,
-					   int len)
+astreamer_inject_file(astreamer *streamer, char *pathname, char *data,
+					  int len)
 {
-	bbstreamer_member member;
+	astreamer_member member;
 
 	strlcpy(member.pathname, pathname, MAXPGPATH);
 	member.size = len;
@@ -238,12 +238,12 @@ bbstreamer_inject_file(bbstreamer *streamer, char *pathname, char *data,
 	/*
 	 * We don't know here how to generate valid member headers and trailers
 	 * for the archiving format in use, so if those are needed, some successor
-	 * bbstreamer will have to generate them using the data from 'member'.
+	 * astreamer will have to generate them using the data from 'member'.
 	 */
-	bbstreamer_content(streamer, &member, NULL, 0,
-					   BBSTREAMER_MEMBER_HEADER);
-	bbstreamer_content(streamer, &member, data, len,
-					   BBSTREAMER_MEMBER_CONTENTS);
-	bbstreamer_content(streamer, &member, NULL, 0,
-					   BBSTREAMER_MEMBER_TRAILER);
+	astreamer_content(streamer, &member, NULL, 0,
+					  ASTREAMER_MEMBER_HEADER);
+	astreamer_content(streamer, &member, data, len,
+					  ASTREAMER_MEMBER_CONTENTS);
+	astreamer_content(streamer, &member, NULL, 0,
+					  ASTREAMER_MEMBER_TRAILER);
 }

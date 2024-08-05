@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * bbstreamer_file.c
+ * astreamer_file.c
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  src/bin/pg_basebackup/bbstreamer_file.c
+ *		  src/bin/pg_basebackup/astreamer_file.c
  *-------------------------------------------------------------------------
  */
 
@@ -13,60 +13,60 @@
 
 #include <unistd.h>
 
-#include "bbstreamer.h"
+#include "astreamer.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 #include "common/string.h"
 
-typedef struct bbstreamer_plain_writer
+typedef struct astreamer_plain_writer
 {
-	bbstreamer	base;
+	astreamer	base;
 	char	   *pathname;
 	FILE	   *file;
 	bool		should_close_file;
-} bbstreamer_plain_writer;
+} astreamer_plain_writer;
 
-typedef struct bbstreamer_extractor
+typedef struct astreamer_extractor
 {
-	bbstreamer	base;
+	astreamer	base;
 	char	   *basepath;
 	const char *(*link_map) (const char *);
 	void		(*report_output_file) (const char *);
 	char		filename[MAXPGPATH];
 	FILE	   *file;
-} bbstreamer_extractor;
+} astreamer_extractor;
 
-static void bbstreamer_plain_writer_content(bbstreamer *streamer,
-											bbstreamer_member *member,
-											const char *data, int len,
-											bbstreamer_archive_context context);
-static void bbstreamer_plain_writer_finalize(bbstreamer *streamer);
-static void bbstreamer_plain_writer_free(bbstreamer *streamer);
+static void astreamer_plain_writer_content(astreamer *streamer,
+										   astreamer_member *member,
+										   const char *data, int len,
+										   astreamer_archive_context context);
+static void astreamer_plain_writer_finalize(astreamer *streamer);
+static void astreamer_plain_writer_free(astreamer *streamer);
 
-static const bbstreamer_ops bbstreamer_plain_writer_ops = {
-	.content = bbstreamer_plain_writer_content,
-	.finalize = bbstreamer_plain_writer_finalize,
-	.free = bbstreamer_plain_writer_free
+static const astreamer_ops astreamer_plain_writer_ops = {
+	.content = astreamer_plain_writer_content,
+	.finalize = astreamer_plain_writer_finalize,
+	.free = astreamer_plain_writer_free
 };
 
-static void bbstreamer_extractor_content(bbstreamer *streamer,
-										 bbstreamer_member *member,
-										 const char *data, int len,
-										 bbstreamer_archive_context context);
-static void bbstreamer_extractor_finalize(bbstreamer *streamer);
-static void bbstreamer_extractor_free(bbstreamer *streamer);
+static void astreamer_extractor_content(astreamer *streamer,
+										astreamer_member *member,
+										const char *data, int len,
+										astreamer_archive_context context);
+static void astreamer_extractor_finalize(astreamer *streamer);
+static void astreamer_extractor_free(astreamer *streamer);
 static void extract_directory(const char *filename, mode_t mode);
 static void extract_link(const char *filename, const char *linktarget);
 static FILE *create_file_for_extract(const char *filename, mode_t mode);
 
-static const bbstreamer_ops bbstreamer_extractor_ops = {
-	.content = bbstreamer_extractor_content,
-	.finalize = bbstreamer_extractor_finalize,
-	.free = bbstreamer_extractor_free
+static const astreamer_ops astreamer_extractor_ops = {
+	.content = astreamer_extractor_content,
+	.finalize = astreamer_extractor_finalize,
+	.free = astreamer_extractor_free
 };
 
 /*
- * Create a bbstreamer that just writes data to a file.
+ * Create a astreamer that just writes data to a file.
  *
  * The caller must specify a pathname and may specify a file. The pathname is
  * used for error-reporting purposes either way. If file is NULL, the pathname
@@ -74,14 +74,14 @@ static const bbstreamer_ops bbstreamer_extractor_ops = {
  * for writing and closed when done. If file is not NULL, the data is written
  * there.
  */
-bbstreamer *
-bbstreamer_plain_writer_new(char *pathname, FILE *file)
+astreamer *
+astreamer_plain_writer_new(char *pathname, FILE *file)
 {
-	bbstreamer_plain_writer *streamer;
+	astreamer_plain_writer *streamer;
 
-	streamer = palloc0(sizeof(bbstreamer_plain_writer));
-	*((const bbstreamer_ops **) &streamer->base.bbs_ops) =
-		&bbstreamer_plain_writer_ops;
+	streamer = palloc0(sizeof(astreamer_plain_writer));
+	*((const astreamer_ops **) &streamer->base.bbs_ops) =
+		&astreamer_plain_writer_ops;
 
 	streamer->pathname = pstrdup(pathname);
 	streamer->file = file;
@@ -101,13 +101,13 @@ bbstreamer_plain_writer_new(char *pathname, FILE *file)
  * Write archive content to file.
  */
 static void
-bbstreamer_plain_writer_content(bbstreamer *streamer,
-								bbstreamer_member *member, const char *data,
-								int len, bbstreamer_archive_context context)
+astreamer_plain_writer_content(astreamer *streamer,
+							   astreamer_member *member, const char *data,
+							   int len, astreamer_archive_context context)
 {
-	bbstreamer_plain_writer *mystreamer;
+	astreamer_plain_writer *mystreamer;
 
-	mystreamer = (bbstreamer_plain_writer *) streamer;
+	mystreamer = (astreamer_plain_writer *) streamer;
 
 	if (len == 0)
 		return;
@@ -128,11 +128,11 @@ bbstreamer_plain_writer_content(bbstreamer *streamer,
  * the file if we opened it, but not if the caller provided it.
  */
 static void
-bbstreamer_plain_writer_finalize(bbstreamer *streamer)
+astreamer_plain_writer_finalize(astreamer *streamer)
 {
-	bbstreamer_plain_writer *mystreamer;
+	astreamer_plain_writer *mystreamer;
 
-	mystreamer = (bbstreamer_plain_writer *) streamer;
+	mystreamer = (astreamer_plain_writer *) streamer;
 
 	if (mystreamer->should_close_file && fclose(mystreamer->file) != 0)
 		pg_fatal("could not close file \"%s\": %m",
@@ -143,14 +143,14 @@ bbstreamer_plain_writer_finalize(bbstreamer *streamer)
 }
 
 /*
- * Free memory associated with this bbstreamer.
+ * Free memory associated with this astreamer.
  */
 static void
-bbstreamer_plain_writer_free(bbstreamer *streamer)
+astreamer_plain_writer_free(astreamer *streamer)
 {
-	bbstreamer_plain_writer *mystreamer;
+	astreamer_plain_writer *mystreamer;
 
-	mystreamer = (bbstreamer_plain_writer *) streamer;
+	mystreamer = (astreamer_plain_writer *) streamer;
 
 	Assert(!mystreamer->should_close_file);
 	Assert(mystreamer->base.bbs_next == NULL);
@@ -160,13 +160,13 @@ bbstreamer_plain_writer_free(bbstreamer *streamer)
 }
 
 /*
- * Create a bbstreamer that extracts an archive.
+ * Create a astreamer that extracts an archive.
  *
  * All pathnames in the archive are interpreted relative to basepath.
  *
- * Unlike e.g. bbstreamer_plain_writer_new() we can't do anything useful here
+ * Unlike e.g. astreamer_plain_writer_new() we can't do anything useful here
  * with untyped chunks; we need typed chunks which follow the rules described
- * in bbstreamer.h. Assuming we have that, we don't need to worry about the
+ * in astreamer.h. Assuming we have that, we don't need to worry about the
  * original archive format; it's enough to just look at the member information
  * provided and write to the corresponding file.
  *
@@ -179,16 +179,16 @@ bbstreamer_plain_writer_free(bbstreamer *streamer)
  * new output file. The pathname to that file is passed as an argument. If
  * NULL, the call is skipped.
  */
-bbstreamer *
-bbstreamer_extractor_new(const char *basepath,
-						 const char *(*link_map) (const char *),
-						 void (*report_output_file) (const char *))
+astreamer *
+astreamer_extractor_new(const char *basepath,
+						const char *(*link_map) (const char *),
+						void (*report_output_file) (const char *))
 {
-	bbstreamer_extractor *streamer;
+	astreamer_extractor *streamer;
 
-	streamer = palloc0(sizeof(bbstreamer_extractor));
-	*((const bbstreamer_ops **) &streamer->base.bbs_ops) =
-		&bbstreamer_extractor_ops;
+	streamer = palloc0(sizeof(astreamer_extractor));
+	*((const astreamer_ops **) &streamer->base.bbs_ops) =
+		&astreamer_extractor_ops;
 	streamer->basepath = pstrdup(basepath);
 	streamer->link_map = link_map;
 	streamer->report_output_file = report_output_file;
@@ -200,19 +200,19 @@ bbstreamer_extractor_new(const char *basepath,
  * Extract archive contents to the filesystem.
  */
 static void
-bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
-							 const char *data, int len,
-							 bbstreamer_archive_context context)
+astreamer_extractor_content(astreamer *streamer, astreamer_member *member,
+							const char *data, int len,
+							astreamer_archive_context context)
 {
-	bbstreamer_extractor *mystreamer = (bbstreamer_extractor *) streamer;
+	astreamer_extractor *mystreamer = (astreamer_extractor *) streamer;
 	int			fnamelen;
 
-	Assert(member != NULL || context == BBSTREAMER_ARCHIVE_TRAILER);
-	Assert(context != BBSTREAMER_UNKNOWN);
+	Assert(member != NULL || context == ASTREAMER_ARCHIVE_TRAILER);
+	Assert(context != ASTREAMER_UNKNOWN);
 
 	switch (context)
 	{
-		case BBSTREAMER_MEMBER_HEADER:
+		case ASTREAMER_MEMBER_HEADER:
 			Assert(mystreamer->file == NULL);
 
 			/* Prepend basepath. */
@@ -245,7 +245,7 @@ bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
 				mystreamer->report_output_file(mystreamer->filename);
 			break;
 
-		case BBSTREAMER_MEMBER_CONTENTS:
+		case ASTREAMER_MEMBER_CONTENTS:
 			if (mystreamer->file == NULL)
 				break;
 
@@ -260,14 +260,14 @@ bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
 			}
 			break;
 
-		case BBSTREAMER_MEMBER_TRAILER:
+		case ASTREAMER_MEMBER_TRAILER:
 			if (mystreamer->file == NULL)
 				break;
 			fclose(mystreamer->file);
 			mystreamer->file = NULL;
 			break;
 
-		case BBSTREAMER_ARCHIVE_TRAILER:
+		case ASTREAMER_ARCHIVE_TRAILER:
 			break;
 
 		default:
@@ -375,10 +375,10 @@ create_file_for_extract(const char *filename, mode_t mode)
  * There's nothing to do here but sanity checking.
  */
 static void
-bbstreamer_extractor_finalize(bbstreamer *streamer)
+astreamer_extractor_finalize(astreamer *streamer)
 {
-	bbstreamer_extractor *mystreamer PG_USED_FOR_ASSERTS_ONLY
-	= (bbstreamer_extractor *) streamer;
+	astreamer_extractor *mystreamer PG_USED_FOR_ASSERTS_ONLY
+	= (astreamer_extractor *) streamer;
 
 	Assert(mystreamer->file == NULL);
 }
@@ -387,9 +387,9 @@ bbstreamer_extractor_finalize(bbstreamer *streamer)
  * Free memory.
  */
 static void
-bbstreamer_extractor_free(bbstreamer *streamer)
+astreamer_extractor_free(astreamer *streamer)
 {
-	bbstreamer_extractor *mystreamer = (bbstreamer_extractor *) streamer;
+	astreamer_extractor *mystreamer = (astreamer_extractor *) streamer;
 
 	pfree(mystreamer->basepath);
 	pfree(mystreamer);

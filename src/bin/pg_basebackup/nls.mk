@@ -1,12 +1,12 @@
 # src/bin/pg_basebackup/nls.mk
 CATALOG_NAME     = pg_basebackup
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
-                   bbstreamer_file.c \
-                   bbstreamer_gzip.c \
-                   bbstreamer_inject.c \
-                   bbstreamer_lz4.c \
-                   bbstreamer_tar.c \
-                   bbstreamer_zstd.c \
+                   astreamer_file.c \
+                   astreamer_gzip.c \
+                   astreamer_inject.c \
+                   astreamer_lz4.c \
+                   astreamer_tar.c \
+                   astreamer_zstd.c \
                    pg_basebackup.c \
                    pg_createsubscriber.c \
                    pg_receivewal.c \
