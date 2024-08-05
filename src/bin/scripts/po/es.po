@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-10-03 07:20+0000\n"
+"POT-Creation-Date: 2024-08-01 12:20+0000\n"
 "PO-Revision-Date: 2023-10-03 16:25+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -100,12 +100,22 @@ msgstr "el valor «%s» no es válido para la opción %s"
 msgid "%s must be in range %d..%d"
 msgstr "%s debe estar en el rango %d..%d"
 
-#: ../../fe_utils/parallel_slot.c:299
+#: ../../fe_utils/parallel_slot.c:317
 #, c-format
-msgid "too many jobs for this platform"
-msgstr "demasiados procesos para esta plataforma"
+msgid "too many jobs for this platform: %d"
+msgstr "demasiados procesos para esta plataforma: %d"
 
-#: ../../fe_utils/parallel_slot.c:520
+#: ../../fe_utils/parallel_slot.c:326
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "descriptor de archivo para socket fuera de rango para select(): %d"
+
+#: ../../fe_utils/parallel_slot.c:328
+#, c-format
+msgid "Try fewer jobs."
+msgstr "Intente con menos trabajos."
+
+#: ../../fe_utils/parallel_slot.c:553
 #, c-format
 msgid "processing of database \"%s\" failed: %s"
 msgstr "falló el procesamiento de la base de datos «%s»: %s"

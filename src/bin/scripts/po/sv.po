@@ -1,5 +1,5 @@
 # Swedish message translation file for postgresql
-# Dennis Björklund <db@zigo.dhs.org>, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Dennis Björklund <db@zigo.dhs.org>, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 # Peter Eisentraut <peter_e@gmx.net>, 2013.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-23 02:50+0000\n"
-"PO-Revision-Date: 2023-08-02 07:51+0200\n"
+"POT-Creation-Date: 2024-07-13 16:08+0000\n"
+"PO-Revision-Date: 2024-07-12 22:17+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -94,12 +94,22 @@ msgstr "ogiltigt värde \"%s\" för flaggan \"%s\""
 msgid "%s must be in range %d..%d"
 msgstr "%s måste vara i intervallet %d..%d"
 
-#: ../../fe_utils/parallel_slot.c:299
+#: ../../fe_utils/parallel_slot.c:317
 #, c-format
-msgid "too many jobs for this platform"
-msgstr "för många jobb för denna plattform"
+msgid "too many jobs for this platform: %d"
+msgstr "för många jobb för denna plattform: %d"
 
-#: ../../fe_utils/parallel_slot.c:520
+#: ../../fe_utils/parallel_slot.c:326
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "deskriptor-index utanför sitt intervall för select(): %d"
+
+#: ../../fe_utils/parallel_slot.c:328
+#, c-format
+msgid "Try fewer jobs."
+msgstr "Försök med färre job."
+
+#: ../../fe_utils/parallel_slot.c:553
 #, c-format
 msgid "processing of database \"%s\" failed: %s"
 msgstr "processande av databas \"%s\" misslyckades: %s"
@@ -190,18 +200,18 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:265 createdb.c:288 createuser.c:415 dropdb.c:172 dropuser.c:170
-#: pg_isready.c:226 reindexdb.c:750 vacuumdb.c:1150
+#: pg_isready.c:226 reindexdb.c:750 vacuumdb.c:1156
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: clusterdb.c:266 reindexdb.c:751 vacuumdb.c:1151
+#: clusterdb.c:266 reindexdb.c:751 vacuumdb.c:1157
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [FLAGGA]... [DBNAMN]\n"
 
 #: clusterdb.c:267 createdb.c:290 createuser.c:417 dropdb.c:174 dropuser.c:172
-#: pg_isready.c:229 reindexdb.c:752 vacuumdb.c:1152
+#: pg_isready.c:229 reindexdb.c:752 vacuumdb.c:1158
 #, c-format
 msgid ""
 "\n"
@@ -251,7 +261,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                visa denna hjälp, avsluta sedan\n"
 
 #: clusterdb.c:276 createdb.c:306 createuser.c:448 dropdb.c:181 dropuser.c:179
-#: pg_isready.c:235 reindexdb.c:767 vacuumdb.c:1181
+#: pg_isready.c:235 reindexdb.c:767 vacuumdb.c:1187
 #, c-format
 msgid ""
 "\n"
@@ -260,32 +270,32 @@ msgstr ""
 "\n"
 "Flaggor för anslutning:\n"
 
-#: clusterdb.c:277 createuser.c:449 dropdb.c:182 dropuser.c:180 vacuumdb.c:1182
+#: clusterdb.c:277 createuser.c:449 dropdb.c:182 dropuser.c:180 vacuumdb.c:1188
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=VÄRDNAMN       databasens värdnamn eller socketkatalog\n"
 
-#: clusterdb.c:278 createuser.c:450 dropdb.c:183 dropuser.c:181 vacuumdb.c:1183
+#: clusterdb.c:278 createuser.c:450 dropdb.c:183 dropuser.c:181 vacuumdb.c:1189
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           databasserverns port\n"
 
-#: clusterdb.c:279 dropdb.c:184 vacuumdb.c:1184
+#: clusterdb.c:279 dropdb.c:184 vacuumdb.c:1190
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=ANVÄNDARE  användarnamn att ansluta som\n"
 
-#: clusterdb.c:280 createuser.c:452 dropdb.c:185 dropuser.c:183 vacuumdb.c:1185
+#: clusterdb.c:280 createuser.c:452 dropdb.c:185 dropuser.c:183 vacuumdb.c:1191
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         fråga ej efter lösenord\n"
 
-#: clusterdb.c:281 createuser.c:453 dropdb.c:186 dropuser.c:184 vacuumdb.c:1186
+#: clusterdb.c:281 createuser.c:453 dropdb.c:186 dropuser.c:184 vacuumdb.c:1192
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            framtvinga fråga om lösenord\n"
 
-#: clusterdb.c:282 dropdb.c:187 vacuumdb.c:1187
+#: clusterdb.c:282 dropdb.c:187 vacuumdb.c:1193
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAMN   annat val av underhållsdatabas\n"
@@ -300,7 +310,7 @@ msgstr ""
 "Läs beskrivningen av SQL-kommandot CLUSTER för detaljer.\n"
 
 #: clusterdb.c:284 createdb.c:314 createuser.c:454 dropdb.c:188 dropuser.c:185
-#: pg_isready.c:240 reindexdb.c:775 vacuumdb.c:1189
+#: pg_isready.c:240 reindexdb.c:775 vacuumdb.c:1195
 #, c-format
 msgid ""
 "\n"
@@ -310,7 +320,7 @@ msgstr ""
 "Rapportera fel till <%s>.\n"
 
 #: clusterdb.c:285 createdb.c:315 createuser.c:455 dropdb.c:189 dropuser.c:186
-#: pg_isready.c:241 reindexdb.c:776 vacuumdb.c:1190
+#: pg_isready.c:241 reindexdb.c:776 vacuumdb.c:1196
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "hemsida för %s: <%s>\n"
@@ -1093,17 +1103,17 @@ msgstr "%s: processar databasen \"%s\": %s\n"
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: städar databasen \"%s\".\n"
 
-#: vacuumdb.c:1138
+#: vacuumdb.c:1144
 #, c-format
 msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "städning av tabell \"%s\" i databasen \"%s\" misslyckades: %s"
 
-#: vacuumdb.c:1141
+#: vacuumdb.c:1147
 #, c-format
 msgid "vacuuming of database \"%s\" failed: %s"
 msgstr "städning av databasen \"%s\" misslyckades: %s"
 
-#: vacuumdb.c:1149
+#: vacuumdb.c:1155
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -1112,134 +1122,134 @@ msgstr ""
 "%s städar och analyserar en PostgreSQL-databas.\n"
 "\n"
 
-#: vacuumdb.c:1153
+#: vacuumdb.c:1159
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       städa i alla databaser\n"
 
-#: vacuumdb.c:1154
+#: vacuumdb.c:1160
 #, c-format
 msgid "      --buffer-usage-limit=SIZE   size of ring buffer used for vacuum\n"
 msgstr "      --buffer-usage-limit=STORLEK storlek på ringbuffert som används vid städning\n"
 
-#: vacuumdb.c:1155
+#: vacuumdb.c:1161
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=DBNAMN             databas att städa i\n"
 
-#: vacuumdb.c:1156
+#: vacuumdb.c:1162
 #, c-format
 msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
 msgstr "      --disable-page-skipping     stäng av alla sidöverhoppande beteeenden\n"
 
-#: vacuumdb.c:1157
+#: vacuumdb.c:1163
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      visa kommandon som skickas till servern\n"
 
-#: vacuumdb.c:1158
+#: vacuumdb.c:1164
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      utför full städning\n"
 
-#: vacuumdb.c:1159
+#: vacuumdb.c:1165
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                    frys information om radtransaktioner\n"
 
-#: vacuumdb.c:1160
+#: vacuumdb.c:1166
 #, c-format
 msgid "      --force-index-cleanup       always remove index entries that point to dead tuples\n"
 msgstr "      --force-index-cleanup       ta alltid bort indexposter som pekar på döda tupler\n"
 
-#: vacuumdb.c:1161
+#: vacuumdb.c:1167
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
 msgstr "  -j, --jobs=NUM                  använd så här många samtida anslutningar för städning\n"
 
-#: vacuumdb.c:1162
+#: vacuumdb.c:1168
 #, c-format
 msgid "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"
 msgstr "      --min-mxid-age=MXID_ÅLDER   minimal multixact-ID-ålder i tabeller som skall städas\n"
 
-#: vacuumdb.c:1163
+#: vacuumdb.c:1169
 #, c-format
 msgid "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"
 msgstr "      --min-xid-age=XID_ÅLDER     minimal transaktions-ID-ålder i tabeller som skall städas\n"
 
-#: vacuumdb.c:1164
+#: vacuumdb.c:1170
 #, c-format
 msgid "      --no-index-cleanup          don't remove index entries that point to dead tuples\n"
 msgstr "      --no-index-cleanup          ta inte bort indexposter som pekar på döda tupler\n"
 
-#: vacuumdb.c:1165
+#: vacuumdb.c:1171
 #, c-format
 msgid "      --no-process-main           skip the main relation\n"
 msgstr "      --no-process-main           skippa huvudrelationen\n"
 
-#: vacuumdb.c:1166
+#: vacuumdb.c:1172
 #, c-format
 msgid "      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"
 msgstr "      --no-process-toast          hoppa över TOAST-tabellen som hör ihop med tabellen som städas\n"
 
-#: vacuumdb.c:1167
+#: vacuumdb.c:1173
 #, c-format
 msgid "      --no-truncate               don't truncate empty pages at the end of the table\n"
 msgstr "      --no-truncate               trunkera inte tomma sidor i slutet av tabellen\n"
 
-#: vacuumdb.c:1168
+#: vacuumdb.c:1174
 #, c-format
-msgid "  -n, --schema=PATTERN            vacuum tables in the specified schema(s) only\n"
-msgstr "  -n, --schema=MALL               städa enbart tabeller i angiva scheman\n"
+msgid "  -n, --schema=SCHEMA             vacuum tables in the specified schema(s) only\n"
+msgstr "  -n, --schema=SCHEMA             städa enbart tabeller i angiva scheman\n"
 
-#: vacuumdb.c:1169
+#: vacuumdb.c:1175
 #, c-format
-msgid "  -N, --exclude-schema=PATTERN    do not vacuum tables in the specified schema(s)\n"
-msgstr "  -N, --exclude-schema=MALL       städa inte tabeller i angivna scheman\n"
+msgid "  -N, --exclude-schema=SCHEMA     do not vacuum tables in the specified schema(s)\n"
+msgstr "  -N, --exclude-schema=SCHEMA     städa inte tabeller i angivna scheman\n"
 
-#: vacuumdb.c:1170
+#: vacuumdb.c:1176
 #, c-format
 msgid "  -P, --parallel=PARALLEL_WORKERS use this many background workers for vacuum, if available\n"
 msgstr ""
 "  -P, --parallel=PARALLELLA_ARBETARE\n"
 "                                  använda så här många bakgrundsarbetare för städning, om det finns\n"
 
-#: vacuumdb.c:1171
+#: vacuumdb.c:1177
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     skriv inte ut några meddelanden\n"
 
-#: vacuumdb.c:1172
+#: vacuumdb.c:1178
 #, c-format
 msgid "      --skip-locked               skip relations that cannot be immediately locked\n"
 msgstr "      --skip-locked               hoppa äver relationer som inte kan låsas direkt\n"
 
-#: vacuumdb.c:1173
+#: vacuumdb.c:1179
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr "  -t, --table='TABELL[(KOLUMNER)]' städa enbart i dessa tabeller\n"
 
-#: vacuumdb.c:1174
+#: vacuumdb.c:1180
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   skriv massor med utdata\n"
 
-#: vacuumdb.c:1175
+#: vacuumdb.c:1181
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   visa versionsinformation, avsluta sedan\n"
 
-#: vacuumdb.c:1176
+#: vacuumdb.c:1182
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   uppdatera optimeringsstatistik\n"
 
-#: vacuumdb.c:1177
+#: vacuumdb.c:1183
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
 msgstr "  -Z, --analyze-only              uppdatera bara optimeringsstatistik; ingen städning\n"
 
-#: vacuumdb.c:1178
+#: vacuumdb.c:1184
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
@@ -1248,12 +1258,12 @@ msgstr ""
 "      --analyze-in-stages         uppdatera bara optimeringsstatistik, men i\n"
 "                                  flera steg för snabbare resultat; ingen städning\n"
 
-#: vacuumdb.c:1180
+#: vacuumdb.c:1186
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      visa denna hjälp, avsluta sedan\n"
 
-#: vacuumdb.c:1188
+#: vacuumdb.c:1194
 #, c-format
 msgid ""
 "\n"
@@ -1261,15 +1271,3 @@ msgid ""
 msgstr ""
 "\n"
 "Läs beskrivningen av SQL-kommandot VACUUM för detaljer.\n"
-
-#, c-format
-#~ msgid "cannot reindex system catalogs concurrently, skipping all"
-#~ msgstr "kan inte omindexera systemkataloger parallellt, hoppar över alla"
-
-#, c-format
-#~ msgid "only one of --locale and --lc-collate can be specified"
-#~ msgstr "endast en av --locale och --lc-collate kan anges"
-
-#, c-format
-#~ msgid "only one of --locale and --lc-ctype can be specified"
-#~ msgstr "endast en av --locale och --lc-ctype kan anges"

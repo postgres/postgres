@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-24 23:20+0000\n"
+"POT-Creation-Date: 2024-08-01 12:20+0000\n"
 "PO-Revision-Date: 2023-05-22 12:05+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -52,7 +52,7 @@ msgstr "No se pudo enviar la petición de cancelación: "
 msgid "could not connect to database %s: out of memory"
 msgstr "no se pudo conectar a la base de datos %s: memoria agotada"
 
-#: ../../fe_utils/connect_utils.c:117
+#: ../../fe_utils/connect_utils.c:116
 #, c-format
 msgid "%s"
 msgstr "%s"
