@@ -35,6 +35,45 @@
 
     <listitem>
 <!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [66e94448a] 2024-08-05 06:05:33 -0700
+Branch: REL_17_STABLE [fdf218f1d] 2024-08-05 06:05:30 -0700
+Branch: REL_16_STABLE [6aba85a4b] 2024-08-05 06:05:28 -0700
+Branch: REL_15_STABLE [e81e53a0c] 2024-08-05 06:05:25 -0700
+Branch: REL_14_STABLE [72ef1675e] 2024-08-05 06:05:23 -0700
+Branch: REL_13_STABLE [bbc94abf6] 2024-08-05 06:05:20 -0700
+Branch: REL_12_STABLE [79c7a7e29] 2024-08-05 06:05:17 -0700
+-->
+     <para>
+      Prevent unauthorized code execution
+      during <application>pg_dump</application> (Masahiko Sawada)
+     </para>
+
+     <para>
+      An attacker able to create and drop non-temporary objects could
+      inject SQL code that would be executed by a
+      concurrent <application>pg_dump</application> session with the
+      privileges of the role running <application>pg_dump</application>
+      (which is often a superuser).  The attack involves replacing a
+      sequence or similar object with a view or foreign table that will
+      execute malicious code.  To prevent this, introduce a new server
+      parameter <varname>restrict_nonsystem_relation_kind</varname> that
+      can disable expansion of non-builtin views as well as access to
+      foreign tables, and teach <application>pg_dump</application> to set
+      it when available.  Note that the attack is prevented only if
+      both <application>pg_dump</application> and the server it is dumping
+      from are new enough to have this fix.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Noah Misch for reporting this problem.
+      (CVE-2024-7348)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [3dd637f3d] 2024-07-24 12:38:18 +0200
 Branch: REL_17_STABLE [2b22543a4] 2024-07-24 12:38:18 +0200
