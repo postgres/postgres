@@ -11,7 +11,7 @@
 
 #include "postgres_fe.h"
 
-#include "astreamer.h"
+#include "astreamer_inject.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 

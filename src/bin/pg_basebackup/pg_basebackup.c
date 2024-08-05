@@ -26,7 +26,7 @@
 #endif
 
 #include "access/xlog_internal.h"
-#include "astreamer.h"
+#include "astreamer_inject.h"
 #include "backup/basebackup.h"
 #include "common/compression.h"
 #include "common/file_perm.h"

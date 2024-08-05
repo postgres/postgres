@@ -217,10 +217,4 @@ extern astreamer *astreamer_tar_parser_new(astreamer *next);
 extern astreamer *astreamer_tar_terminator_new(astreamer *next);
 extern astreamer *astreamer_tar_archiver_new(astreamer *next);
 
-extern astreamer *astreamer_recovery_injector_new(astreamer *next,
-												  bool is_recovery_guc_supported,
-												  PQExpBuffer recoveryconfcontents);
-extern void astreamer_inject_file(astreamer *streamer, char *pathname,
-								  char *data, int len);
-
 #endif
