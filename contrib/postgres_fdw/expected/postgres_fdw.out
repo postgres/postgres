@@ -637,6 +637,17 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft_empty ORDER BY c1;
    Remote SQL: SELECT c1, c2 FROM public.loct_empty ORDER BY c1 ASC NULLS LAST
 (3 rows)
 
+-- test restriction on non-system foreign tables.
+SET restrict_nonsystem_relation_kind TO 'foreign-table';
+SELECT * from ft1 where c1 < 1; -- ERROR
+ERROR:  access to non-system foreign table is restricted
+INSERT INTO ft1 (c1) VALUES (1); -- ERROR
+ERROR:  access to non-system foreign table is restricted
+DELETE FROM ft1 WHERE c1 = 1; -- ERROR
+ERROR:  access to non-system foreign table is restricted
+TRUNCATE ft1; -- ERROR
+ERROR:  access to non-system foreign table is restricted
+RESET restrict_nonsystem_relation_kind;
 -- ===================================================================
 -- WHERE with remotely-executable conditions
 -- ===================================================================

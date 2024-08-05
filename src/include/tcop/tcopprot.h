@@ -43,6 +43,12 @@ typedef enum
 
 extern PGDLLIMPORT int log_statement;
 
+/* Flags for restrict_nonsystem_relation_kind value */
+#define RESTRICT_RELKIND_VIEW			0x01
+#define RESTRICT_RELKIND_FOREIGN_TABLE	0x02
+
+extern PGDLLIMPORT int restrict_nonsystem_relation_kind;
+
 extern List *pg_parse_query(const char *query_string);
 extern List *pg_rewrite_query(Query *query);
 extern List *pg_analyze_and_rewrite_fixedparams(RawStmt *parsetree,
@@ -68,6 +74,9 @@ extern List *pg_plan_queries(List *querytrees, const char *query_string,
 
 extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
 extern void assign_max_stack_depth(int newval, void *extra);
+extern bool check_restrict_nonsystem_relation_kind(char **newval, void **extra,
+												   GucSource source);
+extern void assign_restrict_nonsystem_relation_kind(const char *newval, void *extra);
 
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS) pg_attribute_noreturn();
