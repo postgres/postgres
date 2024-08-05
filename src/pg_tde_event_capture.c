@@ -101,7 +101,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 		tdeCurrentCreateEvent.relation = stmt->relation;
 
-		if (stmt->accessMethod && !strcmp(stmt->accessMethod, "pg_tde2"))
+		if (stmt->accessMethod && !strcmp(stmt->accessMethod, "pg_tde"))
 		{
 			tdeCurrentCreateEvent.encryptMode = true;
 		}
