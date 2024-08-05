@@ -79,6 +79,7 @@
 #include "utils/snapmgr.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
+#include "utils/varlena.h"
 
 /* ----------------
  *		global variables
@@ -102,6 +103,9 @@ int			PostAuthDelay = 0;
 
 /* Time between checks that the client is still connected. */
 int			client_connection_check_interval = 0;
+
+/* flags for non-system relation kinds to restrict use */
+int			restrict_nonsystem_relation_kind;
 
 /* ----------------
  *		private typedefs etc
@@ -3667,6 +3671,66 @@ assign_transaction_timeout(int newval, void *extra)
 	}
 }
 
+/*
+ * GUC check_hook for restrict_nonsystem_relation_kind
+ */
+bool
+check_restrict_nonsystem_relation_kind(char **newval, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	List	   *elemlist;
+	ListCell   *l;
+	int			flags = 0;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(*newval);
+
+	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	{
+		/* syntax error in list */
+		GUC_check_errdetail("List syntax is invalid.");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
+	}
+
+	foreach(l, elemlist)
+	{
+		char	   *tok = (char *) lfirst(l);
+
+		if (pg_strcasecmp(tok, "view") == 0)
+			flags |= RESTRICT_RELKIND_VIEW;
+		else if (pg_strcasecmp(tok, "foreign-table") == 0)
+			flags |= RESTRICT_RELKIND_FOREIGN_TABLE;
+		else
+		{
+			GUC_check_errdetail("Unrecognized key word: \"%s\".", tok);
+			pfree(rawstring);
+			list_free(elemlist);
+			return false;
+		}
+	}
+
+	pfree(rawstring);
+	list_free(elemlist);
+
+	/* Save the flags in *extra, for use by the assign function */
+	*extra = guc_malloc(ERROR, sizeof(int));
+	*((int *) *extra) = flags;
+
+	return true;
+}
+
+/*
+ * GUC assign_hook for restrict_nonsystem_relation_kind
+ */
+void
+assign_restrict_nonsystem_relation_kind(const char *newval, void *extra)
+{
+	int		   *flags = (int *) extra;
+
+	restrict_nonsystem_relation_kind = *flags;
+}
 
 /*
  * set_debug_options --- apply "-d N" command line option
