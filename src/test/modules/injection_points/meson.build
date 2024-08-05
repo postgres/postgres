@@ -7,6 +7,7 @@ endif
 injection_points_sources = files(
   'injection_points.c',
   'injection_stats.c',
+  'injection_stats_fixed.c',
 )
 
 if host_system == 'windows'

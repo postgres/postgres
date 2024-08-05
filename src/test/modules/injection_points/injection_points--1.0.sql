@@ -84,3 +84,14 @@ CREATE FUNCTION injection_points_stats_numcalls(IN point_name TEXT)
 RETURNS bigint
 AS 'MODULE_PATHNAME', 'injection_points_stats_numcalls'
 LANGUAGE C STRICT;
+
+--
+-- injection_points_stats_fixed()
+--
+-- Reports fixed-numbered statistics for injection points.
+CREATE FUNCTION injection_points_stats_fixed(OUT numattach int8,
+   OUT numdetach int8,
+   OUT numrun int8)
+RETURNS record
+AS 'MODULE_PATHNAME', 'injection_points_stats_fixed'
+LANGUAGE C STRICT;

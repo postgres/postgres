@@ -297,6 +297,7 @@ injection_points_attach(PG_FUNCTION_ARGS)
 		condition.pid = MyProcPid;
 	}
 
+	pgstat_report_inj_fixed(1, 0, 0);
 	InjectionPointAttach(name, "injection_points", function, &condition,
 						 sizeof(InjectionPointCondition));
 
@@ -342,6 +343,7 @@ injection_points_run(PG_FUNCTION_ARGS)
 {
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
+	pgstat_report_inj_fixed(0, 0, 1);
 	INJECTION_POINT(name);
 
 	PG_RETURN_VOID();
@@ -432,6 +434,7 @@ injection_points_detach(PG_FUNCTION_ARGS)
 {
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
+	pgstat_report_inj_fixed(0, 1, 0);
 	if (!InjectionPointDetach(name))
 		elog(ERROR, "could not detach injection point \"%s\"", name);
 
@@ -459,4 +462,5 @@ _PG_init(void)
 		return;
 
 	pgstat_register_inj();
+	pgstat_register_inj_fixed();
 }
