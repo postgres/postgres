@@ -55,6 +55,54 @@ SELECT ('"'||repeat('.', 12)||'abc\n"')::json; -- OK, legal escapes
  "............abc\n"
 (1 row)
 
+-- Test various lengths of strings to validate SIMD processing to escape
+-- special chars in the JSON.
+SELECT row_to_json(j)::jsonb FROM (
+  SELECT left(E'abcdefghijklmnopqrstuv"\twxyz012345678', a) AS a
+  FROM generate_series(0,37) a
+) j;
+                   row_to_json                    
+--------------------------------------------------
+ {"a": ""}
+ {"a": "a"}
+ {"a": "ab"}
+ {"a": "abc"}
+ {"a": "abcd"}
+ {"a": "abcde"}
+ {"a": "abcdef"}
+ {"a": "abcdefg"}
+ {"a": "abcdefgh"}
+ {"a": "abcdefghi"}
+ {"a": "abcdefghij"}
+ {"a": "abcdefghijk"}
+ {"a": "abcdefghijkl"}
+ {"a": "abcdefghijklm"}
+ {"a": "abcdefghijklmn"}
+ {"a": "abcdefghijklmno"}
+ {"a": "abcdefghijklmnop"}
+ {"a": "abcdefghijklmnopq"}
+ {"a": "abcdefghijklmnopqr"}
+ {"a": "abcdefghijklmnopqrs"}
+ {"a": "abcdefghijklmnopqrst"}
+ {"a": "abcdefghijklmnopqrstu"}
+ {"a": "abcdefghijklmnopqrstuv"}
+ {"a": "abcdefghijklmnopqrstuv\""}
+ {"a": "abcdefghijklmnopqrstuv\"\t"}
+ {"a": "abcdefghijklmnopqrstuv\"\tw"}
+ {"a": "abcdefghijklmnopqrstuv\"\twx"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxy"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz0"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz01"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz012"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz0123"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz01234"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz012345"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz0123456"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz01234567"}
+ {"a": "abcdefghijklmnopqrstuv\"\twxyz012345678"}
+(38 rows)
+
 -- see json_encoding test for input with unicode escapes
 -- Numbers.
 SELECT '1'::json;				-- OK

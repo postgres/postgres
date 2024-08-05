@@ -12,6 +12,13 @@ SELECT '"\v"'::json;			-- ERROR, not a valid JSON escape
 SELECT ('"'||repeat('.', 12)||'abc"')::json; -- OK
 SELECT ('"'||repeat('.', 12)||'abc\n"')::json; -- OK, legal escapes
 
+-- Test various lengths of strings to validate SIMD processing to escape
+-- special chars in the JSON.
+SELECT row_to_json(j)::jsonb FROM (
+  SELECT left(E'abcdefghijklmnopqrstuv"\twxyz012345678', a) AS a
+  FROM generate_series(0,37) a
+) j;
+
 -- see json_encoding test for input with unicode escapes
 
 -- Numbers.
