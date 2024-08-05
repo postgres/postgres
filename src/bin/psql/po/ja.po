@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-06-14 11:24+0900\n"
-"PO-Revision-Date: 2024-06-14 11:30+0900\n"
+"PO-Revision-Date: 2024-06-26 09:46+0200\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -2543,7 +2543,7 @@ msgstr "  -c, --command=コマンド   単一の(SQLまたは内部)コマンド
 
 #: help.c:69
 msgid "  -d, --dbname=DBNAME      database name to connect to\n"
-msgstr "    -d, --dbname=DBNAME      接続先データベース名\n"
+msgstr "  -d, --dbname=DBNAME      接続先データベース名\n"
 
 #: help.c:70
 msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"

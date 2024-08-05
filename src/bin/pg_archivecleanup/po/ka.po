@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-11 09:52+0000\n"
+"POT-Creation-Date: 2024-07-01 03:53+0000\n"
 "PO-Revision-Date: 2024-02-11 14:42+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
@@ -37,6 +37,17 @@ msgstr "დეტალები: "
 #, c-format
 msgid "hint: "
 msgstr "მინიშნება: "
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
 
 #: pg_archivecleanup.c:68
 #, c-format
@@ -128,9 +139,6 @@ msgstr "  -V, --version            ვერსიის ინფორმა�
 
 #: pg_archivecleanup.c:268
 #, c-format
-#| msgid ""
-#| "  -L, --use-list=FILENAME      use table of contents from this file for\n"
-#| "                               selecting/ordering output\n"
 msgid ""
 "  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
 "                              clean up\n"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-03-26 10:51+0000\n"
+"POT-Creation-Date: 2024-07-01 03:51+0000\n"
 "PO-Revision-Date: 2024-02-11 16:08+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
@@ -37,6 +37,105 @@ msgstr "დეტალები: "
 #, c-format
 msgid "hint: "
 msgstr "მინიშნება: "
+
+#: ../../common/controldata_utils.c:97 pg_resetwal.c:370 pg_resetwal.c:525
+#: pg_resetwal.c:573
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:110 pg_resetwal.c:534 pg_resetwal.c:588
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "ბაიტების მიმდევრობა არ ემთხვევა"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"ბაიტების მიმდევრობის შესაძლო შეუსაბამობა pg_control ფაილის შესანახად გამოყენებული \n"
+"ბაიტების მიმდევრობა შესაძლოა არ ემთხვეოდეს ამ პროგრამის მიერ გამოყენებულს. ამ შემთხვევაში  ქვემოთ \n"
+"მოცემული შედეგები არასწორი იქნება და PostgreSQL ეს აგება ამ მონაცემთა საქაღალდესთან შეუთავსებელი იქნება."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 pg_resetwal.c:1134
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:249 pg_resetwal.c:1142 pg_resetwal.c:1154
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "შეუძლებელია ფაილური სისტემის სინქრონიზაცია ფაილისთვის \"%s\": %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ფაილი \"%s\" არ არსებობს: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "ამ აგებას სინქრონიზაციის მეთოდის \"%s\" მხარდაჭერა არ გააჩნია"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_resetwal.c:928 pg_resetwal.c:981 pg_resetwal.c:1016 pg_resetwal.c:1054
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033 pg_resetwal.c:1068
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "გადარქმევის შეცდომა %s - %s: %m"
 
 #: ../../common/restricted_token.c:60
 #, c-format
@@ -77,11 +176,6 @@ msgstr "არასწორი მნიშვნელობა \"%s\" პა
 #, c-format
 msgid "%s must be in range %d..%d"
 msgstr "%s არაა საზღვრებში %d-დან %d-მდე"
-
-#: ../../fe_utils/option_utils.c:99
-#, c-format
-msgid "this build does not support sync method \"%s\""
-msgstr "ამ აგებას სინქრონიზაციის მეთოდის \"%s\" მხარდაჭერა არ გააჩნია"
 
 #: ../../fe_utils/option_utils.c:106
 #, c-format
@@ -179,11 +273,6 @@ msgstr "საქაღალდის წვდომების წაკი�
 msgid "could not change directory to \"%s\": %m"
 msgstr "საქაღალდის %s-ზე შეცვლის შეცდომა: %m"
 
-#: pg_resetwal.c:370 pg_resetwal.c:525 pg_resetwal.c:573
-#, c-format
-msgid "could not open file \"%s\" for reading: %m"
-msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
-
 #: pg_resetwal.c:375
 #, c-format
 msgid "lock file \"%s\" exists"
@@ -228,11 +317,6 @@ msgstr "წინასწარ-ჩაწერი ჟურნალის ს
 #, c-format
 msgid "unexpected empty file \"%s\""
 msgstr "მოულოდნელად ფაილი ცარიელია: \"%s\""
-
-#: pg_resetwal.c:534 pg_resetwal.c:588
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
 
 #: pg_resetwal.c:542
 #, c-format
@@ -523,16 +607,6 @@ msgstr "oldestCommitTsXid:                    %u\n"
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                    %u\n"
 
-#: pg_resetwal.c:928 pg_resetwal.c:981 pg_resetwal.c:1016 pg_resetwal.c:1054
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
-
-#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033 pg_resetwal.c:1068
-#, c-format
-msgid "could not read directory \"%s\": %m"
-msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
-
 #: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036 pg_resetwal.c:1071
 #, c-format
 msgid "could not close directory \"%s\": %m"
@@ -542,16 +616,6 @@ msgstr "საქაღალდის %s-ზე დახურვის შე
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "ფაილის (\"%s\") წაშლის შეცდომა: %m"
-
-#: pg_resetwal.c:1134
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
-
-#: pg_resetwal.c:1142 pg_resetwal.c:1154
-#, c-format
-msgid "could not write file \"%s\": %m"
-msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 
 #: pg_resetwal.c:1159
 #, c-format

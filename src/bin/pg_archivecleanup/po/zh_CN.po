@@ -1,92 +1,98 @@
 # LANGUAGE message translation file for pg_archivecleanup
 # Copyright (C) 2019 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
-# FIRST AUTHOR <zhangjie2@fujitsu.com>, 2019.
+# Dianjin Wang <wangdianjin@gmail.com>, 2024.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 14\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 05:48+0000\n"
-"PO-Revision-Date: 2021-08-14 19:40+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2024-06-06 01:23+0000\n"
+"PO-Revision-Date: 2024-06-06 16:40+0800\n"
+"Last-Translator: Dianjin Wang <wangdianjin@gmail.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.4\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "致命的: "
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "错误: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: pg_archivecleanup.c:66
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "详细信息: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+#: pg_archivecleanup.c:68
 #, c-format
 msgid "archive location \"%s\" does not exist"
-msgstr "存档位置\"%s\"不存在"
+msgstr "存档位置 \"%s\" 不存在"
 
-#: pg_archivecleanup.c:152
+#: pg_archivecleanup.c:100
+#, c-format
+msgid "could not open archive location \"%s\": %m"
+msgstr "无法打开存档位置 \"%s\": %m"
+
+#: pg_archivecleanup.c:164
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "无法删除文件 \"%s\": %m"
 
-#: pg_archivecleanup.c:160
+#: pg_archivecleanup.c:169
 #, c-format
 msgid "could not read archive location \"%s\": %m"
-msgstr "无法读取存档位置\"%s\": %m"
+msgstr "无法读取存档位置 \"%s\": %m"
 
-#: pg_archivecleanup.c:163
+#: pg_archivecleanup.c:172
 #, c-format
 msgid "could not close archive location \"%s\": %m"
 msgstr "无法关闭存档位置 \"%s\": %m"
 
-#: pg_archivecleanup.c:167
-#, c-format
-msgid "could not open archive location \"%s\": %m"
-msgstr "无法打开存档位置\"%s\": %m"
-
-#: pg_archivecleanup.c:240
+#: pg_archivecleanup.c:245
 #, c-format
 msgid "invalid file name argument"
 msgstr "文件名参数无效"
 
-#: pg_archivecleanup.c:241 pg_archivecleanup.c:315 pg_archivecleanup.c:336
-#: pg_archivecleanup.c:348 pg_archivecleanup.c:355
+#: pg_archivecleanup.c:246 pg_archivecleanup.c:334 pg_archivecleanup.c:354
+#: pg_archivecleanup.c:366 pg_archivecleanup.c:373
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "请用 \"%s --help\" 获取更多的信息."
 
-#: pg_archivecleanup.c:254
+#: pg_archivecleanup.c:259
 #, c-format
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
 "\n"
 msgstr ""
-"%s 从PostgreSQL存档中删除旧的WAL文件.\n"
+"%s 从 PostgreSQL 存档中删除旧的 WAL 文件.\n"
 "\n"
 
-#: pg_archivecleanup.c:255
+#: pg_archivecleanup.c:260
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_archivecleanup.c:256
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
-msgstr "  %s [OPTION]... 归档文件位置 最早保存的WAL文件\n"
+msgstr "  %s [选项]... 归档文件位置 最早保存的WAL文件\n"
 
-#: pg_archivecleanup.c:257
+#: pg_archivecleanup.c:262
 #, c-format
 msgid ""
 "\n"
@@ -95,32 +101,45 @@ msgstr ""
 "\n"
 "选项:\n"
 
-#: pg_archivecleanup.c:258
-#, c-format
-msgid "  -d             generate debug output (verbose mode)\n"
-msgstr "  -d             生成调试输出（详细模式）\n"
-
-#: pg_archivecleanup.c:259
-#, c-format
-msgid "  -n             dry run, show the names of the files that would be removed\n"
-msgstr "  -n             dry运行，显示要删除的文件的名称\n"
-
-#: pg_archivecleanup.c:260
-#, c-format
-msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V, --version  输出版本信息，然后退出\n"
-
-#: pg_archivecleanup.c:261
-#, c-format
-msgid "  -x EXT         clean up files if they have this extension\n"
-msgstr "  -x EXT         如果文件具有此扩展名，则清除文件\n"
-
-#: pg_archivecleanup.c:262
-#, c-format
-msgid "  -?, --help     show this help, then exit\n"
-msgstr "  -?, --help     显示帮助信息，然后退出\n"
-
 #: pg_archivecleanup.c:263
+#, c-format
+msgid "  -b, --clean-backup-history  clean up files including backup history files\n"
+msgstr "  -b, --clean-backup-history  清理包括备份历史文件在内的文件\n"
+
+#: pg_archivecleanup.c:264
+#, c-format
+msgid "  -d, --debug                 generate debug output (verbose mode)\n"
+msgstr "  -d, --debug                 生成调试输出(详细模式)\n"
+
+#: pg_archivecleanup.c:265
+#, c-format
+msgid ""
+"  -n, --dry-run               dry run, show the names of the files that would be\n"
+"                              removed\n"
+msgstr ""
+"  -n, --dry-run               模拟运行, 显示要被删除的文件名称\n"
+"                              \n"
+
+#: pg_archivecleanup.c:267
+#, c-format
+msgid "  -V, --version               output version information, then exit\n"
+msgstr "  -V, --version               输出版本信息，然后退出\n"
+
+#: pg_archivecleanup.c:268
+#, c-format
+msgid ""
+"  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
+"                              clean up\n"
+msgstr ""
+"  -x, --strip-extension=EXT   在识别要清理的文件前移除该扩展\n"
+"                              \n"
+
+#: pg_archivecleanup.c:270
+#, c-format
+msgid "  -?, --help                  show this help, then exit\n"
+msgstr "  -?, --help                  显示此帮助，然后退出\n"
+
+#: pg_archivecleanup.c:271
 #, c-format
 msgid ""
 "\n"
@@ -130,12 +149,12 @@ msgid ""
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 msgstr ""
 "\n"
-"在postgresql.conf中，archive_cleanup_command的用法 \n"
+"在 postgresql.conf 中，archive_cleanup_command 的用法为:\n"
 "  archive_cleanup_command = 'pg_archivecleanup [选项]... 存档位置 %%r'\n"
-"例.\n"
+"例如:\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 
-#: pg_archivecleanup.c:268
+#: pg_archivecleanup.c:276
 #, c-format
 msgid ""
 "\n"
@@ -144,36 +163,55 @@ msgid ""
 "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 msgstr ""
 "\n"
-"或者，用作独立存档清理程序:\n"
-"例.\n"
+"或者，将其用作独立存档清理程序:\n"
+"例如:\n"
 "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:272
+#: pg_archivecleanup.c:280
 #, c-format
 msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
 "\n"
-"臭虫报告至<%s>.\n"
+"报告缺陷: <%s>.\n"
 
-#: pg_archivecleanup.c:273
+#: pg_archivecleanup.c:281
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 主页: <%s>\n"
 
-#: pg_archivecleanup.c:335
+#: pg_archivecleanup.c:353
 #, c-format
 msgid "must specify archive location"
 msgstr "必须指定存档位置"
 
-#: pg_archivecleanup.c:347
+#: pg_archivecleanup.c:365
 #, c-format
 msgid "must specify oldest kept WAL file"
-msgstr "必须指定最早保存的WAL文件"
+msgstr "必须指定最早保存的 WAL 文件"
 
-#: pg_archivecleanup.c:354
+#: pg_archivecleanup.c:372
 #, c-format
 msgid "too many command-line arguments"
 msgstr "命令行参数太多"
 
+#, c-format
+#~ msgid "  -?, --help     show this help, then exit\n"
+#~ msgstr "  -?, --help     显示帮助信息，然后退出\n"
+
+#, c-format
+#~ msgid "  -V, --version  output version information, then exit\n"
+#~ msgstr "  -V, --version  输出版本信息，然后退出\n"
+
+#, c-format
+#~ msgid "  -x EXT         clean up files if they have this extension\n"
+#~ msgstr "  -x EXT         如果文件具有此扩展名，则清除文件\n"
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#, c-format
+#~ msgid "fatal: "
+#~ msgstr "致命的: "

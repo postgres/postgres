@@ -1,14 +1,14 @@
 # SWEDISH message translation file for ecpglib
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 14\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-10 02:39+0000\n"
-"PO-Revision-Date: 2021-11-07 10:36+0100\n"
+"POT-Creation-Date: 2024-07-12 11:10+0000\n"
+"PO-Revision-Date: 2024-07-12 15:08+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: connect.c:237
+#: connect.c:221
 msgid "empty message text"
 msgstr "tom meddelandetext"
 
-#: connect.c:401 connect.c:430 connect.c:653
+#: connect.c:386 connect.c:645
 msgid "<DEFAULT>"
 msgstr "<DEFAULT>"
 
-#: descriptor.c:871 misc.c:119
+#: descriptor.c:866 misc.c:88
 msgid "NULL"
 msgstr "NULL"
 
@@ -185,15 +185,15 @@ msgstr "kunde inte ansluta till databas \"%s\" på rad %d"
 msgid "SQL error %d on line %d"
 msgstr "SQL-fel %d på rad %d"
 
-#: error.c:254
+#: error.c:253
 msgid "the connection to the server was lost"
 msgstr "anslutningen till servern tappades"
 
-#: error.c:347
+#: error.c:345
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQL-fel: %s\n"
 
-#: execute.c:2196 execute.c:2203
+#: execute.c:2186 execute.c:2193
 msgid "<empty>"
 msgstr "<tom>"

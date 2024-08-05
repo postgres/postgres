@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-14 02:22+0000\n"
-"PO-Revision-Date: 2024-06-14 06:14+0200\n"
+"POT-Creation-Date: 2024-06-24 21:52+0000\n"
+"PO-Revision-Date: 2024-06-25 05:48+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -577,37 +577,42 @@ msgstr "ფილტრის ფაილის \"%s\" გახსნის �
 msgid "could not close filter file \"%s\": %m"
 msgstr "ფილტრის ფაილის \"%s\" დახურვის შეცდომა: %m"
 
-#: filter.c:164
+#: filter.c:165
 #, c-format
-msgid "invalid format in filter read from \"%s\" on line %d: %s"
-msgstr "არასწორი ფორმატი ფილტრში, რომელიც წავიკითხე \"%s\"-დან, ხაზზე %d: %s"
+msgid "invalid format in filter read from standard input on line %d: %s"
+msgstr "არასწორი ფორმატი ფილტრში, რომელიც წავიკითხე სტანდარტული შეყვანიდან, ხაზზე %d: %s"
 
-#: filter.c:239 filter.c:466
+#: filter.c:168
+#, c-format
+msgid "invalid format in filter read from file \"%s\" on line %d: %s"
+msgstr "არასწორი ფორმატი ფილტრში, რომელიც წავიკითხე ფაილიდან \"%s\", ხაზზე %d: %s"
+
+#: filter.c:241 filter.c:468
 #, c-format
 msgid "could not read from filter file \"%s\": %m"
 msgstr "ფილტრის ფაილიდან \"%s\" წაკითხვა შეუძლებელია: %m"
 
-#: filter.c:242
+#: filter.c:244
 msgid "unexpected end of file"
 msgstr "ფაილის მოულოდნელი დასასრული"
 
-#: filter.c:309
+#: filter.c:311
 msgid "missing object name pattern"
 msgstr "აკლია ობიექტის სახელის ნიმუში"
 
-#: filter.c:420
+#: filter.c:422
 msgid "no filter command found (expected \"include\" or \"exclude\")"
 msgstr "ფილტრის ბრძანება ვერ ვიპოვე (მოველოდი \"include\" ან \"exclude\")"
 
-#: filter.c:431
+#: filter.c:433
 msgid "invalid filter command (expected \"include\" or \"exclude\")"
 msgstr "არასწორი ფილტრის ბრძანება (მოველოდი \"include\" ან \"exclude\")"
 
-#: filter.c:438
+#: filter.c:440
 msgid "missing filter object type"
 msgstr "აკლია ფილტრის ობიექტის ტიპი"
 
-#: filter.c:445
+#: filter.c:447
 #, c-format
 msgid "unsupported filter object type: \"%.*s\""
 msgstr "მხარდაუჭერელი ფილტრის ობიექტის ტიპი: \"%.*s\""

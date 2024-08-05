@@ -21,7 +21,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-26 08:16+0000\n"
-"PO-Revision-Date: 2023-09-05 09:53+0200\n"
+"PO-Revision-Date: 2024-06-26 09:10+0200\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -2829,7 +2829,7 @@ msgstr "  \\copy ...              esegui una SQL COPY con flusso di dati dal cli
 
 #: help.c:227
 msgid "  \\echo [-n] [STRING]    write string to standard output (-n for no newline)\n"
-msgstr "  \\echo [-n] [STRING]     scrive la stringa nello standard output (-n per nessuna nuova riga)\n"
+msgstr "  \\echo [-n] [STRING]    scrive la stringa nello standard output (-n per nessuna nuova riga)\n"
 
 #: help.c:228
 msgid "  \\i FILE                execute commands from file\n"

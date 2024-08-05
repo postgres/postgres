@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-09-08 21:52+0000\n"
-"PO-Revision-Date: 2023-11-06 08:49+0800\n"
+"PO-Revision-Date: 2024-06-26 08:37+0200\n"
 "Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
 "Language-Team: \n"
 "Language: zh_TW\n"
@@ -382,7 +382,7 @@ msgstr "最新檢查點的時間:                %s\n"
 #: pg_controldata.c:275
 #, c-format
 msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
-msgstr "無日誌關聯的虛擬 LSN 計數: %X/%X\n"
+msgstr "無日誌關聯的虛擬 LSN 計數:       %X/%X\n"
 
 #: pg_controldata.c:277
 #, c-format
@@ -484,7 +484,7 @@ msgstr "資料庫區塊大小:                  %u\n"
 #: pg_controldata.c:308
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "大型關聯每個片段的區塊數:  %u\n"
+msgstr "大型關聯每個片段的區塊數:        %u\n"
 
 #: pg_controldata.c:310
 #, c-format

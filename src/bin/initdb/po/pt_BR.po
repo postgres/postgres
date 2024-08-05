@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-01-02 12:54-0300\n"
-"PO-Revision-Date: 2010-09-25 00:45-0300\n"
+"PO-Revision-Date: 2024-07-02 00:07+0200\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -535,17 +535,17 @@ msgstr "  -E, --encoding=CODIFICAÇÃO   ajusta a codificação padrão para nov
 #: initdb.c:2436
 #, c-format
 msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
-msgstr "  -g, --allow-group-access  permite leitura/execução do grupo no diretório de dados\n"
+msgstr "  -g, --allow-group-access     permite leitura/execução do grupo no diretório de dados\n"
 
 #: initdb.c:2437
 #, c-format
 msgid "      --icu-locale=LOCALE   set ICU locale ID for new databases\n"
-msgstr "      --icu-locale=LOCALE   ajusta ID de configuração regional ICU para novos bancos de dados\n"
+msgstr "      --icu-locale=LOCALE      ajusta ID de configuração regional ICU para novos bancos de dados\n"
 
 #: initdb.c:2438
 #, fuzzy, c-format
 msgid "      --icu-rules=RULES     set additional ICU collation rules for new databases\n"
-msgstr "      --icu-rules=REGRAS    ajusta regras adicionais de agregação ICU para novos bancos de dados\n"
+msgstr "      --icu-rules=REGRAS       ajusta regras adicionais de agregação ICU para novos bancos de dados\n"
 
 #: initdb.c:2439
 #, c-format
@@ -582,7 +582,7 @@ msgid ""
 "                            set default locale provider for new databases\n"
 msgstr ""
 "      --locale-provider={libc|icu}\n"
-"                            ajusta provedor de configuração regional padrão para novos bancos de dados\n"
+"                               ajusta provedor de configuração regional padrão para novos bancos de dados\n"
 
 #: initdb.c:2448
 #, c-format
@@ -611,12 +611,12 @@ msgstr "  -W, --pwprompt               pergunta senha do novo super-usuário\n"
 #: initdb.c:2453
 #, c-format
 msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
-msgstr "  -X, --waldir=DIRWAL        local do diretório do log de transação\n"
+msgstr "  -X, --waldir=DIRWAL           local do diretório do log de transação\n"
 
 #: initdb.c:2454
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
-msgstr "      --wal-segsize=TAMANHO  tamanho dos segmentos do WAL, em megabytes\n"
+msgstr "      --wal-segsize=TAMANHO     tamanho dos segmentos do WAL, em megabytes\n"
 
 #: initdb.c:2455
 #, c-format
@@ -630,7 +630,7 @@ msgstr ""
 #: initdb.c:2456
 #, fuzzy, c-format
 msgid "  -c, --set NAME=VALUE      override default setting for server parameter\n"
-msgstr "  -c, --set NOME=VALOR      sobrescreve o valor padrão para parâmetro do servidor\n"
+msgstr "  -c, --set NOME=VALOR         sobrescreve o valor padrão para parâmetro do servidor\n"
 
 #: initdb.c:2457
 #, c-format
@@ -660,7 +660,7 @@ msgstr "  -N, --no-sync                não espera mudanças serem escritas com 
 #: initdb.c:2462
 #, c-format
 msgid "      --no-instructions     do not print instructions for next steps\n"
-msgstr "      --no-instructions     não mostra instruções para próximos passos\n"
+msgstr "      --no-instructions        não mostra instruções para próximos passos\n"
 
 #: initdb.c:2463
 #, c-format

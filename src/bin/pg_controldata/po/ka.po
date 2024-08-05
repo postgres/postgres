@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-18 22:23+0000\n"
+"POT-Creation-Date: 2024-07-01 03:53+0000\n"
 "PO-Revision-Date: 2024-05-19 07:11+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
@@ -68,6 +68,17 @@ msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
 
 #: pg_controldata.c:35
 #, c-format

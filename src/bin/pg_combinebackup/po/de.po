@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-21 16:52+0000\n"
-"PO-Revision-Date: 2024-06-22 09:58+0200\n"
+"POT-Creation-Date: 2024-07-22 11:23+0000\n"
+"PO-Revision-Date: 2024-07-22 16:49+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -40,8 +40,8 @@ msgstr "Tipp: "
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
 
-#: ../../common/controldata_utils.c:110 copy_file.c:146 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1387 reconstruct.c:527
+#: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:527
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht lesen: %m"
@@ -52,8 +52,8 @@ msgid "could not read file \"%s\": read %d of %zu"
 msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
-#: backup_label.c:174 copy_file.c:64 pg_combinebackup.c:526
-#: pg_combinebackup.c:1162 reconstruct.c:356 reconstruct.c:727
+#: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
+#: pg_combinebackup.c:1175 reconstruct.c:356 reconstruct.c:727
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -79,10 +79,10 @@ msgstr ""
 
 #: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
 #: ../../common/file_utils.c:347 ../../common/file_utils.c:406
-#: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:62
-#: copy_file.c:135 copy_file.c:167 copy_file.c:171 copy_file.c:218
-#: copy_file.c:258 load_manifest.c:128 pg_combinebackup.c:511
-#: pg_combinebackup.c:1154 reconstruct.c:510 reconstruct.c:625
+#: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
+#: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
+#: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
+#: pg_combinebackup.c:1167 reconstruct.c:510 reconstruct.c:625
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
@@ -136,8 +136,8 @@ msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "konnte Dateisystem für Datei »%s« nicht synchronisieren: %m"
 
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
-#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:664
-#: pg_combinebackup.c:1118 pg_combinebackup.c:1370 reconstruct.c:199
+#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:199
 #: reconstruct.c:408
 #, c-format
 msgid "could not stat file \"%s\": %m"
@@ -150,7 +150,7 @@ msgid "this build does not support sync method \"%s\""
 msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
 
 #: ../../common/file_utils.c:151 ../../common/file_utils.c:281
-#: pg_combinebackup.c:920 pg_combinebackup.c:1243
+#: pg_combinebackup.c:933 pg_combinebackup.c:1256
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
@@ -351,7 +351,7 @@ msgstr "konnte Dateinamen nicht dekodieren"
 msgid "file size is not an integer"
 msgstr "Dateigröße ist keine ganze Zahl"
 
-#: ../../common/parse_manifest.c:700 pg_combinebackup.c:190
+#: ../../common/parse_manifest.c:700 pg_combinebackup.c:199
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "unbekannter Prüfsummenalgorithmus: »%s«"
@@ -468,58 +468,58 @@ msgstr "%s: %s benötigt %s"
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "konnte Datei »%s« nicht schreiben: %d von %d geschrieben"
 
-#: backup_label.c:166 copy_file.c:142 copy_file.c:189 reconstruct.c:708
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:708
 #: reconstruct.c:754 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "konnte Prüfsumme der Datei »%s« nicht aktualisieren"
 
-#: copy_file.c:182
+#: copy_file.c:186
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "konnte nicht in Datei »%s« schreiben: %m"
 
-#: copy_file.c:184
+#: copy_file.c:188
 #, c-format
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "konnte nicht in Datei »%s«, Position %u schreiben: %d von %d geschrieben"
 
-#: copy_file.c:195 reconstruct.c:771
+#: copy_file.c:199 reconstruct.c:771
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "konnte nicht aus Datei »%s« lesen: %m"
 
-#: copy_file.c:214
+#: copy_file.c:218
 #, c-format
 msgid "error while cloning file \"%s\" to \"%s\": %m"
 msgstr "Fehler beim Klonen von Datei »%s« nach »%s«: %m"
 
-#: copy_file.c:222 copy_file.c:262
+#: copy_file.c:229 copy_file.c:272
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht erstellen: %m"
 
-#: copy_file.c:230
+#: copy_file.c:237
 #, c-format
 msgid "error while cloning file \"%s\" to \"%s\": %s"
 msgstr "Fehler beim Klonen von Datei »%s« nach »%s«: %s"
 
-#: copy_file.c:235 pg_combinebackup.c:239
+#: copy_file.c:245 pg_combinebackup.c:251
 #, c-format
 msgid "file cloning not supported on this platform"
 msgstr "Klonen von Dateien wird auf dieser Plattform nicht unterstützt"
 
-#: copy_file.c:268 reconstruct.c:691
+#: copy_file.c:278 reconstruct.c:691
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "Fehler beim Kopieren von Dateibereich von »%s« nach »%s«: %m"
 
-#: copy_file.c:275 pg_combinebackup.c:252 reconstruct.c:711
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:711
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range wird auf dieser Plattform nicht unterstützt"
 
-#: copy_file.c:290
+#: copy_file.c:300
 #, c-format
 msgid "could not copy file \"%s\" to \"%s\": %m"
 msgstr "konnte Datei »%s« nicht nach »%s« kopieren: %m"
@@ -549,137 +549,137 @@ msgstr "Backup-Manifest Version 1 unterstützt kein inkrementelles Backup"
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "doppelter Pfadname im Backup-Manifest: »%s«"
 
-#: pg_combinebackup.c:208 pg_combinebackup.c:216
+#: pg_combinebackup.c:220 pg_combinebackup.c:228
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Versuchen Sie »%s --help« für weitere Informationen."
 
-#: pg_combinebackup.c:215
+#: pg_combinebackup.c:227
 #, c-format
 msgid "no input directories specified"
 msgstr "keine Eingabeverzeichnisse angegeben"
 
-#: pg_combinebackup.c:221
+#: pg_combinebackup.c:233
 #, c-format
 msgid "no output directory specified"
 msgstr "kein Ausgabeverzeichnis angegeben"
 
-#: pg_combinebackup.c:289
+#: pg_combinebackup.c:301
 #, c-format
 msgid "%s: manifest system identifier is %llu, but control file has %llu"
 msgstr "%s: Systemidentifikator im Manifest ist %llu, aber Kontrolldatei hat %llu"
 
-#: pg_combinebackup.c:328
+#: pg_combinebackup.c:340
 #, c-format
 msgid "can't generate a manifest because no manifest is available for the final input backup"
 msgstr "kann kein Manifest erzeugen, weil kein Manifest für das letzte Eingabe-Backup verfügbar ist"
 
-#: pg_combinebackup.c:375
+#: pg_combinebackup.c:387
 #, c-format
 msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung von »%s« nach »%s« nicht erzeugen: %m"
 
-#: pg_combinebackup.c:387 pg_combinebackup.c:718 pg_combinebackup.c:914
+#: pg_combinebackup.c:399 pg_combinebackup.c:730 pg_combinebackup.c:927
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht erzeugen: %m"
 
-#: pg_combinebackup.c:442
+#: pg_combinebackup.c:454
 #, c-format
 msgid "directory name too long"
 msgstr "Verzeichnisname zu lang"
 
-#: pg_combinebackup.c:449
+#: pg_combinebackup.c:461
 #, c-format
 msgid "multiple \"=\" signs in tablespace mapping"
 msgstr "mehrere »=«-Zeichen im Tablespace-Mapping"
 
-#: pg_combinebackup.c:457
+#: pg_combinebackup.c:469
 #, c-format
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr "ungültiges Tablespace-Mapping-Format »%s«, muss »ALTES_VERZ=NEUES_VERZ« sein"
 
-#: pg_combinebackup.c:468 pg_combinebackup.c:472
+#: pg_combinebackup.c:480 pg_combinebackup.c:484
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr "altes Verzeichnis im Tablespace-Mapping ist kein absoluter Pfad: %s"
 
-#: pg_combinebackup.c:541
+#: pg_combinebackup.c:553
 #, c-format
 msgid "backup at \"%s\" is a full backup, but only the first backup should be a full backup"
 msgstr "Backup in »%s« ist ein volles Backup, aber nur das erste Backup sollte ein volles Backup sein"
 
-#: pg_combinebackup.c:544
+#: pg_combinebackup.c:556
 #, c-format
 msgid "backup at \"%s\" is an incremental backup, but the first backup should be a full backup"
 msgstr "Backup in »%s« ist ein inkrementelles Backup, aber das erste Backup sollte ein volles Backup sein"
 
-#: pg_combinebackup.c:547
+#: pg_combinebackup.c:559
 #, c-format
 msgid "backup at \"%s\" starts on timeline %u, but expected %u"
 msgstr "Backup in »%s« startet auf Zeitleiste %u, aber %u wurde erwartet"
 
-#: pg_combinebackup.c:550
+#: pg_combinebackup.c:562
 #, c-format
 msgid "backup at \"%s\" starts at LSN %X/%X, but expected %X/%X"
 msgstr "Backup in »%s« startet bei LSN %X/%X, aber %X/%X wurde erwartet"
 
-#: pg_combinebackup.c:602
+#: pg_combinebackup.c:614
 #, c-format
 msgid "%s: CRC is incorrect"
 msgstr "%s: CRC ist falsch"
 
-#: pg_combinebackup.c:606
+#: pg_combinebackup.c:618
 #, c-format
 msgid "%s: unexpected control file version"
 msgstr "%s: unerwartete Kontrolldateiversion"
 
-#: pg_combinebackup.c:613
+#: pg_combinebackup.c:625
 #, c-format
 msgid "%s: expected system identifier %llu, but found %llu"
 msgstr "%s: Systemidentifikator %llu erwartet, aber %llu gefunden"
 
-#: pg_combinebackup.c:645
+#: pg_combinebackup.c:657
 #, c-format
 msgid "only some backups have checksums enabled"
 msgstr "nur einige Sicherungen haben Prüfsummen aktiviert"
 
-#: pg_combinebackup.c:646
+#: pg_combinebackup.c:658
 #, c-format
 msgid "disable, and optionally reenable, checksums on the output directory to avoid failures"
 msgstr "schalten Sie für das Ausgabeverzeichnis Prüfsummen aus, und optional wieder an, um Fehler zu vermeiden"
 
-#: pg_combinebackup.c:681
+#: pg_combinebackup.c:693
 #, c-format
 msgid "removing output directory \"%s\""
 msgstr "Ausgabeverzeichnis »%s« wird entfernt"
 
-#: pg_combinebackup.c:683
+#: pg_combinebackup.c:695
 #, c-format
 msgid "failed to remove output directory"
 msgstr "konnte Ausgabeverzeichnis nicht entfernen"
 
-#: pg_combinebackup.c:687
+#: pg_combinebackup.c:699
 #, c-format
 msgid "removing contents of output directory \"%s\""
 msgstr "entferne Inhalt des Ausgabeverzeichnisses »%s«"
 
-#: pg_combinebackup.c:690
+#: pg_combinebackup.c:702
 #, c-format
 msgid "failed to remove contents of output directory"
 msgstr "konnte Inhalt des Ausgabeverzeichnisses nicht entfernen"
 
-#: pg_combinebackup.c:730
+#: pg_combinebackup.c:742
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "Verzeichnis »%s« existiert aber ist nicht leer"
 
-#: pg_combinebackup.c:733
+#: pg_combinebackup.c:745
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "konnte nicht auf Verzeichnis »%s« zugreifen: %m"
 
-#: pg_combinebackup.c:747
+#: pg_combinebackup.c:759
 #, c-format
 msgid ""
 "%s reconstructs full backups from incrementals.\n"
@@ -688,17 +688,17 @@ msgstr ""
 "%s rekonstruiert volle Backups aus inkrementellen.\n"
 "\n"
 
-#: pg_combinebackup.c:748
+#: pg_combinebackup.c:760
 #, c-format
 msgid "Usage:\n"
 msgstr "Aufruf:\n"
 
-#: pg_combinebackup.c:749
+#: pg_combinebackup.c:761
 #, c-format
 msgid "  %s [OPTION]... DIRECTORY...\n"
 msgstr "  %s [OPTION]... VERZEICHNIS...\n"
 
-#: pg_combinebackup.c:750
+#: pg_combinebackup.c:762
 #, c-format
 msgid ""
 "\n"
@@ -707,29 +707,29 @@ msgstr ""
 "\n"
 "Optionen:\n"
 
-#: pg_combinebackup.c:751
+#: pg_combinebackup.c:763
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               erzeuge eine Menge Debug-Ausgaben\n"
 
-#: pg_combinebackup.c:752
+#: pg_combinebackup.c:764
 #, c-format
 msgid "  -n, --dry-run             do not actually do anything\n"
 msgstr "  -n, --dry-run             nichts wirklich ausführen\n"
 
-#: pg_combinebackup.c:753
+#: pg_combinebackup.c:765
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr ""
 "  -N, --no-sync             nicht warten, bis Änderungen sicher auf Festplatte\n"
 "                            geschrieben sind\n"
 
-#: pg_combinebackup.c:754
+#: pg_combinebackup.c:766
 #, c-format
 msgid "  -o, --output=DIRECTORY    output directory\n"
 msgstr "  -o, --output=VERZEICHNIS  Ausgabeverzeichnis\n"
 
-#: pg_combinebackup.c:755
+#: pg_combinebackup.c:767
 #, c-format
 msgid ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
@@ -738,17 +738,22 @@ msgstr ""
 "  -T, --tablespace-mapping=ALTES_VERZ=NEUES_VERZ\n"
 "                            Tablespace in ALTES_VERZ nach NEUES_VERZ verlagern\n"
 
-#: pg_combinebackup.c:757
+#: pg_combinebackup.c:769
 #, c-format
 msgid "      --clone               clone (reflink) instead of copying files\n"
 msgstr "      --clone               Dateien klonen (reflink) statt kopieren\n"
 
-#: pg_combinebackup.c:758
+#: pg_combinebackup.c:770
+#, c-format
+msgid "      --copy                copy files (default)\n"
+msgstr "      --copy                Dateien kopieren (Voreinstellung)\n"
+
+#: pg_combinebackup.c:771
 #, c-format
 msgid "      --copy-file-range     copy using copy_file_range() syscall\n"
 msgstr "      --copy-file-range     mit Systemaufruf copy_file_range() kopieren\n"
 
-#: pg_combinebackup.c:759
+#: pg_combinebackup.c:772
 #, c-format
 msgid ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
@@ -757,29 +762,29 @@ msgstr ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 "                            Algorithmus für Manifest-Prüfsummen\n"
 
-#: pg_combinebackup.c:761
+#: pg_combinebackup.c:774
 #, c-format
 msgid "      --no-manifest         suppress generation of backup manifest\n"
 msgstr "      --no-manifest         Erzeugen des Backup-Manifests unterbinden\n"
 
-#: pg_combinebackup.c:762
+#: pg_combinebackup.c:775
 #, c-format
 msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
 msgstr ""
 "      --sync-method=METHODE Methode zum Synchronisieren vond Dateien auf\n"
 "                            Festplatte setzen\n"
 
-#: pg_combinebackup.c:763
+#: pg_combinebackup.c:776
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             Versionsinformationen anzeigen, dann beenden\n"
 
-#: pg_combinebackup.c:764
+#: pg_combinebackup.c:777
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                diese Hilfe anzeigen, dann beenden\n"
 
-#: pg_combinebackup.c:766
+#: pg_combinebackup.c:779
 #, c-format
 msgid ""
 "\n"
@@ -788,72 +793,72 @@ msgstr ""
 "\n"
 "Berichten Sie Fehler an <%s>.\n"
 
-#: pg_combinebackup.c:767
+#: pg_combinebackup.c:780
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s Homepage: <%s>\n"
 
-#: pg_combinebackup.c:982
+#: pg_combinebackup.c:995
 #, c-format
 msgid "skipping symbolic link \"%s\""
 msgstr "überspringe symbolische Verknüpfung »%s«"
 
-#: pg_combinebackup.c:984
+#: pg_combinebackup.c:997
 #, c-format
 msgid "skipping special file \"%s\""
 msgstr "überspringe besondere Datei »%s«"
 
-#: pg_combinebackup.c:1060
+#: pg_combinebackup.c:1073
 #, c-format
 msgid "\"%s\" contains no entry for \"%s\""
 msgstr "»%s« enthält keinen Eintrag für »%s«"
 
-#: pg_combinebackup.c:1176
+#: pg_combinebackup.c:1189
 #, c-format
 msgid "%s: server version too old"
 msgstr "%s: Serverversion zu alt"
 
-#: pg_combinebackup.c:1177
+#: pg_combinebackup.c:1190
 #, c-format
 msgid "%s: could not parse version number"
 msgstr "%s: konnte Versionsnummer nicht parsen"
 
-#: pg_combinebackup.c:1296
+#: pg_combinebackup.c:1309
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %m"
 
-#: pg_combinebackup.c:1299
+#: pg_combinebackup.c:1312
 #, c-format
 msgid "target of symbolic link \"%s\" is too long"
 msgstr "Ziel der symbolischen Verknüpfung »%s« ist zu lang"
 
-#: pg_combinebackup.c:1302
+#: pg_combinebackup.c:1315
 #, c-format
 msgid "target of symbolic link \"%s\" is relative"
 msgstr "Ziel der symbolischen Verknüpfung »%s« ist relativ"
 
-#: pg_combinebackup.c:1324
+#: pg_combinebackup.c:1337
 #, c-format
 msgid "tablespace at \"%s\" has no tablespace mapping"
 msgstr "Tablespace in »%s« hat kein Tablespace-Mapping"
 
-#: pg_combinebackup.c:1342
+#: pg_combinebackup.c:1355
 #, c-format
 msgid "tablespaces with OIDs %u and %u both point at directory \"%s\""
 msgstr "die Tablespaces mit OIDs %u und %u zeigen beide auf Verzeichnis »%s«"
 
-#: pg_combinebackup.c:1351
+#: pg_combinebackup.c:1364
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht schließen: %m"
 
-#: pg_combinebackup.c:1372
+#: pg_combinebackup.c:1385
 #, c-format
 msgid "file \"%s\" is too large"
 msgstr "Datei »%s« ist zu groß"
 
-#: pg_combinebackup.c:1389
+#: pg_combinebackup.c:1402
 #, c-format
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "konnte Datei »%s« nicht lesen: %zd von %lld gelesen"

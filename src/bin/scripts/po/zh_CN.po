@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-14 05:47+0000\n"
-"PO-Revision-Date: 2021-08-15 18:30+0800\n"
+"PO-Revision-Date: 2024-06-26 11:01+0200\n"
 "Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
 "Language: zh_CN\n"
@@ -892,7 +892,7 @@ msgstr "  -a, --all                    对所有数据库进行重建索引操�
 
 #: reindexdb.c:796
 msgid "      --concurrently           reindex concurrently\n"
-msgstr "      --concurrently          同时重新索引\n"
+msgstr "      --concurrently           同时重新索引\n"
 
 #: reindexdb.c:797
 msgid "  -d, --dbname=DBNAME          database to reindex\n"

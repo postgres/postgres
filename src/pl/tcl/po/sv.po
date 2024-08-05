@@ -1,14 +1,14 @@
 # Swedish message translation file for pltcl
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-04-11 13:38+0000\n"
-"PO-Revision-Date: 2023-03-09 22:42+0100\n"
+"POT-Creation-Date: 2024-07-12 17:38+0000\n"
+"PO-Revision-Date: 2024-07-12 22:05+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,56 +17,61 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: pltcl.c:463
+#: pltcl.c:462
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "PL/Tcl-funktion att anropa en gång när pltcl först används."
 
-#: pltcl.c:470
+#: pltcl.c:469
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "PL/TclU-funktion att anrop en gång när pltclu först används."
 
-#: pltcl.c:637
+#: pltcl.c:636
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "funktionen \"%s\" är skriven i fel språk"
 
-#: pltcl.c:648
+#: pltcl.c:647
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "funktionen \"%s\" får ej vara SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:682
+#: pltcl.c:681
 #, c-format
 msgid "processing %s parameter"
 msgstr "processar parameter %s"
 
-#: pltcl.c:835
+#: pltcl.c:834
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "en funktion som returnerar en mängd anropades i kontext som inte godtar en mängd"
 
-#: pltcl.c:840
+#: pltcl.c:839
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "materialiserat läge krävs, men stöds inte i detta kontext"
 
-#: pltcl.c:1013
+#: pltcl.c:1012
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "en funktion med post som värde anropades i sammanhang där poster inte kan godtagas."
 
-#: pltcl.c:1297
+#: pltcl.c:1031
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "kunde inte dela på returvärde från trigger: %s"
+msgid "could not parse function return value: %s"
+msgstr "kunde inte parsa funktions returvärde: %s"
 
-#: pltcl.c:1378 pltcl.c:1808
+#: pltcl.c:1298
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "kunde inte parsa triggers returvärde: %s"
+
+#: pltcl.c:1383 pltcl.c:1810
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1379
+#: pltcl.c:1384
 #, c-format
 msgid ""
 "%s\n"
@@ -75,42 +80,42 @@ msgstr ""
 "%s\n"
 "i PL/Tcl-funktion \"%s\""
 
-#: pltcl.c:1543
+#: pltcl.c:1547
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggningsfunktioner kan bara anropas vid triggning."
 
-#: pltcl.c:1547
+#: pltcl.c:1551
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl-funktioner kan inte returnera typ %s"
 
-#: pltcl.c:1586
+#: pltcl.c:1590
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl-funktioner kan inte ta emot typ %s"
 
-#: pltcl.c:1700
+#: pltcl.c:1702
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "kunde inte skapa en intern procedur \"%s\": %s"
 
-#: pltcl.c:3202
+#: pltcl.c:3207
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "kolumn-namn/-värde måste ha ett jämt antal element"
 
-#: pltcl.c:3220
+#: pltcl.c:3225
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "listan med kolumn-namn/-värde innehåller det icke existerande kolumnnamnet \"%s\""
 
-#: pltcl.c:3227
+#: pltcl.c:3232
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "kan inte sätta systemattribut \"%s\""
 
-#: pltcl.c:3233
+#: pltcl.c:3238
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "kan inte sätta genererad kolumn \"%s\""

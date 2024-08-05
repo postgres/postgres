@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-09-07 05:51+0000\n"
-"PO-Revision-Date: 2023-05-26 13:22+0900\n"
+"PO-Revision-Date: 2024-06-26 09:50+0200\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -583,7 +583,7 @@ msgstr "  -g, --member-of=ROLE      만들어지는 롤이 이 ROLE의 구성원
 #: createuser.c:425
 #, c-format
 msgid "  --role=ROLE               (same as --member-of, deprecated)\n"
-msgstr " --role=ROLE               (--member-of와 같음, 옛날 옵션)\n"
+msgstr "  --role=ROLE               (--member-of와 같음, 옛날 옵션)\n"
 
 #: createuser.c:426
 #, c-format
@@ -1012,8 +1012,7 @@ msgstr "  -i, --index=INDEX            지정한 인덱스들만 다시 만듬\n
 msgid ""
 "  -j, --jobs=NUM               use this many concurrent connections to "
 "reindex\n"
-msgstr ""
-"  -j, --jobs=NUM                재색인 작업을 여러개의 연결로 동시에 작업함\n"
+msgstr "  -j, --jobs=NUM               재색인 작업을 여러개의 연결로 동시에 작업함\n"
 
 #: reindexdb.c:759
 #, c-format

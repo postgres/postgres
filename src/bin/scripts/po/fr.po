@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-10-29 17:19+0000\n"
-"PO-Revision-Date: 2023-10-30 13:38+0100\n"
+"PO-Revision-Date: 2024-07-01 23:55+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -571,7 +571,7 @@ msgstr "  %s [OPTION]... [RÔLE]\n"
 msgid ""
 "  -a, --with-admin=ROLE     ROLE will be a member of new role with admin\n"
 "                            option\n"
-msgstr "  -a, --with-admin=ROLE     ROLE sera un membre du nouveau rôle avec l'option admin\n"
+msgstr "  -a, --with-admin=ROLE          ROLE sera un membre du nouveau rôle avec l'option admin\n"
 
 #: createuser.c:420
 #, c-format
@@ -595,12 +595,12 @@ msgstr ""
 #: createuser.c:424
 #, c-format
 msgid "  -g, --member-of=ROLE      new role will be a member of ROLE\n"
-msgstr "  -g, --member-of=ROLE      le nouveau rôle sera un membre de ROLE\n"
+msgstr "  -g, --member-of=ROLE           le nouveau rôle sera un membre de ROLE\n"
 
 #: createuser.c:425
 #, c-format
 msgid "  --role=ROLE               (same as --member-of, deprecated)\n"
-msgstr "  --role=ROLE               (identique à --member-of, obsolète)\n"
+msgstr "  --role=ROLE                    (identique à --member-of, obsolète)\n"
 
 #: createuser.c:426
 #, c-format
@@ -629,7 +629,7 @@ msgstr "  -L, --no-login                 le rôle ne peut pas se connecter\n"
 #: createuser.c:431
 #, c-format
 msgid "  -m, --with-member=ROLE    ROLE will be a member of new role\n"
-msgstr "  -m, --with-member=ROLE    ROLE sera un membre du nouveau rôle\n"
+msgstr "  -m, --with-member=ROLE         ROLE sera un membre du nouveau rôle\n"
 
 #: createuser.c:432
 #, c-format
@@ -663,9 +663,7 @@ msgstr ""
 msgid ""
 "  -v, --valid-until=TIMESTAMP\n"
 "                            password expiration date and time for role\n"
-msgstr ""
-"  -v, --valid-until=TIMESTAMP\n"
-"                            date et heure d'expiration du mot de passe pour le rôle\n"
+msgstr "  -v, --valid-until=TIMESTAMP    date et heure d'expiration du mot de passe pour le rôle\n"
 
 #: createuser.c:440
 #, c-format
@@ -679,7 +677,7 @@ msgstr ""
 #: createuser.c:442
 #, c-format
 msgid "  --bypassrls               role can bypass row-level security (RLS) policy\n"
-msgstr "  --bypassrls               le rôle peut contourner la politique de sécurité niveau ligne (RLS)\n"
+msgstr "  --bypassrls                    le rôle peut contourner la politique de sécurité niveau ligne (RLS)\n"
 
 #: createuser.c:443
 #, c-format
@@ -687,8 +685,8 @@ msgid ""
 "  --no-bypassrls            role cannot bypass row-level security (RLS) policy\n"
 "                            (default)\n"
 msgstr ""
-"  --no-bypassrls            le rôle ne peut pas contourner la politique de sécurité niveau ligne (RLS)\n"
-"                            (par défaut)\n"
+"  --no-bypassrls                 le rôle ne peut pas contourner la politique de sécurité niveau ligne (RLS)\n"
+"                                 (par défaut)\n"
 
 #: createuser.c:445
 #, c-format

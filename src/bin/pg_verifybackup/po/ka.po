@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-04 22:18+0000\n"
+"POT-Creation-Date: 2024-07-01 03:48+0000\n"
 "PO-Revision-Date: 2024-06-05 01:39+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
@@ -37,6 +37,79 @@ msgstr "დეტალები: "
 #, c-format
 msgid "hint: "
 msgstr "მინიშნება: "
+
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:110 pg_verifybackup.c:438
+#: pg_verifybackup.c:476 pg_verifybackup.c:896
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: pg_verifybackup.c:902
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "ბაიტების მიმდევრობა არ ემთხვევა"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"ბაიტების მიმდევრობის შესაძლო შეუსაბამობა pg_control ფაილის შესანახად გამოყენებული \n"
+"ბაიტების მიმდევრობა შესაძლოა არ ემთხვეოდეს ამ პროგრამის მიერ გამოყენებულს. ამ შემთხვევაში  ქვემოთ \n"
+"მოცემული შედეგები არასწორი იქნება და PostgreSQL ეს აგება ამ მონაცემთა საქაღალდესთან შეუთავსებელი იქნება."
+
+#: ../../common/controldata_utils.c:230 pg_verifybackup.c:406
+#: pg_verifybackup.c:865
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:249
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:268
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#, c-format
+msgid "out of memory"
+msgstr "არასაკმარისი მეხსიერება"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "წარმატება"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "სამიზნე ბუფერი ძალიან პატარაა"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "OpenSSL -ის სეცდომა"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
@@ -144,11 +217,6 @@ msgstr "უნიკოდის მაღალ სუროგატს მა
 #: ../../common/jsonapi.c:2187
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "უნიკოდის დაბალი სუროგატი მაღალ სუროგატს უნდა მისდევდეს."
-
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
-#, c-format
-msgid "out of memory"
-msgstr "არასაკმარისი მეხსიერება"
 
 #: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
 #, c-format
@@ -342,20 +410,10 @@ msgstr "პროგრამა „%s“ ნაპოვნია „%s“-ი�
 msgid "backup successfully verified\n"
 msgstr "მარქაფი წარმატებით შემოწმდა\n"
 
-#: pg_verifybackup.c:406 pg_verifybackup.c:865
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
-
 #: pg_verifybackup.c:410
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ფაილი \"%s\" არ არსებობს: %m"
-
-#: pg_verifybackup.c:438 pg_verifybackup.c:476 pg_verifybackup.c:896
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
 
 #: pg_verifybackup.c:440
 #, c-format
@@ -431,11 +489,6 @@ msgstr "ფაილის (\"%s\") საკონტროლო ჯამი�
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "ფაილის (\"%s\") საკონტროლო ჯამის განახლების შეცდომა"
-
-#: pg_verifybackup.c:902
-#, c-format
-msgid "could not close file \"%s\": %m"
-msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
 
 #: pg_verifybackup.c:921
 #, c-format

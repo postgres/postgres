@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-01-17 11:44-0300\n"
-"PO-Revision-Date: 2024-01-15 07:45-0300\n"
+"PO-Revision-Date: 2024-06-26 11:02+0200\n"
 "Last-Translator: Halley Pacheco de Oliveira <halley@vivaldi.net>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -16193,7 +16193,7 @@ msgstr "  --boot             seleciona modo de ativação (deve ser o primeiro a
 #: main/main.c:372
 #, c-format
 msgid "  --check            selects check mode (must be first argument)\n"
-msgstr "  --check          seleciona o modo de verificação (deve ser o primeiro argumento)\n"
+msgstr "  --check            seleciona o modo de verificação (deve ser o primeiro argumento)\n"
 
 #: main/main.c:373
 #, c-format

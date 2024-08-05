@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-04 22:22+0000\n"
-"PO-Revision-Date: 2024-06-05 01:39+0200\n"
+"POT-Creation-Date: 2024-07-04 05:53+0000\n"
+"PO-Revision-Date: 2024-07-04 09:37+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: \n"
 "Language: ka\n"
@@ -37,6 +37,88 @@ msgstr "დეტალები: "
 msgid "hint: "
 msgstr "მინიშნება: "
 
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:527
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
+#: pg_combinebackup.c:1175 reconstruct.c:356 reconstruct.c:727
+#: write_manifest.c:187
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "ბაიტების მიმდევრობა არ ემთხვევა"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"ბაიტების მიმდევრობის შესაძლო შეუსაბამობა pg_control ფაილის შესანახად გამოყენებული \n"
+"ბაიტების მიმდევრობა შესაძლოა არ ემთხვეოდეს ამ პროგრამის მიერ გამოყენებულს. ამ შემთხვევაში  ქვემოთ \n"
+"მოცემული შედეგები არასწორი იქნება და PostgreSQL ეს აგება ამ მონაცემთა საქაღალდესთან შეუთავსებელი იქნება."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
+#: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
+#: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
+#: pg_combinebackup.c:1167 reconstruct.c:510 reconstruct.c:625
+#: write_manifest.c:250
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:746
+#: write_manifest.c:260
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#, c-format
+msgid "out of memory"
+msgstr "არასაკმარისი მეხსიერება"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "წარმატება"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "სამიზნე ბუფერი ძალიან პატარაა"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "OpenSSL -ის სეცდომა"
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
@@ -47,6 +129,41 @@ msgstr "არასაკმარისი მეხსიერება\n"
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "შეუძლებელია ფაილური სისტემის სინქრონიზაცია ფაილისთვის \"%s\": %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:199
+#: reconstruct.c:408
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ფაილი \"%s\" არ არსებობს: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "ამ აგებას სინქრონიზაციის მეთოდის \"%s\" მხარდაჭერა არ გააჩნია"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_combinebackup.c:933 pg_combinebackup.c:1256
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "გადარქმევის შეცდომა %s - %s: %m"
 
 #: ../../common/jsonapi.c:2121
 msgid "Recursive descent parser cannot use incremental lexer."
@@ -144,11 +261,6 @@ msgstr "უნიკოდის მაღალ სუროგატს მა
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "უნიკოდის დაბალი სუროგატი მაღალ სუროგატს უნდა მისდევდეს."
 
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
-#, c-format
-msgid "out of memory"
-msgstr "არასაკმარისი მეხსიერება"
-
 #: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
 #, c-format
 msgid "could not initialize checksum of manifest"
@@ -239,7 +351,7 @@ msgstr "ფაილის სახელის გაშიფვრის შ
 msgid "file size is not an integer"
 msgstr "ფაილის ზომა მთელი რიცხვი არაა"
 
-#: ../../common/parse_manifest.c:700 pg_combinebackup.c:190
+#: ../../common/parse_manifest.c:700 pg_combinebackup.c:199
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "საკონტროლო ჯამის უცნობი ალგორითმი: \"%s\""
@@ -306,6 +418,21 @@ msgstr "მანიფესტის საკონტროლო ჯამ�
 msgid "could not parse backup manifest: %s"
 msgstr "მარქაფის მანიფესტის დამუშავების შეცრომა: %s"
 
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "არასწორი მნიშვნელობა \"%s\" პარამეტრისთვის %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s არაა საზღვრებში %d-დან %d-მდე"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "უცნობი სინქრონიზაციის მეთოდი: \"%s\""
+
 #: backup_label.c:66 backup_label.c:85 backup_label.c:95
 #, c-format
 msgid "%s: could not parse %s"
@@ -336,97 +463,71 @@ msgstr "%s: %s ვერ ვიპოვე"
 msgid "%s: %s requires %s"
 msgstr "%s: %s-ს %s სჭირდება"
 
-#: backup_label.c:143 copy_file.c:135 copy_file.c:167 copy_file.c:171
-#: copy_file.c:218 copy_file.c:258 load_manifest.c:128 pg_combinebackup.c:511
-#: pg_combinebackup.c:1154 reconstruct.c:511 reconstruct.c:626
-#: write_manifest.c:250
+#: backup_label.c:162 reconstruct.c:748 write_manifest.c:262
 #, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+msgid "could not write file \"%s\": wrote %d of %d"
+msgstr "ფაილში \"%s\" ჩაწერა შეუძლებელია. ჩაწერილია %d %d-დან"
 
-#: backup_label.c:160 copy_file.c:182 reconstruct.c:747
-#, c-format
-msgid "could not write file \"%s\": %m"
-msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
-
-#: backup_label.c:162 reconstruct.c:749 write_manifest.c:262
-#, c-format
-msgid "could not write file \"%s\": wrote only %d of %d bytes"
-msgstr "ვერ ჩავწერე ფაილი \"%s\": ჩავწერე, მხოლოდ, %d ბაიტი %d-დან"
-
-#: backup_label.c:166 copy_file.c:142 copy_file.c:189 reconstruct.c:709
-#: reconstruct.c:755 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:708
+#: reconstruct.c:754 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "ფაილის (\"%s\") საკონტროლო ჯამის განახლების შეცდომა"
 
-#: backup_label.c:174 copy_file.c:64 pg_combinebackup.c:526
-#: pg_combinebackup.c:1162 reconstruct.c:357 reconstruct.c:728
-#: write_manifest.c:187
+#: copy_file.c:186
 #, c-format
-msgid "could not close \"%s\": %m"
-msgstr "\"%s\" ვერ დავხურე: %m"
+msgid "could not write to file \"%s\": %m"
+msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 
-#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:1118
+#: copy_file.c:188
 #, c-format
-msgid "could not stat file \"%s\": %m"
-msgstr "ფაილი \"%s\" არ არსებობს: %m"
+msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
+msgstr "ფაილში \"%s\" ჩაწერის შეცდომა. წანაცვლება %u: ჩავწერე %d ბაიტი %d-დან"
 
-#: copy_file.c:62
+#: copy_file.c:199 reconstruct.c:771
 #, c-format
-msgid "could not open \"%s\": %m"
-msgstr "\"%s\" ვერ გავხსენი: %m"
+msgid "could not read from file \"%s\": %m"
+msgstr "ფაილიდან (\"%s\") წაკითხვის შეცდომა: %m"
 
-#: copy_file.c:146 copy_file.c:195 load_manifest.c:161 load_manifest.c:199
-#: pg_combinebackup.c:1387 reconstruct.c:528 reconstruct.c:772
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
-
-#: copy_file.c:184
-#, c-format
-msgid "could not write file \"%s\": wrote only %d of %d bytes at offset %u"
-msgstr "ფაილში \"%s\" ჩაწერის შეცდომა: ჩავწერე მხოლოდ %d ბაიტი %d-დან , წანაცვლებაზე %u"
-
-#: copy_file.c:214
+#: copy_file.c:218
 #, c-format
 msgid "error while cloning file \"%s\" to \"%s\": %m"
 msgstr "შეცდომა ფაილის დაკლონვისას \"%s\"-დან \"%s\"-მდე: %m"
 
-#: copy_file.c:222 copy_file.c:262
+#: copy_file.c:229 copy_file.c:272
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "ფაილის (%s) შექმნის შეცდომა: %m"
 
-#: copy_file.c:230
+#: copy_file.c:237
 #, c-format
 msgid "error while cloning file \"%s\" to \"%s\": %s"
 msgstr "შეცდომა ფაილის დაკლონვისას \"%s\"-დან \"%s\"-მდე: %s"
 
-#: copy_file.c:235 pg_combinebackup.c:239
+#: copy_file.c:245 pg_combinebackup.c:251
 #, c-format
 msgid "file cloning not supported on this platform"
 msgstr "ამ პლატფორმაზე კლონირება მხარდაჭერილი არაა"
 
-#: copy_file.c:268 reconstruct.c:692
+#: copy_file.c:278 reconstruct.c:691
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "შეცდომა ფაილბის შუალედის კოპირებისას \"%s\"-დან \"%s\"-მდე: %m"
 
-#: copy_file.c:275 pg_combinebackup.c:252 reconstruct.c:712
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:711
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "ამ პლატფორმაზე copy_file_range მხარდაჭერილი არაა"
 
-#: copy_file.c:290
+#: copy_file.c:300
 #, c-format
-msgid "could not copy \"%s\" to \"%s\": %m"
-msgstr "\"%s\"-დან \"%s\"-ში კოპირება შეუძლებელია: %m"
+msgid "could not copy file \"%s\" to \"%s\": %m"
+msgstr "ფაილის \"%s\"-დან \"%s\"-ში კოპირება შეუძლებელია: %m"
 
 #: load_manifest.c:125
 #, c-format
-msgid "\"%s\" does not exist"
-msgstr "\"%s\" არ არსებობს"
+msgid "file \"%s\" does not exist"
+msgstr "ფაილი %s არ არსებობს"
 
 #: load_manifest.c:163
 #, c-format
@@ -448,143 +549,137 @@ msgstr "მარქაფის მანიფესტის ვერსი�
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "მარქაფს მანიფესტში მითითებული ბილიკის სახელი დუბლირებულია: %s"
 
-#: pg_combinebackup.c:208 pg_combinebackup.c:216
+#: pg_combinebackup.c:220 pg_combinebackup.c:228
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: pg_combinebackup.c:215
+#: pg_combinebackup.c:227
 #, c-format
-msgid "%s: no input directories specified"
-msgstr "%s: შეყვანის საქაღალდეები მითითებული არაა"
+msgid "no input directories specified"
+msgstr "შეყვანის საქაღალდეები მითითებული არაა"
 
-#: pg_combinebackup.c:221
+#: pg_combinebackup.c:233
 #, c-format
 msgid "no output directory specified"
 msgstr "გამოტანის საქაღალდე მითითებული არაა"
 
-#: pg_combinebackup.c:289
+#: pg_combinebackup.c:301
 #, c-format
 msgid "%s: manifest system identifier is %llu, but control file has %llu"
 msgstr "%s: მანიფესტის სისტემის იდენტიფიკატორია %llu, მაგრამ კონტროლის ფაილი შეიცავს %llu"
 
-#: pg_combinebackup.c:328
+#: pg_combinebackup.c:340
 #, c-format
 msgid "can't generate a manifest because no manifest is available for the final input backup"
 msgstr "მანიფესტის გენერაცია შეუძლებელია, რადგან საბოლოო შეყვანის მარქაფისთვის მანიფესტი ხელმისაწვდომი არაა"
 
-#: pg_combinebackup.c:375
+#: pg_combinebackup.c:387
 #, c-format
 msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
 msgstr "%s-დან %s-მდე სიმბმულის შექმნა შეუძლებელია: %m"
 
-#: pg_combinebackup.c:387 pg_combinebackup.c:718 pg_combinebackup.c:914
+#: pg_combinebackup.c:399 pg_combinebackup.c:730 pg_combinebackup.c:927
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "საქაღალდის (%s) შექმნის შეცდომა: %m"
 
-#: pg_combinebackup.c:442
+#: pg_combinebackup.c:454
 #, c-format
 msgid "directory name too long"
 msgstr "საქაღალდის სახელი ძალიან გრძელია"
 
-#: pg_combinebackup.c:449
+#: pg_combinebackup.c:461
 #, c-format
 msgid "multiple \"=\" signs in tablespace mapping"
 msgstr "ცხრილების სივრცის მიბმაში ერთზე მეტი \"=\" ნიშანია"
 
-#: pg_combinebackup.c:457
+#: pg_combinebackup.c:469
 #, c-format
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr "ცხრილების მიბმის არასწორი ფორმატი \"%s\", უნდა იყოს \"OLDDIR=NEWDIR\""
 
-#: pg_combinebackup.c:468 pg_combinebackup.c:472
+#: pg_combinebackup.c:480 pg_combinebackup.c:484
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr "ძველი საქაღალდის ბილიკი ცხრილის სივრცის მიბმაში აბსოლუტური არაა: %s"
 
-#: pg_combinebackup.c:541
+#: pg_combinebackup.c:553
 #, c-format
 msgid "backup at \"%s\" is a full backup, but only the first backup should be a full backup"
 msgstr "მარქაფი მისამართზე \"%s\" სრული მარქაფია, მაგრამ, მხოლოდ, პირველი მარქაფი უნდა იყოს სრული"
 
-#: pg_combinebackup.c:544
+#: pg_combinebackup.c:556
 #, c-format
 msgid "backup at \"%s\" is an incremental backup, but the first backup should be a full backup"
 msgstr "მარქაფი მისამართზე \"%s\" ინკრემენტული მარქაფია, მაგრამ პირველი მარქაფი სრული უნდა იყოს"
 
-#: pg_combinebackup.c:547
+#: pg_combinebackup.c:559
 #, c-format
 msgid "backup at \"%s\" starts on timeline %u, but expected %u"
 msgstr "მარქაფი მისამართზე \"%s\" იწყება დროის ხაზზე %u, მაგრამ მოველოდი მნიშვნელობას %u"
 
-#: pg_combinebackup.c:550
+#: pg_combinebackup.c:562
 #, c-format
 msgid "backup at \"%s\" starts at LSN %X/%X, but expected %X/%X"
 msgstr "მარქაფი მისამართზე \"%s\" იწყება LSN-თან %X/%X, მაგრამ მოველოდი მნიშვნელობას %X/%X"
 
-#: pg_combinebackup.c:602
+#: pg_combinebackup.c:614
 #, c-format
 msgid "%s: CRC is incorrect"
 msgstr "%s: CRC არასწორია"
 
-#: pg_combinebackup.c:606
+#: pg_combinebackup.c:618
 #, c-format
 msgid "%s: unexpected control file version"
 msgstr "%s: მოულოდნელი საკონტროლო ფაილის ვერსია"
 
-#: pg_combinebackup.c:613
+#: pg_combinebackup.c:625
 #, c-format
 msgid "%s: expected system identifier %llu, but found %llu"
 msgstr "%s: მოველოდი სისტემის იდენტიფიკატორს %llu, ნაპოვნი მნიშვნელობაა %llu"
 
-#: pg_combinebackup.c:645
+#: pg_combinebackup.c:657
 #, c-format
 msgid "only some backups have checksums enabled"
 msgstr "საკონტროლო ჯამები, მხოლოდ, ზოგიერთ მარქაფს ჰქონდა"
 
-#: pg_combinebackup.c:646
+#: pg_combinebackup.c:658
 #, c-format
 msgid "disable, and optionally reenable, checksums on the output directory to avoid failures"
 msgstr "გამორთვა და არასავალდებულოდ თავიდან ჩართვა საკონტროლო ჯამებისა გამოტანის საქაღალდეზე, ჩავარდნების თავიდან ასაცილებლად"
 
-#: pg_combinebackup.c:664 pg_combinebackup.c:1370 reconstruct.c:199
-#: reconstruct.c:409
-#, c-format
-msgid "could not stat \"%s\": %m"
-msgstr "\"%s\" ვერ აღმოვაჩინე: %m"
-
-#: pg_combinebackup.c:681
+#: pg_combinebackup.c:693
 #, c-format
 msgid "removing output directory \"%s\""
 msgstr "წაიშლება გამოტანის საქაღალდე \"%s\""
 
-#: pg_combinebackup.c:683
+#: pg_combinebackup.c:695
 #, c-format
 msgid "failed to remove output directory"
 msgstr "გამოტანის საქაღალდის წაშლა ჩავარდა"
 
-#: pg_combinebackup.c:687
+#: pg_combinebackup.c:699
 #, c-format
 msgid "removing contents of output directory \"%s\""
 msgstr "წაიშლება შემცველობა გამოტანის საქაღალდისთვის \"%s\""
 
-#: pg_combinebackup.c:690
+#: pg_combinebackup.c:702
 #, c-format
 msgid "failed to remove contents of output directory"
 msgstr "გამოტანის საქაღალდის შემცველობის წაშლა ჩავარდა"
 
-#: pg_combinebackup.c:730
+#: pg_combinebackup.c:742
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "საქაღალდე \"%s\" არსებობს, მაგრამ ცარიელი არაა"
 
-#: pg_combinebackup.c:733
+#: pg_combinebackup.c:745
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "საქაღალდის (%s) წვდომის შეცდომა: %m"
 
-#: pg_combinebackup.c:747
+#: pg_combinebackup.c:759
 #, c-format
 msgid ""
 "%s reconstructs full backups from incrementals.\n"
@@ -593,17 +688,17 @@ msgstr ""
 "%s სრული მარქაფების აგება ინკრემენტულებისგან.\n"
 "\n"
 
-#: pg_combinebackup.c:748
+#: pg_combinebackup.c:760
 #, c-format
 msgid "Usage:\n"
 msgstr "გამოყენება:\n"
 
-#: pg_combinebackup.c:749
+#: pg_combinebackup.c:761
 #, c-format
 msgid "  %s [OPTION]... DIRECTORY...\n"
 msgstr "  %s [პარამეტრი]... საქაღალდე...\n"
 
-#: pg_combinebackup.c:750
+#: pg_combinebackup.c:762
 #, c-format
 msgid ""
 "\n"
@@ -612,27 +707,27 @@ msgstr ""
 "\n"
 "პარამეტრები:\n"
 
-#: pg_combinebackup.c:751
+#: pg_combinebackup.c:763
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               გასამართი ინფორმაციის გენერაცია\n"
 
-#: pg_combinebackup.c:752
+#: pg_combinebackup.c:764
 #, c-format
 msgid "  -n, --dry-run             do not actually do anything\n"
 msgstr "  -n, --dry-run             არაფერი სინამდვილეში არ ქნა\n"
 
-#: pg_combinebackup.c:753
+#: pg_combinebackup.c:765
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync             არ დაველოდო ცვლილებების დისკზე უსაფრთხოდ ჩაწერას\n"
 
-#: pg_combinebackup.c:754
+#: pg_combinebackup.c:766
 #, c-format
-msgid "  -o, --output              output directory\n"
-msgstr "  -o, --output              გამოტანის საქაღალდე\n"
+msgid "  -o, --output=DIRECTORY    output directory\n"
+msgstr "  -o, --output=საქაღალდე    გამოტანის საქაღალდე\n"
 
-#: pg_combinebackup.c:755
+#: pg_combinebackup.c:767
 #, c-format
 msgid ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
@@ -641,17 +736,22 @@ msgstr ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
 "                         ცხრილების სივრცის OLDDIR-დან NEWDIR-ში გადატანა\n"
 
-#: pg_combinebackup.c:757
+#: pg_combinebackup.c:769
 #, c-format
 msgid "      --clone               clone (reflink) instead of copying files\n"
 msgstr "     --clone                 ფაილების დაკლონვა (reflink) კოპირების ნაცვლად\n"
 
-#: pg_combinebackup.c:758
+#: pg_combinebackup.c:770
+#, c-format
+msgid "      --copy                copy files (default)\n"
+msgstr "      --copy                ფაილების კოპირება (ნაგულისხმევი)\n"
+
+#: pg_combinebackup.c:771
 #, c-format
 msgid "      --copy-file-range     copy using copy_file_range() syscall\n"
 msgstr "      --copy-file-range     კოპირება სისტემური ფუნქციით copy_file_range()\n"
 
-#: pg_combinebackup.c:759
+#: pg_combinebackup.c:772
 #, c-format
 msgid ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
@@ -660,27 +760,27 @@ msgstr ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 "                         მანიფესტების საკონტროლო ჯამის გამოსათვლელი ალფორითმი\n"
 
-#: pg_combinebackup.c:761
+#: pg_combinebackup.c:774
 #, c-format
 msgid "      --no-manifest         suppress generation of backup manifest\n"
 msgstr "      --no-manifest      მარქაფის მანიფესტი არ შეიქმნება\n"
 
-#: pg_combinebackup.c:762
+#: pg_combinebackup.c:775
 #, c-format
 msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
 msgstr "      --sync-method=მეთოდი  ფაილების დისკზე სინქრონიზაციის მეთოდის დაყენება\n"
 
-#: pg_combinebackup.c:763
+#: pg_combinebackup.c:776
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: pg_combinebackup.c:764
+#: pg_combinebackup.c:777
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: pg_combinebackup.c:766
+#: pg_combinebackup.c:779
 #, c-format
 msgid ""
 "\n"
@@ -689,116 +789,150 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: pg_combinebackup.c:767
+#: pg_combinebackup.c:780
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
 
-#: pg_combinebackup.c:920 pg_combinebackup.c:1243
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
-
-#: pg_combinebackup.c:982
+#: pg_combinebackup.c:995
 #, c-format
 msgid "skipping symbolic link \"%s\""
 msgstr "%s: სიმბმულია. გამოტოვება"
 
-#: pg_combinebackup.c:984
+#: pg_combinebackup.c:997
 #, c-format
 msgid "skipping special file \"%s\""
 msgstr "სპეციალური ფაილის გამოტოვება \"%s\""
 
-#. translator: the first %s is a backup manifest file, the second is a file absent therein
-#: pg_combinebackup.c:1060 reconstruct.c:301
+#: pg_combinebackup.c:1073
 #, c-format
 msgid "\"%s\" contains no entry for \"%s\""
 msgstr "\"%s\" არ შეიცავს ჩანაწერს \"%s\"-სთვის"
 
-#: pg_combinebackup.c:1176
+#: pg_combinebackup.c:1189
 #, c-format
-msgid "%s: server version too old\n"
-msgstr "%s: სერვერის ვერსია ძალიან ძველია\n"
+msgid "%s: server version too old"
+msgstr "%s: სერვერის ვერსია ძალიან ძველია"
 
-#: pg_combinebackup.c:1177
+#: pg_combinebackup.c:1190
 #, c-format
-msgid "%s: could not parse version number\n"
-msgstr "%s: ვერსის ნომრის დამუშავების შეცდომა\n"
+msgid "%s: could not parse version number"
+msgstr "%s: ვერსის ნომრის დამუშავების შეცდომა"
 
-#: pg_combinebackup.c:1296
+#: pg_combinebackup.c:1309
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "სიმბოლური ბმის \"%s\" წაკითხვის შეცდომა: %m"
 
-#: pg_combinebackup.c:1299
+#: pg_combinebackup.c:1312
 #, c-format
-msgid "symbolic link \"%s\" is too long"
-msgstr "სიმბოლური ბმული \"%s\" მეტისმეტად გრძელია"
+msgid "target of symbolic link \"%s\" is too long"
+msgstr "სიმბოლური ბმულის \"%s\" სამიზნე მეტისმეტად გრძელია"
 
-#: pg_combinebackup.c:1302
+#: pg_combinebackup.c:1315
 #, c-format
-msgid "symbolic link \"%s\" is relative"
-msgstr "სიმბმული \"%s\" ფარდობითია"
+msgid "target of symbolic link \"%s\" is relative"
+msgstr "სიმბმულის \"%s\" სამიზნე ფარდობითია"
 
-#: pg_combinebackup.c:1324
+#: pg_combinebackup.c:1337
 #, c-format
 msgid "tablespace at \"%s\" has no tablespace mapping"
 msgstr "ცხრილები სივრცეს მისამართზე \"%s\" ცხრილების სივრცის ასახვები არ გააჩნია"
 
-#: pg_combinebackup.c:1342
+#: pg_combinebackup.c:1355
 #, c-format
-msgid "tablespaces with OIDs %u and %u both point at \"%s\""
-msgstr "ცხრილის სივრცეები OID-ებით %u და %u, ორივე, \"%s\"-ზე მიუთითებს"
+msgid "tablespaces with OIDs %u and %u both point at directory \"%s\""
+msgstr "ცხრილის სივრცეები OID-ებით %u და %u, ორივე მიუთითებს საქაღალდეზე \"%s\"-ზე"
 
-#: pg_combinebackup.c:1351
+#: pg_combinebackup.c:1364
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "საქაღალდის %s-ზე დახურვის შეცდომა: %m"
 
-#: pg_combinebackup.c:1372
+#: pg_combinebackup.c:1385
 #, c-format
 msgid "file \"%s\" is too large"
 msgstr "%s: ფაილი ძალიან დიდია"
 
-#: pg_combinebackup.c:1389
+#: pg_combinebackup.c:1402
 #, c-format
-msgid "could not read file \"%s\": read only %zd of %lld bytes"
-msgstr "ვერ წავიკითხე ფაილი \"%s\": წავიკითხე, მხოლოდ, %zd ბაიტი %lld-დან"
+msgid "could not read file \"%s\": read %zd of %lld"
+msgstr "ფაილის \"%s\" წაკითხვა შეუძლებელია: წაკითხულია %zd %lld-დან"
 
-#: reconstruct.c:411
+#: reconstruct.c:300
+#, c-format
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "მანიფესტის ფაილი \"%s\" ფაილისთვის \"%s\" ჩანაწერებს არ შეიცავს"
+
+#: reconstruct.c:410
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "ფაილი \"%s\" მეტისმეტად მოკლეა. მოველოდი %llu, მივიღე %llu"
 
-#: reconstruct.c:453
+#: reconstruct.c:452
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x not 0x%x)"
 msgstr "ფაილს \"%s\" არასწორი ინკრემენტული ჯადოსნური რიცხვი (0x%x not 0x%x) გააჩნია"
 
-#: reconstruct.c:459
+#: reconstruct.c:458
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "ფაილს \"%s\" აქვს ბლოკების რაოდენობა %u, რომელიც სეგმენტის ზომას %u აჭარბებს"
 
-#: reconstruct.c:466
+#: reconstruct.c:465
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "ფაილს \"%s\" აქვს წაკვეთის ბლოკის სიგრძე %u, რომელიც სეგმენტის ზომას %u აჭარბებს"
 
-#: reconstruct.c:530
+#: reconstruct.c:529
 #, c-format
-msgid "could not read file \"%s\": read only %d of %u bytes"
-msgstr "ვერ წავიკითხე ფაილი \"%s\": წავიკითხე, მხოლოდ, %d ბაიტი %u-დან"
+msgid "could not read file \"%s\": read %d of %u"
+msgstr "ფაილის \"%s\" წაკითხვის შეცდომა: წაკითხულია %d %u-დან"
 
-#: reconstruct.c:774
+#: reconstruct.c:773
 #, c-format
-msgid "could not read file \"%s\": read only %d of %d bytes at offset %llu"
-msgstr "ვერ წავიკითხე ფაილი \"%s\": წავიკითხე, მხოლოდ %d ბაიტი %d-დან წანაცვლებაზე %llu"
+msgid "could not read from file \"%s\", offset %llu: read %d of %d"
+msgstr "ფაილიდან \"%s\" წაკითხვის შეცდომა. წანაცვლება %llu: წაკითხულია %d %d-დან"
 
-#: write_manifest.c:260
 #, c-format
-msgid "could not write \"%s\": %m"
-msgstr "\"%s\"-ში ჩაწერის შეცდომა: %m"
+#~ msgid "\"%s\" does not exist"
+#~ msgstr "\"%s\" არ არსებობს"
+
+#, c-format
+#~ msgid "could not close \"%s\": %m"
+#~ msgstr "\"%s\" ვერ დავხურე: %m"
+
+#, c-format
+#~ msgid "could not open \"%s\": %m"
+#~ msgstr "\"%s\" ვერ გავხსენი: %m"
+
+#, c-format
+#~ msgid "could not read file \"%s\": read only %d of %d bytes at offset %llu"
+#~ msgstr "ვერ წავიკითხე ფაილი \"%s\": წავიკითხე, მხოლოდ %d ბაიტი %d-დან წანაცვლებაზე %llu"
+
+#, c-format
+#~ msgid "could not read file \"%s\": read only %d of %u bytes"
+#~ msgstr "ვერ წავიკითხე ფაილი \"%s\": წავიკითხე, მხოლოდ, %d ბაიტი %u-დან"
+
+#, c-format
+#~ msgid "could not read file \"%s\": read only %zd of %lld bytes"
+#~ msgstr "ვერ წავიკითხე ფაილი \"%s\": წავიკითხე, მხოლოდ, %zd ბაიტი %lld-დან"
+
+#, c-format
+#~ msgid "could not stat \"%s\": %m"
+#~ msgstr "\"%s\" ვერ აღმოვაჩინე: %m"
+
+#, c-format
+#~ msgid "could not write \"%s\": %m"
+#~ msgstr "\"%s\"-ში ჩაწერის შეცდომა: %m"
+
+#, c-format
+#~ msgid "could not write file \"%s\": wrote only %d of %d bytes"
+#~ msgstr "ვერ ჩავწერე ფაილი \"%s\": ჩავწერე, მხოლოდ, %d ბაიტი %d-დან"
+
+#, c-format
+#~ msgid "could not write file \"%s\": wrote only %d of %d bytes at offset %u"
+#~ msgstr "ფაილში \"%s\" ჩაწერის შეცდომა: ჩავწერე მხოლოდ %d ბაიტი %d-დან , წანაცვლებაზე %u"
 
 #, c-format
 #~ msgid "unexpected json parse error type: %d"
