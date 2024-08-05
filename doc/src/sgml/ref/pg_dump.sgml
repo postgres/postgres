@@ -1003,6 +1003,14 @@ PostgreSQL documentation
 
        <note>
         <para>
+         Using wildcards in <option>--include-foreign-data</option> may result
+         in access to unexpected foreign servers. Also, to use this option securely,
+         make sure that the named server must have a trusted owner.
+        </para>
+       </note>
+
+       <note>
+        <para>
          When <option>--include-foreign-data</option> is specified,
          <application>pg_dump</application> does not check that the foreign
          table is writable.  Therefore, there is no guarantee that the

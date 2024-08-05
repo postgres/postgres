@@ -2202,6 +2202,21 @@ select pg_get_viewdef('tt26v', true);
     FROM ( VALUES (1,2,3)) v(x, y, z);
 (1 row)
 
+-- test restriction on non-system view expansion.
+create table tt27v_tbl (a int);
+create view tt27v as select a from tt27v_tbl;
+set restrict_nonsystem_relation_kind to 'view';
+select a from tt27v where a > 0; -- Error
+ERROR:  access to non-system view "tt27v" is restricted
+insert into tt27v values (1); -- Error
+ERROR:  access to non-system view "tt27v" is restricted
+select viewname from pg_views where viewname = 'tt27v'; -- Ok to access a system view.
+ viewname 
+----------
+ tt27v
+(1 row)
+
+reset restrict_nonsystem_relation_kind;
 -- clean up all the random objects we made above
 DROP SCHEMA temp_view_test CASCADE;
 NOTICE:  drop cascades to 27 other objects
@@ -2233,7 +2248,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 77 other objects
+NOTICE:  drop cascades to 79 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -2311,3 +2326,5 @@ drop cascades to view tt23v
 drop cascades to view tt24v
 drop cascades to view tt25v
 drop cascades to view tt26v
+drop cascades to table tt27v_tbl
+drop cascades to view tt27v
