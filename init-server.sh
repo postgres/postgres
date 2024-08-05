@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Ask for the database cluster name
-read -p "Enter the name of the database cluster to start: " DB_CLUSTER_NAME
+# Ask for the database cluster name if not provided
+if [ -z "$3" ]; then
+    read -p "Enter the name of the database cluster to start: " DB_CLUSTER_NAME
+else
+    DB_CLUSTER_NAME=$3
+fi
 
 # Define paths
 ROOT_DIR=$(pwd)
@@ -11,7 +15,7 @@ POSTGRES_EXECUTABLE="$ROOT_DIR/src/backend/postgres"
 CLUSTERS_DIR="$ROOT_DIR/clusters"
 DB_DIR="$CLUSTERS_DIR/$DB_CLUSTER_NAME"
 LOG_FILE="$CLUSTERS_DIR/logfile"
-CONFIG_FILE="$SHARDING_DIR/src/node/config.yaml" # Path to config.yaml
+CONFIG_FILE="$SHARDING_DIR/src/node/router_config.yaml" # Path to config.yaml
 
 # Check for additional argument
 START_PSQL=$1

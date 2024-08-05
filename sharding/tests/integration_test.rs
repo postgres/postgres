@@ -9,7 +9,7 @@ use std::{
 };
 use users::get_current_username;
 
-fn setup_connection(host: &str, port: &str, db_name: &str) -> Client {
+fn setup_connection(host: &str, port: &str, db_name: &str) -> Option<Client> {
     let username = match get_current_username() {
         Some(username) => username.to_string_lossy().to_string(),
         None => panic!("Failed to get current username"),
@@ -24,21 +24,23 @@ fn setup_connection(host: &str, port: &str, db_name: &str) -> Client {
         NoTls,
     ) {
         Ok(client) => {
-            println!("Connected to host: {}, port: {}", host, port);
-            client},
+            Some(client)
+        }
         Err(e) => {
-            panic!("Failed to connect to the database: {:?}", e);
+            //panic!("Failed to connect to the database: {:?}", e);
+            println!("Failed to connect to the database: {:?}", e);
+            None
         }
     }
 }
 
 #[test]
 fn test_nodes_initialize_empty() {
-    create_and_init_cluster(b"test-shard\n", "s");
-    create_and_init_cluster(b"test-router\n", "r");
+    create_and_init_cluster(b"test-shard\n", "s", "localhost", "5433");
+    create_and_init_cluster(b"test-router\n", "r", "localhost", "5434");
 
-    let mut router_connection: Client = setup_connection("localhost", "5433", "template1");
-    let mut shard_connection: Client = setup_connection("localhost", "5434", "template1");
+    let mut router_connection: Client = setup_connection("localhost", "5433", "template1").unwrap();
+    let mut shard_connection: Client = setup_connection("localhost", "5434", "template1").unwrap();
 
     // Count user tables, excluding system tables
     let row = router_connection
@@ -65,22 +67,34 @@ fn test_nodes_initialize_empty() {
 
 #[test]
 fn test_create_table() {
-    create_and_init_cluster(b"test-shard1\n", "s");
+    create_and_init_cluster(b"test-shard1\n", "s", "localhost", "5433");
+    create_and_init_cluster(b"test-router1\n", "r", "localhost", "5434"); 
 
-    let mut shard_connection: Client = setup_connection("localhost", "5433", "template1");
+    let mut shard_connection: Client = setup_connection("localhost", "5433", "template1").unwrap();
 
     // Initialize and get the router
     init_node_instance(
         NodeType::Router,
-        "5434".as_ptr() as *const i8,
-        "src/node/config.yaml\0".as_ptr() as *const i8,
+        "5434\0".as_ptr() as *const i8,
+        "src/node/router_config.yaml\0".as_ptr() as *const i8,
     );
+    println!("Initialized router");
     let router = get_node_instance();
+    println!("Got router");
+    
+    let mut router_connection: Client = setup_connection("localhost", "5434", "template1").unwrap();
 
     // Create a table on the router
-    router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);");
+    // router.send_query("DROP TABLE IF EXISTS test_table;");
+    // router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);");
 
-    let mut router_connection: Client = setup_connection("localhost", "5434", "template1");
+    router_connection
+        .execute("DROP TABLE IF EXISTS test_table;", &[])
+        .unwrap();
+
+    router_connection
+        .execute("CREATE TABLE test_table (id INT PRIMARY KEY);", &[])
+        .unwrap();
 
     // Count user tables in the router, excluding system tables. Should be zero.
     let row = router_connection
@@ -102,15 +116,16 @@ fn test_create_table() {
     let count: i64 = row.get(0);
     assert_eq!(count, 1);
 
-    stop_cluster(b"test-shard\n");
-    stop_cluster(b"test-router\n");
+    stop_cluster(b"test-shard1\n");
+    stop_cluster(b"test-router1\n");
 }
 
 // Utility functions
 
-fn create_and_init_cluster(node_name: &[u8], node_type: &str) {
+fn create_and_init_cluster(node_name: &[u8], node_type: &str, ip: &str, port: &str) {
     create_cluster_dir(node_name);
-    init_cluster(node_name, node_type);
+    init_cluster(std::str::from_utf8(node_name).unwrap(), node_type);
+    wait_for_postgres(ip, port);
 }
 
 fn create_cluster_dir(node_name: &[u8]) {
@@ -135,28 +150,15 @@ fn create_cluster_dir(node_name: &[u8]) {
     }
 }
 
-fn init_cluster(node_name: &[u8], node_type: &str) {
-    let mut init_cluster = Command::new("./init-server.sh")
+fn init_cluster(node_name: &str, node_type: &str) {
+    Command::new("./init-server.sh")
         .current_dir("..")
         .arg("start")
         .arg(node_type)
-        .stdin(Stdio::piped())
+        .arg(node_name)
+        .arg("&")
         .spawn()
         .expect("failed to start cluster");
-
-    {
-        let stdin = init_cluster.stdin.as_mut().expect("failed to open stdin");
-        stdin
-            .write_all(node_name)
-            .expect("failed to write to stdin");
-    }
-
-    let init_cluster_status = init_cluster
-        .wait()
-        .expect("failed to wait on init-server.sh");
-    if !init_cluster_status.success() {
-        panic!("init-server.sh failed");
-    }
 }
 
 fn stop_cluster(node_name: &[u8]) {
@@ -173,3 +175,25 @@ fn stop_cluster(node_name: &[u8]) {
             .expect("failed to write to stdin");
     }
 }
+
+fn wait_for_postgres(host: &str, port: &str) {
+    let username = match get_current_username() {
+        Some(username) => username.to_string_lossy().to_string(),
+        None => panic!("Failed to get current username"),
+    };
+
+    let mut attempts = 0;
+    loop {
+        println!("Waiting...");
+        attempts += 1;
+        if attempts > 30 {
+            panic!("PostgreSQL server did not start in time");
+        }
+
+        match Client::connect(&format!("host={} port={} user={} dbname=template1", host, port, username), NoTls) {
+            Ok(_) => break,
+            Err(_) => std::thread::sleep(std::time::Duration::from_secs(1)),
+        }
+    }
+}
+

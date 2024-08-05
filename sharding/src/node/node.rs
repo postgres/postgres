@@ -1,10 +1,6 @@
-use crate::utils::node_config::NodesConfig;
-
 use super::router::Router;
 use super::shard::Shard;
-use std::cell::UnsafeCell;
 use std::ffi::CStr;
-use std::sync::{Arc, Mutex};
 
 // TODO-SHARD this file should be a more organized configuration file
 pub const FILE_PATH: &str = "ports.txt";
@@ -73,6 +69,7 @@ pub extern "C" fn init_node_instance(
         let config_path = parse_config_file(config_file_path);
 
         let ip = "127.0.0.1";
+
         match node_type {
             NodeType::Router => {
                 NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(
@@ -96,7 +93,6 @@ fn parse_config_file(config_file_path: *const i8) -> Option<&'static str> {
         true => None,
         false => unsafe {
             let config_path_str = CStr::from_ptr(config_file_path);
-            println!("Config path file c_str is: {:?}", config_path_str);
             let config_path = match config_path_str.to_str() {
                 Ok(str) => str,
                 Err(_) => {
@@ -106,21 +102,4 @@ fn parse_config_file(config_file_path: *const i8) -> Option<&'static str> {
             Some(config_path)
         },
     }
-
-    // let config_path_str = CStr::from_ptr(config_file_path);
-    //     println!("Config path file c_str is: {:?}", config_path_str);
-    //     let config_path = match config_path_str.to_str() {
-    //         Ok(str) => str,
-    //         Err(_) => {
-    //             panic!("Received an invalid UTF-8 string for config path");
-    //         }
-    //     };
-
-    // if config_file_path.is_empty() {
-    //     println!("Empty config file path");
-    //     None
-    // } else {
-    //     println!("Config file path is: {}", config_file_path);
-    //     Some(config_file_path)
-    // }
 }

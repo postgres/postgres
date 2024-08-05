@@ -1,5 +1,4 @@
 use inline_colorization::*;
-use postgres::config::Host::Tcp;
 use postgres::{Client, NoTls};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, RwLock};
@@ -8,7 +7,6 @@ use std::{io, thread};
 extern crate users;
 use super::memory_manager::MemoryManager;
 use super::node::*;
-use crate::node::router::Channel;
 use crate::utils::node_config::get_shard_config;
 use rust_decimal::Decimal;
 use users::get_current_username;
@@ -22,7 +20,7 @@ pub struct Shard<'a> {
     port: &'a str,
     listener: Arc<RwLock<TcpListener>>,
     router_stream: Arc<RwLock<Option<TcpStream>>>,
-    memory_manager: MemoryManager
+    memory_manager: MemoryManager,
 }
 
 impl<'a> Shard<'a> {
@@ -68,8 +66,14 @@ impl<'a> Shard<'a> {
         let memory_threshold = config.memory_threshold;
         let memory_manager = MemoryManager::new(memory_threshold);
 
-        println!("{color_blue}[Shard] Available Memory: {:?} %{style_reset}", memory_manager.available_memory_perc);
-        println!("{color_blue}[Shard] Accepts Insertions: {:?}{style_reset}", memory_manager.accepts_insertions());
+        println!(
+            "{color_blue}[Shard] Available Memory: {:?} %{style_reset}",
+            memory_manager.available_memory_perc
+        );
+        println!(
+            "{color_blue}[Shard] Accepts Insertions: {:?}{style_reset}",
+            memory_manager.accepts_insertions()
+        );
 
         Shard {
             // router: clients,
@@ -78,7 +82,7 @@ impl<'a> Shard<'a> {
             port,
             listener,
             router_stream: stream.clone(),
-            memory_manager
+            memory_manager,
         }
     }
 
@@ -87,6 +91,7 @@ impl<'a> Shard<'a> {
         rw_stream: Arc<RwLock<Option<TcpStream>>>,
     ) {
         let listener_guard = listener.read().unwrap();
+        println!("Listening for connections on {:?}", listener_guard.local_addr().unwrap());
         match listener_guard.accept() {
             Ok((stream, addr)) => {
                 println!("New connection accepted from {}.", addr);

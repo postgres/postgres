@@ -2,22 +2,14 @@ use postgres::{Client, NoTls};
 extern crate users;
 use crate::utils::queries::query_is_insert;
 
-use super::super::utils::node_config::*;
 use super::node::*;
+use crate::utils::node_config::get_router_config;
 use inline_colorization::*;
-use regex::Regex;
 use rust_decimal::Decimal;
-use serde_yaml;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::{
-    fs, io,
-    net::{SocketAddr, TcpListener, TcpStream},
-    sync::Mutex,
-    thread,
-};
+use std::{io, net::TcpStream, sync::Mutex};
 use users::get_current_username;
-use crate::utils::node_config::get_router_config;
 
 // use super::super::utils::sysinfo::print_available_memory;
 
@@ -43,19 +35,21 @@ pub struct Router {
 impl Router {
     /// Creates a new Router node with the given port
     pub fn new(ip: &str, port: &str, config_path: Option<&str>) -> Self {
-        
         let config = get_router_config(config_path);
 
         let mut shards: HashMap<String, Client> = HashMap::new();
         let mut comm_channels = Vec::new();
         for node in config.nodes {
-            println!("Trying to connect to ip {} and port: {}", node.ip, node.port);
             let node_ip = node.ip;
             let node_port = node.port;
 
             if (node_ip == ip) && (node_port == port) {
                 continue;
             }
+            println!(
+                "Trying to connect to ip {} and port: {}",
+                node_ip, node_port
+            );
 
             // get username dynamically
             let username = match get_current_username() {
@@ -73,14 +67,15 @@ impl Router {
                         }
                         Err(e) => {
                             println!("Failed to connect to port: {}", node_port);
+                            println!("{:?}", e);
                         } // Do something here
                     }
                 }
                 Err(e) => {
                     println!("Failed to connect to port: {}", node_port);
+                    println!("{:?}", e);
                 } // Do something here
             }
-
         }
         if shards.is_empty() {
             eprint!("Failed to connect to any of the nodes");
@@ -98,6 +93,10 @@ impl Router {
     }
 
     fn connect(ip: &str, port: &str, username: String) -> Result<Client, postgres::Error> {
+        println!(
+            "{color_bright_green}Connecting to ip {} and port: {}{style_reset}",
+            ip, port
+        );
         match Client::connect(
             format!(
                 "host={} port={} user={} dbname=template1",
@@ -113,6 +112,10 @@ impl Router {
 
     fn health_connect(node_ip: &str, node_port: &str) -> Result<Channel, io::Error> {
         let port = node_port.parse::<u64>().unwrap() + 1000;
+        println!(
+            "{color_bright_green}Connecting to health port {}, node_ip: {}, node_port: {}{style_reset}",
+            port, node_ip, node_port
+        );
         match TcpStream::connect(format!("{}:{}", node_ip, port)) {
             Ok(mut stream) => {
                 println!(
@@ -126,6 +129,7 @@ impl Router {
                     "{color_red}Error establishing health connection with {}:{}{style_reset}",
                     node_ip, port
                 );
+                println!("{color_red}Error: {:?}{style_reset}", e);
                 Err(e)
             }
         }
