@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-08-28 09:07+0000\n"
+"POT-Creation-Date: 2024-08-01 11:39+0000\n"
 "PO-Revision-Date: 2019-08-28 11:21+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -50,17 +50,22 @@ msgstr "Funktion mit Mengenergebnis in einem Zusammenhang aufgerufen, der keine 
 msgid "function returning record called in context that cannot accept type record"
 msgstr "Funktion, die einen Record zurückgibt, in einem Zusammenhang aufgerufen, der Typ record nicht verarbeiten kann"
 
-#: pltcl.c:1299
+#: pltcl.c:1034
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "konnte Rückgabewert des Triggers nicht splitten: %s"
+msgid "could not parse function return value: %s"
+msgstr "konnte Rückgabewert der Funktion nicht parsen: %s"
 
-#: pltcl.c:1379 pltcl.c:1809
+#: pltcl.c:1302
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "konnte Rückgabewert des Triggers nicht parsen: %s"
+
+#: pltcl.c:1386 pltcl.c:1816
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1380
+#: pltcl.c:1387
 #, c-format
 msgid ""
 "%s\n"
@@ -69,42 +74,42 @@ msgstr ""
 "%s\n"
 "in PL/Tcl-Funktion »%s«"
 
-#: pltcl.c:1544
+#: pltcl.c:1551
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggerfunktionen können nur als Trigger aufgerufen werden"
 
-#: pltcl.c:1548
+#: pltcl.c:1555
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl-Funktionen können keinen Rückgabetyp %s haben"
 
-#: pltcl.c:1587
+#: pltcl.c:1594
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl-Funktionen können Typ %s nicht annehmen"
 
-#: pltcl.c:1701
+#: pltcl.c:1708
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "konnte interne Prozedur »%s« nicht erzeugen: %s"
 
-#: pltcl.c:3208
+#: pltcl.c:3213
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "Liste der Spaltennamen/-werte muss gerade Anzahl Elemente haben"
 
-#: pltcl.c:3226
+#: pltcl.c:3231
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "Liste der Spaltennamen/-werte enthält nicht existierenden Spaltennamen »%s«"
 
-#: pltcl.c:3233
+#: pltcl.c:3238
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "Systemattribut »%s« kann nicht gesetzt werden"
 
-#: pltcl.c:3239
+#: pltcl.c:3244
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "kann generierte Spalte »%s« nicht setzen"

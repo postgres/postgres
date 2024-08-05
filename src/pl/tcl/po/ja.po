@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL 12)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-11 11:34+0900\n"
-"PO-Revision-Date: 2019-06-11 17:26+0900\n"
+"POT-Creation-Date: 2024-06-06 10:42+0900\n"
+"PO-Revision-Date: 2024-06-06 16:14+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.13\n"
 
 #: pltcl.c:464
 msgid "PL/Tcl function to call once when pltcl is first used."
@@ -49,23 +49,25 @@ msgstr "このコンテキストでは、集合値の関数は集合を受け付
 
 #: pltcl.c:1015
 #, c-format
-msgid ""
-"function returning record called in context that cannot accept type record"
-msgstr ""
-"レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されまし"
-"た"
+msgid "function returning record called in context that cannot accept type record"
+msgstr "レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されました"
 
-#: pltcl.c:1299
+#: pltcl.c:1034
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "トリガーからの戻り値を分割できませんでした: %s"
+msgid "could not parse function return value: %s"
+msgstr "関数の戻り値をパースできませんでした: %s"
 
-#: pltcl.c:1379 pltcl.c:1809
+#: pltcl.c:1302
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "トリガの戻り値をパースできませんでした: %s"
+
+#: pltcl.c:1386 pltcl.c:1816
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1380
+#: pltcl.c:1387
 #, c-format
 msgid ""
 "%s\n"
@@ -74,43 +76,45 @@ msgstr ""
 "%s\n"
 "PL/Tcl 関数 \"%s\""
 
-#: pltcl.c:1544
+#: pltcl.c:1551
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "トリガー関数はトリガーとしてのみコールできます"
 
-#: pltcl.c:1548
+#: pltcl.c:1555
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl 関数は%s型の戻り値を返せません"
 
-#: pltcl.c:1587
+#: pltcl.c:1594
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl 関数は%s型を受け付けません"
 
-#: pltcl.c:1701
+#: pltcl.c:1708
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "内部プロシージャ\"%s\"を作成できませんでした: %s"
 
-#: pltcl.c:3208
+#: pltcl.c:3213
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "列名/値のリストの要素は偶数個でなければなりません"
 
-#: pltcl.c:3226
+#: pltcl.c:3231
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "列名/値のリストの中に、存在しない列名\"%s\"が含まれています"
 
-#: pltcl.c:3233
+#: pltcl.c:3238
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "システム属性\"%s\"は設定できません"
 
-#: pltcl.c:3239
+#: pltcl.c:3244
 #, c-format
-#| msgid "cannot alter inherited column \"%s\""
 msgid "cannot set generated column \"%s\""
 msgstr "生成列\"%s\"を変更できません"
+
+#~ msgid "could not split return value from trigger: %s"
+#~ msgstr "トリガーからの戻り値を分割できませんでした: %s"
