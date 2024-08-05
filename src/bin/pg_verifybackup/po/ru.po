@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-03 05:56+0300\n"
+"POT-Creation-Date: 2024-08-01 12:52+0300\n"
 "PO-Revision-Date: 2021-09-17 07:33+0300\n"
 "Last-Translator: Alexander Lakhin <a.lakhin@postgrespro.ru>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -41,74 +41,74 @@ msgstr "нехватка памяти\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
-#: ../../common/jsonapi.c:1081
+#: ../../common/jsonapi.c:1082
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "Неверная спецпоследовательность: \"\\%s\"."
 
-#: ../../common/jsonapi.c:1084
+#: ../../common/jsonapi.c:1085
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Символ с кодом 0x%02x необходимо экранировать."
 
-#: ../../common/jsonapi.c:1087
+#: ../../common/jsonapi.c:1088
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Ожидался конец текста, но обнаружено продолжение \"%s\"."
 
-#: ../../common/jsonapi.c:1090
+#: ../../common/jsonapi.c:1091
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Ожидался элемент массива или \"]\", но обнаружено \"%s\"."
 
-#: ../../common/jsonapi.c:1093
+#: ../../common/jsonapi.c:1094
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "Ожидалась \",\" или \"]\", но обнаружено \"%s\"."
 
-#: ../../common/jsonapi.c:1096
+#: ../../common/jsonapi.c:1097
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "Ожидалось \":\", но обнаружено \"%s\"."
 
-#: ../../common/jsonapi.c:1099
+#: ../../common/jsonapi.c:1100
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "Ожидалось значение JSON, но обнаружено \"%s\"."
 
-#: ../../common/jsonapi.c:1102
+#: ../../common/jsonapi.c:1103
 msgid "The input string ended unexpectedly."
 msgstr "Неожиданный конец входной строки."
 
-#: ../../common/jsonapi.c:1104
+#: ../../common/jsonapi.c:1105
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Ожидалась строка или \"}\", но обнаружено \"%s\"."
 
-#: ../../common/jsonapi.c:1107
+#: ../../common/jsonapi.c:1108
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "Ожидалась \",\" или \"}\", но обнаружено \"%s\"."
 
-#: ../../common/jsonapi.c:1110
+#: ../../common/jsonapi.c:1111
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Ожидалась строка, но обнаружено \"%s\"."
 
-#: ../../common/jsonapi.c:1113
+#: ../../common/jsonapi.c:1114
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "Ошибочный элемент текста \"%s\"."
 
-#: ../../common/jsonapi.c:1116
+#: ../../common/jsonapi.c:1117
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 нельзя преобразовать в текст."
 
-#: ../../common/jsonapi.c:1118
+#: ../../common/jsonapi.c:1119
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "За \"\\u\" должны следовать четыре шестнадцатеричные цифры."
 
-#: ../../common/jsonapi.c:1121
+#: ../../common/jsonapi.c:1122
 msgid ""
 "Unicode escape values cannot be used for code point values above 007F when "
 "the encoding is not UTF8."
@@ -116,12 +116,12 @@ msgstr ""
 "Спецкоды Unicode для значений выше 007F можно использовать только с "
 "кодировкой UTF8."
 
-#: ../../common/jsonapi.c:1123
+#: ../../common/jsonapi.c:1124
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr ""
 "Старшее слово суррогата Unicode не может следовать за другим старшим словом."
 
-#: ../../common/jsonapi.c:1125
+#: ../../common/jsonapi.c:1126
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Младшее слово суррогата Unicode должно следовать за старшим словом."
 

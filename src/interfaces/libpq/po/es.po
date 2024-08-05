@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-07 17:08+0000\n"
+"POT-Creation-Date: 2024-08-02 10:15+0000\n"
 "PO-Revision-Date: 2020-09-12 22:47-0300\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -63,8 +63,8 @@ msgstr "no se pude generar nonce\n"
 #: fe-connect.c:5863 fe-connect.c:5964 fe-connect.c:5973 fe-connect.c:6329
 #: fe-connect.c:6479 fe-exec.c:2751 fe-exec.c:3502 fe-exec.c:3667
 #: fe-gssapi-common.c:112 fe-lobj.c:895 fe-protocol2.c:1207 fe-protocol3.c:963
-#: fe-protocol3.c:1667 fe-secure-common.c:110 fe-secure-gssapi.c:504
-#: fe-secure-openssl.c:445 fe-secure-openssl.c:1096
+#: fe-protocol3.c:1667 fe-secure-common.c:110 fe-secure-gssapi.c:500
+#: fe-secure-openssl.c:446 fe-secure-openssl.c:1082
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
@@ -868,8 +868,8 @@ msgstr "el entero de tamaño %lu no está soportado por pqPutInt"
 msgid "connection not open\n"
 msgstr "la conexión no está abierta\n"
 
-#: fe-misc.c:805 fe-secure-openssl.c:209 fe-secure-openssl.c:316
-#: fe-secure.c:267 fe-secure.c:383
+#: fe-misc.c:805 fe-secure-openssl.c:204 fe-secure-openssl.c:317
+#: fe-secure.c:269 fe-secure.c:390
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -1066,115 +1066,115 @@ msgstr "el certificado de servidor para «%s» no coincide con el nombre de serv
 msgid "could not get server's host name from server certificate\n"
 msgstr "no se pudo obtener el nombre de servidor desde el certificado del servidor\n"
 
-#: fe-secure-gssapi.c:201
+#: fe-secure-gssapi.c:194
 msgid "GSSAPI wrap error"
 msgstr "error de «wrap» de GSSAPI"
 
-#: fe-secure-gssapi.c:209
+#: fe-secure-gssapi.c:202
 msgid "outgoing GSSAPI message would not use confidentiality\n"
 msgstr "mensaje GSSAPI de saluda no proveería confidencialidad\n"
 
-#: fe-secure-gssapi.c:217
+#: fe-secure-gssapi.c:210
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
 msgstr "el cliente intentó enviar un paquete GSSAPI demasiado grande (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:598
+#: fe-secure-gssapi.c:350 fe-secure-gssapi.c:594
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
 msgstr "paquete GSSAPI demasiado grande enviado por el servidor (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:393
+#: fe-secure-gssapi.c:389
 msgid "GSSAPI unwrap error"
 msgstr "error de «unwrap» de GSSAPI"
 
-#: fe-secure-gssapi.c:403
+#: fe-secure-gssapi.c:399
 msgid "incoming GSSAPI message did not use confidentiality\n"
 msgstr "mensaje GSSAPI entrante no usó confidencialidad\n"
 
-#: fe-secure-gssapi.c:644
+#: fe-secure-gssapi.c:640
 msgid "could not initiate GSSAPI security context"
 msgstr "no se pudo iniciar un contexto de seguridad GSSAPI"
 
-#: fe-secure-gssapi.c:672
+#: fe-secure-gssapi.c:668
 msgid "GSSAPI size check error"
 msgstr "error de verificación de tamaño GSSAPI"
 
-#: fe-secure-gssapi.c:683
+#: fe-secure-gssapi.c:679
 msgid "GSSAPI context establishment error"
 msgstr "error de establecimiento de contexto de GSSAPI"
 
-#: fe-secure-openssl.c:214 fe-secure-openssl.c:321 fe-secure-openssl.c:1330
+#: fe-secure-openssl.c:209 fe-secure-openssl.c:322 fe-secure-openssl.c:1318
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ERROR en llamada SSL: %s\n"
 
-#: fe-secure-openssl.c:221 fe-secure-openssl.c:328 fe-secure-openssl.c:1334
+#: fe-secure-openssl.c:216 fe-secure-openssl.c:329 fe-secure-openssl.c:1322
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ERROR en llamada SSL: detectado fin de archivo\n"
 
-#: fe-secure-openssl.c:232 fe-secure-openssl.c:339 fe-secure-openssl.c:1343
+#: fe-secure-openssl.c:227 fe-secure-openssl.c:340 fe-secure-openssl.c:1331
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "error de SSL: %s\n"
 
-#: fe-secure-openssl.c:247 fe-secure-openssl.c:354
+#: fe-secure-openssl.c:242 fe-secure-openssl.c:355
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "la conexión SSL se ha cerrado inesperadamente\n"
 
-#: fe-secure-openssl.c:253 fe-secure-openssl.c:360 fe-secure-openssl.c:1393
+#: fe-secure-openssl.c:248 fe-secure-openssl.c:361 fe-secure-openssl.c:1381
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "código de error SSL no reconocido: %d\n"
 
-#: fe-secure-openssl.c:405
+#: fe-secure-openssl.c:406
 msgid "could not determine server certificate signature algorithm\n"
 msgstr "no se pudo determinar el algoritmo de firma del certificado del servidor\n"
 
-#: fe-secure-openssl.c:426
+#: fe-secure-openssl.c:427
 #, c-format
 msgid "could not find digest for NID %s\n"
 msgstr "no se pudo encontrar «digest» para el NID %s\n"
 
-#: fe-secure-openssl.c:436
+#: fe-secure-openssl.c:437
 msgid "could not generate peer certificate hash\n"
 msgstr "no se pudo generar hash de certificado de la contraparte\n"
 
-#: fe-secure-openssl.c:493
+#: fe-secure-openssl.c:494
 msgid "SSL certificate's name entry is missing\n"
 msgstr "falta el elemento de nombre en el certificado SSL\n"
 
-#: fe-secure-openssl.c:820
+#: fe-secure-openssl.c:805
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "no se pudo crear un contexto SSL: %s\n"
 
-#: fe-secure-openssl.c:859
+#: fe-secure-openssl.c:844
 #, c-format
 msgid "invalid value \"%s\" for minimum SSL protocol version\n"
 msgstr "valor entero «%s» no válido para la versión mínima del protocolo SSL\n"
 
-#: fe-secure-openssl.c:870
+#: fe-secure-openssl.c:855
 #, c-format
 msgid "could not set minimum SSL protocol version: %s\n"
 msgstr "no se pudo definir la versión mínima de protocolo SSL: %s\n"
 
-#: fe-secure-openssl.c:888
+#: fe-secure-openssl.c:873
 #, c-format
 msgid "invalid value \"%s\" for maximum SSL protocol version\n"
 msgstr "valor entero «%s» no válido para la versión máxima del protocolo SSL\n"
 
-#: fe-secure-openssl.c:899
+#: fe-secure-openssl.c:884
 #, c-format
 msgid "could not set maximum SSL protocol version: %s\n"
 msgstr "no se pudo definir la versión máxima de protocolo SSL: %s\n"
 
-#: fe-secure-openssl.c:935
+#: fe-secure-openssl.c:920
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "no se pudo leer la lista de certificado raíz «%s»: %s\n"
 
-#: fe-secure-openssl.c:979
+#: fe-secure-openssl.c:964
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate verification.\n"
@@ -1182,7 +1182,7 @@ msgstr ""
 "no se pudo obtener el directorio «home» para ubicar el archivo del certificado raíz\n"
 "Debe ya sea entregar este archivo, o bien cambiar sslmode para deshabilitar la verificación de certificados del servidor.\n"
 
-#: fe-secure-openssl.c:983
+#: fe-secure-openssl.c:968
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1191,97 +1191,97 @@ msgstr ""
 "el archivo de certificado raíz «%s» no existe\n"
 "Debe ya sea entregar este archivo, o bien cambiar sslmode para deshabilitar la verificación de certificados del servidor.\n"
 
-#: fe-secure-openssl.c:1014
+#: fe-secure-openssl.c:999
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "no se pudo abrir el archivo de certificado «%s»: %s\n"
 
-#: fe-secure-openssl.c:1033
+#: fe-secure-openssl.c:1018
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "no se pudo leer el archivo de certificado «%s»: %s\n"
 
-#: fe-secure-openssl.c:1058
+#: fe-secure-openssl.c:1043
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "no se pudo establecer conexión SSL: %s\n"
 
-#: fe-secure-openssl.c:1112
+#: fe-secure-openssl.c:1098
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "no se pudo cargar el motor SSL «%s»: %s\n"
 
-#: fe-secure-openssl.c:1124
+#: fe-secure-openssl.c:1110
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "no se pudo inicializar el motor SSL «%s»: %s\n"
 
-#: fe-secure-openssl.c:1140
+#: fe-secure-openssl.c:1126
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "no se pudo leer el archivo de la llave privada SSL «%s» desde el motor «%s»: %s\n"
 
-#: fe-secure-openssl.c:1154
+#: fe-secure-openssl.c:1140
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "no se pudo leer la llave privada SSL «%s» desde el motor «%s»: %s\n"
 
-#: fe-secure-openssl.c:1191
+#: fe-secure-openssl.c:1177
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "el certificado está presente, pero no la llave privada «%s»\n"
 
-#: fe-secure-openssl.c:1200
+#: fe-secure-openssl.c:1186
 #, c-format
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "el archivo de llave privada «%s» no es un archivo regular\n"
 
-#: fe-secure-openssl.c:1233
+#: fe-secure-openssl.c:1219
 #, c-format
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"
 msgstr "el archivo de llave privada «%s» tiene acceso de grupo o para todos; debe tener permisos u=rw (0600) o menos si es de propiedad del usuario de base de datos, o permisos u=rw,g=r (0640) o menos si es de root\n"
 
-#: fe-secure-openssl.c:1258
+#: fe-secure-openssl.c:1244
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "no se pudo cargar el archivo de la llave privada «%s»: %s\n"
 
-#: fe-secure-openssl.c:1276
+#: fe-secure-openssl.c:1262
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "el certificado no coincide con la llave privada «%s»: %s\n"
 
-#: fe-secure-openssl.c:1376
+#: fe-secure-openssl.c:1364
 #, c-format
 msgid "This may indicate that the server does not support any SSL protocol version between %s and %s.\n"
 msgstr "Esto puede indicar que el servidor no soporta ninguna versión del protocolo SSL entre %s and %s.\n"
 
-#: fe-secure-openssl.c:1412
+#: fe-secure-openssl.c:1400
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "el certificado no pudo ser obtenido: %s\n"
 
-#: fe-secure-openssl.c:1501
+#: fe-secure-openssl.c:1490
 #, c-format
 msgid "no SSL error reported"
 msgstr "código de error SSL no reportado"
 
-#: fe-secure-openssl.c:1510
+#: fe-secure-openssl.c:1516
 #, c-format
 msgid "SSL error code %lu"
 msgstr "código de error SSL %lu"
 
-#: fe-secure-openssl.c:1758
+#: fe-secure-openssl.c:1788
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "ADVERTENCIA: sslpassword truncada\n"
 
-#: fe-secure.c:275
+#: fe-secure.c:282
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "no se pudo recibir datos del servidor: %s\n"
 
-#: fe-secure.c:390
+#: fe-secure.c:397
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "no se pudo enviar datos al servidor: %s\n"

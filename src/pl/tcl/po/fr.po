@@ -8,23 +8,23 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-17 01:07+0000\n"
-"PO-Revision-Date: 2019-05-17 14:57+0200\n"
+"POT-Creation-Date: 2024-07-20 19:14+0000\n"
+"PO-Revision-Date: 2024-07-22 14:45+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 3.4.4\n"
 
-#: pltcl.c:464
+#: pltcl.c:465
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr ""
 "Fonction PL/Tcl à appeler une fois quand pltcl est utilisé pour la\n"
 "première fois"
 
-#: pltcl.c:471
+#: pltcl.c:472
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr ""
 "Fonction PL/TclU à appeler une fois quand pltcl est utilisé pour la\n"
@@ -46,30 +46,34 @@ msgstr "la fonction « %s » doit être définie en SECURITY DEFINER"
 msgid "processing %s parameter"
 msgstr "traitement du paramètre %s"
 
-#: pltcl.c:842
+#: pltcl.c:835
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "la fonction renvoyant un ensemble a été appelée dans un contexte qui n'accepte pas un ensemble"
 
-#: pltcl.c:1015
+#: pltcl.c:1008
 #, c-format
-msgid ""
-"function returning record called in context that cannot accept type record"
+msgid "function returning record called in context that cannot accept type record"
 msgstr ""
 "fonction renvoyant le type record appelée dans un contexte qui ne peut pas\n"
 "accepter le type record"
 
-#: pltcl.c:1299
+#: pltcl.c:1027
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "n'a pas pu séparer la valeur de retour du trigger : %s"
+msgid "could not parse function return value: %s"
+msgstr "n'a pas pu analyser la valeur de retour de la fonction : %s"
 
-#: pltcl.c:1379 pltcl.c:1809
+#: pltcl.c:1295
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "n'a pas pu analyser la valeur de retour du trigger : %s"
+
+#: pltcl.c:1380 pltcl.c:1810
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1380
+#: pltcl.c:1381
 #, c-format
 msgid ""
 "%s\n"
@@ -78,62 +82,64 @@ msgstr ""
 "%s\n"
 "dans la fonction PL/Tcl « %s »"
 
-#: pltcl.c:1544
+#: pltcl.c:1545
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
 
-#: pltcl.c:1548
+#: pltcl.c:1549
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer le type %s"
 
-#: pltcl.c:1587
+#: pltcl.c:1588
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "les fonctions PL/Tcl ne peuvent pas accepter le type %s"
 
-#: pltcl.c:1701
+#: pltcl.c:1702
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "n'a pas pu créer la procédure interne « %s » : %s"
 
-#: pltcl.c:3208
+#: pltcl.c:3204
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "la liste de nom de colonne/valeur doit avoir un nombre pair d'éléments"
 
-#: pltcl.c:3226
+#: pltcl.c:3222
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
-msgstr ""
-"la liste de nom de colonne/valeur contient des noms de colonne inexistantes "
-"(« %s »)"
+msgstr "la liste de nom de colonne/valeur contient des noms de colonne inexistantes (« %s »)"
 
-#: pltcl.c:3233
+#: pltcl.c:3229
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "ne peut pas initialiser l'attribut système « %s »"
 
-#: pltcl.c:3239
+#: pltcl.c:3235
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "ne peut pas initialiser la colonne générée « %s »"
 
-#~ msgid "module \"unknown\" not found in pltcl_modules"
-#~ msgstr "module « unkown » introuvable dans pltcl_modules"
+#~ msgid "PL/Tcl functions cannot return composite types"
+#~ msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer des types composites"
 
 #~ msgid "could not load module \"unknown\": %s"
 #~ msgstr "n'a pas pu charger le module « unknown » : %s"
+
+#, c-format
+#~ msgid "could not split return value from trigger: %s"
+#~ msgstr "n'a pas pu séparer la valeur de retour du trigger : %s"
+
+#~ msgid "module \"unknown\" not found in pltcl_modules"
+#~ msgstr "module « unkown » introuvable dans pltcl_modules"
+
+#~ msgid "out of memory"
+#~ msgstr "mémoire épuisée"
 
 #~ msgid "trigger's return list must have even number of elements"
 #~ msgstr "la liste de retour du trigger doit avoir un nombre pair d'éléments"
 
 #~ msgid "unrecognized attribute \"%s\""
 #~ msgstr "attribut « %s » non reconnu"
-
-#~ msgid "out of memory"
-#~ msgstr "mémoire épuisée"
-
-#~ msgid "PL/Tcl functions cannot return composite types"
-#~ msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer des types composites"

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-07 17:07+0000\n"
+"POT-Creation-Date: 2024-08-02 10:14+0000\n"
 "PO-Revision-Date: 2019-06-06 17:26-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -54,17 +54,22 @@ msgstr "se llamó una función que retorna un conjunto en un contexto que no pue
 msgid "function returning record called in context that cannot accept type record"
 msgstr "se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
 
-#: pltcl.c:1292
+#: pltcl.c:1027
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "no se pudo separar el valor de retorno del disparador: %s"
+msgid "could not parse function return value: %s"
+msgstr "no se pudo interpretar el valor de retorno de la función: %s"
 
-#: pltcl.c:1373 pltcl.c:1803
+#: pltcl.c:1295
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "no se pudo interpretar el valor de retorno del trigger: «%s»"
+
+#: pltcl.c:1380 pltcl.c:1810
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1374
+#: pltcl.c:1381
 #, c-format
 msgid ""
 "%s\n"
@@ -73,42 +78,42 @@ msgstr ""
 "%s\n"
 "en función PL/Tcl \"%s\""
 
-#: pltcl.c:1538
+#: pltcl.c:1545
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
 
-#: pltcl.c:1542
+#: pltcl.c:1549
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
 
-#: pltcl.c:1581
+#: pltcl.c:1588
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"
 
-#: pltcl.c:1695
+#: pltcl.c:1702
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "no se pudo crear procedimiento interno «%s»: %s"
 
-#: pltcl.c:3197
+#: pltcl.c:3204
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "la lista de nombres de columnas y valores debe tener un número par de elementos"
 
-#: pltcl.c:3215
+#: pltcl.c:3222
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "la lista de nombres de columnas y valores contiene el nombre de columna no existente «%s»"
 
-#: pltcl.c:3222
+#: pltcl.c:3229
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
 
-#: pltcl.c:3228
+#: pltcl.c:3235
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "no se puede definir el atributo generado «%s»"
