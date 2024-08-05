@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-07 16:39+0000\n"
+"POT-Creation-Date: 2024-08-02 09:44+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -68,7 +68,7 @@ msgstr "el resultado de la consulta tiene demasiados registros y no entran en un
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "cerrando un cursor en una subtransacción abortada"
 
-#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:530
+#: plpy_elog.c:122 plpy_elog.c:123 plpy_plpymodule.c:530
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -108,83 +108,83 @@ msgstr "procedimiento PL/Python no returnó None"
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "función PL/Python con tipo de retorno «void» no retorna None"
 
-#: plpy_exec.c:369 plpy_exec.c:395
-#, c-format
-msgid "unexpected return value from trigger procedure"
-msgstr "valor de retorno no esperado desde el procedimiento disparador"
-
-#: plpy_exec.c:370
-#, c-format
-msgid "Expected None or a string."
-msgstr "Se esperaba None o una cadena."
-
-#: plpy_exec.c:385
-#, c-format
-msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
-msgstr "función de disparador de PL/Python retorno «MODIFY» en un disparador de tipo DELETE -- ignorado"
-
-#: plpy_exec.c:396
-#, c-format
-msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
-msgstr "Se esperaba None, «OK», «SKIP» o «MODIFY»."
-
-#: plpy_exec.c:446
-#, c-format
-msgid "PyList_SetItem() failed, while setting up arguments"
-msgstr "PyList_SetItem() falló, mientras se inicializaban los argumentos"
-
-#: plpy_exec.c:450
-#, c-format
-msgid "PyDict_SetItemString() failed, while setting up arguments"
-msgstr "PyDict_SetItemString() falló, mientras se inicializaban los argumentos"
-
-#: plpy_exec.c:462
+#: plpy_exec.c:246
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
 
-#: plpy_exec.c:679
+#: plpy_exec.c:392 plpy_exec.c:418
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "valor de retorno no esperado desde el procedimiento disparador"
+
+#: plpy_exec.c:393
+#, c-format
+msgid "Expected None or a string."
+msgstr "Se esperaba None o una cadena."
+
+#: plpy_exec.c:408
+#, c-format
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "función de disparador de PL/Python retorno «MODIFY» en un disparador de tipo DELETE -- ignorado"
+
+#: plpy_exec.c:419
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Se esperaba None, «OK», «SKIP» o «MODIFY»."
+
+#: plpy_exec.c:470
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "PyList_SetItem() falló, mientras se inicializaban los argumentos"
+
+#: plpy_exec.c:474
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "PyDict_SetItemString() falló, mientras se inicializaban los argumentos"
+
+#: plpy_exec.c:703
 #, c-format
 msgid "while creating return value"
 msgstr "mientras se creaba el valor de retorno"
 
-#: plpy_exec.c:926
+#: plpy_exec.c:954
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] borrado, no se puede modicar el registro"
 
-#: plpy_exec.c:931
+#: plpy_exec.c:959
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] no es un diccionario"
 
-#: plpy_exec.c:956
+#: plpy_exec.c:984
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "el nombre del atributo de TD[\"new\"] en la posición %d no es una cadena"
 
-#: plpy_exec.c:963
+#: plpy_exec.c:991
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "la llave «%s» en TD[\"new\"] no existe como columna en la fila disparadora"
 
-#: plpy_exec.c:968
+#: plpy_exec.c:996
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
 
-#: plpy_exec.c:973
+#: plpy_exec.c:1001
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "no se puede definir el atributo generado «%s»"
 
-#: plpy_exec.c:1031
+#: plpy_exec.c:1059
 #, c-format
 msgid "while modifying trigger row"
 msgstr "mientras se modificaba la fila de disparador"
 
 # FIXME not very happy with this
-#: plpy_exec.c:1089
+#: plpy_exec.c:1117
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "abortando una subtransacción que no se ha cerrado"
@@ -273,27 +273,27 @@ msgstr "«%s» no es un argumento válido para esta función"
 msgid "invalid SQLSTATE code"
 msgstr "código SQLSTATE no válido"
 
-#: plpy_procedure.c:225
+#: plpy_procedure.c:226
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
 
-#: plpy_procedure.c:229
+#: plpy_procedure.c:230
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "las funciones PL/Python no pueden retornar el tipo %s"
 
-#: plpy_procedure.c:307
+#: plpy_procedure.c:308
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "la funciones PL/Python no pueden aceptar el tipo %s"
 
-#: plpy_procedure.c:397
+#: plpy_procedure.c:398
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "no se pudo compilar la función PL/Python «%s»"
 
-#: plpy_procedure.c:400
+#: plpy_procedure.c:401
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "no se pudo compilar el bloque anónimo PL/Python"

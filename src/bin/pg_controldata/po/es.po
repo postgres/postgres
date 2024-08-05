@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-07 16:51+0000\n"
+"POT-Creation-Date: 2024-08-02 09:56+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -22,31 +22,31 @@ msgstr ""
 "X-Generator: Poedit 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../common/controldata_utils.c:73
+#: ../../common/controldata_utils.c:83
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 
-#: ../../common/controldata_utils.c:86
+#: ../../common/controldata_utils.c:96
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:95
+#: ../../common/controldata_utils.c:105
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
 
-#: ../../common/controldata_utils.c:108 ../../common/controldata_utils.c:244
+#: ../../common/controldata_utils.c:118 ../../common/controldata_utils.c:274
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "no se pudo cerrar el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:124
+#: ../../common/controldata_utils.c:154
 msgid "byte ordering mismatch"
 msgstr "discordancia en orden de bytes"
 
-#: ../../common/controldata_utils.c:126
+#: ../../common/controldata_utils.c:156
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
@@ -60,17 +60,17 @@ msgstr ""
 "serían erróneos, y la instalación de PostgreSQL sería incompatible con este\n"
 "directorio de datos."
 
-#: ../../common/controldata_utils.c:194
+#: ../../common/controldata_utils.c:224
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:213
+#: ../../common/controldata_utils.c:243
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "no se pudo escribir el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:232
+#: ../../common/controldata_utils.c:262
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"

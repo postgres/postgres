@@ -1,14 +1,14 @@
 # Swedish message translation file for pltcl
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-04-11 13:38+0000\n"
-"PO-Revision-Date: 2023-03-09 22:42+0100\n"
+"POT-Creation-Date: 2024-07-14 18:43+0000\n"
+"PO-Revision-Date: 2024-07-12 22:05+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -56,17 +56,22 @@ msgstr "materialiserat läge krävs, men stöds inte i detta kontext"
 msgid "function returning record called in context that cannot accept type record"
 msgstr "en funktion med post som värde anropades i sammanhang där poster inte kan godtagas."
 
-#: pltcl.c:1297
+#: pltcl.c:1032
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "kunde inte dela på returvärde från trigger: %s"
+msgid "could not parse function return value: %s"
+msgstr "kunde inte parsa funktions returvärde: %s"
 
-#: pltcl.c:1378 pltcl.c:1808
+#: pltcl.c:1299
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "kunde inte parsa triggers returvärde: %s"
+
+#: pltcl.c:1384 pltcl.c:1814
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1379
+#: pltcl.c:1385
 #, c-format
 msgid ""
 "%s\n"
@@ -75,42 +80,46 @@ msgstr ""
 "%s\n"
 "i PL/Tcl-funktion \"%s\""
 
-#: pltcl.c:1543
+#: pltcl.c:1549
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggningsfunktioner kan bara anropas vid triggning."
 
-#: pltcl.c:1547
+#: pltcl.c:1553
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl-funktioner kan inte returnera typ %s"
 
-#: pltcl.c:1586
+#: pltcl.c:1592
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl-funktioner kan inte ta emot typ %s"
 
-#: pltcl.c:1700
+#: pltcl.c:1706
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "kunde inte skapa en intern procedur \"%s\": %s"
 
-#: pltcl.c:3202
+#: pltcl.c:3209
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "kolumn-namn/-värde måste ha ett jämt antal element"
 
-#: pltcl.c:3220
+#: pltcl.c:3227
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "listan med kolumn-namn/-värde innehåller det icke existerande kolumnnamnet \"%s\""
 
-#: pltcl.c:3227
+#: pltcl.c:3234
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "kan inte sätta systemattribut \"%s\""
 
-#: pltcl.c:3233
+#: pltcl.c:3240
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "kan inte sätta genererad kolumn \"%s\""
+
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "kunde inte dela på returvärde från trigger: %s"
