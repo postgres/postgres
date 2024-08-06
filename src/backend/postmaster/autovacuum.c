@@ -3339,12 +3339,12 @@ check_autovacuum_work_mem(int *newval, void **extra, GucSource source)
 		return true;
 
 	/*
-	 * We clamp manually-set values to at least 1MB.  Since
+	 * We clamp manually-set values to at least 64kB.  Since
 	 * maintenance_work_mem is always set to at least this value, do the same
 	 * here.
 	 */
-	if (*newval < 1024)
-		*newval = 1024;
+	if (*newval < 64)
+		*newval = 64;
 
 	return true;
 }
