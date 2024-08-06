@@ -2447,6 +2447,11 @@ struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 
+	/*
+	 * Dynamic shared memory has a higher overhead than local memory contexts,
+	 * so when testing low-memory scenarios that could use shared memory, the
+	 * recommended minimum is 1MB.
+	 */
 	{
 		{"maintenance_work_mem", PGC_USERSET, RESOURCES_MEM,
 			gettext_noop("Sets the maximum memory to be used for maintenance operations."),
@@ -2454,7 +2459,7 @@ struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB
 		},
 		&maintenance_work_mem,
-		65536, 1024, MAX_KILOBYTES,
+		65536, 64, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 
