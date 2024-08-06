@@ -213,15 +213,15 @@ static char JSON_PROD_GOAL[] = {JSON_TOKEN_END, JSON_NT_JSON, 0};
 static inline JsonParseErrorType json_lex_string(JsonLexContext *lex);
 static inline JsonParseErrorType json_lex_number(JsonLexContext *lex, const char *s,
 												 bool *num_err, size_t *total_len);
-static inline JsonParseErrorType parse_scalar(JsonLexContext *lex, JsonSemAction *sem);
-static JsonParseErrorType parse_object_field(JsonLexContext *lex, JsonSemAction *sem);
-static JsonParseErrorType parse_object(JsonLexContext *lex, JsonSemAction *sem);
-static JsonParseErrorType parse_array_element(JsonLexContext *lex, JsonSemAction *sem);
-static JsonParseErrorType parse_array(JsonLexContext *lex, JsonSemAction *sem);
+static inline JsonParseErrorType parse_scalar(JsonLexContext *lex, const JsonSemAction *sem);
+static JsonParseErrorType parse_object_field(JsonLexContext *lex, const JsonSemAction *sem);
+static JsonParseErrorType parse_object(JsonLexContext *lex, const JsonSemAction *sem);
+static JsonParseErrorType parse_array_element(JsonLexContext *lex, const JsonSemAction *sem);
+static JsonParseErrorType parse_array(JsonLexContext *lex, const JsonSemAction *sem);
 static JsonParseErrorType report_parse_error(JsonParseContext ctx, JsonLexContext *lex);
 
 /* the null action object used for pure validation */
-JsonSemAction nullSemAction =
+const JsonSemAction nullSemAction =
 {
 	NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL
@@ -519,7 +519,7 @@ freeJsonLexContext(JsonLexContext *lex)
  * other differences.
  */
 JsonParseErrorType
-pg_parse_json(JsonLexContext *lex, JsonSemAction *sem)
+pg_parse_json(JsonLexContext *lex, const JsonSemAction *sem)
 {
 #ifdef FORCE_JSON_PSTACK
 
@@ -648,7 +648,7 @@ json_count_array_elements(JsonLexContext *lex, int *elements)
  */
 JsonParseErrorType
 pg_parse_json_incremental(JsonLexContext *lex,
-						  JsonSemAction *sem,
+						  const JsonSemAction *sem,
 						  const char *json,
 						  size_t len,
 						  bool is_last)
@@ -1005,7 +1005,7 @@ pg_parse_json_incremental(JsonLexContext *lex,
  *	  - object field
  */
 static inline JsonParseErrorType
-parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
+parse_scalar(JsonLexContext *lex, const JsonSemAction *sem)
 {
 	char	   *val = NULL;
 	json_scalar_action sfunc = sem->scalar;
@@ -1049,7 +1049,7 @@ parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 }
 
 static JsonParseErrorType
-parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
+parse_object_field(JsonLexContext *lex, const JsonSemAction *sem)
 {
 	/*
 	 * An object field is "fieldname" : value where value can be a scalar,
@@ -1111,7 +1111,7 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 }
 
 static JsonParseErrorType
-parse_object(JsonLexContext *lex, JsonSemAction *sem)
+parse_object(JsonLexContext *lex, const JsonSemAction *sem)
 {
 	/*
 	 * an object is a possibly empty sequence of object fields, separated by
@@ -1185,7 +1185,7 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 }
 
 static JsonParseErrorType
-parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
+parse_array_element(JsonLexContext *lex, const JsonSemAction *sem)
 {
 	json_aelem_action astart = sem->array_element_start;
 	json_aelem_action aend = sem->array_element_end;
@@ -1229,7 +1229,7 @@ parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
 }
 
 static JsonParseErrorType
-parse_array(JsonLexContext *lex, JsonSemAction *sem)
+parse_array(JsonLexContext *lex, const JsonSemAction *sem)
 {
 	/*
 	 * an array is a possibly empty sequence of array elements, separated by

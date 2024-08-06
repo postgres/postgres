@@ -84,7 +84,7 @@ main(int argc, char **argv)
 	size_t		chunk_size = DEFAULT_CHUNK_SIZE;
 	struct stat statbuf;
 	off_t		bytes_left;
-	JsonSemAction *testsem = &nullSemAction;
+	const JsonSemAction *testsem = &nullSemAction;
 	char	   *testfile;
 	int			c;
 	bool		need_strings = false;

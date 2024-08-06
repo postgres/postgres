@@ -514,7 +514,7 @@ static JsonParseErrorType transform_string_values_scalar(void *state, char *toke
  * returned when escontext is an ErrorSaveContext).
  */
 bool
-pg_parse_json_or_errsave(JsonLexContext *lex, JsonSemAction *sem,
+pg_parse_json_or_errsave(JsonLexContext *lex, const JsonSemAction *sem,
 						 Node *escontext)
 {
 	JsonParseErrorType result;
