@@ -1398,9 +1398,13 @@ ParallelWorkerMain(Datum main_arg)
 
 	/*
 	 * Set the client encoding to the database encoding, since that is what
-	 * the leader will expect.
+	 * the leader will expect.  (We're cheating a bit by not calling
+	 * PrepareClientEncoding first.  It's okay because this call will always
+	 * result in installing a no-op conversion.  No error should be possible,
+	 * but check anyway.)
 	 */
-	SetClientEncoding(GetDatabaseEncoding());
+	if (SetClientEncoding(GetDatabaseEncoding()) < 0)
+		elog(ERROR, "SetClientEncoding(%d) failed", GetDatabaseEncoding());
 
 	/*
 	 * Load libraries that were loaded by original backend.  We want to do
