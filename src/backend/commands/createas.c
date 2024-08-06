@@ -83,7 +83,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	bool		is_matview;
 	char		relkind;
 	Datum		toast_options;
-	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
+	const char *const validnsps[] = HEAP_RELOPT_NAMESPACES;
 	ObjectAddress intoRelationAddr;
 
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
