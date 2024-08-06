@@ -2124,14 +2124,7 @@ pg_strxfrm_libc(char *dest, const char *src, size_t destsize,
 				pg_locale_t locale)
 {
 	Assert(locale->provider == COLLPROVIDER_LIBC);
-
-#ifdef TRUST_STRXFRM
 	return strxfrm_l(dest, src, destsize, locale->info.lt);
-#else
-	/* shouldn't happen */
-	PGLOCALE_SUPPORT_ERROR(locale->provider);
-	return 0;					/* keep compiler quiet */
-#endif
 }
 
 static size_t
@@ -2340,6 +2333,10 @@ pg_strxfrm_enabled(pg_locale_t locale)
  * The provided 'src' must be nul-terminated. If 'destsize' is zero, 'dest'
  * may be NULL.
  *
+ * Not all providers support pg_strxfrm() safely. The caller should check
+ * pg_strxfrm_enabled() first, otherwise this function may return wrong
+ * results or an error.
+ *
  * Returns the number of bytes needed (or more) to store the transformed
  * string, excluding the terminating nul byte. If the value returned is
  * 'destsize' or greater, the resulting contents of 'dest' are undefined.
@@ -2371,6 +2368,10 @@ pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
  *
  * 'src' does not need to be nul-terminated. If 'destsize' is zero, 'dest' may
  * be NULL.
+ *
+ * Not all providers support pg_strnxfrm() safely. The caller should check
+ * pg_strxfrm_enabled() first, otherwise this function may return wrong
+ * results or an error.
  *
  * Returns the number of bytes needed (or more) to store the transformed
  * string, excluding the terminating nul byte. If the value returned is
@@ -2426,6 +2427,10 @@ pg_strxfrm_prefix_enabled(pg_locale_t locale)
  *
  * The provided 'src' must be nul-terminated.
  *
+ * Not all providers support pg_strxfrm_prefix() safely. The caller should
+ * check pg_strxfrm_prefix_enabled() first, otherwise this function may return
+ * wrong results or an error.
+ *
  * If destsize is not large enough to hold the resulting byte sequence, stores
  * only the first destsize bytes in 'dest'. Returns the number of bytes
  * actually copied to 'dest'.
@@ -2454,6 +2459,10 @@ pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
  * untransformed strings. The result is not nul-terminated.
  *
  * The provided 'src' must be nul-terminated.
+ *
+ * Not all providers support pg_strnxfrm_prefix() safely. The caller should
+ * check pg_strxfrm_prefix_enabled() first, otherwise this function may return
+ * wrong results or an error.
  *
  * If destsize is not large enough to hold the resulting byte sequence, stores
  * only the first destsize bytes in 'dest'. Returns the number of bytes

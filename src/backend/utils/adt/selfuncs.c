@@ -4639,7 +4639,7 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
  * On failure (e.g., unsupported typid), set *failure to true;
  * otherwise, that variable is not changed.  (We'll return NULL on failure.)
  *
- * When using a non-C locale, we must pass the string through strxfrm()
+ * When using a non-C locale, we must pass the string through pg_strxfrm()
  * before continuing, so as to generate correct locale-specific results.
  */
 static char *
@@ -4673,20 +4673,25 @@ convert_string_datum(Datum value, Oid typid, Oid collid, bool *failure)
 
 	if (!lc_collate_is_c(collid))
 	{
+		pg_locale_t mylocale = pg_newlocale_from_collation(collid);
 		char	   *xfrmstr;
 		size_t		xfrmlen;
 		size_t		xfrmlen2 PG_USED_FOR_ASSERTS_ONLY;
 
 		/*
 		 * XXX: We could guess at a suitable output buffer size and only call
-		 * strxfrm twice if our guess is too small.
+		 * pg_strxfrm() twice if our guess is too small.
 		 *
 		 * XXX: strxfrm doesn't support UTF-8 encoding on Win32, it can return
 		 * bogus data or set an error. This is not really a problem unless it
 		 * crashes since it will only give an estimation error and nothing
 		 * fatal.
+		 *
+		 * XXX: we do not check pg_strxfrm_enabled(). On some platforms and in
+		 * some cases, libc strxfrm() may return the wrong results, but that
+		 * will only lead to an estimation error.
 		 */
-		xfrmlen = strxfrm(NULL, val, 0);
+		xfrmlen = pg_strxfrm(NULL, val, 0, mylocale);
 #ifdef WIN32
 
 		/*
@@ -4698,7 +4703,7 @@ convert_string_datum(Datum value, Oid typid, Oid collid, bool *failure)
 			return val;
 #endif
 		xfrmstr = (char *) palloc(xfrmlen + 1);
-		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
+		xfrmlen2 = pg_strxfrm(xfrmstr, val, xfrmlen + 1, mylocale);
 
 		/*
 		 * Some systems (e.g., glibc) can return a smaller value from the
