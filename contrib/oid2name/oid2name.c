@@ -62,7 +62,7 @@ void		sql_exec_dumpalltbspc(PGconn *conn, struct options *opts);
 void
 get_opts(int argc, char **argv, struct options *my_opts)
 {
-	static struct option long_options[] = {
+	static const struct option long_options[] = {
 		{"dbname", required_argument, NULL, 'd'},
 		{"host", required_argument, NULL, 'h'},
 		{"host", required_argument, NULL, 'H'}, /* deprecated */

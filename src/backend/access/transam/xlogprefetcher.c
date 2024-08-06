@@ -362,7 +362,7 @@ XLogPrefetcher *
 XLogPrefetcherAllocate(XLogReaderState *reader)
 {
 	XLogPrefetcher *prefetcher;
-	static HASHCTL hash_table_ctl = {
+	const HASHCTL hash_table_ctl = {
 		.keysize = sizeof(RelFileLocator),
 		.entrysize = sizeof(XLogPrefetcherFilter)
 	};

@@ -113,7 +113,7 @@ static const gbtree_ninfo tinfo =
 Interval *
 abs_interval(Interval *a)
 {
-	static Interval zero = {0, 0, 0};
+	static const Interval zero = {0, 0, 0};
 
 	if (DatumGetBool(DirectFunctionCall2(interval_lt,
 										 IntervalPGetDatum(a),

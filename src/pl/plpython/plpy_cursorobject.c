@@ -27,7 +27,7 @@ static PyObject *PLy_cursor_iternext(PyObject *self);
 static PyObject *PLy_cursor_fetch(PyObject *self, PyObject *args);
 static PyObject *PLy_cursor_close(PyObject *self, PyObject *unused);
 
-static char PLy_cursor_doc[] = "Wrapper around a PostgreSQL cursor";
+static const char PLy_cursor_doc[] = "Wrapper around a PostgreSQL cursor";
 
 static PyMethodDef PLy_cursor_methods[] = {
 	{"fetch", PLy_cursor_fetch, METH_VARARGS, NULL},
