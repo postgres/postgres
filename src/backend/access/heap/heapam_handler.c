@@ -56,8 +56,6 @@ static bool SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
 
 static BlockNumber heapam_scan_get_blocks_done(HeapScanDesc hscan);
 
-static const TableAmRoutine heapam_methods;
-
 
 /* ------------------------------------------------------------------------
  * Slot related callbacks for heap AM
