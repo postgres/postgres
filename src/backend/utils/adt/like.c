@@ -174,8 +174,7 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 			   *p;
 	int			slen,
 				plen;
-	pg_locale_t locale = 0;
-	bool		locale_is_c = false;
+	pg_locale_t locale;
 
 	if (!OidIsValid(collation))
 	{
@@ -189,10 +188,7 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 	}
 
-	if (lc_ctype_is_c(collation))
-		locale_is_c = true;
-	else
-		locale = pg_newlocale_from_collation(collation);
+	locale = pg_newlocale_from_collation(collation);
 
 	if (!pg_locale_deterministic(locale))
 		ereport(ERROR,
@@ -228,7 +224,7 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 		plen = VARSIZE_ANY_EXHDR(pat);
 		s = VARDATA_ANY(str);
 		slen = VARSIZE_ANY_EXHDR(str);
-		return SB_IMatchText(s, slen, p, plen, locale, locale_is_c);
+		return SB_IMatchText(s, slen, p, plen, locale, locale->ctype_is_c);
 	}
 }
 

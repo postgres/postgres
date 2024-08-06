@@ -1665,7 +1665,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		mylocale = pg_newlocale_from_collation(collid);
 
 #ifdef USE_ICU
-		if (mylocale && mylocale->provider == COLLPROVIDER_ICU)
+		if (mylocale->provider == COLLPROVIDER_ICU)
 		{
 			int32_t		len_uchar;
 			int32_t		len_conv;
@@ -1681,7 +1681,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 #endif
-		if (mylocale && mylocale->provider == COLLPROVIDER_BUILTIN)
+		if (mylocale->provider == COLLPROVIDER_BUILTIN)
 		{
 			const char *src = buff;
 			size_t		srclen = nbytes;
@@ -1710,7 +1710,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 		{
-			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
+			Assert(mylocale->provider == COLLPROVIDER_LIBC);
 
 			if (pg_database_encoding_max_length() > 1)
 			{
@@ -1730,12 +1730,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 				char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
 
 				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
-				{
-					if (mylocale)
-						workspace[curr_char] = towlower_l(workspace[curr_char], mylocale->info.lt);
-					else
-						workspace[curr_char] = towlower(workspace[curr_char]);
-				}
+					workspace[curr_char] = towlower_l(workspace[curr_char], mylocale->info.lt);
 
 				/*
 				 * Make result large enough; case change might change number
@@ -1761,12 +1756,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 				 * collations you get exactly what the collation says.
 				 */
 				for (p = result; *p; p++)
-				{
-					if (mylocale)
-						*p = tolower_l((unsigned char) *p, mylocale->info.lt);
-					else
-						*p = pg_tolower((unsigned char) *p);
-				}
+					*p = tolower_l((unsigned char) *p, mylocale->info.lt);
 			}
 		}
 	}
@@ -1813,7 +1803,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		mylocale = pg_newlocale_from_collation(collid);
 
 #ifdef USE_ICU
-		if (mylocale && mylocale->provider == COLLPROVIDER_ICU)
+		if (mylocale->provider == COLLPROVIDER_ICU)
 		{
 			int32_t		len_uchar,
 						len_conv;
@@ -1829,7 +1819,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 #endif
-		if (mylocale && mylocale->provider == COLLPROVIDER_BUILTIN)
+		if (mylocale->provider == COLLPROVIDER_BUILTIN)
 		{
 			const char *src = buff;
 			size_t		srclen = nbytes;
@@ -1858,7 +1848,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 		{
-			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
+			Assert(mylocale->provider == COLLPROVIDER_LIBC);
 
 			if (pg_database_encoding_max_length() > 1)
 			{
@@ -1878,12 +1868,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 				char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
 
 				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
-				{
-					if (mylocale)
-						workspace[curr_char] = towupper_l(workspace[curr_char], mylocale->info.lt);
-					else
-						workspace[curr_char] = towupper(workspace[curr_char]);
-				}
+					workspace[curr_char] = towupper_l(workspace[curr_char], mylocale->info.lt);
 
 				/*
 				 * Make result large enough; case change might change number
@@ -1909,12 +1894,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 				 * collations you get exactly what the collation says.
 				 */
 				for (p = result; *p; p++)
-				{
-					if (mylocale)
-						*p = toupper_l((unsigned char) *p, mylocale->info.lt);
-					else
-						*p = pg_toupper((unsigned char) *p);
-				}
+					*p = toupper_l((unsigned char) *p, mylocale->info.lt);
 			}
 		}
 	}
@@ -2003,7 +1983,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		mylocale = pg_newlocale_from_collation(collid);
 
 #ifdef USE_ICU
-		if (mylocale && mylocale->provider == COLLPROVIDER_ICU)
+		if (mylocale->provider == COLLPROVIDER_ICU)
 		{
 			int32_t		len_uchar,
 						len_conv;
@@ -2019,7 +1999,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 #endif
-		if (mylocale && mylocale->provider == COLLPROVIDER_BUILTIN)
+		if (mylocale->provider == COLLPROVIDER_BUILTIN)
 		{
 			const char *src = buff;
 			size_t		srclen = nbytes;
@@ -2060,7 +2040,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		}
 		else
 		{
-			Assert(!mylocale || mylocale->provider == COLLPROVIDER_LIBC);
+			Assert(mylocale->provider == COLLPROVIDER_LIBC);
 
 			if (pg_database_encoding_max_length() > 1)
 			{
@@ -2081,22 +2061,11 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 
 				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
 				{
-					if (mylocale)
-					{
-						if (wasalnum)
-							workspace[curr_char] = towlower_l(workspace[curr_char], mylocale->info.lt);
-						else
-							workspace[curr_char] = towupper_l(workspace[curr_char], mylocale->info.lt);
-						wasalnum = iswalnum_l(workspace[curr_char], mylocale->info.lt);
-					}
+					if (wasalnum)
+						workspace[curr_char] = towlower_l(workspace[curr_char], mylocale->info.lt);
 					else
-					{
-						if (wasalnum)
-							workspace[curr_char] = towlower(workspace[curr_char]);
-						else
-							workspace[curr_char] = towupper(workspace[curr_char]);
-						wasalnum = iswalnum(workspace[curr_char]);
-					}
+						workspace[curr_char] = towupper_l(workspace[curr_char], mylocale->info.lt);
+					wasalnum = iswalnum_l(workspace[curr_char], mylocale->info.lt);
 				}
 
 				/*
@@ -2124,22 +2093,11 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 				 */
 				for (p = result; *p; p++)
 				{
-					if (mylocale)
-					{
-						if (wasalnum)
-							*p = tolower_l((unsigned char) *p, mylocale->info.lt);
-						else
-							*p = toupper_l((unsigned char) *p, mylocale->info.lt);
-						wasalnum = isalnum_l((unsigned char) *p, mylocale->info.lt);
-					}
+					if (wasalnum)
+						*p = tolower_l((unsigned char) *p, mylocale->info.lt);
 					else
-					{
-						if (wasalnum)
-							*p = pg_tolower((unsigned char) *p);
-						else
-							*p = pg_toupper((unsigned char) *p);
-						wasalnum = isalnum((unsigned char) *p);
-					}
+						*p = toupper_l((unsigned char) *p, mylocale->info.lt);
+					wasalnum = isalnum_l((unsigned char) *p, mylocale->info.lt);
 				}
 			}
 		}
