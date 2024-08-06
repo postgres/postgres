@@ -96,34 +96,25 @@ gtsvectorin(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
-#define SINGOUTSTR	"%d true bits, %d false bits"
-#define ARROUTSTR	"%d unique words"
-#define EXTRALEN	( 2*13 )
-
-static int	outbuf_maxlen = 0;
-
 Datum
 gtsvectorout(PG_FUNCTION_ARGS)
 {
 	SignTSVector *key = (SignTSVector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	char	   *outbuf;
 
-	if (outbuf_maxlen == 0)
-		outbuf_maxlen = 2 * EXTRALEN + Max(strlen(SINGOUTSTR), strlen(ARROUTSTR)) + 1;
-	outbuf = palloc(outbuf_maxlen);
-
 	if (ISARRKEY(key))
-		sprintf(outbuf, ARROUTSTR, (int) ARRNELEM(key));
+		outbuf = psprintf("%d unique words", (int) ARRNELEM(key));
 	else
 	{
 		if (ISALLTRUE(key))
-			sprintf(outbuf, "all true bits");
+			outbuf = pstrdup("all true bits");
 		else
 		{
 			int			siglen = GETSIGLEN(key);
 			int			cnttrue = sizebitvec(GETSIGN(key), siglen);
 
-			sprintf(outbuf, SINGOUTSTR, cnttrue, (int) SIGLENBIT(siglen) - cnttrue);
+			outbuf = psprintf("%d true bits, %d false bits",
+							  cnttrue, (int) SIGLENBIT(siglen) - cnttrue);
 		}
 	}
 
