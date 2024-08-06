@@ -32,9 +32,9 @@
  *
  * INSTR_TIME_GET_MILLISEC(t)		convert t to double (in milliseconds)
  *
- * INSTR_TIME_GET_MICROSEC(t)		convert t to uint64 (in microseconds)
+ * INSTR_TIME_GET_MICROSEC(t)		get t in microseconds
  *
- * INSTR_TIME_GET_NANOSEC(t)		convert t to uint64 (in nanoseconds)
+ * INSTR_TIME_GET_NANOSEC(t)		get t in nanoseconds
  *
  * Note that INSTR_TIME_SUBTRACT and INSTR_TIME_ACCUM_DIFF convert
  * absolute times to intervals.  The INSTR_TIME_GET_xxx operations are
@@ -123,7 +123,7 @@ pg_clock_gettime_ns(void)
 	((t) = pg_clock_gettime_ns())
 
 #define INSTR_TIME_GET_NANOSEC(t) \
-	((int64) (t).ticks)
+	((t).ticks)
 
 
 #else							/* WIN32 */
