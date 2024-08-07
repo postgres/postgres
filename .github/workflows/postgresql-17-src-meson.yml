@@ -1,0 +1,78 @@
+name: postgresql-17-src-meson
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    name: pg-17-src-meson-test
+    runs-on: ubuntu-22.04
+    steps:
+
+
+      - name: Remove old postgres
+        run: |
+          sudo apt purge postgresql-client-common postgresql-common \
+            postgresql postgresql*
+          sudo rm -rf /var/lib/postgresql /var/log/postgresql /etc/postgresql \
+           /usr/lib/postgresql /usr/include/postgresql /usr/share/postgresql \
+           /etc/postgresql
+          sudo rm -f /usr/bin/pg_config
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreadline6-dev systemtap-sdt-dev \
+            zlib1g-dev libssl-dev libpam0g-dev bison flex \
+            libipc-run-perl -y docbook-xsl docbook-xsl libxml2 libxml2-utils \
+            libxml2-dev libxslt-dev xsltproc libkrb5-dev libldap2-dev \
+            libsystemd-dev gettext tcl-dev libperl-dev pkg-config clang-11 \
+            llvm-11 llvm-11-dev libselinux1-dev python3-dev \
+            uuid-dev liblz4-dev meson ninja-build  \
+            gpg wget libcurl4-openssl-dev libhttp-server-simple-perl
+          sudo /usr/bin/perl -MCPAN -e 'install IPC::Run'
+          sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
+          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install -y vault
+
+      - name: Clone postgres repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'postgres/postgres'
+          ref: 'REL_17_STABLE'
+          path: 'src'
+
+      - name: Clone pg_tde repository
+        uses: actions/checkout@v4
+        with:
+          path: 'src/contrib/pg_tde'
+
+      - name: Include pg_tde in meson build
+        run: |
+          echo "subdir('pg_tde')" >> src/contrib/meson.build
+
+      - name: Build postgres
+        run: |
+          meson setup build --prefix `pwd`/../inst --buildtype=debug -Dcassert=true
+          cd build && ninja && ninja install
+        working-directory: src
+
+      - name: Test pg_tde
+        run: |
+          TV=$(mktemp)
+          { exec >$TV; vault server -dev; } &
+          sleep 10
+          export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
+          echo "Root token: $ROOT_TOKEN"
+
+          meson test --suite setup -v
+          meson test --suite pg_tde -v --num-processes 1
+        working-directory: src/build
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: Regressions diff and postgresql log
+          path: |
+            src/build/testrun/pg_tde/regress/
+          retention-days: 3
