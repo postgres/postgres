@@ -3740,8 +3740,8 @@ make: *** [postgres] Error 1
    </para>
 
    <para>
-    PostgreSQL for Windows with Visual can be built using meson, as described
-    in <xref linkend="install-meson"/>.
+    PostgreSQL for Windows with Visual Studio can be built using Meson, as
+    described in <xref linkend="install-meson"/>.
     The native Windows port requires a 32 or 64-bit version of Windows
     10 or later.
    </para>
