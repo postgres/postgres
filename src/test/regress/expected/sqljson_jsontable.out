@@ -489,7 +489,7 @@ DROP VIEW jsonb_table_view6;
 DROP DOMAIN jsonb_test_domain;
 -- JSON_TABLE: only one FOR ORDINALITY columns allowed
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (id FOR ORDINALITY, id2 FOR ORDINALITY, a int PATH '$.a' ERROR ON EMPTY)) jt;
-ERROR:  cannot use more than one FOR ORDINALITY column
+ERROR:  only one FOR ORDINALITY column is allowed
 LINE 1: ..._TABLE(jsonb '1', '$' COLUMNS (id FOR ORDINALITY, id2 FOR OR...
                                                              ^
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (id FOR ORDINALITY, a int PATH '$' ERROR ON EMPTY)) jt;
@@ -1126,7 +1126,7 @@ SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int omit quotes true on error
 ERROR:  invalid ON ERROR behavior for column "a"
 LINE 1: ...N_TABLE(jsonb '1', '$' COLUMNS (a int omit quotes true on er...
                                                              ^
-DETAIL:  Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for formatted columns.
+DETAIL:  Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for formatted columns.
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on error));
 ERROR:  invalid ON ERROR behavior for column "a"
 LINE 1: ...M JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty obje...

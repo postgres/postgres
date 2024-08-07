@@ -4660,13 +4660,17 @@ ExecEvalJsonCoercionFinish(ExprState *state, ExprEvalStep *op)
 		if (DatumGetBool(jsestate->error.value))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("could not coerce ON ERROR expression (%s) to the RETURNING type",
+			/*- translator: first %s is a SQL/JSON clause (e.g. ON ERROR) */
+					 errmsg("could not coerce %s expression (%s) to the RETURNING type",
+							"ON ERROR",
 							GetJsonBehaviorValueString(jsestate->jsexpr->on_error)),
 					 errdetail("%s", jsestate->escontext.error_data->message)));
 		else if (DatumGetBool(jsestate->empty.value))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("could not coerce ON EMPTY expression (%s) to the RETURNING type",
+			/*- translator: first %s is a SQL/JSON clause (e.g. ON ERROR) */
+					 errmsg("could not coerce %s expression (%s) to the RETURNING type",
+							"ON EMPTY",
 							GetJsonBehaviorValueString(jsestate->jsexpr->on_empty)),
 					 errdetail("%s", jsestate->escontext.error_data->message)));
 

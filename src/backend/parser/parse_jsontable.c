@@ -91,7 +91,7 @@ transformJsonTable(ParseState *pstate, JsonTable *jt)
 		jt->on_error->btype != JSON_BEHAVIOR_EMPTY_ARRAY)
 		ereport(ERROR,
 				errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("invalid ON ERROR behavior"),
+				errmsg("invalid %s behavior", "ON ERROR"),
 				errdetail("Only EMPTY [ ARRAY ] or ERROR is allowed in the top-level ON ERROR clause."),
 				parser_errposition(pstate, jt->on_error->location));
 
@@ -292,7 +292,7 @@ transformJsonTableColumns(JsonTableParseContext *cxt, List *columns,
 				if (ordinality_found)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot use more than one FOR ORDINALITY column"),
+							 errmsg("only one FOR ORDINALITY column is allowed"),
 							 parser_errposition(pstate, rawc->location)));
 				ordinality_found = true;
 				colexpr = NULL;
