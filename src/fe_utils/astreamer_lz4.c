@@ -2,6 +2,10 @@
  *
  * astreamer_lz4.c
  *
+ * Archive streamers that deal with data compressed using lz4.
+ * astreamer_lz4_compressor applies lz4 compression to the input stream,
+ * and astreamer_lz4_decompressor does the reverse.
+ *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION

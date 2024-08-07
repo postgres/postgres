@@ -2,6 +2,10 @@
  *
  * astreamer_zstd.c
  *
+ * Archive streamers that deal with data compressed using zstd.
+ * astreamer_zstd_compressor applies lz4 compression to the input stream,
+ * and astreamer_zstd_decompressor does the reverse.
+ *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION

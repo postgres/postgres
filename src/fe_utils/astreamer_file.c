@@ -2,6 +2,10 @@
  *
  * astreamer_file.c
  *
+ * Archive streamers that write to files. astreamer_plain_writer writes
+ * the whole archive to a single file, and astreamer_extractor writes
+ * each archive member to a separate file in a given directory.
+ *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION

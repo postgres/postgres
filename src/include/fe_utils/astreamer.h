@@ -2,9 +2,18 @@
  *
  * astreamer.h
  *
- * Each tar archive returned by the server is passed to one or more
- * astreamer objects for further processing. The astreamer may do
- * something simple, like write the archive to a file, perhaps after
+ * The "archive streamer" interface is intended to allow frontend code
+ * to stream from possibly-compressed archive files from any source and
+ * perform arbitrary actions based on the contents of those archives.
+ * Archive streamers are intended to be composable, and most tasks will
+ * require two or more archive streamers to complete. For instance,
+ * if the input is an uncompressed tar stream, a tar parser astreamer
+ * could be used to interpret it, and then an extractor astreamer could
+ * be used to write each archive member out to a file.
+ *
+ * In general, each archive streamer is relatively free to take whatever
+ * action it desires in the stream of chunks provided by the caller. It
+ * may do something simple, like write the archive to a file, perhaps after
  * compressing it, but it can also do more complicated things, like
  * annotating the byte stream to indicate which parts of the data
  * correspond to tar headers or trailing padding, vs. which parts are
@@ -33,9 +42,9 @@ typedef struct astreamer_ops astreamer_ops;
 
 /*
  * Each chunk of archive data passed to a astreamer is classified into one
- * of these categories. When data is first received from the remote server,
- * each chunk will be categorized as ASTREAMER_UNKNOWN, and the chunks will
- * be of whatever size the remote server chose to send.
+ * of these categories. When data is initially passed to an archive streamer,
+ * each chunk will be categorized as ASTREAMER_UNKNOWN, and the chunks can
+ * be of whatever size the caller finds convenient.
  *
  * If the archive is parsed (e.g. see astreamer_tar_parser_new()), then all
  * chunks should be labelled as one of the other types listed here. In

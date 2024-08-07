@@ -2,6 +2,21 @@
  *
  * astreamer_gzip.c
  *
+ * Archive streamers that deal with data compressed using gzip.
+ * astreamer_gzip_writer applies gzip compression to the input data
+ * and writes the result to a file. astreamer_gzip_decompressor assumes
+ * that the input stream is compressed using gzip and decompresses it.
+ *
+ * Note that the code in this file is asymmetric with what we do for
+ * other compression types: for lz4 and zstd, there is a compressor and
+ * a decompressor, rather than a writer and a decompressor. The approach
+ * taken here is less flexible, because a writer can only write to a file,
+ * while a compressor can write to a subsequent astreamer which is free
+ * to do whatever it likes. The reason it's like this is because this
+ * code was adapated from old, less-modular pg_basebackup code that used
+ * the same APIs that astreamer_gzip_writer now uses, and it didn't seem
+ * necessary to change anything at the time.
+ *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
