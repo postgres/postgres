@@ -8,4 +8,10 @@ use warnings;
 BEGIN { *PostgreSQL::Test::Utils:: = \*TestLib::; }
 use TestLib ();
 
+# There's no runtime requirement for the following package declaration, but it
+# convinces the RPM Package Manager that this file provides the Perl package
+# in question.  Perl v5.10.1 segfaults if a declaration of the to-be-aliased
+# package precedes the aliasing itself, hence the abnormal placement.
+package PostgreSQL::Test::Utils;
+
 1;
