@@ -10,8 +10,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef HEAPTOAST_H
-#define HEAPTOAST_H
+#ifndef PG_TDE_TOAST_H
+#define PG_TDE_TOAST_H
 
 #include "access/htup_details.h"
 #include "storage/lockdefs.h"
@@ -146,4 +146,4 @@ extern void tdeheap_fetch_toast_slice(Relation toastrel, Oid valueid,
 								   int32 attrsize, int32 sliceoffset,
 								   int32 slicelength, struct varlena *result);
 
-#endif							/* HEAPTOAST_H */
+#endif							/* PG_TDE_TOAST_H */

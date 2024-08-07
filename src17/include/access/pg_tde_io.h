@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * hio.h
+ * tdeheap_io.h
  *	  POSTGRES heap access method input/output definitions.
  *
  *
@@ -11,8 +11,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef HIO_H
-#define HIO_H
+#ifndef PG_TDE_IO_H
+#define PG_TDE_IO_H
 
 #include "access/htup.h"
 #include "storage/buf.h"
@@ -52,11 +52,11 @@ typedef struct BulkInsertStateData
 
 
 extern void tdeheap_RelationPutHeapTuple(Relation relation, Buffer buffer,
-								 HeapTuple tuple, bool token);
+								 HeapTuple tuple, bool encrypt, bool token);
 extern Buffer tdeheap_RelationGetBufferForTuple(Relation relation, Size len,
 										Buffer otherBuffer, int options,
 										BulkInsertStateData *bistate,
 										Buffer *vmbuffer, Buffer *vmbuffer_other,
 										int num_pages);
 
-#endif							/* HIO_H */
+#endif							/* PG_TDE_IO_H */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * visibilitymap.c
+ * tdeheap_visibilitymap.c
  *	  bitmap for tracking visibility of heap tuples
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/access/heap/visibilitymap.c
+ *	  src/backend/access/heap/pg_tde_visibilitymap.c
  *
  * INTERFACE ROUTINES
  *		tdeheap_visibilitymap_clear  - clear bits for one page in the visibility map
@@ -84,10 +84,13 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include "access/pg_tdeam_xlog.h"
-#include "access/visibilitymap.h"
+#include "access/pg_tde_visibilitymap.h"
+
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
 #include "miscadmin.h"

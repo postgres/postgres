@@ -64,9 +64,12 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
-#include "access/heapam.h"
+#include "access/pg_tdeam.h"
+
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/tableam.h"
@@ -94,7 +97,7 @@
  * future re-examination of the tuple.
  *
  * We can always set hint bits when marking a transaction aborted.  (Some
- * code in heapam.c relies on that!)
+ * code in pg_tdeam.c relies on that!)
  *
  * Also, if we are cleaning up HEAP_MOVED_IN or HEAP_MOVED_OFF entries, then
  * we can always set the hint bits, since pre-9.0 VACUUM FULL always used

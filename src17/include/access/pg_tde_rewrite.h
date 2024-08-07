@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteheap.h
+ * tdeheap_rewrite.h
  *	  Declarations for heap rewrite support functions
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
@@ -10,8 +10,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef REWRITE_HEAP_H
-#define REWRITE_HEAP_H
+#ifndef PG_TDE_REWRITE_H
+#define PG_TDE_REWRITE_H
 
 #include "access/htup.h"
 #include "storage/itemptr.h"
@@ -54,4 +54,4 @@ typedef struct LogicalRewriteMappingData
 #define LOGICAL_REWRITE_FORMAT "map-%x-%x-%X_%X-%x-%x"
 extern void CheckPointLogicalRewriteHeap(void);
 
-#endif							/* REWRITE_HEAP_H */
+#endif							/* PG_TDE_REWRITE_H */

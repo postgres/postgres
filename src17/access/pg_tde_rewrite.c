@@ -100,14 +100,18 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
 #include <unistd.h>
 
-#include "access/heapam.h"
+#include "access/pg_tdeam.h"
 #include "access/pg_tdeam_xlog.h"
-#include "access/heaptoast.h"
-#include "access/rewriteheap.h"
+#include "access/pg_tdetoast.h"
+#include "access/pg_tde_rewrite.h"
+#include "encryption/enc_tde.h"
+
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xloginsert.h"
@@ -673,7 +677,7 @@ raw_tdeheap_insert(RewriteState state, HeapTuple tup)
 	}
 
 	/* And now we can insert the tuple into the page */
-	newoff = PageAddItem(page, (Item) heaptup->t_data, heaptup->t_len,
+	newoff = TDE_PageAddItem(state->rs_new_rel->rd_locator, heaptup->t_tableOid, state->rs_blockno, page, (Item) heaptup->t_data, heaptup->t_len,
 						 InvalidOffsetNumber, false, true);
 	if (newoff == InvalidOffsetNumber)
 		elog(ERROR, "failed to add tuple");

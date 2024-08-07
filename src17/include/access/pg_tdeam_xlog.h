@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
  * pg_tdeam_xlog.h
- *	  POSTGRES heap access XLOG definitions.
+ *	  POSTGRES pg_tde access XLOG definitions.
  *
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/access/pg_tdeam_xlog.h
+ * src/include/access/heapam_xlog.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef HEAPAM_XLOG_H
-#define HEAPAM_XLOG_H
+#ifndef PG_TDEAM_XLOG_H
+#define PG_TDEAM_XLOG_H
 
 #include "access/htup.h"
 #include "access/xlogreader.h"
@@ -24,7 +24,7 @@
 
 
 /*
- * WAL record definitions for heapam.c's WAL operations
+ * WAL record definitions for pg_tdeam.c's WAL operations
  *
  * XLOG allows to store some information in high 4 bits of log
  * record xl_info field.  We use 3 for opcode and one for init bit.
@@ -45,7 +45,7 @@
  */
 #define XLOG_HEAP_INIT_PAGE		0x80
 /*
- * We ran out of opcodes, so heapam.c now has a second RmgrId.  These opcodes
+ * We ran out of opcodes, so pg_tdeam.c now has a second RmgrId.  These opcodes
  * are associated with RM_HEAP2_ID, but are not logically different from
  * the ones above associated with RM_HEAP_ID.  XLOG_HEAP_OPMASK applies to
  * these, too.
@@ -499,4 +499,4 @@ extern void heap_xlog_deserialize_prune_and_freeze(char *cursor, uint8 flags,
 												   int *ndead, OffsetNumber **nowdead,
 												   int *nunused, OffsetNumber **nowunused);
 
-#endif							/* HEAPAM_XLOG_H */
+#endif							/* PG_TDEAM_XLOG_H */

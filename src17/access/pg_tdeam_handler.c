@@ -17,13 +17,22 @@
  *
  *-------------------------------------------------------------------------
  */
+
+#include "pg_tde_defines.h"
+
 #include "postgres.h"
 
+#include "access/pg_tde_slot.h"
+
+#include "access/pg_tdeam.h"
+#include "access/pg_tdetoast.h"
+#include "access/pg_tde_rewrite.h"
+#include "access/pg_tde_tdemap.h"
+
+#include "encryption/enc_tde.h"
+
 #include "access/genam.h"
-#include "access/heapam.h"
-#include "access/heaptoast.h"
 #include "access/multixact.h"
-#include "access/rewriteheap.h"
 #include "access/syncscan.h"
 #include "access/tableam.h"
 #include "access/tsmapi.h"
@@ -45,6 +54,12 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
+
+PG_FUNCTION_INFO_V1(pg_tdeam_basic_handler);
+#ifdef PERCONA_FORK
+PG_FUNCTION_INFO_V1(pg_tdeam_handler);
+#endif
+
 
 static void reform_and_rewrite_tuple(HeapTuple tuple,
 									 Relation OldHeap, Relation NewHeap,
@@ -160,7 +175,7 @@ pg_tdeam_index_fetch_tuple(struct IndexFetchTableData *scan,
 		*call_again = !IsMVCCSnapshot(snapshot);
 
 		slot->tts_tableOid = RelationGetRelid(scan->rel);
-		ExecStoreBufferHeapTuple(&bslot->base.tupdata, slot, hscan->xs_cbuf);
+		PGTdeExecStoreBufferHeapTuple(scan->rel, &bslot->base.tupdata, slot, hscan->xs_cbuf);
 	}
 	else
 	{
@@ -192,7 +207,7 @@ pg_tdeam_fetch_row_version(Relation relation,
 	if  (tdeheap_fetch(relation, snapshot, &bslot->base.tupdata, &buffer, false))
 	{
 		/* store in slot, transferring existing pin */
-		ExecStorePinnedBufferHeapTuple(&bslot->base.tupdata, slot, buffer);
+		PGTdeExecStorePinnedBufferHeapTuple(relation, &bslot->base.tupdata, slot, buffer);
 		slot->tts_tableOid = RelationGetRelid(relation);
 
 		return true;
@@ -566,7 +581,7 @@ tuple_lock_retry:
 	tuple->t_tableOid = slot->tts_tableOid;
 
 	/* store in slot, transferring existing pin */
-	ExecStorePinnedBufferHeapTuple(tuple, slot, buffer);
+	PGTdeExecStorePinnedBufferHeapTuple(relation, tuple, slot, buffer);
 
 	return result;
 }
@@ -621,6 +636,17 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 	}
 
 	smgrclose(srel);
+
+	/* Update TDE filemap */
+	if (rel->rd_rel->relkind == RELKIND_RELATION ||
+		rel->rd_rel->relkind == RELKIND_MATVIEW	||
+		rel->rd_rel->relkind == RELKIND_TOASTVALUE)
+	{
+		ereport(DEBUG1,
+			(errmsg("creating key file for relation %s", RelationGetRelationName(rel))));
+
+		pg_tde_create_key_map_entry(newrlocator);
+	}
 }
 
 static void
@@ -1151,7 +1177,7 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 
 		if (sample_it)
 		{
-			ExecStoreBufferHeapTuple(targtuple, slot, hscan->rs_cbuf);
+			PGTdeExecStoreBufferHeapTuple(scan->rs_rd, targtuple, slot, hscan->rs_cbuf);
 			hscan->rs_cindex++;
 
 			/* note that we leave the buffer locked here! */
@@ -1162,7 +1188,7 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 	/* Now release the lock and pin on the page */
 	UnlockReleaseBuffer(hscan->rs_cbuf);
 	hscan->rs_cbuf = InvalidBuffer;
-
+	TdeSlotForgetDecryptedTuple(slot);
 	/* also prevent old slot contents from having pin on page */
 	ExecClearTuple(slot);
 
@@ -1631,7 +1657,7 @@ pg_tdeam_index_build_range_scan(Relation heapRelation,
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 		/* Set up for predicate or expression evaluation */
-		ExecStoreBufferHeapTuple(heapTuple, slot, hscan->rs_cbuf);
+		PGTdeExecStoreBufferHeapTuple(heapRelation, heapTuple, slot, hscan->rs_cbuf);
 
 		/*
 		 * In a partial index, discard tuples that don't satisfy the
@@ -2293,7 +2319,7 @@ pg_tdeam_scan_bitmap_next_tuple(TableScanDesc scan,
 	 * Set up the result slot to point to this tuple.  Note that the slot
 	 * acquires a pin on the buffer.
 	 */
-	ExecStoreBufferHeapTuple(&hscan->rs_ctup,
+	PGTdeExecStoreBufferHeapTuple(scan->rs_rd, &hscan->rs_ctup,
 							 slot,
 							 hscan->rs_cbuf);
 
@@ -2463,7 +2489,7 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 			if (!pagemode)
 				LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
-			ExecStoreBufferHeapTuple(tuple, slot, hscan->rs_cbuf);
+			PGTdeExecStoreBufferHeapTuple(scan->rs_rd, tuple, slot, hscan->rs_cbuf);
 
 			/* Count successfully-fetched tuples as heap fetches */
 			pgstat_count_tdeheap_getnext(scan->rs_rd);
@@ -2478,7 +2504,16 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 			 */
 			if (!pagemode)
 				LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-
+			/*
+			 * Hack:
+			 * The issue is that, The previous call that would have used the same
+			 * TupleTableSlot would have just deleted the memory context for the slot
+			 * and refrained from calling the clear slot function. So, the slot would
+			 * have the non NULL pointer to the decrypted tuple which is now invalid.
+			 * So, we need to explicitly clear the decrypted tuple pointer before
+			 * calling the clear slot function.
+			 */
+			TdeSlotForgetDecryptedTuple(slot);
 			ExecClearTuple(slot);
 			return false;
 		}
@@ -2648,15 +2683,28 @@ static const TableAmRoutine pg_tdeam_methods = {
 	.scan_sample_next_tuple = pg_tdeam_scan_sample_next_tuple
 };
 
-
 const TableAmRoutine *
-GetHeapamTableAmRoutine(void)
+GetPGTdeamTableAmRoutine(void)
 {
 	return &pg_tdeam_methods;
 }
 
 Datum
-tdeheap_tableam_handler(PG_FUNCTION_ARGS)
+pg_tdeam_basic_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&pg_tdeam_methods);
+}
+
+#ifdef PERCONA_FORK
+Datum
+pg_tdeam_handler(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_POINTER(GetHeapamTableAmRoutine());
+}
+#endif
+
+bool
+is_tdeheap_rel(Relation rel)
+{
+	return (rel->rd_tableam == (TableAmRoutine *) &pg_tdeam_methods);
 }

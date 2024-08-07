@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * heapam.h
+ * pg_tdeam.h
  *	  POSTGRES heap access method definitions.
  *
  *
@@ -11,8 +11,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef HEAPAM_H
-#define HEAPAM_H
+#ifndef PG_TDEAM_H
+#define PG_TDEAM_H
 
 #include "access/relation.h"	/* for backward compatibility */
 #include "access/relscan.h"
@@ -32,10 +32,11 @@
 
 
 /* "options" flag bits for tdeheap_insert */
-#define HEAP_INSERT_SKIP_FSM	TABLE_INSERT_SKIP_FSM
-#define HEAP_INSERT_FROZEN		TABLE_INSERT_FROZEN
-#define HEAP_INSERT_NO_LOGICAL	TABLE_INSERT_NO_LOGICAL
-#define HEAP_INSERT_SPECULATIVE 0x0010
+#define HEAP_INSERT_SKIP_FSM		TABLE_INSERT_SKIP_FSM
+#define HEAP_INSERT_FROZEN			TABLE_INSERT_FROZEN
+#define HEAP_INSERT_NO_LOGICAL		TABLE_INSERT_NO_LOGICAL
+#define HEAP_INSERT_SPECULATIVE 	0x0010
+#define HEAP_INSERT_TDE_NO_ENCRYPT	0x2000 /* to specify rare cases when NO TDE enc */
 
 /* "options" flag bits for tdeheap_page_prune_and_freeze */
 #define HEAP_PAGE_PRUNE_MARK_UNUSED_NOW		(1 << 0)
@@ -373,9 +374,21 @@ extern void tdeheap_page_prune_and_freeze(Relation relation, Buffer buffer,
 									   PruneFreezeResult *presult,
 									   PruneReason reason,
 									   OffsetNumber *off_loc,
+<<<<<<<
 									   TransactionId *new_relfrozen_xid,
 									   MultiXactId *new_relmin_mxid);
 extern void tdeheap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
+|||||||
+							TimestampTz old_snap_ts,
+							int *nnewlpdead,
+							OffsetNumber *off_loc);
+extern void tdeheap_page_prune_execute(Buffer buffer,
+=======
+							TimestampTz old_snap_ts,
+							int *nnewlpdead,
+							OffsetNumber *off_loc);
+extern void tdeheap_page_prune_execute(Relation rel, Buffer buffer,
+>>>>>>>
 									OffsetNumber *redirected, int nredirected,
 									OffsetNumber *nowdead, int ndead,
 									OffsetNumber *nowunused, int nunused);
@@ -422,4 +435,10 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
 extern void HeapCheckForSerializableConflictOut(bool visible, Relation relation, HeapTuple tuple,
 												Buffer buffer, Snapshot snapshot);
 
-#endif							/* HEAPAM_H */
+/* Defined in pg_tdeam_handler.c */
+extern bool is_tdeheap_rel(Relation rel);
+
+const TableAmRoutine *
+GetPGTdeamTableAmRoutine(void);
+
+#endif							/* PG_TDEAM_H */
