@@ -122,6 +122,8 @@ typedef struct
 	HTAB	   *hashp;
 	uint32		curBucket;		/* index of current bucket */
 	HASHELEMENT *curEntry;		/* current entry in bucket */
+	bool		hasHashvalue;	/* true if hashvalue was provided */
+	uint32		hashvalue;		/* hashvalue to start seqscan over hash */
 } HASH_SEQ_STATUS;
 
 /*
@@ -141,6 +143,9 @@ extern bool hash_update_hash_key(HTAB *hashp, void *existingEntry,
 								 const void *newKeyPtr);
 extern long hash_get_num_entries(HTAB *hashp);
 extern void hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp);
+extern void hash_seq_init_with_hash_value(HASH_SEQ_STATUS *status,
+										  HTAB *hashp,
+										  uint32 hashvalue);
 extern void *hash_seq_search(HASH_SEQ_STATUS *status);
 extern void hash_seq_term(HASH_SEQ_STATUS *status);
 extern void hash_freeze(HTAB *hashp);
