@@ -1099,7 +1099,8 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 	if (result->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("NULLIF requires = operator to yield boolean"),
+		/* translator: %s is name of a SQL construct, eg NULLIF */
+				 errmsg("%s requires = operator to yield boolean", "NULLIF"),
 				 parser_errposition(pstate, a->location)));
 	if (result->opretset)
 		ereport(ERROR,
@@ -3060,7 +3061,9 @@ make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	if (((OpExpr *) result)->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("IS DISTINCT FROM requires = operator to yield boolean"),
+		/* translator: %s is name of a SQL construct, eg NULLIF */
+				 errmsg("%s requires = operator to yield boolean",
+						"IS DISTINCT FROM"),
 				 parser_errposition(pstate, location)));
 	if (((OpExpr *) result)->opretset)
 		ereport(ERROR,
@@ -4326,15 +4329,22 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			if (func->column_name == NULL)
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("invalid ON EMPTY behavior"),
-						errdetail("Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON EMPTY for JSON_QUERY()."),
+				/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errmsg("invalid %s behavior", "ON EMPTY"),
+				/*- translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY),
+					second %s is a SQL/JSON function name (e.g. JSON_QUERY) */
+						errdetail("Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in %s for %s.",
+								  "ON EMPTY", "JSON_QUERY()"),
 						parser_errposition(pstate, func->on_empty->location));
 			else
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("invalid ON EMPTY behavior for column \"%s\"",
-							   func->column_name),
-						errdetail("Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON EMPTY for formatted columns."),
+				/*- translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errmsg("invalid %s behavior for column \"%s\"",
+							   "ON EMPTY", func->column_name),
+				/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errdetail("Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in %s for formatted columns.",
+								  "ON EMPTY"),
 						parser_errposition(pstate, func->on_empty->location));
 		}
 		if (func->on_error != NULL &&
@@ -4348,15 +4358,22 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			if (func->column_name == NULL)
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("invalid ON ERROR behavior"),
-						errdetail("Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for JSON_QUERY()."),
+				/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errmsg("invalid %s behavior", "ON ERROR"),
+				/*- translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY),
+					second %s is a SQL/JSON function name (e.g. JSON_QUERY) */
+						errdetail("Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in %s for %s.",
+								  "ON ERROR", "JSON_QUERY()"),
 						parser_errposition(pstate, func->on_error->location));
 			else
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("invalid ON ERROR behavior for column \"%s\"",
-							   func->column_name),
-						errdetail("Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for formatted columns."),
+				/*- translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errmsg("invalid %s behavior for column \"%s\"",
+							   "ON ERROR", func->column_name),
+				/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errdetail("Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in %s for formatted columns.",
+								  "ON ERROR"),
 						parser_errposition(pstate, func->on_error->location));
 		}
 	}
@@ -4372,15 +4389,20 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 		if (func->column_name == NULL)
 			ereport(ERROR,
 					errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("invalid ON ERROR behavior"),
-					errdetail("Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in ON ERROR for JSON_EXISTS()."),
+			/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+					errmsg("invalid %s behavior", "ON ERROR"),
+					errdetail("Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in %s for %s.",
+							  "ON ERROR", "JSON_EXISTS()"),
 					parser_errposition(pstate, func->on_error->location));
 		else
 			ereport(ERROR,
 					errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("invalid ON ERROR behavior for column \"%s\"",
-						   func->column_name),
-					errdetail("Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in ON ERROR for EXISTS columns."),
+			/*- translator: first %s is name a SQL/JSON clause (eg. ON EMPTY) */
+					errmsg("invalid %s behavior for column \"%s\"",
+						   "ON ERROR", func->column_name),
+			/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+					errdetail("Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in %s for EXISTS columns.",
+							  "ON ERROR"),
 					parser_errposition(pstate, func->on_error->location));
 	}
 	if (func->op == JSON_VALUE_OP)
@@ -4393,15 +4415,22 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			if (func->column_name == NULL)
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("invalid ON EMPTY behavior"),
-						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in ON EMPTY for JSON_VALUE()."),
+				/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errmsg("invalid %s behavior", "ON EMPTY"),
+				/*- translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY),
+					second %s is a SQL/JSON function name (e.g. JSON_QUERY) */
+						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in %s for %s.",
+								  "ON EMPTY", "JSON_VALUE()"),
 						parser_errposition(pstate, func->on_empty->location));
 			else
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("invalid ON EMPTY behavior for column \"%s\"",
-							   func->column_name),
-						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in ON EMPTY for scalar columns."),
+				/*- translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errmsg("invalid %s behavior for column \"%s\"",
+							   "ON EMPTY", func->column_name),
+				/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in %s for scalar columns.",
+								  "ON EMPTY"),
 						parser_errposition(pstate, func->on_empty->location));
 		}
 		if (func->on_error != NULL &&
@@ -4412,15 +4441,22 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			if (func->column_name == NULL)
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("invalid ON ERROR behavior"),
-						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in ON ERROR for JSON_VALUE()."),
+				/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errmsg("invalid %s behavior", "ON ERROR"),
+				/*- translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY),
+					second %s is a SQL/JSON function name (e.g. JSON_QUERY) */
+						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in %s for %s.",
+								  "ON ERROR", "JSON_VALUE()"),
 						parser_errposition(pstate, func->on_error->location));
 			else
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("invalid ON ERROR behavior for column \"%s\"",
-							   func->column_name),
-						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in ON ERROR for scalar columns."),
+				/*- translator: first %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errmsg("invalid %s behavior for column \"%s\"",
+							   "ON ERROR", func->column_name),
+				/*- translator: %s is name of a SQL/JSON clause (eg. ON EMPTY) */
+						errdetail("Only ERROR, NULL, or DEFAULT expression is allowed in %s for scalar columns.",
+								  "ON ERROR"),
 						parser_errposition(pstate, func->on_error->location));
 		}
 	}

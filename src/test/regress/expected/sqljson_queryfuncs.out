@@ -1384,7 +1384,7 @@ SELECT JSON_QUERY(jsonb '1', '$' TRUE ON ERROR);
 ERROR:  invalid ON ERROR behavior
 LINE 1: SELECT JSON_QUERY(jsonb '1', '$' TRUE ON ERROR);
                                          ^
-DETAIL:  Only ERROR, NULL, EMPTY [ ARRAY ], EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for JSON_QUERY().
+DETAIL:  Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for JSON_QUERY().
 -- Test implicit coercion to a domain over fixed-length type specified in
 -- RETURNING
 CREATE DOMAIN queryfuncs_char2 AS char(2);
