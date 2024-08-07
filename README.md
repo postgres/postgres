@@ -179,3 +179,9 @@ Date:   Wed Sep 13 09:48:31 2023 +0530
 
     Fix the ALTER SUBSCRIPTION to reflect the change in run_as_owner option.
 ```
+
+## FAQ
+
+### What would be the best way to encrypt an existing table using pg_tde?
+
+- That can be done by using the ALTER TABLE command and changing the table's access method to pg_tde_basic. `ALTER TABLE table_name SET access method  pg_tde_basic;` This command rewrites the table, so for large tables, it might take a considerable amount of time. Unfortunately, rewriting the table is currently the only available option.
