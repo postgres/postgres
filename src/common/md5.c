@@ -150,10 +150,6 @@ static const uint8 md5_paddat[MD5_BUFLEN] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-#ifdef WORDS_BIGENDIAN
-static uint32 X[16];
-#endif
-
 static void
 md5_calc(const uint8 *b64, pg_md5_ctx *ctx)
 {
@@ -167,6 +163,7 @@ md5_calc(const uint8 *b64, pg_md5_ctx *ctx)
 #else
 	/* 4 byte words */
 	/* what a brute force but fast! */
+	uint32		X[16];
 	uint8	   *y = (uint8 *) X;
 
 	y[0] = b64[3];
