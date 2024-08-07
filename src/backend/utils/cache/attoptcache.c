@@ -44,12 +44,10 @@ typedef struct
 
 /*
  * InvalidateAttoptCacheCallback
- *		Flush all cache entries when pg_attribute is updated.
+ *		Flush cache entry (or entries) when pg_attribute is updated.
  *
  * When pg_attribute is updated, we must flush the cache entry at least
- * for that attribute.  Currently, we just flush them all.  Since attribute
- * options are not currently used in performance-critical paths (such as
- * query execution), this seems OK.
+ * for that attribute.
  */
 static void
 InvalidateAttoptCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
@@ -57,7 +55,16 @@ InvalidateAttoptCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 	HASH_SEQ_STATUS status;
 	AttoptCacheEntry *attopt;
 
-	hash_seq_init(&status, AttoptCacheHash);
+	/*
+	 * By convention, zero hash value is passed to the callback as a sign that
+	 * it's time to invalidate the whole cache. See sinval.c, inval.c and
+	 * InvalidateSystemCachesExtended().
+	 */
+	if (hashvalue == 0)
+		hash_seq_init(&status, AttoptCacheHash);
+	else
+		hash_seq_init_with_hash_value(&status, AttoptCacheHash, hashvalue);
+
 	while ((attopt = (AttoptCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
 		if (attopt->opts)
@@ -68,6 +75,18 @@ InvalidateAttoptCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 						NULL) == NULL)
 			elog(ERROR, "hash table corrupted");
 	}
+}
+
+/*
+ * Hash function compatible with two-arg system cache hash function.
+ */
+static uint32
+relatt_cache_syshash(const void *key, Size keysize)
+{
+	const AttoptCacheKey *ckey = key;
+
+	Assert(keysize == sizeof(*ckey));
+	return GetSysCacheHashValue2(ATTNUM, ckey->attrelid, ckey->attnum);
 }
 
 /*
@@ -82,9 +101,17 @@ InitializeAttoptCache(void)
 	/* Initialize the hash table. */
 	ctl.keysize = sizeof(AttoptCacheKey);
 	ctl.entrysize = sizeof(AttoptCacheEntry);
+
+	/*
+	 * AttoptCacheEntry takes hash value from the system cache. For
+	 * AttoptCacheHash we use the same hash in order to speedup search by hash
+	 * value. This is used by hash_seq_init_with_hash_value().
+	 */
+	ctl.hash = relatt_cache_syshash;
+
 	AttoptCacheHash =
 		hash_create("Attopt cache", 256, &ctl,
-					HASH_ELEM | HASH_BLOBS);
+					HASH_ELEM | HASH_FUNCTION);
 
 	/* Make sure we've initialized CacheMemoryContext. */
 	if (!CacheMemoryContext)

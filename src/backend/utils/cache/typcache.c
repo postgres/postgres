@@ -332,6 +332,16 @@ static dsa_pointer share_tupledesc(dsa_area *area, TupleDesc tupdesc,
 
 
 /*
+ * Hash function compatible with one-arg system cache hash function.
+ */
+static uint32
+type_cache_syshash(const void *key, Size keysize)
+{
+	Assert(keysize == sizeof(Oid));
+	return GetSysCacheHashValue1(TYPEOID, ObjectIdGetDatum(*(const Oid *) key));
+}
+
+/*
  * lookup_type_cache
  *
  * Fetch the type cache entry for the specified datatype, and make sure that
@@ -355,8 +365,16 @@ lookup_type_cache(Oid type_id, int flags)
 
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TypeCacheEntry);
+
+		/*
+		 * TypeEntry takes hash value from the system cache. For TypeCacheHash
+		 * we use the same hash in order to speedup search by hash value. This
+		 * is used by hash_seq_init_with_hash_value().
+		 */
+		ctl.hash = type_cache_syshash;
+
 		TypeCacheHash = hash_create("Type information cache", 64,
-									&ctl, HASH_ELEM | HASH_BLOBS);
+									&ctl, HASH_ELEM | HASH_FUNCTION);
 
 		/* Also set up callbacks for SI invalidations */
 		CacheRegisterRelcacheCallback(TypeCacheRelCallback, (Datum) 0);
@@ -407,8 +425,7 @@ lookup_type_cache(Oid type_id, int flags)
 
 		/* These fields can never change, by definition */
 		typentry->type_id = type_id;
-		typentry->type_id_hash = GetSysCacheHashValue1(TYPEOID,
-													   ObjectIdGetDatum(type_id));
+		typentry->type_id_hash = get_hash_value(TypeCacheHash, &type_id);
 
 		/* Keep this part in sync with the code below */
 		typentry->typlen = typtup->typlen;
@@ -2358,20 +2375,28 @@ TypeCacheTypCallback(Datum arg, int cacheid, uint32 hashvalue)
 	TypeCacheEntry *typentry;
 
 	/* TypeCacheHash must exist, else this callback wouldn't be registered */
-	hash_seq_init(&status, TypeCacheHash);
+
+	/*
+	 * By convention, zero hash value is passed to the callback as a sign that
+	 * it's time to invalidate the whole cache. See sinval.c, inval.c and
+	 * InvalidateSystemCachesExtended().
+	 */
+	if (hashvalue == 0)
+		hash_seq_init(&status, TypeCacheHash);
+	else
+		hash_seq_init_with_hash_value(&status, TypeCacheHash, hashvalue);
+
 	while ((typentry = (TypeCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
-		/* Is this the targeted type row (or it's a total cache flush)? */
-		if (hashvalue == 0 || typentry->type_id_hash == hashvalue)
-		{
-			/*
-			 * Mark the data obtained directly from pg_type as invalid.  Also,
-			 * if it's a domain, typnotnull might've changed, so we'll need to
-			 * recalculate its constraints.
-			 */
-			typentry->flags &= ~(TCFLAGS_HAVE_PG_TYPE_DATA |
-								 TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS);
-		}
+		Assert(hashvalue == 0 || typentry->type_id_hash == hashvalue);
+
+		/*
+		 * Mark the data obtained directly from pg_type as invalid.  Also, if
+		 * it's a domain, typnotnull might've changed, so we'll need to
+		 * recalculate its constraints.
+		 */
+		typentry->flags &= ~(TCFLAGS_HAVE_PG_TYPE_DATA |
+							 TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS);
 	}
 }
 
