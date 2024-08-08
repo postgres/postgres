@@ -844,7 +844,7 @@ copy copy_default from stdin with (default E'\r');
 ERROR:  COPY default representation cannot use newline or carriage return
 -- DELIMITER cannot appear in DEFAULT spec
 copy copy_default from stdin with (delimiter ';', default 'test;test');
-ERROR:  COPY delimiter must not appear in the DEFAULT specification
+ERROR:  COPY delimiter character must not appear in the DEFAULT specification
 -- CSV quote cannot appear in DEFAULT spec
 copy copy_default from stdin with (format csv, quote '"', default 'test"test');
 ERROR:  CSV quote character must not appear in the DEFAULT specification
@@ -904,4 +904,4 @@ select id, text_value, ts_value from copy_default;
 truncate copy_default;
 -- DEFAULT cannot be used in COPY TO
 copy (select 1 as test) TO stdout with (default '\D');
-ERROR:  COPY DEFAULT only available using COPY FROM
+ERROR:  COPY DEFAULT cannot be used with COPY TO

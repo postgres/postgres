@@ -1444,8 +1444,9 @@ BeginCopyFrom(ParseState *pstate,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("FORCE_NOT_NULL column \"%s\" not referenced by COPY",
-								NameStr(attr->attname))));
+				/*- translator: first %s is the name of a COPY option, e.g. FORCE_NOT_NULL */
+						 errmsg("%s column \"%s\" not referenced by COPY",
+								"FORCE_NOT_NULL", NameStr(attr->attname))));
 			cstate->opts.force_notnull_flags[attnum - 1] = true;
 		}
 	}
@@ -1486,8 +1487,9 @@ BeginCopyFrom(ParseState *pstate,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("FORCE_NULL column \"%s\" not referenced by COPY",
-								NameStr(attr->attname))));
+				/*- translator: first %s is the name of a COPY option, e.g. FORCE_NOT_NULL */
+						 errmsg("%s column \"%s\" not referenced by COPY",
+								"FORCE_NULL", NameStr(attr->attname))));
 			cstate->opts.force_null_flags[attnum - 1] = true;
 		}
 	}
