@@ -1417,6 +1417,23 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2
 
 -- leave these tables around intentionally
 
+-- Verify that attaching a table that's referenced by an existing FK
+-- in the parent throws an error
+CREATE TABLE fk_partitioned_pk_6 (a int PRIMARY KEY);
+CREATE TABLE fk_partitioned_fk_6 (a int REFERENCES fk_partitioned_pk_6) PARTITION BY LIST (a);
+ALTER TABLE fk_partitioned_fk_6 ATTACH PARTITION fk_partitioned_pk_6 FOR VALUES IN (1);
+DROP TABLE fk_partitioned_pk_6, fk_partitioned_fk_6;
+
+-- This case is similar to above, but the referenced relation is one level
+-- lower in the hierarchy.  This one fails in a different way as the above,
+-- because we don't bother to protect against this case explicitly.  If the
+-- current error stops happening, we'll need to add a better protection.
+CREATE TABLE fk_partitioned_pk_6 (a int PRIMARY KEY) PARTITION BY list (a);
+CREATE TABLE fk_partitioned_pk_61 PARTITION OF fk_partitioned_pk_6 FOR VALUES IN (1);
+CREATE TABLE fk_partitioned_fk_6 (a int REFERENCES fk_partitioned_pk_61) PARTITION BY LIST (a);
+ALTER TABLE fk_partitioned_fk_6 ATTACH PARTITION fk_partitioned_pk_6 FOR VALUES IN (1);
+DROP TABLE fk_partitioned_pk_6, fk_partitioned_fk_6;
+
 -- test the case when the referenced table is owned by a different user
 create role regress_other_partitioned_fk_owner;
 grant references on fk_notpartitioned_pk to regress_other_partitioned_fk_owner;
