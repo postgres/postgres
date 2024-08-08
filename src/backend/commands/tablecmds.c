@@ -10759,6 +10759,23 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 	{
 		ForeignKeyCacheInfo *fk = lfirst(cell);
 
+		/*
+		 * Refuse to attach a table as partition that this partitioned table
+		 * already has a foreign key to.  This isn't useful schema, which is
+		 * proven by the fact that there have been no user complaints that
+		 * it's already impossible to achieve this in the opposite direction,
+		 * i.e., creating a foreign key that references a partition.  This
+		 * restriction allows us to dodge some complexities around
+		 * pg_constraint and pg_trigger row creations that would be needed
+		 * during ATTACH/DETACH for this kind of relationship.
+		 */
+		if (fk->confrelid == RelationGetRelid(partRel))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("can't attach table \"%s\" as a partition which is referenced by foreign key \"%s\"",
+							RelationGetRelationName(partRel),
+							get_constraint_name(fk->conoid))));
+
 		clone = lappend_oid(clone, fk->conoid);
 	}
 
