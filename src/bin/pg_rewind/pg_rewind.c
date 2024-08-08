@@ -578,6 +578,7 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 		pg_free(histfile);
 	}
 
+	/* In debugging mode, print what we read */
 	if (debug)
 	{
 		int			i;
@@ -589,10 +590,7 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 		else
 			Assert(false);
 
-		/*
-		 * Print the target timeline history.
-		 */
-		for (i = 0; i < targetNentries; i++)
+		for (i = 0; i < *nentries; i++)
 		{
 			TimeLineHistoryEntry *entry;
 
