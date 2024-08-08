@@ -257,7 +257,10 @@ make_date(PG_FUNCTION_ARGS)
 	if (tm.tm_year < 0)
 	{
 		bc = true;
-		tm.tm_year = -tm.tm_year;
+		if (pg_mul_s32_overflow(tm.tm_year, -1, &tm.tm_year))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("date field value out of range")));
 	}
 
 	dterr = ValidateDate(DTK_DATE_M, false, false, bc, &tm);
