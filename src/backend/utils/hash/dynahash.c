@@ -1395,6 +1395,11 @@ hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp)
 /*
  * Same as above but scan by the given hash value.
  * See also hash_seq_search().
+ *
+ * NOTE: the default hash function doesn't match syscache hash function.
+ * Thus, if you're going to use this function in syscache callback, make sure
+ * you're using custom hash function.  See relatt_cache_syshash()
+ * for example.
  */
 void
 hash_seq_init_with_hash_value(HASH_SEQ_STATUS *status, HTAB *hashp,
