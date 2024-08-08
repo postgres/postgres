@@ -372,7 +372,7 @@ index_compute_xid_horizon_for_tuples(Relation irel,
  *	nkeys, key: scan keys
  *
  * The attribute numbers in the scan key should be set for the heap case.
- * If we choose to index, we reset them to 1..n to reference the index
+ * If we choose to index, we convert them to 1..n to reference the index
  * columns.  Note this means there must be one scankey qualification per
  * index column!  This is checked by the Asserts in the normal, index-using
  * case, but won't be checked if the heapscan path is taken.
@@ -420,17 +420,22 @@ systable_beginscan(Relation heapRelation,
 	if (irel)
 	{
 		int			i;
+		ScanKey		idxkey;
 
-		/* Change attribute numbers to be index column numbers. */
+		idxkey = palloc_array(ScanKeyData, nkeys);
+
+		/* Convert attribute numbers to be index column numbers. */
 		for (i = 0; i < nkeys; i++)
 		{
 			int			j;
+
+			memcpy(&idxkey[i], &key[i], sizeof(ScanKeyData));
 
 			for (j = 0; j < IndexRelationGetNumberOfAttributes(irel); j++)
 			{
 				if (key[i].sk_attno == irel->rd_index->indkey.values[j])
 				{
-					key[i].sk_attno = j + 1;
+					idxkey[i].sk_attno = j + 1;
 					break;
 				}
 			}
@@ -440,7 +445,7 @@ systable_beginscan(Relation heapRelation,
 
 		sysscan->iscan = index_beginscan(heapRelation, irel,
 										 snapshot, nkeys, 0);
-		index_rescan(sysscan->iscan, key, nkeys, NULL, 0);
+		index_rescan(sysscan->iscan, idxkey, nkeys, NULL, 0);
 		sysscan->scan = NULL;
 	}
 	else
@@ -648,6 +653,7 @@ systable_beginscan_ordered(Relation heapRelation,
 {
 	SysScanDesc sysscan;
 	int			i;
+	ScanKey		idxkey;
 
 	/* REINDEX can probably be a hard error here ... */
 	if (ReindexIsProcessingIndex(RelationGetRelid(indexRelation)))
@@ -679,16 +685,20 @@ systable_beginscan_ordered(Relation heapRelation,
 		sysscan->snapshot = NULL;
 	}
 
-	/* Change attribute numbers to be index column numbers. */
+	idxkey = palloc_array(ScanKeyData, nkeys);
+
+	/* Convert attribute numbers to be index column numbers. */
 	for (i = 0; i < nkeys; i++)
 	{
 		int			j;
+
+		memcpy(&idxkey[i], &key[i], sizeof(ScanKeyData));
 
 		for (j = 0; j < IndexRelationGetNumberOfAttributes(indexRelation); j++)
 		{
 			if (key[i].sk_attno == indexRelation->rd_index->indkey.values[j])
 			{
-				key[i].sk_attno = j + 1;
+				idxkey[i].sk_attno = j + 1;
 				break;
 			}
 		}
@@ -698,7 +708,7 @@ systable_beginscan_ordered(Relation heapRelation,
 
 	sysscan->iscan = index_beginscan(heapRelation, indexRelation,
 									 snapshot, nkeys, 0);
-	index_rescan(sysscan->iscan, key, nkeys, NULL, 0);
+	index_rescan(sysscan->iscan, idxkey, nkeys, NULL, 0);
 	sysscan->scan = NULL;
 
 	return sysscan;

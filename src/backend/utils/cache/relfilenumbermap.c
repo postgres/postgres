@@ -141,7 +141,6 @@ RelidByRelfilenumber(Oid reltablespace, RelFileNumber relfilenumber)
 	SysScanDesc scandesc;
 	Relation	relation;
 	HeapTuple	ntp;
-	ScanKeyData skey[2];
 	Oid			relid;
 
 	if (RelfilenumberMapHash == NULL)
@@ -181,6 +180,8 @@ RelidByRelfilenumber(Oid reltablespace, RelFileNumber relfilenumber)
 	}
 	else
 	{
+		ScanKeyData skey[2];
+
 		/*
 		 * Not a shared table, could either be a plain relation or a
 		 * non-shared, nailed one, like e.g. pg_class.
@@ -189,10 +190,8 @@ RelidByRelfilenumber(Oid reltablespace, RelFileNumber relfilenumber)
 		/* check for plain relations by looking in pg_class */
 		relation = table_open(RelationRelationId, AccessShareLock);
 
-		/* copy scankey to local copy, it will be modified during the scan */
+		/* copy scankey to local copy and set scan arguments */
 		memcpy(skey, relfilenumber_skey, sizeof(skey));
-
-		/* set scan arguments */
 		skey[0].sk_argument = ObjectIdGetDatum(reltablespace);
 		skey[1].sk_argument = ObjectIdGetDatum(relfilenumber);
 
