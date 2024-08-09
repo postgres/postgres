@@ -26,16 +26,13 @@
 /*
  * List of background workers, private to postmaster.
  *
- * All workers that are currently running will have rw_backend set, and will
- * be present in BackendList.
+ * All workers that are currently running will also have an entry in
+ * BackendList.
  */
 typedef struct RegisteredBgWorker
 {
 	BackgroundWorker rw_worker; /* its registry entry */
-	struct bkend *rw_backend;	/* its BackendList entry, or NULL if not
-								 * running */
 	pid_t		rw_pid;			/* 0 if not running */
-	int			rw_child_slot;
 	TimestampTz rw_crashed_at;	/* if not 0, time it last crashed */
 	int			rw_shmem_slot;
 	bool		rw_terminate;

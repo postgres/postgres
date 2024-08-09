@@ -401,9 +401,7 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 		}
 
 		/* Initialize postmaster bookkeeping. */
-		rw->rw_backend = NULL;
 		rw->rw_pid = 0;
-		rw->rw_child_slot = 0;
 		rw->rw_crashed_at = 0;
 		rw->rw_shmem_slot = slotno;
 		rw->rw_terminate = false;
@@ -1026,9 +1024,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	}
 
 	rw->rw_worker = *worker;
-	rw->rw_backend = NULL;
 	rw->rw_pid = 0;
-	rw->rw_child_slot = 0;
 	rw->rw_crashed_at = 0;
 	rw->rw_terminate = false;
 
