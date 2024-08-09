@@ -1301,6 +1301,60 @@ select pg_get_viewdef('composite_v', true);
 
 drop view composite_v;
 --
+-- Check cases where the composite comes from a proven-dummy rel (bug #18576)
+--
+explain (verbose, costs off)
+select (ss.a).x, (ss.a).n from
+  (select information_schema._pg_expandarray(array[1,2]) AS a) ss;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Subquery Scan on ss
+   Output: (ss.a).x, (ss.a).n
+   ->  ProjectSet
+         Output: information_schema._pg_expandarray('{1,2}'::integer[])
+         ->  Result
+(5 rows)
+
+explain (verbose, costs off)
+select (ss.a).x, (ss.a).n from
+  (select information_schema._pg_expandarray(array[1,2]) AS a) ss
+where false;
+        QUERY PLAN        
+--------------------------
+ Result
+   Output: (a).f1, (a).f2
+   One-Time Filter: false
+(3 rows)
+
+explain (verbose, costs off)
+with cte(c) as materialized (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select (c).f1 from cte2 as t;
+            QUERY PLAN             
+-----------------------------------
+ CTE Scan on cte
+   Output: (cte.c).f1
+   CTE cte
+     ->  Result
+           Output: '(1,2)'::record
+(5 rows)
+
+explain (verbose, costs off)
+with cte(c) as materialized (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select (c).f1 from cte2 as t
+where false;
+            QUERY PLAN             
+-----------------------------------
+ Result
+   Output: (cte.c).f1
+   One-Time Filter: false
+   CTE cte
+     ->  Result
+           Output: '(1,2)'::record
+(6 rows)
+
+--
 -- Tests for component access / FieldSelect
 --
 CREATE TABLE compositetable(a text, b text);
