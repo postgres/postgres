@@ -651,7 +651,7 @@ pg_tde_process_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_
 	 */
 	if (should_delete == true && *offset > 0)
 	{
-		curr_pos = lseek(FileGetRawDesc(map_fd), *offset, SEEK_SET);
+		curr_pos = lseek(map_fd, *offset, SEEK_SET);
 
 		if (curr_pos == -1)
 		{
