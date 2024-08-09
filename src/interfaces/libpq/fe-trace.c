@@ -707,7 +707,11 @@ void
 pqTraceOutputNoTypeByteMessage(PGconn *conn, const char *message)
 {
 	int			length;
+	int			version;
+	bool		regress;
 	int			logCursor = 0;
+
+	regress = (conn->traceFlags & PQTRACE_REGRESS_MODE) != 0;
 
 	if ((conn->traceFlags & PQTRACE_SUPPRESS_TIMESTAMPS) == 0)
 	{
@@ -723,19 +727,46 @@ pqTraceOutputNoTypeByteMessage(PGconn *conn, const char *message)
 
 	fprintf(conn->Pfdebug, "F\t%d\t", length);
 
-	switch (length)
+	if (length < 8)
 	{
-		case 16:				/* CancelRequest */
-			fprintf(conn->Pfdebug, "CancelRequest\t");
-			pqTraceOutputInt32(conn->Pfdebug, message, &logCursor, false);
-			pqTraceOutputInt32(conn->Pfdebug, message, &logCursor, false);
-			pqTraceOutputInt32(conn->Pfdebug, message, &logCursor, false);
-			break;
-		case 8:					/* GSSENCRequest or SSLRequest */
-			/* These messages do not reach here. */
-		default:
-			fprintf(conn->Pfdebug, "Unknown message: length is %d", length);
-			break;
+		fprintf(conn->Pfdebug, "Unknown message\n");
+		return;
+	}
+
+	memcpy(&version, message + logCursor, 4);
+	version = (int) pg_ntoh32(version);
+
+	if (version == CANCEL_REQUEST_CODE && length >= 16)
+	{
+		fprintf(conn->Pfdebug, "CancelRequest\t");
+		pqTraceOutputInt16(conn->Pfdebug, message, &logCursor);
+		pqTraceOutputInt16(conn->Pfdebug, message, &logCursor);
+		pqTraceOutputInt32(conn->Pfdebug, message, &logCursor, regress);
+		pqTraceOutputInt32(conn->Pfdebug, message, &logCursor, regress);
+	}
+	else if (version == NEGOTIATE_SSL_CODE)
+	{
+		fprintf(conn->Pfdebug, "SSLRequest\t");
+		pqTraceOutputInt16(conn->Pfdebug, message, &logCursor);
+		pqTraceOutputInt16(conn->Pfdebug, message, &logCursor);
+	}
+	else if (version == NEGOTIATE_GSS_CODE)
+	{
+		fprintf(conn->Pfdebug, "GSSENCRequest\t");
+		pqTraceOutputInt16(conn->Pfdebug, message, &logCursor);
+		pqTraceOutputInt16(conn->Pfdebug, message, &logCursor);
+	}
+	else
+	{
+		fprintf(conn->Pfdebug, "StartupMessage\t");
+		pqTraceOutputInt16(conn->Pfdebug, message, &logCursor);
+		pqTraceOutputInt16(conn->Pfdebug, message, &logCursor);
+		while (message[logCursor] != '\0')
+		{
+			/* XXX should we suppress anything in regress mode? */
+			pqTraceOutputString(conn->Pfdebug, message, &logCursor, false);
+			pqTraceOutputString(conn->Pfdebug, message, &logCursor, false);
+		}
 	}
 
 	fputc('\n', conn->Pfdebug);
