@@ -87,10 +87,10 @@
     <listitem>
      <para>
       This key is always present on the last line of the backup manifest file.
-      The associated value is a SHA256 checksum of all the preceding lines.
+      The associated value is a SHA-256 checksum of all the preceding lines.
       We use a fixed checksum method here to make it possible for clients
-      to do incremental parsing of the manifest. While a SHA256 checksum
-      is significantly more expensive than a CRC32C checksum, the manifest
+      to do incremental parsing of the manifest. While a SHA-256 checksum
+      is significantly more expensive than a CRC-32C checksum, the manifest
       should normally be small enough that the extra computation won't matter
       very much.
      </para>

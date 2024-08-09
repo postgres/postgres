@@ -687,7 +687,7 @@ PostgreSQL documentation
        <para>
         Using a SHA hash function provides a cryptographically secure digest
         of each file for users who wish to verify that the backup has not been
-        tampered with, while the CRC32C algorithm provides a checksum that is
+        tampered with, while the CRC-32C algorithm provides a checksum that is
         much faster to calculate; it is good at catching errors due to accidental
         changes but is not resistant to malicious modifications.  Note that, to
         be useful against an adversary who has access to the backup, the backup

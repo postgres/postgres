@@ -106,7 +106,7 @@ hmac(data bytea, key bytea, type text) returns bytea
 
   <para>
    The algorithms in <function>crypt()</function> differ from the usual
-   MD5 or SHA1 hashing algorithms in the following respects:
+   MD5 or SHA-1 hashing algorithms in the following respects:
   </para>
 
   <orderedlist>
@@ -525,7 +525,7 @@ gen_salt(type text [, iter_count integer ]) returns text
    </listitem>
    <listitem>
     <para>
-     A SHA1 hash of the random prefix and data is appended.
+     A SHA-1 hash of the random prefix and data is appended.
     </para>
    </listitem>
    <listitem>
