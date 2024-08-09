@@ -7839,17 +7839,31 @@ get_name_for_var_field(Var *var, int fieldno,
 					/*
 					 * We're deparsing a Plan tree so we don't have complete
 					 * RTE entries (in particular, rte->subquery is NULL). But
-					 * the only place we'd see a Var directly referencing a
-					 * SUBQUERY RTE is in a SubqueryScan plan node, and we can
-					 * look into the child plan's tlist instead.
+					 * the only place we'd normally see a Var directly
+					 * referencing a SUBQUERY RTE is in a SubqueryScan plan
+					 * node, and we can look into the child plan's tlist
+					 * instead.  An exception occurs if the subquery was
+					 * proven empty and optimized away: then we'd find such a
+					 * Var in a childless Result node, and there's nothing in
+					 * the plan tree that would let us figure out what it had
+					 * originally referenced.  In that case, fall back on
+					 * printing "fN", analogously to the default column names
+					 * for RowExprs.
 					 */
 					TargetEntry *tle;
 					deparse_namespace save_dpns;
 					const char *result;
 
 					if (!dpns->inner_plan)
-						elog(ERROR, "failed to find plan for subquery %s",
-							 rte->eref->aliasname);
+					{
+						char	   *dummy_name = palloc(32);
+
+						Assert(IsA(dpns->plan, Result));
+						snprintf(dummy_name, 32, "f%d", fieldno);
+						return dummy_name;
+					}
+					Assert(IsA(dpns->plan, SubqueryScan));
+
 					tle = get_tle_by_resno(dpns->inner_tlist, attnum);
 					if (!tle)
 						elog(ERROR, "bogus varattno for subquery var: %d",
@@ -7958,20 +7972,30 @@ get_name_for_var_field(Var *var, int fieldno,
 				{
 					/*
 					 * We're deparsing a Plan tree so we don't have a CTE
-					 * list.  But the only places we'd see a Var directly
-					 * referencing a CTE RTE are in CteScan or WorkTableScan
-					 * plan nodes.  For those cases, set_deparse_plan arranged
-					 * for dpns->inner_plan to be the plan node that emits the
-					 * CTE or RecursiveUnion result, and we can look at its
-					 * tlist instead.
+					 * list.  But the only places we'd normally see a Var
+					 * directly referencing a CTE RTE are in CteScan or
+					 * WorkTableScan plan nodes.  For those cases,
+					 * set_deparse_plan arranged for dpns->inner_plan to be
+					 * the plan node that emits the CTE or RecursiveUnion
+					 * result, and we can look at its tlist instead.  As
+					 * above, this can fail if the CTE has been proven empty,
+					 * in which case fall back to "fN".
 					 */
 					TargetEntry *tle;
 					deparse_namespace save_dpns;
 					const char *result;
 
 					if (!dpns->inner_plan)
-						elog(ERROR, "failed to find plan for CTE %s",
-							 rte->eref->aliasname);
+					{
+						char	   *dummy_name = palloc(32);
+
+						Assert(IsA(dpns->plan, Result));
+						snprintf(dummy_name, 32, "f%d", fieldno);
+						return dummy_name;
+					}
+					Assert(IsA(dpns->plan, CteScan) ||
+						   IsA(dpns->plan, WorkTableScan));
+
 					tle = get_tle_by_resno(dpns->inner_tlist, attnum);
 					if (!tle)
 						elog(ERROR, "bogus varattno for subquery var: %d",
