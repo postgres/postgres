@@ -1,4 +1,4 @@
-# MERGE MATCHED RECHECK
+# MERGE MATCHED recheck
 #
 # This test looks at what happens when we have complex
 # WHEN MATCHED AND conditions and a concurrent UPDATE causes a

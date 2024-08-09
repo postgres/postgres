@@ -273,14 +273,6 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
    is likely to be inlined into the calling query, which will prevent
    the optimizer from recognizing that the query matches an index.
   </para>
-
-  <para>
-   Before <productname>PostgreSQL</productname> 8.4, the <literal>OPERATOR</literal>
-   clause could include a <literal>RECHECK</literal> option.  This is no longer
-   supported because whether an index operator is <quote>lossy</quote> is now
-   determined on-the-fly at run time.  This allows efficient handling of
-   cases where an operator might or might not be lossy.
-  </para>
  </refsect1>
 
  <refsect1>
