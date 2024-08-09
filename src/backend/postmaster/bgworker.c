@@ -37,7 +37,7 @@
 /*
  * The postmaster's list of registered background workers, in private memory.
  */
-slist_head	BackgroundWorkerList = SLIST_STATIC_INIT(BackgroundWorkerList);
+dlist_head	BackgroundWorkerList = DLIST_STATIC_INIT(BackgroundWorkerList);
 
 /*
  * BackgroundWorkerSlots exist in shared memory and can be accessed (via
@@ -168,7 +168,7 @@ BackgroundWorkerShmemInit(void)
 										   &found);
 	if (!IsUnderPostmaster)
 	{
-		slist_iter	siter;
+		dlist_iter	iter;
 		int			slotno = 0;
 
 		BackgroundWorkerData->total_slots = max_worker_processes;
@@ -181,12 +181,12 @@ BackgroundWorkerShmemInit(void)
 		 * correspondence between the postmaster's private list and the array
 		 * in shared memory.
 		 */
-		slist_foreach(siter, &BackgroundWorkerList)
+		dlist_foreach(iter, &BackgroundWorkerList)
 		{
 			BackgroundWorkerSlot *slot = &BackgroundWorkerData->slot[slotno];
 			RegisteredBgWorker *rw;
 
-			rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
+			rw = dlist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 			Assert(slotno < max_worker_processes);
 			slot->in_use = true;
 			slot->terminate = false;
@@ -220,13 +220,13 @@ BackgroundWorkerShmemInit(void)
 static RegisteredBgWorker *
 FindRegisteredWorkerBySlotNumber(int slotno)
 {
-	slist_iter	siter;
+	dlist_iter	iter;
 
-	slist_foreach(siter, &BackgroundWorkerList)
+	dlist_foreach(iter, &BackgroundWorkerList)
 	{
 		RegisteredBgWorker *rw;
 
-		rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
+		rw = dlist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 		if (rw->rw_shmem_slot == slotno)
 			return rw;
 	}
@@ -413,28 +413,24 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 				(errmsg_internal("registering background worker \"%s\"",
 								 rw->rw_worker.bgw_name)));
 
-		slist_push_head(&BackgroundWorkerList, &rw->rw_lnode);
+		dlist_push_head(&BackgroundWorkerList, &rw->rw_lnode);
 	}
 }
 
 /*
  * Forget about a background worker that's no longer needed.
  *
- * The worker must be identified by passing an slist_mutable_iter that
- * points to it.  This convention allows deletion of workers during
- * searches of the worker list, and saves having to search the list again.
+ * NOTE: The entry is unlinked from BackgroundWorkerList.  If the caller is
+ * iterating through it, better use a mutable iterator!
  *
  * Caller is responsible for notifying bgw_notify_pid, if appropriate.
  *
  * This function must be invoked only in the postmaster.
  */
 void
-ForgetBackgroundWorker(slist_mutable_iter *cur)
+ForgetBackgroundWorker(RegisteredBgWorker *rw)
 {
-	RegisteredBgWorker *rw;
 	BackgroundWorkerSlot *slot;
-
-	rw = slist_container(RegisteredBgWorker, rw_lnode, cur->cur);
 
 	Assert(rw->rw_shmem_slot < max_worker_processes);
 	slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
@@ -454,7 +450,7 @@ ForgetBackgroundWorker(slist_mutable_iter *cur)
 			(errmsg_internal("unregistering background worker \"%s\"",
 							 rw->rw_worker.bgw_name)));
 
-	slist_delete_current(cur);
+	dlist_delete(&rw->rw_lnode);
 	pfree(rw);
 }
 
@@ -480,16 +476,16 @@ ReportBackgroundWorkerPID(RegisteredBgWorker *rw)
  * Report that the PID of a background worker is now zero because a
  * previously-running background worker has exited.
  *
+ * NOTE: The entry may be unlinked from BackgroundWorkerList.  If the caller
+ * is iterating through it, better use a mutable iterator!
+ *
  * This function should only be called from the postmaster.
  */
 void
-ReportBackgroundWorkerExit(slist_mutable_iter *cur)
+ReportBackgroundWorkerExit(RegisteredBgWorker *rw)
 {
-	RegisteredBgWorker *rw;
 	BackgroundWorkerSlot *slot;
 	int			notify_pid;
-
-	rw = slist_container(RegisteredBgWorker, rw_lnode, cur->cur);
 
 	Assert(rw->rw_shmem_slot < max_worker_processes);
 	slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
@@ -505,7 +501,7 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
 	 */
 	if (rw->rw_terminate ||
 		rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
-		ForgetBackgroundWorker(cur);
+		ForgetBackgroundWorker(rw);
 
 	if (notify_pid != 0)
 		kill(notify_pid, SIGUSR1);
@@ -519,13 +515,13 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
 void
 BackgroundWorkerStopNotifications(pid_t pid)
 {
-	slist_iter	siter;
+	dlist_iter	iter;
 
-	slist_foreach(siter, &BackgroundWorkerList)
+	dlist_foreach(iter, &BackgroundWorkerList)
 	{
 		RegisteredBgWorker *rw;
 
-		rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
+		rw = dlist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 		if (rw->rw_worker.bgw_notify_pid == pid)
 			rw->rw_worker.bgw_notify_pid = 0;
 	}
@@ -546,14 +542,14 @@ BackgroundWorkerStopNotifications(pid_t pid)
 void
 ForgetUnstartedBackgroundWorkers(void)
 {
-	slist_mutable_iter iter;
+	dlist_mutable_iter iter;
 
-	slist_foreach_modify(iter, &BackgroundWorkerList)
+	dlist_foreach_modify(iter, &BackgroundWorkerList)
 	{
 		RegisteredBgWorker *rw;
 		BackgroundWorkerSlot *slot;
 
-		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
+		rw = dlist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 		Assert(rw->rw_shmem_slot < max_worker_processes);
 		slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
 
@@ -564,7 +560,7 @@ ForgetUnstartedBackgroundWorkers(void)
 			/* ... then zap it, and notify the waiter */
 			int			notify_pid = rw->rw_worker.bgw_notify_pid;
 
-			ForgetBackgroundWorker(&iter);
+			ForgetBackgroundWorker(rw);
 			if (notify_pid != 0)
 				kill(notify_pid, SIGUSR1);
 		}
@@ -584,13 +580,13 @@ ForgetUnstartedBackgroundWorkers(void)
 void
 ResetBackgroundWorkerCrashTimes(void)
 {
-	slist_mutable_iter iter;
+	dlist_mutable_iter iter;
 
-	slist_foreach_modify(iter, &BackgroundWorkerList)
+	dlist_foreach_modify(iter, &BackgroundWorkerList)
 	{
 		RegisteredBgWorker *rw;
 
-		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
+		rw = dlist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 
 		if (rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
 		{
@@ -601,7 +597,7 @@ ResetBackgroundWorkerCrashTimes(void)
 			 * parallel_terminate_count will get incremented after we've
 			 * already zeroed parallel_register_count, which would be bad.)
 			 */
-			ForgetBackgroundWorker(&iter);
+			ForgetBackgroundWorker(rw);
 		}
 		else
 		{
@@ -1036,7 +1032,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	rw->rw_crashed_at = 0;
 	rw->rw_terminate = false;
 
-	slist_push_head(&BackgroundWorkerList, &rw->rw_lnode);
+	dlist_push_head(&BackgroundWorkerList, &rw->rw_lnode);
 }
 
 /*
