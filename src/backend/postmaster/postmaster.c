@@ -2386,9 +2386,9 @@ process_pm_child_exit(void)
 			connsAllowed = true;
 
 			/*
-			 * Crank up the background tasks, if we didn't do that already
-			 * when we entered consistent recovery state.  It doesn't matter
-			 * if this fails, we'll just try again later.
+			 * Crank up any background tasks that we didn't start earlier
+			 * already.  It doesn't matter if any of these fail, we'll just
+			 * try again later.
 			 */
 			if (CheckpointerPID == 0)
 				CheckpointerPID = StartChildProcess(B_CHECKPOINTER);
@@ -2397,18 +2397,11 @@ process_pm_child_exit(void)
 			if (WalWriterPID == 0)
 				WalWriterPID = StartChildProcess(B_WAL_WRITER);
 			MaybeStartWalSummarizer();
-
-			/*
-			 * Likewise, start other special children as needed.  In a restart
-			 * situation, some of them may be alive already.
-			 */
 			if (!IsBinaryUpgrade && AutoVacuumingActive() && AutoVacPID == 0)
 				AutoVacPID = StartChildProcess(B_AUTOVAC_LAUNCHER);
 			if (PgArchStartupAllowed() && PgArchPID == 0)
 				PgArchPID = StartChildProcess(B_ARCHIVER);
 			MaybeStartSlotSyncWorker();
-
-			/* workers may be scheduled to start now */
 			maybe_start_bgworkers();
 
 			/* at this point we are really open for business */
