@@ -186,7 +186,7 @@
    <itemizedlist>
     <listitem>
      <para>
-      Each individual record in a WAL file is protected by a CRC-32 (32-bit) check
+      Each individual record in a WAL file is protected by a CRC-32C (32-bit) check
       that allows us to tell if record contents are correct. The CRC value
       is set when we write each WAL record and checked during crash recovery,
       archive recovery and replication.
@@ -212,7 +212,7 @@
     </listitem>
     <listitem>
      <para>
-      Individual state files in <filename>pg_twophase</filename> are protected by CRC-32.
+      Individual state files in <filename>pg_twophase</filename> are protected by CRC-32C.
      </para>
     </listitem>
     <listitem>
