@@ -3810,7 +3810,15 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
 						ereturn(escontext,,
 								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 								 errmsg("invalid input string for \"Y,YYY\"")));
-					years += (millennia * 1000);
+					if (pg_mul_s32_overflow(millennia, 1000, &millennia))
+						ereturn(escontext,,
+								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+								 errmsg("invalid input string for \"Y,YYY\"")));
+					if (pg_add_s32_overflow(years, millennia, &years))
+						ereturn(escontext,,
+								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+								 errmsg("invalid input string for \"Y,YYY\"")));
+
 					if (!from_char_set_int(&out->year, years, n, escontext))
 						return;
 					out->yysz = 4;

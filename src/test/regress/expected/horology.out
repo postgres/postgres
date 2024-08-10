@@ -3448,6 +3448,8 @@ SELECT i, to_timestamp('2018-11-02 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF' 
 
 SELECT i, to_timestamp('2018-11-02 12:34:56.123456789', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
 ERROR:  date/time field value out of range: "2018-11-02 12:34:56.123456789"
+SELECT to_timestamp('1000000000,999', 'Y,YYY');
+ERROR:  invalid input string for "Y,YYY"
 SELECT to_date('1 4 1902', 'Q MM YYYY');  -- Q is ignored
   to_date   
 ------------
