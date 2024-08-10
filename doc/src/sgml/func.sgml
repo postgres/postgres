@@ -28970,6 +28970,15 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
    </para>
 
    <para>
+    <function>pg_wal_replay_wait</function> should be called on standby.
+    If a user calls <function>pg_wal_replay_wait</function> on primary, it
+    will error out.  However, if <function>pg_wal_replay_wait</function> is
+    called on primary promoted from standby and <literal>target_lsn</literal>
+    was already replayed, then <function>pg_wal_replay_wait</function> just
+    exits immediately.
+   </para>
+
+   <para>
     You can use <function>pg_wal_replay_wait</function> to wait for
     the <type>pg_lsn</type> value.  For example, an application could update
     the <literal>movie</literal> table and get the <acronym>lsn</acronym> after

@@ -126,12 +126,18 @@ ok(1, 'multiple LSN waiters reported consistent data');
 
 # 5. Check that the standby promotion terminates the wait on LSN.  Start
 # waiting for an unreachable LSN then promote.  Check the log for the relevant
-# error message.
+# error message.  Also, check that waiting for already replayed LSN doesn't
+# cause an error even after promotion.
+my $lsn4 =
+  $node_primary->safe_psql('postgres',
+	"SELECT pg_current_wal_insert_lsn() + 10000000000");
+my $lsn5 =
+  $node_primary->safe_psql('postgres', "SELECT pg_current_wal_insert_lsn()");
 my $psql_session = $node_standby1->background_psql('postgres');
 $psql_session->query_until(
 	qr/start/, qq[
 	\\echo start
-	CALL pg_wal_replay_wait('${lsn3}');
+	CALL pg_wal_replay_wait('${lsn4}');
 ]);
 
 $log_offset = -s $node_standby1->logfile;
@@ -139,6 +145,11 @@ $node_standby1->promote;
 $node_standby1->wait_for_log('recovery is not in progress', $log_offset);
 
 ok(1, 'got error after standby promote');
+
+$node_standby1->safe_psql('postgres', "CALL pg_wal_replay_wait('${lsn5}');");
+
+ok(1,
+	'wait for already replayed LSN exists immediately even after promotion');
 
 $node_standby1->stop;
 $node_primary->stop;

@@ -230,14 +230,27 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 	Assert(MyProcNumber >= 0 && MyProcNumber < MaxBackends);
 
 	if (!RecoveryInProgress())
+	{
+		/*
+		 * Recovery is not in progress.  Given that we detected this in the
+		 * very first check, this procedure was mistakenly called on primary.
+		 * However, it's possible that standby was promoted concurrently to
+		 * the procedure call, while target LSN is replayed.  So, we still
+		 * check the last replay LSN before reporting an error.
+		 */
+		if (targetLSN <= GetXLogReplayRecPtr(NULL))
+			return;
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is not in progress"),
 				 errhint("Waiting for LSN can only be executed during recovery.")));
-
-	/* If target LSN is already replayed, exit immediately */
-	if (targetLSN <= GetXLogReplayRecPtr(NULL))
-		return;
+	}
+	else
+	{
+		/* If target LSN is already replayed, exit immediately */
+		if (targetLSN <= GetXLogReplayRecPtr(NULL))
+			return;
+	}
 
 	if (timeout > 0)
 	{
@@ -257,19 +270,30 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 		int			rc;
 		long		delay_ms = 0;
 
-		/* Check if the waited LSN has been replayed */
-		currentLSN = GetXLogReplayRecPtr(NULL);
-		if (targetLSN <= currentLSN)
-			break;
-
 		/* Recheck that recovery is still in-progress */
 		if (!RecoveryInProgress())
+		{
+			/*
+			 * Recovery was ended, but recheck if target LSN was already
+			 * replayed.
+			 */
+			currentLSN = GetXLogReplayRecPtr(NULL);
+			if (targetLSN <= currentLSN)
+				return;
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("recovery is not in progress"),
 					 errdetail("Recovery ended before replaying target LSN %X/%X; last replay LSN %X/%X.",
 							   LSN_FORMAT_ARGS(targetLSN),
 							   LSN_FORMAT_ARGS(currentLSN))));
+		}
+		else
+		{
+			/* Check if the waited LSN has been replayed */
+			currentLSN = GetXLogReplayRecPtr(NULL);
+			if (targetLSN <= currentLSN)
+				break;
+		}
 
 		/*
 		 * If the timeout value is specified, calculate the number of
