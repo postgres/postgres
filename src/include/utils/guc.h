@@ -238,6 +238,7 @@ typedef enum
  * available via 'postgres -C' if the server is not running.
  */
 #define GUC_RUNTIME_COMPUTED  0x200000
+#define GUC_ALLOW_IN_PARALLEL 0x400000	/* allow setting in parallel mode */
 
 #define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
 
