@@ -462,3 +462,26 @@ SELECT 1 FROM tenk1_vw_sec
   WHERE (SELECT sum(f1) FROM int4_tbl WHERE f1 < unique1) < 100;
 
 rollback;
+
+-- test that function option SET ROLE works in parallel workers.
+create role regress_parallel_worker;
+
+create function set_and_report_role() returns text as
+  $$ select current_setting('role') $$ language sql parallel safe
+  set role = regress_parallel_worker;
+
+create function set_role_and_error(int) returns int as
+  $$ select 1 / $1 $$ language sql parallel safe
+  set role = regress_parallel_worker;
+
+set debug_parallel_query = 0;
+select set_and_report_role();
+select set_role_and_error(0);
+set debug_parallel_query = 1;
+select set_and_report_role();
+select set_role_and_error(0);
+reset debug_parallel_query;
+
+drop function set_and_report_role();
+drop function set_role_and_error(int);
+drop role regress_parallel_worker;
