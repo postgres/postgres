@@ -2056,7 +2056,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	tablespacecount = PQntuples(res);
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		totalsize_kb += atol(PQgetvalue(res, i, 2));
+		totalsize_kb += atoll(PQgetvalue(res, i, 2));
 
 		/*
 		 * Verify tablespace directories are empty. Don't bother with the

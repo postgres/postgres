@@ -294,7 +294,7 @@ libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 		}
 
 		path = PQgetvalue(res, i, 0);
-		filesize = atol(PQgetvalue(res, i, 1));
+		filesize = atoll(PQgetvalue(res, i, 1));
 		isdir = (strcmp(PQgetvalue(res, i, 2), "t") == 0);
 		link_target = PQgetvalue(res, i, 3);
 

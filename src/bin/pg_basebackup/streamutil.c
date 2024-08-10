@@ -631,7 +631,7 @@ GetSlotInformation(PGconn *conn, const char *slot_name,
 
 	/* current TLI */
 	if (!PQgetisnull(res, 0, 2))
-		tli_loc = (TimeLineID) atol(PQgetvalue(res, 0, 2));
+		tli_loc = (TimeLineID) atoll(PQgetvalue(res, 0, 2));
 
 	PQclear(res);
 
