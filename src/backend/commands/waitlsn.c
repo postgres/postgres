@@ -147,8 +147,9 @@ deleteLSNWaiter(void)
 }
 
 /*
- * Set latches of LSN waiters whose LSN has been replayed.  Set latches of all
- * LSN waiters when InvalidXLogRecPtr is given.
+ * Remove waiters whose LSN has been replayed from the heap and set their
+ * latches.  If InvalidXLogRecPtr is given, remove all waiters from the heap
+ * and set latches for all waiters.
  */
 void
 WaitLSNSetLatches(XLogRecPtr currentLSN)
