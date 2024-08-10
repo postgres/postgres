@@ -3324,10 +3324,12 @@ parse_and_validate_value(struct config_generic *record,
  *
  * Return value:
  *	+1: the value is valid and was successfully applied.
- *	0:	the name or value is invalid (but see below).
- *	-1: the value was not applied because of context, priority, or changeVal.
+ *	0:	the name or value is invalid, or it's invalid to try to set
+ *		this GUC now; but elevel was less than ERROR (see below).
+ *	-1: no error detected, but the value was not applied, either
+ *		because changeVal is false or there is some overriding setting.
  *
- * If there is an error (non-existing option, invalid value) then an
+ * If there is an error (non-existing option, invalid value, etc) then an
  * ereport(ERROR) is thrown *unless* this is called for a source for which
  * we don't want an ERROR (currently, those are defaults, the config file,
  * and per-database or per-user settings, as well as callers who specify
@@ -3390,8 +3392,11 @@ set_config_option_ext(const char *name, const char *value,
 
 
 /*
- * set_config_with_handle: takes an optional 'handle' argument, which can be
- * obtained by the caller from get_config_handle().
+ * set_config_with_handle: sets option `name' to given value.
+ *
+ * This API adds the ability to pass a 'handle' argument, which can be
+ * obtained by the caller from get_config_handle().  NULL has no effect,
+ * but a non-null value avoids the need to search the GUC tables.
  *
  * This should be used by callers which repeatedly set the same config
  * option(s), and want to avoid the overhead of a hash lookup each time.
@@ -3428,23 +3433,6 @@ set_config_with_handle(const char *name, config_handle *handle,
 			elevel = ERROR;
 	}
 
-	/*
-	 * GUC_ACTION_SAVE changes are acceptable during a parallel operation,
-	 * because the current worker will also pop the change.  We're probably
-	 * dealing with a function having a proconfig entry.  Only the function's
-	 * body should observe the change, and peer workers do not share in the
-	 * execution of a function call started by this worker.
-	 *
-	 * Other changes might need to affect other workers, so forbid them.
-	 */
-	if (IsInParallelMode() && changeVal && action != GUC_ACTION_SAVE)
-	{
-		ereport(elevel,
-				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot set parameters during a parallel operation")));
-		return -1;
-	}
-
 	/* if handle is specified, no need to look up option */
 	if (!handle)
 	{
@@ -3454,6 +3442,27 @@ set_config_with_handle(const char *name, config_handle *handle,
 	}
 	else
 		record = handle;
+
+	/*
+	 * GUC_ACTION_SAVE changes are acceptable during a parallel operation,
+	 * because the current worker will also pop the change.  We're probably
+	 * dealing with a function having a proconfig entry.  Only the function's
+	 * body should observe the change, and peer workers do not share in the
+	 * execution of a function call started by this worker.
+	 *
+	 * Also allow normal setting if the GUC is marked GUC_ALLOW_IN_PARALLEL.
+	 *
+	 * Other changes might need to affect other workers, so forbid them.
+	 */
+	if (IsInParallelMode() && changeVal && action != GUC_ACTION_SAVE &&
+		(record->flags & GUC_ALLOW_IN_PARALLEL) == 0)
+	{
+		ereport(elevel,
+				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+				 errmsg("parameter \"%s\" cannot be set during a parallel operation",
+						name)));
+		return 0;
+	}
 
 	/*
 	 * Check if the option can be set at this time. See guc.h for the precise
