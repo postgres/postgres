@@ -77,8 +77,46 @@ $node_standby1->psql(
 ok( $stderr =~ /timed out while waiting for target LSN/,
 	"get timeout on waiting for unreachable LSN");
 
+# 4. Check that pg_wal_replay_wait() triggers an error if called on primary,
+# within another function, or inside a transaction with an isolation level
+# higher than READ COMMITTED.
 
-# 4. Also, check the scenario of multiple LSN waiters.  We make 5 background
+$node_primary->psql(
+	'postgres',
+	"CALL pg_wal_replay_wait('${lsn3}');",
+	stderr => \$stderr);
+ok( $stderr =~ /recovery is not in progress/,
+	"get an error when running on the primary");
+
+$node_standby1->psql(
+	'postgres',
+	"BEGIN ISOLATION LEVEL REPEATABLE READ; CALL pg_wal_replay_wait('${lsn3}');",
+	stderr => \$stderr);
+ok( $stderr =~
+	  /pg_wal_replay_wait\(\) must be only called without an active or registered snapshot/,
+	"get an error when running in a transaction with an isolation level higher than REPEATABLE READ"
+);
+
+$node_primary->safe_psql(
+	'postgres', qq[
+CREATE FUNCTION pg_wal_replay_wait_wrap(target_lsn pg_lsn) RETURNS void AS \$\$
+  BEGIN
+    CALL pg_wal_replay_wait(target_lsn);
+  END
+\$\$
+LANGUAGE plpgsql;
+]);
+
+$node_primary->wait_for_catchup($node_standby1);
+$node_standby1->psql(
+	'postgres',
+	"SELECT pg_wal_replay_wait_wrap('${lsn3}');",
+	stderr => \$stderr);
+ok( $stderr =~
+	  /pg_wal_replay_wait\(\) must be only called without an active or registered snapshot/,
+	"get an error when running within another function");
+
+# 5. Also, check the scenario of multiple LSN waiters.  We make 5 background
 # psql sessions each waiting for a corresponding insertion.  When waiting is
 # finished, stored procedures logs if there are visible as many rows as
 # should be.
@@ -124,7 +162,7 @@ for (my $i = 0; $i < 5; $i++)
 
 ok(1, 'multiple LSN waiters reported consistent data');
 
-# 5. Check that the standby promotion terminates the wait on LSN.  Start
+# 6. Check that the standby promotion terminates the wait on LSN.  Start
 # waiting for an unreachable LSN then promote.  Check the log for the relevant
 # error message.  Also, check that waiting for already replayed LSN doesn't
 # cause an error even after promotion.
