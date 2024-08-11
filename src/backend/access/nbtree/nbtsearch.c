@@ -1916,15 +1916,19 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 					}
 				}
 			}
+			/* When !continuescan, there can't be any more matches, so stop */
 			if (!pstate.continuescan)
-			{
-				/* there can't be any more matches, so stop */
-				so->currPos.moreLeft = false;
 				break;
-			}
 
 			offnum = OffsetNumberPrev(offnum);
 		}
+
+		/*
+		 * We don't need to visit page to the left when no more matches will
+		 * be found there
+		 */
+		if (!pstate.continuescan || P_LEFTMOST(opaque))
+			so->currPos.moreLeft = false;
 
 		Assert(itemIndex >= 0);
 		so->currPos.firstItem = itemIndex;
@@ -2240,6 +2244,15 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 			so->currPos.currPage = blkno;
 		}
 
+		/* Done if we know that the left sibling link isn't of interest */
+		if (!so->currPos.moreLeft)
+		{
+			BTScanPosUnpinIfPinned(so->currPos);
+			_bt_parallel_done(scan);
+			BTScanPosInvalidate(so->currPos);
+			return false;
+		}
+
 		/*
 		 * Walk left to the next page with data.  This is much more complex
 		 * than the walk-right case because of the possibility that the page
@@ -2260,7 +2273,7 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 
 		for (;;)
 		{
-			/* Done if we know there are no matching keys to the left */
+			/* Done if we know that the left sibling link isn't of interest */
 			if (!so->currPos.moreLeft)
 			{
 				_bt_relbuf(rel, so->currPos.buf);
