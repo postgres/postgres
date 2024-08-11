@@ -7298,11 +7298,11 @@ get_name_for_var_field(Var *var, int fieldno,
 					{
 						char	   *dummy_name = palloc(32);
 
-						Assert(IsA(dpns->plan, Result));
+						Assert(dpns->plan && IsA(dpns->plan, Result));
 						snprintf(dummy_name, 32, "f%d", fieldno);
 						return dummy_name;
 					}
-					Assert(IsA(dpns->plan, SubqueryScan));
+					Assert(dpns->plan && IsA(dpns->plan, SubqueryScan));
 
 					tle = get_tle_by_resno(dpns->inner_tlist, attnum);
 					if (!tle)
@@ -7426,11 +7426,11 @@ get_name_for_var_field(Var *var, int fieldno,
 					{
 						char	   *dummy_name = palloc(32);
 
-						Assert(IsA(dpns->plan, Result));
+						Assert(dpns->plan && IsA(dpns->plan, Result));
 						snprintf(dummy_name, 32, "f%d", fieldno);
 						return dummy_name;
 					}
-					Assert(IsA(dpns->plan, CteScan));
+					Assert(dpns->plan && IsA(dpns->plan, CteScan));
 
 					tle = get_tle_by_resno(dpns->inner_tlist, attnum);
 					if (!tle)
