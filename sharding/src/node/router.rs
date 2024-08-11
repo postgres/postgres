@@ -46,10 +46,6 @@ impl Router {
             if (node_ip == ip) && (node_port == port) {
                 continue;
             }
-            println!(
-                "Trying to connect to ip {} and port: {}",
-                node_ip, node_port
-            );
 
             // get username dynamically
             let username = match get_current_username() {
@@ -66,14 +62,12 @@ impl Router {
                             comm_channels.push(health_connection);
                         }
                         Err(e) => {
-                            println!("Failed to connect to port: {}", node_port);
-                            println!("{:?}", e);
+                            println!("Failed to connect to port: {}. Error: {:?}", node_port, e);
                         } // Do something here
                     }
                 }
                 Err(e) => {
-                    println!("Failed to connect to port: {}", node_port);
-                    println!("{:?}", e);
+                    println!("Failed to connect to port: {}. Error: {:?}", node_port, e);
                 } // Do something here
             }
         }
@@ -93,10 +87,6 @@ impl Router {
     }
 
     fn connect(ip: &str, port: &str, username: String) -> Result<Client, postgres::Error> {
-        println!(
-            "{color_bright_green}Connecting to ip {} and port: {}{style_reset}",
-            ip, port
-        );
         match Client::connect(
             format!(
                 "host={} port={} user={} dbname=template1",
@@ -112,10 +102,6 @@ impl Router {
 
     fn health_connect(node_ip: &str, node_port: &str) -> Result<Channel, io::Error> {
         let port = node_port.parse::<u64>().unwrap() + 1000;
-        println!(
-            "{color_bright_green}Connecting to health port {}, node_ip: {}, node_port: {}{style_reset}",
-            port, node_ip, node_port
-        );
         match TcpStream::connect(format!("{}:{}", node_ip, port)) {
             Ok(mut stream) => {
                 println!(
@@ -126,10 +112,9 @@ impl Router {
             }
             Err(e) => {
                 println!(
-                    "{color_red}Error establishing health connection with {}:{}{style_reset}",
-                    node_ip, port
+                    "{color_red}Error establishing health connection with {}:{}. Error: {:?}{style_reset}",
+                    node_ip, port, e
                 );
-                println!("{color_red}Error: {:?}{style_reset}", e);
                 Err(e)
             }
         }

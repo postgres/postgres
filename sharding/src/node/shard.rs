@@ -91,10 +91,6 @@ impl<'a> Shard<'a> {
         rw_stream: Arc<RwLock<Option<TcpStream>>>,
     ) {
         let listener_guard = listener.read().unwrap();
-        println!(
-            "Listening for connections on {:?}",
-            listener_guard.local_addr().unwrap()
-        );
         match listener_guard.accept() {
             Ok((stream, addr)) => {
                 println!("New connection accepted from {}.", addr);
