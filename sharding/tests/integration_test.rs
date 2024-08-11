@@ -23,13 +23,9 @@ fn setup_connection(host: &str, port: &str, db_name: &str) -> Option<Client> {
         .as_str(),
         NoTls,
     ) {
-        Ok(client) => {
-            Some(client)
-        }
+        Ok(client) => Some(client),
         Err(e) => {
-            //panic!("Failed to connect to the database: {:?}", e);
-            println!("Failed to connect to the database: {:?}", e);
-            None
+            panic!("Failed to connect to the database: {:?}", e);
         }
     }
 }
@@ -68,7 +64,7 @@ fn test_nodes_initialize_empty() {
 #[test]
 fn test_create_table() {
     create_and_init_cluster(b"test-shard1\n", "s", "localhost", "5433");
-    create_and_init_cluster(b"test-router1\n", "r", "localhost", "5434"); 
+    create_and_init_cluster(b"test-router1\n", "r", "localhost", "5434");
 
     let mut shard_connection: Client = setup_connection("localhost", "5433", "template1").unwrap();
 
@@ -78,38 +74,19 @@ fn test_create_table() {
         "5434\0".as_ptr() as *const i8,
         "src/node/router_config.yaml\0".as_ptr() as *const i8,
     );
-    println!("Initialized router");
     let router = get_node_instance();
-    println!("Got router");
-    
-    let mut router_connection: Client = setup_connection("localhost", "5434", "template1").unwrap();
 
     // Create a table on the router
-    // router.send_query("DROP TABLE IF EXISTS test_table;");
-    // router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);");
-
-    router_connection
-        .execute("DROP TABLE IF EXISTS test_table;", &[])
-        .unwrap();
-
-    router_connection
-        .execute("CREATE TABLE test_table (id INT PRIMARY KEY);", &[])
-        .unwrap();
-
-    // Count user tables in the router, excluding system tables. Should be zero.
-    let row = router_connection
-        .query_one(
-            "SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public'",
-            &[],
-        )
-        .unwrap();
-    let count: i64 = row.get(0);
-    assert_eq!(count, 0);
+    assert_eq!(true, router.send_query("DROP TABLE IF EXISTS test_table;"));
+    assert_eq!(
+        true,
+        router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);")
+    );
 
     // Count user tables in the shard, excluding system tables. Should be one.
     let row = shard_connection
         .query_one(
-            "SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public'",
+            "SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public';",
             &[],
         )
         .unwrap();
@@ -118,6 +95,64 @@ fn test_create_table() {
 
     stop_cluster(b"test-shard1\n");
     stop_cluster(b"test-router1\n");
+}
+
+#[test]
+fn test_insert_into_table_select_and_delete() {
+    create_and_init_cluster(b"test-shard2\n", "s", "localhost", "5433");
+    create_and_init_cluster(b"test-router2\n", "r", "localhost", "5434");
+
+    let mut shard_connection: Client = setup_connection("localhost", "5433", "template1").unwrap();
+
+    // Initialize and get the router
+    init_node_instance(
+        NodeType::Router,
+        "5434\0".as_ptr() as *const i8,
+        "src/node/router_config.yaml\0".as_ptr() as *const i8,
+    );
+    let router = get_node_instance();
+
+    // Create a table on the router
+    assert_eq!(true, router.send_query("DROP TABLE IF EXISTS test_table;"));
+    assert_eq!(
+        true,
+        router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);")
+    );
+
+    // Insert ten rows into the table
+    for i in 0..10000 {
+        assert_eq!(
+            true,
+            router.send_query(&format!("INSERT INTO test_table VALUES ({});", i))
+        );
+    }
+
+    // Select all rows from the table using the shard connection
+    let rows = shard_connection
+        .query("SELECT * FROM test_table;", &[])
+        .unwrap();
+    assert_eq!(rows.len(), 10000);
+
+    // Validate the data inserted in each row
+    for (i, row) in rows.iter().enumerate() {
+        let id: i32 = row.get(0);
+        assert_eq!(id, i as i32);
+    }
+
+    // Delete half of the rows from the table using the router connection
+    assert_eq!(
+        true,
+        router.send_query("DELETE FROM test_table WHERE id % 2 = 0;")
+    );
+
+    // Select all rows from the table using the shard connection
+    let rows = shard_connection
+        .query("SELECT * FROM test_table;", &[])
+        .unwrap();
+    assert_eq!(rows.len(), 5000);
+
+    stop_cluster(b"test-shard2\n");
+    stop_cluster(b"test-router2\n");
 }
 
 // Utility functions
@@ -184,16 +219,20 @@ fn wait_for_postgres(host: &str, port: &str) {
 
     let mut attempts = 0;
     loop {
-        println!("Waiting...");
         attempts += 1;
         if attempts > 30 {
             panic!("PostgreSQL server did not start in time");
         }
 
-        match Client::connect(&format!("host={} port={} user={} dbname=template1", host, port, username), NoTls) {
+        match Client::connect(
+            &format!(
+                "host={} port={} user={} dbname=template1",
+                host, port, username
+            ),
+            NoTls,
+        ) {
             Ok(_) => break,
             Err(_) => std::thread::sleep(std::time::Duration::from_secs(1)),
         }
     }
 }
-

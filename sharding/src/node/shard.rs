@@ -91,7 +91,10 @@ impl<'a> Shard<'a> {
         rw_stream: Arc<RwLock<Option<TcpStream>>>,
     ) {
         let listener_guard = listener.read().unwrap();
-        println!("Listening for connections on {:?}", listener_guard.local_addr().unwrap());
+        println!(
+            "Listening for connections on {:?}",
+            listener_guard.local_addr().unwrap()
+        );
         match listener_guard.accept() {
             Ok((stream, addr)) => {
                 println!("New connection accepted from {}.", addr);
@@ -112,23 +115,26 @@ impl<'a> Shard<'a> {
 impl<'a> NodeRole for Shard<'a> {
     fn send_query(&mut self, query: &str) -> bool {
         let rows = match self.backend.query(query, &[]) {
-            Ok(rows) => rows,
+            Ok(rows) => {
+                println!("Query executed successfully: {:?}", rows);
+                rows
+            }
             Err(e) => {
                 eprintln!("Failed to execute query: {:?}", e);
                 return false;
             }
         };
 
-        for row in rows {
-            let id: i32 = row.get(0);
-            let name: &str = row.get(1);
-            let position: &str = row.get(2);
-            let salary: Decimal = row.get(3);
-            println!(
-                "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-                id, name, position, salary
-            );
-        }
+        // for row in rows {
+        //     let id: i32 = row.get(0);
+        //     let name: &str = row.get(1);
+        //     let position: &str = row.get(2);
+        //     let salary: Decimal = row.get(3);
+        //     println!(
+        //         "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
+        //         id, name, position, salary
+        //     );
+        // }
 
         true
     }
