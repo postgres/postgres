@@ -362,17 +362,15 @@ XLogPrefetcher *
 XLogPrefetcherAllocate(XLogReaderState *reader)
 {
 	XLogPrefetcher *prefetcher;
-	const HASHCTL hash_table_ctl = {
-		.keysize = sizeof(RelFileLocator),
-		.entrysize = sizeof(XLogPrefetcherFilter)
-	};
+	HASHCTL ctl;
 
 	prefetcher = palloc0(sizeof(XLogPrefetcher));
-
 	prefetcher->reader = reader;
+
+	ctl.keysize = sizeof(RelFileLocator);
+	ctl.entrysize = sizeof(XLogPrefetcherFilter);
 	prefetcher->filter_table = hash_create("XLogPrefetcherFilterTable", 1024,
-										   &hash_table_ctl,
-										   HASH_ELEM | HASH_BLOBS);
+										   &ctl, HASH_ELEM | HASH_BLOBS);
 	dlist_init(&prefetcher->filter_queue);
 
 	SharedStats->wal_distance = 0;
