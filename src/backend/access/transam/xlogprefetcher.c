@@ -362,7 +362,7 @@ XLogPrefetcher *
 XLogPrefetcherAllocate(XLogReaderState *reader)
 {
 	XLogPrefetcher *prefetcher;
-	HASHCTL ctl;
+	HASHCTL		ctl;
 
 	prefetcher = palloc0(sizeof(XLogPrefetcher));
 	prefetcher->reader = reader;
