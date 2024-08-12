@@ -2948,6 +2948,11 @@ sub wait_for_catchup
 		}
 		else
 		{
+			# Fetch additional detail for debugging purposes
+			$query = qq[SELECT * FROM pg_catalog.pg_stat_replication];
+			my $details = $self->safe_psql('postgres', $query);
+			diag qq(Last pg_stat_replication contents:
+${details});
 			croak "timed out waiting for catchup";
 		}
 	}
@@ -3015,8 +3020,15 @@ sub wait_for_slot_catchup
 	  . $self->name . "\n";
 	my $query =
 	  qq[SELECT '$target_lsn' <= ${mode}_lsn FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot_name';];
-	$self->poll_query_until('postgres', $query)
-	  or croak "timed out waiting for catchup";
+	if (!$self->poll_query_until('postgres', $query))
+	{
+		# Fetch additional detail for debugging purposes
+		$query = qq[SELECT * FROM pg_catalog.pg_replication_slots];
+		my $details = $self->safe_psql('postgres', $query);
+		diag qq(Last pg_replication_slots contents:
+${details});
+		croak "timed out waiting for catchup";
+	}
 	print "done\n";
 	return;
 }
@@ -3051,8 +3063,15 @@ sub wait_for_subscription_sync
 	print "Waiting for all subscriptions in \"$name\" to synchronize data\n";
 	my $query =
 	  qq[SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');];
-	$self->poll_query_until($dbname, $query)
-	  or croak "timed out waiting for subscriber to synchronize data";
+	if (!$self->poll_query_until($dbname, $query))
+	{
+		# Fetch additional detail for debugging purposes
+		$query = qq[SELECT * FROM pg_subscription_rel];
+		my $details = $self->safe_psql($dbname, $query);
+		diag qq(Last pg_subscription_rel contents:
+${details});
+		croak "timed out waiting for subscriber to synchronize data";
+	}
 
 	# Then, wait for the replication to catchup if required.
 	if (defined($publisher))
