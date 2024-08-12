@@ -417,26 +417,12 @@ static void TerminateChildren(int signal);
 
 static int	CountChildren(int target);
 static Backend *assign_backendlist_entry(void);
+static void LaunchMissingBackgroundProcesses(void);
 static void maybe_start_bgworkers(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(BackendType type);
 static void StartAutovacuumWorker(void);
-static void MaybeStartWalReceiver(void);
-static void MaybeStartWalSummarizer(void);
 static void InitPostmasterDeathWatchHandle(void);
-static void MaybeStartSlotSyncWorker(void);
-
-/*
- * Archiver is allowed to start up at the current postmaster state?
- *
- * If WAL archiving is enabled always, we are allowed to start archiver
- * even during recovery.
- */
-#define PgArchStartupAllowed()	\
-	(((XLogArchivingActive() && pmState == PM_RUN) ||			\
-	  (XLogArchivingAlways() &&									  \
-	   (pmState == PM_RECOVERY || pmState == PM_HOT_STANDBY))) && \
-	 PgArchCanRestart())
 
 #ifdef WIN32
 #define WNOHANG 0				/* ignored, so any integer value will do */
@@ -1670,53 +1656,11 @@ ServerLoop(void)
 			}
 		}
 
-		/* If we have lost the log collector, try to start a new one */
-		if (SysLoggerPID == 0 && Logging_collector)
-			SysLoggerPID = SysLogger_Start();
-
 		/*
-		 * If no background writer process is running, and we are not in a
-		 * state that prevents it, start one.  It doesn't matter if this
-		 * fails, we'll just try again later.  Likewise for the checkpointer.
+		 * If we need to launch any background processes after changing state
+		 * or because some exited, do so now.
 		 */
-		if (pmState == PM_RUN || pmState == PM_RECOVERY ||
-			pmState == PM_HOT_STANDBY || pmState == PM_STARTUP)
-		{
-			if (CheckpointerPID == 0)
-				CheckpointerPID = StartChildProcess(B_CHECKPOINTER);
-			if (BgWriterPID == 0)
-				BgWriterPID = StartChildProcess(B_BG_WRITER);
-		}
-
-		/*
-		 * Likewise, if we have lost the walwriter process, try to start a new
-		 * one.  But this is needed only in normal operation (else we cannot
-		 * be writing any new WAL).
-		 */
-		if (WalWriterPID == 0 && pmState == PM_RUN)
-			WalWriterPID = StartChildProcess(B_WAL_WRITER);
-
-		/*
-		 * If we have lost the autovacuum launcher, try to start a new one. We
-		 * don't want autovacuum to run in binary upgrade mode because
-		 * autovacuum might update relfrozenxid for empty tables before the
-		 * physical files are put in place.
-		 */
-		if (!IsBinaryUpgrade && AutoVacPID == 0 &&
-			(AutoVacuumingActive() || start_autovac_launcher) &&
-			pmState == PM_RUN)
-		{
-			AutoVacPID = StartChildProcess(B_AUTOVAC_LAUNCHER);
-			if (AutoVacPID != 0)
-				start_autovac_launcher = false; /* signal processed */
-		}
-
-		/* If we have lost the archiver, try to start a new one. */
-		if (PgArchPID == 0 && PgArchStartupAllowed())
-			PgArchPID = StartChildProcess(B_ARCHIVER);
-
-		/* If we need to start a slot sync worker, try to do that now */
-		MaybeStartSlotSyncWorker();
+		LaunchMissingBackgroundProcesses();
 
 		/* If we need to signal the autovacuum launcher, do so now */
 		if (avlauncher_needs_signal)
@@ -1725,17 +1669,6 @@ ServerLoop(void)
 			if (AutoVacPID != 0)
 				kill(AutoVacPID, SIGUSR2);
 		}
-
-		/* If we need to start a WAL receiver, try to do that now */
-		if (WalReceiverRequested)
-			MaybeStartWalReceiver();
-
-		/* If we need to start a WAL summarizer, try to do that now */
-		MaybeStartWalSummarizer();
-
-		/* Get other worker processes running, if needed */
-		if (StartWorkerNeeded || HaveCrashedWorker)
-			maybe_start_bgworkers();
 
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
 
@@ -2386,23 +2319,11 @@ process_pm_child_exit(void)
 			connsAllowed = true;
 
 			/*
-			 * Crank up any background tasks that we didn't start earlier
-			 * already.  It doesn't matter if any of these fail, we'll just
-			 * try again later.
+			 * At the next iteration of the postmaster's main loop, we will
+			 * crank up the background tasks like the autovacuum launcher and
+			 * background workers that were not started earlier already.
 			 */
-			if (CheckpointerPID == 0)
-				CheckpointerPID = StartChildProcess(B_CHECKPOINTER);
-			if (BgWriterPID == 0)
-				BgWriterPID = StartChildProcess(B_BG_WRITER);
-			if (WalWriterPID == 0)
-				WalWriterPID = StartChildProcess(B_WAL_WRITER);
-			MaybeStartWalSummarizer();
-			if (!IsBinaryUpgrade && AutoVacuumingActive() && AutoVacPID == 0)
-				AutoVacPID = StartChildProcess(B_AUTOVAC_LAUNCHER);
-			if (PgArchStartupAllowed() && PgArchPID == 0)
-				PgArchPID = StartChildProcess(B_ARCHIVER);
-			MaybeStartSlotSyncWorker();
-			maybe_start_bgworkers();
+			StartWorkerNeeded = true;
 
 			/* at this point we are really open for business */
 			ereport(LOG,
@@ -2541,11 +2462,8 @@ process_pm_child_exit(void)
 		/*
 		 * Was it the archiver?  If exit status is zero (normal) or one (FATAL
 		 * exit), we assume everything is all right just like normal backends
-		 * and just try to restart a new one so that we immediately retry
-		 * archiving remaining files. (If fail, we'll try again in future
-		 * cycles of the postmaster's main loop.) Unless we were waiting for
-		 * it to shut down; don't restart it in that case, and
-		 * PostmasterStateMachine() will advance to the next shutdown step.
+		 * and just try to start a new one on the next cycle of the
+		 * postmaster's main loop, to retry archiving remaining files.
 		 */
 		if (pid == PgArchPID)
 		{
@@ -2553,8 +2471,6 @@ process_pm_child_exit(void)
 			if (!EXIT_STATUS_0(exitstatus) && !EXIT_STATUS_1(exitstatus))
 				HandleChildCrash(pid, exitstatus,
 								 _("archiver process"));
-			if (PgArchStartupAllowed())
-				PgArchPID = StartChildProcess(B_ARCHIVER);
 			continue;
 		}
 
@@ -3207,6 +3123,118 @@ PostmasterStateMachine(void)
 	}
 }
 
+/*
+ * Launch background processes after state change, or relaunch after an
+ * existing process has exited.
+ *
+ * Check the current pmState and the status of any background processes.  If
+ * there are any background processes missing that should be running in the
+ * current state, but are not, launch them.
+ */
+static void
+LaunchMissingBackgroundProcesses(void)
+{
+	/* Syslogger is active in all states */
+	if (SysLoggerPID == 0 && Logging_collector)
+		SysLoggerPID = SysLogger_Start();
+
+	/*
+	 * The checkpointer and the background writer are active from the start,
+	 * until shutdown is initiated.
+	 *
+	 * (If the checkpointer is not running when we enter the the PM_SHUTDOWN
+	 * state, it is launched one more time to perform the shutdown checkpoint.
+	 * That's done in PostmasterStateMachine(), not here.)
+	 */
+	if (pmState == PM_RUN || pmState == PM_RECOVERY ||
+		pmState == PM_HOT_STANDBY || pmState == PM_STARTUP)
+	{
+		if (CheckpointerPID == 0)
+			CheckpointerPID = StartChildProcess(B_CHECKPOINTER);
+		if (BgWriterPID == 0)
+			BgWriterPID = StartChildProcess(B_BG_WRITER);
+	}
+
+	/*
+	 * WAL writer is needed only in normal operation (else we cannot be
+	 * writing any new WAL).
+	 */
+	if (WalWriterPID == 0 && pmState == PM_RUN)
+		WalWriterPID = StartChildProcess(B_WAL_WRITER);
+
+	/*
+	 * We don't want autovacuum to run in binary upgrade mode because
+	 * autovacuum might update relfrozenxid for empty tables before the
+	 * physical files are put in place.
+	 */
+	if (!IsBinaryUpgrade && AutoVacPID == 0 &&
+		(AutoVacuumingActive() || start_autovac_launcher) &&
+		pmState == PM_RUN)
+	{
+		AutoVacPID = StartChildProcess(B_AUTOVAC_LAUNCHER);
+		if (AutoVacPID != 0)
+			start_autovac_launcher = false; /* signal processed */
+	}
+
+	/*
+	 * If WAL archiving is enabled always, we are allowed to start archiver
+	 * even during recovery.
+	 */
+	if (PgArchPID == 0 &&
+		((XLogArchivingActive() && pmState == PM_RUN) ||
+		 (XLogArchivingAlways() && (pmState == PM_RECOVERY || pmState == PM_HOT_STANDBY))) &&
+		PgArchCanRestart())
+		PgArchPID = StartChildProcess(B_ARCHIVER);
+
+	/*
+	 * If we need to start a slot sync worker, try to do that now
+	 *
+	 * We allow to start the slot sync worker when we are on a hot standby,
+	 * fast or immediate shutdown is not in progress, slot sync parameters are
+	 * configured correctly, and it is the first time of worker's launch, or
+	 * enough time has passed since the worker was launched last.
+	 */
+	if (SlotSyncWorkerPID == 0 && pmState == PM_HOT_STANDBY &&
+		Shutdown <= SmartShutdown && sync_replication_slots &&
+		ValidateSlotSyncParams(LOG) && SlotSyncWorkerCanRestart())
+		SlotSyncWorkerPID = StartChildProcess(B_SLOTSYNC_WORKER);
+
+	/*
+	 * If we need to start a WAL receiver, try to do that now
+	 *
+	 * Note: if WalReceiverPID is already nonzero, it might seem that we
+	 * should clear WalReceiverRequested.  However, there's a race condition
+	 * if the walreceiver terminates and the startup process immediately
+	 * requests a new one: it's quite possible to get the signal for the
+	 * request before reaping the dead walreceiver process.  Better to risk
+	 * launching an extra walreceiver than to miss launching one we need. (The
+	 * walreceiver code has logic to recognize that it should go away if not
+	 * needed.)
+	 */
+	if (WalReceiverRequested)
+	{
+		if (WalReceiverPID == 0 &&
+			(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
+			 pmState == PM_HOT_STANDBY) &&
+			Shutdown <= SmartShutdown)
+		{
+			WalReceiverPID = StartChildProcess(B_WAL_RECEIVER);
+			if (WalReceiverPID != 0)
+				WalReceiverRequested = false;
+			/* else leave the flag set, so we'll try again later */
+		}
+	}
+
+	/* If we need to start a WAL summarizer, try to do that now */
+	if (summarize_wal && WalSummarizerPID == 0 &&
+		(pmState == PM_RUN || pmState == PM_HOT_STANDBY) &&
+		Shutdown <= SmartShutdown)
+		WalSummarizerPID = StartChildProcess(B_WAL_SUMMARIZER);
+
+	/* Get other worker processes running, if needed */
+	if (StartWorkerNeeded || HaveCrashedWorker)
+		maybe_start_bgworkers();
+}
 
 /*
  * Send a signal to a postmaster child process
@@ -3558,9 +3586,6 @@ process_pm_pmsignal(void)
 		StartWorkerNeeded = true;
 	}
 
-	if (StartWorkerNeeded || HaveCrashedWorker)
-		maybe_start_bgworkers();
-
 	/* Tell syslogger to rotate logfile if requested */
 	if (SysLoggerPID != 0)
 	{
@@ -3600,9 +3625,7 @@ process_pm_pmsignal(void)
 	if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER))
 	{
 		/* Startup Process wants us to start the walreceiver process. */
-		/* Start immediately if possible, else remember request for later. */
 		WalReceiverRequested = true;
-		MaybeStartWalReceiver();
 	}
 
 	/*
@@ -3796,64 +3819,6 @@ StartAutovacuumWorker(void)
 	}
 }
 
-/*
- * MaybeStartWalReceiver
- *		Start the WAL receiver process, if not running and our state allows.
- *
- * Note: if WalReceiverPID is already nonzero, it might seem that we should
- * clear WalReceiverRequested.  However, there's a race condition if the
- * walreceiver terminates and the startup process immediately requests a new
- * one: it's quite possible to get the signal for the request before reaping
- * the dead walreceiver process.  Better to risk launching an extra
- * walreceiver than to miss launching one we need.  (The walreceiver code
- * has logic to recognize that it should go away if not needed.)
- */
-static void
-MaybeStartWalReceiver(void)
-{
-	if (WalReceiverPID == 0 &&
-		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
-		 pmState == PM_HOT_STANDBY) &&
-		Shutdown <= SmartShutdown)
-	{
-		WalReceiverPID = StartChildProcess(B_WAL_RECEIVER);
-		if (WalReceiverPID != 0)
-			WalReceiverRequested = false;
-		/* else leave the flag set, so we'll try again later */
-	}
-}
-
-/*
- * MaybeStartWalSummarizer
- *		Start the WAL summarizer process, if not running and our state allows.
- */
-static void
-MaybeStartWalSummarizer(void)
-{
-	if (summarize_wal && WalSummarizerPID == 0 &&
-		(pmState == PM_RUN || pmState == PM_HOT_STANDBY) &&
-		Shutdown <= SmartShutdown)
-		WalSummarizerPID = StartChildProcess(B_WAL_SUMMARIZER);
-}
-
-
-/*
- * MaybeStartSlotSyncWorker
- * 		Start the slot sync worker, if not running and our state allows.
- *
- * We allow to start the slot sync worker when we are on a hot standby,
- * fast or immediate shutdown is not in progress, slot sync parameters
- * are configured correctly, and it is the first time of worker's launch,
- * or enough time has passed since the worker was launched last.
- */
-static void
-MaybeStartSlotSyncWorker(void)
-{
-	if (SlotSyncWorkerPID == 0 && pmState == PM_HOT_STANDBY &&
-		Shutdown <= SmartShutdown && sync_replication_slots &&
-		ValidateSlotSyncParams(LOG) && SlotSyncWorkerCanRestart())
-		SlotSyncWorkerPID = StartChildProcess(B_SLOTSYNC_WORKER);
-}
 
 /*
  * Create the opts file
