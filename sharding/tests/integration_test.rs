@@ -119,7 +119,7 @@ fn test_insert_into_table_select_and_delete() {
         router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);")
     );
 
-    // Insert ten rows into the table
+    // Insert 10000 rows into the table
     for i in 0..10000 {
         assert_eq!(
             true,
