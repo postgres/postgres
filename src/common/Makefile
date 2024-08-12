@@ -102,14 +102,15 @@ endif
 # A few files are currently only built for frontend, not server.
 # logging.c is excluded from OBJS_FRONTEND_SHLIB (shared library) as
 # a matter of policy, because it is not appropriate for general purpose
-# libraries such as libpq to report errors directly.
+# libraries such as libpq to report errors directly.  fe_memutils.c is
+# excluded because libpq must not exit() on allocation failure.
 OBJS_FRONTEND_SHLIB = \
 	$(OBJS_COMMON) \
-	fe_memutils.o \
 	restricted_token.o \
 	sprompt.o
 OBJS_FRONTEND = \
 	$(OBJS_FRONTEND_SHLIB) \
+	fe_memutils.o \
 	logging.o
 
 # foo.o, foo_shlib.o, and foo_srv.o are all built from foo.c
