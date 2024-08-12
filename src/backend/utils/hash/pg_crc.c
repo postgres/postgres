@@ -17,9 +17,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include "c.h"
+#include "postgres.h"
 
+#include "port/pg_crc32c.h"
+#include "utils/builtins.h"
 #include "utils/pg_crc.h"
+#include "varatt.h"
 
 /*
  * Lookup table for calculating CRC-32 using Sarwate's algorithm.
@@ -95,3 +98,33 @@ const uint32 pg_crc32_table[256] = {
 	0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
 	0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
 };
+
+/*
+ * SQL-callable functions
+ */
+
+Datum
+crc32_bytea(PG_FUNCTION_ARGS)
+{
+	bytea	   *in = PG_GETARG_BYTEA_PP(0);
+	pg_crc32	crc;
+
+	INIT_TRADITIONAL_CRC32(crc);
+	COMP_TRADITIONAL_CRC32(crc, VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
+	FIN_TRADITIONAL_CRC32(crc);
+
+	PG_RETURN_INT64(crc);
+}
+
+Datum
+crc32c_bytea(PG_FUNCTION_ARGS)
+{
+	bytea	   *in = PG_GETARG_BYTEA_PP(0);
+	pg_crc32c	crc;
+
+	INIT_CRC32C(crc);
+	COMP_CRC32C(crc, VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
+	FIN_CRC32C(crc);
+
+	PG_RETURN_INT64(crc);
+}

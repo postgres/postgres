@@ -720,6 +720,15 @@ SELECT sha512('');
 SELECT sha512('The quick brown fox jumps over the lazy dog.');
 
 --
+-- CRC
+--
+SELECT crc32('');
+SELECT crc32('The quick brown fox jumps over the lazy dog.');
+
+SELECT crc32c('');
+SELECT crc32c('The quick brown fox jumps over the lazy dog.');
+
+--
 -- encode/decode
 --
 SELECT encode('\x1234567890abcdef00', 'hex');

@@ -4493,6 +4493,40 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>crc32</primary>
+        </indexterm>
+        <function>crc32</function> ( <type>bytea</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the CRC-32 value of the binary string.
+       </para>
+       <para>
+        <literal>crc32('abc'::bytea)</literal>
+        <returnvalue>891568578</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>crc32c</primary>
+        </indexterm>
+        <function>crc32c</function> ( <type>bytea</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the CRC-32C value of the binary string.
+       </para>
+       <para>
+        <literal>crc32c('abc'::bytea)</literal>
+        <returnvalue>910901175</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>get_bit</primary>
         </indexterm>
         <function>get_bit</function> ( <parameter>bytes</parameter> <type>bytea</type>,
