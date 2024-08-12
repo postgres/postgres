@@ -17,9 +17,9 @@
 
 /*
  * Defines the direction for scanning a table or an index.  Scans are never
- * invoked using NoMovementScanDirectionScans.  For convenience, we use the
- * values -1 and 1 for backward and forward scans.  This allows us to perform
- * a few mathematical tricks such as what is done in ScanDirectionCombine.
+ * invoked using NoMovementScanDirection.  For convenience, we use the values
+ * -1 and 1 for backward and forward scans.  This allows us to perform a few
+ * mathematical tricks such as what is done in ScanDirectionCombine.
  */
 typedef enum ScanDirection
 {

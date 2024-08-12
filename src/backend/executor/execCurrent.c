@@ -200,7 +200,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 			/*
 			 * For IndexOnlyScan, the tuple stored in ss_ScanTupleSlot may be
 			 * a virtual tuple that does not have the ctid column, so we have
-			 * to get the TID from xs_ctup.t_self.
+			 * to get the TID from xs_heaptid.
 			 */
 			IndexScanDesc scan = ((IndexOnlyScanState *) scanstate)->ioss_ScanDesc;
 

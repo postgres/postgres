@@ -80,7 +80,7 @@ static const dshash_parameters dsh_params = {
  * compares to their copy of pgStatSharedRefAge on a regular basis.
  */
 static pgstat_entry_ref_hash_hash *pgStatEntryRefHash = NULL;
-static int	pgStatSharedRefAge = 0; /* cache age of pgStatShmLookupCache */
+static int	pgStatSharedRefAge = 0; /* cache age of pgStatLocal.shmem */
 
 /*
  * Memory contexts containing the pgStatEntryRefHash table and the
@@ -887,7 +887,7 @@ pgstat_drop_database_and_contents(Oid dboid)
 
 	/*
 	 * If some of the stats data could not be freed, signal the reference
-	 * holders to run garbage collection of their cached pgStatShmLookupCache.
+	 * holders to run garbage collection of their cached pgStatLocal.shmem.
 	 */
 	if (not_freed_count > 0)
 		pgstat_request_entry_refs_gc();

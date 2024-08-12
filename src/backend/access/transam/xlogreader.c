@@ -946,9 +946,9 @@ err:
 	XLogReaderInvalReadState(state);
 
 	/*
-	 * If an error was written to errmsg_buf, it'll be returned to the caller
-	 * of XLogReadRecord() after all successfully decoded records from the
-	 * read queue.
+	 * If an error was written to errormsg_buf, it'll be returned to the
+	 * caller of XLogReadRecord() after all successfully decoded records from
+	 * the read queue.
 	 */
 
 	return XLREAD_FAIL;

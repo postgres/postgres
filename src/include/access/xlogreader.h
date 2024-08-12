@@ -224,9 +224,9 @@ struct XLogReaderState
 	 * should not be accessed directly.
 	 * ----------------------------------------
 	 * Start and end point of the last record read and decoded by
-	 * XLogReadRecordInternal().  NextRecPtr is also used as the position to
-	 * decode next.  Calling XLogBeginRead() sets NextRecPtr and EndRecPtr to
-	 * the requested starting position.
+	 * XLogReadRecord().  NextRecPtr is also used as the position to decode
+	 * next.  Calling XLogBeginRead() sets NextRecPtr and EndRecPtr to the
+	 * requested starting position.
 	 */
 	XLogRecPtr	DecodeRecPtr;	/* start of last record decoded */
 	XLogRecPtr	NextRecPtr;		/* end+1 of last record decoded */
