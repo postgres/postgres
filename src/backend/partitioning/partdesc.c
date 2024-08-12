@@ -209,6 +209,10 @@ retry:
 		 * shared queue.  We solve this problem by reading pg_class directly
 		 * for the desired tuple.
 		 *
+		 * If the partition recently detached is also dropped, we get no tuple
+		 * from the scan.  In that case, we also retry, and next time through
+		 * here, we don't see that partition anymore.
+		 *
 		 * The other problem is that DETACH CONCURRENTLY is in the process of
 		 * removing a partition, which happens in two steps: first it marks it
 		 * as "detach pending", commits, then unsets relpartbound.  If
@@ -223,8 +227,6 @@ retry:
 			Relation	pg_class;
 			SysScanDesc scan;
 			ScanKeyData key[1];
-			Datum		datum;
-			bool		isnull;
 
 			pg_class = table_open(RelationRelationId, AccessShareLock);
 			ScanKeyInit(&key[0],
@@ -233,17 +235,29 @@ retry:
 						ObjectIdGetDatum(inhrelid));
 			scan = systable_beginscan(pg_class, ClassOidIndexId, true,
 									  NULL, 1, key);
+
+			/*
+			 * We could get one tuple from the scan (the normal case), or zero
+			 * tuples if the table has been dropped meanwhile.
+			 */
 			tuple = systable_getnext(scan);
-			datum = heap_getattr(tuple, Anum_pg_class_relpartbound,
-								 RelationGetDescr(pg_class), &isnull);
-			if (!isnull)
-				boundspec = stringToNode(TextDatumGetCString(datum));
+			if (HeapTupleIsValid(tuple))
+			{
+				Datum		datum;
+				bool		isnull;
+
+				datum = heap_getattr(tuple, Anum_pg_class_relpartbound,
+									 RelationGetDescr(pg_class), &isnull);
+				if (!isnull)
+					boundspec = stringToNode(TextDatumGetCString(datum));
+			}
 			systable_endscan(scan);
 			table_close(pg_class, AccessShareLock);
 
 			/*
-			 * If we still don't get a relpartbound value, then it must be
-			 * because of DETACH CONCURRENTLY.  Restart from the top, as
+			 * If we still don't get a relpartbound value (either because
+			 * boundspec is null or because there was no tuple), then it must
+			 * be because of DETACH CONCURRENTLY.  Restart from the top, as
 			 * explained above.  We only do this once, for two reasons: first,
 			 * only one DETACH CONCURRENTLY session could affect us at a time,
 			 * since each of them would have to wait for the snapshot under
