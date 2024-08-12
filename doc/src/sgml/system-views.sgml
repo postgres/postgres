@@ -483,15 +483,6 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>parent</structfield> <type>text</type>
-      </para>
-      <para>
-       Name of the parent of this memory context
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>type</structfield> <type>text</type>
       </para>
       <para>

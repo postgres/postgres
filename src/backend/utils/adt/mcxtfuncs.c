@@ -41,28 +41,6 @@ typedef struct MemoryContextId
 }			MemoryContextId;
 
 /*
- * get_memory_context_name_and_ident
- *		Populate *name and *ident from the name and ident from 'context'.
- */
-static void
-get_memory_context_name_and_ident(MemoryContext context, const char **const name,
-								  const char **const ident)
-{
-	*name = context->name;
-	*ident = context->ident;
-
-	/*
-	 * To be consistent with logging output, we label dynahash contexts with
-	 * just the hash table name as with MemoryContextStatsPrint().
-	 */
-	if (*ident == NULL && strcmp(*name, "dynahash") == 0)
-	{
-		*name = *ident;
-		*ident = NULL;
-	}
-}
-
-/*
  * int_list_to_array
  *		Convert an IntList to an array of INT4OIDs.
  */
@@ -93,7 +71,7 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 								 TupleDesc tupdesc, MemoryContext context,
 								 HTAB *context_id_lookup)
 {
-#define PG_GET_BACKEND_MEMORY_CONTEXTS_COLS	11
+#define PG_GET_BACKEND_MEMORY_CONTEXTS_COLS	10
 
 	Datum		values[PG_GET_BACKEND_MEMORY_CONTEXTS_COLS];
 	bool		nulls[PG_GET_BACKEND_MEMORY_CONTEXTS_COLS];
@@ -128,7 +106,18 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	memset(values, 0, sizeof(values));
 	memset(nulls, 0, sizeof(nulls));
 
-	get_memory_context_name_and_ident(context, &name, &ident);
+	name = context->name;
+	ident = context->ident;
+
+	/*
+	 * To be consistent with logging output, we label dynahash contexts with
+	 * just the hash table name as with MemoryContextStatsPrint().
+	 */
+	if (ident && strcmp(name, "dynahash") == 0)
+	{
+		name = ident;
+		ident = NULL;
+	}
 
 	if (name)
 		values[0] = CStringGetTextDatum(name);
@@ -154,18 +143,6 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	else
 		nulls[1] = true;
 
-	if (context->parent)
-	{
-		const char *parent_name,
-				   *parent_ident;
-
-		get_memory_context_name_and_ident(context->parent, &parent_name,
-										  &parent_ident);
-		values[2] = CStringGetTextDatum(parent_name);
-	}
-	else
-		nulls[2] = true;
-
 	switch (context->type)
 	{
 		case T_AllocSetContext:
@@ -185,14 +162,14 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 			break;
 	}
 
-	values[3] = CStringGetTextDatum(type);
-	values[4] = Int32GetDatum(list_length(path));	/* level */
-	values[5] = int_list_to_array(path);
-	values[6] = Int64GetDatum(stat.totalspace);
-	values[7] = Int64GetDatum(stat.nblocks);
-	values[8] = Int64GetDatum(stat.freespace);
-	values[9] = Int64GetDatum(stat.freechunks);
-	values[10] = Int64GetDatum(stat.totalspace - stat.freespace);
+	values[2] = CStringGetTextDatum(type);
+	values[3] = Int32GetDatum(list_length(path));	/* level */
+	values[4] = int_list_to_array(path);
+	values[5] = Int64GetDatum(stat.totalspace);
+	values[6] = Int64GetDatum(stat.nblocks);
+	values[7] = Int64GetDatum(stat.freespace);
+	values[8] = Int64GetDatum(stat.freechunks);
+	values[9] = Int64GetDatum(stat.totalspace - stat.freespace);
 
 	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	list_free(path);

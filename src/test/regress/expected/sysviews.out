@@ -21,11 +21,11 @@ select count(*) >= 0 as ok from pg_available_extensions;
 
 -- The entire output of pg_backend_memory_contexts is not stable,
 -- we test only the existence and basic condition of TopMemoryContext.
-select type, name, ident, parent, level, total_bytes >= free_bytes
+select type, name, ident, level, total_bytes >= free_bytes
   from pg_backend_memory_contexts where level = 1;
-   type   |       name       | ident | parent | level | ?column? 
-----------+------------------+-------+--------+-------+----------
- AllocSet | TopMemoryContext |       |        |     1 | t
+   type   |       name       | ident | level | ?column? 
+----------+------------------+-------+-------+----------
+ AllocSet | TopMemoryContext |       |     1 | t
 (1 row)
 
 -- We can exercise some MemoryContext type stats functions.  Most of the
@@ -43,11 +43,11 @@ fetch 1 from cur;
  bbbbbbbbbb | 2
 (1 row)
 
-select type, name, parent, total_bytes > 0, total_nblocks, free_bytes > 0, free_chunks
+select type, name, total_bytes > 0, total_nblocks, free_bytes > 0, free_chunks
 from pg_backend_memory_contexts where name = 'Caller tuples';
- type |     name      |     parent     | ?column? | total_nblocks | ?column? | free_chunks 
-------+---------------+----------------+----------+---------------+----------+-------------
- Bump | Caller tuples | TupleSort sort | t        |             2 | t        |           0
+ type |     name      | ?column? | total_nblocks | ?column? | free_chunks 
+------+---------------+----------+---------------+----------+-------------
+ Bump | Caller tuples | t        |             2 | t        |           0
 (1 row)
 
 rollback;

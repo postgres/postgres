@@ -1305,7 +1305,6 @@ pg_available_extensions| SELECT e.name,
      LEFT JOIN pg_extension x ON ((e.name = x.extname)));
 pg_backend_memory_contexts| SELECT name,
     ident,
-    parent,
     type,
     level,
     path,
@@ -1314,7 +1313,7 @@ pg_backend_memory_contexts| SELECT name,
     free_bytes,
     free_chunks,
     used_bytes
-   FROM pg_get_backend_memory_contexts() pg_get_backend_memory_contexts(name, ident, parent, type, level, path, total_bytes, total_nblocks, free_bytes, free_chunks, used_bytes);
+   FROM pg_get_backend_memory_contexts() pg_get_backend_memory_contexts(name, ident, type, level, path, total_bytes, total_nblocks, free_bytes, free_chunks, used_bytes);
 pg_config| SELECT name,
     setting
    FROM pg_config() pg_config(name, setting);
