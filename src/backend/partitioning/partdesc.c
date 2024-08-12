@@ -164,8 +164,6 @@ RelationBuildPartitionDesc(Relation rel)
 			Relation	pg_class;
 			SysScanDesc scan;
 			ScanKeyData key[1];
-			Datum		datum;
-			bool		isnull;
 
 			pg_class = table_open(RelationRelationId, AccessShareLock);
 			ScanKeyInit(&key[0],
@@ -175,10 +173,16 @@ RelationBuildPartitionDesc(Relation rel)
 			scan = systable_beginscan(pg_class, ClassOidIndexId, true,
 									  NULL, 1, key);
 			tuple = systable_getnext(scan);
-			datum = heap_getattr(tuple, Anum_pg_class_relpartbound,
-								 RelationGetDescr(pg_class), &isnull);
-			if (!isnull)
-				boundspec = stringToNode(TextDatumGetCString(datum));
+			if (HeapTupleIsValid(tuple))
+			{
+				Datum		datum;
+				bool		isnull;
+
+				datum = heap_getattr(tuple, Anum_pg_class_relpartbound,
+									 RelationGetDescr(pg_class), &isnull);
+				if (!isnull)
+					boundspec = stringToNode(TextDatumGetCString(datum));
+			}
 			systable_endscan(scan);
 			table_close(pg_class, AccessShareLock);
 		}
