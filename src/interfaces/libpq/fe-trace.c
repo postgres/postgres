@@ -355,6 +355,42 @@ pqTraceOutput_CopyFail(FILE *f, const char *message, int *cursor)
 }
 
 static void
+pqTraceOutput_GSSResponse(FILE *f, const char *message, int *cursor,
+						  int length, bool regress)
+{
+	fprintf(f, "GSSResponse\t");
+	pqTraceOutputNchar(f, length - *cursor + 1, message, cursor, regress);
+}
+
+static void
+pqTraceOutput_PasswordMessage(FILE *f, const char *message, int *cursor)
+{
+	fprintf(f, "PasswordMessage\t");
+	pqTraceOutputString(f, message, cursor, false);
+}
+
+static void
+pqTraceOutput_SASLInitialResponse(FILE *f, const char *message, int *cursor,
+								  bool regress)
+{
+	int			initialResponse;
+
+	fprintf(f, "SASLInitialResponse\t");
+	pqTraceOutputString(f, message, cursor, false);
+	initialResponse = pqTraceOutputInt32(f, message, cursor, false);
+	if (initialResponse != -1)
+		pqTraceOutputNchar(f, initialResponse, message, cursor, regress);
+}
+
+static void
+pqTraceOutput_SASLResponse(FILE *f, const char *message, int *cursor,
+						   int length, bool regress)
+{
+	fprintf(f, "SASLResponse\t");
+	pqTraceOutputNchar(f, length - *cursor + 1, message, cursor, regress);
+}
+
+static void
 pqTraceOutput_FunctionCall(FILE *f, const char *message, int *cursor, bool regress)
 {
 	int			nfields;
@@ -609,6 +645,39 @@ pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 			break;
 		case PqMsg_CopyFail:
 			pqTraceOutput_CopyFail(conn->Pfdebug, message, &logCursor);
+			break;
+		case PqMsg_GSSResponse:
+			Assert(PqMsg_GSSResponse == PqMsg_PasswordMessage);
+			Assert(PqMsg_GSSResponse == PqMsg_SASLInitialResponse);
+			Assert(PqMsg_GSSResponse == PqMsg_SASLResponse);
+
+			/*
+			 * These messages share a common type byte, so we discriminate by
+			 * having the code store the auth type separately.
+			 */
+			switch (conn->current_auth_response)
+			{
+				case AUTH_RESPONSE_GSS:
+					pqTraceOutput_GSSResponse(conn->Pfdebug, message,
+											  &logCursor, length, regress);
+					break;
+				case AUTH_RESPONSE_PASSWORD:
+					pqTraceOutput_PasswordMessage(conn->Pfdebug, message,
+												  &logCursor);
+					break;
+				case AUTH_RESPONSE_SASL_INITIAL:
+					pqTraceOutput_SASLInitialResponse(conn->Pfdebug, message,
+													  &logCursor, regress);
+					break;
+				case AUTH_RESPONSE_SASL:
+					pqTraceOutput_SASLResponse(conn->Pfdebug, message,
+											   &logCursor, length, regress);
+					break;
+				default:
+					fprintf(conn->Pfdebug, "UnknownAuthenticationResponse");
+					break;
+			}
+			conn->current_auth_response = '\0';
 			break;
 		case PqMsg_FunctionCall:
 			pqTraceOutput_FunctionCall(conn->Pfdebug, message, &logCursor, regress);

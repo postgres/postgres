@@ -331,6 +331,18 @@ typedef enum
 	PGQUERY_CLOSE				/* Close Statement or Portal */
 } PGQueryClass;
 
+
+/*
+ * valid values for pg_conn->current_auth_response.  These are just for
+ * libpq internal use: since authentication response types all use the
+ * protocol byte 'p', fe-trace.c needs a way to distinguish them in order
+ * to print them correctly.
+ */
+#define AUTH_RESPONSE_GSS			'G'
+#define AUTH_RESPONSE_PASSWORD		'P'
+#define AUTH_RESPONSE_SASL_INITIAL	'I'
+#define AUTH_RESPONSE_SASL			'S'
+
 /*
  * An entry in the pending command queue.
  */
@@ -490,7 +502,9 @@ struct pg_conn
 										 * codes */
 	bool		client_finished_auth;	/* have we finished our half of the
 										 * authentication exchange? */
-
+	char		current_auth_response;	/* used by pqTraceOutputMessage to
+										 * know which auth response we're
+										 * sending */
 
 	/* Transient state needed while establishing connection */
 	PGTargetServerType target_server_type;	/* desired session properties */

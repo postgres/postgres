@@ -124,6 +124,7 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 		 * first or subsequent packet, just send the same kind of password
 		 * packet.
 		 */
+		conn->current_auth_response = AUTH_RESPONSE_GSS;
 		if (pqPacketSend(conn, PqMsg_GSSResponse,
 						 goutbuf.value, goutbuf.length) != STATUS_OK)
 		{
@@ -324,6 +325,7 @@ pg_SSPI_continue(PGconn *conn, int payloadlen)
 		 */
 		if (outbuf.pBuffers[0].cbBuffer > 0)
 		{
+			conn->current_auth_response = AUTH_RESPONSE_GSS;
 			if (pqPacketSend(conn, PqMsg_GSSResponse,
 							 outbuf.pBuffers[0].pvBuffer, outbuf.pBuffers[0].cbBuffer))
 			{
@@ -597,8 +599,10 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		if (pqPutnchar(initialresponse, initialresponselen, conn))
 			goto error;
 	}
+	conn->current_auth_response = AUTH_RESPONSE_SASL_INITIAL;
 	if (pqPutMsgEnd(conn))
 		goto error;
+
 	if (pqFlush(conn))
 		goto error;
 
@@ -683,6 +687,7 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 		/*
 		 * Send the SASL response to the server.
 		 */
+		conn->current_auth_response = AUTH_RESPONSE_SASL;
 		res = pqPacketSend(conn, PqMsg_SASLResponse, output, outputlen);
 		free(output);
 
@@ -754,6 +759,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 		default:
 			return STATUS_ERROR;
 	}
+	conn->current_auth_response = AUTH_RESPONSE_PASSWORD;
 	ret = pqPacketSend(conn, PqMsg_PasswordMessage,
 					   pwd_to_send, strlen(pwd_to_send) + 1);
 	free(crypt_pwd);
