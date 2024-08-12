@@ -201,7 +201,7 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	 * way.
 	 */
 
-	if (pg_database_encoding_max_length() > 1 || (locale && locale->provider == COLLPROVIDER_ICU))
+	if (pg_database_encoding_max_length() > 1 || (locale->provider == COLLPROVIDER_ICU))
 	{
 		pat = DatumGetTextPP(DirectFunctionCall1Coll(lower, collation,
 													 PointerGetDatum(pat)));
