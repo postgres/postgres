@@ -285,25 +285,6 @@ pg_realpath(const char *fname)
 
 #ifndef WIN32
 	path = realpath(fname, NULL);
-	if (path == NULL && errno == EINVAL)
-	{
-		/*
-		 * Cope with old-POSIX systems that require a user-provided buffer.
-		 * Assume MAXPGPATH is enough room on all such systems.
-		 */
-		char	   *buf = malloc(MAXPGPATH);
-
-		if (buf == NULL)
-			return NULL;		/* assume errno is set */
-		path = realpath(fname, buf);
-		if (path == NULL)		/* don't leak memory */
-		{
-			int			save_errno = errno;
-
-			free(buf);
-			errno = save_errno;
-		}
-	}
 #else							/* WIN32 */
 
 	/*
