@@ -23,7 +23,7 @@
 #include <langinfo.h>
 #endif
 
-#ifdef LOCALE_T_IN_XLOCALE_H
+#ifdef LOCALE_T_IN_XLOCALE
 #include <xlocale.h>
 #endif
 
