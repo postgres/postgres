@@ -948,7 +948,7 @@ boolexpr_startup_fn(Node *clause, PredIterInfo info)
 typedef struct
 {
 	OpExpr		opexpr;
-	Const		constexpr;
+	Const		const_expr;
 	int			next_elem;
 	int			num_elems;
 	Datum	   *elem_values;
@@ -992,13 +992,13 @@ arrayconst_startup_fn(Node *clause, PredIterInfo info)
 	state->opexpr.args = list_copy(saop->args);
 
 	/* Set up a dummy Const node to hold the per-element values */
-	state->constexpr.xpr.type = T_Const;
-	state->constexpr.consttype = ARR_ELEMTYPE(arrayval);
-	state->constexpr.consttypmod = -1;
-	state->constexpr.constcollid = arrayconst->constcollid;
-	state->constexpr.constlen = elmlen;
-	state->constexpr.constbyval = elmbyval;
-	lsecond(state->opexpr.args) = &state->constexpr;
+	state->const_expr.xpr.type = T_Const;
+	state->const_expr.consttype = ARR_ELEMTYPE(arrayval);
+	state->const_expr.consttypmod = -1;
+	state->const_expr.constcollid = arrayconst->constcollid;
+	state->const_expr.constlen = elmlen;
+	state->const_expr.constbyval = elmbyval;
+	lsecond(state->opexpr.args) = &state->const_expr;
 
 	/* Initialize iteration state */
 	state->next_elem = 0;
@@ -1011,8 +1011,8 @@ arrayconst_next_fn(PredIterInfo info)
 
 	if (state->next_elem >= state->num_elems)
 		return NULL;
-	state->constexpr.constvalue = state->elem_values[state->next_elem];
-	state->constexpr.constisnull = state->elem_nulls[state->next_elem];
+	state->const_expr.constvalue = state->elem_values[state->next_elem];
+	state->const_expr.constisnull = state->elem_nulls[state->next_elem];
 	state->next_elem++;
 	return (Node *) &(state->opexpr);
 }
