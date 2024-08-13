@@ -382,8 +382,8 @@ WalSummarizerMain(char *startup_data, size_t startup_data_len)
 
 			switch_lsn = tliSwitchPoint(current_tli, tles, &switch_tli);
 			ereport(DEBUG1,
-					errmsg("switch point from TLI %u to TLI %u is at %X/%X",
-						   current_tli, switch_tli, LSN_FORMAT_ARGS(switch_lsn)));
+					errmsg_internal("switch point from TLI %u to TLI %u is at %X/%X",
+									current_tli, switch_tli, LSN_FORMAT_ARGS(switch_lsn)));
 		}
 
 		/*
@@ -1217,10 +1217,10 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 
 		/* Tell the user what we did. */
 		ereport(DEBUG1,
-				errmsg("summarized WAL on TLI %u from %X/%X to %X/%X",
-					   tli,
-					   LSN_FORMAT_ARGS(summary_start_lsn),
-					   LSN_FORMAT_ARGS(summary_end_lsn)));
+				errmsg_internal("summarized WAL on TLI %u from %X/%X to %X/%X",
+								tli,
+								LSN_FORMAT_ARGS(summary_start_lsn),
+								LSN_FORMAT_ARGS(summary_end_lsn)));
 
 		/* Durably rename the new summary into place. */
 		durable_rename(temp_path, final_path, ERROR);
@@ -1229,10 +1229,10 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	/* If we skipped a non-zero amount of WAL, log a debug message. */
 	if (summary_end_lsn > summary_start_lsn && fast_forward)
 		ereport(DEBUG1,
-				errmsg("skipped summarizing WAL on TLI %u from %X/%X to %X/%X",
-					   tli,
-					   LSN_FORMAT_ARGS(summary_start_lsn),
-					   LSN_FORMAT_ARGS(summary_end_lsn)));
+				errmsg_internal("skipped summarizing WAL on TLI %u from %X/%X to %X/%X",
+								tli,
+								LSN_FORMAT_ARGS(summary_start_lsn),
+								LSN_FORMAT_ARGS(summary_end_lsn)));
 
 	return summary_end_lsn;
 }
@@ -1575,8 +1575,8 @@ summarizer_read_local_xlog_page(XLogReaderState *state,
 
 					/* Debugging output. */
 					ereport(DEBUG1,
-							errmsg("timeline %u became historic, can read up to %X/%X",
-								   private_data->tli, LSN_FORMAT_ARGS(private_data->read_upto)));
+							errmsg_internal("timeline %u became historic, can read up to %X/%X",
+											private_data->tli, LSN_FORMAT_ARGS(private_data->read_upto)));
 				}
 
 				/* Go around and try again. */
