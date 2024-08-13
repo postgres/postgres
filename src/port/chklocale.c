@@ -19,7 +19,7 @@
 #include "postgres_fe.h"
 #endif
 
-#ifdef HAVE_LANGINFO_H
+#ifndef WIN32
 #include <langinfo.h>
 #endif
 
@@ -287,8 +287,6 @@ pg_codepage_to_encoding(UINT cp)
 #endif
 #endif							/* WIN32 */
 
-#if (defined(HAVE_LANGINFO_H) && defined(CODESET)) || defined(WIN32)
-
 /*
  * Given a setting for LC_CTYPE, return the Postgres ID of the associated
  * encoding, if we can determine it.  Return -1 if we can't determine it.
@@ -415,19 +413,3 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 	free(sys);
 	return -1;
 }
-#else							/* (HAVE_LANGINFO_H && CODESET) || WIN32 */
-
-/*
- * stub if no multi-language platform support
- *
- * Note: we could return -1 here, but that would have the effect of
- * forcing users to specify an encoding to initdb on such platforms.
- * It seems better to silently default to SQL_ASCII.
- */
-int
-pg_get_encoding_from_locale(const char *ctype, bool write_message)
-{
-	return PG_SQL_ASCII;
-}
-
-#endif							/* (HAVE_LANGINFO_H && CODESET) || WIN32 */

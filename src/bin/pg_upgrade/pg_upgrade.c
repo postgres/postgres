@@ -40,10 +40,6 @@
 
 #include <time.h>
 
-#ifdef HAVE_LANGINFO_H
-#include <langinfo.h>
-#endif
-
 #include "catalog/pg_class_d.h"
 #include "common/file_perm.h"
 #include "common/logging.h"

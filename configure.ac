@@ -1447,7 +1447,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	execinfo.h
 	getopt.h
 	ifaddrs.h
-	langinfo.h
 	mbarrier.h
 	sys/epoll.h
 	sys/event.h
