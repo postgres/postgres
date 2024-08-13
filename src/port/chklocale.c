@@ -306,63 +306,34 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 	char	   *sys;
 	int			i;
 
+#ifndef WIN32
+	locale_t	loc;
+#endif
+
 	/* Get the CODESET property, and also LC_CTYPE if not passed in */
-	if (ctype)
-	{
-		char	   *save;
-		char	   *name;
-
-		/* If locale is C or POSIX, we can allow all encodings */
-		if (pg_strcasecmp(ctype, "C") == 0 ||
-			pg_strcasecmp(ctype, "POSIX") == 0)
-			return PG_SQL_ASCII;
-
-		save = setlocale(LC_CTYPE, NULL);
-		if (!save)
-			return -1;			/* setlocale() broken? */
-		/* must copy result, or it might change after setlocale */
-		save = strdup(save);
-		if (!save)
-			return -1;			/* out of memory; unlikely */
-
-		name = setlocale(LC_CTYPE, ctype);
-		if (!name)
-		{
-			free(save);
-			return -1;			/* bogus ctype passed in? */
-		}
-
-#ifndef WIN32
-		sys = nl_langinfo(CODESET);
-		if (sys)
-			sys = strdup(sys);
-#else
-		sys = win32_langinfo(name);
-#endif
-
-		setlocale(LC_CTYPE, save);
-		free(save);
-	}
-	else
-	{
-		/* much easier... */
+	if (!ctype)
 		ctype = setlocale(LC_CTYPE, NULL);
-		if (!ctype)
-			return -1;			/* setlocale() broken? */
 
-		/* If locale is C or POSIX, we can allow all encodings */
-		if (pg_strcasecmp(ctype, "C") == 0 ||
-			pg_strcasecmp(ctype, "POSIX") == 0)
-			return PG_SQL_ASCII;
+
+	/* If locale is C or POSIX, we can allow all encodings */
+	if (pg_strcasecmp(ctype, "C") == 0 ||
+		pg_strcasecmp(ctype, "POSIX") == 0)
+		return PG_SQL_ASCII;
+
 
 #ifndef WIN32
-		sys = nl_langinfo(CODESET);
-		if (sys)
-			sys = strdup(sys);
+	loc = newlocale(LC_CTYPE_MASK, ctype, (locale_t) 0);
+	if (loc == (locale_t) 0)
+		return -1;				/* bogus ctype passed in? */
+
+	sys = nl_langinfo_l(CODESET, loc);
+	if (sys)
+		sys = strdup(sys);
+
+	freelocale(loc);
 #else
-		sys = win32_langinfo(ctype);
+	sys = win32_langinfo(ctype);
 #endif
-	}
 
 	if (!sys)
 		return -1;				/* out of memory; unlikely */
