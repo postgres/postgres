@@ -359,12 +359,6 @@
 /* #define WAL_DEBUG */
 
 /*
- * Enable tracing of resource consumption during sort operations;
- * see also the trace_sort GUC var.  For 8.1 this is enabled by default.
- */
-#define TRACE_SORT 1
-
-/*
  * Enable tracing of syncscan operations (see also the trace_syncscan GUC var).
  */
 /* #define TRACE_SYNCSCAN */

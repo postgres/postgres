@@ -2127,13 +2127,11 @@ numeric_abbrev_abort(int memtupcount, SortSupport ssup)
 	 */
 	if (abbr_card > 100000.0)
 	{
-#ifdef TRACE_SORT
 		if (trace_sort)
 			elog(LOG,
 				 "numeric_abbrev: estimation ends at cardinality %f"
 				 " after " INT64_FORMAT " values (%d rows)",
 				 abbr_card, nss->input_count, memtupcount);
-#endif
 		nss->estimating = false;
 		return false;
 	}
@@ -2149,24 +2147,20 @@ numeric_abbrev_abort(int memtupcount, SortSupport ssup)
 	 */
 	if (abbr_card < nss->input_count / 10000.0 + 0.5)
 	{
-#ifdef TRACE_SORT
 		if (trace_sort)
 			elog(LOG,
 				 "numeric_abbrev: aborting abbreviation at cardinality %f"
 				 " below threshold %f after " INT64_FORMAT " values (%d rows)",
 				 abbr_card, nss->input_count / 10000.0 + 0.5,
 				 nss->input_count, memtupcount);
-#endif
 		return true;
 	}
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "numeric_abbrev: cardinality %f"
 			 " after " INT64_FORMAT " values (%d rows)",
 			 abbr_card, nss->input_count, memtupcount);
-#endif
 
 	return false;
 }

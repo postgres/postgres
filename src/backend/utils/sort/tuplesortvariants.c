@@ -181,12 +181,10 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 
 	Assert(nkeys > 0);
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "begin tuple sort: nkeys = %d, workMem = %d, randomAccess = %c",
 			 nkeys, workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
 
 	base->nKeys = nkeys;
 
@@ -258,13 +256,11 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
 	arg = (TuplesortClusterArg *) palloc0(sizeof(TuplesortClusterArg));
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "begin tuple sort: nkeys = %d, workMem = %d, randomAccess = %c",
 			 RelationGetNumberOfAttributes(indexRel),
 			 workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
 
 	base->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
 
@@ -368,13 +364,11 @@ tuplesort_begin_index_btree(Relation heapRel,
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
 	arg = (TuplesortIndexBTreeArg *) palloc(sizeof(TuplesortIndexBTreeArg));
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "begin index sort: unique = %c, workMem = %d, randomAccess = %c",
 			 enforceUnique ? 't' : 'f',
 			 workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
 
 	base->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
 
@@ -452,7 +446,6 @@ tuplesort_begin_index_hash(Relation heapRel,
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
 	arg = (TuplesortIndexHashArg *) palloc(sizeof(TuplesortIndexHashArg));
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "begin index sort: high_mask = 0x%x, low_mask = 0x%x, "
@@ -462,7 +455,6 @@ tuplesort_begin_index_hash(Relation heapRel,
 			 max_buckets,
 			 workMem,
 			 sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
 
 	base->nKeys = 1;			/* Only one sort column, the hash code */
 
@@ -503,12 +495,10 @@ tuplesort_begin_index_gist(Relation heapRel,
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
 	arg = (TuplesortIndexBTreeArg *) palloc(sizeof(TuplesortIndexBTreeArg));
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "begin index sort: workMem = %d, randomAccess = %c",
 			 workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
 
 	base->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
 
@@ -560,13 +550,11 @@ tuplesort_begin_index_brin(int workMem,
 												   sortopt);
 	TuplesortPublic *base = TuplesortstateGetPublic(state);
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "begin index sort: workMem = %d, randomAccess = %c",
 			 workMem,
 			 sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
 
 	base->nKeys = 1;			/* Only one sort column, the block number */
 
@@ -596,12 +584,10 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
 	arg = (TuplesortDatumArg *) palloc(sizeof(TuplesortDatumArg));
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "begin datum sort: workMem = %d, randomAccess = %c",
 			 workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
 
 	base->nKeys = 1;			/* always a one-column sort */
 

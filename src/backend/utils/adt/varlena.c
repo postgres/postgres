@@ -2455,7 +2455,6 @@ varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 	 * time there are differences within full key strings not captured in
 	 * abbreviations.
 	 */
-#ifdef TRACE_SORT
 	if (trace_sort)
 	{
 		double		norm_abbrev_card = abbrev_distinct / (double) memtupcount;
@@ -2465,7 +2464,6 @@ varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 			 memtupcount, abbrev_distinct, key_distinct, norm_abbrev_card,
 			 sss->prop_card);
 	}
-#endif
 
 	/*
 	 * If the number of distinct abbreviated keys approximately matches the
@@ -2527,12 +2525,10 @@ varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 	 * of moderately high to high abbreviated cardinality.  There is little to
 	 * lose but much to gain, which our strategy reflects.
 	 */
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG, "varstr_abbrev: aborted abbreviation at %d "
 			 "(abbrev_distinct: %f, key_distinct: %f, prop_card: %f)",
 			 memtupcount, abbrev_distinct, key_distinct, sss->prop_card);
-#endif
 
 	return true;
 }

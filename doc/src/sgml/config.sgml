@@ -11711,9 +11711,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         If on, emit information about resource usage during sort operations.
-        This parameter is only available if the <symbol>TRACE_SORT</symbol> macro
-        was defined when <productname>PostgreSQL</productname> was compiled.
-        (However, <symbol>TRACE_SORT</symbol> is currently defined by default.)
        </para>
       </listitem>
      </varlistentry>

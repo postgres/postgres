@@ -307,13 +307,11 @@ uuid_abbrev_abort(int memtupcount, SortSupport ssup)
 	 */
 	if (abbr_card > 100000.0)
 	{
-#ifdef TRACE_SORT
 		if (trace_sort)
 			elog(LOG,
 				 "uuid_abbrev: estimation ends at cardinality %f"
 				 " after " INT64_FORMAT " values (%d rows)",
 				 abbr_card, uss->input_count, memtupcount);
-#endif
 		uss->estimating = false;
 		return false;
 	}
@@ -326,23 +324,19 @@ uuid_abbrev_abort(int memtupcount, SortSupport ssup)
 	 */
 	if (abbr_card < uss->input_count / 2000.0 + 0.5)
 	{
-#ifdef TRACE_SORT
 		if (trace_sort)
 			elog(LOG,
 				 "uuid_abbrev: aborting abbreviation at cardinality %f"
 				 " below threshold %f after " INT64_FORMAT " values (%d rows)",
 				 abbr_card, uss->input_count / 2000.0 + 0.5, uss->input_count,
 				 memtupcount);
-#endif
 		return true;
 	}
 
-#ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
 			 "uuid_abbrev: cardinality %f after " INT64_FORMAT
 			 " values (%d rows)", abbr_card, uss->input_count, memtupcount);
-#endif
 
 	return false;
 }
