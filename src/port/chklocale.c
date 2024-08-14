@@ -193,7 +193,7 @@ static const struct encoding_match encoding_match_list[] = {
 
 #ifdef WIN32
 /*
- * On Windows, use CP<code page number> instead of the nl_langinfo() result
+ * On Windows, use CP<code page number> instead of CODESET.
  *
  * This routine uses GetLocaleInfoEx() to parse short locale names like
  * "de-DE", "fr-FR", etc.  If those cannot be parsed correctly process falls
@@ -203,12 +203,10 @@ static const struct encoding_match encoding_match_list[] = {
  * Returns a malloc()'d string for the caller to free.
  */
 static char *
-win32_langinfo(const char *ctype)
+win32_get_codeset(const char *ctype)
 {
 	char	   *r = NULL;
 	char	   *codepage;
-
-#if defined(_MSC_VER)
 	uint32		cp;
 	WCHAR		wctype[LOCALE_NAME_MAX_LENGTH];
 
@@ -233,7 +231,6 @@ win32_langinfo(const char *ctype)
 		}
 	}
 	else
-#endif
 	{
 		/*
 		 * Locale format on Win32 is <Language>_<Country>.<CodePage>.  For
@@ -336,7 +333,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 
 	freelocale(loc);
 #else
-	sys = win32_langinfo(ctype);
+	sys = win32_get_codeset(ctype);
 #endif
 
 	if (!sys)
