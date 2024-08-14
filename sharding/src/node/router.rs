@@ -1,12 +1,17 @@
 use postgres::{Client, NoTls};
 extern crate users;
+use crate::node::messages::message::{Message, MessageType};
+use crate::node::shard::Shard;
 use crate::utils::queries::query_is_insert;
 
 use super::node::*;
 use crate::utils::node_config::get_router_config;
+use super::shard_manager::ShardManager;
 use inline_colorization::*;
 use rust_decimal::Decimal;
-use std::collections::HashMap;
+use serde_yaml;
+use std::collections::{BinaryHeap, HashMap};
+use std::io::Write;
 use std::sync::{Arc, RwLock};
 use std::{io, net::TcpStream, sync::Mutex};
 use users::get_current_username;
@@ -17,6 +22,7 @@ pub struct Channel {
     stream: TcpStream,
 }
 
+
 /// This struct represents the Router node in the distributed system. It has the responsibility of routing the queries to the appropriate shard or shards.
 #[repr(C)]
 pub struct Router {
@@ -24,6 +30,7 @@ pub struct Router {
     ///     key: shardId
     ///     value: Shard's Client
     shards: Mutex<HashMap<String, Client>>,
+    shard_manager: ShardManager,
     ///  HashMap:
     ///     key: Hash
     ///     value: shardId
@@ -60,6 +67,14 @@ impl Router {
                     match Router::health_connect(&node_ip, &node_port) {
                         Ok(health_connection) => {
                             comm_channels.insert(node_port.to_string(), health_connection);
+                            // TODO-SHARD: Send Threshold Check Message to Shard and save shard to ShardManager
+                    
+                            let update_message = Message::new(MessageType::Update, None);
+                    
+                            health_connection
+                                .stream
+                                .write(update_message.to_string().as_bytes())
+                                .unwrap();
                         }
                         Err(e) => {
                             println!("Failed to connect to port: {}. Error: {:?}", node_port, e);
@@ -78,6 +93,7 @@ impl Router {
         println!("SHARDS: {}", shards.len());
         let router = Router {
             shards: Mutex::new(shards),
+            shard_manager: ShardManager::new(),
             comm_channels: Arc::new(RwLock::new(comm_channels)),
             ip: Arc::from(ip),
             port: Arc::from(port),
@@ -133,7 +149,8 @@ impl Router {
         if query_is_insert(query) {
             println!("Query is INSERT");
 
-            // TODO-SHARD: Elegir un shard, el que tenga menor cargo o algo, etc
+            // TODO-SHARD: ShardManager.pop() to get the shard with the least amount of data
+            // let shard = self.shard_manager.pop().unwrap();
             return vec!["5433".to_string()];
         } else {
             // Return all shards
@@ -213,7 +230,7 @@ impl NodeRole for Router {
                 };
 
                 // TODO-SHARD: maybe this can be encapsulated inside another trait, with `.query` included
-                // TODO-SHARD: Send Update Message to Shard somehow
+                // TODO-SHARD: Send Update Message to Shard and re-insert into ShardManager
 
                 // for row in rows {
                 //     let id: i32 = row.get(0);
