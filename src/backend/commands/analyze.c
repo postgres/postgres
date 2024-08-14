@@ -303,9 +303,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
-	int64		AnalyzePageHit = VacuumPageHit;
-	int64		AnalyzePageMiss = VacuumPageMiss;
-	int64		AnalyzePageDirty = VacuumPageDirty;
+	BufferUsage startbufferusage = pgBufferUsage;
+	BufferUsage bufferusage;
 	PgStat_Counter startreadtime = 0;
 	PgStat_Counter startwritetime = 0;
 
@@ -736,15 +735,19 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			double		read_rate = 0;
 			double		write_rate = 0;
 			StringInfoData buf;
+			int64		total_blks_hit;
+			int64		total_blks_read;
+			int64		total_blks_dirtied;
 
-			/*
-			 * Calculate the difference in the Page Hit/Miss/Dirty that
-			 * happened as part of the analyze by subtracting out the
-			 * pre-analyze values which we saved above.
-			 */
-			AnalyzePageHit = VacuumPageHit - AnalyzePageHit;
-			AnalyzePageMiss = VacuumPageMiss - AnalyzePageMiss;
-			AnalyzePageDirty = VacuumPageDirty - AnalyzePageDirty;
+			memset(&bufferusage, 0, sizeof(BufferUsage));
+			BufferUsageAccumDiff(&bufferusage, &pgBufferUsage, &startbufferusage);
+
+			total_blks_hit = bufferusage.shared_blks_hit +
+				bufferusage.local_blks_hit;
+			total_blks_read = bufferusage.shared_blks_read +
+				bufferusage.local_blks_read;
+			total_blks_dirtied = bufferusage.shared_blks_dirtied +
+				bufferusage.local_blks_dirtied;
 
 			/*
 			 * We do not expect an analyze to take > 25 days and it simplifies
@@ -770,10 +773,10 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 
 			if (delay_in_ms > 0)
 			{
-				read_rate = (double) BLCKSZ * AnalyzePageMiss / (1024 * 1024) /
-					(delay_in_ms / 1000.0);
-				write_rate = (double) BLCKSZ * AnalyzePageDirty / (1024 * 1024) /
-					(delay_in_ms / 1000.0);
+				read_rate = (double) BLCKSZ * total_blks_read /
+					(1024 * 1024) / (delay_in_ms / 1000.0);
+				write_rate = (double) BLCKSZ * total_blks_dirtied /
+					(1024 * 1024) / (delay_in_ms / 1000.0);
 			}
 
 			/*
@@ -796,10 +799,10 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			}
 			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
 							 read_rate, write_rate);
-			appendStringInfo(&buf, _("buffer usage: %lld hits, %lld misses, %lld dirtied\n"),
-							 (long long) AnalyzePageHit,
-							 (long long) AnalyzePageMiss,
-							 (long long) AnalyzePageDirty);
+			appendStringInfo(&buf, _("buffer usage: %lld hits, %lld reads, %lld dirtied\n"),
+							 (long long) total_blks_hit,
+							 (long long) total_blks_read,
+							 (long long) total_blks_dirtied);
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
 			ereport(LOG,
