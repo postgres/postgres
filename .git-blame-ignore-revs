@@ -14,6 +14,12 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+8de5ca1dc9fa809102acd1983ee19159d0bc469f # 2024-08-12 10:57:03 +0300
+# Fix bad indentation introduced in commit f011e82c2c
+
+c883453cb29cb40c1e59c3c54d159c5e744da8a9 # 2024-07-26 12:00:04 -0400
+# Fix indentation.
+
 47ecbfdfcc71e41d7dcc35f0be04f8adbe88397f # 2024-07-15 15:17:04 -0700
 # Fix bad indentation introduced in 43cd30bcd1c
 
