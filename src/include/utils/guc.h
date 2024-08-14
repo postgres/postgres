@@ -312,11 +312,11 @@ extern PGDLLIMPORT bool optimize_bounded_sort;
  * that would then require including the definition of struct
  * config_enum_entry into those header files.)
  */
-extern const struct config_enum_entry archive_mode_options[];
-extern const struct config_enum_entry dynamic_shared_memory_options[];
-extern const struct config_enum_entry recovery_target_action_options[];
-extern const struct config_enum_entry wal_level_options[];
-extern const struct config_enum_entry wal_sync_method_options[];
+extern PGDLLIMPORT const struct config_enum_entry archive_mode_options[];
+extern PGDLLIMPORT const struct config_enum_entry dynamic_shared_memory_options[];
+extern PGDLLIMPORT const struct config_enum_entry recovery_target_action_options[];
+extern PGDLLIMPORT const struct config_enum_entry wal_level_options[];
+extern PGDLLIMPORT const struct config_enum_entry wal_sync_method_options[];
 
 /*
  * Functions exported by guc.c

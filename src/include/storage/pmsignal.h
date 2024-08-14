@@ -58,7 +58,7 @@ typedef enum
 typedef struct PMSignalData PMSignalData;
 
 #ifdef EXEC_BACKEND
-extern volatile PMSignalData *PMSignalState;
+extern PGDLLIMPORT volatile PMSignalData *PMSignalState;
 #endif
 
 /*

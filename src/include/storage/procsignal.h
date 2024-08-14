@@ -77,7 +77,7 @@ extern void procsignal_sigusr1_handler(SIGNAL_ARGS);
 typedef struct ProcSignalHeader ProcSignalHeader;
 
 #ifdef EXEC_BACKEND
-extern ProcSignalHeader *ProcSignal;
+extern PGDLLIMPORT ProcSignalHeader *ProcSignal;
 #endif
 
 #endif							/* PROCSIGNAL_H */

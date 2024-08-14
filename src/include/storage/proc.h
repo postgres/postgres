@@ -454,8 +454,8 @@ extern PGDLLIMPORT int IdleSessionTimeout;
 extern PGDLLIMPORT bool log_lock_waits;
 
 #ifdef EXEC_BACKEND
-extern slock_t *ProcStructLock;
-extern PGPROC *AuxiliaryProcs;
+extern PGDLLIMPORT slock_t *ProcStructLock;
+extern PGDLLIMPORT PGPROC *AuxiliaryProcs;
 #endif
 
 

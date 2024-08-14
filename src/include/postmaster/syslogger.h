@@ -76,7 +76,7 @@ extern PGDLLIMPORT bool Log_truncate_on_rotation;
 extern PGDLLIMPORT int Log_file_mode;
 
 #ifdef EXEC_BACKEND
-extern pg_time_t first_syslogger_file_time;
+extern PGDLLIMPORT pg_time_t first_syslogger_file_time;
 #endif
 
 #ifndef WIN32
