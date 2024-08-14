@@ -840,3 +840,23 @@ pqTraceOutputNoTypeByteMessage(PGconn *conn, const char *message)
 
 	fputc('\n', conn->Pfdebug);
 }
+
+/*
+ * Trace a single-byte backend response received for a known request
+ * type the frontend previously sent.  Only useful for the simplest of
+ * FE/BE interaction workflows such as SSL/GSS encryption requests.
+ */
+void
+pqTraceOutputCharResponse(PGconn *conn, const char *responseType,
+						  char response)
+{
+	if ((conn->traceFlags & PQTRACE_SUPPRESS_TIMESTAMPS) == 0)
+	{
+		char		timestr[128];
+
+		pqTraceFormatTimestamp(timestr, sizeof(timestr));
+		fprintf(conn->Pfdebug, "%s\t", timestr);
+	}
+
+	fprintf(conn->Pfdebug, "B\t1\t%s\t %c\n", responseType, response);
+}
