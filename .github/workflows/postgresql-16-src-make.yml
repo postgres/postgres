@@ -58,7 +58,7 @@ jobs:
       - name: Build pg_tde
         run: |
           ./configure
-          make -j
+          make -j MAJORVERSION=16
           sudo make install
         working-directory: src/contrib/pg_tde
 

@@ -1,5 +1,6 @@
 *.so
 *.o
+__pycache__
 
 /config.cache
 /config.log

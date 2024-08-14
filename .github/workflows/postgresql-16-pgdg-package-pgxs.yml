@@ -56,7 +56,7 @@ jobs:
         run: |
           sudo -u postgres bash -c './configure'
           sudo -u postgres bash -c 'make USE_PGXS=1'
-          sudo make USE_PGXS=1 install
+          sudo make USE_PGXS=1 MAJORVERSION=16 install
         working-directory: src/pg_tde
 
       - name: Start pg_tde tests

@@ -1421,7 +1421,7 @@ lazy_scan_new_or_empty(LVRelState *vacrel, Buffer buf, BlockNumber blkno,
 		 * (which creates a number of empty pages at the tail end of the
 		 * relation), and then enters them into the FSM.
 		 *
-		 * Note we do not enter the page into the tdeheap_visibilitymap. That has the
+		 * Note we do not enter the page into the visibilitymap. That has the
 		 * downside that we repeatedly visit this page in subsequent vacuums,
 		 * but otherwise we'll never discover the space on a promoted standby.
 		 * The harm of repeated checking ought to normally not be too bad. The
@@ -2014,7 +2014,6 @@ lazy_scan_noprune(LVRelState *vacrel,
 
 		*hastup = true;			/* page prevents rel truncation */
 		tupleheader = (HeapTupleHeader) PageGetItem(page, itemid);
-		// TODO: decrypt
 		if  (tdeheap_tuple_should_freeze(tupleheader, &vacrel->cutoffs,
 									 &NoFreezePageRelfrozenXid,
 									 &NoFreezePageRelminMxid))
@@ -2822,11 +2821,8 @@ should_attempt_truncation(LVRelState *vacrel)
 {
 	BlockNumber possibly_freeable;
 
-	if (!vacrel->do_rel_truncate || VacuumFailsafeActive
-#if PG_VERSION_NUM < 170000
-	 || old_snapshot_threshold >= 0
-#endif
-		)
+	if (!vacrel->do_rel_truncate || VacuumFailsafeActive ||
+		old_snapshot_threshold >= 0)
 		return false;
 
 	possibly_freeable = vacrel->rel_pages - vacrel->nonempty_pages;

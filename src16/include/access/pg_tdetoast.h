@@ -13,7 +13,6 @@
 #ifndef PG_TDE_TOAST_H
 #define PG_TDE_TOAST_H
 
-
 #include "access/htup_details.h"
 #include "storage/lockdefs.h"
 #include "utils/relcache.h"

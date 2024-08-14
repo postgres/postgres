@@ -13,20 +13,23 @@ conf_data.set_quoted('PACKAGE_TARNAME', 'pg_tde')
 configure_file(output : 'config.h',
                configuration : conf_data)
 
+pg_version = meson.project_version().substring(0,2)
+src_version = 'src' + pg_version
+
 pg_tde_sources = files(
         'src/pg_tde.c',
         'src/transam/pg_tde_xact_handler.c',
         'src/access/pg_tde_tdemap.c',
         'src/access/pg_tde_slot.c',
-        'src/access/pg_tdeam.c',
-        'src/access/pg_tdeam_handler.c',
-        'src/access/pg_tdeam_visibility.c',
-        'src/access/pg_tdetoast.c',
-        'src/access/pg_tde_io.c',
-        'src/access/pg_tde_prune.c',
-        'src/access/pg_tde_rewrite.c',
-        'src/access/pg_tde_vacuumlazy.c',
-        'src/access/pg_tde_visibilitymap.c',
+        src_version / 'access/pg_tdeam.c',
+        src_version / 'access/pg_tdeam_handler.c',
+        src_version / 'access/pg_tdeam_visibility.c',
+        src_version / 'access/pg_tdetoast.c',
+        src_version / 'access/pg_tde_io.c',
+        src_version / 'access/pg_tde_prune.c',
+        src_version / 'access/pg_tde_rewrite.c',
+        src_version / 'access/pg_tde_vacuumlazy.c',
+        src_version / 'access/pg_tde_visibilitymap.c',
         'src/access/pg_tde_ddl.c',
         'src/access/pg_tde_xlog.c',
 
@@ -51,7 +54,7 @@ pg_tde_sources = files(
         'src/pg_tde_event_capture.c',
 )
 
-incdir = include_directories('src/include', '.')
+incdir = include_directories(src_version / 'include', 'src/include', '.')
 
 deps_update = {'dependencies': contrib_mod_args.get('dependencies') + [curldep]}
 

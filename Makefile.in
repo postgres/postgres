@@ -24,16 +24,16 @@ TAP_TESTS = 1
 OBJS = src/encryption/enc_tde.o \
 src/encryption/enc_aes.o \
 src/access/pg_tde_slot.o \
-src/access/pg_tde_io.o \
-src/access/pg_tdeam_visibility.o \
 src/access/pg_tde_tdemap.o \
-src/access/pg_tdeam.o \
-src/access/pg_tdetoast.o \
-src/access/pg_tde_prune.o \
-src/access/pg_tde_vacuumlazy.o \
-src/access/pg_tde_visibilitymap.o \
-src/access/pg_tde_rewrite.o \
-src/access/pg_tdeam_handler.o \
+src$(MAJORVERSION)/access/pg_tde_io.o \
+src$(MAJORVERSION)/access/pg_tdeam_visibility.o \
+src$(MAJORVERSION)/access/pg_tdeam.o \
+src$(MAJORVERSION)/access/pg_tdetoast.o \
+src$(MAJORVERSION)/access/pg_tde_prune.o \
+src$(MAJORVERSION)/access/pg_tde_vacuumlazy.o \
+src$(MAJORVERSION)/access/pg_tde_visibilitymap.o \
+src$(MAJORVERSION)/access/pg_tde_rewrite.o \
+src$(MAJORVERSION)/access/pg_tdeam_handler.o \
 src/access/pg_tde_ddl.o \
 src/access/pg_tde_xlog.o \
 src/transam/pg_tde_xact_handler.o \
@@ -57,12 +57,12 @@ override PG_CPPFLAGS += @tde_CPPFLAGS@
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
-override PG_CPPFLAGS += -I$(CURDIR)/src/include
+override PG_CPPFLAGS += -I$(CURDIR)/src/include -I$(CURDIR)/src$(MAJORVERSION)/include
 include $(PGXS)
 else
 subdir = contrib/pg_tde
 top_builddir = ../..
-override PG_CPPFLAGS += -I$(top_srcdir)/$(subdir)/src/include
+override PG_CPPFLAGS += -I$(top_srcdir)/$(subdir)/src/include -I$(top_srcdir)/$(subdir)/src$(MAJORVERSION)/include
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif

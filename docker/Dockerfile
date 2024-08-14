@@ -14,7 +14,7 @@ WORKDIR /opt/pg_tde
 COPY . .
 
 RUN ./configure && \
-    make USE_PGXS=1 && \
+    make USE_PGXS=1 MAJORVERSION=16 && \
     make USE_PGXS=1 install
 RUN cp /usr/share/postgresql/postgresql.conf.sample /etc/postgresql/postgresql.conf; \
     echo "shared_preload_libraries = 'pg_tde'" >> /etc/postgresql/postgresql.conf; \
