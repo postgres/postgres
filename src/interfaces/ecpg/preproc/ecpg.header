@@ -37,24 +37,25 @@ extern int base_yynerrs;
 /*
  * Variables containing simple states.
  */
-int struct_level = 0;
-int braces_open; /* brace level counter */
-char *current_function;
-int ecpg_internal_var = 0;
-char	*connection = NULL;
-char	*input_filename = NULL;
+int			struct_level = 0;
+int			braces_open;		/* brace level counter */
+char	   *current_function;
+int			ecpg_internal_var = 0;
+char	   *connection = NULL;
+char	   *input_filename = NULL;
 
 static int	FoundInto = 0;
 static int	initializer = 0;
 static int	pacounter = 1;
-static char	pacounter_buffer[sizeof(int) * CHAR_BIT * 10 / 3]; /* a rough guess at the size we need */
+static char pacounter_buffer[sizeof(int) * CHAR_BIT * 10 / 3];	/* a rough guess at the
+																 * size we need */
 static struct this_type actual_type[STRUCT_DEPTH];
 static char *actual_startline[STRUCT_DEPTH];
 static int	varchar_counter = 1;
 static int	bytea_counter = 1;
 
 /* temporarily store struct members while creating the data structure */
-struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
+struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = {NULL};
 
 /* also store struct type so we can do a sizeof() later */
 static char *ECPGstruct_sizeof = NULL;
@@ -82,7 +83,7 @@ vmmerror(int error_code, enum errortype type, const char *error, va_list ap)
 
 	fprintf(stderr, "%s:%d: ", input_filename, base_yylineno);
 
-	switch(type)
+	switch (type)
 	{
 		case ET_WARNING:
 			fprintf(stderr, _("WARNING: "));
@@ -96,7 +97,7 @@ vmmerror(int error_code, enum errortype type, const char *error, va_list ap)
 
 	fprintf(stderr, "\n");
 
-	switch(type)
+	switch (type)
 	{
 		case ET_WARNING:
 			break;
@@ -107,7 +108,7 @@ vmmerror(int error_code, enum errortype type, const char *error, va_list ap)
 }
 
 void
-mmerror(int error_code, enum errortype type, const char *error, ...)
+mmerror(int error_code, enum errortype type, const char *error,...)
 {
 	va_list		ap;
 
@@ -117,7 +118,7 @@ mmerror(int error_code, enum errortype type, const char *error, ...)
 }
 
 void
-mmfatal(int error_code, const char *error, ...)
+mmfatal(int error_code, const char *error,...)
 {
 	va_list		ap;
 
@@ -142,7 +143,7 @@ mmfatal(int error_code, const char *error, ...)
 static char *
 cat2_str(char *str1, char *str2)
 {
-	char * res_str	= (char *)mm_alloc(strlen(str1) + strlen(str2) + 2);
+	char	   *res_str = (char *) mm_alloc(strlen(str1) + strlen(str2) + 2);
 
 	strcpy(res_str, str1);
 	if (strlen(str1) != 0 && strlen(str2) != 0)
@@ -154,11 +155,11 @@ cat2_str(char *str1, char *str2)
 }
 
 static char *
-cat_str(int count, ...)
+cat_str(int count,...)
 {
 	va_list		args;
 	int			i;
-	char		*res_str;
+	char	   *res_str;
 
 	va_start(args, count);
 
@@ -176,7 +177,7 @@ cat_str(int count, ...)
 static char *
 make2_str(char *str1, char *str2)
 {
-	char * res_str	= (char *)mm_alloc(strlen(str1) + strlen(str2) + 1);
+	char	   *res_str = (char *) mm_alloc(strlen(str1) + strlen(str2) + 1);
 
 	strcpy(res_str, str1);
 	strcat(res_str, str2);
@@ -188,7 +189,7 @@ make2_str(char *str1, char *str2)
 static char *
 make3_str(char *str1, char *str2, char *str3)
 {
-	char * res_str	= (char *)mm_alloc(strlen(str1) + strlen(str2) +strlen(str3) + 1);
+	char	   *res_str = (char *) mm_alloc(strlen(str1) + strlen(str2) + strlen(str3) + 1);
 
 	strcpy(res_str, str1);
 	strcat(res_str, str2);
@@ -210,13 +211,18 @@ static char *
 create_questionmarks(char *name, bool array)
 {
 	struct variable *p = find_variable(name);
-	int count;
-	char *result = EMPTY;
+	int			count;
+	char	   *result = EMPTY;
 
-	/* In case we have a struct, we have to print as many "?" as there are attributes in the struct
+	/*
+	 * In case we have a struct, we have to print as many "?" as there are
+	 * attributes in the struct
+	 *
 	 * An array is only allowed together with an element argument
-	 * This is essentially only used for inserts, but using a struct as input parameter is an error anywhere else
-	 * so we don't have to worry here. */
+	 *
+	 * This is essentially only used for inserts, but using a struct as input
+	 * parameter is an error anywhere else so we don't have to worry here.
+	 */
 
 	if (p->type->type == ECPGt_struct || (array && p->type->type == ECPGt_array && p->type->u.element->type == ECPGt_struct))
 	{
@@ -227,12 +233,12 @@ create_questionmarks(char *name, bool array)
 		else
 			m = p->type->u.element->u.members;
 
-		for (count = 0; m != NULL; m=m->next, count++);
+		for (count = 0; m != NULL; m = m->next, count++);
 	}
 	else
 		count = 1;
 
-	for (; count > 0; count --)
+	for (; count > 0; count--)
 	{
 		sprintf(pacounter_buffer, "$%d", pacounter++);
 		result = cat_str(3, result, mm_strdup(pacounter_buffer), mm_strdup(" , "));
@@ -240,42 +246,45 @@ create_questionmarks(char *name, bool array)
 
 	/* removed the trailing " ," */
 
-	result[strlen(result)-3] = '\0';
+	result[strlen(result) - 3] = '\0';
 	return result;
 }
 
 static char *
 adjust_outofscope_cursor_vars(struct cursor *cur)
 {
-	/* Informix accepts DECLARE with variables that are out of scope when OPEN is called.
-	 * For instance you can DECLARE a cursor in one function, and OPEN/FETCH/CLOSE
-	 * it in another functions. This is very useful for e.g. event-driver programming,
-	 * but may also lead to dangerous programming. The limitation when this is allowed
-	 * and doesn't cause problems have to be documented, like the allocated variables
-	 * must not be realloc()'ed.
+	/*
+	 * Informix accepts DECLARE with variables that are out of scope when OPEN
+	 * is called. For instance you can DECLARE a cursor in one function, and
+	 * OPEN/FETCH/CLOSE it in another functions. This is very useful for e.g.
+	 * event-driver programming, but may also lead to dangerous programming.
+	 * The limitation when this is allowed and doesn't cause problems have to
+	 * be documented, like the allocated variables must not be realloc()'ed.
 	 *
-	 * We have to change the variables to our own struct and just store the pointer
-	 * instead of the variable. Do it only for local variables, not for globals.
+	 * We have to change the variables to our own struct and just store the
+	 * pointer instead of the variable. Do it only for local variables, not
+	 * for globals.
 	 */
 
-	char *result = EMPTY;
-	int insert;
+	char	   *result = EMPTY;
+	int			insert;
 
 	for (insert = 1; insert >= 0; insert--)
 	{
 		struct arguments *list;
 		struct arguments *ptr;
 		struct arguments *newlist = NULL;
-		struct variable *newvar, *newind;
+		struct variable *newvar,
+				   *newind;
 
 		list = (insert ? cur->argsinsert : cur->argsresult);
 
 		for (ptr = list; ptr != NULL; ptr = ptr->next)
 		{
-			char var_text[20];
-			char *original_var;
-			bool skip_set_var = false;
-			bool var_ptr = false;
+			char		var_text[20];
+			char	   *original_var;
+			bool		skip_set_var = false;
+			bool		var_ptr = false;
 
 			/* change variable name to "ECPGget_var(<counter>)" */
 			original_var = ptr->variable->name;
@@ -350,10 +359,10 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 					|| ptr->variable->type->u.element->type == ECPGt_union)
 				{
 					newvar = new_variable(cat_str(5, mm_strdup("(*("),
-											  mm_strdup(ptr->variable->type->u.element->type_name),
-											  mm_strdup(" *)(ECPGget_var("),
-											  mm_strdup(var_text),
-											  mm_strdup(")")),
+												  mm_strdup(ptr->variable->type->u.element->type_name),
+												  mm_strdup(" *)(ECPGget_var("),
+												  mm_strdup(var_text),
+												  mm_strdup(")")),
 										  ECPGmake_struct_type(ptr->variable->type->u.element->u.members,
 															   ptr->variable->type->u.element->type,
 															   ptr->variable->type->u.element->type_name,
@@ -387,7 +396,10 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 				var_ptr = true;
 			}
 
-			/* create call to "ECPGset_var(<counter>, <connection>, <pointer>. <line number>)" */
+			/*
+			 * create call to "ECPGset_var(<counter>, <connection>, <pointer>.
+			 * <line number>)"
+			 */
 			if (!skip_set_var)
 			{
 				sprintf(var_text, "%d, %s", ecpg_internal_var++, var_ptr ? "&(" : "(");
@@ -396,7 +408,10 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 								 mm_strdup("), __LINE__);\n"));
 			}
 
-			/* now the indicator if there is one and it's not a global variable */
+			/*
+			 * now the indicator if there is one and it's not a global
+			 * variable
+			 */
 			if ((ptr->indicator->type->type == ECPGt_NO_INDICATOR) || (ptr->indicator->brace_level == 0))
 			{
 				newind = ptr->indicator;
@@ -412,10 +427,10 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 					|| ptr->indicator->type->type == ECPGt_union)
 				{
 					newind = new_variable(cat_str(5, mm_strdup("(*("),
-											  mm_strdup(ptr->indicator->type->type_name),
-											  mm_strdup(" *)(ECPGget_var("),
-											  mm_strdup(var_text),
-											  mm_strdup(")")),
+												  mm_strdup(ptr->indicator->type->type_name),
+												  mm_strdup(" *)(ECPGget_var("),
+												  mm_strdup(var_text),
+												  mm_strdup(")")),
 										  ECPGmake_struct_type(ptr->indicator->type->u.members,
 															   ptr->indicator->type->type,
 															   ptr->indicator->type->type_name,
@@ -429,10 +444,10 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 						|| ptr->indicator->type->u.element->type == ECPGt_union)
 					{
 						newind = new_variable(cat_str(5, mm_strdup("(*("),
-											  mm_strdup(ptr->indicator->type->u.element->type_name),
-											  mm_strdup(" *)(ECPGget_var("),
-											  mm_strdup(var_text),
-											  mm_strdup(")")),
+													  mm_strdup(ptr->indicator->type->u.element->type_name),
+													  mm_strdup(" *)(ECPGget_var("),
+													  mm_strdup(var_text),
+													  mm_strdup(")")),
 											  ECPGmake_struct_type(ptr->indicator->type->u.element->u.members,
 																   ptr->indicator->type->u.element->type,
 																   ptr->indicator->type->u.element->type_name,
@@ -476,7 +491,10 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 					var_ptr = true;
 				}
 
-				/* create call to "ECPGset_var(<counter>, <pointer>. <line number>)" */
+				/*
+				 * create call to "ECPGset_var(<counter>, <pointer>. <line
+				 * number>)"
+				 */
 				sprintf(var_text, "%d, %s", ecpg_internal_var++, var_ptr ? "&(" : "(");
 				result = cat_str(5, result, mm_strdup("ECPGset_var("),
 								 mm_strdup(var_text), mm_strdup(original_var),
@@ -505,9 +523,9 @@ add_additional_variables(char *name, bool insert)
 {
 	struct cursor *ptr;
 	struct arguments *p;
-	int (* strcmp_fn)(const char *, const char *) = ((name[0] == ':' || name[0] == '"') ? strcmp : pg_strcasecmp);
+	int			(*strcmp_fn) (const char *, const char *) = ((name[0] == ':' || name[0] == '"') ? strcmp : pg_strcasecmp);
 
-	for (ptr = cur; ptr != NULL; ptr=ptr->next)
+	for (ptr = cur; ptr != NULL; ptr = ptr->next)
 	{
 		if (strcmp_fn(ptr->name, name) == 0)
 			break;
@@ -521,8 +539,12 @@ add_additional_variables(char *name, bool insert)
 
 	if (insert)
 	{
-		/* add all those input variables that were given earlier
-		 * note that we have to append here but have to keep the existing order */
+		/*
+		 * add all those input variables that were given earlier
+		 *
+		 * note that we have to append here but have to keep the existing
+		 * order
+		 */
 		for (p = (SAMEFUNC(ptr) ? ptr->argsinsert : ptr->argsinsert_oos); p; p = p->next)
 			add_variable_to_tail(&argsinsert, p->variable, p->indicator);
 	}
@@ -539,7 +561,8 @@ add_typedef(char *name, char *dimension, char *length, enum ECPGttype type_enum,
 			char *type_dimension, char *type_index, int initializer, int array)
 {
 	/* add entry to list */
-	struct typedefs *ptr, *this;
+	struct typedefs *ptr,
+			   *this;
 
 	if ((type_enum == ECPGt_struct ||
 		 type_enum == ECPGt_union) &&
@@ -570,7 +593,7 @@ add_typedef(char *name, char *dimension, char *length, enum ECPGttype type_enum,
 		this->type->type_index = length;	/* length of string */
 		this->type->type_sizeof = ECPGstruct_sizeof;
 		this->struct_member_list = (type_enum == ECPGt_struct || type_enum == ECPGt_union) ?
-		ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
+			ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
 
 		if (type_enum != ECPGt_varchar &&
 			type_enum != ECPGt_bytea &&
@@ -593,15 +616,16 @@ static bool
 check_declared_list(const char *name)
 {
 	struct declared_list *ptr = NULL;
-	for (ptr = g_declared_list; ptr != NULL; ptr = ptr -> next)
+
+	for (ptr = g_declared_list; ptr != NULL; ptr = ptr->next)
 	{
 		if (!ptr->connection)
 			continue;
-		if (strcmp(name, ptr -> name) == 0)
+		if (strcmp(name, ptr->name) == 0)
 		{
 			if (connection && strcmp(ptr->connection, connection) != 0)
 				mmerror(PARSE_ERROR, ET_WARNING, "connection %s is overwritten with %s by DECLARE statement %s", connection, ptr->connection, name);
-			connection = mm_strdup(ptr -> connection);
+			connection = mm_strdup(ptr->connection);
 			return true;
 		}
 	}
@@ -614,18 +638,18 @@ check_declared_list(const char *name)
 %locations
 
 %union {
-	double	dval;
-	char	*str;
-	int		ival;
-	struct	when		action;
-	struct	index		index;
-	int		tagname;
-	struct	this_type	type;
-	enum	ECPGttype	type_enum;
-	enum	ECPGdtype	dtype_enum;
-	struct	fetch_desc	descriptor;
-	struct  su_symbol	struct_union;
-	struct	prep		prep;
-	struct	exec		exec;
-	struct describe		describe;
+	double		dval;
+	char	   *str;
+	int			ival;
+	struct when action;
+	struct index index;
+	int			tagname;
+	struct this_type type;
+	enum ECPGttype type_enum;
+	enum ECPGdtype dtype_enum;
+	struct fetch_desc descriptor;
+	struct su_symbol struct_union;
+	struct prep prep;
+	struct exec exec;
+	struct describe describe;
 }
