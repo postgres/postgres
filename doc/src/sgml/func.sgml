@@ -2910,7 +2910,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>unicode_assigned</primary>
         </indexterm>
         <function>unicode_assigned</function> ( <type>text</type> )
-        <returnvalue>text</returnvalue>
+        <returnvalue>boolean</returnvalue>
        </para>
        <para>
         Returns <literal>true</literal> if all characters in the string are
