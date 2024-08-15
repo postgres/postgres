@@ -8113,7 +8113,7 @@ int64_to_numericvar(int64 val, NumericVar *var)
 	if (val < 0)
 	{
 		var->sign = NUMERIC_NEG;
-		uval = -val;
+		uval = pg_abs_s64(val);
 	}
 	else
 	{
@@ -11584,7 +11584,7 @@ power_var_int(const NumericVar *base, int exp, int exp_dscale,
 	 * Now we can proceed with the multiplications.
 	 */
 	neg = (exp < 0);
-	mask = abs(exp);
+	mask = pg_abs_s32(exp);
 
 	init_var(&base_prod);
 	set_var_from_var(base, &base_prod);

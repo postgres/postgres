@@ -23,15 +23,35 @@
 
 /*---------
  * The following guidelines apply to all the overflow routines:
- * - If a + b overflows, return true, otherwise store the result of a + b
- * into *result. The content of *result is implementation defined in case of
+ *
+ * If the result overflows, return true, otherwise store the result into
+ * *result.  The content of *result is implementation defined in case of
  * overflow.
- * - If a - b overflows, return true, otherwise store the result of a - b
- * into *result. The content of *result is implementation defined in case of
- * overflow.
- * - If a * b overflows, return true, otherwise store the result of a * b
- * into *result. The content of *result is implementation defined in case of
- * overflow.
+ *
+ *  bool pg_add_*_overflow(a, b, *result)
+ *
+ *    Calculate a + b
+ *
+ *  bool pg_sub_*_overflow(a, b, *result)
+ *
+ *    Calculate a - b
+ *
+ *  bool pg_mul_*_overflow(a, b, *result)
+ *
+ *    Calculate a * b
+ *
+ *  bool pg_neg_*_overflow(a, *result)
+ *
+ *    Calculate -a
+ *
+ *
+ * In addition, this file contains:
+ *
+ *  <unsigned int type> pg_abs_*(<signed int type> a)
+ *
+ *    Calculate absolute value of a.  Unlike the standard library abs()
+ *    and labs() functions, the return type is unsigned, so the operation
+ *    cannot overflow.
  *---------
  */
 
@@ -97,6 +117,17 @@ pg_mul_s16_overflow(int16 a, int16 b, int16 *result)
 #endif
 }
 
+static inline uint16
+pg_abs_s16(int16 a)
+{
+	/*
+	 * This first widens the argument from int16 to int32 for use with abs().
+	 * The result is then narrowed from int32 to uint16.  This prevents any
+	 * possibility of overflow.
+	 */
+	return (uint16) abs((int32) a);
+}
+
 /*
  * INT32
  */
@@ -152,6 +183,17 @@ pg_mul_s32_overflow(int32 a, int32 b, int32 *result)
 	*result = (int32) res;
 	return false;
 #endif
+}
+
+static inline uint32
+pg_abs_s32(int32 a)
+{
+	/*
+	 * This first widens the argument from int32 to int64 for use with
+	 * i64abs().  The result is then narrowed from int64 to uint32.  This
+	 * prevents any possibility of overflow.
+	 */
+	return (uint32) i64abs((int64) a);
 }
 
 /*
@@ -258,6 +300,14 @@ pg_mul_s64_overflow(int64 a, int64 b, int64 *result)
 #endif
 }
 
+static inline uint64
+pg_abs_s64(int64 a)
+{
+	if (unlikely(a == PG_INT64_MIN))
+		return (uint64) PG_INT64_MAX + 1;
+	return (uint64) i64abs(a);
+}
+
 /*------------------------------------------------------------------------
  * Overflow routines for unsigned integers
  *------------------------------------------------------------------------
@@ -318,6 +368,24 @@ pg_mul_u16_overflow(uint16 a, uint16 b, uint16 *result)
 #endif
 }
 
+static inline bool
+pg_neg_u16_overflow(uint16 a, int16 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(0, a, result);
+#else
+	int32		res = -((int32) a);
+
+	if (unlikely(res < PG_INT16_MIN))
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
+	return false;
+#endif
+}
+
 /*
  * INT32
  */
@@ -369,6 +437,24 @@ pg_mul_u32_overflow(uint32 a, uint32 b, uint32 *result)
 		return true;
 	}
 	*result = (uint32) res;
+	return false;
+#endif
+}
+
+static inline bool
+pg_neg_u32_overflow(uint32 a, int32 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(0, a, result);
+#else
+	int64		res = -((int64) a);
+
+	if (unlikely(res < PG_INT32_MIN))
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
 	return false;
 #endif
 }
@@ -434,6 +520,35 @@ pg_mul_u64_overflow(uint64 a, uint64 b, uint64 *result)
 		return true;
 	}
 	*result = res;
+	return false;
+#endif
+}
+
+static inline bool
+pg_neg_u64_overflow(uint64 a, int64 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(0, a, result);
+#elif defined(HAVE_INT128)
+	int128		res = -((int128) a);
+
+	if (unlikely(res < PG_INT64_MIN))
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
+	return false;
+#else
+	if (unlikely(a > (uint64) PG_INT64_MAX + 1))
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	if (unlikely(a == (uint64) PG_INT64_MAX + 1))
+		*result = PG_INT64_MIN;
+	else
+		*result = -((int64) a);
 	return false;
 #endif
 }

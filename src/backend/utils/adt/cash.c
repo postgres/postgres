@@ -387,6 +387,7 @@ Datum
 cash_out(PG_FUNCTION_ARGS)
 {
 	Cash		value = PG_GETARG_CASH(0);
+	uint64		uvalue;
 	char	   *result;
 	char		buf[128];
 	char	   *bufptr;
@@ -429,8 +430,6 @@ cash_out(PG_FUNCTION_ARGS)
 
 	if (value < 0)
 	{
-		/* make the amount positive for digit-reconstruction loop */
-		value = -value;
 		/* set up formatting data */
 		signsymbol = (*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-";
 		sign_posn = lconvert->n_sign_posn;
@@ -444,6 +443,9 @@ cash_out(PG_FUNCTION_ARGS)
 		cs_precedes = lconvert->p_cs_precedes;
 		sep_by_space = lconvert->p_sep_by_space;
 	}
+
+	/* make the amount positive for digit-reconstruction loop */
+	uvalue = pg_abs_s64(value);
 
 	/* we build the digits+decimal-point+sep string right-to-left in buf[] */
 	bufptr = buf + sizeof(buf) - 1;
@@ -470,10 +472,10 @@ cash_out(PG_FUNCTION_ARGS)
 			memcpy(bufptr, ssymbol, strlen(ssymbol));
 		}
 
-		*(--bufptr) = ((uint64) value % 10) + '0';
-		value = ((uint64) value) / 10;
+		*(--bufptr) = (uvalue % 10) + '0';
+		uvalue = uvalue / 10;
 		digit_pos--;
-	} while (value || digit_pos >= 0);
+	} while (uvalue || digit_pos >= 0);
 
 	/*----------
 	 * Now, attach currency symbol and sign symbol in the correct order.
