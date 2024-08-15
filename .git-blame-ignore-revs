@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+97add39c038bbdb9082b416ddf04cd20b0d20bf5 # 2024-08-15 11:41:46 -0400
+# Clean up indentation and whitespace inconsistencies in ecpg.
+
 8de5ca1dc9fa809102acd1983ee19159d0bc469f # 2024-08-12 10:57:03 +0300
 # Fix bad indentation introduced in commit f011e82c2c
 
