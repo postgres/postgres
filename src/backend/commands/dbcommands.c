@@ -704,22 +704,22 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	Oid			dboid = InvalidOid;
 	Oid			datdba;
 	ListCell   *option;
-	DefElem    *dtablespacename = NULL;
-	DefElem    *downer = NULL;
-	DefElem    *dtemplate = NULL;
-	DefElem    *dencoding = NULL;
-	DefElem    *dlocale = NULL;
-	DefElem    *dbuiltinlocale = NULL;
-	DefElem    *dcollate = NULL;
-	DefElem    *dctype = NULL;
-	DefElem    *diculocale = NULL;
-	DefElem    *dicurules = NULL;
-	DefElem    *dlocprovider = NULL;
-	DefElem    *distemplate = NULL;
-	DefElem    *dallowconnections = NULL;
-	DefElem    *dconnlimit = NULL;
-	DefElem    *dcollversion = NULL;
-	DefElem    *dstrategy = NULL;
+	DefElem    *tablespacenameEl = NULL;
+	DefElem    *ownerEl = NULL;
+	DefElem    *templateEl = NULL;
+	DefElem    *encodingEl = NULL;
+	DefElem    *localeEl = NULL;
+	DefElem    *builtinlocaleEl = NULL;
+	DefElem    *collateEl = NULL;
+	DefElem    *ctypeEl = NULL;
+	DefElem    *iculocaleEl = NULL;
+	DefElem    *icurulesEl = NULL;
+	DefElem    *locproviderEl = NULL;
+	DefElem    *istemplateEl = NULL;
+	DefElem    *allowconnectionsEl = NULL;
+	DefElem    *connlimitEl = NULL;
+	DefElem    *collversionEl = NULL;
+	DefElem    *strategyEl = NULL;
 	char	   *dbname = stmt->dbname;
 	char	   *dbowner = NULL;
 	const char *dbtemplate = NULL;
@@ -746,93 +746,93 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 
 		if (strcmp(defel->defname, "tablespace") == 0)
 		{
-			if (dtablespacename)
+			if (tablespacenameEl)
 				errorConflictingDefElem(defel, pstate);
-			dtablespacename = defel;
+			tablespacenameEl = defel;
 		}
 		else if (strcmp(defel->defname, "owner") == 0)
 		{
-			if (downer)
+			if (ownerEl)
 				errorConflictingDefElem(defel, pstate);
-			downer = defel;
+			ownerEl = defel;
 		}
 		else if (strcmp(defel->defname, "template") == 0)
 		{
-			if (dtemplate)
+			if (templateEl)
 				errorConflictingDefElem(defel, pstate);
-			dtemplate = defel;
+			templateEl = defel;
 		}
 		else if (strcmp(defel->defname, "encoding") == 0)
 		{
-			if (dencoding)
+			if (encodingEl)
 				errorConflictingDefElem(defel, pstate);
-			dencoding = defel;
+			encodingEl = defel;
 		}
 		else if (strcmp(defel->defname, "locale") == 0)
 		{
-			if (dlocale)
+			if (localeEl)
 				errorConflictingDefElem(defel, pstate);
-			dlocale = defel;
+			localeEl = defel;
 		}
 		else if (strcmp(defel->defname, "builtin_locale") == 0)
 		{
-			if (dbuiltinlocale)
+			if (builtinlocaleEl)
 				errorConflictingDefElem(defel, pstate);
-			dbuiltinlocale = defel;
+			builtinlocaleEl = defel;
 		}
 		else if (strcmp(defel->defname, "lc_collate") == 0)
 		{
-			if (dcollate)
+			if (collateEl)
 				errorConflictingDefElem(defel, pstate);
-			dcollate = defel;
+			collateEl = defel;
 		}
 		else if (strcmp(defel->defname, "lc_ctype") == 0)
 		{
-			if (dctype)
+			if (ctypeEl)
 				errorConflictingDefElem(defel, pstate);
-			dctype = defel;
+			ctypeEl = defel;
 		}
 		else if (strcmp(defel->defname, "icu_locale") == 0)
 		{
-			if (diculocale)
+			if (iculocaleEl)
 				errorConflictingDefElem(defel, pstate);
-			diculocale = defel;
+			iculocaleEl = defel;
 		}
 		else if (strcmp(defel->defname, "icu_rules") == 0)
 		{
-			if (dicurules)
+			if (icurulesEl)
 				errorConflictingDefElem(defel, pstate);
-			dicurules = defel;
+			icurulesEl = defel;
 		}
 		else if (strcmp(defel->defname, "locale_provider") == 0)
 		{
-			if (dlocprovider)
+			if (locproviderEl)
 				errorConflictingDefElem(defel, pstate);
-			dlocprovider = defel;
+			locproviderEl = defel;
 		}
 		else if (strcmp(defel->defname, "is_template") == 0)
 		{
-			if (distemplate)
+			if (istemplateEl)
 				errorConflictingDefElem(defel, pstate);
-			distemplate = defel;
+			istemplateEl = defel;
 		}
 		else if (strcmp(defel->defname, "allow_connections") == 0)
 		{
-			if (dallowconnections)
+			if (allowconnectionsEl)
 				errorConflictingDefElem(defel, pstate);
-			dallowconnections = defel;
+			allowconnectionsEl = defel;
 		}
 		else if (strcmp(defel->defname, "connection_limit") == 0)
 		{
-			if (dconnlimit)
+			if (connlimitEl)
 				errorConflictingDefElem(defel, pstate);
-			dconnlimit = defel;
+			connlimitEl = defel;
 		}
 		else if (strcmp(defel->defname, "collation_version") == 0)
 		{
-			if (dcollversion)
+			if (collversionEl)
 				errorConflictingDefElem(defel, pstate);
-			dcollversion = defel;
+			collversionEl = defel;
 		}
 		else if (strcmp(defel->defname, "location") == 0)
 		{
@@ -868,9 +868,9 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		}
 		else if (strcmp(defel->defname, "strategy") == 0)
 		{
-			if (dstrategy)
+			if (strategyEl)
 				errorConflictingDefElem(defel, pstate);
-			dstrategy = defel;
+			strategyEl = defel;
 		}
 		else
 			ereport(ERROR,
@@ -879,17 +879,17 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					 parser_errposition(pstate, defel->location)));
 	}
 
-	if (downer && downer->arg)
-		dbowner = defGetString(downer);
-	if (dtemplate && dtemplate->arg)
-		dbtemplate = defGetString(dtemplate);
-	if (dencoding && dencoding->arg)
+	if (ownerEl && ownerEl->arg)
+		dbowner = defGetString(ownerEl);
+	if (templateEl && templateEl->arg)
+		dbtemplate = defGetString(templateEl);
+	if (encodingEl && encodingEl->arg)
 	{
 		const char *encoding_name;
 
-		if (IsA(dencoding->arg, Integer))
+		if (IsA(encodingEl->arg, Integer))
 		{
-			encoding = defGetInt32(dencoding);
+			encoding = defGetInt32(encodingEl);
 			encoding_name = pg_encoding_to_char(encoding);
 			if (strcmp(encoding_name, "") == 0 ||
 				pg_valid_server_encoding(encoding_name) < 0)
@@ -897,39 +897,39 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("%d is not a valid encoding code",
 								encoding),
-						 parser_errposition(pstate, dencoding->location)));
+						 parser_errposition(pstate, encodingEl->location)));
 		}
 		else
 		{
-			encoding_name = defGetString(dencoding);
+			encoding_name = defGetString(encodingEl);
 			encoding = pg_valid_server_encoding(encoding_name);
 			if (encoding < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("%s is not a valid encoding name",
 								encoding_name),
-						 parser_errposition(pstate, dencoding->location)));
+						 parser_errposition(pstate, encodingEl->location)));
 		}
 	}
-	if (dlocale && dlocale->arg)
+	if (localeEl && localeEl->arg)
 	{
-		dbcollate = defGetString(dlocale);
-		dbctype = defGetString(dlocale);
-		dblocale = defGetString(dlocale);
+		dbcollate = defGetString(localeEl);
+		dbctype = defGetString(localeEl);
+		dblocale = defGetString(localeEl);
 	}
-	if (dbuiltinlocale && dbuiltinlocale->arg)
-		dblocale = defGetString(dbuiltinlocale);
-	if (dcollate && dcollate->arg)
-		dbcollate = defGetString(dcollate);
-	if (dctype && dctype->arg)
-		dbctype = defGetString(dctype);
-	if (diculocale && diculocale->arg)
-		dblocale = defGetString(diculocale);
-	if (dicurules && dicurules->arg)
-		dbicurules = defGetString(dicurules);
-	if (dlocprovider && dlocprovider->arg)
+	if (builtinlocaleEl && builtinlocaleEl->arg)
+		dblocale = defGetString(builtinlocaleEl);
+	if (collateEl && collateEl->arg)
+		dbcollate = defGetString(collateEl);
+	if (ctypeEl && ctypeEl->arg)
+		dbctype = defGetString(ctypeEl);
+	if (iculocaleEl && iculocaleEl->arg)
+		dblocale = defGetString(iculocaleEl);
+	if (icurulesEl && icurulesEl->arg)
+		dbicurules = defGetString(icurulesEl);
+	if (locproviderEl && locproviderEl->arg)
 	{
-		char	   *locproviderstr = defGetString(dlocprovider);
+		char	   *locproviderstr = defGetString(locproviderEl);
 
 		if (pg_strcasecmp(locproviderstr, "builtin") == 0)
 			dblocprovider = COLLPROVIDER_BUILTIN;
@@ -943,20 +943,20 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					 errmsg("unrecognized locale provider: %s",
 							locproviderstr)));
 	}
-	if (distemplate && distemplate->arg)
-		dbistemplate = defGetBoolean(distemplate);
-	if (dallowconnections && dallowconnections->arg)
-		dballowconnections = defGetBoolean(dallowconnections);
-	if (dconnlimit && dconnlimit->arg)
+	if (istemplateEl && istemplateEl->arg)
+		dbistemplate = defGetBoolean(istemplateEl);
+	if (allowconnectionsEl && allowconnectionsEl->arg)
+		dballowconnections = defGetBoolean(allowconnectionsEl);
+	if (connlimitEl && connlimitEl->arg)
 	{
-		dbconnlimit = defGetInt32(dconnlimit);
+		dbconnlimit = defGetInt32(connlimitEl);
 		if (dbconnlimit < DATCONNLIMIT_UNLIMITED)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid connection limit: %d", dbconnlimit)));
 	}
-	if (dcollversion)
-		dbcollversion = defGetString(dcollversion);
+	if (collversionEl)
+		dbcollversion = defGetString(collversionEl);
 
 	/* obtain OID of proposed owner */
 	if (dbowner)
@@ -1025,11 +1025,11 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	}
 
 	/* Validate the database creation strategy. */
-	if (dstrategy && dstrategy->arg)
+	if (strategyEl && strategyEl->arg)
 	{
 		char	   *strategy;
 
-		strategy = defGetString(dstrategy);
+		strategy = defGetString(strategyEl);
 		if (pg_strcasecmp(strategy, "wal_log") == 0)
 			dbstrategy = CREATEDB_WAL_LOG;
 		else if (pg_strcasecmp(strategy, "file_copy") == 0)
@@ -1080,7 +1080,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	/* validate provider-specific parameters */
 	if (dblocprovider != COLLPROVIDER_BUILTIN)
 	{
-		if (dbuiltinlocale)
+		if (builtinlocaleEl)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("BUILTIN_LOCALE cannot be specified unless locale provider is builtin")));
@@ -1088,7 +1088,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 
 	if (dblocprovider != COLLPROVIDER_ICU)
 	{
-		if (diculocale)
+		if (iculocaleEl)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("ICU locale cannot be specified unless locale provider is ICU")));
@@ -1239,7 +1239,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	 * template0, for which we stipulate that it does not contain
 	 * collation-using objects.)
 	 */
-	if (src_collversion && !dcollversion)
+	if (src_collversion && !collversionEl)
 	{
 		char	   *actual_versionstr;
 		const char *locale;
@@ -1289,12 +1289,12 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	}
 
 	/* Resolve default tablespace for new database */
-	if (dtablespacename && dtablespacename->arg)
+	if (tablespacenameEl && tablespacenameEl->arg)
 	{
 		char	   *tablespacename;
 		AclResult	aclresult;
 
-		tablespacename = defGetString(dtablespacename);
+		tablespacename = defGetString(tablespacenameEl);
 		dst_deftablespace = get_tablespace_oid(tablespacename, false);
 		/* check permissions */
 		aclresult = object_aclcheck(TableSpaceRelationId, dst_deftablespace, GetUserId(),
