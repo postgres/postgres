@@ -690,9 +690,13 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 
 	/*
 	 * Set FrontendProtocol now so that ereport() knows what format to send if
-	 * we fail during startup.
+	 * we fail during startup. We use the protocol version requested by the
+	 * client unless it's higher than the latest version we support. It's
+	 * possible that error message fields might look different in newer
+	 * protocol versions, but that's something those new clients should be
+	 * able to deal with.
 	 */
-	FrontendProtocol = proto;
+	FrontendProtocol = Min(proto, PG_PROTOCOL_LATEST);
 
 	/* Check that the major protocol version is in range. */
 	if (PG_PROTOCOL_MAJOR(proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
@@ -852,9 +856,12 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 
 /*
  * Send a NegotiateProtocolVersion to the client.  This lets the client know
- * that they have requested a newer minor protocol version than we are able
- * to speak.  We'll speak the highest version we know about; the client can,
- * of course, abandon the connection if that's a problem.
+ * that they have either requested a newer minor protocol version than we are
+ * able to speak, or at least one protocol option that we don't understand, or
+ * possibly both. FrontendProtocol has already been set to the version
+ * requested by the client or the highest version we know how to speak,
+ * whichever is older. If the highest version that we know how to speak is too
+ * old for the client, it can abandon the connection.
  *
  * We also include in the response a list of protocol options we didn't
  * understand.  This allows clients to include optional parameters that might
@@ -870,7 +877,7 @@ SendNegotiateProtocolVersion(List *unrecognized_protocol_options)
 	ListCell   *lc;
 
 	pq_beginmessage(&buf, PqMsg_NegotiateProtocolVersion);
-	pq_sendint32(&buf, PG_PROTOCOL_LATEST);
+	pq_sendint32(&buf, FrontendProtocol);
 	pq_sendint32(&buf, list_length(unrecognized_protocol_options));
 	foreach(lc, unrecognized_protocol_options)
 		pq_sendstring(&buf, lfirst(lc));
