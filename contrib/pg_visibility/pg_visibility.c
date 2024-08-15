@@ -546,10 +546,20 @@ collect_visibility_data(Oid relid, bool include_pd)
  *
  * 1. Ignore processes xmin's, because they consider connection to other
  *    databases that were ignored before.
- * 2. Ignore KnownAssignedXids, because they are not database-aware. At the
- *    same time, the primary could compute its horizons database-aware.
+ * 2. Ignore KnownAssignedXids, as they are not database-aware. Although we
+ *    now perform minimal checking on a standby by always using nextXid, this
+ *    approach is better than nothing and will at least catch extremely broken
+ *    cases where a xid is in the future.
  * 3. Ignore walsender xmin, because it could go backward if some replication
  *    connections don't use replication slots.
+ *
+ * While it might seem like we could use KnownAssignedXids for shared
+ * catalogs, since shared catalogs rely on a global horizon rather than a
+ * database-specific one - there are potential edge cases.  For example, a
+ * transaction may crash on the primary without writing a commit/abort record.
+ * This would lead to a situation where it appears to still be running on the
+ * standby, even though it has already ended on the primary.  For this reason,
+ * it's safer to ignore KnownAssignedXids, even for shared catalogs.
  *
  * As a result, we're using only currently running xids to compute the horizon.
  * Surely these would significantly sacrifice accuracy.  But we have to do so
@@ -560,7 +570,17 @@ GetStrictOldestNonRemovableTransactionId(Relation rel)
 {
 	RunningTransactions runningTransactions;
 
-	if (rel == NULL || rel->rd_rel->relisshared || RecoveryInProgress())
+	if (RecoveryInProgress())
+	{
+		TransactionId result;
+
+		/* As we ignore KnownAssignedXids on standby, just pick nextXid */
+		LWLockAcquire(XidGenLock, LW_SHARED);
+		result = XidFromFullTransactionId(TransamVariables->nextXid);
+		LWLockRelease(XidGenLock);
+		return result;
+	}
+	else if (rel == NULL || rel->rd_rel->relisshared)
 	{
 		/* Shared relation: take into account all running xids */
 		runningTransactions = GetRunningTransactionData();
