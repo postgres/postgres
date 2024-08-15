@@ -417,6 +417,10 @@ ALTER PUBLICATION testpub_fortable DROP TABLE testpub_tbl5;
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, d);
 -- error: system attributes "ctid" not allowed in column list
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, ctid);
+ALTER PUBLICATION testpub_fortable SET TABLE testpub_tbl1 (id, ctid);
+-- error: duplicates not allowed in column list
+ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, a);
+ALTER PUBLICATION testpub_fortable SET TABLE testpub_tbl5 (a, a);
 -- ok
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, c);
 ALTER TABLE testpub_tbl5 DROP COLUMN c;		-- no dice

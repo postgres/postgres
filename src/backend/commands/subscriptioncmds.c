@@ -2266,7 +2266,7 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 		 *
 		 * Note that attrs are always stored in sorted order so we don't need
 		 * to worry if different publications have specified them in a
-		 * different order. See publication_translate_columns.
+		 * different order. See pub_collist_validate.
 		 */
 		appendStringInfo(&cmd, "SELECT DISTINCT n.nspname, c.relname, gpt.attrs\n"
 						 "       FROM pg_class c\n"

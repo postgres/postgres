@@ -693,6 +693,13 @@ ERROR:  cannot use generated column "d" in publication column list
 -- error: system attributes "ctid" not allowed in column list
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, ctid);
 ERROR:  cannot use system column "ctid" in publication column list
+ALTER PUBLICATION testpub_fortable SET TABLE testpub_tbl1 (id, ctid);
+ERROR:  cannot use system column "ctid" in publication column list
+-- error: duplicates not allowed in column list
+ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, a);
+ERROR:  duplicate column "a" in publication column list
+ALTER PUBLICATION testpub_fortable SET TABLE testpub_tbl5 (a, a);
+ERROR:  duplicate column "a" in publication column list
 -- ok
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, c);
 ALTER TABLE testpub_tbl5 DROP COLUMN c;		-- no dice
