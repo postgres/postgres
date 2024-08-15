@@ -47,6 +47,7 @@ my $result = $node->safe_psql("postgres",
 ok($result eq "", "pg_check_visible() detects no errors");
 
 # Run pg_check_visible() on standby
+$node->wait_for_catchup($standby);
 $result = $standby->safe_psql("postgres",
 	"SELECT * FROM pg_check_visible('vacuum_test');");
 
