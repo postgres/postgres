@@ -132,19 +132,69 @@ smgr_bulk_finish(BulkWriteState *bulkstate)
 	smgr_bulk_flush(bulkstate);
 
 	/*
-	 * When we wrote out the pages, we passed skipFsync=true to avoid the
-	 * overhead of registering all the writes with the checkpointer.  Register
-	 * the whole relation now.
-	 *
-	 * There is one hole in that idea: If a checkpoint occurred while we were
-	 * writing the pages, it already missed fsyncing the pages we had written
-	 * before the checkpoint started.  A crash later on would replay the WAL
-	 * starting from the checkpoint, therefore it wouldn't replay our earlier
-	 * WAL records.  So if a checkpoint started after the bulk write, fsync
-	 * the files now.
+	 * Fsync the relation, or register it for the next checkpoint, if
+	 * necessary.
 	 */
-	if (!SmgrIsTemp(bulkstate->smgr))
+	if (SmgrIsTemp(bulkstate->smgr))
 	{
+		/* Temporary relations don't need to be fsync'd, ever */
+	}
+	else if (!bulkstate->use_wal)
+	{
+		/*----------
+		 * This is either an unlogged relation, or a permanent relation but we
+		 * skipped WAL-logging because wal_level=minimal:
+		 *
+		 * A) Unlogged relation
+		 *
+		 *    Unlogged relations will go away on crash, but they need to be
+		 *    fsync'd on a clean shutdown. It's sufficient to call
+		 *    smgrregistersync(), that ensures that the checkpointer will
+		 *    flush it at the shutdown checkpoint. (It will flush it on the
+		 *    next online checkpoint too, which is not strictly necessary.)
+		 *
+		 *    Note that the init-fork of an unlogged relation is not
+		 *    considered unlogged for our purposes. It's treated like a
+		 *    regular permanent relation. The callers will pass use_wal=true
+		 *    for the init fork.
+		 *
+		 * B) Permanent relation, WAL-logging skipped because wal_level=minimal
+		 *
+		 *    This is a new relation, and we didn't WAL-log the pages as we
+		 *    wrote, but they need to be fsync'd before commit.
+		 *
+		 *    We don't need to do that here, however. The fsync() is done at
+		 *    commit, by smgrDoPendingSyncs() (*).
+		 *
+		 *    (*) smgrDoPendingSyncs() might decide to WAL-log the whole
+		 *    relation at commit instead of fsyncing it, if the relation was
+		 *    very small, but it's smgrDoPendingSyncs() responsibility in any
+		 *    case.
+		 *
+		 * We cannot distinguish the two here, so conservatively assume it's
+		 * an unlogged relation. A permanent relation with wal_level=minimal
+		 * would require no actions, see above.
+		 */
+		smgrregistersync(bulkstate->smgr, bulkstate->forknum);
+	}
+	else
+	{
+		/*
+		 * Permanent relation, WAL-logged normally.
+		 *
+		 * We already WAL-logged all the pages, so they will be replayed from
+		 * WAL on crash. However, when we wrote out the pages, we passed
+		 * skipFsync=true to avoid the overhead of registering all the writes
+		 * with the checkpointer.  Register the whole relation now.
+		 *
+		 * There is one hole in that idea: If a checkpoint occurred while we
+		 * were writing the pages, it already missed fsyncing the pages we had
+		 * written before the checkpoint started.  A crash later on would
+		 * replay the WAL starting from the checkpoint, therefore it wouldn't
+		 * replay our earlier WAL records.  So if a checkpoint started after
+		 * the bulk write, fsync the files now.
+		 */
+
 		/*
 		 * Prevent a checkpoint from starting between the GetRedoRecPtr() and
 		 * smgrregistersync() calls.
