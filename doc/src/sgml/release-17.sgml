@@ -968,8 +968,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 
       <listitem>
        <para>
-       Add server variable <xref linkend="guc-huge-page-size"/> to report
-       the use of huge pages by Postgres (Justin Pryzby)
+       Add server variable <xref linkend="guc-huge-pages-status"/> to
+       report the use of huge pages by Postgres (Justin Pryzby)
        </para>
 
        <para>
