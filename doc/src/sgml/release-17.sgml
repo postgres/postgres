@@ -176,7 +176,7 @@ Author: Bruce Momjian <bruce@momjian.us>
      and <function>pg_walfile_name_offset()</function> used to report
      the previous <acronym>LSN</acronym> segment number when the
      <acronym>LSN</acronym> was on a file segment boundary;  it now
-     returns the <acronym>LSN</acronym> segment.
+     returns the current <acronym>LSN</acronym> segment.
      </para>
     </listitem>
 
