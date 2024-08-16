@@ -1834,6 +1834,7 @@ SELECT f1,
     EXTRACT(MINUTE FROM f1) AS MINUTE,
     EXTRACT(HOUR FROM f1) AS HOUR,
     EXTRACT(DAY FROM f1) AS DAY,
+    EXTRACT(WEEK FROM f1) AS WEEK,
     EXTRACT(MONTH FROM f1) AS MONTH,
     EXTRACT(QUARTER FROM f1) AS QUARTER,
     EXTRACT(YEAR FROM f1) AS YEAR,
@@ -1842,20 +1843,52 @@ SELECT f1,
     EXTRACT(MILLENNIUM FROM f1) AS MILLENNIUM,
     EXTRACT(EPOCH FROM f1) AS EPOCH
     FROM INTERVAL_TBL;
-              f1               | microsecond | millisecond |   second   | minute |   hour    |    day    | month | quarter |   year    |  decade   |  century  | millennium |       epoch       
--------------------------------+-------------+-------------+------------+--------+-----------+-----------+-------+---------+-----------+-----------+-----------+------------+-------------------
- @ 1 min                       |           0 |       0.000 |   0.000000 |      1 |         0 |         0 |     0 |       1 |         0 |         0 |         0 |          0 |         60.000000
- @ 5 hours                     |           0 |       0.000 |   0.000000 |      0 |         5 |         0 |     0 |       1 |         0 |         0 |         0 |          0 |      18000.000000
- @ 10 days                     |           0 |       0.000 |   0.000000 |      0 |         0 |        10 |     0 |       1 |         0 |         0 |         0 |          0 |     864000.000000
- @ 34 years                    |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |     0 |       1 |        34 |         3 |         0 |          0 | 1072958400.000000
- @ 3 mons                      |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |     3 |       2 |         0 |         0 |         0 |          0 |    7776000.000000
- @ 14 secs ago                 |   -14000000 |  -14000.000 | -14.000000 |      0 |         0 |         0 |     0 |       1 |         0 |         0 |         0 |          0 |        -14.000000
- @ 1 day 2 hours 3 mins 4 secs |     4000000 |    4000.000 |   4.000000 |      3 |         2 |         1 |     0 |       1 |         0 |         0 |         0 |          0 |      93784.000000
- @ 6 years                     |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |     0 |       1 |         6 |         0 |         0 |          0 |  189345600.000000
- @ 5 mons                      |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |     5 |       2 |         0 |         0 |         0 |          0 |   12960000.000000
- @ 5 mons 12 hours             |           0 |       0.000 |   0.000000 |      0 |        12 |         0 |     5 |       2 |         0 |         0 |         0 |          0 |   13003200.000000
- infinity                      |             |             |            |        |  Infinity |  Infinity |       |         |  Infinity |  Infinity |  Infinity |   Infinity |          Infinity
- -infinity                     |             |             |            |        | -Infinity | -Infinity |       |         | -Infinity | -Infinity | -Infinity |  -Infinity |         -Infinity
+              f1               | microsecond | millisecond |   second   | minute |   hour    |    day    | week | month | quarter |   year    |  decade   |  century  | millennium |       epoch       
+-------------------------------+-------------+-------------+------------+--------+-----------+-----------+------+-------+---------+-----------+-----------+-----------+------------+-------------------
+ @ 1 min                       |           0 |       0.000 |   0.000000 |      1 |         0 |         0 |    0 |     0 |       1 |         0 |         0 |         0 |          0 |         60.000000
+ @ 5 hours                     |           0 |       0.000 |   0.000000 |      0 |         5 |         0 |    0 |     0 |       1 |         0 |         0 |         0 |          0 |      18000.000000
+ @ 10 days                     |           0 |       0.000 |   0.000000 |      0 |         0 |        10 |    1 |     0 |       1 |         0 |         0 |         0 |          0 |     864000.000000
+ @ 34 years                    |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |    0 |     0 |       1 |        34 |         3 |         0 |          0 | 1072958400.000000
+ @ 3 mons                      |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |    0 |     3 |       2 |         0 |         0 |         0 |          0 |    7776000.000000
+ @ 14 secs ago                 |   -14000000 |  -14000.000 | -14.000000 |      0 |         0 |         0 |    0 |     0 |       1 |         0 |         0 |         0 |          0 |        -14.000000
+ @ 1 day 2 hours 3 mins 4 secs |     4000000 |    4000.000 |   4.000000 |      3 |         2 |         1 |    0 |     0 |       1 |         0 |         0 |         0 |          0 |      93784.000000
+ @ 6 years                     |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |    0 |     0 |       1 |         6 |         0 |         0 |          0 |  189345600.000000
+ @ 5 mons                      |           0 |       0.000 |   0.000000 |      0 |         0 |         0 |    0 |     5 |       2 |         0 |         0 |         0 |          0 |   12960000.000000
+ @ 5 mons 12 hours             |           0 |       0.000 |   0.000000 |      0 |        12 |         0 |    0 |     5 |       2 |         0 |         0 |         0 |          0 |   13003200.000000
+ infinity                      |             |             |            |        |  Infinity |  Infinity |      |       |         |  Infinity |  Infinity |  Infinity |   Infinity |          Infinity
+ -infinity                     |             |             |            |        | -Infinity | -Infinity |      |       |         | -Infinity | -Infinity | -Infinity |  -Infinity |         -Infinity
+(12 rows)
+
+SELECT -f1,
+    EXTRACT(MICROSECOND FROM -f1) AS MICROSECOND,
+    EXTRACT(MILLISECOND FROM -f1) AS MILLISECOND,
+    EXTRACT(SECOND FROM -f1) AS SECOND,
+    EXTRACT(MINUTE FROM -f1) AS MINUTE,
+    EXTRACT(HOUR FROM -f1) AS HOUR,
+    EXTRACT(DAY FROM -f1) AS DAY,
+    EXTRACT(WEEK FROM -f1) AS WEEK,
+    EXTRACT(MONTH FROM -f1) AS MONTH,
+    EXTRACT(QUARTER FROM -f1) AS QUARTER,
+    EXTRACT(YEAR FROM -f1) AS YEAR,
+    EXTRACT(DECADE FROM -f1) AS DECADE,
+    EXTRACT(CENTURY FROM -f1) AS CENTURY,
+    EXTRACT(MILLENNIUM FROM -f1) AS MILLENNIUM,
+    EXTRACT(EPOCH FROM -f1) AS EPOCH
+    FROM INTERVAL_TBL;
+             ?column?              | microsecond | millisecond |  second   | minute |   hour    |    day    | week | month | quarter |   year    |  decade   |  century  | millennium |       epoch        
+-----------------------------------+-------------+-------------+-----------+--------+-----------+-----------+------+-------+---------+-----------+-----------+-----------+------------+--------------------
+ @ 1 min ago                       |           0 |       0.000 |  0.000000 |     -1 |         0 |         0 |    0 |     0 |       1 |         0 |         0 |         0 |          0 |         -60.000000
+ @ 5 hours ago                     |           0 |       0.000 |  0.000000 |      0 |        -5 |         0 |    0 |     0 |       1 |         0 |         0 |         0 |          0 |      -18000.000000
+ @ 10 days ago                     |           0 |       0.000 |  0.000000 |      0 |         0 |       -10 |   -1 |     0 |       1 |         0 |         0 |         0 |          0 |     -864000.000000
+ @ 34 years ago                    |           0 |       0.000 |  0.000000 |      0 |         0 |         0 |    0 |     0 |      -1 |       -34 |        -3 |         0 |          0 | -1072958400.000000
+ @ 3 mons ago                      |           0 |       0.000 |  0.000000 |      0 |         0 |         0 |    0 |    -3 |      -2 |         0 |         0 |         0 |          0 |    -7776000.000000
+ @ 14 secs                         |    14000000 |   14000.000 | 14.000000 |      0 |         0 |         0 |    0 |     0 |       1 |         0 |         0 |         0 |          0 |          14.000000
+ @ 1 day 2 hours 3 mins 4 secs ago |    -4000000 |   -4000.000 | -4.000000 |     -3 |        -2 |        -1 |    0 |     0 |       1 |         0 |         0 |         0 |          0 |      -93784.000000
+ @ 6 years ago                     |           0 |       0.000 |  0.000000 |      0 |         0 |         0 |    0 |     0 |      -1 |        -6 |         0 |         0 |          0 |  -189345600.000000
+ @ 5 mons ago                      |           0 |       0.000 |  0.000000 |      0 |         0 |         0 |    0 |    -5 |      -2 |         0 |         0 |         0 |          0 |   -12960000.000000
+ @ 5 mons 12 hours ago             |           0 |       0.000 |  0.000000 |      0 |       -12 |         0 |    0 |    -5 |      -2 |         0 |         0 |         0 |          0 |   -13003200.000000
+ -infinity                         |             |             |           |        | -Infinity | -Infinity |      |       |         | -Infinity | -Infinity | -Infinity |  -Infinity |          -Infinity
+ infinity                          |             |             |           |        |  Infinity |  Infinity |      |       |         |  Infinity |  Infinity |  Infinity |   Infinity |           Infinity
 (12 rows)
 
 SELECT EXTRACT(FORTNIGHT FROM INTERVAL '2 days');  -- error

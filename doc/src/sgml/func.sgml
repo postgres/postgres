@@ -10432,12 +10432,16 @@ SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
       <term><literal>quarter</literal></term>
       <listitem>
        <para>
-        The quarter of the year (1&ndash;4) that the date is in
+        The quarter of the year (1&ndash;4) that the date is in;
+        for <type>interval</type> values, the month field divided by 3
+        plus 1
        </para>
 
 <screen>
 SELECT EXTRACT(QUARTER FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+SELECT EXTRACT(QUARTER FROM INTERVAL '1 year 6 months');
+<lineannotation>Result: </lineannotation><computeroutput>3</computeroutput>
 </screen>
       </listitem>
      </varlistentry>
@@ -10508,9 +10512,16 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
         <literal>week</literal> to get consistent results.
        </para>
 
+       <para>
+        For <type>interval</type> values, the week field is simply the number
+        of integral days divided by 7.
+       </para>
+
 <screen>
 SELECT EXTRACT(WEEK FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>7</computeroutput>
+SELECT EXTRACT(WEEK FROM INTERVAL '13 days 24 hours');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
 </screen>
       </listitem>
      </varlistentry>

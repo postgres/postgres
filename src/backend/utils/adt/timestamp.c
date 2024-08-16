@@ -5899,6 +5899,7 @@ NonFiniteIntervalPart(int type, int unit, char *lowunits, bool isNegative)
 		case DTK_MILLISEC:
 		case DTK_SECOND:
 		case DTK_MINUTE:
+		case DTK_WEEK:
 		case DTK_MONTH:
 		case DTK_QUARTER:
 			return 0.0;
@@ -6018,12 +6019,27 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 				intresult = tm->tm_mday;
 				break;
 
+			case DTK_WEEK:
+				intresult = tm->tm_mday / 7;
+				break;
+
 			case DTK_MONTH:
 				intresult = tm->tm_mon;
 				break;
 
 			case DTK_QUARTER:
-				intresult = (tm->tm_mon / 3) + 1;
+
+				/*
+				 * We want to maintain the rule that a field extracted from a
+				 * negative interval is the negative of the field's value for
+				 * the sign-reversed interval.  The broken-down tm_year and
+				 * tm_mon aren't very helpful for that, so work from
+				 * interval->month.
+				 */
+				if (interval->month >= 0)
+					intresult = (tm->tm_mon / 3) + 1;
+				else
+					intresult = -(((-interval->month % MONTHS_PER_YEAR) / 3) + 1);
 				break;
 
 			case DTK_YEAR:
