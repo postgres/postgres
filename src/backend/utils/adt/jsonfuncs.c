@@ -990,7 +990,7 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 	{
 		uint32		nelements = JB_ROOT_COUNT(jb);
 
-		if (-element > nelements)
+		if (pg_abs_s32(element) > nelements)
 			PG_RETURN_NULL();
 		else
 			element += nelements;
@@ -4811,7 +4811,7 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 
 	if (idx < 0)
 	{
-		if (-idx > n)
+		if (pg_abs_s32(idx) > n)
 			idx = n;
 		else
 			idx = n + idx;
