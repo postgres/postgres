@@ -1194,7 +1194,7 @@ InitCatCachePhase2(CatCache *cache, bool touch_index)
  *		catalogs' indexes.
  */
 static bool
-IndexScanOK(CatCache *cache, ScanKey cur_skey)
+IndexScanOK(CatCache *cache)
 {
 	switch (cache->id)
 	{
@@ -1483,7 +1483,7 @@ SearchCatCacheMiss(CatCache *cache,
 
 		scandesc = systable_beginscan(relation,
 									  cache->cc_indexoid,
-									  IndexScanOK(cache, cur_skey),
+									  IndexScanOK(cache),
 									  NULL,
 									  nkeys,
 									  cur_skey);
@@ -1803,7 +1803,7 @@ SearchCatCacheList(CatCache *cache,
 
 			scandesc = systable_beginscan(relation,
 										  cache->cc_indexoid,
-										  IndexScanOK(cache, cur_skey),
+										  IndexScanOK(cache),
 										  NULL,
 										  nkeys,
 										  cur_skey);
