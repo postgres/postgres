@@ -597,10 +597,12 @@ CopyMultiInsertInfoNextFreeSlot(CopyMultiInsertInfo *miinfo,
 								ResultRelInfo *rri)
 {
 	CopyMultiInsertBuffer *buffer = rri->ri_CopyMultiInsertBuffer;
-	int			nused = buffer->nused;
+	int			nused;
 
 	Assert(buffer != NULL);
-	Assert(nused < MAX_BUFFERED_TUPLES);
+	Assert(buffer->nused < MAX_BUFFERED_TUPLES);
+
+	nused = buffer->nused;
 
 	if (buffer->slots[nused] == NULL)
 		buffer->slots[nused] = table_slot_create(rri->ri_RelationDesc, NULL);
