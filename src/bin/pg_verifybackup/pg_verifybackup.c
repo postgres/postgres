@@ -113,6 +113,7 @@ typedef struct verifier_context
 	manifest_data *manifest;
 	char	   *backup_directory;
 	SimpleStringList ignore_list;
+	bool		skip_checksums;
 	bool		exit_on_error;
 	bool		saw_any_error;
 } verifier_context;
@@ -162,9 +163,8 @@ static void usage(void);
 
 static const char *progname;
 
-/* options */
+/* is progress reporting enabled? */
 static bool show_progress = false;
-static bool skip_checksums = false;
 
 /* Progress indicators */
 static uint64 total_size = 0;
@@ -266,7 +266,7 @@ main(int argc, char **argv)
 				quiet = true;
 				break;
 			case 's':
-				skip_checksums = true;
+				context.skip_checksums = true;
 				break;
 			case 'w':
 				wal_directory = pstrdup(optarg);
@@ -363,7 +363,7 @@ main(int argc, char **argv)
 	 * Now do the expensive work of verifying file checksums, unless we were
 	 * told to skip it.
 	 */
-	if (!skip_checksums)
+	if (!context.skip_checksums)
 		verify_backup_checksums(&context);
 
 	/*
@@ -739,7 +739,8 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 		verify_control_file(fullpath, context->manifest->system_identifier);
 
 	/* Update statistics for progress report, if necessary */
-	if (show_progress && !skip_checksums && should_verify_checksum(m))
+	if (show_progress && !context->skip_checksums &&
+		should_verify_checksum(m))
 		total_size += m->size;
 
 	/*
