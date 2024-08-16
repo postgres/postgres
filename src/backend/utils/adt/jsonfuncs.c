@@ -18,6 +18,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "common/int.h"
 #include "common/jsonapi.h"
 #include "common/string.h"
 #include "fmgr.h"
@@ -946,7 +947,7 @@ jsonb_array_element(PG_FUNCTION_ARGS)
 	{
 		uint32		nelements = JB_ROOT_COUNT(jb);
 
-		if (-element > nelements)
+		if (pg_abs_s32(element) > nelements)
 			PG_RETURN_NULL();
 		else
 			element += nelements;
@@ -5426,7 +5427,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 
 	if (idx < 0)
 	{
-		if (-idx > nelems)
+		if (pg_abs_s32(idx) > nelems)
 		{
 			/*
 			 * If asked to keep elements position consistent, it's not allowed
@@ -5438,7 +5439,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 						 errmsg("path element at position %d is out of range: %d",
 								level + 1, idx)));
 			else
-				idx = INT_MIN;
+				idx = PG_INT32_MIN;
 		}
 		else
 			idx = nelems + idx;

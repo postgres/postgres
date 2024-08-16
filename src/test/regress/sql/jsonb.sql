@@ -204,6 +204,7 @@ select '[{"b": "c"}, {"b": "cc"}]'::jsonb -> 'z';
 select '{"a": "c", "b": null}'::jsonb -> 'b';
 select '"foo"'::jsonb -> 1;
 select '"foo"'::jsonb -> 'z';
+select '[]'::jsonb -> -2147483648;
 
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::text;
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::jsonb ->> null::int;
@@ -216,6 +217,7 @@ select '[{"b": "c"}, {"b": "cc"}]'::jsonb ->> 'z';
 select '{"a": "c", "b": null}'::jsonb ->> 'b';
 select '"foo"'::jsonb ->> 1;
 select '"foo"'::jsonb ->> 'z';
+select '[]'::jsonb ->> -2147483648;
 
 -- equality and inequality
 SELECT '{"x":"y"}'::jsonb = '{"x":"y"}'::jsonb;
@@ -1185,6 +1187,7 @@ select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::j
 select jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{n}');
 select jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{b,-1}');
 select jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}', '{d,1,0}');
+select jsonb_delete_path('{"a":[]}', '{"a",-2147483648}');
 
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{n}';
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{b,-1}';
