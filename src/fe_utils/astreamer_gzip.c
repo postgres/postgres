@@ -86,9 +86,16 @@ static const astreamer_ops astreamer_gzip_decompressor_ops = {
  * Create a astreamer that just compresses data using gzip, and then writes
  * it to a file.
  *
- * As in the case of astreamer_plain_writer_new, pathname is always used
- * for error reporting purposes; if file is NULL, it is also the opened and
- * closed so that the data may be written there.
+ * The caller must specify a pathname and may specify a file. The pathname is
+ * used for error-reporting purposes either way. If file is NULL, the pathname
+ * also identifies the file to which the data should be written: it is opened
+ * for writing and closed when done. If file is not NULL, the data is written
+ * there.
+ *
+ * Note that zlib does not use the FILE interface, but operates directly on
+ * a duplicate of the underlying fd. Hence, callers must take care if they
+ * plan to write any other data to the same FILE, either before or after using
+ * this.
  */
 astreamer *
 astreamer_gzip_writer_new(char *pathname, FILE *file,
@@ -112,6 +119,10 @@ astreamer_gzip_writer_new(char *pathname, FILE *file,
 	}
 	else
 	{
+		/*
+		 * We must dup the file handle so that gzclose doesn't break the
+		 * caller's FILE.  See comment for astreamer_gzip_writer_finalize.
+		 */
 		int			fd = dup(fileno(file));
 
 		if (fd < 0)
