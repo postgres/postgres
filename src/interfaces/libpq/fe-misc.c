@@ -436,6 +436,21 @@ pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn)
 }
 
 /*
+ * pqParseDone: after a server-to-client message has successfully
+ * been parsed, advance conn->inStart to account for it.
+ */
+void
+pqParseDone(PGconn *conn, int newInStart)
+{
+	/* trace server-to-client message */
+	if (conn->Pfdebug)
+		pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
+
+	/* Mark message as done */
+	conn->inStart = newInStart;
+}
+
+/*
  * pqPutMsgStart: begin construction of a message to the server
  *
  * msg_type is the message type byte, or 0 for a message without type byte

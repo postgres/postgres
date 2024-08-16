@@ -753,6 +753,7 @@ extern PGresult *pqFunctionCall3(PGconn *conn, Oid fnid,
   */
 extern int	pqCheckOutBufferSpace(size_t bytes_needed, PGconn *conn);
 extern int	pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn);
+extern void pqParseDone(PGconn *conn, int newInStart);
 extern int	pqGetc(char *result, PGconn *conn);
 extern int	pqPutc(char c, PGconn *conn);
 extern int	pqGets(PQExpBuffer buf, PGconn *conn);

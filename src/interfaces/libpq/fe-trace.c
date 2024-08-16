@@ -281,6 +281,14 @@ pqTraceOutput_CommandComplete(FILE *f, const char *message, int *cursor)
 }
 
 static void
+pqTraceOutput_CopyData(FILE *f, const char *message, int *cursor, int length,
+					   bool suppress)
+{
+	fprintf(f, "CopyData\t");
+	pqTraceOutputNchar(f, length - *cursor + 1, message, cursor, suppress);
+}
+
+static void
 pqTraceOutput_DataRow(FILE *f, const char *message, int *cursor)
 {
 	int			nfields;
@@ -472,10 +480,58 @@ pqTraceOutput_Query(FILE *f, const char *message, int *cursor)
 }
 
 static void
-pqTraceOutput_Authentication(FILE *f, const char *message, int *cursor)
+pqTraceOutput_Authentication(FILE *f, const char *message, int *cursor,
+							 int length, bool suppress)
 {
-	fprintf(f, "Authentication\t");
-	pqTraceOutputInt32(f, message, cursor, false);
+	int			authType = 0;
+
+	memcpy(&authType, message + *cursor, 4);
+	authType = (int) pg_ntoh32(authType);
+	*cursor += 4;
+	switch (authType)
+	{
+		case AUTH_REQ_OK:
+			fprintf(f, "AuthenticationOk");
+			break;
+			/* AUTH_REQ_KRB4 not supported */
+			/* AUTH_REQ_KRB5 not supported */
+		case AUTH_REQ_PASSWORD:
+			fprintf(f, "AuthenticationCleartextPassword");
+			break;
+			/* AUTH_REQ_CRYPT not supported */
+		case AUTH_REQ_MD5:
+			fprintf(f, "AuthenticationMD5Password");
+			break;
+		case AUTH_REQ_GSS:
+			fprintf(f, "AuthenticationGSS");
+			break;
+		case AUTH_REQ_GSS_CONT:
+			fprintf(f, "AuthenticationGSSContinue\t");
+			pqTraceOutputNchar(f, length - *cursor + 1, message, cursor,
+							   suppress);
+			break;
+		case AUTH_REQ_SSPI:
+			fprintf(f, "AuthenticationSSPI");
+			break;
+		case AUTH_REQ_SASL:
+			fprintf(f, "AuthenticationSASL\t");
+			while (message[*cursor] != '\0')
+				pqTraceOutputString(f, message, cursor, false);
+			pqTraceOutputString(f, message, cursor, false);
+			break;
+		case AUTH_REQ_SASL_CONT:
+			fprintf(f, "AuthenticationSASLContinue\t");
+			pqTraceOutputNchar(f, length - *cursor + 1, message, cursor,
+							   suppress);
+			break;
+		case AUTH_REQ_SASL_FIN:
+			fprintf(f, "AuthenticationSASLFinal\t");
+			pqTraceOutputNchar(f, length - *cursor + 1, message, cursor,
+							   suppress);
+			break;
+		default:
+			fprintf(f, "Unknown authentication message %d", authType);
+	}
 }
 
 static void
@@ -625,7 +681,8 @@ pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 				pqTraceOutput_CommandComplete(conn->Pfdebug, message, &logCursor);
 			break;
 		case PqMsg_CopyData:
-			/* Drop COPY data to reduce the overhead of logging. */
+			pqTraceOutput_CopyData(conn->Pfdebug, message, &logCursor,
+								   length, regress);
 			break;
 		case PqMsg_Describe:
 			/* Describe(F) and DataRow(B) use the same identifier. */
@@ -714,7 +771,8 @@ pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 			pqTraceOutput_Query(conn->Pfdebug, message, &logCursor);
 			break;
 		case PqMsg_AuthenticationRequest:
-			pqTraceOutput_Authentication(conn->Pfdebug, message, &logCursor);
+			pqTraceOutput_Authentication(conn->Pfdebug, message, &logCursor,
+										 length, regress);
 			break;
 		case PqMsg_PortalSuspended:
 			fprintf(conn->Pfdebug, "PortalSuspended");

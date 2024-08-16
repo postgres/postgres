@@ -94,6 +94,10 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 		ginbuf.value = NULL;
 	}
 
+	/* finished parsing, trace server-to-client message */
+	if (conn->Pfdebug)
+		pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
+
 	/* Only try to acquire credentials if GSS delegation isn't disabled. */
 	if (!pg_GSS_have_cred_cache(&conn->gcred))
 		conn->gcred = GSS_C_NO_CREDENTIAL;
@@ -257,6 +261,10 @@ pg_SSPI_continue(PGconn *conn, int payloadlen)
 		InBuffers[0].cbBuffer = payloadlen;
 		InBuffers[0].BufferType = SECBUFFER_TOKEN;
 	}
+
+	/* finished parsing, trace server-to-client message */
+	if (conn->Pfdebug)
+		pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
 
 	OutBuffers[0].pvBuffer = NULL;
 	OutBuffers[0].BufferType = SECBUFFER_TOKEN;
@@ -563,6 +571,10 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		}
 	}
 
+	/* finished parsing, trace server-to-client message */
+	if (conn->Pfdebug)
+		pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
+
 	Assert(conn->sasl);
 
 	/*
@@ -651,6 +663,11 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 		free(challenge);
 		return STATUS_ERROR;
 	}
+
+	/* finished parsing, trace server-to-client message */
+	if (conn->Pfdebug)
+		pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
+
 	/* For safety and convenience, ensure the buffer is NULL-terminated. */
 	challenge[payloadlen] = '\0';
 
@@ -715,6 +732,10 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 		if (pqGetnchar(md5Salt, 4, conn))
 			return STATUS_ERROR;	/* shouldn't happen */
 	}
+
+	/* finished parsing, trace server-to-client message */
+	if (conn->Pfdebug)
+		pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
 
 	/* Encrypt the password if needed. */
 
