@@ -269,7 +269,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
      Change <link
      linkend="catalog-pg-attribute"><structname>pg_attribute</structname>.<structfield>attstattarget</structfield></link>
      and
-     <structname>pg_attribute</structname>.<structfield>stxstattarget</structfield>
+     <structname>pg_statistic_ext</structname>.<structfield>stxstattarget</structfield>
      to represent the default statistics target as <literal>NULL</literal>
      (Peter Eisentraut)
      </para>
