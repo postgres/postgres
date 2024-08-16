@@ -7452,7 +7452,9 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 				 const char *username, const char *pgpassfile)
 {
 	FILE	   *fp;
+#ifndef WIN32
 	struct stat stat_buf;
+#endif
 	PQExpBufferData buf;
 
 	if (dbname == NULL || dbname[0] == '\0')
@@ -7477,10 +7479,14 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 		port = DEF_PGPORT_STR;
 
 	/* If password file cannot be opened, ignore it. */
-	if (stat(pgpassfile, &stat_buf) != 0)
+	fp = fopen(pgpassfile, "r");
+	if (fp == NULL)
 		return NULL;
 
 #ifndef WIN32
+	if (fstat(fileno(fp), &stat_buf) != 0)
+		return NULL;
+
 	if (!S_ISREG(stat_buf.st_mode))
 	{
 		fprintf(stderr,
@@ -7504,10 +7510,6 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 	 * file.
 	 */
 #endif
-
-	fp = fopen(pgpassfile, "r");
-	if (fp == NULL)
-		return NULL;
 
 	/* Use an expansible buffer to accommodate any reasonable line length */
 	initPQExpBuffer(&buf);
