@@ -114,7 +114,7 @@ CREATE TABLE brin_parallel_test (a int, b text, c bigint) WITH (fillfactor=40);
 -- for the different opclasses we build later).
 INSERT INTO brin_parallel_test
 SELECT (CASE WHEN (mod(i,231) = 0) OR (i BETWEEN 3500 AND 4000) THEN NULL ELSE i END),
-       (CASE WHEN (mod(i,233) = 0) OR (i BETWEEN 3750 AND 4250) THEN NULL ELSE md5(i::text) END),
+       (CASE WHEN (mod(i,233) = 0) OR (i BETWEEN 3750 AND 4250) THEN NULL ELSE encode(sha256(i::text::bytea), 'hex') END),
        (CASE WHEN (mod(i,233) = 0) OR (i BETWEEN 3850 AND 4500) THEN NULL ELSE (i/100) + mod(i,8) END)
   FROM generate_series(1,5000) S(i);
 -- Build an index with different opclasses - minmax, bloom and minmax-multi.
@@ -152,8 +152,8 @@ SELECT relname, relpages
  ORDER BY relname;
         relname         | relpages 
 ------------------------+----------
- brin_test_parallel_idx |        3
- brin_test_serial_idx   |        3
+ brin_test_parallel_idx |        4
+ brin_test_serial_idx   |        4
 (2 rows)
 
 -- Check that (A except B) and (B except A) is empty, which means the indexes
@@ -186,8 +186,8 @@ SELECT relname, relpages
  ORDER BY relname;
         relname         | relpages 
 ------------------------+----------
- brin_test_parallel_idx |        3
- brin_test_serial_idx   |        3
+ brin_test_parallel_idx |        4
+ brin_test_serial_idx   |        4
 (2 rows)
 
 SELECT * FROM brin_page_items(get_raw_page('brin_test_parallel_idx', 2), 'brin_test_parallel_idx')

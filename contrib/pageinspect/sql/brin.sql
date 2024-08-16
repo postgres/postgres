@@ -62,7 +62,7 @@ CREATE TABLE brin_parallel_test (a int, b text, c bigint) WITH (fillfactor=40);
 -- for the different opclasses we build later).
 INSERT INTO brin_parallel_test
 SELECT (CASE WHEN (mod(i,231) = 0) OR (i BETWEEN 3500 AND 4000) THEN NULL ELSE i END),
-       (CASE WHEN (mod(i,233) = 0) OR (i BETWEEN 3750 AND 4250) THEN NULL ELSE md5(i::text) END),
+       (CASE WHEN (mod(i,233) = 0) OR (i BETWEEN 3750 AND 4250) THEN NULL ELSE encode(sha256(i::text::bytea), 'hex') END),
        (CASE WHEN (mod(i,233) = 0) OR (i BETWEEN 3850 AND 4500) THEN NULL ELSE (i/100) + mod(i,8) END)
   FROM generate_series(1,5000) S(i);
 
