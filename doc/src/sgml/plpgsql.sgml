@@ -1295,7 +1295,7 @@ $$ LANGUAGE plpgsql;
      On failure, this function might produce an error message such as
 <programlisting>
 ERROR:  query returned no rows
-DETAIL:  parameters: $1 = 'nosuchuser'
+DETAIL:  parameters: username = 'nosuchuser'
 CONTEXT:  PL/pgSQL function get_userid(text) line 6 at SQL statement
 </programlisting>
     </para>
