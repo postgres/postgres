@@ -51,7 +51,7 @@
  * I/Os that have been started with StartReadBuffers(), and for which
  * WaitReadBuffers() must be called before returning the buffer.
  *
- * For example, if the callback return block numbers 10, 42, 43, 60 in
+ * For example, if the callback returns block numbers 10, 42, 43, 44, 60 in
  * successive calls, then these data structures might appear as follows:
  *
  *                          buffers buf/data       ios
