@@ -16,6 +16,7 @@
 
 #include "common/controldata_utils.h"
 #include "common/hashfn_unstable.h"
+#include "common/logging.h"
 #include "common/parse_manifest.h"
 #include "fe_utils/simple_list.h"
 
