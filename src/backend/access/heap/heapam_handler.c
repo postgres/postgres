@@ -605,9 +605,7 @@ heapam_relation_set_new_filelocator(Relation rel,
 
 	/*
 	 * If required, set up an init fork for an unlogged table so that it can
-	 * be correctly reinitialized on restart.  Recovery may remove it while
-	 * replaying, for example, an XLOG_DBASE_CREATE* or XLOG_TBLSPC_CREATE
-	 * record.  Therefore, logging is necessary even if wal_level=minimal.
+	 * be correctly reinitialized on restart.
 	 */
 	if (persistence == RELPERSISTENCE_UNLOGGED)
 	{

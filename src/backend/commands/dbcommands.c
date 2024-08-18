@@ -644,9 +644,10 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 	 * make the XLOG entry for the benefit of PITR operations). This avoids
 	 * two nasty scenarios:
 	 *
-	 * #1: When PITR is off, we don't XLOG the contents of newly created
-	 * indexes; therefore the drop-and-recreate-whole-directory behavior of
-	 * DBASE_CREATE replay would lose such indexes.
+	 * #1: At wal_level=minimal, we don't XLOG the contents of newly created
+	 * relfilenodes; therefore the drop-and-recreate-whole-directory behavior
+	 * of DBASE_CREATE replay would lose such files created in the new
+	 * database between our commit and the next checkpoint.
 	 *
 	 * #2: Since we have to recopy the source database during DBASE_CREATE
 	 * replay, we run the risk of copying changes in it that were committed
