@@ -19,7 +19,7 @@ echo "macOS major version: $macos_major_version"
 # Scan the available MacPorts releases to find one that matches the running
 # macOS release.
 macports_release_list_url="https://api.github.com/repos/macports/macports-base/releases"
-macports_version_pattern="2\.9\.3"
+macports_version_pattern="2\.10\.1"
 macports_url="$( curl -s $macports_release_list_url | grep "\"https://github.com/macports/macports-base/releases/download/v$macports_version_pattern/MacPorts-$macports_version_pattern-$macos_major_version-[A-Za-z]*\.pkg\"" | sed 's/.*: "//;s/".*//' | head -1 )"
 echo "MacPorts package URL: $macports_url"
 
