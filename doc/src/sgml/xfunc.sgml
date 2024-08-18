@@ -3868,7 +3868,7 @@ extern bool InjectionPointDetach(const char *name);
     <title>Custom Cumulative Statistics</title>
 
     <para>
-     Is is possible for add-ins written in C-language to use custom types
+     It is possible for add-ins written in C-language to use custom types
      of cumulative statistics registered in the
      <link linkend="monitoring-stats-setup">Cumulative Statistics System</link>.
     </para>
