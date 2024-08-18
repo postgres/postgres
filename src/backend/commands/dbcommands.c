@@ -827,6 +827,8 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	bool		db_istemplate;
 	Relation	pgdbrel;
 	HeapTuple	tup;
+	ScanKeyData scankey;
+	SysScanDesc scan;
 	Form_pg_database datform;
 	int			notherbackends;
 	int			npreparedxacts;
@@ -959,7 +961,18 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	 */
 	dropDatabaseDependencies(db_id);
 
-	tup = SearchSysCacheCopy1(DATABASEOID, ObjectIdGetDatum(db_id));
+	/*
+	 * Update the database's pg_database tuple
+	 */
+	ScanKeyInit(&scankey,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(dbname));
+
+	scan = systable_beginscan(pgdbrel, DatabaseNameIndexId, true,
+							  NULL, 1, &scankey);
+
+	tup = systable_getnext(scan);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for database %u", db_id);
 	datform = (Form_pg_database) GETSTRUCT(tup);
@@ -984,6 +997,8 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	 * the row will be gone, but if we fail, dropdb() can be invoked again.
 	 */
 	CatalogTupleDelete(pgdbrel, &tup->t_self);
+
+	systable_endscan(scan);
 
 	/*
 	 * Drop db-specific replication slots.
