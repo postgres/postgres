@@ -236,10 +236,9 @@ be_tls_init(bool isServerStart)
 	 */
 #ifdef HAVE_SSL_CTX_SET_NUM_TICKETS
 	SSL_CTX_set_num_tickets(context, 0);
-#else
+#endif
 #ifdef SSL_OP_NO_TICKET                        /* added in OpenSSL 0.9.8f */
 	SSL_CTX_set_options(context, SSL_OP_NO_TICKET);
-#endif
 #endif
 
 	/* disallow SSL session caching, too */
