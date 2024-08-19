@@ -3,10 +3,12 @@ use std::fmt;
 /// MessageType enum shows which command is being sent
 #[derive(Debug, PartialEq, Clone)]
 pub enum MessageType {
-    Update,
-    AskInsertion,
-    Accepted,
-    Denied
+    InitConnection,
+    AskMemoryUpdate,
+    MemoryUpdate,
+    AskInsertionAcceptance,
+    Agreed,
+    Denied,
 }
 
 #[derive(Clone)]
@@ -40,9 +42,11 @@ impl Message {
         let mut result = String::new();
 
         result.push_str(match self.message_type {
-            MessageType::Update => "UPDATE",
-            MessageType::AskInsertion => "ASK_INSERTION",
-            MessageType::Accepted => "ACCEPTED",
+            MessageType::InitConnection => "INIT_CONNECTION",
+            MessageType::AskMemoryUpdate => "ASK_MEMORY_UPDATE",
+            MessageType::MemoryUpdate => "MEMORY_UPDATE",
+            MessageType::AskInsertionAcceptance => "ASK_INSERTION_ACCEPTANCE",
+            MessageType::Agreed => "AGREED",
             MessageType::Denied => "DENIED",
         });
 
@@ -61,9 +65,11 @@ impl Message {
         let mut parts = input.split_whitespace();
 
         let message_type = match parts.next() {
-            Some("UPDATE") => MessageType::Update,
-            Some("ASK_INSERTION") => MessageType::AskInsertion,
-            Some("ACCEPTED") => MessageType::Accepted,
+            Some("INIT_CONNECTION") => MessageType::InitConnection,
+            Some("ASK_MEMORY_UPDATE") => MessageType::AskMemoryUpdate,
+            Some("MEMORY_UPDATE") => MessageType::MemoryUpdate,
+            Some("ASK_INSERTION_ACCEPTANCE") => MessageType::AskInsertionAcceptance,
+            Some("AGREED") => MessageType::Agreed,
             Some("DENIED") => MessageType::Denied,
             _ => return Err("Invalid message type"),
         };

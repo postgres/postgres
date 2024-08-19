@@ -1,31 +1,38 @@
+use futures::lock::Mutex;
 use inline_colorization::*;
 use postgres::{Client, NoTls};
+use std::borrow::BorrowMut;
+use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, RwLock};
 use std::{io, thread};
 
 extern crate users;
 use super::memory_manager::MemoryManager;
+use super::messages::message::{Message, MessageType};
 use super::node::*;
+use crate::node::router::Channel;
+use crate::node::{memory_manager, shard};
 use crate::utils::node_config::get_shard_config;
 use rust_decimal::Decimal;
 use users::get_current_username;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
 #[repr(C)]
-pub struct Shard<'a> {
+#[derive(Clone)]
+pub struct Shard {
     // router: Client,
-    backend: Client,
-    ip: &'a str,
-    port: &'a str,
+    backend: Arc<Mutex<Client>>,
+    ip: Arc<str>,
+    port: Arc<str>,
     listener: Arc<RwLock<TcpListener>>,
     router_stream: Arc<RwLock<Option<TcpStream>>>,
-    memory_manager: MemoryManager,
+    memory_manager: Arc<Mutex<MemoryManager>>,
 }
 
-impl<'a> Shard<'a> {
+impl Shard {
     /// Creates a new Shard node with the given port
-    pub fn new(ip: &'a str, port: &'a str) -> Self {
+    pub fn new(ip: &str, port: &str) -> Self {
         println!("Creating a new Shard node with port: {}", port);
 
         // get username dynamically
@@ -53,13 +60,6 @@ impl<'a> Shard<'a> {
         let mut listener = Arc::new(RwLock::new(
             TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap(),
         ));
-        let mut stream = Arc::new(RwLock::new(None));
-        let mut listener_clone = listener.clone();
-        let mut stream_clone = stream.clone();
-
-        let handle = thread::spawn(move || {
-            Self::accept_connections(listener_clone, stream_clone);
-        });
 
         // Initialize memory manager
         let config = get_shard_config();
@@ -75,18 +75,30 @@ impl<'a> Shard<'a> {
             memory_manager.accepts_insertions()
         );
 
-        Shard {
+        let stream = Arc::new(RwLock::new(None));
+        let shard = Shard {
             // router: clients,
-            backend,
-            ip,
-            port,
-            listener,
+            backend: Arc::new(Mutex::new(backend)),
+            ip: Arc::from(ip),
+            port: Arc::from(port),
+            listener: listener.clone(),
             router_stream: stream.clone(),
-            memory_manager,
-        }
+            memory_manager: Arc::new(Mutex::new(memory_manager)),
+        };
+
+        let listener_clone = listener.clone();
+        let stream_clone = stream.clone();
+
+        let mut shard_clone = shard.clone();
+        let _handle = thread::spawn(move || {
+            shard_clone.accept_connections(listener_clone, stream_clone);
+        });
+
+        shard
     }
 
     fn accept_connections(
+        &mut self,
         listener: Arc<RwLock<TcpListener>>,
         rw_stream: Arc<RwLock<Option<TcpStream>>>,
     ) {
@@ -94,8 +106,15 @@ impl<'a> Shard<'a> {
         match listener_guard.accept() {
             Ok((stream, addr)) => {
                 println!("New connection accepted from {}.", addr);
-                let mut stream_guard = rw_stream.write().unwrap();
-                *stream_guard = Some(stream);
+                // let mut stream_guard = rw_stream.write().unwrap();
+                
+                self.router_stream = Arc::new(RwLock::new(Some(stream)));
+
+                // Start listening for incoming messages in a thread
+                let mut shard_clone = self.clone();
+                let _handle = thread::spawn(move || {
+                    shard_clone.listen();
+                });
             }
             Err(e) => {
                 eprintln!("Failed to accept a connection: {}", e);
@@ -104,53 +123,83 @@ impl<'a> Shard<'a> {
     }
 
     // Listen for incoming messages
-    // TODO-SHARD: Call this function
     pub fn listen(&mut self) {
-        let mut stream = self.router_stream.read().unwrap();
+        println!("Listening for incoming messages");
+        let self_clone = self.clone();
+        let stream = self_clone.router_stream.read().unwrap();
         loop {
             // TODO-SHARD fix this multiple match statements so they're not nested
-            let message = match stream.as_ref() {
-                Some(stream) => {
+            match stream.as_ref() {
+                Some(mut stream) => {
                     let mut buffer = [0; 1024];
+                    let mut retries = 10;
                     match stream.read(&mut buffer) {
                         Ok(_) => {
-                            // Check if it's a AskInsertion message. If it is, send Agreed if self.accepts_insertions() is true, else send Denied, or Denied if self.accepts_insertions() is false
-                            match Message::from_string(&String::from_utf8_lossy(&buffer)) {
-                                Ok(message) => {
-                                    match message.message_type {
-                                        MessageType::AskInsertion => {
-                                            let response = self.get_insertion_response();
-                                            stream.write_all(response.to_string().as_bytes()).unwrap();
-                                        }
-                                        _ => {
-                                            eprintln!("Invalid message type");
-                                        }
+                            let message_string = String::from_utf8_lossy(&buffer);
+                            // println!("Received message: {}", message_string);
+                            match self.get_response_message(&message_string) {
+                                Some(response) => {
+                                    stream.write(response.as_bytes()).unwrap();
+                                }
+                                None => {
+                                    retries -= 1;
+                                    if retries == 0 {
+                                        eprintln!("Stream has exceeded the number of retries");
+                                        break;
                                     }
                                 }
-                                Err(e) => {
-                                    eprintln!("Failed to parse message: {}", e);
-                                }
                             }
-
                         }
                         Err(e) => {
-                            eprintln!("Failed to read from stream: {}", e);
+                            eprintln!("Failed to read from stream: {:?}", e);
                         }
                     }
                 }
                 None => {
-                    eprintln!("Stream is not available");
+                    // Do nothing
+
                 }
+            };
+        }
+    }
+
+    fn get_response_message(&mut self, message: &str) -> Option<String> {
+        let message = match Message::from_string(&message) {
+            Ok(message) => message,
+            Err(e) => {
+                // eprintln!("Failed to parse message: {:?}", e);
+                return None;
+            }
+        };
+
+        match message.message_type {
+            MessageType::InitConnection | MessageType::AskMemoryUpdate => {
+                println!("Received an InitConnection or AskMemoryUpdate message");
+                let response_string = self.get_memory_update_message();
+                println!("Response created: {}", response_string);
+                Some(response_string)
+            }
+            _ => {
+                eprintln!("Message type received: {:?}, not yet implemented", message.message_type);
+                None
             }
         }
     }
 
+    fn get_memory_update_message (&self) -> String {
+        let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
+        let memory_percentage = memory_manager.available_memory_perc;
+        let response_message = shard::Message::new(MessageType::MemoryUpdate, Some(memory_percentage));
+
+        response_message.to_string()
+    }
+    
     pub fn update(&mut self) -> Result<(), io::Error> {
-        self.memory_manager.update()
+        self.memory_manager.as_ref().try_lock().unwrap().update()
     }
 
     fn accepts_insertions(&self) -> bool {
-        self.memory_manager.accepts_insertions()
+        self.memory_manager.as_ref().try_lock().unwrap().accepts_insertions()
     }
 
     fn get_insertion_response(&self) -> MessageType {
@@ -162,13 +211,10 @@ impl<'a> Shard<'a> {
     }
 }
 
-impl<'a> NodeRole for Shard<'a> {
+impl NodeRole for Shard {
     fn send_query(&mut self, query: &str) -> bool {
-        let rows = match self.backend.query(query, &[]) {
-            Ok(rows) => {
-                println!("Query executed successfully: {:?}", rows);
-                rows
-            }
+        let rows = match self.backend.as_ref().try_lock().unwrap().query(query, &[]) {
+            Ok(rows) => rows,
             Err(e) => {
                 eprintln!("Failed to execute query: {:?}", e);
                 return false;
