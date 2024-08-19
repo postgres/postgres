@@ -1663,7 +1663,9 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	pgstat_drop_database(db_id);
 
 	/*
-	 * Update the database's pg_database tuple
+	 * Get the pg_database tuple to scribble on.  Note that this does not
+	 * directly rely on the syscache to avoid issues with flattened toast
+	 * values for the in-place update.
 	 */
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
