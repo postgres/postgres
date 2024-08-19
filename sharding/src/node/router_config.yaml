@@ -8,3 +8,12 @@ nodes:
   - ip: 127.0.0.1
     port: 5435
     name: node3
+  - ip: 127.0.0.1
+    port: 5436
+    name: node4
+  - ip: 127.0.0.1
+    port: 5437
+    name: node5
+  - ip: 127.0.0.1
+    port: 5438
+    name: node6

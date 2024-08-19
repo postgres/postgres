@@ -16,7 +16,7 @@ typedef enum {
 } NodeType;
 
 extern char* SendQueryToShard(char* query_data);
-extern void init_node_instance(NodeType nodeType, char* port);
+extern void init_node_instance(NodeType nodeType, char* port, char* config_file_path);
 
 extern const PsqlScanCallbacks psqlscan_callbacks;
 
