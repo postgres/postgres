@@ -1325,6 +1325,7 @@ SELCT 1/0;<!-- this typo is intentional -->
      <member><varname>IntervalStyle</varname></member>
      <member><varname>is_superuser</varname></member>
      <member><varname>scram_iterations</varname></member>
+     <member><varname>search_path</varname></member>
      <member><varname>server_encoding</varname></member>
      <member><varname>server_version</varname></member>
      <member><varname>session_authorization</varname></member>
@@ -1334,7 +1335,8 @@ SELCT 1/0;<!-- this typo is intentional -->
     (<varname>default_transaction_read_only</varname> and
     <varname>in_hot_standby</varname> were not reported by releases before
     14; <varname>scram_iterations</varname> was not reported by releases
-    before 16.)
+    before 16; <varname>search_path</varname> was not reported by releases
+    before 18.)
     Note that
     <varname>server_version</varname>,
     <varname>server_encoding</varname> and
